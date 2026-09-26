@@ -1031,7 +1031,7 @@ const Core = (function () {
   ];
   const UPG_KW = [1, 1.08, 1.16, 1.25], UPG_GRIP = [1, 1.04, 1.08, 1.12], UPG_KV = [1, 1.02, 1.04, 1.06], UPG_BRAKE = [1, 1.08, 1.16, 1.25];
   const UPG_AEROK = [0, 0.00006, 0.00011, 0.00016], UPG_DRAG = [1, 1.03, 1.06, 1.10];
-  const upgLv = (L, id) => { const v = L ? Math.round(+L[id]) : 0; return v >= 0 && v <= 3 ? v : 0; };   // missing / invalid -> 0
+  const upgLv = (L, id) => { const x = L ? L[id] : 0, v = typeof x === 'string' && /^[0-3]$/.test(x) ? +x : x; return Number.isInteger(v) && v >= 0 && v <= 3 ? v : 0; };   // 0..3 (or '0'..'3'); missing / invalid -> 0
   // levels = {motor, gume, zavore, aero} (0..3) -> { kw, grip, trac, kv, brake, aeroK, drag }
   function upgMods(levels) {
     const m = upgLv(levels, 'motor'), g = upgLv(levels, 'gume'), z = upgLv(levels, 'zavore'), a = upgLv(levels, 'aero');
@@ -1042,9 +1042,10 @@ const Core = (function () {
     const b = model.stats || { power: 5, grip: 5, weight: 5, drift: 5 };
     const m = upgLv(levels, 'motor'), g = upgLv(levels, 'gume'), z = upgLv(levels, 'zavore'), a = upgLv(levels, 'aero');
     const r = (v) => Math.min(10, Math.round(v * 10) / 10);
+    const up = (base, add) => { const h = 10 - base; return h > 0 ? 10 - h * Math.exp(-add / h) : base; };   // ~ +add, but it bends below 10, so every level still shows
     return {
-      power: r(b.power + [0, 0.8, 1.6, 2.5][m]),
-      grip: r(b.grip + [0, 0.5, 1.0, 1.5][g] + [0, 0.3, 0.6, 0.9][a] + [0, 0.2, 0.4, 0.6][z]),
+      power: r(up(b.power, [0, 0.8, 1.6, 2.5][m])),
+      grip: r(up(b.grip, [0, 0.5, 1.0, 1.5][g] + [0, 0.3, 0.6, 0.9][a] + [0, 0.2, 0.4, 0.6][z])),
       weight: r(b.weight),
       drift: r(b.drift),
       kw: model.kw * UPG_KW[m],
@@ -1192,10 +1193,12 @@ const Core = (function () {
       if (!grounded) wT = this.w; // no steering authority while airborne
       this.w += (wT - this.w) * Math.min(1, dt * 12);
       this.drift = sstep(0.1, 0.45, ab);
+      // on a slope (gradeForce), a brake press that catches the car rolling backwards only stops it: reverse needs a fresh press
+      if (trk.def.gradeForce) { if (this.inBrk <= 0.1) this.revNo = false; else if (vl < -0.3 && this.gear !== -1) this.revNo = true; }
       if (this.gear === -1) {
         const revThr = brk; brk = thr; thr = revThr;
         if (this.inThr > 0.1 && vl > -1.0) { this.gear = 1; thr = this.inThr; brk = 0; }
-      } else if (this.inBrk > 0.1 && this.inThr < 0.1 && vl < 0.6 && !this.locked && !this.noReverse) {
+      } else if (this.inBrk > 0.1 && this.inThr < 0.1 && vl < 0.6 && !this.locked && !this.noReverse && !this.revNo) {
         this.revHold += dt; if (this.revHold > 0.3) { this.gear = -1; this.revHold = 0; }
       } else this.revHold = 0;
       let F = 0; const eff = 0.88;
@@ -1248,8 +1251,9 @@ const Core = (function () {
       this.lock = grounded && (brk > 0.7 || hb > 0.5) && spd > 4 ? 1 : 0;
       if (fwd && spd > 1.5 && grounded) {
         let aMax = P.amax * G * muSurf * (1 - 0.4 * hb) * (1 - 0.08 * (this.dmgMode === 2 ? this.dmg : 0));
-        if (this.aeroK) aMax *= 1 + this.aeroK * spd * spd;   // aero upgrade: downforce grip grows with speed^2
-        const aTurn = Math.min(aMax, P.kv * (1 - 0.4 * hb) * spd * Math.min(ab, 1.2), spd * spd / P.rmin + 2);
+        // aero upgrade: downforce grip grows with speed^2 - both the limit and the turn per slide angle (so it is felt in every fast corner)
+        const gA = this.aeroK ? 1 + this.aeroK * spd * spd : 1; aMax *= gA;
+        const aTurn = Math.min(aMax, P.kv * gA * (1 - 0.4 * hb) * spd * Math.min(ab, 1.2), spd * spd / P.rmin + 2);
         const sgn = beta > 0 ? -1 : 1;
         Fx += m * aTurn * sgn * (-uy); Fy += m * aTurn * sgn * ux;
         const s2 = uy * uy;
@@ -1543,6 +1547,15 @@ const Core = (function () {
 
   // ---- debris lying on the road: flies off, tumbles, slides, rests; cars hitting it knock it away ----
   const relaxAng = (a, dt) => { const t = Math.round(a / Math.PI) * Math.PI; return a + (t - a) * Math.min(1, dt * 8); };
+  // open road: how far a point (radius r) is past the wall at an end of the road (0.5 m in from the last sample); _en = inward normal
+  const _en = [0, 0];
+  function endPen(T, q, r) {
+    const sl = q.s + (q.over || 0);
+    if (sl < 0.5 + r) { _en[0] = T.tx[0]; _en[1] = T.tz[0]; return 0.5 + r - sl; }
+    const e = T.len - 0.5 - r;
+    if (sl > e) { _en[0] = -T.tx[T.N - 1]; _en[1] = -T.tz[T.N - 1]; return sl - e; }
+    return 0;
+  }
   function stepDebris(d, T, dt) {
     if (d.rest) return;
     d.vy -= JUMP_G * dt;
@@ -1555,6 +1568,7 @@ const Core = (function () {
       d.x -= nx * pen; d.z -= nz * pen;
       const vn = d.vx * nx + d.vz * nz; if (vn > 0) { d.vx -= 1.4 * vn * nx; d.vz -= 1.4 * vn * nz; }
     }
+    if (T.open) { const pen = endPen(T, d.q, d.r * 0.5); if (pen > 0) { const nx = _en[0], nz = _en[1]; d.x += nx * pen; d.z += nz * pen; const vn = d.vx * nx + d.vz * nz; if (vn < 0) { d.vx -= 1.4 * vn * nx; d.vz -= 1.4 * vn * nz; } } }   // ... and the end walls
     if (d.y <= gy) {
       d.y = gy;
       if (d.vy < -2.5) { d.vy = -d.vy * 0.28; d.wx *= 0.6; d.wz *= 0.6; } else { d.vy = 0; d.ground = true; }
@@ -1689,6 +1703,7 @@ const Core = (function () {
       b.x -= nx * pen; b.z -= nz * pen;
       const vn = b.vx * nx + b.vz * nz; if (vn > 0) { b.vx -= 1.35 * vn * nx; b.vz -= 1.35 * vn * nz; b.wy += (Math.random() - 0.5) * vn; }
     }
+    if (T.open && b.y - gy < 3.2) { const pen = endPen(T, q, K.rh); if (pen > 0) { const nx = _en[0], nz = _en[1]; b.x += nx * pen; b.z += nz * pen; const vn = b.vx * nx + b.vz * nz; if (vn < 0) { b.vx -= 1.35 * vn * nx; b.vz -= 1.35 * vn * nz; } } }   // open road: the end walls
     let touch = false, maxPen = 0;                                                  // ground: impulses at every contact point below it
     for (const p of K.pts) {
       const rr = qRot(b, p[0], p[1], p[2], _r3), rx = rr[0], ry = rr[1], rz = rr[2], pen = gy - (b.y + ry);
@@ -1881,7 +1896,7 @@ const Core = (function () {
     if (c.arcade) {
       // needed slide angle for the path curvature, as a fraction of full-lock slide
       const P = c.arc || ARC[M.id] || ARC.kaze;
-      const bNeed = v * kap / P.kv;                       // rad (positive = right turn)
+      const bNeed = v * kap / (P.kv * (c.aeroK ? 1 + c.aeroK * v * v : 1));   // rad (positive = right turn); aero upgrade: less slide for the same turn
       c.inSteer = clamp(bNeed / Math.max(0.08, c.bMaxNow || 0.5) + 0.12 * (v * kap - c.w), -1, 1);
     }
 
@@ -1912,6 +1927,7 @@ const Core = (function () {
     if (!c.arcade && ab > 0.1 && c.vl > 6) thr *= clamp(1 - (ab - 0.1) * 3.5, 0.25, 1);
     if (c.spin > 0.05) thr *= 0.8;
     // off-track: slow down a bit & aim back
+    if (T.open && T.len - q.s < 6 + v * v / 40) { thr = 0; brk = 1; }   // open road: stop (and stay stopped) well short of the wall at the top end
     c.inThr = thr; c.inBrk = brk; c.inHand = 0;
   }
 
@@ -1991,7 +2007,7 @@ const Core = (function () {
       const i = this.timeTrial ? T.startIdx : T.idx(s);
       const lat = this.timeTrial ? 0 : (g % 2 === 1 ? -1 : 1) * 3.4;
       const x = T.px[i] + T.nx[i] * lat, z = T.pz[i] + T.nz[i] * lat;
-      c.place(x, z, T.hd[i]); if (T.hasElev) { c.y = c.py = c.roadY = T.hy[i]; }
+      c.place(x, z, T.hd[i]); if (T.hasElev) { c.y = c.py = T.hy[i]; if (T.open) c.roadY = c.y; }   // (open road: the camera starts at the right height)
       c.dist = -back; c.lap = 0;
       c.cp = 0; c.splits = [];
       c.q = T.query(x, z, i, {});
@@ -2008,7 +2024,11 @@ const Core = (function () {
       this.debris.push(d);
       if (this.debris.length > 40) { const old = this.debris.shift(); old.dead = true; }   // keep the road readable
     }
-    start() { this.state = 'racing'; this.time = 0; for (const c of this.cars) { c.locked = false; c.lapStart = 0; } }
+    start() {
+      this.state = 'racing'; this.time = 0; for (const c of this.cars) { c.locked = false; c.lapStart = 0; }
+      // open-road demo: the grid is packed tight between the bottom end and the start line, so the cars set off one by one, 0.5 s apart
+      if (this.track.open && this.opts.noPlayer) for (const c of this.cars) { c.relT = (c.grid - 1) * 0.5; if (c.relT > 0) c.locked = true; }
+    }
 
     // trackside props from the scenery builder: [{ kind, x, z, yaw, col }]; stacks get their tyres / bales ready (hidden) for when they burst
     setProps(list) {
@@ -2062,6 +2082,7 @@ const Core = (function () {
       const P = this.player;
       for (const c of cars) {
         if (c.isPlayer) continue;
+        if (c.relT > 0 && this.state === 'racing') { c.relT -= dt; if (c.relT <= 0) c.locked = false; }   // (open-road demo: staggered start)
         if (P && !c.finished) {
           const gap = c.dist - P.dist; // + ahead of player
           const D = this.diff || DIFF[1], target = gap > D[3] ? 1 - clamp((gap - D[3]) / 500, 0, D[2]) : gap < -D[5] ? 1 + clamp((-gap - D[5]) / 400, 0, D[4]) : 1;
@@ -2203,11 +2224,13 @@ const Core = (function () {
       let i = T.idx(s);
       if (T.open) i = clamp(i, 3, T.N - 4);   // not into the wall at an end of the road
       const off = T.rl[i] * 0.5;
-      c.place(T.px[i] + T.nx[i] * off, T.pz[i] + T.nz[i] * off, T.hd[i]); if (T.hasElev) { c.y = c.py = c.roadY = T.hy[i]; }
+      c.place(T.px[i] + T.nx[i] * off, T.pz[i] + T.nz[i] * off, T.hd[i]); if (T.hasElev) { c.y = c.py = T.hy[i]; if (T.open) c.roadY = c.y; }
       c.locked = false;
       c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s;
+      if (T.open && Number.isFinite(s) && Number.isFinite(c.dist)) c.dist += c.q.s - s;   // open road: the distance follows the car back to the sample (checkpoints / finish stay exact)
       c.stuckT = 0; c.wrongT = 0; c.rescued = 1.2; c.inPit = false; c.pitState = null; c.pitDone = false;   // (back on the circuit, not in the pit lane)
-      const v = 8; c.vx = Math.cos(c.h) * v; c.vz = Math.sin(c.h) * v;
+      const v = T.open && T.len - c.q.s < 25 ? 0 : 8;   // (near the top end of an open road: standing, not off into the end wall)
+      c.vx = Math.cos(c.h) * v; c.vz = Math.sin(c.h) * v;
     }
 
     // estimated finish times for unfinished cars (for results)
