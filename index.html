@@ -155,7 +155,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #s-car { justify-content: flex-end; }
 .car-panel { width: min(430px, 54vw); max-height: 100%; display: flex; flex-direction: column; }
 .car-panel > .btns { margin-top: auto; padding-top: 8px; flex: 0 0 auto; }
-.car-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-right: 6px; touch-action: pan-y; -webkit-overflow-scrolling: touch; }   /* scrolls on short screens so Nazaj/Naprej always stay visible */
+.car-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; touch-action: pan-y; -webkit-overflow-scrolling: touch; }   /* scrolls on short screens so Nazaj/Naprej always stay visible; a flex column like .car-panel, so the spacing is as before */
 .car-head { display: flex; align-items: center; gap: 10px; }
 .car-head h2 { margin: 0; }
 .tag { font: 700 italic 12px/1 var(--f-ui); padding: 4px 8px; border-radius: 6px; background: var(--lcd); color: #1b1b1b; }
@@ -321,7 +321,9 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
   .upg-seg button { padding: 6px 2px; font-size: clamp(11px, 3.1vw, 13px); }
   .res-head.tt .res-pos { font-size: clamp(34px, 11vw, 52px); }
   .ltab.b th:nth-child(3), .ltab.b td:nth-child(3) { display: none; }
-  .ltab td.nm, #res-table td.nm { max-width: 9em; }
+  .ltab td.nm, #res-table td.nm { max-width: min(9em, 22vw); }
+  .ltab, #res-table { font-size: min(13.5px, 3.1vh, 3.4vw); }   /* four columns fit on 320-360 px wide phones (the date and best lap are not cut off) */
+  .ltab th, .ltab td, #res-table th, #res-table td { padding-left: 4px; padding-right: 4px; }
   #hud.tt #h-lap { font-size: clamp(12px, 3.6vw, 17px); }
 }
 
@@ -7623,20 +7625,28 @@ if (typeof module !== 'undefined') module.exports = Comm;
   // one-time move to the new recommended defaults (chase camera, far view, high drift assist) for existing players
   try { if (!localStorage.getItem('tdgp-defaults-v2')) { S.camera = 'chase'; S.zoom = 1.2; S.assist = 2; localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
   try { records = JSON.parse(localStorage.getItem('tdgp-records') || '{}') || {}; } catch (_) { records = {}; }
-  if (!records.tracks) { records.tracks = {}; if (records.bestLap) records.tracks.jezero = { bestLap: records.bestLap, bestRace: records.bestRace, bestPos: records.bestPos }; }
-  const rec = (id) => records.tracks[id] || (records.tracks[id] = {});
-  // time-trial records: bestTime, bestSplits [cp1..cpN, finish], board = top 10 [{name, car, carId, time, splits, date, upg}] (drop anything malformed)
-  for (const id in records.tracks) { const r = records.tracks[id]; if (!r || typeof r !== 'object') { delete records.tracks[id]; continue; }
-    if (r.board != null) r.board = Array.isArray(r.board) ? r.board.filter(e => e && isFinite(e.time) && e.time > 0).sort((a, b) => a.time - b.time).slice(0, 10) : [];
-    if (r.bestTime != null && !(r.bestTime > 0)) { delete r.bestTime; delete r.bestSplits; } }
   // player name: printable, single spaces, max 16 characters; always escaped when rendered
-  const cleanName = (v) => String(v == null ? '' : v).replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16);
+  const cleanName = (v) => typeof v === 'string' || typeof v === 'number' ? String(v).replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16) : '';
   const esc = (v) => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  for (const k in DEF) if (S[k] == null || typeof S[k] === 'object') S[k] = DEF[k];   // hand-edited storage: a setting is always a plain value
   S.name = cleanName(S.name) || DEF.name;
   // upgrades per car: S.upg[modelId] = {motor, gume, zavore, aero} 0..3 (own objects, never shared; old saves have none)
   const UPG_IDS = Core.UPG.map(u => u.id);
-  const upgNorm = (o) => { const r = {}; for (const k of UPG_IDS) { const v = o ? +o[k] : 0; r[k] = v >= 0 && v <= 3 ? Math.floor(v) : 0; } return r; };
+  const upgNorm = (o) => { const r = {}; for (const k of UPG_IDS) { const v = o && typeof o[k] === 'number' ? o[k] : 0; r[k] = v >= 0 && v <= 3 ? Math.floor(v) : 0; } return r; };
   { const u = {}; if (S.upg && typeof S.upg === 'object') for (const m of Core.MODELS) if (S.upg[m.id]) u[m.id] = upgNorm(S.upg[m.id]); S.upg = u; }
+  // records: plain objects all the way down; circuits keep bestLap, bestRace, bestPos
+  const isObj = (o) => !!o && typeof o === 'object' && !Array.isArray(o), posNum = (v) => typeof v === 'number' && isFinite(v) && v > 0;
+  if (!isObj(records)) records = {};
+  if (!isObj(records.tracks)) { records.tracks = {}; if (records.bestLap) records.tracks.jezero = { bestLap: records.bestLap, bestRace: records.bestRace, bestPos: records.bestPos }; }
+  const rec = (id) => records.tracks[id] || (records.tracks[id] = {});
+  // time-trial records: bestTime, bestSplits [cp1..cpN, finish], board = top 10 [{name, car, carId, time, splits, date, upg}] (drop anything malformed, rebuild the rest from known fields)
+  const splitsOf = (a) => a.slice(0, 12).map(v => posNum(v) ? v : NaN);
+  const boardEntry = (e) => isObj(e) && posNum(e.time) ? { name: cleanName(e.name) || '?', car: typeof e.car === 'string' ? e.car.slice(0, 24) : '', carId: typeof e.carId === 'string' ? e.carId.slice(0, 24) : '',
+    time: e.time, splits: Array.isArray(e.splits) ? splitsOf(e.splits) : [], date: posNum(e.date) ? e.date : 0, upg: upgNorm(isObj(e.upg) ? e.upg : null) } : null;
+  for (const id in records.tracks) { const r = records.tracks[id]; if (!isObj(r)) { delete records.tracks[id]; continue; }
+    for (const k of ['bestLap', 'bestRace', 'bestPos', 'bestTime']) if (r[k] != null && !posNum(r[k])) delete r[k];
+    if (r.bestTime && Array.isArray(r.bestSplits)) r.bestSplits = splitsOf(r.bestSplits); else delete r.bestSplits;
+    if (r.board != null) r.board = Array.isArray(r.board) ? r.board.map(boardEntry).filter(e => e).sort((a, b) => a.time - b.time).slice(0, 10) : []; }
   const upgOf = (id) => S.upg[id] || (S.upg[id] = upgNorm(null));
   const upgCount = (id) => UPG_IDS.reduce((a, k) => a + upgOf(id)[k], 0);
   const isTT = (d) => !!(d && d.timeTrial);
@@ -7853,6 +7863,7 @@ if (typeof module !== 'undefined') module.exports = Comm;
       Render.buildWorld(track, S.quality === 'retro' ? 0.8 : 1);
       demo = new Core.Race(track, { numAI: 10, noPlayer: true, difficulty: 2, laps: 9999, seed: 11 });
       demo.start(); for (let i = 0; i < 120 * 4; i++) demo.step(STEP);
+      demoTarget = null; demoSwitch = 0;   // the title camera picks a car of the new demo right away (not one left over from the previous track)
       mm.img = null; mm.w = 0;
       $('loading').classList.add('off');
       cb();
@@ -7927,7 +7938,7 @@ if (typeof module !== 'undefined') module.exports = Comm;
   // leaderboard rows (top 10); the given run highlighted, and appended below when it did not make the top 10
   function boardRows(board, me) {
     const medal = (i) => i < 3 ? ['\u{1F947}', '\u{1F948}', '\u{1F949}'][i] : (i + 1) + '.';
-    const row = (e, lbl) => '<tr class="' + (me && e.date === me.date && e.time === me.time ? 'me' : '') + '"><td>' + lbl + '</td><td class="nm">' + esc(e.name || '?') + '</td><td>' + esc(e.car || '') + '</td><td>' + fmt(e.time, true) + '</td><td>' + (e.date ? new Date(e.date).toLocaleDateString('sl-SI', { day: 'numeric', month: 'numeric', year: '2-digit' }) : '') + '</td></tr>';
+    const row = (e, lbl) => '<tr class="' + (me && e.date === me.date && e.time === me.time ? 'me' : '') + '"><td>' + lbl + '</td><td class="nm">' + esc(e.name || '?') + '</td><td class="nm">' + esc(e.car || '') + '</td><td>' + fmt(e.time, true) + '</td><td>' + (e.date ? new Date(e.date).toLocaleDateString('sl-SI', { day: 'numeric', month: 'numeric', year: '2-digit' }) : '') + '</td></tr>';
     let h = board.map((e, i) => row(e, medal(i))).join('');
     if (me && !board.some(e => e.date === me.date && e.time === me.time)) h += row(me, '\u2013');
     return h;
@@ -8007,7 +8018,7 @@ if (typeof module !== 'undefined') module.exports = Comm;
     tb.innerHTML = res.map((r, i) => {
       const c = r.car; const b = c.lapTimes.length ? Math.min(...c.lapTimes) : NaN;
       const name = c.isPlayer ? 'Ti' : c.name;
-      return '<tr class="' + (c.isPlayer ? 'me' : '') + '"><td>' + (i + 1) + '</td><td><span class="dot" style="background:' + hexCss(c.color) + '"></span>' + name + '</td><td>' + c.m.name + '</td><td>' + (r.est ? '+' + fmt(r.time - res[0].time) : fmt(r.time, true)) + '</td><td>' + fmt(b, true) + '</td></tr>';
+      return '<tr class="' + (c.isPlayer ? 'me' : '') + '"><td>' + (i + 1) + '</td><td><span class="dot" style="background:' + hexCss(c.color) + '"></span>' + name + '</td><td>' + c.m.name + '</td><td>' + (r.est ? '+' + fmt(r.time - res[0].time, true) : fmt(r.time, true)) + '</td><td>' + fmt(b, true) + '</td></tr>';
     }).join('');
     showScreen('results');
   }
