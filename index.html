@@ -1124,13 +1124,16 @@ const Core = (function () {
 
     // pit lane (def.pit = [centre offset to the right, from, to, player's box] in metres from the start line): a lane beside the straight,
     // tapering in from the circuit edge at both ends. Returns null outside it. gap: the lane touches the circuit (no pit wall) - where you drive in and out.
+    // inner: the player's limit on the pit-wall side: the rail, but where the teams' stands sit on the grass strip behind it (pitStands [d0, d1],
+    // set by the world builder from its pit boxes) the lane's edge kerb, eased in and out over 25 m
     pitAt(s) {
       const P = this.def && this.def.pit; if (!P) return null;
       const L = this.len; let d = s - this.startS; d = ((d % L) + L) % L; if (d > L / 2) d -= L;
       if (d < P[1] || d > P[2]) return null;
       const f = (((s % L) + L) % L) / this.ds, i = Math.floor(f) % this.N, j = (i + 1) % this.N, br = lerp(this.br[i], this.br[j], f - Math.floor(f));
       const full = Math.max(P[0], br + 5), t = Math.min(sstep(P[1], P[1] + 60, d), sstep(P[2], P[2] - 30, d)), o = lerp(this.w + 3.6, full, t);   // a long, gentle way in
-      return { d, o, t, br, gap: o - 3.5 < br + 0.8, wall: br + 0.25, lin: o - 3.5, lout: o + 3.5 };
+      const S = this.pitStands, e = S ? Math.min(sstep(S[0] - 26, S[0] - 1, d), sstep(S[1] + 26, S[1] + 1, d)) : 0, wall = br + 0.25, lin = o - 3.5;
+      return { d, o, t, br, gap: o - 3.5 < br + 0.8, wall, lin, lout: o + 3.5, inner: wall + 0.12 + Math.max(0, lin - 0.3 - wall - 0.12) * e };
     }
 
     // nearest point search around hint index; returns object (reused)
@@ -2191,7 +2194,7 @@ const Core = (function () {
       const px = c.x + wx, pz = c.z + wz;
       const q = trk.query(px, pz, c.q.i, _q);
       let pen = 0, nx = 0, nz = 0, br = q.br, inner = -1e9;
-      if (c.isPlayer && trk.def.pit) { const pz2 = trk.pitAt(q.s); if (pz2) { if (pz2.gap) br = Math.max(br, pz2.lout); else if (c.inPit) { inner = pz2.wall + 0.12; br = pz2.lout; } } }   // in the pit lane: between the pit wall and the lane's outer edge
+      if (c.isPlayer && trk.def.pit) { const pz2 = trk.pitAt(q.s); if (pz2) { if (pz2.gap) br = Math.max(br, pz2.lout); else if (c.inPit) { inner = pz2.inner; br = pz2.lout; } } }   // in the pit lane: between the pit wall (the kerb in front of the stands) and the lane's outer edge
       if (q.d > br) { pen = q.d - br; nx = -q.nx; nz = -q.nz; }
       else if (q.d < inner) { pen = inner - q.d; nx = q.nx; nz = q.nz; }
       else if (q.d < -q.bl) { pen = -q.bl - q.d; nx = q.nx; nz = q.nz; }
@@ -3473,7 +3476,7 @@ const World = (function () {
     return (q) => { const e = Math.abs(q.d) - w; if (!(e > 0)) return 0;
       const f = Math.min(e * 2, NE - 1.001), k = Math.floor(f), b = ((q.i >= 0 && q.i < N ? q.i : 0) * 2 + (q.d > 0 ? 1 : 0)) * NE; return tab[b + k] + (tab[b + k + 1] - tab[b + k]) * (f - k); };
   }
-  function trackPropsGeneric(out, excluded, island) {
+  function trackPropsGeneric(out, excluded, island, decks) {
     const o = RP_THEME[THEME]; if (!o) return null;
     const tu = T.def.tunnel, L = T.len, roadY = (i) => (T.hasElev ? T.hy[i] : 0);
     // the visible ground: the GROUND mesh (its vertices exactly as built above, triangles a,c,b and b,c,d), on the mountain the dirt shoulder
@@ -3487,7 +3490,18 @@ const World = (function () {
     const vis = (x, z, i, side, off) => { let y = meshY(x, z); if (THEME === 'mountain' && off <= T.w + 2.2) {   // (the shoulder starts at the gravel road's wavy edge)
       const ew = T.w + (mk ? 0.26 * Math.sin(i * 0.37 + side * 1.7) * Math.sin(i * 0.113 + side) + 0.13 * Math.sin(i * 1.31 + side * 2.3) : 0);
       y = Math.max(y, roadY(i) + 0.02 - 1.02 * clamp((off - ew) / (T.w + 2.2 - ew), 0, 1)); } return y; };
-    const fl = drop ? (out.propFloor = propFloorTable(vis)) : null;
+    // (+ the red/white kerbs: drawn 0.045..0.085 m above the road from w to w + curbW; a sharp band over the table, not in it, so the
+    // 0.5 m interpolation doesn't ramp the verge up to them and the placement test (it stays clear of the kerbs) sees the same floor)
+    const kerbs = (f) => (q) => { const v = f(q), e = Math.abs(q.d) - T.w, a = q.a >= 0 && q.a < T.N ? q.a : q.i >= 0 && q.i < T.N ? q.i : 0;   // (a: the segment a..a+1 its kerb quad is drawn on)
+      return e > 0 && e <= T.curbW && T.curb[a] && T.curb[(a + 1) % T.N] ? Math.max(v, 0.045 + 0.04 * e / T.curbW) : v; };   // (drop / Ljubljana: never the forest, whose outside kerbs differ)
+    const fl = drop ? (out.propFloor = kerbs(propFloorTable(vis))) : null;
+    if (THEME === 'ljubljana' && RIVER) {   // only for the knocked props (they are still placed on level verge only): the banks of the Ljubljanica
+      // slope down inside the barrier, with the water (y -1.25) where its surface is drawn; the circuit's bridges: the deck, barrier to barrier
+      const N = T.N, onW = new Uint8Array(N); for (let i = 0; i < N; i++) onW[i] = distRiver(T.px[i], T.pz[i]) < RW / 2 + 2.5 ? 1 : 0;
+      const onDeck = (i) => onW[(i + N - 1) % N] || onW[i] || onW[(i + 1) % N];
+      const deck = (x, z) => { let y = -1e9; for (const [cx, cz, hl, hw, r, top] of decks || []) { const dx = x - cx, dz = z - cz, c = Math.cos(r), sn = Math.sin(r); if (Math.abs(dx * c + dz * sn) < hl && Math.abs(dz * c - dx * sn) < hw) y = Math.max(y, top); } return y; };   // (+ the footbridges)
+      out.propFloor = kerbs(propFloorTable((x, z, i) => onDeck(i) ? 0 : Math.max(deck(x, z), distRiver(x, z) < RW / 2 - 0.4 ? Math.max(meshY(x, z), -1.25) : meshY(x, z))));
+    }
     return out.propStats = roadsideProps(out.props, Object.assign({}, o, { floor: fl, skip: (i, side, x, z, rh) => {
       const s = i * T.ds, d = Math.abs((x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i]);
       if (excluded(x, z)) return true;
@@ -3698,6 +3712,7 @@ const World = (function () {
     const exclRect = []; // oriented rects {x,z,hx,hz,rot}
     const inRect = (x, z, r) => { const dx = x - r.x, dz = z - r.z; const c = Math.cos(-r.rot), s = Math.sin(-r.rot); const lx = dx * c - dz * s, lz = dx * s + dz * c; return Math.abs(lx) < r.hx && Math.abs(lz) < r.hz; };
     const exclF = [];   // extra exclusion tests (functions of x, z)
+    const decks = [];   // Ljubljana's footbridges [x, z, half length, half width, rot, top]: the knocked props land on them (trackPropsGeneric)
     const excluded = (x, z) => { for (const e of excl) if ((x - e.x) ** 2 + (z - e.z) ** 2 < e.r * e.r) return true; for (const r of exclRect) if (inRect(x, z, r)) return true; for (const f of exclF) if (f(x, z)) return true; return false; };
 
     /* ================= GROUND ================= */
@@ -4929,7 +4944,7 @@ const World = (function () {
           for (const [o0, o1, wd] of [[0, 0, 10], [-9, -15, 5], [9, 15, 5]]) {
             const pA = [-along[0] * 20 + across[0] * o1, -along[1] * 20 + across[1] * o1], pB = [along[0] * 20 + across[0] * o0, along[1] * 20 + across[1] * o0];
             const mx = (pA[0] + pB[0]) / 2, mz = (pA[1] + pB[1]) / 2, a2 = Math.atan2(pB[1] - pA[1], pB[0] - pA[0]), Ld = Math.hypot(pB[0] - pA[0], pB[1] - pA[1]), g = scen.get(mx, mz);
-            box(g, mx, -0.6, mz, Ld, 0.66, wd, a2, [0.9, 0.89, 0.85], [0.8, 0.79, 0.76]); box(g, mx, -3.2, mz, Ld * 0.3, 2.6, wd * 0.9, a2, [0.86, 0.85, 0.8]);
+            box(g, mx, -0.6, mz, Ld, 0.66, wd, a2, [0.9, 0.89, 0.85], [0.8, 0.79, 0.76]); box(g, mx, -3.2, mz, Ld * 0.3, 2.6, wd * 0.9, a2, [0.86, 0.85, 0.8]); decks.push([mx, mz, Ld / 2, wd / 2, a2, 0.06]);
             for (const sd of [-1, 1]) {
               const ex = -Math.sin(a2) * sd * (wd / 2 - 0.2), ez = Math.cos(a2) * sd * (wd / 2 - 0.2);
               box(g, mx + ex, 0, mz + ez, Ld, 0.15, 0.3, a2, whiteStone); box(g, mx + ex, 0.85, mz + ez, Ld, 0.14, 0.34, a2, whiteStone);
@@ -4939,7 +4954,7 @@ const World = (function () {
             excl.push({ x: mx, z: mz, r: 18 });
           } }
         { const cx = 185, cz = -52, a2 = Math.atan2(0.958, 0.287), Ld = 36, g = scen.get(cx, cz);       // Butchers' Bridge (modern footbridge, glass sides)
-          box(g, cx, -0.5, cz, Ld, 0.5, 7, a2, [0.3, 0.31, 0.33], [0.72, 0.7, 0.66]);
+          box(g, cx, -0.5, cz, Ld, 0.5, 7, a2, [0.3, 0.31, 0.33], [0.72, 0.7, 0.66]); decks.push([cx, cz, Ld / 2, 3.5, a2, 0]);
           for (const sd of [-1, 1]) box(g, cx - Math.sin(a2) * sd * 3.3, 0, cz + Math.cos(a2) * sd * 3.3, Ld, 1.1, 0.12, a2, [0.62, 0.78, 0.82]);
           excl.push({ x: cx, z: cz, r: 16 }); }
         // where the circuit itself crosses the river: deck + stone faces; dragons on the Dragon Bridge, columns on the Cobblers' Bridge
@@ -5378,6 +5393,16 @@ const World = (function () {
           const oc = atSf(T.startS + q + 5, 0);   // for the renderer's crews: the box centre on the centre line, the box frame
           (out.pitBoxes = out.pitBoxes || []).push({ k, s: T.startS + q + 5, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: p.o, wall: p.wall, team: tc, mine }); }
         forestGarages();
+        { const pbs = out.pitBoxes; T.pitStands = null;   // the stands on the grass strip (2.7 m roofs over the box centres, forestPitKit): Core keeps the player's car off it
+          if (pbs && pbs.length) { const L = T.len, dS = (s) => { let d = s - T.startS; d = ((d % L) + L) % L; return d > L / 2 ? d - L : d; };
+            T.pitStands = [dS(pbs[0].s) - 1.35, dS(pbs[pbs.length - 1].s) + 1.35];
+            const kt = [0.86, 0.86, 0.83], kf = [0.66, 0.67, 0.64];   // and a low concrete kerb along that limit (pitAt().inner: the lane's edge, eased in from the rail)
+            for (let q = T.pitStands[0] - 28; q < T.pitStands[1] + 28; q += 2) {
+              const i = T.idx(T.startS + q), j = T.idx(T.startS + q + 2), pi = foPit(i), pj = foPit(j); if (!pi || !pj || pi.gap || pj.gap) continue;
+              const ai = pi.inner, aj = pj.inner; if (ai - pi.wall < 0.15 && aj - pj.wall < 0.15) continue;
+              gp.quadUp(at(i, ai - 0.15, 0.1), at(i, ai, 0.1), at(j, aj, 0.1), at(j, aj - 0.15, 0.1), [kt, kt, kt, kt]);
+              gp.quadO(at(i, ai, 0.02), at(j, aj, 0.02), at(j, aj, 0.1), at(i, ai, 0.1), kf, at(i, ai - 1, 0.05));
+              gp.quadO(at(j, aj - 0.15, 0), at(i, ai - 0.15, 0), at(i, ai - 0.15, 0.1), at(j, aj - 0.15, 0.1), kf, at(i, ai + 1, 0.05)); } } }
         for (const [q0, dq] of [[fdp[1] + 30, 4], [fdp[2] - 26, -4]]) for (let k = 0; k < 3; k++) {   // knockable cones on the noses where the pit lane leaves and rejoins
           const i = T.idx(T.startS + q0 + k * dq), p = foPit(i); if (!p) continue; const o = (T.br[i] + 0.9 + p.o - 3.5) / 2; if (o < T.br[i] + 0.5 || o > p.o - 4) continue;
           const [x, z] = atS(T.startS + q0 + k * dq, o); prop('cone', x, z, R() * TAU); }
@@ -5501,7 +5526,7 @@ const World = (function () {
         if (barOut > w + cw + 3) for (let k = 0; k < 4; k++) { const [x, z, hd] = atSf(sm + 10 + k * 1.0, -inner * (barOut - 0.6)); prop('tstack', x, z, hd + k * 0.6, (k >> 1) % 2); }   // spare tyres in front of the outer barrier
       }
     }
-    trackPropsGeneric(out, excluded, MC_ISLAND);   // + safety-tyre walls and roadside posts on every circuit (see roadsideProps)
+    trackPropsGeneric(out, excluded, MC_ISLAND, decks);   // + safety-tyre walls and roadside posts on every circuit (see roadsideProps)
 
     /* ================= MONACO (real circuit layout; origin Sainte-Dévote, x east, z south) ================= */
     if (THEME === 'monaco') {
@@ -6684,13 +6709,32 @@ const World = (function () {
     const lk = 0.3 * (0.2 + crH(x, z, 12));
     return crowdPut(C, x, C.gH(x, z), z, -side * nx - tx * lk, -side * nz - tz * lk, o, row);
   }
-  const CRQ = { px: 0, pz: 0, nx: 0, nz: 0, tx: 0, tz: 0, bl: 0, br: 0, hy: 0, i: 0 };
+  const CRQ = { px: 0, pz: 0, nx: 0, nz: 0, tx: 0, tz: 0, bl: 0, br: 0, hy: 0, i: 0, i0: 0, i1: 0 };
   function crAt(s) {   // track frame at s, interpolated between the samples (the samples are 2 m apart); null past the ends of an open road
     const N = T.N, f = s / T.ds; let i0 = Math.floor(f); const t = f - i0;
     if (T.open) { if (i0 < 0 || i0 >= N - 1) return null; } else i0 = ((i0 % N) + N) % N;
     const i1 = T.open ? i0 + 1 : (i0 + 1) % N, L = (a) => a[i0] + (a[i1] - a[i0]) * t, q = CRQ;
-    q.px = L(T.px); q.pz = L(T.pz); q.nx = L(T.nx); q.nz = L(T.nz); q.tx = L(T.tx); q.tz = L(T.tz); q.bl = L(T.bl); q.br = L(T.br); q.hy = T.hy ? L(T.hy) : 0; q.i = t < 0.5 ? i0 : i1;
+    q.px = L(T.px); q.pz = L(T.pz); q.nx = L(T.nx); q.nz = L(T.nz); q.tx = L(T.tx); q.tz = L(T.tz); q.bl = L(T.bl); q.br = L(T.br); q.hy = T.hy ? L(T.hy) : 0; q.i = t < 0.5 ? i0 : i1; q.i0 = i0; q.i1 = i1;
     return q;
+  }
+  // the front row's offset at a crAt() frame: the barrier segment i0 -> i1 is drawn with i0's type (a tyre wall ending there) and the next one with i1's
+  const crFirstQ = (first, q, side) => Math.max(first(q.i0, side), first(q.i1, side));
+  // is (x, z) inside the band [centre line, barrier + first - 0.6] of a same-side barrier segment j -> j + 1 within 12 samples of i, or closer than
+  // that across a sample's own strip (|along| < 0.55 ds, as clearance() measures it for the nearest sample)? On the inside of a tight bend the
+  // neighbouring samples' bands fan in over the spot, and their barriers can stand farther out than the nearest sample's
+  function crInBand(i, side, x, z, first) {
+    const N = T.N, bar = side > 0 ? T.br : T.bl;
+    for (let d = -12; d <= 12; d++) {
+      let j = i + d; if (T.open) { if (j < 0 || j > N - 1) continue; } else j = ((j % N) + N) % N;
+      const dx = x - T.px[j], dz = z - T.pz[j];
+      if (Math.abs(dx * T.tx[j] + dz * T.tz[j]) < T.ds * 0.55 && side * (dx * T.nx[j] + dz * T.nz[j]) < bar[j] + Math.max(first(j, side), first(T.open ? Math.max(0, j - 1) : (j + N - 1) % N, side)) - 0.6) return true;
+      if (T.open && j > N - 2) continue;
+      const j1 = T.open ? j + 1 : (j + 1) % N, f = first(j, side) - 0.6, oa = side * (bar[j] + f), ob = side * (bar[j1] + f);
+      const P = [T.px[j], T.pz[j], T.px[j1], T.pz[j1], T.px[j1] + T.nx[j1] * ob, T.pz[j1] + T.nz[j1] * ob, T.px[j] + T.nx[j] * oa, T.pz[j] + T.nz[j] * oa];
+      let ins = false; for (let a = 0, b = 3; a < 4; b = a++) { const xa = P[a * 2], za = P[a * 2 + 1], xb = P[b * 2], zb = P[b * 2 + 1]; if ((za > z) !== (zb > z) && x < (xb - xa) * (z - za) / (zb - za) + xa) ins = !ins; }
+      if (ins) return true;
+    }
+    return false;
   }
   // A crowd along s in [sa, sb) behind the barrier on one side (+1 right, -1 left), facing the road and turned a little towards the oncoming cars.
   // o: rows, dens (share of slots filled, less in the back rows), first (offset of the front row beyond the barrier: number or f(i, side)), gap (row
@@ -6707,9 +6751,10 @@ const World = (function () {
       const keep = dens * (1 - clump + 2 * clump * crNoise(s / 7 + seed + side * 5.3)) - row * (o.rowFall == null ? 0.06 : o.rowFall);
       if (crH(s, row * 7 + side, seed) >= keep) continue;
       const sj = s + (crH(s, row, seed + 1) - 0.5) * step * 0.7, q = crAt(sj); if (!q) continue;
-      const f0 = first(q.i, side), off = (side > 0 ? q.br : q.bl) + f0 + row * gap + (crH(sj, row, seed + 2) - 0.5) * 0.36;
+      const f0 = crFirstQ(first, q, side), off = (side > 0 ? q.br : q.bl) + f0 + row * gap + (crH(sj, row, seed + 2) - 0.5) * 0.36;
       const x = q.px + q.nx * side * off, z = q.pz + q.nz * side * off, ry = q.hy, tx = q.tx, tz = q.tz, nx = q.nx, nz = q.nz;
       if (near(x, z) < (o.minClear == null ? f0 - 0.6 : o.minClear) || !crFree(C, x, z)) continue;   // another part of the road (or its verge) too close; taken
+      if (o.minClear == null && crInBand(q.i0, side, x, z, first)) continue;   // in front of a neighbouring segment's barrier / catch fence (bend insides)
       if ((C.water && C.water(x, z)) || (exc && exc(x, z))) continue;
       const y = gH(x, z); if (y < ry - below || y > ry + above) continue;
       if (maxS < 9) { const sl = Math.hypot(gH(x + 1, z) - gH(x - 1, z), gH(x, z + 1) - gH(x, z - 1)) / 2; if (sl > maxS) continue; }
@@ -6721,7 +6766,7 @@ const World = (function () {
     if (n && (o.strip != null ? o.strip : dens >= 0.3)) crStrip(C, segs, side, first, gap, gH, near, o.dark == null ? 0.58 : o.dark);   // (none under thin, scattered crowds)
     if (n && o.excl !== false) {   // tree exclusion circles along the run, overlapping (keepBar: how far they stay off the barrier line)
       const depth = (rows - 1) * gap;
-      for (const k of segs.keys()) { const q = crAt(k * 2 + 1); if (!q) continue; const f0 = first(q.i, side), oc = f0 + depth / 2, r = Math.max(1.2, Math.min(depth / 2 + 2, oc - (o.keepBar == null ? 0.3 : o.keepBar)));
+      for (const k of segs.keys()) { const q = crAt(k * 2 + 1); if (!q) continue; const f0 = crFirstQ(first, q, side), oc = f0 + depth / 2, r = Math.max(1.2, Math.min(depth / 2 + 2, oc - (o.keepBar == null ? 0.3 : o.keepBar)));
         if (k % Math.max(1, Math.floor(r / 2)) && segs.has(k - 1)) continue;
         const off = (side > 0 ? q.br : q.bl) + oc; C.exclAdd(q.px + q.nx * side * off, q.pz + q.nz * side * off, r); }
     }
@@ -6733,7 +6778,7 @@ const World = (function () {
     for (const [k, rw] of segs) {
       const ends = (segs.has(k - 1) ? 0 : 1) + (segs.has(k + 1) ? 0 : 1), dk = 1 - (1 - dark) * (ends === 2 ? 0.45 : ends ? 0.75 : 1) * Math.min(1, 0.6 + 0.2 * rw), D = [dk, dk, dk];
       const pts = [];
-      for (const s of [k * 2, k * 2 + 2]) { const q = crAt(s); if (!q) break; const f0 = first(q.i, side), bar = side > 0 ? q.br : q.bl, lo = [bar + f0 - 0.7, bar + f0 - 0.15, bar + f0 + (rw - 1) * gap + 0.15, bar + f0 + (rw - 1) * gap + 0.9];
+      for (const s of [k * 2, k * 2 + 2]) { const q = crAt(s); if (!q) break; const f0 = crFirstQ(first, q, side), bar = side > 0 ? q.br : q.bl, lo = [bar + f0 - 0.7, bar + f0 - 0.15, bar + f0 + (rw - 1) * gap + 0.15, bar + f0 + (rw - 1) * gap + 0.9];
         pts.push(lo.map(o => { const x = q.px + q.nx * side * o, z = q.pz + q.nz * side * o; return [x, gH(x, z) + 0.05, z]; })); }
       if (pts.length < 2) continue;
       const [a, b] = pts; if (near(a[0][0], a[0][2]) < 0.2 || near(b[0][0], b[0][2]) < 0.2 || (C.water && (C.water(a[3][0], a[3][2]) || C.water(b[3][0], b[3][2])))) continue;
@@ -8216,7 +8261,9 @@ const Render = (function () {
     if (mode === 'clear') c.clearT += dt;
     const F = c.frame, u = mode === 'work' ? clamp(P.pitT / Math.max(0.1, P.pitDur), 0, 1) : mode === 'clear' ? 1 : 0;
     const ch = F ? Math.cos(F.h) : 1, sh = F ? Math.sin(F.h) : 0, Wp = (f, r) => [F.x + ch * f - sh * r, F.z + sh * f + ch * r], yawC = (df, dr) => Math.atan2(sh * df + ch * dr, ch * df - sh * dr);
-    const go = (m, p, yaw, style, act) => { m.gx = p[0]; m.gz = p[1]; m.gyaw = yaw; m.style = style; m.act = act; };
+    const pb = c.pb, wMin = pb.wallO + 0.35;   // (nobody is sent across the pit-wall rail, wherever the car stands)
+    const go = (m, p, yaw, style, act) => { const wo = pb.lane + (p[0] - pb.stop[0]) * pb.nx + (p[1] - pb.stop[1]) * pb.nz; if (wo < wMin) p = [p[0] + pb.nx * (wMin - wo), p[1] + pb.nz * (wMin - wo)];
+      m.gx = p[0]; m.gz = p[1]; m.gyaw = yaw; m.style = style; m.act = act; };
     const lf = c.liftF, lr = c.liftR, y0 = P.y || 0;
     const hub = (k) => { const f = k < 2 ? D.fx : D.rx, sd = k % 2 ? 1 : -1, [x, z] = Wp(f, sd * D.hw); return [x, y0 + D.rw + (k < 2 ? lf : lr), z]; };
     c.gunOn = false;
