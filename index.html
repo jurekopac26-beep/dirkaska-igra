@@ -1168,7 +1168,7 @@ const Core = (function () {
       if (open) out.over = a === 0 && tu < 0 ? tu * Math.sqrt(sl2) : b === N - 1 && tu > 1 ? (tu - 1) * Math.sqrt(sl2) : 0;
       const cx = px[a] + sx * t, cz = pz[a] + sz * t;
       const nxa = lerp(this.nx[a], this.nx[b], t), nza = lerp(this.nz[a], this.nz[b], t);
-      out.i = bi; out.a = a; out.t = t;
+      out.i = bi; out.a = a; out.t = t; out.x = x; out.z = z;
       out.s = (a + t) * this.ds;
       out.d = (x - cx) * nxa + (z - cz) * nza;
       out.nx = nxa; out.nz = nza;
@@ -2083,7 +2083,7 @@ const Core = (function () {
   function mkProp(kind, x, y, z, yaw) {
     const a = -(yaw || 0) / 2;   // local +x along the heading yaw (the car convention: forward = (cos h, sin h))
     return { kind, K: PROPK[kind], x, y, z, vx: 0, vy: 0, vz: 0, qx: 0, qy: Math.sin(a), qz: 0, qw: Math.cos(a), wx: 0, wy: 0, wz: 0,
-      sleep: true, hidden: false, dead: false, dirty: true, slot: -1, qi: -1, bk: -1, t: 0, age: 0, col: 0, parts: null };
+      sleep: true, hidden: false, dead: false, dirty: true, slot: -1, qi: -1, bk: -1, t: 0, age: 0, col: 0, parts: null, fy: NaN };   // (fy: the floor under it last step)
   }
   function propImpulse(b, jx, jy, jz, rx, ry, rz) {
     const K = b.K; b.vx += jx / K.m; b.vy += jy / K.m; b.vz += jz / K.m;
@@ -2140,14 +2140,19 @@ const Core = (function () {
   function propStep(race, b, T, dt) {
     const K = b.K;
     b.age += dt; b.vy -= PROP_G * dt;
+    const x0 = b.x, z0 = b.z;
     b.x += b.vx * dt; b.y += b.vy * dt; b.z += b.vz * dt;
     const h = 0.5 * dt, qx = b.qx, qy = b.qy, qz = b.qz, qw = b.qw, wx = b.wx, wy = b.wy, wz = b.wz;   // orientation (world-frame angular velocity)
     b.qx = qx + h * (wx * qw + wy * qz - wz * qy); b.qy = qy + h * (wy * qw + wz * qx - wx * qz);
     b.qz = qz + h * (wz * qw + wx * qy - wy * qx); b.qw = qw - h * (wx * qx + wy * qy + wz * qz);
     const ql = Math.hypot(b.qx, b.qy, b.qz, b.qw) || 1; b.qx /= ql; b.qy /= ql; b.qz /= ql; b.qw /= ql;
-    const q = T.query(b.x, b.z, b.qi, _pq); b.qi = q.i; race._bkMove(b);
-    const gy = (T.hasElev ? T.elevAt(q.s).y : 0) + (race.propFloor ? race.propFloor(q) : 0);   // (the verge may lie below the road)
-    const lim = (q.d > 0 ? q.br : q.bl) - K.rh;                                   // barriers (with the catch fences above them)
+    const F = race.propFloor; let q = T.query(b.x, b.z, b.qi, _pq), gy = (T.hasElev ? T.elevAt(q.s).y : 0) + (F ? F(q) : 0);   // (the verge may lie below the road)
+    if (gy - b.fy > 0.45) {   // the floor rose by more than 0.45 m since the last step and the prop is that far below it: a face (a deck's end, a planter, the
+      let lo = 1e9; for (const p of K.pts) { const r = qRot(b, p[0], p[1], p[2], _r3)[1]; if (r < lo) lo = r; }   // side of a pit), not a slope: it bounces off
+      if (gy - (b.y + lo) > 0.45) { b.x = x0; b.z = z0; b.vx *= -0.3; b.vz *= -0.3; q = T.query(b.x, b.z, b.qi, _pq); gy = (T.hasElev ? T.elevAt(q.s).y : 0) + (F ? F(q) : 0); }
+    }
+    b.fy = gy; b.qi = q.i; race._bkMove(b);
+    const lim = (q.d > 0 ? q.br : q.bl) - K.rh - (F && F.inset ? F.inset[q.i * 2 + (q.d > 0 ? 1 : 0)] : 0);   // barriers (with the catch fences above them; F.inset: solid scenery in front of them)
     if (Math.abs(q.d) > lim && b.y - gy < 3.2) {
       const sg = Math.sign(q.d), nx = q.nx * sg, nz = q.nz * sg, pen = Math.abs(q.d) - lim;
       b.x -= nx * pen; b.z -= nz * pen;
@@ -2489,7 +2494,7 @@ const Core = (function () {
       this.propFloor = floor || null;
       for (const it of list) {
         const K = PROPK[it.kind]; if (!K) continue;
-        const q = T.query(it.x, it.z, it.i >= 0 && it.i < T.N ? it.i : -1, {}), gy = (T.hasElev ? T.elevAt(q.s).y : 0) + (floor ? floor(q) : 0);   // (it.i: the builder's sample index, a hint that saves a full scan)
+        const q = T.query(it.x, it.z, it.i >= 0 && it.i < T.N ? it.i : -1, {}), gy = (T.hasElev ? T.elevAt(q.s).y : 0) + (floor ? floor(q, true) : 0);   // (it.i: the builder's sample index, a hint that saves a full scan; the floor row of the nearest sample, as the builder's placement test saw it)
         const b = mkProp(it.kind, it.x, gy + K.h0, it.z, it.yaw); b.col = it.col || 0; b.qi = q.i;
         b.slot = slots[it.kind] = (slots[it.kind] || 0); slots[it.kind]++; cap[it.kind] = (cap[it.kind] || 0) + 1; props.push(b);
         if (K.breaks) b.parts = K.parts.map(() => { const pb = mkProp(K.breaks, it.x, gy, it.z, 0); pb.hidden = true; pb.dead = true; pb.col = b.col; cap[K.breaks] = (cap[K.breaks] || 0) + 1; props.push(pb); return pb; });
@@ -3406,7 +3411,7 @@ const World = (function () {
     const fits = (i, side, x, z, rh) => {   // also on the verge of the nearest road sample (not on another leg's asphalt, not behind its barrier), and the track's own tests
       const n = nearest(x, z), a = Math.abs(n.lat);
       if (n.i < 0 || a < w + rh + 0.25 || a > n.bar - rh - 0.1) return false;
-      if (o.floor) { const d = Math.abs((x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i]), f0 = o.floor({ i, d: side * (d - rh) }), f1 = o.floor({ i, d: side * (d + rh) });
+      if (o.floor) { const d = Math.abs((x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i]), f0 = o.floor({ i, d: side * (d - rh) }, true), f1 = o.floor({ i, d: side * (d + rh) }, true);
         if (Math.abs(f0 - f1) > 0.15 || f0 + f1 < -1.4) return false; }   // level ground under it (where the verge isn't at road height), not down in a dip
       return !(o.skip && o.skip(i, side, x, z, rh));
     };
@@ -3465,18 +3470,29 @@ const World = (function () {
   };
   // the verge's real height beyond the asphalt edge, relative to the road (per sample and side, every 0.5 m out to 12 m): the knockable
   // props stand and land on it (Core: Race.setProps(list, floor)). vis(x, z, i, side, o): the visible ground height there, or
-  // prof(i, side): the verge's cross-section [[offset, height above the road], ...] (the corridor builders' own verge ribbons)
-  function propFloorTable(vis, prof) {
-    const N = T.N, w = T.w, NE = 25, tab = new Float32Array(N * 2 * NE);
+  // prof(i, side): the verge's cross-section [[offset, height above the road], ...] (the corridor builders' own verge ribbons).
+  // opt.cap(i, side, o): the table's ceiling there (default 0.3 above the road); opt.ex = { f(x, z, ry), on }: where the table can't follow
+  // the visible surface (steps at an angle to the track: a deck's edge, the water's edge, a planter), on[a * 2 + side (0 left, 1 right)]
+  // marks the segment a..a+1 and the knocked props use f (the surface's absolute height at their own spot, q.x/q.z from Track.query;
+  // ry: the road's). floor(q, near): between two samples the rows are blended by q.t; near (or a q without a/t): the nearest sample's row
+  // only, which is what the placement test sees (roadsideProps.fits) and where the standing props start (Race.setProps). On the asphalt:
+  // 0, or the banking's tilt (Track.bankAt: the Karussell)
+  const _pfb = { dy: 0, sl: 0 };
+  function propFloorTable(vis, prof, opt) {
+    const N = T.N, w = T.w, NE = 25, tab = new Float32Array(N * 2 * NE), cap = opt && opt.cap, EX = opt && opt.ex, TT = T, open = T.open, bank = !!T.bank;
     for (let i = 0; i < N; i++) for (let sd = 0; sd < 2; sd++) { const side = sd ? 1 : -1, ry = T.hasElev ? T.hy[i] : 0, P = prof ? prof(i, side) : null;
       for (let k = 0, m = 0; k < NE; k++) { const o = w + k * 0.5; let y;
         if (P) { while (m < P.length - 2 && P[m + 1][0] < o) m++; const a = P[m], b = P[m + 1]; y = a[1] + (b[1] - a[1]) * clamp((o - a[0]) / Math.max(1e-3, b[0] - a[0]), 0, 1); }
         else y = vis(T.px[i] + T.nx[i] * side * o, T.pz[i] + T.nz[i] * side * o, i, side, o) - ry;
-        tab[(i * 2 + sd) * NE + k] = Math.min(0.3, y); } }
-    return (q) => { const e = Math.abs(q.d) - w; if (!(e > 0)) return 0;
-      const f = Math.min(e * 2, NE - 1.001), k = Math.floor(f), b = ((q.i >= 0 && q.i < N ? q.i : 0) * 2 + (q.d > 0 ? 1 : 0)) * NE; return tab[b + k] + (tab[b + k + 1] - tab[b + k]) * (f - k); };
+        tab[(i * 2 + sd) * NE + k] = Math.min(cap ? cap(i, side, o) : 0.3, y); } }
+    return (q, near) => { const e = Math.abs(q.d) - w; if (!(e > 0)) return bank && q.s >= 0 ? TT.bankAt(q.s, q.d, _pfb).dy : 0;
+      const f = Math.min(e * 2, NE - 1.001), k = Math.floor(f), u = f - k, sd = q.d > 0 ? 1 : 0;
+      if (near || !(q.t >= 0) || !(q.a >= 0 && q.a < N)) { const b = ((q.i >= 0 && q.i < N ? q.i : 0) * 2 + sd) * NE + k; return tab[b] + (tab[b + 1] - tab[b]) * u; }
+      const a = q.a; if (EX && EX.on[a * 2 + sd] && q.x !== undefined) { const ry = TT.hasElev ? TT.elevAt(q.s).y : 0; return EX.f(q.x, q.z, ry) - ry; }
+      const a1 = a + 1 < N ? a + 1 : open ? a : 0, b = (a * 2 + sd) * NE + k, c = (a1 * 2 + sd) * NE + k, y0 = tab[b] + (tab[b + 1] - tab[b]) * u;
+      return y0 + (tab[c] + (tab[c + 1] - tab[c]) * u - y0) * q.t; };
   }
-  function trackPropsGeneric(out, excluded, island, decks) {
+  function trackPropsGeneric(out, excluded, island, decks, slabs) {
     const o = RP_THEME[THEME]; if (!o) return null;
     const tu = T.def.tunnel, L = T.len, roadY = (i) => (T.hasElev ? T.hy[i] : 0);
     // the visible ground: the GROUND mesh (its vertices exactly as built above, triangles a,c,b and b,c,d), on the mountain the dirt shoulder
@@ -3492,15 +3508,40 @@ const World = (function () {
       y = Math.max(y, roadY(i) + 0.02 - 1.02 * clamp((off - ew) / (T.w + 2.2 - ew), 0, 1)); } return y; };
     // (+ the red/white kerbs: drawn 0.045..0.085 m above the road from w to w + curbW; a sharp band over the table, not in it, so the
     // 0.5 m interpolation doesn't ramp the verge up to them and the placement test (it stays clear of the kerbs) sees the same floor)
-    const kerbs = (f) => (q) => { const v = f(q), e = Math.abs(q.d) - T.w, a = q.a >= 0 && q.a < T.N ? q.a : q.i >= 0 && q.i < T.N ? q.i : 0;   // (a: the segment a..a+1 its kerb quad is drawn on)
+    const kerbs = (f) => (q, near) => { const v = f(q, near), e = Math.abs(q.d) - T.w, a = q.a >= 0 && q.a < T.N ? q.a : q.i >= 0 && q.i < T.N ? q.i : 0;   // (a: the segment a..a+1 its kerb quad is drawn on)
       return e > 0 && e <= T.curbW && T.curb[a] && T.curb[(a + 1) % T.N] ? Math.max(v, 0.045 + 0.04 * e / T.curbW) : v; };   // (drop / Ljubljana: never the forest, whose outside kerbs differ)
-    const fl = drop ? (out.propFloor = kerbs(propFloorTable(vis))) : null;
+    // ex(f, near, far): the exact floor f(x, z, ry) on the segments where some lateral point of either end row satisfies near(x, z) (all of
+    // them without near; far(i): no point of row i can) (propFloorTable opt.ex)
+    const ex = (f, near, far) => { const N = T.N, on = new Uint8Array(N * 2), hit = new Uint8Array(N * 2);
+      for (let i = 0; i < N; i++) if (!(far && far(i))) for (let sd = 0; sd < 2; sd++) { const side = sd ? 1 : -1;
+        for (let k = 0; k < 25; k++) { const o = side * (T.w + k * 0.5); if (!near || near(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o)) { hit[i * 2 + sd] = 1; break; } } }
+      for (let i = 0; i < N; i++) for (let sd = 0; sd < 2; sd++) { const j = i + 1 < N ? i + 1 : T.open ? i : 0; on[i * 2 + sd] = hit[i * 2 + sd] | hit[j * 2 + sd]; }
+      return { f, on }; };
+    const boxes = (L) => { const A = new Float64Array((L || []).length * 7); (L || []).forEach(([cx, cz, hl, hw, r, top], k) => A.set([cx, cz, hl, hw, Math.cos(r), Math.sin(r), top], k * 7));
+      return (x, z, m) => { let y = -1e9; for (let k = 0; k < A.length; k += 7) { const dx = x - A[k], dz = z - A[k + 1], hl = A[k + 2] + m, hw = A[k + 3] + m;   // top of the highest box [x, z, half length,
+        if (dx * dx + dz * dz <= hl * hl + hw * hw && Math.abs(dx * A[k + 4] + dz * A[k + 5]) < hl && Math.abs(dz * A[k + 4] - dx * A[k + 5]) < hw) y = Math.max(y, A[k + 6]); }   //  half width, rot, top] under (x, z), m: grown by m
+        return y; }; };
+    let exM = null;
+    if (THEME === 'monaco') {   // Monaco: the ground mesh itself (steep where it drops to the harbour and into the terrace cut into the verge of the
+      // Fairmont's high road in, MC_TER), and the planter on the hairpin's island (24-sided, top yr + 0.6, in a kerb ring 0.9 m wide)
+      const I = island, yr = I && T.hy ? T.hy[I.i] : 0, sg = TAU / 24, c24 = Math.cos(sg / 2);
+      const planter = (x, z) => { if (!I) return -1e9; const dx = x - I.cx, dz = z - I.cz, r = Math.hypot(dx, dz); if (r > I.rI + 1) return -1e9;
+        let a = Math.atan2(dz, dx); a -= (Math.floor(a / sg) + 0.5) * sg; const re = r * Math.cos(a) / c24;
+        return re <= I.rI ? yr + 0.6 : re <= I.rI + 0.9 ? yr + 0.16 - 0.11 * (re - I.rI) / 0.9 : -1e9; };
+      exM = ex((x, z, ry) => Math.max(Math.min(meshY(x, z), ry + 0.3), planter(x, z)));
+    }
+    const fl = drop ? (out.propFloor = kerbs(propFloorTable(vis, null, { ex: exM }))) : null;
     if (THEME === 'ljubljana' && RIVER) {   // only for the knocked props (they are still placed on level verge only): the banks of the Ljubljanica
-      // slope down inside the barrier, with the water (y -1.25) where its surface is drawn; the circuit's bridges: the deck, barrier to barrier
+      // slope down inside the barrier, with the water (y -1.25) where its surface is drawn; the circuit's bridges: the deck, barrier to barrier.
+      // Near the river, the decks and the footbridges the floor is exact: the water out to RW / 2 - 0.4 from the river's centre line, the
+      // terrain mesh in the strip between it and the bank, the deck slabs and footbridges to their ends
       const N = T.N, onW = new Uint8Array(N); for (let i = 0; i < N; i++) onW[i] = distRiver(T.px[i], T.pz[i]) < RW / 2 + 2.5 ? 1 : 0;
       const onDeck = (i) => onW[(i + N - 1) % N] || onW[i] || onW[(i + 1) % N];
-      const deck = (x, z) => { let y = -1e9; for (const [cx, cz, hl, hw, r, top] of decks || []) { const dx = x - cx, dz = z - cz, c = Math.cos(r), sn = Math.sin(r); if (Math.abs(dx * c + dz * sn) < hl && Math.abs(dz * c - dx * sn) < hw) y = Math.max(y, top); } return y; };   // (+ the footbridges)
-      out.propFloor = kerbs(propFloorTable((x, z, i) => onDeck(i) ? 0 : Math.max(deck(x, z), distRiver(x, z) < RW / 2 - 0.4 ? Math.max(meshY(x, z), -1.25) : meshY(x, z))));
+      const inDeck = boxes(decks), inSlab = boxes(slabs), deck = (x, z) => inDeck(x, z, 0);   // (+ the footbridges)
+      const reach = T.w + 12.5, exL = ex((x, z, ry) => { let y = Math.min(meshY(x, z), ry + 0.3); if (distRiver(x, z) < RW / 2 - 0.4) y = Math.max(y, -1.25); return Math.max(y, deck(x, z), inSlab(x, z, 0)); },
+        (x, z) => distRiver(x, z) < RW / 2 + 3 || inDeck(x, z, 1.5) > -1e9 || inSlab(x, z, 1.5) > -1e9,
+        (i) => distRiver(T.px[i], T.pz[i]) > RW / 2 + 3 + reach && inDeck(T.px[i], T.pz[i], 1.5 + reach) === -1e9 && inSlab(T.px[i], T.pz[i], 1.5 + reach) === -1e9);
+      out.propFloor = kerbs(propFloorTable((x, z, i) => onDeck(i) ? 0 : Math.max(deck(x, z), distRiver(x, z) < RW / 2 - 0.4 ? Math.max(meshY(x, z), -1.25) : meshY(x, z)), null, { ex: exL }));
     }
     return out.propStats = roadsideProps(out.props, Object.assign({}, o, { floor: fl, skip: (i, side, x, z, rh) => {
       const s = i * T.ds, d = Math.abs((x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i]);
@@ -3531,7 +3572,8 @@ const World = (function () {
     const w = T.w;
     out.propFloor = propFloorTable(null, (i, side) => {   // (buildNring's verge rows: grass a little below the road, lifted onto the ground where it rises; the banking)
       const bar = side > 0 ? T.br[i] : T.bl[i], y = T.hy[i] + nrBankY(i, side * w), lift = (o, h) => { const q = side * o; return [o, Math.max(h, nrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) + 0.06 - y)]; };
-      return [[w, 0], [w + 1.2, -0.04], lift(Math.max(w + 1.8, bar - 0.4), -0.1), lift(bar + 0.8, -0.16), lift(bar + 3.2, -0.4)].map(([o, h]) => [o, h + nrBankY(i, side * o)]); });
+      return [[w, 0], [w + 1.2, -0.04], lift(Math.max(w + 1.8, bar - 0.4), -0.1), lift(bar + 0.8, -0.16), lift(bar + 3.2, -0.4)].map(([o, h]) => [o, h + nrBankY(i, side * o)]); },
+      { cap: (i, side, o) => 0.3 + Math.max(0, nrBankY(i, side * o)) });   // (the ceiling rides up with the banked outer verge of the Karussell)
     const N = T.N, banked = (i) => { if (!T.bank) return false; for (let d = -14; d <= 14; d += 2) if (T.bank[(i + d + N) % N] > 0) return true; return false; };
     return out.propStats = roadsideProps(out.props, { post: [55, 75], postEdge: [1.8, 2.4], exits: 24, apexes: 3, wallEdge: [1.8, 2.4], stacks: [5, 7], rows2: 0.25,
       floor: out.propFloor, skip: (i) => t13(i) || onBridge(i) || inKar(i) || banked(i) });
@@ -3713,6 +3755,7 @@ const World = (function () {
     const inRect = (x, z, r) => { const dx = x - r.x, dz = z - r.z; const c = Math.cos(-r.rot), s = Math.sin(-r.rot); const lx = dx * c - dz * s, lz = dx * s + dz * c; return Math.abs(lx) < r.hx && Math.abs(lz) < r.hz; };
     const exclF = [];   // extra exclusion tests (functions of x, z)
     const decks = [];   // Ljubljana's footbridges [x, z, half length, half width, rot, top]: the knocked props land on them (trackPropsGeneric)
+    const slabs = [];   // the deck slabs of the circuit's own bridges over the Ljubljanica (the same form): the knocked props' exact floor at their ends
     const excluded = (x, z) => { for (const e of excl) if ((x - e.x) ** 2 + (z - e.z) ** 2 < e.r * e.r) return true; for (const r of exclRect) if (inRect(x, z, r)) return true; for (const f of exclF) if (f(x, z)) return true; return false; };
 
     /* ================= GROUND ================= */
@@ -4964,8 +5007,10 @@ const World = (function () {
           const mid = (br.a + br.b) >> 1, isDragon = Math.hypot(T.px[mid] - 324, T.pz[mid] + 97) < 60;
           for (let i = br.a - 1; i <= br.b + 1; i++) {
             const k = (i + N) % N, g = scen.get(T.px[k], T.pz[k]), w0 = Math.max(T.bl[k], T.br[k]) + 1.2;
-            box(g, T.px[k], -1.35, T.pz[k], T.ds + 0.15, 1.33, w0 * 2, T.hd[k], [0.72, 0.7, 0.66]);
-            for (const sd of [-1, 1]) { const o = sd * ((sd > 0 ? T.br[k] : T.bl[k]) + 0.9); box(g, T.px[k] + T.nx[k] * o, -3.2, T.pz[k] + T.nz[k] * o, T.ds + 0.15, 4.3, 0.8, T.hd[k], isDragon ? [0.86, 0.85, 0.82] : whiteStone); }
+            const P = (j, o) => [T.px[j] + T.nx[j] * o, T.pz[j] + T.nz[j] * o], len = (o) => { const e = P(k, o), a = P((k + N - 1) % N, o), b = P((k + 1) % N, o);   // (one slab per sample, long enough to meet
+              return Math.max(T.ds, Math.hypot(e[0] - a[0], e[1] - a[1]), Math.hypot(e[0] - b[0], e[1] - b[1])) + 0.15; };                           //  its neighbours on the outside of the bend too)
+            const Ld = Math.max(len(-w0), len(w0)); box(g, T.px[k], -1.35, T.pz[k], Ld, 1.33, w0 * 2, T.hd[k], [0.72, 0.7, 0.66]); slabs.push([T.px[k], T.pz[k], Ld / 2, w0, T.hd[k], -0.02]);
+            for (const sd of [-1, 1]) { const o = sd * ((sd > 0 ? T.br[k] : T.bl[k]) + 0.9); box(g, T.px[k] + T.nx[k] * o, -3.2, T.pz[k] + T.nz[k] * o, len(o), 4.3, 0.8, T.hd[k], isDragon ? [0.86, 0.85, 0.82] : whiteStone); }
           }
           const ends = [br.a - 2, br.b + 2];
           for (const e of ends) for (const sd of [-1, 1]) {
@@ -5526,7 +5571,15 @@ const World = (function () {
         if (barOut > w + cw + 3) for (let k = 0; k < 4; k++) { const [x, z, hd] = atSf(sm + 10 + k * 1.0, -inner * (barOut - 0.6)); prop('tstack', x, z, hd + k * 0.6, (k >> 1) % 2); }   // spare tyres in front of the outer barrier
       }
     }
-    trackPropsGeneric(out, excluded, MC_ISLAND, decks);   // + safety-tyre walls and roadside posts on every circuit (see roadsideProps)
+    trackPropsGeneric(out, excluded, MC_ISLAND, decks, slabs);   // + safety-tyre walls and roadside posts on every circuit (see roadsideProps)
+    // solid scenery built inside a barrier line (box footprint lx by lz at x, z, rot): the knocked props stop at its face, not in it
+    // (out.propFloor.inset[i * 2 + side (0 left, 1 right)]: how far in from the barrier, per sample; Core propStep)
+    const propSolid = (x, z, lx, lz, rot) => { const F = out.propFloor; if (!F) return;
+      const I = F.inset || (F.inset = new Float32Array(T.N * 2)), c = Math.cos(rot), sn = Math.sin(rot), nu = Math.ceil(lx / 0.25), nv = Math.ceil(lz / 0.25), q = {};
+      T.query(x, z, -1, q); const h = q.i; if (Math.abs(q.d) - Math.hypot(lx, lz) / 2 > Math.max(q.bl, q.br)) return;   // (nowhere near the barrier)
+      for (let a = 0; a <= nu; a++) for (let b = 0; b <= nv; b++) { const u = (a / nu - 0.5) * lx, v = (b / nv - 0.5) * lz;
+        T.query(x + u * c - v * sn, z + u * sn + v * c, h, q); const d = Math.abs(q.d), bar = q.d > 0 ? q.br : q.bl, k = q.i * 2 + (q.d > 0 ? 1 : 0);
+        if (d > T.w && d < bar) I[k] = Math.max(I[k], bar - d); } };
 
     /* ================= MONACO (real circuit layout; origin Sainte-Dévote, x east, z south) ================= */
     if (THEME === 'monaco') {
@@ -5734,7 +5787,7 @@ const World = (function () {
         ico(g, cx + (R() - 0.5) * 3, y + h * 0.93, cz + (R() - 0.5) * 3, 3.6, 0.45, vary([0.25, 0.43, 0.19], R, 0.12), R, 0.25); excl.push({ x, z, r: 4 }); };
       const crane = (x, z, rot, boom, ang) => {   // mobile TV crane: white truck on outriggers, red telescopic boom, camera hanging from the tip
         const g = scen.get(x, z), y = gH(x, z), cr = Math.cos(rot), sr = Math.sin(rot);
-        box(g, x, y, z, 12, 2.2, 3, rot, [0.93, 0.93, 0.93], [0.85, 0.85, 0.87]); box(g, x + cr * 5.2, y + 2.2, z + sr * 5.2, 2.4, 2.2, 2.8, rot, [0.95, 0.95, 0.95], [0.3, 0.35, 0.42]);
+        box(g, x, y, z, 12, 2.2, 3, rot, [0.93, 0.93, 0.93], [0.85, 0.85, 0.87]); propSolid(x, z, 12, 3, rot); box(g, x + cr * 5.2, y + 2.2, z + sr * 5.2, 2.4, 2.2, 2.8, rot, [0.95, 0.95, 0.95], [0.3, 0.35, 0.42]);
         for (const a of [-1, 1]) for (const b of [-1, 1]) { const px = x + cr * a * 4.5 - sr * b * 3.4, pz = z + sr * a * 4.5 + cr * b * 3.4; seg(g, [x + cr * a * 4.5, y + 1, z + sr * a * 4.5], [px, y + 0.3, pz], 0.35, [0.85, 0.85, 0.85]); box(g, px, y, pz, 0.9, 0.35, 0.9, rot, [0.2, 0.2, 0.22]); }
         box(g, x - cr * 2, y + 2.2, z - sr * 2, 3.2, 1.4, 3.2, rot, red, red);
         const b0 = [x - cr * 2, y + 3.6, z - sr * 2], ca = Math.cos(ang), sa = Math.sin(ang), at = (t) => [b0[0] + cr * ca * boom * t, b0[1] + sa * boom * t, b0[2] + sr * ca * boom * t];
@@ -5767,7 +5820,7 @@ const World = (function () {
       // orange/black energy-absorbing blocks around the outside of the hairpin exit
       if (MC_ISLAND) { const sA = MC_ISLAND.s, side = -MC_ISLAND.sg;
         for (let s1 = sA - 18, q = 0; s1 < sA + 34; s1 += 2.1, q++) { const i = T.idx(s1), bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar - 0.45), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, g = scen.get(x, z);
-          box(g, x, HYi(i), z, 2.0, 1.2, 0.9, T.hd[i], q % 2 ? [0.12, 0.12, 0.13] : [0.98, 0.45, 0.08], q % 2 ? [0.2, 0.2, 0.22] : [1, 0.55, 0.15]); } }
+          box(g, x, HYi(i), z, 2.0, 1.2, 0.9, T.hd[i], q % 2 ? [0.12, 0.12, 0.13] : [0.98, 0.45, 0.08], q % 2 ? [0.2, 0.2, 0.22] : [1, 0.55, 0.15]); propSolid(x, z, 2.0, 0.9, T.hd[i]); } }
       // a second big billboard above the hairpin
       { const [x, z] = [1009.8, -135.9], g = scen.get(x, z), y = gH(x, z), rot = 1.5, cr = Math.cos(rot), sr = Math.sin(rot), hw = 8;
         for (const o of [-hw + 1, hw - 1]) box(g, x + cr * o, y, z + sr * o, 0.5, 5, 0.5, rot, [0.2, 0.2, 0.22]);
