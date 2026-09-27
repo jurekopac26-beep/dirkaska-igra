@@ -1961,7 +1961,7 @@ const Core = (function () {
     }
   }
 
-  /* ---- loose trackside props: traffic cones, striped marker pylons, spare-tyre stacks, straw bales, crates ----
+  /* ---- loose trackside props: traffic cones, striped marker pylons, spare-tyre stacks, straw bales, crates, roadside posts ----
      Little rigid bodies with point contacts. They sleep until a car (or another flying prop) knocks them, then fly,
      tumble, bounce off the barriers and settle wherever they land. Tyre and bale stacks burst into single tyres / bales. */
   const PROP_G = 13;
@@ -1978,6 +1978,7 @@ const Core = (function () {
       crate:  { m: 18, rh: 0.5,  rb: 0.62, h0: 0.4,   e: 0.2,  mu: 0.7,  lift: 0.35, I: 2.6,  pts: boxPts(0.5, 0.4, 0.4) },
       tstack: { m: 27, rh: 0.43, rb: 0.55, h0: 0.39,  breaks: 'tyre', parts: [[0, -0.26, 0], [0, 0, 0], [0, 0.26, 0]], pf: [[1.25, 1.0], [1.1, 2.2], [0.85, 3.4]] },
       bstack: { m: 78, rh: 0.9,  rb: 1.1,  h0: 0.85,  breaks: 'bale', parts: [[-0.66, -0.425, 0], [0.66, -0.425, 0], [0, 0.425, 0]], pf: [[1.1, 0.6], [1.0, 0.9], [0.8, 2.4]] },
+      post:   { m: 4,  rh: 0.14, rb: 0.62, h0: 0.55,  e: 0.3,  mu: 0.6,  lift: 1.0,  I: 0.4,  pts: boxPts(0.07, 0.55, 0.07) },   // roadside post (stebriček): light, snaps over and cartwheels away
     };
   })();
   const _pq = {};
@@ -2052,7 +2053,7 @@ const Core = (function () {
     b.qz = qz + h * (wz * qw + wx * qy - wy * qx); b.qw = qw - h * (wx * qx + wy * qy + wz * qz);
     const ql = Math.hypot(b.qx, b.qy, b.qz, b.qw) || 1; b.qx /= ql; b.qy /= ql; b.qz /= ql; b.qw /= ql;
     const q = T.query(b.x, b.z, b.qi, _pq); b.qi = q.i; race._bkMove(b);
-    const gy = T.hasElev ? T.elevAt(q.s).y : 0;
+    const gy = (T.hasElev ? T.elevAt(q.s).y : 0) + (race.propFloor ? race.propFloor(q) : 0);   // (the verge may lie below the road)
     const lim = (q.d > 0 ? q.br : q.bl) - K.rh;                                   // barriers (with the catch fences above them)
     if (Math.abs(q.d) > lim && b.y - gy < 3.2) {
       const sg = Math.sign(q.d), nx = q.nx * sg, nz = q.nz * sg, pen = Math.abs(q.d) - lim;
@@ -2388,12 +2389,14 @@ const Core = (function () {
       if (this.track.open && this.opts.noPlayer) for (const c of this.cars) { c.relT = (c.grid - 1) * 0.5; if (c.relT > 0) c.locked = true; }
     }
 
-    // trackside props from the scenery builder: [{ kind, x, z, yaw, col }]; stacks get their tyres / bales ready (hidden) for when they burst
-    setProps(list) {
+    // trackside props from the scenery builder: [{ kind, x, z, yaw, col }]; stacks get their tyres / bales ready (hidden) for when they burst.
+    // floor(q): the verge's height relative to the road there (from the world builder; worlds whose verge drops away from the road edge)
+    setProps(list, floor) {
       const T = this.track, props = [], slots = {}, cap = {};
+      this.propFloor = floor || null;
       for (const it of list) {
         const K = PROPK[it.kind]; if (!K) continue;
-        const q = T.query(it.x, it.z, -1, {}), gy = T.hasElev ? T.elevAt(q.s).y : 0;
+        const q = T.query(it.x, it.z, it.i >= 0 && it.i < T.N ? it.i : -1, {}), gy = (T.hasElev ? T.elevAt(q.s).y : 0) + (floor ? floor(q) : 0);   // (it.i: the builder's sample index, a hint that saves a full scan)
         const b = mkProp(it.kind, it.x, gy + K.h0, it.z, it.yaw); b.col = it.col || 0; b.qi = q.i;
         b.slot = slots[it.kind] = (slots[it.kind] || 0); slots[it.kind]++; cap[it.kind] = (cap[it.kind] || 0) + 1; props.push(b);
         if (K.breaks) b.parts = K.parts.map(() => { const pb = mkProp(K.breaks, it.x, gy, it.z, 0); pb.hidden = true; pb.dead = true; pb.col = b.col; cap[K.breaks] = (cap[K.breaks] || 0) + 1; props.push(pb); return pb; });
@@ -3285,6 +3288,150 @@ const World = (function () {
     return [x + nx * lat, z + nz * lat, T.hd[i], t < 0.5 ? i : j];
   }
   function wrapS(s) { const L = T.len; return ((s % L) + L) % L; }
+
+  /* ---------------- knockable safety-tyre walls and roadside posts (stebrički): the same rules on every track ----------------
+     Short red/white 'tstack' walls (5-9 stacks, 1-2 staggered rows) on the outside of the corner exits and at the apexes of the
+     tightest bends, and a 'post' every o.post[0..1] m along both verges. Everything stands on the verge:
+     w + kerb + rh + 0.3 <= |d| <= bar - rh - 0.15 (skipped where that leaves less than 0.4 m), clear of the other props, the start
+     grid, gravel traps (posts) and the asphalt of any other leg. The jitter comes from a hash of the sample index, never from the
+     builders' R() (an extra R() call would re-roll all the later scenery). Options: post [min, max] spacing (m) or spots [[i, side]],
+     postEdge [a, b] m past the asphalt edge, postCol(i), exits / apexes: how many corner walls (sharpest corners first), wallEdge [a, b],
+     stacks [min, max], rows2: share of walls with a second row, maxLat: cap on |d|, floor(q): the verge's height (propFloorTable; then
+     only level ground), skip(i, side, x, z, rh): true = not here.
+     Returns { posts, stacks, spots } (spots: the o.spots entries that got a post). */
+  function rpHash(a, b) { let h = Math.imul(a ^ 0x5bd1e995, 0x9e3779b1) ^ Math.imul((b + 0x7f4a7c15) | 0, 0x85ebca77); h ^= h >>> 15; h = Math.imul(h, 0x2c1b3c6d); h ^= h >>> 12; h = Math.imul(h, 0x297a2d39); h ^= h >>> 15; return (h >>> 0) / 4294967296; }
+  function roadsideProps(list, o) {
+    const N = T.N, w = T.w, L = T.len, ds = T.ds, CELL = 8, grid = new Map(), res = { posts: 0, stacks: 0, spots: new Set(), nSpots: o.spots ? o.spots.length : 0 };   // (world.propStats, for the tests)
+    const RHK = { cone: 0.28, pylon: 0.36, tyre: 0.43, bale: 0.62, crate: 0.5, tstack: 0.43, bstack: 0.9, post: 0.14 };
+    const put = (x, z, r) => { const k = Math.floor(x / CELL) + ',' + Math.floor(z / CELL); let a = grid.get(k); if (!a) grid.set(k, a = []); a.push(x, z, r); };
+    const free = (x, z, r) => { const cx = Math.floor(x / CELL), cz = Math.floor(z / CELL);   // clear of every prop already placed (r + its keep-out radius)
+      for (let a = cx - 1; a <= cx + 1; a++) for (let b = cz - 1; b <= cz + 1; b++) { const A = grid.get(a + ',' + b); if (A) for (let k = 0; k < A.length; k += 3) if ((A[k] - x) ** 2 + (A[k + 1] - z) ** 2 < (A[k + 2] + r) ** 2) return false; }
+      return true; };
+    for (const it of list) put(it.x, it.z, (RHK[it.kind] || 0.6) + 0.4);
+    const onGrid = (s) => { if (T.open) return false; let d = s - T.startS; d = ((d % L) + L) % L; return d > L - 112 || d < 12; };   // the start grid
+    const band = (i, side, rh) => { const bar = side > 0 ? T.br[i] : T.bl[i]; return [w + (T.curb[i] ? T.curbW : 0) + rh + 0.3, Math.min(bar - rh - 0.15, o.maxLat || 1e9)]; };
+    const fits = (i, side, x, z, rh) => {   // also on the verge of the nearest road sample (not on another leg's asphalt, not behind its barrier), and the track's own tests
+      const n = nearest(x, z), a = Math.abs(n.lat);
+      if (n.i < 0 || a < w + rh + 0.25 || a > n.bar - rh - 0.1) return false;
+      if (o.floor) { const d = Math.abs((x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i]), f0 = o.floor({ i, d: side * (d - rh) }), f1 = o.floor({ i, d: side * (d + rh) });
+        if (Math.abs(f0 - f1) > 0.15 || f0 + f1 < -1.4) return false; }   // level ground under it (where the verge isn't at road height), not down in a dip
+      return !(o.skip && o.skip(i, side, x, z, rh));
+    };
+    const add = (kind, x, z, yaw, col, i, r) => { list.push({ kind, x, z, yaw, col, i }); put(x, z, r); };
+    // tyre walls: the sharpest corners first
+    const cs = T.corners.filter(c => c.sev >= 2).sort((a, b) => b.sev - a.sev || b.angle - a.angle || a.i0 - b.i0);
+    const wall = (c, apex) => {
+      const i1c = c.i1 < c.i0 ? c.i1 + N : c.i1, side = apex ? c.dir : -c.dir, sm = ((c.i0 + i1c) / 2) * ds;
+      const n = Math.round(lerp(o.stacks[0], o.stacks[1], rpHash(c.i0, apex ? 21 : 22))), gap = 0.95, e = lerp(o.wallEdge[0], o.wallEdge[1], rpHash(c.i0, 23));
+      for (const shift of apex ? [0, -4, 4] : [0, 8, 16, 24]) {   // (slide it along if it doesn't fit)
+        const s0 = apex ? sm - (n - 1) * gap / 2 + shift : (i1c + 3) * ds + rpHash(c.i0, 24) * 6 + shift, P = [];
+        const step = (s, lat, g) => { let st = g; for (let it = 0; it < 3; it++) { const a = atSf(s, side * lat), b = atSf(s + st, side * lat), dd = Math.hypot(b[0] - a[0], b[1] - a[1]); if (dd > 1e-3) st *= g / dd; } return st; };   // (the step along s that puts the next one g metres on: shorter on the outside of a bend, longer on the inside)
+        for (let k = 0, s = s0; k < n; k++) {
+          if ((T.open && (s < 2 || s > L - 2)) || onGrid(s)) break;
+          const i = T.idx(s), [lo, hi] = band(i, side, 0.43); if (hi - lo < 0.4) break;
+          const lat = clamp(w + e, lo, hi), [x, z, hd, ii] = atSf(s, side * lat);
+          if (!fits(ii, side, x, z, 0.43) || !free(x, z, 0.35)) break;
+          P.push({ x, z, hd, ii, k, lat, s }); s += step(s, lat, gap);
+        }
+        if (P.length < n) continue;
+        const P2 = [];   // a second, staggered row behind the first where there is room
+        if (rpHash(c.i0, 25) < o.rows2) for (const p of P) { if (p.k === n - 1) break; const lat = p.lat + 0.86, s = p.s + step(p.s, lat, gap / 2), i = T.idx(s), [, hi] = band(i, side, 0.43); if (lat > hi) continue;
+          const [x, z, hd, ii] = atSf(s, side * lat); if (fits(ii, side, x, z, 0.43) && free(x, z, 0.35)) P2.push({ x, z, hd, ii, k: p.k }); }
+        for (const p of P) add('tstack', p.x, p.z, p.hd + p.k * 0.7, (p.k >> 1) % 2, p.ii, 0.8);
+        for (const p of P2) add('tstack', p.x, p.z, p.hd + p.k * 0.7 + 0.35, ((p.k + 1) >> 1) % 2, p.ii, 0.8);
+        res.stacks += P.length + P2.length; return true;
+      }
+      return false;
+    };
+    let nEx = 0, nAp = 0;
+    for (const c of cs) { if (nEx < (o.exits || 0) && wall(c, false)) nEx++; if (c.sev >= 3 && nAp < (o.apexes || 0) && wall(c, true)) nAp++; }
+    // roadside posts
+    const post = (s, side, k) => {
+      const i = T.idx(s), gv = side > 0 ? T.gravR : T.gravL; if ((gv && gv[i]) || onGrid(s)) return false;
+      const [lo, hi] = band(i, side, 0.14); if (hi - lo < 0.4) return false;
+      const lat = clamp(w + lerp(o.postEdge[0], o.postEdge[1], rpHash(k, side + 31)), lo, hi), [x, z, hd, ii] = atSf(s, side * lat);
+      if (!fits(ii, side, x, z, 0.14) || !free(x, z, 0.6)) return false;
+      add('post', x, z, hd, o.postCol ? o.postCol(ii) : 0, ii, 0.5); res.posts++; return true;
+    };
+    if (o.spots) o.spots.forEach((sp, k) => { if (post(sp[0] * ds, sp[1], sp[0] * 2 + (sp[1] > 0 ? 1 : 0))) res.spots.add(sp); });
+    else if (o.post) for (const side of [-1, 1]) {
+      const s0 = T.open ? 2 : T.startS + 14, s1 = T.open ? L - 2 : T.startS + L - 114;
+      for (let s = s0 + (side > 0 ? o.post[0] * 0.5 : 0), k = 0; s < s1; k++) { post(s, side, k * 2 + (side > 0 ? 1 : 0)); s += lerp(o.post[0], o.post[1], rpHash(k, side + 41)); }
+    }
+    return res;
+  }
+  // the circuits of the generic builder (Bakreni gozd already has plenty: a light top-up there). Skipped: excluded spots, uneven ground,
+  // the Monaco tunnel and the inside of the Fairmont hairpin (a planted island), the pit lane
+  const RP_THEME = {
+    lake:      { post: [64, 80], postEdge: [1.0, 1.6], exits: 3, apexes: 0, wallEdge: [2.5, 3.0], stacks: [5, 7], rows2: 0.4 },
+    city:      { post: [80, 100], postEdge: [0.9, 1.4], exits: 2, apexes: 0, wallEdge: [2.3, 2.8], stacks: [5, 7], rows2: 0.3 },
+    mountain:  { post: [52, 66], postEdge: [0.9, 1.4], exits: 4, apexes: 0, wallEdge: [2.5, 3.0], stacks: [5, 7], rows2: 0.4 },
+    ljubljana: { post: [52, 66], postEdge: [0.9, 1.4], exits: 4, apexes: 1, wallEdge: [2.3, 2.8], stacks: [5, 8], rows2: 0.4 },
+    monaco:    { post: [46, 60], postEdge: [0.8, 1.2], exits: 6, apexes: 1, wallEdge: [2.2, 2.7], stacks: [5, 8], rows2: 0.3 },
+    forest:    { post: [190, 240], postEdge: [0.9, 1.3], exits: 0, apexes: 0, wallEdge: [2.5, 3.0], stacks: [5, 6], rows2: 0 },
+  };
+  // the verge's real height beyond the asphalt edge, relative to the road (per sample and side, every 0.5 m out to 12 m): the knockable
+  // props stand and land on it (Core: Race.setProps(list, floor)). vis(x, z, i, side, o): the visible ground height there, or
+  // prof(i, side): the verge's cross-section [[offset, height above the road], ...] (the corridor builders' own verge ribbons)
+  function propFloorTable(vis, prof) {
+    const N = T.N, w = T.w, NE = 25, tab = new Float32Array(N * 2 * NE);
+    for (let i = 0; i < N; i++) for (let sd = 0; sd < 2; sd++) { const side = sd ? 1 : -1, ry = T.hasElev ? T.hy[i] : 0, P = prof ? prof(i, side) : null;
+      for (let k = 0, m = 0; k < NE; k++) { const o = w + k * 0.5; let y;
+        if (P) { while (m < P.length - 2 && P[m + 1][0] < o) m++; const a = P[m], b = P[m + 1]; y = a[1] + (b[1] - a[1]) * clamp((o - a[0]) / Math.max(1e-3, b[0] - a[0]), 0, 1); }
+        else y = vis(T.px[i] + T.nx[i] * side * o, T.pz[i] + T.nz[i] * side * o, i, side, o) - ry;
+        tab[(i * 2 + sd) * NE + k] = Math.min(0.3, y); } }
+    return (q) => { const e = Math.abs(q.d) - w; if (!(e > 0)) return 0;
+      const f = Math.min(e * 2, NE - 1.001), k = Math.floor(f), b = ((q.i >= 0 && q.i < N ? q.i : 0) * 2 + (q.d > 0 ? 1 : 0)) * NE; return tab[b + k] + (tab[b + k + 1] - tab[b + k]) * (f - k); };
+  }
+  function trackPropsGeneric(out, excluded, island) {
+    const o = RP_THEME[THEME]; if (!o) return null;
+    const tu = T.def.tunnel, L = T.len, roadY = (i) => (T.hasElev ? T.hy[i] : 0);
+    // the visible ground: the GROUND mesh (its vertices exactly as built above, triangles a,c,b and b,c,d), on the mountain the dirt shoulder
+    // above it. Monaco's and the mountain's ground mesh dips under the road edge, so their verge lies up to ~0.9 m below the road: the props
+    // get a floor there (they stand and land on the verge). Elsewhere the verge is at road height; spots where it isn't are skipped.
+    const B = out.bounds, cell = THEME === 'mountain' ? 6 : 8, drop = THEME === 'monaco' ? 1.0 : THEME === 'mountain' ? 0.8 : 0, mk = T.def.roadSurface === 'makadam';
+    const vc = new Map(), vh = (a, b) => { const key = a * 65536 + b; let h = vc.get(key); if (h !== undefined) return h;
+      const x = B.minX + a * cell, z = B.minZ + b * cell; h = groundH(x, z); if (drop) { const nn = nearest(x, z); if (nn.i >= 0) h -= drop * (1 - sstep(T.w + 0.3, T.w + 3.5, Math.abs(nn.lat))); } vc.set(key, h); return h; };
+    const meshY = (x, z) => { const fx = (x - B.minX) / cell, fz = (z - B.minZ) / cell, a = Math.floor(fx), b = Math.floor(fz), u = fx - a, v = fz - b;
+      const hb = vh(a + 1, b), hc = vh(a, b + 1); if (u + v <= 1) { const ha = vh(a, b); return ha + (hb - ha) * u + (hc - ha) * v; } const hd = vh(a + 1, b + 1); return hd + (hc - hd) * (1 - u) + (hb - hd) * (1 - v); };
+    const vis = (x, z, i, side, off) => { let y = meshY(x, z); if (THEME === 'mountain' && off <= T.w + 2.2) {   // (the shoulder starts at the gravel road's wavy edge)
+      const ew = T.w + (mk ? 0.26 * Math.sin(i * 0.37 + side * 1.7) * Math.sin(i * 0.113 + side) + 0.13 * Math.sin(i * 1.31 + side * 2.3) : 0);
+      y = Math.max(y, roadY(i) + 0.02 - 1.02 * clamp((off - ew) / (T.w + 2.2 - ew), 0, 1)); } return y; };
+    const fl = drop ? (out.propFloor = propFloorTable(vis)) : null;
+    return out.propStats = roadsideProps(out.props, Object.assign({}, o, { floor: fl, skip: (i, side, x, z, rh) => {
+      const s = i * T.ds, d = Math.abs((x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i]);
+      if (excluded(x, z)) return true;
+      if (!fl) for (const e of [-rh, 0, rh]) { const o2 = d + e; if (Math.abs(vis(T.px[i] + T.nx[i] * side * o2, T.pz[i] + T.nz[i] * side * o2, i, side, o2) - roadY(i)) > 0.1) return true; }
+      if (tu && s > tu[0] * L - 25 && s < tu[1] * L + 20) return true;
+      if (island && side === island.sg) { const d = Math.abs(s - island.s); if (Math.min(d, L - d) < 45) return true; }
+      return !!(T.def.pit && (T.pitAt(s) || T.pitAt(s + 25) || T.pitAt(s - 25)));
+    } }));
+  }
+  // Pikes Peak: its marker posts become knockable where they fit (spots: [[i, side]] where buildPikes wanted one; the orange snow poles up
+  // high too), tyre walls at the hairpin exits. Only within w + 2 (farther out the verge falls away from the road), on level verge; the
+  // start and summit areas keep their fixed posts. The props stand on the verge's own height. Drawn out to 150 m (a long open view).
+  function pikesProps(out, spots) {
+    out.propR = 150;
+    const sA = T.startS + 60, sB = T.finishS - 40, w = T.w;
+    out.propFloor = propFloorTable(null, (i, side) => {   // (buildPikes' verge: the gravel strip, then the dusty verge lifted onto the ground where it rises)
+      const bar = side > 0 ? T.br[i] : T.bl[i], y = T.hy[i], lift = (o, h) => { const q = side * o; return [o, Math.max(h, pkGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) + 0.05 - y)]; };
+      return [[w, 0.012], [w + 0.9, -0.02], lift(Math.max(w + 1.5, bar - 2.5), -0.02 - 0.2 * (1 - 2.5 / Math.max(2.6, bar - w - 0.9))), lift(bar, -0.22), lift(bar + 1.4, -0.62)]; });
+    return out.propStats = roadsideProps(out.props, { spots, postEdge: [1.3, 1.7], postCol: (i) => (T.hy[i] > 330 ? 1 : 0), exits: 6, apexes: 0, wallEdge: [1.4, 1.9], stacks: [5, 6], rows2: 0, maxLat: T.w + 2,
+      floor: out.propFloor, skip: (i) => { const s = i * T.ds; return s < sA || s > sB; } });
+  }
+  // the Nordschleife: posts every 55-75 m, tyre walls at the corner exits, 1.8-2.4 m past the edge (the verge is narrow). Not on the
+  // T13 start/finish straight (walls and fences), the bridges, the Karussell bowl and its banked approach, nor on a sloping verge.
+  // The props stand on the verge's own height (a little below the road; lifted where the ground rises). Drawn out to 150 m.
+  function nringProps(out, t13, onBridge, inKar) {
+    out.propR = 150;
+    const w = T.w;
+    out.propFloor = propFloorTable(null, (i, side) => {   // (buildNring's verge rows: grass a little below the road, lifted onto the ground where it rises; the banking)
+      const bar = side > 0 ? T.br[i] : T.bl[i], y = T.hy[i] + nrBankY(i, side * w), lift = (o, h) => { const q = side * o; return [o, Math.max(h, nrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) + 0.06 - y)]; };
+      return [[w, 0], [w + 1.2, -0.04], lift(Math.max(w + 1.8, bar - 0.4), -0.1), lift(bar + 0.8, -0.16), lift(bar + 3.2, -0.4)].map(([o, h]) => [o, h + nrBankY(i, side * o)]); });
+    const N = T.N, banked = (i) => { if (!T.bank) return false; for (let d = -14; d <= 14; d += 2) if (T.bank[(i + d + N) % N] > 0) return true; return false; };
+    return out.propStats = roadsideProps(out.props, { post: [55, 75], postEdge: [1.8, 2.4], exits: 24, apexes: 3, wallEdge: [1.8, 2.4], stacks: [5, 7], rows2: 0.25,
+      floor: out.propFloor, skip: (i) => t13(i) || onBridge(i) || inKar(i) || banked(i) });
+  }
 
   let THEME = 'lake', SEA = null, RIVER = null, RW = 26, CASTLE = null;
   function distRiver(x, z) {   // distance to the river centre line (polyline)
@@ -5182,6 +5329,7 @@ const World = (function () {
         if (barOut > w + cw + 3) for (let k = 0; k < 4; k++) { const [x, z, hd] = atSf(sm + 10 + k * 1.0, -inner * (barOut - 0.6)); prop('tstack', x, z, hd + k * 0.6, (k >> 1) % 2); }   // spare tyres in front of the outer barrier
       }
     }
+    trackPropsGeneric(out, excluded, MC_ISLAND);   // + safety-tyre walls and roadside posts on every circuit (see roadsideProps)
 
     /* ================= MONACO (real circuit layout; origin Sainte-Dévote, x east, z south) ================= */
     if (THEME === 'monaco') {
@@ -5909,6 +6057,7 @@ const World = (function () {
     /* ---- guardrails on the outside of the bends and wherever the ground drops away, marker posts elsewhere ---- */
     let nRail = 0;   // (share of the road sides with a rail, for the tests)
     {
+      const mkPosts = [];   // [i, side] where a marker post goes
       const need = [new Uint8Array(N), new Uint8Array(N)];
       for (const c of T.corners) if (c.sev >= 2) { const sd = -c.dir > 0 ? 1 : 0; for (let k = Math.max(0, c.i0 - 10); k <= Math.min(N - 1, c.i1 + 10); k++) need[sd][k] = 1; }
       for (let i = 0; i < N; i += 2) for (const side of [-1, 1]) { const bar = side > 0 ? T.br[i] : T.bl[i];   // a drop: 2.8 m within 9 m of the barrier, or a fall-off farther out (a flat shelf, then the slope down to the leg below)
@@ -5927,12 +6076,15 @@ const World = (function () {
             const g = scen.get(T.px[i], T.pz[i]), a = Q(i, 0.45), b = Q(i + 1, 0.45), c = Q(i + 1, 0.8), d = Q(i, 0.8), ins = Q(i, 0.6, 3), ino = Q(i, 0.6, -3);
             g.quadO(a, b, c, d, steel, ins); g.quadO(a, b, c, d, steelB, ino);
             if (i % 2 === 0) { const p = Q(i, -0.3, 0.14); box(g, p[0], p[1], p[2], 0.13, 1.08, 0.13, T.hd[i], postC, null, true); }
-          } else if (!nd[i] && i % 12 === 0 && i > 2) {   // white marker post with a black band and an orange reflector (taller snow poles near the top)
-            const p = Q(i, 0, 0.3), g = scen.get(p[0], p[2]), tall = T.hy[i] > 330 ? 1.9 : 1;
-            box(g, p[0], p[1] - 0.2, p[2], 0.13, 1.2 * tall, 0.13, T.hd[i], tall > 1 ? [0.95, 0.5, 0.12] : [0.94, 0.94, 0.92], null, true);
-            box(g, p[0], p[1] + 0.72 * tall, p[2], 0.14, 0.2, 0.14, T.hd[i], [0.1, 0.1, 0.1], null, true);
-          }
+          } else if (!nd[i] && i % 12 === 0 && i > 2) mkPosts.push([i, side]);   // a marker post (below)
         }
+      }
+      const kp = pikesProps(out, mkPosts).spots;   // knockable where they fit on the verge; the rest stay fixed beside the barrier line:
+      for (const sp of mkPosts) { if (kp.has(sp)) continue;
+        const [i, side] = sp, o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 0.42), p = [T.px[i] + T.nx[i] * o, T.hy[i], T.pz[i] + T.nz[i] * o], g = scen.get(p[0], p[2]), tall = T.hy[i] > 330 ? 1.9 : 1;
+        // white marker post with a black band and an orange reflector (taller snow poles near the top)
+        box(g, p[0], p[1] - 0.2, p[2], 0.13, 1.2 * tall, 0.13, T.hd[i], tall > 1 ? [0.95, 0.5, 0.12] : [0.94, 0.94, 0.92], null, true);
+        box(g, p[0], p[1] + 0.72 * tall, p[2], 0.14, 0.2, 0.14, T.hd[i], [0.1, 0.1, 0.1], null, true);
       }
     }
 
@@ -6310,6 +6462,7 @@ const World = (function () {
       addM(gr, rMat, true);
     }
     const nPosts = posts.addTo(root, true);
+    nringProps(out, t13, onBridge, inKar);   // knockable tyre walls and roadside posts
 
     /* ---- scenery (vertex coloured, 128 m chunks) ---- */
     const scen = new Chunks(128), ban = new GB(true), crowdG = new GB(true), fenceG = new GB(true);
@@ -7141,9 +7294,10 @@ const Render = (function () {
     return world;
   }
 
-  /* ---------------- knockable trackside props (cones, pylons, tyre stacks, straw bales, crates): one instanced mesh per kind ---------------- */
+  /* ---------------- knockable trackside props (cones, pylons, tyre stacks, straw bales, crates, roadside posts): one instanced mesh per kind ---------------- */
   let propMeshes = {};
   const PROP_COLS = [[0.88, 0.33, 0.24], [0.95, 0.95, 0.94]];   // instance tint: red / white (painted tyres, the same as the tyre walls)
+  const POST_SNOW = [1, 0.53, 0.13];                              // instance tint of the orange snow poles high up on Pikes Peak (a 'post' with col 1)
   let propMat = null, propMatTyre = null;
   function propGeometry(kind) {
     const W = World, g = new W.GB(kind === 'tyre' || kind === 'tstack'), white = [1, 1, 1], TAU2 = Math.PI * 2;
@@ -7170,6 +7324,10 @@ const Render = (function () {
     else if (kind === 'bstack') { bale(-0.66, -0.425, 0); bale(0.66, -0.425, 0); bale(0, 0.425, 0); }
     else if (kind === 'crate') { const wd = [0.56, 0.38, 0.22], dk = [0.4, 0.26, 0.15]; W.box(g, 0, -0.4, 0, 1.0, 0.8, 0.8, 0, wd, [0.62, 0.43, 0.26]);
       for (const y of [-0.12, 0.14]) W.box(g, 0, y, 0, 1.02, 0.05, 0.82, 0, dk, dk); for (const x of [-0.46, 0.46]) W.box(g, x, -0.41, 0, 0.08, 0.82, 0.82, 0, dk, dk); }
+    else if (kind === 'post') {   // roadside post (stebriček): white, a black band with orange reflectors both ways; its foot sits 10 cm in the ground
+      const wh = [0.95, 0.95, 0.93], bk = [0.08, 0.08, 0.09], rf = [1, 0.45, 0.08];
+      W.box(g, 0, -0.65, 0, 0.14, 1.2, 0.14, 0, wh, wh); W.box(g, 0, 0.18, 0, 0.146, 0.22, 0.146, 0, bk, bk);
+      for (const x of [-0.074, 0.074]) W.box(g, x, 0.22, 0, 0.012, 0.12, 0.09, 0, rf, rf); }
     return g.geometry();
   }
   function clearPropMeshes() { for (const k in propMeshes) { const m = propMeshes[k]; scene.remove(m); m.geometry.dispose(); } propMeshes = {}; }
@@ -7194,7 +7352,7 @@ const Render = (function () {
   }
   const _pm4 = new THREE.Matrix4(), _pq4 = new THREE.Quaternion(), _pv3 = new THREE.Vector3(), _ps3 = new THREE.Vector3(1, 1, 1), _pc = new THREE.Color(), _zero = new THREE.Matrix4().makeScale(0, 0, 0);
   const _fq = {};
-  function floorAt(x, z) { const T = curRace && curRace.track; return T && T.hasElev ? T.elevAt(T.query(x, z, -1, _fq).s).y : 0; }   // particle floor: the road height there (0 on the flat circuits)
+  function floorAt(x, z) { const T = curRace && curRace.track, f = curRace && curRace.propFloor; if (!T || (!T.hasElev && !f)) return 0; const q = T.query(x, z, -1, _fq); return (T.hasElev ? T.elevAt(q.s).y : 0) + (f ? f(q) : 0); }   // particle floor: the road height there (0 on the flat circuits; the verge's where it lies lower)
   function syncProps() {
     if (!curRace || !curRace.props) return;
     const E = curRace.propEvents;
@@ -7207,7 +7365,7 @@ const Render = (function () {
       E.length = 0;
     }
     // only the props around the view are drawn (and cast shadows): packed into the front of each instanced mesh every frame
-    const cx = cam.vcx || 0, cz = cam.vcz || 0, R = Math.max(95, (cam.vd || 60) * 2.3), R2 = R * R;
+    const cx = cam.vcx || 0, cz = cam.vcz || 0, R = Math.max((world && world.propR) || 95, (cam.vd || 60) * 2.3), R2 = R * R;   // (propR: the long open corridors see farther, so nothing pops in)
     for (const k in propMeshes) propMeshes[k].userData.n = 0;
     for (const b of curRace.props) {
       if (b.hidden || b.slot < 0) continue;
@@ -7215,7 +7373,7 @@ const Render = (function () {
       const dx = b.x - cx, dz = b.z - cz; if (dx * dx + dz * dz > R2) continue;
       const n = m.userData.n++;
       _pv3.set(b.x, b.y, b.z); _pq4.set(b.qx, b.qy, b.qz, b.qw); _pm4.compose(_pv3, _pq4, _ps3); m.setMatrixAt(n, _pm4);
-      const c = (b.kind === 'tyre' || b.kind === 'tstack') ? (PROP_COLS[b.col] || PROP_COLS[1]) : null;
+      const c = (b.kind === 'tyre' || b.kind === 'tstack') ? (PROP_COLS[b.col] || PROP_COLS[1]) : b.kind === 'post' && b.col === 1 ? POST_SNOW : null;   // (col 1 posts: orange snow poles)
       if (c) m.setColorAt(n, _pc.setRGB(c[0], c[1], c[2])); else if (m.instanceColor) m.setColorAt(n, _pc.setRGB(1, 1, 1));
     }
     for (const k in propMeshes) { const m = propMeshes[k]; m.count = m.userData.n; m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; }
@@ -7330,7 +7488,7 @@ const Render = (function () {
   function attachRace(race) {
     for (const v of views) disposeView(v);
     views = []; curTrack = race.track; curRace = race; clearDebris();
-    if (world && world.props && world.props.length && race.setProps && !race.props) race.setProps(world.props);
+    if (world && world.props && world.props.length && race.setProps && !race.props) race.setProps(world.props, world.propFloor);
     setupProps(race);
     for (const c of race.cars) views.push(makeView(c));
     setupCrew(race);
@@ -7984,7 +8142,7 @@ const Sfx = (function () {
   function knock(kind, v) {
     if (!ctx || ctx.state !== 'running' || !running) return;
     const now = ctx.currentTime; if (now - lastKnock < 0.05) return; lastKnock = now;
-    const vol = clamp(v / 18, 0.12, 0.8), cone = kind === 'cone' || kind === 'pylon', straw = kind === 'bale' || kind === 'bstack', wood = kind === 'crate';
+    const vol = clamp(v / 18, 0.12, 0.8), cone = kind === 'cone' || kind === 'pylon' || kind === 'post', straw = kind === 'bale' || kind === 'bstack', wood = kind === 'crate';
     const o = ctx.createOscillator(); o.type = cone ? 'square' : 'triangle';
     const f0 = cone ? 520 + Math.random() * 120 : straw ? 90 : wood ? 260 : 150;
     o.frequency.setValueAtTime(f0, now); o.frequency.exponentialRampToValueAtTime(f0 * (cone ? 0.55 : 0.4), now + (cone ? 0.06 : 0.14));
@@ -8275,6 +8433,7 @@ const Comm = (() => {
     propTyre: ['Straight through the tyres!', 'Tyres flying everywhere!', 'He has scattered the tyre stack!'],
     propBale: ['Right through the hay bales!', 'Straw everywhere!', 'The bales go flying!'],
     propPylon: ['Took the marker post with him!', 'That marker post is history!'],
+    propPost: ["He's clipped a marker post!", 'Roadside post down!', 'That post never stood a chance!', 'Flattened a post there!'],
     propCrate: ['Smashed straight into the crate!', 'There goes the crate!'],
     // time trial (hill climb against the clock, no opponents)
     introTT: ['Welcome to {track}, the race to the clouds! Just you, the mountain and the clock.', 'Here we are at the foot of {track}. {cps} checkpoints between you and the summit.', 'Welcome to {track}! No opponents today, only the clock. Get to the top as fast as you can.'],
@@ -9129,7 +9288,7 @@ if (typeof module !== 'undefined') module.exports = Comm;
     if (+S.damage > 0 && P.dmg > 0.5 && !cs.dmg1) { cs.dmg1 = true; Comm.say('damage', null, 2); }
     if (+S.damage > 0 && P.dmg > 0.8 && !cs.dmg2) { cs.dmg2 = true; Comm.say('heavyDamage', null, 3); }
     // knocked-over trackside props
-    if (P.propKnock) { const k = P.propKnock, key = k === 'cone' ? 'propCone' : k === 'tyre' || k === 'tstack' ? 'propTyre' : k === 'bale' || k === 'bstack' ? 'propBale' : k === 'pylon' ? 'propPylon' : 'propCrate';
+    if (P.propKnock) { const k = P.propKnock, key = k === 'cone' ? 'propCone' : k === 'tyre' || k === 'tstack' ? 'propTyre' : k === 'bale' || k === 'bstack' ? 'propBale' : k === 'pylon' ? 'propPylon' : k === 'post' ? 'propPost' : 'propCrate';
       P.propKnock = null; if (P.propKnockV > 7 && cool('prop', 12) && Math.random() < 0.75) Comm.say(key, null, 1); }
     // crashes and contact
     if (cev.wall > 6 && cool('crash', 8)) Comm.say('crash', null, 2);
