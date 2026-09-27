@@ -469,6 +469,7 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
         <div class="row tiltrow"><span class="rlbl">Nagib</span><div class="tilt-live"><div id="tilt-live-bar"></div></div><button class="btn mini" data-act="calibrate">Nastavi sredino</button><button class="btn mini" data-act="tilt-invert" id="tilt-inv-btn">Obrni smer</button></div>
         <div class="row"><span class="rlbl">Kamera</span><div class="seg" data-set="camera"><button data-v="iso">Izometrična · ležeče</button><button data-v="chase">Za avtom · pokončno</button><button data-v="kino">Kino · ležeče</button></div></div>
         <div class="row"><span class="rlbl">Oddaljenost</span><div class="seg" data-set="zoom"><button data-v="0.85">Blizu</button><button data-v="1">Srednje</button><button data-v="1.2">Daleč</button></div></div>
+        <div class="row"><span class="rlbl">Fizika vožnje</span><div class="seg" data-set="phys"><button data-v="rally">Rally (kot art of rally)</button><button data-v="arcade">Arkadna</button></div></div>
         <div class="row"><span class="rlbl">Pomoč pri driftu</span><div class="seg" data-set="assist"><button data-v="0">Nizka</button><button data-v="1">Srednja</button><button data-v="2">Visoka</button></div></div>
         <div class="row"><span class="rlbl">Težavnost</span><div class="seg" data-set="difficulty"><button data-v="0">Lahka</button><button data-v="1">Srednja</button><button data-v="2">Težka</button></div></div>
         <div class="row"><span class="rlbl">Samodejni plin</span><div class="seg" data-set="autoGas"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
@@ -1110,13 +1111,14 @@ const Core = (function () {
   //   kv    : how fast momentum swings toward the nose, per radian of slide (1/s)
   //   bscale: slide angle at full lock (video: ~33 deg slow, ~22 deg at 110 km/h, ~15 deg fast)
   //   rmin  : tightest low-speed turning radius (m)
+  // rb: rear grip balance of the 'rally' model (fitted so trail-braking into a hairpin swings every car ~30 deg at the high assist)
   const ARC = {
-    kaze: { amax: 1.72, kv: 2.0, bscale: 1.12, rmin: 4.2 },
-    vortex: { amax: 1.82, kv: 2.1, bscale: 0.9, rmin: 4.4 },
-    pico: { amax: 1.78, kv: 2.1, bscale: 0.86, rmin: 4.0 },
-    strega: { amax: 1.76, kv: 2.0, bscale: 1.08, rmin: 4.2 },
-    rally: { amax: 1.82, kv: 2.05, bscale: 1.1, rmin: 4.1 },
-    p206: { amax: 1.8, kv: 2.1, bscale: 0.9, rmin: 4.1 },
+    kaze: { amax: 1.72, kv: 2.0, bscale: 1.12, rmin: 4.2, rb: 1.084 },
+    vortex: { amax: 1.82, kv: 2.1, bscale: 0.9, rmin: 4.4, rb: 1.057 },
+    pico: { amax: 1.78, kv: 2.1, bscale: 0.86, rmin: 4.0, rb: 1.112 },
+    strega: { amax: 1.76, kv: 2.0, bscale: 1.08, rmin: 4.2, rb: 1.021 },
+    rally: { amax: 1.82, kv: 2.05, bscale: 1.1, rmin: 4.1, rb: 1.061 },
+    p206: { amax: 1.8, kv: 2.1, bscale: 0.9, rmin: 4.1, rb: 1.031 },
   };
   const TRAC_G = 1.8, BRAKE_G = 2.6; // high-class SWGP2 cars brake at ~2.8-3.0 g peak (incl. slide), weak cars ~2.2 g
 
@@ -1149,6 +1151,26 @@ const Core = (function () {
       kw: model.kw * UPG_KW[m],
     };
   }
+  // 'rally' handling tuning (see Car.stepRally)
+  const RL = {
+    muF: 0.95, muR: 1.034,  // side grip of each axle as a share of the car's arcade grip (arc.amax, in g); x arc.rb per car at the rear
+    muX: 1.6,               // grip along the tyre (brakes, traction) relative to side grip: the arcade-strong brakes stay
+    BF: 11.8, CF: 1.45,     // front tyre curve: peak at ~9 deg of slip, ~85% left when it slides
+    BR: 16.2, CR: 1.35,     // rear tyre curve: stiffer than the front (~8 deg peak: a stable car), ~90% left when sliding (long, catchable drifts)
+    kc: 0.6,                // friction ellipse: how much braking / drive eats into the side grip
+    wtK: 0.72, wtMax: 0.13, // longitudinal weight transfer (scaled for the arcade-strong brakes), max share of the weight moved
+    bias: 0.536,            // brake balance (front share): rear-heavy, the tail comes round on the brakes
+    ls: 0.12,               // load sensitivity: a heavily loaded axle grips a little less per kilo
+    hbMu: 0.85,             // locked rear wheels slide at 85% of their grip
+    eps: 1.0,               // slip-angle regulariser (m/s)
+    axRate: 13,             // how quickly the weight shifts (1/s)
+  };
+  // assists for the 'rally' model per level (nizka, srednja, visoka): countersteer gain, spin guard from this slide angle (rad), its strength
+  // + traction assist: from this rear slip angle (rad) the drive is eased off, this hard (per rad of excess)
+  // + the slide angles (rad) between which the assist takes the steering over (b1 -> b2)
+  // + rear grip regained in a big slide (share, over b1 -> b2)
+  const RASSIST = [{ cs: 0.1, spin: 1.35, spinK: 6, tcSlip: 0.9, tc: 0, b1: 1.4, b2: 2.2, rg: 0 }, { cs: 0.3, spin: 0.9, spinK: 10, tcSlip: 0.5, tc: 2.5, b1: 0.5, b2: 0.95, rg: 0.2 },
+    { cs: 0.45, spin: 0.75, spinK: 14, tcSlip: 0.38, tc: 3.5, b1: 0.35, b2: 0.75, rg: 0.35 }];
   const PWR_MULT = 1.75, SW_DRAG = 0.0013; // arcade power boost and drag (fit to SWGP2 acceleration curves)
   const JUMP_G = 14; // vertical gravity for jumps on hilly tracks (arcade-snappy, a bit above real g)
   const MU_BASE = 1.32;
@@ -1181,7 +1203,8 @@ const Core = (function () {
       this.m = model;
       this.id = opts.id || 0;
       this.isPlayer = !!opts.isPlayer;
-      this.arcade = !!opts.arcade;
+      this.phys = opts.phys === 'rally' ? 'rally' : 'arcade';   // 'rally': rigid-body handling (stepRally); 'arcade': the SWGP2-style slide model
+      this.arcade = this.phys === 'rally' ? false : !!opts.arcade;
       this.wMaxNow = 2;
       this.name = opts.name || model.name;
       this.color = opts.color;
@@ -1395,7 +1418,185 @@ const Core = (function () {
       this.rpm += (Math.min(M.redline * 1.02, rt) - this.rpm) * Math.min(1, dt * 14);
     }
 
+    /* 'rally' handling (art of rally style; tuned against gameplay video of the Mount Haruna tarmac stage):
+       a real rigid body on two axles instead of the arcade 'steering sets the slide angle' model.
+       Steering turns the front wheels; the car turns because the tyres push it (and it has yaw inertia),
+       weight shifts forward on the brakes (the rear goes light: trail-braking swings the tail out) and back
+       under power; throttle or brakes eat into a tyre's side grip (friction circle), so a RWD car oversteers
+       on the throttle and a FWD car tucks in when you lift; the handbrake locks the rear wheels.
+       A slide keeps going until you catch it - the assist levels add countersteer and a spin guard.
+       Engine, gearbox, brakes, drag, slopes and jumps are the same as in the arcade model. */
+    stepRally(dt, trk) {
+      const M = this.m, P = this.arc || ARC[M.id] || ARC.kaze, A = this.assist, RA = RASSIST[Math.max(0, ASSISTS.indexOf(A))];
+      this.px = this.x; this.pz = this.z; this.ph = this.h; this.py = this.y;
+      if (trk.hasElev) { trk.query(this.x, this.z, this.q.i, this.q); const e = trk.elevAt(this.q.s); this.roadY = e.y; this.gradeNow = e.grade; this.curvNow = e.curv; }
+      else { this.roadY = 0; this.gradeNow = 0; this.curvNow = 0; }
+      const ch = Math.cos(this.h), sh = Math.sin(this.h);
+      const vl = this.vx * ch + this.vz * sh, vt = -this.vx * sh + this.vz * ch;
+      const spd = Math.hypot(vl, vt), m = M.mass, a = M.a, b = M.b, L = a + b, I = this.I;
+      if (trk.hasElev && !this.air) {
+        const accSurf = vl * vl * this.curvNow;
+        if (spd > 6 && accSurf < -JUMP_G * 0.85) { this.air = 1; this.vy = this.gradeNow * vl; this.airT = 0; }
+      }
+      const grounded = !this.air;
+      const tw = this.tw, wpos = [[a, -tw], [a, tw], [-b, -tw], [-b, tw]];
+      let muF = 0, muR = 0, muSum = 0, curb = 0, dragC0 = 0, dragC1 = 0;
+      for (let k = 0; k < 4; k++) {
+        const wx = this.x + wpos[k][0] * ch - wpos[k][1] * sh, wz = this.z + wpos[k][0] * sh + wpos[k][1] * ch;
+        const q = trk.query(wx, wz, this.wq[k].i >= 0 ? this.wq[k].i : this.q.i, this.wq[k]);
+        const sf = trk.surface(q); this.ws[k] = sf; muSum += SURF[sf].mu; if (k < 2) muF += SURF[sf].mu * 0.5; else muR += SURF[sf].mu * 0.5; if (sf === 1) curb++;
+        dragC0 += SURF[sf].c0 * 0.25; dragC1 += SURF[sf].c1 * 0.25;
+      }
+      this.onCurb = curb;
+      const muSurf = muSum / 4;
+      const fwd = vl > 0.5;
+      const beta = spd > 1.5 && fwd ? Math.atan2(vt, vl) : 0;
+      this.beta = beta;
+      const ab = Math.abs(beta);
+      const st = this.locked ? 0 : this.steer;
+      let thr = this.locked ? 0 : this.inThr, brk = this.inBrk;
+      const hb = this.locked ? 0 : this.inHand;
+      // steering: the lock shrinks with speed; the countersteer assist turns the wheels into a slide, and as the slide
+      // grows past the level's comfort angle it takes the wheel over (wheels along the travel = a held drift, not a spin)
+      const csG = RA.cs * clamp((vl - 3) / 8, 0, 1);
+      const dP = st * M.steerMax / (1 + Math.max(0, vl) / this.vref) + csG * clamp(beta, -0.8, 0.8);
+      const kOv = vl > 3 ? sstep(RA.b1, RA.b2, ab) : 0;
+      const delta = clamp(dP + (clamp(beta, -M.steerMax, M.steerMax) - dP) * kOv, -M.steerMax, M.steerMax);
+      // ---- gearbox + engine (identical to the arcade model) ----
+      if (trk.def.gradeForce) { if (this.inBrk <= 0.1) this.revNo = false; else if (vl < -0.3 && this.gear !== -1) this.revNo = true; }
+      if (this.gear === -1) {
+        const revThr = brk; brk = thr; thr = revThr;
+        if (this.inThr > 0.1 && vl > -1.0) { this.gear = 1; thr = this.inThr; brk = 0; }
+      } else if (this.inBrk > 0.1 && this.inThr < 0.1 && vl < 0.6 && !this.locked && !this.noReverse && !this.revNo) {
+        this.revHold += dt; if (this.revHold > 0.3) { this.gear = -1; this.revHold = 0; }
+      } else this.revHold = 0;
+      let F = 0; const eff = 0.88;
+      if (this.gear > 0) {
+        const gr = M.gears[this.gear - 1] * M.final;
+        const wr = Math.max(0, vl) / M.rw * gr * 9.5493;
+        if (this.shiftT <= 0) {
+          if (wr > M.redline * 0.95 && this.gear < M.gears.length) { this.gear++; this.shiftT = 0.1; }
+          else if (this.gear > 1) {
+            const wrLow = Math.max(0, vl) / M.rw * M.gears[this.gear - 2] * M.final * 9.5493;
+            if (wrLow < M.redline * 0.78 && wr < M.redline * 0.55) { this.gear--; this.shiftT = 0.1; }
+          }
+        }
+        const gr2 = M.gears[this.gear - 1] * M.final;
+        const wr2 = Math.max(0, vl) / M.rw * gr2 * 9.5493;
+        this.rpmTarget = Math.max(wr2, M.idle + (M.redline * 0.62 - M.idle) * thr);
+        const Kp = PWR_MULT * M.kw * 1000 * 0.88 / m * (1 - 0.22 * (this.dmgMode === 2 ? this.dmg : 0));
+        let Fsw = m * Kp / Math.max(Math.abs(vl), 4) * thr;
+        if (this.shiftT > 0) Fsw *= 0.7;
+        Fsw -= (1 - thr) * m * 1.1 * sstep(2, 20, vl);
+        F = Fsw;
+      } else {
+        const gr = 3.3 * M.final;
+        const wr = Math.max(0, -vl) / M.rw * gr * 9.5493;
+        this.rpmTarget = Math.max(wr, M.idle + 2500 * thr);
+        F = -M.Tmax * 0.8 * gr * eff / M.rw * thr * (vl < -8 ? 0 : 1);
+      }
+      if (this.shiftT > 0) this.shiftT -= dt;
+      if (this.locked) this.rpmTarget = M.idle + (M.redline * 0.88 - M.idle) * this.inThr;
+      if (!grounded) F = 0;
+      // ---- axle loads: weight moves forward on the brakes, back under power ----
+      const NF0 = m * G * b / L, NR0 = m * G * a / L;
+      const dN = clamp(m * this.axF * M.hcg / L * RL.wtK, -RL.wtMax * m * G, RL.wtMax * m * G);
+      const NF = NF0 - dN, NR = NR0 + dN;
+      const gA = this.aeroK ? 1 + this.aeroK * spd * spd : 1, dmgG = 1 - 0.08 * (this.dmgMode === 2 ? this.dmg : 0);
+      const mu0 = P.amax * gA * dmgG;
+      const capF0 = mu0 * RL.muF * muF * NF * (1 - RL.ls * (NF / NF0 - 1)), capR0 = mu0 * RL.muR * (P.rb || 1) * muR * NR * (1 - RL.ls * (NR / NR0 - 1));
+      // ---- longitudinal tyre forces: drive split by layout, brakes 62/38, traction limit as the arcade model ----
+      const share = M.drive === 'AWD' ? 0.68 : M.drive === 'FF' ? 0.6 : 0.55;
+      const Fdmax = this.tracG * G * m * share * muSurf * (0.42 + 0.58 * sstep(0.5, 9, Math.abs(vl)));
+      let spin = 0;
+      if (Math.abs(F) > Fdmax) { spin = Math.abs(F) / Fdmax - 1; F = Math.sign(F) * Fdmax; }
+      const sF = M.drive === 'FF' ? 1 : M.drive === 'AWD' ? 0.4 : 0;
+      // traction assist (per level): ease the drive off while the driven rear is already sliding far (keeps a keyboard driver in a drift, not a donut)
+      if (RA.tc > 0 && F > 0 && sF < 1 && fwd) { const ex = this.slipR - RA.tcSlip; if (ex > 0) { const k = clamp(1 - ex * RA.tc, 0.25, 1); F *= k; spin *= k; } }
+      this.spin = thr > 0.2 && grounded ? spin : 0;
+      let FxF = F * sF, FxR = F * (1 - sF);
+      if (brk > 0 && spd > 0.05 && grounded) {   // fixed brake bias: under hard braking the light rear works hardest, so the tail wants to come round
+        const fb = Math.min(brk * this.brakeG * G * m * (0.55 + 0.45 * muSurf), spd * m / dt) * Math.sign(vl || 1);
+        FxF -= fb * RL.bias; FxR -= fb * (1 - RL.bias);
+      }
+      this.lock = grounded && (brk > 0.7 || hb > 0.5) && spd > 4 ? 1 : 0;
+      // ---- side forces (tyre curves + friction circle) ----
+      let FxBody = 0, FyBody = 0, Tz = 0;
+      if (grounded) {
+        const e = RL.eps;
+        // front: velocity of the front axle in the wheel frame
+        const vfl = vt + this.w * a, cd = Math.cos(delta), sd = Math.sin(delta);
+        const uL = vl * cd + vfl * sd, uT = -vl * sd + vfl * cd;
+        const aF = Math.atan2(uT, Math.abs(uL) + e);
+        const vrt = vt - this.w * b, aR = Math.atan2(vrt, Math.abs(vl) + e);
+        // what is left for cornering after drive / brake (spinning or locked tyres grip much less sideways)
+        const cxF = capF0 * RL.muX, cxR = capR0 * RL.muX;
+        if (Math.abs(FxF) > cxF) FxF = Math.sign(FxF) * cxF;
+        if (Math.abs(FxR) > cxR) FxR = Math.sign(FxR) * cxR;
+        let capFy = capF0 * Math.sqrt(Math.max(0.05, 1 - RL.kc * (FxF / cxF) * (FxF / cxF)));
+        let capRy = capR0 * Math.sqrt(Math.max(0.05, 1 - RL.kc * (FxR / cxR) * (FxR / cxR)));
+        if (this.spin > 0) { if (sF > 0) capFy /= 1 + this.spin * 1.4 * sF; if (sF < 1) capRy /= 1 + this.spin * 1.6 * (1 - sF); }
+        if (RA.rg && fwd) capRy *= 1 + RA.rg * sstep(RA.b1, RA.b2, ab);   // assist: a big slide finds some rear grip again (it can be caught)
+        const tyre = (x, B, C) => Math.sin(C * Math.atan(B * x));
+        let FyT = -capFy * tyre(aF, RL.BF, RL.CF);
+        let FyR = -capRy * tyre(aR, RL.BR, RL.CR);
+        // never push harder than it takes to stop that axle sliding within this step (stable at low speed)
+        const mEF = 1 / (1 / m + a * a / I), mER = 1 / (1 / m + b * b / I);
+        const cFy = Math.abs(uT) * mEF / dt, cRy = Math.abs(vrt) * mER / dt;
+        FyT = clamp(FyT, -cFy, cFy); FyR = clamp(FyR, -cRy, cRy);
+        // handbrake: the rear wheels lock and slide along their own velocity
+        if (hb > 0) {
+          const vr = Math.hypot(vl, vrt);
+          if (vr > 0.3) {
+            const fl = capR0 * RL.hbMu;
+            FxR += (-fl * vl / vr - FxR) * hb; FyR += (-fl * vrt / vr - FyR) * hb;
+          }
+        }
+        this.slipF = Math.abs(aF); this.slipR = Math.abs(aR); this.latR = Math.abs(vrt);
+        const FfxB = FxF * cd - FyT * sd, FfyB = FxF * sd + FyT * cd;
+        FxBody = FfxB + FxR; FyBody = FfyB + FyR;
+        Tz = a * FfyB - b * FyR;
+      } else { this.slipF = 0; this.slipR = 0; this.latR = 0; }
+      // ---- air + rolling + surface drag (as the arcade model) ----
+      const cdA = m * SW_DRAG * (M.cDrag / 0.42);
+      FxBody -= cdA * vl * spd + (grounded ? (0.015 * m * G) * Math.tanh(vl * 1.5) : 0);
+      FyBody -= cdA * 1.6 * vt * spd;
+      if ((dragC0 > 0 || dragC1 > 0) && spd > 0.05 && grounded) {
+        const dec = (dragC0 * Math.min(1, spd / 3) + dragC1 * spd) * m, ux = vl / spd, uy = vt / spd;
+        FxBody -= ux * dec; FyBody -= uy * dec;
+      }
+      if (trk.def.gradeForce && grounded && !this.locked) {
+        const gH = this.gradeNow * (ch * this.q.tx + sh * this.q.tz);
+        const hold = (brk > 0.05 || hb > 0.5) && thr < 0.05 && spd < 0.4;
+        if (!hold) FxBody -= m * G * gH / Math.sqrt(1 + gH * gH);
+      }
+      // ---- assists: spin guard (the higher the level, the earlier a runaway rotation is caught) ----
+      let wDot = Tz / I;
+      if (grounded && spd > 5 && ab > RA.spin && this.w * beta < 0) wDot -= this.w * Math.min(1, (ab - RA.spin) / 0.3) * RA.spinK;
+      // ---- integrate ----
+      const ax = (FxBody * ch - FyBody * sh) / m, az = (FxBody * sh + FyBody * ch) / m;
+      this.vx += ax * dt; this.vz += az * dt;
+      this.w += wDot * dt;
+      // parking speeds: the tyre model has nothing to work with, roll like a kinematic bicycle
+      if (grounded && spd < 3) { const k = 1 - spd / 3, wK = vl * Math.tan(delta) / L; this.w += (wK - this.w) * Math.min(1, k * dt * 20); }
+      this.x += this.vx * dt; this.z += this.vz * dt; this.h += this.w * dt;
+      if (trk.hasElev) {
+        if (this.air) {
+          this.airT += dt; this.vy -= JUMP_G * dt; this.y += this.vy * dt;
+          if (this.y <= this.roadY) { this.impactVY = this.vy; if (this.vy < -11) applyDamage(this, (-this.vy - 11) * 0.01); this.y = this.roadY; this.vy = 0; this.air = 0; this.landT = clamp(-this.impactVY * 0.02 + 0.05, 0.05, 0.2); this.airT = 0; const sc = clamp(-this.impactVY * 0.016, 0, 0.13); this.vx *= (1 - sc); this.vz *= (1 - sc); }
+        } else { this.y = this.roadY; this.vy = this.gradeNow * vl; if (this.landT > 0) this.landT -= dt; }
+      } else { this.y = 0; }
+      this.axF += ((FxBody / m) - this.axF) * Math.min(1, dt * RL.axRate);
+      if (spd < 0.08 && thr < 0.05 && Math.abs(F) < 1) { this.vx *= 0.8; this.vz *= 0.8; this.w *= 0.8; }
+      this.vl = vl; this.vt = vt;
+      this.drift = sstep(0.1, 0.45, ab);
+      this.delta = delta * (vl >= -0.3 ? 1 : -1);
+      const rt = this.rpmTarget + (this.spin > 0.05 ? Math.min(2500, this.spin * 5000) : 0) + (this.drift > 0.3 && thr > 0.5 ? 500 * this.drift : 0);
+      this.rpm += (Math.min(M.redline * 1.02, rt) - this.rpm) * Math.min(1, dt * 14);
+    }
+
     step(dt, trk) {
+      if (this.phys === 'rally') return this.stepRally(dt, trk);
       if (this.arcade) return this.stepArcade(dt, trk);
       const M = this.m, A = this.assist;
       this.px = this.x; this.pz = this.z; this.ph = this.h;
@@ -1987,7 +2188,7 @@ const Core = (function () {
     let dW = Math.atan(kap * (M.a + M.b));
     // yaw-rate feedback for stability
     dW += 0.06 * (v * kap - c.w);
-    const csGain = A.cs * clamp((c.vl - 3) / 8, 0, 1);
+    const csGain = (c.phys === 'rally' ? 0.15 : A.cs) * clamp((c.vl - 3) / 8, 0, 1);   // ('rally' cars get their countersteer from the model's assist)
     dW -= csGain * clamp(c.beta, -0.8, 0.8);
     const steerLim = M.steerMax / (1 + v / c.vref);
     c.inSteer = clamp(dW / steerLim, -1, 1);
@@ -2023,6 +2224,8 @@ const Core = (function () {
     // traction management (tyre-model cars only; SWGP-style cars slide by design)
     const ab = Math.abs(c.beta);
     if (!c.arcade && ab > 0.1 && c.vl > 6) thr *= clamp(1 - (ab - 0.1) * 3.5, 0.25, 1);
+    // 'rally' model, rear-driven cars: feed the throttle in against the rear slip, as a driver would (no power spins on the exits)
+    if (c.phys === 'rally' && M.drive !== 'FF' && c.vl > 4) thr *= clamp(1 - (c.slipR - (M.drive === 'AWD' ? 0.14 : 0.09)) * 4.5, 0.15, 1);
     if (c.spin > 0.05) thr *= 0.8;
     // off-track: slow down a bit & aim back
     if (T.open && T.len - q.s < 6 + v * v / 40) { thr = 0; brk = 1; }   // open road: stop (and stay stopped) well short of the wall at the top end
@@ -2070,11 +2273,11 @@ const Core = (function () {
       for (let g = 1; g <= total; g++) {
         let c;
         if (g === playerGrid) {
-          c = new Car(opts.playerModel || MODELS[0], { id: g, isPlayer: true, arcade: opts.arcade !== false, name: 'TI', color: opts.playerColor, assist: opts.assist, upg: opts.playerUpg });
+          c = new Car(opts.playerModel || MODELS[0], { id: g, isPlayer: true, arcade: opts.arcade !== false, phys: opts.phys, name: 'TI', color: opts.playerColor, assist: opts.assist, upg: opts.playerUpg });
           this.player = c;
         } else {
           const s = aiSpecs[ai++];
-          c = new Car(s.model, { id: g, name: s.name, color: s.color, skill: s.skill, assist: 1, arcade: true, laneBias: (R() - 0.5) * 1.6 });
+          c = new Car(s.model, { id: g, name: s.name, color: s.color, skill: s.skill, assist: opts.phys === 'rally' ? 2 : 1, arcade: true, phys: opts.phys, laneBias: (R() - 0.5) * 1.6 });
           c.skCap = s.model.id === 'pico' ? 1.0 : 1.14;   // no point pushing a car past what it can hold (the light pico understeers into the walls beyond the line's own pace)
         }
         c.grid = g; c.num = [7, 3, 11, 21, 5, 44, 9, 16, 27, 8, 12, 33, 2, 55][(g - 1) % 14];
@@ -2348,7 +2551,7 @@ const Core = (function () {
     }
   }
 
-  return { G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, SURF, Car, Race, wallCollide, carCollide, aiControl, tire, DRIVER_NAMES, UPG, upgMods, upgStats };
+  return { G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, SURF, Car, Race, wallCollide, carCollide, aiControl, tire, DRIVER_NAMES, UPG, upgMods, upgStats, RL, RASSIST };
 })();
 
 
@@ -6896,8 +7099,10 @@ const Render = (function () {
     const k1 = 1 - Math.exp(-dt * 2.0), k2 = 1 - Math.exp(-dt * 1.4);
     let px, py, pz, tx, ty, tz;
     if (mode === 'chase') {
-      const hv = h + clamp(c.beta || 0, -1.2, 1.2) * 0.65; // in a drift, look along the direction of travel
-      cam.hs += wrapPi(hv - cam.hs) * (1 - Math.exp(-dt * 3.2));
+      // in a drift, look along the direction of travel; with the 'rally' physics fully along it and a lazier swing
+      // (art of rally: the camera trails the car's path, so a sliding car shows its angle)
+      const rl = c.phys === 'rally', hv = h + clamp(c.beta || 0, -1.2, 1.2) * (rl ? 1 : 0.65);
+      cam.hs += wrapPi(hv - cam.hs) * (1 - Math.exp(-dt * (rl ? 2.4 : 3.2)));
       cam.zoom += (1 + 0.25 * clamp(spd / 55, 0, 1) - cam.zoom) * k2;
       // phone held upright: higher camera, wider lens, long view ahead, car in the lower part of the screen
       const portrait = camera.aspect < 1;
@@ -7618,7 +7823,7 @@ if (typeof module !== 'undefined') module.exports = Comm;
 
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
-  const DEF = { control: 'buttons', camera: 'chase', zoom: 1.2, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, damage: 2, name: 'Igralec' };
+  const DEF = { phys: 'rally', control: 'buttons', camera: 'chase', zoom: 1.2, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, damage: 2, name: 'Igralec' };
   let S = Object.assign({}, DEF);
   let records = {};
   try { const j = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (j) S = Object.assign(S, j); } catch (_) { }
@@ -7754,10 +7959,21 @@ if (typeof module !== 'undefined') module.exports = Comm;
     if (race && race.player) race.player.assist = Core.ASSISTS[S.assist];
     refreshSegs();
   }
+  // driving physics: 'rally' (art of rally style rigid body, the default) or the old 'arcade' slide model; switching applies at once
+  const physOf = () => S.phys === 'arcade' ? 'arcade' : 'rally';
+  function applyPhys(r) {
+    if (!r) return;
+    const ph = physOf(); r.opts.phys = ph;
+    for (const c of r.cars) {
+      c.phys = ph; c.arcade = ph === 'rally' ? false : true;
+      if (!c.isPlayer) c.assist = Core.ASSISTS[ph === 'rally' ? 2 : 1];
+    }
+  }
   function setOption(key, v) {
     const num = ['zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'damage'];
     S[key] = num.includes(key) ? +v : v;
     save(); applySettings();
+    if (key === 'phys') { applyPhys(race); applyPhys(demo); }
     if (key === 'control' && v === 'tilt') enableTilt(false);
     if (key === 'camera') { lockOrientation(); updateOrientation(); }
   }
@@ -7861,7 +8077,7 @@ if (typeof module !== 'undefined') module.exports = Comm;
     setTimeout(() => {
       track = getTrack(id);
       Render.buildWorld(track, S.quality === 'retro' ? 0.8 : 1);
-      demo = new Core.Race(track, { numAI: 10, noPlayer: true, difficulty: 2, laps: 9999, seed: 11 });
+      demo = new Core.Race(track, { numAI: 10, noPlayer: true, difficulty: 2, laps: 9999, seed: 11, phys: physOf() });
       demo.start(); for (let i = 0; i < 120 * 4; i++) demo.step(STEP);
       demoTarget = null; demoSwitch = 0;   // the title camera picks a car of the new demo right away (not one left over from the previous track)
       mm.img = null; mm.w = 0;
@@ -7874,7 +8090,7 @@ if (typeof module !== 'undefined') module.exports = Comm;
   function newRace() {
     const tt = isTT(track.def), M = Core.MODELS[S.car];
     race = new Core.Race(track, {   // time trial: alone on the start line, one run to the finish
-      numAI: tt ? 0 : NUM_AI, playerGrid: tt ? 1 : PLAYER_GRID, laps: tt ? 1 : track.def.laps || LAPS, difficulty: S.difficulty, assist: S.assist, damage: +S.damage,
+      numAI: tt ? 0 : NUM_AI, playerGrid: tt ? 1 : PLAYER_GRID, laps: tt ? 1 : track.def.laps || LAPS, difficulty: S.difficulty, assist: S.assist, damage: +S.damage, phys: physOf(),
       playerModel: M, playerUpg: Object.assign({}, upgOf(M.id)), playerColor: PLAYER_COLORS[S.color], playerNum: carNum(), seed: (Math.random() * 1e6) | 0
     });
     Render.attachRace(race);
@@ -8531,7 +8747,7 @@ if (typeof module !== 'undefined') module.exports = Comm;
       Render.buildWorld(track, S.quality === 'retro' ? 0.8 : 1);
       Input.init($('touch'), () => { if (screen === 'pause') resume(); else if (screen === 'none') pause(); });
       applySettings();
-      demo = new Core.Race(track, { numAI: 10, noPlayer: true, difficulty: 2, laps: 9999, seed: 11 });
+      demo = new Core.Race(track, { numAI: 10, noPlayer: true, difficulty: 2, laps: 9999, seed: 11, phys: physOf() });
       demo.start();
       for (let i = 0; i < 120 * 6; i++) demo.step(STEP);
       Render.attachRace(demo);
