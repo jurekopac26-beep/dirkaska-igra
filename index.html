@@ -634,7 +634,7 @@ const Core = (function () {
   //   elev                 : [x, z, h] keyframes (h = metres above the start line), snapped to samples, interpolated along s (not periodic)
   //   alt                  : real altitude shown in the HUD at the start line and at the finish (linear in h)
   const PIKES_DEF = {
-    id: 'pikes', name: 'Pikes Peak', theme: 'pikes', open: true, timeTrial: true, laps: 1, halfWidth: 5.5,
+    id: 'pikes', name: 'Pikes Peak', theme: 'pikes', open: true, timeTrial: true, laps: 1, halfWidth: 7,
     desc: 'Vzpon na Pikes Peak: kronometer od starta na 2862 m do vrha na 4301 m. Gozdni zavoji, lasnice \u201eW\u201c, hiter greben in serpentine pod zasneženim vrhom. Ni nasprotnikov, dirkaš proti uri.',
     realKm: 19.99, alt: [2862, 4301],
     start: [10, -39], finish: [-536, -3695], cps: [[-199,-991],[-186,-1666],[-362,-2164],[-519,-3202]],
@@ -8423,6 +8423,8 @@ if (typeof module !== 'undefined') module.exports = Comm;
     for (const k of ['bestLap', 'bestRace', 'bestPos', 'bestTime']) if (r[k] != null && !posNum(r[k])) delete r[k];
     if (r.bestTime && Array.isArray(r.bestSplits)) r.bestSplits = splitsOf(r.bestSplits); else delete r.bestSplits;
     if (r.board != null) r.board = Array.isArray(r.board) ? r.board.map(boardEntry).filter(e => e).sort((a, b) => a.time - b.time).slice(0, 10) : []; }
+  // one-time archive of Pikes Peak times driven on the old, narrower road (11 m -> 14 m): kept as 'pikes-ozka', never shown
+  try { if (!localStorage.getItem('tdgp-pikes-w7')) { const o = records.tracks.pikes; if (isObj(o) && (o.bestTime || (o.board && o.board.length))) { records.tracks['pikes-ozka'] = o; delete records.tracks.pikes; saveRecords(); } localStorage.setItem('tdgp-pikes-w7', '1'); } } catch (_) { }
   const upgOf = (id) => S.upg[id] || (S.upg[id] = upgNorm(null));
   const upgCount = (id) => UPG_IDS.reduce((a, k) => a + upgOf(id)[k], 0);
   const isTT = (d) => !!(d && d.timeTrial);
