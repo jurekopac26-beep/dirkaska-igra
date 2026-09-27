@@ -593,6 +593,22 @@ const Core = (function () {
     desc: 'Mestna proga po središču Ljubljane: Petkovškovo nabrežje, Zmajski most, tržnica, Mestni trg, Šuštarski most, Kongresni trg, Slovenska, Čopova in Prešernov trg. Nad mestom grad.',
     points: [[40, -40], [150, -68], [250, -98], [300, -116], [324, -100], [330, -75], [316, -57], [240, -35], [150, -10], [62, 12], [22, 40], [14, 85], [10, 135], [4, 200], [-6, 262], [-26, 298], [-85, 304], [-150, 300], [-190, 280], [-197, 212], [-202, 165], [-250, 150], [-292, 126], [-286, 40], [-268, -50], [-254, -108], [-218, -118], [-165, -97], [-92, -72], [-30, -55]],
     start: [150, -68], runoff: 0.45, inner: 3.2, side: 3.4, offSurface: 'paving',
+    // named places: [HUD label, x, z, what the commentator may say there] (spoken in English, so the lines use English names
+    // or spellings an English voice can read: Dragon Bridge, Cobblers' Bridge, Presheren, Chopova, Stritaryeva)
+    names: [
+      ['Zmajski most', 324.3, -99.6, ['Over the Dragon Bridge now!', 'Across the Dragon Bridge, past the green dragons!', 'Round over the Dragon Bridge, the river below!']],
+      ['Tržnica', 209.8, -26.4, ['Along the Central Market!', "Past the market and Plechnik's colonnade!", 'Down the river bank by the Central Market!']],
+      ['Stritarjeva', 59.1, 13.3, ['Past the Triple Bridge into Stritaryeva!', 'Left into Stritaryeva Street!', 'Round by the Triple Bridge!']],
+      ['Mestni trg', 11.9, 108.4, ['Through Town Square, past the Town Hall!', 'Town Square, past the Robba Fountain!', 'Into Town Square, by the Town Hall!']],
+      ['Stari trg', 1.3, 223.9, ['Down Old Square, under the castle!', 'Through the Old Square, the castle looking down!', 'Old Square, cobbles and cafes!']],
+      ['Šuštarski most', -62.2, 304.2, ["Over the Cobblers' Bridge!", "Right, across the Cobblers' Bridge!", "Over the Cobblers' Bridge, back across the river!"]],
+      ['Vegova', -194.1, 270.7, ['Right into Vegova Street!', 'Along Vegova, past the National Library!', 'Vegova Street, towards Congress Square!']],
+      ['Kongresni trg', -204.2, 162.9, ['Round Congress Square!', 'Congress Square, past the University!', 'Left at Congress Square, by the park!']],
+      ['Slovenska cesta', -295.7, 103.9, ['Onto Slovenska Street!', 'Flat out up Slovenska Street!', 'Slovenska Street, the main road through the city!']],
+      ['Čopova', -251.7, -110.1, ['Right into Chopova Street!', 'Down Chopova, the busy shopping street!', 'Chopova Street, down towards Presheren Square!']],
+      ['Prešernov trg', -18.5, -51.9, ['Presheren Square! Past the pink church!', 'Through Presheren Square, by the Triple Bridge!', 'Past the Presheren monument!']],
+      ['Petkovškovo nabrežje', 92.9, -50.2, ['Along the river to the line!', 'Down Petkovshkovo embankment to the line!', 'Along the embankment, back to the line!']],
+    ],
     // Ljubljanica centre line (south-west → north → east) and width; castle on its hill
     river: [[-170, 600], [-110, 470], [-75, 380], [-54, 299], [-30, 180], [-12, 80], [0, 0], [60, -18], [150, -45], [240, -72], [324, -97], [420, -113], [560, -108]], riverW: 26,
     castle: [182, 240],
@@ -604,6 +620,22 @@ const Core = (function () {
     desc: 'Prava proga skozi Monako v pravem merilu: Sainte Dévote, vzpon do Casinoja, lasnica pri hotelu Fairmont, predor, šikana ob pristanišču, bazen in Rascasse.',
     points: [[-72,449],[-85,384],[-93,292],[-93,194],[-85,120],[-65,64],[-36,26],[0,3],[36,-6],[105,-6],[203,-6],[301,-2],[399,1],[483,-6],[546,-27],[603,-59],[652,-104],[684,-146],[712,-182],[750,-205],[791,-217],[831,-231],[869,-242],[897,-235],[913,-211],[925,-190],[934,-172],[951,-167],[964,-179],[967,-200],[974,-223],[990,-237],[1013,-244],[1043,-237],[1062,-217],[1055,-191],[1027,-162],[987,-125],[938,-84],[880,-43],[824,-6],[766,21],[693,39],[619,49],[546,54],[505,55],[487,65],[465,66],[444,59],[383,60],[301,64],[219,65],[145,65],[98,70],[72,87],[56,110],[42,132],[33,162],[19,208],[12,256],[3,292],[8,325],[16,361],[28,400],[39,431],[40,454],[23,472],[-5,477],[-35,474],[-59,463]],
     start: [-93,194], runoff: 0.4, inner: 3, side: 3, offSurface: 'paving',
+    // named places: [HUD label, x, z, what the commentator may say there] (English lines: Sainte Devote, Noghes without accents for the voice)
+    names: [
+      ['Sainte Dévote', -1.8, 3.8, ['Into Sainte Devote, turn one!', 'Round Sainte Devote, past the little church!', 'Sainte Devote, and up the hill we go!']],
+      ['Beau Rivage', 220.7, -5.5, ['Up the hill along Beau Rivage!', 'Climbing Beau Rivage towards the Casino!', 'Flat out up Beau Rivage!']],
+      ['Massenet', 590.7, -50.7, ['Sweeping left through Massenet!', 'Massenet, the long left towards Casino Square!', 'Over the top of the hill at Massenet!']],
+      ['Casino', 728.1, -193.8, ['Up into Casino Square!', 'Through Casino Square, past the famous Casino!', 'Casino Square, the heart of Monte Carlo!']],
+      ['Mirabeau', 869.5, -242, ['Down the hill to Mirabeau!', 'Hard on the brakes for Mirabeau!', 'Mirabeau, and down towards the hairpin!']],
+      ['Lasnica Fairmont', 948.4, -166.7, ['The Fairmont hairpin! Full lock!', 'Round the Fairmont hairpin, the slowest corner of the lap!', 'Crawling round the famous hairpin!']],
+      ['Portier', 1050.4, -232, ['Down through Mirabeau Bas to Portier!', 'Portier, and down to the sea!', 'Right at Portier, the tunnel is next!']],
+      ['Predor', 995.8, -132.8, ['Into the tunnel! Flat out in the dark!', 'Through the tunnel, under the Fairmont hotel!', 'In the tunnel, the fastest part of the lap!']],
+      ['Nouvelle Chicane', 511.1, 53.9, ['Out of the tunnel, hard on the brakes for the chicane!', 'The Nouvelle Chicane! Over the kerbs!', 'Down to the harbour chicane!']],
+      ['Tabac', 101.7, 68.8, ['Tabac! Along the harbour!', 'Left at Tabac, yachts all around!', 'Through Tabac, right by the water!']],
+      ['Piscine', 21.2, 199.4, ['Into the Swimming Pool section!', 'Round the swimming pool, past the yachts!', 'Flicking through the Piscine!']],
+      ['La Rascasse', 41.2, 448.2, ['La Rascasse! Tight right by the famous bar!', 'Round La Rascasse, the lap is nearly done!', 'Slow in, fast out at La Rascasse!']],
+      ['Anthony Noghès', -64.8, 458.5, ['Anthony Noghes, and onto the start-finish straight!', 'Through Anthony Noghes, back onto Boulevard Albert the First!', 'Anthony Noghes, named after the founder of this race!']],
+    ],
     elev: [[0.0767,3],[0.1167,4.5],[0.1447,6],[0.2067,15],[0.2647,26],[0.3097,33],[0.3647,40],[0.3787,41],[0.4177,38],[0.4387,35],[0.4547,32],[0.4657,27.5],[0.4777,23.5],[0.4917,20],[0.5167,13],[0.5367,10.5],[0.5867,8],[0.6327,5],[0.7177,3],[0.8357,2],[0.8537,1.8],[0.9107,1.5],[0.9607,2],[0.9857,2.5]],
     tunnel: [0.5337, 0.6347],
   };
@@ -640,6 +672,24 @@ const Core = (function () {
     start: [10, -39], finish: [-536, -3695], cps: [[-199,-991],[-186,-1666],[-362,-2164],[-519,-3202]],
     elev: [[0,0,-1],[10,-39,0],[-199,-991,57],[-186,-1666,150],[-362,-2164,244],[-519,-3202,337],[-536,-3695,440],[-483,-3781,443]],
     runoff: 0.55, inner: 3.2, side: 3.6, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true,
+    // named places of the real course, in its order (the scaled road cannot match every one, so d = metres after the start line,
+    // chosen from the real order and altitudes: Brown Bush Corner and the Ski Area on the first hairpins, Glen Cove at the foot of the
+    // W's, Devil's Playground and the Bottomless Pit on the ridge, Boulder Park on the last switchbacks); say = the commentator's lines
+    names: [
+      { n: "Hansen's Corner", d: 240, say: ["Through Hansen's Corner, the climb is on!", "Hansen's Corner, up into the pines!"] },
+      { n: "Engineer's Corner", d: 578, say: ["Engineer's Corner!", "Into Engineer's Corner, still in the trees!", "Engineer's Corner, keep it tidy!"] },
+      { n: 'Halfway Picnic Grounds', d: 1000, say: ['Halfway Picnic Grounds, the fastest part of the course!', 'Flat out past the Halfway Picnic Grounds!', 'Through the picnic grounds, three thousand metres up!'] },
+      { n: 'Brown Bush Corner', d: 1720, say: ['Brown Bush Corner, the first big hairpin!', 'Hard on the brakes for Brown Bush Corner!', 'Round Brown Bush Corner!'] },
+      { n: 'Ski Area', d: 1964, say: ['Up past the old Ski Area!', 'The Ski Area hairpin, climbing through the trees!'] },
+      { n: 'Glen Cove', d: 2688, say: ['Glen Cove, the trees are thinning out!', 'Up to Glen Cove, about halfway up!', 'Glen Cove, and now the switchbacks!'] },
+      { n: "The W's", d: 2918, say: ["Into the W's! Hairpin after hairpin!", "The famous W's, left, right, left!", "Climbing the W's above the tree line!"] },
+      { n: 'Cove Creek', d: 3564, say: ['Cove Creek, out of the switchbacks!', 'Past Cove Creek, the air is getting thin!'] },
+      { n: "Devil's Playground", d: 4050, say: ["Devil's Playground! Nothing but rock and sky!", "Out across Devil's Playground, flat out on the ridge!", "Devil's Playground, lightning country up here!"] },
+      { n: 'Bottomless Pit', d: 4466, say: ["Past the Bottomless Pit, don't look down!", 'The Bottomless Pit, a huge drop off the side!'] },
+      { n: 'Double Cut', d: 4632, say: ['Through Double Cut, carry the speed!', 'Double Cut, one wide corner!'] },
+      { n: 'Boulder Park', d: 5360, say: ['Boulder Park! Granite boulders everywhere!', 'The Boulder Park switchbacks, over four thousand metres up!', 'Into Boulder Park, the summit is close!'] },
+      { n: 'Olympic', d: 5854, say: ['Round Olympic, the summit is in sight!', 'Olympic, one of the last corners before the top!'] },
+    ],
     points: [[0,0],[3.5,-12.9],[6.9,-25.8],[10.3,-38.6],[13.3,-49.5],[16.2,-60.4],[19.1,-71.2],[22,-82.1],[24.9,-93],[27.8,-103.8],[30.7,-114.7],[33.6,-125.6],[35.7,-135.8],[36.4,-146.3],[35.7,-156.7],[33.6,-167],[30.5,-178.6],[27.4,-190.2],[24.3,-201.8],[21.2,-213.4],[18.1,-225],[16.3,-235.3],[16.3,-245.8],[18.1,-256.1],[21.7,-265.9],[26.9,-275],[33.7,-283],[42.5,-291.8],[51.3,-300.7],[60.2,-309.5],[69,-318.4],[75.2,-325.7],[80,-334],[83.3,-343],[84.9,-352.5],[84.9,-362.1],[83.3,-371.5],[80,-380.6],[75.2,-390.9],[70.3,-401.3],[65.5,-411.6],[60.7,-422],[55.8,-432.4],[51,-442.7],[46.2,-453.1],[42.1,-463.3],[39.4,-473.9],[38,-484.9],[37.9,-495.8],[39.1,-506.8],[41.4,-519.9],[43.7,-533],[46.1,-546.2],[46.7,-555.6],[45.4,-564.9],[42.2,-573.8],[37.2,-581.7],[30.6,-588.5],[21.7,-596],[12.8,-603.5],[3.8,-611],[-5.1,-618.5],[-14.1,-626],[-23,-633.5],[-29.8,-640.1],[-35.7,-647.6],[-40.6,-655.7],[-44.2,-664.5],[-46.7,-673.7],[-47.9,-683.1],[-47.8,-692.6],[-46.4,-702],[-43.8,-711.1],[-39.7,-722.4],[-35.6,-733.7],[-31.5,-745],[-27.4,-756.3],[-23.3,-767.5],[-20.9,-776.6],[-20.3,-785.9],[-21.4,-795.2],[-24.2,-804.1],[-28.6,-812.3],[-34.5,-819.6],[-41.6,-825.7],[-50.8,-832.1],[-60,-838.6],[-69.2,-845],[-78.5,-851.5],[-87.7,-857.9],[-96.9,-864.4],[-106.1,-870.8],[-115.3,-877.3],[-123.6,-883.7],[-131.1,-891],[-137.8,-899],[-143.7,-907.7],[-148.6,-917],[-153.9,-928.3],[-159.2,-939.6],[-164.4,-951],[-169.7,-962.3],[-175,-971.3],[-181.7,-979.4],[-189.7,-986.1],[-198.8,-991.3],[-209.7,-996.4],[-220.6,-1001.5],[-231.4,-1006.5],[-242.3,-1011.6],[-253.2,-1016.7],[-262.1,-1021.6],[-270.1,-1027.8],[-277.2,-1035.2],[-283.2,-1043.4],[-287.9,-1052.4],[-291.2,-1062.1],[-294.2,-1073.1],[-297.1,-1084.1],[-300.1,-1095.2],[-303.1,-1106.2],[-306,-1117.3],[-309,-1128.3],[-311.9,-1139.3],[-315.8,-1149.4],[-321.4,-1158.6],[-328.8,-1166.5],[-337.6,-1172.8],[-348.4,-1179],[-359.3,-1185.3],[-370.1,-1191.5],[-380.9,-1197.8],[-389,-1203.8],[-395.6,-1211.4],[-400.3,-1220.3],[-402.9,-1230],[-403.3,-1240],[-401.5,-1250],[-397.5,-1259.2],[-391.6,-1267.3],[-384,-1273.9],[-375.1,-1278.7],[-365.4,-1281.4],[-354.5,-1283.1],[-343.5,-1284.8],[-332.6,-1286.6],[-321.6,-1288.3],[-310.7,-1290],[-299.7,-1291.8],[-285.6,-1293.3],[-276.1,-1294.1],[-266.7,-1295.6],[-257.5,-1297.7],[-243.5,-1300.7],[-232.6,-1302.4],[-221.6,-1304.1],[-210.7,-1305.9],[-199.7,-1307.6],[-188.8,-1309.3],[-177.8,-1311.1],[-171.3,-1313.8],[-166.7,-1319.2],[-165.1,-1326],[-166.7,-1332.9],[-171.3,-1338.3],[-177.8,-1341],[-188.8,-1342.7],[-199.7,-1344.5],[-210.7,-1346.2],[-221.6,-1347.9],[-232.6,-1349.7],[-243.5,-1351.4],[-257.5,-1354.3],[-266.7,-1356.5],[-276.1,-1358],[-285.6,-1358.8],[-299.7,-1360.3],[-310.7,-1362],[-321.6,-1363.8],[-332.6,-1365.5],[-343.5,-1367.2],[-354.5,-1369],[-365.4,-1370.7],[-371.9,-1373.4],[-376.5,-1378.8],[-378.2,-1385.7],[-376.5,-1392.5],[-371.9,-1397.9],[-365.4,-1400.6],[-353.7,-1402.5],[-342,-1404.3],[-330.2,-1406.2],[-318.5,-1408],[-306.8,-1409.9],[-295.1,-1411.8],[-283.3,-1413.6],[-271.6,-1415.5],[-262,-1418.3],[-253.4,-1423.3],[-246.3,-1430.4],[-241.1,-1439],[-238.3,-1448.6],[-237.9,-1458.6],[-239,-1470.5],[-240,-1482.5],[-241.1,-1494.4],[-242.1,-1506.4],[-243.1,-1518.3],[-243.1,-1528.8],[-241.3,-1539.1],[-237.7,-1549],[-232.5,-1558],[-225.8,-1567.6],[-219.1,-1577.2],[-212.4,-1586.7],[-205.7,-1596.3],[-199.1,-1605.8],[-192.3,-1615.4],[-187.2,-1624.6],[-183.8,-1634.6],[-182.4,-1645],[-183.1,-1655.6],[-185.7,-1665.8],[-190,-1677.6],[-194.3,-1689.3],[-198.5,-1701],[-202.8,-1712.8],[-207.1,-1721.5],[-213.2,-1729.2],[-220.8,-1735.3],[-229.5,-1739.6],[-238.9,-1742],[-250.5,-1743.7],[-262,-1745.3],[-273.6,-1746.9],[-285.1,-1748.5],[-296.7,-1750.1],[-308.2,-1751.8],[-315.6,-1753],[-322.9,-1754.6],[-332.7,-1756.7],[-342.6,-1758.1],[-352.6,-1758.8],[-360.1,-1759.3],[-367.6,-1760.1],[-379.1,-1761.7],[-390.6,-1763.3],[-402.2,-1765],[-413.8,-1766.6],[-425.3,-1768.2],[-436.9,-1769.8],[-443.5,-1772.5],[-448.2,-1777.9],[-449.9,-1784.8],[-448.2,-1791.8],[-443.5,-1797.2],[-436.9,-1799.8],[-425.3,-1801.5],[-413.8,-1803.1],[-402.2,-1804.7],[-390.6,-1806.3],[-379.1,-1808],[-367.6,-1809.6],[-360.1,-1810.4],[-352.6,-1810.9],[-342.6,-1811.6],[-332.7,-1813],[-322.9,-1815],[-315.6,-1816.7],[-308.2,-1817.9],[-296.7,-1819.5],[-285.1,-1821.2],[-273.6,-1822.8],[-262,-1824.4],[-250.5,-1826],[-238.9,-1827.7],[-232.3,-1830.3],[-227.6,-1835.7],[-225.9,-1842.7],[-227.6,-1849.6],[-232.3,-1855],[-238.9,-1857.7],[-250.5,-1859.3],[-262,-1860.9],[-273.6,-1862.5],[-285.1,-1864.1],[-296.7,-1865.8],[-308.2,-1867.4],[-315.6,-1868.6],[-322.9,-1870.3],[-332.7,-1872.3],[-342.6,-1873.7],[-352.6,-1874.4],[-360.1,-1874.9],[-367.6,-1875.7],[-379.1,-1877.3],[-390.6,-1879],[-402.2,-1880.6],[-413.8,-1882.2],[-425.3,-1883.8],[-436.9,-1885.5],[-443.5,-1888.1],[-448.2,-1893.5],[-449.9,-1900.5],[-448.2,-1907.4],[-443.5,-1912.8],[-436.9,-1915.5],[-425.3,-1917.1],[-413.8,-1918.7],[-402.2,-1920.3],[-390.6,-1922],[-379.1,-1923.6],[-367.6,-1925.2],[-360.1,-1926],[-352.6,-1926.5],[-342.6,-1927.2],[-332.7,-1928.6],[-322.9,-1930.7],[-315.6,-1932.3],[-308.2,-1933.5],[-296.7,-1935.2],[-285.1,-1936.8],[-273.6,-1938.4],[-262,-1940],[-250.5,-1941.7],[-238.9,-1943.3],[-232.3,-1945.9],[-227.6,-1951.3],[-225.9,-1958.3],[-227.6,-1965.2],[-232.3,-1970.6],[-238.9,-1973.3],[-251.3,-1975],[-263.7,-1976.8],[-276,-1978.5],[-288.4,-1980.2],[-300.8,-1982],[-313.2,-1983.7],[-325.6,-1985.5],[-337.9,-1987.2],[-348.2,-1990.1],[-357.4,-1995.6],[-364.8,-2003.3],[-369.9,-2012.8],[-372.3,-2023.2],[-371.9,-2033.9],[-369.9,-2045],[-368,-2056],[-366,-2067.1],[-364.1,-2078.2],[-362.1,-2089.3],[-360.1,-2100.4],[-358.2,-2111.4],[-356.2,-2122.5],[-355.2,-2133.2],[-355.8,-2143.8],[-358,-2154.3],[-361.7,-2164.3],[-366.9,-2175.4],[-372.1,-2186.4],[-377.2,-2197.5],[-382.4,-2208.6],[-387.6,-2219.7],[-392.7,-2230.8],[-397.9,-2241.8],[-403.1,-2252.9],[-408.2,-2264],[-412.1,-2273],[-415.3,-2282.3],[-418,-2291.7],[-420,-2301.3],[-421.4,-2311.1],[-422.1,-2320.8],[-422.2,-2330.7],[-421.7,-2340.5],[-420.7,-2352.1],[-419.7,-2363.7],[-418.7,-2375.3],[-417.6,-2387],[-416.6,-2398.6],[-415.6,-2410.2],[-414.6,-2421.8],[-413.6,-2433.4],[-412.6,-2445.1],[-411.5,-2456.7],[-410.5,-2468.3],[-409.5,-2479.9],[-409,-2490],[-409.3,-2500.1],[-410.4,-2510.1],[-412.2,-2520],[-414.8,-2529.8],[-418.2,-2539.3],[-422.3,-2548.5],[-427.1,-2557.4],[-432.5,-2565.9],[-439.3,-2575.5],[-446.1,-2585.2],[-452.9,-2594.9],[-459.6,-2604.6],[-466.4,-2614.3],[-473.2,-2623.9],[-480,-2633.6],[-486.8,-2643.3],[-493.5,-2653],[-500.3,-2662.7],[-507.1,-2672.3],[-512.3,-2680.4],[-516.7,-2689],[-520.4,-2697.8],[-523.2,-2707],[-525.3,-2716.3],[-526.6,-2725.9],[-527,-2735.5],[-527,-2746.7],[-527,-2758],[-527,-2769.2],[-527,-2780.5],[-527,-2791.7],[-527,-2803],[-527,-2814.2],[-527,-2825.5],[-527.5,-2834.9],[-529,-2844.2],[-531.4,-2853.3],[-534.8,-2862.1],[-539.1,-2870.5],[-544.8,-2880.4],[-550.5,-2890.3],[-556.2,-2900.2],[-561.9,-2910.1],[-567.6,-2920],[-573.3,-2929.9],[-579.1,-2939.8],[-582.9,-2948.5],[-584.9,-2957.9],[-584.8,-2967.5],[-582.7,-2976.9],[-578.6,-2985.6],[-572.8,-2993.2],[-565.5,-2999.5],[-557.1,-3004],[-547.8,-3006.7],[-536.1,-3008.8],[-524.4,-3010.8],[-512.7,-3012.9],[-501,-3015],[-489.2,-3017],[-476.6,-3018.6],[-468.1,-3019.5],[-459.8,-3021],[-451.5,-3023],[-439.1,-3025.9],[-427.4,-3027.9],[-415.6,-3030],[-403.9,-3032.1],[-392.2,-3034.2],[-380.5,-3036.2],[-373.7,-3039.2],[-368.9,-3044.9],[-367.2,-3052.1],[-368.9,-3059.4],[-373.7,-3065.1],[-380.5,-3068],[-392.5,-3070.1],[-404.4,-3072.2],[-416.4,-3074.3],[-428.3,-3076.4],[-440.3,-3078.6],[-452.3,-3080.7],[-464.2,-3082.8],[-474,-3085.6],[-483,-3090.3],[-490.9,-3096.7],[-497.4,-3104.6],[-502.1,-3113.6],[-504.8,-3123.4],[-506.8,-3134.7],[-508.8,-3145.9],[-510.8,-3157.2],[-512.8,-3168.4],[-514.8,-3179.7],[-516.7,-3190.9],[-518.7,-3202.2],[-521,-3215.3],[-523.4,-3228.4],[-525.7,-3241.6],[-528.9,-3252.1],[-534.5,-3261.5],[-542.3,-3269.3],[-551.8,-3275],[-562.3,-3278.2],[-575.2,-3280.4],[-588.1,-3282.7],[-601,-3285],[-614,-3287.3],[-624.9,-3289.8],[-635.9,-3292.3],[-647.1,-3293.7],[-658.2,-3295.1],[-671.1,-3297.4],[-684.1,-3299.7],[-697,-3301.9],[-709.9,-3304.2],[-715.9,-3306.8],[-720.1,-3311.8],[-721.6,-3318.1],[-720.1,-3324.5],[-715.9,-3329.4],[-709.9,-3332],[-697,-3334.3],[-684.1,-3336.6],[-671.1,-3338.9],[-658.2,-3341.2],[-647.1,-3342.5],[-635.9,-3343.9],[-624.9,-3346.4],[-614,-3348.9],[-601,-3351.2],[-588.1,-3353.5],[-575.2,-3355.8],[-562.3,-3358.1],[-556.3,-3360.7],[-552.1,-3365.6],[-550.6,-3372],[-552.1,-3378.3],[-556.3,-3383.3],[-562.3,-3385.9],[-575.2,-3388.2],[-588.1,-3390.4],[-601,-3392.7],[-614,-3395],[-624.9,-3397.5],[-635.9,-3400.1],[-647.1,-3401.4],[-658.2,-3402.8],[-671.1,-3405.1],[-684.1,-3407.4],[-697,-3409.7],[-709.9,-3411.9],[-715.9,-3414.5],[-720.1,-3419.5],[-721.6,-3425.8],[-720.1,-3432.2],[-715.9,-3437.2],[-709.9,-3439.8],[-697.6,-3441.9],[-685.3,-3444.1],[-673,-3446.3],[-660.7,-3448.4],[-648.4,-3450.6],[-636.1,-3452.8],[-626.6,-3455.5],[-618,-3460.3],[-610.6,-3466.7],[-604.9,-3474.6],[-598.9,-3485],[-592.9,-3495.4],[-586.9,-3505.8],[-580.9,-3516.2],[-574.9,-3526.6],[-570.8,-3535.1],[-568.1,-3544.1],[-566.9,-3553.5],[-567.1,-3562.9],[-568.9,-3572.2],[-572.1,-3584.3],[-575.3,-3596.3],[-578.5,-3608.4],[-581.8,-3620.5],[-583.1,-3630.8],[-581.8,-3641.2],[-577.8,-3650.9],[-571.4,-3659.2],[-562.6,-3668.1],[-553.7,-3676.9],[-544.9,-3685.7],[-536,-3694.6],[-527.6,-3703.1],[-519.1,-3711.6],[-510.6,-3720],[-502.1,-3728.5],[-493.6,-3737],[-487.6,-3745.6],[-484.9,-3755.7],[-483.8,-3768.2],[-482.7,-3780.6]],
   };
   // Nürburgring Nordschleife (Eifel, Germany), the real 20.8 km "Green Hell": one lap, clockwise, from the T13 start/finish line.
@@ -658,7 +708,41 @@ const Core = (function () {
     elev: NRING_H.map((h, i) => [i / NRING_H.length, h / 10]),
     bumps: [{ at: 0.12405, h: 0.7, w: 9 }, { at: 0.73068, h: 0.9, w: 8 }],   // the Flugplatz crest and the jump at Pflanzgarten
     bank: [[11962, 12108, 0.28]],   // the Karussell: the road banked into the bend (metres after the start line, slope), the inside a concrete bowl
-    names: [['Hatzenbach',-650.3,-26.2],['Hocheichen',-1214.1,-283.8],['Quiddelbacher Höhe',-1676.5,-751.3],['Flugplatz',-1771.7,-971.9],['Schwedenkreuz',-1909.1,-2004.4],['Aremberg',-2169.5,-2179.5],['Fuchsröhre',-1586.1,-2665.3],['Adenauer Forst',-1376.8,-3182.4],['Metzgesfeld',-937.7,-3804.6],['Kallenhard',-1186.9,-3998.8],['Wehrseifen',-526,-4252.5],['Breidscheid',-63.8,-4300],['Ex-Mühle',-15.3,-4481.1],['Bergwerk',694.8,-4764.4],['Kesselchen',1421.7,-4044.9],['Klostertal',2412.9,-4016.4],['Karussell',2502.1,-3739.8],['Hohe Acht',3153.9,-4321.1],['Wippermann',3656,-4096.6],['Eschbach',3698.2,-3750.3],['Brünnchen',3882,-3588.9],['Eiskurve',3628,-3424],['Pflanzgarten',3471.9,-3043.7],['Stefan-Bellof-S',2977.4,-2403.5],['Schwalbenschwanz',2382.7,-2327.2],['Kleines Karussell',2160.4,-2195.5],['Galgenkopf',2506.2,-1949.3],['Döttinger Höhe',2201.2,-1581.1],['Antoniusbuche',685.7,-651.4],['Tiergarten',367.6,-306.9],['Hohenrain',168.4,-32.4]],
+    // corner names ([HUD label, x, z, the commentator's lines]; the German names stay on the HUD, the voice gets English where it would
+    // stumble: the Foxhole, the old mill, the Swedish Cross)
+    names: [
+      ['Hatzenbach', -650.3, -26.2, ['Into the Hatzenbach esses!', 'Hatzenbach, left and right through the trees!', 'Weaving through Hatzenbach!']],
+      ['Hocheichen', -1214.1, -283.8, ['Hocheichen, a quick right!', 'Through Hocheichen, keep it tidy!']],
+      ['Quiddelbacher Höhe', -1676.5, -751.3, ['Flat out over the Quiddelbach crest!', 'Up the hill past Quiddelbach!']],
+      ['Flugplatz', -1771.7, -971.9, ['Over the Flugplatz, and the car goes light!', 'Flugplatz! Airborne over the crest!', 'The old airfield, the Flugplatz!']],
+      ['Schwedenkreuz', -1909.1, -2004.4, ['Schwedenkreuz, flat out downhill!', 'Past the Swedish Cross, full throttle!']],
+      ['Aremberg', -2169.5, -2179.5, ['Hard on the brakes for Aremberg!', 'Aremberg, tight right at the bottom!']],
+      ['Fuchsröhre', -1586.1, -2665.3, ['Down into the Foxhole, flat out!', 'The Foxhole, the fastest part of the lap!', 'Down the Foxhole and up the other side!']],
+      ['Adenauer Forst', -1376.8, -3182.4, ['Adenauer Forst, a tight chicane in the trees!', 'Through Adenauer Forst, mind the kerbs!']],
+      ['Metzgesfeld', -937.7, -3804.6, ['Metzgesfeld, a long fast left!', 'Sweeping through Metzgesfeld!']],
+      ['Kallenhard', -1186.9, -3998.8, ['Kallenhard, right into the woods!', 'Through Kallenhard!']],
+      ['Wehrseifen', -526, -4252.5, ['Steeply down into Wehrseifen!', 'Wehrseifen, a slow one, brake early!']],
+      ['Breidscheid', -63.8, -4300, ['Down to Breidscheid, the lowest point of the lap.', 'Breidscheid, and now the long climb begins.', 'Over the bridge at Breidscheid!']],
+      ['Ex-Mühle', -15.3, -4481.1, ['Round the old mill corner, and up the hill!', 'Past the old mill, climbing again!']],
+      ['Bergwerk', 694.8, -4764.4, ['Bergwerk, the old mine, tight right!', 'Near Bergwerk, where Niki Lauda crashed in 1976.']],
+      ['Kesselchen', 1421.7, -4044.9, ['Up through Kesselchen, the long climb!', 'Kesselchen, flat out up the valley!']],
+      ['Klostertal', 2412.9, -4016.4, ['Klostertal, the monastery valley!', 'Through Klostertal, now up to the Karussell!']],
+      ['Karussell', 2502.1, -3739.8, ['Into the Karussell! Dive into the concrete!', 'Round the famous Karussell!']],
+      ['Hohe Acht', 3153.9, -4321.1, ['Hohe Acht, the highest point of the circuit!', 'Up at Hohe Acht, over six hundred metres high.']],
+      ['Wippermann', 3656, -4096.6, ['Twisting through Wippermann!', 'Wippermann, keep it tidy through here!']],
+      ['Eschbach', 3698.2, -3750.3, ['Eschbach, keep it on the road!', 'Down through Eschbach!']],
+      ['Brünnchen', 3882, -3588.9, ['Brunnchen! The fans are packed in here!', 'Past the crowds at Brunnchen!']],
+      ['Eiskurve', 3628, -3424, ['The Eiskurve, the ice corner!', 'Careful through the Eiskurve!']],
+      ['Pflanzgarten', 3471.9, -3043.7, ['Pflanzgarten! Hold on for the jump!', 'Over the Pflanzgarten jump!']],
+      ['Stefan-Bellof-S', 2977.4, -2403.5, ['The Stefan Bellof S, flat out!', 'Through the Bellof S, named after a lap record legend!']],
+      ['Schwalbenschwanz', 2382.7, -2327.2, ["Schwalbenschwanz, the swallow's tail!", 'Round the Swallow Tail!']],
+      ['Kleines Karussell', 2160.4, -2195.5, ['The little Karussell, into the concrete again!', 'Round the little Karussell!']],
+      ['Galgenkopf', 2506.2, -1949.3, ['Galgenkopf, get a good exit!', 'Round Galgenkopf, onto the long straight!']],
+      ['Döttinger Höhe', 2201.2, -1581.1, ['Onto the Döttinger Höhe, the long straight home!', 'Flat out down the Döttinger Höhe!']],
+      ['Antoniusbuche', 685.7, -651.4, ['Under the bridge at Antoniusbuche!', 'Antoniusbuche, still flat out!']],
+      ['Tiergarten', 367.6, -306.9, ['Tiergarten, nearly home!', 'Down through Tiergarten, flat out!']],
+      ['Hohenrain', 168.4, -32.4, ['The Hohenrain chicane, nearly at the line!', 'Through the Hohenrain chicane to the line!']],
+    ],
     brO: [[-1472.5,-539.3],[-48.3,-4326.8],[2292.1,-1635.6],[-128.8,-125.7],[48.6,-0.7]], brU: [[-2092.9,-2297.2],[661.1,-636]],
     bld: [[3016,-2403.8,4.1,3.7,-2,0,0],[759.5,-4745.3,8.1,6,2.5,0,0],[-1570.9,-575.4,31.7,13.9,-0.5,0,0],[1056.4,-915.2,13.6,7.5,-0.6,0,0],[-57.4,-4436.7,21.4,12.5,-2.3,0,0],[-23.4,-61.6,115.3,20.6,-2.4,0,2],[1.7,-4344,13.6,13.3,2.3,0,0],[-66.8,-4474.5,10.5,9.8,-0.4,0,0],[-20.6,-4283.3,15.6,12.3,0.7,0,0],[1095.3,-958.3,17.2,15.7,1,0,0],[-75.6,-4469.8,9.4,9.4,-0.4,0,0],[-114.7,-4334.7,9.5,6.6,-2.7,0,0],[1109.5,-975.3,10.9,10.8,0.2,0,0],[-80,-4422.5,38.5,14.6,-0.7,0,0],[-83.2,-4484.1,21.9,9.1,-0.7,0,0],[-103.3,-4346.7,20.8,10.4,0.7,0,0],[-75.2,-153.2,17.4,11.6,0.6,0,0],[-90.1,-4441,12.8,8,-1.9,0,0],[953.3,-893,8.8,8.5,0,0,0],[2174,-1488.2,49.4,27.2,2.9,0,1],[21.4,-4309.3,7.7,7.4,0.2,0,0],[-3.7,-4262.6,10.6,7.9,-2.4,0,0],[-133.3,-4359.8,13.9,11.9,-1.1,0,0],[921.7,-881.9,19.8,9.3,-1.2,0,0],[-8.5,-98.2,14.7,13.8,0.1,0,0],[-103.1,-4447.7,24.3,19.7,-0.3,0,0],[936.6,-895.8,9.4,8.3,-1.6,0,0],[1947.6,-1334.4,37.7,24.9,1.2,0,1],[-80.8,-4521.2,8.2,7.6,-1.3,0,0],[950.9,-907.7,7.6,5.4,1.5,0,0],[1444.6,-1028.8,32,28.6,0.3,0,0],[1767.5,-1223.6,41.5,38.2,1.2,0,1],[1991.1,-1357.2,40.6,38.2,-0.4,0,1],[-28.7,-129.8,15.8,10.6,0.6,0,0],[-186,-4386.1,58,33.3,-2.6,0,0],[9.4,-4260,8.5,7.6,-0.7,0,0],[1914.9,-1309.6,39.5,29.1,-1.9,0,1],[50.6,-4335.1,29,11.7,-2.2,0,0],[-82.1,-4533.8,12.7,10.6,-1.3,0,0],[-95.5,-4517.2,7.8,7.8,1,0,0],[935.5,-907.9,14.9,6.3,1.6,0,0],[903.6,-891.8,19.2,17.5,0,0,0],[1847.1,-1263.6,46.1,34.6,1.2,0,1],[-126.9,-250.1,21,9.8,1.1,0,0],[938,-919.6,11.7,8.4,3.1,0,0],[-93.5,-230.3,11.2,11.1,2.3,0,0],[-2.4,108.3,84.1,46.3,-0.8,0,0],[-129.8,-4387.6,11.4,7.9,-1.1,0,0],[1437.9,-1002.5,14.5,11.6,0.3,0,0],[-104.6,-4531.1,19.1,18.8,-2.1,0,0],[-106.5,-246.5,12.8,11.9,-0.4,0,0],[34,-4265.7,13.7,12,0.9,0,0],[127.7,-158.5,13.7,11.3,0.1,0,0],[907.4,-911,20.7,9.8,-1.6,0,0],[-53.8,-196.9,15.2,11.5,-1,0,0],[1476.7,-1020.5,23.9,7.3,1.9,0,0],[-30.6,-166.4,10.7,9.7,1.9,0,0],[-74.1,-226.6,10,9.7,-0.8,0,0],[47.1,-4276.3,21.7,11.4,2.5,0,0],[1813.8,-1220,14.7,12.3,-0.4,0,0],[-117.1,-263.7,14.7,9,0.9,0,0],[-155.1,-277.6,8.8,7.8,-3.1,0,0],[68.4,-4309.7,18.4,12.4,0.9,0,0],[-47.8,-206.2,11.5,7.1,0.6,0,0],[-127.4,-4520,18,17.5,-2.1,0,0],[1438.1,-984.1,15.7,9.8,1.9,0,0],[1642.6,-1110.3,9.7,7.9,-0.4,0,0],[-136.7,-279.4,9.4,7.6,0.4,0,0],[1,-148.3,21,11.1,0.1,0,0],[1071.4,-1030,8,5.2,2.4,0,0],[-266.5,-4428.8,40.8,28.3,0.7,5.5,1],[18,-4213,10.3,9.4,-0.2,0,0],[21.3,131.9,84.4,53.4,-0.8,0,0],[-455.5,-4420.7,9.7,7.2,1.6,0,0],[2068.5,-1357.6,60.7,55.7,1.2,0,1],[1496.1,-1010.1,12,8.4,-1.3,0,0],[-25.4,-196.5,13.6,12,-1.2,0,0],[-155.4,-4435,64.8,27.9,0.9,0,0],[1532.4,-1026.3,11.6,8.8,1.9,0,0],[49.1,-4233.9,9.8,9.1,2.8,0,0],[2132.2,-1377.8,54.5,23.5,1.2,0,0],[12.3,-160.6,15.9,10.8,1.7,0,0],[29.6,-4207.1,8.7,8.1,1.5,0,0],[1513,-1008.1,10.7,7.4,-1.3,0,0],[1634.4,-1079.8,8.9,8.1,2.8,0,0],[106.7,-193.5,33.3,14.6,-1.6,0,0],[60.3,-4235.2,14.2,7.5,-1.9,0,0],[1463.2,-970.1,14.1,11.7,0.2,0,0],[1779.1,-1162.3,36.4,22.8,-0.4,0,1],[-149.7,62,19.7,17.7,-0.1,0,0],[-494,-4435.1,11.6,6,-1.8,0,0],[1530.3,-1008,11.9,10.4,0.3,0,0],[2205.9,-1411.6,57.8,48,0,0,1],[-95,-4594.5,47.9,29.4,-2.1,0,0],[-505.5,-4440.2,12.1,10.2,1.5,0,0],[35.5,-4189.5,14.2,11.4,3,0,0],[1604.1,-1046.3,7.8,6.6,2.6,0,0],[88.5,-190.5,7,6.6,0,0,0],[1827.6,-1181.6,35.6,17.4,-0.4,0,1],[-285.1,-4460.6,25.3,15.1,2.5,0,0],[-317.3,-4461.3,25.7,15.4,0.9,0,0],[1873.2,-1197.4,26,23.4,2.8,0,1],[-513.4,-4450.1,11.5,6.7,3.1,0,0],[-26,-4135.5,8.2,6.8,1.4,0,0],[-299.3,-4472.9,24.8,20.8,-0.7,0,0],[2324.7,-1465.1,59.2,38.5,-1.9,0,1],[81,-4215,11.2,9.2,0,0,0],[1411.6,-907.8,8.1,7.2,-1.3,0,0],[1935.5,-1224,59.9,23.7,2.8,0,1],[72.8,-201,17.2,17.2,1.4,0,0],[1533.5,-978.1,12,9.1,0.2,0,0],[2270.9,-1420.2,27.5,23,-3,0,0],[59.7,-4179.4,9.1,8.5,0.2,0,0],[-148.9,-4591.3,33.2,18.5,-0.3,0,0],[69.9,-4187.9,9.3,8.4,-1.4,0,0],[1411.5,-897,12.5,11,1.9,0,0],[-31.8,-280.8,23.9,10.6,-0.7,0,0],[10.5,-239.5,15.3,7.7,-1.5,0,0],[41.3,-4149.5,13.8,6.2,0.1,0,0],[1366,-861.4,10.6,9.1,1.9,0,0],[-477.7,241.9,107.6,25.5,-0.3,0,2],[-2.2,195.2,19.3,14,0.7,0,0],[23.4,-234,17.9,11.3,-1.4,0,0],[-195.8,148.8,16.4,7,2.2,0,0],[92,-4189.4,13.6,11.4,1.8,0,0],[1487.4,-926.9,14.1,9.5,-1.3,0,0],[1614.2,-1005.6,7.4,6.9,-1.2,0,0],[-214.1,165,17.4,9.1,-0.8,0,0]],
     lc: { x0: -2592, z0: -5168, nx: 431, nz: 352, cell: 16, rle: 'P______lP______lP______lP__9f___XP__3f___dP__1f___fP__zf___hP__xf___jP__vf___lP__uf___mP__tfSP___FP__rfTBf___EP__qfSEf___DP__ofRGf___EP__jfTHRAf___DP__efVJRBf___DP__afXLQCf___DP__XfXMSDf___CP__UfYMRFf___DP__RfYCgJSDf___GP__PfYBhKSCf___IP__NfYAhMSBf___KP__LfYPBRDf___KP__JfYAhCRLSBRBf___GP_b_bfXBgGYBUBSCf___EP_W_ffUCjGTGUBUCf___CP_U_gfQEjJSBTCTAXBf___BP_R_jfLDjOSAWATBZCf__9P_Q_lfIBiFTIRBYASBbCf__7P_O_CR_TfFAxgGgXAWBZASBdP__8P_N_CcAR_FfDBiEjfAAbASAf___MP_M_CXI_FfACgKgeBcASAf___MP_K7C0YH_FaEgIgDgdBdASAf___MP_J8ExVBRG_HWxAiFhEgCbCfAASAf___MP_J8GUL1R_AS0CgCiHjWDfDAf___QP_I3gyISN0TxC_DCgPASDfHBRAf___NP_H3jIUNzUD_DAwgIVEfLASAf___NP_G3jKUMzQATD_EGVCfQASAf___NP_G3gPRyQBSF_CEUCfTASAf___NP_F4PSyQCSF_ADTCfKCYASAf___NP_E6PQ0DSF-BSCfNEWASAf___NP_E6PQ0QDSD_AARCfOHUASBf___MP_D6PSzQERC_BQCfSFUARCf___MP_D5QPTzFRA_CQAfYBUARCf___MP_C5ROVIQDzGR_CQAfZAUARCf___MP_C5SKaFQFyGS_BQAfZAUARCf___MP_B5UHSHSCRHxHS_BAffARCf___MP_A5WCQCRBUDRAQJgwIT-BfeARCf___MP96XBQCRBXCSERBgLT9BfGBfGARDf___LP78ZCRBaCRBTBgLV7AxfFDfEBQDf__CCf1P68ZCRBcCXhLVB4AgyfEFfDARCf_7CRDf1P_BQ0aBSAfABWhMTE2AgzfFHeARCf_6Kf0P_ATxbBRBfBCWJYFyB1fGFeARCf_6Kf0P3QGfGAfEBUBUPH3fGEeBRBf_6NVCfoP2RGfFAfGBVPM4fGDfAARCf_8CUGQFfmP1RHfFAfHBRAQERPFg4fIBfABf__ACXLfmP0SGfFBfHBSCVPG3fICfAAf_-DZKflP0SFfGBfIBQDVPH2fJCeBf_8DeIbBfVPzTEfHBfIGUPI3fIDeBf_8CfCFaCfVPzTDfIAfLEUPJ2fIDTBYBf_8BfFDaDfUPyTEfHBfNBWPI2fIKYBf_7BfGDYDfVPyTDfHBfOAZPH1fIKZCf_5BfHCUEfYPxVCfGBfdPE3fGIcCf_4BfICRFfZPxfNCfgPB4fGCfFBf_3BfJJWBfQPxfMBflK8fGBfGCf_1BfKISGfPPxfKBfpHQ8fgDf_yAfMPDfOPwfJCfz8fiDf_bATAeAfOPCfNPwfHCfzA-fkCf_WIeAfTNfMPwfGCfsAUC-fmDf_QKeAfWLfMPwfFCfsBTE9fpPCf3ISFRDQAVBfXBfVPwfFCfrCTCRA_TfWAdMfjKWLRAVAfYCfUPwfGBfqCTCSD_QfuGfgDdLQDSAfaCfTPwfGCfoDSBUE_QfzDfcBfBPBRBfbCfSPwfICflESBUE_Rf0EfYAfDPARBfdCfRP2fDCfjFSBVE_Rf2EfTBfEORAfgCfQP2fECflCSBVPXf3DfRBfDORCfgEfOP2fGCfpBVPYf4DfOBfDMTCfhHfLP2fHLTBf__VCfLCfDPCfkHfLP2fNFTCf__VCfJBfFOfmJfKP2fOFSDf__VDfGBfFKfrEfPP3fOETDf__WCfDCfFHfvEfPP3fOFTCf__XHaCfGFfxEfQP2fPGf__fGXCfGFfzDfRP2fQFf__hFVBfGFf1CfSP2fQFf__iLfFGf1DfSP2fQFf__lDfJGf2DfSP3fPGTBf__7Ff3DfKHP3fNBQFRCf__8Ef3DfKIP4fLCQBQHUBf__1Ef3EfJIP5eNQCREYAf__0Cf4EfIJP7ZPBQBSEf____MKfBJP7ZPERGf____MKeKP6aPDSGf____NKdKP5bDRLTHf____NKbLP5bDQMTHf____QIaLP5bDQLRLf____QIYMP5aDRKRLf____SEzBUNP6XFRKQLRAf____RE2PBP6WFTIRKRAf__PBf_xD5NP6WEVGRNf__QJf_pD4OPyQGVEXERNf__QLf_pC4OPwSHUDSCTCRNf__RLf_pC3PAPvTHTDgRESBRNf__VFf_sC2PBPuUISgBhQJROf__ZAf_tBUyPBPtUJjQiQIRPAf____XCWPCPsVKgSiIRPAf__dDf_mCWPCPrWKUgISMf____bCVPDPqXKTJSMf____bDUPEPqYJRKTMf____OBZETPFPpZPGUMf____MPDSAQPEPobPEVMf____LCYIQASPDPobPDUOf____LBZGQBVPBPncPCTPBf____KBcCRBXPAPncPBRBQPBf____KBfBBaNPncPARASPCf____IBfBBbNPmdLgBTAQPDf____IBfABdMPmeJgATPHf____HBfABeMPmeHgBRPKf____HAfABfBLPmfAFgBRDQLQHf____HAfABfDKPmeEgCREREXFf____HAfABfEKPleDRDREfAEf____GBeBfGJPldDTCREfBCf____HAeBfHJPldDTCREfCAf____HBbDfSPkfACTBREf____aBbDfTPkfHCQEf____aBbBfVPjfICQAf____dCaBfWPjfICf____fBaDfVPjfHCf____gBZHfSPifHDf____hARBUKfQPifHCf____iARAVJfRPifGCf____jBQBQBQKfRPifFBf____lBQDQLfRPifFBf____lPDfSPifFAf____mFQMfRPifFAf____mEQPfPifFAf____mEQPfPifFAf____mDQPgPhfGAf____mDQPgPhfGAf____mCQPhPhfGAf____mCQPhPgfHAf____mBQPiPffIAf____mBQPiPdfKAf____mPlPdfJAf____nDxPfPefIAf____mDzPePaQCfHAf____nBQAyPfPZfMAf____mEwPhPYf_____CEQBwPhPZfLAf____hGRPkPWf____-GTPkPVfCCYAf____eFVPlPUfBFf____mCZPlPSdKWAf____dCaAQPjPRbMWAf____dBcASPhPQaNWAf____DAfJBcBUPfPPXPBWAf____EAfIBdBWPdPNYPCVAf____FAfHCdAZPbPLaPBVAf____dCeAYPcPJcPAVAf____eBfAAYPcPGfANVBf___dAfvCeBYPcPEfCNUBf___dBfvBfAAZPcPCfEMUBf___cDfuCfAAZPcPAfFNTBf___cEfuBfLPdNfGNTBf___bGftCfAAZPdPAfENTAf___bGfuBfBAZPdPDfBMTAf___aIftCfBAXPfPCfBNSAf___aJftBfBAXPgPAfCNSAf___aKfsBfCAUPjNfENQBf___aLfrCfBBTPkMfDNhAf___bLfrCfCBRPmMfCNgBf___bMfqCfDAQPoGfBPCRgAf___dIfsDfEAQPoGfCLVgAf___dGfGCfUEfFPqFcCSJXAf___dFfJAfUDfHPqFYPCYAf___eDfvDfHPrEWPEWCf___eCfvDfJPrEUPEWBf___hAfNCfPEfKPrESPHTBf____AGfIHfMPrDSPFiQCf____BISkRhXIfNPsDQPGhCf____CHgErRKfOPsPKgCQAf____BDjBiCnFhHfOPsPIgDf____DCgChCiMhMfMPsPIgCf____CChDgGgIhPDfIPtPIgBf___4CVCgPBkPLf_CPLf___4DTChPkf-PIgCf___3DTCgPof7PIgDf___3DSCgPsf3PJgDf___4IgIhPjf0DRPEhDf___4HgGiP_oDUPDhDf___5NhP_oDRCQPFgDf___5LhEYP_aEQCRPGgDf___4KgFaP_YEQPNgCf___4JgEdP_WEQPOhCf___4IfMP_NPWgCf___3Kf_nPXgBf___4CSFf_lPYgBf___3BXDf_jGQPRgBf____DBf_jHWPKgBf____EBf_iIbPFgBf____EAf_iIfDNhAf____EBf_hJfDNgBf____EAf_hKfJGhAf___fAfTBf_gLfIHgBaGf___NAfSBf_gMfGIgBYIf___OAfSAf_gOfEJgAWKf___xAf_gPAfDJgBVKf___xBf_fPCfBKgATNf___OAfRBf_fPegBRCQKf___MCfRBf_fPegBQEQKf___LDfQAf_gPfgARDQLf___LCfQAf_gPfgBQEQKf___LDfOBf_gPggAREQIf___PBfMBf_hPggBQEQHf___SBSCfEAf_iPjQMf___XFfACfGP_MPhgARLf___YGbCfGP_OPkhJf___aIWDfEDf_NPigAhJf___JAWBXDYDfDDf_QPigBgJf___IESEVCSBTCfBEf_TPjgLf___IgNTBRBQBQCeFf_WPwf___FDhLjSBSCdESAf_WPkgKf__4FVPJTCbEf_dPkQKf__2LRPISCRAWHf_ePkQAQGf__2OSJgJRCTKgDf_ePlQAQGf__0PAUPCRBVGhHf_dPlQAQGf__0HRGXMgCUEjwIf_dPlQARJf__wGSPKhBTEjzIf_dPnSJRCf__lATGTPHhHxk2Hf_dPoRPAf__iAQATFQBQPHgCgC0i4If_cPSTPAQASPAf__fCSAaPKgB_FHf_cPRUPAQASPBQP__eRAQAaPJgB_HHf_cPRUMTASP__vSBXPP_IHf_cPSTJWATP__saPOgB_NEf_cPSTJWATP__rYPPgC_Qjf_bPfXBSP__sXPR_Tv_ePfXCQNf__XIXPLgC_UAv_dPfXCQFf__eIZPIgC_UP_gPeYCQFf__cKaPJ_TP_jPcaCQFf__bKePBgC_SP_lPZdCQFf__bJfBNgD_QP_oPVXDVCQFf__bJfBPB_RP_pPTTJVBRFf__bIfDJgD_SP_pPSRLWBRGf__ZIVBaIgD_TP_qPSSKWBRGf__XKQHQPAhC___QPSSKWJf__WPWgD___RPTSJWAQGf__VPWgCg___TPVQJWAQFf__UPWhBhA___TPRQNWAQBf__WPXgCiB___SPRQNWAQBf__VPWgDiC_AF__7PgWAQBf__WPUgDhE6K__7PQRNVDf__YEyPJgChGg2gN__7PQRNVDf__YC1PGhBjDjziO__7PPULVAQBf__YA4PEgBgAjAgwgChwiPB__7PPULVAQBf__YAgA3PBgEgDgxDjP__PPPSNUBQAf__YCh1PAgHgByEhP__RPOSOUAQAf__YEhAxAYGgJgAzP__XPOUMUAQAf__XHgAZFgFzCyP__ZPOULUAQAf__XJwYFgCyAzCyP__ZPOTMUAQAf__WJxWFgE4AyP__aPOTLUBf__YJwQLgG3AyP__aPNTMUAQAf__CCfBL1hCgI2BzP__ZPNTMUAQAf__BDfAL2gBhJ8P__ZPNSMUDf_-IbKg2CgL9P__YPNVJUCf_-IxBXK3BgO6AwP__YPNZEVBf_9J0CRLh1BhPA6P__aPOYEVBf_7NxRG2D0BgPB5P__cPOXFVBf_6DwKTF2DyBhPB6P__cPPWFVBf_5wCyIVE2DwCgPC7P__cPPVHVAaBcP_d5GXC2GhPB9P__cPOQAVGVBYDaP_d7FYB1CgCgPD-P__bPORAVGVAXEaCf_Z9EZA0BgCgPD1D3P__aPORAUHVBUGaDf_XxA7Ea0AgCgPE0E___iPOSATIVBTGaEf_VC7FfACgPG0D___jPPVKVBTFbDf_UC6HeBhPIzDzP__fPPSARKWBSGZFf_TB6IcCgLjPDwP__hPPTAQLWATFZFf_SB6KZChLjP__2PPWLWASFYHTP_O6MXCgNiP__3PQTAQNUBSEYGVP_M6NVCgBXDjP__4PQUAQMVBRDYFYP_K6NVBhBRP___IPRWKVAQBRCYDbP_I6NUCgBTP___IPRUARIVCQARDWEf_SA6NUBgBVP___IPSWHVEQARChUDf_SA6OSCgBWP___IPSUARFVGQAQCiSDfDP-7RPCgCwWP___IPTTATDUOjQCfDBf87TLgBhCyVP___IPUSAbCjCQGjAfEAf88UJgBgD0UP___IPVRAbBlBRFhAgASBeAf89UJgE1UP___IPWQAbiEgRGgBgHbAf8_AUEgBgD3UP___IPXahIQDQEhIaAf7_CTCiAgF7P___IPXYhJREQFpZAf6_EGgAgG7P___IPYVgMRJQNVAf6_CIgAgHR____SPZRAhNRDUAgdFf7-PHV____OPbQOTAXBf_O8PKV____OPaSMTAaAgf_L7PMX____MPbTJTAcBgf_J4PPbF____CPcTISAeBgf_H5PCgKbP___JPdUFTAfBBgf_D6PCgLbP___JPeUDUAfCBhf_B6PJQEaP___KPnUAfEBgf_A6IRASGTDbP___KPmVAfFBgf88IUBgBWDaP___LPmVAfHAf87JTBgCXBbP___LPhkVAfHBf76JTFYBaP___MPikUAfHEf46HUCgBaAaP___MPjkTAfIGf15GRBSBgCfGP___NPkjTAfIIfy6ESCRBgCf___kPmiSAfIKfnzU5DTDREfHP___OPniQAfKNfj0S6BUDRBgAxf___lPohBfLNfj0R5CUDQBgByf___kPrfPLfj_ABVDQD0f___jPrfUGfk_AAVCQBgA2f___iPtfUFfl9JQC3f___iPufUFfaEV7JQD3f___iPwfSGfTLT-JgA4f___iPxfSEfUNQ_AIgA6f___hP4fMEfTNQ_AHgB6f___hP5fMDfUIiA_BCRBgB7f___hP5fOCbBfFHgyBxB8SCgA8f___hP6fNCZBfGHgzG7RCgA4f___mP5fPCYAfIFQzI6QF4f___mP4fQCXBfJEQyK3RI1f___nP3fRESMfBDRwBQLzREgAzBzf___nP2fUPDfBDRAQNxRFgA1Byf___nP3fUFUHfACQAQPBQGgB3Awf___oP5fUBcERBVEQAQPEg0gA5Af___oP6fkPBQPG1gA7Af___nP7flMRPFwB0B8f___nP9fVxdITPFxAzC7f___oP_AfS1BUBTESAQPGxAyD4f___rP_DfH8AZAYPKxAwC4f___tP_GfD8BRwQ1RCQCQPHwCwD3T1f___lP_HfB8BQ9ASPIyBQD4R4f___jP_Ie9AQ4XPJ1QD1A____wP_Id9AQ5PSzAQDzD____vP_Jb9AR0PYxAQEyF____uP_KZ-AQPgQFxH____tP_LY9AQPgQEyBwF____tP_MY7AQPm3I____pP_NY5AQPlQB2B2A____oP_OTAwAS3AQPcxGRA_AA____oP_QzV0AQPcyDxARA9f___rP_RyVzAQPdxC0AQB5f___uP_SxVyAQPewC2AQA2f___xP_UVxAQPi3AQA1f___yP_WUARPh5QB0f___yP_bRPh6QB____3P__P6f___6P__U_____BP______lP______lP______lP______lP______lP______l' },
@@ -753,8 +837,14 @@ const Core = (function () {
         this.finishIdx = this.startIdx; this.finishS = this.startS; this.raceLen = len; this.cpS = []; this.hStart = 0; this.hFinish = 0;
       }
       this.cpDist = this.cpS.map(s => s - this.startS);   // metres from the start line
-      // named corners (def.names = [[name, x, z], ...]): distance from the start line, in lap order (HUD, commentary)
-      this.names = (def.names || []).map(([n, x, z]) => { let d = this.nearestIdx(x, z) * ds - this.startS; if (!open) d = ((d % len) + len) % len; return { n, d }; }).sort((a, b) => a.d - b.d);
+      // named places (def.names = [[name, x, z, lines?], ...] snapped to the centre line, or { n, d, say? } with d = metres after the
+      // start line, for scaled roads): { n, d, say } in lap order (HUD label, commentator lines or null). Open roads keep only the run.
+      this.names = (def.names || []).map((e) => {
+        const arr = Array.isArray(e), n = arr ? e[0] : e.n, say = arr ? e[3] : e.say;
+        let d = !arr && e.d != null ? +e.d : this.nearestIdx(arr ? e[1] : e.x, arr ? e[2] : e.z) * ds - this.startS;
+        if (!open) d = ((d % len) + len) % len;
+        return { n, d, say: Array.isArray(say) && say.length ? say : null };
+      }).filter(q => !open || (q.d >= 0 && q.d <= this.raceLen)).sort((a, b) => a.d - b.d);
       // banked corners (def.bank = [[from, to, slope], ...], metres after the start line; closed circuits): the road surface tilts across
       // its width towards the inside of the bend (slope = height lost per metre towards the inside), eased in and out over ~20 m
       this.bank = null;
@@ -8816,14 +8906,15 @@ const Comm = (() => {
 
   function speakNow(item) {
     const maxT = 2000 + item.text.length * 95;          // safety net if the engine never reports the end
-    cur = { prio: item.prio, t: now(), maxT };
+    const me = cur = { prio: item.prio, t: now(), maxT, item };
     if (!synth || !speech) { speaking = false; return; }
     try {
       const u = new SpeechSynthesisUtterance(item.text);
       if (voice) u.voice = voice;
       u.lang = voice ? voice.lang : 'en-GB'; u.rate = 1.08; u.pitch = voiceMale ? 0.95 : 0.72; u.volume = 1;   // deeper tone when no male voice exists
-      u.onend = u.onerror = () => { speaking = false; lastEnd = now(); cur = null; };
-      speaking = true; synth.speak(u);
+      // only the line that is still current may end it (a cancelled line reports its end/error later, after the next one started)
+      u.onend = u.onerror = () => { if (cur !== me) return; speaking = false; lastEnd = now(); cur = null; };
+      speaking = true; synth.speak(u); item.spoken = true;
     } catch (_) { speaking = false; lastEnd = now() + item.text.length * 60; }
   }
 
@@ -8833,31 +8924,35 @@ const Comm = (() => {
     return speaking || t < lastEnd + GAP;
   }
 
-  function say(key, vars, prio) {
-    if (!on || !speech || !synth) return;   // audio-only commentary: silent when sound is off
-    const pool = LINES[key]; if (!pool) return;
+  // prio: 0 = ambient (named places: anything from prio 2 cuts in, it only waits in an empty queue), 1 = chatter ... 5 = finish.
+  // opt.ttl = how long (ms) the line may wait in the queue. Returns the logged item (item.spoken / item.cut are set later), or null.
+  function say(key, vars, prio, opt) {
+    if (!on || !speech || !synth) return null;   // audio-only commentary: silent when sound is off
+    const pool = LINES[key]; if (!pool) return null;
     let k = Math.floor(Math.random() * pool.length);
     if (pool.length > 1 && k === lastPick[key]) k = (k + 1) % pool.length;
     lastPick[key] = k;
     let text = pool[k].replace(/\{(\w+)\}/g, (_, n) => (vars && vars[n] != null ? String(vars[n]) : ''));
     text = text.charAt(0).toUpperCase() + text.slice(1);
-    const item = { key, text, prio: prio || 1, t: now() };
+    const item = { key, text, prio: prio == null ? 1 : prio, t: now() };
+    if (opt && opt.ttl > 0) item.ttl = opt.ttl;
     log.push(item); if (log.length > 200) log.shift();
-    if (!busy()) { speakNow(item); return; }
-    if (cur && item.prio >= cur.prio + 2) { cancelSpeech(); speakNow(item); return; }   // urgent news cuts in
+    if (!busy()) { speakNow(item); return item; }
+    if (cur && item.prio >= cur.prio + 2) { cancelSpeech(); speakNow(item); return item; }   // urgent news cuts in
     if (!queue || item.prio >= queue.prio) queue = item;                               // keep only the most important pending line
+    return item;
   }
 
   function update() {
     const t = now();
     if (queue && !busy()) {
-      const fresh = t - queue.t < (queue.prio >= 3 ? 7000 : 3500);                      // stale chatter is dropped
+      const fresh = t - queue.t < (queue.ttl || (queue.prio >= 3 ? 7000 : 3500));       // stale chatter is dropped
       const q = queue; queue = null;
       if (fresh) speakNow(q);
     }
   }
 
-  function cancelSpeech() { if (synth) { try { synth.cancel(); } catch (_) { } } speaking = false; lastEnd = 0; cur = null; }
+  function cancelSpeech() { if (speaking && cur && cur.item) cur.item.cut = true; if (synth) { try { synth.cancel(); } catch (_) { } } speaking = false; lastEnd = 0; cur = null; }
   function stop() { cancelSpeech(); queue = null; }
   // call from a tap handler: some browsers only allow speech after a user gesture
   function unlock() { if (!synth || !speech || !on) return; try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); } catch (_) { } }
@@ -8866,8 +8961,17 @@ const Comm = (() => {
   function setEnabled(v) { on = !!v; if (!on) stop(); }
   function setSpeech(v) { speech = !!v; if (!speech) cancelSpeech(); }
   const available = () => !!synth;
+  // register (or replace) a pool at run time, e.g. a track's place lines; say() ignores keys that have no pool
+  function addLines(key, arr) {
+    const a = (Array.isArray(arr) ? arr : [arr]).filter(s => typeof s === 'string' && s.trim());
+    if (!a.length) return false;
+    LINES[key] = a; if (!(lastPick[key] < a.length)) delete lastPick[key];   // keep "never the same line twice in a row" across races
+    return true;
+  }
+  // what the commentator is doing: busy (speaking or in the pause after a line), the priority speaking now and waiting (-1 = none)
+  function state() { const b = busy(); return { busy: b, prio: speaking && cur ? cur.prio : -1, queued: queue ? queue.prio : -1 }; }
 
-  return { say, update, stop, unlock, setEnabled, setSpeech, ordinal, available, log, test, voiceInfo, setOnVoice };
+  return { say, update, stop, unlock, setEnabled, setSpeech, ordinal, available, log, test, voiceInfo, setOnVoice, addLines, state };
 })();
 if (typeof module !== 'undefined') module.exports = Comm;
 
@@ -8953,7 +9057,7 @@ if (typeof module !== 'undefined') module.exports = Comm;
   let demoTarget = null, demoSwitch = 0;
   let msgT = 0, splitT = 0, lastLapCount = 0, lastBeepLight = 0;
   let cpSeen = 0, ttRes = null, boardId = null;   // time trial: checkpoint events shown, the finished run's result, Lestvica tab
-  let cornerSeen = -1, cornerShow = false;   // tracks with named corners (the Nordschleife): the last name shown under the clock, and whether it is still up
+  let cornerSeen = -1, cornerShow = false;   // tracks with named places: the last name shown under the clock (lap * 1000 + index), and whether it is still up
   let fbT = 0, prevGear = 1, prevAir = 0;
   let tiltWarned = false;
   let orientBlock = false;
@@ -9174,7 +9278,7 @@ if (typeof module !== 'undefined') module.exports = Comm;
     $('h-lights').className = ''; setLights(0, false);
     $('h-tot').textContent = '/' + race.cars.length;
     $('hud').classList.toggle('tt', race.timeTrial); $('pause-restart').textContent = race.timeTrial ? 'Ponovi vzpon' : 'Ponovi dirko';
-    cpSeen = race.player.cpEv; ttRes = null; cornerSeen = -1;
+    cpSeen = race.player.cpEv; ttRes = null; cornerSeen = -1; cornerShow = false; placeInit();
     Input.reset();
     showScreen('none');
     Sfx.resume(); Sfx.setRunning(true);
@@ -9524,24 +9628,59 @@ if (typeof module !== 'undefined') module.exports = Comm;
       cpSeen = P.cpEv;
       const k = P.cp, t = P.splits[k - 1]; if (P.finished || !(k >= 1) || !(t >= 0)) return;
       const pb = Array.isArray(R0.bestSplits) ? R0.bestSplits[k - 1] : NaN, d = t - pb, has = isFinite(d);
-      const el = $('h-split'); el.textContent = 'CP' + k + '  ' + fmt(t, true) + (has ? '  ' + sgn(d) : ''); el.className = 'show ' + (has ? dCls(d) : 'even'); splitT = 3.5;
+      const el = $('h-split'); el.textContent = 'CP' + k + '  ' + fmt(t, true) + (has ? '  ' + sgn(d) : ''); el.className = 'show ' + (has ? dCls(d) : 'even'); splitT = 3.5; cornerShow = false;   // (a place name waits until the split clears)
       showMsg('CP' + k + (has ? ' ' + sgn(d) : ''), has ? (d < 0 ? 'fast' : 'warn') : 'gold', 1.5);
       Sfx.beep(has && d < 0 ? 990 : 740, 0.12, 0.12);
       if (!has) Comm.say('cpFirst', { cp: k, time: spkTime(t) }, 2);
       else Comm.say(Math.abs(d) < 0.005 ? 'cpEven' : d < 0 ? 'cpFast' : 'cpSlow', { cp: k, delta: spkDelta(d) }, 3);
     }
   }
-  // named corners (the Nordschleife): the name under the clock ~70 m before each one, a word from the commentator at the famous ones
-  const CORNER_COMM = { 'Flugplatz': 'nrFlug', 'Fuchsröhre': 'nrFuchs', 'Breidscheid': 'nrBreid', 'Karussell': 'nrKar', 'Hohe Acht': 'nrHohe', 'Pflanzgarten': 'nrPflanz', 'Döttinger Höhe': 'nrDott' };
+  // named places (tracks on real places: Ljubljana, Monaco, Pikes Peak, the Nordschleife): the name under the clock ~70 m before each
+  // one, every lap (also in the time trial), and now and then the commentator says where the driver is (each place's own lines)
+  const CORNER_COMM = { 'Flugplatz': 'nrFlug', 'Fuchsröhre': 'nrFuchs', 'Breidscheid': 'nrBreid', 'Karussell': 'nrKar', 'Hohe Acht': 'nrHohe', 'Pflanzgarten': 'nrPflanz', 'Döttinger Höhe': 'nrDott' };   // older pools, for names without lines
+  const PLACE_GAP = 14, PLACE_GAP_ONE = 8;   // s of race time between two place lines: circuits / one lap or an open road
+  let placeKeys = [], placeSt = null;
+  function placeInit() {   // newRace: each place's lines go to the commentator under their own key, so every place alternates its own lines
+    const L = track.names || [];
+    placeKeys = L.map((q, k) => { const key = 'place:' + track.def.id + ':' + k; return q.say && Comm.addLines(key, q.say) ? key : CORNER_COMM[q.n] || null; });
+    placeSt = { said: {}, lastT: -1e9, log: [] };
+    placeExpose();
+  }
   function updateCorner(P) {
     const L = track.names; if (!L || !L.length || phase !== 'racing' || P.finished || P.dist < 0) return;
-    const d = ((P.dist % track.len) + track.len) % track.len + 70; let k = -1;
-    for (let n = 0; n < L.length; n++) if (L[n].d <= d) k = n;
-    if (k < 0 || k === cornerSeen) return;
-    cornerSeen = k;
-    if (splitT > 0.5 && !cornerShow) return;   // a lap time is showing
+    const a = P.dist + 70, lapN = track.open ? 0 : Math.floor(a / track.len), la = a - lapN * track.len;   // 70 m ahead, wrapped into the lap
+    let k = -1;
+    for (let n = 0; n < L.length; n++) if (L[n].d <= la) k = n;
+    if (k < 0) return;
+    const key = lapN * 1000 + k;
+    if (key <= cornerSeen) return;   // each place once a lap, never again after reversing or a rescue behind it
+    if (splitT > 0.5 && !cornerShow) return;   // a lap time or CP split is up: the name waits (pending) until it clears
+    cornerSeen = key;
     const el = $('h-split'); el.textContent = L[k].n.toUpperCase(); el.className = 'show even'; splitT = 2.6; cornerShow = true;
-    if (CORNER_COMM[L[k].n]) Comm.say(CORNER_COMM[L[k].n], null, 1);
+    placeSpeak(k, lapN + 1, P);
+  }
+  // a place is said once a race (3+ laps: now and then once more, never on the next lap); one skipped (spacing, commentator busy)
+  // or cut off by more important news gets another chance on a later lap. Said as ambient (prio 0): overtakes, splits, crashes and
+  // pits cut in, and it is only started into a silence, so it is heard right at the place and never waits behind other news.
+  function placeSpeak(k, lap, P) {
+    const key = placeKeys[k], st = placeSt; if (!key || !st || !race) return;
+    const prev = st.said[k], heard = !!(prev && prev.item && prev.item.spoken && !prev.item.cut);
+    let r = '';
+    if (heard && (race.laps < 3 || lap - prev.lap < 2 || Math.random() > 0.35)) r = 'heard';
+    else if (race.time - st.lastT < (race.laps > 1 ? PLACE_GAP : PLACE_GAP_ONE)) r = 'gap';
+    else if (race.timeTrial && track.cpDist.some(c => c > P.dist && c - P.dist < 150)) r = 'cp';   // a checkpoint split is about to be called
+    else if ((track.open ? track.raceLen : race.laps * track.len) - P.dist < 200) r = 'finish';   // the finish call would cut it off
+    else if (Comm.state().busy) r = 'busy';
+    let item = null;
+    if (!r) { item = Comm.say(key, null, 0); if (item) { st.said[k] = { lap, item }; st.lastT = race.time; } else r = 'off'; }
+    st.log.push({ k, n: track.names[k].n, lap, t: race.time, r: r || 'say', item }); if (st.log.length > 300) st.log.shift();
+  }
+  // tests: window.__game.places (the names, their commentator keys, what was said and why places were skipped)
+  function placeExpose() {
+    const g = window.__game; if (!g || Object.getOwnPropertyDescriptor(g, 'places')) return;
+    Object.defineProperty(g, 'places', { configurable: true, get: () => ({ track: track && track.def.id, keys: placeKeys.slice(), seen: cornerSeen, show: cornerShow,
+      names: (track && track.names || []).map(q => ({ n: q.n, d: q.d, lines: q.say ? q.say.length : 0 })),
+      log: placeSt ? placeSt.log.map(e => ({ k: e.k, n: e.n, lap: e.lap, t: e.t, r: e.r, text: e.item ? e.item.text : '', spoken: !!(e.item && e.item.spoken), cut: !!(e.item && e.item.cut) })) : [] }) });
   }
   const spkDelta = (d) => { const a = Math.abs(d); return a < 1 ? a.toFixed(2) : a.toFixed(1); };   // never "0.0 seconds"
   const spkTime = (t) => { const m = Math.floor(t / 60), s = t - m * 60; return m ? m + (m === 1 ? ' minute ' : ' minutes ') + s.toFixed(1) : t.toFixed(1) + ' seconds'; };
@@ -9572,7 +9711,7 @@ if (typeof module !== 'undefined') module.exports = Comm;
       if (!P.finished && P.lap === race.laps) { showMsg('ZADNJI KROG!', 'gold', 2); Sfx.beep(880, 0.12, 0.12); }
     }
     if (splitT > 0) { splitT -= dt; if (splitT <= 0) $('h-split').className = ''; }
-    if (!race.timeTrial) updateCorner(P);
+    updateCorner(P);
     // wrong way
     if (phase === 'racing') {
       if (P.wrongT > 1.1) { if ($('h-msg').textContent !== 'NAPAČNA SMER!') showMsg('NAPAČNA SMER!', 'warn', 0.5); else msgT = 0.4; }
