@@ -17,6 +17,25 @@ Na progah Ljubljana, Monako, Pikes Peak in Nordschleife se ~70 m pred vsakim zna
 
 Privzeta fizika je **Circuit Superstars**: avto drsi z nosom v ovinek toliko, kolikor hitro zavijaš; zaviranje v ovinku ga zavrti, na izhodu se sam poravna; brez vrtenja. Gumb za drift (preslednica) ga zavrti še malo bolj. Pomoč pri driftu (nizka/srednja/visoka) določa, kako daleč lahko zadrsa. **Arkadna** je prejšnja fizika in je na voljo v Nastavitvah (Fizika vožnje: Arkadna). Rekordi se za vsako fiziko vodijo posebej.
 
+## Dirka s prijateljem
+
+Dirka dveh igralcev, vsak na svojem telefonu (ali računalniku), preko interneta.
+
+1. Oba odpreta igro. Različici morata biti enaki: po posodobitvi igre jo na obeh telefonih zapri in znova odpri.
+2. Prvi na naslovnem zaslonu tapne **Dirka s prijateljem** → **Ustvari sobo** in drugemu pošlje kodo sobe (4 znaki).
+3. Drugi tapne **Dirka s prijateljem**, vpiše kodo in tapne **Pridruži se**.
+4. V sobi vsak izbere svoj avto (◀ ▶). Gostitelj (kdor je ustvaril sobo) izbere progo in število krogov ter tapne **Začni dirko**.
+
+- Na progi sta samo vidva, brez tekmecev z AI. Vzpon na Pikes Peak (vožnja proti uri) ni na voljo.
+- Semafor ugasne na obeh telefonih hkrati. Časi se merijo od skupnega starta, zato sta rezultata na obeh telefonih enaka.
+- Fizika vožnje in poškodbe so po nastavitvah gostitelja. Vsak vozi svoj avto z nadgradnjami.
+- Avta se lahko zadeneta. Vsak telefon premika le svoj avto, zato se ob trku odmakne vsak svoj.
+- Premor ustavi le tvoj avto: prijatelj vozi naprej in ura teče. Enako, če med dirko preklopiš v drugo aplikacijo; če telefon igro takrat ustavi za več kot 10 sekund, se povezava prekine.
+- Po cilju se vrneta v sobo na naslednjo dirko. Če prijatelj odide ali se povezava prekine, dirka teče naprej.
+- Poškodbe prijateljevega avta (udrtine, odpadli deli, dim) vidi le prijatelj.
+
+Telefona sta povezana neposredno (WebRTC) s knjižnico [PeerJS](https://peerjs.com). Da se najdeta, uporabita brezplačni javni strežnik PeerJS: koda sobe je njun naslov na njem. Kadar neposredna povezava ni mogoča (nekatera mobilna omrežja), gre promet prek posredniškega strežnika PeerJS. Brez interneta igra deluje naprej, dirka s prijateljem pa ne.
+
 ## Igra kot aplikacija
 
 - **Android (Chrome):** na naslovnem zaslonu tapni **Namesti igro** (ali v meniju Chroma ⋮ → *Namesti aplikacijo*). Igra dobi svojo ikono, odpre se čez cel zaslon in se obrne tako, kot zahteva izbrana kamera (za avtom: pokončno; izometrična in kino: ležeče).
@@ -40,7 +59,8 @@ Igra ne potrebuje namestitve ali prevajanja: `index.html` naloži datoteke po vr
 | `js/data/p206.js` | 3D model Peugeota 206 |
 | `js/render.js` | izris, avti, delci, kamere, mehaniki v boksih |
 | `js/sfx.js`, `js/input.js`, `js/comm.js` | zvok, upravljanje, komentator |
-| `js/game.js` | meniji, nastavitve, HUD, rekordi, glavna zanka |
+| `js/net.js`, `js/vendor/peerjs.min.js` | povezava dveh telefonov za dirko s prijateljem (soba s kodo, usklajena ura); knjižnica PeerJS (MIT) |
+| `js/game.js` | meniji, nastavitve, HUD, rekordi, dirka s prijateljem, glavna zanka |
 | `manifest.webmanifest`, `icons/` | opis aplikacije (ime, ikone, celoten zaslon) za namestitev na telefon; ikone nariše `node tools/icons.mjs` |
 | `sw.js` | service worker: igra brez interneta in vedno najnovejša različica, ko je internet na voljo (opis v datoteki) |
 | `tests/` | samodejni testi (glej `tests/README.md`) |
@@ -58,5 +78,6 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 ## Zasluge
 
 - Avto PEUGEOT 206: 3D model [„Peugeot 206“](https://sketchfab.com/) avtorja **Alvier** (Sketchfab), licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Model je poenostavljen in shranjen v `js/data/p206.js`.
+- Povezava telefonov: knjižnica [PeerJS](https://peerjs.com) 1.5.5 (Michelle Bu, Eric Zhang in sodelavci), licenca MIT, shranjena v `js/vendor/peerjs.min.js`. Za iskanje sobe in posredovanje uporablja brezplačni javni strežnik PeerJS.
 - Proga Nordschleife (sredinska črta, raba tal, stavbe, mostovi, imena ovinkov): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors. Podatki so vzeti iz OpenStreetMap, ki je na voljo pod licenco [Open Database License (ODbL) 1.0](https://opendatacommons.org/licenses/odbl/1-0/). Iz njih izpeljani podatki v `js/tracks/nring.js` so prav tako na voljo pod ODbL 1.0.
 - Višine Nordschleife: SRTM (NASA/USGS, javna domena) in Copernicus DEM GLO-30: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
