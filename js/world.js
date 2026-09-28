@@ -2935,8 +2935,52 @@ const World = (function () {
   function pkForest(scen, R, dens, excluded) {   // conifer forest below the treeline, on a jittered grid over the corridor tiles
     const G = PK.G, P = PK, step = 6.6 / Math.sqrt(dens), L = PKT * PKC, maxT = Math.round(15500 * dens);
     const pineCs = [[0.09, 0.2, 0.11], [0.11, 0.24, 0.12], [0.08, 0.18, 0.1], [0.13, 0.26, 0.14], [0.1, 0.22, 0.14]];
+    // species on their own stream (R keeps its sequence, so every tree stands where it did): quaking aspen groves low down, bristlecone pines at the treeline
+    const A = rng(9404), grove = valueNoise2(9405, 170);
+    const aspC = [[0.4, 0.54, 0.2], [0.36, 0.5, 0.17], [0.46, 0.57, 0.23]], gold = [0.82, 0.64, 0.16], barkA = [0.84, 0.84, 0.78], knotA = [0.3, 0.29, 0.27];
+    const barkB = [0.74, 0.7, 0.64], footB = [0.46, 0.4, 0.34], snagB = [0.8, 0.78, 0.74], needB = [[0.11, 0.19, 0.16], [0.13, 0.22, 0.17], [0.1, 0.17, 0.15]];
+    const sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
+    const seg = (g, b, rb, t, rt, a0, a1, cb, ct) => {   // 3-sided trunk piece from ring b to ring t (a1 - a0: twist)
+      const inn = [(b[0] + t[0]) / 2, (b[1] + t[1]) / 2, (b[2] + t[2]) / 2];
+      for (let k = 0; k < 3; k++) { const p = (c, r, a) => [c[0] + Math.cos(a) * r, c[1], c[2] + Math.sin(a) * r], e0 = k / 3 * TAU, e1 = (k + 1) / 3 * TAU;
+        g.quadO(p(b, rb, a0 + e0), p(t, rt, a1 + e0), p(t, rt, a1 + e1), p(b, rb, a0 + e1), cb, inn, null, [cb, ct, ct, cb]); }
+    };
+    const spike = (g, b, rb, t, a0, cb, ct) => { const inn = [(b[0] * 2 + t[0]) / 3, (b[1] * 2 + t[1]) / 3, (b[2] * 2 + t[2]) / 3];   // 3-sided tapering tip (leans towards t)
+      for (let k = 0; k < 3; k++) { const e0 = a0 + k / 3 * TAU, e1 = a0 + (k + 1) / 3 * TAU; g.triO([b[0] + Math.cos(e0) * rb, b[1], b[2] + Math.sin(e0) * rb], t, [b[0] + Math.cos(e1) * rb, b[1], b[2] + Math.sin(e1) * rb], cb, inn, ct, cb); } };
+    const blob = (g, x, y, z, r, up, dn, n, col) => {   // rounded crown / needle tuft: a jittered ring with a top and a bottom point (2n faces), lit on top, dark below
+      const a0 = A() * TAU, ps = [], top = [x, y + r * up, z], bot = [x, y - r * dn, z], inn = [x, y, z], ct = sh(col, 1.25), cb = sh(col, 0.62);
+      for (let k = 0; k < n; k++) { const a = a0 + k / n * TAU, rr = r * (0.8 + A() * 0.35); ps.push([x + Math.cos(a) * rr, y + (A() - 0.5) * r * 0.3, z + Math.sin(a) * rr]); }
+      for (let k = 0; k < n; k++) { const p = ps[k], q = ps[(k + 1) % n]; g.triO(p, top, q, col, inn, ct, col); g.triO(p, q, bot, col, inn, col, cb); }
+    };
+    const ball = (g, x, y, z, r, sy, col) => {   // rounder crown: two staggered 4-rings between a top and a bottom point (16 faces)
+      const a0 = A() * TAU, u = [], d = [], top = [x, y + r * sy, z], bot = [x, y - r * sy * 0.8, z], inn = [x, y, z], ct = sh(col, 1.18), cb = sh(col, 0.66);
+      for (let k = 0; k < 4; k++) { const a = a0 + k / 4 * TAU, b = a + TAU / 8, ru = r * (0.75 + A() * 0.2), rd = r * (0.92 + A() * 0.2);
+        u.push([x + Math.cos(a) * ru, y + r * sy * 0.45, z + Math.sin(a) * ru]); d.push([x + Math.cos(b) * rd, y - r * sy * 0.15, z + Math.sin(b) * rd]); }
+      for (let k = 0; k < 4; k++) { const k1 = (k + 1) % 4;
+        g.triO(u[k], top, u[k1], ct, inn, ct, ct); g.triO(u[k], u[k1], d[k], col, inn, col, col); g.triO(u[k1], d[k1], d[k], col, inn, col, col); g.triO(d[k], d[k1], bot, col, inn, col, cb); }
+    };
+    const aspen = (g, x, y, z, h, far) => {   // quaking aspen: one slender whitish trunk (dark at the foot, a dark band where it enters the crown), a rounded crown, some golden, some with a second lobe
+      const a0 = A() * TAU, rb = 0.1 + h * 0.012, gd = A() < 0.12, col = vary(gd ? gold : aspC[Math.floor(A() * 3)], A, 0.12);
+      if (!far) spike(g, [x, y - 0.3, z], rb, [x, y + h * 0.8, z], a0, knotA, barkA);
+      ball(g, x, y + h * 0.72, z, h * 0.16, 1.7, col);
+      if (A() < 0.4) { const a = A() * TAU, o = h * 0.12; blob(g, x + Math.cos(a) * o, y + h * (0.52 + A() * 0.12), z + Math.sin(a) * o, h * 0.11, 1.3, 1.1, 4, vary(col, A, 0.1)); }
+    };
+    const bristle = (g, x, y, z, h) => {   // bristlecone pine: a short, leaning, twisted pale trunk (some dead snags), sparse dark blue-green tufts
+      const la = A() * TAU, lx = Math.cos(la), lz = Math.sin(la), lean = 0.18 + A() * 0.3, rb = 0.22 + h * 0.03, a0 = A() * TAU, dead = A() < 0.22, bk = vary(dead ? snagB : barkB, A, 0.1);
+      const m = [x + lx * h * 0.45 * lean, y + h * 0.45, z + lz * h * 0.45 * lean], ba = la + (A() - 0.5) * 2.4, t = [m[0] + Math.cos(ba) * h * 0.25, y + h * (dead ? 0.95 : 0.85), m[2] + Math.sin(ba) * h * 0.25];
+      seg(g, [x, y - 0.4, z], rb, m, rb * 0.6, a0, a0 + 0.9, footB, bk);
+      spike(g, m, rb * 0.6, t, a0 + 0.9, bk, sh(bk, 1.08));
+      const ab = ba + 2 + A(), br = [m[0] + Math.cos(ab) * h * 0.4, m[1] + h * 0.2, m[2] + Math.sin(ab) * h * 0.4];   // a side limb (bare on the snags)
+      spike(g, [m[0], m[1] - h * 0.06, m[2]], rb * 0.35, br, a0, bk, sh(bk, 1.1));
+      if (dead) return;
+      const c = vary(needB[Math.floor(A() * 3)], A, 0.12), n = 2 + (A() < 0.5 ? 1 : 0);
+      blob(g, t[0], t[1] - h * 0.05, t[2], h * 0.15, 1.2, 0.9, 4, c);   // (small tall tufts: wide flat ones read as umbrellas)
+      blob(g, br[0], br[1], br[2], h * 0.13, 1.1, 0.9, 4, vary(c, A, 0.1));
+      blob(g, (m[0] + t[0]) / 2 + (t[0] - m[0]) * 0.2, (m[1] + t[1]) / 2, (m[2] + t[2]) / 2 + (t[2] - m[2]) * 0.2, h * 0.12, 1.1, 0.9, 4, vary(c, A, 0.1));
+      if (n > 2) blob(g, (m[0] + br[0]) / 2, (m[1] + br[1]) / 2 + h * 0.04, (m[2] + br[2]) / 2, h * 0.11, 1.1, 0.9, 4, vary(c, A, 0.1));
+    };
     let n = 0;
-    for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
+    grid: for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
       if (!G.on[tj * G.ntx + ti]) continue;
       const xa = G.x0 + ti * L, za = G.z0 + tj * L;
       for (let zz = za; zz < za + L - 0.01; zz += step) for (let xx = xa; xx < xa + L - 0.01; xx += step) {
@@ -2951,9 +2995,22 @@ const World = (function () {
         if (nn.i >= 0 && nn.dd < 8 && r2 < 0.2) continue;
         if (excluded(x, z) || pkSlope(x, z) > 0.95) continue;
         const hk = lerp(1, 0.45, sstep(tl - 45, tl + 8, y));   // stunted towards the treeline
-        pkPine(scen.get(x, z), x, y, z, (7.5 + R() * 6) * hk, vary(pineCs[Math.floor(R() * pineCs.length)], R, 0.14), R, nn.i < 0 || nn.dd > 30);
-        if (++n >= maxT) return n;
+        const h = (7.5 + R() * 6) * hk, col = vary(pineCs[Math.floor(R() * pineCs.length)], R, 0.14), far = nn.i < 0 || nn.dd > 30, g = scen.get(x, z);
+        const gv = grove(x, z), pa = y < 150 && y < tl - 35 ? (gv > 0.56 ? lerp(0.5, 0.82, sstep(0.56, 0.7, gv)) : 0.03) * sstep(150, 135, y) : 0;
+        const pb = y > tl - 30 ? 0.5 * sstep(tl - 30, tl - 18, y) : 0, q = A();
+        if (q < pa || q > 1 - pb) { R(); R(); R(); R();   // (the draws pkPine would have made)
+          if (q < pa) aspen(g, x, y, z, h * (0.62 + A() * 0.2), far); else bristle(g, x, y, z, h * (0.75 + A() * 0.3)); }
+        else pkPine(g, x, y, z, h, col, R, far);
+        if (++n >= maxT) break grid;
       }
+    }
+    // a few bristlecones scattered just above the treeline on the rocky slopes beside the road
+    for (let s = 20; s < T.len - 20; s += 6) for (const side of [-1, 1]) {
+      const i = T.idx(s), tl0 = pkTreeline(T.px[i], T.pz[i]); if (T.hy[i] < tl0 - 25 || T.hy[i] > tl0 + 60 || A() > 0.3) continue;
+      const o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 3 + Math.pow(A(), 1.4) * 38), x = T.px[i] + T.nx[i] * o + (A() - 0.5) * 4, z = T.pz[i] + T.nz[i] * o + (A() - 0.5) * 4;
+      const y = pkGround(x, z), tl = pkTreeline(x, z); if (y < tl - 6 || y > tl + 35 - Math.abs(y - T.hy[i]) * 0.5) continue;
+      if (pkNear(x, z).dd < 3 || excluded(x, z) || pkSlope(x, z) > 0.95) continue;
+      bristle(scen.get(x, z), x, y, z, 2.6 + A() * 2.4); n++;
     }
     return n;
   }
@@ -3376,6 +3433,46 @@ const World = (function () {
 
   /* ---- late-June snow: plowed banks behind the barriers high up (own random stream) ---- */
   function pkSnow(K) {
+    const R = rng(9404), { scen, excl, crSoft, excluded, sFin } = K, ds = T.ds, lump = valueNoise2(9407, 9), top = [0.98, 1.0, 1.06], back = [0.86, 0.9, 0.99], backF = [0.76, 0.79, 0.86], dirt = [0.6, 0.58, 0.58], foot = [0.44, 0.39, 0.36];
+    const busy = (s) => s > sFin - 100 || T.cpS.some(c => Math.abs(s - c) < 30) || T.corners.some(c => c.sev >= 3 && Math.abs(s - (c.i0 + c.i1) / 2 * ds) < 26);   // crowds stand there (placed later)
+    const P = (i, o, dy) => { const x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; return [x, pkGround(x, z) + dy, z]; };
+    // plowed banks: a lumpy ridge (4 faces per road sample) 0.6 m+ beyond the barrier line, in pieces with gaps, mostly on the uphill side
+    const mine = [], sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
+    for (const side of [-1, 1]) {
+      let run = 0, gap = R() * 10, prev = null, s0 = 0, len = 0, e = 0, tone = 1;
+      for (let s = 20; s < T.len - 20; s += ds) {
+        const i = T.idx(s), bar = side > 0 ? T.br[i] : T.bl[i], sn = sstep(333, 350, T.hy[i]);
+        const up = pkGround(T.px[i] + T.nx[i] * side * (bar + 5), T.pz[i] + T.nz[i] * side * (bar + 5)) > T.hy[i] + 0.1;
+        let sec = null;
+        if (run > 0) {   // inside a piece: its cross-section here (tapered at both ends, lumpy along)
+          const t = (s - s0) / len, env = Math.pow(Math.sin(Math.PI * clamp(t, 0.05, 0.95)), 0.5), b0 = bar + 0.8 + lump(s, side * 7) * 0.4 + R() * 0.15, W = (1.9 + lump(s * 0.7, side * 3 + 20) * 1.3) * (0.55 + 0.45 * env), H = Math.min(W * 0.38, e * env * (0.5 + lump(s * 2.5, side + 40) * 0.6 + R() * 0.3));   // (no steeper than ~40 deg: taller reads as a wall)
+          const pts = [P(i, side * b0, -0.2), P(i, side * (b0 + W * (0.18 + R() * 0.08)), H * (0.5 + R() * 0.2)), P(i, side * (b0 + W * (0.42 + R() * 0.12)), H), P(i, side * (b0 + W * (0.72 + R() * 0.08)), H * (0.55 + R() * 0.25)), P(i, side * (b0 + W), -0.25)];
+          if (pts.every(p => pkNear(p[0], p[2]).dd >= 0.6) && !excluded(pts[2][0], pts[2][2]) && !busy(s)) sec = pts; else run = 0;
+          if (sec) { run -= ds; sec.k = tone * (0.95 + R() * 0.08); if (Math.floor((s - s0) / 8) !== Math.floor((s - s0 - ds) / 8)) mine.push({ x: pts[2][0], z: pts[2][2], r: 3.2 }); }
+        } else if (sn > 0 && (gap -= ds) <= 0 && !busy(s) && R() < sn * (up ? 0.95 : 0.35)) { run = len = 8 + R() * 18; s0 = s; e = 0.45 + R() * 0.75; gap = 3 + R() * 10; tone = 0.93 + R() * 0.08; }
+        const cs = (k) => [sh(foot, k), sh(dirt, k), sh(top, k), sh(back, k), sh(backF, k)];
+        if (sec && prev) {   // road-facing flank dirty grey fading up to white, bright crest, blue-white back
+          const g = scen.get(sec[2][0], sec[2][2]), a = cs(prev.k), b = cs(sec.k), inn = [(sec[0][0] + sec[4][0] + prev[0][0] + prev[4][0]) / 4, Math.min(sec[0][1], prev[0][1], sec[4][1], prev[4][1]) - 0.8, (sec[0][2] + sec[4][2] + prev[0][2] + prev[4][2]) / 4];
+          for (let k = 0; k < 4; k++) g.quadO(prev[k], sec[k], sec[k + 1], prev[k + 1], a[k], inn, null, [a[k], b[k], b[k + 1], a[k + 1]]);
+        } else if (sec && !prev || !sec && prev) {   // end cap: a fan from the crest
+          const c = sec || prev, f = sec ? 3 : -3, inn = [(c[0][0] + c[4][0]) / 2 + T.tx[i] * f, (c[0][1] + c[4][1]) / 2, (c[0][2] + c[4][2]) / 2 + T.tz[i] * f], g = scen.get(c[2][0], c[2][2]), q = cs(c.k);   // (inn: a point inside the piece)
+          g.triO(c[0], c[1], c[2], q[0], inn, q[1], q[2]); g.triO(c[0], c[2], c[4], q[0], inn, q[2], q[4]); g.triO(c[2], c[3], c[4], q[2], inn, q[3], q[4]);
+        }
+        prev = sec;
+      }
+    }
+    for (const c of mine) { excl.push(c); crSoft.add(c); }   // (keeps boulders and shrubs off the banks, not the crowds)
+    // old dirty drifts lying on in hollows farther out
+    for (let s = 20; s < T.len - 20; s += 7) for (const side of [-1, 1]) {
+      const i = T.idx(s); if (T.hy[i] < 338 || R() > 0.35) continue;
+      const bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 6 + R() * 34), x = T.px[i] + T.nx[i] * o + (R() - 0.5) * 6, z = T.pz[i] + T.nz[i] * o + (R() - 0.5) * 6, y = pkGround(x, z);
+      const rim = (pkGround(x + 6, z) + pkGround(x - 6, z) + pkGround(x, z + 6) + pkGround(x, z - 6)) / 4; if (rim < y + 0.25 || pkSlope(x, z) > 0.45 || excluded(x, z)) continue;   // only in a hollow
+      const r = 2 + R() * 3.5, n = 7, a0 = R() * TAU, c = vary([0.9, 0.91, 0.96], R, 0.08), cr = vary([0.74, 0.72, 0.72], R, 0.08), ps = [];
+      for (let k = 0; k < n; k++) { const a = a0 + k / n * TAU, rr = r * (0.6 + R() * 0.5) * (k % 2 ? 1 : 1.25), px = x + Math.cos(a) * rr, pz = z + Math.sin(a) * rr; ps.push([px, pkGround(px, pz) + 0.08, pz]); }
+      if (ps.some(p => pkNear(p[0], p[2]).dd < 1.5)) continue;
+      const mid = [x, y + 0.2 + r * 0.06, z], g = scen.get(x, z);
+      for (let k = 0; k < n; k++) g.triO(ps[k], ps[(k + 1) % n], mid, cr, [x, y - 5, z], cr, c);
+    }
   }
 
   /* ---- moving things: the TV helicopter over the leading car, cloud shadows drifting across the mountain
