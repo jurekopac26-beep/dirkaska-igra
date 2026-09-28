@@ -6,6 +6,8 @@
 // - the race: both start at the same planned moment, each sees the other's car where the other really is, both finish, and
 //   both result screens show the same two times
 // - the friend leaves in the middle of a race: the host is told, the race goes on alone, the friend is shown as gone
+// - quick match (no code): the first waits, the next connects at once; a third waits for the next; two tapping at the same
+//   moment meet; a leftover of a dead waiter is skipped
 //   node tests/browser/online.test.mjs
 import net from 'node:net';
 import { createRequire } from 'node:module';
@@ -13,6 +15,7 @@ import { serve, launch, openGame, checker } from './lib.mjs';
 
 const require = createRequire(import.meta.url);
 const { PeerServer } = require('peer');
+const WebSocket = require('ws');
 const T = checker('online (two players)');
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
 const port = await new Promise((resolve) => { const s = net.createServer(); s.listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => resolve(p)); }); });
@@ -25,7 +28,7 @@ const settings = { quality: 'normal', shadows: 0, camera: 'chase', zoom: 1.2, ca
 const open = (name, car, color) => openGame(browser, srv.base + '/index.html', Object.assign({ name, car, color }, settings), { width: 360, height: 300 }, { init });
 const netOf = (p) => p.evaluate(() => window.__game.net);
 const until = (p, fn, arg, ms = 60000) => p.waitForFunction(fn, arg, { timeout: ms, polling: 200 }).then(h => h.jsonValue());
-let A, B;
+let A, B, C, D, E, F, dead;
 try {
   A = await open('Ana', 0, 0); B = await open('Bor', 2, 2);
 
@@ -112,12 +115,45 @@ try {
   await B.ctx.close();
   const gone = await until(A.page, () => { const n = window.__game.net; return n && n.race && n.race.left ? { toast: document.getElementById('toast').textContent, dist: window.__game.race.remote.dist, state: window.__game.race.state } : null; }, null, 40000);
   T.check('the friend leaves mid-race: the host is told, the race goes on, the friend is out of the way', /Prijatelj|prekinjena/.test(gone.toast) && gone.dist < -1e8 && gone.state === 'racing', JSON.stringify(gone));
+  // 7. quick match: no code, one button
+  C = await open('Cene', 0, 0); D = await open('Dana', 1, 1); E = await open('Eva', 2, 2); F = await open('Fani', 3, 3);
+  const tap = (x) => x.page.evaluate(() => { window.__game.onAction('to-online'); window.__game.onAction('net-wait'); });
+  const leave = (x) => x.page.evaluate(() => window.__game.onAction('to-title'));
+  const paired = (x, name) => until(x.page, (n) => { const g = window.__game.net; return g && g.open && g.peer && g.peer.name === n ? g.role : null; }, name, 40000);
+  const still = (x) => x.page.evaluate(() => { const g = window.__game.net; return !!(g && !g.open && !g.peer); });
+  await tap(C);
+  const cw = await until(C.page, () => { const t = document.getElementById('on-status').textContent; return /Čakam, da se kdo pridruži/.test(t) ? { t, back: document.getElementById('on-back').textContent, box: document.getElementById('on-codebox').classList.contains('off') } : null; }, null, 30000);
+  T.check('quick match: the first waits with a cancel button and no code', cw.back === 'Prekliči' && cw.box, JSON.stringify(cw));
+  await wait(1500); await tap(D);
+  const [rC, rD] = [await paired(C, 'Dana'), await paired(D, 'Cene')];
+  T.check('quick match: the second one taps and they are connected (the first is the host), no code needed', rC === 'host' && rD === 'guest', `${rC} / ${rD}`);
+  await until(D.page, () => window.__game.net.synced, null, 20000);
+  await tap(E); await wait(2500);
+  T.check('quick match: a third player waits (the pair is not disturbed)', await still(E) && (await netOf(C.page)).open, '');
+  await tap(F);
+  const [rE, rF] = [await paired(E, 'Fani'), await paired(F, 'Eva')];
+  T.check('quick match: the next one taps and meets the one who waits', rE === 'host' && rF === 'guest', `${rE} / ${rF}`);
+  await leave(E); await leave(F); await leave(C); await leave(D); await wait(1500);
+  await Promise.all([tap(C), tap(D)]);
+  const [sC, sD] = [await paired(C, 'Dana'), await paired(D, 'Cene')];
+  T.check('quick match: two who tap at the same moment meet (one waits, one connects)', sC !== sD && [sC, sD].includes('host'), `${sC} / ${sD}`);
+  await leave(C); await leave(D); await wait(1500);
+  // a waiting place whose owner is gone without a word (a phone that lost its network): skipped after a few seconds
+  const ver = (await E.page.evaluate(() => window.__game.ver)).replace(/[^A-Za-z0-9]/g, '');
+  dead = new WebSocket(`ws://127.0.0.1:${port}/peerjs?key=peerjs&id=apex-racing-dirkaska-q${ver}-0&token=dead`);
+  await new Promise((res, rej) => { dead.on('open', res); dead.on('error', rej); }); await wait(500);
+  await tap(E); await wait(500); await tap(F);
+  const [tE, tF] = [await paired(E, 'Fani'), await paired(F, 'Eva')];
+  T.check('quick match: a dead waiting place is skipped, the two still meet', tE === 'host' && tF === 'guest', `${tE} / ${tF}`);
+  await leave(E); await leave(F);
+  T.check('no page errors (quick match)', ![C, D, E, F].some(x => x.errors.length), [C, D, E, F].flatMap(x => x.errors).slice(0, 5).join(' | '));
   T.check('no page errors', !A.errors.length && !B.errors.length, A.errors.concat(B.errors).slice(0, 5).join(' | '));
 } catch (e) {
   T.check('the test ran to the end', false, String(e && e.message || e).split('\n')[0]);   // (a wait that timed out: what was waited for is in the message)
   if (A && B) console.log('page errors: ' + (A.errors.concat(B.errors).slice(0, 5).join(' | ') || 'none'));
 } finally {
   await browser.close(); await srv.close();
+  try { if (dead) dead.terminate(); } catch (_) { }
   peerHttp.closeAllConnections(); peerHttp.close();
 }
 T.done();

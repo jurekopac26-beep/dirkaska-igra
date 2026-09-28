@@ -282,6 +282,9 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 
 /* ================= Dirka s prijateljem (online) ================= */
 .on-join { margin-top: 14px; }
+.on-privbtn { margin-top: 10px; }
+.on-priv { margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,.12); }
+.on-priv.off { display: none; }
 .txt.code { width: 6.4em; text-align: center; text-transform: uppercase; letter-spacing: .28em; font-size: clamp(16px, 4.2vh, 20px); }
 .on-err { color: #ff8f80; min-height: 1.3em; }
 .on-codebox { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 4px 0 2px; }

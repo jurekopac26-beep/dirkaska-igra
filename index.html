@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
-<link rel="stylesheet" href="css/style.css?v=ec74de9b">
+<link rel="stylesheet" href="css/style.css?v=ee8205fb">
 </head>
 <body>
 <div id="app">
@@ -172,14 +172,19 @@
     <div class="panel set-panel online-panel">
       <h2>Dirka s prijateljem</h2>
       <div id="on-pick" class="set-list">
-        <p class="desc">Dirkaj proti prijatelju na drugem telefonu. Eden ustvari sobo in drugemu pošlje kodo, drugi jo vpiše. Oba potrebujeta internetno povezavo.</p>
+        <p class="desc">Dirkaj proti prijatelju na drugem telefonu. Vpiši ime in tapni <b>Počakaj prijatelja</b>: ko prijatelj (ali kdorkoli drug) tapne isto, sta takoj povezana. Oba potrebujeta internetno povezavo.</p>
         <div class="row"><span class="rlbl">Tvoje ime</span><input type="text" id="on-name" class="txt" maxlength="16" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" aria-label="Tvoje ime"></div>
-        <div class="btns"><button class="btn primary" data-act="net-host">Ustvari sobo</button></div>
-        <div class="row on-join"><input type="text" id="on-code" class="txt code" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="go" placeholder="KODA" aria-label="Koda sobe"><button class="btn" data-act="net-join">Pridruži se</button></div>
+        <div class="btns"><button class="btn primary" data-act="net-wait">Počakaj prijatelja</button></div>
+        <div class="btns on-privbtn"><button class="btn mini" data-act="net-private" id="on-priv-btn" aria-expanded="false" aria-controls="on-priv">Zasebna soba s kodo</button></div>
+        <div id="on-priv" class="on-priv off">
+          <p class="desc small">Ustvari sobo in prijatelju pošlji kodo, ali vpiši kodo, ki si jo dobil.</p>
+          <div class="btns"><button class="btn" data-act="net-host">Ustvari sobo</button></div>
+          <div class="row on-join"><input type="text" id="on-code" class="txt code" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="go" placeholder="KODA" aria-label="Koda sobe"><button class="btn" data-act="net-join">Pridruži se</button></div>
+        </div>
         <p id="on-err" class="desc on-err" role="alert"></p>
       </div>
       <div id="on-room" class="set-list off">
-        <div class="on-codebox"><span class="rlbl">Koda sobe</span><b id="on-code-show" class="on-code">····</b></div>
+        <div class="on-codebox" id="on-codebox"><span class="rlbl">Koda sobe</span><b id="on-code-show" class="on-code">····</b></div>
         <p id="on-status" class="desc" role="status"></p>
         <div id="on-players" class="on-players"></div>
         <div class="row"><span class="rlbl">Moj avto</span><button class="btn mini" data-act="net-car-prev" aria-label="Prejšnji avto">&#9664;</button><span id="on-mycar" class="on-mycar"></span><button class="btn mini" data-act="net-car-next" aria-label="Naslednji avto">&#9654;</button></div>
@@ -188,7 +193,7 @@
         <p id="on-note" class="desc small"></p>
       </div>
       <div class="btns horiz">
-        <button class="btn ghost" data-act="net-leave">Nazaj</button>
+        <button class="btn ghost" data-act="net-leave" id="on-back">Nazaj</button>
         <button class="btn primary off" data-act="net-go" id="on-go">Začni dirko</button>
       </div>
     </div>
@@ -239,7 +244,7 @@
 <script src="js/input.js?v=43b63819"></script>
 <script src="js/comm.js?v=24f7623e"></script>
 <script src="js/vendor/peerjs.min.js?v=76b403e4"></script>
-<script src="js/net.js?v=b53f68fc"></script>
-<script src="js/game.js?v=7fc85d0a"></script>
+<script src="js/net.js?v=1f45dfb1"></script>
+<script src="js/game.js?v=289207e5"></script>
 </body>
 </html>
