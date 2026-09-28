@@ -95,19 +95,19 @@
   }
  },
  "pikes": {
-  "meshes": 935,
-  "verts": 1333669,
-  "instances": 2911,
+  "meshes": 948,
+  "verts": 1424859,
+  "instances": 2737,
   "props": 352,
-  "crowd": 2911,
-  "world": "2ba77139",
+  "crowd": 2737,
+  "world": "5aa079b",
   "propsHash": "fed9419e",
   "floor": "67c951b5/12544",
   "groups": {
-   "-:MeshLambertMaterial": "97ef194f",
+   "-:MeshLambertMaterial": "84211614",
    "-:MeshPhongMaterial": "67b62ca8",
-   "-:MeshBasicMaterial": "33c883f9",
-   "crowd:MeshLambertMaterial": "54b30ee9"
+   "-:MeshBasicMaterial": "ee9b6e4a",
+   "crowd:MeshLambertMaterial": "7d3d5da5"
   }
  },
  "nring": {
