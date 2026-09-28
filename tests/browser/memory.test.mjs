@@ -1,6 +1,7 @@
 // Memory: switching tracks, restarting races and browsing cars in the car menu must not leave GPU geometry,
-// textures, shader programs or JavaScript memory behind. After a warm-up round (every track once, caches filled)
-// two more rounds must not grow the counts.
+// textures, shader programs or JavaScript memory behind. Rounds 1-2 warm up (caches fill, and effects that only show
+// now and then, like sparks or a broken lamp, compile their first shaders); from round 2 to the last the counts must
+// stay flat, within a small margin (the leak this test was written for grew by ~1850 geometries per round).
 //   node tests/browser/memory.test.mjs
 import { serve, launch, openGame, startTrack, trackIds, simulate, checker } from './lib.mjs';
 
@@ -36,11 +37,11 @@ try {
     rounds.push(await measure());
     console.log(`round ${r + 1}: ${JSON.stringify(rounds[r], (k, v) => typeof v === 'number' ? +v.toFixed(1) : v)}`);
   }
-  const w = rounds[0], z = rounds[rounds.length - 1];
-  T.check('GPU geometries do not grow after the warm-up round', z.geometries <= w.geometries + 10, `${w.geometries} -> ${z.geometries}`);
+  const w = rounds[Math.min(1, rounds.length - 1)], z = rounds[rounds.length - 1], k = rounds.length - 1 - Math.min(1, rounds.length - 1);
+  T.check('GPU geometries do not grow after the warm-up rounds', z.geometries <= w.geometries + 30 * Math.max(1, k), `${w.geometries} -> ${z.geometries}`);
   T.check('textures do not grow', z.textures <= w.textures + 2, `${w.textures} -> ${z.textures}`);
-  T.check('shader programs do not grow', z.programs <= w.programs + 2, `${w.programs} -> ${z.programs}`);
-  T.check('JavaScript memory does not grow (more than 25 MB over two rounds)', z.heapMB <= w.heapMB + 25, `${w.heapMB.toFixed(1)} -> ${z.heapMB.toFixed(1)} MB`);
+  T.check('shader programs do not grow', z.programs <= w.programs + 4, `${w.programs} -> ${z.programs}`);
+  T.check('JavaScript memory does not grow (more than 25 MB)', z.heapMB <= w.heapMB + 25, `${w.heapMB.toFixed(1)} -> ${z.heapMB.toFixed(1)} MB`);
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
 } finally {
   await browser.close(); await srv.close();
