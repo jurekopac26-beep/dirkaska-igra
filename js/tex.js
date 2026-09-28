@@ -445,7 +445,7 @@ const Tex = (function () {
   // Toskana: the Italian tricolour in long stripes (green by the asphalt, white, red on the outside, as in the reference); Gromski rt: red and yellow blocks
   function curbIT() {
     const c = cv(32, 64), x = c.getContext('2d');
-    x.fillStyle = '#3c9a6c'; x.fillRect(0, 0, 12, 64); x.fillStyle = '#f4f1ea'; x.fillRect(12, 0, 9, 64); x.fillStyle = '#d23a30'; x.fillRect(21, 0, 11, 64);
+    x.fillStyle = '#588a72'; x.fillRect(0, 0, 12, 64); x.fillStyle = '#9daf94'; x.fillRect(12, 0, 9, 64); x.fillStyle = '#97524a'; x.fillRect(21, 0, 11, 64);   // (toned for Toskana's strong light: coral, cream and sage on screen, as in the reference)
     const g = x.createLinearGradient(0, 0, 32, 0);
     g.addColorStop(0, 'rgba(0,0,0,0.0)'); g.addColorStop(0.75, 'rgba(0,0,0,0.0)'); g.addColorStop(1, 'rgba(0,0,0,0.28)');
     x.fillStyle = g; x.fillRect(0, 0, 32, 64);

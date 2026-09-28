@@ -482,7 +482,7 @@
     if (P.pitEv) { const e = P.pitEv; P.pitEv = null; pitEvent(e); }
     if (track.def.pit && !pitHint && +S.damage > 0 && P.dmg > 0.45 && phase === 'racing') { pitHint = true; toast('Avto je poškodovan: zapelji v bokse (desno takoj za zadnjim ovinkom pred ciljno ravnino), mehaniki ga popravijo.', 4600); }
     if (P.pitState === 'repair' && (!Render.crew || !Render.crew.P || Render.crew.gunOn)) { pitWrenchT -= dt; if (pitWrenchT <= 0) { pitWrenchT = 0.28 + Math.random() * 0.35; Sfx.wrench(); } }   // (with the crew: while the wheel guns rattle)
-    if (P.propSnd) { Sfx.knock(P.propSnd, P.propSndV); if (P.propSndV > 9 && (P.propSnd === 'tstack' || P.propSnd === 'bstack' || P.propSnd === 'crate')) vibrate(25); P.propSnd = null; P.propSndV = 0; }   // knocked a cone, tyres or bales
+    if (P.propSnd) { Sfx.knock(P.propSnd, P.propSndV); if (P.propSndV > 9 && (P.propSnd === 'tstack' || P.propSnd === 'bstack' || P.propSnd === 'rbstack' || P.propSnd === 'crate')) vibrate(25); P.propSnd = null; P.propSndV = 0; }   // knocked a cone, tyres or bales
     for (const c of race.cars) { c.hitWall = 0; c.hitCar = 0; c.hitDebris = 0; }
   }
 
@@ -805,7 +805,7 @@
     if (+S.damage > 0 && P.dmg > 0.5 && !cs.dmg1) { cs.dmg1 = true; Comm.say('damage', null, 2); }
     if (+S.damage > 0 && P.dmg > 0.8 && !cs.dmg2) { cs.dmg2 = true; Comm.say('heavyDamage', null, 3); }
     // knocked-over trackside props
-    if (P.propKnock) { const k = P.propKnock, key = k === 'cone' ? 'propCone' : k === 'tyre' || k === 'tstack' ? 'propTyre' : k === 'bale' || k === 'bstack' ? 'propBale' : k === 'pylon' ? 'propPylon' : k === 'post' ? 'propPost' : 'propCrate';
+    if (P.propKnock) { const k = P.propKnock, key = k === 'cone' ? 'propCone' : k === 'tyre' || k === 'tstack' ? 'propTyre' : k === 'bale' || k === 'bstack' || k === 'rbale' || k === 'rbstack' ? 'propBale' : k === 'pylon' ? 'propPylon' : k === 'post' ? 'propPost' : 'propCrate';
       P.propKnock = null; if (P.propKnockV > 7 && cool('prop', 12) && Math.random() < 0.75) Comm.say(key, null, 1); }
     // crashes and contact
     if (cev.wall > 6 && cool('crash', 8)) Comm.say('crash', null, 2);
