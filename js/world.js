@@ -3478,9 +3478,115 @@ const World = (function () {
   /* ---- moving things: the TV helicopter over the leading car, cloud shadows drifting across the mountain
      (built at the end of buildPikes; pkUpdate runs every frame from World.update) ---- */
   function pkSky(K) {
+    const S = 110, NP = 64;   // cloud-shadow noise cell (m) and its period in cells (the drift offset wraps without a seam)
+    // cloud shadows: every plain material of this world (not the crowds' own shader) darkens under slowly drifting blobs of 2-octave value noise;
+    // computed per vertex (highp: phones' mediump fragments cannot hold world coordinates; the blobs are 100-300 m, the vertices at most 10 m apart), applied to the lit colour before the fog
+    const U = { value: new THREE.Vector2() };
+    const vHead = '#include <common>\nuniform vec2 pkCloudO;\nvarying float vCloud;\n' +
+      'float pkHash(vec2 i, float n) { i = mod(i, n); return fract(sin(dot(i, vec2(12.9898, 78.233))) * 43758.5453); }\n' +
+      'float pkVN(vec2 p, float n) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(pkHash(i, n), pkHash(i + vec2(1.0, 0.0), n), f.x), mix(pkHash(i + vec2(0.0, 1.0), n), pkHash(i + 1.0, n), f.x), f.y); }';
+    const vBody = '#include <project_vertex>\nvec4 pkW = vec4( transformed, 1.0 );\n#ifdef USE_INSTANCING\npkW = instanceMatrix * pkW;\n#endif\n' +
+      'vec2 pkQ = ( modelMatrix * pkW ).xz / ' + S.toFixed(1) + ' - pkCloudO;\n' +
+      'float pkN = 0.65 * pkVN( pkQ, ' + NP.toFixed(1) + ' ) + 0.35 * pkVN( pkQ * 2.0 + vec2( 17.0, 5.0 ), ' + (NP * 2).toFixed(1) + ' );\n' +
+      'vCloud = 1.0 - 0.18 * smoothstep( 0.53, 0.66, pkN );';
+    const patch = (m) => {
+      if (m.userData.pkCloud || !(m.isMeshLambertMaterial || m.isMeshPhongMaterial) || m.map === K.tex.water) return;   // (the lake: a few huge triangles, far below)
+      const prev = m.onBeforeCompile, key = 'pkCloud|' + m.customProgramCacheKey(); m.userData.pkCloud = true;   // (its own programs, the same on every rebuild)
+      m.onBeforeCompile = (sh, r) => {
+        prev.call(m, sh, r);
+        sh.uniforms.pkCloudO = U;
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', vHead).replace('#include <project_vertex>', vBody);
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vCloud;').replace('#include <fog_fragment>', 'gl_FragColor.rgb *= vCloud;\n#include <fog_fragment>');
+      };
+      m.customProgramCacheKey = () => key; m.needsUpdate = true;
+    };
+    const walk = (o) => { if (o.name === 'crowds') return; if (o.isMesh) (Array.isArray(o.material) ? o.material : [o.material]).forEach(patch); o.children.forEach(walk); };
+    walk(K.root);
+
+    // the TV helicopter: a light single-engine type in white with a blue livery (+x forward, y up, 11.4 m nose to tail); the main and the tail rotor spin on their own
+    const wht = [0.93, 0.93, 0.95], blu = [0.13, 0.3, 0.68], gls = [0.07, 0.09, 0.13], gry = [0.36, 0.37, 0.4], drk = [0.16, 0.16, 0.18];
+    const hull = (g, x0, ya0, yb0, hw0, x1, ya1, yb1, hw1, col, colTop, colEnd) => {   // a tapered box between two cross-sections (at x0: y ya0..yb0, half-width hw0; at x1 likewise)
+      const a = [[x0, ya0, -hw0], [x0, ya0, hw0], [x0, yb0, hw0], [x0, yb0, -hw0]], b = [[x1, ya1, -hw1], [x1, ya1, hw1], [x1, yb1, hw1], [x1, yb1, -hw1]], inn = [(x0 + x1) / 2, (ya0 + yb0 + ya1 + yb1) / 4, 0];
+      g.quadO(a[0], a[1], b[1], b[0], col, inn); g.quadO(a[3], a[2], b[2], b[3], colTop || col, inn);
+      g.quadO(a[0], a[3], b[3], b[0], colEnd || col, inn); g.quadO(a[1], a[2], b[2], b[1], colEnd || col, inn);
+      g.quadO(b[0], b[1], b[2], b[3], colEnd || col, inn); g.quadO(a[0], a[1], a[2], a[3], col, inn);
+    };
+    const gb = new GB();
+    box(gb, 0.2, 0.55, 0, 3.2, 1.75, 1.7, 0, wht);                               // cabin
+    box(gb, 0.2, 0.86, 0, 3.24, 0.3, 1.74, 0, blu);                              // livery stripe
+    hull(gb, 1.8, 0.55, 2.3, 0.85, 3.15, 0.8, 1.45, 0.42, wht, gls, gls);        // nose with the wrap-around windscreen
+    hull(gb, -1.4, 0.55, 2.3, 0.85, -2.7, 1.4, 2.05, 0.3, wht);                  // rear fairing
+    hull(gb, -2.7, 1.4, 2.05, 0.3, -7.9, 1.7, 1.98, 0.13, wht, blu, wht);        // tail boom (blue spine)
+    for (const sd of [-1, 1]) {
+      box(gb, 1.0, 1.35, sd * 0.84, 1.1, 0.72, 0.06, 0, gls);                    // door windows
+      box(gb, -0.4, 1.35, sd * 0.84, 0.9, 0.62, 0.06, 0, gls);
+      box(gb, 0.2, 0.02, sd * 1.0, 3.8, 0.1, 0.12, 0, drk);                      // skid
+      for (const x of [-0.7, 1.1]) box(gb, x, 0.08, sd * 0.93, 0.1, 0.5, 0.1, 0, gry);   // struts
+    }
+    box(gb, -0.35, 2.3, 0, 2.1, 0.5, 1.1, 0, blu, wht);                          // engine cowling
+    cyl(gb, -0.1, 2.75, 0, 0.13, 0.55, 5, gry);                                  // rotor mast
+    hull(gb, -7.3, 1.85, 2.0, 0.06, -8.3, 2.3, 3.3, 0.05, blu);                  // swept tail fin
+    box(gb, -7.0, 1.78, 0, 0.55, 0.06, 1.9, 0, wht);                             // horizontal stabiliser
+    const g2 = new GB(); box(g2, 0, 0, 0, 10.6, 0.06, 0.34, 0.1, drk); cyl(g2, 0, -0.05, 0, 0.26, 0.2, 6, gry, gry);   // main rotor: two blades through the hub
+    const gt = new GB(); box(gt, 0, -0.85, 0, 0.14, 1.7, 0.04, 0, drk); box(gt, 0, -0.05, 0, 0.2, 0.1, 0.1, 0, gry);   // tail rotor (spins about z)
+    const mat = new THREE.MeshLambertMaterial({ vertexColors: true }); mat.userData.pkCloud = true;   // (the helicopter stays out of the cloud patch)
+    const heli = new THREE.Group(); heli.rotation.order = 'YZX'; K.root.add(heli);
+    const body = new THREE.Mesh(gb.geometry(), mat), rotor = new THREE.Mesh(g2.geometry(), mat), tail = new THREE.Mesh(gt.geometry(), mat);
+    rotor.position.set(-0.1, 3.3, 0); tail.position.set(-8.0, 2.55, 0.14);
+    body.castShadow = rotor.castShadow = true; heli.add(body, rotor, tail);
+    const i0 = T.idx(K.sStart);
+    K.out.dyn.pk = { U, S, NP, heli, rotor, tail, init: false, t: 0, hx: T.px[i0], hz: T.pz[i0], hy: T.hy[i0], hh: T.hd[i0] };
   }
 
   function pkUpdate(pk, t, car) {
+    const wrap = (a) => a - TAU * Math.round(a / TAU), dt = t - pk.t; pk.t = t;
+    // cloud shadows: the pattern drifts with the wind (~4 m/s towards the north-east)
+    pk.U.value.set(((t * 3.2 / pk.S) % pk.NP + pk.NP) % pk.NP, ((-t * 2.5 / pk.S) % pk.NP + pk.NP) % pk.NP);
+    // the helicopter: anchored on the followed car (the start line without one), 20-34 m off to one side, 22-30 m up
+    const ax = car ? car.x : pk.hx, az = car ? car.z : pk.hz, ay = car ? car.roadY || 0 : pk.hy, ah = car ? car.h : pk.hh, spd = car ? car.speed || 0 : 0;
+    const cvx = car ? car.vx || 0 : 0, cvz = car ? car.vz || 0 : 0;
+    const snap = !pk.init || dt < 0 || dt > 1.5 || Math.hypot(ax - pk.ax, az - pk.az) > 80;
+    if (snap) { pk.init = true; pk.ax = ax; pk.az = az; pk.ay = ay; pk.fx = Math.cos(ah); pk.fz = Math.sin(ah); pk.th = ah + Math.PI * 0.3; pk.L = 28; pk.vx = pk.vz = pk.ac = pk.al = 0; }
+    const e = (k) => 1 - Math.exp(-Math.max(0, dt) * k);
+    // the anchor trails the car smoothly but leads by its velocity (no lag at a steady speed: it stays level with the car)
+    pk.ax += (ax + cvx / 2.5 - pk.ax) * e(2.5); pk.az += (az + cvz / 2.5 - pk.az) * e(2.5); pk.ay += (ay - pk.ay) * e(1.5);
+    { const k = e(2.5); pk.fx += (Math.cos(ah) - pk.fx) * k; pk.fz += (Math.sin(ah) - pk.fz) * k; const l = Math.hypot(pk.fx, pk.fz) || 1; pk.fx /= l; pk.fz /= l; }
+    const H = 26 + 3 * Math.sin(t * 0.21), fx = pk.fx, fz = pk.fz;
+    // where it may fly: a rough model of the three cameras (chase in portrait and landscape, iso, kino: see Render's updateCamera) projects a candidate spot;
+    // off screen, or clear of the car and the road just ahead on screen, in every view; a bit ahead of the car is nicer, and it does not jump around
+    const sp1 = Math.max(spd, 1e-3), la = sstep(1.5, 16, spd), lvx = cvx / sp1 * la, lvz = cvz / sp1 * la, zc = 1.2 * (1 + 0.25 * clamp(spd / 55, 0, 1)), zi = 1.2 * (1 + 0.1 * clamp(spd / 60, 0, 1));
+    const views = [[fx * 13, fz * 13, -fx, -fz, 46 * zc, 0.98, 58, 0.46], [fx * 8.5, fz * 8.5, -fx, -fz, 30 * zc, 0.9, 46, 2.2], [clamp(lvx * 19, -24, 24), clamp(lvz * 19, -12.6, 18.6), 0, 1, 57 * zi, 0.82, 30, 2.2], [lvx * 11, lvz * 11, 0, 1, 38 * zi, 0.74, 30, 2.2]];
+    const cams = views.map(([ox, oz, bx, bz, D, pt, fov, as]) => { const tx = ax + ox, tz = az + oz, c = [tx + bx * D * Math.cos(pt), ay + D * Math.sin(pt), tz + bz * D * Math.cos(pt)];
+      const f = [tx - c[0], ay - c[1], tz - c[2]], fl = Math.hypot(f[0], f[1], f[2]); f[0] /= fl; f[1] /= fl; f[2] /= fl; const rl = Math.hypot(f[0], f[2]), r = [-f[2] / rl, 0, f[0] / rl];
+      return { c, f, r, u: [r[1] * f[2] - r[2] * f[1], r[2] * f[0] - r[0] * f[2], r[0] * f[1] - r[1] * f[0]], k: 1 / Math.tan(fov / 2 * Math.PI / 180), as }; });
+    const prot = [[ax, ay + 0.7, az], [ax + fx * 7, ay, az + fz * 7], [ax + fx * 14, ay, az + fz * 14], [ax + fx * 21, ay, az + fz * 21]];
+    const scr = (C, q) => { const d0 = q[0] - C.c[0], d1 = q[1] - C.c[1], d2 = q[2] - C.c[2], z = d0 * C.f[0] + d1 * C.f[1] + d2 * C.f[2]; return z < 1 ? null : [(d0 * C.r[0] + d1 * C.r[1] + d2 * C.r[2]) / z * C.k, (d0 * C.u[0] + d1 * C.u[1] + d2 * C.u[2]) / z * C.k, z]; };
+    const clear = (x, y, z) => { let m = 1, n = 0;   // in half screen heights: the smallest gap between the helicopter (~7 m wide disc) and the protected points, + 0.05 per view that shows it well clear
+      for (const C of cams) { const h = scr(C, [x, y + 1.5, z]); if (!h) continue; const rr = 7 * C.k / h[2]; if (Math.abs(h[0]) > C.as + rr || Math.abs(h[1]) > 1 + rr) continue;
+        let mv = 1; for (const q of prot) { const s = scr(C, q); if (s) mv = Math.min(mv, Math.hypot(s[0] - h[0], s[1] - h[1]) - rr); } m = Math.min(m, mv); if (mv > 0.35) n++; }
+      return Math.min(0.35, m) + 0.05 * n; };
+    let best = pk.th, bL = pk.L, bs = -1e9;
+    for (let j = -12; j < 12; j++) for (const L of [20, 27, 34]) {
+      const th = pk.th + j * TAU / 24, x = ax + Math.cos(th) * L, z = az + Math.sin(th) * L, y = Math.max(ay + H, pkGround(x, z) + 20);
+      const sc = clear(x, y, z) + 0.12 * (Math.cos(th) * fx + Math.sin(th) * fz) - 0.1 * Math.abs(j * TAU / 24) - 0.004 * Math.abs(L - pk.L);
+      if (sc > bs) { bs = sc; best = th; bL = L; }
+    }
+    pk.th += wrap(best - pk.th) * (snap ? 1 : e(1.2)); pk.L += (bL - pk.L) * (snap ? 1 : e(0.8));
+    const tx = pk.ax + Math.cos(pk.th) * pk.L, tz = pk.az + Math.sin(pk.th) * pk.L, ty = Math.max(pk.ay + H, pkGround(tx, tz) + 20) + 0.4 * Math.sin(t * 0.9);
+    const m = pk.heli, p = m.position;
+    if (snap) p.y = ty;
+    const px = p.x, pz = p.z;
+    p.x = tx; p.z = tz; p.y += (ty - p.y) * e(ty > p.y ? 1.6 : 0.8);
+    p.y = Math.max(p.y, pkGround(p.x, p.z) + 18);
+    // attitude: nose along its flight (towards the car while it hovers); banks into the turns, dips the nose with speed and when it speeds up
+    if (snap) pk.yaw = Math.atan2(az - p.z, ax - p.x);
+    else if (dt > 1e-4) { const vx = (p.x - px) / dt, vz = (p.z - pz) / dt, c = Math.cos(pk.yaw), s = Math.sin(pk.yaw), dvx = (vx - pk.vx) / dt, dvz = (vz - pk.vz) / dt, k = e(3);
+      pk.ac += (dvx * c + dvz * s - pk.ac) * e(2); pk.al += (dvz * c - dvx * s - pk.al) * e(2); pk.vx += (vx - pk.vx) * k; pk.vz += (vz - pk.vz) * k; }
+    const sp = Math.hypot(pk.vx, pk.vz), wv = sstep(2, 9, sp), lx = pk.ax - p.x, lz = pk.az - p.z, ll = Math.hypot(lx, lz) || 1;
+    const yt = Math.atan2(lerp(lz / ll, pk.vz / (sp || 1), wv), lerp(lx / ll, pk.vx / (sp || 1), wv));
+    pk.yaw += wrap(yt - pk.yaw) * e(1.3);
+    m.rotation.set(clamp(pk.al * 0.035, -0.35, 0.35), -pk.yaw, -clamp(0.004 * sp + 0.02 * pk.ac, -0.12, 0.25));
+    pk.rotor.rotation.y = (t * 41) % TAU; pk.tail.rotation.z = (t * 73) % TAU;
   }
 
   function buildPikes(scene, tex, opts) {
