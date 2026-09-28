@@ -541,7 +541,8 @@ const World = (function () {
     const macro = valueNoise2(5, 45), forestN = valueNoise2(9, 70), typeN = valueNoise2(13, 55);
     const dens = opts.density || 1;
     const root = new THREE.Group(); scene.add(root);
-    const out = { root, dyn: {}, groundH, props: [] };   // props: loose trackside objects the cars can knock over (simulated by Core, drawn by Render)
+    const out = { root, dyn: {}, groundH, props: [], ownTex: [] };   // props: loose trackside objects the cars can knock over (simulated by Core, drawn by Render)
+    const ownTex = (t) => { out.ownTex.push(t); return t; };   // textures made for this build only: Render frees them with the scenery
 
     // bounds
     let minX = 1e9, maxX = -1e9, minZ = 1e9, maxZ = -1e9;
@@ -2287,7 +2288,7 @@ const World = (function () {
             x2.fillStyle = '#f4f1ec'; x2.beginPath(); x2.arc(128, 116, 34, 0, Math.PI * 2); x2.fill(); x2.strokeStyle = '#c8261f'; x2.lineWidth = 9; x2.beginPath(); x2.arc(128, 116, 29, 0, Math.PI * 2); x2.stroke();
             x2.fillStyle = '#16171a'; x2.font = '900 32px "Russo One", "Arial Black", Arial, sans-serif'; x2.fillText('80', 128, 118);
             let fx = -T.tx[i] - T.nx[i] * 0.45, fz = -T.tz[i] - T.nz[i] * 0.45; const fl = Math.hypot(fx, fz); fx /= fl; fz /= fl;
-            const bm = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 2.6), new THREE.MeshLambertMaterial({ map: new THREE.CanvasTexture(c2) }));
+            const bm = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 2.6), new THREE.MeshLambertMaterial({ map: ownTex(new THREE.CanvasTexture(c2)) }));
             bm.position.set(x + fx * 0.14, 3.1, z + fz * 0.14); bm.rotation.set(-0.12, Math.atan2(fx, fz), 0, 'YXZ'); bm.castShadow = true; root.add(bm);
             box(g, x, 1.8, z, 4.4, 2.8, 0.2, Math.atan2(-fx, fz), [0.86, 0.85, 0.82], [0.86, 0.85, 0.82]);
             for (const q2 of [-1.6, 1.6]) box(g, x + fz * q2, 0, z - fx * q2, 0.22, 2.0, 0.22, 0, [0.62, 0.63, 0.66]);
@@ -2690,7 +2691,7 @@ const World = (function () {
         for (const o of [-hw + 1, hw - 1]) box(g, x + cr * o, y, z + sr * o, 0.5, 4.2, 0.5, rot, [0.2, 0.2, 0.22]);
         texSpons.quadO([x - cr * hw, y + 4, z - sr * hw], [x + cr * hw, y + 4, z + sr * hw], [x + cr * hw, y + 7, z + sr * hw], [x - cr * hw, y + 7, z - sr * hw], [1, 1, 1], [x + sr * 3, y + 5, z - cr * 3], [[0, 0.75], [0.5, 0.75], [0.5, 1], [0, 1]]); }
       // distance boards before the braking zones (150 / 100 / 50 m)
-      { const boardTex = {}; const bt = (n) => boardTex[n] || (boardTex[n] = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x2 = c.getContext('2d'); x2.fillStyle = '#fff'; x2.fillRect(0, 0, 64, 64); x2.strokeStyle = '#111'; x2.lineWidth = 5; x2.strokeRect(3, 3, 58, 58); x2.fillStyle = '#111'; x2.font = '900 30px Arial, sans-serif'; x2.textAlign = 'center'; x2.textBaseline = 'middle'; x2.fillText(String(n), 32, 34); const t = new THREE.CanvasTexture(c); return t; })());
+      { const boardTex = {}; const bt = (n) => boardTex[n] || (boardTex[n] = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x2 = c.getContext('2d'); x2.fillStyle = '#fff'; x2.fillRect(0, 0, 64, 64); x2.strokeStyle = '#111'; x2.lineWidth = 5; x2.strokeRect(3, 3, 58, 58); x2.fillStyle = '#111'; x2.font = '900 30px Arial, sans-serif'; x2.textAlign = 'center'; x2.textBaseline = 'middle'; x2.fillText(String(n), 32, 34); return ownTex(new THREE.CanvasTexture(c)); })());
         for (const fc of [0.068, 0.362, 0.641, 0.884]) { const sC = sF(fc);
           for (const d of [150, 100, 50]) { const sq = sC - d - 12; const i = T.idx(sq), side = T.br[i] < T.bl[i] ? 1 : -1, o = side * ((side > 0 ? T.br[i] : T.bl[i]) - 0.2);
             const m = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 1.2), new THREE.MeshBasicMaterial({ map: bt(d) })); m.position.set(T.px[i] + T.nx[i] * o, HYi(i) + 2.0, T.pz[i] + T.nz[i] * o); m.rotation.y = Math.atan2(-T.tx[i], -T.tz[i]); root.add(m);

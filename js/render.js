@@ -630,6 +630,7 @@ const Render = (function () {
     if (world && world.root) {   // switching tracks: drop and free the previous scenery
       scene.remove(world.root);
       world.root.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.dispose()); if (o.isInstancedMesh) o.dispose(); });   // (instanced: its instance buffers)
+      if (world.ownTex) world.ownTex.forEach(t => t.dispose());   // textures made for that track only (the shared ones stay cached)
       if (skids) skids.clear();
     }
     clearPropMeshes();
@@ -820,7 +821,20 @@ const Render = (function () {
   function getDynScale() { return dynScale; }
 
   /* ---------------- race attach ---------------- */
-  function disposeView(v) { scene.remove(v.grp); if (v.glb) { v.glb.paint.dispose(); v.glb.tail.dispose(); } if (v.body && v.body.material !== matCar) v.body.material.dispose(); if (v.ownGeo) v.body.geometry.dispose(); if (v.partMats) v.partMats.forEach(m => m.dispose()); if (v.decals) v.decals.forEach(m => { m.geometry.dispose(); m.material.dispose(); }); }
+  // frees everything a car mesh built for itself: the cloned body, panels, lamps, glass, decals, the shadow blob and marker,
+  // and its own materials; the shared pieces stay (cached body / tail / wheel / Peugeot geometry, the materials all cars use).
+  // Loose panels lying on the track reuse their car's panel geometry: three.js uploads a disposed geometry again if it is drawn.
+  function disposeCarMesh(v) {
+    const keepG = new Set([wheelGeo, wheelGeoW, ...geoCache.values(), ...tailGeoCache.values()]);
+    if (p206Geo) for (const n of p206Geo) for (const p of n.prims) keepG.add(p.g);
+    const keepM = new Set([matCar, matWheel, matTailOff, matTailOn, matBlob, matMarker, matUnder, matEngine, matLens, matLensBroken]);
+    if (p206Mats) for (const k in p206Mats) keepM.add(p206Mats[k]);
+    v.grp.traverse(o => {
+      if (o.geometry && !keepG.has(o.geometry)) o.geometry.dispose();
+      for (const m of Array.isArray(o.material) ? o.material : o.material ? [o.material] : []) if (!keepM.has(m)) m.dispose();
+    });
+  }
+  function disposeView(v) { scene.remove(v.grp); disposeCarMesh(v); }
   function makeView(c) {
     if (c.stripe === undefined) c.stripe = (c.id * 7) % 3 !== 0;
     const v = makeCarMesh(c);
@@ -1647,7 +1661,7 @@ const Render = (function () {
   }
   function setShowCar(model, color, num) {
     if (!showScene) initShowroom();
-    if (showCar) showScene.remove(showCar.grp);
+    if (showCar) { showScene.remove(showCar.grp); disposeCarMesh(showCar); }
     const fake = { m: model, color, num, stripe: true, isPlayer: false };
     showCar = makeCarMesh(fake, { noMarker: true });
     showCar.grp.position.set(0, 0, 0);

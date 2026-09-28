@@ -5,9 +5,9 @@ v brskalniku Playwright (`npm install` ga namesti, `npx playwright install chrom
 
 ```sh
 npm install          # enkrat
-npm test             # vse (~5 min)
+npm test             # vse (~8 min)
 npm run test:node    # samo fizika, AI in dirke (~1 min)
-npm run test:browser # samo testi v brskalniku (~4 min)
+npm run test:browser # samo testi v brskalniku (~7 min)
 ```
 
 ## Kaj preverjajo
@@ -20,6 +20,7 @@ npm run test:browser # samo testi v brskalniku (~4 min)
 | `browser/smoke.test.mjs` | Stran se naloži (http in lokalna datoteka), 20 s vožnje na vsaki progi, nastavitve in prenos starih nastavitev, preklop fizike med dirko, demo na naslovnem zaslonu, rekord na Pikes Peaku, brez napak na strani. |
 | `browser/world.test.mjs` | Prstni odtis zgrajenega 3D sveta vsake proge (vsi modeli, rekviziti, gledalci, tla) primerjan z `golden/world.json`. |
 | `browser/pits.test.mjs` | Cela dirka v Bakrenem gozdu s postankom v boksih: ustavitev, mehaniki, dvig na dvigalkah, popravilo, vsi avti v cilju. |
+| `browser/memory.test.mjs` | Pomnilnik: trije krogi menjav vseh prog, ponovni start in brskanje po avtih v meniju; geometrija, teksture, programi senčilnikov in pomnilnik JavaScripta ne smejo rasti. |
 
 ## Referenčne vrednosti
 

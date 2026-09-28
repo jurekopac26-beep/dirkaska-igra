@@ -25,8 +25,8 @@ export function serve(root = ROOT) {
   });
 }
 
-export function launch() {
-  return chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+export function launch(extraArgs = []) {
+  return chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', ...extraArgs] });
 }
 
 // open the game; settings: an object (merged over sound/commentary off), a raw JSON string, or null (a fresh profile)

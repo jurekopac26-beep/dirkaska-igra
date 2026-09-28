@@ -1,14 +1,14 @@
 // Runs the test suites one after another (each in its own process) and prints a summary.
 //   node tests/run.js           everything
 //   node tests/run.js node      only the Node tests (physics, AI, races; ~1 min)
-//   node tests/run.js browser   only the browser tests (Playwright; ~4 min with software WebGL)
+//   node tests/run.js browser   only the browser tests (Playwright; ~7 min with software WebGL)
 'use strict';
 const { spawnSync } = require('child_process');
 const path = require('path');
 
 const SUITES = {
   node: ['stamp.test.js', 'golden.test.js', 'races.test.js', 'cs-handling.test.js'],
-  browser: ['browser/smoke.test.mjs', 'browser/world.test.mjs', 'browser/pits.test.mjs'],
+  browser: ['browser/smoke.test.mjs', 'browser/world.test.mjs', 'browser/pits.test.mjs', 'browser/memory.test.mjs'],
 };
 const which = process.argv[2];
 const list = which ? SUITES[which] : [...SUITES.node, ...SUITES.browser];
