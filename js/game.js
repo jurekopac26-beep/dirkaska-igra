@@ -784,6 +784,7 @@
     if (!cs || !race) return;
     const P = race.player, pos = P.pos || cs.lastPos, n = race.laps, ord = race.order || [], tt = race.timeTrial;
     // position changes (must hold for 1 s, so side-by-side battles don't flicker); a time trial has no positions, laps or gaps (its checkpoints are called in updateHUDTT)
+    if (mp && mp.race && mp.race.off) cs.lastPos = pos;   // (a friend who left is no place lost or won)
     if (!tt && pos !== cs.lastPos) {
       cs.posHold += dt;
       if (cs.posHold > 1.0) {
@@ -857,7 +858,7 @@
         phase = 'racing'; phaseT = 0; race.start(); if (on) on.startT = Net.now();
         setLights(0, true); Sfx.beep(1040, 0.42, 0.16);
         showMsg('START!', 'gold', 0.9);
-        Comm.say(race.timeTrial ? 'goTT' : 'go', null, 4);
+        Comm.say(race.timeTrial ? 'goTT' : on ? 'goNet' : 'go', null, 4);
         setTimeout(() => { if (phase === 'racing') { $('h-lights').classList.remove('show'); setLights(0, false); } }, 1100);
       }
     } else if (phase === 'racing') {
@@ -906,6 +907,7 @@
     lost: 'Povezava z gostiteljem je prekinjena.',
   };
   const netErr = (type) => (Object.prototype.hasOwnProperty.call(NET_ERR, type) ? NET_ERR[type] : 'Povezava s strežnikom ni uspela. Preveri internetno povezavo in poskusi znova.');
+  const onErr = (t) => { const el = $('on-err'); el.textContent = t; if (t) { try { el.scrollIntoView({ block: 'nearest' }); } catch (_) { } } };   // (on a short screen it may be below the fold)
   const peerOf = (m) => ({ name: cleanName(m.name) || 'Prijatelj', car: String(m.car), color: m.color | 0, num: Core.clamp(m.num | 0, 1, 99) });
   // mp: the room, or null. role 'host' | 'guest'; peer: the friend { name, car, color, num }; peerIn (host): the friend is in
   // the room (not still racing or on the results), so a race can start; track, laps: the host's choice; setup: the race being
@@ -918,6 +920,7 @@
   function netTap() { if (S.control === 'tilt') enableTilt(true); Comm.unlock(); }
 
   function leaveRace() {   // the race (or its results) off the screen, the title demo back
+    Net.fixClock(false);
     paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); Sfx.setRunning(false); Sfx.silence();
     Render.attachRace(demo); Render.resetCam(); setLights(0, false);
   }
@@ -925,18 +928,18 @@
     if (race) leaveRace(); else bg = 'demo';
     mp = null;
     $('on-pick').classList.remove('off'); $('on-room').classList.add('off'); $('on-go').classList.add('off');
-    $('on-err').textContent = Net.available() ? '' : netErr('browser-incompatible');
     $('on-name').value = S.name;
     showScreen('online');
+    onErr(Net.available() ? '' : netErr('browser-incompatible'));
   }
   function netStart(role) {
     const code = Net.normCode($('on-code').value);
-    if (role === 'guest' && code.length !== 4) { $('on-err').textContent = 'Vpiši kodo sobe (4 znaki), ki ti jo je poslal prijatelj.'; return; }
-    if (!Net.available()) { $('on-err').textContent = netErr('browser-incompatible'); return; }
+    if (role === 'guest' && code.length !== 4) { onErr('Vpiši kodo sobe (4 znaki), ki ti jo je poslal prijatelj.'); return; }
+    if (!Net.available()) { onErr(netErr('browser-incompatible')); return; }
     netTap();
     const d = netTracks().find(t => t.id === S.track) || netTracks()[0];
     mp = { role, code: role === 'guest' ? code : '', peer: null, peerIn: false, track: d.id, laps: d.laps || LAPS, no: 0, setup: null, race: null };
-    $('on-pick').classList.add('off'); $('on-room').classList.remove('off'); $('on-err').textContent = '';
+    $('on-pick').classList.add('off'); $('on-room').classList.remove('off'); onErr('');
     if (role === 'host') Net.host(onNet); else Net.join(code, onNet);
     buildRoom();
   }
@@ -953,14 +956,14 @@
       mp.acked = false; hello(); buildRoom(); return;
     }
     if (type === 'error') {
-      if (race) { mp.err = m; return; }   // (a race goes on; back from it the player hears what happened)
-      Net.close(); openOnline(); $('on-err').textContent = netErr(m); return;
+      if (race) { mp.err = m; if (screen === 'results') netResults(); return; }   // (a race goes on; back from it the player hears what happened)
+      Net.close(); openOnline(); onErr(netErr(m)); return;
     }
     if (type === 'lost') { friendGone(false); return; }
     if (type !== 'msg') return;
     switch (m.t) {
       case 'hello':
-        if (m.v !== gameVer()) { Net.send({ t: 'nope', why: 'version' }); Net.close(); openOnline(); $('on-err').textContent = netErr('version'); return; }
+        if (m.v !== gameVer()) { Net.send({ t: 'nope', why: 'version' }); Net.close(); openOnline(); onErr(netErr('version')); return; }
         mp.peer = peerOf(m); mp.peerIn = true;
         Net.send({ t: 'hi' });
         if (mp.role === 'host') Net.send({ t: 'lobby', track: mp.track, laps: mp.laps });
@@ -968,8 +971,8 @@
       case 'hi': mp.acked = true; break;
       case 'me': if (mp.peer) { mp.peer = peerOf(m); buildRoom(); } break;
       case 'lobby': if (mp.role === 'guest' && netTracks().some(d => d.id === m.track)) { mp.track = m.track; mp.laps = Core.clamp(m.laps | 0, 1, 5); buildRoom(); } break;
-      case 'nope': Net.close(); openOnline(); $('on-err').textContent = netErr(m.why); break;
-      case 'full': Net.close(); openOnline(); $('on-err').textContent = netErr('full'); break;
+      case 'nope': Net.close(); openOnline(); onErr(netErr(m.why)); break;
+      case 'full': Net.close(); openOnline(); onErr(netErr('full')); break;
       case 'bye': friendGone(true); break;
       case 'setup':   // (only in the room: not while still racing or on the results)
         if (mp.role !== 'guest') break;
@@ -978,7 +981,7 @@
       case 'busy': if (mp.role === 'host' && mp.setup && m.no === mp.setup.no) { mp.setup = null; mp.peerIn = false; buildRoom(); } break;
       case 'cancel': if (mp.role === 'guest' && mp.setup && m.no === mp.setup.no) { mp.setup = null; buildRoom(); } break;
       case 'ready': if (mp.role === 'host' && mp.setup && m.no === mp.setup.no) { mp.setup.guestReady = true; netMaybeGo(); } break;
-      case 'go': if (mp.role === 'guest' && mp.setup && m.no === mp.setup.no && Math.abs(m.at - Net.now()) < 10000) netRace(m.at); break;
+      case 'go': if (mp.role === 'guest' && mp.setup && m.no === mp.setup.no && Number.isFinite(m.at) && m.at - Net.now() < 10000) netRace(m.at); break;   // (also late, e.g. after the app was in the background: that phone just starts late)
       case 'st':
         if (mp.race && m.no === mp.race.no && !mp.race.off) { const B = mp.race.buf; B.push(m); if (B.length > 40) B.shift(); if (m.ft != null) theirFinish(+m.ft); }
         break;
@@ -995,9 +998,9 @@
     toast(said ? 'Prijatelj je zapustil ' + (inRace ? 'dirko.' : 'sobo.') : 'Povezava s prijateljem je prekinjena.', 3600);
     mp.peer = null; mp.setup = null;
     if (mp.role === 'guest') { Net.close(); mp.gone = true; }
-    else if (said) Net.drop();   // (the room stays open; no second message when the friend's phone then closes the line)
+    else if (said) { Net.drop(); if (!mp) return; }   // (the room stays open; no second message when the friend's phone then closes the line)
     if (R) { if (R.theirs == null) R.left = true; hideRemote(); if (screen === 'results') netResults(); }
-    if (!inRace) { if (mp.role === 'guest') { openOnline(); $('on-err').textContent = netErr(said ? 'closed' : 'lost'); } else buildRoom(); }
+    if (!inRace) { if (mp.role === 'guest') { openOnline(); onErr(netErr(said ? 'closed' : 'lost')); } else buildRoom(); }
   }
   function hideRemote() {   // the friend's car off the track: no more states will move it (last in the order if it has not finished)
     const c = race && race.remote; if (mp && mp.race) mp.race.off = true;
@@ -1068,6 +1071,7 @@
   function netRace(at) {
     const s = mp.setup; mp.setup = null; mp.peerIn = false;
     mp.race = { no: s.no, at, hold: s.hold, goAt: at + 1300 + 4000 + s.hold * 1000, laps: s.laps, phys: s.phys, damage: s.damage, first: s.first, buf: [], sendT: -1e9, late: null, mine: null, theirs: null, left: false, off: false };
+    Net.fixClock(true);   // (the clock as it was at the start, until the race is over. The watchdog keeps its patience from the setup for a while: a phone that was frozen just before the start, e.g. switched away, still joins late)
     newRace();
   }
   // every frame of an online race, after its steps: my car to the friend (20 times a second; with no speed while this phone does
@@ -1128,7 +1132,7 @@
     const alive = mp && !mp.err && Net.open && (mp.role === 'host' || !mp.gone);
     if (alive && mp.race) Net.send({ t: 'out', no: mp.race.no });
     leaveRace();
-    if (!mp || mp.err || (mp.role === 'guest' && !alive)) { const e = mp && mp.err; mp = null; Net.close(); openOnline(); if (e) $('on-err').textContent = netErr(e); return; }
+    if (!mp || mp.err || (mp.role === 'guest' && !alive)) { const e = mp && mp.err; mp = null; Net.close(); openOnline(); if (e) onErr(netErr(e)); return; }
     mp.race = null; mp.setup = null; $('on-pick').classList.add('off'); $('on-room').classList.remove('off');
     showScreen('online'); buildRoom();
   }

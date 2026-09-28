@@ -15,8 +15,8 @@ const Net = (function () {
   const SILENT = 10000;   // ms without a word from the friend (pings and answers every 2 s, also in the background; race states 20 times a second): gone
   const SERVER_ERR = ['network', 'socket-closed', 'socket-error', 'server-error'];   // the connection to the PeerJS server (not to the friend) broke
   let peer = null, conn = null, role = null, handler = null, code = '';
-  let offset = 0, bestRtt = Infinity, synced = false, lastRx = 0, quietTill = 0, pongs = [], timers = [];
-  let fails = 0, retryT = null;
+  let offset = 0, bestRtt = Infinity, synced = false, fixed = false, lastRx = 0, quietTill = 0, pongs = [], timers = [];
+  let fails = 0, retryT = null, lastTry = -1e9;
 
   const opts = () => Object.assign({ debug: 0 }, window.__peerOpts || {});   // (the tests point it at their own server)
   const available = () => typeof window.Peer === 'function' && typeof window.RTCPeerConnection === 'function';
@@ -50,7 +50,8 @@ const Net = (function () {
         if (typeof m.h !== 'number' || !(rtt >= 0 && rtt < 5000)) return;
         pongs.push({ rtt, off: m.h + rtt / 2 - t1 }); if (pongs.length > 12) pongs.shift();
         const best = pongs.reduce((a, b) => (b.rtt < a.rtt ? b : a));
-        offset = best.off; bestRtt = best.rtt; synced = true;
+        if (!fixed || !synced) offset = best.off;   // (during a race the clock stays as it was at the start)
+        bestRtt = best.rtt; synced = true;
         return;
       }
       emit('msg', m);
@@ -73,16 +74,18 @@ const Net = (function () {
   // reports the error first and then disconnects the peer, or destroys it if it never got in: then a new one, with a new code.)
   function serverLost(p, type) {
     if (peer !== p || role !== 'host' || retryT || (conn && conn.open)) return;
-    if (fails >= 7) { emit('error', type); return; }
+    if (performance.now() - lastTry > 30000) fails = 0;   // (a new outage, not the same one going on: count again)
+    if (fails >= 7) { later(() => emit('error', type), 0); return; }   // (not from inside the caller)
     retryT = later(() => retry(p), Math.min(10000, 800 * 2 ** fails));
   }
   function retry(p) {
-    retryT = null;
+    retryT = null; lastTry = performance.now();
     if (peer !== p || (conn && conn.open)) return;
     fails++;
     if (p.destroyed) openRoom(0);
-    else if (p.disconnected) { try { p.reconnect(); } catch (_) { } }
+    else if (p.disconnected) { try { p.reconnect(); } catch (_) { } later(() => { if (peer === p && serverUp(p)) fails = 0; }, 5000); }   // (back for a while: a later drop counts from the start)
   }
+  const serverUp = (p) => !!(p.open || (p.socket && p.socket._socket && p.socket._socket.readyState === 1));   // (the server takes a known peer back without saying "open": its WebSocket is up)
   function kick() {   // the network or the app is back: try now
     if (role !== 'host' || !peer || (conn && conn.open) || !(peer.disconnected || peer.destroyed)) return;
     if (retryT) { clearTimeout(retryT); retryT = null; }
@@ -93,7 +96,7 @@ const Net = (function () {
 
   // make a room: a new code each time (another one if the code is taken)
   function host(onEvent) {
-    close(); handler = onEvent; role = 'host'; offset = 0; synced = true; fails = 0;
+    close(); handler = onEvent; role = 'host'; offset = 0; synced = true; fixed = false; fails = 0; lastTry = -1e9;
     openRoom(0);
     later(() => { if (role === 'host' && !code) emit('error', 'network'); }, 30000);   // (no answer from the server at all)
   }
@@ -117,7 +120,7 @@ const Net = (function () {
   }
   // join the friend's room by its code
   function join(roomCode, onEvent) {
-    close(); handler = onEvent; role = 'guest'; offset = 0; bestRtt = Infinity; synced = false; pongs = [];
+    close(); handler = onEvent; role = 'guest'; offset = 0; bestRtt = Infinity; synced = false; fixed = false; pongs = [];
     code = normCode(roomCode);
     const p = peer = new Peer(opts());
     p.on('open', () => { if (peer === p && !conn) attach(p.connect(PREFIX + code, { serialization: 'json', reliable: true })); });   // (once: the server may say open again after a reconnect)
@@ -133,11 +136,13 @@ const Net = (function () {
   }
   // the host: let this friend go (they said goodbye), keep the room
   function drop() { if (conn) lost('bye', true); }
-  // a long job ahead (loading a track: a phone may not answer for seconds): nobody counts as gone before ms have passed
-  function hold(ms) { quietTill = Math.max(quietTill, performance.now() + ms); }
+  // a long job ahead (loading a track: a phone may not answer for seconds): nobody counts as gone before ms have passed (0: as usual again)
+  function hold(ms) { quietTill = performance.now() + ms; }
+  // during a race the clock does not move (the best ping may change; the start and the finish must be on the same clock)
+  function fixClock(on) { fixed = !!on; }
 
   return {
-    available, host, join, close, drop, hold, send, now, normCode,
+    available, host, join, close, drop, hold, fixClock, send, now, normCode,
     get role() { return role; }, get code() { return code; }, get open() { return !!(conn && conn.open); },
     get synced() { return synced; }, get rtt() { return bestRtt; },
   };

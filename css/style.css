@@ -294,6 +294,7 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 select.txt { width: min(15em, 100%); font-style: normal; }
 select.txt option { color: #111; background: #fff; }
 select.txt:disabled { opacity: .75; }
+@media (orientation: landscape) and (max-height: 400px) { #on-pick > .desc:first-child { display: none; } }   /* (short landscape phones: room for the name, the code and a message) */
 
 /* ================= LEADERBOARD (Lestvica) + time-trial results ================= */
 #s-board { justify-content: center; }
