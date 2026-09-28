@@ -22,9 +22,9 @@ Privzeta fizika je **Circuit Superstars**: avto drsi z nosom v ovinek toliko, ko
 Dirka dveh igralcev, vsak na svojem telefonu (ali računalniku), preko interneta.
 
 1. Oba odpreta igro. Različici morata biti enaki: po posodobitvi igre jo na obeh telefonih zapri in znova odpri.
-2. Prvi na naslovnem zaslonu tapne **Dirka s prijateljem**, vpiše svoje ime, tapne **Ustvari sobo** in drugemu pošlje kodo sobe (4 znaki).
-3. Drugi tapne **Dirka s prijateljem**, vpiše svoje ime in kodo ter tapne **Pridruži se**.
-4. V sobi vsak izbere svoj avto (◀ ▶). Gostitelj (kdor je ustvaril sobo) izbere progo in število krogov ter tapne **Začni dirko**.
+2. Oba na naslovnem zaslonu tapneta **Dirka s prijateljem**, vpišeta svoje ime in tapneta **Počakaj prijatelja**. Prvi počaka (**Prekliči** ga vrne nazaj), ko drugi tapne isto, sta takoj povezana, brez kode. Če tapne še kdo tretji, ga združi z naslednjim čakajočim. Priporočilo: dogovorita se za isti trenutek; kdorkoli drug, ki tapne v tem času, se lahko poveže z vama.
+3. Za zasebno sobo tapni manjši gumb **Zasebna soba s kodo**: eden tapne **Ustvari sobo** in drugemu pošlje kodo (4 znaki), drugi kodo vpiše in tapne **Pridruži se**.
+4. V sobi vsak izbere svoj avto (◀ ▶). Gostitelj (kdor je čakal oziroma ustvaril sobo) izbere progo in število krogov ter tapne **Začni dirko**.
 
 - Na progi sta samo vidva, brez tekmecev z AI, drug ob drugem v prvi vrsti; kdo začne na levi, se menja od dirke do dirke. Vzpon na Pikes Peak (vožnja proti uri) ni na voljo.
 - Semafor ugasne na obeh telefonih hkrati. Časi se merijo od skupnega starta, zato sta rezultata na obeh telefonih enaka.
@@ -34,7 +34,7 @@ Dirka dveh igralcev, vsak na svojem telefonu (ali računalniku), preko interneta
 - Po cilju se vrneta v sobo na naslednjo dirko. Če prijatelj odide ali se povezava prekine, dirka teče naprej.
 - Poškodbe prijateljevega avta (udrtine, odpadli deli, dim) vidi le prijatelj.
 
-Telefona sta povezana neposredno (WebRTC) s knjižnico [PeerJS](https://peerjs.com). Da se najdeta, uporabita brezplačni javni strežnik PeerJS: koda sobe je njun naslov na njem. Za neposredno povezavo telefona prek Googlovega strežnika STUN izvesta svoj javni naslov; kadar neposredna povezava ni mogoča (nekatera mobilna omrežja), gre promet prek posredniškega strežnika PeerJS (TURN). Če gostitelj med čakanjem na prijatelja za hip izgubi povezavo s strežnikom (npr. ko preklopi v drugo aplikacijo, da pošlje kodo), se soba z isto kodo sama znova poveže. Brez interneta igra deluje naprej, dirka s prijateljem pa ne.
+Telefona sta povezana neposredno (WebRTC) s knjižnico [PeerJS](https://peerjs.com). Da se najdeta, uporabita brezplačni javni strežnik PeerJS: pri hitri povezavi imajo čakalna mesta stalna imena (z različico igre), pri zasebni sobi je koda njun naslov na njem. Čakajoči telefon mora imeti igro odprto na zaslonu. Za neposredno povezavo telefona prek Googlovega strežnika STUN izvesta svoj javni naslov; kadar neposredna povezava ni mogoča (nekatera mobilna omrežja), gre promet prek posredniškega strežnika PeerJS (TURN). Če gostitelj med čakanjem na prijatelja za hip izgubi povezavo s strežnikom (npr. ko preklopi v drugo aplikacijo, da pošlje kodo), se soba z isto kodo sama znova poveže. Brez interneta igra deluje naprej, dirka s prijateljem pa ne.
 
 ## Igra kot aplikacija
 
