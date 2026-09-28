@@ -2958,10 +2958,37 @@ const World = (function () {
     return n;
   }
 
+  /* ---- real-course landmarks: the Halfway Picnic Grounds, the Glen Cove Inn, the Bottomless Pit overlook ----
+     (K: the build's shared bits, see buildPikes; own random stream, so the rest of the scenery stays where it was) */
+  function pkLandmarks(K) {
+  }
+
+  /* ---- the cog railway at the summit: the station beside the summit house, a train at the platform, the track down the east face ----
+     (own random stream) */
+  function pkCog(K) {
+  }
+
+  /* ---- race day: marshal posts with flags at the corners, safety and recovery vehicles, photographers, sponsor banners,
+     mile markers and altitude boards (own random stream; text boards on this build's own texture) */
+  function pkRaceOps(K) {
+  }
+
+  /* ---- late-June snow: plowed banks behind the barriers high up (own random stream) ---- */
+  function pkSnow(K) {
+  }
+
+  /* ---- moving things: the TV helicopter over the leading car, cloud shadows drifting across the mountain
+     (built at the end of buildPikes; pkUpdate runs every frame from World.update) ---- */
+  function pkSky(K) {
+  }
+
+  function pkUpdate(pk, t, car) {
+  }
+
   function buildPikes(scene, tex, opts) {
     const R = rng(7311), N = T.N, w = T.w, dens = opts.density || 1;
     const root = new THREE.Group(); scene.add(root);
-    const out = { root, dyn: {}, groundH: pkGround, camFloor: pkGround, props: [] };
+    const out = { root, dyn: {}, groundH: pkGround, camFloor: pkGround, props: [], ownTex: [] };
     pkPrep();
     const P = PK, iE = N - 1, sStart = T.startS, sFin = T.finishS;
     // flat ground: the paddock below the start, the car park at the summit (behind the road's end), the summit house's plot
@@ -3177,6 +3204,15 @@ const World = (function () {
       }
     }
 
+    /* ---- the real course's landmarks and race-day details (each in its own function above, on its own random stream: R is not drawn from) ---- */
+    const K = { root, out, tex, dens, N, w, P, scen, matV, excl, crSoft, excluded, onSide, carPk, tent, fans, CR, sStart, sFin, iE, padE, padH,
+      mats: { tMat, gMat, aMat, lMat, sMat, matV },
+      putPerson: (x, z, ro, col) => crowdPut(CR, x, pkGround(x, z), z, -Math.sin(ro), Math.cos(ro), { col }, 1) };   // a spectator facing ro (no draws from R)
+    pkLandmarks(K);
+    pkCog(K);
+    pkRaceOps(K);
+    pkSnow(K);
+
     /* ---- more spectators (instanced, hashed: no draws from R): both sides of every hairpin, the insides of the forest bends, the "W's" ladder,
        more rows at the checkpoints, the start and the finish, small groups on the high side along the ridge; only where the ground is not below the road ---- */
     {
@@ -3233,6 +3269,9 @@ const World = (function () {
     scen.addTo(sceneryGroup, matV, true, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: pkAtlas(cpAlt), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     crowdFinish(CR, root, out);
+
+    pkSky(K);
+
     out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, rails: +(nRail / (2 * N)).toFixed(3) };   // (read by the tests)
     return out;
   }
@@ -4027,6 +4066,7 @@ const World = (function () {
     const d = out.dyn;
     if (d.crowd) { d.crowd.uTime.value = t % 1000; if (car) d.crowd.uCar.value.set(car.x, car.roadY || 0, car.z); }   // spectators: arm waving, cheering near the followed car
     if (d.water) { d.water.offset.x = (t * 0.012) % 1; d.water.offset.y = (t * 0.007) % 1; }
+    if (d.pk) pkUpdate(d.pk, t, car);   // Pikes Peak: the TV helicopter, the cloud shadows
     if (d.boats) {
       const L = d.lake;
       for (const b of d.boats) {
