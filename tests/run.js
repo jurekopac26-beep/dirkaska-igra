@@ -10,7 +10,7 @@ const path = require('path');
 
 const SUITES = {
   node: ['stamp.test.js', 'golden.test.js', 'races.test.js', 'cs-handling.test.js'],
-  browser: ['browser/smoke.test.mjs', 'browser/world.test.mjs', 'browser/pits.test.mjs', 'browser/memory.test.mjs', 'browser/perf.test.mjs'],
+  browser: ['browser/smoke.test.mjs', 'browser/app.test.mjs', 'browser/world.test.mjs', 'browser/pits.test.mjs', 'browser/memory.test.mjs', 'browser/perf.test.mjs'],
 };
 const which = process.argv[2];
 const list = which ? SUITES[which] : [...SUITES.node, ...SUITES.browser];

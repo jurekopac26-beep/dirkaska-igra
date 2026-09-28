@@ -9,19 +9,28 @@ import url from 'node:url';
 export const REPO = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..', '..');
 export const ROOT = process.env.GAME_ROOT ? path.resolve(process.env.GAME_ROOT) : REPO;
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
-  '.json': 'application/json', '.glb': 'model/gltf-binary', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.ico': 'image/x-icon' };
+  '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.glb': 'model/gltf-binary', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.ico': 'image/x-icon' };
 
-// a tiny static web server for the repo folder (like GitHub Pages)
+// a tiny static web server for the repo folder (like GitHub Pages: a folder address serves its index.html). setOffline(true)
+// makes every request fail, as if the phone had no internet. setFail(fn) spoils only the requests fn(req) picks: fn returns
+// true (the connection drops), an HTTP status such as 503 (the server has a problem) or 'hang' (no answer ever comes)
 export function serve(root = ROOT) {
   return new Promise((resolve) => {
+    let offline = false, fail = null;
+    const hung = new Set();   // (requests left without an answer; they fail as soon as the setting changes)
+    const settle = () => { for (const s of hung) s.destroy(); hung.clear(); };
     const server = http.createServer((req, res) => {
+      const f = offline || (fail && fail(req));
+      if (f === 'hang') { hung.add(req.socket); return; }
+      if (typeof f === 'number') { res.writeHead(f); res.end('server problem'); return; }
+      if (f) { req.socket.destroy(); return; }
       const p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
-      const file = path.join(root, p === '/' ? 'index.html' : p);
+      const file = path.join(root, p.endsWith('/') ? p + 'index.html' : p);
       if (!file.startsWith(root) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); res.end('not found'); return; }
       res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream' });
       fs.createReadStream(file).pipe(res);
     });
-    server.listen(0, '127.0.0.1', () => resolve({ base: `http://127.0.0.1:${server.address().port}`, close: () => new Promise(r => server.close(r)) }));
+    server.listen(0, '127.0.0.1', () => resolve({ base: `http://127.0.0.1:${server.address().port}`, close: () => new Promise(r => { server.close(r); server.closeAllConnections(); }), setOffline: (v) => { settle(); offline = !!v; }, setFail: (fn) => { settle(); fail = fn || null; } }));
   });
 }
 
@@ -43,6 +52,7 @@ export async function openGame(browser, address, settings = {}, viewport = { wid
   // opts.seed: Math.random becomes a seeded generator. (The game still runs in real time, so this alone does not make a
   // run repeatable: a test that needs the same result every time also pauses the game and steps it itself.)
   if (opts.seed) await page.addInitScript((seed) => { let s = seed; Math.random = () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; }, opts.seed);
+  if (opts.init) await page.addInitScript(opts.init);   // (a test's own set-up, run before the game's scripts)
   await page.goto(address);
   await page.waitForFunction(() => window.__game, null, { timeout: 180000 });
   return { ctx, page, errors };
