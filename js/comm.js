@@ -15,6 +15,7 @@ const Comm = (() => {
 
   const LINES = {
     intro: ['Welcome to {track}! {laps} laps, thirteen cars, and you line up {grid} on the grid.', 'Good day and welcome to {track}. {laps} laps ahead, and you start from {grid}.', 'Here we are at {track}! Thirteen cars, {laps} laps, and you start {grid}.'],
+    introNet: ['Welcome to {track}! Just two cars today, {laps}: you and {name}, side by side on the front row.', 'Here we are at {track} for a duel with {name} over {laps}. May the better driver win!', 'Good day and welcome to {track}! You against {name}, {laps}. Let\'s see who takes it.'],
     introOne: ['Welcome to {track}, the Green Hell! One lap of more than twenty kilometres, and you start {grid}.', 'Here we are at {track}. One lap, thirteen cars, and you line up {grid} on the grid.', 'Welcome to {track}! Twenty kilometres of forest, crests and jumps. One lap, and you start {grid}.'],
     // the Nordschleife's famous places
     nrFlug: ['Over the Flugplatz, and the car goes light!', 'Flugplatz! Airborne over the crest!'],
@@ -24,6 +25,7 @@ const Comm = (() => {
     nrHohe: ['Hohe Acht, the highest point of the circuit!', 'Up at Hohe Acht, over six hundred metres high.'],
     nrPflanz: ['Pflanzgarten! Hold on for the jump!', 'Over the Pflanzgarten jump!'],
     nrDott: ['Onto the Döttinger Höhe, the long straight home!', 'Flat out down the Döttinger Höhe!'],
+    goNet: ['Lights out, and away they go!', "And they're off!", 'Green light! Side by side into turn one!', 'Go, go, go! The duel is on!'],
     go: ['Lights out, and away we go!', "And they're off!", 'Green light! The pack charges into turn one!', 'Go, go, go! The race is on!'],
     gain: ["What a move! Up to {pos}!", "Brilliant overtake, you're now {pos}!", "Straight past! That's {pos} place!", "Another one bites the dust. You're up to {pos}!", 'Clean pass, into {pos}!'],
     lose: ["Oh, you've lost a place. Down to {pos}.", 'Overtaken! You drop to {pos}.', "They come through, you're now {pos}."],
