@@ -88,7 +88,10 @@
   let fbT = 0, prevGear = 1, prevAir = 0;
   let tiltWarned = false;
   let orientBlock = false;
-  const perf = { sum: 0, n: 0, good: 0, slow: 0 };
+  // adaptive quality (see adaptive()): pending = shadows go off at the next pause or race start; slowAvg = frame time that decided it;
+  // check = windows until the effect is measured; restore = no faster without shadows, so they come back; keep = never switch them off again
+  const perf = { sum: 0, n: 0, good: 0, slow: 0, pending: false, slowAvg: 0, check: 0, restore: false, keep: false };
+  let autoNoShadows = false;   // shadows switched off by adaptive() for this visit only (never saved: S.shadows keeps the player's choice)
   let noAdapt = false; try { noAdapt = localStorage.getItem('tdgp-noadapt') === '1'; } catch (_) { }   // automated tests: resolution and shadows stay as set
 
   /* ---------------- helpers ---------------- */
@@ -141,7 +144,8 @@
   function refreshSegs() {
     for (const seg of document.querySelectorAll('.seg')) {
       const key = seg.dataset.set; if (!key) continue;   // (upgrade rows mark their own selection)
-      for (const b of seg.querySelectorAll('button')) b.classList.toggle('sel', String(S[key]) === b.dataset.v);
+      const val = key === 'shadows' ? (shadowsOn() ? 1 : 0) : S[key];   // (shadows: what is on screen, also when adaptive() switched them off)
+      for (const b of seg.querySelectorAll('button')) b.classList.toggle('sel', String(val) === b.dataset.v);
     }
     document.querySelectorAll('.tiltrow').forEach(r => r.classList.toggle('off', S.control !== 'tilt'));
     $('tilt-sens').value = S.tiltSens; $('tilt-sens-v').textContent = S.tiltSens + '°';
@@ -153,8 +157,9 @@
     $('title-hint').textContent += ' Upravljanje: ' + CTRL_NAME[S.control] + ', kamera: ' + (S.camera === 'chase' ? 'za avtom (telefon pokončno)' : S.camera === 'kino' ? 'kino (telefon ležeče)' : 'izometrična (telefon ležeče)') + '. Spremeniš v nastavitvah.' + (records.bestLap ? ' Rekord kroga: ' + fmt(records.bestLap, true) + '.' : '');
     { const el = $('set-name'); if (el && document.activeElement !== el) el.value = S.name; }
   }
+  function shadowsOn() { return !!S.shadows && !autoNoShadows; }
   function applySettings() {
-    Render.applySettings({ quality: S.quality, shadows: !!S.shadows, camera: S.camera });
+    Render.applySettings({ quality: S.quality, shadows: shadowsOn(), camera: S.camera });
     Render.cam.userZoom = +S.zoom;
     Comm.setEnabled(!!+S.comm); Comm.setSpeech(!!+S.sound);
     Comm.setOnVoice(v => { const el = $('comm-voice'); if (el) el.textContent = !v.any ? 'Ta brskalnik ne podpira govora – komentatorja ne bo slišati.' : 'Glas: ' + (v.name || 'privzeti angleški') + ' (' + v.lang + ')' + (v.male ? ' – moški' : ' – nižji ton'); });
@@ -170,6 +175,7 @@
   function setOption(key, v) {
     const num = ['zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'damage'];
     S[key] = num.includes(key) ? +v : v;
+    if (key === 'shadows') { autoNoShadows = false; perf.pending = perf.restore = false; perf.keep = true; }   // the player's own choice wins for the rest of the visit
     save(); applySettings();
     if (key === 'phys') { applyPhys(race); applyPhys(demo); }
     if (key === 'control' && v === 'tilt') enableTilt(false);
@@ -293,6 +299,7 @@
     });
     Render.attachRace(race);
     Render.resetCam();
+    adaptBreak();
     bg = 'race'; phase = 'intro'; phaseT = 0; lightsOn = 0; lastBeepLight = 0; paused = false; acc = 0;
     lastLapCount = 0; prevGear = 1; prevAir = 0; msgT = 0; splitT = 0; dmgKey = ''; pitHint = false;
     $('h-msg').className = ''; $('h-split').className = ''; $('h-note').className = '';
@@ -320,6 +327,7 @@
     if (bg !== 'race' || paused || phase === 'done') return;
     paused = true; Sfx.setRunning(false); Input.reset(); Comm.stop();
     showScreen('pause');
+    adaptBreak();
   }
   function resume() {
     paused = false; last = performance.now(); acc = 0;
@@ -887,22 +895,32 @@
       if (screen === 'settings') updateTiltLive();
     }
   }
+  // Adaptive quality, measured over 2 s windows while racing. First the resolution goes down (to x0.55). If the game is still
+  // under ~42 fps there for 6 s, the shadow pass (about 40 % of the drawing) goes off for this visit: at the next pause or race
+  // start, never mid-corner (the shaders compile again, which stalls a frame). If it is no faster without shadows (a frame-rate
+  // cap such as a battery saver, not a heavy scene), they come back at the next break and are not switched off again.
   function adaptive(dt) {
     if (noAdapt) return;
     perf.sum += dt; perf.n++;
     if (perf.sum < 2) return;
     const avg = perf.sum / perf.n * 1000; perf.sum = 0; perf.n = 0;
+    if (perf.check && --perf.check === 0 && avg > perf.slowAvg * 0.85) perf.restore = true;   // (the 2nd window without shadows: first one may hold the stall)
     const k = Render.getDynScale();
     if (avg > 21 && k > 0.6) { Render.setDynScale(k - 0.1); perf.good = 0; perf.slow = 0; }
     else if (avg < 15.5) { perf.slow = 0; if (++perf.good >= 3 && k < 1) { Render.setDynScale(k + 0.05); perf.good = 0; } }
     else {
       perf.good = 0;
-      // still under ~42 fps at the lowest resolution for 6 s: the shadow pass (about 40 % of the drawing) goes off, and stays off
-      // (saved; it can be switched back on in Nastavitve)
-      if (avg > 24 && k <= 0.6 && S.shadows) { if (++perf.slow >= 3) { perf.slow = 0; setOption('shadows', 0); toast('Sence so izklopljene, da igra teče tekoče. Vklopiš jih v Nastavitvah.', 3600); } }
-      else perf.slow = 0;
+      if (avg > 24 && k <= 0.6 && shadowsOn() && !perf.keep && !perf.pending) {
+        if (++perf.slow >= 3) { perf.slow = 0; perf.pending = true; perf.slowAvg = avg; toast('Igra na tej napravi teče počasi: od naslednjega premora ali dirke bo brez senc (vklopiš jih v Nastavitvah).', 4200); }
+      } else perf.slow = 0;
     }
   }
+  // a pause or a race start: carry out what adaptive() decided
+  function adaptBreak() {
+    if (perf.pending) { perf.pending = false; autoNoShadows = true; perf.check = 2; applyShadows(); }
+    else if (perf.restore) { perf.restore = false; perf.keep = true; autoNoShadows = false; applyShadows(); }
+  }
+  function applyShadows() { Render.applySettings({ quality: S.quality, shadows: shadowsOn(), camera: S.camera }); refreshSegs(); }
   function updateTiltLive() {
     if (S.control !== 'tilt') return;
     const v = Input.tilt.got ? Core.clamp(Core.wrapPi(Input.tilt.raw - Input.tilt.neutral) * (S.tiltInvert ? -1 : 1) / (S.tiltSens * Math.PI / 180), -1, 1) : 0;
@@ -1011,6 +1029,7 @@
       last = performance.now();
       requestAnimationFrame(frame);
       window.__game = { comm: Comm, get race() { return race; }, get phase() { return phase; }, get screen() { return screen; }, S, onAction, pause, resume,
+        get adapt() { return { dyn: Render.getDynScale(), shadowsOn: shadowsOn(), auto: autoNoShadows, pending: perf.pending, restore: perf.restore, keep: perf.keep, check: perf.check }; },
         sim(sec, auto, steer) { const inp = { steer: steer || 0, thr: 1, brk: 0, hand: 0, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; } if (phase !== 'done') updatePhase(STEP, inp); stepRace(STEP, inp); } } };
     } catch (e) {
       console.error(e);

@@ -174,7 +174,9 @@ const World = (function () {
     const P = (lx, ly, lz) => [cx + lx * c - lz * s, cy + ly, cz + lx * s + lz * c];
     const b0 = P(-L / 2, 0, -D / 2), b1 = P(L / 2, 0, -D / 2), b2 = P(L / 2, 0, D / 2), b3 = P(-L / 2, 0, D / 2), r0 = P(-L / 2, h, 0), r1 = P(L / 2, h, 0);
     const inn = [cx, cy + h * 0.3, cz];
-    g.quadO(b0, r0, r1, b1, col, inn); g.quadO(b3, b2, r1, r0, vary(col, Math.random, 0.08), inn);
+    // the far slope a shade lighter or darker: the same every time the track is built (hashed from where the roof stands)
+    const hr = rng((Math.round(cx * 10) * 73856093) ^ (Math.round(cz * 10) * 19349663) ^ (Math.round(cy * 10) * 83492791));
+    g.quadO(b0, r0, r1, b1, col, inn); g.quadO(b3, b2, r1, r0, vary(col, hr, 0.08), inn);
     g.triO(b0, b3, r0, colEnd || col, inn); g.triO(b1, r1, b2, colEnd || col, inn);
     // underside (overhang visible from low angles is rare) skipped
   }

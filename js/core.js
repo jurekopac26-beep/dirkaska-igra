@@ -26,8 +26,9 @@ const Core = (function () {
      TRACK
      --------------------------------------------------------------------- */
   // The track definitions (layout, heights, scenery anchors, named places) live in js/tracks/<id>.js, one file per track.
-  // Each adds itself to TRACK_DEFS; index.html loads them before this file, in the order of the track menu.
-  const TRACKS = TRACK_DEFS.slice();
+  // Each adds itself to TRACK_DEFS; index.html loads them before this file, in the order of the track menu. (In Node, load
+  // Core with tests/lib/core.js, which reads the track files first; a plain require of this file gives a Core without tracks.)
+  const TRACKS = (typeof TRACK_DEFS !== 'undefined' ? TRACK_DEFS : []).slice();
   const TRACK_DEF = TRACKS.find(d => d.id === 'jezero'), PIKES_DEF = TRACKS.find(d => d.id === 'pikes');   // (exported by name)
 
   // centripetal Catmull-Rom through the control points. Closed loop by default; open = a road with two ends

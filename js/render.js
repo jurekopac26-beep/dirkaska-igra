@@ -735,7 +735,11 @@ const Render = (function () {
     renderer.shadowMap.type = settings.quality === 'high' ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
     const ms = settings.quality === 'high' ? 2048 : 1024;
     if (sun.shadow.mapSize.x !== ms) { sun.shadow.mapSize.set(ms, ms); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
-    scene.traverse(o => { if (o.material && o.material.needsUpdate !== undefined) o.material.needsUpdate = true; });
+    if (!settings.shadows && sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }   // shadows off: free the shadow map
+    // every material is rebuilt, so shadow receiving goes in or out of its shader (three.js r128 has no getter for needsUpdate:
+    // it has to be set on each material; the shaders are compiled again at the next frame)
+    const upd = (o) => { if (o.material) for (const m of Array.isArray(o.material) ? o.material : [o.material]) m.needsUpdate = true; };
+    scene.traverse(upd); if (showScene) showScene.traverse(upd);
     resize();
   }
 
@@ -821,20 +825,28 @@ const Render = (function () {
   function getDynScale() { return dynScale; }
 
   /* ---------------- race attach ---------------- */
-  // frees everything a car mesh built for itself: the cloned body, panels, lamps, glass, decals, the shadow blob and marker,
-  // and its own materials; the shared pieces stay (cached body / tail / wheel / Peugeot geometry, the materials all cars use).
-  // Loose panels lying on the track reuse their car's panel geometry: three.js uploads a disposed geometry again if it is drawn.
-  function disposeCarMesh(v) {
-    const keepG = new Set([wheelGeo, wheelGeoW, ...geoCache.values(), ...tailGeoCache.values()]);
-    if (p206Geo) for (const n of p206Geo) for (const p of n.prims) keepG.add(p.g);
-    const keepM = new Set([matCar, matWheel, matTailOff, matTailOn, matBlob, matMarker, matUnder, matEngine, matLens, matLensBroken]);
-    if (p206Mats) for (const k in p206Mats) keepM.add(p206Mats[k]);
-    v.grp.traverse(o => {
-      if (o.geometry && !keepG.has(o.geometry)) o.geometry.dispose();
-      for (const m of Array.isArray(o.material) ? o.material : o.material ? [o.material] : []) if (!keepM.has(m)) m.dispose();
+  // the pieces every car shares (cached body / tail / wheel / Peugeot geometry, the common materials): never freed with a car
+  function sharedCarRes() {
+    const g = new Set([wheelGeo, wheelGeoW, ...geoCache.values(), ...tailGeoCache.values()]);
+    if (p206Geo) for (const n of p206Geo) for (const p of n.prims) g.add(p.g);
+    const m = new Set([matCar, matWheel, matTailOff, matTailOn, matBlob, matMarker, matUnder, matEngine, matLens, matLensBroken]);
+    if (p206Mats) for (const k in p206Mats) m.add(p206Mats[k]);
+    return { g, m };
+  }
+  // frees what a group built for itself (geometry and materials), except the shared pieces and anything in `keep`
+  function freeOwn(root, keep) {
+    const sh = sharedCarRes();
+    root.traverse(o => {
+      if (o.geometry && !sh.g.has(o.geometry) && !(keep && keep.has(o.geometry))) o.geometry.dispose();
+      for (const m of Array.isArray(o.material) ? o.material : o.material ? [o.material] : []) if (!sh.m.has(m) && !(keep && keep.has(m))) m.dispose();
     });
   }
-  function disposeView(v) { scene.remove(v.grp); disposeCarMesh(v); }
+  // frees everything a car mesh built for itself: the cloned body, panels, lamps, glass, decals, the shadow blob and marker, and
+  // its own materials. keep: what loose panels lying on the track still use (they share their car's panel geometry and paint)
+  function disposeCarMesh(v, keep) { freeOwn(v.grp, keep); }
+  function disposeView(v, keep) { scene.remove(v.grp); disposeCarMesh(v, keep); }
+  // geometry and materials the loose panels on the track are drawn with
+  function debrisRes() { const s = new Set(); for (const d of debrisMeshes) if (d.mesh && d.mesh.traverse) d.mesh.traverse(o => { if (o.geometry) s.add(o.geometry); if (o.material) s.add(o.material); }); return s; }
   function makeView(c) {
     if (c.stripe === undefined) c.stripe = (c.id * 7) % 3 !== 0;
     const v = makeCarMesh(c);
@@ -845,11 +857,12 @@ const Render = (function () {
     scene.add(v.grp); return v;
   }
   function attachRace(race) {
-    for (const v of views) disposeView(v);
+    const old = views;
     views = []; curTrack = race.track; curRace = race; clearDebris();
     if (world && world.props && world.props.length && race.setProps && !race.props) race.setProps(world.props, world.propFloor);
     setupProps(race);
     for (const c of race.cars) views.push(makeView(c));
+    for (const v of old) disposeView(v);   // (after the new cars exist: their shaders are reused, not compiled again)
     setupCrew(race);
     particles.clear(); sparkP.clear(); skids.clear(); cam.init = false;
   }
@@ -1408,7 +1421,8 @@ const Render = (function () {
       d.mesh.position.set(d.x, d.y, d.z); d.mesh.rotation.set(d.rx, -d.yaw, d.rz);
     }
   }
-  function clearDebris() { for (const d of debrisMeshes) scene.remove(d.mesh); debrisMeshes.length = 0; }
+  // loose panels off the track, freed with them (a panel of a car that was repaired in the pits outlives its car's own mesh)
+  function clearDebris() { for (const d of debrisMeshes) { scene.remove(d.mesh); if (d.mesh && d.mesh.traverse) freeOwn(d.mesh); } debrisMeshes.length = 0; }
 
   function applyDent(v, d) {   // push the bodywork in around the hit point (deterministic jitter → no cracks) and scrape the paint
     const geo = v.body.geometry, pos = geo.attributes.position, col = geo.attributes.color, M = v.car.m;
@@ -1600,7 +1614,7 @@ const Render = (function () {
     updateCars(dt, alpha, opt);
     syncDebris(); syncProps();
     for (let k = 0; k < views.length; k++) { const v = views[k], c = v.car; if ((c.repairN || 0) !== v.repairN) {   // repaired in the pits: a fresh car (and a burst of sparkle)
-      const nv = makeView(c); nv.sk = v.sk; nv.acc = v.acc; disposeView(v); views[k] = nv;
+      const nv = makeView(c); nv.sk = v.sk; nv.acc = v.acc; disposeView(v, debrisRes()); views[k] = nv;   // (its loose panels on the track stay drawable)
       for (let n = 0; n < 12; n++) sparkP.emit(c.x + (Math.random() - 0.5) * 3, (c.y || 0) + 0.4 + Math.random() * 1.2, c.z + (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 2, 1 + Math.random() * 2, (Math.random() - 0.5) * 2, 0.4 + Math.random() * 0.3, 0.45, 0.8, 1, 0.95, 0.7, 0.7, -1, 1.2, c.y || 0); } }
     particles.update(dt); sparkP.update(dt);
     World.update(world, time, target);
@@ -1661,11 +1675,12 @@ const Render = (function () {
   }
   function setShowCar(model, color, num) {
     if (!showScene) initShowroom();
-    if (showCar) { showScene.remove(showCar.grp); disposeCarMesh(showCar); }
+    const prev = showCar;
     const fake = { m: model, color, num, stripe: true, isPlayer: false };
     showCar = makeCarMesh(fake, { noMarker: true });
     showCar.grp.position.set(0, 0, 0);
     showScene.add(showCar.grp);
+    if (prev) { showScene.remove(prev.grp); disposeCarMesh(prev); }   // (after the new car exists: its shaders are reused, not compiled again)
   }
   function renderShowroom(dt) {
     if (!showScene) return;
