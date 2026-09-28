@@ -21,7 +21,7 @@ Privzeta fizika je **Circuit Superstars**: avto drsi z nosom v ovinek toliko, ko
 
 - **Android (Chrome):** na naslovnem zaslonu tapni **Namesti igro** (ali v meniju Chroma ⋮ → *Namesti aplikacijo*). Igra dobi svojo ikono, odpre se čez cel zaslon in se obrne tako, kot zahteva izbrana kamera (za avtom: pokončno; izometrična in kino: ležeče).
 - **iPhone (Safari):** Deli → *Dodaj na začetni zaslon*.
-- Ko je igra enkrat odprta, deluje tudi brez interneta. Ko je internet na voljo, se ob zagonu vedno naloži najnovejša različica.
+- Ko je igra enkrat odprta, deluje tudi brez interneta (in pri zelo slabem signalu). Ko je internet na voljo, igra ob zagonu naloži najnovejšo različico; če ostane odprta v ozadju, se posodobi sama, ko se vrneš vanjo na naslovnem zaslonu. Po objavi na GitHubu lahko traja nekaj minut, da je nova različica na voljo.
 - V brskalniku se zaslon zaklene le v celozaslonskem načinu (gumb **Celoten zaslon**); tam, kjer brskalnik tega ne dovoli (Safari na iPhonu), se med dirko pokaže obvestilo, naj telefon obrneš.
 
 ## Zgradba projekta

@@ -113,8 +113,10 @@
 
   /* ---------------- orientation: iso camera = landscape, chase camera = portrait ---------------- */
   const wantPortrait = () => S.camera === 'chase';
-  // started from the home screen as an installed app (manifest.webmanifest), not in a browser tab
-  const installedApp = () => matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone === true;
+  // started from the home screen as an installed app (manifest.webmanifest), not in a browser tab. Decided once at the start:
+  // later, Chrome on Android also reports display-mode full screen for a browser tab in full screen (the Celoten zaslon button).
+  const APP = matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone === true;
+  const installedApp = () => APP;
   // turn the screen the camera's way and keep it there. Browsers allow it only in full screen or in the installed app
   // (Chrome on Android); elsewhere (Safari on the iPhone) the "turn your phone" notice of updateOrientation() takes over.
   // (window.screen, the device's screen: in this file `screen` is the menu screen on show)
@@ -994,6 +996,21 @@
   }
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; updateAppButtons(); });
   window.addEventListener('appinstalled', () => { installEvt = null; updateAppButtons(); toast('Igra je nameščena: odpreš jo z ikono APEX Racing na začetnem zaslonu.', 4200); });
+  // an app (or tab) left open in the background does not start again, so it would keep the old version: when it comes back on
+  // the title screen, it asks the network for index.html and reloads if a file of the game changed (never mid-race or in a menu)
+  let updAsked = -1e9;
+  const stampsOf = (text) => (text.match(/\?v=[0-9a-f]{8}\b/g) || []).sort().join();
+  function checkUpdate() {
+    if (screen !== 'title' || document.hidden || !/^https?:$/.test(location.protocol) || performance.now() - updAsked < 60000) return;
+    updAsked = performance.now();
+    const mine = stampsOf([...document.querySelectorAll('script[src], link[href]')].map(e => e.getAttribute('src') || e.getAttribute('href')).join(' '));
+    fetch('./', { cache: 'no-cache' }).then(r => (r.ok ? r.text() : '')).then((html) => {
+      const now = stampsOf(html);
+      if (!now || now === mine || screen !== 'title' || document.hidden) return;
+      toast('Nova različica igre: nalagam …', 2000);
+      setTimeout(() => { if (screen === 'title') location.reload(); }, 900);
+    }).catch(() => { });   // (offline: stay on this version)
+  }
   function bindUI() {
     document.addEventListener('click', (e) => {
       const b = e.target.closest('[data-act]');
@@ -1021,7 +1038,7 @@
     nm.addEventListener('blur', () => { nm.value = S.name; });
     $('btn-pause').addEventListener('click', (e) => { e.preventDefault(); pause(); });
     $('btn-rescue').addEventListener('click', (e) => { e.preventDefault(); if (race && phase === 'racing') { race.rescue(race.player); race.player.locked = false; $('btn-rescue').classList.add('off'); } });
-    document.addEventListener('visibilitychange', () => { if (document.hidden) { pause(); Sfx.suspend(); } });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) { pause(); Sfx.suspend(); } else checkUpdate(); });
     const unlock = () => Sfx.resume();
     window.addEventListener('touchend', unlock, { passive: true });
     window.addEventListener('pointerup', unlock, { passive: true });

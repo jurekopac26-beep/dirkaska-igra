@@ -11,20 +11,26 @@ export const ROOT = process.env.GAME_ROOT ? path.resolve(process.env.GAME_ROOT) 
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.glb': 'model/gltf-binary', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.ico': 'image/x-icon' };
 
-// a tiny static web server for the repo folder (like GitHub Pages); setOffline(true) makes every request fail, as if the
-// phone had no internet
+// a tiny static web server for the repo folder (like GitHub Pages: a folder address serves its index.html). setOffline(true)
+// makes every request fail, as if the phone had no internet. setFail(fn) spoils only the requests fn(req) picks: fn returns
+// true (the connection drops), an HTTP status such as 503 (the server has a problem) or 'hang' (no answer ever comes)
 export function serve(root = ROOT) {
   return new Promise((resolve) => {
-    let offline = false;
+    let offline = false, fail = null;
+    const hung = new Set();   // (requests left without an answer; they fail as soon as the setting changes)
+    const settle = () => { for (const s of hung) s.destroy(); hung.clear(); };
     const server = http.createServer((req, res) => {
-      if (offline) { req.socket.destroy(); return; }
+      const f = offline || (fail && fail(req));
+      if (f === 'hang') { hung.add(req.socket); return; }
+      if (typeof f === 'number') { res.writeHead(f); res.end('server problem'); return; }
+      if (f) { req.socket.destroy(); return; }
       const p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
-      const file = path.join(root, p === '/' ? 'index.html' : p);
+      const file = path.join(root, p.endsWith('/') ? p + 'index.html' : p);
       if (!file.startsWith(root) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); res.end('not found'); return; }
       res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream' });
       fs.createReadStream(file).pipe(res);
     });
-    server.listen(0, '127.0.0.1', () => resolve({ base: `http://127.0.0.1:${server.address().port}`, close: () => new Promise(r => { server.close(r); server.closeAllConnections(); }), setOffline: (v) => { offline = !!v; } }));
+    server.listen(0, '127.0.0.1', () => resolve({ base: `http://127.0.0.1:${server.address().port}`, close: () => new Promise(r => { server.close(r); server.closeAllConnections(); }), setOffline: (v) => { settle(); offline = !!v; }, setFail: (fn) => { settle(); fail = fn || null; } }));
   });
 }
 
