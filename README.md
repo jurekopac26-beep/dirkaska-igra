@@ -15,7 +15,7 @@ Na progah Ljubljana, Monako, Pikes Peak in Nordschleife se ~70 m pred vsakim zna
 
 ## Fizika vožnje
 
-Privzeta fizika je **Rally (kot art of rally)**: avto je pravo togo telo z vztrajnostjo. Pri zaviranju se teža prenese naprej in zadek zanese v ovinek, zadnji pogon pri plinu drsi, ročna zavora (preslednica) zablokira zadnji kolesi, zdrs pa traja, dokler ga ne ujameš. Pomoč pri driftu (nizka/srednja/visoka) doda kontriranje in prepreči vrtenje. Stara arkadna fizika je še vedno na voljo v Nastavitvah (Fizika vožnje: Arkadna).
+Privzeta fizika je **Circuit Superstars**: avto drsi z nosom v ovinek toliko, kolikor hitro zavijaš; zaviranje v ovinku ga zavrti, na izhodu se sam poravna; brez vrtenja. Gumb za drift (preslednica) ga zavrti še malo bolj. Pomoč pri driftu (nizka/srednja/visoka) določa, kako daleč lahko zadrsa. **Arkadna** je prejšnja fizika in je na voljo v Nastavitvah (Fizika vožnje: Arkadna). Rekordi se za vsako fiziko vodijo posebej.
 
 ## Zasluge
 
