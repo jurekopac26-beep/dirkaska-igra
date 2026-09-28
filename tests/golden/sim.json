@@ -1,0 +1,386 @@
+{
+ "jezero/race/cs": {
+  "digest": "c58fcaee171b301505e351a2",
+  "lead": 2188.1,
+  "car0": [
+   -218.22,
+   192.83
+  ]
+ },
+ "jezero/race/arcade": {
+  "digest": "1f6e2b53ce8ed917536c595a",
+  "lead": 2052,
+  "car0": [
+   -103.53,
+   211.77
+  ]
+ },
+ "jezero/demo/cs": {
+  "digest": "cc971ace20f98b2124e5a5e5",
+  "lead": 2350.9,
+  "car0": [
+   -171.61,
+   -71.89
+  ]
+ },
+ "jezero/demo/arcade": {
+  "digest": "78f685c4005e93337bedce03",
+  "lead": 2183.3,
+  "car0": [
+   -242.64,
+   48.15
+  ]
+ },
+ "jezero/upg/cs": {
+  "digest": "7cba242d9804e97226a91f2c",
+  "lead": 2352.9,
+  "car0": [
+   -245.23,
+   4.38
+  ]
+ },
+ "jezero/upg/arcade": {
+  "digest": "d3309b4cd50695bd1e805c56",
+  "lead": 2186,
+  "car0": [
+   -234.76,
+   121.17
+  ]
+ },
+ "riviera/race/cs": {
+  "digest": "d16da825493f75abb2328a5a",
+  "lead": 2030.5,
+  "car0": [
+   14.42,
+   68.41
+  ]
+ },
+ "riviera/race/arcade": {
+  "digest": "56c644efe82246a4cabfa410",
+  "lead": 1940,
+  "car0": [
+   94.23,
+   45.86
+  ]
+ },
+ "riviera/demo/cs": {
+  "digest": "a370c761799c095758220eb9",
+  "lead": 2168.4,
+  "car0": [
+   -200.75,
+   55.76
+  ]
+ },
+ "riviera/demo/arcade": {
+  "digest": "c756290e49b5f6509d03ab9a",
+  "lead": 2039.8,
+  "car0": [
+   -82.4,
+   80.74
+  ]
+ },
+ "riviera/upg/cs": {
+  "digest": "98488efe0fd231bc1b282a08",
+  "lead": 2165.7,
+  "car0": [
+   -175.46,
+   53.81
+  ]
+ },
+ "riviera/upg/arcade": {
+  "digest": "d01875dbc819025f88d87165",
+  "lead": 2037.1,
+  "car0": [
+   -58.73,
+   76.04
+  ]
+ },
+ "gora/race/cs": {
+  "digest": "a0e9a65dbbd6672b6e7650e3",
+  "lead": 2249.8,
+  "car0": [
+   219.66,
+   153.86
+  ]
+ },
+ "gora/race/arcade": {
+  "digest": "54d3f1a0ea435dc19b2c894b",
+  "lead": 2199.1,
+  "car0": [
+   286.92,
+   130.48
+  ]
+ },
+ "gora/demo/cs": {
+  "digest": "87c0b5cc0c04c899fc5ef2ad",
+  "lead": 2320.7,
+  "car0": [
+   262.67,
+   -62.6
+  ]
+ },
+ "gora/demo/arcade": {
+  "digest": "c181cb4a99d62a7714e59d54",
+  "lead": 2267.1,
+  "car0": [
+   312.71,
+   -48.1
+  ]
+ },
+ "gora/upg/cs": {
+  "digest": "d3bf6c6c483e48477315a989",
+  "lead": 2326.2,
+  "car0": [
+   343.08,
+   5.2
+  ]
+ },
+ "gora/upg/arcade": {
+  "digest": "7bc552481589bf7038df1d9a",
+  "lead": 2267.1,
+  "car0": [
+   353.69,
+   27.05
+  ]
+ },
+ "ljubljana/race/cs": {
+  "digest": "591682129431d5f3b8520cbd",
+  "lead": 2054.6,
+  "car0": [
+   278.48,
+   -107.52
+  ]
+ },
+ "ljubljana/race/arcade": {
+  "digest": "0324b05451d655c4f03ca81c",
+  "lead": 1971.4,
+  "car0": [
+   68.41,
+   -38.89
+  ]
+ },
+ "ljubljana/demo/cs": {
+  "digest": "21a517196d0d9591238a7ea5",
+  "lead": 2151.8,
+  "car0": [
+   272.1,
+   -46.62
+  ]
+ },
+ "ljubljana/demo/arcade": {
+  "digest": "a0adb145ff3ccb7b90ae1206",
+  "lead": 2064,
+  "car0": [
+   330.22,
+   -94.56
+  ]
+ },
+ "ljubljana/upg/cs": {
+  "digest": "37eec35bbfb51034aca7226a",
+  "lead": 2154.2,
+  "car0": [
+   304.69,
+   -56.87
+  ]
+ },
+ "ljubljana/upg/arcade": {
+  "digest": "d85116c5e4192e2f712aa513",
+  "lead": 2065.3,
+  "car0": [
+   293.52,
+   -109.01
+  ]
+ },
+ "monaco/race/cs": {
+  "digest": "0e5e8e2eed8dae7d61081756",
+  "lead": 2526.8,
+  "car0": [
+   271.03,
+   66.03
+  ]
+ },
+ "monaco/race/arcade": {
+  "digest": "352f6fae6cbc9c5b121bcdac",
+  "lead": 2413.6,
+  "car0": [
+   343.63,
+   59.56
+  ]
+ },
+ "monaco/demo/cs": {
+  "digest": "014d8e9332796a281ddd0259",
+  "lead": 2627.4,
+  "car0": [
+   42.86,
+   141.47
+  ]
+ },
+ "monaco/demo/arcade": {
+  "digest": "5b6280e0e89aa610c81353c6",
+  "lead": 2532.2,
+  "car0": [
+   99.7,
+   72.51
+  ]
+ },
+ "monaco/upg/cs": {
+  "digest": "371d6b7c18e44e909b120a2b",
+  "lead": 2627,
+  "car0": [
+   46.83,
+   129.24
+  ]
+ },
+ "monaco/upg/arcade": {
+  "digest": "c3bf388c3e4d1f085592ec43",
+  "lead": 2534.3,
+  "car0": [
+   146.49,
+   69.02
+  ]
+ },
+ "gozd/race/cs": {
+  "digest": "3043335ab4509717ddb87a26",
+  "lead": 1813,
+  "car0": [
+   230.66,
+   284.66
+  ]
+ },
+ "gozd/race/arcade": {
+  "digest": "68b39b7e6b80f18a8b0330e4",
+  "lead": 1682.8,
+  "car0": [
+   229.75,
+   281.12
+  ]
+ },
+ "gozd/demo/cs": {
+  "digest": "f056455bcfaa6723ee163996",
+  "lead": 1963.1,
+  "car0": [
+   351.34,
+   24.34
+  ]
+ },
+ "gozd/demo/arcade": {
+  "digest": "ab791f8956dce93251ca2e27",
+  "lead": 1772.8,
+  "car0": [
+   306.22,
+   200.31
+  ]
+ },
+ "gozd/upg/cs": {
+  "digest": "588acf1527a1acff35a6c40c",
+  "lead": 1961.5,
+  "car0": [
+   328.19,
+   80.7
+  ]
+ },
+ "gozd/upg/arcade": {
+  "digest": "0abc59ac22b97ac345ae849d",
+  "lead": 1772.6,
+  "car0": [
+   273.4,
+   269.25
+  ]
+ },
+ "pikes/race/cs": {
+  "digest": "6bf5ef015f746de48fa68093",
+  "lead": 2051.1,
+  "car0": [
+   -296.07,
+   -1414.14
+  ]
+ },
+ "pikes/race/arcade": {
+  "digest": "d51c5c3dc9247886cece818e",
+  "lead": 1926.7,
+  "car0": [
+   -353.72,
+   -1373.4
+  ]
+ },
+ "pikes/demo/cs": {
+  "digest": "759f18e3406c8d60837353b5",
+  "lead": 2081.5,
+  "car0": [
+   -268.26,
+   -1421.97
+  ]
+ },
+ "pikes/demo/arcade": {
+  "digest": "ae38a319124751f833d6923c",
+  "lead": 1954.1,
+  "car0": [
+   -374.2,
+   -1381
+  ]
+ },
+ "pikes/upg/cs": {
+  "digest": "cd0e7e20751323a233d9ddfd",
+  "lead": 2101.6,
+  "car0": [
+   -252.69,
+   -1431.08
+  ]
+ },
+ "pikes/upg/arcade": {
+  "digest": "db6b5b3b6a47385df7ff5fdc",
+  "lead": 2001.9,
+  "car0": [
+   -343.94,
+   -1401.47
+  ]
+ },
+ "nring/race/cs": {
+  "digest": "ae004a4033a1f9b4ac32d205",
+  "lead": 2372.8,
+  "car0": [
+   -1592.37,
+   -650.18
+  ]
+ },
+ "nring/race/arcade": {
+  "digest": "00a7da415d8534f4a1d4ea5b",
+  "lead": 2263.8,
+  "car0": [
+   -1609.68,
+   -676.28
+  ]
+ },
+ "nring/demo/cs": {
+  "digest": "f3f25ae3bcf7859253d6bd1b",
+  "lead": 2546.8,
+  "car0": [
+   -1741.44,
+   -1056.68
+  ]
+ },
+ "nring/demo/arcade": {
+  "digest": "3d47ba871509b6b65d5b8df3",
+  "lead": 2436.4,
+  "car0": [
+   -1766.82,
+   -952.15
+  ]
+ },
+ "nring/upg/cs": {
+  "digest": "f5be1fbc2813dee9123805b6",
+  "lead": 2545.9,
+  "car0": [
+   -1747.93,
+   -1045.1
+  ]
+ },
+ "nring/upg/arcade": {
+  "digest": "c3c22419e0c8621ea2254fda",
+  "lead": 2434.3,
+  "car0": [
+   -1770.9,
+   -944.24
+  ]
+ }
+}

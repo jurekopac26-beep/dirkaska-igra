@@ -1,0 +1,146 @@
+{
+ "jezero/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 97.43,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false
+ },
+ "jezero/arcade": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 102.8,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false
+ },
+ "riviera/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 73.53,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false
+ },
+ "riviera/arcade": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 77.47,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false
+ },
+ "gora/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 86.7,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false
+ },
+ "gora/arcade": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 88.82,
+  "spins": 1,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false
+ },
+ "ljubljana/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 107.43,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false
+ },
+ "ljubljana/arcade": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 112.86,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false
+ },
+ "monaco/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 161.4,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false
+ },
+ "monaco/arcade": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 168.96,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false
+ },
+ "gozd/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 99.95,
+  "spins": 0,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false
+ },
+ "gozd/arcade": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 107.2,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false
+ },
+ "pikes/cs": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 182.3,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false
+ },
+ "pikes/arcade": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 207.21,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false
+ },
+ "nring/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 457.52,
+  "spins": 0,
+  "walls": 12,
+  "rescues": 0,
+  "nan": false
+ },
+ "nring/arcade": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 483.63,
+  "spins": 0,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false
+ }
+}

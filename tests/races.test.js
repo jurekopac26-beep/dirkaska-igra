@@ -1,0 +1,66 @@
+// Full AI races on every track with both physics (12 AI + the player on autopilot; Pikes Peak: time trial).
+// Checks that every car finishes, nobody spins, wall contacts stay low and the pace stays close to the reference
+// in tests/golden/races.json (winner time within +-3 %, so deliberate small tuning still passes).
+//   node tests/races.test.js [--update] [--only=gozd,cs]
+'use strict';
+const fs = require('fs');
+const path = require('path');
+const { loadCore } = require('./lib/core.js');
+const { DT, TRACK_IDS, PHYSICS, seeded } = require('./lib/sim.js');
+
+const FILE = path.join(__dirname, 'golden', 'races.json');
+const update = process.argv.includes('--update');
+const only = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7).split(',').filter(Boolean);
+const C = loadCore();
+const ref = fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, 'utf8')) : {};
+
+function race(tid, phys) {
+  const orig = Math.random;
+  try {
+    Math.random = seeded(3);
+    const T = new C.Track(C.TRACKS.find(d => d.id === tid)), tt = !!T.def.timeTrial;
+    const laps = tt || tid === 'nring' ? 1 : 2;
+    const r = new C.Race(T, { numAI: tt ? 0 : 12, playerGrid: tt ? 1 : 12, laps, playerModel: C.MODELS[4], assist: 2, phys, seed: 11, difficulty: 1 });
+    r.start();
+    const P = r.player, st = new Map(r.cars.map(c => [c, { spins: 0, spinning: false, walls: 0, resc: 0 }]));
+    const tmax = T.len * laps / 12 + 120;
+    let t = 0, k = 0, nan = false;
+    while (t < tmax && r.cars.some(c => !c.finished)) {
+      Math.random = seeded(5000 + (++k));
+      C.aiControl(P, r, DT); r.step(DT); t += DT;
+      for (const c of r.cars) {
+        const s = st.get(c); if (c.finished) continue;
+        if (!Number.isFinite(c.x) || !Number.isFinite(c.speed)) nan = true;
+        const b = Math.abs(c.beta || 0);
+        if (b > 1.05 && !s.spinning) { s.spinning = true; s.spins++; } if (b < 0.5) s.spinning = false;
+        if (c.hitWall > 3) s.walls++; c.hitWall = 0; c.hitCar = 0;
+        if (c.isPlayer && (c.stuckT > 3 || c.wrongT > 3)) { r.rescue(c); s.resc++; }
+      }
+    }
+    const fin = r.cars.filter(c => c.finished).sort((a, b) => a.finishTime - b.finishTime);
+    let spins = 0, walls = 0, resc = 0; for (const s of st.values()) { spins += s.spins; walls += s.walls; resc += s.resc; }
+    return { finished: fin.length, cars: r.cars.length, winner: fin[0] ? +fin[0].finishTime.toFixed(2) : null, spins, walls, rescues: resc, nan };
+  } finally { Math.random = orig; }
+}
+
+const out = {}; let bad = 0; const t0 = Date.now();
+for (const tid of TRACK_IDS) for (const phys of PHYSICS) {
+  const key = `${tid}/${phys}`;
+  if (only.length && !only.every(o => key.split('/').includes(o))) { if (ref[key]) out[key] = ref[key]; continue; }
+  const r = race(tid, phys); out[key] = r;
+  const g = ref[key], why = [];
+  if (r.nan) why.push('NaN in car state');
+  if (r.finished !== r.cars) why.push(`only ${r.finished}/${r.cars} finished`);
+  if (!update && g) {
+    if (r.spins > g.spins + 2) why.push(`spins ${r.spins} (ref ${g.spins})`);
+    if (r.walls > Math.max(g.walls * 1.5, g.walls + 10)) why.push(`wall contacts ${r.walls} (ref ${g.walls})`);
+    if (r.rescues > g.rescues + 1) why.push(`rescues ${r.rescues} (ref ${g.rescues})`);
+    if (g.winner && r.winner && Math.abs(r.winner / g.winner - 1) > 0.03) why.push(`winner ${r.winner} s (ref ${g.winner} s, more than 3 % off)`);
+  }
+  if (!update && !g) why.push('no reference');
+  if (why.length) bad++;
+  console.log(`${key.padEnd(17)} fin ${r.finished}/${r.cars} winner ${String(r.winner).padStart(7)} s spins ${r.spins} walls ${r.walls} rescues ${r.rescues} ${why.length ? 'FAIL: ' + why.join('; ') : 'OK'}`);
+}
+const secs = ((Date.now() - t0) / 1000).toFixed(0);
+if (update) { if (bad) { console.log('not written: fix the failures first'); process.exit(1); } fs.writeFileSync(FILE, JSON.stringify(out, null, 1) + '\n'); console.log(`written ${FILE} (${secs} s)`); }
+else { console.log(bad ? `FAIL: ${bad} race(s)` : `OK: all races fine (${secs} s)`); process.exit(bad ? 1 : 0); }
