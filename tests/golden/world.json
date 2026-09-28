@@ -94,6 +94,36 @@
    "-:MeshBasicMaterial": "dc40622"
   }
  },
+ "toskana": {
+  "meshes": 110,
+  "verts": 1501431,
+  "instances": 961,
+  "props": 180,
+  "crowd": 961,
+  "world": "b8491ac6",
+  "propsHash": "19fb023b",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "e673a370",
+   "-:MeshBasicMaterial": "bfe79b7a",
+   "crowd:MeshLambertMaterial": "48dab80"
+  }
+ },
+ "grom": {
+  "meshes": 105,
+  "verts": 1495746,
+  "instances": 941,
+  "props": 86,
+  "crowd": 941,
+  "world": "1e3ca72c",
+  "propsHash": "dff8f53c",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "3ba321eb",
+   "crowd:MeshLambertMaterial": "e31b3936",
+   "-:MeshBasicMaterial": "a0daea25"
+  }
+ },
  "pikes": {
   "meshes": 935,
   "verts": 1333669,

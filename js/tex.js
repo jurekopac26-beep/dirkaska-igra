@@ -441,6 +441,68 @@ const Tex = (function () {
     return mk(c, true);
   }
 
+  // kerbs of the two newer circuits in the same style (a kerb quad runs u 0 at the asphalt .. 1 at its outer edge, v along the road, 3 m per repeat):
+  // Toskana: the Italian tricolour in long stripes (green by the asphalt, white, red on the outside, as in the reference); Gromski rt: red and yellow blocks
+  function curbIT() {
+    const c = cv(32, 64), x = c.getContext('2d');
+    x.fillStyle = '#3c9a6c'; x.fillRect(0, 0, 12, 64); x.fillStyle = '#f4f1ea'; x.fillRect(12, 0, 9, 64); x.fillStyle = '#d23a30'; x.fillRect(21, 0, 11, 64);
+    const g = x.createLinearGradient(0, 0, 32, 0);
+    g.addColorStop(0, 'rgba(0,0,0,0.0)'); g.addColorStop(0.75, 'rgba(0,0,0,0.0)'); g.addColorStop(1, 'rgba(0,0,0,0.28)');
+    x.fillStyle = g; x.fillRect(0, 0, 32, 64);
+    const t = mk(c, true); t.magFilter = THREE.NearestFilter; return t;
+  }
+  function curbRY() {
+    const c = cv(32, 64), x = c.getContext('2d');
+    x.fillStyle = '#d8323a'; x.fillRect(0, 0, 32, 32); x.fillStyle = '#f2bd3c'; x.fillRect(0, 32, 32, 32);
+    const g = x.createLinearGradient(0, 0, 32, 0);
+    g.addColorStop(0, 'rgba(0,0,0,0.0)'); g.addColorStop(0.75, 'rgba(0,0,0,0.0)'); g.addColorStop(1, 'rgba(0,0,0,0.28)');
+    x.fillStyle = g; x.fillRect(0, 0, 32, 64);
+    const t = mk(c, true); t.magFilter = THREE.NearestFilter; return t;
+  }
+  // stand and barrier boards (2 x 4 slots, as sponsorsFO): our own names in the spirit of the reference's (Motor, Thunder, Good days, Hornet, Fuel)
+  function boards8(slots) {
+    const c = cv(512, 256), x = c.getContext('2d');
+    for (let k = 0; k < 8; k++) {
+      const bx = (k % 2) * 256, by = Math.floor(k / 2) * 64, [txt, bg, fg] = slots[k];
+      x.fillStyle = bg; x.fillRect(bx, by, 256, 64);
+      x.fillStyle = fg; x.font = 'italic 900 40px "Russo One", "Arial Black", Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+      x.save(); x.translate(bx + 128, by + 34); x.scale(Math.min(1, 228 / Math.max(1, x.measureText(txt).width)), 1); x.fillText(txt, 0, 0); x.restore();
+      x.fillStyle = 'rgba(255,255,255,0.12)'; x.fillRect(bx, by, 256, 6);
+      x.strokeStyle = 'rgba(0,0,0,0.3)'; x.lineWidth = 3; x.strokeRect(bx + 1.5, by + 1.5, 253, 61);
+    }
+    return mk(c, false);
+  }
+  const sponsorsIT = () => boards8([['MOTORE', '#f3efe8', '#c8261f'], ['TUONO', '#c8261f', '#ffffff'], ['MOTORE', '#f3efe8', '#c8261f'], ['TOSKANA GP', '#2f7a4a', '#ffffff'],
+    ['BUONGIORNO', '#f3efe8', '#1f3f8c'], ['CALABRONE', '#f5c332', '#2b2b2b'], ['MOTORE', '#c8261f', '#ffffff'], ['CIPRESSO', '#f3efe8', '#2f7a4a']]);
+  const sponsorsKP = () => boards8([['GORIVO', '#f3efe8', '#1f3f8c'], ['SRŠEN', '#f5c332', '#2b2b2b'], ['GROM', '#c8261f', '#ffffff'], ['GROMSKI RT', '#1f3f8c', '#ffffff'],
+    ['DOBRI DNEVI', '#f3efe8', '#c8261f'], ['KAMP', '#2f7a4a', '#ffffff'], ['GORIVO', '#c8261f', '#ffffff'], ['BOR', '#f5c332', '#c8261f']]);
+  // big billboards (2 x 2 slots, as boardsFO): Toskana - BUONGIORNO, TUONO, CALABRONE, MOTORE; Gromski rt - SRŠEN, GROM, DOBRI DNEVI, GORIVO
+  function boards4(list) {
+    const c = cv(512, 256), x = c.getContext('2d'), F = (sz) => 'italic 900 ' + sz + 'px "Russo One", "Arial Black", Arial, sans-serif';
+    const fit = (txt, cx, cy, maxW, sz, col) => { x.font = F(sz); x.fillStyle = col; x.textAlign = 'center'; x.textBaseline = 'middle'; x.save(); x.translate(cx, cy); x.scale(Math.min(1, maxW / Math.max(1, x.measureText(txt).width)), 1); x.fillText(txt, 0, 0); x.restore(); };
+    list.forEach(([txt, bg, fg, deco], k) => {
+      const bx = (k % 2) * 256, by = Math.floor(k / 2) * 128;
+      x.fillStyle = bg; x.fillRect(bx, by, 256, 128);
+      if (deco === 'swoosh') { x.strokeStyle = fg; x.lineWidth = 7; x.beginPath(); x.ellipse(bx + 128, by + 66, 112, 42, -0.08, 0, Math.PI * 2); x.stroke(); }
+      if (deco === 'bars') { x.fillStyle = fg; x.fillRect(bx, by, 256, 22); x.fillRect(bx, by + 106, 256, 22); }
+      if (deco === 'frame') { x.strokeStyle = fg; x.lineWidth = 6; x.strokeRect(bx + 8, by + 8, 240, 112); }
+      if (deco === 'disc') { x.fillStyle = '#f4f1ec'; x.beginPath(); x.ellipse(bx + 128, by + 64, 96, 54, 0, 0, Math.PI * 2); x.fill(); }
+      fit(txt, bx + 128, by + 66, deco === 'disc' ? 160 : 200, deco === 'disc' ? 38 : 46, fg);
+      x.strokeStyle = 'rgba(0,0,0,0.25)'; x.lineWidth = 4; x.strokeRect(bx + 2, by + 2, 252, 124);
+    });
+    return mk(c, false);
+  }
+  const boardsIT = () => boards4([['BUONGIORNO', '#f3efe8', '#1f3f8c', 'swoosh'], ['TUONO', '#f3efe8', '#c8261f', 'bars'], ['CALABRONE', '#f5c332', '#7c3b22', 'frame'], ['MOTORE', '#c3231c', '#c3231c', 'disc']]);
+  const boardsKP = () => boards4([['SRŠEN', '#f5c332', '#7c3b22', 'frame'], ['GROM', '#f3efe8', '#c8261f', 'bars'], ['DOBRI DNEVI', '#f3efe8', '#1f3f8c', 'swoosh'], ['GORIVO', '#c3231c', '#c3231c', 'disc']]);
+  // feather flag (a tall banner on a bent pole) with the word running up it: white with blue lettering, a blue stripe along the pole side
+  function flagKP() {
+    const c = cv(64, 256), x = c.getContext('2d');
+    x.fillStyle = '#f3f1ec'; x.fillRect(0, 0, 64, 256); x.fillStyle = '#1f3f8c'; x.fillRect(0, 0, 9, 256);
+    x.save(); x.translate(36, 150); x.rotate(-Math.PI / 2); x.fillStyle = '#1f3f8c'; x.font = 'italic 900 34px "Russo One", "Arial Black", Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.scale(Math.min(1, 200 / Math.max(1, x.measureText('GORIVO').width)), 1); x.fillText('GORIVO', 0, 0); x.restore();
+    return mk(c, false);
+  }
+
   let cache = null;
   function all(maxAniso) {
     if (cache) return cache;
@@ -449,6 +511,7 @@ const Tex = (function () {
     { const m = makadam(); cache.makadam = m.map; cache.makadamBump = m.bump; }
     cache.cracks = cracks(); cache.tiresRW = tiresRW(); cache.facadeBal = facadeBal();
     cache.sponsorsLJ = sponsorsLJ(); cache.bannerLJ = bannerLJ(); cache.sponsorsFO = sponsorsFO(); cache.fenceFO = fenceFO(); cache.boardsFO = boardsFO(); cache.curbRWB = curbRWB(); cache.tyreTex = tyreTex(); cache.sponsorsMC = sponsorsMC();
+    cache.curbIT = curbIT(); cache.curbRY = curbRY(); cache.sponsorsIT = sponsorsIT(); cache.sponsorsKP = sponsorsKP(); cache.boardsIT = boardsIT(); cache.boardsKP = boardsKP(); cache.flagKP = flagKP();
     return cache;
   }
   return { all, number, SPONSORS };
