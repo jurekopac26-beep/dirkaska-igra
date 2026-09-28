@@ -3115,6 +3115,102 @@ const World = (function () {
   /* ---- the cog railway at the summit: the station beside the summit house, a train at the platform, the track down the east face ----
      (own random stream) */
   function pkCog(K) {
+    const R = rng(9202), { scen, excl, sFin } = K, ic = T.idx(sFin + 62), hd = T.hd[ic] + Math.PI, tx = Math.cos(hd), tz = Math.sin(hd), nx = -tz, nz = tx, o = T.br[ic] + 3.8;
+    // station frame: on the outside of the last bend, straight along the road's heading there (in view ahead while the cars brake); u runs down the line
+    // (from the buffer stop by the car park towards the south), v to its right (towards the road); the platform is on the far side
+    const at = (u, v) => [T.px[ic] + T.nx[ic] * o + tx * u + nx * v, T.pz[ic] + T.nz[ic] * o + tz * u + nz * v];
+    const uB = -17, uP0 = -16.5, uP1 = 17, kS = uP1 - uB + 3;   // buffer stop, platform ends, the last level sample of the line
+    // the line (1 m steps): straight and level through the station, then steered down the east face past the summit sign, parallel to the road
+    // below it and slowly drifting away (in view while the cars climb the last straight); it ends where it would meet the road or another landmark
+    const X = [], Z = [], Hd = [], sp = K.CR.sp;
+    const blocked = (x, z) => { if (pkNear(x, z).dd < 1.5) return true;   // the road, a hard exclusion (huts, pads, car parks; crowd areas only where somebody stands), a spectator
+      for (const e of excl) if (!K.crSoft.has(e) && (x - e.x) ** 2 + (z - e.z) ** 2 < e.r * e.r) return true;
+      const cx = Math.floor(x / 0.8), cz = Math.floor(z / 0.8);
+      for (let a = -3; a <= 3; a++) for (let b = -3; b <= 3; b++) { const L = sp.get((cx + a) + ',' + (cz + b)); if (L) for (let q = 0; q < L.length; q += 2) if ((x - L[q]) ** 2 + (z - L[q + 1]) ** 2 < 4) return true; }
+      return false; };
+    { let [x, z] = at(uB, 0), h = hd;
+      for (let d = 0; d <= 150; d++) { const ex = -Math.sin(h) * 1.8, ez = Math.cos(h) * 1.8;
+        if (d > kS && [0, 1, -1].some(a => blocked(x + ex * a, z + ez * a))) break;
+        X.push(x); Z.push(z); Hd.push(h); if (d > kS) { const q = pkNear(x, z), j = T.idx(q.i * T.ds - 12), L = 27 + 0.12 * (d - kS), a = Math.atan2(T.pz[j] + T.nz[j] * L - z, T.px[j] + T.nx[j] * L - x);
+          h += clamp(Math.atan2(Math.sin(a - h), Math.cos(a - h)), -1 / 30, 1 / 30); }
+        x += Math.cos(h); z += Math.sin(h); } }
+    // its height: level through the station, then the ground under the rails smoothed from above: dips are bridged, humps followed
+    const n = X.length, gC = new Float32Array(n), gM = new Float32Array(n), Y = new Float32Array(n);
+    for (let k = 0; k < n; k++) { const ex = -Math.sin(Hd[k]) * 0.6, ez = Math.cos(Hd[k]) * 0.6; gC[k] = pkGround(X[k], Z[k]); gM[k] = Math.max(gC[k], pkGround(X[k] + ex, Z[k] + ez), pkGround(X[k] - ex, Z[k] - ez)); }
+    const avg = (A, k, W) => { let s = 0, c = 0; W = Math.min(W, n - 1 - k); for (let j = k - W; j <= k + W; j++) { s += A[j]; c++; } return s / c; };
+    let lev = -1e9; for (let k = 0; k <= kS; k++) lev = Math.max(lev, gM[k] + 0.22);
+    for (let k = 0; k < n; k++) Y[k] = k <= kS ? lev : gM[k] + 0.22;
+    for (let pass = 0; pass < 14; pass++) { const Y2 = Y.slice(); for (let k = kS + 1; k < n; k++) Y[k] = Math.max(avg(Y2, k, 4), gM[k] + 0.22); }
+    const yR = lev + 0.3, yP = yR + 0.4;   // rail top, platform top
+
+    /* ---- the track: ballast on a low embankment, sleepers, two running rails and the raised rack rail between them ---- */
+    const Pt = (k, o, y) => [X[k] - Math.sin(Hd[k]) * o, Y[k] + y, Z[k] + Math.cos(Hd[k]) * o];
+    const bal = [0.5, 0.48, 0.46], emb = [0.56, 0.41, 0.33], tieC = [0.34, 0.28, 0.23], railC = [0.4, 0.39, 0.38], railT = [0.74, 0.74, 0.76], rackC = [0.28, 0.28, 0.3];
+    const foot = (k, sd) => { const p = Pt(k, sd * (1.3 + 1.4 * Math.max(0.35, Y[k] - gC[k])), 0); p[1] = pkGround(p[0], p[2]) - 0.3; return p; };
+    for (let k = 0; k + 1 < n; k += 2) { const j = Math.min(n - 1, k + 2), g = scen.get(X[k], Z[k]), a0 = Pt(k, -1.3, 0), a1 = Pt(k, 1.3, 0), b0 = Pt(j, -1.3, 0), b1 = Pt(j, 1.3, 0), inn = Pt(k + 1, 0, -2);
+      const ec = vary(emb, R, 0.06); g.quadO(a0, a1, b1, b0, bal, inn); g.quadO(a0, b0, foot(j, -1), foot(k, -1), ec, inn); g.quadO(a1, foot(k, 1), foot(j, 1), b1, ec, inn);
+      for (const [o, hw, y0, y1, c, ct] of [[-0.5, 0.05, 0.14, 0.3, railC, railT], [0.5, 0.05, 0.14, 0.3, railC, railT], [0, 0.09, 0.12, 0.4, rackC, railC]]) {
+        const ri = Pt(k + 1, o, y0);
+        g.quadO(Pt(k, o - hw, y1), Pt(k, o + hw, y1), Pt(j, o + hw, y1), Pt(j, o - hw, y1), ct, ri);
+        for (const sd of [-1, 1]) g.quadO(Pt(k, o + sd * hw, y0), Pt(j, o + sd * hw, y0), Pt(j, o + sd * hw, y1), Pt(k, o + sd * hw, y1), c, ri); } }
+    for (let k = 0; k < n; k++) { const g = scen.get(X[k], Z[k]), c = vary(tieC, R, 0.2), ca = Math.cos(Hd[k]) * 0.12, sa = Math.sin(Hd[k]) * 0.12, inn = Pt(k, 0, -0.5);   // sleepers (top and long sides)
+      const q = (a, o, y) => { const p = Pt(k, o, y); return [p[0] + ca * a, p[1], p[2] + sa * a]; };
+      g.quadO(q(-1, -1.05, 0.14), q(1, -1.05, 0.14), q(1, 1.05, 0.14), q(-1, 1.05, 0.14), c, inn); for (const a of [-1, 1]) g.quadO(q(a, -1.05, -0.03), q(a, 1.05, -0.03), q(a, 1.05, 0.14), q(a, -1.05, 0.14), c, inn); }
+
+    /* ---- the station: a raised concrete platform beside the track, a slim canopy on posts, benches, steps up at the top end, a buffer stop ---- */
+    const box2 = (u, v, y, su, sy, sv, col, colTop) => { const [x, z] = at(u, v); box(scen.get(x, z), x, y, z, su, sy, sv, hd, col, colTop, true); };   // a box in the station frame (u, v: centre; y: bottom)
+    const gLow = (u0, u1, v0, v1) => { let m = 1e9; for (let u = u0; u <= u1 + 0.01; u += (u1 - u0) / 6) for (const v of [v0, (v0 + v1) / 2, v1]) { const [x, z] = at(u, v); m = Math.min(m, pkGround(x, z)); } return m - 0.3; };
+    const conc = [0.62, 0.61, 0.58], concT = [0.76, 0.75, 0.72], steel = [0.3, 0.32, 0.34], uc = (uP0 + uP1) / 2, yb = gLow(uP0 - 2, uP1, -5.8, -1.65), uC0 = uB + 3, uC1 = uB + 31;
+    box2(uc, -3.72, yb, uP1 - uP0, yP - yb, 4.15, conc, concT); box2(uc, -1.97, yP, uP1 - uP0 - 0.3, 0.02, 0.3, [0.95, 0.78, 0.15]);   // the slab, a yellow line along its edge
+    for (let q = 0; q < 8; q++) { const h = yP - 0.25 * (q + 1); if (h > yb + 0.1) box2(uP0 - 0.2 - 0.4 * q, -3.75, yb, 0.4, h - yb, 3.4, conc, concT); }   // steps down at the top end
+    for (let u = uP0 + 0.2; u <= uP1 - 0.1; u += 2.4) box2(u, -5.7, yP, 0.07, 1.05, 0.07, steel); box2(uc, -5.7, yP + 1.0, uP1 - uP0 - 0.3, 0.07, 0.08, steel);   // railing on the far side
+    for (let u = uC0 + 0.6; u < uC1; u += 6.8) box2(u, -4.9, yP, 0.2, 3.5, 0.2, [0.2, 0.26, 0.24]);
+    { const [x, z] = at((uC0 + uC1) / 2, -3.95); box2((uC0 + uC1) / 2, -3.95, yP + 3.42, uC1 - uC0, 0.14, 4.3, [0.2, 0.26, 0.24]); gable(scen.get(x, z), x, yP + 3.56, z, uC1 - uC0, 4.3, 0.4, hd, [0.24, 0.38, 0.31], [0.2, 0.26, 0.24]); }   // canopy: a low green roof
+    for (let u = uC0 + 4; u < uC1 - 2; u += 6.8) box2(u, -5.1, yP, 1.8, 0.45, 0.45, [0.42, 0.3, 0.2]);   // benches
+    for (let q = 0; q < 9; q++) { const [x, z] = at(uC0 + 1 + R() * (uC1 - uC0 - 2), -2.4 - R() * 2); crowdPut(K.CR, x, yP, z, nx, nz, { col: K.fans[Math.floor(R() * K.fans.length)] }, 1); }   // passengers on the platform, watching the cars
+    { const yb2 = gLow(uB - 2, uB - 0.3, -1.5, 1.5); box2(uB - 1.3, 0, yb2, 1.4, yR + 0.3 - yb2, 3, conc, concT); box2(uB - 0.5, 0, yR - 0.2, 0.3, 1.1, 2.4, [0.86, 0.14, 0.1], [0.95, 0.95, 0.92]); }   // buffer stop
+
+    /* ---- the train: two red railcars with a white window band, sloped cab ends, roof boxes (no pantograph: diesel) ---- */
+    const red = [0.8, 0.13, 0.1], wht = [0.94, 0.93, 0.9], win = [0.12, 0.15, 0.2], roofC = [0.62, 0.14, 0.12], dark = [0.13, 0.13, 0.14];
+    const car = (u0, dir) => {   // a 15 m railcar centred at u0, its cab (sloped end) towards dir
+      const L = 7.5, F = (a, y, b) => { const [x, z] = at(u0 + a * dir, b); return [x, yR + y, z]; }, g = scen.get(...at(u0, 0));
+      const layer = (poly, bw, col) => {   // a side profile (a, y) extruded across the car
+        const ca = poly.reduce((s, p) => s + p[0], 0) / poly.length, cy = poly.reduce((s, p) => s + p[1], 0) / poly.length, inn = F(ca, cy, 0);
+        for (const b of [-bw, bw]) for (let q = 1; q + 1 < poly.length; q++) g.triO(F(poly[0][0], poly[0][1], b), F(poly[q][0], poly[q][1], b), F(poly[q + 1][0], poly[q + 1][1], b), col, inn);
+        for (let q = 0; q < poly.length; q++) { const p0 = poly[q], p1 = poly[(q + 1) % poly.length]; g.quadO(F(p0[0], p0[1], -bw), F(p1[0], p1[1], -bw), F(p1[0], p1[1], bw), F(p0[0], p0[1], bw), col, inn); }
+      };
+      layer([[-L, 0.95], [L - 0.15, 0.95], [L, 1.25], [L, 1.95], [-L, 1.95]], 1.35, red);
+      layer([[-L, 1.95], [L, 1.95], [L - 0.5, 2.95], [-L, 2.95]], 1.35, wht);
+      layer([[-L, 2.95], [L - 0.5, 2.95], [L - 0.75, 3.3], [-L, 3.3]], 1.35, red);
+      layer([[-L + 0.1, 3.3], [L - 0.75, 3.3], [L - 1.0, 3.45], [-L + 0.1, 3.45]], 1.22, roofC);
+      const inn = F(0, 2, 0);
+      for (const b of [-1.37, 1.37]) for (let a = -L + 0.5; a < L - 1.5; a += 1.55) g.quadO(F(a, 2.1, b), F(a + 1.2, 2.1, b), F(a + 1.2, 2.8, b), F(a, 2.8, b), win, inn);   // side windows
+      g.quadO(F(L - 0.05, 2.07, -1.1), F(L - 0.05, 2.07, 1.1), F(L - 0.44, 2.85, 1.1), F(L - 0.44, 2.85, -1.1), win, inn);   // windscreen
+      for (const b of [-0.85, 0.85]) g.quadO(F(L + 0.02, 1.4, b - 0.14), F(L + 0.02, 1.4, b + 0.14), F(L + 0.02, 1.62, b + 0.14), F(L + 0.02, 1.62, b - 0.14), [1, 0.96, 0.78], inn);   // headlights
+      for (const a of [-4.8, 4.8]) { const p = F(a, -0.08, 0); box(g, p[0], p[1], p[2], 2.8, 0.85, 2.0, hd, dark, null, true); }   // bogies
+      { const p = F(0, 0.65, 0); box(g, p[0], p[1], p[2], 2 * L - 0.8, 0.32, 2.4, hd, [0.22, 0.22, 0.24], null, true); }
+      for (const a of [-3.4, 2.2]) { const p = F(a, 3.42, 0); box(g, p[0], p[1], p[2], 2.4, 0.36, 1.5, hd, [0.46, 0.48, 0.5], [0.6, 0.62, 0.64], true); }   // roof boxes
+      { const p = F(-0.6, 3.42, 0.55); box(g, p[0], p[1], p[2], 0.25, 0.55, 0.25, hd, dark, null, true); }   // exhaust
+    };
+    car(uB + 8.7, -1); car(uB + 24.3, 1);
+    { const [x, z] = at(uB + 16.5, 0); box(scen.get(x, z), x, yR + 1.0, z, 0.7, 2.0, 1.7, hd, dark, null, true); }   // gangway between the cars
+
+    /* ---- the station's name board hung under the lower end of the canopy, both faces (its own small canvas: one extra mesh) ---- */
+    { const c = document.createElement('canvas'); c.width = 512; c.height = 128; const x = c.getContext('2d'), cream = '#efe3c8', grn = '#1f4034';
+      x.fillStyle = grn; x.fillRect(0, 0, 512, 128); x.strokeStyle = cream; x.lineWidth = 6; x.strokeRect(8, 8, 496, 112);
+      x.fillStyle = cream; x.font = '900 74px Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('SUMMIT', 256, 68, 320);
+      for (const gx of [62, 450]) { x.beginPath(); for (let k = 0; k < 48; k++) { const a = (k + 0.5) / 48 * TAU, r = k % 4 < 2 ? 36 : 27; x.lineTo(gx + Math.cos(a) * r, 64 + Math.sin(a) * r); }   // cog wheels
+        x.closePath(); x.fill(); x.fillStyle = grn; x.beginPath(); x.arc(gx, 64, 11, 0, TAU); x.fill(); x.fillStyle = cream; }
+      const t = new THREE.CanvasTexture(c); t.anisotropy = 4; K.out.ownTex.push(t);
+      const gb = new GB(true), W1 = [1, 1, 1], ub = uC1 - 0.25, y0 = yP + 2.45, y1 = yP + 3.35, ym = (y0 + y1) / 2;
+      for (const f of [-1, 1]) { const [ax, az] = at(ub + f * 0.05, -3.75 + 2 * f), [bx, bz] = at(ub + f * 0.05, -3.75 - 2 * f), [ix, iz] = at(ub - f, -3.75);   // (the text reads left to right from either side)
+        gb.quadO([ax, y0, az], [bx, y0, bz], [bx, y1, bz], [ax, y1, az], W1, [ix, ym, iz], [[0, 0], [1, 0], [1, 1], [0, 1]]); }
+      const m = new THREE.Mesh(gb.geometry(), new THREE.MeshLambertMaterial({ map: t })); m.matrixAutoUpdate = false; m.receiveShadow = true; K.root.add(m);
+      box2(ub, -3.75, y0 - 0.06, 0.08, y1 - y0 + 0.12, 4.12, dark); for (const v of [-2.3, -5.2]) box2(ub, v, y1, 0.05, 0.16, 0.05, dark); }
+
+    /* ---- keep the trees, boulders and later crowds off it ---- */
+    for (let u = uB - 3; u <= uP1 + 3; u += 6) { const [x, z] = at(u, -2.5); excl.push({ x, z, r: 6.5 }); }
+    for (let k = kS; k < n; k += 5) excl.push({ x: X[k], z: Z[k], r: 3 + 1.4 * Math.max(0.35, Y[k] - gC[k]) });
   }
 
   /* ---- race day: marshal posts with flags at the corners, safety and recovery vehicles, photographers, sponsor banners,
