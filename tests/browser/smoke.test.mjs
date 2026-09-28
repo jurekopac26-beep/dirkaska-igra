@@ -3,6 +3,7 @@
 // a Pikes Peak run finishes and its record is saved per physics. Zero page errors allowed.
 //   node tests/browser/smoke.test.mjs
 import path from 'node:path';
+import url from 'node:url';
 import { ROOT, serve, launch, openGame, startTrack, trackIds, simulate, checker } from './lib.mjs';
 
 const T = checker('smoke');
@@ -23,15 +24,15 @@ try {
 
   // 2. the page also works when opened straight from the disk (file://)
   {
-    const { ctx, page, errors } = await openGame(browser, 'file://' + path.join(ROOT, 'index.html'));
+    const { ctx, page, errors } = await openGame(browser, url.pathToFileURL(path.join(ROOT, 'index.html')).href);
     T.check('opens from a local file (file://)', !errors.length, errors.join(' | '));
     await ctx.close();
   }
 
   // 3. every track: race 20 s on autopilot with full graphics
   const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.2 });
-  const ids = await trackIds(page);
-  T.check('track menu lists 8 tracks', ids.length === 8, ids.join(','));
+  const ids = await trackIds(page), all = await page.evaluate(() => Core.TRACKS.map(d => d.id));
+  T.check('track menu lists every track of the game', ids.join(',') === all.join(',') && ids.length >= 8, ids.join(','));
   for (const id of ids) {
     const e0 = errors.length;
     await startTrack(page, id);
@@ -80,18 +81,30 @@ try {
   T.check('no page errors during the whole run', !errors.length, errors.slice(0, 5).join(' | '));
   await ctx.close();
 
-  // 7. a device too slow even at the lowest resolution: the game lowers the resolution, then switches the shadows off by itself
-  //    (software WebGL at 844x390 is slow enough; the page runs in real time here, no simulation)
+  // 7. a device too slow even at the lowest resolution (software WebGL is slow enough; the page runs in real time here):
+  //    the resolution goes down first; then the game decides to drop the shadows, but only at the next pause (not mid-race),
+  //    for this visit only (the saved setting stays), every material is rebuilt without shadows, and the player's own
+  //    choice in Nastavitve brings them back for good
   {
-    const { ctx: c2, page: p2, errors: e2 } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase' }, { width: 844, height: 390 }, { adaptive: true });
+    const { ctx: c2, page: p2, errors: e2 } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase' }, { width: 640, height: 360 }, { adaptive: true });
     await startTrack(p2, 'gozd');
     const r = await p2.evaluate(async () => {
-      const g = window.__game; let t = 0;
-      while (t < 90 && g.S.shadows) { await new Promise(r => setTimeout(r, 1000)); t++; }
-      return { shadows: g.S.shadows, dyn: Render.getDynScale(), t, saved: JSON.parse(localStorage.getItem('tdgp-settings') || '{}').shadows, toast: (document.getElementById('toast') || {}).textContent || '' };
+      const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)); let t = 0;
+      while (t < 300 && !g.adapt.pending) { await wait(1000); t++; }
+      const decided = Object.assign({ t, toast: document.getElementById('toast').textContent }, g.adapt);
+      const mats = []; Render.scene.traverse(o => { if (o.material && !Array.isArray(o.material) && mats.length < 60) mats.push([o.material, o.material.version]); });
+      g.pause(); await wait(300);
+      const paused = Object.assign({ rebuilt: mats.every(([m, v]) => m.version > v), saved: JSON.parse(localStorage.getItem('tdgp-settings') || '{}').shadows,
+        seg: [...document.querySelectorAll('[data-set="shadows"] button')].map(b => b.dataset.v + (b.classList.contains('sel') ? '*' : '')).join(' ') }, g.adapt);
+      document.querySelector('[data-set="shadows"] button[data-v="1"]').click(); await wait(300);   // the player turns them back on
+      return { decided, paused, back: g.adapt };
     });
-    T.check('slow device: lower resolution first, then shadows off (and saved)', r.shadows === 0 && r.saved === 0 && r.dyn <= 0.6 && /Sence so izklopljene/.test(r.toast) && !e2.length,
-      `after ${r.t} s: resolution x${r.dyn.toFixed(2)}, shadows ${r.shadows}, saved ${r.saved}, message "${r.toast}"${e2.length ? ', errors: ' + e2.join(' | ') : ''}`);
+    const { decided: d, paused: p, back: b } = r;
+    T.check('slow device: resolution down first, then shadows off decided (not yet switched mid-race)', d.pending && d.dyn <= 0.6 && d.shadowsOn && /brez senc/.test(d.toast),
+      `after ${d.t} s: resolution x${d.dyn.toFixed(2)}, pending ${d.pending}, shadows still on ${d.shadowsOn}, message "${d.toast}"`);
+    T.check('at the pause: shadows off for this visit, materials rebuilt, saved setting kept, Nastavitve shows it', !p.shadowsOn && p.auto && !p.pending && p.rebuilt && p.saved === 1 && p.seg === '0* 1',
+      `shadows on ${p.shadowsOn}, auto ${p.auto}, materials rebuilt ${p.rebuilt}, saved ${p.saved}, buttons "${p.seg}"`);
+    T.check("the player's choice brings them back and they stay", b.shadowsOn && !b.auto && b.keep && !e2.length, `shadows on ${b.shadowsOn}, keep ${b.keep}${e2.length ? ', errors: ' + e2.join(' | ') : ''}`);
     await c2.close();
   }
 } finally {

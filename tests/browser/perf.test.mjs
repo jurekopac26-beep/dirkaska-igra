@@ -1,7 +1,8 @@
 // Phone budget: on a phone-size screen (844x390, quality 'normal', shadows on, chase camera) every track is driven on
 // autopilot and the WebGL work per frame is counted (draw calls and vertices of all passes: shadows and scene) at six
-// places around the lap, plus the JavaScript time of physics+AI and of the render-side updates. Fails when a track
-// needs more than 30 % above tests/golden/perf.json (e.g. a new track or car that would be too heavy for phones).
+// places around the lap. Fails when the busiest of them needs more than tests/golden/perf.json allows (+10 % +5 draw
+// calls, +10 % +20k vertices), e.g. a change that makes a track or car too heavy for phones. The JavaScript time of
+// physics+AI and of the render-side updates is only printed (it depends on the machine).
 //   node tests/browser/perf.test.mjs            check
 //   node tests/browser/perf.test.mjs --update   write new reference values
 import fs from 'node:fs';
@@ -26,13 +27,17 @@ try {
   });
   for (const id of await trackIds(page)) {
     await startTrack(page, id);
-    const r = await page.evaluate(async () => {
-      const g = window.__game, raf = () => new Promise(r => requestAnimationFrame(r)), s = [];
+    const r = await page.evaluate(() => {
+      // a fresh race with Math.random seeded, paused at once: nothing moves by itself, the race is stepped and drawn only
+      // here, in one go, so the counts are the same every run
+      const g = window.__game; let seed = 12345; Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+      g.onAction('restart'); g.pause();
+      const P = g.race.player, s = [];
       let tPhys = 0, tRend = 0;
       for (let k = 0; k < 6; k++) {
         const dt = Math.min(30, g.race.track.len / 45 / 6); for (let i = 0; i < dt; i++) g.sim(1, true);
-        Render.resetCam(); for (let i = 0; i < 4; i++) await raf();
-        const c0 = __gl.calls, v0 = __gl.verts; await raf(); s.push([__gl.calls - c0, __gl.verts - v0]);
+        Render.resetCam(); for (let i = 0; i < 10; i++) Render.frame(1 / 60, 1, P, g.S.camera, {});   // the camera settles
+        const c0 = __gl.calls, v0 = __gl.verts; Render.frame(1 / 60, 1, P, g.S.camera, {}); s.push([__gl.calls - c0, __gl.verts - v0]);
         let t0 = performance.now(); for (let i = 0; i < 30; i++) g.sim(1 / 60, true); tPhys += performance.now() - t0;
         Render.scene.visible = false; t0 = performance.now(); for (let i = 0; i < 30; i++) Render.frame(1 / 60, 1, g.race.player, g.S.camera, {}); tRend += performance.now() - t0; Render.scene.visible = true;
       }
@@ -45,8 +50,8 @@ try {
     if (update) { console.log(`${id.padEnd(10)} ${line}`); continue; }
     if (!g) { T.check(`${id}: within the phone budget`, false, 'no reference'); continue; }
     const why = [];
-    if (r.maxCalls > g.maxCalls * 1.3 + 10) why.push(`draw calls ${r.maxCalls} > ${Math.round(g.maxCalls * 1.3 + 10)}`);
-    if (r.maxKverts > g.maxKverts * 1.3 + 20) why.push(`vertices ${r.maxKverts}k > ${Math.round(g.maxKverts * 1.3 + 20)}k`);
+    if (r.maxCalls > g.maxCalls * 1.1 + 5) why.push(`draw calls ${r.maxCalls} > ${Math.round(g.maxCalls * 1.1 + 5)}`);
+    if (r.maxKverts > g.maxKverts * 1.1 + 20) why.push(`vertices ${r.maxKverts}k > ${Math.round(g.maxKverts * 1.1 + 20)}k`);
     T.check(`${id}: within the phone budget`, !why.length, line + (why.length ? ' — ' + why.join(', ') : ''));
   }
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));

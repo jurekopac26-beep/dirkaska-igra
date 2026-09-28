@@ -1,58 +1,58 @@
 {
  "jezero": {
-  "calls": 238,
-  "maxCalls": 294,
-  "kverts": 543,
-  "maxKverts": 659,
-  "jsMs": 0.9
+  "calls": 237,
+  "maxCalls": 250,
+  "kverts": 590,
+  "maxKverts": 713,
+  "jsMs": 0.97
  },
  "riviera": {
-  "calls": 261,
-  "maxCalls": 284,
-  "kverts": 435,
+  "calls": 269,
+  "maxCalls": 301,
+  "kverts": 428,
   "maxKverts": 522,
-  "jsMs": 0.48
+  "jsMs": 0.69
  },
  "gora": {
-  "calls": 221,
-  "maxCalls": 282,
-  "kverts": 944,
-  "maxKverts": 995,
-  "jsMs": 0.85
+  "calls": 229,
+  "maxCalls": 278,
+  "kverts": 955,
+  "maxKverts": 1066,
+  "jsMs": 0.81
  },
  "ljubljana": {
-  "calls": 258,
-  "maxCalls": 349,
-  "kverts": 508,
-  "maxKverts": 571,
-  "jsMs": 0.62
+  "calls": 254,
+  "maxCalls": 348,
+  "kverts": 510,
+  "maxKverts": 575,
+  "jsMs": 0.71
  },
  "monaco": {
-  "calls": 213,
-  "maxCalls": 284,
-  "kverts": 616,
-  "maxKverts": 702,
-  "jsMs": 0.61
+  "calls": 228,
+  "maxCalls": 286,
+  "kverts": 615,
+  "maxKverts": 677,
+  "jsMs": 0.7
  },
  "gozd": {
-  "calls": 324,
-  "maxCalls": 395,
-  "kverts": 1362,
-  "maxKverts": 1567,
-  "jsMs": 1.39
+  "calls": 296,
+  "maxCalls": 330,
+  "kverts": 1357,
+  "maxKverts": 1527,
+  "jsMs": 1.4
  },
  "pikes": {
-  "calls": 83,
-  "maxCalls": 108,
-  "kverts": 233,
-  "maxKverts": 354,
-  "jsMs": 0.4
+  "calls": 88,
+  "maxCalls": 100,
+  "kverts": 251,
+  "maxKverts": 314,
+  "jsMs": 0.21
  },
  "nring": {
-  "calls": 179,
-  "maxCalls": 218,
-  "kverts": 533,
-  "maxKverts": 725,
-  "jsMs": 1.16
+  "calls": 181,
+  "maxCalls": 234,
+  "kverts": 544,
+  "maxKverts": 752,
+  "jsMs": 1.45
  }
 }

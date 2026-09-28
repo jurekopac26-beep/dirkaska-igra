@@ -1,47 +1,75 @@
-// Memory: switching tracks, restarting races and browsing cars in the car menu must not leave GPU geometry,
-// textures, shader programs or JavaScript memory behind. Rounds 1-2 warm up (caches fill, and effects that only show
-// now and then, like sparks or a broken lamp, compile their first shaders); from round 2 to the last the counts must
-// stay flat, within a small margin (the leak this test was written for grew by ~1850 geometries per round).
-//   node tests/browser/memory.test.mjs
+// Memory: switching tracks, restarting races, a crash with loose panels and a pit repair, and browsing cars in the car
+// menu must not leave GPU geometry, textures, shader programs or JavaScript memory behind. Round 1 warms up (caches
+// fill, first shaders compile); from round 2 to the last the counts must stay flat.
+// Every measurement is taken in the same state, so it does not depend on what happened to be on screen before: a fresh
+// race on jezero at the start lights (no contacts yet), the game paused, and one frame drawn with frustum culling off, so
+// every visible object is on the GPU; then garbage collection.
+//   node tests/browser/memory.test.mjs            (MEM_ROUNDS=4 for more rounds)
 import { serve, launch, openGame, startTrack, trackIds, simulate, checker } from './lib.mjs';
 
 const T = checker('memory');
 const srv = await serve();
 const browser = await launch(['--js-flags=--expose-gc', '--enable-precise-memory-info']);
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.2 });
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.2, damage: 2 }, undefined, { seed: 777 });
   const ids = await trackIds(page);
-  // always measured in the same state: a fresh race on jezero, 2 s in, after garbage collection
   const measure = async () => {
     await startTrack(page, 'jezero'); await simulate(page, 2);
     return page.evaluate(async () => {
+      const g = window.__game; g.pause();
+      const culled = []; Render.scene.traverse(o => { if (o.frustumCulled) { culled.push(o); o.frustumCulled = false; } });
+      Render.frame(0, 1, g.race.player, g.S.camera, { noFx: true });
+      for (const o of culled) o.frustumCulled = true;
       for (let i = 0; i < 3; i++) { if (window.gc) window.gc(); await new Promise(r => setTimeout(r, 150)); }
       const inf = Render.info();
       return { geometries: inf.memory.geometries, textures: inf.memory.textures, programs: inf.programs ? inf.programs.length : 0, heapMB: performance.memory ? performance.memory.usedJSHeapSize / 1048576 : 0 };
     });
   };
-  // browse the car menu: through every car twice (each change builds a new showroom car)
+  // Bakreni gozd: at racing speed full throttle and full left lock for 2.5 s (damage, loose panels on the track), then on
+  // autopilot into the pits (rescued when stuck, like a player pressing the button) until the car is repaired: the
+  // renderer swaps in a fresh car while the panels still lie on the track; the next race start frees them
+  const crashAndRepair = async () => {
+    await startTrack(page, 'gozd');
+    return page.evaluate(async () => {
+      const g = window.__game, P = g.race.player, raf = () => new Promise(r => requestAnimationFrame(r));
+      for (let i = 0; i < 40 && g.race.time < 6; i++) g.sim(0.5, true);
+      g.sim(2.5, false, -1); await raf(); await raf();
+      let dmg = P.dmg, loose = g.race.debris.length;
+      for (let i = 0; i < 180 && !P.repairN; i++) {
+        if (P.stuckT > 3 || P.wrongT > 3) g.race.rescue(P);
+        if (!P.inPit) P.pitWant = true; g.sim(1, true); if (i % 10 === 0) await raf();
+        dmg = Math.max(dmg, P.repairN ? 0 : P.dmg); loose = Math.max(loose, g.race.debris.length);
+      }
+      P.pitWant = false; for (let i = 0; i < 3; i++) await raf();
+      return { dmg: +dmg.toFixed(2), loose, repaired: P.repairN || 0, looseAtRepair: g.race.debris.length };
+    });
+  };
+  // browse the car menu: through every car twice (each change builds a new showroom car); every car is drawn before the
+  // next one, so each one really reaches the GPU (and the last one is always drawn when memory is measured)
   const carMenu = () => page.evaluate(async () => {
-    const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms));
+    const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)), raf = () => new Promise(r => requestAnimationFrame(r));
     g.onAction('to-car'); await wait(300);
-    for (let k = 0; k < 12; k++) { g.onAction('car-next'); await wait(120); }
+    for (let k = 0; k < 12; k++) { g.onAction('car-next'); await raf(); await raf(); }
     g.onAction('to-title'); await wait(200);
   });
   const rounds = [];
   const ROUNDS = +(process.env.MEM_ROUNDS || 3);
+  let crash = null;
   for (let r = 0; r < ROUNDS; r++) {
     for (const id of ids) { await startTrack(page, id); await simulate(page, 3); }
-    await startTrack(page, 'gozd'); await simulate(page, 2); await startTrack(page, 'gozd'); await simulate(page, 2);   // a restart on the same track
+    crash = await crashAndRepair();
+    await startTrack(page, 'gozd'); await simulate(page, 2);   // a restart on the same track
     await carMenu();
     await page.evaluate(async () => { window.__game.onAction('to-title'); await new Promise(r => setTimeout(r, 1500)); });   // the title demo race
     rounds.push(await measure());
-    console.log(`round ${r + 1}: ${JSON.stringify(rounds[r], (k, v) => typeof v === 'number' ? +v.toFixed(1) : v)}`);
+    console.log(`round ${r + 1}: ${JSON.stringify(rounds[r], (k, v) => typeof v === 'number' ? +v.toFixed(1) : v)}  crash ${JSON.stringify(crash)}`);
   }
-  const w = rounds[Math.min(1, rounds.length - 1)], z = rounds[rounds.length - 1], k = rounds.length - 1 - Math.min(1, rounds.length - 1);
-  T.check('GPU geometries do not grow after the warm-up rounds', z.geometries <= w.geometries + 30 * Math.max(1, k), `${w.geometries} -> ${z.geometries}`);
-  T.check('textures do not grow', z.textures <= w.textures + 2, `${w.textures} -> ${z.textures}`);
-  T.check('shader programs do not grow', z.programs <= w.programs + 4, `${w.programs} -> ${z.programs}`);
-  T.check('JavaScript memory does not grow (more than 25 MB)', z.heapMB <= w.heapMB + 25, `${w.heapMB.toFixed(1)} -> ${z.heapMB.toFixed(1)} MB`);
+  const w = rounds[Math.min(1, rounds.length - 1)], z = rounds[rounds.length - 1];
+  T.check('the crash-and-repair part really ran (damage, loose panels still on the track at the pit repair)', crash && crash.dmg > 0 && crash.looseAtRepair > 0 && crash.repaired === 1, JSON.stringify(crash));
+  T.check('GPU geometries do not grow after the warm-up round', z.geometries <= w.geometries + 2, `${w.geometries} -> ${z.geometries}`);
+  T.check('textures do not grow', z.textures <= w.textures, `${w.textures} -> ${z.textures}`);
+  T.check('shader programs do not grow', z.programs <= w.programs + 1, `${w.programs} -> ${z.programs}`);
+  T.check('JavaScript memory does not grow (more than 15 MB)', z.heapMB <= w.heapMB + 15, `${w.heapMB.toFixed(1)} -> ${z.heapMB.toFixed(1)} MB`);
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
 } finally {
   await browser.close(); await srv.close();

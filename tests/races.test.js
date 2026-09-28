@@ -1,12 +1,14 @@
-// Full AI races on every track with both physics (12 AI + the player on autopilot; Pikes Peak: time trial).
-// Checks that every car finishes, nobody spins, wall contacts stay low and the pace stays close to the reference
-// in tests/golden/races.json (winner time within +-3 %, so deliberate small tuning still passes).
+// Full AI races on every track with both physics (12 AI + the player on autopilot; Pikes Peak: time trial), to the finish.
+// Checks that every car finishes and compares with tests/golden/races.json: the exact result (finish order, finish times
+// and the final state of every car, as a digest) must be the same. When it is not, the other values show how big the
+// change is: spins (at most 2 more than the reference), wall contacts, rescues and the winner's time (within +-3 %).
 //   node tests/races.test.js [--update] [--only=gozd,cs]
 'use strict';
 const fs = require('fs');
 const path = require('path');
 const { loadCore } = require('./lib/core.js');
-const { DT, TRACK_IDS, PHYSICS, seeded } = require('./lib/sim.js');
+const crypto = require('crypto');
+const { DT, trackIds, PHYSICS, seeded, raceState } = require('./lib/sim.js');
 
 const FILE = path.join(__dirname, 'golden', 'races.json');
 const update = process.argv.includes('--update');
@@ -39,12 +41,13 @@ function race(tid, phys) {
     }
     const fin = r.cars.filter(c => c.finished).sort((a, b) => a.finishTime - b.finishTime);
     let spins = 0, walls = 0, resc = 0; for (const s of st.values()) { spins += s.spins; walls += s.walls; resc += s.resc; }
-    return { finished: fin.length, cars: r.cars.length, winner: fin[0] ? +fin[0].finishTime.toFixed(2) : null, spins, walls, rescues: resc, nan };
+    const digest = crypto.createHash('sha256').update(fin.map(c => c.id + '@' + c.finishTime).join(',') + '\n' + raceState(r)).digest('hex').slice(0, 24);
+    return { finished: fin.length, cars: r.cars.length, winner: fin[0] ? +fin[0].finishTime.toFixed(2) : null, spins, walls, rescues: resc, nan, digest };
   } finally { Math.random = orig; }
 }
 
 const out = {}; let bad = 0; const t0 = Date.now();
-for (const tid of TRACK_IDS) for (const phys of PHYSICS) {
+for (const tid of trackIds(C)) for (const phys of PHYSICS) {
   const key = `${tid}/${phys}`;
   if (only.length && !only.every(o => key.split('/').includes(o))) { if (ref[key]) out[key] = ref[key]; continue; }
   const r = race(tid, phys); out[key] = r;
@@ -58,8 +61,10 @@ for (const tid of TRACK_IDS) for (const phys of PHYSICS) {
     if (g.winner && r.winner && Math.abs(r.winner / g.winner - 1) > 0.03) why.push(`winner ${r.winner} s (ref ${g.winner} s, more than 3 % off)`);
   }
   if (!update && !g) why.push('no reference');
-  if (why.length) bad++;
-  console.log(`${key.padEnd(17)} fin ${r.finished}/${r.cars} winner ${String(r.winner).padStart(7)} s spins ${r.spins} walls ${r.walls} rescues ${r.rescues} ${why.length ? 'FAIL: ' + why.join('; ') : 'OK'}`);
+  const changed = !update && g && g.digest !== r.digest;   // (a different result, even if every value above is within its limit)
+  if (why.length || changed) bad++;
+  console.log(`${key.padEnd(17)} fin ${r.finished}/${r.cars} winner ${String(r.winner).padStart(7)} s spins ${r.spins} walls ${r.walls} rescues ${r.rescues} ${r.digest} ` +
+    (why.length ? 'FAIL: ' + why.join('; ') : changed ? `CHANGED: not the same result as the reference (was ${g.digest}, winner ${g.winner} s); if the change was intended: npm run golden:update` : 'OK'));
 }
 const secs = ((Date.now() - t0) / 1000).toFixed(0);
 if (update) { if (bad) { console.log('not written: fix the failures first'); process.exit(1); } fs.writeFileSync(FILE, JSON.stringify(out, null, 1) + '\n'); console.log(`written ${FILE} (${secs} s)`); }

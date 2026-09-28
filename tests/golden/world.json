@@ -5,14 +5,14 @@
   "instances": 2936,
   "props": 102,
   "crowd": 2936,
-  "world": "bb88b712",
+  "world": "730387fc",
   "propsHash": "8c07ccb7",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "b9ab8fc1",
-   "-:MeshBasicMaterial": "6644bd6f",
-   "-:MeshPhongMaterial": "c0bee8f2",
-   "crowd:MeshLambertMaterial": "edc97914"
+   "-:MeshLambertMaterial": "dcce7ef4",
+   "-:MeshBasicMaterial": "e705d937",
+   "-:MeshPhongMaterial": "87fa8193",
+   "crowd:MeshLambertMaterial": "f662c1b4"
   }
  },
  "riviera": {
@@ -21,14 +21,14 @@
   "instances": 2448,
   "props": 96,
   "crowd": 2448,
-  "world": "34c7fea2",
+  "world": "9ab947f4",
   "propsHash": "283197ed",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "5923d552",
-   "-:MeshBasicMaterial": "2ea6f94f",
-   "-:MeshPhongMaterial": "7747f771",
-   "crowd:MeshLambertMaterial": "d74f400e"
+   "-:MeshLambertMaterial": "8451a3ce",
+   "-:MeshBasicMaterial": "5cef53d7",
+   "-:MeshPhongMaterial": "7d06212a",
+   "crowd:MeshLambertMaterial": "bcd13c51"
   }
  },
  "gora": {
@@ -37,14 +37,14 @@
   "instances": 1530,
   "props": 76,
   "crowd": 1530,
-  "world": "f4cba816",
+  "world": "9fe1bec5",
   "propsHash": "e4a0fab6",
   "floor": "49bbc346/3276",
   "groups": {
-   "-:MeshLambertMaterial": "748ca7f5",
-   "-:MeshPhongMaterial": "9ae73013",
-   "-:MeshBasicMaterial": "d444d714",
-   "crowd:MeshLambertMaterial": "c87f33f0"
+   "-:MeshLambertMaterial": "e67d83b5",
+   "-:MeshPhongMaterial": "77ad02bd",
+   "-:MeshBasicMaterial": "deb30354",
+   "crowd:MeshLambertMaterial": "c2995c14"
   }
  },
  "ljubljana": {
@@ -53,14 +53,14 @@
   "instances": 2346,
   "props": 92,
   "crowd": 2346,
-  "world": "46c65d1c",
+  "world": "1745fa0c",
   "propsHash": "2315e742",
   "floor": "7addfae4/3752",
   "groups": {
-   "-:MeshLambertMaterial": "541e6ab6",
-   "-:MeshBasicMaterial": "c642ada7",
-   "-:MeshPhongMaterial": "25704727",
-   "crowd:MeshLambertMaterial": "82b26412"
+   "-:MeshLambertMaterial": "ccdb0c8a",
+   "-:MeshBasicMaterial": "9dbdf42b",
+   "-:MeshPhongMaterial": "69ea5557",
+   "crowd:MeshLambertMaterial": "56818ce0"
   }
  },
  "monaco": {
@@ -69,14 +69,14 @@
   "instances": 3123,
   "props": 143,
   "crowd": 3123,
-  "world": "795efdd7",
+  "world": "7742cc7e",
   "propsHash": "51f46d13",
   "floor": "5bd68b2e/6692",
   "groups": {
-   "-:MeshLambertMaterial": "d92191cc",
-   "-:MeshBasicMaterial": "7ef8ba06",
-   "-:MeshPhongMaterial": "b8178358",
-   "crowd:MeshLambertMaterial": "f3007fb"
+   "-:MeshLambertMaterial": "1f07f579",
+   "-:MeshBasicMaterial": "9806e559",
+   "-:MeshPhongMaterial": "643f8405",
+   "crowd:MeshLambertMaterial": "d41154ff"
   }
  },
  "gozd": {
@@ -85,13 +85,13 @@
   "instances": 1545,
   "props": 167,
   "crowd": 1545,
-  "world": "d41721ad",
+  "world": "7e6f6d35",
   "propsHash": "4eaefa60",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "996c9c42",
-   "crowd:MeshLambertMaterial": "9cefb8f8",
-   "-:MeshBasicMaterial": "a8d5360"
+   "-:MeshLambertMaterial": "e5bf129e",
+   "crowd:MeshLambertMaterial": "403bbda4",
+   "-:MeshBasicMaterial": "dc40622"
   }
  },
  "pikes": {
@@ -100,14 +100,14 @@
   "instances": 2911,
   "props": 352,
   "crowd": 2911,
-  "world": "d8d023a7",
+  "world": "2ba77139",
   "propsHash": "fed9419e",
   "floor": "67c951b5/12544",
   "groups": {
-   "-:MeshLambertMaterial": "62622343",
-   "-:MeshPhongMaterial": "8c50b5e0",
-   "-:MeshBasicMaterial": "40408313",
-   "crowd:MeshLambertMaterial": "7fb62889"
+   "-:MeshLambertMaterial": "97ef194f",
+   "-:MeshPhongMaterial": "67b62ca8",
+   "-:MeshBasicMaterial": "33c883f9",
+   "crowd:MeshLambertMaterial": "54b30ee9"
   }
  },
  "nring": {
@@ -116,13 +116,13 @@
   "instances": 111151,
   "props": 789,
   "crowd": 11951,
-  "world": "816cd1c8",
+  "world": "da1d7461",
   "propsHash": "f0c50817",
   "floor": "e00238e1/41384",
   "groups": {
-   "-:MeshLambertMaterial": "4256ba46",
-   "-:MeshBasicMaterial": "8efe3be6",
-   "crowd:MeshLambertMaterial": "5a8cd91c"
+   "-:MeshLambertMaterial": "4859ac15",
+   "-:MeshBasicMaterial": "a6574a9",
+   "crowd:MeshLambertMaterial": "2104b0ef"
   }
  }
 }
