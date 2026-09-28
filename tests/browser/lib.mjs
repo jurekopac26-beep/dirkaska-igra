@@ -30,7 +30,7 @@ export function launch(extraArgs = []) {
 }
 
 // open the game; settings: an object (merged over sound/commentary off), a raw JSON string, or null (a fresh profile)
-export async function openGame(browser, address, settings = {}, viewport = { width: 480, height: 270 }) {
+export async function openGame(browser, address, settings = {}, viewport = { width: 480, height: 270 }, opts = {}) {
   const ctx = await browser.newContext({ viewport });
   const page = await ctx.newPage();
   const errors = [];
@@ -38,7 +38,10 @@ export async function openGame(browser, address, settings = {}, viewport = { wid
   page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
   page.on('requestfailed', r => errors.push('request failed: ' + r.url()));
   const raw = settings === null ? null : typeof settings === 'string' ? settings : JSON.stringify(Object.assign({ sound: 0, comm: 0 }, settings));
-  await page.addInitScript((raw) => { localStorage.setItem('tdgp-defaults-v2', '1'); if (raw !== null) localStorage.setItem('tdgp-settings', raw); }, raw);
+  // (tdgp-noadapt: software WebGL is slow, so without it the game would lower the resolution and switch shadows off by itself)
+  await page.addInitScript(([raw, adapt]) => { localStorage.setItem('tdgp-defaults-v2', '1'); if (!adapt) localStorage.setItem('tdgp-noadapt', '1'); if (raw !== null) localStorage.setItem('tdgp-settings', raw); }, [raw, !!opts.adaptive]);
+  // opts.seed: Math.random becomes a seeded generator (the same AI traffic every run, for measurements)
+  if (opts.seed) await page.addInitScript((seed) => { let s = seed; Math.random = () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; }, opts.seed);
   await page.goto(address);
   await page.waitForFunction(() => window.__game, null, { timeout: 180000 });
   return { ctx, page, errors };

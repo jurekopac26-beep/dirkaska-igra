@@ -88,7 +88,8 @@
   let fbT = 0, prevGear = 1, prevAir = 0;
   let tiltWarned = false;
   let orientBlock = false;
-  const perf = { sum: 0, n: 0, good: 0 };
+  const perf = { sum: 0, n: 0, good: 0, slow: 0 };
+  let noAdapt = false; try { noAdapt = localStorage.getItem('tdgp-noadapt') === '1'; } catch (_) { }   // automated tests: resolution and shadows stay as set
 
   /* ---------------- helpers ---------------- */
   const hexCss = (h) => '#' + h.toString(16).padStart(6, '0');
@@ -887,13 +888,20 @@
     }
   }
   function adaptive(dt) {
+    if (noAdapt) return;
     perf.sum += dt; perf.n++;
     if (perf.sum < 2) return;
     const avg = perf.sum / perf.n * 1000; perf.sum = 0; perf.n = 0;
     const k = Render.getDynScale();
-    if (avg > 21 && k > 0.6) { Render.setDynScale(k - 0.1); perf.good = 0; }
-    else if (avg < 15.5) { if (++perf.good >= 3 && k < 1) { Render.setDynScale(k + 0.05); perf.good = 0; } }
-    else perf.good = 0;
+    if (avg > 21 && k > 0.6) { Render.setDynScale(k - 0.1); perf.good = 0; perf.slow = 0; }
+    else if (avg < 15.5) { perf.slow = 0; if (++perf.good >= 3 && k < 1) { Render.setDynScale(k + 0.05); perf.good = 0; } }
+    else {
+      perf.good = 0;
+      // still under ~42 fps at the lowest resolution for 6 s: the shadow pass (about 40 % of the drawing) goes off, and stays off
+      // (saved; it can be switched back on in Nastavitve)
+      if (avg > 24 && k <= 0.6 && S.shadows) { if (++perf.slow >= 3) { perf.slow = 0; setOption('shadows', 0); toast('Sence so izklopljene, da igra teče tekoče. Vklopiš jih v Nastavitvah.', 3600); } }
+      else perf.slow = 0;
+    }
   }
   function updateTiltLive() {
     if (S.control !== 'tilt') return;

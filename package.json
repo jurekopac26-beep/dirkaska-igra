@@ -6,7 +6,7 @@
     "test": "node tests/run.js",
     "test:node": "node tests/run.js node",
     "test:browser": "node tests/run.js browser",
-    "golden:update": "node tests/golden.test.js --update && node tests/races.test.js --update && node tests/browser/world.test.mjs --update"
+    "golden:update": "node tests/golden.test.js --update && node tests/races.test.js --update && node tests/browser/world.test.mjs --update && node tests/browser/perf.test.mjs --update"
   },
   "devDependencies": {
     "playwright": "1.56.1"

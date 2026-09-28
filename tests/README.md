@@ -5,9 +5,9 @@ v brskalniku Playwright (`npm install` ga namesti, `npx playwright install chrom
 
 ```sh
 npm install          # enkrat
-npm test             # vse (~8 min)
+npm test             # vse (~12 min)
 npm run test:node    # samo fizika, AI in dirke (~1 min)
-npm run test:browser # samo testi v brskalniku (~7 min)
+npm run test:browser # samo testi v brskalniku (~11 min)
 ```
 
 ## Kaj preverjajo
@@ -17,9 +17,10 @@ npm run test:browser # samo testi v brskalniku (~7 min)
 | `golden.test.js` | Determinizem: 8 prog × 3 postavitve (dirka, demo na naslovnem zaslonu, izboljšan avto) × 2 fiziki, po 60 s. Celotno stanje vseh avtov se vsakih 10 s zapiše v prstni odtis in primerja z `golden/sim.json`. Zazna **vsako** spremembo fizike, AI ali pravil dirke. |
 | `races.test.js` | Cele dirke z AI na vseh progah z obema fizikama: vsi avti pridejo do cilja, brez vrtenja, malo stikov z ograjo, čas zmagovalca največ ±3 % od reference (`golden/races.json`). |
 | `cs-handling.test.js` | Značilnosti fizike Circuit Superstars (iz analize posnetka): oprijem v zavojih, kot drsenja, odziv, samodejna poravnava na izhodu, zaviranje v zavoju, pospešek 0–100, zavorna pot. |
-| `browser/smoke.test.mjs` | Stran se naloži (http in lokalna datoteka), 20 s vožnje na vsaki progi, nastavitve in prenos starih nastavitev, preklop fizike med dirko, demo na naslovnem zaslonu, rekord na Pikes Peaku, brez napak na strani. |
+| `browser/smoke.test.mjs` | Stran se naloži (http in lokalna datoteka), 20 s vožnje na vsaki progi, nastavitve in prenos starih nastavitev, preklop fizike med dirko, demo na naslovnem zaslonu, rekord na Pikes Peaku, samodejno prilagajanje na počasni napravi (nižja ločljivost, nato brez senc), brez napak na strani. |
 | `browser/world.test.mjs` | Prstni odtis zgrajenega 3D sveta vsake proge (vsi modeli, rekviziti, gledalci, tla) primerjan z `golden/world.json`. |
 | `browser/pits.test.mjs` | Cela dirka v Bakrenem gozdu s postankom v boksih: ustavitev, mehaniki, dvig na dvigalkah, popravilo, vsi avti v cilju. |
+| `browser/perf.test.mjs` | Proračun za telefon: na zaslonu velikosti telefona (844×390, normalna kakovost, sence) se na vsaki progi na šestih mestih prešteje delo grafike na sličico (risalni klici, točke) in čas JavaScripta. Test pade, če proga zahteva več kot 30 % nad referenco (`golden/perf.json`). |
 | `browser/memory.test.mjs` | Pomnilnik: trije krogi menjav vseh prog, ponovni start in brskanje po avtih v meniju; geometrija, teksture, programi senčilnikov in pomnilnik JavaScripta ne smejo rasti. |
 
 ## Referenčne vrednosti

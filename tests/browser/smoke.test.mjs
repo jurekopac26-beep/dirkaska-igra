@@ -79,6 +79,21 @@ try {
   }
   T.check('no page errors during the whole run', !errors.length, errors.slice(0, 5).join(' | '));
   await ctx.close();
+
+  // 7. a device too slow even at the lowest resolution: the game lowers the resolution, then switches the shadows off by itself
+  //    (software WebGL at 844x390 is slow enough; the page runs in real time here, no simulation)
+  {
+    const { ctx: c2, page: p2, errors: e2 } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase' }, { width: 844, height: 390 }, { adaptive: true });
+    await startTrack(p2, 'gozd');
+    const r = await p2.evaluate(async () => {
+      const g = window.__game; let t = 0;
+      while (t < 90 && g.S.shadows) { await new Promise(r => setTimeout(r, 1000)); t++; }
+      return { shadows: g.S.shadows, dyn: Render.getDynScale(), t, saved: JSON.parse(localStorage.getItem('tdgp-settings') || '{}').shadows, toast: (document.getElementById('toast') || {}).textContent || '' };
+    });
+    T.check('slow device: lower resolution first, then shadows off (and saved)', r.shadows === 0 && r.saved === 0 && r.dyn <= 0.6 && /Sence so izklopljene/.test(r.toast) && !e2.length,
+      `after ${r.t} s: resolution x${r.dyn.toFixed(2)}, shadows ${r.shadows}, saved ${r.saved}, message "${r.toast}"${e2.length ? ', errors: ' + e2.join(' | ') : ''}`);
+    await c2.close();
+  }
 } finally {
   await browser.close(); await srv.close();
 }
