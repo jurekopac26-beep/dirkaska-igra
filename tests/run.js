@@ -7,7 +7,7 @@ const { spawnSync } = require('child_process');
 const path = require('path');
 
 const SUITES = {
-  node: ['golden.test.js', 'races.test.js', 'cs-handling.test.js'],
+  node: ['stamp.test.js', 'golden.test.js', 'races.test.js', 'cs-handling.test.js'],
   browser: ['browser/smoke.test.mjs', 'browser/world.test.mjs', 'browser/pits.test.mjs'],
 };
 const which = process.argv[2];

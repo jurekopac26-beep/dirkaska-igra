@@ -11,7 +11,7 @@ const ROOT = process.env.GAME_ROOT ? path.resolve(process.env.GAME_ROOT) : path.
 // the <script src> files of a page, in order (vendor libraries skipped: Core needs none of them)
 function pageScripts(htmlFile) {
   const html = fs.readFileSync(htmlFile, 'utf8');
-  return [...html.matchAll(/<script\b[^>]*\bsrc="([^"]+)"/g)].map(m => m[1]).filter(s => !/(^|\/)vendor\//.test(s));
+  return [...html.matchAll(/<script\b[^>]*\bsrc="([^"?#]+)[^"]*"/g)].map(m => m[1]).filter(s => !/(^|\/)vendor\//.test(s));
 }
 
 // source text that defines `Core` (plus any data scripts it reads)
