@@ -2961,6 +2961,155 @@ const World = (function () {
   /* ---- real-course landmarks: the Halfway Picnic Grounds, the Glen Cove Inn, the Bottomless Pit overlook ----
      (K: the build's shared bits, see buildPikes; own random stream, so the rest of the scenery stays where it was) */
   function pkLandmarks(K) {
+    const R = rng(9101), { scen, excl, sStart } = K, gy = pkGround, tb = new GB(true), W1 = [1, 1, 1], PI = Math.PI;
+    const wood = [0.47, 0.32, 0.19], woodD = [0.31, 0.21, 0.13], stone = [0.55, 0.52, 0.48], stoneT = [0.6, 0.57, 0.52], gravC = [0.33, 0.3, 0.26];
+    const carC = [[0.86, 0.86, 0.87], [0.55, 0.13, 0.11], [0.17, 0.25, 0.43], [0.29, 0.31, 0.3], [0.7, 0.62, 0.45], [0.2, 0.37, 0.31]];
+    // local frame beyond the barrier at road s on 'side' (interpolated between the samples): at(u, v) -> [x, z], u along the road, v out from the barrier line;
+    // dir(a): unit direction a rad from the road's heading towards +v, rot(a): the box rotation that lines a box's length up with it, P(u, v, y): a 3D point
+    const fr = (s, side) => { const q = crAt(s), bar = side > 0 ? q.br : q.bl, tx = q.tx, tz = q.tz, ox = q.nx * side, oz = q.nz * side, x0 = q.px + ox * bar, z0 = q.pz + oz * bar;
+      const dir = (a) => [tx * Math.cos(a || 0) + ox * Math.sin(a || 0), tz * Math.cos(a || 0) + oz * Math.sin(a || 0)], at = (u, v) => [x0 + tx * u + ox * v, z0 + tz * u + oz * v];
+      return { at, dir, rot: (a) => { const d = dir(a); return Math.atan2(d[1], d[0]); }, P: (u, v, y) => { const p = at(u, v); return [p[0], y, p[1]]; } }; };
+    const lowest = (F, u, v, a, b) => { let m = 1e9; for (const [p, q] of [[-a, -b], [a, -b], [a, b], [-a, b], [0, 0]]) { const [x, z] = F.at(u + p, v + q); m = Math.min(m, gy(x, z)); } return m; };   // lowest ground under a footprint (half sizes a along u, b along v)
+    const clear = (F, u, v, a, b) => { for (const [p, q] of [[-a, -b], [a, -b], [a, b], [-a, b], [0, -b], [0, b], [-a, 0], [a, 0], [0, 0]]) { const [x, z] = F.at(u + p, v + q); if (pkNear(x, z).dd < 1.5 || K.excluded(x, z)) return false; } return true; };   // off the road and clear of the other scenery
+    const bx = (F, u, v, y, su, sy, sv, col, top, a) => { const [x, z] = F.at(u, v); box(scen.get(x, z), x, y, z, su, sy, sv, F.rot(a), col, top, true); };   // box in the frame (su along the direction a, bottom at y), in its own chunk
+    const quad = (a, b, c, d, col, inn) => scen.get(a[0], a[2]).quadO(a, b, c, d, col, inn);
+    const ex = (F, u, v, r) => { const [x, z] = F.at(u, v); excl.push({ x, z, r }); };   // trees and later crowds keep off
+    const guy = (F, u, v, a, y) => { const [x, z] = F.at(u, v), [fx, fz] = F.dir(a); crowdPut(K.CR, x, y == null ? gy(x, z) : y, z, fx, fz, { col: K.fans[Math.floor(R() * K.fans.length)] }, 1); };   // a visitor facing a
+    const car = (F, u, v, a) => { const [x, z] = F.at(u, v); K.carPk(x, z, F.rot(a), vary(carC[Math.floor(R() * carC.length)], R, 0.15)); };
+    const gravel = (side, s0, s1, v0, v1, col) => {   // gravel pull-out laid on the ground (2 m grid, 6 cm up); its outer ring takes the ground's own colour, so the edge fades out
+      const nu = Math.max(2, Math.round((s1 - s0) / 2)), nv = Math.max(2, Math.round((v1 - v0) / 2)), V = [];
+      for (let b = 0; b <= nv; b++) for (let a = 0; a <= nu; a++) { const [x, z] = fr(s0 + (s1 - s0) * a / nu, side).at(0, v0 + (v1 - v0) * b / nv), k = 0.93 + R() * 0.12, gc = pkGCol(x, z);
+        V.push([[x, gy(x, z) + 0.06, z], a && b && a < nu && b < nv ? [col[0] * k, col[1] * k, col[2] * k] : [gc[0] * pkGMean, gc[1] * pkGMean, gc[2] * pkGMean]]); }
+      for (let b = 0; b < nv; b++) for (let a = 0; a < nu; a++) { const p = V[b * (nu + 1) + a], q = V[b * (nu + 1) + a + 1], r = V[(b + 1) * (nu + 1) + a + 1], d = V[(b + 1) * (nu + 1) + a];
+        scen.get(p[0][0], p[0][2]).quadUp(p[0], q[0], r[0], d[0], [p[1], q[1], r[1], d[1]]); }
+    };
+    const tq = (cx, cy, cz, fx, fz, W, H, r, tilt, rb) => {   // text board (bottom centre cx, cy, cz) facing (fx, fz), its top leaning back by tilt; r: atlas rect [x0, y0, x1, y1] (px) of the front, rb: of the back (else the front again, readable from behind)
+      const ca = Math.cos(tilt || 0), sa = Math.sin(tilt || 0), ux = fz, uz = -fx, kx = -fx * H * sa, ky = H * ca, kz = -fz * H * sa;
+      for (const f of [1, -1]) { const q = f > 0 || !rb ? r : rb, u0 = q[0] / 1024, u1 = q[2] / 1024, v1 = 1 - q[1] / 1024, v0 = 1 - q[3] / 1024, hw = W / 2 * f, ox = fx * ca * 0.03 * f, oy = sa * 0.03 * f, oz = fz * ca * 0.03 * f;
+        const A = [cx + ox - ux * hw, cy + oy, cz + oz - uz * hw], B = [cx + ox + ux * hw, cy + oy, cz + oz + uz * hw], C = [B[0] + kx, B[1] + ky, B[2] + kz], D = [A[0] + kx, A[1] + ky, A[2] + kz];
+        tb.quadO(A, B, C, D, W1, [cx + kx / 2 - fx * ca * f, cy + ky / 2 - sa * f, cz + kz / 2 - fz * ca * f], [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]); }
+    };
+    const sign = (F, u, v, a, W, H, r) => {   // brown sign facing a (rad from the road's heading; pi + ~0.35: the arriving cars, turned a little towards the road), leaning back so the high cameras read it; a short post under its bottom edge and a tall one behind its top edge at each end
+      const [x, z] = F.at(u, v), [fx, fz] = F.dir(a), y = lowest(F, u, v, W / 2, 0.6), g = scen.get(x, z), tl = 0.6, h0 = 0.75, lx = H * Math.sin(tl) + 0.08, pc = [0.3, 0.2, 0.12];
+      for (const o of [-W * 0.38, W * 0.38]) { const px = x + fz * o, pz = z - fx * o; box(g, px - fx * 0.08, y - 0.3, pz - fz * 0.08, 0.14, h0 + 0.3, 0.14, Math.atan2(fz, fx), pc, null, true); box(g, px - fx * lx, y - 0.3, pz - fz * lx, 0.14, h0 + H * Math.cos(tl) + 0.36, 0.14, Math.atan2(fz, fx), pc, null, true); }
+      tq(x, y + h0, z, fx, fz, W, H, r, tl); ex(F, u, v, W / 2 + 1.5);
+    };
+    const table = (F, u, v, a, y) => {   // wooden picnic table: top, two benches, two legs and a bench bearer at each end (2 m long; a: its heading from the road's)
+      y = y == null ? lowest(F, u, v, 1, 0.8) - 0.04 : y; const ca = Math.cos(a), sa = Math.sin(a), P = (p, q) => [u + p * ca - q * sa, v + p * sa + q * ca], c = vary(wood, R, 0.12);   // p along the table, q across
+      bx(F, u, v, y + 0.7, 2.0, 0.07, 0.78, c, [c[0] * 1.15, c[1] * 1.15, c[2] * 1.12], a);
+      for (const q of [-0.66, 0.66]) { const [pu, pv] = P(0, q); bx(F, pu, pv, y + 0.42, 2.0, 0.05, 0.3, c, null, a); }
+      for (const p of [-0.72, 0.72]) { let [pu, pv] = P(p, 0); bx(F, pu, pv, y + 0.34, 0.08, 0.07, 1.62, woodD, null, a); for (const q of [-0.36, 0.36]) { [pu, pv] = P(p, q); bx(F, pu, pv, y, 0.08, 0.72, 0.09, woodD, null, a); } }
+    };
+    const pine = (F, u, v, h) => { const [x, z] = F.at(u, v); pkPine(scen.get(x, z), x, gy(x, z), z, h, vary([0.1, 0.22, 0.12], R, 0.14), R); };
+
+    /* Halfway Picnic Grounds (in the pines, on the flatter side): the entry sign, a gravel pull-out with parked cars, picnic tables and grills, an open shelter */
+    {
+      const s0 = sStart + 1000, fl = (sd) => { const p = K.onSide(s0, sd, 14); return Math.abs(gy(p[0], p[1]) - T.hy[p[2]]); }, side = fl(1) <= fl(-1) ? 1 : -1, at = (d) => fr(s0 + d, side);
+      sign(at(-30), 0, 3.1, PI + 0.35, 4.4, 1.1, [0, 0, 1024, 256]);
+      gravel(side, s0 - 26, s0 - 4, 1.6, 8.4, gravC);
+      for (const d of [-20.5, -17.3, -12.8]) { const F = at(d); if (clear(F, 0, 4.4, 1.1, 2.3)) car(F, 0, 4.4, PI / 2 + (R() - 0.5) * 0.12); }
+      for (const [d, v, a] of [[2.5, 3.6, 0.25], [7.5, 6.9, -0.2], [0.4, 9.6, 0.1], [12.2, 3.3, -0.35], [-6, 12.2, 0.45]]) { const F = at(d); if (clear(F, 0, v, 1.3, 1.3)) table(F, 0, v, a); }
+      for (const [d, v] of [[5.2, 2.3], [-2.6, 6.8]]) { const F = at(d), [x, z] = F.at(0, v), y = gy(x, z), g = scen.get(x, z); box(g, x, y - 0.1, z, 0.1, 0.92, 0.1, F.rot(), [0.2, 0.2, 0.21]); box(g, x, y + 0.8, z, 0.62, 0.16, 0.44, F.rot(0.4), [0.12, 0.12, 0.13]); }   // pedestal grills
+      { const F = at(-8); bx(F, 0, 2.3, gy(...F.at(0, 2.3)) - 0.1, 0.85, 1.15, 0.7, [0.24, 0.31, 0.25], [0.3, 0.37, 0.31]); }   // bear-proof bin
+      { const F = at(19), vs = 6.4;   // open shelter: concrete slab, six posts, eave beams, a shingle gable roof over two tables
+        if (clear(F, 0, vs, 4.2, 2.9)) { const y = lowest(F, 0, vs, 3.7, 2.4), L = 7, D = 4.4, H = 2.45, [x, z] = F.at(0, vs);
+          bx(F, 0, vs, y - 0.2, L + 0.5, 0.36, D + 0.5, [0.6, 0.59, 0.56]);
+          for (const p of [-L / 2, 0, L / 2]) for (const q of [-D / 2, D / 2]) bx(F, p, vs + q, y + 0.1, 0.2, H, 0.2, wood);
+          for (const q of [-D / 2, D / 2]) bx(F, 0, vs + q, y + H, L + 0.5, 0.24, 0.26, woodD);
+          gable(scen.get(x, z), x, y + H + 0.22, z, L + 1.1, D + 1.4, 1.5, F.rot(), [0.27, 0.2, 0.15], wood);
+          table(F, -1.7, vs, PI / 2, y + 0.16); table(F, 1.7, vs, PI / 2, y + 0.16); ex(F, 0, vs, 6.5); } }
+      for (const [d, v, h] of [[-9, 15.5, 11], [5.5, 14, 12.5], [11.5, 13.5, 10], [28.5, 12, 11.5], [-25, 13, 9.5], [-14, 12.2, 8]]) pine(at(d), 0, v, h);
+      guy(at(3.4), 0, 5.0, -PI / 2 + 0.4); guy(at(1.6), 0, 2.2, PI / 2); guy(at(-15.1), 0, 2.4, PI / 2 + 0.6); guy(at(17.6), 0, 5.1, 0.3); guy(at(20.5), 0, 7.4, PI + 0.2); guy(at(8.8), 0, 5.3, PI);
+      ex(at(0), 0, 7, 18); ex(at(-14), 0, 5, 13);
+    }
+
+    /* Glen Cove Inn, on the outside of the hairpin just below the treeline (the mountain rises behind it, the car braking for the hairpin looks straight at it):
+       a log lodge on a stone base, a green metal roof, a covered porch facing the road, a stone chimney, its sign; the gravel car park along the exit */
+    const hp = T.corners.find(c => c.sev >= 3 && Math.abs((c.i0 + c.i1) / 2 * T.ds - sStart - 2681) < 40);
+    if (hp) {
+      const sm = (hp.i0 + hp.i1) / 2 * T.ds, side = -hp.dir, F = fr(sm, side), P = F.P, at = (d) => fr(sm + d, side), L = 13, D = 8, vF = 4.9, vc = vF + D / 2, [cx, cz] = F.at(0, vc);
+      if (clear(F, 0, 7.7, L / 2 + 1.2, 5.6)) {
+        const yf = Math.max(...[[-L / 2, vF - 2.8], [L / 2, vF - 2.8], [-L / 2, vF], [L / 2, vF]].map(([u, v]) => gy(...F.at(u, v)))) + 0.45, yb = lowest(F, 0, vc - 1.4, L / 2 + 1, D / 2 + 1.4) - 0.3;
+        const logA = [0.5, 0.33, 0.19], logB = [0.43, 0.28, 0.16], y0 = yf + 3.42, h = 2.7, ov = 0.75, rfA = [0.2, 0.38, 0.28], rfB = [0.17, 0.33, 0.24], stC = [0.52, 0.5, 0.47], trim = [0.84, 0.79, 0.66], glass = [0.16, 0.2, 0.25];
+        bx(F, 0, vc, yb, L + 0.5, yf - yb + 0.08, D + 0.5, stone, stoneT);   // stone base (dug into the slope at the back)
+        bx(F, 0, vc, yf, L - 0.1, 3.2, D - 0.1, [0.74, 0.68, 0.56]);   // chinking between the logs
+        for (let k = 0; k < 8; k++) { const y = yf + 0.06 + k * 0.4, c = k % 2 ? logA : logB;   // log walls: the side walls' logs half a log lower, all crossing at the corners
+          for (const q of [-1, 1]) { bx(F, 0, vc + q * D / 2, y, L + 0.8, 0.34, 0.3, c); bx(F, q * L / 2, vc, y - 0.2, 0.3, 0.34, D + 0.8, vary(c, R, 0.06)); } }
+        // green metal roof: sheets in two shades (the seams), closed gable ends
+        const n = Math.round((L + 2 * ov) / 0.75), kk = h / (D / 2), ye = y0 - ov * kk, inn = P(0, vc, y0);
+        for (let q = 0; q < n; q++) { const a = -L / 2 - ov + (L + 2 * ov) * q / n, b = -L / 2 - ov + (L + 2 * ov) * (q + 1) / n, c = q % 2 ? rfA : rfB;
+          for (const sg of [-1, 1]) quad(P(a, vc + sg * (D / 2 + ov), ye), P(b, vc + sg * (D / 2 + ov), ye), P(b, vc, y0 + h), P(a, vc, y0 + h), c, inn); }
+        for (const sg of [-1, 1]) scen.get(cx, cz).triO(P(sg * L / 2, vc - D / 2, y0 - 0.25), P(sg * L / 2, vc + D / 2, y0 - 0.25), P(sg * L / 2, vc, y0 + h - 0.06), logB, inn);
+        // porch: stone-sided deck, posts, a railing, a lean-to roof under the eaves
+        bx(F, 0, vF - 1.4, yb, L - 0.4, yf - yb, 2.8, stone, [0.52, 0.38, 0.24]);
+        for (let k = 0; k < 5; k++) bx(F, -L / 2 + 0.5 + k * (L - 1) / 4, vF - 2.6, yf, 0.22, 2.3, 0.22, wood);
+        for (const k of [0, 3]) bx(F, -L / 2 + 0.5 + (k + 0.5) * (L - 1) / 4, vF - 2.6, yf + 0.86, (L - 1) / 4, 0.09, 0.09, woodD);
+        quad(P(-L / 2 - 0.1, vF - 2.95, yf + 2.3), P(L / 2 + 0.1, vF - 2.95, yf + 2.3), P(L / 2 + 0.1, vF, yf + 2.95), P(-L / 2 - 0.1, vF, yf + 2.95), rfA, P(0, vF - 1.4, yf));
+        bx(F, 0, vF - 2.6, yf + 2.08, L - 0.5, 0.22, 0.2, woodD);
+        // windows and the door on the front, a window in the far gable
+        for (const u of [-4.7, -2.3, 2.3, 4.7]) { bx(F, u, vF - 0.17, yf + 0.75, 1.4, 1.25, 0.08, trim); bx(F, u, vF - 0.21, yf + 0.87, 1.1, 1.0, 0.06, glass); }
+        bx(F, 0, vF - 0.17, yf, 1.4, 2.25, 0.08, trim); bx(F, 0, vF - 0.21, yf, 1.05, 2.05, 0.06, [0.36, 0.2, 0.12]);
+        bx(F, -L / 2 - 0.17, vc, yf + 0.9, 0.08, 1.2, 1.3, trim); bx(F, -L / 2 - 0.21, vc, yf + 1.0, 0.06, 1.0, 1.05, glass);
+        // stone chimney at the near gable end, up through the eaves
+        bx(F, L / 2 + 0.6, vc, yb, 1.1, yf + 2.4 - yb, 2.0, stC, stC); bx(F, L / 2 + 0.52, vc, yf + 2.4, 0.84, y0 + h + 0.9 - yf - 2.4, 1.2, stC); bx(F, L / 2 + 0.52, vc, y0 + h + 0.9, 1.0, 0.14, 1.36, [0.3, 0.29, 0.28]);
+        K.CR.block(cx, cz, L + 1.2, D + 0.8, F.rot());   // (no spectator inside)
+        guy(F, -3.4, vF - 1.3, -PI / 2 + 0.3, yf); guy(F, 3.1, vF - 1.6, -PI / 2 - 0.5, yf); guy(F, 1.2, vF - 2.3, -PI / 2 + 0.2, yf);
+        if (clear(F, -9.6, 2.2, 2.6, 0.5)) sign(F, -9.6, 2.2, -PI / 2 - 0.3, 4.4, 1.1, [0, 256, 1024, 512]);   // facing the cars braking for the hairpin
+        ex(F, 0, vc - 1.2, 12);
+      }
+      // the car park along the exit, where the mountain is still flat enough
+      gravel(side, sm + 29, sm + 63, 2.5, 8.8, gravC);
+      for (const d of [34, 37.2, 40.4, 46.6, 49.8, 56]) { const Fc = at(d); if (clear(Fc, 0, 4.9, 1.1, 2.3)) car(Fc, 0, 4.9, PI / 2 + (R() - 0.5) * 0.12); }
+      guy(at(43.6), 0, 3.0, -0.4); guy(at(44.2), 0, 4.2, -0.6); guy(at(31), 0, 5.5, PI - 0.3);
+      ex(at(38), 0, 5, 9.5); ex(at(54), 0, 5, 9.5);
+    }
+
+    /* the Bottomless Pit overlook on the ridge, on the side where the ground falls away: a gravel pull-out, a low dry-stone wall along its edge,
+       a coin telescope, an interpretive board, visitors looking out over the drop */
+    {
+      const s0 = sStart + 4462, lo = (sd) => { const p = K.onSide(sStart + 4466, sd, 20); return gy(p[0], p[1]) - T.hy[p[2]]; }, side = lo(1) <= lo(-1) ? 1 : -1, at = (d) => fr(s0 + d, side), wc = [0.56, 0.5, 0.46];
+      gravel(side, s0 - 17, s0 + 15, 1.6, 6.8, [0.5, 0.45, 0.4]);
+      for (let d = -15; d < 13;) { const l = 0.85 + R() * 0.5, F = at(d + l / 2), y = lowest(F, 0, 7.0, l / 2, 0.32);   // the wall: big blocks, then a course of smaller ones on top
+        bx(F, 0, 7.0, y - 0.3, l, 0.72 + R() * 0.08, 0.66, vary(wc, R, 0.2), null, (R() - 0.5) * 0.08); d += l + 0.03; }
+      for (let d = -14.7; d < 12.6;) { const l = 0.5 + R() * 0.45, F = at(d + l / 2), y = lowest(F, 0, 7.0, l / 2, 0.25);
+        bx(F, 0, 7.0 + (R() - 0.5) * 0.08, y + 0.4, l, 0.24 + R() * 0.1, 0.5, vary(wc, R, 0.22), null, (R() - 0.5) * 0.2); d += l + 0.06 + R() * 0.1; }
+      { const F = at(2.5), [x, z] = F.at(0, 5.9), y = gy(x, z), r = F.rot(PI / 2), [fx, fz] = F.dir(PI / 2), g = scen.get(x, z);   // coin telescope on a post, looking out
+        box(g, x, y - 0.2, z, 0.7, 0.32, 0.7, r, [0.6, 0.6, 0.58]); cyl(g, x, y + 0.1, z, 0.07, 1.0, 6, [0.22, 0.3, 0.28]);
+        box(g, x, y + 1.06, z, 0.6, 0.34, 0.38, r, [0.16, 0.5, 0.42], [0.2, 0.56, 0.47], false); box(g, x - fx * 0.34, y + 1.12, z - fz * 0.34, 0.1, 0.22, 0.42, r, [0.08, 0.08, 0.09]);
+        box(g, x + fx * 0.33, y + 1.1, z + fz * 0.33, 0.08, 0.26, 0.34, r, [0.1, 0.12, 0.14]); }
+      { const F = at(-3.5), [x, z] = F.at(0, 5.2), y = gy(x, z), [fx, fz] = F.dir(-PI / 2), g = scen.get(x, z);   // interpretive board on a stone plinth, a lectern read from the pull-out
+        box(g, x - fx * 0.45, y - 0.3, z - fz * 0.45, 0.9, 0.7, 2.7, F.rot(PI / 2), stone, stoneT);
+        for (const o of [-0.8, 0.8]) box(g, x + fz * o - fx * 0.45, y + 0.3, z - fx * o - fz * 0.45, 0.12, 0.84, 0.12, 0, woodD);
+        tq(x, y + 0.8, z, fx, fz, 2.4, 1.2, [0, 512, 512, 768], 0.85, [512, 512, 1024, 640]); }
+      for (const d of [-12.5, -7]) { const F = at(d); if (clear(F, 0, 3.7, 2.3, 1.1)) car(F, 0, 3.7, (R() - 0.5) * 0.06); }   // parked along the wall
+      guy(at(5), 0, 6.1, PI / 2); guy(at(6.3), 0, 6.0, PI / 2 + 0.35); guy(at(9.4), 0, 6.1, PI / 2 - 0.2); guy(at(2.5), 0, 5.2, PI / 2); guy(at(-3.3), 0, 4.4, PI / 2);
+      sign(fr(s0 - 40, -side), 0, 3.1, PI + 0.35, 4.4, 1.1, [512, 640, 1024, 768]);   // its name on the near side, where the chase camera still sees it
+      ex(at(0), 0, 4, 17);
+    }
+
+    /* a small brown sign at the Devil's Playground (on the side where it stands closer to the road) */
+    { const s0 = sStart + 4044, i = T.idx(s0), side = T.bl[i] <= T.br[i] ? -1 : 1; sign(fr(s0, side), 0, 3.1, PI + 0.35, 4.4, 1.1, [0, 768, 1024, 1024]); }
+
+    /* the text boards: one canvas atlas (4 rows of 1024 x 256), one mesh */
+    const cv = document.createElement('canvas'); cv.width = cv.height = 1024; const c2 = cv.getContext('2d'), cream = '#efe3c6';
+    const txt = (s, x, y, px, col, w) => { c2.fillStyle = col; c2.font = '700 ' + px + 'px Georgia, "Times New Roman", serif'; c2.textAlign = 'center'; c2.textBaseline = 'middle'; c2.fillText(s, x, y, w); };
+    const plank = (x0, y0, w, h, col) => { c2.fillStyle = col; c2.fillRect(x0, y0, w, h); c2.strokeStyle = 'rgba(0,0,0,0.13)'; c2.lineWidth = 3;   // wood with a little grain
+      for (let k = 0; k < 14; k++) { const y = y0 + R() * h; c2.beginPath(); c2.moveTo(x0, y); c2.bezierCurveTo(x0 + w * 0.3, y + (R() - 0.5) * 12, x0 + w * 0.7, y + (R() - 0.5) * 12, x0 + w, y + (R() - 0.5) * 8); c2.stroke(); } };
+    const board = (y0) => { plank(0, y0, 1024, 256, '#5b3b21'); c2.strokeStyle = cream; c2.lineWidth = 10; c2.strokeRect(16, y0 + 16, 992, 224); };
+    const ft = (m) => String(Math.round(m * 3.28084)).replace(/\B(?=(\d{3})+(?!\d))/g, ','), alt = (d) => Math.round(T.altAt ? T.altAt(T.hy[T.idx(sStart + d)]) : 0);
+    board(0); c2.fillStyle = cream;   // HALFWAY PICNIC GROUNDS, with a picnic table pictogram
+    c2.fillRect(62, 96, 150, 16); c2.fillRect(48, 140, 178, 12); for (const [a, b] of [[88, 150], [186, 124]]) { c2.beginPath(); c2.moveTo(a, 110); c2.lineTo(a + 12, 110); c2.lineTo(b + 12, 196); c2.lineTo(b, 196); c2.fill(); }
+    txt('HALFWAY', 612, 96, 118, cream, 740); txt('PICNIC GROUNDS', 612, 186, 70, cream, 740);
+    board(256); txt('GLEN COVE', 512, 256 + 104, 130, cream, 930); txt('INN  ·  GIFTS  ·  SNACKS', 512, 256 + 196, 50, cream, 860);
+    plank(0, 512, 512, 256, '#3c2a1a'); c2.fillStyle = '#e8dcc0'; c2.fillRect(18, 530, 476, 220); c2.fillStyle = '#2f4a3a'; c2.fillRect(18, 530, 476, 60); txt('BOTTOMLESS PIT', 256, 562, 42, cream, 440);   // interpretive board
+    c2.fillStyle = '#9cc2dc'; c2.fillRect(34, 604, 200, 130); c2.fillStyle = '#8a6a55'; c2.beginPath(); c2.moveTo(34, 734); c2.lineTo(34, 640); c2.lineTo(92, 626); c2.lineTo(118, 648); c2.lineTo(130, 724); c2.lineTo(150, 728); c2.lineTo(168, 650); c2.lineTo(234, 612); c2.lineTo(234, 734); c2.fill();
+    c2.fillStyle = '#5d5048'; for (let k = 0; k < 6; k++) c2.fillRect(252, 612 + k * 18, k === 5 ? 120 : 220 - (k % 2) * 30, 8);
+    txt(alt(4466) + ' m', 360, 730, 30, '#2f4a3a', 220);
+    plank(512, 512, 512, 128, '#4a3220');   // the back of the interpretive board
+    plank(512, 640, 512, 128, '#5b3b21'); c2.strokeStyle = cream; c2.lineWidth = 6; c2.strokeRect(520, 648, 496, 112); txt('BOTTOMLESS PIT', 768, 690, 58, cream, 470); txt('OVERLOOK  ·  ' + alt(4466) + ' m', 768, 738, 28, cream, 440);
+    board(768); txt("DEVIL'S PLAYGROUND", 512, 768 + 100, 92, cream, 950); txt('ELEV. ' + ft(alt(4050)) + ' FT  ·  ' + alt(4050) + ' m', 512, 768 + 194, 48, cream, 860);
+    const tx = new THREE.CanvasTexture(cv); tx.anisotropy = 4; K.out.ownTex.push(tx);
+    if (!tb.empty) { const m = new THREE.Mesh(tb.geometry(), new THREE.MeshLambertMaterial({ map: tx })); m.receiveShadow = true; m.matrixAutoUpdate = false; K.root.add(m); }
   }
 
   /* ---- the cog railway at the summit: the station beside the summit house, a train at the platform, the track down the east face ----
