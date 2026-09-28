@@ -2,8 +2,8 @@
 // and the GitHub Pages cache never mix old and new files after an update.
 //   node tools/stamp.js           update index.html (run after changing any js/ or css/ file)
 //   node tools/stamp.js --check   only check: exit 1 if a link points to a missing file or has an old (or no) stamp
-// Every <script src> and <link href> to a local file counts, whatever the quotes or other query parameters; the hash
-// ignores line endings (CRLF or LF), so a copy checked out on Windows gets the same stamps.
+// Every <script src> and <link href> to a local file counts (except the app manifest), whatever the quotes or other query
+// parameters; the hash ignores line endings (CRLF or LF), so a copy checked out on Windows gets the same stamps.
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -26,6 +26,7 @@ const inComment = (i) => comments.some(([a, b]) => i >= a && i < b);
 
 const out = html.replace(/<(script|link)\b[^>]*>/gi, (tag, name, at) => {
   if (inComment(at)) return tag;
+  if (/\brel\s*=\s*["']?manifest\b/i.test(tag)) return tag;   // (the app's manifest keeps its plain address: the installed app knows it by it)
   const attr = name.toLowerCase() === 'script' ? 'src' : 'href';
   return tag.replace(new RegExp(`(\\b${attr}\\s*=\\s*)("([^"]*)"|'([^']*)'|([^\\s"'>]+))`, 'i'), (all, pre, quoted, dq, sq, bare) => {
     const url = dq != null ? dq : sq != null ? sq : bare, q = dq != null ? '"' : sq != null ? "'" : '';

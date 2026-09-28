@@ -113,8 +113,15 @@
 
   /* ---------------- orientation: iso camera = landscape, chase camera = portrait ---------------- */
   const wantPortrait = () => S.camera === 'chase';
+  // started from the home screen as an installed app (manifest.webmanifest), not in a browser tab
+  const installedApp = () => matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone === true;
+  // turn the screen the camera's way and keep it there. Browsers allow it only in full screen or in the installed app
+  // (Chrome on Android); elsewhere (Safari on the iPhone) the "turn your phone" notice of updateOrientation() takes over.
+  // (window.screen, the device's screen: in this file `screen` is the menu screen on show)
   function lockOrientation() {
-    try { if (screen.orientation && screen.orientation.lock && (document.fullscreenElement || document.webkitFullscreenElement)) screen.orientation.lock(wantPortrait() ? 'portrait' : 'landscape').catch(() => { }); } catch (_) { }
+    const o = window.screen && window.screen.orientation;
+    if (!o || !o.lock || !(isFs() || installedApp())) return;
+    try { o.lock(wantPortrait() ? 'portrait' : 'landscape').catch(() => { }); } catch (_) { }
   }
   function updateOrientation() {
     const coarse = matchMedia('(pointer: coarse)').matches;
@@ -949,6 +956,7 @@
       case 'calibrate': Input.calibrate(); toast('Sredina nagiba je nastavljena.'); break;
       case 'tilt-invert': S.tiltInvert = S.tiltInvert ? 0 : 1; save(); applySettings(); break;
       case 'fullscreen': goFullscreen(); break;
+      case 'install': installApp(); break;
     }
   }
   const isFs = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
@@ -960,14 +968,32 @@
     if (isFs()) { const ex = document.exitFullscreen || document.webkitExitFullscreen; try { if (ex) ex.call(document); } catch (_) { } return; }
     const d = document.documentElement;
     const req = d.requestFullscreen || d.webkitRequestFullscreen;
-    const na = 'Celoten zaslon tukaj ni na voljo. Odpri igro v Chromu ali jo dodaj na začetni zaslon.';
-    if (!req || !(document.fullscreenEnabled || document.webkitFullscreenEnabled)) { toast(na, 3600); return; }
+    const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const na = ios ? 'Na iPhonu: Deli → Dodaj na začetni zaslon. Igra se nato z ikone odpre čez cel zaslon.' : 'Celoten zaslon tukaj ni na voljo. Odpri igro v Chromu ali jo dodaj na začetni zaslon.';
+    if (!req || !(document.fullscreenEnabled || document.webkitFullscreenEnabled)) { toast(na, 4200); return; }
     try {
-      const p = req.call(d, { navigationUI: 'hide' });
-      const lock = () => { try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock(wantPortrait() ? 'portrait' : 'landscape').catch(() => { }); } catch (_) { } };
-      if (p && p.then) p.then(lock).catch(() => toast(na, 3600)); else lock();
-    } catch (_) { toast(na, 3600); }
+      const p = req.call(d, { navigationUI: 'hide' });   // (the screen then turns the camera's way: onFsChange)
+      if (p && p.catch) p.catch(() => toast(na, 4200));
+    } catch (_) { toast(na, 4200); }
   }
+  function onFsChange() { updateFsButtons(); lockOrientation(); }
+
+  /* ---------------- the game as an app (manifest.webmanifest, sw.js) ---------------- */
+  // Chrome offers to install the game with the beforeinstallprompt event: only then the title screen shows "Namesti igro".
+  // In the installed app the full-screen buttons go (it runs full screen already).
+  let installEvt = null;
+  function updateAppButtons() {
+    const app = installedApp();
+    document.querySelectorAll('[data-act="install"]').forEach(b => b.classList.toggle('off', !installEvt || app));
+    document.querySelectorAll('[data-act="fullscreen"]').forEach(b => b.classList.toggle('off', app));
+  }
+  function installApp() {
+    const e = installEvt; if (!e) return;
+    installEvt = null; updateAppButtons();   // (one offer is one prompt; Chrome offers again later if the player says no)
+    try { const p = e.prompt(); if (p && p.catch) p.catch(() => { }); } catch (_) { }
+  }
+  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; updateAppButtons(); });
+  window.addEventListener('appinstalled', () => { installEvt = null; updateAppButtons(); toast('Igra je nameščena: odpreš jo z ikono APEX Racing na začetnem zaslonu.', 4200); });
   function bindUI() {
     document.addEventListener('click', (e) => {
       const b = e.target.closest('[data-act]');
@@ -1004,9 +1030,9 @@
       updateOrientation();
     });
     window.addEventListener('orientationchange', () => setTimeout(() => { Render.resize(); mm.w = 0; buildMinimap(); sp.w = 0; Input.layout(); updateOrientation(); }, 250));
-    document.addEventListener('fullscreenchange', updateFsButtons);
-    document.addEventListener('webkitfullscreenchange', updateFsButtons);
-    updateFsButtons();
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    updateFsButtons(); updateAppButtons();
   }
 
   /* ---------------- boot ---------------- */
@@ -1028,6 +1054,9 @@
       $('loading').classList.add('off');
       last = performance.now();
       requestAnimationFrame(frame);
+      lockOrientation();   // (the installed app: straight away; in a browser tab only once full screen is on)
+      // offline play and the newest version when online (sw.js); a service worker needs http(s), not a local file
+      if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => { });
       window.__game = { comm: Comm, get race() { return race; }, get phase() { return phase; }, get screen() { return screen; }, S, onAction, pause, resume,
         get adapt() { return { dyn: Render.getDynScale(), shadowsOn: shadowsOn(), auto: autoNoShadows, pending: perf.pending, restore: perf.restore, keep: perf.keep, check: perf.check }; },
         sim(sec, auto, steer) { const inp = { steer: steer || 0, thr: 1, brk: 0, hand: 0, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; } if (phase !== 'done') updatePhase(STEP, inp); stepRace(STEP, inp); } } };

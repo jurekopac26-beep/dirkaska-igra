@@ -276,7 +276,7 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 .btn.upg-open { align-self: flex-start; margin: 0 0 4px; }
 
 /* short landscape phones: title buttons two per row so the hint still fits (Dirkaj and Celoten zaslon span both); track cards without the long description */
-@media (orientation: landscape) and (max-height: 500px) { .title-panel .btns { display: grid; grid-template-columns: 1fr 1fr; } .title-panel .btn.primary, .title-panel .btn.fsbtn { grid-column: 1 / -1; } .track-card .tdesc { display: none; } }
+@media (orientation: landscape) and (max-height: 500px) { .title-panel .btns { display: grid; grid-template-columns: 1fr 1fr; } .title-panel .btn.primary, .title-panel .btn.fsbtn, .title-panel .btn.appbtn { grid-column: 1 / -1; } .track-card .tdesc { display: none; } }
 
 /* ================= LEADERBOARD (Lestvica) + time-trial results ================= */
 #s-board { justify-content: center; }
