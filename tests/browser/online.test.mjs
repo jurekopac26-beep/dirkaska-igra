@@ -16,17 +16,18 @@ const { PeerServer } = require('peer');
 const T = checker('online (two players)');
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
 const port = await new Promise((resolve) => { const s = net.createServer(); s.listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => resolve(p)); }); });
-const peerServer = PeerServer({ port, host: '127.0.0.1', path: '/' });
-await wait(300);
+const peerHttp = await new Promise((resolve) => PeerServer({ port, host: '127.0.0.1', path: '/' }, resolve));   // (the callback gets its http server)
 const srv = await serve();
 const browser = await launch(['--disable-features=WebRtcHideLocalIpsWithMdns']);   // (local addresses as they are: both pages are on this machine)
-const init = { content: `window.__peerOpts = ${JSON.stringify({ host: '127.0.0.1', port, path: '/', secure: false })};` };
+// no STUN/TURN servers: both pages are on this machine, the test needs nothing from the internet
+const init = { content: `window.__peerOpts = ${JSON.stringify({ host: '127.0.0.1', port, path: '/', secure: false, config: { iceServers: [] } })};` };
 const settings = { quality: 'normal', shadows: 0, camera: 'chase', zoom: 1.2, carV: 2 };   // (carV: the car as set here, not the new players' default)
 const open = (name, car, color) => openGame(browser, srv.base + '/index.html', Object.assign({ name, car, color }, settings), { width: 360, height: 300 }, { init });
 const netOf = (p) => p.evaluate(() => window.__game.net);
 const until = (p, fn, arg, ms = 60000) => p.waitForFunction(fn, arg, { timeout: ms, polling: 200 }).then(h => h.jsonValue());
+let A, B;
 try {
-  const A = await open('Ana', 0, 0), B = await open('Bor', 2, 2);
+  A = await open('Ana', 0, 0); B = await open('Bor', 2, 2);
 
   // 1. a wrong code: a clear message, back to the choice
   await B.page.evaluate(() => { window.__game.onAction('to-online'); document.getElementById('on-code').value = 'ZZZZ'; window.__game.onAction('net-join'); });
@@ -57,6 +58,8 @@ try {
   await A.page.evaluate(() => window.__game.onAction('net-go'));
   const goA = await until(A.page, () => { const n = window.__game.net; return n && n.race ? n.race.goAt : null; }), goB = await until(B.page, () => { const n = window.__game.net; return n && n.race ? n.race.goAt : null; });
   T.check('race: both phones plan the same start moment', goA === goB, `host ${goA}, friend ${goB}`);
+  const row = await A.page.evaluate(() => { const r = window.__game.race; return { d: [r.player.dist, r.remote.dist], side: Math.sign((r.remote.x - r.player.x) * Math.sin(r.player.h) - (r.remote.z - r.player.z) * Math.cos(r.player.h)) }; });
+  T.check('race: the two side by side on the front row (the same distance to the line)', Math.abs(row.d[0] - row.d[1]) < 0.05 && row.d[0] < 0 && row.side !== 0, JSON.stringify(row));
   const started = (p) => until(p, () => { const n = window.__game.net; return n && n.race && n.race.startT != null ? n.race.startT : null; }, null, 60000);   // (the moment the lights went out there)
   const [sA, sB] = await Promise.all([started(A.page), started(B.page)]);
   T.check('race: both start on time (in the first frame after the planned moment)', sA - goA < 400 && sB - goB < 400 && sA >= goA && sB >= goB, `host +${(sA - goA).toFixed(0)} ms, friend +${(sB - goB).toFixed(0)} ms`);
@@ -100,17 +103,22 @@ try {
   T.check('back to the room: the host can start only once the friend is back; the car that left is off the track', hideB.title === qB.title && waitA.go && /vrne v sobo/.test(waitA.status) && /v sobi/.test(inA),
     `friend's results: ${hideB.title}, host's car off the track | host waiting: "${waitA.status}", start disabled ${waitA.go} | then: "${inA}"`);
 
-  // 6. a second race; the friend leaves in the middle of it
+  // 6. a second race (the friend on the left of the front row this time); the friend leaves in the middle of it
   await A.page.evaluate(() => window.__game.onAction('net-go'));
   await until(B.page, () => { const g = window.__game; return !!(g.race && g.race.state === 'racing'); }, null, 60000);
+  const gA = await A.page.evaluate(() => [window.__game.race.player.grid, window.__game.race.remote.grid]), gB = await B.page.evaluate(() => [window.__game.race.player.grid, window.__game.race.remote.grid]);
+  T.check('second race: the sides of the front row change', gA.join() === '2,1' && gB.join() === '1,2', `host ${gA}, friend ${gB}`);
   await wait(3000);
   await B.ctx.close();
   const gone = await until(A.page, () => { const n = window.__game.net; return n && n.race && n.race.left ? { toast: document.getElementById('toast').textContent, dist: window.__game.race.remote.dist, state: window.__game.race.state } : null; }, null, 40000);
   T.check('the friend leaves mid-race: the host is told, the race goes on, the friend is out of the way', /Prijatelj|prekinjena/.test(gone.toast) && gone.dist < -1e8 && gone.state === 'racing', JSON.stringify(gone));
   T.check('no page errors', !A.errors.length && !B.errors.length, A.errors.concat(B.errors).slice(0, 5).join(' | '));
+} catch (e) {
+  T.check('the test ran to the end', false, String(e && e.message || e).split('\n')[0]);   // (a wait that timed out: what was waited for is in the message)
+  if (A && B) console.log('page errors: ' + (A.errors.concat(B.errors).slice(0, 5).join(' | ') || 'none'));
 } finally {
   await browser.close(); await srv.close();
-  await new Promise(r => peerServer.close ? peerServer.close(() => r()) : r());
+  peerHttp.closeAllConnections(); peerHttp.close();
 }
 T.done();
-process.exit(process.exitCode || 0);   // (the PeerJS server keeps a timer running)
+process.exit(process.exitCode || 0);   // (the PeerJS server library keeps a timer running)

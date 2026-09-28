@@ -275,9 +275,10 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 .btn .upg-n { margin-left: 6px; color: var(--lcd); }
 .btn.upg-open { align-self: flex-start; margin: 0 0 4px; }
 
-/* short landscape phones: title buttons two per row so the hint still fits (Dirkaj next to Dirka s prijateljem; Celoten zaslon spans
-   both, and when Namesti igro shows, it sits next to it, so the panel is no taller); track cards without the long description */
-@media (orientation: landscape) and (max-height: 500px) { .title-panel .btns { display: grid; grid-template-columns: 1fr 1fr; } .title-panel .btn.fsbtn { grid-column: 1 / -1; } .title-panel .btns:has(.appbtn:not(.off)) .btn.fsbtn { grid-column: auto; } .track-card .tdesc { display: none; } }
+/* short landscape phones: title buttons two per row, each label on one line, so the hint still fits (Dirkaj next to Dirka s
+   prijateljem; Celoten zaslon spans both, and when Namesti igro shows, it sits next to it, so the panel is no taller); track
+   cards without the long description */
+@media (orientation: landscape) and (max-height: 500px) { .title-panel .btns { display: grid; grid-template-columns: 1fr 1fr; } .title-panel .btns .btn { padding-left: 12px; padding-right: 12px; white-space: nowrap; font-size: clamp(13px, 3.9vh, 17px); } .title-panel .btn.fsbtn { grid-column: 1 / -1; } .title-panel .btns:has(.appbtn:not(.off)) .btn.fsbtn { grid-column: auto; } .track-card .tdesc { display: none; } }
 
 /* ================= Dirka s prijateljem (online) ================= */
 .on-join { margin-top: 14px; }

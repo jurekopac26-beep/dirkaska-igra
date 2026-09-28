@@ -17,6 +17,9 @@ const mk = () => new C.Race(T, { numAI: 0, playerGrid: 1, laps: 1, phys: 'cs', p
 let r = mk();
 check('grid: the player and the friend, no AI', r.cars.length === 2 && r.player.grid === 1 && r.remote.grid === 2 && r.remote.net === true && !r.player.net && r.remote.name === 'Bor' && r.remote.num === 5,
   `${r.cars.length} cars, friend grid ${r.remote.grid} num ${r.remote.num}`);
+{ const P = r.player, F = r.remote, side = (F.x - P.x) * Math.sin(P.h) - (F.z - P.z) * Math.cos(P.h), along = (F.x - P.x) * Math.cos(P.h) + (F.z - P.z) * Math.sin(P.h);
+  check('grid: side by side on the front row, the same distance to the line', P.dist === F.dist && P.dist === -9 && Math.abs(along) < 0.5 && Math.abs(side) > 5,
+    `distance ${P.dist} / ${F.dist} m, ${along.toFixed(2)} m apart along the road, ${side.toFixed(1)} m across`); }
 
 // 2. the race does not drive the friend's car: after 3 s of racing it stands where the network put it; the player drives on
 r.start();
@@ -58,6 +61,9 @@ check('finish: the earlier time wins even when its message comes later', r.remot
   `friend ${r.remote.finishPos}. (60.9 s), player ${r.player.finishPos}. (61.2 s)`);
 r.netFinish(r.remote, 10);   // (a repeated message changes nothing)
 check('finish: a repeated finish message changes nothing', r.remote.finishTime === 60.9, `${r.remote.finishTime}`);
+r.netFinish(r.player, 60.7);   // my time measured on the shared clock replaces the local one, and the order follows it
+check('finish: my time on the shared clock replaces the local one, the order follows', r.player.finishTime === 60.7 && r.player.finishPos === 1 && r.remote.finishPos === 2 && r.finishOrder.length === 2,
+  `player ${r.player.finishPos}. (${r.player.finishTime} s), friend ${r.remote.finishPos}. (${r.remote.finishTime} s)`);
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
 process.exit(bad ? 1 : 0);

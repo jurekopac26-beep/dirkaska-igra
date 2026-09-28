@@ -1815,11 +1815,13 @@ const Core = (function () {
       this._prof();
     }
 
-    // online race: the friend has crossed the finish line (time from the friend's phone, on the race clock both share)
+    // online race: a finish time on the clock both phones share, and the order by it. The friend's comes from its phone (once);
+    // mine replaces the local one (measured on that clock, see game.js)
     netFinish(c, t) {
-      if (c.finished) return;
-      c.finished = true; c.finishTime = t; c.lap = this.laps + 1;
-      this.finishOrder.push(c); this.finishOrder.sort((a, b) => a.finishTime - b.finishTime);
+      if (c.net && c.finished) return;
+      if (!c.finished) { c.finished = true; c.lap = this.laps + 1; this.finishOrder.push(c); }
+      c.finishTime = t;
+      this.finishOrder.sort((a, b) => a.finishTime - b.finishTime);
       this.finishOrder.forEach((f, i) => { f.finishPos = i + 1; });
     }
 
@@ -1845,6 +1847,7 @@ const Core = (function () {
     _gridBack(g) {   // metres behind the start line of grid slot g
       const T = this.track;
       if (this.timeTrial) return 0;
+      if (this.opts.remote) return 9;   // online: the two of them side by side on the front row (the same distance to the line)
       if (!T.open) return 9 + (g - 1) * 7.5;
       // open road: the grid has to fit between the bottom end of the road and the start line (two abreast, staggered)
       const sp = clamp((T.startS - 9) / Math.max(1, this._gridN - 1), 2.4, 3.6);
