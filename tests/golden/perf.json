@@ -1,0 +1,58 @@
+{
+ "jezero": {
+  "calls": 237,
+  "maxCalls": 250,
+  "kverts": 590,
+  "maxKverts": 713,
+  "jsMs": 0.97
+ },
+ "riviera": {
+  "calls": 269,
+  "maxCalls": 301,
+  "kverts": 428,
+  "maxKverts": 522,
+  "jsMs": 0.69
+ },
+ "gora": {
+  "calls": 229,
+  "maxCalls": 278,
+  "kverts": 955,
+  "maxKverts": 1066,
+  "jsMs": 0.81
+ },
+ "ljubljana": {
+  "calls": 254,
+  "maxCalls": 348,
+  "kverts": 510,
+  "maxKverts": 575,
+  "jsMs": 0.71
+ },
+ "monaco": {
+  "calls": 228,
+  "maxCalls": 286,
+  "kverts": 615,
+  "maxKverts": 677,
+  "jsMs": 0.7
+ },
+ "gozd": {
+  "calls": 296,
+  "maxCalls": 330,
+  "kverts": 1357,
+  "maxKverts": 1527,
+  "jsMs": 1.4
+ },
+ "pikes": {
+  "calls": 88,
+  "maxCalls": 100,
+  "kverts": 251,
+  "maxKverts": 314,
+  "jsMs": 0.21
+ },
+ "nring": {
+  "calls": 181,
+  "maxCalls": 234,
+  "kverts": 544,
+  "maxKverts": 752,
+  "jsMs": 1.45
+ }
+}

@@ -1,0 +1,43 @@
+# Samodejni testi ob vsakem pull requestu in ob vsaki spremembi veje main (glej tests/README.md).
+name: Testi
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# nov zagon na isti veji prekine starega (ki bi preverjal staro stanje)
+concurrency:
+  group: testi-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  node:
+    name: Fizika, AI in dirke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:node
+
+  browser:
+    name: Igra v brskalniku
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser

@@ -1,0 +1,170 @@
+/* =========================================================================
+   COMM — English race commentator: browser speech synthesis + captions.
+   Lines are chosen at random from pools (never the same line twice in a row).
+   Only one line plays at a time; while busy, only the most important pending
+   line is kept, and urgent news (lead change, finish) cuts in.
+   ========================================================================= */
+const Comm = (() => {
+  const synth = (typeof window !== 'undefined' && window.speechSynthesis) || null;
+  let on = true, speech = true, voice = null, speaking = false, cur = null, lastEnd = 0, queue = null;
+  const log = [], lastPick = {};
+  const GAP = 500;
+  const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+  const ORD = ['', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelfth', 'thirteenth'];
+  const ordinal = (n) => ORD[n] || n + 'th';
+
+  const LINES = {
+    intro: ['Welcome to {track}! {laps} laps, thirteen cars, and you line up {grid} on the grid.', 'Good day and welcome to {track}. {laps} laps ahead, and you start from {grid}.', 'Here we are at {track}! Thirteen cars, {laps} laps, and you start {grid}.'],
+    introOne: ['Welcome to {track}, the Green Hell! One lap of more than twenty kilometres, and you start {grid}.', 'Here we are at {track}. One lap, thirteen cars, and you line up {grid} on the grid.', 'Welcome to {track}! Twenty kilometres of forest, crests and jumps. One lap, and you start {grid}.'],
+    // the Nordschleife's famous places
+    nrFlug: ['Over the Flugplatz, and the car goes light!', 'Flugplatz! Airborne over the crest!'],
+    nrFuchs: ['Down into the Foxhole, flat out!', 'The Fuchsröhre, the fastest part of the lap!'],
+    nrBreid: ['Down to Breidscheid, the lowest point of the lap.', 'Breidscheid, and now the long climb begins.'],
+    nrKar: ['Into the Karussell! Dive into the concrete!', 'Round the famous Karussell!'],
+    nrHohe: ['Hohe Acht, the highest point of the circuit!', 'Up at Hohe Acht, over six hundred metres high.'],
+    nrPflanz: ['Pflanzgarten! Hold on for the jump!', 'Over the Pflanzgarten jump!'],
+    nrDott: ['Onto the Döttinger Höhe, the long straight home!', 'Flat out down the Döttinger Höhe!'],
+    go: ['Lights out, and away we go!', "And they're off!", 'Green light! The pack charges into turn one!', 'Go, go, go! The race is on!'],
+    gain: ["What a move! Up to {pos}!", "Brilliant overtake, you're now {pos}!", "Straight past! That's {pos} place!", "Another one bites the dust. You're up to {pos}!", 'Clean pass, into {pos}!'],
+    lose: ["Oh, you've lost a place. Down to {pos}.", 'Overtaken! You drop to {pos}.', "They come through, you're now {pos}."],
+    lead: ['And you take the lead!', "You're leading the race!", 'Into first place! Now hold on to it!'],
+    lostLead: ["You've lost the lead!", 'Out of first place. Fight back!'],
+    lap: ['Lap {lap} of {laps}.', 'Into lap {lap}. Keep it clean.', "That's lap {lap}. Let's go."],
+    best: ['Fastest lap! {time} seconds!', 'Quickest lap of the race, {time}!', 'Superb lap, {time} seconds!'],
+    record: ['New track record! {time} seconds!', "That's a new lap record! {time}!"],
+    final: ['Final lap! Give it everything!', 'Last lap! This is where it counts!', 'One lap to go!'],
+    drift: ['Look at that drift!', 'Sideways and loving it!', 'Beautiful slide through there!', 'Full opposite lock, what a drift!'],
+    jump: ['Big air!', 'Airborne! What a jump!', 'Flying over the crest!', 'Look at that car fly!'],
+    land: ['Ooh, heavy landing!', 'That landing rattled some teeth!', 'Hard touchdown, but still going!'],
+    crash: ['Into the barrier!', "Ouch, that's going to leave a mark!", 'Big hit on the wall!', 'Straight into the fence!'],
+    contact: ['Contact! Bumper to bumper!', 'A bit of paint trading there!', 'They touched! Rubbing is racing!'],
+    offtrack: ['Off the track, that costs time!', 'Wide, and off the road!', 'Running wide there!'],
+    gapLead: ['You lead by {gap} seconds.', 'A {gap} second lead. Keep pushing!', 'The gap to second place is {gap} seconds.'],
+    gapBehind: ['The leader is {gap} seconds up the road.', '{gap} seconds to the lead. Keep chipping away!', "You're {pos}, {gap} seconds behind the leader."],
+    pressure: ["Watch your mirrors, there's a car right behind you!", "Under pressure! Someone's all over your rear bumper!"],
+    win: ['Chequered flag! Victory! What a drive!', 'And you win it! Absolutely brilliant!', 'Winner! Take a bow!'],
+    podium: ['Chequered flag! {pos} place, a podium finish!', 'Across the line in {pos}! On the podium!'],
+    finish: ['Chequered flag. You finish {pos}.', 'Across the line in {pos}. Better luck next time!', "That's the flag. {pos} place today."],
+    wrong: ['Wrong way! Turn it around!', "You're going the wrong way!"],
+    damage: ["That car's taking a real beating!", 'The bodywork is looking battered now!', "There's some serious damage there!"],
+    partLost: ['There goes the {part}!', 'The {part} has come clean off!', 'Bits flying everywhere, that was the {part}!'],
+    heavyDamage: ["Smoke pouring from the engine! That doesn't look good!", 'Heavy damage! Nurse it home!', 'That car is badly hurt now!'],
+    pitIn: ['Into the pit lane!', 'Coming in for repairs!', 'He dives into the pits!'],
+    pitWork: ['The crew get to work!', 'Mechanics all over the car!', 'Quick work needed here from the crew!'],
+    pitOut: ['Back out, good as new!', 'Great stop from the crew!', 'Repaired and rejoining the race!'],
+    propCone: ['Cone down!', 'There goes a cone!', 'Sending the cones flying!'],
+    propTyre: ['Straight through the tyres!', 'Tyres flying everywhere!', 'He has scattered the tyre stack!'],
+    propBale: ['Right through the hay bales!', 'Straw everywhere!', 'The bales go flying!'],
+    propPylon: ['Took the marker post with him!', 'That marker post is history!'],
+    propPost: ["He's clipped a marker post!", 'Roadside post down!', 'That post never stood a chance!', 'Flattened a post there!'],
+    propCrate: ['Smashed straight into the crate!', 'There goes the crate!'],
+    // time trial (hill climb against the clock, no opponents)
+    introTT: ['Welcome to {track}, the race to the clouds! Just you, the mountain and the clock.', 'Here we are at the foot of {track}. {cps} checkpoints between you and the summit.', 'Welcome to {track}! No opponents today, only the clock. Get to the top as fast as you can.'],
+    goTT: ['Green light! The clock is running!', 'Go! Attack the mountain!', "And you're away! Up the hill!"],
+    cpFirst: ['Checkpoint {cp}, {time}.', 'Through checkpoint {cp}. Keep climbing!', 'Checkpoint {cp}. Up we go!'],
+    cpFast: ['Checkpoint {cp}, {delta} seconds up on your best!', 'Green split at checkpoint {cp}! {delta} seconds faster!', 'Checkpoint {cp}. You are {delta} seconds ahead of your record pace!'],
+    cpEven: ['Checkpoint {cp}, dead level with your best split!', 'Checkpoint {cp}. Right on your record pace, not a hair in it!'],
+    cpSlow: ['Checkpoint {cp}, {delta} seconds down on your best.', 'Split {cp}: {delta} seconds slower. Push on!', 'Checkpoint {cp}. Down by {delta}, find that time!'],
+    summitRecord: ['At the summit! A new personal best, {time}!', 'Record run! {time} to the top of {track}!', 'What a climb! New personal best, {time}!'],
+    summitEven: ['At the summit in {time}. That is your record to the thousandth!', '{time} at the top, dead level with your best!'],
+    summit: ['At the summit in {time}, {delta} seconds off your best.', 'Across the line at the top. {time}, just {delta} short of the record.', "That's the summit. {time}. {delta} seconds to find next time."]
+  };
+
+  // Speech engines don't report gender, so voices are scored by known name/URI markers.
+  // Android Google TTS variants (en-gb-x-gbd, -rjs, en-us-x-iol ...), Samsung (SMTm = male),
+  // Microsoft/Apple voice names. Without an identifiable male voice, a lower pitch is used.
+  const MALE = /\bmale\b|\bman\b|daniel|george|arthur|oliver|harry|ryan|thomas|james|\bguy\b|davis|eric|christopher|roger|aaron|\bfred\b|\balex\b|rishi|gordon|\blee\b|\btom\b|x-gbd|x-rjs|x-iol|x-iom|x-tpd|x-aub|x-aud|smtm/i;
+  const FEMALE = /female|woman|samantha|karen|moira|tessa|serena|\bkate\b|susan|hazel|libby|sonia|zira|\baria\b|jenny|fiona|victoria|allison|\bava\b|martha|stephanie|catherine|emily|\bamy\b|x-gba|x-gbb|x-gbc|x-gbg|x-fis|x-iob|x-iog|x-sfg|x-tpc|x-tpf|smtf|smtl/i;
+  let voiceMale = false;
+  function pickVoice() {
+    if (!synth) return;
+    let vs = []; try { vs = synth.getVoices() || []; } catch (_) { vs = []; }
+    const en = vs.filter(v => /^en([-_]|$)/i.test(v.lang || ''));
+    let best = null, bs = -1e9;
+    for (const v of en) {
+      const id = (v.name || '') + ' ' + (v.voiceURI || '');
+      let sc = 0;
+      if (MALE.test(id)) sc += 10; else if (FEMALE.test(id)) sc -= 10;
+      sc += /GB/i.test(v.lang) ? 3 : /AU/i.test(v.lang) ? 2 : /US/i.test(v.lang) ? 1 : 0.5;
+      if (v.localService) sc += 0.5;
+      if (sc > bs) { bs = sc; best = v; }
+    }
+    voice = best;
+    voiceMale = !!best && MALE.test((best.name || '') + ' ' + (best.voiceURI || ''));
+    if (typeof onVoice === 'function') onVoice(voiceInfo());
+  }
+  let onVoice = null;
+  const voiceInfo = () => ({ name: voice ? voice.name : '', lang: voice ? voice.lang : 'en-GB', male: voiceMale, any: !!synth });
+  if (synth) { pickVoice(); try { synth.addEventListener('voiceschanged', pickVoice); } catch (_) { synth.onvoiceschanged = pickVoice; } }
+
+  function speakNow(item) {
+    const maxT = 2000 + item.text.length * 95;          // safety net if the engine never reports the end
+    const me = cur = { prio: item.prio, t: now(), maxT, item };
+    if (!synth || !speech) { speaking = false; return; }
+    try {
+      const u = new SpeechSynthesisUtterance(item.text);
+      if (voice) u.voice = voice;
+      u.lang = voice ? voice.lang : 'en-GB'; u.rate = 1.08; u.pitch = voiceMale ? 0.95 : 0.72; u.volume = 1;   // deeper tone when no male voice exists
+      // only the line that is still current may end it (a cancelled line reports its end/error later, after the next one started)
+      u.onend = u.onerror = () => { if (cur !== me) return; speaking = false; lastEnd = now(); cur = null; };
+      speaking = true; synth.speak(u); item.spoken = true;
+    } catch (_) { speaking = false; lastEnd = now() + item.text.length * 60; }
+  }
+
+  function busy() {
+    const t = now();
+    if (speaking && cur && t - cur.t > cur.maxT) { speaking = false; lastEnd = t; }
+    return speaking || t < lastEnd + GAP;
+  }
+
+  // prio: 0 = ambient (named places: anything from prio 2 cuts in, it only waits in an empty queue), 1 = chatter ... 5 = finish.
+  // opt.ttl = how long (ms) the line may wait in the queue. Returns the logged item (item.spoken / item.cut are set later), or null.
+  function say(key, vars, prio, opt) {
+    if (!on || !speech || !synth) return null;   // audio-only commentary: silent when sound is off
+    const pool = LINES[key]; if (!pool) return null;
+    let k = Math.floor(Math.random() * pool.length);
+    if (pool.length > 1 && k === lastPick[key]) k = (k + 1) % pool.length;
+    lastPick[key] = k;
+    let text = pool[k].replace(/\{(\w+)\}/g, (_, n) => (vars && vars[n] != null ? String(vars[n]) : ''));
+    text = text.charAt(0).toUpperCase() + text.slice(1);
+    const item = { key, text, prio: prio == null ? 1 : prio, t: now() };
+    if (opt && opt.ttl > 0) item.ttl = opt.ttl;
+    log.push(item); if (log.length > 200) log.shift();
+    if (!busy()) { speakNow(item); return item; }
+    if (cur && item.prio >= cur.prio + 2) { cancelSpeech(); speakNow(item); return item; }   // urgent news cuts in
+    if (!queue || item.prio >= queue.prio) queue = item;                               // keep only the most important pending line
+    return item;
+  }
+
+  function update() {
+    const t = now();
+    if (queue && !busy()) {
+      const fresh = t - queue.t < (queue.ttl || (queue.prio >= 3 ? 7000 : 3500));       // stale chatter is dropped
+      const q = queue; queue = null;
+      if (fresh) speakNow(q);
+    }
+  }
+
+  function cancelSpeech() { if (speaking && cur && cur.item) cur.item.cut = true; if (synth) { try { synth.cancel(); } catch (_) { } } speaking = false; lastEnd = 0; cur = null; }
+  function stop() { cancelSpeech(); queue = null; }
+  // call from a tap handler: some browsers only allow speech after a user gesture
+  function unlock() { if (!synth || !speech || !on) return; try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); } catch (_) { } }
+  function test() { cancelSpeech(); queue = null; speakNow({ key: 'test', text: "Hello and welcome! I'm your commentator for today's race.", prio: 9, t: now() }); }
+  function setOnVoice(fn) { onVoice = fn; fn(voiceInfo()); }
+  function setEnabled(v) { on = !!v; if (!on) stop(); }
+  function setSpeech(v) { speech = !!v; if (!speech) cancelSpeech(); }
+  const available = () => !!synth;
+  // register (or replace) a pool at run time, e.g. a track's place lines; say() ignores keys that have no pool
+  function addLines(key, arr) {
+    const a = (Array.isArray(arr) ? arr : [arr]).filter(s => typeof s === 'string' && s.trim());
+    if (!a.length) return false;
+    LINES[key] = a; if (!(lastPick[key] < a.length)) delete lastPick[key];   // keep "never the same line twice in a row" across races
+    return true;
+  }
+  // what the commentator is doing: busy (speaking or in the pause after a line), the priority speaking now and waiting (-1 = none)
+  function state() { const b = busy(); return { busy: b, prio: speaking && cur ? cur.prio : -1, queued: queue ? queue.prio : -1 }; }
+
+  return { say, update, stop, unlock, setEnabled, setSpeech, ordinal, available, log, test, voiceInfo, setOnVoice, addLines, state };
+})();
+if (typeof module !== 'undefined') module.exports = Comm;
+

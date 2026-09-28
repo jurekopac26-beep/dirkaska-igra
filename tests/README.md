@@ -1,0 +1,37 @@
+# Testi
+
+Samodejni testi za igro. Igra sama ne potrebuje namestitve; testi potrebujejo le Node.js (22) in za teste
+v brskalniku Playwright (`npm install` ga namesti, `npx playwright install chromium` prenese brskalnik).
+
+```sh
+npm install          # enkrat
+npm test             # vse (~17 min)
+npm run test:node    # samo fizika, AI in dirke (~2 min)
+npm run test:browser # samo testi v brskalniku (~15 min s programskim WebGL)
+```
+
+Na GitHubu se ob vsakem pull requestu in vsaki spremembi veje `main` samodejno poženejo vsi testi
+(`.github/workflows/tests.yml`). Test, ki teče dlje od 15 minut, se ustavi in šteje kot neuspešen
+(drugače: `TEST_TIMEOUT_MIN=30 npm test`).
+
+## Kaj preverjajo
+
+| Test | Kaj preveri |
+|---|---|
+| `stamp.test.js` | Vse povezave na skripte in sloge v `index.html` imajo trenutno oznako vsebine (`?v=…`) in kažejo na obstoječe datoteke (glej `tools/stamp.js`). |
+| `golden.test.js` | Vse proge × 4 postavitve × 2 fiziki: dirka, demo na naslovnem zaslonu, izboljšan avto brez poškodb in trčenje (igralec pri polni hitrosti zavije v ogrado: poškodbe, odpadli deli na cesti, reševanje, v Bakrenem gozdu še postanek v boksih s popravilom). Po 60 s (trčenje na progi z boksi 80 s). Celotno stanje dirke, vseh avtov in odpadlih delov se vsakih 10 s zapiše v prstni odtis in primerja z `golden/sim.json`, zato se pokaže vsaka sprememba fizike, AI, poškodb, boksov ali pravil v teh vožnjah. Test preveri tudi, da trčenje res pripelje do poškodb (in popravila v boksih). |
+| `races.test.js` | Cele dirke z AI do cilja na vseh progah z obema fizikama. Vsi avti morajo priti do cilja, rezultat (vrstni red, časi v cilju in končno stanje vseh avtov) pa mora biti natanko enak referenci v `golden/races.json`. Ob spremembi izpiše še, koliko se je spremenilo: vrtenja (največ 2 več kot v referenci), stiki z ograjo, reševanja in čas zmagovalca (največ ±3 %). |
+| `cs-handling.test.js` | Značilnosti fizike Circuit Superstars (iz analize posnetka): oprijem v zavojih, kot drsenja, odziv, samodejna poravnava na izhodu, zaviranje v zavoju, pospešek 0–100, zavorna pot. |
+| `browser/smoke.test.mjs` | Stran se naloži (http in lokalna datoteka), 20 s vožnje na vsaki progi, nastavitve in prenos starih nastavitev, preklop fizike med dirko, demo na naslovnem zaslonu, rekord na Pikes Peaku, prepočasna naprava (najprej nižja ločljivost; nato igra ob naslednjem premoru za ta obisk izklopi sence, shranjena nastavitev ostane, igralčeva izbira v Nastavitvah velja naprej), brez napak na strani. |
+| `browser/world.test.mjs` | Prstni odtis zgrajenega 3D sveta vsake proge, primerjan z `golden/world.json`: vsi modeli (točke, barve, UV, normale in ostali podatki, postavitev, primerki), materiali (vrsta, barve, velikost in ponavljanje teksture, prosojnost), rekviziti, gledalci in tla ob progi. Slikovne pike tekstur niso zajete. |
+| `browser/pits.test.mjs` | Cela dirka v Bakrenem gozdu s postankom v boksih: ustavitev, mehaniki, dvig na dvigalkah, popravilo, vsi avti v cilju. |
+| `browser/perf.test.mjs` | Proračun za telefon: na zaslonu velikosti telefona (844×390, normalna kakovost, sence) test na vsaki progi začne novo dirko, jo sam poganja (vedno enako) in na šestih mestih prešteje delo grafike na sličico (risalni klici in točke vseh prehodov). Pade, če najzahtevnejše mesto preseže referenco (`golden/perf.json`) za več kot 10 % + 5 klicev oziroma 10 % + 20 tisoč točk. Čas JavaScripta se le izpiše (odvisen je od računalnika). Referenco za novo progo zapiše `npm run golden:update`; primerjaj jo z drugimi progami. |
+| `browser/memory.test.mjs` | Pomnilnik: trije krogi (menjave vseh prog, trčenje z odpadlimi deli in popravilo v boksih v Bakrenem gozdu, ponovni start, dvakrat skozi vse avte v meniju, demo na naslovnem zaslonu). Po vsakem krogu se meri v enakem stanju (nova dirka na Jezeru pred startom, igra ustavljena, ena sličica z vsemi predmeti). Od 2. kroga naprej ne smejo rasti: geometrija (največ +2), teksture (0), programi senčilnikov (največ +1) in pomnilnik JavaScripta (največ +15 MB). Več krogov: `MEM_ROUNDS=4`. |
+
+## Referenčne vrednosti
+
+Datoteke v `golden/` so posnetek pravilnega obnašanja. Če spremembo naredimo **namenoma** (npr. uglasimo fiziko ali
+dodamo drevesa na progo), jih osvežimo z `npm run golden:update` in spremembo razložimo v commitu. Pri preurejanju
+kode brez sprememb obnašanja se ne smejo spremeniti.
+
+Z `GAME_ROOT=/pot/do/druge/kopije` lahko teste poženemo na drugi kopiji igre (npr. starejši različici).

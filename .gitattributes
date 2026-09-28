@@ -1,0 +1,6 @@
+# Besedilne datoteke vedno z LF (tudi na Windows): tako so oznake vsebine (?v=…) v index.html povsod enake
+* text=auto eol=lf
+*.glb binary
+*.png binary
+*.jpg binary
+*.mp4 binary
