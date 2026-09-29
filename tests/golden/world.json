@@ -155,6 +155,21 @@
    "crowd:MeshLambertMaterial": "a4df55a6"
   }
  },
+ "rbring": {
+  "meshes": 512,
+  "verts": 338188,
+  "instances": 12290,
+  "props": 68,
+  "crowd": 2978,
+  "world": "1ab8da8b",
+  "propsHash": "16f4ac8d",
+  "floor": "106192fc/8652",
+  "groups": {
+   "-:MeshLambertMaterial": "a0824c2a",
+   "-:MeshBasicMaterial": "4fdb0600",
+   "crowd:MeshLambertMaterial": "f759b22e"
+  }
+ },
  "suzuka": {
   "meshes": 719,
   "verts": 289871,

@@ -1,5 +1,5 @@
 // Determinism / regression net: every track x 4 set-ups (race, title demo, upgraded car, crash) x 2 physics, 60 s each
-// (the crash set-up on a track with pits 80 s: it ends with a pit stop and the repair). The full state of the race, every
+// (the crash set-up on a track with pits 80 s or more: it ends with a pit stop and the repair). The full state of the race, every
 // car and the loose panels is hashed every 10 s and compared with tests/golden/sim.json: a change to the physics, AI,
 // damage, pits or race rules shows up here (finishing is covered by races.test.js). The crash runs must really crash
 // (damage, loose panels, the repair on a track with pits), so a change can not quietly turn them into a plain drive.
