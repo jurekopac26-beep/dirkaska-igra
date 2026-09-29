@@ -1601,7 +1601,11 @@ const Render = (function () {
     const baseY = cam.gy;
     const k1 = 1 - Math.exp(-dt * 2.0), k2 = 1 - Math.exp(-dt * 1.4);
     let px, py, pz, tx, ty, tz;
-    if (mode === 'chase') {
+    const shot = cam.shot;
+    if (shot) {   // a TV shot the world directs (setShot: the Red Bull Ring's fly-over before the start, the podium): a camera of its own
+      px = shot.px; py = shot.py; pz = shot.pz; tx = shot.tx; ty = shot.ty; tz = shot.tz;
+      if (camera.fov !== shot.fov) { camera.fov = shot.fov; camera.updateProjectionMatrix(); updatePointScale(); }
+    } else if (mode === 'chase') {
       // in a drift, look along the direction of travel; with the 'cs' physics further along it and a lazier swing
       // (Circuit Superstars: the view reads the drift along the travel, so a sliding car shows its angle)
       const cs = c.phys === 'cs', hv = h + clamp(c.beta || 0, -1.2, 1.2) * (cs ? 0.85 : 0.65);
@@ -1639,10 +1643,10 @@ const Render = (function () {
       px = tx; py = baseY + D * Math.sin(pitch); pz = tz + D * Math.cos(pitch);
       if (camera.fov !== 30) { camera.fov = 30; camera.updateProjectionMatrix(); updatePointScale(); }
     }
-    if (world && world.camFloor) { const gf = world.camFloor(px, pz) + 4; if (py < gf) py = gf; }   // mountain worlds: never under the slope behind the car
+    if (world && world.camFloor && !shot) { const gf = world.camFloor(px, pz) + 4; if (py < gf) py = gf; }   // mountain worlds: never under the slope behind the car
     if (cam.shake > 0) { px += (Math.random() - 0.5) * cam.shake; py += (Math.random() - 0.5) * cam.shake; pz += (Math.random() - 0.5) * cam.shake; cam.shake = Math.max(0, cam.shake - dt * 3); }
     camera.position.set(px, py, pz); camera.lookAt(tx, ty, tz); cam.vcx = tx; cam.vcz = tz; cam.vd = Math.hypot(px - tx, py - ty, pz - tz);
-    { const dC = Math.hypot(px - tx, py - ty, pz - tz); scene.fog.near = dC * 1.35; scene.fog.far = dC * 5.5; }
+    { const dC = shot ? shot.fogD : Math.hypot(px - tx, py - ty, pz - tz); scene.fog.near = dC * 1.35; scene.fog.far = dC * 5.5; }
     if (world && world.farClip) { const f = Math.min(700, scene.fog.far + 40); if (Math.abs(camera.far - f) > 6) { camera.far = f; camera.updateProjectionMatrix(); } }   // long corridor worlds: nothing past the fog is drawn
     // sun/shadow follows view center
     lastMode = mode;
@@ -1656,6 +1660,9 @@ const Render = (function () {
   let sunOff = [-80, 96, 70], camYaw = 0, lastMode = 'iso';
   function shake(a) { cam.shake = Math.max(cam.shake, Math.min(1.2, a)); }
   function resetCam() { cam.init = false; }
+  // a TV shot: { px, py, pz (the camera), tx, ty, tz (where it looks), fov, fogD (the fog as for a camera this far from its target) },
+  // updated by its owner every frame; null: back to the game's camera (from scratch)
+  function setShot(s) { if (!s && cam.shot) cam.init = false; cam.shot = s || null; }
 
   function frame(dt, alpha, target, mode, opt) {
     time += dt;
@@ -1757,6 +1764,6 @@ const Render = (function () {
   const dbg = { noSmoke: false };
   function setDebug(o) { Object.assign(dbg, o); }
   function fxStats() { let n = 0; for (let i = 0; i < particles.max; i++) if (particles.life[i] > 0) n++; return { alive: n, emitted: particles.cur }; }
-  return { setDebug, fxStats, setGhost, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; } };
+  return { setDebug, fxStats, setGhost, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; } };
 })();
 

@@ -175,20 +175,22 @@
   }
  },
  "rbring": {
-  "meshes": 529,
-  "verts": 349228,
+  "meshes": 547,
+  "verts": 353576,
   "instances": 12278,
   "props": 68,
   "crowd": 2966,
-  "world": "eca9f5b8",
+  "world": "99d1683c",
   "propsHash": "16f4ac8d",
   "floor": "106192fc/8652",
   "groups": {
-   "-:MeshLambertMaterial": "5f12858f",
-   "-:MeshBasicMaterial": "1eb1fb0c",
-   "crowd:MeshLambertMaterial": "e027a574",
-   "smoke:ShaderMaterial": "e00cb601",
-   "flags:MeshLambertMaterial": "c3947206"
+   "-:MeshLambertMaterial": "a7e7ea0b",
+   "-:MeshBasicMaterial": "d8c109b7",
+   "crowd:MeshLambertMaterial": "b62a7271",
+   "smoke:ShaderMaterial": "38d0b4e8",
+   "champagne:ShaderMaterial": "9d67d0bc",
+   "flags:MeshLambertMaterial": "d2420824",
+   "jet smoke:MeshBasicMaterial": "684b759b"
   }
  },
  "suzuka": {

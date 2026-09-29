@@ -6,7 +6,7 @@ const Sfx = (function () {
   const { clamp } = Core;
   let ctx = null, master = null, bus = null, enabled = true, volume = 0.8;
   let noiseBuf = null;
-  let eng = null, ai = [], squeal = null, rumble = null, wind = null, curbV = null, heli = null, echo = null;
+  let eng = null, ai = [], squeal = null, rumble = null, wind = null, curbV = null, heli = null, echo = null, crowd = null, jet = null;
   let lastCrash = 0, running = false;
 
   function create() {
@@ -28,7 +28,7 @@ const Sfx = (function () {
     rumble = noiseVoice('lowpass', 220, 0.8);
     curbV = noiseVoice('bandpass', 90, 4);
     wind = noiseVoice('bandpass', 700, 0.6);
-    heli = heliVoice(); echo = echoFx();
+    heli = heliVoice(); echo = echoFx(); crowd = crowdVoice(); jet = noiseVoice('lowpass', 500, 0.7);
     return true;
   }
   function shaperCurve(k) {
@@ -88,6 +88,58 @@ const Sfx = (function () {
     let pn = null; if (ctx.createStereoPanner) { pn = ctx.createStereoPanner(); out.connect(pn); pn.connect(bus); } else out.connect(bus);
     src.start(); body.start(); mod.start(); wh.start();
     return { out, pn };
+  }
+  // the crowd in the grandstands and on the grass (a world with World's crowdPts: the Red Bull Ring): the roar of many voices (noise in
+  // two bands, swelling slowly), with drums and air horns from the orange fans now and then (crowdStep)
+  function crowdVoice() {
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf; src.loop = true; src.playbackRate.value = 0.9;
+    const b1 = ctx.createBiquadFilter(); b1.type = 'bandpass'; b1.frequency.value = 650; b1.Q.value = 0.8;
+    const b2 = ctx.createBiquadFilter(); b2.type = 'bandpass'; b2.frequency.value = 1900; b2.Q.value = 1.4;
+    const g2 = ctx.createGain(); g2.gain.value = 0.45;
+    const vca = ctx.createGain(); vca.gain.value = 0.72;
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.23; const lg = ctx.createGain(); lg.gain.value = 0.26; lfo.connect(lg); lg.connect(vca.gain);
+    const out = ctx.createGain(); out.gain.value = 0;
+    let pn = null; if (ctx.createStereoPanner) { pn = ctx.createStereoPanner(); out.connect(pn); pn.connect(bus); } else out.connect(bus);
+    src.connect(b1); src.connect(b2); b1.connect(vca); b2.connect(g2); g2.connect(vca); vca.connect(out);
+    src.start(); lfo.start();
+    return { out, pn, lev: 0, cheer: 0, pan: 0, tHorn: 0, tDrum: 0, pos: 0, state: '' };
+  }
+  function horn(vol, pan) {   // an air horn: two detuned saws a third apart, a short blast
+    const now = ctx.currentTime, dur = 0.3 + Math.random() * 0.55, f0 = [370, 415, 466, 494][Math.floor(Math.random() * 4)];
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2600;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(vol, now + 0.03); g.gain.setValueAtTime(vol, now + dur); g.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.1);
+    for (const f of [f0, f0 * 1.26, f0 * 1.005]) { const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.connect(lp); o.start(now); o.stop(now + dur + 0.12); }
+    lp.connect(g);
+    if (ctx.createStereoPanner) { const pn = ctx.createStereoPanner(); pn.pan.value = pan; g.connect(pn); pn.connect(bus); } else g.connect(bus);
+  }
+  function drum(vol, t) {   // a big drum: a thump falling in pitch, a slap on top
+    const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(115, t); o.frequency.exponentialRampToValueAtTime(46, t + 0.2);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.38);
+    o.connect(g); g.connect(bus); o.start(t); o.stop(t + 0.42);
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf; const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1400; bp.Q.value = 0.9;
+    const ng = ctx.createGain(); ng.gain.setValueAtTime(vol * 0.35, t); ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
+    src.connect(bp); bp.connect(ng); ng.connect(bus); src.start(t, Math.random()); src.stop(t + 0.08);
+  }
+  // per frame: the crowd's level from the nearest stands (W.crowdPts: x, z, weight), louder for a while after the start, an overtake by the
+  // player or the finish; horns and drum rolls more often the louder it is
+  function crowdStep(race, player, W, cam) {
+    const C = crowd, P = W && W.crowdPts, now = ctx.currentTime;
+    if (!P || !race) { set(C.out.gain, 0, 0.3); C.lev = 0; return; }
+    const lx = cam ? cam.position.x : player.x, lz = cam ? cam.position.z : player.z;
+    let lev = 0, bx = 0, bz = 0;
+    for (let k = 0; k < P.length; k += 3) { const dx = P[k] - lx, dz = P[k + 1] - lz, d = Math.sqrt(dx * dx + dz * dz), a = P[k + 2] * clamp(1 - d / 130, 0, 1) ** 1.6; if (a > lev) { lev = a; bx = dx; bz = dz; } }
+    if (race.state !== C.state) { if (race.state === 'racing') C.cheer = 1; C.state = race.state; }   // the lights go out
+    if (race.state === 'racing' && player.pos < C.pos && !player.finished) { C.cheer = 1; C.tHorn = Math.min(C.tHorn, now + 0.15); }   // the player passes a car
+    if (player.finished && !C.fin) { C.fin = true; C.cheer = 1; } else if (!player.finished) C.fin = false;
+    C.pos = player.pos || 0;
+    const dt = clamp(now - (C.tPrev || now), 0, 0.1); C.tPrev = now;
+    C.cheer = Math.max(0, C.cheer - dt / 4); C.lev += (lev - C.lev) * Math.min(1, dt * 5);
+    if (cam) { const e = cam.matrixWorld.elements, dl = Math.hypot(bx, bz) || 1; C.pan = clamp((bx * e[0] + bz * e[2]) / dl, -0.7, 0.7); }
+    set(C.out.gain, C.lev * (0.13 + 0.24 * C.cheer), 0.15); if (C.pn) set(C.pn.pan, C.pan, 0.3);
+    const L = C.lev * (0.5 + 0.8 * C.cheer);
+    if (L < 0.08) return;
+    if (now >= C.tHorn) { horn(0.03 + 0.05 * L, clamp(C.pan + (Math.random() - 0.5) * 0.6, -0.9, 0.9)); C.tHorn = now + (0.6 + Math.random() * 3.5) / (0.4 + L); }
+    if (now >= C.tDrum) { const n = 3 + Math.floor(Math.random() * 4), st = 0.24 + Math.random() * 0.08; for (let k = 0; k < n; k++) drum(0.1 + 0.16 * L, now + 0.05 + k * st * (k === n - 1 ? 1.5 : 1)); C.tDrum = now + n * st + (3 + Math.random() * 6) / (0.4 + L); }
   }
   // an echo of the player's engine off the rock walls (Pikes Peak above the treeline): two short delays, one fed back, dulled
   function echoFx() {
@@ -162,7 +214,7 @@ const Sfx = (function () {
     // Pikes Peak: the engine echoes among the rocks above the treeline; the TV helicopter (World's dyn.pk) by its distance to the camera
     const pikes = !!(race && race.track && race.track.def && race.track.def.id === 'pikes');
     set(echo.send.gain, pikes ? Core.sstep(186, 198, player.roadY || 0) * 0.32 : 0, 0.6);
-    const W = typeof Render !== 'undefined' ? Render.world : null, pk = pikes && W && W.dyn ? W.dyn.pk : null, cam = typeof Render !== 'undefined' ? Render.camera : null;
+    const W = typeof Render !== 'undefined' ? Render.world : null, pk = W && W.dyn ? (pikes ? W.dyn.pk : W.dyn.air) : null, cam = typeof Render !== 'undefined' ? Render.camera : null;   // (the Red Bull Ring's: dyn.air)
     let hv = 0, hp = 0;
     if (pk && pk.on && pk.heli) {
       const q = pk.heli.position, lx = cam ? cam.position.x : player.x, ly = cam ? cam.position.y : (player.roadY || 0), lz = cam ? cam.position.z : player.z;
@@ -172,6 +224,11 @@ const Sfx = (function () {
     }
     set(heli.out.gain, hv, 0.35);
     if (heli.pn) set(heli.pn.pan, hp, 0.1);
+    crowdStep(race, player, W, cam);
+    // the Red Bull Ring's jets before the start: a roar by the distance to the nearest one
+    let jv = 0; const A = W && W.dyn && W.dyn.air;
+    if (A && A.t0 >= 0) for (const m of A.jets) if (m.visible) { const q = m.position, lx = cam ? cam.position.x : player.x, ly = cam ? cam.position.y : 0, lz = cam ? cam.position.z : player.z; jv = Math.max(jv, clamp(1 - Math.hypot(q.x - lx, q.y - ly, q.z - lz) / 420, 0, 1) ** 2); }
+    set(jet.out.gain, jv * 0.55, 0.12); set(jet.flt.frequency, 300 + jv * 900, 0.12);
   }
 
   function crash(imp) {
@@ -233,7 +290,7 @@ const Sfx = (function () {
   function silence() {
     if (!ctx) return;
     for (const v of [eng, ...ai]) set(v.out.gain, 0, 0.02);
-    for (const v of [squeal, rumble, wind, curbV, heli]) set(v.out.gain, 0, 0.02);
+    for (const v of [squeal, rumble, wind, curbV, heli, crowd, jet]) set(v.out.gain, 0, 0.02);
     set(echo.send.gain, 0, 0.02);
   }
 

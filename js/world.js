@@ -3737,6 +3737,41 @@ const World = (function () {
     }
   }
 
+  // the TV helicopter: a light single-engine type in white with a blue livery (+x forward, y up, 11.4 m nose to tail); the main and the tail rotor
+  // spin on their own (Pikes Peak's, Ouninpohja's, the Red Bull Ring's)
+  function tvHeli(root) {
+    const wht = [0.93, 0.93, 0.95], blu = [0.13, 0.3, 0.68], gls = [0.07, 0.09, 0.13], gry = [0.36, 0.37, 0.4], drk = [0.16, 0.16, 0.18];
+    const hull = (g, x0, ya0, yb0, hw0, x1, ya1, yb1, hw1, col, colTop, colEnd) => {   // a tapered box between two cross-sections (at x0: y ya0..yb0, half-width hw0; at x1 likewise)
+      const a = [[x0, ya0, -hw0], [x0, ya0, hw0], [x0, yb0, hw0], [x0, yb0, -hw0]], b = [[x1, ya1, -hw1], [x1, ya1, hw1], [x1, yb1, hw1], [x1, yb1, -hw1]], inn = [(x0 + x1) / 2, (ya0 + yb0 + ya1 + yb1) / 4, 0];
+      g.quadO(a[0], a[1], b[1], b[0], col, inn); g.quadO(a[3], a[2], b[2], b[3], colTop || col, inn);
+      g.quadO(a[0], a[3], b[3], b[0], colEnd || col, inn); g.quadO(a[1], a[2], b[2], b[1], colEnd || col, inn);
+      g.quadO(b[0], b[1], b[2], b[3], colEnd || col, inn); g.quadO(a[0], a[1], a[2], a[3], col, inn);
+    };
+    const gb = new GB();
+    box(gb, 0.2, 0.55, 0, 3.2, 1.75, 1.7, 0, wht);                               // cabin
+    box(gb, 0.2, 0.86, 0, 3.24, 0.3, 1.74, 0, blu);                              // livery stripe
+    hull(gb, 1.8, 0.55, 2.3, 0.85, 3.15, 0.8, 1.45, 0.42, wht, gls, gls);        // nose with the wrap-around windscreen
+    hull(gb, -1.4, 0.55, 2.3, 0.85, -2.7, 1.4, 2.05, 0.3, wht);                  // rear fairing
+    hull(gb, -2.7, 1.4, 2.05, 0.3, -7.9, 1.7, 1.98, 0.13, wht, blu, wht);        // tail boom (blue spine)
+    for (const sd of [-1, 1]) {
+      box(gb, 1.0, 1.35, sd * 0.84, 1.1, 0.72, 0.06, 0, gls);                    // door windows
+      box(gb, -0.4, 1.35, sd * 0.84, 0.9, 0.62, 0.06, 0, gls);
+      box(gb, 0.2, 0.02, sd * 1.0, 3.8, 0.1, 0.12, 0, drk);                      // skid
+      for (const x of [-0.7, 1.1]) box(gb, x, 0.08, sd * 0.93, 0.1, 0.5, 0.1, 0, gry);   // struts
+    }
+    box(gb, -0.35, 2.3, 0, 2.1, 0.5, 1.1, 0, blu, wht);                          // engine cowling
+    cyl(gb, -0.1, 2.75, 0, 0.13, 0.55, 5, gry);                                  // rotor mast
+    hull(gb, -7.3, 1.85, 2.0, 0.06, -8.3, 2.3, 3.3, 0.05, blu);                  // swept tail fin
+    box(gb, -7.0, 1.78, 0, 0.55, 0.06, 1.9, 0, wht);                             // horizontal stabiliser
+    const g2 = new GB(); box(g2, 0, 0, 0, 10.6, 0.06, 0.34, 0.1, drk); cyl(g2, 0, -0.05, 0, 0.26, 0.2, 6, gry, gry);   // main rotor: two blades through the hub
+    const gt = new GB(); box(gt, 0, -0.85, 0, 0.14, 1.7, 0.04, 0, drk); box(gt, 0, -0.05, 0, 0.2, 0.1, 0.1, 0, gry);   // tail rotor (spins about z)
+    const mat = new THREE.MeshLambertMaterial({ vertexColors: true }); mat.userData.pkCloud = true;   // (the helicopter stays out of the cloud patch)
+    const heli = new THREE.Group(); heli.rotation.order = 'YZX'; root.add(heli);
+    const body = new THREE.Mesh(gb.geometry(), mat), rotor = new THREE.Mesh(g2.geometry(), mat), tail = new THREE.Mesh(gt.geometry(), mat);
+    rotor.position.set(-0.1, 3.3, 0); tail.position.set(-8.0, 2.55, 0.14);
+    body.castShadow = rotor.castShadow = true; heli.add(body, rotor, tail);
+    return { heli, rotor, tail };
+  }
   /* ---- moving things: the TV helicopter (a fly-over, the finish), cloud shadows drifting across the mountain
      (built at the end of buildPikes; pkUpdate runs every frame from World.update) ---- */
   function pkSky(K) {
@@ -3765,37 +3800,7 @@ const World = (function () {
     const walk = (o) => { if (o.name === 'crowds') return; if (o.isMesh) (Array.isArray(o.material) ? o.material : [o.material]).forEach(patch); o.children.forEach(walk); };
     walk(K.root);
 
-    // the TV helicopter: a light single-engine type in white with a blue livery (+x forward, y up, 11.4 m nose to tail); the main and the tail rotor spin on their own
-    const wht = [0.93, 0.93, 0.95], blu = [0.13, 0.3, 0.68], gls = [0.07, 0.09, 0.13], gry = [0.36, 0.37, 0.4], drk = [0.16, 0.16, 0.18];
-    const hull = (g, x0, ya0, yb0, hw0, x1, ya1, yb1, hw1, col, colTop, colEnd) => {   // a tapered box between two cross-sections (at x0: y ya0..yb0, half-width hw0; at x1 likewise)
-      const a = [[x0, ya0, -hw0], [x0, ya0, hw0], [x0, yb0, hw0], [x0, yb0, -hw0]], b = [[x1, ya1, -hw1], [x1, ya1, hw1], [x1, yb1, hw1], [x1, yb1, -hw1]], inn = [(x0 + x1) / 2, (ya0 + yb0 + ya1 + yb1) / 4, 0];
-      g.quadO(a[0], a[1], b[1], b[0], col, inn); g.quadO(a[3], a[2], b[2], b[3], colTop || col, inn);
-      g.quadO(a[0], a[3], b[3], b[0], colEnd || col, inn); g.quadO(a[1], a[2], b[2], b[1], colEnd || col, inn);
-      g.quadO(b[0], b[1], b[2], b[3], colEnd || col, inn); g.quadO(a[0], a[1], a[2], a[3], col, inn);
-    };
-    const gb = new GB();
-    box(gb, 0.2, 0.55, 0, 3.2, 1.75, 1.7, 0, wht);                               // cabin
-    box(gb, 0.2, 0.86, 0, 3.24, 0.3, 1.74, 0, blu);                              // livery stripe
-    hull(gb, 1.8, 0.55, 2.3, 0.85, 3.15, 0.8, 1.45, 0.42, wht, gls, gls);        // nose with the wrap-around windscreen
-    hull(gb, -1.4, 0.55, 2.3, 0.85, -2.7, 1.4, 2.05, 0.3, wht);                  // rear fairing
-    hull(gb, -2.7, 1.4, 2.05, 0.3, -7.9, 1.7, 1.98, 0.13, wht, blu, wht);        // tail boom (blue spine)
-    for (const sd of [-1, 1]) {
-      box(gb, 1.0, 1.35, sd * 0.84, 1.1, 0.72, 0.06, 0, gls);                    // door windows
-      box(gb, -0.4, 1.35, sd * 0.84, 0.9, 0.62, 0.06, 0, gls);
-      box(gb, 0.2, 0.02, sd * 1.0, 3.8, 0.1, 0.12, 0, drk);                      // skid
-      for (const x of [-0.7, 1.1]) box(gb, x, 0.08, sd * 0.93, 0.1, 0.5, 0.1, 0, gry);   // struts
-    }
-    box(gb, -0.35, 2.3, 0, 2.1, 0.5, 1.1, 0, blu, wht);                          // engine cowling
-    cyl(gb, -0.1, 2.75, 0, 0.13, 0.55, 5, gry);                                  // rotor mast
-    hull(gb, -7.3, 1.85, 2.0, 0.06, -8.3, 2.3, 3.3, 0.05, blu);                  // swept tail fin
-    box(gb, -7.0, 1.78, 0, 0.55, 0.06, 1.9, 0, wht);                             // horizontal stabiliser
-    const g2 = new GB(); box(g2, 0, 0, 0, 10.6, 0.06, 0.34, 0.1, drk); cyl(g2, 0, -0.05, 0, 0.26, 0.2, 6, gry, gry);   // main rotor: two blades through the hub
-    const gt = new GB(); box(gt, 0, -0.85, 0, 0.14, 1.7, 0.04, 0, drk); box(gt, 0, -0.05, 0, 0.2, 0.1, 0.1, 0, gry);   // tail rotor (spins about z)
-    const mat = new THREE.MeshLambertMaterial({ vertexColors: true }); mat.userData.pkCloud = true;   // (the helicopter stays out of the cloud patch)
-    const heli = new THREE.Group(); heli.rotation.order = 'YZX'; K.root.add(heli);
-    const body = new THREE.Mesh(gb.geometry(), mat), rotor = new THREE.Mesh(g2.geometry(), mat), tail = new THREE.Mesh(gt.geometry(), mat);
-    rotor.position.set(-0.1, 3.3, 0); tail.position.set(-8.0, 2.55, 0.14);
-    body.castShadow = rotor.castShadow = true; heli.add(body, rotor, tail);
+    const { heli, rotor, tail } = tvHeli(K.root);
     if (K.far) {   // Ouninpohja: the helicopter stays with the car the whole run, standing off far from the camera (pkFollow)
       const i0 = T.idx(K.sStart);
       K.out.dyn.pk = { U, S, NP, heli, rotor, tail, follow: true, init: false, t: 0, hx: T.px[i0], hz: T.pz[i0], hy: T.hy[i0], hh: T.hd[i0], gH: K.gH || pkGround,
@@ -6799,6 +6804,207 @@ const World = (function () {
       x.fillStyle = '#ffcc00'; x.font = '900 10px ' + F; x.fillText('4,318 km', ox + 10, 76); x.fillText('10 zavojev', ox + 10, 90); }
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
   }
+  /* ---- the Red Bull Ring's air show (rbAir builds it at the end of buildRbring, rbAirStep runs it from World.update):
+     - the TV helicopter (tvHeli) crosses the main straight once a race, low in front of the player's car on its second run down the straight
+       (not in the start's scramble, not in a corner); then it is gone, it never hangs about in the way
+     - three jets fly down the straight over the grid before the start (game.js asks with air.go and films it with air.shot: a camera on the
+       grid, low, looking back up the straight), trailing red, white and red smoke that hangs over the straight for a while ---- */
+  const RB_JET = { v: 70, d0: -470, d1: 700, y: 48, smoke: [-420, 420], dx: 15 };   // the jets: speed, from / to (m from the start line), height, smoke on, spacing
+  function rbAir(root, ownTex, nrG) {
+    const L = T.len, sAt = (d) => (((T.startS + d) % L) + L) % L, W = (d) => T.idx(sAt(d));
+    // the helicopter's crossing: 170 m past the start line (clear of the wing, the pit building's tower, the grandstands and the Energy Station),
+    // in from the side with the higher ground
+    const { heli, rotor, tail } = tvHeli(root); heli.visible = false;
+    const iX = W(170), gs = (sd) => nrG(T.px[iX] + T.nx[iX] * sd * 60, T.pz[iX] + T.nz[iX] * sd * 60), sdX = gs(1) > gs(-1) ? -1 : 1;
+    const X = { x: T.px[iX], z: T.pz[iX], y: T.hy[iX], nx: T.nx[iX] * sdX, nz: T.nz[iX] * sdX, tx: T.tx[iX], tz: T.tz[iX], d: 170 };
+    // the jets' line: the straight from 300 m before to 250 m after the start line; n: across it
+    const i0 = W(0), ia = W(-300), ib = W(250), ux0 = T.px[ib] - T.px[ia], uz0 = T.pz[ib] - T.pz[ia], ul = Math.hypot(ux0, uz0);
+    const J = { x: T.px[i0], z: T.pz[i0], y: T.hy[i0], ux: ux0 / ul, uz: uz0 / ul, nx: -uz0 / ul, nz: ux0 / ul };
+    // a jet (+x forward, 12.4 m, 7.6 m span): white, a red spine and wing tips, the dark canopy
+    const g = new GB(), Wc = [0.93, 0.93, 0.95], Rc = [0.82, 0.1, 0.14], Gc = [0.1, 0.12, 0.16];
+    const hull = (x0, ya0, yb0, hw0, x1, ya1, yb1, hw1, col, colTop) => {
+      const a = [[x0, ya0, -hw0], [x0, ya0, hw0], [x0, yb0, hw0], [x0, yb0, -hw0]], b = [[x1, ya1, -hw1], [x1, ya1, hw1], [x1, yb1, hw1], [x1, yb1, -hw1]], inn = [(x0 + x1) / 2, (ya0 + yb0 + ya1 + yb1) / 4, 0];
+      g.quadO(a[0], a[1], b[1], b[0], col, inn); g.quadO(a[3], a[2], b[2], b[3], colTop || col, inn); g.quadO(a[0], a[3], b[3], b[0], col, inn); g.quadO(a[1], a[2], b[2], b[1], col, inn);
+      g.quadO(b[0], b[1], b[2], b[3], col, inn); g.quadO(a[0], a[1], a[2], a[3], col, inn);
+    };
+    hull(6.2, -0.05, 0.1, 0.06, 3.6, -0.5, 0.6, 0.5, Wc); hull(3.6, -0.5, 0.6, 0.5, -4.8, -0.45, 0.62, 0.55, Wc, Rc); hull(-4.8, -0.45, 0.62, 0.55, -6.2, -0.2, 0.35, 0.3, Wc);
+    hull(3.4, 0.6, 1.05, 0.3, 1.2, 0.6, 1.0, 0.36, Gc);                                                    // canopy
+    for (const sd of [-1, 1]) for (const [y, dn] of [[0.05, 1], [-0.02, -1]]) {                             // delta wings (top and bottom), red tips
+      g.triO([2.0, y, sd * 0.5], [-4.3, y, sd * 3.8], [-4.9, y, sd * 0.5], Wc, [-2, y - dn, sd * 1.5]);
+      g.triO([-3.9, y + 0.001, sd * 3.2], [-4.3, y + 0.001, sd * 3.8], [-4.55, y + 0.001, sd * 3.2], Rc, [-4.2, y - dn, sd * 3.4]); }
+    for (const sd of [-1, 1]) g.triO([-3.2, 0.6, sd * 0.02], [-6.1, 3.0, sd * 0.02], [-6.3, 0.6, sd * 0.02], Rc, [-5, 1.2, -sd]);   // fin
+    const jg = g.geometry(), jm = new THREE.MeshLambertMaterial({ vertexColors: true, emissive: 0x4a4a50 }), jets = [];   // (seen from below: lit a little of their own)
+    for (let k = 0; k < 3; k++) { const m = new THREE.Mesh(jg, jm); m.visible = false; m.castShadow = true; m.rotation.order = 'YZX'; root.add(m); jets.push(m); }
+    // their smoke: a ribbon each behind them (up to 120 samples, 0.1 s apart), turned to the camera every frame, soft across (the texture)
+    const NP = 120, tc = document.createElement('canvas'); tc.width = 64; tc.height = 32; const tx2 = tc.getContext('2d'), r = rng(1968);
+    for (let y = 0; y < 32; y++) for (let x = 0; x < 64; x++) { const v = Math.sin(y / 31 * Math.PI) ** 1.4 * (0.75 + 0.25 * r()); tx2.fillStyle = `rgba(255,255,255,${v.toFixed(3)})`; tx2.fillRect(x, y, 1, 1); }
+    const stex = ownTex(new THREE.CanvasTexture(tc)); stex.wrapS = THREE.RepeatWrapping;
+    const trails = [[1, 0.18, 0.2], [0.97, 0.97, 0.97], [1, 0.18, 0.2]].map((col) => {
+      const gt = new THREE.BufferGeometry(), P = new Float32Array(NP * 6), C = new Float32Array(NP * 8), U = new Float32Array(NP * 4), I = [];
+      for (let k = 0; k < NP; k++) { U[k * 4] = k * 0.15; U[k * 4 + 1] = 0; U[k * 4 + 2] = k * 0.15; U[k * 4 + 3] = 1; if (k) { const a = (k - 1) * 2; I.push(a, a + 1, a + 3, a, a + 3, a + 2); } }
+      gt.setAttribute('position', new THREE.BufferAttribute(P, 3).setUsage(THREE.DynamicDrawUsage)); gt.setAttribute('color', new THREE.BufferAttribute(C, 4).setUsage(THREE.DynamicDrawUsage));
+      gt.setAttribute('uv', new THREE.BufferAttribute(U, 2)); gt.setIndex(I); gt.setDrawRange(0, 0); gt.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
+      const m = new THREE.Mesh(gt, new THREE.MeshBasicMaterial({ map: stex, vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide }));
+      m.frustumCulled = false; m.renderOrder = 4; m.matrixAutoUpdate = false; m.name = 'jet smoke'; root.add(m);
+      return { m, col, s: [], P, C };
+    });
+    return { heli, rotor, tail, X, J, jets, trails, on: false, fly: null, flyDone: false, t: 0, news: null, nNews: 0, v3: new THREE.Vector3(),
+      go: false, t0: -1, shot: { px: 0, py: 0, pz: 0, tx: 0, ty: 0, tz: 0, fov: 55, fogD: 95 } };
+  }
+  function rbAirStep(A, t, car) {
+    const raw = t - A.t, dt = clamp(raw, 0, 0.25); A.t = t;
+    const cam = typeof Render !== 'undefined' && Render.camera && Render.camera.isCamera ? Render.camera : null;
+    /* the jets: asked for by game.js (A.go) as the race is set up; while the shot runs (A.shot, the first ~6 s) the camera stands on the grid and
+       follows them in; the smoke hangs on, drifting and spreading, for half a minute */
+    const J = A.J, R = RB_JET;
+    if (A.go) { A.go = false; A.t0 = t; for (const tr of A.trails) tr.s.length = 0; }
+    if (A.t0 >= 0) {
+      const tt = t - A.t0, d = R.d0 + R.v * tt, climb = Math.max(0, d - 380) * 0.35, bank = Math.sin(tt * 0.7) * 0.03;
+      const cx = J.x + J.ux * d, cz = J.z + J.uz * d, cy = J.y + R.y + climb, fly = d < R.d1;
+      A.jets.forEach((m, k) => {
+        const o = (k - 1) * R.dx, back = k === 1 ? 0 : 6;   // (a V: the outer two a little behind)
+        m.visible = fly; m.position.set(cx + J.nx * o - J.ux * back, cy + (k === 1 ? 0.8 : 0), cz + J.nz * o - J.uz * back);
+        m.rotation.set(bank, -Math.atan2(J.uz, J.ux), Math.atan2(climb > 0 ? 0.35 : 0, 1));
+        const tr = A.trails[k], last = tr.s[tr.s.length - 1];
+        if (fly && d > R.smoke[0] && d < R.smoke[1] && (!last || t - last[3] >= 0.1)) { tr.s.push([m.position.x - J.ux * 6.3, m.position.y + 0.1, m.position.z - J.uz * 6.3, t]); if (tr.s.length > 120) tr.s.shift(); }
+      });
+      if (tt > 60) A.t0 = -1;
+      // the shot: on the grid 25 m past the start line, 2.2 m up, looking back up the straight at the formation (up to 48 degrees above the horizon)
+      const S = A.shot, ex = J.x + J.ux * 25, ez = J.z + J.uz * 25, ey = J.y + 2.2, hd = Math.max(8, Math.hypot(cx - ex, cz - ez)), el = Math.min(Math.atan2(cy - ey, hd), 0.84);
+      const lx = cx - ex, lz = cz - ez, ll = Math.hypot(lx, lz) || 1, fwd = (lx * J.ux + lz * J.uz) < 0 ? 1 : -1;   // (while they come: at them; once over: straight up the road)
+      const dx = fwd > 0 ? lx / ll : -J.ux, dz = fwd > 0 ? lz / ll : -J.uz;
+      S.px = ex; S.py = ey; S.pz = ez; S.tx = ex + dx * 60; S.tz = ez + dz * 60; S.ty = ey + Math.tan(fwd > 0 ? el : 0.84) * 60;
+    }
+    for (const tr of A.trails) {   // the ribbons, turned to the camera
+      const n = tr.s.length, g = tr.m.geometry, P = tr.P, C = tr.C;
+      for (let k = 0; k < n; k++) {
+        const s = tr.s[k], age = t - s[3], x = s[0] + RB_WIND[0] * 0.35 * age, y = s[1] - 0.12 * age, z = s[2] + RB_WIND[1] * 0.35 * age;
+        const q = tr.s[Math.min(n - 1, k + 1)], p0 = tr.s[Math.max(0, k - 1)], tx = q[0] - p0[0], ty = q[1] - p0[1], tz = q[2] - p0[2];
+        let vx = cam ? cam.position.x - x : 0, vy = cam ? cam.position.y - y : 1, vz = cam ? cam.position.z - z : 0;
+        let sx = ty * vz - tz * vy, sy = tz * vx - tx * vz, sz = tx * vy - ty * vx; const sl = Math.hypot(sx, sy, sz) || 1, w = (1.6 + 0.55 * age) / sl; sx *= w; sy *= w; sz *= w;
+        P[k * 6] = x - sx; P[k * 6 + 1] = y - sy; P[k * 6 + 2] = z - sz; P[k * 6 + 3] = x + sx; P[k * 6 + 4] = y + sy; P[k * 6 + 5] = z + sz;
+        const a = clamp(1 - age / 32, 0, 1) * clamp(age * 3, 0.35, 1) * 0.85;
+        for (const o of [0, 4]) { C[k * 8 + o] = tr.col[0]; C[k * 8 + o + 1] = tr.col[1]; C[k * 8 + o + 2] = tr.col[2]; C[k * 8 + o + 3] = a; }
+      }
+      g.setDrawRange(0, Math.max(0, n - 1) * 6); g.attributes.position.needsUpdate = true; g.attributes.color.needsUpdate = true;
+      tr.m.visible = n > 1;
+    }
+    /* the helicopter: once a race, when the player's car comes down the straight for the second time; timed (as Pikes Peak's fly-over) to be over
+       the road A m in front of the car at height H, both chosen for the camera in use: in the frame, clear of the car */
+    const m = A.heli, p = m.position, e = (k) => 1 - Math.exp(-dt * k), X = A.X;
+    if (!car || !car.isPlayer) { m.visible = A.on = false; A.fly = null; A.flyDone = false; return; }
+    const Ln = T.len, sq = car.q && car.q.i >= 0 ? car.q.s : T.query(car.x, car.z, -1, {}).s, d0 = ((sq - T.startS) % Ln + Ln) % Ln, d = d0 > Ln / 2 ? d0 - Ln : d0, ay = car.roadY || 0;
+    if (car.dist < Ln * 0.5) { A.fly = null; A.flyDone = false; }   // (a new race)
+    if (!A.fly && !A.flyDone && car.dist > Ln * 0.5 && d > -240 && d < -110) { A.fly = { x: -1, A: 25, H: 11, gy: -1e9, d0: d }; A.news = { key: 'heliRb', n: ++A.nNews }; }
+    const F = A.fly, prevX = p.x, prevZ = p.z, wasOn = A.on; let on = false;
+    if (F) {
+      if (cam) {
+        const kF = 1 / Math.tan(cam.fov / 2 * Math.PI / 180);
+        const proj = (x, y, z, dx, dy, dz) => { const v = A.v3.set(x - dx, y - dy, z - dz).applyMatrix4(cam.matrixWorldInverse); if (v.z > -1) return null; const dd = -v.z; v.applyMatrix4(cam.projectionMatrix); return [v.x * cam.aspect, v.y, dd]; };
+        let best = null, bs = -1e9;
+        for (const Aa of [40, 32, 25, 19, 14]) for (const H of [22, 16, 11, 8, 6]) {   // (as high and as far as the frame allows: small on the screen)
+          const j = T.idx(sAtS(X.d - Aa)), ex = T.px[j] - car.x, ez = T.pz[j] - car.z, ey = T.hy[j] - ay, h = proj(X.x, X.y + H + 1.2, X.z, ex, ey, ez), c = proj(T.px[j], T.hy[j] + 0.7, T.pz[j], ex, ey, ez);
+          if (!h || !c) continue;
+          const rr = 6.5 * kF / h[2], sep = Math.hypot(h[0] - c[0], h[1] - c[1]) - rr - 2 * kF / c[2];
+          if (Math.abs(h[0]) > cam.aspect - rr * 0.6 || Math.abs(h[1]) > 0.86 - rr * 0.6 || sep < 0.18) continue;
+          const sc = Math.min(sep, 0.5) + 0.016 * H + 0.006 * Aa;
+          if (sc > bs) { bs = sc; best = [Aa, H]; }
+        }
+        if (best) { const k = F.x < -0.7 ? 1 : e(1.5); F.A += (best[0] - F.A) * k; F.H += (best[1] - F.H) * k; }
+      }
+      // in by the car's progress (over the road when the car is A m short of it, whatever its speed), then away at ~0.3 a second
+      if (F.x < 0) F.x = Math.max(F.x, -1 + clamp((d - F.d0) / Math.max(20, X.d - F.A - F.d0), 0, 1) ** 1.2); else F.x += 0.3 * dt;
+      if (F.x < 0 && d > X.d - F.A) F.x = 0;
+      if (F.x >= 1) { A.fly = null; A.flyDone = true; }
+      else {
+        const x = F.x, u = 105 * (0.45 * x + 0.55 * x * x * x), a = 16 * x, hx = X.x + X.nx * u + X.tx * a, hz = X.z + X.nz * u + X.tz * a;
+        const du = 105 * (0.45 + 1.65 * x * x), vx = X.nx * du + X.tx * 16, vz = X.nz * du + X.tz * 16, vl = Math.hypot(vx, vz);
+        let gy = -1e9; for (const Ls of [0, 10, 20]) gy = Math.max(gy, nrGround(hx + vx / vl * Ls, hz + vz / vl * Ls));
+        F.gy = F.gy < -1e8 ? gy : F.gy + (gy - F.gy) * e(gy > F.gy ? 4 : 2.5);
+        p.set(hx, Math.max(X.y + F.H * (1 + 0.7 * x * x), F.gy + 10) + 0.3 * Math.sin(t * 0.9), hz); on = true;
+      }
+    }
+    m.visible = A.on = on;
+    if (!on) return;
+    // attitude: nose along its flight, banked into the turn, the nose down with speed
+    if (!wasOn) { A.yaw = Math.atan2(car.z - p.z, car.x - p.x); A.vx = A.vz = A.ac = A.al = 0; }
+    else if (dt > 1e-4) { const vx = (p.x - prevX) / dt, vz = (p.z - prevZ) / dt, c = Math.cos(A.yaw), sn = Math.sin(A.yaw), dvx = (vx - A.vx) / dt, dvz = (vz - A.vz) / dt, k = e(3);
+      A.ac += (dvx * c + dvz * sn - A.ac) * e(2); A.al += (dvz * c - dvx * sn - A.al) * e(2); A.vx += (vx - A.vx) * k; A.vz += (vz - A.vz) * k; }
+    const sp = Math.hypot(A.vx, A.vz), wv = sstep(2, 9, sp), lx = car.x - p.x, lz = car.z - p.z, ll = Math.hypot(lx, lz) || 1, wrap = (a) => a - TAU * Math.round(a / TAU);
+    A.yaw += wrap(Math.atan2(lerp(lz / ll, A.vz / (sp || 1), wv), lerp(lx / ll, A.vx / (sp || 1), wv)) - A.yaw) * e(1.6);
+    m.rotation.set(clamp(A.al * 0.035, -0.35, 0.35), -A.yaw, -clamp(0.004 * sp + 0.02 * A.ac, -0.12, 0.25));
+    A.rotor.rotation.y = (t * 41) % TAU; A.tail.rotation.z = (t * 73) % TAU;
+  }
+  const sAtS = (d) => (((T.startS + d) % T.len) + T.len) % T.len;   // (metres from the start line -> s)
+  /* ---- the Red Bull Ring's podium on the pit building's roof terrace, under the wing-shaped canopy, facing the straight (built by buildRbring,
+     shown by game.js after the race: show(colours of the first three), step() from World.update, hide()): three steps, the first three in
+     their cars' colours (the winner with the cup over the head, the others spraying champagne from ~2 s on, jumping), orange smoke either side,
+     and the camera for it (shot: from the straight, a long lens) ---- */
+  function rbPodium(root, at, uTime) {
+    const { x: cx, z: cz, y: cy, tx, tz, nx, nz } = at, fx = -nx, fz = -nz;   // f: the way they face (to the straight); t: along it
+    const place = (g, u, v) => {   // local -> world (local: x to the viewer's right = -t, y up, z towards the viewer = f; u: along the straight, v: towards it)
+      const a = g.attributes.position.array, nn = g.attributes.normal.array;
+      for (let k = 0; k < a.length; k += 3) { const lx = a[k], ly = a[k + 1], lz = a[k + 2]; a[k] = cx + tx * (u - lx) + fx * (lz + v); a[k + 1] = cy + ly; a[k + 2] = cz + tz * (u - lx) + fz * (lz + v);
+        const ax = nn[k], az = nn[k + 2]; nn[k] = -tx * ax + fx * az; nn[k + 2] = -tz * ax + fz * az; }
+      g.computeBoundingSphere(); return g; };
+    const prism = (g, a, b, r, col) => {   // a square bar between two points
+      const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], l = Math.hypot(...d), t = d.map(v => v / l), h = Math.abs(t[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
+      let u = [t[1] * h[2] - t[2] * h[1], t[2] * h[0] - t[0] * h[2], t[0] * h[1] - t[1] * h[0]]; const ul = Math.hypot(...u); u = u.map(v => v / ul);
+      const w = [t[1] * u[2] - t[2] * u[1], t[2] * u[0] - t[0] * u[2], t[0] * u[1] - t[1] * u[0]], m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+      const c = (p, i) => { const an = i * Math.PI / 2 + Math.PI / 4, cs = Math.cos(an) * r, sn = Math.sin(an) * r; return [p[0] + u[0] * cs + w[0] * sn, p[1] + u[1] * cs + w[1] * sn, p[2] + u[2] * cs + w[2] * sn]; };
+      for (let i = 0; i < 4; i++) g.quadO(c(a, i), c(a, i + 1), c(b, i + 1), c(b, i), col, m);
+      g.quadO(c(b, 0), c(b, 1), c(b, 2), c(b, 3), col, m); };
+    const SUIT = [1, 0, 1], SK = [0.86, 0.67, 0.53], DK = [0.12, 0.12, 0.14], GOLD = [0.98, 0.78, 0.25], BOT = [0.1, 0.3, 0.16];
+    const figure = (k) => {   // a driver in race overalls (SUIT: the car's colour, set by show) with a cap; 0 the winner (the cup up), 1 / 2 a bottle
+      const g = new GB();
+      for (const sd of [-1, 1]) prism(g, [sd * 0.11, 0, 0], [sd * 0.11, 0.88, 0], 0.085, SUIT);
+      box(g, 0, 0.86, 0, 0.44, 0.62, 0.26, 0, SUIT); box(g, 0, 1.48, 0, 0.12, 0.08, 0.12, 0, SK); box(g, 0, 1.54, 0, 0.22, 0.25, 0.22, 0, SK, DK);
+      box(g, 0, 1.76, 0.02, 0.24, 0.07, 0.3, 0, DK);   // cap
+      if (k === 0) { for (const sd of [-1, 1]) prism(g, [sd * 0.24, 1.42, 0], [sd * 0.13, 2.02, 0.06], 0.06, SUIT);
+        cyl(g, 0, 2.02, 0.06, 0.07, 0.16, 8, GOLD); cyl(g, 0, 2.18, 0.06, 0.06, 0.18, 8, GOLD, null, 0.16); cyl(g, 0, 2.36, 0.06, 0.16, 0.05, 10, GOLD, GOLD); }   // the cup
+      else { prism(g, [0.24, 1.42, 0], [0.34, 1.78, 0.34], 0.06, SUIT); prism(g, [-0.24, 1.42, 0], [-0.3, 0.95, 0.08], 0.06, SUIT);
+        prism(g, [0.34, 1.76, 0.32], [0.4, 1.98, 0.6], 0.045, BOT); }   // the bottle, up and out
+      const geo = g.geometry(), C = geo.attributes.color.array, suit = [];
+      for (let q = 0; q < C.length; q += 3) if (C[q] === 1 && C[q + 1] === 0 && C[q + 2] === 1) suit.push(q);
+      return { geo, suit };
+    };
+    // the steps (2nd on the viewer's left, 1st in the middle, 3rd on the right), a navy backdrop, the cup's plinth
+    const NV = [0.12, 0.16, 0.32], WH = [0.94, 0.94, 0.95], STEP = [[0, 0.6], [1.9, 0.45], [-1.9, 0.3]];   // [u, height]: 1st, 2nd, 3rd
+    const steps = new THREE.Group(), mat = new THREE.MeshLambertMaterial({ vertexColors: true });
+    STEP.forEach(([u, h]) => { const gs = new GB(); box(gs, 0, 0, 0, 1.7, h, 1.4, 0, NV, WH); box(gs, 0, h - 0.004, 0.69, 0.5, 0.02, 0.02, 0, [0.86, 0.12, 0.16]); const m = new THREE.Mesh(place(gs.geometry(), u, 0), mat); m.castShadow = m.receiveShadow = true; steps.add(m); });
+    { const gb = new GB(); box(gb, 0, 0, 0, 7.2, 3.1, 0.12, 0, NV, NV); const m = new THREE.Mesh(place(gb.geometry(), 0, -1.1), mat); m.receiveShadow = true; steps.add(m); }   // the backdrop
+    root.add(steps);
+    const figs = [0, 1, 2].map((k) => { const f = figure(k), m = new THREE.Mesh(place(f.geo, STEP[k][0], 0), mat); m.castShadow = true; m.visible = false; m.position.y = STEP[k][1]; root.add(m); return { m, suit: f.suit, k }; });
+    // the champagne: foam from the two bottles, arcing over the winner and out towards the straight (as the smoke: animated in the shader)
+    const spray = [], r = rng(1970);
+    for (const k of [1, 2]) { const u = STEP[k][0] - 0.4, h = STEP[k][1] + 2.0, px = cx + tx * u + fx * 0.6, pz = cz + tz * u + fz * 0.6, py = cy + h;
+      for (let n = 0; n < 60; n++) spray.push([px, py, pz, (k === 1 ? 1 : -1) * (1.2 + r() * 1.8), 1.2 + r() * 1.6, 1.6 + r() * 2.0, r()]); }   // (over the winner, under the canopy)
+    const NS = spray.length, P = new Float32Array(NS * 12), C2 = new Float32Array(NS * 8), V = new Float32Array(NS * 16), I = [];
+    spray.forEach(([x, y, z, vu, vy, vf, ph], q) => { const vx = -tx * vu + fx * vf, vz = -tz * vu + fz * vf;
+      for (let v = 0; v < 4; v++) { const o = q * 4 + v; P.set([x, y, z], o * 3); C2.set([v & 1 ? 1 : -1, v & 2 ? 1 : -1], o * 2); V.set([vx, vy, vz, ph], o * 4); }
+      const b = q * 4; I.push(b, b + 1, b + 3, b, b + 3, b + 2); });
+    const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(P, 3)); sg.setAttribute('aC', new THREE.BufferAttribute(C2, 2)); sg.setAttribute('aV', new THREE.BufferAttribute(V, 4));
+    sg.setIndex(I); sg.boundingSphere = new THREE.Sphere(new THREE.Vector3(cx, cy, cz), 40);
+    const U = { uTime, uT0: { value: 0 } };
+    const sm = new THREE.ShaderMaterial({ uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog]), transparent: true, depthWrite: false, fog: true, side: THREE.DoubleSide,
+      vertexShader: ['uniform float uTime;', 'uniform float uT0;', 'attribute vec2 aC;', 'attribute vec4 aV;', 'varying vec2 vC;', 'varying float vA;', '#include <fog_pars_vertex>',
+        'void main() {', '  float T = uTime - uT0 - 2.0, t = fract(T / 0.9 + aV.w) * 0.9;',   // (a puff lives 0.9 s, from 2 s after the start of the show)
+        '  vec3 p = position + aV.xyz * t + vec3(0.0, -4.9 * t * t, 0.0);',
+        '  vec4 mvPosition = modelViewMatrix * vec4(p, 1.0); float sz = 0.05 + 0.22 * t; mvPosition.xy += aC * sz;',
+        '  gl_Position = projectionMatrix * mvPosition; vC = aC; vA = T > 0.0 ? (1.0 - t / 0.9) * 0.9 : 0.0;', '  #include <fog_vertex>', '}'].join('\n'),
+      fragmentShader: ['varying vec2 vC;', 'varying float vA;', '#include <fog_pars_fragment>', 'void main() { float r = dot(vC, vC); if (r > 1.0 || vA <= 0.0) discard; gl_FragColor = vec4(1.0, 0.98, 0.9, vA * (1.0 - r));', '  #include <fog_fragment>', '}'].join('\n') });
+    sm.uniforms.uTime = U.uTime; sm.uniforms.uT0 = U.uT0;
+    const sprayM = new THREE.Mesh(sg, sm); sprayM.visible = false; sprayM.renderOrder = 5; sprayM.matrixAutoUpdate = false; sprayM.name = 'champagne'; root.add(sprayM);
+    // the camera: on the straight, 2 m out from its middle towards the pits, 10.5 m up, looking at the winner's head (a long lens)
+    const shot = { px: cx + fx * 27, py: cy + 1.4, pz: cz + fz * 27, tx: cx, ty: cy + 1.7, tz: cz, fov: 24, fogD: 70 };   // (over the railing, under the canopy's edge)
+    const P0 = { figs, sprayM, U, shot, on: false, req: false, t0: 0, smoke: null,
+      show(cols) { figs.forEach((f) => { const col = cols[f.k] || [0.8, 0.8, 0.8], A = f.m.geometry.attributes.color; for (const q of f.suit) { A.array[q] = col[0]; A.array[q + 1] = col[1]; A.array[q + 2] = col[2]; } A.needsUpdate = true; f.m.visible = true; });
+        sprayM.visible = true; if (P0.smoke) P0.smoke.visible = true; P0.on = true; P0.req = true; },
+      hide() { figs.forEach(f => { f.m.visible = false; }); sprayM.visible = false; if (P0.smoke) P0.smoke.visible = false; P0.on = false; },
+      step(t) { if (!P0.on) return; if (P0.req) { P0.req = false; P0.t0 = t; U.uT0.value = t % 1000; }
+        const tt = t - P0.t0; figs.forEach((f) => { f.m.position.y = STEP[f.k][1] + Math.max(0, Math.sin((tt + f.k * 0.37) * 7.5)) * (f.k === 0 ? 0.22 : 0.12) * sstep(0.3, 1.2, tt); }); } };
+    return P0;
+  }
   // the verge's cross-section beyond the road edge ([offset, height above the road]), lifted onto the ground where it rises: the road ribbons
   // and the knocked props' floor (rbringProps) use the same rows
   function rbVerge(i, side) {
@@ -7073,6 +7279,8 @@ const World = (function () {
     };
     const CR = crowdCtx({ gH: nrGround, near: (x, z) => nrNear(x, z).dd, maxSlope: 0.9, shirts: RB_SHIRTS });   // spectators (instanced)
     // (the orange smoke, the waving flags and the video walls' screens are collected on the way and built at the end; their own random stream)
+    const crowdPts = [];   // where the crowds are (x, z, how many: 0..1) for the crowd's sound (Sfx, out.crowdPts)
+    let podAt = null;      // the podium's place (the pit building's roof terrace): { s, f0: the garages' front there }
     const RX = rng(4322), smokeL = [], flagL = [], scrG = new GB(true), WROT = Math.atan2(RB_WIND[1], RB_WIND[0]), SMK = [[1, 0.5, 0.12], [1, 0.45, 0.08], [0.98, 0.56, 0.18]];
     const FL = { nl: [[0.68, 0.11, 0.16], [0.95, 0.95, 0.94], [0.13, 0.28, 0.55]], at: [[0.8, 0.1, 0.14], [0.95, 0.95, 0.94], [0.8, 0.1, 0.14]], or: [[1, 0.5, 0.08]], st: [[0.95, 0.95, 0.94], [0.12, 0.5, 0.25]], rb: [[0.12, 0.16, 0.36]] };
     const flagAt = (x, y, z, h, k, W) => { W = W || 1.6; cyl(scen.get(x, z), x, y - 0.2, z, 0.05, h + 0.2, 5, [0.86, 0.86, 0.88]); flagL.push([x, y + h, z, WROT + (RX() - 0.5) * 0.3, FL[k], W, W * 0.66]); };   // (the cloth flies downwind)
@@ -7211,6 +7419,12 @@ const World = (function () {
         exclPush(T.px[ik] + T.nx[ik] * o, T.pz[ik] + T.nz[ik] * o, 12);
         if (!bay0) bay0 = { s: s0, f0 }; bay1 = { s: s0 + 10, f0 };
       }
+      { const s = sAt(-130), f0 = gb(s);   // the podium's place on the roof terrace: between two of the canopy's columns (at -139.8 and -119.8 m)
+        if (f0 != null) { podAt = { s, f0 };
+          const i = T.idx(s), [u0, v0, u1, v1] = AUV(RB_AT.rbr), y = hyS(s) + 12.25, Q = (a, o, yy) => { const [x, z] = atSf(s + a, o); return [x, yy, z]; };
+          ban.quadO(Q(4, f0 + 1.13, y + 0.05), Q(-4, f0 + 1.13, y + 0.05), Q(-4, f0 + 1.13, y + 1.0), Q(4, f0 + 1.13, y + 1.0), W1, Q(0, f0 + 3, y + 0.5), [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]);   // the banner on its railing
+          ban.quadO(Q(3, f0 + 4.22, y + 1.75), Q(-3, f0 + 4.22, y + 1.75), Q(-3, f0 + 4.22, y + 3.05), Q(3, f0 + 4.22, y + 3.05), W1, Q(0, f0 + 6, y + 2.4), [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]);   // on its backdrop
+          for (const a of [4.4, -4.4]) { const [x, z] = atSf(s + a, f0 + 3.4); flagAt(x, y, z, 2.75, 'at', 1.8); } } }   // Austrian flags either side (under the canopy)
       for (const [bb, sd] of [[bay0, -1], [bay1, 1]]) if (bb) {   // the canopy's end plates: navy, a red edge along the top
         const e = bb.s + sd * 0.3, ins = at(e, bb.f0 + 6, 15.2), g = scen.get(...atSf(bb.s, bb.f0 + 6).slice(0, 2)), nv = [0.12, 0.16, 0.32], rd = [0.86, 0.12, 0.16];   // (ins: the plate's middle)
         const Pp = [[-3.0, 12.2], [-3.0, 15.9], [14.8, 18.9], [14.8, 12.2]].map(([oo, y]) => [bb.f0 + oo, y]);
@@ -7309,6 +7523,7 @@ const World = (function () {
           if (m % 2 === 0) { const [x, z] = atSf(A.s, side * (a1 - 0.4)), y0 = nrGround(x, z) - 0.3; box(g, x, y0, z, 0.5, tA - y0, 0.5, T.hd[T.idx(A.s)], [0.86, 0.87, 0.9]); }
         }
         for (const r of rows2) { const [x, z] = atSf(r.s, side * (r.prof[0][0] + rows * dep * 0.5)); exclPush(x, z, rows * dep / 2 + 6); CR.exclAdd(x, z, rows * dep / 2 + 3); }
+        for (let m = 0; m < rows2.length; m += 4) { const [x, z] = atSf(rows2[m].s, side * (rows2[m].prof[0][0] + rows * dep * 0.5)); crowdPts.push(x, z, orange ? 1 : 0.8); }   // (for the crowd's sound)
         if (orange && sec % 3 === 1 && rows2.length) { const M3 = rows2[rows2.length >> 1], p = M3.pts[1 + Math.max(0, rows - 3) * 2]; smokeL.push([p[0], p[1], p[2], SMK[Math.floor(RX() * 3)], 1.5 + RX() * 0.4]); }   // flares in the orange stands
         if (!roof) for (let m = 2; m < rows2.length - 1; m += 6) { const A = rows2[m], [ob, yb] = A.prof[A.prof.length - 3], [x, z] = atSf(A.s, side * (ob + 0.18));   // flags on the back wall of the open stands
           flagAt(x, yb, z, 5, orange ? pick({ nl: 0.5, or: 0.3, at: 0.2 }) : pick({ at: 0.5, st: 0.3, nl: 0.2 })); }
@@ -7544,6 +7759,7 @@ const World = (function () {
       }
       // the fans on the grass: flags on poles among them, orange smoke rising here and there
       for (const [a, b, sd] of def.ga || []) {
+        for (let d = a; d <= b; d += 20) { const [x, z] = onSide(sAt(d), sd, 7); crowdPts.push(x, z, 0.9); }
         for (let d = a + 12; d < b - 8; d += 20 + RX() * 16) { const [x, z] = onSide(sAt(d), sd, 3.5 + RX() * 9); if (excluded(x, z) || nrSlope(x, z) > 0.6) continue;
           flagAt(x, nrGround(x, z), z, 4.5 + RX() * 1.5, pick({ nl: 0.45, or: 0.25, at: 0.2, rb: 0.1 })); CR.avoid(x, z, 0.6); }
         for (let n = Math.max(1, Math.round((b - a) / 200)), k = 0; k < n; k++) { const [x, z] = onSide(sAt(a + (b - a) * (k + 0.5) / n + (RX() - 0.5) * 30), sd, 5 + RX() * 5);
@@ -7686,8 +7902,16 @@ const World = (function () {
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
     addM(fenceG, fMat);
     crowdFinish(CR, root, out);
-    if (smokeL.length) root.add(rbSmoke(smokeL, CR.U.uTime, ownTex(rbSmokeTex())));   // (the crowd's clock: World.update sets it)
+    const smTex = ownTex(rbSmokeTex());
+    if (smokeL.length) root.add(rbSmoke(smokeL, CR.U.uTime, smTex));   // (the crowd's clock: World.update sets it)
+    if (podAt) {   // the podium (shown after the race: game.js), two orange flares on the apron in front of it for the ceremony
+      const { s, f0 } = podAt, i = T.idx(s), [x, z] = atSf(s, f0 + 3.2), P = out.dyn.podium = out.podium = rbPodium(root, { x, z, y: hyS(s) + 12.25, tx: T.tx[i], tz: T.tz[i], nx: T.nx[i], nz: T.nz[i] }, CR.U.uTime);
+      const fl = [12, -12].map((a) => { const [fx2, fz2] = atSf(s + a, f0 - 3); return [fx2, hyS(s + a) + 0.3, fz2, SMK[0], 1.1]; });   // (at the edges of the shot)
+      P.smoke = rbSmoke(fl, CR.U.uTime, smTex); P.smoke.visible = false; root.add(P.smoke);
+    }
     if (flagL.length) root.add(rbFlags(flagL, CR.U.uTime));
+    out.crowdPts = Float32Array.from(crowdPts);
+    out.dyn.air = out.air = rbAir(root, ownTex, nrGround);   // the helicopter's pass, the jets before the start (game.js: air.go, air.shot)
     if (!scrG.empty) { const st = ownTex(rbScreenTex()); addM(scrG, new THREE.MeshBasicMaterial({ map: st })); out.dyn.screens = { tex: st, f: -1 }; }
     out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, stands: nStands, boxes: nBoxes, camp: nCamp, farms: nFarm, cars: nCars, tv: nTV, decals: nDecals, smoke: smokeL.length, flags: flagL.length, screens: nScr, photographers: nPh };   // (read by the tests)
     return out;
@@ -8390,6 +8614,8 @@ const World = (function () {
       for (const e of f.list) { e.mat.opacity = f.op; e.mesh.visible = f.op > 0.02; e.mat.depthWrite = f.op > 0.98; }
     }
     if (d.crowd) { d.crowd.uTime.value = t % 1000; if (car) d.crowd.uCar.value.set(car.x, car.roadY || 0, car.z); }   // spectators: arm waving, cheering near the followed car
+    if (d.air) rbAirStep(d.air, t, car);   // Red Bull Ring: the TV helicopter's pass, the jets and their smoke
+    if (d.podium) d.podium.step(t);   // Red Bull Ring: the podium after the race
     if (d.screens) { const f = Math.floor(t / 6) % 4; if (f !== d.screens.f) { d.screens.f = f; d.screens.tex.offset.x = f * 0.25; } }   // Red Bull Ring: the video walls' next picture every 6 s
     if (d.water) { d.water.offset.x = (t * 0.012) % 1; d.water.offset.y = (t * 0.007) % 1; }
     if (d.pk) pkUpdate(d.pk, t, car);   // Pikes Peak: the TV helicopter, the cloud shadows

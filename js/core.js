@@ -157,6 +157,9 @@ const Core = (function () {
         const tS = (k) => { const t = def.turns[k - 1]; return this.nearestIdx(t[0], t[1]) * ds - this.startS; }, W = (d) => ((d % len) + len) % len;
         this.drs = def.drs.map(([t, det, act, nt]) => ({ det: W(tS(t) + det), act: W(tS(t) + act), end: W(tS(nt) - 60) }));
       }
+      // TV sectors (def.sectors = [where sector 2 starts, where sector 3 starts], metres after the start line; closed circuits): the lap in
+      // three, the lines at 0, def.sectors[0] and def.sectors[1] (see Race._sectors)
+      this.sectors = def.sectors && !open ? [0, def.sectors[0], def.sectors[1]] : null;
     }
 
     // banked corners: the road surface's height offset at lateral offset d (m, + right) and its lateral slope there (dy/dd, 0 off the road)
@@ -1878,6 +1881,7 @@ const Core = (function () {
       if (this.player) this.player.num = opts.playerNum || 1;
       if (this.remote) this.remote.num = RM.num || 2;
       if (track.drs) this.drsLast = track.drs.map(() => null);   // (per DRS zone: who crossed its detection line last, and when)
+      if (track.sectors) this.secBest = [Infinity, Infinity, Infinity];   // (the best time in each sector of the race so far)
       this._prof();
     }
 
@@ -2057,6 +2061,7 @@ const Core = (function () {
           }
         }
         if (this.drsLast) this._drs(c, ds, dt);
+        if (this.secBest) this._sectors(c, ds, dt);
         // wrong way
         const fwd = Math.cos(c.h) * q.tx + Math.sin(c.h) * q.tz;
         if (fwd < -0.2 && c.speed > 3) c.wrongT += dt; else c.wrongT = Math.max(0, c.wrongT - dt * 2);
@@ -2123,6 +2128,23 @@ const Core = (function () {
         if ((c.drsA & bit) && crossed(z.act)) { c.drsA &= ~bit; if (!c.inPit && !c.finished) { c.drs = k + 1; if (c.isPlayer) c.drsEv = 'open'; } }
         if (c.drs === k + 1 && crossed(z.end)) c.drs = 0;
       }
+    }
+    // TV sectors (Track.sectors): every car's time through each third of the lap, as on the timing screens. A sector is purple ('p': the best
+    // of the race so far), green ('g': the car's own best) or yellow ('y': slower). c.secN: the sectors done; c.secS: when the current one
+    // began (the first at the start line, c.lapStart, as the lap: the three add up to the lap time); c.secT / c.secPB: the car's last and
+    // best time in each; the player's c.secEv [sector, time, colour] for the HUD. (These fields appear only on a circuit with sectors.)
+    _sectors(c, ds, dt) {
+      const S = this.track.sectors, L = this.track.len;
+      if (c.secN == null) { c.secN = 0; c.secS = 0; c.secT = [NaN, NaN, NaN]; c.secPB = [Infinity, Infinity, Infinity]; }
+      if (!(ds > 0) || this.state === 'grid') return;
+      if (c.secN === 0) c.secS = c.lapStart;
+      const k = c.secN % 3, lap = Math.floor(c.secN / 3), at = (k === 2 ? L : S[k + 1]) + lap * L, d1 = c.dist;   // the line that ends sector k
+      if (lap >= this.laps || d1 < at || d1 - ds >= at) return;
+      const t = this.time - dt * clamp((d1 - at) / ds, 0, 1), st = t - c.secS, col = st < this.secBest[k] ? 'p' : st < c.secPB[k] ? 'g' : 'y';
+      c.secS = t; c.secN++; c.secT[k] = st;
+      if (st < c.secPB[k]) c.secPB[k] = st;
+      if (st < this.secBest[k]) this.secBest[k] = st;
+      if (c.isPlayer) c.secEv = [k, st, col];
     }
     repairCar(c) {   // good as new: body, panels, lamps, glass; the renderer rebuilds the car when repairN changes
       c.dmg = 0; c.dz = [0, 0, 0, 0]; c.dents = []; c.cd = [0, 0, 0, 0]; c.lightOut = [0, 0, 0, 0]; c.lost = {}; c.detach = []; c.winOut = [0, 0, 0, 0]; c.roofDmg = 0;
