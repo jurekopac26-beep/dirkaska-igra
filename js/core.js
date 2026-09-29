@@ -96,6 +96,7 @@ const Core = (function () {
       for (let i = 0; i < N; i++) { let s = 0; for (let o = -3; o <= 3; o++) s += kr[open ? clamp(i + o, 0, N - 1) : (i + o + N) % N]; k[i] = s / 7; }
 
       this._buildElevation(def);
+      this._findCrossings();
       this._buildEdges();
       this._buildRacingLine();
       this._buildCorners();
@@ -260,6 +261,33 @@ const Core = (function () {
       return { y: this.hy[i0] * (1 - f) + this.hy[i1] * f, grade: this.grade[i0] * (1 - f) + this.grade[i1] * f, curv: this.curv[i0] * (1 - f) + this.curv[i1] * f };
     }
 
+    // where the centre line crosses itself on two levels (a figure of eight: one leg on a bridge over the other). A crossing counts only
+    // where the two legs are at least 4 m apart in height. cross = [{ lo, up, x, z, sin, dy, loZ, upZ }]: the sample positions (fractional
+    // indices) of the lower and the upper leg at the crossing point, the point, the sine of the angle between the legs, the height gap,
+    // and how far along each leg (m) the underpass walls / the bridge parapets reach (_buildEdges narrows the barriers there)
+    _findCrossings() {
+      const N = this.N, px = this.px, pz = this.pz, hy = this.hy, cross = this.cross = [];
+      if (this.open || !this.hasElev) return;
+      const C = 16, hash = new Map(), key = (a, b) => a * 65536 + b, cell = (i) => { const j = (i + 1) % N; return [Math.floor((px[i] + px[j]) / 2 / C), Math.floor((pz[i] + pz[j]) / 2 / C)]; };
+      for (let i = 0; i < N; i++) { const [a, b] = cell(i), k = key(a, b); let L = hash.get(k); if (!L) hash.set(k, L = []); L.push(i); }
+      for (let i = 0; i < N; i++) {
+        const [ca, cb] = cell(i), i1 = (i + 1) % N;
+        for (let a = ca - 1; a <= ca + 1; a++) for (let b = cb - 1; b <= cb + 1; b++) {
+          const L = hash.get(key(a, b)); if (!L) continue;
+          for (const m of L) {
+            if (m <= i || Math.min(m - i, N - m + i) < 40) continue;
+            const m1 = (m + 1) % N, ax = px[i1] - px[i], az = pz[i1] - pz[i], bx = px[m1] - px[m], bz = pz[m1] - pz[m], den = ax * bz - az * bx;
+            if (Math.abs(den) < 1e-9) continue;
+            const ex = px[m] - px[i], ez = pz[m] - pz[i], t = (ex * bz - ez * bx) / den, u = (ex * az - ez * ax) / den;
+            if (t < 0 || t >= 1 || u < 0 || u >= 1) continue;
+            const hi = hy[i] + (hy[i1] - hy[i]) * t, hm = hy[m] + (hy[m1] - hy[m]) * u; if (Math.abs(hi - hm) < 4) continue;
+            cross.push({ lo: hi < hm ? i + t : m + u, up: hi < hm ? m + u : i + t, x: px[i] + ax * t, z: pz[i] + az * t,
+              sin: Math.abs(den) / (Math.hypot(ax, az) * Math.hypot(bx, bz)), dy: Math.abs(hi - hm), loZ: 16, upZ: 40 });
+          }
+        }
+      }
+    }
+
     _buildEdges() {
       const N = this.N, w = this.w, k = this.k, ds = this.ds;
       const bl = new Float32Array(N), br = new Float32Array(N);
@@ -289,6 +317,9 @@ const Core = (function () {
       const px = this.px, pz = this.pz, nx = this.nx, nz = this.nz;
       const CELL = 80, hash = new Map(), hkey = (cx, cz) => cx * 131072 + cz;
       for (let j = 0; j < N; j += 2) { const key = hkey(Math.floor(px[j] / CELL), Math.floor(pz[j] / CELL)); let L = hash.get(key); if (!L) hash.set(key, L = []); L.push(j); }
+      // a crossing on two levels: around it the two legs do not limit each other's barriers (one passes over the other)
+      const X = this.cross || [], cdist = (i, f) => { const d = Math.abs(i - f); return Math.min(d, N - d) * ds; };
+      const crossPair = (i, j) => { for (const c of X) if ((cdist(i, c.lo) < 90 && cdist(j, c.up) < 90) || (cdist(i, c.up) < 90 && cdist(j, c.lo) < 90)) return true; return false; };
       const limitNear = () => {
         for (let i = 0; i < N; i++) {
           const cx = Math.floor(px[i] / CELL), cz = Math.floor(pz[i] / CELL);
@@ -301,6 +332,7 @@ const Core = (function () {
             const dx = px[j] - px[i], dz = pz[j] - pz[i];
             const d = Math.hypot(dx, dz);
             if (d > 80) continue;
+            if (X.length && crossPair(i, j)) continue;
             const side = dx * nx[i] + dz * nz[i];
             const lim = d * 0.5 - 1;
             if (side > 0) BR[i] = Math.min(BR[i], lim); else BL[i] = Math.min(BL[i], lim);
@@ -313,6 +345,12 @@ const Core = (function () {
       limitInside(); limitNear();
       const minB = Math.min(3.5, this.def.side || 3.5);
       for (let i = 0; i < N; i++) { BL[i] = Math.max(BL[i], w + minB); BR[i] = Math.max(BR[i], w + minB); }
+      // ... and there the upper leg runs between the parapets of its bridge (3 m from the road), the lower one between the walls of the
+      // underpass (3.4 m), each narrowing in over the next 30 / 24 m
+      for (const c of X) for (let i = 0; i < N; i++) {
+        const fu = sstep(c.upZ + 30, c.upZ, cdist(i, c.up)), fl = sstep(c.loZ + 24, c.loZ, cdist(i, c.lo));
+        for (const [f, t] of [[fu, w + 3], [fl, w + 3.4]]) if (f > 0) { if (BL[i] > t) BL[i] = lerp(BL[i], t, f); if (BR[i] > t) BR[i] = lerp(BR[i], t, f); }
+      }
       this.bl = BL; this.br = BR;
       // curbs where curvature is meaningful (both sides), dilated — but not on makadam (rally) roads
       const cb = new Uint8Array(N);
@@ -1901,7 +1939,8 @@ const Core = (function () {
       const ox = P.lx * hl, oz = P.lz * hw, x = c.x + ox * ch - oz * sh, z = c.z + ox * sh + oz * ch;
       const ol = Math.hypot(ox, oz) || 1, ux = (ox * ch - oz * sh) / ol, uz = (ox * sh + oz * ch) / ol, out = 2 + Math.random() * 3;
       const d = { id: ++this.debrisId, car: c.id, part: name, x, z, y: (c.y || 0) + P.y, vx: c.vx * 0.7 + ux * out, vz: c.vz * 0.7 + uz * out, vy: 2.5 + Math.random() * 2.5,
-        yaw: c.h, rx: 0, rz: 0, wx: (Math.random() - 0.5) * 16, wy: (Math.random() - 0.5) * 12, wz: (Math.random() - 0.5) * 16, r: P.r, m: P.m, h: P.h, rest: false, ground: false, q: null, dead: false };
+        yaw: c.h, rx: 0, rz: 0, wx: (Math.random() - 0.5) * 16, wy: (Math.random() - 0.5) * 12, wz: (Math.random() - 0.5) * 16, r: P.r, m: P.m, h: P.h, rest: false, ground: false,
+        q: this.track.cross.length && c.q.i >= 0 ? { i: c.q.i } : null, dead: false };   // (a figure of eight: the part starts on its car's level, not on the nearest leg)
       this.debris.push(d);
       if (this.debris.length > 40) { const old = this.debris.shift(); old.dead = true; }   // keep the road readable
     }
@@ -1946,7 +1985,7 @@ const Core = (function () {
         this._bkPut(p);
       });
     }
-    propFx(b, v) { if (v < 3) return; const E = this.propEvents || (this.propEvents = []); if (E.length < 24) E.push({ x: b.x, y: b.y, z: b.z, kind: b.kind, v }); }   // for the renderer: dust / straw puffs
+    propFx(b, v) { if (v < 3) return; const E = this.propEvents || (this.propEvents = []); if (E.length < 24) E.push({ x: b.x, y: b.y, z: b.z, kind: b.kind, v, i: b.qi }); }   // for the renderer: dust / straw puffs (i: the prop's sample, where the puff lands)
     stepProps(dt) {
       if (!this.props) return;
       const T = this.track, bk = this.propBk, nb = bk.length;
@@ -1985,16 +2024,17 @@ const Core = (function () {
         c.steer += clamp(target - c.steer, -rate * dt, rate * dt);
         c.step(dt, T);
       }
-      // collisions
+      // collisions (a figure of eight: a car on the bridge and one under it do not touch)
+      const lv = T.cross.length > 0;
       for (let i = 0; i < cars.length; i++) {
-        for (let j = i + 1; j < cars.length; j++) carCollide(cars[i], cars[j]);
+        for (let j = i + 1; j < cars.length; j++) if (!lv || Math.abs((cars[i].y || 0) - (cars[j].y || 0)) < 3) carCollide(cars[i], cars[j]);
       }
       if (T.def.pit) for (const c of cars) if (c.isPlayer) this.pitStep(c, dt, true);   // which side of the pit wall the car is on (before the walls push it)
       for (const c of cars) if (!c.net) wallCollide(c, T);
       if (T.def.pit) for (const c of cars) if (c.isPlayer) this.pitStep(c, dt, false);  // speed limiter, stopping at the box, repair
       for (const c of cars) if (c.detach.length) { for (const name of c.detach) this.spawnDebris(c, name); c.detach.length = 0; }
       for (const c of cars) if (!c.net && !Number.isFinite(c.x + c.z + c.vx + c.vz + c.h + c.w + (c.y || 0))) { c.x = c.z = c.vx = c.vz = c.w = c.h = 0; c.y = 0; c.vy = 0; c.air = 0; c.q.s = c.goodS || 0; c.q.i = -1; this.rescue(c); }
-      if (this.debris.length) { for (const d of this.debris) stepDebris(d, T, dt); for (const c of cars) if (!c.net) for (const d of this.debris) debrisHit(c, d); }
+      if (this.debris.length) { for (const d of this.debris) stepDebris(d, T, dt); for (const c of cars) if (!c.net) for (const d of this.debris) if (!lv || Math.abs(d.y - (c.y || 0)) < 4) debrisHit(c, d); }
       // progress
       for (const c of cars) {
         const q = T.query(c.x, c.z, c.q.i, c.q);
