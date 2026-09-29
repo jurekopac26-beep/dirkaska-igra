@@ -68,5 +68,12 @@
   "kverts": 544,
   "maxKverts": 752,
   "jsMs": 1.45
+ },
+ "spa": {
+  "calls": 197,
+  "maxCalls": 258,
+  "kverts": 480,
+  "maxKverts": 609,
+  "jsMs": 0.79
  }
 }

@@ -4086,7 +4086,7 @@ const World = (function () {
     const L = def.lc, lc = new Uint8Array(L.nx * L.nz);
     for (let p = 0, k = 0; k < lc.length;) { const v = NR_A64.indexOf(L.rle[p++]); let n = (v & 15) + 1; if ((v & 15) === 15) { let e; do { e = NR_A64.indexOf(L.rle[p++]); n += e; } while (e === 63); } lc.fill(v >> 4, k, Math.min(lc.length, k + n)); k += n; }
     P.lc = lc; P.L = L;
-    // real terrain: 64 m grid, heights above 300 m a.s.l. (the same datum as the road)
+    // real terrain: def.dem's grid (the Nordschleife 64 m, Spa 16 m), heights above the road's datum (def.dem.datum, else 300 m a.s.l.)
     const D = def.dem, bin = atob(D.b64), dem = new Float32Array(D.nx * D.nz), datum = D.datum != null ? D.datum : 300;   // (the road's datum: 300 m a.s.l. on the Nordschleife)
     for (let k = 0; k < dem.length; k++) dem[k] = D.lo + bin.charCodeAt(k) * D.step - datum;
     P.dem = dem; P.D = D;
@@ -4621,7 +4621,7 @@ const World = (function () {
         for (let i = 0; i < N; i++) {
           const j = (i + 1) % N; if (!flag[i] && !flag[j]) continue;
           const row = (k, f) => { const vr = vergeRow(k, side), a = w + (T.curb[k] ? T.curbW : 0.35), b = lerp(a + 0.1, bar[k] - 0.7, f), m = (a + b) / 2;
-            return [a, m, b].map(o => { const p = Pt(k, side * o, vy(vr, o) + 0.03); return p; }); };
+            return [a, m, b].map(o => Pt(k, side * o, vy(vr, o) + 0.03)); };
           const A = row(i, flag[i] ? 1 : 0), B = row(j, flag[j] ? 1 : 0), uv = (p) => [p[0] / 10, -p[2] / 10];
           for (let c = 0; c < 2; c++) gg.quadUp(A[c], A[c + 1], B[c + 1], B[c], [one, one, one, one], [uv(A[c]), uv(A[c + 1]), uv(B[c + 1]), uv(B[c])]);
         }
