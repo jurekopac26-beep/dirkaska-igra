@@ -1,6 +1,7 @@
 // Browser smoke test: the page loads (over http like GitHub Pages, and from a local file), every track can be
 // raced for 20 s on autopilot, settings migrate, the physics can be switched mid-race, the title demo runs,
-// a Pikes Peak run and an Ouninpohja run finish and their records are saved per physics. Zero page errors allowed.
+// a Pikes Peak run and an Ouninpohja run finish and their records are saved per physics (Ouninpohja also in the rain, apart).
+// Zero page errors allowed.
 //   node tests/browser/smoke.test.mjs
 import path from 'node:path';
 import url from 'node:url';
@@ -112,21 +113,50 @@ try {
   }
 
   // 6b. the Ouninpohja rally stage to the flying finish: the distance to go under the clock (no altitude), the record under
-  //     'ouninpohja@cs', the stage's own words on the results screen, the split table with the distances
+  //     'ouninpohja2@cs' (def.recId: the 9.7 km stage), the stage's own words on the results screen, the split table with the
+  //     distances, the medal and the longest jump (the Yellow House kept with the record), the co-driver's calls ready
   {
     await startTrack(page, 'ouninpohja');
     const r = await page.evaluate(async () => {
       const g = window.__game;
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));   // (a frame of the new race has drawn the HUD: the first one can take a while, its shaders compile)
-      const left = document.getElementById('h-alt').textContent;
+      const left = document.getElementById('h-alt').textContent, calls = g.codrv.calls;
       for (let i = 0; i < 300 && g.phase !== 'done'; i++) { g.sim(1, true); if (i % 10 === 0) await new Promise(r => setTimeout(r, 0)); }
       await new Promise(r => setTimeout(r, 800));
       const rec = JSON.parse(localStorage.getItem('tdgp-records') || '{}'), head = [...document.querySelectorAll('#res-tt th')].map(e => e.textContent);
-      return { phase: g.phase, t: g.race.player.finishTime, left, again: document.getElementById('res-restart').textContent, head: head.join('|'), rec: rec.tracks && rec.tracks['ouninpohja@cs'] };
+      return { phase: g.phase, t: g.race.player.finishTime, left, calls, again: document.getElementById('res-restart').textContent, head: head.join('|'), sub: document.getElementById('res-sub').textContent, rec: rec.tracks && rec.tracks['ouninpohja2@cs'] };
     });
     T.check('Ouninpohja stage finishes, record saved for cs, the distance to go on the HUD, the stage\'s words on the results',
       r.phase === 'done' && r.rec && r.rec.bestTime > 0 && /^še \d+,\d km$/.test(r.left) && r.again === 'Ponovi preizkušnjo' && r.head.startsWith('Točka|Razdalja|'),
       `time ${r.t && r.t.toFixed(2)} s, record ${r.rec && r.rec.bestTime}, HUD "${r.left}", button "${r.again}", splits "${r.head}"`);
+    T.check('Ouninpohja: a medal line and the longest jump on the results, the Yellow House jump kept with the record, the co-driver\'s calls',
+      /medalja/.test(r.sub) && /Najdaljši skok \d+ m · Rumena hiša \d+ m/.test(r.sub) && r.rec && r.rec.jumpRec > 30 && r.calls > 20,
+      `"${r.sub}", Yellow House record ${r.rec && r.rec.jumpRec} m, ${r.calls} co-driver calls`);
+  }
+
+  // 6c. Ouninpohja in the rain (Dež on the track menu): the stage's puddles drawn and on the road (Track.inRain) while the race runs,
+  //     to the finish; a time trial keeps its records in the rain apart ('ouninpohja2-wet@cs'); then back to dry, the puddles gone
+  {
+    const r = await page.evaluate(async () => {
+      const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)), frame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(250);
+      document.querySelector('[data-track="ouninpohja"]').click(); await wait(150);
+      document.querySelector('[data-set="weather"] button[data-v="rain"]').click(); await wait(150);
+      g.onAction('start');
+      for (let k = 0; k < 1200 && !(g.race && g.race.track.def.id === 'ouninpohja'); k++) await wait(100);
+      await frame();
+      const W = Render.world.dyn.wet, drawn = !!(g.race.rain && Render.raining && W && W.puddles.visible);
+      g.sim(2, true); const onRoad = g.race.track.inRain === true;
+      for (let i = 0; i < 300 && g.phase !== 'done'; i++) { g.sim(1, true); if (i % 10 === 0) await wait(0); }
+      await wait(800);
+      const rec = JSON.parse(localStorage.getItem('tdgp-records') || '{}'), out = { drawn, onRoad, phase: g.phase, t: g.race.player.finishTime, rec: rec.tracks && rec.tracks['ouninpohja2-wet@cs'], sub: document.getElementById('res-sub').textContent };
+      g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(250); document.querySelector('[data-set="weather"] button[data-v="dry"]').click(); await wait(600); await frame();
+      out.dry = g.S.weather === 'dry' && !Render.raining && !W.puddles.visible;
+      return out;
+    });
+    T.check('Ouninpohja in the rain: puddles drawn and on the road, finishes, its own record in the rain, back to dry',
+      r.drawn && r.onRoad && r.phase === 'done' && r.rec && r.rec.bestTime > 0 && / v dežju/.test(r.sub) && r.dry,
+      `puddles drawn ${r.drawn}, on the road ${r.onRoad}, time ${r.t && r.t.toFixed(2)} s, record ${r.rec && r.rec.bestTime}, "${r.sub}", dry again ${r.dry}`);
   }
   T.check('no page errors during the whole run', !errors.length, errors.slice(0, 5).join(' | '));
   await ctx.close();
