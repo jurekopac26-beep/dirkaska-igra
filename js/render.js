@@ -750,7 +750,8 @@ const Render = (function () {
       if (skids) skids.clear();
     }
     clearPropMeshes();
-    world = World.build(scene, track, tex, { density });
+    const th = THEMES[(track.def && track.def.theme) || 'lake'] || THEMES.lake;
+    world = World.build(scene, track, tex, { density, sunOff: th.sunOff || [-80, 96, 70] });   // (sunOff: Ouninpohja's shafts of light fall along the sun)
     if (!world.farClip && camera.far !== 700) { camera.far = 700; camera.updateProjectionMatrix(); }
     applyTheme((track.def && track.def.theme) || 'lake'); wet = -1;   // (the weather again on the new world's road)
     birds.reset(!!(track.def && (track.def.sea || track.def.theme === 'monaco')));   // (gulls by the sea)
@@ -885,7 +886,7 @@ const Render = (function () {
     kamp:     { fog: 0xa4a8d0, sun: 0xff9468, sunI: 1.33, sky: 0xc6ceff, gnd: 0x7a7338, hemiI: 1.0, tint: [1.0, 0.96, 1.03], sat: 1.06, sunOff: [-100, 80, 30] },   // Gromski rt: sun in the west-south-west, a warm bright ambient: softer shadows, as in the reference
     monaco:   { fog: 0xcfe2f1, sun: 0xfff0d6, sunI: 1.08, sky: 0xd8ebff, gnd: 0x8a7c62, hemiI: 0.6, tint: [1.03, 1.0, 0.95], sat: 1.14 },
     mountain: { fog: 0xb4cadf, sun: 0xfff2e0, sunI: 1.0, sky: 0xc8dcff, gnd: 0x4d5c33, hemiI: 0.6, tint: [0.98, 1.0, 1.03], sat: 1.12 },
-    ouni:     { fog: 0xc4d3dc, sun: 0xffe9c6, sunI: 1.18, sky: 0xcfe1f5, gnd: 0x4a5a2e, hemiI: 0.56, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-88, 72, 58] },   // Ouninpohja: a clear Finnish August afternoon, a warm sun lower in the west (the forest's long shadows across the road), soft haze over the lakes
+    ouni:     { fog: 0xc9d5da, sun: 0xffddae, sunI: 1.2, sky: 0xc9dcf2, gnd: 0x4f5a30, hemiI: 0.64, tint: [1.04, 1.0, 0.95], sat: 1.1, sunOff: [-88, 72, 58], haze: 0.2, hazeCol: [1, 0.82, 0.56], shadowR: 2.2 },   // Ouninpohja: a clear Finnish August afternoon, a warm golden sun lower in the west (the forest's long shadows across the road, soft-edged and lit by the sky), soft haze over the lakes
     pikes:    { fog: 0xbfd3e8, sun: 0xfff4e4, sunI: 1.1, sky: 0xcfe0ff, gnd: 0x6b5847, hemiI: 0.6, tint: [1.0, 0.99, 1.02], sat: 1.1 },   // clear, thin high-altitude air: bright sun, pale blue haze over the valleys
     nring:    { fog: 0xb7c7cc, sun: 0xfff0d8, sunI: 1.1, sky: 0xcadcf0, gnd: 0x3e4a2a, hemiI: 0.6, tint: [1.03, 1.0, 0.95], sat: 1.04, sunOff: [-80, 76, 70] },   // the Eifel: a summer afternoon over the 'green hell' (a lower sun: longer shadows)
     spa:      { fog: 0xc3ced7, sun: 0xfff1de, sunI: 0.98, sky: 0xd0dde9, gnd: 0x43522f, hemiI: 0.64, tint: [0.99, 1.0, 1.01], sat: 1.1 },   // the Ardennes: a little greyer, softer daylight (Spa's changeable weather)
@@ -896,6 +897,7 @@ const Render = (function () {
   function applyTheme(id) {
     const t = THEMES[id] || THEMES.lake, r = Math.max(0, wet); themeId = id;
     sunOff = t.sunOff || [-80, 96, 70];   // low evening sun where the theme asks for it (long shadows)
+    sun.shadow.radius = t.shadowR || 1;   // (softer shadow edges where the theme asks for them: the PCF filter of 'normal' quality)
     // rain: an overcast sky (grey haze, a weak sun, more light from the whole sky), a cooler, paler grade
     const mix = (hex, to, k) => _c1.setHex(hex).lerp(_c2.setHex(to), k * r);
     scene.fog.color.copy(mix(t.fog, 0x949ea7, 0.75)); renderer.setClearColor(scene.fog.color, 1);
@@ -917,6 +919,7 @@ const Render = (function () {
       m.color.copy(m.userData.dry).multiplyScalar(1 - (m.map === tex.curb ? 0.22 : 0.36) * r); } });
     const W = world.dyn.wet;   // (a gravel stage with a road of its own, Ouninpohja: its puddles show, the gravel darkens and glistens, the verges darken)
     if (W) { W.puddles.visible = r > 0; W.road.color.setScalar(1 - 0.36 * r); W.road.shininess = r > 0 ? 28 : W.base.sh; W.road.specular.setHex(r > 0 ? 0x3c3e40 : W.base.sp); W.ground.color.setScalar(1 - 0.2 * r); }
+    if (world.dyn.rays) world.dyn.rays.visible = !(r > 0);   // (no shafts of sunlight under the overcast)
   }
 
   /* ---------------- post-processing (high quality): tilt-shift miniature look, edge smoothing, colour grade, vignette ---------------- */

@@ -4903,31 +4903,64 @@ const World = (function () {
     let sum = 0; for (let o = 0; o < d.length; o += 4) sum += d[o]; ouGMean = sum / (S * S) / 255;
     return (ouGTexC = t);
   }
+  // a soft lump of a tree crown: an icosahedron (open: without its 6 lowest faces, which the crown below hides). Its normals are half its own
+  // and half the whole crown's C = [x, y, z, radius, half height] (the lumps read as one soft crown in the light, each still round); the
+  // colour darkens down the crown (the shade inside and under it) and warms towards the sunlit top
+  function ouLump(g, cx, cy, cz, r, sy, col, R, jit, C, open) {
+    const vs = ICO_V.map(v => { const k = 1 + (R() - 0.5) * jit; return [cx + v[0] * r * k, cy + v[1] * r * sy * k, cz + v[2] * r * k]; }), inn = [cx, cy, cz];
+    const nn = (p) => { let x = (p[0] - cx) / r, y = (p[1] - cy) / (r * sy * sy), z = (p[2] - cz) / r, l = Math.hypot(x, y, z) || 1;
+      let X = (p[0] - C[0]) / C[3], Y = (p[1] - C[1]) * C[3] / (C[4] * C[4]), Z = (p[2] - C[2]) / C[3], L = Math.hypot(X, Y, Z) || 1;
+      x = x / l * 0.55 + X / L * 0.45; y = y / l * 0.55 + Y / L * 0.45; z = z / l * 0.55 + Z / L * 0.45; l = Math.hypot(x, y, z) || 1; return [x / l, y / l, z / l]; };
+    const sc = (p) => { const t = clamp((p[1] - C[1]) / C[4] * 0.5 + 0.5, 0, 1), u = clamp((p[1] - cy) / (r * sy) * 0.5 + 0.5, 0, 1), k = (0.62 + 0.44 * t) * (0.86 + 0.22 * u);
+      return [col[0] * k * (1 + 0.12 * t), col[1] * k, col[2] * k * (1 - 0.1 * t)]; };
+    for (const f of ICO_F) { if (open && ICO_V[f[0]][1] + ICO_V[f[1]][1] + ICO_V[f[2]][1] < -1.2) continue; const a = vs[f[0]], b = vs[f[1]], c = vs[f[2]]; g.triON(a, b, c, nn(a), nn(b), nn(c), inn, sc(a), sc(b), sc(c)); }
+  }
+  // a spruce tier: a soft cone with n drooping branch tips round its foot (2n faces). The tips stick out into the light (lighter, the young
+  // shoots), the notches and the top of the tier, under the next one, are in its shade (darker); top: the last tier, its point in the sun
+  function ouFir(g, cx, cy, cz, r, h, n, col, colTip, rot, droop, top) {
+    const apex = [cx, cy + h, cz], inn = [cx, cy + h * 0.3, cz], L = Math.hypot(r, h), ny = r / L, nh = h / L, P = [], Nm = [], Cl = [];
+    const dk = [col[0] * 0.8, col[1] * 0.8, col[2] * 0.82], ap = top ? colTip : [col[0] * 0.66, col[1] * 0.66, col[2] * 0.7];
+    for (let k = 0; k < 2 * n; k++) { const a = rot + (k + (k % 2 ? 0 : 0.12)) / (2 * n) * TAU, tip = k % 2 === 0, rr = tip ? r : r * 0.7, ca = Math.cos(a), sa = Math.sin(a);
+      P.push([cx + ca * rr, cy + (tip ? -droop : h * 0.1), cz + sa * rr]);
+      const ly = tip ? ny * 0.55 : ny * 1.15, l = Math.hypot(nh, ly); Nm.push([ca * nh / l, ly / l, sa * nh / l]); Cl.push(tip ? colTip : dk); }
+    const up = [0, 1, 0];
+    for (let k = 0; k < 2 * n; k++) { const j = (k + 1) % (2 * n); g.triON(P[k], P[j], apex, Nm[k], Nm[j], up, inn, Cl[k], Cl[j], ap); }
+  }
   function ouTreeGeo(kind, far) {   // unit trees (height 1, instances scale them): 0 Norway spruce, 1 Scots pine, 2 silver birch, 3 young spruce; far: the plain
-    // versions for the forest deep behind the road (never seen up close)
-    const g = new GB(), R = rng(620 + kind), rs = ROCK_SMOOTH;
-    ROCK_SMOOTH = kind === 1 || kind === 2;   // soft, rounded crowns on the pines and birches (the spruces stay jagged)
+    // versions for the forest deep behind the road (never seen up close). Soft shaded: crowns of several round lumps, spruces of drooping tiers
+    const g = new GB(), R = rng(620 + kind), rs = ROCK_SMOOTH; ROCK_SMOOTH = false;   // (flat trunks; the crowns shade themselves)
+    const SP = [0.085, 0.18, 0.11], SPT = [0.19, 0.33, 0.2], PI_ = [0.15, 0.27, 0.12], BI = [0.28, 0.43, 0.14];
+    const vr = (c, a) => [c[0] * (1 + a), c[1] * (1 + a * 0.8), c[2] * (1 + a * 0.5)];
     if (far) {
-      if (kind === 0) { const col = [0.09, 0.185, 0.115], tip = [0.17, 0.3, 0.19]; starCone(g, 0, 0.02, 0, 0.3, 0.42, 4, col, tip, 0.2, 0.05); starCone(g, 0, 0.36, 0, 0.19, 0.38, 4, col, tip, 0.9, 0.04); cone(g, 0, 0.66, 0, 0.08, 0.34, 4, col, tip, 1.2); }
-      else if (kind === 1) { cyl(g, 0, -0.02, 0, 0.017, 0.78, 3, [0.58, 0.37, 0.22], null, 0.009); ico(g, 0, 0.8, 0, 0.19, 0.55, [0.13, 0.25, 0.12], R, 0.35); }
-      else { cyl(g, 0, -0.02, 0, 0.016, 0.62, 3, [0.88, 0.88, 0.84], null, 0.01); ico(g, 0, 0.67, 0, 0.16, 1.8, [0.27, 0.42, 0.13], R, 0.3); }
+      if (kind === 0) { ouFir(g, 0, 0.02, 0, 0.3, 0.44, 5, SP, SPT, 0.2, 0.06); ouFir(g, 0, 0.36, 0, 0.19, 0.4, 4, vr(SP, 0.08), SPT, 0.9, 0.05); cone(g, 0, 0.7, 0, 0.06, 0.3, 3, SP, SPT, 1.2); }
+      else if (kind === 1) { const C = [0, 0.82, 0, 0.2, 0.12];
+        cyl(g, 0, -0.02, 0, 0.017, 0.8, 3, [0.58, 0.37, 0.22], null, 0.009);
+        ouLump(g, 0, 0.82, 0, 0.16, 0.6, PI_, R, 0.3, C); ouLump(g, 0.13, 0.77, 0.05, 0.1, 0.62, vr(PI_, 0.06), R, 0.3, C, true); }
+      else { const C = [0, 0.66, 0, 0.17, 0.25];
+        cyl(g, 0, -0.02, 0, 0.016, 0.6, 3, [0.88, 0.88, 0.84], null, 0.01);
+        ouLump(g, 0, 0.68, 0, 0.14, 1.55, BI, R, 0.28, C); ouLump(g, 0.1, 0.57, -0.04, 0.1, 1.2, vr(BI, 0.07), R, 0.3, C, true); }
       ROCK_SMOOTH = rs; const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
     }
-    if (kind === 0) {   // spruce: four drooping tiers down to the ground and a spire, very dark inside, the tips of the branches lighter and a little bluer
-      const col = [0.085, 0.175, 0.11], tip = [0.17, 0.3, 0.19];
-      [[0.02, 0.31, 0.32, 0.06], [0.23, 0.25, 0.31, 0.05], [0.44, 0.19, 0.28, 0.045], [0.61, 0.13, 0.24, 0.035]].forEach(([y, r, h, dr], k) => {
-        const kk = k % 2 ? 1.1 : 1; starCone(g, 0, y, 0, r, h, 5, [col[0] * kk, col[1] * kk, col[2] * kk], tip, k * 0.66, dr); });
-      cone(g, 0, 0.78, 0, 0.055, 0.22, 4, col, tip, 0.4);
-    } else if (kind === 1) {   // pine: a long bare trunk, grey-brown below and orange up high, an uneven umbrella crown of two flat clumps
-      cyl(g, 0, -0.02, 0, 0.018, 0.4, 3, [0.36, 0.3, 0.25], null, 0.015); cyl(g, 0, 0.38, 0, 0.015, 0.4, 3, [0.66, 0.4, 0.22], null, 0.009);
-      ico(g, 0.02, 0.82, 0, 0.18, 0.5, [0.14, 0.26, 0.12], R, 0.35); ico(g, -0.1, 0.7, 0.06, 0.12, 0.55, [0.12, 0.23, 0.11], R, 0.4);
-    } else if (kind === 2) {   // birch: a slim white trunk, dark rough bark at the foot and a black band, a light, airy crown of two clumps
+    if (kind === 0) {   // spruce: five drooping tiers down to the ground and a spire, very dark inside, the tips of the branches lighter and a little bluer
+      [[0.0, 0.33, 0.3, 7, 0.075], [0.17, 0.28, 0.27, 7, 0.065], [0.33, 0.22, 0.25, 6, 0.055], [0.48, 0.16, 0.22, 6, 0.045], [0.62, 0.1, 0.2, 5, 0.035]].forEach(([y, r, h, n, dr], k) =>
+        ouFir(g, 0, y, 0, r, h, n, vr(SP, (k % 2 ? 0.08 : 0) + k * 0.03), SPT, k * 0.83, dr));
+      cone(g, 0, 0.76, 0, 0.045, 0.24, 4, SP, SPT, 0.4);
+    } else if (kind === 1) {   // pine: a long bare trunk, grey-brown below and orange up high, an uneven umbrella crown of four lumps
+      const C = [0, 0.84, 0, 0.22, 0.13];
+      cyl(g, 0, -0.02, 0, 0.019, 0.42, 4, [0.36, 0.3, 0.25], null, 0.015); cyl(g, 0, 0.4, 0, 0.015, 0.5, 4, [0.68, 0.41, 0.22], null, 0.007);
+      ouLump(g, 0, 0.85, 0, 0.14, 0.58, PI_, R, 0.3, C);
+      ouLump(g, 0.15, 0.8, 0.03, 0.1, 0.62, vr(PI_, 0.05), R, 0.32, C, true); ouLump(g, -0.1, 0.77, 0.12, 0.095, 0.6, vr(PI_, -0.06), R, 0.32, C, true);
+      ouLump(g, -0.06, 0.83, -0.14, 0.09, 0.6, vr(PI_, 0.1), R, 0.32, C, true);
+    } else if (kind === 2) {   // birch: a slim white trunk, dark rough bark at the foot and a black band, a light, airy crown of four lumps hanging a little
+      const C = [0, 0.66, 0, 0.19, 0.27];
       cyl(g, 0, -0.02, 0, 0.019, 0.16, 3, [0.3, 0.28, 0.26], null, 0.016); cyl(g, 0, 0.14, 0, 0.016, 0.24, 3, [0.9, 0.9, 0.86], null, 0.014);
-      cyl(g, 0, 0.38, 0, 0.014, 0.04, 3, [0.16, 0.16, 0.16], null, 0.013); cyl(g, 0, 0.42, 0, 0.013, 0.24, 3, [0.88, 0.88, 0.84], null, 0.008);
-      ico(g, 0, 0.7, 0, 0.15, 1.5, [0.27, 0.42, 0.13], R, 0.3); ico(g, 0.07, 0.56, -0.05, 0.1, 1.2, [0.31, 0.46, 0.15], R, 0.35);
-    } else {   // young spruce
-      const col = [0.12, 0.25, 0.13], tip = [0.2, 0.35, 0.17];
-      starCone(g, 0, 0.0, 0, 0.34, 0.42, 4, col, tip, 0.4, 0.04); starCone(g, 0, 0.3, 0, 0.25, 0.38, 4, col, tip, 1.2, 0.03); cone(g, 0, 0.58, 0, 0.14, 0.42, 4, col, tip, 1.0);
+      cyl(g, 0, 0.38, 0, 0.014, 0.04, 3, [0.16, 0.16, 0.16], null, 0.013); cyl(g, 0, 0.42, 0, 0.013, 0.26, 3, [0.88, 0.88, 0.84], null, 0.008);
+      ouLump(g, 0, 0.7, 0, 0.13, 1.5, BI, R, 0.26, C);
+      ouLump(g, 0.11, 0.58, 0.05, 0.1, 1.25, vr(BI, 0.06), R, 0.3, C, true); ouLump(g, -0.09, 0.6, -0.07, 0.1, 1.2, vr(BI, -0.05), R, 0.3, C, true);
+      ouLump(g, 0.02, 0.8, 0.08, 0.085, 1.1, vr(BI, 0.1), R, 0.3, C, true);
+    } else {   // young spruce: three tiers, fresher green
+      const col = [0.12, 0.25, 0.13], tip = [0.22, 0.37, 0.18];
+      ouFir(g, 0, 0.0, 0, 0.34, 0.4, 5, col, tip, 0.4, 0.05); ouFir(g, 0, 0.28, 0, 0.25, 0.36, 5, vr(col, 0.08), tip, 1.2, 0.04); ouFir(g, 0, 0.54, 0, 0.14, 0.44, 4, col, tip, 1.9, 0.03, true);
     }
     ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
@@ -5070,10 +5103,15 @@ const World = (function () {
   // the trees and buildings between the camera and the followed car fade out (an ordered screen-door dither), so the forest standing right
   // beside the road never hides the car: a cone along the line from the camera (1.5 m) to the car (5.5 m). World.view sets U.uCam and
   // U.uCar every frame (without a car the point is parked far away: nothing fades). The shadows stay (the depth pass is not patched)
-  function ouCutMat(m, U) {
+  function ouCutMat(m, U, wind) {   // wind: the trees sway as on the Nordschleife (each in its own rhythm, the higher up the more; the foot stays put)
     m.onBeforeCompile = (sh) => {
       sh.uniforms.ouCam = U.uCam; sh.uniforms.ouCar = U.uCar;
-      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vOuW;')
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vOuW;');
+      if (wind) { sh.uniforms.uWind = wind;
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uWind;').replace('#include <begin_vertex>', '#include <begin_vertex>\n' +
+          '#ifdef USE_INSTANCING\nfloat wPh = instanceMatrix[3].x * 0.07 + instanceMatrix[3].z * 0.05;\n#else\nfloat wPh = 0.0;\n#endif\n' +
+          'float wK = position.y * position.y * 0.024;\ntransformed.x += wK * sin( uWind * 1.1 + wPh );\ntransformed.z += wK * 0.6 * sin( uWind * 0.83 + wPh * 1.7 );'); }
+      sh.vertexShader = sh.vertexShader
         .replace('#include <project_vertex>', '#include <project_vertex>\nvec4 ouW = vec4( transformed, 1.0 );\n#ifdef USE_INSTANCING\nouW = instanceMatrix * ouW;\n#endif\nvOuW = ( modelMatrix * ouW ).xyz;');
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 ouCam;\nuniform vec3 ouCar;\nvarying vec3 vOuW;')
         .replace('void main() {', 'void main() {\n' +
@@ -5082,7 +5120,7 @@ const World = (function () {
           '  vec2 ouQ = mod( floor( gl_FragCoord.xy ), 4.0 ), ouA = mod( ouQ, 2.0 ), ouB = floor( ouQ * 0.5 );\n' +
           '  if ( ouF * 0.9 > ( 4.0 * ( 2.0 * mod( ouA.x + ouA.y, 2.0 ) + ouA.y ) + 2.0 * mod( ouB.x + ouB.y, 2.0 ) + ouB.y + 0.5 ) / 16.0 ) discard;');
     };
-    m.customProgramCacheKey = () => 'ouCut';
+    m.customProgramCacheKey = () => (wind ? 'ouCutWind' : 'ouCut');
     return m;
   }
   function buildOuni(scene, tex, opts) {
@@ -5128,7 +5166,7 @@ const World = (function () {
         for (let b = 0; b < nz; b++) for (let a = 0; a < nx; a++) wet[b * nx + a] = ouGround(x0 + a * cs, z0 + b * cs) < L.h + 0.4 ? 1 : 0;
         const cc = new Map(), wc = (a, b) => { const key = b * nx + a; let c = cc.get(key); if (c) return c;
           const x = x0 + a * cs, z = z0 + b * cs, e = ouWater(x, z).e, far = clamp((ouSeg(x, z).lat * L.side - L.gap) / L.depth, 0, 1), ks = 0.75 * sstep(0.06, 0.32, far) * sstep(0.9, 0.55, far);
-          c = [0, 1, 2].map(k => lerp(lerp(lerp(deep[k], sky[k], ks), wood[k], sstep(0.62, 0.93, far)), shal[k], sstep(10, 3, e)));
+          c = [0, 1, 2].map(k => lerp(lerp(lerp(deep[k], sky[k], ks), wood[k], sstep(0.8, 0.97, far)), shal[k], sstep(10, 3, e)));   // (the far forest's reflection itself: below)
           cc.set(key, c); return c; };
         const g = new GB(true), uv = (q) => [q[0] / 14, -q[2] / 14];
         for (let b = 0; b < nz - 1; b++) for (let a = 0; a < nx - 1; a++) {
@@ -5138,6 +5176,28 @@ const World = (function () {
         }
         const m = new THREE.Mesh(g.geometry(), wMat); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); root.add(m);
       }
+      // the far shore mirrored in the still water: the forest's dark reflection along it, a jagged edge of mirrored tree tops pointing back
+      // across the lake towards the road (the water's own material and moving texture, darker vertex colours, just above the surface)
+      (def.lakes || []).forEach(([a, b, side], li) => {
+        const L = P.lakes[li]; if (!L) return;
+        const g = new GB(true), RR = rng(7571 + li), y = L.h + 0.02, uv = (q) => [q[0] / 14, -q[2] / 14], below = [0, y - 50, 0], WS = [0.07, 0.13, 0.1], WD = [0.1, 0.17, 0.15], TIP = [0.15, 0.25, 0.3];
+        let prev = null;
+        for (let s = sStart + a + 6; s < sStart + b - 6; s += 2.4) {
+          const i = T.idx(s), ox = T.nx[i] * side, oz = T.nz[i] * side, at = (o) => [T.px[i] + ox * o, y, T.pz[i] + oz * o];
+          let oIn = -1, oOut = -1;
+          for (let o = L.gap - 8; o < L.gap + L.depth + 14; o += 1) { const p = at(o), wet = ouGround(p[0], p[2]) < L.h - 0.15; if (wet && oIn < 0) oIn = o; else if (!wet && oIn >= 0) { oOut = o; break; } }
+          if (oIn < 0 || oOut < 0 || oOut - oIn < 10) { prev = null; continue; }
+          const e = oOut - 1.4, band = Math.min(36, (e - oIn) * 0.3) * (0.85 + RR() * 0.3), E = at(e), B = at(e - band), cur = { E, B, e, oIn, ox, oz };   // (seen from above the road the far forest mirrors ~a third of the way across)
+          if (prev && ouField(E[0], E[2]) < -3) {
+            below[0] = E[0]; below[2] = E[2];
+            g.quadUp(prev.E, E, B, prev.B, [WS, WS, WD, WD], [uv(prev.E), uv(E), uv(B), uv(prev.B)]);
+            const len = Math.min(3 + RR() * (RR() < 0.3 ? 12 : 6), (e - oIn) * 0.6 - band), m = [(prev.B[0] + B[0]) / 2 - ox * len, y, (prev.B[2] + B[2]) / 2 - oz * len];   // a mirrored spruce top (now and then a tall one)
+            if (len > 1) g.triO(prev.B, B, m, WD, below, WD, TIP, uv(prev.B), uv(B), uv(m));
+          }
+          prev = cur;
+        }
+        if (!g.empty) { const m = new THREE.Mesh(g.geometry(), wMat); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); m.name = 'mirror'; root.add(m); }
+      });
       if (P.lakes.length) out.dyn.water = tex.water;
     }
 
@@ -5156,7 +5216,7 @@ const World = (function () {
       // side of it), the loose gravel between and outside them (the line held 2.3 m inside the edges, so the columns stay in order)
       const cols = (i) => { const rl = clamp(T.rl[i], -w + 2.3, w - 2.3); return [-w, -w + 0.5, rl - 1.7, rl - 1.2, rl - 0.7, rl - 0.25, rl + 0.25, rl + 0.7, rl + 1.2, rl + 1.7, w - 0.5, w]; };
       const shade = (i, o) => { const a = Math.abs(o - T.rl[i]), trk = sstep(0.45, 0.72, a) * sstep(1.45, 1.18, a), ao = Math.abs(o);
-        let k = 1.0 - 0.21 * trk + 0.06 * sstep(0.5, 0.2, a);   // the tracks darker and smoother, the loose crown between them lighter
+        let k = 1.0 - 0.21 * trk + 0.1 * sstep(0.55, 0.15, a);   // the tracks darker and smoother, the ridge of loose gravel between them lighter
         const outer = Math.sign(o) === -Math.sign(T.k[i]) ? sstep(1 / 400, 1 / 70, Math.abs(T.k[i])) : 0;   // on the outside of a bend the cars throw the loose gravel out
         k += (0.06 + 0.07 * outer) * sstep(w - 1.3 - 1.4 * outer, w - 0.3, ao) * (1 - trk);
         k *= 0.93 + 0.13 * P.n2(T.px[i] * 0.7 + 50, T.pz[i] * 0.7);   // long dusty and damp stretches
@@ -5186,6 +5246,23 @@ const World = (function () {
       for (const [s0, hw] of [[sStart, 0.4], [sFin, 0.4]].concat(T.cpS.map(s => [s, 0.2]))) { const a = atSf(s0 - hw, -w + 0.1), b = atSf(s0 - hw, w - 0.1), c = atSf(s0 + hw, w - 0.1), d = atSf(s0 + hw, -w + 0.1), y = (p) => T.hy[p[3]] + 0.04;
         gl.quadUp([a[0], y(a), a[1]], [b[0], y(b), b[1]], [c[0], y(c), c[1]], [d[0], y(d), d[1]], [wht, wht, wht, wht]); }
       addM(gl, new THREE.MeshLambertMaterial({ vertexColors: true }));
+      // potholes: the road's own gravel (its texture, continuous with it) in rings a little above it, dark in the hollow, the loose stones thrown
+      // out round the rim lighter; small ones in the wheel tracks, the beds of the rain's puddles (T.puddles) shallow and silty in the dry
+      const gp = new GB(true), RH = rng(7561), PH = (s, d) => { const f = s / T.ds, i = clamp(Math.floor(f), 0, N - 2), t = f - i, j = i + 1, nx = lerp(T.nx[i], T.nx[j], t), nz = lerp(T.nz[i], T.nz[j], t);
+        return [lerp(T.px[i], T.px[j], t) + nx * d, lerp(T.hy[i], T.hy[j], t) + 0.035, lerp(T.pz[i], T.pz[j], t) + nz * d]; };
+      const holes = T.puddles.map(([s0, d, hl, hw]) => [s0, d, hl * 0.9, hw * 0.9, 0.84]), lines = [sStart, sFin].concat(T.cpS);
+      for (let k = 0; k < 500 && holes.length < T.puddles.length + 140; k++) { const s0 = lerp(sStart + 30, sFin - 30, RH()), i = T.idx(s0), r = RH();
+        if (lines.some(l => Math.abs(l - s0) < 12) || holes.some(h => Math.abs(h[0] - s0) < h[2] + 2)) continue;
+        holes.push([s0, clamp(T.rl[i] + (RH() < 0.5 ? -1 : 1) * (0.8 + RH() * 0.35), -w + 1, w - 1), 0.6 + r * 0.7, 0.4 + RH() * 0.4, 0.44 + RH() * 0.12]); }
+      for (const [s0, d, hl, hw, dk] of holes) {
+        const n = 9, ph = RH() * TAU, c = PH(s0, d), below = [c[0], c[1] - 5, c[2]], uv = (ss, dd) => [(dd + w) / tileL, ss / tileL];
+        const cC = [dk, dk, dk], cI = [lerp(dk, 1, 0.35), lerp(dk, 1, 0.35), lerp(dk, 1, 0.35)], cR = [1.16, 1.13, 1.08], I = [], O = [];
+        for (let q = 0; q < n; q++) { const a = q / n * TAU, wb = 0.82 + 0.18 * Math.sin(a * 3 + ph) * Math.cos(a * 2 - ph), cs = Math.cos(a) * hl * wb, sn = Math.sin(a) * hw * wb; I.push([s0 + cs * 0.55, d + sn * 0.55]); O.push([s0 + cs, d + sn]); }
+        for (let q = 0; q < n; q++) { const m = (q + 1) % n, iq = PH(I[q][0], I[q][1]), im = PH(I[m][0], I[m][1]), oq = PH(O[q][0], O[q][1]), om = PH(O[m][0], O[m][1]);
+          gp.triO(c, iq, im, cC, below, cI, cI, uv(s0, d), uv(I[q][0], I[q][1]), uv(I[m][0], I[m][1]));
+          gp.triO(iq, oq, om, cI, below, cR, cR, uv(I[q][0], I[q][1]), uv(O[q][0], O[q][1]), uv(O[m][0], O[m][1])); gp.triO(iq, om, im, cI, below, cR, cI, uv(I[q][0], I[q][1]), uv(O[m][0], O[m][1]), uv(I[m][0], I[m][1])); }
+      }
+      { const m = addM(gp, rMat); if (m) m.name = 'potholes'; }
     }
 
     /* ---- scenery (vertex coloured, 110 m chunks) ---- */
@@ -5593,12 +5670,23 @@ const World = (function () {
       const tri = (g, a, b, c, ca, cb, cc) => g.triN(a, b, c, UPN, UPN, UPN, ca, cb || ca, cc || ca);
       const blade = (g, x, y, z, h, a, lean, bw, c0, c1) => { const ca = Math.cos(a), sa = Math.sin(a); tri(g, [x - sa * bw, y, z + ca * bw], [x + sa * bw, y, z - ca * bw], [x + ca * h * lean, y + h, z + sa * h * lean], c0, c0, c1); };
       const tuft = (g, x, y, z, h) => { const c0 = grassC[Math.floor(RV() * grassC.length)]; for (let k = 0; k < 3; k++) blade(g, x, y, z, h * (0.7 + RV() * 0.5), RV() * TAU, 0.2 + RV() * 0.3, 0.05 + RV() * 0.04, c0, tipC); };
-      const spike = (g, x, y, z, h, wd, col, top) => {   // a flower spike (lupin, fireweed): one flat spindle, a green stem into the blossoms (larger than life, to read from the camera)
-        const a = RV() * PI, ca = Math.cos(a) * wd, sa = Math.sin(a) * wd, mL = [x - ca, y + h * 0.5, z - sa], mR = [x + ca, y + h * 0.5, z + sa];
-        tri(g, [x, y, z], mR, mL, [0.24, 0.36, 0.13], col, col); tri(g, mL, mR, [x, y + h, z], col, col, top); };
+      const cone3 = (g, x, yb, z, r, yt, a0, col, top) => {   // a slim spindle of flowers (three-sided): widest a third of the way up, where they are open, the buds at the tip
+        const ym = lerp(yb, yt, 0.3), foot = [col[0] * 0.62, col[1] * 0.66, col[2] * 0.62], P3 = [0, 1, 2].map(k => { const a = a0 + k / 3 * TAU; return [x + Math.cos(a) * r, ym, z + Math.sin(a) * r]; });
+        for (let k = 0; k < 3; k++) { const j = (k + 1) % 3; tri(g, [x, yb, z], P3[j], P3[k], foot, col, col); tri(g, P3[k], P3[j], [x, yt, z], col, col, top); } };
+      const LFL = [0.19, 0.33, 0.12], LFT = [0.27, 0.43, 0.16], STM = [0.24, 0.36, 0.13];
+      const lupin = (g, x, y, z, h, col, top) => {   // a lupin (larger than life, to read from the camera): a star of palmate leaves at its foot, a stem, a tall cone of pea flowers
+        const a0 = RV() * TAU;
+        const ly = y + h * 0.26; for (let k = 0; k < 3; k++) { const a = a0 + k / 3 * TAU, ca = Math.cos(a), sa = Math.sin(a), L = 0.26 + RV() * 0.1; tri(g, [x - sa * 0.07, ly - 0.04, z + ca * 0.07], [x + sa * 0.07, ly - 0.04, z - ca * 0.07], [x + ca * L, ly + 0.05, z + sa * L], LFL, LFL, LFT); }
+        blade(g, x, y, z, h * 0.45, a0, 0, 0.022, STM, STM);
+        cone3(g, x, y + h * 0.38, z, 0.1 + RV() * 0.03, y + h, a0 + 0.5, col, top); };
+      const fireweed = (g, x, y, z, h) => {   // fireweed: a tall stem with two narrow leaves, a spire of pink flowers on top, the buds at the tip darker
+        const a0 = RV() * TAU;
+        blade(g, x, y, z, h * 0.66, a0, 0, 0.02, [0.34, 0.27, 0.2], STM);
+        for (let k = 0; k < 2; k++) { const a = a0 + k * PI + 0.5, ly = y + h * (0.28 + k * 0.17), ca = Math.cos(a), sa = Math.sin(a), L = 0.24 + RV() * 0.08; tri(g, [x - sa * 0.03, ly, z + ca * 0.03], [x + sa * 0.03, ly, z - ca * 0.03], [x + ca * L, ly + 0.1, z + sa * L], LFL, LFL, LFT); }
+        cone3(g, x, y + h * 0.54, z, 0.08 + RV() * 0.02, y + h, a0, FIRE, FIREB); };
       const umbel = (g, x, y, z, h, col) => { blade(g, x, y, z, h, RV() * TAU, 0.05, 0.04, [0.24, 0.36, 0.13], [0.3, 0.42, 0.16]);   // a stem with a flat head of small flowers
         const r = 0.12 + RV() * 0.07, a0 = RV() * TAU, cy = y + h; for (let k = 0; k < 3; k++) { const a = a0 + k / 3 * TAU, b = a0 + (k + 1) / 3 * TAU; tri(g, [x, cy + 0.03, z], [x + Math.cos(a) * r, cy, z + Math.sin(a) * r], [x + Math.cos(b) * r, cy, z + Math.sin(b) * r], col); } };
-      const LUP = [[0.42, 0.28, 0.74], [0.55, 0.36, 0.82], [0.84, 0.42, 0.68], [0.68, 0.3, 0.62]], FIRE = [0.86, 0.3, 0.6], FIRET = [0.94, 0.5, 0.7], WHITE = [0.95, 0.95, 0.91], CREAM = [0.9, 0.87, 0.74], YEL = [0.96, 0.8, 0.16];
+      const LUP = [[0.42, 0.28, 0.74], [0.55, 0.36, 0.82], [0.84, 0.42, 0.68], [0.68, 0.3, 0.62]], FIRE = [0.9, 0.34, 0.62], FIREB = [0.58, 0.18, 0.34], WHITE = [0.95, 0.95, 0.91], CREAM = [0.9, 0.87, 0.74], YEL = [0.96, 0.8, 0.16];
       const vY = (i, side, o) => { const pr = vProf(i, side); if (o <= pr[0][0]) return T.hy[i];   // the verge ribbon's surface at offset o (its cross-section); beyond it the ground
         for (let k = 0; k < pr.length - 1; k++) if (o <= pr[k + 1][0]) return T.hy[i] + lerp(pr[k][1], pr[k + 1][1], (o - pr[k][0]) / (pr[k + 1][0] - pr[k][0]));
         return ouGround(T.px[i] + T.nx[i] * side * o, T.pz[i] + T.nz[i] * side * o); };
@@ -5613,19 +5701,29 @@ const World = (function () {
         tuft(g, x, y, z, ditch ? 0.75 + r1 * 0.35 : 0.35 + r1 * 0.4);
         // lupins in drifts on the shoulder and the near bank (a colour per drift), cream umbels and yellow tansy here and there
         const drift = P.n4(s * 0.35 + side * 97, 11), lc = LUP[(Math.floor(s / 41) + (side > 0 ? 2 : 0)) % LUP.length], lt = [Math.min(1, lc[0] * 1.18), Math.min(1, lc[1] * 1.18), Math.min(1, lc[2] * 1.1)];
-        if (drift > 0.58) { const n = 3 + Math.floor(RV() * 4 * sstep(0.58, 0.75, drift) + RV()); for (let q = 0; q < n; q++) { const oq = w + 0.8 + RV() * (bar - w - 0.6), [qx, qz] = at(oq); spike(g, qx + (RV() - 0.5) * 0.9, vY(i, side, oq) - 0.05, qz + (RV() - 0.5) * 0.9, 0.8 + RV() * 0.45, 0.11, lc, lt); } }
+        if (drift > 0.58) { const n = 3 + Math.floor(RV() * 4 * sstep(0.58, 0.75, drift) + RV()); for (let q = 0; q < n; q++) { const oq = w + 0.8 + RV() * (bar - w - 0.6), [qx, qz] = at(oq); lupin(g, qx + (RV() - 0.5) * 0.9, vY(i, side, oq) - 0.05, qz + (RV() - 0.5) * 0.9, 0.8 + RV() * 0.45, lc, lt); } }
         else if (r2 < 0.16) { const n = 2 + Math.floor(RV() * 3); for (let q = 0; q < n; q++) { const qx = x + (RV() - 0.5) * 0.7, qz = z + (RV() - 0.5) * 0.7; if (r3 < 0.45) umbel(g, qx, y - 0.05, qz, 0.45 + RV() * 0.25, CREAM); else umbel(g, qx, y - 0.05, qz, 0.4 + RV() * 0.25, YEL); } }
         // fireweed in pink bands along the forest edge, just beyond the ditch (not by the fields)
         const band = P.n4(s * 0.3 + side * 211 + 40, 23);
         if (band > 0.5) { const oq = bar + 1.4 + RV() * 2.6, [fx, fz] = at(oq); if (ok(fx, fz, i) && ouField(fx, fz) < -1 && ouWater(fx, fz).e < -3) { const fy = vY(i, side, oq), n = 2 + Math.floor(RV() * 4 * sstep(0.5, 0.7, band));
-          for (let q = 0; q < n; q++) spike(g, fx + (RV() - 0.5) * 1.4, fy - 0.05, fz + (RV() - 0.5) * 1.4, 1.2 + RV() * 0.6, 0.1, FIRE, FIRET); } }
+          for (let q = 0; q < n; q++) fireweed(g, fx + (RV() - 0.5) * 1.4, fy - 0.05, fz + (RV() - 0.5) * 1.4, 1.2 + RV() * 0.6); } }
       }
       const BIL = [[0.13, 0.26, 0.1], [0.16, 0.3, 0.11], [0.2, 0.32, 0.12]], FERN = [0.24, 0.42, 0.14], FERNT = [0.34, 0.5, 0.2];
       for (let s = sA; s < sB; s += 2.6) for (const side of [-1, 1]) {
         const i = T.idx(s), bar = side > 0 ? T.br[i] : T.bl[i], o = bar + 2.4 + Math.pow(RV(), 1.4) * 14, x = T.px[i] + T.nx[i] * side * o + (RV() - 0.5) * 2, z = T.pz[i] + T.nz[i] * side * o + (RV() - 0.5) * 2, r1 = RV();
         if (excluded(x, z) || ouField(x, z) > -2 || ouWater(x, z).e > -2 || ouNear(x, z).dd < 1.8) continue;
         const y = ouGround(x, z) - 0.03, g = veg.get(x, z);
-        if (r1 < 0.62) { const r = 0.35 + RV() * 0.35, h = 0.22 + RV() * 0.2, c = BIL[Math.floor(RV() * 3)], a0 = RV() * TAU, top = [x, y + h, z], cT = [c[0] * 1.25, c[1] * 1.2, c[2] * 1.2];   // bilberry: a low dome
+        if (r1 < 0.05) {   // a stump: bark round a flared foot, the cut fresh and pale or old, grey and mossy
+          const n = 6, r = 0.24 + RV() * 0.18, h = 0.25 + RV() * 0.45, a0 = RV() * TAU, old = RV() < 0.55, bark = vary([0.29, 0.24, 0.19], RV, 0.25), foot = [bark[0] * 0.7, bark[1] * 0.7, bark[2] * 0.7];
+          const cut = old ? (RV() < 0.6 ? [0.3, 0.4, 0.14] : [0.42, 0.38, 0.3]) : [0.68, 0.55, 0.37], rim = old ? cut : [0.52, 0.4, 0.26], inn = [x, y + h * 0.5, z], top = [x, y + h + 0.02, z], B = [], U = [];
+          for (let k = 0; k < n; k++) { const a = a0 + k / n * TAU, rr = r * (0.9 + RV() * 0.2); B.push([x + Math.cos(a) * rr * 1.3, y - 0.04, z + Math.sin(a) * rr * 1.3]); U.push([x + Math.cos(a) * rr, y + h * (0.9 + RV() * 0.2), z + Math.sin(a) * rr]); }
+          for (let k = 0; k < n; k++) { const j = (k + 1) % n; g.quadO(B[k], B[j], U[j], U[k], bark, inn, null, [foot, foot, bark, bark]); g.triO(U[k], U[j], top, rim, [x, y - 5, z], rim, cut); }
+        } else if (r1 < 0.075) {   // a fallen trunk: grey bark, moss along its top, the broken ends pale; along the slope, a little sunk into the moss
+          const n = 5, len = 4 + RV() * 6, r = 0.2 + RV() * 0.14, a = RV() * TAU, dx = Math.cos(a) * len / 2, dz = Math.sin(a) * len / 2, bark = vary([0.33, 0.29, 0.24], RV, 0.2), moss = [0.27, 0.38, 0.13], end = [0.55, 0.47, 0.34];
+          const A = [x - dx, ouGround(x - dx, z - dz) + r * 0.7, z - dz], E = [x + dx, ouGround(x + dx, z + dz) + r * 0.7, z + dz], px = -Math.sin(a), pz = Math.cos(a), ring = (c, rr) => { const o = []; for (let k = 0; k < n; k++) { const t = k / n * TAU + 0.3, cs = Math.cos(t) * rr, sn = Math.sin(t) * rr; o.push([c[0] + px * cs, c[1] + sn, c[2] + pz * cs]); } return o; };
+          const RA = ring(A, r), RE = ring(E, r * 0.8), inn = [x, (A[1] + E[1]) / 2, z], cl = (p, c) => (p[1] - c[1] > r * 0.3 ? moss : bark);
+          for (let k = 0; k < n; k++) { const j = (k + 1) % n; g.quadO(RA[k], RE[k], RE[j], RA[j], bark, inn, null, [cl(RA[k], A), cl(RE[k], E), cl(RE[j], E), cl(RA[j], A)]); g.triO(RA[k], RA[j], A, end, E); g.triO(RE[k], RE[j], E, end, A); }
+        } else if (r1 < 0.64) { const r = 0.35 + RV() * 0.35, h = 0.22 + RV() * 0.2, c = BIL[Math.floor(RV() * 3)], a0 = RV() * TAU, top = [x, y + h, z], cT = [c[0] * 1.25, c[1] * 1.2, c[2] * 1.2];   // bilberry: a low dome
           for (let k = 0; k < 6; k++) { const a = a0 + k / 6 * TAU, b = a0 + (k + 1) / 6 * TAU; tri(g, [x + Math.cos(a) * r, y, z + Math.sin(a) * r], [x + Math.cos(b) * r, y, z + Math.sin(b) * r], top, c, c, cT); }
         } else { const a0 = RV() * TAU, L = 0.5 + RV() * 0.4;   // a fern: five fronds arching out
           for (let k = 0; k < 5; k++) { const a = a0 + k / 5 * TAU + (RV() - 0.5) * 0.4, ca = Math.cos(a), sa = Math.sin(a); tri(g, [x - sa * 0.07, y + 0.05, z + ca * 0.07], [x + sa * 0.07, y + 0.05, z - ca * 0.07], [x + ca * L, y + L * 0.45, z + sa * L], FERN, FERN, FERNT); } }
@@ -5642,11 +5740,17 @@ const World = (function () {
 
     /* ---- the forest: spruce in the damp hollows, pine on the dry ridges, birch at the edges of the fields and the road, young spruce in
        the undergrowth; right up to the ditch, thinner and bigger farther out (instanced per 96 m chunk) ---- */
-    const tMat = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
-    const tk = [0, 1, 2, 3].map(k => new IChunks(ouTreeGeo(k), tMat, 96)), tkF = [0, 1, 2].map(k => new IChunks(ouTreeGeo(k, true), tMat, 96));   // (tkF: beyond 80 m, plain)
+    const WIND = { value: 0 }; out.dyn.wind = WIND;   // (World.update: the trees sway)
+    const tMat = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut, WIND);
+    const tk = [0, 1, 2, 3].map(k => new IChunks(ouTreeGeo(k), tMat, 64)), tkF = [0, 1, 2].map(k => new IChunks(ouTreeGeo(k, true), tMat, 96));   // (tkF: beyond 80 m, plain)
     let nTrees = 0;
     {
       const G = P.G, L = OUC * OUT, maxT = Math.round(120000 * dens), RT = rng(7441), SP = 5.4 / Math.sqrt(dens);   // (the cap is only a safety net)
+      // what stands over each grid vertex (for the forest floor below): [shade, spruce, pine], each crown weighted by how near its middle
+      const FL = new Float32Array(G.nx * G.nz * 3), CRU = [0.31, 0.21, 0.19, 0.32];   // (crown radius / instance width)
+      const flo = (x, z, rc, sp) => { const RR = rc + 2.5, i0 = Math.max(0, Math.floor((x - RR - G.x0) / OUC)), i1 = Math.min(G.nx - 1, Math.ceil((x + RR - G.x0) / OUC)), j0 = Math.max(0, Math.floor((z - RR - G.z0) / OUC)), j1 = Math.min(G.nz - 1, Math.ceil((z + RR - G.z0) / OUC));
+        for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const d = Math.hypot(G.x0 + i * OUC - x, G.z0 + j * OUC - z); if (d >= RR) continue;
+          const q = sstep(RR, rc * 0.4, d), k = (j * G.nx + i) * 3; FL[k] += q; if (sp === 0 || sp === 3) FL[k + 1] += q; else if (sp === 1) FL[k + 2] += q; } };
       grid: for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
         if (!G.on[tj * G.ntx + ti]) continue;
         const xa = G.x0 + ti * L, za = G.z0 + tj * L;
@@ -5667,17 +5771,35 @@ const World = (function () {
           const hgt = sp === 0 ? 13 + r4 * 8 : sp === 1 ? 15 + r4 * 9 : sp === 2 ? 11 + r4 * 6 : 2.5 + r4 * 3, big = far ? 1.15 : 1;
           const wid = hgt * (sp === 0 ? 0.52 + r2 * 0.14 : sp === 1 ? 0.8 + r2 * 0.3 : sp === 2 ? 0.85 + r2 * 0.25 : 0.7);
           const cv = 0.86 + r2 * 0.26; (far && sp < 3 ? tkF : tk)[sp].add(x, y - 0.15, z, r1 * 70, wid * big, hgt * big, [cv * (0.94 + r4 * 0.1), cv, cv * (0.94 + r3 * 0.1)]);
+          flo(x, z, wid * big * CRU[sp], sp);
           if (++nTrees >= maxT) break grid;
         }
       }
+      /* ---- the forest floor: the ground darkens under the crowns (their shade, most at the foot of each tree), brown needle litter under the spruces,
+         pale reindeer lichen and heather in patches under the pines of the dry ridges (the tile colours at the 5 m grid vertices; not within ~6 m of
+         the barrier line, where the verge ribbon meets the ground in its own colours) ---- */
+      for (const m of out.ground.children) {
+        const pa = m.geometry.attributes.position, ca = m.geometry.attributes.color;
+        for (let v = 0; v < pa.count; v++) {
+          const x = pa.getX(v), z = pa.getZ(v), i = Math.round((x - G.x0) / OUC), j = Math.round((z - G.z0) / OUC); if (i < 0 || j < 0 || i >= G.nx || j >= G.nz) continue;
+          const k = j * G.nx + i, sh = Math.min(1, FL[k * 3]); if (sh < 0.01) continue;
+          const f = sstep(6, 10, G.dd[k]); if (f <= 0) continue;
+          let r = ca.getX(v), g = ca.getY(v), b = ca.getZ(v);
+          const ns = Math.min(1, FL[k * 3 + 1]) * 0.62 * f; r = lerp(r, 0.21, ns); g = lerp(g, 0.16, ns); b = lerp(b, 0.09, ns);
+          const li = Math.min(1, FL[k * 3 + 2] * 1.5) * 0.7 * f * sstep(0.4, 0.62, P.n5(x * 0.8 + 31, z * 0.8)); r = lerp(r, 0.5, li); g = lerp(g, 0.53, li); b = lerp(b, 0.42, li);
+          const dk = 1 - 0.3 * sh * f; ca.setXYZ(v, r * dk, g * dk, b * dk);
+        }
+        ca.needsUpdate = true;
+      }
     }
-    for (const t of tk.concat(tkF)) t.addTo(root, true);
+    for (const t of tk) t.addTo(root, true);
+    for (const t of tkF) t.addTo(root, false);   // (the far forest casts no shadows: they would fall outside the view, mostly; a third of the tree work per frame)
 
     /* ---- the puddles of a race in the rain (T.puddles, Render.setWet shows them and darkens the wet road and grass): the grey sky mirrored in
        the middle, darker towards a muddy rim, following the road's curve and height; one mesh, hidden in the dry ---- */
     if (T.puddles.length) {
       const g = new GB(), PP = (s, d) => { const f = s / T.ds, i = clamp(Math.floor(f), 0, T.N - 2), t = f - i, j = i + 1, nx = lerp(T.nx[i], T.nx[j], t), nz = lerp(T.nz[i], T.nz[j], t);
-        return [lerp(T.px[i], T.px[j], t) + nx * d, lerp(T.hy[i], T.hy[j], t) + 0.035, lerp(T.pz[i], T.pz[j], t) + nz * d]; };
+        return [lerp(T.px[i], T.px[j], t) + nx * d, lerp(T.hy[i], T.hy[j], t) + 0.05, lerp(T.pz[i], T.pz[j], t) + nz * d]; };   // (over the dry beds, the potholes)
       const SKY = [0.55, 0.59, 0.63], MID = [0.38, 0.4, 0.42], RIM = [0.3, 0.27, 0.22], n = 14, RP = rng(7531);
       for (const [s, d, hl, hw] of T.puddles) {
         const c = PP(s, d), below = [c[0], c[1] - 5, c[2]], ph = RP() * TAU, wob = [];
@@ -5702,6 +5824,32 @@ const World = (function () {
       const PL = [null, { per: 9, life: 6, lifeV: 2, rise: 5, riseV: 2, flare: 0.16 }, { per: 12, life: 8, lifeV: 3, rise: 9, riseV: 4, flare: 0 }];
       const t = rbSmokeTex(); out.ownTex.push(t);
       root.add(rbSmoke(smoke.map(([x, y, z, k]) => [x, y - 0.5, z, k === 1 ? [0.74, 0.74, 0.76] : [0.62, 0.62, 0.64], k === 1 ? 0.45 : 0.7, PL[k]]), CR.U.uTime, t, [0.5, 0.3]));
+    }
+    /* ---- shafts of sunlight between the trees: soft beams from the canopy down onto the road and the verges along the sun's direction (the theme's
+       sunOff), turning round their own axis towards the camera, drifting dust in them; added light, faded out with distance (hidden in the rain) ---- */
+    {
+      const so = opts.sunOff || [-88, 72, 58], sl = Math.hypot(so[0], so[1], so[2]), D = [-so[0] / sl, -so[1] / sl, -so[2] / sl], RS = rng(7581), pos = [], end = [], par = [], ph = [], idx = [];
+      for (let s = sStart + 60; s < sFin - 40; s += 26 + RS() * 50) {
+        const i = T.idx(s), side = RS() < 0.5 ? -1 : 1, o = side * (w - 1 + RS() * 9), gx = T.px[i] + T.nx[i] * o, gz = T.pz[i] + T.nz[i] * o;   // (mostly onto the verge and the forest edge: dark behind them)
+        if (ouField(gx, gz) > -10 || ouWater(gx, gz).e > -12 || excluded(gx, gz)) continue;
+        const gy = Math.max(ouGround(gx, gz), T.hy[i]) + 0.2, h = 9 + RS() * 6, L = h / -D[1], tx = gx - D[0] * L, tz = gz - D[2] * L;
+        if (ouField(tx, tz) > -4 || ouWater(tx, tz).e > -4) continue;   // (only where a crown stands up there)
+        const wd = 0.7 + RS() * 1.3, p = RS() * TAU, b = pos.length / 3;
+        for (const [sd, t] of [[-1, 0], [1, 0], [-1, 1], [1, 1]]) { pos.push(tx, gy + h, tz); end.push(gx, gy, gz); par.push(sd, t, wd); ph.push(p); }
+        idx.push(b, b + 2, b + 1, b + 1, b + 2, b + 3);
+      }
+      if (idx.length) {
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('aEnd', new THREE.Float32BufferAttribute(end, 3));
+        g.setAttribute('aP', new THREE.Float32BufferAttribute(par, 3)); g.setAttribute('aPh', new THREE.Float32BufferAttribute(ph, 1)); g.setIndex(idx); g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e6);
+        const m = new THREE.Mesh(g, new THREE.ShaderMaterial({ uniforms: { uTime: CR.U.uTime, uA: { value: 0.18 }, uCol: { value: new THREE.Color(1, 0.88, 0.66) } },
+          vertexShader: 'attribute vec3 aEnd; attribute vec3 aP; attribute float aPh; uniform float uTime; uniform float uA; varying float vA; varying vec2 vST;\n' +
+            'void main() { vec3 P = mix( position, aEnd, aP.y ), ax = normalize( aEnd - position ), sd = normalize( cross( ax, normalize( cameraPosition - P ) ) );\n' +
+            '  P += sd * aP.x * aP.z * ( 0.75 + 0.5 * aP.y ); gl_Position = projectionMatrix * viewMatrix * vec4( P, 1.0 );\n' +
+            '  vA = uA * ( 0.6 + 0.4 * sin( uTime * 0.6 + aPh ) * sin( uTime * 0.23 + aPh * 2.1 ) ) * ( 1.0 - smoothstep( 110.0, 240.0, length( cameraPosition - P ) ) ); vST = aP.xy; }',
+          fragmentShader: 'uniform vec3 uCol; varying float vA; varying vec2 vST;\nvoid main() { float a = vA * ( 1.0 - vST.x * vST.x ) * smoothstep( 0.0, 0.35, vST.y ) * ( 1.0 - smoothstep( 0.72, 1.0, vST.y ) ); gl_FragColor = vec4( uCol, a ); }',
+          transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }));
+        m.frustumCulled = false; m.renderOrder = 3; m.name = 'sunRays'; root.add(m); out.dyn.rays = m;
+      }
     }
     pkSky({ root, tex, out, sStart, gH: ouGround, far: true });
     out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld };   // (read by the tests)
