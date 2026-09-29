@@ -68,5 +68,12 @@
   "kverts": 544,
   "maxKverts": 752,
   "jsMs": 1.45
+ },
+ "suzuka": {
+  "calls": 250,
+  "maxCalls": 318,
+  "kverts": 548,
+  "maxKverts": 686,
+  "jsMs": 0.54
  }
 }
