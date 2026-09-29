@@ -179,6 +179,26 @@
   "nan": false,
   "digest": "a493c432550aa93b66df5a4f"
  },
+ "ouninpohja/cs": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 149.82,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c27ec594974297d8329d7a72"
+ },
+ "ouninpohja/arcade": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 154.43,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e5ef8613f8823ae2025e9fc6"
+ },
  "nring/cs": {
   "finished": 13,
   "cars": 13,

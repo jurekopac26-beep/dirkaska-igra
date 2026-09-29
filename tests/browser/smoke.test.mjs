@@ -1,6 +1,6 @@
 // Browser smoke test: the page loads (over http like GitHub Pages, and from a local file), every track can be
 // raced for 20 s on autopilot, settings migrate, the physics can be switched mid-race, the title demo runs,
-// a Pikes Peak run finishes and its record is saved per physics. Zero page errors allowed.
+// a Pikes Peak run and an Ouninpohja run finish and their records are saved per physics. Zero page errors allowed.
 //   node tests/browser/smoke.test.mjs
 import path from 'node:path';
 import url from 'node:url';
@@ -77,6 +77,22 @@ try {
       return { phase: g.phase, t: g.race.player.finishTime, pikes: rec.tracks && rec.tracks['pikes@cs'] };
     });
     T.check('Pikes Peak run finishes, record saved for cs', r.phase === 'done' && r.pikes && r.pikes.bestTime > 0, `time ${r.t && r.t.toFixed(2)} s, record ${r.pikes && r.pikes.bestTime}`);
+  }
+
+  // 6b. the Ouninpohja rally stage to the flying finish: the distance to go under the clock (no altitude), the record under
+  //     'ouninpohja@cs', the stage's own words on the results screen, the split table with the distances
+  {
+    await startTrack(page, 'ouninpohja');
+    const r = await page.evaluate(async () => {
+      const g = window.__game, left = document.getElementById('h-alt').textContent;
+      for (let i = 0; i < 300 && g.phase !== 'done'; i++) { g.sim(1, true); if (i % 10 === 0) await new Promise(r => setTimeout(r, 0)); }
+      await new Promise(r => setTimeout(r, 800));
+      const rec = JSON.parse(localStorage.getItem('tdgp-records') || '{}'), head = [...document.querySelectorAll('#res-tt th')].map(e => e.textContent);
+      return { phase: g.phase, t: g.race.player.finishTime, left, again: document.getElementById('res-restart').textContent, head: head.join('|'), rec: rec.tracks && rec.tracks['ouninpohja@cs'] };
+    });
+    T.check('Ouninpohja stage finishes, record saved for cs, the distance to go on the HUD, the stage\'s words on the results',
+      r.phase === 'done' && r.rec && r.rec.bestTime > 0 && /^še \d+,\d km$/.test(r.left) && r.again === 'Ponovi preizkušnjo' && r.head.startsWith('Točka|Razdalja|'),
+      `time ${r.t && r.t.toFixed(2)} s, record ${r.rec && r.rec.bestTime}, HUD "${r.left}", button "${r.again}", splits "${r.head}"`);
   }
   T.check('no page errors during the whole run', !errors.length, errors.slice(0, 5).join(' | '));
   await ctx.close();

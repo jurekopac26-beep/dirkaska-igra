@@ -5,6 +5,22 @@ Dirkanje z avti
 
 Vzpon od starta (2862 m) do vrha (4301 m) proti uri, brez nasprotnikov. Na poti so kontrolne točke CP1–CP4 z vmesnimi časi. Po cilju se osebni rekord in lestvica najboljših 10 časov shranita v brskalnik na tej napravi. Pred vožnjo lahko avto nadgradiš (motor, gume, zavore, aerodinamika); nadgradnje veljajo na vseh progah. Proga je sorazmerno skrajšana na ~6,2 km (prava je 19,99 km), višine na zaslonu so prave.
 
+## Ouninpohja (kronometer na makadamu)
+
+Najslavnejša hitrostna preizkušnja Relija Finska (Jämsä): vožnja proti uri po makadamu, brez nasprotnikov, od Hämepohje do Hassintieja, v smeri, v kateri jo vozijo od leta 1995. Prava preizkušnja je dolga ~33 km in ima več kot 75 skokov, v igri je sorazmerno skrajšana na ~5,9 km z 18 skoki, kraji pa so v pravem vrstnem redu:
+
+- prvi ovinek pri Hämepohji,
+- dolg desni ovinek ob jezeru Naarajärvi in velik vrh za njim,
+- cesta čez dvorišče kmetije Ouni in ovinki med polji,
+- skok pri Rumeni hiši (Keltainen talo): hiša stoji levo ob cesti, vrh je ~90 m za njo, avto pristane rahlo navkreber med hišami. Markko Märtin je tam leta 2003 preletel 57 m; v igri je to najdaljši skok (~50–58 m pri polnem plinu), navijači ob cesti imajo table pri 40, 50 in 57 m,
+- »stopnice« (trije skoki navzdol) do križišča Mutanen, kjer se zavije ostro levo,
+- hitra in široka Okskulmantie,
+- skok Amazon čez vrh tik pred levim ovinkom,
+- lasnica v križišču Kakaristo med polji (največ gledalcev in šotor z gostilno),
+- ozka cesta mimo Liisanmutke in leteči cilj na Hassintieju.
+
+Na poti so štiri kontrolne točke (CP1–CP4, modre table kot radijske točke na reliju) z vmesnimi časi, pod uro pa namesto nadmorske višine piše, koliko je še do cilja. Rekordi in lestvica najboljših 10 časov se shranijo kot pri Pikes Peaku, nadgradnje avta veljajo tudi tu. Ob cesti so gost gozd smrek, borov in brez, balvani, rdeče lesene hiše in skednji, sive senice in bele bale na poljih, savna s pomolom ob jezeru, navijači s finskimi zastavami ob skokih in v križiščih (tam se druga cesta nadaljuje naravnost, zaprta z balami slame), TV helikopter nad avtom ter table preizkušnje: start z lučmi, rumena tabla pred ciljem, rdeča na letečem cilju in STOP 200 m za njim. Drevesa in hiše med kamero in avtom se sproti razredčijo, da avta nikoli ne zakrijejo.
+
 ## Nürburgring Nordschleife
 
 Pravi „Zeleni pekel“ v Nemčiji v pravem merilu: en krog (20,7 km) proti 12 tekmecem, start in cilj pri tribuni T13, vožnja v smeri urinega kazalca. Oblika proge je iz OpenStreetMap, višine pa iz satelitskih višinskih modelov (SRTM in Copernicus), zato so klanci in spusti pravi: od T13 (~620 m) po Fuchsröhre navzdol do Breidscheida (~335 m, najnižja točka), nato dolg vzpon do Hohe Acht (~617 m). Ovinek Karussell je nagnjen (betonska skleda na notranji strani, avto ga lahko odpelje hitreje), na Flugplatzu in v Pflanzgartnu avto poskoči. Med vožnjo se pod uro izpišejo imena ovinkov (Hatzenbach, Flugplatz, Fuchsröhre, Adenauer Forst, Wehrseifen, Breidscheid, Bergwerk, Kesselchen, Karussell, Hohe Acht, Brünnchen, Pflanzgarten, Schwalbenschwanz, Döttinger Höhe …), pri KROG pa, koliko kilometrov kroga je že za tabo. Gozd, travniki, vasi in mostovi so postavljeni po pravi rabi tal in stavbah iz OpenStreetMap.
@@ -21,7 +37,7 @@ Na obeh lahko zapelješ v bokse (desno takoj za zadnjim ovinkom pred ciljno ravn
 
 ## Kje na progi si (proge po resničnih krajih)
 
-Na progah Ljubljana, Monako, Pikes Peak in Nordschleife se ~70 m pred vsakim znanim krajem pod uro izpiše njegovo ime (npr. Zmajski most, Prešernov trg, Casino, predor, Glen Cove, Devil's Playground, Karussell), in to v vsakem krogu. Komentator (v angleščini) občasno pove, kje si („Over the Dragon Bridge now!“, „Up into Casino Square!“), vsak kraj praviloma enkrat na dirko, z razmikom med takimi stavki, in samo takrat, ko ne govori o nečem pomembnejšem (prehitevanja, vmesni časi, nesreče in boksi imajo prednost in ga prekinejo). Kraj, ki ga v enem krogu ni utegnil omeniti, lahko pove v naslednjem. Čas kroga ali vmesni čas ostane na zaslonu, ime kraja pa se pokaže takoj za njim.
+Na progah Ljubljana, Monako, Pikes Peak, Ouninpohja in Nordschleife se ~70 m pred vsakim znanim krajem pod uro izpiše njegovo ime (npr. Zmajski most, Prešernov trg, Casino, predor, Glen Cove, Devil's Playground, Keltainen talo, Kakaristo, Karussell), in to v vsakem krogu. Komentator (v angleščini) občasno pove, kje si („Over the Dragon Bridge now!“, „Up into Casino Square!“), vsak kraj praviloma enkrat na dirko, z razmikom med takimi stavki, in samo takrat, ko ne govori o nečem pomembnejšem (prehitevanja, vmesni časi, nesreče in boksi imajo prednost in ga prekinejo). Kraj, ki ga v enem krogu ni utegnil omeniti, lahko pove v naslednjem. Čas kroga ali vmesni čas ostane na zaslonu, ime kraja pa se pokaže takoj za njim.
 
 ## Fizika vožnje
 
@@ -36,7 +52,7 @@ Dirka dveh igralcev, vsak na svojem telefonu (ali računalniku), preko interneta
 3. Za zasebno sobo tapni manjši gumb **Zasebna soba s kodo**: eden tapne **Ustvari sobo** in drugemu pošlje kodo (4 znaki), drugi kodo vpiše in tapne **Pridruži se**.
 4. V sobi vsak izbere svoj avto (◀ ▶). Gostitelj (kdor je čakal oziroma ustvaril sobo) izbere progo in število krogov ter tapne **Začni dirko**.
 
-- Na progi sta samo vidva, brez tekmecev z AI, drug ob drugem v prvi vrsti; kdo začne na levi, se menja od dirke do dirke. Vzpon na Pikes Peak (vožnja proti uri) ni na voljo.
+- Na progi sta samo vidva, brez tekmecev z AI, drug ob drugem v prvi vrsti; kdo začne na levi, se menja od dirke do dirke. Vožnji proti uri (Pikes Peak in Ouninpohja) nista na voljo.
 - Semafor ugasne na obeh telefonih hkrati. Časi se merijo od skupnega starta, zato sta rezultata na obeh telefonih enaka.
 - Fizika vožnje in poškodbe so po nastavitvah gostitelja (sprememba med dirko velja od naslednje dirke). Vsak vozi svoj avto z nadgradnjami.
 - Avta se lahko zadeneta. Vsak telefon premika le svoj avto, zato se ob trku odmakne vsak svoj.

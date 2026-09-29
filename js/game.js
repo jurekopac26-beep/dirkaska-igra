@@ -58,9 +58,18 @@
   const upgOf = (id) => S.upg[id] || (S.upg[id] = upgNorm(null));
   const upgCount = (id) => UPG_IDS.reduce((a, k) => a + upgOf(id)[k], 0);
   const isTT = (d) => !!(d && d.timeTrial);
+  // a time trial is a hill climb (Pikes Peak) or a rally special stage (def.rally: Ouninpohja): each with its own words and commentator lines
+  const isRally = (d) => !!(d && d.rally);
+  const ttRun = (d) => isRally(d) ? 'preizkušnjo' : 'vzpon';   // (Ponovi vzpon / Ponovi preizkušnjo)
+  const TT_LINES = { intro: ['introTT', 'introStage'], go: ['goTT', 'goStage'], cpFirst: ['cpFirst', 'cpFirstStage'], record: ['summitRecord', 'stageRecord'], even: ['summitEven', 'stageEven'], end: ['summit', 'stageEnd'] };
+  const ttLine = (d, k) => TT_LINES[k][isRally(d) ? 1 : 0];
   const numDot = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');   // 3048 -> 3.048
   const kmTxt = (m, dec) => (m / 1000).toFixed(dec).replace('.', ',');
   const cpWord = (n) => n + (n === 1 ? ' kontrolna točka' : n === 2 ? ' kontrolni točki' : n <= 4 ? ' kontrolne točke' : ' kontrolnih točk');
+  const jumpWord = (n) => n + (n === 1 ? ' skok' : n === 2 ? ' skoka' : n <= 4 ? ' skoki' : ' skokov');
+  // time trial splits table: the altitude of each point (hill climb) or how far into the stage it lies
+  const ttWhereHead = (d) => d.alt ? 'Višina' : 'Razdalja';
+  const ttWhere = (T, s) => { const alt = T.altAt(T.hy[T.idx(s)]); return alt != null ? numDot(alt) + ' m' : T.def.alt ? '' : kmTxt(s - T.startS, 2) + ' km'; };
   const sgn = (d) => Math.abs(d) < 0.0005 ? '\u00b10.000' : (d < 0 ? '\u2212' : '+') + (Math.abs(d) >= 60 ? fmt(Math.abs(d)) : Math.abs(d).toFixed(3));   // −1.234 / +0.512 / ±0.000 / −3:24.799
   const dCls = (d) => d < -0.0005 ? 'fast' : d > 0.0005 ? 'slow' : 'even';
   const lapWord = (n) => n + (n === 1 ? ' KROG' : n === 2 ? ' KROGA' : n <= 4 ? ' KROGI' : ' KROGOV');
@@ -277,7 +286,7 @@
   function buildTrackScreen() {
     const list = $('track-list');
     list.innerHTML = Core.TRACKS.map(d => { const T = getTrack(d.id), r = rec(d.id);
-      const meta = isTT(d) ? kmTxt(T.raceLen, 1) + ' km' + (d.realKm ? ' (pravih ' + String(d.realKm).replace('.', ',') + ' km)' : '') + (d.alt ? ' · vzpon ' + numDot(d.alt[1] - d.alt[0]) + ' m' : '') + ' · ' + cpWord(T.cpS.length) + ' · kronometer' + (r.bestTime ? ' · rekord ' + fmt(r.bestTime, true) : '')
+      const meta = isTT(d) ? kmTxt(T.raceLen, 1) + ' km' + (d.realKm ? ' (pravih ' + String(d.realKm).replace('.', ',') + ' km)' : '') + (d.alt ? ' · vzpon ' + numDot(d.alt[1] - d.alt[0]) + ' m' : '') + (isRally(d) && d.bumps ? ' · ' + jumpWord(d.bumps.length) : '') + ' · ' + cpWord(T.cpS.length) + ' · kronometer' + (r.bestTime ? ' · rekord ' + fmt(r.bestTime, true) : '')
         : kmTxt(T.len, 2) + ' km · ' + T.corners.length + ' ovinkov · ' + lapWord(d.laps || 3).toLowerCase() + (r.bestLap ? ' · rekord ' + fmt(r.bestLap, true) : '');
       return '<button class="track-card' + (d.id === S.track ? ' sel' : '') + '" data-track="' + d.id + '"><canvas></canvas><h3>' + d.name + '</h3>' +
         '<div class="tmeta">' + meta + '</div>' +
@@ -319,14 +328,14 @@
     $('h-msg').className = ''; $('h-split').className = ''; $('h-note').className = '';
     $('h-lights').className = ''; setLights(0, false);
     $('h-tot').textContent = '/' + race.cars.length;
-    $('hud').classList.toggle('tt', race.timeTrial); $('pause-restart').textContent = race.timeTrial ? 'Ponovi vzpon' : 'Ponovi dirko';
+    $('hud').classList.toggle('tt', race.timeTrial); $('pause-restart').textContent = race.timeTrial ? 'Ponovi ' + ttRun(track.def) : 'Ponovi dirko';
     $('pause-restart').classList.toggle('off', !!on);   // (online: no restart for one)
     cpSeen = race.player.cpEv; ttRes = null; cornerSeen = -1; cornerShow = false; placeInit();
     Input.reset();
     showScreen('none');
     Sfx.resume(); Sfx.setRunning(true);
     Comm.stop(); commReset();
-    if (race.timeTrial) { Comm.say('introTT', { track: EN_NAME[track.def.id] || track.def.name, cps: track.cpS.length }, 2); showMsg('VZPON NA VRH!', 'gold', 1.2); }
+    if (race.timeTrial) { Comm.say(ttLine(track.def, 'intro'), { track: EN_NAME[track.def.id] || track.def.name, cps: track.cpS.length }, 2); showMsg(isRally(track.def) ? 'POLNI PLIN!' : 'VZPON NA VRH!', 'gold', 1.2); }
     else {
       if (on) Comm.say('introNet', { track: EN_NAME[track.def.id] || track.def.name, laps: race.laps === 1 ? 'one lap' : race.laps + ' laps', name: race.remote.name }, 2);
       else Comm.say(race.laps === 1 ? 'introOne' : 'intro', { track: EN_NAME[track.def.id] || track.def.name, laps: race.laps, grid: Comm.ordinal(race.player.grid) }, 2);
@@ -391,16 +400,16 @@
     $('res-sub').innerHTML = (r.newPB ? (r.prev ? 'Prejšnji rekord ' + fmt(r.prev, true) + ' (<span class="fast">' + sgn(d) + '</span>).' : 'Prvi čas na tej progi.')   // (the title already says "Nov osebni rekord!")
       : '<span class="slow">' + sgn(d) + '</span> za rekordom (rekord ' + fmt(r.prev, true) + ').') +
       ' ' + esc(T.def.name) + ' · ' + esc(Core.MODELS[S.car].name) + ' · ' + (r.rank <= 10 ? r.rank + '. mesto na lestvici.' : 'izven prvih 10.');
-    // splits table: CP1..CPn + finish, altitude, time, difference to the previous personal best
+    // splits table: CP1..CPn + finish, altitude (a rally stage: the distance from the start), time, difference to the previous personal best
     const pts = T.cpS.map((s, k) => ({ lbl: 'CP' + (k + 1), s })).concat([{ lbl: 'CILJ', s: T.finishS }]);
-    const rows = pts.map((p, k) => { const t = r.splits[k], pb = r.prevSplits ? r.prevSplits[k] : NaN, dd = t - pb, alt = T.altAt(T.hy[T.idx(p.s)]);
-      return '<tr><td>' + p.lbl + '</td><td>' + (alt != null ? numDot(alt) + ' m' : '') + '</td><td>' + fmt(t, true) + '</td><td class="' + (isFinite(dd) ? dCls(dd) : '') + '">' + (isFinite(dd) ? sgn(dd) : '\u2013') + '</td></tr>'; }).join('');
+    const rows = pts.map((p, k) => { const t = r.splits[k], pb = r.prevSplits ? r.prevSplits[k] : NaN, dd = t - pb;
+      return '<tr><td>' + p.lbl + '</td><td>' + ttWhere(T, p.s) + '</td><td>' + fmt(t, true) + '</td><td class="' + (isFinite(dd) ? dCls(dd) : '') + '">' + (isFinite(dd) ? sgn(dd) : '\u2013') + '</td></tr>'; }).join('');
     const tt = $('res-tt'); tt.classList.remove('off');
-    tt.innerHTML = '<p class="ltab-h">Vmesni časi</p><table class="ltab"><thead><tr><th>Točka</th><th>Višina</th><th>Čas</th><th>' + '\u00b1 rekord' + '</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+    tt.innerHTML = '<p class="ltab-h">Vmesni časi</p><table class="ltab"><thead><tr><th>Točka</th><th>' + ttWhereHead(T.def) + '</th><th>Čas</th><th>' + '\u00b1 rekord' + '</th></tr></thead><tbody>' + rows + '</tbody></table>' +
       '<p class="ltab-h">Lestvica · ' + esc(T.def.name) + '</p>';
     $('res-table').querySelector('thead').innerHTML = TT_HEAD;
     $('res-table').querySelector('tbody').innerHTML = boardRows(R0.board || [], r.entry);
-    $('res-restart').textContent = 'Ponovi vzpon';
+    $('res-restart').textContent = 'Ponovi ' + ttRun(T.def);
     const wrap = $('res-table').parentElement; wrap.scrollTop = 0;
     showScreen('results');
     // the run's row on the board must be in view (it sits below the splits; on short screens below the fold)
@@ -415,13 +424,13 @@
     let h;
     if (isTT(d)) {
       const board = Array.isArray(r.board) ? r.board : [], T = getTrack(d.id);
-      if (!board.length) h = '<p class="board-empty">Na tej progi še ni časov. Odpelji vzpon in postavi prvi rekord!</p>';
+      if (!board.length) h = '<p class="board-empty">Na tej progi še ni časov. Odpelji ' + ttRun(d) + ' in postavi prvi rekord!</p>';
       else {
         h = '<p class="ltab-h">Najboljših 10 · ' + esc(d.name) + ' · kronometer</p><table class="ltab b"><thead>' + TT_HEAD + '</thead><tbody>' + boardRows(board, null) + '</tbody></table>';
         if (Array.isArray(r.bestSplits) && r.bestTime) {
           const pts = T.cpS.map((s, k) => ['CP' + (k + 1), s]).concat([['CILJ', T.finishS]]);
-          h += '<p class="ltab-h">Osebni rekord ' + fmt(r.bestTime, true) + ' · vmesni časi</p><table class="ltab"><thead><tr><th>Točka</th><th>Višina</th><th>Čas</th></tr></thead><tbody>' +
-            pts.map((p, k) => { const alt = T.altAt(T.hy[T.idx(p[1])]); return '<tr><td>' + p[0] + '</td><td>' + (alt != null ? numDot(alt) + ' m' : '') + '</td><td>' + fmt(r.bestSplits[k], true) + '</td></tr>'; }).join('') + '</tbody></table>';
+          h += '<p class="ltab-h">Osebni rekord ' + fmt(r.bestTime, true) + ' · vmesni časi</p><table class="ltab"><thead><tr><th>Točka</th><th>' + ttWhereHead(d) + '</th><th>Čas</th></tr></thead><tbody>' +
+            pts.map((p, k) => '<tr><td>' + p[0] + '</td><td>' + ttWhere(T, p[1]) + '</td><td>' + fmt(r.bestSplits[k], true) + '</td></tr>').join('') + '</tbody></table>';
         }
       }
     } else {
@@ -665,9 +674,10 @@
   function updateHUDTT(dt, P) {
     const nCP = track.cpS.length, R0 = rec(track.def.id);
     setText('h-lap', P.finished ? 'CILJ' : 'CP ' + P.cp + '/' + nCP);
-    // altitude of the road under the car (not the body, as in the splits table), between start and summit; frozen at the summit after the finish
+    // altitude of the road under the car (not the body, as in the splits table), between start and summit; frozen at the summit after the finish.
+    // A stage without altitudes (a rally stage): the distance still to go to the finish, to the nearest 0.1 km (at least 0.1 until the line)
     const al = track.def.alt, alt = track.altAt(P.finished ? track.hy[track.finishIdx] : P.roadY || 0);
-    setText('h-alt', alt != null ? numDot(al ? clamp(alt, al[0], al[1]) : alt) + ' m' : '');
+    setText('h-alt', alt != null ? numDot(al ? clamp(alt, al[0], al[1]) : alt) + ' m' : P.finished ? '' : 'še ' + kmTxt(Math.max(100, Math.round(clamp(track.raceLen - Math.max(0, P.dist), 0, track.raceLen) / 100) * 100), 1) + ' km');
     const cur = P.finished ? P.finishTime : phase === 'racing' ? race.time : 0;
     setText('h-time', fmt(cur, true));
     setText('h-bestv', fmt(R0.bestTime || NaN, true));   // personal best (a new one shows as soon as the run ends)
@@ -678,7 +688,7 @@
       const el = $('h-split'); el.textContent = 'CP' + k + '  ' + fmt(t, true) + (has ? '  ' + sgn(d) : ''); el.className = 'show ' + (has ? dCls(d) : 'even'); splitT = 3.5; cornerShow = false;   // (a place name waits until the split clears)
       showMsg('CP' + k + (has ? ' ' + sgn(d) : ''), has ? (d < 0 ? 'fast' : 'warn') : 'gold', 1.5);
       Sfx.beep(has && d < 0 ? 990 : 740, 0.12, 0.12);
-      if (!has) Comm.say('cpFirst', { cp: k, time: spkTime(t) }, 2);
+      if (!has) Comm.say(ttLine(track.def, 'cpFirst'), { cp: k, time: spkTime(t) }, 2);
       else Comm.say(Math.abs(d) < 0.005 ? 'cpEven' : d < 0 ? 'cpFast' : 'cpSlow', { cp: k, delta: spkDelta(d) }, 3);
     }
   }
@@ -771,7 +781,7 @@
 
   /* ---------------- commentator (English) ---------------- */
   const PART_EN = { bumperF: 'front bumper', bumperR: 'rear bumper', hood: 'bonnet', trunk: 'boot lid', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'front wing', fenderR: 'front wing' };
-  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', nring: 'the Nürburgring Nordschleife', toskana: 'Tuscany', grom: 'Thunder Cape' };
+  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', ouninpohja: 'Ouninpohja', nring: 'the Nürburgring Nordschleife', toskana: 'Tuscany', grom: 'Thunder Cape' };
   const cev = { wall: 0, car: 0 };          // impacts collected per physics step
   let cs = null;
   function commReset() {
@@ -858,7 +868,7 @@
         phase = 'racing'; phaseT = 0; race.start(); if (on) on.startT = Net.now();
         setLights(0, true); Sfx.beep(1040, 0.42, 0.16);
         showMsg('START!', 'gold', 0.9);
-        Comm.say(race.timeTrial ? 'goTT' : on ? 'goNet' : 'go', null, 4);
+        Comm.say(race.timeTrial ? ttLine(track.def, 'go') : on ? 'goNet' : 'go', null, 4);
         setTimeout(() => { if (phase === 'racing') { $('h-lights').classList.remove('show'); setLights(0, false); } }, 1100);
       }
     } else if (phase === 'racing') {
@@ -874,7 +884,7 @@
           const r = ttFinish(), d = r.prev ? r.time - r.prev : NaN, el = $('h-split');
           el.textContent = 'CILJ  ' + fmt(r.time, true) + (r.prev ? '  ' + sgn(d) : ''); el.className = 'show ' + (r.prev ? dCls(d) : 'even'); splitT = 5;
           showMsg(r.newPB ? 'NOV REKORD!' : 'CILJ! ' + sgn(d), r.newPB ? 'fast' : 'gold', 4);
-          Comm.say(r.newPB ? 'summitRecord' : isFinite(d) && Math.abs(d) < 0.005 ? 'summitEven' : 'summit', { time: spkTime(r.time), delta: isFinite(d) ? spkDelta(d) : '', track: EN_NAME[track.def.id] || track.def.name }, 5);
+          Comm.say(ttLine(track.def, r.newPB ? 'record' : isFinite(d) && Math.abs(d) < 0.005 ? 'even' : 'end'), { time: spkTime(r.time), delta: isFinite(d) ? spkDelta(d) : '', track: EN_NAME[track.def.id] || track.def.name }, 5);
         } else {
           showMsg(pos === 1 ? 'ZMAGA!' : 'CILJ! ' + pos + '. MESTO', 'gold', 4);
           Comm.say(pos === 1 ? 'win' : pos <= 3 ? 'podium' : 'finish', { pos: Comm.ordinal(pos) }, 5);
@@ -895,7 +905,7 @@
   // the past, smoothly between two states. Race times count from the shared start, so they compare fairly on both phones.
   const NET_V = 1;   // message format; together with the game's own version (the stamps of all its scripts) both phones must match
   const gameVer = () => { let h = 2166136261; for (const s of document.querySelectorAll('script[src]')) for (const ch of s.getAttribute('src')) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return NET_V + '/' + (h >>> 0).toString(36); };
-  const netTracks = () => Core.TRACKS.filter(d => !isTT(d));   // circuits (the hill climb is a run for one)
+  const netTracks = () => Core.TRACKS.filter(d => !isTT(d));   // circuits (the hill climb and the rally stage are runs for one)
   const modelById = (id) => Core.MODELS.find(m => m.id === id) || Core.MODELS[0];
   const NET_ERR = {
     'peer-unavailable': 'Sobe s to kodo ni. Preveri kodo (prijatelj mora imeti sobo odprto).',

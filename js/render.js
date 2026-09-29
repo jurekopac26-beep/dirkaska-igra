@@ -768,6 +768,7 @@ const Render = (function () {
     kamp:     { fog: 0xa4a8d0, sun: 0xff9468, sunI: 1.33, sky: 0xc6ceff, gnd: 0x7a7338, hemiI: 1.0, tint: [1.0, 0.96, 1.03], sat: 1.06, sunOff: [-100, 80, 30] },   // Gromski rt: sun in the west-south-west, a warm bright ambient: softer shadows, as in the reference
     monaco:   { fog: 0xcfe2f1, sun: 0xfff0d6, sunI: 1.08, sky: 0xd8ebff, gnd: 0x8a7c62, hemiI: 0.6, tint: [1.03, 1.0, 0.95], sat: 1.14 },
     mountain: { fog: 0xb4cadf, sun: 0xfff2e0, sunI: 1.0, sky: 0xc8dcff, gnd: 0x4d5c33, hemiI: 0.6, tint: [0.98, 1.0, 1.03], sat: 1.12 },
+    ouni:     { fog: 0xc3d3de, sun: 0xfff1da, sunI: 1.06, sky: 0xd0e2f6, gnd: 0x46552c, hemiI: 0.6, tint: [1.0, 1.0, 1.01], sat: 1.08 },   // Ouninpohja: a clear Finnish August day, soft haze over the forests and lakes
     pikes:    { fog: 0xbfd3e8, sun: 0xfff4e4, sunI: 1.1, sky: 0xcfe0ff, gnd: 0x6b5847, hemiI: 0.6, tint: [1.0, 0.99, 1.02], sat: 1.1 },   // clear, thin high-altitude air: bright sun, pale blue haze over the valleys
     nring:    { fog: 0xc6d4dd, sun: 0xfff0da, sunI: 1.02, sky: 0xd4e4f2, gnd: 0x46552f, hemiI: 0.62, tint: [1.0, 1.01, 0.99], sat: 1.12 },   // the Eifel: soft hazy daylight over the 'green hell'
   };
@@ -1628,6 +1629,7 @@ const Render = (function () {
     particles.update(dt); sparkP.update(dt);
     World.update(world, time, target);
     if (target) updateCamera(dt, target, mode, alpha);
+    World.view(world, camera, target, alpha);   // (Ouninpohja: the forest between the camera and the car fades out)
     // tunnel roof (and the hotel above it) fades out while the followed car is inside, so you can see it
     if (world && world.dyn.tunnel && target && target.q) {
       const tn = world.dyn.tunnel, sq = target.q.s, inside = sq > tn.s0 - 30 && sq < tn.s1 + 12, goal = inside ? 0.14 : 1;

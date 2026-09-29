@@ -140,6 +140,22 @@
    "crowd:MeshLambertMaterial": "7d3d5da5"
   }
  },
+ "ouninpohja": {
+  "meshes": 2200,
+  "verts": 753748,
+  "instances": 57487,
+  "props": 57,
+  "crowd": 4387,
+  "world": "e1c8e841",
+  "propsHash": "d46aeaab",
+  "floor": "f6743e4f/12488",
+  "groups": {
+   "-:MeshLambertMaterial": "be97bc74",
+   "-:MeshPhongMaterial": "4f769f85",
+   "-:MeshBasicMaterial": "827b8eb2",
+   "crowd:MeshLambertMaterial": "5da84fc5"
+  }
+ },
  "nring": {
   "meshes": 2625,
   "verts": 859881,
