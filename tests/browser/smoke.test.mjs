@@ -84,7 +84,9 @@ try {
   {
     await startTrack(page, 'ouninpohja');
     const r = await page.evaluate(async () => {
-      const g = window.__game, left = document.getElementById('h-alt').textContent;
+      const g = window.__game;
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));   // (a frame of the new race has drawn the HUD: the first one can take a while, its shaders compile)
+      const left = document.getElementById('h-alt').textContent;
       for (let i = 0; i < 300 && g.phase !== 'done'; i++) { g.sim(1, true); if (i % 10 === 0) await new Promise(r => setTimeout(r, 0)); }
       await new Promise(r => setTimeout(r, 800));
       const rec = JSON.parse(localStorage.getItem('tdgp-records') || '{}'), head = [...document.querySelectorAll('#res-tt th')].map(e => e.textContent);

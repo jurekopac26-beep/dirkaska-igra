@@ -84,6 +84,11 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-speed { position: absolute; right: 2%; bottom: -2%; font: 700 italic clamp(24px, 8vh, 36px)/1 var(--f-ui); color: var(--meter); text-shadow: 0 2px 0 rgba(0,0,0,.7), 0 0 8px rgba(140,240,70,.25); font-variant-numeric: tabular-nums; }
 #h-kmh { position: absolute; right: 4%; top: 34%; font: 700 italic clamp(8px, 2.3vh, 11px)/1 var(--f-ui); color: var(--meter); text-shadow: 0 1px 2px #000; }
 #h-gear { position: absolute; left: 30%; top: 30%; transform: translateX(-50%); font: 700 italic clamp(13px, 4.2vh, 20px)/1 var(--f-ui); color: var(--chalk); text-shadow: 0 1px 2px #000; }
+/* DRS (circuits with DRS zones): dim; armed for the next zone (within 1 s of the car ahead at the detection line): white; open: green */
+#h-drs { display: none; position: absolute; left: 8%; bottom: 2%; padding: 1px 4px 0; border: 1.5px solid rgba(255,255,255,.3); border-radius: 4px; font: 700 italic clamp(9px, 2.4vh, 12px)/1.15 var(--f-ui); letter-spacing: .06em; color: rgba(255,255,255,.38); text-shadow: 0 1px 2px #000; transition: background-color .15s, color .15s; }
+#hud.drs #h-drs { display: block; }
+#h-drs.arm { color: var(--chalk); border-color: var(--chalk); }
+#h-drs.open { color: #0c1a08; background: #62e04c; border-color: #62e04c; text-shadow: none; }
 
 /* ================= TOUCH ================= */
 #touch { position: absolute; inset: 0; z-index: 4; touch-action: none; }
