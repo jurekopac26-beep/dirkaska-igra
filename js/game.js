@@ -21,7 +21,7 @@
 
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
-  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.2, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, damage: 2, name: 'Igralec' };
+  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.2, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, damage: 2, ghost: 1, name: 'Igralec' };
   let S = Object.assign({}, DEF);
   let records = {};
   try { const j = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (j) S = Object.assign(S, j); } catch (_) { }
@@ -183,7 +183,7 @@
   const physOf = () => S.phys === 'arcade' ? 'arcade' : 'cs';
   function applyPhys(r) { if (r) r.setPhys(physOf()); }
   function setOption(key, v) {
-    const num = ['zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'damage'];
+    const num = ['zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'damage', 'ghost'];
     S[key] = num.includes(key) ? +v : v;
     if (key === 'shadows') { autoNoShadows = false; perf.pending = perf.restore = false; perf.keep = true; }   // the player's own choice wins for the rest of the visit
     save(); applySettings();
@@ -300,6 +300,76 @@
     }, 40);
   }
 
+  /* ---------------- ghost of the best run (time trials) ---------------- */
+  // While a time trial runs, the player's car pose is sampled every GH_DT s of race time (between two physics steps, so exactly on the
+  // grid). A run that sets a new personal best is stored with the record (per track and physics, key tdgp-ghost-<record key>) and
+  // replays as a see-through car (Render.setGhost) in the next runs, on the race clock. Only drawn: it never touches the race.
+  // Stored: { v, dt, n, t (the run's time), car, color, stripe, q0 [x, y, z in cm], d: base64 of Int16 [n x 7] }: per sample the
+  // x, y, z steps from the previous sample (cm), heading, steer, pitch and roll (1e-4 rad)
+  const GH_DT = 0.1, GH_MAX = 12000, GH_CH = 7, GH_V = 1, GH_BYTES = 600000;   // sample interval (s), max samples (20 min), channels, format, max stored size
+  const ghKey = (id) => 'tdgp-ghost-' + recKey(id);
+  let ghRec = null, ghPlay = null;   // the run being recorded { n, f: Float32Array }, the best run being replayed { n, t, M, color, stripe, f }
+  function ghPose(P, f, k, a) {   // the car's pose at a (0 = previous physics step, 1 = this one) into f at sample k
+    const o = k * GH_CH, lat = clamp(P.w * P.speed, -16, 16);
+    f[o] = P.px + (P.x - P.px) * a; f[o + 1] = P.py + (P.y - P.py) * a; f[o + 2] = P.pz + (P.z - P.pz) * a; f[o + 3] = P.ph + Core.wrapPi(P.h - P.ph) * a;
+    f[o + 4] = P.delta || 0; f[o + 5] = P.air ? Math.atan2(P.vy, Math.max(Math.abs(P.vl), 6)) * 0.8 : Math.atan(P.gradeNow || 0); f[o + 6] = clamp(-lat * 0.0042, -0.06, 0.06);
+  }
+  function ghSample(P) {   // after each physics step of a time trial, until the finish
+    if (!ghRec || ghRec.done || race.state !== 'racing' || phase !== 'racing') return;
+    const t1 = race.time, t0 = t1 - STEP;
+    while (ghRec.n < GH_MAX && ghRec.n * GH_DT <= t1 + 1e-9) { ghPose(P, ghRec.f, ghRec.n, clamp((ghRec.n * GH_DT - t0) / STEP, 0, 1)); ghRec.n++; }
+    if (P.finished) { if (ghRec.n < GH_MAX) { ghPose(P, ghRec.f, ghRec.n, 1); ghRec.n++; } ghRec.done = true; }   // (the last sample: just past the line)
+  }
+  function ghEncode(G) {
+    const n = G.n, f = G.f, a = new Int16Array(n * GH_CH), q0 = [Math.round(f[0] * 100), Math.round(f[1] * 100), Math.round(f[2] * 100)], q = q0.slice();
+    const i16 = (v) => Math.max(-32767, Math.min(32767, Math.round(v)));
+    for (let k = 0; k < n; k++) { const o = k * GH_CH;
+      for (let c = 0; c < 3; c++) { const v = Math.round(f[o + c] * 100), d = v - q[c]; if (Math.abs(d) > 32767) return null; a[o + c] = d; q[c] = v; }   // (a jump of over 327 m: not a drive)
+      a[o + 3] = i16(Core.wrapPi(f[o + 3]) * 1e4); for (let c = 4; c < 7; c++) a[o + c] = i16(f[o + c] * 1e4); }
+    const b = new Uint8Array(a.buffer); let s = '';
+    for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+    return { q0, d: btoa(s) };
+  }
+  function ghSave(id, time) {   // a new personal best: store the recorded run (a run too long or too big is not kept; the old ghost goes with its record)
+    const G = ghRec; ghRec = null;
+    try { localStorage.removeItem(ghKey(id)); } catch (_) { }
+    if (!G || !G.done || G.n < 2) return;
+    const M = Core.MODELS[S.car], e = ghEncode(G); if (!e) return;
+    const j = JSON.stringify({ v: GH_V, dt: GH_DT, n: G.n, t: time, car: M.id, color: PLAYER_COLORS[S.color], stripe: race.player.stripe !== false, q0: e.q0, d: e.d });
+    if (j.length > GH_BYTES) return;
+    try { localStorage.setItem(ghKey(id), j); } catch (_) { }
+  }
+  function ghLoad(id, best) {   // the stored best run of this track and physics, if it is the run of the current record
+    let o = null; try { o = JSON.parse(localStorage.getItem(ghKey(id)) || 'null'); } catch (_) { return null; }
+    if (!isObj(o) || o.v !== GH_V || o.dt !== GH_DT || !posNum(o.t) || !(Math.abs(o.t - best) < 0.0005) || !(o.n >= 2 && o.n <= GH_MAX) || typeof o.d !== 'string' || !Array.isArray(o.q0) || o.q0.length !== 3) return null;
+    let b; try { b = atob(o.d); } catch (_) { return null; }
+    if (b.length !== o.n * GH_CH * 2) return null;
+    const u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
+    const a = new Int16Array(u.buffer), f = new Float32Array(o.n * GH_CH), q = o.q0.map(v => +v || 0);
+    for (let k = 0; k < o.n; k++) { const i = k * GH_CH; for (let c = 0; c < 3; c++) { q[c] += a[i + c]; f[i + c] = q[c] / 100; } for (let c = 3; c < 7; c++) f[i + c] = a[i + c] / 1e4; }
+    return { n: o.n, t: o.t, M: modelById(o.car), color: typeof o.color === 'number' ? o.color : PLAYER_COLORS[0], stripe: o.stripe !== false, f };
+  }
+  function ghStart() {   // newRace: record every time trial (alone, never online); replay the best run when there is one
+    const tt = race.timeTrial && !(mp && mp.race);
+    ghRec = tt ? { n: 0, f: new Float32Array(GH_MAX * GH_CH), done: false } : null;
+    const R0 = tt ? rec(track.def.id) : null;
+    ghPlay = R0 && R0.bestTime ? ghLoad(track.def.id, R0.bestTime) : null;
+    Render.setGhost(null, true);
+  }
+  const _gp = { M: null, color: 0, stripe: true, x: 0, y: 0, z: 0, h: 0, d: 0, p: 0, r: 0, op: 1 };
+  function ghShow(alpha) {   // every drawn frame of a race: the ghost where the best run was at this moment of the race clock
+    const G = ghPlay;
+    if (!G || !race || !S.ghost || !(phase === 'racing' || phase === 'finish' || phase === 'done') || race.state === 'grid') { Render.setGhost(null); return; }
+    const t = Math.max(0, race.time - (1 - clamp(alpha, 0, 1)) * STEP), u = t / GH_DT, k = Math.min(G.n - 2, Math.floor(u)), a = clamp(u - k, 0, 1), end = (G.n - 1) * GH_DT;
+    if (t > end + 0.6) { Render.setGhost(null); return; }   // the best run is over (it ends just past the line)
+    const f = G.f, o = k * GH_CH, n2 = o + GH_CH, L = (c) => f[o + c] + (f[n2 + c] - f[o + c]) * a;
+    const g = _gp; g.M = G.M; g.color = G.color; g.stripe = G.stripe;
+    g.x = L(0); g.y = L(1); g.z = L(2); g.h = f[o + 3] + Core.wrapPi(f[n2 + 3] - f[o + 3]) * a; g.d = L(4); g.p = L(5); g.r = L(6);
+    const P = race.player, dd = Math.hypot(g.x - P.x, g.z - P.z);
+    g.op = clamp((dd - 1.5) / 5, 0.3, 1) * clamp(t / 0.4, 0, 1) * clamp((end + 0.6 - t) / 0.6, 0, 1);   // fainter right on top of the player; fades in at the start and out past the line
+    Render.setGhost(g);
+  }
+
   /* ---------------- race lifecycle ---------------- */
   function newRace() {
     const tt = isTT(track.def), M = Core.MODELS[S.car], on = mp && mp.race;
@@ -321,7 +391,7 @@
     $('h-tot').textContent = '/' + race.cars.length;
     $('hud').classList.toggle('tt', race.timeTrial); $('pause-restart').textContent = race.timeTrial ? 'Ponovi vzpon' : 'Ponovi dirko';
     $('pause-restart').classList.toggle('off', !!on);   // (online: no restart for one)
-    cpSeen = race.player.cpEv; ttRes = null; cornerSeen = -1; cornerShow = false; placeInit();
+    cpSeen = race.player.cpEv; ttRes = null; cornerSeen = -1; cornerShow = false; placeInit(); ghStart(); $('h-ttsp').className = '';
     Input.reset();
     showScreen('none');
     Sfx.resume(); Sfx.setRunning(true);
@@ -351,7 +421,7 @@
     showScreen('none');
   }
   function toTitle() {
-    paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop();
+    paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); ghRec = ghPlay = null; Render.setGhost(null, true);
     Sfx.setRunning(false); Sfx.silence();
     Render.attachRace(demo); Render.resetCam();
     setLights(0, false);
@@ -363,7 +433,7 @@
     const splits = P.splits.slice(0, track.cpS.length).concat([time]);
     const prev = R0.bestTime > 0 ? R0.bestTime : 0, prevSplits = Array.isArray(R0.bestSplits) ? R0.bestSplits.slice() : null;
     const newPB = !prev || time < prev;
-    if (newPB) { R0.bestTime = time; R0.bestSplits = splits.slice(); }
+    if (newPB) { R0.bestTime = time; R0.bestSplits = splits.slice(); ghSave(track.def.id, time); } else ghRec = null;
     const M = Core.MODELS[S.car], date = Date.now();
     const entry = { name: S.name, car: M.name, carId: M.id, time, splits, date, upg: Object.assign({}, upgOf(M.id)) };
     const board = (Array.isArray(R0.board) ? R0.board : []).concat([entry]).sort((a, b) => a.time - b.time);
@@ -372,6 +442,12 @@
     saveRecords();
     ttRes = { time, splits, prev, prevSplits, newPB, rank, date, entry };
     return ttRes;
+  }
+  // split rows, CP1..CPn + finish: this run's time, the previous best run's time there and the difference (alt: with the altitude)
+  function splitRows(r, alt) {
+    const T = track, pts = T.cpS.map((s, k) => ['CP' + (k + 1), s]).concat([['CILJ', T.finishS]]);
+    return pts.map((p, k) => { const t = r.splits[k], pb = r.prevSplits ? r.prevSplits[k] : NaN, dd = t - pb, a = alt ? T.altAt(T.hy[T.idx(p[1])]) : null;
+      return '<tr><td>' + p[0] + '</td>' + (alt ? '<td>' + (a != null ? numDot(a) + ' m' : '') + '</td>' : '') + '<td>' + fmt(t, true) + '</td><td>' + (isFinite(pb) ? fmt(pb, true) : '\u2013') + '</td><td class="' + (isFinite(dd) ? dCls(dd) : '') + '">' + (isFinite(dd) ? sgn(dd) : '\u2013') + '</td></tr>'; }).join('');
   }
   // leaderboard rows (top 10); the given run highlighted, and appended below when it did not make the top 10
   function boardRows(board, me) {
@@ -392,11 +468,8 @@
       : '<span class="slow">' + sgn(d) + '</span> za rekordom (rekord ' + fmt(r.prev, true) + ').') +
       ' ' + esc(T.def.name) + ' · ' + esc(Core.MODELS[S.car].name) + ' · ' + (r.rank <= 10 ? r.rank + '. mesto na lestvici.' : 'izven prvih 10.');
     // splits table: CP1..CPn + finish, altitude, time, difference to the previous personal best
-    const pts = T.cpS.map((s, k) => ({ lbl: 'CP' + (k + 1), s })).concat([{ lbl: 'CILJ', s: T.finishS }]);
-    const rows = pts.map((p, k) => { const t = r.splits[k], pb = r.prevSplits ? r.prevSplits[k] : NaN, dd = t - pb, alt = T.altAt(T.hy[T.idx(p.s)]);
-      return '<tr><td>' + p.lbl + '</td><td>' + (alt != null ? numDot(alt) + ' m' : '') + '</td><td>' + fmt(t, true) + '</td><td class="' + (isFinite(dd) ? dCls(dd) : '') + '">' + (isFinite(dd) ? sgn(dd) : '\u2013') + '</td></tr>'; }).join('');
     const tt = $('res-tt'); tt.classList.remove('off');
-    tt.innerHTML = '<p class="ltab-h">Vmesni časi</p><table class="ltab"><thead><tr><th>Točka</th><th>Višina</th><th>Čas</th><th>' + '\u00b1 rekord' + '</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+    tt.innerHTML = '<p class="ltab-h">Vmesni časi</p><table class="ltab sp"><thead><tr><th>Točka</th><th>Višina</th><th>Čas</th><th>Rekord</th><th>\u00b1</th></tr></thead><tbody>' + splitRows(r, true) + '</tbody></table>' +
       '<p class="ltab-h">Lestvica · ' + esc(T.def.name) + '</p>';
     $('res-table').querySelector('thead').innerHTML = TT_HEAD;
     $('res-table').querySelector('tbody').innerHTML = boardRows(R0.board || [], r.entry);
@@ -470,6 +543,7 @@
     else if (phase === 'finish' || phase === 'done' || autoDrive) { P.pitWant = !!P.inPit; Core.aiControl(P, race, dt); P.digitalSteer = false; }   // (autoDrive: automated tests of online races drive in real time)
     else { P.inSteer = inp.steer; P.inThr = inp.thr; P.inBrk = inp.brk; P.inHand = inp.hand; P.digitalSteer = inp.digital; }
     race.step(dt);
+    if (ghRec) ghSample(P);
     if (P.gear > prevGear && prevGear > 0) Sfx.shiftPop();
     prevGear = P.gear;
     // feedback
@@ -873,6 +947,7 @@
         } else if (race.timeTrial) {   // time trial: store the run, finish popup with the difference to the previous record
           const r = ttFinish(), d = r.prev ? r.time - r.prev : NaN, el = $('h-split');
           el.textContent = 'CILJ  ' + fmt(r.time, true) + (r.prev ? '  ' + sgn(d) : ''); el.className = 'show ' + (r.prev ? dCls(d) : 'even'); splitT = 5;
+          const sp = $('h-ttsp'); sp.innerHTML = '<table><thead><tr><th></th><th>Čas</th><th>Rekord</th><th>\u00b1</th></tr></thead><tbody>' + splitRows(r, false) + '</tbody></table>'; sp.className = 'show';   // the splits under it until the results
           showMsg(r.newPB ? 'NOV REKORD!' : 'CILJ! ' + sgn(d), r.newPB ? 'fast' : 'gold', 4);
           Comm.say(r.newPB ? 'summitRecord' : isFinite(d) && Math.abs(d) < 0.005 ? 'summitEven' : 'summit', { time: spkTime(r.time), delta: isFinite(d) ? spkDelta(d) : '', track: EN_NAME[track.def.id] || track.def.name }, 5);
         } else {
@@ -1163,7 +1238,7 @@
     }
     // race (online: netFrame() after this frame's steps sends my car as it is now to the friend and places the friend's car;
     // also while paused or turned the wrong way, when the friend drives on)
-    if (orientBlock) { if (mp && mp.race) netFrame(true); Render.frame(0, 1, race.player, S.camera, { noFx: true }); return; }
+    if (orientBlock) { if (mp && mp.race) netFrame(true); ghShow(1); Render.frame(0, 1, race.player, S.camera, { noFx: true }); return; }
     const inp = Input.update(dt);
     if (!paused && screen === 'none' || (!paused && (phase === 'finish' || phase === 'done'))) {
       if (phase !== 'done') updatePhase(dt, inp);
@@ -1177,11 +1252,11 @@
       if (on) { if (race.player.finished && on.mine == null) netMyFinish(); netFrame(false); }
       updateHUD(dt); Comm.update();
       Sfx.update(race, race.player, null, inp.thr);
-      Render.frame(dt, acc / STEP, race.player, S.camera, { marker: phase === 'intro' || phase === 'lights' || (phase === 'racing' && race.time < 2.5) });
+      ghShow(acc / STEP); Render.frame(dt, acc / STEP, race.player, S.camera, { marker: phase === 'intro' || phase === 'lights' || (phase === 'racing' && race.time < 2.5) });
       adaptive(dt);
     } else {
       if (mp && mp.race) netFrame(true);
-      Render.frame(0, 1, race.player, S.camera, { noFx: true });
+      ghShow(1); Render.frame(0, 1, race.player, S.camera, { noFx: true });
       if (screen === 'settings') updateTiltLive();
     }
   }
