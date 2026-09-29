@@ -5027,6 +5027,15 @@ const World = (function () {
     lf.fin(lf.sm, n);
   }
 
+  /* ---- round 4, the air and the details: haze layered in the valleys, the distant peaks where the view opens (the Bottomless Pit),
+     flags fluttering in the wind, dust and leaves in the air, smoke from the grills at the picnic grounds (built at the end of buildPikes;
+     pkAmbientUpdate runs every frame when out.dyn.pkAmb is set) ---- */
+  function pkAmbient(K) {
+  }
+
+  function pkAmbientUpdate(am, t, car) {
+  }
+
   function buildPikes(scene, tex, opts) {
     const R = rng(7311), N = T.N, w = T.w, dens = opts.density || 1;
     const root = new THREE.Group(); scene.add(root);
@@ -5367,6 +5376,8 @@ const World = (function () {
     pkSky(K);
 
     pkWeather(K);
+
+    pkAmbient(K);
 
     out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, rails: +(nRail / (2 * N)).toFixed(3) };   // (read by the tests)
     return out;
@@ -9144,6 +9155,7 @@ const World = (function () {
     if (d.pkOps) pkOpsUpdate(d.pkOps, t, car);   // Pikes Peak: the marshals' flags
     if (d.wheel) szWheel(d.wheel, t);   // Suzuka: the Ferris wheel turns
     if (d.pkLife) pkWildlifeUpdate(d.pkLife, t, car);   // Pikes Peak: marmots and bighorn sheep
+    if (d.pkAmb) pkAmbientUpdate(d.pkAmb, t, car);   // Pikes Peak: flags, dust and leaves, grill smoke
     if (d.boats) {
       const L = d.lake;
       for (const b of d.boats) {
