@@ -108,7 +108,8 @@ const Sfx = (function () {
   const bpf = (f, q, sr) => { const w = 2 * Math.PI * f / sr, al = Math.sin(w) / (2 * q), a0 = 1 + al; return [al / a0, -2 * Math.cos(w) / a0, (1 - al) / a0]; };   // band-pass biquad: b0 (b1 = 0, b2 = -b0), a1, a2
   const rmsTo = (a, v) => { let s = 0; for (let i = 0; i < a.length; i++) s += a[i] * a[i]; const k = v / Math.sqrt(s / a.length + 1e-12); for (let i = 0; i < a.length; i++) a[i] *= k; };
   const mkPan = (v) => { if (!ctx.createStereoPanner) return ctx.createGain(); const p = ctx.createStereoPanner(); p.pan.value = v; return p; };
-  // the crowd's loop and the cowbell clanks, made a slice per frame (a few ms each) while the car waits on the start line; then the crowd starts
+  // the crowd's loop and the cowbell clanks, made in small slices (~16k samples, one clapper, one whoop, one bell partial) while the car waits on the
+  // start line, as many a frame as fit in ~2 ms (a slow phone: one); then the crowd starts
   function* atmoGen(A) {
     const sr = AT_SR, n = Math.floor(4.3 * sr), R = Core.rng(7141), rn = () => R() * 2 - 1, { sstep, lerp } = Core;
     // 4.3 s of a crowd that loops without a seam: a babbling roar in vowel formants, applause and many overlapping whoops, swelling a little
@@ -118,7 +119,8 @@ const Sfx = (function () {
       const [b0, a1, a2] = bpf(f, q, sr), K = 22, cp = []; for (let k = 0; k < K; k++) cp.push(0.3 + 0.7 * R());
       let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
       for (let j = -1024; j < n; j++) { const x = w[j < 0 ? n + j : j], y = b0 * (x - x2) - a1 * y1 - a2 * y2; x2 = x1; x1 = x; y2 = y1; y1 = y;
-        if (j >= 0) { const u = j / n * K, k = Math.floor(u), t = u - k; roar[j] += y * a * (cp[k] + (cp[(k + 1) % K] - cp[k]) * t * t * (3 - 2 * t)); } }
+        if (j >= 0) { const u = j / n * K, k = Math.floor(u), t = u - k; roar[j] += y * a * (cp[k] + (cp[(k + 1) % K] - cp[k]) * t * t * (3 - 2 * t)); }
+        if ((j & 16383) === 16383) yield; }
       yield;
     }
     for (let c = 0; c < 28; c++) {   // clappers, 2.8-4.6 claps a second: each clap a short burst of noise with the clapper's own brightness
@@ -127,7 +129,7 @@ const Sfx = (function () {
         let i = Math.floor(t * sr), e = amp * (0.6 + R() * 0.4), x1 = 0, x2 = 0, y1 = 0, y2 = 0;
         for (let j = 0; j < L; j++, i++) { const x = rn() * e * (j < 14 ? j / 14 : 1), y = b0 * (x - x2) - a1 * y1 - a2 * y2; x2 = x1; x1 = x; y2 = y1; y1 = y; if (j >= 14) e *= k; clap[i % n] += y; }
       }
-      if (c % 7 === 6) yield;
+      yield;
     }
     for (let v = 0; v < 26; v++) {   // whoops ("woo", "yeah", "hey"): a buzz gliding up and down through two moving vowel formants, with some breath
       const i0 = Math.floor(R() * n), L = Math.floor((0.35 + R() * 0.8) * sr), f0 = R() < 0.6 ? 160 + R() * 130 : 270 + R() * 180, up = 0.15 + R() * 0.35, a = 0.5 + R() * 0.5, vr = R();
@@ -142,12 +144,13 @@ const Sfx = (function () {
         x2 = x1; x1 = x; y2 = y1; y1 = y; z2 = z1; z1 = z;
         voc[(i0 + j) % n] += (y + 0.5 * z) * a * Math.min(1, u / 0.08, (1 - u) / 0.3);
       }
-      if (v % 7 === 6) yield;
+      yield;
     }
     rmsTo(roar, 0.05); rmsTo(clap, 0.085); rmsTo(voc, 0.06);
     const buf = ctx.createBuffer(1, n, sr), d = buf.getChannelData(0), p0 = R() * 6.28, p1 = R() * 6.28; let pk = 0;
     for (let b = 0; b < n; b += 64) { const u = b / n * 6.2832, kc = 0.75 + 0.25 * Math.sin(3 * u + p1), sw = 0.82 + 0.12 * Math.sin(2 * u + p0) + 0.06 * Math.sin(7 * u + p1);
-      for (let i = b; i < b + 64 && i < n; i++) { d[i] = (roar[i] + clap[i] * kc + voc[i]) * sw; pk = Math.max(pk, Math.abs(d[i])); } }
+      for (let i = b; i < b + 64 && i < n; i++) { d[i] = (roar[i] + clap[i] * kc + voc[i]) * sw; pk = Math.max(pk, Math.abs(d[i])); }
+      if ((b & 16383) === 16320) yield; }
     if (pk > 0.95) for (let i = 0; i < n; i++) d[i] *= 0.95 / pk;
     yield;
     // cowbell clanks, four sizes: inharmonic partials (the lower ones slightly detuned pairs: the metal shimmers), the upper ones dying faster, the clapper's click
@@ -159,6 +162,7 @@ const Sfx = (function () {
           const wq = 2 * Math.PI * fb * r * (1 + (np > 1 ? (q ? 0.003 : -0.003) : 0) + (Rb() - 0.5) * 0.008) / sr, c2 = 2 * Math.cos(wq), k = Math.exp(-1 / (tau * (0.8 + Rb() * 0.4) * sr));
           let s1 = Math.sin(-wq), s2 = Math.sin(-2 * wq), g = a / np;
           for (let i = 0; i < m; i++) { const s = c2 * s1 - s2; s2 = s1; s1 = s; e[i] += s * g * (i < 12 ? i / 12 : 1); g *= k; }   // (a sine by recursion)
+          yield;
         }
       for (let i = 0, g = 0.35; i < 45; i++, g *= 0.9) e[i] += (Rb() * 2 - 1) * g;
       let pb = 0; for (let i = 0; i < m; i++) pb = Math.max(pb, Math.abs(e[i]));
@@ -189,7 +193,7 @@ const Sfx = (function () {
   function atmoUpdate(race, player, pikes, cam) {
     if (!pikes || !enabled) { if (atmo && atmo.on) atmoOff(0.3); return; }
     if (!atmo) atmoBuild();
-    if (atmo.gen && atmo.gen.next().done) atmo.gen = null;   // (the next slice of its buffers)
+    if (atmo.gen) { const t0 = performance.now(); do { if (atmo.gen.next().done) { atmo.gen = null; break; } } while (performance.now() - t0 < 2); }   // (the next slices of its buffers: ~2 ms a frame)
     if (atmo.T !== race.track) atmoSpots(race.track);
     const { sstep, lerp } = Core, now = ctx.currentTime, dt = clamp(now - atmo.t, 0, 0.25), y = player.roadY || 0, spd = player.speed || 0;
     atmo.t = now; atmo.on = true;

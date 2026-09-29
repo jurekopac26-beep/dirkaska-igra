@@ -196,7 +196,7 @@
     S[key] = num.includes(key) ? +v : v;
     if (key === 'shadows') { autoNoShadows = false; perf.pending = perf.restore = false; perf.keep = true; }   // the player's own choice wins for the rest of the visit
     save(); applySettings();
-    if (key === 'phys') { if (!(mp && mp.race)) applyPhys(race); applyPhys(demo); }   // (an online race keeps the host's physics)
+    if (key === 'phys') { if (!(mp && mp.race)) { applyPhys(race); ghPhys(); } applyPhys(demo); }   // (an online race keeps the host's physics)
     if (key === 'control' && v === 'tilt') enableTilt(false);
     if (key === 'camera') { lockOrientation(); updateOrientation(); }
   }
@@ -810,6 +810,12 @@
     return (lo + (s - a[lo]) / (a[hi] - a[lo])) * GH_DT;
   }
   const hxSAt = (t) => { const a = hx.gs, u = clamp(t / GH_DT, 0, a.length - 1), k = Math.min(a.length - 2, Math.floor(u)); return a[k] + (a[k + 1] - a[k]) * (u - k); };   // the best run's road position at race time t
+  function ghPhys() {   // the physics switched during a time trial: the record moves to the other physics, so do its best run (the ghost car) and the live difference
+    if (!race || !race.timeTrial || (mp && mp.race)) return;
+    const R0 = rec(track.def.id); ghPlay = R0.bestTime ? ghLoad(track.def.id, R0.bestTime) : null;
+    hx.gs = ghPlay ? hxTable(ghPlay) : null; hx.gt = ghPlay ? ghPlay.t : 0; hx.dSm = 0; hx.dT = 0; pf.lg = -9;
+    setText('h-delta', '\u00b10.00'); $('h-delta').className = 'even'; $('hud').classList.toggle('ttd', !!hx.gs);
+  }
   function hxFrame(dt, P) {   // every HUD frame of a time trial
     const sp = track.startS + P.dist;
     if (hx.turns) { const L = hx.turns, N = track.def.turns || L[L.length - 1].n; let k = 0; while (k < L.length && L[k].s <= sp) k++;

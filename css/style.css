@@ -101,7 +101,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
    height profile under the minimap (def.alt) */
 #h-turn { display: none; margin-top: 2px; color: var(--chalk); font-variant-numeric: tabular-nums; }
 #hud.tt.ttn #h-turn { display: block; }
-#h-delta { display: none; margin: -3px 0 -3px .45em; padding: 1px 5px 0; border-radius: 4px; background: rgba(10, 14, 20, .55); font: 700 italic 1.2em/1.05 var(--f-ui); letter-spacing: .02em; color: var(--chalk); }
+#h-delta { display: none; margin: -3px 0 -3px .45em; padding: 1px 5px 0; border-radius: 4px; background: rgba(10, 14, 20, .55); font: 700 italic 1.2em/1.05 var(--f-ui); letter-spacing: .02em; color: var(--chalk); font-variant-numeric: tabular-nums; min-width: 3.4em; text-align: center; }   /* (the same width for −1.24, +0.87 and ±0.00: the NAJ line does not shift) */
 #hud.tt.ttd #h-delta { display: inline-block; }
 #h-delta.fast { color: var(--meter); }
 #h-delta.slow { color: #ff5a47; }
