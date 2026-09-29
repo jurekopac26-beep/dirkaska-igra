@@ -7008,6 +7008,17 @@ const World = (function () {
 
   // a TV camera tower (the circuits' own builders place it): scaffolding on the ground at (x, y, z), square to the road (hd), a platform with a
   // cameraman under an umbrella, the camera looking along (fx, fz)
+  function photographerGeo(g, x, y, z, fx, fz, kn, tb) {   // a photographer behind the barrier facing the track (fx, fz), in a tabard tb, kneeling (kn: the legs folded under) or standing; the long white lens on the track
+    const dk = [0.14, 0.15, 0.18], skin = [0.85, 0.66, 0.52], px = -fz, pz = fx, rot = Math.atan2(fz, fx), h = kn ? 0.42 : 0;
+    if (kn) { box(g, x - fx * 0.12, y, z - fz * 0.12, 0.5, 0.45, 0.34, rot, dk, null, true); }
+    else for (const sd of [-1, 1]) box(g, x + px * sd * 0.1, y, z + pz * sd * 0.1, 0.15, 0.88, 0.15, rot, dk, null, true);
+    const yb = y + 0.86 - h;
+    box(g, x, yb, z, 0.24, 0.6, 0.42, rot, tb, null, true);                                             // the tabard
+    box(g, x, yb + 0.6, z, 0.22, 0.25, 0.2, rot, skin, [0.22, 0.17, 0.12], true);                      // the head (the hair on top)
+    box(g, x + fx * 0.28, yb + 0.35, z + fz * 0.28, 0.36, 0.1, 0.44, rot, dk, null, true);            // the arms up to the camera
+    box(g, x + fx * 0.22, yb + 0.5, z + fz * 0.22, 0.16, 0.16, 0.16, rot, [0.08, 0.08, 0.09], null, true);   // the camera at the eye
+    box(g, x + fx * 0.55, yb + 0.51, z + fz * 0.55, 0.52, 0.14, 0.14, rot, [0.93, 0.93, 0.9], null, true);   // the lens
+  }
   function tvTowerGeo(g, x, y, z, hd, fx, fz) {
     const ph = 6.5;
     const st = [0.62, 0.63, 0.66], c = Math.cos(hd), sn = Math.sin(hd), at2 = (a, b) => [x + c * a - sn * b, z + sn * a + c * b];
@@ -7159,8 +7170,9 @@ const World = (function () {
     return mesh;
   }
   // the video walls' pictures, four 256 x 128 frames side by side (the walls show one after another): the race from behind a car, the
-  // standings (the game's own drivers), the orange fans in their smoke, the map of the circuit (T's centre line)
-  function rbScreenTex() {
+  // standings (the game's own drivers), the orange fans in their smoke, the map of the circuit (T's centre line). o (another circuit's
+  // walls, Suzuka): its name and figures on the map, the fans waving the national flag instead of the orange smoke
+  function rbScreenTex(o) {
     const c = document.createElement('canvas'); c.width = 1024; c.height = 128; const x = c.getContext('2d'), r = rng(1967), F = '"Russo One", "Arial Black", Arial, sans-serif';
     const tag = (ox, t, bg) => { x.fillStyle = bg || '#e2202c'; x.fillRect(ox + 8, 8, 40, 16); x.fillStyle = '#fff'; x.font = '900 11px ' + F; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(t, ox + 28, 17); };
     { const ox = 0, g = x.createLinearGradient(0, 0, 0, 60);   // 1: the race
@@ -7186,6 +7198,12 @@ const World = (function () {
         x.fillStyle = '#fff'; x.textAlign = 'right'; x.fillText(String(k + 1), ox + 78, y + 1); x.textAlign = 'left'; x.fillText(nm, ox + 92, y + 1);
         x.fillStyle = '#ffcc00'; x.textAlign = 'right'; x.fillText(k ? '+' + (k * 0.8 + r() * 0.7).toFixed(1) : '', ox + 192, y + 1); }
       tag(ox, 'KROG', '#1c2856'); }
+    if (o) { const ox = 512; x.fillStyle = '#2f3440'; x.fillRect(ox, 0, 256, 128);   // 3 (o): the fans in their team shirts, the flags waving over them
+      const cols = ['#e2202c', '#f4f4f0', '#1c2856', '#2f7fe0', '#ffcc00', '#1f7a3a', '#ff8a1c', '#f4f4f0'];
+      for (let row = 0; row < 12; row++) for (let k = 0; k < 44; k++) { const px = ox + k * 6 + (row % 2) * 3, py = 26 + row * 9; x.fillStyle = cols[Math.floor(r() * cols.length)]; x.fillRect(px, py + 3, 5, 6); x.fillStyle = r() < 0.7 ? '#f1c7a1' : '#c99a70'; x.fillRect(px + 1, py, 3, 3); }
+      for (let k = 0; k < 11; k++) { const px = ox + 12 + r() * 220, py = 12 + r() * 60, w = 26 + r() * 10, h = w * 0.66;   // the national flags: white, the red sun
+        x.fillStyle = '#d8d8d8'; x.fillRect(px - 2, py, 2, h + 14); x.fillStyle = '#f7f7f5'; x.fillRect(px, py, w, h); x.fillStyle = '#d2102b'; x.beginPath(); x.arc(px + w / 2, py + h / 2, h * 0.3, 0, TAU); x.fill(); }
+      tag(ox, 'LIVE'); } else
     { const ox = 512; x.fillStyle = '#3b3f48'; x.fillRect(ox, 0, 256, 128);   // 3: the orange fans in their smoke
       const cols = ['#ff7a12', '#ff8a1c', '#f26a0c', '#ff9d3a', '#f4f4f0', '#1c2856', '#e2202c'];
       for (let row = 0; row < 12; row++) for (let k = 0; k < 44; k++) { const px = ox + k * 6 + (row % 2) * 3, py = 26 + row * 9; x.fillStyle = cols[Math.floor(r() * cols.length)]; x.fillRect(px, py + 3, 5, 6); x.fillStyle = r() < 0.6 ? '#f1c7a1' : '#a86f45'; x.fillRect(px + 1, py, 3, 3); }
@@ -7199,8 +7217,9 @@ const World = (function () {
       for (let i = 0; i <= T.N; i += 4) { const k = i % T.N; if (i === 0) x.moveTo(mx + T.px[k] * sc, mz + T.pz[k] * sc); else x.lineTo(mx + T.px[k] * sc, mz + T.pz[k] * sc); }
       x.closePath(); x.stroke();
       x.fillStyle = '#e2202c'; x.beginPath(); x.arc(mx + T.px[0] * sc, mz + T.pz[0] * sc, 5, 0, TAU); x.fill();
-      x.fillStyle = '#fff'; x.font = '900 13px ' + F; x.textAlign = 'left'; x.textBaseline = 'middle'; x.fillText('RED BULL', ox + 10, 40); x.fillText('RING', ox + 10, 56);
-      x.fillStyle = '#ffcc00'; x.font = '900 10px ' + F; x.fillText('4,318 km', ox + 10, 76); x.fillText('10 zavojev', ox + 10, 90); }
+      const nm = o ? o.name : ['RED BULL', 'RING'], fg = o ? o.info : ['4,318 km', '10 zavojev'];
+      x.fillStyle = '#fff'; x.font = '900 13px ' + F; x.textAlign = 'left'; x.textBaseline = 'middle'; x.fillText(nm[0], ox + 10, 40); x.fillText(nm[1], ox + 10, 56);
+      x.fillStyle = '#ffcc00'; x.font = '900 10px ' + F; x.fillText(fg[0], ox + 10, 76); x.fillText(fg[1], ox + 10, 90); }
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
   }
   // the verge's cross-section beyond the road edge ([offset, height above the road]), lifted onto the ground where it rises: the road ribbons
@@ -7882,21 +7901,14 @@ const World = (function () {
       }
       // photographers behind the barriers at Turns 1, 3, 4 and 10 (tabards, the long white lenses on the track), standing or kneeling: at the
       // apex on the inside, past it on the outside where no grandstand is
-      const TB = [[0.98, 0.55, 0.1], [0.98, 0.84, 0.12], [0.2, 0.55, 0.3]], dk = [0.14, 0.15, 0.18], skin = [0.85, 0.66, 0.52];
+      const TB = [[0.98, 0.55, 0.1], [0.98, 0.84, 0.12], [0.2, 0.55, 0.3]];
       for (const k of [0, 2, 3, 9]) {
         const tn = def.turns && def.turns[k]; if (!tn) continue;
         const i0 = T.nearestIdx(tn[0], tn[1]), out1 = T.k[i0] > 0 ? -1 : 1;
         for (const [off, side] of [[-14, -out1], [-9, -out1], [-4, -out1], [18, out1], [24, out1], [44, out1]]) {
           const s = i0 * ds + off, [x, z, i] = onSide(s, side, 2.1); if (excluded(x, z) || nrSlope(x, z) > 0.45 || (side > 0 && PD && T.pitAt(s))) continue;
-          const y = nrGround(x, z), g = scen.get(x, z), fx = -T.nx[i] * side, fz = -T.nz[i] * side, px = -fz, pz = fx, rot = Math.atan2(fz, fx), kn = RX() < 0.35, tb = TB[Math.floor(RX() * 3)], h = kn ? 0.42 : 0;
-          if (kn) { box(g, x - fx * 0.12, y, z - fz * 0.12, 0.5, 0.45, 0.34, rot, dk, null, true); }   // (kneeling: the legs folded under)
-          else for (const sd of [-1, 1]) box(g, x + px * sd * 0.1, y, z + pz * sd * 0.1, 0.15, 0.88, 0.15, rot, dk, null, true);
-          const yb = y + 0.86 - h;
-          box(g, x, yb, z, 0.24, 0.6, 0.42, rot, tb, null, true);                                             // the tabard
-          box(g, x, yb + 0.6, z, 0.22, 0.25, 0.2, rot, skin, [0.22, 0.17, 0.12], true);                      // the head (the hair on top)
-          box(g, x + fx * 0.28, yb + 0.35, z + fz * 0.28, 0.36, 0.1, 0.44, rot, dk, null, true);            // the arms up to the camera
-          box(g, x + fx * 0.22, yb + 0.5, z + fz * 0.22, 0.16, 0.16, 0.16, rot, [0.08, 0.08, 0.09], null, true);   // the camera at the eye
-          box(g, x + fx * 0.55, yb + 0.51, z + fz * 0.55, 0.52, 0.14, 0.14, rot, [0.93, 0.93, 0.9], null, true);   // the lens
+          const y = nrGround(x, z), g = scen.get(x, z), fx = -T.nx[i] * side, fz = -T.nz[i] * side, kn = RX() < 0.35, tb = TB[Math.floor(RX() * 3)];
+          photographerGeo(g, x, y, z, fx, fz, kn, tb);
           CR.avoid(x, z, 0.8); nPh++;
         }
       }
@@ -8268,6 +8280,100 @@ const World = (function () {
       floor: out.propFloor, skip });
   }
 
+  /* ---- Motopia's rides along their monorails (def.rides; OpenStreetMap): the Flying Ship's pirate boats and the Run Run Balloon's
+     balloons hang under their rails, held by posts beside the way, the Den-Den-Mushi's snail cars ride on top of an elevated track on
+     columns. The rail follows the ground (the highest of the 12 m round, smoothed), over the park's roofs where it crosses them. The rails
+     and posts join the scenery, the cars are one instanced mesh a ride, moved round the loop by szRides ---- */
+  const SZ_RIDE = {
+    ship: { clear: 7.6, n: 12, v: 2.4, post: 12, rail: [0.2, 0.3, 0.5], postC: [0.86, 0.87, 0.9], cols: [[1, 1, 1]] },
+    balloon: { clear: 8.2, n: 10, v: 1.6, post: 12, rail: [0.95, 0.72, 0.15], postC: [0.94, 0.94, 0.95], cols: [[0.95, 0.3, 0.3], [0.25, 0.6, 0.95], [0.98, 0.8, 0.2], [0.35, 0.78, 0.4], [0.95, 0.55, 0.8], [0.6, 0.45, 0.9]] },
+    snail: { clear: 3.2, n: 8, v: 1.8, post: 8, rail: [0.4, 0.66, 0.34], postC: [0.78, 0.78, 0.8], cols: [[0.98, 0.75, 0.3], [0.95, 0.5, 0.6], [0.55, 0.75, 0.98], [0.75, 0.9, 0.45]] },
+  };
+  function szRideCar(kind) {   // one car of a ride, in its own frame: x forward, y up, z to the right; the origin on the rail (hanging) or on the track (snail)
+    const g = new GB(), W = [1, 1, 1];
+    const hull = (x0, x1, y0, y1, w, col, colD) => {   // a boat hull: flat stern (x0), pointed bow (x1), narrower at the keel
+      const bw = w * 0.55, xb = x1 - (x1 - x0) * 0.3, P = [[x0, y1, -w], [xb, y1, -w], [x1, y1, 0], [xb, y1, w], [x0, y1, w]], Q = [[x0 + 0.2, y0, -bw], [xb, y0, -bw], [x1 - 0.35, y0 + 0.15, 0], [xb, y0, bw], [x0 + 0.2, y0, bw]], inn = [(x0 + x1) / 2, (y0 + y1) / 2, 0];
+      for (let k = 0; k < 5; k++) { const k2 = (k + 1) % 5; g.quadO(P[k], P[k2], Q[k2], Q[k], k === 4 ? colD : col, inn); }
+      g.quadO(Q[0], Q[1], Q[3], Q[4], colD, inn); g.triO(Q[1], Q[2], Q[3], colD, inn);
+      g.quadO(P[0], P[1], P[3], P[4], [0.72, 0.56, 0.36], [inn[0], y0 - 1, 0]); g.triO(P[1], P[2], P[3], [0.72, 0.56, 0.36], [inn[0], y0 - 1, 0]); };   // (the deck)
+    const ball = (cx, cy, cz, rx, ry, seg, rings, col) => {   // an ellipsoid; col(k, r) per facet
+      for (let r = 0; r < rings; r++) for (let k = 0; k < seg; k++) { const t0 = r / rings * Math.PI, t1 = (r + 1) / rings * Math.PI, a0 = k / seg * TAU, a1 = (k + 1) / seg * TAU;
+        const p = (t, a) => [cx + Math.sin(t) * Math.cos(a) * rx, cy + Math.cos(t) * ry, cz + Math.sin(t) * Math.sin(a) * rx];
+        g.quadO(p(t0, a0), p(t0, a1), p(t1, a1), p(t1, a0), col(k, r), [cx, cy, cz]); } };
+    if (kind === 'ship') {   // pirate boat for three under its hanger (the hanger is the mast): brown hull, a cream sail, a black flag on top
+      box(g, 0, -2.3, 0, 0.14, 2.3, 0.14, 0, [0.35, 0.36, 0.4]);
+      hull(-1.8, 1.9, -3.25, -2.3, 0.78, [0.47, 0.27, 0.13], [0.33, 0.19, 0.1]);
+      box(g, -1.45, -2.3, 0, 0.7, 0.55, 1.3, 0, [0.52, 0.31, 0.16]);   // the stern castle
+      g.quadO([0.12, -2.1, 0], [0.12, -0.75, 0], [1.1, -1.05, 0], [1.25, -2.05, 0], [0.96, 0.92, 0.82], [0.6, -1.5, 1]);   // the sail on the hanger
+      g.quadO([0.12, -0.7, 0], [0.12, -0.35, 0], [-0.5, -0.4, 0], [-0.5, -0.65, 0], [0.08, 0.08, 0.09], [-0.2, -0.5, 1]);   // the pirate flag
+    } else if (kind === 'balloon') {   // a hot-air balloon for four: the envelope in stripes (the instance colour paints it), ropes down to the wicker basket
+      box(g, 0, -0.62, 0, 0.12, 0.62, 0.12, 0, [0.35, 0.36, 0.4]);
+      ball(0, -2.25, 0, 1.55, 1.7, 12, 7, (k, r) => r === 6 ? [0.55, 0.55, 0.55] : k % 2 ? W : [0.72, 0.72, 0.74]);
+      for (const [x, z] of [[-0.42, -0.42], [0.42, -0.42], [0.42, 0.42], [-0.42, 0.42]]) box(g, x * 1.2, -4.25, z * 1.2, 0.04, 0.5, 0.04, 0, [0.3, 0.26, 0.22]);
+      box(g, 0, -4.95, 0, 1.0, 0.72, 1.0, 0, [0.62, 0.45, 0.28], [0.4, 0.3, 0.2]);   // the basket
+    } else {   // a snail car for four on the track: a long soft body with its head and eye stalks up front, the big striped shell on its back
+      box(g, -0.1, 0, 0, 2.7, 0.55, 1.1, 0, [0.86, 0.9, 0.62]);
+      box(g, 1.25, 0.2, 0, 0.55, 0.9, 0.75, 0, [0.86, 0.9, 0.62]);   // the head
+      for (const z of [-0.2, 0.2]) { box(g, 1.3, 1.1, z, 0.08, 0.55, 0.08, 0, [0.86, 0.9, 0.62]); box(g, 1.3, 1.62, z, 0.2, 0.18, 0.2, 0, [0.12, 0.12, 0.12]); }
+      ball(-0.45, 1.35, 0, 0.95, 0.9, 10, 6, (k, r) => (k + r) % 3 === 0 ? [0.62, 0.62, 0.64] : W);   // the shell (the instance colour paints it)
+      box(g, 0.45, 0.55, 0, 0.9, 0.3, 1.05, 0, [0.3, 0.3, 0.34]);   // the seats in front of the shell
+    }
+    return g.geometry();
+  }
+  function szRidesBuild(def, out, scen, bTop) {
+    if (!def.rides) return;
+    const roofAt = (x, z) => { let y = -1e9; for (const b of bTop) { const dx = x - b.x, dz = z - b.z; if (Math.abs(dx * b.c + dz * b.s) < b.hl && Math.abs(-dx * b.s + dz * b.c) < b.hw) y = Math.max(y, b.y); } return y; };
+    const sbeam = (g, a, b, rw, rh, col) => {   // a beam of rw x rh from a to b (horizontal sides)
+      const dx = b[0] - a[0], dz = b[2] - a[2], L = Math.hypot(dx, dz) || 1, px = -dz / L * rw, pz = dx / L * rw, inn = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2 - rh * 0.5, (a[2] + b[2]) / 2];
+      const C = (p, s, h) => [p[0] + px * s, p[1] + h, p[2] + pz * s];
+      g.quadO(C(a, -1, 0), C(b, -1, 0), C(b, -1, -rh), C(a, -1, -rh), col, inn); g.quadO(C(a, 1, 0), C(b, 1, 0), C(b, 1, -rh), C(a, 1, -rh), col, inn);
+      g.quadO(C(a, -1, 0), C(b, -1, 0), C(b, 1, 0), C(a, 1, 0), col, inn); g.quadO(C(a, -1, -rh), C(b, -1, -rh), C(b, 1, -rh), C(a, 1, -rh), col, inn); };
+    const mat = out.matV, rides = [];
+    for (const [name, kind, loop] of def.rides) {
+      const K = SZ_RIDE[kind]; if (!K || loop.length < 3) continue;
+      const m = loop.length, L0 = []; let Lt = 0; for (let k = 0; k < m; k++) { const a = loop[k], b = loop[(k + 1) % m], l = Math.hypot(b[0] - a[0], b[1] - a[1]); L0.push(l); Lt += l; }
+      const n = Math.max(12, Math.round(Lt / 2)), st = Lt / n, X = new Float32Array(n), Z = new Float32Array(n), Y = new Float32Array(n);
+      for (let j = 0, k = 0, acc = 0; j < n; j++) { const s = j * st; while (k < m - 1 && acc + L0[k] < s) acc += L0[k++]; const a = loop[k], b = loop[(k + 1) % m], f = clamp((s - acc) / (L0[k] || 1), 0, 1); X[j] = a[0] + (b[0] - a[0]) * f; Z[j] = a[1] + (b[1] - a[1]) * f; }
+      const base = new Float32Array(n), hi = new Float32Array(n);
+      for (let j = 0; j < n; j++) base[j] = Math.max(szGround(X[j], Z[j]), roofAt(X[j], Z[j]) + 1.2 - (kind === 'snail' ? 0 : K.clear - 5.2));   // (a hanging car's bottom clears the roofs by ~1 m)
+      for (let j = 0; j < n; j++) { let v = -1e9; for (let d = -6; d <= 6; d++) v = Math.max(v, base[(j + d + n) % n]); hi[j] = v; }
+      for (let j = 0; j < n; j++) { let a = 0; for (let d = -8; d <= 8; d++) a += hi[(j + d + n) % n]; Y[j] = Math.max(a / 17, base[j] + 0.3) + K.clear; }
+      let area = 0; for (let j = 0; j < n; j++) { const j2 = (j + 1) % n; area += X[j] * Z[j2] - X[j2] * Z[j]; }
+      const outS = area > 0 ? -1 : 1;   // (the posts stand on the outside of the loop)
+      for (let j = 0; j < n; j++) {
+        const j2 = (j + 1) % n, a = [X[j], Y[j], Z[j]], b = [X[j2], Y[j2], Z[j2]], g = scen.get(X[j], Z[j]);
+        if (kind === 'snail') { sbeam(g, a, b, 0.85, 0.38, K.rail); sbeam(g, [a[0], a[1] + 0.45, a[2]], [b[0], b[1] + 0.45, b[2]], 0.9, 0.06, [0.95, 0.95, 0.95]); }   // the track and its white edge rail
+        else sbeam(g, [a[0], a[1] + 0.3, a[2]], [b[0], b[1] + 0.3, b[2]], 0.26, 0.55, K.rail);
+        if (j % Math.round(K.post / st)) continue;
+        const tx = X[j2] - X[j], tz = Z[j2] - Z[j], tl = Math.hypot(tx, tz) || 1, nx = -tz / tl * outS, nz = tx / tl * outS, gy = szGround(X[j], Z[j]);
+        if (kind === 'snail') box(g, X[j], gy - 0.3, Z[j], 0.5, Y[j] - 0.38 - gy + 0.3, 0.5, Math.atan2(tz, tx), K.postC);   // a column under the track
+        else { const px = X[j] + nx * 1.9, pz = Z[j] + nz * 1.9, py = szGround(px, pz), top = Y[j] + 1.2;   // a post beside the way, its arm over the rail
+          box(g, px, py - 0.3, pz, 0.5, top - py + 0.3, 0.5, Math.atan2(tz, tx), K.postC);
+          sbeam(g, [px, top, pz], [X[j] - nx * 0.3, top, Z[j] - nz * 0.3], 0.22, 0.4, K.postC); box(g, X[j], Y[j] + 0.25, Z[j], 0.16, top - Y[j] - 0.4, 0.16, 0, [0.4, 0.42, 0.46]); }
+      }
+      const im = new THREE.InstancedMesh(szRideCar(kind), mat, K.n), cc = new THREE.Color();
+      for (let k = 0; k < K.n; k++) { cc.setRGB(...K.cols[k % K.cols.length]); im.setColorAt(k, cc); }
+      im.castShadow = true; im.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      let cx = 0, cz = 0, r = 0; for (let j = 0; j < n; j++) { cx += X[j] / n; cz += Z[j] / n; } for (let j = 0; j < n; j++) r = Math.max(r, Math.hypot(X[j] - cx, Z[j] - cz));
+      im.geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(cx, Y[0], cz), r + 12);   // (the whole loop: the frustum culling works)
+      out.root.add(im);
+      rides.push({ name, kind, im, n, X, Y, Z, Lt, st, k: K.n, v: K.v, hang: kind !== 'snail', m4: new THREE.Matrix4(), q: new THREE.Quaternion(), e: new THREE.Euler(), p: new THREE.Vector3(), sc: new THREE.Vector3(1, 1, 1) });
+    }
+    if (rides.length) { out.dyn.rides = rides; szRides(rides, 0); }
+  }
+  function szRides(rides, t) {   // every ride's cars round its loop at time t: the hanging ones swing a little, the snails nod
+    for (const R of rides) {
+      for (let k = 0; k < R.k; k++) {
+        const s = ((t * R.v + k / R.k * R.Lt) % R.Lt + R.Lt) % R.Lt, f = s / R.st, j = Math.floor(f) % R.n, j2 = (j + 1) % R.n, u = f - Math.floor(f);
+        const x = R.X[j] + (R.X[j2] - R.X[j]) * u, y = R.Y[j] + (R.Y[j2] - R.Y[j]) * u, z = R.Z[j] + (R.Z[j2] - R.Z[j]) * u;
+        const j3 = (j + 2) % R.n, hx = R.X[j3] - R.X[j], hz = R.Z[j3] - R.Z[j], sw = R.hang ? Math.sin(t * 1.1 + k * 1.7) * 0.05 : 0;
+        R.e.set(sw, -Math.atan2(hz, hx), R.hang ? 0 : Math.sin(t * 2.3 + k) * 0.02, 'YXZ'); R.q.setFromEuler(R.e);
+        R.m4.compose(R.p.set(x, y, z), R.q, R.sc); R.im.setMatrixAt(k, R.m4);
+      }
+      R.im.instanceMatrix.needsUpdate = true;
+    }
+  }
+
   function szWheel(W, t) {   // the Ferris wheel at time t: the wheel turns, every gondola hangs level under its pin
     const a = t * W.w; W.spin.rotation.z = a;
     for (let k = 0; k < W.n; k++) { const b = a + k / W.n * TAU, e = Math.cos(b) * W.r; W.m.makeTranslation(W.x + W.ux * e, W.y + Math.sin(b) * W.r, W.z + W.uz * e); W.gond.setMatrixAt(k, W.m); }
@@ -8340,9 +8446,10 @@ const World = (function () {
     const CH = 128, offs = [-w, -w * 2 / 3, -w / 3, 0, w / 3, w * 2 / 3, w], tileL = 8;
     const shade = (i, o) => { const rl = T.rl[i]; let k = 0.86 - 0.15 * Math.exp(-((o - rl) * (o - rl)) / 5); if (Math.abs(o) > w * 0.92) k -= 0.03; return [k, k, k * 1.02]; };
     const vg = [0.97, 1.05, 0.92], conc = [0.74, 0.74, 0.72];
+    const RO_C = [1.04, 1.04, 1.06], roMat = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true });   // (the asphalt run-offs: the road's texture, paler)
     for (let c0 = 0; c0 < N; c0 += CH) {
-      const gr = new RB(true), gl = new RB(), gv = new RB(true), gk = new RB(true), gs = new RB(true), grB = new RB(true), glB = new RB(), gvB = new RB();
-      let pr = -1, pl = -1, pv = [-1, -1], pk = [-1, -1], ps = [-1, -1], prB = -1, plB = -1, pvB = [-1, -1], pd = false;
+      const gr = new RB(true), gl = new RB(), gv = new RB(true), gk = new RB(true), gs = new RB(true), ga = new RB(true), grB = new RB(true), glB = new RB(), gvB = new RB();
+      let pr = -1, pl = -1, pv = [-1, -1], pk = [-1, -1], ps = [-1, -1], pa = [-1, -1], pg = [-1, -1], prB = -1, plB = -1, pvB = [-1, -1], pd = false;
       for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++) {
         const i = ii % N, v = ii * ds / tileL, deck = !!onDeck(i), both = deck && pd; pd = deck;
         // (a quad between two rows on the bridge goes into the bridge meshes instead)
@@ -8364,15 +8471,25 @@ const World = (function () {
             const rk = gk.row(kp, [[1, 1, 1], [1, 1, 1]], side > 0 ? [[0, ii * ds / 3], [1, ii * ds / 3]] : [[1, ii * ds / 3], [0, ii * ds / 3]]);
             if (pk[si] >= 0) gk.link(pk[si], rk, 0, 1); pk[si] = rk;
           } else pk[si] = -1;
-          const gwv = gravW(i, side), bar = side > 0 ? T.br[i] : T.bl[i];
-          if (gwv > 0 && !deck) {   // gravel trap on the verge: from 3 m past the edge to 1.5 m short of the barrier, pinched in at its ends
+          const gwv = gravW(i, side), bar = side > 0 ? T.br[i] : T.bl[i], tar = !!(T.roT && T.roT[si][i]);
+          if (gwv > 0 && !deck && !tar) {   // gravel trap on the verge: from 3 m past the edge to 1.5 m short of the barrier, pinched in at its ends
             const o0 = w + 3, o1 = lerp(o0, Math.max(o0 + 0.5, bar - 1.5), gwv), a = [o0, vY(vr, o0) + 0.03], b = [(o0 + o1) / 2, vY(vr, (o0 + o1) / 2) + 0.03], e = [o1, vY(vr, o1) + 0.03];
             const sp = [a, b, e].map(([o, h]) => Pt(i, side * o, h)), sc = [[0.88, 0.88, 0.9], [0.93, 0.93, 0.95], [0.9, 0.9, 0.92]], so = side > 0 ? sp : sp.slice().reverse(), sco = side > 0 ? sc : sc.slice().reverse();
             const rs = gs.row(so, sco, so.map(p => [p[0] / 6, -p[2] / 6])); if (ps[si] >= 0) gs.link(ps[si], rs, 0, 2); ps[si] = rs;
           } else ps[si] = -1;
+          if (gwv > 0 && !deck && tar) {   // an asphalt run-off (def.tarmacRuns): older, paler asphalt from the kerb to just short of the barrier, pinched in at its ends
+            const o0 = w + (kerb[si][i] ? T.curbW : 0.05), o1 = lerp(o0 + 0.1, Math.max(o0 + 0.6, bar - 0.7), gwv), m = (o0 + o1) / 2;
+            const sp = [[o0, vY(vr, o0) + 0.028], [m, vY(vr, m) + 0.028], [o1, vY(vr, o1) + 0.028]].map(([o, h]) => Pt(i, side * o, h)), so = side > 0 ? sp : sp.slice().reverse(), rc3 = [RO_C, RO_C, RO_C];
+            const ra = ga.row(so, rc3, so.map(p => [p[0] / 8, -p[2] / 8])); if (pa[si] >= 0) ga.link(pa[si], ra, 0, 2); pa[si] = ra;
+          } else pa[si] = -1;
+          const gsw = T.gstrip ? T.gstrip[si][i] : 0;
+          if (gsw > 0 && !deck) {   // a gravel strip just past the kerb (def.gravelStrips, the 2025 ones), over the verge and the start of a trap
+            const o0 = w + (kerb[si][i] ? T.curbW : 0.02), o1 = o0 + gsw, sp = [[o0, vY(vr, o0) + 0.036], [o1, vY(vr, o1) + 0.036]].map(([o, h]) => Pt(i, side * o, h)), so = side > 0 ? sp : sp.slice().reverse(), sc = [[0.9, 0.9, 0.92], [0.9, 0.9, 0.92]];
+            const rg = gs.row(so, sc, so.map(p => [p[0] / 6, -p[2] / 6])); if (pg[si] >= 0) gs.link(pg[si], rg, 0, 1); pg[si] = rg;
+          } else pg[si] = -1;
         }
       }
-      addM(gr, aMat); addM(gl, lMat); addM(gv, gMat); addM(gk, cMat); addM(gs, sMat);
+      addM(gr, aMat); addM(gl, lMat); addM(gv, gMat); addM(gk, cMat); addM(gs, sMat); addM(ga, roMat);
       addM(grB, aMatB); addM(glB, lMatB); addM(gvB, dMatB);
     }
     // chequered start / finish line and the grid boxes (13 cars, staggered)
@@ -8619,6 +8736,7 @@ const World = (function () {
     }
 
     /* ---- buildings (OpenStreetMap footprints near the track): houses, halls, the circuit's own buildings, the theme park's rides in bright colours ---- */
+    const bTop = [];   // (the theme park's roofs, for its rides over them)
     const moto = def.motopia || null, RIDE = [[0.95, 0.35, 0.3], [0.2, 0.55, 0.9], [0.98, 0.8, 0.2], [0.35, 0.75, 0.4], [0.95, 0.55, 0.75], [0.6, 0.4, 0.85], [0.98, 0.6, 0.2]].map(c => c.map(v => lerp(v, 0.95, 0.3)));   // (pastel)
     for (const [bx, bz, L, W, ang, H, k] of def.bld || []) {
       const ca = Math.cos(ang), sa = Math.sin(ang), corners = [[L / 2, W / 2], [L / 2, -W / 2], [-L / 2, W / 2], [-L / 2, -W / 2]].map(([a, b]) => [bx + ca * a - sa * b, bz + sa * a + ca * b]);
@@ -8639,9 +8757,12 @@ const World = (function () {
         box(g, bx, y0 - 0.4, bz, L, hh + 0.4, W, ang, wc, null, true);
         if (L * W < 700) gable(g, bx, y0 + hh, bz, L + 0.6, W + 0.6, Math.min(3.2, W * 0.4), ang, inMoto ? [0.95, 0.95, 0.95] : roofs[Math.floor(R() * roofs.length)], [0.8, 0.78, 0.74]);
         else box(g, bx, y0 + hh, bz, L, 0.5, W, ang, [0.5, 0.5, 0.52]);
+        if (inMoto) bTop.push({ x: bx, z: bz, c: ca, s: sa, hl: L / 2 + 1.5, hw: W / 2 + 1.5, y: y0 + hh + (L * W < 700 ? Math.min(3.2, W * 0.4) : 0.5) });
       }
+      if (inMoto && k === 1) bTop.push({ x: bx, z: bz, c: ca, s: sa, hl: L / 2 + 1.5, hw: W / 2 + 1.5, y: y0 + (H || 11) });
       exclPush(bx, bz, Math.min(Math.max(L, W) / 2 + 3, 30));
     }
+    szRidesBuild(def, out, scen, bTop);
 
     /* ---- Motopia's Ferris wheel, the Circuit Wheel (50 m, bright red): it turns, the gondolas hang level ---- */
     if (def.wheel) {
@@ -8726,9 +8847,42 @@ const World = (function () {
       }
     });
 
+    /* ---- video walls across the track from the big stands (their pictures change: the race, the standings, the fans with their flags, the
+       figure of eight; rbScreenTex, World.update); photographers behind the barriers at the famous corners (before the apex on the inside,
+       after it on the outside), in the agencies' tabards, kneeling or standing (own random stream) ---- */
+    let nScr = 0, nPh = 0;
+    const scrG = new GB(true);
+    {
+      const RS = rng(6011), SW = 10.4, SH = 5.4, W1 = [1, 1, 1];
+      const vidWall = (x, z, fx, fz) => {   // on its post, the screen towards (fx, fz)
+        const y = szGround(x, z), g = scen.get(x, z), fa = Math.atan2(fz, fx), rx = fz, rz = -fx, cx = x + fx * 0.72, cz = z + fz * 0.72, y0 = y + 7.5, y1 = y0 + SH;
+        box(g, x, y - 0.3, z, 1.1, 7.3, 1.1, fa, [0.3, 0.31, 0.34]); box(g, x, y + 7, z, 1.4, SH + 1, SW + 0.8, fa, [0.1, 0.1, 0.11], [0.16, 0.16, 0.18]);
+        scrG.quadO([cx - rx * SW / 2, y0, cz - rz * SW / 2], [cx + rx * SW / 2, y0, cz + rz * SW / 2], [cx + rx * SW / 2, y1, cz + rz * SW / 2], [cx - rx * SW / 2, y1, cz - rz * SW / 2], W1, [x, y0 + SH / 2, z], [[0, 0], [0.25, 0], [0.25, 1], [0, 1]]);
+        exclPush(x, z, 7); CR.avoid(x, z, 4); nScr++;
+      };
+      for (const nm of ['A1', 'C', 'E', 'Q1']) {   // across the track from the First Curve's, the S Curves', Dunlop's and the Casio Triangle's stands, facing them
+        const st = (def.stands || []).find(q => q[0] === nm); if (!st) continue;
+        const rows = st[3], s = sAt(rows[rows.length >> 1][0]), i = T.idx(s), sd = -st[1];
+        const pz = sd > 0 ? pitR(i) : null;   // (beside the pit lane: beyond it)
+        for (const ex of [16, 22, 28, 12]) { const [x, z] = onSide(s, sd, pz ? Math.max(ex, pz.lout + 6 - T.br[i]) : ex); if (excluded(x, z) || inRects(x, z) || szPond(x, z) || szSlope(x, z) > 0.3 || nearX(i, 60)) continue;
+          const fx = T.px[i] - x, fz = T.pz[i] - z, fl = Math.hypot(fx, fz); vidWall(x, z, fx / fl, fz / fl); break; }
+      }
+      const TB = [[0.98, 0.55, 0.1], [0.98, 0.84, 0.12], [0.2, 0.55, 0.3], [0.95, 0.95, 0.95]];
+      for (const k of [0, 2, 7, 8, 10, 12, 14, 15]) {   // Turn 1, the S Curves, Degner 1 and 2, the Hairpin, Spoon, 130R, the Casio Triangle
+        const tn = def.turns && def.turns[k]; if (!tn) continue;
+        const i0 = T.nearestIdx(tn[0], tn[1]), out1 = T.k[i0] > 0 ? -1 : 1;
+        for (const [off, side] of [[-14, -out1], [-9, -out1], [-4, -out1], [18, out1], [24, out1], [44, out1]]) {
+          const s = i0 * ds + off, [x, z, i] = onSide(s, side, 1.7), kn = RS() < 0.35, tb = TB[Math.floor(RS() * TB.length)];
+          if (excluded(x, z) || inRects(x, z) || szPond(x, z) || szSlope(x, z) > 0.45 || nearX(i, 50) || (side > 0 && pitR(i))) continue;
+          photographerGeo(scen.get(x, z), x, szGround(x, z), z, -T.nx[i] * side, -T.nz[i] * side, kn, tb);
+          CR.avoid(x, z, 1.7); nPh++;   // (right behind the catch fence, the fans a step away)
+        }
+      }
+    }
+
     /* ---- spectators on the grass banks at the famous corners (the stands have their own): deep crowds at the S Curves, Degner, the Hairpin,
        Spoon and 130R, many of them waving flags; the fans' banners on the catch fences in front of them, flags on poles behind them ---- */
-    let nFans = 0, nBanners = 0;
+    let nFans = 0, nBanners = 0, nStall = 0, nLoo = 0;
     {
       const M = { first: 1.4, gap: 1.1, excluded: (x, z) => excluded(x, z) || inRects(x, z), below: 3, above: 8, sit: 0.35, flag: 0.16 };
       const run = (d0, d1, side, o, fc) => { const n = crowdRun(CR, sStart + d0, sStart + d1, side, Object.assign({}, M, o));
@@ -8760,6 +8914,32 @@ const World = (function () {
       }
       for (const sd of [-1, 1]) run(260, T.len - 340, sd, { rows: 2, dens: 0.05, clump: 0.95, strip: false, label: 'SZ groups' });
       for (const e of CR.circ) exclPush(e.x, e.z, e.r);
+      // behind the crowds: food stalls (yatai: a counter under a striped awning, the sign on top) facing the track every ~24 m, and a
+      // row of portable toilets at the far end of the deeper crowds
+      const AWN = [[0.86, 0.16, 0.14], [0.16, 0.36, 0.78], [0.96, 0.68, 0.1], [0.2, 0.58, 0.3], [0.95, 0.45, 0.12]], LOO = [[0.2, 0.46, 0.82], [0.24, 0.6, 0.34]];
+      for (const [n, side, rows, , a, b] of SPOTS) {
+        const d = nameD(n); if (d == null) continue;
+        for (let dd = a + 16, k = 0; dd < b - 10; dd += 24, k++) {
+          const q = crAt(sAt(d + dd)); if (!q || k % 2 !== (side > 0 ? 0 : 1)) continue; const i = q.i, off = (side > 0 ? q.br : q.bl) + 1.4 + rows * 1.1 + 5.5;
+          const x = q.px + q.nx * side * off, z = q.pz + q.nz * side * off; if (excluded(x, z) || inRects(x, z) || szPond(x, z) || szSlope(x, z) > 0.3 || nearX(i, 50)) continue;
+          const y = szGround(x, z), g = scen.get(x, z), fx = -q.nx * side, fz = -q.nz * side, rot = Math.atan2(q.tz, q.tx), col = AWN[(crH(x, z, 41) * AWN.length) | 0];
+          box(g, x + fx * 0.3, y - 0.2, z + fz * 0.3, 2.6, 1.2, 1.2, rot, [0.9, 0.86, 0.78], [0.76, 0.6, 0.42]);   // the counter
+          for (const [a2, b2] of [[-1.35, 0.9], [1.35, 0.9], [-1.35, -0.9], [1.35, -0.9]]) box(g, x + q.tx * a2 + fx * b2, y - 0.2, z + q.tz * a2 + fz * b2, 0.08, 2.6, 0.08, rot, [0.5, 0.36, 0.22]);
+          box(g, x - fx * 0.85, y - 0.2, z - fz * 0.85, 2.7, 2.4, 0.08, rot, [0.92, 0.9, 0.86]);   // the back wall
+          gable(g, x, y + 2.4, z, 3.2, 2.4, 0.55, rot, col, [0.97, 0.97, 0.95]);   // the awning
+          box(g, x + fx * 1.02, y + 2.1, z + fz * 1.02, 2.4, 0.42, 0.06, rot, [0.97, 0.96, 0.9], col);   // the sign
+          exclPush(x, z, 2.6); nStall++;
+        }
+        if (rows < 3) continue;
+        const q = crAt(sAt(d + b - 14)); if (!q) continue; const off = (side > 0 ? q.br : q.bl) + 1.4 + rows * 1.1 + 6.2, col = LOO[(crH(q.px, q.pz, 43) * LOO.length) | 0], rot = Math.atan2(q.tz, q.tx);
+        for (let k = -2; k <= 2; k++) {
+          const x = q.px + q.nx * side * off + q.tx * k * 1.3, z = q.pz + q.nz * side * off + q.tz * k * 1.3; if (excluded(x, z) || inRects(x, z) || szPond(x, z) || szSlope(x, z) > 0.3) continue;
+          const y = szGround(x, z), g = scen.get(x, z), fx = -q.nx * side, fz = -q.nz * side;
+          box(g, x, y - 0.1, z, 1.15, 2.35, 1.15, rot, col, [0.95, 0.95, 0.95]);   // a cabin, its white roof
+          box(g, x + fx * 0.585, y + 0.1, z + fz * 0.585, 0.72, 1.9, 0.03, rot, [col[0] * 0.7, col[1] * 0.7, col[2] * 0.75]);   // the door
+          exclPush(x, z, 1.2); nLoo++;
+        }
+      }
     }
     // catch fences (chain link on posts) right behind the barriers where the spectators are
     for (const side of [-1, 1]) {
@@ -8810,8 +8990,10 @@ const World = (function () {
     scen.addTo(sceneryGroup, matV, true, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
     addM(fenceG, fMat);
+    if (!scrG.empty) { const st = ownTex(rbScreenTex({ name: ['SUZUKA', ''], info: ['5,807 km', '18 zavojev'] })); addM(scrG, new THREE.MeshBasicMaterial({ map: st })); out.dyn.screens = { tex: st, f: -1 }; }
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, buildings: nBld, stands: nStands, fans: nFans, banners: nBanners, tv: nTV, boxes: nBoxes };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, buildings: nBld, stands: nStands, fans: nFans, banners: nBanners, tv: nTV, boxes: nBoxes,
+      screens: nScr, photographers: nPh, stalls: nStall, loos: nLoo, rides: out.dyn.rides ? out.dyn.rides.length : 0 };   // (read by the tests)
     return out;
   }
 
@@ -8836,6 +9018,7 @@ const World = (function () {
     if (d.pkWx) pkWeatherUpdate(d.pkWx, t, car);   // Pikes Peak: cloud banks, snowfall
     if (d.pkOps) pkOpsUpdate(d.pkOps, t, car);   // Pikes Peak: the marshals' flags
     if (d.wheel) szWheel(d.wheel, t);   // Suzuka: the Ferris wheel turns
+    if (d.rides) szRides(d.rides, t);   // Suzuka: Motopia's rides go round
     if (d.boats) {
       const L = d.lake;
       for (const b of d.boats) {

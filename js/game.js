@@ -56,6 +56,10 @@
     if (r.board != null) r.board = Array.isArray(r.board) ? r.board.map(boardEntry).filter(e => e).sort((a, b) => a.time - b.time).slice(0, 10) : []; }
   // one-time archive of Pikes Peak times driven on the old, narrower road (11 m -> 14 m): kept as 'pikes-ozka', never shown
   try { if (!localStorage.getItem('tdgp-pikes-w7')) { const o = records.tracks.pikes; if (isObj(o) && (o.bestTime || (o.board && o.board.length))) { records.tracks['pikes-ozka'] = o; delete records.tracks.pikes; saveRecords(); } localStorage.setItem('tdgp-pikes-w7', '1'); } } catch (_) { }
+  // one-time archive of the Suzuka race times of the old 2-lap race (now 3 laps): kept as 'suzuka-2kroga' (per physics), never shown;
+  // the best lap and the best place stay
+  try { if (!localStorage.getItem('tdgp-suzuka-l3')) { let ch = false; for (const k of ['suzuka', 'suzuka@cs']) { const o = records.tracks[k]; if (isObj(o) && o.bestRace) { records.tracks[k.replace('suzuka', 'suzuka-2kroga')] = { bestRace: o.bestRace }; delete o.bestRace; ch = true; } }
+    if (ch) saveRecords(); localStorage.setItem('tdgp-suzuka-l3', '1'); } } catch (_) { }
   const upgOf = (id) => S.upg[id] || (S.upg[id] = upgNorm(null));
   const upgCount = (id) => UPG_IDS.reduce((a, k) => a + upgOf(id)[k], 0);
   const isTT = (d) => !!(d && d.timeTrial);
@@ -682,7 +686,7 @@
     }
     prevAir = P.air;
     if (P.pitEv) { const e = P.pitEv; P.pitEv = null; pitEvent(e); }
-    if (track.def.pit && !pitHint && dmgOn() && P.dmg > 0.45 && phase === 'racing') { pitHint = true; toast('Avto je poškodovan: zapelji v bokse (desno takoj za zadnjim ovinkom pred ciljno ravnino), mehaniki ga popravijo.', 4600); }
+    if (track.def.pit && !pitHint && dmgOn() && P.dmg > 0.45 && phase === 'racing') { pitHint = true; toast('Avto je poškodovan: zapelji v bokse (' + (track.def.pitWhere || 'desno takoj za zadnjim ovinkom pred ciljno ravnino') + '), mehaniki ga popravijo.', 4600); }
     if (P.pitState === 'repair' && (!Render.crew || !Render.crew.P || Render.crew.gunOn)) { pitWrenchT -= dt; if (pitWrenchT <= 0) { pitWrenchT = 0.28 + Math.random() * 0.35; Sfx.wrench(); } }   // (with the crew: while the wheel guns rattle)
     if (P.propSnd) { Sfx.knock(P.propSnd, P.propSndV); if (P.propSndV > 9 && (P.propSnd === 'tstack' || P.propSnd === 'bstack' || P.propSnd === 'rbstack' || P.propSnd === 'crate')) vibrate(25); P.propSnd = null; P.propSndV = 0; }   // knocked a cone, tyres or bales
     for (const c of race.cars) { c.hitWall = 0; c.hitCar = 0; c.hitDebris = 0; }
@@ -692,9 +696,9 @@
   let pitWrenchT = 0, pitHint = false, drsN = 0;
   function pitEvent(e) {
     if (phase !== 'racing') return;
-    if (e === 'enter') { showMsg('BOKSI · 80 km/h', 'gold', 1.8); Sfx.beep(660, 0.1, 0.1); Comm.say('pitIn', null, 2); }
+    if (e === 'enter') { showMsg('BOKSI · 80 km/h', 'gold', 1.8); Sfx.beep(660, 0.1, 0.1); sayT('pitIn', null, 2); }
     else if (e === 'repair') { pitWrenchT = 0.15; vibrate(30); if (Math.random() < 0.6) Comm.say('pitWork', null, 1); }
-    else if (e === 'done') { showMsg('POPRAVLJENO!', 'gold', 1.6); Sfx.beep(880, 0.12, 0.12); setTimeout(() => Sfx.beep(1175, 0.18, 0.12), 130); vibrate(40); Comm.say('pitOut', null, 2); dmgKey = ''; }
+    else if (e === 'done') { showMsg('POPRAVLJENO!', 'gold', 1.6); Sfx.beep(880, 0.12, 0.12); setTimeout(() => Sfx.beep(1175, 0.18, 0.12), 130); vibrate(40); sayT('pitOut', null, 2); dmgKey = ''; }
   }
 
   /* ---------------- HUD ---------------- */
@@ -886,7 +890,36 @@
     const L = track.names || [];
     placeKeys = L.map((q, k) => { const key = 'place:' + track.def.id + ':' + k; return q.say && Comm.addLines(key, q.say) ? key : CORNER_COMM[q.n] || null; });
     placeSt = { said: {}, lastT: -1e9, log: [] };
+    trkComm = {}; for (const k of Object.keys(track.def.comm || {})) { const key = 'trk:' + track.def.id + ':' + k; if (Comm.addLines(key, track.def.comm[k])) trkComm[k] = key; }
+    aiPitSeen = new Map(); aiPitT = -1e9; crossSeen = '';
     placeExpose();
+  }
+  // a track's own lines for a common pool (def.comm: { pitIn: [...], drs: [...], ... }), else the common ones
+  let trkComm = {};
+  const sayT = (k, vars, prio, opt) => Comm.say(trkComm[k] || k, vars, prio, opt);
+  // the rivals' pit stops (every circuit with pits): who comes in (at most one call in 12 s), and a car near the player in the order back out
+  let aiPitSeen = new Map(), aiPitT = -1e9;
+  function aiPitNews(P) {
+    if (!track.def.pit || phase !== 'racing') return;
+    for (const c of race.cars) {
+      if (c.isPlayer || c.net) continue;
+      const e = c.pitEv || null, was = aiPitSeen.get(c) || null; if (e === was) continue; aiPitSeen.set(c, e);
+      if (race.time - aiPitT < 12) continue;
+      if (e === 'enter') { aiPitT = race.time; sayT('aiPitIn', { name: c.name, pos: Comm.ordinal(c.pos) }, 1, { ttl: 5000 }); }
+      else if (e === 'exit' && was === 'done' && Math.abs((c.pos || 0) - (P.pos || 0)) <= 2) { aiPitT = race.time; sayT('aiPitOut', { name: c.name, pos: Comm.ordinal(c.pos) }, 1, { ttl: 4000 }); }
+    }
+  }
+  // a figure of eight (Suzuka): the player goes under the bridge with a car right above on it, or over it with one right underneath (once a lap each way)
+  let crossSeen = '';
+  function crossNews(P) {
+    const X = track.cross; if (!X || !X.length || phase !== 'racing' || !P.q || !(P.q.i >= 0)) return;
+    const N = track.N, cd = (i, f) => { const d = Math.abs(i - f) % N; return Math.min(d, N - d) * track.ds; };
+    for (const x of X) {
+      const leg = cd(P.q.i, x.lo) < 14 ? 'lo' : cd(P.q.i, x.up) < 14 ? 'up' : null; if (!leg) continue;
+      const key = P.lap + leg; if (crossSeen === key) continue;
+      const other = leg === 'lo' ? x.up : x.lo, o = race.cars.find(o => o !== P && o.q && o.q.i >= 0 && !o.finished && cd(o.q.i, other) < 20);
+      if (o) { crossSeen = key; sayT(leg === 'lo' ? 'crossUnder' : 'crossOver', { name: o.name }, 1, { ttl: 2500 }); }
+    }
   }
   function updateCorner(P) {
     const L = track.names; if (!L || !L.length || phase !== 'racing' || P.finished || P.dist < 0) return;
@@ -940,7 +973,7 @@
     }
     updateDamageHUD(P);
     if (race.drsLast) { const st = P.drs ? 'open' : P.drsA ? 'arm' : ''; if ($('h-drs').className !== st) $('h-drs').className = st; }
-    if (P.drsEv) { P.drsEv = null; if (phase === 'racing') { Sfx.beep(1320, 0.07, 0.08); if (drsN++ % 2 === 0) Comm.say('drs', null, 1); } }   // the flap opens (the commentator: every other time)
+    if (P.drsEv) { P.drsEv = null; if (phase === 'racing') { Sfx.beep(1320, 0.07, 0.08); if (drsN++ % 2 === 0) sayT('drs', null, 1); } }   // the flap opens (the commentator: every other time)
     setText('h-speed', String(Math.round(P.speed * 3.6)));
     setText('h-gear', P.gear === -1 ? 'R' : String(P.gear));
     drawSpeedo(P);
@@ -955,7 +988,7 @@
       if (!P.finished && P.lap === race.laps) { showMsg('ZADNJI KROG!', 'gold', 2); Sfx.beep(880, 0.12, 0.12); }
     }
     if (splitT > 0) { splitT -= dt; if (splitT <= 0) $('h-split').className = ''; }
-    updateCorner(P);
+    updateCorner(P); crossNews(P); aiPitNews(P);
     // wrong way
     if (phase === 'racing') {
       if (P.wrongT > 1.1) { if ($('h-msg').textContent !== 'NAPAČNA SMER!') showMsg('NAPAČNA SMER!', 'warn', 0.5); else msgT = 0.4; }

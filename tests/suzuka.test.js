@@ -4,6 +4,7 @@
 // car keeps to its own level when it drives across, hits the parapet, is rescued or loses a panel there; a whole race never snaps a
 // car from one level to the other. The pit lane: in after the Casio Triangle, out before the First Curve, a damaged car stops at its
 // box, is repaired and rejoins (both physics). DRS: one zone on the start / finish straight, used by the cars that follow closely.
+// Run-offs: asphalt at the First Curve and 130R, gravel traps at the other corners, the 2025 gravel strips just past five kerbs.
 //   node tests/suzuka.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -126,6 +127,22 @@ for (const phys of ['cs', 'arcade']) {
   check(`DRS in a race (${phys}): followers open the flap on the last lap, only in the zone, and keep it open down the straight`, opens >= 3 && early === 0 && outside === 0 && longest > 4,
     `${opens} openings (${early} on lap 1), ${outside} steps open outside the zone, longest ${longest.toFixed(1)} s`);
 }
+
+// 9. run-offs: asphalt on the outside of the First Curve and of 130R, gravel traps elsewhere; the 2025 gravel strips just past the kerbs
+// at Turns 2, 7, 9, 14 and 17 (asphalt again beyond the one at Turn 2); a car coasting over the asphalt loses clearly less speed than in gravel
+{ const W = T.w, at = (d, lat) => { const s = T.startS + d, i = T.idx(s); return T.surface(T.query(T.px[i] + T.nx[i] * lat, T.pz[i] + T.nz[i] * lat, i, {})); };
+  const tar = [['First Curve', 500, -1], ['Turn 2', 640, -1], ['130R', -1040, 1], ['130R', -950, 1]].map(([n, d, sd]) => [n, at(d, sd * (W + 10))]);
+  const grv = [['S Curves', 930, -1], ['Degner 1', 2060, -1], ['Hairpin', 2700, 1], ['Spoon', -2200, 1], ['Casio Triangle', -640, -1], ['Final Curve', -450, -1]].map(([n, d, sd]) => [n, at(d, sd * (W + 10))]);
+  const strips = [['Turn 2', 600, -1], ['Turn 7', 1500, 1], ['Turn 9', 2250, -1], ['Turn 14', -2050, 1], ['Turn 17', -575, 1]].map(([n, d, sd]) => [n, at(d, sd * (W + T.curbW + 1.5))]);
+  check('run-offs: asphalt outside the First Curve and 130R, gravel traps at the other corners', tar.every(([, s]) => s === 4) && grv.every(([, s]) => s === 3),
+    [...tar, ...grv].map(([nm, s]) => `${nm} ${['asphalt', 'kerb', 'grass', 'gravel', 'asphalt run-off'][s] || s}`).join(', '));
+  check('the 2025 gravel strips just past the kerbs (Turns 2, 7, 9, 14, 17), asphalt beyond the one at Turn 2', strips.every(([, s]) => s === 3) && at(600, -(W + T.curbW + 5)) === 4,
+    strips.map(([nm, s]) => `${nm} ${s === 3 ? 'gravel' : s}`).join(', ') + `, beyond Turn 2's: ${at(600, -(W + T.curbW + 5)) === 4 ? 'asphalt' : 'not asphalt'}`);
+  const coast = (d, lat) => { const r2 = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 2, phys: 'cs', playerModel: C.MODELS[0], seed: 5 }), P2 = r2.player, s = T.startS + d, i = T.idx(s);
+    P2.place(T.px[i] + T.nx[i] * lat, T.pz[i] + T.nz[i] * lat, T.hd[i]); P2.y = P2.py = T.hy[i]; P2.q = T.query(P2.x, P2.z, i, {}); P2.sPrev = P2.q.s; P2.vx = Math.cos(P2.h) * 25; P2.vz = Math.sin(P2.h) * 25; r2.start();
+    for (let k = 0; k < 0.8 / DT; k++) { P2.inThr = 0; P2.inBrk = 0; P2.inSteer = 0; r2.step(DT); } return 25 - P2.speed; };
+  const lossA = coast(470, -(W + 9)), lossG = coast(-2230, W + 9);
+  check('coasting at 90 km/h: the asphalt run-off (First Curve) slows the car clearly less than the gravel (Spoon)', lossA < lossG * 0.75, `${(lossA * 3.6).toFixed(1)} km/h lost on asphalt, ${(lossG * 3.6).toFixed(1)} km/h in the gravel in 0.8 s`); }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
 process.exit(bad ? 1 : 0);

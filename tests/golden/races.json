@@ -207,7 +207,7 @@
   "walls": 3,
   "rescues": 0,
   "nan": false,
-  "digest": "1098f0c035a26af59cdf00c1"
+  "digest": "1eb3bfca8d9df43af0b42a8c"
  },
  "gozd/cs/rain": {
   "finished": 13,
@@ -217,7 +217,7 @@
   "walls": 3,
   "rescues": 0,
   "nan": false,
-  "digest": "fd379bc34dfcd75c271eddbf"
+  "digest": "8d1e971f65c8a0a330a1b3c3"
  },
  "gozd/arcade": {
   "finished": 13,
@@ -227,7 +227,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "1a3e7caab8b4c24dddd9424e"
+  "digest": "b75c1d48695218dfbfb20d51"
  },
  "gozd/arcade/rain": {
   "finished": 13,
@@ -237,7 +237,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "c8b3c7715aa5fe475589311e"
+  "digest": "23d397c44c12befed426d5b2"
  },
  "toskana/cs": {
   "finished": 13,
@@ -247,7 +247,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "421f13fc24216960acefc316"
+  "digest": "433cdcc34499232ab2c66c5c"
  },
  "toskana/cs/rain": {
   "finished": 13,
@@ -257,7 +257,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "4b378933dcce8388d790cef2"
+  "digest": "851b4183410996fab635e9e1"
  },
  "toskana/arcade": {
   "finished": 13,
@@ -267,7 +267,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "15b690844e04bc41a2e6f806"
+  "digest": "6c1ef524c87c9fe8cc03e469"
  },
  "toskana/arcade/rain": {
   "finished": 13,
@@ -277,7 +277,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b0c765949c22b0d6528588ab"
+  "digest": "079d2858883df7fbc6e72708"
  },
  "grom/cs": {
   "finished": 13,
@@ -287,7 +287,7 @@
   "walls": 3,
   "rescues": 0,
   "nan": false,
-  "digest": "6cfb2b1ac886de0ce8ce17ef"
+  "digest": "b50cae9fd1742bd9d487d1cd"
  },
  "grom/cs/rain": {
   "finished": 13,
@@ -297,7 +297,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "44d2d3884066e46d88b5df54"
+  "digest": "735740a70aa2a769b61a5d69"
  },
  "grom/arcade": {
   "finished": 13,
@@ -307,7 +307,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "9142f843c26d018836fba4c6"
+  "digest": "928cd1f05f9c828d2e80b369"
  },
  "grom/arcade/rain": {
   "finished": 13,
@@ -317,7 +317,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "af010f5994cf455949b9827e"
+  "digest": "e98847f1d1c7742076bc89f8"
  },
  "pikes/cs": {
   "finished": 1,
@@ -447,7 +447,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "f79abae82436aa612b636ce1"
+  "digest": "1857d3768234f5e83972d7c5"
  },
  "spa/cs/rain": {
   "finished": 13,
@@ -457,7 +457,7 @@
   "walls": 8,
   "rescues": 0,
   "nan": false,
-  "digest": "24727488d98f7e0abcf14bce"
+  "digest": "2195108462a724b4af2e8055"
  },
  "spa/arcade": {
   "finished": 13,
@@ -467,7 +467,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "4c53333b29dcf3394a84d3d3"
+  "digest": "9763e0b005e07456bb094cd3"
  },
  "spa/arcade/rain": {
   "finished": 13,
@@ -477,7 +477,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "17136ed5335da888f2c941da"
+  "digest": "78e46d846684fd0d35dddb41"
  },
  "rbring/cs": {
   "finished": 13,
@@ -487,7 +487,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "0340894632f2a4b04df7458a"
+  "digest": "b9b6ef1b6bb52cf7ab78b5b1"
  },
  "rbring/cs/rain": {
   "finished": 13,
@@ -497,7 +497,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "f01ad797f63448679702f0c3"
+  "digest": "d7271e6f2b1498e7d06f8842"
  },
  "rbring/arcade": {
   "finished": 13,
@@ -507,7 +507,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "7348db568d31e6ce744d3499"
+  "digest": "d4f5837ae80fe9fcc486242b"
  },
  "rbring/arcade/rain": {
   "finished": 13,
@@ -517,46 +517,46 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "dce472961b300f610fe9ae1d"
+  "digest": "2284cfec633c90c5ce6d20e2"
  },
  "suzuka/cs": {
   "finished": 13,
   "cars": 13,
-  "winner": 272.01,
+  "winner": 273.86,
   "spins": 0,
-  "walls": 2,
+  "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "ee48174935782573a68b3074"
+  "digest": "c6d8c5f260fbed2c8aaa707e"
  },
  "suzuka/cs/rain": {
   "finished": 13,
   "cars": 13,
-  "winner": 290.57,
+  "winner": 293.4,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "275ac8a80ad4688ec65f6bf0"
+  "digest": "8dc3e28de9ef0b645de3004b"
  },
  "suzuka/arcade": {
   "finished": 13,
   "cars": 13,
-  "winner": 292.84,
+  "winner": 291.09,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "f933743c8767d176d7d9af63"
+  "digest": "13604ea84387ebcff1ca90c4"
  },
  "suzuka/arcade/rain": {
   "finished": 13,
   "cars": 13,
-  "winner": 310.58,
+  "winner": 306.64,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "47502c85fe982c2a7098e435"
+  "digest": "4bacc9f7e2ba10e4a1339133"
  }
 }

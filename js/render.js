@@ -1187,12 +1187,13 @@ const Render = (function () {
     crArm(m, 0, pe); crArm(m, 1, pe);
   }
 
+  const CREW_POOL = 4;   // stop crews for the AI cars: each is sent to the garage of a car coming in for repairs (Core: c.pitWant, c.pitBox)
   function setupCrew(race) {
     if (crew) { scene.remove(crew.grp); for (const m of crew.meshes) { m.geometry.dispose(); if (m.dispose) m.dispose(); } crew.mats.forEach(m => m.dispose()); crew = null; }
     const boxes = world && world.pitBoxes; if (!boxes || !boxes.length || !race) return;
     const P = race.player || null, pb = world.pitBox, ai = race.cars.filter(c => c !== P); let ai0 = 0;
-    for (const bx of boxes) bx.col = new THREE.Color().setRGB(...bx.team);   // the teams: the player's box in the player's colour, the others in the AI cars' colours
-    for (const bx of boxes) { if (bx.mine && P) bx.col = new THREE.Color(P.color); else if (ai[ai0]) bx.col = new THREE.Color(ai[ai0++].color); }
+    for (const bx of boxes) { bx.col = new THREE.Color().setRGB(...bx.team); bx.car = null; }   // the teams: the player's box in the player's colour, the others in the AI cars' colours
+    for (const bx of boxes) { if (bx.mine && P) bx.col = new THREE.Color(P.color); else if (ai[ai0]) { bx.car = ai[ai0]; bx.col = new THREE.Color(ai[ai0++].color); } }   // (in grid order, as Core gives the cars their boxes)
     const men = [], bpt = (bx, a, w) => [bx.ox + bx.tx * a + bx.nx * w, bx.oz + bx.tz * a + bx.nz * w];
     const man = (bx, a, w, yaw, act, role, helmet) => { const id = men.length + bx.k * 17, h1 = crHash(id * 1.37 + 0.5), h2 = crHash(id * 2.71 + 1.3), h3 = crHash(id * 0.91 + 7.1), [x, z] = bpt(bx, a, w);
       const m = { id, role: role || 'idle', act, act0: act, bx, team: bx.col, x, y: bx.y || 0, z, yaw, hx: x, hz: z, hyaw: yaw, gx: x, gz: z, gyaw: yaw, style: 'walk', spd: 0, ph: h2 * 6, t0: h3 * 50, h1, h2,
@@ -1208,76 +1209,133 @@ const Render = (function () {
         if (j === 2 || j === 3) { const o = SLOTS[j === 2 ? 3 : 2], [ox, oz] = bpt(bx, o[0], bx.base + o[1]); yaw = Math.atan2(oz - z, ox - x); }   // the talkers face each other
         const m = man(bx, a + ja, bx.base + w + jw, yaw + (crHash(bx.k + j * 9.1) - 0.5) * 0.4, act); if (act === 'gun') m.gun = true; }
       man(bx, crHash(bx.k * 1.9) < 0.5 ? -0.62 : 0.62, bx.wall + 1.5, faceN(bx, -1), 'sit', null, false); }
-    // the player's crew: waits in the garage (two rows), comes out when the car is in the lane
-    let roles = null;
-    if (P && pb) { const bx = boxes.find(b => b.mine); if (bx) {
-      roles = { G: [], O: [], N: [] }; const wA = bx.base + 9.45, wB = bx.base + 10.4, lane = faceN(bx, -1);
-      const rowA = [['N', 3], ['G', 3], ['N', 2], ['G', 2], ['G', 0], ['N', 0], ['G', 1], ['N', 1]], rowB = [['O', 3], ['O', 2], ['LP'], ['O', 0], ['O', 1]];
-      rowA.forEach(([r, k], j) => { const m = man(bx, -3.5 + j, wA, lane, r === 'G' ? 'gun' : 'stand', r, true); m.wheel = k; roles[r][k] = m; if (r === 'G') m.gun = true; });
-      rowB.forEach(([r, k], j) => { const m = man(bx, -2.6 + j * 1.3, wB, lane, r === 'LP' ? 'lolliD' : (j % 2 ? 'cross' : 'talk'), r, true); if (r === 'LP') roles.LP = m; else { m.wheel = k; roles.O[k] = m; } });
-      roles.JF = man(bx, 3.9, bx.base + 11.7, faceT(bx, -1), 'stand', 'JF', true); roles.JR = man(bx, -3.9, bx.base + 11.7, faceT(bx, 1), 'stand', 'JR', true);
-      roles.ENG = man(bx, -0.62, bx.wall + 1.5, lane, 'sit', 'ENG', false);
-      for (const k of ['JF', 'JR']) roles[k].jack = { beta: CR_B0, man: roles[k] };
-      for (const m of roles.G) m.air = bpt(bx, (m.hx - bx.ox) * bx.tx + (m.hz - bx.oz) * bx.tz, bx.base + 9.05);   // the air line comes out of the garage front
-      roles.bx = bx; } }
+    // a stop crew: waits in the garage (two rows), comes out when its car is in the lane. m.home: where in the garage of a box (crHome)
+    const ROW_A = [['N', 3], ['G', 3], ['N', 2], ['G', 2], ['G', 0], ['N', 0], ['G', 1], ['N', 1]], ROW_B = [['O', 3], ['O', 2], ['LP'], ['O', 0], ['O', 1]];
+    const crewMen = (bx, eng) => {
+      const R = { G: [], O: [], N: [] }, wA = bx.base + 9.45, wB = bx.base + 10.4, lane = faceN(bx, -1);
+      ROW_A.forEach(([r, k], j) => { const m = man(bx, -3.5 + j, wA, lane, r === 'G' ? 'gun' : 'stand', r, true); m.home = [-3.5 + j, 9.45, 0]; m.wheel = k; R[r][k] = m; if (r === 'G') m.gun = true; });
+      ROW_B.forEach(([r, k], j) => { const m = man(bx, -2.6 + j * 1.3, wB, lane, r === 'LP' ? 'lolliD' : (j % 2 ? 'cross' : 'talk'), r, true); m.home = [-2.6 + j * 1.3, 10.4, 0]; if (r === 'LP') R.LP = m; else { m.wheel = k; R.O[k] = m; } });
+      R.JF = man(bx, 3.9, bx.base + 11.7, faceT(bx, -1), 'stand', 'JF', true); R.JF.home = [3.9, 11.7, -1]; R.JR = man(bx, -3.9, bx.base + 11.7, faceT(bx, 1), 'stand', 'JR', true); R.JR.home = [-3.9, 11.7, 1];
+      if (eng) R.ENG = man(bx, -0.62, bx.wall + 1.5, lane, 'sit', 'ENG', false);
+      for (const k of ['JF', 'JR']) R[k].jack = { beta: CR_B0, man: R[k] };
+      for (const m of R.G) m.air = bpt(bx, (m.hx - bx.ox) * bx.tx + (m.hz - bx.oz) * bx.tz, bx.base + 9.05);   // the air line comes out of the garage front
+      R.bx = bx; return R; };
+    const units = [], unit = (R, car, upb, m0) => { const u = { k: units.length, roles: R, P: car, pb: upb, men: men.slice(m0), mode: 'home', frame: null, lift: 0, liftP: 0, liftF: 0, liftR: 0, gunOn: false, clearT: 0,
+      dim: car ? crDims(car) : null, active: !!car, tyres: [] }; for (const m of u.men) m.unit = u; units.push(u); return u; };
+    // the player's crew (unit 0: always there), then the AI cars' stop crews (hidden until sent to a garage: crewSend)
+    let mine = null;
+    if (P && pb) { const bx = boxes.find(b => b.mine); if (bx) { const m0 = men.length; mine = unit(crewMen(bx, true), P, pb, m0); } }
+    const bx0 = boxes.find(b => b.car);
+    if (bx0 && race.cars.some(c => !c.isPlayer && !c.net)) for (let k = 0; k < CREW_POOL; k++) { const m0 = men.length; unit(crewMen(bx0, false), null, null, m0); }
     // meshes: every part and tool one InstancedMesh; the bounding sphere covers the whole pit so the frustum culling works
     let cx = 0, cz = 0; for (const b of boxes) { cx += b.ox; cz += b.oz; } cx /= boxes.length; cz /= boxes.length;
     let rad = 0; for (const b of boxes) rad = Math.max(rad, Math.hypot(b.ox - cx, b.oz - cz)); rad += 40;
-    const bs = new THREE.Sphere(new THREE.Vector3(cx, 2, cz), rad), geo = crewGeos(), mat = crewMaterial(false), matS = crewMaterial(true), grp = new THREE.Group(), meshes = [], nM = men.length;
+    const bs = new THREE.Sphere(new THREE.Vector3(cx, 2, cz), rad), geo = crewGeos(), mat = crewMaterial(false), matS = crewMaterial(true), grp = new THREE.Group(), meshes = [], nM = men.length, nU = units.length;
     const mk = (g, n, cast, mt) => { if (!n) { g.dispose(); return null; } g.boundingSphere = bs.clone(); const im = new THREE.InstancedMesh(g, mt || mat, n);
       im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); im.castShadow = cast; im.receiveShadow = true;
-      for (let i = 0; i < n; i++) { im.setMatrixAt(i, _zero); im.setColorAt(i, _pc.setRGB(1, 1, 1)); } grp.add(im); meshes.push(im); return im; };
-    const gunMen = men.filter(m => m.gun), nT = roles ? 8 : 0;
+      for (let i = 0; i < n; i++) { im.setMatrixAt(i, _zero); im.setColorAt(i, _pc.setRGB(1, 1, 1)); } grp.add(im); meshes.push(im); im.nMax = n; return im; };
+    const gunMen = men.filter(m => m.gun);
     geo.head.setAttribute('crewSkin', new THREE.InstancedBufferAttribute(new Float32Array(nM * 3), 3));
     const M = { trunk: mk(geo.trunk, nM, true), head: mk(geo.head, nM, true, matS), helmet: mk(geo.helmet, nM, false), uarm: mk(geo.uarm, nM * 2, true), farm: mk(geo.farm, nM * 2, true),
-      thigh: mk(geo.thigh, nM * 2, true), shin: mk(geo.shin, nM * 2, true), gun: mk(geo.gun, gunMen.length, false), tyre: mk(geo.tyre, nT, true), jack: mk(geo.jack, roles ? 2 : 0, true),
-      rod: mk(geo.rod, (roles ? 13 : 0) + boxes.length, false), disc: mk(geo.disc, roles ? 1 : 0, false) };
+      thigh: mk(geo.thigh, nM * 2, true), shin: mk(geo.shin, nM * 2, true), gun: mk(geo.gun, gunMen.length, false), tyre: mk(geo.tyre, nU * 8, true), jack: mk(geo.jack, nU * 2, true),
+      rod: mk(geo.rod, boxes.length + nU * 13, false), disc: mk(geo.disc, nU, false) };
     const skinA = geo.head.attributes.crewSkin;
-    men.forEach((m, i) => { for (const k of ['trunk', 'head', 'helmet']) M[k].setColorAt(i, m.team); for (const k of ['uarm', 'farm', 'thigh', 'shin']) { M[k].setColorAt(i * 2, m.team); M[k].setColorAt(i * 2 + 1, m.team); }
-      skinA.setXYZ(i, m.skin[0], m.skin[1], m.skin[2]); });
-    gunMen.forEach((m, i) => { m.gunI = i; M.gun.setColorAt(i, m.team); });
-    const tyres = [];
-    if (roles) { const cmp = [new THREE.Color(0.95, 0.8, 0.14), new THREE.Color(0.86, 0.14, 0.12)];   // new set: yellow bands, the old ones: red
-      for (let k = 0; k < 4; k++) { const tn = { i: k, mode: 'floor', man: roles.N[k] }, to = { i: 4 + k, mode: 'hidden', man: roles.O[k] }; tyres.push(tn, to); roles.N[k].tyre = tn; roles.O[k].tyre = to;
-        M.tyre.setColorAt(k, cmp[0]); M.tyre.setColorAt(4 + k, cmp[1]); }
-      M.jack.setColorAt(0, roles.bx.col); M.jack.setColorAt(1, roles.bx.col);
-      for (let i = 0; i < 13; i++) M.rod.setColorAt(i, _pc.setRGB(...(i < 8 ? [0.12, 0.12, 0.13] : i < 12 ? [0.62, 0.63, 0.66] : [0.8, 0.8, 0.78]))); }
-    const rb = roles ? 13 : 0;   // the band over each crew's garage door in the team's colour (the rods after the player's)
-    boxes.forEach((bx, j) => { const [ax, az] = bpt(bx, -4.7, bx.base + 8.93), [bx2, bz2] = bpt(bx, 4.7, bx.base + 8.93), by = (bx.y || 0) + 3.7; crSetRod(M.rod, rb + j, ax, by, az, bx2, by, bz2, 0.04, 0.5); M.rod.setColorAt(rb + j, bx.col); });   // (bx.y: the box floor's height, where the pit lane is not at 0)
+    men.forEach((m, i) => { m.i = i; skinA.setXYZ(i, m.skin[0], m.skin[1], m.skin[2]); });
+    gunMen.forEach((m, i) => { m.gunI = i; });
+    for (const m of men) crTeam(M, m);
+    const cmp = [new THREE.Color(0.95, 0.8, 0.14), new THREE.Color(0.86, 0.14, 0.12)];   // new set: yellow bands, the old ones: red
+    for (const u of units) { const R = u.roles, t0 = u.k * 8; u.r0 = boxes.length + u.k * 13;   // (the rods: the garage bands first, then 13 per crew)
+      for (let k = 0; k < 4; k++) { const tn = { i: t0 + k, mode: 'floor', man: R.N[k], unit: u }, to = { i: t0 + 4 + k, mode: 'hidden', man: R.O[k], unit: u }; u.tyres.push(tn, to); R.N[k].tyre = tn; R.O[k].tyre = to;
+        M.tyre.setColorAt(t0 + k, cmp[0]); M.tyre.setColorAt(t0 + 4 + k, cmp[1]); }
+      M.jack.setColorAt(u.k * 2, R.bx.col); M.jack.setColorAt(u.k * 2 + 1, R.bx.col);
+      for (let i = 0; i < 13; i++) M.rod.setColorAt(u.r0 + i, _pc.setRGB(...(i < 8 ? [0.12, 0.12, 0.13] : i < 12 ? [0.62, 0.63, 0.66] : [0.8, 0.8, 0.78]))); }
+    boxes.forEach((bx, j) => { const [ax, az] = bpt(bx, -4.7, bx.base + 8.93), [bx2, bz2] = bpt(bx, 4.7, bx.base + 8.93), by = (bx.y || 0) + 3.7; crSetRod(M.rod, j, ax, by, az, bx2, by, bz2, 0.04, 0.5); M.rod.setColorAt(j, bx.col); });   // the band over each crew's garage door in the team's colour (bx.y: the box floor's height, where the pit lane is not at 0)
     for (const im of meshes) if (im.instanceColor) im.instanceColor.needsUpdate = true;
     scene.add(grp);
-    crew = { grp, meshes, mats: [mat, matS], M, men, roles, tyres, P: roles ? P : null, pb, cx, cz, rad, mode: 'home', frame: null, lift: 0, liftP: 0, liftF: 0, liftR: 0, gunOn: false, clearT: 0, dim: roles ? crDims(P) : null };
+    crew = { grp, meshes, mats: [mat, matS], M, men, units, pool: units.filter(u => u !== mine), byCar: new Map(mine ? [[P, mine]] : []), boxes, bpt, faceN, faceT, mine, roles: mine ? mine.roles : null,
+      P: mine ? P : null, pb, cx, cz, rad, mode: 'home', lift: 0, gunOn: false, nIdle: units.length ? units[0].men[0].i : men.length };
     for (const m of men) crPose(m, 0, m.O, m.H);   // (start in the pose, not standing up from it)
+    crewCounts();
+  }
+  function crTeam(M, m) {   // a man's instances (and his gun) in his team's colour
+    for (const k of ['trunk', 'head', 'helmet']) M[k].setColorAt(m.i, m.team);
+    for (const k of ['uarm', 'farm', 'thigh', 'shin']) { M[k].setColorAt(m.i * 2, m.team); M[k].setColorAt(m.i * 2 + 1, m.team); }
+    if (m.gun) M.gun.setColorAt(m.gunI, m.team);
   }
   function crDims(P) {   // the car's hubs, nose and tail (car frame: forward, right), as the car mesh builds them
     const M = P.m, d = BODIES[M.body], sx = M.len / d.len, fx = M.a * (M.len / 4.4) * 0.98 + 0.05, rx = -M.b * (M.len / 4.4) * 0.98, hw = M.wid * 0.5 - 0.1;
     return { fx, rx, hw, rw: M.rw, wid: M.wid, nose: d.secs[d.secs.length - 1][0] * sx + 0.05, tail: d.secs[0][0] * sx - 0.06, wb: fx - rx };
   }
+  // the AI cars' stop crews: one is sent to the garage of every car that decides to come in (it waits there, in the team's colours),
+  // and it is taken off again once the car has left the lane and everybody is back inside
+  function crewAssign() {
+    const c = crew, T = curTrack; if (!c.pool.length || !curRace || !T) return;
+    for (const u of c.pool) if (u.active && u.mode === 'home' && !(u.P.pitWant || u.P.inPit) && u.men.every(m => Math.hypot(m.x - m.hx, m.z - m.hz) < 0.3)) crewHide(u);
+    const L = T.len;
+    for (const car of curRace.cars) { if (car.isPlayer || !car.pitWant || car.pitBox == null || c.byCar.has(car)) continue;
+      const u = c.pool.find(u => !u.active); if (!u) break;
+      const bx = c.boxes.find(b => { let d = b.s - T.startS - car.pitBox; d = ((d % L) + L) % L; return d < 1.5 || d > L - 1.5; }); if (bx) crewSend(u, car, bx); }
+  }
+  function crewSend(u, car, bx) {
+    const c = crew, R = u.roles, lane = c.faceN(bx, -1), o = bx.lane + Core.PIT_WORK;
+    u.P = car; u.dim = crDims(car); u.active = true; u.mode = 'home'; u.frame = null; u.lift = u.liftP = u.liftF = u.liftR = 0; u.clearT = 0; u.gunOn = false; R.bx = bx;
+    u.pb = { s: bx.s, lane: bx.lane, wallO: bx.wall, nx: bx.nx, nz: bx.nz, tx: bx.tx, tz: bx.tz, stopO: o, stop: c.bpt(bx, 0, o) };
+    for (const m of u.men) { const [a, w, f] = m.home, [x, z] = c.bpt(bx, a, bx.base + w), yaw = f ? c.faceT(bx, f) : lane;
+      m.bx = bx; m.team = bx.col; m.x = m.hx = m.gx = x; m.z = m.hz = m.gz = z; m.yaw = m.hyaw = m.gyaw = yaw; m.y = bx.y || 0; m.act = m.act0; m.spd = 0; m.carry = false; m.aim = null; m.pd = null;
+      crPose(m, 0, m.O, m.H); crTeam(c.M, m); }
+    for (const m of R.G) m.air = c.bpt(bx, a0(m, bx), bx.base + 9.05);
+    for (const k of ['JF', 'JR']) R[k].jack.beta = CR_B0;
+    for (let k = 0; k < 4; k++) { R.N[k].tyre.mode = 'floor'; R.O[k].tyre.mode = 'hidden'; }
+    c.M.jack.setColorAt(u.k * 2, bx.col); c.M.jack.setColorAt(u.k * 2 + 1, bx.col);
+    for (const im of c.meshes) if (im.instanceColor) im.instanceColor.needsUpdate = true;
+    c.byCar.set(car, u); crewCounts();
+  }
+  const a0 = (m, bx) => (m.hx - bx.ox) * bx.tx + (m.hz - bx.oz) * bx.tz;   // (a man's home, along the box)
+  function crewHide(u) {
+    const c = crew, M = c.M;
+    for (let k = 0; k < 4; k++) crewWheel(u, k, false);
+    for (const m of u.men) { for (const k of ['trunk', 'head', 'helmet']) M[k].setMatrixAt(m.i, _zero); for (const k of ['uarm', 'farm', 'thigh', 'shin']) { M[k].setMatrixAt(m.i * 2, _zero); M[k].setMatrixAt(m.i * 2 + 1, _zero); } if (m.gun) M.gun.setMatrixAt(m.gunI, _zero); }
+    for (const t of u.tyres) M.tyre.setMatrixAt(t.i, _zero);
+    M.jack.setMatrixAt(u.k * 2, _zero); M.jack.setMatrixAt(u.k * 2 + 1, _zero); M.disc.setMatrixAt(u.k, _zero); for (let i = 0; i < 13; i++) M.rod.setMatrixAt(u.r0 + i, _zero);
+    c.byCar.delete(u.P); u.P = null; u.active = false; u.lift = u.liftP = 0;
+    for (const im of c.meshes) im.instanceMatrix.needsUpdate = true;
+    crewCounts();
+  }
+  function crewCounts() {   // draw only up to the last crew at work (the others' instances stand at zero scale)
+    const c = crew, M = c.M; let last = null; for (const u of c.units) if (u.active) last = u;
+    const nMen = last ? last.men[last.men.length - 1].i + 1 : c.nIdle, nU = last ? last.k + 1 : 0;
+    let nGun = 0; for (let i = 0; i < nMen; i++) if (c.men[i].gun) nGun = c.men[i].gunI + 1;
+    for (const k of ['trunk', 'head', 'helmet']) M[k].count = nMen;
+    for (const k of ['uarm', 'farm', 'thigh', 'shin']) M[k].count = nMen * 2;
+    if (M.gun) M.gun.count = nGun;
+    M.tyre.count = nU * 8; M.jack.count = nU * 2; M.disc.count = nU; M.rod.count = c.boxes.length + nU * 13;
+  }
 
-  // ---- the player's crew: what everybody does, from the pit state ----
-  function crewLogic(dt) {
-    const c = crew, P = c.P, R = c.roles, D = c.dim, T = curTrack; if (!P || !R || !T) return;
+  // ---- a stop crew (u: the player's, or one sent to an AI car's garage): what everybody does, from its car's pit state ----
+  function crewLogic(c, dt) {
+    const P = c.P, R = c.roles, D = c.dim, T = curTrack; if (!P || !R || !T) return;
     const L = T.len; let dB = c.pb.s - (P.q ? P.q.s : c.pb.s + 999); dB = ((dB % L) + L) % L; if (dB > L / 2) dB -= L;   // metres from the car to its box (along the lane)
     const prev = c.mode; let mode;
     if (P.pitState === 'repair') mode = 'work';
     else if (prev === 'work' || prev === 'clear') mode = P.inPit && dB > -13 && c.clearT < 5 ? 'clear' : 'home';
     else mode = P.inPit && !P.pitDone && dB > -4 ? 'out' : 'home';
     if (mode !== prev) { c.mode = mode; c.clearT = 0;
-      if (mode === 'out') { const st = c.pb.stop; c.frame = { x: st[0], z: st[1], h: Math.atan2(c.pb.tz, c.pb.tx) };
+      if (mode === 'out') { if (c !== crew.mine) { c.pb.stopO = c.pb.lane + (P.pitFast ? -Core.PIT_FAST : Core.PIT_WORK); c.pb.stop = crew.bpt(R.bx, 0, c.pb.stopO); }   // (an AI car: in the working lane, or in the fast lane)
+        const st = c.pb.stop; c.frame = { x: st[0], z: st[1], h: Math.atan2(c.pb.tz, c.pb.tx) };
         for (const k of [0, 1, 2, 3]) { R.N[k].tyre.mode = 'hands'; R.O[k].tyre.mode = 'hidden'; } }
       if (mode === 'home') for (const m of c.men) if (m.role !== 'idle') m.act = m.act0; }
     if (mode === 'work') c.frame = { x: P.x, z: P.z, h: P.h };
     if (mode === 'clear') c.clearT += dt;
     const F = c.frame, u = mode === 'work' ? clamp(P.pitT / Math.max(0.1, P.pitDur), 0, 1) : mode === 'clear' ? 1 : 0;
     const ch = F ? Math.cos(F.h) : 1, sh = F ? Math.sin(F.h) : 0, Wp = (f, r) => [F.x + ch * f - sh * r, F.z + sh * f + ch * r], yawC = (df, dr) => Math.atan2(sh * df + ch * dr, ch * df - sh * dr);
-    const pb = c.pb, wMin = pb.wallO + 0.35;   // (nobody is sent across the pit-wall rail, wherever the car stands)
-    const go = (m, p, yaw, style, act) => { const wo = pb.lane + (p[0] - pb.stop[0]) * pb.nx + (p[1] - pb.stop[1]) * pb.nz; if (wo < wMin) p = [p[0] + pb.nx * (wMin - wo), p[1] + pb.nz * (wMin - wo)];
+    const pb = c.pb, wMin = pb.wallO + 0.35, o0 = pb.stopO != null ? pb.stopO : pb.lane;   // (nobody is sent across the pit-wall rail, wherever the car stands)
+    const go = (m, p, yaw, style, act) => { const wo = o0 + (p[0] - pb.stop[0]) * pb.nx + (p[1] - pb.stop[1]) * pb.nz; if (wo < wMin) p = [p[0] + pb.nx * (wMin - wo), p[1] + pb.nz * (wMin - wo)];
       m.gx = p[0]; m.gz = p[1]; m.gyaw = yaw; m.style = style; m.act = act; };
     const lf = c.liftF, lr = c.liftR, y0 = P.y || 0;
     const hub = (k) => { const f = k < 2 ? D.fx : D.rx, sd = k % 2 ? 1 : -1, [x, z] = Wp(f, sd * D.hw); return [x, y0 + D.rw + (k < 2 ? lf : lr), z]; };
     c.gunOn = false;
     if (mode === 'home') {
-      for (const m of c.men) { if (m.role === 'idle') continue; m.gx = m.hx; m.gz = m.hz; m.gyaw = m.hyaw; m.style = 'walk'; m.aim = null;
+      for (const m of c.men) { if (m.role === 'idle' || m.role === 'ENG') continue; m.gx = m.hx; m.gz = m.hz; m.gyaw = m.hyaw; m.style = 'walk'; m.aim = null;
         const home = Math.hypot(m.x - m.hx, m.z - m.hz) < 0.3;
         if (m.role === 'O') { m.carry = m.tyre.mode === 'hands'; if (home && m.carry) { m.tyre.mode = 'floor'; m.carry = false; } m.act = m.carry ? 'carry' : m.act0; }
         if (m.role === 'N') { if (home && m.tyre.mode !== 'floor') m.tyre.mode = 'floor'; m.carry = false; }
@@ -1304,7 +1362,7 @@ const Render = (function () {
         else if (u < 0.46) { const t2 = crSS(0.34, 0.46, u); go(N, Wp(fk - dO * (0.72 - 0.3 * t2), sd * (D.hw + 0.86 - 0.25 * t2)), nYaw, 'snap', 'carry'); N.carry = true; tN.mode = 'lerp'; tN.to = hb; tN.t = t2; }
         else if (u < 0.58) { go(N, Wp(fk - dO * 0.42, sd * (D.hw + 0.61)), nYaw, 'snap', 'pushT'); N.aim = hb; N.carry = false; tN.mode = 'hidden'; }
         else { go(N, Wp(fk - dO * 0.8, sd * (D.hw + 1.1 + (mode === 'clear' ? 0.3 : 0))), nYaw, 'snap', 'stand'); N.carry = false; tN.mode = 'hidden'; }
-        crewWheel(k, mode === 'work' && u > 0.24 && u < 0.46); }
+        crewWheel(c, k, mode === 'work' && u > 0.24 && u < 0.46); }
       // jack men: front one in front of the nose (the car stops before him), rear one steps in behind the tail once it has stopped
       const JF = R.JF, JR = R.JR, dj = 0.52 + 1.3 * Math.cos(CR_B0);
       const fSpot = Wp(D.nose + 0.22 + dj, 0), rSpot = Wp(D.tail - 0.22 - dj, 0);
@@ -1324,12 +1382,12 @@ const Render = (function () {
     }
     if (mode !== 'work') { c.liftF = 0; c.liftR = 0; }
     c.lift = (c.liftF + c.liftR) / 2; c.liftP = Math.atan2(c.liftF - c.liftR, D.wb);
-    // the engineer on the pit wall follows his car
-    const E = R.ENG; E.lookAt = Math.hypot(P.x - E.x, P.z - E.z) < 160 ? [P.x, P.z] : null;
-    if (mode !== 'work') for (let k = 0; k < 4; k++) crewWheel(k, false);
+    // the engineer on the pit wall follows his car (the player's crew)
+    const E = R.ENG; if (E) E.lookAt = Math.hypot(P.x - E.x, P.z - E.z) < 160 ? [P.x, P.z] : null;
+    if (mode !== 'work') for (let k = 0; k < 4; k++) crewWheel(c, k, false);
   }
-  function crewWheel(k, hide) {   // the player's car wheel k (0 FL, 1 FR, 2 RL, 3 RR) is off the car while the tyre men swap it (only wheels that are separate meshes)
-    const P = crew.P, v = views.find(v => v.car === P); if (!v) return;
+  function crewWheel(u, k, hide) {   // the crew's car's wheel k (0 FL, 1 FR, 2 RL, 3 RR) is off the car while the tyre men swap it (only wheels that are separate meshes)
+    const P = u.P, v = P && views.find(v => v.car === P); if (!v) return;
     const list = k < 2 ? v.wf : v.wr, want = k % 2 ? 1 : -1;
     for (const w of list) if (Math.sign(w.position.z) === want && w.visible === hide) w.visible = !hide;
   }
@@ -1351,8 +1409,8 @@ const Render = (function () {
     const walk = clamp(m.spd / 0.8, 0, 1), run = clamp((m.spd - 2) / 1.6, 0, 1);
     crPose(m, time, _cO, _cH);
     if (walk > 0) { crGait(m, run, _cO2, _cH2); for (let k = 0; k < 12; k++) _cO[k] += (_cO2[k] - _cO[k]) * walk; if (!m.carry) for (let k = 0; k < 12; k++) _cH[k] += (_cH2[k] - _cH[k]) * walk; }
-    // where he looks: his car when it is near (the engineer always), otherwise now and then around
-    let lk = null; const P = crew.P;
+    // where he looks: his car when it is near (the engineer always), otherwise now and then around (the other teams: at the player's car)
+    let lk = null; const P = m.unit ? m.unit.P : crew.P;
     if (m.lookAt) lk = m.lookAt; else if (P && m.act !== 'bench' && m.act !== 'kneel' && m.act !== 'gunK' && Math.hypot(P.x - m.x, P.z - m.z) < 45) lk = [P.x, P.z];
     const la = lk ? -wrapPi(Math.atan2(lk[1] - m.z, lk[0] - m.x) - m.yaw) : Math.sin(time * 0.23 + m.t0) * 0.7 * Math.max(0, Math.sin(time * 0.11 + m.t0 * 2));
     m.look += (clamp(la, -1.2, 1.2) - m.look) * Math.min(1, dt * 4); _cO[5] += m.look * (1 - walk * 0.7); _cO[2] += m.look * 0.2;
@@ -1377,40 +1435,42 @@ const Render = (function () {
     const fx = Math.cos(m.yaw), fz = Math.sin(m.yaw), s = m.sc; let ang = yawM + Math.PI / 2;
     _cv.set(m.x + fx * 0.42 * s, m.y + 0.99 * s, m.z + fz * 0.42 * s);
     if (t.mode === 'lerp') {   // between his hands and the hub: off the car (from the hub) or onto it (to the hub); the axle turns to the car's
-      const hubP = t.from || t.to, k = t.from ? 1 - t.t : t.t, F = crew.frame; let hubA = Math.PI / 2 - F.h; if (Math.abs(wrapPi(hubA - ang)) > Math.PI / 2) hubA += Math.PI;
+      const hubP = t.from || t.to, k = t.from ? 1 - t.t : t.t, F = t.unit.frame; let hubA = Math.PI / 2 - F.h; if (Math.abs(wrapPi(hubA - ang)) > Math.PI / 2) hubA += Math.PI;
       _cv.set(_cv.x + (hubP[0] - _cv.x) * k, _cv.y + (hubP[1] - _cv.y) * k, _cv.z + (hubP[2] - _cv.z) * k); ang += wrapPi(hubA - ang) * k; }
     _cQ.setFromEuler(_ce.set(0, ang, 0, 'YXZ')); out.compose(_cv, _cQ, _cS); return true;
   }
   function updateCrew(dt) {
     if (!crew) return;
-    const c = crew; crewLogic(dt);
+    const c = crew; crewAssign();
+    for (const u of c.units) if (u.active) crewLogic(u, dt);
+    if (c.mine) { c.mode = c.mine.mode; c.lift = c.mine.lift; c.gunOn = c.mine.gunOn; }   // (the player's crew, for the game and the tests)
     const near = Math.hypot(cam.vcx - c.cx, cam.vcz - c.cz) < c.rad + 170;
     if (c.grp.visible !== near) c.grp.visible = near;
-    if (!near) { for (const m of c.men) { m.x = m.gx; m.z = m.gz; m.yaw = m.gyaw; m.spd = 0; } return; }   // off screen: everybody just is where he is going
+    if (!near) { for (const m of c.men) { if (m.unit && !m.unit.active) continue; m.x = m.gx; m.z = m.gz; m.yaw = m.gyaw; m.spd = 0; } return; }   // off screen: everybody just is where he is going
     const M = c.M, rel = (im, i, src) => im.setMatrixAt(i, src);
-    for (let i = 0; i < c.men.length; i++) { const m = c.men[i];
+    for (let i = 0; i < c.men.length; i++) { const m = c.men[i], U = m.unit; if (U && !U.active) continue;
       crewMan(m, dt); crRig(m);
       _cM.copy(CRM.pel); { const e = _cM.elements, bz = 0.6 + 0.4 * m.bulk; e[0] *= m.bulk; e[1] *= m.bulk; e[2] *= m.bulk; e[8] *= bz; e[9] *= bz; e[10] *= bz; } rel(M.trunk, i, _cM);
       rel(M.head, i, CRM.neck); rel(M.helmet, i, m.helmet ? CRM.neck : _zero);
       rel(M.uarm, i * 2, CRM.shL); rel(M.uarm, i * 2 + 1, CRM.shR); rel(M.farm, i * 2, CRM.elL); rel(M.farm, i * 2 + 1, CRM.elR);
       rel(M.thigh, i * 2, CRM.hipL); rel(M.thigh, i * 2 + 1, CRM.hipR); rel(M.shin, i * 2, CRM.knL); rel(M.shin, i * 2 + 1, CRM.knR);
       if (m.gun) rel(M.gun, m.gunI, CRM.hdR);
-      if (m.role === 'G' && M.rod) {   // air hose: gun -> the floor behind him -> the garage
+      if (m.role === 'G' && U) {   // air hose: gun -> the floor behind him -> the garage
         _cv.set(0, 0.07, 0.05).applyMatrix4(CRM.hdR); const bx = m.x - Math.cos(m.yaw) * 0.55, bz = m.z - Math.sin(m.yaw) * 0.55;
-        crSetRod(M.rod, m.wheel * 2, _cv.x, _cv.y, _cv.z, bx, m.y + 0.03, bz, 0.032); crSetRod(M.rod, m.wheel * 2 + 1, bx, m.y + 0.03, bz, m.air[0], m.y + 0.03, m.air[1], 0.032); }
-      if (m.jack && M.jack) { const j = m.jack, fx = Math.cos(m.yaw), fz = Math.sin(m.yaw), dj = 0.52 + 1.3 * Math.cos(CR_B0), ax = m.x + fx * dj, az = m.z + fz * dj, ji = m.role === 'JF' ? 0 : 1;
-        _cQ.setFromEuler(_ce.set(0, Math.PI / 2 - m.yaw, 0, 'YXZ')); _cM2.compose(_cv.set(ax, m.y, az), _cQ, _cS); M.jack.setMatrixAt(ji, _cM2);
+        crSetRod(M.rod, U.r0 + m.wheel * 2, _cv.x, _cv.y, _cv.z, bx, m.y + 0.03, bz, 0.032); crSetRod(M.rod, U.r0 + m.wheel * 2 + 1, bx, m.y + 0.03, bz, m.air[0], m.y + 0.03, m.air[1], 0.032); }
+      if (m.jack && U) { const j = m.jack, fx = Math.cos(m.yaw), fz = Math.sin(m.yaw), dj = 0.52 + 1.3 * Math.cos(CR_B0), ax = m.x + fx * dj, az = m.z + fz * dj, ji = m.role === 'JF' ? 0 : 1;
+        _cQ.setFromEuler(_ce.set(0, Math.PI / 2 - m.yaw, 0, 'YXZ')); _cM2.compose(_cv.set(ax, m.y, az), _cQ, _cS); M.jack.setMatrixAt(U.k * 2 + ji, _cM2);
         const px = ax - fx * 0.1, pz = az - fz * 0.1, gl = 0.1 + 1.3 * Math.cos(j.beta), gx = ax - fx * gl, gz = az - fz * gl, gy = m.y + 0.14 + 1.3 * Math.sin(j.beta), lx = Math.sin(m.yaw) * 0.24, lz = -Math.cos(m.yaw) * 0.24;
-        crSetRod(M.rod, 8 + ji, px, m.y + 0.14, pz, gx, gy, gz, 0.045); crSetRod(M.rod, 10 + ji, gx - lx, gy, gz - lz, gx + lx, gy, gz + lz, 0.035); }
-      if (m.role === 'LP' && M.disc) {   // the lollipop: the pole out of his hand (across, raised or resting upright), the sign at its end facing along the car
+        crSetRod(M.rod, U.r0 + 8 + ji, px, m.y + 0.14, pz, gx, gy, gz, 0.045); crSetRod(M.rod, U.r0 + 10 + ji, gx - lx, gy, gz - lz, gx + lx, gy, gz + lz, 0.035); }
+      if (m.role === 'LP' && U) {   // the lollipop: the pole out of his hand (across, raised or resting upright), the sign at its end facing along the car
         const want = m.act === 'lolliH' ? [Math.cos(m.yaw), 0, Math.sin(m.yaw)] : [0, 1, 0]; m.pd = m.pd || [0, 1, 0];
         for (let k = 0; k < 3; k++) m.pd[k] += (want[k] - m.pd[k]) * Math.min(1, dt * 8); const l = Math.hypot(...m.pd) || 1, d0 = m.pd[0] / l, d1 = m.pd[1] / l, d2 = m.pd[2] / l;
-        _cv.setFromMatrixPosition(CRM.hdR); const ex = _cv.x + d0 * 1.35, ey = _cv.y + d1 * 1.35, ez = _cv.z + d2 * 1.35; crSetRod(M.rod, 12, _cv.x, _cv.y, _cv.z, ex, ey, ez, 0.03);
+        _cv.setFromMatrixPosition(CRM.hdR); const ex = _cv.x + d0 * 1.35, ey = _cv.y + d1 * 1.35, ez = _cv.z + d2 * 1.35; crSetRod(M.rod, U.r0 + 12, _cv.x, _cv.y, _cv.z, ex, ey, ez, 0.03);
         const nx = Math.sin(m.yaw), nz = -Math.cos(m.yaw);   // the sign's face points along his left-right, i.e. along the car (y = the pole, z = that normal, x = y cross z)
         const xx = d1 * nz, xy = d2 * nx - d0 * nz, xz = -d1 * nx, xl = Math.hypot(xx, xy, xz) || 1;
-        _cM.set(xx / xl, d0, nx, ex + d0 * 0.2, xy / xl, d1, 0, ey + d1 * 0.2, xz / xl, d2, nz, ez + d2 * 0.2, 0, 0, 0, 1); M.disc.setMatrixAt(0, _cM); }
+        _cM.set(xx / xl, d0, nx, ex + d0 * 0.2, xy / xl, d1, 0, ey + d1 * 0.2, xz / xl, d2, nz, ez + d2 * 0.2, 0, 0, 0, 1); M.disc.setMatrixAt(U.k, _cM); }
     }
-    for (const t of c.tyres) M.tyre.setMatrixAt(t.i, crTyreMat(t, _cM) ? _cM : _zero);
+    for (const u of c.units) if (u.active) for (const t of u.tyres) M.tyre.setMatrixAt(t.i, crTyreMat(t, _cM) ? _cM : _zero);
     for (const im of c.meshes) im.instanceMatrix.needsUpdate = true;
   }
 
@@ -1424,8 +1484,8 @@ const Render = (function () {
     for (const v of views) {
       const c = v.car, M = c.m;
       const x = lerp(c.px, c.x, alpha), z = lerp(c.pz, c.z, alpha), h = c.ph + wrapPi(c.h - c.ph) * alpha;
-      const y = lerp(c.py, c.y, alpha), jk = crew && c === crew.P;   // jk: the player's car, maybe up on the jacks in its pit box
-      v.grp.position.set(x, y + (jk ? crew.lift : 0), z);
+      const y = lerp(c.py, c.y, alpha), cu = crew && crew.byCar.get(c), jk = cu && cu.active ? cu : null;   // jk: the crew of a car in its pit box (maybe up on the jacks)
+      v.grp.position.set(x, y + (jk ? jk.lift : 0), z);
       const lat = clamp(c.w * c.speed, -16, 16);
       v.roll += (clamp(-lat * 0.0042, -0.06, 0.06) - v.roll) * Math.min(1, dt * 7);
       v.pitch += (clamp(c.axF * 0.0035, -0.045, 0.04) - v.pitch) * Math.min(1, dt * 7);
@@ -1434,10 +1494,10 @@ const Render = (function () {
       v.gpitch += (pitchTarget - v.gpitch) * Math.min(1, dt * (c.air ? 9 : 6));
       const bankT = c.bankSl && !c.air ? -Math.atan(c.bankSl * (-Math.sin(h) * c.q.nx + Math.cos(h) * c.q.nz)) : 0;   // a banked corner: tilt with the surface
       v.broll = (v.broll || 0) + (bankT - (v.broll || 0)) * Math.min(1, dt * 10);
-      v.grp.rotation.set(v.broll, -h, v.gpitch + (jk ? crew.liftP : 0), 'YZX');   // whole car (incl. separate front wheels) follows the slope (and the bank)
+      v.grp.rotation.set(v.broll, -h, v.gpitch + (jk ? jk.liftP : 0), 'YZX');   // whole car (incl. separate front wheels) follows the slope (and the bank)
       v.bodyG.rotation.set(v.roll, 0, v.pitch);
       v.bodyG.position.y = Math.abs(v.roll) * 0.4 + (c.onCurb ? Math.sin(time * 60) * 0.015 : 0);
-      if (v.blob) v.blob.position.y = (c.roadY - c.y) + 0.05 - (jk ? crew.lift : 0); // shadow stays on the ground during jumps (and on the jacks)
+      if (v.blob) v.blob.position.y = (c.roadY - c.y) + 0.05 - (jk ? jk.lift : 0); // shadow stays on the ground during jumps (and on the jacks)
       v.landed = !!(v.wasAir && !c.air);   // landing this frame (dust ring is emitted in emitFx)
       if (v.landed && c.isPlayer && c.speed > 3) shake(0.15 + clamp(-(c.impactVY || 0) / 8, 0, 1) * 0.45);
       v.spin += c.vl * dt / M.rw;
