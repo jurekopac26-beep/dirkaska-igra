@@ -674,6 +674,7 @@ const Core = (function () {
       this.m = model;
       this.id = opts.id || 0;
       this.isPlayer = !!opts.isPlayer;
+      if (opts.net) this.net = true;   // a friend's car in an online race: its own phone drives it, this one only shows it (Race.step leaves it alone)
       this.phys = opts.phys === 'cs' || opts.phys === 'rally' ? 'cs' : 'arcade';   // 'cs': Circuit Superstars kinematic drift (stepCS; the removed 'rally' maps to it); 'arcade': the SWGP2-style slide model
       this.arcade = this.phys === 'cs' ? false : !!opts.arcade;
       this.wMaxNow = 2;
@@ -1618,10 +1619,11 @@ const Core = (function () {
     }
     if (best <= 0) return 0;
     const ma = a.m.mass, mb = b.m.mass, ia = 1 / ma, ib = 1 / mb;
-    // separate
+    // separate. A friend's car in an online race (net) is not moved here (its own phone moves it): the local car takes the
+    // whole separation and, below, only its own share of the impulse (the friend's phone gives the friend's car its share)
     const tot = ia + ib;
-    a.x += bnx * best * ia / tot; a.z += bnz * best * ia / tot;
-    b.x -= bnx * best * ib / tot; b.z -= bnz * best * ib / tot;
+    if (b.net) { a.x += bnx * best; a.z += bnz * best; } else if (!a.net) { a.x += bnx * best * ia / tot; a.z += bnz * best * ia / tot; }
+    if (a.net) { b.x -= bnx * best; b.z -= bnz * best; } else if (!b.net) { b.x -= bnx * best * ib / tot; b.z -= bnz * best * ib / tot; }
     // impulse (normal points from b to a)
     const rax = bpx - a.x, raz = bpz - a.z, rbx = bpx - b.x, rbz = bpz - b.z;
     const vax = a.vx - a.w * raz, vaz = a.vz + a.w * rax;
@@ -1632,12 +1634,12 @@ const Core = (function () {
     const csc = a.phys === 'cs' && b.phys === 'cs', e = csc ? CSK.carE : 0.3, ka = csc ? 0 : 0.6;
     // angular terms damped to keep contact spins moderate
     const J = -(1 + e) * vrel / (ia + ib + rna * rna / a.I * 0.6 + rnb * rnb / b.I * 0.6);
-    a.vx += J * bnx * ia; a.vz += J * bnz * ia; a.w += rna * J / a.I * ka;
-    b.vx -= J * bnx * ib; b.vz -= J * bnz * ib; b.w -= rnb * J / b.I * ka;
-    if (csc) { if (!a.air) a.csKc = clamp(a.csKc + rna * J / a.I * CSK.tapT, -CSK.tapMax, CSK.tapMax); if (!b.air) b.csKc = clamp(b.csKc - rnb * J / b.I * CSK.tapT, -CSK.tapMax, CSK.tapMax); }   // cs: a tap swings the tail, the car catches itself
+    if (!a.net) { a.vx += J * bnx * ia; a.vz += J * bnz * ia; a.w += rna * J / a.I * ka; }
+    if (!b.net) { b.vx -= J * bnx * ib; b.vz -= J * bnz * ib; b.w -= rnb * J / b.I * ka; }
+    if (csc) { if (!a.air && !a.net) a.csKc = clamp(a.csKc + rna * J / a.I * CSK.tapT, -CSK.tapMax, CSK.tapMax); if (!b.air && !b.net) b.csKc = clamp(b.csKc - rnb * J / b.I * CSK.tapT, -CSK.tapMax, CSK.tapMax); }   // cs: a tap swings the tail, the car catches itself
     const imp = -vrel;
     a.hitCar = Math.max(a.hitCar, imp); b.hitCar = Math.max(b.hitCar, imp);
-    if (imp > 3.5) for (const c of [a, b]) { const dx = bpx - c.x, dz = bpz - c.z, ch = Math.cos(c.h), sh = Math.sin(c.h); applyDamage(c, (imp - 3.5) * 0.016, dx * ch + dz * sh, -dx * sh + dz * ch); }
+    if (imp > 3.5) for (const c of [a, b]) { if (c.net) continue; const dx = bpx - c.x, dz = bpz - c.z, ch = Math.cos(c.h), sh = Math.sin(c.h); applyDamage(c, (imp - 3.5) * 0.016, dx * ch + dz * sh, -dx * sh + dz * ch); }
     a.fxCar = Math.max(a.fxCar || 0, imp); b.fxCar = Math.max(b.fxCar || 0, imp);
     a.contactX = b.contactX = bpx; a.contactZ = b.contactZ = bpz;
     return imp;
@@ -1776,9 +1778,11 @@ const Core = (function () {
       this.timeTrial = !!(track.def.timeTrial && !opts.noPlayer);
       this._rq = [];   // open road + noPlayer (menu demo): cars that reached the top, waiting for a free spot at the start
       const nAI = this.timeTrial ? 0 : opts.numAI == null ? 12 : opts.numAI;
-      const total = nAI + (opts.noPlayer ? 0 : 1);
+      const RM = opts.remote || null;   // online race: the friend's car { model, color, num, name, grid }, driven by the friend's phone
+      const total = nAI + (opts.noPlayer ? 0 : 1) + (RM ? 1 : 0);
       this._gridN = total;
       const playerGrid = opts.noPlayer ? -1 : Math.min(total, opts.playerGrid || 12);
+      const remoteGrid = RM ? Math.min(total, RM.grid || total) : -1;
       const R = rng(opts.seed || 7);
       // AI roster
       const diff = DIFF[opts.difficulty == null ? 1 : opts.difficulty]; this.diff = diff;
@@ -1794,6 +1798,9 @@ const Core = (function () {
         if (g === playerGrid) {
           c = new Car(opts.playerModel || MODELS[0], { id: g, isPlayer: true, arcade: opts.arcade !== false, phys: opts.phys, name: 'TI', color: opts.playerColor, assist: opts.assist, upg: opts.playerUpg });
           this.player = c;
+        } else if (g === remoteGrid) {
+          c = new Car(RM.model || MODELS[0], { id: g, net: true, arcade: true, phys: opts.phys, name: RM.name || 'Prijatelj', color: RM.color });
+          this.remote = c;
         } else {
           const s = aiSpecs[ai++];
           c = new Car(s.model, { id: g, name: s.name, color: s.color, skill: s.skill, assist: opts.phys === 'cs' ? CSK.aiAssist : 1, arcade: true, phys: opts.phys, laneBias: (R() - 0.5) * 1.6 });
@@ -1806,7 +1813,18 @@ const Core = (function () {
         this._placeOnGrid(c, g);
       }
       if (this.player) this.player.num = opts.playerNum || 1;
+      if (this.remote) this.remote.num = RM.num || 2;
       this._prof();
+    }
+
+    // online race: a finish time on the clock both phones share, and the order by it. The friend's comes from its phone (once);
+    // mine replaces the local one (measured on that clock, see game.js)
+    netFinish(c, t) {
+      if (c.net && c.finished) return;
+      if (!c.finished) { c.finished = true; c.lap = this.laps + 1; this.finishOrder.push(c); }
+      c.finishTime = t;
+      this.finishOrder.sort((a, b) => a.finishTime - b.finishTime);
+      this.finishOrder.forEach((f, i) => { f.finishPos = i + 1; });
     }
 
     // speed profile for the AI (on the racing line), per physics; an upgraded player's autopilot brakes later with better brakes (its own profile)
@@ -1831,6 +1849,7 @@ const Core = (function () {
     _gridBack(g) {   // metres behind the start line of grid slot g
       const T = this.track;
       if (this.timeTrial) return 0;
+      if (this.opts.remote) return 9;   // online: the two of them side by side on the front row (the same distance to the line)
       if (!T.open) return 9 + (g - 1) * 7.5;
       // open road: the grid has to fit between the bottom end of the road and the start line (two abreast, staggered)
       const sp = clamp((T.startS - 9) / Math.max(1, this._gridN - 1), 2.4, 3.6);
@@ -1919,7 +1938,7 @@ const Core = (function () {
       // rubber band vs player
       const P = this.player;
       for (const c of cars) {
-        if (c.isPlayer) continue;
+        if (c.isPlayer || c.net) continue;
         if (c.relT > 0 && this.state === 'racing') { c.relT -= dt; if (c.relT <= 0) c.locked = false; }   // (open-road demo: staggered start)
         if (P && !c.finished) {
           const gap = c.dist - P.dist; // + ahead of player
@@ -1932,6 +1951,7 @@ const Core = (function () {
         } else { c.inThr = 0; c.inBrk = c.parkQ ? 1 : 0; c.inSteer = 0; }
       }
       for (const c of cars) {
+        if (c.net) continue;   // (the friend's car: placed from the network, see game.js)
         if (c.pitState === 'repair') { c.inThr = 0; c.inBrk = 0; c.inSteer = 0; c.inHand = 0; }   // on the jacks: the mechanics are working (held in place below; no brake, so the gearbox stays in first)
         // steering smoothing
         const target = c.inSteer;
@@ -1944,14 +1964,15 @@ const Core = (function () {
         for (let j = i + 1; j < cars.length; j++) carCollide(cars[i], cars[j]);
       }
       if (T.def.pit) for (const c of cars) if (c.isPlayer) this.pitStep(c, dt, true);   // which side of the pit wall the car is on (before the walls push it)
-      for (const c of cars) wallCollide(c, T);
+      for (const c of cars) if (!c.net) wallCollide(c, T);
       if (T.def.pit) for (const c of cars) if (c.isPlayer) this.pitStep(c, dt, false);  // speed limiter, stopping at the box, repair
       for (const c of cars) if (c.detach.length) { for (const name of c.detach) this.spawnDebris(c, name); c.detach.length = 0; }
-      for (const c of cars) if (!Number.isFinite(c.x + c.z + c.vx + c.vz + c.h + c.w + (c.y || 0))) { c.x = c.z = c.vx = c.vz = c.w = c.h = 0; c.y = 0; c.vy = 0; c.air = 0; c.q.s = c.goodS || 0; c.q.i = -1; this.rescue(c); }
-      if (this.debris.length) { for (const d of this.debris) stepDebris(d, T, dt); for (const c of cars) for (const d of this.debris) debrisHit(c, d); }
+      for (const c of cars) if (!c.net && !Number.isFinite(c.x + c.z + c.vx + c.vz + c.h + c.w + (c.y || 0))) { c.x = c.z = c.vx = c.vz = c.w = c.h = 0; c.y = 0; c.vy = 0; c.air = 0; c.q.s = c.goodS || 0; c.q.i = -1; this.rescue(c); }
+      if (this.debris.length) { for (const d of this.debris) stepDebris(d, T, dt); for (const c of cars) if (!c.net) for (const d of this.debris) debrisHit(c, d); }
       // progress
       for (const c of cars) {
         const q = T.query(c.x, c.z, c.q.i, c.q);
+        if (c.net) { c.sPrev = q.s; continue; }   // (distance, laps and the finish of the friend's car come from its phone)
         let ds = q.s - c.sPrev;
         if (!T.open) { if (ds > T.len * 0.5) ds -= T.len; else if (ds < -T.len * 0.5) ds += T.len; }
         ds = clamp(ds, -3, 3);

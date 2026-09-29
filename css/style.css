@@ -275,9 +275,29 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 .btn .upg-n { margin-left: 6px; color: var(--lcd); }
 .btn.upg-open { align-self: flex-start; margin: 0 0 4px; }
 
-/* short landscape phones: title buttons two per row so the hint still fits (Dirkaj and Celoten zaslon span both; when Namesti igro
-   shows, it sits next to Celoten zaslon, so the panel is no taller); track cards without the long description */
-@media (orientation: landscape) and (max-height: 500px) { .title-panel .btns { display: grid; grid-template-columns: 1fr 1fr; } .title-panel .btn.primary, .title-panel .btn.fsbtn { grid-column: 1 / -1; } .title-panel .btns:has(.appbtn:not(.off)) .btn.fsbtn { grid-column: auto; } .track-card .tdesc { display: none; } }
+/* short landscape phones: title buttons two per row, each label on one line, so the hint still fits (Dirkaj next to Dirka s
+   prijateljem; Celoten zaslon spans both, and when Namesti igro shows, it sits next to it, so the panel is no taller); track
+   cards without the long description */
+@media (orientation: landscape) and (max-height: 500px) { .title-panel .btns { display: grid; grid-template-columns: 1fr 1fr; } .title-panel .btns .btn { padding-left: 12px; padding-right: 12px; white-space: nowrap; font-size: clamp(13px, 3.9vh, 17px); } .title-panel .btn.fsbtn { grid-column: 1 / -1; } .title-panel .btns:has(.appbtn:not(.off)) .btn.fsbtn { grid-column: auto; } .track-card .tdesc { display: none; } }
+
+/* ================= Dirka s prijateljem (online) ================= */
+.on-join { margin-top: 14px; }
+.on-privbtn { margin-top: 10px; }
+.on-priv { margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,.12); }
+.on-priv.off { display: none; }
+.txt.code { width: 6.4em; text-align: center; text-transform: uppercase; letter-spacing: .28em; font-size: clamp(16px, 4.2vh, 20px); }
+.on-err { color: #ff8f80; min-height: 1.3em; }
+.on-codebox { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 4px 0 2px; }
+.on-code { font: 900 italic clamp(30px, 9vh, 46px)/1 var(--f-ui); letter-spacing: .14em; color: var(--lcd); }
+.on-players { display: flex; flex-direction: column; gap: 5px; margin: 6px 0 6px; }
+.on-players div { font: 700 italic clamp(13px, 3.4vh, 15px)/1.25 var(--f-ui); color: var(--chalk); }
+.on-players .wait { color: var(--muted); }
+.on-players .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 7px; vertical-align: -1px; border: 1px solid rgba(0,0,0,.4); }
+.on-mycar { font: 700 italic clamp(13px, 3.4vh, 15px)/1 var(--f-ui); color: var(--chalk); min-width: 7.5em; text-align: center; }
+select.txt { width: min(15em, 100%); font-style: normal; }
+select.txt option { color: #111; background: #fff; }
+select.txt:disabled { opacity: .75; }
+@media (orientation: landscape) and (max-height: 400px) { #on-pick > .desc:first-child { display: none; } }   /* (short landscape phones: room for the name, the code and a message) */
 
 /* ================= LEADERBOARD (Lestvica) + time-trial results ================= */
 #s-board { justify-content: center; }
