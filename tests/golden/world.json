@@ -183,19 +183,19 @@
   }
  },
  "spa": {
-  "meshes": 1044,
-  "verts": 496474,
-  "instances": 50042,
+  "meshes": 1045,
+  "verts": 496798,
+  "instances": 50041,
   "props": 80,
-  "crowd": 5618,
-  "world": "52fbeab",
+  "crowd": 5617,
+  "world": "b2b7be2f",
   "propsHash": "5faf0407",
   "floor": "b3d517c3/14000",
   "groups": {
-   "-:MeshLambertMaterial": "1d7659df",
+   "-:MeshLambertMaterial": "b25dcab7",
    "-:MeshBasicMaterial": "7ae03018",
    "-:MeshPhongMaterial": "4a03e534",
-   "crowd:MeshLambertMaterial": "c0095bb5",
+   "crowd:MeshLambertMaterial": "f4d17e82",
    "tyremarks:MeshBasicMaterial": "9a5c2c1e"
   }
  },

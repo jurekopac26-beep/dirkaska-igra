@@ -59,6 +59,13 @@ const Comm = (() => {
     heavyDamage: ["Smoke pouring from the engine! That doesn't look good!", 'Heavy damage! Nurse it home!', 'That car is badly hurt now!'],
     pitIn: ['Into the pit lane!', 'Coming in for repairs!', 'He dives into the pits!'],
     drs: ['DRS open down the straight!', 'The rear wing opens, DRS is on!', 'Within a second at the line, DRS for the chase!'],
+    // qualifying: one flying lap alone, the rivals' times make the grid
+    qualiIntro: ['Welcome to {track}! Qualifying first: one flying lap, and your time decides where you start.', 'Here we are at {track} for qualifying. One lap on your own, give it everything!', 'Qualifying at {track}! Just you and the clock for one lap.'],
+    qualiGo: ['Build up the speed, the clock starts at the line!', 'Here we go! The lap starts when you cross the line.', 'Out onto the straight, the flying lap begins at the line!'],
+    qualiLap: ['The clock is running! Push!', 'Across the line, the flying lap is on!', 'And the lap begins! Every hundredth counts!'],
+    qualiEnd: ['Lap complete, {time}! Let us see where that puts you.', 'Across the line in {time}. How does that compare?', '{time} on the clock. Now we wait for the order.'],
+    pole: ['Pole position! Nobody was faster!', 'Fastest of all! You start from pole!', 'Pole position! What a lap!'],
+    qualiGrid: ['You will start {grid} on the grid.', 'That puts you {grid} on the grid.', 'Starting position: {grid}.'],
     pitWork: ['The crew get to work!', 'Mechanics all over the car!', 'Quick work needed here from the crew!'],
     pitOut: ['Back out, good as new!', 'Great stop from the crew!', 'Repaired and rejoining the race!'],
     propCone: ['Cone down!', 'There goes a cone!', 'Sending the cones flying!'],

@@ -468,6 +468,14 @@ const Core = (function () {
 
     idx(s) { const N = this.N; if (this.open) return clamp(Math.floor(s / this.ds), 0, N - 1); let i = Math.floor(s / this.ds) % N; if (i < 0) i += N; return i; }
 
+    // qualifying (closed circuits): a flying lap from a standing start this far behind the start line, from the exit of the last corner
+    // before it (the whole straight to build up speed), 120-400 m
+    qualiBack() {
+      const N = this.N; let best = N;
+      for (const c of this.corners) { const d = (this.startIdx - c.i1 + N) % N; if (d > 0 && d < best) best = d; }
+      return clamp(best * this.ds, 120, 400);
+    }
+
     // pit lane (def.pit = [centre offset to the right, from, to, player's box, entry length (default 60 m)] in metres from the start line): a lane
     // beside the straight, tapering in from the circuit edge at both ends. Returns null outside it. gap: the lane touches the circuit (no pit wall) -
     // where you drive in and out.
@@ -1856,7 +1864,10 @@ const Core = (function () {
       this._rq = [];   // open road + noPlayer (menu demo): cars that reached the top, waiting for a free spot at the start
       const nAI = this.timeTrial ? 0 : opts.numAI == null ? 12 : opts.numAI;
       const RM = opts.remote || null;   // online race: the friend's car { model, color, num, name, grid }, driven by the friend's phone
-      const total = nAI + (opts.noPlayer ? 0 : 1) + (RM ? 1 : 0);
+      // opts.aiOrder: which AI drivers (their roster indices, 0 the fastest) stand on the grid and in what order (after qualifying; one
+      // of them alone for its qualifying lap), each with its own skill as in the full roster; default: all of them, the fastest first
+      const order = Array.isArray(opts.aiOrder) ? opts.aiOrder.filter((k, j, a) => k >= 0 && k < nAI && a.indexOf(k) === j) : null;
+      const total = (order ? order.length : nAI) + (opts.noPlayer ? 0 : 1) + (RM ? 1 : 0);
       this._gridN = total;
       const playerGrid = opts.noPlayer ? -1 : Math.min(total, opts.playerGrid || 12);
       const remoteGrid = RM ? Math.min(total, RM.grid || total) : -1;
@@ -1879,7 +1890,7 @@ const Core = (function () {
           c = new Car(RM.model || MODELS[0], { id: g, net: true, arcade: true, phys: opts.phys, name: RM.name || 'Prijatelj', color: RM.color });
           this.remote = c;
         } else {
-          const s = aiSpecs[ai++];
+          const s = aiSpecs[order ? order[ai++] : ai++];
           c = new Car(s.model, { id: g, name: s.name, color: s.color, skill: s.skill, assist: opts.phys === 'cs' ? CSK.aiAssist : 1, arcade: true, phys: opts.phys, laneBias: (R() - 0.5) * 1.6 });
           c.skCap = s.model.id === 'pico' ? 1.0 : opts.phys === 'cs' ? CSK.aiSkCap : 1.14;   // no point pushing a car past what it can hold (the light pico understeers into the walls beyond the line's own pace)
         }
@@ -1935,6 +1946,7 @@ const Core = (function () {
     _gridBack(g) {   // metres behind the start line of grid slot g
       const T = this.track;
       if (this.timeTrial) return 0;
+      if (this.opts.qualiBack > 0 && !T.open) return this.opts.qualiBack;   // qualifying: one car, its run-up to a flying lap
       if (this.opts.remote) return 9;   // online: the two of them side by side on the front row (the same distance to the line)
       if (!T.open) return 9 + (g - 1) * 7.5;
       // open road: the grid has to fit between the bottom end of the road and the start line (two abreast, staggered)
@@ -1946,7 +1958,7 @@ const Core = (function () {
       const back = this._gridBack(g);
       const s = T.startS - back;
       const i = this.timeTrial ? T.startIdx : T.idx(s);
-      const lat = this.timeTrial ? 0 : (g % 2 === 1 ? -1 : 1) * 3.4;
+      const lat = this.timeTrial ? 0 : this.opts.qualiBack > 0 && !T.open ? T.rl[i] : (g % 2 === 1 ? -1 : 1) * 3.4;   // (qualifying: on the racing line)
       const x = T.px[i] + T.nx[i] * lat, z = T.pz[i] + T.nz[i] * lat;
       c.place(x, z, T.hd[i]); if (T.hasElev) { c.y = c.py = T.hy[i]; if (T.open) c.roadY = c.y; }   // (open road: the camera starts at the right height)
       c.dist = -back; c.lap = 0;

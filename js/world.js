@@ -6769,12 +6769,13 @@ const World = (function () {
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
   let spaATex = null;
-  function spaAtlas(names) {   // text boards (4 x 16 cells of 256 x 64): the braking boards 300-100 m, the corner names, banners, the game's sponsors (boards on the rails)
+  function spaAtlas(names) {   // text boards (4 x 16 cells of 256 x 64): the braking boards 300-100 m, DRS, the corner names, banners, the game's sponsors (boards on the rails)
     if (spaATex) spaATex.dispose();
     const c = document.createElement('canvas'); c.width = 1024; c.height = 1024; const x = c.getContext('2d');
     const cell = (k, bg, fg, txt, px, stripe) => { const cx = (k % 4) * 256, cy = Math.floor(k / 4) * 64; x.fillStyle = bg; x.fillRect(cx, cy, 256, 64); if (stripe) { x.fillStyle = stripe; x.fillRect(cx, cy + 56, 256, 8); x.fillRect(cx, cy, 256, 4); }
       x.fillStyle = fg; x.font = '900 ' + px + 'px Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(txt, cx + 128, cy + 33, 240); };
     for (let k = 1; k <= 3; k++) cell(k - 1, '#f4f4f0', '#111', String(k * 100), 50, '#c8261f');
+    cell(3, '#101114', '#fff', 'DRS', 44, '#39c84a');   // (where a DRS zone opens)
     names.forEach((n, k) => cell(20 + k, '#17306a', '#fff', n.toUpperCase(), n.length > 14 ? 26 : 32, '#e8e8e0'));
     const B = 20 + names.length;
     cell(B, '#16181c', '#fff', 'SPA-FRANCORCHAMPS', 28); cell(B + 1, '#c8261f', '#fff', 'EAU ROUGE', 38); cell(B + 2, '#f2c21a', '#111', 'BELGIQUE · BELGIË', 28); cell(B + 3, '#123f86', '#fff', 'DÉPART · ARRIVÉE', 28);
@@ -6943,6 +6944,15 @@ const World = (function () {
         gw.quadUp([q0[0], HYp(q0) + 0.037, q0[1]], [q1[0], HYp(q1) + 0.037, q1[1]], [q2[0], HYp(q2) + 0.037, q2[1]], [q3[0], HYp(q3) + 0.037, q3[1]], [wh, wh, wh, wh]);
       }
       tex.checker.repeat.set(1, 1); addM(gq, new THREE.MeshLambertMaterial({ map: tex.checker })); addM(gw, lMat);
+    }
+    if (T.drs) {   // the DRS lines across the road (def.drs, as on the Red Bull Ring): a solid one at each detection point, a dashed one where the zone opens
+      const gd = new GB(), wl = [0.95, 0.95, 0.92], HYp = (p) => T.hy[p[3]];
+      for (const z of T.drs) for (const [at, dash] of [[z.det, false], [z.act, true]]) {
+        const s0 = sAt(at), s1 = s0 + 0.3;
+        for (let o = -w + 0.2; o < w - 0.2 - 1e-6; o += dash ? 1.2 : 2) { const o1 = Math.min(w - 0.2, o + (dash ? 0.7 : 2)), A = atSf(s0, o), B = atSf(s0, o1), C = atSf(s1, o1), D = atSf(s1, o);
+          gd.quadUp([A[0], HYp(A) + 0.036, A[1]], [B[0], HYp(B) + 0.036, B[1]], [C[0], HYp(C) + 0.036, C[1]], [D[0], HYp(D) + 0.036, D[1]], [wl, wl, wl, wl]); }
+      }
+      addM(gd, lMat);
     }
 
     /* ---- barriers: concrete walls along the pit straight (Bus Stop to La Source), the support pits' wall (def.walls) and in front of the
@@ -7211,6 +7221,7 @@ const World = (function () {
     for (const n of ['La Source', 'Les Combes', 'Bruxelles', 'Bus Stop']) { const d = nameD(n); if (d == null) continue;   // braking boards before the heavy stops
       for (let k = 3; k >= 1; k--) { const s = sAt(d - k * 100); signPost(s, roomSide(s), 1.4, k - 1, 1.5, 0.7, 0.9); } }
     T.names.forEach((q, k) => { const s = sAt(q.d - 55); signPost(s, roomSide(s), 1.6, 20 + k, 3.2, 0.8, 1.2); });
+    for (const z of T.drs || []) { const s = sAt(z.act), side = roomSide(s); if (side > 0 && def.pit && T.pitAt(s)) continue; signPost(s, side, 1.4, 3, 2.4, 1.0, 1.6); }   // DRS boards where each zone opens
 
     /* ---- the TV cameras (on a scaffold tower on the outside of the famous corners: the cameraman at his camera under a sunshade), big video
        screens across the track from the grandstands, the game's own sponsors on boards along the rails of the straights, and the marshals in
