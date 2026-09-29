@@ -70,10 +70,10 @@
   "jsMs": 0.52
  },
  "nring": {
-  "calls": 181,
-  "maxCalls": 234,
-  "kverts": 544,
-  "maxKverts": 752,
-  "jsMs": 1.45
+  "calls": 191,
+  "maxCalls": 235,
+  "kverts": 526,
+  "maxKverts": 750,
+  "jsMs": 1.41
  }
 }

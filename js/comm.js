@@ -10,13 +10,13 @@ const Comm = (() => {
   const log = [], lastPick = {};
   const GAP = 500;
   const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
-  const ORD = ['', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelfth', 'thirteenth'];
+  const ORD = ['', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelfth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth', 'twentieth', 'twenty-first'];
   const ordinal = (n) => ORD[n] || n + 'th';
 
   const LINES = {
     intro: ['Welcome to {track}! {laps} laps, thirteen cars, and you line up {grid} on the grid.', 'Good day and welcome to {track}. {laps} laps ahead, and you start from {grid}.', 'Here we are at {track}! Thirteen cars, {laps} laps, and you start {grid}.'],
     introNet: ['Welcome to {track}! Just two cars today, {laps}: you and {name}, side by side on the front row.', 'Here we are at {track} for a duel with {name} over {laps}. May the better driver win!', 'Good day and welcome to {track}! You against {name}, {laps}. Let\'s see who takes it.'],
-    introOne: ['Welcome to {track}, the Green Hell! One lap of more than twenty kilometres, and you start {grid}.', 'Here we are at {track}. One lap, thirteen cars, and you line up {grid} on the grid.', 'Welcome to {track}! Twenty kilometres of forest, crests and jumps. One lap, and you start {grid}.'],
+    introOne: ['Welcome to {track}, the Green Hell! One lap of more than twenty kilometres, and you start {grid}.', 'Here we are at {track}. One lap, a full field, and you line up {grid} on the grid.', 'Welcome to {track}! Twenty kilometres of forest, crests and jumps. One lap, and you start {grid}.'],
     // the Nordschleife's famous places
     nrFlug: ['Over the Flugplatz, and the car goes light!', 'Flugplatz! Airborne over the crest!'],
     nrFuchs: ['Down into the Foxhole, flat out!', 'The Fuchsröhre, the fastest part of the lap!'],
