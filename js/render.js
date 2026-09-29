@@ -253,7 +253,7 @@ const Render = (function () {
   }
   // the driver's helmet: white, a band in the car's colour over the top, a gold visor
   function fHelmet(g, cx, cy, cz, r, col, band) {
-    const NA = 10, NB = 6, V = [0.26, 0.17, 0.06];
+    const NA = 8, NB = 5, V = [0.26, 0.17, 0.06];
     const P = (i, j) => { const th = j / NB * Math.PI, ph = i / NA * Math.PI * 2; return [cx + r * Math.sin(th) * Math.cos(ph), cy + r * Math.cos(th), cz + r * Math.sin(th) * Math.sin(ph)]; };
     for (let j = 0; j < NB; j++) for (let i = 0; i < NA; i++) {
       const a = P(i, j), b = P(i + 1, j), c = P(i + 1, j + 1), d = P(i, j + 1), mx = (a[0] + c[0]) / 2 - cx, my = (a[1] + c[1]) / 2 - cy, mz = (a[2] + c[2]) / 2 - cz;
@@ -352,23 +352,19 @@ const Render = (function () {
     const geo = g.geometry(); geo.translate(0, 0.012, 0); return geo;
   }
   // formula wheel (axle along z): a slick with the compound band on the sidewall (red soft; green intermediate in the rain), a dark rim,
-  // a flat aero cover with two lighter spokes (so the spin shows) and a gold nut
+  // a flat aero cover with two lighter spokes (so the spin shows) and a gold nut (12 sides: ~200 triangles, a phone draws 52 of them)
   const fWheelCache = new Map();
   function fWheelGeo(r, wd, wet) {
     const key = r + '|' + wd + '|' + (wet ? 1 : 0); if (fWheelCache.has(key)) return fWheelCache.get(key);
-    const g = new GB(), S = 18, T = [0.075, 0.075, 0.08], SW = [0.11, 0.11, 0.12], B = wet ? [0.12, 0.66, 0.24] : [0.88, 0.13, 0.1], RIM = [0.22, 0.22, 0.24], CV = [0.13, 0.13, 0.14], CV2 = [0.34, 0.34, 0.36], NUT = [0.86, 0.72, 0.12];
-    const h = wd / 2, sh = 0.035, p = (a, z, rr) => [Math.cos(a) * rr, Math.sin(a) * rr, z], O = [0, 0, 0];
+    const g = new GB(), S = 12, T = [0.075, 0.075, 0.08], B = wet ? [0.12, 0.66, 0.24] : [0.88, 0.13, 0.1], RIM = [0.22, 0.22, 0.24], CV = [0.13, 0.13, 0.14], CV2 = [0.34, 0.34, 0.36], NUT = [0.86, 0.72, 0.12];
+    const h = wd / 2, p = (a, z, rr) => [Math.cos(a) * rr, Math.sin(a) * rr, z];
     for (let i = 0; i < S; i++) {
       const a0 = i / S * Math.PI * 2, a1 = (i + 1) / S * Math.PI * 2;
-      g.quadO(p(a0, -h + sh, r), p(a0, h - sh, r), p(a1, h - sh, r), p(a1, -h + sh, r), T, O);
+      g.quadO(p(a0, -h, r), p(a0, h, r), p(a1, h, r), p(a1, -h, r), T, [0, 0, 0]);
       for (const sd of [-1, 1]) {
-        const out = [0, 0, -sd * 5];
-        g.quadO(p(a0, sd * (h - sh), r), p(a0, sd * h, r - sh), p(a1, sd * h, r - sh), p(a1, sd * (h - sh), r), T, O);
-        g.quadO(p(a0, sd * h, r - sh), p(a0, sd * h, r * 0.86), p(a1, sd * h, r * 0.86), p(a1, sd * h, r - sh), SW, out);
-        g.quadO(p(a0, sd * h, r * 0.86), p(a0, sd * h, r * 0.8), p(a1, sd * h, r * 0.8), p(a1, sd * h, r * 0.86), B, out);
-        g.quadO(p(a0, sd * h, r * 0.8), p(a0, sd * h, r * 0.72), p(a1, sd * h, r * 0.72), p(a1, sd * h, r * 0.8), SW, out);
-        g.quadO(p(a0, sd * h, r * 0.72), p(a0, sd * (h - 0.012), r * 0.68), p(a1, sd * (h - 0.012), r * 0.68), p(a1, sd * h, r * 0.72), RIM, out);
-        g.triO([0, 0, sd * (h - 0.02)], p(a0, sd * (h - 0.012), r * 0.68), p(a1, sd * (h - 0.012), r * 0.68), i % 9 === 0 ? CV2 : CV, out);
+        const out = [0, 0, -sd * 5], z = sd * h, ring = (r0, r1, col) => g.quadO(p(a0, z, r0), p(a0, z, r1), p(a1, z, r1), p(a1, z, r0), col, out);
+        ring(r, r * 0.84, T); ring(r * 0.84, r * 0.77, B); ring(r * 0.77, r * 0.68, RIM);
+        g.triO([0, 0, sd * (h - 0.02)], p(a0, sd * (h - 0.012), r * 0.68), p(a1, sd * (h - 0.012), r * 0.68), i % 6 === 0 ? CV2 : CV, out);
       }
     }
     for (const sd of [-1, 1]) for (let i = 0; i < 6; i++) { const a0 = i / 6 * Math.PI * 2, a1 = (i + 1) / 6 * Math.PI * 2; g.triO([0, 0, sd * (h - 0.004)], p(a0, sd * (h - 0.016), 0.05), p(a1, sd * (h - 0.016), 0.05), NUT, [0, 0, -sd * 5]); }
@@ -632,7 +628,7 @@ const Render = (function () {
       fp = fPartMeshes(car, bodyG);
       for (const sd of [-1, 1]) {   // open wheels: all four separate (they steer and spin; the pit crew changes them)
         const f = new THREE.Mesh(fWheelGeo(F_HUB.fr, F_HUB.fw, car.wet), matWheel), r = new THREE.Mesh(fWheelGeo(F_HUB.rr, F_HUB.rw, car.wet), matWheel);
-        f.position.set(M.a, F_HUB.fr, sd * F_HUB.fz); r.position.set(-M.b, F_HUB.rr, sd * F_HUB.rz); f.castShadow = r.castShadow = true;
+        f.position.set(M.a, F_HUB.fr, sd * F_HUB.fz); r.position.set(-M.b, F_HUB.rr, sd * F_HUB.rz); f.castShadow = r.castShadow = !!car.isPlayer;   // (a field of 13: the rivals' wheels cast none)
         grp.add(f, r); wf.push(f); wr.push(r);
       }
     } else for (const sd of [-1, 1]) { const w = new THREE.Mesh(getWheelGeo(M.body === 'rally'), matWheel); w.position.set(fx, M.rw, sd * (M.wid * 0.5 - 0.1)); grp.add(w); wf.push(w); }
@@ -1632,18 +1628,18 @@ const Render = (function () {
   // its middle; its geometry's .parameters say how it lies on the track)
   function fPartMeshes(car, bodyG) {
     const P = colArr(car.color), S = stripeFor(car.color), parts = {};
-    const paint = new THREE.MeshPhongMaterial({ color: car.color, shininess: 80, specular: 0x505050, envMap: envTex, combine: THREE.MixOperation, reflectivity: 0.2 }), trim = new THREE.MeshLambertMaterial({ color: 0x2b2e34 });
-    const add = (name, geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; bodyG.add(m); parts[name] = m; return m; };
+    const paint = new THREE.MeshPhongMaterial({ color: car.color, shininess: 80, specular: 0x505050, envMap: envTex, combine: THREE.MixOperation, reflectivity: 0.2 });
+    const add = (name, geo, mat, x, y, z, noShadow) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = !noShadow; bodyG.add(m); parts[name] = m; return m; };
     add('bumperF', fWingFGeo(P, S), matCar, 2.44, 0.1, 0);
     add('hood', fNoseGeo(P, S), matCar, 2.17, 0.35, 0);
     const rw = add('bumperR', fWingRGeo(P), matCar, -2.36, 0.9, 0), flap = new THREE.Group(), fm = new THREE.Mesh(fFlapGeo(S), matCar);
-    flap.position.set(-0.235, 0.175, 0); fm.castShadow = true; flap.add(fm); rw.add(flap);   // (it opens on the DRS straights: see frame)
+    flap.position.set(-0.235, 0.175, 0); flap.add(fm); rw.add(flap);   // (it opens on the DRS straights: see frame)
     add('trunk', fCoverGeo(P, S), matCar, -1.45, 0.5, 0);
-    for (const [name, sd] of [['mirrorL', -1], ['mirrorR', 1]]) {
-      const st = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.17, 0.025), trim); st.position.set(0.02, -0.1, -sd * 0.04);
-      add(name, new THREE.BoxGeometry(0.09, 0.065, 0.17), paint, 0.34, 0.74, sd * 0.56).add(st);
+    for (const [name, sd] of [['mirrorL', -1], ['mirrorR', 1]]) {   // the housing on its stalk (one mesh: small parts are cheap draws, and cast no shadow)
+      const g = new GB(); World.box(g, 0, -0.0325, 0, 0.09, 0.065, 0.17, 0, P); World.box(g, 0.02, -0.185, -sd * 0.04, 0.025, 0.17, 0.025, 0, FK);
+      add(name, fPartGeo(g, 0, 0, 0.09, 0.065, 0.17), matCar, 0.34, 0.74, sd * 0.56, true);
     }
-    for (const [name, sd] of [['fenderL', -1], ['fenderR', 1]]) add(name, new THREE.BoxGeometry(0.42, 0.22, 0.02), paint, 0.86, 0.3, sd * 0.63);
+    for (const [name, sd] of [['fenderL', -1], ['fenderR', 1]]) add(name, new THREE.BoxGeometry(0.42, 0.22, 0.02), paint, 0.86, 0.3, sd * 0.63, true);
     return { parts, flap };
   }
   // a race car's formula parts become its detachable parts; under the nose the front bulkhead, under the engine cover the power unit

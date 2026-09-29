@@ -84,12 +84,13 @@ Privzeta fizika je **Circuit Superstars**: avto drsi z nosom v ovinek toliko, ko
 
 ## Dirkalnik formule
 
-V izbiri avta je **FORMULA ORKAN**, dirkalnik formule z odprtimi kolesi, sprednjim in zadnjim krilom, zaščitnim lokom (halo) nad voznikom v čeladi in kamero na strehi. Voziš ga lahko na vseh progah; tekmeci vozijo še naprej običajne avte.
+V izbiri avta je **FORMULA ORKAN**, dirkalnik formule z odprtimi kolesi, sprednjim in zadnjim krilom, zaščitnim lokom (halo) nad voznikom v čeladi in kamero na strehi. Voziš ga lahko na vseh progah. Ko ga izbereš, vozijo formule tudi vsi tekmeci, vsak v svoji barvi in s svojo številko, kot v formuli 1.
 
 - 1000 KM, 798 kg, osem prestav, motor poje višje kot pri drugih avtih. Od 0 do 100 km/h pospeši v 2,5 s, doseže ~280 km/h (z odprtim DRS na Red Bull Ringu ~300 km/h).
 - Krila ga pri hitrosti pritisnejo ob cesto: v hitrih ovinkih ima veliko več oprijema kot drugi avti (pri 150 km/h ~3,2 g, drugi ~2,3 g), v počasnih lasnicah pa ne (tam zavije celo malo širše). Zavore so iz ogljikovih vlaken: s 100 km/h se ustavi na ~18 m (drugi avti na ~24 m). Manj drsi in se hitreje poravna.
 - Gume so gladke (slik): na travi, produ in makadamu imajo le 70 % oprijema, zato je tam reli avto BURJA R7 hitrejši.
 - Ob trkih odletijo sprednje krilo, nos, zadnje krilo, pokrov motorja (pod njim se vidi motor), ogledali in stranski deflektorji. Brez sprednjega krila izgubi pol pritiska na cesto, brez zadnjega še 40 %; mehaniki v boksih avto popravijo.
+- Tekmeci v formulah vozijo kot formule: hitreje skozi hitre ovinke in pozneje zavirajo, sledijo z večjo razdaljo, prehitevajo širše in se bolj držijo stran od roba proge; brez krila zapeljejo v hitre ovinke počasneje.
 - V conah DRS na Red Bull Ringu se loputa zadnjega krila res odpre. Zadaj ima rdečo luč kot v formuli 1: v dežju sveti, med zaviranjem utripa. V dežju vozi na gumah za moker asfalt (zelen pas na boku gume), sicer na mehkih (rdeč pas).
 
 ## Dirka s prijateljem

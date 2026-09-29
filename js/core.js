@@ -414,11 +414,12 @@ const Core = (function () {
     }
 
     // speed profile for a given lateral accel limit (m/s^2) and braking decel
-    speedProfile(latA, brakeA, vtop, wMax) {
-      const N = this.N, rk = this.rk, rds = this.rds;
+    // aero: grip that grows with speed, latA (1 + aero v^2) (the formula's wings): v^2 (curvature - latA aero) = latA (no limit once the wings hold any bend)
+    speedProfile(latA, brakeA, vtop, wMax, aero) {
+      const N = this.N, rk = this.rk, rds = this.rds, la = latA * (aero || 0);
       const v = new Float32Array(N);
-      for (let i = 0; i < N; i++) v[i] = Math.min(vtop, Math.sqrt(latA / Math.max(Math.abs(rk[i]), 1e-5)));
-      if (this.bank) for (let i = 0; i < N; i++) { const b = this.bank[i]; if (b > 0) v[i] = Math.min(vtop, Math.sqrt((latA + G * b / Math.sqrt(1 + b * b)) / Math.max(Math.abs(rk[i]), 1e-5))); }   // a banked bend carries part of the cornering force
+      for (let i = 0; i < N; i++) { const kk = Math.max(Math.abs(rk[i]), 1e-5) - la; v[i] = kk > 1e-6 ? Math.min(vtop, Math.sqrt(latA / kk)) : vtop; }
+      if (this.bank) for (let i = 0; i < N; i++) { const b = this.bank[i], kk = Math.max(Math.abs(rk[i]), 1e-5) - la; if (b > 0) v[i] = kk > 1e-6 ? Math.min(vtop, Math.sqrt((latA + G * b / Math.sqrt(1 + b * b)) / kk)) : vtop; }   // a banked bend carries part of the cornering force
       if (wMax) for (let i = 0; i < N; i++) v[i] = Math.min(v[i], wMax / Math.max(Math.abs(rk[i]), 1e-5));   // cs: the car turns no faster than wMax (rad/s) along its path
       if (this.open) {   // open road: come to a stop at the far end of the road, nothing wraps
         v[N - 1] = 0;
@@ -570,15 +571,16 @@ const Core = (function () {
     gripF: 1.05, gripR: 1.12, cDrag: 0.40, down: 0.22, brake: 12.0, steerMax: 0.64,
     driftLoss: 0.36, len: 3.85, wid: 1.74, body: 'hatch', glb: 'p206', stats: { power: 7, grip: 8, weight: 8, drift: 5 },
     credit: 'Model: \u201ePeugeot 206\u201c, avtor Alvier (Sketchfab), licenca CC BY 4.0' });
-  // open-wheel formula car (player only, every track): light, 1000 KM, high revs. Its wings press it onto the road harder the faster it
-  // goes (aero: the downforce of the aero upgrade, on top of it); carbon brakes (brakeK) and more traction (tracK) than the road cars;
-  // slicks: little grip on grass, gravel and makadam (loose). A wing knocked off costs downforce until the pit repair (applyDamage).
-  // engHz: its engine note is that much higher (Sfx).
+  // open-wheel formula car (every track): light, 1000 KM, high revs. Its wings press it onto the road harder the faster it goes (aero:
+  // the downforce of the aero upgrade, on top of it); carbon brakes (brakeK) and more traction (tracK) than the road cars; slicks: little
+  // grip on grass, gravel and makadam (loose). A wing knocked off costs downforce until the pit repair (applyDamage). engHz: its engine
+  // note is that much higher (Sfx). oneMake: a race with it is a formula race, every rival drives one too (Race); aiGap / aiPass / aiEdge:
+  // the AI in it follows further back, passes wider and keeps further from the road's edge (a longer, wider, much faster car).
   MODELS.push({ id: 'formula', name: 'FORMULA ORKAN', drive: 'MR', desc: 'Dirkalnik formule z odprtimi kolesi in krili',
     mass: 798, a: 1.8, b: 1.7, hcg: 0.3, kI: 1.3, kw: 735, redline: 12000, idle: 4200,
     gears: [4.3, 3.55, 2.95, 2.48, 2.1, 1.78, 1.5, 1.25], final: 4.2, rw: 0.36,
     gripF: 1.22, gripR: 1.28, cDrag: 0.95, down: 1.2, brake: 16, steerMax: 0.46,
-    driftLoss: 0.2, len: 5.2, wid: 1.96, body: 'formula', aero: 0.00014, brakeK: 1.3, tracK: 1.4, loose: 0.7, engHz: 1.6,
+    driftLoss: 0.2, len: 5.2, wid: 1.96, body: 'formula', aero: 0.00014, brakeK: 1.3, tracK: 1.4, loose: 0.7, engHz: 1.6, oneMake: true, aiGap: 5, aiPass: 3.8, aiEdge: 1.6,
     stats: { power: 10, grip: 10, weight: 10, drift: 2 } });
   const tqShape = (u) => Math.max(0.3, 1 - 0.85 * (u - 0.7) * (u - 0.7)); // flat, arcade-strong mid-range (SWGP2 pulls hard to ~130 km/h)
   for (const M of MODELS) {
@@ -1122,7 +1124,7 @@ const Core = (function () {
       const dAtt = clamp(building ? err * CP.turn / K.tIn : err / (tOut + (K.tRev - tOut) * kRev), -rate, rate);
       // ---- path law: the travel swings toward the nose at (path share of the attitude) / tau_v, inside the friction ellipse ----
       const rho = Math.abs(aU) > 0.02 ? clamp(aP / aU, 0, 1.3) : 1;
-      let wN = lo * rho * (att - (1 - K.kickPath) * (this.csK + this.csKc)) / tv + (1 - lo) * wD;
+      let wN = lo * rho * (att - (1 - K.kickPath * (CP.tv || 1)) * (this.csK + this.csKc)) / tv + (1 - lo) * wD;   // (CP.tv: the same path swing from a kick as the road cars)
       if (!fwd || !grounded) wN = 0;
       const aC = K.comb * aL, aNeed = Math.min(aL, Math.abs(wN) * v);
       if (F > 0 && fwd) F = Math.min(F, m * Math.sqrt(Math.max(0, aC * aC - aNeed * aNeed)));   // power costs grip: the drive gets what the cornering leaves
@@ -1761,7 +1763,7 @@ const Core = (function () {
         // choose side with more room
         const roomL = oPos - (-T.w + 1.2), roomR = (T.w - 1.2) - oPos;
         const side = roomR > roomL ? 1 : -1;
-        const want = oPos + side * 3.3;
+        const want = oPos + side * (M.aiPass || 3.3);   // (aiPass: the formula passes wider)
         target = clamp(want - rlHere, -2 * T.w, 2 * T.w);
         c.passing = 1;
       } else c.passing = 0;
@@ -1777,7 +1779,7 @@ const Core = (function () {
     if (T.open) { const f = clamp(fi, 0, N - 1); i0 = Math.min(N - 2, Math.floor(f)); i1 = i0 + 1; ft = f - i0; }   // open road: the look-ahead stops at the end
     else { i0 = ((Math.floor(fi) % N) + N) % N; i1 = (i0 + 1) % N; ft = fi - Math.floor(fi); }
     const rlv = lerp(T.rl[i0], T.rl[i1], ft);
-    const lim = T.w - 1.25;
+    const lim = T.w - (M.aiEdge || 1.25);   // (M.aiEdge: the formula keeps further in)
     let off = clamp(rlv + c.aiOff, -lim, lim);
     if (c.pitWant && T.def.pit) { const pz = T.pitAt(sT); if (pz) off = pz.o; }   // (autopilot into the pits: follow the lane)
     const tx = lerp(T.px[i0], T.px[i1], ft) + lerp(T.nx[i0], T.nx[i1], ft) * off;
@@ -1814,11 +1816,12 @@ const Core = (function () {
     if (sk > 1 && offLine) sk = 1 + (sk - 1) * 0.3;   // away from the ideal line (overtaking, defending, knocked aside) the extra pace is not there
     let vT = vpA * (sk <= 1 ? sk : 1 + (sk - 1) * sstep(11, 24, vpA));
     if (c.upgGrip) vT *= Math.pow(c.upgGrip * (1 + c.aeroK * vT * vT), 0.25);   // upgraded tyres / aero: carry more speed through the corners (half the grip gain: safe for every car)
+    if (c.aeroK0 != null && c.aeroK < c.aeroK0) vT *= Math.sqrt((1 + c.aeroK * vT * vT) / (1 + c.aeroK0 * vT * vT));   // the formula with a wing knocked off: less grip at speed
     // if displaced from line, be a little more careful
     if (offErr > 2.5) vT *= 0.94;
     if (c.passing) vT *= 1.01;
     if (c.pitWant && T.def.pit) { const pz = T.pitAt(q.s + v * 0.8 + 6), pn = T.pitAt(q.s); if (pz || c.inPit) vT = Math.min(vT, (pz && pz.t < 0.98) || (pn && pn.t < 0.98) ? 15 : PIT_V * 0.97); }   // (easy through the S of the way in and out)
-    { const o = c.aiThreat; if (o && c.aiGap < 9 && Math.abs(o.q.d - q.d) < 2.1) vT = Math.min(vT, Math.max(0, o.vl) + Math.max(0, c.aiGap - 3) * 0.8); }   // right behind someone with no gap yet: follow, don't ram
+    { const o = c.aiThreat, g0 = M.aiGap || 3; if (o && c.aiGap < g0 + 6 && Math.abs(o.q.d - q.d) < 2.1) vT = Math.min(vT, Math.max(0, o.vl) + Math.max(0, c.aiGap - g0) * 0.8); }   // right behind someone with no gap yet: follow, don't ram (M.aiGap: the formula keeps a longer gap)
     let thr = 0, brk = 0;
     if (v < vT - 0.8) thr = 1;
     else if (v < vT + 0.6) thr = 0.45;
@@ -1875,10 +1878,12 @@ const Core = (function () {
       const R = rng(opts.seed || 7);
       // AI roster
       const diff = DIFF[opts.difficulty == null ? 1 : opts.difficulty]; this.diff = diff;
+      const oneMake = opts.playerModel && opts.playerModel.oneMake ? opts.playerModel : null;   // the player in the formula: every rival in one too
+      if (oneMake) this.oneMake = oneMake;
       const aiSpecs = [];
       for (let k = 0; k < nAI; k++) {
         const skill = lerp(diff[1], diff[0], k / Math.max(1, nAI - 1)) + (R() - 0.5) * 0.012;
-        aiSpecs.push({ skill, model: MODELS[(k * 3 + 1) % 4], color: AI_COLORS[k % AI_COLORS.length], name: DRIVER_NAMES[k % DRIVER_NAMES.length] });
+        aiSpecs.push({ skill, model: oneMake || MODELS[(k * 3 + 1) % 4], color: AI_COLORS[k % AI_COLORS.length], name: DRIVER_NAMES[k % DRIVER_NAMES.length] });
       }
       // grid: fastest first
       let ai = 0;
@@ -1919,13 +1924,15 @@ const Core = (function () {
       this.finishOrder.forEach((f, i) => { f.finishPos = i + 1; });
     }
 
-    // speed profile for the AI (on the racing line), per physics; an upgraded player's autopilot brakes later with better brakes (its own profile)
+    // speed profile for the AI (on the racing line), per physics; an upgraded player's autopilot brakes later with better brakes (its own profile).
+    // A formula race: the formula's profile (its grip against the road cars' ~1.8, the wings' grip growing with speed, its brakes, its path-rate cap)
     _prof() {
-      const opts = this.opts, track = this.track;
+      const opts = this.opts, track = this.track, F = this.oneMake;
       const wl = this.wet ? WET_GRIP : 1, wb = this.wet ? WET_GRIP * WET_BRAKE : 1;   // (rain: the AI takes the corners slower and brakes earlier)
       const csP = opts.phys === 'cs', latA0 = (opts.aiLatA || (csP ? CSK.aiLatA : 16.5)) * wl, brA0 = (opts.aiBrakeA || (csP ? CSK.aiBrakeA : 13.0)) * wb, wM0 = csP ? CSK.aiWmax : 0;
-      this.vprof = track.speedProfile(latA0, brA0, 85, wM0);
-      if (this.player && this.player.upg && this.player.brakeG !== BRAKE_G) this.player.vprof = track.speedProfile(latA0, brA0 * this.player.brakeG / BRAKE_G, 85, wM0);
+      const lat = latA0 * (F ? ARC[F.id].amax / 1.8 : 1), fb = F ? F.brakeK : 1, br = brA0 * fb, wM = wM0 * (F ? CSP[F.id].w : 1), aero = F ? F.aero : 0, bG = BRAKE_G * fb;
+      this.vprof = track.speedProfile(lat, br, 85, wM, aero);
+      if (this.player && this.player.upg && this.player.brakeG !== bG) this.player.vprof = track.speedProfile(lat, br * this.player.brakeG / bG, 85, wM, aero);
     }
 
     // switch the driving physics of a running race at once ('cs' | 'arcade'): every car, the AI set-up and the AI speed profile

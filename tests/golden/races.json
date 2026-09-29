@@ -12,12 +12,12 @@
  "jezero/cs/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 95.38,
+  "winner": 84.86,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "2597e9d622d58dc8762a976a"
+  "digest": "c1ed88859ec1230100659267"
  },
  "jezero/arcade": {
   "finished": 13,
@@ -32,12 +32,12 @@
  "jezero/arcade/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 102.34,
+  "winner": 88.88,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "0a84b0b901d61ca054323a2d"
+  "digest": "9388ad8649e70da09cf06782"
  },
  "riviera/cs": {
   "finished": 13,
@@ -52,12 +52,12 @@
  "riviera/cs/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 72.77,
+  "winner": 65.26,
   "spins": 0,
-  "walls": 0,
+  "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "0216209fae5658cbca81ad53"
+  "digest": "5c720b73fc5d3ac55d37bb40"
  },
  "riviera/arcade": {
   "finished": 13,
@@ -72,12 +72,12 @@
  "riviera/arcade/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 74.26,
+  "winner": 67.89,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "51ec7dc37496b19c8b03d0a5"
+  "digest": "3f0c85175b123b48edda70fe"
  },
  "gora/cs": {
   "finished": 13,
@@ -92,12 +92,12 @@
  "gora/cs/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 86.72,
+  "winner": 89.83,
   "spins": 0,
-  "walls": 2,
+  "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "fd5a893b198ebd628dad129e"
+  "digest": "5a08c59234925514bdd51e89"
  },
  "gora/arcade": {
   "finished": 13,
@@ -112,12 +112,12 @@
  "gora/arcade/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 89.44,
-  "spins": 1,
+  "winner": 90.78,
+  "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "d4a2bd96ba3540c839dc8b5a"
+  "digest": "d358746962fa314edafb71bd"
  },
  "ljubljana/cs": {
   "finished": 13,
@@ -132,12 +132,12 @@
  "ljubljana/cs/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 105.1,
+  "winner": 94.7,
   "spins": 0,
-  "walls": 2,
+  "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "525b9c34703e34294f00c113"
+  "digest": "77f8d09811f8f1dd0e2ecda3"
  },
  "ljubljana/arcade": {
   "finished": 13,
@@ -152,12 +152,12 @@
  "ljubljana/arcade/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 107.46,
+  "winner": 98.09,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "d748e3d44cdfd4c11a9d4a31"
+  "digest": "605a182efdde1ef35f208309"
  },
  "monaco/cs": {
   "finished": 13,
@@ -172,12 +172,12 @@
  "monaco/cs/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 151.96,
+  "winner": 135.68,
   "spins": 0,
-  "walls": 1,
+  "walls": 6,
   "rescues": 0,
   "nan": false,
-  "digest": "d3cd93bd461dcf6cec5de4bd"
+  "digest": "719d502379952590576e5988"
  },
  "monaco/arcade": {
   "finished": 13,
@@ -192,12 +192,12 @@
  "monaco/arcade/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 156.81,
+  "winner": 139.52,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "7b199b8a19fda714c5504090"
+  "digest": "c1183cffcaa5fb8a889e2e41"
  },
  "gozd/cs": {
   "finished": 13,
@@ -212,12 +212,12 @@
  "gozd/cs/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 98.63,
+  "winner": 90.6,
   "spins": 0,
-  "walls": 1,
+  "walls": 8,
   "rescues": 0,
   "nan": false,
-  "digest": "3dbaf37f39103d88e79102a0"
+  "digest": "ddfcd5ed32d3e643a9adb865"
  },
  "gozd/arcade": {
   "finished": 13,
@@ -232,12 +232,12 @@
  "gozd/arcade/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 103.83,
+  "winner": 93.13,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b4868fe722dc392a2b0421c8"
+  "digest": "6f93b2b8840423134ce1d796"
  },
  "toskana/cs": {
   "finished": 13,
@@ -252,12 +252,12 @@
  "toskana/cs/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 94.77,
+  "winner": 86.08,
   "spins": 0,
-  "walls": 2,
+  "walls": 7,
   "rescues": 0,
   "nan": false,
-  "digest": "efd7fb53d956357549ea6b1d"
+  "digest": "b97389088bedd11095abe750"
  },
  "toskana/arcade": {
   "finished": 13,
@@ -272,12 +272,12 @@
  "toskana/arcade/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 98.7,
+  "winner": 88.07,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "233c58cfbb53e439405df848"
+  "digest": "418a0deca911e87e37951d11"
  },
  "grom/cs": {
   "finished": 13,
@@ -292,12 +292,12 @@
  "grom/cs/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 65.72,
-  "spins": 1,
+  "winner": 59.46,
+  "spins": 0,
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "fa060add96ef9c2e62569bab"
+  "digest": "4f52a3bbd1597bc322c8b713"
  },
  "grom/arcade": {
   "finished": 13,
@@ -312,12 +312,12 @@
  "grom/arcade/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 71.1,
+  "winner": 62.44,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "7ab08e15474180b0c60d522c"
+  "digest": "48b44f07c40be9ce409e8f12"
  },
  "pikes/cs": {
   "finished": 1,
@@ -332,12 +332,12 @@
  "pikes/cs/formula": {
   "finished": 1,
   "cars": 1,
-  "winner": 176.6,
+  "winner": 164.29,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "e5e6e26c4f57f7eab3dc7292"
+  "digest": "7025c21c123be20cdac6f590"
  },
  "pikes/arcade": {
   "finished": 1,
@@ -352,12 +352,12 @@
  "pikes/arcade/formula": {
   "finished": 1,
   "cars": 1,
-  "winner": 187.09,
+  "winner": 174.88,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "c4a35b9998dfda4bc2a67735"
+  "digest": "16cf45a44e1c3193c8e05e55"
  },
  "ouninpohja/cs": {
   "finished": 1,
@@ -372,12 +372,12 @@
  "ouninpohja/cs/formula": {
   "finished": 1,
   "cars": 1,
-  "winner": 163.68,
+  "winner": 160.79,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b00cce319799eff1a68cbe2e"
+  "digest": "1c02b68e7aecbab5e9d94e61"
  },
  "ouninpohja/arcade": {
   "finished": 1,
@@ -392,12 +392,12 @@
  "ouninpohja/arcade/formula": {
   "finished": 1,
   "cars": 1,
-  "winner": 165.75,
+  "winner": 162.75,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "c50ccd02cf9abdf360a28cd5"
+  "digest": "c5b3d1c151e8b4fc6186a1b8"
  },
  "nring/cs": {
   "finished": 21,
@@ -412,12 +412,12 @@
  "nring/cs/formula": {
   "finished": 21,
   "cars": 21,
-  "winner": 435.8,
+  "winner": 364.58,
   "spins": 0,
-  "walls": 24,
+  "walls": 32,
   "rescues": 0,
   "nan": false,
-  "digest": "244df3f21432cc29a9cadb67"
+  "digest": "b9ca4076f73e56132ffaa463"
  },
  "nring/arcade": {
   "finished": 21,
@@ -432,12 +432,12 @@
  "nring/arcade/formula": {
   "finished": 21,
   "cars": 21,
-  "winner": 432.59,
+  "winner": 390.82,
   "spins": 0,
-  "walls": 5,
+  "walls": 4,
   "rescues": 0,
   "nan": false,
-  "digest": "2adaa7e10664bcb15cfab749"
+  "digest": "e1f1f80faef0fc7c3a469e8f"
  },
  "rbring/cs": {
   "finished": 13,
@@ -462,12 +462,12 @@
  "rbring/cs/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 184.97,
+  "winner": 168.31,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "5fe83779ddf56cd9e6df5058"
+  "digest": "791fe90c164939391a5aa923"
  },
  "rbring/arcade": {
   "finished": 13,
@@ -492,12 +492,12 @@
  "rbring/arcade/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 187.42,
+  "winner": 172.57,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "e427f68577e56c2fbc4df833"
+  "digest": "b34e29d571b819dfdb0cdfc5"
  },
  "suzuka/cs": {
   "finished": 13,
@@ -512,12 +512,12 @@
  "suzuka/cs/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 254.22,
+  "winner": 232.67,
   "spins": 0,
-  "walls": 0,
+  "walls": 3,
   "rescues": 0,
   "nan": false,
-  "digest": "20ccfacc533cd5c2007b231a"
+  "digest": "db3b65059ce75109380c6e54"
  },
  "suzuka/arcade": {
   "finished": 13,
@@ -532,11 +532,11 @@
  "suzuka/arcade/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 263.38,
+  "winner": 241.5,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "c46b58ccaf97b6b5c9a9f8e5"
+  "digest": "5a5132c73cc10c8a527ec6d7"
  }
 }
