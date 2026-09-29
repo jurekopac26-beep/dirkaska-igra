@@ -706,6 +706,9 @@ const Core = (function () {
   ];
   const PWR_MULT = 1.75, SW_DRAG = 0.0013; // arcade power boost and drag (fit to SWGP2 acceleration curves)
   const DRS_DRAG = 0.8;   // the air drag with the rear wing's flap open (Car.drs, set by Race._drs)
+  // rain (a race with opts.rain on a track that has def.rain: every car's c.wet): the tyres' grip on the wet road (side grip, traction, and
+  // through them the brakes), the brakes' bite on top of that; the AI plans its speeds with the same (Race._prof)
+  const WET_GRIP = 0.76, WET_BRAKE = 0.9;
   const JUMP_G = 14; // vertical gravity for jumps on hilly tracks (arcade-snappy, a bit above real g)
   const _bk = { dy: 0, sl: 0 };   // (Track.bankAt output)
   const MU_BASE = 1.32;
@@ -821,7 +824,7 @@ const Core = (function () {
         dragC0 += SURF[sf].c0 * 0.25; dragC1 += SURF[sf].c1 * 0.25;
       }
       this.onCurb = curb;
-      const muSurf = muSum / 4;
+      const muSurf = muSum / 4 * (this.wet ? WET_GRIP : 1);
       const fwd = vl > 0.5;
       const beta = spd > 1.5 && fwd ? Math.atan2(vt, vl) : 0;
       this.beta = beta;
@@ -903,7 +906,7 @@ const Core = (function () {
       let Fx = F, Fy = 0;
       const ux = spd > 0.05 ? vl / spd : 1, uy = spd > 0.05 ? vt / spd : 0;
       if (brk > 0 && spd > 0.05 && grounded) {
-        const fb = Math.min(brk * this.brakeG * G * m * (0.55 + 0.45 * muSurf), spd * m / dt);
+        const fb = Math.min(brk * this.brakeG * G * m * (0.55 + 0.45 * muSurf) * (this.wet ? WET_BRAKE : 1), spd * m / dt);
         Fx -= ux * fb; Fy -= uy * fb;
       }
       this.lock = grounded && (brk > 0.7 || hb > 0.5) && spd > 4 ? 1 : 0;
@@ -991,8 +994,8 @@ const Core = (function () {
         if (k & 1) dragP += dk; else dragN += dk;
       }
       this.onCurb = curb;
-      const muSurf = muSum / 4, muLat = (latF + latB) * 0.5;
-      const muDrv = M.drive === 'FF' ? muF : M.drive === 'AWD' ? muSurf : muR;   // one rear wheel on the grass costs a RWD car traction
+      const wg = this.wet ? WET_GRIP : 1, muSurf = muSum / 4 * wg, muLat = (latF + latB) * 0.5 * wg;   // (rain: less grip everywhere)
+      const muDrv = M.drive === 'FF' ? muF * wg : M.drive === 'AWD' ? muSurf : muR * wg;   // one rear wheel on the grass costs a RWD car traction
       const fwd = vl > 0.5;
       const beta = spd > 1.5 && fwd ? Math.atan2(vt, vl) : 0;
       this.beta = beta;
@@ -1053,7 +1056,7 @@ const Core = (function () {
       // ---- brakes: a quick ramp, capped below the grip (they never lock), along the travel ----
       this.csB += clamp(brk - this.csB, -K.brkDn * dt, K.brkUp * dt);
       const bF = this.csB;
-      const fb = spd > 0.05 && grounded ? Math.min((bF * K.brk * this.brakeG + hb * K.hbBrk) * G * m * (0.55 + 0.45 * muSurf), spd * m / dt) : 0;
+      const fb = spd > 0.05 && grounded ? Math.min((bF * K.brk * this.brakeG + hb * K.hbBrk) * G * m * (0.55 + 0.45 * muSurf) * (this.wet ? WET_BRAKE : 1), spd * m / dt) : 0;
       this.lock = grounded && hb > 0.5 && spd > 4 ? 1 : 0;
       // ---- the demand: a path rate, and the drift attitude that goes with it ----
       const v = Math.max(spd, 0.5);
@@ -1882,6 +1885,7 @@ const Core = (function () {
       if (this.remote) this.remote.num = RM.num || 2;
       if (track.drs) this.drsLast = track.drs.map(() => null);   // (per DRS zone: who crossed its detection line last, and when)
       if (track.sectors) this.secBest = [Infinity, Infinity, Infinity];   // (the best time in each sector of the race so far)
+      if (opts.rain && track.def.rain) { this.wet = 1; for (const c of this.cars) c.wet = 1; }   // rain: every car on a wet road (the fields only then)
       this._prof();
     }
 
@@ -1898,7 +1902,8 @@ const Core = (function () {
     // speed profile for the AI (on the racing line), per physics; an upgraded player's autopilot brakes later with better brakes (its own profile)
     _prof() {
       const opts = this.opts, track = this.track;
-      const csP = opts.phys === 'cs', latA0 = opts.aiLatA || (csP ? CSK.aiLatA : 16.5), brA0 = opts.aiBrakeA || (csP ? CSK.aiBrakeA : 13.0), wM0 = csP ? CSK.aiWmax : 0;
+      const wl = this.wet ? WET_GRIP : 1, wb = this.wet ? WET_GRIP * WET_BRAKE : 1;   // (rain: the AI takes the corners slower and brakes earlier)
+      const csP = opts.phys === 'cs', latA0 = (opts.aiLatA || (csP ? CSK.aiLatA : 16.5)) * wl, brA0 = (opts.aiBrakeA || (csP ? CSK.aiBrakeA : 13.0)) * wb, wM0 = csP ? CSK.aiWmax : 0;
       this.vprof = track.speedProfile(latA0, brA0, 85, wM0);
       if (this.player && this.player.upg && this.player.brakeG !== BRAKE_G) this.player.vprof = track.speedProfile(latA0, brA0 * this.player.brakeG / BRAKE_G, 85, wM0);
     }

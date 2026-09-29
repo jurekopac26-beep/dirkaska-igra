@@ -229,6 +229,16 @@
   "nan": false,
   "digest": "b601b92d85bc99e91bc008da"
  },
+ "rbring/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 221.09,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "1064af725d94a951740915dc"
+ },
  "rbring/arcade": {
   "finished": 13,
   "cars": 13,
@@ -238,6 +248,16 @@
   "rescues": 0,
   "nan": false,
   "digest": "5d8be98bba0ca890facbcae8"
+ },
+ "rbring/arcade/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 227.17,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "a65b1d6c84d73f26521b8856"
  },
  "suzuka/cs": {
   "finished": 13,

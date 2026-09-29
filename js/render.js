@@ -671,7 +671,7 @@ const Render = (function () {
     clearPropMeshes();
     world = World.build(scene, track, tex, { density });
     if (!world.farClip && camera.far !== 700) { camera.far = 700; camera.updateProjectionMatrix(); }
-    applyTheme((track.def && track.def.theme) || 'lake');
+    themeId = (track.def && track.def.theme) || 'lake'; applyTheme(themeId);
     return world;
   }
 
@@ -806,9 +806,13 @@ const Render = (function () {
     ouni:     { fog: 0xc4d3dc, sun: 0xffe9c6, sunI: 1.18, sky: 0xcfe1f5, gnd: 0x4a5a2e, hemiI: 0.56, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-88, 72, 58] },   // Ouninpohja: a clear Finnish August afternoon, a warm sun lower in the west (the forest's long shadows across the road), soft haze over the lakes
     pikes:    { fog: 0xbfd3e8, sun: 0xfff4e4, sunI: 1.1, sky: 0xcfe0ff, gnd: 0x6b5847, hemiI: 0.6, tint: [1.0, 0.99, 1.02], sat: 1.1 },   // clear, thin high-altitude air: bright sun, pale blue haze over the valleys
     nring:    { fog: 0xb7c7cc, sun: 0xfff0d8, sunI: 1.1, sky: 0xcadcf0, gnd: 0x3e4a2a, hemiI: 0.6, tint: [1.03, 1.0, 0.95], sat: 1.04, sunOff: [-80, 76, 70] },   // the Eifel: a summer afternoon over the 'green hell' (a lower sun: longer shadows)
+    rbringRain: { fog: 0x8e99a3, sun: 0xdde3ea, sunI: 0.4, sky: 0xaab4be, gnd: 0x3a4632, hemiI: 1.05, tint: [0.96, 0.99, 1.03], sat: 0.8, sunOff: [-30, 120, 25] },   // the same in the rain: low grey cloud, soft light, faint shadows
     rbring:   { fog: 0xc6daea, sun: 0xfff1d8, sunI: 1.12, sky: 0xcfe3fb, gnd: 0x46602c, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.06, sunOff: [-86, 78, 52] },   // Styria in early summer, an afternoon sun (longer shadows): clear alpine air, fresh meadows, dark spruce woods
     suzuka:   { fog: 0xc8d9e6, sun: 0xfff1dc, sunI: 1.06, sky: 0xd5e7fa, gnd: 0x4f5c34, hemiI: 0.62, tint: [1.01, 1.0, 0.99], sat: 1.12 },   // Suzuka: a clear spring day in Mie
   };
+  // the weather of a race (Core's race.wet: rain): the theme's rainy variant (THEMES[theme + 'Rain']) and the world's rain (world.setRain)
+  let themeId = 'lake';
+  function setWeather(wet) { applyTheme(wet && THEMES[themeId + 'Rain'] ? themeId + 'Rain' : themeId); if (world && world.setRain) world.setRain(!!wet); }
   function applyTheme(id) {
     const t = THEMES[id] || THEMES.lake;
     sunOff = t.sunOff || [-80, 96, 70];   // low evening sun where the theme asks for it (long shadows)
@@ -1540,6 +1544,11 @@ const Render = (function () {
       } else v.sk[k] = null;
       // smoke / dust
       if (front) continue;
+      if (c.wet && onHard && spd > 9) {   // rain: a mist of spray off the rear tyres
+        const wa = v.wacc || (v.wacc = [0, 0, 0, 0]); wa[k] += clamp(spd / 40, 0.25, 1.2) * 30 * dt;
+        while (wa[k] >= 1) { wa[k] -= 1; const g = 0.8 + Math.random() * 0.08;
+          particles.emit(px, 0.25 + yb, pz, c.vx * 0.35 + (Math.random() - 0.5) * 1.6, 0.7 + Math.random() * 0.9, c.vz * 0.35 + (Math.random() - 0.5) * 1.6, 0.7 + Math.random() * 0.4, 0.6, 3.6 + Math.random() * 1.6, g, g + 0.02, g + 0.05, 0.26, 0.4, 1.5, yb); }
+      }
       if (onHard && intens > 0.22 && spd > 3) {
         v.acc[k] += Math.min(1.3, intens) * 42 * dt;
         while (v.acc[k] >= 1) {
@@ -1764,6 +1773,6 @@ const Render = (function () {
   const dbg = { noSmoke: false };
   function setDebug(o) { Object.assign(dbg, o); }
   function fxStats() { let n = 0; for (let i = 0; i < particles.max; i++) if (particles.life[i] > 0) n++; return { alive: n, emitted: particles.cur }; }
-  return { setDebug, fxStats, setGhost, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; } };
+  return { setDebug, fxStats, setGhost, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, setWeather, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; } };
 })();
 

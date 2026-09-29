@@ -6,7 +6,7 @@ const Sfx = (function () {
   const { clamp } = Core;
   let ctx = null, master = null, bus = null, enabled = true, volume = 0.8;
   let noiseBuf = null;
-  let eng = null, ai = [], squeal = null, rumble = null, wind = null, curbV = null, heli = null, echo = null, crowd = null, jet = null;
+  let eng = null, ai = [], squeal = null, rumble = null, wind = null, curbV = null, heli = null, echo = null, crowd = null, jet = null, rainV = null, hiss = null;
   let lastCrash = 0, running = false;
 
   function create() {
@@ -28,7 +28,7 @@ const Sfx = (function () {
     rumble = noiseVoice('lowpass', 220, 0.8);
     curbV = noiseVoice('bandpass', 90, 4);
     wind = noiseVoice('bandpass', 700, 0.6);
-    heli = heliVoice(); echo = echoFx(); crowd = crowdVoice(); jet = noiseVoice('lowpass', 500, 0.7);
+    heli = heliVoice(); echo = echoFx(); crowd = crowdVoice(); jet = noiseVoice('lowpass', 500, 0.7); rainV = noiseVoice('highpass', 2600, 0.5); hiss = noiseVoice('bandpass', 1300, 0.7);
     return true;
   }
   function shaperCurve(k) {
@@ -229,6 +229,9 @@ const Sfx = (function () {
     let jv = 0; const A = W && W.dyn && W.dyn.air;
     if (A && A.t0 >= 0) for (const m of A.jets) if (m.visible) { const q = m.position, lx = cam ? cam.position.x : player.x, ly = cam ? cam.position.y : 0, lz = cam ? cam.position.z : player.z; jv = Math.max(jv, clamp(1 - Math.hypot(q.x - lx, q.y - ly, q.z - lz) / 420, 0, 1) ** 2); }
     set(jet.out.gain, jv * 0.55, 0.12); set(jet.flt.frequency, 300 + jv * 900, 0.12);
+    // rain (Core's race.wet): its patter all round, and the tyres hissing through the water on a hard surface
+    const wet = !!(race && race.wet);
+    set(rainV.out.gain, wet ? 0.06 : 0, 0.4); set(hiss.out.gain, wet && onHard ? clamp(spd / 45, 0, 1) * 0.16 : 0, 0.08); set(hiss.flt.frequency, 900 + clamp(spd, 0, 60) * 18, 0.1);
   }
 
   function crash(imp) {
@@ -290,7 +293,7 @@ const Sfx = (function () {
   function silence() {
     if (!ctx) return;
     for (const v of [eng, ...ai]) set(v.out.gain, 0, 0.02);
-    for (const v of [squeal, rumble, wind, curbV, heli, crowd, jet]) set(v.out.gain, 0, 0.02);
+    for (const v of [squeal, rumble, wind, curbV, heli, crowd, jet, rainV, hiss]) set(v.out.gain, 0, 0.02);
     set(echo.send.gain, 0, 0.02);
   }
 

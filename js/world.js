@@ -6936,6 +6936,40 @@ const World = (function () {
     A.rotor.rotation.y = (t * 41) % TAU; A.tail.rotation.z = (t * 73) % TAU;
   }
   const sAtS = (d) => (((T.startS + d) % T.len) + T.len) % T.len;   // (metres from the start line -> s)
+  /* ---- rain on the Red Bull Ring (a race with Core's race.wet; Render.setWeather -> out.setRain): streaks in a box (70 x 34 x 70 m) round
+     the followed car, falling ~9-12 m/s and slanting with the wind, recycled in the shader (one draw); the asphalt darker, with the grey sky
+     in it the flatter one looks along it (rbWetAsphalt) ---- */
+  function rbRain(root) {
+    const ND = 4000, BX = 70, BY = 34, P = new Float32Array(ND * 12), Q = new Float32Array(ND * 8), Rr = new Float32Array(ND * 4), I = [], r = rng(1971);
+    for (let k = 0; k < ND; k++) { const x = r() * BX, y = r() * BY, z = r() * BX, rr = r();
+      for (let v = 0; v < 4; v++) { const o = k * 4 + v; P[o * 3] = x; P[o * 3 + 1] = y; P[o * 3 + 2] = z; Q[o * 2] = v >> 1; Q[o * 2 + 1] = v & 1 ? 1 : -1; Rr[o] = rr; }
+      const b = k * 4; I.push(b, b + 1, b + 3, b, b + 3, b + 2); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('aQ', new THREE.BufferAttribute(Q, 2)); g.setAttribute('aR', new THREE.BufferAttribute(Rr, 1));
+    g.setIndex(I); g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
+    const U = { uC: { value: new THREE.Vector3() }, uT: { value: 0 }, uW: { value: new THREE.Vector2(RB_WIND[0] * 1.3, RB_WIND[1] * 1.3) } };
+    const m = new THREE.Mesh(g, new THREE.ShaderMaterial({ uniforms: U, transparent: true, depthWrite: false, side: THREE.DoubleSide,
+      vertexShader: ['uniform vec3 uC; uniform float uT; uniform vec2 uW; attribute vec2 aQ; attribute float aR; varying float vA;',
+        'void main() {', '  vec3 B = vec3(' + BX.toFixed(1) + ', ' + BY.toFixed(1) + ', ' + BX.toFixed(1) + '), vel = vec3(uW.x, -9.0 - 3.0 * aR, uW.y);',
+        '  vec3 lo = uC - vec3(B.x * 0.5, 8.0, B.z * 0.5), p = lo + mod(position + vel * uT - lo, B), rr = (p - lo) / B;',
+        '  vec4 mh = modelViewMatrix * vec4(p, 1.0), mt = modelViewMatrix * vec4(p - vel * 0.045, 1.0), mv = aQ.x > 0.5 ? mt : mh;',   // (head and tail: a streak ~0.45 m)
+        '  vec2 d = mh.xy - mt.xy; float dl = length(d); vec2 n = dl > 1e-4 ? vec2(-d.y, d.x) / dl : vec2(1.0, 0.0); float z = -mv.z;',
+        '  mv.xy += n * aQ.y * (0.006 + 0.0011 * z);',
+        '  vA = smoothstep(0.0, 0.1, rr.x) * smoothstep(1.0, 0.9, rr.x) * smoothstep(0.0, 0.1, rr.z) * smoothstep(1.0, 0.9, rr.z) * smoothstep(0.0, 0.1, rr.y) * smoothstep(1.0, 0.85, rr.y) * smoothstep(1.5, 5.0, z);',
+        '  gl_Position = projectionMatrix * mv;', '}'].join('\n'),
+      fragmentShader: 'varying float vA; void main() { if (vA <= 0.0) discard; gl_FragColor = vec4(0.84, 0.88, 0.93, vA * 0.38); }' }));
+    m.frustumCulled = false; m.renderOrder = 8; m.visible = false; m.matrixAutoUpdate = false; m.name = 'rain'; root.add(m);
+    return { m, U };
+  }
+  function rbWetAsphalt(mat, wet) {   // the road's material: darker when wet, the grey sky in it at grazing angles (wet.value 0: as it was)
+    mat.onBeforeCompile = (sh) => {
+      sh.uniforms.uWet = wet;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWtV;\nvarying vec3 vWtN;')
+        .replace('#include <project_vertex>', '#include <project_vertex>\nvWtV = -mvPosition.xyz; vWtN = normalMatrix * objectNormal;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uWet;\nvarying vec3 vWtV;\nvarying vec3 vWtN;')
+        .replace('#include <fog_fragment>', '{ float fr = pow(1.0 - max(dot(normalize(vWtN), normalize(vWtV)), 0.0), 3.0);\n  gl_FragColor.rgb = mix(gl_FragColor.rgb * (1.0 - 0.32 * uWet), vec3(0.66, 0.7, 0.75), uWet * (0.06 + 0.5 * fr)); }\n#include <fog_fragment>');
+    };
+    mat.customProgramCacheKey = () => 'rbWet';
+  }
   /* ---- the Red Bull Ring's podium on the pit building's roof terrace, under the wing-shaped canopy, facing the straight (built by buildRbring,
      shown by game.js after the race: show(colours of the first three), step() from World.update, hide()): three steps, the first three in
      their cars' colours (the winner with the cup over the head, the others spraying champagne from ~2 s on, jumping), orange smoke either side,
@@ -7912,6 +7946,8 @@ const World = (function () {
     if (flagL.length) root.add(rbFlags(flagL, CR.U.uTime));
     out.crowdPts = Float32Array.from(crowdPts);
     out.dyn.air = out.air = rbAir(root, ownTex, nrGround);   // the helicopter's pass, the jets before the start (game.js: air.go, air.shot)
+    { const rain = rbRain(root), wet = { value: 0 }; rbWetAsphalt(aMat, wet);   // rain (Render.setWeather)
+      out.dyn.rain = rain; out.setRain = (on) => { rain.m.visible = !!on; wet.value = on ? 1 : 0; }; }
     if (!scrG.empty) { const st = ownTex(rbScreenTex()); addM(scrG, new THREE.MeshBasicMaterial({ map: st })); out.dyn.screens = { tex: st, f: -1 }; }
     out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, stands: nStands, boxes: nBoxes, camp: nCamp, farms: nFarm, cars: nCars, tv: nTV, decals: nDecals, smoke: smokeL.length, flags: flagL.length, screens: nScr, photographers: nPh };   // (read by the tests)
     return out;
@@ -8616,6 +8652,7 @@ const World = (function () {
     if (d.crowd) { d.crowd.uTime.value = t % 1000; if (car) d.crowd.uCar.value.set(car.x, car.roadY || 0, car.z); }   // spectators: arm waving, cheering near the followed car
     if (d.air) rbAirStep(d.air, t, car);   // Red Bull Ring: the TV helicopter's pass, the jets and their smoke
     if (d.podium) d.podium.step(t);   // Red Bull Ring: the podium after the race
+    if (d.rain && d.rain.m.visible) { const q = car || (cam && cam.position); if (q) d.rain.U.uC.value.set(q.x, car ? car.roadY || 0 : q.y - 20, q.z); d.rain.U.uT.value = t % 1000; }   // rain round the followed car
     if (d.screens) { const f = Math.floor(t / 6) % 4; if (f !== d.screens.f) { d.screens.f = f; d.screens.tex.offset.x = f * 0.25; } }   // Red Bull Ring: the video walls' next picture every 6 s
     if (d.water) { d.water.offset.x = (t * 0.012) % 1; d.water.offset.y = (t * 0.007) % 1; }
     if (d.pk) pkUpdate(d.pk, t, car);   // Pikes Peak: the TV helicopter, the cloud shadows
