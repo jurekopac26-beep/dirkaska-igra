@@ -656,9 +656,9 @@ const World = (function () {
   function build(scene, track, tex, opts) {
     T = track; THEME = (track.def && track.def.theme) || 'lake'; CSX = THEME === 'forest' || THEME === 'italia' || THEME === 'kamp'; ROCK_SMOOTH = CSX; SEA = (track.def && track.def.sea) || null; RIVER = track.def.river || null; RW = track.def.riverW || 26; CASTLE = track.def.castle || null; buildHash();
     if (THEME !== 'nring' && THEME !== 'spa') NR = null;          // free the last Nordschleife / Spa build's grids
-    if (THEME === 'pikes') return buildPikes(scene, tex, opts);   // open mountain road: its own corridor builder (below)
+    if (THEME === 'pikes') return finish(buildPikes(scene, tex, opts), tex);   // open mountain road: its own corridor builder (below)
     PK = null;                                                     // free the last Pikes build's grids (only that world's groundH used them)
-    if (THEME === 'nring' || THEME === 'spa') return buildNring(scene, tex, opts);   // the real circuits in their landscape (the 20.7 km Nordschleife, Spa): a corridor builder (below)
+    if (THEME === 'nring' || THEME === 'spa') return finish(buildNring(scene, tex, opts), tex);   // the real circuits in their landscape (the 20.7 km Nordschleife, Spa): a corridor builder (below)
     const R = rng(4242);
     hillN = valueNoise2(77, 60);
     mtnN = valueNoise2(83, 130); mtnN2 = valueNoise2(91, 55); mtnPeak = valueNoise2(97, 220);
@@ -2930,7 +2930,7 @@ const World = (function () {
       : new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide, transparent: false }), false);
     addTex(texCrowd, new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), false);
     crowdFinish(CR, root, out);   // the instanced spectators and their ground strips
-    return out;
+    return finish(out, tex);
   }
 
   /* ================= PIKES PEAK (theme 'pikes') =================
@@ -3670,33 +3670,89 @@ const World = (function () {
     }
   }
 
-  /* ---- moving things: the TV helicopter over the leading car, cloud shadows drifting across the mountain
-     (built at the end of buildPikes; pkUpdate runs every frame from World.update) ---- */
-  function pkSky(K) {
-    const S = 110, NP = 64;   // cloud-shadow noise cell (m) and its period in cells (the drift offset wraps without a seam)
-    // cloud shadows: every plain material of this world (not the crowds' own shader) darkens under slowly drifting blobs of 2-octave value noise;
-    // computed per vertex (highp: phones' mediump fragments cannot hold world coordinates; the blobs are 100-300 m, the vertices at most 10 m apart), applied to the lit colour before the fog
-    const U = { value: new THREE.Vector2() };
-    const vHead = '#include <common>\nuniform vec2 pkCloudO;\nvarying float vCloud;\n' +
-      'float pkHash(vec2 i, float n) { i = mod(i, n); return fract(sin(dot(i, vec2(12.9898, 78.233))) * 43758.5453); }\n' +
-      'float pkVN(vec2 p, float n) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(pkHash(i, n), pkHash(i + vec2(1.0, 0.0), n), f.x), mix(pkHash(i + vec2(0.0, 1.0), n), pkHash(i + 1.0, n), f.x), f.y); }';
-    const vBody = '#include <project_vertex>\nvec4 pkW = vec4( transformed, 1.0 );\n#ifdef USE_INSTANCING\npkW = instanceMatrix * pkW;\n#endif\n' +
-      'vec2 pkQ = ( modelMatrix * pkW ).xz / ' + S.toFixed(1) + ' - pkCloudO;\n' +
-      'float pkN = 0.65 * pkVN( pkQ, ' + NP.toFixed(1) + ' ) + 0.35 * pkVN( pkQ * 2.0 + vec2( 17.0, 5.0 ), ' + (NP * 2).toFixed(1) + ' );\n' +
-      'vCloud = 1.0 - 0.18 * smoothstep( 0.53, 0.66, pkN );';
+  /* ---- cloud shadows (every world): slowly drifting blobs of 2-octave value noise darken every plain material of the world (not the
+     crowds' own shader, not the water, not what stays out: userData.noCloud); computed per vertex (highp: phones' mediump fragments
+     cannot hold world coordinates; the blobs are 100-300 m, the vertices at most ~10 m apart), applied to the lit colour before the
+     fog. World.update drifts them with the wind (~4 m/s towards the north-east); Render sets their strength for the weather (none
+     under the rain's overcast). The uniforms are shared by every build (one world at a time) ---- */
+  const CLOUD_S = 110, CLOUD_NP = 64;   // noise cell (m) and its period in cells (the drift offset wraps without a seam)
+  const CLOUD_O = { value: new THREE.Vector2() }, CLOUD_K = { value: 0.16 };
+  const CLOUD_TH = { pikes: 0.18, nring: 0.22, spa: 0.22, forest: 0.14, italia: 0.14, kamp: 0.14 };   // how much a cloud darkens, per theme (else 0.2)
+  const CLOUD_VH = '#include <common>\nuniform vec2 clO;\nuniform float clK;\nvarying float vCloud;\n' +
+    'float clHash(vec2 i, float n) { i = mod(i, n); return fract(sin(dot(i, vec2(12.9898, 78.233))) * 43758.5453); }\n' +
+    'float clVN(vec2 p, float n) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(clHash(i, n), clHash(i + vec2(1.0, 0.0), n), f.x), mix(clHash(i + vec2(0.0, 1.0), n), clHash(i + 1.0, n), f.x), f.y); }';
+  const CLOUD_VB = '#include <project_vertex>\nvec4 clW = vec4( transformed, 1.0 );\n#ifdef USE_INSTANCING\nclW = instanceMatrix * clW;\n#endif\n' +
+    'vec2 clQ = ( modelMatrix * clW ).xz / ' + CLOUD_S.toFixed(1) + ' - clO;\n' +
+    'float clN = 0.65 * clVN( clQ, ' + CLOUD_NP.toFixed(1) + ' ) + 0.35 * clVN( clQ * 2.0 + vec2( 17.0, 5.0 ), ' + (CLOUD_NP * 2).toFixed(1) + ' );\n' +
+    'vCloud = 1.0 - clK * smoothstep( 0.53, 0.66, clN );';
+  function clouds(root, out, tex) {
+    CLOUD_K.value = CLOUD_TH[THEME] != null ? CLOUD_TH[THEME] : 0.2;
     const patch = (m) => {
-      if (m.userData.pkCloud || !(m.isMeshLambertMaterial || m.isMeshPhongMaterial) || m.map === K.tex.water) return;   // (the lake: a few huge triangles, far below)
-      const prev = m.onBeforeCompile, key = 'pkCloud|' + m.customProgramCacheKey(); m.userData.pkCloud = true;   // (its own programs, the same on every rebuild)
+      if (m.userData.cloud || m.userData.noCloud || !(m.isMeshLambertMaterial || m.isMeshPhongMaterial) || m.map === tex.water) return;   // (lakes and seas: a few huge triangles)
+      const prev = m.onBeforeCompile, key = 'cloud|' + m.customProgramCacheKey(); m.userData.cloud = true;   // (its own programs, the same on every rebuild)
       m.onBeforeCompile = (sh, r) => {
         prev.call(m, sh, r);
-        sh.uniforms.pkCloudO = U;
-        sh.vertexShader = sh.vertexShader.replace('#include <common>', vHead).replace('#include <project_vertex>', vBody);
+        sh.uniforms.clO = CLOUD_O; sh.uniforms.clK = CLOUD_K;
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', CLOUD_VH).replace('#include <project_vertex>', CLOUD_VB);
         sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vCloud;').replace('#include <fog_fragment>', 'gl_FragColor.rgb *= vCloud;\n#include <fog_fragment>');
       };
       m.customProgramCacheKey = () => key; m.needsUpdate = true;
     };
     const walk = (o) => { if (o.name === 'crowds') return; if (o.isMesh) (Array.isArray(o.material) ? o.material : [o.material]).forEach(patch); o.children.forEach(walk); };
-    walk(K.root);
+    walk(root);
+    out.dyn.clouds = { O: CLOUD_O, K: CLOUD_K, k0: CLOUD_K.value };
+    return out;
+  }
+
+  /* ---- tyre marks (every tarmac track): dark streaks of rubber where the cars brake hard for the corners and where they power out of
+     them, along the racing line (left and right wheels, a few cars' worth, each a little off the others), faded at their ends. Found from
+     a speed profile of the lap: a braking zone is where the pace falls by 8 m/s or more; the marks darken towards its end, the exit marks
+     start at the slowest point. Decal meshes (one per 256 m cell: only the marks near the view are drawn) just above the road (under
+     the kerbs), drawn like the skid marks of the race ---- */
+  function tyreMarks(root) {
+    if (T.def.roadSurface === 'makadam' || !T.rl) return;
+    const N = T.N, ds = T.ds, open = T.open, v = T.speedProfile(16.5, 13, 85), R = rng(515), bk = { dy: 0, sl: 0 }, cells = new Map();
+    const cell = (p) => { const k = Math.floor(p[0] / 256) + ',' + Math.floor(p[2] / 256); let g = cells.get(k); if (!g) cells.set(k, g = new GB(false, true)); return g; };
+    const at = (k) => (open ? Math.max(0, Math.min(N - 1, k)) : ((k % N) + N) % N);
+    const HYi = (i) => (T.hasElev ? T.hy[i] : 0);
+    const streak = (i0, n, off, wd, a0, grow) => {   // n samples from i0, 'off' m from the racing line, alpha a0 (grow: darker towards the end)
+      let prev = null;
+      for (let k = 0; k <= n; k++) {
+        const i = at(i0 + k), f = k / n, a = a0 * Math.min(1, f / 0.2, (1 - f) / 0.12) * (grow ? 0.45 + 0.55 * f : 1);
+        const o = T.rl[i] + off + Math.sin(i * 0.37 + off * 3) * 0.08, lim = T.w - 0.25; if (Math.abs(o) > lim) { prev = null; continue; }
+        const y = (q) => { let h = HYi(i) + 0.03; if (T.bank) h += T.bankAt(i * ds, q, bk).dy; return h; };
+        const l = [T.px[i] + T.nx[i] * (o - wd), y(o - wd), T.pz[i] + T.nz[i] * (o - wd)], r = [T.px[i] + T.nx[i] * (o + wd), y(o + wd), T.pz[i] + T.nz[i] * (o + wd)];
+        if (prev && prev.a + a > 0.01) cell(l).quadUp(prev.l, prev.r, r, l, [[0.05, 0.05, 0.06, prev.a], [0.05, 0.05, 0.06, prev.a], [0.05, 0.05, 0.06, a], [0.05, 0.05, 0.06, a]]);
+        prev = { l, r, a };
+        if (open && i0 + k >= N - 1) break;
+      }
+    };
+    const cars = (i0, n, a0, grow, spread) => {   // two to four cars' worth of marks: each a pair of wheels, a little off the others, shorter or longer
+      const m = 2 + Math.floor(R() * 3);
+      for (let c = 0; c < m; c++) {
+        const lat = (R() - 0.5) * spread, s0 = Math.floor(R() * n * 0.35), len = Math.max(6, Math.floor(n * (0.5 + R() * 0.5)) - s0), a = a0 * (0.6 + R() * 0.5);
+        for (const w of [-0.78, 0.78]) streak(i0 + s0, len, lat + w, 0.13, a, grow);
+      }
+    };
+    // braking zones: runs of falling pace from a fast approach to a corner's slowest point (lap samples; an open road from its start)
+    const falls = (k) => v[at(k + 1)] < v[at(k)] - 0.005;
+    for (let i = 0; i < (open ? N - 1 : N); i++) {
+      if (!falls(i) || ((i > 0 || !open) && falls(i - 1))) continue;   // (only the first sample of a run of falling pace)
+      let j = i; while (j - i < N / 2 && (!open || j < N - 1) && falls(j)) j++;
+      const drop = v[i] - v[at(j)], n = j - i;
+      if (drop < 8 || n < 6) continue;
+      const nb = Math.min(n, Math.round(60 / ds));   // (the last 60 m of the braking)
+      cars(j - nb, nb, Math.min(0.42, 0.18 + drop * 0.012), true, 0.9);
+      const ne = Math.round((14 + Math.min(20, drop)) / ds);   // exit marks: from the slowest point, lighter, a bit wider spread (the cars slide out)
+      if (R() < 0.8) cars(j, ne, 0.2, false, 1.4);
+    }
+    const mat = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
+    for (const g of cells.values()) { if (g.empty) continue; const m = new THREE.Mesh(g.geometry(), mat); m.name = 'tyremarks'; m.renderOrder = 1; m.matrixAutoUpdate = false; root.add(m); }
+  }
+  function finish(o, tex) { tyreMarks(o.root); return clouds(o.root, o, tex); }   // (every world, at the end of its build)
+
+  /* ---- moving things: the TV helicopter over the leading car (built at the end of buildPikes; pkUpdate runs every frame from World.update) ---- */
+  function pkSky(K) {
 
     // the TV helicopter: a light single-engine type in white with a blue livery (+x forward, y up, 11.4 m nose to tail); the main and the tail rotor spin on their own
     const wht = [0.93, 0.93, 0.95], blu = [0.13, 0.3, 0.68], gls = [0.07, 0.09, 0.13], gry = [0.36, 0.37, 0.4], drk = [0.16, 0.16, 0.18];
@@ -3724,19 +3780,17 @@ const World = (function () {
     box(gb, -7.0, 1.78, 0, 0.55, 0.06, 1.9, 0, wht);                             // horizontal stabiliser
     const g2 = new GB(); box(g2, 0, 0, 0, 10.6, 0.06, 0.34, 0.1, drk); cyl(g2, 0, -0.05, 0, 0.26, 0.2, 6, gry, gry);   // main rotor: two blades through the hub
     const gt = new GB(); box(gt, 0, -0.85, 0, 0.14, 1.7, 0.04, 0, drk); box(gt, 0, -0.05, 0, 0.2, 0.1, 0.1, 0, gry);   // tail rotor (spins about z)
-    const mat = new THREE.MeshLambertMaterial({ vertexColors: true }); mat.userData.pkCloud = true;   // (the helicopter stays out of the cloud patch)
+    const mat = new THREE.MeshLambertMaterial({ vertexColors: true }); mat.userData.noCloud = true;   // (the helicopter stays out of the cloud shadows)
     const heli = new THREE.Group(); heli.rotation.order = 'YZX'; K.root.add(heli);
     const body = new THREE.Mesh(gb.geometry(), mat), rotor = new THREE.Mesh(g2.geometry(), mat), tail = new THREE.Mesh(gt.geometry(), mat);
     rotor.position.set(-0.1, 3.3, 0); tail.position.set(-8.0, 2.55, 0.14);
     body.castShadow = rotor.castShadow = true; heli.add(body, rotor, tail);
     const i0 = T.idx(K.sStart);
-    K.out.dyn.pk = { U, S, NP, heli, rotor, tail, init: false, t: 0, hx: T.px[i0], hz: T.pz[i0], hy: T.hy[i0], hh: T.hd[i0] };
+    K.out.dyn.pk = { heli, rotor, tail, init: false, t: 0, hx: T.px[i0], hz: T.pz[i0], hy: T.hy[i0], hh: T.hd[i0] };
   }
 
   function pkUpdate(pk, t, car) {
     const wrap = (a) => a - TAU * Math.round(a / TAU), dt = t - pk.t; pk.t = t;
-    // cloud shadows: the pattern drifts with the wind (~4 m/s towards the north-east)
-    pk.U.value.set(((t * 3.2 / pk.S) % pk.NP + pk.NP) % pk.NP, ((-t * 2.5 / pk.S) % pk.NP + pk.NP) % pk.NP);
     // the helicopter: anchored on the followed car (the start line without one), 20-34 m off to one side, 22-30 m up
     const ax = car ? car.x : pk.hx, az = car ? car.z : pk.hz, ay = car ? car.roadY || 0 : pk.hy, ah = car ? car.h : pk.hh, spd = car ? car.speed || 0 : 0;
     const cvx = car ? car.vx || 0 : 0, cvz = car ? car.vz || 0 : 0;
@@ -4559,9 +4613,26 @@ const World = (function () {
     else for (let k = 1; k <= 20; k++) cell(k - 1, '#f4f4f0', '#111', k + ' km', 44, '#111');
     names.forEach((n, k) => cell(20 + k, spa ? '#17306a' : '#1d5f2c', '#fff', n.toUpperCase(), n.length > 14 ? 26 : 32, '#e8e8e0'));
     const B = 20 + names.length;
-    if (spa) { cell(B, '#16181c', '#fff', 'SPA-FRANCORCHAMPS', 28); cell(B + 1, '#c8261f', '#fff', 'EAU ROUGE', 38); cell(B + 2, '#f2c21a', '#111', 'BELGIQUE · BELGIË', 28); cell(B + 3, '#123f86', '#fff', 'DÉPART · ARRIVÉE', 28); }
+    if (spa) { cell(B, '#16181c', '#fff', 'SPA-FRANCORCHAMPS', 28); cell(B + 1, '#c8261f', '#fff', 'EAU ROUGE', 38); cell(B + 2, '#f2c21a', '#111', 'BELGIQUE · BELGIË', 28); cell(B + 3, '#123f86', '#fff', 'DÉPART · ARRIVÉE', 28);
+      const SP = (typeof Tex !== 'undefined' && Tex.SPONSORS) || [['TURBOX', '#101418', '#ffd23f']];   // (the game's own sponsors: boards on the rails)
+      for (let k = 0; k < 8; k++) { const [txt, bg, fg] = SP[k % SP.length]; cell(40 + k, bg, fg, txt, 40, 'rgba(255,255,255,.14)'); } }
     else { cell(B, '#16181c', '#fff', 'START · ZIEL', 36); cell(B + 1, '#123f86', '#fff', 'NÜRBURGRING', 38); cell(B + 2, '#1a1a1a', '#6fdc3c', 'GRÜNE HÖLLE', 38); cell(B + 3, '#f2c21a', '#111', 'NORDSCHLEIFE', 36); }
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (nrATex = t);
+  }
+  // Spa's big screens: a still of the race coverage (a car on the track, the timing column, LIVE, the circuit's name)
+  function spaScreenTex() {
+    const c = document.createElement('canvas'); c.width = 512; c.height = 288; const x = c.getContext('2d');
+    const sky = x.createLinearGradient(0, 0, 0, 288); sky.addColorStop(0, '#6f9fcf'); sky.addColorStop(0.45, '#b9d2e6'); sky.addColorStop(0.46, '#3e6b2f'); sky.addColorStop(1, '#2d5424'); x.fillStyle = sky; x.fillRect(0, 0, 512, 288);
+    x.fillStyle = '#51575f'; x.beginPath(); x.moveTo(0, 288); x.lineTo(250, 140); x.lineTo(330, 140); x.lineTo(512, 288); x.fill();   // the road into the distance
+    x.fillStyle = '#f2f2ee'; for (let k = 0; k < 8; k++) { x.fillStyle = k % 2 ? '#d8262a' : '#f2f2ee'; x.beginPath(); x.moveTo(250 - k * 31, 140 + k * 18.5); x.lineTo(250 - (k + 1) * 31, 140 + (k + 1) * 18.5); x.lineTo(240 - (k + 1) * 31, 140 + (k + 1) * 18.5); x.lineTo(240 - k * 31, 140 + k * 18.5); x.fill(); }
+    x.fillStyle = '#1c5fd6'; x.fillRect(262, 196, 84, 34); x.fillStyle = '#f2f2ee'; x.fillRect(262, 206, 84, 8); x.fillStyle = '#111'; x.fillRect(266, 226, 16, 10); x.fillRect(326, 226, 16, 10);   // the leader
+    x.fillStyle = 'rgba(10,12,18,.82)'; x.fillRect(12, 12, 150, 132);
+    const rows = [['1', 'KOVAČ', '#e8e8ee'], ['2', 'HAYASHI', '#1c5fd6'], ['3', 'ROSSI', '#f2c230'], ['4', 'NOVAK', '#2fa84f']];
+    x.font = 'bold 22px Arial, sans-serif'; x.textBaseline = 'middle';
+    rows.forEach(([p, nm, col], k) => { const yy = 32 + k * 30; x.fillStyle = '#fff'; x.fillText(p, 22, yy); x.fillStyle = col; x.fillRect(42, yy - 10, 5, 20); x.fillStyle = '#fff'; x.fillText(nm, 54, yy); });
+    x.fillStyle = '#d8262a'; x.fillRect(420, 14, 80, 32); x.fillStyle = '#fff'; x.font = 'bold 22px Arial, sans-serif'; x.fillText('LIVE', 432, 31);
+    x.fillStyle = 'rgba(10,12,18,.82)'; x.fillRect(0, 250, 512, 38); x.fillStyle = '#fff'; x.font = 'bold 22px Arial, sans-serif'; x.fillText('SPA-FRANCORCHAMPS', 16, 270);
+    const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
   }
   const nrAUV = (k) => { const u0 = (k % 4) / 4, v1 = 1 - Math.floor(k / 4) / 16; return [u0, v1 - 1 / 16, u0 + 0.25, v1]; };
 
@@ -4900,6 +4971,68 @@ const World = (function () {
     else for (let km = 1; km <= 20; km++) { const s = sAt(km * 1000); signPost(s, roomSide(s), 1.4, km - 1, 1.9, 0.48, 1.1); }
     T.names.forEach((q, k) => { const s = sAt(q.d - 55); signPost(s, roomSide(s), 1.6, 20 + k, 3.2, 0.8, 1.2); });
 
+    /* ---- SPA: the TV cameras (on a scaffold tower on the outside of the famous corners: the cameraman at his camera under a sunshade),
+       big video screens across the track from the grandstands, the game's own sponsors on boards along the rails of the straights, and
+       the marshals in orange at their posts, a flag in hand (both of them figures of the instanced crowd: filming, waving a flag) ---- */
+    if (SPA) {
+      const free = (x, z, r) => !excluded(x, z) && nrSlope(x, z) < 0.45 && nrNear(x, z).dd > r;   // (clear of other scenery, not on a steep bank, not near another leg)
+      const place = (d0, side, extra, r) => { for (const dd of [0, 12, -12, 24, -24, 40, -40]) { const p = onSide(sAt(d0 + dd), side, extra); if (free(p[0], p[1], r)) return p; } return null; };
+      const outside = (d) => { let k = 0; for (let e = -40; e <= 40; e += 4) k += T.k[T.idx(sAt(d + e))]; return k > 0 ? -1 : 1; };   // (the outside of the bend around d)
+      const person = (x, y, z, fx, fz, col, pose) => { CR.ppl.put(x, y, z, Math.atan2(fx, fz), 0.98, 1, col, pose + crH(x, z, 9) * 0.998, Math.floor(crH(x, z, 11) * 4) + 4 * Math.floor(crH(x, z, 10) * 256)); CR.n++; };
+      const grey = [0.6, 0.62, 0.64], dark = [0.17, 0.18, 0.2], plank = [0.42, 0.34, 0.24];
+      // the TV towers
+      for (const [n, dd] of [['La Source', 10], ['Raidillon', 25], ['Les Combes', 0], ['Pouhon', 0], ['Blanchimont', 30], ['Bus Stop', -25]]) {
+        const d = nameD(n); if (d == null) continue;
+        let side = outside(d + dd), p = place(d + dd, side, 6.5, 4);
+        if (!p) { side = -side; p = place(d + dd, side, 6.5, 4); } if (!p) continue;
+        const [x, z, i] = p, g = scen.get(x, z), y = nrGround(x, z), H = 4.4, hd = T.hd[i], c = Math.cos(hd), sn = Math.sin(hd);
+        const at = (a, b) => [x + c * a - sn * b, z + sn * a + c * b];   // a along the track, b across (+b: the track's +n side)
+        for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { const [lx, lz] = at(a, b); cyl(g, lx, y - 0.1, lz, 0.07, H + 1.15, 5, grey); }   // (the legs run up into the railing)
+        for (const hy of [1.4, 2.9]) for (const [a, b, rot] of [[0, -1, 0], [0, 1, 0], [-1, 0, Math.PI / 2], [1, 0, Math.PI / 2]]) { const [lx, lz] = at(a, b); box(g, lx, y + hy, lz, 2.0, 0.07, 0.07, hd + rot, grey); }
+        box(g, x, y + H, z, 2.6, 0.16, 2.6, hd, plank, [0.5, 0.41, 0.3]);                                          // the platform
+        for (const [a, b, rot] of [[0, -1.25, 0], [0, 1.25, 0], [-1.25, 0, Math.PI / 2], [1.25, 0, Math.PI / 2]]) { const [lx, lz] = at(a, b); box(g, lx, y + H + 0.95, lz, 2.5, 0.06, 0.06, hd + rot, grey); }   // the railing
+        { const [lx, lz] = at(0.6, 0.6 * side); cyl(g, lx, y + H, lz, 0.04, 2.5, 4, grey); cone(g, lx, y + H + 2.15, lz, 1.35, 0.5, 8, [0.95, 0.44, 0.1], [0.97, 0.97, 0.95], 0); }   // the sunshade
+        // the camera on its tripod at the front rail, looking at the road; the cameraman behind it (the crowd's filming pose)
+        const tf = -side, [cx, cz] = at(0, 0.55 * tf), [mx, mz] = at(0.1, -0.35 * tf), ny = T.nx[i] * tf, nz = T.nz[i] * tf;
+        for (let k = 0; k < 3; k++) { const a = k / 3 * TAU; cyl(g, cx + Math.cos(a) * 0.28, y + H + 0.08, cz + Math.sin(a) * 0.28, 0.025, 1.25, 3, dark, null, 0.02); }
+        box(g, cx, y + H + 1.3, cz, 0.72, 0.36, 0.3, Math.atan2(nz, ny), dark, [0.25, 0.26, 0.28]);
+        cyl(g, cx + ny * 0.45, y + H + 1.4, cz + nz * 0.45, 0.12, 0.12, 6, [0.08, 0.08, 0.09]);
+        person(mx, y + H + 0.08, mz, ny, nz, [0.13, 0.3, 0.62], 3);
+        exclPush(x, z, 4.5); CR.avoid(x, z, 2.4);
+      }
+      // the big screens: across the track from the grandstands, facing them (the picture: the race, a timing column, LIVE)
+      const scrTex = spaScreenTex(), scrG = new GB(true); out.ownTex.push(scrTex);   // (Render frees it with the scenery)
+      for (const [d0, sg] of [[1150, -1], [620, -1], [276, -1], [6930, -1]]) {   // (the grandstand's distance and side: Raidillon, the descent, La Source, the pit straight)
+        const p = place(d0, -sg, 5.5, 5); if (!p) continue;
+        const [x, z, i] = p, g = scen.get(x, z), y = nrGround(x, z), W = 7.2, Hs = 4.05, y0 = y + 3.2, fx = T.nx[i] * sg, fz = T.nz[i] * sg, ux = -fz, uz = fx;   // (facing the grandstand's side)
+        for (const o of [-W / 2 + 0.5, W / 2 - 0.5]) box(g, x + ux * o - fx * 0.3, y - 0.2, z + uz * o - fz * 0.3, 0.3, y0 - y + Hs + 0.2, 0.3, Math.atan2(uz, ux), dark);
+        box(g, x - fx * 0.12, y0 - 0.25, z - fz * 0.12, W + 0.5, Hs + 0.5, 0.35, Math.atan2(uz, ux), dark, [0.25, 0.26, 0.28]);   // the frame
+        for (const f of [1, -1]) {   // the picture on both sides (read the right way round from either)
+          const o = f > 0 ? 0.07 : -0.31, A = [x + fx * o - ux * f * W / 2, y0, z + fz * o - uz * f * W / 2], B = [x + fx * o + ux * f * W / 2, y0, z + fz * o + uz * f * W / 2], one = [1, 1, 1];
+          scrG.quadO(A, B, [B[0], y0 + Hs, B[2]], [A[0], y0 + Hs, A[2]], one, [x - fx * f, y0 + Hs / 2, z - fz * f], [[0, 0], [1, 0], [1, 1], [0, 1]]);
+        }
+        exclPush(x, z, 6); CR.avoid(x, z, 4);
+      }
+      if (!scrG.empty) { const m = addM(scrG, new THREE.MeshBasicMaterial({ map: scrTex, color: 0xe6e6e6 })); if (m) m.castShadow = false; }
+      // sponsors on the rails along the straights (over the rail, facing the road; none on walls, bridges, pit gaps)
+      for (const [a, b, sides] of [[300, 900, [-1]], [1430, 2140, [-1, 1]], [5200, 5640, [-1, 1]], [6250, 6560, [-1, 1]]]) {
+        for (const side of sides) for (let dd = a, k = 0; dd < b; dd += 14, k++) {
+          const s = sAt(dd), i = T.idx(s); if (kind(i, side) !== 0 || pitGap(i, side)) continue;
+          const [x, z] = onSide(s, side, 0.35), y = T.hy[i] + 0.78;
+          board(x, y, z, T.nx[i] * side, T.nz[i] * side, 9.6, 0.82, 40 + ((k + (side > 0 ? 3 : 0) + Math.floor(a / 7)) % 8));
+        }
+      }
+      // the marshals at their posts: two in orange at the post, one with a flag (yellow, blue or green: the crowd's flag palettes)
+      for (const [px, pz] of def.posts || []) {
+        const i = T.nearestIdx(px, pz), lat = (px - T.px[i]) * T.nx[i] + (pz - T.pz[i]) * T.nz[i], side = lat > 0 ? 1 : -1;
+        const [x, z] = onSide(i * ds, side, 1.1), fx = -T.nx[i] * side, fz = -T.nz[i] * side, y = nrGround(x, z);
+        if (nrSlope(x, z) > 0.6) continue;
+        person(x + T.tx[i] * 2.6, y, z + T.tz[i] * 2.6, fx, fz, [0.98, 0.5, 0.08], 5);
+        person(x - T.tx[i] * 1.2, y, z - T.tz[i] * 1.2, fx, fz, [0.98, 0.5, 0.08], 0);
+        CR.avoid(x, z, 3.5);
+      }
+    }
+
     /* ---- spectators, fans' tents and cars at the famous places, catch fences in front of them ---- */
     const FANS = SPA ? { 'La Source': 3, 'Eau Rouge': 3, 'Raidillon': 3, 'Kemmel': 1, 'Les Combes': 2, 'Malmedy': 1, 'Bruxelles': 2, "Speaker's Corner": 1, 'Pouhon': 3, 'Fagnes': 2, 'Campus': 1, 'Paul Frère': 2, 'Blanchimont': 2, 'Bus Stop': 3 }
       : { 'Brünnchen': 3, 'Pflanzgarten': 3, 'Karussell': 3, 'Wippermann': 2, 'Hohe Acht': 2, 'Adenauer Forst': 2, 'Breidscheid': 2, 'Flugplatz': 2, 'Hatzenbach': 2, 'Schwalbenschwanz': 2, 'Kesselchen': 1, 'Galgenkopf': 1, 'Eschbach': 1, 'Metzgesfeld': 1, 'Ex-Mühle': 1, 'Bergwerk': 1, 'Fuchsröhre': 1, 'Aremberg': 1, 'Klostertal': 1, 'Quiddelbacher Höhe': 1, 'Döttinger Höhe': 1 };
@@ -4962,6 +5095,15 @@ const World = (function () {
 
     /* ---- the forest: spruce and beech where OpenStreetMap has woods, bushes on the scrub, lone trees on the meadows ---- */
     const tMat = new THREE.MeshLambertMaterial({ vertexColors: true });
+    // the wind: the crowns sway a little, each tree in its own rhythm (the higher up, the more; the foot of the trunk stays put)
+    const WIND = { value: 0 }; out.dyn.wind = WIND;
+    tMat.onBeforeCompile = (sh) => {
+      sh.uniforms.uWind = WIND;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uWind;').replace('#include <begin_vertex>', '#include <begin_vertex>\n' +
+        '#ifdef USE_INSTANCING\nfloat wPh = instanceMatrix[3].x * 0.07 + instanceMatrix[3].z * 0.05;\n#else\nfloat wPh = 0.0;\n#endif\n' +
+        'float wK = position.y * position.y * 0.018;\ntransformed.x += wK * sin( uWind * 1.1 + wPh );\ntransformed.z += wK * 0.6 * sin( uWind * 0.83 + wPh * 1.7 );');
+    };
+    tMat.customProgramCacheKey = () => 'nrTreeWind';
     const tk = [new IChunks(nrTreeGeo(0), tMat, 128), new IChunks(nrTreeGeo(1), tMat, 128), new IChunks(nrTreeGeo(2), tMat, 128)];   // (small chunks: the view and the shadow box cull them well)
     let nTrees = 0;
     {
@@ -5002,7 +5144,9 @@ const World = (function () {
     const d = out.dyn;
     if (d.crowd) { d.crowd.uTime.value = t % 1000; if (car) d.crowd.uCar.value.set(car.x, car.roadY || 0, car.z); }   // spectators: arm waving, cheering near the followed car
     if (d.water) { d.water.offset.x = (t * 0.012) % 1; d.water.offset.y = (t * 0.007) % 1; }
-    if (d.pk) pkUpdate(d.pk, t, car);   // Pikes Peak: the TV helicopter, the cloud shadows
+    if (d.wind) d.wind.value = t % 1000;   // the trees sway (Nordschleife, Spa)
+    if (d.clouds) { const n = CLOUD_NP; d.clouds.O.value.set(((t * 3.2 / CLOUD_S) % n + n) % n, ((-t * 2.5 / CLOUD_S) % n + n) % n); }   // the cloud shadows drift with the wind
+    if (d.pk) pkUpdate(d.pk, t, car);   // Pikes Peak: the TV helicopter
     if (d.boats) {
       const L = d.lake;
       for (const b of d.boats) {

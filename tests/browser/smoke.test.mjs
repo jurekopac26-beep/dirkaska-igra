@@ -85,15 +85,17 @@ try {
     await startTrack(page, 'spa');
     const nan = await simulate(page, 20);
     await page.waitForTimeout(1500);   // (a second and a half of real frames: the spray)
-    const r = await page.evaluate(() => { const g = window.__game, R = g.race; return { rain: R.rain, wet: R.cars.every(c => c.wet === 0.8), drawn: Render.raining, spray: Render.fxStats().alive, dist: Math.round(R.player.dist), saved: JSON.parse(localStorage.getItem('tdgp-settings')).weather }; });
-    T.check('Spa in the rain: wet grip for every car, rain drawn, spray, the setting saved', r.rain === 1 && r.wet && r.drawn && r.spray > 10 && r.dist > 200 && r.saved === 'rain' && !nan && errors.length === e0, JSON.stringify(r) + (errors.length > e0 ? ' errors: ' + errors.slice(e0).join(' | ') : ''));
+    const r = await page.evaluate(() => { const g = window.__game, R = g.race; return { rain: R.rain, wet: R.cars.every(c => c.wet === 0.8), drawn: Render.raining, spray: Render.fxStats().alive, dist: Math.round(R.player.dist), saved: JSON.parse(localStorage.getItem('tdgp-settings')).weather,
+      birds: Render.birds.mesh.visible, clouds: Render.world.dyn.clouds.K.value }; });
+    T.check('Spa in the rain: wet grip for every car, rain drawn, spray, the setting saved; no birds, no cloud shadows', r.rain === 1 && r.wet && r.drawn && r.spray > 10 && r.dist > 200 && r.saved === 'rain' && !r.birds && r.clouds === 0 && !nan && errors.length === e0, JSON.stringify(r) + (errors.length > e0 ? ' errors: ' + errors.slice(e0).join(' | ') : ''));
     await page.evaluate(() => window.__game.onAction('to-title')); await page.waitForTimeout(600);
     const d = await page.evaluate(() => ({ demo: window.__game.demo ? window.__game.demo.rain : null, drawn: Render.raining }));
     await page.evaluate(() => document.querySelector('[data-set="weather"] button[data-v="dry"]').click()); await page.waitForTimeout(600);
     const d2 = await page.evaluate(() => ({ demo: window.__game.demo ? window.__game.demo.rain : null, drawn: Render.raining }));
     await startTrack(page, 'spa'); await simulate(page, 3);
-    const r2 = await page.evaluate(() => ({ rain: window.__game.race.rain, wet: window.__game.race.cars.every(c => c.wet === 1), drawn: Render.raining }));
-    T.check('title demo in the rain with the setting, dry again without it; the next race dry', d.demo === 1 && d.drawn && d2.demo === 0 && !d2.drawn && r2.rain === 0 && r2.wet && !r2.drawn && errors.length === e0, JSON.stringify({ d, d2, r2 }));
+    const r2 = await page.evaluate(() => { let marks = 0; Render.world.root.traverse(o => { if (o.name === 'tyremarks') marks++; });
+      return { rain: window.__game.race.rain, wet: window.__game.race.cars.every(c => c.wet === 1), drawn: Render.raining, birds: Render.birds.mesh.visible, clouds: Render.world.dyn.clouds.K.value, marks }; });
+    T.check('title demo in the rain with the setting, dry again without it; the next race dry (birds, cloud shadows, tyre marks)', d.demo === 1 && d.drawn && d2.demo === 0 && !d2.drawn && r2.rain === 0 && r2.wet && !r2.drawn && r2.birds && r2.clouds > 0.1 && r2.marks > 5 && errors.length === e0, JSON.stringify({ d, d2, r2 }));
   }
 
   // 6. a Pikes Peak time trial to the finish: the record is stored under 'pikes@cs'
