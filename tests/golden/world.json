@@ -141,18 +141,18 @@
   }
  },
  "nring": {
-  "meshes": 2625,
-  "verts": 859881,
-  "instances": 111151,
-  "props": 789,
-  "crowd": 11951,
-  "world": "da1d7461",
-  "propsHash": "f0c50817",
-  "floor": "e00238e1/41384",
+  "meshes": 2757,
+  "verts": 958092,
+  "instances": 115445,
+  "props": 784,
+  "crowd": 11706,
+  "world": "8965dc5b",
+  "propsHash": "2b1fd9ad",
+  "floor": "e5170eee/41384",
   "groups": {
-   "-:MeshLambertMaterial": "4859ac15",
-   "-:MeshBasicMaterial": "a6574a9",
-   "crowd:MeshLambertMaterial": "2104b0ef"
+   "-:MeshLambertMaterial": "cb760c81",
+   "-:MeshBasicMaterial": "d9780c7b",
+   "crowd:MeshLambertMaterial": "a4df55a6"
   }
  },
  "suzuka": {
