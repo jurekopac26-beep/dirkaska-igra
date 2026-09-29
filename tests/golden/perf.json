@@ -70,10 +70,10 @@
   "jsMs": 1.45
  },
  "spa": {
-  "calls": 198,
-  "maxCalls": 266,
-  "kverts": 532,
-  "maxKverts": 677,
-  "jsMs": 0.93
+  "calls": 200,
+  "maxCalls": 269,
+  "kverts": 526,
+  "maxKverts": 671,
+  "jsMs": 0.96
  }
 }

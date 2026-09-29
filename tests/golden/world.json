@@ -156,18 +156,19 @@
   }
  },
  "spa": {
-  "meshes": 831,
-  "verts": 425730,
-  "instances": 30152,
+  "meshes": 862,
+  "verts": 455989,
+  "instances": 29860,
   "props": 80,
-  "crowd": 5771,
-  "world": "150d7d91",
+  "crowd": 5692,
+  "world": "9baae652",
   "propsHash": "5faf0407",
-  "floor": "f94f37e9/14000",
+  "floor": "7b1cec21/14000",
   "groups": {
-   "-:MeshLambertMaterial": "9d4d1946",
-   "-:MeshBasicMaterial": "ea500c3a",
-   "crowd:MeshLambertMaterial": "a4105474"
+   "-:MeshLambertMaterial": "ba8074a7",
+   "-:MeshBasicMaterial": "80022d7b",
+   "-:MeshPhongMaterial": "6ede8927",
+   "crowd:MeshLambertMaterial": "fb92cdc6"
   }
  }
 }

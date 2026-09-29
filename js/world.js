@@ -4112,13 +4112,17 @@ const World = (function () {
     P.n1 = valueNoise2(401, 90); P.n2 = valueNoise2(402, 30); P.n3 = valueNoise2(403, 55); P.n4 = valueNoise2(404, 14); P.n5 = valueNoise2(405, 160);
     P.na = D.cell < 32 ? 1.6 : 6; P.nb = D.cell < 32 ? 0.6 : 2.2;   // noise on the far terrain: less over a fine (LiDAR) grid
     // a pit lane beside the straight (Spa): the ground right of the road is paved at the road's own height from the rail out behind the garages
-    // (the cars in the lane run at the road's height; lane centre + 3.5 lane + 9 apron + 7.2 garages + 2.3), easing into the landscape beyond
+    // (the cars in the lane run at the road's height; lane centre + 3.5 lane + 9 apron + 7.2 garages + 2.3), easing into the landscape beyond;
+    // the same behind a wall the track sets itself (def.walls: the support pit lane and its garages, out to 30 m from the centre line)
     P.pitF = null;
-    if (def.pit) { const PP = def.pit, L = T.len;
+    if (def.pit || def.walls) { const PP = def.pit, WL = def.walls || [], L = T.len;
       P.pitF = (i, lat, hn, h) => { let d = i * T.ds - T.startS; d = ((d % L) + L) % L; if (d > L / 2) d -= L;
-        if (lat <= 0 || d < PP[1] - 12 || d > PP[2] + 12) return h;
-        const p = T.pitAt(i * T.ds), reach = (p ? p.o : T.w + 3.6) + 22;
-        return lat < reach ? hn - 0.06 : lat < reach + 14 ? lerp(hn - 0.06, h, sstep(reach, reach + 14, lat)) : h; }; }
+        if (PP && lat > 0 && d >= PP[1] - 12 && d <= PP[2] + 12) { const p = T.pitAt(i * T.ds), reach = (p ? p.o : T.w + 3.6) + 22;
+          return lat < reach ? hn - 0.06 : lat < reach + 14 ? lerp(hn - 0.06, h, sstep(reach, reach + 14, lat)) : h; }
+        for (const [a, b, sd] of WL) { if (lat * sd <= 0) continue;
+          const f = Math.min(sstep(a - 30, a - 10, d), sstep(b + 50, b + 30, d)) * (1 - sstep(30, 44, lat * sd));
+          if (f > 0) return lerp(h, hn - 0.06, f); }
+        return h; }; }
     // terrain height grid (filled lazily, NaN = not computed yet) and the distance beyond the nearest barrier at each vertex
     const G = P.G = { x0, z0 }; G.ntx = Math.ceil((x1 - x0) / (NRC * NRT)); G.ntz = Math.ceil((z1 - z0) / (NRC * NRT)); G.nx = G.ntx * NRT + 1; G.nz = G.ntz * NRT + 1;
     G.h = new Float32Array(G.nx * G.nz).fill(NaN); G.dd = new Float32Array(G.nx * G.nz); G.on = new Uint8Array(G.ntx * G.ntz);
@@ -4676,7 +4680,9 @@ const World = (function () {
     const postGeo = (() => { const g = new GB(); box(g, 0, 0, 0, 0.13, 1, 0.13, 0, [0.42, 0.43, 0.46], null, true); return g.geometry(); })();
     const posts = new IChunks(postGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), 256);
     const fence = [new Uint8Array(N), new Uint8Array(N)];   // catch fences (set below where the spectators stand)
-    const kind = (i) => (onBridge(i) ? 2 : t13(i) ? 1 : 0);   // 0 armco, 1 wall + fence, 2 parapet
+    const setW = [new Uint8Array(N), new Uint8Array(N)];   // the walls the track sets itself (def.walls: a pit wall right by the road)
+    for (const [a, b, sd] of def.walls || []) for (let d = a; d <= b; d += ds) setW[sd > 0 ? 1 : 0][T.idx(sAt(d))] = 1;
+    const kind = (i, side) => (onBridge(i) ? 2 : t13(i) || (side && setW[side > 0 ? 1 : 0][i]) ? 1 : 0);   // 0 armco, 1 wall + fence, 2 parapet
     const pitGap = (i, side) => { if (side < 0 || !def.pit) return false; const p = T.pitAt(i * ds); return !!p && p.gap; };   // (Spa: the pit entry and exit, open to the lane)
     const steel = [0.8, 0.82, 0.85], steelD = [0.5, 0.52, 0.56], conc = [0.72, 0.72, 0.7], concD = [0.6, 0.6, 0.58];
     const railRow = (gr, i, side, k) => {   // guardrail / wall cross-section at sample i (rows run so that the faces look at the road)
@@ -4692,7 +4698,7 @@ const World = (function () {
       for (const side of [-1, 1]) {
         let prev = -1, pk = -1;
         for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++) {
-          const i = ii % N, k = kind(i);
+          const i = ii % N, k = kind(i, side);
           if (pitGap(i, side)) { prev = -1; continue; }
           if (prev >= 0 && k !== pk) { gr.link(prev, railRow(gr, i, side, pk), 0, 4); prev = -1; }   // the old kind of barrier runs up to here, the new one starts here
           const r = railRow(gr, i, side, k); if (prev >= 0) gr.link(prev, r, 0, 4); prev = r; pk = k;
@@ -4746,6 +4752,7 @@ const World = (function () {
       }
     }
     for (let i = 0; i < N; i++) if (t13(i)) { fence[0][i] = 1; fence[1][i] = pitGap(i, 1) ? 0 : 1; }
+    for (let i = 0; i < N; i++) for (let k = 0; k < 2; k++) if (setW[k][i]) fence[k][i] = 1;
 
     /* ---- buildings (OpenStreetMap footprints near the track) and the T13 grandstand ---- */
     let nBld = 0; const crB0 = excl.length;
@@ -4807,6 +4814,69 @@ const World = (function () {
         excl: exclPush, root, out, ownTex: (t) => { out.ownTex.push(t); return t; }, Y: (s) => T.elevAt(s).y, spa: true });
       for (let d = def.pit[1]; d <= def.pit[2]; d += 6) { const s = sAt(d), p = T.pitAt(s); if (!p) continue;   // no trees, no crowd from the rail to behind the garages
         const r = (p.o + 20 - p.wall) / 2, [x, z] = onSide(s, 1, r); exclPush(x, z, r + 2); } }
+    /* ---- SPA: the support pit lane (the endurance series' pits on the way down to Eau Rouge: scenery, behind the pit wall): asphalt from the wall
+       to the garages of the pit buildings off the pit straight, a white line along it ---- */
+    if (SPA) {
+      const edge = [new Float32Array(N), new Float32Array(N)];   // per sample and side: the distance of the garages' front from the centre line (0: none)
+      for (const [bx, bz, L, W, ang, , k] of def.bld || []) { if (k !== 3 || pitZone(bx, bz)) continue;
+        const i = T.nearestIdx(bx, bz), lat = (bx - T.px[i]) * T.nx[i] + (bz - T.pz[i]) * T.nz[i], sd = lat > 0 ? 1 : 0, bar = sd ? T.br[i] : T.bl[i];
+        const c = Math.abs(Math.cos(ang - T.hd[i])), sn = Math.abs(Math.sin(ang - T.hd[i])), front = Math.abs(lat) - (c * W + sn * L) / 2, half = (c * L + sn * W) / 2;
+        if (front - bar < 3 || front - bar > 18) continue;
+        for (let d = -half; d <= half; d += ds) { const ii = T.idx(i * ds + d); edge[sd][ii] = edge[sd][ii] ? Math.min(edge[sd][ii], front) : front; } }
+      const gs = new GB(true), gsl = new GB(), one = [1, 1, 1], wl = [0.94, 0.94, 0.9];
+      for (const side of [-1, 1]) { const E = edge[side > 0 ? 1 : 0], bar = side > 0 ? T.br : T.bl;
+        const at = (k, o) => { const q = side * o, x = T.px[k] + T.nx[k] * q, z = T.pz[k] + T.nz[k] * q; return [x, nrGround(x, z) + 0.1, z]; };   // (above the verge)
+        for (let i = 0; i < N; i++) { const j = (i + 1) % N; if (!E[i] || !E[j]) continue;
+          const A = [bar[i] + 0.3, (bar[i] + 0.3 + E[i] - 0.4) / 2, E[i] - 0.4], B = [bar[j] + 0.3, (bar[j] + 0.3 + E[j] - 0.4) / 2, E[j] - 0.4];   // (from the wall's back)
+          const a = A.map(o => at(i, o)), b = B.map(o => at(j, o)), uv = (p) => [p[0] / 8, -p[2] / 8];
+          for (let c = 0; c < 2; c++) gs.quadUp(a[c], a[c + 1], b[c + 1], b[c], [one, one, one, one], [uv(a[c]), uv(a[c + 1]), uv(b[c + 1]), uv(b[c])]);
+          const l0 = at(i, A[1] - 0.08), l1 = at(i, A[1] + 0.08), l2 = at(j, B[1] + 0.08), l3 = at(j, B[1] - 0.08); for (const p of [l0, l1, l2, l3]) p[1] += 0.012;
+          gsl.quadUp(l0, l1, l2, l3, [wl, wl, wl, wl]);
+          if (i % 5 === 0) { const [x, , z] = a[1]; exclPush(x, z, (E[i] - bar[i]) / 2 + 3); } } }   // (no trees, no crowd on the lane)
+      addM(gs, aMat); addM(gsl, lMat);
+      // the strip between the road and a wall the track sets itself (the support pit wall): concrete, not grass (on the verge's cross-section)
+      const gc = new GB(true), cc = [1.16, 1.15, 1.12];
+      for (const side of [-1, 1]) { const SW = setW[side > 0 ? 1 : 0], bar = side > 0 ? T.br : T.bl;
+        const row = (k) => { const vr = vergeRow(k, side), b = bar[k] - 0.2;
+          return [w, (w + b) / 2, b].map(o => { let m = 0; while (m < vr.length - 2 && vr[m + 1][0] < o) m++; const p = vr[m], q = vr[m + 1];
+            return Pt(k, side * o, p[1] + (q[1] - p[1]) * clamp((o - p[0]) / Math.max(1e-3, q[0] - p[0]), 0, 1) + 0.03); }); };
+        for (let i = 0; i < N; i++) { const j = (i + 1) % N; if (!SW[i] || !SW[j]) continue;
+          const A = row(i), B = row(j), uv = (p) => [p[0] / 8, -p[2] / 8];
+          for (let c = 0; c < 2; c++) gc.quadUp(A[c], A[c + 1], B[c + 1], B[c], [cc, cc, cc, cc], [uv(A[c]), uv(A[c + 1]), uv(B[c + 1]), uv(B[c])]); } }
+      addM(gc, aMat);
+    }
+
+    /* ---- a brook (def.brook: its course, the Eau Rouge at Spa, rust-brown with iron): water on the valley floor between muddy banks, through
+       culverts under the road (concrete headwalls where it goes in and out); only near the track, where the ground is built ---- */
+    let inBrook = () => false;   // (x, z, r): within r of the water (the fans' tents and cars keep out of it)
+    if (def.brook) {
+      const pts = [];   // the course resampled every 3 m
+      for (let k = 0; k < def.brook.length - 1; k++) { const [ax, az] = def.brook[k], [bx, bz] = def.brook[k + 1], l = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.ceil(l / 3));
+        for (let m = 0; m < n; m++) pts.push([ax + (bx - ax) * m / n, az + (bz - az) * m / n]); }
+      pts.push(def.brook[def.brook.length - 1]);
+      const wg = new Chunks(256), bg = new Chunks(256), HW = 1.1, BW = 1.9, mud = [0.36, 0.3, 0.24], mud2 = [0.44, 0.4, 0.3], rust = [0.55, 0.32, 0.18], deep = [0.33, 0.19, 0.12];
+      const under = (x, z) => { const n = nrNear(x, z); return n.i >= 0 && n.dd < 2.5; }, far = (x, z) => nrDist(x, z) > 240;
+      for (let k = 0; k < pts.length - 1; k++) {
+        const [ax, az] = pts[k], [bx, bz] = pts[k + 1], ua = under(ax, az), ub = under(bx, bz);
+        if (far(ax, az) || far(bx, bz)) continue;
+        if (ua !== ub) {   // a culvert mouth: a concrete headwall across the water where the brook goes under the road
+          const [cx, cz] = ua ? [bx, bz] : [ax, az], hd = Math.atan2(bz - az, bx - ax), y = nrGround(cx, cz);
+          box(scen.get(cx, cz), cx, y - 0.6, cz, 0.5, 1.5, 4.2, hd, [0.62, 0.62, 0.6], [0.7, 0.7, 0.68]); exclPush(cx, cz, 3); }
+        if (ua || ub) continue;
+        const dx = bx - ax, dz = bz - az, l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l;
+        const P = (x, z, o, dy) => { const X = x + nx * o, Z = z + nz * o; return [X, nrGround(X, Z) + dy, Z]; };
+        const g = wg.get(ax, az), w0 = P(ax, az, -HW, 0.07), m0 = P(ax, az, 0, 0.07), w1 = P(ax, az, HW, 0.07), w2 = P(bx, bz, HW, 0.07), m1 = P(bx, bz, 0, 0.07), w3 = P(bx, bz, -HW, 0.07);
+        g.quadUp(w0, m0, m1, w3, [rust, deep, deep, rust]); g.quadUp(m0, w1, w2, m1, [deep, rust, rust, deep]);   // (the iron-red shallows at the sides, darker in the middle)
+        const b = bg.get(ax, az);
+        for (const sd of [-1, 1]) b.quadUp(P(ax, az, sd * HW, 0.06), P(ax, az, sd * BW, 0.05), P(bx, bz, sd * BW, 0.05), P(bx, bz, sd * HW, 0.06), [mud, mud2, mud2, mud]);
+        if (k % 2 === 0) exclPush(ax, az, BW + 0.8);   // (no tree in the water)
+        CR.block((ax + bx) / 2, (az + bz) / 2, l + 0.4, BW * 2 + 0.6, Math.atan2(dz, dx));   // (nobody standing in it)
+      }
+      wg.addTo(root, new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 80, specular: 0x3c3c3c }), false, true);
+      bg.addTo(root, matV, false, true);
+      const bh = new Map(); for (const [x, z] of pts) { const k = Math.floor(x / 16) + ',' + Math.floor(z / 16); let L = bh.get(k); if (!L) bh.set(k, L = []); L.push(x, z); }
+      inBrook = (x, z, r) => { for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const L = bh.get((Math.floor(x / 16) + a) + ',' + (Math.floor(z / 16) + b)); if (L) for (let q = 0; q < L.length; q += 2) if ((x - L[q]) ** 2 + (z - L[q + 1]) ** 2 < (r + BW) ** 2) return true; } return false; };
+    }
 
     /* ---- marshal posts, km boards, corner-name boards ---- */
     const hut = (x, z, i, side) => {   // marshal post: a white hut with a flag pole
@@ -4846,7 +4916,7 @@ const World = (function () {
       }
       for (let ii = T.idx(sm - half - 6), n = 0; n < (2 * half + 12) / ds; n++, ii = (ii + 1) % N) fence[side > 0 ? 1 : 0][ii] = 1;
       if (wgt >= 2) for (let k = 0; k < wgt * 5; k++) {   // camping in the woods behind the crowd (the 24 h race tradition)
-        const s = sm + (R() - 0.5) * half * 2, [x, z, i] = onSide(s, side, 9 + R() * 22); if (nrSlope(x, z) > 0.45) continue;
+        const s = sm + (R() - 0.5) * half * 2, [x, z, i] = onSide(s, side, 9 + R() * 22); if (nrSlope(x, z) > 0.45 || inBrook(x, z, 3)) continue;
         if (R() < 0.55) tent(x, z, T.hd[i] + (R() - 0.5) * 0.6, tcols[Math.floor(R() * tcols.length)]); else carPk(x, z, T.hd[i] + (R() - 0.5) * 0.8, vary(fans[Math.floor(R() * fans.length)], R, 0.2));
       }
       const [ex, ez] = onSide(sm, side, 14); exclPush(ex, ez, half + 10);
