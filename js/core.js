@@ -118,13 +118,14 @@ const Core = (function () {
         this.finishIdx = this.startIdx; this.finishS = this.startS; this.raceLen = len; this.cpS = []; this.hStart = 0; this.hFinish = 0;
       }
       this.cpDist = this.cpS.map(s => s - this.startS);   // metres from the start line
-      // named places (def.names = [[name, x, z, lines?], ...] snapped to the centre line, or { n, d, say? } with d = metres after the
-      // start line, for scaled roads): { n, d, say } in lap order (HUD label, commentator lines or null). Open roads keep only the run.
+      // named places (def.names = [[name, x, z, lines?], ...] snapped to the centre line, or { n, d, say?, hud? } with d = metres after the
+      // start line, for scaled roads): { n, d, say, hud } in lap order (HUD label, commentator lines or null; hud false: a place the
+      // commentator names but the HUD does not show, e.g. one of an invented section). Open roads keep only the run.
       this.names = (def.names || []).map((e) => {
         const arr = Array.isArray(e), n = arr ? e[0] : e.n, say = arr ? e[3] : e.say;
         let d = !arr && e.d != null ? +e.d : this.nearestIdx(arr ? e[1] : e.x, arr ? e[2] : e.z) * ds - this.startS;
         if (!open) d = ((d % len) + len) % len;
-        return { n, d, say: Array.isArray(say) && say.length ? say : null };
+        return { n, d, say: Array.isArray(say) && say.length ? say : null, hud: arr || e.hud !== false };
       }).filter(q => !open || (q.d >= 0 && q.d <= this.raceLen)).sort((a, b) => a.d - b.d);
       // banked corners (def.bank = [[from, to, slope], ...], metres after the start line; closed circuits): the road surface tilts across
       // its width towards the inside of the bend (slope = height lost per metre towards the inside), eased in and out over ~20 m
@@ -157,6 +158,29 @@ const Core = (function () {
         const tS = (k) => { const t = def.turns[k - 1]; return this.nearestIdx(t[0], t[1]) * ds - this.startS; }, W = (d) => ((d % len) + len) % len;
         this.drs = def.drs.map(([t, det, act, nt]) => ({ det: W(tS(t) + det), act: W(tS(t) + act), end: W(tS(nt) - 60) }));
       }
+      // a gravel stage with puddles in the rain (def.rain = { seed, puddles }; open roads): [s, d (m across, + right), half length,
+      // half width]; pudAt: per sample, the puddle there (-1: none). inRain: the race driving on it has rain (Race.step); only then are the
+      // puddles a surface (6)
+      this.puddles = []; this.pudAt = null; this.inRain = false;
+      if (def.rain && open) this._buildPuddles(def.rain);
+    }
+
+    // the puddles: in the dips of the profile first (the water runs down into them), then spread along the rest of the run, some on the
+    // racing line, 30 m apart at least, and none from a jump's approach to its landing (the jumps fly as tuned)
+    _buildPuddles(rain) {
+      const N = this.N, ds = this.ds, hy = this.hy, R = rng(rain.seed || 31), P = this.puddles, n = rain.puddles || 40, s0 = this.startS + 40, s1 = this.finishS - 40;
+      const jumps = (this.def.bumps || []).map(b => [clamp(b.at, 0, 1) * this.len, b.w || 8]);
+      const free = (s) => jumps.every(([c, w]) => s < c - 2.2 * w - 25 || s > c + 1.6 * w + 10) && P.every(p => Math.abs(p[0] - s) > 30);
+      const put = (s, onLine) => {
+        if (s < s0 || s > s1 || !free(s)) return;
+        const i = this.idx(s), hl = 1.6 + R() * 2.6, hw = Math.min(this.w - 1, 0.8 + R() * 1.4), lim = this.w - hw - 0.3;
+        P.push([s, clamp(onLine ? this.rl[i] + (R() - 0.5) * 2.4 : (R() - 0.5) * 2 * lim, -lim, lim), hl, hw]); };
+      const r = Math.round(30 / ds);   // a dip: the lowest sample within 30 m either way, 0.25 m below both ends
+      for (let i = r; i < N - r && P.length < n; i++) { const h = hy[i]; let lo = hy[i - r] - h > 0.25 && hy[i + r] - h > 0.25; for (let k = -r; k <= r && lo; k++) if (hy[i + k] < h) lo = false; if (lo) put(i * ds, R() < 0.6); }
+      for (let t = 0; t < 600 && P.length < n; t++) put(lerp(s0, s1, R()), R() < 0.5);
+      P.sort((a, b) => a[0] - b[0]);
+      const at = this.pudAt = new Int16Array(N).fill(-1);
+      P.forEach((p, k) => { for (let s = p[0] - p[2]; s <= p[0] + p[2] + ds; s += ds / 2) { const i = Math.floor(s / ds); if (i >= 0 && i < N) at[i] = k; } });
     }
 
     // banked corners: the road surface's height offset at lateral offset d (m, + right) and its lateral slope there (dy/dd, 0 off the road)
@@ -468,6 +492,49 @@ const Core = (function () {
 
     idx(s) { const N = this.N; if (this.open) return clamp(Math.floor(s / this.ds), 0, N - 1); let i = Math.floor(s / this.ds) % N; if (i < 0) i += N; return i; }
 
+    // pace notes of a rally stage (open roads), as a co-driver reads them (game.js speaks each call ahead of the car): the bends graded by
+    // their tightest radius from one (the slowest) to six, 'flat' for a gentle one, hairpins and square junctions; long, tightens, opens;
+    // the jumps and crests (def.bumps by height; one inside a bend is read with it: 'over crest'). Calls: what follows within 30 m is
+    // joined with 'into', within 70 m with 'and' (three notes at most), a longer straight ends the call with its length (to 50 m).
+    // [{ s, e, text }]: the call's first and last point (m along the road from sample 0)
+    paceNotes() {
+      if (this._notes) return this._notes;
+      const N = this.N, ds = this.ds, k = this.k, ev = [], NUM = ['', 'one', 'two', 'three', 'four', 'five', 'six'];
+      const bend = (c) => {
+        if (c.sum < 0.3) return;
+        const R = 1 / c.mk, side = c.dir > 0 ? 'right' : 'left', len = (c.i1 - c.i0) * ds, f = (c.im - c.i0) / Math.max(1, c.i1 - c.i0);
+        const hair = c.sum > 2.2 && R < 22, square = !hair && c.sum > 1.25 && c.sum < 1.9 && R < 22, g = R < 16 ? 1 : R < 26 ? 2 : R < 38 ? 3 : R < 55 ? 4 : R < 80 ? 5 : R < 120 ? 6 : 0;
+        let txt = hair ? 'hairpin ' + side : square ? 'square ' + side : g ? side + ' ' + NUM[g] : 'flat ' + side;
+        if (!hair && !square && c.sum > 1.7) txt += ' long';
+        if (!hair && len > 30 && f > 0.7) txt += ' tightens'; else if (!hair && g && len > 30 && f < 0.3) txt += ' opens';
+        ev.push({ s: c.i0 * ds, e: c.i1 * ds, txt, bend: true });
+      };
+      let cur = null;   // bends: runs of curvature over 1/220 m^-1 one way
+      for (let i = 0; i < N; i++) {
+        const ki = k[i], on = Math.abs(ki) > 1 / 220, dir = Math.sign(ki);
+        if (cur && (!on || dir !== cur.dir)) { bend(cur); cur = null; }
+        if (on) { if (!cur) cur = { i0: i, i1: i, dir, sum: 0, mk: 0, im: i }; cur.i1 = i; cur.sum += Math.abs(ki) * ds; if (Math.abs(ki) > cur.mk) { cur.mk = Math.abs(ki); cur.im = i; } }
+      }
+      if (cur) bend(cur);
+      for (const b of this.def.bumps || []) {
+        const c = (this.open ? clamp(b.at, 0, 1) : ((b.at % 1) + 1) % 1) * this.len, w = b.w || 8, h = b.h || 1, word = h >= 1.5 ? 'big jump' : h >= 1 ? 'jump' : 'crest';
+        const on = ev.find(e => e.bend && e.s - 15 <= c && c <= e.e + 10);
+        if (on) on.txt += ' over ' + word; else ev.push({ s: c - w * 0.8, e: c + w, txt: word });
+      }
+      const from = this.open ? this.startS : 0, to = this.open ? this.finishS : this.len;
+      const E = ev.filter(e => e.s >= from && e.s < to).sort((a, b) => a.s - b.s), out = this._notes = [];
+      const dist = (m) => { const r = clamp(Math.round(m / 50) * 50, 100, 500); return ['one hundred', 'one fifty', 'two hundred', 'two fifty', 'three hundred', 'three fifty', 'four hundred', 'four fifty', 'five hundred'][r / 50 - 2]; };
+      for (let n = 0; n < E.length;) {
+        const first = E[n]; let last = first, text = first.txt; n++;
+        for (let m = 1; n < E.length && m < 3; m++, n++) { const gap = E[n].s - last.e; if (gap >= 70) break; text += (gap < 30 ? ' into ' : ' and ') + E[n].txt; last = E[n]; }
+        const next = E[n], gap = next ? next.s - last.e : Infinity, fin = this.open ? this.finishS - last.e : Infinity;
+        if (next && gap >= 70 && gap <= 520) text += ', ' + dist(gap);
+        else if (!next && fin > 60 && fin <= 520) text += ', ' + dist(fin) + ' to finish';
+        out.push({ s: first.s, e: last.e, text });
+      }
+      return out;
+    }
+
     // pit lane (def.pit = [centre offset to the right, from, to, player's box, entry length (default 60 m)] in metres from the start line): a lane
     // beside the straight, tapering in from the circuit edge at both ends. Returns null outside it. gap: the lane touches the circuit (no pit wall) -
     // where you drive in and out.
@@ -525,10 +592,15 @@ const Core = (function () {
     }
 
     // surface at a query result: 0 asphalt, 1 curb, 2 grass, 3 gravel (def.runoffTarmac: the wide run-off areas are asphalt, 4 as paving;
-    // def.gravelStrips: gravel just past the kerb)
+    // def.gravelStrips: gravel just past the kerb), 5 makadam; 6 a puddle on it (in the rain, inRain: def.rain's puddles)
     surface(q) {
       const d = q.d, ad = Math.abs(d), w = this.w;
-      if (ad <= w) return this.def.roadSurface === 'makadam' ? 5 : 0;
+      if (ad <= w) {
+        if (this.def.roadSurface !== 'makadam') return 0;
+        const p = this.inRain && this.pudAt ? this.pudAt[q.a] : -1;
+        if (p >= 0) { const u = this.puddles[p], a = (q.s - u[0]) / u[2], b = (d - u[1]) / u[3]; if (a * a + b * b < 1) return 6; }
+        return 5;
+      }
       const i = q.a;
       if (this.curb[i] && ad <= w + this.curbW) return 1;
       if (this.gstrip) { const g = this.gstrip[d > 0 ? 1 : 0][i]; if (g > 0 && ad <= w + this.curbW + g) return 3; }
@@ -596,6 +668,7 @@ const Core = (function () {
     { mu: 0.55, c0: 2.4, c1: 0.16 },   // gravel
     { mu: 0.86, c0: 0.35, c1: 0.03 },   // paving (street circuits)
     { mu: 0.82, c0: 0.6, c1: 0.05 },    // makadam (dirt rally road): decent accel/brake but lively, slidey
+    { mu: 0.7, c0: 2.6, c1: 0.12 },     // a puddle on the makadam (in the rain, on top of WET): the water drags at the wheel
   ];
   // rain: the grip left on a wet track (x every surface's mu: cornering and traction; the brakes keep 0.55 + 0.45 x of theirs).
   // Less grip also means bigger, lazier slides in both slide models (as on the loose surfaces)
@@ -693,6 +766,7 @@ const Core = (function () {
     { lat: 0.58, tr: 0.85, c0: 1.0, c1: 0.05 },     // gravel / sand: whole car ~ -0.4 g of drive (drive about halved, A32/B8a), side grip 0.58
     { lat: 0.88, tr: 0.86, c0: 0.35, c1: 0.03 },    // paving (= SURF)
     { lat: 0.8, tr: 0.82, c0: 0.6, c1: 0.05 },      // makadam: side grip 0.8, tau_v +16 % (C11); drive and drag = SURF (gora's pace unchanged)
+    { lat: 0.7, tr: 0.72, c0: 2.6, c1: 0.12 },      // a puddle (in the rain, on top of WET): the water drags at the wheel (one side in it: a tug towards it)
   ];
   // cs per model (drive-type layer, targets §5.4): bx brake excess at full brake + full demand, coast / thr steady attitude
   // change at full demand, liftP / pwr FR/MR rotation, out = unwind factor, turn = turn-in speed factor, w = path-rate cap factor
@@ -2020,6 +2094,7 @@ const Core = (function () {
 
     step(dt) {
       const T = this.track, cars = this.cars;
+      T.inRain = this.rain > 0;   // (the puddles; the track is shared with the title screen's race: the weather of the race being stepped)
       if (this.state === 'racing' || this.state === 'done') this.time += dt;
       for (const c of cars) if (!(c.q.i >= 0)) c.q = T.query(c.x, c.z, -1, c.q);   // a car placed without a track lookup finds itself first
       // rubber band vs player

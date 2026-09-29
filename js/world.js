@@ -4755,7 +4755,9 @@ const World = (function () {
     const sS = T.startS;
     P.fields = (def.fields || []).map(([a, b, side, depth], k) => { const R = rng(700 + k); return { s0: sS + a, s1: sS + b, side, a: T.w + 2, depth, ph1: R() * TAU, ph2: R() * TAU }; });
     P.lakes = (def.lakes || []).map(([a, b, side, gap, depth, level], k) => Object.assign(ouBand(sS + a, sS + b, side, gap, gap + depth, 30, 800 + k), { h: level, side, gap, depth }));
-    P.n1 = valueNoise2(501, 120); P.n2 = valueNoise2(502, 42); P.n3 = valueNoise2(503, 60); P.n4 = valueNoise2(504, 16); P.n5 = valueNoise2(505, 7);
+    P.n1 = valueNoise2(501, 120); P.n2 = valueNoise2(502, 42); P.n3 = valueNoise2(503, 60); P.n4 = valueNoise2(504, 16); P.n5 = valueNoise2(505, 7); P.n6 = valueNoise2(506, 260);
+    // islands (def.islands [lake, s, gap, radius], metres after the start line): a knoll of rock and pines out in a lake
+    P.islands = (def.islands || []).map(([l, a, gap, r]) => { const L = P.lakes[l], i = T.idx(sS + a); return L ? { x: T.px[i] + T.nx[i] * L.side * gap, z: T.pz[i] + T.nz[i] * L.side * gap, r, L } : null; }).filter(Boolean);
     // terrain height grid (filled lazily, NaN = not computed yet); at each vertex also the distance beyond the nearest barrier, the field distance, how
     // deep inside a lake and which (for the colours)
     const G = P.G = { x0, z0 }; G.ntx = Math.ceil((x1 - x0) / (OUC * OUT)); G.ntz = Math.ceil((z1 - z0) / (OUC * OUT)); G.nx = G.ntx * OUT + 1; G.nz = G.ntz * OUT + 1;
@@ -4815,7 +4817,9 @@ const World = (function () {
     ouFW(x, z); const flat = sstep(-16, 10, OUN.fd), L = OUN.wl >= 0 ? P.lakes[OUN.wl] : null;
     f += (P.n1(x, z) * 17 + P.n2(x, z) * 6 - 11.5) * sstep(8, 90, dd) * (1 - 0.85 * flat);   // hills and hollows (almost none on the fields)
     f += (P.n4(x, z) - 0.5) * 1.4 * (1 - flat);                                                // knolls and hummocks in the forest
+    f += Math.max(0, P.n6(x, z) * 44 - 16) * sstep(110, 280, ouTG(P.td, x, z)) * (1 - 0.85 * flat);   // farther out the land rises into forested hills (the horizon of the side views)
     if (L) { const e = OUN.we, shore = L.h + 1.1 - 0.4 * e; if (e > -40) f = Math.min(f, e > 0 ? Math.max(L.h - 4.5, shore) : lerp(shore, f, sstep(0, -40, e))); }   // the basin: the water line ~3 m inside the polygon
+    for (const I of P.islands) { const d = Math.hypot(x - I.x, z - I.z); if (d < I.r + 16) f = Math.max(f, I.L.h - 1.8 + 4.8 * sstep(I.r + 14, I.r * 0.35, d) + (P.n4(x * 2.3, z * 2.3) - 0.5) * 1.4); }   // an island: rock and moss out of the water
     return f;
   }
   function ouH(x, z) {   // terrain height
@@ -4966,12 +4970,14 @@ const World = (function () {
     return (ouRTexC = { map: mk(cm), bump: mk(cb) });
   }
   let ouA2Tex = null;
-  function ouAtlas2() {   // the signs (8 rows of 512 x 128): 0 YLEISÖALUE (spectator area), 1 KIELLETTY ALUE (no spectators), 2-5 blue direction signs with an
-    // arrow (Jämsä, Petäjävesi, Korpilahti, Himos), 6 parking, 7 MEDIA (the photographers' spot, the TV tower)
+  function ouAtlas2() {   // the signs, two columns of 8 rows (512 x 128 each). Left (u 0-0.5): 0 YLEISÖALUE (spectator area), 1 KIELLETTY ALUE (no
+    // spectators), 2-5 blue direction signs with an arrow (Jämsä, Petäjävesi, Korpilahti, Himos), 6 parking, 7 MEDIA. Right (u 0.5-1): 0 KAUPPA (the
+    // village shop), 1 SEURANTALO (the village hall), 2 KOULU (the school), 3 the bus stop sign (a 128 px square) and 4 the moose warning (a
+    // triangle on a clear ground: the material cuts it out with alphaTest)
     if (ouA2Tex) return ouA2Tex;
-    const c = document.createElement('canvas'); c.width = 512; c.height = 1024; const x = c.getContext('2d');
+    const c = document.createElement('canvas'); c.width = 1024; c.height = 1024; const x = c.getContext('2d');
     const txt = (s, cx, cy, px, col, w, wt) => { x.fillStyle = col; x.font = (wt || 900) + ' ' + px + 'px Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(s, cx, cy, w || 470); };
-    const board = (k, bg, rim) => { const y = k * 128; x.fillStyle = rim || '#f4f4f2'; x.fillRect(0, y, 512, 128); x.fillStyle = bg; x.fillRect(9, y + 9, 494, 110); return y; };
+    const board = (k, bg, rim, x0) => { const y = k * 128; x0 = x0 || 0; x.fillStyle = rim || '#f4f4f2'; x.fillRect(x0, y, 512, 128); x.fillStyle = bg; x.fillRect(x0 + 9, y + 9, 494, 110); return y; };
     let y = board(0, '#1d7a3c'); txt('YLEISÖALUE', 256, y + 54, 68, '#fff'); txt('SPECTATOR AREA', 256, y + 100, 26, '#fff', 400, 700);
     y = board(1, '#c8211b'); txt('KIELLETTY ALUE', 256, y + 54, 60, '#fff'); txt('NO SPECTATORS', 256, y + 100, 26, '#fff', 400, 700);
     [['Jämsä', '18', 1], ['Petäjävesi', '26', -1], ['Korpilahti', '21', 1], ['Himos', '9', -1]].forEach(([n, km, dir], k) => {
@@ -4980,6 +4986,19 @@ const World = (function () {
       txt(n + '  ' + km, dir > 0 ? 214 : 298, m + 2, 58, '#fff', 330, 700); });
     y = board(6, '#1f56a8'); x.fillStyle = '#fff'; x.fillRect(22, y + 18, 92, 92); txt('P', 68, y + 66, 84, '#1f56a8'); txt('PYSÄKÖINTI', 310, y + 66, 54, '#fff', 350, 700);
     y = board(7, '#f2c230', '#16181c'); txt('MEDIA', 256, y + 66, 76, '#16181c');
+    // the right column: the village's own boards
+    y = board(0, '#f7f4ec', '#b8231c', 512); txt('KAUPPA', 768, y + 66, 84, '#b8231c', 460);
+    y = board(1, '#f2ead2', '#2f5d3a', 512); txt('SEURANTALO', 768, y + 66, 66, '#2f5d3a', 460);
+    y = board(2, '#f7f7f4', '#1f3f7a', 512); txt('KOULU', 768, y + 66, 84, '#1f3f7a', 460);
+    { const y0 = 3 * 128; x.fillStyle = '#f4f4f2'; x.fillRect(512, y0, 128, 128); x.fillStyle = '#1f56a8'; x.fillRect(518, y0 + 6, 116, 116);   // bus stop: a white bus on blue
+      x.fillStyle = '#fff'; x.fillRect(536, y0 + 34, 80, 44); x.fillRect(540, y0 + 78, 72, 8); x.fillStyle = '#1f56a8'; x.fillRect(544, y0 + 40, 20, 16); x.fillRect(568, y0 + 40, 20, 16); x.fillRect(592, y0 + 40, 18, 16);
+      x.fillStyle = '#fff'; x.beginPath(); x.arc(552, y0 + 92, 9, 0, TAU); x.arc(600, y0 + 92, 9, 0, TAU); x.fill(); }
+    { const y0 = 4 * 128, tri = (inset, col) => { x.fillStyle = col; x.beginPath(); x.moveTo(576, y0 + 6 + inset * 1.15); x.lineTo(634 - inset, y0 + 118 - inset * 0.55); x.lineTo(518 + inset, y0 + 118 - inset * 0.55); x.closePath(); x.fill(); };
+      tri(0, '#c8211b'); tri(11, '#f4c21c');   // a red rim, yellow inside, and the black moose walking left (body, neck, head, legs, antlers)
+      x.fillStyle = '#111'; x.beginPath(); x.ellipse(580, y0 + 86, 21, 10, 0, 0, TAU); x.fill();
+      x.beginPath(); x.moveTo(563, y0 + 82); x.lineTo(553, y0 + 70); x.lineTo(545, y0 + 72); x.lineTo(541, y0 + 79); x.lineTo(550, y0 + 80); x.lineTo(558, y0 + 90); x.closePath(); x.fill();
+      for (const lx of [564, 570, 590, 597]) x.fillRect(lx, y0 + 92, 3.5, 17);
+      x.fillRect(549, y0 + 62, 3, 9); x.fillRect(543, y0 + 62, 13, 3); x.fillRect(542, y0 + 58, 3, 6); x.fillRect(553, y0 + 58, 3, 6); }
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (ouA2Tex = t);
   }
   // the low plants' material: vertex coloured, both faces lit as the front one (the blades carry an 'up' normal: lit like the ground they grow on), no shadows cast
@@ -5073,7 +5092,8 @@ const World = (function () {
     ouPrep();
     const P = OU, iE = N - 1, sStart = T.startS, sFin = T.finishS, PI = Math.PI;
     // buildings (def.farms [kind, s, side, off, angle]): where they stand, their flat yards (pushed before the terrain is sampled)
-    const KIND = { house: [11, 7.6, 3.3], house2: [10.5, 7.6, 5.8], barn: [17, 9.5, 4.8], aitta: [4.6, 3.6, 2.5], lato: [5.6, 4.4, 2.7], sauna: [4.4, 3.6, 2.4], yellow: [12, 8, 5.9], tent: [16, 9, 2.8] };
+    const KIND = { house: [11, 7.6, 3.3], house2: [10.5, 7.6, 5.8], barn: [17, 9.5, 4.8], aitta: [4.6, 3.6, 2.5], lato: [5.6, 4.4, 2.7], sauna: [4.4, 3.6, 2.4], yellow: [12, 8, 5.9], tent: [16, 9, 2.8],
+      shop: [12, 8, 4.4], hall: [18, 10, 6.6], school: [22, 9, 4.8], bus: [3.2, 1.6, 2.4] };
     const farms = (def.farms || []).map(([kind, d, side, off, ang]) => {
       const s = clamp(sStart + d, 2, T.len - 2), i = T.idx(s), x = T.px[i] + T.nx[i] * side * off, z = T.pz[i] + T.nz[i] * side * off, K = KIND[kind] || KIND.house;
       const rot = Math.atan2(-side * T.tz[i], -side * T.tx[i]) + (ang || 0);   // its front (local +z) faces the road
@@ -5198,7 +5218,8 @@ const World = (function () {
       box(g, x, y + 1.0, z, 6.25, 0.3, 2.25, rot, col, null, true);
       for (const [a, b] of [[2.0, 0.95], [2.0, -0.95], [-1.8, 0.95], [-1.8, -0.95]]) box(g, x + c * a - s * b, y, z + s * a + c * b, 0.7, 0.7, 0.26, rot, [0.08, 0.08, 0.09], null, true); };
     const tentS = (x, z, rot, col) => { const g = scen.get(x, z), y = ouGround(x, z); gable(g, x, y, z, 2.4, 2.2, 1.3, rot, col, [col[0] * 0.8, col[1] * 0.8, col[2] * 0.8]); };   // a small tent
-    const grill = (x, z) => { const g = scen.get(x, z), y = ouGround(x, z); for (const [a, b] of [[-0.25, 0], [0.25, 0]]) box(g, x + a, y, z + b, 0.06, 0.7, 0.06, 0, [0.2, 0.2, 0.2]); box(g, x, y + 0.7, z, 0.7, 0.2, 0.45, 0, [0.12, 0.12, 0.13], [0.3, 0.1, 0.05]); };
+    const smoke = [];   // [x, y, z, kind]: where smoke rises (1: a grill, 2: a sauna's chimney), built at the end
+    const grill = (x, z) => { const g = scen.get(x, z), y = ouGround(x, z); for (const [a, b] of [[-0.25, 0], [0.25, 0]]) box(g, x + a, y, z + b, 0.06, 0.7, 0.06, 0, [0.2, 0.2, 0.2]); box(g, x, y + 0.7, z, 0.7, 0.2, 0.45, 0, [0.12, 0.12, 0.13], [0.3, 0.1, 0.05]); smoke.push([x, y + 1.0, z, 1]); };
 
     /* ---- buildings ---- */
     const red = [0.55, 0.13, 0.09], trim = [0.94, 0.93, 0.89], roofD = [0.22, 0.22, 0.23], roofR = [0.42, 0.14, 0.1], glass = [0.14, 0.18, 0.24], boards = [0.72, 0.6, 0.42];
@@ -5224,7 +5245,7 @@ const World = (function () {
       } else if (f.kind === 'sauna') {   // lakeside sauna: dark logs, a chimney pipe, a jetty out over the water
         ouHouse(g, x, y, z, rot, L, D, H, { wall: [0.34, 0.24, 0.16], trim: [0.3, 0.2, 0.13], roof: roofD, win: 1, roofH: 1.1 });
         const c = Math.cos(rot), s = Math.sin(rot), jx = x + s * (D / 2 + 1), jz = z - c * (D / 2 + 1), W = ouWater(x, z), wy = W.L ? W.L.h : y - 1;
-        box(g, x + c * 1.2, y + H, z + s * 1.2, 0.3, 1.6, 0.3, rot, [0.12, 0.12, 0.12]);
+        box(g, x + c * 1.2, y + H, z + s * 1.2, 0.3, 1.6, 0.3, rot, [0.12, 0.12, 0.12]); smoke.push([x + c * 1.2, y + H + 1.7, z + s * 1.2, 2]);   // (the sauna is being heated)
         for (let k = 0; k < 7; k++) { const px = jx + s * k * 2, pz = jz - c * k * 2; box(g, px, wy + 0.35, pz, 1.8, 0.12, 2.0, rot, [0.52, 0.42, 0.3], [0.62, 0.5, 0.36], true); if (k % 2) for (const b of [-0.8, 0.8]) box(g, px + c * b, wy - 1.2, pz + s * b, 0.14, 1.6, 0.14, rot, [0.3, 0.24, 0.18]); }
         const bx = jx + s * 9 + c * 2, bz = jz - c * 9 + s * 2; ouLog(g, bx, wy - 0.25, bz, rot + PI / 2 + 0.2, 0.45, 3.6, [0.24, 0.42, 0.26], [0.2, 0.34, 0.22]);   // a rowing boat
       } else if (f.kind === 'tent') {   // Kakaristo's big white marquee (the pop-up restaurant), open towards the road, benches inside
@@ -5233,6 +5254,25 @@ const World = (function () {
         for (let a = -L / 2 + 2; a < L / 2 - 1; a += 3) for (const b of [-1.4, 1.4]) box(g, x + c * a - s * b, y, z + s * a + c * b, 2.2, 0.75, 0.8, rot, [0.5, 0.36, 0.22], [0.62, 0.46, 0.3], true);
         for (let k = 0; k < 18; k++) { const u = (R() - 0.5) * (L - 2), v = (R() - 0.5) * (D - 3); person(x + c * u - s * v, z + s * u + c * v, R() * TAU); }
         flagAt(x + c * (L / 2 + 1.5) + s * 2, z + s * (L / 2 + 1.5) - c * 2, rot, 8); flagAt(x - c * (L / 2 + 1.5) + s * 2, z - s * (L / 2 + 1.5) - c * 2, rot, 8);
+      }
+      else if (f.kind === 'shop' || f.kind === 'hall' || f.kind === 'school') {   // the village: the shop (pale yellow, big windows, a porch roof), the hall (two storeys of
+        // ochre boards), the school (red, a long row of windows); each its board over the front (ouAtlas2's right column)
+        const c = Math.cos(rot), s = Math.sin(rot), at = (u, v) => [x + c * u - s * v, z + s * u + c * v];
+        if (f.kind === 'shop') ouHouse(g, x, y, z, rot, L, D, H, { wall: [0.95, 0.87, 0.6], roof: [0.42, 0.14, 0.1], door: [0.36, 0.22, 0.14], chim: [0.6, 0.25, 0.18], win: 3, glass: [0.22, 0.3, 0.36] });
+        else if (f.kind === 'hall') ouHouse(g, x, y, z, rot, L, D, H, { wall: [0.85, 0.64, 0.3], roof: [0.3, 0.3, 0.32], door: [0.94, 0.93, 0.89], chim: [0.6, 0.25, 0.18], win: 6, roofH: 3.6 });
+        else ouHouse(g, x, y, z, rot, L, D, H, { wall: vr, roof: roofD, door: [0.94, 0.93, 0.89], chim: [0.6, 0.25, 0.18], win: 7 });
+        if (f.kind === 'hall') for (let k = 0; k < 6; k++) { const u = (k + 0.5 - 3) * (L / 6), [px, pz] = at(u, D / 2 + 0.05); box(g, px, y + 3.9, pz, 0.95, 1.2, 0.1, rot, trim, null, true); box(g, px, y + 4.0, pz, 0.72, 1.0, 0.14, rot, glass, null, true); }   // upstairs windows
+        if (f.kind === 'shop') { const [px, pz] = at(0, D / 2 + 1.4); box(g, px, y + 2.6, pz, 5.4, 0.14, 2.8, rot, [0.32, 0.12, 0.09]); for (const u of [-2.5, 2.5]) { const [qx, qz] = at(u, D / 2 + 2.6); box(g, qx, y - 0.1, qz, 0.14, 2.7, 0.14, rot, trim); }   // the porch roof on posts
+          const [bx, bz] = at(4, D / 2 + 1.6); box(g, bx, y, bz, 1.8, 0.45, 0.5, rot, [0.45, 0.3, 0.18], [0.55, 0.38, 0.22], true); }   // a bench
+        const [sx, sz] = at(0, D / 2 + (f.kind === 'shop' ? 2.9 : 0.14)), rowK = f.kind === 'shop' ? 0 : f.kind === 'hall' ? 1 : 2;
+        bannerQ(sx, y + (f.kind === 'shop' ? 2.75 : H - 1.0), sz, -s, c, f.kind === 'hall' ? 4.2 : 3.2, f.kind === 'hall' ? 0.8 : 0.72, 1 - (rowK + 1) / 8, 1 - rowK / 8, 0.5, 1, ban2);
+        if (f.kind !== 'shop') { const [fx, fz] = at(L / 2 + 2, D / 2 + 3); flagAt(fx, fz, rot, 9); }
+      } else if (f.kind === 'bus') {   // a bus stop shelter open to the road: back and side walls, a roof, a bench; the blue stop sign on a pole beside it
+        const c = Math.cos(rot), s = Math.sin(rot), at = (u, v) => [x + c * u - s * v, z + s * u + c * v], wd = [0.55, 0.42, 0.28];
+        { const [px, pz] = at(0, -D / 2); box(g, px, y - 0.1, pz, L, H, 0.12, rot, wd, null, true); }
+        for (const u of [-L / 2, L / 2]) { const [px, pz] = at(u, 0); box(g, px, y - 0.1, pz, 0.12, H, D, rot, wd, null, true); }
+        box(g, x, y + H - 0.1, z, L + 0.4, 0.14, D + 0.5, rot, [0.26, 0.26, 0.27]); { const [px, pz] = at(0, -D / 2 + 0.35); box(g, px, y, pz, L - 0.5, 0.45, 0.4, rot, [0.5, 0.36, 0.22], null, true); }
+        const [px, pz] = at(L / 2 + 1.1, D / 2); box(g, px, y - 0.2, pz, 0.08, 2.8, 0.08, rot, [0.6, 0.61, 0.63]); bannerQ(px, y + 2.0, pz, -s, c, 0.6, 0.6, 0.5, 0.625, 0.5, 0.625, ban2);
       }
       if (f.kind === 'house' || f.kind === 'house2') {   // firewood stacked against the gable end under a lean-to roof (the cut ends out)
         const c = Math.cos(rot), s = Math.sin(rot), wx = x + c * (L / 2 + 0.85), wz = z + s * (L / 2 + 0.85);
@@ -5314,11 +5354,11 @@ const World = (function () {
       for (const sd of [-1, 1]) { const x = ox + dx * 6 - dz * sd * (hw + 1.5), z = oz + dz * 6 + dx * sd * (hw + 1.5); flagAt(x, z, Math.atan2(dz, dx), 6.5); }
       { const bx = ox + dx * 7.5, bz = oz + dz * 7.5, by = ouGround(bx, bz), gb = scen.get(bx, bz), [v0, v1] = row(1);   // KIELLETTY ALUE on the closed road, read from the corner
         for (const o of [-1.25, 1.25]) box(gb, bx - dz * o, by - 0.2, bz + dx * o, 0.09, 2.3, 0.09, Math.atan2(dz, dx), [0.35, 0.3, 0.24]);
-        bannerQ(bx, by + 1.25, bz, dx, dz, 3.2, 0.8, v0, v1, 0, 1, ban2); }
+        bannerQ(bx, by + 1.25, bz, dx, dz, 3.2, 0.8, v0, v1, 0, 0.5, ban2); }
       for (const sd of [-1, 1]) person(ox + dx * 10 - dz * sd * 1.6, oz + dz * 10 + dx * sd * 1.6, Math.atan2(-dz, -dx) - PI / 2, [1, 0.5, 0.1]);   // marshals
       { const k = juncs.indexOf(c), sj = sm - 45, [px, pz, ii] = onSide(sj, 1, 1.4), py = ouGround(px, pz), gp = scen.get(px, pz);   // two blue direction signs on a post before the corner, facing the arriving cars
         box(gp, px, py - 0.2, pz, 0.1, 3.3, 0.1, T.hd[ii], [0.6, 0.61, 0.63]);
-        for (let q = 0; q < 2; q++) { const [v0, v1] = row(2 + (k * 2 + q) % 4); bannerQ(px, py + 2.3 - q * 0.62, pz, T.tx[ii], T.tz[ii], 2.2, 0.55, v0, v1, 0, 1, ban2); }
+        for (let q = 0; q < 2; q++) { const [v0, v1] = row(2 + (k * 2 + q) % 4); bannerQ(px, py + 2.3 - q * 0.62, pz, T.tx[ii], T.tz[ii], 2.2, 0.55, v0, v1, 0, 0.5, ban2); }
         exclPush(px, pz, 2); }
       exclPush(ox, oz, 10);
     }
@@ -5344,7 +5384,7 @@ const World = (function () {
       if (hard(x, z) || ouNear(x, z).dd < off - 0.5 || ouWater(x, z).e > -3) return false;
       const y = ouGround(x, z), g = scen.get(x, z), [v0, v1] = row(rowK);
       for (const u of [-W * 0.4, W * 0.4]) box(g, x + T.tx[i] * u, y - 0.2, z + T.tz[i] * u, 0.08, 1.1 + H, 0.08, T.hd[i], [0.35, 0.3, 0.24]);
-      bannerQ(x, y + 0.85, z, T.nx[i], T.nz[i], W, H, v0, v1, 0, 1, ban2); exclPush(x, z, W / 2 + 0.5); CR.block(x, z, W, 0.4, T.hd[i]); return true; };   // (nobody stands in it)
+      bannerQ(x, y + 0.85, z, T.nx[i], T.nz[i], W, H, v0, v1, 0, 0.5, ban2); exclPush(x, z, W / 2 + 0.5); CR.block(x, z, W, 0.4, T.hd[i]); return true; };   // (nobody stands in it)
     const run = (sa, sb, side, o) => { const a = Math.max(sa, sStart + 40), b = Math.min(sb, sFin - 30), first = (o && o.first) || M.first, n = crowdRun(CR, a, b, side, Object.assign({}, M, o));
       if (n >= 14 && tape(a - 3, b + 3, side, first) > 2 && n >= 40) board2(a - 5, side, Math.max(1.2, first - 0.9) + 0.3, 0, 2.6, 0.66);   // a big crowd stands behind a tape, a YLEISÖALUE sign where it begins
       return n; };
@@ -5362,6 +5402,7 @@ const World = (function () {
     for (const sd of [-1, 1]) { run(sStart - 10, sStart + 80, sd, { rows: 3, dens: 0.55, label: 'OU start' }); run(sFin - 70, sFin + 5, sd, { rows: 3, dens: 0.5, label: 'OU finish' }); }
     for (const nm of T.names) { const s0 = sStart + nm.d + 60; if (nm.n === 'Ouni') for (const sd of [-1, 1]) run(s0 - 40, s0 + 100, sd, { first: 2.5, rows: 2, dens: 0.4, label: 'OU Ouni' }); }
     for (let s = sStart + 150; s < sFin - 150; s += 170) { const sd = R() < 0.5 ? -1 : 1; run(s, s + 22, sd, { rows: 2, dens: 0.35, clump: 0.9, label: 'OU group' }); }
+    for (const [a, b, sd, rows, dens] of def.crowds || []) run(sStart + a, sStart + b, sd, { rows, dens, first: 3.4, label: 'OU street ' + a });   // (the village: people along its street, behind the garden fences)
     // the TV: a scaffold camera tower behind the crowd across from the Yellow House (a cameraman on it), photographers with a MEDIA sign at the Yellow House and the Amazon
     const filmer = (x, y, z, fx, fz) => {   // someone filming (a spectator's pose comes from a hash of the spot: it is nudged until the hash says 'filming')
       for (let t = 0; t < 64; t++) { const jx = x + ((t & 7) - 3.5) * 0.08, jz = z + ((t >> 3) - 3.5) * 0.08, p = crH(jx, jz, 2); if (p >= 0.25 && p < 0.35) return crowdPut(CR, jx, y, jz, fx, fz, { flag: 0.05 }, 1); }
@@ -5405,7 +5446,7 @@ const World = (function () {
           carPk(x, z, Math.atan2(T.nz[i] * side, T.nx[i] * side) + (r2 - 0.5) * 0.12, vary(CARC[Math.floor(r3 * CARC.length)], RP, 0.14)); exclPush(x, z, 2.7); n++; }
         if (n) board2(sStart + d0 - 6, side, 2.2, 6, 2.2, 0.55);
         return n; };
-      park(2420, 2525, 1, 24, 46, 7491); park(5095, 5205, 1, 42, 66, 7492);
+      (def.parks || []).forEach(([a, b, sd, o0, o1], k) => park(a, b, sd, o0, o1, 7491 + k));   // (def.parks [s0, s1, side, from, to])
     }
 
     /* ---- the fields: rows of white silage bales, a stack by the road here and there ---- */
@@ -5467,7 +5508,7 @@ const World = (function () {
         exclPush(x, z, 2.5); return tops; };
       const span = (A, B) => { for (let k = 0; k < 3; k++) { const a = A[k], b = B[k], sag = Math.min(1.5, Math.hypot(b[0] - a[0], b[2] - a[2]) * 0.024); let pr = a;   // three wires, sagging
         for (let q = 1; q <= 6; q++) { const t = q / 6, p = [lerp(a[0], b[0], t), lerp(a[1], b[1], t) - sag * 4 * t * (1 - t), lerp(a[2], b[2], t)]; ouRod(veg.get(p[0], p[2]), pr, p, 0.02, wire, 3); pr = p; } } };
-      for (const [a, b, side, off, sp] of [[1570, 2080, 1, 40, 46], [4840, 5650, 1, 100, 50], [5640, 5985, -1, 16, 44]]) { let prev = null; const L = [];   // [s0, s1, side, beyond the barrier, span]
+      for (const [a, b, side, off, sp] of def.lines || []) { let prev = null; const L = [];   // (def.lines [s0, s1, side, beyond the barrier, span])
         for (let d = a; d <= b; d += sp) { const i = T.idx(sStart + d), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + off), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
           if (ouNear(x, z).dd < 4 || excluded(x, z) || ouWater(x, z).e > -3) { prev = null; continue; }
           const tops = pole(x, z, T.hd[i] + PI / 2); if (prev) span(prev, tops); prev = tops; L.push({ d, tops }); }
@@ -5475,17 +5516,26 @@ const World = (function () {
       const ouF = farms.find(f => f.kind === 'house' && f.s > sStart + 1600 && f.s < sStart + 1760);   // the Ouni farmhouse: a line from the nearest pole over the road to its gable
       if (ouF && lines[0].length) { const c = Math.cos(ouF.rot), sn = Math.sin(ouF.rot), x = ouF.x + c * (ouF.L / 2 + 3), z = ouF.z + sn * (ouF.L / 2 + 3);
         if (ouNear(x, z).dd >= 2) { const P0 = lines[0].reduce((b, q) => (Math.abs(q.d + sStart - ouF.s) < Math.abs(b.d + sStart - ouF.s) ? q : b)), rot = Math.atan2(P0.tops[1][2] - z, P0.tops[1][0] - x) + PI / 2; span(P0.tops, pole(x, z, rot)); } }
-      // riukuaita: pairs of posts every 2.6 m just inside the field's edge, three slanting poles from each pair to the next
-      const wood = [0.45, 0.39, 0.31];
-      for (const [a, b, side] of [[-60, 100, -1], [-60, 72, 1], [1600, 2055, -1], [1610, 2045, 1], [4880, 5625, 1], [4890, 5615, -1]]) { let prev = null;
+      // fences (def.fences [s0, s1, side, style]): the roundpole riukuaita (0) just inside a field's edge, pairs of posts every 2.6 m and three slanting poles
+      // from each pair to the next; white pickets (1) along the village's gardens, the people standing behind them (pointed boards in the plants' material)
+      const wood = [0.45, 0.39, 0.31], WP = [0.93, 0.93, 0.9], inBld = (x, z) => farms.some(f => Math.hypot(x - f.x, z - f.z) < Math.max(f.L, f.D) * 0.62 + 1);
+      for (const [a, b, side, style] of def.fences || []) { let prev = null;
         for (let d = a; d <= b; d += 2.6) { const i = T.idx(sStart + d), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 2.8), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
-          if (ouField(x, z) < 0.5 || ouNear(x, z).dd < 2.2 || excluded(x, z)) { prev = null; continue; }
+          if (ouNear(x, z).dd < 2.2 || (style ? inBld(x, z) || ouWater(x, z).e > -3 : ouField(x, z) < 0.5 || excluded(x, z))) { prev = null; continue; }
           const y = ouGround(x, z), g = scen.get(x, z);
-          for (const u of [-0.11, 0.11]) ouRod(g, [x + T.nx[i] * u, y - 0.2, z + T.nz[i] * u], [x + T.nx[i] * u, y + 1.3, z + T.nz[i] * u], 0.045, [0.5, 0.44, 0.35]);
-          if (prev) for (let q = 0; q < 3; q++) ouRod(g, [lerp(prev[0], x, -0.25 + q * 0.12), prev[1] + 0.1 + q * 0.3, lerp(prev[2], z, -0.25 + q * 0.12)], [lerp(prev[0], x, 1.15 + q * 0.12), y + 0.55 + q * 0.3, lerp(prev[2], z, 1.15 + q * 0.12)], 0.04, vary(wood, RC, 0.14));
+          if (style) {
+            box(g, x, y - 0.2, z, 0.1, 1.3, 0.1, T.hd[i], WP);
+            if (prev) { for (const h of [0.3, 0.78]) ouRod(g, [prev[0], prev[1] + h, prev[2]], [x, y + h, z], 0.03, WP, 4);
+              const gv = veg.get(x, z), L = Math.hypot(x - prev[0], z - prev[2]) || 1, ux = (x - prev[0]) / L * 0.045, uz = (z - prev[2]) / L * 0.045;
+              for (let q = 1; q < 8; q++) { const t = q / 8, px = lerp(prev[0], x, t), pz = lerp(prev[2], z, t), py = lerp(prev[1], y, t) - 0.05, BL = [px - ux, py, pz - uz], BR = [px + ux, py, pz + uz], TL = [px - ux, py + 1.0, pz - uz], TR = [px + ux, py + 1.0, pz + uz];
+                gv.triN(BL, BR, TR, UPN, UPN, UPN, WP, WP, WP); gv.triN(BL, TR, TL, UPN, UPN, UPN, WP, WP, WP); gv.triN(TL, TR, [px, py + 1.12, pz], UPN, UPN, UPN, WP, WP, WP); } }
+          } else {
+            for (const u of [-0.11, 0.11]) ouRod(g, [x + T.nx[i] * u, y - 0.2, z + T.nz[i] * u], [x + T.nx[i] * u, y + 1.3, z + T.nz[i] * u], 0.045, [0.5, 0.44, 0.35]);
+            if (prev) for (let q = 0; q < 3; q++) ouRod(g, [lerp(prev[0], x, -0.25 + q * 0.12), prev[1] + 0.1 + q * 0.3, lerp(prev[2], z, -0.25 + q * 0.12)], [lerp(prev[0], x, 1.15 + q * 0.12), y + 0.55 + q * 0.3, lerp(prev[2], z, 1.15 + q * 0.12)], 0.04, vary(wood, RC, 0.14));
+          }
           prev = [x, y, z]; } }
       // log piles: 4-3-2 (or 5-4-3-2) spruce or pine logs along the road, pale cut ends
-      for (const [d, side] of [[380, 1], [1240, -1], [2860, 1], [3480, -1], [3990, 1], [4560, -1], [5470, -1]]) {
+      for (const [d, side] of def.logs || []) {   // (def.logs [s, side])
         const i = T.idx(sStart + d), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 4.2), cx = T.px[i] + T.nx[i] * o, cz = T.pz[i] + T.nz[i] * o;
         if (ouNear(cx, cz).dd < 3 || excluded(cx, cz) || ouField(cx, cz) > -2 || ouWater(cx, cz).e > -3) continue;
         const rows = RC() < 0.5 ? [4, 3, 2] : [5, 4, 3, 2], pine = RC() < 0.5, bark = pine ? [0.5, 0.35, 0.23] : [0.36, 0.31, 0.25], end = [0.86, 0.74, 0.52], g = scen.get(cx, cz);
@@ -5503,6 +5553,37 @@ const World = (function () {
         tri(0.53, 0.03, [0.55, 0.56, 0.58], true); tri(0.53, 0.05, [0.8, 0.1, 0.08]); tri(0.4, 0.065, [0.98, 0.8, 0.12]);
         box(g, px + fx * 0.075, y + 2.12, pz + fz * 0.075, 0.06, 0.24, 0.012, hd + PI / 2, [0.08, 0.08, 0.08]); box(g, px + fx * 0.075, y + 2.0, pz + fz * 0.075, 0.06, 0.06, 0.012, hd + PI / 2, [0.08, 0.08, 0.08]);
         exclPush(px, pz, 1.5); }
+    }
+
+    /* ---- Finnish details: moose warning signs (def.moose.signs [s, side]: a yellow triangle with a moose, facing the arriving cars), a moose at a forest
+       edge (def.moose.animals [s, side, beyond the barrier, angle, wading: out in a lake's shallows]), rowing boats full of fans sitting out on the lakes ---- */
+    {
+      const RM = rng(7521), mo = def.moose || {};
+      for (const [d, side] of mo.signs || []) { const [px, pz, ii] = onSide(sStart + d, side, 1.6); if (excluded(px, pz)) continue;
+        const y = ouGround(px, pz), g = scen.get(px, pz), fx = -T.tx[ii], fz = -T.tz[ii];
+        box(g, px, y - 0.2, pz, 0.07, 2.5, 0.07, T.hd[ii], [0.6, 0.61, 0.63]); bannerQ(px + fx * 0.05, y + 1.7, pz + fz * 0.05, fx, fz, 1.15, 1.15, 0.375, 0.5, 0.5, 0.625, ban2); exclPush(px, pz, 1.5); }
+      for (const [d, side, off, ang, wade] of mo.animals || []) { const i = T.idx(sStart + d); let o = side * ((side > 0 ? T.br[i] : T.bl[i]) + off), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
+        if (wade) {   // (wading: from there out into the lake, to where the water comes up to its knees)
+          let ok = false; for (let k = 0; k < 120 && !ok; k++, o += side * 0.5) { x = T.px[i] + T.nx[i] * o; z = T.pz[i] + T.nz[i] * o; const W = ouWater(x, z); ok = !!W.L && W.e > 2 && W.L.h - ouGround(x, z) > 0.35; }
+          if (!ok) continue; }
+        if (excluded(x, z)) continue;
+        const y = ouGround(x, z), g = scen.get(x, z), rot = T.hd[i] + (ang || 0), c = Math.cos(rot), sn = Math.sin(rot), at = (u, v, h) => [x + c * u - sn * v, y + h, z + sn * u + c * v];
+        const fur = [0.23, 0.16, 0.11], legC = [0.35, 0.3, 0.25], ant = [0.66, 0.6, 0.47];   // a bull moose: dark body over long pale legs, a shoulder hump, the long head, palmate antlers
+        box(g, x, y + 1.1, z, 2.5, 1.05, 0.95, rot, fur); { const [hx, , hz] = at(0.95, 0, 0); box(g, hx, y + 1.45, hz, 0.9, 0.95, 0.85, rot, fur); }
+        ouRod(g, at(1.3, 0, 1.9), at(1.85, 0, 2.3), 0.22, fur, 4); { const [hx, , hz] = at(2.15, 0, 0); box(g, hx, y + 2.05, hz, 0.8, 0.45, 0.36, rot, fur); }
+        for (const v of [-1, 1]) { ouRod(g, at(1.95, v * 0.12, 2.45), at(1.85, v * 0.55, 2.7), 0.05, ant, 3); const [ax, ay, az] = at(1.8, v * 0.75, 2.62); box(g, ax, ay, az, 0.5, 0.08, 0.5, rot + v * 0.35, ant); }
+        for (const [u, v] of [[0.95, -0.3], [0.95, 0.3], [-0.95, -0.3], [-0.95, 0.3]]) ouRod(g, at(u, v, 1.2), at(u, v, -0.1), 0.09, legC, 4);
+        exclPush(x, z, 5); }
+      for (const L of P.lakes) for (let k = 0; k < 3; k++) {   // boats: a white hull with a green rim, three fans sitting in each, looking at the road
+        let x = 0, z = 0, ok = false;
+        for (let t = 0; t < 40 && !ok; t++) { x = lerp(L.x0, L.x1, RM()); z = lerp(L.z0, L.z1, RM()); ok = ouWater(x, z).e > 14 && ouGround(x, z) < L.h - 1.2 && !P.islands.some(I => Math.hypot(x - I.x, z - I.z) < I.r + 12); }
+        if (!ok) continue;
+        const q = ouSeg(x, z), rot = Math.atan2(T.tz[q.i], T.tx[q.i]) + (RM() - 0.5) * 0.7, g = scen.get(x, z), c = Math.cos(rot), sn = Math.sin(rot), y = L.h;
+        box(g, x, y - 0.2, z, 3.8, 0.55, 1.3, rot, [0.9, 0.9, 0.88], [0.5, 0.4, 0.3]); box(g, x, y + 0.3, z, 3.9, 0.08, 1.36, rot, [0.2, 0.42, 0.28]);
+        for (const u of [2.1, -2.1]) box(g, x + c * u, y - 0.15, z + sn * u, 0.5, 0.42, 0.7, rot, [0.9, 0.9, 0.88]);   // (blunt bow and stern)
+        const fx = T.px[q.i] - x, fz = T.pz[q.i] - z;
+        for (let m = 0; m < 3; m++) { const u = (m - 1) * 1.15; crowdPut(CR, x + c * u, y + 0.05, z + sn * u, fx, fz, { sit: 1 }, 0); }
+      }
     }
 
     /* ---- low plants (their own chunks, casting no shadow): grass tufts and summer flowers on the verges and the ditch banks (lupins in drifts, pink fireweed in
@@ -5574,13 +5655,15 @@ const World = (function () {
           const hd = ouTG(P.td, x, z); if (hd > 240) continue;
           const far = hd > 80; if (far && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // farther out every other spot (bigger trees: a closed canopy from above)
           const fd = ouField(x, z); if (fd > -1.5 && (fd < 6 || r1 > 0.004)) continue;   // (a lone tree now and then out on a field)
-          if (ouWater(x, z).e > -5) continue;
+          const isle = P.islands.find(I => Math.hypot(x - I.x, z - I.z) < I.r + 3);   // (on an island: pines, where it is dry)
+          if (ouWater(x, z).e > -5 && !(isle && ouGround(x, z) > isle.L.h + 0.9)) continue;
           const nn = ouNear(x, z); if (nn.i >= 0 && nn.dd < 2.6) continue; if (nn.i >= 0 && nn.dd < 6 && r2 < 0.3) continue;
           if (excluded(x, z) || r1 > 0.93) continue;
           const y = ouGround(x, z), trend = ouTG(P.th, x, z), rise = y - trend, edge = (nn.i >= 0 && nn.dd < 14) || (fd > -14);
           const pPine = clamp(0.25 + rise * 0.06 + (P.n2(x * 1.4 + 300, z * 1.4) - 0.5) * 0.9, 0.05, 0.85), pBirch = edge ? 0.35 : 0.1 + 0.15 * sstep(0.6, 0.8, P.n1(x * 2 + 70, z * 2));
           let sp = r3 < pBirch ? 2 : r3 < pBirch + (1 - pBirch) * pPine ? 1 : 0;
           if (sp === 0 && edge && r4 < 0.25) sp = 3;   // young spruce at the edges
+          if (isle) sp = 1;
           const hgt = sp === 0 ? 13 + r4 * 8 : sp === 1 ? 15 + r4 * 9 : sp === 2 ? 11 + r4 * 6 : 2.5 + r4 * 3, big = far ? 1.15 : 1;
           const wid = hgt * (sp === 0 ? 0.52 + r2 * 0.14 : sp === 1 ? 0.8 + r2 * 0.3 : sp === 2 ? 0.85 + r2 * 0.25 : 0.7);
           const cv = 0.86 + r2 * 0.26; (far && sp < 3 ? tkF : tk)[sp].add(x, y - 0.15, z, r1 * 70, wid * big, hgt * big, [cv * (0.94 + r4 * 0.1), cv, cv * (0.94 + r3 * 0.1)]);
@@ -5590,13 +5673,36 @@ const World = (function () {
     }
     for (const t of tk.concat(tkF)) t.addTo(root, true);
 
+    /* ---- the puddles of a race in the rain (T.puddles, Render.setWet shows them and darkens the wet road and grass): the grey sky mirrored in
+       the middle, darker towards a muddy rim, following the road's curve and height; one mesh, hidden in the dry ---- */
+    if (T.puddles.length) {
+      const g = new GB(), PP = (s, d) => { const f = s / T.ds, i = clamp(Math.floor(f), 0, T.N - 2), t = f - i, j = i + 1, nx = lerp(T.nx[i], T.nx[j], t), nz = lerp(T.nz[i], T.nz[j], t);
+        return [lerp(T.px[i], T.px[j], t) + nx * d, lerp(T.hy[i], T.hy[j], t) + 0.035, lerp(T.pz[i], T.pz[j], t) + nz * d]; };
+      const SKY = [0.55, 0.59, 0.63], MID = [0.38, 0.4, 0.42], RIM = [0.3, 0.27, 0.22], n = 14, RP = rng(7531);
+      for (const [s, d, hl, hw] of T.puddles) {
+        const c = PP(s, d), below = [c[0], c[1] - 5, c[2]], ph = RP() * TAU, wob = [];
+        for (let k = 0; k < n; k++) { const a = k / n * TAU; wob.push([Math.cos(a), Math.sin(a), 0.84 + 0.16 * Math.sin(a * 3 + ph) * Math.cos(a * 2 - ph)]); }
+        const ring = (f) => wob.map(([cx, sz, w]) => PP(s + cx * hl * w * f, d + sz * hw * w * f)), I = ring(0.62), O = ring(1);
+        for (let k = 0; k < n; k++) { const m = (k + 1) % n;
+          g.triO(c, I[k], I[m], SKY, below);
+          g.triO(I[k], O[k], O[m], MID, below, RIM, RIM); g.triO(I[k], O[m], I[m], MID, below, RIM, MID); }
+      }
+      const m = new THREE.Mesh(g.geometry(), new THREE.MeshBasicMaterial({ vertexColors: true })); m.matrixAutoUpdate = false; m.visible = false; m.name = 'puddles'; root.add(m);
+      out.dyn.wet = { puddles: m, road: rMat, ground: gMat, base: { sh: rMat.shininess, sp: rMat.specular.getHex() } };
+    }
+
     /* ---- finish the meshes, the sky: cloud shadows and the TV helicopter (Pikes Peak's) ---- */
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: ouAtlas(T.cpS.map(kmS)), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
-    const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: ouAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
+    const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: ouAtlas2(), side: THREE.FrontSide, alphaTest: 0.5 }), true); if (bm2) bm2.castShadow = false;   // (alphaTest: the triangular moose sign)
     { const vg = new THREE.Group(); vg.name = 'plants'; root.add(vg); veg.addTo(vg, ouVegMat(), false, true); }
     crowdFinish(CR, root, out);
+    if (smoke.length) {   // thin smoke from the grills and the sauna chimneys, drifting in a light breeze (Red Bull Ring's plumes, fewer and smaller puffs)
+      const PL = [null, { per: 9, life: 6, lifeV: 2, rise: 5, riseV: 2, flare: 0.16 }, { per: 12, life: 8, lifeV: 3, rise: 9, riseV: 4, flare: 0 }];
+      const t = rbSmokeTex(); out.ownTex.push(t);
+      root.add(rbSmoke(smoke.map(([x, y, z, k]) => [x, y - 0.5, z, k === 1 ? [0.74, 0.74, 0.76] : [0.62, 0.62, 0.64], k === 1 ? 0.45 : 0.7, PL[k]]), CR.U.uTime, t, [0.5, 0.3]));
+    }
     pkSky({ root, tex, out, sStart, gH: ouGround, far: true });
     out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld };   // (read by the tests)
     return out;
@@ -6105,6 +6211,8 @@ const World = (function () {
     const n = C.ppl.addTo(grp);
     C.strip.addTo(grp, new THREE.MeshBasicMaterial({ vertexColors: true, blending: THREE.MultiplyBlending, transparent: true, depthWrite: false, fog: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4 }), false, false);
     out.dyn.crowd = C.U; out.crowdN = n; out.crowdLog = C.log;
+    const cells = out.crowdCells = new Map();   // the fans per 24 m square (Sfx: how many stand near the car, the cheering on a rally stage)
+    for (const L of C.sp.values()) for (let q = 0; q < L.length; q += 2) { const k = Math.floor(L[q] / 24) + ',' + Math.floor(L[q + 1] / 24); cells.set(k, (cells.get(k) || 0) + 1); }
     return n;
   }
 
@@ -7009,22 +7117,23 @@ const World = (function () {
     '}'].join('\n');
   const RB_SMOKE_FS = ['uniform sampler2D uMap;', 'varying vec2 vUv;', 'varying vec3 vCol;', 'varying float vA;', '#include <fog_pars_fragment>',
     'void main() { float a = texture2D(uMap, vUv).a * vA; if (a < 0.005) discard; gl_FragColor = vec4(vCol, a);', '  #include <fog_fragment>', '}'].join('\n');
-  function rbSmoke(list, uTime, tex) {
-    const PER = 32, n = list.length * (PER + 1), P = new Float32Array(n * 12), C2 = new Float32Array(n * 8), A = new Float32Array(n * 16), K = new Float32Array(n * 12), I = [], r = rng(1965);
+  const RB_PLUME = { per: 32, life: 10, lifeV: 4, rise: 18, riseV: 10, flare: 0.3 };   // (a list entry's 6th item overrides it: Ouninpohja's grills and chimneys)
+  function rbSmoke(list, uTime, tex, wind) {
+    const n = list.reduce((a, e) => a + (e[5] || RB_PLUME).per + ((e[5] || RB_PLUME).flare ? 1 : 0), 0), P = new Float32Array(n * 12), C2 = new Float32Array(n * 8), A = new Float32Array(n * 16), K = new Float32Array(n * 12), I = [], r = rng(1965);
     let q = 0;
     const put = (x, y, z, ph, life, rise, size, col) => {
       for (let v = 0; v < 4; v++) { const o = q * 4 + v; P[o * 3] = x; P[o * 3 + 1] = y; P[o * 3 + 2] = z; C2[o * 2] = v & 1 ? 1 : -1; C2[o * 2 + 1] = v & 2 ? 1 : -1;
         A[o * 4] = ph; A[o * 4 + 1] = life; A[o * 4 + 2] = rise; A[o * 4 + 3] = size; K[o * 3] = col[0]; K[o * 3 + 1] = col[1]; K[o * 3 + 2] = col[2]; }
       const b = q * 4; I.push(b, b + 1, b + 3, b, b + 3, b + 2); q++; };
-    for (const [x, y, z, col, sz] of list) {
-      const life = 10 + r() * 4, rise = 18 + r() * 10;
+    for (const [x, y, z, col, sz, pl] of list) {
+      const L = pl || RB_PLUME, PER = L.per, life = L.life + r() * L.lifeV, rise = L.rise + r() * L.riseV;
       for (let k = 0; k < PER; k++) put(x + (r() - 0.5) * 0.6, y + 0.5, z + (r() - 0.5) * 0.6, (k + r() * 0.5) / PER, life * (0.85 + r() * 0.3), rise * (0.8 + r() * 0.4), sz * (0.8 + r() * 0.4), col);
-      put(x, y + 1.0, z, r(), -1, 0, 0.3, [1, 0.66, 0.4]);
+      if (L.flare) put(x, y + 1.0, z, r(), -1, 0, L.flare, [1, 0.66, 0.4]);
     }
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('aC', new THREE.BufferAttribute(C2, 2)); g.setAttribute('aP', new THREE.BufferAttribute(A, 4)); g.setAttribute('aCol', new THREE.BufferAttribute(K, 3));
     g.setIndex(I); g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
-    const mat = new THREE.ShaderMaterial({ uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uMap: { value: null }, uWind: { value: new THREE.Vector2(RB_WIND[0], RB_WIND[1]) } }]),
+    const mat = new THREE.ShaderMaterial({ uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uMap: { value: null }, uWind: { value: new THREE.Vector2(...(wind || RB_WIND)) } }]),
       vertexShader: RB_SMOKE_VS, fragmentShader: RB_SMOKE_FS, transparent: true, depthWrite: false, fog: true, side: THREE.DoubleSide });
     mat.uniforms.uTime = uTime; mat.uniforms.uMap.value = tex;   // (after the merge: it would copy them)
     const m = new THREE.Mesh(g, mat); m.frustumCulled = false; m.renderOrder = 4; m.matrixAutoUpdate = false; m.name = 'smoke';

@@ -362,42 +362,42 @@
  "ouninpohja/cs": {
   "finished": 1,
   "cars": 1,
-  "winner": 149.82,
+  "winner": 231.77,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "ab35a2b3a8c5c7bc02c6dc40"
+  "digest": "fb803c0bbb5616d3277d3f6c"
  },
  "ouninpohja/cs/rain": {
   "finished": 1,
   "cars": 1,
-  "winner": 165.03,
+  "winner": 255.06,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "3444bf91a3ca71b1e9ee6e66"
+  "digest": "17cf6a96cb9ee581a9df3b4f"
  },
  "ouninpohja/arcade": {
   "finished": 1,
   "cars": 1,
-  "winner": 154.43,
+  "winner": 238.48,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "6cd89670597e93dc8fa35197"
+  "digest": "fe1a8354c6a2cbcdb31fd4e4"
  },
  "ouninpohja/arcade/rain": {
   "finished": 1,
   "cars": 1,
-  "winner": 169.97,
+  "winner": 262.62,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "76b5cc168d8a2addc8d750e1"
+  "digest": "e079994b94f84e62eb08a20e"
  },
  "nring/cs": {
   "finished": 21,

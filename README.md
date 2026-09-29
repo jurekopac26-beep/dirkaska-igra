@@ -7,7 +7,7 @@ Vzpon od starta (2862 m) do vrha (4301 m) proti uri, brez nasprotnikov. Na poti 
 
 ## Ouninpohja (kronometer na makadamu)
 
-Najslavnejša hitrostna preizkušnja Relija Finska (Jämsä): vožnja proti uri po makadamu, brez nasprotnikov, od Hämepohje do Hassintieja, v smeri, v kateri jo vozijo od leta 1995. Prava preizkušnja je dolga ~33 km in ima več kot 75 skokov, v igri je sorazmerno skrajšana na ~5,9 km z 18 skoki, kraji pa so v pravem vrstnem redu:
+Najslavnejša hitrostna preizkušnja Relija Finska (Jämsä): vožnja proti uri po makadamu, brez nasprotnikov, od Hämepohje do Hassintieja, v smeri, v kateri jo vozijo od leta 1995. Prava preizkušnja je dolga ~33 km in ima več kot 75 skokov, v igri je sorazmerno skrajšana na ~9,7 km z 28 skoki, kraji pa so v pravem vrstnem redu:
 
 - prvi ovinek pri Hämepohji,
 - dolg desni ovinek ob jezeru Naarajärvi in velik vrh za njim,
@@ -15,11 +15,18 @@ Najslavnejša hitrostna preizkušnja Relija Finska (Jämsä): vožnja proti uri 
 - skok pri Rumeni hiši (Keltainen talo): hiša stoji levo ob cesti, vrh je ~90 m za njo, avto pristane rahlo navkreber med hišami. Markko Märtin je tam leta 2003 preletel 57 m; v igri je to najdaljši skok (~50–58 m pri polnem plinu), navijači ob cesti imajo table pri 40, 50 in 57 m,
 - »stopnice« (trije skoki navzdol) do križišča Mutanen, kjer se zavije ostro levo,
 - hitra in široka Okskulmantie,
+- dodan odsek, ki ga na pravi preizkušnji ni (a je v istem slogu): vrhovi v smrekovem gozdu, ribnik s savno, vas s trgovino (KAUPPA), dvorano (SEURANTALO), šolo (KOULU), avtobusno postajo, gledalci ob ulici in ostrim levim v križišču, nato vrh za vasjo. Imena teh krajev pove samo komentator, pod uro se ne izpišejo,
 - skok Amazon čez vrh tik pred levim ovinkom,
 - lasnica v križišču Kakaristo med polji (največ gledalcev in šotor z gostilno),
 - ozka cesta mimo Liisanmutke in leteči cilj na Hassintieju.
 
-Na poti so štiri kontrolne točke (CP1–CP4, modre table kot radijske točke na reliju) z vmesnimi časi, pod uro pa namesto nadmorske višine piše, koliko je še do cilja. Rekordi in lestvica najboljših 10 časov se shranijo kot pri Pikes Peaku, nadgradnje avta veljajo tudi tu.
+Na poti so štiri kontrolne točke (CP1–CP4, modre table kot radijske točke na reliju) z vmesnimi časi, pod uro pa namesto nadmorske višine piše, koliko je še do cilja. Rekordi in lestvica najboljših 10 časov se shranijo kot pri Pikes Peaku, nadgradnje avta veljajo tudi tu. Časi s prejšnje, 5,9 km dolge preizkušnje se s sedanjimi ne primerjajo: nova proga ima svoje rekorde in svojega duha.
+
+- **Dež** (vreme izbereš pod seznamom prog, glej Vreme): na Ouninpohji je v dežju po cesti 46 luž, makadam je temnejši in se sveti, trava ob cesti je temnejša. Luža zavira kolo, ki zapelje vanjo (samo eno kolo v luži malo potegne avto vstran), iz nje pljuskne voda z blatom. Ni prahu, sledi drsenja so temne, avto se hitreje umaže. Vožnja v dežju ima svoje rekorde, lestvico, duha in medalje.
+- **Sovoznik**: med vožnjo angleški sovoznik z drugim glasom kot komentator (hitreje, višje) bere opombe za progo ~2,5 s pred ovinki: ovinke od ena (najpočasnejši) do šest, »flat« za skoraj ravne, lasnice in pravokotne ovinke (»square left«), »long«, »tightens«, »opens«, skoke (»jump«, »big jump«), vrhove (»crest«, »over crest«), povezave (»into«, »and«) in dolžine ravnin (»one fifty«). Komentator medtem molči ali ga sovoznik prekine. V Nastavitvah ga lahko izklopiš (Sovoznik na reliju).
+- **Skoki**: po vsakem daljšem skoku se na zaslonu izpiše njegova dolžina (npr. SKOK 43 m). Pri Rumeni hiši igra shrani tvoj najdaljši skok in ga primerja z Märtinovimi 57 m (REKORD SKOKA!, DLJE OD MÄRTINA!), komentator pa pove dolžino. Na koncu je na rezultatih najdaljši skok vožnje, na lestvici pa tvoj rekord pri Rumeni hiši.
+- **Medalje**: zlata, srebrna in bronasta za vsako fiziko ter za suho in dež (zlato je približno čas relijskega avta na avtopilotu). Na rezultatih piše, katero si dobil in koliko ti manjka do naslednje, na kartici proge je ikona medalje tvojega rekorda, na lestvici so časi za medalje.
+- **Zvok**: hrustanje makadama (glasnejše v drsenju) in kamenčki, ki tolčejo po podvozju; v dežju šumenje vode izpod koles, pljusk v vsaki luži in dež. Navijači ob cesti vzklikajo in trobijo s trobljami, ko pripelješ mimo (glasneje, ko skočiš pred njimi), nad avtom pa brni TV helikopter.
 
 Okolica:
 
@@ -30,6 +37,7 @@ Okolica:
 - **Reli**: navijači s finskimi zastavami stojijo za rdeče-belim trakom. Zelene table YLEISÖALUE označujejo prostor za gledalce, rdeče KIELLETTY ALUE pa zaprte ceste v križiščih (tam se druga cesta nadaljuje naravnost, zaprta z balami slame, stražijo jo redarji v oranžnem). Pred križišči so modre smerne table (Jämsä, Petäjävesi …), pred ostrimi ovinki rumeni opozorilni trikotniki. Na poljih pri Rumeni hiši in v Kakaristu so parkirišča z avtomobili navijačev, za gledalci prenosna stranišča. Fotografi stojijo pri tabli MEDIA, pri Rumeni hiši pa na TV stolpu snemalec.
 - **Table preizkušnje**: start z lučmi, CP loki, rumena tabla pred ciljem, rdeča na letečem cilju in STOP 200 m za njim.
 - **Helikopter in kamera**: TV helikopter se drži daleč od kamere (prej je v izometričnem pogledu pogosto prekril pol zaslona), njegova senca pa drsi po tleh. Drevesa in hiše med kamero in avtom se sproti razredčijo, da avta ne zakrijejo.
+- **Finske podrobnosti**: rumene table z losom ob gozdu, los na robu gozda in drugi, ki brodi po ribniku med trstiko. Na jezerih so čolni z navijači, na velikem jezeru otok z bori. Iz žarov ob taborih navijačev in iz dimnikov savn se vije dim. Na obzorju se dvigajo gozdnati griči.
 
 ## Nürburgring Nordschleife
 
@@ -96,7 +104,7 @@ Na vseh progah čez pokrajino počasi drsijo sence oblakov (v dežju jih ni, ker
 
 ## Vreme
 
-Na zaslonu **Izberi progo** izbereš vreme: **Suho**, **Dež** ali **Naključno** (vsaka dirka posebej: dež približno v vsaki tretji dirki, na Spa v vsaki drugi, na Nordschleife skoraj v vsaki drugi). V dežju imajo vsi avti manj oprijema (v ovinkih in pri speljevanju za petino, zavore za desetino), zato drsijo bolj in dlje; tekmeci z AI zato vozijo ovinke počasneje in prej zavirajo, krog je 6–9 % počasnejši. Cesta je temna in mokra, nebo oblačno, vidljivost manjša, dež pada v curkih, izpod koles se dviga pršec (namesto dima iz gum), s trave in gramoza pa leti blato. Slišati je dež in šumenje gum po vodi, komentator pa ob štartu omeni dež. Kadar je izbran Dež, dežuje tudi na naslovnem zaslonu.
+Na zaslonu **Izberi progo** izbereš vreme: **Suho**, **Dež** ali **Naključno** (vsaka dirka posebej: dež približno v vsaki tretji dirki, na Spa v vsaki drugi, na Nordschleife skoraj v vsaki drugi). V dežju imajo vsi avti manj oprijema (v ovinkih in pri speljevanju za petino, zavore za desetino), zato drsijo bolj in dlje; tekmeci z AI zato vozijo ovinke počasneje in prej zavirajo, krog je 6–9 % počasnejši. Cesta je temna in mokra, nebo oblačno, vidljivost manjša, dež pada v curkih, izpod koles se dviga pršec (namesto dima iz gum), s trave in gramoza pa leti blato. Slišati je dež in šumenje gum po vodi, komentator pa ob štartu omeni dež. Kadar je izbran Dež, dežuje tudi na naslovnem zaslonu. Kronometra (Pikes Peak in Ouninpohja) imata v dežju svoje rekorde, lestvico in duha. Kadar je izbran Dež, kartica proge in lestvica pokažeta te.
 
 ## Dirka s prijateljem
 
