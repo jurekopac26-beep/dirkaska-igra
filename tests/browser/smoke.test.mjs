@@ -76,17 +76,17 @@ try {
     T.check('title screen with the demo race moving behind it', scr === 'title' && diff > n * 0.05, `screen ${scr}, ${(100 * diff / n).toFixed(0)} % of the image bytes changed`);
   }
 
-  // 6b. rain: the weather row on the track screen; a race at Spa in the rain (every car on the wet grip, the streaks drawn, spray behind
+  // 6b. rain: the weather row on the track screen; a race at Spa in the rain (every car on rain tyres: the wet grip, a little less as they wear; the streaks drawn, spray behind
   //     the cars), the title demo follows the setting; back to dry, the next race is dry again
   {
     const row = await page.evaluate(() => [...document.querySelectorAll('[data-set="weather"] button')].map(b => b.textContent + (b.classList.contains('sel') ? '*' : '')).join(' | '));
-    T.check('weather row: Suho (selected) | Dež | Naključno', row === 'Suho* | Dež | Naključno', row);
+    T.check('weather row: Suho (selected) | Dež | Naključno | Menljivo', row === 'Suho* | Dež | Naključno | Menljivo', row);
     const e0 = errors.length;
     await page.evaluate(() => document.querySelector('[data-set="weather"] button[data-v="rain"]').click());
     await startTrack(page, 'spa');
     const nan = await simulate(page, 20);
     await page.waitForTimeout(1500);   // (a second and a half of real frames: the spray)
-    const r = await page.evaluate(() => { const g = window.__game, R = g.race; return { rain: R.rain, wet: R.cars.every(c => c.wet === 0.8), drawn: Render.raining, spray: Render.fxStats().alive, dist: Math.round(R.player.dist), saved: JSON.parse(localStorage.getItem('tdgp-settings')).weather,
+    const r = await page.evaluate(() => { const g = window.__game, R = g.race; return { rain: R.rain, wet: R.cars.every(c => c.wet <= 0.8 && c.wet > 0.79 && c.ty && c.ty.k === 'wet'), drawn: Render.raining, spray: Render.fxStats().alive, dist: Math.round(R.player.dist), saved: JSON.parse(localStorage.getItem('tdgp-settings')).weather,
       birds: Render.birds.mesh.visible, clouds: Render.world.dyn.clouds.K.value }; });
     T.check('Spa in the rain: wet grip for every car, rain drawn, spray, the setting saved; no birds, no cloud shadows', r.rain === 1 && r.wet && r.drawn && r.spray > 10 && r.dist > 200 && r.saved === 'rain' && !r.birds && r.clouds === 0 && !nan && errors.length === e0, JSON.stringify(r) + (errors.length > e0 ? ' errors: ' + errors.slice(e0).join(' | ') : ''));
     await page.evaluate(() => window.__game.onAction('to-title')); await page.waitForTimeout(600);

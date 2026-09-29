@@ -268,7 +268,7 @@ const Render = (function () {
   }
 
   /* ---------------- materials (shared) ---------------- */
-  let matCar, matWheel, matTailOff, matTailOn, matBlob, matMarker;
+  let matCar, matWheel, matTailOff, matTailOn, matBlob, matMarker, matScOn, matScOff;
   // scratches: thin bright streaks through the paint, mostly lengthwise, patchy; strongest on the roof/upper body
   const SCRATCH_GLSL = [
     '{ vec3 p = vLp;',
@@ -701,7 +701,7 @@ const Render = (function () {
   let dust = null;
   const debrisMeshes = [];
   let particles, skids, views = [];
-  let rain = null, wet = -1, themeId = 'lake', birds = null;   // rain streaks; the weather drawn now (race.rain; -1: not applied yet), the world's theme
+  let rain = null, wet = -1, wetW = -1, dryLn = null, themeId = 'lake', birds = null;   // rain streaks; the weather drawn now (race.rain, the rain, and race.water, the water on the road; -1: not applied yet), the dry racing line, the world's theme
   let basePR = 1, dynScale = 1;
   let settings = { quality: 'high', shadows: true, camera: 'iso' };
   const cam = { x: 0, z: 0, lx: 0, lz: 0, zoom: 1, hs: 0, shake: 0, init: false, userZoom: 1 };
@@ -730,6 +730,7 @@ const Render = (function () {
     matTailOn = new THREE.MeshBasicMaterial({ color: 0xff2a1a });
     matBlob = new THREE.MeshBasicMaterial({ map: tex.blob, transparent: true, depthWrite: false, opacity: 0.8 });
     matMarker = new THREE.MeshBasicMaterial({ color: 0xffd23f });
+    matScOn = new THREE.MeshBasicMaterial({ color: 0xffa21a }); matScOff = new THREE.MeshLambertMaterial({ color: 0x4a3312 });   // (the safety car's lamps)
     particles = new Particles(2400); scene.add(particles.points);
     sparkP = new Particles(700, true); scene.add(sparkP.points);
     glows = new Glows(4 * 16); scene.add(glows.points);
@@ -752,7 +753,8 @@ const Render = (function () {
     clearPropMeshes();
     world = World.build(scene, track, tex, { density });
     if (!world.farClip && camera.far !== 700) { camera.far = 700; camera.updateProjectionMatrix(); }
-    applyTheme((track.def && track.def.theme) || 'lake'); wet = -1;   // (the weather again on the new world's road)
+    applyTheme((track.def && track.def.theme) || 'lake'); wet = wetW = -1;   // (the weather again on the new world's road)
+    if (dryLn) { scene.remove(dryLn); dryLn.geometry.dispose(); dryLn.material.dispose(); dryLn = null; }
     birds.reset(!!(track.def && (track.def.sea || track.def.theme === 'monaco')));   // (gulls by the sea)
     return world;
   }
@@ -903,20 +905,55 @@ const Render = (function () {
     sun.color.copy(mix(t.sun, 0xe8eef4, 0.8)); sun.intensity = t.sunI * (1 - 0.62 * r);
     if (post) { post.mat.uniforms.uTint.value.set(t.tint[0] - 0.03 * r, t.tint[1], t.tint[2] + 0.03 * r); post.mat.uniforms.uSat.value = t.sat * (1 - 0.2 * r); post.mat.uniforms.uHaze.value = (t.haze || 0) * (1 - r); if (t.hazeCol) post.mat.uniforms.uHazeCol.value.set(t.hazeCol[0], t.hazeCol[1], t.hazeCol[2]); }
   }
-  // the weather of the race on screen (race.rain 0..1): the sky, the streaks, and a darker road (asphalt, paving, kerbs, makadam: every
-  // material of the world with one of those textures, back to its own colour when dry)
+  // the weather of the race on screen (race.rain 0..1): the sky and the streaks
   function applyWeather(r) {
     wet = r; applyTheme(themeId); rain.mesh.visible = r > 0; rain.mat.uniforms.uA.value = 0.5 * Math.min(1, r * 1.5);
     birds.mesh.visible = !(r > 0); if (r > 0) birds.reset(birds.gull);   // (no birds in the rain)
     if (!world || !world.root) return;
     if (world.dyn.clouds) world.dyn.clouds.K.value = world.dyn.clouds.k0 * (1 - r);   // (no cloud shadows under the rain's overcast)
-    const maps = [tex.asphalt, tex.paving, tex.curb, tex.makadam].filter(Boolean);
-    world.root.traverse(o => { for (const m of o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []) {
-      if (!m.color || !maps.includes(m.map)) continue;
-      if (!m.userData.dry) m.userData.dry = m.color.clone();
-      m.color.copy(m.userData.dry).multiplyScalar(1 - (m.map === tex.curb ? 0.22 : 0.36) * r); } });
+  }
+  // the water on the road (race.water 0..1: with the rain, or still wet after it, see Race._weather): a darker road (asphalt, paving, kerbs,
+  // makadam: every material of the world with one of those textures, back to its own colour when dry)
+  function applyRoad(w) {
+    wetW = w;
+    if (!world || !world.root) return;
+    if (!world.wetMats) {   // (found once per world)
+      const maps = [tex.asphalt, tex.paving, tex.curb, tex.makadam].filter(Boolean), L = world.wetMats = [];
+      world.root.traverse(o => { for (const m of o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []) {
+        if (!m.color || !maps.includes(m.map) || L.includes(m)) continue;
+        if (!m.userData.dry) m.userData.dry = m.color.clone();
+        L.push(m); } });
+    }
+    for (const m of world.wetMats) m.color.copy(m.userData.dry).multiplyScalar(1 - (m.map === tex.curb ? 0.22 : 0.36) * w);
     const W = world.dyn.wet;   // (a gravel stage with a road of its own, Ouninpohja: its puddles show, the gravel darkens and glistens, the verges darken)
-    if (W) { W.puddles.visible = r > 0; W.road.color.setScalar(1 - 0.36 * r); W.road.shininess = r > 0 ? 28 : W.base.sh; W.road.specular.setHex(r > 0 ? 0x3c3e40 : W.base.sp); W.ground.color.setScalar(1 - 0.2 * r); }
+    if (W) { W.puddles.visible = w > 0; W.road.color.setScalar(1 - 0.36 * w); W.road.shininess = w > 0 ? 28 : W.base.sh; W.road.specular.setHex(w > 0 ? 0x3c3e40 : W.base.sp); W.ground.color.setScalar(1 - 0.2 * w); }
+  }
+  // the dry line (a changing weather, Race opts weather: after the rain the racing line dries first): a band of dry road along it, as light as
+  // the line is drier than the rest of the road. One mesh along the whole lap, built the first time it shows
+  function dryLine(R) {
+    const W = R && R.wst, T = R && R.track, k = W && W.wx && T && !T.open && T.rl ? clamp((W.water - W.line) * 2.4, 0, 1) : 0;
+    if (k > 0.01 && !dryLn && world) {
+      const N = T.N, st = N > 6000 ? 2 : 1, n = Math.ceil(N / st) + 1, O = [-1.7, -0.95, 0.95, 1.7], A = [0, 1, 1, 0];
+      const pos = new Float32Array(n * 12), col = new Float32Array(n * 16), uv = new Float32Array(n * 8), idx = [], bk = { dy: 0, sl: 0 };
+      for (let j = 0; j < n; j++) {
+        const i = (j * st) % N, s = i * T.ds, rl = T.rl[i];
+        for (let v = 0; v < 4; v++) {
+          const o = rl + O[v], b = j * 4 + v; let y = (T.hasElev && T.hy ? T.hy[i] : 0) + 0.03;
+          if (T.bank) y += T.bankAt(s, o, bk).dy;
+          pos[b * 3] = T.px[i] + T.nx[i] * o; pos[b * 3 + 1] = y; pos[b * 3 + 2] = T.pz[i] + T.nz[i] * o;
+          col[b * 4] = col[b * 4 + 1] = col[b * 4 + 2] = 0.95; col[b * 4 + 3] = A[v];
+          uv[b * 2] = o / 7; uv[b * 2 + 1] = j * st * T.ds / 7;
+        }
+        if (j < n - 1) for (let v = 0; v < 3; v++) { const a = j * 4 + v, c = a + 4; idx.push(a, a + 1, c, a + 1, c + 1, c); }   // (facing up)
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 4)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setIndex(idx);
+      g.computeVertexNormals();
+      const base = world.asphaltMat, m = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+      if (base) m.color.copy(base.userData.dry || base.color);
+      dryLn = new THREE.Mesh(g, m); dryLn.receiveShadow = true; dryLn.renderOrder = 1; dryLn.matrixAutoUpdate = false; scene.add(dryLn);
+    }
+    if (dryLn) { dryLn.visible = k > 0.01; dryLn.material.opacity = k; }
   }
 
   /* ---------------- post-processing (high quality): tilt-shift miniature look, edge smoothing, colour grade, vignette ---------------- */
@@ -977,7 +1014,7 @@ const Render = (function () {
   function sharedCarRes() {
     const g = new Set([wheelGeo, wheelGeoW, ...geoCache.values(), ...tailGeoCache.values()]);
     if (p206Geo) for (const n of p206Geo) for (const p of n.prims) g.add(p.g);
-    const m = new Set([matCar, matWheel, matTailOff, matTailOn, matBlob, matMarker, matUnder, matEngine, matLens, matLensBroken]);
+    const m = new Set([matCar, matWheel, matTailOff, matTailOn, matBlob, matMarker, matUnder, matEngine, matLens, matLensBroken, matScOn, matScOff]);
     if (p206Mats) for (const k in p206Mats) m.add(p206Mats[k]);
     return { g, m };
   }
@@ -1004,7 +1041,44 @@ const Render = (function () {
     buildParts(v);
     scene.add(v.grp); return v;
   }
+  /* ---------------- flags (race.fl, see Race._flags): the safety car, a car of its own with a light bar on the roof (the two lamps flash
+     orange while it leads the field, off when it goes in), and a marshal's waving yellow flag beside the track before a yellow zone ---------------- */
+  let scView = null;
+  const flagPool = [];
+  function scDrop() { if (!scView) return; const k = views.indexOf(scView); if (k >= 0) views.splice(k, 1); disposeView(scView); scView = null; }
+  function flagMesh() {
+    const g = new THREE.Group();
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 2.3, 6), new THREE.MeshLambertMaterial({ color: 0xd8d8d8 })); pole.position.y = 1.15; g.add(pole);
+    const cloth = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 0.62), new THREE.MeshLambertMaterial({ color: 0xffd21f, side: THREE.DoubleSide }));
+    cloth.geometry.translate(0.5, 0, 0); cloth.position.y = 1.95; g.add(cloth); g.userData.cloth = cloth;
+    const man = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.24, 1.55, 8), new THREE.MeshLambertMaterial({ color: 0xff7a1a })); man.position.set(0.15, 0.78, 0.25); g.add(man);   // (the marshal in orange overalls)
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 6), new THREE.MeshLambertMaterial({ color: 0xf2f2f2 })); head.position.set(0.15, 1.7, 0.25); g.add(head);
+    g.visible = false; scene.add(g); return g;
+  }
+  function updateFlags() {
+    const R = curRace, F = R && R.fl, X = F && F.sc ? F.sc.car : null, T = R && R.track;
+    if (scView && scView.car !== X) scDrop();
+    if (X && !scView) {
+      scView = makeView(X); views.push(scView); scView.dec.visible = false;
+      const bar = new THREE.Group(), dx = scView.dec.position.x, y = scView.dec.position.y + 0.05, w = X.m.wid * 0.62;
+      const base = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.08, w), new THREE.MeshLambertMaterial({ color: 0x1a1a1a })); bar.add(base);
+      scView.lamps = [-1, 1].map(sd => { const l = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.12, w * 0.34), matScOff); l.position.set(0, 0.08, sd * w * 0.3); bar.add(l); return l; });
+      bar.position.set(dx, y, 0); scView.bodyG.add(bar);
+    }
+    if (scView) { const on = F.sc.state === 'out', ph = (time * 2.6) % 1 < 0.5; scView.lamps[0].material = on && ph ? matScOn : matScOff; scView.lamps[1].material = on && !ph ? matScOn : matScOff; }
+    const Y = F ? F.yel : [];
+    while (flagPool.length < Math.min(4, Y.length)) flagPool.push(flagMesh());
+    for (let k = 0; k < flagPool.length; k++) {
+      const g = flagPool[k], y = Y[k]; g.visible = !!y && !T.open;
+      if (!g.visible) continue;
+      const i = T.idx(y.s - 110), br = T.br ? T.br[i] : T.w, d = br + 1.6;
+      g.position.set(T.px[i] + T.nx[i] * d, (T.hasElev && T.hy ? T.hy[i] : 0), T.pz[i] + T.nz[i] * d);
+      g.rotation.y = -Math.atan2(T.pz[(i + 1) % T.N] - T.pz[i], T.px[(i + 1) % T.N] - T.px[i]) + Math.PI / 2;
+      g.userData.cloth.rotation.y = Math.sin(time * 7 + k) * 0.9; g.userData.cloth.rotation.z = Math.sin(time * 5.3 + k) * 0.25;
+    }
+  }
   function attachRace(race) {
+    scDrop();
     const old = views;
     views = []; curTrack = race.track; curRace = race; clearDebris(); dust = race.track.def.dust ? Object.assign({}, DUST0, race.track.def.dust) : null;
     if (world && world.props && world.props.length && race.setProps && !race.props) race.setProps(world.props, world.propFloor);
@@ -1460,7 +1534,7 @@ const Render = (function () {
       if (v.scrU) v.scrU.value = Core.sstep(0.3, 0.9, c.dmg || 0);
       if (v.dirtU && !(opt && opt.noFx) && !c.air && dt > 0) {
         let loose = 0; for (let k = 0; k < 4; k++) { const sf = c.ws[k]; if (sf === 2 || sf === 3 || sf >= 5) loose++; }
-        if (loose) v.dirtU.value = Math.min(1, v.dirtU.value + dt * loose * (1 + 1.5 * Math.max(0, wet)) * 0.012 * clamp(c.speed / 12, 0.2, 1.5));   // (rain: mud, two and a half times as fast)
+        if (loose) v.dirtU.value = Math.min(1, v.dirtU.value + dt * loose * (1 + 1.5 * Math.max(0, wetW)) * 0.012 * clamp(c.speed / 12, 0.2, 1.5));   // (rain: mud, two and a half times as fast)
       }
       if (v.marker) { v.marker.visible = !!markerOn; v.marker.position.y = 4 + Math.sin(time * 5) * 0.3; v.marker.rotation.y = time * 2; }
       // --- effects ---
@@ -1605,7 +1679,7 @@ const Render = (function () {
       const hard = -(c.impactVY || 0), gy = c.roadY || 0;
       if (hard > 2.2) {
         let loose = 0; for (let k = 0; k < 4; k++) { const sf = c.ws[k]; if (sf >= 2 && sf !== 4) loose++; }
-        const dirt = loose >= 2, n = Math.min(26, 8 + hard * 2.2), wetL = wet > 0;   // (in the rain: a splash of muddy water)
+        const dirt = loose >= 2, n = Math.min(26, 8 + hard * 2.2), wetL = wetW > 0;   // (in the rain: a splash of muddy water)
         for (let k = 0; k < n; k++) {
           const a = k / n * Math.PI * 2 + Math.random() * 0.4, sp = (2.5 + Math.random() * 3) * Math.min(1.6, hard / 6);
           const cr = wetL ? 0.66 : dirt ? 0.8 : 0.78, cg = wetL ? 0.67 : dirt ? 0.66 : 0.77, cb = wetL ? 0.68 : dirt ? 0.46 : 0.75;
@@ -1615,7 +1689,7 @@ const Render = (function () {
       }
     }
     const slide = (c.arcade ? Core.sstep(0.26, 0.62, Math.abs(c.beta || 0)) * 1.2 : Math.max(0, c.latR - 1.0) / 3.5) + c.spin * 0.9 + (c.lock ? 0.55 : 0) + (c.inHand > 0.5 && spd > 5 ? 0.45 : 0);
-    const rainy = wet > 0, near = !rainy || Math.hypot(x - (cam.vcx || 0), z - (cam.vcz || 0)) < 140;   // (rain: spray only where it can be seen, the particles are shared)
+    const rainy = wetW > 0.1, near = !rainy || Math.hypot(x - (cam.vcx || 0), z - (cam.vcz || 0)) < 140;   // (rain: spray only where it can be seen, the particles are shared)
     const wheels = [[-M.b, -tw, 2], [-M.b, tw, 3], [M.a, -tw, 0], [M.a, tw, 1]];
     for (let k = 0; k < 4; k++) {
       const [lx, lz, wi] = wheels[k];
@@ -1646,7 +1720,7 @@ const Render = (function () {
       if (front) continue;
       if (rainy && onHard) {   // a wet road: a mist of spray off the rear tyres at speed, thicker in a slide (no tyre smoke)
         if (spd > 7 && near) {
-          v.acc[k] += (clamp(spd / 36, 0, 1.4) + intens * 0.7) * 26 * wet * dt;
+          v.acc[k] += (clamp(spd / 36, 0, 1.4) + intens * 0.7) * 26 * wetW * dt;
           while (v.acc[k] >= 1) {
             v.acc[k] -= 1;
             const sh = 0.9 + Math.random() * 0.1, sp = 0.35 + Math.random() * 0.15;
@@ -1744,6 +1818,17 @@ const Render = (function () {
       tx = x + fx * ahead; tz = z + fz * ahead; ty = baseY;
       px = tx - fx * D * Math.cos(pitch); pz = tz - fz * D * Math.cos(pitch); py = baseY + D * Math.sin(pitch);
       if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); updatePointScale(); }
+    } else if (mode === 'tv') {
+      // the replay's TV cameras: on posts every 170 m beside the track (on the outside of the bends), 9 m up; the one ahead of the car
+      // until it has gone 60 m past it, then a cut to the next; zoomed so the car fills about the same part of the picture
+      const C = tvCams(curTrack), s = c.q && Number.isFinite(c.q.s) ? c.q.s : 0, L = curTrack.len, n = C.length;
+      let k = Math.floor(s / 170) % n; if (curTrack.open) k = Core.clamp(k, 0, n - 1);
+      const P = C[k]; px = P.x; py = P.y; pz = P.z; tx = x; ty = (c.y || 0) + 0.7; tz = z;
+      if (cam.tvK !== k) { cam.tvK = k; cam.tx = tx; cam.tz = tz; }
+      cam.tx += (tx - cam.tx) * (1 - Math.exp(-dt * 9)); cam.tz += (tz - cam.tz) * (1 - Math.exp(-dt * 9)); tx = cam.tx; tz = cam.tz;   // (a camera operator's smooth pan)
+      const d = Math.hypot(px - tx, py - ty, pz - tz), fov = Core.clamp(2 * Math.atan(6.5 / Math.max(1, d)) * 180 / Math.PI, 4, 55);
+      if (Math.abs(camera.fov - fov) > 0.05) { camera.fov = fov; camera.updateProjectionMatrix(); updatePointScale(); }
+      cam.gy = (c.y || 0);
     } else if (mode === 'kino') {
       // 'kino': the fixed, lower and closer view of the reference racer: heading set per circuit, ~42 deg tilt, look-ahead along the travel
       const fx = Math.sin(camYaw), fz = -Math.cos(camYaw);
@@ -1783,12 +1868,27 @@ const Render = (function () {
     sun.target.updateMatrixWorld();
   }
   let sunOff = [-80, 96, 70], camYaw = 0, lastMode = 'iso';
+  // TV camera posts (the replay): every 170 m, 40 m past the start of its stretch, on the outside of the bend there (else alternating
+  // sides), 14 m beyond the road's edge and 9 m above it (over the fences; higher where the ground beside the road is)
+  function tvCams(T) {
+    if (T._tv) return T._tv;
+    const out = [], n = Math.max(1, Math.floor(T.len / 170));
+    for (let k = 0; k < n; k++) {
+      const s = k * 170 + 110, i = T.idx(s); let ks = 0; for (let d = -40; d <= 40; d += 8) ks += T.k[T.idx(s + d)] || 0;
+      const side = Math.abs(ks) > 0.004 ? (ks > 0 ? -1 : 1) : (k % 2 ? 1 : -1), off = side * ((T.br ? Math.max(T.w, side > 0 ? T.br[i] : (T.bl ? T.bl[i] : T.w)) : T.w) + 14);
+      const x = T.px[i] + T.nx[i] * off, z = T.pz[i] + T.nz[i] * off; let y = (T.hasElev && T.hy ? T.hy[i] : 0) + 9;
+      if (world && world.groundH) { const g = world.groundH(x, z); if (Number.isFinite(g)) y = Math.max(y, g + 5); }
+      out.push({ x, y, z, s });
+    }
+    return (T._tv = out);
+  }
   function shake(a) { cam.shake = Math.max(cam.shake, Math.min(1.2, a)); }
   function resetCam() { cam.init = false; }
 
   function frame(dt, alpha, target, mode, opt) {
     time += dt;
     updateCrew(dt);   // (first: it sets how far the player's car is up on the jacks)
+    updateFlags();
     updateCars(dt, alpha, opt);
     syncDebris(); syncProps();
     for (let k = 0; k < views.length; k++) { const v = views[k], c = v.car; if ((c.repairN || 0) !== v.repairN) {   // repaired in the pits: a fresh car (and a burst of sparkle)
@@ -1798,7 +1898,9 @@ const Render = (function () {
     World.update(world, time, target, camera);
     if (target) updateCamera(dt, target, mode, alpha);
     World.view(world, camera, target, alpha);   // (Ouninpohja: the forest between the camera and the car fades out)
-    { const r = curRace ? curRace.rain || 0 : 0; if (r !== wet) applyWeather(r); }
+    { const R = curRace, q = (v) => v > 0 ? Math.max(0.05, Math.round(v * 20) / 20) : 0;   // (a changing weather: in steps of 5 %)
+      const r = R ? q(R.rain || 0) : 0, w = R ? q(R.water != null ? R.water : R.rain || 0) : 0;
+      if (r !== wet) applyWeather(r); if (w !== wetW) applyRoad(w); dryLine(R); }
     if (birds.mesh.visible && target && world) birds.update(Math.min(dt, 0.1), cam.vcx || 0, cam.vcz || 0, world.groundH || (() => 0));
     if (rain.mesh.visible) {   // the box of streaks around the view centre (the iso camera sees the most ground, the chase camera the least)
       const U = rain.mat.uniforms, B = lastMode === 'chase' ? [62, 30, 62] : lastMode === 'kino' ? [72, 34, 72] : [86, 38, 86];
@@ -1894,6 +1996,7 @@ const Render = (function () {
   const dbg = { noSmoke: false };
   function setDebug(o) { Object.assign(dbg, o); }
   function fxStats() { let n = 0; for (let i = 0; i < particles.max; i++) if (particles.life[i] > 0) n++; return { alive: n, emitted: particles.cur }; }
-  return { setDebug, fxStats, setGhost, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagPool.filter(g => g.visible).length }; }   // (tests)
+  return { setDebug, fxStats, flagInfo, setGhost, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 

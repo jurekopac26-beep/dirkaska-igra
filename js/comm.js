@@ -58,6 +58,17 @@ const Comm = (() => {
     partLost: ['There goes the {part}!', 'The {part} has come clean off!', 'Bits flying everywhere, that was the {part}!'],
     heavyDamage: ["Smoke pouring from the engine! That doesn't look good!", 'Heavy damage! Nurse it home!', 'That car is badly hurt now!'],
     pitIn: ['Into the pit lane!', 'Coming in for repairs!', 'He dives into the pits!'],
+    // flags: a yellow flag, the safety car, overtaking under them
+    yellow: ['Yellow flags! A car has stopped on the track.', 'Yellow flag waving, careful through there!', 'Yellow flags, a stranded car ahead!'],
+    sc: ['The safety car is out! No overtaking!', 'Safety car deployed! The field will bunch up behind it.', 'Here comes the safety car! Everyone slows down.'],
+    scIn: ['The safety car is coming in! Get ready for the restart!', 'Safety car in this lap! Warm up those tyres!', 'The lights are off on the safety car, restart coming!'],
+    green: ['Green flag! We are racing again!', 'And we are green! Back to racing!', 'Green, green, green! Racing resumes!'],
+    passWarn: ['Overtaking under the flag! Give that place back!', 'That was a pass under yellow! Let him back through!', 'No overtaking under the flag! Give the position back!'],
+    penalty: ['A five second penalty!', 'That will cost you: five seconds added!', 'Penalty! Five seconds on your race time!'],
+    // a changing weather (the rain starts or stops during the race) and the tyres
+    rainStart: ['And here comes the rain! The track is getting wet!', 'Spots of rain on the visors! Slicks or rain tyres now?', 'It is starting to rain! The grip is going away!'],
+    rainStop: ['The rain has stopped! The track will start to dry.', 'No more rain! Watch for a dry line appearing.', 'The rain has eased off. A drying track now!'],
+    dryLine: ['A dry line is appearing! Those rain tyres are overheating!', 'The racing line is dry now. Time for slicks?', 'Dry line! The rain tyres will not last on this.'],
     drs: ['DRS open down the straight!', 'The rear wing opens, DRS is on!', 'Within a second at the line, DRS for the chase!'],
     // qualifying: one flying lap alone, the rivals' times make the grid
     qualiIntro: ['Welcome to {track}! Qualifying first: one flying lap, and your time decides where you start.', 'Here we are at {track} for qualifying. One lap on your own, give it everything!', 'Qualifying at {track}! Just you and the clock for one lap.'],
