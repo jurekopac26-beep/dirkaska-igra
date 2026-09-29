@@ -1204,31 +1204,31 @@
   }
  },
  "spa/crash/cs": {
-  "digest": "8d602448a1b77f72ec4147e8",
-  "lead": 2541.4,
+  "digest": "62eda86c233be2819223f202",
+  "lead": 10226.2,
   "car0": [
-   857.73,
-   1447.08
+   858.23,
+   1324.99
   ],
   "cover": {
    "dmg": 1,
-   "loose": 10,
+   "loose": 14,
    "rescues": 0,
-   "repairs": 0
+   "repairs": 1
   }
  },
  "spa/crash/arcade": {
-  "digest": "e9456ea793040042aa3b4bb7",
-  "lead": 2496.6,
+  "digest": "6be80a988e36b173a9509f4a",
+  "lead": 9893.2,
   "car0": [
-   822.78,
-   1490.38
+   699.74,
+   773
   ],
   "cover": {
-   "dmg": 0.49,
-   "loose": 2,
+   "dmg": 0.88,
+   "loose": 3,
    "rescues": 0,
-   "repairs": 0
+   "repairs": 1
   }
  }
 }

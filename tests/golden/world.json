@@ -157,17 +157,17 @@
  },
  "spa": {
   "meshes": 831,
-  "verts": 378680,
-  "instances": 30177,
+  "verts": 425730,
+  "instances": 30152,
   "props": 80,
-  "crowd": 5762,
-  "world": "43267314",
+  "crowd": 5771,
+  "world": "150d7d91",
   "propsHash": "5faf0407",
-  "floor": "a5579c71/14000",
+  "floor": "f94f37e9/14000",
   "groups": {
-   "-:MeshLambertMaterial": "ee494cc6",
-   "-:MeshBasicMaterial": "400e008d",
-   "crowd:MeshLambertMaterial": "d1db1f34"
+   "-:MeshLambertMaterial": "9d4d1946",
+   "-:MeshBasicMaterial": "ea500c3a",
+   "crowd:MeshLambertMaterial": "a4105474"
   }
  }
 }
