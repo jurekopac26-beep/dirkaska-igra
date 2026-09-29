@@ -3743,6 +3743,23 @@ const World = (function () {
     pk.rotor.rotation.y = (t * 41) % TAU; pk.tail.rotation.z = (t * 73) % TAU;
   }
 
+  /* ---- more of the real course: Crystal Reservoir by the start, the toll gate, the old ski lift at the Ski Area hairpin,
+     the crowded ladder of the W's, the Summit Visitor Center (own random stream) ---- */
+  function pkLandmarks2(K) {
+  }
+
+  /* ---- mountain weather by altitude: sun in the forest, low cloud drifting over the ridge, light snowfall near the summit;
+     wet road below the melting snow banks (built at the end of buildPikes; pkWeatherUpdate runs every frame) ---- */
+  function pkWeather(K) {
+  }
+
+  function pkWeatherUpdate(wx, t, car) {
+  }
+
+  /* ---- race-day animation: the marshals wave their flags as the car goes by (pkOpsUpdate runs every frame when out.dyn.pkOps is set) ---- */
+  function pkOpsUpdate(ops, t, car) {
+  }
+
   function buildPikes(scene, tex, opts) {
     const R = rng(7311), N = T.N, w = T.w, dens = opts.density || 1;
     const root = new THREE.Group(); scene.add(root);
@@ -3970,6 +3987,7 @@ const World = (function () {
     pkCog(K);
     pkRaceOps(K);
     pkSnow(K);
+    pkLandmarks2(K);
 
     /* ---- more spectators (instanced, hashed: no draws from R): both sides of every hairpin, the insides of the forest bends, the "W's" ladder,
        more rows at the checkpoints, the start and the finish, small groups on the high side along the ridge; only where the ground is not below the road ---- */
@@ -4029,6 +4047,8 @@ const World = (function () {
     crowdFinish(CR, root, out);
 
     pkSky(K);
+
+    pkWeather(K);
 
     out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, rails: +(nRail / (2 * N)).toFixed(3) };   // (read by the tests)
     return out;
@@ -4825,6 +4845,8 @@ const World = (function () {
     if (d.crowd) { d.crowd.uTime.value = t % 1000; if (car) d.crowd.uCar.value.set(car.x, car.roadY || 0, car.z); }   // spectators: arm waving, cheering near the followed car
     if (d.water) { d.water.offset.x = (t * 0.012) % 1; d.water.offset.y = (t * 0.007) % 1; }
     if (d.pk) pkUpdate(d.pk, t, car);   // Pikes Peak: the TV helicopter, the cloud shadows
+    if (d.pkWx) pkWeatherUpdate(d.pkWx, t, car);   // Pikes Peak: cloud banks, snowfall
+    if (d.pkOps) pkOpsUpdate(d.pkOps, t, car);   // Pikes Peak: the marshals' flags
     if (d.boats) {
       const L = d.lake;
       for (const b of d.boats) {
