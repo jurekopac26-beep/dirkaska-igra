@@ -158,10 +158,10 @@ const Core = (function () {
         const tS = (k) => { const t = def.turns[k - 1]; return this.nearestIdx(t[0], t[1]) * ds - this.startS; }, W = (d) => ((d % len) + len) % len;
         this.drs = def.drs.map(([t, det, act, nt]) => ({ det: W(tS(t) + det), act: W(tS(t) + act), end: W(tS(nt) - 60) }));
       }
-      // a gravel stage that can be driven in the rain (def.rain = { seed, puddles }; open roads): its puddles, [s, d (m across, + right),
-      // half length, half width]; pudAt: per sample, the puddle there (-1: none). wet: set by the race driving on it (Race.step); only
-      // then are the road (6) and the puddles (7) wet surfaces
-      this.puddles = []; this.pudAt = null; this.wet = false;
+      // a gravel stage with puddles in the rain (def.rain = { seed, puddles }; open roads): [s, d (m across, + right), half length,
+      // half width]; pudAt: per sample, the puddle there (-1: none). inRain: the race driving on it has rain (Race.step); only then are the
+      // puddles a surface (6)
+      this.puddles = []; this.pudAt = null; this.inRain = false;
       if (def.rain && open) this._buildPuddles(def.rain);
     }
 
@@ -375,6 +375,13 @@ const Core = (function () {
         const fu = sstep(c.upZ + 30, c.upZ, cdist(i, c.up)), fl = sstep(c.loZ + 24, c.loZ, cdist(i, c.lo));
         for (const [f, t] of [[fu, w + 3], [fl, w + 3.4]]) if (f > 0) { if (BL[i] > t) BL[i] = lerp(BL[i], t, f); if (BR[i] > t) BR[i] = lerp(BR[i], t, f); }
       }
+      // walls the track sets itself (def.walls = [[from, to, side (-1 left, 1 right), metres past the road edge], ...], metres after the start
+      // line, closed circuits): a pit wall right by the road, eased in and out over 20 m
+      if (this.def.walls && !open) {
+        const i0 = this.def.start ? this.nearestIdx(this.def.start[0], this.def.start[1]) : 0;
+        for (const [a, b, side, off] of this.def.walls) { const arr = side > 0 ? BR : BL;
+          for (let d = a - 20; d <= b + 20; d += ds) { const i = ((i0 + Math.round(d / ds)) % N + N) % N, f = Math.min(sstep(a - 20, a, d), sstep(b + 20, b, d)); arr[i] = lerp(arr[i], w + off, f); } }
+      }
       this.bl = BL; this.br = BR;
       // curbs where curvature is meaningful (both sides), dilated — but not on makadam (rally) roads
       const cb = new Uint8Array(N);
@@ -528,8 +535,9 @@ const Core = (function () {
       return out;
     }
 
-    // pit lane (def.pit = [centre offset to the right, from, to, player's box] in metres from the start line): a lane beside the straight,
-    // tapering in from the circuit edge at both ends. Returns null outside it. gap: the lane touches the circuit (no pit wall) - where you drive in and out.
+    // pit lane (def.pit = [centre offset to the right, from, to, player's box, entry length (default 60 m)] in metres from the start line): a lane
+    // beside the straight, tapering in from the circuit edge at both ends. Returns null outside it. gap: the lane touches the circuit (no pit wall) -
+    // where you drive in and out.
     // inner: the player's limit on the pit-wall side: the rail, but where the teams' stands sit on the grass strip behind it (pitStands [d0, d1],
     // set by the world builder from its pit boxes) the lane's edge kerb, eased in and out over 25 m
     pitAt(s) {
@@ -537,7 +545,7 @@ const Core = (function () {
       const L = this.len; let d = s - this.startS; d = ((d % L) + L) % L; if (d > L / 2) d -= L;
       if (d < P[1] || d > P[2]) return null;
       const f = (((s % L) + L) % L) / this.ds, i = Math.floor(f) % this.N, j = (i + 1) % this.N, br = lerp(this.br[i], this.br[j], f - Math.floor(f));
-      const full = Math.max(P[0], br + 5), t = Math.min(sstep(P[1], P[1] + 60, d), sstep(P[2], P[2] - 30, d)), o = lerp(this.w + 3.6, full, t);   // a long, gentle way in
+      const full = Math.max(P[0], br + 5), t = Math.min(sstep(P[1], P[1] + (P[4] || 60), d), sstep(P[2], P[2] - 30, d)), o = lerp(this.w + 3.6, full, t);   // a long, gentle way in
       const S = this.pitStands, e = S ? Math.min(sstep(S[0] - 26, S[0] - 1, d), sstep(S[1] + 26, S[1] + 1, d)) : 0, wall = br + 0.25, lin = o - 3.5;
       return { d, o, t, br, gap: o - 3.5 < br + 0.8, wall, lin, lout: o + 3.5, inner: wall + 0.12 + Math.max(0, lin - 0.3 - wall - 0.12) * e };
     }
@@ -584,15 +592,14 @@ const Core = (function () {
     }
 
     // surface at a query result: 0 asphalt, 1 curb, 2 grass, 3 gravel (def.runoffTarmac: the wide run-off areas are asphalt, 4 as paving;
-    // def.gravelStrips: gravel just past the kerb), 5 makadam; in the rain (wet) 6 wet makadam, 7 a puddle on it
+    // def.gravelStrips: gravel just past the kerb), 5 makadam; 6 a puddle on it (in the rain, inRain: def.rain's puddles)
     surface(q) {
       const d = q.d, ad = Math.abs(d), w = this.w;
       if (ad <= w) {
         if (this.def.roadSurface !== 'makadam') return 0;
-        if (!this.wet) return 5;
-        const p = this.pudAt ? this.pudAt[q.a] : -1;
-        if (p >= 0) { const u = this.puddles[p], a = (q.s - u[0]) / u[2], b = (d - u[1]) / u[3]; if (a * a + b * b < 1) return 7; }
-        return 6;
+        const p = this.inRain && this.pudAt ? this.pudAt[q.a] : -1;
+        if (p >= 0) { const u = this.puddles[p], a = (q.s - u[0]) / u[2], b = (d - u[1]) / u[3]; if (a * a + b * b < 1) return 6; }
+        return 5;
       }
       const i = q.a;
       if (this.curb[i] && ad <= w + this.curbW) return 1;
@@ -661,9 +668,11 @@ const Core = (function () {
     { mu: 0.55, c0: 2.4, c1: 0.16 },   // gravel
     { mu: 0.86, c0: 0.35, c1: 0.03 },   // paving (street circuits)
     { mu: 0.82, c0: 0.6, c1: 0.05 },    // makadam (dirt rally road): decent accel/brake but lively, slidey
-    { mu: 0.7, c0: 0.8, c1: 0.06 },     // wet makadam (a race in the rain): less grip, a little more drag
-    { mu: 0.6, c0: 2.6, c1: 0.12 },     // a puddle on the wet makadam: the water drags at the wheel
+    { mu: 0.7, c0: 2.6, c1: 0.12 },     // a puddle on the makadam (in the rain, on top of WET): the water drags at the wheel
   ];
+  // rain: the grip left on a wet track (x every surface's mu: cornering and traction; the brakes keep 0.55 + 0.45 x of theirs).
+  // Less grip also means bigger, lazier slides in both slide models (as on the loose surfaces)
+  const WET = 0.8;
   // arcade (player) handling: yaw = max nose rotation (rad/s), mu = lateral grip (g), slide = grip kept while sliding
   // SWGP2-style tarmac handling, measured from gameplay video:
   //   amax  : lateral grip (g) - the video's cars corner at ~1.6-2.2 g
@@ -757,8 +766,7 @@ const Core = (function () {
     { lat: 0.58, tr: 0.85, c0: 1.0, c1: 0.05 },     // gravel / sand: whole car ~ -0.4 g of drive (drive about halved, A32/B8a), side grip 0.58
     { lat: 0.88, tr: 0.86, c0: 0.35, c1: 0.03 },    // paving (= SURF)
     { lat: 0.8, tr: 0.82, c0: 0.6, c1: 0.05 },      // makadam: side grip 0.8, tau_v +16 % (C11); drive and drag = SURF (gora's pace unchanged)
-    { lat: 0.68, tr: 0.72, c0: 0.8, c1: 0.06 },     // wet makadam: 0.85 of the dry side grip (lazier slides, tvLoose), drive and brakes 0.88
-    { lat: 0.6, tr: 0.62, c0: 2.6, c1: 0.12 },      // a puddle: the water drags at the wheel (one side in it: a tug towards it)
+    { lat: 0.7, tr: 0.72, c0: 2.6, c1: 0.12 },      // a puddle (in the rain, on top of WET): the water drags at the wheel (one side in it: a tug towards it)
   ];
   // cs per model (drive-type layer, targets §5.4): bx brake excess at full brake + full demand, coast / thr steady attitude
   // change at full demand, liftP / pwr FR/MR rotation, out = unwind factor, turn = turn-in speed factor, w = path-rate cap factor
@@ -824,6 +832,7 @@ const Core = (function () {
       this.y = 0; this.py = 0; this.vy = 0; this.air = 0; this.airT = 0; this.landT = 0; this.impactVY = 0;
       this.roadY = 0; this.gradeNow = 0; this.curvNow = 0;
       this.dmg = 0; this.dz = [0, 0, 0, 0]; this.dents = []; this.dmgMode = 2;
+      this.wet = 1;   // grip left in the rain (Race.setRain): 1 dry
       this.inPit = false; this.pitState = null; this.pitT = 0; this.pitDur = 0; this.pitDone = false; this.repairN = 0;   // pit lane: in it, stopping / repairing at the box
       this.cd = [0, 0, 0, 0]; this.lightOut = [0, 0, 0, 0]; this.lost = {}; this.detach = []; this.hitDebris = 0;
       this.winOut = [0, 0, 0, 0]; this.roofDmg = 0;   // broken windows (windscreen, rear, left, right); roof crumple 0..1   // corners FL/FR/RL/RR, broken lights, lost parts   // damage 0..1; zones front/rear/left/right; 0 off, 1 visual, 2 visual+handling
@@ -895,7 +904,7 @@ const Core = (function () {
         dragC0 += SURF[sf].c0 * 0.25; dragC1 += SURF[sf].c1 * 0.25;
       }
       this.onCurb = curb;
-      const muSurf = muSum / 4;
+      const muSurf = muSum / 4 * this.wet;   // (rain: less grip)
       const fwd = vl > 0.5;
       const beta = spd > 1.5 && fwd ? Math.atan2(vt, vl) : 0;
       this.beta = beta;
@@ -1065,8 +1074,8 @@ const Core = (function () {
         if (k & 1) dragP += dk; else dragN += dk;
       }
       this.onCurb = curb;
-      const muSurf = muSum / 4, muLat = (latF + latB) * 0.5;
-      const muDrv = M.drive === 'FF' ? muF : M.drive === 'AWD' ? muSurf : muR;   // one rear wheel on the grass costs a RWD car traction
+      const wg = this.wet, muSurf = muSum / 4 * wg, muLat = (latF + latB) * 0.5 * wg;   // (rain: less grip)
+      const muDrv = M.drive === 'FF' ? muF * wg : M.drive === 'AWD' ? muSurf : muR * wg;   // one rear wheel on the grass costs a RWD car traction
       const fwd = vl > 0.5;
       const beta = spd > 1.5 && fwd ? Math.atan2(vt, vl) : 0;
       this.beta = beta;
@@ -1261,7 +1270,7 @@ const Core = (function () {
         const wz = this.z + wpos[k][0] * sh + wpos[k][1] * ch;
         const q = trk.query(wx, wz, this.wq[k].i >= 0 ? this.wq[k].i : hint, this.wq[k]);
         const s = trk.surface(q);
-        this.ws[k] = s; muW[k] = SURF[s].mu;
+        this.ws[k] = s; muW[k] = SURF[s].mu * this.wet;
         if (s === 1) curb++;
       }
       this.onCurb = curb;
@@ -1896,8 +1905,8 @@ const Core = (function () {
   const DRIVER_NAMES = ['M. Kovač', 'T. Hayashi', 'L. Rossi', 'J. Novak', 'K. Weber', 'A. Silva', 'R. Horvat', 'S. Tanaka', 'P. Dubois', 'N. Petek', 'E. Lindqvist', 'G. Moretti', 'D. Zupan', 'H. Kimura', 'F. Keller', 'O. Nieminen', 'B. Kranjc', 'C. Duarte', 'I. Kowalski', 'V. Andersen'];
   const AI_COLORS = [0xe8e8ee, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xf07a1a, 0x9a2bd8, 0x19b7c7, 0xd81f45, 0xc9c3b0, 0x6b8e23, 0xff5fa2, 0x3b3fa8, 0x8a1c2b, 0x0f5e4e, 0x8ec9e8, 0xb87333, 0x6b737c, 0xb4dc2c, 0xc2187a];
   const CAR_NUMS = [7, 3, 11, 21, 5, 44, 9, 16, 27, 8, 12, 33, 2, 55, 14, 23, 31, 46, 63, 77, 88];   // by grid slot (the player's own number replaces the one of its slot)
-  // the autopilot in the rain (Race.wet): the racing line's corner speeds, braking and path rate for the wet gravel's grip
-  const WET_AI = { lat: 0.84, brake: 0.86, w: 0.93 };
+  // the AI drivers in grid order (the fastest first): name, car and colour are the same in every race (a championship's standings follow them)
+  const aiDriver = (k) => ({ name: DRIVER_NAMES[k % DRIVER_NAMES.length], model: MODELS[(k * 3 + 1) % 4], color: AI_COLORS[k % AI_COLORS.length] });
   // AI pace per difficulty: [slowest skill, fastest skill, rubber band: slow-down when far ahead of the player (max, from metres), speed-up when behind (max, from metres)]
   // (skill 1 = the racing-line speed profile; the cars' own limit on the autopilot is about 1.12, the little pico understeers past ~1.08)
   const DIFF = [
@@ -1909,10 +1918,9 @@ const Core = (function () {
   class Race {
     constructor(track, opts) {
       if (opts.phys === 'rally') opts = Object.assign({}, opts, { phys: 'cs' });   // the removed 'rally' physics maps to cs (as in Car)
-      if (track.def.rivals && opts.numAI > 0 && !opts.noPlayer && !opts.remote) opts = Object.assign({}, opts, { numAI: track.def.rivals });   // a track's own field size (def.rivals) in a normal race; not the title-screen demo, a time trial or an online race
+      if (track.def.rivals && opts.numAI > 0 && !opts.noPlayer && !opts.remote && !opts.champ) opts = Object.assign({}, opts, { numAI: track.def.rivals });   // a track's own field size (def.rivals) in a normal race; not the title-screen demo, a time trial, an online race or a championship round (its own drivers in every round)
       this.track = track;
       this.opts = opts;
-      if (opts.wet && track.def.rain) this.wet = true;   // a race in the rain (def.rain: a gravel stage with puddles; see Track.surface). Only set in the rain: a dry race's state is as before
       this.laps = opts.laps || 3;
       this.time = 0; this.state = 'grid'; this.countdown = 0;
       this.cars = []; this.debris = []; this.debrisId = 0; this.props = null; this.propBk = null; this.propSlots = null; this.propCap = null;
@@ -1932,7 +1940,7 @@ const Core = (function () {
       const aiSpecs = [];
       for (let k = 0; k < nAI; k++) {
         const skill = lerp(diff[1], diff[0], k / Math.max(1, nAI - 1)) + (R() - 0.5) * 0.012;
-        aiSpecs.push({ skill, model: MODELS[(k * 3 + 1) % 4], color: AI_COLORS[k % AI_COLORS.length], name: DRIVER_NAMES[k % DRIVER_NAMES.length] });
+        aiSpecs.push(Object.assign({ skill }, aiDriver(k)));
       }
       // grid: fastest first
       let ai = 0;
@@ -1957,6 +1965,7 @@ const Core = (function () {
       }
       if (this.player) this.player.num = opts.playerNum || 1;
       if (this.remote) this.remote.num = RM.num || 2;
+      this.rain = 0; this._wet(opts.rain);
       if (track.drs) this.drsLast = track.drs.map(() => null);   // (per DRS zone: who crossed its detection line last, and when)
       this._prof();
     }
@@ -1971,17 +1980,20 @@ const Core = (function () {
       this.finishOrder.forEach((f, i) => { f.finishPos = i + 1; });
     }
 
-    // speed profile for the AI (on the racing line), per physics (in the rain: WET_AI); an upgraded player's autopilot brakes later with better brakes (its own profile)
+    // rain (0 dry .. 1 wet, opts.rain): the grip of every car; the renderer follows race.rain (streaks, spray, a wet road)
+    _wet(r) { r = clamp(+r || 0, 0, 1); this.rain = r; const w = 1 - (1 - WET) * r; for (const c of this.cars) c.wet = w; }
+    setRain(r) { this._wet(r); this._prof(); }   // (title demo: the weather setting at once)
+
+    // speed profile for the AI (on the racing line), per physics; an upgraded player's autopilot brakes later with better brakes (its own profile).
+    // Rain: the corners as much slower as the grip is lower, the braking as the brakes (see Car)
     _prof() {
-      const opts = this.opts, track = this.track;
-      const W = this.wet ? WET_AI : null, csP = opts.phys === 'cs';
-      const latA0 = (opts.aiLatA || (csP ? CSK.aiLatA : 16.5)) * (W ? W.lat : 1), brA0 = (opts.aiBrakeA || (csP ? CSK.aiBrakeA : 13.0)) * (W ? W.brake : 1), wM0 = csP ? CSK.aiWmax * (W ? W.w : 1) : 0;
+      const opts = this.opts, track = this.track, w = this.rain ? 1 - (1 - WET) * this.rain : 1;
+      const csP = opts.phys === 'cs', wM0 = csP ? CSK.aiWmax : 0;
+      let latA0 = opts.aiLatA || (csP ? CSK.aiLatA : 16.5), brA0 = opts.aiBrakeA || (csP ? CSK.aiBrakeA : 13.0);
+      if (this.rain) { latA0 *= w; brA0 *= 0.55 + 0.45 * w; }
       this.vprof = track.speedProfile(latA0, brA0, 85, wM0);
       if (this.player && this.player.upg && this.player.brakeG !== BRAKE_G) this.player.vprof = track.speedProfile(latA0, brA0 * this.player.brakeG / BRAKE_G, 85, wM0);
     }
-
-    // rain on or off (the title screen's race, when the weather is chosen on the track menu): the surfaces and the AI speed profile
-    setWet(on) { if (on && this.track.def.rain) this.wet = true; else delete this.wet; this._prof(); }
 
     // switch the driving physics of a running race at once ('cs' | 'arcade'): every car, the AI set-up and the AI speed profile
     setPhys(ph) {
@@ -2082,7 +2094,7 @@ const Core = (function () {
 
     step(dt) {
       const T = this.track, cars = this.cars;
-      T.wet = !!this.wet;   // (the track is shared with the title screen's race: the weather of the race being stepped)
+      T.inRain = this.rain > 0;   // (the puddles; the track is shared with the title screen's race: the weather of the race being stepped)
       if (this.state === 'racing' || this.state === 'done') this.time += dt;
       for (const c of cars) if (!(c.q.i >= 0)) c.q = T.query(c.x, c.z, -1, c.q);   // a car placed without a track lookup finds itself first
       // rubber band vs player
@@ -2281,7 +2293,33 @@ const Core = (function () {
     }
   }
 
-  return { G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, SURF, Car, Race, wallCollide, carCollide, aiControl, tire, DRIVER_NAMES, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF };
+  /* ---------------------------------------------------------------------
+     CHAMPIONSHIP (prvenstvo): a series of races on several circuits. Points by the finishing order (25, 18, 15, 12, 10, 8, 6, 4, 2, 1
+     for the first ten, as in Formula 1); the standings by points, a tie by more wins, then more second places and so on. The
+     AI drivers are the same in every round (aiDriver). A round = { track, order: [driver key, ...] (the winner first) }; the
+     player's key is PLAYER_KEY, an AI driver's key its name. The game keeps the rounds driven so far (and the difficulty).
+     --------------------------------------------------------------------- */
+  const CHAMP_PTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1], PLAYER_KEY = 'TI';
+  const CHAMPS = [
+    { id: 'domaci', name: 'Domači pokal', desc: 'Štiri kratke proge za začetek: jezero, mesto in makadam.', tracks: ['jezero', 'ljubljana', 'gora', 'riviera'] },
+    { id: 'superstars', name: 'Superstars', desc: 'Proge v slogu Circuit Superstars z boksi in Monako.', tracks: ['gozd', 'toskana', 'grom', 'monaco'] },
+    { id: 'legende', name: 'Legende', desc: 'Pet slavnih prog v pravem merilu: Monako, Spa, Red Bull Ring, Suzuka in Zeleni pekel.', tracks: ['monaco', 'spa', 'rbring', 'suzuka', 'nring'] },
+    { id: 'veliko', name: 'Veliko prvenstvo', desc: 'Vse krožne proge igre, ena za drugo.', tracks: TRACKS.filter(d => !d.timeTrial).map(d => d.id) },
+  ];
+  const champPoints = (pos) => CHAMP_PTS[pos - 1] || 0;   // (pos 1 = the winner)
+  // the standings after the given rounds: [{ key, pts, wins, places: [firsts, seconds, ...], last: the place in the latest round }], leader first
+  function champTable(keys, rounds) {
+    const n = keys.length, row = new Map(keys.map(k => [k, { key: k, pts: 0, wins: 0, places: new Array(n).fill(0), last: 0 }]));
+    for (const r of rounds) r.order.forEach((k, i) => { const e = row.get(k); if (!e) return; e.pts += champPoints(i + 1); if (i === 0) e.wins++; if (i < n) e.places[i]++; e.last = i + 1; });
+    const t = [...row.values()];
+    t.sort((a, b) => { if (b.pts !== a.pts) return b.pts - a.pts; for (let i = 0; i < n; i++) if (b.places[i] !== a.places[i]) return b.places[i] - a.places[i]; return keys.indexOf(a.key) - keys.indexOf(b.key); });
+    return t;
+  }
+  // every driver of a championship: the player first, then the AI drivers of a race with nAI of them (in grid order)
+  const champKeys = (nAI) => [PLAYER_KEY].concat(Array.from({ length: nAI }, (_, k) => aiDriver(k).name));
+
+  return { G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, SURF, Car, Race, wallCollide, carCollide, aiControl, tire, DRIVER_NAMES, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
+    aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys };
 })();
 
 

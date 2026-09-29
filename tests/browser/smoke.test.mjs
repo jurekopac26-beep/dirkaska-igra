@@ -1,6 +1,6 @@
 // Browser smoke test: the page loads (over http like GitHub Pages, and from a local file), every track can be
 // raced for 20 s on autopilot, settings migrate, the physics can be switched mid-race, the title demo runs,
-// a Pikes Peak run and an Ouninpohja run finish and their records are saved per physics (Ouninpohja also in the rain).
+// a Pikes Peak run and an Ouninpohja run finish and their records are saved per physics (Ouninpohja also in the rain, apart).
 // Zero page errors allowed.
 //   node tests/browser/smoke.test.mjs
 import path from 'node:path';
@@ -20,6 +20,15 @@ try {
       const row = await page.evaluate(() => [...document.querySelectorAll('[data-set="phys"] button')].map(b => b.textContent + (b.classList.contains('sel') ? '*' : '')).join(' | '));
       T.check('settings row: Circuit Superstars (selected) | Arkadna', row === 'Circuit Superstars* | Arkadna', row);
     }
+    await ctx.close();
+  }
+
+  // 1b. rain chosen before: the title demo behind the menu rains from the start
+  {
+    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { weather: 'rain' });
+    await page.waitForTimeout(1500);
+    const r = await page.evaluate(() => ({ demo: window.__game.demo && window.__game.demo.rain, drawn: Render.raining, sub: document.getElementById('title-sub').textContent }));
+    T.check('saved weather: rain -> the title demo rains', r.demo === 1 && r.drawn && / · dež$/.test(r.sub) && !errors.length, JSON.stringify(r) + (errors.length ? ' errors: ' + errors.join(' | ') : ''));
     await ctx.close();
   }
 
@@ -67,6 +76,29 @@ try {
     T.check('title screen with the demo race moving behind it', scr === 'title' && diff > n * 0.05, `screen ${scr}, ${(100 * diff / n).toFixed(0)} % of the image bytes changed`);
   }
 
+  // 6b. rain: the weather row on the track screen; a race at Spa in the rain (every car on the wet grip, the streaks drawn, spray behind
+  //     the cars), the title demo follows the setting; back to dry, the next race is dry again
+  {
+    const row = await page.evaluate(() => [...document.querySelectorAll('[data-set="weather"] button')].map(b => b.textContent + (b.classList.contains('sel') ? '*' : '')).join(' | '));
+    T.check('weather row: Suho (selected) | Dež | Naključno', row === 'Suho* | Dež | Naključno', row);
+    const e0 = errors.length;
+    await page.evaluate(() => document.querySelector('[data-set="weather"] button[data-v="rain"]').click());
+    await startTrack(page, 'spa');
+    const nan = await simulate(page, 20);
+    await page.waitForTimeout(1500);   // (a second and a half of real frames: the spray)
+    const r = await page.evaluate(() => { const g = window.__game, R = g.race; return { rain: R.rain, wet: R.cars.every(c => c.wet === 0.8), drawn: Render.raining, spray: Render.fxStats().alive, dist: Math.round(R.player.dist), saved: JSON.parse(localStorage.getItem('tdgp-settings')).weather,
+      birds: Render.birds.mesh.visible, clouds: Render.world.dyn.clouds.K.value }; });
+    T.check('Spa in the rain: wet grip for every car, rain drawn, spray, the setting saved; no birds, no cloud shadows', r.rain === 1 && r.wet && r.drawn && r.spray > 10 && r.dist > 200 && r.saved === 'rain' && !r.birds && r.clouds === 0 && !nan && errors.length === e0, JSON.stringify(r) + (errors.length > e0 ? ' errors: ' + errors.slice(e0).join(' | ') : ''));
+    await page.evaluate(() => window.__game.onAction('to-title')); await page.waitForTimeout(600);
+    const d = await page.evaluate(() => ({ demo: window.__game.demo ? window.__game.demo.rain : null, drawn: Render.raining }));
+    await page.evaluate(() => document.querySelector('[data-set="weather"] button[data-v="dry"]').click()); await page.waitForTimeout(600);
+    const d2 = await page.evaluate(() => ({ demo: window.__game.demo ? window.__game.demo.rain : null, drawn: Render.raining }));
+    await startTrack(page, 'spa'); await simulate(page, 3);
+    const r2 = await page.evaluate(() => { let marks = (Render.world.stats && Render.world.stats.decals) || 0; Render.world.root.traverse(o => { if (o.name === 'tyremarks') marks++; });   // (Spa: the tyre marks among the builder's decals)
+      return { rain: window.__game.race.rain, wet: window.__game.race.cars.every(c => c.wet === 1), drawn: Render.raining, birds: Render.birds.mesh.visible, clouds: Render.world.dyn.clouds.K.value, marks }; });
+    T.check('title demo in the rain with the setting, dry again without it; the next race dry (birds, cloud shadows, tyre marks)', d.demo === 1 && d.drawn && d2.demo === 0 && !d2.drawn && r2.rain === 0 && r2.wet && !r2.drawn && r2.birds && r2.clouds > 0.1 && r2.marks > 5 && errors.length === e0, JSON.stringify({ d, d2, r2 }));
+  }
+
   // 6. a Pikes Peak time trial to the finish: the record is stored under 'pikes@cs'
   {
     await startTrack(page, 'pikes');
@@ -102,29 +134,29 @@ try {
       `"${r.sub}", Yellow House record ${r.rec && r.rec.jumpRec} m, ${r.calls} co-driver calls`);
   }
 
-  // 6c. Ouninpohja in the rain, chosen on the track menu (the weather row only for a track that has rain): the wet race with its
-  //     puddles and rain drawn, to the finish; the record apart ('ouninpohja2-wet@cs'); then back to dry
+  // 6c. Ouninpohja in the rain (Dež on the track menu): the stage's puddles drawn and on the road (Track.inRain) while the race runs,
+  //     to the finish; a time trial keeps its records in the rain apart ('ouninpohja2-wet@cs'); then back to dry, the puddles gone
   {
     const r = await page.evaluate(async () => {
-      const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)), row = document.getElementById('wx-row');
+      const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)), frame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
       g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(250);
-      document.querySelector('[data-track="jezero"]').click(); await wait(150); const hiddenCircuit = row.classList.contains('off');
-      document.querySelector('[data-track="ouninpohja"]').click(); await wait(150); const shown = !row.classList.contains('off');
-      row.querySelector('[data-v="1"]').click(); await wait(150);
+      document.querySelector('[data-track="ouninpohja"]').click(); await wait(150);
+      document.querySelector('[data-set="weather"] button[data-v="rain"]').click(); await wait(150);
       g.onAction('start');
       for (let k = 0; k < 1200 && !(g.race && g.race.track.def.id === 'ouninpohja'); k++) await wait(100);
-      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-      const W = Render.world.dyn.wet, drawn = !!(g.race.wet && Render.wet && W && W.puddles.visible && Render.scene.getObjectByName('rain').visible);
+      await frame();
+      const W = Render.world.dyn.wet, drawn = !!(g.race.rain && Render.raining && W && W.puddles.visible);
+      g.sim(2, true); const onRoad = g.race.track.inRain === true;
       for (let i = 0; i < 300 && g.phase !== 'done'; i++) { g.sim(1, true); if (i % 10 === 0) await wait(0); }
       await wait(800);
-      const rec = JSON.parse(localStorage.getItem('tdgp-records') || '{}'), out = { hiddenCircuit, shown, drawn, phase: g.phase, t: g.race.player.finishTime, rec: rec.tracks && rec.tracks['ouninpohja2-wet@cs'] };
-      g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(250); row.querySelector('[data-v="0"]').click(); await wait(150);
-      out.dry = g.S.wet === 0 && !Render.wet;
+      const rec = JSON.parse(localStorage.getItem('tdgp-records') || '{}'), out = { drawn, onRoad, phase: g.phase, t: g.race.player.finishTime, rec: rec.tracks && rec.tracks['ouninpohja2-wet@cs'], sub: document.getElementById('res-sub').textContent };
+      g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(250); document.querySelector('[data-set="weather"] button[data-v="dry"]').click(); await wait(600); await frame();
+      out.dry = g.S.weather === 'dry' && !Render.raining && !W.puddles.visible;
       return out;
     });
-    T.check('Ouninpohja in the rain: the weather row (not for a circuit), puddles and rain drawn, finishes, its own record, back to dry',
-      r.hiddenCircuit && r.shown && r.drawn && r.phase === 'done' && r.rec && r.rec.bestTime > 0 && r.dry,
-      `row hidden for a circuit ${r.hiddenCircuit}, shown ${r.shown}, rain drawn ${r.drawn}, time ${r.t && r.t.toFixed(2)} s, record ${r.rec && r.rec.bestTime}, dry again ${r.dry}`);
+    T.check('Ouninpohja in the rain: puddles drawn and on the road, finishes, its own record in the rain, back to dry',
+      r.drawn && r.onRoad && r.phase === 'done' && r.rec && r.rec.bestTime > 0 && / v dežju/.test(r.sub) && r.dry,
+      `puddles drawn ${r.drawn}, on the road ${r.onRoad}, time ${r.t && r.t.toFixed(2)} s, record ${r.rec && r.rec.bestTime}, "${r.sub}", dry again ${r.dry}`);
   }
   T.check('no page errors during the whole run', !errors.length, errors.slice(0, 5).join(' | '));
   await ctx.close();

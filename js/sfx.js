@@ -6,8 +6,8 @@ const Sfx = (function () {
   const { clamp } = Core;
   let ctx = null, master = null, bus = null, enabled = true, volume = 0.8;
   let noiseBuf = null;
-  let eng = null, ai = [], squeal = null, rumble = null, wind = null, curbV = null, heli = null, echo = null;
-  let gravel = null, spray = null, rainV = null, crowd = null, lastT = 0, pudPrev = false;
+  let eng = null, ai = [], squeal = null, rumble = null, wind = null, curbV = null, rainV = null, hiss = null, heli = null, echo = null;
+  let gravel = null, spray = null, crowd = null, lastT = 0, pudPrev = false;
   let lastCrash = 0, running = false;
 
   function create() {
@@ -29,8 +29,10 @@ const Sfx = (function () {
     rumble = noiseVoice('lowpass', 220, 0.8);
     curbV = noiseVoice('bandpass', 90, 4);
     wind = noiseVoice('bandpass', 700, 0.6);
+    rainV = noiseVoice('bandpass', 3200, 0.35);   // rain: the steady patter, and the hiss of the tyres through the water
+    hiss = noiseVoice('bandpass', 1400, 0.8);
     heli = heliVoice(); echo = echoFx();
-    gravel = noiseVoice('bandpass', 2600, 0.7); spray = noiseVoice('highpass', 1500, 0.5); rainV = noiseVoice('bandpass', 4200, 0.35); crowd = crowdVoice();
+    gravel = noiseVoice('bandpass', 2600, 0.7); spray = noiseVoice('highpass', 1500, 0.5); crowd = crowdVoice();
     return true;
   }
   function shaperCurve(k) {
@@ -164,8 +166,10 @@ const Sfx = (function () {
     const spd = player.speed;
     const onHard = player.ws[2] <= 1 && player.ws[3] <= 1;
     const slide = (player.arcade ? Core.sstep(0.18, 0.55, Math.abs(player.beta || 0)) : Math.max(0, player.latR - 2.2) / 5) + player.spin * 0.8 + (player.lock ? 0.6 : 0) + (player.inHand > 0.5 && spd > 5 ? 0.5 : 0);
-    const sq = onHard && spd > 3 ? clamp(slide, 0, 1.2) : 0;
-    set(squeal.out.gain, sq * 0.09, 0.04);
+    const sq = onHard && spd > 3 ? clamp(slide, 0, 1.2) : 0, wet = race ? race.rain || 0 : 0;
+    set(squeal.out.gain, sq * 0.09 * (1 - 0.7 * wet), 0.04);   // (a wet road hardly squeals)
+    set(rainV.out.gain, wet * 0.05, 0.4);
+    set(hiss.out.gain, onHard ? wet * clamp(spd / 45, 0, 1) * 0.1 : 0, 0.08);
     set(squeal.bp.frequency, 980 + clamp(spd, 0, 50) * 6, 0.1);
     // offroad rumble
     let off = 0; for (let k = 0; k < 4; k++) if (player.ws[k] >= 2) off++;
@@ -174,18 +178,17 @@ const Sfx = (function () {
     set(curbV.out.gain, player.onCurb ? clamp(spd / 20, 0, 1) * 0.35 : 0, 0.02);
     set(curbV.flt.frequency, 40 + spd * 3.5, 0.05);
     set(wind.out.gain, clamp(spd / 70, 0, 1) ** 2 * 0.12, 0.1);
-    // loose gravel (gravel traps, makadam): the crunch, louder in a slide, and stones pinging off the underbody; on the wet gravel a hiss of
-    // spray instead, and a splash into each puddle; the rain on everything
-    let loose = 0, wetW = 0, pud = false;
-    for (let k = 0; k < 4; k++) { const w = player.ws[k]; if (w === 3 || w === 5) loose++; else if (w >= 6) { wetW++; if (w === 7) pud = true; } }
+    // loose gravel (gravel traps, makadam): the crunch, louder in a slide, and stones pinging off the underbody; in the rain the crunch muffled by
+    // a hiss of water off the tyres (the hard roads' is above), and a splash into each puddle
+    let loose = 0, pud = false;
+    for (let k = 0; k < 4; k++) { const w = player.ws[k]; if (w === 3 || w === 5 || w === 6) loose++; if (w === 6) pud = true; }
     const air = !!player.air, spf = clamp(spd / 25, 0, 1.3);
-    set(gravel.out.gain, air ? 0 : loose / 4 * spf * (0.05 + 0.09 * clamp(slide, 0, 1)), 0.05);
+    set(gravel.out.gain, air ? 0 : loose / 4 * spf * (0.05 + 0.09 * clamp(slide, 0, 1)) * (1 - 0.6 * wet), 0.05);
     set(gravel.flt.frequency, 1900 + clamp(spd, 0, 50) * 30, 0.1);
-    if (!air && loose >= 2 && spd > 8 && Math.random() < dt * spd / 40 * 7) ping(0.4 + Math.random() * 0.6);
-    set(spray.out.gain, air ? 0 : wetW / 4 * spf * 0.14, 0.05);
+    if (!air && loose >= 2 && spd > 8 && Math.random() < dt * spd / 40 * 7 * (1 - 0.5 * wet)) ping(0.4 + Math.random() * 0.6);
+    set(spray.out.gain, air ? 0 : loose / 4 * spf * 0.14 * wet, 0.05);
     if (pud && !pudPrev && !air && spd > 5) splash(clamp(spd / 30, 0.3, 1));
     pudPrev = pud;
-    set(rainV.out.gain, race && race.wet ? 0.045 : 0, 0.5);
     // the fans (a rally stage: World's crowdCells, the fans per 24 m square round the car): a roar that swells as the car comes by (more
     // over a jump), with whoops and air horns
     const Wd = typeof Render !== 'undefined' ? Render.world : null, cc = race && race.track.def.rally && Wd ? Wd.crowdCells : null;
@@ -309,7 +312,7 @@ const Sfx = (function () {
   function silence() {
     if (!ctx) return;
     for (const v of [eng, ...ai]) set(v.out.gain, 0, 0.02);
-    for (const v of [squeal, rumble, wind, curbV, heli, gravel, spray, rainV, crowd]) set(v.out.gain, 0, 0.02);
+    for (const v of [squeal, rumble, wind, curbV, rainV, hiss, heli, gravel, spray, crowd]) set(v.out.gain, 0, 0.02);
     set(echo.send.gain, 0, 0.02);
   }
 

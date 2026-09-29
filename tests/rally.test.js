@@ -1,5 +1,5 @@
-// The rally stage's extras (Ouninpohja): the co-driver's pace notes, the puddles and the wet surfaces of a race in the rain, the
-// famous jump and the medal times. Fast checks on the track data and the core (the races themselves: races.test.js, also wet).
+// The rally stage's extras (Ouninpohja): the co-driver's pace notes, the puddles of a race in the rain, the famous jump and the
+// medal times. Fast checks on the track data and the core (the races themselves: races.test.js, also in the rain).
 //   node tests/rally.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -34,19 +34,20 @@ const dAt = (s) => Math.round(s - T.startS);   // (metres after the start line)
   check('puddles: as many as def.rain asks, on the road, 30 m apart, none on a jump', P.length === def.rain.puddles && onRoad && apart && clear, `${P.length} puddles`);
   const [s, d] = P[5], q = T.query(...(() => { const i = T.idx(s); return [T.px[i] + T.nx[i] * d, T.pz[i] + T.nz[i] * d]; })(), T.idx(s), {});
   const q2 = T.query(T.px[T.idx(s + 15)], T.pz[T.idx(s + 15)], T.idx(s + 15), {});
-  T.wet = false; const dry = [T.surface(q), T.surface(q2)];
-  T.wet = true; const wet = [T.surface(q), T.surface(q2)]; T.wet = false;
-  check('surfaces: dry makadam 5; in the rain the road 6 and the puddle 7', dry[0] === 5 && dry[1] === 5 && wet[0] === 7 && wet[1] === 6, `dry ${dry}, wet ${wet}`);
+  T.inRain = false; const dry = [T.surface(q), T.surface(q2)];
+  T.inRain = true; const wet = [T.surface(q), T.surface(q2)]; T.inRain = false;
+  check('surfaces: makadam 5 in the dry; in the rain the puddle 6, the road around it makadam', dry[0] === 5 && dry[1] === 5 && wet[0] === 6 && wet[1] === 5, `dry ${dry}, wet ${wet}`);
 }
 
-// a race in the rain: the track wet while it steps, a slower autopilot line; a dry race keeps no weather of its own (its state is as before)
+// a race in the rain: the puddles only while it steps (the track is shared with a dry race), every car on the wet grip and in a puddle
+// slower still; the puddle a surface of the core's own (not on any other track)
 {
-  const mk = (wet) => new C.Race(T, { numAI: 0, playerGrid: 1, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1, wet });
-  const dry = mk(false), wet = mk(true);
-  wet.step(1 / 120); const w1 = T.wet; dry.step(1 / 120); const w2 = T.wet;
-  let slower = 0, n = 0; for (let i = T.startIdx; i < T.finishIdx; i += 20) { n++; if (wet.vprof[i] <= dry.vprof[i] + 1e-6) slower++; }
-  check('rain: the track wet while the wet race steps, dry for the dry one; the autopilot never faster in the rain', w1 === true && w2 === false && slower === n, `wet ${w1}, then dry ${w2}; ${slower}/${n} samples no faster`);
-  check('rain: a dry race has no weather key (its state and so the golden digests are as before)', !('wet' in dry) && wet.wet === true && !('wet' in new C.Race(new C.Track(C.TRACKS[0]), { numAI: 0, phys: 'cs', wet: true })), 'a circuit without def.rain stays dry too');
+  const mk = (rain) => new C.Race(T, { numAI: 0, playerGrid: 1, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1, rain });
+  const dry = mk(0), wet = mk(1);
+  wet.step(1 / 120); const w1 = T.inRain; dry.step(1 / 120); const w2 = T.inRain;
+  check('rain: the track has its puddles while the wet race steps, none for the dry one; the wet grip on the car', w1 === true && w2 === false && wet.player.wet < 1 && dry.player.wet === 1, `wet ${w1}, then dry ${w2}; grip ${wet.player.wet} / ${dry.player.wet}`);
+  const others = C.TRACKS.filter(d => d.id !== 'ouninpohja' && d.rain);
+  check('puddles only on the rally stage (def.rain)', !others.length, others.map(d => d.id).join(', '));
 }
 
 // the famous jump and the medals
