@@ -458,14 +458,14 @@ const Core = (function () {
       return out;
     }
 
-    // surface at a query result: 0 asphalt, 1 curb, 2 grass, 3 gravel
+    // surface at a query result: 0 asphalt, 1 curb, 2 grass, 3 gravel (def.runoffTarmac: the wide run-off areas are asphalt, 4 as paving)
     surface(q) {
       const d = q.d, ad = Math.abs(d), w = this.w;
       if (ad <= w) return this.def.roadSurface === 'makadam' ? 5 : 0;
       const i = q.a;
       if (this.curb[i] && ad <= w + this.curbW) return 1;
       const grav = d > 0 ? this.gravR[i] : this.gravL[i];
-      return grav ? 3 : this.def.offSurface === 'paving' ? 4 : this.def.offSurface === 'gravel' ? 3 : 2;
+      return grav ? (this.def.runoffTarmac ? 4 : 3) : this.def.offSurface === 'paving' ? 4 : this.def.offSurface === 'gravel' ? 3 : 2;
     }
   }
 

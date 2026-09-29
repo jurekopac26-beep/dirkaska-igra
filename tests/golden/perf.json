@@ -68,5 +68,12 @@
   "kverts": 544,
   "maxKverts": 752,
   "jsMs": 1.45
+ },
+ "rbring": {
+  "calls": 230,
+  "maxCalls": 315,
+  "kverts": 386,
+  "maxKverts": 523,
+  "jsMs": 0.62
  }
 }

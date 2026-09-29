@@ -154,5 +154,20 @@
    "-:MeshBasicMaterial": "a6574a9",
    "crowd:MeshLambertMaterial": "2104b0ef"
   }
+ },
+ "rbring": {
+  "meshes": 476,
+  "verts": 317041,
+  "instances": 11006,
+  "props": 68,
+  "crowd": 3031,
+  "world": "b0b65f0a",
+  "propsHash": "16f4ac8d",
+  "floor": "106192fc/8652",
+  "groups": {
+   "-:MeshLambertMaterial": "789dce6f",
+   "-:MeshBasicMaterial": "9855fa12",
+   "crowd:MeshLambertMaterial": "ede267d6"
+  }
  }
 }
