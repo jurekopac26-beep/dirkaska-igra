@@ -469,6 +469,39 @@ const Render = (function () {
     return { grp, bodyG, body, tail, dec, wf, wr, glb, blob, marker, lights, dirtU: bodyMat.userData && bodyMat.userData.dirt || null, scrU: bodyMat.userData && bodyMat.userData.scr || null };
   }
 
+  /* ---------------- ghost of the best run (time trials) ---------------- */
+  // A see-through copy of the player's car, posed by the game (js/game.js replays the stored best run). Only drawn: not a car of the
+  // race (no physics, no collisions, no sound, no shadow, no glows or dust). One material for all its parts, kept for the whole visit.
+  let ghostV = null, ghostMat = null;
+  function ghostDrop() { if (!ghostV) return; scene.remove(ghostV.grp); freeOwn(ghostV.grp, new Set([ghostMat])); ghostV = null; }
+  // g: null hides it (drop: also frees the mesh); else { M, color, stripe, x, y, z, h, d (steer), p (pitch), r (roll), op (opacity 0..1) }
+  function setGhost(g, drop) {
+    if (!g) { if (drop) ghostDrop(); else if (ghostV) ghostV.grp.visible = false; return; }
+    if (!scene) return;
+    if (!ghostMat) ghostMat = new THREE.MeshLambertMaterial({ color: 0xcfe4ff, emissive: 0x2b4a72, transparent: true, opacity: 0.4 });
+    if (ghostV && (ghostV.M !== g.M || ghostV.color !== g.color)) ghostDrop();
+    if (!ghostV) {
+      const v = makeCarMesh({ m: g.M, color: g.color, stripe: g.stripe !== false, num: 0 }, { noDirt: true, noBlob: true, noMarker: true });
+      const sh = sharedCarRes();
+      v.bodyG.remove(v.dec); freeOwn(v.dec);   // no start number (also the rally's side decals: they share its material)
+      v.grp.traverse(o => { if (!o.isMesh) return; if (o.material === v.dec.material) o.visible = false;
+        for (const m of Array.isArray(o.material) ? o.material : [o.material]) if (m && !sh.m.has(m) && m !== ghostMat && m !== v.dec.material) m.dispose();
+        o.material = ghostMat; o.castShadow = false; o.receiveShadow = false; o.renderOrder = 2; });
+      if (v.body.visible) v.body.renderOrder = 3;   // (the body over the wheels it hides)
+      v.M = g.M; v.color = g.color; v.spin = 0; v.lx = g.x; v.lz = g.z;
+      scene.add(v.grp); ghostV = v;
+    }
+    const v = ghostV, M = g.M;
+    v.grp.visible = g.op > 0.01; ghostMat.opacity = 0.42 * clamp(g.op, 0, 1);
+    v.grp.position.set(g.x, g.y, g.z);
+    v.grp.rotation.set(0, -g.h, g.p || 0, 'YZX');
+    v.bodyG.rotation.set(g.r || 0, 0, 0); v.bodyG.position.y = Math.abs(g.r || 0) * 0.4;
+    const mv = Math.hypot(g.x - v.lx, g.z - v.lz); v.lx = g.x; v.lz = g.z;
+    if (mv < 5) v.spin += mv / M.rw;   // (wheels roll with the distance moved; not across a jump back in the replay)
+    for (const w of v.wf) w.rotation.set(0, -(g.d || 0), -v.spin);
+    for (const w of v.wr) w.rotation.set(0, 0, -v.spin);
+  }
+
   /* ---------------- particles ---------------- */
   class Particles {
     constructor(max, additive) {
@@ -1520,8 +1553,9 @@ const Render = (function () {
           const vxs = c.vx * 0.25 + (Math.random() - 0.5) * 2.4, vzs = c.vz * 0.25 + (Math.random() - 0.5) * 2.4;
           if (surf === 3 || surf === 5) {
             // big, lingering dust cloud on dirt/gravel (the classic rally rooster tail)
-            const sh = 0.92 + Math.random() * 0.12;
-            particles.emit(px, 0.35 + yb, pz, vxs, 0.7 + Math.random() * 0.9, vzs, 1.5 + Math.random() * 0.9, 1.1, 5.2 + Math.random() * 2.6, 0.84 * sh, 0.69 * sh, 0.48 * sh, 0.42, -0.04, 1.3, yb);
+            const sh = 0.92 + Math.random() * 0.12, dc = world && world.dust;   // (a world may give its own dust colour: Pikes Peak's pale granite)
+            if (dc) particles.emit(px, 0.35 + yb, pz, vxs, 0.8 + Math.random() * 1.1, vzs, 1.8 + Math.random() * 1.0, 1.2, 6 + Math.random() * 3, dc[0] * sh, dc[1] * sh, dc[2] * sh, 0.55, -0.05, 1.2, yb);
+            else particles.emit(px, 0.35 + yb, pz, vxs, 0.7 + Math.random() * 0.9, vzs, 1.5 + Math.random() * 0.9, 1.1, 5.2 + Math.random() * 2.6, 0.84 * sh, 0.69 * sh, 0.48 * sh, 0.42, -0.04, 1.3, yb);
             if (Math.random() < 0.28) particles.emit(px, 0.2 + yb, pz, -c.vx * 0.04 + (Math.random() - 0.5) * 2.5, 2 + Math.random() * 2.5, -c.vz * 0.04 + (Math.random() - 0.5) * 2.5, 0.5 + Math.random() * 0.35, 0.3, 0.24, 0.32, 0.26, 0.19, 0.95, 14, 0.4, yb); // flying stones
           }
           else {
@@ -1718,6 +1752,6 @@ const Render = (function () {
   const dbg = { noSmoke: false };
   function setDebug(o) { Object.assign(dbg, o); }
   function fxStats() { let n = 0; for (let i = 0; i < particles.max; i++) if (particles.life[i] > 0) n++; return { alive: n, emitted: particles.cur }; }
-  return { setDebug, fxStats, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; } };
+  return { setDebug, fxStats, setGhost, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; } };
 })();
 
