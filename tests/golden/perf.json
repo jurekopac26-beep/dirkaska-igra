@@ -41,6 +41,20 @@
   "maxKverts": 1527,
   "jsMs": 1.4
  },
+ "toskana": {
+  "calls": 302,
+  "maxCalls": 332,
+  "kverts": 926,
+  "maxKverts": 1053,
+  "jsMs": 0.67
+ },
+ "grom": {
+  "calls": 315,
+  "maxCalls": 361,
+  "kverts": 1129,
+  "maxKverts": 1230,
+  "jsMs": 0.78
+ },
  "pikes": {
   "calls": 91,
   "maxCalls": 103,

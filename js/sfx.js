@@ -168,7 +168,7 @@ const Sfx = (function () {
   function knock(kind, v) {
     if (!ctx || ctx.state !== 'running' || !running) return;
     const now = ctx.currentTime; if (now - lastKnock < 0.05) return; lastKnock = now;
-    const vol = clamp(v / 18, 0.12, 0.8), cone = kind === 'cone' || kind === 'pylon' || kind === 'post', straw = kind === 'bale' || kind === 'bstack', wood = kind === 'crate';
+    const vol = clamp(v / 18, 0.12, 0.8), cone = kind === 'cone' || kind === 'pylon' || kind === 'post', straw = kind === 'bale' || kind === 'bstack' || kind === 'rbale' || kind === 'rbstack', wood = kind === 'crate';
     const o = ctx.createOscillator(); o.type = cone ? 'square' : 'triangle';
     const f0 = cone ? 520 + Math.random() * 120 : straw ? 90 : wood ? 260 : 150;
     o.frequency.setValueAtTime(f0, now); o.frequency.exponentialRampToValueAtTime(f0 * (cone ? 0.55 : 0.4), now + (cone ? 0.06 : 0.14));

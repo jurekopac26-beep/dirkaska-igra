@@ -37,8 +37,8 @@ try {
     const e0 = errors.length;
     await startTrack(page, id);
     const nan = await simulate(page, 20);
-    const r = await page.evaluate(() => { const g = window.__game, P = g.race.player; return { phase: g.phase, dist: Math.round(P.dist), phys: P.phys, crew: Render.crew ? Render.crew.men.length : 0, id: g.race.track.def.id }; });
-    const crewOk = r.id === 'gozd' ? r.crew > 0 : r.crew === 0;
+    const r = await page.evaluate(() => { const g = window.__game, P = g.race.player; return { phase: g.phase, dist: Math.round(P.dist), phys: P.phys, crew: Render.crew ? Render.crew.men.length : 0, id: g.race.track.def.id, pit: !!g.race.track.def.pit }; });
+    const crewOk = r.pit ? r.crew > 0 : r.crew === 0;   // (pit crews on the circuits with a pit lane: Bakreni gozd, Toskana, Gromski rt)
     T.check(`${id}: 20 s race on autopilot`, r.phase === 'racing' && r.dist > 150 && r.phys === 'cs' && !nan && crewOk && errors.length === e0,
       `dist ${r.dist} m, phys ${r.phys}, pit crew ${r.crew}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
   }
