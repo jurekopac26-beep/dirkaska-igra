@@ -4466,6 +4466,319 @@ const World = (function () {
   /* ---- round 3 of the real course: boards with the real turn numbers at the bigger corners (T.def.turnNos), the timing tower and the
      podium at the summit, more named places (Engineer's Corner, Brown Bush, Cove Creek, the rocks of Devil's Playground); own random stream ---- */
   function pkLandmarks3(K) {
+    const R = rng(9811), { scen, excl, sStart: S0, sFin, CR } = K, gy = pkGround, tb = new GB(true), W1 = [1, 1, 1], PI = Math.PI;
+    // local frame beyond the barrier at road s on 'side' (as in pkLandmarks): at(u, v) -> [x, z], u along the road, v out from the barrier line; dir(a): a rad from the road's heading towards +v
+    const fr = (s, side) => { const q = crAt(clamp(s, 0, T.len - 0.01)), bar = side > 0 ? q.br : q.bl, tx = q.tx, tz = q.tz, ox = q.nx * side, oz = q.nz * side, x0 = q.px + ox * bar, z0 = q.pz + oz * bar, hy = q.hy;
+      const dir = (a) => [tx * Math.cos(a || 0) + ox * Math.sin(a || 0), tz * Math.cos(a || 0) + oz * Math.sin(a || 0)], at = (u, v) => [x0 + tx * u + ox * v, z0 + tz * u + oz * v];
+      return { at, dir, rot: (a) => { const d = dir(a); return Math.atan2(d[1], d[0]); }, hy, bar }; };
+    const hard = (x, z, skip) => { for (const e of excl) if (e !== skip && !K.crSoft.has(e) && (x - e.x) ** 2 + (z - e.z) ** 2 < e.r * e.r) return true; return false; };   // buildings, pads, landmarks (not the crowds' tree-only circles)
+    const busy = (x, z, r) => { const cx = Math.floor(x / 0.8), cz = Math.floor(z / 0.8), n = Math.ceil(r / 0.8);   // a spectator within r
+      for (let a = -n; a <= n; a++) for (let b = -n; b <= n; b++) { const L = CR.sp.get((cx + a) + ',' + (cz + b)); if (L) for (let q = 0; q < L.length; q += 2) if ((x - L[q]) ** 2 + (z - L[q + 1]) ** 2 < r * r) return true; }
+      return false; };
+    const free = (P, strict, skip) => P.every(([x, z]) => pkNear(x, z).dd >= 1.5 && (strict ? !K.excluded(x, z) : !hard(x, z, skip) && !busy(x, z, 0.9)));   // off the road; clear of all the scenery (strict) or of the buildings and the people
+    const lo = (P) => Math.min(...P.map(p => gy(p[0], p[1]))), hi = (P) => Math.max(...P.map(p => gy(p[0], p[1])));
+    const ring = (x, z, r) => [[x, z], [x + r, z], [x - r, z], [x, z + r], [x, z - r]];
+    const ex = (x, z, r) => excl.push({ x, z, r });
+    const info = K.out.pkL3 = { turns: [], signs: [], tors: 0, culv: [], eng: [] }, where = (x, z) => { const n = pkNear(x, z); return [Math.round(n.i * T.ds), +n.lat.toFixed(1)]; };   // (where things went, for the tests and the screenshot tools: [s, lateral])
+    const sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k], gcol = (x, z) => sh(pkGCol(x, z), pkGMean);   // (gcol: the terrain's own shade there)
+    const rod = (g, a, b, w, col) => {   // square bar from a to b, w thick
+      const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], l = Math.hypot(d[0], d[2]), s = l > 1e-4 ? [-d[2] / l, 0, d[0] / l] : [1, 0, 0], L = Math.hypot(...d) || 1, f = [d[0] / L, d[1] / L, d[2] / L];
+      const u = [s[1] * f[2] - s[2] * f[1], s[2] * f[0] - s[0] * f[2], s[0] * f[1] - s[1] * f[0]], P = (p, i, j) => [p[0] + (s[0] * i + u[0] * j) * w / 2, p[1] + (s[1] * i + u[1] * j) * w / 2, p[2] + (s[2] * i + u[2] * j) * w / 2];
+      const inn = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+      for (const [i0, j0, i1, j1] of [[-1, -1, 1, -1], [1, -1, 1, 1], [1, 1, -1, 1], [-1, 1, -1, -1]]) g.quadO(P(a, i0, j0), P(a, i1, j1), P(b, i1, j1), P(b, i0, j0), col, inn); };
+    const bush = (g, x, y, z, r, sy, col) => {   // a clump of twigs and leaves, domed, its edge a little ragged (24 faces): six lobes round it, darker in the dips between them, lit on top, dark below; y: its foot
+      const a0 = R() * TAU, h = r * sy, yc = y + h * 0.42, top = [x + (R() - 0.5) * r * 0.25, yc + h * 0.62, z + (R() - 0.5) * r * 0.25], bot = [x, yc - h * 0.42, z], inn = [x, yc, z], ps = [], cs = [], ct = sh(col, 1.18), cb = sh(col, 0.55);
+      for (let k = 0; k < 12; k++) { const a = a0 + (k + (R() - 0.5) * 0.3) / 12 * TAU, lobe = k % 2 === 0, rr = r * (lobe ? 0.95 + R() * 0.2 : 0.8);
+        ps.push([x + Math.cos(a) * rr, yc + (lobe ? 0.02 : 0.12) * h + (R() - 0.5) * h * 0.12, z + Math.sin(a) * rr]); cs.push(sh(col, lobe ? 1 : 0.84)); }
+      for (let k = 0; k < 12; k++) { const j = (k + 1) % 12; g.triO(ps[k], top, ps[j], cs[k], inn, ct, cs[j]); g.triO(ps[k], ps[j], bot, cs[k], inn, cs[j], cb); } };
+    const peb = (g, x, y, z, r, col) => {   // a stone lying on the ground: a low five-sided cap (5 faces), sunk a little
+      const a0 = R() * TAU, top = [x + (R() - 0.5) * r * 0.3, y + r * (0.3 + R() * 0.22), z + (R() - 0.5) * r * 0.3], ps = [], inn = [x, y - r, z], ct = sh(col, 1.12), cb = sh(col, 0.72);
+      for (let k = 0; k < 5; k++) { const a = a0 + k / 5 * TAU, rr = r * (0.75 + R() * 0.45); ps.push([x + Math.cos(a) * rr, y - 0.04, z + Math.sin(a) * rr]); }
+      for (let k = 0; k < 5; k++) g.triO(ps[k], top, ps[(k + 1) % 5], cb, inn, ct, cb); };
+    // atlas cells (px): the turn boards 128 x 80 (8 a row, rows 0-4; the podium's step numbers the last three), the brown signs 512 x 128, the tower's fascia 512 x 48,
+    // the results screen and the podium's backdrop 512 x 256
+    const cell = (k) => [(k % 8) * 128 + 1, Math.floor(k / 8) * 80 + 1, (k % 8) * 128 + 127, Math.floor(k / 8) * 80 + 79], ins = (r) => [r[0] + 2, r[1] + 2, r[2] - 2, r[3] - 2];
+    const AT = { eng: [0, 400, 512, 528], brown: [512, 400, 1024, 528], cove: [0, 528, 512, 656], fascia: [512, 528, 1024, 576], screen: [0, 656, 512, 912], back: [512, 656, 1024, 912] };
+    const tq = (cx, cy, cz, fx, fz, W, H, r, tilt, back) => {   // text board (bottom centre cx, cy, cz) facing (fx, fz), its top leaning back by tilt; r: atlas rect [x0, y0, x1, y1] (px);
+      // back: a plain colour for its back (in the scenery), 0: none (on a wall), else the text again (readable from behind)
+      const ca = Math.cos(tilt || 0), sa = Math.sin(tilt || 0), ux = fz, uz = -fx, kx = -fx * H * sa, ky = H * ca, kz = -fz * H * sa, nX = fx * ca, nY = sa, nZ = fz * ca;
+      const u0 = r[0] / 1024, u1 = r[2] / 1024, v1 = 1 - r[1] / 1024, v0 = 1 - r[3] / 1024, m = [cx + kx / 2, cy + ky / 2, cz + kz / 2];
+      const Q = (f, o) => { const hw = W / 2 * f, A = [cx + nX * o - ux * hw, cy + nY * o, cz + nZ * o - uz * hw], B = [cx + nX * o + ux * hw, cy + nY * o, cz + nZ * o + uz * hw]; return [A, B, [B[0] + kx, B[1] + ky, B[2] + kz], [A[0] + kx, A[1] + ky, A[2] + kz]]; };
+      for (const f of back != null ? [1] : [1, -1]) { const [A, B, C, D] = Q(f, 0.03 * f); tb.quadO(A, B, C, D, W1, [m[0] - nX * f, m[1] - nY * f, m[2] - nZ * f], [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]); }
+      if (back) { const [A, B, C, D] = Q(1, -0.03); scen.get(cx, cz).quadO(A, B, C, D, back, [m[0] + nX, m[1] + nY, m[2] + nZ]); }
+    };
+    const sign = (F, v, a, r) => {   // brown National Forest board (4.4 x 1.1 m, as in pkLandmarks) on two short and two tall posts, leaning back so the high cameras read it
+      const W = 4.4, H = 1.1, [x, z] = F.at(0, v), [fx, fz] = F.dir(a), tl = 0.6, h0 = 0.75, lx = H * Math.sin(tl) + 0.08, pc = [0.3, 0.2, 0.12], ro = Math.atan2(fz, fx), g = scen.get(x, z), P = [[x, z]];
+      for (const o of [-W * 0.38, W * 0.38]) P.push([x + fz * o - fx * 0.08, z - fx * o - fz * 0.08], [x + fz * o - fx * lx, z - fx * o - fz * lx]);
+      const y = lo(P);
+      for (const o of [-W * 0.38, W * 0.38]) { const px = x + fz * o, pz = z - fx * o; box(g, px - fx * 0.08, y - 0.3, pz - fz * 0.08, 0.14, h0 + 0.3, 0.14, ro, pc, null, true); box(g, px - fx * lx, y - 0.3, pz - fz * lx, 0.14, h0 + H * Math.cos(tl) + 0.36, 0.14, ro, pc, null, true); }
+      tq(x, y + h0, z, fx, fz, W, H, ins(r), tl); ex(x, z, W / 2 + 1.5); };
+    const signAt = (s0, s1, side, v, r) => {   // the sign at the first spot from s0 towards s1 where it fits, facing the arriving cars (turned a little towards the road); -> its s
+      const st = s1 > s0 ? 1 : -1;
+      for (let s = s0; st * (s1 - s) >= 0; s += st) { const F = fr(s, side), [x, z] = F.at(0, v), [fx, fz] = F.dir(PI + 0.35), P = [[x, z]];
+        for (const o of [-1.68, 1.68]) P.push([x + fz * o - fx * 0.08, z - fx * o - fz * 0.08], [x + fz * o - fx * 0.72, z - fx * o - fz * 0.72]);   // (its four posts)
+        if (free(P, true)) { sign(F, v, PI + 0.35, r); info.signs.push(where(x, z)); return s; } }
+      return null; };
+
+    /* ---- turn boards: the real course's number of every modelled corner (T.def.turnNos: 2 ... 154 of its 156 turns), 25-45 m before the corner on the side where
+       the barrier is nearest the road (in view of the portrait chase camera): a white board with the number and a red arrow the way it turns (round a U at the
+       hairpins), leaning back, facing the arriving cars ---- */
+    const TN = (T.def && T.def.turnNos ? T.def.turnNos(T) : []).slice(0, 37), BW = 2.9, BH = 1.8, BT = 0.55, BA = PI + 0.3;
+    const bPts = (F, v) => { const [x, z] = F.at(0, v), [fx, fz] = F.dir(BA), lx = BH * Math.sin(BT) + 0.06, P = [[x, z]];
+      for (const o of [-BW / 2, BW / 2]) P.push([x + fz * o, z - fx * o], [x + fz * o * 0.72 - fx * lx, z - fx * o * 0.72 - fz * lx]); return P; };
+    TN.forEach((t, k) => {
+      const C = [];   // the spots, nearest the road first (the barrier's distance, how far beyond it, a little off 32 m before the corner): the first that fits is taken
+      for (let d = 25; d <= 45; d++) for (const side of [-1, 1]) { const s = t.s - d; if (s < S0 + 6) continue; const bar = side > 0 ? T.br[T.idx(s)] : T.bl[T.idx(s)];
+        for (const e of [0, 0.8, 1.8, 3, 4.5]) C.push([bar + e + Math.abs(d - 32) * 0.03, s, side, e]); }
+      C.sort((p, q) => p[0] - q[0]);
+      let b = null;
+      for (const strict of [true, false]) {   // (clear of everything; else only of the buildings and the people)
+        for (const [, s, side, e] of C) { if (strict && e > 2) continue;
+          const F = fr(s, side), v = 1.6 + e + BW * 0.47, P = bPts(F, v); if (!free(P, strict)) continue;
+          const l = lo(P), h = hi(P); if (h - l > 1.1 || l < F.hy - 2.2 || h > F.hy + 2.2) continue;
+          b = { F, v, y: l }; break; }
+        if (b) break; }
+      if (!b) return;
+      const [x, z] = b.F.at(0, b.v), [fx, fz] = b.F.dir(BA), g = scen.get(x, z), h0 = 1.05, lx = BH * Math.sin(BT) + 0.06, ro = Math.atan2(fz, fx), pc = [0.58, 0.6, 0.62];
+      for (const o of [-BW * 0.36, BW * 0.36]) { const px = x + fz * o, pz = z - fx * o;   // galvanised posts: a short one under the bottom edge, a tall one behind the top edge
+        box(g, px - fx * 0.06, b.y - 0.3, pz - fz * 0.06, 0.1, h0 + 0.36, 0.1, ro, pc, null, true);
+        box(g, px - fx * lx, b.y - 0.3, pz - fz * lx, 0.1, h0 + BH * Math.cos(BT) + 0.3, 0.1, ro, pc, null, true); }
+      tq(x, b.y + h0, z, fx, fz, BW, BH, cell(k), BT, [0.17, 0.18, 0.2]);
+      ex(x, z, BW / 2 + 1.8); info.turns.push([t.n, ...where(x, z)]);
+    });
+
+    // a culvert's end just beyond the barrier (frame F; its pipe runs under the road, the mouth faces away from it): a stone headwall with flared wing walls, the pipe's dark
+    // mouth half in the ground (steel: a corrugated steel pipe sticking out of the wall); -> [x, y, z] where its water comes out (or goes in), its exclusion, the way out from the road
+    const stone = [0.55, 0.52, 0.48], stoneT = [0.63, 0.6, 0.55], dark = [0.05, 0.05, 0.06];
+    const culvert = (F, steel, CV) => {   // (CV: the headwall's distance beyond the barrier line)
+      const [x, z] = F.at(0, CV), g = scen.get(x, z), ro = F.rot(), y = lo([F.at(-1.8, CV - 0.25), F.at(1.8, CV - 0.25), F.at(-1.8, CV + 0.35), F.at(1.8, CV + 0.35), F.at(0, CV + 0.95)]), [tx, tz] = F.dir(0), [ox, oz] = F.dir(PI / 2);
+      box(g, x, y - 0.5, z, 3.6, 1.5, 0.6, ro, stone, stoneT, true);
+      for (const sg of [-1, 1]) { const [wx, wz] = F.at(sg * 2.15, CV + 0.55); box(g, wx, y - 0.5, wz, 0.45, 1.15, 1.5, F.rot(sg * 0.45), vary(stone, R, 0.08), stoneT, true); }
+      const r = steel ? 0.58 : 0.62, o = CV + (steel ? 1.1 : 0.32), n = 8, pt = (a, rr, v) => [x + tx * Math.cos(a) * rr + ox * (v - CV), y + 0.02 + Math.sin(a) * rr, z + tz * Math.cos(a) * rr + oz * (v - CV)], c = pt(0, 0, o - 1), ax = pt(0, 0, (CV + 0.25 + o) / 2);
+      for (let k = 0; k < n; k++) { const a0 = PI * k / n, a1 = PI * (k + 1) / n;
+        g.triO(pt(a0, 0, o), pt(a0, r, o), pt(a1, r, o), dark, c);   // the mouth, dark inside
+        if (steel) { g.quadO(pt(a0, r, CV + 0.25), pt(a1, r, CV + 0.25), pt(a1, r, o), pt(a0, r, o), k % 2 ? [0.62, 0.63, 0.62] : [0.54, 0.55, 0.55], ax); g.quadO(pt(a0, r, o), pt(a1, r, o), pt(a1, r + 0.07, o), pt(a0, r + 0.07, o), [0.72, 0.73, 0.72], c); }
+        else g.quadO(pt(a0, r, o), pt(a1, r, o), pt(a1, r + 0.22, o), pt(a0, r + 0.22, o), vary([0.44, 0.42, 0.39], R, 0.1), c); }   // (the arch's voussoirs)
+      const e = { x, z, r: 4.5 }; excl.push(e); info.culv.push(where(x, z));
+      const [px, pz] = F.at(0, o + 0.15); return [px, y + 0.02, pz, e, Math.atan2(oz, ox)];   // (its watercourse may cross its own exclusion)
+    };
+    const culverts = (s, up, steel) => {   // a pipe under the road near s (moved a little either way, and out from the barrier where it widens, until both ends fit): -> [the upper end, the lower end]
+      const fit = (F, v) => free([F.at(-2.4, v - 0.15), F.at(2.4, v - 0.15), F.at(-2.5, v + 1.3), F.at(2.5, v + 1.3), F.at(0, v - 0.3)], false) && hi([F.at(-2.4, v), F.at(2.4, v)]) - lo([F.at(-2.4, v), F.at(2.4, v)]) < 0.9;
+      for (const du of [0, 2, -2, 4, -4, 6, -6, 8, -8]) { const A = fr(s + du, up), B = fr(s + du, -up), va = [2.4, 3, 3.6].find(v => fit(A, v)), vb = [2.4, 3, 3.6].find(v => fit(B, v));
+        if (va && vb) return [culvert(A, steel, va), culvert(B, steel, vb)]; }
+      return [null, null]; };
+    // a watercourse from a culvert's mouth [x, y, z, its exclusion] out along the fall line (dn 1: downhill; -1: up the slope, where it comes from): 1 m steps, steered a little at a time
+    // towards the steepest way down (up) 3 m ahead, off the road and the buildings; -> the points [x, z]
+    const course = (p0, len, dn) => {
+      let x = p0[0], z = p0[2], a = p0[4]; const P = [];
+      for (let k = 0; k <= len; k++) { P.push([x, z]); let best = null, bv = 1e9;
+        for (const da of [-0.45, -0.2, 0, 0.2, 0.45]) { const b = a + da, qx = x + Math.cos(b) * 3, qz = z + Math.sin(b) * 3; if (pkNear(qx, qz).dd < 2.5 || hard(qx, qz, p0[3])) continue; const v = dn * gy(qx, qz) + Math.abs(da) * 0.12; if (v < bv) { bv = v; best = b; } }
+        if (best == null) break; a += clamp(best - a, -0.16, 0.16) + (R() - 0.5) * 0.14; x += Math.cos(a); z += Math.sin(a); }
+      return P; };
+    // its bed on the ground along the points (the edges take the ground's colour, so it fades in), cobbles along the banks; wet: a dark bed, a strip of water on it,
+    // willow scrub on the banks
+    const bed = (P, wet) => {
+      const n = P.length; if (n < 3) return;
+      const L = P.map((p, k) => { const a = P[Math.max(0, k - 1)], b = P[Math.min(n - 1, k + 1)], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1; return [-dz / l, dx / l]; });
+      const E = (k, o, lift) => { const x = P[k][0] + L[k][0] * o, z = P[k][1] + L[k][1] * o; return [x, gy(x, z) + lift, z]; }, G = (k, o) => gcol(P[k][0] + L[k][0] * o, P[k][1] + L[k][1] * o);
+      const bc = wet ? [0.27, 0.26, 0.25] : [0.55, 0.51, 0.46], Wb = (k) => (wet ? 2.5 : 1.9) * (0.85 + 0.25 * Math.sin(k * 0.61 + 1.3)) * Math.min(1, 0.55 + k * 0.15), Ww = (k) => (0.75 + 0.3 * Math.sin(k * 0.47)) * Math.min(1, 0.6 + k * 0.12);
+      const cols = P.map((p, k) => { const w = Wb(k), c = vary(bc, R, 0.1); return [G(k, -w / 2), c, c, G(k, w / 2)]; }), keep = [];
+      for (let k = 0; k + 1 < n; k++) { const g = scen.get(P[k][0], P[k][1]), w0 = Wb(k), w1 = Wb(k + 1), A = [-w0 / 2, -w0 / 4, w0 / 4, w0 / 2].map((o, i) => E(k, o, i % 3 ? 0.05 : 0.03)), B = [-w1 / 2, -w1 / 4, w1 / 4, w1 / 2].map((o, i) => E(k + 1, o, i % 3 ? 0.05 : 0.03));
+        for (let q = 0; q < 3; q++) g.quadUp(A[q], A[q + 1], B[q + 1], B[q], [cols[k][q], cols[k][q + 1], cols[k + 1][q + 1], cols[k + 1][q]]);
+        if (wet) { const v0 = Ww(k), v1 = Ww(k + 1), fall = gy(...P[k]) - gy(...P[k + 1]), wc = fall > 0.16 ? [0.82, 0.88, 0.9] : vary([0.3, 0.45, 0.52], R, 0.06);   // the water, white where it drops
+          g.quadUp(E(k, -v0 / 2, 0.08), E(k, v0 / 2, 0.08), E(k + 1, v1 / 2, 0.08), E(k + 1, -v1 / 2, 0.08), [wc, wc, wc, wc]); }
+        if (k % 3 === 0) keep.push([P[k][0], P[k][1], Math.max(w0, 2.2)]); }
+      for (let k = 1; k < n; k++) for (const sd of [-1, 1]) { if (R() > 0.55) continue;   // cobbles
+        const w = Wb(k), r = 0.1 + R() * (wet ? 0.28 : 0.2), [x, y, z] = E(k, sd * (w / 2 - 0.1 - R() * 0.5), 0); if (pkNear(x, z).dd < r * 1.7 + 1.5) continue;
+        peb(scen.get(x, z), x, y, z, r * 1.2, vary(wet ? [0.46, 0.45, 0.44] : [0.64, 0.6, 0.55], R, 0.18)); }
+      if (wet) for (let k = 3; k < n; k += 3) for (const sd of [-1, 1]) { if (R() > 0.5) continue;   // willow scrub: low, grey-green clumps along the banks
+        const w = Wb(k), [x, y, z] = E(k, sd * (w / 2 + 0.7 + R() * 1.6), 0), g = scen.get(x, z), c = vary([[0.36, 0.44, 0.3], [0.42, 0.48, 0.33], [0.31, 0.39, 0.27]][Math.floor(R() * 3)], R, 0.1);
+        if (pkNear(x, z).dd < 3.4 || hard(x, z)) continue;   // (the clumps spread ~1.9 m)
+        for (let q = 0, m = 2 + Math.floor(R() * 2); q < m; q++) { const rr = 0.5 + R() * 0.35, qa = R() * TAU, qd = q ? 0.55 + R() * 0.45 : 0; ico(g, x + Math.cos(qa) * qd, y + rr * 0.72, z + Math.sin(qa) * qd, rr, 1.05 + R() * 0.3, sh(c, 0.9 + R() * 0.2), R, 0.3); }   // (rounded, soft clumps)
+        ex(x, z, 1.6); }
+      for (const [x, z, r] of keep) ex(x, z, r);   // (trees, boulders and the later crowds keep off it)
+    };
+
+    /* ---- Engineer's Corner: just past the bend, on its uphill side (here its inside, the barrier near the road), the brown sign and the road builders' benchmark: a stone cairn
+       with a striped survey pole, a brass-capped concrete marker, a surveyor at his level on its tripod; then an old stone culvert taking a dry wash under the road ---- */
+    {
+      const s0 = S0 + 578, hs = (sd) => { const p = K.onSide(s0 + 40, sd, 22); return gy(p[0], p[1]); }, up = hs(-1) > hs(1) ? -1 : 1, sc = s0 + 44;   // (sc: the culvert)
+      const one = (L, rr, f) => { for (const [s, v] of L) { const F = fr(s0 + s, up), [x, z] = F.at(0, v); if (!free(ring(x, z, rr), true)) continue; f(F, x, z); info.eng.push(where(x, z)); return; } };   // at the first of the spots where it fits
+      signAt(s0 + 16, s0 + 30, up, 3.1, AT.eng);
+      one([[23.5, 2.6], [24.5, 3.4], [26, 2.8], [22, 3.8], [28, 3.2]], 1.1, (F, x, z) => { const g = scen.get(x, z), c = [0.6, 0.57, 0.53]; let y = lo(ring(x, z, 0.9)) - 0.15;   // the cairn
+        for (const [r, h] of [[0.9, 0.55], [0.7, 0.5], [0.5, 0.42], [0.32, 0.34]]) { rock(g, x + (R() - 0.5) * 0.1, y + 0.4 * h, z + (R() - 0.5) * 0.1, r, h, r * 0.9, R() * TAU, vary(c, R, 0.12), R, 0.2, 0.55); y += h * 0.88; }
+        for (let q = 0; q < 6; q++) box(g, x, y - 0.1 + q * 0.4, z, 0.08, 0.4, 0.08, 0, q % 2 ? [0.95, 0.95, 0.93] : [0.86, 0.12, 0.1]);   // the survey pole, red and white
+        ex(x, z, 1.8); });
+      one([[27.5, 1.9], [28.5, 2.4], [21, 2], [30, 2.2], [26, 4.6]], 0.4, (F, x, z) => { const g = scen.get(x, z), y = gy(x, z);   // the benchmark: a concrete post, a brass cap
+        box(g, x, y - 0.3, z, 0.3, 0.95, 0.3, F.rot(), [0.7, 0.69, 0.66], [0.74, 0.73, 0.7]); cyl(g, x, y + 0.65, z, 0.1, 0.04, 8, [0.72, 0.55, 0.22], [0.86, 0.68, 0.3]); ex(x, z, 0.9); });
+      one([[32, 2.9], [33, 3.6], [31, 4.2], [35, 3]], 1.2, (F, x, z) => { const g = scen.get(x, z), y = gy(x, z), hd = [x, y + 1.42, z], leg = [0.78, 0.62, 0.3], [fx, fz] = F.dir(-PI / 2 - 0.5);   // the level on its tripod, sighting across the road
+        for (let q = 0; q < 3; q++) { const a = q / 3 * TAU + 0.4; rod(g, [x + Math.cos(a) * 0.55, y - 0.05, z + Math.sin(a) * 0.55], hd, 0.05, leg); }
+        box(g, x, y + 1.42, z, 0.36, 0.2, 0.2, Math.atan2(fz, fx), [0.93, 0.74, 0.12]); box(g, x + fx * 0.22, y + 1.47, z + fz * 0.22, 0.16, 0.1, 0.1, Math.atan2(fz, fx), [0.12, 0.12, 0.13]);
+        crowdPut(CR, x - fx * 0.75, gy(x - fx * 0.75, z - fz * 0.75), z - fz * 0.75, fx, fz, { col: [1, 0.55, 0.1], flag: 0 }, 1); ex(x, z, 1.9); });   // the surveyor, in hi-vis orange
+      { const [x, z] = fr(s0 + 27, up).at(0, 3.4); ex(x, z, 6.5); }   // a clearing round them (no tree crown over them)
+      const [pi, po] = culverts(sc, up, false);
+      if (pi) bed(course(pi, 16, -1), false); if (po) bed(course(po, 18, 1), false);
+    }
+
+    /* ---- Brown Bush Corner, the first big hairpin: its sign on the approach, a thicket of brown scrub on the inside ---- */
+    {
+      const c = T.corners.find(q => q.sev >= 3 && q.s0 > S0 + 1600 && q.s0 < S0 + 1800);
+      if (c) {
+        const sm = (c.i0 + c.i1) / 2 * T.ds, side = c.dir, brn = [[0.36, 0.25, 0.16], [0.42, 0.31, 0.2], [0.3, 0.21, 0.14], [0.4, 0.33, 0.21], [0.47, 0.36, 0.25], [0.33, 0.3, 0.18], [0.37, 0.34, 0.2]], bs = [];   // (dull browns, some olive: the low sun warms them)
+        signAt(c.s0 - 12, c.s0 - 34, side, 3.1, AT.brown);
+        for (let s = c.s0 - 16; s < sm + 24; s += 1.6) for (let q = 0; q < 4; q++) {   // (a thicket: the clumps close together, some touching)
+          const r = 0.6 + R() * 0.8, v = 0.9 + Math.pow(R(), 0.9) * 8, [x, z] = fr(s + (R() - 0.5) * 1.6, side).at(0, v + r), keep = R() < 0.6;
+          if (!keep || pkNear(x, z).dd < r * 1.6 + 1.5 || K.excluded(x, z) || bs.some(b => (b[0] - x) ** 2 + (b[1] - z) ** 2 < ((b[2] + r) * 0.62) ** 2)) continue;   // (the bush spreads ~1.6 r)
+          const y = gy(x, z), g = scen.get(x, z), col = brn[Math.floor(R() * brn.length)];   // a bush: a big clump and two or three smaller ones round it
+          for (let q = 0, m = 2 + (r > 0.85 ? 1 : 0); q < m; q++) { const a = R() * TAU, d = q ? r * (0.5 + R() * 0.3) : 0; bush(g, x + Math.cos(a) * d, y - 0.08, z + Math.sin(a) * d, r * (q ? 0.55 + R() * 0.2 : 0.8), q ? 0.62 + R() * 0.15 : 0.75, vary(col, R, 0.14)); }
+          bs.push([x, z, r]); }
+        for (const b of bs) ex(b[0], b[1], b[2] + 0.35);
+      }
+    }
+
+    /* ---- Cove Creek: a mountain stream comes down the high side of the bend, runs under the road through a culvert and on down the low side over the stones,
+       willow scrub along it; the sign just before it on the near side ---- */
+    {
+      const s0 = S0 + 3568, hs = (sd) => { const p = K.onSide(s0, sd, 30); return gy(p[0], p[1]); }, up = hs(-1) > hs(1) ? -1 : 1, i0 = T.idx(s0), near = T.bl[i0] <= T.br[i0] ? -1 : 1;
+      signAt(s0 - 11, s0 - 30, near, 3.1, AT.cove);
+      const [pi, po] = culverts(s0, up, true);
+      if (pi) bed(course(pi, 40, -1), true); if (po) bed(course(po, 44, 1), true);
+    }
+
+    /* ---- Devil's Playground: weathered granite tors on the bare ridge (stacks of rounded blocks, pillars, low domes with boulders on top, scree at their feet):
+       a row of smaller ones right beyond the barriers on both sides (in view of the chase camera), bigger ones farther out on the slopes ---- */
+    {
+      const s0 = S0 + 4050, gran = [[0.66, 0.55, 0.49], [0.61, 0.51, 0.46], [0.7, 0.6, 0.53], [0.58, 0.49, 0.45]], tors = [];
+      const tor = (x, z, sz, kind) => {   // a jumble of rounded blocks: kind 0 a cluster of two or three with one on top, 1 a tall block with one or two perched on it, 2 a low dome with a boulder on it
+        const g = scen.get(x, z), c = vary(gran[Math.floor(R() * gran.length)], R, 0.08), y0 = lo(ring(x, z, sz * 0.8)) - 0.3, a0 = R() * TAU, tops = [];
+        const blk = (bx, by, bz, rx, ry, k) => { const rz = rx * (0.7 + R() * 0.3), fl = 0.5 + R() * 0.2; rock(g, bx, by + 0.4 * ry, bz, rx, ry, rz, R() * TAU, sh(c, k * (0.95 + R() * 0.1)), R, 0.22, fl); tops.push([bx, by + ry * (0.4 + fl) - 0.1, bz, Math.min(rx, rz)]); };
+        if (kind === 0) for (let q = 0, m = 2 + (R() < 0.25 ? 1 : 0); q < m; q++) { const a = a0 + q / m * TAU, d = sz * 0.55, rx = sz * (0.6 + R() * 0.25); blk(x + Math.cos(a) * d, y0, z + Math.sin(a) * d, rx, rx * (0.75 + R() * 0.3), 0.92); }
+        else if (kind === 1) blk(x, y0, z, sz * 0.8, sz * (1.3 + R() * 0.4), 0.92);
+        else blk(x, y0, z, sz * 1.3, sz * 0.62, 0.92);
+        for (let q = 0, m = kind === 1 && R() < 0.3 ? 2 : 1; q < m; q++) {   // blocks perched on the highest ones
+          const t = tops.reduce((p, u) => u[1] > p[1] ? u : p), rx = t[3] * (0.6 + R() * 0.25), a = R() * TAU, d = t[3] * 0.25 * R();
+          blk(t[0] + Math.cos(a) * d, t[1], t[2] + Math.sin(a) * d, rx, rx * (0.7 + R() * 0.35), 1.04); }
+        for (let q = 0, m = 1 + Math.floor(R() * 2); q < m; q++) { const a = R() * TAU, d = sz * (1.3 + R() * 0.7), bx = x + Math.cos(a) * d, bz = z + Math.sin(a) * d, r = 0.25 + R() * 0.3 * sz;   // scree
+          if (pkNear(bx, bz).dd < r * 1.6 + 1.5) continue; peb(g, bx, gy(bx, bz), bz, r * 1.3, sh(c, 0.9 + R() * 0.15)); } };
+      const put = (s, side, v0, v1, z0, z1) => { for (let tries = 0; tries < 12; tries++) {   // one tor near road s on 'side', v0-v1 beyond the barrier, sz0-sz1 across (a few tries round the spot)
+        const sz = z0 + R() * (z1 - z0), e = sz * 1.45, [x, z] = fr(s + (R() - 0.5) * 8, side).at(0, v0 + R() * (v1 - v0) + e);   // (e: how far its blocks spread)
+        if (pkNear(x, z).dd < e + 1.5 || !free(ring(x, z, e), true) || tors.some(t => (t[0] - x) ** 2 + (t[1] - z) ** 2 < (t[2] + e + 1.5) ** 2) || pkSlope(x, z) > 0.7) continue;
+        tor(x, z, sz, Math.floor(R() * 3)); tors.push([x, z, e]); ex(x, z, e + 0.8); info.tors++; return; } };
+      for (let s = s0 - 30, k = 0; s < s0 + 112; s += 8 + R() * 4, k++) { const sd = k % 2 ? 1 : -1;   // both sides, staggered: a row right beyond the barrier (the chase camera's edges),
+        put(s, sd, 1.6, 2.6, 1.4, 2.1); put(s + 5, -sd, 3.5, 9, 2.2, 3.3); if (k % 4 === 0) put(s + 3, sd, 11, 28, 3, 4.5); }   // bigger ones behind them (the upper part of the view), the biggest farther out
+    }
+
+    /* ---- the timing & scoring tower just past the finish line, on the Summit Visitor Center's side between the finish crowd and the center: three storeys, the top one
+       the glazed control room with a balcony towards the road (officials watching the line), "TIMING & SCORING" on the fascia, the big results screen facing the
+       arriving cars; the block turned a little towards the road ---- */
+    {
+      const side = K.padH.lat < 0 ? -1 : 1, th = 0.5, L = 6.2, D = 4.4, bw = 1.3;
+      let tw = null;
+      for (let vc = 3.5; vc <= 9 && !tw; vc += 0.25) for (let s = sFin + 14; s <= sFin + 26 && !tw; s += 0.5) {   // (the nearest the road that fits: in view of the chase camera)
+        const F = fr(s, side), [cx, cz] = F.at(0, vc), e1 = F.dir(PI + th), e2 = F.dir(1.5 * PI + th), P = (a, b) => [cx + e1[0] * a + e2[0] * b, cz + e1[1] * a + e2[1] * b], pts = [], pb = [];
+        for (const a of [-L / 2, 0, L / 2]) { for (const b of [-D / 2, 0, D / 2]) pts.push(P(a, b)); pb.push(P(a, D / 2 + bw + 0.1)); }
+        // (the walls on the ground clear of the road and of the buildings, the block below culls anyone inside; the balcony, 6 m up, only reaches out over the verge beyond the barrier)
+        if (!pts.every(([x, z]) => pkNear(x, z).dd >= 1.5 && !hard(x, z)) || !pb.every(([x, z]) => pkNear(x, z).dd >= 0.3 && !hard(x, z)) || hi(pts) - lo(pts) > 1.6) continue;
+        tw = { P, e1, e2, cx, cz, y0: hi(pts) + 0.12, yl: lo(pts), s, vc };
+      }
+      if (tw) {
+        const { P, e1, e2, y0, yl } = tw, g = scen.get(tw.cx, tw.cz), ro = Math.atan2(e1[1], e1[0]), B = (a, b, y, sa, sy, sb, col, top) => { const [x, z] = P(a, b); box(g, x, y, z, sa, sy, sb, ro, col, top, true); };
+        const wht = [0.9, 0.9, 0.88], grey = [0.66, 0.66, 0.65], glass = [0.13, 0.16, 0.2], glassB = [0.17, 0.24, 0.3], rail = [0.55, 0.66, 0.72], red = [0.84, 0.12, 0.1];
+        B(0, 0, yl - 0.3, L + 0.5, y0 - yl + 0.3, D + 0.5, [0.55, 0.54, 0.52], [0.62, 0.61, 0.59]);   // plinth
+        B(0, 0, y0, L, 3.0, D, grey, grey); B(L / 2 + 0.02, -D / 2 + 1.0, y0, 0.06, 2.2, 1.1, [0.24, 0.27, 0.31]);   // ground floor, its door
+        B(0, 0, y0 + 3, L, 3.0, D, wht, wht); B(0, 0, y0 + 3.9, L + 0.05, 1.2, D + 0.05, glass);   // first floor, a band of windows round it
+        B(0, 0, y0 + 5.95, L + 0.3, 0.2, D + 0.3, wht, wht);
+        B(0, 0, y0 + 6.15, L + 0.2, 2.6, D + 0.2, glassB);   // the control room: glass all round, white corner posts and mullions
+        for (const a of [-1, 1]) for (const b of [-1, 1]) B(a * (L / 2 + 0.05), b * (D / 2 + 0.05), y0 + 6.15, 0.2, 2.6, 0.2, wht);
+        for (let q = 1; q < 4; q++) for (const b of [-1, 1]) B(-L / 2 + q * L / 4, b * (D / 2 + 0.11), y0 + 6.15, 0.08, 2.6, 0.04, wht);
+        for (let q = 1; q < 3; q++) B(-L / 2 - 0.11, -D / 2 + q * D / 3, y0 + 6.15, 0.04, 2.6, 0.08, wht);
+        B(0, 0, y0 + 8.65, L + 0.92, 0.12, D + 0.92, red); B(0, 0, y0 + 8.75, L + 0.9, 0.9, D + 0.9, wht, [0.72, 0.72, 0.7]);   // the roof: a red line under a deep white fascia
+        B(-1.5, -1.0, y0 + 9.65, 1.6, 0.7, 1.2, [0.8, 0.8, 0.79], [0.86, 0.86, 0.85]);   // plant, antennas
+        for (const [a, b, h] of [[2.1, -1.5, 3.4], [2.5, 1.3, 2.4]]) B(a, b, y0 + 9.65, 0.07, h, 0.07, [0.45, 0.45, 0.47]);
+        // the balcony towards the road: deck, a glass railing, two struts under it; officials watching the line
+        const bb = D / 2 + 0.1 + bw / 2;
+        B(0, bb, y0 + 5.95, L, 0.2, bw + 0.2, wht, [0.6, 0.58, 0.55]); B(0, bb + bw / 2, y0 + 6.15, L, 1.0, 0.05, rail); B(0, bb + bw / 2, y0 + 7.12, L + 0.06, 0.07, 0.1, wht);
+        for (const a of [-1, 1]) { B(a * L / 2, bb, y0 + 6.15, 0.05, 1.0, bw, rail); B(a * L / 2, bb, y0 + 7.12, 0.1, 0.07, bw, wht);
+          const [x0, z0] = P(a * (L / 2 - 0.4), D / 2), [x1, z1] = P(a * (L / 2 - 0.4), D / 2 + bw); rod(g, [x0, y0 + 4.3, z0], [x1, y0 + 5.95, z1], 0.14, wht); }
+        { const fx = e2[0] * 0.85 + e1[0] * 0.53, fz = e2[1] * 0.85 + e1[1] * 0.53;
+          for (const [a, col] of [[-1.9, [0.95, 0.95, 0.94]], [-0.2, [0.98, 0.52, 0.1]], [1.7, [0.14, 0.2, 0.38]]]) { const [x, z] = P(a, bb + 0.1); crowdPut(CR, x, y0 + 6.15, z, fx, fz, { col, flag: 0 }, 1); } }
+        // the results screen on the front (the face towards the arriving cars), in a black frame; the name on the fascia (front and road side)
+        B(L / 2 + 0.14, 0, y0 + 3.1, 0.24, 2.5, D + 0.2, [0.08, 0.08, 0.09]);
+        { const [x, z] = P(L / 2 + 0.27, 0); tq(x, y0 + 3.3, z, e1[0], e1[1], D - 0.2, (D - 0.2) / 2, ins(AT.screen), 0, 0); }
+        { const [x, z] = P(L / 2 + 0.46, 0); tq(x, y0 + 8.88, z, e1[0], e1[1], D + 0.5, 0.64, ins(AT.fascia), 0, 0); }
+        { const [x, z] = P(0, D / 2 + 0.46); tq(x, y0 + 8.88, z, e2[0], e2[1], L + 0.6, 0.64, ins(AT.fascia), 0, 0); }
+        ex(tw.cx, tw.cz, Math.hypot(L, D) / 2 + 1.5); CR.block(tw.cx, tw.cz, L + 0.5, D + 0.5, ro); info.tower = [Math.round(tw.s), tw.vc];   // (nobody inside it)
+      }
+    }
+
+    /* ---- the winners' podium on the summit, where the portrait chase camera looks once the car has stopped past the line (the game brakes it straight on, ~46 m):
+       in the upper part of that view, beside the last metres of the road, clear of the cog railway, the car park and the crowds, on a stage where the ground slopes;
+       three steps with their numbers, the sponsor backdrop "RACE TO THE CLOUDS" between two chequered flags, a red carpet, the three winners on the steps, officials
+       beside them, photographers and fans in front; facing the stopped car (or turned towards the road where that fits better) ---- */
+    {
+      const iF = T.idx(sFin), hx = T.tx[iF], hz = T.tz[iF], nx = -hz, nz = hx, ax = T.px[iF] + hx * 46, az = T.pz[iF] + hz * 46, pE = K.padE;
+      const park = excl.find(e => e.x === pE.x && e.z === pE.z), C = [];   // (the car park's own wide circle: the podium may stand inside it, clear of the pad itself)
+      for (let d = 22; d <= 72; d += 1.5) for (let o = -24; o <= 30; o += 1.5) for (let t = 0; t <= 3; t++) C.push([d, o, t, Math.abs(o - 3) * 1.2 + Math.abs(d - 42) * 0.5 + t * 2.5]);
+      C.sort((p, q) => p[3] - q[3]);   // (d ahead of the stopped car, o to its right: nearest the upper middle of its view first; t: turned from the car towards the road)
+      const ok = (x, z) => pkNear(x, z).dd >= 1.5 && !hard(x, z, park);
+      let pd = null;
+      for (const [d, o, t] of C) {
+        const cx = ax + hx * d + nx * o, cz = az + hz * d + nz * o, n = pkNear(cx, cz); if (n.i < 0 || n.dd < 3 || Math.hypot(cx - pE.x, cz - pE.z) < pE.r + 5) continue;
+        const sg = n.lat > 0 ? 1 : -1, l = Math.hypot(ax - cx, az - cz), k = t / 3, fx = (ax - cx) / l * (1 - k) - T.nx[n.i] * sg * k, fz = (az - cz) / l * (1 - k) - T.nz[n.i] * sg * k, fl = Math.hypot(fx, fz) || 1;
+        const f = [fx / fl, fz / fl], r = [f[1], -f[0]], P = (a, b) => [cx + f[0] * a + r[0] * b, cz + f[1] * a + r[1] * b], pts = [P(3.8, -1.3), P(3.8, 1.3)];
+        for (const a of [1.3, 0, -2.4]) for (const b of [-5, -2.5, 0, 2.5, 5]) pts.push(P(a, b));
+        const st = [P(1.3, -5.2), P(1.3, 5.2), P(-2.5, -5.2), P(-2.5, 5.2), P(0, 0)], l0 = lo(st), h0 = hi(st);
+        if (free(pts, false, park) && h0 - l0 < 1.4 && hi(pts) - lo(pts) < 2.2) { pd = { cx, cz, P, f, y: h0 - l0 > 0.25 ? h0 + 0.12 : l0, yl: l0 }; break; }
+      }
+      if (pd) {
+        const { P, y, f } = pd, g = scen.get(pd.cx, pd.cz), ro = Math.atan2(f[1], f[0]), B = (a, b, yb, sa, sy, sb, col, top) => { const [x, z] = P(a, b); box(g, x, yb, z, sa, sy, sb, ro, col, top, true); };
+        const blu = [0.1, 0.2, 0.45], wht = [0.95, 0.95, 0.93], steps = [[0, 1.05, 0], [-1.65, 0.72, 1], [1.65, 0.48, 2]];   // (across, height, place): the winner in the middle, second on the audience's left
+        if (y > pd.yl) B(-0.6, 0, pd.yl - 0.3, 3.8, y - pd.yl + 0.3, 10.4, [0.12, 0.15, 0.28], [0.46, 0.46, 0.48]);   // a stage where the ground slopes: a blue skirt, grey boards
+        for (const [b, h] of steps) B(0, b, y - 0.1, 1.65, h + 0.1, 1.62, blu, wht);
+        for (const [b, h, k] of steps) { const [x, z] = P(0.84, b); tq(x, y + h - 0.46, z, f[0], f[1], 0.64, 0.4, cell(37 + k), 0, 0); }
+        { const c = [0.6, 0.07, 0.1], Q = (a, b) => { const [x, z] = P(a, b); return [x, a < 1.3 ? y + 0.035 : gy(x, z) + 0.05, z]; };   // the carpet, from the steps down the stage and out over the ground
+          g.quadUp(Q(0.83, -2.6), Q(0.83, 2.6), Q(1.25, 2.4), Q(1.25, -2.4), [c, c, c, c]); g.quadUp(Q(1.35, -2.4), Q(1.35, 2.4), Q(3.8, 1.3), Q(3.8, -1.3), [c, c, c, c]); }
+        for (const b of [-3.75, 3.75]) B(-1.62, b, y - 0.2, 0.3, 4.45, 0.3, [0.62, 0.63, 0.66]);   // the backdrop on its truss posts
+        B(-1.62, 0, y + 0.4, 0.1, 3.75, 7.5, [0.1, 0.12, 0.18]);
+        { const [x, z] = P(-1.55, 0); tq(x, y + 0.48, z, f[0], f[1], 7.2, 3.6, ins(AT.back), 0, 0); }
+        for (const b of [-4.7, 4.7]) { const [x, z] = P(-1.3, b); cyl(g, x, y - 0.2, z, 0.05, 5.6, 5, [0.85, 0.85, 0.88]);   // chequered flags, flying out to the sides
+          for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) { const [qx, qz] = P(-1.3, b + Math.sign(b) * (0.2 + i * 0.3)); box(g, qx, y + 4.35 + j * 0.3, qz, 0.03, 0.3, 0.3, ro, (i + j) % 2 ? [0.08, 0.08, 0.08] : [0.96, 0.96, 0.96], null, true); } }
+        for (const [b, h, k] of steps) { const [x, z] = P(0.05, b); crowdPut(CR, x, y + h, z, f[0], f[1], { col: [[0.86, 0.12, 0.1], [0.15, 0.35, 0.8], [0.95, 0.95, 0.95]][k], flag: 0 }, 1); }   // the winners in their race suits
+        for (const [a, b] of [[0.7, -3.3], [0.5, 3.4]]) { const [x, z] = P(a, b); crowdPut(CR, x, y, z, f[0], f[1], { col: [0.12, 0.13, 0.16], flag: 0 }, 1); }   // officials
+        for (const [a, b] of [[3.2, -2.4], [3.6, 0.2], [3.3, 2.6], [4.5, -1.1], [4.7, 1.4], [2.6, -4.2], [2.7, 4.3]]) { const [x, z] = P(a, b), [px, pz] = P(0, b * 0.3); if (ok(x, z)) crowdPut(CR, x, gy(x, z), z, px - x, pz - z, {}, 1); }   // photographers and fans
+        ex(pd.cx, pd.cz, 6.5); info.podium = where(pd.cx, pd.cz);
+      }
+    }
+
+    /* ---- the text: one canvas atlas (1024 x 1024), one mesh ---- */
+    const cv = document.createElement('canvas'); cv.width = cv.height = 1024; const c2 = cv.getContext('2d'), cream = '#efe3c6', GEO = 'px Georgia, "Times New Roman", serif';
+    const txt = (s, x, y, px, col, w, font) => { c2.fillStyle = col; c2.font = font || '900 ' + px + 'px Arial, sans-serif'; c2.textAlign = 'center'; c2.textBaseline = 'middle'; c2.fillText(s, x, y, w); };
+    const rect = (x, y, w, h, col) => { c2.fillStyle = col; c2.fillRect(x, y, w, h); };
+    const poly = (pts, col) => { c2.fillStyle = col; c2.beginPath(); pts.forEach(([a, b], k) => k ? c2.lineTo(a, b) : c2.moveTo(a, b)); c2.closePath(); c2.fill(); };
+    TN.forEach((t, k) => { const x0 = (k % 8) * 128, y0 = Math.floor(k / 8) * 80, dl = t.dir < 0;   // turn boards: black edge, white face, the number, a red arrow (drawn for a right turn, mirrored for a left one)
+      rect(x0, y0, 128, 80, '#16171a'); rect(x0 + 5, y0 + 5, 118, 70, '#f5f4ef'); txt(String(t.n), x0 + (dl ? 81 : 47), y0 + 43, 54, '#101114', 80);
+      c2.save(); c2.translate(x0 + (dl ? 27 : 101), y0 + 40); if (dl) c2.scale(-1, 1); c2.strokeStyle = '#d42219'; c2.lineWidth = 8; c2.lineJoin = 'round'; c2.beginPath();
+      if (t.sev >= 3) { c2.moveTo(-9, 27); c2.lineTo(-9, -9); c2.arc(0, -9, 9, PI, 0); c2.lineTo(9, 3); c2.stroke(); poly([[0, 3], [18, 3], [9, 21]], '#d42219'); }   // round a U
+      else { c2.moveTo(-8, 27); c2.lineTo(-8, -2); c2.quadraticCurveTo(-8, -14, 4, -14); c2.stroke(); poly([[3, -26], [19, -14], [3, -2]], '#d42219'); }
+      c2.restore(); });
+    ['1', '2', '3'].forEach((n, k) => { const q = 37 + k, x0 = (q % 8) * 128, y0 = Math.floor(q / 8) * 80; rect(x0, y0, 128, 80, '#0f2a60'); rect(x0 + 4, y0 + 4, 120, 72, '#1a4390'); txt(n, x0 + 64, y0 + 43, 66, ['#f2c230', '#dfe3e8', '#d58a48'][k], 100); });   // the podium's step numbers
+    const plank = (x0, y0, w, h, col) => { rect(x0, y0, w, h, col); c2.strokeStyle = 'rgba(0,0,0,0.13)'; c2.lineWidth = 2;   // wood with a little grain (as pkLandmarks)
+      for (let k = 0; k < 10; k++) { const y = y0 + R() * h; c2.beginPath(); c2.moveTo(x0, y); c2.bezierCurveTo(x0 + w * 0.3, y + (R() - 0.5) * 8, x0 + w * 0.7, y + (R() - 0.5) * 8, x0 + w, y + (R() - 0.5) * 6); c2.stroke(); } };
+    const ft = (m) => String(Math.round(m * 3.28084)).replace(/\B(?=(\d{3})+(?!\d))/g, ','), alt = (d) => Math.round(T.altAt ? T.altAt(T.hy[T.idx(S0 + d)]) : 0);
+    const brown = (r, name, d) => { const [x0, y0] = r, a = alt(d); plank(x0, y0, 512, 128, '#5b3b21'); c2.strokeStyle = cream; c2.lineWidth = 5; c2.strokeRect(x0 + 8, y0 + 8, 496, 112);
+      txt(name, x0 + 256, y0 + 51, 46, cream, 470, '700 46' + GEO); txt('ELEV. ' + ft(a) + ' FT  ·  ' + a + ' m', x0 + 256, y0 + 97, 24, cream, 430, '700 24' + GEO); };
+    brown(AT.eng, "ENGINEER'S CORNER", 578); brown(AT.brown, 'BROWN BUSH CORNER', 1720); brown(AT.cove, 'COVE CREEK', 3564);
+    { const [x0, y0] = AT.fascia; rect(x0, y0, 512, 48, '#14306a'); rect(x0, y0 + 41, 512, 7, '#d8261e'); txt('TIMING & SCORING', x0 + 256, y0 + 21, 32, '#fff', 490); }
+    { const [x0, y0] = AT.screen; rect(x0, y0, 512, 256, '#050607'); rect(x0, y0, 512, 46, '#1a1c21'); txt('RESULTS', x0 + 256, y0 + 24, 30, '#ffb61e', 470);   // the results screen: LED yellow on black
+      txt('1', x0 + 64, y0 + 116, 104, '#ffd426', 90); txt('YOU', x0 + 292, y0 + 116, 104, '#ffd426', 330); rect(x0 + 18, y0 + 176, 476, 3, '#ffb61e');
+      txt((T.def.alt ? T.def.alt[1] : 4301) + ' m', x0 + 132, y0 + 216, 36, '#79e2ff', 220); txt('07:42', x0 + 390, y0 + 216, 40, '#f4f4f4', 200);
+      c2.fillStyle = 'rgba(0,0,0,0.4)'; for (let y = y0 + 46; y < y0 + 256; y += 4) c2.fillRect(x0, y, 512, 1); for (let x = x0; x < x0 + 512; x += 4) c2.fillRect(x, y0 + 46, 1, 210); }
+    { const [x0, y0] = AT.back, gr = c2.createLinearGradient(0, y0, 0, y0 + 256); gr.addColorStop(0, '#2a67b8'); gr.addColorStop(1, '#0f2b5e'); c2.fillStyle = gr; c2.fillRect(x0, y0, 512, 256);   // the podium's backdrop
+      poly([[x0, y0 + 196], [x0, y0 + 176], [x0 + 110, y0 + 118], [x0 + 172, y0 + 146], [x0 + 256, y0 + 84], [x0 + 332, y0 + 138], [x0 + 402, y0 + 110], [x0 + 512, y0 + 170], [x0 + 512, y0 + 196]], 'rgba(255,255,255,0.2)');   // the peak
+      txt('RACE TO THE', x0 + 256, y0 + 50, 46, '#fff', 430, 'italic 900 46px Arial, sans-serif'); txt('CLOUDS', x0 + 256, y0 + 118, 88, '#fff', 470, 'italic 900 88px Arial, sans-serif');
+      rect(x0, y0 + 196, 512, 60, '#f2f2f0'); [['APEX RACING', '#e02a1f'], ['SUMMIT OIL', '#13306b'], ['ROCKY TYRES', '#1b2f6e'], ['14ER COFFEE', '#4a2c1a']].forEach(([n, col], k) => txt(n, x0 + 64 + k * 128, y0 + 226, 22, col, 116)); }   // (fictional sponsors, as the banners)
+    const tx = new THREE.CanvasTexture(cv); tx.anisotropy = 4; K.out.ownTex.push(tx);
+    if (!tb.empty) { const m = new THREE.Mesh(tb.geometry(), new THREE.MeshLambertMaterial({ map: tx })); m.receiveShadow = true; m.matrixAutoUpdate = false; K.root.add(m); }
   }
 
   /* ---- wildlife above the treeline: yellow-bellied marmots on the boulders, a band of bighorn sheep on the slopes
