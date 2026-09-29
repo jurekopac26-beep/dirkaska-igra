@@ -1,5 +1,6 @@
 // "Circuit Superstars" handling signatures, measured on a flat test plane and checked against the bands that came
 // out of the analysis of the reference video (parta.mp4). BURJA R7 (model 'rally'), assist 2, unless noted.
+// At the end the formula car (open wheels, wings): quicker than the road cars on tarmac, tidier, worse on makadam.
 //   node tests/cs-handling.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -9,10 +10,11 @@ const DT = 1 / 120, G = 9.81, D = 180 / Math.PI;
 const tauLaw = (v) => Math.min(0.6, Math.max(0.35, 0.45 * Math.pow(v / 27.78, 0.4)));   // drift attitude time constant vs speed (m/s)
 const mean = (a, i0, i1) => { let s = 0, n = 0; for (let i = Math.max(0, i0); i < Math.min(a.length, i1); i++) { s += a[i]; n++; } return n ? s / n : NaN; };
 
-// flat, endless test plane (optionally a wall along z = wallZ)
+// flat, endless test plane (optionally a wall along z = wallZ); its surface: asphalt, or planeSurf (5: makadam)
+let planeSurf = 0;
 const plane = { hasElev: false, def: {}, open: false,
   query(x, z, h, o) { o = o || {}; Object.assign(o, { i: 0, a: 0, s: x, d: z, tx: 1, tz: 0, nx: 0, nz: 1, x, z, bl: 1e9, br: 1e9 }); return o; },
-  surface() { return 0; } };
+  surface() { return planeSurf; } };
 
 function mkCar(id, o) {
   const M = C.MODELS.find(m => m.id === id);
@@ -119,6 +121,39 @@ const lo = longi('rally');
 band('0-100 km/h', lo.t100, 2.85, 2.89, ' s');
 band('100-0 km/h braking distance', lo.d100, 22, 26, ' m');
 band('straight braking from 150 km/h: max body slip', lo.bmax, 0, 1, ' deg');
+
+// ---- the formula (open wheels, wings): the fastest car on tarmac, a tidy slide, carbon brakes; slicks on makadam ----
+{
+  const lf = longi('formula');
+  band('formula: 0-100 km/h', lf.t100, 2.3, 2.7, ' s');
+  band('formula: 100-0 km/h braking distance', lf.d100, 16, 20, ' m');
+  band('formula: straight braking from 150 km/h: max body slip', lf.bmax, 0, 1, ' deg');
+  const c = mkCar('formula', { v: 0 }); for (let i = 0; i < 60 / DT; i++) step(c, { thr: 1 });
+  band('formula: top speed on the flat', c._v * 3.6, 270, 295, ' km/h');
+  const f60 = steady('formula', 60, 1.0), f100 = steady('formula', 100, 1.0), f150 = steady('formula', 150, 1.0), r100 = steady('rally', 100, 1.0);
+  band('formula: steady 150 km/h full lock: lateral g (the wings)', f150.ay, 3.0, 3.5, ' g');
+  band('formula: grip gained from 60 to 150 km/h (downforce)', f150.ay - f60.ay, 0.7, 1.4, ' g');
+  band('formula: drift attitude at 100 km/h below the rally car\'s', r100.slip - f100.slip, 4, 12, ' deg');
+  const te = turnExit('formula', 100);
+  band('formula exit 100 km/h: slip decay to 37 %', te.tau63, 0.18, 0.35, ' s');
+  band('formula exit 100 km/h: no swing to the other side (min slip)', te.slMin, -2, 90, ' deg');
+  band('formula exit 100 km/h: slip sign crossings', te.cross, 0, 0);
+  const b = pedal('formula', 'brake'), l = pedal('formula', 'lift'), th = pedal('formula', 'thr');
+  band('formula: brake in a corner, peak extra slip', b.pk, -90, 9, ' deg');
+  band('formula: no spin under brake / lift / throttle', +(b.spun || l.spun || th.spun), 0, 0);
+  planeSurf = 5;   // makadam
+  const fm = longi('formula'), rm = longi('rally'), fs = steady('formula', 100, 1.0), rs = steady('rally', 100, 1.0);
+  planeSurf = 0;
+  band('formula on makadam: 0-100 km/h slower than the rally car', fm.t100 - rm.t100, 0.8, 2.5, ' s');
+  band('formula on makadam: less side grip at 100 km/h than the rally car', rs.ay - fs.ay, 0.15, 0.6, ' g');
+  // a head-on hit knocks the front wing off (half the downforce goes with it); the pit repair brings it back
+  const A = mkCar('formula', { v: 0 }), B = mkCar('rally', { v: 0 });
+  B.place(4.2, 0, Math.PI); A.vx = 20; B.vx = -20; C.carCollide(A, B);
+  const wingOff = +!!A.lost.bumperF, lost = A.aeroK / A.aeroK0; C.Race.prototype.repairCar(A);
+  band('formula: front wing knocked off in a head-on hit', wingOff, 1, 1);
+  band('formula: downforce left without the front wing (share)', lost, 0.49, 0.51);
+  band('formula: the pit repair gives it back', A.aeroK / A.aeroK0, 1, 1);
+}
 
 let bad = 0;
 for (const c of checks) { if (!c.ok) bad++; console.log(`${c.ok ? 'OK  ' : 'FAIL'} ${c.name.padEnd(56)} ${f(c.v).padStart(8)}  (want ${c.want})`); }

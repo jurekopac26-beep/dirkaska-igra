@@ -173,10 +173,10 @@ const Sfx = (function () {
     let rpm = player.rpm;
     if (player.locked) rpm = M.idle + (M.redline * 0.82 - M.idle) * (revInput || 0) + Math.random() * 60 * (revInput || 0);
     const r = clamp(rpm / M.redline, 0.08, 1.05);
-    const base = 22 + r * 205; // firing freq Hz
+    const base = (22 + r * 205) * (M.engHz || 1); // firing freq Hz (the formula screams higher)
     set(eng.o1.frequency, base, 0.015); set(eng.o2.frequency, base * 0.5, 0.015); set(eng.o3.frequency, base * 2.01, 0.015);
     const load = player.locked ? (revInput || 0) : player.inThr;
-    set(eng.lp.frequency, 380 + r * 1700 + load * 1300, 0.03);
+    set(eng.lp.frequency, (380 + r * 1700 + load * 1300) * (M.engHz ? 1.35 : 1), 0.03);
     const cut = player.shiftT > 0 ? 0.35 : 1;
     set(eng.out.gain, (0.1 + 0.1 * r + 0.1 * load) * cut * eng.level, 0.02);
     // two nearest AI engines
@@ -189,7 +189,7 @@ const Sfx = (function () {
         if (!o) { set(v.out.gain, 0); continue; }
         const c = o[1], d = Math.sqrt(o[0]);
         const rr = clamp(c.rpm / c.m.redline, 0.1, 1.05);
-        const f = 22 + rr * 205;
+        const f = (22 + rr * 205) * (c.m.engHz || 1);
         set(v.o1.frequency, f); set(v.o2.frequency, f * 0.5); set(v.o3.frequency, f * 2.02);
         set(v.lp.frequency, 400 + rr * 1500 + c.inThr * 800);
         const att = clamp(1 - d / 70, 0, 1);

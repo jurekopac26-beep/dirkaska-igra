@@ -6853,6 +6853,12 @@ const World = (function () {
   }
   function rbAirStep(A, t, car) {
     const raw = t - A.t, dt = clamp(raw, 0, 0.25); A.t = t;
+    if (!car) {   // no car to follow (World.update(W, 0, null): the scenery's pose at time 0, as the world test takes it): nothing in the air
+      A.go = false; A.t0 = -1; A.heli.visible = A.on = false; A.fly = null; A.flyDone = false;
+      for (const m of A.jets) { m.visible = false; m.position.set(0, 0, 0); m.rotation.set(0, 0, 0); }
+      for (const tr of A.trails) { tr.s.length = 0; tr.P.fill(0); tr.C.fill(0); tr.m.geometry.setDrawRange(0, 0); tr.m.visible = false; }
+      return;
+    }
     const cam = typeof Render !== 'undefined' && Render.camera && Render.camera.isCamera ? Render.camera : null;
     /* the jets: asked for by game.js (A.go) as the race is set up; while the shot runs (A.shot, the first ~6 s) the camera stands on the grid and
        follows them in; the smoke hangs on, drifting and spreading, for half a minute */

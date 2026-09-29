@@ -50,6 +50,11 @@ Proga formule 1 v Spielbergu na avstrijskem Štajerskem v pravem merilu: en krog
 - **Red Bull Energy Station** na koncu paddocka proti 1. zavoju: tri steklena nadstropja pod široko temnomodro streho z napisom, terasa s senčniki, bazen in zastave.
 - Gozdovi (smreke in bukve), travniki (z rumenimi in belimi cvetočimi lisami) in polja okoli proge so postavljeni po podatkih o rabi tal (ESA WorldCover). Na pozidanih površinah iz teh podatkov so parkirišča z avtomobili navijačev v vrstah; okoli so še štajerske kmetije ter kampi s šotori in avtodomi.
 - Zavoji so označeni s številkami kot v formuli 1 (imena sponzorjev se skoraj vsako leto menjajo); 1. zavoj nosi ime Nikija Laude (od leta 2019), 9. pa Jochena Rindta. Pred počasnimi zavoji stojijo table z oddaljenostjo (300, 200, 100 m).
+- **Sektorski časi kot na TV**: krog je razdeljen na tri sektorje (do 1,4 km, do 3 km in do cilja). Pod uro so tri črtice; ko prevoziš konec sektorja, se obarva: vijolična pomeni najhitrejši čas tega sektorja na dirki (med vsemi avti), zelena tvoj najboljši, rumena počasneje. Na koncu 1. in 2. sektorja se za trenutek izpiše še SEKTOR 1 oziroma 2 s časom; vijolični sektor zapiska in komentator ga občasno pohvali.
+- **Navijači**: ko pelješ mimo tribun in navijačev na travi, se slišijo množica, bobni in trobente. Ob startu, ko koga prehitiš, in v cilju zagrmi glasneje.
+- **Prelet letal in TV helikopter**: pred startom kamera s tal pokaže tri letala, ki z rdeče-belo-rdečim dimom (avstrijska zastava) preletijo ciljno ravnino. Med dirko TV helikopter samo enkrat, ko drugič pripelješ na ciljno ravnino, nizko preleti progo pred tabo in odleti, da ne moti vožnje.
+- **Zmagovalni oder**: po cilju kamera za 8 s pokaže oder na strehi stavbe boksov: prve tri v barvah njihovih avtov (imena so na zaslonu), pokal, avstrijske zastave, šampanjec in oranžen dim. V dirki s prijateljem odra ni.
+- **Dež**: pri izbiri proge je vrstica Vreme (Sončno ali Dež, le na Red Bull Ringu). V dežju je nebo sivo, okoli kamere padajo kaplje, asfalt se sveti, za avti se dviga vodna meglica, slišita se dež in šumenje gum po vodi. Gume imajo le 76 % oprijema, zavorna pot je daljša, tekmeci skozi ovinke vozijo počasneje in zavirajo prej.
 
 ## Suzuka
 
@@ -76,6 +81,16 @@ Na progah Ljubljana, Monako, Pikes Peak, Ouninpohja, Nordschleife, Red Bull Ring
 ## Fizika vožnje
 
 Privzeta fizika je **Circuit Superstars**: avto drsi z nosom v ovinek toliko, kolikor hitro zavijaš; zaviranje v ovinku ga zavrti, na izhodu se sam poravna; brez vrtenja. Gumb za drift (preslednica) ga zavrti še malo bolj. Pomoč pri driftu (nizka/srednja/visoka) določa, kako daleč lahko zadrsa. **Arkadna** je prejšnja fizika in je na voljo v Nastavitvah (Fizika vožnje: Arkadna). Rekordi se za vsako fiziko vodijo posebej.
+
+## Dirkalnik formule
+
+V izbiri avta je **FORMULA ORKAN**, dirkalnik formule z odprtimi kolesi, sprednjim in zadnjim krilom, zaščitnim lokom (halo) nad voznikom v čeladi in kamero na strehi. Voziš ga lahko na vseh progah; tekmeci vozijo še naprej običajne avte.
+
+- 1000 KM, 798 kg, osem prestav, motor poje višje kot pri drugih avtih. Od 0 do 100 km/h pospeši v 2,5 s, doseže ~280 km/h (z odprtim DRS na Red Bull Ringu ~300 km/h).
+- Krila ga pri hitrosti pritisnejo ob cesto: v hitrih ovinkih ima veliko več oprijema kot drugi avti (pri 150 km/h ~3,2 g, drugi ~2,3 g), v počasnih lasnicah pa ne (tam zavije celo malo širše). Zavore so iz ogljikovih vlaken: s 100 km/h se ustavi na ~18 m (drugi avti na ~24 m). Manj drsi in se hitreje poravna.
+- Gume so gladke (slik): na travi, produ in makadamu imajo le 70 % oprijema, zato je tam reli avto BURJA R7 hitrejši.
+- Ob trkih odletijo sprednje krilo, nos, zadnje krilo, pokrov motorja (pod njim se vidi motor), ogledali in stranski deflektorji. Brez sprednjega krila izgubi pol pritiska na cesto, brez zadnjega še 40 %; mehaniki v boksih avto popravijo.
+- V conah DRS na Red Bull Ringu se loputa zadnjega krila res odpre. Zadaj ima rdečo luč kot v formuli 1: v dežju sveti, med zaviranjem utripa. V dežju vozi na gumah za moker asfalt (zelen pas na boku gume), sicer na mehkih (rdeč pas).
 
 ## Dirka s prijateljem
 
