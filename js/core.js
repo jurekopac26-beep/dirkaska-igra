@@ -537,6 +537,9 @@ const Core = (function () {
     { mu: 0.86, c0: 0.35, c1: 0.03 },   // paving (street circuits)
     { mu: 0.82, c0: 0.6, c1: 0.05 },    // makadam (dirt rally road): decent accel/brake but lively, slidey
   ];
+  // rain: the grip left on a wet track (x every surface's mu: cornering and traction; the brakes keep 0.55 + 0.45 x of theirs).
+  // Less grip also means bigger, lazier slides in both slide models (as on the loose surfaces)
+  const WET = 0.8;
   // arcade (player) handling: yaw = max nose rotation (rad/s), mu = lateral grip (g), slide = grip kept while sliding
   // SWGP2-style tarmac handling, measured from gameplay video:
   //   amax  : lateral grip (g) - the video's cars corner at ~1.6-2.2 g
@@ -694,6 +697,7 @@ const Core = (function () {
       this.y = 0; this.py = 0; this.vy = 0; this.air = 0; this.airT = 0; this.landT = 0; this.impactVY = 0;
       this.roadY = 0; this.gradeNow = 0; this.curvNow = 0;
       this.dmg = 0; this.dz = [0, 0, 0, 0]; this.dents = []; this.dmgMode = 2;
+      this.wet = 1;   // grip left in the rain (Race.setRain): 1 dry
       this.inPit = false; this.pitState = null; this.pitT = 0; this.pitDur = 0; this.pitDone = false; this.repairN = 0;   // pit lane: in it, stopping / repairing at the box
       this.cd = [0, 0, 0, 0]; this.lightOut = [0, 0, 0, 0]; this.lost = {}; this.detach = []; this.hitDebris = 0;
       this.winOut = [0, 0, 0, 0]; this.roofDmg = 0;   // broken windows (windscreen, rear, left, right); roof crumple 0..1   // corners FL/FR/RL/RR, broken lights, lost parts   // damage 0..1; zones front/rear/left/right; 0 off, 1 visual, 2 visual+handling
@@ -765,7 +769,7 @@ const Core = (function () {
         dragC0 += SURF[sf].c0 * 0.25; dragC1 += SURF[sf].c1 * 0.25;
       }
       this.onCurb = curb;
-      const muSurf = muSum / 4;
+      const muSurf = muSum / 4 * this.wet;   // (rain: less grip)
       const fwd = vl > 0.5;
       const beta = spd > 1.5 && fwd ? Math.atan2(vt, vl) : 0;
       this.beta = beta;
@@ -935,8 +939,8 @@ const Core = (function () {
         if (k & 1) dragP += dk; else dragN += dk;
       }
       this.onCurb = curb;
-      const muSurf = muSum / 4, muLat = (latF + latB) * 0.5;
-      const muDrv = M.drive === 'FF' ? muF : M.drive === 'AWD' ? muSurf : muR;   // one rear wheel on the grass costs a RWD car traction
+      const wg = this.wet, muSurf = muSum / 4 * wg, muLat = (latF + latB) * 0.5 * wg;   // (rain: less grip)
+      const muDrv = M.drive === 'FF' ? muF * wg : M.drive === 'AWD' ? muSurf : muR * wg;   // one rear wheel on the grass costs a RWD car traction
       const fwd = vl > 0.5;
       const beta = spd > 1.5 && fwd ? Math.atan2(vt, vl) : 0;
       this.beta = beta;
@@ -1131,7 +1135,7 @@ const Core = (function () {
         const wz = this.z + wpos[k][0] * sh + wpos[k][1] * ch;
         const q = trk.query(wx, wz, this.wq[k].i >= 0 ? this.wq[k].i : hint, this.wq[k]);
         const s = trk.surface(q);
-        this.ws[k] = s; muW[k] = SURF[s].mu;
+        this.ws[k] = s; muW[k] = SURF[s].mu * this.wet;
         if (s === 1) curb++;
       }
       this.onCurb = curb;
@@ -1822,6 +1826,7 @@ const Core = (function () {
       }
       if (this.player) this.player.num = opts.playerNum || 1;
       if (this.remote) this.remote.num = RM.num || 2;
+      this.rain = 0; this._wet(opts.rain);
       this._prof();
     }
 
@@ -1835,10 +1840,17 @@ const Core = (function () {
       this.finishOrder.forEach((f, i) => { f.finishPos = i + 1; });
     }
 
-    // speed profile for the AI (on the racing line), per physics; an upgraded player's autopilot brakes later with better brakes (its own profile)
+    // rain (0 dry .. 1 wet, opts.rain): the grip of every car; the renderer follows race.rain (streaks, spray, a wet road)
+    _wet(r) { r = clamp(+r || 0, 0, 1); this.rain = r; const w = 1 - (1 - WET) * r; for (const c of this.cars) c.wet = w; }
+    setRain(r) { this._wet(r); this._prof(); }   // (title demo: the weather setting at once)
+
+    // speed profile for the AI (on the racing line), per physics; an upgraded player's autopilot brakes later with better brakes (its own profile).
+    // Rain: the corners as much slower as the grip is lower, the braking as the brakes (see Car)
     _prof() {
-      const opts = this.opts, track = this.track;
-      const csP = opts.phys === 'cs', latA0 = opts.aiLatA || (csP ? CSK.aiLatA : 16.5), brA0 = opts.aiBrakeA || (csP ? CSK.aiBrakeA : 13.0), wM0 = csP ? CSK.aiWmax : 0;
+      const opts = this.opts, track = this.track, w = this.rain ? 1 - (1 - WET) * this.rain : 1;
+      const csP = opts.phys === 'cs', wM0 = csP ? CSK.aiWmax : 0;
+      let latA0 = opts.aiLatA || (csP ? CSK.aiLatA : 16.5), brA0 = opts.aiBrakeA || (csP ? CSK.aiBrakeA : 13.0);
+      if (this.rain) { latA0 *= w; brA0 *= 0.55 + 0.45 * w; }
       this.vprof = track.speedProfile(latA0, brA0, 85, wM0);
       if (this.player && this.player.upg && this.player.brakeG !== BRAKE_G) this.player.vprof = track.speedProfile(latA0, brA0 * this.player.brakeG / BRAKE_G, 85, wM0);
     }

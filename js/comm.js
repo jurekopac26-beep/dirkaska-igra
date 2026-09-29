@@ -25,6 +25,9 @@ const Comm = (() => {
     nrHohe: ['Hohe Acht, the highest point of the circuit!', 'Up at Hohe Acht, over six hundred metres high.'],
     nrPflanz: ['Pflanzgarten! Hold on for the jump!', 'Over the Pflanzgarten jump!'],
     nrDott: ['Onto the Döttinger Höhe, the long straight home!', 'Flat out down the Döttinger Höhe!'],
+    // the weather (after the welcome, in a wet race)
+    rain: ["And it's raining! A wet track today, so brake early and go easy on the throttle.", 'Rain is falling, and the track is wet. Watch out for the spray!', 'The heavens have opened! Grip will be hard to find today.'],
+    rainSpa: ["Typical Spa weather, it's raining in the Ardennes! Brake early today.", "It's wet at Spa! Eau Rouge in the rain, that takes courage.", 'Rain at Spa, of course! Spray everywhere, and grip will be hard to find.'],
     goNet: ['Lights out, and away they go!', "And they're off!", 'Green light! Side by side into turn one!', 'Go, go, go! The duel is on!'],
     go: ['Lights out, and away we go!', "And they're off!", 'Green light! The pack charges into turn one!', 'Go, go, go! The race is on!'],
     gain: ["What a move! Up to {pos}!", "Brilliant overtake, you're now {pos}!", "Straight past! That's {pos} place!", "Another one bites the dust. You're up to {pos}!", 'Clean pass, into {pos}!'],

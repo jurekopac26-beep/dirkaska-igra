@@ -21,7 +21,7 @@
 
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
-  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.2, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, damage: 2, name: 'Igralec' };
+  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.2, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, damage: 2, weather: 'dry', name: 'Igralec' };
   let S = Object.assign({}, DEF);
   let records = {};
   try { const j = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (j) S = Object.assign(S, j); } catch (_) { }
@@ -33,6 +33,7 @@
   const esc = (v) => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   for (const k in DEF) if (S[k] == null || typeof S[k] === 'object') S[k] = DEF[k];   // hand-edited storage: a setting is always a plain value
   if (S.phys !== 'arcade') S.phys = 'cs';   // the 'rally' physics was removed: its players (it was the default) and old saves get cs
+  if (!['dry', 'rain', 'random'].includes(S.weather)) S.weather = 'dry';
   S.name = cleanName(S.name) || DEF.name;
   // upgrades per car: S.upg[modelId] = {motor, gume, zavore, aero} 0..3 (own objects, never shared; old saves have none)
   const UPG_IDS = Core.UPG.map(u => u.id);
@@ -163,7 +164,7 @@
     $('ctrl-help').textContent = (S.control === 'buttons' && S.phys !== 'arcade' ? CTRL_HELP_CS : CTRL_HELP[S.control]) || '';
     { const d = Core.TRACKS.find(x => x.id === S.track) || Core.TRACKS[0], r = rec(d.id);   // the selected track and its record first (short screens may cut the end of the hint)
       if (isTT(d)) { $('title-hint').textContent = 'Proga: ' + d.name + (r.bestTime ? ' (osebni rekord ' + fmt(r.bestTime, true) + ')' : ' (še brez časa)') + '.'; $('title-sub').textContent = d.name + ' · kronometer · brez nasprotnikov'; }
-      else { $('title-hint').textContent = 'Proga: ' + d.name + (r.bestLap ? ' (rekord kroga ' + fmt(r.bestLap, true) + ')' : '') + '.'; $('title-sub').textContent = d.name + ' · ' + lapWord(d.laps || 3).toLowerCase() + ' · 12 nasprotnikov'; } }
+      else { $('title-hint').textContent = 'Proga: ' + d.name + (r.bestLap ? ' (rekord kroga ' + fmt(r.bestLap, true) + ')' : '') + '.'; $('title-sub').textContent = d.name + ' · ' + lapWord(d.laps || 3).toLowerCase() + ' · 12 nasprotnikov' + (S.weather === 'rain' ? ' · dež' : S.weather === 'random' ? ' · morda dež' : ''); } }
     $('title-hint').textContent += ' Upravljanje: ' + CTRL_NAME[S.control] + ', kamera: ' + (S.camera === 'chase' ? 'za avtom (telefon pokončno)' : S.camera === 'kino' ? 'kino (telefon ležeče)' : 'izometrična (telefon ležeče)') + '. Spremeniš v nastavitvah.' + (records.bestLap ? ' Rekord kroga: ' + fmt(records.bestLap, true) + '.' : '');
     { const el = $('set-name'); if (el && document.activeElement !== el) el.value = S.name; }
   }
@@ -181,6 +182,10 @@
   }
   // driving physics: 'cs' (Circuit Superstars kinematic drift, the default) or the old 'arcade' slide model; switching applies at once
   const physOf = () => S.phys === 'arcade' ? 'arcade' : 'cs';
+  // the weather: dry, rain, or at random for every race (rain more often in the Ardennes and the Eifel); the title demo rains only with 'rain'
+  const RAIN_P = { spa: 0.5, nring: 0.45 };
+  const rainOf = () => S.weather === 'rain' ? 1 : S.weather === 'random' && Math.random() < (RAIN_P[track && track.def.id] || 0.35) ? 1 : 0;
+  const demoRain = () => S.weather === 'rain' ? 1 : 0;
   function applyPhys(r) { if (r) r.setPhys(physOf()); }
   function setOption(key, v) {
     const num = ['zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'damage'];
@@ -188,6 +193,7 @@
     if (key === 'shadows') { autoNoShadows = false; perf.pending = perf.restore = false; perf.keep = true; }   // the player's own choice wins for the rest of the visit
     save(); applySettings();
     if (key === 'phys') { if (!(mp && mp.race)) applyPhys(race); applyPhys(demo); }   // (an online race keeps the host's physics)
+    if (key === 'weather' && demo) demo.setRain(demoRain());   // (a race keeps its weather; the next one gets the new setting)
     if (key === 'control' && v === 'tilt') enableTilt(false);
     if (key === 'camera') { lockOrientation(); updateOrientation(); }
   }
@@ -291,7 +297,7 @@
     setTimeout(() => {
       track = getTrack(id);
       Render.buildWorld(track, S.quality === 'retro' ? 0.8 : 1);
-      demo = new Core.Race(track, { numAI: 10, noPlayer: true, difficulty: 2, laps: 9999, seed: 11, phys: physOf() });
+      demo = new Core.Race(track, { numAI: 10, noPlayer: true, difficulty: 2, laps: 9999, seed: 11, phys: physOf(), rain: demoRain() });
       demo.start(); for (let i = 0; i < 120 * 4; i++) demo.step(STEP);
       demoTarget = null; demoSwitch = 0;   // the title camera picks a car of the new demo right away (not one left over from the previous track)
       mm.img = null; mm.w = 0;
@@ -306,10 +312,10 @@
     const mine = { playerModel: M, playerUpg: Object.assign({}, upgOf(M.id)), playerColor: PLAYER_COLORS[S.color], playerNum: carNum(), seed: (Math.random() * 1e6) | 0, difficulty: S.difficulty, assist: S.assist };
     if (on) {   // online: the host on the first grid slot, the friend on the second; the host's physics and damage for both
       const host = mp.role === 'host', left = on.first === mp.role, F = mp.peer || { name: 'Prijatelj', car: M.id, color: 0, num: 2 }, same = F.num === carNum();
-      race = new Core.Race(track, Object.assign(mine, { numAI: 0, playerGrid: left ? 1 : 2, laps: on.laps, damage: on.damage, phys: on.phys, playerNum: same && !host ? carNum() + 1 : carNum(),
+      race = new Core.Race(track, Object.assign(mine, { numAI: 0, playerGrid: left ? 1 : 2, laps: on.laps, damage: on.damage, phys: on.phys, rain: on.rain, playerNum: same && !host ? carNum() + 1 : carNum(),
         remote: { model: modelById(F.car), color: PLAYER_COLORS[F.color] || PLAYER_COLORS[0], num: same && host ? F.num + 1 : F.num, name: F.name, grid: left ? 2 : 1 } }));
     } else race = new Core.Race(track, Object.assign(mine, {   // time trial: alone on the start line, one run to the finish
-      numAI: tt ? 0 : NUM_AI, playerGrid: tt ? 1 : PLAYER_GRID, laps: tt ? 1 : track.def.laps || LAPS, damage: +S.damage, phys: physOf()
+      numAI: tt ? 0 : NUM_AI, playerGrid: tt ? 1 : PLAYER_GRID, laps: tt ? 1 : track.def.laps || LAPS, damage: +S.damage, phys: physOf(), rain: rainOf()
     }));
     Render.attachRace(race);
     Render.resetCam();
@@ -326,12 +332,14 @@
     showScreen('none');
     Sfx.resume(); Sfx.setRunning(true);
     Comm.stop(); commReset();
-    if (race.timeTrial) { Comm.say('introTT', { track: EN_NAME[track.def.id] || track.def.name, cps: track.cpS.length }, 2); showMsg('VZPON NA VRH!', 'gold', 1.2); }
+    const wetTxt = race.rain ? ' · DEŽ' : '';
+    if (race.timeTrial) { Comm.say('introTT', { track: EN_NAME[track.def.id] || track.def.name, cps: track.cpS.length }, 2); showMsg('VZPON NA VRH!' + wetTxt, 'gold', race.rain ? 1.8 : 1.2); }
     else {
       if (on) Comm.say('introNet', { track: EN_NAME[track.def.id] || track.def.name, laps: race.laps === 1 ? 'one lap' : race.laps + ' laps', name: race.remote.name }, 2);
       else Comm.say(race.laps === 1 ? 'introOne' : 'intro', { track: EN_NAME[track.def.id] || track.def.name, laps: race.laps, grid: Comm.ordinal(race.player.grid) }, 2);
-      showMsg(lapWord(race.laps), 'gold', 1.2);
+      showMsg(lapWord(race.laps) + wetTxt, 'gold', race.rain ? 1.8 : 1.2);
     }
+    if (race.rain) Comm.say(track.def.id === 'spa' ? 'rainSpa' : 'rain', null, 2, { ttl: 12000 });   // (after the welcome)
   }
   function setLights(n, go) {
     const ls = $('h-lights').children;
@@ -1054,8 +1062,9 @@
   // ready, the start is set 1.2 s ahead on the host's clock. The one on the left of the front row takes turns
   function netGo() {
     if (!mp || mp.role !== 'host' || !Net.open || !mp.peer || !mp.peerIn || mp.setup) return;
-    const no = ++mp.no, s = mp.setup = { no, track: mp.track, laps: mp.laps, phys: physOf(), damage: +S.damage, hold: +(0.5 + Math.random() * 0.9).toFixed(3), first: no % 2 ? 'host' : 'guest', hostReady: false, guestReady: false };
-    Net.send({ t: 'setup', no, track: s.track, laps: s.laps, phys: s.phys, damage: s.damage, hold: s.hold, first: s.first });
+    const no = ++mp.no, s = mp.setup = { no, track: mp.track, laps: mp.laps, phys: physOf(), damage: +S.damage, rain: 0, hold: +(0.5 + Math.random() * 0.9).toFixed(3), first: no % 2 ? 'host' : 'guest', hostReady: false, guestReady: false };
+    s.rain = S.weather === 'rain' ? 1 : S.weather === 'random' && Math.random() < (RAIN_P[s.track] || 0.35) ? 1 : 0;   // (the host's weather for both)
+    Net.send({ t: 'setup', no, track: s.track, laps: s.laps, phys: s.phys, damage: s.damage, rain: s.rain, hold: s.hold, first: s.first });
     Net.hold(30000); buildRoom();
     ensureTrack(s.track, () => { s.hostReady = true; netMaybeGo(); });
     setTimeout(() => { if (mp && mp.setup === s && !mp.race) { mp.setup = null; Net.send({ t: 'cancel', no }); buildRoom(); toast('Prijatelj se ne odziva. Poskusi znova.', 3600); } }, 45000);
@@ -1067,7 +1076,7 @@
   }
   // guest: the host starts. Load the track, then say ready (once the clocks are matched)
   function netPrepare(m) {
-    mp.setup = { no: m.no, track: m.track, laps: Core.clamp(m.laps | 0, 1, 5), phys: m.phys === 'arcade' ? 'arcade' : 'cs', damage: Core.clamp(m.damage | 0, 0, 2), hold: Core.clamp(+m.hold || 1, 0.5, 1.4), first: m.first === 'guest' ? 'guest' : 'host' };
+    mp.setup = { no: m.no, track: m.track, laps: Core.clamp(m.laps | 0, 1, 5), phys: m.phys === 'arcade' ? 'arcade' : 'cs', damage: Core.clamp(m.damage | 0, 0, 2), rain: m.rain === 1 ? 1 : 0, hold: Core.clamp(+m.hold || 1, 0.5, 1.4), first: m.first === 'guest' ? 'guest' : 'host' };
     mp.track = m.track; mp.laps = mp.setup.laps;
     Net.hold(30000); buildRoom();
     ensureTrack(m.track, () => {
@@ -1077,7 +1086,7 @@
   }
   function netRace(at) {
     const s = mp.setup; mp.setup = null; mp.peerIn = false;
-    mp.race = { no: s.no, at, hold: s.hold, goAt: at + 1300 + 4000 + s.hold * 1000, laps: s.laps, phys: s.phys, damage: s.damage, first: s.first, buf: [], sendT: -1e9, late: null, mine: null, theirs: null, left: false, off: false };
+    mp.race = { no: s.no, at, hold: s.hold, goAt: at + 1300 + 4000 + s.hold * 1000, laps: s.laps, phys: s.phys, damage: s.damage, rain: s.rain, first: s.first, buf: [], sendT: -1e9, late: null, mine: null, theirs: null, left: false, off: false };
     Net.fixClock(true);   // (the clock as it was at the start, until the race is over. The watchdog keeps its patience from the setup for a while: a phone that was frozen just before the start, e.g. switched away, still joins late)
     newRace();
   }
@@ -1361,7 +1370,7 @@
       Render.buildWorld(track, S.quality === 'retro' ? 0.8 : 1);
       Input.init($('touch'), () => { if (screen === 'pause') resume(); else if (screen === 'none') pause(); });
       applySettings();
-      demo = new Core.Race(track, { numAI: 10, noPlayer: true, difficulty: 2, laps: 9999, seed: 11, phys: physOf() });
+      demo = new Core.Race(track, { numAI: 10, noPlayer: true, difficulty: 2, laps: 9999, seed: 11, phys: physOf(), rain: demoRain() });
       demo.start();
       for (let i = 0; i < 120 * 6; i++) demo.step(STEP);
       Render.attachRace(demo);
@@ -1374,7 +1383,7 @@
       lockOrientation();   // (the installed app: straight away; in a browser tab only once full screen is on)
       // offline play and the newest version when online (sw.js); a service worker needs http(s), not a local file
       if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => { });
-      window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get phase() { return phase; }, get screen() { return screen; }, S, onAction, pause, resume,
+      window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get screen() { return screen; }, S, onAction, pause, resume,
         get adapt() { return { dyn: Render.getDynScale(), shadowsOn: shadowsOn(), auto: autoNoShadows, pending: perf.pending, restore: perf.restore, keep: perf.keep, check: perf.check }; },
         get net() { return mp ? { role: mp.role, code: mp.code, open: Net.open, synced: Net.synced, peer: mp.peer, track: mp.track, laps: mp.laps, race: mp.race && { at: mp.race.at, goAt: mp.race.goAt, mine: mp.race.mine, theirs: mp.race.theirs, left: mp.race.left, got: mp.race.buf.length, frameT: mp.race.frameT, startT: mp.race.startT } } : null; },
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; },

@@ -6,7 +6,7 @@ const Sfx = (function () {
   const { clamp } = Core;
   let ctx = null, master = null, bus = null, enabled = true, volume = 0.8;
   let noiseBuf = null;
-  let eng = null, ai = [], squeal = null, rumble = null, wind = null, curbV = null;
+  let eng = null, ai = [], squeal = null, rumble = null, wind = null, curbV = null, rainV = null, hiss = null;
   let lastCrash = 0, running = false;
 
   function create() {
@@ -28,6 +28,8 @@ const Sfx = (function () {
     rumble = noiseVoice('lowpass', 220, 0.8);
     curbV = noiseVoice('bandpass', 90, 4);
     wind = noiseVoice('bandpass', 700, 0.6);
+    rainV = noiseVoice('bandpass', 3200, 0.35);   // rain: the steady patter, and the hiss of the tyres through the water
+    hiss = noiseVoice('bandpass', 1400, 0.8);
     return true;
   }
   function shaperCurve(k) {
@@ -121,8 +123,10 @@ const Sfx = (function () {
     const spd = player.speed;
     const onHard = player.ws[2] <= 1 && player.ws[3] <= 1;
     const slide = (player.arcade ? Core.sstep(0.18, 0.55, Math.abs(player.beta || 0)) : Math.max(0, player.latR - 2.2) / 5) + player.spin * 0.8 + (player.lock ? 0.6 : 0) + (player.inHand > 0.5 && spd > 5 ? 0.5 : 0);
-    const sq = onHard && spd > 3 ? clamp(slide, 0, 1.2) : 0;
-    set(squeal.out.gain, sq * 0.09, 0.04);
+    const sq = onHard && spd > 3 ? clamp(slide, 0, 1.2) : 0, wet = race ? race.rain || 0 : 0;
+    set(squeal.out.gain, sq * 0.09 * (1 - 0.7 * wet), 0.04);   // (a wet road hardly squeals)
+    set(rainV.out.gain, wet * 0.05, 0.4);
+    set(hiss.out.gain, onHard ? wet * clamp(spd / 45, 0, 1) * 0.1 : 0, 0.08);
     set(squeal.bp.frequency, 980 + clamp(spd, 0, 50) * 6, 0.1);
     // offroad rumble
     let off = 0; for (let k = 0; k < 4; k++) if (player.ws[k] >= 2) off++;
@@ -192,7 +196,7 @@ const Sfx = (function () {
   function silence() {
     if (!ctx) return;
     for (const v of [eng, ...ai]) set(v.out.gain, 0, 0.02);
-    for (const v of [squeal, rumble, wind, curbV]) set(v.out.gain, 0, 0.02);
+    for (const v of [squeal, rumble, wind, curbV, rainV, hiss]) set(v.out.gain, 0, 0.02);
   }
 
   const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, shiftPop, knock, wrench, silence, get ready() { return !!ctx && ctx.state === 'running'; } };
