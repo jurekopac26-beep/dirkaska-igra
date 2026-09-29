@@ -15,7 +15,8 @@ try {
   const act = (a) => page.evaluate((a) => window.__game.onAction(a), a);
   // every ghost the game draws (Render.setGhost with a pose), the latest one and how far it is from the player
   await page.evaluate(() => { const orig = Render.setGhost; Render.setGhost = (g, drop) => { const P = window.__game.race && window.__game.race.player; window.__gh = g ? { op: g.op, d: P ? Math.hypot(g.x - P.x, g.z - P.z) : -1 } : null; return orig(g, drop); }; });
-  const ghostNow = () => page.evaluate(async () => { window.__gh = undefined; await new Promise(r => setTimeout(r, 400)); return window.__gh; });   // (drawn frames, paused: ghShow runs on every frame)
+  // the ghost of the next drawn frame (paused: ghShow runs on every frame; a software-rendered frame can take long, so wait for one)
+  const ghostNow = () => page.evaluate(async () => { window.__gh = undefined; for (let i = 0; i < 400 && window.__gh === undefined; i++) await new Promise(r => setTimeout(r, 50)); return window.__gh; });
   const state = () => page.evaluate(() => { const g = window.__game, r = g.race, P = r && r.player;
     return { quali: !!(r && r.quali), cars: r ? r.cars.length : 0, back: P ? Math.round(-P.dist) : 0, grid: P ? P.grid : 0, lap: P ? P.lap : -1, phase: g.phase, screen: g.screen, q: g.qual,
       tot: document.getElementById('h-tot').textContent, skip: !document.getElementById('pause-skip').classList.contains('off'), restart: document.getElementById('pause-restart').textContent }; });
