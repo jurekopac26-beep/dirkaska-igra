@@ -77,11 +77,11 @@
   "jsMs": 1.41
  },
  "rbring": {
-  "calls": 233,
-  "maxCalls": 320,
-  "kverts": 418,
-  "maxKverts": 481,
-  "jsMs": 0.75
+  "calls": 241,
+  "maxCalls": 329,
+  "kverts": 429,
+  "maxKverts": 496,
+  "jsMs": 0.64
  },
  "suzuka": {
   "calls": 250,
