@@ -143,6 +143,22 @@
    "-:ShaderMaterial": "78ad3d74"
   }
  },
+ "ouninpohja": {
+  "meshes": 2670,
+  "verts": 1304914,
+  "instances": 57471,
+  "props": 57,
+  "crowd": 4385,
+  "world": "b69e52a6",
+  "propsHash": "d46aeaab",
+  "floor": "f6743e4f/12488",
+  "groups": {
+   "-:MeshLambertMaterial": "98871a8f",
+   "-:MeshPhongMaterial": "3dcb1cf5",
+   "-:MeshBasicMaterial": "5309dd3",
+   "crowd:MeshLambertMaterial": "79b8c1c0"
+  }
+ },
  "nring": {
   "meshes": 2757,
   "verts": 958092,
