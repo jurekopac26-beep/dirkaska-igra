@@ -56,11 +56,11 @@
   "jsMs": 0.78
  },
  "pikes": {
-  "calls": 91,
-  "maxCalls": 103,
-  "kverts": 258,
-  "maxKverts": 318,
-  "jsMs": 0.22
+  "calls": 92,
+  "maxCalls": 104,
+  "kverts": 269,
+  "maxKverts": 320,
+  "jsMs": 0.2
  },
  "nring": {
   "calls": 191,
@@ -70,11 +70,11 @@
   "jsMs": 1.41
  },
  "rbring": {
-  "calls": 233,
-  "maxCalls": 320,
-  "kverts": 418,
-  "maxKverts": 481,
-  "jsMs": 0.75
+  "calls": 241,
+  "maxCalls": 329,
+  "kverts": 429,
+  "maxKverts": 496,
+  "jsMs": 0.64
  },
  "suzuka": {
   "calls": 255,
