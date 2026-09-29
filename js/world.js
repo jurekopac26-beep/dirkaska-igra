@@ -4674,7 +4674,7 @@ const World = (function () {
     {
       const side = K.padH.lat < 0 ? -1 : 1, th = 0.5, L = 6.2, D = 4.4, bw = 1.3;
       let tw = null;
-      for (let vc = 3.5; vc <= 9 && !tw; vc += 0.25) for (let s = sFin + 14; s <= sFin + 26 && !tw; s += 0.5) {   // (the nearest the road that fits: in view of the chase camera)
+      for (const [sa, sb] of [[14, 26], [4, 13.5]]) for (let vc = 3.5; vc <= 9 && !tw; vc += 0.25) for (let s = sFin + sa; s <= sFin + sb && !tw; s += 0.5) {   // (the nearest the road that fits: in view of the chase camera; else just past the finish gantry, when the Visitor Center's monument stands in the first spot)
         const F = fr(s, side), [cx, cz] = F.at(0, vc), e1 = F.dir(PI + th), e2 = F.dir(1.5 * PI + th), P = (a, b) => [cx + e1[0] * a + e2[0] * b, cz + e1[1] * a + e2[1] * b], pts = [], pb = [];
         for (const a of [-L / 2, 0, L / 2]) { for (const b of [-D / 2, 0, D / 2]) pts.push(P(a, b)); pb.push(P(a, D / 2 + bw + 0.1)); }
         // (the walls on the ground clear of the road and of the buildings, the block below culls anyone inside; the balcony, 6 m up, only reaches out over the verge beyond the barrier)
