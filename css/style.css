@@ -96,6 +96,24 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #hud.drs #h-drs { display: block; }
 #h-drs.arm { color: var(--chalk); border-color: var(--chalk); }
 #h-drs.open { color: #0c1a08; background: #62e04c; border-color: #62e04c; text-shadow: none; }
+/* time trial (js/game.js hx*): the turn counter under the altitude (def.turnNos), the live difference to the best run on the NAJ
+   line under the clock (with a stored best run; the negative margins keep the line as high as before, so nothing below moves), the
+   height profile under the minimap (def.alt) */
+#h-turn { display: none; margin-top: 2px; color: var(--chalk); font-variant-numeric: tabular-nums; }
+#hud.tt.ttn #h-turn { display: block; }
+#h-delta { display: none; margin: -3px 0 -3px .45em; padding: 1px 5px 0; border-radius: 4px; background: rgba(10, 14, 20, .55); font: 700 italic 1.2em/1.05 var(--f-ui); letter-spacing: .02em; color: var(--chalk); }
+#hud.tt.ttd #h-delta { display: inline-block; }
+#h-delta.fast { color: var(--meter); }
+#h-delta.slow { color: #ff5a47; }
+#h-prof { display: none; position: absolute; right: calc(62px + var(--sr)); top: calc(14px + var(--st) + clamp(72px, 22vh, 112px)); width: clamp(96px, 30vh, 150px); height: clamp(34px, 11vh, 52px); background: rgba(10, 14, 20, .45); border-radius: 8px; overflow: hidden; }
+#hud.tt.ttp #h-prof { display: block; }
+#h-prof-c { width: 100%; height: 100%; display: block; }
+/* portrait (390 px): the turn counter under the speedometer (the popups under the clock are wider than the gap beside the altitude) */
+@media (orientation: portrait) {
+  #hud.tt #h-turn { order: 1; margin-top: 5px; }
+  #hud.tt #h-dmg { order: 2; }
+  #h-prof { right: calc(8px + var(--sr)); top: calc(66px + var(--st) + clamp(64px, 20vw, 100px)); width: clamp(84px, 27vw, 130px); height: clamp(34px, 11vw, 50px); }
+}
 
 /* ================= TOUCH ================= */
 #touch { position: absolute; inset: 0; z-index: 4; touch-action: none; }
