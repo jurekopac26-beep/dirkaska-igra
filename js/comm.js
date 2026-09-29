@@ -69,6 +69,9 @@ const Comm = (() => {
     cpSlow: ['Checkpoint {cp}, {delta} seconds down on your best.', 'Split {cp}: {delta} seconds slower. Push on!', 'Checkpoint {cp}. Down by {delta}, find that time!'],
     summitRecord: ['At the summit! A new personal best, {time}!', 'Record run! {time} to the top of {track}!', 'What a climb! New personal best, {time}!'],
     summitEven: ['At the summit in {time}. That is your record to the thousandth!', '{time} at the top, dead level with your best!'],
+    // Pikes Peak: the TV helicopter (its fly-over after Glen Cove, and the escort to the finish)
+    heliFly: ['The TV chopper is overhead!', 'Here comes the helicopter, catching the action!', 'Look up! The TV helicopter sweeps across the road!'],
+    heliFin: ['And the helicopter is back, escorting you to the summit!', 'The TV chopper picks you up for the final run to the line!', 'Here comes the helicopter again, the cameras follow you home!'],
     summit: ['At the summit in {time}, {delta} seconds off your best.', 'Across the line at the top. {time}, just {delta} short of the record.', "That's the summit. {time}. {delta} seconds to find next time."]
   };
 
@@ -138,7 +141,16 @@ const Comm = (() => {
     return item;
   }
 
+  // news from the world: the Pikes Peak TV helicopter shows up (World's dyn.pk.news: { key, n }, each said once)
+  let heliSeen = null;
+  function heliNews() {
+    const w = typeof Render !== 'undefined' && Render.world, pk = w && w.dyn && w.dyn.pk, nw = pk && pk.news;
+    if (!nw || nw === heliSeen) return;
+    heliSeen = nw; say(nw.key, null, 1, { ttl: 4000 });
+  }
+
   function update() {
+    try { heliNews(); } catch (_) { }
     const t = now();
     if (queue && !busy()) {
       const fresh = t - queue.t < (queue.ttl || (queue.prio >= 3 ? 7000 : 3500));       // stale chatter is dropped

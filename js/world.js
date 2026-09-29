@@ -3707,7 +3707,7 @@ const World = (function () {
     }
   }
 
-  /* ---- moving things: the TV helicopter over the leading car, cloud shadows drifting across the mountain
+  /* ---- moving things: the TV helicopter (a fly-over, the finish), cloud shadows drifting across the mountain
      (built at the end of buildPikes; pkUpdate runs every frame from World.update) ---- */
   function pkSky(K) {
     const S = 110, NP = 64;   // cloud-shadow noise cell (m) and its period in cells (the drift offset wraps without a seam)
@@ -3766,57 +3766,90 @@ const World = (function () {
     const body = new THREE.Mesh(gb.geometry(), mat), rotor = new THREE.Mesh(g2.geometry(), mat), tail = new THREE.Mesh(gt.geometry(), mat);
     rotor.position.set(-0.1, 3.3, 0); tail.position.set(-8.0, 2.55, 0.14);
     body.castShadow = rotor.castShadow = true; heli.add(body, rotor, tail);
-    const i0 = T.idx(K.sStart);
-    K.out.dyn.pk = { U, S, NP, heli, rotor, tail, init: false, t: 0, hx: T.px[i0], hz: T.pz[i0], hy: T.hy[i0], hh: T.hd[i0] };
+    heli.visible = false;   // (only on its two appearances: see pkUpdate)
+    // the fly-over crosses the long straight after Glen Cove (s 2740-2950) at X, down from the higher side of the slope towards the valley (low over the road)
+    const sX = 2870, iX = T.idx(sX), gs = (sd) => pkGround(T.px[iX] + T.nx[iX] * sd * 60, T.pz[iX] + T.nz[iX] * sd * 60), sdX = gs(1) > gs(-1) ? -1 : 1;
+    const X = { x: T.px[iX], z: T.pz[iX], y: T.hy[iX], nx: T.nx[iX] * sdX, nz: T.nz[iX] * sdX, tx: T.tx[iX], tz: T.tz[iX], s: sX, sTrig: 2745 };
+    K.out.dyn.pk = { U, S, NP, heli, rotor, tail, X, sEsc: 5790, sFin: K.sFin, t: 0, fly: null, flyDone: false, fin: null, finDone: false, on: false, news: null, nNews: 0, v3: new THREE.Vector3() };
   }
 
   function pkUpdate(pk, t, car) {
-    const wrap = (a) => a - TAU * Math.round(a / TAU), dt = t - pk.t; pk.t = t;
+    const wrap = (a) => a - TAU * Math.round(a / TAU), dt = clamp(t - pk.t, 0, 0.25); pk.t = t;
     // cloud shadows: the pattern drifts with the wind (~4 m/s towards the north-east)
     pk.U.value.set(((t * 3.2 / pk.S) % pk.NP + pk.NP) % pk.NP, ((-t * 2.5 / pk.S) % pk.NP + pk.NP) % pk.NP);
-    // the helicopter: anchored on the followed car (the start line without one), 20-34 m off to one side, 22-30 m up
-    const ax = car ? car.x : pk.hx, az = car ? car.z : pk.hz, ay = car ? car.roadY || 0 : pk.hy, ah = car ? car.h : pk.hh, spd = car ? car.speed || 0 : 0;
-    const cvx = car ? car.vx || 0 : 0, cvz = car ? car.vz || 0 : 0;
-    const snap = !pk.init || dt < 0 || dt > 1.5 || Math.hypot(ax - pk.ax, az - pk.az) > 80;
-    if (snap) { pk.init = true; pk.ax = ax; pk.az = az; pk.ay = ay; pk.fx = Math.cos(ah); pk.fz = Math.sin(ah); pk.th = ah + Math.PI * 0.3; pk.L = 28; pk.vx = pk.vz = pk.ac = pk.al = 0; }
-    const e = (k) => 1 - Math.exp(-Math.max(0, dt) * k);
-    // the anchor trails the car smoothly but leads by its velocity (no lag at a steady speed: it stays level with the car)
-    pk.ax += (ax + cvx / 2.5 - pk.ax) * e(2.5); pk.az += (az + cvz / 2.5 - pk.az) * e(2.5); pk.ay += (ay - pk.ay) * e(1.5);
-    { const k = e(2.5); pk.fx += (Math.cos(ah) - pk.fx) * k; pk.fz += (Math.sin(ah) - pk.fz) * k; const l = Math.hypot(pk.fx, pk.fz) || 1; pk.fx /= l; pk.fz /= l; }
-    const H = 26 + 3 * Math.sin(t * 0.21), fx = pk.fx, fz = pk.fz;
-    // where it may fly: a rough model of the three cameras (chase in portrait and landscape, iso, kino: see Render's updateCamera) projects a candidate spot;
-    // off screen, or clear of the car and the road just ahead on screen, in every view; a bit ahead of the car is nicer, and it does not jump around
-    const sp1 = Math.max(spd, 1e-3), la = sstep(1.5, 16, spd), lvx = cvx / sp1 * la, lvz = cvz / sp1 * la, zc = 1.2 * (1 + 0.25 * clamp(spd / 55, 0, 1)), zi = 1.2 * (1 + 0.1 * clamp(spd / 60, 0, 1));
-    const views = [[fx * 13, fz * 13, -fx, -fz, 46 * zc, 0.98, 58, 0.46], [fx * 8.5, fz * 8.5, -fx, -fz, 30 * zc, 0.9, 46, 2.2], [clamp(lvx * 19, -24, 24), clamp(lvz * 19, -12.6, 18.6), 0, 1, 57 * zi, 0.82, 30, 2.2], [lvx * 11, lvz * 11, 0, 1, 38 * zi, 0.74, 30, 2.2]];
-    const cams = views.map(([ox, oz, bx, bz, D, pt, fov, as]) => { const tx = ax + ox, tz = az + oz, c = [tx + bx * D * Math.cos(pt), ay + D * Math.sin(pt), tz + bz * D * Math.cos(pt)];
-      const f = [tx - c[0], ay - c[1], tz - c[2]], fl = Math.hypot(f[0], f[1], f[2]); f[0] /= fl; f[1] /= fl; f[2] /= fl; const rl = Math.hypot(f[0], f[2]), r = [-f[2] / rl, 0, f[0] / rl];
-      return { c, f, r, u: [r[1] * f[2] - r[2] * f[1], r[2] * f[0] - r[0] * f[2], r[0] * f[1] - r[1] * f[0]], k: 1 / Math.tan(fov / 2 * Math.PI / 180), as }; });
-    const prot = [[ax, ay + 0.7, az], [ax + fx * 7, ay, az + fz * 7], [ax + fx * 14, ay, az + fz * 14], [ax + fx * 21, ay, az + fz * 21]];
-    const scr = (C, q) => { const d0 = q[0] - C.c[0], d1 = q[1] - C.c[1], d2 = q[2] - C.c[2], z = d0 * C.f[0] + d1 * C.f[1] + d2 * C.f[2]; return z < 1 ? null : [(d0 * C.r[0] + d1 * C.r[1] + d2 * C.r[2]) / z * C.k, (d0 * C.u[0] + d1 * C.u[1] + d2 * C.u[2]) / z * C.k, z]; };
-    const clear = (x, y, z) => { let m = 1, n = 0;   // in half screen heights: the smallest gap between the helicopter (~7 m wide disc) and the protected points, + 0.05 per view that shows it well clear
-      for (const C of cams) { const h = scr(C, [x, y + 1.5, z]); if (!h) continue; const rr = 7 * C.k / h[2]; if (Math.abs(h[0]) > C.as + rr || Math.abs(h[1]) > 1 + rr) continue;
-        let mv = 1; for (const q of prot) { const s = scr(C, q); if (s) mv = Math.min(mv, Math.hypot(s[0] - h[0], s[1] - h[1]) - rr); } m = Math.min(m, mv); if (mv > 0.35) n++; }
-      return Math.min(0.35, m) + 0.05 * n; };
-    let best = pk.th, bL = pk.L, bs = -1e9;
-    for (let j = -12; j < 12; j++) for (const L of [20, 27, 34]) {
-      const th = pk.th + j * TAU / 24, x = ax + Math.cos(th) * L, z = az + Math.sin(th) * L, y = Math.max(ay + H, pkGround(x, z) + 20);
-      const sc = clear(x, y, z) + 0.12 * (Math.cos(th) * fx + Math.sin(th) * fz) - 0.1 * Math.abs(j * TAU / 24) - 0.004 * Math.abs(L - pk.L);
-      if (sc > bs) { bs = sc; best = th; bL = L; }
+    // the TV helicopter shows up twice a run, by the progress of the player's car: a fly-over across the road after Glen Cove, and the escort over
+    // the last ~350 m, hovering over the finish area while the car stands. Not in the title demo (no player's car); reset when the car is back down the hill
+    const m = pk.heli, p = m.position, e = (k) => 1 - Math.exp(-dt * k);
+    if (!car || !car.isPlayer) { m.visible = pk.on = false; pk.fly = pk.fin = null; pk.flyDone = pk.finDone = false; return; }
+    const s = car.q && car.q.i >= 0 ? car.q.s : T.query(car.x, car.z, -1, {}).s, X = pk.X, ay = car.roadY || 0;
+    if (s < X.sTrig - 100) { pk.fly = null; pk.flyDone = false; }
+    if (s < pk.sEsc - 100) { pk.fin = null; pk.finDone = false; }
+    const news = (key) => { pk.news = { key, n: ++pk.nNews }; };   // (for the commentator: Comm.update picks it up)
+    const cam = typeof Render !== 'undefined' && Render.camera && Render.camera.isCamera ? Render.camera : null;
+    // a world point on the screen of the current camera shifted by (dx,dy,dz): [x, y] in half screen heights and the depth; null behind it
+    const proj = (x, y, z, dx, dy, dz) => { const v = pk.v3.set(x - dx, y - dy, z - dz).applyMatrix4(cam.matrixWorldInverse); if (v.z > -1) return null; const d = -v.z; v.applyMatrix4(cam.projectionMatrix); return [v.x * cam.aspect, v.y, d]; };
+    const kF = cam ? 1 / Math.tan(cam.fov / 2 * Math.PI / 180) : 1;
+    const prevX = p.x, prevZ = p.z, wasOn = pk.on;
+    let on = false;
+    // a) the fly-over: a straight, slightly diagonal pass across the road at X in ~8 s, over the road when the car is A m short of it; A and the height H
+    //    suit the camera in use (seen as it will be then, the camera moved with the car: all of it in the frame, clear of the car)
+    if (!pk.fly && !pk.flyDone && s > X.sTrig && s < X.sTrig + 120) { pk.fly = { x: -1, A: 26, H: 18, gy: -1e9 }; news('heliFly'); }
+    const F = pk.fly;
+    if (F) {
+      if (cam) {
+        let best = null, bs = -1e9;
+        for (const A of [34, 28, 22, 17, 13]) for (const H of [22, 18, 14, 11, 8, 6]) {
+          const j = T.idx(X.s - A), ex = T.px[j] - car.x, ez = T.pz[j] - car.z, ey = T.hy[j] - ay, h = proj(X.x, X.y + H + 1.2, X.z, ex, ey, ez), c = proj(T.px[j], T.hy[j] + 0.7, T.pz[j], ex, ey, ez);
+          if (!h || !c) continue;
+          const rr = 6.5 * kF / h[2], sep = Math.hypot(h[0] - c[0], h[1] - c[1]) - rr - 2 * kF / c[2];
+          if (Math.abs(h[0]) > cam.aspect - rr * 0.6 || Math.abs(h[1]) > 0.86 - rr * 0.6 || sep < 0.12) continue;
+          const sc = Math.min(sep, 0.5) + 0.012 * H + 0.006 * A - 0.8 * Math.max(0, Math.abs(h[1]) - 0.55);
+          if (sc > bs) { bs = sc; best = [A, H]; }
+        }
+        if (best) { const k = F.x < -0.7 ? 1 : e(1.5); F.A += (best[0] - F.A) * k; F.H += (best[1] - F.H) * k; }
+      }
+      // pace: timed (within limits) by the car's speed to be over the road when the car is A m short of it (it speeds up: aimed a bit early), then ~0.26/s
+      F.x += (F.x < 0 ? clamp(-F.x / Math.max(0.1, (X.s - F.A - 8 - s) / Math.max(car.speed || 0, 30)), 0.15, 0.8) : 0.26) * dt;
+      if (F.x >= 1) { pk.fly = null; pk.flyDone = true; }
+      else {
+        const x = F.x, u = 105 * (0.45 * x + 0.55 * x * x * x), a = 16 * x, hx = X.x + X.nx * u + X.tx * a, hz = X.z + X.nz * u + X.tz * a;
+        const du = 105 * (0.45 + 1.65 * x * x), vx = X.nx * du + X.tx * 16, vz = X.nz * du + X.tz * 16, vl = Math.hypot(vx, vz);
+        let g = -1e9; for (const L of [0, 10, 20]) g = Math.max(g, pkGround(hx + vx / vl * L, hz + vz / vl * L));   // (over the ground ahead, not into it)
+        F.gy = F.gy < -1e8 ? g : F.gy + (g - F.gy) * e(g > F.gy ? 4 : 2.5);
+        p.set(hx, Math.max(X.y + F.H * (1 + 0.7 * x * x), F.gy + 8) + 0.3 * Math.sin(t * 0.9), hz); on = true;
+      }
     }
-    pk.th += wrap(best - pk.th) * (snap ? 1 : e(1.2)); pk.L += (bL - pk.L) * (snap ? 1 : e(0.8));
-    const tx = pk.ax + Math.cos(pk.th) * pk.L, tz = pk.az + Math.sin(pk.th) * pk.L, ty = Math.max(pk.ay + H, pkGround(tx, tz) + 20) + 0.4 * Math.sin(t * 0.9);
-    const m = pk.heli, p = m.position;
-    if (snap) p.y = ty;
-    const px = p.x, pz = p.z;
-    p.x = tx; p.z = tz; p.y += (ty - p.y) * e(ty > p.y ? 1.6 : 0.8);
-    p.y = Math.max(p.y, pkGround(p.x, p.z) + 18);
+    // b) the finish: in from the side ~350 m before the line, then alongside the car, kept in the camera's frame (to one side and up on the
+    //    screen, clear of the car); once the car is through, over the finish area, hovering while it stands
+    if (!pk.fin && !pk.finDone && s > pk.sEsc && s < pk.sEsc + 150) { pk.fin = { ox: 0, oz: 0, tau: 0, sd: 0, y: ay + 40 }; news('heliFin'); }
+    const G = pk.fin;
+    if (G && !on) {
+      const done = s > pk.sFin + 2, H = (cam ? clamp((cam.position.y - ay) * 0.26, 7, 18) : 16) + (done ? 3 : 0);
+      let ox = Math.cos(car.h) * 14 + Math.sin(car.h) * 16, oz = Math.sin(car.h) * 14 - Math.cos(car.h) * 16;   // (no camera: ahead, to one side)
+      if (cam) {
+        if (!G.sd) { const c = proj(car.x, ay, car.z, 0, 0, 0); G.sd = c && c[0] > 0 ? -1 : 1; }   // the side of the screen away from the car; it keeps it
+        // where the ray through a spot on the screen (to that side, in the upper half) meets the height it flies at
+        const v = pk.v3.set(G.sd * (done ? 0.45 : 0.55), done ? 0.5 : 0.4, 0.5).unproject(cam), c = cam.position, dy = v.y - c.y, k = dy < -0.05 ? (ay + H - c.y) / dy : 0;
+        if (k > 0) { ox = c.x + (v.x - c.x) * k - car.x; oz = c.z + (v.z - c.z) * k - car.z; }
+      }
+      if (!G.tau) { G.ox = ox * 4; G.oz = oz * 4; }   // (comes in from far out on that side)
+      G.tau += dt;
+      const bob = done ? 2 : 0, kk = e(G.tau < 3.5 ? 0.8 : 3);
+      G.ox += (ox + Math.cos(t * 0.23) * bob - G.ox) * kk; G.oz += (oz + Math.sin(t * 0.31) * bob - G.oz) * kk;
+      const hx = car.x + G.ox, hz = car.z + G.oz, gy = Math.max(pkGround(hx, hz), pkGround(hx + (car.vx || 0) * 0.6, hz + (car.vz || 0) * 0.6)) + 9;
+      const ty = Math.max(ay + H + 0.4 * Math.sin(t * 0.9) + sstep(3.5, 0, G.tau) * 30, gy);
+      G.y += (ty - G.y) * e(ty > G.y ? 2.5 : 0.9);
+      p.set(hx, G.y, hz); on = true;
+    }
+    m.visible = pk.on = on;
+    if (!on) return;
     // attitude: nose along its flight (towards the car while it hovers); banks into the turns, dips the nose with speed and when it speeds up
-    if (snap) pk.yaw = Math.atan2(az - p.z, ax - p.x);
-    else if (dt > 1e-4) { const vx = (p.x - px) / dt, vz = (p.z - pz) / dt, c = Math.cos(pk.yaw), s = Math.sin(pk.yaw), dvx = (vx - pk.vx) / dt, dvz = (vz - pk.vz) / dt, k = e(3);
-      pk.ac += (dvx * c + dvz * s - pk.ac) * e(2); pk.al += (dvz * c - dvx * s - pk.al) * e(2); pk.vx += (vx - pk.vx) * k; pk.vz += (vz - pk.vz) * k; }
-    const sp = Math.hypot(pk.vx, pk.vz), wv = sstep(2, 9, sp), lx = pk.ax - p.x, lz = pk.az - p.z, ll = Math.hypot(lx, lz) || 1;
+    if (!wasOn) { pk.yaw = Math.atan2(car.z - p.z, car.x - p.x); pk.vx = pk.vz = pk.ac = pk.al = 0; }
+    else if (dt > 1e-4) { const vx = (p.x - prevX) / dt, vz = (p.z - prevZ) / dt, c = Math.cos(pk.yaw), sn = Math.sin(pk.yaw), dvx = (vx - pk.vx) / dt, dvz = (vz - pk.vz) / dt, k = e(3);
+      pk.ac += (dvx * c + dvz * sn - pk.ac) * e(2); pk.al += (dvz * c - dvx * sn - pk.al) * e(2); pk.vx += (vx - pk.vx) * k; pk.vz += (vz - pk.vz) * k; }
+    const sp = Math.hypot(pk.vx, pk.vz), wv = sstep(2, 9, sp), lx = car.x - p.x, lz = car.z - p.z, ll = Math.hypot(lx, lz) || 1;
     const yt = Math.atan2(lerp(lz / ll, pk.vz / (sp || 1), wv), lerp(lx / ll, pk.vx / (sp || 1), wv));
-    pk.yaw += wrap(yt - pk.yaw) * e(1.3);
+    pk.yaw += wrap(yt - pk.yaw) * e(1.6);
     m.rotation.set(clamp(pk.al * 0.035, -0.35, 0.35), -pk.yaw, -clamp(0.004 * sp + 0.02 * pk.ac, -0.12, 0.25));
     pk.rotor.rotation.y = (t * 41) % TAU; pk.tail.rotation.z = (t * 73) % TAU;
   }
