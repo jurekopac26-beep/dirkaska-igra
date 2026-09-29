@@ -21,7 +21,7 @@
 
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
-  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.2, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', ghost: 1, name: 'Igralec' };
+  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.2, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', ghost: 1, gold: 1, name: 'Igralec' };
   let S = Object.assign({}, DEF);
   let records = {};
   try { const j = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (j) S = Object.assign(S, j); } catch (_) { }
@@ -226,7 +226,7 @@
   const demoRain = () => S.weather === 'rain' ? 1 : 0;
   function applyPhys(r) { if (r) r.setPhys(physOf()); }
   function setOption(key, v) {
-    const num = ['zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'codrv', 'damage', 'ghost'];
+    const num = ['zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'codrv', 'damage', 'ghost', 'gold'];
     S[key] = num.includes(key) ? +v : v;
     if (key === 'shadows') { autoNoShadows = false; perf.pending = perf.restore = false; perf.keep = true; }   // the player's own choice wins for the rest of the visit
     save(); applySettings();
@@ -413,17 +413,183 @@
     Render.setGhost(null, true);
   }
   const _gp = { M: null, color: 0, stripe: true, x: 0, y: 0, z: 0, h: 0, d: 0, p: 0, r: 0, op: 1 };
-  function ghShow(alpha) {   // every drawn frame of a race: the ghost where the best run was at this moment of the race clock
-    const G = ghPlay;
-    if (!G || !race || !S.ghost || !(phase === 'racing' || phase === 'finish' || phase === 'done') || race.state === 'grid') { Render.setGhost(null); return; }
-    const t = Math.max(0, race.time - (1 - clamp(alpha, 0, 1)) * STEP), u = t / GH_DT, k = Math.min(G.n - 2, Math.floor(u)), a = clamp(u - k, 0, 1), end = (G.n - 1) * GH_DT;
-    if (t > end + 0.6) { Render.setGhost(null); return; }   // the best run is over (it ends just past the line)
+  function ghAt(G, t, g) {   // the pose of a sampled run at its time t into g (false: the run is over, it ends just past the line)
+    const u = t / GH_DT, k = Math.min(G.n - 2, Math.floor(u)), a = clamp(u - k, 0, 1), end = (G.n - 1) * GH_DT;
+    if (t > end + 0.6) return false;
     const f = G.f, o = k * GH_CH, n2 = o + GH_CH, L = (c) => f[o + c] + (f[n2 + c] - f[o + c]) * a;
-    const g = _gp; g.M = G.M; g.color = G.color; g.stripe = G.stripe;
     g.x = L(0); g.y = L(1); g.z = L(2); g.h = f[o + 3] + Core.wrapPi(f[n2 + 3] - f[o + 3]) * a; g.d = L(4); g.p = L(5); g.r = L(6);
     const P = race.player, dd = Math.hypot(g.x - P.x, g.z - P.z);
     g.op = clamp((dd - 1.5) / 5, 0.3, 1) * clamp(t / 0.4, 0, 1) * clamp((end + 0.6 - t) / 0.6, 0, 1);   // fainter right on top of the player; fades in at the start and out past the line
+    return true;
+  }
+  function ghShow(alpha) {   // every drawn frame of a race: the ghost where the best run was at this moment of the race clock (and the gold ghost)
+    goldShow(alpha);
+    const G = ghPlay;
+    if (!G || !race || !S.ghost || !(phase === 'racing' || phase === 'finish' || phase === 'done') || race.state === 'grid') { Render.setGhost(null); return; }
+    const g = _gp; g.M = G.M; g.color = G.color; g.stripe = G.stripe;
+    if (!ghAt(G, Math.max(0, race.time - (1 - clamp(alpha, 0, 1)) * STEP), g)) { Render.setGhost(null); return; }
     Render.setGhost(g);
+  }
+
+  /* ---------------- the gold ghost: the gold medal's time on the road (time trials with medal times) ---------------- */
+  // A second race on the same track, alone: the autopilot drives the player's car (its upgrades, the physics and the weather of the run),
+  // a few ms of it in each drawn frame from the start of the run on (with its own seeded random numbers: the player's race never notices
+  // it, and the same car always takes the same line). Its poses, sampled as the best run's (GH_DT), replay stretched to the gold time: at
+  // race time t the gold ghost is where the autopilot was at t * Ta / Tg. At each checkpoint the HUD gives the gap to it (the autopilot's
+  // split times stretched the same way). It appears once the autopilot's run is complete (on a slow phone a moment after the start).
+  const GOLD_MS = 3;
+  let gold = null;   // { r (its race), f, n (samples), done, Ta (the autopilot's time), Tg (gold), sp (its split times), k (Ta / Tg), q (seed) }
+  const goldRnd = (s) => () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
+  function goldStart() {   // newRace
+    Render.setGhost(null, true, 1); gold = null; $('h-gold').className = '';
+    const M = medalSet(track.def); if (!S.gold || !M || !race.timeTrial || (mp && mp.race)) return;
+    const orig = Math.random; Math.random = goldRnd(4711);
+    try {
+      const P0 = race.player, r = new Core.Race(track, { playerModel: P0.m, playerUpg: Object.assign({}, upgOf(P0.m.id)), playerColor: PLAYER_COLORS[S.color], playerNum: carNum(), seed: 11, difficulty: 1, assist: S.assist,
+        numAI: 0, playerGrid: 1, laps: 1, damage: 0, phys: physOf(), rain: race.rain });
+      r.start(); gold = { r, f: new Float32Array(GH_MAX * GH_CH), n: 0, done: false, Ta: 0, Tg: M[0], sp: null, k: 1, q: 5000 };
+    } catch (e) { gold = null; } finally { Math.random = orig; }
+  }
+  function goldTick(ms) {   // every drawn frame of the run until the autopilot is home: a slice of its drive (more of it before the start)
+    const G = gold; if (!G || G.done) return;
+    const r = G.r, P = r.player, t0 = performance.now(), orig = Math.random, lim = ms || (phase === 'racing' ? GOLD_MS : 3 * GOLD_MS);
+    try {
+      while (!G.done && performance.now() - t0 < lim) {
+        for (let q = 0; q < 30 && !P.finished; q++) {
+          Math.random = goldRnd(++G.q); Core.aiControl(P, r, STEP); r.step(STEP);
+          if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P);
+          const t1 = r.time, ta = t1 - STEP; while (G.n < GH_MAX && G.n * GH_DT <= t1 + 1e-9) { ghPose(P, G.f, G.n, clamp((G.n * GH_DT - ta) / STEP, 0, 1)); G.n++; }
+        }
+        if (P.finished) { if (G.n < GH_MAX) { ghPose(P, G.f, G.n, 1); G.n++; } G.done = true; G.Ta = P.finishTime; G.sp = P.splits.slice(); G.k = G.Ta / G.Tg; G.r = null; }
+        else if (r.time > 900 || G.n >= GH_MAX - 1) { gold = null; return; }   // (never home: no gold ghost this run)
+      }
+    } finally { Math.random = orig; if (race) track.inRain = race.rain > 0; }   // (the track's rain flag is the player's race's again)
+  }
+  const _gg = { M: null, color: 0, stripe: true, x: 0, y: 0, z: 0, h: 0, d: 0, p: 0, r: 0, op: 1 };
+  function goldShow(alpha) {
+    const G = gold;
+    if (!G || !G.done || !race || !S.gold || !(phase === 'racing' || phase === 'finish' || phase === 'done') || race.state === 'grid') { Render.setGhost(null, false, 1); return; }
+    const g = _gg; g.M = race.player.m; g.color = PLAYER_COLORS[S.color]; g.stripe = race.player.stripe !== false;
+    if (!ghAt(G, Math.max(0, race.time - (1 - clamp(alpha, 0, 1)) * STEP) * G.k, g)) { Render.setGhost(null, false, 1); return; }
+    Render.setGhost(g, false, 1);
+  }
+  const goldGap = (k, t) => { const G = gold; return G && G.done && G.sp && G.sp[k] > 0 ? t - G.sp[k] / G.k : NaN; };   // the gap to the gold ghost at checkpoint k+1
+  function goldLine(d) {   // the HUD line under the split: ahead of / behind the gold time
+    const el = $('h-gold'); if (!isFinite(d)) { el.className = ''; return; }
+    el.textContent = (d <= 0 ? 'PRED ZLATOM ' : 'ZA ZLATOM ') + (Math.abs(d) >= 60 ? fmt(Math.abs(d)) : Math.abs(d).toFixed(2) + ' s'); el.className = 'show ' + (d <= 0 ? 'ahead' : 'behind');
+  }
+
+  /* ---------------- the replay of a time trial, with TV cameras ---------------- */
+  // Every time trial is recorded at RP_DT of race time, from the start to 3 s past the finish: the car's pose and what the renderer and the
+  // sound read of it (speed, slide, the wheels' surfaces, throttle, gear, a landing...). 'Posnetek' on the results plays it back: the race
+  // is not stepped, the player's car takes the recorded state every frame (so the dust, the stones, the skid marks, the engine and the
+  // crowd follow it), and a TV director cuts between cameras: the helicopter, roadside cameras the car races past, the camera tower across
+  // from the Yellow House (the famous jump in slow motion), a roof camera and a low chase; 'Kamera' holds one of them. The car's real
+  // state comes back at the end.
+  const RP_DT = 1 / 30, RP_CH = 26, RP_MAX = 30 * 60 * 12;   // sample interval (s), channels, max samples (12 min)
+  const RP_KEEP = ['x', 'y', 'z', 'px', 'py', 'pz', 'h', 'ph', 'vx', 'vz', 'vy', 'beta', 'delta', 'air', 'gradeNow', 'roadY', 'inBrk', 'inThr', 'inHand', 'axF', 'w', 'vl', 'rpm', 'gear',
+    'impactVY', 'latR', 'slipF', 'spin', 'lock', 'onCurb', 'bankSl', 'shiftT', 'hitWall', 'hitCar', 'fxWall', 'fxCar'];
+  const RP_MODES = ['tv', 'heli', 'road', 'roof', 'low'], RP_NAME = { tv: 'TV režija', heli: 'Helikopter', road: 'Ob cesti', roof: 'Na strehi', low: 'Za avtom', tower: 'TV stolp', start: 'Start', finish: 'Cilj' };
+  let rpRec = null, replay = null;   // the recording { f, n, fin, done }, the replay being played
+  function rpStart() { rpRec = race.timeTrial && !(mp && mp.race) ? { f: new Float32Array(RP_MAX * RP_CH), n: 0, fin: -1, done: false } : null; }
+  function rpSample(P) {   // after each physics step of a time trial, from the start until 3 s past the line
+    const R = rpRec; if (!R || R.done || race.state === 'grid' || !(phase === 'racing' || phase === 'finish' || phase === 'done')) return;
+    const t1 = race.time, t0 = t1 - STEP, f = R.f;
+    while (R.n < RP_MAX && R.n * RP_DT <= t1 + 1e-9) {
+      const a = clamp((R.n * RP_DT - t0) / STEP, 0, 1), o = R.n * RP_CH, ws = P.ws || [0, 0, 0, 0];
+      f[o] = P.px + (P.x - P.px) * a; f[o + 1] = P.py + (P.y - P.py) * a; f[o + 2] = P.pz + (P.z - P.pz) * a; f[o + 3] = P.ph + Core.wrapPi(P.h - P.ph) * a;
+      f[o + 4] = P.speed; f[o + 5] = P.beta || 0; f[o + 6] = P.delta || 0; f[o + 7] = P.air ? 1 : 0; f[o + 8] = P.vy || 0; f[o + 9] = P.gradeNow || 0; f[o + 10] = P.roadY || 0;
+      f[o + 11] = P.inBrk || 0; f[o + 12] = (ws[0] & 7) + (ws[1] & 7) * 8 + (ws[2] & 7) * 64 + (ws[3] & 7) * 512; f[o + 13] = P.axF || 0; f[o + 14] = P.w || 0; f[o + 15] = P.vl || 0;
+      f[o + 16] = P.rpm || 0; f[o + 17] = P.inThr || 0; f[o + 18] = P.gear || 0; f[o + 19] = P.impactVY || 0; f[o + 20] = P.q.s; f[o + 21] = P.latR || 0; f[o + 22] = P.slipF || 0;
+      f[o + 23] = P.spin || 0; f[o + 24] = P.lock ? 1 : 0; f[o + 25] = P.inHand || 0;
+      R.n++;
+    }
+    if (P.finished && R.fin < 0) R.fin = t1;
+    if ((R.fin >= 0 && t1 > R.fin + 3) || R.n >= RP_MAX) R.done = true;
+  }
+  const rpOk = () => !!(rpRec && rpRec.done && rpRec.fin > 0 && rpRec.n > 60 && race && race.timeTrial);
+  function rpApply(t) {   // the recorded state at replay time t into the player's car (the position smooth through the samples: Catmull-Rom)
+    const R = rpRec, f = R.f, u = t / RP_DT, k = clamp(Math.floor(u), 0, R.n - 2), a = clamp(u - k, 0, 1), o = k * RP_CH, o2 = o + RP_CH, P = race.player;
+    const om = Math.max(0, k - 1) * RP_CH, op = Math.min(R.n - 1, k + 2) * RP_CH, L = (c) => f[o + c] + (f[o2 + c] - f[o + c]) * a;
+    const cr = (c) => { const p0 = f[om + c], p1 = f[o + c], p2 = f[o2 + c], p3 = f[op + c]; return 0.5 * (2 * p1 + (p2 - p0) * a + (2 * p0 - 5 * p1 + 4 * p2 - p3) * a * a + (3 * p1 - p0 - 3 * p2 + p3) * a * a * a); };
+    P.px = P.x; P.py = P.y; P.pz = P.z; P.ph = P.h;
+    P.x = cr(0); P.y = cr(1); P.z = cr(2); P.h = f[o + 3] + Core.wrapPi(f[o2 + 3] - f[o + 3]) * a;
+    const spd = L(4); P.beta = L(5); P.delta = L(6); P.vy = L(8); P.gradeNow = L(9); P.roadY = L(10); P.inBrk = L(11); P.axF = L(13); P.w = L(14); P.vl = L(15); P.rpm = L(16); P.inThr = L(17);
+    P.latR = L(21); P.slipF = L(22); P.spin = L(23); P.inHand = L(25);
+    const n = a < 0.5 ? o : o2, ws = f[n + 12], dx = f[o2] - f[o], dz = f[o2 + 2] - f[o + 2], dir = Math.hypot(dx, dz) > 1e-3 ? Math.atan2(dz, dx) : P.h;
+    P.vx = Math.cos(dir) * spd; P.vz = Math.sin(dir) * spd;   // (the speed is theirs)
+    if (!P.ws) P.ws = [0, 0, 0, 0]; P.ws[0] = ws & 7; P.ws[1] = (ws >> 3) & 7; P.ws[2] = (ws >> 6) & 7; P.ws[3] = (ws >> 9) & 7;
+    P.air = f[n + 7] > 0.5 ? 1 : 0; P.impactVY = f[n + 19]; P.gear = Math.round(f[n + 18]); P.lock = f[n + 24] > 0.5; P.q.s = L(20);
+    P.onCurb = false; P.bankSl = 0; P.shiftT = 0; P.hitWall = P.hitCar = 0; P.fxWall = P.fxCar = 0;
+  }
+  function replayStart() {
+    if (!rpOk() || replay) return;
+    const P = race.player, keep = {}; for (const k of RP_KEEP) keep[k] = P[k]; keep.ws = (P.ws || []).slice(); keep.qs = P.q.s;
+    const J = track.def.jumpRec, b = J && track.def.bumps && track.def.bumps[J.bump], jc = b ? clamp(b.at, 0, 1) * track.len : -1, jw = b ? b.w || 8 : 0;
+    replay = { t: 0, end: (rpRec.n - 1) * RP_DT, keep, mode: 'tv', shot: null, rate: 1, jc, jw, cam: null, seq: 0 };
+    Comm.stop(); Sfx.setRunning(true); Render.setGhost(null); Render.setGhost(null, false, 1);   // (the ghosts sit this one out)
+    showScreen('none'); document.body.classList.add('replaying'); $('rp').classList.remove('off'); rpLabel();
+    Render.resetCam(); rpApply(0); race.player.px = race.player.x; race.player.pz = race.player.z; race.player.py = race.player.y; race.player.ph = race.player.h;
+  }
+  function replayEnd() {   // back to the results, the car as it was
+    if (!replay) return;
+    const P = race.player, K = replay.keep; for (const k of RP_KEEP) P[k] = K[k]; if (P.ws) for (let q = 0; q < 4; q++) P.ws[q] = K.ws[q] || 0; P.q.s = K.qs;
+    replay = null; Render.setTv(null); Render.resetCam(); Sfx.setRunning(false); Sfx.silence();
+    document.body.classList.remove('replaying'); $('rp').classList.add('off');
+    if (race) showScreen('results');
+  }
+  function rpLabel() { if (!replay) return; const sh = replay.shot; $('rp-cam').textContent = (replay.mode === 'tv' ? 'TV režija' + (sh ? ' · ' + RP_NAME[sh.kind] : '') : RP_NAME[replay.mode]) + (replay.rate < 0.9 ? ' · počasi' : ''); }
+  // the cameras: where one stands (or flies), what it follows. at(s, off, up): a point beside the road at track distance s
+  function rpAt(s, off, up) { const T = track, i = T.idx(s), x = T.px[i] + T.nx[i] * off, z = T.pz[i] + T.nz[i] * off, gH = Render.world && Render.world.groundH; return [x, Math.max(gH ? gH(x, z) : T.hy[i], T.hy[i] - 3) + up, z]; }
+  function rpShot(kind) {   // a new shot of the given kind, set up for the car where it is now
+    const P = race.player, T = track, s = P.q.s, D = replay, sh = { kind, t0: D.t, x: 0, y: 0, z: 0 }, side = (D.seq++ % 2) ? 1 : -1;
+    if (kind === 'road' || kind === 'finish' || kind === 'start') {   // a camera on a tripod beside the road, the car coming towards it (the finish: just past the line; the start: by the start line)
+      const ahead = kind === 'finish' ? T.finishS + 18 - s : kind === 'start' ? 22 : 75 + (D.seq * 37 % 50), sc = s + ahead, i = T.idx(sc), edge = side > 0 ? T.br[i] : T.bl[i];
+      const p = rpAt(sc, side * (edge + (kind === 'road' ? 3.5 + (D.seq * 13 % 5) : 6)), kind === 'road' ? 1.3 + (D.seq % 3) * 0.6 : 2.2); sh.x = p[0]; sh.y = p[1]; sh.z = p[2]; sh.s = sc;
+    } else if (kind === 'heli') { sh.a = P.h + (side > 0 ? 1 : -1) * (0.9 + (D.seq % 3) * 0.3); sh.r = 40 + (D.seq % 2) * 12; sh.hh = 46 + (D.seq % 3) * 7; }   // (high: over the treetops)
+    else if (kind === 'tower') { const w = Render.world && Render.world.tvTower; if (!w) return rpShot('road'); sh.x = w[0]; sh.y = w[1]; sh.z = w[2]; }
+    D.shot = sh; D.cam = null; rpLabel(); return sh;
+  }
+  function rpDirect(dt) {   // the TV director: which shot, and when to cut
+    const D = replay, P = race.player, T = track, s = P.q.s, sh = D.shot, age = sh ? D.t - sh.t0 : 1e9;
+    const inJump = D.jc > 0 && s > D.jc - 2.5 * D.jw - 170 && s < D.jc + D.jw + 45 && Render.world && Render.world.tvTower;
+    let want = null;
+    if (D.mode !== 'tv') want = D.mode;
+    else if (D.t < 3.2) want = 'start';
+    else if (inJump) want = 'tower';
+    else if (s > T.finishS - 140) want = 'finish';
+    if (want) { if (!sh || sh.kind !== want || (want === 'road' && rpPast(sh))) rpShot(want); return; }
+    if (!sh || sh.kind === 'start' || sh.kind === 'tower' || sh.kind === 'finish') { rpShot('heli'); return; }
+    const long = sh.kind === 'heli' ? 6 : sh.kind === 'road' ? 7 : 5.5;
+    if (age > long || (sh.kind === 'road' && rpPast(sh))) { const seq = ['road', 'roof', 'road', 'heli', 'road', 'low', 'road', 'heli']; rpShot(seq[D.seq % seq.length]); }
+  }
+  function rpPast(sh) { const P = race.player, d = Math.hypot(P.x - sh.x, P.z - sh.z); return (P.q.s > sh.s + 8 && d > 28) || d > 190; }   // the car has gone by (or the camera is far behind it)
+  function rpCamera(dt) {   // this frame's camera for the shot
+    const D = replay, sh = D.shot, P = race.player, x = P.x, y = P.y, z = P.z, fx = Math.cos(P.h), fz = Math.sin(P.h), c = D.cam || (D.cam = { x: 0, y: 0, z: 0, tx: x, ty: y, tz: z, fov: 40, init: false });
+    const e = (k) => 1 - Math.exp(-dt * k);
+    let cx, cy, cz, tx = x, ty = y + 0.9, tz = z, fov = 40, snap = !c.init;
+    if (sh.kind === 'heli') { sh.a += dt * 0.07; const gH = Render.world && Render.world.groundH; cx = x + Math.cos(sh.a) * sh.r; cz = z + Math.sin(sh.a) * sh.r; cy = Math.max(y + sh.hh, (gH ? gH(cx, cz) : y) + 12); fov = 30; }
+    else if (sh.kind === 'roof') { const M = P.m; cx = x + fx * (M.a * 0.2); cy = y + 1.62; cz = z + fz * (M.a * 0.2); tx = x + fx * 18; ty = y + 0.4; tz = z + fz * 18; fov = 62; snap = true; }   // (on the roof, over the windscreen: the bonnet in the view)
+    else if (sh.kind === 'low') { cx = x - fx * 11; cy = y + 5; cz = z - fz * 11; tx = x + fx * 5; tz = z + fz * 5; ty = y + 0.6; fov = 50; }   // (over its own dust)
+    else { cx = sh.x; cy = sh.y; cz = sh.z; const d = Math.hypot(x - cx, y - cy, z - cz), asp = Math.min(1, innerWidth / Math.max(1, innerHeight)); fov = clamp(2 * Math.atan(7.5 / Math.max(d, 1) / asp) * 180 / Math.PI, 9, 70); snap = snap || !c.fixed; c.fixed = true; }   // (a zoom lens: the car about the same size, also on an upright phone)
+    if (sh.kind !== 'road' && sh.kind !== 'tower' && sh.kind !== 'finish' && sh.kind !== 'start') c.fixed = false;
+    if (snap || c.kind !== sh.kind) { c.x = cx; c.y = cy; c.z = cz; c.tx = tx; c.ty = ty; c.tz = tz; c.fov = fov; c.init = true; c.kind = sh.kind; }
+    else { const kp = sh.kind === 'heli' ? e(1.6) : sh.kind === 'low' ? e(5) : 1, kt = sh.kind === 'heli' ? e(6) : e(14);
+      c.x += (cx - c.x) * kp; c.y += (cy - c.y) * kp; c.z += (cz - c.z) * kp; c.tx += (tx - c.tx) * kt; c.ty += (ty - c.ty) * kt; c.tz += (tz - c.tz) * kt; c.fov += (fov - c.fov) * e(4); }
+    return c;
+  }
+  function replayFrame(dt) {   // a drawn frame of the replay
+    const D = replay, P = race.player;
+    // slow motion through the Yellow House jump (in the air near it); the recording's own time runs on at D.rate
+    const s = P.q.s, fly = D.jc > 0 && P.air && s > D.jc - 2.5 * D.jw - 30 && s < D.jc + D.jw + 50, want = fly ? 0.3 : 1;
+    D.rate += (want - D.rate) * (1 - Math.exp(-dt * (want < D.rate ? 8 : 3)));
+    const dtR = dt * D.rate; D.t = Math.min(D.end, D.t + dtR);
+    rpApply(D.t); rpDirect(dtR); if (D.rate < 0.9 !== !!D.slow) { D.slow = D.rate < 0.9; rpLabel(); }
+    Render.setTv(rpCamera(dt));
+    Sfx.update(race, P, null, P.inThr);
+    $('rp-t').textContent = fmt(D.t, true);
+    Render.frame(dtR, 1, P, 'tv', {});
+    if (D.t >= D.end) replayEnd();
   }
 
   /* ---------------- race lifecycle ---------------- */
@@ -451,7 +617,7 @@
     $('hud').classList.toggle('drs', !!race.drsLast); $('h-drs').className = '';   // (a circuit with DRS zones)
     $('hud').classList.toggle('tt', race.timeTrial); $('pause-restart').textContent = race.timeTrial ? 'Ponovi ' + ttRun(track.def) : 'Ponovi dirko';
     $('pause-restart').classList.toggle('off', !!on);   // (online: no restart for one)
-    cpSeen = race.player.cpEv; ttRes = null; cornerSeen = -1; cornerShow = false; placeInit(); codrvInit(); ghStart(); $('h-ttsp').className = '';
+    cpSeen = race.player.cpEv; ttRes = null; cornerSeen = -1; cornerShow = false; placeInit(); codrvInit(); ghStart(); goldStart(); rpStart(); $('h-ttsp').className = '';
     Input.reset();
     showScreen('none');
     Sfx.resume(); Sfx.setRunning(true);
@@ -484,7 +650,8 @@
   }
   function toTitle() {
     champRecord(); champRun = false;
-    paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); ghRec = ghPlay = null; Render.setGhost(null, true);
+    if (replay) replayEnd();
+    paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); ghRec = ghPlay = null; Render.setGhost(null, true); gold = null; Render.setGhost(null, true, 1); rpRec = null;
     Sfx.setRunning(false); Sfx.silence();
     Render.attachRace(demo); Render.resetCam();
     setLights(0, false);
@@ -537,7 +704,7 @@
       '<p class="ltab-h">Lestvica · ' + esc(T.def.name) + '</p>';
     $('res-table').querySelector('thead').innerHTML = TT_HEAD;
     $('res-table').querySelector('tbody').innerHTML = boardRows(R0.board || [], r.entry);
-    $('res-restart').textContent = 'Ponovi ' + ttRun(T.def);
+    $('res-restart').textContent = 'Ponovi ' + ttRun(T.def); $('res-replay').classList.toggle('off', !rpOk());
     const wrap = $('res-table').parentElement; wrap.scrollTop = 0;
     showScreen('results');
     // the run's row on the board must be in view (it sits below the splits; on short screens below the fold)
@@ -578,7 +745,7 @@
     if (mp && mp.race) { netResults(); return; }
     $('res-restart').dataset.act = 'restart';
     if (race.timeTrial) { finishTT(); return; }
-    $('res-head').classList.remove('tt'); $('res-tt').classList.add('off'); $('res-table').querySelector('thead').innerHTML = RES_HEAD; $('res-restart').textContent = 'Ponovi dirko';
+    $('res-head').classList.remove('tt'); $('res-tt').classList.add('off'); $('res-table').querySelector('thead').innerHTML = RES_HEAD; $('res-restart').textContent = 'Ponovi dirko'; $('res-replay').classList.add('off');
     const res = race.estimateResults();
     const P = race.player;
     const myIdx = res.findIndex(r => r.car === P);
@@ -700,6 +867,7 @@
     else { P.inSteer = inp.steer; P.inThr = inp.thr; P.inBrk = inp.brk; P.inHand = inp.hand; P.digitalSteer = inp.digital; }
     race.step(dt);
     if (ghRec) ghSample(P);
+    if (rpRec) rpSample(P);
     if (P.gear > prevGear && prevGear > 0) Sfx.shiftPop();
     prevGear = P.gear;
     // feedback
@@ -911,9 +1079,11 @@
       const k = P.cp, t = P.splits[k - 1]; if (P.finished || !(k >= 1) || !(t >= 0)) return;
       const pb = Array.isArray(R0.bestSplits) ? R0.bestSplits[k - 1] : NaN, d = t - pb, has = isFinite(d);
       const el = $('h-split'); el.textContent = 'CP' + k + '  ' + fmt(t, true) + (has ? '  ' + sgn(d) : ''); el.className = 'show ' + (has ? dCls(d) : 'even'); splitT = 3.5; cornerShow = false;   // (a place name waits until the split clears)
+      const gd = S.gold ? goldGap(k - 1, t) : NaN; goldLine(gd);   // (and the gap to the gold ghost under it)
       showMsg('CP' + k + (has ? ' ' + sgn(d) : ''), has ? (d < 0 ? 'fast' : 'warn') : 'gold', 1.5);
       Sfx.beep(has && d < 0 ? 990 : 740, 0.12, 0.12);
-      if (!has) Comm.say(ttLine(track.def, 'cpFirst'), { cp: k, time: spkTime(t) }, 2);
+      if (gd < 0 || (!has && isFinite(gd))) Comm.say(gd < 0 ? 'goldAhead' : 'goldBehind', { cp: k, delta: spkDelta(gd) }, 3);   // (ahead of gold: that first; else the record)
+      else if (!has) Comm.say(ttLine(track.def, 'cpFirst'), { cp: k, time: spkTime(t) }, 2);
       else Comm.say(Math.abs(d) < 0.005 ? 'cpEven' : d < 0 ? 'cpFast' : 'cpSlow', { cp: k, delta: spkDelta(d) }, 3);
     }
   }
@@ -1012,7 +1182,7 @@
       const el = $('h-split'); el.textContent = 'KROG ' + lastLapCount + ': ' + fmt(t, true) + (isBest ? '  NAJHITREJŠI' : ''); el.className = 'show'; splitT = 3.2; cornerShow = false;
       if (!P.finished && P.lap === race.laps) { showMsg('ZADNJI KROG!', 'gold', 2); Sfx.beep(880, 0.12, 0.12); }
     }
-    if (splitT > 0) { splitT -= dt; if (splitT <= 0) $('h-split').className = ''; }
+    if (splitT > 0) { splitT -= dt; if (splitT <= 0) { $('h-split').className = ''; $('h-gold').className = ''; } }
     updateCorner(P);
     updateCodrv(P);
     // wrong way
@@ -1129,6 +1299,7 @@
         } else if (race.timeTrial) {   // time trial: store the run, finish popup with the difference to the previous record
           const r = ttFinish(), d = r.prev ? r.time - r.prev : NaN, el = $('h-split');
           el.textContent = 'CILJ  ' + fmt(r.time, true) + (r.prev ? '  ' + sgn(d) : ''); el.className = 'show ' + (r.prev ? dCls(d) : 'even'); splitT = 5;
+          goldLine(S.gold && gold && gold.done ? r.time - gold.Tg : NaN);   // (the gold ghost crosses the line on the gold time)
           const sp = $('h-ttsp'); sp.innerHTML = '<table><thead><tr><th></th><th>Čas</th><th>Rekord</th><th>\u00b1</th></tr></thead><tbody>' + splitRows(r, false) + '</tbody></table>'; sp.className = 'show';   // the splits under it until the results
           showMsg(r.newPB ? 'NOV REKORD!' : 'CILJ! ' + sgn(d), r.newPB ? 'fast' : 'gold', 4);
           Comm.say(ttLine(track.def, r.newPB ? 'record' : isFinite(d) && Math.abs(d) < 0.005 ? 'even' : 'end'), { time: spkTime(r.time), delta: isFinite(d) ? spkDelta(d) : '', track: EN_NAME[track.def.id] || track.def.name }, 5);
@@ -1423,8 +1594,10 @@
     // race (online: netFrame() after this frame's steps sends my car as it is now to the friend and places the friend's car;
     // also while paused or turned the wrong way, when the friend drives on)
     if (orientBlock) { if (mp && mp.race) netFrame(true); ghShow(1); Render.frame(0, 1, race.player, S.camera, { noFx: true }); return; }
+    if (replay) { replayFrame(dt); return; }
     const inp = Input.update(dt);
     if (!paused && screen === 'none' || (!paused && (phase === 'finish' || phase === 'done'))) {
+      goldTick();
       if (phase !== 'done') updatePhase(dt, inp);
       // alone, a slow device plays in slow motion rather than in big jumps; online, the race keeps up with the clock both
       // phones share (slow frames and hitches up to 0.25 s are caught up), so a slower phone does not lose time
@@ -1517,6 +1690,9 @@
       case 'comm-test': Comm.setSpeech(!!+S.sound); Comm.unlock(); Comm.test(); break;
       case 'start': if (S.control === 'tilt') enableTilt(true); Comm.unlock(); champRun = false; ensureTrack(S.track, newRace); break;
       case 'resume': resume(); break;
+      case 'replay': replayStart(); break;
+      case 'rp-cam': if (replay) { replay.mode = RP_MODES[(RP_MODES.indexOf(replay.mode) + 1) % RP_MODES.length]; replay.shot = null; rpLabel(); } break;
+      case 'rp-end': replayEnd(); break;
       case 'restart': if (race && race.champ && race.player.finished) openChamp(); else newRace(); break;   // (a championship round already driven counts: on to the standings)
       case 'calibrate': Input.calibrate(); toast('Sredina nagiba je nastavljena.'); break;
       case 'tilt-invert': S.tiltInvert = S.tiltInvert ? 0 : 1; save(); applySettings(); break;
@@ -1652,6 +1828,8 @@
         get adapt() { return { dyn: Render.getDynScale(), shadowsOn: shadowsOn(), auto: autoNoShadows, pending: perf.pending, restore: perf.restore, keep: perf.keep, check: perf.check }; },
         get net() { return mp ? { role: mp.role, code: mp.code, open: Net.open, synced: Net.synced, peer: mp.peer, track: mp.track, laps: mp.laps, race: mp.race && { at: mp.race.at, goAt: mp.race.goAt, mine: mp.race.mine, theirs: mp.race.theirs, left: mp.race.left, got: mp.race.buf.length, frameT: mp.race.frameT, startT: mp.race.startT } } : null; },
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; },
+        get gold() { return gold && { done: gold.done, Ta: gold.Ta, Tg: gold.Tg, n: gold.n, sp: gold.sp, k: gold.k }; }, goldRun() { goldTick(1e5); },
+        get replay() { return replay && { t: replay.t, end: replay.end, shot: replay.shot && replay.shot.kind, rate: replay.rate, mode: replay.mode }; }, get rpOk() { return rpOk(); }, rpSeek(t) { if (replay) { replay.t = t; replay.shot = null; replay.cam = null; } }, rpFrame(dt) { if (replay) replayFrame(dt); },
         sim(sec, auto, steer) { const inp = { steer: steer || 0, thr: 1, brk: 0, hand: 0, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; } if (phase !== 'done') updatePhase(STEP, inp); stepRace(STEP, inp); } } };
     } catch (e) {
       console.error(e);

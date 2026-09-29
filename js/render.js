@@ -469,30 +469,33 @@ const Render = (function () {
     return { grp, bodyG, body, tail, dec, wf, wr, glb, blob, marker, lights, dirtU: bodyMat.userData && bodyMat.userData.dirt || null, scrU: bodyMat.userData && bodyMat.userData.scr || null };
   }
 
-  /* ---------------- ghost of the best run (time trials) ---------------- */
-  // A see-through copy of the player's car, posed by the game (js/game.js replays the stored best run). Only drawn: not a car of the
-  // race (no physics, no collisions, no sound, no shadow, no glows or dust). One material for all its parts, kept for the whole visit.
-  let ghostV = null, ghostMat = null;
-  function ghostDrop() { if (!ghostV) return; scene.remove(ghostV.grp); freeOwn(ghostV.grp, new Set([ghostMat])); ghostV = null; }
-  // g: null hides it (drop: also frees the mesh); else { M, color, stripe, x, y, z, h, d (steer), p (pitch), r (roll), op (opacity 0..1) }
-  function setGhost(g, drop) {
-    if (!g) { if (drop) ghostDrop(); else if (ghostV) ghostV.grp.visible = false; return; }
+  /* ---------------- ghosts of the time trials: the best run (slot 0) and the gold medal pace (slot 1) ---------------- */
+  // A see-through copy of the player's car, posed by the game (js/game.js replays the stored best run, and the autopilot's run stretched
+  // to the gold time). Only drawn: not a car of the race (no physics, no collisions, no sound, no shadow, no glows or dust). One material
+  // per ghost for all its parts (pale blue, gold), kept for the whole visit.
+  const GHOST_LOOK = [{ color: 0xcfe4ff, emissive: 0x2b4a72, op: 0.42 }, { color: 0xffd95e, emissive: 0x9a6a0c, op: 0.56 }];
+  const ghosts = [{ v: null, mat: null }, { v: null, mat: null }];
+  function ghostDrop(k) { const G = ghosts[k]; if (!G.v) return; scene.remove(G.v.grp); freeOwn(G.v.grp, new Set([G.mat])); G.v = null; }
+  // g: null hides it (drop: also frees the mesh); else { M, color, stripe, x, y, z, h, d (steer), p (pitch), r (roll), op (opacity 0..1) }; slot: 0 best run, 1 gold
+  function setGhost(g, drop, slot) {
+    const k = slot || 0, G = ghosts[k];
+    if (!g) { if (drop) ghostDrop(k); else if (G.v) G.v.grp.visible = false; return; }
     if (!scene) return;
-    if (!ghostMat) ghostMat = new THREE.MeshLambertMaterial({ color: 0xcfe4ff, emissive: 0x2b4a72, transparent: true, opacity: 0.4 });
-    if (ghostV && (ghostV.M !== g.M || ghostV.color !== g.color)) ghostDrop();
-    if (!ghostV) {
+    if (!G.mat) { const L = GHOST_LOOK[k]; G.mat = new THREE.MeshLambertMaterial({ color: L.color, emissive: L.emissive, transparent: true, opacity: L.op }); }
+    if (G.v && (G.v.M !== g.M || G.v.color !== g.color)) ghostDrop(k);
+    if (!G.v) {
       const v = makeCarMesh({ m: g.M, color: g.color, stripe: g.stripe !== false, num: 0 }, { noDirt: true, noBlob: true, noMarker: true });
       const sh = sharedCarRes();
       v.bodyG.remove(v.dec); freeOwn(v.dec);   // no start number (also the rally's side decals: they share its material)
       v.grp.traverse(o => { if (!o.isMesh) return; if (o.material === v.dec.material) o.visible = false;
-        for (const m of Array.isArray(o.material) ? o.material : [o.material]) if (m && !sh.m.has(m) && m !== ghostMat && m !== v.dec.material) m.dispose();
-        o.material = ghostMat; o.castShadow = false; o.receiveShadow = false; o.renderOrder = 2; });
+        for (const m of Array.isArray(o.material) ? o.material : [o.material]) if (m && !sh.m.has(m) && m !== G.mat && m !== v.dec.material) m.dispose();
+        o.material = G.mat; o.castShadow = false; o.receiveShadow = false; o.renderOrder = 2; });
       if (v.body.visible) v.body.renderOrder = 3;   // (the body over the wheels it hides)
       v.M = g.M; v.color = g.color; v.spin = 0; v.lx = g.x; v.lz = g.z;
-      scene.add(v.grp); ghostV = v;
+      scene.add(v.grp); G.v = v;
     }
-    const v = ghostV, M = g.M;
-    v.grp.visible = g.op > 0.01; ghostMat.opacity = 0.42 * clamp(g.op, 0, 1);
+    const v = G.v, M = g.M;
+    v.grp.visible = g.op > 0.01; G.mat.opacity = GHOST_LOOK[k].op * clamp(g.op, 0, 1);
     v.grp.position.set(g.x, g.y, g.z);
     v.grp.rotation.set(0, -g.h, g.p || 0, 'YZX');
     v.bodyG.rotation.set(g.r || 0, 0, 0); v.bodyG.position.y = Math.abs(g.r || 0) * 0.4;
@@ -1747,6 +1750,10 @@ const Render = (function () {
       tx = x + fx * ahead; tz = z + fz * ahead; ty = baseY;
       px = tx - fx * D * Math.cos(pitch); pz = tz - fz * D * Math.cos(pitch); py = baseY + D * Math.sin(pitch);
       if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); updatePointScale(); }
+    } else if (mode === 'tv' && tv) {
+      // the replay's TV cameras (js/game.js directs them): where the camera is, what it looks at, its lens
+      px = tv.x; py = tv.y; pz = tv.z; tx = tv.tx; ty = tv.ty; tz = tv.tz;
+      if (camera.fov !== tv.fov || camera.near !== 0.25) { camera.fov = tv.fov; camera.near = 0.25; camera.updateProjectionMatrix(); updatePointScale(); }   // (near: a camera on the car itself)
     } else if (mode === 'kino') {
       // 'kino': the fixed, lower and closer view of the reference racer: heading set per circuit, ~42 deg tilt, look-ahead along the travel
       const fx = Math.sin(camYaw), fz = -Math.cos(camYaw);
@@ -1771,21 +1778,23 @@ const Render = (function () {
       px = tx; py = baseY + D * Math.sin(pitch); pz = tz + D * Math.cos(pitch);
       if (camera.fov !== 30) { camera.fov = 30; camera.updateProjectionMatrix(); updatePointScale(); }
     }
-    if (world && world.camFloor) { const gf = world.camFloor(px, pz) + 4; if (py < gf) py = gf; }   // mountain worlds: never under the slope behind the car
+    if (mode !== 'tv' && camera.near !== 4) { camera.near = 4; camera.updateProjectionMatrix(); }   // (after a replay)
+    if (world && world.camFloor) { const gf = world.camFloor(px, pz) + (mode === 'tv' ? 0.8 : 4); if (py < gf) py = gf; }   // mountain worlds: never under the slope behind the car (a TV camera: above the ground)
     if (cam.shake > 0) { px += (Math.random() - 0.5) * cam.shake; py += (Math.random() - 0.5) * cam.shake; pz += (Math.random() - 0.5) * cam.shake; cam.shake = Math.max(0, cam.shake - dt * 3); }
     camera.position.set(px, py, pz); camera.lookAt(tx, ty, tz); cam.vcx = tx; cam.vcz = tz; cam.vd = Math.hypot(px - tx, py - ty, pz - tz);
-    { const dC = Math.hypot(px - tx, py - ty, pz - tz), r = Math.max(0, wet); scene.fog.near = dC * (1.35 - 0.4 * r); scene.fog.far = dC * (5.5 - 1.6 * r); }   // (rain: a closer haze)
+    { const dC = mode === 'tv' ? 62 : Math.hypot(px - tx, py - ty, pz - tz), r = Math.max(0, wet); scene.fog.near = dC * (1.35 - 0.4 * r); scene.fog.far = dC * (5.5 - 1.6 * r); }   // (rain: a closer haze; the TV cameras: the chase camera's haze wherever they stand)
     if (world && world.farClip) { const f = Math.min(700, scene.fog.far + 40); if (Math.abs(camera.far - f) > 6) { camera.far = f; camera.updateProjectionMatrix(); } }   // long corridor worlds: nothing past the fog is drawn
     // sun/shadow follows view center
     lastMode = mode;
-    const sx = mode === 'kino' ? tx + Math.sin(camYaw) * 8 : tx, sz = mode === 'chase' ? tz : mode === 'kino' ? tz - Math.cos(camYaw) * 8 : tz - 8;
+    const sx = mode === 'kino' ? tx + Math.sin(camYaw) * 8 : tx, sz = mode === 'chase' || mode === 'tv' ? tz : mode === 'kino' ? tz - Math.cos(camYaw) * 8 : tz - 8;
     const texel = 160 / sun.shadow.mapSize.x;
     const cx = Math.round(sx / texel) * texel, cz = Math.round(sz / texel) * texel;
     sun.target.position.set(cx, baseY, cz);
     sun.position.set(cx + sunOff[0], baseY + sunOff[1], cz + sunOff[2]);
     sun.target.updateMatrixWorld();
   }
-  let sunOff = [-80, 96, 70], camYaw = 0, lastMode = 'iso';
+  let sunOff = [-80, 96, 70], camYaw = 0, lastMode = 'iso', tv = null;
+  function setTv(c) { tv = c; }   // the replay's TV camera: { x, y, z, tx, ty, tz, fov } (Render.frame with mode 'tv')
   function shake(a) { cam.shake = Math.max(cam.shake, Math.min(1.2, a)); }
   function resetCam() { cam.init = false; }
 
@@ -1831,7 +1840,7 @@ const Render = (function () {
           const ex = far ? px / pl * 1.15 : px, ey = far ? py / pl * 1.15 : py;
           post.mat.uniforms.uSun.value.set((ex / asp) * 0.5 + 0.5, ey * 0.5 + 0.5); }
         else post.mat.uniforms.uSun.value.set(0.5, 9); }
-      const U = post.mat.uniforms; U.uFocus.value = post.focus; U.uBand.value = (lastMode === 'kino' ? 0.3 : camera.aspect < 1 ? 0.2 : 0.24) + (post.span || 0); U.uBlur.value = lastMode === 'kino' ? 0.7 : 0.8;   // kino: a soft depth of field only towards the edges, as in the reference
+      const U = post.mat.uniforms; U.uFocus.value = post.focus; U.uBand.value = (lastMode === 'kino' ? 0.3 : camera.aspect < 1 ? 0.2 : 0.24) + (post.span || 0); U.uBlur.value = lastMode === 'kino' ? 0.7 : lastMode === 'tv' ? 0.3 : 0.8;   // kino: a soft depth of field only towards the edges, as in the reference
       renderer.setRenderTarget(post.rt); renderer.render(scene, camera);
       renderer.setRenderTarget(null); renderer.render(post.sc, post.cam);
     } else renderer.render(scene, camera);
@@ -1897,6 +1906,6 @@ const Render = (function () {
   const dbg = { noSmoke: false };
   function setDebug(o) { Object.assign(dbg, o); }
   function fxStats() { let n = 0; for (let i = 0; i < particles.max; i++) if (particles.life[i] > 0) n++; return { alive: n, emitted: particles.cur }; }
-  return { setDebug, fxStats, setGhost, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setDebug, fxStats, setGhost, setTv, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 

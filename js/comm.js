@@ -74,6 +74,8 @@ const Comm = (() => {
     cpFast: ['Checkpoint {cp}, {delta} seconds up on your best!', 'Green split at checkpoint {cp}! {delta} seconds faster!', 'Checkpoint {cp}. You are {delta} seconds ahead of your record pace!'],
     cpEven: ['Checkpoint {cp}, dead level with your best split!', 'Checkpoint {cp}. Right on your record pace, not a hair in it!'],
     cpSlow: ['Checkpoint {cp}, {delta} seconds down on your best.', 'Split {cp}: {delta} seconds slower. Push on!', 'Checkpoint {cp}. Down by {delta}, find that time!'],
+    goldAhead: ['Checkpoint {cp}, {delta} seconds inside gold medal pace!', 'You are beating the gold ghost by {delta} at checkpoint {cp}!', 'Checkpoint {cp}. Ahead of the gold time by {delta}, keep it flat!'],
+    goldBehind: ['Checkpoint {cp}, {delta} seconds off gold medal pace.', 'The gold ghost is {delta} seconds up the road at checkpoint {cp}. Chase it!', 'Checkpoint {cp}. Gold is {delta} ahead, you need more!'],
     summitRecord: ['At the summit! A new personal best, {time}!', 'Record run! {time} to the top of {track}!', 'What a climb! New personal best, {time}!'],
     summitEven: ['At the summit in {time}. That is your record to the thousandth!', '{time} at the top, dead level with your best!'],
     // Pikes Peak: the TV helicopter (its fly-over after Glen Cove, and the escort to the finish)

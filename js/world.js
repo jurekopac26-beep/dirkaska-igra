@@ -5494,7 +5494,8 @@ const World = (function () {
     const tvCam = (x, y, z, fx, fz) => { const g = scen.get(x, z); box(g, x, y, z, 0.1, 1.2, 0.1, 0, [0.15, 0.15, 0.16]); box(g, x, y + 1.2, z, 0.72, 0.4, 0.3, Math.atan2(fz, fx), [0.16, 0.16, 0.18], [0.3, 0.3, 0.32]);
       ouRod(g, [x + fx * 0.3, y + 1.4, z + fz * 0.3], [x + fx * 0.72, y + 1.4, z + fz * 0.72], 0.1, [0.07, 0.07, 0.08], 6); };
     if (sY > 0) { const sd = -yh.side, i = T.idx(sY + 30), o = sd * ((sd > 0 ? T.br[i] : T.bl[i]) + 10.5), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
-      if (!hard(x, z) && ouNear(x, z).dd > 8) { const yd = tower(x, z, T.hd[i], 5.2), fx = -T.nx[i] * sd, fz = -T.nz[i] * sd; tvCam(x + fx * 0.5 + T.tx[i] * 0.3, yd, z + fz * 0.5 + T.tz[i] * 0.3, fx, fz); filmer(x - T.tx[i] * 0.5, yd, z - T.tz[i] * 0.5, fx, fz); } }
+      if (!hard(x, z) && ouNear(x, z).dd > 8) { const yd = tower(x, z, T.hd[i], 5.2), fx = -T.nx[i] * sd, fz = -T.nz[i] * sd; tvCam(x + fx * 0.5 + T.tx[i] * 0.3, yd, z + fz * 0.5 + T.tz[i] * 0.3, fx, fz); filmer(x - T.tx[i] * 0.5, yd, z - T.tz[i] * 0.5, fx, fz);
+        out.tvTower = [x + fx * 0.5 + T.tx[i] * 0.3, yd + 1.45, z + fz * 0.5 + T.tz[i] * 0.3]; } }   // (the replay's tower camera: its lens)
     const media = (s0, side) => { if (!board2(s0, side, 2.6, 7, 1.6, 0.5)) return;
       for (let k = 0; k < 3; k++) { const i = T.idx(s0 + 3 + k * 2.2), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 2.7), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; if (!hard(x, z)) filmer(x, ouGround(x, z), z, -T.nx[i] * side - T.tx[i] * 0.6, -T.nz[i] * side - T.tz[i] * 0.6); } };
     if (sY > 0) media(sY + 64, yh.side);

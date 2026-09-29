@@ -58,6 +58,10 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-split.fast, #h-msg.fast { color: var(--meter); }
 #h-split.slow { color: var(--curb); }
 #h-split.even { color: var(--chalk); }
+/* the gap to the gold ghost at a checkpoint (time trials with medal times) */
+#h-gold { height: 1.1em; font: 700 italic clamp(10px, 2.7vh, 13px)/1.1 var(--f-ui); color: #ffd35a; text-shadow: 0 1px 2px #000; opacity: 0; transition: opacity .3s; font-variant-numeric: tabular-nums; }
+#h-gold.show { opacity: 1; }
+#h-gold.behind { color: #e8b25a; }
 /* time trial finish: compact splits table under the finish time (this run, the previous record, the difference) */
 #h-ttsp { display: none; position: absolute; left: 50%; top: calc(40% + clamp(28px, 10vh, 56px) + 10px); transform: translateX(-50%); padding: 4px 8px; background: rgba(10, 14, 20, .6); border-radius: 6px; font: 700 clamp(10px, 2.9vh, 13px)/1.25 var(--f-ui); font-variant-numeric: tabular-nums; color: var(--chalk); text-shadow: 0 1px 2px #000; }
 #h-ttsp.show { display: table; }
@@ -396,3 +400,11 @@ select.txt:disabled { opacity: .75; }
 #h-dmg .dmg-cab { fill: rgba(255,255,255,.28); }
 #h-dmg rect[id^="dz"] { transition: fill .25s; }
 
+/* the replay of a time trial (TV cameras): a bar at the top, the race HUD and controls hidden */
+#rp { position: fixed; left: 50%; top: calc(8px + var(--st, 0px)); transform: translateX(-50%); z-index: 30; display: flex; align-items: center; gap: 10px; padding: 6px 10px; background: rgba(10, 14, 20, .62); border-radius: 10px; font: 700 clamp(11px, 3vh, 14px)/1.2 var(--f-ui); color: var(--chalk); text-shadow: 0 1px 2px #000; white-space: nowrap; }
+#rp.off { display: none; }
+#rp .rp-rec { color: #ff5a4a; letter-spacing: .06em; }
+#rp #rp-t { font-variant-numeric: tabular-nums; color: var(--lcd); }
+#rp #rp-cam { color: var(--muted); min-width: 9em; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 560px) { #rp { gap: 6px; padding: 5px 7px; } #rp .rp-w { display: none; } #rp #rp-cam { min-width: 0; max-width: 30vw; } }
+body.replaying #hud, body.replaying #touch, body.replaying #btn-pause, body.replaying #btn-rescue { display: none !important; }
