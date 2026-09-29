@@ -128,8 +128,10 @@ band('straight braking from 150 km/h: max body slip', lo.bmax, 0, 1, ' deg');
   band('formula: 0-100 km/h', lf.t100, 2.3, 2.7, ' s');
   band('formula: 100-0 km/h braking distance', lf.d100, 16, 20, ' m');
   band('formula: straight braking from 150 km/h: max body slip', lf.bmax, 0, 1, ' deg');
-  const c = mkCar('formula', { v: 0 }); for (let i = 0; i < 60 / DT; i++) step(c, { thr: 1 });
+  const c = mkCar('formula', { v: 0 }); let vSpin = 0;
+  for (let i = 0; i < 60 / DT; i++) { step(c, { thr: 1 }); if (c.spin > 0.24) vSpin = c._v * 3.6; }   // (the renderer smokes and marks the road from 0.24)
   band('formula: top speed on the flat', c._v * 3.6, 270, 295, ' km/h');
+  band('formula: full throttle spins the tyres only at the launch (up to)', vSpin, 20, 110, ' km/h');
   const f60 = steady('formula', 60, 1.0), f100 = steady('formula', 100, 1.0), f150 = steady('formula', 150, 1.0), r100 = steady('rally', 100, 1.0);
   band('formula: steady 150 km/h full lock: lateral g (the wings)', f150.ay, 3.0, 3.5, ' g');
   band('formula: grip gained from 60 to 150 km/h (downforce)', f150.ay - f60.ay, 0.7, 1.4, ' g');

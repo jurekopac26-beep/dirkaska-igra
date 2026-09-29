@@ -6861,7 +6861,7 @@ const World = (function () {
     }
     const cam = typeof Render !== 'undefined' && Render.camera && Render.camera.isCamera ? Render.camera : null;
     /* the jets: asked for by game.js (A.go) as the race is set up; while the shot runs (A.shot, the first ~6 s) the camera stands on the grid and
-       follows them in; the smoke hangs on, drifting and spreading, for half a minute */
+       follows them in; the smoke hangs on, drifting and spreading, for ~20 s, and never where the camera flies */
     const J = A.J, R = RB_JET;
     if (A.go) { A.go = false; A.t0 = t; for (const tr of A.trails) tr.s.length = 0; }
     if (A.t0 >= 0) {
@@ -6889,11 +6889,12 @@ const World = (function () {
         let vx = cam ? cam.position.x - x : 0, vy = cam ? cam.position.y - y : 1, vz = cam ? cam.position.z - z : 0;
         let sx = ty * vz - tz * vy, sy = tz * vx - tx * vz, sz = tx * vy - ty * vx; const sl = Math.hypot(sx, sy, sz) || 1, w = (1.6 + 0.55 * age) / sl; sx *= w; sy *= w; sz *= w;
         P[k * 6] = x - sx; P[k * 6 + 1] = y - sy; P[k * 6 + 2] = z - sz; P[k * 6 + 3] = x + sx; P[k * 6 + 4] = y + sy; P[k * 6 + 5] = z + sz;
-        const a = clamp(1 - age / 32, 0, 1) * clamp(age * 3, 0.35, 1) * 0.85;
+        const dc = cam ? Math.hypot(cam.position.x - x, cam.position.y - y, cam.position.z - z) : 1e3;   // (the phone's chase camera flies at the smoke's height: none right at it)
+        const a = clamp(1 - age / 22, 0, 1) * clamp(age * 3, 0.35, 1) * 0.85 * clamp((dc - 30) / 50, 0, 1);
         for (const o of [0, 4]) { C[k * 8 + o] = tr.col[0]; C[k * 8 + o + 1] = tr.col[1]; C[k * 8 + o + 2] = tr.col[2]; C[k * 8 + o + 3] = a; }
       }
       g.setDrawRange(0, Math.max(0, n - 1) * 6); g.attributes.position.needsUpdate = true; g.attributes.color.needsUpdate = true;
-      tr.m.visible = n > 1;
+      tr.m.visible = n > 1 && t - tr.s[n - 1][3] < 22;   // (gone once the last of it has faded)
     }
     /* the helicopter: once a race, when the player's car comes down the straight for the second time; timed (as Pikes Peak's fly-over) to be over
        the road A m in front of the car at height H, both chosen for the camera in use: in the frame, clear of the car */
