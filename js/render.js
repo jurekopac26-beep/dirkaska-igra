@@ -1406,11 +1406,11 @@ const Render = (function () {
         if (k < 2) glows.add(_lv.x, _lv.y, _lv.z, 0.95, 1.0, 0.88, 0.62, 0.17);
         else glows.add(_lv.x, _lv.y, _lv.z, braking ? 1.8 : 0.95, 1.0, 0.15, 0.08, braking ? 0.95 : 0.3);
       }
-      // dirt builds up while driving on grass/gravel/makadam (never washes off during a race)
+      // dirt builds up while driving on grass/gravel/makadam, faster on the wet makadam (never washes off during a race)
       if (v.scrU) v.scrU.value = Core.sstep(0.3, 0.9, c.dmg || 0);
       if (v.dirtU && !(opt && opt.noFx) && !c.air && dt > 0) {
-        let loose = 0; for (let k = 0; k < 4; k++) { const sf = c.ws[k]; if (sf === 2 || sf === 3 || sf >= 5) loose++; }
-        if (loose) v.dirtU.value = Math.min(1, v.dirtU.value + dt * loose * 0.012 * clamp(c.speed / 12, 0.2, 1.5));
+        let loose = 0, mud = 0; for (let k = 0; k < 4; k++) { const sf = c.ws[k]; if (sf === 2 || sf === 3 || sf >= 5) loose++; if (sf >= 6) mud++; }
+        if (loose) v.dirtU.value = Math.min(1, v.dirtU.value + dt * (loose + mud * 1.5) * 0.012 * clamp(c.speed / 12, 0.2, 1.5));   // (the wet gravel: mud, two and a half times as fast)
       }
       if (v.marker) { v.marker.visible = !!markerOn; v.marker.position.y = 4 + Math.sin(time * 5) * 0.3; v.marker.rotation.y = time * 2; }
       // --- effects ---
