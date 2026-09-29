@@ -625,11 +625,12 @@ const Render = (function () {
     return renderer;
   }
 
+  const staleMats = new Set();   // the last world's materials, freed after the new world's first frame: its materials take over the shader programs the two share instead of compiling them again
   function buildWorld(track, density) {
     camYaw = (track && track.def && track.def.camYaw) || 0;   // fixed heading of the 'kino' camera for this circuit (clockwise from north)
     if (world && world.root) {   // switching tracks: drop and free the previous scenery
       scene.remove(world.root);
-      world.root.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.dispose()); if (o.isInstancedMesh) o.dispose(); });   // (instanced: its instance buffers)
+      world.root.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => staleMats.add(m)); if (o.isInstancedMesh) o.dispose(); });   // (instanced: its instance buffers)
       if (world.ownTex) world.ownTex.forEach(t => t.dispose());   // textures made for that track only (the shared ones stay cached)
       if (skids) skids.clear();
     }
@@ -1656,6 +1657,7 @@ const Render = (function () {
       renderer.setRenderTarget(post.rt); renderer.render(scene, camera);
       renderer.setRenderTarget(null); renderer.render(post.sc, post.cam);
     } else renderer.render(scene, camera);
+    if (staleMats.size) { staleMats.forEach(m => m.dispose()); staleMats.clear(); }   // (the previous world's materials, now that the new world's have their programs)
   }
 
   function setStartLights(n, go) {

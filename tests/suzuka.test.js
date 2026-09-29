@@ -1,9 +1,10 @@
-// A crossing on two levels (Suzuka's figure of eight: the back straight on a bridge over the link from Degner to the Hairpin), Core
-// only: the track finds the crossing (and no other track has one), narrows the barriers to the bridge's parapets and the underpass's
+// Suzuka in Core. The crossing on two levels (the figure of eight: the back straight on a bridge over the link from Degner to the
+// Hairpin): the track finds the crossing (and no other track has one), narrows the barriers to the bridge's parapets and the underpass's
 // walls, the two roads' corridors do not cut into each other there; cars and loose parts on the bridge and under it do not touch; a
 // car keeps to its own level when it drives across, hits the parapet, is rescued or loses a panel there; a whole race never snaps a
-// car from one level to the other.
-//   node tests/crossover.test.js
+// car from one level to the other. The pit lane: in after the Casio Triangle, out before the First Curve, a damaged car stops at its
+// box, is repaired and rejoins (both physics). DRS: one zone on the start / finish straight, used by the cars that follow closely.
+//   node tests/suzuka.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
 const { DT, seeded } = require('./lib/sim.js');
@@ -79,6 +80,51 @@ for (const phys of ['cs', 'arcade']) {
   }
   check(`a whole race (${phys}): every car drives under and over the bridge, nobody jumps levels, everybody finishes`, jumps === 0 && under > 0 && over > 0 && r.cars.every(c => c.finished),
     `${jumps} jumps (largest ${maxJ.toFixed(2)} m), ${under} / ${over} steps under / on the bridge, ${r.cars.filter(c => c.finished).length}/${r.cars.length} finished in ${t.toFixed(0)} s`);
+}
+
+// 7. the pit lane: on the right from where the Casio Triangle's gravel ends to before the First Curve, beside the pit wall in between
+const L = T.len, dd = (s) => { let d = s - T.startS; d = ((d % L) + L) % L; return d > L / 2 ? d - L : d; }, dz = (v) => (v > L / 2 ? v - L : v), PD = T.def.pit;   // (dd: a position s as metres from the start line; dz: a DRS line, already after the start line)
+{ const t16 = dd(T.nearestIdx(...T.def.turns[15]) * ds), t1 = dd(T.nearestIdx(...T.def.turns[0]) * ds);
+  let wallOk = 0, wallN = 0, grav = 0; for (let d = PD[1]; d <= PD[2]; d += 2) { const s = T.startS + d, p = T.pitAt(s), i = T.idx(s); if (T.gravR[i]) grav++; if (p && !p.gap) { wallN++; if (p.o - 3.5 >= p.wall + 0.5) wallOk++; } }
+  check('the pit lane: in after the Casio Triangle and its gravel, out before the First Curve, the pit wall between it and the track', PD[1] > t16 + 120 && PD[2] < t1 - 150 && grav === 0 && wallN > 250 && wallOk === wallN,
+    `lane ${PD[1]} .. ${PD[2]} m (Turn 16 at ${t16.toFixed(0)} m, Turn 1 at ${t1.toFixed(0)} m), ${wallN * 2} m of it behind the pit wall, gravel under it: ${grav}`); }
+for (const phys of ['cs', 'arcade']) {
+  Math.random = seeded(21);
+  r = new C.Race(T, { numAI: 12, playerGrid: 12, laps: 2, playerModel: C.MODELS[4], assist: 2, phys, seed: 9, difficulty: 1, damage: 2 });
+  r.start(); P = r.player; P.dmg = 0.6; P.lost = { bumperF: 1 };
+  const ev = []; let t = 0, stopAt = null, hit = 0;
+  while (t < 420 && !P.finished) {
+    const d = dd(P.q.s);
+    if (P.lap === 1 && !P.repairN && !P.inPit && d > -900 && d < PD[1] - 20) P.pitWant = true;   // (as a player would: turn in for the pits before the way in, at the end of lap 1)
+    if (P.repairN && !P.inPit) P.pitWant = false;
+    C.aiControl(P, r, DT); r.step(DT); t += DT;
+    if (P.pitEv) { ev.push(P.pitEv); if (P.pitEv === 'repair') stopAt = dd(P.q.s); P.pitEv = null; }
+    if (P.inPit) hit = Math.max(hit, P.hitWall || 0);
+  }
+  const seq = ev.join('>');
+  check(`pit stop (${phys}): in, stopped at its box, repaired, out again, finished, no knock in the lane`, /enter>box>repair>done>exit/.test(seq) && P.repairN === 1 && P.dmg === 0 && stopAt !== null && Math.abs(stopAt - PD[3]) < 4 && P.finished && hit < 2,
+    `${seq}, stopped ${stopAt === null ? '-' : stopAt.toFixed(1)} m (its box at ${PD[3]} m), damage ${P.dmg}, finished ${!!P.finished} in ${t.toFixed(0)} s, hardest knock in the lane ${hit.toFixed(2)} m/s`);
+}
+
+// 8. DRS: one zone, detection before the Casio Triangle, open from the end of the Final Curve to 60 m before Turn 1; in a race the cars that
+// cross the detection line within 1 s of the car in front open the flap (from lap 2 on), only in the zone
+{ const Z = T.drs || [], z = Z[0] || {}, t16 = dd(T.nearestIdx(...T.def.turns[15]) * ds), t1 = dd(T.nearestIdx(...T.def.turns[0]) * ds);
+  check('DRS: one zone on the start / finish straight', Z.length === 1 && Math.abs(dz(z.det) - (t16 - 50)) < 4 && dz(z.act) > -420 && dz(z.act) < -340 && Math.abs(dz(z.end) - (t1 - 60)) < 4,
+    Z.map(q => `detection ${dz(q.det).toFixed(0)} m, open ${dz(q.act).toFixed(0)} m, closed ${dz(q.end).toFixed(0)} m`).join(' | ')); }
+for (const phys of ['cs', 'arcade']) {
+  Math.random = seeded(7);
+  r = new C.Race(T, { numAI: 12, playerGrid: 12, laps: 2, playerModel: C.MODELS[4], assist: 2, phys, seed: 11, difficulty: 1 });
+  r.start(); const z = T.drs[0], prev = new Map(); let t = 0, opens = 0, early = 0, outside = 0, longest = 0; const since = new Map();
+  while (t < 420 && r.cars.some(c => !c.finished)) {
+    C.aiControl(r.player, r, DT); r.step(DT); t += DT;
+    for (const c of r.cars) { const o = !!c.drs, d = dd(c.q.s);
+      if (o && !prev.get(c)) { opens++; if (c.lap < 2) early++; since.set(c, t); }
+      if (o && !(d >= dz(z.act) - 3 || d <= dz(z.end) + 3)) outside++;
+      if (!o && prev.get(c)) longest = Math.max(longest, t - since.get(c));
+      prev.set(c, o); }
+  }
+  check(`DRS in a race (${phys}): followers open the flap on the last lap, only in the zone, and keep it open down the straight`, opens >= 3 && early === 0 && outside === 0 && longest > 4,
+    `${opens} openings (${early} on lap 1), ${outside} steps open outside the zone, longest ${longest.toFixed(1)} s`);
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);

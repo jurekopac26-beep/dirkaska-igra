@@ -1232,7 +1232,7 @@
   }
  },
  "suzuka/race/cs": {
-  "digest": "5a6f81d20d1cb27425df4c86",
+  "digest": "853f0aed65543cd0c2f02f04",
   "lead": 2283.6,
   "car0": [
    -860.11,
@@ -1246,7 +1246,7 @@
   }
  },
  "suzuka/race/arcade": {
-  "digest": "7a2fb545f6911f00e3ec6a9a",
+  "digest": "6f58d9b95b292850279eded3",
   "lead": 2164.8,
   "car0": [
    -709.87,
@@ -1260,7 +1260,7 @@
   }
  },
  "suzuka/demo/cs": {
-  "digest": "0368f1f058488226f7260774",
+  "digest": "77d932fac95dd9fbb0d0528f",
   "lead": 2441.6,
   "car0": [
    -902.38,
@@ -1274,7 +1274,7 @@
   }
  },
  "suzuka/demo/arcade": {
-  "digest": "30fc6a2033212d737ee527cc",
+  "digest": "dec21ff35bf7ef57fa3646fa",
   "lead": 2257.5,
   "car0": [
    -872.38,
@@ -1288,7 +1288,7 @@
   }
  },
  "suzuka/upg/cs": {
-  "digest": "5604ad2dbacd678e39fc3bd2",
+  "digest": "8eef5deb13fb22ccbe6b70a8",
   "lead": 2440.1,
   "car0": [
    -848.25,
@@ -1302,7 +1302,7 @@
   }
  },
  "suzuka/upg/arcade": {
-  "digest": "1517998aa605d30bb6d44b92",
+  "digest": "cfaef6d4d3145e5312452d07",
   "lead": 2250,
   "car0": [
    -870.81,
@@ -1316,31 +1316,31 @@
   }
  },
  "suzuka/crash/cs": {
-  "digest": "225c228c6ca53c90fd899a16",
-  "lead": 2250.2,
+  "digest": "6de3c63e4a4e989fe7f6263e",
+  "lead": 8695.4,
   "car0": [
-   -730.22,
-   18.58
+   -36.83,
+   282.95
   ],
   "cover": {
-   "dmg": 0.83,
-   "loose": 4,
-   "rescues": 0,
-   "repairs": 0
+   "dmg": 1,
+   "loose": 6,
+   "rescues": 3,
+   "repairs": 1
   }
  },
  "suzuka/crash/arcade": {
-  "digest": "bcc64d716a9be8deb70e6848",
-  "lead": 2150.5,
+  "digest": "fbf522d1d668d83fe8b8763d",
+  "lead": 8252.8,
   "car0": [
-   -683.69,
-   -19.91
+   -12.43,
+   290.28
   ],
   "cover": {
-   "dmg": 0.75,
-   "loose": 2,
+   "dmg": 1,
+   "loose": 3,
    "rescues": 0,
-   "repairs": 0
+   "repairs": 1
   }
  }
 }
