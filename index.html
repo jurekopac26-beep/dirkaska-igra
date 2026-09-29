@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
-<link rel="stylesheet" href="css/style.css?v=022736cb">
+<link rel="stylesheet" href="css/style.css?v=833e2272">
 </head>
 <body>
 <div id="app">
@@ -41,6 +41,7 @@
     <div id="h-note"><svg viewBox="0 0 64 64" aria-hidden="true"><path id="h-note-path" d="" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <div id="h-lights"><i></i><i></i><i></i><i></i><i></i></div>
     <div id="h-msg"></div>
+    <div id="h-ttsp"></div>
   </div>
 
   <!-- ============ TOUCH CONTROLS ============ -->
@@ -146,6 +147,7 @@
         <div class="row"><span class="rlbl">Težavnost</span><div class="seg" data-set="difficulty"><button data-v="0">Lahka</button><button data-v="1">Srednja</button><button data-v="2">Težka</button></div></div>
         <div class="row"><span class="rlbl">Samodejni plin</span><div class="seg" data-set="autoGas"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Opozorila za ovinke</span><div class="seg" data-set="notes"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row"><span class="rlbl">Duh najboljše vožnje</span><div class="seg" data-set="ghost"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Komentator (angleščina)</span><div class="seg" data-set="comm"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div><button class="mini" data-act="comm-test">&#9654; Preizkusi glas</button><span id="comm-voice" class="vinfo"></span></div>
         <div class="row"><span class="rlbl">Poškodbe avtov</span><div class="seg" data-set="damage"><button data-v="0">Izklop</button><button data-v="1">Samo videz</button><button data-v="2">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Grafika</span><div class="seg" data-set="quality"><button data-v="retro">Retro</button><button data-v="normal">Normalno</button><button data-v="high">Visoko</button></div></div>
@@ -250,21 +252,22 @@
 <script src="js/tracks/gozd.js?v=87bf8586"></script>
 <script src="js/tracks/toskana.js?v=7439009f"></script>
 <script src="js/tracks/grom.js?v=e271bc6b"></script>
-<script src="js/tracks/pikes.js?v=f8c59d0b"></script>
+<script src="js/tracks/pikes.js?v=9ea49f63"></script>
+<script src="js/tracks/ouninpohja.js?v=1c341f1d"></script>
 <script src="js/tracks/nring.js?v=f5f4699b"></script>
 <script src="js/tracks/spa.js?v=6f82cd14"></script>
 <script src="js/tracks/rbring.js?v=4f8972a6"></script>
 <script src="js/tracks/suzuka.js?v=52b89a62"></script>
 <script src="js/core.js?v=f1ddbdc2"></script>
 <script src="js/tex.js?v=f643b690"></script>
-<script src="js/world.js?v=e667b87d"></script>
+<script src="js/world.js?v=38e6b396"></script>
 <script src="js/data/p206.js?v=0016824f"></script>
-<script src="js/render.js?v=30a090a3"></script>
-<script src="js/sfx.js?v=f98a38d0"></script>
+<script src="js/render.js?v=df37272e"></script>
+<script src="js/sfx.js?v=4f46d3b7"></script>
 <script src="js/input.js?v=43b63819"></script>
-<script src="js/comm.js?v=8b76b923"></script>
+<script src="js/comm.js?v=94edb379"></script>
 <script src="js/vendor/peerjs.min.js?v=76b403e4"></script>
 <script src="js/net.js?v=1f45dfb1"></script>
-<script src="js/game.js?v=6c2a125e"></script>
+<script src="js/game.js?v=b2dabbd7"></script>
 </body>
 </html>

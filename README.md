@@ -5,6 +5,32 @@ Dirkanje z avti
 
 Vzpon od starta (2862 m) do vrha (4301 m) proti uri, brez nasprotnikov. Na poti so kontrolne točke CP1–CP4 z vmesnimi časi. Po cilju se osebni rekord in lestvica najboljših 10 časov shranita v brskalnik na tej napravi. Pred vožnjo lahko avto nadgradiš (motor, gume, zavore, aerodinamika); nadgradnje veljajo na vseh progah. Proga je sorazmerno skrajšana na ~6,2 km (prava je 19,99 km), višine na zaslonu so prave.
 
+## Ouninpohja (kronometer na makadamu)
+
+Najslavnejša hitrostna preizkušnja Relija Finska (Jämsä): vožnja proti uri po makadamu, brez nasprotnikov, od Hämepohje do Hassintieja, v smeri, v kateri jo vozijo od leta 1995. Prava preizkušnja je dolga ~33 km in ima več kot 75 skokov, v igri je sorazmerno skrajšana na ~5,9 km z 18 skoki, kraji pa so v pravem vrstnem redu:
+
+- prvi ovinek pri Hämepohji,
+- dolg desni ovinek ob jezeru Naarajärvi in velik vrh za njim,
+- cesta čez dvorišče kmetije Ouni in ovinki med polji,
+- skok pri Rumeni hiši (Keltainen talo): hiša stoji levo ob cesti, vrh je ~90 m za njo, avto pristane rahlo navkreber med hišami. Markko Märtin je tam leta 2003 preletel 57 m; v igri je to najdaljši skok (~50–58 m pri polnem plinu), navijači ob cesti imajo table pri 40, 50 in 57 m,
+- »stopnice« (trije skoki navzdol) do križišča Mutanen, kjer se zavije ostro levo,
+- hitra in široka Okskulmantie,
+- skok Amazon čez vrh tik pred levim ovinkom,
+- lasnica v križišču Kakaristo med polji (največ gledalcev in šotor z gostilno),
+- ozka cesta mimo Liisanmutke in leteči cilj na Hassintieju.
+
+Na poti so štiri kontrolne točke (CP1–CP4, modre table kot radijske točke na reliju) z vmesnimi časi, pod uro pa namesto nadmorske višine piše, koliko je še do cilja. Rekordi in lestvica najboljših 10 časov se shranijo kot pri Pikes Peaku, nadgradnje avta veljajo tudi tu.
+
+Okolica:
+
+- **Svetloba in makadam**: avgustovsko popoldne, toplo sonce nizko na zahodu, gozd meče dolge sence čez cesto. Makadam je sivo-bež zdrobljen granit s kamenčki. Avtomobili so v njem splužili dve temnejši kolesnici, med njima in ob robovih je rahel gramoz, ki ga je na zunanji strani ovinkov več. Za avtom se dviga velik oblak prahu, ki visi v zraku dvakrat dlje kot na drugih progah.
+- **Gozd**: gosto rastejo smreke s štirimi nivoji vej, bori z oranžnimi debli in breze s črno-belimi debli. Globlje v gozdu (več kot 80 m od ceste) so drevesa preprostejša, da igra na telefonih ostane tekoča. Ob cesti so balvani, borovnice in praproti.
+- **Rastline in jezera**: ob cesti raste trava, lupine (volčji bob) cvetijo v lisah vijolične in rožnate barve, ob robu gozda so pasovi rožnatega ozkolistnega vrbovca (maitohorsma), vmes kremaste kobulnice in rumeni vratič. V jezerih so lokvanji. Voda je temna, na sredini se v njej zrcali nebo, ob drugem bregu gozd.
+- **Kmetije**: rdeče lesene hiše z drvarnicami in poštnimi nabiralniki, skednji, sive senice in bele bale na poljih, ograje iz poševnih kolov (riukuaita), savna s pomolom. Daljnovodi na lesenih drogovih tečejo ob poljih, eden čez cesto do kmetije Ouni. Ob gozdni cesti so kupi hlodov.
+- **Reli**: navijači s finskimi zastavami stojijo za rdeče-belim trakom. Zelene table YLEISÖALUE označujejo prostor za gledalce, rdeče KIELLETTY ALUE pa zaprte ceste v križiščih (tam se druga cesta nadaljuje naravnost, zaprta z balami slame, stražijo jo redarji v oranžnem). Pred križišči so modre smerne table (Jämsä, Petäjävesi …), pred ostrimi ovinki rumeni opozorilni trikotniki. Na poljih pri Rumeni hiši in v Kakaristu so parkirišča z avtomobili navijačev, za gledalci prenosna stranišča. Fotografi stojijo pri tabli MEDIA, pri Rumeni hiši pa na TV stolpu snemalec.
+- **Table preizkušnje**: start z lučmi, CP loki, rumena tabla pred ciljem, rdeča na letečem cilju in STOP 200 m za njim.
+- **Helikopter in kamera**: TV helikopter se drži daleč od kamere (prej je v izometričnem pogledu pogosto prekril pol zaslona), njegova senca pa drsi po tleh. Drevesa in hiše med kamero in avtom se sproti razredčijo, da avta ne zakrijejo.
+
 ## Nürburgring Nordschleife
 
 Pravi „Zeleni pekel“ v Nemčiji v pravem merilu: en krog (20,7 km) proti 20 tekmecem (na drugih progah jih je 12), ki so tu hitrejši kot drugod, start in cilj pri tribuni T13, vožnja v smeri urinega kazalca. Oblika proge je iz OpenStreetMap, višine pa iz satelitskih višinskih modelov (SRTM in Copernicus), zato so klanci in spusti pravi: od T13 (~620 m) po Fuchsröhre navzdol do Breidscheida (~335 m, najnižja točka), nato dolg vzpon do Hohe Acht (~617 m). Ovinka Karussell in Kleines Karussell sta nagnjena (betonska skleda na notranji strani, avto ju lahko odpelje hitreje), na Flugplatzu, v Pflanzgartnu in na Sprunghüglu avto poskoči. Med vožnjo se pod uro izpišejo imena ovinkov (Hatzenbach, Flugplatz, Fuchsröhre, Adenauer Forst, Wehrseifen, Breidscheid, Bergwerk, Kesselchen, Karussell, Hohe Acht, Brünnchen, Pflanzgarten, Schwalbenschwanz, Döttinger Höhe …), pri KROG pa, koliko kilometrov kroga je že za tabo. Gozd, travniki, vasi in mostovi so postavljeni po pravi rabi tal in stavbah iz OpenStreetMap; gozd ima smreke, bukve, macesne in suhe smreke, ob robu grmovje in mlado drevje, tla pod krošnjami so temna. Na asfaltu so grafiti in zastave navijačev (največ pri znanih ovinkih in na Döttinger Höhe), katranske razpoke, zaplate in sledi gum pred počasnimi ovinki. Ob progi so kampi navijačev (šotori, prikolice, paviljoni, zastave, odri), reklame na ograjah, maršalske hišice s številkami na vsakih 250 m, table 300/200/100 pred zaviranjem in puščice v najostrejših ovinkih; pod mostovi proge tečejo ceste, na Döttinger Höhe so drevored in ograje ob poljih.
@@ -23,6 +49,9 @@ Proga formule 1 v Spielbergu na avstrijskem Štajerskem v pravem merilu: en krog
 - **Tribune**: pokrita Start-Ziel vzdolž cele ciljne ravnine, na njej pa »voestalpine krilo« (90 m dolga stavba v obliki zadnjega krila dirkalnika) kot streha tribune: stranski plošči, glavna ploskev z napisom RED BULL RING, modra loputa in pod njima steklena stavba medijskega centra. Kadar je kamera v krilu, postane prosojno. Steiermark pri 1. zavoju z velikim zaslonom, dolga Red Bull tribuna (15 delov) ob vzponu proti 3. zavoju, T3, pokrita Nord pri 4. zavoju ter T9 in pokrita T10; na tribunah so stopnišča med bloki. Na hribu med 3. in 4. zavojem in ob notranjem delu proge stojijo navijači na travi, veliko jih je v oranžnem (nizozemski navijači), za njimi stojnice s hrano in stranišča.
 - **Jekleni bik** (14,6 m, z aluminijastim lokom 17,2 m) iz varjenih plošč rjavečega jekla: mišičasta grba, spuščena glava z zlatimi rogovi (7 m od konice do konice), dvignjen rep, na srebrnem loku. Stoji na hribu sredi proge desno ob ravnini za 3. zavojem, a bližje progi kot v resnici, da ga kamera med vožnjo sploh ujame.
 - Ob progi: reklamni pasovi (izmišljene znamke iz igre) na betonskih zidovih in zidu boksov, TV-stolpi s snemalci ob velikih zavojih, svetlobni panoji z zastavicami pri redarjih, tovornjak za odvoz avtomobilov in zdravniški avto za ogrado pri 1., 3. in 4. zavoju.
+- **Asfalt in robniki**: asfalt je v odsekih malo različnih odtenkov (s šivi čez progo), idealna linija je temnejša in pred počasnimi zavoji še temnejša, tam so tudi črne sledi gum; ponekod so zaplate in zalite razpoke. Robniki so tridimenzionalni (poševen notranji rob, ravna površina, nizek zunanji rob). Na širokih asfaltnih izletnih pasovih so napisi RED BULL RING, SPIELBERG in STEIERMARK, čez progo so bele črte DRS (polna na črti zaznave, črtkana tam, kjer se cona odpre), ob progi pa table DRS. Popoldansko sonce meče daljše sence.
+- **Dan dirke**: z oranžnih tribun in s hriba med 3. in 4. zavojem se dviga oranžen dim iz bakel nizozemskih navijačev (animiran, veter ga nosi čez progo). Med navijači, na tribunah, v kampih in pred tribuno Start-Ziel plapolajo nizozemske, avstrijske, štajerske in oranžne zastave. Pet velikih zaslonov (pri 1. zavoju in nasproti tribun Red Bull, T3, Nord in T10) izmenično kaže prenos dirke, vrstni red, navijače in zemljevid proge. Za ograjo pri 1., 3., 4. in 10. zavoju stojijo fotografi s teleobjektivi.
+- **Red Bull Energy Station** na koncu paddocka proti 1. zavoju: tri steklena nadstropja pod široko temnomodro streho z napisom, terasa s senčniki, bazen in zastave.
 - Gozdovi (smreke in bukve), travniki (z rumenimi in belimi cvetočimi lisami) in polja okoli proge so postavljeni po podatkih o rabi tal (ESA WorldCover). Na pozidanih površinah iz teh podatkov so parkirišča z avtomobili navijačev v vrstah; okoli so še štajerske kmetije ter kampi s šotori in avtodomi.
 - Zavoji so označeni s številkami kot v formuli 1 (imena sponzorjev se skoraj vsako leto menjajo); 1. zavoj nosi ime Nikija Laude (od leta 2019), 9. pa Jochena Rindta. Pred počasnimi zavoji stojijo table z oddaljenostjo (300, 200, 100 m).
 
@@ -46,7 +75,7 @@ Na obeh lahko zapelješ v bokse (desno takoj za zadnjim ovinkom pred ciljno ravn
 
 ## Kje na progi si (proge po resničnih krajih)
 
-Na progah Ljubljana, Monako, Pikes Peak, Nordschleife, Spa, Red Bull Ring in Suzuka se ~70 m pred vsakim znanim krajem pod uro izpiše njegovo ime (npr. Zmajski most, Prešernov trg, Casino, predor, Glen Cove, Devil's Playground, Karussell, Eau Rouge, Zavoj 1 · Niki Lauda), in to v vsakem krogu. Komentator (v angleščini) občasno pove, kje si („Over the Dragon Bridge now!“, „Up into Casino Square!“), vsak kraj praviloma enkrat na dirko, z razmikom med takimi stavki, in samo takrat, ko ne govori o nečem pomembnejšem (prehitevanja, vmesni časi, nesreče in boksi imajo prednost in ga prekinejo). Kraj, ki ga v enem krogu ni utegnil omeniti, lahko pove v naslednjem. Čas kroga ali vmesni čas ostane na zaslonu, ime kraja pa se pokaže takoj za njim.
+Na progah Ljubljana, Monako, Pikes Peak, Ouninpohja, Nordschleife, Spa, Red Bull Ring in Suzuka se ~70 m pred vsakim znanim krajem pod uro izpiše njegovo ime (npr. Zmajski most, Prešernov trg, Casino, predor, Glen Cove, Devil's Playground, Keltainen talo, Kakaristo, Karussell, Eau Rouge, Zavoj 1 · Niki Lauda), in to v vsakem krogu. Komentator (v angleščini) občasno pove, kje si („Over the Dragon Bridge now!“, „Up into Casino Square!“), vsak kraj praviloma enkrat na dirko, z razmikom med takimi stavki, in samo takrat, ko ne govori o nečem pomembnejšem (prehitevanja, vmesni časi, nesreče in boksi imajo prednost in ga prekinejo). Kraj, ki ga v enem krogu ni utegnil omeniti, lahko pove v naslednjem. Čas kroga ali vmesni čas ostane na zaslonu, ime kraja pa se pokaže takoj za njim.
 
 ## Fizika vožnje
 
@@ -63,7 +92,7 @@ Na naslovnem zaslonu tapni **Prvenstvo** in izberi serijo dirk: **Domači pokal*
 
 ## Grafika
 
-Na vseh progah čez pokrajino počasi drsijo sence oblakov (v dežju jih ni, ker je nebo oblačno). Pred zavoji, kjer tekmeci močno zavirajo, so na asfaltu sledi gum, lažje sledi pa tudi na izhodih iz ovinkov (na makadamu jih ni; na Nordschleife in Spa so narisane skupaj z drugimi oznakami na asfaltu, na mostu Suzuke jih ni). Nad progo občasno preleti jata ptic, ob morju galebi, njihove sence pa drsijo po tleh; v dežju jih ni. Na Nordschleife in Spa se krošnje dreves rahlo zibljejo v vetru.
+Na vseh progah čez pokrajino počasi drsijo sence oblakov (v dežju jih ni, ker je nebo oblačno). Pred zavoji, kjer tekmeci močno zavirajo, so na asfaltu sledi gum, lažje sledi pa tudi na izhodih iz ovinkov (na makadamu jih ni; na Nordschleife, Spa in Red Bull Ringu so narisane skupaj z drugimi oznakami na asfaltu, na mostu Suzuke jih ni). Nad progo občasno preleti jata ptic, ob morju galebi, njihove sence pa drsijo po tleh; v dežju jih ni. Na Nordschleife in Spa se krošnje dreves rahlo zibljejo v vetru.
 
 ## Vreme
 
@@ -78,7 +107,7 @@ Dirka dveh igralcev, vsak na svojem telefonu (ali računalniku), preko interneta
 3. Za zasebno sobo tapni manjši gumb **Zasebna soba s kodo**: eden tapne **Ustvari sobo** in drugemu pošlje kodo (4 znaki), drugi kodo vpiše in tapne **Pridruži se**.
 4. V sobi vsak izbere svoj avto (◀ ▶). Gostitelj (kdor je čakal oziroma ustvaril sobo) izbere progo in število krogov ter tapne **Začni dirko**.
 
-- Na progi sta samo vidva, brez tekmecev z AI, drug ob drugem v prvi vrsti; kdo začne na levi, se menja od dirke do dirke. Vzpon na Pikes Peak (vožnja proti uri) ni na voljo.
+- Na progi sta samo vidva, brez tekmecev z AI, drug ob drugem v prvi vrsti; kdo začne na levi, se menja od dirke do dirke. Vožnji proti uri (Pikes Peak in Ouninpohja) nista na voljo.
 - Semafor ugasne na obeh telefonih hkrati. Časi se merijo od skupnega starta, zato sta rezultata na obeh telefonih enaka.
 - Fizika vožnje, poškodbe in vreme so po nastavitvah gostitelja (sprememba med dirko velja od naslednje dirke). Vsak vozi svoj avto z nadgradnjami.
 - Avta se lahko zadeneta. Vsak telefon premika le svoj avto, zato se ob trku odmakne vsak svoj.

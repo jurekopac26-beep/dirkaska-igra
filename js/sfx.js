@@ -6,7 +6,7 @@ const Sfx = (function () {
   const { clamp } = Core;
   let ctx = null, master = null, bus = null, enabled = true, volume = 0.8;
   let noiseBuf = null;
-  let eng = null, ai = [], squeal = null, rumble = null, wind = null, curbV = null, rainV = null, hiss = null;
+  let eng = null, ai = [], squeal = null, rumble = null, wind = null, curbV = null, rainV = null, hiss = null, heli = null, echo = null;
   let lastCrash = 0, running = false;
 
   function create() {
@@ -30,6 +30,7 @@ const Sfx = (function () {
     wind = noiseVoice('bandpass', 700, 0.6);
     rainV = noiseVoice('bandpass', 3200, 0.35);   // rain: the steady patter, and the hiss of the tyres through the water
     hiss = noiseVoice('bandpass', 1400, 0.8);
+    heli = heliVoice(); echo = echoFx();
     return true;
   }
   function shaperCurve(k) {
@@ -72,6 +73,33 @@ const Sfx = (function () {
     const out = ctx.createGain(); out.gain.value = 0;
     src.connect(flt); flt.connect(out); out.connect(bus); src.start();
     return { flt, out };
+  }
+
+  // the TV helicopter: a low noise thump pulsed by the two blades (~12 per second, sawtooth -> sharp pulses), a body tone and a faint turbine whine
+  function heliVoice() {
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf; src.loop = true; src.playbackRate.value = 0.6;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 420; lp.Q.value = 0.9;
+    const body = ctx.createOscillator(); body.type = 'triangle'; body.frequency.value = 62; const bg = ctx.createGain(); bg.gain.value = 0.5;
+    const vca = ctx.createGain(); vca.gain.value = 0.08;
+    const mod = ctx.createOscillator(); mod.type = 'sawtooth'; mod.frequency.value = 12.5;
+    const sh = ctx.createWaveShaper(), n = 512, c = new Float32Array(n); for (let i = 0; i < n; i++) c[i] = Math.pow(1 - i / (n - 1), 5); sh.curve = c;   // (a pulse on each reset of the ramp)
+    const mg = ctx.createGain(); mg.gain.value = 1.1; mod.connect(sh); sh.connect(mg); mg.connect(vca.gain);
+    const wh = ctx.createOscillator(); wh.type = 'sine'; wh.frequency.value = 1580; const wg = ctx.createGain(); wg.gain.value = 0.012;
+    const out = ctx.createGain(); out.gain.value = 0;
+    src.connect(lp); lp.connect(vca); body.connect(bg); bg.connect(vca); vca.connect(out); wh.connect(wg); wg.connect(out);
+    let pn = null; if (ctx.createStereoPanner) { pn = ctx.createStereoPanner(); out.connect(pn); pn.connect(bus); } else out.connect(bus);
+    src.start(); body.start(); mod.start(); wh.start();
+    return { out, pn };
+  }
+  // an echo of the player's engine off the rock walls (Pikes Peak above the treeline): two short delays, one fed back, dulled
+  function echoFx() {
+    const send = ctx.createGain(); send.gain.value = 0;
+    const d1 = ctx.createDelay(1), d2 = ctx.createDelay(1); d1.delayTime.value = 0.14; d2.delayTime.value = 0.31;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1300;
+    const fb = ctx.createGain(); fb.gain.value = 0.28; const g2 = ctx.createGain(); g2.gain.value = 0.6;
+    send.connect(lp); lp.connect(d1); lp.connect(d2); d2.connect(g2); d2.connect(fb); fb.connect(d2); d1.connect(bus); g2.connect(bus);
+    eng.out.connect(send);
+    return { send };
   }
 
   function resume() {
@@ -135,6 +163,19 @@ const Sfx = (function () {
     set(curbV.out.gain, player.onCurb ? clamp(spd / 20, 0, 1) * 0.35 : 0, 0.02);
     set(curbV.flt.frequency, 40 + spd * 3.5, 0.05);
     set(wind.out.gain, clamp(spd / 70, 0, 1) ** 2 * 0.12, 0.1);
+    // Pikes Peak: the engine echoes among the rocks above the treeline; the TV helicopter (World's dyn.pk) by its distance to the camera
+    const pikes = !!(race && race.track && race.track.def && race.track.def.id === 'pikes');
+    set(echo.send.gain, pikes ? Core.sstep(186, 198, player.roadY || 0) * 0.32 : 0, 0.6);
+    const W = typeof Render !== 'undefined' ? Render.world : null, pk = pikes && W && W.dyn ? W.dyn.pk : null, cam = typeof Render !== 'undefined' ? Render.camera : null;
+    let hv = 0, hp = 0;
+    if (pk && pk.on && pk.heli) {
+      const q = pk.heli.position, lx = cam ? cam.position.x : player.x, ly = cam ? cam.position.y : (player.roadY || 0), lz = cam ? cam.position.z : player.z;
+      const d = Math.hypot(q.x - lx, q.y - ly, q.z - lz), a = clamp(1 - d / 280, 0, 1);
+      hv = a * a * 0.5;
+      if (cam) { const e = cam.matrixWorld.elements; hp = clamp(((q.x - lx) * e[0] + (q.y - ly) * e[1] + (q.z - lz) * e[2]) / Math.max(d, 1) * 1.2, -0.8, 0.8); }
+    }
+    set(heli.out.gain, hv, 0.35);
+    if (heli.pn) set(heli.pn.pan, hp, 0.1);
   }
 
   function crash(imp) {
@@ -196,7 +237,8 @@ const Sfx = (function () {
   function silence() {
     if (!ctx) return;
     for (const v of [eng, ...ai]) set(v.out.gain, 0, 0.02);
-    for (const v of [squeal, rumble, wind, curbV, rainV, hiss]) set(v.out.gain, 0, 0.02);
+    for (const v of [squeal, rumble, wind, curbV, rainV, hiss, heli]) set(v.out.gain, 0, 0.02);
+    set(echo.send.gain, 0, 0.02);
   }
 
   const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, shiftPop, knock, wrench, silence, get ready() { return !!ctx && ctx.state === 'running'; } };

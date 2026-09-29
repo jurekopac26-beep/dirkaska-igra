@@ -58,6 +58,13 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-split.fast, #h-msg.fast { color: var(--meter); }
 #h-split.slow { color: var(--curb); }
 #h-split.even { color: var(--chalk); }
+/* time trial finish: compact splits table under the finish time (this run, the previous record, the difference) */
+#h-ttsp { display: none; position: absolute; left: 50%; top: calc(40% + clamp(28px, 10vh, 56px) + 10px); transform: translateX(-50%); padding: 4px 8px; background: rgba(10, 14, 20, .6); border-radius: 6px; font: 700 clamp(10px, 2.9vh, 13px)/1.25 var(--f-ui); font-variant-numeric: tabular-nums; color: var(--chalk); text-shadow: 0 1px 2px #000; }
+#h-ttsp.show { display: table; }
+#h-ttsp th { color: var(--muted); font-weight: 700; padding: 0 5px; text-align: right; }
+#h-ttsp td { padding: 1px 5px; text-align: right; white-space: nowrap; }
+#h-ttsp td:first-child { text-align: left; color: var(--lcd); }
+#h-ttsp td.fast { color: var(--meter); } #h-ttsp td.slow { color: var(--curb); }
 /* time trial (kronometer): no position, CP counter + altitude instead of laps */
 #h-alt { display: none; margin-top: 2px; color: var(--chalk); font-variant-numeric: tabular-nums; }
 #hud.tt #h-rank > .h-lbl:first-child, #hud.tt .h-rankrow { display: none; }
@@ -215,6 +222,7 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
   #h-time { font-size: clamp(15px, 4.8vw, 22px); }
   #h-best { font-size: clamp(10px, 2.8vw, 13px); }
   #h-split { font-size: clamp(10px, 3vw, 13px); }
+  #h-ttsp { top: calc(44% + clamp(24px, 9vw, 44px) + 10px); font-size: clamp(11px, 3.4vw, 14px); }
   #h-map { right: calc(8px + var(--sr)); top: calc(60px + var(--st)); width: clamp(84px, 27vw, 130px); height: clamp(64px, 20vw, 100px); }
   #speedo { width: clamp(100px, 32vw, 150px); height: clamp(62px, 20vw, 94px); }
   #h-speed { font-size: clamp(20px, 7vw, 32px); }
@@ -336,6 +344,7 @@ select.txt:disabled { opacity: .75; }
   .upg-seg button { padding: 6px 2px; font-size: clamp(11px, 3.1vw, 13px); }
   .res-head.tt .res-pos { font-size: clamp(34px, 11vw, 52px); }
   .ltab.b th:nth-child(3), .ltab.b td:nth-child(3) { display: none; }
+  .ltab.sp th:nth-child(2), .ltab.sp td:nth-child(2) { display: none; }   /* splits: time, record and difference fit without the altitude */
   .ltab td.nm, #res-table td.nm { max-width: min(9em, 22vw); }
   .ltab, #res-table { font-size: min(13.5px, 3.1vh, 3.4vw); }   /* four columns fit on 320-360 px wide phones (the date and best lap are not cut off) */
   .ltab th, .ltab td, #res-table th, #res-table td { padding-left: 4px; padding-right: 4px; }

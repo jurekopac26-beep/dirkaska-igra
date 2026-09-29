@@ -56,11 +56,18 @@
   "jsMs": 0.71
  },
  "pikes": {
-  "calls": 95,
-  "maxCalls": 108,
-  "kverts": 262,
-  "maxKverts": 323,
-  "jsMs": 0.21
+  "calls": 96,
+  "maxCalls": 109,
+  "kverts": 273,
+  "maxKverts": 326,
+  "jsMs": 0.23
+ },
+ "ouninpohja": {
+  "calls": 167,
+  "maxCalls": 187,
+  "kverts": 574,
+  "maxKverts": 754,
+  "jsMs": 0.53
  },
  "nring": {
   "calls": 193,
@@ -77,11 +84,11 @@
   "jsMs": 0.89
  },
  "rbring": {
-  "calls": 237,
-  "maxCalls": 323,
-  "kverts": 421,
-  "maxKverts": 484,
-  "jsMs": 0.63
+  "calls": 243,
+  "maxCalls": 331,
+  "kverts": 429,
+  "maxKverts": 496,
+  "jsMs": 0.76
  },
  "suzuka": {
   "calls": 256,
