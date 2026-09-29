@@ -4087,9 +4087,125 @@ const World = (function () {
   /* ---- mountain weather by altitude: sun in the forest, low cloud drifting over the ridge, light snowfall near the summit;
      wet road below the melting snow banks (built at the end of buildPikes; pkWeatherUpdate runs every frame) ---- */
   function pkWeather(K) {
+    const out = K.out, root = K.root, w = K.w, ds = T.ds, s0 = T.startS;   // (the course's d = s - s0)
+    // one tileable cloud-noise texture: 4 octaves of periodic value noise (own random stream)
+    const NT = 256, cv = document.createElement('canvas'); cv.width = cv.height = NT;
+    {
+      const R = rng(6611), cx = cv.getContext('2d'), im = cx.createImageData(NT, NT), acc = new Float32Array(NT * NT); let amp = 1, tot = 0;
+      for (let o = 0, P = 4; o < 4; o++, P *= 2, amp *= 0.5) {
+        const g = new Float32Array(P * P); for (let k = 0; k < g.length; k++) g[k] = R(); tot += amp;
+        for (let y = 0; y < NT; y++) for (let x = 0; x < NT; x++) {
+          const fx = x / NT * P, fy = y / NT * P, xi = Math.floor(fx), yi = Math.floor(fy), u = fx - xi, v = fy - yi, su = u * u * (3 - 2 * u), sv = v * v * (3 - 2 * v), x1 = (xi + 1) % P, y1 = (yi + 1) % P;
+          acc[y * NT + x] += amp * lerp(lerp(g[yi * P + xi], g[yi * P + x1], su), lerp(g[y1 * P + xi], g[y1 * P + x1], su), sv);
+        }
+      }
+      let lo = 1e9, hi = -1e9; for (const v of acc) { lo = Math.min(lo, v); hi = Math.max(hi, v); }   // (stretched to the full range: the octaves average out to a flat grey)
+      for (let k = 0; k < NT * NT; k++) { const v = Math.round((acc[k] - lo) / (hi - lo) * 255); im.data[k * 4] = im.data[k * 4 + 1] = im.data[k * 4 + 2] = v; im.data[k * 4 + 3] = 255; }
+      cx.putImageData(im, 0, 0);
+    }
+    const ntex = new THREE.CanvasTexture(cv); ntex.wrapS = ntex.wrapT = THREE.RepeatWrapping; out.ownTex.push(ntex);
+
+    // low cloud over the ridge (Devil's Playground .. Bottomless Pit): two thin blankets draped 3.5 m and 9 m over the ground, their noise drifting with the wind (1 draw)
+    const cU = THREE.UniformsUtils.merge([THREE.UniformsLib.fog]); let cm = null;
+    {
+      const sa = s0 + 4010, sb = s0 + 4520, sm = s0 + 4260, along = (s) => sstep(sa, sa + 110, s) * (1 - sstep(sb - 110, sb, s)) * (0.5 + 0.5 * Math.exp(-(((s - sm) / 120) ** 2)));
+      const ia = T.idx(sa - 80), ib = T.idx(sb + 80), rs = []; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
+      for (let i = ia; i <= ib; i += 2) { const a = along(i * ds); rs.push([T.px[i], T.pz[i], T.hy[i], a]); x0 = Math.min(x0, T.px[i]); x1 = Math.max(x1, T.px[i]); z0 = Math.min(z0, T.pz[i]); z1 = Math.max(z1, T.pz[i]); }
+      const C = 8, M = 80, nx = Math.ceil((x1 - x0 + 2 * M) / C) + 1, nz = Math.ceil((z1 - z0 + 2 * M) / C) + 1, bx = x0 - M, bz = z0 - M;
+      const env = new Float32Array(nx * nz), gy = new Float32Array(nx * nz);
+      for (let b = 0; b < nz; b++) for (let a = 0; a < nx; a++) {
+        const x = bx + a * C, z = bz + b * C, y = pkGround(x, z); let e = 0;
+        for (const r of rs) { if (!r[3]) continue; const d = Math.hypot(x - r[0], z - r[1]); if (d < 78) e = Math.max(e, r[3] * sstep(78, 38, d) * sstep(-45, -18, y - r[2]) * sstep(60, 30, y - r[2])); }
+        env[b * nx + a] = e * sstep(0.9, 0.45, pkSlope(x, z)); gy[b * nx + a] = Math.max(y, pkGround(x + 5, z), pkGround(x - 5, z), pkGround(x, z + 5), pkGround(x, z - 5));   // (the highest ground around: the blanket stays clear of bumps between its vertices)
+      }
+      const pos = [], ae = [], al = [], idx = [];
+      for (let L = 0; L < 2; L++) {
+        const vi = new Int32Array(nx * nz).fill(-1), vtx = (k) => { if (vi[k] < 0) { vi[k] = pos.length / 3; pos.push(bx + (k % nx) * C, gy[k] + (L ? 9 : 3.5), bz + Math.floor(k / nx) * C); ae.push(env[k]); al.push(L); } return vi[k]; };
+        for (let b = 0; b < nz - 1; b++) for (let a = 0; a < nx - 1; a++) {
+          const k = b * nx + a; if (Math.max(env[k], env[k + 1], env[k + nx], env[k + nx + 1]) < 0.02) continue;
+          const p = vtx(k), q = vtx(k + 1), r = vtx(k + nx + 1), s = vtx(k + nx); idx.push(p, s, r, p, r, q);
+        }
+      }
+      if (idx.length) {
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('aE', new THREE.Float32BufferAttribute(ae, 1)); g.setAttribute('aL', new THREE.Float32BufferAttribute(al, 1)); g.setIndex(idx); g.computeBoundingSphere();
+        Object.assign(cU, { uTex: { value: ntex }, uC0: { value: new THREE.Vector2((x0 + x1) / 2, (z0 + z1) / 2) }, uO0: { value: new THREE.Vector2() }, uO1: { value: new THREE.Vector2() }, uO2: { value: new THREE.Vector2() } });
+        const mat = new THREE.ShaderMaterial({ uniforms: cU, fog: true, transparent: true, depthWrite: false, side: THREE.DoubleSide,
+          vertexShader: 'uniform vec2 uC0, uO0, uO1, uO2; attribute float aE, aL; varying vec2 vA, vB; varying float vE, vL;\n#include <fog_pars_vertex>\n' +
+            'void main() { vec2 q = position.xz - uC0; vA = aL > 0.5 ? q / 95.0 + uO2 : q / 70.0 + uO0; vB = q / 26.0 + uO1 + aL * 0.37; vE = aE; vL = aL;\n' +
+            'vec4 mvPosition = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mvPosition;\n#include <fog_vertex>\n}',
+          fragmentShader: 'uniform sampler2D uTex; varying vec2 vA, vB; varying float vE, vL;\n#include <fog_pars_fragment>\n' +
+            'void main() { float n = texture2D(uTex, vA).r * 0.65 + texture2D(uTex, vB).r * 0.35; float c = smoothstep(0.6 - 0.2 * vE, 0.78 - 0.1 * vE, n);\n' +
+            'gl_FragColor = vec4(mix(vec3(0.74, 0.77, 0.82), vec3(0.97, 0.98, 1.0), smoothstep(0.45, 0.85, n)), c * vE * (vL > 0.5 ? 0.55 : 0.72));\n#include <fog_fragment>\n}' });
+        cm = new THREE.Mesh(g, mat); cm.renderOrder = 5; cm.matrixAutoUpdate = false; root.add(cm);
+      }
+    }
+
+    // light snowfall near the summit: a box of flakes (84 x 27 x 84 m) that follows the car, recycled in the shader; more of them shown the higher the car is (1 draw)
+    const NF = 1500, fp = new Float32Array(NF * 3), fr = new Float32Array(NF), BX = 84, BY = 27;
+    { const R = rng(6623); for (let k = 0; k < NF; k++) { fp[k * 3] = R() * BX; fp[k * 3 + 1] = R() * BY; fp[k * 3 + 2] = R() * BX; fr[k] = R(); } }
+    const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(fp, 3)); sg.setAttribute('aR', new THREE.BufferAttribute(fr, 1)); sg.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
+    const sU = { uC: { value: new THREE.Vector3() }, uT: { value: 0 }, uD: { value: 0 }, uS: { value: 400 } };
+    const snow = new THREE.Points(sg, new THREE.ShaderMaterial({ uniforms: sU, transparent: true, depthWrite: false,
+      vertexShader: 'uniform vec3 uC; uniform float uT, uD, uS; attribute float aR; varying float vA;\n' +
+        'void main() { vec3 B = vec3(' + BX.toFixed(1) + ', ' + BY.toFixed(1) + ', ' + BX.toFixed(1) + '); float ph = aR * 43.7;\n' +
+        'vec3 p = position + vec3(uT * 1.1 + sin(uT * 0.9 + ph) * 0.6, -uT * (0.8 + 0.5 * fract(ph)), -uT * 0.8 + cos(uT * 0.7 + ph * 1.3) * 0.6);\n' +
+        'vec3 lo = uC - vec3(B.x * 0.5, 5.0, B.z * 0.5); p = lo + mod(p - lo, B); vec3 r = (p - lo) / B;\n' +
+        'vec4 mv = modelViewMatrix * vec4(p, 1.0); float z = -mv.z;\n' +
+        'vA = step(aR, uD) * smoothstep(0.0, 0.12, r.x) * smoothstep(1.0, 0.88, r.x) * smoothstep(0.0, 0.12, r.z) * smoothstep(1.0, 0.88, r.z) * smoothstep(0.0, 0.06, r.y) * smoothstep(1.0, 0.8, r.y) * smoothstep(6.0, 14.0, z);\n' +
+        'gl_PointSize = vA > 0.0 ? clamp((0.12 + 0.1 * fract(ph * 7.0)) * uS / max(1.0, z), 1.6, 10.0) : 0.0; gl_Position = projectionMatrix * mv; }',
+      fragmentShader: 'varying float vA; void main() { vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0; if (r > 1.0) discard; gl_FragColor = vec4(0.97, 0.98, 1.0, vA * 0.92 * (1.0 - r * r)); }' }));
+    snow.frustumCulled = false; snow.renderOrder = 8; snow.visible = false; root.add(snow);
+    snow.onBeforeRender = (r, sc, cam) => { sU.uS.value = r.domElement.height * cam.projectionMatrix.elements[5] / 2; };   // (pixels per metre at 1 m, as Render's particles)
+
+    // wet road below the snow banks: dark, slightly shiny film along the edge where a bank lies behind it (pkSnow's exclusion circles on the bank crests), meltwater rivulets running down across the lane
+    {
+      const R = rng(6637), gw = new GB(false, true), lump = valueNoise2(6641, 7), wet = [new Float32Array(T.N), new Float32Array(T.N)], i0 = T.idx(s0 + 4400);
+      for (const e of K.excl) {
+        if (e.r !== 3.2 || !K.crSoft.has(e)) continue;
+        let bi = -1, bd = 1e9; for (let i = i0; i < T.N; i++) { const d = (e.x - T.px[i]) ** 2 + (e.z - T.pz[i]) ** 2; if (d < bd) { bd = d; bi = i; } }
+        if (bi < 0 || bd > 22 * 22) continue;
+        const sd = (e.x - T.px[bi]) * T.nx[bi] + (e.z - T.pz[bi]) * T.nz[bi] > 0 ? 1 : 0, n = Math.round(9 / ds);
+        for (let k = -n; k <= n; k++) { const i = bi + k; if (i >= 0 && i < T.N) wet[sd][i] = Math.max(wet[sd][i], 1 - sstep(n * 0.25, n, Math.abs(k))); }
+        if (R() < 0.3) {   // a rivulet: from the edge downhill (towards the start) and across the lane, meandering
+          const side = sd ? 1 : -1, acr = 3 + R() * 8, L = acr * (1.3 + R() * 1.6), wd = 0.45 + R() * 0.4, ph = R() * TAU, m = 1 + R() * 1.5, st = Math.max(1, Math.round(1 / ds)), a0 = 0.6 + R() * 0.15;
+          let prev = null;
+          for (let k = 0; k * ds <= L; k += st) {
+            const u = k * ds / L, i = bi - k; if (i < 1) break;
+            const o = side * (w - 0.3 - u * acr) + Math.sin(u * TAU * m + ph) * 0.35, hw = wd * (1 - u * 0.4), y = T.hy[i] + 0.05, a = a0 * (1 - sstep(0.6, 1, u)) * sstep(0, 0.08, u + 0.02);
+            const P = (dl) => [T.px[i] + T.nx[i] * (o + dl), y, T.pz[i] + T.nz[i] * (o + dl)], cur = [P(-hw), P(0), P(hw), a];
+            if (prev) { const c0 = [0.035, 0.04, 0.05, 0], c1 = [0.035, 0.04, 0.05, prev[3]], c2 = [0.035, 0.04, 0.05, a];
+              gw.quadUp(prev[0], prev[1], cur[1], cur[0], [c0, c1, c2, c0]); gw.quadUp(prev[1], prev[2], cur[2], cur[1], [c1, c0, c0, c2]); }
+            prev = cur;
+          }
+        }
+      }
+      // the film along the edges (2 m steps): full at the edge line, feathered out 0.8-3 m into the lane
+      const st = Math.max(1, Math.round(2 / ds));
+      for (const sd of [0, 1]) {
+        const side = sd ? 1 : -1, W = wet[sd]; let prev = null;
+        for (let i = i0; i < T.N; i += st) {
+          const a = W[i] * 0.9 * (0.55 + 0.45 * lump(i * ds * 1.9, side * 5 + 3)); if (a <= 0 && (!prev || prev[3] <= 0)) { prev = null; continue; }
+          const s = i * ds, wd = 1.3 + 3 * lump(s, side * 11), y = T.hy[i] + 0.05, P = (o) => [T.px[i] + T.nx[i] * side * o, y, T.pz[i] + T.nz[i] * side * o], cur = [P(w - 0.02), P(w - wd * 0.7), P(w - wd), a];
+          if (prev) { const k = [0.035, 0.04, 0.05], ca = [...k, prev[3] * 0.85], cb = [...k, prev[3]], cc = [...k, 0], da = [...k, a * 0.85], db = [...k, a];
+            gw.quadUp(prev[0], prev[1], cur[1], cur[0], [ca, cb, db, da]); gw.quadUp(prev[1], prev[2], cur[2], cur[1], [cb, cc, cc, db]); }
+          prev = cur;
+        }
+      }
+      if (!gw.empty) { const m = new THREE.Mesh(gw.geometry(), new THREE.MeshPhongMaterial({ vertexColors: true, transparent: true, depthWrite: false, shininess: 60, specular: 0x3a4048, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+        m.receiveShadow = true; m.renderOrder = 1; m.matrixAutoUpdate = false; root.add(m); }
+    }
+    out.dust = [0.86, 0.76, 0.62];   // Render: pale granite dust behind wheels off the asphalt
+    out.dyn.pkWx = { cU, cm, sU, snow };
   }
 
   function pkWeatherUpdate(wx, t, car) {
+    const fr = (v) => v - Math.floor(v);
+    if (wx.cm) {   // the cloud noise drifts with the wind (~4 m/s towards the north-east, as the cloud shadows); the detail at another speed, so the banks change shape
+      wx.cU.uO0.value.set(fr(-t * 3.2 / 70), fr(t * 2.5 / 70)); wx.cU.uO2.value.set(fr(-t * 4.1 / 95), fr(t * 3.0 / 95)); wx.cU.uO1.value.set(fr(-t * 2.4 / 26), fr(t * 3.1 / 26));
+    }
+    const y = car ? car.roadY || 0 : 0, d = car ? sstep(356, 372, y) * lerp(0.3, 1, sstep(372, 432, y)) : 0;
+    wx.snow.visible = d > 0; wx.sU.uD.value = d;
+    if (d > 0) { wx.sU.uC.value.set(car.x, y, car.z); wx.sU.uT.value = t % 1000; }
   }
 
   /* ---- race-day animation: the marshals wave their flags as the car goes by (pkOpsUpdate runs every frame when out.dyn.pkOps is set) ---- */
