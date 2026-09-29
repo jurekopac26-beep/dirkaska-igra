@@ -52,6 +52,7 @@ const Comm = (() => {
     partLost: ['There goes the {part}!', 'The {part} has come clean off!', 'Bits flying everywhere, that was the {part}!'],
     heavyDamage: ["Smoke pouring from the engine! That doesn't look good!", 'Heavy damage! Nurse it home!', 'That car is badly hurt now!'],
     pitIn: ['Into the pit lane!', 'Coming in for repairs!', 'He dives into the pits!'],
+    drs: ['DRS open down the straight!', 'The rear wing opens, DRS is on!', 'Within a second at the line, DRS for the chase!'],
     pitWork: ['The crew get to work!', 'Mechanics all over the car!', 'Quick work needed here from the crew!'],
     pitOut: ['Back out, good as new!', 'Great stop from the crew!', 'Repaired and rejoining the race!'],
     propCone: ['Cone down!', 'There goes a cone!', 'Sending the cones flying!'],
