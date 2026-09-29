@@ -67,20 +67,20 @@
   }
  },
  "monaco": {
-  "meshes": 250,
-  "verts": 571230,
-  "instances": 3123,
-  "props": 143,
-  "crowd": 3123,
-  "world": "f2a1b6a",
-  "propsHash": "51f46d13",
-  "floor": "5bd68b2e/6692",
+  "meshes": 257,
+  "verts": 1241564,
+  "instances": 1493,
+  "props": 71,
+  "crowd": 1493,
+  "world": "7013cedc",
+  "propsHash": "746ca96b",
+  "floor": "d8a89c80/6636",
   "groups": {
-   "-:MeshLambertMaterial": "1f07f579",
-   "-:MeshBasicMaterial": "9806e559",
-   "-:MeshPhongMaterial": "643f8405",
-   "crowd:MeshLambertMaterial": "d41154ff",
-   "tyremarks:MeshBasicMaterial": "c8624df2"
+   "-:MeshLambertMaterial": "48fbc49e",
+   "-:MeshPhongMaterial": "92cad07a",
+   "-:MeshBasicMaterial": "fabec7ba",
+   "crowd:MeshLambertMaterial": "c9f01eef",
+   "tyremarks:MeshBasicMaterial": "72e0c8ff"
   }
  },
  "gozd": {
