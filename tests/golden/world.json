@@ -141,18 +141,18 @@
   }
  },
  "nring": {
-  "meshes": 2640,
-  "verts": 854754,
-  "instances": 115538,
+  "meshes": 2757,
+  "verts": 958092,
+  "instances": 115445,
   "props": 784,
-  "crowd": 11951,
-  "world": "e1c2d92b",
+  "crowd": 11706,
+  "world": "8965dc5b",
   "propsHash": "2b1fd9ad",
-  "floor": "9bded216/41384",
+  "floor": "e5170eee/41384",
   "groups": {
-   "-:MeshLambertMaterial": "a98756ec",
-   "-:MeshBasicMaterial": "3b52441b",
-   "crowd:MeshLambertMaterial": "2c7879a2"
+   "-:MeshLambertMaterial": "cb760c81",
+   "-:MeshBasicMaterial": "d9780c7b",
+   "crowd:MeshLambertMaterial": "a4df55a6"
   }
  }
 }

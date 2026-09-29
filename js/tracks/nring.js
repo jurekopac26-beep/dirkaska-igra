@@ -18,13 +18,14 @@ var TRACK_DEFS = TRACK_DEFS || [];
     elev: NRING_H.map((h, i) => [i / NRING_H.length, h / 10]),
     bumps: [{ at: 0.12405, h: 0.7, w: 9 }, { at: 0.73068, h: 0.9, w: 8 }, { at: 0.77099, h: 0.5, w: 8 }],   // the Flugplatz crest, the jump at Pflanzgarten and the smaller one over the Sprunghügel after it
     bank: [[11962, 12108, 0.28], [16868, 16954, 0.2]],   // the Karussell and the Kleines Karussell: the road banked into the bend (metres after the start line, slope), the inside a concrete bowl
+    wide: [[16060, 16220, -1, 2.6]],   // more room on the outside of the fast right before the Bellof-S (the cars arrive quicker there since the Sprunghügel)
     // corner names ([HUD label, x, z, the commentator's lines]; the German names stay on the HUD, the voice gets English where it would
     // stumble: the Foxhole, the old mill, the Swedish Cross)
     names: [
       ['Hatzenbach', -650.3, -26.2, ['Into the Hatzenbach esses!', 'Hatzenbach, left and right through the trees!', 'Weaving through Hatzenbach!']],
       ['Hocheichen', -1214.1, -283.8, ['Hocheichen, a quick right!', 'Through Hocheichen, keep it tidy!']],
-      ['Quiddelbacher Höhe', -1676.5, -751.3, ['Flat out over the Quiddelbach crest!', 'Up the hill past Quiddelbach!']],
-      ['Flugplatz', -1771.7, -971.9, ['Over the Flugplatz, and the car goes light!', 'Flugplatz! Airborne over the crest!', 'The old airfield, the Flugplatz!']],
+      ['Quiddelbacher Höhe', -1676.5, -751.3, ['Flat out over the Quiddelbach crest!', 'Over the Quiddelbach crest, and the car goes light!', 'Up the hill and airborne at Quiddelbach!']],
+      ['Flugplatz', -1771.7, -971.9, ['Down into the Flugplatz, what a jump that was!', 'Through the Flugplatz, the old airfield!', 'The old airfield, the Flugplatz!']],
       ['Schwedenkreuz', -1909.1, -2004.4, ['Schwedenkreuz, flat out downhill!', 'Past the Swedish Cross, full throttle!']],
       ['Aremberg', -2169.5, -2179.5, ['Hard on the brakes for Aremberg!', 'Aremberg, tight right at the bottom!']],
       ['Fuchsröhre', -1586.1, -2665.3, ['Down into the Foxhole, flat out!', 'The Foxhole, the fastest part of the lap!', 'Down the Foxhole and up the other side!']],
@@ -43,7 +44,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
       ['Eschbach', 3698.2, -3750.3, ['Eschbach, keep it on the road!', 'Down through Eschbach!']],
       ['Brünnchen', 3882, -3588.9, ['Brunnchen! The fans are packed in here!', 'Past the crowds at Brunnchen!']],
       ['Eiskurve', 3628, -3424, ['The Eiskurve, the ice corner!', 'Careful through the Eiskurve!']],
-      ['Pflanzgarten', 3471.9, -3043.7, ['Pflanzgarten! Hold on for the jump!', 'Over the Pflanzgarten jump!']],
+      ['Pflanzgarten', 3471.9, -3043.7, ['Pflanzgarten! Down from the jump and hard on the brakes!', 'Through Pflanzgarten, the Sprunghugel is next!']],
+      ['Sprunghügel', 3194.1, -2670.9, ['Over the Sprunghugel, hold on!', 'The Sprunghugel! Airborne again!', 'Up and over the Sprunghugel jump!']],
       ['Stefan-Bellof-S', 2977.4, -2403.5, ['The Stefan Bellof S, flat out!', 'Through the Bellof S, named after a lap record legend!']],
       ['Schwalbenschwanz', 2382.7, -2327.2, ["Schwalbenschwanz, the swallow's tail!", 'Round the Swallow Tail!']],
       ['Kleines Karussell', 2160.4, -2195.5, ['The little Karussell, into the concrete again!', 'Round the little Karussell!']],

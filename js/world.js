@@ -4100,6 +4100,9 @@ const World = (function () {
     // farmland: ~100 m fields (a jittered grid of cell centres, each with a crop tone) for nrField
     const F = P.F = { S: 104, i0: Math.floor(x0 / 104) - 1, j0: Math.floor(z0 / 104) - 1 }; F.ni = Math.floor((x0 + G.nx * NRC) / 104) + 2 - F.i0; F.nj = Math.floor((z0 + G.nz * NRC) / 104) + 2 - F.j0; F.c = new Float32Array(F.ni * F.nj * 3);
     for (let j = 0; j < F.nj; j++) for (let i = 0; i < F.ni; i++) { const a = i + F.i0, b = j + F.j0, k = (j * F.ni + i) * 3; F.c[k] = (a + 0.2 + 0.6 * crH(a, b, 21)) * 104; F.c[k + 1] = (b + 0.2 + 0.6 * crH(a, b, 22)) * 104; F.c[k + 2] = crH(a, b, 23); }
+    // the roads under the track's bridges (def.brO, not the two by T13): nrH digs a cutting for each, 6 m below the road, straight across the track
+    P.br = (def.brO || []).map(([x, z]) => T.nearestIdx(x, z)).filter(i => { const d = ((i * T.ds - T.startS) % T.len + T.len) % T.len; return d > 250 && d < T.len - 250; })
+      .map(i => ({ i, x: T.px[i], z: T.pz[i], tx: T.tx[i], tz: T.tz[i], nx: T.nx[i], nz: T.nz[i], y: T.hy[i] - 6 }));
   }
   function nrChamfer(d, nx, nz, c) {   // two-pass 3x3 chamfer distance transform (in place)
     const c2 = c * Math.SQRT2;
@@ -4168,6 +4171,10 @@ const World = (function () {
     if (i < 0) h = nrFar(x, z);
     else { const hr = lerp(hn, n.h, sstep(0, 6, dd)) - 0.3; h = dd <= 1 ? hr : lerp(hr, nrFar(x, z), sstep(2, 60, dd)); }
     if (i >= 0 && dd < 6) h = Math.min(h, hn - 0.3 + 0.12 * dd * dd);   // never above the road inside the barriers, only a gentle rise right behind them
+    for (const b of NR.br || []) {   // a cutting for the road under a bridge of the track: flat 12 m wide at the bottom, steep sides, rising to the land 45-95 m out
+      const dx = x - b.x, dz = z - b.z, al = Math.abs(dx * b.tx + dz * b.tz), lat = Math.abs(dx * b.nx + dz * b.nz);
+      if (al < 18 && lat < 95) h = Math.min(h, lerp(h, b.y, sstep(95, 45, lat)) + Math.max(0, al - 6) * 1.1);
+    }
     NRN.dd = i >= 0 ? dd : 999;
     return h;
   }
@@ -4582,9 +4589,21 @@ const World = (function () {
     names.forEach((n, k) => cell(20 + k, '#1d5f2c', '#fff', n.toUpperCase(), n.length > 14 ? 26 : 32, '#e8e8e0'));
     const B = 20 + names.length;
     cell(B, '#16181c', '#fff', 'START · ZIEL', 36); cell(B + 1, '#123f86', '#fff', 'NÜRBURGRING', 38); cell(B + 2, '#1a1a1a', '#6fdc3c', 'GRÜNE HÖLLE', 38); cell(B + 3, '#f2c21a', '#111', 'NORDSCHLEIFE', 36);
+    ['300', '200', '100'].forEach((n, k) => cell(B + 4 + k, '#f4f4f0', '#111', n, 46, '#c8201c'));   // braking boards
+    for (const [k, dir] of [[B + 7, 1], [B + 8, -1]]) {   // chevrons, pointing into the bend: right, left
+      const cx = (k % 4) * 256, cy = Math.floor(k / 4) * 64; x.fillStyle = '#16171a'; x.fillRect(cx, cy, 256, 64); x.fillStyle = '#f2d21c';
+      for (let n = 0; n < 3; n++) { const ax = cx + 64 + n * 64 + dir * 16; x.beginPath(); x.moveTo(ax - dir * 26, cy + 8); x.lineTo(ax + dir * 10, cy + 32); x.lineTo(ax - dir * 26, cy + 56); x.lineTo(ax - dir * 8, cy + 56); x.lineTo(ax + dir * 28, cy + 32); x.lineTo(ax - dir * 8, cy + 8); x.closePath(); x.fill(); }
+    }
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (nrATex = t);
   }
   const nrAUV = (k) => { const u0 = (k % 4) / 4, v1 = 1 - Math.floor(k / 4) / 16; return [u0, v1 - 1 / 16, u0 + 0.25, v1]; };
+  function nrNumTex() {   // the marshal posts' numbers 1-128 (16 x 8 cells of 64 px): white on orange
+    const c = document.createElement('canvas'); c.width = 1024; c.height = 512; const x = c.getContext('2d');
+    x.font = '900 34px Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+    for (let k = 0; k < 128; k++) { const cx = (k % 16) * 64, cy = Math.floor(k / 16) * 64; x.fillStyle = '#e45f1a'; x.fillRect(cx, cy, 64, 64); x.fillStyle = '#fff'; x.fillRect(cx + 4, cy + 4, 56, 3); x.fillRect(cx + 4, cy + 57, 56, 3); x.fillText(String(k + 1), cx + 32, cy + 33, 54); }
+    const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
+  }
+  const nrNUV = (k) => { const u0 = (k % 16) / 16, v1 = 1 - Math.floor(k / 16) / 8; return [u0, v1 - 1 / 8, u0 + 1 / 16, v1]; };
   function nrPN(P, seed) { const q = rng(seed), g = new Float32Array(P * P); for (let k = 0; k < g.length; k++) g[k] = q();   // value noise on [0, 1)^2 with the tile as its period (P cells)
     return (u, v) => { u *= P; v *= P; const i = Math.floor(u), j = Math.floor(v), f = u - i, e = v - j, I = (a, b) => g[(b % P) * P + (a % P)], s = f * f * (3 - 2 * f), t = e * e * (3 - 2 * e); return lerp(lerp(I(i, j), I(i + 1, j), s), lerp(I(i, j + 1), I(i + 1, j + 1), s), t); }; }
   function nrGrassTex(aniso) {   // the Eifel meadow under the vertex colours (256 px = 14 m, tileable, no mowing stripes): olive grass in clumps, darker clover, dark and dry blades, a few flowers and specks of soil
@@ -4835,7 +4854,21 @@ const World = (function () {
     const carPk = (x, z, rot, col) => { const g = scen.get(x, z), y = nrGround(x, z), c = Math.cos(rot), s = Math.sin(rot);
       box(g, x, y + 0.25, z, 4.3, 0.8, 1.85, rot, col, null, true); box(g, x - c * 0.35, y + 1.05, z - s * 0.35, 2.3, 0.62, 1.62, rot, [0.16, 0.2, 0.26], col, true);
       for (const [a, b] of [[1.35, 0.8], [1.35, -0.8], [-1.35, 0.8], [-1.35, -0.8]]) box(g, x + c * a - s * b, y, z + s * a + c * b, 0.66, 0.66, 0.24, rot, [0.08, 0.08, 0.09], null, true); };
-    const tent = (x, z, rot, col) => { const g = scen.get(x, z), y = nrGround(x, z); box(g, x, y, z, 3.2, 1.9, 3.2, rot, col, null, true); gable(g, x, y + 1.9, z, 3.5, 3.5, 1.0, rot, [col[0] * 0.8, col[1] * 0.8, col[2] * 0.8], col); };
+    const DR = rng(9330);   // (the camp props' own random stream: R() is not drawn from)
+    const FLAGS = [[[0.08, 0.08, 0.09], [0.82, 0.1, 0.1], [0.96, 0.78, 0.06]], [[0.76, 0.1, 0.14], [0.95, 0.95, 0.95], [0.12, 0.3, 0.62]], [[0.82, 0.1, 0.12], [0.95, 0.95, 0.95], [0.82, 0.1, 0.12]], [[0.08, 0.08, 0.09], [0.97, 0.82, 0.06], [0.84, 0.12, 0.14]]];   // stripes: German, Dutch, Austrian, Belgian (upright)
+    const flagPole = (g, x, y, z, rot, k) => { const c = Math.cos(rot), s = Math.sin(rot), F = FLAGS[k % FLAGS.length]; cyl(g, x, y - 0.2, z, 0.05, 6.4, 5, [0.86, 0.86, 0.88]);
+      for (let n = 0; n < 3; n++) { if (k % FLAGS.length === 3) { const a = 0.3 + n * 0.5; box(g, x + c * a, y + 5.2, z + s * a, 0.5, 0.95, 0.04, rot, F[n], null, true); } else box(g, x + c * 0.8, y + 5.84 - n * 0.32, z + s * 0.8, 1.5, 0.32, 0.04, rot, F[n], null, true); } };
+    const tent = (x, z, rot, col) => {   // the fans' camp, by hash: a dome tent, a ridge tent, a gazebo or a caravan; now and then a flag on a pole beside it
+      const g = scen.get(x, z), y = nrGround(x, z), h = crH(x, z, 31), c = Math.cos(rot), s = Math.sin(rot), dk = [col[0] * 0.72, col[1] * 0.72, col[2] * 0.72], dark = [0.16, 0.2, 0.26];
+      if (h < 0.34) nrLump(g, x, y + 0.05, z, 1.5, 0.78, col, DR, 0.05);
+      else if (h < 0.56) gable(g, x, y, z, 3.4, 2.4, 1.35, rot, col, dk);
+      else if (h < 0.78) { for (const [a, b] of [[1.45, 1.45], [1.45, -1.45], [-1.45, 1.45], [-1.45, -1.45]]) cyl(g, x + c * a - s * b, y - 0.1, z + s * a + c * b, 0.04, 2.25, 4, [0.86, 0.86, 0.88]);
+        cone(g, x, y + 2.1, z, 2.2, 0.8, 4, col, [0.97, 0.97, 0.95], rot + Math.PI / 4); }
+      else { box(g, x, y + 0.3, z, 5.4, 2.1, 2.2, rot, [0.93, 0.92, 0.88], [0.84, 0.84, 0.82], true); box(g, x, y + 1.05, z, 5.44, 0.22, 2.24, rot, col, null, true);
+        for (const [a, L] of [[1.2, 1.3], [-1.4, 0.9]]) box(g, x + c * a, y + 1.55, z + s * a, L, 0.5, 2.26, rot, dark, null, true);
+        for (const a of [-1.0, 0.6]) box(g, x + c * a, y, z + s * a, 0.6, 0.6, 2.3, rot, [0.08, 0.08, 0.09], null, true); }
+      if (crH(x, z, 32) < 0.3) { const fx = x + c * 2.6 - s * 1.6, fz = z + s * 2.6 + c * 1.6; flagPole(g, fx, nrGround(fx, fz), fz, rot + 1.2, Math.floor(crH(x, z, 33) * 4)); }
+    };
     const board = (cx, cy, cz, tx, tz, W, H, cellK) => {   // text board (bottom centre cx, cy, cz) facing -t (read by cars driving along +t), a dark back behind it
       const [u0, v0, u1, v1] = nrAUV(cellK), ux = tz, uz = -tx, hw = -W / 2, W1 = [1, 1, 1];   // (the text's left edge on the driver's left)
       const A = [cx - ux * hw, cy, cz - uz * hw], B = [cx + ux * hw, cy, cz + uz * hw], C = [B[0], cy + H, B[2]], D = [A[0], cy + H, A[2]];
@@ -4865,6 +4898,12 @@ const World = (function () {
       for (let d = -220; d < 160; d += 14) for (const side of [-1, 1]) {   // flag poles behind the walls
         const [px, pz, ii] = onSide(sAt(d), side, 2.2), py = nrGround(px, pz), gg = scen.get(px, pz); CR.avoid(px, pz, 0.45);
         cyl(gg, px, py, pz, 0.06, 6, 5, [0.86, 0.86, 0.88]); box(gg, px + T.tx[ii] * 0.6, py + 4.8, pz + T.tz[ii] * 0.6, 1.2, 0.8, 0.05, T.hd[ii], fans[Math.floor(R() * fans.length)], null, true);
+      }
+      for (let d = -210, n = 0; d < 150; d += 30, n++) for (const side of [-1, 1]) {   // banners on the walls of the straight: NÜRBURGRING, GRÜNE HÖLLE, NORDSCHLEIFE
+        const s0 = sAt(d), a0 = T.idx(s0), b0 = T.idx(s0 + 3.6), [u0, v0, u1, v1] = nrAUV(BAN + 1 + (n + (side > 0 ? 1 : 0)) % 3);
+        const Wp = (ii, yy) => { const o = side * ((side > 0 ? T.br[ii] : T.bl[ii]) + 0.1); return [T.px[ii] + T.nx[ii] * o, T.hy[ii] + yy + nrBankY(ii, o), T.pz[ii] + T.nz[ii] * o]; };
+        const A = Wp(a0, 0.1), ins = [A[0] + T.nx[a0] * side * 2, A[1], A[2] + T.nz[a0] * side * 2];
+        ban.quadO(A, Wp(b0, 0.1), Wp(b0, 0.98), Wp(a0, 0.98), [1, 1, 1], ins, side > 0 ? [[u1, v0], [u0, v0], [u0, v1], [u1, v1]] : [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]);
       }
     }
     for (let i = 0; i < N; i++) if (t13(i)) { fence[0][i] = 1; fence[1][i] = 1; }
@@ -4912,18 +4951,44 @@ const World = (function () {
       board(mx - T.tx[i] * 3.3, y + 6.62, mz - T.tz[i] * 3.3, T.tx[i], T.tz[i], Math.min(16, L - 4), 1.05, BAN + 1);
       exclPush(mx, mz, L / 2 + 6);
     }
+    for (const b of P.br) {   // the track on a bridge over a road: the deck under the road and its verges, the abutments, and the road down in its cutting (nrH)
+      const i = b.i, hd = T.hd[i], Wd = T.bl[i] + T.br[i] + 7, off = (T.br[i] - T.bl[i]) / 2, cx = b.x + b.nx * off, cz = b.z + b.nz * off, g = scen.get(cx, cz);
+      let y = 1e9; for (let k = -4; k <= 4; k++) y = Math.min(y, T.hy[(i + k + N) % N]);   // (the deck stays under the road on a gradient: its top at the lowest point of the span)
+      box(g, cx, y - 1.8, cz, 13, 1.3, Wd, hd, [0.6, 0.6, 0.58], [0.56, 0.56, 0.54]);   // (0.5 m under the road: also under the verges' outer slope)
+      for (const f of [-1, 1]) box(g, cx + b.tx * 7.3 * f, b.y - 0.6, cz + b.tz * 7.3 * f, 2.6, y - 1.8 - b.y + 0.6, Wd, hd, [0.55, 0.55, 0.53], null, true);
+      const rb = new RB(true), e = [0.95, 0.95, 0.92], m = [0.74, 0.74, 0.76]; let pr = -1;
+      for (let l = -95; l <= 95.01; l += 4) {   // (rows across the road, from +t to -t: up-facing as the rows advance along +n)
+        const pts = [3.6, 3.2, -3.2, -3.6].map(a => { const px = b.x + b.nx * l + b.tx * a, pz = b.z + b.nz * l + b.tz * a; return [px, nrGround(px, pz) + 0.1, pz]; });
+        const r = rb.row(pts, [e, m, m, e], [3.6, 3.2, -3.2, -3.6].map(a => [(a + 3.6) / 8, l / 8])); if (pr >= 0) rb.link(pr, r, 0, 3); pr = r;
+        if (Math.round(l) % 12 === 1) exclPush(b.x + b.nx * l, b.z + b.nz * l, 8);
+      }
+      addM(rb, aMat);
+    }
 
-    /* ---- marshal posts, km boards, corner-name boards ---- */
-    for (let d = 260, k = 0; d < T.len - 250; d += 480, k++) {   // marshal post: a white hut with a flag pole
-      const s = sAt(d), side = k % 2 ? roomSide(s) : -roomSide(s), [x, z, i] = onSide(s, side, 2.4), y = nrGround(x, z), g = scen.get(x, z);
+    /* ---- marshal posts, km boards, corner-name boards, braking boards, chevrons ---- */
+    const numTex = nrNumTex(); out.ownTex.push(numTex); const numC = new Chunks(512, true);
+    for (let d = 260, k = 0, np = 0; d < T.len - 250; d += 250, k++) {   // marshal post: a white hut with a pitched roof, its number, two amber warning lights and a flag pole
+      const s = sAt(d), side = k % 2 ? roomSide(s) : -roomSide(s), [x, z, i] = onSide(s, side, 2.4), y = nrGround(x, z), g = scen.get(x, z), hd = T.hd[i], tx = T.tx[i], tz = T.tz[i], nx = T.nx[i] * side, nz = T.nz[i] * side;
       if (excluded(x, z)) continue;
-      box(g, x, y - 0.2, z, 2.4, 2.5, 2.2, T.hd[i], [0.94, 0.94, 0.92], [0.9, 0.36, 0.12], true);
-      box(g, x - T.nx[i] * side * 0.4, y + 1.1, z - T.nz[i] * side * 0.4, 1.6, 0.6, 2.25, T.hd[i], [0.2, 0.28, 0.36], null, true);   // window
-      const fx = x + T.tx[i] * 1.8, fz = z + T.tz[i] * 1.8; cyl(g, fx, y, fz, 0.05, 4.2, 5, [0.85, 0.85, 0.87]); box(g, fx + T.tx[i] * 0.45, y + 3.4, fz + T.tz[i] * 0.45, 0.9, 0.6, 0.04, T.hd[i], [0.98, 0.84, 0.1], null, true);
+      box(g, x, y - 0.2, z, 2.4, 2.5, 2.2, hd, [0.94, 0.94, 0.92], null, true); gable(g, x, y + 2.3, z, 2.8, 2.6, 0.72, hd, [0.3, 0.32, 0.36], [0.92, 0.92, 0.9]);
+      box(g, x - nx * 0.4, y + 1.0, z - nz * 0.4, 1.6, 0.6, 2.25, hd, [0.2, 0.28, 0.36], null, true);   // window
+      box(g, x - tx * side * 0.78 - nx * 1.13, y + 1.84, z - tz * side * 0.78 - nz * 1.13, 0.5, 0.24, 0.06, hd, [0.1, 0.1, 0.11], null, true);   // the light panel (beside the number)
+      for (const a of [-0.12, 0.12]) box(g, x - tx * side * (0.78 + a) - nx * 1.16, y + 1.9, z - tz * side * (0.78 + a) - nz * 1.16, 0.12, 0.12, 0.04, hd, [1, 0.74, 0.12], null, true);
+      const [u0, v0, u1, v1] = nrNUV(np++ % 128), lx = tx * side * 0.26, lz = tz * side * 0.26, px = x - nx * 1.13, pz = z - nz * 1.13;   // the number above the window, facing the road
+      numC.get(px, pz).quadO([px + lx, y + 1.72, pz + lz], [px - lx, y + 1.72, pz - lz], [px - lx, y + 2.24, pz - lz], [px + lx, y + 2.24, pz + lz], [1, 1, 1], [x, y + 1.9, z], [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]);
+      const fx = x + tx * 1.8, fz = z + tz * 1.8; cyl(g, fx, y, fz, 0.05, 4.2, 5, [0.85, 0.85, 0.87]); box(g, fx + tx * 0.45, y + 3.4, fz + tz * 0.45, 0.9, 0.6, 0.04, hd, [0.98, 0.84, 0.1], null, true);
       exclPush(x, z, 5);
     }
+    numC.addTo(root, new THREE.MeshLambertMaterial({ map: numTex }), false, true);
     for (let km = 1; km <= 20; km++) { const s = sAt(km * 1000); signPost(s, roomSide(s), 1.4, km - 1, 1.9, 0.48, 1.1); }
     T.names.forEach((q, k) => { const s = sAt(q.d - 55); signPost(s, roomSide(s), 1.6, 20 + k, 3.2, 0.8, 1.2); });
+    let lastC = -1e9;
+    for (const c of T.corners) {   // braking boards 300, 200, 100 m before the bends at the end of a fast approach (not right after another bend); chevrons round the outside of the tightest ones
+      const d0 = dS(c.i0 * ds), prev = lastC; if (c.sev >= 2) lastC = d0; if (c.sev < 2 || d0 < 400 || d0 > T.len - 250) continue;
+      let str = 0; for (let k = 20; k <= 160; k += 4) if (Math.abs(T.k[(c.i0 - k + N) % N]) < 1 / 260) str++;
+      if (str >= 21 && d0 - prev > 160) { const side = roomSide(sAt(d0 - 200)); [300, 200, 100].forEach((m, n) => signPost(sAt(d0 - m), side, 1.2, BAN + 4 + n, 1.5, 0.42, 0.75)); }
+      if (c.minR < 38 && c.i1 > c.i0) for (let s = c.i0 * ds + 6; s < c.i1 * ds; s += 11) signPost(s, c.dir > 0 ? -1 : 1, 0.9, BAN + (c.dir > 0 ? 7 : 8), 1.9, 0.48, 0.35);
+    }
 
     /* ---- spectators, fans' tents and cars at the famous places, catch fences in front of them ---- */
     const FANS = { 'Brünnchen': 3, 'Pflanzgarten': 3, 'Karussell': 3, 'Wippermann': 2, 'Hohe Acht': 2, 'Adenauer Forst': 2, 'Breidscheid': 2, 'Flugplatz': 2, 'Hatzenbach': 2, 'Schwalbenschwanz': 2, 'Kesselchen': 1, 'Galgenkopf': 1, 'Eschbach': 1, 'Metzgesfeld': 1, 'Ex-Mühle': 1, 'Bergwerk': 1, 'Fuchsröhre': 1, 'Aremberg': 1, 'Klostertal': 1, 'Quiddelbacher Höhe': 1, 'Döttinger Höhe': 1 };
@@ -4944,6 +5009,17 @@ const World = (function () {
         if (R() < 0.55) tent(x, z, T.hd[i] + (R() - 0.5) * 0.6, tcols[Math.floor(R() * tcols.length)]); else carPk(x, z, T.hd[i] + (R() - 0.5) * 0.8, vary(fans[Math.floor(R() * fans.length)], R, 0.2));
       }
       const [ex, ez] = onSide(sm, side, 14); exclPush(ex, ez, half + 10);
+    }
+    for (const q of T.names) {   // the fans' scaffold towers behind the camps (two at the big three, one at the other big places), a banner in their colours on top
+      const wgt = FANS[q.n] || 0; if (wgt < 2) continue; const sm = sAt(q.d), side = roomSide(sm);
+      for (const f of wgt >= 3 ? [-1, 1] : [1]) {
+        const [x, z, i] = onSide(sm + f * (20 + crH(q.d, f, 41) * 16), side, 10 + crH(q.d, f, 42) * 7); if (nrSlope(x, z) > 0.35 || nrNear(x, z).dd < 4) continue;
+        const g = scen.get(x, z), y = nrGround(x, z), hd = T.hd[i], c = Math.cos(hd), sn = Math.sin(hd), st = [0.6, 0.62, 0.66], nx = T.nx[i] * side, nz = T.nz[i] * side;
+        for (const [a, b] of [[1.1, 1.1], [1.1, -1.1], [-1.1, 1.1], [-1.1, -1.1]]) box(g, x + c * a - sn * b, y - 0.2, z + sn * a + c * b, 0.09, 6.5, 0.09, hd, st, null, true);
+        for (const lv of [2.9, 5.6]) box(g, x, y + lv, z, 2.4, 0.12, 2.4, hd, [0.52, 0.42, 0.3]);
+        box(g, x - nx * 1.2, y + 5.72, z - nz * 1.2, 2.4, 0.7, 0.05, hd, fans[Math.floor(crH(q.d, f, 43) * fans.length)], null, true);
+        CR.avoid(x, z, 2); exclPush(x, z, 3);
+      }
     }
     /* ---- more spectators (instanced, hashed: no draws from R): the far side at the famous places, more rows at the big five, the places that had
        nobody, both sides of the T13 straight, groups along Döttinger Höhe and small groups everywhere; chain link in front of the bigger crowds ---- */
@@ -4966,7 +5042,18 @@ const World = (function () {
       for (const sd of [-1, 1]) run(200, T.len - 250, sd, { rows: 2, dens: 0.06, clump: 0.95, strip: false, label: 'NR groups' });
       for (const e of CR.circ) exclPush(e.x, e.z, e.r);   // the forest keeps clear of them
     }
-    // catch fences (chain link on posts) right behind the rails where the fences were asked for
+    // Döttinger Höhe: a farm fence along the fields on both sides of the long straight (wooden posts, two rails)
+    for (const side of [-1, 1]) { let pv = null;
+      for (let d = 17930; d < 19560; d += 4) {
+        const [x, z, i] = onSide(sAt(d), side, 10.5); if (nrLC(x, z) === 1 || excluded(x, z) || nrSlope(x, z) > 0.5) { pv = null; continue; }
+        const y = nrGround(x, z), g = scen.get(x, z), wd = [0.44, 0.35, 0.25]; box(g, x, y - 0.15, z, 0.12, 1.35, 0.12, T.hd[i], wd, null, true);
+        if (pv) { const dx = x - pv[0], dz = z - pv[2], L = Math.hypot(dx, dz), rt = Math.atan2(dz, dx), mx = (x + pv[0]) / 2, mz = (z + pv[2]) / 2, my = (y + pv[1]) / 2;
+          for (const hh of [0.5, 0.98]) box(g, mx, my + hh, mz, L, 0.07, 0.05, rt, [0.5, 0.4, 0.29], null, true); }
+        pv = [x, y, z]; exclPush(x, z, 1.2);
+      }
+    }
+    // catch fences (chain link on posts) right behind the rails where the fences were asked for, sponsor banners on them
+    const spC = new Chunks(256, true);
     for (const side of [-1, 1]) {
       const fc = fence[side > 0 ? 1 : 0], bar = side > 0 ? T.br : T.bl; let acc = 0;
       for (let i = 0; i < N; i++) {
@@ -4974,6 +5061,12 @@ const World = (function () {
         const Q = (ii, y) => { const o = side * (bar[ii] + 0.55); return [T.px[ii] + T.nx[ii] * o, T.hy[ii] + y + nrBankY(ii, o), T.pz[ii] + T.nz[ii] * o]; };
         const u0 = acc / 2.5, u1 = (acc + seg) / 2.5, ins = Q(i, 1); ins[0] += T.nx[i] * side * 3; ins[2] += T.nz[i] * side * 3;
         const q0 = Q(i, 0.9); fenceC.get(q0[0], q0[2]).quadO(q0, Q(j, 0.9), Q(j, 3.6), Q(i, 3.6), [1, 1, 1], ins, [[u0, 0], [u1, 0], [u1, 1.1], [u0, 1.1]]);
+        const j2 = (i + 2) % N;
+        if (i % 13 === 0 && fc[j2]) {   // a sponsor banner on the chain link, 4 m long (tex.sponsors: 8 invented brands), read from the road
+          const k = Math.floor(crH(i, side, 51) * 8), su = (k % 2) / 2, sv = 1 - Math.floor(k / 2) / 4, pull = (p, ii) => [p[0] - T.nx[ii] * side * 0.06, p[1], p[2] - T.nz[ii] * side * 0.06];
+          const a = pull(Q(i, 0.95), i), b = pull(Q(j2, 0.95), j2);
+          spC.get(a[0], a[2]).quadO(a, b, pull(Q(j2, 1.9), j2), pull(Q(i, 1.9), i), [1, 1, 1], ins, side > 0 ? [[su + 0.5, sv - 0.25], [su, sv - 0.25], [su, sv], [su + 0.5, sv]] : [[su, sv - 0.25], [su + 0.5, sv - 0.25], [su + 0.5, sv], [su, sv]]);
+        }
         if (i % 3 === 0) { const p = Q(i, 0); box(scen.get(p[0], p[2]), p[0], p[1] - 0.2, p[2], 0.1, 3.8, 0.1, T.hd[i], [0.6, 0.61, 0.64]); }
         acc += seg;
       }
@@ -5025,6 +5118,11 @@ const World = (function () {
           const cv = 0.86 + R() * 0.28; plant(sp, far, x, y - 0.1, z, R() * TAU, wid, hgt, [cv * (0.95 + R() * 0.1), cv, cv * (0.95 + R() * 0.1)]);
         }
       }
+      for (const side of [-1, 1]) for (let d = 17930; d < 19560; d += 13) {   // Döttinger Höhe: a row of poplars and beech along the field edge, both sides
+        const [x, z] = onSide(sAt(d + (crH(d, side, 61) - 0.5) * 6), side, 15 + crH(d, side, 62) * 5); if (nrLC(x, z) === 1 || excluded(x, z) || !clear(x, z, 2)) continue;
+        const hq = crH(d, side, 63), pop = hq < 0.6, hgt = pop ? 15 + hq * 9 : 10 + hq * 4, cv = 0.9 + crH(d, side, 64) * 0.2;
+        plant(1, false, x, nrGround(x, z) - 0.1, z, crH(d, side, 65) * TAU, hgt * (pop ? 0.42 : 0.9), hgt, [cv * (pop ? 0.92 : 1), cv * (pop ? 1.05 : 1), cv * 0.9]);
+      }
     }
     for (const t of tk) t.addTo(root, true);
     for (const t of tf) t.addTo(root, false);
@@ -5055,7 +5153,7 @@ const World = (function () {
     scen.addTo(sceneryGroup, matV, true, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
     addM(crowdG, new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }));
-    fenceC.addTo(root, fMat, false, true);
+    fenceC.addTo(root, fMat, false, true); spC.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true);
     crowdFinish(CR, root, out);
     out.stats = { tiles: nTiles, trees: nTrees, edgeTrees: nEdge, posts: nPosts, buildings: nBld, fans: nFans, decals: nDecals };   // (read by the tests)
     return out;
