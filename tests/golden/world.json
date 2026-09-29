@@ -95,33 +95,33 @@
   }
  },
  "toskana": {
-  "meshes": 110,
-  "verts": 1466295,
-  "instances": 957,
-  "props": 178,
-  "crowd": 957,
-  "world": "bc8ecc9",
-  "propsHash": "a6988150",
+  "meshes": 120,
+  "verts": 1467699,
+  "instances": 956,
+  "props": 163,
+  "crowd": 956,
+  "world": "bda5cad1",
+  "propsHash": "b17cae2e",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "15553581",
-   "-:MeshBasicMaterial": "aeae6363",
-   "crowd:MeshLambertMaterial": "b9d1aa63"
+   "-:MeshLambertMaterial": "268f33f3",
+   "-:MeshBasicMaterial": "814f4947",
+   "crowd:MeshLambertMaterial": "9780616a"
   }
  },
  "grom": {
-  "meshes": 105,
-  "verts": 1521789,
-  "instances": 960,
-  "props": 86,
-  "crowd": 960,
-  "world": "d4349afb",
-  "propsHash": "674738bf",
+  "meshes": 109,
+  "verts": 1557877,
+  "instances": 954,
+  "props": 108,
+  "crowd": 954,
+  "world": "e035eaf7",
+  "propsHash": "5755bf97",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "8f1bb152",
-   "crowd:MeshLambertMaterial": "a61b1f1",
-   "-:MeshBasicMaterial": "2caa08ad"
+   "-:MeshLambertMaterial": "5a7944d6",
+   "crowd:MeshLambertMaterial": "f45f1aea",
+   "-:MeshBasicMaterial": "6f7736da"
   }
  },
  "pikes": {

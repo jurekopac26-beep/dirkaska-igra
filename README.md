@@ -13,8 +13,9 @@ Pravi „Zeleni pekel“ v Nemčiji v pravem merilu: en krog (20,7 km) proti 20 
 
 Progi v slogu dveh prog iz igre Circuit Superstars (posnetek dirke `parta.mp4`), z drugače oblikovanimi ovinki, tako da nista enaki originaloma:
 
-- **Toskana** (po Faenzi): dolga ciljna ravnina s tribunami, rešetkastim štartnim portalom in boksi, dvojni levi ovinek, šikana ob jezeru, ostra dvojna lasnica in dvostopenjski desni ovinek sredi proge. Zeleno-belo-rdeči robniki, stene iz zelenih in belih gum, široki oranžni izletni pasovi, ciprese in kmečke hiše z opečnatimi strehami.
-- **Gromski rt** (po Thunder Pointu, zrcaljen): kratka proga z dolgo ravnino, boksi in zastavicami GORIVO, ostrim levim ovinkom, dvojnim levim na vrhu, šikano na diagonali in tesno lasnico. Rdeče-rumeni robniki, stene iz črnih gum, borov gozd in velik kamp z avtodomi, prikolicami, šotori in paviljoni.
+- **Toskana** (po Faenzi): dolga ciljna ravnina s tribunami, rešetkastim štartnim portalom in boksi, dvojni levi ovinek, ostra 90° šikana, dolg S-zavoj ob jezeru, zavit vrh, ostra dvojna lasnica in dolg dvojni zavoj po sredini proge (namesto ravnin razvlečeni zavoji za drsenje). Zeleno-belo-rdeči robniki, stene iz zelenih in belih gum, široki oranžni izletni pasovi, ciprese in kmečke hiše z opečnatimi strehami.
+- **Gromski rt** (po Thunder Pointu, zrcaljen): kratka proga z dolgo ravnino, boksi in zastavicami GORIVO, ostrim levim ovinkom, S-zavojem ob kampu, levim na vrhu, ostro 90° šikano, dolgo zavito diagonalo in tesno lasnico. Rdeče-rumeni robniki, stene iz črnih gum, borov gozd in velik kamp z avtodomi, prikolicami, šotori in paviljoni.
+- Na obeh progah so stožci ob robnikih in na travi (nikoli na cesti), čez bližnjico vsake šikane (kjer bi ravna črta zapustila asfalt) pa stojijo gume, stožci in bale, ki jih avto, ki šikano odreže, razbije.
 
 Na obeh lahko zapelješ v bokse (desno takoj za zadnjim ovinkom pred ciljno ravnino) in mehaniki ti popravijo avto, tako kot v Bakrenem gozdu.
 
