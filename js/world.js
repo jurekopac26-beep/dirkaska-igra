@@ -3294,7 +3294,23 @@ const World = (function () {
         tq(x, y + 0.8, z, fx, fz, 2.4, 1.2, [0, 512, 512, 768], 0.85, [512, 512, 1024, 640]); }
       for (const d of [-12.5, -7]) { const F = at(d); if (clear(F, 0, 3.7, 2.3, 1.1)) car(F, 0, 3.7, (R() - 0.5) * 0.06); }   // parked along the wall
       guy(at(5), 0, 6.1, PI / 2); guy(at(6.3), 0, 6.0, PI / 2 + 0.35); guy(at(9.4), 0, 6.1, PI / 2 - 0.2); guy(at(2.5), 0, 5.2, PI / 2); guy(at(-3.3), 0, 4.4, PI / 2);
-      sign(fr(s0 - 40, -side), 0, 3.1, PI + 0.35, 4.4, 1.1, [512, 640, 1024, 768]);   // its name on the near side, where the chase camera still sees it
+      // the near side (the barrier there is ~10 m from the road centre, in the chase camera's view): the name board at a gravel strip just beyond the
+      // barrier, a second coin telescope aimed across the road into the pit, visitors looking over (own random stream: the rest of the scenery keeps its rolls)
+      { const R2 = rng(9111), ns = -side, an = (d) => fr(s0 + d, ns), a0 = s0 - 14, a1 = s0 + 12, v0 = 1.6, v1 = 4.6, nu = Math.round((a1 - a0) / 2), nv = 3, V = [], gc0 = [0.5, 0.45, 0.4];
+        for (let b = 0; b <= nv; b++) for (let a = 0; a <= nu; a++) { const [x, z] = fr(a0 + (a1 - a0) * a / nu, ns).at(0, v0 + (v1 - v0) * b / nv), k = 0.93 + R2() * 0.12, gc = pkGCol(x, z);   // (as gravel(): the outer ring fades out)
+          V.push([[x, gy(x, z) + 0.06, z], a && b && a < nu && b < nv ? [gc0[0] * k, gc0[1] * k, gc0[2] * k] : [gc[0] * pkGMean, gc[1] * pkGMean, gc[2] * pkGMean]]); }
+        for (let b = 0; b < nv; b++) for (let a = 0; a < nu; a++) { const p = V[b * (nu + 1) + a], q = V[b * (nu + 1) + a + 1], r = V[(b + 1) * (nu + 1) + a + 1], d = V[(b + 1) * (nu + 1) + a];
+          scen.get(p[0][0], p[0][2]).quadUp(p[0], q[0], r[0], d[0], [p[1], q[1], r[1], d[1]]); }
+        sign(an(-17), 0, 3.0, PI + 0.35, 4.4, 1.1, [512, 640, 1024, 768]);   // its name, facing the arriving cars
+        { const F = an(1), [x, z] = F.at(0, 3.0), y = gy(x, z), r = F.rot(-PI / 2), [fx, fz] = F.dir(-PI / 2), g = scen.get(x, z);   // coin telescope aimed across the road
+          box(g, x, y - 0.2, z, 0.7, 0.32, 0.7, r, [0.6, 0.6, 0.58]); cyl(g, x, y + 0.1, z, 0.07, 1.0, 6, [0.22, 0.3, 0.28]);
+          box(g, x, y + 1.06, z, 0.6, 0.34, 0.38, r, [0.16, 0.5, 0.42], [0.2, 0.56, 0.47], false); box(g, x - fx * 0.34, y + 1.12, z - fz * 0.34, 0.1, 0.22, 0.42, r, [0.08, 0.08, 0.09]);
+          box(g, x + fx * 0.33, y + 1.1, z + fz * 0.33, 0.08, 0.26, 0.34, r, [0.1, 0.12, 0.14]); }
+        { const F = an(-6), [x, z] = F.at(0, 4.2), y = gy(x, z) - 0.1, g = scen.get(x, z), c = vary(wood, R2, 0.1);   // a bench facing the pit
+          box(g, x, y + 0.42, z, 1.8, 0.07, 0.42, F.rot(), c, [c[0] * 1.15, c[1] * 1.15, c[2] * 1.12]); for (const o of [-0.7, 0.7]) { const [px, pz] = F.at(o, 4.2); box(g, px, y, pz, 0.08, 0.44, 0.38, F.rot(), woodD); } }
+        for (const [d, v, a] of [[2.6, 2.6, -PI / 2 + 0.2], [3.4, 3.4, -PI / 2 - 0.3], [-2.2, 2.4, -PI / 2 + 0.5], [-6.4, 3.2, -PI / 2], [-5.6, 3.5, -PI / 2 + 0.25], [7.5, 2.8, -PI / 2 - 0.4]]) {
+          const F = an(d), [x, z] = F.at(0, v); if (pkNear(x, z).dd < 1.5) continue; const [fx, fz] = F.dir(a); crowdPut(K.CR, x, gy(x, z), z, fx, fz, { col: K.fans[Math.floor(R2() * K.fans.length)] }, 1); }
+        ex(an(-1), 0, 3.2, 14.5); }
       ex(at(0), 0, 4, 17);
     }
 
@@ -3477,10 +3493,20 @@ const World = (function () {
       for (let d = 0; d <= span; d += 2) for (const sg of d ? [-1, 1] : [1]) for (const side of sd) for (const e of es) {
         const s = s0 + d * sg, [x, z, i] = onSide(s, side, 1.5 + e + W / 2), f = fit(x, z, i, L, W, dh); if (f) return { x, z, i, s, side, lo: f[0], hi: f[1], nx: T.nx[i] * side, nz: T.nz[i] * side, tx: T.tx[i], tz: T.tz[i] }; }
       return null; };
+    const spotN = (s0, sides, es, L, W, span, dh) => {   // the footprint nearest the road centre within s0 +- span (the barrier is 10.5-18 m out: the portrait chase camera sees ~12 m to each side), the nearer s wins a tie
+      let b = null, bs = 1e9;
+      for (let d = 0; d <= span; d += 2) for (const sg of d ? [-1, 1] : [1]) for (const side of sides) for (const e of es) {
+        const s = s0 + d * sg, i = T.idx(s), sc = (side > 0 ? T.br[i] : T.bl[i]) + e + d * 0.012; if (sc >= bs) continue;
+        const [x, z, j] = onSide(s, side, 1.5 + e + W / 2), f = fit(x, z, j, L, W, dh); if (!f) continue;
+        bs = sc; b = { x, z, i: j, s, side, lo: f[0], hi: f[1], nx: T.nx[j] * side, nz: T.nz[j] * side, tx: T.tx[j], tz: T.tz[j] }; }
+      return b; };
     const nrm = (a, b) => { const l = Math.hypot(a, b) || 1; return [a / l, b / l]; };
+    const info = { posts: [], veh: [], ph: [] };   // (where things went, for the tests and the screenshot tools)
 
     const ORG = [1, 0.46, 0.08], LIME = [0.8, 0.96, 0.18], YEL = [1, 0.86, 0.1], RED = [0.84, 0.1, 0.08], WHT = [0.95, 0.95, 0.94], DARK = [0.14, 0.14, 0.16], GLASS = [0.16, 0.2, 0.26], TYRE = [0.08, 0.08, 0.09];
-    // a race-day worker facing (fx, fz): o.flag (yellow flag on a short pole in the right hand), o.cam (kneeling, camera on a monopod), o.hat, o.y (stands on a platform)
+    const flags = [], lamps = [];   // the waving flags (arm + pole + cloth, one instanced mesh), the vehicles' flashing lamps (one instanced mesh)
+    // a race-day worker facing (fx, fz): o.flag (yellow flag on a short pole in the right hand), o.wave (the right arm and the flag are the animated instance),
+    // o.cam (kneeling, camera on a monopod), o.hat, o.y (stands on a platform)
     const man = (x, z, fx, fz, vest, o) => {
       o = o || {}; const g = scen.get(x, z), y = o.y != null ? o.y : gy(x, z) - 0.06, rot = Math.atan2(fz, fx), at = (a, b) => [x + fx * a - fz * b, z + fz * a + fx * b];
       const pants = [0.16, 0.18, 0.24], skin = [0.86, 0.64, 0.5], sl = [vest[0] * 0.8, vest[1] * 0.8, vest[2] * 0.8], hat = o.hat || WHT, B = (a, b, h, sx, sy, sz, col, top) => { const p = at(a, b); box(g, p[0], y + h, p[1], sx, sy, sz, rot, col, top, true); };
@@ -3492,68 +3518,93 @@ const World = (function () {
         const p = at(0.4, 0); beam(g, [p[0], y, p[1]], [p[0], y + 0.8, p[1]], 0.018, DARK); return;
       }
       B(0, -0.09, 0, 0.16, 0.84, 0.14, pants); B(0, 0.09, 0, 0.16, 0.84, 0.14, pants);
-      B(0, 0, 0.82, 0.22, 0.6, 0.38, vest); B(0, -0.24, 0.86, 0.09, 0.56, 0.09, sl); B(0, 0.24, 0.86, 0.09, 0.56, 0.09, sl);
+      B(0, 0, 0.82, 0.22, 0.6, 0.38, vest); B(0, -0.24, 0.86, 0.09, 0.56, 0.09, sl); if (!o.wave) B(0, 0.24, 0.86, 0.09, 0.56, 0.09, sl);
       B(0, 0, 1.43, 0.19, 0.22, 0.18, skin); B(0, 0, 1.63, 0.21, 0.06, 0.2, hat);
-      if (o.flag) { const p = at(0.08, 0.27); beam(g, [p[0], y + 0.86, p[1]], [p[0], y + 2.1, p[1]], 0.018, [0.85, 0.85, 0.86]); B(0.08, 0.6, 1.62, 0.03, 0.46, 0.64, YEL); }
+      if (o.wave) { const p = at(0, 0.24); flags.push({ x: p[0], y: y + 1.4, z: p[1], fx, fz, lv: 0, fr: 0, ph: crH(p[0], p[1], 5) * TAU, on: true }); }
+      else if (o.flag) { const p = at(0.08, 0.27); beam(g, [p[0], y + 0.86, p[1]], [p[0], y + 2.1, p[1]], 0.018, [0.85, 0.85, 0.86]); B(0.08, 0.6, 1.62, 0.03, 0.46, 0.64, YEL); }
     };
+    const ext = (g, x, z, hd) => { if (pkNear(x, z).dd < 1.5) return; const y = gy(x, z) - 0.05; cyl(g, x, y, z, 0.11, 0.55, 6, RED, RED); box(g, x, y + 0.55, z, 0.08, 0.12, 0.08, hd, DARK); };   // red extinguisher
 
-    /* marshal posts: every hairpin and every other severity-2 bend, at the entry on the side with room: a white pop-up canopy (or a low wooden stand),
-       marshals in orange with yellow flags, a red extinguisher, a radio mast at the hairpins */
+    /* marshal posts: every hairpin and every other severity-2 bend, on the spot of the bend where the barrier is nearest the road (the inside, where the car
+       passes closest): a raised scaffold platform under a high orange canopy at the hairpins, elsewhere a raised wooden stand with a tall striped pole or a
+       high pop-up canopy; marshals in orange wave their yellow flags as the car comes by (pkOpsUpdate); a red extinguisher, a radio mast at the hairpins */
     let n2 = 0;
     for (const c of T.corners) {
       const sm = (c.i0 + c.i1) / 2 * T.ds; if (c.sev < 2 || sm < sStart + 80 || sm > sFin - 60) continue;
       const hp = c.sev >= 3; if (!hp && n2++ % 2) continue;
-      const p = spot(c.s0 - 12, [-c.dir, c.dir], [0.1, 1, 2.5], 3.2, 4.4, 22, 0.9); if (!p) continue;
-      const { nx, nz, tx, tz, i } = p, hd = T.hd[i], g = scen.get(p.x, p.z), [fx, fz] = nrm(-nx * 0.85 - tx * 0.5, -nz * 0.85 - tz * 0.5), bx = p.x + nx * 0.8, bz = p.z + nz * 0.8;
-      if (hp || n2 % 4 === 1) {   // canopy: four legs, an orange valance, a white pyramid roof
-        const top = p.hi + 2.3;
-        for (const [a, b] of [[1.3, 1.3], [1.3, -1.3], [-1.3, 1.3], [-1.3, -1.3]]) { const lx = bx + tx * a - tz * b, lz = bz + tz * a + tx * b, ly = gy(lx, lz) - 0.15; box(g, lx, ly, lz, 0.07, top - ly, 0.07, hd, [0.82, 0.82, 0.84], null, true); }
-        box(g, bx, top - 0.24, bz, 2.7, 0.24, 2.7, hd, ORG, WHT, true); cone(g, bx, top, bz, 1.91, 0.55, 4, WHT, [0.9, 0.9, 0.9], hd + Math.PI / 4);
-        box(g, bx + nx * 0.6, p.lo - 0.1, bz + nz * 0.6, 1.6, p.hi - p.lo + 0.85, 0.6, hd, [0.9, 0.9, 0.9], null, true);   // a folding table
-        man(p.x - nx * 1.3 - tx * 0.6, p.z - nz * 1.3 - tz * 0.6, fx, fz, ORG, { flag: 1 });
-        if (hp) man(p.x - nx * 1.1 + tx * 0.8, p.z - nz * 1.1 + tz * 0.8, fx, fz, ORG, { hat: ORG });
-      } else {   // low wooden stand with a rail, the marshal on it
-        const top = p.hi + 0.6, wood = [0.55, 0.38, 0.22], sx = bx - nx * 0.6, sz = bz - nz * 0.6;
-        box(g, sx, p.lo - 0.15, sz, 1.9, top - p.lo + 0.15, 1.5, hd, wood, [0.64, 0.46, 0.28]);
-        for (const a of [-0.85, 0.85]) box(g, sx + tx * a - nx * 0.65, top, sz + tz * a - nz * 0.65, 0.08, 0.95, 0.08, hd, wood);
-        box(g, sx - nx * 0.65, top + 0.85, sz - nz * 0.65, 1.8, 0.08, 0.08, hd, wood);
-        man(sx + nx * 0.15, sz + nz * 0.15, fx, fz, ORG, { flag: 1, y: top });
+      const p = spotN((c.s0 + sm) / 2, [c.dir, -c.dir], [0.1, 0.8, 2], 3.2, 2.8, 60, 0.9); if (!p) continue;
+      const { nx, nz, tx, tz, i } = p, hd = T.hd[i], g = scen.get(p.x, p.z), [fx, fz] = nrm(-nx * 0.85 - tx * 0.5, -nz * 0.85 - tz * 0.5), bx = p.x + nx * 0.3, bz = p.z + nz * 0.3;
+      const P = (a, b) => [bx + tx * a - nx * b, bz + tz * a - nz * b];   // a along the road, b towards it
+      info.posts.push([Math.round(p.s), p.side, +Math.hypot(p.x - T.px[i], p.z - T.pz[i]).toFixed(1)]);
+      if (hp) {   // scaffold platform: grey tubes, an orange deck edged white, a rail, a ladder at the back, a high canopy over the back half, two marshals
+        const deck = p.hi + 1.3, top = deck + 2.4, SC = [0.62, 0.63, 0.66];
+        for (const [a, b] of [[1.35, 1.15], [1.35, -1.15], [-1.35, 1.15], [-1.35, -1.15]]) { const [lx, lz] = P(a, b), ly = gy(lx, lz) - 0.15; box(g, lx, ly, lz, 0.08, deck - ly, 0.08, hd, SC, null, true); }
+        { const [x, z] = P(0, 0); box(g, x, deck - 0.14, z, 2.9, 0.14, 2.5, hd, WHT, [0.72, 0.5, 0.3], true); box(g, x, deck - 0.9, z, 2.8, 0.06, 2.4, hd, SC, null, true); }
+        for (const b of [-1.15]) { const [x, z] = P(0, b); box(g, x, deck + 0.95, z, 2.9, 0.07, 0.07, hd, SC); }
+        for (const a of [-1.4, 1.4]) { const [x, z] = P(a, 0); box(g, x, deck + 0.95, z, 0.07, 0.07, 2.4, hd, SC); }
+        for (let k = 0; k < 4; k++) { const [x, z] = P(0.6, -1.3); box(g, x, deck - 1.2 + k * 0.32, z, 0.5, 0.05, 0.06, hd, SC, null, true); }   // ladder rungs
+        for (const [a, b] of [[1.35, -1.15], [-1.35, -1.15], [1.35, 0.05], [-1.35, 0.05]]) { const [x, z] = P(a, b); box(g, x, deck, z, 0.06, top - deck, 0.06, hd, [0.82, 0.82, 0.84], null, true); }
+        { const [x, z] = P(0, -0.55); box(g, x, top - 0.22, z, 3.0, 0.22, 1.5, hd, ORG, WHT, true); const [rx, rz] = P(0, -0.55); box(g, rx, top, rz, 3.0, 0.12, 1.5, hd, ORG, [1, 0.56, 0.18], true); }   // flat orange roof (reads from above)
+        { const [x, z] = P(0.9, -0.7); box(g, x, deck, z, 0.9, 0.75, 0.5, hd, [0.9, 0.9, 0.9], null, true); }   // table with the radio
+        { const [x, z] = P(-0.5, 0.75); man(x, z, fx, fz, ORG, { wave: 1, y: deck }); }
+        { const [x, z] = P(1.9, 1.2); if (pkNear(x, z).dd >= 1.5) man(x, z, fx, fz, ORG, { hat: ORG, wave: 1 }); }
+        { const [mx, mz] = P(-1.35, -1.15), my = deck + 2.4; cyl(g, mx, my, mz, 0.04, 3.4, 4, [0.7, 0.7, 0.72]); box(g, mx, my + 3.4, mz, 0.5, 0.06, 0.06, hd, DARK); }   // radio mast
+        { const [x, z] = P(-1.9, 0.9); ext(g, x, z, hd); }
+      } else if (n2 % 4 === 1) {   // high pop-up canopy (roof 3.1 m up) behind the marshal, a folding table under it
+        const top = p.hi + 3.1;
+        for (const [a, b] of [[1.3, 0], [1.3, -2.4], [-1.3, 0], [-1.3, -2.4]]) { const [lx, lz] = P(a, b + 0.8), ly = gy(lx, lz) - 0.15; box(g, lx, ly, lz, 0.07, top - ly, 0.07, hd, [0.82, 0.82, 0.84], null, true); }
+        { const [x, z] = P(0, -0.4); box(g, x, top - 0.24, z, 2.7, 0.24, 2.5, hd, ORG, WHT, true); cone(g, x, top, z, 1.84, 0.5, 4, WHT, [0.9, 0.9, 0.9], hd + Math.PI / 4);
+          box(g, x, p.lo - 0.1, z, 1.6, p.hi - p.lo + 0.85, 0.6, hd, [0.9, 0.9, 0.9], null, true); }
+        { const [x, z] = P(-0.5, 0.95); man(x, z, fx, fz, ORG, { wave: 1 }); }
+        { const [x, z] = P(1.6, 0.9); ext(g, x, z, hd); }
+      } else {   // raised wooden stand with a rail, the marshal on it; a tall orange and white striped pole with an orange board on top
+        const top = p.hi + 1.2, wood = [0.55, 0.38, 0.22], [sx, sz] = P(0, -0.1);
+        box(g, sx, p.lo - 0.15, sz, 2.0, top - p.lo + 0.15, 1.6, hd, wood, [0.64, 0.46, 0.28]);
+        for (const a of [-0.9, 0.9]) { const [x, z] = P(a, -0.8); box(g, x, top, z, 0.08, 0.95, 0.08, hd, wood); }
+        { const [x, z] = P(0, -0.8); box(g, x, top + 0.85, z, 1.8, 0.08, 0.08, hd, wood); }
+        { const [x, z] = P(-0.2, 0.3); man(x, z, fx, fz, ORG, { wave: 1, y: top }); }
+        { const [x, z] = P(1.3, -0.75), y = gy(x, z) - 0.2; for (let k = 0; k < 6; k++) box(g, x, y + k * 0.9, z, 0.12, 0.9, 0.12, hd, k % 2 ? WHT : ORG, null, true);
+          box(g, x, y + 5.4, z, 0.9, 0.62, 0.9, hd, ORG, WHT); box(g, x, y + 6.02, z, 0.5, 0.05, 0.5, hd, ORG); }   // a marker cube: white top, orange cross-square
+        { const [x, z] = P(-1.4, 0.6); ext(g, x, z, hd); }
       }
-      { const ex = p.x - nx * 1.6 + tx * 1.4, ez = p.z - nz * 1.6 + tz * 1.4, ey = gy(ex, ez) - 0.05; cyl(g, ex, ey, ez, 0.11, 0.55, 6, RED, RED); box(g, ex, ey + 0.55, ez, 0.08, 0.12, 0.08, hd, DARK); }   // extinguisher
-      if (hp) { const mx = p.x - tx * 1.55 + nx * 0.2, mz = p.z - tz * 1.55 + nz * 0.2, my = gy(mx, mz) - 0.2; cyl(g, mx, my, mz, 0.04, 5.2, 4, [0.7, 0.7, 0.72]); box(g, mx, my + 5.2, mz, 0.5, 0.06, 0.06, hd, DARK); }   // radio mast
       excl.push({ x: p.x, z: p.z, r: 4.2 });
     }
 
-    /* safety and recovery vehicles, about every 1.2 km on a flat spot beyond the barrier: tow truck, ambulance, fire / rescue pickup, each with its crew */
+    /* safety and recovery vehicles, about every 1.2 km on the spot within +-60 m where the barrier is nearest the road: tow truck, ambulance, fire / rescue
+       pickup, each with its crew and a light bar whose lamps flash (pkOpsUpdate) */
     [650, 1850, 3050, 4250, 5450].forEach((d, k) => {
-      const kind = k % 3, p = spot(sStart + d, [1, -1], [0.1, 1.5, 3.5], 7.4, 3.8, 90, 0.5); if (!p) return;
-      const { nx, nz, tx, tz } = p, fl = R() < 0.5 ? 1 : -1, hd = Math.atan2(tz * fl, tx * fl), c = Math.cos(hd), s = Math.sin(hd), vx = p.x + nx * 0.6, vz = p.z + nz * 0.6, y0 = p.lo - 0.08, g = scen.get(vx, vz);
+      const kind = k % 3, p = spotN(sStart + d, [1, -1], [0.1, 1, 2.5], 9.2, 2.8, 60, 1.0) || spot(sStart + d, [1, -1], [0.1, 1.5, 3.5], 7.4, 3.8, 90, 0.5); if (!p) return;
+      const { nx, nz, tx, tz } = p, fl = R() < 0.5 ? 1 : -1, hd = Math.atan2(tz * fl, tx * fl), c = Math.cos(hd), s = Math.sin(hd), vx = p.x + nx * 0.1, vz = p.z + nz * 0.1, y0 = p.hi - p.lo > 0.2 ? p.hi + 0.04 : p.lo - 0.08, g = scen.get(vx, vz);
       const vb = (a, b, h, L, H, W, col, top) => box(g, vx + c * a - s * b, y0 + h, vz + s * a + c * b, L, H, W, hd, col, top, true), V = (a, b, h) => [vx + c * a - s * b, y0 + h, vz + s * a + c * b];
+      const crew = (a, b, fx, fz, col, o) => { const x = p.x + tx * a - nx * b, z = p.z + tz * a - nz * b; if (pkNear(x, z).dd >= 1.5) man(x, z, fx, fz, col, o); };   // at the vehicle's ends
       const wheels = (as) => { for (const a of as) for (const b of [-0.96, 0.96]) vb(a, b, 0, 0.9, 0.9, 0.3, TYRE); };
+      const bar = (a, h, cols) => { vb(a, 0, h, 0.34, 0.1, 1.7, DARK); cols.forEach((cl, q) => { const b = -0.6 + 1.2 * q / Math.max(1, cols.length - 1); lamps.push({ p: V(a, b, h + 0.1), hd, cl, k: q + k }); }); };   // the lamps sit on a dark base
+      info.veh.push([Math.round(p.s), p.side, +Math.hypot(p.x - T.px[p.i], p.z - T.pz[p.i]).toFixed(1)]);
+      if (p.hi - p.lo > 0.2) box(g, vx, p.lo - 0.3, vz, 7.6, p.hi - p.lo + 0.34, 2.8, hd, [0.42, 0.38, 0.33], [0.52, 0.48, 0.42], true);   // a levelled gravel pad on the slope
       if (kind === 0) {   // tow truck: yellow cab, flat body, a boom over the back with a hook, the wheel lift below
         const Y = [0.96, 0.72, 0.1], GR = [0.42, 0.43, 0.46];
-        vb(0, 0, 0.35, 6.8, 0.3, 1.9, DARK); vb(2.85, 0, 0.6, 1.1, 0.75, 2.0, Y); vb(1.6, 0, 0.6, 1.5, 1.55, 2.2, Y); vb(1.62, 0, 1.38, 1.53, 0.56, 2.22, GLASS, Y); vb(1.6, 0, 2.15, 0.3, 0.14, 1.5, [1, 0.6, 0.1]);
+        vb(0, 0, 0.35, 6.8, 0.3, 1.9, DARK); vb(2.85, 0, 0.6, 1.1, 0.75, 2.0, Y); vb(1.6, 0, 0.6, 1.5, 1.55, 2.2, Y); vb(1.62, 0, 1.38, 1.53, 0.56, 2.22, GLASS, Y); bar(1.6, 2.15, [[1, 0.62, 0.08], [1, 0.62, 0.08], [1, 0.62, 0.08]]);
         vb(-1.3, 0, 0.65, 3.6, 0.7, 2.2, Y, GR); vb(-0.3, 0, 1.35, 0.8, 0.5, 0.8, GR); beam(g, V(-0.3, 0, 1.7), V(-3.4, 0, 2.9), 0.15, GR); beam(g, V(-3.4, 0, 2.8), V(-3.45, 0, 1.25), 0.02, DARK);
         vb(-3.45, 0, 1.0, 0.15, 0.25, 0.15, DARK); vb(-3.7, 0, 0.25, 0.7, 0.18, 1.6, DARK); wheels([2.4, -0.9, -2.1]);
-        man(p.x - nx * 1.3 + tx * 1.2, p.z - nz * 1.3 + tz * 1.2, -nx, -nz, ORG, { hat: DARK });
+        crew(4.2 * fl, 0.4, -nx, -nz, ORG, { hat: DARK });
       } else if (kind === 1) {   // ambulance: white box body with a red stripe, red lights, a red cross on the roof
         vb(0, 0, 0.3, 6.2, 0.3, 1.9, DARK); vb(2.6, 0, 0.55, 1.0, 0.8, 2.0, WHT); vb(1.55, 0, 0.55, 1.2, 1.55, 2.05, WHT); vb(1.6, 0, 1.32, 1.23, 0.6, 2.07, GLASS, WHT); vb(1.55, 0, 0.95, 1.22, 0.2, 2.07, RED);
-        vb(-1.0, 0, 0.55, 4.0, 2.2, 2.35, WHT); vb(-1.0, 0, 1.05, 4.02, 0.32, 2.37, RED); vb(3.11, 0, 0.9, 0.02, 0.2, 2.0, RED);
-        for (const b of [-0.95, 0.95]) vb(0.9, b, 2.75, 0.2, 0.15, 0.3, RED); vb(-1.0, 0, 2.75, 1.5, 0.03, 0.45, RED); vb(-1.0, 0, 2.75, 0.45, 0.03, 1.5, RED); wheels([2.1, -1.9]);
-        const cr = [0.18, 0.3, 0.46]; man(p.x - nx * 1.3 + tx * 0.6, p.z - nz * 1.3 + tz * 0.6, -nx, -nz, cr, { hat: cr }); man(p.x - nx * 1.2 - tx * 0.5, p.z - nz * 1.2 - tz * 0.5, tx, tz, cr);
+        vb(-1.0, 0, 0.55, 4.0, 2.2, 2.35, WHT); vb(-1.0, 0, 1.05, 4.02, 0.32, 2.37, RED); vb(3.11, 0, 0.9, 0.02, 0.2, 2.0, RED); bar(1.55, 2.1, [[1, 0.12, 0.1], [0.2, 0.4, 1], [1, 0.12, 0.1]]);
+        for (const b of [-0.95, 0.95]) lamps.push({ p: V(0.95, b, 2.75), hd, cl: [1, 0.12, 0.1], k: b > 0 ? 1 : 0 }); vb(-1.0, 0, 2.75, 1.5, 0.03, 0.45, RED); vb(-1.0, 0, 2.75, 0.45, 0.03, 1.5, RED); wheels([2.1, -1.9]);
+        const cr = [0.18, 0.3, 0.46]; crew(-3.9 * fl, 0.5, -nx, -nz, cr, { hat: cr }); crew(-4.2 * fl, -0.4, tx * fl, tz * fl, cr);
       } else {   // fire / rescue pickup: red, a white stripe, a light bar, equipment box in the bed
         vb(0, 0, 0.3, 5.4, 0.3, 1.8, DARK); vb(0, 0, 0.5, 5.4, 0.75, 2.0, RED); vb(0.5, 0, 1.25, 2.3, 0.75, 1.9, RED); vb(0.5, 0, 1.3, 2.32, 0.5, 1.92, GLASS, RED);
-        vb(0, 0, 0.9, 5.42, 0.12, 2.02, WHT); vb(0.9, 0, 2.0, 0.3, 0.14, 1.5, [1, 0.2, 0.15], [1, 0.3, 0.2]); vb(-1.7, 0, 1.25, 1.6, 0.55, 1.8, [0.88, 0.88, 0.88]); wheels([1.7, -1.7]);
-        const tan = [0.78, 0.62, 0.3]; man(p.x - nx * 1.3, p.z - nz * 1.3, -nx, -nz, tan, { hat: RED }); man(p.x - nx * 1.4 + tx * 1.1, p.z - nz * 1.4 + tz * 1.1, -tx, -tz, tan, { hat: RED });
+        vb(0, 0, 0.9, 5.42, 0.12, 2.02, WHT); bar(0.9, 2.0, [[1, 0.12, 0.1], [0.2, 0.4, 1], [1, 0.12, 0.1]]); vb(-1.7, 0, 1.25, 1.6, 0.55, 1.8, [0.88, 0.88, 0.88]); wheels([1.7, -1.7]);
+        const tan = [0.78, 0.62, 0.3]; crew(3.5 * fl, 0.4, -nx, -nz, tan, { hat: RED }); crew(-3.5 * fl, 0.3, -nx - tx * fl, -nz - tz * fl, tan, { hat: RED });
       }
       excl.push({ x: p.x, z: p.z, r: 6.8 });   // (no pine over the boom, nobody in the ambulance)
     });
 
-    /* photographers at five of the hairpins: kneeling just outside the corner in a hi-vis bib, camera on a monopod */
+    /* photographers at five of the hairpins: kneeling just beyond the barrier where it is nearest the road, in a hi-vis bib, camera on a monopod */
     { const hps = T.corners.filter(c => { const sm = (c.i0 + c.i1) / 2 * T.ds; return c.sev >= 3 && sm > sStart + 80 && sm < sFin - 60; });
       let n = 0; for (const k of hps.map((c, k) => k).sort((a, b) => a % 2 - b % 2 || a - b)) { if (n >= 5) break;
-        const c = hps[k], p = spot((c.i0 + c.i1) / 2 * T.ds + 4, [-c.dir], [0.05, 0.5], 1, 1, 14, 0.6); if (!p) continue;
-        const [fx, fz] = nrm(-p.nx + p.tx * 0.3, -p.nz + p.tz * 0.3); man(p.x, p.z, fx, fz, LIME, { cam: 1, hat: DARK }); excl.push({ x: p.x, z: p.z, r: 1.2 }); n++; } }
+        const c = hps[k], p = spotN((c.i0 + c.i1) / 2 * T.ds + 4, [c.dir, -c.dir], [0.05, 0.5], 1, 1, 40, 0.6); if (!p) continue;
+        const [fx, fz] = nrm(-p.nx + p.tx * 0.3, -p.nz + p.tz * 0.3); man(p.x, p.z, fx, fz, LIME, { cam: 1, hat: DARK }); excl.push({ x: p.x, z: p.z, r: 1.2 }); info.ph.push([Math.round(p.s), p.side, +Math.hypot(p.x - T.px[p.i], p.z - T.pz[p.i]).toFixed(1)]); n++; } }
 
     /* Pikes Peak Highway mile posts: the race starts at Mile 7, the real course is 19.99 km; small green boards on the right going up, facing the cars */
     for (let m = 8; m <= 19; m++) {
@@ -3583,6 +3634,33 @@ const World = (function () {
     for (const side of [-1, 1]) { row(sStart + 70, sStart + 150, side); row(sFin - 150, sFin - 44, side); for (const s0 of T.cpS) row(s0 - 50, s0 + 46, side); }
 
     if (!tg.empty) { const m = new THREE.Mesh(tg.geometry(), new THREE.MeshLambertMaterial({ map: tt })); m.receiveShadow = true; m.matrixAutoUpdate = false; K.root.add(m); }
+
+    /* the animated parts (pkOpsUpdate): the flags as one instanced mesh (the right arm from the shoulder up, the pole, a two-sided yellow cloth that hangs
+       off the pole towards the road; each instance turns about its shoulder), the vehicles' lamps as one instanced box with a colour each; hidden when far */
+    const ops = { t: 0, F: flags, L: lamps, fm: null, lm: null, root: K.root, hp: null, info };
+    // a flag's instance matrix (column-major, at E[o]): the shoulder's frame (x: the marshal's facing, y up, z his right), the arm tilted forwards by phi
+    // (0 straight up, -1.7 held out low with the cloth hanging), then swung sideways by th about the facing
+    ops.flagM = (E, o, f, th, phi) => { const cp = Math.cos(phi), sp = Math.sin(phi), ct = Math.cos(th), st = Math.sin(th), fx = f.fx, fz = f.fz;
+      const M = [[cp, -sp, 0], [ct * sp, ct * cp, -st], [st * sp, st * cp, ct]];
+      for (let c = 0; c < 3; c++) { E[o + c * 4] = fx * M[0][c] - fz * M[2][c]; E[o + c * 4 + 1] = M[1][c]; E[o + c * 4 + 2] = fz * M[0][c] + fx * M[2][c]; E[o + c * 4 + 3] = 0; }
+      E[o + 12] = f.x; E[o + 13] = f.y; E[o + 14] = f.z; E[o + 15] = 1; };
+    ops.hp = T.corners.filter(c => c.sev >= 3).map(c => { const i = T.idx((c.i0 + c.i1) / 2 * T.ds); return { x: T.px[i] + T.nx[i] * c.dir * 4, z: T.pz[i] + T.nz[i] * c.dir * 4, it: null, st: false }; });   // the hairpins' crowds cheer harder (pkOpsUpdate)
+    if (flags.length) {
+      const gf = new GB(), sl = [ORG[0] * 0.8, ORG[1] * 0.8, ORG[2] * 0.8], cl = YEL, cl2 = [0.93, 0.76, 0.06];
+      box(gf, 0, -0.02, 0, 0.1, 0.58, 0.1, 0, sl); box(gf, 0.01, 0.5, 0, 0.1, 0.12, 0.1, 0, [0.86, 0.64, 0.5]);   // sleeve, hand
+      beam(gf, [0.03, 0.4, 0], [0.03, 1.9, 0], 0.02, [0.86, 0.86, 0.88]);
+      const A = [0.05, 1.88, 0], B = [1.0, 1.8, 0.14], C = [0.97, 1.16, -0.12], D = [0.05, 1.2, 0], M = [0.5, 1.5, 0];   // the cloth, a little twisted (it reads from above too)
+      for (const sd of [-1, 1]) gf.quadO(A, B, C, D, sd > 0 ? cl : cl2, [M[0], M[1], M[2] - sd]);
+      const fm = new THREE.InstancedMesh(gf.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true }), flags.length);
+      fm.frustumCulled = false; fm.matrixAutoUpdate = false; fm.visible = false; fm.name = 'pkFlags'; K.root.add(fm); ops.fm = fm;
+      flags.forEach((f, k) => ops.flagM(fm.instanceMatrix.array, k * 16, f, 0, -1.7));
+    }
+    if (lamps.length) {
+      const lm = new THREE.InstancedMesh(new THREE.BoxGeometry(0.4, 0.2, 0.46), new THREE.MeshBasicMaterial(), lamps.length), m4 = new THREE.Matrix4(), qt = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), c3 = new THREE.Color();
+      lamps.forEach((l, k) => { m4.compose(new THREE.Vector3(l.p[0], l.p[1] + 0.08, l.p[2]), qt.setFromAxisAngle(up, -l.hd), new THREE.Vector3(1, 1, 1)); lm.setMatrixAt(k, m4); lm.setColorAt(k, c3.setRGB(l.cl[0] * 0.3, l.cl[1] * 0.3, l.cl[2] * 0.3)); });
+      lm.frustumCulled = false; lm.matrixAutoUpdate = false; lm.visible = false; lm.name = 'pkLamps'; K.root.add(lm); ops.lm = lm;
+    }
+    K.out.dyn.pkOps = ops;
   }
 
   /* ---- late-June snow: plowed banks behind the barriers high up (own random stream) ---- */
@@ -3758,6 +3836,39 @@ const World = (function () {
 
   /* ---- race-day animation: the marshals wave their flags as the car goes by (pkOpsUpdate runs every frame when out.dyn.pkOps is set) ---- */
   function pkOpsUpdate(ops, t, car) {
+    const dt = clamp(t - ops.t, 0, 0.1); ops.t = t; if (!car) return;
+    const cx = car.x, cz = car.z, vx = car.vx || 0, vz = car.vz || 0;
+    if (ops.fm) {   // flags: held out low; from ~60 m the arm goes up and waves, frantic while the car comes (and right by it), calmer once it has passed
+      const E = ops.fm.instanceMatrix.array; let vis = false, ch = false;
+      for (let k = 0; k < ops.F.length; k++) { const f = ops.F[k], dx = f.x - cx, dz = f.z - cz, d2 = dx * dx + dz * dz;
+        if (d2 > 25000) { if (f.on) { f.lv = f.fr = 0; ops.flagM(E, k * 16, f, 0, -1.7); f.on = false; ch = true; } continue; }
+        vis = true; const d = Math.sqrt(d2), goal = 1 - sstep(52, 66, d), fg = d < 16 || dx * vx + dz * vz > 0 ? 1 : 0;
+        f.lv += (goal - f.lv) * Math.min(1, dt * 3.5); f.fr += (fg * goal - f.fr) * Math.min(1, dt * 2.2); f.ph += dt * lerp(4, 12, f.fr);
+        if (f.lv < 0.002 && !f.on) continue;
+        const th = f.lv * lerp(0.4, 0.85, f.fr) * Math.sin(f.ph), phi = lerp(-1.7, -0.18, f.lv) + f.lv * f.fr * 0.15 * Math.sin(f.ph * 2 + 1);
+        ops.flagM(E, k * 16, f, th, phi); f.on = f.lv >= 0.002; ch = true; }
+      ops.fm.visible = vis; if (ch) ops.fm.instanceMatrix.needsUpdate = true;
+    }
+    if (ops.lm) {   // light bars: the lamps flash in turn (double flash), only those near the car are updated
+      const C = ops.lm.instanceColor.array; let vis = false;
+      for (let k = 0; k < ops.L.length; k++) { const l = ops.L[k], dx = l.p[0] - cx, dz = l.p[2] - cz; if (dx * dx + dz * dz > 40000) continue;
+        vis = true; const ph = (t * 1.8 + (l.k % 2) * 0.5) % 1, on = ph < 0.16 || (ph > 0.26 && ph < 0.44), b = on ? 1.4 : 0.28;
+        C[k * 3] = Math.min(1, l.cl[0] * b); C[k * 3 + 1] = Math.min(1, l.cl[1] * b); C[k * 3 + 2] = Math.min(1, l.cl[2] * b); }
+      ops.lm.visible = vis; if (vis) ops.lm.instanceColor.needsUpdate = true;
+    }
+    if (ops.hp) {   // the hairpins' crowds: when the car is near, the ones on the grass stand up and everyone near joins the cheering (the shared crowd shader
+      // leaves ~28% out by a phase hash: their phase is nudged); pose + phase are per instance (aCrowd.x), swapped back when the car has gone
+      if (!ops.hpInit) { ops.hpInit = true; const grp = ops.root.getObjectByName('crowds');
+        if (grp) for (const im of grp.children) { const at = im.geometry && im.geometry.getAttribute('aCrowd'); if (!at || !im.isInstancedMesh) continue; const M = im.instanceMatrix.array, A = at.array, ox = im.position.x, oz = im.position.z;
+          for (let q = 0; q < im.count; q++) { const x = M[q * 16 + 12] + ox, z = M[q * 16 + 14] + oz;
+            for (const h of ops.hp) { if ((x - h.x) ** 2 + (z - h.z) ** 2 > 1100) continue;
+              const a0 = A[q * 2], v = A[q * 2 + 1], pose = Math.floor(a0); if (pose === 5) break;
+              const ok = (fr) => { const e = fr * 6.2832 * 2.713 + v * 0.0171, u = e - Math.floor(e); return u > 0.36 && u < 0.97; };
+              let fr = a0 - pose; for (let n = 0; n < 60 && !ok(fr); n++) fr = (fr + 0.0137) % 0.997;
+              const a1 = (pose === 6 ? 1 : pose) + fr; if (a1 !== a0) { if (!h.it) h.it = []; h.it.push(A, q * 2, a0, a1, at); } break; } } } }
+      for (const h of ops.hp) { if (!h.it) continue; const on = (h.x - cx) ** 2 + (h.z - cz) ** 2 < 8100; if (on === h.st) continue; h.st = on;
+        for (let k = 0; k < h.it.length; k += 5) { h.it[k][h.it[k + 1]] = on ? h.it[k + 3] : h.it[k + 2]; h.it[k + 4].needsUpdate = true; } }
+    }
   }
 
   function buildPikes(scene, tex, opts) {
@@ -3995,7 +4106,7 @@ const World = (function () {
       const hard = (x, z) => { for (let k = 0; k < excl.length; k++) { const e = excl[k]; if (crSoft.has(e)) continue; const dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };   // huts, pads, car parks
       const M = { first: 2.8, gap: 1.05, below: 0.6, maxSlope: 0.55, excluded: hard, sit: 0.3, flag: 0.08, keepBar: 1.6 };
       const run = (sa, sb, side, o) => crowdRun(CR, Math.max(sa, sStart + 70), Math.min(sb, sFin - 50), side, Object.assign({}, M, o));
-      for (const c of T.corners) { if (c.sev < 3) continue; const sm = (c.i0 + c.i1) / 2 * T.ds; for (const sd of [-1, 1]) run(sm - 20, sm + 20, sd, { rows: 3, dens: 0.6, label: 'PK hairpin ' + Math.round(sm - sStart) }); }
+      for (const c of T.corners) { if (c.sev < 3) continue; const sm = (c.i0 + c.i1) / 2 * T.ds; for (const sd of [-1, 1]) run(sm - 20, sm + 20, sd, { rows: 3, dens: 0.6, flag: 0.2, label: 'PK hairpin ' + Math.round(sm - sStart) }); }
       for (const d of [306, 546, 810, 1312, 1404]) { const c = T.corners.find(q => Math.abs(q.s0 - sStart - d) < 20); if (c) run(c.s0 - 8, c.s0 + 46, c.dir, { rows: 3, dens: 0.6, label: 'PK bend ' + d }); }
       for (const sd of [-1, 1]) run(sStart + 2640, sStart + 3400, sd, { rows: 2, dens: 0.2, clump: 0.8, label: "PK W's" });
       T.cpS.forEach((s0) => { const i = T.idx(s0), side = T.br[i] > T.bl[i] ? 1 : -1; run(s0 - 26, s0 + 22, side, { first: 4.9, rows: 2, dens: 0.6, label: 'PK cp+' }); run(s0 - 22, s0 + 18, -side, { first: 3.8, rows: 2, dens: 0.5, label: 'PK cp-' }); });
