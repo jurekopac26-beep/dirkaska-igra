@@ -671,8 +671,57 @@ const Render = (function () {
     clearPropMeshes();
     world = World.build(scene, track, tex, { density });
     if (!world.farClip && camera.far !== 700) { camera.far = 700; camera.updateProjectionMatrix(); }
-    applyTheme((track.def && track.def.theme) || 'lake');
+    themeId = (track.def && track.def.theme) || 'lake'; wetOn = false; if (rain) rain.visible = false;
+    applyTheme(themeId);
     return world;
+  }
+
+  /* ---------------- rain (a wet race: Race.wet on a track with def.rain) ----------------
+     setWet: the world's puddles shown, the road darker and glossy, the grass darker, the theme's rain light (THEMES[theme + 'Rain']), the haze
+     closer, and the rain itself: one mesh of streaks, each a thin quad along its fall turned to the camera. The drops are fixed in the world in a
+     box of air that wraps around the view (the vertex shader), so they do not travel with the camera; they fall at 11 m/s, blown by the wind. */
+  let rain = null;
+  function makeRain() {
+    const n = 3000, P = new Float32Array(n * 12), E = new Float32Array(n * 8), I = [];
+    for (let k = 0; k < n; k++) {
+      const x = Math.random(), y = Math.random(), z = Math.random();
+      for (let v = 0; v < 4; v++) { const o = k * 4 + v; P[o * 3] = x; P[o * 3 + 1] = y; P[o * 3 + 2] = z; E[o * 2] = v & 1; E[o * 2 + 1] = v & 2 ? 1 : -1; }
+      const b = k * 4; I.push(b, b + 1, b + 3, b, b + 3, b + 2);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('aE', new THREE.BufferAttribute(E, 2)); g.setIndex(I);
+    g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
+    const mat = new THREE.ShaderMaterial({
+      uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTime: { value: 0 }, uC: { value: new THREE.Vector3() }, uBox: { value: new THREE.Vector3(64, 46, 64) } }]),
+      vertexShader: ['uniform float uTime;', 'uniform vec3 uC;', 'uniform vec3 uBox;', 'attribute vec2 aE;', 'varying float vA;', '#include <fog_pars_vertex>',
+        'void main() {',
+        '  const vec3 V = vec3(1.3, -11.0, 0.5);',   // (m/s: the fall and the wind)
+        '  vec3 p = position * uBox + V * uTime;',
+        '  p = uC + mod(p - uC + 0.5 * uBox, uBox) - 0.5 * uBox;',   // (into the box of air around the view)
+        '  vec3 ax = normalize(V), toC = cameraPosition - p; float dc = length(toC);',
+        '  vec3 sd = normalize(cross(ax, toC));',
+        '  float w = max(0.018, dc * 0.0011);',   // (never much thinner than a pixel)
+        '  p += -ax * aE.x * 0.9 + sd * aE.y * w;',   // (a streak 0.9 m long up along its fall)
+        '  vec4 mvPosition = modelViewMatrix * vec4(p, 1.0); gl_Position = projectionMatrix * mvPosition;',
+        '  vec3 r = abs(p - uC) / (0.5 * uBox);',
+        '  vA = 0.3 * (1.0 - 0.65 * aE.x) * smoothstep(1.0, 0.75, max(r.x, max(r.y, r.z))) * smoothstep(3.0, 10.0, dc);',   // (fading at the box's walls and right at the lens)
+        '  #include <fog_vertex>',
+        '}'].join('\n'),
+      fragmentShader: ['varying float vA;', '#include <fog_pars_fragment>', 'void main() { gl_FragColor = vec4(0.8, 0.84, 0.88, vA);', '  #include <fog_fragment>', '}'].join('\n'),
+      transparent: true, depthWrite: false, fog: true });
+    const m = new THREE.Mesh(g, mat); m.frustumCulled = false; m.renderOrder = 5; m.name = 'rain';
+    scene.add(m); return m;
+  }
+  function setWet(on) {
+    const W = world && world.dyn && world.dyn.wet; on = !!(on && W);
+    if (on === wetOn) return;
+    wetOn = on;
+    W.puddles.visible = on;
+    W.road.color.setScalar(on ? 0.64 : 1); W.road.shininess = on ? 28 : W.base.sh; W.road.specular.setHex(on ? 0x3c3e40 : W.base.sp);
+    W.ground.color.setScalar(on ? 0.8 : 1);
+    applyTheme(on && THEMES[themeId + 'Rain'] ? themeId + 'Rain' : themeId);
+    if (on && !rain) rain = makeRain();
+    if (rain) rain.visible = on;
   }
 
   /* ---------------- knockable trackside props (cones, pylons, tyre stacks, straw bales, crates, roadside posts): one instanced mesh per kind ---------------- */
@@ -809,6 +858,8 @@ const Render = (function () {
     rbring:   { fog: 0xc6daea, sun: 0xfff1d8, sunI: 1.12, sky: 0xcfe3fb, gnd: 0x46602c, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.06, sunOff: [-86, 78, 52] },   // Styria in early summer, an afternoon sun (longer shadows): clear alpine air, fresh meadows, dark spruce woods
     suzuka:   { fog: 0xc8d9e6, sun: 0xfff1dc, sunI: 1.06, sky: 0xd5e7fa, gnd: 0x4f5c34, hemiI: 0.62, tint: [1.01, 1.0, 0.99], sat: 1.12 },   // Suzuka: a clear spring day in Mie
   };
+  THEMES.ouniRain = { fog: 0x98a2a8, sun: 0xe6edf2, sunI: 0.4, sky: 0xb2bcc4, gnd: 0x3a4430, hemiI: 0.98, tint: [0.98, 1.0, 1.02], sat: 0.9, sunOff: [-60, 110, 40] };   // Ouninpohja in the rain: low grey cloud, flat light, the haze closing in (setWet)
+  let themeId = 'lake', wetOn = false;
   function applyTheme(id) {
     const t = THEMES[id] || THEMES.lake;
     sunOff = t.sunOff || [-80, 96, 70];   // low evening sun where the theme asks for it (long shadows)
@@ -912,6 +963,7 @@ const Render = (function () {
     for (const v of old) disposeView(v);   // (after the new cars exist: their shaders are reused, not compiled again)
     setupCrew(race);
     particles.clear(); sparkP.clear(); skids.clear(); cam.init = false;
+    setWet(race.wet);
   }
 
   /* ---------------- pit crews (Bakreni gozd) ----------------
@@ -1357,7 +1409,7 @@ const Render = (function () {
       // dirt builds up while driving on grass/gravel/makadam (never washes off during a race)
       if (v.scrU) v.scrU.value = Core.sstep(0.3, 0.9, c.dmg || 0);
       if (v.dirtU && !(opt && opt.noFx) && !c.air && dt > 0) {
-        let loose = 0; for (let k = 0; k < 4; k++) { const sf = c.ws[k]; if (sf === 2 || sf === 3 || sf === 5) loose++; }
+        let loose = 0; for (let k = 0; k < 4; k++) { const sf = c.ws[k]; if (sf === 2 || sf === 3 || sf >= 5) loose++; }
         if (loose) v.dirtU.value = Math.min(1, v.dirtU.value + dt * loose * 0.012 * clamp(c.speed / 12, 0.2, 1.5));
       }
       if (v.marker) { v.marker.visible = !!markerOn; v.marker.position.y = 4 + Math.sin(time * 5) * 0.3; v.marker.rotation.y = time * 2; }
@@ -1503,10 +1555,10 @@ const Render = (function () {
       const hard = -(c.impactVY || 0), gy = c.roadY || 0;
       if (hard > 2.2) {
         let loose = 0; for (let k = 0; k < 4; k++) { const sf = c.ws[k]; if (sf >= 2 && sf !== 4) loose++; }
-        const dirt = loose >= 2, n = Math.min(26, 8 + hard * 2.2);
+        const dirt = loose >= 2, n = Math.min(26, 8 + hard * 2.2), wetL = c.ws[0] >= 6 || c.ws[2] >= 6;   // (on the wet gravel: a splash of muddy water)
         for (let k = 0; k < n; k++) {
           const a = k / n * Math.PI * 2 + Math.random() * 0.4, sp = (2.5 + Math.random() * 3) * Math.min(1.6, hard / 6);
-          const cr = dirt ? 0.8 : 0.78, cg = dirt ? 0.66 : 0.77, cb = dirt ? 0.46 : 0.75;
+          const cr = wetL ? 0.66 : dirt ? 0.8 : 0.78, cg = wetL ? 0.67 : dirt ? 0.66 : 0.77, cb = wetL ? 0.68 : dirt ? 0.46 : 0.75;
           particles.emit(x + Math.cos(a) * 1.3, gy + 0.3, z + Math.sin(a) * 1.3, Math.cos(a) * sp + c.vx * 0.3, 0.6 + Math.random() * 0.8, Math.sin(a) * sp + c.vz * 0.3, 1.0 + Math.random() * 0.7, 1.1, 5 + Math.random() * 2.5, cr, cg, cb, 0.5, -0.08, 2.2, gy);
         }
         if (dirt) for (let k = 0; k < 8; k++) { const a = Math.random() * Math.PI * 2, sp = 2 + Math.random() * 3; particles.emit(x, gy + 0.3, z, Math.cos(a) * sp + c.vx * 0.4, 3 + Math.random() * 2.5, Math.sin(a) * sp + c.vz * 0.4, 0.8 + Math.random() * 0.4, 0.3, 0.26, 0.34, 0.27, 0.2, 0.95, 14, 0.4, gy); }
@@ -1532,6 +1584,7 @@ const Render = (function () {
           if (d > 0.45 && d < 4) {
             const a = clamp(0.4 + intens * 0.4, 0.4, 0.86);
             if (onHard) skids.add(last[0], last[1], px, pz, 0.2, 0.035, 0.035, 0.04, a * 0.92, a, last[2], yb);
+            else if (surf >= 6) skids.add(last[0], last[1], px, pz, 0.22, 0.17, 0.14, 0.1, a * 0.9, a, last[2], yb);   // (wet gravel: dark, muddy)
             else if (surf === 3 || surf === 5) skids.add(last[0], last[1], px, pz, 0.22, 0.42, 0.27, 0.14, a * 0.85, a * 0.95, last[2], yb);
             else skids.add(last[0], last[1], px, pz, 0.22, 0.14, 0.2, 0.07, a * 0.75, a * 0.85, last[2], yb);
             v.sk[k] = [px, pz, yb];
@@ -1547,6 +1600,15 @@ const Render = (function () {
           const vxs = c.vx * 0.12 + (Math.random() - 0.5) * 1.6, vzs = c.vz * 0.12 + (Math.random() - 0.5) * 1.6;
           const g = 0.88 + Math.random() * 0.1;
           particles.emit(px, 0.35 + yb, pz, vxs, 0.5 + Math.random() * 0.6, vzs, 1.6 + Math.random() * 1.0, 0.9, 4.4 + Math.random() * 1.8, g, g, g + 0.02, 0.4, -0.05, 1.2, yb);
+        }
+      } else if (surf >= 6 && spd > 4) {   // wet gravel: a spray of muddy water off the tyres (a puddle: a big splash), no dust
+        const pud = surf === 7;
+        v.acc[k] += (clamp(spd / 20, 0.2, 1.5) * (pud ? 3.2 : 1) + intens * 0.4) * 24 * dt;
+        while (v.acc[k] >= 1) {
+          v.acc[k] -= 1;
+          const vxs = c.vx * 0.3 + (Math.random() - 0.5) * (pud ? 3.5 : 1.4), vzs = c.vz * 0.3 + (Math.random() - 0.5) * (pud ? 3.5 : 1.4), sh = 0.9 + Math.random() * 0.12;
+          particles.emit(px, 0.25 + yb, pz, vxs, pud ? 1.8 + Math.random() * 2.6 : 0.7 + Math.random() * 1.2, vzs, 0.45 + Math.random() * 0.35, 0.5, (pud ? 2.6 : 2.0) + Math.random(), (pud ? 0.8 : 0.7) * sh, (pud ? 0.83 : 0.71) * sh, (pud ? 0.86 : 0.72) * sh, pud ? 0.5 : 0.34, pud ? 7 : 4.5, 1.4, yb);
+          if (Math.random() < 0.22) particles.emit(px, 0.2 + yb, pz, -c.vx * 0.05 + (Math.random() - 0.5) * 2, 1.5 + Math.random() * 2, -c.vz * 0.05 + (Math.random() - 0.5) * 2, 0.5, 0.2, 0.14, 0.2, 0.16, 0.11, 1, 12, 0.4, yb);   // clods of mud
         }
       } else if (!onHard && spd > 4) {
         const amt = (surf === 3 || surf === 5 ? 1.0 : 0.45) * clamp(spd / 20, 0.2, 1.4) + intens * 0.5, D = dust || DUST0;
@@ -1642,7 +1704,8 @@ const Render = (function () {
     if (world && world.camFloor) { const gf = world.camFloor(px, pz) + 4; if (py < gf) py = gf; }   // mountain worlds: never under the slope behind the car
     if (cam.shake > 0) { px += (Math.random() - 0.5) * cam.shake; py += (Math.random() - 0.5) * cam.shake; pz += (Math.random() - 0.5) * cam.shake; cam.shake = Math.max(0, cam.shake - dt * 3); }
     camera.position.set(px, py, pz); camera.lookAt(tx, ty, tz); cam.vcx = tx; cam.vcz = tz; cam.vd = Math.hypot(px - tx, py - ty, pz - tz);
-    { const dC = Math.hypot(px - tx, py - ty, pz - tz); scene.fog.near = dC * 1.35; scene.fog.far = dC * 5.5; }
+    { const dC = Math.hypot(px - tx, py - ty, pz - tz); scene.fog.near = dC * (wetOn ? 0.8 : 1.35); scene.fog.far = dC * (wetOn ? 3.9 : 5.5); }   // (in the rain the haze closes in)
+    if (wetOn && rain) { const U = rain.material.uniforms; U.uTime.value = time % 1000; U.uC.value.set((px + tx) / 2, (py + ty) / 2, (pz + tz) / 2); }
     if (world && world.farClip) { const f = Math.min(700, scene.fog.far + 40); if (Math.abs(camera.far - f) > 6) { camera.far = f; camera.updateProjectionMatrix(); } }   // long corridor worlds: nothing past the fog is drawn
     // sun/shadow follows view center
     lastMode = mode;
@@ -1757,6 +1820,6 @@ const Render = (function () {
   const dbg = { noSmoke: false };
   function setDebug(o) { Object.assign(dbg, o); }
   function fxStats() { let n = 0; for (let i = 0; i < particles.max; i++) if (particles.life[i] > 0) n++; return { alive: n, emitted: particles.cur }; }
-  return { setDebug, fxStats, setGhost, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; } };
+  return { setDebug, fxStats, setGhost, init, buildWorld, setWet, get wet() { return wetOn; }, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; } };
 })();
 

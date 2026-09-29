@@ -1008,11 +1008,11 @@
   }
  },
  "ouninpohja/race/cs": {
-  "digest": "1c338615e74a9faee189f015",
-  "lead": 2348.6,
+  "digest": "623738d2cacbfa96d7752d24",
+  "lead": 2348.3,
   "car0": [
-   916.52,
-   -1971.99
+   916.24,
+   -1971.89
   ],
   "cover": {
    "dmg": 0,
@@ -1022,11 +1022,11 @@
   }
  },
  "ouninpohja/race/arcade": {
-  "digest": "37afe2be9dcd06ebf976b014",
-  "lead": 2226.3,
+  "digest": "477105a2c03fdb4fc273f8c7",
+  "lead": 2226.1,
   "car0": [
-   800.88,
-   -1932.25
+   800.68,
+   -1932.14
   ],
   "cover": {
    "dmg": 0,
@@ -1036,25 +1036,25 @@
   }
  },
  "ouninpohja/demo/cs": {
-  "digest": "f9259cfa9fbe8015a30174c3",
-  "lead": 2314.8,
+  "digest": "1c8b4c23fd4ce0edde0d578a",
+  "lead": 2314.9,
   "car0": [
-   883.72,
-   -1960.2
+   883.82,
+   -1960.24
   ],
   "cover": {
    "dmg": 0,
-   "loose": 0,
+   "loose": 4,
    "rescues": 0,
    "repairs": 0
   }
  },
  "ouninpohja/demo/arcade": {
-  "digest": "371ea087624822366aabfcf0",
-  "lead": 2242.6,
+  "digest": "9a08e3653111a15860e3eeae",
+  "lead": 2240.3,
   "car0": [
-   815.75,
-   -1935.74
+   813.49,
+   -1935.15
   ],
   "cover": {
    "dmg": 0,
@@ -1064,11 +1064,11 @@
   }
  },
  "ouninpohja/upg/cs": {
-  "digest": "73a1537a46480ae6d0fc649c",
-  "lead": 2337.5,
+  "digest": "23b1592fcae88440f0591938",
+  "lead": 2338.8,
   "car0": [
-   906.01,
-   -1968.23
+   907.23,
+   -1968.66
   ],
   "cover": {
    "dmg": 0,
@@ -1078,11 +1078,11 @@
   }
  },
  "ouninpohja/upg/arcade": {
-  "digest": "03630c975bcd3ed3a8e4161d",
-  "lead": 2259.7,
+  "digest": "9778c01f88060b0c46646dbb",
+  "lead": 2258.5,
   "car0": [
-   833.05,
-   -1941.28
+   831.89,
+   -1940.86
   ],
   "cover": {
    "dmg": 0,
@@ -1092,11 +1092,11 @@
   }
  },
  "ouninpohja/crash/cs": {
-  "digest": "205d1b9f0f84a40b1f952d9c",
-  "lead": 2049.1,
+  "digest": "c754c69cad53d609ad126b2b",
+  "lead": 2048.5,
   "car0": [
-   671.03,
-   -1825.41
+   670.72,
+   -1824.88
   ],
   "cover": {
    "dmg": 0.81,
@@ -1106,8 +1106,8 @@
   }
  },
  "ouninpohja/crash/arcade": {
-  "digest": "67a897e72183f187dfcc2b42",
-  "lead": 1965.8,
+  "digest": "96799824e51d345e7e5e6fa1",
+  "lead": 1965.9,
   "car0": [
    646.04,
    -1750.72

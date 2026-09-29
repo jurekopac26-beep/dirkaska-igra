@@ -260,6 +260,7 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 /* ================= TRACK SELECT ================= */
 #s-track { justify-content: center; }
 .track-panel { width: min(760px, 96vw); max-height: 100%; display: flex; flex-direction: column; }
+.wx-row { margin: 2px 0 0; } .wx-row .rlbl { min-width: 0; }
 .track-list { display: flex; gap: 12px; overflow-x: auto; padding: 4px 2px 8px; touch-action: pan-x pan-y; }
 .track-card { flex: 1 0 220px; max-width: 340px; border: 2px solid rgba(255,255,255,.2); border-radius: 12px; padding: 10px; background: rgba(255,255,255,.04); cursor: pointer; text-align: left; color: inherit; font: inherit; }
 .track-card.sel { border-color: var(--curb); background: rgba(230,59,46,.14); box-shadow: 0 0 0 2px rgba(230,59,46,.35); }
