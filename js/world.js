@@ -4852,7 +4852,9 @@ const World = (function () {
      the straight and past the spectators, tyre walls outside the slow corners, armco elsewhere; the pit lane with the crews' boxes, the team
      stands on the pit wall and the 300 m pit building on level ground (NR.pad); the grandstands (the covered Start-Ziel along the whole
      straight with the voestalpine wing on top, Steiermark, the long Red Bull stand up the hill, T3, Nord, T9, T10) with seated crowds, the
-     orange fans on the grass, the steel bull on its arch on the infield hill, braking boards, turn numbers, marshal posts, Styrian farms. */
+     orange fans on the grass with food stalls behind them, the steel bull on its arch on the infield hill, the 2024 gravel strips at Turns
+     9 and 10, advertising boards on the walls, braking boards, turn numbers, marshal posts, TV towers, recovery trucks, car parks on the
+     built-up land, Styrian farms. */
   const RB_SHIRTS = [[1, 0.5, 0.08], [0.98, 0.45, 0.06], [1, 0.56, 0.12], [0.95, 0.42, 0.1], [0.94, 0.94, 0.92], [0.12, 0.16, 0.36], [0.86, 0.12, 0.14], [0.98, 0.8, 0.12],
     [0.16, 0.4, 0.86], [0.12, 0.13, 0.16], [0.2, 0.6, 0.3], [0.97, 0.52, 0.1]];   // the spectators' shirts: lots of orange (the Dutch fans), Red Bull navy, Austrian red and white
   function rbAtlas() {   // text boards (4 x 16 cells of 256 x 64): turn numbers 1-10, the braking boards, banners
@@ -4877,6 +4879,15 @@ const World = (function () {
       for (let k = 0; k < 64; k++) { if (r() < 0.1) continue; const px = k * 4 + (r() - 0.5) * 1.2, py = row * 8 + 1;
         x.fillStyle = cols[Math.floor(r() * cols.length)]; x.fillRect(px, py + 2, 3, 4); x.fillStyle = r() < 0.5 ? '#f1c7a1' : '#a86f45'; x.fillRect(px + 0.5, py, 2, 2); }
     }
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t;
+  }
+  function rbGravelTex() {   // the grey gravel of the 2024 strips at Turns 9 and 10: pebbles with a shadow and a highlight each
+    const c = document.createElement('canvas'); c.width = 128; c.height = 128; const x = c.getContext('2d'), r = rng(2024);
+    x.fillStyle = '#8f8a82'; x.fillRect(0, 0, 128, 128);
+    for (let k = 0; k < 900; k++) { const px = r() * 128, py = r() * 128, rr = 0.8 + r() * 1.8, v = 120 + Math.floor(r() * 90), w2 = (a) => { for (const ox of [-128, 0, 128]) for (const oy of [-128, 0, 128]) a(px + ox, py + oy); };
+      w2((X, Y) => { x.fillStyle = 'rgba(40,36,32,0.45)'; x.beginPath(); x.arc(X + 0.6, Y + 0.7, rr, 0, TAU); x.fill();
+        x.fillStyle = `rgb(${v},${v - 4},${v - 12})`; x.beginPath(); x.arc(X, Y, rr, 0, TAU); x.fill();
+        x.fillStyle = 'rgba(255,255,250,0.35)'; x.beginPath(); x.arc(X - rr * 0.3, Y - rr * 0.35, rr * 0.4, 0, TAU); x.fill(); }); }
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t;
   }
   // the verge's cross-section beyond the road edge ([offset, height above the road]), lifted onto the ground where it rises: the road ribbons
@@ -4911,6 +4922,9 @@ const World = (function () {
     P.colMod = (x, z, c) => {
       const f = nrLCf(x, z, 2), n = P.n5(x * 0.55 + 700, z * 0.55), m = P.n3(x * 1.6 + 300, z * 1.6), k = 0.88 + (n - 0.5) * 0.2 + (m - 0.5) * 0.1;
       c[0] *= k; c[1] *= k; c[2] *= k * 0.96;
+      { const fm = nrLCf(x, z, 0), yf = sstep(0.55, 0.75, P.n3(x * 0.9 + 90, z * 0.9 - 40)) * 0.75 * fm, wf = sstep(0.6, 0.8, P.n1(x * 1.3 - 210, z * 1.3 + 75)) * 0.5 * fm;   // flowering meadows: buttercup and daisy patches
+        c[0] = lerp(c[0], c[0] * 1.3 + 0.08, yf); c[1] = lerp(c[1], c[1] * 1.12 + 0.04, yf); c[2] = lerp(c[2], c[2] * 0.6, yf);
+        c[0] = lerp(c[0], c[0] * 1.15 + 0.12, wf); c[1] = lerp(c[1], c[1] * 1.05 + 0.1, wf); c[2] = lerp(c[2], c[2] * 1.2 + 0.14, wf); }
       if (f > 0) { const crop = P.n1(x * 0.35 + 1200, z * 0.35), col = crop < 0.42 ? [0.62, 0.86, 0.5] : crop < 0.64 ? [1.5, 1.08, 0.5] : [1.2, 1.0, 0.72];
         c[0] = lerp(c[0], col[0], f * 0.85); c[1] = lerp(c[1], col[1], f * 0.85); c[2] = lerp(c[2], col[2], f * 0.85); }
     };
@@ -4993,6 +5007,23 @@ const World = (function () {
       }
       rc.addTo(root, roMat, false, true); gb.addTo(root, lMat, false, true);
     }
+    /* ---- 2024: the gravel strips just past the kerbs at the exits of Turns 9 and 10 (def.gravelStrips; Core: gravel there), and a blue
+       line along the white track limit beside them (a contrast for the stewards' cameras) ---- */
+    if (def.gravelStrips) {
+      const gs = new GB(true), gbl = new GB(), blue = [0.1, 0.32, 0.86], gcl = [1.05, 1.05, 1.05], uvg = (p) => [p[0] / 2.5, -p[2] / 2.5];
+      for (const [a, b, side, wd] of def.gravelStrips) {
+        for (let d = a; d < b - 0.01; d += ds) {
+          const i = T.idx(sAt(d)), j = T.idx(sAt(Math.min(b, d + ds))), o0 = w + T.curbW, o1 = o0 + wd;
+          const A = Pt(i, side * o0, 0.036), B = Pt(i, side * o1, 0.036), C = Pt(j, side * o1, 0.036), D = Pt(j, side * o0, 0.036);
+          gs.quadUp(A, B, C, D, [gcl, gcl, gcl, gcl], [uvg(A), uvg(B), uvg(C), uvg(D)]);
+        }
+        for (let d = a - 30; d < b + 12; d += ds) {   // the blue line: from before the corner to the end of the strip
+          const i = T.idx(sAt(d)), j = T.idx(sAt(d + ds));
+          gbl.quadUp(Pt(i, side * (w - 0.2), 0.036), Pt(i, side * w, 0.036), Pt(j, side * w, 0.036), Pt(j, side * (w - 0.2), 0.036), [blue, blue, blue, blue]);
+        }
+      }
+      addM(gs, new THREE.MeshLambertMaterial({ map: ownTex(rbGravelTex()), vertexColors: true })); addM(gbl, lMat);
+    }
     // chequered start / finish line and the grid boxes (13 cars, staggered)
     {
       const gq = new GB(true), gw = new GB(), uM = Math.round(w * 2 / 0.8) / 16, W1 = [1, 1, 1], wh = [0.93, 0.93, 0.9], HYp = (p) => T.hy[p[3]];
@@ -5060,6 +5091,14 @@ const World = (function () {
       addM(gr, rMat, true); addM(gt, tyMat, true);
     }
     const nPosts = posts.addTo(root, true);
+    // advertising boards on the concrete walls (the game's own brands, tex.sponsors: 4 m boards, the text read from the road)
+    { const sb = new Chunks(128, true);
+      for (const side of [-1, 1]) for (let i = 0, n = 0; i + 2 <= N; i += 2) {
+        const j = (i + 2) % N; if (kindAt(i, side) !== 1 || kindAt(j, side) !== 1 || kindAt((i + 1) % N, side) !== 1) continue;
+        const k = (n++ * 3 + (side > 0 ? 1 : 0)) % 8, u0 = (k % 2) * 0.5, v1 = 1 - Math.floor(k / 2) * 0.25, bar = side > 0 ? T.br : T.bl, o = (ii) => side * (bar[ii] + 0.1);
+        const A = Pt(i, o(i), 0.14), B = Pt(j, o(j), 0.14), C = Pt(j, o(j), 0.96), D = Pt(i, o(i), 0.96), uL = side < 0 ? u0 : u0 + 0.5, uR = side < 0 ? u0 + 0.5 : u0;
+        sb.get(A[0], A[2]).quadO(A, B, C, D, W1, Pt(i, side * (bar[i] + 2), 0.5), [[uL, v1 - 0.25], [uR, v1 - 0.25], [uR, v1], [uL, v1]]); }
+      sb.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true); }
     // debris fences (chain link on posts) behind the walls and the tyre walls
     const scen = new Chunks(128), ban = new GB(true), fenceG = new GB(true);
     for (const side of [-1, 1]) {
@@ -5188,6 +5227,8 @@ const World = (function () {
       const WH = [0.92, 0.92, 0.9], WT = [0.78, 0.78, 0.8], GLS = [0.3, 0.42, 0.55], GLD = [0.2, 0.28, 0.38], SH = [0.72, 0.74, 0.77];
       const gb = (s) => { const p = T.pitAt(s); return p && p.t > 0.999 ? p.o + 12.5 : null; };   // the garages' front (the apron's back edge)
       const crewQ = new Set(); for (let q = pq0, n = 0; q <= pq1 && n < 13; q += 10) { const p = T.pitAt(sStart + q); if (p && p.t >= 0.999) { crewQ.add(q); n++; } }
+      const CU = [[-2.4, 14.7], [0, 15.5], [4, 16.2], [9, 16.7], [14.2, 17.6]], CL = [[-2.4, 14.7], [0, 14.95], [4, 15.3], [9, 15.8], [14.2, 17.3]];   // the canopy's profile (from the garages' front)
+      let bay0 = null, bay1 = null;
       for (let q = pq0 - Math.floor((pq0 - PB[0]) / 10) * 10; q < PB[1] - 5; q += 10) {   // (the bays line up with the crews' boxes)
         const s0 = sStart + q, f0 = gb(s0 + 5); if (f0 == null) continue;
         const o = f0 + 3.6, ik = T.idx(s0 + 1), g = scen.get(T.px[ik] + T.nx[ik] * o, T.pz[ik] + T.nz[ik] * o), b0 = f0 + 7.2, crew = crewQ.has(q), k = crew ? ((q - pq0) / 10) | 0 : 0;
@@ -5213,10 +5254,19 @@ const World = (function () {
         kbox(g, s0, 5, (f0 + 1.4 + back) / 2, 8.45, 10.02, 3.4, back - f0 - 1.4, GLS, WH);
         kbox(g, s0, 5, (f0 + 0.2 + back) / 2, 11.85, 10.02, 0.4, back - f0 - 0.2, WH, [0.84, 0.85, 0.87]);
         kbox(g, s0, 5, f0 + 1.2, 12.25, 10.02, 1.0, 0.1, [0.75, 0.8, 0.85]);                                  // the terrace's glass railing
-        kbox(g, s0, 5, o + 2.2, 15.2, 10.02, 0.35, 9.2, [0.96, 0.96, 0.95], [0.97, 0.97, 0.96]);                // canopy
-        if (q % 20 === 0) for (const lw of [f0 + 1.5, b0 + 3.8]) kbox(g, s0, 0.2, lw, 12.25, 0.3, 3.0, 0.3, [0.85, 0.86, 0.88], null, true);   // its columns
+        for (let p = 0; p + 1 < CU.length; p++) for (const [pr, cl, dn] of [[CU, p === 0 ? [0.86, 0.12, 0.16] : [0.96, 0.96, 0.95], -9], [CL, [0.74, 0.75, 0.78], 9]]) {   // the canopy: a wing (Domenig), cambered, the red leading edge over the apron
+          const A = at(s0, f0 + pr[p][0], pr[p][1]), B = at(s0 + 10, f0 + pr[p][0], pr[p][1]), C = at(s0 + 10, f0 + pr[p + 1][0], pr[p + 1][1]), D = at(s0, f0 + pr[p + 1][0], pr[p + 1][1]);
+          g.quadO(A, B, C, D, cl, at(s0 + 5, f0 + pr[p][0], pr[p][1] + dn)); }
+        if (q % 20 === 0) for (const [lw, yc] of [[f0 + 1.5, 15.0], [b0 + 3.8, 16.0]]) kbox(g, s0, 0.2, lw, 12.25, 0.3, yc - 12.25, 0.3, [0.85, 0.86, 0.88], null, true);   // its columns
         kbox(g, s0, 5, b0 + 2.2, 0, 10.02, 11.9, 4.6, [0.84, 0.84, 0.82], null, true);                        // the back half (offices, the paddock side)
         exclPush(T.px[ik] + T.nx[ik] * o, T.pz[ik] + T.nz[ik] * o, 12);
+        if (!bay0) bay0 = { s: s0, f0 }; bay1 = { s: s0 + 10, f0 };
+      }
+      for (const [bb, sd] of [[bay0, -1], [bay1, 1]]) if (bb) {   // the canopy's end plates: navy, a red edge along the top
+        const e = bb.s + sd * 0.3, ins = at(e, bb.f0 + 6, 15.2), g = scen.get(...atSf(bb.s, bb.f0 + 6).slice(0, 2)), nv = [0.12, 0.16, 0.32], rd = [0.86, 0.12, 0.16];   // (ins: the plate's middle)
+        const Pp = [[-3.0, 12.2], [-3.0, 15.9], [14.8, 18.9], [14.8, 12.2]].map(([oo, y]) => [bb.f0 + oo, y]);
+        for (const dd of [-0.3, 0.3]) g.quadO(at(e + dd, ...Pp[0]), at(e + dd, ...Pp[1]), at(e + dd, ...Pp[2]), at(e + dd, ...Pp[3]), nv, ins);
+        for (let k = 0; k < 4; k++) { const P1 = Pp[k], P2 = Pp[(k + 1) % 4]; g.quadO(at(e - 0.3, ...P1), at(e + 0.3, ...P1), at(e + 0.3, ...P2), at(e - 0.3, ...P2), k === 1 ? rd : nv, ins); }
       }
       { const q = PB[1] - 5, s0 = sStart + q, f0 = gb(s0), o = f0 != null ? f0 + 6 : 38, ik = T.idx(s0), g = scen.get(T.px[ik] + T.nx[ik] * o, T.pz[ik] + T.nz[ik] * o);   // race control: a glazed tower
         kbox(g, s0, 6, o, 0, 12, 18, 12, [0.86, 0.87, 0.88], WH); kface(g, s0, 0.5, 11.5, o - 6.02, 12.5, 17.2, GLD); kbox(g, s0, 6, o, 18, 13, 0.5, 13, WH);
@@ -5273,8 +5323,15 @@ const World = (function () {
           for (let k = 0; k < rows; k++) { const a0 = A.pts[1 + k * 2], a1 = A.pts[2 + k * 2], b0 = B.pts[1 + k * 2], b1 = B.pts[2 + k * 2], v = (k * 0.11) % 1, u0 = (m * 5) / 12;
             cg.quadUp([a0[0], a0[1] + 0.02, a0[2]], [a1[0], a1[1] + 0.02, a1[2]], [b1[0], b1[1] + 0.02, b1[2]], [b0[0], b0[1] + 0.02, b0[2]], [W1, W1, W1, W1], [[u0, v], [u0, v + 0.1], [u0 + len / 12, v + 0.1], [u0 + len / 12, v]]); }
         }
+        for (let m = 3; m + 3 < rows2.length; m += 3) {   // stairs between the blocks: a strip of bare concrete up the tiers every 15 m
+          const A = rows2[m], g = scen.get(A.pts[1][0], A.pts[1][2]);
+          for (let k = 0; k < rows; k++) { const [o0, y] = A.prof[1 + k * 2], o1 = A.prof[2 + k * 2][0], P = (ds2, o) => { const [x, z] = atSf(A.s + ds2, side * o); return [x, y + 0.045, z]; };
+            g.quadUp(P(-0.6, o0), P(0.6, o0), P(0.6, o1), P(-0.6, o1), [[0.76, 0.76, 0.74], [0.76, 0.76, 0.74], [0.8, 0.8, 0.78], [0.8, 0.8, 0.78]]); }
+        }
+        const underWing = (r) => def.wing && side === def.wing[1] && Math.abs(dS(r.s) - def.wing[0]) < 45.5;   // (Start-Ziel: the wing is the roof there)
         if (roof) for (let m = 0; m + 1 < rows2.length; m++) {   // the roof: a slab over the upper half, tilted up towards the track, columns at the back
           const A = rows2[m], B = rows2[m + 1], tA = A.top, tB = B.top, a0 = A.o0, a1 = A.o1, b0 = B.o0, b1 = B.o1;
+          if (underWing(A) || underWing(B)) continue;
           const q = (R2, o, y) => { const [x, z] = atSf(R2.s, side * o); return [x, y, z]; };
           const g = scen.get(A.pts[1][0], A.pts[1][2]), rc = [0.93, 0.94, 0.95], ru = [0.62, 0.64, 0.68];
           g.quadO(q(A, a0, tA + 0.8), q(B, b0, tB + 0.8), q(B, b1, tB), q(A, a1, tA), rc, q(A, (a0 + a1) / 2, tA - 5));   // (seen from above: light)
@@ -5283,7 +5340,8 @@ const World = (function () {
           if (m % 2 === 0) { const [x, z] = atSf(A.s, side * (a1 - 0.4)), y0 = nrGround(x, z) - 0.3; box(g, x, y0, z, 0.5, tA - y0, 0.5, T.hd[T.idx(A.s)], [0.86, 0.87, 0.9]); }
         }
         for (const r of rows2) { const [x, z] = atSf(r.s, side * (r.prof[0][0] + rows * dep * 0.5)); exclPush(x, z, rows * dep / 2 + 6); CR.exclAdd(x, z, rows * dep / 2 + 3); }
-        const nk = RB_BAN.findIndex(bn => bn[0] === name), M2 = rows2[rows2.length >> 1];
+        const nk = RB_BAN.findIndex(bn => bn[0] === name); let M2 = rows2[rows2.length >> 1];
+        if (M2 && underWing(M2)) M2 = rows2[Math.floor(rows2.length * 0.82)];   // (not on the wing: on the roof beyond it)
         if (nk >= 0 && M2 && (sections === 1 || sec % 5 === 2)) {   // the stand's name, big enough for the high cameras: painted on the roof, or on a board leaning back on top of an open stand's back wall
           const i = T.idx(M2.s), Wd = Math.min(roof ? 24 : 14, (b - a) * 0.8), H = roof ? 3.4 : 2.2, [u0, v0, u1, v1] = AUV(RB_AT.ban + nk), rx = -side * T.tx[i], rz = -side * T.tz[i];   // (the reader's right, looking at the stand from the track)
           const oN = roof ? M2.o0 + 1.2 : M2.prof[M2.prof.length - 3][0] - 0.4, yN = roof ? M2.top + 0.8 - 0.8 * (oN - M2.o0) / (M2.o1 - M2.o0) + 0.04 : M2.pts[M2.pts.length - 3][1] + 0.05;
@@ -5293,58 +5351,121 @@ const World = (function () {
           if (!roof) box(scen.get(xf, zf), (xn + xf) / 2, yN - 0.1, (zn + zf) / 2, Wd + 0.1, (yF - yN) + 0.1, 0.12, T.hd[i], [0.3, 0.31, 0.33], null, true); }   // (its frame)
         nStands++;
       }
-      if (sa < 0 && sb > 0 && def.wing) {   // the voestalpine wing: a 90 m racing car rear wing behind Start-Ziel (end plates, the main plane and a flap)
-        const [wd, wsd, wo] = def.wing, s0 = sAt(wd - 45), s1 = sAt(wd + 45), plates = [[s0, -1], [s1, 1]], stl = [0.6, 0.64, 0.7], stD = [0.3, 0.33, 0.38], nav = [0.13, 0.17, 0.3], red = [0.86, 0.12, 0.16];
-        for (const [s, sg] of plates) { const [x, z, hd, i] = atS(s, wsd * (wo + 1)), g = scen.get(x, z), y0 = nrGround(x, z) - 0.5, c = Math.cos(hd), sn = Math.sin(hd);   // the end plates: tall navy slabs
-          box(g, x, y0, z, 1.8, 30 - y0 + T.hy[i], 25, hd, nav, [0.2, 0.25, 0.4]);
-          for (const f of [-1, 1]) box(g, x + c * f * 0.93, T.hy[i] + 16.5, z + sn * f * 0.93, 0.06, 1.4, 25.1, hd, red, red); }   // (a red band round each)
-        const segs = 18;
-        for (let k = 0; k < segs; k++) {   // the main plane (an airfoil tilted up at the back) and the upper flap, in 5 m pieces along the span
-          const sa2 = sAt(wd - 44 + k * 88 / segs), sb2 = sAt(wd - 44 + (k + 1) * 88 / segs), yA = hyS(sa2), yB = hyS(sb2), g = scen.get(...atS(sa2, wsd * wo).slice(0, 2));
-          const Q = (s, o, y) => { const [x, z] = atSf(s, wsd * o); return [x, y, z]; }, ins = Q(sa2, wo, yA + 20.5);
-          const prof = [[wo - 11, 21.2], [wo - 5, 23.3], [wo + 3, 24.2], [wo + 11, 25.6]], und = [[wo - 11, 20.9], [wo - 4, 21.9], [wo + 4, 23.0], [wo + 11, 25.1]];
-          for (let p = 0; p < 3; p++) { g.quadO(Q(sa2, prof[p][0], yA + prof[p][1]), Q(sb2, prof[p][0], yB + prof[p][1]), Q(sb2, prof[p + 1][0], yB + prof[p + 1][1]), Q(sa2, prof[p + 1][0], yA + prof[p + 1][1]), p ? stl : red, [ins[0], ins[1] - 30, ins[2]]);
-            g.quadO(Q(sa2, und[p][0], yA + und[p][1]), Q(sb2, und[p][0], yB + und[p][1]), Q(sb2, und[p + 1][0], yB + und[p + 1][1]), Q(sa2, und[p + 1][0], yA + und[p + 1][1]), stD, [ins[0], ins[1] + 30, ins[2]]); }
-          g.quadO(Q(sa2, wo - 11, yA + 20.9), Q(sb2, wo - 11, yB + 20.9), Q(sb2, wo - 11, yB + 21.2), Q(sa2, wo - 11, yA + 21.2), stl, Q(sa2, wo, yA + 22));
-          const fl = [[wo + 6, 27.2], [wo + 12.5, 29.4]];   // the flap
-          g.quadO(Q(sa2, fl[0][0], yA + fl[0][1]), Q(sb2, fl[0][0], yB + fl[0][1]), Q(sb2, fl[1][0], yB + fl[1][1]), Q(sa2, fl[1][0], yA + fl[1][1]), [0.88, 0.9, 0.93], [ins[0], ins[1] - 40, ins[2]]);
-          g.quadO(Q(sa2, fl[0][0], yA + fl[0][1] - 0.35), Q(sb2, fl[0][0], yB + fl[0][1] - 0.35), Q(sb2, fl[1][0], yB + fl[1][1] - 0.35), Q(sa2, fl[1][0], yA + fl[1][1] - 0.35), stD, [ins[0], ins[1] + 40, ins[2]]);
-          if (k === 4 || k === 13) board(...(() => { const [x, z] = atSf((sa2 + sb2) / 2, wsd * (wo - 11.3)); return [x, yA + 21.1, z]; })(), wsd * T.nx[T.idx(sa2)], wsd * T.nz[T.idx(sa2)], 16, 1.9, k === 4 ? RB_AT.rbr : RB_AT.spielberg);   // (on the leading edge, towards the track)
+      if (sa < 0 && sb > 0 && def.wing) {
+        // the voestalpine wing (2014): a 90 m racing car rear wing on top of Start-Ziel, the stand's roof there: two end plates (dividing the
+        // stand), the main plane over the back rows on slim columns, the flap above it, the media centre's glass front under it behind the
+        // stand. All of it stays under the line from the high cameras (kino, iso: behind the stand, looking across it) to a car on the
+        // near edge of the road (height < 0.88 x offset - 4.4 m); its own mesh, faded out while such a camera is inside it (out.dyn.fade)
+        const [wd, wsd] = def.wing, S0 = wd - 45, S1 = wd + 45, nav = [0.11, 0.15, 0.3], red = [0.86, 0.12, 0.16];
+        const stl = [0.8, 0.83, 0.87], stl2 = [0.72, 0.75, 0.8], stlD = [0.56, 0.59, 0.64], und = [0.3, 0.33, 0.38], gls = [0.28, 0.4, 0.52], band = [0.9, 0.9, 0.9], flp = [0.1, 0.34, 0.66];
+        const WQ = (d, o, y) => { const s = sAt(d), [x, z] = atSf(s, wsd * o); return [x, hyS(s) + y, z]; }, gRel = (d, o) => { const q = WQ(d, o, 0); return nrGround(q[0], q[2]) - q[1]; };
+        const g = new GB();
+        const up = [[23.2, 13.6], [24.5, 14.4], [27, 15.6], [31, 17.2], [36, 19.0], [41, 20.6]], lo = [[23.5, 12.8], [25, 13.2], [27, 14.0], [31, 15.9], [36, 18.1], [41, 20.2]];
+        const fU = [[40.2, 22.0], [42.5, 23.2], [45, 24.3], [47.5, 25.0]], fL = [[40.4, 21.6], [42.5, 22.7], [45, 23.9], [47.5, 24.7]];
+        const surf = (prof, d0, d1, cols, below) => { for (let p = 0; p + 1 < prof.length; p++) {
+          const A = WQ(d0, ...prof[p]), B = WQ(d1, ...prof[p]), C = WQ(d1, ...prof[p + 1]), D = WQ(d0, ...prof[p + 1]), m = WQ((d0 + d1) / 2, prof[p][0], prof[p][1] + (below ? 30 : -30));
+          g.quadO(A, B, C, D, cols(p), m); } };
+        for (let d = S0 + 0.7, n = 0; d < S1 - 0.7; d += 5, n++) {   // the planes in 5 m panels along the span: the main plane in steel, the flap blue
+          const d1 = Math.min(S1 - 0.7, d + 5);
+          surf(up, d, d1, (p) => p === 0 ? red : n % 2 ? stl2 : stl, false); surf(lo, d, d1, () => und, true);
+          surf(fU, d, d1, (p) => p === 0 ? red : flp, false); surf(fL, d, d1, () => und, true);
+          for (const [pu, pl, c] of [[up[0], lo[0], red], [up[up.length - 1], lo[lo.length - 1], stlD], [fU[0], fL[0], red], [fU[fU.length - 1], fL[fL.length - 1], stlD]])   // leading and trailing edges
+            g.quadO(WQ(d, ...pu), WQ(d1, ...pu), WQ(d1, ...pl), WQ(d, ...pl), c, WQ((d + d1) / 2, pu[0] + (c === red ? 5 : -5), pu[1]));
         }
-        const [wx, wz] = atS(sAt(wd), wsd * wo); exclPush(wx, wz, 55);
+        // the end plates: navy fins through the stand, a red edge along the top
+        const pl = [[15, 0], [15, 6.8], [22, 12.2], [40, 21.8], [46, 26], [51, 26], [51, 0]];
+        for (const dp of [S0, S1]) {
+          const P0 = pl.map(([o, y]) => [o, y === 0 ? gRel(dp, o) - 1 : y]);   // (the foot in the ground)
+          for (const sd of [-0.7, 0.7]) { const ins = WQ(dp - sd * 3, 34, 12);
+            for (let k = 1; k + 1 < P0.length; k++) g.triO(WQ(dp + sd, ...P0[0]), WQ(dp + sd, ...P0[k]), WQ(dp + sd, ...P0[k + 1]), nav, ins); }
+          for (let k = 0; k + 1 < P0.length; k++) { const top = k >= 1 && k <= 4, ins = WQ(dp, 34, 12);
+            g.quadO(WQ(dp - 0.7, ...P0[k]), WQ(dp + 0.7, ...P0[k]), WQ(dp + 0.7, ...P0[k + 1]), WQ(dp - 0.7, ...P0[k + 1]), top ? red : nav, ins); }
+          const q = WQ(dp, 34, 0); exclPush(q[0], q[2], 22);
+        }
+        // the media centre under the wing: a glass front with white floor bands, four storeys, flat roof; slim columns under the main plane
+        { const o0 = 32.5, o1 = 50.3, yT = 15.2;
+          for (let d = S0 + 0.7; d < S1 - 0.7; d += 5) { const d1 = Math.min(S1 - 0.7, d + 5), gb0 = gRel(d, o0) - 0.8, m = WQ((d + d1) / 2, o0 + 8, yT / 2);
+            g.quadO(WQ(d, o0, gb0), WQ(d1, o0, gb0), WQ(d1, o0, yT), WQ(d, o0, yT), gls, m);
+            for (let f = 1; f <= 3; f++) { const y = gb0 + (yT - gb0) * f / 3.6; g.quadO(WQ(d, o0 - 0.05, y), WQ(d1, o0 - 0.05, y), WQ(d1, o0 - 0.05, y + 0.5), WQ(d, o0 - 0.05, y + 0.5), band, m); }
+            g.quadO(WQ(d, o0, yT), WQ(d1, o0, yT), WQ(d1, o1, yT), WQ(d, o1, yT), [0.72, 0.73, 0.75], WQ((d + d1) / 2, o0 + 8, 0));
+            g.quadO(WQ(d, o1, gb0), WQ(d1, o1, gb0), WQ(d1, o1, yT), WQ(d, o1, yT), [0.82, 0.82, 0.8], m);
+            if (Math.round((d - S0 - 0.7) / 5) % 3 === 1) { const c0 = WQ(d, 31.9, 0), gy0 = nrGround(c0[0], c0[2]);   // a column under the main plane
+              box(g, c0[0], gy0 - 0.3, c0[2], 0.6, c0[1] + 16.0 - gy0 + 0.3, 0.6, T.hd[T.idx(sAt(d))], [0.78, 0.8, 0.84], null, true); }
+          }
+          for (const [dq, k] of [[wd - 22, RB_AT.rbr], [wd + 22, RB_AT.spielberg]]) { const q = WQ(dq, o0 - 0.12, 12.3), i = T.idx(sAt(dq));   // the names on the glass, above the stand's back wall
+            board(q[0], q[1], q[2], wsd * T.nx[i], wsd * T.nz[i], 20, 2.4, k); }
+          for (let d = S0 + 10; d < S1 - 5; d += 20) { const q = WQ(d, 42, 0); exclPush(q[0], q[2], 14); CR.exclAdd(q[0], q[2], 12); }
+        }
+        // the name on the main plane, as on a racing car's rear wing: two panels, the text read from the high cameras behind the stand
+        const gt = new GB(true), [u0, v0, u1, v1] = AUV(RB_AT.rbr), yo = (o) => { let k = 0; while (k + 2 < up.length && up[k + 1][0] < o) k++; const [a, b] = [up[k], up[k + 1]]; return a[1] + (b[1] - a[1]) * (o - a[0]) / (b[0] - a[0]) + 0.15; };   // (just above the cambered plane)
+        for (const dc of [wd - 22, wd + 22]) { const dl = dc - 14, dh = dc + 14, oL = 28.0, oH = 35.0;   // (the text's right: against the traffic, its top: towards the track)
+          gt.quadO(WQ(dh, oH, yo(oH)), WQ(dl, oH, yo(oH)), WQ(dl, oL, yo(oL)), WQ(dh, oL, yo(oL)), W1, WQ(dc, 31.5, yo(31.5) - 20), [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]); }
+        const fl = [];
+        for (const [geo, mt] of [[g, new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true })], [gt, new THREE.MeshLambertMaterial({ map: atlas, transparent: true })]]) {
+          const m = new THREE.Mesh(geo.geometry(), mt); m.castShadow = geo === g; m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); fl.push({ mesh: m, mat: mt }); }
+        const cn = [[S0 - 6, 11], [S1 + 6, 11], [S1 + 6, 56], [S0 - 6, 56]].map(([d, o]) => { const q = WQ(d, o, 0); return [q[0], q[2]]; });
+        out.dyn.fade = { list: fl, poly: cn, yTop: hyS(sAt(wd)) + 30, op: 1, t: null };   // (the footprint, a little wider, up to 30 m)
       }
     }
     addM(crowdG[0], new THREE.MeshLambertMaterial({ map: crowdMats[0], vertexColors: true })); addM(crowdG[1], new THREE.MeshLambertMaterial({ map: crowdMats[1], vertexColors: true }));
 
-    /* ---- the steel bull (Clemens Neugebauer and Martin Kölldorfer, 2012): 14.6 m of Corten steel with gilded horns, on its arch (17.2 m in all),
-       head down, charging towards the straight ---- */
+    /* ---- the steel bull (Clemens Neugebauer and Martin Kölldorfer, 2012): 14.6 m of welded Corten plates on its cast aluminium arch
+       (17.2 m in all), charging: head down, the gilded horns (7 m from tip to tip) forward, the hump over the shoulders, the tail up; built
+       in its own frame (+x the way it charges, y up, z to its right), flat shaded so the plates show ---- */
     if (def.bull) {
-      const [bx, bz, fa] = def.bull, g = new GB(), y0 = nrGround(bx, bz), cs = Math.cos(fa), sn = Math.sin(fa), rust = [0.46, 0.24, 0.13], rustD = [0.36, 0.18, 0.1], gold = [0.98, 0.78, 0.3], R2 = rng(1712);
-      const n0 = g.P.length;
-      // local frame: +x the way it charges, y up, z to its right; the arch is 2.6 m high, the bull on top of it
-      for (let k = 0; k < 12; k++) { const a0 = Math.PI * k / 12, a1 = Math.PI * (k + 1) / 12, r0 = 13, r1 = 10.6, hA = 2.6 / 13;
-        const P0 = [-Math.cos(a0) * r0, Math.sin(a0) * r0 * hA * 1.0, 0], P1 = [-Math.cos(a1) * r0, Math.sin(a1) * r0 * hA, 0], I0 = [-Math.cos(a0) * r1, Math.sin(a0) * r1 * hA - 0.6, 0], I1 = [-Math.cos(a1) * r1, Math.sin(a1) * r1 * hA - 0.6, 0];
-        for (const zz of [-2.2, 2.2]) g.quadO([P0[0], P0[1], zz], [P1[0], P1[1], zz], [I1[0], I1[1], zz], [I0[0], I0[1], zz], rustD, [(P0[0] + I1[0]) / 2, (P0[1] + I1[1]) / 2, 0]);
-        g.quadO([P0[0], P0[1], -2.2], [P1[0], P1[1], -2.2], [P1[0], P1[1], 2.2], [P0[0], P0[1], 2.2], rust, [(P0[0] + P1[0]) / 2, -5, 0]); }
-      const top = 2.6;
-      ico(g, -2.2, top + 8.2, 0, 4.6, 0.95, rust, R2, 0.08);                   // hind quarters
-      ico(g, 2.4, top + 9.2, 0, 5.2, 1.0, rust, R2, 0.08);                    // chest and the hump
-      ico(g, 0.2, top + 8.6, 0, 4.7, 0.9, rustD, R2, 0.06);                   // belly between them
-      ico(g, 6.4, top + 7.6, 0, 3.0, 1.0, rust, R2, 0.08);                    // neck, head lowered
-      ico(g, 8.6, top + 5.6, 0, 2.3, 1.15, rust, R2, 0.08);                   // head
-      ico(g, 9.6, top + 4.2, 0, 1.3, 0.9, rustD, R2, 0.05);                   // muzzle
-      for (const sd of [-1, 1]) {   // gilded horns, curving forward and up
-        cone(g, 8.4, top + 6.8, sd * 1.6, 0.55, 2.6, 7, gold, [1, 0.9, 0.5], 0);
-        const hx = 8.4, hy = top + 7.2, hz = sd * 1.6; box(g, hx, hy - 0.4, hz + sd * 0.4, 0.8, 0.8, 1.6, 0, gold, gold);
-        cone(g, hx + 0.6, hy + 2.0, hz + sd * 0.6, 0.35, 1.8, 6, gold, [1, 0.92, 0.55], 0); }
-      const leg = (x, z, lean, h) => { cyl(g, x, top, z, 0.7, h, 7, rustD, rust, 1.0); ico(g, x + lean, top + h, z, 1.3, 1.1, rust, R2, 0.05); };
-      leg(4.2, -1.9, 0.3, 6.2); leg(4.8, 1.9, 0.6, 6.0); leg(-3.8, -1.8, -0.2, 5.6); leg(-4.6, 1.8, -0.5, 5.4);   // (the hooves on the arch)
-      for (let k = 0; k < 4; k++) cyl(g, -6.4 - k * 0.55, top + 9.4 + k * 1.2, 0, 0.32 - k * 0.04, 1.3, 5, rustD, rustD, 0.28 - k * 0.04);   // the tail, up
-      ico(g, -8.4, top + 14.3, 0, 0.8, 1.2, rustD, R2, 0.1);
-      for (let k = n0; k < g.P.length; k += 3) { const x = g.P[k], z = g.P[k + 2]; g.P[k] = bx + x * cs - z * sn; g.P[k + 1] += y0 - 0.3; g.P[k + 2] = bz + x * sn + z * cs; }
+      const [bx, bz, fa] = def.bull, g = new GB(), y0 = nrGround(bx, bz), cs = Math.cos(fa), sn = Math.sin(fa), R2 = rng(1712);
+      const rust = [0.47, 0.24, 0.13], rustD = [0.38, 0.19, 0.1], gold = [0.98, 0.78, 0.3], alu = [0.6, 0.62, 0.66], aluD = [0.56, 0.58, 0.63], aluU = [0.42, 0.44, 0.48], hoof = [0.2, 0.12, 0.08];
+      const pv = (c) => vary(c, R2, 0.16);   // (each plate a little lighter or darker)
+      const AX = 13, AY = 2.6, archY = (x) => AY * Math.sqrt(Math.max(0, 1 - (x / AX) * (x / AX)));   // the arch's top at x
+      // the arch: a flat elliptic bow under the hooves, 20 segments of cast aluminium
+      for (let k = 0; k < 20; k++) {
+        const a0 = Math.PI * k / 20, a1 = Math.PI * (k + 1) / 20, O = (a) => [-Math.cos(a) * AX, Math.sin(a) * AY], I = (a) => [-Math.cos(a) * (AX - 0.9), Math.sin(a) * (AY - 1.1)];
+        const o0 = O(a0), o1 = O(a1), i0 = I(a0), i1 = I(a1), c = k % 2 ? alu : aluD, ctr = [0, -4, 0];
+        g.quadO([o0[0], o0[1], -1.9], [o1[0], o1[1], -1.9], [o1[0], o1[1], 1.9], [o0[0], o0[1], 1.9], c, ctr);   // top
+        g.quadO([i0[0], i0[1], -1.9], [i1[0], i1[1], -1.9], [i1[0], i1[1], 1.9], [i0[0], i0[1], 1.9], aluU, [0, 12, 0]);   // underside
+        for (const zz of [-1.9, 1.9]) g.quadO([o0[0], o0[1], zz], [o1[0], o1[1], zz], [i1[0], i1[1], zz], [i0[0], i0[1], zz], aluD, [(o0[0] + i1[0]) / 2, (o0[1] + i1[1]) / 2, 0]);
+      }
+      // the body: rings round the spine [x, y, half height, half width] from the rump to the nose, each ring square to the spine (so the
+      // head, pointing down, keeps its shape), lofted into plates and closed at both ends
+      const ST = [[-8.4, 13.2, 1.1, 1.0], [-7.6, 12.3, 2.5, 2.1], [-6.0, 12.1, 3.1, 2.7], [-3.6, 11.7, 3.3, 2.8], [-1.0, 11.9, 3.8, 3.0], [1.6, 12.4, 4.4, 3.1],
+        [3.8, 12.9, 4.5, 2.9], [5.8, 12.3, 3.6, 2.5], [7.3, 11.2, 2.8, 2.2], [8.5, 10.1, 2.25, 2.0], [9.3, 8.6, 1.9, 1.65], [9.95, 7.1, 1.6, 1.35], [10.4, 6.0, 1.3, 1.2], [10.7, 5.3, 0.85, 0.95]];
+      const NR = 10, RS = ST.map((q, k) => {
+        const p0 = ST[Math.max(0, k - 1)], p1 = ST[Math.min(ST.length - 1, k + 1)], tx = p1[0] - p0[0], ty = p1[1] - p0[1], tl = Math.hypot(tx, ty), ux = -ty / tl, uy = tx / tl;   // (u: square to the spine, upwards)
+        const r = []; for (let j = 0; j < NR; j++) { const an = j / NR * TAU, sa = Math.sin(an) * q[2]; r.push([q[0] + ux * sa, q[1] + uy * sa, Math.cos(an) * q[3]]); } return r; });
+      for (let k = 0; k + 1 < RS.length; k++) for (let j = 0; j < NR; j++) {
+        const A = RS[k][j], B = RS[k][(j + 1) % NR], C = RS[k + 1][(j + 1) % NR], D = RS[k + 1][j];
+        g.quadO(A, B, C, D, pv(k < 9 ? rust : rustD), [(ST[k][0] + ST[k + 1][0]) / 2, (ST[k][1] + ST[k + 1][1]) / 2, 0]); }
+      for (const k of [0, RS.length - 1]) { const c0 = [ST[k][0], ST[k][1], 0], nb = ST[k ? k - 1 : 1], ins = [c0[0] + (nb[0] - c0[0]) * 0.5, c0[1] + (nb[1] - c0[1]) * 0.5, 0];
+        for (let j = 0; j < NR; j++) g.triO(c0, RS[k][j], RS[k][(j + 1) % NR], pv(rustD), ins); }
+      // limbs: tapered prisms between joints, a knuckle at each joint
+      const limb = (a, b, ra, rb, n, col) => {
+        const t = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], l = Math.hypot(...t); t[0] /= l; t[1] /= l; t[2] /= l;
+        const h0 = Math.abs(t[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0], u = [t[1] * h0[2] - t[2] * h0[1], t[2] * h0[0] - t[0] * h0[2], t[0] * h0[1] - t[1] * h0[0]], lu = Math.hypot(...u);
+        u[0] /= lu; u[1] /= lu; u[2] /= lu; const v = [t[1] * u[2] - t[2] * u[1], t[2] * u[0] - t[0] * u[2], t[0] * u[1] - t[1] * u[0]];
+        const at = (p, r, k) => { const an = k / n * TAU, c = Math.cos(an) * r, s2 = Math.sin(an) * r; return [p[0] + u[0] * c + v[0] * s2, p[1] + u[1] * c + v[1] * s2, p[2] + u[2] * c + v[2] * s2]; };
+        const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+        for (let k = 0; k < n; k++) g.quadO(at(a, ra, k), at(a, ra, k + 1), at(b, rb, k + 1), at(b, rb, k), pv(col), mid);
+      };
+      const leg = (P, col) => { for (let k = 0; k + 1 < P.length; k++) limb(P[k][0], P[k + 1][0], P[k][1], P[k + 1][1], 8, col);
+        for (let k = 1; k + 1 < P.length; k++) ico(g, ...P[k][0], P[k][1] * 1.02, 1, col, R2, 0);
+        const f = P[P.length - 1][0]; box(g, f[0] + 0.15, f[1] - 0.05, f[2], 1.4, 0.8, 1.2, 0, hoof, hoof); };
+      leg([[[4.4, 10.0, -1.3], 1.5], [[6.6, 6.4, -1.4], 0.95], [[8.4, archY(8.4) + 0.05, -1.3], 0.75]], rust);     // front left, reaching forward
+      leg([[[3.4, 10.0, 1.3], 1.5], [[5.0, 6.2, 1.5], 0.95], [[3.2, archY(3.2) + 0.05, 1.3], 0.75]], rustD);         // front right, under it
+      leg([[[-5.6, 10.4, -1.4], 1.65], [[-7.9, 5.8, -1.5], 0.9], [[-8.6, archY(-8.6) + 0.05, -1.3], 0.75]], rust);  // hind left, pushing off
+      leg([[[-5.4, 10.4, 1.4], 1.65], [[-6.7, 6.0, 1.6], 0.9], [[-5.8, archY(-5.8) + 0.05, 1.3], 0.75]], rustD);    // hind right
+      // the tail, up in an S with a tuft; ears; the horns: gilded, out and forward, curling up (7 m from tip to tip)
+      const tl = [[-8.0, 13.6, 0], [-9.5, 14.8, 0], [-10.3, 16.3, 0.1], [-9.9, 17.4, 0.2]];
+      for (let k = 0; k + 1 < tl.length; k++) limb(tl[k], tl[k + 1], 0.5 - k * 0.1, 0.4 - k * 0.1, 6, rustD);
+      ico(g, -9.8, 17.7, 0.2, 0.75, 1.3, rustD, R2, 0.12);
+      for (const sd of [-1, 1]) {
+        limb([8.2, 10.6, sd * 1.5], [7.6, 10.9, sd * 2.7], 0.45, 0.12, 5, rustD);
+        const hn = [[8.9, 10.9, sd * 1.1], [9.5, 11.3, sd * 2.3], [10.3, 12.0, sd * 3.2], [11.0, 13.1, sd * 3.5]];
+        for (let k = 0; k + 1 < hn.length; k++) limb(hn[k], hn[k + 1], [0.66, 0.5, 0.32][k], [0.5, 0.32, 0.1][k], 7, gold);
+      }
+      for (let k = 0; k < g.P.length; k += 3) { const x = g.P[k], z = g.P[k + 2]; g.P[k] = bx + x * cs - z * sn; g.P[k + 1] += y0 - 0.3; g.P[k + 2] = bz + x * sn + z * cs; }
       for (let k = 0; k < g.N.length; k += 3) { const x = g.N[k], z = g.N[k + 2]; g.N[k] = x * cs - z * sn; g.N[k + 2] = x * sn + z * cs; }
-      addM(g, matV, true); exclPush(bx, bz, 26); CR.exclAdd(bx, bz, 16);
-      const sp = new GB(); cyl(sp, bx, y0 - 0.4, bz, 15, 0.45, 20, [0.5, 0.49, 0.46], [0.58, 0.56, 0.52]); addM(sp, matV);   // a gravel ring round its foot
+      addM(g, matV, true); exclPush(bx, bz, 22); CR.exclAdd(bx, bz, 15);
+      const sp = new GB(); cyl(sp, bx, y0 - 0.4, bz, 13.5, 0.45, 24, [0.4, 0.4, 0.38], [0.44, 0.44, 0.41]); addM(sp, matV);   // a paved ring round its foot
     }
 
     /* ---- marshal posts, turn numbers, braking boards ---- */
@@ -5355,7 +5476,50 @@ const World = (function () {
       box(g, x, y - 0.2, z, 2.4, 2.5, 2.2, T.hd[i], [0.94, 0.94, 0.92], [0.95, 0.45, 0.1], true);
       box(g, x - T.nx[i] * side * 0.4, y + 1.1, z - T.nz[i] * side * 0.4, 1.6, 0.6, 2.25, T.hd[i], [0.2, 0.28, 0.36], null, true);
       const fx = x + T.tx[i] * 1.8, fz = z + T.tz[i] * 1.8; cyl(g, fx, y, fz, 0.05, 4.2, 5, [0.85, 0.85, 0.87]); box(g, fx + T.tx[i] * 0.45, y + 3.4, fz + T.tz[i] * 0.45, 0.9, 0.6, 0.04, T.hd[i], [0.98, 0.84, 0.1], null, true);
+      { const lx = x - T.tx[i] * 1.9, lz = z - T.tz[i] * 1.9, nx = -T.nx[i] * side, nz = -T.nz[i] * side;   // the digital flag panel on its post, a green light towards the road
+        box(g, lx, y, lz, 0.14, 3.1, 0.14, T.hd[i], [0.5, 0.51, 0.54], null, true); box(g, lx + nx * 0.1, y + 2.6, lz + nz * 0.1, 1.0, 0.75, 0.16, T.hd[i], [0.1, 0.1, 0.11]);
+        box(g, lx + nx * 0.2, y + 2.72, lz + nz * 0.2, 0.62, 0.5, 0.04, T.hd[i], [0.35, 1.0, 0.4], null, true); }
       exclPush(x, z, 5); CR.avoid(x, z, 2.5);
+    }
+    let nTV = 0;
+    (def.turns || []).forEach(([tx0, tz0], k) => {   // TV camera towers: scaffolding outside the big corners, a platform with a cameraman under an umbrella
+      if (k === 1 || k === 4 || k === 7) return;   // (not at the kinks)
+      const i0 = T.nearestIdx(tx0, tz0), side = T.k[i0] > 0 ? -1 : 1, s = i0 * ds + 30, i = T.idx(s); if (side > 0 && PD && T.pitAt(s)) return;
+      const [x, z] = onSide(s, side, 7), y = nrGround(x, z), g = scen.get(x, z), hd = T.hd[i], ph = 6.5; if (excluded(x, z) || nrSlope(x, z) > 0.5) return;
+      const st = [0.62, 0.63, 0.66], c = Math.cos(hd), sn = Math.sin(hd), at2 = (a, b) => [x + c * a - sn * b, z + sn * a + c * b];
+      for (const [a, b] of [[-1.1, -1.1], [1.1, -1.1], [1.1, 1.1], [-1.1, 1.1]]) { const [px, pz] = at2(a, b); box(g, px, y - 0.3, pz, 0.12, ph + 0.3, 0.12, hd, st, null, true); }
+      for (let h = 1.6; h < ph; h += 1.6) for (const [a, b, w2, d2] of [[0, -1.1, 2.3, 0.08], [0, 1.1, 2.3, 0.08], [-1.1, 0, 0.08, 2.3], [1.1, 0, 0.08, 2.3]]) { const [px, pz] = at2(a, b); box(g, px, y + h, pz, w2, 0.08, d2, hd, st, null, true); }
+      { const [px, pz] = at2(0, 0); box(g, px, y + ph, pz, 2.7, 0.15, 2.7, hd, [0.45, 0.46, 0.5]);   // the platform, the cameraman and his camera, an umbrella
+        const fx = -T.nx[i] * side, fz = -T.nz[i] * side, mx = px - fx * 0.3, mz = pz - fz * 0.3;
+        box(g, mx, y + ph + 0.15, mz, 0.45, 0.85, 0.3, hd, [0.18, 0.2, 0.26], null, true); box(g, mx, y + ph + 1.0, mz, 0.5, 0.65, 0.34, hd, [0.95, 0.5, 0.1], null, true); box(g, mx, y + ph + 1.65, mz, 0.28, 0.28, 0.28, hd, [0.85, 0.66, 0.52], [0.25, 0.18, 0.12], true);
+        box(g, px + fx * 0.45, y + ph + 1.3, pz + fz * 0.45, 0.5, 0.42, 0.42, hd, [0.13, 0.13, 0.15], null, true); box(g, px + fx * 0.95, y + ph + 1.36, pz + fz * 0.95, 0.3, 0.3, 0.3, hd, [0.08, 0.08, 0.09], null, true);
+        box(g, px, y + ph + 0.15, pz, 0.06, 2.6, 0.06, hd, st, null, true); cone(g, px, y + ph + 2.4, pz, 1.4, 0.55, 8, [0.95, 0.95, 0.93], [0.86, 0.12, 0.16], 0); }
+      exclPush(x, z, 4); CR.avoid(x, z, 2.2); nTV++;
+      if (k === 0 || k === 2 || k === 3) {   // at Turns 1, 3 and 4: a recovery truck and the medical car behind the barrier after the corner
+        const s2 = i0 * ds + 70, i2 = T.idx(s2), [rx, rz] = onSide(s2, side, 5), ry = nrGround(rx, rz), hd2 = T.hd[i2], c2 = Math.cos(hd2), s3 = Math.sin(hd2), gr = scen.get(rx, rz);
+        if (!excluded(rx, rz) && nrSlope(rx, rz) < 0.3) {
+          box(gr, rx + c2 * 2.6, ry + 0.4, rz + s3 * 2.6, 2.2, 2.3, 2.4, hd2, [0.98, 0.72, 0.1], [0.95, 0.95, 0.93], true);   // the truck: cab, flat bed, the crane and its beacons
+          box(gr, rx - c2 * 1.4, ry + 0.4, rz - s3 * 1.4, 5.4, 0.9, 2.4, hd2, [0.3, 0.31, 0.34], [0.36, 0.37, 0.4], true);
+          box(gr, rx - c2 * 2.6, ry + 1.3, rz - s3 * 2.6, 0.5, 2.6, 0.5, hd2, [0.98, 0.72, 0.1], null, true); box(gr, rx - c2 * 1.4, ry + 3.7, rz - s3 * 1.4, 3.0, 0.35, 0.35, hd2, [0.98, 0.72, 0.1], null, true);
+          box(gr, rx + c2 * 2.9, ry + 2.7, rz + s3 * 2.9, 0.9, 0.18, 1.6, hd2, [0.95, 0.5, 0.05], null, true);
+          const mx = rx - c2 * 9, mz = rz - s3 * 9, my = nrGround(mx, mz);   // the medical car: white, red and yellow stripes, blue lights
+          if (!excluded(mx, mz)) { box(gr, mx, my + 0.3, mz, 4.6, 0.9, 1.9, hd2, [0.95, 0.95, 0.94], [0.95, 0.95, 0.94], true); box(gr, mx - c2 * 0.3, my + 1.2, mz - s3 * 0.3, 2.5, 0.6, 1.7, hd2, [0.2, 0.24, 0.3], [0.95, 0.95, 0.94], true);
+            box(gr, mx, my + 0.7, mz, 4.62, 0.22, 1.92, hd2, [0.86, 0.12, 0.14], null, true); box(gr, mx, my + 0.92, mz, 4.62, 0.12, 1.92, hd2, [0.98, 0.84, 0.1], null, true);
+            box(gr, mx - c2 * 0.3, my + 1.8, mz - s3 * 0.3, 0.3, 0.14, 1.2, hd2, [0.2, 0.4, 1.0], null, true); }
+          exclPush(rx - c2 * 3, rz - s3 * 3, 9); CR.avoid(rx - c2 * 3, rz - s3 * 3, 7);
+        }
+      }
+    });
+    // behind the spectators on the grass: food stalls with striped awnings and rows of portable toilets
+    for (const [a, b, sd] of def.ga || []) for (let d = a + 40, n = 0; d < b - 30; d += 85, n++) {
+      const s = sAt(d), [x, z, i] = onSide(s, sd, 21), y = nrGround(x, z), g = scen.get(x, z), hd2 = T.hd[i], c2 = Math.cos(hd2), s3 = Math.sin(hd2), fx = -T.nx[i] * sd, fz = -T.nz[i] * sd;
+      if (excluded(x, z) || nrSlope(x, z) > 0.35) continue;
+      if (n % 2 === 0) { const ac = [[0.86, 0.12, 0.16], [0.12, 0.3, 0.7], [0.98, 0.6, 0.1]][(n >> 1) % 3];   // a stall: the booth, its counter towards the track, an awning
+        box(g, x, y - 0.3, z, 4.2, 3.0, 2.6, hd2, [0.95, 0.94, 0.9], [0.9, 0.9, 0.88], true); box(g, x + fx * 1.45, y, z + fz * 1.45, 4.0, 1.1, 0.4, hd2, ac, null, true);
+        box(g, x + fx * 1.7, y + 2.6, z + fz * 1.7, 4.6, 0.12, 1.6, hd2, ac, [0.97, 0.97, 0.95], true);
+        for (const q of [-1.4, 1.4]) cyl(g, x + fx * 2.9 + c2 * q, y, z + fz * 2.9 + s3 * q, 0.25, 1.05, 6, [0.5, 0.35, 0.2], [0.6, 0.45, 0.28]); }   // (standing tables)
+      else for (let q = -2; q <= 2; q++) box(g, x + c2 * q * 1.3, y - 0.1, z + s3 * q * 1.3, 1.15, 2.35, 1.15, hd2, [0.16, 0.4, 0.8], [0.9, 0.9, 0.9], true);   // portable toilets
+      exclPush(x, z, 6); CR.avoid(x, z, 4.5);
     }
     (def.turns || []).forEach(([tx0, tz0], k) => {   // turn numbers on boards behind the barrier on the outside of each turn
       const i = T.nearestIdx(tx0, tz0), side = T.k[i] > 0 ? -1 : 1, s = i * ds; if (side > 0 && PD && T.pitAt(s)) return;
@@ -5413,6 +5577,28 @@ const World = (function () {
       exclPush(x - s * 8, z + c * 8, 22); nFarm++;
     }
 
+    // car parks: the fans' cars in rows on the built-up land of the land cover (the paved car parks round the circuit) 45-420 m from the
+    // track, level ground only; instanced (one shape, a colour each), lots aligned with the main straight
+    let nCars = 0;
+    { const cg = new GB(); box(cg, 0, 0.25, 0, 4.3, 0.8, 1.85, 0, [1, 1, 1], [1, 1, 1], true); box(cg, -0.35, 1.05, 0, 2.3, 0.62, 1.62, 0, [0.3, 0.33, 0.38], [1, 1, 1], true);
+      const cars = new IChunks(cg.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true }), 256), LC = P.L, a0 = T.hd[T.idx(sStart)];
+      const ccols = [[0.93, 0.93, 0.92], [0.72, 0.74, 0.77], [0.12, 0.12, 0.13], [0.42, 0.44, 0.47], [0.16, 0.22, 0.42], [0.62, 0.1, 0.1], [0.86, 0.85, 0.8], [0.25, 0.3, 0.26]];
+      for (let j = 0; j < LC.nz && nCars < 1400; j++) for (let i = 0; i < LC.nx && nCars < 1400; i++) {
+        if (P.lc[j * LC.nx + i] !== 3) continue;
+        const x = LC.x0 + (i + 0.5) * LC.cell, z = LC.z0 + (j + 0.5) * LC.cell, rd = nrDist(x, z);
+        if (rd < 45 || rd > 420 || excluded(x, z) || nrSlope(x, z) > 0.08 || P.pad(x, z, 0) !== 0) continue;
+        const rot = a0 + ((Math.floor(x / 64) + Math.floor(z / 64)) & 1 ? Math.PI / 2 : 0), c = Math.cos(rot), sn = Math.sin(rot);
+        for (let r = -1; r <= 1; r++) for (let q = -2; q <= 2; q++) {   // three rows of five
+          if (R() < 0.3) continue;
+          const a = r * 5.4 + (R() - 0.5) * 0.3, b = q * 2.8 + (R() - 0.5) * 0.3, px = x + c * a - sn * b, pz = z + sn * a + c * b;
+          if (excluded(px, pz)) continue;
+          cars.add(px, nrGround(px, pz) - 0.05, pz, -(rot + Math.PI / 2 + (R() < 0.5 ? Math.PI : 0) + (R() - 0.5) * 0.08), 1, 1, ccols[Math.floor(R() * ccols.length)]); nCars++;
+        }
+        exclPush(x, z, 11);
+      }
+      cars.addTo(root, true);
+    }
+
     /* ---- spectators on the grass (the hill between Turns 3 and 4, the infield), fans along the fences, a few everywhere ---- */
     {
       const M = { first: 1.4, gap: 1.2, excluded, below: 4, above: 30, sit: 0.35, flag: 0.1, maxSlope: 0.9 };
@@ -5456,13 +5642,22 @@ const World = (function () {
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
     addM(fenceG, fMat);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, stands: nStands, boxes: nBoxes, camp: nCamp, farms: nFarm };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, stands: nStands, boxes: nBoxes, camp: nCamp, farms: nFarm, cars: nCars, tv: nTV };   // (read by the tests)
     return out;
   }
 
-  function update(out, t, car) {
+  function update(out, t, car, cam) {
     if (!out) return;
     const d = out.dyn;
+    if (d.fade && cam) {   // Red Bull Ring: the wing fades out while the camera is inside it (the high kino / iso views over Start-Ziel)
+      const f = d.fade, p = cam.position, P = f.poly; let inside = p.y < f.yTop, sg = 0;
+      for (let k = 0; k < 4 && inside; k++) {   // (inside the footprint: on the same side of all four edges)
+        const a = P[k], b = P[(k + 1) % 4], c = Math.sign((b[0] - a[0]) * (p.z - a[1]) - (b[1] - a[1]) * (p.x - a[0]));
+        if (!sg) sg = c; else if (c !== sg) inside = false; }
+      const dt = f.t == null ? 1 : clamp(t - f.t, 0, 0.1); f.t = t;
+      f.op += ((inside ? 0 : 1) - f.op) * Math.min(1, dt * 6); if (Math.abs(f.op - (inside ? 0 : 1)) < 0.02) f.op = inside ? 0 : 1;
+      for (const e of f.list) { e.mat.opacity = f.op; e.mesh.visible = f.op > 0.02; e.mat.depthWrite = f.op > 0.98; }
+    }
     if (d.crowd) { d.crowd.uTime.value = t % 1000; if (car) d.crowd.uCar.value.set(car.x, car.roadY || 0, car.z); }   // spectators: arm waving, cheering near the followed car
     if (d.water) { d.water.offset.x = (t * 0.012) % 1; d.water.offset.y = (t * 0.007) % 1; }
     if (d.pk) pkUpdate(d.pk, t, car);   // Pikes Peak: the TV helicopter, the cloud shadows

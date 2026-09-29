@@ -70,10 +70,10 @@
   "jsMs": 1.45
  },
  "rbring": {
-  "calls": 230,
-  "maxCalls": 315,
-  "kverts": 386,
-  "maxKverts": 523,
-  "jsMs": 0.62
+  "calls": 236,
+  "maxCalls": 322,
+  "kverts": 434,
+  "maxKverts": 514,
+  "jsMs": 0.84
  }
 }

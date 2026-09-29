@@ -202,21 +202,21 @@
  "rbring/cs": {
   "finished": 13,
   "cars": 13,
-  "winner": 201.39,
+  "winner": 201.1,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "2782befe3dda2586a14597ee"
+  "digest": "2c3a0aab19df48338a5e89ce"
  },
  "rbring/arcade": {
   "finished": 13,
   "cars": 13,
-  "winner": 209.26,
+  "winner": 209.42,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "411e912ef8d19ed51d723d51"
+  "digest": "7a5554eae90c124d287eb304"
  }
 }
