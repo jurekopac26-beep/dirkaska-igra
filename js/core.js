@@ -141,6 +141,21 @@ const Core = (function () {
       if (def.wide && !open) for (const [a, b, sd, m] of def.wide) for (let d = a - 30; d <= b + 30; d += ds) {
         const i = this.idx(this.startS + d), f = Math.min(sstep(a - 30, a, d), sstep(b + 30, b, d)); if (sd < 0) this.bl[i] += m * f; else this.br[i] += m * f;
       }
+      // gravel strips (def.gravelStrips = [[from, to, side, width], ...], metres after the start line, side -1 left / 1 right; closed
+      // circuits): a band of gravel from the kerb's outer edge outwards, as the strips the Red Bull Ring laid at the exits of Turns 9 and
+      // 10 in 2024 against running wide (see surface: gravel there even where the run-off beyond it is asphalt)
+      this.gstrip = null;
+      if (def.gravelStrips && !open) {
+        const g = this.gstrip = [new Float32Array(N), new Float32Array(N)];
+        for (const [a, b, side, wd] of def.gravelStrips) for (let d = a; d <= b; d += ds / 2) g[side > 0 ? 1 : 0][this.idx(this.startS + d)] = wd;
+      }
+      // DRS zones (def.drs = [[turn, detection, activation, next turn], ...], metres relative to the turns of def.turns; closed circuits):
+      // { det, act, end } in metres after the start line, the zone closing 60 m before the next turn (see Race._drs)
+      this.drs = null;
+      if (def.drs && def.turns && !open) {
+        const tS = (k) => { const t = def.turns[k - 1]; return this.nearestIdx(t[0], t[1]) * ds - this.startS; }, W = (d) => ((d % len) + len) % len;
+        this.drs = def.drs.map(([t, det, act, nt]) => ({ det: W(tS(t) + det), act: W(tS(t) + act), end: W(tS(nt) - 60) }));
+      }
     }
 
     // banked corners: the road surface's height offset at lateral offset d (m, + right) and its lateral slope there (dy/dd, 0 off the road)
@@ -463,14 +478,16 @@ const Core = (function () {
       return out;
     }
 
-    // surface at a query result: 0 asphalt, 1 curb, 2 grass, 3 gravel
+    // surface at a query result: 0 asphalt, 1 curb, 2 grass, 3 gravel (def.runoffTarmac: the wide run-off areas are asphalt, 4 as paving;
+    // def.gravelStrips: gravel just past the kerb)
     surface(q) {
       const d = q.d, ad = Math.abs(d), w = this.w;
       if (ad <= w) return this.def.roadSurface === 'makadam' ? 5 : 0;
       const i = q.a;
       if (this.curb[i] && ad <= w + this.curbW) return 1;
+      if (this.gstrip) { const g = this.gstrip[d > 0 ? 1 : 0][i]; if (g > 0 && ad <= w + this.curbW + g) return 3; }
       const grav = d > 0 ? this.gravR[i] : this.gravL[i];
-      return grav ? 3 : this.def.offSurface === 'paving' ? 4 : this.def.offSurface === 'gravel' ? 3 : 2;
+      return grav ? (this.def.runoffTarmac ? 4 : 3) : this.def.offSurface === 'paving' ? 4 : this.def.offSurface === 'gravel' ? 3 : 2;
     }
   }
 
@@ -647,6 +664,7 @@ const Core = (function () {
     { lock: 1.0, bx: 1.0, layer: 1.0, kick: 1.0, out: 1.0, hard: 0.8, stOn: 0.36 },       // visoka
   ];
   const PWR_MULT = 1.75, SW_DRAG = 0.0013; // arcade power boost and drag (fit to SWGP2 acceleration curves)
+  const DRS_DRAG = 0.8;   // the air drag with the rear wing's flap open (Car.drs, set by Race._drs)
   const JUMP_G = 14; // vertical gravity for jumps on hilly tracks (arcade-snappy, a bit above real g)
   const _bk = { dy: 0, sl: 0 };   // (Track.bankAt output)
   const MU_BASE = 1.32;
@@ -861,7 +879,7 @@ const Core = (function () {
       }
       const lowGrip = 1 - sstep(3, 8, spd);
       if ((lowGrip > 0 || !fwd) && grounded) Fy += clamp(-vt * m / dt, -G * m * 1.5, G * m * 1.5) * (fwd ? lowGrip : 1);
-      const cdA = m * SW_DRAG * (M.cDrag / 0.42);
+      const cdA = m * SW_DRAG * (M.cDrag / 0.42) * (this.drs ? DRS_DRAG : 1);
       Fx -= cdA * vl * spd + (grounded ? (0.015 * m * G) * Math.tanh(vl * 1.5) : 0);
       Fy -= cdA * 1.6 * vt * spd;
       if ((dragC0 > 0 || dragC1 > 0) && spd > 0.05 && grounded) {
@@ -1061,7 +1079,7 @@ const Core = (function () {
       const lowGrip = 1 - sstep(3, 8, spd);
       if ((lowGrip > 0 || !fwd) && grounded) Fy += clamp(-vt * m / dt, -G * m * 1.5, G * m * 1.5) * (fwd ? lowGrip : 1);
       // ---- air + rolling + surface drag, slope, bank (shared blocks) ----
-      const cdA = m * SW_DRAG * (M.cDrag / 0.42);
+      const cdA = m * SW_DRAG * (M.cDrag / 0.42) * (this.drs ? DRS_DRAG : 1);
       Fx -= cdA * vl * spd + (grounded ? (0.015 * m * G) * Math.tanh(vl * 1.5) : 0);
       Fy -= cdA * 1.6 * vt * spd;
       if ((dragC0 > 0 || dragC1 > 0) && spd > 0.05 && grounded) {
@@ -1821,6 +1839,7 @@ const Core = (function () {
       }
       if (this.player) this.player.num = opts.playerNum || 1;
       if (this.remote) this.remote.num = RM.num || 2;
+      if (track.drs) this.drsLast = track.drs.map(() => null);   // (per DRS zone: who crossed its detection line last, and when)
       this._prof();
     }
 
@@ -1997,6 +2016,7 @@ const Core = (function () {
             }
           }
         }
+        if (this.drsLast) this._drs(c, ds, dt);
         // wrong way
         const fwd = Math.cos(c.h) * q.tx + Math.sin(c.h) * q.tz;
         if (fwd < -0.2 && c.speed > 3) c.wrongT += dt; else c.wrongT = Math.max(0, c.wrongT - dt * 2);
@@ -2043,6 +2063,26 @@ const Core = (function () {
         }
       }
       if (sp > vmax) { const k = Math.max(vmax / sp, 1 - 4 * dt); c.vx *= k; c.vz *= k; if (vmax < 1) c.w *= k; }   // the limiter (and the stop) take over smoothly
+    }
+    // DRS (Track.drs): a car that crosses a zone's detection line less than 1 s after the car before it may open the flap of its rear wing
+    // in that zone (from the second lap on, not in the pit lane): open from the activation line (c.drs = zone + 1, less air drag, see Car)
+    // to the end of the zone, closed at once when the driver brakes. c.drsA: the zones it may open in (bits); the player's c.drsEv 'open'
+    // for the HUD. (These fields appear only on a circuit with DRS, so every other circuit's race state stays as it was.)
+    _drs(c, ds, dt) {
+      const Z = this.track.drs, L = this.track.len, d1 = c.dist, d0 = d1 - ds, racing = this.state === 'racing' || this.state === 'done';
+      if (c.drsA == null) { c.drsA = 0; c.drs = 0; }
+      if (c.drs && (c.inBrk > 0.2 || c.inPit || c.finished || !racing)) c.drs = 0;
+      if (!(ds > 0) || !racing) return;
+      for (let k = 0; k < Z.length; k++) {
+        const z = Z[k], lapAt = (at) => Math.floor((d1 - at) / L), crossed = (at) => lapAt(at) > Math.floor((d0 - at) / L), bit = 1 << k;
+        if (crossed(z.det)) {
+          const t = this.time - dt * clamp((d1 - (z.det + lapAt(z.det) * L)) / ds, 0, 1), prev = this.drsLast[k];
+          if (c.lap >= 2 && !c.finished && !c.inPit && prev && prev.car !== c && t - prev.t <= 1) c.drsA |= bit; else c.drsA &= ~bit;
+          this.drsLast[k] = { car: c, t };
+        }
+        if ((c.drsA & bit) && crossed(z.act)) { c.drsA &= ~bit; if (!c.inPit && !c.finished) { c.drs = k + 1; if (c.isPlayer) c.drsEv = 'open'; } }
+        if (c.drs === k + 1 && crossed(z.end)) c.drs = 0;
+      }
     }
     repairCar(c) {   // good as new: body, panels, lamps, glass; the renderer rebuilds the car when repairN changes
       c.dmg = 0; c.dz = [0, 0, 0, 0]; c.dents = []; c.cd = [0, 0, 0, 0]; c.lightOut = [0, 0, 0, 0]; c.lost = {}; c.detach = []; c.winOut = [0, 0, 0, 0]; c.roofDmg = 0;
