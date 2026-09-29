@@ -56,11 +56,11 @@
   "jsMs": 0.78
  },
  "pikes": {
-  "calls": 91,
-  "maxCalls": 103,
-  "kverts": 258,
-  "maxKverts": 318,
-  "jsMs": 0.22
+  "calls": 92,
+  "maxCalls": 104,
+  "kverts": 269,
+  "maxKverts": 320,
+  "jsMs": 0.2
  },
  "nring": {
   "calls": 181,
