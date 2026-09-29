@@ -198,5 +198,25 @@
   "rescues": 0,
   "nan": false,
   "digest": "38815d35403d224f8ca6e6e8"
+ },
+ "spa/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 323.83,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "2b4ebadc8e634c5fa85696c6"
+ },
+ "spa/arcade": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 336.15,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e9d9b9d89ea8ffd0c232e885"
  }
 }

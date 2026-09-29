@@ -770,6 +770,7 @@ const Render = (function () {
     mountain: { fog: 0xb4cadf, sun: 0xfff2e0, sunI: 1.0, sky: 0xc8dcff, gnd: 0x4d5c33, hemiI: 0.6, tint: [0.98, 1.0, 1.03], sat: 1.12 },
     pikes:    { fog: 0xbfd3e8, sun: 0xfff4e4, sunI: 1.1, sky: 0xcfe0ff, gnd: 0x6b5847, hemiI: 0.6, tint: [1.0, 0.99, 1.02], sat: 1.1 },   // clear, thin high-altitude air: bright sun, pale blue haze over the valleys
     nring:    { fog: 0xc6d4dd, sun: 0xfff0da, sunI: 1.02, sky: 0xd4e4f2, gnd: 0x46552f, hemiI: 0.62, tint: [1.0, 1.01, 0.99], sat: 1.12 },   // the Eifel: soft hazy daylight over the 'green hell'
+    spa:      { fog: 0xc3ced7, sun: 0xfff1de, sunI: 0.98, sky: 0xd0dde9, gnd: 0x43522f, hemiI: 0.64, tint: [0.99, 1.0, 1.01], sat: 1.1 },   // the Ardennes: a little greyer, softer daylight (Spa's changeable weather)
   };
   function applyTheme(id) {
     const t = THEMES[id] || THEMES.lake;

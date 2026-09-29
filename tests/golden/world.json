@@ -154,5 +154,20 @@
    "-:MeshBasicMaterial": "a6574a9",
    "crowd:MeshLambertMaterial": "2104b0ef"
   }
+ },
+ "spa": {
+  "meshes": 831,
+  "verts": 378680,
+  "instances": 30177,
+  "props": 80,
+  "crowd": 5762,
+  "world": "43267314",
+  "propsHash": "5faf0407",
+  "floor": "a5579c71/14000",
+  "groups": {
+   "-:MeshLambertMaterial": "ee494cc6",
+   "-:MeshBasicMaterial": "400e008d",
+   "crowd:MeshLambertMaterial": "d1db1f34"
+  }
  }
 }
