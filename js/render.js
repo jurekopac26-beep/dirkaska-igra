@@ -804,7 +804,7 @@ const Render = (function () {
     monaco:   { fog: 0xcfe2f1, sun: 0xfff0d6, sunI: 1.08, sky: 0xd8ebff, gnd: 0x8a7c62, hemiI: 0.6, tint: [1.03, 1.0, 0.95], sat: 1.14 },
     mountain: { fog: 0xb4cadf, sun: 0xfff2e0, sunI: 1.0, sky: 0xc8dcff, gnd: 0x4d5c33, hemiI: 0.6, tint: [0.98, 1.0, 1.03], sat: 1.12 },
     ouni:     { fog: 0xc4d3dc, sun: 0xffe9c6, sunI: 1.18, sky: 0xcfe1f5, gnd: 0x4a5a2e, hemiI: 0.56, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-88, 72, 58] },   // Ouninpohja: a clear Finnish August afternoon, a warm sun lower in the west (the forest's long shadows across the road), soft haze over the lakes
-    pikes:    { fog: 0xcfd2e2, sun: 0xffd9ab, sunI: 1.3, sky: 0xd6dcf4, gnd: 0x5d4c44, hemiI: 0.62, tint: [1.03, 0.99, 0.97], sat: 1.1, sunOff: [114, 50, -41] },   // early morning on race day: a low sun from the east-north-east (long shadows down the slopes), clear thin air, a faint warm haze over the valleys
+    pikes:    { fog: 0xdfd0cc, sun: 0xffcc8f, sunI: 1.58, sky: 0x9fbbf1, gnd: 0x70604e, hemiI: 0.75, tint: [1.05, 1.0, 0.925], sat: 1.13, haze: 0.25, hazeCol: [1, 0.77, 0.48], sunOff: [104, 48, -60] },   // early morning on race day: a low golden sun from the east-north-east (long shadows down the slopes, its warm glow at the edge of the view when it is ahead), cool blue shade from the clear sky, a light warm haze over the valleys
     nring:    { fog: 0xb7c7cc, sun: 0xfff0d8, sunI: 1.1, sky: 0xcadcf0, gnd: 0x3e4a2a, hemiI: 0.6, tint: [1.03, 1.0, 0.95], sat: 1.04, sunOff: [-80, 76, 70] },   // the Eifel: a summer afternoon over the 'green hell' (a lower sun: longer shadows)
     rbring:   { fog: 0xc6daea, sun: 0xfff1d8, sunI: 1.12, sky: 0xcfe3fb, gnd: 0x46602c, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.06, sunOff: [-86, 78, 52] },   // Styria in early summer, an afternoon sun (longer shadows): clear alpine air, fresh meadows, dark spruce woods
     suzuka:   { fog: 0xc8d9e6, sun: 0xfff1dc, sunI: 1.06, sky: 0xd5e7fa, gnd: 0x4f5c34, hemiI: 0.62, tint: [1.01, 1.0, 0.99], sat: 1.12 },   // Suzuka: a clear spring day in Mie
@@ -815,7 +815,7 @@ const Render = (function () {
     scene.fog.color.setHex(t.fog); renderer.setClearColor(t.fog, 1);
     hemi.color.setHex(t.sky); hemi.groundColor.setHex(t.gnd); hemi.intensity = t.hemiI;
     sun.color.setHex(t.sun); sun.intensity = t.sunI;
-    if (post) { post.mat.uniforms.uTint.value.set(t.tint[0], t.tint[1], t.tint[2]); post.mat.uniforms.uSat.value = t.sat; post.mat.uniforms.uHaze.value = t.haze || 0; if (t.hazeCol) post.mat.uniforms.uHazeCol.value.set(t.hazeCol[0], t.hazeCol[1], t.hazeCol[2]); }
+    if (post) { post.mat.uniforms.uTint.value.set(t.tint[0], t.tint[1], t.tint[2]); post.mat.uniforms.uSat.value = t.sat; post.haze = t.haze || 0; post.hk = 0; post.mat.uniforms.uHaze.value = 0; if (t.hazeCol) post.mat.uniforms.uHazeCol.value.set(t.hazeCol[0], t.hazeCol[1], t.hazeCol[2]); }
   }
 
   /* ---------------- post-processing (high quality): tilt-shift miniature look, edge smoothing, colour grade, vignette ---------------- */
@@ -1684,13 +1684,13 @@ const Render = (function () {
         post.focus += (fc - post.focus) * Math.min(1, dt * 6 + 0.02);
         post.span = Math.abs(fy - 0.5) / 2;
       }
-      if (post.mat.uniforms.uHaze.value > 0) {   // where the low sun is on (or just off) the screen; nothing when it is behind the camera
+      if (post.haze > 0) {   // where the low sun is on (or just off) the screen; nothing when it is behind the camera
         camera.getWorldDirection(_sunV); const sl = Math.hypot(sunOff[0], sunOff[1], sunOff[2]), front = (_sunV.x * sunOff[0] + _sunV.y * sunOff[1] + _sunV.z * sunOff[2]) / sl;
         if (front > 0.02) { _pv.set(cam.vcx + sunOff[0] * 20, (cam.gy || 0) + sunOff[1] * 20, cam.vcz + sunOff[2] * 20).project(camera);
           const asp = camera.aspect, px = _pv.x * asp, py = _pv.y, pl = Math.hypot(px, py) || 1, far = pl > 1.15;   // the sun far off screen: put the glow just outside the edge, in its direction
           const ex = far ? px / pl * 1.15 : px, ey = far ? py / pl * 1.15 : py;
           post.mat.uniforms.uSun.value.set((ex / asp) * 0.5 + 0.5, ey * 0.5 + 0.5); }
-        else post.mat.uniforms.uSun.value.set(0.5, 9); }
+        post.hk += ((front > 0.02 ? 1 : 0) - post.hk) * Math.min(1, dt * 3); post.mat.uniforms.uHaze.value = post.hk > 0.005 ? post.haze * post.hk : 0; }   // (fades in and out as a turning view brings the sun round: no pop)
       const U = post.mat.uniforms; U.uFocus.value = post.focus; U.uBand.value = (lastMode === 'kino' ? 0.3 : camera.aspect < 1 ? 0.2 : 0.24) + (post.span || 0); U.uBlur.value = lastMode === 'kino' ? 0.7 : 0.8;   // kino: a soft depth of field only towards the edges, as in the reference
       renderer.setRenderTarget(post.rt); renderer.render(scene, camera);
       renderer.setRenderTarget(null); renderer.render(post.sc, post.cam);
