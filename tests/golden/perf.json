@@ -63,17 +63,17 @@
   "jsMs": 0.22
  },
  "nring": {
-  "calls": 181,
-  "maxCalls": 234,
-  "kverts": 544,
-  "maxKverts": 752,
-  "jsMs": 1.45
+  "calls": 191,
+  "maxCalls": 235,
+  "kverts": 526,
+  "maxKverts": 750,
+  "jsMs": 1.41
  },
  "rbring": {
-  "calls": 236,
-  "maxCalls": 322,
-  "kverts": 434,
-  "maxKverts": 514,
-  "jsMs": 0.84
+  "calls": 233,
+  "maxCalls": 320,
+  "kverts": 418,
+  "maxKverts": 481,
+  "jsMs": 0.75
  }
 }

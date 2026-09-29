@@ -180,24 +180,24 @@
   "digest": "a493c432550aa93b66df5a4f"
  },
  "nring/cs": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 457.52,
+  "finished": 21,
+  "cars": 21,
+  "winner": 443.69,
   "spins": 0,
-  "walls": 12,
+  "walls": 11,
   "rescues": 0,
   "nan": false,
-  "digest": "43f055c343ed53c25e71e06a"
+  "digest": "6c018e2e39a5af2f342004a8"
  },
  "nring/arcade": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 483.63,
+  "finished": 21,
+  "cars": 21,
+  "winner": 474.67,
   "spins": 0,
-  "walls": 3,
+  "walls": 10,
   "rescues": 0,
   "nan": false,
-  "digest": "38815d35403d224f8ca6e6e8"
+  "digest": "931192079bf7425e65173a13"
  },
  "rbring/cs": {
   "finished": 13,
