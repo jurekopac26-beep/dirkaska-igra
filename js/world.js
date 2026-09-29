@@ -4334,6 +4334,19 @@ const World = (function () {
     }
   }
 
+  /* ---- round 3 of the real course: boards with the real turn numbers at the bigger corners (T.def.turnNos), the timing tower and the
+     podium at the summit, more named places (Engineer's Corner, Brown Bush, Cove Creek, the rocks of Devil's Playground); own random stream ---- */
+  function pkLandmarks3(K) {
+  }
+
+  /* ---- wildlife above the treeline: yellow-bellied marmots on the boulders, a band of bighorn sheep on the slopes
+     (own random stream; pkWildlifeUpdate runs every frame when out.dyn.pkLife is set) ---- */
+  function pkWildlife(K) {
+  }
+
+  function pkWildlifeUpdate(lf, t, car) {
+  }
+
   function buildPikes(scene, tex, opts) {
     const R = rng(7311), N = T.N, w = T.w, dens = opts.density || 1;
     const root = new THREE.Group(); scene.add(root);
@@ -4559,6 +4572,8 @@ const World = (function () {
     pkRaceOps(K);
     pkSnow(K);
     pkLandmarks2(K);
+    pkLandmarks3(K);
+    pkWildlife(K);
 
     /* ---- more spectators (instanced, hashed: no draws from R): both sides of every hairpin, the insides of the forest bends, the "W's" ladder,
        more rows at the checkpoints, the start and the finish, small groups on the high side along the ridge; only where the ground is not below the road ---- */
@@ -8396,6 +8411,7 @@ const World = (function () {
     if (d.pkWx) pkWeatherUpdate(d.pkWx, t, car);   // Pikes Peak: cloud banks, snowfall
     if (d.pkOps) pkOpsUpdate(d.pkOps, t, car);   // Pikes Peak: the marshals' flags
     if (d.wheel) szWheel(d.wheel, t);   // Suzuka: the Ferris wheel turns
+    if (d.pkLife) pkWildlifeUpdate(d.pkLife, t, car);   // Pikes Peak: marmots and bighorn sheep
     if (d.boats) {
       const L = d.lake;
       for (const b of d.boats) {

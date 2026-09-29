@@ -12,6 +12,16 @@ var TRACK_DEFS = TRACK_DEFS || [];
     id: 'pikes', name: 'Pikes Peak', theme: 'pikes', open: true, timeTrial: true, laps: 1, halfWidth: 7,
     desc: 'Vzpon na Pikes Peak: kronometer od starta na 2862 m do vrha na 4301 m. Gozdni zavoji, lasnice \u201eW\u201c, hiter greben in serpentine pod zasneženim vrhom. Ni nasprotnikov, dirkaš proti uri.',
     realKm: 19.99, alt: [2862, 4301],
+    // the real course's 156 turns: every modelled corner between the start and the finish carries the number the real turn at its place would
+    // have (from the share of the course before it, strictly rising), for the corner boards (World) and the HUD counter (Game): [{ s, n, sev, dir }] in road order
+    turns: 156,
+    turnNos(T) {
+      if (T.turnList) return T.turnList;
+      const L = T.corners.filter(c => c.s0 > T.startS && c.s0 < T.finishS).sort((a, b) => a.s0 - b.s0), out = [];
+      let n = 0;
+      for (const c of L) { n = Math.min(this.turns, Math.max(n + 1, Math.round(this.turns * (c.s0 - T.startS) / (T.finishS - T.startS)))); out.push({ s: c.s0, n, sev: c.sev, dir: c.dir }); }
+      return (T.turnList = out);
+    },
     start: [10, -39], finish: [-536, -3695], cps: [[-199,-991],[-186,-1666],[-362,-2164],[-519,-3202]],
     elev: [[0,0,-1],[10,-39,0],[-199,-991,57],[-186,-1666,150],[-362,-2164,244],[-519,-3202,337],[-536,-3695,440],[-483,-3781,443]],
     runoff: 0.55, inner: 3.2, side: 3.6, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true,
