@@ -4784,9 +4784,224 @@ const World = (function () {
   /* ---- wildlife above the treeline: yellow-bellied marmots on the boulders, a band of bighorn sheep on the slopes
      (own random stream; pkWildlifeUpdate runs every frame when out.dyn.pkLife is set) ---- */
   function pkWildlife(K) {
+    const R = rng(9671), { scen, excl, excluded, sFin } = K, gy = pkGround, PI = Math.PI;
+    const mix = (a, b, f) => { f = clamp(f, 0, 1); return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f]; };
+    /* the animals: one instanced mesh per species, posed in the vertex shader. Model space: +x forward, y up, the feet on y = 0; every part is a GB of its own with
+       the joint it turns about (attribute aPart: part, joint x, joint y). Per instance aPose: x head yaw, y head pitch (both about the head's joint), z the legs'
+       swing (parts 2 and 3 in opposite phase; a marmot's torso is part 2: how far it rears up, the head riding on it), w the horns (4: a ram's curls, scaled
+       by w; 5: a ewe's short horns, shown when w = 0) */
+    const egg = (g, c, r, pit, n, m, col) => {   // smooth ellipsoid along its own x axis pitched by pit, n around, m bands pole to pole; col(u, v): the colour at a point of the unit sphere (u forward, v up)
+      const cp = Math.cos(pit), sp = Math.sin(pit), V = [];
+      for (let j = 0; j <= m; j++) { const th = j / m * PI, row = [];
+        for (let k = 0; k < (j === 0 || j === m ? 1 : n); k++) { const ph = k / n * TAU, u = Math.cos(th), v = Math.sin(th) * Math.cos(ph), w = Math.sin(th) * Math.sin(ph), x = u * r[0], y = v * r[1], a = u / r[0], b = v / r[1], d = w / r[2], l = Math.hypot(a, b, d) || 1;
+          row.push({ p: [c[0] + x * cp - y * sp, c[1] + x * sp + y * cp, c[2] + w * r[2]], n: [(a * cp - b * sp) / l, (a * sp + b * cp) / l, d / l], c: col(u, v) }); }
+        V.push(row); }
+      const tri = (a, b, d) => g.triON(a.p, b.p, d.p, a.n, b.n, d.n, c, a.c, b.c, d.c);
+      for (let j = 0; j < m; j++) { const A = V[j], B = V[j + 1];
+        for (let k = 0; k < n; k++) { const k1 = (k + 1) % n; if (A.length === 1) tri(A[0], B[k], B[k1]); else if (B.length === 1) tri(A[k], A[k1], B[0]); else { tri(A[k], A[k1], B[k1]); tri(A[k], B[k1], B[k]); } } }
+    };
+    const tube = (g, pts, rad, n, col) => {   // tapered tube through pts (n sides, radius rad[k], colour col(k)); a zero radius ends it in a point. The rings lie across the path, one side along z
+      const rg = pts.map((p, k) => { const q = pts[Math.min(k + 1, pts.length - 1)], o = pts[Math.max(k - 1, 0)]; let tx = q[0] - o[0], ty = q[1] - o[1], tz = q[2] - o[2]; const tl = Math.hypot(tx, ty, tz) || 1; tx /= tl; ty /= tl; tz /= tl;
+        const ul = Math.hypot(tx, ty) || 1, ux = ty / ul, uy = -tx / ul, vx = tz * tx / ul, vy = tz * ty / ul, vz = -(tx * tx + ty * ty) / ul, out = [];
+        for (let j = 0; j < n; j++) { const a = j / n * TAU, c = Math.cos(a), s = Math.sin(a), nx = ux * c + vx * s, ny = uy * c + vy * s, nz = vz * s; out.push({ p: [p[0] + nx * rad[k], p[1] + ny * rad[k], p[2] + nz * rad[k]], n: [nx, ny, nz] }); }
+        out.t = [tx, ty, tz]; return out; });
+      for (let k = 1; k < pts.length; k++) { const A = rg[k - 1], B = rg[k], ca = col(k - 1), cb = col(k), inn = [(pts[k - 1][0] + pts[k][0]) / 2, (pts[k - 1][1] + pts[k][1]) / 2, (pts[k - 1][2] + pts[k][2]) / 2];
+        for (let j = 0; j < n; j++) { const a = A[j], b = A[(j + 1) % n], c = B[(j + 1) % n], d = B[j];
+          if (rad[k] > 0) { g.triON(a.p, b.p, c.p, a.n, b.n, c.n, inn, ca, ca, cb); g.triON(a.p, c.p, d.p, a.n, c.n, d.n, inn, ca, cb, cb); } else g.triON(a.p, b.p, pts[k], a.n, b.n, B.t, inn, ca, ca, cb); } }
+    };
+    const VS = 'attribute vec3 aPart;\nattribute vec4 aPose;\nuniform vec3 uHip;\nuniform vec3 uHead;\n' +
+      'vec3 lfR(vec3 p, vec2 o, float yw, float pt) { p.xy -= o; float c = cos(yw), s = sin(yw); p.xz = vec2(c * p.x + s * p.z, c * p.z - s * p.x); c = cos(pt); s = sin(pt); p.xy = vec2(c * p.x - s * p.y, s * p.x + c * p.y); p.xy += o; return p; }\n' +
+      'vec3 lfPose(vec3 p, float q) { float k = aPart.x; if (k < 0.5) return p;\n  if (k > 1.5 && k < 3.5) return lfR(p, aPart.yz * q, 0.0, k < 2.5 ? aPose.z : -aPose.z);\n' +
+      '  if (k > 3.5 && q > 0.5) p = uHead + (p - uHead) * (k < 4.5 ? max(aPose.w, 0.0) : 1.0 - step(0.001, abs(aPose.w)));\n' +
+      '  p = lfR(p, aPart.yz * q, aPose.x, aPose.y); if (uHip.z > 0.5) p = lfR(p, uHip.xy * q, 0.0, aPose.z); return p; }\n';
+    const mesh = (list, cap, hip, head, name) => {   // [[GB, part, joint x, joint y]] -> the instanced mesh (cap instances; count and visibility set by pkWildlifeUpdate), its shadow posed the same way
+      let nv = 0; for (const [g] of list) nv += g.P.length / 3;
+      const P = new Float32Array(nv * 3), N = new Float32Array(nv * 3), C = new Float32Array(nv * 3), J = new Float32Array(nv * 3); let o = 0;
+      for (const [g, k, jx, jy] of list) { P.set(g.P, o * 3); N.set(g.N, o * 3); C.set(g.C, o * 3); const n = g.P.length / 3; for (let q = o; q < o + n; q++) { J[q * 3] = k; J[q * 3 + 1] = jx; J[q * 3 + 2] = jy; } o += n; }
+      const G = new THREE.BufferGeometry(), ap = new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4); ap.setUsage(THREE.DynamicDrawUsage);
+      G.setAttribute('position', new THREE.BufferAttribute(P, 3)); G.setAttribute('normal', new THREE.BufferAttribute(N, 3)); G.setAttribute('color', new THREE.BufferAttribute(C, 3)); G.setAttribute('aPart', new THREE.BufferAttribute(J, 3)); G.setAttribute('aPose', ap); G.computeBoundingSphere();
+      const U = { uHip: { value: new THREE.Vector3(hip[0], hip[1], hip[2]) }, uHead: { value: new THREE.Vector3(head[0], head[1], head[2]) } };
+      const hook = (m, key) => { m.onBeforeCompile = (sh) => { Object.assign(sh.uniforms, U); sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\n' + VS)
+        .replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\n\tobjectNormal = lfPose(objectNormal, 0.0);').replace('#include <begin_vertex>', 'vec3 transformed = lfPose(vec3(position), 1.0);'); }; m.customProgramCacheKey = () => key; return m; };
+      const mat = hook(new THREE.MeshLambertMaterial({ vertexColors: true }), 'pkLife'), dm = hook(new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking }), 'pkLifeD');
+      mat.addEventListener('dispose', () => dm.dispose());   // (the world's teardown frees the mesh's own material only)
+      const im = new THREE.InstancedMesh(G, mat, cap); im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); im.customDepthMaterial = dm;
+      im.count = 0; im.visible = false; im.frustumCulled = false; im.matrixAutoUpdate = false; im.castShadow = im.receiveShadow = true; im.name = name; K.root.add(im); return im;
+    };
+
+    // yellow-bellied marmot, life size (drawn MS = 2.2x: a real one is a few pixels in the high cameras): grizzled dark brown back, yellow-orange belly and chest,
+    // a dark cap, a pale muzzle. 0: haunches and tail, 2: torso and forepaws (rears up about the hip: the sentinel's upright pose), 1: the head (on the torso)
+    const MS = 2.2, mBack = [0.3, 0.23, 0.17], mDark = [0.22, 0.17, 0.13], mBelly = [0.95, 0.7, 0.28], mBuff = [0.7, 0.53, 0.33], mCap = [0.23, 0.18, 0.14], mMuz = [0.8, 0.76, 0.69], mPaw = [0.22, 0.17, 0.13];
+    const mParts = [[new GB(), 0, 0, 0], [new GB(), 2, -0.1, 0.1], [new GB(), 1, 0.2, 0.15]];
+    egg(mParts[0][0], [-0.1, 0.125, 0], [0.155, 0.125, 0.15], 0, 5, 3, (u, v) => mix(mBelly, mBack, v * 1.4 + 0.6));
+    tube(mParts[0][0], [[-0.2, 0.14, 0], [-0.37, 0.07, 0]], [0.05, 0], 3, (k) => k ? mDark : mBack);
+    egg(mParts[1][0], [0.07, 0.13, 0], [0.16, 0.115, 0.13], 0, 5, 3, (u, v) => mix(mBelly, mBack, v * 1.6 + 0.5));
+    egg(mParts[1][0], [0.17, 0.04, 0], [0.055, 0.04, 0.09], 0, 4, 2, () => mPaw);
+    egg(mParts[2][0], [0.27, 0.16, 0], [0.085, 0.072, 0.08], 0, 5, 3, (u, v) => u > 0.62 ? mMuz : v > 0.25 ? mCap : mBuff);
+    // Rocky Mountain bighorn, ram size (ewes and lambs smaller): brown coat, white rump patch, belly and muzzle, dark hooves; the ram's heavy curls, the ewe's
+    // short horns. 0: body and tail, 1: neck and head, 2 / 3: the legs (diagonal pairs), 4 / 5: the horns
+    const sCoat = [0.47, 0.37, 0.27], sDark = [0.36, 0.28, 0.2], sWht = [0.9, 0.87, 0.8], sHorn = [0.8, 0.7, 0.52], sHornT = [0.6, 0.51, 0.37], sHoof = [0.15, 0.12, 0.1], JN = [0.52, 0.7];
+    const sParts = [[new GB(), 0, 0, 0], [new GB(), 1, JN[0], JN[1]]];
+    egg(sParts[0][0], [0, 0.74, 0], [0.66, 0.32, 0.29], 0, 6, 4, (u, v) => u < -0.6 && v < 0.5 ? sWht : v < -0.6 ? mix(sCoat, sWht, 0.7) : mix(sCoat, sDark, (u - 0.2) * 1.5));
+    tube(sParts[0][0], [[-0.6, 0.88, 0], [-0.72, 0.7, 0]], [0.055, 0], 3, () => sDark);
+    egg(sParts[1][0], [0.68, 0.9, 0], [0.25, 0.16, 0.15], 0.8, 5, 3, (u, v) => v < -0.5 ? mix(sDark, sWht, 0.45) : sDark);
+    egg(sParts[1][0], [0.9, 1.1, 0], [0.2, 0.11, 0.095], -0.5, 5, 3, (u) => u > 0.55 ? sWht : mix(sCoat, sDark, 0.3));
+    for (const [x, z, k] of [[0.42, 0.15, 2], [-0.44, -0.15, 2], [0.42, -0.15, 3], [-0.44, 0.15, 3]]) { const g = new GB(); tube(g, [[x, 0.6, z], [x, 0, z]], [0.085, 0.048], 4, (q) => q ? sHoof : sCoat); sParts.push([g, k, x, 0.6]); }
+    for (const sd of [-1, 1]) { const pts = [], rad = []; for (let k = 0; k <= 5; k++) { const f = k / 5, a = PI / 2 + f * 1.6 * PI, r = 0.19 * (1 - 0.35 * f); pts.push([0.78 + Math.cos(a) * r, 1.07 + Math.sin(a) * r, sd * (0.08 + 0.2 * f)]); rad.push(k === 5 ? 0 : 0.1 * (1 - 0.65 * f)); }
+      const g = new GB(); tube(g, pts, rad, 3, (k) => mix(sHorn, sHornT, k / 5)); sParts.push([g, 4, JN[0], JN[1]]); }
+    for (const sd of [-1, 1]) { const g = new GB(); tube(g, [[0.84, 1.18, sd * 0.05], [0.77, 1.29, sd * 0.07], [0.68, 1.33, sd * 0.085]], [0.032, 0.024, 0], 3, () => sHornT); sParts.push([g, 5, JN[0], JN[1]]); }
+
+    const clear = (x, z, r, dd) => { for (let k = 0; k < 7; k++) { const a = k * TAU / 6, px = x + (k ? Math.cos(a) * r : 0), pz = z + (k ? Math.sin(a) * r : 0); if (pkNear(px, pz).dd < dd || excluded(px, pz)) return false; } return true; };   // a round footprint beyond the barriers, free
+    const info = { cols: [], bands: [] };   // (where they went: for the tests and the screenshot tools)
+    const busy = (s, r) => s > sFin - 110 || T.cpS.some(c => Math.abs(s - c) < 38) || T.corners.some(c => c.sev >= 3 && Math.abs(s - (c.i0 + c.i1) / 2 * T.ds) < r);   // (the checkpoints, the hairpins' crowds, the summit)
+
+    /* bighorn bands (4-8: a ram or two, ewes, a lamb now and then) grazing on a slope beside the road: the spot within [sa, sb] with the best slope a few metres
+       beyond the barrier; each sheep has two or three spots a slow step apart (it walks between them), each checked for its whole turning circle */
+    const SS = 1.1, S = [], bands = [];   // (the sheep a little over life size: they read from the high cameras)
+    const stand = (x, z, h, sc) => { const L = 1.05 * sc * SS; if (!clear(x, z, L, 2.2) || pkSlope(x, z) > 0.8) return null;   // -> the ground under the lowest hoof (the others sink a little), or null
+      const c = Math.cos(h), s = Math.sin(h), a = 0.43 * sc * SS, b = 0.13 * sc * SS; let lo = 1e9, hi = -1e9;
+      for (const [p, q] of [[a, b], [a, -b], [-a, b], [-a, -b]]) { const y = gy(x + c * p - s * q, z + s * p + c * q); lo = Math.min(lo, y); hi = Math.max(hi, y); }
+      if (hi - lo > 0.28 * sc || S.some(o => o.st.some(p => (p[0] - x) ** 2 + (p[2] - z) ** 2 < 4))) return null;
+      return lo - 0.03; };
+    const band = (sa, sb) => {
+      let best = null;
+      for (let s = sa; s <= sb; s += 5) for (const side of [-1, 1]) for (const e of [3.5, 5, 7, 9, 12]) { if (busy(s, 34)) continue;
+        const [x, z, i] = K.onSide(s, side, e), y = gy(x, z), sl = pkSlope(x, z), dh = y - T.hy[i]; if (sl > 0.7 || dh < -3 || dh > 10 || !clear(x, z, 1.5, 2.2)) continue;
+        const sc = -Math.abs(sl - 0.3) - e * 0.04 - ((side > 0 ? T.br[i] : T.bl[i]) - 10.5) * 0.06 - Math.max(0, -dh) * 0.15 - Math.max(0, dh - 5) * 0.06; if (!best || sc > best.sc) best = { x, z, i, s, side, sc }; }
+      if (!best) return;
+      const n = 4 + Math.floor(R() * 5), i = best.i, tx = T.tx[i], tz = T.tz[i], ox = T.nx[i] * best.side, oz = T.nz[i] * best.side, b = { x: best.x, z: best.z, a0: S.length, a1: 0 };
+      for (let k = 0, tries = 0; k < n && tries < 90; tries++) {
+        const u = (R() - 0.5) * 16, v = (R() - 0.5) * 7, x = best.x + tx * u + ox * v, z = best.z + tz * u + oz * v, kind = k < (n > 5 ? 2 : 1) ? 0 : R() < 0.22 ? 2 : 1, sc = [1.1, 0.88, 0.56][kind];   // rams, ewes, lambs
+        const gx = gy(x + 1, z) - gy(x - 1, z), gz = gy(x, z + 1) - gy(x, z - 1), h = (Math.hypot(gx, gz) > 0.15 ? Math.atan2(gx, -gz) + (R() < 0.5 ? PI : 0) : R() * TAU) + (R() - 0.5) * 0.8;   // across the slope
+        const y = stand(x, z, h, sc); if (y === null) continue;
+        const st = [[x, y, z, h]];
+        for (let q = 0; q < 2; q++) { const p = st[st.length - 1], a = p[3] + (R() - 0.5) * 1.1, d = 0.9 + R() * 0.7, px = p[0] + Math.cos(a) * d, pz = p[2] + Math.sin(a) * d, py = stand(px, pz, a, sc); if (py === null) break; st.push([px, py, pz, a]); }
+        S.push({ st, k: 0, nk: 0, x, y, z, h, sc: sc * SS, w: kind ? (kind === 1 ? 0 : -1) : k ? 0.8 : 1, hp: -1.6, hy: 0, lg: 0, md: 0, u: 0, D: 1, tS: 0, tn: 2 + R() * 9, ty: 0, ph: R() * TAU }); k++; }
+      b.a1 = S.length; if (b.a1 === b.a0) return;
+      let r = 0; for (let k = b.a0; k < b.a1; k++) for (const p of S[k].st) r = Math.max(r, Math.hypot(p[0] - b.x, p[2] - b.z));
+      excl.push({ x: b.x, z: b.z, r: r + 5 }); bands.push(b); info.bands.push([Math.round(best.s), best.side, b.a1 - b.a0]);   // (a wide margin: the boulders placed later check their centres only)
+    };
+    band(3330, 3470);   // above the W's
+    band(4050, 4210);   // Devil's Playground
+    band(4980, 5090);   // below Boulder Park
+
+    /* marmot colonies: a granite rock or two with a burrow under the big one's foot (a dark hole, a fan of dug-out soil), 2-11 m beyond the barrier; a sentinel
+       sitting up on the top (or one lying there), sometimes a second one on the small rock or beside the hole, now and then a young one */
+    const M = [], cols = [], graniteC = [[0.54, 0.44, 0.39], [0.48, 0.42, 0.39], [0.58, 0.48, 0.43]], holeC = [0.09, 0.07, 0.055], dirtC = [0.52, 0.41, 0.31];
+    const colony = (s, x, z, i, side, rr, sl, yc) => {
+      const ry = 0.5 + R() * 0.3 + sl * rr * 1.1, nm = R(), yng = R();   // (a wide sunning rock; taller on a slope: the top stays clear of the ground above it)
+      let ym = yc; for (let k = 0; k < 6; k++) { const a = k * TAU / 6; ym = Math.min(ym, gy(x + Math.cos(a) * rr, z + Math.sin(a) * rr)); }
+      const g = scen.get(x, z), col = vary(graniteC[Math.floor(R() * 3)], R, 0.1), yb = ym + (yc - ym) * 0.3 - 0.12, top = yb + ry;
+      rock(g, x, yb + 0.4 * ry, z, rr, ry, rr * (0.72 + R() * 0.25), R() * TAU, col, R, 0.25);
+      const ox = T.nx[i] * side, oz = T.nz[i] * side, ab = Math.atan2(oz, ox) + (R() - 0.5) * 1.8, bd = rr * 0.9 + 0.1, hx = x + Math.cos(ab) * bd, hz = z + Math.sin(ab) * bd, hy = gy(hx, hz);   // the burrow: on the far side
+      const disc = (cx, cz, r, dy, c, n, el) => { const ps = []; for (let k = 0; k < n; k++) { const a = ab + k / n * TAU, rk = r * (1 + el * Math.cos(a - ab)), px = cx + Math.cos(a) * rk, pz = cz + Math.sin(a) * rk; ps.push([px, gy(px, pz) + dy, pz]); }
+        const mid = [cx, gy(cx, cz) + dy, cz]; for (let k = 0; k < n; k++) g.triO(ps[k], ps[(k + 1) % n], mid, c, [cx, mid[1] - 5, cz]); };
+      disc(hx + Math.cos(ab) * 0.36, hz + Math.sin(ab) * 0.36, 0.62, 0.03, vary(dirtC, R, 0.08), 7, 0.3); disc(hx, hz, 0.34, 0.05, holeC, 6, 0.15);
+      const tops = [], n2 = R() < 0.4 ? 2 : 1;
+      for (let k = 0; k < n2; k++) { const a = Math.atan2(oz, ox) + (k % 2 ? 1 : -1) * (0.9 + R() * 0.8), r2 = 0.3 + R() * 0.3, d = rr + r2 * 0.6, px = x + Math.cos(a) * d, pz = z + Math.sin(a) * d, py = gy(px, pz);   // (beside and behind the big one)
+        if (Math.abs(Math.atan2(Math.sin(a - ab), Math.cos(a - ab))) < 0.75) continue;   // (not on the burrow)
+        ico(g, px, py + r2 * 0.12, pz, r2, 0.72, vary(col, R, 0.1), R, 0.35); tops.push([px, py + r2 * 0.62, pz]); }
+      const face = Math.atan2(-oz, -ox), c0 = M.length;   // (facing the road, give or take)
+      const add = (px, py, pz, h, up, sc) => M.push({ x: px, y: py, z: pz, h, bx: hx, by: hy, bz: hz, up, sc, fl: 22 + R() * 8, ph: R() * TAU, st: 0, tS: 0, wt: 0, pk: 0,
+        ax: px, ay: py, az: pz, ah: h, ra: up ? 1.3 : 0, hy: 0, hp: 0, sk: 0, ty: 0, tn: R() * 2, bob: 0, sit: 0, fx: px, fy: py, fz: pz });
+      const beside = (sc, up) => { const a = ab + (R() < 0.5 ? 1 : -1) * (1 + R() * 0.7), px = hx + Math.cos(a) * 1, pz = hz + Math.sin(a) * 1; if (pkNear(px, pz).dd > 2) add(px, gy(px, pz), pz, face + (R() - 0.5) * 2, up, sc); };
+      add(x, top, z, face + (R() - 0.5) * 1.8, R() < 0.62 ? 1 : 0, MS * (0.93 + R() * 0.14));
+      if (nm < 0.4 && tops.length) { const p = tops[0]; add(p[0], p[1], p[2], face + (R() - 0.5) * 2.4, R() < 0.5 ? 1 : 0, MS * (0.88 + R() * 0.14)); }
+      else if (nm < 0.58) beside(MS * (0.9 + R() * 0.12), 1);
+      if (yng < 0.15) beside(MS * 0.62, R() < 0.5 ? 1 : 0);
+      cols.push({ x, z, m0: c0, m1: M.length, on: false }); excl.push({ x, z, r: rr * 1.8 + 3 }); info.cols.push([Math.round(s), side, M.length - c0]);
+    };
+    const fits = (x, z, ox, oz, rr, rc, dd) => {   // the big rock's side towards the road (rr + 0.2) and the far side with the small rocks and the burrow (rc): beyond the barriers, free
+      const a0 = Math.atan2(oz, ox); if (pkNear(x, z).dd < dd) return false;
+      for (const u of [0, -3, 3, -6, 6]) if (excluded(x - oz * u, z + ox * u)) return false;   // (along the road too: the snow banks' circles are 8 m apart)
+      for (let k = 0; k < 9; k++) { const a = a0 + (k < 4 ? PI + (k - 1.5) * 0.7 : (k - 6) * 0.8), d = k < 4 ? rr + 0.2 : rc, px = x + Math.cos(a) * d, pz = z + Math.sin(a) * d; if (pkNear(px, pz).dd < dd || excluded(px, pz)) return false; }
+      return true; };
+    const site = (s, sd, e0) => {   // a colony near road s: the first spot that fits (the nearer barrier's side first: in view of the chase camera), then the other side and farther out
+      const rr = 1.05 + R() * 0.45, rc = rr * 1.8 + 0.3, i0 = T.idx(s); if (Math.abs(T.bl[i0] - T.br[i0]) > 2) sd = T.br[i0] < T.bl[i0] ? 1 : -1;
+      for (const [side, e] of [[sd, e0], [sd, e0 + 1.5], [sd, e0 + 3.5], [-sd, e0], [-sd, e0 + 2], [sd, e0 + 6], [-sd, e0 + 5]]) {
+        const [x, z, i] = K.onSide(s, side, rr + 1.7 + e), yc = gy(x, z), sl = pkSlope(x, z), ox = T.nx[i] * side, oz = T.nz[i] * side;
+        if (sl > 0.6 || yc < T.hy[i] - 4 || yc > T.hy[i] + 9 || !fits(x, z, ox, oz, rr, rc, 1.5)) continue;
+        colony(s, x, z, i, side, rr, sl, yc); return; }
+    };
+    for (const [a, b, step, p] of [[3100, 3470, 34, 0.8], [3470, 4040, 95, 0.6], [4040, 4260, 30, 0.9], [4260, 5150, 100, 0.6], [5150, 5985, 30, 0.95], [5985, 6100, 55, 0.6]])   // the W's upper legs, Devil's Playground, Boulder Park
+      for (let s = a; s < b; s += step) { const s1 = s + R() * step * 0.6, sd = R() < 0.5 ? -1 : 1, e = Math.pow(R(), 2.5) * 5; if (R() > p || busy(s1, 20)) continue; site(s1, sd, e); }
+
+    const lf = { t: 0, r: rng(9679), aM: 70, aS: 75, M, cols, S, bands, info, mm: M.length ? mesh(mParts, M.length, [-0.1, 0.1, 1], [0, 0, 0], 'pkMarmots') : null, sm: S.length ? mesh(sParts, S.length, [0, 0, 0], [0.9, 1.1, 0], 'pkSheep') : null };
+    lf.put = (im, k, x, y, z, h, s, a, b, c, d) => {   // instance k: at (x, y, z) facing h (model +x), scaled s, pose (a, b, c, d)
+      const E = im.instanceMatrix.array, Q = im.geometry.attributes.aPose.array, o = k * 16, co = Math.cos(h) * s, si = Math.sin(h) * s;
+      E[o] = co; E[o + 1] = 0; E[o + 2] = si; E[o + 3] = 0; E[o + 4] = 0; E[o + 5] = s; E[o + 6] = 0; E[o + 7] = 0; E[o + 8] = -si; E[o + 9] = 0; E[o + 10] = co; E[o + 11] = 0; E[o + 12] = x; E[o + 13] = y; E[o + 14] = z; E[o + 15] = 1;
+      Q[k * 4] = a; Q[k * 4 + 1] = b; Q[k * 4 + 2] = c; Q[k * 4 + 3] = d; };
+    lf.fin = (im, n) => { if (!im) return; im.count = n; im.visible = n > 0; if (!n) return;   // draw the first n (only those are sent to the GPU)
+      const A = im.instanceMatrix, B = im.geometry.attributes.aPose; A.updateRange.offset = B.updateRange.offset = 0; A.updateRange.count = n * 16; B.updateRange.count = n * 4; A.needsUpdate = B.needsUpdate = true; };
+    lf.home = (m) => { m.st = 0; m.tS = 0; m.ax = m.x; m.ay = m.y; m.az = m.z; m.ah = m.h; m.ra = m.up ? 1.3 : 0; m.sk = 0; m.hy = m.hp = 0; };
+    K.out.dyn.pkLife = lf;
   }
 
   function pkWildlifeUpdate(lf, t, car) {
+    const dt = clamp(t - lf.t, 0, 0.1); lf.t = t; if (!car) return;
+    const cx = car.x, cz = car.z, r = lf.r, PI = Math.PI, M = lf.M, S = lf.S, ez = (v, g, k) => v + (g - v) * Math.min(1, dt * k), W = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+    /* marmots (only the colonies within 100 m are posed and drawn; a colony left behind goes back to its rocks): on the rock the sentinel sits up and looks
+       about, now and then ducks; a lying one lifts its head, sits up now and then; everyone sits up and watches a car coming (70 m). Within ~25 m: drop, dash
+       to the burrow, dive in; out again a few seconds after the car has gone (45 m): the head and shoulders first, a look round, then back up onto the rock */
+    let n = 0;
+    for (const c of lf.cols) {
+      if ((c.x - cx) ** 2 + (c.z - cz) ** 2 > 10000) { if (c.on) { c.on = false; for (let k = c.m0; k < c.m1; k++) lf.home(M[k]); } continue; }
+      c.on = true;
+      for (let k = c.m0; k < c.m1; k++) { const m = M[k], dx = cx - m.ax, dz = cz - m.az, d = Math.sqrt(dx * dx + dz * dz), T0 = 0.12;
+        let gr = 0, gY = 0, gP = 0, gH = m.ah, kr = 7, kh = 2.5; m.tS += dt;
+        if (m.st === 4) {   // back to the rock: out of the hole, a scamper and a hop up
+          const D = Math.hypot(m.x - m.bx, m.z - m.bz), u = Math.min(1, m.tS / Math.max(0.8, D / 1.1)), f = sstep(0.45, 0.95, u);
+          m.ax = lerp(m.bx, m.x, u); m.az = lerp(m.bz, m.z, u); m.ay = lerp(m.by, m.y, f) + Math.sin(PI * f) * 0.15; m.sk = ez(m.sk, 0, 8); gH = Math.atan2(m.z - m.bz, m.x - m.bx); kh = 8;
+          if (d < m.fl) { m.st = 1; m.tS = 0; m.fx = m.ax; m.fy = m.ay; m.fz = m.az; } else if (u >= 1) { m.st = 0; m.tS = 0; }
+        }
+        if (m.st === 0) {   // on its rock
+          m.ax = m.x; m.ay = m.y; m.az = m.z; m.sk = ez(m.sk, 0, 8);
+          if (d < m.fl) { m.st = 1; m.tS = 0; m.fx = m.x; m.fy = m.y; m.fz = m.z; }
+          else { const al = d < lf.aM; m.tn -= dt; m.bob -= dt; m.sit -= dt;
+            if (m.tn <= 0) { m.tn = 0.6 + r() * 2.2; m.ty = (r() - 0.5) * 2.2; const q = r(); if (m.up && q < 0.3) m.bob = 0.4; if (!m.up && q < 0.22) m.sit = 2 + r() * 2.5; }
+            gr = m.up || al || m.sit > 0 ? (m.bob > 0 && !al ? 0.45 : 1.3) : 0;
+            const a = Math.atan2(dz, dx); gY = al ? clamp(W(m.ah - a), -1.2, 1.2) : m.ty; gH = al ? m.h + clamp(W(a - m.h), -1.3, 1.3) : m.h;
+            gP = gr > 0.2 ? 0.08 * Math.sin(t * 1.7 + m.ph) : -0.28 + 0.12 * Math.sin(t * 2.3 + m.ph); }
+        }
+        if (m.st === 1) {   // flight: drop, dash to the burrow, dive in head first
+          const D = Math.hypot(m.bx - m.fx, m.bz - m.fz), Tr = Math.max(0.4, D / 3), hd = D > 0.05 ? Math.atan2(m.bz - m.fz, m.bx - m.fx) : m.ah; kr = 14; kh = 14;
+          if (m.tS < T0) gH = hd;
+          else if (m.tS < T0 + Tr) { const u = (m.tS - T0) / Tr; m.ax = lerp(m.fx, m.bx, u); m.az = lerp(m.fz, m.bz, u); m.ay = lerp(m.fy, m.by, sstep(0.1, 0.9, u)) + Math.sin(PI * u) * 0.2 + Math.abs(Math.sin(m.tS * 20)) * 0.06; gr = -0.12; gH = hd; }
+          else { const u = (m.tS - T0 - Tr) / 0.3; m.ax = m.bx; m.ay = m.by; m.az = m.bz; m.sk = Math.max(m.sk, Math.min(1, u) * 0.75 * m.sc); gr = -0.7; kr = 10;
+            if (u >= 1) { m.st = 2; m.tS = 0; m.wt = 2.5 + r() * 3; } }
+        }
+        if (m.st === 2) { if (m.tS > m.wt && d > 45) { m.st = 3; m.tS = 0; m.pk = 1.3 + r() * 1.8; } else continue; }   // down the burrow (not drawn)
+        if (m.st === 3) {   // peeking out: head and shoulders, glancing about
+          m.ax = m.bx; m.ay = m.by; m.az = m.bz; m.sk = ez(m.sk, 0.3 * m.sc, 3); gr = 1.3; m.tn -= dt; if (m.tn <= 0) { m.tn = 0.4 + r() * 0.9; m.ty = (r() - 0.5) * 2.4; } gY = m.ty;
+          if (d < m.fl + 5) { m.st = 1; m.fx = m.bx; m.fy = m.by; m.fz = m.bz; m.tS = T0 + 0.4; } else if (m.tS > m.pk) { m.st = 4; m.tS = 0; }   // (a car again: straight back down)
+        }
+        m.ra = ez(m.ra, gr, kr); m.hy = ez(m.hy, gY, 6); m.hp = ez(m.hp, gP, 5); m.ah += W(gH - m.ah) * Math.min(1, dt * kh);
+        lf.put(lf.mm, n++, m.ax, m.ay - m.sk, m.az, m.ah, m.sc, m.hy, m.hp - Math.max(0, m.ra) * 0.9, m.ra, 0);
+      }
+    }
+    lf.fin(lf.mm, n);
+    /* bighorn sheep (the bands within 130 m): heads down grazing (chewing), now and then a look round or a slow step to the next spot; heads up, watching the car
+       while it is within 75 m */
+    n = 0;
+    for (const b of lf.bands) {
+      if ((b.x - cx) ** 2 + (b.z - cz) ** 2 > 16900) continue;
+      for (let k = b.a0; k < b.a1; k++) { const q = S[k], dx = cx - q.x, dz = cz - q.z, al = dx * dx + dz * dz < lf.aS * lf.aS;
+        let gP = -1.6 + 0.06 * Math.sin(t * 5 + q.ph), gY = 0.25 * Math.sin(t * 0.37 + q.ph); q.tS += dt;
+        if (q.md === 2) {   // a slow step: turn towards the next spot, walk (0.45 m/s), legs swinging
+          const A = q.st[q.k], B = q.st[q.nk], e = W(Math.atan2(B[2] - A[2], B[0] - A[0]) - q.h); q.h += e * Math.min(1, dt * 1.6);
+          if (Math.abs(e) < 0.35) q.u += dt * 0.45 / q.D;
+          const u = Math.min(1, q.u); q.x = lerp(A[0], B[0], u); q.y = lerp(A[1], B[1], u); q.z = lerp(A[2], B[2], u); q.lg = 0.36 * Math.sin(q.tS * 6.5); gP = -0.35; gY = 0;
+          if (q.u >= 1) { q.k = q.nk; q.md = 0; q.tn = 6 + r() * 10; }
+        } else { q.tn -= dt; q.lg = ez(q.lg, 0, 6);
+          if (q.tn <= 0) { if (q.md === 1 || q.st.length < 2 || r() < 0.5) { q.md = q.md === 1 ? 0 : 1; q.tn = q.md ? 1.5 + r() * 2.5 : 5 + r() * 9; q.ty = (r() - 0.5) * 1.6; }
+            else { const L = q.st.length, fw = q.k === L - 1 ? false : q.k === 0 ? true : r() < 0.5; q.nk = q.k + (fw ? 1 : -1); q.md = 2; q.u = 0; q.tS = 0; q.D = Math.max(0.3, Math.hypot(q.st[q.nk][0] - q.x, q.st[q.nk][2] - q.z)); } }
+          if (q.md === 1) { gP = 0.05; gY = q.ty; } }
+        if (al && q.md !== 2) { gP = 0.08; gY = clamp(W(q.h - Math.atan2(dz, dx)), -1.25, 1.25); }
+        q.hp = ez(q.hp, gP, 2.2); q.hy = ez(q.hy, gY, 2.5);
+        lf.put(lf.sm, n++, q.x, q.y, q.z, q.h, q.sc, q.hy, q.hp, q.lg, q.w);
+      }
+    }
+    lf.fin(lf.sm, n);
   }
 
   function buildPikes(scene, tex, opts) {
