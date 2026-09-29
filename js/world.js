@@ -5686,7 +5686,8 @@ const World = (function () {
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
   }
   const RB_BAN = [['RED BULL RING', '#1c2856', '#fff', '#e2202c'], ['SPIELBERG', '#e2202c', '#fff', '#fff'], ['START · ZIEL', '#16181c', '#fff', '#e2202c'], ['STEIERMARK', '#1f7a3a', '#fff', '#fff'],
-    ['RED BULL', '#1c2856', '#ffcc00', '#e2202c'], ['T3', '#1c2856', '#fff', '#e2202c'], ['NORD', '#1c2856', '#fff', '#e2202c'], ['T9', '#1c2856', '#fff', '#e2202c'], ['T10', '#1c2856', '#fff', '#e2202c']];
+    ['RED BULL', '#1c2856', '#ffcc00', '#e2202c'], ['T3', '#1c2856', '#fff', '#e2202c'], ['NORD', '#1c2856', '#fff', '#e2202c'], ['T9', '#1c2856', '#fff', '#e2202c'], ['T10', '#1c2856', '#fff', '#e2202c'],
+    ['DRS', '#101114', '#fff', '#39c84a'], ['STEIERMARK', '#1c2856', '#fff', '#39c84a'], ['ENERGY STATION', '#1c2856', '#fff', '#e2202c']];   // (the DRS boards; the painted run-offs; the Energy Station)
   const RB_AT = { num: 0, brake: 10, ban: 13, rbr: 13, spielberg: 14 };   // atlas cells: the turn numbers, the braking boards, the banners (RB_BAN, the grandstands' names by their text)
   function rbCrowdTex(orange) {   // seated crowd for the grandstand tiers (as Tex.crowd; the orange one for the stands full of Dutch fans)
     const c = document.createElement('canvas'); c.width = 256; c.height = 128; const x = c.getContext('2d'), r = rng(orange ? 77 : 78);
@@ -5708,6 +5709,130 @@ const World = (function () {
         x.fillStyle = `rgb(${v},${v - 4},${v - 12})`; x.beginPath(); x.arc(X, Y, rr, 0, TAU); x.fill();
         x.fillStyle = 'rgba(255,255,250,0.35)'; x.beginPath(); x.arc(X - rr * 0.3, Y - rr * 0.35, rr * 0.4, 0, TAU); x.fill(); }); }
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t;
+  }
+  /* the Dutch fans' orange smoke: a plume is a column of puffs (quads facing the camera) that rise, grow, drift with the wind and thin out, a
+     flare glowing at its foot; all of it animated in the vertex shader (uTime), one mesh for every plume. list: [x, y, z, colour, size] */
+  const RB_WIND = [1.4, -0.7];   // (m/s, x and z: the smoke drifts and the flags fly with it)
+  function rbSmokeTex() {   // a soft, lumpy puff: white, the alpha is the smoke
+    const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), r = rng(1964);
+    for (let k = 0; k < 18; k++) { const a = r() * TAU, d = r() * 11, px = 32 + Math.cos(a) * d, py = 32 + Math.sin(a) * d, rr = 8 + r() * 11, gr = x.createRadialGradient(px, py, 0, px, py, rr);
+      gr.addColorStop(0, 'rgba(255,255,255,0.5)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64); }
+    return new THREE.CanvasTexture(c);
+  }
+  const RB_SMOKE_VS = ['uniform float uTime;', 'uniform vec2 uWind;', 'attribute vec2 aC;', 'attribute vec4 aP;', 'attribute vec3 aCol;', 'varying vec2 vUv;', 'varying vec3 vCol;', 'varying float vA;',
+    '#include <fog_pars_vertex>',
+    'void main() {',
+    '  vec3 p = position, col = aCol; float sz, a, an = aP.x * 6.2832;',
+    '  if (aP.y < 0.0) { sz = aP.w * (0.8 + 0.2 * sin(uTime * 21.0 + aP.x * 50.0) * sin(uTime * 6.3 + aP.x * 17.0)); a = 0.95; }',   // the flare: flickering
+    '  else {',   // aP: phase, lifetime (s), rise (m), size (m)
+    '    float t = fract(uTime / aP.y + aP.x), age = t * aP.y;',
+    '    p.y += aP.z * (0.35 * t + 0.65 * (1.0 - (1.0 - t) * (1.0 - t)));',   // (fast off the flare, slowing)
+    '    p.xz += uWind * age * (0.2 + 0.8 * t);',
+    '    p.x += sin(age * 0.7 + aP.x * 40.0) * 1.5 * t; p.z += cos(age * 0.6 + aP.x * 31.0) * 1.5 * t;',
+    '    sz = aP.w * (0.45 + 1.9 * sqrt(t));',
+    '    a = smoothstep(0.0, 0.05, t) * pow(1.0 - t, 1.3) * 0.95;',
+    '    col = mix(aCol, vec3(0.8, 0.78, 0.76), t * 0.5);',   // (paler as it thins out)
+    '    an += age * 0.25 * (fract(aP.x * 7.0) - 0.5);',
+    '  }',
+    '  vec2 c = vec2(cos(an) * aC.x - sin(an) * aC.y, sin(an) * aC.x + cos(an) * aC.y);',
+    '  vec4 mvPosition = modelViewMatrix * vec4(p, 1.0); mvPosition.xy += c * sz;',
+    '  gl_Position = projectionMatrix * mvPosition;',
+    '  vUv = aC * 0.5 + 0.5; vCol = col * (0.88 + 0.1 * c.y); vA = a;',   // (lighter on top)
+    '  #include <fog_vertex>',
+    '}'].join('\n');
+  const RB_SMOKE_FS = ['uniform sampler2D uMap;', 'varying vec2 vUv;', 'varying vec3 vCol;', 'varying float vA;', '#include <fog_pars_fragment>',
+    'void main() { float a = texture2D(uMap, vUv).a * vA; if (a < 0.005) discard; gl_FragColor = vec4(vCol, a);', '  #include <fog_fragment>', '}'].join('\n');
+  function rbSmoke(list, uTime, tex) {
+    const PER = 32, n = list.length * (PER + 1), P = new Float32Array(n * 12), C2 = new Float32Array(n * 8), A = new Float32Array(n * 16), K = new Float32Array(n * 12), I = [], r = rng(1965);
+    let q = 0;
+    const put = (x, y, z, ph, life, rise, size, col) => {
+      for (let v = 0; v < 4; v++) { const o = q * 4 + v; P[o * 3] = x; P[o * 3 + 1] = y; P[o * 3 + 2] = z; C2[o * 2] = v & 1 ? 1 : -1; C2[o * 2 + 1] = v & 2 ? 1 : -1;
+        A[o * 4] = ph; A[o * 4 + 1] = life; A[o * 4 + 2] = rise; A[o * 4 + 3] = size; K[o * 3] = col[0]; K[o * 3 + 1] = col[1]; K[o * 3 + 2] = col[2]; }
+      const b = q * 4; I.push(b, b + 1, b + 3, b, b + 3, b + 2); q++; };
+    for (const [x, y, z, col, sz] of list) {
+      const life = 10 + r() * 4, rise = 18 + r() * 10;
+      for (let k = 0; k < PER; k++) put(x + (r() - 0.5) * 0.6, y + 0.5, z + (r() - 0.5) * 0.6, (k + r() * 0.5) / PER, life * (0.85 + r() * 0.3), rise * (0.8 + r() * 0.4), sz * (0.8 + r() * 0.4), col);
+      put(x, y + 1.0, z, r(), -1, 0, 0.3, [1, 0.66, 0.4]);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('aC', new THREE.BufferAttribute(C2, 2)); g.setAttribute('aP', new THREE.BufferAttribute(A, 4)); g.setAttribute('aCol', new THREE.BufferAttribute(K, 3));
+    g.setIndex(I); g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
+    const mat = new THREE.ShaderMaterial({ uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uMap: { value: null }, uWind: { value: new THREE.Vector2(RB_WIND[0], RB_WIND[1]) } }]),
+      vertexShader: RB_SMOKE_VS, fragmentShader: RB_SMOKE_FS, transparent: true, depthWrite: false, fog: true, side: THREE.DoubleSide });
+    mat.uniforms.uTime = uTime; mat.uniforms.uMap.value = tex;   // (after the merge: it would copy them)
+    const m = new THREE.Mesh(g, mat); m.frustumCulled = false; m.renderOrder = 4; m.matrixAutoUpdate = false; m.name = 'smoke';
+    return m;
+  }
+  // flags on poles that wave: the cloth in stripes (top to bottom), 4 segments along it, pushed out of its plane in the vertex shader (uTime),
+  // more towards the free end. list: [x, y (the top of the pole), z, the way the cloth flies (radians from +x), stripes, width, height]
+  function rbFlags(list, uTime) {
+    const P = [], N = [], C = [], F = [], I = [], r = rng(1966), SEG = 4; let v = 0;
+    for (const [x, y, z, rot, cols, W, H] of list) {
+      const c = Math.cos(rot), s = Math.sin(rot), ph = r() * TAU, ns = cols.length;
+      for (let b = 0; b < ns; b++) {
+        for (let k = 0; k <= SEG; k++) { const u = k / SEG;
+          for (const f of [b / ns, (b + 1) / ns]) { P.push(x + c * W * u, y - 0.05 - H * f - u * u * 0.12 * H, z + s * W * u); N.push(-s, 0, c); C.push(cols[b][0], cols[b][1], cols[b][2]); F.push(u, ph, W * 0.07); } }
+        for (let k = 0; k < SEG; k++) { const a = v + k * 2; I.push(a, a + 2, a + 3, a, a + 3, a + 1); }
+        v += (SEG + 1) * 2;
+      }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3));
+    g.setAttribute('aFlag', new THREE.Float32BufferAttribute(F, 3)); g.setIndex(I); g.computeBoundingSphere();
+    const m = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
+    m.onBeforeCompile = (sh) => {
+      sh.uniforms.uTime = uTime;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec3 aFlag;\nuniform float uTime;')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\n{ float u = aFlag.x, w = sin(uTime * 5.0 - u * 5.5 + aFlag.y) + 0.45 * sin(uTime * 8.3 - u * 9.0 + aFlag.y * 2.0);\n  transformed += objectNormal * w * aFlag.z * u; transformed.y -= (0.5 + 0.5 * w) * aFlag.z * 0.4 * u * u; }');
+    };
+    m.customProgramCacheKey = () => 'rbflag';
+    const mesh = new THREE.Mesh(g, m); mesh.receiveShadow = true; mesh.matrixAutoUpdate = false; mesh.name = 'flags';
+    return mesh;
+  }
+  // the video walls' pictures, four 256 x 128 frames side by side (the walls show one after another): the race from behind a car, the
+  // standings (the game's own drivers), the orange fans in their smoke, the map of the circuit (T's centre line)
+  function rbScreenTex() {
+    const c = document.createElement('canvas'); c.width = 1024; c.height = 128; const x = c.getContext('2d'), r = rng(1967), F = '"Russo One", "Arial Black", Arial, sans-serif';
+    const tag = (ox, t, bg) => { x.fillStyle = bg || '#e2202c'; x.fillRect(ox + 8, 8, 40, 16); x.fillStyle = '#fff'; x.font = '900 11px ' + F; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(t, ox + 28, 17); };
+    { const ox = 0, g = x.createLinearGradient(0, 0, 0, 60);   // 1: the race
+      g.addColorStop(0, '#7fb2e8'); g.addColorStop(1, '#cfe3f6'); x.fillStyle = g; x.fillRect(ox, 0, 256, 60);
+      x.fillStyle = '#3f6a3a'; x.beginPath(); x.moveTo(ox, 60); for (let k = 0; k <= 16; k++) x.lineTo(ox + k * 16, 44 + Math.sin(k * 1.3) * 6 + r() * 4); x.lineTo(ox + 256, 60); x.fill();
+      x.fillStyle = '#5d8f3c'; x.fillRect(ox, 58, 256, 70);
+      x.fillStyle = '#5a5c60'; x.beginPath(); x.moveTo(ox + 112, 58); x.lineTo(ox + 146, 58); x.lineTo(ox + 256, 128); x.lineTo(ox, 128); x.fill();
+      for (let k = 0; k < 7; k++) { const t0 = k / 7, t1 = (k + 0.5) / 7, yA = 58 + 70 * t0 * t0, yB = 58 + 70 * t1 * t1, xa = (t) => 112 - 112 * t * t, xb = (t) => 146 + 110 * t * t;   // kerbs
+        x.fillStyle = k % 2 ? '#fff' : '#e2202c'; x.beginPath(); x.moveTo(ox + xa(t0), yA); x.lineTo(ox + xa(t1), yB); x.lineTo(ox + xa(t1) + 8 * t1, yB); x.lineTo(ox + xa(t0) + 8 * t0, yA); x.fill();
+        x.beginPath(); x.moveTo(ox + xb(t0), yA); x.lineTo(ox + xb(t1), yB); x.lineTo(ox + xb(t1) - 8 * t1, yB); x.lineTo(ox + xb(t0) - 8 * t0, yA); x.fill(); }
+      const cx = ox + 128, cy = 100;   // a racing car from behind: the wheels, the body, the rear wing
+      x.fillStyle = '#141416'; x.fillRect(cx - 44, cy - 6, 18, 24); x.fillRect(cx + 26, cy - 6, 18, 24);
+      x.fillStyle = '#1c2856'; x.beginPath(); x.moveTo(cx - 26, cy + 12); x.lineTo(cx - 14, cy - 12); x.lineTo(cx + 14, cy - 12); x.lineTo(cx + 26, cy + 12); x.fill();
+      x.fillStyle = '#e2202c'; x.fillRect(cx - 10, cy - 8, 20, 6); x.fillStyle = '#ffcc00'; x.fillRect(cx - 4, cy - 20, 8, 12);
+      x.fillStyle = '#1c2856'; x.fillRect(cx - 30, cy - 30, 60, 8); x.fillStyle = '#e2202c'; x.fillRect(cx - 30, cy - 24, 60, 2); x.fillStyle = '#101114'; x.fillRect(cx - 28, cy - 22, 4, 12); x.fillRect(cx + 24, cy - 22, 4, 12);
+      x.fillStyle = '#ff3030'; x.fillRect(cx - 3, cy + 4, 6, 4);
+      tag(ox, 'LIVE'); }
+    { const ox = 256; x.fillStyle = '#101a3a'; x.fillRect(ox, 0, 256, 128);   // 2: the standings
+      const tc = ['#1c2856', '#e2202c', '#1f7a3a', '#ff8a1c', '#f4f4f0', '#2f7fe0', '#1bbfd6', '#ffcc00'];
+      x.textBaseline = 'middle'; x.font = '900 12px ' + F;
+      for (let k = 0; k < 8; k++) { const y = 10 + k * 14.5, nm = Core.DRIVER_NAMES[k].split(' ').pop().slice(0, 3).toUpperCase();
+        x.fillStyle = k % 2 ? '#16224a' : '#1b2a58'; x.fillRect(ox + 60, y - 6, 136, 13); x.fillStyle = tc[k]; x.fillRect(ox + 82, y - 5, 4, 11);
+        x.fillStyle = '#fff'; x.textAlign = 'right'; x.fillText(String(k + 1), ox + 78, y + 1); x.textAlign = 'left'; x.fillText(nm, ox + 92, y + 1);
+        x.fillStyle = '#ffcc00'; x.textAlign = 'right'; x.fillText(k ? '+' + (k * 0.8 + r() * 0.7).toFixed(1) : '', ox + 192, y + 1); }
+      tag(ox, 'KROG', '#1c2856'); }
+    { const ox = 512; x.fillStyle = '#3b3f48'; x.fillRect(ox, 0, 256, 128);   // 3: the orange fans in their smoke
+      const cols = ['#ff7a12', '#ff8a1c', '#f26a0c', '#ff9d3a', '#f4f4f0', '#1c2856', '#e2202c'];
+      for (let row = 0; row < 12; row++) for (let k = 0; k < 44; k++) { const px = ox + k * 6 + (row % 2) * 3, py = 26 + row * 9; x.fillStyle = cols[Math.floor(r() * cols.length)]; x.fillRect(px, py + 3, 5, 6); x.fillStyle = r() < 0.6 ? '#f1c7a1' : '#a86f45'; x.fillRect(px + 1, py, 3, 3); }
+      for (let k = 0; k < 9; k++) { const px = ox + 20 + r() * 216, py = 20 + r() * 50, rr = 16 + r() * 22, gr = x.createRadialGradient(px, py, 0, px, py, rr);
+        gr.addColorStop(0, 'rgba(255,128,30,0.85)'); gr.addColorStop(1, 'rgba(255,128,30,0)'); x.fillStyle = gr; x.fillRect(ox, 0, 256, 128); }
+      tag(ox, 'LIVE'); }
+    { const ox = 768; x.fillStyle = '#1c2856'; x.fillRect(ox, 0, 256, 128);   // 4: the circuit
+      let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (let i = 0; i < T.N; i++) { x0 = Math.min(x0, T.px[i]); x1 = Math.max(x1, T.px[i]); z0 = Math.min(z0, T.pz[i]); z1 = Math.max(z1, T.pz[i]); }
+      const sc = Math.min(150 / (x1 - x0), 96 / (z1 - z0)), mx = ox + 150 - (x0 + x1) / 2 * sc, mz = 66 - (z0 + z1) / 2 * sc;
+      x.strokeStyle = '#fff'; x.lineWidth = 4; x.lineJoin = 'round'; x.beginPath();
+      for (let i = 0; i <= T.N; i += 4) { const k = i % T.N; if (i === 0) x.moveTo(mx + T.px[k] * sc, mz + T.pz[k] * sc); else x.lineTo(mx + T.px[k] * sc, mz + T.pz[k] * sc); }
+      x.closePath(); x.stroke();
+      x.fillStyle = '#e2202c'; x.beginPath(); x.arc(mx + T.px[0] * sc, mz + T.pz[0] * sc, 5, 0, TAU); x.fill();
+      x.fillStyle = '#fff'; x.font = '900 13px ' + F; x.textAlign = 'left'; x.textBaseline = 'middle'; x.fillText('RED BULL', ox + 10, 40); x.fillText('RING', ox + 10, 56);
+      x.fillStyle = '#ffcc00'; x.font = '900 10px ' + F; x.fillText('4,318 km', ox + 10, 76); x.fillText('10 zavojev', ox + 10, 90); }
+    const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
   }
   // the verge's cross-section beyond the road edge ([offset, height above the road]), lifted onto the ground where it rises: the road ribbons
   // and the knocked props' floor (rbringProps) use the same rows
@@ -5764,7 +5889,7 @@ const World = (function () {
     const excluded = (x, z) => { const Lc = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!Lc) return false; for (let k = 0; k < Lc.length; k++) { const e = Lc[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
 
     /* ---- terrain tiles: which ones (they are built at the end, when the trees have darkened the ground under them) ---- */
-    const gMat = new THREE.MeshLambertMaterial({ map: tex.grass, vertexColors: true }), tiles = [];
+    const gMat = new THREE.MeshLambertMaterial({ map: ownTex(nrGrassTex(tex.grass.anisotropy)), vertexColors: true }), tiles = [];   // (the Nordschleife's meadow grass: no mowing stripes; the vertex colours make it Styrian)
     for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) { const on = nrTileOn(ti, tj); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; tiles.push(ti, tj, on); }
 
     /* ---- road: asphalt, white edge lines, red and white kerbs (256 m chunks, culled; the grass verges out past the barriers at the end) ---- */
@@ -5775,7 +5900,12 @@ const World = (function () {
     const kerb = [new Uint8Array(N), new Uint8Array(N)];   // inside of every bend, outside in the tighter ones
     for (let i = 0; i < N; i++) if (T.curb[i]) { const k = T.k[i]; for (const side of [-1, 1]) { const inside = side * k > 0; if (inside || Math.abs(k) > 1 / 70) kerb[side > 0 ? 1 : 0][i] = 1; } }
     const CH = 128, offs = [-w, -w * 2 / 3, -w / 3, 0, w / 3, w * 2 / 3, w], tileL = 8;
-    const shade = (i, o) => { const rl = T.rl[i]; let k = 0.84 - 0.14 * Math.exp(-((o - rl) * (o - rl)) / 5); if (Math.abs(o) > w * 0.92) k -= 0.03; return [k, k, k * 1.02]; };
+    // asphalt tone: resurfaced sections of 120-260 m (seams across the road), the rubbered racing line, darker still in the braking zones of the
+    // slower corners (as on the Nordschleife; an F1 circuit is younger and more even)
+    const secT = new Float32Array(N), brk = new Float32Array(N);
+    for (let i0 = 0, k = 0; i0 < N; k++) { const n = 60 + Math.floor(crH(k, 3, 97) * 70), t = 0.94 + crH(k, 5, 97) * 0.09; for (let i = i0; i < Math.min(N, i0 + n); i++) secT[i] = t; i0 += n; }
+    for (const c of T.corners) if (c.sev >= 2) for (let k = -70; k <= 6; k++) { const i = (c.i0 + k + N) % N, f = k < -10 ? sstep(-70, -12, k) : sstep(6, -10, k); if (f > brk[i]) brk[i] = f; }
+    const shade = (i, o) => { const rl = T.rl[i]; let k = (0.85 - (0.16 + 0.12 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.92) k -= 0.03; return [k, k, k * 1.02]; };
     const vg = [0.9, 0.99, 0.86];
     for (let c0 = 0; c0 < N; c0 += CH) {
       const gr = new RB(true), gl = new RB(), gk = new RB(true);
@@ -5788,10 +5918,11 @@ const World = (function () {
         if (pl >= 0) { gl.link(pl, l, 0, 1); gl.link(pl, l, 2, 3); } pl = l;
         for (const side of [-1, 1]) {
           const si = side > 0 ? 1 : 0;
-          if (kerb[si][i]) {
-            const kp = side > 0 ? [Pt(i, w - 0.02, 0.04), Pt(i, w + T.curbW, 0.085)] : [Pt(i, -(w + T.curbW), 0.085), Pt(i, -w + 0.02, 0.04)];
-            const rk = gk.row(kp, [[1, 1, 1], [1, 1, 1]], side > 0 ? [[0, ii * ds / 3], [1, ii * ds / 3]] : [[1, ii * ds / 3], [0, ii * ds / 3]]);
-            if (pk[si] >= 0) gk.link(pk[si], rk, 0, 1); pk[si] = rk;
+          if (kerb[si][i]) {   // red/white kerb in 1 m blocks: a sloped inner edge, a flat top, a low outer lip
+            const cw = T.curbW, pf = [[w - 0.02, 0.035], [w + 0.14, 0.078], [w + cw - 0.12, 0.085], [w + cw + 0.02, 0.03]], v = ii * ds / 2;
+            const sh = [0.84, 1, 1, 0.78].map(k => [k, k, k]), us = [0, 0.1, 0.92, 1], o = side > 0 ? [0, 1, 2, 3] : [3, 2, 1, 0];
+            const rk = gk.row(o.map(k => Pt(i, side * pf[k][0], pf[k][1])), o.map(k => sh[k]), o.map(k => [us[k], v]));
+            if (pk[si] >= 0) gk.link(pk[si], rk, 0, 3); pk[si] = rk;
           } else pk[si] = -1;
         }
       }
@@ -5832,6 +5963,45 @@ const World = (function () {
         }
       }
       addM(gs, new THREE.MeshLambertMaterial({ map: ownTex(rbGravelTex()), vertexColors: true })); addM(gbl, lMat);
+    }
+    /* ---- on the asphalt: black tyre marks into the slower corners (many: a Formula 1 circuit), a few repair patches and sealed cracks (the
+       Nordschleife's decal atlas, its marks only: no fans' paint on this track), and the DRS lines across the road: a solid one at each
+       detection point, a dashed one where the zone opens. Strips that follow the road 5 cm up, per road chunk, drawn without writing depth ---- */
+    let nDecals = 0;
+    {
+      const dTex = ownTex(nrDecalTex()); dTex.anisotropy = tex.asphalt.anisotropy || 4;
+      const dMat = new THREE.MeshLambertMaterial({ map: dTex, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4 });
+      const RD = rng(4320), dcs = [], put = (i0, n, c, hw, cell, a, lay, fol) => dcs.push([i0, n, c, hw, cell, a, lay, fol]);   // (their own random stream: R() is not drawn from)
+      for (let d = 60; d < L - 60; d += 30) {   // (not on the grid)
+        const i = T.idx(sAt(d));
+        if (RD() < 0.04) put(i, 5 + Math.floor(RD() * 4), (RD() - 0.5) * 6, 1.2 + RD() * 0.6, 24 + Math.floor(RD() * 2), 0.75, 1);   // sealed cracks
+        if (RD() < 0.05) { const hw = 1.5 + RD() * 1.2; put(i, 2 + Math.floor(RD() * 6), (RD() < 0.5 ? -1 : 1) * (w - 0.8 - hw) * RD(), hw, 28 + Math.floor(RD() * 4), 0.85, 0); }   // repair patches
+      }
+      for (const c of T.corners) if (c.sev >= 2) for (let n = c.sev >= 3 ? 5 : 3; n > 0; n--)   // tyre marks into the corner, along the racing line
+        put((c.i0 - 4 - Math.floor(RD() * 34) + N) % N, 10 + Math.floor(RD() * 7), (RD() - 0.5) * 1.8, 1.25, 26 + (RD() < 0.35 ? 1 : 0), 0.45 + RD() * 0.4, 2, true);
+      dcs.sort((a, b) => a[6] - b[6]);   // (patches under cracks under tyre marks)
+      const rbs = new Map();
+      for (const [i0, n, c, hw, cell, a, , fol] of dcs) {
+        const key = Math.floor(i0 / CH); let rb = rbs.get(key); if (!rb) rbs.set(key, rb = new RB(true, true));
+        const cu = cell % 4, cv = Math.floor(cell / 4), u0 = cu / 4 + 1 / 512, u1 = (cu + 1) / 4 - 1 / 512, vt = 1 - cv / 8 - 1 / 1024, vb = 1 - (cv + 1) / 8 + 1 / 1024, col = [1, 1, 1, a];
+        let pr = -1;
+        for (let k = 0; k <= n; k++) {
+          const i = (i0 + k) % N, cc = clamp((fol ? T.rl[i] : 0) + c, -(w - 0.7 - hw), w - 0.7 - hw), v = vb + (vt - vb) * k / n;
+          const r = rb.row([Pt(i, cc - hw, 0.05), Pt(i, cc + hw, 0.05)], [col, col], [[u0, v], [u1, v]]);
+          if (pr >= 0) rb.link(pr, r, 0, 1); pr = r;
+        }
+      }
+      for (const rb of rbs.values()) { const m = addM(rb, dMat); if (m) m.renderOrder = 1; }
+      nDecals = dcs.length;
+      if (T.drs) {   // the DRS lines: 0.3 m across the whole road
+        const gd = new GB(), wl = [0.95, 0.95, 0.92];
+        for (const z of T.drs) for (const [at, dash] of [[z.det, false], [z.act, true]]) {
+          const s0 = sAt(at), s1 = s0 + 0.3;
+          for (let o = -w + 0.2; o < w - 0.2 - 1e-6; o += dash ? 1.2 : 2) { const o1 = Math.min(w - 0.2, o + (dash ? 0.7 : 2)), A = atSf(s0, o), B = atSf(s0, o1), C = atSf(s1, o1), D = atSf(s1, o);
+            gd.quadUp([A[0], hyS(s0) + 0.036, A[1]], [B[0], hyS(s0) + 0.036, B[1]], [C[0], hyS(s1) + 0.036, C[1]], [D[0], hyS(s1) + 0.036, D[1]], [wl, wl, wl, wl]); }
+        }
+        addM(gd, lMat);
+      }
     }
     // chequered start / finish line and the grid boxes (13 cars, staggered)
     {
@@ -5937,6 +6107,11 @@ const World = (function () {
       board(x, y + y0, z, T.tx[i], T.tz[i], Wd, H, cellK); exclPush(x, z, 3);
     };
     const CR = crowdCtx({ gH: nrGround, near: (x, z) => nrNear(x, z).dd, maxSlope: 0.9, shirts: RB_SHIRTS });   // spectators (instanced)
+    // (the orange smoke, the waving flags and the video walls' screens are collected on the way and built at the end; their own random stream)
+    const RX = rng(4322), smokeL = [], flagL = [], scrG = new GB(true), WROT = Math.atan2(RB_WIND[1], RB_WIND[0]), SMK = [[1, 0.5, 0.12], [1, 0.45, 0.08], [0.98, 0.56, 0.18]];
+    const FL = { nl: [[0.68, 0.11, 0.16], [0.95, 0.95, 0.94], [0.13, 0.28, 0.55]], at: [[0.8, 0.1, 0.14], [0.95, 0.95, 0.94], [0.8, 0.1, 0.14]], or: [[1, 0.5, 0.08]], st: [[0.95, 0.95, 0.94], [0.12, 0.5, 0.25]], rb: [[0.12, 0.16, 0.36]] };
+    const flagAt = (x, y, z, h, k, W) => { W = W || 1.6; cyl(scen.get(x, z), x, y - 0.2, z, 0.05, h + 0.2, 5, [0.86, 0.86, 0.88]); flagL.push([x, y + h, z, WROT + (RX() - 0.5) * 0.3, FL[k], W, W * 0.66]); };   // (the cloth flies downwind)
+    const pick = (o) => { let u = RX(); for (const k in o) { if (u < o[k]) return k; u -= o[k]; } return Object.keys(o)[0]; };
 
     /* ---- START / FINISH: the gantry with the start lights and the banner ---- */
     {
@@ -6083,7 +6258,7 @@ const World = (function () {
         exclPush(T.px[ik] + T.nx[ik] * o, T.pz[ik] + T.nz[ik] * o, 14); }
       // the paddock behind the pit building: asphalt, the teams' transporters and motorhomes in rows
       { const gpd = new GB(true), pc = [0.95, 0.95, 0.97];
-        for (let q = PB[0] - 20; q < PB[1] + 20; q += 4) { const s0 = sStart + q, i = T.idx(s0), j = T.idx(s0 + 4), f = gb(s0 + 2) || 30.5;
+        for (let q = PB[0] - 20; q < PB[1] + 60; q += 4) { const s0 = sStart + q, i = T.idx(s0), j = T.idx(s0 + 4), f = gb(s0 + 2) || 30.5;   // (on to the Energy Station)
           const A = Pt(i, f + 14, 0.03), B = Pt(i, f + 62, 0.03), C = Pt(j, f + 62, 0.03), D = Pt(j, f + 14, 0.03), uv = (p) => [p[0] / 8, -p[2] / 8];
           gpd.quadUp(A, B, C, D, [pc, pc, pc, pc], [uv(A), uv(B), uv(C), uv(D)]); }
         addM(gpd, aMat);
@@ -6093,6 +6268,26 @@ const World = (function () {
               for (const wa of [-5, -3.6, 5.6, 8.2]) for (const sd of [-1, 1]) box(g, x + Math.cos(hd) * wa - Math.sin(hd) * sd * 1.05, y, z + Math.sin(hd) * wa + Math.cos(hd) * sd * 1.05, 1.0, 1.0, 0.35, hd, [0.08, 0.08, 0.09], null, true); }
             else { box(g, x, y, z, 12, 6.4, 7, hd, [0.95, 0.95, 0.96], tc); box(g, x, y + 6.4, z, 12.6, 0.3, 7.6, hd, tc, tc); kface(g, s0, -5.5, 5.5, lw - 3.52, 1.2, 5.6, GLD); }   // a motorhome: two storeys of glass
             exclPush(x, z, 9); } } }
+      // the Red Bull Energy Station at the paddock's end towards Turn 1: the team's house, three floors of glass under a wide navy roof with
+      // the name on top, the top floor set back behind a terrace with sunshades, a pool in front, flags
+      { const s0 = sStart + PB[1] + 24, f = gb(s0 + 17) || 30.5, o = f + 40, [cx, cz] = atSf(s0 + 17, o), ik = T.idx(s0 + 17), g = scen.get(cx, cz), NV = [0.12, 0.16, 0.32], RD = [0.86, 0.12, 0.16];
+        kbox(g, s0, 17, o, -0.7, 35, 0.85, 25, [0.74, 0.75, 0.77], [0.8, 0.81, 0.82]);                        // the plinth
+        kbox(g, s0, 17, o + 1, 0.15, 31, 4.2, 21, GLD, WH, true);                                            // the ground floor, set back
+        kbox(g, s0, 17, o, 4.35, 34, 0.45, 24, WH, WT); kbox(g, s0, 17, o, 4.8, 33.4, 3.9, 23.4, GLS, WH, true);
+        kbox(g, s0, 17, o, 8.7, 34, 0.45, 24, WH, WT); kbox(g, s0, 17, o + 3.5, 9.15, 28, 3.6, 16, GLD, WH, true);
+        kbox(g, s0, 17, o, 12.75, 38, 0.6, 28, NV, [0.66, 0.68, 0.72]);                                      // the roof, overhanging
+        { const [rx0, rz0] = atSf(s0 + 17, o), nx = T.nx[ik], nz = T.nz[ik], lx = nz, lz = -nx, Wn = 26, Hn = 6.5, yR = hyS(s0 + 17) + 13.37, [u0, v0, u1, v1] = AUV(RB_AT.ban + RB_BAN.findIndex(b => b[0] === 'RED BULL'));
+          const Q = (a, b) => [rx0 + lx * a + nx * b, yR, rz0 + lz * a + nz * b];   // the name painted on the roof, read from the track (a: to the reader's left, b: away)
+          ban.quadO(Q(Wn / 2, -Hn / 2), Q(-Wn / 2, -Hn / 2), Q(-Wn / 2, Hn / 2), Q(Wn / 2, Hn / 2), W1, [rx0, yR - 5, rz0], [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]); }
+        for (const e of [-14.03, 14.03]) kbox(g, s0, 17, o + e, 13.05, 38.1, 0.2, 0.08, RD, null, true);     // (red lines along its edges)
+        for (const a of [0.5, 11.7, 22.3, 33.5]) kbox(g, s0, a, o - 11.2, 9.15, 0.3, 3.6, 0.3, WH, null, true);   // its columns at the terrace's edge
+        for (const a of [6, 17, 28]) { kcyl(g, s0, a, o - 7.5, 9.15, 0.05, 2.3, 5, [0.8, 0.8, 0.82]); const [ux, uz] = atSf(s0 + a, o - 7.5); cone(g, ux, hyS(s0 + a) + 10.9, uz, 1.5, 0.6, 8, RD, [0.97, 0.97, 0.95], 0);   // sunshades and tables
+          kcyl(g, s0, a, o - 7.5, 9.15, 0.5, 0.75, 8, [0.95, 0.95, 0.93], [0.97, 0.97, 0.95]); }
+        { const [bx, bz] = atSf(s0 + 17, o - 13.4); board(bx, hyS(s0 + 17) + 13.35, bz, T.nx[ik], T.nz[ik], 20, 3.4, RB_AT.ban + RB_BAN.findIndex(b => b[0] === 'RED BULL')); }   // (and on its front edge, for the low cameras)
+        { const [bx, bz] = atSf(s0 + 17, o - 11.85); board(bx, hyS(s0 + 17) + 5.9, bz, T.nx[ik], T.nz[ik], 12, 1.9, RB_AT.ban + RB_BAN.findIndex(b => b[0] === 'ENERGY STATION')); }
+        kbox(g, s0, 17, o - 17.5, -0.6, 27, 0.75, 6.4, [0.86, 0.86, 0.84], [0.9, 0.9, 0.88]); kbox(g, s0, 17, o - 17.5, -0.6, 26, 0.79, 5.4, [0.2, 0.48, 0.74], [0.26, 0.58, 0.84]);   // the pool (the water over its rim's middle)
+        for (const [a, k] of [[6, 'rb'], [17, 'at'], [28, 'st']]) { const [x, z] = atSf(s0 + a, o - 22); flagAt(x, nrGround(x, z), z, 8, k, 2.2); }
+        exclPush(cx, cz, 26); }
     }
 
     /* ---- grandstands along the barriers: tiers following the track and the ground, a seated crowd on every tier, covered stands under a roof
@@ -6149,6 +6344,9 @@ const World = (function () {
           if (m % 2 === 0) { const [x, z] = atSf(A.s, side * (a1 - 0.4)), y0 = nrGround(x, z) - 0.3; box(g, x, y0, z, 0.5, tA - y0, 0.5, T.hd[T.idx(A.s)], [0.86, 0.87, 0.9]); }
         }
         for (const r of rows2) { const [x, z] = atSf(r.s, side * (r.prof[0][0] + rows * dep * 0.5)); exclPush(x, z, rows * dep / 2 + 6); CR.exclAdd(x, z, rows * dep / 2 + 3); }
+        if (orange && sec % 3 === 1 && rows2.length) { const M3 = rows2[rows2.length >> 1], p = M3.pts[1 + Math.max(0, rows - 3) * 2]; smokeL.push([p[0], p[1], p[2], SMK[Math.floor(RX() * 3)], 1.5 + RX() * 0.4]); }   // flares in the orange stands
+        if (!roof) for (let m = 2; m < rows2.length - 1; m += 6) { const A = rows2[m], [ob, yb] = A.prof[A.prof.length - 3], [x, z] = atSf(A.s, side * (ob + 0.18));   // flags on the back wall of the open stands
+          flagAt(x, yb, z, 5, orange ? pick({ nl: 0.5, or: 0.3, at: 0.2 }) : pick({ at: 0.5, st: 0.3, nl: 0.2 })); }
         const nk = RB_BAN.findIndex(bn => bn[0] === name); let M2 = rows2[rows2.length >> 1];
         if (M2 && underWing(M2)) M2 = rows2[Math.floor(rows2.length * 0.82)];   // (not on the wing: on the roof beyond it)
         if (nk >= 0 && M2 && (sections === 1 || sec % 5 === 2)) {   // the stand's name, big enough for the high cameras: painted on the roof, or on a board leaning back on top of an open stand's back wall
@@ -6341,23 +6539,70 @@ const World = (function () {
       if (c.sev < 3) continue; const side = -c.dir;
       [300, 200, 100].forEach((m, k) => { const s = wrapS(c.i0 * ds - m + 30), i = T.idx(s); if ((side > 0 ? T.br[i] : T.bl[i]) < w + 3 || (side > 0 && PD && T.pitAt(s))) return; signPost(s, side, 1.6, RB_AT.brake + k, 1.6, 1.1, 1.3); });
     }
+    if (T.drs) { const kD = RB_AT.ban + RB_BAN.findIndex(b => b[0] === 'DRS');   // DRS boards where each zone opens, on the side with more room
+      for (const z of T.drs) { const s = sAt(z.act), side = roomSide(s); if (side > 0 && PD && T.pitAt(s)) continue; signPost(s, side, 1.4, kD, 2.4, 1.0, 1.6); } }
+    { const bn = (t) => RB_AT.ban + RB_BAN.findIndex(b => b[0] === t), cells = [bn('RED BULL RING'), bn('SPIELBERG'), bn('STEIERMARK')], gp = new GB(true);
+      let n = 0;
+      for (const c of T.corners) {   // painted names on the wide asphalt run-offs outside the corners, across them (read from the cars coming in)
+        if (c.sev < 2) continue; const side = -c.dir, flag = side > 0 ? T.gravR : T.gravL, bar = side > 0 ? T.br : T.bl, i1c = c.i1 < c.i0 ? c.i1 + N : c.i1;
+        let bi = -1, bw = 0; for (let k = c.i0; k <= i1c + 20; k++) { const i = k % N, wd = bar[i] - w - T.curbW; if (flag[i] && wd > bw) { bw = wd; bi = i; } }
+        if (bi < 0 || bw < 13) continue;
+        const o0 = w + T.curbW + 2.2, o1 = Math.min(bar[bi] - 1.6, o0 + 15), s0 = bi * ds, s1 = s0 + (o1 - o0) / 4, [u0, v0, u1, v1] = AUV(cells[n++ % 3]);
+        const Q = (s, o) => { const [x, z] = atSf(s, side * o); return [x, hyS(s) + 0.036, z]; }, oL = side < 0 ? o1 : o0, oR = side < 0 ? o0 : o1;   // (the text's left on the driver's left)
+        const mc = atSf(s0, side * (o0 + o1) / 2); gp.quadO(Q(s0, oL), Q(s0, oR), Q(s1, oR), Q(s1, oL), W1, [mc[0], hyS(s0) - 5, mc[1]], [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]);
+      }
+      const mp = addM(gp, new THREE.MeshLambertMaterial({ map: atlas, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 })); if (mp) mp.castShadow = false; }
 
     /* ---- more of the big day: a video wall at Turn 1, flag poles with the Austrian colours along the straight, tents and camper vans at the
        campsites on the fields, farms around ---- */
+    let nScr = 0, nPh = 0;
     {
-      const t1 = def.turns && def.turns[0]; if (t1) {   // the video wall at the Steiermark stand
-        const i = T.nearestIdx(t1[0], t1[1]), [x, z] = onSide(i * ds - 45, -1, 30), y = nrGround(x, z), g = scen.get(x, z), fx = x - T.px[i], fz = z - T.pz[i], fa = Math.atan2(fz, fx);
-        box(g, x, y, z, 1.2, 8, 1.2, fa, [0.3, 0.31, 0.34]); box(g, x, y + 8, z, 1.4, 7, 12.4, fa, [0.1, 0.1, 0.11], [0.16, 0.16, 0.18]);
-        const scr = [0.18, 0.32, 0.62], d = 0.72; g.quadO([x - Math.sin(fa) * 5.8 - Math.cos(fa) * d, y + 8.5, z + Math.cos(fa) * 5.8 - Math.sin(fa) * d], [x + Math.sin(fa) * 5.8 - Math.cos(fa) * d, y + 8.5, z - Math.cos(fa) * 5.8 - Math.sin(fa) * d],
-          [x + Math.sin(fa) * 5.8 - Math.cos(fa) * d, y + 14.5, z - Math.cos(fa) * 5.8 - Math.sin(fa) * d], [x - Math.sin(fa) * 5.8 - Math.cos(fa) * d, y + 14.5, z + Math.cos(fa) * 5.8 - Math.sin(fa) * d], scr, [x, y + 11, z]);
-        exclPush(x, z, 8);
+      const SW = 11.6, SH = 6;
+      const vidWall = (x, z, fx, fz) => {   // a video wall on its post, the screen towards (fx, fz): its pictures change (rbScreenTex, World.update)
+        const y = nrGround(x, z), g = scen.get(x, z), fa = Math.atan2(fz, fx), rx = fz, rz = -fx, cx = x + fx * 0.72, cz = z + fz * 0.72, y0 = y + 8.5, y1 = y0 + SH;   // (r: the viewer's right)
+        box(g, x, y - 0.3, z, 1.2, 8.3, 1.2, fa, [0.3, 0.31, 0.34]); box(g, x, y + 8, z, 1.4, SH + 1, SW + 0.8, fa, [0.1, 0.1, 0.11], [0.16, 0.16, 0.18]);
+        scrG.quadO([cx - rx * SW / 2, y0, cz - rz * SW / 2], [cx + rx * SW / 2, y0, cz + rz * SW / 2], [cx + rx * SW / 2, y1, cz + rz * SW / 2], [cx - rx * SW / 2, y1, cz - rz * SW / 2], W1, [x, y0 + SH / 2, z], [[0, 0], [0.25, 0], [0.25, 1], [0, 1]]);
+        exclPush(x, z, 8); CR.avoid(x, z, 4); nScr++;
+      };
+      const t1 = def.turns && def.turns[0]; if (t1) {   // the video wall at the Steiermark stand, facing Turn 1
+        const i = T.nearestIdx(t1[0], t1[1]), [x, z] = onSide(i * ds - 45, -1, 30), fx = T.px[i] - x, fz = T.pz[i] - z, fl = Math.hypot(fx, fz); vidWall(x, z, fx / fl, fz / fl); }
+      for (const [nm, sd] of [['RED BULL', 1], ['T3', 1], ['NORD', 1], ['T10', 1]]) {   // more across the track from the stands, facing them
+        const st = (def.stands || []).find(q => q[7] === nm); if (!st) continue;
+        const s = sAt((st[0] + st[1]) / 2), i = T.idx(s);
+        for (const ex of [16, 22, 28, 12]) { const [x, z] = onSide(s, sd, ex); if (excluded(x, z) || nrSlope(x, z) > 0.3 || (sd > 0 && PD && T.pitAt(s))) continue;
+          const fx = T.px[i] - x, fz = T.pz[i] - z, fl = Math.hypot(fx, fz); vidWall(x, z, fx / fl, fz / fl); break; }
       }
-      const red = [0.86, 0.12, 0.15], wht = [0.95, 0.95, 0.94];
       for (let d = -300; d < 160; d += 24) {   // flag poles on top of the grandstand's front (red-white-red)
-        if (Math.abs(d) < 20) continue; const [x, z, i] = onSide(sAt(d), -1, 1.4), y = nrGround(x, z), g = scen.get(x, z);
-        cyl(g, x, y, z, 0.07, 9, 5, [0.88, 0.88, 0.9]);
-        for (let b = 0; b < 3; b++) box(g, x + T.tx[i] * 0.85, y + 7.6 + b * 0.45, z + T.tz[i] * 0.85, 1.6, 0.45, 0.04, T.hd[i], b === 1 ? wht : red, null, true);
+        if (Math.abs(d) < 20) continue; const [x, z] = onSide(sAt(d), -1, 1.4), y = nrGround(x, z);
+        cyl(scen.get(x, z), x, y, z, 0.07, 9, 5, [0.88, 0.88, 0.9]); flagL.push([x, y + 9, z, WROT + (RX() - 0.5) * 0.3, FL.at, 1.6, 1.1]);
         CR.avoid(x, z, 0.5);
+      }
+      // the fans on the grass: flags on poles among them, orange smoke rising here and there
+      for (const [a, b, sd] of def.ga || []) {
+        for (let d = a + 12; d < b - 8; d += 20 + RX() * 16) { const [x, z] = onSide(sAt(d), sd, 3.5 + RX() * 9); if (excluded(x, z) || nrSlope(x, z) > 0.6) continue;
+          flagAt(x, nrGround(x, z), z, 4.5 + RX() * 1.5, pick({ nl: 0.45, or: 0.25, at: 0.2, rb: 0.1 })); CR.avoid(x, z, 0.6); }
+        for (let n = Math.max(1, Math.round((b - a) / 200)), k = 0; k < n; k++) { const [x, z] = onSide(sAt(a + (b - a) * (k + 0.5) / n + (RX() - 0.5) * 30), sd, 5 + RX() * 5);
+          if (!excluded(x, z)) smokeL.push([x, nrGround(x, z) + 0.8, z, SMK[Math.floor(RX() * 3)], 1.4 + RX() * 0.4]); }
+      }
+      // photographers behind the barriers at Turns 1, 3, 4 and 10 (tabards, the long white lenses on the track), standing or kneeling: at the
+      // apex on the inside, past it on the outside where no grandstand is
+      const TB = [[0.98, 0.55, 0.1], [0.98, 0.84, 0.12], [0.2, 0.55, 0.3]], dk = [0.14, 0.15, 0.18], skin = [0.85, 0.66, 0.52];
+      for (const k of [0, 2, 3, 9]) {
+        const tn = def.turns && def.turns[k]; if (!tn) continue;
+        const i0 = T.nearestIdx(tn[0], tn[1]), out1 = T.k[i0] > 0 ? -1 : 1;
+        for (const [off, side] of [[-14, -out1], [-9, -out1], [-4, -out1], [18, out1], [24, out1], [44, out1]]) {
+          const s = i0 * ds + off, [x, z, i] = onSide(s, side, 2.1); if (excluded(x, z) || nrSlope(x, z) > 0.45 || (side > 0 && PD && T.pitAt(s))) continue;
+          const y = nrGround(x, z), g = scen.get(x, z), fx = -T.nx[i] * side, fz = -T.nz[i] * side, px = -fz, pz = fx, rot = Math.atan2(fz, fx), kn = RX() < 0.35, tb = TB[Math.floor(RX() * 3)], h = kn ? 0.42 : 0;
+          if (kn) { box(g, x - fx * 0.12, y, z - fz * 0.12, 0.5, 0.45, 0.34, rot, dk, null, true); }   // (kneeling: the legs folded under)
+          else for (const sd of [-1, 1]) box(g, x + px * sd * 0.1, y, z + pz * sd * 0.1, 0.15, 0.88, 0.15, rot, dk, null, true);
+          const yb = y + 0.86 - h;
+          box(g, x, yb, z, 0.24, 0.6, 0.42, rot, tb, null, true);                                             // the tabard
+          box(g, x, yb + 0.6, z, 0.22, 0.25, 0.2, rot, skin, [0.22, 0.17, 0.12], true);                      // the head (the hair on top)
+          box(g, x + fx * 0.28, yb + 0.35, z + fz * 0.28, 0.36, 0.1, 0.44, rot, dk, null, true);            // the arms up to the camera
+          box(g, x + fx * 0.22, yb + 0.5, z + fz * 0.22, 0.16, 0.16, 0.16, rot, [0.08, 0.08, 0.09], null, true);   // the camera at the eye
+          box(g, x + fx * 0.55, yb + 0.51, z + fz * 0.55, 0.52, 0.14, 0.14, rot, [0.93, 0.93, 0.9], null, true);   // the lens
+          CR.avoid(x, z, 0.8); nPh++;
+        }
       }
     }
     // campsites and farms on the open land (the land cover's meadows) 120-420 m from the track, level ground, nothing else there
@@ -6375,6 +6620,8 @@ const World = (function () {
         if (!openAt(px, pz) || R() < 0.2) continue; const r = R();
         if (r < 0.45) tent(px, pz, rot + (R() - 0.5) * 0.4, tcols[Math.floor(R() * tcols.length)]); else if (r < 0.75) van(px, pz, rot + (R() - 0.5) * 0.3); else carPk(px, pz, rot + (R() - 0.5) * 0.3, vary(RB_SHIRTS[Math.floor(R() * RB_SHIRTS.length)], R, 0.2));
         nCamp++; }
+      for (let k = 0; k < 4; k++) { const a = Math.floor(RX() * 5) * 9 - 17.5, b = Math.floor(RX() * 5) * 9 - 17.5, fx = x + Math.cos(rot) * a - Math.sin(rot) * b, fz = z + Math.sin(rot) * a + Math.cos(rot) * b;   // flags between the tents
+        if (openAt(fx, fz)) flagAt(fx, nrGround(fx, fz), fz, 6, pick({ nl: 0.55, or: 0.2, at: 0.25 }), 1.9); }
       exclPush(x, z, 42);
     }
     for (let tries = 0; tries < 300 && nFarm < 7; tries++) {   // a Styrian farm: a white house under a dark roof, a timber barn beside it
@@ -6474,7 +6721,10 @@ const World = (function () {
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
     addM(fenceG, fMat);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, stands: nStands, boxes: nBoxes, camp: nCamp, farms: nFarm, cars: nCars, tv: nTV };   // (read by the tests)
+    if (smokeL.length) root.add(rbSmoke(smokeL, CR.U.uTime, ownTex(rbSmokeTex())));   // (the crowd's clock: World.update sets it)
+    if (flagL.length) root.add(rbFlags(flagL, CR.U.uTime));
+    if (!scrG.empty) { const st = ownTex(rbScreenTex()); addM(scrG, new THREE.MeshBasicMaterial({ map: st })); out.dyn.screens = { tex: st, f: -1 }; }
+    out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, stands: nStands, boxes: nBoxes, camp: nCamp, farms: nFarm, cars: nCars, tv: nTV, decals: nDecals, smoke: smokeL.length, flags: flagL.length, screens: nScr, photographers: nPh };   // (read by the tests)
     return out;
   }
 
@@ -7175,6 +7425,7 @@ const World = (function () {
       for (const e of f.list) { e.mat.opacity = f.op; e.mesh.visible = f.op > 0.02; e.mat.depthWrite = f.op > 0.98; }
     }
     if (d.crowd) { d.crowd.uTime.value = t % 1000; if (car) d.crowd.uCar.value.set(car.x, car.roadY || 0, car.z); }   // spectators: arm waving, cheering near the followed car
+    if (d.screens) { const f = Math.floor(t / 6) % 4; if (f !== d.screens.f) { d.screens.f = f; d.screens.tex.offset.x = f * 0.25; } }   // Red Bull Ring: the video walls' next picture every 6 s
     if (d.water) { d.water.offset.x = (t * 0.012) % 1; d.water.offset.y = (t * 0.007) % 1; }
     if (d.pk) pkUpdate(d.pk, t, car);   // Pikes Peak: the TV helicopter, the cloud shadows
     if (d.pkWx) pkWeatherUpdate(d.pkWx, t, car);   // Pikes Peak: cloud banks, snowfall
