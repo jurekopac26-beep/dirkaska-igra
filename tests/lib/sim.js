@@ -16,14 +16,14 @@ function withRandom(seed, fn) {
 }
 
 // four set-ups per track: a normal 13-car race, the title-screen demo, an upgraded player with damage off, and a crash
-// (the normal race, but the player is driven by crashDrive below; 80 s on a track with pits, so the repair is included; 240 s on a lap
-// longer than 5 km, where the pits are that far round)
+// (the normal race, but the player is driven by crashDrive below; on a track with pits 80 s, or on a long lap the lap at ~30 m/s
+// plus 20 s, so the repair is included)
 const raceOpts = (C, tt, phys) => ({ numAI: tt ? 0 : 12, playerGrid: tt ? 1 : 12, laps: 2, playerModel: C.MODELS[4], assist: 2, seed: 9, difficulty: 1, damage: 2, phys });
 const SETUPS = {
   race: { opts: raceOpts },
   demo: { opts: (C, tt, phys) => ({ numAI: 10, noPlayer: true, difficulty: 2, laps: 9999, seed: 11, phys }) },
   upg: { opts: (C, tt, phys) => ({ numAI: tt ? 0 : 12, playerGrid: tt ? 1 : 3, laps: 2, playerModel: C.MODELS[0], playerUpg: { motor: 3, gume: 2, zavore: 3, aero: 3 }, assist: 0, seed: 5, difficulty: 2, damage: 0, phys }) },
-  crash: { opts: raceOpts, drive: crashDrive, seconds: (T) => T.def.pit ? (T.len > 5000 ? 240 : 80) : 60 },   // (Spa: its pit entry is most of a lap from the grid)
+  crash: { opts: raceOpts, drive: crashDrive, seconds: (T) => T.def.pit ? Math.max(80, Math.ceil(T.len / 30) + 20) : 60 },
 };
 
 // the player in the crash set-up: autopilot, but from 6 s to 8.5 s full throttle and full left lock (into the barrier or

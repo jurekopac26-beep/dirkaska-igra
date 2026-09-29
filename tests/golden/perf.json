@@ -63,17 +63,31 @@
   "jsMs": 0.21
  },
  "nring": {
-  "calls": 185,
-  "maxCalls": 239,
-  "kverts": 548,
-  "maxKverts": 754,
-  "jsMs": 0.89
+  "calls": 193,
+  "maxCalls": 237,
+  "kverts": 526,
+  "maxKverts": 750,
+  "jsMs": 1.26
  },
  "spa": {
-  "calls": 204,
-  "maxCalls": 272,
-  "kverts": 526,
-  "maxKverts": 673,
-  "jsMs": 0.91
+  "calls": 206,
+  "maxCalls": 274,
+  "kverts": 527,
+  "maxKverts": 669,
+  "jsMs": 0.89
+ },
+ "rbring": {
+  "calls": 237,
+  "maxCalls": 323,
+  "kverts": 421,
+  "maxKverts": 484,
+  "jsMs": 0.63
+ },
+ "suzuka": {
+  "calls": 256,
+  "maxCalls": 322,
+  "kverts": 554,
+  "maxKverts": 693,
+  "jsMs": 0.7
  }
 }

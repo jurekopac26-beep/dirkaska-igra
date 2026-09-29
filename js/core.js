@@ -96,6 +96,7 @@ const Core = (function () {
       for (let i = 0; i < N; i++) { let s = 0; for (let o = -3; o <= 3; o++) s += kr[open ? clamp(i + o, 0, N - 1) : (i + o + N) % N]; k[i] = s / 7; }
 
       this._buildElevation(def);
+      this._findCrossings();
       this._buildEdges();
       this._buildRacingLine();
       this._buildCorners();
@@ -135,6 +136,26 @@ const Core = (function () {
           const side = km > 0 ? 1 : -1;   // the inside of the bend
           for (let d = a - 22; d <= b + 22; d += ds / 2) { const i = this.idx(this.startS + d), f = Math.min(sstep(a - 22, a + 6, d), sstep(b + 22, b - 6, d)); if (sl * f > bk[i]) { bk[i] = sl * f; bs[i] = side; } }
         }
+      }
+      // more run-off where a track asks for it (def.wide = [[from, to, side (-1 left, 1 right), metres], ...], metres after the start line;
+      // closed circuits): the barrier on that side moves out, eased in and out over 30 m
+      if (def.wide && !open) for (const [a, b, sd, m] of def.wide) for (let d = a - 30; d <= b + 30; d += ds) {
+        const i = this.idx(this.startS + d), f = Math.min(sstep(a - 30, a, d), sstep(b + 30, b, d)); if (sd < 0) this.bl[i] += m * f; else this.br[i] += m * f;
+      }
+      // gravel strips (def.gravelStrips = [[from, to, side, width], ...], metres after the start line, side -1 left / 1 right; closed
+      // circuits): a band of gravel from the kerb's outer edge outwards, as the strips the Red Bull Ring laid at the exits of Turns 9 and
+      // 10 in 2024 against running wide (see surface: gravel there even where the run-off beyond it is asphalt)
+      this.gstrip = null;
+      if (def.gravelStrips && !open) {
+        const g = this.gstrip = [new Float32Array(N), new Float32Array(N)];
+        for (const [a, b, side, wd] of def.gravelStrips) for (let d = a; d <= b; d += ds / 2) g[side > 0 ? 1 : 0][this.idx(this.startS + d)] = wd;
+      }
+      // DRS zones (def.drs = [[turn, detection, activation, next turn], ...], metres relative to the turns of def.turns; closed circuits):
+      // { det, act, end } in metres after the start line, the zone closing 60 m before the next turn (see Race._drs)
+      this.drs = null;
+      if (def.drs && def.turns && !open) {
+        const tS = (k) => { const t = def.turns[k - 1]; return this.nearestIdx(t[0], t[1]) * ds - this.startS; }, W = (d) => ((d % len) + len) % len;
+        this.drs = def.drs.map(([t, det, act, nt]) => ({ det: W(tS(t) + det), act: W(tS(t) + act), end: W(tS(nt) - 60) }));
       }
     }
 
@@ -240,6 +261,33 @@ const Core = (function () {
       return { y: this.hy[i0] * (1 - f) + this.hy[i1] * f, grade: this.grade[i0] * (1 - f) + this.grade[i1] * f, curv: this.curv[i0] * (1 - f) + this.curv[i1] * f };
     }
 
+    // where the centre line crosses itself on two levels (a figure of eight: one leg on a bridge over the other). A crossing counts only
+    // where the two legs are at least 4 m apart in height. cross = [{ lo, up, x, z, sin, dy, loZ, upZ }]: the sample positions (fractional
+    // indices) of the lower and the upper leg at the crossing point, the point, the sine of the angle between the legs, the height gap,
+    // and how far along each leg (m) the underpass walls / the bridge parapets reach (_buildEdges narrows the barriers there)
+    _findCrossings() {
+      const N = this.N, px = this.px, pz = this.pz, hy = this.hy, cross = this.cross = [];
+      if (this.open || !this.hasElev) return;
+      const C = 16, hash = new Map(), key = (a, b) => a * 65536 + b, cell = (i) => { const j = (i + 1) % N; return [Math.floor((px[i] + px[j]) / 2 / C), Math.floor((pz[i] + pz[j]) / 2 / C)]; };
+      for (let i = 0; i < N; i++) { const [a, b] = cell(i), k = key(a, b); let L = hash.get(k); if (!L) hash.set(k, L = []); L.push(i); }
+      for (let i = 0; i < N; i++) {
+        const [ca, cb] = cell(i), i1 = (i + 1) % N;
+        for (let a = ca - 1; a <= ca + 1; a++) for (let b = cb - 1; b <= cb + 1; b++) {
+          const L = hash.get(key(a, b)); if (!L) continue;
+          for (const m of L) {
+            if (m <= i || Math.min(m - i, N - m + i) < 40) continue;
+            const m1 = (m + 1) % N, ax = px[i1] - px[i], az = pz[i1] - pz[i], bx = px[m1] - px[m], bz = pz[m1] - pz[m], den = ax * bz - az * bx;
+            if (Math.abs(den) < 1e-9) continue;
+            const ex = px[m] - px[i], ez = pz[m] - pz[i], t = (ex * bz - ez * bx) / den, u = (ex * az - ez * ax) / den;
+            if (t < 0 || t >= 1 || u < 0 || u >= 1) continue;
+            const hi = hy[i] + (hy[i1] - hy[i]) * t, hm = hy[m] + (hy[m1] - hy[m]) * u; if (Math.abs(hi - hm) < 4) continue;
+            cross.push({ lo: hi < hm ? i + t : m + u, up: hi < hm ? m + u : i + t, x: px[i] + ax * t, z: pz[i] + az * t,
+              sin: Math.abs(den) / (Math.hypot(ax, az) * Math.hypot(bx, bz)), dy: Math.abs(hi - hm), loZ: 16, upZ: 40 });
+          }
+        }
+      }
+    }
+
     _buildEdges() {
       const N = this.N, w = this.w, k = this.k, ds = this.ds;
       const bl = new Float32Array(N), br = new Float32Array(N);
@@ -269,6 +317,9 @@ const Core = (function () {
       const px = this.px, pz = this.pz, nx = this.nx, nz = this.nz;
       const CELL = 80, hash = new Map(), hkey = (cx, cz) => cx * 131072 + cz;
       for (let j = 0; j < N; j += 2) { const key = hkey(Math.floor(px[j] / CELL), Math.floor(pz[j] / CELL)); let L = hash.get(key); if (!L) hash.set(key, L = []); L.push(j); }
+      // a crossing on two levels: around it the two legs do not limit each other's barriers (one passes over the other)
+      const X = this.cross || [], cdist = (i, f) => { const d = Math.abs(i - f); return Math.min(d, N - d) * ds; };
+      const crossPair = (i, j) => { for (const c of X) if ((cdist(i, c.lo) < 90 && cdist(j, c.up) < 90) || (cdist(i, c.up) < 90 && cdist(j, c.lo) < 90)) return true; return false; };
       const limitNear = () => {
         for (let i = 0; i < N; i++) {
           const cx = Math.floor(px[i] / CELL), cz = Math.floor(pz[i] / CELL);
@@ -281,6 +332,7 @@ const Core = (function () {
             const dx = px[j] - px[i], dz = pz[j] - pz[i];
             const d = Math.hypot(dx, dz);
             if (d > 80) continue;
+            if (X.length && crossPair(i, j)) continue;
             const side = dx * nx[i] + dz * nz[i];
             const lim = d * 0.5 - 1;
             if (side > 0) BR[i] = Math.min(BR[i], lim); else BL[i] = Math.min(BL[i], lim);
@@ -293,6 +345,12 @@ const Core = (function () {
       limitInside(); limitNear();
       const minB = Math.min(3.5, this.def.side || 3.5);
       for (let i = 0; i < N; i++) { BL[i] = Math.max(BL[i], w + minB); BR[i] = Math.max(BR[i], w + minB); }
+      // ... and there the upper leg runs between the parapets of its bridge (3 m from the road), the lower one between the walls of the
+      // underpass (3.4 m), each narrowing in over the next 30 / 24 m
+      for (const c of X) for (let i = 0; i < N; i++) {
+        const fu = sstep(c.upZ + 30, c.upZ, cdist(i, c.up)), fl = sstep(c.loZ + 24, c.loZ, cdist(i, c.lo));
+        for (const [f, t] of [[fu, w + 3], [fl, w + 3.4]]) if (f > 0) { if (BL[i] > t) BL[i] = lerp(BL[i], t, f); if (BR[i] > t) BR[i] = lerp(BR[i], t, f); }
+      }
       // walls the track sets itself (def.walls = [[from, to, side (-1 left, 1 right), metres past the road edge], ...], metres after the start
       // line, closed circuits): a pit wall right by the road, eased in and out over 20 m
       if (this.def.walls && !open) {
@@ -466,14 +524,16 @@ const Core = (function () {
       return out;
     }
 
-    // surface at a query result: 0 asphalt, 1 curb, 2 grass, 3 gravel
+    // surface at a query result: 0 asphalt, 1 curb, 2 grass, 3 gravel (def.runoffTarmac: the wide run-off areas are asphalt, 4 as paving;
+    // def.gravelStrips: gravel just past the kerb)
     surface(q) {
       const d = q.d, ad = Math.abs(d), w = this.w;
       if (ad <= w) return this.def.roadSurface === 'makadam' ? 5 : 0;
       const i = q.a;
       if (this.curb[i] && ad <= w + this.curbW) return 1;
+      if (this.gstrip) { const g = this.gstrip[d > 0 ? 1 : 0][i]; if (g > 0 && ad <= w + this.curbW + g) return 3; }
       const grav = d > 0 ? this.gravR[i] : this.gravL[i];
-      return grav ? 3 : this.def.offSurface === 'paving' ? 4 : this.def.offSurface === 'gravel' ? 3 : 2;
+      return grav ? (this.def.runoffTarmac ? 4 : 3) : this.def.offSurface === 'paving' ? 4 : this.def.offSurface === 'gravel' ? 3 : 2;
     }
   }
 
@@ -653,6 +713,7 @@ const Core = (function () {
     { lock: 1.0, bx: 1.0, layer: 1.0, kick: 1.0, out: 1.0, hard: 0.8, stOn: 0.36 },       // visoka
   ];
   const PWR_MULT = 1.75, SW_DRAG = 0.0013; // arcade power boost and drag (fit to SWGP2 acceleration curves)
+  const DRS_DRAG = 0.8;   // the air drag with the rear wing's flap open (Car.drs, set by Race._drs)
   const JUMP_G = 14; // vertical gravity for jumps on hilly tracks (arcade-snappy, a bit above real g)
   const _bk = { dy: 0, sl: 0 };   // (Track.bankAt output)
   const MU_BASE = 1.32;
@@ -868,7 +929,7 @@ const Core = (function () {
       }
       const lowGrip = 1 - sstep(3, 8, spd);
       if ((lowGrip > 0 || !fwd) && grounded) Fy += clamp(-vt * m / dt, -G * m * 1.5, G * m * 1.5) * (fwd ? lowGrip : 1);
-      const cdA = m * SW_DRAG * (M.cDrag / 0.42);
+      const cdA = m * SW_DRAG * (M.cDrag / 0.42) * (this.drs ? DRS_DRAG : 1);
       Fx -= cdA * vl * spd + (grounded ? (0.015 * m * G) * Math.tanh(vl * 1.5) : 0);
       Fy -= cdA * 1.6 * vt * spd;
       if ((dragC0 > 0 || dragC1 > 0) && spd > 0.05 && grounded) {
@@ -1068,7 +1129,7 @@ const Core = (function () {
       const lowGrip = 1 - sstep(3, 8, spd);
       if ((lowGrip > 0 || !fwd) && grounded) Fy += clamp(-vt * m / dt, -G * m * 1.5, G * m * 1.5) * (fwd ? lowGrip : 1);
       // ---- air + rolling + surface drag, slope, bank (shared blocks) ----
-      const cdA = m * SW_DRAG * (M.cDrag / 0.42);
+      const cdA = m * SW_DRAG * (M.cDrag / 0.42) * (this.drs ? DRS_DRAG : 1);
       Fx -= cdA * vl * spd + (grounded ? (0.015 * m * G) * Math.tanh(vl * 1.5) : 0);
       Fy -= cdA * 1.6 * vt * spd;
       if ((dragC0 > 0 || dragC1 > 0) && spd > 0.05 && grounded) {
@@ -1735,7 +1796,7 @@ const Core = (function () {
     // skill > 1 (hard): faster in the quicker corners and on the brakes, but no faster than the profile through the slowest hairpins,
     // where the cars would only slide wide (tested per car model at the limit)
     const vpA = (c.vprof || race.vprof)[ia], offErr = Math.abs(q.d - (T.rl[q.i] + c.aiOff)), offLine = Math.abs(c.aiOff) > 1.2 || offErr > 1.2;
-    let sk = Math.min(c.skill * c.rubber, c.skCap || 1.14);
+    let sk = Math.min(c.skill * c.rubber, c.skCap || 1.14) * (c.isPlayer || !T.def.aiPace ? 1 : T.def.aiPace[c.phys] || 1);   // (def.aiPace: quicker rivals on a track with room for them, skill and cap; never the player's autopilot)
     if (sk > 1 && offLine) sk = 1 + (sk - 1) * 0.3;   // away from the ideal line (overtaking, defending, knocked aside) the extra pace is not there
     let vT = vpA * (sk <= 1 ? sk : 1 + (sk - 1) * sstep(11, 24, vpA));
     if (c.upgGrip) vT *= Math.pow(c.upgGrip * (1 + c.aeroK * vT * vT), 0.25);   // upgraded tyres / aero: carry more speed through the corners (half the grip gain: safe for every car)
@@ -1767,8 +1828,9 @@ const Core = (function () {
   /* ---------------------------------------------------------------------
      RACE
      --------------------------------------------------------------------- */
-  const DRIVER_NAMES = ['M. Kovač', 'T. Hayashi', 'L. Rossi', 'J. Novak', 'K. Weber', 'A. Silva', 'R. Horvat', 'S. Tanaka', 'P. Dubois', 'N. Petek', 'E. Lindqvist', 'G. Moretti', 'D. Zupan', 'H. Kimura'];
-  const AI_COLORS = [0xe8e8ee, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xf07a1a, 0x9a2bd8, 0x19b7c7, 0xd81f45, 0xc9c3b0, 0x6b8e23, 0xff5fa2, 0x3b3fa8];
+  const DRIVER_NAMES = ['M. Kovač', 'T. Hayashi', 'L. Rossi', 'J. Novak', 'K. Weber', 'A. Silva', 'R. Horvat', 'S. Tanaka', 'P. Dubois', 'N. Petek', 'E. Lindqvist', 'G. Moretti', 'D. Zupan', 'H. Kimura', 'F. Keller', 'O. Nieminen', 'B. Kranjc', 'C. Duarte', 'I. Kowalski', 'V. Andersen'];
+  const AI_COLORS = [0xe8e8ee, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xf07a1a, 0x9a2bd8, 0x19b7c7, 0xd81f45, 0xc9c3b0, 0x6b8e23, 0xff5fa2, 0x3b3fa8, 0x8a1c2b, 0x0f5e4e, 0x8ec9e8, 0xb87333, 0x6b737c, 0xb4dc2c, 0xc2187a];
+  const CAR_NUMS = [7, 3, 11, 21, 5, 44, 9, 16, 27, 8, 12, 33, 2, 55, 14, 23, 31, 46, 63, 77, 88];   // by grid slot (the player's own number replaces the one of its slot)
   // the AI drivers in grid order (the fastest first): name, car and colour are the same in every race (a championship's standings follow them)
   const aiDriver = (k) => ({ name: DRIVER_NAMES[k % DRIVER_NAMES.length], model: MODELS[(k * 3 + 1) % 4], color: AI_COLORS[k % AI_COLORS.length] });
   // AI pace per difficulty: [slowest skill, fastest skill, rubber band: slow-down when far ahead of the player (max, from metres), speed-up when behind (max, from metres)]
@@ -1782,6 +1844,7 @@ const Core = (function () {
   class Race {
     constructor(track, opts) {
       if (opts.phys === 'rally') opts = Object.assign({}, opts, { phys: 'cs' });   // the removed 'rally' physics maps to cs (as in Car)
+      if (track.def.rivals && opts.numAI > 0 && !opts.noPlayer && !opts.remote && !opts.champ) opts = Object.assign({}, opts, { numAI: track.def.rivals });   // a track's own field size (def.rivals) in a normal race; not the title-screen demo, a time trial, an online race or a championship round (its own drivers in every round)
       this.track = track;
       this.opts = opts;
       this.laps = opts.laps || 3;
@@ -1820,7 +1883,7 @@ const Core = (function () {
           c = new Car(s.model, { id: g, name: s.name, color: s.color, skill: s.skill, assist: opts.phys === 'cs' ? CSK.aiAssist : 1, arcade: true, phys: opts.phys, laneBias: (R() - 0.5) * 1.6 });
           c.skCap = s.model.id === 'pico' ? 1.0 : opts.phys === 'cs' ? CSK.aiSkCap : 1.14;   // no point pushing a car past what it can hold (the light pico understeers into the walls beyond the line's own pace)
         }
-        c.grid = g; c.num = [7, 3, 11, 21, 5, 44, 9, 16, 27, 8, 12, 33, 2, 55][(g - 1) % 14];
+        c.grid = g; c.num = CAR_NUMS[(g - 1) % CAR_NUMS.length]; if (playerGrid > 0 && !c.isPlayer && c.num === opts.playerNum) c.num = CAR_NUMS[(playerGrid - 1) % CAR_NUMS.length];   // (not the player's own number: that car takes the one of the player's slot)
         c.rubber = 1;
         c.dmgMode = opts.damage == null ? 2 : opts.damage;
         this.cars.push(c);
@@ -1829,6 +1892,7 @@ const Core = (function () {
       if (this.player) this.player.num = opts.playerNum || 1;
       if (this.remote) this.remote.num = RM.num || 2;
       this.rain = 0; this._wet(opts.rain);
+      if (track.drs) this.drsLast = track.drs.map(() => null);   // (per DRS zone: who crossed its detection line last, and when)
       this._prof();
     }
 
@@ -1897,7 +1961,8 @@ const Core = (function () {
       const ox = P.lx * hl, oz = P.lz * hw, x = c.x + ox * ch - oz * sh, z = c.z + ox * sh + oz * ch;
       const ol = Math.hypot(ox, oz) || 1, ux = (ox * ch - oz * sh) / ol, uz = (ox * sh + oz * ch) / ol, out = 2 + Math.random() * 3;
       const d = { id: ++this.debrisId, car: c.id, part: name, x, z, y: (c.y || 0) + P.y, vx: c.vx * 0.7 + ux * out, vz: c.vz * 0.7 + uz * out, vy: 2.5 + Math.random() * 2.5,
-        yaw: c.h, rx: 0, rz: 0, wx: (Math.random() - 0.5) * 16, wy: (Math.random() - 0.5) * 12, wz: (Math.random() - 0.5) * 16, r: P.r, m: P.m, h: P.h, rest: false, ground: false, q: null, dead: false };
+        yaw: c.h, rx: 0, rz: 0, wx: (Math.random() - 0.5) * 16, wy: (Math.random() - 0.5) * 12, wz: (Math.random() - 0.5) * 16, r: P.r, m: P.m, h: P.h, rest: false, ground: false,
+        q: this.track.cross.length && c.q.i >= 0 ? { i: c.q.i } : null, dead: false };   // (a figure of eight: the part starts on its car's level, not on the nearest leg)
       this.debris.push(d);
       if (this.debris.length > 40) { const old = this.debris.shift(); old.dead = true; }   // keep the road readable
     }
@@ -1942,7 +2007,7 @@ const Core = (function () {
         this._bkPut(p);
       });
     }
-    propFx(b, v) { if (v < 3) return; const E = this.propEvents || (this.propEvents = []); if (E.length < 24) E.push({ x: b.x, y: b.y, z: b.z, kind: b.kind, v }); }   // for the renderer: dust / straw puffs
+    propFx(b, v) { if (v < 3) return; const E = this.propEvents || (this.propEvents = []); if (E.length < 24) E.push({ x: b.x, y: b.y, z: b.z, kind: b.kind, v, i: b.qi }); }   // for the renderer: dust / straw puffs (i: the prop's sample, where the puff lands)
     stepProps(dt) {
       if (!this.props) return;
       const T = this.track, bk = this.propBk, nb = bk.length;
@@ -1981,16 +2046,17 @@ const Core = (function () {
         c.steer += clamp(target - c.steer, -rate * dt, rate * dt);
         c.step(dt, T);
       }
-      // collisions
+      // collisions (a figure of eight: a car on the bridge and one under it do not touch)
+      const lv = T.cross.length > 0;
       for (let i = 0; i < cars.length; i++) {
-        for (let j = i + 1; j < cars.length; j++) carCollide(cars[i], cars[j]);
+        for (let j = i + 1; j < cars.length; j++) if (!lv || Math.abs((cars[i].y || 0) - (cars[j].y || 0)) < 3) carCollide(cars[i], cars[j]);
       }
       if (T.def.pit) for (const c of cars) if (c.isPlayer) this.pitStep(c, dt, true);   // which side of the pit wall the car is on (before the walls push it)
       for (const c of cars) if (!c.net) wallCollide(c, T);
       if (T.def.pit) for (const c of cars) if (c.isPlayer) this.pitStep(c, dt, false);  // speed limiter, stopping at the box, repair
       for (const c of cars) if (c.detach.length) { for (const name of c.detach) this.spawnDebris(c, name); c.detach.length = 0; }
       for (const c of cars) if (!c.net && !Number.isFinite(c.x + c.z + c.vx + c.vz + c.h + c.w + (c.y || 0))) { c.x = c.z = c.vx = c.vz = c.w = c.h = 0; c.y = 0; c.vy = 0; c.air = 0; c.q.s = c.goodS || 0; c.q.i = -1; this.rescue(c); }
-      if (this.debris.length) { for (const d of this.debris) stepDebris(d, T, dt); for (const c of cars) if (!c.net) for (const d of this.debris) debrisHit(c, d); }
+      if (this.debris.length) { for (const d of this.debris) stepDebris(d, T, dt); for (const c of cars) if (!c.net) for (const d of this.debris) if (!lv || Math.abs(d.y - (c.y || 0)) < 4) debrisHit(c, d); }
       // progress
       for (const c of cars) {
         const q = T.query(c.x, c.z, c.q.i, c.q);
@@ -2012,6 +2078,7 @@ const Core = (function () {
             }
           }
         }
+        if (this.drsLast) this._drs(c, ds, dt);
         // wrong way
         const fwd = Math.cos(c.h) * q.tx + Math.sin(c.h) * q.tz;
         if (fwd < -0.2 && c.speed > 3) c.wrongT += dt; else c.wrongT = Math.max(0, c.wrongT - dt * 2);
@@ -2058,6 +2125,26 @@ const Core = (function () {
         }
       }
       if (sp > vmax) { const k = Math.max(vmax / sp, 1 - 4 * dt); c.vx *= k; c.vz *= k; if (vmax < 1) c.w *= k; }   // the limiter (and the stop) take over smoothly
+    }
+    // DRS (Track.drs): a car that crosses a zone's detection line less than 1 s after the car before it may open the flap of its rear wing
+    // in that zone (from the second lap on, not in the pit lane): open from the activation line (c.drs = zone + 1, less air drag, see Car)
+    // to the end of the zone, closed at once when the driver brakes. c.drsA: the zones it may open in (bits); the player's c.drsEv 'open'
+    // for the HUD. (These fields appear only on a circuit with DRS, so every other circuit's race state stays as it was.)
+    _drs(c, ds, dt) {
+      const Z = this.track.drs, L = this.track.len, d1 = c.dist, d0 = d1 - ds, racing = this.state === 'racing' || this.state === 'done';
+      if (c.drsA == null) { c.drsA = 0; c.drs = 0; }
+      if (c.drs && (c.inBrk > 0.2 || c.inPit || c.finished || !racing)) c.drs = 0;
+      if (!(ds > 0) || !racing) return;
+      for (let k = 0; k < Z.length; k++) {
+        const z = Z[k], lapAt = (at) => Math.floor((d1 - at) / L), crossed = (at) => lapAt(at) > Math.floor((d0 - at) / L), bit = 1 << k;
+        if (crossed(z.det)) {
+          const t = this.time - dt * clamp((d1 - (z.det + lapAt(z.det) * L)) / ds, 0, 1), prev = this.drsLast[k];
+          if (c.lap >= 2 && !c.finished && !c.inPit && prev && prev.car !== c && t - prev.t <= 1) c.drsA |= bit; else c.drsA &= ~bit;
+          this.drsLast[k] = { car: c, t };
+        }
+        if ((c.drsA & bit) && crossed(z.act)) { c.drsA &= ~bit; if (!c.inPit && !c.finished) { c.drs = k + 1; if (c.isPlayer) c.drsEv = 'open'; } }
+        if (c.drs === k + 1 && crossed(z.end)) c.drs = 0;
+      }
     }
     repairCar(c) {   // good as new: body, panels, lamps, glass; the renderer rebuilds the car when repairN changes
       c.dmg = 0; c.dz = [0, 0, 0, 0]; c.dents = []; c.cd = [0, 0, 0, 0]; c.lightOut = [0, 0, 0, 0]; c.lost = {}; c.detach = []; c.winOut = [0, 0, 0, 0]; c.roofDmg = 0;
@@ -2141,7 +2228,7 @@ const Core = (function () {
   const CHAMPS = [
     { id: 'domaci', name: 'Domači pokal', desc: 'Štiri kratke proge za začetek: jezero, mesto in makadam.', tracks: ['jezero', 'ljubljana', 'gora', 'riviera'] },
     { id: 'superstars', name: 'Superstars', desc: 'Proge v slogu Circuit Superstars z boksi in Monako.', tracks: ['gozd', 'toskana', 'grom', 'monaco'] },
-    { id: 'legende', name: 'Legende', desc: 'Tri slavne proge v pravem merilu: Monako, Spa in Zeleni pekel.', tracks: ['monaco', 'spa', 'nring'] },
+    { id: 'legende', name: 'Legende', desc: 'Pet slavnih prog v pravem merilu: Monako, Spa, Red Bull Ring, Suzuka in Zeleni pekel.', tracks: ['monaco', 'spa', 'rbring', 'suzuka', 'nring'] },
     { id: 'veliko', name: 'Veliko prvenstvo', desc: 'Vse krožne proge igre, ena za drugo.', tracks: TRACKS.filter(d => !d.timeTrial).map(d => d.id) },
   ];
   const champPoints = (pos) => CHAMP_PTS[pos - 1] || 0;   // (pos 1 = the winner)

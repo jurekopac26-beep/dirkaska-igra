@@ -1,5 +1,5 @@
 // The championship rules (Core only, no browser): the points per place, the standings and their tie-break, the drivers of a
-// championship, the series (every track exists, circuits only), and a whole short championship driven by the AI (the player on
+// championship (the same 12 AI drivers in every round, also where a track has a bigger field of its own), the series (every track exists, circuits only), and a whole short championship driven by the AI (the player on
 // autopilot): every round's order holds every driver once, the points add up, and the same AI driver is in the same car every round.
 //   node tests/champ.test.js
 'use strict';
@@ -22,6 +22,13 @@ const ai = race.cars.filter(c => !c.isPlayer);
 check('drivers: the player and 12 AI drivers, all different', keys.length === 13 && new Set(keys).size === 13 && keys[0] === C.PLAYER_KEY, keys.join(', '));
 check("drivers: the race's AI drivers are the championship's (same names, cars and colours)", ai.every((c, k) => c.name === keys[k + 1] && c.m === C.aiDriver(k).model && c.color === C.aiDriver(k).color),
   ai.map(c => c.name + ' (' + c.m.id + ')').join(', '));
+// a track with a bigger field of its own (the Nordschleife: 20 rivals) keeps the championship's drivers in a championship round
+{
+  const NR = new C.Track(C.TRACKS.find(d => d.id === 'nring')), o = { numAI: 12, playerGrid: 12, laps: 1, playerModel: C.MODELS[0], seed: 3 };
+  const free = new C.Race(NR, o), round = new C.Race(NR, Object.assign({ champ: true }, o));
+  check('drivers: a championship round on the Nordschleife has its 12 AI drivers (a normal race there: 20)', free.cars.length === 21 && round.cars.length === 13 &&
+    round.cars.filter(c => !c.isPlayer).every((c, k) => c.name === keys[k + 1]), `normal ${free.cars.length}, championship ${round.cars.length} cars`);
+}
 
 // 3. the standings: by points; a tie by more wins, then more second places ...
 {
