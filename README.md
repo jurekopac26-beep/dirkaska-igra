@@ -31,6 +31,15 @@ Na progah Ljubljana, Monako, Pikes Peak, Nordschleife in Spa se ~70 m pred vsaki
 
 Privzeta fizika je **Circuit Superstars**: avto drsi z nosom v ovinek toliko, kolikor hitro zavijaš; zaviranje v ovinku ga zavrti, na izhodu se sam poravna; brez vrtenja. Gumb za drift (preslednica) ga zavrti še malo bolj. Pomoč pri driftu (nizka/srednja/visoka) določa, kako daleč lahko zadrsa. **Arkadna** je prejšnja fizika in je na voljo v Nastavitvah (Fizika vožnje: Arkadna). Rekordi se za vsako fiziko vodijo posebej.
 
+## Prvenstvo
+
+Na naslovnem zaslonu tapni **Prvenstvo** in izberi serijo dirk: **Domači pokal** (Jezero Ring, Ljubljana, Gorski reli, Riviera), **Superstars** (Bakreni gozd, Toskana, Gromski rt, Monako), **Legende** (Monako, Spa-Francorchamps, Nordschleife) ali **Veliko prvenstvo** (vseh deset krožnih prog). Dirke so enake kot sicer (12 tekmecev, štart z 12. mesta, število krogov proge, vreme po nastavitvi), le da za mesto v cilju dobiš točke kot v formuli 1: 25, 18, 15, 12, 10, 8, 6, 4, 2 in 1 za prvih deset. Tekmeci so v vseh dirkah isti vozniki z istimi avti, zato med dirkami vodiš lestvico proti njim; pri enakem številu točk je pred tistim, ki ima več zmag (nato več drugih mest …).
+
+- Po vsaki dirki pokaže rezultat tudi osvojene točke, gumb **Lestvica prvenstva** pa lestvico in naslednjo dirko. Med dirkami lahko zamenjaš avto; težavnost ostane tista, s katero si prvenstvo začel.
+- Dirka šteje, ko prečkaš cilj. Če jo prej zapustiš ali ponoviš (Pavza → Ponovi dirko), jo odpelješ znova.
+- Prvenstvo se shrani v brskalnik: ko se vrneš, gumb na naslovnem zaslonu pokaže, katera dirka je na vrsti (npr. »Prvenstvo · 2/4«). **Opusti** (z drugim tapom za potrditev) ga konča predčasno.
+- Po zadnji dirki je na vrsti končna razvrstitev; najboljše končno mesto in število naslovov prvaka se shranita pri vsaki seriji.
+
 ## Vreme
 
 Na zaslonu **Izberi progo** izbereš vreme: **Suho**, **Dež** ali **Naključno** (vsaka dirka posebej: dež približno v vsaki tretji dirki, na Spa v vsaki drugi, na Nordschleife skoraj v vsaki drugi). V dežju imajo vsi avti manj oprijema (v ovinkih in pri speljevanju za petino, zavore za desetino), zato drsijo bolj in dlje; tekmeci z AI zato vozijo ovinke počasneje in prej zavirajo, krog je 6–9 % počasnejši. Cesta je temna in mokra, nebo oblačno, vidljivost manjša, dež pada v curkih, izpod koles se dviga pršec (namesto dima iz gum), s trave in gramoza pa leti blato. Slišati je dež in šumenje gum po vodi, komentator pa ob štartu omeni dež. Kadar je izbran Dež, dežuje tudi na naslovnem zaslonu.
@@ -71,14 +80,14 @@ Igra ne potrebuje namestitve ali prevajanja: `index.html` naloži datoteke po vr
 | `css/style.css` | slogi |
 | `js/vendor/three.r128.min.js` | knjižnica three.js (MIT) |
 | `js/tracks/<id>.js` | ena datoteka na progo: oblika, višine, sidrišča okolice, imena krajev (vrstni red v `index.html` = vrstni red v meniju) |
-| `js/core.js` | proge, fizika (Circuit Superstars in arkadna, oprijem v dežju), AI, pravila dirke (brez DOM in three.js) |
+| `js/core.js` | proge, fizika (Circuit Superstars in arkadna, oprijem v dežju), AI, pravila dirke in prvenstva (brez DOM in three.js) |
 | `js/tex.js` | proceduralne teksture |
 | `js/world.js` | 3D svet prog (teren, drevesa, gledalci, rekviziti, boksi) |
 | `js/data/p206.js` | 3D model Peugeota 206 |
 | `js/render.js` | izris, avti, delci, kamere, mehaniki v boksih, dež (curki, pršec, mokra cesta, oblačno nebo) |
 | `js/sfx.js`, `js/input.js`, `js/comm.js` | zvok, upravljanje, komentator |
 | `js/net.js`, `js/vendor/peerjs.min.js` | povezava dveh telefonov za dirko s prijateljem (soba s kodo, usklajena ura); knjižnica PeerJS (MIT) |
-| `js/game.js` | meniji, nastavitve, HUD, rekordi, dirka s prijateljem, glavna zanka |
+| `js/game.js` | meniji, nastavitve, HUD, rekordi, prvenstvo, dirka s prijateljem, glavna zanka |
 | `manifest.webmanifest`, `icons/` | opis aplikacije (ime, ikone, celoten zaslon) za namestitev na telefon; ikone nariše `node tools/icons.mjs` |
 | `sw.js` | service worker: igra brez interneta in vedno najnovejša različica, ko je internet na voljo (opis v datoteki) |
 | `tests/` | samodejni testi (glej `tests/README.md`) |

@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
-<link rel="stylesheet" href="css/style.css?v=ee8205fb">
+<link rel="stylesheet" href="css/style.css?v=0b50962f">
 </head>
 <body>
 <div id="app">
@@ -72,6 +72,7 @@
       <p class="sub" id="title-sub">Jezero Ring &middot; 3 krogi &middot; 12 nasprotnikov</p>
       <div class="btns">
         <button class="btn primary" data-act="to-car">Dirkaj</button>
+        <button class="btn champbtn" data-act="to-champ" id="btn-champ">Prvenstvo</button>
         <button class="btn netbtn" data-act="to-online">Dirka s prijateljem</button>
         <button class="btn" data-act="to-board">Lestvica</button>
         <button class="btn" data-act="to-settings">Nastavitve</button>
@@ -211,6 +212,19 @@
     </div>
   </section>
 
+  <section id="s-champ" class="screen">
+    <div class="panel champ-panel">
+      <div class="car-head"><h2 id="ch-title">Prvenstvo</h2><span id="ch-tag" class="tag"></span></div>
+      <div id="ch-body" class="res-table-wrap"></div>
+      <div class="row ch-car"><span class="rlbl">Avto</span><button class="btn mini" data-act="champ-car-prev" aria-label="Prejšnji avto">&#9664;</button><span id="ch-mycar" class="on-mycar"></span><button class="btn mini" data-act="champ-car-next" aria-label="Naslednji avto">&#9654;</button><span id="ch-diff" class="ch-diff"></span></div>
+      <div class="btns horiz">
+        <button class="btn ghost" data-act="to-title">Nazaj</button>
+        <button class="btn ghost off" data-act="champ-quit" id="ch-quit">Opusti</button>
+        <button class="btn primary" data-act="champ-go" id="ch-go">Začni</button>
+      </div>
+    </div>
+  </section>
+
   <section id="s-board" class="screen">
     <div class="panel board-panel">
       <h2>Lestvica</h2>
@@ -239,16 +253,16 @@
 <script src="js/tracks/pikes.js?v=f8c59d0b"></script>
 <script src="js/tracks/nring.js?v=61a437d3"></script>
 <script src="js/tracks/spa.js?v=e52e79d8"></script>
-<script src="js/core.js?v=2ae875fa"></script>
+<script src="js/core.js?v=21cdd8cc"></script>
 <script src="js/tex.js?v=f643b690"></script>
 <script src="js/world.js?v=ea8aa4f7"></script>
 <script src="js/data/p206.js?v=0016824f"></script>
 <script src="js/render.js?v=d9e123bb"></script>
 <script src="js/sfx.js?v=f98a38d0"></script>
 <script src="js/input.js?v=43b63819"></script>
-<script src="js/comm.js?v=a2b5cfae"></script>
+<script src="js/comm.js?v=9b824a02"></script>
 <script src="js/vendor/peerjs.min.js?v=76b403e4"></script>
 <script src="js/net.js?v=1f45dfb1"></script>
-<script src="js/game.js?v=14e0fba9"></script>
+<script src="js/game.js?v=955cebbe"></script>
 </body>
 </html>

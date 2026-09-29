@@ -25,6 +25,9 @@ const Comm = (() => {
     nrHohe: ['Hohe Acht, the highest point of the circuit!', 'Up at Hohe Acht, over six hundred metres high.'],
     nrPflanz: ['Pflanzgarten! Hold on for the jump!', 'Over the Pflanzgarten jump!'],
     nrDott: ['Onto the Döttinger Höhe, the long straight home!', 'Flat out down the Döttinger Höhe!'],
+    // the end of a championship (at the results of its last round)
+    champWin: ['And that makes you the champion! What a season!', 'Champion! The title is yours!', 'You have won the championship! Brilliant driving all season!'],
+    champEnd: ['That is the end of the championship. You finish {pos} overall.', 'The season is over, and you are {pos} in the final standings.'],
     // the weather (after the welcome, in a wet race)
     rain: ["And it's raining! A wet track today, so brake early and go easy on the throttle.", 'Rain is falling, and the track is wet. Watch out for the spray!', 'The heavens have opened! Grip will be hard to find today.'],
     rainSpa: ["Typical Spa weather, it's raining in the Ardennes! Brake early today.", "It's wet at Spa! Eau Rouge in the rain, that takes courage.", 'Rain at Spa, of course! Spray everywhere, and grip will be hard to find.'],

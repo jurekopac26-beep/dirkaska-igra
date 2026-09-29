@@ -1769,6 +1769,8 @@ const Core = (function () {
      --------------------------------------------------------------------- */
   const DRIVER_NAMES = ['M. Kovač', 'T. Hayashi', 'L. Rossi', 'J. Novak', 'K. Weber', 'A. Silva', 'R. Horvat', 'S. Tanaka', 'P. Dubois', 'N. Petek', 'E. Lindqvist', 'G. Moretti', 'D. Zupan', 'H. Kimura'];
   const AI_COLORS = [0xe8e8ee, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xf07a1a, 0x9a2bd8, 0x19b7c7, 0xd81f45, 0xc9c3b0, 0x6b8e23, 0xff5fa2, 0x3b3fa8];
+  // the AI drivers in grid order (the fastest first): name, car and colour are the same in every race (a championship's standings follow them)
+  const aiDriver = (k) => ({ name: DRIVER_NAMES[k % DRIVER_NAMES.length], model: MODELS[(k * 3 + 1) % 4], color: AI_COLORS[k % AI_COLORS.length] });
   // AI pace per difficulty: [slowest skill, fastest skill, rubber band: slow-down when far ahead of the player (max, from metres), speed-up when behind (max, from metres)]
   // (skill 1 = the racing-line speed profile; the cars' own limit on the autopilot is about 1.12, the little pico understeers past ~1.08)
   const DIFF = [
@@ -1801,7 +1803,7 @@ const Core = (function () {
       const aiSpecs = [];
       for (let k = 0; k < nAI; k++) {
         const skill = lerp(diff[1], diff[0], k / Math.max(1, nAI - 1)) + (R() - 0.5) * 0.012;
-        aiSpecs.push({ skill, model: MODELS[(k * 3 + 1) % 4], color: AI_COLORS[k % AI_COLORS.length], name: DRIVER_NAMES[k % DRIVER_NAMES.length] });
+        aiSpecs.push(Object.assign({ skill }, aiDriver(k)));
       }
       // grid: fastest first
       let ai = 0;
@@ -2129,7 +2131,33 @@ const Core = (function () {
     }
   }
 
-  return { G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, SURF, Car, Race, wallCollide, carCollide, aiControl, tire, DRIVER_NAMES, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF };
+  /* ---------------------------------------------------------------------
+     CHAMPIONSHIP (prvenstvo): a series of races on several circuits. Points by the finishing order (25, 18, 15, 12, 10, 8, 6, 4, 2, 1
+     for the first ten, as in Formula 1); the standings by points, a tie by more wins, then more second places and so on. The
+     AI drivers are the same in every round (aiDriver). A round = { track, order: [driver key, ...] (the winner first) }; the
+     player's key is PLAYER_KEY, an AI driver's key its name. The game keeps the rounds driven so far (and the difficulty).
+     --------------------------------------------------------------------- */
+  const CHAMP_PTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1], PLAYER_KEY = 'TI';
+  const CHAMPS = [
+    { id: 'domaci', name: 'Domači pokal', desc: 'Štiri kratke proge za začetek: jezero, mesto in makadam.', tracks: ['jezero', 'ljubljana', 'gora', 'riviera'] },
+    { id: 'superstars', name: 'Superstars', desc: 'Proge v slogu Circuit Superstars z boksi in Monako.', tracks: ['gozd', 'toskana', 'grom', 'monaco'] },
+    { id: 'legende', name: 'Legende', desc: 'Tri slavne proge v pravem merilu: Monako, Spa in Zeleni pekel.', tracks: ['monaco', 'spa', 'nring'] },
+    { id: 'veliko', name: 'Veliko prvenstvo', desc: 'Vse krožne proge igre, ena za drugo.', tracks: TRACKS.filter(d => !d.timeTrial).map(d => d.id) },
+  ];
+  const champPoints = (pos) => CHAMP_PTS[pos - 1] || 0;   // (pos 1 = the winner)
+  // the standings after the given rounds: [{ key, pts, wins, places: [firsts, seconds, ...], last: the place in the latest round }], leader first
+  function champTable(keys, rounds) {
+    const n = keys.length, row = new Map(keys.map(k => [k, { key: k, pts: 0, wins: 0, places: new Array(n).fill(0), last: 0 }]));
+    for (const r of rounds) r.order.forEach((k, i) => { const e = row.get(k); if (!e) return; e.pts += champPoints(i + 1); if (i === 0) e.wins++; if (i < n) e.places[i]++; e.last = i + 1; });
+    const t = [...row.values()];
+    t.sort((a, b) => { if (b.pts !== a.pts) return b.pts - a.pts; for (let i = 0; i < n; i++) if (b.places[i] !== a.places[i]) return b.places[i] - a.places[i]; return keys.indexOf(a.key) - keys.indexOf(b.key); });
+    return t;
+  }
+  // every driver of a championship: the player first, then the AI drivers of a race with nAI of them (in grid order)
+  const champKeys = (nAI) => [PLAYER_KEY].concat(Array.from({ length: nAI }, (_, k) => aiDriver(k).name));
+
+  return { G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, SURF, Car, Race, wallCollide, carCollide, aiControl, tire, DRIVER_NAMES, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
+    aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys };
 })();
 
 
