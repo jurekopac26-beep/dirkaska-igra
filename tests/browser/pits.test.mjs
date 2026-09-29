@@ -1,5 +1,6 @@
 // Bakreni gozd (gozd): a full race on autopilot with one pit stop on lap 2. The car must stop in its box, the crew
-// must go out, work (car up on the jacks) and clear, the repair must finish, and all 13 cars must finish the race.
+// must go out, work (car up on the jacks) and clear, the repair must finish, and all 13 cars must finish the race (the
+// race runs on after the player's finish until the last car is in: a rival that stopped for repairs comes home later).
 //   node tests/browser/pits.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -10,7 +11,7 @@ try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.2 }, { width: 640, height: 360 });
   await startTrack(page, 'gozd');
   await page.evaluate(() => { window.__game.pause(); const e = document.querySelector('.screen.show'); if (e) e.style.display = 'none'; });
-  const states = [], modes = new Set(); let lastSt, maxLift = 0, r;
+  const states = [], modes = new Set(); let lastSt, maxLift = 0, r, after = 0;
   for (let k = 0; k < 900; k++) {
     // 1 s of game time in 20 steps, the renderer (and the pit crew) stepped along without drawing
     r = await page.evaluate(() => {
@@ -23,7 +24,7 @@ try {
     });
     for (const [s, m, l] of r.st) { if (s !== lastSt) { states.push(`${r.t.toFixed(1)} s ${s}`); lastSt = s; } if (m) modes.add(m); maxLift = Math.max(maxLift, l); }
     if (r.fin && r.finished === r.n) break;
-    if (r.phase === 'done' && k > 5) break;
+    if (r.phase === 'done' && k > 5 && ++after > 90) break;   // (at most 90 s after the results)
   }
   const seq = states.map(s => s.split(' ').pop()).join('>');
   T.check('pit stop: stop > repair > done', /stop>repair>done/.test(seq), states.join(' > '));
