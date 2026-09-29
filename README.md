@@ -19,7 +19,17 @@ Najslavnejša hitrostna preizkušnja Relija Finska (Jämsä): vožnja proti uri 
 - lasnica v križišču Kakaristo med polji (največ gledalcev in šotor z gostilno),
 - ozka cesta mimo Liisanmutke in leteči cilj na Hassintieju.
 
-Na poti so štiri kontrolne točke (CP1–CP4, modre table kot radijske točke na reliju) z vmesnimi časi, pod uro pa namesto nadmorske višine piše, koliko je še do cilja. Rekordi in lestvica najboljših 10 časov se shranijo kot pri Pikes Peaku, nadgradnje avta veljajo tudi tu. Ob cesti so gost gozd smrek, borov in brez, balvani, rdeče lesene hiše in skednji, sive senice in bele bale na poljih, savna s pomolom ob jezeru, navijači s finskimi zastavami ob skokih in v križiščih (tam se druga cesta nadaljuje naravnost, zaprta z balami slame), TV helikopter nad avtom ter table preizkušnje: start z lučmi, rumena tabla pred ciljem, rdeča na letečem cilju in STOP 200 m za njim. Drevesa in hiše med kamero in avtom se sproti razredčijo, da avta nikoli ne zakrijejo.
+Na poti so štiri kontrolne točke (CP1–CP4, modre table kot radijske točke na reliju) z vmesnimi časi, pod uro pa namesto nadmorske višine piše, koliko je še do cilja. Rekordi in lestvica najboljših 10 časov se shranijo kot pri Pikes Peaku, nadgradnje avta veljajo tudi tu.
+
+Okolica:
+
+- **Svetloba in makadam**: avgustovsko popoldne, toplo sonce nizko na zahodu, gozd meče dolge sence čez cesto. Makadam je sivo-bež zdrobljen granit s kamenčki. Avtomobili so v njem splužili dve temnejši kolesnici, med njima in ob robovih je rahel gramoz, ki ga je na zunanji strani ovinkov več. Za avtom se dviga velik oblak prahu, ki visi v zraku dvakrat dlje kot na drugih progah.
+- **Gozd**: gosto rastejo smreke s štirimi nivoji vej, bori z oranžnimi debli in breze s črno-belimi debli. Globlje v gozdu (več kot 80 m od ceste) so drevesa preprostejša, da igra na telefonih ostane tekoča. Ob cesti so balvani, borovnice in praproti.
+- **Rastline in jezera**: ob cesti raste trava, lupine (volčji bob) cvetijo v lisah vijolične in rožnate barve, ob robu gozda so pasovi rožnatega ozkolistnega vrbovca (maitohorsma), vmes kremaste kobulnice in rumeni vratič. V jezerih so lokvanji. Voda je temna, na sredini se v njej zrcali nebo, ob drugem bregu gozd.
+- **Kmetije**: rdeče lesene hiše z drvarnicami in poštnimi nabiralniki, skednji, sive senice in bele bale na poljih, ograje iz poševnih kolov (riukuaita), savna s pomolom. Daljnovodi na lesenih drogovih tečejo ob poljih, eden čez cesto do kmetije Ouni. Ob gozdni cesti so kupi hlodov.
+- **Reli**: navijači s finskimi zastavami stojijo za rdeče-belim trakom. Zelene table YLEISÖALUE označujejo prostor za gledalce, rdeče KIELLETTY ALUE pa zaprte ceste v križiščih (tam se druga cesta nadaljuje naravnost, zaprta z balami slame, stražijo jo redarji v oranžnem). Pred križišči so modre smerne table (Jämsä, Petäjävesi …), pred ostrimi ovinki rumeni opozorilni trikotniki. Na poljih pri Rumeni hiši in v Kakaristu so parkirišča z avtomobili navijačev, za gledalci prenosna stranišča. Fotografi stojijo pri tabli MEDIA, pri Rumeni hiši pa na TV stolpu snemalec.
+- **Table preizkušnje**: start z lučmi, CP loki, rumena tabla pred ciljem, rdeča na letečem cilju in STOP 200 m za njim.
+- **Helikopter in kamera**: TV helikopter se drži daleč od kamere (prej je v izometričnem pogledu pogosto prekril pol zaslona), njegova senca pa drsi po tleh. Drevesa in hiše med kamero in avtom se sproti razredčijo, da avta ne zakrijejo.
 
 ## Nürburgring Nordschleife
 
