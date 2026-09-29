@@ -784,53 +784,53 @@
   }
  },
  "nring/race/cs": {
-  "digest": "108ae717c11008fa17a0932c",
-  "lead": 2372.8,
+  "digest": "2d83c167a28b28c9a4ace201",
+  "lead": 2498.2,
   "car0": [
-   -1592.37,
-   -650.18
+   -1745.26,
+   -832.69
   ],
   "cover": {
-   "dmg": 1,
-   "loose": 8,
+   "dmg": 0.27,
+   "loose": 19,
    "rescues": 0,
    "repairs": 0
   }
  },
  "nring/race/arcade": {
-  "digest": "7071d4f829000a98a30becb2",
-  "lead": 2263.8,
+  "digest": "3b7577b25af9b1d9aa9acbf1",
+  "lead": 2316.9,
   "car0": [
-   -1609.68,
-   -676.28
+   -1607.76,
+   -667.51
   ],
   "cover": {
-   "dmg": 0.12,
+   "dmg": 0.08,
    "loose": 0,
    "rescues": 0,
    "repairs": 0
   }
  },
  "nring/demo/cs": {
-  "digest": "3291b788b0c35c0bb07d1f99",
-  "lead": 2546.8,
+  "digest": "4e4b89f20561892ffebdd340",
+  "lead": 2645.3,
   "car0": [
-   -1741.44,
-   -1056.68
+   -1712.6,
+   -1149.84
   ],
   "cover": {
    "dmg": 0,
-   "loose": 7,
+   "loose": 4,
    "rescues": 0,
    "repairs": 0
   }
  },
  "nring/demo/arcade": {
-  "digest": "c39d93ba1f3ed34cf077775d",
-  "lead": 2436.4,
+  "digest": "821114aed95ad638af777b80",
+  "lead": 2466.3,
   "car0": [
-   -1766.82,
-   -952.15
+   -1766.78,
+   -981.01
   ],
   "cover": {
    "dmg": 0,
@@ -840,11 +840,11 @@
   }
  },
  "nring/upg/cs": {
-  "digest": "29cecae956bfc5937cc7a2bb",
-  "lead": 2545.9,
+  "digest": "ee76fcfb449ab32bf4d01bb8",
+  "lead": 2644.1,
   "car0": [
-   -1747.93,
-   -1045.1
+   -1743.23,
+   -1051.78
   ],
   "cover": {
    "dmg": 0,
@@ -854,11 +854,11 @@
   }
  },
  "nring/upg/arcade": {
-  "digest": "421ffe984c69f9dc371845ae",
-  "lead": 2434.3,
+  "digest": "8f7f0aa92cf83046a6083a26",
+  "lead": 2470.6,
   "car0": [
-   -1770.9,
-   -944.24
+   -1768.12,
+   -966.07
   ],
   "cover": {
    "dmg": 0,
@@ -868,28 +868,28 @@
   }
  },
  "nring/crash/cs": {
-  "digest": "477a35f27db9dc17ce80822a",
-  "lead": 2372.5,
+  "digest": "fde053a2fc4d9e107492bae9",
+  "lead": 2496.8,
   "car0": [
-   -1546.15,
-   -596.9
+   -1526.15,
+   -576.32
   ],
   "cover": {
-   "dmg": 0.56,
-   "loose": 2,
+   "dmg": 0.53,
+   "loose": 30,
    "rescues": 1,
    "repairs": 0
   }
  },
  "nring/crash/arcade": {
-  "digest": "03fcf33ef8c8d147c8ff5934",
-  "lead": 2246,
+  "digest": "83de3d09dabe2afebf74e722",
+  "lead": 2314.6,
   "car0": [
-   -1499.25,
-   -561.54
+   -1543.56,
+   -596.63
   ],
   "cover": {
-   "dmg": 0.52,
+   "dmg": 0.54,
    "loose": 2,
    "rescues": 0,
    "repairs": 0

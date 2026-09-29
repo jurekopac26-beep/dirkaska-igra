@@ -10,7 +10,7 @@ const Comm = (() => {
   const log = [], lastPick = {};
   const GAP = 500;
   const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
-  const ORD = ['', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelfth', 'thirteenth'];
+  const ORD = ['', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelfth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth', 'twentieth', 'twenty-first'];
   const ordinal = (n) => ORD[n] || n + 'th';
 
   const LINES = {
