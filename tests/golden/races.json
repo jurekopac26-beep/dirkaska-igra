@@ -142,22 +142,22 @@
  "grom/cs": {
   "finished": 13,
   "cars": 13,
-  "winner": 66.22,
+  "winner": 66.25,
   "spins": 0,
-  "walls": 3,
+  "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "e85a0376533abf486a3fc25e"
+  "digest": "f6ff32b8854dba204d04eaaf"
  },
  "grom/arcade": {
   "finished": 13,
   "cars": 13,
-  "winner": 71.16,
+  "winner": 71.15,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "213457873ecd528777ea83f0"
+  "digest": "f6180bbe5987bf23b4bfa95e"
  },
  "pikes/cs": {
   "finished": 1,
