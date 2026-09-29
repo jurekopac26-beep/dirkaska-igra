@@ -3,13 +3,14 @@ var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
   // "Gromski rt": a short club circuit in the look of the Thunder Point track from the stylised top-down racer (the third race of the reference
   // video), mirrored so the pits lie on the right of the straight, with its corners reshaped: the long start/finish straight with the pits and
-  // the GORIVO flags → a sharp left → a kink up the east side → a double left at the top → down the long diagonal through a flick → the tight
-  // left hairpin onto the straight. Red/yellow kerbs, black tyre walls, a pine wood and a big campsite full of vans, caravans and tents.
+  // the GORIVO flags → a sharp left → a sweeping S up the east side → a left at the top → a sharp 90-degree left-right chicane (tyre stacks,
+  // cones and bales across its short cut) → down the long diagonal as one drawn-out left-right sweep, made for drifting, no straight → the
+  // tight left hairpin onto the straight. Red/yellow kerbs, black tyre walls, a pine wood and a big campsite full of vans, caravans and tents.
   TRACK_DEFS.push({
     id: 'grom', name: 'Gromski rt', theme: 'kamp', laps: 4, halfWidth: 6.4,
-    desc: 'Kratka proga v slogu Thunder Pointa, zrcaljena in z drugače oblikovanimi ovinki: dolga ravnina z boksi (zapelji vanje in mehaniki ti popravijo avto) in zastavicami, oster levi ovinek, dvojni levi na vrhu, šikana na diagonali in tesna lasnica. Borov gozd, velik kamp z avtodomi, prikolicami in šotori, rdeče-rumeni robniki in stene iz črnih gum.',
-    points: [[-160,58],[-146,58],[-132,58],[-118,58],[-104,58],[-90,58],[-75,58],[-61,58],[-47,58],[-33,58],[-19,58],[-5,58],[9,58],[23,58],[37,58],[51,58],[65,58],[79,58],[94,58],[108,58],[122,58],[136,58],[150,58],[164,58],[178,58],[192,58],[206,54],[216,45],[221,32],[222,18],[222,4],[222,-10],[223,-24],[227,-38],[233,-51],[239,-64],[242,-77],[237,-90],[225,-98],[212,-103],[199,-108],[185,-108],[171,-104],[158,-99],[145,-94],[132,-89],[119,-84],[106,-79],[93,-74],[79,-69],[66,-64],[53,-59],[40,-54],[27,-49],[14,-44],[0,-39],[-13,-34],[-26,-30],[-40,-31],[-54,-28],[-67,-23],[-80,-18],[-93,-13],[-107,-8],[-120,-3],[-133,2],[-146,7],[-159,12],[-172,18],[-181,28],[-181,42],[-173,54]],
-    start: [-20, 58], runoff: 0.5, inner: 3.2, side: 3.4,
+    desc: 'Kratka proga v slogu Thunder Pointa, zrcaljena in z drugače oblikovanimi ovinki: dolga ravnina z boksi (zapelji vanje in mehaniki ti popravijo avto) in zastavicami, oster levi ovinek, S-zavoj, ostra šikana na vrhu (kdor jo odreže, razbije gume), dolga zavita diagonala za drsenje in tesna lasnica. Borov gozd, velik kamp z avtodomi, prikolicami in šotori, rdeče-rumeni robniki in stene iz črnih gum.',
+    points: [[-160,58],[-146,58],[-132,58],[-118,58],[-104,58],[-90,58],[-76,58],[-62,58],[-49,58],[-35,58],[-21,58],[-7,58],[7,58],[21,58],[35,58],[49,58],[63,58],[77,58],[91,58],[105,58],[119,58],[133,58],[147,58],[161,58],[174,58],[187,53],[196,42],[200,29],[200,15],[201,1],[203,-13],[208,-26],[213,-39],[218,-52],[219,-66],[218,-80],[216,-93],[213,-107],[211,-121],[208,-134],[199,-145],[186,-149],[172,-146],[159,-142],[145,-140],[131,-138],[117,-138],[105,-131],[100,-118],[100,-105],[94,-92],[82,-86],[68,-86],[54,-84],[41,-82],[27,-79],[14,-75],[1,-70],[-12,-64],[-24,-57],[-36,-49],[-47,-41],[-59,-33],[-70,-26],[-83,-19],[-95,-13],[-108,-7],[-120,-1],[-133,4],[-146,8],[-160,13],[-173,18],[-181,29],[-181,43],[-173,54]],
+    start: [-20, 58], runoff: 0.7, inner: 3.2, side: 3.4,
     pit: [16, -120, 170, 39],   // pit lane south of the straight: [centre offset to the right, from, to, the player's box] (metres from the start line)
     pitRow: [-56, 64],          // the first and the last of the 13 boxes
     // scenery (see toskana.js): stands, billboards, spectators, the campsites [x, z, width, depth, rot] and the feather flags [from, to, side, spacing]

@@ -2192,14 +2192,18 @@ const World = (function () {
         const xs = P2.map(p => p[0]), zs = P2.map(p => p[1]), bb = [Math.min(...xs) - 8, Math.max(...xs) + 8, Math.min(...zs) - 8, Math.max(...zs) + 8];
         creekD = (x, z) => { if (x < bb[0] || x > bb[1] || z < bb[2] || z > bb[3]) return 1e9; let d = 1e9; for (let k = 0; k < P2.length; k += 2) d = Math.min(d, (x - P2[k][0]) ** 2 + (z - P2[k][1]) ** 2); return Math.sqrt(d); };
         exclF.push((x, z) => creekD(x, z) < 4.5); }
-      // ---- knockable traffic cones: a short row on the asphalt through the apex of every hairpin, well outside the racing line
-      //      (as in the reference, the cars swing past on the inside), one more on the kerb at each end; marshals at the big corners ----
+      // ---- knockable traffic cones (Bakreni gozd: a short row on the asphalt through the apex of every hairpin, well outside the racing line,
+      //      as in the reference, the cars swing past on the inside, one more on the kerb at each end; the newer circuits: on the grass behind
+      //      the apex kerb); marshals at the big corners ----
       const prop = (kind, x, z, yaw, col) => out.props.push({ kind, x, z, yaw: yaw || 0, col: col || 0 });
       for (const c of T.corners) { if (c.sev < 2) continue; const i1c = c.i1 < c.i0 ? c.i1 + N : c.i1, inner = c.dir;
-        { let za = null, zb = null;   // (hairpins: up to four on the road and two on the kerb; the quicker corners: three on the road, as at the S in the reference)
+        if (!FOR) { const sm = ((c.i0 + i1c) / 2) * T.ds;   // (the newer circuits: never on the asphalt, where they only got in the way; a pair on the grass just behind the apex kerb, as in the reference)
+          for (const ds of c.sev >= 3 ? [-7, 7] : [0]) { const i = T.idx(sm + ds), bar = inner > 0 ? T.br[i] : T.bl[i], o = w + T.curbW + 1.3; if (bar < o + 0.8) continue;
+            const [x, z, hd] = atSf(sm + ds, inner * o); prop('cone', x, z, hd + R() * 0.6); } }
+        else { let za = null, zb = null;   // (hairpins: up to four on the road and two on the kerb; the quicker corners: three on the road, as at the S in the reference)
           for (let k = c.i0 - 4; k <= i1c + 4; k++) { const ii = ((k % N) + N) % N; if (T.rl[ii] * inner >= 3.9) { if (za == null) za = k; zb = k; } }
           if (za != null) { const s0 = za * T.ds, s1 = zb * T.ds, n = c.sev >= 3 ? clamp(Math.floor((s1 - s0) / 3.6) + 1, 2, 4) : 3, st = (s1 - s0) / (n - 1);
-            for (let q = 0; q < n; q++) { const [x, z, hd] = atSf(s0 + q * st, inner * 0.7), yaw = hd + R() * 0.6; if (!FOR && out.props.some(p => p.kind === 'cone' && Math.hypot(p.x - x, p.z - z) < 0.5)) continue; prop('cone', x, z, yaw); }
+            for (let q = 0; q < n; q++) { const [x, z, hd] = atSf(s0 + q * st, inner * 0.7), yaw = hd + R() * 0.6; prop('cone', x, z, yaw); }
             if (c.sev >= 3) for (const se of [s0 - 3, s1 + 3]) { const [x, z, hd] = atSf(se, inner * (w + 0.45)); prop('cone', x, z, hd); } } }
         for (let k = 0; k < 2; k++) { const i = T.idx(c.s0 + k * 7), side = -c.dir, bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 1.6), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, g = scen.get(x, z);
           box(g, x, 0, z, 0.5, 1.25, 0.35, T.hd[i], [0.98, 0.5, 0.1]); box(g, x, 1.25, z, 0.32, 0.32, 0.32, T.hd[i], [0.96, 0.96, 0.96]); } }
@@ -2399,6 +2403,27 @@ const World = (function () {
       // ---- red/white striped marker pylons on the apex of the hairpins ----
       for (const c of T.corners) { if (c.sev < 3) continue; const i1c = c.i1 < c.i0 ? c.i1 + N : c.i1, i = T.idx(((c.i0 + i1c) / 2) * T.ds), o = c.dir * (w + T.curbW + 0.55), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
         prop('pylon', x, z, 0); }   // knockable
+      // ---- the newer circuits: tyre stacks and cones across the short cut of every chicane (a run of corners turning alternately left and right
+      //      close together): wherever a straight line from the road before the chicane to the road after it leaves the asphalt, so a car
+      //      that drives straight on instead of round the chicane smashes into them ----
+      if (!FOR) { const cs = T.corners, nC = cs.length, done = new Set(), put = [];
+        const gap = (a, b) => ((((b.i0 - a.i1) % N) + N) % N) * T.ds;
+        for (let a = 0; a < nC; a++) { if (done.has(a)) continue; let b = a;
+          while (b - a < nC - 1 && cs[(b + 1) % nC].dir === -cs[b % nC].dir && gap(cs[b % nC], cs[(b + 1) % nC]) < 26) b++;
+          if (b === a) continue; for (let k = a; k <= b; k++) done.add(k % nC);
+          const c0 = cs[a], c1 = cs[b % nC], i0 = c0.i1 - Math.min((((c0.i1 - c0.i0) % N) + N) % N, 18), sA = i0 * T.ds - 6, span = (((c1.i1 - i0) % N) + N) % N * T.ds + 12, sB = sA + span;   // (from at most 36 m before the end of the first corner)
+          const inSpan = (i) => { const d = (((i * T.ds - sA) % T.len) + T.len) % T.len; return d > 2 && d < span - 2; };
+          for (const oa of [-0.6, 0, 0.6]) for (const ob of [-0.6, 0, 0.6]) { const A = atSf(sA, oa * w), B = atSf(sB, ob * w), L = Math.hypot(B[0] - A[0], B[1] - A[1]);
+            for (let t = 0; t <= L; t += 1.1) { const x = A[0] + (B[0] - A[0]) * t / L, z = A[1] + (B[1] - A[1]) * t / L, n = nearest(x, z), d = Math.abs(n.lat);
+              if (n.i < 0 || !inSpan(n.i) || d < w + T.curbW + 0.5 || d > n.bar - 0.7) continue;
+              if (put.some(p => (p[0] - x) ** 2 + (p[1] - z) ** 2 < 2.1 * 2.1) || out.props.some(p => (p.x - x) ** 2 + (p.z - z) ** 2 < 1.6 * 1.6)) continue;   // (clear of the apex walls, pylons and cones)
+              put.push([x, z, d, n.i, Math.sign(n.lat), a]); } } }
+        const far = {}; for (const p of put) { const key = p[5] + ':' + p[4]; if (!far[key] || p[2] > far[key][2]) far[key] = p; }   // the deepest spot of the cut on either side: a stack of straw bales, as in the reference
+        const bales = Object.values(far).filter(p => p[2] > w + T.curbW + 3 && !out.props.some(q => (q.x - p[0]) ** 2 + (q.z - p[1]) ** 2 < 2.4 * 2.4));
+        for (const p of put) { const [x, z, d, i] = p, k = rpHash(i, Math.round(x * 7 + z * 13)), yaw = T.hd[i] + k * 1.2;
+          if (bales.includes(p)) prop(ITA ? 'rbstack' : 'bstack', x, z, T.hd[i]);
+          else if (bales.some(b => (b[0] - x) ** 2 + (b[1] - z) ** 2 < 2.6 * 2.6)) continue;   // (room for the bales)
+          else if (d < w + T.curbW + 2.2) prop('cone', x, z, yaw); else prop('tstack', x, z, yaw, KMP ? 3 : k < 0.5 ? (ITA ? 4 : 1) : ITA ? 2 : 0); } }
       // ---- little ferns and star-shaped plants dotted over the grass near the circuit ----
       { const fern = (g, x, z, sz) => { const y = gH(x, z) + 0.02, n = 5, a0 = R() * TAU, col = vary([0.27, 0.47, 0.25], R, 0.1);
           for (let k = 0; k < n; k++) { const a = a0 + k / n * TAU, ex = x + Math.cos(a) * sz, ez = z + Math.sin(a) * sz, px2 = -Math.sin(a) * sz * 0.28, pz2 = Math.cos(a) * sz * 0.28;
