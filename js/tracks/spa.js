@@ -18,6 +18,12 @@ var TRACK_DEFS = TRACK_DEFS || [];
     pit: [15.5, -245, 195, -95, 100],   // pit lane right of the pit straight: [centre offset to the right, from, to, the player's box, a long way in] (metres from the start line)
     pitRow: [-140, 140],                // the first and the last box (the crews in the first 13, as many garages as boxes)
     walls: [[360, 860, 1, 1.5]],        // the support pit lane's wall on the way down to Eau Rouge, 1.5 m past the road edge (the lane and its garages behind it)
+    // run-offs as at a Formula 1 circuit: asphalt where the barriers stand far out (Core: they drive as asphalt), gravel from the kerb out in a few
+    // corners (the outside of Raidillon, Les Combes, Bruxelles, Pouhon, Paul Frère and Blanchimont): [from, to, side (-1 left, 1 right), width]
+    // (at Blanchimont the barrier on the outside moves back 12 m for its gravel: [from, to, side, metres])
+    runoffTarmac: true,
+    wide: [[5640, 5760, 1, 12]],
+    gravelStrips: [[990, 1110, -1, 24], [2268, 2340, -1, 20], [2344, 2422, 1, 20], [2866, 3030, -1, 22], [3620, 3800, 1, 24], [5010, 5110, -1, 22], [5640, 5760, 1, 24]],
     // corner names ([HUD label, x, z, the commentator's lines]; the OSM names, but Pouhon for the 'Double Gauche' and the Bus Stop for the final chicane)
     names: [
       ['La Source', -119.8, -210.3, ['Into La Source, the tight hairpin!', 'Hard on the brakes for La Source!', 'Round La Source, and down the hill!']],

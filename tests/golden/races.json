@@ -442,42 +442,42 @@
  "spa/cs": {
   "finished": 13,
   "cars": 13,
-  "winner": 323.83,
+  "winner": 321.42,
   "spins": 0,
-  "walls": 1,
+  "walls": 4,
   "rescues": 0,
   "nan": false,
-  "digest": "f79abae82436aa612b636ce1"
+  "digest": "390c77fb9e1acefd7ab1d815"
  },
  "spa/cs/rain": {
   "finished": 13,
   "cars": 13,
-  "winner": 342.44,
+  "winner": 343.94,
   "spins": 0,
-  "walls": 8,
+  "walls": 6,
   "rescues": 0,
   "nan": false,
-  "digest": "24727488d98f7e0abcf14bce"
+  "digest": "6f337a846f8b5c40145cb8ee"
  },
  "spa/arcade": {
   "finished": 13,
   "cars": 13,
-  "winner": 336.15,
+  "winner": 336.09,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "4c53333b29dcf3394a84d3d3"
+  "digest": "f496465dbab3e652f31ae582"
  },
  "spa/arcade/rain": {
   "finished": 13,
   "cars": 13,
-  "winner": 355.57,
+  "winner": 355.24,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "17136ed5335da888f2c941da"
+  "digest": "52edeb351b1c10bf30f999b4"
  },
  "rbring/cs": {
   "finished": 13,
