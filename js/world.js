@@ -4068,13 +4068,42 @@ const World = (function () {
       for (let k = 0; k < NA; k++) { const P = ring[k], Q = ring[(k + 1) % NA], g = K.noShadow(P[2][0][0], P[2][0][2]);   // (the shore lies on the ground: no shadow)
         for (let q = 0; q < nD - 1; q++) g.quadUp(P[q][0], Q[q][0], Q[q + 1][0], P[q + 1][0], [P[q][1], Q[q][1], Q[q + 1][1], P[q + 1][1]]); }
       // the water: a polar grid out a little under the shore; teal, darker in the deep middle, lighter over the shallows (uv in metres: the texture scrolls, out.dyn.water)
-      const wg = new GB(true), WR = [0.12, 0.35, 0.58, 0.77, 0.9, 1.0, 1.06], NW = 60, wc = [[0.74, 0.8, 0.8], [0.76, 0.82, 0.82], [0.83, 0.88, 0.87], [0.96, 1.0, 0.95], [1.14, 1.17, 1.02], [1.32, 1.33, 1.08], [1.32, 1.33, 1.08]];
-      const wp = WR.map((f) => { const row = []; for (let k = 0; k < NW; k++) { const t = k / NW * TAU, r = Rf(t) * f, [x, z] = L(uc + ru * r * Math.cos(t), vc + rv * r * Math.sin(t)); row.push([x, yw, z]); } return row; });
+      const wg = new GB(true), WR = [0.12, 0.35, 0.58, 0.77, 0.9, 0.96, 1.0, 1.06], NW = 60, wc = [[0.74, 0.8, 0.8], [0.76, 0.82, 0.82], [0.83, 0.88, 0.87], [0.96, 1.0, 0.95], [1.14, 1.17, 1.02], [1.23, 1.25, 1.05], [1.32, 1.33, 1.08], [1.32, 1.33, 1.08]];
+      const WF = [0, 0, 0, 0, 0, 0.5, 1, 1], fm = new Map(), fk = (x, z) => x.toFixed(2) + ',' + z.toFixed(2);   // the foam line along the shore (per ring; looked up per vertex by its position)
+      const wp = WR.map((f, q) => { const row = []; for (let k = 0; k < NW; k++) { const t = k / NW * TAU, r = Rf(t) * f, [x, z] = L(uc + ru * r * Math.cos(t), vc + rv * r * Math.sin(t)); row.push([x, yw, z]); fm.set(fk(x, z), WF[q]); } return row; });
       const wuv = (p) => [p[0] / 12, p[2] / 12], [mx0, mz0] = L(uc, vc), m0 = [mx0, yw, mz0];
       for (let k = 0; k < NW; k++) { const a = wp[0][k], b = wp[0][(k + 1) % NW]; wg.triO(m0, a, b, wc[0], [mx0, yw - 5, mz0], wc[0], wc[0], wuv(m0), wuv(a), wuv(b)); }
       for (let r = 0; r < WR.length - 1; r++) for (let k = 0; k < NW; k++) { const a = wp[r][k], b = wp[r][(k + 1) % NW], c = wp[r + 1][(k + 1) % NW], d = wp[r + 1][k];
         wg.quadUp(a, b, c, d, [wc[r], wc[r], wc[r + 1], wc[r + 1]], [wuv(a), wuv(b), wuv(c), wuv(d)]); }
-      const wm = new THREE.Mesh(wg.geometry(), new THREE.MeshPhongMaterial({ map: K.tex.water, color: 0x80865c, shininess: 70, specular: 0x5d7a80, vertexColors: true }));
+      // its shader (the map's scrolling offset, out.dyn.water, is the clock: every wave's phase an integer number of turns per wrap, so no jump): wavelets ruffle the
+      // normal (the sun glints off them), the sky mirrored by a Fresnel term (paler toward the far side, where the view grazes it), a warm sheen towards the low sun
+      // where no shadow falls, the foam line lapping at the shore
+      const wgm = wg.geometry(), pa = wgm.attributes.position, fo = new Float32Array(pa.count); for (let k = 0; k < pa.count; k++) fo[k] = fm.get(fk(pa.getX(k), pa.getZ(k))) || 0; wgm.setAttribute('foam', new THREE.BufferAttribute(fo, 1));
+      const wmt = new THREE.MeshPhongMaterial({ map: K.tex.water, color: 0x80865c, shininess: 70, specular: 0x5d7a80, vertexColors: true }), f3 = (v) => v.toFixed(3);
+      const wav = [[0.8, 0.6, 3.1, 14, 0.028], [-0.5, 0.87, 1.9, 19, 0.018], [0.97, -0.26, 1.2, 29, 0.01], [-0.9, -0.44, 0.75, 41, 0.006]].map(([dx, dz, l, n, a]) => { const f = TAU / l;
+        return 'pkG += ' + f3(a * f) + ' * vec2( ' + f3(dx) + ', ' + f3(dz) + ' ) * cos( dot( vLw.xy, vec2( ' + f3(dx * f) + ', ' + f3(dz * f) + ' ) ) + pkPh * ' + n.toFixed(1) + ' );\n'; }).join('');
+      wmt.onBeforeCompile = (sh) => {
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float foam;\nvarying float vFoam;\nvarying vec3 vLw;')
+          .replace('#include <begin_vertex>', '#include <begin_vertex>\nvFoam = foam;\nvLw = vec3( position.x - ' + f3(mx0) + ', position.z - ' + f3(mz0) + ', uvTransform[ 2 ].x );');
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vFoam;\nvarying vec3 vLw;')
+          .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\nfloat pkPh = 6.2831853 * vLw.z;\nvec2 pkG = vec2( 0.0 );\n' + wav +
+            'pkG *= 1.0 - 0.6 * vFoam;\nnormal = normalize( ( viewMatrix * vec4( -pkG.x, 1.0, -pkG.y, 0.0 ) ).xyz );')
+          .replace('#include <envmap_fragment>', [
+            'vec3 pkR = reflect( -geometry.viewDir, normal ), pkRw = ( vec4( pkR, 0.0 ) * viewMatrix ).xyz;',
+            'float pkF = pow( 1.0 - clamp( dot( normal, geometry.viewDir ), 0.0, 1.0 ), 1.7 );',
+            'vec3 pkSky = mix( vec3( 0.86, 0.84, 0.82 ), vec3( 0.55, 0.68, 0.9 ), smoothstep( 0.05, 0.75, pkRw.y ) );',
+            'outgoingLight = mix( outgoingLight, pkSky, clamp( 0.04 + 0.95 * pkF, 0.0, 0.65 ) );',
+            '#if NUM_DIR_LIGHTS > 0',
+            'vec3 pkU = max( dot( normal, directionalLights[ 0 ].direction ), 0.0 ) * directionalLights[ 0 ].color * diffuseColor.rgb;',
+            'float pkSh = clamp( dot( reflectedLight.directDiffuse, vec3( 1.0 ) ) / max( dot( pkU, vec3( 1.0 ) ), 1e-4 ), 0.0, 1.0 ), pkSd = max( dot( pkR, directionalLights[ 0 ].direction ), 0.0 );',
+            'outgoingLight += directionalLights[ 0 ].color * pkSh * ( 0.16 * pow( pkSd, 5.0 ) + 1.4 * pow( pkSd, 90.0 ) );',
+            '#endif',
+            'float pkFo = smoothstep( 0.45, 0.95, vFoam + 0.14 * sin( pkPh * 9.0 + vLw.x * 0.9 + vLw.y * 1.3 ) ) * ( 0.7 + 0.3 * sin( vLw.x * 3.1 - vLw.y * 2.3 ) );',
+            'vec3 pkL = ( reflectedLight.directDiffuse + reflectedLight.indirectDiffuse ) / max( diffuseColor.rgb, vec3( 0.03 ) );',
+            'outgoingLight = mix( outgoingLight, vec3( 0.8, 0.82, 0.8 ) * pkL, 0.85 * pkFo );'].join('\n'));
+      };
+      wmt.customProgramCacheKey = () => 'pkLake';
+      const wm = new THREE.Mesh(wgm, wmt);
       wm.receiveShadow = true; wm.matrixAutoUpdate = false; K.root.add(wm); K.out.dyn.water = K.tex.water;
       // the spillway where the dam's outer face drops the most (towards the valley): a concrete lip at the water, a slab across the crest, the chute with its
       // walls down the face, a stilling basin at the foot, rocks, the creek winding on down the slope
@@ -4600,16 +4629,22 @@ const World = (function () {
       return P; };
     // its bed on the ground along the points (the edges take the ground's colour, so it fades in), cobbles along the banks; wet: a dark bed, a strip of water on it,
     // willow scrub on the banks
+    const cwg = new GB(true);   // the running water of the wet beds (Cove Creek): one mesh (uv: across 0-1, metres downstream)
     const bed = (P, wet) => {
       const n = P.length; if (n < 3) return;
       const L = P.map((p, k) => { const a = P[Math.max(0, k - 1)], b = P[Math.min(n - 1, k + 1)], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1; return [-dz / l, dx / l]; });
       const E = (k, o, lift) => { const x = P[k][0] + L[k][0] * o, z = P[k][1] + L[k][1] * o; return [x, gy(x, z) + lift, z]; }, G = (k, o) => gcol(P[k][0] + L[k][0] * o, P[k][1] + L[k][1] * o);
       const bc = wet ? [0.27, 0.26, 0.25] : [0.55, 0.51, 0.46], Wb = (k) => (wet ? 2.5 : 1.9) * (0.85 + 0.25 * Math.sin(k * 0.61 + 1.3)) * Math.min(1, 0.55 + k * 0.15), Ww = (k) => (0.75 + 0.3 * Math.sin(k * 0.47)) * Math.min(1, 0.6 + k * 0.12);
       const cols = P.map((p, k) => { const w = Wb(k), c = vary(bc, R, 0.1); return [G(k, -w / 2), c, c, G(k, w / 2)]; }), keep = [];
+      const fl = wet && gy(...P[0]) < gy(...P[n - 1]) ? -1 : 1, cwd = [0], cwc = [];   // (the water flows downhill: fl; its distance along the bed and its colour per point: white over the drops, fading in and out)
+      if (wet) { for (let k = 1; k < n; k++) cwd.push(cwd[k - 1] + Math.hypot(P[k][0] - P[k - 1][0], P[k][1] - P[k - 1][1]));
+        const dr = P.map((p, k) => { const a = P[Math.max(0, k - 1)], b = P[Math.min(n - 1, k + 1)]; return Math.abs(gy(...a) - gy(...b)) / Math.max(1, (k > 0) + (k < n - 1)); });
+        for (let k = 0; k < n; k++) { const r = sstep(0.07, 0.17, Math.max(dr[k], 0.7 * (dr[k - 1] || 0), 0.7 * (dr[k + 1] || 0))); cwc.push([lerp(0.3, 0.84, r), lerp(0.45, 0.89, r), lerp(0.52, 0.9, r)]); } }
       for (let k = 0; k + 1 < n; k++) { const g = K.noShadow(P[k][0], P[k][1]), w0 = Wb(k), w1 = Wb(k + 1), A = [-w0 / 2, -w0 / 4, w0 / 4, w0 / 2].map((o, i) => E(k, o, i % 3 ? 0.05 : 0.03)), B = [-w1 / 2, -w1 / 4, w1 / 4, w1 / 2].map((o, i) => E(k + 1, o, i % 3 ? 0.05 : 0.03));
         for (let q = 0; q < 3; q++) g.quadUp(A[q], A[q + 1], B[q + 1], B[q], [cols[k][q], cols[k][q + 1], cols[k + 1][q + 1], cols[k + 1][q]]);
         if (wet) { const v0 = Ww(k), v1 = Ww(k + 1), fall = gy(...P[k]) - gy(...P[k + 1]), wc = fall > 0.16 ? [0.82, 0.88, 0.9] : vary([0.3, 0.45, 0.52], R, 0.06);   // the water, white where it drops
-          g.quadUp(E(k, -v0 / 2, 0.08), E(k, v0 / 2, 0.08), E(k + 1, v1 / 2, 0.08), E(k + 1, -v1 / 2, 0.08), [wc, wc, wc, wc]); }
+          const wi = cwc[k], wj = cwc[k + 1], ua = cwd[k] * fl, ub = cwd[k + 1] * fl;   // (its own mesh, the flow animated: see creek below)
+          cwg.quadUp(E(k, -v0 / 2, 0.08), E(k, v0 / 2, 0.08), E(k + 1, v1 / 2, 0.08), E(k + 1, -v1 / 2, 0.08), [wi, wi, wj, wj], [[0, ua], [1, ua], [1, ub], [0, ub]]); }
         if (k % 3 === 0) keep.push([P[k][0], P[k][1], Math.max(w0, 2.2)]); }
       for (let k = 1; k < n; k++) for (const sd of [-1, 1]) { if (R() > 0.55) continue;   // cobbles
         const w = Wb(k), r = 0.1 + R() * (wet ? 0.28 : 0.2), [x, y, z] = E(k, sd * (w / 2 - 0.1 - R() * 0.5), 0); if (pkNear(x, z).dd < r * 1.7 + 1.5) continue;
@@ -4666,6 +4701,21 @@ const World = (function () {
       signAt(s0 - 11, s0 - 30, near, 3.1, AT.cove);
       const [pi, po] = culverts(s0, up, true);
       if (pi) bed(course(pi, 40, -1), true); if (po) bed(course(po, 44, 1), true);
+      // the creek's water: two layers of the water texture streaming downhill along the bed (the map's scrolling offset, out.dyn.water, as the clock: a whole number
+      // of repeats per wrap), a steady ripple across; white where it drops (vertex colour), foam streaks and flecks there; lit, no shadow of its own
+      if (!cwg.empty) {
+        const cm = new THREE.MeshLambertMaterial({ map: K.tex.water, vertexColors: true });
+        cm.onBeforeCompile = (sh) => {
+          sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec4 vFl;\nvarying float vAc;').replace('#include <begin_vertex>', '#include <begin_vertex>\n' +
+            'float pkT = uvTransform[ 2 ].x;\nvAc = uv.x;\nvFl = vec4( uv.x * 0.35 + 0.1 * sin( uv.y * 0.9 ), uv.y / 4.0 - pkT * 40.0, uv.x * 0.6 + 0.3, uv.y / 2.3 - pkT * 84.0 );');
+          sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec4 vFl;\nvarying float vAc;')
+            .replace('#include <map_fragment>', 'vec4 pkA = texture2D( map, vFl.xy ), pkB = texture2D( map, vFl.zw );\ndiffuseColor.rgb *= 0.8 + 0.5 * ( pkA.b + pkB.b - 1.2 );')
+            .replace('#include <color_fragment>', ['#include <color_fragment>',
+              'float pkW = smoothstep( 0.55, 0.8, vColor.g ), pkC = max( smoothstep( 0.28, 0.42, pkA.r ), smoothstep( 0.28, 0.42, pkB.r ) ), pkE = abs( vAc - 0.5 );',
+              'diffuseColor.rgb = mix( diffuseColor.rgb, vec3( 0.93, 0.95, 0.95 ), clamp( pkC * ( 0.3 + 0.7 * pkW ) + pkW * 0.35 * smoothstep( 0.3, 0.5, pkE ), 0.0, 1.0 ) );'].join('\n'));
+        };
+        cm.customProgramCacheKey = () => 'pkCreek';
+        const m = new THREE.Mesh(cwg.geometry(), cm); m.receiveShadow = true; m.matrixAutoUpdate = false; K.root.add(m); K.out.dyn.water = K.tex.water; }
     }
 
     /* ---- Devil's Playground: weathered granite tors on the bare ridge (stacks of rounded blocks, pillars, low domes with boulders on top, scree at their feet):
@@ -5073,10 +5123,14 @@ const World = (function () {
        (ground-coloured, in the terrain tiles) out to the barriers (150 m chunks, culled) ---- */
     const Pt = (i, o, y) => [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o];
     const aMat = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true }); out.asphaltMat = aMat;
-    aMat.onBeforeCompile = (sh) => {   // the paint (attribute paint = 1) takes its vertex colour only, without the asphalt's grain
-      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float paint;\nvarying float vPaint;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvPaint = paint;');
-      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vPaint;').replace('#include <map_fragment>',
-        '#ifdef USE_MAP\n  vec4 texelColor = mapTexelToLinear( texture2D( map, vUv ) );\n  diffuseColor *= mix( texelColor, vec4( 1.0 ), vPaint );\n#endif');
+    aMat.onBeforeCompile = (sh) => {   // the paint (attribute paint = 1) takes its vertex colour only, without the asphalt's grain (faded paint 0.5-1: some grain; patches 0.02, asphalt 0);
+      // from the raw uv (lateral offset (o + w) / 8, s / 8; the vertex shader is highp): the asphalt polished lighter in the wheel tracks of each lane (the wear varying along the road), a darker edge outside the white line
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float paint;\nvarying float vPaint;\nvarying vec2 vRd;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvPaint = paint;\n' +
+        'float pkS = uv.y * 8.0;\nvRd = vec2( uv.x * 8.0 - 7.0, clamp( 0.45 + 0.35 * sin( pkS * 0.0213 + 1.3 ) + 0.3 * sin( pkS * 0.0571 + 0.4 ), 0.0, 1.0 ) );');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vPaint;\nvarying vec2 vRd;').replace('#include <map_fragment>',
+        '#ifdef USE_MAP\n  vec4 texelColor = mapTexelToLinear( texture2D( map, vUv ) );\n  diffuseColor *= mix( texelColor, vec4( 1.0 ), vPaint );\n#endif\n' +
+        'float pkO = abs( vRd.x ), pkT = exp( -pow( ( pkO - 2.6 ) * 1.9, 2.0 ) ) + exp( -pow( ( pkO - 4.4 ) * 1.9, 2.0 ) );\n' +
+        'diffuseColor.rgb *= 1.0 + ( 1.0 - step( 0.01, vPaint ) ) * 0.24 * pkT * vRd.y - ( 1.0 - step( 0.03, vPaint ) ) * 0.42 * smoothstep( 6.73, 6.84, pkO );');
     };
     aMat.customProgramCacheKey = () => 'pkRoad';
     const sMat = new THREE.MeshPhongMaterial({ map: tex.makadam, bumpMap: tex.makadamBump, bumpScale: 0.04, shininess: 5, specular: 0x14110d, vertexColors: true });
@@ -5091,31 +5145,66 @@ const World = (function () {
         a.push([[w + sw, -0.02], lift(Math.max(w + sw + 0.6, bar - 2.5), -0.02 - 0.2 * (1 - 2.5 / Math.max(2.6, bar - w - sw))), lift(bar, -0.22), lift(bar + 1.4, -0.62)]); } return a; });
       // verge colours per cross-section point = the ground's there (dusty near the road; the outer edge takes the terrain mesh's colour there, snow patches included, so no seam)
       const vc = [-1, 1].map((side, si) => { const a = []; for (let i = 0; i < N; i++) { const bar = side > 0 ? T.br[i] : T.bl[i];
-        a.push(vp[si][i].map(([o, y], k) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o, sl = k === 2 ? pkSlope(x, z) : 0; if (k === 3) return pkGCol(x, z); return pkCol(x, z, T.hy[i] + y, 1 / Math.sqrt(1 + sl * sl), Math.max(0, o - bar)).slice(); })); } return a; });
+        a.push(vp[si][i].map(([o, y], k) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o, sl = k === 2 ? pkSlope(x, z) : 0; if (k === 3) return pkGCol(x, z); const c = pkCol(x, z, T.hy[i] + y, 1 / Math.sqrt(1 + sl * sl), Math.max(0, o - bar)).slice();
+          if (k === 0) for (let q = 0; q < 3; q++) c[q] = lerp(c[q], [0.56, 0.45, 0.35][q], 0.35);   // (gravel dust spilt onto the verge's inner edge: a soft transition)
+          return c; })); } return a; });
       const RC = 75, cpI = T.cpS.map(s => T.idx(s));   // (samples per chunk; the checkpoints' samples)
+      // a worn public road: dark fresh patches (pothole patches, trenches across a lane, strips along the edge) and black crack-seal lines (across the road,
+      // along the centre joint and the wheel tracks) as thin quads just above the asphalt, in its chunk's mesh; faded paint in places and on the inside of the
+      // tight bends (the cars cut them); own random stream
+      const XR = rng(4471), XN = Math.ceil((N - 1) / RC), xP = [], xC = [], ruv = (s, o) => [(o + w) / tileL, s / tileL];
+      for (let c = 0; c < XN; c++) { xP.push(new GB(true)); xC.push(new GB(true)); }
+      const PF = (s, o, y) => { const f = clamp(s / T.ds, 0, N - 1.001), i = Math.floor(f), t = f - i, l = (a) => a[i] + (a[i + 1] - a[i]) * t; return [l(T.px) + l(T.nx) * o, l(T.hy) + y, l(T.pz) + l(T.nz) * o]; };
+      const xAt = (s) => Math.min(XN - 1, Math.floor(clamp(s / T.ds, 0, N - 2) / RC)), keep = (s0, s1) => ![sStart, sFin].concat(T.cpS).some(q => s1 > q - 4 && s0 < q + 4);
+      const patch = (s0, s1, o0, o1, col) => { if (!keep(s0, s1)) return; const g = xP[xAt(s0)], ss = [s0]; for (let s = (Math.floor(s0 / T.ds) + 1) * T.ds; s < s1 - 0.2; s += T.ds) ss.push(s); ss.push(s1);
+        for (let k = 0; k + 1 < ss.length; k++) { const a = ss[k], b = ss[k + 1]; g.quadUp(PF(a, o0, 0.027), PF(a, o1, 0.027), PF(b, o1, 0.027), PF(b, o0, 0.027), [col, col, col, col], [ruv(a, o0), ruv(a, o1), ruv(b, o1), ruv(b, o0)]); } };
+      const seal = [0.2, 0.2, 0.21], crack = (P, cw) => { if (!keep(P[0][0], P[P.length - 1][0])) return; const g = xC[xAt(P[0][0])];   // P: [s, o] points
+        for (let k = 0; k + 1 < P.length; k++) { const [s0, o0] = P[k], [s1, o1] = P[k + 1], l = Math.hypot(s1 - s0, o1 - o0) || 1, ps = -(o1 - o0) / l * cw / 2, po = (s1 - s0) / l * cw / 2, e = 0.02 / l, a = s0 - (s1 - s0) * e, b = s1 + (s1 - s0) * e, oa = o0 - (o1 - o0) * e, ob = o1 + (o1 - o0) * e;
+          g.quadUp(PF(a - ps, oa - po, 0.031), PF(a + ps, oa + po, 0.031), PF(b + ps, ob + po, 0.031), PF(b - ps, ob - po, 0.031), [seal, seal, seal, seal], [ruv(a, oa - po), ruv(a, oa + po), ruv(b, ob + po), ruv(b, ob - po)]); } };
+      for (let s = 30 + XR() * 20; s < T.len - 40;) {   // patches (never overlapping)
+        const r = XR(), sd = XR() < 0.5 ? -1 : 1, tone = 0.5 + XR() * 0.2, col = [tone, tone, tone * 1.04]; let L;
+        if (r < 0.55) { L = 1.2 + XR() * 3; const W = 0.9 + XR() * 1.6, oc = 0.45 + W / 2 + XR() * (w - 1.3 - W); patch(s, s + L, sd * (oc - W / 2), sd * (oc + W / 2), col); }   // a pothole patch
+        else if (r < 0.8) { L = 0.8 + XR() * 0.9; patch(s, s + L, sd * 0.36, sd * (w - 0.6), col); }   // a trench across the lane
+        else { L = 8 + XR() * 22; const W = 0.8 + XR() * 1.0; patch(s, s + L, sd * (w - 0.56 - W), sd * (w - 0.56), col); }   // the edge repaired along the shoulder
+        s += L + 14 + XR() * 50; }
+      for (let s = 20 + XR() * 10; s < T.len - 20; s += 9 + XR() * 30) {   // cracks across (the whole road or one lane), a little wavy and skewed
+        const full = XR() < 0.55, sd = XR() < 0.5 ? -1 : 1, oa = full || sd < 0 ? -(w - 0.35) : 0.3, ob = full || sd > 0 ? w - 0.35 : -0.3, n = Math.max(2, Math.round((ob - oa) / 0.6)), sk = (XR() - 0.5) * 0.6, P = []; let d = 0;
+        for (let k = 0; k <= n; k++) { const o = oa + (ob - oa) * k / n; P.push([s + d + sk * o / w, o]); d += (XR() - 0.5) * 0.3; }
+        crack(P, 0.09); }
+      for (let s = 15 + XR() * 30; s < T.len - 50; s += 20 + XR() * 55) {   // cracks along: the centre joint beside the yellow lines, the wheel tracks
+        const L = 6 + XR() * 30, joint = XR() < 0.5, sd = XR() < 0.5 ? -1 : 1, P = []; let o = sd * (joint ? 0.42 + XR() * 0.15 : 1.6 + XR() * 3.8);
+        for (let q = 0; q <= L; q += 1.1) { P.push([s + q, o]); o += (XR() - 0.5) * 0.16; if (joint) o = sd * clamp(o * sd, 0.36, 0.7); }
+        crack(P, 0.08); }
+      const nF = valueNoise2(4473, 1), fade = [0, 1, 2, 3].map(q => { const a = new Float32Array(N), sd = q < 2 ? 0 : q === 2 ? -1 : 1;   // paint wear per line (the two yellow, the left and right white) and sample
+        for (let i = 0; i < N; i++) a[i] = Math.min(0.8, 0.62 * sstep(0.52, 0.8, nF(i * T.ds / 45, q * 7.3)) + (sd ? 0.5 * sstep(1 / 70, 1 / 22, sd * T.k[i]) : 0)); return a; });
+      const fc = (c, f) => [lerp(c[0], 0.4, f), lerp(c[1], 0.4, f), lerp(c[2], 0.41, f)];
+      const gv = (i, k) => { const q = 0.9 + 0.2 * nF(i * T.ds / 9, 40 + k); return [gc[0] * q, gc[1] * q, gc[2] * q]; }, gIn = [0.66, 0.63, 0.6];   // the gravel's tone varies along it, greyer where it meets the asphalt
       let gs = null;   // (the gravel strip: few vertices, chunks 4 times as long)
       for (let c0 = 0; c0 < N - 1; c0 += RC) {
-        const gr = new GB(true), gl = new GB(); if (c0 % (RC * 4) === 0) gs = new GB(true);
+        const gr = new GB(true), gl = new GB(true), pp = []; if (c0 % (RC * 4) === 0) gs = new GB(true);
         for (let i = c0; i < Math.min(c0 + RC, N - 1); i++) {
           const j = i + 1, v0 = i * T.ds / tileL, v1 = j * T.ds / tileL, s0 = i * T.ds / 6, s1 = j * T.ds / 6;
           for (let c = 0; c < offs.length - 1; c++) { const o0 = offs[c], o1 = offs[c + 1];
             gr.quadUp(Pt(i, o0, 0.02), Pt(i, o1, 0.02), Pt(j, o1, 0.02), Pt(j, o0, 0.02), [shade(i, o0), shade(i, o1), shade(j, o1), shade(j, o0)], [[(o0 + w) / tileL, v0], [(o1 + w) / tileL, v0], [(o1 + w) / tileL, v1], [(o0 + w) / tileL, v1]]); }
-          for (const [o0, o1, col] of [[-0.27, -0.12, yel], [0.12, 0.27, yel], [-(w - 0.28), -(w - 0.5), wht], [w - 0.5, w - 0.28, wht]])
-            gl.quadUp(Pt(i, o0, 0.036), Pt(i, o1, 0.036), Pt(j, o1, 0.036), Pt(j, o0, 0.036), [col, col, col, col]);
+          [[-0.27, -0.12, yel], [0.12, 0.27, yel], [-(w - 0.28), -(w - 0.5), wht], [w - 0.5, w - 0.28, wht]].forEach(([o0, o1, col], q) => { const fi = fade[q][i], fj = fade[q][j], ci = fc(col, fi), cj = fc(col, fj), si = i * T.ds, sj = j * T.ds;
+            gl.quadUp(Pt(i, o0, 0.036), Pt(i, o1, 0.036), Pt(j, o1, 0.036), Pt(j, o0, 0.036), [ci, ci, cj, cj], [ruv(si, o0), ruv(si, o1), ruv(sj, o1), ruv(sj, o0)]); pp.push(1 - 0.5 * Math.max(fi, fj)); });
           for (const side of [-1, 1]) {
             const ci = vc[side > 0 ? 1 : 0][i], cj = vc[side > 0 ? 1 : 0][j];
-            gs.quadUp(Pt(i, side * w, 0.012), Pt(i, side * (w + sw), -0.02), Pt(j, side * (w + sw), -0.02), Pt(j, side * w, 0.012), [gc, gc, gc, gc], [[0, s0], [sw / 4, s0], [sw / 4, s1], [0, s1]]);
+            const ga = gv(i, side), gb = gv(j, side), gai = [ga[0] * gIn[0] * 1.15, ga[1] * gIn[1] * 1.15, ga[2] * gIn[2] * 1.15], gbi = [gb[0] * gIn[0] * 1.15, gb[1] * gIn[1] * 1.15, gb[2] * gIn[2] * 1.15];   // (coarse: the texture's stones ~5-25 cm)
+            gs.quadUp(Pt(i, side * w, 0.012), Pt(i, side * (w + sw), -0.02), Pt(j, side * (w + sw), -0.02), Pt(j, side * w, 0.012), [gai, ga, gb, gbi], [[0, s0 * 6 / 7], [sw / 7, s0 * 6 / 7], [sw / 7, s1 * 6 / 7], [0, s1 * 6 / 7]]);
             const qi = vp[side > 0 ? 1 : 0][i], qj = vp[side > 0 ? 1 : 0][j];
             for (let k = 0; k < 3; k++) { const a = Pt(i, side * qi[k][0], qi[k][1]), b = Pt(i, side * qi[k + 1][0], qi[k + 1][1]), c = Pt(j, side * qj[k + 1][0], qj[k + 1][1]), d = Pt(j, side * qj[k][0], qj[k][1]);
               flatAt(a[0], a[2])[0].quadUp(a, b, c, d, [ci[k], ci[k + 1], cj[k + 1], cj[k]], [wuv(a), wuv(b), wuv(c), wuv(d)]); }
           }
         }
         cpI.forEach((ic, k) => { if (ic < c0 || ic >= c0 + RC) return; const s0 = T.cpS[k], a = atSf(s0 - 0.25, -w + 0.1), b = atSf(s0 - 0.25, w - 0.1), c = atSf(s0 + 0.25, w - 0.1), d = atSf(s0 + 0.25, -w + 0.1), y = (p) => T.hy[p[3]] + 0.038;   // a white line at the checkpoint
-          gl.quadUp([a[0], y(a), a[1]], [b[0], y(b), b[1]], [c[0], y(c), c[1]], [d[0], y(d), d[1]], [wht, wht, wht, wht]); });
-        if (!gr.empty) {   // the asphalt and its paint: one mesh (the paint's uv unused)
-          const na = gr.P.length / 3, np = gl.P.length / 3, g = new THREE.BufferGeometry(), uv = new Float32Array((na + np) * 2), paint = new Float32Array(na + np); uv.set(gr.U); paint.fill(1, na);
-          g.setAttribute('position', new THREE.Float32BufferAttribute(gr.P.concat(gl.P), 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(gr.N.concat(gl.N), 3));
-          g.setAttribute('color', new THREE.Float32BufferAttribute(gr.C.concat(gl.C), 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setAttribute('paint', new THREE.BufferAttribute(paint, 1)); g.computeBoundingSphere();
+          gl.quadUp([a[0], y(a), a[1]], [b[0], y(b), b[1]], [c[0], y(c), c[1]], [d[0], y(d), d[1]], [wht, wht, wht, wht], [[0, 0], [0, 0], [0, 0], [0, 0]]); });
+        if (!gr.empty) {   // the asphalt, its patches and crack seals and its paint: one mesh
+          const L = [gr, xP[c0 / RC], xC[c0 / RC], gl], n = L.map(q => q.P.length / 3), g = new THREE.BufferGeometry(), paint = new Float32Array(n[0] + n[1] + n[2] + n[3]).fill(1);
+          paint.fill(0, 0, n[0]); paint.fill(0.02, n[0], n[0] + n[1]); pp.forEach((v, k) => paint.fill(v, n[0] + n[1] + n[2] + k * 6, n[0] + n[1] + n[2] + k * 6 + 6));
+          const cat = (f) => [].concat(...L.map(f));
+          g.setAttribute('position', new THREE.Float32BufferAttribute(cat(q => q.P), 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(cat(q => q.N), 3));
+          g.setAttribute('color', new THREE.Float32BufferAttribute(cat(q => q.C), 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(cat(q => q.U), 2)); g.setAttribute('paint', new THREE.BufferAttribute(paint, 1)); g.computeBoundingSphere();
           const m = new THREE.Mesh(g, aMat); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); }
         if ((c0 + RC) % (RC * 4) === 0 || c0 + RC >= N - 1) addM(gs, sMat);
       }
