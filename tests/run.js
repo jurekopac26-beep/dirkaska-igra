@@ -1,6 +1,6 @@
 // Runs the test suites one after another (each in its own process) and prints a summary.
 //   node tests/run.js           everything
-//   node tests/run.js node      only the Node tests (physics, AI, races; ~2 min)
+//   node tests/run.js node      only the Node tests (physics, AI, races; ~3 min)
 //   node tests/run.js browser   only the browser tests (Playwright; ~17 min with software WebGL)
 // A test that runs longer than TEST_TIMEOUT_MIN minutes (default 15) is stopped and counted as failed, so a hung test
 // still ends with the summary.
@@ -9,7 +9,7 @@ const { spawnSync } = require('child_process');
 const path = require('path');
 
 const SUITES = {
-  node: ['stamp.test.js', 'golden.test.js', 'races.test.js', 'cs-handling.test.js', 'net-core.test.js'],
+  node: ['stamp.test.js', 'golden.test.js', 'races.test.js', 'cs-handling.test.js', 'net-core.test.js', 'crossover.test.js'],
   browser: ['browser/smoke.test.mjs', 'browser/app.test.mjs', 'browser/world.test.mjs', 'browser/pits.test.mjs', 'browser/memory.test.mjs', 'browser/perf.test.mjs', 'browser/online.test.mjs'],
 };
 const which = process.argv[2];

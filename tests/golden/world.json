@@ -172,5 +172,20 @@
    "-:MeshBasicMaterial": "4fdb0600",
    "crowd:MeshLambertMaterial": "f759b22e"
   }
+ },
+ "suzuka": {
+  "meshes": 719,
+  "verts": 289871,
+  "instances": 15267,
+  "props": 147,
+  "crowd": 1522,
+  "world": "8d3b9a2a",
+  "propsHash": "1cdfec55",
+  "floor": "72b445dd/11620",
+  "groups": {
+   "-:MeshLambertMaterial": "ed6592c9",
+   "-:MeshBasicMaterial": "b674325b",
+   "crowd:MeshLambertMaterial": "23a36833"
+  }
  }
 }
