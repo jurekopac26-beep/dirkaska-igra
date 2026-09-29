@@ -22,6 +22,15 @@ try {
     await ctx.close();
   }
 
+  // 1b. rain chosen before: the title demo behind the menu rains from the start
+  {
+    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { weather: 'rain' });
+    await page.waitForTimeout(1500);
+    const r = await page.evaluate(() => ({ demo: window.__game.demo && window.__game.demo.rain, drawn: Render.raining, sub: document.getElementById('title-sub').textContent }));
+    T.check('saved weather: rain -> the title demo rains', r.demo === 1 && r.drawn && / · dež$/.test(r.sub) && !errors.length, JSON.stringify(r) + (errors.length ? ' errors: ' + errors.join(' | ') : ''));
+    await ctx.close();
+  }
+
   // 2. the page also works when opened straight from the disk (file://)
   {
     const { ctx, page, errors } = await openGame(browser, url.pathToFileURL(path.join(ROOT, 'index.html')).href);
@@ -64,6 +73,29 @@ try {
     const s2 = await page.screenshot();
     let diff = 0; const n = Math.min(s1.length, s2.length); for (let i = 0; i < n; i++) if (s1[i] !== s2[i]) diff++;
     T.check('title screen with the demo race moving behind it', scr === 'title' && diff > n * 0.05, `screen ${scr}, ${(100 * diff / n).toFixed(0)} % of the image bytes changed`);
+  }
+
+  // 6b. rain: the weather row on the track screen; a race at Spa in the rain (every car on the wet grip, the streaks drawn, spray behind
+  //     the cars), the title demo follows the setting; back to dry, the next race is dry again
+  {
+    const row = await page.evaluate(() => [...document.querySelectorAll('[data-set="weather"] button')].map(b => b.textContent + (b.classList.contains('sel') ? '*' : '')).join(' | '));
+    T.check('weather row: Suho (selected) | Dež | Naključno', row === 'Suho* | Dež | Naključno', row);
+    const e0 = errors.length;
+    await page.evaluate(() => document.querySelector('[data-set="weather"] button[data-v="rain"]').click());
+    await startTrack(page, 'spa');
+    const nan = await simulate(page, 20);
+    await page.waitForTimeout(1500);   // (a second and a half of real frames: the spray)
+    const r = await page.evaluate(() => { const g = window.__game, R = g.race; return { rain: R.rain, wet: R.cars.every(c => c.wet === 0.8), drawn: Render.raining, spray: Render.fxStats().alive, dist: Math.round(R.player.dist), saved: JSON.parse(localStorage.getItem('tdgp-settings')).weather,
+      birds: Render.birds.mesh.visible, clouds: Render.world.dyn.clouds.K.value }; });
+    T.check('Spa in the rain: wet grip for every car, rain drawn, spray, the setting saved; no birds, no cloud shadows', r.rain === 1 && r.wet && r.drawn && r.spray > 10 && r.dist > 200 && r.saved === 'rain' && !r.birds && r.clouds === 0 && !nan && errors.length === e0, JSON.stringify(r) + (errors.length > e0 ? ' errors: ' + errors.slice(e0).join(' | ') : ''));
+    await page.evaluate(() => window.__game.onAction('to-title')); await page.waitForTimeout(600);
+    const d = await page.evaluate(() => ({ demo: window.__game.demo ? window.__game.demo.rain : null, drawn: Render.raining }));
+    await page.evaluate(() => document.querySelector('[data-set="weather"] button[data-v="dry"]').click()); await page.waitForTimeout(600);
+    const d2 = await page.evaluate(() => ({ demo: window.__game.demo ? window.__game.demo.rain : null, drawn: Render.raining }));
+    await startTrack(page, 'spa'); await simulate(page, 3);
+    const r2 = await page.evaluate(() => { let marks = (Render.world.stats && Render.world.stats.decals) || 0; Render.world.root.traverse(o => { if (o.name === 'tyremarks') marks++; });   // (Spa: the tyre marks among the builder's decals)
+      return { rain: window.__game.race.rain, wet: window.__game.race.cars.every(c => c.wet === 1), drawn: Render.raining, birds: Render.birds.mesh.visible, clouds: Render.world.dyn.clouds.K.value, marks }; });
+    T.check('title demo in the rain with the setting, dry again without it; the next race dry (birds, cloud shadows, tyre marks)', d.demo === 1 && d.drawn && d2.demo === 0 && !d2.drawn && r2.rain === 0 && r2.wet && !r2.drawn && r2.birds && r2.clouds > 0.1 && r2.marks > 5 && errors.length === e0, JSON.stringify({ d, d2, r2 }));
   }
 
   // 6. a Pikes Peak time trial to the finish: the record is stored under 'pikes@cs'
