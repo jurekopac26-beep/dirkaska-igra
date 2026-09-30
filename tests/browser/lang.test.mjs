@@ -94,8 +94,8 @@ try {
   await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 180000 });
   const r6 = await page.evaluate(() => ({ title: document.getElementById('res-title').textContent, pos: document.getElementById('res-pos').textContent, sub: document.getElementById('res-sub').textContent, head: document.querySelector('#res-table thead').innerText }));
   const sR = await slovene();
-  T.check('results in English: Victory! / On the podium! / Finish, "Race time ... You started 12th.", Driver / Car / Time / Best lap', /^(Victory!|On the podium!|Finish)$/.test(r6.title) && /^\d+(st|nd|rd|th)$/.test(r6.pos) &&
-    /^Race time \d+:\d\d\.\d{3}, best lap \d+:\d\d\.\d{3}.*\. You started 12th\.$/.test(r6.sub) && /Driver/.test(r6.head) && /Best lap/.test(r6.head) && !sR.length, JSON.stringify({ r6, sR }));
+  T.check('results in English: Victory! / On the podium! / Finish, "Race time ... You started 12th. (New achievements: ...)", Driver / Car / Time / Best lap', /^(Victory!|On the podium!|Finish)$/.test(r6.title) && /^\d+(st|nd|rd|th)$/.test(r6.pos) &&
+    /^Race time \d+:\d\d\.\d{3}, best lap \d+:\d\d\.\d{3}.*\. You started 12th\.( New achievements: [A-Z][\w ,]+\.)?$/.test(r6.sub) && /Driver/.test(r6.head) && /Best lap/.test(r6.head) && !sR.length, JSON.stringify({ r6, sR }));
 
   // 7. back to Slovenian in the settings: the page and the title at once; then English again
   await act('to-title'); await page.waitForTimeout(250); await act('to-settings'); await page.waitForTimeout(200);

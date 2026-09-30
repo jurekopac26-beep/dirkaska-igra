@@ -22,7 +22,7 @@
 
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
-  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.2, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 1, name: 'Igralec', lang: 'sl' };
+  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.2, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 1, name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0 };
   let S = Object.assign({}, DEF);
   let records = {};
   try { const j = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (j) S = Object.assign(S, j); } catch (_) { }
@@ -34,11 +34,13 @@
   const esc = (v) => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   for (const k in DEF) if (S[k] == null || typeof S[k] === 'object') S[k] = DEF[k];   // hand-edited storage: a setting is always a plain value
   if (S.phys !== 'arcade') S.phys = 'cs';   // the 'rally' physics was removed: its players (it was the default) and old saves get cs
-  if (!['dry', 'rain', 'random', 'change'].includes(S.weather)) S.weather = 'dry';
+  if (!['dry', 'rain', 'random', 'change', 'storm'].includes(S.weather)) S.weather = 'dry';
   if (!['summer', 'autumn', 'winter'].includes(S.season)) S.season = 'summer';
-  if (!['day', 'dusk', 'night'].includes(S.tod)) S.tod = 'day';
+  if (!['day', 'dusk', 'night', 'dawn'].includes(S.tod)) S.tod = 'day';
   if (!['race', 'tt', 'traffic', 'police'].includes(S.mode)) S.mode = 'race';   // (Vršič: the race against the rivals, the time trial, the duel in the traffic, the run from the police)
   if (S.lang !== 'en') S.lang = 'sl';
+  if (!['off', 'auto', 'on'].includes(S.saver)) S.saver = 'off';
+  if (!['short', 'normal', 'long', 'endurance'].includes(S.length)) S.length = 'normal';
   Lang.set(S.lang); if (S.lang !== 'sl') Lang.apply(document.body);   // (the page in the chosen language before anything is drawn)
   S.name = cleanName(S.name) || tr(DEF.name);
   // upgrades per car: S.upg[modelId] = {motor, gume, zavore, aero} 0..3 (own objects, never shared; old saves have none)
@@ -53,7 +55,7 @@
   // (def.recId: a track re-made so that its old times no longer compare keeps new records apart.) A time trial in the rain keeps its own records
   // and ghost (id-wet): the weather of the race on it, before a race the weather setting (the wet ones only with 'rain'). A track with
   // more ways to drive it (def.modes: Vršič) keeps the records of each apart from the race's (id-tt, id-tt-wet, id-traffic, id-police)
-  const wetRec = (d) => isTT(d) && (race && race.track.def.id === d.id ? !!race.rain : S.weather === 'rain');
+  const wetRec = (d) => isTT(d) && (race && race.track.def.id === d.id ? !!race.rain : S.weather === 'rain' || S.weather === 'storm');
   const recKey = (id) => { const d = Core.TRACKS.find(x => x.id === id), r = ((d && d.recId) || id) + (d && d.modes && modeOf(d) !== 'race' ? '-' + modeOf(d) : '') + (wetRec(d) ? '-wet' : ''); return S.phys === 'arcade' ? r : r + '@cs'; };
   const rec = (id) => { const k = recKey(id); return records.tracks[k] || (records.tracks[k] = {}); };
   // time-trial records: bestTime, bestSplits [cp1..cpN, finish], board = top 10 [{name, car, carId, time, splits, date, upg}] (drop anything malformed, rebuild the rest from known fields)
@@ -117,6 +119,10 @@
   const ttWhere = (T, s) => { const alt = T.altAt(T.hy[T.idx(s)]); return alt != null ? numDot(alt) + ' m' : T.def.alt ? '' : kmTxt(s - T.startS, 2) + ' km'; };
   const sgn = (d) => Math.abs(d) < 0.0005 ? '\u00b10.000' : (d < 0 ? '\u2212' : '+') + (Math.abs(d) >= 60 ? fmt(Math.abs(d)) : Math.abs(d).toFixed(3));   // −1.234 / +0.512 / ±0.000 / −3:24.799
   const dCls = (d) => d < -0.0005 ? 'fast' : d > 0.0005 ? 'slow' : 'even';
+  // a race's laps by the length (Dolžina dirke): short half the track's usual (at least one), long twice, endurance three times (an open road:
+  // its one run)
+  const LEN_K = { short: 0.5, normal: 1, long: 2, endurance: 3 };
+  const lapsOf = (d) => d.open ? 1 : Math.max(1, Math.round((d.laps || LAPS) * (LEN_K[S.length] || 1)));
   const lapWord = (n) => Lang.cur === 'en' ? n + (n === 1 ? ' LAP' : ' LAPS') : n + (n === 1 ? ' KROG' : n === 2 ? ' KROGA' : n <= 4 ? ' KROGI' : ' KROGOV');
   const trackCache = new Map();
   const getTrack = (id) => { if (!trackCache.has(id)) trackCache.set(id, new Core.Track(Core.TRACKS.find(d => d.id === id) || Core.TRACKS[0])); return trackCache.get(id); };
@@ -167,6 +173,89 @@
       champ = { v: 1, id: d.id, diff: j.diff, rounds: j.rounds.map(r => ({ track: r.track, order: r.order.slice(), rain: r.rain ? 1 : 0 })) };
   } catch (_) { champ = null; }
   function champSave() { try { if (champ) localStorage.setItem('tdgp-champ', JSON.stringify(champ)); else localStorage.removeItem('tdgp-champ'); } catch (_) { } }
+
+  /* ---------------- statistics and achievements (Dosežki): the player's own numbers over all races, and the achievements ----------------
+     st (kept in the browser, tdgp-stats): the km and the time driven, races, wins, podiums, poles, fastest laps, time trials run, medals, titles,
+     escapes, races online, the top speed, the longest jump and drift, the tracks raced to the line (and those with a gold medal), the
+     achievements unlocked (id -> date). Counted as the game goes (stDrive after each physics step of a race, the rest at the finish); an
+     achievement unlocked: a message at once and a line on the results. */
+  const stNew = () => ({ v: 1, km: 0, time: 0, races: 0, wins: 0, podiums: 0, poles: 0, fl: 0, tt: 0, gold: 0, silver: 0, bronze: 0, titles: 0, escapes: 0, online: 0, vmax: 0, jump: 0, drift: 0, tracks: {}, goldT: {}, ach: {} });
+  let st = stNew();
+  try {
+    const j = JSON.parse(localStorage.getItem('tdgp-stats') || 'null');
+    if (isObj(j) && j.v === 1) {
+      for (const k in st) if (typeof st[k] === 'number' && k !== 'v' && posNum(j[k])) st[k] = j[k];
+      for (const k of ['tracks', 'goldT', 'ach']) if (isObj(j[k])) for (const id in j[k]) if (posNum(j[k][id])) st[k][id] = j[k][id];
+    }
+  } catch (_) { st = stNew(); }
+  let stHold = false;   // (a profile brought in: the game starts again with its stats, not these saved over them as the page goes)
+  function stSave() { if (stHold) return; try { localStorage.setItem('tdgp-stats', JSON.stringify(st)); } catch (_) { } }
+  // [id, name, how to get it, progress: () => [now, goal]]
+  const ACH = [
+    ['first', 'Prvi cilj', 'Pripelji do cilja prve dirke.'],
+    ['win', 'Prva zmaga', 'Zmagaj na dirki.'],
+    ['fromLast', 'Z zadnjega na prvo', 'Zmagaj na dirki z zadnjega štartnega mesta (vsaj deset avtov).'],
+    ['cleanLap', 'Čist krog', 'Odpelji krog brez dotika ograje.'],
+    ['cleanRace', 'Brez praske', 'Pripelji dirko do cilja brez dotika ograje in drugih avtov.'],
+    ['pole', 'Prvi na štartu', 'Osvoji prvo štartno mesto v kvalifikacijah.'],
+    ['fastLap', 'Najhitrejši krog', 'Odpelji najhitrejši krog dirke.'],
+    ['hattrick', 'Hat-trick', 'Prvo štartno mesto, zmaga in najhitrejši krog na isti dirki.'],
+    ['overtake', 'Napadalec', 'Na eni dirki pridobi osem mest.'],
+    ['podium10', 'Deset stopničk', 'Stopi na stopničke desetkrat.', () => [st.podiums, 10]],
+    ['wins10', 'Deset zmag', 'Zmagaj desetkrat.', () => [st.wins, 10]],
+    ['km100', '100 kilometrov', 'Prevozi 100 km.', () => [st.km, 100]],
+    ['km1000', '1000 kilometrov', 'Prevozi 1000 km.', () => [st.km, 1000]],
+    ['allTracks', 'Popotnik', 'Pripelji do cilja na vsaki progi.', () => [Core.TRACKS.filter(d => st.tracks[d.id]).length, Core.TRACKS.length]],
+    ['nring', 'Zeleni pekel', 'Pripelji do cilja na Nordschleife.'],
+    ['champ', 'Prvak', 'Osvoji prvenstvo.'],
+    ['legend', 'Legenda', 'Osvoji prvenstvo Legende.'],
+    ['gold', 'Zlata medalja', 'Osvoji zlato medaljo v kronometru.'],
+    ['allGold', 'Zlata zbirka', 'Osvoji zlato na vseh kronometrih.', () => [Core.TRACKS.filter(d => d.medals && st.goldT[d.id]).length, Core.TRACKS.filter(d => d.medals).length]],
+    ['escape', 'Neulovljiv', 'Pobegni policiji čez prelaz.'],
+    ['rain', 'Mojster dežja', 'Zmagaj v dežju.'],
+    ['night', 'Nočna ptica', 'Zmagaj ponoči.'],
+    ['drift', 'Kralj drsenja', 'Drsi tri sekunde brez prekinitve.'],
+    ['jump', 'Letalec', 'Skoči 40 m daleč.'],
+    ['speed', '300 km/h', 'Pelji 300 km/h.'],
+    ['rich', 'Bogataš', 'V karieri zasluži 100.000 €.'],
+    ['online', 'S prijateljem', 'Pripelji do cilja dirke s prijateljem.'],
+  ];
+  let achNew = [];   // (unlocked during the race on screen: listed on its results)
+  function achGet(id) {
+    const a = ACH.find(x => x[0] === id); if (!a || st.ach[id]) return;
+    st.ach[id] = Date.now(); stSave(); achNew.push(id);
+    toast(tr('Nov dosežek: {0}', tr(a[1])), 3000); Sfx.beep(1320, 0.1, 0.1); setTimeout(() => Sfx.beep(1760, 0.14, 0.1), 120);
+  }
+  const achLine = () => { const L = achNew.map(id => tr(ACH.find(a => a[0] === id)[1])); achNew = []; return L.length ? tr(' Novi dosežki: {0}.', L.join(', ')) : ''; };
+  // per race: the drift under way, wall or car contact (this lap, this race), the laps counted, pole position for this race
+  let stRun = { drift: 0, lapWall: false, wall: false, car: false, laps: 0, pole: false, done: false };
+  function stDrive(P, dt) {   // after each physics step of a race
+    if (phase !== 'racing' || P.finished) return;
+    st.km += Math.abs(P.speed) * dt / 1000; st.time += dt;
+    const v = P.speed * 3.6; if (v > st.vmax) st.vmax = v; if (v >= 300) achGet('speed');
+    if (Math.abs(P.beta || 0) > 0.35 && P.speed > 12 && !P.air) { stRun.drift += dt; if (stRun.drift >= 3) achGet('drift'); }
+    else { if (stRun.drift > st.drift) st.drift = stRun.drift; stRun.drift = 0; }
+    if (P.hitWall > 0.5) { stRun.lapWall = true; stRun.wall = true; }
+    if (P.hitCar > 0.5) stRun.car = true;
+    if (P.lapTimes.length > stRun.laps) { stRun.laps = P.lapTimes.length; if (!stRun.lapWall && !race.timeTrial) achGet('cleanLap'); stRun.lapWall = false; }   // (a lap done without the wall)
+    if (st.km >= 100) achGet('km100'); if (st.km >= 1000) achGet('km1000');
+  }
+  // a race to the line (not online): the counts and the achievements of the finish (pos of n, the fastest lap of the race)
+  function stRace(pos, n, fl) {
+    if (stRun.done) return; stRun.done = true;
+    const P = race.player, id = track.def.id;
+    st.races++; st.tracks[id] = (st.tracks[id] || 0) + 1;
+    if (pos === 1) st.wins++; if (pos <= 3) st.podiums++; if (fl) st.fl++;
+    achGet('first');
+    if (pos === 1) { achGet('win'); if (P.grid >= n && n >= 10) achGet('fromLast'); if (race.rain) achGet('rain'); if (S.tod === 'night') achGet('night'); if (stRun.pole && fl) achGet('hattrick'); }
+    if (fl) achGet('fastLap');
+    if (!stRun.wall && !stRun.car) achGet('cleanRace');
+    if (P.grid - pos >= 8) achGet('overtake');
+    if (st.podiums >= 10) achGet('podium10'); if (st.wins >= 10) achGet('wins10');
+    if (id === 'nring') achGet('nring');
+    if (Core.TRACKS.every(d => st.tracks[d.id])) achGet('allTracks');
+    stSave();
+  }
   if (!isObj(records.champ)) records.champ = {};   // per series: best = the best final place, titles = championships won
   for (const id in records.champ) { const r = records.champ[id]; if (!isObj(r) || !Core.CHAMPS.some(c => c.id === id)) { delete records.champ[id]; continue; }
     if (!(Number.isInteger(r.best) && r.best > 0)) delete r.best; if (!(Number.isInteger(r.titles) && r.titles > 0)) delete r.titles; }
@@ -239,21 +328,30 @@
     $('tilt-inv-btn').classList.toggle('primary', !!S.tiltInvert);
     $('ctrl-help').textContent = tr((S.control === 'buttons' && S.phys !== 'arcade' ? CTRL_HELP_CS : CTRL_HELP[S.control]) || '');
     { const d = Core.TRACKS.find(x => x.id === S.track) || Core.TRACKS[0], r = rec(d.id), nm = Lang.of(d, 'name');   // the selected track and its record first (short screens may cut the end of the hint)
-      const wx = tr(S.weather === 'rain' ? ' · dež' : S.weather === 'random' ? ' · morda dež' : S.weather === 'change' ? ' · menljivo vreme' : '') + tr(S.season === 'autumn' ? ' · jesen' : S.season === 'winter' ? ' · zima' : '') + tr(S.tod === 'dusk' ? ' · večer' : S.tod === 'night' ? ' · noč' : '');
+      const wx = tr(S.weather === 'rain' ? ' · dež' : S.weather === 'storm' ? ' · nevihta' : S.weather === 'random' ? ' · morda dež' : S.weather === 'change' ? ' · menljivo vreme' : '') + tr(S.season === 'autumn' ? ' · jesen' : S.season === 'winter' ? ' · zima' : '') + tr(S.tod === 'dusk' ? ' · večer' : S.tod === 'night' ? ' · noč' : S.tod === 'dawn' ? ' · jutro' : '');
       if (isTT(d)) { $('title-hint').textContent = tr('Proga: {0}', nm) + (r.bestTime ? tr(' (osebni rekord {0})', fmt(r.bestTime, true)) : tr(' (še brez časa)')) + '.'; $('title-sub').textContent = nm + tr(' · kronometer · brez nasprotnikov'); }
       else if (modeOf(d) === 'traffic' || modeOf(d) === 'police') { const pol = modeOf(d) === 'police';
         $('title-hint').textContent = tr('Proga: {0}', nm) + (r.bestRace ? tr(pol ? ' (najhitrejši pobeg {0})' : ' (najboljši čas {0})', fmt(r.bestRace, true)) : '') + '.';
         $('title-sub').textContent = nm + tr(pol ? ' · beg pred policijo · odprta cesta' : ' · dvoboj z enim tekmecem · promet na cesti') + wx; }
       else if (upRace(d)) { $('title-hint').textContent = tr('Proga: {0}', nm) + (r.bestRace ? tr(' (najboljša dirka {0})', fmt(r.bestRace, true)) : '') + '.'; $('title-sub').textContent = nm + tr(' · dirka na vrh · {0} nasprotnikov', NUM_AI) + wx; }
-      else { $('title-hint').textContent = tr('Proga: {0}', nm) + (r.bestLap ? tr(' (rekord kroga {0})', fmt(r.bestLap, true)) : '') + '.'; $('title-sub').textContent = nm + ' · ' + lapWord(d.laps || 3).toLowerCase() + tr(' · {0} nasprotnikov', 12) + wx; } }
+      else { $('title-hint').textContent = tr('Proga: {0}', nm) + (r.bestLap ? tr(' (rekord kroga {0})', fmt(r.bestLap, true)) : '') + '.'; $('title-sub').textContent = nm + ' · ' + lapWord(lapsOf(d)).toLowerCase() + tr(' · {0} nasprotnikov', 12) + wx + (S.length === 'endurance' ? tr(' · vzdržljivostna') : '') + (S.fuel && d.pit ? tr(' · gorivo') : ''); } }
     $('title-hint').textContent += tr(' Upravljanje: {0}, kamera: {1}. Spremeniš v nastavitvah.', tr(CTRL_NAME[S.control]), tr(S.camera === 'chase' ? 'za avtom (telefon pokončno)' : S.camera === 'kino' ? 'kino (telefon ležeče)' : S.camera === 'cockpit' ? 'kokpit (telefon ležeče)' : 'izometrična (telefon ležeče)')) + (records.bestLap ? tr(' Rekord kroga: {0}.', fmt(records.bestLap, true)) : '');
     { const el = $('set-name'); if (el && document.activeElement !== el) el.value = S.name; }
     { const d = champDef(); $('btn-champ').textContent = tr('Prvenstvo') + (d && !champDone() ? ' · ' + (champ.rounds.length + 1) + '/' + d.tracks.length : ''); }
     $('btn-career').textContent = tr('Kariera') + (inCareer() ? ' · ' + eur(career.money) : '');
   }
   function shadowsOn() { return !!S.shadows && !autoNoShadows; }
+  // the picture's settings to the renderer only when they change (it builds every shader again: a language or a sound switch must not)
+  let rsKey = '';
+  function renderSettings() { const rs = { quality: S.quality, shadows: shadowsOn(), camera: S.camera }, k = JSON.stringify(rs); if (k !== rsKey) { rsKey = k; Render.applySettings(rs); } Render.setSaver(saverOn()); }
+  // the battery saver (Varčevanje z baterijo): 30 frames a second and a lower resolution; 'auto' while the battery is at 20 % or less and not
+  // charging (where the browser tells: Chrome; elsewhere 'auto' stays off)
+  let batLow = false;
+  const saverOn = () => S.saver === 'on' || (S.saver === 'auto' && batLow);
+  try { if (navigator.getBattery) navigator.getBattery().then((b) => { const up = () => { const was = saverOn(); batLow = !b.charging && b.level <= 0.2; if (saverOn() !== was) { renderSettings(); perf.sum = perf.n = 0; if (saverOn()) toast(tr('Baterija je skoraj prazna: varčni način (30 sličic na sekundo, nižja ločljivost).'), 3600); } };
+    up(); b.addEventListener('levelchange', up); b.addEventListener('chargingchange', up); }).catch(() => { }); } catch (_) { }
   function applySettings() {
-    Render.applySettings({ quality: S.quality, shadows: shadowsOn(), camera: S.camera });
+    renderSettings();
     Render.cam.userZoom = +S.zoom;
     Comm.setEnabled(!!+S.comm); Comm.setSpeech(!!+S.sound); Comm.setNotes(!!+S.codrv);
     Comm.setOnVoice(v => { const el = $('comm-voice'); if (el) el.textContent = !v.any ? tr('Ta brskalnik ne podpira govora – komentatorja ne bo slišati.') : tr('Glas: {0} ({1})', v.name || tr('privzeti angleški'), v.lang) + tr(v.male ? ' – moški' : ' – nižji ton') + (v.codrv ? tr(' · sovoznik: {0}', v.codrv) : ''); });
@@ -268,17 +366,18 @@
   // the weather: dry, rain, or at random for every race (rain more often in the Ardennes, the Eifel and the Julian Alps in the autumn);
   // the title demo rains only with 'rain'
   const RAIN_P = { spa: 0.5, nring: 0.45, vrsic: 0.45 };
-  const rainOf = () => S.weather === 'rain' ? 1 : (S.weather === 'random' || S.weather === 'change') && Math.random() < (RAIN_P[track && track.def.id] || 0.35) ? 1 : 0;
+  const rainOf = () => S.weather === 'rain' || S.weather === 'storm' ? 1 : (S.weather === 'random' || S.weather === 'change') && Math.random() < (RAIN_P[track && track.def.id] || 0.35) ? 1 : 0;
   // 'change': the weather changes during a race (on a circuit, or up the Vršič; Race opts weather): it starts dry and rains later on, or it starts wet,
   // the rain stops and the road dries (the racing line first). Somewhere between a fifth and a half of the race (by its usual length); a time trial: as 'random'
   let wxNext = null;   // (tests: the weather of the next race)
   function weatherOf(d) {
     if (wxNext) { const W = wxNext; wxNext = null; return W; }
+    if (S.weather === 'storm') return { rain: 1, wx: null, storm: true };   // (a thunderstorm: rain all the race, lightning and thunder)
     if (S.weather !== 'change' || isTT(d)) return { rain: rainOf(), wx: null };
-    const wet = Math.random() < 0.5, est = (d.open ? track.raceLen : track.len * (d.laps || LAPS)) / 38;   // (an open road: its one run)
+    const wet = Math.random() < 0.5, est = (d.open ? track.raceLen : track.len * lapsOf(d)) / 38;   // (an open road: its one run)
     return { rain: wet ? 1 : 0, wx: { at: +(est * (0.2 + Math.random() * 0.3)).toFixed(1), dur: wet ? 25 : Math.round(30 + Math.random() * 30), to: wet ? 0 : 1 } };
   }
-  const demoRain = () => S.weather === 'rain' ? 1 : 0;
+  const demoRain = () => S.weather === 'rain' || S.weather === 'storm' ? 1 : 0;
   function applyPhys(r) { if (r) r.setPhys(physOf()); }
   function setOption(key, v) {
     if (key === 'wing' || key === 'gear') {   // (the set-up of the chosen track)
@@ -286,16 +385,18 @@
       const d = Core.TRACKS.find(x => x.id === S.track), W = ['malo krila', 'srednje krilo', 'veliko krila'], G = ['kratke prestave', 'srednje prestave', 'dolge prestave'], U = setupOf(S.track);
       if (d) toast(tr('Nastavitev za {0}: {1}, {2}.', Lang.of(d, 'name'), tr(W[U.wing]), tr(G[U.gear])), 2400);
       return; }
-    const num = ['zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'codrv', 'damage', 'ghost', 'quali'];
+    const num = ['zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'codrv', 'damage', 'ghost', 'quali', 'tower', 'fuel'];
     S[key] = num.includes(key) ? +v : v;
     if (key === 'lang') Lang.set(S.lang);   // (before the settings apply: what they write is in the new language)
     if (key === 'shadows') { autoNoShadows = false; perf.pending = perf.restore = false; perf.keep = true; }   // the player's own choice wins for the rest of the visit
+    if (key === 'saver') { perf.sum = perf.n = 0; perf.good = perf.slow = 0; }   // (the frame times measured again from now)
+    if (key === 'tower') $('hud').classList.toggle('tw', !!tw && !!S.tower);
     save(); applySettings();
     if (key === 'lang') relang();
     if (key === 'phys') { if (!(mp && mp.race)) { applyPhys(race); ghPhys(); } applyPhys(demo); }   // (an online race keeps the host's physics)
-    if (key === 'weather' && demo) demo.setRain(demoRain());   // (a race keeps its weather; the next one gets the new setting)
+    if (key === 'weather' && demo) { demo.setRain(demoRain()); if (!race) Render.setStorm(S.weather === 'storm'); }   // (a race keeps its weather; the next one gets the new setting)
     if (key === 'season' || key === 'tod') Render.setAtmos({ season: S.season, tod: S.tod });   // (the season and the time of day: at once, also on the title demo)
-    if ((key === 'weather' || key === 'mode') && screen === 'track') buildTrackScreen();   // (a time trial's records in the rain are its own, and a race's: the cards show them)
+    if ((key === 'weather' || key === 'mode' || key === 'length') && screen === 'track') buildTrackScreen();   // (a time trial's records in the rain are its own, and a race's: the cards show them)
     if (key === 'control' && v === 'tilt') enableTilt(false);
     if (key === 'camera') { lockOrientation(); updateOrientation(); }
   }
@@ -420,7 +521,7 @@
     const R = recd; if (!R || R.frames.length < 40) { toast(tr('Posnetka ni.'), 2000); return; }
     replay = { t: R.frames[0][0], t1: R.frames[R.frames.length - 1][0], i: 0, speed: 1, play: true, cam: 'tv', k: Math.max(0, R.cars.indexOf(race.player)), sc: null };
     showScreen('none'); $('hud').classList.add('off'); $('btn-pause').classList.add('off'); $('btn-cam').classList.add('off'); $('touch').classList.add('off'); $('replay-ui').classList.remove('off');
-    Sfx.setRunning(false); Sfx.silence(); Comm.stop(); Render.setGhost(null); Render.resetCam(); replayUI();
+    Sfx.setRunning(false); Sfx.silence(); Comm.stop(); Render.setGhost(null); Render.setGhostF(null); Render.resetCam(); replayUI();
   }
   function replayEnd() {
     if (!replay) return;
@@ -603,6 +704,7 @@
   function careerPay(sum, what) {
     if (!inCareer() || !(sum > 0) || (mp && mp.race)) return '';
     career.money += sum; career.earned += sum; careerSave();
+    if (career.earned >= 100000) achGet('rich');
     return tr(' {0}: +{1} (imaš {2}).', tr(what), eur(sum), eur(career.money));
   }
   function carBuy() {
@@ -657,7 +759,7 @@
       let meta = md === 'traffic' ? kmTxt(T.raceLen, 1) + ' km' + climb + tr(' · dvoboj z enim tekmecem v prometu') + (r.bestRace ? tr(' · rekord {0}', fmt(r.bestRace, true)) : '') :
         md === 'police' ? kmTxt(T.raceLen, 1) + ' km' + climb + tr(' · beg pred policijo') + (r.bestRace ? tr(' · najhitrejši pobeg {0}', fmt(r.bestRace, true)) : '') :
         upRace(d) ? kmTxt(T.raceLen, 1) + ' km' + climb + tr(' · dirka z {0} tekmeci', NUM_AI) + (r.bestRace ? tr(' · rekord {0}', fmt(r.bestRace, true)) : '') : isTT(d) ? kmTxt(T.raceLen, 1) + ' km' + climb + (isRally(d) && d.bumps ? ' · ' + jumpWord(d.bumps.length) : '') + ' · ' + cpWord(T.cpS.length) + tr(' · kronometer') + (r.bestTime ? tr(' · rekord {0}', fmt(r.bestTime, true)) : '')
-        : kmTxt(T.len, 2) + ' km · ' + tr('{0} ovinkov', T.corners.length) + ' · ' + lapWord(d.laps || 3).toLowerCase() + (r.bestLap ? tr(' · rekord {0}', fmt(r.bestLap, true)) : '');
+        : kmTxt(T.len, 2) + ' km · ' + tr('{0} ovinkov', T.corners.length) + ' · ' + lapWord(lapsOf(d)).toLowerCase() + (r.bestLap ? tr(' · rekord {0}', fmt(r.bestLap, true)) : '');
       if (wetRec(d)) meta = meta.replace(tr(' · kronometer'), tr(' · kronometer v dežju'));
       if (isTT(d) && medalOf(d, r.bestTime) >= 0) meta += ' ' + MEDAL_ICON[medalOf(d, r.bestTime)];
       const desc = '<div class="tmeta">' + meta + '</div>' + (pkIs(d) ? pkTrackTag(r) : '') + '<div class="tdesc">' + (Lang.of(d, 'desc') || '').replace(/\b(\d{1,3})(\d{3}) m\b/g, (m, a, b) => numDot(+(a + b)) + '\u00a0m') + '</div>';   // 2862 m -> 2.862 m (as on the HUD)
@@ -666,21 +768,33 @@
       return '<button class="track-card' + sel + '" data-track="' + d.id + '"><canvas></canvas><h3>' + Lang.of(d, 'name') + '</h3>' + desc + '</button>'; }).join('');
     requestAnimationFrame(() => list.querySelectorAll('.track-card').forEach(el => drawTrackMini(el.querySelector('canvas'), getTrack(el.dataset.track))));
   }
+  // a track loaded: its world built and its shaders compiled while the loading screen is up. The title demo on it is made only when a menu
+  // shows it (demoOn): a race started from the menus does not wait for its cars to drive their first seconds
   function ensureTrack(id, cb) {
     if (track && track.def.id === id) { cb(); return; }
     $('ld-msg').textContent = tr('Nalagam progo {0}…', Lang.of(Core.TRACKS.find(d => d.id === id), 'name') || '');
     $('loading').classList.remove('off');
     setTimeout(() => {
+      const t0 = performance.now();
       track = getTrack(id);
       Render.buildWorld(track, S.quality === 'retro' ? 0.8 : 1);
-      demo = new Core.Race(track, { numAI: 10, noPlayer: true, difficulty: 2, laps: 9999, seed: 11, phys: physOf(), rain: demoRain() });
-      demo.start(); for (let i = 0; i < 120 * 4; i++) demo.step(STEP);
-      demoTarget = null; demoSwitch = 0;   // the title camera picks a car of the new demo right away (not one left over from the previous track)
+      Render.precompile();
+      demo = null;
       mm.img = null; mm.w = 0;
+      loadMs = performance.now() - t0;
       $('loading').classList.add('off');
       cb();
     }, 40);
   }
+  let loadMs = 0;   // (tests: how long the last track took to load)
+  // the title demo: ten cars racing on the loaded track behind the menus, their first seconds driven at once
+  function demoMake(sec) {
+    demo = new Core.Race(track, { numAI: 10, noPlayer: true, difficulty: 2, laps: 9999, seed: 11, phys: physOf(), rain: demoRain() });
+    demo.start(); for (let i = 0; i < 120 * sec; i++) demo.step(STEP);
+    demoTarget = null; demoSwitch = 0;   // the title camera picks a car of the new demo right away (not one left over from the previous track)
+  }
+  const demoOn = () => { if (!demo || demo.track !== track) demoMake(4); return demo; };
+  function demoShow() { demoAt = demoOn(); Render.attachRace(demoAt); }   // (the demo behind the menus again)
 
   /* ---------------- ghost of the best run (time trials) and of the best flying lap (circuits) ---------------- */
   // While a time trial runs, the player's car pose is sampled every GH_DT s of race time (between two physics steps, so exactly on the
@@ -692,7 +806,7 @@
   // x, y, z steps from the previous sample (cm), heading, steer, pitch and roll (1e-4 rad)
   const GH_DT = 0.1, GH_MAX = 12000, GH_CH = 7, GH_V = 1, GH_BYTES = 600000;   // sample interval (s), max samples (20 min), channels, format, max stored size
   const ghKey = (id) => 'tdgp-ghost-' + recKey(id);
-  let ghRec = null, ghPlay = null, ghLap = null;   // the run being recorded { n, f: Float32Array }, the best run being replayed { n, t, M, color, stripe, f, lap }, a circuit's lap being recorded { n, f, t0, lap, on }
+  let ghRec = null, ghPlay = null, ghLap = null, ghFr = null;   // (ghFr: a friend's shared ghost of this track { name, t, g })   // the run being recorded { n, f: Float32Array }, the best run being replayed { n, t, M, color, stripe, f, lap }, a circuit's lap being recorded { n, f, t0, lap, on }
   function ghPose(P, f, k, a) {   // the car's pose at a (0 = previous physics step, 1 = this one) into f at sample k
     const o = k * GH_CH, lat = clamp(P.w * P.speed, -16, 16);
     f[o] = P.px + (P.x - P.px) * a; f[o + 1] = P.py + (P.y - P.py) * a; f[o + 2] = P.pz + (P.z - P.pz) * a; f[o + 3] = P.ph + Core.wrapPi(P.h - P.ph) * a;
@@ -726,15 +840,20 @@
     const G = ghRec; ghRec = null;
     if (G && G.done) ghWrite(id, G, time, false); else try { localStorage.removeItem(ghKey(id)); } catch (_) { }
   }
-  function ghLoad(id, best, lap) {   // the stored best run of this track and physics, if it is the run of the current record (lap: a circuit's best flying lap)
-    let o = null; try { o = JSON.parse(localStorage.getItem(ghKey(id)) || 'null'); } catch (_) { return null; }
-    if (!isObj(o) || o.v !== GH_V || o.dt !== GH_DT || !posNum(o.t) || (lap ? o.lap !== 1 : o.lap != null || !(Math.abs(o.t - best) < 0.0005)) || !(o.n >= 2 && o.n <= GH_MAX) || typeof o.d !== 'string' || !Array.isArray(o.q0) || o.q0.length !== 3) return null;
+  // a stored ghost ({ v, dt, n, t, car, color, stripe, lap?, q0, d }): checked and unpacked to its poses (null: not a ghost of this game)
+  function ghParse(o) {
+    if (!isObj(o) || o.v !== GH_V || o.dt !== GH_DT || !posNum(o.t) || !(o.n >= 2 && o.n <= GH_MAX) || typeof o.d !== 'string' || !Array.isArray(o.q0) || o.q0.length !== 3) return null;
     let b; try { b = atob(o.d); } catch (_) { return null; }
     if (b.length !== o.n * GH_CH * 2) return null;
     const u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
     const a = new Int16Array(u.buffer), f = new Float32Array(o.n * GH_CH), q = o.q0.map(v => +v || 0);
     for (let k = 0; k < o.n; k++) { const i = k * GH_CH; for (let c = 0; c < 3; c++) { q[c] += a[i + c]; f[i + c] = q[c] / 100; } for (let c = 3; c < 7; c++) f[i + c] = a[i + c] / 1e4; }
-    return { n: o.n, t: o.t, M: modelById(o.car), color: typeof o.color === 'number' ? o.color : PLAYER_COLORS[0], stripe: o.stripe !== false, f, lap: !!lap };
+    return { n: o.n, t: o.t, M: modelById(o.car), color: typeof o.color === 'number' ? o.color : PLAYER_COLORS[0], stripe: o.stripe !== false, f, lap: o.lap === 1 };
+  }
+  function ghLoad(id, best, lap) {   // the stored best run of this track and physics, if it is the run of the current record (lap: a circuit's best flying lap)
+    let o = null; try { o = JSON.parse(localStorage.getItem(ghKey(id)) || 'null'); } catch (_) { return null; }
+    if (!isObj(o) || (lap ? o.lap !== 1 : o.lap != null || !(Math.abs(o.t - best) < 0.0005))) return null;
+    return ghParse(o);
   }
   function ghStart() {   // newRace: record every time trial and every flying lap on a circuit (never online); replay the best one when there is one
     const on = mp && mp.race, tt = race.timeTrial && !on, circ = !race.timeTrial && !on;
@@ -742,7 +861,8 @@
     ghLap = circ ? { n: 0, f: new Float32Array(GH_MAX * GH_CH), t0: 0, lap: -1, on: false } : null;
     const R0 = tt ? rec(track.def.id) : null;
     ghPlay = R0 && R0.bestTime ? ghLoad(track.def.id, R0.bestTime) : circ ? ghLoad(track.def.id, 0, true) : null;
-    Render.setGhost(null, true);
+    const F = tt || circ ? ghFriend(track.def.id) : null; ghFr = F && F.g.lap === !tt ? F : null;   // (a friend's time trial run in a time trial, a friend's lap on a circuit's flying laps)
+    Render.setGhost(null, true); Render.setGhostF(null, true);
   }
   function ghLapSample(P) {   // a circuit, after each physics step: the flying lap under way (see ghStart)
     const G = ghLap; if (!G || race.state !== 'racing') return;
@@ -761,19 +881,97 @@
     ghPlay = { n: G.n, t, M: Core.MODELS[S.car], color: PLAYER_COLORS[S.color], stripe: P.stripe !== false, f, lap: true };
     ghWrite(track.def.id, { n: G.n, f }, t, true);
   }
-  const _gp = { M: null, color: 0, stripe: true, x: 0, y: 0, z: 0, h: 0, d: 0, p: 0, r: 0, op: 1 };
-  function ghShow(alpha) {   // every drawn frame of a race: the ghost where the best run was at this moment of the race clock
-    const G = ghPlay, P = race && race.player;
-    if (!G || !race || !S.ghost || !(phase === 'racing' || phase === 'finish' || phase === 'done') || race.state === 'grid') { Render.setGhost(null); return; }
-    if (G.lap && (P.finished || !(P.lap >= (race.quali ? 1 : 2)))) { Render.setGhost(null); return; }   // (a circuit: only while a flying lap is under way)
+  const _gp = { M: null, color: 0, stripe: true, x: 0, y: 0, z: 0, h: 0, d: 0, p: 0, r: 0, op: 1 }, _gpF = Object.assign({ tag: '' }, _gp);
+  function ghAt(G, alpha, g) {   // the ghost G where its run was at this moment of the race clock (a circuit's lap: of the lap clock), into g; null while it is not on
+    const P = race.player;
+    if (G.lap && (P.finished || !(P.lap >= (race.quali ? 1 : 2)))) return null;   // (a circuit: only while a flying lap is under way)
     const t = Math.max(0, race.time - (1 - clamp(alpha, 0, 1)) * STEP - (G.lap ? P.lapStart : 0)), u = t / GH_DT, k = Math.min(G.n - 2, Math.floor(u)), a = clamp(u - k, 0, 1), end = (G.n - 1) * GH_DT;
-    if (t > end + 0.6) { Render.setGhost(null); return; }   // the best run is over (it ends just past the line)
+    if (t > end + 0.6) return null;   // the run is over (it ends just past the line)
     const f = G.f, o = k * GH_CH, n2 = o + GH_CH, L = (c) => f[o + c] + (f[n2 + c] - f[o + c]) * a;
-    const g = _gp; g.M = G.M; g.color = G.color; g.stripe = G.stripe;
+    g.M = G.M; g.color = G.color; g.stripe = G.stripe;
     g.x = L(0); g.y = L(1); g.z = L(2); g.h = f[o + 3] + Core.wrapPi(f[n2 + 3] - f[o + 3]) * a; g.d = L(4); g.p = L(5); g.r = L(6);
     const dd = Math.hypot(g.x - P.x, g.z - P.z);
     g.op = clamp((dd - 1.5) / 5, 0.3, 1) * clamp(t / 0.4, 0, 1) * clamp((end + 0.6 - t) / 0.6, 0, 1);   // fainter right on top of the player; fades in at the start and out past the line
-    Render.setGhost(g);
+    return g;
+  }
+  function ghShow(alpha) {   // every drawn frame of a race: the player's own best run and a friend's shared one
+    const on = !!race && !!S.ghost && (phase === 'racing' || phase === 'finish' || phase === 'done') && race.state !== 'grid';
+    Render.setGhost(on && ghPlay ? ghAt(ghPlay, alpha, _gp) : null);
+    if (on && ghFr) _gpF.tag = ghFr.name + ' ' + fmt(ghFr.t);
+    Render.setGhostF(on && ghFr ? ghAt(ghFr.g, alpha, _gpF) : null);
+  }
+
+  /* ---------------- sharing: the profile (all the game keeps: settings, records, career, championship, achievements, ghosts) and a ghost ----------------
+     A file (the phone's share sheet, else a download), brought back with the file chooser; a ghost also as a link (#duh=...: the ghost packed
+     with deflate, base64url), which opens the game and brings the ghost in. A friend's ghost (one per track, tdgp-fghost-<track>) drives with
+     the player's own in that track's time trial or on its flying laps, orange with the friend's name over it. */
+  function saveFile(name, text, title) {   // -> 'share' | 'file' | 'abort'
+    const type = 'application/json', b = new Blob([text], { type }), file = typeof File === 'function' ? new File([b], name, { type }) : null;
+    const down = () => { const url = URL.createObjectURL(b), a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000); return 'file'; };
+    if (file && matchMedia('(pointer: coarse)').matches && navigator.canShare && navigator.canShare({ files: [file] })) return navigator.share({ files: [file], title }).then(() => 'share', (e) => (e && e.name === 'AbortError' ? 'abort' : down()));
+    return Promise.resolve(down());
+  }
+  function pickFile(cb) {   // a file the player picks: its text to cb
+    const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json,application/json'; inp.style.display = 'none'; document.body.appendChild(inp);
+    inp.addEventListener('change', () => { const f = inp.files && inp.files[0]; inp.remove(); if (!f) return;
+      if (f.size > 8e6) { toast(tr('Datoteka je prevelika.'), 2600); return; }
+      f.text().then(cb, () => toast(tr('Datoteke ni bilo mogoče prebrati.'), 2600)); });
+    inp.click();
+  }
+  const b64u = (u8) => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
+  async function packStr(s) { if (typeof CompressionStream !== 'function') return null; return b64u(new Uint8Array(await new Response(new Blob([s]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer())); }
+  async function unpackStr(p) { const b = atob(p.replace(/-/g, '+').replace(/_/g, '/')), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text(); }
+  const profKeys = () => { const a = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (/^tdgp-/.test(k) && k !== 'tdgp-noadapt') a.push(k); } return a; };
+  function profExport() {
+    const data = {}; for (const k of profKeys()) data[k] = localStorage.getItem(k);
+    const d = new Date(), p2 = (x) => String(x).padStart(2, '0'), name = 'apex-racing-profil-' + d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()) + '.json';
+    return saveFile(name, JSON.stringify({ app: 'apex-racing', kind: 'profile', v: 1, date: Date.now(), name: S.name, data }), 'APEX Racing').then((how) => { if (how !== 'abort') toast(how === 'share' ? tr('Profil je pripravljen za deljenje.') : tr('Profil je shranjen v datoteko {0}.', name), 3400); return how; });
+  }
+  function profImport(text) {   // a profile file: checked, asked, the saved game replaced by it, the game started again
+    let o = null; try { o = JSON.parse(text); } catch (_) { }
+    if (!isObj(o) || o.app !== 'apex-racing' || o.kind !== 'profile' || o.v !== 1 || !isObj(o.data) || !Object.keys(o.data).every(k => /^tdgp-[\w@.-]{1,80}$/.test(k) && typeof o.data[k] === 'string')) { toast(tr('To ni profil igre APEX Racing.'), 3200); return false; }
+    if (!confirm(tr('Uvozim profil {0} z dne {1}? Tvoj trenutni profil (nastavitve, rekordi, kariera, dosežki in duhovi) se zamenja.', cleanName(o.name) || '?', new Date(posNum(o.date) ? o.date : Date.now()).toLocaleDateString(Lang.locale)))) return false;
+    const old = {}; for (const k of profKeys()) old[k] = localStorage.getItem(k);
+    try { for (const k in old) localStorage.removeItem(k); for (const k in o.data) localStorage.setItem(k, o.data[k]); }
+    catch (_) { try { for (const k of profKeys()) localStorage.removeItem(k); for (const k in old) localStorage.setItem(k, old[k]); } catch (e) { } toast(tr('Profila ni bilo mogoče shraniti (premalo prostora).'), 3600); return false; }   // (the old one back)
+    try { localStorage.setItem('tdgp-defaults-v2', '1'); } catch (_) { }
+    stHold = true; location.reload(); return true;
+  }
+  function ghOwn(id) {   // the player's ghost of this track (the current physics, weather and way to drive) as it is shared
+    let o = null; try { o = JSON.parse(localStorage.getItem(ghKey(id)) || 'null'); } catch (_) { }
+    return ghParse(o) ? { app: 'apex-racing', kind: 'ghost', v: 1, track: id, name: S.name, time: o.t, ghost: o } : null;
+  }
+  function ghFriend(id) { let o = null; try { o = JSON.parse(localStorage.getItem('tdgp-fghost-' + id) || 'null'); } catch (_) { } const g = isObj(o) ? ghParse(o.ghost) : null; return g ? { name: cleanName(o.name) || tr('Prijatelj'), t: g.t, g } : null; }
+  async function ghShare(id, how) {   // how: 'link' (the phone's share sheet or the clipboard; a file when too long) or 'file'
+    const G = ghOwn(id); if (!G) return;
+    const text = JSON.stringify(G), name = 'duh-' + id + '-' + fmt(G.time).replace(/[:.]/g, '-') + '.json', title = tr('Duh · {0} · {1}', Lang.of(Core.TRACKS.find(d => d.id === id), 'name'), fmt(G.time));
+    if (how === 'link') {
+      let link = null; try { const p = await packStr(text); if (p && p.length <= 16000) link = location.origin + location.pathname + '#duh=' + p; } catch (_) { }
+      window.__game.ghostLink = link;   // (the tests)
+      if (link) {
+        if (matchMedia('(pointer: coarse)').matches && navigator.share) { try { await navigator.share({ title, url: link }); return 'share'; } catch (e) { if (e && e.name === 'AbortError') return 'abort'; } }
+        try { await navigator.clipboard.writeText(link); toast(tr('Povezava do duha je kopirana: pošlji jo prijatelju.'), 3400); return 'copy'; } catch (_) { }
+      }
+      toast(tr(link ? 'Povezave ni bilo mogoče kopirati: duh je shranjen v datoteko.' : 'Duh je za povezavo predolg: shranjen je v datoteko.'), 3400);
+    }
+    const r = await saveFile(name, text, title); if (r === 'file' && how !== 'link') toast(tr('Duh je shranjen v datoteko {0}.', name), 3400); return r;
+  }
+  function ghImport(text) {   // a friend's ghost (a file or a link): kept for its track, the track chosen
+    let o = null; try { o = JSON.parse(text); } catch (_) { }
+    const d = isObj(o) && o.app === 'apex-racing' && o.kind === 'ghost' && o.v === 1 ? Core.TRACKS.find(x => x.id === o.track) : null, g = d ? ghParse(o.ghost) : null;
+    if (!g) { toast(tr('To ni duh igre APEX Racing.'), 3200); return false; }
+    const name = cleanName(o.name) || tr('Prijatelj');
+    try { localStorage.setItem('tdgp-fghost-' + d.id, JSON.stringify({ name, time: g.t, ghost: o.ghost })); } catch (_) { toast(tr('Duha ni bilo mogoče shraniti (premalo prostora).'), 3200); return false; }
+    S.track = d.id; if (d.modes) S.mode = g.lap ? 'race' : 'tt'; save(); refreshSegs();
+    toast(tr(g.lap ? 'Duh igralca {0} na progi {1} ({2}): dirkaj proti njemu na letečem krogu.' : 'Duh igralca {0} na progi {1} ({2}): dirkaj proti njemu v kronometru.', name, Lang.of(d, 'name'), fmt(g.t)), 5200);
+    if (screen === 'board') { boardId = d.id; buildBoardScreen(); }
+    return true;
+  }
+  async function ghHash() {   // the game opened with a ghost's link
+    const m = /[#&]duh=([\w-]+)/.exec(location.hash); if (!m) return;
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (_) { }
+    let text = null; try { text = await unpackStr(m[1]); } catch (_) { }
+    if (!text || !ghImport(text)) toast(tr('Povezava do duha ni veljavna.'), 3200);
   }
 
   /* ---------------- qualifying (Kvalifikacije) ---------------- */
@@ -811,7 +1009,7 @@
     $('res-table').querySelector('tbody').innerHTML = rows.map((r, i) => '<tr class="' + (r.me ? 'me' : '') + '"><td>' + (i + 1) + '</td><td><span class="dot" style="background:' + hexCss(r.color) + '"></span>' + esc(r.name) + '</td><td>' + esc(r.car) + '</td><td>' +
       (isFinite(r.time) ? fmt(r.time, true) : '–') + '</td><td>' + (i && isFinite(r.time) ? '+' + fmt(r.time - best, true) : '') + '</td></tr>').join('');
     $('res-restart').dataset.act = 'quali-go'; $('res-restart').textContent = tr('Na štart');
-    if (g === 1 && !Q.paid) { Q.paid = true; $('res-sub').textContent += careerPay(Core.CAREER.pole, 'Za prvo štartno mesto'); }   // (once per qualifying)
+    if (g === 1 && !Q.paid) { Q.paid = true; st.poles++; achGet('pole'); stSave(); $('res-sub').textContent += careerPay(Core.CAREER.pole, 'Za prvo štartno mesto'); }   // (once per qualifying)
     Comm.say(g === 1 ? 'pole' : 'qualiGrid', { grid: Comm.ordinal(g) }, 4);
     showScreen('results');
   }
@@ -832,11 +1030,11 @@
     const cd = !on && champRun ? champDef() : null, cr = cd && !champDone() && cd.tracks[champ.rounds.length] === track.def.id ? champ.rounds.length : -1;   // a championship round (its index), or -1
     if (cr < 0) champRun = false;
     const quali = mode === 'quali' && qualiOn(track.def), nAI = tt || chase ? 0 : duel ? 1 : cr >= 0 ? NUM_AI : track.def.rivals || NUM_AI;   // (a championship round: its own twelve in every round)
-    if (quali && !(qual && qual.id === track.def.id && qual.cr === cr && !qual.res)) { const W = weatherOf(track.def); qual = { id: track.def.id, cr, seed: (Math.random() * 1e6) | 0, rain: W.rain, wx: W.wx, nAI, back: track.qualiBack(), diff: cr >= 0 ? champ.diff : S.difficulty, phys: physOf(), sims: null, lap: 0, res: null }; }
+    if (quali && !(qual && qual.id === track.def.id && qual.cr === cr && !qual.res)) { const W = weatherOf(track.def); qual = { id: track.def.id, cr, seed: (Math.random() * 1e6) | 0, rain: W.rain, wx: W.wx, storm: !!W.storm, nAI, back: track.qualiBack(), diff: cr >= 0 ? champ.diff : S.difficulty, phys: physOf(), sims: null, lap: 0, res: null }; }
     const Q = !quali && !on && !tt && qual && qual.res && qual.id === track.def.id && qual.cr === cr ? qual : null;   // the race after qualifying
     if (!quali && !Q) qual = null;
     if (quali) { qual.lapShown = false; qual.wait = false; }
-    const W = quali || Q ? { rain: qual.rain, wx: qual.wx } : weatherOf(track.def);   // (qualifying: the weather at the start of the race to come, no change during the lap)
+    const W = quali || Q ? { rain: qual.rain, wx: qual.wx, storm: qual.storm } : weatherOf(track.def);   // (qualifying: the weather at the start of the race to come, no change during the lap)
     const mine = { playerModel: M, playerUpg: Object.assign({}, upgOf(M.id)), playerSetup: Object.assign({}, setupOf(track.def.id)), playerColor: PLAYER_COLORS[S.color], playerNum: carNum(), seed: quali || Q ? qual.seed : (Math.random() * 1e6) | 0, difficulty: cr >= 0 ? champ.diff : S.difficulty, assist: S.assist };
     if (on) {   // online: the host on the first grid slot, the friend on the second; the host's physics and damage for both
       const host = mp.role === 'host', left = on.first === mp.role, F = mp.peer || { name: tr('Prijatelj'), car: M.id, color: 0, num: 2 }, same = F.num === carNum();
@@ -844,11 +1042,15 @@
         remote: { model: modelById(F.car), color: PLAYER_COLORS[F.color] || PLAYER_COLORS[0], num: same && host ? F.num + 1 : F.num, name: F.name, grid: left ? 2 : 1 } }));
     } else race = new Core.Race(track, Object.assign(mine, {   // time trial: alone on the start line, one run to the finish; qualifying: alone, one flying lap
       numAI: tt || quali ? 0 : nAI, playerGrid: tt || quali || chase ? 1 : duel ? 2 : Q ? Q.res.grid : PLAYER_GRID, aiOrder: Q ? Q.res.order : undefined, qualiBack: quali ? qual.back : 0,
-      laps: tt || quali ? 1 : track.def.laps || LAPS, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali ? null : W.wx, tyres: !tt && !!track.def.pit, flags: !tt && !quali, winter: S.season === 'winter', champ: cr >= 0, tt,
+      laps: tt || quali ? 1 : lapsOf(track.def), fuel: !tt && !quali && !!S.fuel, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali ? null : W.wx, tyres: !tt && !!track.def.pit, flags: !tt && !quali, winter: S.season === 'winter', champ: cr >= 0, tt,
       traffic: duel, police: chase
     }));
     race.champ = cr >= 0 ? { round: cr, n: cd.tracks.length, done: false } : null;
-    race.quali = quali;
+    race.quali = quali; race.storm = !on && !!W.storm;
+    Render.setStorm(race.storm);
+    race.endu = !on && !tt && !quali && !track.def.open && S.length === 'endurance';   // an endurance race: from the afternoon into the night (enduStep)
+    if (race.endu) { Render.setTodK(0); enduK = 0; } else Render.setAtmos({ season: S.season, tod: S.tod }, true);
+    fuelTold = { low: false, out: false };
     Render.attachRace(race);
     Render.resetCam();
     adaptBreak();
@@ -867,7 +1069,8 @@
     tfSeen = race.tf ? race.tf.ev : 0; polSeen = race.pol ? race.pol.ev : 0; tfHits = { ped: 0, bike: 0 }; Sfx.siren(0, 0);
     $('pause-skip').classList.toggle('off', !quali);
     $('pause-restart').classList.toggle('off', !!on);   // (online: no restart for one)
-    cpSeen = race.player.cpEv; ttRes = null; cornerSeen = -1; cornerShow = false; placeInit(); codrvInit(); ghStart(); secReset(); recStart(); replay = null; $('replay-ui').classList.add('off'); $('h-ttsp').className = '';
+    stRun = { drift: 0, lapWall: false, wall: false, car: false, laps: 0, pole: !!(Q && Q.res.grid === 1), done: false }; achNew = [];
+    cpSeen = race.player.cpEv; ttRes = null; cornerSeen = -1; cornerShow = false; placeInit(); codrvInit(); twStart(); ghStart(); secReset(); recStart(); replay = null; $('replay-ui').classList.add('off'); $('h-ttsp').className = '';
     hxStart();   // (time trial: turn counter, live difference to the best run, height profile)
     pkStart();   // (Pikes Peak: the class, its splits)
     Input.reset();
@@ -920,10 +1123,11 @@
   }
   function endPodium() { const pod = Render.world && Render.world.podium; if (pod) pod.hide(); $('podium-cap').className = ''; shotOff(); }
   function toTitle() {
+    stSave();   // (the km of a race left before its end)
     endPodium(); champRecord(); champRun = false; replay = null; recd = null; $('replay-ui').classList.add('off');
-    paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); ghRec = ghPlay = ghLap = null; qual = null; Render.setGhost(null, true);
+    paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); ghRec = ghPlay = ghLap = ghFr = null; qual = null; Render.setGhost(null, true); Render.setGhostF(null, true);
     Sfx.setRunning(false); Sfx.silence();
-    Render.attachRace(demo); Render.resetCam();
+    demoShow(); Render.resetCam(); Render.setStorm(S.weather === 'storm'); Render.setAtmos({ season: S.season, tod: S.tod }, true);   // (after an endurance race: the time of day of the setting again)
     setLights(0, false);
     showScreen('title'); refreshSegs();
   }
@@ -969,12 +1173,20 @@
       : tr('{0} za rekordom (rekord {1}).', '<span class="slow">' + sgn(d) + '</span>', fmt(r.prev, true))) +
       ' ' + esc(Lang.of(T.def, 'name')) + (race && race.rain ? tr(' v dežju') : '') + ' · ' + esc(Core.MODELS[S.car].name) + ' · ' + (r.rank <= 10 ? tr('{0} mesto na lestvici.', Lang.ord(r.rank)) : tr('izven prvih 10.')) +
       (medalSet(T.def) ? '<br>' + medalLine(T.def, r.time) : '') + (jumpLine() ? '<br>' + jumpLine() : '');
+    if (!r.st) {   // the statistics: a time trial run, its medal (once per run)
+      r.st = true; const k = medalSet(T.def) ? medalOf(T.def, r.time) : -1; st.tt++; st.tracks[T.def.id] = (st.tracks[T.def.id] || 0) + 1;
+      if (k >= 0) st[['gold', 'silver', 'bronze'][k]]++;
+      if (k === 0) { st.goldT[T.def.id] = 1; achGet('gold'); if (Core.TRACKS.every(d => !d.medals || st.goldT[d.id])) achGet('allGold'); }
+      if (Core.TRACKS.every(d => st.tracks[d.id])) achGet('allTracks');
+      stSave();
+    }
     if (inCareer() && !r.paid) {   // the career: a medal, a personal best, or a little for getting there (once per run)
       r.paid = true; const k = medalSet(T.def) ? medalOf(T.def, r.time) : -1, C = Core.CAREER, sum = k >= 0 ? C.medal[['gold', 'silver', 'bronze'][k]] : r.newPB ? C.pb : C.finishTT;
       career.races++; const line = careerPay(sum, k >= 0 ? 'Nagrada za medaljo' : r.newPB ? 'Nagrada za osebni rekord' : 'Nagrada');
       if (line) $('res-sub').innerHTML += '<br>' + esc(line.trim());
     }
     // splits table: CP1..CPn + finish, altitude (a rally stage: the distance from the start), time, difference to the previous personal best
+    { const a = achLine(); if (a) $('res-sub').innerHTML += '<br>' + esc(a.trim()); }
     const tt = $('res-tt'); tt.classList.remove('off');
     tt.innerHTML = '<p class="ltab-h">' + tr('Vmesni časi') + '</p><table class="ltab sp"><thead><tr><th>' + tr('Točka') + '</th><th>' + ttWhereHead(T.def) + '</th><th>' + tr('Čas') + '</th><th>' + tr('Rekord') + '</th><th>\u00b1</th></tr></thead><tbody>' + splitRows(r, true) + '</tbody></table>' +
       '<p class="ltab-h">' + tr('Lestvica · {0}', esc(Lang.of(T.def, 'name'))) + '</p>';
@@ -1015,7 +1227,24 @@
     { const M = isTT(d) && medalSet(d), R = rec(d.id), J = d.jumpRec;   // the medal times; the famous jump: the player's longest there
       if (M) h += '<p class="ltab-h">' + tr('Medalje ({0}) · {1}', (physOf() === 'cs' ? 'Circuit Superstars' : tr('arkadna fizika')) + (wetRec(d) ? tr(', dež') : ''), M.map((t, k) => MEDAL_ICON[k] + ' ' + fmt(t, true)).join(' · ')) + '</p>';
       if (J) h += '<p class="ltab-h">' + tr('{0}: tvoj najdaljši skok {1} · {2} {3} m', esc(Lang.of(J, 'name')), R.jumpRec ? Math.round(R.jumpRec) + ' m' : '\u2013', esc(J.by), J.m) + '</p>'; }
+    { const own = ghOwn(d.id), F = ghFriend(d.id);   // the ghosts: the player's to share, a friend's shared one
+      h += '<div class="gh-box"><p class="ltab-h">' + tr('Duh') + '</p><p class="desc small">' + (own ? tr('Tvoj duh: {0} ({1}).', fmt(own.time, true), tr(own.ghost.lap === 1 ? 'leteči krog' : 'kronometer')) : tr('Na tej progi še nimaš duha (odpelji kronometer ali leteči krog).')) + '</p>' +
+        (own ? '<div class="btns horiz gh-btns"><button class="btn mini" data-act="gh-link">' + tr('Deli povezavo') + '</button><button class="btn mini" data-act="gh-file">' + tr('Shrani v datoteko') + '</button></div>' : '') +
+        (F ? '<p class="desc small">' + tr('Duh prijatelja: {0} · {1}', esc(F.name), fmt(F.t, true)) + '</p>' : '') +
+        '<div class="btns horiz gh-btns">' + (F ? '<button class="btn mini" data-act="gh-del">' + tr('Izbriši prijateljevega') + '</button>' : '') + '<button class="btn mini" data-act="gh-import">' + tr('Uvozi duha') + '</button></div></div>'; }
     $('board-body').innerHTML = h; $('board-body').scrollTop = 0;
+  }
+  // Dosežki (from the title): the player's numbers, then every achievement (unlocked: the date; the counting ones: how far)
+  function buildStatsScreen() {
+    const hm = (t) => { const h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60); return h ? tr('{0} h {1} min', h, m) : tr('{0} min', m); };
+    const rows = [['Prevoženo', kmTxt(st.km * 1000, 1) + ' km'], ['Čas vožnje', hm(st.time)], ['Dirke', st.races], ['Zmage', st.wins], ['Stopničke', st.podiums], ['Prva štartna mesta', st.poles], ['Najhitrejši krogi', st.fl],
+      ['Kronometri', st.tt], ['Medalje', MEDAL_ICON[0] + ' ' + st.gold + '  ' + MEDAL_ICON[1] + ' ' + st.silver + '  ' + MEDAL_ICON[2] + ' ' + st.bronze], ['Naslovi prvaka', st.titles], ['Pobegi policiji', st.escapes], ['Dirke s prijatelji', st.online],
+      ['Najvišja hitrost', Math.round(st.vmax) + ' km/h'], ['Najdaljši skok', Math.round(st.jump) + ' m'], ['Najdaljše drsenje', Lang.dec(st.drift.toFixed(1)) + ' s'], ['Proge', Core.TRACKS.filter(d => st.tracks[d.id]).length + '/' + Core.TRACKS.length]];
+    const n = ACH.filter(a => st.ach[a[0]]).length;
+    $('stats-body').innerHTML = '<div class="st-grid">' + rows.map(([k, v]) => '<div class="st-cell"><b>' + v + '</b><span>' + tr(k) + '</span></div>').join('') + '</div>' +
+      '<p class="ltab-h">' + tr('Dosežki {0}/{1}', n, ACH.length) + '</p><div class="ach-list">' + ACH.map(a => { const d = st.ach[a[0]], p = !d && a[3] ? a[3]() : null;
+        return '<div class="ach' + (d ? ' got' : '') + '"><i>' + (d ? '\u{1F3C6}' : '\u{1F512}') + '</i><div><b>' + tr(a[1]) + '</b><span>' + tr(a[2]) + (d ? ' · ' + new Date(d).toLocaleDateString(Lang.locale) : p ? ' (' + (a[0].startsWith('km') ? kmTxt(p[0] * 1000, 1) : Math.floor(p[0])) + '/' + p[1] + ')' : '') + '</span></div></div>'; }).join('') + '</div>';
+    $('stats-body').scrollTop = 0;
   }
   /* ---------------- PIKES PEAK: race classes, the summit ceremony, TV splits ---------------- */
   // Classes as at the real race, from the car's performance (Core.MODELS): the formula (735 kW, wings) Unlimited; the purpose-built AWD
@@ -1095,7 +1324,7 @@
     phase = 'done';
     Sfx.setRunning(false);
     if (mp && mp.race) { netResults(); return; }
-    $('res-restart').dataset.act = 'restart';
+    $('res-restart').dataset.act = 'restart'; $('res-laps').classList.add('off');
     if (race.timeTrial) { finishTT(); return; }
     if (race.pol) { finishPolice(); return; }
     if (race.quali) { finishQuali(); return; }
@@ -1111,15 +1340,17 @@
     if (best > 0 && (!R0.bestLap || best < R0.bestLap)) { R0.bestLap = best; newRec = true; }
     const tot = res[myIdx].time;
     secSave();
-    if (!R0.bestRace || tot < R0.bestRace) R0.bestRace = tot;
-    if (!R0.bestPos || pos < R0.bestPos) R0.bestPos = pos;
+    if (S.length === 'normal' && (!R0.bestRace || tot < R0.bestRace)) R0.bestRace = tot;   // (the race time and place: of the usual length only)
+    if (S.length === 'normal' && (!R0.bestPos || pos < R0.bestPos)) R0.bestPos = pos;
     saveRecords();
     $('res-pos').textContent = Lang.ord(pos);
     $('res-title').textContent = tr(pos === 1 ? 'Zmaga!' : pos <= 3 ? 'Na stopničkah!' : 'Cilj');
     $('res-sub').textContent = tr('Čas dirke {0}', fmt(tot, true)) + (res[myIdx].pen ? tr(' (s {0} s kazni)', res[myIdx].pen) : '') + (up ? '' : tr(', najboljši krog {0}', fmt(best, true))) + (newRec ? tr(' (nov rekord proge)') : '') + tr('. Štartal si z {0} mesta.', Lang.ord(P.grid));
     if (race.tf) $('res-sub').textContent += tr(' Zbiti pešci: {0}, kolesarji: {1}', tfHits.ped, tfHits.bike) + (tfHits.ped + tfHits.bike ? tr(' (5 s kazni za vsakega)') : '') + '.';
+    const fl = !up && best > 0 && race.cars.every(c => c === P || !c.lapTimes.length || Math.min(...c.lapTimes) >= best);   // (the fastest lap of the race)
+    stRace(pos, res.length, fl);
     if (inCareer()) {   // the career: prize money (the place, the distance, the difficulty), the fastest lap of the race (a race up the road: no laps)
-      const diff = race.champ ? champ.diff : S.difficulty, fl = !up && best > 0 && race.cars.every(c => c === P || !c.lapTimes.length || Math.min(...c.lapTimes) >= best);
+      const diff = race.champ ? champ.diff : S.difficulty;
       career.races++; if (pos === 1) career.wins++;
       $('res-sub').textContent += careerPay(Core.careerPrize(pos, res.length, up ? track.raceLen : track.len * race.laps, diff) + (fl ? Core.CAREER.fastest : 0), 'Nagrada' + (fl ? ' (z najhitrejšim krogom)' : ''));
     }
@@ -1135,6 +1366,8 @@
       $('res-restart').dataset.act = 'to-champ'; $('res-restart').textContent = tr(last ? 'Končna razvrstitev' : 'Lestvica prvenstva');
       $('res-table').querySelector('thead').innerHTML = head.replace('</tr>', '<th>' + tr('Točke') + '</th></tr>');
     }
+    $('res-sub').textContent += achLine();
+    lapTable(res);
     const tb = $('res-table').querySelector('tbody');
     tb.innerHTML = res.map((r, i) => {
       const c = r.car; const b = c.lapTimes.length ? Math.min(...c.lapTimes) : NaN, kmh = up && !r.est && r.time > 0 ? Math.round(track.raceLen / r.time * 3.6) + ' km/h' : '\u2013';
@@ -1150,6 +1383,7 @@
     const P = race.player, pol = race.pol, esc = !pol.busted, t = P.finishTime || race.time, R0 = rec(track.def.id), L = track.raceLen, done = clamp(P.dist, 0, L);
     let newRec = false; if (esc && t > 0 && (!R0.bestRace || t < R0.bestRace)) { R0.bestRace = t; newRec = true; }
     if (esc) R0.escapes = (R0.escapes || 0) + 1; else R0.busts = (R0.busts || 0) + 1; saveRecords();
+    if (!stRun.done) { stRun.done = true; st.races++; st.tracks[track.def.id] = (st.tracks[track.def.id] || 0) + 1; if (esc) { st.escapes++; achGet('escape'); } if (Core.TRACKS.every(d => st.tracks[d.id])) achGet('allTracks'); stSave(); }
     $('res-head').classList.remove('tt'); $('res-tt').classList.add('off'); $('res-restart').textContent = tr('Ponovi beg');
     $('res-pos').textContent = esc ? '\u2713' : '\u2715'; $('res-title').textContent = tr(esc ? 'Pobegnil si!' : 'Ulovljen!');
     $('res-sub').textContent = esc ? tr('Čez prelaz v {0}', fmt(t, true)) + (newRec ? tr(' (najhitrejši pobeg).') : '.') : tr('Policija te je ujela po {0} km, v {1}.', kmTxt(done, 1), fmt(t, true));
@@ -1158,6 +1392,7 @@
     $('res-table').querySelector('thead').innerHTML = '<tr><th>' + tr('Beg pred policijo') + '</th><th></th></tr>';
     $('res-table').querySelector('tbody').innerHTML = rows.map(([a, b]) => '<tr' + (a === 'Čas' ? ' class="me"' : '') + '><td>' + tr(a) + '</td><td>' + b + '</td></tr>').join('');
     if (inCareer() && esc) { career.races++; career.wins++; $('res-sub').textContent += careerPay(Core.careerPrize(1, 2, L, S.difficulty), 'Nagrada za pobeg'); }
+    $('res-sub').textContent += achLine();
     showScreen('results');
   }
 
@@ -1170,6 +1405,7 @@
     const J = track.def.jumpRec, b = J && track.def.bumps && track.def.bumps[J.bump], c = b ? clamp(b.at, 0, 1) * track.len : 0, w = b ? b.w || 8 : 0;
     const m = Math.round(len);
     jmp.n++; jmp.best = Math.max(jmp.best, len);
+    if (len > st.jump) { st.jump = len; stSave(); } if (len >= 40) achGet('jump');
     if (!b || s0 < c - 2.5 * w - 15 || s0 > c + w) { showMsg(tr('SKOK {0} m', m), 'gold', 1.1); return; }
     jmp.rec = Math.max(jmp.rec, len);
     const R0 = rec(track.def.id), prev = R0.jumpRec || 0, pb = len > prev + 0.05, beat = len > J.m;
@@ -1199,7 +1435,7 @@
     if (champDone()) {
       const pos = Core.champTable(CH_KEYS, champ.rounds).findIndex(e => e.key === Core.PLAYER_KEY) + 1, R0 = records.champ[champ.id] || (records.champ[champ.id] = {});
       if (!R0.best || pos < R0.best) R0.best = pos;
-      if (pos === 1) R0.titles = (R0.titles || 0) + 1;
+      if (pos === 1) { R0.titles = (R0.titles || 0) + 1; st.titles++; achGet('champ'); if (champ.id === 'legende') achGet('legend'); stSave(); }
       saveRecords();
     }
   }
@@ -1216,7 +1452,7 @@
       $('ch-title').textContent = tr('Prvenstvo'); $('ch-tag').textContent = tr('točke kot v F1');
       $('ch-diff').textContent = tr('Težavnost: {0} (spremeniš v Nastavitvah)', tr(DIFF_NAME[S.difficulty]));
       $('ch-body').innerHTML = '<div class="ch-cards">' + Core.CHAMPS.map(c => {
-        const R0 = records.champ[c.id] || {}, km = c.tracks.reduce((a, id) => { const T = getTrack(id); return a + T.len * (T.def.laps || LAPS); }, 0);
+        const R0 = records.champ[c.id] || {}, km = c.tracks.reduce((a, id) => { const T = getTrack(id); return a + T.len * lapsOf(T.def); }, 0);
         return '<button class="ch-card' + (c.id === champPick ? ' sel' : '') + '" data-champ="' + c.id + '"><h3>' + esc(Lang.of(c, 'name')) + '</h3><div class="tmeta">' + raceWord(c.tracks.length) + ' · ' + kmTxt(km, 0) + ' km</div>' +
           '<div class="ttracks">' + c.tracks.map(id => esc(trackName(id))).join(' · ') + '</div><div class="tdesc">' + esc(Lang.of(c, 'desc')) + '</div>' +
           (R0.best ? '<div class="trec">' + (R0.titles ? tr('Prvak {0}×', R0.titles) : tr('Najboljše: {0} mesto', Lang.ord(R0.best))) + '</div>' : '') + '</button>'; }).join('') + '</div>';
@@ -1246,9 +1482,10 @@
     else if (phase === 'finish' || phase === 'done' || autoDrive) { P.pitWant = !!P.inPit; Core.aiControl(P, race, dt); P.digitalSteer = false; }   // (autoDrive: automated tests of online races drive in real time)
     else { P.inSteer = inp.steer; P.inThr = inp.thr; P.inBrk = inp.brk; P.inHand = inp.hand; P.digitalSteer = inp.digital; }
     race.step(dt);
+    twMark(); stDrive(P, dt);
     if (ghRec) ghSample(P);
     if (ghLap) ghLapSample(P);
-    if (P.gear > prevGear && prevGear > 0) Sfx.shiftPop();
+    if (P.gear !== prevGear && prevGear > 0 && P.gear > 0) Sfx.shift(P.gear > prevGear);   // (up: the clack and a turbo's flutter; down: the clack and a blip)
     prevGear = P.gear;
     // feedback
     fbT -= dt;
@@ -1355,7 +1592,7 @@
     if (phase !== 'racing' || P.finished) return;
     const W = race.wst, box = W.tyres && P.ty && track.def.pit;
     if (k === 'rain') { showMsg(tr('DEŽ'), 'gold', 2.2); Comm.say('rainStart', null, 2); if (box && P.ty.k === 'dry') toast(tr('Začelo je deževati: proga bo kmalu mokra. Zapelji v bokse po dežne gume (desno takoj za zadnjim ovinkom pred ciljno ravnino).'), 4800); }
-    else if (k === 'dry') { showMsg(tr('DEŽ JE PONEHAL'), 'gold', 2.2); Comm.say('rainStop', null, 2); if (box && P.ty.k === 'wet') toast(tr('Dež je ponehal: proga se suši, najprej na idealni liniji.'), 3800); }
+    else if (k === 'dry') { showMsg(tr('DEŽ JE PONEHAL'), 'gold', 2.2); Comm.say('rainStop', null, 2); Render.rainbow(true); if (box && P.ty.k === 'wet') toast(tr('Dež je ponehal: proga se suši, najprej na idealni liniji.'), 3800); }   // (the rain stopped: a rainbow over the land, by day)
   }
   function tyreHUD(P) {
     const W = race.wst, on = !!(W && W.tyres && P.ty), left = on ? Math.round((1 - P.ty.wear) * 100) : 0, bad = on && P.ty.k !== Core.tyreFor(W.line);
@@ -1363,6 +1600,30 @@
     if (key === tyreKey) return; tyreKey = key;
     const el = $('h-tyre'); el.className = on ? 'on ' + P.ty.k + (left < 35 ? ' worn' : '') + (bad ? ' bad' : '') : '';
     el.textContent = on ? tr(P.ty.k === 'wet' ? 'DEŽNE {0}%' : 'SUHE {0}%', left) : '';
+  }
+  // the fuel (a race with fuel on): the gauge under the tyres, a tick on it at what it takes to the line (the car's own burn); a warning on
+  // the lap it would not last another when it will not reach the line, the last drops (a crawl to the pits) when it is empty
+  let fuelKey = '', fuelTold = { low: false, out: false };
+  function fuelHUD(P) {
+    const on = P.fuel != null && !!race.fuelRate, left = on ? Math.round(P.fuel * 100) : 0, rest = on ? (race.laps * track.len - Math.max(0, P.dist)) * P.fuelPm : 0, need = Math.round(rest * 100);
+    const key = on ? left + '|' + (P.finished ? '' : need) + (P.inPit ? 'p' : '') : '';
+    if (key !== fuelKey) { fuelKey = key; const el = $('h-fuel'); el.className = on ? 'on' + (left < 15 ? ' low' : '') : '';
+      el.innerHTML = on ? tr('GORIVO {0}%', left) + '<i style="width:' + left + '%"></i>' + (!P.finished && need > 0 && need < 100 ? '<b style="left:' + need + '%"></b>' : '') : ''; }
+    if (!on || phase !== 'racing' || P.finished) return;
+    if (P.fuel < rest * 1.03 && P.fuel < track.len * P.fuelPm * 1.3 && !fuelTold.low && !P.inPit) { fuelTold.low = true; toast(tr('Malo goriva: zapelji v bokse, mehaniki natočijo gorivo.'), 4200); Comm.say('fuelLow', null, 3); }
+    if (P.fuel <= 0 && !fuelTold.out) { fuelTold.out = true; showMsg(tr('BREZ GORIVA!'), 'slow', 2.6); Comm.say('fuelOut', null, 4); }
+    if (P.fuel > 0.9) fuelTold.low = fuelTold.out = false;   // (filled up again)
+  }
+  // an endurance race: the time of day with the leader's progress, from the afternoon (0) to the night (1, at about nine tenths of the race):
+  // the light blended, the lamps coming on; the evening and the night told
+  let enduK = 0;
+  function enduStep() {
+    if (!race.endu) return;
+    const L = race.order && race.order[0] ? race.order[0] : race.player, k = clamp(Math.max(0, L.dist) / (race.laps * track.len) * 1.12, 0, 1);
+    if (Math.abs(k - enduK) < 0.004) return;
+    if (enduK < 0.45 && k >= 0.45) { showMsg(tr('VEČER'), 'gold', 2); Comm.say('dusk', null, 1); }
+    if (enduK < 0.8 && k >= 0.8) { showMsg(tr('PADA NOČ'), 'gold', 2.2); Comm.say('nightFall', null, 2); }
+    enduK = k; Render.setTodK(k);
   }
   // sector times on the HUD (Race._sectors: a circuit's TV sectors; Race._thirds elsewhere): the cells of the lap under way; purple: the
   // fastest of anyone (in qualifying: faster than every rival's lap so far), green: the player's best of this race, yellow: slower. The time
@@ -1395,7 +1656,7 @@
     if (phase !== 'racing') return;
     if (e === 'enter') { showMsg(tr('BOKSI · 80 km/h'), 'gold', 1.8); Sfx.beep(660, 0.1, 0.1); Comm.say('pitIn', null, 2); }
     else if (e === 'repair') { pitWrenchT = 0.15; vibrate(30); pitFix = race.player.dmg > 0.01; if (Math.random() < 0.6) Comm.say('pitWork', null, 1); }
-    else if (e === 'done') { const ty = race.player.ty; showMsg(ty ? tr(ty.k === 'wet' ? 'DEŽNE GUME' : 'SUHE GUME') + (pitFix ? tr(' · POPRAVLJENO') : '') : tr('POPRAVLJENO!'), 'gold', 1.8); Sfx.beep(880, 0.12, 0.12); setTimeout(() => Sfx.beep(1175, 0.18, 0.12), 130); vibrate(40); Comm.say('pitOut', null, 2); dmgKey = ''; }
+    else if (e === 'done') { const ty = race.player.ty, fu = race.player.fuel != null && race.fuelRate; showMsg((ty ? tr(ty.k === 'wet' ? 'DEŽNE GUME' : 'SUHE GUME') + (pitFix ? tr(' · POPRAVLJENO') : '') : fu ? tr('POLNO') + (pitFix ? tr(' · POPRAVLJENO') : '') : tr('POPRAVLJENO!')) + (ty && fu ? tr(' · POLNO') : ''), 'gold', 1.8); Sfx.beep(880, 0.12, 0.12); setTimeout(() => Sfx.beep(1175, 0.18, 0.12), 130); vibrate(40); Comm.say(fu ? 'fuelIn' : 'pitOut', null, 2); dmgKey = ''; }
   }
 
   /* ---------------- HUD ---------------- */
@@ -1761,7 +2022,7 @@
       const best = P.lapTimes.length ? Math.min(...P.lapTimes) : NaN;
       setText('h-bestv', fmt(best, true));
     }
-    updateDamageHUD(P); tyreHUD(P); flagHUD(P);
+    updateDamageHUD(P); tyreHUD(P); flagHUD(P); twHUD(dt); fuelHUD(P); enduStep();
     if (!race.timeTrial) secHUD(P);
     if (race.drsLast) { const st = P.drs ? 'open' : P.drsA ? 'arm' : ''; if ($('h-drs').className !== st) $('h-drs').className = st; }
     if (P.drsEv) { P.drsEv = null; if (phase === 'racing') { Sfx.beep(1320, 0.07, 0.08); if (drsN++ % 2 === 0) Comm.say('drs', null, 1); } }   // the flap opens (the commentator: every other time)
@@ -1806,6 +2067,61 @@
       if (o) { const g = (o.finished ? L : o.dist) - (P.finished ? L : P.dist), t = Math.abs(g) / Math.max(12, P.speed, o.speed), f = Lang.dec(t.toFixed(1));
         setText('h-gap', o.finished && P.finished ? '' : tr(g >= 0 ? 'TEKMEC {0} s PRED TABO' : 'TEKMEC {0} s ZA TABO', f)); $('h-gap').classList.toggle('behind', g < 0); }
     }
+  }
+
+  /* ---------------- the timing tower (Časovna tabela): the order with the gaps to the leader, as on TV ----------------
+     A race with rivals (a circuit, a race up an open road, the duel in the traffic, a race online): each car's race time at every 25 m of its
+     race (twMark, after each physics step); a car's gap to the leader is its time at the last mark it passed less the leader's time there (a
+     lapped car: +1 KROG). Shown four times a second: the whole order when it is short, else the first three and the player with the cars just
+     ahead and behind (two each upright, one on a phone on its side); the player's row lit, a car in the pits and one past the line marked.
+     Its pit stops go to the lap table on the results. */
+  const TW_M = 25;
+  let tw = null;
+  function twStart() {
+    tw = !race.timeTrial && !race.quali && !race.pol && race.cars.length > 1 ? { t: new Map(), n: new Map(), pit: new Map(), stops: new Map(), html: '', at: 0 } : null;
+    $('hud').classList.toggle('tw', !!tw && !!S.tower); $('h-tower').innerHTML = '';
+  }
+  function twMark() {
+    if (!tw) return;
+    const total = track.open ? track.raceLen : track.len * race.laps;
+    for (const c of race.cars) {
+      let a = tw.t.get(c); if (!a) { a = new Float32Array(Math.ceil(total / TW_M) + 4); tw.t.set(c, a); tw.n.set(c, 0); }
+      let n = tw.n.get(c); const k = Math.min(a.length - 1, Math.floor(c.dist / TW_M));
+      while (n <= k) a[n++] = race.time;
+      tw.n.set(c, n);
+      const p = !!c.inPit; if (p && !tw.pit.get(c)) tw.stops.set(c, (tw.stops.get(c) || 0) + 1); tw.pit.set(c, p);
+    }
+  }
+  function twGap(c, L) {   // seconds behind the leader L at the last mark c passed (null: none yet)
+    const k = (tw.n.get(c) || 0) - 1; if (k < 0 || k >= (tw.n.get(L) || 0)) return null;
+    return tw.t.get(c)[k] - tw.t.get(L)[k];
+  }
+  const twCode = (c) => c.isPlayer ? tr('TI') : (String(c.name).split(/[\s.]+/).filter(Boolean).pop() || '?').slice(0, 3).toUpperCase();   // (M. Kovač -> KOV)
+  function twHUD(dt) {
+    if (!tw || !S.tower || (tw.at -= dt) > 0) return; tw.at = 0.25;
+    const O = race.order && race.order.length === race.cars.length ? race.order : race.cars.slice().sort((a, b) => b.dist - a.dist), L = O[0], P = race.player, pi = O.indexOf(P);
+    const nb = window.innerHeight > window.innerWidth ? 2 : 1, rows = new Set();
+    if (O.length <= 3 + 2 * nb + 1) O.forEach((c, i) => rows.add(i)); else { for (let i = 0; i < 3; i++) rows.add(i); for (let i = pi - nb; i <= pi + nb; i++) if (i >= 0 && i < O.length) rows.add(i); }
+    let h = '', prev = -1;
+    for (const i of [...rows].sort((a, b) => a - b)) {
+      if (prev >= 0 && i > prev + 1) h += '<div class="tw-sep">⋯</div>';
+      const c = O[i], down = !track.open && L.dist - c.dist >= track.len ? Math.floor((L.dist - c.dist) / track.len) : 0, g = i ? twGap(c, L) : null;
+      const txt = !i ? tr('VODI') : c.inPit && !c.finished ? tr('BOKSI') : down ? '+' + lapWord(down) : g == null ? '' : '+' + (g >= 60 ? fmt(g).slice(0, -2) : g.toFixed(1));
+      h += '<div class="tw-r' + (c === P ? ' me' : '') + (c.finished ? ' fin' : '') + '"><b>' + (i + 1) + '</b><i style="background:' + hexCss(c.color) + '"></i><span>' + esc(twCode(c)) + '</span><em>' + txt + '</em></div>';
+      prev = i;
+    }
+    if (h !== tw.html) { tw.html = h; $('h-tower').innerHTML = h; }
+  }
+  // the results of a race on a circuit (two laps or more): every driver's laps, the driver's best in green, the race's fastest in purple, the pit stops
+  function lapTable(res) {
+    const el = $('res-laps'), n = race.laps, all = race.cars.flatMap(c => c.lapTimes.filter(t => t > 0)), best = all.length ? Math.min(...all) : NaN;
+    if (track.open || n < 2) { el.classList.add('off'); el.innerHTML = ''; return; }
+    const cols = Array.from({ length: n }, (_, k) => k);
+    el.innerHTML = '<p class="ltab-h">' + tr('Krogi vseh voznikov') + '</p><div class="laps-wrap"><table class="ltab laps"><thead><tr><th>#</th><th>' + tr('Voznik') + '</th>' + cols.map(k => '<th>' + tr('K{0}', k + 1) + '</th>').join('') + '<th>' + tr('Postanki') + '</th></tr></thead><tbody>' +
+      res.map((r, i) => { const c = r.car, lt = c.lapTimes.filter(t => t > 0), pb = lt.length ? Math.min(...lt) : NaN;
+        return '<tr class="' + (c.isPlayer ? 'me' : '') + '"><td>' + (i + 1) + '</td><td class="nm"><span class="dot" style="background:' + hexCss(c.color) + '"></span>' + esc(c.isPlayer ? tr('Ti') : c.name) + '</td>' +
+          cols.map(k => { const t = c.lapTimes[k]; return '<td class="' + (t === best ? 'ob' : t === pb ? 'pb' : '') + '">' + (t > 0 ? fmt(t) : '–') + '</td>'; }).join('') + '<td>' + ((tw && tw.stops.get(c)) || 0) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+    el.classList.remove('off');
   }
 
   /* ---------------- commentator (English) ---------------- */
@@ -1980,7 +2296,7 @@
   function leaveRace() {   // the race (or its results) off the screen, the title demo back
     Net.fixClock(false); endPodium();
     paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); Sfx.setRunning(false); Sfx.silence();
-    Render.attachRace(demo); Render.resetCam(); setLights(0, false);
+    demoShow(); Render.resetCam(); setLights(0, false);
   }
   function openOnline() {
     if (race) leaveRace(); else bg = 'demo';
@@ -2177,12 +2493,14 @@
     race.netFinish(P, R.mine);
   }
   function netResults() {
-    const R = mp.race, P = race.player, c = race.remote, M = Core.MODELS[S.car];
+    const R = mp.race, P = race.player, c = race.remote, M = Core.MODELS[S.car]; $('res-laps').classList.add('off');
     phase = 'done'; Sfx.setRunning(false);
     const rows = [{ me: true, name: S.name || tr('Igralec'), car: M.name, col: S.color, t: R.mine, best: P.lapTimes.length ? Math.min(...P.lapTimes) : NaN },
       { me: false, name: c ? c.name : tr('Prijatelj'), car: c ? c.m.name : '', col: -1, color: c ? c.color : 0, t: R.theirs, left: R.left && R.theirs == null }];
     rows.sort((a, b) => (a.t == null) - (b.t == null) || a.t - b.t);
     const myPos = rows.findIndex(r => r.me) + 1, waiting = R.theirs == null && !R.left;
+    if (!stRun.done && R.mine != null) { stRun.done = true; st.online++; st.races++; achGet('online'); stSave(); }
+    if (!stRun.onWin && !waiting && R.mine != null) { stRun.onWin = true; if (myPos === 1) { st.wins++; stSave(); } }   // (the win once the friend is in too)
     $('res-head').classList.remove('tt'); $('res-tt').classList.add('off'); $('res-table').querySelector('thead').innerHTML = resHead();
     $('res-pos').textContent = waiting ? '…' : Lang.ord(myPos);
     $('res-title').textContent = tr(waiting ? 'Cilj!' : myPos === 1 ? 'Zmaga!' : 'Drugi');
@@ -2258,8 +2576,11 @@
   }
 
   /* ---------------- main loop ---------------- */
+  const fr = { raf: 0, drawn: 0 };   // (tests: frames the browser offered, frames drawn)
   function frame(now) {
-    requestAnimationFrame(frame);
+    requestAnimationFrame(frame); fr.raf++;
+    if (saverOn() && now - last < 1000 / 30 - 3) return;   // the battery saver: 30 frames a second (every other one at 60 Hz, every fourth at 120 Hz)
+    fr.drawn++;
     let dt = (now - last) / 1000; last = now;
     if (!(dt > 0)) dt = 0.001;
     padFrame(Math.min(dt, 0.1));
@@ -2267,6 +2588,7 @@
     if (race && race.quali && qual && !qual.res && bg === 'race' && qsimStep(qual, qual.wait ? 30 : paused || screen !== 'none' ? 12 : 2.5) && qual.wait) qualiShow();   // (qualifying: the rivals' laps; the grid once they are in)
     if (bg === 'show') { Render.renderShowroom(dt); if (screen === 'settings') updateTiltLive(); return; }
     if (bg === 'demo') {
+      if (demoOn() !== demoAt) demoShow();   // (a new demo on the menus, e.g. an online race's track loaded)
       acc += dt; let n = 0;
       while (acc >= STEP && n < 8) { demo.step(STEP); for (const c of demo.cars) { c.hitWall = 0; c.hitCar = 0; } acc -= STEP; n++; }
       if (n >= 8) acc = 0;
@@ -2305,8 +2627,9 @@
   // under ~42 fps there for 6 s, the shadow pass (about 40 % of the drawing) goes off for this visit: at the next pause or race
   // start, never mid-corner (the shaders compile again, which stalls a frame). If it is no faster without shadows (a frame-rate
   // cap such as a battery saver, not a heavy scene), they come back at the next break and are not switched off again.
+  let demoAt = null;
   function adaptive(dt) {
-    if (noAdapt) return;
+    if (noAdapt || saverOn()) return;   // (the battery saver draws fewer frames at a lower resolution by choice)
     perf.sum += dt; perf.n++;
     if (perf.sum < 2) return;
     const avg = perf.sum / perf.n * 1000; perf.sum = 0; perf.n = 0;
@@ -2326,7 +2649,7 @@
     if (perf.pending) { perf.pending = false; autoNoShadows = true; perf.check = 2; applyShadows(); }
     else if (perf.restore) { perf.restore = false; perf.keep = true; autoNoShadows = false; applyShadows(); }
   }
-  function applyShadows() { Render.applySettings({ quality: S.quality, shadows: shadowsOn(), camera: S.camera }); refreshSegs(); }
+  function applyShadows() { renderSettings(); refreshSegs(); }
   function updateTiltLive() {
     if (S.control !== 'tilt') return;
     const v = Input.tilt.got ? Core.clamp(Core.wrapPi(Input.tilt.raw - Input.tilt.neutral) * (S.tiltInvert ? -1 : 1) / (S.tiltSens * Math.PI / 180), -1, 1) : 0;
@@ -2358,6 +2681,12 @@
       case 'upg-done': buildCarScreen(); showScreen('car'); break;
       case 'upg-reset': S.upg[Core.MODELS[S.car].id] = upgNorm(null); save(); buildUpgScreen(); break;
       case 'to-board': boardId = S.track; buildBoardScreen(); showScreen('board'); break;
+      case 'to-stats': buildStatsScreen(); showScreen('stats'); break;
+      case 'gh-link': case 'gh-file': ghShare(boardId, act === 'gh-link' ? 'link' : 'file'); break;
+      case 'gh-import': pickFile(ghImport); break;
+      case 'gh-del': try { localStorage.removeItem('tdgp-fghost-' + boardId); } catch (_) { } buildBoardScreen(); break;
+      case 'prof-export': profExport(); break;
+      case 'prof-import': pickFile(profImport); break;
       case 'to-champ': openChamp(); break;
       case 'to-career': buildCareerScreen(); showScreen('career'); break;
       case 'career-toggle': careerToggle(); break;
@@ -2487,7 +2816,7 @@
       pd.addEventListener('touchstart', (e) => e.preventDefault(), o); pd.addEventListener('touchmove', (e) => e.preventDefault(), o);
       window.addEventListener('keydown', photoKey); }
     $('btn-rescue').addEventListener('click', (e) => { e.preventDefault(); if (race && phase === 'racing') { race.rescue(race.player); race.player.locked = false; $('btn-rescue').classList.add('off'); } });
-    document.addEventListener('visibilitychange', () => { if (document.hidden) { pause(); Sfx.suspend(); } else checkUpdate(); });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) { pause(); Sfx.suspend(); stSave(); } else checkUpdate(); });
     window.addEventListener('pagehide', () => { if (mp) Net.close(true); });   // (closing the game: the friend hears it at once, not only when the connection times out)
     window.addEventListener('pageshow', (e) => { if (e.persisted && mp) netLeave(); });   // (back from the browser's page cache: that room is closed)
     const unlock = () => Sfx.resume();
@@ -2519,11 +2848,11 @@
       Render.buildWorld(track, S.quality === 'retro' ? 0.8 : 1);
       Input.init($('touch'), () => { if (screen === 'pause') resume(); else if (screen === 'none') pause(); });
       Input.onCam = () => { if (bg === 'race' && !replay && (screen === 'none' || screen === 'pause')) cycleCam(); };   // (C on the keyboard)
+      Render.onThunder = (delay, vol) => Sfx.thunder(delay, vol);   // (a thunderstorm: the thunder after each lightning)
+      Render.setStorm(S.weather === 'storm');
       Input.onPad = () => toast(tr('Igralni plošček je povezan: leva palica krmili, RT plin, LT zavora, B drift, Start pavza. V menijih izbiraš s palico in A, B je nazaj.'), 5200);
       applySettings();
-      demo = new Core.Race(track, { numAI: 10, noPlayer: true, difficulty: 2, laps: 9999, seed: 11, phys: physOf(), rain: demoRain() });
-      demo.start();
-      for (let i = 0; i < 120 * 6; i++) demo.step(STEP);
+      demoMake(6); demoAt = demo;
       Render.attachRace(demo);
       bindUI();
       refreshSegs();
@@ -2532,9 +2861,10 @@
       last = performance.now();
       requestAnimationFrame(frame);
       lockOrientation();   // (the installed app: straight away; in a browser tab only once full screen is on)
+      ghHash();   // (opened with a friend's ghost's link)
       // offline play and the newest version when online (sw.js); a service worker needs http(s), not a local file
       if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => { });
-      window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get screen() { return screen; }, S, onAction, pause, resume,
+      window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get saver() { return saverOn(); }, set batLow(v) { batLow = !!v; renderSettings(); }, get screen() { return screen; }, S, onAction, pause, resume,
         get qual() { return qual && { id: qual.id, cr: qual.cr, seed: qual.seed, rain: qual.rain, sims: qual.sims ? qual.sims.k : 0, n: qual.nAI, lap: qual.lap, grid: qual.res ? qual.res.grid : 0 }; },
         get adapt() { return { dyn: Render.getDynScale(), shadowsOn: shadowsOn(), auto: autoNoShadows, pending: perf.pending, restore: perf.restore, keep: perf.keep, check: perf.check }; },
         get net() { return mp ? { role: mp.role, code: mp.code, open: Net.open, synced: Net.synced, peer: mp.peer, track: mp.track, laps: mp.laps, race: mp.race && { at: mp.race.at, goAt: mp.race.goAt, mine: mp.race.mine, theirs: mp.race.theirs, left: mp.race.left, got: mp.race.buf.length, frameT: mp.race.frameT, startT: mp.race.startT } } : null; },

@@ -957,7 +957,7 @@ const Core = (function () {
       if (trk.bank) { trk.bankAt(this.q.s, this.q.d, _bk); this.roadY += _bk.dy; this.bankSl = _bk.sl; }   // a banked corner (the Karussell)
       const ch = Math.cos(this.h), sh = Math.sin(this.h);
       const vl = this.vx * ch + this.vz * sh, vt = -this.vx * sh + this.vz * ch;
-      const spd = Math.hypot(vl, vt), m = M.mass;
+      const spd = Math.hypot(vl, vt), m = M.mass + (this.fuelKg || 0);
       // launch off crests: if the road curves away downward faster than gravity can hold the car, it takes off
       if (trk.hasElev && !this.air) {
         const accSurf = vl * vl * this.curvNow;   // vertical accel needed to keep following the surface (negative over a crest)
@@ -1123,7 +1123,7 @@ const Core = (function () {
       if (trk.bank) { trk.bankAt(this.q.s, this.q.d, _bk); this.roadY += _bk.dy; this.bankSl = _bk.sl; }   // a banked corner (the Karussell)
       const ch = Math.cos(this.h), sh = Math.sin(this.h);
       const vl = this.vx * ch + this.vz * sh, vt = -this.vx * sh + this.vz * ch;
-      const spd = Math.hypot(vl, vt), m = M.mass, a = M.a, b = M.b;
+      const spd = Math.hypot(vl, vt), m = M.mass + (this.fuelKg || 0), a = M.a, b = M.b;
       if (trk.hasElev && !this.air) {
         const accSurf = vl * vl * this.curvNow;
         if (spd > 6 && accSurf < -JUMP_G * 0.85) { this.air = 1; this.vy = this.gradeNow * vl; this.airT = 0; }
@@ -1328,7 +1328,7 @@ const Core = (function () {
       let vl = this.vx * ch + this.vz * sh;
       let vt = -this.vx * sh + this.vz * ch;
       const spd = Math.hypot(vl, vt);
-      const L = M.a + M.b, m = M.mass;
+      const L = M.a + M.b, m = M.mass + (this.fuelKg || 0);
 
       // --- wheel surfaces ---
       const tw = this.tw;
@@ -1921,9 +1921,10 @@ const Core = (function () {
     if (race.tf && c.tfLo != null) { const E = Math.max(lim + 0.4, c.tfEdge || 0); off = clamp(off, Math.max(-E, c.tfLo), Math.min(E, c.tfHi)); }   // (the open road: within the corridor the traffic leaves; round a roadblock over the verge)
     if (c.pitWant && T.def.pit) {   // (autopilot into the pits: follow the lane)
       const pz = T.pitAt(sT); if (pz) off = pz.o;
-      if (pz && c.ty && !c.isPlayer && !pz.gap) {   // (an AI car in for tyres: the fast lane beside the boxes, over to its own box to stop)
+      if (pz && (c.ty || c.fuel != null) && !c.isPlayer && !pz.gap) {   // (an AI car in for tyres or fuel: the fast lane beside the boxes, over to its own box to stop; past a car at the box before its own first)
         const L = T.len; let db = T.startS + race._aiBox(c) - sT; db = ((db % L) + L) % L; if (db > L / 2) db -= L;
-        off += !c.pitDone && db > -8 && db < 16 ? -2 : 1.5;
+        const o = c.aiThreat, held = o && o.inPit && o.pitState && !o.pitDone && c.aiGap < 12 && c.fuel != null;   // (fuel on: a stop takes long enough to jam the lane)
+        off += !c.pitDone && db > -8 && db < 16 && !held ? -2 : 1.5;
       } else if (!c.isPlayer) { const P = T.def.pit, L = T.len; let d = sT - T.startS; d = ((d % L) + L) % L; if (d > L / 2) d -= L; if (d > P[1] - 220 && d < P[1]) off = lim; }   // (an AI car in for tyres: over to the lane's side of the road first)
     }
     if (c.parkS != null) off = lerp(off, c.parkD, sstep(c.parkS - 90, c.parkS - 30, sT));   // (past the finish of a race up the road: over to its slot, see Race._progressOpen)
@@ -1985,7 +1986,7 @@ const Core = (function () {
         }
       }
     }
-    if (c.ty && !c.isPlayer && (c.inPit || c.pitWant)) { const o = c.aiThreat; if (o && Math.abs(o.q.d - q.d) < 2.4) vT = Math.min(vT, Math.sqrt(Math.max(0, o.vl) ** 2 + 10 * Math.max(0, c.aiGap - 6))); }   // (the pit lane: wait behind a car stopping at its box or pulling out)
+    if ((c.ty || c.fuel != null) && !c.isPlayer && (c.inPit || c.pitWant)) { const o = c.aiThreat; if (o && Math.abs(o.q.d - q.d) < 2.4) vT = Math.min(vT, Math.sqrt(Math.max(0, o.vl) ** 2 + 10 * Math.max(0, c.aiGap - 6))); }   // (the pit lane: wait behind a car stopping at its box or pulling out)
     let thr = 0, brk = 0;
     if (v < vT - 0.8) thr = 1;
     else if (v < vT + 0.6) thr = 0.45;
@@ -2752,6 +2753,15 @@ const Core = (function () {
       this.wst = { on: !!(opts.tyres || WX), tyres: !!opts.tyres, water: this.rain, line: this.rain, profW: (this.rain ? 1 - (1 - WET) * this.rain : 1) * this.cold.gk, ev: 0, evK: '',
         wx: WX ? { at: Math.max(0, +WX.at || 0), dur: Math.max(1, +WX.dur || 60), r0: this.rain, r1: clamp(+WX.to || 0, 0, 1) } : null };
       if (opts.tyres) for (const c of this.cars) c.ty = { k: c.isPlayer && (opts.playerTyre === 'dry' || opts.playerTyre === 'wet') ? opts.playerTyre : tyreFor(this.rain), wear: 0 };
+      // fuel (opts.fuel, a circuit with pits): every car starts full (c.fuel 1, a share of the tank); a full tank lasts about 1.3 times the track's
+      // usual race at an average throttle (a long race stops for it once, an endurance race more), more on the throttle, less off it; its weight
+      // on the car (c.fuelKg of c.tankKg); refilled at a pit stop (0.9 s a tenth of the tank, with the repair and the tyres); empty: the last
+      // drops, a crawl to the pits. c.fuelPm: what the car burns a metre (its own since it was filled up); c.fuelK: how many laps before the
+      // last one it could make a rival comes in when that costs it no extra stop (0 to 1.5: the stops spread over the laps)
+      if (opts.fuel && track.def.pit && !track.open && !this.timeTrial) {
+        this.fuelRate = 1 / (1.3 * track.len * (track.def.laps || 3) / 38);
+        this.cars.forEach((c, i) => { c.fuel = 1; c.tankKg = c.m.body === 'formula' ? 105 : c.m.id === 'rally' ? 60 : 45; c.fuelKg = c.tankKg; c.fuelD = 0; c.fuelPm = this.fuelRate / 38; c.fuelK = (i % 4) * 0.5; });
+      }
       if (track.drs) this.drsLast = track.drs.map(() => null);   // (per DRS zone: who crossed its detection line last, and when)
       this.sec = { best: [Infinity, Infinity, Infinity] };   // sector times on a circuit without TV sectors (thirds of the lap, see _thirds): the fastest of anyone in this race
       // flags (opts.flags, a closed circuit with rivals): a yellow flag where a car has stopped on the track, the safety car after a heavy
@@ -2941,6 +2951,11 @@ const Core = (function () {
       }
       for (const c of cars) {
         if (c.net) continue;   // (the friend's car: placed from the network, see game.js)
+        if (c.fuel != null && this.fuelRate) {   // the fuel burnt (a share of the tank a second), the car lighter; empty: the last drops (a crawl, 40 km/h at most)
+          if (this.state === 'racing' && !c.finished && !c.inPit) c.fuel = Math.max(0, c.fuel - this.fuelRate * (0.3 + 0.9 * clamp(c.inThr, 0, 1)) / 0.975 * dt);
+          c.fuelKg = c.tankKg * c.fuel; if (c.fuel <= 0) c.inThr = c.speed > 11 ? 0 : Math.min(c.inThr, 0.4);
+          const used = c.dist - c.fuelD; if (used > 300) c.fuelPm = (1 - c.fuel) / used;
+        }
         if (c.pitState === 'repair') { c.inThr = 0; c.inBrk = 0; c.inSteer = 0; c.inHand = 0; }   // on the jacks: the mechanics are working (held in place below; no brake, so the gearbox stays in first)
         // steering smoothing
         const target = c.inSteer;
@@ -3004,12 +3019,20 @@ const Core = (function () {
             }
           }
         }
+        if (c.fuel != null && this.fuelRate && !c.isPlayer && !c.net && !c.finished && !c.pitWant && !c.inPit && this.state === 'racing') {   // fuel: a rival that cannot reach the line on what is left
+          const left = this.laps * T.len - c.dist, dE = (((T.startS + T.def.pit[1] - q.s) % T.len) + T.len) % T.len, need = left * c.fuelPm, lap = T.len * c.fuelPm * 1.1;   // comes in at the pit lane's way in on the last lap it
+          if (left > 150 && c.fuel < need * 1.03 && dE > 30 && dE < 90 + c.speed * 4) {   // can still make it round to it again, or up to c.fuelK laps before when the lane is not full and it costs no extra stop
+            const next = c.fuel - (dE + T.len) * c.fuelPm * 1.1;   // (what would be left there a lap on)
+            let n = 0; for (const o of cars) if (!o.isPlayer && o.pitWant && !o.inPit) n++;
+            if (next < 0.12 * lap || (next < c.fuelK * lap && n < 3 && Math.ceil(need * 1.12) <= Math.ceil((need - c.fuel) * 1.12))) c.pitWant = true;
+          }
+        }
         // wrong way
         const fwd = Math.cos(c.h) * q.tx + Math.sin(c.h) * q.tz;
         if (fwd < -0.2 && c.speed > 3) c.wrongT += dt; else c.wrongT = Math.max(0, c.wrongT - dt * 2);
         // stuck detection (AI auto-rescue)
         if (!c.locked && (!c.pitState || (c.ty && !c.isPlayer && c.pitState === 'done')) && c.speed < 1.2 && (this.state === 'racing' || this.state === 'done') && !(T.open && c.finished)) c.stuckT += dt; else c.stuckT = Math.max(0, c.stuckT - dt);   // (an AI car that came in for tyres: also when stuck on its way out; pulled up past the finish of an open road: not stuck)
-        if (!c.isPlayer && (c.stuckT > (c.ty && c.inPit ? 12 : 3.5) || c.wrongT > 3) && !(T.open && c.finished)) this.rescue(c);   // (in for tyres: waiting in the pit lane behind a car at its box is no reason; not a car pulled up past the finish of an open road)
+        if (!c.isPlayer && (c.stuckT > (c.inPit && c.fuel != null ? 30 : c.ty && c.inPit ? 12 : 3.5) || c.wrongT > 3) && !(T.open && c.finished)) this.rescue(c);   // (in for tyres: waiting in the pit lane behind a car at its box is no reason, behind one filling up longer still; not a car pulled up past the finish of an open road)
       }
       if (this._rq.length) this._serveRespawn();
       if (this.pol) this.pol.post(dt);
@@ -3037,7 +3060,7 @@ const Core = (function () {
       const sp = Math.hypot(c.vx, c.vz), lim = PIT_V;
       if (c.pitState === 'repair') {
         c.vx = c.vz = 0; c.w = 0; c.pitT += dt; c.stuckT = 0;
-        if (c.pitT >= c.pitDur) { this.repairCar(c); if (c.ty) { c.ty.k = tyreFor(this.wst.line); c.ty.wear = 0; } c.pitState = 'done'; c.pitDone = true; c.pitEv = 'done'; }   // (tyres: a new set, the ones for the water on the line)
+        if (c.pitT >= c.pitDur) { this.repairCar(c); if (c.ty) { c.ty.k = tyreFor(this.wst.line); c.ty.wear = 0; } if (c.fuel != null && this.fuelRate) { c.fuel = 1; c.fuelKg = c.tankKg; c.fuelD = c.dist; } c.pitState = 'done'; c.pitDone = true; c.pitEv = 'done'; }   // (tyres: a new set, the ones for the water on the line)
         return;
       }
       let vmax = lim;
@@ -3048,7 +3071,7 @@ const Core = (function () {
           if (!c.pitState) { c.pitState = 'stop'; c.pitEv = 'box'; }
           if (sp < (c.phys === 'cs' ? 1.5 : 0.8) && Math.abs(ds) < 4) {   // (cs: its drive holds ~0.9 m/s against the stop curve at part throttle)
             let lost = 0; for (const k in c.lost) lost++;
-            c.pitState = 'repair'; c.pitT = 0; c.pitDur = Math.min(5, 1.2 + 3.3 * c.dmg + lost * 0.15); if (c.ty) c.pitDur = Math.max(c.pitDur, 2.6); c.vx = c.vz = 0; c.w = 0; c.pitEv = 'repair';   // (tyres: 2.6 s at least)
+            c.pitState = 'repair'; c.pitT = 0; c.pitDur = Math.min(5, 1.2 + 3.3 * c.dmg + lost * 0.15); if (c.ty) c.pitDur = Math.max(c.pitDur, 2.6); if (c.fuel != null && this.fuelRate) c.pitDur = Math.max(c.pitDur, 1.6 + (1 - c.fuel) * 9); c.vx = c.vz = 0; c.w = 0; c.pitEv = 'repair';   // (tyres: 2.6 s at least)
           }
         }
       }

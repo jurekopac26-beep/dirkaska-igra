@@ -78,8 +78,11 @@ check(`tr(): all ${keysUsed.size} texts of the game have their English`, !missin
     html.indexOf('js/lang.js') > 0 && html.indexOf('js/lang.js') < html.indexOf('js/game.js'));
 }
 
-// 4. the same slots in both languages; English with no Slovenian letters
+// 4. the same slots in both languages; English with no Slovenian letters; no text twice in the dictionary (the second would win unseen)
 {
+  const src = read('js/lang.js'), body = src.slice(src.indexOf('const EN = {'), src.indexOf('const SAME')), seen = new Set(), twice = [];
+  for (let i = 0; i < body.length; i++) if (body[i] === "'") { const [v, e] = strAt(body, i); if (/^\s*:/.test(body.slice(e))) { if (seen.has(v)) twice.push(v); seen.add(v); } i = e - 1; }
+  check('the dictionary: no text twice', !twice.length && seen.size === Object.keys(EN).length, twice.join(' | ') + ' (' + seen.size + ' / ' + Object.keys(EN).length + ')');
   const slots = (s) => (s.match(/\{\d+\}/g) || []).sort().join(), wrong = [], sl = [];
   for (const k in EN) { if (slots(k) !== slots(EN[k])) wrong.push(k); if (/[čšžČŠŽ]/.test(EN[k]) && !/Jezik/.test(EN[k])) sl.push(EN[k]); }
   check(`all ${Object.keys(EN).length} entries: the same {0} {1} slots in the English`, !wrong.length, wrong.slice(0, 6).join(' | '));

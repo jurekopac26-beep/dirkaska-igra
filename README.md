@@ -65,7 +65,7 @@ Pravi „Zeleni pekel“ v Nemčiji v pravem merilu: en krog (20,7 km) proti 20 
 
 ## Spa-Francorchamps
 
-Prava proga v Belgiji v pravem merilu: krog meri 7,0 km (uradno 7,004 km), dva kroga proti 12 tekmecem, vožnja v smeri urinega kazalca, start in cilj pred stavbo boksov. Oblika proge in imena ovinkov so iz OpenStreetMap, višine pa iz lidarskega modela reliefa Valonije (ločljivost 0,5 m), zato so klanci pravi: od La Source (423 m) navzdol do Eau Rouge (390 m), po Raidillonu navzgor z do 16 % naklona, po ravnini Kemmel do Les Combes in Malmedyja (469 m, najvišja točka), nato navzdol skozi Pouhon do Paul Frère (367 m, najnižja točka) in spet navzgor skozi Blanchimont do šikane Bus Stop; skupaj 102 m višinske razlike. Med vožnjo se pod uro izpišejo imena ovinkov (La Source, Eau Rouge, Raidillon, Kemmel, Les Combes, Malmedy, Bruxelles, Speaker's Corner, Pouhon, Fagnes, Campus, Paul Frère, Blanchimont, Bus Stop). Gozd in travniki, tribune (Raidillon, F1, Silver, Endurance, RX, tribune pri La Source), stavbi boksov z boksarsko stezo in redarske postaje P1–P19 so postavljeni po OpenStreetMap; pred La Source, Les Combes, Bruxelles in Bus Stop stojijo table za zaviranje (300, 200, 100 m). Spa ima svojo pokrajino, drugačno od Nordschleife: sveže zelene pašnike in travnike s senom, na strmih pobočjih Arden pa smreke, posajene v ravnih vrstah (odseki starih in mladih smrek, posekane jase z orlovo praprotjo, brezami in mladim drevjem, bukovi gozdovi, ob robu gozda breze); tla pod smrekami so rjava od iglic. Ob progi so hiše s skrilastimi strehami, tribune z barvnimi sedeži, polne navijačev, na brežinah pri znanih ovinkih gledalci s šotori in avti v gozdu, trava za ograjami pa je pokošena v pasovih. Zaletišča so kot na progah formule 1: kjer ograje stojijo daleč od proge, je za rdeče-belimi robniki zelen pas, za njim pa svetlejši asfalt, po katerem se vozi skoraj kot po progi. Na zunanji strani Raidillona, Les Combes, Bruxellesa, Pouhona, Paul Frère in Blanchimonta je namesto asfalta gramoz, ki avto upočasni (v Blanchimontu je ograja zato 12 m dlje od proge). Ob ciljni ravnini in pred tribunami stojijo betonski zidovi, okrog počasnejših ovinkov gumijaste pregrade, drugod dvojne jeklene ograje. Na spustu od La Source proti Eau Rouge stoji desno betonski zid z lovilno ograjo le 1,5 m od roba proge, za njim pa sta boksarska steza in garaže pomožnih boksov (za spremljevalne in vzdržljivostne dirke). Na dnu Eau Rouge teče pod progo potok Eau Rouge (rjasto rdeč od železa), ki gre pri Paul Frère še enkrat pod progo. Na zunanji strani znanih ovinkov (La Source, Raidillon, Les Combes, Pouhon, Blanchimont, Bus Stop) stojijo odri s TV kamero, snemalcem in senčnikom, nasproti tribun veliki zasloni s prenosom dirke, ob ravninah (spust proti Eau Rouge, Kemmel, Blanchimont, pred Bus Stopom) so na ograjah panoji sponzorjev igre, pri redarskih postajah pa redarji v oranžnem, eden z zastavico. Za šikano Bus Stop lahko zapelješ v bokse (desno, po dolgem uvozu ob ciljni ravnini): omejitev 80 km/h, ustaviš se v svojem boksu in mehaniki ti popravijo avto, tako kot v Bakrenem gozdu; nad garažami je nadstropje stavbe boksov.
+Prava proga v Belgiji v pravem merilu: krog meri 7,0 km (uradno 7,004 km), dva kroga proti 12 tekmecem, vožnja v smeri urinega kazalca, start in cilj pred stavbo boksov. Oblika proge in imena ovinkov so iz OpenStreetMap, višine pa iz lidarskega modela reliefa Valonije (ločljivost 0,5 m), zato so klanci pravi: od La Source (423 m) navzdol do Eau Rouge (390 m), po Raidillonu navzgor z do 16 % naklona, po ravnini Kemmel do Les Combes in Malmedyja (469 m, najvišja točka), nato navzdol skozi Pouhon do Paul Frère (367 m, najnižja točka) in spet navzgor skozi Blanchimont do šikane Bus Stop; skupaj 102 m višinske razlike. Med vožnjo se pod uro izpišejo imena ovinkov (La Source, Eau Rouge, Raidillon, Kemmel, Les Combes, Malmedy, Bruxelles, Speaker's Corner, Pouhon, Fagnes, Campus, Paul Frère, Blanchimont, Bus Stop). Gozd in travniki, tribune (Raidillon, F1, Silver, Endurance, RX, tribune pri La Source), stavbi boksov z boksarsko stezo in redarske postaje P1–P19 so postavljeni po OpenStreetMap; pred La Source, Les Combes, Bruxelles in Bus Stop stojijo table za zaviranje (300, 200, 100 m). Spa ima svojo pokrajino, drugačno od Nordschleife: sveže zelene pašnike in travnike s senom, na strmih pobočjih Arden pa smreke, posajene v ravnih vrstah (odseki starih in mladih smrek, posekane jase z orlovo praprotjo, brezami in mladim drevjem, bukovi gozdovi, ob robu gozda breze); tla pod smrekami so rjava od iglic. Ob progi so hiše s skrilastimi strehami, tribune z barvnimi sedeži, polne navijačev, na brežinah pri znanih ovinkih gledalci s šotori in avti v gozdu, trava za ograjami pa je pokošena v pasovih. Zaletišča so kot na progah formule 1: kjer ograje stojijo daleč od proge, je za rdeče-belimi robniki zelen pas, za njim pa svetlejši asfalt, po katerem se vozi skoraj kot po progi. Na zunanji strani Raidillona, Les Combes, Bruxellesa, Pouhona, Paul Frère in Blanchimonta je namesto asfalta gramoz, ki avto upočasni (v Blanchimontu je ograja zato 12 m dlje od proge). Ob ciljni ravnini in pred tribunami stojijo betonski zidovi, okrog počasnejših ovinkov gumijaste pregrade, drugod dvojne jeklene ograje. Na spustu od La Source proti Eau Rouge stoji desno betonski zid z lovilno ograjo le 1,5 m od roba proge, za njim pa sta boksarska steza in garaže pomožnih boksov (za spremljevalne in vzdržljivostne dirke). Na dnu Eau Rouge teče pod progo potok Eau Rouge (rjasto rdeč od železa), ki gre pri Paul Frère še enkrat pod progo. Voda v njem teče: po strmejših odsekih hitreje in z brzicami, na gladini se odseva nebo, ob kamnih in pri propustih pod progo se peni. Na zunanji strani znanih ovinkov (La Source, Raidillon, Les Combes, Pouhon, Blanchimont, Bus Stop) stojijo odri s TV kamero, snemalcem in senčnikom, nasproti tribun veliki zasloni s prenosom dirke, ob ravninah (spust proti Eau Rouge, Kemmel, Blanchimont, pred Bus Stopom) so na ograjah panoji sponzorjev igre, pri redarskih postajah pa redarji v oranžnem, eden z zastavico. Za šikano Bus Stop lahko zapelješ v bokse (desno, po dolgem uvozu ob ciljni ravnini): omejitev 80 km/h, ustaviš se v svojem boksu in mehaniki ti popravijo avto, tako kot v Bakrenem gozdu; nad garažami je nadstropje stavbe boksov.
 
 - **DRS** kot na VN Belgije (od 2. kroga naprej): dve coni, na ravnini Kemmel (črta zaznave pri Eau Rouge, loputa se odpre 200 m za vrhom Raidillona in ostane odprta do Les Combes) in na ciljni ravnini (črta zaznave pred šikano Bus Stop, odprta od izhoda iz šikane do La Source). Pravila in oznaka na merilniku hitrosti so enaki kot na Red Bull Ringu.
 
@@ -147,6 +147,10 @@ Pred dirko na krožni progi odpelješ en leteči krog sam na progi (zaslon **Izb
 
 Krog na krožni progi je razdeljen na tri enake dele (S1, S2, S3). Pod uro kroga so trije okvirčki s časi sektorjev kroga, ki ga pelješ. **Vijoličen** je najhitrejši sektor med vsemi na dirki (v kvalifikacijah hitrejši od vseh krogov tekmecev do takrat), **zelen** tvoj najboljši (na tej progi ali na tej dirki), **rumen** počasnejši. Najboljši sektorji se shranijo pri vsaki progi. Na kronometrih jih ni, ker imajo svoje vmesne čase.
 
+## Časovna tabela in rezultati
+
+Med dirko je na levi pod mestom **časovna tabela** kot na televiziji: vodilni (VODI), prva tri mesta in ti (TI, poudarjeno) z dvema avtoma pred sabo in dvema za sabo, pri vsakem pa zaostanek za vodilnim v sekundah (izmerjen na zadnji točki, ki jo je avto prevozil; točke so vsakih 25 m), zaostanek za krog ali več (+1 KROG) oziroma BOKSI za avto v boksih. Na ležečem telefonu je desno pod zemljevidom, z enim avtom pred tabo in enim za tabo. Izklopiš jo v Nastavitvah (**Časovna tabela**). V rezultatih dirke na krožni progi je še tabela **Krogi vseh voznikov**: časi vseh krogov vsakega voznika (najboljši krog vsakega zeleno, najhitrejši krog dirke vijolično) in število postankov v boksih.
+
 ## Nastavitev avta za progo
 
 Na zaslonu **Izberi progo** nastaviš avto posebej za vsako progo:
@@ -164,6 +168,23 @@ Na progah z boksi (Gozd, Toskana, Gromski rt, Spa, Red Bull Ring) imajo avti **s
 - V boksih mehaniki poleg popravila vedno zamenjajo gume za tiste, ki so prave za to, kako mokra je idealna linija (postanek traja vsaj 2,6 s).
 - Tekmeci z AI pridejo po prave gume, ko se vreme spremeni. Vsak se odloči malo drugače, v boksih pa so lahko hkrati največ trije, zato nekateri čakajo en krog. V zadnjem delu dirke ne menjajo več.
 
+## Gorivo in dolžina dirke
+
+Na zaslonu **Izberi progo** je vrstica **Dolžina dirke**: **Kratka** (pol krogov), **Običajna**, **Dolga** (dvakrat več krogov) in **Vzdržljivostna** (trikrat več krogov, glej spodaj). Velja za dirke na krožnih progah (tudi v prvenstvu); kronometri in dirke na vrh ostanejo enaki. Najboljši čas dirke in najboljše mesto proge se shranita le za dirko običajne dolžine, rekord kroga pa za vsako.
+
+Z vrstico **Gorivo** (Vklop) na progah z boksi (Bakreni gozd, Toskana, Gromski rt, Spa, Red Bull Ring) šteje gorivo:
+
+- Vsi avti štartajo s polnim rezervoarjem (45 kg goriva, reli avto 60 kg, formula 105 kg), ki je teža na avtu: s polnim avto pospešuje malo počasneje, ko se prazni, je lažji.
+- Poraba je odvisna od plina (s polnim plinom štirikrat več kot v prostem teku). Poln rezervoar zadošča za približno 1,3 dirke običajne dolžine: na običajni dirki ni treba v bokse, na dolgi enkrat, na vzdržljivostni dvakrat.
+- Na zaslonu je pod gumami merilnik **GORIVO** z belo oznako, koliko goriva potrebuješ do cilja (po tvoji dosedanji porabi): če je rumeni pas daljši od oznake, prideš do cilja brez postanka. V krogu, ko goriva ne bo dovolj za še en krog, te igra in komentator opozorita, da je čas za bokse.
+- V boksih mehaniki natočijo poln rezervoar (skupaj s popravilom in gumami). Postanek traja 1,6 s in še 0,9 s za vsako desetino rezervoarja (s četrtino goriva približno 8 s).
+- Brez goriva motor dobi le še zadnje kapljice: avto se do boksov privleče z največ 40 km/h.
+- Tekmeci z AI pridejo v bokse v krogu, po katerem jim goriva ne bi ostalo za še en krog (ali krog prej, kadar jih to ne stane dodatnega postanka). V boksih zapeljejo mimo avtov, ki stojijo pred svojim boksom.
+
+## Vzdržljivostna dirka
+
+Dirka **Vzdržljivostne** dolžine (trikrat več krogov) na krožni progi se začne popoldne in konča ponoči. Čas dneva teče z napredkom vodilnega: večer se začne okoli polovice dirke, pri devetih desetinah pade noč. Svetloba, nebo in megla se spreminjajo postopoma, avti prižgejo žaromete, ob progi se v pozni zarji prižgejo reflektorji, ponoči pa se na nebu pokažejo zvezde in luna. Na zaslonu se pokažeta **VEČER** in **PADA NOČ**, komentator oboje omeni. Najlepša je na dolgih progah, npr. na Nordschleife ali Spa, z gorivom pa ima še dva postanka. Po dirki je spet izbrani čas dneva.
+
 ## Menljivo vreme
 
 Vreme **Menljivo** (zaslon Izberi progo) pomeni, da se vreme med dirko na krožni progi spremeni. Dirka se začne na suhem in nekje med petino in polovico dirke začne deževati, ali pa se začne v dežju in potem dež poneha. Pojavi se sporočilo in komentator to omeni.
@@ -171,6 +192,7 @@ Vreme **Menljivo** (zaslon Izberi progo) pomeni, da se vreme med dirko na krožn
 - Ko začne deževati, je proga v približno minuti mokra. Ko dež poneha, se proga suši približno štiri minute. **Idealna linija se posuši prva**, približno dvakrat hitreje, in na cesti se pokaže svetlejši pas suhega asfalta. Na njej je oprijem boljši kot drugje na cesti.
 - Na progah z boksi je menjava gum ob pravem času taktika: prezgodnji postanek na dežne gume ali prepozen na suhe stane čas. Igra pove, ko je idealna linija suha.
 - Tudi na dirki na Vršič se vreme lahko spremeni: dež začne padati med vzponom ali pa poneha.
+- Ko dež podnevi poneha, se nasproti sonca za približno minuto pokaže **mavrica**.
 - Na kronometrih (Pikes Peak, Ouninpohja, Vršič v načinu Kronometer) Menljivo pomeni isto kot Naključno. V dirki s prijateljem se vreme med dirko ne spreminja.
 
 ## Zastave in varnostni avto
@@ -197,6 +219,12 @@ Kamero med dirko zamenjaš z gumbom s kamero pod gumbom za pavzo, s tipko **C**,
 
 Prosojen avto (Nastavitve → Duh najboljše vožnje) vozi tvojo najboljšo vožnjo, da vidiš, kje izgubljaš ali pridobivaš čas. Na kronometrih (Pikes Peak, Ouninpohja) je to najboljša vožnja od starta do cilja. Na krožnih progah je to **najboljši leteči krog**: vsak krog, ki ga začneš pri polni hitrosti, se posname (krog iz kvalifikacij in na dirki vsi krogi od drugega naprej). Duh pelje na uri kroga, torej od črte do črte. Ko odpelješ hitrejši krog, ga duh vozi že v naslednjem krogu. Duh se shrani v brskalnik posebej za vsako progo in fiziko (na kronometrih še posebej za dež).
 
+## Deljenje duha in profila
+
+Na **Lestvici** je pri vsaki progi okvirček **Duh**. Svojega najboljšega duha proge (kronometer ali leteči krog) lahko deliš kot **povezavo** (na telefonu se odpre meni za deljenje, na računalniku se povezava kopira) ali ga **shraniš v datoteko** (npr. `duh-spa-2-18-440.json`). Prijatelj povezavo odpre (igra se odpre z izbrano progo in tvojim duhom) ali datoteko uvozi z **Uvozi duha**. Prijateljev duh je oranžen, nad njim sta prijateljevo ime in čas, vozi pa skupaj s tvojim v kronometru ali na letečih krogih. Na vsaki progi je lahko en prijateljev duh; z **Izbriši prijateljevega** ga odstraniš.
+
+V **Nastavitvah** je vrstica **Profil**: **Izvozi v datoteko** shrani vse, kar igra hrani (nastavitve, rekorde, lestvice, kariero, prvenstvo, dosežke in duhove), v eno datoteko (npr. `apex-racing-profil-20260930.json`), **Uvozi iz datoteke** pa jo naloži na drugem telefonu ali računalniku: igra najprej vpraša, nato se znova zažene s tem profilom (dosedanji se zamenja).
+
 ## Igralni plošček
 
 Igro lahko igraš z igralnim ploščkom (Xbox, PlayStation ali drug plošček s standardno razporeditvijo), ki ga povežeš s telefonom ali računalnikom (Bluetooth ali kabel). Ob prvem pritisku se pokaže kratko navodilo, gumbi na zaslonu pa se skrijejo (ko se dotakneš zaslona, se vrnejo).
@@ -216,19 +244,26 @@ Na vseh progah čez pokrajino počasi drsijo sence oblakov (v dežju jih ni, ker
 
 Na zaslonu **Izberi progo** izbereš vreme: **Suho**, **Dež**, **Menljivo** (glej zgoraj) ali **Naključno** (vsaka dirka posebej: dež približno v vsaki tretji dirki, na Spa v vsaki drugi, na Nordschleife in na Vršiču (jesen v Julijskih Alpah) skoraj v vsaki drugi). V dežju imajo vsi avti manj oprijema (v ovinkih in pri speljevanju za petino, zavore za desetino), zato drsijo bolj in dlje; tekmeci z AI zato vozijo ovinke počasneje in prej zavirajo, krog je 6–9 % počasnejši. Cesta je temna in mokra, nebo oblačno, vidljivost manjša, dež pada v curkih, izpod koles se dviga pršec (namesto dima iz gum), s trave in gramoza pa leti blato. Slišati je dež in šumenje gum po vodi, komentator pa ob štartu omeni dež. Kadar je izbran Dež, dežuje tudi na naslovnem zaslonu. Kronometri (Pikes Peak, Ouninpohja in Vršič v načinu Kronometer) imajo v dežju svoje rekorde, lestvico in duha. Kadar je izbran Dež, kartica proge in lestvica pokažeta te.
 
+**Nevihta**: dežuje vso dirko pod temnim nebom, v okolico udarjajo strele (blisk za hip osvetli nebo in pokrajino, vidi se strela), grom pa zagrmi z zamikom glede na razdaljo: čim bližje je udarila, tem prej in glasneje. Ponoči se na mokri cesti v dolgih pasovih odsevajo luči: žarometi in zadnje luči avtov ter reflektorji ob progi.
+
 ## Letni čas in čas dneva
 
-Na zaslonu **Izberi progo** izbereš še **letni čas** (Poletje, Jesen, Zima) in **čas dneva** (Dan, Večer, Noč). Sprememba se pokaže takoj, tudi na naslovnem zaslonu, in velja za vse proge.
+Na zaslonu **Izberi progo** izbereš še **letni čas** (Poletje, Jesen, Zima) in **čas dneva** (Jutro, Dan, Večer, Noč). Sprememba se pokaže takoj, tudi na naslovnem zaslonu, in velja za vse proge.
 
 - **Jesen:** listje na drevesih porumeni, pordeči in porjavi (nekaj ga ostane zelenega), travniki postanejo slamnati in olivni, sonce je toplejše. Npr. jesenska Nordschleife.
 - **Zima:** trava in polja so pod snegom, drevesa zasnežena, asfalt je splužen, makadamske ceste (Ouninpohja, Gorski reli) pa so pokrite s steptanim snegom. Izpod koles se dviga snežni prah. Namesto dežja sneži. Oprijem je manjši: na asfaltu za 6 %, na zasneženem makadamu za četrtino (tekmeci vozijo temu primerno).
 - **Vršič** je vedno jeseni (zlati macesni, prvi sneg na vrhu): Poletje in Jesen ga pustita takega, Zima ga vsega zasneži.
-- **Večer:** nizko oranžno sonce, dolge sence, topla meglica. Avti imajo prižgane žaromete.
-- **Noč:** temno modro nebo in šibka luna. Ob progi so vsakih 30 m reflektorji na drogovih, ki osvetlijo asfalt, avti pa na cesto pred sabo svetijo z žarometi. Npr. nočna dirka v Monaku.
+- **Jutro:** nizko sonce, hladna jutranja svetloba in v dolinah megla v tankih plasteh, ki počasi potuje (na progah z dolinami, npr. Spa, Nordschleife, Vršič; ravne proge je nimajo).
+- **Večer:** nizko oranžno sonce, dolge sence, topla meglica. Avti imajo prižgane žaromete, v oknih stavb se prižigajo luči.
+- **Noč:** temno modro nebo z zvezdami, ki migetajo, in luno v današnji luni meni (vidi se iz kokpita in s kamer, ki gledajo nad obzorje; v dežju ju zakrijejo oblaki). Okna hiš in stavb svetijo, večinoma toplo, ne vsa. Ob progi so vsakih 30 m reflektorji na drogovih, ki osvetlijo asfalt, avti pa na cesto pred sabo svetijo z žarometi. Npr. nočna dirka v Monaku.
 
 ## Zvok navijačev in predori
 
 Na vseh dirkališčih se ob tribunah in gledalcih sliši množica (bobni, trobente, vzklikanje), glasneje, ko pelješ bliže, in s tiste strani, kjer so. Ob štartu, ko koga prehitiš, in v cilju zagrmi glasneje. Na cestnih kronometrih tega ni, na Ouninpohji imajo navijači ob cesti svoj zvok (glej zgoraj). V predoru pod hotelom v Monaku motor in tekmeci odmevajo od sten in stropa (kratek odmev majhnega, trdega prostora), prav tako pod mostom na Suzuki; ko pripelješ ven, odmev utihne.
+
+## Zvok motorjev
+
+Vsak avto ima svoj motor, sestavljen iz vžigov njegovih valjev: štirivaljnik PEUGEOT 206 brenči in hrešči pri visokih vrtljajih, PICO TURBO ima turbo (žvižg in odpihovalni ventil, ko spustiš plin), VORTEX 4WD boksarski motor z neenakomernim brbotanjem, KAZE RS gladek vrstni šestvaljnik s turbom, STREGA MR tuleč V6, reli avto BURJA R7 turbo z »anti-lag« poki, formula ORKAN kričeč V10, policija pa brbotajoč V8. Ob prestavljanju se sliši menjalnik (pri formuli in reli avtu trd sekvenčni), navzgor še turbo, navzdol medgas s pokom; ko spustiš plin, iz izpuha poka. Trije najbližji tekmeci se slišijo s svojimi motorji in z Dopplerjevim pojavom: ko pripeljejo mimo, se ton zniža.
 
 ## Dirkalnik formule
 
@@ -263,6 +298,14 @@ Telefona sta povezana neposredno (WebRTC) s knjižnico [PeerJS](https://peerjs.c
 ## Jezik (angleščina)
 
 V **Nastavitvah** je prva vrstica **Jezik · Language**: **Slovenščina** ali **English**. Izbira velja takoj (tudi med premorom dirke) in se shrani. V angleščini so vsi meniji, HUD, sporočila med dirko, rezultati, prvenstvo, kariera, lestvica in dirka s prijateljem, imena in opisi prog ter prvenstev (npr. Gorski reli je Mountain Rally, Bakreni gozd Copper Forest), številke in denar po angleško (1.9 km, 3,048 m, €12,300, 3rd). Imena pravih krajev ostanejo (Vršič, Eau Rouge, Fuchsröhre), oštevilčeni ovinki in serpentine pa se prevedejo (Turn 3, Hairpin 8). Komentator in sovoznik govorita angleško v obeh jezikih. Privzeto ime voznika se ob zamenjavi jezika zamenja (Igralec, Player).
+
+## Dosežki in statistika
+
+Gumb **Dosežki** na naslovnem zaslonu odpre statistiko voznika: prevoženi kilometri, čas vožnje, dirke, zmage, stopničke, prva štartna mesta, najhitrejši krogi, kronometri, medalje, naslovi prvaka, pobegi policiji, dirke s prijatelji, najvišja hitrost, najdaljši skok, najdaljše drsenje in proge, na katerih si pripeljal do cilja. Spodaj je 27 dosežkov, npr. **Z zadnjega na prvo** (zmaga z zadnjega štartnega mesta), **Čist krog** (krog brez dotika ograje), **Brez praske** (dirka brez dotika ograje in drugih avtov), **Hat-trick** (prvo štartno mesto, zmaga in najhitrejši krog), **Zeleni pekel** (Nordschleife), **Letalec** (skok 40 m), **Kralj drsenja**, **Nočna ptica**, **Mojster dežja** in **Neulovljiv**. Doseženi so zlati z datumom, pri tistih, ki se štejejo (100 in 1000 km, deset zmag, vse proge …), piše, koliko še manjka. Nov dosežek se pokaže takoj med vožnjo in še v rezultatih.
+
+## Varčevanje z baterijo in hitrejše nalaganje
+
+V **Nastavitvah** je **Varčevanje z baterijo**: **Vklop** riše največ 30 sličic na sekundo pri 70 % ločljivosti (manj dela za telefon, baterija zdrži dlje), **Samodejno** pa ga vklopi le, kadar je baterije 20 % ali manj in se telefon ne polni (pokaže se sporočilo). Proge se nalagajo hitreje: igra ob nalaganju ne pripravlja več dirke za naslovni zaslon (ta se pripravi šele, ko se vrneš v meni), senčilniki pa se prevedejo, dokler je na zaslonu napis o nalaganju, zato se dirka na začetku ne zatika. Nastavitve, ki ne spremenijo slike (zvok, jezik, tresenje), senčilnikov ne prevajajo znova.
 
 ## Igra kot aplikacija
 

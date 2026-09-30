@@ -86,6 +86,12 @@ const Comm = (() => {
     penalty: ['A five second penalty!', 'That will cost you: five seconds added!', 'Penalty! Five seconds on your race time!'],
     // a changing weather (the rain starts or stops during the race) and the tyres
     rainStart: ['And here comes the rain! The track is getting wet!', 'Spots of rain on the visors! Slicks or rain tyres now?', 'It is starting to rain! The grip is going away!'],
+    // fuel (a race with fuel on) and an endurance race's evening and night
+    fuelLow: ['Running low on fuel! Box for fuel this lap.', 'The fuel light is on! Time to come in and fill up.', 'Not much fuel left in that tank, pit now!'],
+    fuelOut: ['Oh no, out of fuel! Spluttering along on the last drops!', 'Dry tank! That car is limping back to the pits now.'],
+    fuelIn: ['Fuel in, and back out onto the track!', 'Tank full again, off it goes!'],
+    dusk: ['The sun is going down, the shadows are getting long.', 'Evening now, the light is fading over the circuit.'],
+    nightFall: ['Night has fallen! Headlights on, the floodlights are blazing.', 'It is dark now, racing under the lights!'],
     rainStop: ['The rain has stopped! The track will start to dry.', 'No more rain! Watch for a dry line appearing.', 'The rain has eased off. A drying track now!'],
     dryLine: ['A dry line is appearing! Those rain tyres are overheating!', 'The racing line is dry now. Time for slicks?', 'Dry line! The rain tyres will not last on this.'],
     drs: ['DRS open down the straight!', 'The rear wing opens, DRS is on!', 'Within a second at the line, DRS for the chase!'],
