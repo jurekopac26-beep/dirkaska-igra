@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
-<link rel="stylesheet" href="css/style.css?v=590e2096">
+<link rel="stylesheet" href="css/style.css?v=dfa4aa3c">
 </head>
 <body>
 <div id="app">
@@ -42,6 +42,7 @@
       <div class="h-rankrow"><span id="h-pos">12</span><span id="h-tot">/13</span></div>
       <span id="h-lap" class="h-lbl">KROG 1/3</span>
       <span id="h-alt" class="h-lbl"></span>
+      <span id="h-turn" class="h-lbl"></span>
       <div id="speedo">
         <canvas id="speedo-c"></canvas>
         <div id="h-speed">0</div><div id="h-kmh">KM/H</div><div id="h-gear">1</div><div id="h-drs">DRS</div>
@@ -52,13 +53,14 @@
     </div>
     <div id="h-times">
       <div id="h-time">00:00.000</div>
-      <div id="h-best"><span class="h-lbl">NAJ</span> <span id="h-bestv">--:--.---</span></div>
+      <div id="h-best"><span class="h-lbl">NAJ</span> <span id="h-bestv">--:--.---</span><span id="h-delta"></span></div>
       <div id="h-sec" aria-hidden="true"><i></i><i></i><i></i></div>
       <div id="h-split"></div>
       <div id="h-pen"></div>
     </div>
     <div id="h-map"><canvas id="minimap"></canvas></div>
     <div id="h-tower"></div>
+    <div id="h-prof" aria-hidden="true"><canvas id="h-prof-c"></canvas></div>
     <div id="h-note"><svg viewBox="0 0 64 64" aria-hidden="true"><path id="h-note-path" d="" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <div id="h-lights"><i></i><i></i><i></i><i></i><i></i></div>
     <div id="h-msg"></div>
@@ -322,7 +324,7 @@
 <script src="js/tracks/gozd.js?v=87bf8586"></script>
 <script src="js/tracks/toskana.js?v=7439009f"></script>
 <script src="js/tracks/grom.js?v=e271bc6b"></script>
-<script src="js/tracks/pikes.js?v=9ea49f63"></script>
+<script src="js/tracks/pikes.js?v=59b27e83"></script>
 <script src="js/tracks/ouninpohja.js?v=0942c770"></script>
 <script src="js/tracks/nring.js?v=f5f4699b"></script>
 <script src="js/tracks/spa.js?v=60e85c51"></script>
@@ -330,14 +332,14 @@
 <script src="js/tracks/suzuka.js?v=5e46a5fd"></script>
 <script src="js/core.js?v=2c04550e"></script>
 <script src="js/tex.js?v=f643b690"></script>
-<script src="js/world.js?v=34467dd4"></script>
+<script src="js/world.js?v=967bebfe"></script>
 <script src="js/data/p206.js?v=0016824f"></script>
-<script src="js/render.js?v=18d50e70"></script>
-<script src="js/sfx.js?v=5cc6946f"></script>
+<script src="js/render.js?v=90d4a14f"></script>
+<script src="js/sfx.js?v=7d7b8a05"></script>
 <script src="js/input.js?v=d322f5e4"></script>
-<script src="js/comm.js?v=eef7a704"></script>
+<script src="js/comm.js?v=0ef99b69"></script>
 <script src="js/vendor/peerjs.min.js?v=76b403e4"></script>
 <script src="js/net.js?v=1f45dfb1"></script>
-<script src="js/game.js?v=cd56704d"></script>
+<script src="js/game.js?v=b82eb1ad"></script>
 </body>
 </html>
