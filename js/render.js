@@ -1736,6 +1736,7 @@ const Render = (function () {
     particles.update(dt); sparkP.update(dt);
     World.update(world, time, target, camera);
     if (target) updateCamera(dt, target, mode, alpha);
+    if (world && world.dyn.afterCam) world.dyn.afterCam(camera, target);   // (what depends on the camera of this very frame: Pikes Peak, which scenery chunks cast shadows)
     World.view(world, camera, target, alpha);   // (Ouninpohja: the forest between the camera and the car fades out)
     // tunnel roof (and the hotel above it) fades out while the followed car is inside, so you can see it (Suzuka: the bridge, while it drives underneath)
     if (world && world.dyn.tunnel && target && target.q) {

@@ -4353,14 +4353,17 @@ const World = (function () {
       { const [x, z] = at(0.5, c0 + 5.95); tq(x, y0 + H + 0.58, z, nx, nz, 29, 1.81, [0, 192, 1024, 256], PI / 2); }   // (flat, its top away from the road)
       { const [x, z] = at(0, c0); K.CR.block(x, z, Lb + 2, Db + 14, hd); }
     }
-    { const Fm = fr(K.sFin + 17, -1), [mx, mz] = Fm.at(0, 2.9), [fx, fz] = Fm.dir(PI + 0.35), ux = fz, uz = -fx, W = 7.2, Hs = 1.8, tl = 0.75, g = scen.get(mx, mz);
+    { const Fm = fr(K.sFin + 17, -1), [fx, fz] = Fm.dir(PI + 0.35), ux = fz, uz = -fx, W = 7.2, Hs = 1.8, tl = 0.75;
+      const clear = (v) => { const [x, z] = Fm.at(0, v); for (let p = 0; p <= 4; p++) for (let q = 0; q <= 16; q++) { const a = -1.4 + p * 0.5, b = -4.1 + q * 0.5125; if (pkNear(x + fx * a + ux * b, z + fz * a + uz * b).dd < 1.5) return false; } return true; };   // (the plinth's whole footprint clear of the barrier line)
+      let v = 2.9; while (v < 12 && !clear(v)) v += 0.1;
+      const [mx, mz] = Fm.at(0, v), g = scen.get(mx, mz);
       let yb = 1e9; for (const o of [-4, 0, 4]) for (const q of [-1.3, 0.6]) yb = Math.min(yb, gy(mx + ux * o + fx * q, mz + uz * o + fz * q));
       const ym = yb + 0.62, kx = -fx * Hs * Math.sin(tl), ky = Hs * Math.cos(tl), kz = -fz * Hs * Math.sin(tl), hw = W / 2 + 0.25, cN = [fx * Math.cos(tl) * 0.02, Math.sin(tl) * 0.02, fz * Math.cos(tl) * 0.02];
       box(g, mx - fx * 0.4, yb - 0.35, mz - fz * 0.4, 2.0, 0.97, W + 1.0, Math.atan2(fz, fx), stone, stoneT);   // the plinth
       const A = [mx - ux * hw - cN[0], ym - cN[1], mz - uz * hw - cN[2]], Bq = [mx + ux * hw - cN[0], ym - cN[1], mz + uz * hw - cN[2]], Ct = [Bq[0] + kx, Bq[1] + ky + 0.12, Bq[2] + kz], Dt = [A[0] + kx, A[1] + ky + 0.12, A[2] + kz];
       const Cb = [Ct[0], ym, Ct[2]], Db2 = [Dt[0], ym, Dt[2]], inn = [mx + kx * 0.5, ym + ky * 0.3, mz + kz * 0.5];
       g.quadO(A, Bq, Ct, Dt, stoneT, inn); g.quadO(Db2, Cb, Ct, Dt, stone, inn); g.triO(A, Db2, Dt, stone, inn); g.triO(Bq, Cb, Ct, stone, inn);   // the sloped stone face, its back and cheeks
-      tq(mx, ym + 0.06, mz, fx, fz, W, Hs, [0, 768, 1024, 1024], tl); ex(mx, mz, 4.6); }
+      tq(mx, ym + 0.06, mz, fx, fz, W, Hs, [0, 768, 1024, 1024], tl); ex(mx, mz, 4.6); { const [ox, oz] = Fm.at(0, 2.9); ex(ox, oz, 4.6); } }   // (the spot it first stood on stays clear too: the rocks' random streams run on as they did)
 
     /* the text boards: one canvas atlas, one mesh */
     const cv = document.createElement('canvas'); cv.width = cv.height = 1024; const c2 = cv.getContext('2d'), crm = '#efe3c6';
@@ -4539,16 +4542,18 @@ const World = (function () {
   }
 
   /* ---- race-day animation: the marshals wave their flags as the car goes by (pkOpsUpdate runs every frame when out.dyn.pkOps is set) ---- */
-  function pkOpsUpdate(ops, t, car) {
-    const dt = clamp(t - ops.t, 0, 0.1); ops.t = t;
+  function pkOpsCast(ops, cam, car) {   // (out.dyn.afterCam: Render.frame calls it once the camera has moved for this frame, so a jump of the camera (rescue, start, restart, another view) casts right away)
     if (ops.cast) {   // the scenery chunks cast their shadows only where these can fall into the view: the chunk swept 60 m away from the sun meets the camera's
-      // frustum (last frame's; the sun's shadow map covers a box much larger than the view, a low sun's far longer still). Everything casts without a car or a camera
-      const cam = typeof Render !== 'undefined' && Render.camera && Render.camera.isCamera ? Render.camera : null, C = ops.cast;
-      if (!C.sun && cam && Render.scene) Render.scene.traverse(o => { if (o.isDirectionalLight && o.castShadow) C.sun = o; });
+      // frustum (the sun's shadow map covers a box much larger than the view, a low sun's far longer still). Everything casts without a car or a camera
+      const C = ops.cast; cam = cam && cam.isCamera ? cam : null;
+      if (!C.sun && cam && typeof Render !== 'undefined' && Render.scene) Render.scene.traverse(o => { if (o.isDirectionalLight && o.castShadow) C.sun = o; });
       const all = !car || !cam || !C.sun;
-      if (!all) { C.fr.setFromProjectionMatrix(C.pm.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse)); C.v.subVectors(C.sun.position, C.sun.target.position).normalize(); }
+      if (!all) { cam.updateMatrixWorld(); C.fr.setFromProjectionMatrix(C.pm.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse)); C.v.subVectors(C.sun.position, C.sun.target.position).normalize(); }
       for (const [m, b] of C.list) { if (all) { m.castShadow = true; continue; } C.sp.center.copy(b.center).addScaledVector(C.v, -30); C.sp.radius = b.radius + 30; m.castShadow = C.fr.intersectsSphere(C.sp); }
     }
+  }
+  function pkOpsUpdate(ops, t, car) {
+    const dt = clamp(t - ops.t, 0, 0.1); ops.t = t;
     if (!car) return;
     const cx = car.x, cz = car.z, vx = car.vx || 0, vz = car.vz || 0;
     if (ops.fm) {   // flags: held out low; from ~60 m the arm goes up and waves, frantic while the car comes (and right by it), calmer once it has passed
@@ -5339,6 +5344,26 @@ const World = (function () {
     /* ---- road: asphalt with its paint (double yellow centre line, white edge lines, the checkpoints' lines) in one mesh, a strip of gravel, then the verge
        (ground-coloured, in the terrain tiles) out to the barriers (150 m chunks, culled) ---- */
     const Pt = (i, o, y) => [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o];
+    // draping thin layers exactly onto a triangulated surface: a convex polygon of points [x, z, lift, r, g, b(, u, v)] is cut at one of the surface's triangles A ([x, y, z] x 3;
+    // Sutherland-Hodgman in x-z, the rest interpolated along) and each piece laid on A's plane (or hAt(x, z)) + its lift; returns the vertices added
+    const planeY = (A, x, z, any) => {   // the height of triangle A's plane at (x, z); null outside it (unless any)
+      const d = (A[1][2] - A[2][2]) * (A[0][0] - A[2][0]) + (A[2][0] - A[1][0]) * (A[0][2] - A[2][2]); if (!d) return null;
+      const l1 = ((A[1][2] - A[2][2]) * (x - A[2][0]) + (A[2][0] - A[1][0]) * (z - A[2][2])) / d, l2 = ((A[2][2] - A[0][2]) * (x - A[2][0]) + (A[0][0] - A[2][0]) * (z - A[2][2])) / d, l3 = 1 - l1 - l2;
+      return any || (l1 > -1e-4 && l2 > -1e-4 && l3 > -1e-4) ? l1 * A[0][1] + l2 * A[1][1] + l3 * A[2][1] : null;
+    };
+    const drape = (g, poly, A, hAt) => {
+      const sg = Math.sign((A[1][0] - A[0][0]) * (A[2][2] - A[0][2]) - (A[1][2] - A[0][2]) * (A[2][0] - A[0][0])); if (!sg) return 0;
+      for (let e = 0; e < 3 && poly.length > 2; e++) { const pa = A[e], pb = A[(e + 1) % 3], ex = pb[0] - pa[0], ez = pb[2] - pa[2], side = (p) => sg * (ex * (p[1] - pa[2]) - ez * (p[0] - pa[0])), np = [];
+        for (let k = 0; k < poly.length; k++) { const p = poly[k], q = poly[(k + 1) % poly.length], dp = side(p), dq = side(q);
+          if (dp >= 0) np.push(p); if ((dp >= 0) !== (dq >= 0)) { const t = dp / (dp - dq); np.push(p.map((v, m) => v + (q[m] - v) * t)); } }
+        poly = np.filter((p, k) => { const q = np[(k + 1) % np.length]; return Math.abs(p[0] - q[0]) + Math.abs(p[1] - q[1]) > 1e-5; }); }
+      if (poly.length < 3) return 0;
+      let ar = 0; for (let k = 1; k + 1 < poly.length; k++) ar += Math.abs((poly[k][0] - poly[0][0]) * (poly[k + 1][1] - poly[0][1]) - (poly[k][1] - poly[0][1]) * (poly[k + 1][0] - poly[0][0]));
+      if (ar < 2e-5) return 0;
+      const pts = poly.map(p => [p[0], (hAt ? hAt(p[0], p[1]) : planeY(A, p[0], p[1], 1)) + p[2], p[1]]), cs = poly.map(p => [p[3], p[4], p[5]]), us = poly[0].length > 6 ? poly.map(p => [p[6], p[7]]) : null, dn = [pts[0][0], pts[0][1] - 5, pts[0][2]];
+      for (let k = 1; k + 1 < pts.length; k++) g.triO(pts[0], pts[k], pts[k + 1], cs[0], dn, cs[k], cs[k + 1], us && us[0], us && us[k], us && us[k + 1]);
+      return (pts.length - 2) * 3;
+    };
     const aMat = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true }); out.asphaltMat = aMat;
     aMat.onBeforeCompile = (sh) => {   // the paint (attribute paint = 1) takes its vertex colour only, without the asphalt's grain (faded paint 0.5-1: some grain; patches 0.02, asphalt 0);
       // from the raw uv (lateral offset (o + w) / 8, s / 8; the vertex shader is highp): the asphalt polished lighter in the wheel tracks of each lane (the wear varying along the road), a darker edge outside the white line
@@ -5373,11 +5398,26 @@ const World = (function () {
       for (let c = 0; c < XN; c++) { xP.push(new GB(true)); xC.push(new GB(true)); }
       const PF = (s, o, y) => { const f = clamp(s / T.ds, 0, N - 1.001), i = Math.floor(f), t = f - i, l = (a) => a[i] + (a[i + 1] - a[i]) * t; return [l(T.px) + l(T.nx) * o, l(T.hy) + y, l(T.pz) + l(T.nz) * o]; };
       const xAt = (s) => Math.min(XN - 1, Math.floor(clamp(s / T.ds, 0, N - 2) / RC)), keep = (s0, s1) => ![sStart, sFin].concat(T.cpS).some(q => s1 > q - 4 && s0 < q + 4);
+      // a decal quad [s, o] x 4 (up-facing order) draped on the asphalt: cut at its triangles (the offs columns, the samples, each quad's a-c diagonal, as built below), lifted by y over them
+      // (a flat quad between the samples' heights sank up to ~9 mm into the asphalt on the twisted cells of the tight graded bends)
+      const aTri = (i, c, h) => { const j = i + 1, a = Pt(i, offs[c], 0.02), b = Pt(i, offs[c + 1], 0.02), d = Pt(j, offs[c + 1], 0.02), e = Pt(j, offs[c], 0.02); return h ? [a, d, e] : [a, b, d]; };
+      const decal = (g, Q, col, y, uvs, tol) => { const V = Q.map(([s, o]) => PF(s, o, 0)), S = Q.map(q => q[0]), O = Q.map(q => q[1]), s0 = Math.min(...S), s1 = Math.max(...S), o0 = Math.min(...O), o1 = Math.max(...O);
+        const i0 = clamp(Math.floor(s0 / T.ds) - 1, 0, N - 2), i1 = clamp(Math.floor(s1 / T.ds) + 1, 0, N - 2), U = uvs || Q.map(([s, o]) => ruv(s, o)), C = Array.isArray(col[0]) ? col : [col, col, col, col], poly = V.map((p, k) => [p[0], p[2], y, ...C[k], ...U[k]]), TT = [], tg = new GB(true); let nv = 0;   // (col: one colour or one per corner; returns the vertices added)
+        for (let i = i0; i <= i1; i++) for (let c = 0; c < 4; c++) { if (offs[c + 1] < o0 - 0.3 || offs[c] > o1 + 0.3) continue; for (let h = 0; h < 2; h++) TT.push(aTri(i, c, h)); }
+        for (const A of TT) nv += drape(tg, poly, A);
+        // where the asphalt is flat enough (most of the road) the plain quad, its corners on the asphalt + y, stays within tol of that everywhere (checked at the corners of its own two
+        // triangles' pieces, where the creases of both surfaces cross): 6 vertices instead of the pieces
+        const aH = (x, z) => { for (const A of TT) { const h = planeY(A, x, z); if (h != null) return h; } return null; }, Pq = V.map(p => { const h = aH(p[0], p[2]); return h == null ? null : [p[0], h + y, p[2]]; });
+        if (Pq.every(p => p)) { let ok = true;
+          for (const [p, q, r] of [[0, 1, 2], [0, 2, 3]]) { const tq = new GB(true), A = [Pq[p], Pq[q], Pq[r]]; for (const B of TT) drape(tq, [poly[p], poly[q], poly[r]], B);
+            for (let k = 0; k < tq.P.length && ok; k += 3) ok = planeY(A, tq.P[k], tq.P[k + 2], 1) >= tq.P[k + 1] - tol; }
+          if (ok) { g.quadUp(Pq[0], Pq[1], Pq[2], Pq[3], C, U); return 6; } }
+        g.P.push(...tg.P); g.N.push(...tg.N); g.C.push(...tg.C); g.U.push(...tg.U); return nv; };
       const patch = (s0, s1, o0, o1, col) => { if (!keep(s0, s1)) return; const g = xP[xAt(s0)], ss = [s0]; for (let s = (Math.floor(s0 / T.ds) + 1) * T.ds; s < s1 - 0.2; s += T.ds) ss.push(s); ss.push(s1);
-        for (let k = 0; k + 1 < ss.length; k++) { const a = ss[k], b = ss[k + 1]; g.quadUp(PF(a, o0, 0.027), PF(a, o1, 0.027), PF(b, o1, 0.027), PF(b, o0, 0.027), [col, col, col, col], [ruv(a, o0), ruv(a, o1), ruv(b, o1), ruv(b, o0)]); } };
+        for (let k = 0; k + 1 < ss.length; k++) { const a = ss[k], b = ss[k + 1]; decal(g, [[a, o0], [a, o1], [b, o1], [b, o0]], col, 0.007, null, 0.001); } };
       const seal = [0.2, 0.2, 0.21], crack = (P, cw) => { if (!keep(P[0][0], P[P.length - 1][0])) return; const g = xC[xAt(P[0][0])];   // P: [s, o] points
         for (let k = 0; k + 1 < P.length; k++) { const [s0, o0] = P[k], [s1, o1] = P[k + 1], l = Math.hypot(s1 - s0, o1 - o0) || 1, ps = -(o1 - o0) / l * cw / 2, po = (s1 - s0) / l * cw / 2, e = 0.02 / l, a = s0 - (s1 - s0) * e, b = s1 + (s1 - s0) * e, oa = o0 - (o1 - o0) * e, ob = o1 + (o1 - o0) * e;
-          g.quadUp(PF(a - ps, oa - po, 0.031), PF(a + ps, oa + po, 0.031), PF(b + ps, ob + po, 0.031), PF(b - ps, ob - po, 0.031), [seal, seal, seal, seal], [ruv(a, oa - po), ruv(a, oa + po), ruv(b, ob + po), ruv(b, ob - po)]); } };
+          decal(g, [[a - ps, oa - po], [a + ps, oa + po], [b + ps, ob + po], [b - ps, ob - po]], seal, 0.011, [ruv(a, oa - po), ruv(a, oa + po), ruv(b, ob + po), ruv(b, ob - po)], 0.001); } };
       for (let s = 30 + XR() * 20; s < T.len - 40;) {   // patches (never overlapping)
         const r = XR(), sd = XR() < 0.5 ? -1 : 1, tone = 0.5 + XR() * 0.2, col = [tone, tone, tone * 1.04]; let L;
         if (r < 0.55) { L = 1.2 + XR() * 3; const W = 0.9 + XR() * 1.6, oc = 0.45 + W / 2 + XR() * (w - 1.3 - W); patch(s, s + L, sd * (oc - W / 2), sd * (oc + W / 2), col); }   // a pothole patch
@@ -5404,7 +5444,7 @@ const World = (function () {
           for (let c = 0; c < offs.length - 1; c++) { const o0 = offs[c], o1 = offs[c + 1];
             gr.quadUp(Pt(i, o0, 0.02), Pt(i, o1, 0.02), Pt(j, o1, 0.02), Pt(j, o0, 0.02), [shade(i, o0), shade(i, o1), shade(j, o1), shade(j, o0)], [[(o0 + w) / tileL, v0], [(o1 + w) / tileL, v0], [(o1 + w) / tileL, v1], [(o0 + w) / tileL, v1]]); }
           [[-0.27, -0.12, yel], [0.12, 0.27, yel], [-(w - 0.28), -(w - 0.5), wht], [w - 0.5, w - 0.28, wht]].forEach(([o0, o1, col], q) => { const fi = fade[q][i], fj = fade[q][j], ci = fc(col, fi), cj = fc(col, fj), si = i * T.ds, sj = j * T.ds;
-            gl.quadUp(Pt(i, o0, 0.036), Pt(i, o1, 0.036), Pt(j, o1, 0.036), Pt(j, o0, 0.036), [ci, ci, cj, cj], [ruv(si, o0), ruv(si, o1), ruv(sj, o1), ruv(sj, o0)]); pp.push(1 - 0.5 * Math.max(fi, fj)); });
+            pp.push([decal(gl, [[si, o0], [si, o1], [sj, o1], [sj, o0]], [ci, ci, cj, cj], 0.016, null, 0.004), 1 - 0.5 * Math.max(fi, fj)]); });   // (pp: [vertices, paint] per piece of line)
           for (const side of [-1, 1]) {
             const ci = vc[side > 0 ? 1 : 0][i], cj = vc[side > 0 ? 1 : 0][j];
             const ga = gv(i, side), gb = gv(j, side), gai = [ga[0] * gIn[0] * 1.15, ga[1] * gIn[1] * 1.15, ga[2] * gIn[2] * 1.15], gbi = [gb[0] * gIn[0] * 1.15, gb[1] * gIn[1] * 1.15, gb[2] * gIn[2] * 1.15];   // (coarse: the texture's stones ~5-25 cm)
@@ -5414,11 +5454,11 @@ const World = (function () {
               flatAt(a[0], a[2])[0].quadUp(a, b, c, d, [ci[k], ci[k + 1], cj[k + 1], cj[k]], [wuv(a), wuv(b), wuv(c), wuv(d)]); }
           }
         }
-        cpI.forEach((ic, k) => { if (ic < c0 || ic >= c0 + RC) return; const s0 = T.cpS[k], a = atSf(s0 - 0.25, -w + 0.1), b = atSf(s0 - 0.25, w - 0.1), c = atSf(s0 + 0.25, w - 0.1), d = atSf(s0 + 0.25, -w + 0.1), y = (p) => T.hy[p[3]] + 0.038;   // a white line at the checkpoint
-          gl.quadUp([a[0], y(a), a[1]], [b[0], y(b), b[1]], [c[0], y(c), c[1]], [d[0], y(d), d[1]], [wht, wht, wht, wht], [[0, 0], [0, 0], [0, 0], [0, 0]]); });
+        cpI.forEach((ic, k) => { if (ic < c0 || ic >= c0 + RC) return; const s0 = T.cpS[k], z4 = [[0, 0], [0, 0], [0, 0], [0, 0]];   // a white line at the checkpoint
+          decal(gl, [[s0 - 0.25, -w + 0.1], [s0 - 0.25, w - 0.1], [s0 + 0.25, w - 0.1], [s0 + 0.25, -w + 0.1]], wht, 0.018, z4, 0.004); });
         if (!gr.empty) {   // the asphalt, its patches and crack seals and its paint: one mesh
           const L = [gr, xP[c0 / RC], xC[c0 / RC], gl], n = L.map(q => q.P.length / 3), g = new THREE.BufferGeometry(), paint = new Float32Array(n[0] + n[1] + n[2] + n[3]).fill(1);
-          paint.fill(0, 0, n[0]); paint.fill(0.02, n[0], n[0] + n[1]); pp.forEach((v, k) => paint.fill(v, n[0] + n[1] + n[2] + k * 6, n[0] + n[1] + n[2] + k * 6 + 6));
+          paint.fill(0, 0, n[0]); paint.fill(0.02, n[0], n[0] + n[1]); { let k0 = n[0] + n[1] + n[2]; for (const [nv, v] of pp) { paint.fill(v, k0, k0 + nv); k0 += nv; } }
           const cat = (f) => [].concat(...L.map(f));
           g.setAttribute('position', new THREE.Float32BufferAttribute(cat(q => q.P), 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(cat(q => q.N), 3));
           g.setAttribute('color', new THREE.Float32BufferAttribute(cat(q => q.C), 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(cat(q => q.U), 2)); g.setAttribute('paint', new THREE.BufferAttribute(paint, 1)); g.computeBoundingSphere();
@@ -5608,7 +5648,7 @@ const World = (function () {
     {
       const bushC = [[0.13, 0.25, 0.11], [0.17, 0.28, 0.12], [0.21, 0.28, 0.11]], tuftC = [[0.5, 0.5, 0.26], [0.58, 0.54, 0.3], [0.44, 0.46, 0.22]], graniteC = [[0.54, 0.44, 0.39], [0.48, 0.42, 0.39], [0.58, 0.48, 0.43]], greyC = [0.44, 0.43, 0.41];
       // the rocks' shapes, lichen, scree and snow, the undergrowth: own streams (Q, U); R keeps its sequence (skip: the draws the old boulders made), so everything stands where it did
-      const Q = rng(9433), U = rng(9436), nat = out.pkNat = { kin: 0, jun: 0, log: 0, krum: 0, block: 0, scree: 0, lee: 0, skipU: 0, screeAt: [] },   // (counts, for the tests and the screenshot tools)
+      const Q = rng(9433), U = rng(9436), nat = out.pkNat = { kin: 0, jun: 0, log: 0, krum: 0, block: 0, scree: 0, lee: 0, skipU: 0, screeAt: [], dv: 0 },   // (counts, for the tests and the screenshot tools)
         skip = (k) => { for (let q = 0; q < k; q++) R(); }, sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
       const lichO = valueNoise2(9434, 1.4), lichG = valueNoise2(9435, 2.2), orange = [0.8, 0.5, 0.17], sage = [0.58, 0.63, 0.44], blk = [0.2, 0.19, 0.18];
       const sc = (p, yb, yt, col, up) => {   // a rock vertex's colour: darker at the foot, lichen blotches (orange, pale sage green, a few black streaks) where the weather reaches
@@ -5632,9 +5672,20 @@ const World = (function () {
           g.triO(Tp[k], Tp[j], top, cl(Tp[k], 1), dn, cl(Tp[j], 1), ct); }
       };
       const groundMin = (x, z, r) => Math.min(pkGround(x - r, z - r), pkGround(x + r, z - r), pkGround(x + r, z + r), pkGround(x - r, z + r), pkGround(x, z));
-      const patch = (x, z, pts, lift, cIn, t) => {   // a flat patch on the ground (scree, snow, a mat): a fan from (x, z) out to pts [[x, z]], its rim the ground's colour there, mixed with cIn by t (it fades in)
-        const g = noShadow(x, z), c = [x, pkGround(x, z) + lift * 1.6, z], n = pts.length, rim = pts.map(([px, pz]) => [px, pkGround(px, pz) + lift, pz]), rc = pts.map(([px, pz]) => { const q = pkGCol(px, pz); return [lerp(q[0], cIn[0], t), lerp(q[1], cIn[1], t), lerp(q[2], cIn[2], t)]; }), dn = [x, c[1] - 5, z];
-        for (let k = 0; k < n; k++) { const j = (k + 1) % n; g.triO(rim[k], rim[j], c, rc[k], dn, rc[j], cIn); }
+      const drapeG = (g, poly) => {   // a thin triangle (points [x, z, lift, r, g, b]) laid on the terrain mesh (flat fans up to ~20 m across sank up to 1-2 m into it on the crags):
+        // plain, its corners on the ground + lift, where that stays within half the lift of the mesh everywhere (checked at the corners of its pieces cut at the mesh's triangles: 5 m cells
+        // split u + v = 1, which also cut the 10 m cells' triangles), else those pieces, each exactly on its triangle + the lift (fewer vertices than splitting it smaller)
+        const G = PK.G, X = poly.map(p => (p[0] - G.x0) / PKC), Z = poly.map(p => (p[1] - G.z0) / PKC), i0 = Math.max(0, Math.floor(Math.min(...X))), i1 = Math.min(G.nx - 2, Math.floor(Math.max(...X))), j0 = Math.max(0, Math.floor(Math.min(...Z))), j1 = Math.min(G.nz - 2, Math.floor(Math.max(...Z)));
+        const cut = (gg) => { for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const x = G.x0 + i * PKC, z = G.z0 + j * PKC, a = [x, 0, z], b = [x + PKC, 0, z], c = [x, 0, z + PKC], d = [x + PKC, 0, z + PKC];
+          drape(gg, poly, [a, b, c], pkGroundS); drape(gg, poly, [d, c, b], pkGroundS); } };
+        const tq = new GB(false), A = poly.map(p => [p[0], pkGroundS(p[0], p[1]) + p[2], p[1]]), tol = Math.min(poly[0][2], poly[1][2], poly[2][2]) * 0.5; cut(tq); let ok = true;
+        for (let k = 0; k < tq.P.length && ok; k += 3) ok = planeY(A, tq.P[k], tq.P[k + 2], 1) >= tq.P[k + 1] - tol;
+        if (ok) { g.triO(A[0], A[1], A[2], poly[0].slice(3), [A[0][0], A[0][1] - 5, A[0][2]], poly[1].slice(3), poly[2].slice(3)); nat.dv += 3; return; }
+        cut(g); nat.dv += tq.P.length / 3;
+      };
+      const patch = (x, z, pts, lift, cIn, t) => {   // a patch lying on the ground (scree, snow, a mat): a fan from (x, z) out to pts [[x, z]], its rim the ground's colour there, mixed with cIn by t (it fades in)
+        const g = noShadow(x, z), n = pts.length, rc = pts.map(([px, pz]) => { const q = pkGCol(px, pz); return [lerp(q[0], cIn[0], t), lerp(q[1], cIn[1], t), lerp(q[2], cIn[2], t)]; });
+        for (let k = 0; k < n; k++) { const j = (k + 1) % n; drapeG(g, [[pts[k][0], pts[k][1], lift, ...rc[k]], [pts[j][0], pts[j][1], lift, ...rc[j]], [x, z, lift * 1.6, ...cIn]]); }
       };
       const clearRing = (x, z, r, n) => { for (let k = 0; k < n; k++) { const a = k / n * TAU; if (pkNear(x + Math.cos(a) * r, z + Math.sin(a) * r).dd < 1.5) return false; } return true; };
       const leeSnow = (x, z, r) => {   // snow lying in the lee (east, x+) of a rock above ~335 m: a tapering drift on the ground
@@ -5720,8 +5771,8 @@ const World = (function () {
         if (u < 0.3) {   // kinnikinnick: a glossy dark green mat hugging the ground, bronze-red at the edges
           const rr = 0.8 + U() * 1.3; if (!clearRing(x, z, rr, 5)) continue; const pts = [];
           for (let k = 0; k < 8; k++) { const a = a0 + k / 8 * TAU, d = rr * (0.5 + U() * 0.6); pts.push([x + Math.cos(a) * d, z + Math.sin(a) * d]); }
-          nat.kin++; const g = noShadow(x, z), c = vary(kinC[Math.floor(U() * 3)], U, 0.15), cm = [x, y + 0.08, z], rim = pts.map(([a, b]) => [a, pkGround(a, b) + 0.03, b]), rc = pts.map(([a, b]) => { const q = U() < 0.2 ? vary(bronze, U, 0.2) : sh(c, 0.85), gc = pkGCol(a, b); return [lerp(q[0], gc[0], 0.3), lerp(q[1], gc[1], 0.3), lerp(q[2], gc[2], 0.3)]; }), dn = [x, y - 5, z];
-          for (let k = 0; k < 8; k++) g.triO(rim[k], rim[(k + 1) % 8], cm, rc[k], dn, rc[(k + 1) % 8], c);
+          nat.kin++; const g = noShadow(x, z), c = vary(kinC[Math.floor(U() * 3)], U, 0.15), rc = pts.map(([a, b]) => { const q = U() < 0.2 ? vary(bronze, U, 0.2) : sh(c, 0.85), gc = pkGCol(a, b); return [lerp(q[0], gc[0], 0.3), lerp(q[1], gc[1], 0.3), lerp(q[2], gc[2], 0.3)]; });
+          for (let k = 0; k < 8; k++) { const j = (k + 1) % 8; drapeG(g, [[pts[k][0], pts[k][1], 0.03, ...rc[k]], [pts[j][0], pts[j][1], 0.03, ...rc[j]], [x, z, 0.08, ...c]]); }
         } else if (u < 0.5) {   // common juniper: a low, spreading blue-green mound
           const rr = 1 + U() * 1.3, hh = 0.25 + U() * 0.25, ex = 1 + U() * 0.5; if (!clearRing(x, z, rr * ex, 6)) continue;
           nat.jun++; const g = noShadow(x, z), c = vary(junC[Math.floor(U() * 3)], U, 0.14), top = [x, y + hh, z], B = [], M = [], n = 6, inn = [x, y + hh * 0.3, z];
@@ -5748,7 +5799,8 @@ const World = (function () {
     /* ---- knockable props' kinds are Core's; finish the meshes ---- */
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
-    out.dyn.pkOps.cast = { list: sceneryGroup.children.map(m => [m, m.geometry.boundingSphere]), fr: new THREE.Frustum(), pm: new THREE.Matrix4(), v: new THREE.Vector3(), sp: new THREE.Sphere(), sun: null };   // (pkOpsUpdate: which chunks cast)
+    out.dyn.pkOps.cast = { list: sceneryGroup.children.map(m => [m, m.geometry.boundingSphere]), fr: new THREE.Frustum(), pm: new THREE.Matrix4(), v: new THREE.Vector3(), sp: new THREE.Sphere(), sun: null };   // (pkOpsCast: which chunks cast)
+    { const ops = out.dyn.pkOps; out.dyn.afterCam = (cam, car) => pkOpsCast(ops, cam, car); }
     { const G = P.G, grp = out.ground, add = (g) => { const m = new THREE.Mesh(g, tMat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m); };   // the terrain tiles, the verge and the far scenery in them
       const blocks = new Map();   // the coarse tiles far from the road in blocks of 2 x 2 (one draw call; deep in the haze, only the portrait chase view looks that far)
       for (const [ti, tj, st] of tiles) { const k = tj * G.ntx + ti, g = pkTileGeo(ti, tj, st, flat.get(k)); flat.delete(k);
