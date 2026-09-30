@@ -1958,5 +1958,145 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "holjes/race/cs": {
+  "digest": "1e5791691e4bc7fc100589ad",
+  "lead": 1813.6,
+  "car0": [
+   -255.94,
+   -380.62
+  ],
+  "cover": {
+   "dmg": 0.54,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "holjes/race/arcade": {
+  "digest": "cfa1ae432e1388f99f2e5d8f",
+  "lead": 1765.1,
+  "car0": [
+   -249.38,
+   -368.01
+  ],
+  "cover": {
+   "dmg": 0.11,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "holjes/demo/cs": {
+  "digest": "a57fb82fd00176c257feacf7",
+  "lead": 1933.5,
+  "car0": [
+   -279.31,
+   -396.01
+  ],
+  "cover": {
+   "dmg": 0.78,
+   "loose": 12,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "holjes/demo/arcade": {
+  "digest": "6a5cb1ba9cbf4692a431c276",
+  "lead": 1909.8,
+  "car0": [
+   -271.17,
+   -394.64
+  ],
+  "cover": {
+   "dmg": 0.04,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "holjes/upg/cs": {
+  "digest": "a56e151b9bdcaa1dad6d83e6",
+  "lead": 1908.3,
+  "car0": [
+   -246.61,
+   -366.39
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "holjes/upg/arcade": {
+  "digest": "51859798aed1054ca086e2b0",
+  "lead": 1830.4,
+  "car0": [
+   -254.26,
+   -367.48
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "holjes/crash/cs": {
+  "digest": "5ce2d818a03163dafc8956de",
+  "lead": 1821.1,
+  "car0": [
+   -293.94,
+   -392.71
+  ],
+  "cover": {
+   "dmg": 0.39,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "holjes/crash/arcade": {
+  "digest": "011baab0071cf5bf8d2b9e85",
+  "lead": 1742.8,
+  "car0": [
+   -193.18,
+   -331.66
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 8,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "holjes/formula/cs": {
+  "digest": "06f945a0d36272223b4102e9",
+  "lead": 1877.1,
+  "car0": [
+   -221.83,
+   -339.62
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 10,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "holjes/formula/arcade": {
+  "digest": "966f6017246d5d04a115913b",
+  "lead": 1873.6,
+  "car0": [
+   -304.32,
+   -360.35
+  ],
+  "cover": {
+   "dmg": 0.3,
+   "loose": 6,
+   "rescues": 0,
+   "repairs": 0
+  }
  }
 }

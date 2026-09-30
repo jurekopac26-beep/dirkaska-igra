@@ -106,6 +106,12 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 /* DRS (circuits with DRS zones): dim; armed for the next zone (within 1 s of the car ahead at the detection line): white; open: green */
 #h-drs { display: none; position: absolute; left: 8%; bottom: 2%; padding: 1px 4px 0; border: 1.5px solid rgba(255,255,255,.3); border-radius: 4px; font: 700 italic clamp(9px, 2.4vh, 12px)/1.15 var(--f-ui); letter-spacing: .06em; color: rgba(255,255,255,.38); text-shadow: 0 1px 2px #000; transition: background-color .15s, color .15s; }
 #hud.drs #h-drs { display: block; }
+/* rallycross (a circuit with a joker lap, Race.jkRule): the joker box under the lap counter: dim until the player has driven it, green after;
+   blinking red on the last lap without it */
+#h-jok { display: none; align-self: flex-start; margin-top: 3px; padding: 1px 5px 0; border: 1.5px solid rgba(255,255,255,.35); border-radius: 4px; font: 700 italic clamp(9px, 2.4vh, 12px)/1.15 var(--f-ui); letter-spacing: .06em; color: rgba(255,255,255,.55); text-shadow: 0 1px 2px #000; }
+#hud.jok #h-jok { display: inline-block; }
+#h-jok.done { color: #0c1a08; background: #62e04c; border-color: #62e04c; text-shadow: none; }
+#h-jok.last { color: #fff; background: #d8321f; border-color: #ff6a50; animation: rpBlink .7s steps(1) infinite; }
 #h-drs.arm { color: var(--chalk); border-color: var(--chalk); }
 #h-drs.open { color: #0c1a08; background: #62e04c; border-color: #62e04c; text-shadow: none; }
 /* time trial (js/game.js hx*): the turn counter under the altitude (def.turnNos), the live difference to the best run on the NAJ

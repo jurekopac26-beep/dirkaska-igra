@@ -1081,6 +1081,7 @@ const Render = (function () {
     spa:      { fog: 0xc3ced7, sun: 0xfff1de, sunI: 0.98, sky: 0xd0dde9, gnd: 0x43522f, hemiI: 0.64, tint: [0.99, 1.0, 1.01], sat: 1.1 },   // the Ardennes: a little greyer, softer daylight (Spa's changeable weather)
     rbring:   { fog: 0xc6daea, sun: 0xfff1d8, sunI: 1.12, sky: 0xcfe3fb, gnd: 0x46602c, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.06, sunOff: [-86, 78, 52] },   // Styria in early summer, an afternoon sun (longer shadows): clear alpine air, fresh meadows, dark spruce woods
     suzuka:   { fog: 0xc8d9e6, sun: 0xfff1dc, sunI: 1.06, sky: 0xd5e7fa, gnd: 0x4f5c34, hemiI: 0.62, tint: [1.01, 1.0, 0.99], sat: 1.12 },   // Suzuka: a clear spring day in Mie
+    holjes:   { fog: 0xc9d8e2, sun: 0xfff0da, sunI: 1.1, sky: 0xcfe0f4, gnd: 0x44552e, hemiI: 0.6, tint: [1.01, 1.0, 0.98], sat: 1.08, sunOff: [-91, 78, 42], north: true },   // Höljes: a clear northern summer afternoon, the sun low in the south-west over the forest (long shadows), cool clean air
   };
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   function applyTheme(id) {
@@ -1108,6 +1109,30 @@ const Render = (function () {
     }
     if (A.season === 'winter' && A.tod !== 'night') { to(scene.fog.color, 0xdfe6ee, 0.4); renderer.setClearColor(scene.fog.color, 1); to(sun.color, 0xeef3ff, 0.5); hemi.intensity *= 1.12; if (post) post.mat.uniforms.uSat.value *= 0.88; }
     if (A.season === 'autumn' && A.tod === 'day') { to(sun.color, 0xffd9a8, 0.3); if (post) post.mat.uniforms.uTint.value.set(1.04, 0.99, 0.93); }
+    // a northern world (theme.north: Höljes, 61 degrees north): the white night of midsummer (the sun just under the northern horizon, the
+    // sky pale all night, no floodlights), the winter sun low in the south all day (long, blue shadows, a pink light), and on a winter
+    // night the aurora over the forest (the sky's curtains, their green glow on the snow: aurora(), World frame)
+    aur.on = false;
+    if (t.north && whiteNight()) {
+      sunOff = [14, 9, -120];
+      scene.fog.color.setHex(0xa9b3cb); scene.fog.color.lerp(_c2.setHex(0x949ea7), 0.6 * r); renderer.setClearColor(scene.fog.color, 1);
+      hemi.color.setHex(0xb9c3de); hemi.groundColor.setHex(0x3b4035); hemi.intensity = 0.66; sun.color.setHex(0xffc39a); sun.intensity = 0.34 * (1 - 0.6 * r);
+      if (post) { post.mat.uniforms.uTint.value.set(0.99, 0.97, 1.05); post.mat.uniforms.uSat.value = t.sat * 0.9; post.mat.uniforms.uHaze.value = 0.16 * (1 - r); post.mat.uniforms.uHazeCol.value.set(1, 0.7, 0.6); }
+    } else if (t.north && A.season === 'winter' && A.tod === 'day') {
+      sunOff = [-118, 24, 74]; to(sun.color, 0xffd6b4, 0.55); sun.intensity *= 0.92; to(hemi.color, 0xbcd0ec, 0.3);
+    } else if (t.north && A.season === 'winter' && A.tod === 'night') {
+      scene.fog.color.setHex(0x071321); renderer.setClearColor(scene.fog.color, 1); hemi.color.setHex(0x2c4a52); hemi.intensity = 0.62; sun.color.setHex(0x9fb8ff); sun.intensity = 0.24 * (1 - 0.6 * r);
+      aur.on = r < 0.3; aur.base.copy(hemi.color);
+    }
+  }
+  // the aurora (a northern world's winter night): its curtains in the sky dome (the cockpit, the TV views), its green glow on the snow (the
+  // sky light pulsing green and violet: every frame, from the colour applyTheme left)
+  const aur = { on: false, base: new THREE.Color(), g: new THREE.Color(0x1f8a5a), v: new THREE.Color(0x5a3a8a) };
+  const whiteNight = () => { const t = THEMES[themeId]; return !!(t && t.north) && atmos.tod === 'night' && atmos.season === 'summer'; };
+  function aurora(t) {
+    if (!aur.on) return;
+    const a = 0.5 + 0.5 * Math.sin(t * 0.23) * Math.sin(t * 0.071 + 1.3), b = 0.5 + 0.5 * Math.sin(t * 0.17 + 2.1);
+    hemi.color.copy(aur.base).lerp(aur.g, 0.25 + 0.3 * a).lerp(aur.v, 0.12 * b);
   }
   // the weather of the race on screen (race.rain 0..1): the sky and the streaks
   function applyWeather(r) {
@@ -1230,8 +1255,10 @@ const Render = (function () {
       m.needsUpdate = true;
     }
     for (const [a, nrm] of cols) {
+      if (a.ownSeason) continue;   // (the world colours it itself: world.dyn.season below)
       if (!colOrig.has(a)) colOrig.set(a, a.array.slice());
       const src = colOrig.get(a), dst = a.array, is = a.itemSize, N = nrm ? nrm.array : null;
+      if (a.evergreen && atmos.season === 'autumn') { dst.set(src); a.needsUpdate = true; continue; }   // (spruce and pine: green all year)
       for (let i = 0, v = 0; i < src.length; i += is, v++) { _c1.setRGB(src[i], src[i + 1], src[i + 2]); seasonCol(_c1, v * 0.37, _c2, !!N && N[v * 3 + 1] > 0.8); dst[i] = _c2.r; dst[i + 1] = _c2.g; dst[i + 2] = _c2.b; }   // (facing up: ground)
       a.needsUpdate = true;
     }
@@ -1241,6 +1268,7 @@ const Render = (function () {
       for (let i = 0; i < src.length; i += 3) { _c1.setRGB(src[i], src[i + 1], src[i + 2]); seasonCol(_c1, i * 0.53, _c2, false); dst[i] = _c2.r; dst[i + 1] = _c2.g; dst[i + 2] = _c2.b; }
       a.needsUpdate = true;
     }
+    if (world.dyn.season) world.dyn.season(atmos.season);   // (a world's own: Höljes' ground under snow, its snowbanks)
     wetW = -1;   // (the road's wet colour again)
   }
   function radialTex(inner, soft) {   // a soft round spot (floodlight pools, lamp heads)
@@ -1251,7 +1279,7 @@ const Render = (function () {
   // night: floodlights on poles along the track (every 30 m, alternating sides), each a pool of warm light on the road
   function floodlights() {
     if (flood) { scene.remove(flood.pools); scene.remove(flood.poles); scene.remove(flood.heads); flood.pools.geometry.dispose(); flood.poles.geometry.dispose(); flood.heads.geometry.dispose(); flood = null; }
-    const T = curTrack; if (atmos.tod !== 'night' || !T || !world) return;
+    const T = curTrack; if (atmos.tod !== 'night' || !T || !world || whiteNight()) return;   // (a white night: light enough)
     if (!lampTex) lampTex = radialTex(0.35, 0.55);
     const L = T.len, n = Math.floor(L / 30), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), p = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
     const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: lampTex, color: 0xffe2b0, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), n);
@@ -2370,12 +2398,19 @@ const Render = (function () {
   function skyStep(on) {
     if (!sky) {
       if (!on) return;
-      const u = { uBot: { value: new THREE.Color() }, uTop: { value: new THREE.Color() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uSunC: { value: new THREE.Color() }, uSunA: { value: 0 } };
+      const u = { uBot: { value: new THREE.Color() }, uTop: { value: new THREE.Color() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uSunC: { value: new THREE.Color() }, uSunA: { value: 0 }, uAur: { value: 0 }, uT: { value: 0 } };
       const mat = new THREE.ShaderMaterial({ uniforms: u, depthWrite: false, depthTest: false, fog: false, side: THREE.BackSide,
         vertexShader: 'varying vec3 vD; void main(){ vD = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-        fragmentShader: 'uniform vec3 uBot; uniform vec3 uTop; uniform vec3 uSun; uniform vec3 uSunC; uniform float uSunA; varying vec3 vD;' +
+        fragmentShader: 'uniform vec3 uBot; uniform vec3 uTop; uniform vec3 uSun; uniform vec3 uSunC; uniform float uSunA; uniform float uAur; uniform float uT; varying vec3 vD;' +
           'void main(){ vec3 d = normalize(vD); vec3 c = mix(uBot, uTop, pow(smoothstep(0.0, 0.85, d.y), 0.75)); float s = max(dot(d, uSun), 0.0);' +
-          ' c += uSunC * uSunA * (pow(s, 90.0) * 0.8 + pow(s, 8.0) * 0.15); gl_FragColor = vec4(c, 1.0); }' });
+          ' c += uSunC * uSunA * (pow(s, 90.0) * 0.8 + pow(s, 8.0) * 0.15);' +
+          // the aurora: curtains in a band over the northern sky (-z), folded along the horizon and drifting; green below, violet at the top
+          ' if (uAur > 0.0) { float az = atan(d.x, -d.z), h = d.y, w = sin(az * 3.0 + uT * 0.05) * 0.6 + sin(az * 7.0 - uT * 0.08) * 0.25;' +
+          '  float band = smoothstep(0.08, 0.2 + 0.05 * w, h) * (1.0 - smoothstep(0.3 + 0.1 * w, 0.62 + 0.08 * w, h)) * smoothstep(0.15, -0.55, d.z);' +
+          '  float ray = 0.55 + 0.45 * sin(az * 55.0 + w * 9.0 + uT * 0.35) * sin(az * 23.0 - uT * 0.21);' +
+          '  vec3 ac = mix(vec3(0.12, 0.95, 0.5), vec3(0.62, 0.28, 0.9), smoothstep(0.28, 0.55, h));' +
+          '  c += ac * band * ray * uAur * 0.75; }' +
+          ' gl_FragColor = vec4(c, 1.0); }' });
       const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 16), mat); mesh.frustumCulled = false; mesh.renderOrder = -100;   // (drawn first, under everything)
       scene.add(mesh); sky = { mesh, u };
     }
@@ -2383,7 +2418,8 @@ const Render = (function () {
     if (!on) return;
     const r = Math.max(0, wet), U = sky.u, night = atmos.tod === 'night', dusk = atmos.tod === 'dusk';
     U.uBot.value.copy(scene.fog.color);
-    U.uTop.value.copy(scene.fog.color).lerp(_c2.setHex(night ? 0x010207 : dusk ? 0x34497f : atmos.season === 'winter' ? 0x86a6d0 : 0x3f7cd0), (night ? 0.8 : 0.55) * (1 - 0.8 * r));
+    const wn = whiteNight(); U.uTop.value.copy(scene.fog.color).lerp(_c2.setHex(wn ? 0x6f86c0 : night ? 0x010207 : dusk ? 0x34497f : atmos.season === 'winter' ? 0x86a6d0 : 0x3f7cd0), (night && !wn ? 0.8 : 0.55) * (1 - 0.8 * r));
+    U.uAur.value = aur.on ? 1 : 0; U.uT.value = time % 1000;
     const sl = Math.hypot(sunOff[0], sunOff[1], sunOff[2]); U.uSun.value.set(sunOff[0] / sl, sunOff[1] / sl, sunOff[2] / sl);
     U.uSunC.value.copy(sun.color); U.uSunA.value = (night ? 0.35 : dusk ? 1.3 : 1) * (1 - 0.85 * r);
     sky.mesh.position.copy(camera.position); sky.mesh.scale.setScalar(camera.far * 0.8);
@@ -2529,6 +2565,7 @@ const Render = (function () {
       for (let n = 0; n < 12; n++) sparkP.emit(c.x + (Math.random() - 0.5) * 3, (c.y || 0) + 0.4 + Math.random() * 1.2, c.z + (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 2, 1 + Math.random() * 2, (Math.random() - 0.5) * 2, 0.4 + Math.random() * 0.3, 0.45, 0.8, 1, 0.95, 0.7, 0.7, -1, 1.2, c.y || 0); } }
     particles.update(dt); sparkP.update(dt);
     World.update(world, time, target, camera);
+    aurora(time);   // (a winter night in the north: the sky light pulses green)
     if (target) updateCamera(dt, target, mode, alpha);
     if (world && world.dyn.afterCam) world.dyn.afterCam(camera, target);   // (what depends on the camera of this very frame: Pikes Peak, which scenery chunks cast shadows)
     World.view(world, camera, target, alpha);   // (Ouninpohja: the forest between the camera and the car fades out)

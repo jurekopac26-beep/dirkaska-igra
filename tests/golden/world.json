@@ -239,5 +239,23 @@
    "crowd:MeshLambertMaterial": "23a36833",
    "tyremarks:MeshBasicMaterial": "b6a15a32"
   }
+ },
+ "holjes": {
+  "meshes": 283,
+  "verts": 203871,
+  "instances": 6895,
+  "props": 152,
+  "crowd": 2045,
+  "world": "4496b531",
+  "propsHash": "65236429",
+  "floor": "bd4aab96/2464",
+  "groups": {
+   "-:MeshLambertMaterial": "42991e54",
+   "-:MeshPhongMaterial": "64c01064",
+   "tyremarks:MeshBasicMaterial": "76d6801d",
+   "-:MeshBasicMaterial": "bdc22f4c",
+   "crowd:MeshLambertMaterial": "d9d523e8",
+   "flags:MeshLambertMaterial": "57d513e0"
+  }
  }
 }

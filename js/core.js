@@ -161,6 +161,15 @@ const Core = (function () {
       // TV sectors (def.sectors = [where sector 2 starts, where sector 3 starts], metres after the start line; closed circuits): the lap in
       // three, the lines at 0, def.sectors[0] and def.sectors[1] (see Race._sectors)
       this.sectors = def.sectors && !open ? [0, def.sectors[0], def.sectors[1]] : null;
+      // mixed surfaces (def.surf = [[from, to, 'makadam'], ...], metres after the start line; rallycross: part asphalt, part gravel), see _buildSurf
+      this.srf = null; this.gripK = null; this.pGrip = null;
+      if (def.surf) this._buildSurf(def.surf);
+      // side roads that meet the circuit (def.junctions; closed circuits), see _buildJunctions
+      this.jc = [];
+      if (def.junctions && !open) this._buildJunctions(def.junctions);
+      // the joker lap (def.joker; rallycross, closed circuits), see _buildJoker
+      this.jk = null; this.jshare = null; this.jkOther = null;
+      if (def.joker && !open) this._buildJoker(def.joker);
       // a gravel stage with puddles in the rain (def.rain = { seed, puddles }; open roads): [s, d (m across, + right), half length,
       // half width]; pudAt: per sample, the puddle there (-1: none). inRain: the race driving on it has rain (Race.step); only then are the
       // puddles a surface (6)
@@ -168,6 +177,116 @@ const Core = (function () {
       if (def.rain && open) this._buildPuddles(def.rain);
     }
 
+    // mixed surfaces: the road is asphalt but on the gravel sections (def.surf [from, to, 'makadam'], metres after the start line; an open
+    // road from its sample 0). srf[i] the surface of sample i (0 asphalt, 5 makadam), no kerbs on the gravel; gripK[i] the grip left on
+    // the asphalt right after a gravel section (the gravel the cars carry onto it: 10 % less at the seam, fading out over 45 m); pGrip[i]
+    // the grip the AI's speed profile reckons with (the gravel's side grip)
+    _buildSurf(S) {
+      const N = this.N, ds = this.ds, open = this.open, sf = this.srf = new Uint8Array(N), gk = this.gripK = new Float32Array(N).fill(1);
+      for (const [a, b, k] of S) if (k === 'makadam') for (let d = a; d < b; d += ds / 2) sf[this.idx(this.startS + d)] = 5;
+      const nD = Math.round(45 / ds);
+      for (let i = 0; i < N; i++) {
+        const j = open ? i + 1 : (i + 1) % N; if (j >= N) break;
+        if (sf[i] !== 5 || sf[j] !== 0) continue;
+        for (let k = 0; k < nD; k++) { const m = open ? j + k : (j + k) % N; if (m >= N || sf[m] !== 0) break; gk[m] = Math.min(gk[m], 1 - 0.1 * (1 - k / nD)); }
+      }
+      for (let i = 0; i < N; i++) if (sf[i] === 5) this.curb[i] = 0;
+      const pg = this.pGrip = new Float32Array(N); for (let i = 0; i < N; i++) pg[i] = sf[i] === 5 ? CSSURF[5].lat : gk[i];
+    }
+
+    // side roads that meet the circuit (def.junctions = [{ at (m after the start line) or x, z (the point on the centre line), side (-1 left,
+    // 1 right), hw (the side road's half width), depth (m out along it, from the road's edge, to where it is closed: a gate, tyres or bales),
+    // ang (deg from the road's direction of travel: 90 square, less: the side road leaves forwards), kind }]): the barrier on that side
+    // opens over the side road's mouth, as far out as the side road goes before it is closed (for each station along the road, the part of
+    // the side road's strip that reaches the road's edge). jc: [{ i, side, hw, depth, ang, kind, x, z (where its axis meets the edge),
+    // ax, az (its direction, outwards) }] for the world
+    _buildJunctions(L) {
+      const N = this.N, ds = this.ds, w = this.w;
+      for (const J of L) {
+        const i0 = J.at != null ? this.idx(this.startS + J.at) : this.nearestIdx(J.x, J.z), side = J.side > 0 ? 1 : -1, hw = J.hw || 3.5, dep = J.depth || 8;
+        const ang = clamp(J.ang || 90, 20, 160) * Math.PI / 180, ca = Math.cos(ang), sa = Math.sin(ang), arr = side > 0 ? this.br : this.bl;
+        const reach = Math.ceil((hw / sa + dep * Math.abs(ca) + 2) / ds);
+        for (let k = -reach; k <= reach; k++) {
+          const i = (i0 + k + N) % N, d = k * ds;   // (d: metres along the road from where the side road's axis meets the edge)
+          let u = 0;   // how far out from the edge the side road's strip reaches without a gap (the axis: along = u cot(ang))
+          for (let uu = 0; uu <= dep + hw; uu += 0.25) { const lat = d * sa - uu * ca, t = d * ca + uu * sa; if (Math.abs(lat) > hw || t < -0.5 || t > dep) break; u = uu; }
+          if (u > 0.5) arr[i] = Math.max(arr[i], w + u);
+        }
+        const x = this.px[i0] + this.nx[i0] * side * w, z = this.pz[i0] + this.nz[i0] * side * w;
+        const ax = this.tx[i0] * ca + this.nx[i0] * side * sa, az = this.tz[i0] * ca + this.nz[i0] * side * sa;
+        this.jc.push({ i: i0, side, hw, depth: dep, ang: J.ang || 90, kind: J.kind || 'gate', x, z, ax, az });
+      }
+    }
+
+    // the joker lap (def.joker = { points: [[x, z], ...] from the split to the join, halfWidth, h: [height at each point] (the two ends: the
+    // circuit's), surf, runoff, inner, side }): a second road that leaves the circuit and joins it again further on (rallycross: every car
+    // drives it once a race, see Race._joker). jk: its Track (an open road); jkA / jkB: the samples of the split and of the join on the
+    // circuit; jkK: circuit metres per joker metre (the race distance a car covers on it). jshare (on both roads): the stretches where the
+    // two run together (the split and the join): a car there is on the surface and inside the barriers of either road. Elsewhere a divider
+    // stands between them, each road's barrier midway across the gap between their edges. jkOther: the other road
+    _buildJoker(J) {
+      // (the joker's road starts J.lead m (default 12) before the split and ends as far after the join, on the circuit itself: it leaves and
+      // joins tangentially, and its speed profile holds the braking for its first bend)
+      const N0 = this.N, kL = Math.round((J.lead || 12) / this.ds), n0 = J.points.length;
+      const iS = this.nearestIdx(J.points[0][0], J.points[0][1]), iJ = this.nearestIdx(J.points[n0 - 1][0], J.points[n0 - 1][1]);
+      const iA = (iS - kL + N0) % N0, iB = (iJ + kL) % N0;
+      const P = [[this.px[iA], this.pz[iA]]].concat(J.points, [[this.px[iB], this.pz[iB]]]), n = P.length, Hh = J.h ? [null].concat(J.h, [null]) : null;
+      const elev = P.map((p, k) => [p[0], p[1], k === 0 ? this.hy[iA] : k === 1 ? this.hy[iS] : k === n - 2 ? this.hy[iJ] : k === n - 1 ? this.hy[iB] : Hh ? Hh[k] : lerp(this.hy[iS], this.hy[iJ], (k - 1) / (n - 3))]);
+      const jk = this.jk = new Track({ id: (this.def.id || '') + ':joker', points: P, open: true, halfWidth: J.halfWidth || this.w, elev, elevSmooth: J.elevSmooth || 10,
+        surf: J.surf, noCurbs: J.curbs === false || !!this.def.noCurbs, noGravel: true, runoff: J.runoff || 0.6, inner: J.inner || 3, side: J.side || 3.5, gradeForce: this.def.gradeForce });
+      jk.jkOther = this; this.jkOther = jk; jk.jkOf = this;
+      const L = this.len, N = this.N, NJ = jk.N, q = {};
+      // where it runs on the lap or right beside it (its lead-in and lead-out, the first and last stretches of the split and the join) it
+      // takes the lap's height (the lap's crests there, the two roads' own heights differ): fully within 2 m of the lap's edge, not at all
+      // once the two edges are 6 m apart; then its grade and vertical curvature again (as _buildElevationOpen)
+      if (jk.hasElev) {
+        for (let j = 0; j < NJ; j++) { if (j > NJ * 0.45 && j < NJ * 0.55) continue; this.query(jk.px[j], jk.pz[j], j < NJ / 2 ? iA : iB, q);
+          jk.hy[j] = lerp(jk.hy[j], this.elevAt(q.s).y, 1 - sstep(this.w + 2, this.w + jk.w + 6, Math.abs(q.d))); }
+        const hy = jk.hy, gr = jk.grade, cv = jk.curv;
+        for (let j = 0; j < NJ; j++) { const a = Math.max(0, j - 1), b = Math.min(NJ - 1, j + 1); gr[j] = (hy[b] - hy[a]) / ((b - a) * jk.ds); }
+        for (let j = 0; j < NJ; j++) { const a = Math.max(0, j - 1), b = Math.min(NJ - 1, j + 1); cv[j] = (gr[b] - gr[a]) / ((b - a) * jk.ds); }
+        let mx = -1e9; for (let j = 0; j < NJ; j++) mx = Math.max(mx, hy[j]); jk.maxElev = mx;
+      }
+      this.jkA = iA; this.jkB = iB; this.jkK = (((iB - iA) * this.ds) % L + L) % L / jk.len;
+      // shared: where the gap between the two roads' edges is under 2.5 m (a joker sample in its first or last 45 %; a circuit sample
+      // near the split or the join, at most 20 m before the joker's first sample or after its last), widened by 6 m either way
+      const gapMin = this.w + jk.w + 2.5, shJ = new Uint8Array(NJ), shM = new Uint8Array(N);
+      for (let j = 0; j < NJ; j++) { if (j > NJ * 0.45 && j < NJ * 0.55) continue; this.query(jk.px[j], jk.pz[j], j < NJ / 2 ? iA : iB, q); if (Math.abs(q.d) < gapMin) shJ[j] = 1; }
+      for (const [i0, dir] of [[iA, 1], [iB, -1]]) for (let k = -12; k < 80; k++) {
+        const i = (i0 + dir * k + N) % N; jk.query(this.px[i], this.pz[i], dir > 0 ? 0 : NJ - 1, q);
+        if (Math.abs(q.d) < gapMin && Math.abs(q.over || 0) < 20) shM[i] = 1;
+      }
+      const dil = (a, M, wrap) => { const o = new Uint8Array(M); for (let i = 0; i < M; i++) if (a[i]) for (let d = -3; d <= 3; d++) { const k = wrap ? (i + d + M) % M : clamp(i + d, 0, M - 1); o[k] = 1; } return o; };
+      this.jshare = dil(shM, N, true); jk.jshare = dil(shJ, NJ, false);
+      // where the joker's centre line leaves the circuit's surface (m after jkA along the circuit) and on which side: the AI can still turn in
+      // before that point, and keeps away from that side of the road there when it does not take the joker this lap (see aiControl)
+      this.jkLeave = 30; this.jkSide = -1; let sideB = -1;
+      for (let j = 0; j < NJ; j++) { this.query(jk.px[j], jk.pz[j], iA, q); if (Math.abs(q.d) > this.w) { this.jkLeave = ((q.s - iA * this.ds) % L + L) % L; this.jkSide = q.d > 0 ? 1 : -1; break; } }
+      for (let j = NJ - 1; j >= 0; j--) { this.query(jk.px[j], jk.pz[j], iB, q); if (Math.abs(q.d) > this.w) { sideB = q.d > 0 ? 1 : -1; break; } }
+      // in the shared stretches each road's barrier on the side that faces the other (the gore between them) comes in to 2.5 m past its
+      // edge: a car there is on either road or on the verge beside it (the other road's surface: see wallCollide); the gore is walled off
+      const face = (A, i, side) => { if (side > 0) A.br[i] = Math.min(A.br[i], A.w + 2.5); else A.bl[i] = Math.min(A.bl[i], A.w + 2.5); };
+      for (let i = 0; i < N; i++) if (this.jshare[i]) { const dA = Math.abs(i - iA), dB = Math.abs(i - iB); face(this, i, Math.min(dA, N - dA) <= Math.min(dB, N - dB) ? this.jkSide : sideB); }
+      for (let j = 0; j < NJ; j++) if (jk.jshare[j]) face(jk, j, j < NJ / 2 ? -this.jkSide : -sideB);
+      // the dividers: for a sample of one road outside the shared stretches, the other road's samples within 80 m, left and right of it
+      // (roughly abeam: within +-35 deg of square across); the barrier on each side comes in to the middle of the gap between the two
+      // edges there (0.3 m short of it)
+      const div = (A, B) => {
+        for (let i = 0; i < A.N; i++) {
+          if (A.jshare[i]) continue;
+          let dL = 80, dR = 80;
+          for (let j = 0; j < B.N; j++) {
+            const dx = B.px[j] - A.px[i], dz = B.pz[j] - A.pz[i], lat = dx * A.nx[i] + dz * A.nz[i], al = dx * A.tx[i] + dz * A.tz[i];
+            if (Math.abs(al) > 2 + 0.7 * Math.abs(lat)) continue;
+            if (lat > 0) dR = Math.min(dR, lat); else dL = Math.min(dL, -lat);
+          }
+          const lim = (d) => A.w + Math.max(0.6, (d - A.w - B.w) / 2 - 0.3);
+          if (dR < 80) A.br[i] = Math.min(A.br[i], lim(dR));
+          if (dL < 80) A.bl[i] = Math.min(A.bl[i], lim(dL));
+        }
+      };
+      div(this, jk); div(jk, this);
+    }
     // the puddles: in the dips of the profile first (the water runs down into them), then spread along the rest of the run, some on the
     // racing line, 30 m apart at least, and none from a jump's approach to its landing (the jumps fly as tuned)
     _buildPuddles(rain) {
@@ -446,15 +565,23 @@ const Core = (function () {
 
     // speed profile for a given lateral accel limit (m/s^2) and braking decel
     // aero: grip that grows with speed, latA (1 + aero v^2) (the formula's wings): v^2 (curvature - latA aero) = latA (no limit once the wings hold any bend)
-    speedProfile(latA, brakeA, vtop, wMax, aero) {
-      const N = this.N, rk = this.rk, rds = this.rds, la = latA * (aero || 0);
+    // mixed surfaces (pGrip): each sample's grip scales its cornering and braking; vEnd (an open road that runs on into another, the
+    // joker): the speed it may end at instead of a stop
+    speedProfile(latA, brakeA, vtop, wMax, aero, vEnd) {
+      const N = this.N, rk = this.rk, rds = this.rds, la = latA * (aero || 0), pg = this.pGrip;
       const v = new Float32Array(N);
-      for (let i = 0; i < N; i++) { const kk = Math.max(Math.abs(rk[i]), 1e-5) - la; v[i] = kk > 1e-6 ? Math.min(vtop, Math.sqrt(latA / kk)) : vtop; }
-      if (this.bank) for (let i = 0; i < N; i++) { const b = this.bank[i], kk = Math.max(Math.abs(rk[i]), 1e-5) - la; if (b > 0) v[i] = kk > 1e-6 ? Math.min(vtop, Math.sqrt((latA + G * b / Math.sqrt(1 + b * b)) / kk)) : vtop; }   // a banked bend carries part of the cornering force
+      for (let i = 0; i < N; i++) { const g = pg ? pg[i] : 1, kk = Math.max(Math.abs(rk[i]), 1e-5) - la * g; v[i] = kk > 1e-6 ? Math.min(vtop, Math.sqrt(latA * g / kk)) : vtop; }
+      if (this.bank) for (let i = 0; i < N; i++) { const b = this.bank[i], g = pg ? pg[i] : 1, kk = Math.max(Math.abs(rk[i]), 1e-5) - la * g; if (b > 0) v[i] = kk > 1e-6 ? Math.min(vtop, Math.sqrt((latA * g + G * b / Math.sqrt(1 + b * b)) / kk)) : vtop; }   // a banked bend carries part of the cornering force
       if (wMax) for (let i = 0; i < N; i++) v[i] = Math.min(v[i], wMax / Math.max(Math.abs(rk[i]), 1e-5));   // cs: the car turns no faster than wMax (rad/s) along its path
-      if (this.open) {   // open road: come to a stop at the far end of the road, nothing wraps
-        v[N - 1] = 0;
-        for (let i = N - 2; i >= 0; i--) v[i] = Math.min(v[i], Math.sqrt(v[i + 1] * v[i + 1] + 2 * brakeA * rds[i]));
+      const bA = pg ? (i) => brakeA * (0.55 + 0.45 * pg[i]) : null;   // (mixed surfaces: the brakes keep 0.55 + 0.45 x the grip, as in Car)
+      if (this.open) {   // open road: come to a stop at the far end of the road (or run on at vEnd), nothing wraps
+        v[N - 1] = vEnd != null ? Math.min(v[N - 1], vEnd) : 0;
+        for (let i = N - 2; i >= 0; i--) v[i] = Math.min(v[i], Math.sqrt(v[i + 1] * v[i + 1] + 2 * (bA ? bA(i) : brakeA) * rds[i]));
+        return v;
+      }
+      if (bA) {   // (a mixed-surface circuit: its own braking pass, with the slopes as below)
+        const gr = this.def.gradeForce && this.hasElev ? this.grade : null;
+        for (let pass = 0; pass < 3; pass++) for (let i = N - 1; i >= 0; i--) { const b = (i + 1) % N, a0 = bA(i), a = gr ? Math.max(a0 * 0.6, a0 + G * gr[i]) : a0; v[i] = Math.min(v[i], Math.sqrt(v[b] * v[b] + 2 * a * rds[i])); }
         return v;
       }
       // closed circuit with gravity on the slopes (def.gradeForce): braking downhill takes longer, uphill shorter
@@ -608,10 +735,14 @@ const Core = (function () {
     surface(q) {
       const d = q.d, ad = Math.abs(d), w = this.w;
       if (ad <= w) {
-        if (this.def.roadSurface !== 'makadam') return 0;
+        if ((this.srf ? this.srf[q.a] : this.def.roadSurface === 'makadam' ? 5 : 0) !== 5) return 0;   // (def.surf: the section's own surface)
         const p = this.inRain && this.pudAt ? this.pudAt[q.a] : -1;
         if (p >= 0) { const u = this.puddles[p], a = (q.s - u[0]) / u[2], b = (d - u[1]) / u[3]; if (a * a + b * b < 1) return 6; }
         return 5;
+      }
+      if (this.jshare && this.jshare[q.a] && !this._alt) {   // where the joker and the circuit run together: the other road's surface under the wheel
+        const o = this.jkOther, oq = o.query(q.x, q.z, o._altI != null ? o._altI : -1, _qAlt); o._altI = oq.i;
+        if (Math.abs(oq.d) <= o.w) { o._alt = true; const sf = o.surface(oq); o._alt = false; return sf; }
       }
       const i = q.a;
       if (this.curb[i] && ad <= w + this.curbW) return 1;
@@ -824,6 +955,10 @@ const Core = (function () {
   const DRS_DRAG = 0.8;   // the air drag with the rear wing's flap open (Car.drs, set by Race._drs)
   const JUMP_G = 14; // vertical gravity for jumps on hilly tracks (arcade-snappy, a bit above real g)
   const _bk = { dy: 0, sl: 0 };   // (Track.bankAt output)
+  const _qAlt = {}, _qW2 = {};    // (lookups on the other road where the joker and the circuit run together)
+  // a mixed-surface road's grip (Track.gripK): the asphalt just after a gravel section a little less (the gravel carried onto it), the gravel
+  // in winter less than the asphalt (Race sets trk.coldK: its share of the cold grip against the asphalt's, which every car's wet already holds)
+  const gkAt = (trk, q, sf) => sf === 0 ? trk.gripK[q.a] : sf === 5 ? trk.coldK || 1 : 1;
   const MU_BASE = 1.32;
   const STEER_VREF = 21;
   const DRIFT_GRIP = 0.42; // extra lateral 'momentum follows the nose' accel (g) at full drift
@@ -940,7 +1075,7 @@ const Core = (function () {
       for (let k = 0; k < 4; k++) {
         const wx = this.x + wpos[k][0] * ch - wpos[k][1] * sh, wz = this.z + wpos[k][0] * sh + wpos[k][1] * ch;
         const q = trk.query(wx, wz, this.wq[k].i >= 0 ? this.wq[k].i : this.q.i, this.wq[k]);
-        const sf = trk.surface(q); this.ws[k] = sf; muSum += SURF[sf].mu * (M.loose && LOOSE[sf] ? M.loose : 1); if (sf === 1) curb++;   // (slicks on loose ground)
+        const sf = trk.surface(q); this.ws[k] = sf; muSum += SURF[sf].mu * (M.loose && LOOSE[sf] ? M.loose : 1) * (trk.gripK ? gkAt(trk, q, sf) : 1); if (sf === 1) curb++;   // (slicks on loose ground; gkAt: dirty asphalt after gravel, the winter gravel)
         dragC0 += SURF[sf].c0 * 0.25; dragC1 += SURF[sf].c1 * 0.25;
       }
       this.onCurb = curb;
@@ -1107,7 +1242,7 @@ const Core = (function () {
       for (let k = 0; k < 4; k++) {
         const wx = this.x + wpos[k][0] * ch - wpos[k][1] * sh, wz = this.z + wpos[k][0] * sh + wpos[k][1] * ch;
         const q = trk.query(wx, wz, this.wq[k].i >= 0 ? this.wq[k].i : this.q.i, this.wq[k]);
-        const sf = trk.surface(q); this.ws[k] = sf; const S = CSSURF[sf], lk = M.loose && LOOSE[sf] ? M.loose : 1, tr = S.tr * lk, lt = S.lat * lk;   // (slicks on loose ground)
+        const sf = trk.surface(q); this.ws[k] = sf; const S = CSSURF[sf], lk = (M.loose && LOOSE[sf] ? M.loose : 1) * (trk.gripK ? gkAt(trk, q, sf) : 1), tr = S.tr * lk, lt = S.lat * lk;   // (slicks on loose ground; gkAt: dirty asphalt after gravel, the winter gravel)
         muSum += tr; if (k < 2) muF += tr * 0.5; else muR += tr * 0.5; if (sf === 1) curb++;
         const dk = (S.c0 * Math.min(1, spd / 3) + S.c1 * spd) * 0.25, lw = 0.5 * (1 + ldK * sgO * (k & 1 ? -1 : 1));   // (k odd: +lateral side = inner in a + turn)
         dragC0 += S.c0 * 0.25; dragC1 += S.c1 * 0.25;
@@ -1311,7 +1446,7 @@ const Core = (function () {
         const wz = this.z + wpos[k][0] * sh + wpos[k][1] * ch;
         const q = trk.query(wx, wz, this.wq[k].i >= 0 ? this.wq[k].i : hint, this.wq[k]);
         const s = trk.surface(q);
-        this.ws[k] = s; muW[k] = SURF[s].mu * this.wet;
+        this.ws[k] = s; muW[k] = SURF[s].mu * this.wet * (trk.gripK ? gkAt(trk, q, s) : 1);
         if (s === 1) curb++;
       }
       this.onCurb = curb;
@@ -1740,6 +1875,8 @@ const Core = (function () {
     b.dirty = true;
   }
 
+  // a car on the joker: its lookups on the joker take the place of its circuit lookups for the physics and the barriers (and back after)
+  function jkSwap(c) { const q = c.q; c.q = c.jq; c.jq = q; const w = c.wq; c.wq = c.wqj; c.wqj = w; }
   function wallCollide(c, trk) {
     const ch = Math.cos(c.h), sh = Math.sin(c.h);
     let hit = 0, hitK = 0, hnx = 0, hnz = 0;
@@ -1757,6 +1894,14 @@ const Core = (function () {
         const sl = q.s + (q.over || 0), N = trk.N;
         if (sl < 0.5 && 0.5 - sl > pen) { pen = 0.5 - sl; nx = trk.tx[0]; nz = trk.tz[0]; }
         else if (sl > trk.len - 0.5 && sl - (trk.len - 0.5) > pen) { pen = sl - (trk.len - 0.5); nx = -trk.tx[N - 1]; nz = -trk.tz[N - 1]; }
+      }
+      if (pen > 0 && trk.jshare && (trk.jshare[q.a] || trk.jshare[q.a + 1 < trk.N ? q.a + 1 : q.a])) {   // where the joker and the circuit run together: on the
+        const o = trk.jkOther, oq = o.query(px, pz, o._altI != null ? o._altI : -1, _qW2); o._altI = oq.i;   // other road (its surface and 2.5 m beside it) is inside
+        const eR = Math.min(oq.br, o.w + 2.5), eL = Math.min(oq.bl, o.w + 2.5);
+        let p2 = 0, n2x = 0, n2z = 0;
+        if (oq.d > eR) { p2 = oq.d - eR; n2x = -oq.nx; n2z = -oq.nz; } else if (oq.d < -eL) { p2 = -eL - oq.d; n2x = oq.nx; n2z = oq.nz; }
+        if (o.open) { const sl = oq.s + (oq.over || 0); if (sl < -0.5 || sl > o.len + 0.5) p2 = Math.max(p2, 1e3); }   // (past the joker's ends: not on it)
+        if (p2 <= 0) pen = 0; else if (p2 < pen) { pen = p2; nx = n2x; nz = n2z; }
       }
       if (pen <= 0) continue;
       c.wallX = px; c.wallZ = pz;
@@ -1840,11 +1985,35 @@ const Core = (function () {
   /* ---------------------------------------------------------------------
      AI
      --------------------------------------------------------------------- */
+  // the AI's look-ahead point at s along its route (out: the road R and its samples i0, i1, f): on its own road; on the joker (onJ) past its
+  // end, on the circuit from the join on; on the circuit, into the joker when it takes it this lap (jkGo) and the point lies past the split
+  function aiPoint(T, onJ, jkGo, s, out) {
+    const J = T.jk;
+    if (onJ) { if (s <= J.len - 1) return rsamp(J, s, out); s = T.jkB * T.ds + (s - J.len); }
+    else if (jkGo) { let d = s - T.jkA * T.ds; d = ((d % T.len) + T.len) % T.len; if (d > T.len / 2) d -= T.len; if (d > 0 && d < J.len - 1) return rsamp(J, d, out); }
+    return rsamp(T, s, out);
+  }
+  function rsamp(R, s, out) {   // the samples around s on road R (an open road: clamped to its ends)
+    const N = R.N, fi = s / R.ds;
+    if (R.open) { const f = clamp(fi, 0, N - 1); out.i0 = Math.min(N - 2, Math.floor(f)); out.i1 = out.i0 + 1; out.f = f - out.i0; }
+    else { out.i0 = ((Math.floor(fi) % N) + N) % N; out.i1 = (out.i0 + 1) % N; out.f = fi - Math.floor(fi); }
+    out.R = R; return out;
+  }
+  const _ap = {}, _ap2 = {};
   function aiControl(c, race, dt) {
     const T = race.track, M = c.m, A = c.assist;
     const q = c.q;
     const v = Math.max(0, c.vl);
     const N = T.N;
+    // the joker (Track.jk): on it, its own road and lookup (R, rq); jkGo: this lap it takes the joker and can still make the split
+    const J = T.jk, onJ = !!(J && c.rd), R = onJ ? J : T, rq = onJ ? c.jq : q;
+    let jkGo = false, jkPass = false;   // (jkPass: past the split without taking it: keep off the joker's side until it has left the road)
+    if (J && !onJ) {
+      let dq = q.s - T.jkA * T.ds; dq = ((dq % T.len) + T.len) % T.len; if (dq > T.len / 2) dq -= T.len;
+      if (race.jkRule && !c.jkN && c.lap >= 1 && c.lap >= Math.min(c.jkLap || 1, race.laps)) jkGo = dq < T.jkLeave - 4 || (c.jkGo && dq > -5 && dq < 90 && !!T.jshare[q.a]);   // (once it turns in, it goes through with it while the roads still run together)
+      jkPass = !jkGo && dq > -Math.max(10, v * 1.6) && (dq < T.jkLeave + 10 || (dq < 90 && !!T.jshare[q.a]));   // (fast cars move over earlier)
+    }
+    if (J) c.jkGo = jkGo;
     // --- avoidance / overtaking ---
     c.aiT -= dt;
     if (c.aiT <= 0) {
@@ -1855,20 +2024,21 @@ const Core = (function () {
         if (o === c) continue;
         let gap = o.dist - c.dist;
         if (gap < -4 || gap > 22) continue;
-        const lat = o.q.d - q.d;
+        if (J && (o.rd || 0) !== (c.rd || 0)) continue;   // (the other road: the divider is between them)
+        const lat = (onJ ? o.jq.d : o.q.d) - rq.d;
         const closing = v - Math.max(0, o.vl);
         if (gap > 0 && Math.abs(lat) < 3.2 && (closing > -1 || gap < 7) && gap < tgap) { threat = o; tgap = gap; }
       }
       c.aiThreat = threat; c.aiGap = tgap;
       if (threat && race.fl && !(threat.fl && threat.fl.stopT > 0) && (c.sc || race._noPass(c))) { target = c.laneBias; c.passing = 0; }   // (a yellow flag or the safety car: no overtaking, stay in line; a stopped car is passed)
       else if (threat) {
-        const rlHere = T.rl[q.i];
-        const oPos = threat.q.d;
+        const rlHere = R.rl[rq.i];
+        const oPos = onJ ? threat.jq.d : threat.q.d;
         // choose side with more room
-        const roomL = oPos - (-T.w + 1.2), roomR = (T.w - 1.2) - oPos;
-        const side = roomR > roomL ? 1 : -1;
+        const roomL = oPos - (-R.w + 1.2), roomR = (R.w - 1.2) - oPos;
+        const side = J && threat.jkGo && !jkGo && !onJ ? -T.jkSide : roomR > roomL ? 1 : -1;   // (a car slowing for the joker ahead: past it on the side away from the joker)
         const want = oPos + side * (M.aiPass || 3.3);   // (aiPass: the formula passes wider)
-        target = clamp(want - rlHere, -2 * T.w, 2 * T.w);
+        target = clamp(want - rlHere, -2 * R.w, 2 * R.w);
         c.passing = 1;
       } else c.passing = 0;
       c.aiOffT = target;
@@ -1877,14 +2047,12 @@ const Core = (function () {
 
     // --- steering: pure pursuit on racing line + offset ---
     const look = 5.5 + v * 0.36;
-    const sT = q.s + look;
-    const fi = sT / T.ds;
-    let i0, i1, ft;
-    if (T.open) { const f = clamp(fi, 0, N - 1); i0 = Math.min(N - 2, Math.floor(f)); i1 = i0 + 1; ft = f - i0; }   // open road: the look-ahead stops at the end
-    else { i0 = ((Math.floor(fi) % N) + N) % N; i1 = (i0 + 1) % N; ft = fi - Math.floor(fi); }
-    const rlv = lerp(T.rl[i0], T.rl[i1], ft);
-    const lim = T.w - (M.aiEdge || 1.25);   // (M.aiEdge: the formula keeps further in)
+    const sT = rq.s + look;
+    const Pt = aiPoint(T, onJ, jkGo, sT, _ap), Rt = Pt.R, i0 = Pt.i0, i1 = Pt.i1, ft = Pt.f;   // (an open road: the look-ahead stops at the end; the joker: see aiPoint)
+    const rlv = lerp(Rt.rl[i0], Rt.rl[i1], ft);
+    const lim = Rt.w - (M.aiEdge || 1.25);   // (M.aiEdge: the formula keeps further in)
     let off = clamp(rlv + c.aiOff, -lim, lim);
+    if (jkPass) off = T.jkSide < 0 ? Math.max(off, -T.w + 3) : Math.min(off, T.w - 3);   // (not taking the joker this lap: clear of its way in)
     if (c.pitWant && T.def.pit) {   // (autopilot into the pits: follow the lane)
       const pz = T.pitAt(sT); if (pz) off = pz.o;
       if (pz && c.ty && !c.isPlayer && !pz.gap) {   // (an AI car in for tyres: the fast lane beside the boxes, over to its own box to stop)
@@ -1892,8 +2060,8 @@ const Core = (function () {
         off += !c.pitDone && db > -8 && db < 16 ? -2 : 1.5;
       } else if (!c.isPlayer) { const P = T.def.pit, L = T.len; let d = sT - T.startS; d = ((d % L) + L) % L; if (d > L / 2) d -= L; if (d > P[1] - 220 && d < P[1]) off = lim; }   // (an AI car in for tyres: over to the lane's side of the road first)
     }
-    const tx = lerp(T.px[i0], T.px[i1], ft) + lerp(T.nx[i0], T.nx[i1], ft) * off;
-    const tz = lerp(T.pz[i0], T.pz[i1], ft) + lerp(T.nz[i0], T.nz[i1], ft) * off;
+    const tx = lerp(Rt.px[i0], Rt.px[i1], ft) + lerp(Rt.nx[i0], Rt.nx[i1], ft) * off;
+    const tz = lerp(Rt.pz[i0], Rt.pz[i1], ft) + lerp(Rt.nz[i0], Rt.nz[i1], ft) * off;
     const hA = c.phys === 'cs' && c.speed > 3 ? Math.atan2(c.vz, c.vx) : c.h;   // cs: the arc starts along the travel, not the nose
     const ch = Math.cos(hA), sh = Math.sin(hA);
     const dx = tx - c.x, dz = tz - c.z;
@@ -1917,11 +2085,15 @@ const Core = (function () {
     if (c.phys === 'cs') { const wNeed = v * kap; c.inSteer = clamp((wNeed + CSK.aiKw * (wNeed - c.wPath)) / Math.max(0.05, c.csWcap || 1), -1, 1); }   // steer = share of the path-rate cap
 
     // --- speed ---
-    const sA = q.s + v * 0.22 + 3;
-    const ia = T.idx(sA);
+    const sA = rq.s + v * 0.22 + 3;
     // skill > 1 (hard): faster in the quicker corners and on the brakes, but no faster than the profile through the slowest hairpins,
     // where the cars would only slide wide (tested per car model at the limit)
-    const vpA = (c.vprof || race.vprof)[ia], offErr = Math.abs(q.d - (T.rl[q.i] + c.aiOff)), offLine = Math.abs(c.aiOff) > 1.2 || offErr > 1.2;
+    let vpA;
+    if (onJ || jkGo) {   // (the joker: its own profile on it; on the way to it, slow enough to brake down to its entry speed by the split)
+      const Pv = aiPoint(T, onJ, jkGo, sA, _ap2); vpA = Pv.R === J ? race.vprofJ[Pv.i0] * 0.93 : (c.vprof || race.vprof)[Pv.i0];   // (the joker's tight bends: a margin)
+      if (jkGo) { let dA = T.jkA * T.ds - sA; dA = ((dA % T.len) + T.len) % T.len; if (dA < T.len / 2) vpA = Math.min(vpA, Math.sqrt(race.vprofJ[0] * race.vprofJ[0] * 0.86 + 2 * race.brA * dA)); }
+    } else vpA = (c.vprof || race.vprof)[T.idx(sA)];
+    const offErr = Math.abs(rq.d - (R.rl[rq.i] + c.aiOff)), offLine = Math.abs(c.aiOff) > 1.2 || offErr > 1.2;
     let sk = Math.min(c.skill * c.rubber, c.skCap || 1.14) * (c.isPlayer || !T.def.aiPace ? 1 : T.def.aiPace[c.phys] || 1);   // (def.aiPace: quicker rivals on a track with room for them, skill and cap; never the player's autopilot)
     if (sk > 1 && offLine) sk = 1 + (sk - 1) * 0.3;   // away from the ideal line (overtaking, defending, knocked aside) the extra pace is not there
     let vT = vpA * (sk <= 1 ? sk : 1 + (sk - 1) * sstep(11, 24, vpA));
@@ -1930,9 +2102,11 @@ const Core = (function () {
     if (c.aeroK0 != null && c.aeroK < c.aeroK0) vT *= Math.sqrt((1 + c.aeroK * vT * vT) / (1 + c.aeroK0 * vT * vT));   // the formula with a wing knocked off: less grip at speed
     // if displaced from line, be a little more careful
     if (offErr > 2.5) vT *= 0.94;
+    if (jkGo && !onJ && c.jq.i >= 0 && c.jq.s > 0) { const e = Math.abs(c.jq.d - J.rl[c.jq.i]); vT = Math.min(vT, race.vprofJ[c.jq.i] * 0.93 * (e > 1.5 ? 0.85 : 1)); }   // (turning into the joker: its first bend where the car is now, slower when off its line)
     if (c.passing) vT *= 1.01;
     if (c.pitWant && T.def.pit) { const pz = T.pitAt(q.s + v * 0.8 + 6), pn = T.pitAt(q.s); if (pz || c.inPit) vT = Math.min(vT, (pz && pz.t < 0.98) || (pn && pn.t < 0.98) ? 15 : PIT_V * 0.97); }   // (easy through the S of the way in and out)
-    { const o = c.aiThreat, g0 = M.aiGap || 3; if (o && c.aiGap < g0 + 6 && Math.abs(o.q.d - q.d) < 2.1) vT = Math.min(vT, Math.max(0, o.vl) + Math.max(0, c.aiGap - g0) * 0.8); }   // right behind someone with no gap yet: follow, don't ram (M.aiGap: the formula keeps a longer gap)
+    { const o = c.aiThreat, g0 = M.aiGap || 3; if (o && c.aiGap < g0 + 6 && Math.abs(o.q.d - q.d) < 2.1) vT = Math.min(vT, Math.max(0, o.vl) + Math.max(0, c.aiGap - g0) * 0.8);   // right behind someone with no gap yet: follow, don't ram (M.aiGap: the formula keeps a longer gap)
+      if (o && J && o.jkGo && !o.rd && !jkGo && !onJ && Math.abs(o.q.d - q.d) < 3.2) vT = Math.min(vT, Math.sqrt(Math.max(0, o.vl) ** 2 + 1.2 * race.brA * Math.max(0, c.aiGap - g0))); }   // (behind a car braking hard for the joker: in time, not into its back)
     if (race.fl) {   // flags: the safety car's steady pace; slower through a yellow; the queue behind the safety car, 15 m apart
       const F = race.fl, S = F.sc;
       if (c.sc) { if (!(S && S.state === 'in' && !S.pit)) vT = Math.min(vT * 0.75, 36); }   // (speeding off: at full pace)
@@ -2041,6 +2215,17 @@ const Core = (function () {
       }
       if (this.player) this.player.num = opts.playerNum || 1;
       if (this.remote) this.remote.num = RM.num || 2;
+      // rallycross (def.rx, a circuit with a joker, Track.jk): every car drives the joker once a race (jkRule; not in qualifying). c.rd: the
+      // road the car is on (0 the circuit, 1 the joker); c.jq / c.wqj: its lookups on the joker (swapped in for the physics there); c.jkN:
+      // how often it has driven it; c.jkLap: the lap an AI driver takes it on (its own RNG: many on the first lap, the split comes right
+      // after Turn 1 at Höljes; some in the middle of the race; a few leave it late, to the lap before the last: the last lap is their
+      // spare, should a push from behind at the split make them miss it)
+      if (track.jk) {   // (these fields only on a circuit with a joker: every other race's state stays as it was)
+        this.jkRule = !!(track.def.rx && !(opts.qualiBack > 0) && !this.timeTrial);
+        const RJ = rng(((opts.seed || 7) * 31 + 5) >>> 0);
+        for (const c of this.cars) { c.rd = 0; c.jq = { i: -1 }; c.wqj = [{ i: -1 }, { i: -1 }, { i: -1 }, { i: -1 }]; c.jkN = 0; c.jkIn = false; c.jPrev = 0; c.jkEv = 0;
+          const u = RJ(); c.jkLap = u < 0.45 ? 1 : u < 0.8 ? Math.min(2 + Math.floor(RJ() * Math.max(1, this.laps - 3)), Math.max(1, this.laps - 1)) : Math.max(1, this.laps - 1); }
+      }
       // winter (opts.winter): cold tarmac grips a little less (x0.94), a gravel road packed with snow much less (x0.74): on every car's grip and the AI's profile
       this.cold = { gk: opts.winter ? (track.def.roadSurface === 'makadam' ? 0.74 : 0.94) : 1 };   // (in an object: the golden references digest only the plain fields)
       this.rain = 0; this._wet(opts.rain);
@@ -2068,7 +2253,8 @@ const Core = (function () {
       if (c.net && c.finished) return;
       if (!c.finished) { c.finished = true; c.lap = this.laps + 1; this.finishOrder.push(c); }
       c.finishTime = t;
-      this.finishOrder.sort((a, b) => a.finishTime - b.finishTime);
+      if (this.jkRule) c.jkMiss = !c.jkN;   // (rallycross: the friend's joker laps come from its phone)
+      this.finishOrder.sort((a, b) => (this.jkRule ? (a.jkMiss ? 1 : 0) - (b.jkMiss ? 1 : 0) : 0) || a.finishTime - b.finishTime);
       this.finishOrder.forEach((f, i) => { f.finishPos = i + 1; });
     }
 
@@ -2111,6 +2297,7 @@ const Core = (function () {
       if (w < 1) { latA0 *= w; brA0 *= 0.55 + 0.45 * w; }
       const lat = latA0 * (F ? ARC[F.id].amax / 1.8 : 1), fb = F ? F.brakeK : 1, br = brA0 * fb, wM = wM0 * (F ? CSP[F.id].w : 1), aero = F ? F.aero : 0, bG = BRAKE_G * fb;
       this.vprof = track.speedProfile(lat, br, 85, wM, aero);
+      if (track.jk) { this.vprofJ = track.jk.speedProfile(lat, br, 85, wM, aero, this.vprof[track.jkB]); this.brA = br; }   // (the joker: it runs on into the circuit at the join)
       if (this.player && this.player.upg && this.player.brakeG !== bG) this.player.vprof = track.speedProfile(lat, br * this.player.brakeG / bG, 85, wM, aero);
     }
 
@@ -2130,17 +2317,18 @@ const Core = (function () {
       if (this.timeTrial) return 0;
       if (this.opts.qualiBack > 0 && !T.open) return this.opts.qualiBack;   // qualifying: one car, its run-up to a flying lap
       if (this.opts.remote) return 9;   // online: the two of them side by side on the front row (the same distance to the line)
-      if (!T.open) return 9 + (g - 1) * 7.5;
+      if (!T.open) { const ab = this._abreast(); return ab ? 9 + Math.floor((g - 1) / ab) * 8 : 9 + (g - 1) * 7.5; }   // (def.gridAbreast: rows side by side, rallycross)
       // open road: the grid has to fit between the bottom end of the road and the start line (two abreast, staggered)
       const sp = clamp((T.startS - 9) / Math.max(1, this._gridN - 1), 2.4, 3.6);
       return Math.min(3 + (g - 1) * sp, T.startS - 4);
     }
+    _abreast() { const ab = this.track.def.gridAbreast; return ab && this._gridN > 8 ? 3 : ab || 0; }   // (rows side by side: a bigger field than the track's own, the title demo or a championship round, three abreast)
     _placeOnGrid(c, g) {
       const T = this.track;
       const back = this._gridBack(g);
       const s = T.startS - back;
       const i = this.timeTrial ? T.startIdx : T.idx(s);
-      const lat = this.timeTrial ? 0 : this.opts.qualiBack > 0 && !T.open ? T.rl[i] : (g % 2 === 1 ? -1 : 1) * 3.4;   // (qualifying: on the racing line)
+      const lat = this.timeTrial ? 0 : this.opts.qualiBack > 0 && !T.open ? T.rl[i] : !T.open && this._abreast() === 3 ? ((g - 1) % 3 - 1) * 4.3 : (g % 2 === 1 ? -1 : 1) * 3.4;   // (qualifying: on the racing line)
       const x = T.px[i] + T.nx[i] * lat, z = T.pz[i] + T.nz[i] * lat;
       c.place(x, z, T.hd[i]); if (T.hasElev) { c.y = c.py = T.hy[i]; if (T.open) c.roadY = c.y; }   // (open road: the camera starts at the right height)
       c.dist = -back; c.lap = 0;
@@ -2216,6 +2404,7 @@ const Core = (function () {
       const T = this.track, cars = this.cars;
       if (this.wst && this.wst.on) this._weather(dt);
       T.inRain = (this.wst && this.wst.on ? this.wst.water : this.rain) > 0;   // (the puddles; the track is shared with the title screen's race: the weather of the race being stepped)
+      if (T.gripK) { T.coldK = this.opts.winter ? 0.74 / 0.94 : 1; if (T.jk) T.jk.coldK = T.coldK; }   // (a mixed-surface road in winter: the gravel packed with snow grips less than the asphalt)
       if (this.state === 'racing' || this.state === 'done') this.time += dt;
       for (const c of cars) if (!(c.q.i >= 0)) c.q = T.query(c.x, c.z, -1, c.q);   // a car placed without a track lookup finds itself first
       // rubber band vs player
@@ -2240,7 +2429,7 @@ const Core = (function () {
         const target = c.inSteer;
         const rate = c.isPlayer ? (c.digitalSteer ? (Math.abs(target) < Math.abs(c.steer) || target * c.steer < 0 ? 10 : 6) : 16) : 10;
         c.steer += clamp(target - c.steer, -rate * dt, rate * dt);
-        c.step(dt, T);
+        if (c.rd) { jkSwap(c); c.step(dt, T.jk); jkSwap(c); } else c.step(dt, T);   // (on the joker: its lookups and its road)
       }
       const SC = this.fl && this.fl.sc && this.fl.sc.car;   // (the safety car, when it is out: driven here, not one of the race's cars)
       if (SC) { aiControl(SC, this, dt); SC.steer += clamp(SC.inSteer - SC.steer, -10 * dt, 10 * dt); SC.step(dt, T); }
@@ -2251,7 +2440,7 @@ const Core = (function () {
       }
       if (SC) { for (const c of cars) if (!c.net && (!lv || Math.abs((c.y || 0) - (SC.y || 0)) < 3)) carCollide(SC, c); wallCollide(SC, T); }
       if (T.def.pit) for (const c of cars) if (c.isPlayer || c.pitWant || c.inPit) this.pitStep(c, dt, true);   // which side of the pit wall the car is on (before the walls push it; AI: on the way in for tyres)
-      for (const c of cars) if (!c.net) wallCollide(c, T);
+      for (const c of cars) if (!c.net) { if (c.rd) { jkSwap(c); wallCollide(c, T.jk); jkSwap(c); } else wallCollide(c, T); }
       if (T.def.pit) for (const c of cars) if (c.isPlayer || c.pitWant || c.inPit) this.pitStep(c, dt, false);  // speed limiter, stopping at the box, repair
       for (const c of cars) if (c.detach.length) { for (const name of c.detach) this.spawnDebris(c, name); c.detach.length = 0; }
       for (const c of cars) if (!c.net && !Number.isFinite(c.x + c.z + c.vx + c.vz + c.h + c.w + (c.y || 0))) { c.x = c.z = c.vx = c.vz = c.w = c.h = 0; c.y = 0; c.vy = 0; c.air = 0; c.q.s = c.goodS || 0; c.q.i = -1; this.rescue(c); }
@@ -2260,8 +2449,9 @@ const Core = (function () {
       for (const c of cars) {
         const q = T.query(c.x, c.z, c.q.i, c.q);
         if (c.net) { c.sPrev = q.s; continue; }   // (distance, laps and the finish of the friend's car come from its phone)
-        let ds = q.s - c.sPrev;
-        if (!T.open) { if (ds > T.len * 0.5) ds -= T.len; else if (ds < -T.len * 0.5) ds += T.len; }
+        let ds;
+        if (T.jk) ds = this._joker(c, q);   // (the joker: which road it is on, its distance there)
+        else { ds = q.s - c.sPrev; if (!T.open) { if (ds > T.len * 0.5) ds -= T.len; else if (ds < -T.len * 0.5) ds += T.len; } }
         ds = clamp(ds, -3, 3);
         c.sPrev = q.s; if (Number.isFinite(q.s)) c.goodS = q.s;
         c.dist += ds;
@@ -2274,6 +2464,7 @@ const Core = (function () {
             c.lap++;
             if (c.lap > this.laps && !c.finished) {
               c.finished = true; c.finishTime = this.time; this.finishOrder.push(c); c.finishPos = this.finishOrder.length;
+              if (this.jkRule) this._jkFinish(c);
             }
           }
         }
@@ -2295,7 +2486,7 @@ const Core = (function () {
           }
         }
         // wrong way
-        const fwd = Math.cos(c.h) * q.tx + Math.sin(c.h) * q.tz;
+        const tq = c.rd ? c.jq : q, fwd = Math.cos(c.h) * tq.tx + Math.sin(c.h) * tq.tz;   // (on the joker: its direction)
         if (fwd < -0.2 && c.speed > 3) c.wrongT += dt; else c.wrongT = Math.max(0, c.wrongT - dt * 2);
         // stuck detection (AI auto-rescue)
         if (!c.locked && (!c.pitState || (c.ty && !c.isPlayer && c.pitState === 'done')) && c.speed < 1.2 && (this.state === 'racing' || this.state === 'done')) c.stuckT += dt; else c.stuckT = Math.max(0, c.stuckT - dt);   // (an AI car that came in for tyres: also when stuck on its way out)
@@ -2378,7 +2569,7 @@ const Core = (function () {
       for (const y of F.yel) if (!(y.car.fl.stopT > 0)) y.t -= dt;
       if (F.yel.some(y => y.t <= 0)) { for (const y of F.yel) if (y.t <= 0) y.car.fl.yel = null; F.yel = F.yel.filter(y => y.t > 0); }
       // the safety car: out
-      if (!F.scUsed && lead && lead.lap >= 1 && this.laps * L - lead.dist > L * 1.25) {
+      if (!F.scUsed && !T.def.rx && lead && lead.lap >= 1 && this.laps * L - lead.dist > L * 1.25) {   // (rallycross: no safety car)
         const heavy = stop.some(c => c.dmg > 0.5 || c.fl.stopT > 6 || stop.some(o => o !== c && Math.abs(o.dist - c.dist) < 60));
         if (heavy) this._scOut(lead);
       }
@@ -2518,6 +2709,33 @@ const Core = (function () {
         c.noReverse = true;   // (the UI holds the brake after the finish: the car must stop, not back down the hill)
       }
     }
+    // the joker (Track.jk): which road a car is on and the race distance it covers (returns it for this step). A car goes onto the joker where
+    // the two roads run together at the split, once it is more than 1.5 m into it and nearer its centre line than the circuit's; it is back
+    // on the circuit at the join (or at the split, if it turned back). Past 60 % of the joker it counts (c.jkN, c.jkEv for the HUD and the
+    // commentator). On the joker the race distance grows by jkK x its metres: back on the circuit, it has covered the circuit's own way from
+    // the split to the join
+    _joker(c, q) {
+      const T = this.track, J = T.jk, jq = c.jq;
+      if (!c.rd) J.query(c.x, c.z, jq.i >= 0 ? jq.i : -1, jq);   // (on the joker the physics has just looked it up)
+      const sl = jq.s + (jq.over || 0);
+      let ds;
+      if (c.rd) {   // (back onto the circuit: past the joker's end, or off the joker's surface and on the circuit's where they run together)
+        ds = (jq.s - c.jPrev) * T.jkK; c.jPrev = jq.s;
+        if (!c.jkIn && jq.s > J.len * 0.6) { c.jkIn = true; c.jkN++; c.jkEv++; }
+        if (sl >= J.len - 0.5 || sl <= 0.5 || (J.jshare[jq.a] && Math.abs(jq.d) > J.w + 0.3 && Math.abs(q.d) < T.w + 1)) c.rd = 0;   // (run wide off the joker back onto the circuit: on the circuit)
+      } else {   // (onto the joker: where they run together, once off the circuit's surface and on the joker's; the racing line through the inside of
+        ds = q.s - c.sPrev; if (ds > T.len * 0.5) ds -= T.len; else if (ds < -T.len * 0.5) ds += T.len;   // the bend at the split stays on the circuit)
+        if (T.jshare[q.a] && sl > 1.5 && sl < J.len * 0.5 && Math.abs(jq.d) < J.w + 0.3 && Math.abs(q.d) > T.w - 0.3 + (c.isPlayer || c.jkGo ? 0 : 1.5)) { c.rd = 1; c.jPrev = jq.s; c.jkIn = false; }   // (an AI driver that does not take it now: only when well off the circuit)
+      }
+      return ds;
+    }
+    // the joker rule at the finish (rallycross, as in the semi-finals and finals of the championship series): a car that has not driven the joker is
+    // classified behind every car that has (c.jkMiss); the finishing order and places follow
+    _jkFinish(c) {
+      if (!c.jkN) c.jkMiss = true;
+      const F = this.finishOrder, ok = F.filter(o => !o.jkMiss), miss = F.filter(o => o.jkMiss);
+      this.finishOrder = ok.concat(miss); this.finishOrder.forEach((o, i) => { o.finishPos = i + 1; });
+    }
     _queueRespawn(c) { c.parkQ = true; c.locked = true; c.inThr = 0; c.inBrk = 1; c.inSteer = 0; this._rq.push(c); }
     // put the first waiting car on the first free spot behind the start line (no car within 9 m of it)
     _serveRespawn() {
@@ -2538,6 +2756,17 @@ const Core = (function () {
     rescue(c) {
       const T = this.track;
       if (c.ty && !c.isPlayer) c.pitWant = false;   // (an AI car in for tyres: it tries again from the next lap)
+      if (!c.rd && T.jk && this.jkRule && c.jkGo && !c.jkN) {   // stuck on its way into the joker (in the gore where the two roads part): onto the joker
+        T.jk.query(c.x, c.z, c.jq.i >= 0 ? c.jq.i : -1, c.jq);
+        if (c.jq.s < T.jk.len * 0.45) { c.rd = 1; c.jkIn = false; }
+      }
+      if (c.rd && T.jk) {   // on the joker: back onto the joker, on its line (the circuit's lookup follows; the joker still counts from there)
+        const J = T.jk, i = clamp(J.idx(c.jq.s), 3, J.N - 4), off = J.rl[i] * 0.5;
+        c.place(J.px[i] + J.nx[i] * off, J.pz[i] + J.nz[i] * off, J.hd[i]); if (J.hasElev) c.y = c.py = J.hy[i];
+        c.locked = false; c.jq = J.query(c.x, c.z, i, c.jq); c.jPrev = c.jq.s; c.q = T.query(c.x, c.z, -1, c.q); c.sPrev = c.q.s;
+        c.stuckT = 0; c.wrongT = 0; c.rescued = 1.2; c.vx = Math.cos(c.h) * 8; c.vz = Math.sin(c.h) * 8;
+        return;
+      }
       const s = c.q.s;
       let i = T.idx(s);
       if (T.open) i = clamp(i, 3, T.N - 4);   // not into the wall at an end of the road
@@ -2564,7 +2793,8 @@ const Core = (function () {
         const t = this.time + remain / Math.max(15, avg) + pen(c);
         res.push({ car: c, time: t, est: true, pen: pen(c) });
       }
-      res.sort((a, b) => a.time - b.time);
+      const miss = (r) => this.jkRule && !r.car.jkN ? 1 : 0;   // (rallycross: without the joker, behind everyone who drove it)
+      res.sort((a, b) => miss(a) - miss(b) || a.time - b.time);
       return res;
     }
   }

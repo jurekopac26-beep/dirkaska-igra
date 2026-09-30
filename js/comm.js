@@ -31,6 +31,12 @@ const Comm = (() => {
     // the weather (after the welcome, in a wet race)
     rain: ["And it's raining! A wet track today, so brake early and go easy on the throttle.", 'Rain is falling, and the track is wet. Watch out for the spray!', 'The heavens have opened! Grip will be hard to find today.'],
     rainSpa: ["Typical Spa weather, it's raining in the Ardennes! Brake early today.", "It's wet at Spa! Eau Rouge in the rain, that takes courage.", 'Rain at Spa, of course! Spray everywhere, and grip will be hard to find.'],
+    // rallycross (a circuit with a joker lap): the welcome, the joker
+    introRx: ['Welcome to {track}! {laps} laps of rallycross on asphalt and gravel, and everyone has to take the joker lap once. You start {grid}.', 'Here we are at {track}! Six cars, {laps} laps, one joker lap each, and you line up {grid}.', "Welcome to {track}, rallycross in the forest! {laps} laps, and don't forget your joker. You start {grid}."],
+    jokerDone: ['Joker lap done! The long way round is out of the way.', 'Through the joker! Now it is flat out to the flag.', 'Joker taken! Watch the traffic as you rejoin.'],
+    jokerRival: ['{name} takes the joker!', '{name} goes the long way round, through the joker!', 'And {name} dives into the joker lap!'],
+    jokerLast: ['Last lap, and you still have to take the joker!', "Don't forget the joker, it's the last lap!", 'The joker! You still have to take the joker!'],
+    jokerMiss: ['No joker lap! That puts you behind everyone who took it.', 'You missed the joker! Classified last, I am afraid.'],
     goNet: ['Lights out, and away they go!', "And they're off!", 'Green light! Side by side into turn one!', 'Go, go, go! The duel is on!'],
     go: ['Lights out, and away we go!', "And they're off!", 'Green light! The pack charges into turn one!', 'Go, go, go! The race is on!'],
     gain: ["What a move! Up to {pos}!", "Brilliant overtake, you're now {pos}!", "Straight past! That's {pos} place!", "Another one bites the dust. You're up to {pos}!", 'Clean pass, into {pos}!'],

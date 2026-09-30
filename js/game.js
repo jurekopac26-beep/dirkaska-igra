@@ -227,7 +227,7 @@
     $('ctrl-help').textContent = (S.control === 'buttons' && S.phys !== 'arcade' ? CTRL_HELP_CS : CTRL_HELP[S.control]) || '';
     { const d = Core.TRACKS.find(x => x.id === S.track) || Core.TRACKS[0], r = rec(d.id);   // the selected track and its record first (short screens may cut the end of the hint)
       if (isTT(d)) { $('title-hint').textContent = 'Proga: ' + d.name + (r.bestTime ? ' (osebni rekord ' + fmt(r.bestTime, true) + ')' : ' (še brez časa)') + '.'; $('title-sub').textContent = d.name + ' · kronometer · brez nasprotnikov'; }
-      else { $('title-hint').textContent = 'Proga: ' + d.name + (r.bestLap ? ' (rekord kroga ' + fmt(r.bestLap, true) + ')' : '') + '.'; $('title-sub').textContent = d.name + ' · ' + lapWord(d.laps || 3).toLowerCase() + ' · 12 nasprotnikov' + (S.weather === 'rain' ? ' · dež' : S.weather === 'random' ? ' · morda dež' : S.weather === 'change' ? ' · menljivo vreme' : '') + (S.season === 'autumn' ? ' · jesen' : S.season === 'winter' ? ' · zima' : '') + (S.tod === 'dusk' ? ' · večer' : S.tod === 'night' ? ' · noč' : ''); } }
+      else { $('title-hint').textContent = 'Proga: ' + d.name + (r.bestLap ? ' (rekord kroga ' + fmt(r.bestLap, true) + ')' : '') + '.'; $('title-sub').textContent = d.name + ' · ' + lapWord(d.laps || 3).toLowerCase() + ' · ' + (d.rivals || 12) + ' nasprotnikov' + (S.weather === 'rain' ? ' · dež' : S.weather === 'random' ? ' · morda dež' : S.weather === 'change' ? ' · menljivo vreme' : '') + (S.season === 'autumn' ? ' · jesen' : S.season === 'winter' ? ' · zima' : '') + (S.tod === 'dusk' ? ' · večer' : S.tod === 'night' ? ' · noč' : ''); } }
     $('title-hint').textContent += ' Upravljanje: ' + CTRL_NAME[S.control] + ', kamera: ' + (S.camera === 'chase' ? 'za avtom (telefon pokončno)' : S.camera === 'kino' ? 'kino (telefon ležeče)' : S.camera === 'cockpit' ? 'kokpit (telefon ležeče)' : 'izometrična (telefon ležeče)') + '. Spremeniš v nastavitvah.' + (records.bestLap ? ' Rekord kroga: ' + fmt(records.bestLap, true) + '.' : '');
     { const el = $('set-name'); if (el && document.activeElement !== el) el.value = S.name; }
     { const d = champDef(); $('btn-champ').textContent = 'Prvenstvo' + (d && !champDone() ? ' · ' + (champ.rounds.length + 1) + '/' + d.tracks.length : ''); }
@@ -819,6 +819,7 @@
     $('h-lights').className = ''; setLights(0, false);
     $('h-tot').textContent = quali ? '' : '/' + race.cars.length;
     $('hud').classList.toggle('drs', !!race.drsLast); $('h-drs').className = '';   // (a circuit with DRS zones)
+    $('hud').classList.toggle('jok', !!race.jkRule); $('h-jok').className = ''; $('h-jok').textContent = 'JOKER'; jokSeen = 0;   // (rallycross: the joker lap)
     $('hud').classList.toggle('sec', !!race.secBest);   // (a circuit with TV sectors)
     $('hud').classList.toggle('tt', race.timeTrial); $('pause-restart').textContent = race.timeTrial ? 'Ponovi ' + ttRun(track.def) : quali ? 'Ponovi krog' : 'Ponovi dirko';
     $('pause-skip').classList.toggle('off', !quali);
@@ -834,7 +835,7 @@
     else if (quali) { Comm.say('qualiIntro', { track: EN_NAME[track.def.id] || track.def.name }, 2); showMsg((race.champ ? 'DIRKA ' + (race.champ.round + 1) + '/' + race.champ.n + ' · ' : '') + 'KVALIFIKACIJE' + wetTxt, 'gold', 1.8); }
     else {
       if (on) Comm.say('introNet', { track: EN_NAME[track.def.id] || track.def.name, laps: race.laps === 1 ? 'one lap' : race.laps + ' laps', name: race.remote.name }, 2);
-      else Comm.say(race.laps === 1 ? 'introOne' : 'intro', { track: EN_NAME[track.def.id] || track.def.name, laps: race.laps, grid: Comm.ordinal(race.player.grid) }, 2);
+      else Comm.say(race.laps === 1 ? 'introOne' : race.jkRule ? 'introRx' : 'intro', { track: EN_NAME[track.def.id] || track.def.name, laps: race.laps, grid: Comm.ordinal(race.player.grid) }, 2);
       showMsg((race.champ ? 'DIRKA ' + (race.champ.round + 1) + '/' + race.champ.n + ' · ' : '') + lapWord(race.laps) + wetTxt, 'gold', race.rain || race.champ ? 1.8 : 1.2);
     }
     if (race.rain) Comm.say(track.def.id === 'spa' ? 'rainSpa' : 'rain', null, 2, { ttl: 12000 });   // (after the welcome)
@@ -988,7 +989,8 @@
     saveRecords();
     $('res-pos').textContent = pos + '.';
     $('res-title').textContent = pos === 1 ? 'Zmaga!' : pos <= 3 ? 'Na stopničkah!' : 'Cilj';
-    $('res-sub').textContent = 'Čas dirke ' + fmt(tot, true) + (res[myIdx].pen ? ' (s ' + res[myIdx].pen + ' s kazni)' : '') + ', najboljši krog ' + fmt(best, true) + (newRec ? ' (nov rekord proge)' : '') + '. Štartal si z ' + P.grid + '. mesta.';
+    if (race.jkRule && !P.jkN) $('res-title').textContent = 'Brez jokerja';   // (rallycross: behind everyone who drove it)
+    $('res-sub').textContent = 'Čas dirke ' + fmt(tot, true) + (res[myIdx].pen ? ' (s ' + res[myIdx].pen + ' s kazni)' : '') + ', najboljši krog ' + fmt(best, true) + (newRec ? ' (nov rekord proge)' : '') + '. Štartal si z ' + P.grid + '. mesta.' + (race.jkRule && !P.jkN ? ' Jokerja nisi odpeljal, zato si uvrščen za vsemi, ki so ga.' : '');
     if (inCareer()) {   // the career: prize money (the place, the distance, the difficulty), the fastest lap of the race
       const diff = race.champ ? champ.diff : S.difficulty, fl = best > 0 && race.cars.every(c => c === P || !c.lapTimes.length || Math.min(...c.lapTimes) >= best);
       career.races++; if (pos === 1) career.wins++;
@@ -1010,7 +1012,7 @@
     tb.innerHTML = res.map((r, i) => {
       const c = r.car; const b = c.lapTimes.length ? Math.min(...c.lapTimes) : NaN;
       const name = c.isPlayer ? 'Ti' : c.name, p = Core.champPoints(i + 1);
-      return '<tr class="' + (c.isPlayer ? 'me' : '') + '"><td>' + (i + 1) + '</td><td><span class="dot" style="background:' + hexCss(c.color) + '"></span>' + name + '</td><td>' + c.m.name + '</td><td>' + (r.est ? '+' + fmt(r.time - res[0].time, true) : fmt(r.time, true)) + (r.pen ? ' <small class="pen">(+' + r.pen + ' s)</small>' : '') + '</td><td>' + fmt(b, true) + '</td>' +
+      return '<tr class="' + (c.isPlayer ? 'me' : '') + '"><td>' + (i + 1) + '</td><td><span class="dot" style="background:' + hexCss(c.color) + '"></span>' + name + '</td><td>' + c.m.name + '</td><td>' + (r.est ? '+' + fmt(r.time - res[0].time, true) : fmt(r.time, true)) + (r.pen ? ' <small class="pen">(+' + r.pen + ' s)</small>' : '') + (race.jkRule && !c.jkN ? ' <small class="pen">(brez jokerja)</small>' : '') + '</td><td>' + fmt(b, true) + '</td>' +
         (ch ? '<td class="pts">' + (p ? '+' + p : '') + '</td>' : '') + '</tr>';
     }).join('');
     showScreen('results');
@@ -1137,6 +1139,7 @@
 
   /* ---------------- pit stops ---------------- */
   let pitWrenchT = 0, pitHint = false, drsN = 0, secN = 0, pitFix = false;
+  let jokSeen = 0;   // (rallycross: the player's joker laps shown so far)
   // a changing weather (Race opts weather) and tyres (opts tyres): the rain starts or stops (race.wst.ev), the tyres on the HUD
   let wxSeen = 0, dryHint = false, tyreKey = '';
   // flags (Race opts flags): a yellow flag where a car has stopped, the safety car after a heavy crash, the player overtaking under them
@@ -1236,6 +1239,8 @@
     const g = img.getContext('2d');
     const path = () => { g.beginPath(); for (let i = 0; i <= track.N; i++) { const k = i % track.N; const x = track.px[k] * mm.sc + mm.ox, y = track.pz[k] * mm.sc + mm.oz; if (i) g.lineTo(x, y); else g.moveTo(x, y); } g.closePath(); };
     g.lineJoin = 'round'; g.lineCap = 'round';
+    if (track.jk) { const J = track.jk; g.beginPath(); for (let j = 0; j < J.N; j++) { const x = J.px[j] * mm.sc + mm.ox, y = J.pz[j] * mm.sc + mm.oz; if (j) g.lineTo(x, y); else g.moveTo(x, y); }   // rallycross: the joker lap, yellow under the lap
+      g.strokeStyle = 'rgba(0,0,0,.55)'; g.lineWidth = 5.5 * dpr; g.stroke(); g.strokeStyle = '#f5c518'; g.lineWidth = 2.2 * dpr; g.stroke(); }
     path(); g.strokeStyle = 'rgba(0,0,0,.55)'; g.lineWidth = 7 * dpr; g.stroke();
     path(); g.strokeStyle = '#ffffff'; g.lineWidth = 3.4 * dpr; g.stroke();
     overpass(g, track, (i) => [track.px[i] * mm.sc + mm.ox, track.pz[i] * mm.sc + mm.oz], mm.sc, 7 * dpr, 3.4 * dpr, 'rgba(0,0,0,.8)');
@@ -1577,6 +1582,11 @@
     updateDamageHUD(P); tyreHUD(P); flagHUD(P);
     if (!race.timeTrial) secHUD(P);
     if (race.drsLast) { const st = P.drs ? 'open' : P.drsA ? 'arm' : ''; if ($('h-drs').className !== st) $('h-drs').className = st; }
+    if (race.jkRule) {   // the joker: dim, green once driven, blinking red on the last lap without it
+      const st = P.jkN ? 'done' : P.lap >= race.laps && phase === 'racing' ? 'last' : '', el = $('h-jok');
+      if (el.className !== st) { el.className = st; el.textContent = P.jkN ? 'JOKER ✓' : 'JOKER'; }
+      if ((P.jkEv || 0) > jokSeen) { jokSeen = P.jkEv; if (phase === 'racing') { showMsg('JOKER ✓', 'gold', 1.3); Sfx.beep(1175, 0.08, 0.1); } }
+    }
     if (P.drsEv) { P.drsEv = null; if (phase === 'racing') { Sfx.beep(1320, 0.07, 0.08); if (drsN++ % 2 === 0) Comm.say('drs', null, 1); } }   // the flap opens (the commentator: every other time)
     setText('h-speed', String(Math.round(P.speed * 3.6)));
     setText('h-gear', P.gear === -1 ? 'R' : String(P.gear));
@@ -1607,7 +1617,7 @@
   /* ---------------- commentator (English) ---------------- */
   const PART_EN = { bumperF: 'front bumper', bumperR: 'rear bumper', hood: 'bonnet', trunk: 'boot lid', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'front wing', fenderR: 'front wing' };
   const PART_EN_F = { bumperF: 'front wing', bumperR: 'rear wing', hood: 'nose cone', trunk: 'engine cover', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'bargeboard', fenderR: 'bargeboard' };   // (the formula's parts)
-  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', ouninpohja: 'Ouninpohja', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka' };
+  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', ouninpohja: 'Ouninpohja', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka', holjes: 'Höljes' };
   const cev = { wall: 0, car: 0 };          // impacts collected per physics step
   let cs = null;
   function commReset() {
@@ -1638,6 +1648,14 @@
       else if (cs.laps >= 2 && lt < cs.best) Comm.say('best', { time: lt.toFixed(1) }, 2);
       else if (P.lap < n) Comm.say('lap', { lap: P.lap, laps: n }, 1);
       cs.best = Math.min(cs.best, lt);
+    }
+    // rallycross: the joker (the player's; a rival's near the front or right by the player; the last lap without it)
+    if (race.jkRule && !tt) {
+      if ((P.jkEv || 0) > (cs.jkEv || 0)) { cs.jkEv = P.jkEv; Comm.say('jokerDone', null, 3); }
+      for (const c of race.cars) { if (c === P || !c.jkEv || (cs.jkR || (cs.jkR = new Map())).get(c) === c.jkEv) continue; cs.jkR.set(c, c.jkEv);
+        if ((c.pos <= 2 || Math.abs((c.pos || 9) - pos) <= 1) && cool('jokerRival', 10) && Math.random() < 0.7) Comm.say('jokerRival', { name: c.name }, 2); }
+      if (P.lap === n && n > 1 && !P.jkN && !P.finished && !cs.jkLastSaid) { cs.jkLastSaid = true; Comm.say('jokerLast', null, 4); }
+      if (P.finished && P.jkMiss && !cs.jkMissSaid) { cs.jkMissSaid = true; Comm.say('jokerMiss', null, 4); }
     }
     // long drift
     if (Math.abs(P.beta || 0) > (P.phys === 'cs' ? 0.62 : 0.5) && P.speed > 14 && !P.air) cs.driftT += dt; else cs.driftT = Math.max(0, cs.driftT - dt * 2);   // (cs hairpins routinely reach 30-35 deg: a higher bar)
@@ -1838,7 +1856,7 @@
       case 'ready': if (mp.role === 'host' && mp.setup && m.no === mp.setup.no) { mp.setup.guestReady = true; netMaybeGo(); } break;
       case 'go': if (mp.role === 'guest' && mp.setup && m.no === mp.setup.no && Number.isFinite(m.at) && m.at - Net.now() < 10000) netRace(m.at); break;   // (also late, e.g. after the app was in the background: that phone just starts late)
       case 'st':
-        if (mp.race && m.no === mp.race.no && !mp.race.off) { const B = mp.race.buf; B.push(m); if (B.length > 40) B.shift(); if (m.ft != null) theirFinish(+m.ft); }
+        if (mp.race && m.no === mp.race.no && !mp.race.off) { const B = mp.race.buf; B.push(m); if (B.length > 40) B.shift(); if (m.jk != null && race && race.remote) race.remote.jkN = +m.jk | 0; if (m.ft != null) theirFinish(+m.ft); }
         break;
       case 'out':   // the friend has left the race for the room: its car leaves the track (it would stand there in the way)
         if (mp.race && m.no === mp.race.no) { if (mp.race.theirs == null) mp.race.left = true; hideRemote(); if (screen === 'results') netResults(); }
@@ -1942,7 +1960,7 @@
       Net.send({ t: 'st', no: R.no, k: Math.round(now), x: r2(P.x), z: r2(P.z), y: r2(P.y), h: r3(P.h), vx: r2(P.vx * v), vz: r2(P.vz * v), vy: r2(P.vy * v), w: r3(P.w * v), vl: r2(P.vl * v),
         a: r2(P.air), d: r3(P.delta), b: r2(P.inBrk), hb: r2(P.inHand), th: r2(P.inThr * v), g: P.gear | 0, rp: Math.round(still ? P.m.idle : P.rpm), ax: r2(P.axF), ry: r2(P.roadY), gr: r3(P.gradeNow),
         bs: r3(P.bankSl), cb: P.onCurb ? 1 : 0, ws: P.ws.join(''), lr: r2(P.latR * v), be: r3(P.beta), sp: r2(P.spin * v), lk: P.lock && !still ? 1 : 0, sf: r2(P.slipF * v),
-        di: r2(P.dist), lp: P.lap | 0, ft: R.mine });
+        di: r2(P.dist), lp: P.lap | 0, ft: R.mine, jk: race.jkRule ? P.jkN | 0 : undefined });   // (jk: rallycross, the joker laps driven)
     }
     const c = race.remote, B = R.buf;
     if (!c || R.off || !B.length) return;
@@ -1972,14 +1990,15 @@
     phase = 'done'; Sfx.setRunning(false);
     const rows = [{ me: true, name: S.name || 'Igralec', car: M.name, col: S.color, t: R.mine, best: P.lapTimes.length ? Math.min(...P.lapTimes) : NaN },
       { me: false, name: c ? c.name : 'Prijatelj', car: c ? c.m.name : '', col: -1, color: c ? c.color : 0, t: R.theirs, left: R.left && R.theirs == null }];
-    rows.sort((a, b) => (a.t == null) - (b.t == null) || a.t - b.t);
+    if (race.jkRule) { rows[0].miss = !P.jkN; rows[1].miss = !!c && !c.jkN && R.theirs != null; }   // (rallycross: without the joker, behind)
+    rows.sort((a, b) => (a.t == null) - (b.t == null) || (a.miss ? 1 : 0) - (b.miss ? 1 : 0) || a.t - b.t);
     const myPos = rows.findIndex(r => r.me) + 1, waiting = R.theirs == null && !R.left;
     $('res-head').classList.remove('tt'); $('res-tt').classList.add('off'); $('res-table').querySelector('thead').innerHTML = RES_HEAD;
     $('res-pos').textContent = waiting ? '…' : myPos + '.';
     $('res-title').textContent = waiting ? 'Cilj!' : myPos === 1 ? 'Zmaga!' : 'Drugi';
     $('res-sub').textContent = 'Čas dirke ' + fmt(R.mine, true) + '.' + (waiting ? ' Čakam, da prijatelj pripelje v cilj …' : R.left && R.theirs == null ? ' Prijatelj je dirko zapustil.' : ' Razlika ' + fmt(Math.abs(R.theirs - R.mine), true) + '.');
     $('res-table').querySelector('tbody').innerHTML = rows.map((r, i) => '<tr class="' + (r.me ? 'me' : '') + '"><td>' + (r.t == null ? '–' : i + 1) + '</td><td><span class="dot" style="background:' + hexCss(r.me ? PLAYER_COLORS[r.col] : r.color) + '"></span>' + esc(r.name) + (r.me ? ' (ti)' : '') + '</td><td>' + esc(r.car) + '</td><td>' +
-      (r.t != null ? fmt(r.t, true) : r.left ? 'odšel' : 'vozi …') + '</td><td>' + (r.me ? fmt(r.best, true) : '') + '</td></tr>').join('');
+      (r.t != null ? fmt(r.t, true) : r.left ? 'odšel' : 'vozi …') + (r.miss ? ' <small class="pen">(brez jokerja)</small>' : '') + '</td><td>' + (r.me ? fmt(r.best, true) : '') + '</td></tr>').join('');
     const back = $('res-restart'); back.textContent = !mp.err && (mp.role === 'host' || (Net.open && !mp.gone)) ? 'Nazaj v sobo' : 'Dirka s prijateljem'; back.dataset.act = 'net-room';
     showScreen('results');
   }

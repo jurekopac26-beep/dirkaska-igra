@@ -838,5 +838,65 @@
   "rescues": 0,
   "nan": false,
   "digest": "85060bc6dda5533ba7fd7d2a"
+ },
+ "holjes/cs": {
+  "finished": 6,
+  "cars": 6,
+  "winner": 79.63,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "71d669e6cb3546395f9c13e5"
+ },
+ "holjes/cs/rain": {
+  "finished": 6,
+  "cars": 6,
+  "winner": 87.68,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "a88ed3c7b51fa77da12fd75e"
+ },
+ "holjes/cs/formula": {
+  "finished": 6,
+  "cars": 6,
+  "winner": 76.26,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "8de8097df5be19a8a77c1e2c"
+ },
+ "holjes/arcade": {
+  "finished": 6,
+  "cars": 6,
+  "winner": 87.38,
+  "spins": 1,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d4b8f5246b2d2b3e0e258773"
+ },
+ "holjes/arcade/rain": {
+  "finished": 6,
+  "cars": 6,
+  "winner": 91.48,
+  "spins": 2,
+  "walls": 3,
+  "rescues": 1,
+  "nan": false,
+  "digest": "191c6d595d16aaae6c8465e2"
+ },
+ "holjes/arcade/formula": {
+  "finished": 6,
+  "cars": 6,
+  "winner": 77.99,
+  "spins": 0,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e2e671d648219a5e164c689d"
  }
 }
