@@ -5727,6 +5727,157 @@ const World = (function () {
 
   /* ---- round 6: plants that move: grass and shrubs swaying by the road, alpine flowers on the tundra, aspen groves, more fallen logs and rocks (own random stream) ---- */
   function pkVeg(K) {
+    const R = rng(9601), { root, out, scen, excluded, onSide, P } = K, WD = 2.2, wx = Math.cos(WD), wz = Math.sin(WD);   // (the wind: as pkAmbient's flags)
+    const n6 = P.n6 || (P.n6 = valueNoise2(9432, 34)), grove = valueNoise2(9405, 170), flw = valueNoise2(9611, 18), flc = valueNoise2(9612, 45), mead = valueNoise2(9613, 30);
+    const sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
+    // plants: one instanced mesh of 5-blade pieces (15 vertices); a piece is a grass tuft (blades from a small ring, leaning out) or, with the shrub form (aQ), a low mound of
+    // 5 leafy wedges from a raised centre. Kinds: 0 grass, 1 shrub (dwarf willow above the trees), 2 flower spikes, 3 aspen suckers (the groves' undergrowth), 4 flower cushion.
+    // The season: the 'color' attribute is a green probe the render's season code recolours (it is ground: normals up), the shader reads it back (green: summer, straw:
+    // autumn, near white: winter) and takes its own colours: iC summer, iA autumn (flowers: the petals). Winter: most grass under the snow, the rest and the shrubs low and
+    // snow-capped, no flowers; autumn: straw, rust and gold, no flowers. Only the pieces within ~60 m of where the camera looks are drawn (one draw, refilled per 8 m)
+    const pos = [], aQ = [], aB = [], aN = [], nrm = [], col = [], G = rng(9602);
+    for (let k = 0; k < 5; k++) {
+      const a = k / 5 * TAU + (G() - 0.5) * 0.5, ca = Math.cos(a), sa = Math.sin(a), lk = 0.7 + G() * 0.3, r0 = 0.05, rt = 0.3 + G() * 0.12, n = [ca * 0.45, 1, sa * 0.45], nl = Math.hypot(n[0], 1, n[2]);
+      const w0 = a - 0.62, w1 = a + 0.62, e0 = 0.85 + G() * 0.3, e1 = 0.85 + G() * 0.3, y0 = 0.25 + G() * 0.15, y1 = 0.25 + G() * 0.15, cy = 0.9 + G() * 0.1;
+      const T3 = [[r0 * ca, 0, r0 * sa, 0, -sa, ca], [r0 * ca, 0, r0 * sa, 0, sa, -ca], [rt * ca, lk, rt * sa, lk, 0, 0]], S3 = [[ca * 0.06, cy, sa * 0.06, 1], [Math.cos(w0) * e0, y0, Math.sin(w0) * e0, y0], [Math.cos(w1) * e1, y1, Math.sin(w1) * e1, y1]];
+      for (let v = 0; v < 3; v++) { const t = T3[v], q = S3[v]; pos.push(t[0], t[1], t[2]); aB.push(t[3], t[4], t[5], 0); aQ.push(q[0], q[1], q[2], q[3]); aN.push(n[0] / nl, 1 / nl, n[2] / nl); nrm.push(0, 1, 0); col.push(0.3, 0.5, 0.2); }
+    }
+    const base = new THREE.InstancedBufferGeometry();
+    base.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); base.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3)); base.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    base.setAttribute('aQ', new THREE.Float32BufferAttribute(aQ, 4)); base.setAttribute('aB', new THREE.Float32BufferAttribute(aB, 4)); base.setAttribute('aN', new THREE.Float32BufferAttribute(aN, 3));
+    // where they grow: along the road, 1.8-42 m beyond the barriers, not in the snow zone, not on the crags; meadows (thin forest; grass and tundra patches above the trees) denser
+    const L = [], tl0 = (x, z) => pkTreeline(x, z), add = (x, y, z, rot, sp, h, w, kind, c, a) => L.push(x, y, z, rot, sp, h, w, kind + R() * 0.98, c[0], c[1], c[2], a[0], a[1], a[2]);
+    const grassB = [0.3, 0.4, 0.16], grassA = [0.44, 0.45, 0.23], strawB = [0.68, 0.56, 0.3], strawA = [0.62, 0.47, 0.3], shrubB = [0.17, 0.3, 0.12], willow = [0.3, 0.38, 0.19];
+    const shrubAut = [[0.64, 0.26, 0.1], [0.74, 0.5, 0.13], [0.55, 0.2, 0.12]], aspS = [0.27, 0.41, 0.14], aspA = [[0.93, 0.72, 0.13], [0.95, 0.62, 0.1], [0.88, 0.76, 0.2]];
+    const petals = [[0.58, 0.32, 0.8], [0.97, 0.8, 0.14], [0.96, 0.96, 0.92], [0.92, 0.46, 0.66], [0.38, 0.52, 0.92]], flStem = [0.28, 0.4, 0.17];
+    const nK = [0, 0, 0, 0, 0];
+    const piece = (x, z, big) => {   // one plant at (x, z) (big: a meadow's centre), false where none may grow
+      const nn = pkNear(x, z), dd = nn.dd, hn = nn.hn, vg = dd < 1.8; if (nn.i < 0 || dd > 42 || vg && nn.d < K.w + 1.7) return false;   // (vg: inside the barrier line, on the verge beyond the gravel: grass only)
+      const y = vg ? Math.max(pkGround(x, z) + 0.05, hn - 0.12) : pkGround(x, z); if (y > 332 || excluded(x, z)) return false;
+      const sl = vg ? 0 : pkSlope(x, z); if (sl > 0.85) return false;
+      const tl = tl0(x, z), above = y > tl - 6, r2 = R(), r3 = R(), rot = R() * TAU, sink = 0.05 + sl * 0.3;
+      const gv = grove(x, z), inGrove = y < 150 && y < tl - 35 && gv > 0.55;
+      let kind = 0;
+      if (vg) kind = 0; else if (inGrove && r2 < 0.2 + 0.5 * sstep(0.55, 0.66, gv)) kind = 3;
+      else if (above && y < 322 && flw(x, z) > 0.58 && r2 < 0.75) kind = r3 < 0.55 ? 2 : 4;
+      else if (r2 < (above ? 0.1 : 0.22)) kind = 1;
+      nK[kind]++;
+      if (kind === 0) { const hk = (above ? 0.75 : 1) * (big ? 1.15 : 1); add(x, y - 0.04, z, rot, 1.3 + R() * 0.7, (0.4 + R() * 0.4) * hk, 0.09 + R() * 0.05, 0, vary(above ? grassA : grassB, R, 0.22), vary(above ? strawA : strawB, R, 0.18)); }
+      else if (kind === 1) { const s = above ? 0.4 + R() * 0.3 : 0.55 + R() * 0.5; add(x, y - sink * s * 2, z, rot, s, above ? 0.28 + R() * 0.15 : 0.45 + R() * 0.45, 0, 1, vary(above ? willow : shrubB, R, 0.2), vary(shrubAut[Math.floor(R() * 3)], R, 0.15)); }
+      else if (kind === 3) { const s = 0.5 + R() * 0.45; add(x, y - sink * s * 2, z, rot, s, 1 + R() * 1.1, 0, 3, vary(aspS, R, 0.18), vary(aspA[Math.floor(R() * 3)], R, 0.1)); }
+      else { const pi = R() < 0.8 ? Math.floor(flc(x, z) * 9.999) % 5 : Math.floor(R() * 5), pc = vary(petals[pi], R, 0.1);
+        if (kind === 2) add(x, y - 0.03, z, rot, 0.6 + R() * 0.3, 0.26 + R() * 0.16, 0.04, 2, vary(flStem, R, 0.2), pc);
+        else add(x, y - 0.03 - sl * 0.1, z, rot, 0.22 + R() * 0.16, 0.1 + R() * 0.06, 0, 4, vary(willow, R, 0.2), pc); }
+      return true;
+    };
+    for (let s = 12; s < T.len - 12; s += 1.1) for (const side of [-1, 1]) for (let q = 0; q < 3; q++) {
+      const o = 1.8 + Math.pow(R(), 1.7) * 40, jx = (R() - 0.5) * 3, jz = (R() - 0.5) * 3, r1 = R(), [x0, z0] = onSide(s, side, o), x = x0 + jx, z = z0 + jz;
+      const i = T.idx(s), tl = tl0(x, z), above = T.hy[i] > tl - 6, far = sstep(42, 20, o);
+      const m = above ? Math.max(sstep(0.42, 0.75, P.n4(x, z)), sstep(0.56, 0.76, n6(x * 0.6 + 40, z * 0.6)), sstep(0.55, 0.72, mead(x, z))) : Math.max(sstep(0.42, 0.28, P.n3(x * 1.3 + 100, z * 1.3)), sstep(0.6, 0.75, mead(x, z)) * 0.8);
+      const p = (0.2 + 0.8 * m + 0.35 * sstep(9, 2, o)) * far * sstep(334, 316, T.hy[i]);
+      if (r1 > p || !piece(x, z, m > 0.6)) continue;
+      const nc = Math.floor(R() * (1.5 + 4 * m));   // (a clump round it)
+      for (let k = 0; k < nc; k++) { const a = R() * TAU, d = 0.5 + R() * 1.4; piece(x + Math.cos(a) * d, z + Math.sin(a) * d, false); }
+    }
+    for (let s = 12; s < T.len - 12; s += 0.8) for (const side of [-1, 1]) {   // the verge strip: tufts in clumps just beyond the gravel
+      const i = T.idx(s), lo = K.w + 1.8 - (side > 0 ? T.br[i] : T.bl[i]), o = lo + Math.pow(R(), 1.3) * (10 - lo), [x0, z0] = onSide(s, side, o), x = x0 + (R() - 0.5) * 1.5, z = z0 + (R() - 0.5) * 1.5, r1 = R();
+      const m = Math.max(sstep(0.35, 0.7, mead(x, z)), sstep(0.42, 0.75, P.n4(x, z)));
+      if (r1 > (0.45 + 0.45 * m) * sstep(334, 316, T.hy[i]) || !piece(x, z, false)) continue;
+      const nc = Math.floor(R() * (1.5 + 2.5 * m));
+      for (let k = 0; k < nc; k++) { const a = R() * TAU, d = 0.4 + R() * 1.1; piece(x + Math.cos(a) * d, z + Math.sin(a) * d, false); }
+    }
+    // stored by 16 m cells (each cell's pieces together), drawn nearest cells first up to CAP
+    const NI = L.length / 14, CS = 16, cells = new Map(), key = (cx, cz) => (cx + 4096) * 8192 + cz + 4096;
+    for (let k = 0; k < NI; k++) { const c = key(Math.floor(L[k * 14] / CS), Math.floor(L[k * 14 + 2] / CS)); let a = cells.get(c); if (!a) cells.set(c, a = []); a.push(k); }
+    const sP = new Float32Array(NI * 4), sS = new Float32Array(NI * 4), sC = new Float32Array(NI * 3), sA = new Float32Array(NI * 3), span = new Map(); let o = 0;
+    for (const [c, a] of cells) { span.set(c, [o, a.length]); for (const k of a) { const b = k * 14; sP.set(L.slice(b, b + 4), o * 4); sS.set(L.slice(b + 4, b + 8), o * 4); sC.set(L.slice(b + 8, b + 11), o * 3); sA.set(L.slice(b + 11, b + 14), o * 3); o++; } }
+    const CAP = 680, RW = 60, ring = [];
+    for (let b = -5; b <= 5; b++) for (let a = -5; a <= 5; a++) { const d = Math.hypot(a, b) * CS; if (d < RW + CS * 0.7) ring.push([a, b, d]); }
+    ring.sort((p, q) => p[2] - q[2]);
+    const mk = (n) => { const at = new THREE.InstancedBufferAttribute(new Float32Array(CAP * n), n); at.setUsage(THREE.DynamicDrawUsage); return at; };
+    const iP = mk(4), iS = mk(4), iC = mk(3), iA = mk(3);
+    base.setAttribute('iP', iP); base.setAttribute('iS', iS); base.setAttribute('iC', iC); base.setAttribute('iA', iA); base.instanceCount = 0; base.setDrawRange(0, 0);
+    const uT0 = { value: 0 }, mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
+    mat.onBeforeCompile = (sh) => {
+      sh.uniforms.uT = (out.dyn.pkAmb && out.dyn.pkAmb.uT) || uT0;   // (pkAmbient's clock)
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec4 aQ;\nattribute vec4 aB;\nattribute vec3 aN;\nattribute vec4 iP;\nattribute vec4 iS;\nattribute vec3 iC;\nattribute vec3 iA;\nuniform float uT;\nvarying vec3 vPkC;')
+        .replace('#include <beginnormal_vertex>', [
+        'float pkK = floor( iS.w ), pkSd = fract( iS.w ), pkF = step( 0.5, pkK ) * ( 1.0 - step( 1.5, pkK ) ) + step( 2.5, pkK );   // pkF: the shrub form (kinds 1, 3, 4)',
+        'float pkWn = step( 0.7, min( color.r, min( color.g, color.b ) ) ), pkSu = ( 1.0 - pkWn ) * step( color.r * 1.3, color.g ), pkAu = 1.0 - pkWn - pkSu;   // the season (the probe)',
+        'float pkFl = step( 1.5, pkK ) * ( 1.0 - step( 2.5, pkK ) ) + step( 3.5, pkK );   // flowers',
+        'float pkH = mix( aB.x, aQ.w, pkF ), pkC = cos( iP.w ), pkS = sin( iP.w );',
+        'float pkVis = 1.0 - pkFl * ( 1.0 - pkSu ) - ( 1.0 - pkF ) * pkWn * step( 0.4, pkSd );   // (no flowers but in summer; winter: most grass under the snow)',
+        'float pkHy = iS.y * mix( 1.0, mix( 0.45, 0.7, pkF ), pkWn ) * pkVis;',
+        'vec3 pkL = mix( vec3( position.x * iS.x + aB.y * iS.z, position.y, position.z * iS.x + aB.z * iS.z ), vec3( aQ.x * iS.x, aQ.y, aQ.z * iS.x ), pkF ) * vec3( pkVis, pkHy, pkVis );',
+        'vec3 objectNormal = mix( aN, normalize( vec3( aQ.x * 0.8, 1.0, aQ.z * 0.8 ) ), pkF );',
+        'objectNormal = vec3( objectNormal.x * pkC - objectNormal.z * pkS, objectNormal.y, objectNormal.x * pkS + objectNormal.z * pkC );',
+        '#ifdef USE_TANGENT\nvec3 objectTangent = vec3( tangent.xyz );\n#endif',
+        '{ vec3 c1 = mix( iC * ( 0.5 + 0.8 * pkH ) + vec3( 0.1, 0.08, 0.0 ) * pkH, iA, smoothstep( 0.5, 0.85, pkH ) * pkFl ), c2 = iA * ( 0.6 + 0.5 * pkH );',
+        '  vec3 sn = vec3( 0.9, 0.93, 0.98 ), c3 = mix( mix( sn, iA * 0.8, smoothstep( 0.25, 1.0, pkH ) ), mix( iA * 0.4 + 0.06, sn, smoothstep( 0.55, 0.9, pkH ) ), pkF );',
+        '  vPkC = c1 * pkSu + c2 * pkAu + c3 * pkWn; }'].join('\n'))
+        .replace('#include <begin_vertex>', [
+        'vec3 transformed = vec3( pkL.x * pkC - pkL.z * pkS, pkL.y, pkL.x * pkS + pkL.z * pkC );',
+        '{ vec2 pkW = vec2( ' + wx.toFixed(4) + ', ' + wz.toFixed(4) + ' ); float ph = dot( iP.xz, pkW ) * 0.09;   // (gusts roll downwind)',
+        '  float g = 0.55 + 0.35 * sin( uT * 1.2 - ph ) + 0.2 * sin( uT * 2.9 - ph * 1.7 + pkSd * 3.0 ), fl = sin( uT * 4.7 + pkSd * 40.0 ) * ( 0.25 + 0.5 * step( 2.5, pkK ) * ( 1.0 - step( 3.5, pkK ) ) );',
+        '  float a = ( 0.1 + 0.2 * smoothstep( 0.0, 420.0, iP.y ) ) * pkH * pkH * pkHy * mix( 1.0, 0.45, pkF );   // (stronger higher up)',
+        '  transformed.xz += pkW * a * g + vec2( -pkW.y, pkW.x ) * a * fl * 0.5; transformed.y -= a * a * 0.8; }',
+        'transformed += iP.xyz;'].join('\n'));
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vPkC;').replace('#include <color_fragment>', 'diffuseColor.rgb *= vPkC;')
+        .replace('( gl_FrontFacing ) ? vLightFront : vLightBack', 'vLightFront').replace('( gl_FrontFacing ) ? vIndirectFront : vIndirectBack', 'vIndirectFront');   // (both sides of a blade lit alike)
+    };
+    mat.customProgramCacheKey = () => 'pkVeg';
+    const mesh = new THREE.Mesh(base, mat); mesh.frustumCulled = false; mesh.receiveShadow = true; mesh.name = 'pkVeg'; root.add(mesh);
+    // refill when the point the camera looks at moves to another 8 m cell: the camera's ray to the ground (not far ahead of a low camera); the new pieces are drawn
+    // from the next frame (their buffers go up to the GPU before it draws: count and data stay in step)
+    const st = { key: null, pend: -1 };
+    const fill = (fx, fz) => {
+      const c0 = Math.floor(fx / CS), c1 = Math.floor(fz / CS); let n = 0;
+      for (const [a, b] of ring) { const sp = span.get(key(c0 + a, c1 + b)); if (!sp) continue; const m = Math.min(sp[1], CAP - n); if (m <= 0) break;
+        const s0 = sp[0]; iP.array.set(sP.subarray(s0 * 4, (s0 + m) * 4), n * 4); iS.array.set(sS.subarray(s0 * 4, (s0 + m) * 4), n * 4); iC.array.set(sC.subarray(s0 * 3, (s0 + m) * 3), n * 3); iA.array.set(sA.subarray(s0 * 3, (s0 + m) * 3), n * 3); n += m; }
+      for (const at of [iP, iS, iC, iA]) { at.updateRange.offset = 0; at.updateRange.count = Math.max(1, n) * at.itemSize; at.needsUpdate = true; }
+      return n;
+    };
+    mesh.onBeforeRender = (r, sc, cam) => {
+      if (st.pend >= 0) { base.instanceCount = st.pend; base.setDrawRange(0, st.pend ? Infinity : 0); st.pend = -1; }
+      const e = cam.matrixWorld.elements, cx = e[12], cy = e[13], cz = e[14], fx = -e[8], fy = -e[9], fz = -e[10], gy = pkGround(cx, cz);
+      let d = Math.min(160, Math.max(0, cy - gy) / Math.max(0.02, -fy)); if (cy - gy < 6) d = Math.min(d, 30);
+      const px = cx + fx * d, pz = cz + fz * d, k = Math.floor(px / 8) + ',' + Math.floor(pz / 8);
+      if (k !== st.key) { st.key = k; st.pend = fill(px, pz); }
+    };
+    // more fallen logs and scattered rocks in the forest near the road (merged into the scenery; own stream)
+    const logC = [0.46, 0.4, 0.33], moss = [0.3, 0.36, 0.17], graniteF = [[0.5, 0.47, 0.44], [0.46, 0.44, 0.42], [0.54, 0.49, 0.45]];
+    let nLog = 0, nRock = 0;
+    const log = (x, z, L, rb, a0) => {   // a weathered log lying across the slope (along the contour), mossy on top, a broken stub or two
+      const gx = pkGround(x + 2, z) - pkGround(x - 2, z), gz = pkGround(x, z + 2) - pkGround(x, z - 2), ga = Math.hypot(gx, gz) > 0.2 ? Math.atan2(gz, gx) + Math.PI / 2 : a0, a = ga + (R() - 0.5) * 0.6;
+      const ca = Math.cos(a), sa = Math.sin(a), p0 = [x - ca * L / 2, 0, z - sa * L / 2], p1 = [x + ca * L / 2, 0, z + sa * L / 2];
+      if (pkNear(p0[0], p0[2]).dd < 2 || pkNear(p1[0], p1[2]).dd < 2 || excluded(p0[0], p0[2]) || excluded(p1[0], p1[2])) return false;
+      p0[1] = pkGround(p0[0], p0[2]) + rb * 0.55; p1[1] = pkGround(p1[0], p1[2]) + rb * 0.5; const ym = pkGround(x, z) + rb * 0.55;
+      if (Math.abs((p0[1] + p1[1]) / 2 - ym) > 0.3) return false;   // (no bridges over hollows)
+      const g = scen.get(x, z), c = vary(logC, R, 0.2), mc = vary(moss, R, 0.2), cm = [lerp(c[0], mc[0], 0.6), lerp(c[1], mc[1], 0.6), lerp(c[2], mc[2], 0.6)], cb = sh(c, 0.55), end = [0.7, 0.58, 0.42], n = 5, px = -sa, pz = ca;
+      const ring = (p, r) => { const o = []; for (let k = 0; k < n; k++) { const t = k / n * TAU + 0.3; o.push([p[0] + px * Math.cos(t) * r, p[1] + Math.sin(t) * r, p[2] + pz * Math.cos(t) * r]); } return o; };
+      const A0 = ring(p0, rb), A1 = ring(p1, rb * 0.75), mid = [x, (p0[1] + p1[1]) / 2, z], cl = (p, q) => p[1] > q[1] + rb * 0.5 ? cm : p[1] < q[1] - rb * 0.3 ? cb : c;
+      for (let k = 0; k < n; k++) { const j = (k + 1) % n; g.quadO(A0[k], A1[k], A1[j], A0[j], null, mid, null, [cl(A0[k], p0), cl(A1[k], p1), cl(A1[j], p1), cl(A0[j], p0)]); }
+      for (let k = 1; k < n - 1; k++) { g.triO(A0[0], A0[k], A0[k + 1], end, mid); g.triO(A1[0], A1[k], A1[k + 1], sh(end, 0.85), mid); }
+      if (R() < 0.6) { const f = 0.3 + R() * 0.4, q = [lerp(p0[0], p1[0], f), lerp(p0[1], p1[1], f) + rb * 0.4, lerp(p0[2], p1[2], f)], sd = R() < 0.5 ? -1 : 1, bl = 0.5 + R() * 0.7;   // a broken branch stub
+        const t = [q[0] + px * sd * bl * 0.7 + ca * bl * 0.3, q[1] + bl * 0.6, q[2] + pz * sd * bl * 0.7 + sa * bl * 0.3], rr = rb * 0.3;
+        for (let k = 0; k < 3; k++) { const e0 = k / 3 * TAU, e1 = e0 + TAU / 3; g.triO([q[0] + Math.cos(e0) * rr, q[1], q[2] + Math.sin(e0) * rr], t, [q[0] + Math.cos(e1) * rr, q[1], q[2] + Math.sin(e1) * rr], c, [q[0], q[1] - 1, q[2]], sh(c, 1.15), c); } }
+      nLog++; return true;
+    };
+    const stone = (x, z, r) => {   // a grey granite stone, half sunk, lichen and moss on top (a 5-sided ring, a bulge, a top point: 15 faces)
+      const y = pkGround(x, z) - r * 0.2 - pkSlope(x, z) * r * 0.5, g = scen.get(x, z), c = vary(graniteF[Math.floor(R() * 3)], R, 0.14), mc = vary(moss, R, 0.25), a0 = R() * TAU, B = [], M = [], sy = 0.55 + R() * 0.3;
+      for (let k = 0; k < 5; k++) { const a = a0 + k / 5 * TAU, rb = r * (0.85 + R() * 0.3), rm = r * (0.75 + R() * 0.3); B.push([x + Math.cos(a) * rb, y, z + Math.sin(a) * rb]); M.push([x + Math.cos(a + 0.4) * rm, y + r * sy * (0.75 + R() * 0.3), z + Math.sin(a + 0.4) * rm]); }
+      const top = [x + (R() - 0.5) * r * 0.4, y + r * sy * (1.2 + R() * 0.3), z + (R() - 0.5) * r * 0.4], inn = [x, y + r * 0.3, z], cB = sh(c, 0.72), cT = R() < 0.6 ? [lerp(c[0], mc[0], 0.55), lerp(c[1], mc[1], 0.55), lerp(c[2], mc[2], 0.55)] : sh(c, 1.1);
+      for (let k = 0; k < 5; k++) { const j = (k + 1) % 5; g.quadO(B[k], B[j], M[j], M[k], null, inn, null, [cB, cB, c, c]); g.triO(M[k], M[j], top, c, inn, c, cT); }
+      nRock++;
+    };
+    for (let s = 10; s < T.len - 10; s += 9) for (const side of [-1, 1]) {
+      const i = T.idx(s), u = R(), o = 2.2 + Math.pow(R(), 1.3) * 24, [x, z] = onSide(s, side, o), a0 = R() * TAU, L = 3 + R() * 6, rb = 0.14 + R() * 0.16, nS = 1 + Math.floor(R() * 3);
+      const y = pkGround(x, z), tl = pkTreeline(x, z); if (y > tl - 8 || u > 0.32 || excluded(x, z) || pkSlope(x, z) > 0.8 || pkNear(x, z).dd < 2) continue;
+      if (u < 0.17) log(x, z, L, rb, a0);
+      else for (let k = 0; k < nS; k++) { const a = R() * TAU, d = k ? 0.8 + R() * 2.5 : 0, sx = x + Math.cos(a) * d, sz = z + Math.sin(a) * d, r = (k ? 0.15 + R() * 0.3 : 0.3 + R() * 0.45);
+        if (pkNear(sx, sz).dd >= 1.5 + r && !excluded(sx, sz)) stone(sx, sz, r); }
+    }
+    out.pkVegStats = { plants: NI, kinds: nK, cells: cells.size, logs: nLog, rocks: nRock };
   }
 
   /* ---- round 6: side roads: junctions, turn-offs and car-park entrances along the course, closed for the race (own random stream) ---- */
