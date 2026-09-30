@@ -260,6 +260,10 @@ Dirka dveh igralcev, vsak na svojem telefonu (ali računalniku), preko interneta
 
 Telefona sta povezana neposredno (WebRTC) s knjižnico [PeerJS](https://peerjs.com). Da se najdeta, uporabita brezplačni javni strežnik PeerJS: pri hitri povezavi imajo čakalna mesta stalna imena (z različico igre), pri zasebni sobi je koda njun naslov na njem. Čakajoči telefon mora imeti igro odprto na zaslonu. Za neposredno povezavo telefona prek Googlovega strežnika STUN izvesta svoj javni naslov; kadar neposredna povezava ni mogoča (nekatera mobilna omrežja), gre promet prek posredniškega strežnika PeerJS (TURN). Če gostitelj med čakanjem na prijatelja za hip izgubi povezavo s strežnikom (npr. ko preklopi v drugo aplikacijo, da pošlje kodo), se soba z isto kodo sama znova poveže. Brez interneta igra deluje naprej, dirka s prijateljem pa ne.
 
+## Jezik (angleščina)
+
+V **Nastavitvah** je prva vrstica **Jezik · Language**: **Slovenščina** ali **English**. Izbira velja takoj (tudi med premorom dirke) in se shrani. V angleščini so vsi meniji, HUD, sporočila med dirko, rezultati, prvenstvo, kariera, lestvica in dirka s prijateljem, imena in opisi prog ter prvenstev (npr. Gorski reli je Mountain Rally, Bakreni gozd Copper Forest), številke in denar po angleško (1.9 km, 3,048 m, €12,300, 3rd). Imena pravih krajev ostanejo (Vršič, Eau Rouge, Fuchsröhre), oštevilčeni ovinki in serpentine pa se prevedejo (Turn 3, Hairpin 8). Komentator in sovoznik govorita angleško v obeh jezikih. Privzeto ime voznika se ob zamenjavi jezika zamenja (Igralec, Player).
+
 ## Igra kot aplikacija
 
 - **Android (Chrome):** na naslovnem zaslonu tapni **Namesti igro** (ali v meniju Chroma ⋮ → *Namesti aplikacijo*). Igra dobi svojo ikono, odpre se čez cel zaslon in se obrne tako, kot zahteva izbrana kamera (za avtom: pokončno; izometrična, kino in kokpit: ležeče).
@@ -277,6 +281,7 @@ Igra ne potrebuje namestitve ali prevajanja: `index.html` naloži datoteke po vr
 | `css/style.css` | slogi |
 | `js/vendor/three.r128.min.js` | knjižnica three.js (MIT) |
 | `js/tracks/<id>.js` | ena datoteka na progo: oblika, višine, sidrišča okolice, imena krajev (vrstni red v `index.html` = vrstni red v meniju) |
+| `js/lang.js` | besedila v angleščini (slovar: slovensko besedilo → angleško), številke, denar in mesta po jeziku, prevod strani (`index.html`) ob zamenjavi jezika |
 | `js/core.js` | proge, fizika (Circuit Superstars in arkadna, oprijem v dežju), AI, pravila dirke in prvenstva, promet in pešci na odprti cesti, policija (brez DOM in three.js) |
 | `js/tex.js` | proceduralne teksture |
 | `js/world.js` | 3D svet prog (teren, drevesa, gledalci, rekviziti, boksi); Nordschleife in Red Bull Ring si delita gradnjo terena iz višinskih podatkov, Vršič ima svojega graditelja (teren iz višinskega modela, raba tal, stavbe, jesenski gozd in sneg) |

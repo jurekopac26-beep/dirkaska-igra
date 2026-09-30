@@ -3291,10 +3291,14 @@ const Core = (function () {
      --------------------------------------------------------------------- */
   const CHAMP_PTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1], PLAYER_KEY = 'TI';
   const CHAMPS = [
-    { id: 'domaci', name: 'Domači pokal', desc: 'Štiri kratke proge za začetek: jezero, mesto in makadam.', tracks: ['jezero', 'ljubljana', 'gora', 'riviera'] },
-    { id: 'superstars', name: 'Superstars', desc: 'Proge v slogu Circuit Superstars z boksi in Monako.', tracks: ['gozd', 'toskana', 'grom', 'monaco'] },
-    { id: 'legende', name: 'Legende', desc: 'Pet slavnih prog v pravem merilu: Monako, Spa, Red Bull Ring, Suzuka in Zeleni pekel.', tracks: ['monaco', 'spa', 'rbring', 'suzuka', 'nring'] },
-    { id: 'veliko', name: 'Veliko prvenstvo', desc: 'Vse krožne proge igre, ena za drugo.', tracks: TRACKS.filter(d => !d.timeTrial && !d.open).map(d => d.id) },
+    { id: 'domaci', name: 'Domači pokal', desc: 'Štiri kratke proge za začetek: jezero, mesto in makadam.', tracks: ['jezero', 'ljubljana', 'gora', 'riviera'],
+      en: { name: 'Home Cup', desc: 'Four short tracks to begin with: a lake, a town and gravel.' } },
+    { id: 'superstars', name: 'Superstars', desc: 'Proge v slogu Circuit Superstars z boksi in Monako.', tracks: ['gozd', 'toskana', 'grom', 'monaco'],
+      en: { desc: 'Tracks in the style of Circuit Superstars with pits, and Monaco.' } },
+    { id: 'legende', name: 'Legende', desc: 'Pet slavnih prog v pravem merilu: Monako, Spa, Red Bull Ring, Suzuka in Zeleni pekel.', tracks: ['monaco', 'spa', 'rbring', 'suzuka', 'nring'],
+      en: { name: 'Legends', desc: 'Five famous tracks at full scale: Monaco, Spa, the Red Bull Ring, Suzuka and the Green Hell.' } },
+    { id: 'veliko', name: 'Veliko prvenstvo', desc: 'Vse krožne proge igre, ena za drugo.', tracks: TRACKS.filter(d => !d.timeTrial && !d.open).map(d => d.id),
+      en: { name: 'Grand Championship', desc: 'All the circuits of the game, one after another.' } },
   ];
   const champPoints = (pos) => CHAMP_PTS[pos - 1] || 0;   // (pos 1 = the winner)
   // the standings after the given rounds: [{ key, pts, wins, places: [firsts, seconds, ...], last: the place in the latest round }], leader first
