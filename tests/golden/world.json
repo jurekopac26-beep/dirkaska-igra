@@ -225,16 +225,16 @@
   }
  },
  "suzuka": {
-  "meshes": 795,
-  "verts": 519258,
+  "meshes": 797,
+  "verts": 523626,
   "instances": 17291,
   "props": 145,
   "crowd": 3526,
-  "world": "410af62d",
+  "world": "5d8cc55a",
   "propsHash": "1341661a",
   "floor": "9bfcb202/11620",
   "groups": {
-   "-:MeshLambertMaterial": "4e759ec9",
+   "-:MeshLambertMaterial": "71bfefe3",
    "-:MeshBasicMaterial": "3c5d956a",
    "crowd:MeshLambertMaterial": "1b2fd395",
    "tyremarks:MeshBasicMaterial": "ec8940b4"

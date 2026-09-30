@@ -1227,6 +1227,11 @@ const Render = (function () {
         seasonCol(U.c0, n++, m.color, grassy);
         if (atmos.season === 'autumn' && grassy) m.color.multiply(_sc.setRGB(1.18, 0.92, 0.62));   // (a green grass picture: drier, browner)
       }
+      if (U.bloom) {   // a world's blossom (Mie's cherries): autumn leaves and bare twigs out of season; the fallen petals only as built (spring)
+        if (U.bloom === 'petals') m.visible = atmos.season === 'summer';
+        else if (atmos.season === 'autumn') m.color.multiply(_sc.setRGB(0.85, 0.53, 0.24));
+        else if (atmos.season === 'winter') m.color.multiply(_sc.setRGB(0.5, 0.6, 0.54));
+      }
       if (U.dry) U.dry.copy(m.color);   // (the wet road darkens from this colour)
       m.needsUpdate = true;
     }

@@ -10341,21 +10341,31 @@ const World = (function () {
     g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setIndex(new THREE.BufferAttribute(idx, 1));
     g.computeBoundingSphere(); return g;
   }
-  function szTreeGeo(kind) {   // unit trees (height 1): 0 Japanese cedar (sugi), 1 broadleaf, 2 bush, 3 cherry in blossom
-    const g = new GB(), R = rng(710 + kind);
-    if (kind === 0) {   // sugi: a straight trunk, a tall narrow cone in tiers, dark blue-green
-      cone(g, 0, -0.02, 0, 0.03, 0.34, 4, [0.36, 0.24, 0.16], null, 0);
-      const col = [0.13, 0.24, 0.14], tip = [0.2, 0.33, 0.19];
-      cone(g, 0, 0.16, 0, 0.21, 0.4, 7, col, tip, 0.2); cone(g, 0, 0.38, 0, 0.16, 0.36, 7, [col[0] * 1.06, col[1] * 1.06, col[2] * 1.06], tip, 0.7); cone(g, 0, 0.6, 0, 0.1, 0.4, 6, col, tip, 1.2);
-    } else if (kind === 1) {   // broadleaf (oak, camphor): a round crown of two lumps
+  function szTreeGeo(kind) {   // unit trees (height 1, instances scale them), soft shaded as on the Nordschleife and at Spa: 0 Japanese cedar (sugi),
+    // 1 broadleaf, 2 bush, 3 cherry in blossom; 4-6 the cheaper sugi, broadleaf and cherry far from the road (fewer faces, a thin trunk or none)
+    const g = new GB(), R = rng(710 + kind), rs = ROCK_SMOOTH; ROCK_SMOOTH = true;   // (smooth normals from cone / ico; the flag is the theme's, restored below)
+    const sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k], su = [0.12, 0.23, 0.13], suT = [0.2, 0.32, 0.18], bl = [0.22, 0.38, 0.13], ch = [1.0, 0.81, 0.88];
+    if (kind === 0) {   // sugi: a straight reddish trunk, a tall narrow crown of four soft tiers, dark green
+      cone(g, 0, -0.02, 0, 0.03, 0.36, 4, [0.4, 0.25, 0.17], null, 0);
+      nrFir(g, 0, 0.12, 0, 0.22, 0.34, 7, sh(su, 0.9), suT, 0.2, 0.035); nrFir(g, 0, 0.3, 0, 0.18, 0.32, 7, su, suT, 0.7, 0.03);
+      nrFir(g, 0, 0.48, 0, 0.13, 0.3, 6, sh(su, 1.05), suT, 1.2, 0.025); nrFir(g, 0, 0.66, 0, 0.08, 0.34, 5, sh(su, 1.1), suT, 1.7, 0.02);
+    } else if (kind === 1) {   // broadleaf (oak, camphor): a round crown of three soft lumps
       cyl(g, 0, -0.02, 0, 0.04, 0.42, 4, [0.4, 0.34, 0.28], null, 0.03);
-      ico(g, 0, 0.62, 0, 0.34, 0.9, [0.22, 0.38, 0.13], R, 0.3); ico(g, 0.12, 0.74, 0.08, 0.2, 0.8, [0.25, 0.42, 0.15], R, 0.3);
-    } else if (kind === 2) {   // bush
-      ico(g, 0, 0.35, 0, 0.45, 0.8, [0.26, 0.4, 0.16], R, 0.3);
-    } else {   // cherry in full blossom (the Japanese Grand Prix is in April): dark trunk, a wide pale pink crown
+      ico(g, 0, 0.6, 0, 0.32, 0.86, bl, R, 0.22); nrLump(g, 0.14, 0.7, 0.08, 0.2, 0.85, sh(bl, 1.08), R, 0.2); nrLump(g, -0.12, 0.68, -0.1, 0.19, 0.85, sh(bl, 0.95), R, 0.2);
+    } else if (kind === 2) {   // bush: two soft lumps
+      ico(g, 0, 0.35, 0, 0.45, 0.8, [0.26, 0.4, 0.16], R, 0.3); nrLump(g, 0.18, 0.45, 0.1, 0.26, 0.8, [0.29, 0.44, 0.17], R, 0.25);
+    } else if (kind === 3) {   // cherry in full blossom (the race is in April): a dark trunk, a wide flat crown of soft pale pink lumps
       cyl(g, 0, -0.02, 0, 0.045, 0.4, 5, [0.3, 0.22, 0.2], null, 0.03);
-      ico(g, 0, 0.6, 0, 0.42, 0.72, [1.0, 0.76, 0.84], R, 0.35); ico(g, 0.18, 0.72, -0.1, 0.24, 0.7, [1.0, 0.82, 0.88], R, 0.3);
+      ico(g, 0, 0.58, 0, 0.4, 0.62, ch, R, 0.3); nrLump(g, 0.22, 0.66, -0.08, 0.24, 0.66, sh(ch, 1.03), R, 0.25);
+      nrLump(g, -0.2, 0.64, 0.12, 0.22, 0.66, [1.0, 0.88, 0.93], R, 0.25); nrLump(g, 0.02, 0.72, 0.2, 0.2, 0.7, [0.98, 0.76, 0.84], R, 0.25);
+    } else if (kind === 4) {   // far sugi: two tiers, no trunk
+      nrFir(g, 0, 0.1, 0, 0.21, 0.5, 6, sh(su, 0.92), suT, 0.2, 0.03); nrFir(g, 0, 0.46, 0, 0.13, 0.52, 5, su, suT, 0.9, 0.02);
+    } else if (kind === 5) {   // far broadleaf: one lump on a thin trunk
+      cyl(g, 0, -0.02, 0, 0.04, 0.4, 3, [0.4, 0.34, 0.28], null, 0.03); ico(g, 0, 0.6, 0, 0.34, 0.88, bl, R, 0.22);
+    } else {   // far cherry: one wide pink lump on a thin trunk
+      cyl(g, 0, -0.02, 0, 0.045, 0.38, 3, [0.3, 0.22, 0.2], null, 0.03); ico(g, 0, 0.58, 0, 0.42, 0.62, ch, R, 0.28);
     }
+    ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
   const SZ_FAN = [   // the fans' banners [background, text, text, size, stripe] (invented: no real name of a brand, person or place but the region's and the country's)
@@ -10381,6 +10391,18 @@ const World = (function () {
       x.stroke(); }
     for (const [st, n, sz] of [['rgba(44,90,36,0.5)', 80, 3], ['#f0f0e6', 40, 1]]) { x.fillStyle = st; for (let k = 0; k < n; k++) x.fillRect(Math.floor(r() * (S - sz)), Math.floor(r() * (S - sz)), sz, sz); }   // tufts, clover flowers
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = aniso || 4; return t;
+  }
+  function szPetalTex() {   // fallen cherry petals (256 px, transparent): a pale pink scatter, thicker towards the middle, fading out at the edge
+    const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), r = rng(4611);
+    const gr = x.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2); gr.addColorStop(0, 'rgba(246,200,216,0.22)'); gr.addColorStop(0.6, 'rgba(246,200,216,0.1)'); gr.addColorStop(1, 'rgba(246,200,216,0)');
+    x.fillStyle = gr; x.fillRect(0, 0, S, S);
+    for (let k = 0; k < 3200; k++) {   // petals: small ovals in pinks and a few white, more of them near the middle
+      const a = r() * TAU, d = Math.sqrt(r()) * S * 0.48, px = S / 2 + Math.cos(a) * d, py = S / 2 + Math.sin(a) * d, f = 1 - d / (S * 0.5);
+      if (r() > 0.2 + 0.8 * f) continue;
+      const t = r(); x.fillStyle = t < 0.12 ? 'rgba(255,248,250,0.95)' : t < 0.65 ? 'rgba(250,204,220,0.92)' : 'rgba(238,164,192,0.9)';
+      x.beginPath(); x.ellipse(px, py, 1.2 + r() * 0.9, 0.7 + r() * 0.5, r() * Math.PI, 0, TAU); x.fill();
+    }
+    const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
   }
   function szAtlas(names) {   // text boards (4 x 16 cells of 256 x 64): the corner names, braking boards, banners
     const c = document.createElement('canvas'); c.width = 1024; c.height = 1024; const x = c.getContext('2d');
@@ -11155,10 +11177,23 @@ const World = (function () {
     }
 
     /* ---- trees: Japanese cedars and broadleaves where the land cover has woods, bushes on the scrub, lone trees on the lawns, cherries in
-       blossom along the main straight and round the theme park ---- */
-    const tMat = new THREE.MeshLambertMaterial({ vertexColors: true });
-    const tk = [new IChunks(szTreeGeo(0), tMat, 128), new IChunks(szTreeGeo(1), tMat, 128), new IChunks(szTreeGeo(2), tMat, 128), new IChunks(szTreeGeo(3), tMat, 128)];
-    let nTrees = 0;
+       blossom along the main straight and round the theme park. Farther than 80 m from the road cheaper trees without shadows (bigger chunks).
+       The cherries have their own material: out of season Render.seasonWorld turns their blossom into autumn leaves or bare twigs ---- */
+    const tMat = new THREE.MeshLambertMaterial({ vertexColors: true }), tMatC = new THREE.MeshLambertMaterial({ vertexColors: true }); tMatC.userData.bloom = true;
+    const WIND = { value: 0 }; out.dyn.wind = WIND;   // the crowns sway a little, each tree in its own rhythm (the higher up, the more), as on the Nordschleife and at Spa
+    for (const m of [tMat, tMatC]) {
+      m.onBeforeCompile = (sh) => {
+        sh.uniforms.uWind = WIND;
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uWind;').replace('#include <begin_vertex>', '#include <begin_vertex>\n' +
+          '#ifdef USE_INSTANCING\nfloat wPh = instanceMatrix[3].x * 0.07 + instanceMatrix[3].z * 0.05;\n#else\nfloat wPh = 0.0;\n#endif\n' +
+          'float wK = position.y * position.y * 0.018;\ntransformed.x += wK * sin( uWind * 1.1 + wPh );\ntransformed.z += wK * 0.6 * sin( uWind * 0.83 + wPh * 1.7 );');
+      };
+      m.customProgramCacheKey = () => 'nrTreeWind';
+    }
+    const bush = szTreeGeo(2);
+    const tk = [new IChunks(szTreeGeo(0), tMat, 128), new IChunks(szTreeGeo(1), tMat, 128), new IChunks(bush, tMat, 128), new IChunks(szTreeGeo(3), tMatC, 128)];   // near the road (casting shadows)
+    const tf = [new IChunks(szTreeGeo(4), tMat, 192), new IChunks(szTreeGeo(5), tMat, 192), new IChunks(bush, tMat, 192), new IChunks(szTreeGeo(6), tMatC, 192)];   // more than 80 m out
+    let nTrees = 0; const cherries = [];   // (the cherries near the road: [x, z, crown width, distance to the centre line], for the fallen petals)
     {
       const L = SZC * SZT, maxT = Math.round(90000 * dens);
       const cherryAt = (x, z) => { if (moto && inPoly(moto, x, z)) return 0.3; const i = nearest(x, z).i; if (i < 0) return 0; const d = dS(i * ds); return d > T.len - 420 || d < 330 ? 0.22 : 0.02; };
@@ -11176,12 +11211,32 @@ const World = (function () {
           if (excluded(x, z) || inRects(x, z) || szPond(x, z)) continue;
           const y = szGround(x, z), ck = cl !== 1 && R() < cherryAt(x, z) * 3, sp = ck ? 3 : cl === 1 ? (P.n1(x * 2.1 + 300, z * 2.1) < 0.5 + (R() - 0.5) * 0.3 ? 0 : 1) : cl === 2 ? 2 : 1;
           const hgt = sp === 0 ? (13 + R() * 6) * (far ? 1.15 : 1) : sp === 1 ? (9 + R() * 4.5) * (far ? 1.15 : 1) : sp === 3 ? 6.5 + R() * 2 : 1.6 + R() * 2.2, wid = hgt * (sp === 0 ? 0.9 : sp === 1 ? 0.95 + R() * 0.25 : sp === 3 ? 1.25 : 1.1);
-          const cv = 0.86 + R() * 0.28; tk[sp].add(x, y - 0.1, z, R() * TAU, wid, hgt, sp === 3 ? [1, 1, 1] : [cv * (0.95 + R() * 0.1), cv, cv * (0.95 + R() * 0.1)]);
+          const cv = 0.86 + R() * 0.28; (far ? tf : tk)[sp].add(x, y - 0.1, z, R() * TAU, wid, hgt, sp === 3 ? [1, 1, 1] : [cv * (0.95 + R() * 0.1), cv, cv * (0.95 + R() * 0.1)]);
+          if (sp === 3 && rd < 150) cherries.push([x, z, wid, rd]);
           nTrees++;
         }
       }
     }
     for (const t of tk) t.addTo(root, true);
+    for (const t of tf) t.addTo(root, false);
+
+    /* ---- fallen petals under the cherries near the road: a pink scatter round each trunk (a 3 x 3 grid over the ground, 6 cm up), kept off the
+       road and its verge; only in spring (as built): Render.seasonWorld hides them in autumn and winter ---- */
+    let nPetal = 0;
+    if (cherries.length) {
+      const pMat = new THREE.MeshLambertMaterial({ map: ownTex(szPetalTex()), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+      pMat.userData.bloom = 'petals';
+      const gp = new Chunks(256, true), W1 = [1, 1, 1];
+      for (const [x, z, wid, rd] of cherries) {
+        const r = Math.min(wid * 0.62, rd - 14); if (r < 2) continue;
+        const a = crH(x, z, 61) * TAU, ca = Math.cos(a) * r, sa = Math.sin(a) * r, G = [];
+        for (let v = 0; v <= 3; v++) for (let u = 0; u <= 3; u++) { const du = u / 1.5 - 1, dv = v / 1.5 - 1, px = x + ca * du - sa * dv, pz = z + sa * du + ca * dv; G.push([px, szGround(px, pz) + 0.06, pz]); }
+        const g = gp.get(x, z);
+        for (let v = 0; v < 3; v++) for (let u = 0; u < 3; u++) { const k = v * 4 + u; g.quadUp(G[k], G[k + 1], G[k + 5], G[k + 4], [W1, W1, W1, W1], [[u / 3, v / 3], [(u + 1) / 3, v / 3], [(u + 1) / 3, (v + 1) / 3], [u / 3, (v + 1) / 3]]); }
+        nPetal++;
+      }
+      gp.addTo(root, pMat, false, true);
+    }
 
     /* ---- the lawns out past the barriers, mown in stripes too (as on the Red Bull Ring): MOW_B darker bands along the track from 3.5 m past
        the barrier (the ground's own colour, a deeper green, fading out 20-36 m out), 5 cm over the ground; not on the pit side of the pit
@@ -11217,7 +11272,7 @@ const World = (function () {
     if (!scrG.empty) { const st = ownTex(rbScreenTex({ name: ['MIE', 'JAPONSKA'], info: ['5,807 km', '18 zavojev'] })); addM(scrG, new THREE.MeshBasicMaterial({ map: st })); out.dyn.screens = { tex: st, f: -1 }; }
     crowdFinish(CR, root, out);
     out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, buildings: nBld, stands: nStands, fans: nFans, banners: nBanners, tv: nTV, boxes: nBoxes,
-      screens: nScr, photographers: nPh, stalls: nStall, loos: nLoo, rides: out.dyn.rides ? out.dyn.rides.length : 0, decals: nDecals, painted: nPaint, mown: nMow };   // (read by the tests)
+      screens: nScr, photographers: nPh, stalls: nStall, loos: nLoo, rides: out.dyn.rides ? out.dyn.rides.length : 0, decals: nDecals, painted: nPaint, mown: nMow, petals: nPetal };   // (read by the tests)
     return out;
   }
 

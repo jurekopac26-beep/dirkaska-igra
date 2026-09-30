@@ -91,10 +91,10 @@
   "jsMs": 0.83
  },
  "suzuka": {
-  "calls": 166,
-  "maxCalls": 184,
-  "kverts": 617,
-  "maxKverts": 700,
-  "jsMs": 0.82
+  "calls": 165,
+  "maxCalls": 183,
+  "kverts": 626,
+  "maxKverts": 722,
+  "jsMs": 0.85
  }
 }
