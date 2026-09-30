@@ -1166,27 +1166,131 @@ const Render = (function () {
      and no gap under the car) and the tone of the altitude: as the car climbs the air clears and the light cools (a whiter sun, a bluer sky and shade, a cooler, clearer fog, less of the low sun's warm haze); in the snow flurries near the summit a
      flatter, greyer light. Every frame from the road height, on top of what applyTheme set (the season, the time of day, the rain: taken
      again whenever applyTheme has run); half of it at dusk (the alpenglow stays), none at night. No draw calls ---------------- */
-  const pkL = { on: false, T: null, y0: 0, y1: 1, b: null, w: [-1, -1, -1, -1, -1] };
+  const pkL = { on: false, T: null, y0: 0, y1: 1, b: null, w: [-1, -1, -1, -1, -1], t: 0 };
   function pkLight(target) {
     const on = themeId === 'pikes' && !!curTrack && !!world && !!curTrack.hy, S = sun.shadow;
     if (on !== pkL.on) { pkL.on = on; pkL.b = null;
       if (on) { S.bias = -0.0005; S.normalBias = 0.045; S.radius = 2.5; }
-      else { S.bias = -0.0006; S.normalBias = 0.03; S.radius = 1; } }
+      else { S.bias = -0.0006; S.normalBias = 0.03; S.radius = 1; if (post) post.mat.uniforms.uCon.value = 1.04; pkRays(0); pkFlare(0); } }
     const ms = on ? (settings.quality === 'high' ? 1536 : 1024) : settings.quality === 'high' ? 2048 : 1024;   // (high: a softer PCF-soft edge, ~0.12 m texels)
     if (S.mapSize.x !== ms) { S.mapSize.set(ms, ms); if (S.map) { S.map.dispose(); S.map = null; } }
     if (!on) return;
-    const T = curTrack, U = post && post.mat.uniforms, W = pkL.w;
+    const T = curTrack, U = post && post.mat.uniforms, W = pkL.w, dt = clamp(time - pkL.t, 0, 0.25); pkL.t = time;
     if (pkL.T !== T) { pkL.T = T; pkL.y0 = T.hy[T.idx(T.startS)]; pkL.y1 = Math.max(pkL.y0 + 1, T.hy[T.idx(T.finishS)]); }
     if (!pkL.b || scene.fog.color.getHex() !== W[0] || sun.color.getHex() !== W[1] || hemi.color.getHex() !== W[2] || hemi.groundColor.getHex() !== W[3] || sun.intensity !== W[4])   // (applyTheme has run since)
-      pkL.b = { fog: scene.fog.color.clone(), sun: sun.color.clone(), sunI: sun.intensity, sky: hemi.color.clone(), gnd: hemi.groundColor.clone(), hemiI: hemi.intensity, haze: post ? post.haze : 0, tint: U ? U.uTint.value.clone() : null };
-    const b = pkL.b, A = atmos, tw = A.tod === 'night' ? 0 : A.tod === 'dusk' ? 0.45 : 1, u = clamp(((cam.gy || 0) - pkL.y0) / (pkL.y1 - pkL.y0), 0, 1);
-    const k = u * (0.6 + 0.4 * u) * tw * (1 - 0.6 * Math.max(0, wet)), sn = (world.dyn.pkWx ? world.dyn.pkWx.sU.uD.value : 0) * tw;   // k: the altitude's share (a little more towards the top); sn: the summit's snow flurries
-    scene.fog.color.copy(b.fog).lerp(_c2.setHex(A.season === 'winter' ? 0xd2def0 : 0xc6d8f0), 0.7 * k).lerp(_c2.setHex(0xd8dee6), 0.3 * sn); renderer.setClearColor(scene.fog.color, 1);
+      pkL.b = { fog: scene.fog.color.clone(), sun: sun.color.clone(), sunI: sun.intensity, sky: hemi.color.clone(), gnd: hemi.groundColor.clone(), hemiI: hemi.intensity, haze: post ? post.haze : 0, tint: U ? U.uTint.value.clone() : null, sat: U ? U.uSat.value : 1 };
+    const b = pkL.b, A = atmos, tw = A.tod === 'night' ? 0 : A.tod === 'dusk' ? 0.45 : 1, gy = cam.gy || 0, u = clamp((gy - pkL.y0) / (pkL.y1 - pkL.y0), 0, 1), r = Math.max(0, wet);
+    const k = u * (0.6 + 0.4 * u) * tw * (1 - 0.6 * r), sn = (world.dyn.pkWx ? world.dyn.pkWx.sU.uD.value : 0) * tw;   // k: the altitude's share (a little more towards the top); sn: the summit's snow flurries
+    // (round 6, by day only, fading out as the rain sets in) a warmer, softer, hazier valley morning and a colder, clearer, crisper summit:
+    // lo the valley's share, hi the summit's
+    const dW = A.tod === 'day' ? 1 - clamp(r * 4, 0, 1) : 0, lo = (1 - u) * (1 - u) * dW, hi = u * Math.sqrt(u) * dW * (1 - 0.7 * sn);
+    // (dusk) the alpenglow: high up the setting sun turns pink-orange on the rocks and the snow (the faces towards it the most: the sun's own
+    // light), the shade and the far valleys below a cool violet
+    const ag = A.tod === 'dusk' ? Core.sstep(250, 325, gy) * (1 - clamp(r * 2, 0, 1)) : 0;
+    scene.fog.color.copy(b.fog).lerp(_c2.setHex(A.season === 'winter' ? 0xd2def0 : 0xc6d8f0), 0.7 * k).lerp(_c2.setHex(0xd8dee6), 0.3 * sn);
+    if (lo > 0) scene.fog.color.lerp(_c2.setHex(0xe8cdb4), 0.3 * lo); if (hi > 0) scene.fog.color.lerp(_c2.setHex(A.season === 'winter' ? 0xc4d6f2 : 0xb4cff4), 0.35 * hi);
+    if (ag > 0) scene.fog.color.lerp(_c2.setHex(0xb49ab8), 0.4 * ag);
+    renderer.setClearColor(scene.fog.color, 1);
     sun.color.copy(b.sun).lerp(_c2.setHex(0xfff7ee), 0.6 * k); sun.intensity = b.sunI * (1 + 0.06 * k) * (1 - 0.2 * sn);
+    if (lo > 0) sun.color.lerp(_c2.setHex(0xffb466), 0.4 * lo); if (hi > 0) { sun.color.lerp(_c2.setHex(0xf2f6ff), 0.45 * hi); sun.intensity *= 1 + 0.1 * hi; }
+    if (ag > 0) { sun.color.lerp(_c2.setHex(0xff8270), 0.6 * ag); sun.intensity *= 1 + 0.5 * ag; }
     hemi.color.copy(b.sky).lerp(_c2.setHex(0x84acf6), 0.5 * k); hemi.groundColor.copy(b.gnd).lerp(_c2.setHex(0x535f7c), 0.4 * k); hemi.intensity = b.hemiI * (1 + 0.1 * sn);   // (the shade: the sky's light, bluer)
-    if (post) { post.haze = b.haze * (1 - 0.65 * k); if (b.tint) U.uTint.value.set(b.tint.x - 0.035 * k, b.tint.y, b.tint.z + 0.045 * k); }
-    if (target) scene.fog.near *= 1 + 0.3 * k;   // (the clear air up high: the haze starts further off; the far end, and so the far clip, stay)
+    if (lo > 0) { hemi.color.lerp(_c2.setHex(0xd8c4b0), 0.3 * lo); hemi.groundColor.lerp(_c2.setHex(0x7a5c3e), 0.3 * lo); }
+    if (hi > 0) { hemi.color.lerp(_c2.setHex(0x5c8ef0), 0.4 * hi); hemi.groundColor.lerp(_c2.setHex(0x3f4f78), 0.35 * hi); hemi.intensity *= 1 - 0.08 * hi; }   // (deeper blue shade under the thin air's dark sky)
+    if (ag > 0) { hemi.color.lerp(_c2.setHex(0xa88cc0), 0.4 * ag); hemi.groundColor.lerp(_c2.setHex(0x7a4c5c), 0.35 * ag); hemi.intensity *= 1 + 0.12 * ag; }
+    if (post) { post.haze = b.haze * (1 - 0.65 * k) * (1 + 0.35 * lo) * (1 - 0.3 * hi);
+      if (b.tint) U.uTint.value.set(b.tint.x - 0.035 * k + 0.045 * lo - 0.02 * hi + 0.05 * ag, b.tint.y - 0.01 * lo - 0.03 * ag, b.tint.z + 0.045 * k - 0.05 * lo + 0.035 * hi - 0.02 * ag);
+      U.uSat.value = b.sat * (1 + 0.1 * hi + 0.08 * ag); U.uCon.value = 1.04 + 0.07 * hi - 0.02 * lo; }
+    if (target) scene.fog.near *= 1 + 0.3 * k + 0.4 * hi;   // (the clear air up high: the haze starts further off; the far end, and so the far clip, stay)
     W[0] = scene.fog.color.getHex(); W[1] = sun.color.getHex(); W[2] = hemi.color.getHex(); W[3] = hemi.groundColor.getHex(); W[4] = sun.intensity;
+    pkRays(settings.quality === 'high' && A.tod === 'day' && r <= 0 ? 1 - Core.sstep(170, 200, gy) : 0, dt);
+    pkFlare(A.tod !== 'night' && r < 0.5 && (lastMode === 'cockpit' || (lastMode === 'tv' && !cam.shot)) ? 1 - 2 * r : 0, dt);
+  }
+
+  /* ---------------- Pikes Peak's shafts of sun through the forest (the 'high' quality only, by day, below the tree line): a dozen long soft
+     quads leaning along the sun's rays, anchored on the ground on a hashed 9 m grid round the view (they stay put as the view moves), each
+     turned about its own axis to face the camera, fading in along its length, at the view's edge and close to the camera, breathing gently.
+     One mesh, one draw call (none when hidden), its 48 corners written on the CPU ---------------- */
+  const pkR = { mesh: null, N: 12, c: [] };
+  const _rV = new THREE.Vector3(), _rS = new THREE.Vector3(), _rM = new THREE.Vector3(), _rQ = new THREE.Quaternion();
+  function pkRays(a, dt) {
+    if (!pkR.mesh) {
+      if (!(a > 0)) return;
+      const N = pkR.N, g = new THREE.BufferGeometry(), aw = new Float32Array(N * 12), idx = [];
+      for (let n = 0; n < N; n++) { for (let v = 0; v < 4; v++) { aw[(n * 4 + v) * 3] = v & 1 ? 1 : -1; aw[(n * 4 + v) * 3 + 1] = v >> 1; aw[(n * 4 + v) * 3 + 2] = 0; }
+        const o = n * 4; idx.push(o, o + 1, o + 2, o + 1, o + 3, o + 2); }
+      g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * 12), 3)); g.setAttribute('aw', new THREE.BufferAttribute(aw, 3)); g.setIndex(idx);
+      const m = new THREE.ShaderMaterial({ uniforms: { uC: { value: new THREE.Color() } }, transparent: true, depthWrite: false, fog: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending,
+        vertexShader: 'attribute vec3 aw; varying vec3 vW; void main(){ vW = aw; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+        fragmentShader: 'uniform vec3 uC; varying vec3 vW; void main(){ float x = vW.x, y = vW.y; float c = (1.0 - x * x) * (0.75 + 0.25 * cos(x * 5.0));' +
+          ' float l = smoothstep(0.0, 0.12, y) * pow(1.0 - y, 1.6); gl_FragColor = vec4(uC, c * l * vW.z); }' });
+      const mesh = new THREE.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = 5; mesh.visible = false; scene.add(mesh); pkR.mesh = mesh;
+    }
+    const M = pkR.mesh; if (!(a > 0.01) || !world || !world.groundH) { M.visible = false; return; }
+    const G = world.groundH, N = pkR.N, R = 40, C = 9, cx = cam.vcx || 0, cz = cam.vcz || 0, cp = camera.position, sl = Math.hypot(sunOff[0], sunOff[1], sunOff[2]);
+    const dx = sunOff[0] / sl, dy = sunOff[1] / sl, dz = sunOff[2] / sl, hl = Math.hypot(dx, dz) || 1, qx = -dz / hl, qz = dx / hl;   // (d: towards the sun; q: across it, on the ground)
+    const L = pkR.c; L.length = 0;
+    for (let i = Math.floor((cx - R) / C); i <= Math.floor((cx + R) / C); i++) for (let j = Math.floor((cz - R) / C); j <= Math.floor((cz + R) / C); j++) {
+      const h = hash3(i * 7919 + j * 104729 + 0.5); if (h > 0.2) continue;
+      const x = (i + hash3(i * 31 + j * 57 + 1.3)) * C, z = (j + hash3(i * 91 + j * 13 + 2.7)) * C, d = Math.hypot(x - cx, z - cz); if (d > R) continue;
+      L.push([d, x, z, h * 5]); }
+    L.sort((p, q) => p[0] - q[0]);
+    const P = M.geometry.attributes.position.array, AW = M.geometry.attributes.aw.array; let n = 0;
+    for (; n < N && n < L.length; n++) {
+      const [d, x0, z0, s] = L[n], sw = Math.sin(time * 0.09 + s * 6.3) * 1.6, x = x0 + qx * sw, z = z0 + qz * sw, y = G(x, z) - 0.5, len = 24 + 16 * hash3(s + 3.1), w = 1.1 + 1.8 * hash3(s + 7.7);
+      _rM.set(x + dx * len * 0.4, y + dy * len * 0.4, z + dz * len * 0.4); const dc = _rM.distanceTo(cp);
+      _rS.set(dx, dy, dz).cross(_rV.copy(cp).sub(_rM)).normalize().multiplyScalar(w);
+      const al = a * (1 - Core.sstep(R * 0.6, R, d)) * Core.sstep(8, 22, dc) * (0.55 + 0.45 * Math.sin(time * (0.35 + 0.2 * hash3(s + 5.5)) + s * 11));
+      for (let v = 0; v < 4; v++) { const sd = v & 1 ? 1 : -1, t = (v >> 1) * len, o = (n * 4 + v) * 3;
+        P[o] = x + dx * t + _rS.x * sd; P[o + 1] = y + dy * t + _rS.y * sd; P[o + 2] = z + dz * t + _rS.z * sd; AW[o + 2] = al; } }
+    for (; n < N; n++) for (let v = 0; v < 4; v++) AW[(n * 4 + v) * 3 + 2] = 0;
+    M.geometry.attributes.position.needsUpdate = true; M.geometry.attributes.aw.needsUpdate = true;
+    M.material.uniforms.uC.value.copy(sun.color).multiplyScalar(0.26 * Math.min(1.4, sun.intensity)); M.visible = true;
+  }
+
+  /* ---------------- Pikes Peak's lens flare (the cockpit and the replay's TV cameras, when the low sun is in the picture): a soft bloom disc and
+     a star of light on the sun, rings and ghosts along the line from the sun through the middle of the picture. Hidden when the sun is behind
+     the mountain (the ground's height sampled along the ray to it, as the TV cameras' pkLos does; the forest below the tree line too), fading in
+     and out. One mesh drawn straight in the screen's space, last, one draw call (none when hidden) ---------------- */
+  const pkF = { mesh: null, vis: 0, n: 0, blk: false, sx: 0, sy: 0 };
+  function pkFlare(a, dt) {
+    if (!pkF.mesh) {
+      if (!(a > 0)) return;
+      // [t along the line (0 the sun, 1 the middle, 2 the opposite point), half width, half height (of the picture's height), kind (0 soft disc, 1 ring, 2 small hard disc), r, g, b]
+      const S = [[0, 0.55, 0.55, 0, 1, 0.78, 0.5], [0, 0.11, 0.11, 0, 1, 0.96, 0.85], [0, 0.8, 0.012, 0, 1, 0.85, 0.65], [0.28, 0.035, 0.035, 2, 1, 0.6, 0.3],
+        [0.5, 0.08, 0.08, 0, 0.5, 0.9, 0.55], [0.7, 0.025, 0.025, 2, 0.5, 0.7, 1], [0.92, 0.15, 0.15, 1, 0.85, 0.55, 1], [1.16, 0.05, 0.05, 2, 1, 0.55, 0.25], [1.42, 0.22, 0.22, 1, 0.5, 0.75, 1]];
+      const N = S.length, g = new THREE.BufferGeometry(), pos = new Float32Array(N * 12), aS = new Float32Array(N * 16), col = new Float32Array(N * 12), idx = [];
+      S.forEach((q, n) => { for (let v = 0; v < 4; v++) { const o = n * 4 + v; pos[o * 3] = v & 1 ? 1 : -1; pos[o * 3 + 1] = v >> 1 ? 1 : -1; aS.set(q.slice(0, 4), o * 4); col.set(q.slice(4), o * 3); }
+        idx.push(n * 4, n * 4 + 1, n * 4 + 2, n * 4 + 1, n * 4 + 3, n * 4 + 2); });
+      g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('aS', new THREE.BufferAttribute(aS, 4)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setIndex(idx);
+      const m = new THREE.ShaderMaterial({ uniforms: { uSun: { value: new THREE.Vector2() }, uAsp: { value: 1 }, uA: { value: 0 }, uTint: { value: new THREE.Color() } },
+        transparent: true, depthWrite: false, depthTest: false, fog: false, blending: THREE.AdditiveBlending,
+        vertexShader: 'attribute vec4 aS; attribute vec3 color; uniform vec2 uSun; uniform float uAsp; varying vec2 vC; varying vec3 vCol; varying float vK;' +
+          ' void main(){ vC = position.xy; vCol = color; vK = aS.w; vec2 c = uSun * (1.0 - aS.x); gl_Position = vec4(c + position.xy * vec2(aS.y / uAsp, aS.z), 0.0, 1.0); }',
+        fragmentShader: 'uniform float uA; uniform vec3 uTint; varying vec2 vC; varying vec3 vCol; varying float vK; void main(){ float r = length(vC), f;' +
+          ' if (vK < 0.5) f = pow(max(0.0, 1.0 - r), 2.4); else if (vK < 1.5) f = exp(-pow((r - 0.82) * 9.0, 2.0)) * 0.2 + max(0.0, 0.8 - r) * 0.06; else f = smoothstep(1.0, 0.75, r) * 0.4;' +
+          ' gl_FragColor = vec4(vCol * uTint, f * uA); }' });
+      const mesh = new THREE.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = 1000; mesh.visible = false; scene.add(mesh); pkF.mesh = mesh;
+    }
+    const M = pkF.mesh; let goal = 0;
+    if (a > 0.01 && world && world.groundH) {
+      // the sun in the camera's view: its direction turned into the camera's frame, then onto the picture
+      const sl = Math.hypot(sunOff[0], sunOff[1], sunOff[2]), dx = sunOff[0] / sl, dy = sunOff[1] / sl, dz = sunOff[2] / sl;
+      _rV.set(dx, dy, dz).applyQuaternion(_rQ.copy(camera.quaternion).invert());
+      if (_rV.z < -0.05) { const ty = Math.tan(camera.fov * Math.PI / 360), sx = pkF.sx = _rV.x / -_rV.z / (ty * camera.aspect), sy = pkF.sy = _rV.y / -_rV.z / ty;
+        const e = Math.max(Math.abs(sx), Math.abs(sy));
+        if (e < 1.3) { goal = a * (1 - Core.sstep(0.95, 1.3, e)) * (0.65 + 0.35 * (1 - clamp(Math.hypot(sx, sy) / 1.3, 0, 1)));
+          if ((pkF.n = (pkF.n + 1) % 3) === 0 || pkF.vis < 0.01) {   // (the mountain in the way: the ground along the ray, every 3rd frame)
+            const G = world.groundH, p = camera.position; let blk = false;
+            for (let j = 0, d = 4, dm = Math.min(camera.far * 0.9, 2500); j < 22 && d < dm && !blk; j++, d *= 1.33) {   // (only as far as the world is drawn)
+              const x = p.x + dx * d, z = p.z + dz * d, gh = G(x, z); if (p.y + dy * d < gh + (d < 10 ? 0.3 : gh < 180 ? Math.min(4, 0.06 * d) : 1.2)) blk = true; }
+            pkF.blk = blk; }
+          if (pkF.blk) goal = 0; } }
+    }
+    pkF.vis += (goal - pkF.vis) * Math.min(1, (dt || 0) * 5 + (goal < pkF.vis ? 0.05 : 0));
+    if (pkF.vis < 0.005) { M.visible = false; return; }
+    const U = M.material.uniforms; U.uSun.value.set(pkF.sx, pkF.sy); U.uAsp.value = camera.aspect; U.uA.value = pkF.vis * (atmos.tod === 'dusk' ? 1.3 : 1); U.uTint.value.copy(sun.color);
+    M.visible = true;
   }
 
   /* ---------------- the season and the time of day (setAtmos({ season: 'summer' | 'autumn' | 'winter', tod: 'day' | 'dusk' | 'night' })):
