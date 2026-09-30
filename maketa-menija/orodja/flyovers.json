@@ -1,10 +1,14 @@
 [
-  ["vrsic", {"kbps": 900, "speed": 400, "back": 520, "up": 330, "ahead": 260, "fogNear": 900, "fogFar": 3400, "color": 16765498,
-    "places": [{"n": "Jasna", "d": 1814}, {"n": "Mihov dom", "d": 6533}, {"n": "Ruska kapelica", "d": 7039}, {"n": "Koča na Gozdu", "d": 8281}, {"n": "Erjavčeva koča", "d": 11244}]}],
-  ["pikes", {"speed": 280, "back": 360, "up": 230, "ahead": 180, "fogNear": 650, "fogFar": 2600, "color": 16765498,
-    "places": [{"n": "Halfway Picnic Grounds", "d": 1000}, {"n": "Glen Cove", "d": 2688}, {"n": "Devil's Playground", "d": 4050}, {"n": "Bottomless Pit", "d": 4466}]}],
-  ["ouninpohja", {"kbps": 900, "speed": 380, "back": 420, "up": 270, "ahead": 210, "fogNear": 760, "fogFar": 2900, "color": 16746026,
-    "places": [{"n": "Naarajärvi", "d": 820}, {"n": "Keltainen talo", "d": 2192}, {"n": "Split 1", "d": 3229}, {"n": "Split 2", "d": 6458}, {"n": "Amazon", "d": 8001}]}],
-  ["gora", {"kbps": 800, "speed": 150, "back": 170, "up": 110, "ahead": 90, "fogNear": 340, "fogFar": 1400, "color": 16746026,
-    "places": [{"n": "Split 1", "d": 545}, {"n": "Split 2", "d": 1090}]}]
+  ["vrsic", {"kbps": 900, "speed": 400, "back": 520, "up": 330, "ahead": 260, "fogNear": 900, "fogFar": 3400, "places": [{"n": "Jasna", "d": 1814}, {"n": "Mihov dom", "d": 6533}, {"n": "Ruska kapelica", "d": 7039}, {"n": "Koča na Gozdu", "d": 8281}, {"n": "Erjavčeva koča", "d": 11244}], "alt": [810, 1611]}],
+  ["pikes", {"speed": 280, "back": 360, "up": 230, "ahead": 180, "fogNear": 650, "fogFar": 2600, "places": [{"n": "Halfway Picnic Grounds", "d": 1000}, {"n": "Glen Cove", "d": 2688}, {"n": "Devil's Playground", "d": 4050}, {"n": "Bottomless Pit", "d": 4466}], "alt": [2862, 4301]}],
+  ["ouninpohja", {"kbps": 900, "speed": 380, "back": 420, "up": 270, "ahead": 210, "fogNear": 760, "fogFar": 2900, "places": [{"n": "Naarajärvi", "d": 820}, {"n": "Keltainen talo", "d": 2192}, {"n": "Split 1", "d": 3229}, {"n": "Split 2", "d": 6458}, {"n": "Amazon", "d": 8001}]}],
+  ["gora", {"kbps": 800, "speed": 150, "back": 170, "up": 110, "ahead": 90, "fogNear": 340, "fogFar": 1400, "places": [{"n": "Split 1", "d": 545}, {"n": "Split 2", "d": 1090}]}],
+  ["jezero", {"kbps": 800, "speed": 150, "back": 200, "up": 130, "ahead": 100, "fogNear": 420, "fogFar": 1700, "places": []}],
+  ["riviera", {"kbps": 800, "speed": 130, "back": 175, "up": 115, "ahead": 90, "fogNear": 380, "fogFar": 1500, "places": []}],
+  ["ljubljana", {"kbps": 800, "speed": 130, "back": 175, "up": 115, "ahead": 90, "fogNear": 380, "fogFar": 1500, "places": []}],
+  ["monaco", {"kbps": 850, "speed": 165, "back": 220, "up": 140, "ahead": 110, "fogNear": 480, "fogFar": 1900, "places": []}],
+  ["rbring", {"kbps": 850, "speed": 200, "back": 260, "up": 165, "ahead": 130, "fogNear": 560, "fogFar": 2200, "places": []}],
+  ["suzuka", {"kbps": 850, "speed": 230, "back": 300, "up": 190, "ahead": 150, "fogNear": 640, "fogFar": 2500, "places": []}],
+  ["spa", {"kbps": 900, "speed": 250, "back": 320, "up": 205, "ahead": 160, "fogNear": 700, "fogFar": 2700, "places": [{"n": "Eau Rouge", "d": 916}, {"n": "Pouhon", "d": 3670}, {"n": "Blanchimont", "d": 5683}]}],
+  ["nring", {"kbps": 900, "speed": 540, "back": 700, "up": 450, "ahead": 350, "fogNear": 1200, "fogFar": 4600, "places": [{"n": "Flugplatz", "d": 2456}, {"n": "Adenauer Forst", "d": 5266}, {"n": "Karussell", "d": 12060}, {"n": "Pflanzgarten", "d": 15104}]}]
 ]

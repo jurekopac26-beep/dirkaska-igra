@@ -254,109 +254,149 @@
     return h;
   }
 
-  /* ---------------- the maps of the open roads and rally stages (routes.js), in three versions to choose from ----------------
-     1 a flyover video (the route drawn in the game's world, the names over it), 2 a map from above with the height profile (a rally
-     stage: its pace notes), 3 a floating block of the land with the route on it (as the circuits' models) */
+  /* ---------------- the maps of the tracks (routes.js), in four versions to choose from ----------------
+     1 a flyover video: the route drawn in the game's world behind the point running along it (green on the flat, red where it climbs
+       steeply), the names over it, in the corner the place the point has reached and its height; 2 a map from above to the stage's edges
+       (an open road: its height profile; a rally stage or a circuit: its corners); 3 a floating block of the land with the route on it;
+       4 a drone's shots of the track drawn by the game itself (the open road with its traffic and people, elsewhere the AI cars racing),
+       the place and its height in the corner */
   const RT = window.ROUTES || {};
-  const isRoute = (t) => !!t && t.group !== 'circuit' && !!RT[t.id];
-  const loadImg = (t, wet) => isRoute(t) ? 'assets/maps/block-' + t.id + (wet ? '-rain' : '') + '.webp' : trackImg(t, wet);
+  const isRoute = (t) => !!t && !!RT[t.id];
+  const loadImg = (t, wet) => isRoute(t) && RT[t.id].block ? 'assets/maps/block-' + t.id + (wet ? '-rain' : '') + '.webp' : trackImg(t, wet);
   const pathD = (pts) => 'M' + pts.map(p => p[0] + ' ' + p[1]).join('L');
-  const altOf = (R, M, h) => M.alt ? M.alt[0] + (h - R.prof[0]) * (M.alt[1] - M.alt[0]) / ((R.prof[R.prof.length - 1] - R.prof[0]) || 1) : null;
+  // a height of the world as a real one: scaled between the real start and finish where they are known (routeMaps alt), else the height
+  // at the start (routeMaps base) and the world's rise and fall from there
+  const altOf = (R, M, h) => M.alt ? M.alt[0] + (h - R.prof[0]) * (M.alt[1] - M.alt[0]) / ((R.prof[R.prof.length - 1] - R.prof[0]) || 1) : M.base != null ? M.base + h - R.prof[0] : null;
+  function altAt(R, M, d) { const P = R.prof, n = P.length, x = Math.min(n - 1, Math.max(0, d / R.len * (n - 1))), i = Math.min(n - 2, Math.floor(x)); return altOf(R, M, P[i] + (P[i + 1] - P[i]) * (x - i)); }
+  // the places along the run ([metres, name]) and the one reached at d metres
+  const hudOf = (R, M) => M.hud || R.hud || [[0, 'Start']];
+  function placeAt(H, d) { let p = H[0][1]; for (const q of H) if (q[0] <= d) p = q[1]; return p; }
   const km = (m) => (m / 1000).toFixed(1) + ' km';
   const flagSvg = (fin) => fin ? '<g class="fl fin"><path d="M0 0V-26" /><rect x="0" y="-26" width="16" height="11"/><path class="ck" d="M0-26h4v3.7h-4zM8-26h4v3.7h-4zM4-22.3h4v3.6h-4zM12-22.3h4v3.6h-4zM0-18.7h4v3.7h-4zM8-18.7h4v3.7h-4z"/></g>'
     : '<g class="fl"><path d="M0 0V-26"/><path class="fg" d="M0-26h16l-4 5.5 4 5.5H0z"/></g>';
   function mark(x, y, name, sub, fin, cls) {   // a flag on the map and its name (with a dark edge round the letters: readable on any land)
     return '<g class="mk ' + (cls || '') + '" transform="translate(' + x + ' ' + y + ')"><circle r="6"/>' + flagSvg(fin) + '<text x="' + (fin ? -6 : 6) + '" y="-32" text-anchor="' + (fin ? 'end' : 'start') + '">' + esc(name) + (sub ? '<tspan class="sub" x="' + (fin ? -6 : 6) + '" dy="-20">' + esc(sub) + '</tspan>' : '') + '</text></g>';
   }
+  function marks(R, M, pts, rally) {   // the start and the finish (a closed track: one flag)
+    const a = pts[0], b = pts[pts.length - 1], A = M.alt;
+    return R.open ? mark(a[0], a[1], M.start || 'Start', A ? num(A[0]) + ' m' : rally ? 'SS start' : '', false, 's') + mark(b[0], b[1], M.finish || 'Finish', A ? num(A[1]) + ' m' : '', true, 'f') : mark(a[0], a[1], 'Start · finish', '', false, 's');
+  }
   function routeLines(id, pts, rally) {   // the route drawn on, then a glowing point running along it at an even pace (its glow a gradient: cheap to move)
     const d = pathD(pts), c = rally ? ['#fff0dc', '#ffffff'] : ['#ffe07a', '#ffd23a'];
     return '<defs><radialGradient id="rg-' + id + '"><stop offset="0" stop-color="#fff8d0"/><stop offset=".35" stop-color="' + c[0] + '" stop-opacity=".75"/><stop offset="1" stop-color="' + c[1] + '" stop-opacity="0"/></radialGradient></defs>' +
       '<path class="rt-o" d="' + d + '"/><path class="rt" id="rt-' + id + '" d="' + d + '" pathLength="1"/>' + (rally ? '<path class="rt-c" d="' + d + '"/>' : '') +
-      '<g class="rt-dot" opacity="0"><circle r="30" fill="url(#rg-' + id + ')"/><circle class="c" r="9"/><set attributeName="opacity" to="1" begin="1.6s"/>' +
+      '<g class="rt-dot" opacity="0"><g class="dz"><circle r="30" fill="url(#rg-' + id + ')"/><circle class="c" r="9"/></g><set attributeName="opacity" to="1" begin="1.6s"/>' +
       '<animateMotion dur="' + (rally ? 11 : 15) + 's" begin="1.6s" repeatCount="indefinite"><mpath href="#rt-' + id + '"/></animateMotion></g>';
   }
-  function splitMarks(pts) {   // a rally stage: the two split times at a third and two thirds of it
+  function splitMarks(pts) {   // a rally stage (a circuit: its sectors): the two split times at a third and two thirds of it
     return [1, 2].map(k => { const p = pts[Math.round((pts.length - 1) * k / 3)]; return '<g class="sp" transform="translate(' + p[0] + ' ' + p[1] + ')"><rect x="-15" y="-15" width="30" height="30" rx="6"/><text y="6" text-anchor="middle">S' + k + '</text></g>'; }).join('');
   }
-  function flyView(t, R, lockd) {
-    const F = R.fly;
-    return '<div class="dio fly' + (lockd ? ' lock' : '') + '" data-route="' + t.id + '"><video muted loop playsinline autoplay preload="auto" poster="assets/maps/fly-' + t.id + '.webp" src="assets/maps/fly-' + t.id + '.webm"></video><div class="flab" aria-hidden="true"></div></div>';
+  const hudBox = () => '<div class="hud" aria-hidden="true"><b></b><small></small></div>';
+  function flyView(t, lockd) {
+    return '<div class="dio fly' + (lockd ? ' lock' : '') + '" data-route="' + t.id + '" data-kind="fly"><video muted loop playsinline autoplay preload="auto" poster="assets/maps/fly-' + t.id + '.webp" src="assets/maps/fly-' + t.id + '.webm"></video><div class="flab" aria-hidden="true"></div>' + hudBox() + '</div>';
   }
-  function topView(t, R, M, rally, lockd) {
-    const T = R.top, pts = T.route; let y0 = 1e9, y1 = -1e9; for (const p of pts) { y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); }
-    const vy = Math.max(0, y0 - 92), vh = Math.min(T.H - vy, y1 - y0 + 150), a = pts[0], b = pts[pts.length - 1];
-    let h = '<div class="dio topmap' + (rally ? ' rally' : '') + (lockd ? ' lock' : '') + '"><svg class="mapsvg" viewBox="0 ' + vy + ' ' + T.W + ' ' + vh + '" aria-label="Map of ' + esc(t.name) + '">' +
-      '<defs><clipPath id="mc-' + t.id + '"><rect x="0" y="' + vy + '" width="' + T.W + '" height="' + vh + '" rx="22"/></clipPath></defs><g clip-path="url(#mc-' + t.id + ')">' +
-      '<image href="assets/maps/top-' + t.id + '.webp" width="' + T.W + '" height="' + T.H + '"/><image class="wet" href="assets/maps/top-' + t.id + '-rain.webp" width="' + T.W + '" height="' + T.H + '"/></g>' +
-      '<rect class="frame" x="1" y="' + (vy + 1) + '" width="' + (T.W - 2) + '" height="' + (vh - 2) + '" rx="22"/>' +
-      routeLines(t.id, pts, rally) + (rally ? splitMarks(pts) : '');
-    const A = M.alt ? [M.alt[0], M.alt[1]] : null;
-    if (R.open) h += mark(a[0], a[1], M.start || 'Start', A ? num(A[0]) + ' m' : rally ? 'SS start' : '', false, 's') + mark(b[0], b[1], M.finish || 'Finish', A ? num(A[1]) + ' m' : '', true, 'f');
-    else h += mark(a[0], a[1], 'Start · finish', '', false, 's');
-    h += '</svg>' + (rally ? paceNotes(t, R, M) : profile(t, R, M)) + '</div>';
-    return h;
+  function droneView(t, lockd) {
+    return '<div class="dio fly drone' + (lockd ? ' lock' : '') + '" data-route="' + t.id + '" data-kind="drone"><video muted loop playsinline autoplay preload="auto" poster="assets/maps/drone-' + t.id + '.webp" src="assets/maps/drone-' + t.id + '.webm"></video>' + hudBox() + '</div>';
   }
-  function profile(t, R, M) {   // the heights along the run (as a stage presentation): the real heights where known
+  function topView(t, R, M, notes, lockd) {   // the whole map to the stage's edges (fitMaps: the route above the notes)
+    const T = R.top, pts = T.route, rally = t.group === 'rally';
+    let h = '<div class="dio topmap' + (rally ? ' rally' : '') + (lockd ? ' lock' : '') + '" data-map="' + t.id + '"><svg class="mapsvg" viewBox="0 0 ' + T.W + ' ' + T.H + '" preserveAspectRatio="xMidYMid slice" aria-label="Map of ' + esc(t.name) + '">' +
+      '<image href="assets/maps/top-' + t.id + '.webp" width="' + T.W + '" height="' + T.H + '"/><image class="wet" href="assets/maps/top-' + t.id + '-rain.webp" width="' + T.W + '" height="' + T.H + '"/>' +
+      routeLines(t.id, pts, rally) + (notes ? splitMarks(pts) : '') + marks(R, M, pts, rally);
+    return h + '</svg>' + (notes ? paceNotes(t, R, M) : profile(t, R, M)) + '</div>';
+  }
+  function profile(t, R, M) {   // the heights along the run (as a stage presentation): the real heights where known; a low strip under the map
     const P = R.prof, n = P.length, L = R.len, alts = P.map(h => altOf(R, M, h) != null ? altOf(R, M, h) : h);
-    const lo = Math.min(...alts), hi = Math.max(...alts), span = Math.max(40, hi - lo), X = (k) => 18 + k / (n - 1) * 364, Y = (v) => 96 - (v - lo) / span * 60;
-    let pd = 'M18 104', gain = 0; alts.forEach((v, k) => { pd += 'L' + X(k).toFixed(1) + ' ' + Y(v).toFixed(1); if (k && v > alts[k - 1]) gain += v - alts[k - 1]; }); pd += 'L382 104Z';
-    let h = '<svg class="prof" viewBox="0 0 400 124" aria-label="Height profile"><defs><linearGradient id="pg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd23a"/><stop offset="1" stop-color="#ffd23a" stop-opacity=".12"/></linearGradient></defs>';
-    h += '<path class="pa" d="' + pd + '"/><line class="ax" x1="18" y1="104" x2="382" y2="104"/>';
-    const places = ((R.fly && R.fly.places) || []).slice(0, 3);
-    places.forEach(nm => { const q = R.places.find(x => x[0] === nm || x[0].indexOf(nm) >= 0); if (!q) return; const k = Math.round(q[1] / L * (n - 1)), x = X(k), y = Y(alts[Math.min(n - 1, k)]); h += '<line class="pl" x1="' + x + '" y1="' + y + '" x2="' + x + '" y2="' + (y - 14) + '"/><text class="pn" x="' + x + '" y="' + (y - 18) + '" text-anchor="middle">' + esc(nm) + '</text>'; });
-    h += '<text class="pt" x="18" y="118">0</text><text class="pt" x="382" y="118" text-anchor="end">' + km(L) + '</text><text class="pg" x="200" y="118" text-anchor="middle">' + (M.alt ? 'Climb +' + num(Math.round(gain)) + ' m' : 'Height ±' + Math.round(span) + ' m') + '</text></svg>';
+    const lo = Math.min(...alts), hi = Math.max(...alts), span = Math.max(40, hi - lo), X = (k) => 18 + k / (n - 1) * 364, Y = (v) => 50 - (v - lo) / span * 36;
+    let pd = 'M18 52', gain = 0; alts.forEach((v, k) => { pd += 'L' + X(k).toFixed(1) + ' ' + Y(v).toFixed(1); if (k && v > alts[k - 1]) gain += v - alts[k - 1]; }); pd += 'L382 52Z';
+    let h = '<svg class="prof" viewBox="0 0 400 66" aria-label="Height profile"><defs><linearGradient id="pg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd23a"/><stop offset="1" stop-color="#ffd23a" stop-opacity=".12"/></linearGradient></defs>';
+    h += '<path class="pa" d="' + pd + '"/><line class="ax" x1="18" y1="52" x2="382" y2="52"/>';
+    let px = -1e9;   // (the places of the flyover along it, each far enough from the one before to read)
+    ((R.fly && R.fly.places) || []).forEach(nm => { const q = R.places.find(x => x[0] === nm || x[0].indexOf(nm) >= 0); if (!q) return; const k = Math.round(q[1] / L * (n - 1)), x = X(k), y = Y(alts[Math.min(n - 1, k)]); if (x - px < 78 || x > 350) return; px = x; h += '<line class="pl" x1="' + x + '" y1="' + y + '" x2="' + x + '" y2="' + (y - 8) + '"/><text class="pn" x="' + x + '" y="' + (y - 11) + '" text-anchor="middle">' + esc(nm) + '</text>'; });
+    h += '<text class="pt" x="18" y="64">0</text><text class="pt" x="382" y="64" text-anchor="end">' + km(L) + '</text><text class="pg" x="200" y="64" text-anchor="middle">' + (M.alt ? 'Climb +' + num(Math.round(gain)) + ' m' : 'Height ±' + Math.round(span) + ' m') + '</text></svg>';
     return '<div class="profw">' + h + '</div>';
   }
-  function paceNotes(t, R, M) {   // a rally stage: its corners along it, left ones above the line, right ones below, the tighter the taller
-    const N = R.notes || [], L = R.len, X = (d) => 18 + d / L * 364, col = (g) => g <= 2 ? '#ff4b4b' : g <= 4 ? '#ff9a3a' : '#ffe07a';
-    let h = '<svg class="prof pace" viewBox="0 0 400 124" aria-label="Pace notes"><line class="ax" x1="18" y1="62" x2="382" y2="62"/>';
-    [1, 2].forEach(k => { const x = X(L * k / 3); h += '<line class="spl" x1="' + x + '" y1="18" x2="' + x + '" y2="106"/><text class="pt" x="' + x + '" y="14" text-anchor="middle">SPLIT ' + k + '</text>'; });
-    N.forEach(([d, side, g]) => { const x = X(d), hgt = 8 + (7 - g) * 5.5, y = side < 0 ? 58 - hgt : 66; h += '<rect x="' + (x - 2.2).toFixed(1) + '" y="' + y.toFixed(1) + '" width="4.4" height="' + hgt.toFixed(1) + '" rx="2" fill="' + col(g) + '"/>'; });
-    h += '<text class="pt" x="18" y="120">' + esc((M.stage || 'SS') + ' START') + '</text><text class="pt" x="382" y="120" text-anchor="end">' + (R.open ? 'STOP · ' : 'LAP · ') + km(L) + '</text>';
-    h += '<text class="pg" x="200" y="120" text-anchor="middle">' + N.length + ' corners · ' + esc(M.surface || 'Gravel').toUpperCase() + '</text><text class="lr" x="386" y="36" text-anchor="end">L</text><text class="lr" x="386" y="96" text-anchor="end">R</text></svg>';
+  function paceNotes(t, R, M) {   // a rally stage or a circuit: its corners along it, left ones above the line, right ones below, the tighter the taller
+    const N = R.notes || [], L = R.len, X = (d) => 18 + d / L * 364, col = (g) => g <= 2 ? '#ff4b4b' : g <= 4 ? '#ff9a3a' : '#ffe07a', rally = t.group === 'rally';
+    let h = '<svg class="prof pace" viewBox="0 0 400 66" aria-label="Corners"><line class="ax" x1="18" y1="29" x2="382" y2="29"/>';
+    [1, 2].forEach(k => { const x = X(L * k / 3); h += '<line class="spl" x1="' + x + '" y1="4" x2="' + x + '" y2="54"/><text class="pt sm" x="' + (x + 3) + '" y="8">' + (rally ? 'SPLIT ' : 'SECTOR ') + k + '</text>'; });
+    N.forEach(([d, side, g]) => { const x = X(d), hgt = 3 + (7 - g) * 3.3, y = side < 0 ? 27 - hgt : 31; h += '<rect x="' + (x - 2).toFixed(1) + '" y="' + y.toFixed(1) + '" width="4" height="' + hgt.toFixed(1) + '" rx="1.8" fill="' + col(g) + '"/>'; });
+    h += '<text class="pt" x="18" y="64">' + esc(rally ? (M.stage || 'SS') + ' START' : 'START') + '</text><text class="pt" x="382" y="64" text-anchor="end">' + (R.open ? 'STOP · ' : 'LAP · ') + km(L) + '</text>';
+    h += '<text class="pg" x="200" y="64" text-anchor="middle">' + N.length + ' corners · ' + esc(M.surface || (rally ? 'Gravel' : 'Asphalt')).toUpperCase() + '</text><text class="lr" x="392" y="20" text-anchor="end">L</text><text class="lr" x="392" y="46" text-anchor="end">R</text></svg>';
     return '<div class="profw">' + h + '</div>';
   }
-  function blockView(t, R, M, rally, lockd) {
-    const B = R.block, pts = B.route, a = pts[0], b = pts[pts.length - 1], A = M.alt;
+  function blockView(t, R, M, lockd) {
+    const B = R.block, pts = B.route, rally = t.group === 'rally';
     let h = '<div class="dio blockv' + (lockd ? ' lock' : '') + (rally ? ' rally' : '') + '"><div class="isl" style="animation-delay:-' + Math.round(performance.now() % 5000) + 'ms"><svg viewBox="0 0 ' + B.W + ' ' + B.H + '" aria-label="3D model of ' + esc(t.name) + '">' +
       '<image href="assets/maps/block-' + t.id + '.webp" width="' + B.W + '" height="' + B.H + '"/><image class="wet" href="assets/maps/block-' + t.id + '-rain.webp" width="' + B.W + '" height="' + B.H + '"/>' +
-      routeLines(t.id + '-b', pts, rally) + (rally ? splitMarks(pts) : '');
-    h += R.open ? mark(a[0], a[1], M.start || 'Start', A ? num(A[0]) + ' m' : '', false, 's') + mark(b[0], b[1], M.finish || 'Finish', A ? num(A[1]) + ' m' : '', true, 'f') : mark(a[0], a[1], 'Start · finish', '', false, 's');
+      routeLines(t.id + '-b', pts, rally) + (t.group !== 'road' ? splitMarks(pts) : '') + marks(R, M, pts, rally);
     return h + '</svg></div></div>';
   }
   function routeView(t, lockd) {
-    const R = RT[t.id], M = D.routeMaps[t.id] || {}, rally = t.group === 'rally';
+    const R = RT[t.id], M = D.routeMaps[t.id] || {}, notes = t.group !== 'road';
+    // the version chosen; where a track has no such video (yet), its map
+    const v = mapV === 4 && R.drone ? 4 : mapV === 1 && R.fly ? 1 : mapV === 3 && R.block ? 3 : 2;
     let h = '<div class="sky" aria-hidden="true"><i class="sun"></i><i class="cloud"></i></div>';
-    if (mapV === 1 && R.fly) h += flyView(t, R, lockd); else if (mapV === 3) h += blockView(t, R, M, rally, lockd); else h += topView(t, R, M, rally, lockd);
-    const V = D.mapVersions.find(v => v.n === mapV) || D.mapVersions[0];
-    h += '<div class="mapv" role="group" aria-label="Map version (mockup)"><span>MAP</span>' + D.mapVersions.map(v => '<button aria-pressed="' + (mapV === v.n) + '" data-act="mapv:' + v.n + '" title="' + esc(v.name) + '">' + v.n + '</button>').join('') + '<em>' + esc(V.name) + '</em></div>';
+    h += v === 1 ? flyView(t, lockd) : v === 4 ? droneView(t, lockd) : v === 3 ? blockView(t, R, M, lockd) : topView(t, R, M, notes, lockd);
+    const V = D.mapVersions.find(x => x.n === mapV) || D.mapVersions[0];
+    h += '<div class="mapv" role="group" aria-label="Map version (mockup)"><span>MAP</span>' + D.mapVersions.map(x => '<button aria-pressed="' + (mapV === x.n) + '" data-act="mapv:' + x.n + '" title="' + esc(x.name) + '">' + x.n + '</button>').join('') + '<em>' + esc(V.name) + '</em></div>';
     return h;
   }
   const stageView = (t, lockd) => isRoute(t) ? routeView(t, lockd) : dio(t, lockd);
-  // the flyover's names: each frame of the video says where the start, the finish and the places are
+  // the map from above: the route in the part of the stage above the notes (as big as fits, not blurred), the map to every edge of the stage
+  // (as big as the videos); the route's line, flags and point the same size on the screen however far the map is zoomed
+  function fitMaps() {
+    for (const box of app.querySelectorAll('.topmap[data-map]')) {
+      const T = RT[box.dataset.map].top, svg = $('svg', box), W = box.clientWidth, H = box.clientHeight, ov = $('.profw', box), oh = ov ? ov.offsetHeight + 46 : 40;
+      if (!W || !H) continue;
+      if (!T.bb) { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (const p of T.route) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); } T.bb = [x0, y0, x1, y1]; }
+      const [x0, y0, x1, y1] = T.bb, top = 44, free = Math.max(40, H - oh - top);   // (room at the top for the switch and the ribbon, at the bottom for the notes)
+      const cover = Math.max(W / T.W, H / T.H), fit = Math.min((W - 32) / (x1 - x0), (free - 40) / (y1 - y0));
+      const s = Math.max(cover, Math.min(fit, 0.72)), k = 0.5 / s;
+      const vw = W / s, vh = H / s, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2 - 20 / s;
+      const vx = Math.min(Math.max(0, cx - vw / 2), Math.max(0, T.W - vw)), vy = Math.min(Math.max(0, cy - (top + free / 2) / s), Math.max(0, T.H - vh));
+      svg.setAttribute('viewBox', vx.toFixed(1) + ' ' + vy.toFixed(1) + ' ' + vw.toFixed(1) + ' ' + vh.toFixed(1));
+      svg.style.setProperty('--k', k.toFixed(3));
+      for (const g of svg.querySelectorAll('.mk, .sp')) { if (!g.dataset.at) g.dataset.at = g.getAttribute('transform'); g.setAttribute('transform', g.dataset.at + ' scale(' + k.toFixed(3) + ')'); }
+      for (const g of svg.querySelectorAll('.dz')) g.setAttribute('transform', 'scale(' + k.toFixed(3) + ')');
+    }
+  }
+  window.addEventListener('resize', fitMaps);
+  // the videos: the names over the flyover (each of its frames says where the start, the finish and the places are), the place reached and
+  // its height in the corner (the drone: its shot's), a short dip at the loop
   let flyRaf = 0;
   function flyLabels() {
     cancelAnimationFrame(flyRaf); flyRaf = 0;
-    const box = $('.fly', app); if (!box) return;
-    const R = RT[box.dataset.route], F = R.fly, M = D.routeMaps[box.dataset.route] || {}, v = $('video', box), lab = $('.flab', box), L = R.len;
-    const alt = M.alt ? M.alt.map(a => num(a) + ' m') : ['', ''];
-    const tag = (cls, name, sub, icon) => '<div class="fl-' + cls + '">' + (icon || '') + '<b>' + esc(name) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</div>';
-    const loop = !R.open, sub0 = alt[0] || (M.stage ? M.stage + ' start' : ''), sub1 = alt[1] || '';
-    lab.innerHTML = tag('s start', loop ? 'Start · finish' : M.start || 'Start', sub0, flagSvg(false).replace('<g', '<svg viewBox="-2 -28 20 30" width="18" height="26"><g') + '</svg>') + tag('s finish', loop ? 'Finish' : M.finish || 'Finish', sub1, '<svg viewBox="-2 -28 20 30" width="18" height="26">' + flagSvg(true) + '</svg>') +
-      F.places.map(n => tag('q', n, '')).join('');
-    const els = [...lab.children], pd = F.places.map(n => { const q = R.places.find(x => x[0] === n || x[0].indexOf(n) >= 0); return q ? q[1] : (n === 'Split 1' ? L / 3 : n === 'Split 2' ? 2 * L / 3 : -1e9); });
-    let last = 0, looped = false;
+    const box = $('.dio.fly', app); if (!box) return;
+    const id = box.dataset.route, R = RT[id], drone = box.dataset.kind === 'drone', F = drone ? R.drone : R.fly, M = D.routeMaps[id] || {}, v = $('video', box), lab = $('.flab', box), L = R.len, H0 = hudOf(R, M);
+    const hud = $('.hud', box), hb = $('b', hud), hs = $('small', hud);
+    let els = [], pd = [];
+    if (!drone) {
+      const alt = M.alt ? M.alt.map(a => num(a) + ' m') : ['', ''];
+      const tag = (cls, name, sub, icon) => '<div class="fl-' + cls + '">' + (icon || '') + '<b>' + esc(name) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</div>';
+      const loop = !R.open, sub0 = alt[0] || (M.stage ? M.stage + ' start' : ''), sub1 = alt[1] || '';
+      lab.innerHTML = tag('s start', loop ? 'Start · finish' : M.start || 'Start', sub0, flagSvg(false).replace('<g', '<svg viewBox="-2 -28 20 30" width="18" height="26"><g') + '</svg>') + tag('s finish', loop ? 'Finish' : M.finish || 'Finish', sub1, '<svg viewBox="-2 -28 20 30" width="18" height="26">' + flagSvg(true) + '</svg>') +
+        F.places.map(n => tag('q', n, '')).join('');
+      els = [...lab.children]; pd = F.places.map(n => { const q = R.places.find(x => x[0] === n || x[0].indexOf(n) >= 0); return q ? q[1] : (n === 'Split 1' ? L / 3 : n === 'Split 2' ? 2 * L / 3 : -1e9); });
+    }
+    let last = 0, looped = false, pl = null, al = null;
     const step = () => {
       if (!document.contains(v)) return;
       // a short dip at the loop: the end fades out, the start fades back in (not the very first start: the poster shows there)
       const t = v.currentTime || 0, dur = v.duration; if (t < last - 1) looped = true; last = t;
       const op = isFinite(dur) && dur > 3 && !v.paused ? Math.max(0, Math.min(1, (dur - t) / 0.45, looped ? t / 0.45 : 1)) : 1;
-      v.style.opacity = lab.style.opacity = op < 1 ? op.toFixed(2) : '';
-      const f = F.frames[Math.min(F.frames.length - 1, Math.floor((v.currentTime || 0) * F.fps))], W = box.clientWidth, H = box.clientHeight, k = Math.max(W / F.W, H / F.H), ox = (W - F.W * k) / 2, oy = (H - F.H * k) / 2;
-      const put = (el, P, on) => { const vis = on && P[2] && P[0] > -40 && P[0] < F.W + 40 && P[1] > 0 && P[1] < F.H + 20; el.style.opacity = vis ? 1 : 0; if (vis) el.style.transform = 'translate(' + (ox + P[0] * k).toFixed(1) + 'px,' + (oy + P[1] * k).toFixed(1) + 'px)'; };
-      const d = f[0];
-      put(els[0], f[1], d < L * 0.12); put(els[1], f[2], d > L * 0.8);
-      pd.forEach((q, i) => put(els[2 + i], f[4][i], Math.abs(d - q) < L * 0.07));
+      v.style.opacity = hud.style.opacity = op < 1 ? op.toFixed(2) : ''; if (lab) lab.style.opacity = v.style.opacity;
+      let d, name;
+      if (drone) { let s = F.shots[0]; for (const q of F.shots) if (q[0] + 0.3 <= t) s = q; name = s[1]; d = s[2]; }
+      else {
+        const f = F.frames[Math.min(F.frames.length - 1, Math.floor(t * F.fps))], W = box.clientWidth, H = box.clientHeight, k = Math.max(W / F.W, H / F.H), ox = (W - F.W * k) / 2, oy = (H - F.H * k) / 2;
+        const put = (el, P, on) => { const y = P ? oy + P[1] * k : 0, vis = on && P && P[2] && P[0] > -40 && P[0] < F.W + 40 && P[1] > 0 && y < H - 60; el.style.opacity = vis ? 1 : 0; if (vis) el.style.transform = 'translate(' + (ox + P[0] * k).toFixed(1) + 'px,' + y.toFixed(1) + 'px)'; };
+        d = f[0]; name = placeAt(H0, d);
+        put(els[0], f[1], d < L * 0.12); put(els[1], f[2], d > L * 0.8);
+        pd.forEach((q, i) => put(els[2 + i], f[4][i], Math.abs(d - q) < L * 0.07));
+      }
+      if (name !== pl) { hb.textContent = name; pl = name; hud.classList.remove('in'); void hud.offsetWidth; hud.classList.add('in'); }
+      const a = altAt(R, M, d); if (a != null && Math.round(a) !== al) { al = Math.round(a); hs.textContent = num(al) + ' m'; }
       flyRaf = requestAnimationFrame(step);
     };
     flyRaf = requestAnimationFrame(step);
@@ -369,9 +409,9 @@
   /* ---------------- single race, step 1: the mode ---------------- */
   function vMode() {
     let h = '<section class="scr" id="s-mode" aria-label="Single race: choose a mode">' + topbar('Single race', true, [1, 2, 'Mode']);
-    h += '<div class="modes" role="radiogroup" aria-label="Mode">' + D.modes.map(m => '<button class="mode m-' + m.id + '" role="radio" aria-checked="' + (mode === m.id) + '" data-act="mode:' + m.id + '">' +
+    h += '<div class="modes" aria-label="Mode">' + D.modes.map(m => '<button class="mode m-' + m.id + '" aria-current="' + (mode === m.id) + '" data-act="mode:' + m.id + '">' +
       '<span class="tx"><b>' + esc(m.name) + '</b><small>' + esc(m.sub) + '</small><em class="chip">' + esc(m.chip) + '</em></span><span class="im"><img src="' + m.img + '" alt=""></span><i class="tick" aria-hidden="true">' + I.check + '</i></button>').join('') + '</div>';
-    return h + foot('<button class="go" data-act="mode-next">Next</button>') + '</section>';
+    return h + '</section>';
   }
 
   /* ---------------- single race, step 2: the tracks of the mode (today's race first in its own mode) ---------------- */
@@ -606,7 +646,7 @@
       const c = D.cars[carIdx]; Car3D.show(c.model, colorIdx, { dark: !!c.soon }); Car3D.setVisible(true);
     } else if (car3dReady) Car3D.setVisible(false);
     if (screen === 'track') wx.attach($('#track-stage', app), wxMode(), shown !== 'track'); else wx.detach();
-    flyLabels();
+    flyLabels(); fitMaps();
     shown = screen;
     if (sheet) { app.insertAdjacentHTML('beforeend', typeof sheet === 'function' ? sheet() : sheet); if (sheetOn) $('.sheet-bg', app).classList.add('still'); }
     sheetOn = !!sheet;
@@ -644,7 +684,7 @@
     const t = R.track, el = document.createElement('div'); el.className = 'loading'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Race');
     el.innerHTML = '<img src="' + loadImg(t, R.wet) + '" alt=""><h2>' + esc(fullName(t)) + '</h2><div class="bar"><b style="width:4%"></b></div><p>' + esc(R.label) + '</p>';
     app.appendChild(el);
-    requestAnimationFrame(() => requestAnimationFrame(() => { $('.bar b', el).style.width = '100%'; }));
+    requestAnimationFrame(() => requestAnimationFrame(() => { const b = $('.bar b', el); if (b) b.style.width = '100%'; }));   // (a slow device: the picker may already be there)
     setTimeout(() => {
       const opts = R.kind === 'multi' ? [['1', '1st', 'p1'], ['2', '2nd', '']] : R.chase ? [['3', 'Escaped ★★★', 'p1'], ['2', 'Escaped ★★', 'p2'], ['1', 'Escaped ★', 'p3'], ['0', 'Busted', 'busted']] :
         R.trial ? [['gold', 'Gold time', 'p1'], ['silver', 'Silver time', 'p2'], ['bronze', 'Bronze time', 'p3'], ['none', 'No medal', '']] :
@@ -697,8 +737,7 @@
       case 'go': go(v); break;
       case 'back': back(); break;
       case 'single': go('mode'); break;
-      case 'mode': mode = v; render(true); break;
-      case 'mode-next': trackIdx = 0; lapsSel = null; if (!groupList(group).length) group = 'circuit'; go('track'); break;
+      case 'mode': mode = v; trackIdx = 0; lapsSel = null; if (!groupList(group).length) group = 'circuit'; go('track'); break;   // (a tap on a mode goes straight to its tracks)
       case 'group': group = v; trackIdx = 0; lapsSel = null; render(true); break;
       case 'mapv': mapV = +v; store.set('mapv', mapV); render(true); break;
       case 'car': carIdx = (carIdx + +v + D.cars.length) % D.cars.length; render(); break;

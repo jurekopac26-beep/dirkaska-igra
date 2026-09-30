@@ -1,7 +1,8 @@
-# Mockup only: raw/maps (routemap.mjs, flyover.mjs) -> site/assets/maps/*.webp|webm|jpg and site/routes.js (window.ROUTES): for each
-# open road and rally stage the route over the top map and over the 3D block, the height profile, the places, the pace notes (the
-# corners along a rally stage) and, frame by frame, where the flyover video shows the start, the finish, the point and the places.
-import json, math, os, shutil, subprocess, sys
+# Mockup only: raw/maps (routemap.mjs, flyover.mjs, drone.mjs) -> site/assets/maps/*.webp|webm and site/routes.js (window.ROUTES): for
+# each track the route over the top map and over the 3D block, the height profile, the places, the corners (a rally stage, a circuit),
+# frame by frame where the flyover video shows the start, the finish and the places, and when each of the drone's shots starts. A track
+# without its map from above yet is left out; one without its block, flyover or drone shots yet goes without them.
+import json, math, os, re, shutil, subprocess, sys
 from PIL import Image, ImageEnhance
 
 RAW, SITE = 'raw/maps', sys.argv[1] if len(sys.argv) > 1 else '..'
@@ -11,7 +12,17 @@ except ImportError: FF0 = 'ffmpeg'
 FF = os.environ.get('FFMPEG', FF0)
 OUT = os.path.join(SITE, 'assets', 'maps')
 os.makedirs(OUT, exist_ok=True)
-TRACKS = ['vrsic', 'pikes', 'ouninpohja', 'gora']
+TRACKS = ['vrsic', 'pikes', 'ouninpohja', 'gora', 'jezero', 'riviera', 'ljubljana', 'monaco', 'rbring', 'suzuka', 'spa', 'nring']
+ROADS = ('vrsic', 'pikes')   # the open roads: a height profile under the map; the others their corners
+# the game's own names of the places along a track, in English where they are Slovenian words (proper names stay)
+EN = {'Prvi ovinek': 'First Curve', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under the Bridge', 'Lasnica': 'Hairpin', 'Zadnja ravnina': 'Back Straight',
+      'Zadnji ovinek': 'Last Corner', 'Predor': 'Tunnel', 'tržnica': 'Market', 'mestni trg': 'Town Square', 'stari trg': 'Old Square',
+      'trg ob mostovih': 'Bridges Square', 'nabrežje': 'Riverside', 'Gozdni vrhovi': 'Forest crests', 'Ribnik': 'Pond', 'Vas': 'Village', 'Vrh za vasjo': 'Crest past the village'}
+def en(n):
+    m = re.match(r'(Zavoj|Serpentina) (\d+)(.*)$', n)
+    if m: return ('Turn ' if m.group(1) == 'Zavoj' else 'Hairpin ') + m.group(2) + m.group(3)
+    if n.startswith('Lasnica '): return n[8:] + ' Hairpin'
+    return EN.get(n, n)
 
 def grade(im):   # the rainy grade of the game (less saturated, a little cooler)
     rgb, a = im.convert('RGB'), im.split()[3]
@@ -54,6 +65,7 @@ def pace(route, d, mpp):   # corners of a rally stage from the route on the top 
 data = {}
 for t in TRACKS:
     R = {}
+    if not os.path.exists(os.path.join(RAW, 'top-%s.json' % t)): print(t, 'no map yet'); continue
     # the map from above (version 2): the land fills it (no transparency)
     J = json.load(open(os.path.join(RAW, 'top-%s.json' % t)))
     for sfx in ('', '-rain'):
@@ -71,22 +83,29 @@ for t in TRACKS:
         prof.append(round(h[i], 1))
     R['prof'] = prof
     R['places'] = [[q['n'], round(q['d'])] for q in J['names'] if q.get('hud', True)]
-    if t in ('ouninpohja', 'gora'): R['notes'] = pace(J['route'], J['d'], J['mPerPx'])
+    if t not in ROADS: R['notes'] = pace(J['route'], J['d'], J['mPerPx'])
+    # the places the flyover's corner shows (the menu's own list in data.js comes first): the game's names, or the corners by number
+    H = [[0, 'Start' if R['open'] else 'Start · finish']] + [[max(1, q[1] - 40), en(q[0])] for q in R['places']]
+    if len(H) == 1 and R.get('notes'): H += [[max(1, round(c[0]) - 40), 'Turn %d' % (k + 1)] for k, c in enumerate(R['notes'])]
+    if not R['open']: H.append([round(L - 150), 'Start · finish'])
+    R['hud'] = H
     # the 3D block (version 3): cut to what is drawn, the route moved with it
-    B = json.load(open(os.path.join(RAW, 'block-%s.json' % t)))
-    im = Image.open(os.path.join(RAW, 'block-%s.png' % t)).convert('RGBA')
-    bb = im.split()[3].point(lambda x: 255 if x > 10 else 0).getbbox(); pad = 14
-    bb = (max(0, bb[0] - pad), max(0, bb[1] - pad), min(im.width, bb[2] + pad), min(im.height, bb[3] + pad))
-    sc = min(1.0, 820 / (bb[2] - bb[0]))
-    for sfx in ('', '-rain'):
-        q = Image.open(os.path.join(RAW, 'block-%s%s.png' % (t, sfx))).convert('RGBA')
-        if sfx: q = grade(q)
-        q = q.crop(bb)
-        if sc < 1: q = q.resize((round(q.width * sc), round(q.height * sc)), Image.LANCZOS)
-        q.save(os.path.join(OUT, 'block-%s%s.webp' % (t, sfx)), 'WEBP', quality=80, method=6)
-        W2, H2 = q.size
-    bp = [(round((x - bb[0]) * sc, 1), round((y - bb[1]) * sc, 1)) for x, y in B['route']]
-    R['block'] = { 'W': W2, 'H': H2, 'route': thin(bp, 220), 'vis': thin(B['vis'], 220) }
+    bj = os.path.join(RAW, 'block-%s.json' % t)
+    if os.path.exists(bj):
+        B = json.load(open(bj))
+        im = Image.open(os.path.join(RAW, 'block-%s.png' % t)).convert('RGBA')
+        bb = im.split()[3].point(lambda x: 255 if x > 10 else 0).getbbox(); pad = 14
+        bb = (max(0, bb[0] - pad), max(0, bb[1] - pad), min(im.width, bb[2] + pad), min(im.height, bb[3] + pad))
+        sc = min(1.0, 820 / (bb[2] - bb[0]))
+        for sfx in ('', '-rain'):
+            q = Image.open(os.path.join(RAW, 'block-%s%s.png' % (t, sfx))).convert('RGBA')
+            if sfx: q = grade(q)
+            q = q.crop(bb)
+            if sc < 1: q = q.resize((round(q.width * sc), round(q.height * sc)), Image.LANCZOS)
+            q.save(os.path.join(OUT, 'block-%s%s.webp' % (t, sfx)), 'WEBP', quality=80, method=6)
+            W2, H2 = q.size
+        bp = [(round((x - bb[0]) * sc, 1), round((y - bb[1]) * sc, 1)) for x, y in B['route']]
+        R['block'] = { 'W': W2, 'H': H2, 'route': thin(bp, 220), 'vis': thin(B['vis'], 220) }
     # the flyover (version 1): the video, its first frame, and per frame [metres, start, finish, 0, places] where the menu shows them
     # (the start near the start, the finish near the end, a place near it; elsewhere 0: the menu hides it there anyway)
     fj = os.path.join(RAW, 'fly-%s.json' % t)
@@ -94,7 +113,7 @@ for t in TRACKS:
         F = json.load(open(fj))
         src, dst = os.path.join(RAW, 'fly-%s.webm' % t), os.path.join(OUT, 'fly-%s.webm' % t)
         if not os.path.exists(dst) or os.path.getmtime(dst) < os.path.getmtime(src):
-            if F['W'] <= 660: shutil.copyfile(src, dst)   # drawn at the menu's size already
+            if F['W'] <= 720: shutil.copyfile(src, dst)   # drawn at the menu's size already
             else:   # smaller for a phone: 660 px wide (the names still use the frame's own size)
                 subprocess.run([FF, '-hide_banner', '-loglevel', 'error', '-y', '-i', src, '-vf', 'scale=660:-2', '-c:v', 'libvpx-vp9', '-b:v', '0', '-crf', '42',
                                 '-row-mt', '1', '-deadline', 'good', '-cpu-used', '2', '-pix_fmt', 'yuv420p', '-an', dst], check=True)
@@ -106,10 +125,17 @@ for t in TRACKS:
         keep = lambda P, on: P if on and P and P[2] else 0
         fr = [[f[0], keep(f[1], f[0] < L * 0.14), keep(f[2], f[0] > L * 0.78), 0, [keep(P, abs(f[0] - pd[i]) < L * 0.09) for i, P in enumerate(f[4])]] for f in F['frames']]
         R['fly'] = { 'fps': F['fps'], 'W': F['W'], 'H': F['H'], 'places': F['places'], 'frames': fr }
+    # the drone's shots (version 4): the video, its first frame, when each shot starts (seconds), its place and where it is along the run
+    dj = os.path.join(RAW, 'drone-%s.json' % t)
+    if os.path.exists(dj):
+        Dn = json.load(open(dj)); src, dst = os.path.join(RAW, 'drone-%s.webm' % t), os.path.join(OUT, 'drone-%s.webm' % t)
+        if not os.path.exists(dst) or os.path.getmtime(dst) < os.path.getmtime(src): shutil.copyfile(src, dst)
+        Image.open(os.path.join(RAW, 'drone-%s-poster.jpg' % t)).convert('RGB').save(os.path.join(OUT, 'drone-%s.webp' % t), 'WEBP', quality=72, method=6)
+        R['drone'] = { 'fps': Dn['fps'], 'W': Dn['W'], 'H': Dn['H'], 'dur': Dn['dur'], 'shots': Dn['shots'] }
     data[t] = R
-    print(t, 'len', L, 'places', len(R['places']), 'notes', len(R.get('notes', [])), 'fly', 'fly' in R, 'block', R['block']['W'], R['block']['H'])
+    print(t, 'len', L, 'places', len(R['places']), 'notes', len(R.get('notes', [])), 'fly', 'fly' in R, 'drone', 'drone' in R, 'block', 'block' in R)
 
 with open(os.path.join(SITE, 'routes.js'), 'w') as f:
-    f.write('/* The open roads and rally stages: routes over the maps, heights, places, pace notes and flyover frames (made by routes.py, do not edit). */\n')
+    f.write('/* The tracks: routes over the maps, heights, places, corners, flyover frames and drone shots (made by routes.py, do not edit). */\n')
     f.write('window.ROUTES = ' + json.dumps(data, separators=(',', ':'), ensure_ascii=False) + ';\n')
 print('routes.js', os.path.getsize(os.path.join(SITE, 'routes.js')) // 1024, 'KB')

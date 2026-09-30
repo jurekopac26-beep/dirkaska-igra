@@ -68,13 +68,12 @@ await step('free-daily-result', async () => { await page.click('[data-finish="3"
 await step('free-daily-after', async () => { await page.click('[data-act="res-continue"]'); await wait(700); });
 await step('free-title-after', () => open('free', 'title', {}, 900));
 await step('free-mode', async () => { await page.click('[data-act="single"]'); await wait(700); });
-await step('free-mode-chase', async () => { await page.click('[data-act="mode:chase"]'); await wait(400); });
-await step('free-chase-track', async () => { await page.click('[data-act="mode-next"]'); await wait(900); });
+await step('free-chase-track', async () => { await page.click('[data-act="mode:chase"]'); await wait(900); });   // (a tap on a mode goes straight to its tracks)
 await step('free-chase-picker', async () => { await page.click('[data-act="race-single"]'); await wait(1700); });
 await step('free-chase-escaped', async () => { await page.click('[data-finish="2"]'); await wait(600); });
 await step('free-chase-busted', async () => { await page.click('[data-act="again"]'); await wait(1700); await page.click('[data-finish="0"]'); await wait(600); });
 await step('free-chase-after', async () => { await page.click('[data-act="res-continue"]'); await wait(900); });
-await step('free-trial-track', async () => { await page.click('[data-act="back"]'); await wait(500); await page.click('[data-act="mode:trial"]'); await wait(300); await page.click('[data-act="mode-next"]'); await wait(900); });
+await step('free-trial-track', async () => { await page.click('[data-act="back"]'); await wait(500); await page.click('[data-act="mode:trial"]'); await wait(900); });
 await step('free-trial-result', async () => { await page.click('[data-act="race-single"]'); await wait(1700); await page.click('[data-finish="gold"]'); await wait(600); });
 await step('free-group-road', async () => { await page.click('[data-act="res-continue"]'); await wait(700); await page.click('[data-act="group:road"]'); await wait(1400); });
 await step('free-group-rally', async () => { await page.click('[data-act="group:rally"]'); await wait(1400); });

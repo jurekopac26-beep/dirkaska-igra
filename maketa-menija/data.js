@@ -97,16 +97,24 @@ window.MENU = {
       km: 10.02, corners: 19, laps: 1, trial: true, rec: ['T. Hayashi', '4:48.90'], bars: { speed: 16, tech: 12, drift: 13, grip: 7 } },
   ],
 
-  /* ---------- the maps of the open roads and rally stages (routes.js has the lines and heights, made from the game's worlds) ----------
-     start / finish: the names on the map; alt: the real height at the start and at the finish (m); stage, surface: a rally stage */
+  /* ---------- the maps of the tracks (routes.js has the lines, heights and corners, made from the game's worlds) ----------
+     start / finish: the names on the map; alt: the real height at the start and at the finish (m), else base: the height at the start
+     (about the real one; the rest follows the world's rise and fall); stage, surface: a rally stage; hud: the places along the run
+     ([metres from the start, name]: the corner of the flyover shows the one the point has reached; without it, the game's own names) */
   routeMaps: {
-    vrsic: { start: 'Kranjska Gora', finish: 'Vršič', alt: [810, 1611] },
-    pikes: { start: 'Crystal Reservoir', finish: 'Summit', alt: [2862, 4301] },
-    ouninpohja: { start: 'Hämepohja', finish: 'Flying finish', stage: 'SS 4', surface: 'Gravel' },
-    gora: { start: 'Start', finish: 'Finish', stage: 'SS 1', surface: 'Gravel' },
+    vrsic: { start: 'Kranjska Gora', finish: 'Vršič', alt: [810, 1611],
+      hud: [[0, 'Kranjska Gora'], [1700, 'Jasna'], [3006, 'Eriški most'], [6480, 'Mihov dom'], [7000, 'Ruska kapelica'], [8230, 'Koča na Gozdu'], [11200, 'Erjavčeva koča'], [12150, 'Vršič']] },
+    pikes: { start: 'Crystal Reservoir', finish: 'Summit', alt: [2862, 4301],
+      hud: [[0, 'Crystal Reservoir'], [960, 'Halfway Picnic Grounds'], [1964, 'Ski Area'], [2650, 'Glen Cove'], [4000, "Devil's Playground"], [4440, 'Bottomless Pit'], [5900, 'Summit']] },
+    ouninpohja: { start: 'Hämepohja', finish: 'Flying finish', stage: 'SS 4', surface: 'Gravel', base: 130,
+      hud: [[0, 'Hämepohja'], [800, 'Naarajärvi'], [1640, 'Ouni'], [2170, 'Keltainen talo'], [2980, 'Mutanen'], [4400, 'Forest crests'], [6040, 'Village'], [7980, 'Amazon'], [8700, 'Kakaristo'], [9550, 'Flying finish']] },
+    gora: { start: 'Start', finish: 'Finish', stage: 'SS 1', surface: 'Gravel', base: 640,
+      hud: [[0, 'Stage start'], [545, 'Split 1'], [1090, 'Split 2'], [1590, 'Stage finish']] },
+    jezero: { base: 475 }, riviera: { base: 4 }, ljubljana: { base: 295 }, monaco: { base: 8 },
+    rbring: { base: 677 }, suzuka: { base: 45 }, spa: { base: 400 }, nring: { base: 616 },
   },
-  // the three ways to show them, to choose from (the switch over the map)
-  mapVersions: [{ n: 1, name: 'Flyover' }, { n: 2, name: 'Map & profile' }, { n: 3, name: '3D block' }],
+  // the four ways to show them, to choose from (the switch over the map)
+  mapVersions: [{ n: 1, name: 'Flyover' }, { n: 2, name: 'Map & profile' }, { n: 3, name: '3D block' }, { n: 4, name: 'Drone' }],
 
   /* ---------- career: every race gives up to three trophies ---------- */
   trophyRules: { race: ['Bronze: top 5', 'Silver: podium', 'Gold: win'], trial: ['Bronze time', 'Silver time', 'Gold time'] },

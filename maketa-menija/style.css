@@ -43,7 +43,7 @@ svg { display: block; }
 .scr { position: absolute; inset: 0; display: flex; flex-direction: column; animation: scr-in .28s ease-out; }
 @keyframes scr-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .scr.still { animation: none; }
-@media (prefers-reduced-motion: reduce) { .scr, .float, .dio img { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .scr, .float, .dio img, .hud b { animation: none !important; } }
 
 /* top bar of the inner screens */
 .topbar { flex: 0 0 auto; display: flex; align-items: center; gap: 12px; padding: 14px 16px 6px; z-index: 3; }
@@ -418,14 +418,14 @@ svg { display: block; }
 .topbar h2 small { display: block; margin-top: 4px; font: 800 italic 11px/1 var(--f-ui); letter-spacing: .1em; color: var(--lbl); text-shadow: none; overflow: hidden; text-overflow: ellipsis; }
 .topbar h2 small .ss { display: none; }
 @media (max-width: 380px) { .topbar h2 small .sl { display: none; } .topbar h2 small .ss { display: inline; } }
-.modes { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 12px; padding: 8px 14px; }
-.mode { position: relative; width: 100%; flex: 0 1 148px; min-height: 104px; display: grid; grid-template-columns: minmax(0, 1fr) 48%; align-items: center; border-radius: 16px; overflow: hidden; text-align: left; padding-left: 22px;
+.modes { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 14px; padding: 10px 14px calc(18px + env(safe-area-inset-bottom, 0px)); }
+.mode { position: relative; width: 100%; flex: 1 1 0; max-height: 214px; min-height: 104px; display: grid; grid-template-columns: minmax(0, 1fr) 48%; align-items: center; border-radius: 16px; overflow: hidden; text-align: left; padding-left: 22px;
   background: linear-gradient(100deg, rgba(10, 18, 31, .96) 0%, rgba(10, 18, 31, .9) 50%, rgba(22, 40, 66, .82) 100%); border: 1.5px solid rgba(255, 255, 255, .16); box-shadow: 0 10px 26px rgba(0, 0, 0, .45); transition: border-color .15s ease, box-shadow .15s ease; }
 .mode::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 9px; z-index: 3; }
 .m-race::before { background: repeating-linear-gradient(180deg, var(--curb) 0 13px, var(--chalk) 13px 26px); }
 .m-chase::before { background: linear-gradient(180deg, #ff3b3b 0 50%, #2f6bff 50% 100%); }
 .m-trial::before { background: linear-gradient(180deg, var(--cyan), #1c7fd6); }
-.mode[aria-checked="true"] { border: 2px solid var(--cyan); box-shadow: 0 0 0 3px rgba(63, 208, 255, .18), 0 10px 26px rgba(0, 0, 0, .45); background: linear-gradient(100deg, rgba(14, 32, 52, .97) 0%, rgba(14, 32, 52, .92) 50%, rgba(30, 58, 92, .85) 100%); }
+.mode[aria-current="true"] { border: 2px solid var(--cyan); box-shadow: 0 0 0 3px rgba(63, 208, 255, .18), 0 10px 26px rgba(0, 0, 0, .45); background: linear-gradient(100deg, rgba(14, 32, 52, .97) 0%, rgba(14, 32, 52, .92) 50%, rgba(30, 58, 92, .85) 100%); }
 .mode:active { transform: translateY(2px); }
 .mode .tx { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; padding: 12px 0; }
 .mode .tx b { font: 900 italic 22px/1 var(--f-ui); letter-spacing: -.3px; text-shadow: 0 2px 0 rgba(0, 0, 0, .35); white-space: nowrap; }
@@ -434,7 +434,7 @@ svg { display: block; }
 .mode .im img { position: absolute; right: -8px; top: 50%; transform: translateY(-50%); width: 112%; height: auto; max-width: none; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 22%); mask-image: linear-gradient(90deg, transparent 0, #000 22%); }
 .mode .tick { position: absolute; right: 8px; top: 8px; z-index: 4; width: 24px; height: 24px; opacity: 0; transform: scale(.6); transition: opacity .15s ease, transform .15s ease; }
 .mode .tick svg { width: 24px; height: 24px; }
-.mode[aria-checked="true"] .tick { opacity: 1; transform: none; }
+.mode[aria-current="true"] .tick { opacity: 1; transform: none; }
 @media (max-height: 700px) { .modes { gap: 9px; } .mode { min-height: 92px; } .mode .tx { gap: 4px; padding: 8px 0; } .mode .tx b { font-size: 20px; } .mode .tx small { font-size: 12px; } }
 .ribbon.rmode { background: #122036; color: #fff; border: 1.5px solid rgba(255, 255, 255, .35); font-size: 12px; padding: 5px 12px; box-shadow: 3px 3px 0 rgba(0, 0, 0, .35); }
 .ribbon.r-chase { background: linear-gradient(90deg, #b8202a, #1f4fc4); border-color: rgba(255, 255, 255, .5); }
@@ -483,22 +483,25 @@ svg { display: block; }
 .rally .rt { stroke: #ff8a2a; }
 .rt-c { fill: none; stroke: #fff; stroke-width: 1.6; stroke-dasharray: 10 9; opacity: .9; }
 .rt-dot .c { fill: #fff8d0; }
+.topmap .rt-o { stroke-width: calc(11px * var(--k, 1)); } .topmap .rt { stroke-width: calc(6px * var(--k, 1)); }   /* (fitMaps: the same width on the screen at any zoom) */
+.topmap .rt-c { stroke-width: calc(1.6px * var(--k, 1)); stroke-dasharray: calc(10px * var(--k, 1)) calc(9px * var(--k, 1)); }
 @keyframes rtdraw { to { stroke-dashoffset: 0; } }
 .mk circle { fill: #fff; stroke: #10151d; stroke-width: 3; }
 .mk text { font: 900 italic 21px/1 var(--f-ui); fill: #fff; stroke: rgba(8, 12, 20, .92); stroke-width: 6; paint-order: stroke; stroke-linejoin: round; text-transform: uppercase; }
 .mk text .sub { font-size: 16px; fill: var(--gold); }
 .sp rect { fill: #10151d; stroke: #fff; stroke-width: 2.5; } .sp text { font: 900 italic 15px/1 var(--f-ui); fill: #fff; }
 /* version 2: the map from above and the height profile (a rally stage: its pace notes) */
-.dio.topmap { display: grid; grid-template-rows: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 36px 10px 46px; }
-.topmap .mapsvg { display: block; width: 100%; height: 100%; min-height: 0; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .5)); }
-.mapsvg .frame { fill: none; stroke: rgba(255, 255, 255, .22); stroke-width: 2; }
+.dio.topmap { display: block; background: #1a2634; }
+.topmap .mapsvg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.topmap::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(7, 12, 20, .45) 0, transparent 22%, transparent 62%, rgba(7, 12, 20, .55) 100%); }   /* (the switch and the notes read on any land) */
 .topmap image.wet, .blockv image.wet { opacity: 0; transition: opacity .7s ease; }
 .stage.rainy .dio image.wet { opacity: 1; }
-.profw { width: 100%; flex: 0 1 auto; min-height: 0; padding: 4px 6px 2px; border-radius: 12px; background: rgba(8, 14, 24, .72); border: 1px solid rgba(255, 255, 255, .1); }
-.prof { display: block; width: 100%; height: auto; max-height: 100px; }
+.profw { position: absolute; left: 8px; right: 8px; bottom: 42px; z-index: 2; padding: 2px 4px 0; border-radius: 10px; background: rgba(8, 14, 24, .78); border: 1px solid rgba(255, 255, 255, .12); }
+.prof { display: block; width: 100%; height: auto; max-height: 70px; margin: 0 auto; }
 .prof .pa { fill: url(#pg); stroke: #ffd23a; stroke-width: 1.6; stroke-linejoin: round; }
 .prof .ax { stroke: rgba(255, 255, 255, .5); stroke-width: 1; }
 .prof .pt, .prof .pg, .prof .pn, .prof .lr { font: 800 italic 10.5px/1 var(--f-ui); fill: #dfe6f1; }
+.prof .pt.sm { font-size: 8px; fill: rgba(223, 230, 241, .8); }
 .prof .pg { fill: var(--gold); }
 .prof .pn { font-size: 9.5px; fill: #fff; }
 .prof .pl { stroke: rgba(255, 255, 255, .7); stroke-width: 1; }
@@ -513,11 +516,15 @@ svg { display: block; }
 .stage.route .arrow.l { left: calc(50% - 76px); } .stage.route .arrow.r { right: calc(50% - 76px); }
 .stage.route .arrow svg { width: 14px; height: 14px; }
 .stage.route .dots { bottom: 15px; }
-/* a short screen: the track's description gives way to the map; the profile lies over the lower part of the map */
+/* versions 1 and 4: the place the video has reached and its height, low in the right corner (above the arrows) */
+.hud { position: absolute; right: 10px; bottom: 46px; z-index: 3; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; pointer-events: none; max-width: calc(100% - 20px); }
+.hud b { background: #fff; color: #10151d; font: 900 italic 14px/1 var(--f-ui); letter-spacing: .02em; padding: 6px 10px 5px; transform: skewX(-10deg); text-transform: uppercase; box-shadow: 3px 3px 0 rgba(0, 0, 0, .35); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.hud small { background: var(--gold); color: var(--gold-ink); font: 900 italic 12px/1 var(--f-ui); padding: 4px 9px 3px; transform: skewX(-10deg); margin-right: 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.hud b:empty, .hud small:empty { display: none; }
+.hud.in b { animation: hud-in .5s cubic-bezier(.2, .8, .3, 1) both; }
+@keyframes hud-in { from { opacity: 0; transform: translateX(18px) skewX(-10deg); } }
+/* a short screen: the track's description gives way to the map */
 @media (max-height: 700px) {
   #s-track .card .desc { display: none; }
-  .dio.topmap { display: block; padding: 34px 8px 38px; }
-  .topmap .mapsvg { width: 100%; height: 100%; }
-  .topmap .profw { position: absolute; left: 12px; right: 12px; bottom: 38px; width: auto; padding: 2px 6px 0; background: rgba(8, 14, 24, .8); }
-  .prof { max-height: 56px; margin: 0 auto; }
+  .prof { max-height: 60px; }
 }

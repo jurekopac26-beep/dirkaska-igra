@@ -9,6 +9,13 @@ window.RM = (function () {
     ouni:     { fog: 0xc4d3dc, sun: 0xffe9c6, sunI: 1.18, sky: 0xcfe1f5, gnd: 0x4a5a2e, hemiI: 0.56, sunOff: [-88, 72, 58] },
     vrsic:    { fog: 0xc6d4e0, sun: 0xffe4b8, sunI: 1.16, sky: 0xcfe0f4, gnd: 0x6a5a3a, hemiI: 0.58, sunOff: [-84, 70, 56] },
     pikes:    { fog: 0xdfd0cc, sun: 0xffcc8f, sunI: 1.58, sky: 0x9fbbf1, gnd: 0x70604e, hemiI: 0.75, sunOff: [104, 48, -60] },
+    city:     { fog: 0xd8e3ea, sun: 0xffe5bd, sunI: 1.04, sky: 0xdcecff, gnd: 0x86785a, hemiI: 0.6 },
+    ljubljana: { fog: 0xcadbe9, sun: 0xffe6c2, sunI: 1.04, sky: 0xd8e9ff, gnd: 0x7a6e56, hemiI: 0.6 },
+    monaco:   { fog: 0xcfe2f1, sun: 0xfff0d6, sunI: 1.08, sky: 0xd8ebff, gnd: 0x8a7c62, hemiI: 0.6 },
+    nring:    { fog: 0xb7c7cc, sun: 0xfff0d8, sunI: 1.1, sky: 0xcadcf0, gnd: 0x3e4a2a, hemiI: 0.6, sunOff: [-80, 76, 70] },
+    spa:      { fog: 0xc3ced7, sun: 0xfff1de, sunI: 0.98, sky: 0xd0dde9, gnd: 0x43522f, hemiI: 0.64 },
+    rbring:   { fog: 0xc6daea, sun: 0xfff1d8, sunI: 1.12, sky: 0xcfe3fb, gnd: 0x46602c, hemiI: 0.6, sunOff: [-86, 78, 52] },
+    suzuka:   { fog: 0xc8d9e6, sun: 0xfff1dc, sunI: 1.06, sky: 0xd5e7fa, gnd: 0x4f5c34, hemiI: 0.62 },
   };
   let B = null, R = null, CV = null;
   function build(id) {
@@ -68,6 +75,8 @@ window.RM = (function () {
     ouni: [[-0.2, 0x3b562a], [0.5, 0x4a6632], [1.2, 0x5c7a3d]],
     mountain: [[-0.2, 0x587637], [0.6, 0x6d7d44], [1.3, 0x8b8c7b]],
     lake: [[-0.2, 0x587637], [1.2, 0x6d7d44]],
+    city: [[-0.2, 0x6f7a44], [1.2, 0x7d8450]], ljubljana: [[-0.2, 0x5f7a3a], [1.2, 0x6c7d45]], monaco: [[-0.2, 0x7a7a52], [0.8, 0x8a8666], [1.4, 0x9a9478]],
+    nring: [[-0.2, 0x3e5a2a], [1.2, 0x4f6a32]], spa: [[-0.2, 0x44602e], [1.2, 0x52703a]], rbring: [[-0.2, 0x4f6c30], [0.8, 0x5b7a3a], [1.4, 0x6d7d58]], suzuka: [[-0.2, 0x55683a], [1.2, 0x62763f]],
   };
   function skirt(Bw, margin, cell) {
     if (Bw.skirt) return Bw.skirt;
@@ -93,7 +102,7 @@ window.RM = (function () {
     }
     const vn = (x, z) => { const xi = Math.floor(x), zi = Math.floor(z), fx = x - xi, fz = z - zi, h = (a, b) => { const s = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return s - Math.floor(s); }, sm = (t) => t * t * (3 - 2 * t);
       const a = h(xi, zi), b2 = h(xi + 1, zi), c2 = h(xi, zi + 1), d = h(xi + 1, zi + 1), u = sm(fx), v = sm(fz); return (a * (1 - u) + b2 * u) * (1 - v) + (c2 * (1 - u) + d * u) * v; };
-    const amp = { vrsic: 620, pikes: 460, ouni: 30, mountain: 150, lake: 60 }[Bw.def.theme] || 120;
+    const amp = { vrsic: 620, pikes: 460, ouni: 30, mountain: 150, lake: 60, city: 20, ljubljana: 60, monaco: 90, nring: 160, spa: 140, rbring: 260, suzuka: 60 }[Bw.def.theme] || 120;
     for (let j = 0; j <= nz; j++) for (let i = 0; i <= nx; i++) {
       const k = j * W1 + i; if (near[k]) continue;
       const x = x0 + i * cell, z = z0 + j * cell, f = Math.min(1, (dist[k] - 520) / 1400);
@@ -278,11 +287,25 @@ window.RM = (function () {
     const G = (y) => e * (Math.pow(y / e, 3) - Math.pow(y / e, 4) / 2); x = Math.min(1, Math.max(0, x));
     return (x < e ? G(x) : x > 1 - e ? 1 - e - G(1 - x) : e / 2 + x - e) / (1 - e);
   }
+  // the climb along the run (rise over run, over about 80 m; with the real heights known, as steep as the real road) and its colour: green
+  // on the flat (and downhill), through yellow and orange to red on the steep bits, a deep red from 12 %
+  function grades(pts, alt) {
+    const n = pts.length, k = 7, sc = alt ? (alt[1] - alt[0]) / ((pts[n - 1].h - pts[0].h) || 1) : 1, g = new Array(n);
+    for (let i = 0; i < n; i++) { const a = pts[Math.max(0, i - k)], b = pts[Math.min(n - 1, i + k)]; g[i] = (b.h - a.h) / Math.max(1, b.d - a.d) * sc; }
+    return smooth(g, 5);
+  }
+  const GRADE = [[0.01, 0x2fbf4a], [0.03, 0x9ad13a], [0.05, 0xffd23a], [0.07, 0xff8a2a], [0.09, 0xe8342a], [0.12, 0x9e1420]];
+  function gradeColor(v, out) {
+    if (v <= GRADE[0][0]) return out.setHex(GRADE[0][1]);
+    for (let i = 1; i < GRADE.length; i++) if (v <= GRADE[i][0]) return out.setHex(GRADE[i - 1][1]).lerp(new THREE.Color(GRADE[i][1]), (v - GRADE[i - 1][0]) / (GRADE[i][0] - GRADE[i - 1][0]));
+    return out.setHex(GRADE[GRADE.length - 1][1]);
+  }
   function flyInit(id, opt) {
     // speed: the point's even speed (m/s); end: the seconds of the rise over the finish; turn: how slowly the camera turns and aim: how
     // gently it follows the point (seconds);
     // cull: the trees and other repeated things are left out from this far into the haze (0 its start, 1 its end), where they hardly show
-    opt = Object.assign({ W: 660, H: 544, fps: 30, speed: 300, ease: 0.12, end: 2.4, turn: 0.8, aim: 0.3, cull: 0.75, fov: 48, back: 520, up: 330, ahead: 260, rain: 0, shadow: 2048, color: 0xffd23a, places: [], fogNear: 900, fogFar: 3400 }, opt || {});
+    // alt: the real heights at the start and the finish (the gradients of the line then as steep as the real road's)
+    opt = Object.assign({ W: 704, H: 432, fps: 30, speed: 300, ease: 0.12, end: 2.4, turn: 0.8, aim: 0.3, cull: 0.75, fov: 37, back: 520, up: 330, ahead: 260, rain: 0, shadow: 2048, places: [], fogNear: 900, fogFar: 3400, alt: null }, opt || {});
     const Bw = build(id), T = Bw.T, pts = run(T, Bw.open, 6), box = boxOf(pts, 120), th = THEMES[Bw.def.theme] || THEMES.lake; skirt(Bw, 3000, 40);
     const r = getR(opt.W, opt.H); wet(Bw, opt.rain);
     const L = lights(Bw, box, opt.rain); L[1].shadow.mapSize.set(opt.shadow, opt.shadow);
@@ -292,15 +315,16 @@ window.RM = (function () {
     const sk = document.createElement('canvas'); sk.width = 4; sk.height = 256; const gx = sk.getContext('2d'), gg = gx.createLinearGradient(0, 0, 0, 256);
     gg.addColorStop(0, '#78a2d6'); gg.addColorStop(0.2, '#' + new THREE.Color(th.fog).lerp(new THREE.Color(0x78a2d6), 0.3).getHexString()); gg.addColorStop(1, '#' + fogC.getHexString());
     gx.fillStyle = gg; gx.fillRect(0, 0, 4, 256); Bw.sc.background = new THREE.CanvasTexture(sk);
-    // the route: a flat ribbon 1 m over the road, 14 m wide, drawn up to the point
-    const n = pts.length, pos = new Float32Array(n * 2 * 3), idx = [];
+    // the route: a flat ribbon 1 m over the road, 14 m wide, drawn up to the point, coloured by the climb (grade())
+    const n = pts.length, pos = new Float32Array(n * 2 * 3), col = new Float32Array(n * 2 * 3), idx = [], gc = new THREE.Color(), G = grades(pts, opt.alt);
     for (let i = 0; i < n; i++) {
       const a = pts[Math.max(0, i - 1)], b = pts[Math.min(n - 1, i + 1)], dx = b.x - a.x, dz = b.z - a.z, l = Math.hypot(dx, dz) || 1, nx = -dz / l * 7, nz = dx / l * 7, p = pts[i];
       pos.set([p.x + nx, p.y - 0.5, p.z + nz, p.x - nx, p.y - 0.5, p.z - nz], i * 6);
+      gradeColor(G[i], gc); col.set([gc.r, gc.g, gc.b, gc.r, gc.g, gc.b], i * 6);
       if (i) idx.push(2 * i - 2, 2 * i - 1, 2 * i, 2 * i - 1, 2 * i + 1, 2 * i);
     }
-    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setIndex(idx);
-    const ribbon = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: opt.color, side: THREE.DoubleSide, fog: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }));
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setIndex(idx);
+    const ribbon = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, fog: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }));
     Bw.sc.add(ribbon);
     // the glowing point
     const cv = document.createElement('canvas'); cv.width = cv.height = 128; const x = cv.getContext('2d'), gr = x.createRadialGradient(64, 64, 0, 64, 64, 64);
