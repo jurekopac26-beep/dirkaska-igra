@@ -175,24 +175,24 @@
  },
  "ouninpohja-r": {
   "meshes": 5084,
-  "verts": 3392106,
-  "instances": 94948,
+  "verts": 3386920,
+  "instances": 94913,
   "props": 63,
-  "crowd": 6952,
-  "world": "cf693b56",
+  "crowd": 6909,
+  "world": "4d6a151a",
   "propsHash": "bdc4b0a2",
   "floor": "2cb29107/20384",
   "groups": {
-   "-:MeshLambertMaterial": "b1794421",
+   "-:MeshLambertMaterial": "6bd751f3",
    "-:MeshPhongMaterial": "6e01cb42",
    "mirror:MeshPhongMaterial": "b946042e",
    "potholes:MeshPhongMaterial": "2e2cb7a8",
-   "-:MeshBasicMaterial": "df816672",
+   "-:MeshBasicMaterial": "b11ac384",
    "puddles:MeshBasicMaterial": "330c87e2",
-   "crowd:MeshLambertMaterial": "79a38e58",
+   "crowd:MeshLambertMaterial": "4136db14",
    "runners:MeshLambertMaterial": "d538597",
    "smoke:ShaderMaterial": "230b3323",
-   "sunRays:ShaderMaterial": "d2b5b38f"
+   "sunRays:ShaderMaterial": "c80c1aec"
   }
  },
  "nring": {

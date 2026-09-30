@@ -70,11 +70,11 @@
   "jsMs": 0.88
  },
  "ouninpohja-r": {
-  "calls": 148,
+  "calls": 147,
   "maxCalls": 181,
-  "kverts": 565,
-  "maxKverts": 710,
-  "jsMs": 1.01
+  "kverts": 563,
+  "maxKverts": 705,
+  "jsMs": 0.88
  },
  "nring": {
   "calls": 193,
