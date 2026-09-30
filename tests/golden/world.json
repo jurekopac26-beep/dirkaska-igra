@@ -170,20 +170,20 @@
   }
  },
  "stelvio": {
-  "meshes": 2927,
-  "verts": 1049177,
-  "instances": 84384,
+  "meshes": 3020,
+  "verts": 1096228,
+  "instances": 83920,
   "props": 0,
-  "crowd": 70,
-  "world": "5cc0a3fa",
+  "crowd": 69,
+  "world": "2ffc0e42",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "65c13c40",
-   "-:MeshBasicMaterial": "c3d14e96",
+   "-:MeshLambertMaterial": "fb2fa2cb",
+   "-:MeshBasicMaterial": "84768320",
    "-:MeshPhongMaterial": "cb38ed59",
    "far:MeshLambertMaterial": "ea85d9b7",
-   "crowd:MeshLambertMaterial": "f78fc4ef",
+   "crowd:MeshLambertMaterial": "1a40624b",
    "tyremarks:MeshBasicMaterial": "cabbb590"
   }
  },

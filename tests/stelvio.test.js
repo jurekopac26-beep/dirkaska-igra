@@ -89,6 +89,26 @@ const nearest = (x, z) => { let b = 0, bd = Infinity; for (let i = 0; i < T.N; i
   check('distant mountains: the Ortler the highest (3905 m), the valleys below 1000 m', di.max > 3800 && di.max < 3910 && dO.min < 1000, `inner ${di.min}-${di.max} m, outer ${dO.min}-${dO.max} m`);
 }
 
+// the side roads (def.sideRoads, OpenStreetMap): every road, track and path that meets the pass road, from its junction on the road out
+// (never back over its asphalt); the roads to Stilfs and to Sulden at Gomagoi, on either side; only roads and tracks closed for the race;
+// the direction signs at junctions of roads; the barrier width def.side still a number (not the side roads)
+{
+  const S = def.sideRoads || [], J = S.filter(l => l[2] & 1), pts = (l) => { const o = []; for (let k = 3; k + 1 < l.length; k += 2) o.push([l[k], l[k + 1]]); return o; };
+  const at = (l) => { const [p] = pts(l), [i, off] = nearest(p[0], p[1]); return { d: dAt(i), off, side: 0, i }; };
+  const js = J.map(l => Object.assign(at(l), { kind: l[0] }));
+  check('side roads: over 150 roads, tracks and paths, over 90 from junctions on the pass road, each junction on its centre line', S.length > 150 && J.length > 90 && js.every(j => j.off < 5 && j.d > -145 && j.d < T.raceLen + 330),
+    `${S.length} lines, ${J.length} junctions, farthest off the centre line ${Math.max(...js.map(j => j.off)).toFixed(1)} m`);
+  let over = 0; for (const l of S) { const P = pts(l); for (let k = (l[2] & 1) ? 4 : 0; k < P.length; k++) { const [i, d] = nearest(P[k][0], P[k][1]); if (d < T.w - 0.5) over++; } }
+  check('side roads: none runs over the pass road\'s asphalt (beyond its junction)', over === 0, `${over} points on it`);
+  const side = (l) => { const P = pts(l), q = P[Math.min(P.length - 1, 3)], [i] = nearest(P[0][0], P[0][1]); return Math.sign((q[0] - T.px[i]) * T.nx[i] + (q[1] - T.pz[i]) * T.nz[i]); };
+  const st = J.find(l => l[0] === 0 && Math.abs(at(l).d - 5882) < 40), su = J.find(l => l[0] === 0 && Math.abs(at(l).d - 6016) < 40);
+  check('side roads: at Gomagoi the road to Stilfs (right) and the road to Sulden (left), both closed for the race', !!st && !!su && side(st) === 1 && side(su) === -1 && (st[2] & 2) && (su[2] & 2), st && su ? `Stilfs at ${at(st).d} m, Sulden at ${at(su).d} m` : 'missing');
+  check('side roads: closed for the race only roads and tracks (no drives, footpaths or car park lanes)', S.every(l => !(l[2] & 2) || ((l[2] & 1) && [0, 1, 3].includes(l[0]) && !(l[2] & 4))), `${S.filter(l => l[2] & 2).length} closed`);
+  const SG = def.sideSigns || [];
+  check('direction signs: each at a junction of a road (Stilfs, Sulden, Tre Fontane)', SG.length === 3 && SG.every(([d]) => js.some(j => j.kind <= 1 && Math.abs(j.d - d) < 40)), SG.map(g => g[1]).join(', '));
+  check('the barrier width def.side is still a number', typeof def.side === 'number', `${def.side}`);
+}
+
 // the medal times: gold < silver < bronze, both physics, dry and wet; the rain slower
 {
   const M = def.medals, asc = (a) => Array.isArray(a) && a.length === 3 && a[0] < a[1] && a[1] < a[2];

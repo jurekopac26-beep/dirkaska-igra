@@ -9644,7 +9644,7 @@ const World = (function () {
     G.h = new Float32Array(G.nx * G.nz).fill(NaN); G.dd = new Float32Array(G.nx * G.nz); G.on = new Uint8Array(G.ntx * G.ntz);
     G.cov = new Float32Array(G.nx * G.nz); G.col = new Float32Array(G.nx * G.nz * 3).fill(NaN);
     P.colFn = stCol; P.pad = stPad;
-    STD.pads = []; STD.ph = new Map(); STD.wl = null; STD.wh = new Map();
+    STD.pads = []; STD.ph = new Map(); STD.wl = null; STD.wh = new Map(); STD.sh = null;
   }
   // level ground under the buildings and the car parks (rectangles: centre, half sizes, angle, height, the margin the ground eases back over)
   function stPadAdd(x, z, hx, hz, rot, y, m) {
@@ -9659,6 +9659,11 @@ const World = (function () {
     const W = STD.wl; if (W) {   // the stream beds: the water a little below the banks, the banks easing up over 5 m
       const q = stWater(x, z); if (q && q.d < q.w / 2 + 6) h = Math.min(h, lerp(q.y - 0.5, h, sstep(q.w / 2 - 0.6, q.w / 2 + 6, q.d)));
     }
+    const SH = STD.sh, Lh = SH && SH.get(Math.floor(x / 24) + ',' + Math.floor(z / 24));   // the side roads' beds: flat under them, easing back to the slope
+    if (Lh) { let be = 1e9, by = 0, bm = 1;
+      for (const q of Lh) { const ex = q[2] - q[0], ez = q[3] - q[1], l2 = ex * ex + ez * ez, t = l2 > 0 ? clamp(((x - q[0]) * ex + (z - q[1]) * ez) / l2, 0, 1) : 0, e = Math.hypot(x - q[0] - ex * t, z - q[1] - ez * t) - q[4];
+        if (e < be) { be = e; by = q[5] + (q[6] - q[5]) * t; bm = q[7]; } }
+      if (be < bm) h = lerp(by, h, sstep(0, bm, be)); }
     if (NRN.i >= 0 && NRN.dd < 6) h = Math.min(h, NRN.hn - 0.3 + NR.rise * NRN.dd * NRN.dd);   // (still never above the road inside the barriers: a pad beside the road; nrH has just set NRN)
     return h;
   }
@@ -9927,6 +9932,61 @@ const World = (function () {
       if (q && q.d < 8) continue;
       const hx = L / 2 + 1, y = T.hy[i] - (L > 30 ? 7 : 3.2); stPadAdd(T.px[i], T.pz[i], hx, 30, T.hd[i], y, 8); }
 
+    /* ---- the side roads (def.sideRoads, OpenStreetMap): the roads, tracks and paths that meet the pass road, each followed out from its junction:
+       [kind, width, flags, x, z, x, z, ...]; kinds 0 the roads to Stilfs and Sulden, 1 village roads, 2 service roads and drives, 3 gravel
+       forest and farm tracks, 4 footpaths, 5 paved footways and the cycle path; flags 1 from a junction on the pass road, 2 closed for the
+       race, 4 a car park's lane (only its way in is opened). Each is resampled every 2.5 m and begins where it leaves the pass road's
+       asphalt. A road's height is the ground's along it (the stream beds bridged: not cut yet), smoothed, never steeper than 22 % (a track
+       28 %), taken from the pass road's own over its first 12 m; its bed is cut into the ground (stPad), the paths lie on it. The mouth of
+       a junction opens the edge line (dashed across it), the walls, the rails and the marker posts on that side ---- */
+    const sideL = [], mouth = [new Uint8Array(N), new Uint8Array(N)];
+    STD.sh = new Map();
+    {
+      const wl = STD.wl; STD.wl = null;
+      const near = (x, z) => { const n = nrNear(x, z); return { i: n.i, d: n.d, lat: n.lat, hn: n.hn }; };
+      for (const L of def.sideRoads || []) {
+        const kind = L[0], hw = L[1] / 2, fl = L[2], raw = [];
+        for (let k = 3; k + 1 < L.length; k += 2) raw.push([L[k], L[k + 1]]);
+        const cum = [0]; for (let k = 1; k < raw.length; k++) cum.push(cum[k - 1] + Math.hypot(raw[k][0] - raw[k - 1][0], raw[k][1] - raw[k - 1][1]));
+        const tot = cum[cum.length - 1], n = Math.max(1, Math.round(tot / 2.5));
+        let pts = [];
+        for (let q = 0, k = 1; q <= n; q++) { const s = tot * q / n; while (k < raw.length - 1 && cum[k] < s) k++; const f = (s - cum[k - 1]) / Math.max(1e-6, cum[k] - cum[k - 1]);
+          pts.push([lerp(raw[k - 1][0], raw[k][0], f), lerp(raw[k - 1][1], raw[k][1], f)]); }
+        let J = null;
+        if (fl & 1) {   // from the junction: the point where it crosses the pass road's edge
+          let k = 0, a = null, b = near(pts[0][0], pts[0][1]);
+          while (k + 1 < pts.length && b.d < w) { k++; a = b; b = near(pts[k][0], pts[k][1]); }
+          if (b.d < w) continue;
+          const f = a ? clamp((w - a.d) / Math.max(1e-6, b.d - a.d), 0, 1) : 1, M = a ? [lerp(pts[k - 1][0], pts[k][0], f), lerp(pts[k - 1][1], pts[k][1], f)] : pts[0], m = near(M[0], M[1]);
+          pts = [M].concat(pts.slice(k + (a ? 0 : 1))); if (pts.length > 1 && Math.hypot(pts[1][0] - M[0], pts[1][1] - M[1]) < 0.8) pts.splice(1, 1);
+          J = { i: m.i, sd: m.lat >= 0 ? 1 : -1 };
+        }
+        while (pts.length > 1) { const e = near(pts[pts.length - 1][0], pts[pts.length - 1][1]); if (e.i >= 0 && e.d < w + 0.4) pts.pop(); else break; }   // (the far end: not onto the pass road again)
+        if (pts.length < 2) continue;
+        const sl = [0]; for (let k = 1; k < pts.length; k++) sl.push(sl[k - 1] + Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]));
+        const ys = pts.map(p => nrH(p[0], p[1]));
+        for (let pass = 0; pass < 4; pass++) for (let k = 1; k < ys.length - 1; k++) ys[k] = (ys[k - 1] + 2 * ys[k] + ys[k + 1]) / 4;
+        if (J) {
+          for (let k = 0; k < ys.length && sl[k] < 12; k++) { const e = near(pts[k][0], pts[k][1]); ys[k] = lerp(e.hn + 0.015, ys[k], sstep(0, 12, sl[k])); }
+          const g = kind === 3 ? 0.28 : kind === 4 ? 9 : 0.22;
+          for (let k = 1; k < ys.length; k++) { const dz = g * (sl[k] - sl[k - 1]); ys[k] = clamp(ys[k], ys[k - 1] - dz, ys[k - 1] + dz); }
+          const t = [pts[Math.min(2, pts.length - 1)][0] - pts[0][0], pts[Math.min(2, pts.length - 1)][1] - pts[0][1]], tl = Math.hypot(t[0], t[1]) || 1;
+          J.dir = [t[0] / tl, t[1] / tl]; J.sin = Math.abs(J.dir[0] * T.nx[J.i] + J.dir[1] * T.nz[J.i]);
+          J.flare = [3, 3, 2, 1.5, 0.3, 0.6][kind];
+          const hl = Math.min(16, (hw + J.flare) / Math.max(0.3, J.sin) + (kind === 4 ? 0.3 : 1.5)), si = J.sd > 0 ? 1 : 0;
+          for (let q = Math.max(0, Math.floor(J.i - hl / ds)); q <= Math.min(N - 1, Math.ceil(J.i + hl / ds)); q++) mouth[si][q] = 1;
+        }
+        const S = { kind, hw, fl, pts, ys, sl, J };
+        sideL.push(S);
+        if (kind <= 3 && !(fl & 4)) for (let k = 0; k + 1 < pts.length; k++) {   // the bed: flat out to 0.5 m past the edges, back to the slope over 5 m (a track 3.5 m)
+          const sg = [pts[k][0], pts[k][1], pts[k + 1][0], pts[k + 1][1], hw + 0.5, ys[k] - 0.08, ys[k + 1] - 0.08, kind === 3 ? 3.5 : 5], r = sg[4] + sg[7];
+          for (let a = Math.floor((Math.min(sg[0], sg[2]) - r) / 24); a <= Math.floor((Math.max(sg[0], sg[2]) + r) / 24); a++) for (let b = Math.floor((Math.min(sg[1], sg[3]) - r) / 24); b <= Math.floor((Math.max(sg[1], sg[3]) + r) / 24); b++) {
+            const key = a + ',' + b; let Lh = STD.sh.get(key); if (!Lh) STD.sh.set(key, Lh = []); Lh.push(sg); }
+        }
+      }
+      STD.wl = wl;
+    }
+
     /* ---- road: asphalt (resurfaced sections, the line the cars take a little darker), then the markings: white edge lines and the dashed
        centre line of an Italian state road (indexed ribbons, 120 m chunks) ---- */
     const aMat = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true }); out.asphaltMat = aMat;
@@ -9944,7 +10004,7 @@ const World = (function () {
           const v = i * ds / tileL, r = gr.row(offs.map(o => Pt(i, o, 0.02)), offs.map(o => shade(i, o)), offs.map(o => [(o + w) / tileL, v]));
           if (pr >= 0) gr.link(pr, r, 0, offs.length - 1); pr = r;
           const l = gl.row([Pt(i, -(w - 0.18), 0.036), Pt(i, -(w - 0.32), 0.036), Pt(i, w - 0.32, 0.036), Pt(i, w - 0.18, 0.036)], W4);
-          if (pl >= 0) { gl.link(pl, l, 0, 1); gl.link(pl, l, 2, 3); } pl = l;
+          if (pl >= 0) { const dm = ((dOf(i) % 2) + 2) % 2 < 1; if (!mouth[0][i] || dm) gl.link(pl, l, 0, 1); if (!mouth[1][i] || dm) gl.link(pl, l, 2, 3); } pl = l;   // (across a junction's mouth: 1 m dashes)
           if (dash(i) || (i > 0 && dash(i - 1))) { const c = gc.row([Pt(i, -0.06, 0.036), Pt(i, 0.06, 0.036)], [wht, wht]); if (pc >= 0 && dash(i - 1)) gc.link(pc, c, 0, 1); pc = c; } else pc = -1;
         }
         addM(gr, aMat); addM(gl, lMat); addM(gc, lMat);
@@ -10012,6 +10072,8 @@ const World = (function () {
         for (let i = 0; i < N;) { if (K[i] !== k) { i++; continue; } let j = i; while (j < N && K[j] === k) j++; if (j - i < 5) for (let q = i; q < j; q++) K[q] = 0; i = j; }
       }
       const H = hA[si]; for (let pass = 0; pass < 3; pass++) for (let i = 1; i < N - 1; i++) if (K[i] === 3) H[i] = Math.max(0.8, (H[i - 1] + H[i] * 2 + H[i + 1]) / 4);
+      const Mo = mouth[si]; for (let i = 0; i < N; i++) if (Mo[i]) K[i] = 0;   // (open at the side roads' mouths; no sliver shorter than 4 m left between two)
+      for (let i = 0; i < N;) { if (!K[i]) { i++; continue; } let j = i; while (j < N && K[j] === K[i]) j++; if (j - i < 2 && ((i > 0 && Mo[i - 1]) || (j < N && Mo[j]))) for (let q = i; q < j; q++) K[q] = 0; i = j; }
     }
     let nWall = 0, nRail = 0, nRet = 0;
     {
@@ -10188,10 +10250,107 @@ const World = (function () {
     { const pg = new GB(); box(pg, 0, 0, 0, 0.12, 1.25, 0.12, 0, [0.94, 0.94, 0.92], null, true); box(pg, 0, 0.92, 0, 0.13, 0.22, 0.13, 0, [0.1, 0.1, 0.1], null, true);
       const posts = new IChunks(pg.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true }), 384);
       for (let i = 0; i < N; i += 12) for (const side of [-1, 1]) {
-        if (kindA[side > 0 ? 1 : 0][i] || inTunnel(i, 6) || inVillage(dOf(i)) || dOf(i) < 0 || dOf(i) > T.raceLen) continue;
+        if (kindA[side > 0 ? 1 : 0][i] || mouth[side > 0 ? 1 : 0][i] || inTunnel(i, 6) || inVillage(dOf(i)) || dOf(i) < 0 || dOf(i) > T.raceLen) continue;
         const [x, z] = onSide(i * ds, side, 0.25); posts.add(x, T.hy[i] - 0.2, z, T.hd[i], 1, 1);
       }
       posts.addTo(root, true); }
+    /* ---- the side roads drawn (see def.sideRoads above): the asphalt of the roads in its own shades (the roads to Stilfs and Sulden with edge
+       lines, a dashed centre line and the give-way teeth at the pass road), the gravel tracks (two wheel ruts, grass between them), the paths
+       and footways; each ribbon on its bed and never under the ground (it follows the ground where that is higher), a skirt down its edges,
+       widening into its junction (the mouth's corners on the pass road's edge). Closed for the race: red and white barriers across a road at
+       the pass road's barrier line, a forest track's barrier pole down; direction signs before the junctions to Stilfs, Sulden and Tre Fontane ---- */
+    let nSide = 0, nClosed = 0;
+    {
+      const rbs = new Map(), rbAt = (key, uv) => { let r = rbs.get(key); if (!r) rbs.set(key, r = { rb: new RB(uv), mat: key.split('|')[0] }); return r.rb; };
+      const tg = new GB(), red = [0.78, 0.1, 0.09], wht = [0.95, 0.95, 0.93], earth = [0.43, 0.38, 0.31], W3 = [0.94, 0.94, 0.9];
+      const lane = (S, k) => { const P = S.pts, a = P[Math.max(0, k - 1)], b = P[Math.min(P.length - 1, k + 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; return [(b[0] - a[0]) / l, (b[1] - a[1]) / l]; };
+      for (const S of sideL) {
+        const { kind, hw, fl, pts, ys, sl, J } = S; if (fl & 4) continue;
+        const paved = kind <= 2 || kind === 5, n = pts.length, mid = pts[n >> 1], ck = Math.floor(mid[0] / 256) + ',' + Math.floor(mid[1] / 256);
+        const rb = rbAt((paved ? 'a' : 'g') + '|' + ck, true), shade = paved ? (kind === 5 ? 0.9 : 0.74 + crH(pts[0][0], pts[0][1], 43) * 0.1) : 1;
+        let prev = -1;
+        for (let k = 0; k < n; k++) {
+          const [tx, tz] = lane(S, k), rx = -tz, rz = tx, s = sl[k], fw = J ? J.flare * Math.max(0, 1 - s / 6) ** 2 : 0, hwk = hw + fw;
+          let L = [pts[k][0] - rx * hwk, pts[k][1] - rz * hwk], Rp = [pts[k][0] + rx * hwk, pts[k][1] + rz * hwk];
+          if (J && k === 0) for (const E of [L, Rp]) {   // the mouth's corners onto the pass road's edge
+            const e = nrNear(E[0], E[1]), mv = (w - e.d) / Math.max(0.3, J.sin); E[0] += tx * mv; E[1] += tz * mv; }
+          const onRoad = J && s < 3, yc = ys[k] + (onRoad ? 0 : 0.03);
+          const yAt = (p) => kind >= 4 && !onRoad ? nrGround(p[0], p[1]) + 0.04 : onRoad ? yc : Math.max(yc, nrGround(p[0], p[1]) + 0.05);
+          const offs = kind === 3 ? [-1, -0.4, 0, 0.4, 1] : [-1, 1], P3 = offs.map(o => { const p = [pts[k][0] + rx * hwk * o, pts[k][1] + rz * hwk * o]; if (o === -1) p.splice(0, 2, L[0], L[1]); if (o === 1) p.splice(0, 2, Rp[0], Rp[1]); return [p[0], yAt(p), p[1]]; });
+          const cols = offs.map(o => { const v = 0.94 + crH(pts[k][0] + o, pts[k][1], 44) * 0.1;
+            if (paved) { const c = shade * v; return [c, c, c * 1.02]; }
+            if (kind === 3) return Math.abs(o) < 0.1 ? [0.42 * v, 0.49 * v, 0.27 * v] : Math.abs(o) < 0.5 ? [0.56 * v, 0.52 * v, 0.45 * v] : [0.64 * v, 0.6 * v, 0.52 * v];
+            return [0.52 * v, 0.44 * v, 0.34 * v]; });
+          const m = P3.length, sk = kind <= 3 || kind === 5, low = (p) => [p[0], p[1] - 0.6, p[2]];   // (a skirt down both edges, where the ground might dip under the ribbon: its own vertices, sharp)
+          const uvs = offs.map((o, q) => paved ? [(o + 1) * hwk / 8, s / 8] : [P3[q][0] / 10, -P3[q][2] / 10]);
+          const row = sk ? [low(P3[0]), P3[0]].concat(P3, [P3[m - 1], low(P3[m - 1])]) : P3, rc = sk ? [earth, earth].concat(cols, [earth, earth]) : cols;
+          const uv = sk ? [uvs[0], uvs[0]].concat(uvs, [uvs[m - 1], uvs[m - 1]]) : uvs;
+          const r = rb.row(row, rc, uv);
+          if (prev >= 0) { if (sk) { rb.link(prev, r, 0, 1); rb.link(prev, r, 2, m + 1); rb.link(prev, r, m + 2, m + 3); } else rb.link(prev, r, 0, m - 1); } prev = r;
+          (S.hwk = S.hwk || []).push(hwk);   // (the width here: the barriers across it)
+          if (k % 2 === 0) exclPush(pts[k][0], pts[k][1], hw + (kind >= 4 ? 0.7 : 1.6));   // (no trees, rocks or crowds on it)
+        }
+        nSide++;
+        if (kind === 0 && n > 3) {   // the roads to Stilfs and Sulden: edge lines, a dashed centre line (4.5 m of 12), from 4 m out
+          const lr = rbAt('l|' + ck, false); let pe = -1, pc = -1;
+          for (let k = 0; k < n; k++) { if (sl[k] < 4) continue; const [tx, tz] = lane(S, k), rx = -tz, rz = tx, y = ys[k] + 0.03 + 0.02, at = (o) => { const x = pts[k][0] + rx * o, z = pts[k][1] + rz * o; return [x, Math.max(y, nrGround(x, z) + 0.07), z]; };
+            const r = lr.row([at(-hw + 0.16), at(-hw + 0.28), at(hw - 0.28), at(hw - 0.16)], [W3, W3, W3, W3]); if (pe >= 0) { lr.link(pe, r, 0, 1); lr.link(pe, r, 2, 3); } pe = r;
+            const on = (sl[k] % 12) < 4.5; if (on) { const c = lr.row([at(-0.06), at(0.06)], [W3, W3]); if (pc >= 0) lr.link(pc, c, 0, 1); pc = c; } else pc = -1; }
+        }
+        if (J && (kind <= 1) && n > 3) {   // give-way teeth across it 2.2-2.8 m from the pass road (points toward the cars that must give way)
+          let k = 1; while (k < n - 1 && sl[k] < 2.5) k++;
+          const [tx, tz] = lane(S, k), rx = -tz, rz = tx, y = ys[k] + 0.06;
+          for (let o = -hw + 0.45; o <= hw - 0.4; o += 0.62) { const bx = pts[k][0] + rx * o - tx * 0.3, bz = pts[k][1] + rz * o - tz * 0.3;
+            const A = [bx - rx * 0.22, y, bz - rz * 0.22], B = [bx + rx * 0.22, y, bz + rz * 0.22], C = [bx + tx * 0.6, y, bz + tz * 0.6];
+            tg.triO(A, B, C, W3, [bx, y - 5, bz]); }
+        }
+        if (J && (fl & 2)) {   // closed for the race: where it crosses the pass road's barrier line
+          let k = 0, q = 0, bar = 0;
+          for (; k < n; k++) { const e = nrNear(pts[k][0], pts[k][1]); bar = e.i >= 0 ? (e.lat > 0 ? T.br[e.i] : T.bl[e.i]) : 0; q = e.d; if (q > bar + 0.4) break; }
+          if (k >= n) continue;
+          const [tx, tz] = lane(S, k), rx = -tz, rz = tx, cx = pts[k][0], cz = pts[k][1], y0 = Math.max(ys[k], nrGround(cx, cz)) + 0.03, hwk = S.hwk[k], rot = Math.atan2(rz, rx), g = scen.get(cx, cz);
+          if (kind === 3) {   // a forest barrier: a post, the striped pole down across the track to a forked rest
+            const px = cx + rx * (hwk + 0.3), pz = cz + rz * (hwk + 0.3), qx = cx - rx * (hwk + 0.3), qz = cz - rz * (hwk + 0.3), L2 = 2 * hwk + 0.6, m = Math.max(2, Math.round(L2 / 0.45));
+            box(g, px, y0 - 0.2, pz, 0.15, 1.25, 0.15, rot, [0.45, 0.46, 0.48]); box(g, qx, y0 - 0.2, qz, 0.07, 1.05, 0.07, rot, [0.45, 0.46, 0.48]);
+            for (let e = 0; e < m; e++) { const u = (e + 0.5) / m - 0.5, bx = cx + rx * u * L2, bz = cz + rz * u * L2; box(g, bx, y0 + 0.84, bz, L2 / m + 0.004, 0.08, 0.08, rot, e % 2 ? wht : red, null, true); }
+          } else {   // red and white barriers (two striped boards on posts), side by side across the road
+            const L2 = 2 * hwk + 0.4, nb = Math.max(1, Math.ceil(L2 / 2.2)), bw = L2 / nb;
+            for (let b = 0; b < nb; b++) { const u = ((b + 0.5) / nb - 0.5) * L2, bx = cx + rx * u + tx * (b % 2) * 0.35, bz = cz + rz * u + tz * (b % 2) * 0.35, by = Math.max(y0, nrGround(bx, bz) + 0.03);
+              for (const e of [-1, 1]) box(g, bx + rx * e * (bw / 2 - 0.12), by, bz + rz * e * (bw / 2 - 0.12), 0.06, 1.12, 0.3, rot, [0.9, 0.9, 0.88]);
+              const m = Math.max(3, Math.round((bw - 0.1) / 0.32));
+              for (const [hy, hh] of [[0.78, 0.26], [0.36, 0.2]]) for (let e = 0; e < m; e++) { const v = ((e + 0.5) / m - 0.5) * (bw - 0.1); box(g, bx + rx * v, by + hy, bz + rz * v, (bw - 0.1) / m + 0.003, hh, 0.04, rot, e % 2 ? wht : red, null, true); } }
+          }
+          exclPush(cx, cz, hwk + 1); nClosed++;
+        }
+      }
+      for (const { rb, mat } of rbs.values()) { const m = addM(rb, mat === 'a' ? aMat : mat === 'g' ? gvMat : lMat); if (m && mat === 'l') m.renderOrder = 1; }
+      addM(tg, lMat);
+      // direction signs before the main junctions (def.sideSigns: [metres after the start line, the German name, the Italian, 0 blue / 1 brown]):
+      // on the right, 32 m before the junction, facing the cars coming up, an arrow to its side
+      const SG = def.sideSigns || [];
+      if (SG.length) {
+        const c = document.createElement('canvas'); c.width = 1024; c.height = 128 * Math.ceil(SG.length / 2); const x = c.getContext('2d');
+        const txt = (s, cx, cy, px, w) => { x.fillStyle = '#fff'; x.font = '700 ' + px + 'px Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(s, cx, cy, w); };
+        const use = SG.map(([d, de, it, col], k) => {
+          let best = null; for (const S of sideL) if (S.J && (!best || Math.abs(dOf(S.J.i) - d) < Math.abs(dOf(best.J.i) - d))) best = S;
+          const right = best ? best.J.sd > 0 : true, cx = (k % 2) * 512, cy = Math.floor(k / 2) * 128;
+          x.fillStyle = col ? '#6e3b1e' : '#1d4f9c'; x.fillRect(cx + 4, cy + 4, 504, 120); x.strokeStyle = '#fff'; x.lineWidth = 5; x.strokeRect(cx + 11, cy + 11, 490, 106);
+          const ax = right ? cx + 452 : cx + 60; x.fillStyle = '#fff'; x.beginPath();   // the arrow
+          const dir = right ? 1 : -1; [[-26, -9], [4, -9], [4, -24], [30, 0], [4, 24], [4, 9], [-26, 9]].forEach(([u, v], q) => q ? x.lineTo(ax + u * dir, cy + 64 + v) : x.moveTo(ax + u * dir, cy + 64 + v)); x.fill();
+          txt(de, cx + (right ? 230 : 282), cy + 44, de.length > 14 ? 34 : 42, 380); txt(it, cx + (right ? 230 : 282), cy + 90, it.length > 14 ? 30 : 36, 380);
+          return best ? { i: best.J.i, k } : null; });
+        const t = new THREE.CanvasTexture(c); t.anisotropy = 4; out.ownTex.push(t);
+        const sb = new GB(true), rows = Math.ceil(SG.length / 2);
+        for (const u of use) { if (!u) continue;
+          const s = u.i * ds - 32, [px, pz, i] = onSide(s, 1, 0.9), gy = nrGround(px, pz), y = Math.max(gy, T.hy[i] - 0.2), g = scen.get(px, pz), ux = T.tz[i], uz = -T.tx[i], Wd = 2.3, Hd = 0.58, cy = y + 1.55;   // (where the bank falls away: on longer posts, the board at the road's eye level)
+          for (const e of [-0.95, 0.95]) box(g, px + T.nx[i] * e, gy - 0.3, pz + T.nz[i] * e, 0.08, y - gy + 2.5, 0.08, T.hd[i], [0.55, 0.56, 0.58]);
+          const A = [px + ux * Wd / 2, cy, pz + uz * Wd / 2], B = [px - ux * Wd / 2, cy, pz - uz * Wd / 2], C = [B[0], cy + Hd, B[2]], D = [A[0], cy + Hd, A[2]];
+          const u0 = (u.k % 2) / 2, v1 = 1 - Math.floor(u.k / 2) / rows, v0 = v1 - 1 / rows;
+          sb.quadO(A, B, C, D, W1, [px + T.tx[i], cy + Hd / 2, pz + T.tz[i]], [[u0, v0], [u0 + 0.5, v0], [u0 + 0.5, v1], [u0, v1]]);
+          box(g, px + T.tx[i] * 0.05, cy - 0.02, pz + T.tz[i] * 0.05, 0.06, Hd + 0.04, Wd + 0.04, T.hd[i], [0.3, 0.31, 0.33], null, true); exclPush(px, pz, 2); nSigns++; }
+        const m = addM(sb, new THREE.MeshLambertMaterial({ map: t })); if (m) m.castShadow = false;
+      }
+    }
     /* ---- buildings: South Tyrolean houses (white walls, a dark timber upper storey, grey shingle roofs), the hotels bigger with balconies,
        churches with their towers, the fort at Gomagoi (grey stone, loopholes), sheds and barns of weathered wood, the kiosks and shops on
        the pass (flat roofs, awnings), the Tibet hut (stone and timber on its rock), the mountain huts ---- */
@@ -10380,7 +10539,7 @@ const World = (function () {
     scen.addTo(sceneryGroup, matV, true, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, rocks: nRocks, buildings: nBld, signs: nSigns, decals: nDecals, parked: nParked, far: nFar, walls: +(nWall / (2 * N)).toFixed(3), rails: +(nRail / (2 * N)).toFixed(3), retaining: +(nRet / (2 * N)).toFixed(3) };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, rocks: nRocks, buildings: nBld, signs: nSigns, decals: nDecals, parked: nParked, far: nFar, side: nSide, closed: nClosed, walls: +(nWall / (2 * N)).toFixed(3), rails: +(nRail / (2 * N)).toFixed(3), retaining: +(nRet / (2 * N)).toFixed(3) };   // (read by the tests)
     return out;
   }
 
