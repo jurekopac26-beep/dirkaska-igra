@@ -175,15 +175,15 @@
  },
  "harju": {
   "meshes": 613,
-  "verts": 1243948,
+  "verts": 1245412,
   "instances": 6324,
   "props": 21,
   "crowd": 3650,
-  "world": "c09d917c",
+  "world": "8812d9b2",
   "propsHash": "f70a7360",
   "floor": "3202d0cb/4480",
   "groups": {
-   "-:MeshLambertMaterial": "da094c67",
+   "-:MeshLambertMaterial": "86c0ea05",
    "-:MeshPhongMaterial": "5369271a",
    "-:MeshBasicMaterial": "3338e055",
    "puddles:MeshBasicMaterial": "219cf0ec",
