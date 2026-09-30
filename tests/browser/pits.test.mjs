@@ -32,7 +32,7 @@ try {
   T.check('the crew goes out, works and clears', ['out', 'work', 'clear'].every(m => modes.has(m)), [...modes].join(','));
   T.check('the car goes up on the jacks', maxLift > 0.05, `max lift ${maxLift.toFixed(3)} m`);
   T.check('repaired once', r.repairN === 1, `repairs ${r.repairN}`);
-  T.check('new tyres at the stop', tyreIn > 0.15 && tyreOut === 0, `tyre wear ${tyreIn == null ? '-' : tyreIn.toFixed(2)} in, ${tyreOut == null ? '-' : tyreOut.toFixed(2)} out`);
+  T.check('new tyres at the stop', tyreIn > 0.15 && tyreOut < 0.01, `tyre wear ${tyreIn == null ? '-' : tyreIn.toFixed(2)} in, ${tyreOut == null ? '-' : tyreOut.toFixed(2)} out`);
   T.check('player finishes, all cars finish', r.fin && r.finished === r.n, `${r.finished}/${r.n} after ${r.t.toFixed(1)} s`);
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
 } finally {

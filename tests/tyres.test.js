@@ -25,7 +25,7 @@ const run = (r, drive) => {
   const st = rate(60, 0, 0), co = rate(30, 0.6, 0.06), sl = rate(30, 0.6, 0.45);
   check('wear: a straight < a corner < a slide', st > 0 && st < co && co < sl, `per 10 m: ${st.toExponential(2)}, ${co.toExponential(2)}, ${sl.toExponential(2)}`);
   const g = (w) => { c.tyre = w; r._wear(c, 0); return c.tg; }, G = [0, 0.5, 0.9, 1.0, 1.2, 1.5, 3].map(g);
-  check('grip: 1 new, down 6 % when worn, then the cliff, never under 0.58', G[0] === 1 && G.every((v, k) => k === 0 || v <= G[k - 1]) && Math.abs(G[2] - 0.946) < 1e-9 && G[3] > 0.9 && G[4] < 0.8 && G[6] >= 0.58,
+  check('grip: 1 new, down 5.4 % at 0.9 and about 9 % when worn (1), then the cliff, never under 0.58', G[0] === 1 && G.every((v, k) => k === 0 || v <= G[k - 1]) && Math.abs(G[2] - 0.946) < 1e-9 && G[3] > 0.9 && G[4] < 0.8 && G[6] >= 0.58,
     G.map(v => v.toFixed(3)).join(' '));
 }
 

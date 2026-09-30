@@ -2022,7 +2022,7 @@ const Render = (function () {
      of Spa, the Red Bull Ring and Suzuka (world.tvCams) and elsewhere poles 13 m tall just behind the barrier: one on the outside of each
      bend at its middle, one every ~200 m along the straights. The camera ahead of the car that sees it (tvGrid) picks it up, follows it with
      its zoom (the car about a quarter of the picture's height) until it is 55 m past or hidden behind something, then the picture cuts to
-     the next camera along the road ---------------- */
+     the next camera along the road (tvPick; a shot lasts at least 1.2 s, and one the car is past keeps it while no other camera sees it) ---- */
   let tvC = null;
   function tvSetup(T) {
     const cams = [], L = T.len, N = T.N, ds = T.ds, gH = world && world.groundH, wrap = (d) => { if (T.open) return Math.abs(d); d = Math.abs(d) % L; return Math.min(d, L - d); };
@@ -2049,7 +2049,7 @@ const Render = (function () {
     }
     cams.sort((a, b) => a.s - b.s);
     const t0 = performance.now(), G = world && world.root ? tvGrid(T) : null;
-    return { T, W: world, cams, G, gridMs: performance.now() - t0, cur: -1, fov: 30, lx: 0, ly: 0, lz: 0, cut: true, hid: 0 };
+    return { T, W: world, cams, G, gridMs: performance.now() - t0, cur: -1, fov: 30, lx: 0, ly: 0, lz: 0, cut: true, hid: 0, since: 9 };
   }
   // the TV cameras' line of sight: a coarse height grid of the world (built once, for this camera only: the highest surface in each 4 m cell
   // within the track's box and 250 m around it: the ground, stands, buildings, bridges; the instanced trees as discs of their crowns' height;
@@ -2103,13 +2103,21 @@ const Render = (function () {
     let n = 0, ok = 0; for (let d = -150; d <= 50; d += 25) { const i = T.idx(c.s + d); n++; if (tvSees(G, c.x, c.y, c.z, T.px[i], (T.hasElev ? T.hy[i] : 0) + 1.4, T.pz[i])) ok++; }
     return (c.score = ok / n);
   }
-  function tvPick(C, s, T, car, G) {   // the next camera along the road at least 25 m ahead of s that sees the car (and most of its stretch); else the nearest that sees it
+  // the camera for the car at s: the next one along the road at least 25 m ahead that sees the car and the road 25 m on (where it will be in a
+  // moment), and most of its stretch; else the nearest that sees both and that it is not already 55 m past; else the current one (cur), while
+  // it still sees the car; else the nearest that sees it at all; else the next one ahead. strict: only the first two (-1 if neither), so a
+  // camera that lost the car for a moment does not hand it to one it is past (the picture would cut straight back)
+  function tvPick(C, s, T, car, G, cur, strict) {
     const L = T.len, dS = (a, b) => { let d = a - b; if (!T.open) { d = ((d % L) + L) % L; if (d > L / 2) d -= L; } return d; };
     const ahead = [], all = [];
-    for (let k = 0; k < C.length; k++) { const d = dS(C[k].s, s); all.push([Math.abs(d) + (d < 0 ? 60 : 0), k]); if (d > 25 && d < 400) ahead.push([d, k]); }
+    for (let k = 0; k < C.length; k++) { const d = dS(C[k].s, s); all.push([Math.abs(d) + (d < 0 ? 60 : 0), k, d]); if (d > 25 && d < 400) ahead.push([d, k]); }
     ahead.sort((a, b) => a[0] - b[0]); all.sort((a, b) => a[0] - b[0]);
     const cy = car ? (car.y || 0) + 1.4 : 0, sees = (c) => !car || tvSees(G, c.x, c.y, c.z, car.x, cy, car.z);
-    for (let n = 0; n < Math.min(4, ahead.length); n++) { const c = C[ahead[n][1]]; if (tvScore(G, c, T) >= 0.6 && sees(c)) return ahead[n][1]; }
+    const i2 = T.idx(s + 25), x2 = T.px[i2], y2 = (T.hasElev ? T.hy[i2] : 0) + 1.4, z2 = T.pz[i2], keeps = (c) => sees(c) && tvSees(G, c.x, c.y, c.z, x2, y2, z2);
+    for (let n = 0; n < Math.min(4, ahead.length); n++) { const c = C[ahead[n][1]]; if (tvScore(G, c, T) >= 0.6 && keeps(c)) return ahead[n][1]; }
+    for (let n = 0; n < Math.min(8, all.length); n++) { const c = C[all[n][1]]; if (all[n][0] < 260 && all[n][2] >= -55 && keeps(c)) return all[n][1]; }
+    if (strict) return -1;
+    if (C[cur] && sees(C[cur])) return cur;
     for (let n = 0; n < Math.min(8, all.length); n++) { const c = C[all[n][1]]; if (all[n][0] < 260 && sees(c)) return all[n][1]; }
     return ahead.length ? ahead[0][1] : all.length ? all[0][1] : -1;
   }
@@ -2150,10 +2158,14 @@ const Render = (function () {
       if (!tvC || tvC.T !== curTrack || tvC.W !== world) tvC = tvSetup(curTrack);
       const C = tvC.cams, T = curTrack, L = T.len, s = c.q ? c.q.s : 0;
       if (C.length) {
-        let cur = C[tvC.cur];
-        if (cur) { let d = s - cur.s; if (!T.open) { d = ((d % L) + L) % L; if (d > L / 2) d -= L; } if (d > 55 || d < -450) cur = null; }   // (past it, or nowhere near: a cut)
-        if (cur && dt > 0) { tvC.hid = tvSees(tvC.G, cur.x, cur.y, cur.z, x, (c.y || 0) + 1.4, z) ? 0 : tvC.hid + dt; if (tvC.hid > 0.4) { const k = tvPick(C, s, T, c, tvC.G); if (k >= 0 && k !== tvC.cur) cur = null; tvC.hid = 0; } }   // (hidden behind something: another camera)
-        if (!cur) { const t0 = performance.now(); tvC.cur = tvPick(C, s, T, c, tvC.G); tvC.ms = performance.now() - t0; tvC.cuts = (tvC.cuts || 0) + 1; cur = C[tvC.cur]; tvC.cut = true; }
+        const pick = (strict) => { const t0 = performance.now(), k = tvPick(C, s, T, c, tvC.G, tvC.cur, strict); tvC.ms = performance.now() - t0; return k; };
+        let cur = C[tvC.cur], k = -2;   // (k: the camera picked in this frame; -2: none picked)
+        if (!cur) k = pick(false);
+        else { let d = s - cur.s; if (!T.open) { d = ((d % L) + L) % L; if (d > L / 2) d -= L; } if (d > 55 || d < -450) k = pick(false); }   // (past it, or nowhere near: the next one; this one while no other sees the car)
+        if (k === -2 && dt > 0) { tvC.hid = tvSees(tvC.G, cur.x, cur.y, cur.z, x, (c.y || 0) + 1.4, z) ? 0 : tvC.hid + dt; if (tvC.hid > 0.4 && tvC.since > 1.2) { k = pick(true); tvC.hid = 0; } }   // (hidden behind something: another camera that sees it, if one does; a shot lasts at least 1.2 s)
+        if (k >= 0 && k !== tvC.cur) { tvC.cur = k; tvC.cuts = (tvC.cuts || 0) + 1; tvC.cut = true; tvC.hid = 0; tvC.since = 0; }   // (a cut: the new camera's view at once)
+        tvC.since += dt;
+        cur = C[tvC.cur];
         px = cur.x; py = cur.y; pz = cur.z;
       } else { px = x - 30; py = baseY + 20; pz = z + 30; }
       const gx = x + c.vx * 0.25, gz = z + c.vz * 0.25, gy = (c.y != null ? c.y : baseY) + 0.6, kk = tvC.cut ? 1 : 1 - Math.exp(-dt * 7);   // (a little ahead of the car, panned with a slight lag)

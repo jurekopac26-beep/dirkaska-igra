@@ -1622,7 +1622,7 @@ const Core = (function () {
   // by the pit wall (PIT_FAST m left of the lane's centre) and stops in the working lane in front of its garage (PIT_WORK m right of it)
   const AI_PIT_DMG = 0.6, PIT_FAST = 2.2, PIT_WORK = 1.2;
   const TYRE_K = 1.0, TYRE_STOP = 2.6;   // tyre wear: the rate's scale (a set worn at c.tyre 1), the seconds a tyre change takes
-  const tyreGrip = (w) => w <= 0.9 ? 1 - 0.06 * w : Math.max(0.58, 0.946 - 1.1 * Math.pow(w - 0.9, 1.5));   // the grip left: -6 % when worn, then the cliff
+  const tyreGrip = (w) => w <= 0.9 ? 1 - 0.06 * w : Math.max(0.58, 0.946 - 1.1 * Math.pow(w - 0.9, 1.5));   // the grip left: -5.4 % at 0.9, -9 % worn (1), then the cliff
   const hash01 = (s) => { let h = 2166136261; for (const ch of String(s)) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return (h >>> 0) / 4294967296; };
   const PROPK = (() => {
     const cylPts = (r, y0, y1, n) => { const p = []; for (const y of [y0, y1]) for (let k = 0; k < n; k++) { const a = k / n * Math.PI * 2; p.push([Math.cos(a) * r, y, Math.sin(a) * r]); } return p; };
@@ -1923,7 +1923,7 @@ const Core = (function () {
     const lim = (T.wv ? lerp(T.wv[i0], T.wv[i1], ft) : T.w) - (M.aiEdge || 1.25);   // (M.aiEdge: the formula keeps further in)
     let off = clamp(rlv + c.aiOff, -lim, lim);
     if (c.pitWant && T.def.pit) { const pz = T.pitAt(sT); if (pz) off = pz.o + (c.isPlayer ? autoPitLat(c, T, pz) : aiPitLat(c, T, pz));   // (autopilot into the pits: follow the lane)
-      else if (!c.inPit) { const L = T.len; let dE = T.startS + T.def.pit[1] - sT; dE = ((dE % L) + L) % L; if (dE < 160) off = lerp(off, lim - 0.4, sstep(160, 70, dE)); } }   // (a car on its way in, the autopilot too, moves over to the pit side before the way in)
+      else if (!c.inPit) { const L = T.len; let dE = T.startS + T.def.pit[1] - sT; dE = ((dE % L) + L) % L; if (dE < 160) off = lerp(off, lim - 0.4, c.isPlayer ? sstep(100, 45, dE) : sstep(160, 70, dE)); } }   // (a car on its way in moves over to the pit side before the way in; the autopilot later, out of a corner just before it)
     const tx = lerp(T.px[i0], T.px[i1], ft) + lerp(T.nx[i0], T.nx[i1], ft) * off;
     const tz = lerp(T.pz[i0], T.pz[i1], ft) + lerp(T.nz[i0], T.nz[i1], ft) * off;
     const hA = c.phys === 'cs' && c.speed > 3 ? Math.atan2(c.vz, c.vx) : c.h;   // cs: the arc starts along the travel, not the nose
@@ -2379,7 +2379,7 @@ const Core = (function () {
     /* ---- tyre wear (the circuits with a pit lane; this.tyres): c.tyre from 0 (new) up, per metre driven at a rate that grows with the
        cornering load and the slide (a drift wears them most) and with the driver (c.tyreK: the player 1, the AI 0.8-1.3); set so that a set
        lasts a race at its usual length (Track def.laps) and wears out about 60 % into a race three times as long. c.tg, the grip left
-       (tyreGrip): down 6 % by the time they are worn (c.tyre 1), then over the cliff. A stop in the pits: new tyres (at least TYRE_STOP s) ---- */
+       (tyreGrip): down 5.4 % by c.tyre 0.9, 9 % when worn (1), then over the cliff. A stop in the pits: new tyres (at least TYRE_STOP s) ---- */
     _wear(c, ds) {
       const lat = Math.min(30, Math.abs(c.speed * (c.wPath || 0))), sl = Math.min(0.5, Math.abs(c.beta || 0));
       c.tyre += ds * this.tyreRate * c.tyreK * (0.5 + 0.03 * lat + 1.8 * sl);

@@ -730,7 +730,7 @@
   function stepRace(dt, inp) {
     const P = race.player;
     if ((phase === 'finish' || phase === 'done') && race.timeTrial) { P.inThr = 0; P.inBrk = 1; P.inSteer = 0; P.inHand = 0; P.digitalSteer = false; }   // time trial: brake to a stop past the finish (the road ends)
-    else if (phase === 'finish' || phase === 'done' || autoDrive) { P.pitWant = !!P.inPit; Core.aiControl(P, race, dt); P.digitalSteer = false; }   // (autoDrive: automated tests of online races drive in real time)
+    else if (phase === 'finish' || phase === 'podium' || phase === 'done' || autoDrive) { P.pitWant = !!P.inPit; Core.aiControl(P, race, dt); P.digitalSteer = false; }   // (autoDrive: automated tests of online races drive in real time)
     else { P.inSteer = inp.steer; P.inThr = inp.thr; P.inBrk = inp.brk; P.inHand = inp.hand; P.digitalSteer = inp.digital; }
     race.step(dt);
     if (ghRec) ghSample(P);
@@ -929,7 +929,7 @@
   let dmgKey = '', dmgShown = null;
   const dmgCol = (z) => 'hsl(' + Math.round(120 * (1 - Math.min(1, z))) + ',78%,' + (z < 0.02 ? 52 : 50) + '%)';
   // the tyres (Core Race._wear, the circuits with a pit lane): their life left as a ring and a number under the damage; the commentator when
-  // they start to fade, a hint to the pits when they are about gone (more than half a lap still to go)
+  // they start to fade and, with more than half a lap still to go, when they are about gone: to the pits (no text on the screen)
   function updateTyreHUD(P) {
     if (!race.tyres) return;
     const life = Math.max(0, 1 - (P.tyre || 0)), key = Math.round(life * 100);
@@ -938,8 +938,7 @@
     if (phase !== 'racing' || P.finished || P.inPit) return;
     const left = race.laps * track.len - P.dist;
     if (tyreSaid < 1 && P.tyre > 0.65 && left > track.len * 0.3) { tyreSaid = 1; Comm.say('tyresOld', null, 1, { ttl: 6000 }); }
-    else if (tyreSaid < 2 && P.tyre > 0.92 && left > track.len * 0.5) { tyreSaid = 2; Comm.say('tyresGone', null, 2, { ttl: 6000 });
-      toast('Gume so obrabljene: zapelji v bokse (' + (track.def.pitWhere || 'desno takoj za zadnjim ovinkom pred ciljno ravnino') + ') za nove.', 4600); }
+    else if (tyreSaid < 2 && P.tyre > 0.92 && left > track.len * 0.5) { tyreSaid = 2; Comm.say('tyresGone', null, 2, { ttl: 6000 }); }
   }
   function updateDamageHUD(P) {
     const el = $('h-dmg'); if (!el) return;
