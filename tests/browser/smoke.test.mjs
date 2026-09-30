@@ -1,6 +1,6 @@
 // Browser smoke test: the page loads (over http like GitHub Pages, and from a local file), every track can be
-// raced for 20 s on autopilot, settings migrate, the physics can be switched mid-race, the title demo runs,
-// a Pikes Peak run and an Ouninpohja run finish and their records are saved per physics (Ouninpohja also in the rain, apart).
+// raced for 20 s on autopilot, settings migrate (one driving physics: Circuit Superstars), the title demo runs,
+// a Pikes Peak run and an Ouninpohja run finish and their records are saved (Ouninpohja also in the rain, apart).
 // Zero page errors allowed.
 //   node tests/browser/smoke.test.mjs
 import path from 'node:path';
@@ -11,14 +11,14 @@ const T = checker('smoke');
 const srv = await serve();
 const browser = await launch();
 try {
-  // 1. settings: the physics row and the migration of old saves ('rally' was removed)
-  for (const [seed, want] of [[null, 'cs'], ['{"phys":"rally"}', 'cs'], ['{"phys":"arcade"}', 'arcade'], ['{"sound":0}', 'cs']]) {
+  // 1. settings: one driving physics (no row for it) and the migration of old saves (the 'rally' and 'arcade' physics were removed)
+  for (const [seed, want] of [[null, 'cs'], ['{"phys":"rally"}', 'cs'], ['{"phys":"arcade"}', 'cs'], ['{"sound":0}', 'cs']]) {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', seed);
     const got = await page.evaluate(() => window.__game.S.phys);
     T.check(`saved settings ${seed || '(none)'} -> physics '${want}'`, got === want && !errors.length, `got '${got}'${errors.length ? ', errors: ' + errors.join(' | ') : ''}`);
     if (seed === null) {
-      const row = await page.evaluate(() => [...document.querySelectorAll('[data-set="phys"] button')].map(b => b.textContent + (b.classList.contains('sel') ? '*' : '')).join(' | '));
-      T.check('settings row: Circuit Superstars (selected) | Arkadna', row === 'Circuit Superstars* | Arkadna', row);
+      const row = await page.evaluate(() => document.querySelectorAll('[data-set="phys"]').length);
+      T.check('settings: no driving-physics row (Circuit Superstars only)', row === 0, row + ' rows');
     }
     await ctx.close();
   }
@@ -51,18 +51,6 @@ try {
     const crewOk = r.pit ? r.crew > 0 : r.crew === 0;   // (pit crews on the circuits with a pit lane: Bakreni gozd, Toskana, Gromski rt)
     T.check(`${id}: 20 s race on autopilot`, r.phase === 'racing' && r.dist > 150 && r.phys === 'cs' && !nan && crewOk && errors.length === e0,
       `dist ${r.dist} m, phys ${r.phys}, pit crew ${r.crew}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
-  }
-
-  // 4. switch the physics in the middle of a race: cs -> arcade -> cs
-  {
-    await startTrack(page, 'monaco');
-    await simulate(page, 5);
-    const click = (v) => page.evaluate((v) => document.querySelector(`[data-set="phys"] button[data-v="${v}"]`).click(), v);
-    await click('arcade'); const n1 = await simulate(page, 10);
-    const a = await page.evaluate(() => window.__game.race.cars.every(c => c.phys === 'arcade'));
-    await click('cs'); const n2 = await simulate(page, 10);
-    const b = await page.evaluate(() => ({ all: window.__game.race.cars.every(c => c.phys === 'cs'), dist: window.__game.race.player.dist }));
-    T.check('physics switch mid-race (cs -> arcade -> cs)', a && b.all && !n1 && !n2 && b.dist > 300, `dist ${Math.round(b.dist)} m`);
   }
 
   // 5. the title-screen demo drives behind the menu (two screenshots 1.5 s apart must differ)

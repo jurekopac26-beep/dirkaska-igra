@@ -1,6 +1,6 @@
 {
  "jezero/race/cs": {
-  "digest": "93f30543a90584e733c3d40b",
+  "digest": "6f6c2edb57620d095c67364a",
   "lead": 2188.1,
   "car0": [
    -218.22,
@@ -13,22 +13,8 @@
    "repairs": 0
   }
  },
- "jezero/race/arcade": {
-  "digest": "9bd8fea33d29dfcb7f00002c",
-  "lead": 2052,
-  "car0": [
-   -103.53,
-   211.77
-  ],
-  "cover": {
-   "dmg": 0.17,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "jezero/demo/cs": {
-  "digest": "59d487947c7a32e783b58e0b",
+  "digest": "c6a56f630d7c5bef0cf7e271",
   "lead": 2350.9,
   "car0": [
    -171.61,
@@ -41,22 +27,8 @@
    "repairs": 0
   }
  },
- "jezero/demo/arcade": {
-  "digest": "20e76a0a6146372d20f9ad00",
-  "lead": 2183.3,
-  "car0": [
-   -242.64,
-   48.15
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "jezero/upg/cs": {
-  "digest": "4201d8e6eab8bcefe1e97e5c",
+  "digest": "6f0cb5b87bb771442fa024bd",
   "lead": 2352.9,
   "car0": [
    -245.23,
@@ -69,22 +41,8 @@
    "repairs": 0
   }
  },
- "jezero/upg/arcade": {
-  "digest": "682f15e2b8ab6bc405b01034",
-  "lead": 2186,
-  "car0": [
-   -234.76,
-   121.17
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "jezero/crash/cs": {
-  "digest": "a388bfa5fa731e9e0f07e740",
+  "digest": "3dc228e1d153de253500c1b9",
   "lead": 2171.8,
   "car0": [
    -131.23,
@@ -97,22 +55,8 @@
    "repairs": 0
   }
  },
- "jezero/crash/arcade": {
-  "digest": "16fc4fa89794cc26554d8d96",
-  "lead": 2046.9,
-  "car0": [
-   -62.16,
-   212.92
-  ],
-  "cover": {
-   "dmg": 0.75,
-   "loose": 2,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "jezero/formula/cs": {
-  "digest": "eb4bcc59ee80330001775bbd",
+  "digest": "b765204391f1283b2a6c21cd",
   "lead": 2534,
   "car0": [
    -242.94,
@@ -125,22 +69,8 @@
    "repairs": 0
   }
  },
- "jezero/formula/arcade": {
-  "digest": "7d148a9f54e754ac7b6a66ce",
-  "lead": 2404.4,
-  "car0": [
-   -246.5,
-   6.13
-  ],
-  "cover": {
-   "dmg": 1,
-   "loose": 2,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "riviera/race/cs": {
-  "digest": "331d6336e923f0f67c326ca4",
+  "digest": "143a2647378a688bcf4b21aa",
   "lead": 2030.5,
   "car0": [
    14.42,
@@ -153,22 +83,8 @@
    "repairs": 0
   }
  },
- "riviera/race/arcade": {
-  "digest": "b72faa0a463a60ea40c069a0",
-  "lead": 1940,
-  "car0": [
-   94.23,
-   45.86
-  ],
-  "cover": {
-   "dmg": 0.07,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "riviera/demo/cs": {
-  "digest": "0d4e989e3da84df77dfae082",
+  "digest": "25f7ec2ce8ba6b69a0d0c892",
   "lead": 2168.4,
   "car0": [
    -200.75,
@@ -181,22 +97,8 @@
    "repairs": 0
   }
  },
- "riviera/demo/arcade": {
-  "digest": "1b775abc74127d0b6c0283ee",
-  "lead": 2039.8,
-  "car0": [
-   -82.4,
-   80.74
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "riviera/upg/cs": {
-  "digest": "bf008fda0c77a7fb56ca5cf4",
+  "digest": "868e75ffa0fd3b862ef60b55",
   "lead": 2165.7,
   "car0": [
    -175.46,
@@ -209,22 +111,8 @@
    "repairs": 0
   }
  },
- "riviera/upg/arcade": {
-  "digest": "acec4d9def0b1a0194288167",
-  "lead": 2037.1,
-  "car0": [
-   -58.73,
-   76.04
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "riviera/crash/cs": {
-  "digest": "cfbf7642cd1106ac44e7c6ff",
+  "digest": "b97ceef26ec7c8a4663a7475",
   "lead": 2020.6,
   "car0": [
    50.29,
@@ -237,22 +125,8 @@
    "repairs": 0
   }
  },
- "riviera/crash/arcade": {
-  "digest": "38a51ea0667b138e79a8023c",
-  "lead": 1941.6,
-  "car0": [
-   93.31,
-   46.36
-  ],
-  "cover": {
-   "dmg": 0.37,
-   "loose": 1,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "riviera/formula/cs": {
-  "digest": "cb98fb5d1685524cb66302d5",
+  "digest": "c305cc381175d3a955ab78a7",
   "lead": 2299.7,
   "car0": [
    -211.01,
@@ -265,22 +139,8 @@
    "repairs": 0
   }
  },
- "riviera/formula/arcade": {
-  "digest": "fab0816be3df2b5e0fc2db36",
-  "lead": 2203.7,
-  "car0": [
-   -190.62,
-   48.7
-  ],
-  "cover": {
-   "dmg": 1,
-   "loose": 5,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "gora/race/cs": {
-  "digest": "ca97c6c3f6a7696428588927",
+  "digest": "be4793e98c6272196c3c0fdf",
   "lead": 2249.8,
   "car0": [
    219.66,
@@ -293,22 +153,8 @@
    "repairs": 0
   }
  },
- "gora/race/arcade": {
-  "digest": "cde1cfac645214568ec86030",
-  "lead": 2199.1,
-  "car0": [
-   286.92,
-   130.48
-  ],
-  "cover": {
-   "dmg": 0.15,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "gora/demo/cs": {
-  "digest": "c3d950a3a735e7331d8d70ad",
+  "digest": "9db3a8094dd2c32169bf3eab",
   "lead": 2320.7,
   "car0": [
    262.67,
@@ -321,22 +167,8 @@
    "repairs": 0
   }
  },
- "gora/demo/arcade": {
-  "digest": "107b1c385c30d641d302c38e",
-  "lead": 2267.1,
-  "car0": [
-   312.71,
-   -48.1
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 2,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "gora/upg/cs": {
-  "digest": "1ace5470a1b1f427bcef3129",
+  "digest": "146a9f122632f9f17ea82cfa",
   "lead": 2326.2,
   "car0": [
    343.08,
@@ -349,22 +181,8 @@
    "repairs": 0
   }
  },
- "gora/upg/arcade": {
-  "digest": "e7ad6d5070b5aad01ec9c50d",
-  "lead": 2267.1,
-  "car0": [
-   353.69,
-   27.05
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "gora/crash/cs": {
-  "digest": "2cc26e2009253b3603cc473a",
+  "digest": "39669309522f880bc8aa09b5",
   "lead": 2253.2,
   "car0": [
    211.82,
@@ -377,22 +195,8 @@
    "repairs": 0
   }
  },
- "gora/crash/arcade": {
-  "digest": "5b1fcad604fe4a69d2f2b8f3",
-  "lead": 2192.5,
-  "car0": [
-   270.54,
-   147.81
-  ],
-  "cover": {
-   "dmg": 0.45,
-   "loose": 2,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "gora/formula/cs": {
-  "digest": "f0651868956313ee648f7bd1",
+  "digest": "d6e4b430179d6e4845f8d50c",
   "lead": 2140.9,
   "car0": [
    21.5,
@@ -405,22 +209,8 @@
    "repairs": 0
   }
  },
- "gora/formula/arcade": {
-  "digest": "394df73278653855edb1c1b5",
-  "lead": 2124.9,
-  "car0": [
-   11.03,
-   179.61
-  ],
-  "cover": {
-   "dmg": 0.51,
-   "loose": 2,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "ljubljana/race/cs": {
-  "digest": "d2537804aacbb1f2c5e08e93",
+  "digest": "c4caaec310ed61b2e49076ad",
   "lead": 2054.6,
   "car0": [
    278.48,
@@ -433,22 +223,8 @@
    "repairs": 0
   }
  },
- "ljubljana/race/arcade": {
-  "digest": "2fcd3c59946274c347ecf71d",
-  "lead": 1971.4,
-  "car0": [
-   68.41,
-   -38.89
-  ],
-  "cover": {
-   "dmg": 0.11,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "ljubljana/demo/cs": {
-  "digest": "5cbb344045634abc65462036",
+  "digest": "6b30ad6248c9815bdbee3617",
   "lead": 2151.8,
   "car0": [
    272.1,
@@ -461,22 +237,8 @@
    "repairs": 0
   }
  },
- "ljubljana/demo/arcade": {
-  "digest": "5c846a356fa74de72eab9594",
-  "lead": 2064,
-  "car0": [
-   330.22,
-   -94.56
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "ljubljana/upg/cs": {
-  "digest": "9b6ad6d6ce3ea637df1c6d2a",
+  "digest": "0774bf881af75f7e9ca067de",
   "lead": 2154.2,
   "car0": [
    304.69,
@@ -489,22 +251,8 @@
    "repairs": 0
   }
  },
- "ljubljana/upg/arcade": {
-  "digest": "eb851ce72591c85b528c4409",
-  "lead": 2065.3,
-  "car0": [
-   293.52,
-   -109.01
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "ljubljana/crash/cs": {
-  "digest": "5b979868ddd1ea5f29108bec",
+  "digest": "775f074be63afe113d09a0fc",
   "lead": 2040.7,
   "car0": [
    111.63,
@@ -517,22 +265,8 @@
    "repairs": 0
   }
  },
- "ljubljana/crash/arcade": {
-  "digest": "85edaafab912d75b42699217",
-  "lead": 1969,
-  "car0": [
-   58.39,
-   -41.38
-  ],
-  "cover": {
-   "dmg": 1,
-   "loose": 4,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "ljubljana/formula/cs": {
-  "digest": "7d643878b78a876a0ba20096",
+  "digest": "aae1ae89c92ca53b0da54347",
   "lead": 2330.2,
   "car0": [
    329.93,
@@ -545,22 +279,8 @@
    "repairs": 0
   }
  },
- "ljubljana/formula/arcade": {
-  "digest": "9e9dcf73f0955ff4143f5c69",
-  "lead": 2196,
-  "car0": [
-   311.01,
-   -111.7
-  ],
-  "cover": {
-   "dmg": 1,
-   "loose": 5,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "monaco/race/cs": {
-  "digest": "69911296775f229b6b4678d3",
+  "digest": "a681f737ac1b1076a8f91ecd",
   "lead": 2526.8,
   "car0": [
    271.03,
@@ -573,22 +293,8 @@
    "repairs": 0
   }
  },
- "monaco/race/arcade": {
-  "digest": "a44e6ec7acf099b7d0c30a51",
-  "lead": 2413.6,
-  "car0": [
-   343.63,
-   59.56
-  ],
-  "cover": {
-   "dmg": 0.02,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "monaco/demo/cs": {
-  "digest": "54fcdfaf5920e64e76225df3",
+  "digest": "572ca91e728a8e122524b3c7",
   "lead": 2627.4,
   "car0": [
    42.86,
@@ -601,22 +307,8 @@
    "repairs": 0
   }
  },
- "monaco/demo/arcade": {
-  "digest": "17848d64816578ef4c3705a3",
-  "lead": 2532.2,
-  "car0": [
-   99.7,
-   72.51
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "monaco/upg/cs": {
-  "digest": "ed74aed2fc2053f57464d6a7",
+  "digest": "ebfacc5db3a631c884a6147b",
   "lead": 2627,
   "car0": [
    46.83,
@@ -629,22 +321,8 @@
    "repairs": 0
   }
  },
- "monaco/upg/arcade": {
-  "digest": "50fb8fed4654b7f6d9ac04e7",
-  "lead": 2534.3,
-  "car0": [
-   146.49,
-   69.02
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "monaco/crash/cs": {
-  "digest": "8e0b8754a34c344c87d669ea",
+  "digest": "b185b7498155253d9b2075c6",
   "lead": 2516.4,
   "car0": [
    412.5,
@@ -657,22 +335,8 @@
    "repairs": 0
   }
  },
- "monaco/crash/arcade": {
-  "digest": "d6e4ae97a818ee981dc37d9d",
-  "lead": 2400.5,
-  "car0": [
-   440.65,
-   62.57
-  ],
-  "cover": {
-   "dmg": 1,
-   "loose": 2,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "monaco/formula/cs": {
-  "digest": "79b56a7c94011e983acd3a3f",
+  "digest": "0cb6441cb92eeeee8abe6a36",
   "lead": 2924.4,
   "car0": [
    17.37,
@@ -685,22 +349,8 @@
    "repairs": 0
   }
  },
- "monaco/formula/arcade": {
-  "digest": "2301e583292f594c779627a1",
-  "lead": 2849.4,
-  "car0": [
-   22.36,
-   187.37
-  ],
-  "cover": {
-   "dmg": 1,
-   "loose": 7,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "gozd/race/cs": {
-  "digest": "a6dec0c0f5410b1524527ab0",
+  "digest": "aab25615f910c71c59d52ac9",
   "lead": 1813,
   "car0": [
    230.66,
@@ -713,22 +363,8 @@
    "repairs": 0
   }
  },
- "gozd/race/arcade": {
-  "digest": "f957836a20c9cfc13d23ad65",
-  "lead": 1682.8,
-  "car0": [
-   229.75,
-   281.12
-  ],
-  "cover": {
-   "dmg": 0.08,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "gozd/demo/cs": {
-  "digest": "2fce91819596744f6dd949c9",
+  "digest": "1ddf7408d135b3260acfbe94",
   "lead": 1963.1,
   "car0": [
    351.34,
@@ -741,22 +377,8 @@
    "repairs": 0
   }
  },
- "gozd/demo/arcade": {
-  "digest": "7d2b1aa65d9802ac903cfd12",
-  "lead": 1772.8,
-  "car0": [
-   306.22,
-   200.31
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "gozd/upg/cs": {
-  "digest": "99aa1253ad74af03a10b58ad",
+  "digest": "4385234b4f772976b50f51c4",
   "lead": 1961.5,
   "car0": [
    328.19,
@@ -769,22 +391,8 @@
    "repairs": 0
   }
  },
- "gozd/upg/arcade": {
-  "digest": "83a77bec6d9280f25d0c3f94",
-  "lead": 1772.6,
-  "car0": [
-   273.4,
-   269.25
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "gozd/crash/cs": {
-  "digest": "cf6dadf54ba4928f4cc35638",
+  "digest": "baeb89dbb9e16483f4e846de",
   "lead": 2431.7,
   "car0": [
    325.1,
@@ -797,22 +405,8 @@
    "repairs": 1
   }
  },
- "gozd/crash/arcade": {
-  "digest": "bc3028bb58523223cc3d5839",
-  "lead": 2294.4,
-  "car0": [
-   281.26,
-   271.22
-  ],
-  "cover": {
-   "dmg": 1,
-   "loose": 12,
-   "rescues": 0,
-   "repairs": 1
-  }
- },
  "gozd/formula/cs": {
-  "digest": "44f32c3d7abdfcb8b69f15c4",
+  "digest": "9aa510b05b6f0b6c545a09f2",
   "lead": 3391,
   "car0": [
    158.89,
@@ -825,22 +419,8 @@
    "repairs": 1
   }
  },
- "gozd/formula/arcade": {
-  "digest": "aadd934280859e4aabe11682",
-  "lead": 3222,
-  "car0": [
-   187.66,
-   80.21
-  ],
-  "cover": {
-   "dmg": 1,
-   "loose": 5,
-   "rescues": 0,
-   "repairs": 1
-  }
- },
  "toskana/race/cs": {
-  "digest": "a3ff31b09289ad4d0a18d8b2",
+  "digest": "404a1243a085770074379a1a",
   "lead": 1797.7,
   "car0": [
    162.3,
@@ -853,22 +433,8 @@
    "repairs": 0
   }
  },
- "toskana/race/arcade": {
-  "digest": "6870799dfb375d02d7ead2b5",
-  "lead": 1722.1,
-  "car0": [
-   155.51,
-   136.32
-  ],
-  "cover": {
-   "dmg": 0.06,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "toskana/demo/cs": {
-  "digest": "f9b4622c5f5e3703fee2568f",
+  "digest": "96f6a1c76776f79e78606a02",
   "lead": 1932.5,
   "car0": [
    102.44,
@@ -881,22 +447,8 @@
    "repairs": 0
   }
  },
- "toskana/demo/arcade": {
-  "digest": "0a4a7702c918a92bd6ab73ae",
-  "lead": 1792.3,
-  "car0": [
-   118.17,
-   32.19
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "toskana/upg/cs": {
-  "digest": "688656116452a5d2c3045b5e",
+  "digest": "8d6a2db1f56730f3b85a64fe",
   "lead": 1928.4,
   "car0": [
    104.02,
@@ -909,22 +461,8 @@
    "repairs": 0
   }
  },
- "toskana/upg/arcade": {
-  "digest": "330cda01cbf4fc89a87695ae",
-  "lead": 1790.7,
-  "car0": [
-   126.2,
-   50.85
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "toskana/crash/cs": {
-  "digest": "b86288989e396e23ca930384",
+  "digest": "9c8413e45b492bbe684d1660",
   "lead": 2402.9,
   "car0": [
    129.84,
@@ -937,22 +475,8 @@
    "repairs": 1
   }
  },
- "toskana/crash/arcade": {
-  "digest": "fc04ef6e56258b3ffa6711d3",
-  "lead": 2267.9,
-  "car0": [
-   169.79,
-   83.83
-  ],
-  "cover": {
-   "dmg": 0.62,
-   "loose": 2,
-   "rescues": 0,
-   "repairs": 1
-  }
- },
  "toskana/formula/cs": {
-  "digest": "1656ecb1322f26caa236e905",
+  "digest": "d23d28d17456fae6f4434d2b",
   "lead": 3375.5,
   "car0": [
    -86.57,
@@ -965,22 +489,8 @@
    "repairs": 1
   }
  },
- "toskana/formula/arcade": {
-  "digest": "134531b3a4963d2de53a555e",
-  "lead": 3244.1,
-  "car0": [
-   -94.09,
-   48.12
-  ],
-  "cover": {
-   "dmg": 1,
-   "loose": 5,
-   "rescues": 0,
-   "repairs": 1
-  }
- },
  "grom/race/cs": {
-  "digest": "f02c83c77483afd59059b8df",
+  "digest": "02d22545258b080c9ccb2d4d",
   "lead": 1891.2,
   "car0": [
    57.56,
@@ -993,22 +503,8 @@
    "repairs": 0
   }
  },
- "grom/race/arcade": {
-  "digest": "dbf49658c7b26d22edb33b2f",
-  "lead": 1737.1,
-  "car0": [
-   99.58,
-   -124.75
-  ],
-  "cover": {
-   "dmg": 0.13,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "grom/demo/cs": {
-  "digest": "d841bd02ea2afd6fdd798c39",
+  "digest": "eccd76cc6533b97569635ccd",
   "lead": 1970.5,
   "car0": [
    -142.04,
@@ -1021,22 +517,8 @@
    "repairs": 0
   }
  },
- "grom/demo/arcade": {
-  "digest": "3769f50eb008cc86f9351c5c",
-  "lead": 1840.8,
-  "car0": [
-   -121.1,
-   -2.93
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "grom/upg/cs": {
-  "digest": "db33c6646e21110bfc9f2530",
+  "digest": "0f185d9050a6f1b3d2774f76",
   "lead": 1970.8,
   "car0": [
    -168.48,
@@ -1049,22 +531,8 @@
    "repairs": 0
   }
  },
- "grom/upg/arcade": {
-  "digest": "0d5451545427c354940f6063",
-  "lead": 1854.2,
-  "car0": [
-   -110.2,
-   -8.55
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "grom/crash/cs": {
-  "digest": "8db28837cc15999447196846",
+  "digest": "96b61be0208f04a76a73b9fa",
   "lead": 2527.7,
   "car0": [
    -48.69,
@@ -1077,22 +545,8 @@
    "repairs": 1
   }
  },
- "grom/crash/arcade": {
-  "digest": "51c0b5d397ff32e1e7ca53ca",
-  "lead": 2366,
-  "car0": [
-   -131.1,
-   2.05
-  ],
-  "cover": {
-   "dmg": 0.46,
-   "loose": 2,
-   "rescues": 0,
-   "repairs": 1
-  }
- },
  "grom/formula/cs": {
-  "digest": "18b6f5f6c8ece68424ceb97f",
+  "digest": "c0445d0d6a62d29a4a19375c",
   "lead": 3562.8,
   "car0": [
    53.13,
@@ -1105,22 +559,8 @@
    "repairs": 1
   }
  },
- "grom/formula/arcade": {
-  "digest": "119b8316fdf08c305b4397ce",
-  "lead": 3401.6,
-  "car0": [
-   85.18,
-   74
-  ],
-  "cover": {
-   "dmg": 1,
-   "loose": 10,
-   "rescues": 0,
-   "repairs": 1
-  }
- },
  "pikes/race/cs": {
-  "digest": "dcf0b2c65e386cc2d330da68",
+  "digest": "4ffb9bb0df8f11e46575a32f",
   "lead": 2051.1,
   "car0": [
    -296.07,
@@ -1133,22 +573,8 @@
    "repairs": 0
   }
  },
- "pikes/race/arcade": {
-  "digest": "156d3c068754a65c2db1dd06",
-  "lead": 1926.7,
-  "car0": [
-   -353.72,
-   -1373.4
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "pikes/demo/cs": {
-  "digest": "621442352cd9a9631762398f",
+  "digest": "116aef2c6574fe7a69110d5e",
   "lead": 2081.5,
   "car0": [
    -268.26,
@@ -1161,22 +587,8 @@
    "repairs": 0
   }
  },
- "pikes/demo/arcade": {
-  "digest": "6b53388130fc183f87bfbdd8",
-  "lead": 1954.1,
-  "car0": [
-   -374.2,
-   -1381
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "pikes/upg/cs": {
-  "digest": "f7da8f520cd7ae2fcdae799b",
+  "digest": "947b102781fd20330569ed44",
   "lead": 2101.6,
   "car0": [
    -252.69,
@@ -1189,22 +601,8 @@
    "repairs": 0
   }
  },
- "pikes/upg/arcade": {
-  "digest": "12a5f78d093d26682313c050",
-  "lead": 2001.9,
-  "car0": [
-   -343.94,
-   -1401.47
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "pikes/crash/cs": {
-  "digest": "0a694ff5f4fc7dc80ccc3e05",
+  "digest": "68f263611d0fa554bda5faee",
   "lead": 1900.4,
   "car0": [
    -327.97,
@@ -1217,22 +615,8 @@
    "repairs": 0
   }
  },
- "pikes/crash/arcade": {
-  "digest": "5996a89ec1b41ff1322cde12",
-  "lead": 1782.6,
-  "car0": [
-   -213.04,
-   -1340.92
-  ],
-  "cover": {
-   "dmg": 0.9,
-   "loose": 3,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "pikes/formula/cs": {
-  "digest": "3ad537e9a0a033864e8acd40",
+  "digest": "cdbc7b87e34b4ceb3b214e37",
   "lead": 1943.3,
   "car0": [
    -367.95,
@@ -1245,22 +629,8 @@
    "repairs": 0
   }
  },
- "pikes/formula/arcade": {
-  "digest": "8d33901cb02d2cc93e5df746",
-  "lead": 1855.1,
-  "car0": [
-   -283.54,
-   -1359.04
-  ],
-  "cover": {
-   "dmg": 1,
-   "loose": 3,
-   "rescues": 1,
-   "repairs": 0
-  }
- },
  "ouninpohja/race/cs": {
-  "digest": "fb13eb24354bd19b87fd59d5",
+  "digest": "cbb2c4b4879b91460ae0d28d",
   "lead": 2348.3,
   "car0": [
    916.24,
@@ -1273,22 +643,8 @@
    "repairs": 0
   }
  },
- "ouninpohja/race/arcade": {
-  "digest": "3c2111897ae69e8764b958fa",
-  "lead": 2226.1,
-  "car0": [
-   800.68,
-   -1932.14
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "ouninpohja/demo/cs": {
-  "digest": "063d8074c0be1df5b26069e2",
+  "digest": "7b6358200d3fea3ca1fa0d6f",
   "lead": 2314.9,
   "car0": [
    883.82,
@@ -1301,22 +657,8 @@
    "repairs": 0
   }
  },
- "ouninpohja/demo/arcade": {
-  "digest": "08a2953db45bee8a7704f5c7",
-  "lead": 2240.3,
-  "car0": [
-   813.49,
-   -1935.15
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 4,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "ouninpohja/upg/cs": {
-  "digest": "f1e7abd8077e7a1b3fda31f0",
+  "digest": "90d2aeaf9e0be69d8b330bdb",
   "lead": 2338.8,
   "car0": [
    907.23,
@@ -1329,22 +671,8 @@
    "repairs": 0
   }
  },
- "ouninpohja/upg/arcade": {
-  "digest": "b2ae0d6885f95a8f1edd6623",
-  "lead": 2258.5,
-  "car0": [
-   831.89,
-   -1940.86
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "ouninpohja/crash/cs": {
-  "digest": "eea02cbb13f3494196af60a8",
+  "digest": "db79d5356d2e82bc5f00f8ea",
   "lead": 2048.5,
   "car0": [
    670.72,
@@ -1357,22 +685,8 @@
    "repairs": 0
   }
  },
- "ouninpohja/crash/arcade": {
-  "digest": "7de428452b4d53c1fad5665d",
-  "lead": 1965.9,
-  "car0": [
-   646.04,
-   -1750.72
-  ],
-  "cover": {
-   "dmg": 0.81,
-   "loose": 3,
-   "rescues": 1,
-   "repairs": 0
-  }
- },
  "ouninpohja/formula/cs": {
-  "digest": "5ef0cbf87f78c426456af0d9",
+  "digest": "faf1244de1eccc6337c0d012",
   "lead": 1873.4,
   "car0": [
    654.21,
@@ -1385,22 +699,8 @@
    "repairs": 0
   }
  },
- "ouninpohja/formula/arcade": {
-  "digest": "b906bb231a84ec991cf4e21d",
-  "lead": 1784.4,
-  "car0": [
-   646.15,
-   -1574.65
-  ],
-  "cover": {
-   "dmg": 0.59,
-   "loose": 3,
-   "rescues": 1,
-   "repairs": 0
-  }
- },
  "nring/race/cs": {
-  "digest": "f6ddab7f086ed5bbbbec51a7",
+  "digest": "226de2795e8383490d52d651",
   "lead": 2498.2,
   "car0": [
    -1745.26,
@@ -1413,22 +713,8 @@
    "repairs": 0
   }
  },
- "nring/race/arcade": {
-  "digest": "5ea19ac11b5bac95d44eeb02",
-  "lead": 2316.9,
-  "car0": [
-   -1607.76,
-   -667.51
-  ],
-  "cover": {
-   "dmg": 0.08,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "nring/demo/cs": {
-  "digest": "7138eee59a956436d07849d9",
+  "digest": "541316ccca1fc1b9a3cd8115",
   "lead": 2645.3,
   "car0": [
    -1712.6,
@@ -1441,22 +727,8 @@
    "repairs": 0
   }
  },
- "nring/demo/arcade": {
-  "digest": "63b43271084148e7f63a9120",
-  "lead": 2466.3,
-  "car0": [
-   -1766.78,
-   -981.01
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "nring/upg/cs": {
-  "digest": "a607552d3b9a9d723384b204",
+  "digest": "7e9f9bc92a12922b4964a9e1",
   "lead": 2644.1,
   "car0": [
    -1743.23,
@@ -1469,22 +741,8 @@
    "repairs": 0
   }
  },
- "nring/upg/arcade": {
-  "digest": "b88806bb9686d98f5f966b1e",
-  "lead": 2470.6,
-  "car0": [
-   -1768.12,
-   -966.07
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "nring/crash/cs": {
-  "digest": "c76af4c3d2749e6968ecca71",
+  "digest": "87eef0b83749be71b9569e0c",
   "lead": 2496.8,
   "car0": [
    -1526.15,
@@ -1497,22 +755,8 @@
    "repairs": 0
   }
  },
- "nring/crash/arcade": {
-  "digest": "34de43a0e9ea6253f5309a23",
-  "lead": 2314.6,
-  "car0": [
-   -1543.56,
-   -596.63
-  ],
-  "cover": {
-   "dmg": 0.54,
-   "loose": 2,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "nring/formula/cs": {
-  "digest": "e84a596bac80517ac074c791",
+  "digest": "8d58a75fc39d379bdc661f1e",
   "lead": 3163,
   "car0": [
    -1767.01,
@@ -1525,22 +769,8 @@
    "repairs": 0
   }
  },
- "nring/formula/arcade": {
-  "digest": "6fc12e43bb6f6058e4d0fd83",
-  "lead": 2879.1,
-  "car0": [
-   -1768.75,
-   -942.54
-  ],
-  "cover": {
-   "dmg": 0.74,
-   "loose": 2,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "spa/race/cs": {
-  "digest": "5608c6697310399ccdb45df7",
+  "digest": "a812b0898c0e13eb20b74382",
   "lead": 2542.4,
   "car0": [
    859,
@@ -1553,22 +783,8 @@
    "repairs": 0
   }
  },
- "spa/race/arcade": {
-  "digest": "0d936ba68963ce7e39ff422e",
-  "lead": 2494.1,
-  "car0": [
-   824.39,
-   1479.39
-  ],
-  "cover": {
-   "dmg": 0.13,
-   "loose": 1,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "spa/demo/cs": {
-  "digest": "ee7ddb8df1831659d648d23f",
+  "digest": "e47b5a5405d704ee619437a1",
   "lead": 2648.3,
   "car0": [
    756.79,
@@ -1581,22 +797,8 @@
    "repairs": 0
   }
  },
- "spa/demo/arcade": {
-  "digest": "cec39e6220002cc3f889fbcd",
-  "lead": 2595,
-  "car0": [
-   802.13,
-   1663.41
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "spa/upg/cs": {
-  "digest": "d6ab56423ee6ad896b845876",
+  "digest": "2977d72da727fb3c788ba6c1",
   "lead": 2656.1,
   "car0": [
    749.48,
@@ -1609,22 +811,8 @@
    "repairs": 0
   }
  },
- "spa/upg/arcade": {
-  "digest": "b0557a88fe602f96c5f83283",
-  "lead": 2596,
-  "car0": [
-   838.83,
-   1630.37
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "spa/crash/cs": {
-  "digest": "afe51cfd46a06f99c964899b",
+  "digest": "1316d29dd131161c5b4c6613",
   "lead": 10867.5,
   "car0": [
    619.67,
@@ -1637,22 +825,8 @@
    "repairs": 1
   }
  },
- "spa/crash/arcade": {
-  "digest": "9c937124449f544b2c0004ab",
-  "lead": 10348.3,
-  "car0": [
-   833.51,
-   1544.28
-  ],
-  "cover": {
-   "dmg": 0.78,
-   "loose": 3,
-   "rescues": 0,
-   "repairs": 1
-  }
- },
  "spa/formula/cs": {
-  "digest": "85d3467c6f41c58da31a7847",
+  "digest": "b9414a942ffcf39e683badcb",
   "lead": 13682.9,
   "car0": [
    -268.17,
@@ -1665,22 +839,8 @@
    "repairs": 1
   }
  },
- "spa/formula/arcade": {
-  "digest": "9b357546d1a6385fc8c5c4a0",
-  "lead": 13284.6,
-  "car0": [
-   18.12,
-   1505.44
-  ],
-  "cover": {
-   "dmg": 1,
-   "loose": 3,
-   "rescues": 1,
-   "repairs": 1
-  }
- },
  "rbring/race/cs": {
-  "digest": "376df525a12964b532b5078a",
+  "digest": "40edf8c04096909df93a1638",
   "lead": 2480.6,
   "car0": [
    -157.37,
@@ -1693,22 +853,8 @@
    "repairs": 0
   }
  },
- "rbring/race/arcade": {
-  "digest": "5372980165283305ad6ed37e",
-  "lead": 2399.4,
-  "car0": [
-   -183.55,
-   -481.53
-  ],
-  "cover": {
-   "dmg": 0.1,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "rbring/demo/cs": {
-  "digest": "2770e6c3cdfb79be8d81256e",
+  "digest": "f82159e8ce4c8a7591a59201",
   "lead": 2580.9,
   "car0": [
    -456.41,
@@ -1721,22 +867,8 @@
    "repairs": 0
   }
  },
- "rbring/demo/arcade": {
-  "digest": "e395c786a9e1ef9ab2c88f29",
-  "lead": 2512.5,
-  "car0": [
-   -394.01,
-   -502.23
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "rbring/upg/cs": {
-  "digest": "afa142edb10e72d849e2adf2",
+  "digest": "747b82bfec119ec93ae2e676",
   "lead": 2612.7,
   "car0": [
    -477.77,
@@ -1749,22 +881,8 @@
    "repairs": 0
   }
  },
- "rbring/upg/arcade": {
-  "digest": "c9746f3ad3368bb3573843ea",
-  "lead": 2508.7,
-  "car0": [
-   -391.28,
-   -501.81
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "rbring/crash/cs": {
-  "digest": "421753b9625fffa37fcbabca",
+  "digest": "c9e8246dfc28615499348006",
   "lead": 6980.6,
   "car0": [
    -615.44,
@@ -1777,22 +895,8 @@
    "repairs": 1
   }
  },
- "rbring/crash/arcade": {
-  "digest": "50fb3b34da0ab466d8c5e74d",
-  "lead": 6742.2,
-  "car0": [
-   -670.84,
-   -504.03
-  ],
-  "cover": {
-   "dmg": 1,
-   "loose": 4,
-   "rescues": 0,
-   "repairs": 1
-  }
- },
  "rbring/formula/cs": {
-  "digest": "96894ca008a290217d0296fc",
+  "digest": "daa5504364241f1bb382e1d9",
   "lead": 8932.3,
   "car0": [
    -281.66,
@@ -1805,22 +909,8 @@
    "repairs": 1
   }
  },
- "rbring/formula/arcade": {
-  "digest": "675a1e628cac12e67e7bf9f0",
-  "lead": 8716.8,
-  "car0": [
-   -181.19,
-   -487.92
-  ],
-  "cover": {
-   "dmg": 1,
-   "loose": 8,
-   "rescues": 1,
-   "repairs": 1
-  }
- },
  "suzuka/race/cs": {
-  "digest": "f7ca1b3d3b6d7c03732c05b5",
+  "digest": "5f80d4be2c4d931b6f3372df",
   "lead": 2283.6,
   "car0": [
    -860.11,
@@ -1833,22 +923,8 @@
    "repairs": 0
   }
  },
- "suzuka/race/arcade": {
-  "digest": "69edbbc09e61095bac868f23",
-  "lead": 2164.8,
-  "car0": [
-   -709.87,
-   11.27
-  ],
-  "cover": {
-   "dmg": 0.32,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "suzuka/demo/cs": {
-  "digest": "0dcd991a61c1e56c4d799671",
+  "digest": "af99003b64bf160bf05a48ec",
   "lead": 2441.6,
   "car0": [
    -902.38,
@@ -1861,22 +937,8 @@
    "repairs": 0
   }
  },
- "suzuka/demo/arcade": {
-  "digest": "299e59e1fd9ffebd472c7f68",
-  "lead": 2257.5,
-  "car0": [
-   -872.38,
-   -13.41
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "suzuka/upg/cs": {
-  "digest": "4932a48962415da8cf7f3c9a",
+  "digest": "5994cb8a9a5f6b293dcde627",
   "lead": 2440.1,
   "car0": [
    -848.25,
@@ -1889,22 +951,8 @@
    "repairs": 0
   }
  },
- "suzuka/upg/arcade": {
-  "digest": "28a8587cd770dea52a2fc4c5",
-  "lead": 2250,
-  "car0": [
-   -870.81,
-   0.99
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "suzuka/crash/cs": {
-  "digest": "c7967de345426fc95adf3af2",
+  "digest": "bfc7fcd8e5ac2a8a58c2d74f",
   "lead": 2250.2,
   "car0": [
    -730.22,
@@ -1917,22 +965,8 @@
    "repairs": 0
   }
  },
- "suzuka/crash/arcade": {
-  "digest": "5f295e70a8ae60b61b9fbbf4",
-  "lead": 2150.5,
-  "car0": [
-   -683.69,
-   -19.91
-  ],
-  "cover": {
-   "dmg": 0.75,
-   "loose": 2,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "suzuka/formula/cs": {
-  "digest": "1a7db4426a3addac88723623",
+  "digest": "30af583b9e5d729f244b84ba",
   "lead": 2648.9,
   "car0": [
    -899.83,
@@ -1941,20 +975,6 @@
   "cover": {
    "dmg": 1,
    "loose": 18,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
- "suzuka/formula/arcade": {
-  "digest": "abaf0894c454272155bf999b",
-  "lead": 2529.9,
-  "car0": [
-   -880.16,
-   -83.22
-  ],
-  "cover": {
-   "dmg": 1,
-   "loose": 5,
    "rescues": 0,
    "repairs": 0
   }
