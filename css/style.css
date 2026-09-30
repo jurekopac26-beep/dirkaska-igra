@@ -600,3 +600,11 @@ p.pk-medl { margin: -2px 0 6px; font: 700 12px/1.3 var(--f-ui); opacity: .9; }
   #replay-ui .rp-prog { bottom: calc(114px + var(--sb)); }
   #rp-hl-cap { bottom: calc(128px + var(--sb)); }
 }
+/* Pikes Peak: the course flyover before the start (TV captions at the famous places; the touch controls out of the picture while it runs) */
+#pk-fly { display: none; position: absolute; left: calc(14px + var(--sl)); top: calc(14px + var(--st)); max-width: calc(100% - 90px); padding: 8px 14px 9px; border-left: 4px solid var(--lcd); border-radius: 0 8px 8px 0; background: linear-gradient(90deg, rgba(10, 14, 22, .82), rgba(10, 14, 22, .55)); color: var(--chalk); pointer-events: none; opacity: 0; }
+#pk-fly.show { display: block; }
+#pk-fly small { display: block; font: 700 clamp(9px, 1.9vh, 11px)/1.2 var(--f-ui); letter-spacing: .18em; color: var(--lcd); }
+#pk-fly b { display: block; font: 400 italic clamp(22px, min(6.4vh, 8vw), 34px)/1.05 var(--f-display); text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,.45); }
+#pk-fly span { display: block; font: 700 clamp(13px, 3.2vh, 17px)/1.2 var(--f-ui); color: var(--lcd); }
+#pk-fly em { display: block; margin-top: 4px; font: 400 clamp(9px, 1.8vh, 11px)/1.2 var(--f-ui); font-style: normal; color: rgba(246, 246, 241, .6); }
+body.pkfly #touch { visibility: hidden; }

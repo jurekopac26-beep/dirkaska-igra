@@ -2904,7 +2904,7 @@ const Render = (function () {
     const h = c.ph + wrapPi(c.h - c.ph) * alpha;
     const spd = c.speed, pitZ = crew && c === crew.P && (crew.mode === 'work' || (crew.mode === 'out' && c.pitState === 'stop')) ? 0.62 : 1;   // pitZ: closer while the car pulls into its box and the crew works on it
     if (!cam.init) { cam.lx = 0; cam.lz = 0; cam.zoom = 1; cam.hs = h; cam.gy = c.roadY || 0; cam.init = true; }
-    cam.gy += ((c.roadY || 0) - cam.gy) * (1 - Math.exp(-dt * 5));
+    if (cam.shot && cam.shot.gy != null) cam.gy = cam.shot.gy; else cam.gy += ((c.roadY || 0) - cam.gy) * (1 - Math.exp(-dt * 5));   // (a shot may say how high its view is: Pikes Peak's flyover, for the altitude's light and the sun's shadow box)
     const baseY = cam.gy;
     const k1 = 1 - Math.exp(-dt * 2.0), k2 = 1 - Math.exp(-dt * 1.4);
     let px, py, pz, tx, ty, tz;
@@ -3101,6 +3101,68 @@ const Render = (function () {
     else { const k = e(1.3); st.hx += (hx - x - st.hx) * k; st.hz += (hz - z - st.hz) * k; st.hy += (hy - cy - st.hy) * e(hy - cy > st.hy ? 2.5 : 1); }
     o.px = x + st.hx; o.pz = z + st.hz; o.py = Math.max(cy + st.hy, G(o.px, o.pz) + 24) + 0.6 * Math.sin(time * 0.7); o.half = 9.5; o.key = -1; return o;
   }
+  /* ---------------- Pikes Peak's course flyover (prelet proge) before a fresh time trial: a TV sweep from the start line up the mountain to the
+     summit, a camera high over the road looking down at it (the course's middle line: the road's points averaged over +-150 m, so the view
+     follows the climb, not every hairpin), slowing at the famous places (their captions) and at the two ends. The path is made once per
+     track (points every 40 m: over the ground as the TV cameras keep it, world.groundH, with the ground and the trees clear between the
+     camera and the road; the heights smoothed), then a Catmull-Rom spline through them. game.js asks for it (pkFly.at(t): the shot for
+     Render.setShot, filled in place, and the caption on screen) during the race's intro, before the lights: the race is not touched.
+     The view is kept short (fogD: the far clip ~600 m), so it draws not much more than the kino camera does and streams the world in gently ---------------- */
+  const pkFly = (() => {
+    const DUR = 11.5, STEP = 40, PL = [[0, 'START'], [578, "Engineer's Corner"], [1000, 'Halfway Picnic Grounds'], [2688, 'Glen Cove'], [2918, "The W's"], [4050, "Devil's Playground"], [4466, 'Bottomless Pit'], [5360, 'Boulder Park'], [-1, 'CILJ']];
+    const shot = { px: 0, py: 0, pz: 0, tx: 0, ty: 0, tz: 0, fov: 50, fogD: 80, near: 2, gy: 0 }, res = { shot, k: -1, a: 0 };
+    function build(T) {
+      const G = world.groundH, s0 = T.startS, s1 = T.finishS, n = Math.ceil((s1 - s0) / STEP) + 1, sAt = (j) => Math.min(s1, s0 + j * STEP);
+      const road = (s) => { const f = clamp(s, 0, T.len - 1) / T.ds, i = Math.min(T.N - 2, Math.floor(f)), u = f - i; return [lerp(T.px[i], T.px[i + 1], u), lerp(T.hy[i], T.hy[i + 1], u), lerp(T.pz[i], T.pz[i + 1], u)]; };
+      const mid = (s) => {   // the course's middle line: the road averaged over +-150 m (less towards the ends: there the start line, the finish itself)
+        const W = 150 * Math.min(Core.sstep(s0, s0 + 450, s), Core.sstep(s1, s1 - 450, s)); if (W < 2) return road(s);
+        let x = 0, y = 0, z = 0, w = 0; for (let d = -2 * W; d <= 2 * W; d += 10) { const p = road(s + d), q = Math.exp(-(d * d) / (W * W)); x += p[0] * q; y += p[1] * q; z += p[2] * q; w += q; }
+        return [x / w, y / w, z / w]; };
+      const Tg = [], C = [];
+      for (let j = 0; j < n; j++) {
+        const s = sAt(j), t = mid(s), a = mid(Math.max(s0, s - 220)), b = mid(Math.min(s1, s + 220)); let dx = b[0] - a[0], dz = b[2] - a[2]; const dl = Math.hypot(dx, dz) || 1; dx /= dl; dz /= dl;
+        const e = Math.min(Core.sstep(s0, s0 + 600, s), Core.sstep(s1, s1 - 700, s)), B = lerp(j ? 55 : 42, 80, e), H = lerp(j ? 34 : 26, 112, e);   // (low over the start line and the finish, high between, ~55 deg down: the view ends on the ground, not far off in the haze)
+        const x = t[0] - dx * B, z = t[2] - dz * B; let y = t[1] + H;
+        const g = G(x, z); if (Number.isFinite(g)) y = Math.max(y, g + (g < 196 ? 38 : 24));   // (over the trees below the tree line)
+        for (let it = 0; it < 12; it++) {   // the ground (and the trees) clear between the camera and the road it looks at
+          let ok = true; for (let q = 1; q < 12 && ok; q++) { const u = q / 12, px = x + (t[0] - x) * u, pz = z + (t[2] - z) * u, gh = G(px, pz), ly = y + (t[1] - y) * u; if (Number.isFinite(gh) && ly < gh + (u > 0.85 ? 2 : gh < 196 ? 16 : 6)) ok = false; }
+          if (ok) break; y += 12; }
+        Tg.push(t); C.push([x, y, z]);
+      }
+      for (let r = 0; r < 3; r++) for (let j = 1; j < n - 1; j++) C[j][1] = Math.max(C[j][1], (C[j - 1][1] + C[j][1] * 2 + C[j + 1][1]) / 4);   // (the heights smoothed, only ever up: no dips into a ridge)
+      // the time along the road: slower at the places (a bump each) and at the two ends
+      const ps = PL.map(([d]) => d < 0 ? s1 : s0 + d), M = 400, cum = new Float32Array(M + 1);
+      const w = (s) => { let v = 1 + 14 * Math.exp(-(((s - s0) / 80) ** 2)) + 5.5 * Math.exp(-(((s - s1) / 140) ** 2)); for (let k = 1; k < PL.length - 1; k++) v += 0.9 * Math.exp(-(((s - ps[k]) / 150) ** 2)); return v; };
+      for (let m = 1; m <= M; m++) cum[m] = cum[m - 1] + w(s0 + (s1 - s0) * (m - 0.5) / M);
+      for (let m = 0; m <= M; m++) cum[m] *= DUR / cum[M];
+      const tOf = (s) => { const f = clamp((s - s0) / (s1 - s0), 0, 1) * M, m = Math.min(M - 1, Math.floor(f)); return lerp(cum[m], cum[m + 1], f - m); };
+      // the captions: from a little before each place, at least 1.1 s each (the next waits), at most 1.6 s; the finish's to the end
+      const cap = []; for (let k = 0; k < PL.length; k++) { const t0 = k ? Math.max(tOf(ps[k] - (k === PL.length - 1 ? 260 : 150)), cap[k - 1][0] + 1.1) : 0.15; cap.push([t0, 0]); }
+      for (let k = 0; k < cap.length; k++) cap[k][1] = k < cap.length - 1 ? Math.min(cap[k + 1][0] - 0.05, cap[k][0] + 1.6) : DUR + 1;
+      return { T, s0, s1, n, Tg, C, cum, M, cap, ps };
+    }
+    const cr = (a, b, c, d, u) => { const u2 = u * u, u3 = u2 * u; return 0.5 * (2 * b + (c - a) * u + (2 * a - 5 * b + 4 * c - d) * u2 + (3 * b - a - 3 * c + d) * u3); };   // (Catmull-Rom)
+    function at(t) {   // the shot at t s into the flyover (null: not Pikes Peak)
+      const T = curTrack; if (!T || !world || !world.groundH || !T.hy || themeId !== 'pikes') return null;
+      const F = T._pkFly || (T._pkFly = build(T)), M = F.M, tt = clamp(t, 0, DUR);
+      let lo = 0, hi = M; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (F.cum[m] <= tt) lo = m; else hi = m; }
+      const s = F.s0 + (F.s1 - F.s0) * (lo + clamp((tt - F.cum[lo]) / Math.max(1e-6, F.cum[hi] - F.cum[lo]), 0, 1)) / M;
+      const f = clamp((s - F.s0) / STEP, 0, F.n - 1.0001), j = Math.floor(f), u = f - j, P = (A, k) => A[clamp(k, 0, F.n - 1)], sp = (A, c) => cr(P(A, j - 1)[c], P(A, j)[c], P(A, j + 1)[c], P(A, j + 2)[c], u);
+      shot.px = sp(F.C, 0); shot.py = sp(F.C, 1); shot.pz = sp(F.C, 2); shot.tx = sp(F.Tg, 0); shot.ty = sp(F.Tg, 1); shot.tz = sp(F.Tg, 2); shot.gy = shot.ty;
+      const g = world.groundH(shot.px, shot.pz); if (Number.isFinite(g) && shot.py < g + 12) shot.py = g + 12;   // (never low over the ground, whatever the spline does)
+      res.k = -1; res.a = 0; for (let k = 0; k < F.cap.length; k++) { const [t0, t1] = F.cap[k]; if (t >= t0 && t < t1) { res.k = k; res.a = Math.min(1, (t - t0) / 0.25, (t1 - t) / 0.25); } }
+      cull(true); res.s = s; return res;
+    }
+    let crowd = null;
+    function cull(on) {   // the spectators' 40 m cells (one draw call each) far from the view's centre out of the picture (the camera's layer: nothing else changes): ~30 calls less over the W's
+      if (!crowd || crowd.W !== world) { crowd = { W: world, list: [] }; const g = world && world.root.getObjectByName('crowds'); if (g) g.traverse(o => { if (o.name === 'crowd') crowd.list.push(o); }); }
+      for (const o of crowd.list) o.layers.mask = !on || Math.hypot(o.position.x - shot.tx, o.position.z - shot.tz) < 100 ? 1 : 2;
+    }
+    function end() { if (crowd) cull(false); crowd = null; }
+    function warm() {   // the world's shaders compiled in one go (game.js: before the first frame of the flyover), not one by one as it flies over new ground
+      const t0 = performance.now(), n0 = renderer.info.programs.length; renderer.compile(scene, camera); return [Math.round(performance.now() - t0), n0, renderer.info.programs.length]; }
+    return { at, end, DUR, warm, get caps() { const T = curTrack, F = T && T._pkFly; return PL.map(([d, n], k) => ({ n, s: F ? F.ps[k] : 0 })); } };
+  })();
   function shake(a) { cam.shake = Math.max(cam.shake, Math.min(1.2, a)); }
   function resetCam() { cam.init = false; }
   // a TV shot: { px, py, pz (the camera), tx, ty, tz (where it looks), fov, fogD (the fog as for a camera this far from its target) },
@@ -3401,6 +3463,6 @@ const Render = (function () {
   function setDebug(o) { Object.assign(dbg, o); }
   function fxStats() { let n = 0; for (let i = 0; i < particles.max; i++) if (particles.life[i] > 0) n++; return { alive: n, emitted: particles.cur }; }
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { setDebug, fxStats, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, setGhost, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setDebug, fxStats, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, setGhost, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, pkFly, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 

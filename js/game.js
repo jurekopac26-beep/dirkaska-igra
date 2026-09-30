@@ -25,6 +25,7 @@
   let S = Object.assign({}, DEF);
   let records = {};
   try { const j = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (j) S = Object.assign(S, j); } catch (_) { }
+  if (S.pkFly == null) S.pkFly = 1;   // (Pikes Peak: the course flyover before a fresh start, on unless switched off in Nastavitve)
   // one-time move to the new recommended defaults (chase camera, far view, high drift assist) for existing players
   try { if (!localStorage.getItem('tdgp-defaults-v2')) { S.camera = 'chase'; S.zoom = 1.2; S.assist = 2; localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
   try { records = JSON.parse(localStorage.getItem('tdgp-records') || '{}') || {}; } catch (_) { records = {}; }
@@ -842,7 +843,7 @@
   // (pause menu) goes straight to the race: the usual grid, the player 12th.
   let qual = null;   // { id, cr (a championship round, or -1), seed, rain, nAI, back, diff, phys, sims: { k, r, t, times }, lap, lapShown, newRec, wait, res: { grid, order, rows } }
   const qualiOn = (d) => !!S.quali && !isTT(d) && !d.open && !(mp && mp.race);   // (a race up an open road, Vršič: no lap to fly, straight to the grid)
-  function startRace() { qual = null; newRace(qualiOn(track.def) ? 'quali' : undefined); }   // the menus' Start: a new qualifying first, when it is on
+  function startRace() { qual = null; pkF.fresh = true; newRace(qualiOn(track.def) ? 'quali' : undefined); }   // the menus' Start: a new qualifying first, when it is on
   function qsimStep(Q, ms) {   // the rivals' laps, for about ms milliseconds; true when all are done
     if (Q.phys !== physOf()) { Q.phys = physOf(); Q.sims = null; }   // (the physics changed in the pause menu: their laps again with it)
     const G = Q.sims || (Q.sims = { k: 0, r: null, t: 0, times: [] }), cap = track.len / 8 + 120, t0 = performance.now();
@@ -915,6 +916,7 @@
     introLen = 1.3; endPodium();
     { const air = Render.world && Render.world.air;   // the Red Bull Ring: first the jets over the grid, filmed from the grid (not online, not in a time trial or qualifying)
       if (air && !on && !tt && !quali) { air.go = true; introLen += JET_SHOT; Render.setShot(air.shot); $('hud').classList.add('shot'); } }
+    pkFlyStart(!on && tt && !quali);   // (Pikes Peak: the course flyover first, at a fresh start only)
     lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; dmgKey = ''; pitHint = false; drsN = 0; secN = 0; wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
     $('h-msg').className = ''; $('h-split').className = ''; $('h-note').className = '';
     $('h-lights').className = ''; setLights(0, false);
@@ -977,7 +979,7 @@
     const el = $('podium-cap'); el.innerHTML = top.map((c, i) => '<span><b>' + (i + 1) + '.</b> <i style="background:' + hexCss(c.color) + '"></i>' + esc(c.isPlayer ? 'Ti' : c.name) + '</span>').join(''); el.className = 'show';
     const w = top[0]; Comm.say(w && w.isPlayer ? 'podiumMe' : 'podiumRb', { name: w ? w.name : '' }, 3);
   }
-  function endPodium() { const pod = Render.world && Render.world.podium; if (pod) pod.hide(); $('podium-cap').className = ''; shotOff(); }
+  function endPodium() { const pod = Render.world && Render.world.podium; if (pod) pod.hide(); $('podium-cap').className = ''; shotOff(); pkFlyEnd(); }   // (and Pikes Peak's flyover, left for the title)
   function toTitle() {
     endPodium(); champRecord(); champRun = false; replay = null; recd = null; $('replay-ui').classList.add('off');
     paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); ghRec = ghPlay = ghLap = null; qual = null; Render.setGhost(null, true);
@@ -1114,6 +1116,38 @@
     const el = $('h-pkcls'); el.textContent = pk.cls.name.toUpperCase(); el.className = 'h-lbl pk-' + pk.cls.id;
     pk7Start();   // (the chosen ghost, the corner warnings)
   }
+  // Pikes Peak's course flyover (prelet proge; Render.pkFly films it): a TV sweep up the course with captions at the famous places, during
+  // the race's intro before the lights (the race clock starts after it, the race is not touched). At a fresh start from the menus only:
+  // not online, not after Ponovi, not with the setting off. A tap, a click, any key or pad button skips it (the input is used up by that)
+  const pkF = { on: false, fresh: false, k: -2, eat: 0, bound: false };
+  function pkFlyStart(ok) {
+    pkFlyEnd();
+    const fresh = pkF.fresh; pkF.fresh = false;
+    if (!ok || !fresh || !pkIs(track.def) || !+S.pkFly || !Render.pkFly || !Render.pkFly.at(0)) return;
+    if (!pkF.bound) { pkF.bound = true;
+      const eat = (e) => { e.stopImmediatePropagation(); if (e.cancelable) e.preventDefault(); };
+      window.addEventListener('keydown', (e) => { if (!pkF.on || screen !== 'none' || paused) return; if (!e.repeat) pkFlySkip(); eat(e); }, true);
+      window.addEventListener('pointerdown', (e) => { if (!pkF.on || screen !== 'none' || paused) return; pkFlySkip(); pkF.eat = performance.now() + 700; eat(e); }, true);
+      window.addEventListener('click', (e) => { if (performance.now() < pkF.eat) { pkF.eat = 0; eat(e); } }, true); }   // (the tap's click: not a pause as well)
+    pkF.on = true; pkF.k = -2; introLen += Render.pkFly.DUR;
+    Render.pkFly.warm();   // (every shader of the world now, while the screen still changes over from the menu: none compiles mid-flight)
+    Render.setShot(Render.pkFly.at(0).shot); $('hud').classList.add('shot'); document.body.classList.add('pkfly');
+    pkFlyStep();
+  }
+  function pkFlyStep() {   // updatePhase, in the intro: the shot and its caption at this moment
+    const o = Render.pkFly.at(phaseT), el = $('pk-fly');
+    if (!o || phaseT >= Render.pkFly.DUR) { pkFlyEnd(); return; }
+    if (o.k !== pkF.k && o.k >= 0) { const C = Render.pkFly.caps, c = C[o.k], al = track.def.alt, a = al && !o.k ? al[0] : al && o.k === C.length - 1 ? al[1] : track.altAt(track.hy[track.idx(c.s)]);   // (the start's and the finish's: as the HUD shows them)
+      el.children[1].textContent = c.n; el.children[2].textContent = a != null ? numDot(al ? clamp(a, al[0], al[1]) : a) + ' m' : ''; }
+    pkF.k = o.k; el.className = 'show';
+    el.style.opacity = Math.min(1, phaseT / 0.3, (Render.pkFly.DUR - phaseT) / 0.3).toFixed(2);
+    const a = o.k >= 0 ? o.a.toFixed(2) : '0'; el.children[1].style.opacity = a; el.children[2].style.opacity = a;
+  }
+  function pkFlyEnd() {   // the flyover over (or skipped, or a new race): the game's camera, the HUD back
+    if (!pkF.on) return;
+    pkF.on = false; $('pk-fly').className = ''; document.body.classList.remove('pkfly'); shotOff(); Render.pkFly.end();
+  }
+  function pkFlySkip() { if (!pkF.on) return; if (phase === 'intro' && phaseT < Render.pkFly.DUR) phaseT = Render.pkFly.DUR; pkFlyEnd(); }   // (the usual 1.3 s of the intro, then the lights)
   const pkSplit = (k) => pk.best && posNum(pk.best.splits[k]) ? pk.best.splits[k] : NaN;   // the class best run's time at checkpoint k (0-based)
   function pkSplitHUD(k, t, d, has) {   // checkpoint k (1-based) at time t, d: against the class best run's split there
     const el = $('h-split'), c = has ? dCls(d) : 'even';
@@ -2074,6 +2108,7 @@
   /* ---------------- phases ---------------- */
   function updatePhase(dt, inp) {
     phaseT += dt;
+    if (pkF.on) pkFlyStep();
     const on = mp && mp.race;
     if (on && (phase === 'intro' || phase === 'lights')) phaseT = (Net.now() - on.at) / 1000 - (phase === 'lights' ? 1.3 : 0);   // online: both phones follow the host's clock
     if (phase === 'intro' && phaseT > 1.3 && race.quali) {   // qualifying: no lights, the clock starts at the line
@@ -2431,6 +2466,7 @@
   function padFrame(dt) {
     const P = Input.padRead(dt);
     if (photo) photoPad(dt);
+    if (pkF.on && P.pressed.length && screen === 'none' && !paused) { pkFlySkip(); return; }   // (any button: the flyover skipped)
     if (P.on && (screen !== padScreen || (padSel && !padSel.isConnected))) { padScreen = screen; padFocus(screen === 'none' ? null : padHome()); }   // (a new screen, or its list drawn again: the highlight on the main button or the chosen item)
     for (const k of P.pressed) {
       if (screen === 'none') {   // racing
@@ -2725,12 +2761,12 @@
       lockOrientation();   // (the installed app: straight away; in a browser tab only once full screen is on)
       // offline play and the newest version when online (sw.js); a service worker needs http(s), not a local file
       if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => { });
-      window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get screen() { return screen; }, S, onAction, pause, resume,
+      window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get pkFly() { return pkF.on ? { t: phaseT, k: pkF.k } : null; }, get screen() { return screen; }, S, onAction, pause, resume,
         get qual() { return qual && { id: qual.id, cr: qual.cr, seed: qual.seed, rain: qual.rain, sims: qual.sims ? qual.sims.k : 0, n: qual.nAI, lap: qual.lap, grid: qual.res ? qual.res.grid : 0 }; },
         get adapt() { return { dyn: Render.getDynScale(), shadowsOn: shadowsOn(), auto: autoNoShadows, pending: perf.pending, restore: perf.restore, keep: perf.keep, check: perf.check }; },
         get net() { return mp ? { role: mp.role, code: mp.code, open: Net.open, synced: Net.synced, peer: mp.peer, track: mp.track, laps: mp.laps, race: mp.race && { at: mp.race.at, goAt: mp.race.goAt, mine: mp.race.mine, theirs: mp.race.theirs, left: mp.race.left, got: mp.race.buf.length, frameT: mp.race.frameT, startT: mp.race.startT } } : null; },
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get replay() { return replay && { t: replay.t, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; },
-        sim(sec, auto, steer) { const inp = { steer: steer || 0, thr: 1, brk: 0, hand: 0, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; } if (phase !== 'done') updatePhase(STEP, inp); stepRace(STEP, inp); } } };
+        sim(sec, auto, steer) { pkFlySkip(); /* (a simulated race starts without Pikes Peak's flyover) */ const inp = { steer: steer || 0, thr: 1, brk: 0, hand: 0, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; } if (phase !== 'done') updatePhase(STEP, inp); stepRace(STEP, inp); } } };
     } catch (e) {
       console.error(e);
       $('ld-msg').textContent = 'Napaka pri zagonu: ' + e.message;
