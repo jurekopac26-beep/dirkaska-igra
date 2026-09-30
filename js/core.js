@@ -163,6 +163,13 @@ const Core = (function () {
       // puddles a surface (6)
       this.puddles = []; this.pudAt = null; this.inRain = false;
       if (def.rain && open) this._buildPuddles(def.rain);
+      // cobbled stretches (def.setts = [[from, to], ...], metres after the start line; open roads: the granite setts in the hairpins of
+      // Vršič): a surface of their own (7, 8 in the rain), less grip than asphalt and much less when wet. settAt: per sample, 1 on the setts
+      this.settAt = null;
+      if (def.setts && open) {
+        const a = this.settAt = new Uint8Array(N);
+        for (const [s0, s1] of def.setts) for (let d = s0; d <= s1; d += ds / 2) { const i = Math.floor((this.startS + d) / ds); if (i >= 0 && i < N) a[i] = 1; }
+      }
     }
 
     // the puddles: in the dips of the profile first (the water runs down into them), then spread along the rest of the run, some on the
@@ -442,10 +449,12 @@ const Core = (function () {
     }
 
     // speed profile for a given lateral accel limit (m/s^2) and braking decel
-    speedProfile(latA, brakeA, vtop, wMax) {
+    // (settMu: the share of the grip left on the cobbles, def.setts)
+    speedProfile(latA, brakeA, vtop, wMax, settMu) {
       const N = this.N, rk = this.rk, rds = this.rds;
       const v = new Float32Array(N);
       for (let i = 0; i < N; i++) v[i] = Math.min(vtop, Math.sqrt(latA / Math.max(Math.abs(rk[i]), 1e-5)));
+      if (this.settAt && settMu) for (let i = 0; i < N; i++) if (this.settAt[i]) v[i] = Math.min(v[i], Math.sqrt(latA * settMu / Math.max(Math.abs(rk[i]), 1e-5)));
       if (this.bank) for (let i = 0; i < N; i++) { const b = this.bank[i]; if (b > 0) v[i] = Math.min(vtop, Math.sqrt((latA + G * b / Math.sqrt(1 + b * b)) / Math.max(Math.abs(rk[i]), 1e-5))); }   // a banked bend carries part of the cornering force
       if (wMax) for (let i = 0; i < N; i++) v[i] = Math.min(v[i], wMax / Math.max(Math.abs(rk[i]), 1e-5));   // cs: the car turns no faster than wMax (rad/s) along its path
       if (this.open) {   // open road: come to a stop at the far end of the road, nothing wraps
@@ -592,10 +601,12 @@ const Core = (function () {
     }
 
     // surface at a query result: 0 asphalt, 1 curb, 2 grass, 3 gravel (def.runoffTarmac: the wide run-off areas are asphalt, 4 as paving;
-    // def.gravelStrips: gravel just past the kerb), 5 makadam; 6 a puddle on it (in the rain, inRain: def.rain's puddles)
+    // def.gravelStrips: gravel just past the kerb), 5 makadam; 6 a puddle on it (in the rain, inRain: def.rain's puddles); 7 cobbles
+    // (def.setts), 8 cobbles in the rain
     surface(q) {
       const d = q.d, ad = Math.abs(d), w = this.w;
       if (ad <= w) {
+        if (this.settAt && this.settAt[q.a]) return this.inRain ? 8 : 7;
         if (this.def.roadSurface !== 'makadam') return 0;
         const p = this.inRain && this.pudAt ? this.pudAt[q.a] : -1;
         if (p >= 0) { const u = this.puddles[p], a = (q.s - u[0]) / u[2], b = (d - u[1]) / u[3]; if (a * a + b * b < 1) return 6; }
@@ -669,6 +680,8 @@ const Core = (function () {
     { mu: 0.86, c0: 0.35, c1: 0.03 },   // paving (street circuits)
     { mu: 0.82, c0: 0.6, c1: 0.05 },    // makadam (dirt rally road): decent accel/brake but lively, slidey
     { mu: 0.7, c0: 2.6, c1: 0.12 },     // a puddle on the makadam (in the rain, on top of WET): the water drags at the wheel
+    { mu: 0.9, c0: 0.12, c1: 0.008 },   // cobbles (granite setts): a little less grip than asphalt, a little drag from the bumps
+    { mu: 0.78, c0: 0.12, c1: 0.008 },  // cobbles in the rain (on top of WET): the polished setts are slippery when wet
   ];
   // rain: the grip left on a wet track (x every surface's mu: cornering and traction; the brakes keep 0.55 + 0.45 x of theirs).
   // Less grip also means bigger, lazier slides in both slide models (as on the loose surfaces)
@@ -767,6 +780,8 @@ const Core = (function () {
     { lat: 0.88, tr: 0.86, c0: 0.35, c1: 0.03 },    // paving (= SURF)
     { lat: 0.8, tr: 0.82, c0: 0.6, c1: 0.05 },      // makadam: side grip 0.8, tau_v +16 % (C11); drive and drag = SURF (gora's pace unchanged)
     { lat: 0.7, tr: 0.72, c0: 2.6, c1: 0.12 },      // a puddle (in the rain, on top of WET): the water drags at the wheel (one side in it: a tug towards it)
+    { lat: 0.9, tr: 0.9, c0: 0.12, c1: 0.008 },     // cobbles (= SURF)
+    { lat: 0.78, tr: 0.8, c0: 0.12, c1: 0.008 },    // cobbles in the rain (on top of WET)
   ];
   // cs per model (drive-type layer, targets §5.4): bx brake excess at full brake + full demand, coast / thr steady attitude
   // change at full demand, liftP / pwr FR/MR rotation, out = unwind factor, turn = turn-in speed factor, w = path-rate cap factor
@@ -1840,6 +1855,7 @@ const Core = (function () {
     const lim = T.w - 1.25;
     let off = clamp(rlv + c.aiOff, -lim, lim);
     if (c.pitWant && T.def.pit) { const pz = T.pitAt(sT); if (pz) off = pz.o; }   // (autopilot into the pits: follow the lane)
+    if (c.parkS != null) off = lerp(off, c.parkD, sstep(c.parkS - 90, c.parkS - 30, sT));   // (past the finish of a race up the road: over to its slot, see Race._progressOpen)
     const tx = lerp(T.px[i0], T.px[i1], ft) + lerp(T.nx[i0], T.nx[i1], ft) * off;
     const tz = lerp(T.pz[i0], T.pz[i1], ft) + lerp(T.nz[i0], T.nz[i1], ft) * off;
     const hA = c.phys === 'cs' && c.speed > 3 ? Math.atan2(c.vz, c.vx) : c.h;   // cs: the arc starts along the travel, not the nose
@@ -1895,6 +1911,12 @@ const Core = (function () {
     if (c.phys === 'cs' && c.vl > 6) { const ex = ab - Math.abs(c.csAT || 0) - 0.12; if (ex > 0) thr *= clamp(1 - ex * 4, 0.3, 1); }   // cs: ease off only when knocked past the planned slide
     if (c.spin > 0.05) thr *= 0.8;
     // off-track: slow down a bit & aim back
+    if (c.parkS != null) {   // the race up the road is over for this car: roll up to its slot at the side of the road and stay there
+      const togo = c.parkS - q.s, vP = togo > 0 ? Math.min(16, Math.sqrt(6.4 * togo)) : 0;
+      thr = v < vP - 1 ? 0.6 : 0; brk = v > vP + 0.5 ? clamp((v - vP) / 3, 0.2, 1) : 0;
+      if (togo < 2 && v < 0.5) c.parked = true;
+      if (c.parked) { thr = 0; brk = 1; }
+    }
     if (T.open && T.len - q.s < 6 + v * v / 40) { thr = 0; brk = 1; }   // open road: stop (and stay stopped) well short of the wall at the top end
     c.inThr = thr; c.inBrk = brk; c.inHand = 0;
   }
@@ -1925,8 +1947,9 @@ const Core = (function () {
       this.time = 0; this.state = 'grid'; this.countdown = 0;
       this.cars = []; this.debris = []; this.debrisId = 0; this.props = null; this.propBk = null; this.propSlots = null; this.propCap = null;
       this.finishOrder = [];
-      // time trial (def.timeTrial, e.g. the Pikes Peak hill climb): the player alone, standing ON the start line; the clock is race.time
-      this.timeTrial = !!(track.def.timeTrial && !opts.noPlayer);
+      // time trial (def.timeTrial, e.g. the Pikes Peak hill climb; a track with both ways to drive it, def.modes, driven as one when
+      // opts.tt): the player alone, standing ON the start line; the clock is race.time
+      this.timeTrial = !!((track.def.timeTrial || (opts.tt && !opts.remote && (track.def.modes || []).indexOf('tt') >= 0)) && !opts.noPlayer);
       this._rq = [];   // open road + noPlayer (menu demo): cars that reached the top, waiting for a free spot at the start
       const nAI = this.timeTrial ? 0 : opts.numAI == null ? 12 : opts.numAI;
       const RM = opts.remote || null;   // online race: the friend's car { model, color, num, name, grid }, driven by the friend's phone
@@ -1991,8 +2014,9 @@ const Core = (function () {
       const csP = opts.phys === 'cs', wM0 = csP ? CSK.aiWmax : 0;
       let latA0 = opts.aiLatA || (csP ? CSK.aiLatA : 16.5), brA0 = opts.aiBrakeA || (csP ? CSK.aiBrakeA : 13.0);
       if (this.rain) { latA0 *= w; brA0 *= 0.55 + 0.45 * w; }
-      this.vprof = track.speedProfile(latA0, brA0, 85, wM0);
-      if (this.player && this.player.upg && this.player.brakeG !== BRAKE_G) this.player.vprof = track.speedProfile(latA0, brA0 * this.player.brakeG / BRAKE_G, 85, wM0);
+      const sM = this.rain ? 0.78 : 0.9;   // the cobbles' grip (SURF 7 / 8, relative: the rain is already in latA0)
+      this.vprof = track.speedProfile(latA0, brA0, 85, wM0, sM);
+      if (this.player && this.player.upg && this.player.brakeG !== BRAKE_G) this.player.vprof = track.speedProfile(latA0, brA0 * this.player.brakeG / BRAKE_G, 85, wM0, sM);
     }
 
     // switch the driving physics of a running race at once ('cs' | 'arcade'): every car, the AI set-up and the AI speed profile
@@ -2011,6 +2035,8 @@ const Core = (function () {
       if (this.timeTrial) return 0;
       if (this.opts.remote) return 9;   // online: the two of them side by side on the front row (the same distance to the line)
       if (!T.open) return 9 + (g - 1) * 7.5;
+      // a race up an open road (Vršič): the circuits' grid, where the road below the start line leaves room for it
+      if (!this.opts.noPlayer && T.startS >= 13 + (this._gridN - 1) * 7.5) return 9 + (g - 1) * 7.5;
       // open road: the grid has to fit between the bottom end of the road and the start line (two abreast, staggered)
       const sp = clamp((T.startS - 9) / Math.max(1, this._gridN - 1), 2.4, 3.6);
       return Math.min(3 + (g - 1) * sp, T.startS - 4);
@@ -2020,7 +2046,7 @@ const Core = (function () {
       const back = this._gridBack(g);
       const s = T.startS - back;
       const i = this.timeTrial ? T.startIdx : T.idx(s);
-      const lat = this.timeTrial ? 0 : (g % 2 === 1 ? -1 : 1) * 3.4;
+      const lat = this.timeTrial ? 0 : (g % 2 === 1 ? -1 : 1) * Math.min(3.4, T.w - 1.6);   // (a narrow road: the two columns closer together)
       const x = T.px[i] + T.nx[i] * lat, z = T.pz[i] + T.nz[i] * lat;
       c.place(x, z, T.hd[i]); if (T.hasElev) { c.y = c.py = T.hy[i]; if (T.open) c.roadY = c.y; }   // (open road: the camera starts at the right height)
       c.dist = -back; c.lap = 0;
@@ -2123,8 +2149,9 @@ const Core = (function () {
       }
       // collisions (a figure of eight: a car on the bridge and one under it do not touch)
       const lv = T.cross.length > 0;
+      const pk = T.open && !this.timeTrial;   // (a race up an open road: the cars past the finish pull up in their slots and do not push each other about)
       for (let i = 0; i < cars.length; i++) {
-        for (let j = i + 1; j < cars.length; j++) if (!lv || Math.abs((cars[i].y || 0) - (cars[j].y || 0)) < 3) carCollide(cars[i], cars[j]);
+        for (let j = i + 1; j < cars.length; j++) if ((!lv || Math.abs((cars[i].y || 0) - (cars[j].y || 0)) < 3) && !(pk && cars[i].finished && cars[j].finished)) carCollide(cars[i], cars[j]);
       }
       if (T.def.pit) for (const c of cars) if (c.isPlayer) this.pitStep(c, dt, true);   // which side of the pit wall the car is on (before the walls push it)
       for (const c of cars) if (!c.net) wallCollide(c, T);
@@ -2158,8 +2185,8 @@ const Core = (function () {
         const fwd = Math.cos(c.h) * q.tx + Math.sin(c.h) * q.tz;
         if (fwd < -0.2 && c.speed > 3) c.wrongT += dt; else c.wrongT = Math.max(0, c.wrongT - dt * 2);
         // stuck detection (AI auto-rescue)
-        if (!c.locked && !c.pitState && c.speed < 1.2 && (this.state === 'racing' || this.state === 'done')) c.stuckT += dt; else c.stuckT = Math.max(0, c.stuckT - dt);
-        if (!c.isPlayer && (c.stuckT > 3.5 || c.wrongT > 3)) this.rescue(c);
+        if (!c.locked && !c.pitState && c.speed < 1.2 && (this.state === 'racing' || this.state === 'done') && !(T.open && c.finished)) c.stuckT += dt; else c.stuckT = Math.max(0, c.stuckT - dt);   // (pulled up past the finish of an open road: not stuck)
+        if (!c.isPlayer && (c.stuckT > 3.5 || c.wrongT > 3) && !(T.open && c.finished)) this.rescue(c);   // (not a car pulled up past the finish of an open road)
       }
       if (this._rq.length) this._serveRespawn();
       this.stepProps(dt);
@@ -2242,6 +2269,9 @@ const Core = (function () {
         c.finished = true; c.finishTime = ft; c.lapTimes = [ft]; c.lap = this.laps + 1;
         this.finishOrder.push(c); c.finishPos = this.finishOrder.length;
         c.noReverse = true;   // (the UI holds the brake after the finish: the car must stop, not back down the hill)
+        // a race up the road: past the line every car pulls up in a slot of its own at the side of the road (by its place, both sides
+        // in turn, 9 m apart), clear of the ones still coming up the middle (aiControl drives it there: c.parkS, c.parkD)
+        if (!this.timeTrial) { const k = c.finishPos - 1; c.parkS = Math.min(T.len - 20, T.finishS + 70 + 9 * k); c.parkD = (k % 2 ? -1 : 1) * (T.w - 1.5); }
       }
     }
     _queueRespawn(c) { c.parkQ = true; c.locked = true; c.inThr = 0; c.inBrk = 1; c.inSteer = 0; this._rq.push(c); }
@@ -2249,7 +2279,7 @@ const Core = (function () {
     _serveRespawn() {
       const T = this.track, c = this._rq[0];
       for (let g = 1; g <= 4; g++) {
-        const i = T.idx(T.startS - this._gridBack(g)), lat = (g % 2 === 1 ? -1 : 1) * 3.4;
+        const i = T.idx(T.startS - this._gridBack(g)), lat = (g % 2 === 1 ? -1 : 1) * Math.min(3.4, T.w - 1.6);
         const x = T.px[i] + T.nx[i] * lat, z = T.pz[i] + T.nz[i] * lat;
         let free = true;
         for (const o of this.cars) if (o !== c && (o.x - x) * (o.x - x) + (o.z - z) * (o.z - z) < 81) { free = false; break; }
@@ -2304,7 +2334,7 @@ const Core = (function () {
     { id: 'domaci', name: 'Domači pokal', desc: 'Štiri kratke proge za začetek: jezero, mesto in makadam.', tracks: ['jezero', 'ljubljana', 'gora', 'riviera'] },
     { id: 'superstars', name: 'Superstars', desc: 'Proge v slogu Circuit Superstars z boksi in Monako.', tracks: ['gozd', 'toskana', 'grom', 'monaco'] },
     { id: 'legende', name: 'Legende', desc: 'Pet slavnih prog v pravem merilu: Monako, Spa, Red Bull Ring, Suzuka in Zeleni pekel.', tracks: ['monaco', 'spa', 'rbring', 'suzuka', 'nring'] },
-    { id: 'veliko', name: 'Veliko prvenstvo', desc: 'Vse krožne proge igre, ena za drugo.', tracks: TRACKS.filter(d => !d.timeTrial).map(d => d.id) },
+    { id: 'veliko', name: 'Veliko prvenstvo', desc: 'Vse krožne proge igre, ena za drugo.', tracks: TRACKS.filter(d => !d.timeTrial && !d.open).map(d => d.id) },
   ];
   const champPoints = (pos) => CHAMP_PTS[pos - 1] || 0;   // (pos 1 = the winner)
   // the standings after the given rounds: [{ key, pts, wins, places: [firsts, seconds, ...], last: the place in the latest round }], leader first

@@ -16,6 +16,9 @@ const Comm = (() => {
   const LINES = {
     intro: ['Welcome to {track}! {laps} laps, thirteen cars, and you line up {grid} on the grid.', 'Good day and welcome to {track}. {laps} laps ahead, and you start from {grid}.', 'Here we are at {track}! Thirteen cars, {laps} laps, and you start {grid}.'],
     introNet: ['Welcome to {track}! Just two cars today, {laps}: you and {name}, side by side on the front row.', 'Here we are at {track} for a duel with {name} over {laps}. May the better driver win!', 'Good day and welcome to {track}! You against {name}, {laps}. Let\'s see who takes it.'],
+    // a race up an open road (Vršič, the north side: 24 cobbled hairpins up to the pass)
+    introPass: ['Welcome to {track}! Thirteen cars, twelve kilometres and twenty-four hairpins up to the top, and you start {grid}.', 'Here we are in Kranjska Gora, at the foot of {track}. A race all the way up the mountain, and you line up {grid}.', 'Welcome to {track}, the Russian Road! Thirteen cars heading for the pass, and you start {grid}.'],
+    goPass: ['Lights out, and away they go, up the mountain!', "And they're off! Thirteen cars heading for the pass!", 'Green light! The pack charges up the valley!', 'Go, go, go! Next stop, the top of the pass!'],
     introOne: ['Welcome to {track}, the Green Hell! One lap of more than twenty kilometres, and you start {grid}.', 'Here we are at {track}. One lap, a full field, and you line up {grid} on the grid.', 'Welcome to {track}! Twenty kilometres of forest, crests and jumps. One lap, and you start {grid}.'],
     // the Nordschleife's famous places
     nrFlug: ['Over the Flugplatz, and the car goes light!', 'Flugplatz! Airborne over the crest!'],
@@ -68,6 +71,7 @@ const Comm = (() => {
     propPost: ["He's clipped a marker post!", 'Roadside post down!', 'That post never stood a chance!', 'Flattened a post there!'],
     propCrate: ['Smashed straight into the crate!', 'There goes the crate!'],
     // time trial (hill climb against the clock, no opponents)
+    introPassTT: ['Welcome to {track}! Twenty-four hairpins, most of them cobbled, and just you and the clock.', 'Here we are in Kranjska Gora, at the foot of {track}. {cps} checkpoints between you and the top of the pass.', 'Welcome to {track}! No rivals this time, only the clock. Get to the pass as fast as you can.'],
     introTT: ['Welcome to {track}, the race to the clouds! Just you, the mountain and the clock.', 'Here we are at the foot of {track}. {cps} checkpoints between you and the summit.', 'Welcome to {track}! No opponents today, only the clock. Get to the top as fast as you can.'],
     goTT: ['Green light! The clock is running!', 'Go! Attack the mountain!', "And you're away! Up the hill!"],
     cpFirst: ['Checkpoint {cp}, {time}.', 'Through checkpoint {cp}. Keep climbing!', 'Checkpoint {cp}. Up we go!'],

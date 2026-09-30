@@ -158,6 +158,40 @@ try {
       r.drawn && r.onRoad && r.phase === 'done' && r.rec && r.rec.bestTime > 0 && / v dežju/.test(r.sub) && r.dry,
       `puddles drawn ${r.drawn}, on the road ${r.onRoad}, time ${r.t && r.t.toFixed(2)} s, record ${r.rec && r.rec.bestTime}, "${r.sub}", dry again ${r.dry}`);
   }
+  // 6d. Vršič: one card, two ways to drive it (the switch Dirka / Kronometer on the card). Kronometer: the time trial alone to the pass, its
+  //     record and board under 'vrsic-tt@cs' (the race's records stay apart), a medal; Dirka: 12 rivals on the grid, the HUD shows the place,
+  //     the km climbed and the altitude
+  {
+    const r = await page.evaluate(async () => {
+      const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)), frame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(300);
+      const card = document.querySelector('[data-track="vrsic"]'), btns = [...card.querySelectorAll('.tc-mode button')].map(b => b.textContent);
+      card.querySelector('.tc-mode button[data-v="tt"]').click(); await wait(200);
+      const out = { btns: btns.join('|'), picked: g.S.track + '/' + g.S.mode, meta: document.querySelector('[data-track="vrsic"] .tmeta').textContent };
+      g.onAction('start'); for (let k = 0; k < 1200 && !(g.race && g.race.track.def.id === 'vrsic'); k++) await wait(100);
+      await frame();
+      out.tt = g.race.timeTrial && g.race.cars.length === 1 && document.getElementById('hud').classList.contains('tt');
+      for (let i = 0; i < 600 && g.phase !== 'done'; i++) { g.sim(1, true); if (i % 10 === 0) await wait(0); }
+      await wait(800);
+      const rec = JSON.parse(localStorage.getItem('tdgp-records') || '{}').tracks || {};
+      Object.assign(out, { phase: g.phase, t: g.race.player.finishTime, rec: rec['vrsic-tt@cs'], race: rec['vrsic@cs'], sub: document.getElementById('res-sub').textContent });
+      g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(300);
+      document.querySelector('[data-track="vrsic"] .tc-mode button[data-v="race"]').click(); await wait(200);
+      out.back = g.S.mode;
+      g.onAction('start'); for (let k = 0; k < 1200 && !(g.race && g.race.track.def.id === 'vrsic' && !g.race.timeTrial); k++) await wait(100);
+      g.sim(30, true); await frame(); await frame();
+      Object.assign(out, { cars: g.race.cars.length, up: document.getElementById('hud').classList.contains('up'), lap: document.getElementById('h-lap').textContent, alt: document.getElementById('h-alt').textContent, pos: document.getElementById('h-pos').textContent, racing: g.phase });
+      return out;
+    });
+    T.check('Vršič: one card with the switch Dirka / Kronometer, a tap on Kronometer picks the track and the time trial',
+      r.btns === 'Dirka|Kronometer' && r.picked === 'vrsic/tt' && / kronometer/.test(r.meta), `buttons "${r.btns}", picked ${r.picked}, "${r.meta}"`);
+    T.check('Vršič time trial: alone, to the pass, its own record and board (vrsic-tt@cs), a medal line',
+      r.tt && r.phase === 'done' && r.rec && r.rec.bestTime > 0 && r.rec.board && r.rec.board.length === 1 && !(r.race && r.race.bestTime) && /medalj/.test(r.sub),
+      `time ${r.t && r.t.toFixed(2)} s, record ${r.rec && r.rec.bestTime}, "${r.sub}"`);
+    T.check('Vršič race: 13 cars, the HUD with the place, the km climbed and the altitude',
+      r.back === 'race' && r.cars === 13 && r.up && /^\d+,\d\/12,3 KM$/.test(r.lap) && /^\d+(\.\d{3})? m$/.test(r.alt) && +r.pos >= 1 && r.racing === 'racing',
+      `${r.cars} cars, HUD "${r.lap}" "${r.alt}", place ${r.pos}, ${r.racing}`);
+  }
   T.check('no page errors during the whole run', !errors.length, errors.slice(0, 5).join(' | '));
   await ctx.close();
 

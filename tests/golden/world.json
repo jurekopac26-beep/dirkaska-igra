@@ -169,6 +169,23 @@
    "smoke:ShaderMaterial": "58e293e7"
   }
  },
+ "vrsic": {
+  "meshes": 4224,
+  "verts": 1865913,
+  "instances": 68663,
+  "props": 311,
+  "crowd": 1448,
+  "world": "a9f2b66d",
+  "propsHash": "4fa7ac6c",
+  "floor": "ad77fd61/25760",
+  "groups": {
+   "-:MeshLambertMaterial": "bfb0819a",
+   "-:MeshPhongMaterial": "3bf5b7bf",
+   "-:MeshBasicMaterial": "e402c69d",
+   "crowd:MeshLambertMaterial": "a1566df5",
+   "tyremarks:MeshBasicMaterial": "34a9d215"
+  }
+ },
  "nring": {
   "meshes": 2757,
   "verts": 958092,

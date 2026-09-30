@@ -164,7 +164,7 @@ const Sfx = (function () {
     }
     // tyres
     const spd = player.speed;
-    const onHard = player.ws[2] <= 1 && player.ws[3] <= 1;
+    const hardW = (w) => w <= 1 || w >= 7, onHard = hardW(player.ws[2]) && hardW(player.ws[3]);   // (asphalt, a kerb, the cobbles)
     const slide = (player.arcade ? Core.sstep(0.18, 0.55, Math.abs(player.beta || 0)) : Math.max(0, player.latR - 2.2) / 5) + player.spin * 0.8 + (player.lock ? 0.6 : 0) + (player.inHand > 0.5 && spd > 5 ? 0.5 : 0);
     const sq = onHard && spd > 3 ? clamp(slide, 0, 1.2) : 0, wet = race ? race.rain || 0 : 0;
     set(squeal.out.gain, sq * 0.09 * (1 - 0.7 * wet), 0.04);   // (a wet road hardly squeals)
@@ -172,11 +172,12 @@ const Sfx = (function () {
     set(hiss.out.gain, onHard ? wet * clamp(spd / 45, 0, 1) * 0.1 : 0, 0.08);
     set(squeal.bp.frequency, 980 + clamp(spd, 0, 50) * 6, 0.1);
     // offroad rumble
-    let off = 0; for (let k = 0; k < 4; k++) if (player.ws[k] >= 2) off++;
+    let off = 0, cob = 0; for (let k = 0; k < 4; k++) { const w = player.ws[k]; if (w >= 7) cob++; else if (w >= 2) off++; }
     set(rumble.out.gain, off / 4 * clamp(spd / 18, 0, 1) * 0.5, 0.05);
-    set(rumble.flt.frequency, (player.ws.indexOf(3) >= 0 || player.ws.some(w => w >= 5)) ? 520 : 240, 0.1);
-    set(curbV.out.gain, player.onCurb ? clamp(spd / 20, 0, 1) * 0.35 : 0, 0.02);
-    set(curbV.flt.frequency, 40 + spd * 3.5, 0.05);
+    set(rumble.flt.frequency, (player.ws.indexOf(3) >= 0 || player.ws.some(w => w === 5 || w === 6)) ? 520 : 240, 0.1);
+    // a kerb: a hard buzz; the cobbles (the setts in the hairpins of Vršič): a softer, quicker drumming under the tyres
+    set(curbV.out.gain, player.onCurb ? clamp(spd / 20, 0, 1) * 0.35 : player.air ? 0 : cob / 4 * clamp(spd / 22, 0, 1) * 0.2, 0.03);
+    set(curbV.flt.frequency, player.onCurb || !cob ? 40 + spd * 3.5 : 60 + spd * 6, 0.05);
     set(wind.out.gain, clamp(spd / 70, 0, 1) ** 2 * 0.12, 0.1);
     // loose gravel (gravel traps, makadam): the crunch, louder in a slide, and stones pinging off the underbody; in the rain the crunch muffled by
     // a hiss of water off the tyres (the hard roads' is above), and a splash into each puddle

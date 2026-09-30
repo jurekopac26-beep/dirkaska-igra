@@ -68,7 +68,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 /* time trial (kronometer): no position, CP counter + altitude instead of laps */
 #h-alt { display: none; margin-top: 2px; color: var(--chalk); font-variant-numeric: tabular-nums; }
 #hud.tt #h-rank > .h-lbl:first-child, #hud.tt .h-rankrow { display: none; }
-#hud.tt #h-alt { display: block; }
+#hud.tt #h-alt, #hud.up #h-alt { display: block; }   /* (a race up an open road: the altitude under the km) */
 #hud.tt #h-lap { margin-top: 0; font-size: clamp(13px, 3.8vh, 19px); }
 #h-map { position: absolute; right: calc(62px + var(--sr)); top: calc(8px + var(--st)); width: clamp(96px, 30vh, 150px); height: clamp(72px, 22vh, 112px); background: rgba(10, 14, 20, .45); border-radius: 8px; }
 #minimap { width: 100%; height: 100%; display: block; }
@@ -268,7 +268,11 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 .track-card h3 { margin: 8px 0 2px; font: 400 italic clamp(18px, 5.5vh, 24px)/1 var(--f-display); }
 .track-card .tmeta { font: 700 italic clamp(11px, 3vh, 13px)/1.3 var(--f-ui); color: var(--lcd); }
 .track-card .tdesc { font: 500 clamp(11px, 3vh, 12.5px)/1.35 var(--f-ui); color: var(--muted); margin-top: 4px; }
-@media (orientation: portrait) { .track-list { flex-direction: column; overflow-y: auto; } .track-card { flex: 0 0 auto; max-width: none; padding: 8px 10px; } .track-card canvas { height: clamp(52px, 10vh, 90px); } .track-card .tdesc { display: none; } .track-card h3 { margin-top: 6px; } }
+/* a track with both ways to drive it (Vršič): the switch (Dirka / Kronometer) next to its name */
+.track-card .tc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin: 8px 0 2px; }
+.track-card .tc-head h3 { margin: 0; }
+.track-card .tc-mode button { min-height: 30px; padding: 4px 10px; font-size: clamp(11px, 3.1vh, 13px); }
+@media (orientation: portrait) { .track-list { flex-direction: column; overflow-y: auto; } .track-card { flex: 0 0 auto; max-width: none; padding: 8px 10px; } .track-card canvas { height: clamp(52px, 10vh, 90px); } .track-card .tdesc { display: none; } .track-card h3 { margin-top: 6px; } .track-card .tc-head { margin-top: 6px; } .track-card .tc-head h3 { margin-top: 0; } }
 
 /* ================= UPGRADES (Nadgradnje, over the showroom) ================= */
 #s-upg { justify-content: flex-end; }

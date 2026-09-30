@@ -399,6 +399,46 @@
   "nan": false,
   "digest": "e079994b94f84e62eb08a20e"
  },
+ "vrsic/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 411.88,
+  "spins": 0,
+  "walls": 26,
+  "rescues": 0,
+  "nan": false,
+  "digest": "a1e91c9634bfcdc79ee09e03"
+ },
+ "vrsic/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 452.67,
+  "spins": 0,
+  "walls": 13,
+  "rescues": 0,
+  "nan": false,
+  "digest": "7eef47fbfb86615e1ab840e5"
+ },
+ "vrsic/arcade": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 441.09,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e2c56c0d2b38accd578b614c"
+ },
+ "vrsic/arcade/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 478.49,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "44254a0478246dc6374a0415"
+ },
  "nring/cs": {
   "finished": 21,
   "cars": 21,
