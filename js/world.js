@@ -4802,19 +4802,20 @@ const World = (function () {
     }
 
     // light snowfall near the summit: a box of flakes (84 x 27 x 84 m) that follows the car, recycled in the shader; more of them shown the higher the car is (1 draw)
-    const NF = 1500, fp = new Float32Array(NF * 3), fr = new Float32Array(NF), BX = 84, BY = 27;
+    const NF = 2600, fp = new Float32Array(NF * 3), fr = new Float32Array(NF), BX = 84, BY = 27;
     { const R = rng(6623); for (let k = 0; k < NF; k++) { fp[k * 3] = R() * BX; fp[k * 3 + 1] = R() * BY; fp[k * 3 + 2] = R() * BX; fr[k] = R(); } }
     const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(fp, 3)); sg.setAttribute('aR', new THREE.BufferAttribute(fr, 1)); sg.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
-    const sU = { uC: { value: new THREE.Vector3() }, uT: { value: 0 }, uD: { value: 0 }, uS: { value: 400 } };
+    // (round 7: wind-blown flurries: uWo the wind's drift so far (m, wrapped by the box), uG the gusts' strength, uCol the flakes' colour in the light of the moment (pkLight))
+    const sU = { uC: { value: new THREE.Vector3() }, uT: { value: 0 }, uD: { value: 0 }, uS: { value: 400 }, uWo: { value: new THREE.Vector2() }, uG: { value: 0 }, uCol: { value: new THREE.Color(0.97, 0.98, 1.0) } };
     const snow = new THREE.Points(sg, new THREE.ShaderMaterial({ uniforms: sU, transparent: true, depthWrite: false,
-      vertexShader: 'uniform vec3 uC; uniform float uT, uD, uS; attribute float aR; varying float vA;\n' +
-        'void main() { vec3 B = vec3(' + BX.toFixed(1) + ', ' + BY.toFixed(1) + ', ' + BX.toFixed(1) + '); float ph = aR * 43.7;\n' +
-        'vec3 p = position + vec3(uT * 1.1 + sin(uT * 0.9 + ph) * 0.6, -uT * (0.8 + 0.5 * fract(ph)), -uT * 0.8 + cos(uT * 0.7 + ph * 1.3) * 0.6);\n' +
+      vertexShader: 'uniform vec3 uC; uniform vec2 uWo; uniform float uT, uD, uS, uG; attribute float aR; varying float vA;\n' +
+        'void main() { vec3 B = vec3(' + BX.toFixed(1) + ', ' + BY.toFixed(1) + ', ' + BX.toFixed(1) + '); float ph = aR * 43.7, gw = 0.6 + 1.6 * uG;\n' +
+        'vec3 p = position + vec3(uWo.x + sin(uT * 0.9 + ph) * gw, -uT * (0.8 + 0.5 * fract(ph)) + sin(uT * 2.3 + ph * 3.1) * 0.5 * uG, uWo.y + cos(uT * 0.7 + ph * 1.3) * gw);\n' +
         'vec3 lo = uC - vec3(B.x * 0.5, 5.0, B.z * 0.5); p = lo + mod(p - lo, B); vec3 r = (p - lo) / B;\n' +
         'vec4 mv = modelViewMatrix * vec4(p, 1.0); float z = -mv.z;\n' +
         'vA = step(aR, uD) * smoothstep(0.0, 0.12, r.x) * smoothstep(1.0, 0.88, r.x) * smoothstep(0.0, 0.12, r.z) * smoothstep(1.0, 0.88, r.z) * smoothstep(0.0, 0.06, r.y) * smoothstep(1.0, 0.8, r.y) * smoothstep(6.0, 14.0, z);\n' +
-        'gl_PointSize = vA > 0.0 ? clamp((0.12 + 0.1 * fract(ph * 7.0)) * uS / max(1.0, z), 1.6, 10.0) : 0.0; gl_Position = projectionMatrix * mv; }',
-      fragmentShader: 'varying float vA; void main() { vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0; if (r > 1.0) discard; gl_FragColor = vec4(0.97, 0.98, 1.0, vA * 0.92 * (1.0 - r * r)); }' }));
+        'gl_PointSize = vA > 0.0 ? clamp((0.13 + 0.12 * fract(ph * 7.0)) * uS / max(1.0, z), 1.6, 10.0) : 0.0; gl_Position = projectionMatrix * mv; }',
+      fragmentShader: 'uniform vec3 uCol; varying float vA; void main() { vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0; if (r > 1.0) discard; gl_FragColor = vec4(uCol, vA * 0.92 * (1.0 - r * r)); }' }));
     snow.frustumCulled = false; snow.renderOrder = 8; snow.visible = false; root.add(snow);
     snow.onBeforeRender = (r, sc, cam) => { sU.uS.value = r.domElement.height * cam.projectionMatrix.elements[5] / 2; };   // (pixels per metre at 1 m, as Render's particles)
 
@@ -4876,8 +4877,70 @@ const World = (function () {
         mt.customProgramCacheKey = () => 'pkWet';
         const m = new THREE.Mesh(gw.geometry(), mt); m.receiveShadow = true; m.renderOrder = 1; m.matrixAutoUpdate = false; root.add(m); }
     }
+    // (round 7) the weather of the altitude, visual only; pkWeatherUpdate picks it per run from the race's seed (pkLight hands it over with the season and the rain).
+    // A band of mist over the middle of the course (Glen Cove .. the W's, ground 168-266 m): two thin blankets draped 2.5 m and 7 m over the ground, drawn only
+    // between the run's cloud base and top (uY) with soft edges, their noise drifting across the road with the wind (1 draw, only near the band on a misty run)
+    const mU = THREE.UniformsUtils.merge([THREE.UniformsLib.fog]); let mm = null;
+    {
+      let i0 = -1, i1 = -1; for (let i = 0; i < T.N; i++) if (T.hy[i] > 160 && T.hy[i] < 274) { if (i0 < 0) i0 = i; i1 = i; }
+      const st = Math.max(1, Math.round(5 / ds)), C = 8, M = 82; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
+      for (let i = i0; i <= i1; i += st) { x0 = Math.min(x0, T.px[i]); x1 = Math.max(x1, T.px[i]); z0 = Math.min(z0, T.pz[i]); z1 = Math.max(z1, T.pz[i]); }
+      const nx = Math.ceil((x1 - x0 + 2 * M) / C) + 1, nz = Math.ceil((z1 - z0 + 2 * M) / C) + 1, bx = x0 - M, bz = z0 - M, dm = new Float32Array(nx * nz).fill(1e9), dh = new Float32Array(nx * nz);
+      for (let i = i0; i <= i1; i += st) {   // (the nearest road sample of each grid point within 78 m: stamped around the road)
+        const a0 = Math.max(0, Math.floor((T.px[i] - 78 - bx) / C)), a1 = Math.min(nx - 1, Math.ceil((T.px[i] + 78 - bx) / C)), b0 = Math.max(0, Math.floor((T.pz[i] - 78 - bz) / C)), b1 = Math.min(nz - 1, Math.ceil((T.pz[i] + 78 - bz) / C));
+        for (let b = b0; b <= b1; b++) for (let a = a0; a <= a1; a++) { const k = b * nx + a, d = Math.hypot(bx + a * C - T.px[i], bz + b * C - T.pz[i]); if (d < dm[k]) { dm[k] = d; dh[k] = T.hy[i]; } }
+      }
+      const env = new Float32Array(nx * nz), gy = new Float32Array(nx * nz);
+      for (let k = 0; k < nx * nz; k++) { if (dm[k] > 78) continue; const x = bx + (k % nx) * C, z = bz + Math.floor(k / nx) * C, y = pkGround(x, z);
+        env[k] = sstep(78, 34, dm[k]) * sstep(-45, -18, y - dh[k]) * sstep(55, 28, y - dh[k]) * sstep(0.9, 0.45, pkSlope(x, z));
+        if (env[k] > 0) gy[k] = Math.max(y, pkGround(x + 5, z), pkGround(x - 5, z), pkGround(x, z + 5), pkGround(x, z - 5)); }
+      const pos = [], ae = [], al = [], idx = [], qc = [];
+      for (let L = 0; L < 2; L++) {
+        const vi = new Int32Array(nx * nz).fill(-1), vtx = (k) => { if (vi[k] < 0) { vi[k] = pos.length / 3; pos.push(bx + (k % nx) * C, gy[k] + (L ? 7 : 2.5), bz + Math.floor(k / nx) * C); ae.push(env[k]); al.push(L); } return vi[k]; };
+        for (let b = 0; b < nz - 1; b++) for (let a = 0; a < nx - 1; a++) {
+          const k = b * nx + a; if (Math.min(env[k], env[k + 1], env[k + nx], env[k + nx + 1]) <= 0 || Math.max(env[k], env[k + 1], env[k + nx], env[k + nx + 1]) < 0.02) continue;
+          const p = vtx(k), q = vtx(k + 1), r = vtx(k + nx + 1), s = vtx(k + nx); idx.push(p, s, r, p, r, q); qc.push(bx + (a + 0.5) * C, bz + (b + 0.5) * C, (gy[k] + gy[k + 1] + gy[k + nx] + gy[k + nx + 1]) / 4);
+        }
+      }
+      if (idx.length) {   // (all the quads in qi, [x, z, ground] of each in qc; the index buffer holds those near the car in the run's band: pkWeatherUpdate)
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('aE', new THREE.Float32BufferAttribute(ae, 1)); g.setAttribute('aL', new THREE.Float32BufferAttribute(al, 1));
+        const ix = new THREE.BufferAttribute(new Uint32Array(idx.length), 1); ix.setUsage(THREE.DynamicDrawUsage); g.setIndex(ix); g.setDrawRange(0, 0); g.computeBoundingSphere(); mU.qi = new Uint32Array(idx); mU.qc = new Float32Array(qc);
+        Object.assign(mU, { uTex: { value: ntex }, uC0: { value: new THREE.Vector2((x0 + x1) / 2, (z0 + z1) / 2) }, uO0: { value: new THREE.Vector2() }, uO1: { value: new THREE.Vector2() }, uY: { value: new THREE.Vector2(200, 220) }, uA: { value: 0 }, uCol: { value: new THREE.Color(0.85, 0.87, 0.9) } });
+        const mat = new THREE.ShaderMaterial({ uniforms: mU, fog: true, transparent: true, depthWrite: false, side: THREE.DoubleSide,
+          vertexShader: 'uniform vec2 uC0, uO0, uO1, uY; attribute float aE, aL; varying vec2 vA, vB; varying float vE, vL;\n#include <fog_pars_vertex>\n' +
+            'void main() { vec2 q = position.xz - uC0; vA = vec2(q.x * 0.8 - q.y * 0.6, q.x * 0.6 + q.y * 0.8) * vec2(1.0 / 60.0, 1.0 / 26.0) + uO0 + aL * 0.41; vB = q / 17.0 + uO1 + aL * 0.23;\n' +   // (wisps stretched along the wind)
+            'float gh = position.y - (aL > 0.5 ? 7.0 : 2.5); vE = aE * smoothstep(uY.x - 10.0, uY.x + 4.0, gh) * (1.0 - smoothstep(uY.y - 4.0, uY.y + 10.0, gh)); vL = aL;\n' +
+            'vec4 mvPosition = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mvPosition;\n#include <fog_vertex>\n}',
+          fragmentShader: 'uniform sampler2D uTex; uniform vec3 uCol; uniform float uA; varying vec2 vA, vB; varying float vE, vL;\n#include <fog_pars_fragment>\n' +
+            'void main() { float n = texture2D(uTex, vA).r * 0.6 + texture2D(uTex, vB).r * 0.4; float c = smoothstep(0.42 - 0.12 * vE, 0.74 - 0.08 * vE, n);\n' +
+            'gl_FragColor = vec4(uCol * (0.94 + 0.1 * smoothstep(0.5, 0.85, n)), c * vE * uA * (vL > 0.5 ? 0.36 : 0.44));\n#include <fog_fragment>\n}' });
+        mm = new THREE.Mesh(g, mat); mm.renderOrder = 5; mm.matrixAutoUpdate = false; mm.visible = false; root.add(mm);
+      }
+    }
+    // spindrift near the summit (road above ~322 m): streaks of snow dust blown across the road and its shoulders, a strip lying on the road (flat across it, as
+    // the road), its noise stretched along the wind and racing with it (1 draw, only up there)
+    const dU = THREE.UniformsUtils.merge([THREE.UniformsLib.fog]); let dmesh = null;
+    {
+      let i0 = T.N; for (let i = 0; i < T.N; i++) if (T.hy[i] > 322) { i0 = i; break; }
+      const st = Math.max(1, Math.round(3 / ds)), W = w + 2.4, X = [-1, -0.5, 0, 0.5, 1], pos = [], ax = [], idx = []; let n = 0, cx = 0, cz = 0;
+      for (let i = i0; i < T.N; i += st, n++) { for (const f of X) { pos.push(T.px[i] + T.nx[i] * f * W, T.hy[i] + 0.16, T.pz[i] + T.nz[i] * f * W); ax.push(f); } cx += T.px[i]; cz += T.pz[i];
+        if (n) { const o = (n - 1) * 5; for (let q = 0; q < 4; q++) idx.push(o + q, o + q + 5, o + q + 6, o + q, o + q + 6, o + q + 1); } }
+      if (n > 1) {
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('aX', new THREE.Float32BufferAttribute(ax, 1)); g.setIndex(idx); g.computeBoundingSphere();
+        Object.assign(dU, { uTex: { value: ntex }, uC0: { value: new THREE.Vector2(cx / n, cz / n) }, uO: { value: new THREE.Vector2() }, uA: { value: 0 }, uCol: { value: new THREE.Color(0.95, 0.97, 1.0) } });
+        const mat = new THREE.ShaderMaterial({ uniforms: dU, fog: true, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3,
+          vertexShader: 'uniform vec2 uC0, uO; attribute float aX; varying vec2 vA, vB; varying float vE;\n#include <fog_pars_vertex>\n' +
+            'void main() { vec2 q = position.xz - uC0, r = vec2(q.x * 0.8 - q.y * 0.6, q.x * 0.6 + q.y * 0.8);\n' +   // (r.x along the wind, r.y across it)
+            'vA = vec2(r.x / 38.0 - uO.x, r.y / 4.5); vB = vec2(r.x / 15.0 - uO.y, r.y / 2.2 + 0.37); vE = (1.0 - smoothstep(0.7, 1.0, abs(aX))) * smoothstep(322.0, 338.0, position.y);\n' +
+            'vec4 mvPosition = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mvPosition;\n#include <fog_vertex>\n}',
+          fragmentShader: 'uniform sampler2D uTex; uniform vec3 uCol; uniform float uA; varying vec2 vA, vB; varying float vE;\n#include <fog_pars_fragment>\n' +
+            'void main() { float n = texture2D(uTex, vA).r * 0.55 + texture2D(uTex, vB).r * 0.45; float c = smoothstep(0.58 - 0.08 * uA, 0.84, n);\n' +
+            'gl_FragColor = vec4(uCol, c * vE * uA * 0.45);\n#include <fog_fragment>\n}' });
+        dmesh = new THREE.Mesh(g, mat); dmesh.renderOrder = 2; dmesh.matrixAutoUpdate = false; dmesh.visible = false; root.add(dmesh); dU.rows = [i0, st, n, T];   // (the rows near the car are drawn: pkWeatherUpdate)
+      }
+    }
     out.dust = [0.86, 0.76, 0.62];   // Render: pale granite dust behind wheels off the asphalt
-    out.dyn.pkWx = { cU, cm, sU, snow };
+    out.dyn.pkWx = { cU, cm, sU, snow, mU, mm, dU, dm: dmesh };
   }
 
   function pkWeatherUpdate(wx, t, car) {
@@ -4885,9 +4948,36 @@ const World = (function () {
     if (wx.cm) {   // the cloud noise drifts with the wind (~4 m/s towards the north-east, as the cloud shadows); the detail at another speed, so the banks change shape
       wx.cU.uO0.value.set(fr(-t * 3.2 / 70), fr(t * 2.5 / 70)); wx.cU.uO2.value.set(fr(-t * 4.1 / 95), fr(t * 3.0 / 95)); wx.cU.uO1.value.set(fr(-t * 2.4 / 26), fr(t * 3.1 / 26));
     }
-    const y = car ? car.roadY || 0 : 0, d = car ? sstep(356, 372, y) * lerp(0.3, 1, sstep(372, 432, y)) : 0;
-    wx.snow.visible = d > 0; wx.sU.uD.value = d;
+    // (round 7) the run's weather on the way up, visual only: picked from the race's seed (wx.env: seed, winter, rain, handed over by Render's pkLight);
+    // eased in time, set at once when the car jumps (start, rescue, another car)
+    const dt = clamp(t - (wx.t == null ? t : wx.t), 0, 0.25), E = wx.env || {}, r = E.r || 0; wx.t = t;
+    if (wx.sd !== (E.seed | 0) || !wx.pk) { const sd = wx.sd = E.seed | 0, h = (k) => { let x = Math.imul(sd ^ 0x5bd1e995, 374761393) + Math.imul(k, 668265263) | 0; x = Math.imul(x ^ (x >>> 13), 1274126177); return ((x ^ (x >>> 16)) >>> 0) / 4294967296; };
+      const y0 = 172 + h(2) * 58; wx.pk = { mist: h(1), y0, y1: y0 + 18 + h(3) * 14, mA: 0.75 + 0.25 * h(4), fl: h(5), p1: h(6) * TAU, p2: h(7) * TAU }; wx.jmp = true; }
+    const P = wx.pk, y = car ? car.roadY || 0 : 0, jmp = !car || wx.jmp || (car.x - wx.cx) ** 2 + (car.z - wx.cz) ** 2 > 2500, ez = (v, g, k) => jmp ? g : v + (g - v) * Math.min(1, dt * k);
+    wx.jmp = false; if (car) { wx.cx = car.x; wx.cz = car.z; }
+    // the band of mist (about half the runs, most in the rain): the blankets between its base and top; wx.mist, the car in it, thins the view (pkLight)
+    wx.mA = ez(wx.mA || 0, P.mist < (r > 0 ? 0.85 : 0.5) ? P.mA : 0, 0.4);
+    wx.mist = ez(wx.mist || 0, car ? wx.mA * sstep(P.y0 - 9, P.y0 + 3, y) * (1 - sstep(P.y1 - 3, P.y1 + 9, y)) : 0, 1.2);
+    // flurries above ~330 m: in patches along the way (dry: not every run, and then not everywhere), more in winter, always in the rain (it snows up there)
+    const alt = sstep(328, 346, y) * lerp(0.35, 1, sstep(346, 430, y)), g = sstep(0.3, 0.72, 0.5 + 0.32 * Math.sin(y / 6 + P.p1) + 0.2 * Math.sin(y / 2.3 + P.p2));
+    const fl = wx.fl = ez(wx.fl || 0, car ? alt * Math.max(E.win ? 0.5 + 0.5 * g : P.fl < 0.3 ? 0.15 * g : g * (0.45 + 0.55 * P.fl), Math.min(1, r * 2)) : 0, 0.7);
+    const sp = wx.sp = ez(wx.sp || 0, car ? Math.min(1, sstep(322, 342, y) * (E.win ? 0.55 : 0.28) + 0.75 * fl) : 0, 0.7);   // spindrift: the wind lifts the lying snow, the more in a flurry
+    const ws = wx.ws = ez(wx.ws || 2.5, 2.5 + 7 * fl + 2 * sp, 0.5), wo = wx.sU.uWo.value;   // the wind (m/s, towards the south-east as the flakes always blew)
+    wo.set((wo.x + 0.8 * ws * dt) % 84, (wo.y - 0.6 * ws * dt) % 84);
+    const d = fl > 0.01 ? fl : 0;
+    wx.snow.visible = d > 0; wx.sU.uD.value = d; wx.sU.uG.value = fl;
     if (d > 0) { wx.sU.uC.value.set(car.x, y, car.z); wx.sU.uT.value = t % 1000; }
+    if (wx.mm) { const on = wx.mm.visible = wx.mA > 0.01 && y > P.y0 - 120 && y < P.y1 + 120, U = wx.mU;
+      if (on) { U.uY.value.set(P.y0, P.y1); U.uA.value = wx.mA; U.uO0.value.set(fr(-t * 1.6 / 60), fr(t * 0.2 / 26)); U.uO1.value.set(fr(-t * 1.1 / 17), fr(t * 0.8 / 17));
+        if (wx.mq !== P || (car.x - wx.mx) ** 2 + (car.z - wx.mz) ** 2 > 400) {   // (the quads within 170 m of the car, in the band: again after every 20 m)
+          wx.mq = P; wx.mx = car.x; wx.mz = car.z; const ix = wx.mm.geometry.index, D = ix.array, qi = U.qi, qc = U.qc; let n = 0;
+          for (let q = 0, m = qc.length / 3; q < m; q++) { const gh = qc[q * 3 + 2]; if (gh < P.y0 - 14 || gh > P.y1 + 14 || (qc[q * 3] - car.x) ** 2 + (qc[q * 3 + 1] - car.z) ** 2 > 28900) continue; for (let j = 0; j < 6; j++) D[n++] = qi[q * 6 + j]; }
+          ix.updateRange.offset = 0; ix.updateRange.count = n; ix.needsUpdate = true; wx.mm.geometry.setDrawRange(0, n); wx.mn = n; }
+        wx.mm.visible = wx.mn > 0; } }
+    if (wx.dm) { const on = wx.dm.visible = sp > 0.01 && y > 300, U = wx.dU;
+      if (on) { U.uA.value = sp; wx.dO = (wx.dO || 0) + ws * dt; U.uO.value.set(fr(wx.dO * 1.3 / 38), fr(wx.dO * 1.6 / 15));
+        const [i0, st, n, TT] = U.rows, row = Math.round((TT.idx(car.q ? car.q.s : 0) - i0) / st), a = clamp(row - 60, 0, n - 1), b = clamp(row + 60, 0, n - 1);   // (the rows within ~180 m)
+        wx.dm.geometry.setDrawRange(a * 24, (b - a) * 24); wx.dm.visible = b > a; } }
   }
 
   /* ---- race-day animation: the marshals wave their flags as the car goes by (pkOpsUpdate runs every frame when out.dyn.pkOps is set) ---- */

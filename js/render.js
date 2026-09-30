@@ -1221,6 +1221,10 @@ const Render = (function () {
       pkL.b = { fog: scene.fog.color.clone(), sun: sun.color.clone(), sunI: sun.intensity, sky: hemi.color.clone(), gnd: hemi.groundColor.clone(), hemiI: hemi.intensity, haze: post ? post.haze : 0, tint: U ? U.uTint.value.clone() : null, sat: U ? U.uSat.value : 1 };
     const b = pkL.b, A = atmos, tw = A.tod === 'night' ? 0 : A.tod === 'dusk' ? 0.45 : 1, gy = cam.gy || 0, u = clamp((gy - pkL.y0) / (pkL.y1 - pkL.y0), 0, 1), r = Math.max(0, wet);
     const k = u * (0.6 + 0.4 * u) * tw * (1 - 0.6 * r), sn = (world.dyn.pkWx ? world.dyn.pkWx.sU.uD.value : 0) * tw;   // k: the altitude's share (a little more towards the top); sn: the summit's snow flurries
+    // (round 7) the run's weather on the way up (World's pkWeatherUpdate, from the race's seed, the season and the rain handed over here): mi the band of mist
+    // the car is in (a greyer, closer haze, a veiled sun), fl the flurries up high (also at night: a closer haze)
+    const wx = world.dyn.pkWx, mi = wx ? wx.mist || 0 : 0, fl = wx ? wx.fl || 0 : 0;
+    if (wx) { const e = wx.env || (wx.env = {}); e.seed = curRace && curRace.opts ? curRace.opts.seed | 0 : 0; e.win = A.season === 'winter'; e.r = r; }
     // (round 6, by day only, fading out as the rain sets in) a warmer, softer, hazier valley morning and a colder, clearer, crisper summit:
     // lo the valley's share, hi the summit's
     const dW = A.tod === 'day' ? 1 - clamp(r * 4, 0, 1) : 0, lo = (1 - u) * (1 - u) * dW, hi = u * Math.sqrt(u) * dW * (1 - 0.7 * sn);
@@ -1230,6 +1234,7 @@ const Render = (function () {
     scene.fog.color.copy(b.fog).lerp(_c2.setHex(A.season === 'winter' ? 0xd2def0 : 0xc6d8f0), 0.7 * k).lerp(_c2.setHex(0xd8dee6), 0.3 * sn);
     if (lo > 0) scene.fog.color.lerp(_c2.setHex(0xe8cdb4), 0.3 * lo); if (hi > 0) scene.fog.color.lerp(_c2.setHex(A.season === 'winter' ? 0xc4d6f2 : 0xb4cff4), 0.35 * hi);
     if (ag > 0) scene.fog.color.lerp(_c2.setHex(0xb49ab8), 0.4 * ag);
+    if (mi > 0) scene.fog.color.lerp(_c2.setHex(A.tod === 'night' ? 0x1b2333 : A.tod === 'dusk' ? 0xbdb6ba : A.season === 'winter' ? 0xe4e8ec : 0xd8dde1), 0.75 * mi);
     renderer.setClearColor(scene.fog.color, 1);
     sun.color.copy(b.sun).lerp(_c2.setHex(0xfff7ee), 0.6 * k); sun.intensity = b.sunI * (1 + 0.06 * k) * (1 - 0.2 * sn);
     if (lo > 0) sun.color.lerp(_c2.setHex(0xffb466), 0.4 * lo); if (hi > 0) { sun.color.lerp(_c2.setHex(0xf2f6ff), 0.45 * hi); sun.intensity *= 1 + 0.1 * hi; }
@@ -1238,12 +1243,20 @@ const Render = (function () {
     if (lo > 0) { hemi.color.lerp(_c2.setHex(0xd8c4b0), 0.3 * lo); hemi.groundColor.lerp(_c2.setHex(0x7a5c3e), 0.3 * lo); }
     if (hi > 0) { hemi.color.lerp(_c2.setHex(0x5c8ef0), 0.4 * hi); hemi.groundColor.lerp(_c2.setHex(0x3f4f78), 0.35 * hi); hemi.intensity *= 1 - 0.08 * hi; }   // (deeper blue shade under the thin air's dark sky)
     if (ag > 0) { hemi.color.lerp(_c2.setHex(0xa88cc0), 0.4 * ag); hemi.groundColor.lerp(_c2.setHex(0x7a4c5c), 0.35 * ag); hemi.intensity *= 1 + 0.12 * ag; }
+    if (mi > 0) { sun.intensity *= 1 - 0.4 * mi; hemi.intensity *= 1 + 0.1 * mi; }   // (in the mist: the sun veiled, the light from all round)
     if (post) { post.haze = b.haze * (1 - 0.65 * k) * (1 + 0.35 * lo) * (1 - 0.3 * hi);
       if (b.tint) U.uTint.value.set(b.tint.x - 0.035 * k + 0.045 * lo - 0.02 * hi + 0.05 * ag, b.tint.y - 0.01 * lo - 0.03 * ag, b.tint.z + 0.045 * k - 0.05 * lo + 0.035 * hi - 0.02 * ag);
       U.uSat.value = b.sat * (1 + 0.1 * hi + 0.08 * ag); U.uCon.value = 1.04 + 0.07 * hi - 0.02 * lo; }
+    if (post && (mi > 0 || sn > 0)) { post.haze *= 1 - 0.6 * mi; U.uSat.value *= 1 - 0.16 * mi; U.uCon.value += 0.035 * sn - 0.05 * mi; if (b.tint) U.uTint.value.x -= 0.02 * sn, U.uTint.value.z += 0.03 * sn; }   // (the mist: flat and grey; the flurries: a colder, harsher light)
     if (target) scene.fog.near *= 1 + 0.3 * k + 0.4 * hi;   // (the clear air up high: the haze starts further off; the far end, and so the far clip, stay)
+    if (target && (mi > 0 || fl > 0)) { scene.fog.near *= (1 - 0.6 * mi) * (1 - 0.3 * fl); scene.fog.far *= (1 - 0.42 * mi) * (1 - 0.2 * fl); }   // (the mist, the flurries: a closer haze; the far clip stays)
+    if (wx) {   // the colours of the mist, the spindrift and the flakes in the light of the moment
+      const L = _c1.copy(sun.color).multiplyScalar(0.55 * sun.intensity).add(_c2.copy(hemi.color).multiplyScalar(0.6 * hemi.intensity)), mx = Math.max(L.r, L.g, L.b, 1e-3);
+      if (mx > 1) L.multiplyScalar(1 / mx); L.r = Math.max(L.r, 0.16); L.g = Math.max(L.g, 0.19); L.b = Math.max(L.b, 0.27);
+      wx.sU.uCol.value.copy(L); if (wx.dm) wx.dU.uCol.value.copy(L); if (wx.mm) { const M = wx.mU.uCol.value.copy(scene.fog.color).lerp(L, 0.25), g = M.r * 0.3 + M.g * 0.59 + M.b * 0.11; M.lerp(_c2.setRGB(g, g, g * 1.04), 0.45); }   // (the mist greyer than the haze: no sandstorm at dusk)
+    }
     W[0] = scene.fog.color.getHex(); W[1] = sun.color.getHex(); W[2] = hemi.color.getHex(); W[3] = hemi.groundColor.getHex(); W[4] = sun.intensity;
-    pkRays(settings.quality === 'high' && A.tod === 'day' && r <= 0 ? 1 - Core.sstep(170, 200, gy) : 0, dt);
+    pkRays(settings.quality === 'high' && A.tod === 'day' && r <= 0 ? (1 - Core.sstep(170, 200, gy)) * (1 - mi) : 0, dt);
     pkFlare(A.tod !== 'night' && r < 0.5 && (lastMode === 'cockpit' || (lastMode === 'tv' && !cam.shot)) ? 1 - 2 * r : 0, dt);
   }
 
