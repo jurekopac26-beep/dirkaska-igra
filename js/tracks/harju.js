@@ -3,13 +3,14 @@ var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
   // Harju (Rally Finland, Jyväskylä): the city's own special stage on the Harju ridge, the pine-covered esker in the middle of the town, run on the
   // Thursday evening as the rally's opening stage (and again on the Friday) since the first Jyväskylän Suurajot in 1951. A POINT-TO-POINT time trial
-  // on tarmac, gravel and paving stones, at its real scale and on its real streets, one lap (~2.0 km, as the Friday's 'Harju 2' of 2024, 2.01 km;
-  // on the Thursday the stage is two laps): the start on Yliopistonkatu's south-east carriageway, the familiar sprint down to the first hairpin LEFT
-  // round the end of the median at the Kilpisenkatu junction, the climb back up the other carriageway past the foot of the Nero steps to the
-  // legendary right turn onto the gravel at Cygnaeuksenkatu, up the ridge to the Vesilinna water tower (Olavi Kivimaa, 1953) on the summit, the
-  // plunge down beside the Harju stadium on Ihantolantie, the corner of Lasse Lampi's pine (his Mitsubishi Starion hit it in 1987), Pitkäkatu past
-  // the wooden houses (bale chicanes on its tarmac), the hairpin onto Oikokatu at the Normaalikoulu school, the paving stones along its yard and the
-  // flying finish at Norssin kulma on Yliopistonkatu. (The layout changes a little from year to year; the chicanes' places and the barriers are ours.)
+  // on tarmac, gravel and paving stones, at its real scale and on its real streets, one lap (~2.0 km, as the Friday's 'Harju 2' of 2024, 2.01 km; that
+  // year's Thursday stage was nearly two laps, 3.48 km, and in 2025 and 2026 the stage was 2.58 km): the start on Yliopistonkatu's south-east
+  // carriageway, the familiar sprint down to the first hairpin LEFT round the end of the median at the Kilpisenkatu junction, the climb back up the
+  // other carriageway past the foot of the Nero steps to the legendary right turn onto the gravel at Cygnaeuksenkatu, up the ridge to the Vesilinna
+  // water tower (Olavi Kivimaa, 1953) on the summit, the plunge down beside the Harju stadium on Ihantolantie, the corner of Lasse Lampi's pine (his
+  // Mitsubishi Starion hit it in 1987), Pitkäkatu past the wooden houses (bale chicanes on its tarmac), the hairpin onto Oikokatu at the Normaalikoulu
+  // school, the paving stones along its yard and the flying finish at Norssin kulma on Yliopistonkatu. (The layout changes a little from year to year;
+  // the chicanes' places and the barriers are ours.)
   // Centre line: the streets and paths of OpenStreetMap (© OpenStreetMap contributors, ODbL 1.0; read through Overture Maps), the junctions
   // rounded to their kerb radii; metres, origin = 25.745 E, 62.243 N (x east, z south). Heights (m above the start line, ~110 m a.s.l.): the
   // ArcticDEM 2 m surface model (Polar Geospatial Center, Maxar; CC BY 4.0) with the trees (Meta / WRI global canopy height map, CC BY 4.0)
