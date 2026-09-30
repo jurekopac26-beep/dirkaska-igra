@@ -1484,9 +1484,11 @@ const Render = (function () {
     }
     if (scView) { const on = F.sc.state === 'out', ph = (time * 2.6) % 1 < 0.5; scView.lamps[0].material = on && ph ? matScOn : matScOff; scView.lamps[1].material = on && !ph ? matScOn : matScOff; }
     const Y = F && T && !T.open ? F.yel : [], n = Math.min(4, Y.length);
-    if (!n && !flagInst) return;
+    if (!F && !flagInst) return;
+    // (made with the first race that has flags, not at its first yellow, and drawn all through such a race (no yellow: count 0, nothing
+    // drawn): the marshals' shaders compile and their geometry loads at the start, never in the middle of a race)
     if (!flagInst) flagInst = flagMeshes();
-    const { men, cloth } = flagInst; men.count = cloth.count = n; men.visible = cloth.visible = n > 0;
+    const { men, cloth } = flagInst; men.count = cloth.count = n; men.visible = cloth.visible = !!F;
     for (let k = 0; k < n; k++) {
       const y = Y[k], i = T.idx(y.s - 110), br = T.br ? T.br[i] : T.w, d = br + 1.6, j = (i + 1) % T.N;
       const yaw = -Math.atan2(T.pz[j] - T.pz[i], T.px[j] - T.px[i]) + Math.PI / 2;
