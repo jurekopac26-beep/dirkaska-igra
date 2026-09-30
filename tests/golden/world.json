@@ -186,6 +186,24 @@
    "smoke:ShaderMaterial": "58e293e7"
   }
  },
+ "vrsic": {
+  "meshes": 4288,
+  "verts": 1889480,
+  "instances": 67606,
+  "props": 304,
+  "crowd": 1460,
+  "world": "21d32edf",
+  "propsHash": "de1601ff",
+  "floor": "90eb1e9e/25760",
+  "groups": {
+   "-:MeshLambertMaterial": "b2457ef2",
+   "-:MeshPhongMaterial": "4e626e81",
+   "-:MeshBasicMaterial": "9b1d56ae",
+   "crowd:MeshLambertMaterial": "56769656",
+   "tyremarks:MeshBasicMaterial": "23e69b41",
+   "roadwear:MeshLambertMaterial": "8c36670b"
+  }
+ },
  "nring": {
   "meshes": 2857,
   "verts": 1046360,
