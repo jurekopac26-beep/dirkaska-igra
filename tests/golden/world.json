@@ -169,6 +169,24 @@
    "smoke:ShaderMaterial": "58e293e7"
   }
  },
+ "stelvio": {
+  "meshes": 2927,
+  "verts": 1049177,
+  "instances": 84384,
+  "props": 0,
+  "crowd": 70,
+  "world": "5cc0a3fa",
+  "propsHash": "811c9dc5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "65c13c40",
+   "-:MeshBasicMaterial": "c3d14e96",
+   "-:MeshPhongMaterial": "cb38ed59",
+   "far:MeshLambertMaterial": "ea85d9b7",
+   "crowd:MeshLambertMaterial": "f78fc4ef",
+   "tyremarks:MeshBasicMaterial": "cabbb590"
+  }
+ },
  "nring": {
   "meshes": 2757,
   "verts": 958092,

@@ -271,7 +271,7 @@ const Sfx = (function () {
     const pikes = !!(race && race.track && race.track.def && race.track.def.id === 'pikes');
     set(echo.send.gain, pikes ? Core.sstep(186, 198, player.roadY || 0) * 0.32 : 0, 0.6);
     { const tn = Wd && Wd.dyn && Wd.dyn.tunnel, sq = player.q ? player.q.s : -1e9;   // (in a tunnel: the ring of its walls)
-      set(tun.send.gain, tn && sq > tn.s0 - 3 && sq < tn.s1 + 3 ? 0.85 : 0, 0.08); }
+      const inT = (a, b) => sq > a - 3 && sq < b + 3; set(tun.send.gain, tn && (tn.ranges ? tn.ranges.some(r => inT(r[0], r[1])) : inT(tn.s0, tn.s1)) ? 0.85 : 0, 0.08); }   // (ranges: the Stelvio's two tunnels)
     const W = Wd, pk = W && W.dyn ? W.dyn.pk || W.dyn.air : null, cam = typeof Render !== 'undefined' ? Render.camera : null;   // (the Red Bull Ring's: dyn.air)
     let hv = 0, hp = 0;
     if (pk && pk.heli && (pk.on || (pk.follow && pk.heli.visible))) {

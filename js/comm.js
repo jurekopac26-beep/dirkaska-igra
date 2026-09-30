@@ -95,6 +95,8 @@ const Comm = (() => {
     cpEven: ['Checkpoint {cp}, dead level with your best split!', 'Checkpoint {cp}. Right on your record pace, not a hair in it!'],
     cpSlow: ['Checkpoint {cp}, {delta} seconds down on your best.', 'Split {cp}: {delta} seconds slower. Push on!', 'Checkpoint {cp}. Down by {delta}, find that time!'],
     summitRecord: ['At the summit! A new personal best, {time}!', 'Record run! {time} to the top of {track}!', 'What a climb! New personal best, {time}!'],
+    // the Stelvio (its own welcome: the pass road, not the race to the clouds)
+    introStelvio: ['Welcome to the Stelvio Pass! Twenty four kilometres, forty eight hairpins, and nobody but the clock.', 'Here we are in Prad, at the foot of the Stelvio. {cps} checkpoints between you and the pass, two thousand seven hundred and fifty seven metres up.', 'The Stelvio, the most famous pass road in the Alps. Forty eight hairpins to the top, go!'],
     summitEven: ['At the summit in {time}. That is your record to the thousandth!', '{time} at the top, dead level with your best!'],
     // Pikes Peak: the TV helicopter (its fly-over after Glen Cove, and the escort to the finish)
     heliFly: ['The TV chopper is overhead!', 'Here comes the helicopter, catching the action!', 'Look up! The TV helicopter sweeps across the road!'],

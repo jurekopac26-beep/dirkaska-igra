@@ -69,6 +69,13 @@
   "maxKverts": 772,
   "jsMs": 0.58
  },
+ "stelvio": {
+  "calls": 112,
+  "maxCalls": 123,
+  "kverts": 669,
+  "maxKverts": 709,
+  "jsMs": 0.54
+ },
  "nring": {
   "calls": 191,
   "maxCalls": 233,

@@ -139,8 +139,8 @@ const Core = (function () {
         }
       }
       // more run-off where a track asks for it (def.wide = [[from, to, side (-1 left, 1 right), metres], ...], metres after the start line;
-      // closed circuits): the barrier on that side moves out, eased in and out over 30 m
-      if (def.wide && !open) for (const [a, b, sd, m] of def.wide) for (let d = a - 30; d <= b + 30; d += ds) {
+      // also on an open road: the Stelvio's village street at the start): the barrier on that side moves out, eased in and out over 30 m
+      if (def.wide) for (const [a, b, sd, m] of def.wide) for (let d = a - 30; d <= b + 30; d += ds) {
         const i = this.idx(this.startS + d), f = Math.min(sstep(a - 30, a, d), sstep(b + 30, b, d)); if (sd < 0) this.bl[i] += m * f; else this.br[i] += m * f;
       }
       // gravel strips (def.gravelStrips = [[from, to, side, width], ...], metres after the start line, side -1 left / 1 right; closed

@@ -1081,6 +1081,7 @@ const Render = (function () {
     spa:      { fog: 0xc3ced7, sun: 0xfff1de, sunI: 0.98, sky: 0xd0dde9, gnd: 0x43522f, hemiI: 0.64, tint: [0.99, 1.0, 1.01], sat: 1.1 },   // the Ardennes: a little greyer, softer daylight (Spa's changeable weather)
     rbring:   { fog: 0xc6daea, sun: 0xfff1d8, sunI: 1.12, sky: 0xcfe3fb, gnd: 0x46602c, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.06, sunOff: [-86, 78, 52] },   // Styria in early summer, an afternoon sun (longer shadows): clear alpine air, fresh meadows, dark spruce woods
     suzuka:   { fog: 0xc8d9e6, sun: 0xfff1dc, sunI: 1.06, sky: 0xd5e7fa, gnd: 0x4f5c34, hemiI: 0.62, tint: [1.01, 1.0, 0.99], sat: 1.12 },   // Suzuka: a clear spring day in Mie
+    stelvio:  { fog: 0xc3d5e8, sun: 0xfff3e0, sunI: 1.14, sky: 0xcbe0ff, gnd: 0x565a44, hemiI: 0.6, tint: [1.0, 1.0, 1.02], sat: 1.08, sunOff: [-70, 94, 62] },   // the Stelvio: a clear summer afternoon high in the Alps, crisp air, a bright sun from the south-west
   };
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   function applyTheme(id) {
@@ -2462,7 +2463,7 @@ const Render = (function () {
     particles.update(dt); sparkP.update(dt);
     World.update(world, time, target, camera);
     if (target) updateCamera(dt, target, mode, alpha);
-    World.view(world, camera, target, alpha);   // (Ouninpohja: the forest between the camera and the car fades out)
+    World.view(world, camera, target, alpha, Math.max(0, wet));   // (Ouninpohja: the forest between the camera and the car fades out; the Stelvio: its distant mountains)
     { const R = curRace, q = (v) => v > 0 ? Math.max(0.05, Math.round(v * 20) / 20) : 0;   // (a changing weather: in steps of 5 %)
       const r = R ? q(R.rain || 0) : 0, w = R ? q(R.water != null ? R.water : R.rain || 0) : 0;
       if (r !== wet) applyWeather(r); if (w !== wetW) applyRoad(w); dryLine(R); }
@@ -2476,7 +2477,7 @@ const Render = (function () {
     }
     // tunnel roof (and the hotel above it) fades out while the followed car is inside, so you can see it (Suzuka: the bridge, while it drives underneath)
     if (world && world.dyn.tunnel && target && target.q) {   // (not from the cockpit: from inside the car the tunnel is a tunnel)
-      const tn = world.dyn.tunnel, sq = target.q.s, inside = sq > tn.s0 - 30 && sq < tn.s1 + 12 && !cam.ck, goal = inside ? 0.14 : 1;
+      const tn = world.dyn.tunnel, sq = target.q.s, inR = (a, b) => sq > a - 30 && sq < b + 12, inside = (tn.ranges ? tn.ranges.some(r => inR(r[0], r[1])) : inR(tn.s0, tn.s1)) && !cam.ck, goal = inside ? 0.14 : 1;   // (ranges: the Stelvio's two tunnels)
       tn.mat.opacity += (goal - tn.mat.opacity) * Math.min(1, dt * 5 + 0.02);
       const tr = tn.mat.opacity < 0.985; if (tn.mat.transparent !== tr) { tn.mat.transparent = tr; tn.mat.needsUpdate = true; } tn.mat.depthWrite = !tr;
       if (tn.mats) for (const m of tn.mats) if (m !== tn.mat) { m.opacity = tn.mat.opacity; if (m.transparent !== tr) { m.transparent = tr; m.needsUpdate = true; } m.depthWrite = !tr; }   // (Suzuka: everything on the bridge)

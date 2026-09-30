@@ -94,7 +94,7 @@
     return (k >= 0 ? MEDAL_ICON[k] + ' ' + MEDAL[k].charAt(0).toUpperCase() + MEDAL[k].slice(1) + ' medalja' : 'Brez medalje') + (n >= 0 ? ' · do ' + (k < 0 ? 'brona' : n === 0 ? 'zlata' : 'srebra') + ' ' + fmt(M[n], true) + ' (' + sgn(t - M[n]) + ')' : '') + '.'; };
   const ttRun = (d) => isRally(d) ? 'preizkušnjo' : 'vzpon';   // (Ponovi vzpon / Ponovi preizkušnjo)
   const TT_LINES = { intro: ['introTT', 'introStage'], go: ['goTT', 'goStage'], cpFirst: ['cpFirst', 'cpFirstStage'], record: ['summitRecord', 'stageRecord'], even: ['summitEven', 'stageEven'], end: ['summit', 'stageEnd'] };
-  const ttLine = (d, k) => TT_LINES[k][isRally(d) ? 1 : 0];
+  const ttLine = (d, k) => (d && d.ttLines && d.ttLines[k]) || TT_LINES[k][isRally(d) ? 1 : 0];   // (def.ttLines: a climb's own lines, the Stelvio's welcome)
   const numDot = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');   // 3048 -> 3.048
   const kmTxt = (m, dec) => (m / 1000).toFixed(dec).replace('.', ',');
   const cpWord = (n) => n + (n === 1 ? ' kontrolna točka' : n === 2 ? ' kontrolni točki' : n <= 4 ? ' kontrolne točke' : ' kontrolnih točk');
@@ -369,7 +369,7 @@
 
   /* ---------------- replay: the race recorded (every car 20 times a second, from the start to the results), watched after the finish
      from TV cameras beside the track, behind a car or from above; any car followed, played faster or slower ---------------- */
-  const REC_DT = 0.05, REC_W = 7, REC_MAX = 20 * 60 * 20;   // (per car: x, y, z, h, vl, front wheel angle, bits: 1 braking, 2 the safety car there, 4 its lamps on; 20 min at most)
+  const REC_DT = 0.05, REC_W = 7, REC_MAX = 30 * 60 * 20;   // (per car: x, y, z, h, vl, front wheel angle, bits: 1 braking, 2 the safety car there, 4 its lamps on; 30 min at most: the whole Stelvio)
   let recd = null, replay = null;
   function recStart() { recd = { cars: race.cars.slice(), n: race.cars.length, frames: [], next: 0 }; }
   function recStep() {
@@ -650,7 +650,7 @@
   // second on); the best one is kept (lap: 1) and replays on the lap clock during the next flying laps, from the next lap on.
   // Stored: { v, dt, n, t (the run's time), car, color, stripe, lap?, q0 [x, y, z in cm], d: base64 of Int16 [n x 7] }: per sample the
   // x, y, z steps from the previous sample (cm), heading, steer, pitch and roll (1e-4 rad)
-  const GH_DT = 0.1, GH_MAX = 12000, GH_CH = 7, GH_V = 1, GH_BYTES = 600000;   // sample interval (s), max samples (20 min), channels, format, max stored size
+  const GH_DT = 0.1, GH_MAX = 18000, GH_CH = 7, GH_V = 1, GH_BYTES = 600000;   // sample interval (s), max samples (30 min: the Stelvio's 24 km), channels, format, max stored size
   const ghKey = (id) => 'tdgp-ghost-' + recKey(id);
   let ghRec = null, ghPlay = null, ghLap = null;   // the run being recorded { n, f: Float32Array }, the best run being replayed { n, t, M, color, stripe, f, lap }, a circuit's lap being recorded { n, f, t0, lap, on }
   function ghPose(P, f, k, a) {   // the car's pose at a (0 = previous physics step, 1 = this one) into f at sample k
@@ -1519,7 +1519,7 @@
   /* ---------------- commentator (English) ---------------- */
   const PART_EN = { bumperF: 'front bumper', bumperR: 'rear bumper', hood: 'bonnet', trunk: 'boot lid', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'front wing', fenderR: 'front wing' };
   const PART_EN_F = { bumperF: 'front wing', bumperR: 'rear wing', hood: 'nose cone', trunk: 'engine cover', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'bargeboard', fenderR: 'bargeboard' };   // (the formula's parts)
-  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', ouninpohja: 'Ouninpohja', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka' };
+  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', ouninpohja: 'Ouninpohja', stelvio: 'the Stelvio Pass', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka' };
   const cev = { wall: 0, car: 0 };          // impacts collected per physics step
   let cs = null;
   function commReset() {

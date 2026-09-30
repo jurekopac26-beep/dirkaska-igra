@@ -39,6 +39,27 @@ Okolica:
 - **Helikopter in kamera**: TV helikopter se drži daleč od kamere (prej je v izometričnem pogledu pogosto prekril pol zaslona), njegova senca pa drsi po tleh. Drevesa in hiše med kamero in avtom se sproti razredčijo, da avta ne zakrijejo.
 - **Finske podrobnosti**: rumene table z losom ob gozdu, los na robu gozda in drugi, ki brodi po ribniku med trstiko. Na jezerih so čolni z navijači, na velikem jezeru otok z bori. Iz žarov ob taborih navijačev in iz dimnikov savn se vije dim. Na obzorju se dvigajo gozdnati griči.
 
+## Stelvio (kronometer)
+
+Passo dello Stelvio (Stilfser Joch) na Južnem Tirolskem v Italiji: vzpon proti uri po pravi cesti in v pravem merilu, brez nasprotnikov. Proga ni skrajšana: od starta na robu Prada (920 m) do prelaza (2757 m), drugega najvišjega asfaltiranega prelaza v Alpah, je 24,3 km in 1837 m vzpona, na poti pa je vseh 48 oštevilčenih serpentin (48 je spodaj pred Trafoiem, 1 tik pod prelazom). Hitra vožnja traja okoli 13 minut. Kraji so na svojih pravih mestih:
+
+- start na robu Prada (Prad am Stilfserjoch) in ulica iz vasi, nato dolina ob Suldenbachu do Stilfser Brücke, kjer se cesta čez most odcepi v vas Stilfs,
+- Gomagoi s trdnjavo (Straßensperre Gomagoi iz 19. stoletja): dve kamniti utrdbi s strelnimi linami, po ena na vsaki strani ceste,
+- 350 m dolg predor nad sotesko, serpentini 48 in 47, vas Trafoi s cerkvijo in hoteli (tu je doma smučar Gustav Thöni),
+- gozd smrek in macesnov, razgledna točka Weißer Knott in Franzenshöhe (hotel ob serpentini na 2188 m),
+- nad gozdno mejo (~2130 m) slavna stena serpentin čez travnata pobočja, melišča in skale,
+- Tibet Hütte na skali nad zadnjimi serpentinami in cilj na prelazu med hoteli, trgovinami in parkirišči, polnimi avtomobilov in motorjev.
+
+Na poti je pet kontrolnih točk (Gomagoi, Trafoi, Weißer Knott, Franzenshöhe, serpentina 10) z vmesnimi časi, pod uro pa je nadmorska višina. Rekordi, lestvica najboljših 10 časov, duh najboljše vožnje in medalje (zlata, srebrna, bronasta za vsako fiziko ter za suho in dež) so kot na Ouninpohji. Ob štartu in ob znanih krajih govori komentator (v angleščini).
+
+Cesta in okolica so narejeni iz pravih podatkov:
+
+- **Cesta**: sredinska črta iz OpenStreetMap, zglajena; ozke konice serpentin so odprte na polmer ~4,8 m (nobena točka se ni premaknila za več kot 1,7 m). Asfalt je širok 6 m, z belimi robnimi črtami in prekinjeno sredinsko črto. Višine so iz digitalnega modela reliefa Copernicus (brez krošenj gozda); v serpentinah je cesta nekoliko bolj položna kot med njimi, tako so jo zgradili.
+- **Ob cesti**: v dolini jeklene varnostne ograje, višje nizki zidovi iz kamnitih blokov nad prepadi in suhozidi, kjer se pobočje dviga tik ob cesti; drugod beli smerniki. Pri vsaki serpentini je tabla s številko (KEHRE · TORNANTE), ob vaseh table v nemščini in italijanščini, na prelazu rjava tabla s 2757 m. Na asfaltu so napisi navijačev Gira (W COPPI, PANTANI, DAI! …), najgostejši na serpentinah nad gozdno mejo.
+- **Pokrajina**: teren v pasu 600 m ob cesti in raba tal (gozd, travniki, rušje, pozidano, skale, melišča, voda) iz satelitskih podatkov ESA WorldCover in OpenStreetMap. V gozdu rastejo smreke in macesni, višje cemprini, nad gozdno mejo rušje in skale; po meliščih in ob cesti ležijo balvani. Ob cesti tečeta Suldenbach in Trafoier Bach s sivo-zeleno ledeniško vodo. Za pasom ob cesti so prave gore do 30 km daleč (višine Copernicus, raba tal ESA WorldCover, ledeniki iz OpenStreetMap): iz kokpita, v posnetku in v foto načinu se nad meglico v dolinah dvigajo Ortler (3905 m) in Königspitze z ledeniki, na severu Ötztalske Alpe. V dežju jih zakrijejo oblaki.
+- **Stavbe**: 446 stavb po tlorisih iz OpenStreetMap (hiše z belimi zidovi in lesenim nadstropjem, hoteli z balkoni, cerkve, skednji, trdnjava, Tibet Hütte z molilnimi zastavicami, kioski na prelazu), 22 parkirišč z avtomobili in motorji.
+- **Predora**: kratek pred Stilfser Brücke in 350 m dolg pod Trafoiem, oba z odmevom in lučmi.
+
 ## Nürburgring Nordschleife
 
 Pravi „Zeleni pekel“ v Nemčiji v pravem merilu: en krog (20,7 km) proti 20 tekmecem (na drugih progah jih je 12), ki so tu hitrejši kot drugod, start in cilj pri tribuni T13, vožnja v smeri urinega kazalca. Oblika proge je iz OpenStreetMap, višine pa iz satelitskih višinskih modelov (SRTM in Copernicus), zato so klanci in spusti pravi: od T13 (~620 m) po Fuchsröhre navzdol do Breidscheida (~335 m, najnižja točka), nato dolg vzpon do Hohe Acht (~617 m). Ovinka Karussell in Kleines Karussell sta nagnjena (betonska skleda na notranji strani, avto ju lahko odpelje hitreje), na Flugplatzu, v Pflanzgartnu in na Sprunghüglu avto poskoči. Med vožnjo se pod uro izpišejo imena ovinkov (Hatzenbach, Flugplatz, Fuchsröhre, Adenauer Forst, Wehrseifen, Breidscheid, Bergwerk, Kesselchen, Karussell, Hohe Acht, Brünnchen, Pflanzgarten, Schwalbenschwanz, Döttinger Höhe …), pri KROG pa, koliko kilometrov kroga je že za tabo. Gozd, travniki, vasi in mostovi so postavljeni po pravi rabi tal in stavbah iz OpenStreetMap; gozd ima smreke, bukve, macesne in suhe smreke, ob robu grmovje in mlado drevje, tla pod krošnjami so temna. Na asfaltu so grafiti in zastave navijačev (največ pri znanih ovinkih in na Döttinger Höhe), katranske razpoke, zaplate in sledi gum pred počasnimi ovinki. Ob progi so kampi navijačev (šotori, prikolice, paviljoni, zastave, odri), reklame na ograjah, maršalske hišice s številkami na vsakih 250 m, table 300/200/100 pred zaviranjem in puščice v najostrejših ovinkih; pod mostovi proge tečejo ceste, na Döttinger Höhe so drevored in ograje ob poljih.
@@ -90,7 +111,7 @@ Na obeh lahko zapelješ v bokse (desno takoj za zadnjim ovinkom pred ciljno ravn
 
 ## Kje na progi si (proge po resničnih krajih)
 
-Na progah Ljubljana, Monako, Pikes Peak, Ouninpohja, Nordschleife, Spa, Red Bull Ring in Suzuka se ~70 m pred vsakim znanim krajem pod uro izpiše njegovo ime (npr. Zmajski most, Prešernov trg, Casino, predor, Glen Cove, Devil's Playground, Keltainen talo, Kakaristo, Karussell, Eau Rouge, Zavoj 1 · Niki Lauda), in to v vsakem krogu. Komentator (v angleščini) občasno pove, kje si („Over the Dragon Bridge now!“, „Up into Casino Square!“), vsak kraj praviloma enkrat na dirko, z razmikom med takimi stavki, in samo takrat, ko ne govori o nečem pomembnejšem (prehitevanja, vmesni časi, nesreče in boksi imajo prednost in ga prekinejo). Kraj, ki ga v enem krogu ni utegnil omeniti, lahko pove v naslednjem. Čas kroga ali vmesni čas ostane na zaslonu, ime kraja pa se pokaže takoj za njim.
+Na progah Ljubljana, Monako, Pikes Peak, Ouninpohja, Stelvio, Nordschleife, Spa, Red Bull Ring in Suzuka se ~70 m pred vsakim znanim krajem pod uro izpiše njegovo ime (npr. Zmajski most, Prešernov trg, Casino, predor, Glen Cove, Devil's Playground, Keltainen talo, Kakaristo, Gomagoi, Serpentina 48, Karussell, Eau Rouge, Zavoj 1 · Niki Lauda), in to v vsakem krogu. Komentator (v angleščini) občasno pove, kje si („Over the Dragon Bridge now!“, „Up into Casino Square!“), vsak kraj praviloma enkrat na dirko, z razmikom med takimi stavki, in samo takrat, ko ne govori o nečem pomembnejšem (prehitevanja, vmesni časi, nesreče in boksi imajo prednost in ga prekinejo). Kraj, ki ga v enem krogu ni utegnil omeniti, lahko pove v naslednjem. Čas kroga ali vmesni čas ostane na zaslonu, ime kraja pa se pokaže takoj za njim.
 
 ## Fizika vožnje
 
@@ -120,7 +141,7 @@ Pred dirko na krožni progi odpelješ en leteči krog sam na progi (zaslon **Izb
 
 - Po krogu so na zaslonu časi vseh voznikov in zaostanki za najhitrejšim. Štartna vrsta je po časih: najhitrejši na prvem mestu, ti tam, kamor te je postavil tvoj krog, tekmeci v vrstnem redu svojih časov. **Na štart** začne dirko; **Ponovi dirko** jo kasneje ponovi z isto štartno vrsto.
 - V Pavzi **Ponovi krog** krog ponovi (časi tekmecev ostanejo), **Preskoči kvalifikacije** pa gre naravnost na dirko z 12. mesta.
-- Kvalifikacije so tudi pred vsako dirko prvenstva. V dirki s prijateljem in na kronometrih (Pikes Peak, Ouninpohja) jih ni.
+- Kvalifikacije so tudi pred vsako dirko prvenstva. V dirki s prijateljem in na kronometrih (Pikes Peak, Ouninpohja, Stelvio) jih ni.
 - Krog iz kvalifikacij šteje tudi za rekord kroga proge.
 
 ## Sektorski časi
@@ -150,7 +171,7 @@ Vreme **Menljivo** (zaslon Izberi progo) pomeni, da se vreme med dirko na krožn
 
 - Ko začne deževati, je proga v približno minuti mokra. Ko dež poneha, se proga suši približno štiri minute. **Idealna linija se posuši prva**, približno dvakrat hitreje, in na cesti se pokaže svetlejši pas suhega asfalta. Na njej je oprijem boljši kot drugje na cesti.
 - Na progah z boksi je menjava gum ob pravem času taktika: prezgodnji postanek na dežne gume ali prepozen na suhe stane čas. Igra pove, ko je idealna linija suha.
-- Na kronometrih (Pikes Peak, Ouninpohja) Menljivo pomeni isto kot Naključno. V dirki s prijateljem se vreme med dirko ne spreminja.
+- Na kronometrih (Pikes Peak, Ouninpohja, Stelvio) Menljivo pomeni isto kot Naključno. V dirki s prijateljem se vreme med dirko ne spreminja.
 
 ## Zastave in varnostni avto
 
@@ -174,7 +195,7 @@ Kamero med dirko zamenjaš z gumbom s kamero pod gumbom za pavzo, s tipko **C**,
 
 ## Duh najboljše vožnje
 
-Prosojen avto (Nastavitve → Duh najboljše vožnje) vozi tvojo najboljšo vožnjo, da vidiš, kje izgubljaš ali pridobivaš čas. Na kronometrih (Pikes Peak, Ouninpohja) je to najboljša vožnja od starta do cilja. Na krožnih progah je to **najboljši leteči krog**: vsak krog, ki ga začneš pri polni hitrosti, se posname (krog iz kvalifikacij in na dirki vsi krogi od drugega naprej). Duh pelje na uri kroga, torej od črte do črte. Ko odpelješ hitrejši krog, ga duh vozi že v naslednjem krogu. Duh se shrani v brskalnik posebej za vsako progo in fiziko (na kronometrih še posebej za dež).
+Prosojen avto (Nastavitve → Duh najboljše vožnje) vozi tvojo najboljšo vožnjo, da vidiš, kje izgubljaš ali pridobivaš čas. Na kronometrih (Pikes Peak, Ouninpohja, Stelvio) je to najboljša vožnja od starta do cilja. Na krožnih progah je to **najboljši leteči krog**: vsak krog, ki ga začneš pri polni hitrosti, se posname (krog iz kvalifikacij in na dirki vsi krogi od drugega naprej). Duh pelje na uri kroga, torej od črte do črte. Ko odpelješ hitrejši krog, ga duh vozi že v naslednjem krogu. Duh se shrani v brskalnik posebej za vsako progo in fiziko (na kronometrih še posebej za dež).
 
 ## Igralni plošček
 
@@ -189,7 +210,7 @@ Na vseh progah čez pokrajino počasi drsijo sence oblakov (v dežju jih ni, ker
 
 ## Vreme
 
-Na zaslonu **Izberi progo** izbereš vreme: **Suho**, **Dež**, **Menljivo** (glej zgoraj) ali **Naključno** (vsaka dirka posebej: dež približno v vsaki tretji dirki, na Spa v vsaki drugi, na Nordschleife skoraj v vsaki drugi). V dežju imajo vsi avti manj oprijema (v ovinkih in pri speljevanju za petino, zavore za desetino), zato drsijo bolj in dlje; tekmeci z AI zato vozijo ovinke počasneje in prej zavirajo, krog je 6–9 % počasnejši. Cesta je temna in mokra, nebo oblačno, vidljivost manjša, dež pada v curkih, izpod koles se dviga pršec (namesto dima iz gum), s trave in gramoza pa leti blato. Slišati je dež in šumenje gum po vodi, komentator pa ob štartu omeni dež. Kadar je izbran Dež, dežuje tudi na naslovnem zaslonu. Kronometra (Pikes Peak in Ouninpohja) imata v dežju svoje rekorde, lestvico in duha. Kadar je izbran Dež, kartica proge in lestvica pokažeta te.
+Na zaslonu **Izberi progo** izbereš vreme: **Suho**, **Dež**, **Menljivo** (glej zgoraj) ali **Naključno** (vsaka dirka posebej: dež približno v vsaki tretji dirki, na Spa v vsaki drugi, na Nordschleife skoraj v vsaki drugi). V dežju imajo vsi avti manj oprijema (v ovinkih in pri speljevanju za petino, zavore za desetino), zato drsijo bolj in dlje; tekmeci z AI zato vozijo ovinke počasneje in prej zavirajo, krog je 6–9 % počasnejši. Cesta je temna in mokra, nebo oblačno, vidljivost manjša, dež pada v curkih, izpod koles se dviga pršec (namesto dima iz gum), s trave in gramoza pa leti blato. Slišati je dež in šumenje gum po vodi, komentator pa ob štartu omeni dež. Kadar je izbran Dež, dežuje tudi na naslovnem zaslonu. Kronometri (Pikes Peak, Ouninpohja in Stelvio) imajo v dežju svoje rekorde, lestvico in duha. Kadar je izbran Dež, kartica proge in lestvica pokažeta te.
 
 ## Letni čas in čas dneva
 
@@ -202,7 +223,7 @@ Na zaslonu **Izberi progo** izbereš še **letni čas** (Poletje, Jesen, Zima) i
 
 ## Zvok navijačev in predori
 
-Na vseh dirkališčih se ob tribunah in gledalcih sliši množica (bobni, trobente, vzklikanje), glasneje, ko pelješ bliže, in s tiste strani, kjer so. Ob štartu, ko koga prehitiš, in v cilju zagrmi glasneje. Na cestnih kronometrih tega ni, na Ouninpohji imajo navijači ob cesti svoj zvok (glej zgoraj). V predoru pod hotelom v Monaku motor in tekmeci odmevajo od sten in stropa (kratek odmev majhnega, trdega prostora), prav tako pod mostom na Suzuki; ko pripelješ ven, odmev utihne.
+Na vseh dirkališčih se ob tribunah in gledalcih sliši množica (bobni, trobente, vzklikanje), glasneje, ko pelješ bliže, in s tiste strani, kjer so. Ob štartu, ko koga prehitiš, in v cilju zagrmi glasneje. Na cestnih kronometrih tega ni, na Ouninpohji imajo navijači ob cesti svoj zvok (glej zgoraj). V predoru pod hotelom v Monaku motor in tekmeci odmevajo od sten in stropa (kratek odmev majhnega, trdega prostora), prav tako pod mostom na Suzuki in v obeh predorih na Stelviu; ko pripelješ ven, odmev utihne.
 
 ## Dirkalnik formule
 
@@ -224,7 +245,7 @@ Dirka dveh igralcev, vsak na svojem telefonu (ali računalniku), preko interneta
 3. Za zasebno sobo tapni manjši gumb **Zasebna soba s kodo**: eden tapne **Ustvari sobo** in drugemu pošlje kodo (4 znaki), drugi kodo vpiše in tapne **Pridruži se**.
 4. V sobi vsak izbere svoj avto (◀ ▶). Gostitelj (kdor je čakal oziroma ustvaril sobo) izbere progo in število krogov ter tapne **Začni dirko**.
 
-- Na progi sta samo vidva, brez tekmecev z AI, drug ob drugem v prvi vrsti; kdo začne na levi, se menja od dirke do dirke. Vožnji proti uri (Pikes Peak in Ouninpohja) nista na voljo.
+- Na progi sta samo vidva, brez tekmecev z AI, drug ob drugem v prvi vrsti; kdo začne na levi, se menja od dirke do dirke. Vožnje proti uri (Pikes Peak, Ouninpohja in Stelvio) niso na voljo.
 - Semafor ugasne na obeh telefonih hkrati. Časi se merijo od skupnega starta, zato sta rezultata na obeh telefonih enaka.
 - Fizika vožnje, poškodbe in vreme so po nastavitvah gostitelja (sprememba med dirko velja od naslednje dirke). Vsak vozi svoj avto z nadgradnjami.
 - Avta se lahko zadeneta. Vsak telefon premika le svoj avto, zato se ob trku odmakne vsak svoj.
@@ -253,7 +274,7 @@ Igra ne potrebuje namestitve ali prevajanja: `index.html` naloži datoteke po vr
 | `js/tracks/<id>.js` | ena datoteka na progo: oblika, višine, sidrišča okolice, imena krajev (vrstni red v `index.html` = vrstni red v meniju) |
 | `js/core.js` | proge, fizika (Circuit Superstars in arkadna, oprijem v dežju), AI, pravila dirke in prvenstva (brez DOM in three.js) |
 | `js/tex.js` | proceduralne teksture |
-| `js/world.js` | 3D svet prog (teren, drevesa, gledalci, rekviziti, boksi); Nordschleife in Red Bull Ring si delita gradnjo terena iz višinskih podatkov |
+| `js/world.js` | 3D svet prog (teren, drevesa, gledalci, rekviziti, boksi); Nordschleife, Red Bull Ring in Stelvio si delijo gradnjo terena iz višinskih podatkov |
 | `js/data/p206.js` | 3D model Peugeota 206 |
 | `js/render.js` | izris, avti, delci, kamere, mehaniki v boksih, dež (curki, pršec, mokra cesta, oblačno nebo) |
 | `js/sfx.js`, `js/input.js`, `js/comm.js` | zvok, upravljanje, komentator |
@@ -270,7 +291,7 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 
 1. Nova datoteka `js/tracks/<id>.js` z definicijo proge (po vzoru obstoječih).
 2. V `index.html` dodaj `<script src="js/tracks/<id>.js"></script>` pred `js/core.js`, na mesto, kjer naj bo proga v meniju, nato zaženi `node tools/stamp.js`.
-3. Okolica: vsaka tema (`theme`) v `js/world.js` gradi okolico svoje proge (jezero, stavbe, gozd …), zato nova proga potrebuje svojo temo ali prilagojeno obstoječo. Proge v slogu Circuit Superstars (teme `forest`, `italia`, `kamp`) si delijo tribune, boks z mehaniki, gume, bale in robove; Toskana in Gromski rt svojo okolico (tribune, table, hiše, ciprese, kamp, zastavice, gledalce, jezero) naštejeta kar v datoteki proge. Pravi progi Nordschleife in Spa (temi `nring`, `spa`) si delita teren pasu ob progi (višinski model in raba tal iz datoteke proge), okolico pa gradi vsaka svoj graditelj (`buildNring`, `buildSpa`): Nordschleife gozd z mešanimi drevesi, kampe navijačev in grafite na asfaltu, Spa smreke v vrstah, pašnike, tribune in zaletišča formule 1.
+3. Okolica: vsaka tema (`theme`) v `js/world.js` gradi okolico svoje proge (jezero, stavbe, gozd …), zato nova proga potrebuje svojo temo ali prilagojeno obstoječo. Proge v slogu Circuit Superstars (teme `forest`, `italia`, `kamp`) si delijo tribune, boks z mehaniki, gume, bale in robove; Toskana in Gromski rt svojo okolico (tribune, table, hiše, ciprese, kamp, zastavice, gledalce, jezero) naštejeta kar v datoteki proge. Pravi progi Nordschleife in Spa (temi `nring`, `spa`) si delita teren pasu ob progi (višinski model in raba tal iz datoteke proge), okolico pa gradi vsaka svoj graditelj (`buildNring`, `buildSpa`): Nordschleife gozd z mešanimi drevesi, kampe navijačev in grafite na asfaltu, Spa smreke v vrstah, pašnike, tribune in zaletišča formule 1. Enak teren pasu ob cesti ima tudi Stelvio (tema `stelvio`, `buildStelvio`), ki okolico gradi po svoje: alpski gozd do gozdne meje, stavbe po tlorisih, zidove in ograje ob cesti ter table serpentin.
 4. Testi progo zajamejo sami; referenčne vrednosti zanjo ustvari `npm run golden:update`.
 
 ## Zasluge
@@ -287,3 +308,6 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 - Proga Suzuka (sredinska črta): [TUMFTM racetrack-database](https://github.com/TUMFTM/racetrack-database) (Tehniška univerza v Münchnu, licenca LGPL-3.0), izpeljana iz OpenStreetMap (© OpenStreetMap contributors, ODbL 1.0), umeščena v prostor po obrisu iz [f1-circuits](https://github.com/bacinger/f1-circuits) (Tomislav Bacinger, licenca MIT). Tribune, stavbe, ribniki in parkirišča: © OpenStreetMap contributors (ODbL 1.0), prek [Overture Maps Foundation](https://overturemaps.org). Iz njih izpeljani podatki v `js/tracks/suzuka.js` so na voljo pod ODbL 1.0.
 - Raba tal Suzuke: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium (licenca CC BY 4.0), prek Overture Maps.
 - Višine Suzuke: Copernicus DEM GLO-30: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
+- Proga Stelvio (sredinska črta, stavbe, parkirišča, potoki, ledeniki, skale in melišča, imena krajev): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) (prebrano iz [Overture Maps](https://overturemaps.org)). Iz njih izpeljani podatki v `js/tracks/stelvio.js` so prav tako na voljo pod ODbL 1.0.
+- Višine in teren Stelvia: Copernicus DEM GLO-30: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved. Višina krošenj gozda (odšteta od višin, da je teren pod drevesi): [High Resolution Canopy Height Maps](https://registry.opendata.aws/dataforgood-fb-forests/), © Meta in World Resources Institute, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Raba tal Stelvia (gozd, travniki, grmičevje, pozidano, gole skale, voda): © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).

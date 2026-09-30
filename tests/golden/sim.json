@@ -1399,6 +1399,146 @@
    "repairs": 0
   }
  },
+ "stelvio/race/cs": {
+  "digest": "da0ad23b68447a3426a53402",
+  "lead": 2532.1,
+  "car0": [
+   -2087.85,
+   1297.69
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "stelvio/race/arcade": {
+  "digest": "9bc5bef3dcc2e4dd3cb3101d",
+  "lead": 2433.8,
+  "car0": [
+   -2042,
+   1215.05
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "stelvio/demo/cs": {
+  "digest": "5ad0a7118ca12813dd86ddd3",
+  "lead": 2527.2,
+  "car0": [
+   -2083.21,
+   1294.12
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "stelvio/demo/arcade": {
+  "digest": "df92b8694bbbaaa66b541aa2",
+  "lead": 2439.4,
+  "car0": [
+   -2043.93,
+   1219.59
+  ],
+  "cover": {
+   "dmg": 0.07,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "stelvio/upg/cs": {
+  "digest": "342cfe56e7dbb0752b0e6a1c",
+  "lead": 2603.8,
+  "car0": [
+   -2134.92,
+   1349.57
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "stelvio/upg/arcade": {
+  "digest": "b5541bff916ef8c0eeb603ff",
+  "lead": 2496.6,
+  "car0": [
+   -2060.55,
+   1275.03
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "stelvio/crash/cs": {
+  "digest": "9878517e713fc2626ac9112d",
+  "lead": 2460.3,
+  "car0": [
+   -2046.72,
+   1241.57
+  ],
+  "cover": {
+   "dmg": 0.31,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "stelvio/crash/arcade": {
+  "digest": "740b9dfc358e757e5e594cb1",
+  "lead": 2364.7,
+  "car0": [
+   -1979.22,
+   1191.17
+  ],
+  "cover": {
+   "dmg": 0.34,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "stelvio/formula/cs": {
+  "digest": "e2bd23057a1ce4182c48d439",
+  "lead": 2776.5,
+  "car0": [
+   -2200.3,
+   1504.4
+  ],
+  "cover": {
+   "dmg": 0.3,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "stelvio/formula/arcade": {
+  "digest": "4d27c7e8775866d7d9270175",
+  "lead": 2535.1,
+  "car0": [
+   -2089.17,
+   1301.14
+  ],
+  "cover": {
+   "dmg": 0.37,
+   "loose": 2,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
  "nring/race/cs": {
   "digest": "f6ddab7f086ed5bbbbec51a7",
   "lead": 2498.2,
