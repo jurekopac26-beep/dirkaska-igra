@@ -59,7 +59,9 @@ const Comm = (() => {
     partLost: ['There goes the {part}!', 'The {part} has come clean off!', 'Bits flying everywhere, that was the {part}!'],
     heavyDamage: ["Smoke pouring from the engine! That doesn't look good!", 'Heavy damage! Nurse it home!', 'That car is badly hurt now!'],
     pitIn: ['Into the pit lane!', 'Coming in for repairs!', 'He dives into the pits!'],
+    pitAdvice: ['That car is damaged! Box, box: the pit lane is on the right, just after the last corner, and the mechanics will fix it.', 'Heavy damage there! Bring it into the pits after the final corner, the crew are ready.', 'Time to pit! The entry is on the right after the last corner, the mechanics will put it right.'],
     drs: ['DRS open down the straight!', 'The rear wing opens, DRS is on!', 'Within a second at the line, DRS for the chase!'],
+    secPurple: ['Purple sector!', 'Fastest sector {n} of the race so far!', 'That is a purple sector {n}!', 'Nobody has been quicker through sector {n}!'],
     pitWork: ['The crew get to work!', 'Mechanics all over the car!', 'Quick work needed here from the crew!'],
     pitOut: ['Back out, good as new!', 'Great stop from the crew!', 'Repaired and rejoining the race!'],
     propCone: ['Cone down!', 'There goes a cone!', 'Sending the cones flying!'],
@@ -81,6 +83,9 @@ const Comm = (() => {
     summitEven: ['At the summit in {time}. That is your record to the thousandth!', '{time} at the top, dead level with your best!'],
     // Pikes Peak: the TV helicopter (its fly-over after Glen Cove, and the escort to the finish)
     heliFly: ['The TV chopper is overhead!', 'Here comes the helicopter, catching the action!', 'Look up! The TV helicopter sweeps across the road!'],
+    podiumRb: ['{name} on the top step of the podium, and the champagne is flying!', 'The podium ceremony in Spielberg: {name} lifts the cup!', 'Champagne on the podium! {name} is the winner at the Red Bull Ring!'],
+    podiumMe: ['You are on the top step! Enjoy the champagne!', 'The cup is yours! What a drive at the Red Bull Ring!', 'Champagne for the winner: that is you!'],
+    heliRb: ['The TV helicopter sweeps across the main straight!', 'There goes the helicopter over the start and finish straight!', 'The chopper cameras catch you coming down the straight!'],
     heliFin: ['And the helicopter is back, escorting you to the summit!', 'The TV chopper picks you up for the final run to the line!', 'Here comes the helicopter again, the cameras follow you home!'],
     summit: ['At the summit in {time}, {delta} seconds off your best.', 'Across the line at the top. {time}, just {delta} short of the record.', "That's the summit. {time}. {delta} seconds to find next time."],
     // time trial on a rally special stage (Ouninpohja): gravel, crests and jumps, a flying finish
@@ -192,7 +197,7 @@ const Comm = (() => {
   // news from the world: the Pikes Peak TV helicopter shows up (World's dyn.pk.news: { key, n }, each said once)
   let heliSeen = null;
   function heliNews() {
-    const w = typeof Render !== 'undefined' && Render.world, pk = w && w.dyn && w.dyn.pk, nw = pk && pk.news;
+    const w = typeof Render !== 'undefined' && Render.world, pk = w && w.dyn && (w.dyn.pk || w.dyn.air), nw = pk && pk.news;   // (the Red Bull Ring's: dyn.air)
     if (!nw || nw === heliSeen) return;
     heliSeen = nw; say(nw.key, null, 1, { ttl: 4000 });
   }
