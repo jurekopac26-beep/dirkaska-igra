@@ -1197,8 +1197,8 @@
   // on the fastest car of each class: dry FORMULA ORKAN 164.26, BURJA R7 182.30, STREGA MR 186.80, PEUGEOT 206 184.58 (VORTEX 185.13,
   // KAZE 189.19, PICO 186.12); wet 180.68, 196.83, 204.23, 200.20. Gold ~1.5 % under that run, silver ~2.5 % over it, bronze ~8 % over.
   // The class's best medal is kept with its board (R0.pkMed[class] 0 gold .. 2 bronze; the board's best time counts too).
-  const PK_MED = { unl: [161, 168, 177], open: [179, 186, 196], ppo: [183, 191, 201], ta1: [181, 189, 199] }, PK_MED_WET = { unl: [177, 185, 195], open: [193, 201, 212], ppo: [201, 209, 220], ta1: [197, 205, 216] };
-  const PK_LEG = { unl: 'formula', open: 'rally', ppo: 'strega', ta1: 'p206' };   // the legend's car: the class's fastest on the autopilot
+  const PK_MED = { unl: [161, 168, 177], open: [176, 183, 193], ppo: [183, 191, 201], ta1: [181, 189, 199] }, PK_MED_WET = { unl: [177, 185, 195], open: [189, 197, 208], ppo: [201, 209, 220], ta1: [197, 205, 216] };
+  const PK_LEG = { unl: 'formula', open: 'ev', ppo: 'strega', ta1: 'p206' };   // the legend's car: the class's fastest on the autopilot
   if (!['best', 'legend', 'off'].includes(S.pkGhost)) S.pkGhost = S.ghost ? 'best' : 'off';   // Duh: moj najboljši / legenda / brez (first time: as the ghost setting)
   S.pkNotes = +S.pkNotes === 0 ? 0 : 1;   // Opozorila na ovinke (on unless turned off)
   const pkMedSet = (d) => wetRec(d) ? PK_MED_WET : PK_MED;
@@ -1233,7 +1233,7 @@
   // while the menus are up (the rest at the start, if it is not ready), with its own seeded random numbers (the same run every time; the
   // game's untouched), on a race of its own (the race driven is never touched); kept in localStorage (tdgp-pklegend-*). Not a record.
   const PK_LEG_V = 1, pkLeg = { mem: {}, job: null };
-  const pkLegKey = (c, wet) => 'tdgp-pklegend-' + c + (wet ? '-wet' : '');
+  const pkLegKey = (c, wet) => 'tdgp-pklegend-' + c + '-' + PK_LEG[c] + (wet ? '-wet' : '');   // (the car in the key: a new legend car makes a new run)
   const pkLegTrk = (T) => Math.round(T.len * 10) + '/' + T.N;   // (the road it was driven on)
   function pkLegGet(c, wet) {   // the legend's run, or null when it is not made yet
     const key = pkLegKey(c, wet), T = getTrack('pikes'), gold = (wet ? PK_MED_WET : PK_MED)[c][0];
