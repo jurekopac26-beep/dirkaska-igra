@@ -2292,7 +2292,7 @@ const Render = (function () {
     }
     cams.sort((a, b) => a.s - b.s);
     const t0 = performance.now(), G = world && world.root ? tvGrid(T) : null;
-    return { T, W: world, cams, G, gridMs: performance.now() - t0, cur: -1, fov: 30, lx: 0, ly: 0, lz: 0, cut: true, hid: 0, since: 9 };
+    return { T, W: world, cams, G, gridMs: performance.now() - t0, cur: -1, prev: -1, fov: 30, lx: 0, ly: 0, lz: 0, cut: true, hid: 0, since: 9 };
   }
   // the TV cameras' line of sight: a coarse height grid of the world (built once, for this camera only: the highest surface in each 4 m cell
   // within the track's box and 250 m around it: the ground, stands, buildings, bridges; the instanced trees as discs of their crowns' height;
@@ -2414,12 +2414,20 @@ const Render = (function () {
       if (!tvC || tvC.T !== curTrack || tvC.W !== world) tvC = tvSetup(curTrack);
       const C = tvC.cams, T = curTrack, L = T.len, s = c.q ? c.q.s : 0;
       if (C.length) {
-        const pick = (strict) => { const t0 = performance.now(), k = tvPick(C, s, T, c, tvC.G, tvC.cur, strict); tvC.ms = performance.now() - t0; return k; };
+        const seesCar = (q) => tvSees(tvC.G, q.x, q.y, q.z, x, (c.y || 0) + 1.4, z);
+        const pick = (strict) => {   // (never straight back to the camera before this one within 2 s of the cut: a hidden car stays in this shot, a car past it too while this camera still sees it)
+          const t0 = performance.now(); let k = tvPick(C, s, T, c, tvC.G, tvC.cur, strict);
+          if (k >= 0 && k === tvC.prev && tvC.since < 2 && (strict || (C[tvC.cur] && seesCar(C[tvC.cur])))) k = strict ? -1 : tvC.cur;
+          tvC.ms = performance.now() - t0; return k; };
         let cur = C[tvC.cur], k = -2;   // (k: the camera picked in this frame; -2: none picked)
         if (!cur) k = pick(false);
         else { let d = s - cur.s; if (!T.open) { d = ((d % L) + L) % L; if (d > L / 2) d -= L; } if (d > 55 || d < -450) k = pick(false); }   // (past it, or nowhere near: the next one; this one while no other sees the car)
-        if (k === -2 && dt > 0) { tvC.hid = tvSees(tvC.G, cur.x, cur.y, cur.z, x, (c.y || 0) + 1.4, z) ? 0 : tvC.hid + dt; if (tvC.hid > 0.4 && tvC.since > 1.2) { k = pick(true); tvC.hid = 0; } }   // (hidden behind something: another camera that sees it, if one does; a shot lasts at least 1.2 s)
-        if (k >= 0 && k !== tvC.cur) { tvC.cur = k; tvC.cuts = (tvC.cuts || 0) + 1; tvC.cut = true; tvC.hid = 0; tvC.since = 0; }   // (a cut: the new camera's view at once)
+        if (k === -2 && dt > 0) {   // hidden behind something: another camera that sees it, if one does (a shot lasts at least 1.2 s); not while this one sees the road just ahead of the car (it comes out in a moment), unless that takes 1.5 s
+          tvC.hid = seesCar(cur) ? 0 : tvC.hid + dt;
+          if (tvC.hid > 0.4 && tvC.since > 1.2) { const i2 = T.idx(s + 25), soon = tvSees(tvC.G, cur.x, cur.y, cur.z, T.px[i2], (T.hasElev ? T.hy[i2] : 0) + 1.4, T.pz[i2]);
+            if (!soon || tvC.hid > 1.5) { k = pick(true); tvC.hid = 0; } }
+        }
+        if (k >= 0 && k !== tvC.cur) { tvC.prev = tvC.cur; tvC.cur = k; tvC.cuts = (tvC.cuts || 0) + 1; tvC.cut = true; tvC.hid = 0; tvC.since = 0; }   // (a cut: the new camera's view at once)
         tvC.since += dt;
         cur = C[tvC.cur];
         px = cur.x; py = cur.y; pz = cur.z;
