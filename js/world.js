@@ -6479,6 +6479,78 @@ const World = (function () {
     cm.visible = sm.q > 0;
   }
 
+  /* ---- round 7: the spectators react to the car. The shared crowd shader (every track: arms up and a hop within ~50 m of uCar, ~28% calm by a phase
+     hash) extended for Pikes Peak only, by its own material (program key 'crowdPk'): the reaction reaches ~62 m (3D, so the leg above in the W's
+     does not cheer for the car below), four ways of cheering (both arms up and jumping, one arm waving wide, a fist pumping, clapping over the head),
+     the photographers (the filming pose) keep their cameras up, and everyone within ~75 m turns to follow the car (all from uCar in the vertex
+     shader: no per-instance JS). Camera flashes: one Points mesh with every photographer's camera, each flashing in its own rhythm while the car
+     is within ~60 m (uTime, uCar: the crowd's own uniforms, nothing per frame). out.dyn.pkCheer: the crowd groups (x, y, z, weight) for the
+     cheer's sound (Sfx atmoSpots), heavier at the hairpins, the W's and the summit ---- */
+  function pkCrowd7(K) {
+    const grp = K.root.getObjectByName('crowds'), U = K.CR.U; if (!grp) return;
+    const ims = grp.children.filter(o => o.isInstancedMesh && o.name === 'crowd'); if (!ims.length) return;
+    const old = ims[0].material, m = crowdMat(U), ob = m.onBeforeCompile;
+    m.onBeforeCompile = (sh) => { ob(sh);
+      sh.vertexShader = sh.vertexShader
+        .replace('smoothstep(14.0, 52.0, length(crW.xz - uCar.xz))', 'smoothstep(18.0, 62.0, length(crW - uCar))')
+        .replace('mat3 crM = mat3(1.0);', [
+          'float crHop = crEx * max(0.0, sin(uTime * 8.0 + crPh)) * 0.16;',
+          'float crCam = abs(crPose - 3.0) < 0.5 ? 1.0 : crPose < 0.5 && fract(crV * 0.618034 + 0.13) < 0.3 ? crEx : 0.0;',   // the photographers (filming, and some who stood): the camera up at the eyes
+          'if (crCam > 0.0) { rL = mix(rL, -0.3, crCam); rR = mix(rR, -0.3, crCam); fL = mix(fL, 1.45, crCam); fR = mix(fR, 1.45, crCam); crHop *= 1.0 - crCam; }',
+          'else if (crEx > 0.001 && (crPose < 4.5 || crSit > 0.5)) { float k = fract(crPh * 5.31 + crV * 0.013), tt = uTime * (0.9 + 0.2 * fract(crPh * 7.1)) + crPh;',
+          '  if (k < 0.34) crHop = crEx * max(0.0, sin(tt * 7.0)) * 0.3;',   // both arms up, jumping
+          '  else if (k < 0.58) { rR = mix(rR, 1.95 + 0.85 * sin(tt * 5.0), crEx); fR = mix(fR, -0.1, crEx); rL = mix(rL, 0.35, crEx); fL = mix(fL, 0.25, crEx); }',   // one arm waving wide
+          '  else if (k < 0.78) { float p = max(0.0, sin(tt * 9.0)); rR = mix(rR, 2.3 + 0.55 * p, crEx); fR = mix(fR, 0.2, crEx); rL = mix(rL, 0.3, crEx); fL = mix(fL, 0.5, crEx); crHop = crEx * p * 0.08; }',   // a fist pumping
+          '  else { float c = abs(sin(tt * 6.5)); rL = mix(rL, 2.68 - 0.3 * c, crEx); rR = mix(rR, 2.68 - 0.3 * c, crEx); fL = mix(fL, 0.05, crEx); fR = mix(fR, 0.05, crEx); } }',   // clapping over the head
+          'mat3 crM = mat3(1.0);'].join('\n'))
+        .replace('if (crBone < 4.5) objectNormal = crM * objectNormal;', [
+          'if (crBone < 4.5) objectNormal = crM * objectNormal;',
+          'vec3 crDv = uCar - crW, crIa = instanceMatrix[0].xyz, crIc = instanceMatrix[2].xyz;',   // the car in the figure's own frame (x its right, z its facing)
+          'float crLx = dot(crIa, crDv) / dot(crIa, crIa), crLz = dot(crIc, crDv) / dot(crIc, crIc), crLd = max(0.01, length(vec2(crLx, crLz)));',
+          'float crYa = clamp(atan(crLx, crLz), -1.3, 1.3) * (1.0 - smoothstep(30.0, 75.0, length(crDv))) * smoothstep(-0.6, 0.2, crLz / crLd);',   // (fades out towards behind: no flip)
+          'float crYc = cos(crYa), crYs = sin(crYa); mat3 crY = mat3(crYc, 0.0, -crYs, 0.0, 1.0, 0.0, crYs, 0.0, crYc);',
+          'objectNormal = crY * objectNormal;'].join('\n'))
+        .replace('else transformed.y += crEx * max(0.0, sin(uTime * 8.0 + crPh)) * 0.16;', 'else transformed.y += crHop;\ntransformed = crY * transformed;');
+    };
+    m.customProgramCacheKey = () => 'crowdPk';
+    for (const o of grp.children) if (o.material === old) o.material = m;
+    old.dispose();
+    // the photographers' cameras (head height, per instance: a flash phase and period from a position hash) and the crowd groups for the sound
+    const P = [], F = [], S = [], hp = T.corners.filter(c => c.sev >= 3).map(c => { const i = T.idx((c.i0 + c.i1) / 2 * T.ds); return [T.px[i], T.pz[i]]; }).flat();
+    const wS = [], sm = [];   // road samples along the W's (d 2918-3411) and the last 160 m below the summit
+    for (let s = T.startS + 2918; s <= T.startS + 3411; s += 16) { const i = T.idx(s); wS.push(T.px[i], T.pz[i]); }
+    for (let s = T.finishS - 160; s <= T.len - 2; s += 16) { const i = T.idx(s); sm.push(T.px[i], T.pz[i]); }
+    const fr = (u) => u - Math.floor(u), nearL = (L, x, z, r) => { for (let k = 0; k < L.length; k += 2) if ((L[k] - x) ** 2 + (L[k + 1] - z) ** 2 < r * r) return true; return false; };
+    for (const im of ims) {
+      const M = im.instanceMatrix.array, A = im.geometry.getAttribute('aCrowd').array, ox = im.position.x, oz = im.position.z; let sy = 0;
+      for (let q = 0; q < im.count; q++) { const o = q * 16; sy += M[o + 13];
+        const a0 = A[q * 2], v = A[q * 2 + 1], pose = Math.floor(a0), x = M[o + 12] + ox, z = M[o + 14] + oz, h = Math.hypot(M[o + 4], M[o + 5], M[o + 6]);
+        if (pose !== 3) { if (pose || fr(v * 0.618034 + 0.13) >= 0.3) continue;   // (as the shader: the filming pose, or 30% of those who stood (by the variant)
+          if (fr((a0 - pose) * 6.2832 * 2.713 + v * 0.0171) < 0.28 && !nearL(hp, x, z, 33)) continue; }   // who cheer: not the calm ones, but at the hairpins all do: pkOpsUpdate)
+        P.push(x, M[o + 13] + 1.5 * h, z); F.push(crH(x, z, 21), 1.2 + 2.2 * crH(x, z, 22)); }
+      const x = ox, z = oz, n = im.count, heat = nearL(sm, x, z, 45) ? 1.5 : nearL(hp, x, z, 50) ? 1.4 : nearL(wS, x, z, 40) ? 1.3 : 1;
+      S.push(x, sy / n, z, Math.min(1.6, (0.25 + 0.75 * Math.min(1, n / 45)) * heat));
+    }
+    K.out.dyn.pkCheer = { spots: Float32Array.from(S) };
+    if (!P.length) return;
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('aF', new THREE.Float32BufferAttribute(F, 2));
+    const fU = { uTime: U.uTime, uCar: U.uCar, uH: { value: 400 } };
+    const fm = new THREE.ShaderMaterial({ uniforms: fU, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: ['attribute vec2 aF; uniform float uTime, uH; uniform vec3 uCar; varying float vB;',
+        'void main() { vec3 p = position, d = uCar - p; float dl = length(d), f = fract(uTime / aF.y + aF.x) * aF.y;',
+        '  float b = (1.0 - smoothstep(40.0, 62.0, dl)) * step(5.0, dl) * max(0.0, 1.0 - f / 0.085);',   // one flash per period, 85 ms
+        '  p.xz += d.xz / max(0.1, length(d.xz)) * 0.36; vB = b; vec4 mv = modelViewMatrix * vec4(p, 1.0);',   // (the camera held towards the car)
+        '  gl_Position = b > 0.0 ? projectionMatrix * mv : vec4(2.0, 2.0, 2.0, 1.0);',
+        '  gl_PointSize = b > 0.0 ? clamp(4.0 * (0.55 + 0.45 * b) * uH * projectionMatrix[1][1] / max(1.0, -mv.z), 9.0 * b, 90.0) : 0.0; }'].join('\n'),
+      fragmentShader: ['varying float vB;',
+        'void main() { vec2 q = gl_PointCoord * 2.0 - 1.0; float r = length(q);',
+        '  float a = smoothstep(0.4, 0.0, r) + 0.45 * exp(-r * r * 6.0) + 0.55 * (max(0.0, 1.0 - abs(q.x) * 10.0) + max(0.0, 1.0 - abs(q.y) * 10.0)) * max(0.0, 1.0 - r);',   // core, glow, a four-point star
+        '  a *= vB * (1.0 - smoothstep(0.75, 1.0, r)); if (a < 0.004) discard; gl_FragColor = vec4(1.0, 0.97, 0.92, min(1.0, a)); }'].join('\n') });
+    const pts = new THREE.Points(g, fm), v2 = new THREE.Vector2(); pts.name = 'pkFlash'; pts.frustumCulled = false; pts.renderOrder = 5;
+    pts.onBeforeRender = (r) => { fU.uH.value = r.getDrawingBufferSize(v2).y * 0.5; };
+    K.root.add(pts);
+  }
+
   function buildPikes(scene, tex, opts) {
     const R = rng(7311), N = T.N, w = T.w, dens = opts.density || 1;
     const root = new THREE.Group(); scene.add(root);
@@ -7035,6 +7107,8 @@ const World = (function () {
         }
       }
     }
+
+    pkCrowd7(K);   // (round 7: the spectators react to the car, camera flashes, the groups for the cheer's sound)
 
     pkSky(K);
 
