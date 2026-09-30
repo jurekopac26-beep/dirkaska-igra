@@ -70,8 +70,8 @@ const World = (function () {
     }
   }
   class Chunks {
-    constructor(size, uv) { this.size = size; this.map = new Map(); this.uv = !!uv; }
-    get(x, z) { const k = Math.floor(x / this.size) + ',' + Math.floor(z / this.size); let g = this.map.get(k); if (!g) { g = new GB(this.uv); this.map.set(k, g); } return g; }
+    constructor(size, uv, alpha) { this.size = size; this.map = new Map(); this.uv = !!uv; this.alpha = !!alpha; }   // (alpha: RGBA vertex colours)
+    get(x, z) { const k = Math.floor(x / this.size) + ',' + Math.floor(z / this.size); let g = this.map.get(k); if (!g) { g = new GB(this.uv, this.alpha); this.map.set(k, g); } return g; }
     addTo(group, mat, cast, recv) { for (const g of this.map.values()) { if (g.empty) continue; const m = new THREE.Mesh(g.geometry(), mat); m.castShadow = cast; m.receiveShadow = recv; m.matrixAutoUpdate = false; m.updateMatrix(); group.add(m); } }
   }
 
@@ -4926,6 +4926,15 @@ const World = (function () {
     const up = [0, 1, 0];
     for (let k = 0; k < 2 * n; k++) { const j = (k + 1) % (2 * n); g.triON(P[k], P[j], apex, Nm[k], Nm[j], up, inn, Cl[k], Cl[j], ap); }
   }
+  let ouMistC = null;
+  function ouMistTex() {   // soft, tileable wisps of mist: white, the alpha a smooth noise (made once, reused by every Ouninpohja build)
+    if (ouMistC) return ouMistC;
+    const S = 128, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), img = x.createImageData(S, S), d = img.data, n = valueNoise2(531, 32), n2 = valueNoise2(532, 12);
+    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) { const o = (j * S + i) * 4, v = clamp(0.35 + n(i, j) * 0.75 + (n2(i, j) - 0.5) * 0.35, 0, 1); d[o] = d[o + 1] = d[o + 2] = 255; d[o + 3] = Math.round(v * 255); }
+    x.putImageData(img, 0, 0);
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    return (ouMistC = t);
+  }
   function ouTreeGeo(kind, far) {   // unit trees (height 1, instances scale them): 0 Norway spruce, 1 Scots pine, 2 silver birch, 3 young spruce; far: the plain
     // versions for the forest deep behind the road (never seen up close). Soft shaded: crowns of several round lumps, spruces of drooping tiers
     const g = new GB(), R = rng(620 + kind), rs = ROCK_SMOOTH; ROCK_SMOOTH = false;   // (flat trunks; the crowns shade themselves)
@@ -5444,7 +5453,7 @@ const World = (function () {
        Finnish flags on poles among them, tents and camper vans in the fields behind ---- */
     const jumpS = (def.bumps || []).map(b => clamp(b.at, 0, 1) * T.len).filter(s => s > sStart + 60 && s < sFin - 40);
     const hard = (x, z) => { for (let k = 0; k < excl.length; k++) { const e = excl[k]; if (crSoft.has(e)) continue; const dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
-    const M = { first: 3.0, gap: 1.05, below: 1.2, maxSlope: 0.55, excluded: hard, sit: 0.25, flag: 0.12, keepBar: 1.6 };
+    const M = { first: 3.0, gap: 1.05, below: 1.2, maxSlope: 0.55, excluded: hard, sit: 0.25, flag: 0.16, keepBar: 1.6 };
     const TR = [0.86, 0.12, 0.1], TW = [0.95, 0.95, 0.93];
     const tape = (sa, sb, side, first) => {   // a red and white tape on thin posts between the road and a crowd: 0.5 m stripes, sagging a little between the posts
       const o0 = Math.max(1.2, first - 0.9); let prev = null, n = 0;
@@ -5465,10 +5474,11 @@ const World = (function () {
     const run = (sa, sb, side, o) => { const a = Math.max(sa, sStart + 40), b = Math.min(sb, sFin - 30), first = (o && o.first) || M.first, n = crowdRun(CR, a, b, side, Object.assign({}, M, o));
       if (n >= 14 && tape(a - 3, b + 3, side, first) > 2 && n >= 40) board2(a - 5, side, Math.max(1.2, first - 0.9) + 0.3, 0, 2.6, 0.66);   // a big crowd stands behind a tape, a YLEISÖALUE sign where it begins
       return n; };
-    const yh = farms.find(f => f.kind === 'yellow'), sY = yh ? jumpS.reduce((b, s) => (Math.abs(s - yh.s - 90) < Math.abs(b - yh.s - 90) ? s : b), jumpS[0]) : -1;
+    const yh = farms.find(f => f.kind === 'yellow'), jB = def.jumpRec && def.bumps && def.bumps[def.jumpRec.bump];   // the Yellow House jump: the famous one (either way round)
+    const sY = !yh ? -1 : jB ? clamp(jB.at, 0, 1) * T.len : jumpS.reduce((b, s) => (Math.abs(s - yh.s - 90) < Math.abs(b - yh.s - 90) ? s : b), jumpS[0]);
     jumpS.forEach((s0, k) => {
       const big = s0 === sY;
-      for (const sd of [-1, 1]) run(s0 - (big ? 30 : 14), s0 + (big ? 80 : 40), sd, { rows: big ? 4 : 3, dens: big ? 0.8 : 0.45 + 0.15 * ((k + (sd > 0 ? 1 : 0)) % 2), label: 'OU jump ' + Math.round(s0 - sStart) });
+      for (const sd of [-1, 1]) run(s0 - (big ? 30 : 14), s0 + (big ? 80 : 40), sd, { rows: big ? 4 : 3, dens: big ? 0.8 : 0.45 + 0.15 * ((k + (sd > 0 ? 1 : 0)) % 2), flag: big ? 0.28 : 0.18, label: 'OU jump ' + Math.round(s0 - sStart) });
       if (k % 2 === 0 || big) for (const sd of [-1, 1]) { const [px, pz, ii] = onSide(s0 + 8 + sd * 5, sd, 6 + R() * 3); if (!hard(px, pz)) flagAt(px, pz, T.hd[ii], 6 + R() * 2); }
     });
     if (sY > 0) {   // the fans' marks for the jump length past the Yellow House crest: 40, 50, 57 m (Märtin, 2003)
@@ -5499,6 +5509,14 @@ const World = (function () {
     const media = (s0, side) => { if (!board2(s0, side, 2.6, 7, 1.6, 0.5)) return;
       for (let k = 0; k < 3; k++) { const i = T.idx(s0 + 3 + k * 2.2), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 2.7), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; if (!hard(x, z)) filmer(x, ouGround(x, z), z, -T.nx[i] * side - T.tx[i] * 0.6, -T.nz[i] * side - T.tz[i] * 0.6); } };
     if (sY > 0) media(sY + 64, yh.side);
+    if (yh) {   // fans up on the Yellow House's roof: sitting astride the ridge facing the road, one at each end standing with a flag
+      const c = Math.cos(yh.rot), sn = Math.sin(yh.rot), yr = yh.y + yh.H + yh.D * 0.34, fx = -sn, fz = c;   // (the ridge; local +z: the front, to the road)
+      CR.keep = CR.keep || new Set();
+      const put = (u, o, sit) => { const x = yh.x + c * u + fx * (sit ? 0.55 : 0), z = yh.z + sn * u + fz * (sit ? 0.55 : 0);   // (a sitting figure is drawn 0.55 m back and 0.71 m down)
+        if (crowdPut(CR, x, yr + (sit ? 0.66 : -0.05), z, fx, fz, o, 0)) CR.keep.add(Math.round(x * 10) + ',' + Math.round(z * 10)); };
+      for (const u of [-4.6, -3.4, -2.2, -1.0, 0.3, 1.4, 3.8, 5.0]) put(u, { sit: 1, flag: 0 }, true);
+      put(-yh.L / 2 - 0.1, { sit: 0, flag: 1 }, false); put(yh.L / 2 + 0.1, { sit: 0, flag: 1 }, false);
+    }
     { const am = T.names.find(n => n.n === 'Amazon'); if (am) media(sStart + am.d + 40, 1); }
     // portable toilets in a row behind the big crowds: the Yellow House, Kakaristo, the start
     const wc = (x, z, rot, col) => { const g = scen.get(x, z), y = ouGround(x, z), c = Math.cos(rot), s = Math.sin(rot);   // a plastic cabin, a white roof, the door (local +z) to the road
@@ -5820,7 +5838,22 @@ const World = (function () {
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: ouAtlas(T.cpS.map(kmS)), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: ouAtlas2(), side: THREE.FrontSide, alphaTest: 0.5 }), true); if (bm2) bm2.castShadow = false;   // (alphaTest: the triangular moose sign)
     { const vg = new THREE.Group(); vg.name = 'plants'; root.add(vg); veg.addTo(vg, ouVegMat(), false, true); }
+    CR.U.uHype = { value: new THREE.Vector4(0, 0, -1000, 0) };   // (the wave through the crowd: ouFans)
     crowdFinish(CR, root, out);
+    /* ---- livelier fans: at the jumps, the junctions and in the village some dash across the road once the car is by, and where the car lands after
+       a jump a wave of joy runs out through the crowd (bigger at the Yellow House) ---- */
+    {
+      const sites = [], site = (s0) => { if (s0 < sStart + 60 || s0 > sFin - 40) return; const i = T.idx(s0), q = (sd) => { const o = sd * ((sd > 0 ? T.br[i] : T.bl[i]) + 2.6); return [T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o]; }; sites.push({ s: s0, a: q(-1), b: q(1), done: false }); };
+      jumpS.forEach(s0 => site(s0 + 26));
+      for (const c of juncs) site(((c.i0 + c.i1) / 2) * T.ds + 12);
+      for (const [a, b] of def.crowds || []) for (let s0 = sStart + a + 30; s0 < sStart + b - 10; s0 += 70) site(s0);
+      sites.sort((p, q) => p.s - q.s);
+      const n = 14, im = new THREE.InstancedMesh(crowdGeo(), crowdMat(CR.U), n), RN = rng(7591), aux = new Float32Array(n * 2), col = new THREE.Color(), m0 = new THREE.Matrix4().makeScale(0, 0, 0);
+      for (let k = 0; k < n; k++) { aux[k * 2] = 7 + RN() * 0.998; aux[k * 2 + 1] = Math.floor(RN() * 4) + 4 * Math.floor(RN() * 256); const sc = CR_SHIRTS[Math.floor(RN() * CR_SHIRTS.length)]; col.setRGB(sc[0], sc[1], sc[2]); im.setColorAt(k, col); im.setMatrixAt(k, m0); }
+      im.geometry = im.geometry.clone(); im.geometry.setAttribute('aCrowd', new THREE.InstancedBufferAttribute(aux, 2)); im.frustumCulled = false; im.name = 'runners'; root.add(im);
+      const jb = def.jumpRec && def.bumps && def.bumps[def.jumpRec.bump];
+      out.dyn.fans = { im, sites, run: [], R: RN, U: CR.U, last: -1e9, air: null, big: jb ? clamp(jb.at, 0, 1) * T.len : -1, gH: ouGround };
+    }
     if (smoke.length) {   // thin smoke from the grills and the sauna chimneys, drifting in a light breeze (Red Bull Ring's plumes, fewer and smaller puffs)
       const PL = [null, { per: 9, life: 6, lifeV: 2, rise: 5, riseV: 2, flare: 0.16 }, { per: 12, life: 8, lifeV: 3, rise: 9, riseV: 4, flare: 0 }];
       const t = rbSmokeTex(); out.ownTex.push(t);
@@ -5851,6 +5884,34 @@ const World = (function () {
           transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }));
         m.frustumCulled = false; m.renderOrder = 3; m.name = 'sunRays'; root.add(m); out.dyn.rays = m;
       }
+    }
+    /* ---- morning mist (Render.setMist, hidden in the clear): soft banks in the hollows along the road (where it lies below its own running
+       average: the cold air pools there) and over the lakes, in three thin layers whose edges fade out (where the ground rises through them no
+       line shows), a slow drift in them ---- */
+    {
+      const mt = ouMistTex(), mmat = new THREE.MeshBasicMaterial({ map: mt, color: 0xe8edf0, vertexColors: true, transparent: true, depthWrite: false, opacity: 0 });
+      const mch = new Chunks(160, true, true), LAY = [[0.8, 0.55], [2.0, 0.38], [3.4, 0.22]], OFF = [-36, -21, -9, 0, 9, 21, 36], PRO = [0, 0.6, 1, 1, 1, 0.6, 0];
+      const HW = Math.round(170 / T.ds), dens = new Float32Array(N), pre = new Float64Array(N + 1);
+      for (let i = 0; i < N; i++) pre[i + 1] = pre[i] + T.hy[i];
+      for (let i = 0; i < N; i++) { const a = Math.max(0, i - HW), b = Math.min(N - 1, i + HW), avg = (pre[b + 1] - pre[a]) / (b - a + 1);
+        dens[i] = clamp(sstep(0.4, 3.2, avg - T.hy[i]) + (ouWater(T.px[i], T.pz[i]).e > -45 ? 0.7 : 0) + 0.12, 0, 1); }   // (a thin veil everywhere, thick in the hollows and by the water)
+      const uvm = (p) => [p[0] / 64, -p[2] / 64];
+      for (let i = 0; i + 2 < N; i += 2) { const j = i + 2; if (dens[i] < 0.05 && dens[j] < 0.05) continue;
+        for (const [hh, al] of LAY) { const g = mch.get(T.px[i], T.pz[i]);
+          for (let k = 0; k < OFF.length - 1; k++) {
+            const P = (q, o) => [T.px[q] + T.nx[q] * o, T.hy[q] + hh, T.pz[q] + T.nz[q] * o], C = (q, kk) => [1, 1, 1, PRO[kk] * dens[q] * al];
+            const a = P(i, OFF[k]), b = P(i, OFF[k + 1]), c = P(j, OFF[k + 1]), d = P(j, OFF[k]);
+            g.quadUp(a, b, c, d, [C(i, k), C(i, k + 1), C(j, k + 1), C(j, k)], [uvm(a), uvm(b), uvm(c), uvm(d)]); } } }
+      for (const L of P.lakes) {   // over the water: a 12 m grid, thick in the middle, thinning out towards the shore
+        const cs = 12, nx = Math.ceil((L.x1 - L.x0 + 40) / cs), nz = Math.ceil((L.z1 - L.z0 + 40) / cs), x0 = L.x0 - 20, z0 = L.z0 - 20, A = new Float32Array((nx + 1) * (nz + 1));
+        for (let b = 0; b <= nz; b++) for (let a = 0; a <= nx; a++) { const x = x0 + a * cs, z = z0 + b * cs; A[b * (nx + 1) + a] = ouGround(x, z) < L.h + 0.3 ? sstep(-2, 18, ouWater(x, z).e) : 0; }
+        for (const [hh, al] of LAY.slice(0, 2)) for (let b = 0; b < nz; b++) for (let a = 0; a < nx; a++) {
+          const k0 = b * (nx + 1) + a, k1 = k0 + 1, k2 = k0 + nx + 2, k3 = k0 + nx + 1; if (!(A[k0] + A[k1] + A[k2] + A[k3] > 0)) continue;
+          const p0 = [x0 + a * cs, L.h + hh, z0 + b * cs], p1 = [p0[0] + cs, p0[1], p0[2]], p2 = [p0[0] + cs, p0[1], p0[2] + cs], p3 = [p0[0], p0[1], p0[2] + cs], C = (v) => [1, 1, 1, v * al * 1.2];
+          mch.get(p0[0], p0[2]).quadUp(p0, p1, p2, p3, [C(A[k0]), C(A[k1]), C(A[k2]), C(A[k3])], [uvm(p0), uvm(p1), uvm(p2), uvm(p3)]); }
+      }
+      const mg = new THREE.Group(); mg.name = 'mist'; mg.visible = false; root.add(mg); mch.addTo(mg, mmat, false, false); mg.children.forEach(m => { m.renderOrder = 4; });
+      out.dyn.mist = { tex: mt, set(m) { mmat.opacity = clamp(m, 0, 1); mg.visible = m > 0.01; } };
     }
     pkSky({ root, tex, out, sStart, gH: ouGround, far: true });
     out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld };   // (read by the tests)
@@ -6148,7 +6209,7 @@ const World = (function () {
     return (crGeoC = g);
   }
   const CR_VS_HEAD = [
-    'attribute float aPart;', 'attribute vec2 aCrowd;', 'uniform float uTime;', 'uniform vec3 uCar;',
+    'attribute float aPart;', 'attribute vec2 aCrowd;', 'uniform float uTime;', 'uniform vec3 uCar;', 'uniform vec4 uHype;',
     'mat3 crRx(float a) { float c = cos(a), s = sin(a); return mat3(1.0, 0.0, 0.0, 0.0, c, s, 0.0, -s, c); }',
     'mat3 crRz(float a) { float c = cos(a), s = sin(a); return mat3(c, s, 0.0, -s, c, 0.0, 0.0, 0.0, 1.0); }',
     'vec3 crP4(float i, vec3 a, vec3 b, vec3 c, vec3 d) { return i < 0.5 ? a : i < 1.5 ? b : i < 2.5 ? c : d; }'].join('\n');
@@ -6173,6 +6234,8 @@ const World = (function () {
     'float crMir = dot(cameraPosition - crW, crFw) < 0.0 ? 1.0 : 0.0;',   // seen from behind: mirror the flag so its one-sided quads face the camera
     'float crSit = abs(crPose - 6.0) < 0.5 ? 1.0 : 0.0;',
     'float crEx = (1.0 - smoothstep(14.0, 52.0, length(crW.xz - uCar.xz))) * step(0.28, fract(crPh * 2.713 + crV * 0.0171));',
+    'float crHd = length(crW.xz - uHype.xy), crHt = uTime - uHype.z;',   // a wave of joy running out through the crowd from where the car landed (uHype: x, z, when, how big)
+    'crEx = max(crEx, uHype.w * (1.0 - smoothstep(0.0, 10.0, abs(crHd - crHt * 30.0))) * step(0.0, crHt) * (1.0 - smoothstep(2.5, 5.0, crHt)) * (1.0 - smoothstep(80.0, 150.0, crHd)));',
     'float crT = uTime * (0.85 + 0.3 * fract(crPh * 3.7)) + crPh;',
     'float rL = 0.07, rR = 0.07, fL = 0.05, fR = 0.05;',   // r: raised sideways (0 down, pi up), f: raised forwards
     'if (crPose < 0.5) { rL = 0.07 + 0.05 * sin(crT * 0.9); rR = 0.07 + 0.05 * sin(crT * 0.8 + 1.3); }',
@@ -6181,6 +6244,7 @@ const World = (function () {
     'else if (crPose < 3.5) { rL = -0.32; rR = -0.32; fL = 1.35; fR = 1.35; }',
     'else if (crPose < 4.5) { rL = -0.2 + 0.18 * sin(crT * 10.0); rR = rL; fL = 0.95; fR = 0.95; }',
     'else if (crPose < 5.5) { rR = 2.8 + 0.14 * sin(crT * 2.4); fR = -0.12; rL = 0.1; }',
+    'else if (crPose > 6.5) { float rn = sin(uTime * 11.0 + crPh); rL = 0.3; rR = 0.3; fL = 0.95 * rn; fR = -0.95 * rn; }',   // running (the fans who dash across the road behind the car): the arms pump
     'else { rL = 0.15; rR = 0.15; fL = 0.6; fR = 0.6; }',
     'if (crPose < 4.5 || crSit > 0.5) { float up = 2.55 + 0.35 * sin(uTime * 9.0 + crPh); rL = mix(rL, up, crEx); rR = mix(rR, up + 0.1, crEx); fL = mix(fL, -0.25, crEx); fR = mix(fR, -0.25, crEx); }',
     'mat3 crM = mat3(1.0); vec3 crPv = vec3(0.0);',
@@ -6203,11 +6267,13 @@ const World = (function () {
     '}',
     'if (crBone > 3.5 && abs(crPose - 5.0) > 0.5) transformed = crPv;',   // no flag: fold it into the hand (degenerate, draws nothing)
     'if (crSit > 0.5) transformed += vec3(0.0, -0.71, -0.55);',   // sitting: down on the grass, moved back so the feet stay behind the fence
-    'else transformed.y += crEx * max(0.0, sin(uTime * 8.0 + crPh)) * 0.16;'].join('\n');
+    'else transformed.y += crEx * max(0.0, sin(uTime * 8.0 + crPh)) * 0.16;',
+    'if (crPose > 6.5) { transformed = crRx(0.2) * transformed; transformed.y += abs(sin(uTime * 11.0 + crPh)) * 0.12; }'].join('\n');   // (running: leaning forward, bounding along)
+  const CR_NOHYPE = { value: new THREE.Vector4(0, 0, -1000, 0) };   // (no wave)
   function crowdMat(U) {
     const m = new THREE.MeshLambertMaterial({ vertexColors: true });
     m.onBeforeCompile = (sh) => {
-      sh.uniforms.uTime = U.uTime; sh.uniforms.uCar = U.uCar;
+      sh.uniforms.uTime = U.uTime; sh.uniforms.uCar = U.uCar; sh.uniforms.uHype = U.uHype || CR_NOHYPE;
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\n' + CR_VS_HEAD).replace('#include <color_vertex>', CR_VS_COLOR)
         .replace('#include <beginnormal_vertex>', CR_VS_NORMAL).replace('#include <begin_vertex>', CR_VS_POS);
     };
@@ -6351,10 +6417,29 @@ const World = (function () {
       g.quadUp(a[0], b[0], b[1], a[1], [W1, W1, D, D]); g.quadUp(a[1], b[1], b[2], a[2], [D, D, D, D]); g.quadUp(a[2], b[2], b[3], a[3], [D, D, W1, W1]);
     }
   }
+  const _fm = new THREE.Matrix4(), _fq = new THREE.Quaternion(), _fv = new THREE.Vector3(), _fs = new THREE.Vector3(1, 1, 1), _fe = new THREE.Euler();
+  function ouFans(F, t, car) {   // every frame: the runners (a pool of figures in the running pose) and the wave (the crowd shader's uHype)
+    const s = car && car.q ? car.q.s : -1e9, tm = t % 1000;
+    if (s < F.last - 40) { for (const S of F.sites) S.done = false; F.run.length = 0; }   // (a jump back: a replay from the start, a new run)
+    F.last = s;
+    for (const S of F.sites) if (!S.done && s > S.s + 4) { S.done = true;
+      if (s > S.s + 70) continue;   // (long gone by)
+      const m = 1 + Math.floor(F.R() * 3);
+      for (let k = 0; k < m && F.run.length < F.im.count; k++) { const lr = F.R() < 0.5, A = lr ? S.a : S.b, B = lr ? S.b : S.a, j = (F.R() - 0.5) * 8, dx = B[0] - A[0], dz = B[1] - A[1], L = Math.hypot(dx, dz) || 1, tx = -dz / L, tz = dx / L;
+        F.run.push({ x0: A[0] + tx * j, z0: A[1] + tz * j, x1: B[0] + tx * (j + (F.R() - 0.5) * 5), z1: B[1] + tz * (j + (F.R() - 0.5) * 5), t0: t + 0.05 + F.R() * 0.5, d: L / (5.5 + F.R() * 2.5) }); } }   // (right behind the car: in the view)
+    const im = F.im; let k = 0;
+    for (let q = F.run.length - 1; q >= 0; q--) if (t > F.run[q].t0 + F.run[q].d || t < F.run[q].t0 - 5) F.run.splice(q, 1);
+    for (const r of F.run) { const u = (t - r.t0) / r.d; if (u < 0) continue; const x = r.x0 + (r.x1 - r.x0) * u, z = r.z0 + (r.z1 - r.z0) * u;
+      _fe.set(0, Math.atan2(r.x1 - r.x0, r.z1 - r.z0), 0); _fq.setFromEuler(_fe); _fv.set(x, F.gH(x, z), z); _fm.compose(_fv, _fq, _fs); im.setMatrixAt(k++, _fm); }
+    for (let q = k; q < im.count; q++) { if (F.drawn != null && q >= F.drawn) break; _fm.makeScale(0, 0, 0); im.setMatrixAt(q, _fm); }
+    F.drawn = k; im.instanceMatrix.needsUpdate = true;
+    // the wave: when the car comes down from a jump (the crowd stands at every jump), from where it landed, bigger at the famous one
+    if (car) { if (car.air && !F.air) F.air = { s }; else if (!car.air && F.air) { const big = F.big > 0 && Math.abs(F.air.s - F.big) < 60; if (s - F.air.s > 14) F.U.uHype.value.set(car.x, car.z, tm, big ? 1 : 0.75); F.air = null; } }
+  }
   function crowdFinish(C, root, out) {   // building footprints placed after the crowds hide nobody; the layer and the strips go into the world
     if (C.blocks.length) {
       const bh = new Map(); for (const b of C.blocks) { const r = Math.hypot(b.hw, b.hd); for (let a = Math.floor((b.x - r) / 32); a <= Math.floor((b.x + r) / 32); a++) for (let c = Math.floor((b.z - r) / 32); c <= Math.floor((b.z + r) / 32); c++) { const k = a + ',' + c; let L = bh.get(k); if (!L) bh.set(k, L = []); L.push(b); } }
-      C.culled = C.ppl.cull((x, z) => { const L = bh.get(Math.floor(x / 32) + ',' + Math.floor(z / 32)); if (L) for (const b of L) { const dx = x - b.x, dz = z - b.z; if (Math.abs(dx * b.c + dz * b.s) < b.hw && Math.abs(-dx * b.s + dz * b.c) < b.hd) return true; } return false; });
+      C.culled = C.ppl.cull((x, z) => { if (C.keep && C.keep.has(Math.round(x * 10) + ',' + Math.round(z * 10))) return false; const L = bh.get(Math.floor(x / 32) + ',' + Math.floor(z / 32)); if (L) for (const b of L) { const dx = x - b.x, dz = z - b.z; if (Math.abs(dx * b.c + dz * b.s) < b.hw && Math.abs(-dx * b.s + dz * b.c) < b.hd) return true; } return false; });
     }
     const grp = new THREE.Group(); grp.name = 'crowds'; root.add(grp);
     const n = C.ppl.addTo(grp);
@@ -8950,6 +9035,8 @@ const World = (function () {
       for (const e of f.list) { e.mat.opacity = f.op; e.mesh.visible = f.op > 0.02; e.mat.depthWrite = f.op > 0.98; }
     }
     if (d.crowd) { d.crowd.uTime.value = t % 1000; if (car) d.crowd.uCar.value.set(car.x, car.roadY || 0, car.z); }   // spectators: arm waving, cheering near the followed car
+    if (d.fans) ouFans(d.fans, t, car);
+    if (d.mist && d.mist.tex) d.mist.tex.offset.set((t * 0.0045) % 1, (t * 0.0028) % 1);   // (the mist drifts)   // Ouninpohja: fans dashing across the road behind the car, a wave of joy where it lands
     if (d.screens) { const f = Math.floor(t / 6) % 4; if (f !== d.screens.f) { d.screens.f = f; d.screens.tex.offset.x = f * 0.25; } }   // Red Bull Ring: the video walls' next picture every 6 s
     if (d.water) { d.water.offset.x = (t * 0.012) % 1; d.water.offset.y = (t * 0.007) % 1; }
     if (d.wind) d.wind.value = t % 1000;   // the trees sway (Nordschleife, Spa)

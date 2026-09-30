@@ -80,7 +80,7 @@ try {
   //     the cars), the title demo follows the setting; back to dry, the next race is dry again
   {
     const row = await page.evaluate(() => [...document.querySelectorAll('[data-set="weather"] button')].map(b => b.textContent + (b.classList.contains('sel') ? '*' : '')).join(' | '));
-    T.check('weather row: Suho (selected) | Dež | Naključno', row === 'Suho* | Dež | Naključno', row);
+    T.check('weather row: Suho (selected) | Dež | Megla | Naključno', row === 'Suho* | Dež | Megla | Naključno', row);
     const e0 = errors.length;
     await page.evaluate(() => document.querySelector('[data-set="weather"] button[data-v="rain"]').click());
     await startTrack(page, 'spa');

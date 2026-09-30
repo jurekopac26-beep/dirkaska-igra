@@ -757,6 +757,7 @@ const Render = (function () {
     world = World.build(scene, track, tex, { density, sunOff: th.sunOff || [-80, 96, 70] });   // (sunOff: Ouninpohja's shafts of light fall along the sun)
     if (!world.farClip && camera.far !== 700) { camera.far = 700; camera.updateProjectionMatrix(); }
     applyTheme((track.def && track.def.theme) || 'lake'); wet = -1;   // (the weather again on the new world's road)
+    { const d = world.dyn; if (d.mist) d.mist.set(mist); if (d.rays) d.rays.material.uniforms.uA.value = 0.18 * (1 + 1.5 * mist); }   // (and the mist on its own banks)
     birds.reset(!!(track.def && (track.def.sea || track.def.theme === 'monaco')));   // (gulls by the sea)
     return world;
   }
@@ -907,6 +908,19 @@ const Render = (function () {
     hemi.color.copy(mix(t.sky, 0xaab4bd, 0.7)); hemi.groundColor.copy(mix(t.gnd, 0x3a4032, 0.5)); hemi.intensity = t.hemiI * (1 + 0.3 * r);
     sun.color.copy(mix(t.sun, 0xe8eef4, 0.8)); sun.intensity = t.sunI * (1 - 0.62 * r);
     if (post) { post.mat.uniforms.uTint.value.set(t.tint[0] - 0.03 * r, t.tint[1], t.tint[2] + 0.03 * r); post.mat.uniforms.uSat.value = t.sat * (1 - 0.2 * r); post.mat.uniforms.uHaze.value = (t.haze || 0) * (1 - r); if (t.hazeCol) post.mat.uniforms.uHazeCol.value.set(t.hazeCol[0], t.hazeCol[1], t.hazeCol[2]); }
+    if (mist > 0) {   // morning mist: a pale grey-white haze, the sun weak through it, the light soft from all round
+      scene.fog.color.lerp(_c2.setHex(0xd4dadd), 0.8 * mist); renderer.setClearColor(scene.fog.color, 1);
+      sun.intensity *= 1 - 0.42 * mist; hemi.intensity *= 1 + 0.2 * mist; if (post) post.mat.uniforms.uHaze.value *= 1 - mist; }
+  }
+  // morning mist (0..1, the game lifts it through a race): the theme again, a shorter view (updateCamera), the world's banks of mist and
+  // stronger shafts of sunlight (Ouninpohja)
+  let mist = 0;
+  function setMist(m) {
+    m = clamp(m || 0, 0, 1); if (Math.abs(m - mist) < 0.004 && (m > 0) === (mist > 0)) return;
+    mist = m; applyTheme(themeId);
+    const d = world && world.dyn; if (!d) return;
+    if (d.mist) d.mist.set(m);
+    if (d.rays) d.rays.material.uniforms.uA.value = 0.18 * (1 + 1.5 * m);
   }
   // the weather of the race on screen (race.rain 0..1): the sky, the streaks, and a darker road (asphalt, paving, kerbs, makadam: every
   // material of the world with one of those textures, back to its own colour when dry)
@@ -1782,7 +1796,7 @@ const Render = (function () {
     if (world && world.camFloor) { const gf = world.camFloor(px, pz) + (mode === 'tv' ? 0.8 : 4); if (py < gf) py = gf; }   // mountain worlds: never under the slope behind the car (a TV camera: above the ground)
     if (cam.shake > 0) { px += (Math.random() - 0.5) * cam.shake; py += (Math.random() - 0.5) * cam.shake; pz += (Math.random() - 0.5) * cam.shake; cam.shake = Math.max(0, cam.shake - dt * 3); }
     camera.position.set(px, py, pz); camera.lookAt(tx, ty, tz); cam.vcx = tx; cam.vcz = tz; cam.vd = Math.hypot(px - tx, py - ty, pz - tz);
-    { const dC = mode === 'tv' ? 62 : Math.hypot(px - tx, py - ty, pz - tz), r = Math.max(0, wet); scene.fog.near = dC * (1.35 - 0.4 * r); scene.fog.far = dC * (5.5 - 1.6 * r); }   // (rain: a closer haze; the TV cameras: the chase camera's haze wherever they stand)
+    { const dC = mode === 'tv' ? 62 : Math.hypot(px - tx, py - ty, pz - tz), r = Math.max(0, wet); scene.fog.near = dC * (1.35 - 0.4 * r) * (1 - 0.72 * mist); scene.fog.far = dC * (5.5 - 1.6 * r) * (1 - 0.5 * mist); }   // (mist: a much shorter view)   // (rain: a closer haze; the TV cameras: the chase camera's haze wherever they stand)
     if (world && world.farClip) { const f = Math.min(700, scene.fog.far + 40); if (Math.abs(camera.far - f) > 6) { camera.far = f; camera.updateProjectionMatrix(); } }   // long corridor worlds: nothing past the fog is drawn
     // sun/shadow follows view center
     lastMode = mode;
@@ -1906,6 +1920,6 @@ const Render = (function () {
   const dbg = { noSmoke: false };
   function setDebug(o) { Object.assign(dbg, o); }
   function fxStats() { let n = 0; for (let i = 0; i < particles.max; i++) if (particles.life[i] > 0) n++; return { alive: n, emitted: particles.cur }; }
-  return { setDebug, fxStats, setGhost, setTv, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setDebug, fxStats, setGhost, setTv, setMist, get mist() { return mist; }, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 

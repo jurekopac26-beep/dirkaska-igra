@@ -33,7 +33,7 @@
   const esc = (v) => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   for (const k in DEF) if (S[k] == null || typeof S[k] === 'object') S[k] = DEF[k];   // hand-edited storage: a setting is always a plain value
   if (S.phys !== 'arcade') S.phys = 'cs';   // the 'rally' physics was removed: its players (it was the default) and old saves get cs
-  if (!['dry', 'rain', 'random'].includes(S.weather)) S.weather = 'dry';
+  if (!['dry', 'rain', 'mist', 'random'].includes(S.weather)) S.weather = 'dry';
   S.name = cleanName(S.name) || DEF.name;
   // upgrades per car: S.upg[modelId] = {motor, gume, zavore, aero} 0..3 (own objects, never shared; old saves have none)
   const UPG_IDS = Core.UPG.map(u => u.id);
@@ -224,6 +224,11 @@
   const RAIN_P = { spa: 0.5, nring: 0.45 };
   const rainOf = () => S.weather === 'rain' ? 1 : S.weather === 'random' && Math.random() < (RAIN_P[track && track.def.id] || 0.35) ? 1 : 0;
   const demoRain = () => S.weather === 'rain' ? 1 : 0;
+  // morning mist (visual only: the dry grip and the dry records): thick at the start, lifting through the race (a run of four minutes
+  // ends in a light haze); the title demo in a steady mist. Render lowers the visibility, pales the sky, and a world may add its own
+  // banks of mist (Ouninpohja: over the lakes and in the hollows)
+  let mistRun = 0;
+  const mistNow = () => bg === 'demo' ? (S.weather === 'mist' ? 0.85 : 0) : race && mistRun ? mistRun * (1 - 0.72 * Core.sstep(8, 190, race.time)) : 0;
   function applyPhys(r) { if (r) r.setPhys(physOf()); }
   function setOption(key, v) {
     const num = ['zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'codrv', 'damage', 'ghost', 'gold'];
@@ -606,6 +611,7 @@
       numAI: tt ? 0 : NUM_AI, playerGrid: tt ? 1 : PLAYER_GRID, laps: tt ? 1 : track.def.laps || LAPS, damage: +S.damage, phys: physOf(), rain: rainOf(), champ: cr >= 0
     }));
     race.champ = cr >= 0 ? { round: cr, n: cd.tracks.length, done: false } : null;
+    mistRun = !race.rain && S.weather === 'mist' ? 1 : 0;
     Render.attachRace(race);
     Render.resetCam();
     adaptBreak();
@@ -630,6 +636,7 @@
       showMsg((race.champ ? 'DIRKA ' + (race.champ.round + 1) + '/' + race.champ.n + ' · ' : '') + lapWord(race.laps) + wetTxt, 'gold', race.rain || race.champ ? 1.8 : 1.2);
     }
     if (race.rain) Comm.say(track.def.id === 'spa' ? 'rainSpa' : 'rain', null, 2, { ttl: 12000 });   // (after the welcome)
+    else if (mistRun) Comm.say('mist', null, 2, { ttl: 12000 });
   }
   function setLights(n, go) {
     const ls = $('h-lights').children;
@@ -696,7 +703,7 @@
     const d = r.prev ? r.time - r.prev : 0;
     $('res-sub').innerHTML = (r.newPB ? (r.prev ? 'Prejšnji rekord ' + fmt(r.prev, true) + ' (<span class="fast">' + sgn(d) + '</span>).' : 'Prvi čas na tej progi.')   // (the title already says "Nov osebni rekord!")
       : '<span class="slow">' + sgn(d) + '</span> za rekordom (rekord ' + fmt(r.prev, true) + ').') +
-      ' ' + esc(T.def.name) + (race && race.rain ? ' v dežju' : '') + ' · ' + esc(Core.MODELS[S.car].name) + ' · ' + (r.rank <= 10 ? r.rank + '. mesto na lestvici.' : 'izven prvih 10.') +
+      ' ' + esc(T.def.name) + (race && race.rain ? ' v dežju' : mistRun ? ' v megli' : '') + ' · ' + esc(Core.MODELS[S.car].name) + ' · ' + (r.rank <= 10 ? r.rank + '. mesto na lestvici.' : 'izven prvih 10.') +
       (medalSet(T.def) ? '<br>' + medalLine(T.def, r.time) : '') + (jumpLine() ? '<br>' + jumpLine() : '');
     // splits table: CP1..CPn + finish, altitude (a rally stage: the distance from the start), time, difference to the previous personal best
     const tt = $('res-tt'); tt.classList.remove('off');
@@ -736,7 +743,7 @@
     }
     { const M = isTT(d) && medalSet(d), R = rec(d.id), J = d.jumpRec;   // the medal times; the famous jump: the player's longest there
       if (M) h += '<p class="ltab-h">Medalje (' + (physOf() === 'cs' ? 'Circuit Superstars' : 'arkadna fizika') + (wetRec(d) ? ', dež' : '') + ') · ' + M.map((t, k) => MEDAL_ICON[k] + ' ' + fmt(t, true)).join(' · ') + '</p>';
-      if (J) h += '<p class="ltab-h">' + esc(J.name) + ': tvoj najdaljši skok ' + (R.jumpRec ? Math.round(R.jumpRec) + ' m' : '\u2013') + ' · ' + esc(J.by) + ' ' + J.m + ' m</p>'; }
+      if (J) h += '<p class="ltab-h">' + esc(J.name) + ': tvoj najdaljši skok ' + (R.jumpRec ? Math.round(R.jumpRec) + ' m' : '\u2013') + (J.m > 0 ? ' · ' + esc(J.by) + ' ' + J.m + ' m' : '') + '</p>'; }
     $('board-body').innerHTML = h; $('board-body').scrollTop = 0;
   }
   function finishRace() {
@@ -793,14 +800,14 @@
     jmp.n++; jmp.best = Math.max(jmp.best, len);
     if (!b || s0 < c - 2.5 * w - 15 || s0 > c + w) { showMsg('SKOK ' + m + ' m', 'gold', 1.1); return; }
     jmp.rec = Math.max(jmp.rec, len);
-    const R0 = rec(track.def.id), prev = R0.jumpRec || 0, pb = len > prev + 0.05, beat = len > J.m;
+    const R0 = rec(track.def.id), prev = R0.jumpRec || 0, pb = len > prev + 0.05, beat = J.m > 0 && len > J.m;   // (J.m: a famous record there; the reverse stage has none)
     if (pb) { R0.jumpRec = +len.toFixed(1); saveRecords(); }
     showMsg((beat ? J.beat.toUpperCase() + ' ' : pb && prev ? 'REKORD SKOKA! ' : J.name.toUpperCase() + ' ') + m + ' m', beat || (pb && prev) ? 'fast' : 'gold', 2.2);
-    Comm.say(beat ? 'jumpBeat' : pb && prev ? 'jumpPB' : 'jumpRec', { m, rec: J.m, by: J.by, place: J.say }, 3);
+    Comm.say(beat ? 'jumpBeat' : pb && prev ? 'jumpPB' : J.m > 0 ? 'jumpRec' : 'jumpAt', { m, rec: J.m, by: J.by, place: J.say }, 3);
   }
   const jumpLine = () => { const J = track.def.jumpRec, R0 = rec(track.def.id);   // (the results: the run's longest jump, the famous one against the records)
     if (!jmp.n) return ''; let h = 'Najdaljši skok ' + Math.round(jmp.best) + ' m';
-    if (J) h += ' · ' + esc(J.name) + ' ' + (jmp.rec ? Math.round(jmp.rec) + ' m' : '–') + ' (tvoj rekord ' + (R0.jumpRec ? Math.round(R0.jumpRec) + ' m' : '–') + ', ' + esc(J.by) + ' ' + J.m + ' m)';
+    if (J) h += ' · ' + esc(J.name) + ' ' + (jmp.rec ? Math.round(jmp.rec) + ' m' : '–') + ' (tvoj rekord ' + (R0.jumpRec ? Math.round(R0.jumpRec) + ' m' : '–') + (J.m > 0 ? ', ' + esc(J.by) + ' ' + J.m + ' m' : '') + ')';
     return h + '.'; };
 
   /* ---------------- championship screen: the choice of a series, then the standings between the rounds, the final standings ---------------- */
@@ -1197,7 +1204,7 @@
 
   /* ---------------- commentator (English) ---------------- */
   const PART_EN = { bumperF: 'front bumper', bumperR: 'rear bumper', hood: 'bonnet', trunk: 'boot lid', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'front wing', fenderR: 'front wing' };
-  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', ouninpohja: 'Ouninpohja', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka' };
+  const EN_NAME = { 'ouninpohja-r': 'Ouninpohja, the old way round', monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', ouninpohja: 'Ouninpohja', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka' };
   const cev = { wall: 0, car: 0 };          // impacts collected per physics step
   let cs = null;
   function commReset() {
@@ -1587,10 +1594,11 @@
       if (n >= 8) acc = 0;
       demoSwitch -= dt;
       if (!demoTarget || demoSwitch <= 0) { demoTarget = demo.order ? demo.order[(Math.random() * 4) | 0] : demo.cars[0]; demoSwitch = 9; }
-      Render.frame(dt, acc / STEP, demoTarget, 'iso', {});
+      Render.setMist(mistNow()); Render.frame(dt, acc / STEP, demoTarget, 'iso', {});
       if (screen === 'settings') updateTiltLive();
       return;
     }
+    Render.setMist(mistNow());
     // race (online: netFrame() after this frame's steps sends my car as it is now to the friend and places the friend's car;
     // also while paused or turned the wrong way, when the friend drives on)
     if (orientBlock) { if (mp && mp.race) netFrame(true); ghShow(1); Render.frame(0, 1, race.player, S.camera, { noFx: true }); return; }
