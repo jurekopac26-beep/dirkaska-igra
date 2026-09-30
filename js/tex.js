@@ -143,9 +143,10 @@ const Tex = (function () {
     return mk(c, true);
   }
 
+  // the sponsors on the boards: all invented (no real brand, no name of a real person or place: check a new one before adding it)
   const SPONSORS = [
-    ['TURBOX', '#101418', '#ffd23f'], ['KAZE OIL', '#d8342a', '#fff'], ['GRIP+', '#1b4fd6', '#fff'], ['HIRO TYRES', '#f5f5f0', '#111'],
-    ['VOLTEX', '#1a1a1a', '#6df26d'], ['RADIO JEZERO', '#2aa6e0', '#fff'], ['PIXEL GAS', '#ff8a1c', '#141414'], ['LIPA COLA', '#b3122e', '#fff3c4'],
+    ['HITROLET', '#101418', '#ffd23f'], ['KAZE OIL', '#d8342a', '#fff'], ['GRIP+', '#1b4fd6', '#fff'], ['KOLOTEK TYRES', '#f5f5f0', '#111'],
+    ['KRESILO', '#1a1a1a', '#6df26d'], ['RADIO JEZERO', '#2aa6e0', '#fff'], ['BENCINKO', '#ff8a1c', '#141414'], ['ŠUMKA COLA', '#b3122e', '#fff3c4'],
   ];
   function sponsors() {
     const c = cv(512, 256), x = c.getContext('2d');
