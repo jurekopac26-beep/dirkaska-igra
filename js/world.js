@@ -6046,6 +6046,8 @@ const World = (function () {
       const px = cx + fx * d, pz = cz + fz * d, k = Math.floor(px / 8) + ',' + Math.floor(pz / 8);
       if (k !== st.key) { st.key = k; st.pend = fill(px, pz); }
     };
+    out.dyn.pkVeg = () => {   // (World.update without a car: the buffers in a fixed state, so the world's fingerprint does not depend on the last view)
+      for (const at of [iP, iS, iC, iA]) at.array.fill(0); const n = fill(0, 0); base.instanceCount = n; base.setDrawRange(0, n ? Infinity : 0); st.pend = -1; st.key = null; };
     // more fallen logs and scattered rocks in the forest near the road (merged into the scenery; own stream)
     const logC = [0.46, 0.4, 0.33], moss = [0.3, 0.36, 0.17], graniteF = [[0.5, 0.47, 0.44], [0.46, 0.44, 0.42], [0.54, 0.49, 0.45]];
     let nLog = 0, nRock = 0;
@@ -11919,7 +11921,8 @@ const World = (function () {
     if (d.pk) pkUpdate(d.pk, t, car);   // Pikes Peak, Ouninpohja: the TV helicopter
     if (d.pkWx) pkWeatherUpdate(d.pkWx, t, car);   // Pikes Peak: cloud banks, snowfall
     if (d.pkOps) pkOpsUpdate(d.pkOps, t, car);
-    if (d.pkSum) pkSummitUpdate(d.pkSum, t, car);   // Pikes Peak: the summit's smoke and flags, the sea of clouds   // Pikes Peak: the marshals' flags
+    if (d.pkSum) pkSummitUpdate(d.pkSum, t, car);
+    if (d.pkVeg && !car) d.pkVeg();   // Pikes Peak: the plants' buffers in a fixed state (the world test)   // Pikes Peak: the summit's smoke and flags, the sea of clouds   // Pikes Peak: the marshals' flags
     if (d.wheel) szWheel(d.wheel, t);   // Suzuka: the Ferris wheel turns
     if (d.pkLife) pkWildlifeUpdate(d.pkLife, t, car);   // Pikes Peak: marmots and bighorn sheep
     if (d.pkAmb) pkAmbientUpdate(d.pkAmb, t, car);   // Pikes Peak: flags, dust and leaves, grill smoke

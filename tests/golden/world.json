@@ -146,7 +146,7 @@
   "instances": 2633,
   "props": 352,
   "crowd": 2587,
-  "world": "7234357e",
+  "world": "4986a163",
   "propsHash": "fed9419e",
   "floor": "67c951b5/12544",
   "groups": {
@@ -158,7 +158,7 @@
    "pkMarmots:MeshLambertMaterial": "cbaf6673",
    "pkSheep:MeshLambertMaterial": "43f7b78c",
    "pkGlow:MeshLambertMaterial": "81146913",
-   "pkVeg:MeshLambertMaterial": "794c7737",
+   "pkVeg:MeshLambertMaterial": "20f772fe",
    "crowd:MeshLambertMaterial": "dca18c33",
    "-:ShaderMaterial": "78ad3d74",
    "pkHaze:ShaderMaterial": "7fb271d2",
