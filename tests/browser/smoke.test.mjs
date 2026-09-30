@@ -83,8 +83,10 @@ try {
     const d2 = await page.evaluate(() => ({ demo: window.__game.demo ? window.__game.demo.rain : null, drawn: Render.raining }));
     await startTrack(page, 'spa'); await simulate(page, 3);
     const r2 = await page.evaluate(() => { let marks = 0; Render.world.root.traverse(o => { if (o.name === 'tyremarks') marks++; });
-      return { rain: window.__game.race.rain, wet: window.__game.race.cars.every(c => c.wet === 1), drawn: Render.raining, birds: Render.birds.mesh.visible, clouds: Render.world.dyn.clouds.K.value, marks }; });
-    T.check('title demo in the rain with the setting, dry again without it; the next race dry (birds, cloud shadows, tyre marks)', d.demo === 1 && d.drawn && d2.demo === 0 && !d2.drawn && r2.rain === 0 && r2.wet && !r2.drawn && r2.birds && r2.clouds > 0.1 && r2.marks > 5 && errors.length === e0, JSON.stringify({ d, d2, r2 }));
+      // (every car on slicks with the dry grip of its compound, Core.TYRE_CMP: the soft's a little more than 1, the medium's 1, the hard's less)
+      const dryGrip = (c) => { const K = c.ty && c.ty.k === 'dry' ? Core.TYRE_CMP[c.ty.c] : null; return !!K && Math.abs(c.wet - K.g * (1 - K.loss * c.ty.wear)) < 1e-9; };
+      return { rain: window.__game.race.rain, wet: window.__game.race.cars.every(dryGrip), drawn: Render.raining, birds: Render.birds.mesh.visible, clouds: Render.world.dyn.clouds.K.value, marks }; });
+    T.check('title demo in the rain with the setting, dry again without it; the next race dry (slicks with their dry grip, birds, cloud shadows, tyre marks)', d.demo === 1 && d.drawn && d2.demo === 0 && !d2.drawn && r2.rain === 0 && r2.wet && !r2.drawn && r2.birds && r2.clouds > 0.1 && r2.marks > 5 && errors.length === e0, JSON.stringify({ d, d2, r2 }));
   }
 
   // 6. a Pikes Peak time trial to the finish: the record is stored under 'pikes@cs'
