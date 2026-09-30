@@ -30,7 +30,7 @@ try {
     return { before, after: { wing: seg('wing'), gear: seg('gear') }, S: JSON.stringify(window.__game.S.setup), toast: document.getElementById('toast').textContent }; });
   T.check('track screen: wing and gears (standard at first), "Menljivo" weather; a choice is kept for the chosen track',
     ui.before.wing === 'Malo,Srednje*,Veliko' && ui.before.gear === 'Kratke,Srednje*,Dolge' && /Menljivo/.test(ui.before.weather) && ui.after.wing === 'Malo*,Srednje,Veliko' && ui.after.gear === 'Kratke,Srednje,Dolge*'
-    && ui.S === '{"rbring":{"wing":0,"gear":2}}' && /Red Bull Ring: malo krila, dolge prestave/.test(ui.toast), JSON.stringify(ui));
+    && ui.S === '{"rbring":{"wing":0,"gear":2}}' && /Štajerska, Avstrija: malo krila, dolge prestave/.test(ui.toast), JSON.stringify(ui));
 
   // 2. a race where the rain starts at 20 s (dry, slicks at the start)
   await page.evaluate(() => { window.__game.wxNext = { rain: 0, wx: { at: 20, dur: 15, to: 1 } }; });
