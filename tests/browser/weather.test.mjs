@@ -43,8 +43,7 @@ try {
   T.check('the rain starts: "DEŽ", the hint to come in for rain tyres', h1.rain > 0 && h1.msg === 'DEŽ' && h1.msgOn && /dežne gume/.test(h1.toast), JSON.stringify(h1));
   await page.evaluate(() => { window.__game.race.player.pitWant = true; });   // (the autopilot takes the pit lane next time by)
   let h2 = null, hb = null;
-  // (up to three minutes of race: on slicks in the rain the autopilot's lap to the pit entry takes about two, longer after a spin or a knock from a rival)
-  for (let k = 0; k < 90; k++) { await sim(2); h2 = await hud(); if (!hb && h2.ty.k === 'dry' && h2.water > 0.4) hb = h2; if (h2.ty.k === 'wet') break; }
+  for (let k = 0; k < 90; k++) { await sim(2); h2 = await hud(); if (!hb && h2.ty.k === 'dry' && h2.water > 0.4) hb = h2; if (h2.ty.k === 'wet') break; }   // (up to 3 min: the car comes round to the pit lane, a knock on slicks in the wet may add a repair first)
   const h2b = await hud();
   T.check('slicks on a wet road: red on the HUD (the wrong tyres) until the stop', !!hb && /^on dry bad:SUHE \d+%$/.test(hb.tyre), JSON.stringify(hb));
   await sim(0.6); const h3 = await hud();
