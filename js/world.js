@@ -10027,12 +10027,13 @@ const World = (function () {
       const RD = rng(7731), used = new Uint8Array(N), dcs = [];
       const put = (i0, n, c, hw, cell, a, lay) => { if (i0 < 2 || i0 + n > N - 2) return; for (let k = 0; k <= n; k++) { const i = i0 + k; if (inTunnel(i, 2) || (lay === 3 && used[i])) return; }
         if (lay === 3) for (let k = -2; k <= n + 2; k++) used[i0 + k] = 1; dcs.push([i0, n, c, hw, cell, a, lay]); };
+      const sp = w / 3, big = 1 + (w - 3) * 0.15;   // (a wider road: the paint spread across it, the words bigger)
       for (let d = 150; d < T.raceLen - 60; d += 22) {
         const i = T.idx(sAt(d)), hot = d > 17500 ? 0.5 : d > 9800 ? 0.25 : 0.06, k = Math.abs(T.k[i]);
         if (k < 1 / 40 && RD() < hot) { const t = RD();
-          if (t < 0.78) { const hw = 1.6 + RD() * 0.6; put(i, Math.max(2, Math.round(hw * 1.2 / ds)), (RD() - 0.5) * 1.4, hw, Math.floor(RD() * 20), 0.62 + RD() * 0.33, 3); }
-          else put(i, 1, (RD() - 0.5) * 2.4, 1.1 + RD() * 0.3, 20 + Math.floor(RD() * 4), 0.7 + RD() * 0.25, 3); }
-        if (RD() < 0.1) put(i, 5 + Math.floor(RD() * 4), (RD() - 0.5) * 3, 0.9 + RD() * 0.5, 24 + Math.floor(RD() * 2), 0.9, 1);
+          if (t < 0.78) { const hw = (1.6 + RD() * 0.6) * big; put(i, Math.max(2, Math.round(hw * 1.2 / ds)), (RD() - 0.5) * 1.4 * sp, hw, Math.floor(RD() * 20), 0.62 + RD() * 0.33, 3); }
+          else put(i, 1, (RD() - 0.5) * 2.4 * sp, (1.1 + RD() * 0.3) * big, 20 + Math.floor(RD() * 4), 0.7 + RD() * 0.25, 3); }
+        if (RD() < 0.1) put(i, 5 + Math.floor(RD() * 4), (RD() - 0.5) * 3 * sp, 0.9 + RD() * 0.5, 24 + Math.floor(RD() * 2), 0.9, 1);
         if (RD() < 0.06) { const hw = 1 + RD() * 0.8; put(i, 2 + Math.floor(RD() * 5), (RD() < 0.5 ? -1 : 1) * (w - 0.6 - hw) * RD(), hw, 28 + Math.floor(RD() * 4), 1, 0); }
       }
       dcs.sort((a, b) => a[6] - b[6]);
@@ -10055,7 +10056,7 @@ const World = (function () {
        road), 2 a steel guardrail (the valley road below Trafoi, the bridges' approaches), 3 a dry-stone retaining wall where the slope rises
        right behind the road, 0 open ground (white marker posts) ---- */
     const kindA = [new Uint8Array(N), new Uint8Array(N)], hA = [new Float32Array(N), new Float32Array(N)];
-    const villages = [[-200, 250], [3690, 3990], [5830, 6170], [9540, 10330], [24180, 24800]];
+    const villages = [[-200, 250], [3690, 3990], [5830, 6170], [9540, 10330], [T.raceLen - 120, T.raceLen + 500]];   // (Prad, Stilfser Brücke, Gomagoi, Trafoi, the pass)
     const inVillage = (d) => villages.some(([a, b]) => d > a && d < b);
     for (let i = 0; i < N; i++) for (const side of [-1, 1]) {
       const si = side > 0 ? 1 : 0, bar = side > 0 ? T.br[i] : T.bl[i], y = T.hy[i], d = dOf(i);
@@ -10135,25 +10136,28 @@ const World = (function () {
        (Render: dyn.tunnel), lights, a concrete portal at each end ---- */
     const tunMat = new THREE.MeshLambertMaterial({ vertexColors: true, transparent: false });
     {
-      const tg = new GB(), wg = new GB(), lampC = [1, 0.93, 0.7], wall = [0.66, 0.65, 0.62], roofC = [0.52, 0.52, 0.5], portC = [0.72, 0.71, 0.68];
+      const tg = new GB(), wg = new GB(), lampC = [1, 0.93, 0.7], wall = [0.66, 0.65, 0.62], roofC = [0.52, 0.52, 0.5], portC = [0.72, 0.71, 0.68], TH = 5.4 + (w - 3) * 0.4;   // (TH: its height, more for the wider road)
       for (const [a, b] of tunnels) {
         const i0 = T.idx(sAt(a)), i1 = T.idx(sAt(b));
         for (let i = i0; i < i1; i++) {
-          const j = i + 1, oL = -(T.bl[i] + 0.3), oR = T.br[i] + 0.3, oLj = -(T.bl[j] + 0.3), oRj = T.br[j] + 0.3, y = T.hy[i], yj = T.hy[j], Hh = 5.4;
+          const j = i + 1, oL = -(T.bl[i] + 0.3), oR = T.br[i] + 0.3, oLj = -(T.bl[j] + 0.3), oRj = T.br[j] + 0.3, y = T.hy[i], yj = T.hy[j], Hh = TH;
           const L = (k, o, yy) => [T.px[k] + T.nx[k] * o, yy, T.pz[k] + T.nz[k] * o];
           wg.quadO(L(i, oL, y - 0.3), L(j, oLj, yj - 0.3), L(j, oLj, yj + Hh), L(i, oL, y + Hh), wall, L(i, oL - 3, y + 2));
           wg.quadO(L(i, oR, y - 0.3), L(j, oRj, yj - 0.3), L(j, oRj, yj + Hh), L(i, oR, y + Hh), wall, L(i, oR + 3, y + 2));
+          wg.quadO(L(i, oL, y + Hh), L(j, oLj, yj + Hh), L(j, oRj, yj + Hh), L(i, oR, y + Hh), [0.4, 0.4, 0.39], L(i, 0, y + Hh + 3));   // the ceiling, seen from inside (the cockpit; the roof above faces up and fades)
           tg.quadO(L(i, oL - 0.8, y + Hh), L(j, oLj - 0.8, yj + Hh), L(j, oRj + 0.8, yj + Hh), L(i, oR + 0.8, y + Hh), roofC, L(i, 0, y + 2));
           tg.quadO(L(i, oL - 0.8, y + Hh + 1.2), L(j, oLj - 0.8, yj + Hh + 1.2), L(j, oRj + 0.8, yj + Hh + 1.2), L(i, oR + 0.8, y + Hh + 1.2), [0.45, 0.46, 0.42], L(i, 0, y));
           for (const [o, oj] of [[oL - 0.8, oLj - 0.8], [oR + 0.8, oRj + 0.8]]) tg.quadO(L(i, o, y + Hh), L(j, oj, yj + Hh), L(j, oj, yj + Hh + 1.2), L(i, o, y + Hh + 1.2), [0.5, 0.5, 0.47], L(i, 0, y + Hh));
-          if ((i - i0) % 6 === 0) box(wg, T.px[i] + T.nx[i] * (oR - 0.3), y + 4.4, T.pz[i] + T.nz[i] * (oR - 0.3), 1.6, 0.18, 0.3, T.hd[i], lampC, lampC);
+          if ((i - i0) % 6 === 0) box(wg, T.px[i] + T.nx[i] * (oR - 0.3), y + Hh - 1, T.pz[i] + T.nz[i] * (oR - 0.3), 1.6, 0.18, 0.3, T.hd[i], lampC, lampC);
+          if ((i - i0) % 3 === 0) exclPush(T.px[i], T.pz[i], Math.max(T.bl[i], T.br[i]) + 9);   // (no tree or rock through its walls and roof)
         }
         for (const [k, dir] of [[i0, -1], [i1, 1]]) {   // the portals: a face round the opening, a little proud of the slope
           const L = (o, yy, e) => [T.px[k] + T.nx[k] * o + T.tx[k] * e * dir, yy, T.pz[k] + T.nz[k] * o + T.tz[k] * e * dir], y = T.hy[k], oL = -(T.bl[k] + 0.3), oR = T.br[k] + 0.3, ins = L(0, y + 3, -3);
-          tg.quadO(L(oL - 3, y - 1, 0), L(oL, y - 1, 0), L(oL, y + 7.4, 0), L(oL - 3, y + 7.4, 0), portC, ins);
-          tg.quadO(L(oR, y - 1, 0), L(oR + 3, y - 1, 0), L(oR + 3, y + 7.4, 0), L(oR, y + 7.4, 0), portC, ins);
-          tg.quadO(L(oL, y + 5.4, 0), L(oR, y + 5.4, 0), L(oR, y + 7.4, 0), L(oL, y + 7.4, 0), portC, ins);
-          tg.quadO(L(oL - 3, y + 7.4, 0), L(oR + 3, y + 7.4, 0), L(oR + 3, y + 7.4, -1.4), L(oL - 3, y + 7.4, -1.4), [0.62, 0.61, 0.58], L(0, y, -0.7));
+          const PT = TH + 2;
+          tg.quadO(L(oL - 3, y - 1, 0), L(oL, y - 1, 0), L(oL, y + PT, 0), L(oL - 3, y + PT, 0), portC, ins);
+          tg.quadO(L(oR, y - 1, 0), L(oR + 3, y - 1, 0), L(oR + 3, y + PT, 0), L(oR, y + PT, 0), portC, ins);
+          tg.quadO(L(oL, y + TH, 0), L(oR, y + TH, 0), L(oR, y + PT, 0), L(oL, y + PT, 0), portC, ins);
+          tg.quadO(L(oL - 3, y + PT, 0), L(oR + 3, y + PT, 0), L(oR + 3, y + PT, -1.4), L(oL - 3, y + PT, -1.4), [0.62, 0.61, 0.58], L(0, y, -0.7));
           exclPush(T.px[k], T.pz[k], 12);
         }
       }

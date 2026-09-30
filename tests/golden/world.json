@@ -170,21 +170,21 @@
   }
  },
  "stelvio": {
-  "meshes": 3020,
-  "verts": 1096228,
-  "instances": 83920,
+  "meshes": 3017,
+  "verts": 1064681,
+  "instances": 82546,
   "props": 0,
-  "crowd": 69,
-  "world": "2ffc0e42",
+  "crowd": 77,
+  "world": "8995be6c",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "fb2fa2cb",
-   "-:MeshBasicMaterial": "84768320",
-   "-:MeshPhongMaterial": "cb38ed59",
-   "far:MeshLambertMaterial": "ea85d9b7",
-   "crowd:MeshLambertMaterial": "1a40624b",
-   "tyremarks:MeshBasicMaterial": "cabbb590"
+   "-:MeshLambertMaterial": "5de2815b",
+   "-:MeshBasicMaterial": "1c940032",
+   "-:MeshPhongMaterial": "c0e537e9",
+   "far:MeshLambertMaterial": "c4a2f1f3",
+   "crowd:MeshLambertMaterial": "4221254",
+   "tyremarks:MeshBasicMaterial": "d5b07fc2"
   }
  },
  "nring": {

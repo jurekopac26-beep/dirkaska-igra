@@ -1400,11 +1400,11 @@
   }
  },
  "stelvio/race/cs": {
-  "digest": "da0ad23b68447a3426a53402",
-  "lead": 2532.1,
+  "digest": "b0f526d31b1ef5f9bf999f3c",
+  "lead": 2563.8,
   "car0": [
-   -2087.85,
-   1297.69
+   -2111.71,
+   1319.24
   ],
   "cover": {
    "dmg": 0,
@@ -1414,11 +1414,11 @@
   }
  },
  "stelvio/race/arcade": {
-  "digest": "9bc5bef3dcc2e4dd3cb3101d",
-  "lead": 2433.8,
+  "digest": "b75ed2b6a74e7643949a5654",
+  "lead": 2486.5,
   "car0": [
-   -2042,
-   1215.05
+   -2057.82,
+   1265.1
   ],
   "cover": {
    "dmg": 0,
@@ -1428,11 +1428,25 @@
   }
  },
  "stelvio/demo/cs": {
-  "digest": "5ad0a7118ca12813dd86ddd3",
-  "lead": 2527.2,
+  "digest": "bb2a829c95f8db0c3496c673",
+  "lead": 2572.2,
   "car0": [
-   -2083.21,
-   1294.12
+   -2116.57,
+   1324.21
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "stelvio/demo/arcade": {
+  "digest": "5fce4080e41a8b785c44900b",
+  "lead": 2543.8,
+  "car0": [
+   -2095.05,
+   1306.6
   ],
   "cover": {
    "dmg": 0,
@@ -1441,26 +1455,12 @@
    "repairs": 0
   }
  },
- "stelvio/demo/arcade": {
-  "digest": "df92b8694bbbaaa66b541aa2",
-  "lead": 2439.4,
-  "car0": [
-   -2043.93,
-   1219.59
-  ],
-  "cover": {
-   "dmg": 0.07,
-   "loose": 2,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "stelvio/upg/cs": {
-  "digest": "342cfe56e7dbb0752b0e6a1c",
-  "lead": 2603.8,
+  "digest": "e81efe390a65bfff855f4b5b",
+  "lead": 2632.9,
   "car0": [
-   -2134.92,
-   1349.57
+   -2147.86,
+   1376.2
   ],
   "cover": {
    "dmg": 0,
@@ -1470,11 +1470,11 @@
   }
  },
  "stelvio/upg/arcade": {
-  "digest": "b5541bff916ef8c0eeb603ff",
-  "lead": 2496.6,
+  "digest": "c7b642f72d13772a0006cdae",
+  "lead": 2558.9,
   "car0": [
-   -2060.55,
-   1275.03
+   -2108.24,
+   1315.88
   ],
   "cover": {
    "dmg": 0,
@@ -1484,58 +1484,58 @@
   }
  },
  "stelvio/crash/cs": {
-  "digest": "9878517e713fc2626ac9112d",
-  "lead": 2460.3,
+  "digest": "77b9f76b57141778b0ade37d",
+  "lead": 2490.2,
   "car0": [
-   -2046.72,
-   1241.57
+   -2060.68,
+   1267.43
   ],
   "cover": {
-   "dmg": 0.31,
+   "dmg": 0.28,
    "loose": 1,
    "rescues": 0,
    "repairs": 0
   }
  },
  "stelvio/crash/arcade": {
-  "digest": "740b9dfc358e757e5e594cb1",
-  "lead": 2364.7,
+  "digest": "609725df08876b1b7e21f752",
+  "lead": 2421,
   "car0": [
-   -1979.22,
-   1191.17
+   -2031.58,
+   1206.41
   ],
   "cover": {
-   "dmg": 0.34,
+   "dmg": 0.27,
    "loose": 1,
    "rescues": 0,
    "repairs": 0
   }
  },
  "stelvio/formula/cs": {
-  "digest": "e2bd23057a1ce4182c48d439",
-  "lead": 2776.5,
+  "digest": "10dc1e7ee8aed7f010b285d0",
+  "lead": 2831.5,
   "car0": [
-   -2200.3,
-   1504.4
+   -2229.42,
+   1551.15
   ],
   "cover": {
-   "dmg": 0.3,
+   "dmg": 0.35,
    "loose": 1,
    "rescues": 0,
    "repairs": 0
   }
  },
  "stelvio/formula/arcade": {
-  "digest": "4d27c7e8775866d7d9270175",
-  "lead": 2535.1,
+  "digest": "0248e7ba8b08700a02b8701f",
+  "lead": 2700,
   "car0": [
-   -2089.17,
-   1301.14
+   -2169.68,
+   1437.79
   ],
   "cover": {
    "dmg": 0.37,
    "loose": 2,
-   "rescues": 1,
+   "rescues": 0,
    "repairs": 0
   }
  },

@@ -18,16 +18,19 @@ const nearest = (x, z) => { let b = 0, bd = Infinity; for (let i = 0; i < T.N; i
 {
   const a0 = alt(0), a1 = alt(T.raceLen);
   let top = -Infinity, steep = 0; for (let d = 0; d <= T.raceLen; d += 10) { top = Math.max(top, alt(d)); if (d >= 50) steep = Math.max(steep, (alt(d) - alt(d - 50)) / 50); }
-  check('the climb: 24.3 km in its real scale, an open road against the clock', Math.abs(T.raceLen - 24300) < 100 && T.open && def.timeTrial && def.realKm === 24.3, `${(T.raceLen / 1000).toFixed(2)} km`);
+  check('the climb: 24.5 km (the real road 24.3 km, its hairpins opened for the wider road), an open road against the clock', T.raceLen > 24400 && T.raceLen < 24700 && T.open && def.timeTrial && def.realKm === 24.3, `${(T.raceLen / 1000).toFixed(2)} km`);
+  // the road wider than the real one (more fun to race on): 10 m; no two legs of it closer than their asphalt (hairpins apart)
+  let close = Infinity; for (let i = 0; i < T.N; i += 2) for (let j = i + 60; j < T.N; j += 2) { const d = Math.hypot(T.px[i] - T.px[j], T.pz[i] - T.pz[j]); if (d < close) close = d; if (d > 300) j += 40; }
+  check('the road: 10 m wide (the real one 6 m), no two legs closer than 12 m (their asphalt apart)', T.w === 5 && close > 12, `half width ${T.w} m, closest legs ${close.toFixed(1)} m`);
   check('heights: the start at 920 m, the pass at 2757 m the top of the run, no ramp over 15 %', Math.abs(a0 - 920) < 5 && Math.abs(a1 - 2757) < 3 && top <= a1 + 0.5 && steep < 0.15,
     `start ${a0.toFixed(1)} m, finish ${a1.toFixed(1)} m, top ${top.toFixed(1)} m, steepest 50 m ${(steep * 100).toFixed(1)} %`);
   check('the altitude on the screen: def.alt the start and the pass', def.alt[0] === 920 && def.alt[1] === 2757, `${def.alt}`);
 }
 
 // the 48 hairpins: numbered 48 (at the bottom) to 1 (below the pass) up the road, each on the centre line, a turn of 140-190 degrees
-// over 100 m round its apex the way def.hairpins says (1 right, -1 left)
+// over 120 m round its apex the way def.hairpins says (1 right, -1 left)
 {
-  const H = def.hairpins, turn = (i) => { let a = 0; for (let k = Math.max(1, i - 25); k < Math.min(T.N - 1, i + 25); k++) a += Math.atan2(T.tx[k + 1] * -T.tz[k] + T.tz[k + 1] * T.tx[k], T.tx[k + 1] * T.tx[k] + T.tz[k + 1] * T.tz[k]); return a * 180 / Math.PI; };
+  const H = def.hairpins, turn = (i) => { let a = 0; for (let k = Math.max(1, i - 30); k < Math.min(T.N - 1, i + 30); k++) a += Math.atan2(T.tx[k + 1] * -T.tz[k] + T.tz[k + 1] * T.tx[k], T.tx[k + 1] * T.tx[k] + T.tz[k + 1] * T.tz[k]); return a * 180 / Math.PI; };
   const at = H.map(([n, x, z, dir]) => { const [i, off] = nearest(x, z); return { n, d: dAt(i), off, dir, turn: turn(i) }; });
   const numbered = H.length === 48 && H.every(([n], k) => n === 48 - k), up = at.every((h, k) => k === 0 || h.d > at[k - 1].d), inRun = at.every(h => h.d > 0 && h.d < T.raceLen);
   check('hairpins: 48, numbered 48 to 1 up the road, all within the run', numbered && up && inRun, `${H.length} hairpins, 48 at ${at[0].d} m, 1 at ${at[at.length - 1].d} m`);
