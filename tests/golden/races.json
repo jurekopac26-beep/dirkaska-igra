@@ -212,32 +212,32 @@
  "grom/cs": {
   "finished": 13,
   "cars": 13,
-  "winner": 66.22,
+  "winner": 66.25,
   "spins": 0,
-  "walls": 3,
+  "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "28a686e2713913d774b14736"
+  "digest": "60dcc9116a4f984a263d371d"
  },
  "grom/cs/rain": {
   "finished": 13,
   "cars": 13,
   "winner": 71.41,
   "spins": 0,
-  "walls": 1,
+  "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "eb905c27e80f1a558e9f5a79"
+  "digest": "f25b68a94558cc0908b8caa0"
  },
  "grom/cs/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 59.7,
+  "winner": 59.72,
   "spins": 0,
-  "walls": 6,
+  "walls": 3,
   "rescues": 0,
   "nan": false,
-  "digest": "ee6b2f9fc4a3ea588f300266"
+  "digest": "e6f17d10967c203cf621f659"
  },
  "pikes/cs": {
   "finished": 1,
