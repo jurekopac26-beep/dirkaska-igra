@@ -20,7 +20,10 @@ try {
   await startTrack(page, 'rbring');
   await sim(30);
 
-  // 1. the safety car out (brought out here for the leader), the field behind it, in again, green at the line
+  // 1. the safety car out (brought out here for the leader), the field behind it, in again, green at the line. (Out when the player has
+  // room: no rival alongside or less than 30 m ahead of them, so the autopilot is not in the middle of a pass that it would finish under the
+  // safety car: the warning to give the place back would take the HUD's message and board)
+  for (let k = 0; k < 40 && await page.evaluate(() => { const r = window.__game.race, P = r.player; return r.cars.some(c => c !== P && !c.finished && c.dist > P.dist - 8 && c.dist < P.dist + 30); }); k++) await sim(1);
   await page.evaluate(() => { const r = window.__game.race; r._scOut(r.order.find(c => !c.finished)); });
   await sim(0.5);
   const s1 = await hud();

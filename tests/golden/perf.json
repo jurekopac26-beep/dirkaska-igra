@@ -84,11 +84,11 @@
   "jsMs": 1.78
  },
  "spa": {
-  "calls": 202,
-  "maxCalls": 261,
-  "kverts": 622,
+  "calls": 217,
+  "maxCalls": 299,
+  "kverts": 640,
   "maxKverts": 769,
-  "jsMs": 1.01
+  "jsMs": 0.82
  },
  "rbring": {
   "calls": 264,
@@ -98,10 +98,10 @@
   "jsMs": 0.93
  },
  "suzuka": {
-  "calls": 245,
-  "maxCalls": 296,
-  "kverts": 572,
-  "maxKverts": 758,
-  "jsMs": 0.76
+  "calls": 246,
+  "maxCalls": 297,
+  "kverts": 589,
+  "maxKverts": 766,
+  "jsMs": 0.79
  }
 }
