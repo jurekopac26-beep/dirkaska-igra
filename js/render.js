@@ -1353,7 +1353,7 @@ const Render = (function () {
     for (const a of inst) {
       if (!colOrig.has(a)) colOrig.set(a, a.array.slice());
       const src = colOrig.get(a), dst = a.array;
-      for (let i = 0; i < src.length; i += 3) { _c1.setRGB(src[i], src[i + 1], src[i + 2]); seasonCol(_c1, i * 0.53, _c2, false); dst[i] = _c2.r; dst[i + 1] = _c2.g; dst[i + 2] = _c2.b; }
+      for (let i = 0; i < src.length; i += 3) { _c1.setRGB(src[i], src[i + 1], src[i + 2]); seasonCol(_c1, i * 0.53, _c2, !!a.ground); dst[i] = _c2.r; dst[i + 1] = _c2.g; dst[i + 2] = _c2.b; }   // (a.ground: grass, e.g. the verges' clumps)
       a.needsUpdate = true;
     }
     wetW = -1;   // (the road's wet colour again)

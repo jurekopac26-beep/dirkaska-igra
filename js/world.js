@@ -895,7 +895,7 @@ const World = (function () {
       g.setIndex(idx); g.computeVertexNormals();
       const mat = new THREE.MeshLambertMaterial({ map: THEME === 'city' || THEME === 'ljubljana' || THEME === 'monaco' ? tex.paving : tex.grass, vertexColors: true });
       const m = new THREE.Mesh(g, mat); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m);
-      out.ground = m; GM = { pos, nx, nz, cell, x0: B.minX, z0: B.minZ };
+      out.ground = m; GM = { pos, nx, nz, cell, x0: B.minX, z0: B.minZ }; out.gGrid = GM;
     }
     const gmLine = (y) => waterline((i, j) => GM.pos[(clamp(j, 0, GM.nz) * (GM.nx + 1) + clamp(i, 0, GM.nx)) * 3 + 1], GM.x0, GM.z0, GM.cell, 0, GM.nx, 0, GM.nz, y);
     const gmBox = (x0, z0, x1, z1) => [Math.max(x0, GM.x0), Math.max(z0, GM.z0), Math.min(x1, GM.x0 + GM.nx * GM.cell), Math.min(z1, GM.z0 + GM.nz * GM.cell)];   // (a box within the ground mesh)
@@ -4234,7 +4234,117 @@ const World = (function () {
       const m = new THREE.Mesh(g, mat); m.name = 'roadwear'; m.receiveShadow = true; m.renderOrder = 2; m.matrixAutoUpdate = false; o.root.add(m);   // (after the tyre marks and the drying line: the rubber shows on a drying line too)
     }
   }
-  function finish(o, tex) { if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); return clouds(o.root, o, tex); }
+  /* ---- the grass of every world (at the end of its build): the meadow's own colour varies over tens of metres (lighter, darker, drier
+     patches: world-space noise in the grass materials' shader, no extra draw calls), on the circuits' lawns the mower's stripes along the
+     start straight (fading out far away, where they would shimmer), and along the verges of the circuits tufts of longer grass and
+     flowers that sway in the wind (instanced chunks: only the ones in sight are drawn) ---- */
+  const GRASS_GLSL = [
+    'varying vec2 vGw; varying float vGd; uniform float uStr; uniform vec2 uSd;',
+    'float gHash(vec2 p) { p = fract(p * vec2(0.1031, 0.1030)); p += dot(p, p.yx + 33.33); return fract((p.x + p.y) * p.x); }',   // (no sine: steady on phones' GPUs)
+    'float gNoise(vec2 p) { vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f); return mix(mix(gHash(i), gHash(i + vec2(1.0, 0.0)), u.x), mix(gHash(i + vec2(0.0, 1.0)), gHash(i + vec2(1.0, 1.0)), u.x), u.y); }'].join('\n');
+  function grassLook(m, sd) {
+    if (!m || m.userData.grassLook) return; m.userData.grassLook = true;
+    m.onBeforeCompile = (sh) => {
+      sh.uniforms.uStr = { value: sd ? 1 : 0 }; sh.uniforms.uSd = { value: new THREE.Vector2(sd ? sd[0] : 1, sd ? sd[1] : 0) };
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vGw; varying float vGd;')
+        .replace('#include <project_vertex>', '#include <project_vertex>\nvGw = (modelMatrix * vec4(transformed, 1.0)).xz; vGd = -mvPosition.z;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + GRASS_GLSL).replace('#include <color_fragment>', '#include <color_fragment>\n' + [
+        '{ vec3 gc = diffuseColor.rgb; float gg = clamp((gc.g - max(gc.r, gc.b)) * 8.0, 0.0, 1.0);',   // (only where it is green: not the soil, the sand, the snow)
+        '  if (gg > 0.0) {',
+        '    float n1 = gNoise(vGw * 0.025) * 0.65 + gNoise(vGw * 0.07 + 13.1) * 0.35, n2 = gNoise(vGw * 0.045 + 57.3);',
+        '    gc *= mix(1.0, 0.84 + 0.3 * n1, gg);',   // lighter and darker patches
+        '    gc = mix(gc, gc * vec3(1.12, 1.04, 0.7), gg * smoothstep(0.62, 0.95, n2) * 0.6);',   // drier, yellower ones
+        '    if (uStr > 0.0) { float f = fract(dot(vGw, uSd) * 0.0909), b = smoothstep(0.03, 0.1, f) - smoothstep(0.53, 0.6, f);',   // the mower's stripes, 5.5 m wide
+        '      gc *= 1.0 + gg * uStr * (b - 0.5) * 0.18 * (1.0 - smoothstep(110.0, 240.0, vGd)); }',
+        '    diffuseColor.rgb = gc; } }'].join('\n'));
+    };
+    m.customProgramCacheKey = () => 'grassLook' + (sd ? 'S' : '');
+    m.needsUpdate = true;
+  }
+  function grassWorld(o, tex) {
+    const lawn = !T.open && ['lake', 'forest', 'kamp', 'italia', 'rbring'].includes(THEME);   // (the circuits whose lawns are mown in stripes; Spa and Suzuka lay their own)
+    let sd = null; if (lawn) { const i = T.idx(T.startS); sd = [-T.tz[i], T.tx[i]]; }   // (the stripes run along the start straight)
+    o.root.traverse(m => { if (!m.isMesh || !m.material || Array.isArray(m.material)) return; const t = m.material.map; if (t && (t === tex.grass || t.grassPic)) grassLook(m.material, sd); });
+  }
+  let tuftGeoC = null;
+  function tuftGeo(flower) {   // (1 m wide, 1 m tall, scaled per instance) a clump of longer grass: a low mound with broad blades leaning out round it
+    // (from above a rosette, not a few lines), its colours shades of the lawn under it (the instance colour: the lawn's own); or a few
+    // wild flowers: green stems with white, yellow and violet heads (their own colours)
+    if (!tuftGeoC) tuftGeoC = [];
+    if (tuftGeoC[+flower]) return tuftGeoC[+flower];
+    const P = [], C = [], N = [], put = (c, n) => { for (let q = 0; q < n; q++) C.push(c[0], c[1], c[2]); };
+    if (!flower) {
+      const D = [0.64, 0.66, 0.6], M = [0.8, 0.82, 0.76], TIP = [1.16, 1.12, 0.9];
+      for (let k = 0; k < 7; k++) {   // the mound
+        const a0 = k / 7 * TAU, a1 = (k + 1) / 7 * TAU;
+        P.push(0, 0.3, 0, Math.cos(a0) * 0.36, 0.02, Math.sin(a0) * 0.36, Math.cos(a1) * 0.36, 0.02, Math.sin(a1) * 0.36); put(M, 1); put(D, 2);
+      }
+      for (let k = 0; k < 8; k++) {   // the blades
+        const a = k / 8 * TAU + (k % 2) * 0.35, lean = 0.36 + 0.07 * (k % 3), h = 0.72 + 0.14 * ((k * 5) % 3), w = 0.09;
+        const bx = Math.cos(a) * 0.12, bz = Math.sin(a) * 0.12, px = -Math.sin(a) * w, pz = Math.cos(a) * w, tx = Math.cos(a) * (0.12 + lean), tz = Math.sin(a) * (0.12 + lean);
+        P.push(bx - px, 0.05, bz - pz, bx + px, 0.05, bz + pz, tx, h, tz); put(D, 2); put(TIP, 1);
+      }
+    } else {
+      const FL = [[0.97, 0.96, 0.92], [0.99, 0.85, 0.16], [0.66, 0.44, 0.9]], ST = [0.26, 0.42, 0.13];
+      for (let k = 0; k < 3; k++) {
+        const a = k / 3 * TAU + 0.4, r = 0.18 + 0.1 * k, x = Math.cos(a) * r, z = Math.sin(a) * r, h = 0.62 + 0.18 * k, c = FL[k], sz = 0.17;
+        P.push(x - 0.03, 0, z, x + 0.03, 0, z, x, h, z); put(ST, 3);   // the stem
+        P.push(x - sz, h, z, x + sz, h, z, x, h + sz * 1.3, z, x, h, z - sz, x, h, z + sz, x, h + sz * 1.3, z); put(c, 6);   // the head: two crossed petals
+      }
+    }
+    for (let q = 0; q < P.length / 3; q++) N.push(0, 1, 0);   // (lit like the ground under them; the seasons paint them as ground, not leaves)
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
+    g.computeBoundingSphere();
+    return (tuftGeoC[+flower] = g);
+  }
+  function texAvg(t) {   // the average colour of a (canvas) texture, 0..1
+    if (!t || !t.image) return [0.4, 0.6, 0.25];
+    if (t.avgCol) return t.avgCol;
+    let r = 0, g = 0, b = 0, n = 0;
+    try { const im = t.image, c = im.getContext ? im : null, d = c && c.getContext('2d').getImageData(0, 0, im.width, im.height).data;
+      if (d) for (let i = 0; i < d.length; i += 4 * 7) { r += d[i]; g += d[i + 1]; b += d[i + 2]; n++; } } catch (_) { }
+    return (t.avgCol = n ? [r / n / 255, g / n / 255, b / n / 255] : [0.4, 0.6, 0.25]);
+  }
+  const LAWN = { nring: [0.92, 0.95, 0.82], spa: [0.95, 1.0, 0.95], rbring: [0.96, 1.0, 0.9], suzuka: [0.95, 1.0, 0.92] };   // (the corridor builders' lawns: their vertex colours, roughly)
+  function verge(o) {
+    if (T.open || ['city', 'ljubljana', 'monaco'].includes(THEME)) return;
+    const W = o.dyn.wind || (o.dyn.wind = { value: 0 });
+    const mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
+    mat.onBeforeCompile = (sh) => {
+      sh.uniforms.uWind = W;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uWind;').replace('#include <begin_vertex>', '#include <begin_vertex>\n' +
+        '#ifdef USE_INSTANCING\nfloat wPh = instanceMatrix[3].x * 0.31 + instanceMatrix[3].z * 0.23;\n#else\nfloat wPh = 0.0;\n#endif\n' +
+        'float wK = position.y * position.y * 0.16;\ntransformed.x += wK * sin(uWind * 2.1 + wPh);\ntransformed.z += wK * 0.7 * sin(uWind * 1.63 + wPh * 1.3);');
+      // (both faces lit as the front one: the normals point up, the blades are thin, seen from above half of them are back faces)
+      sh.fragmentShader = sh.fragmentShader.replace('( gl_FrontFacing ) ? vIndirectFront : vIndirectBack', 'vIndirectFront').replace('( gl_FrontFacing ) ? vLightFront : vLightBack', 'vLightFront');
+    };
+    mat.customProgramCacheKey = () => 'tuftWind';
+    const tu = new IChunks(tuftGeo(false), mat, 160), fl = new IChunks(tuftGeo(true), mat, 160), q = {}, gH = o.groundH;
+    // the lawn's colour under a clump: the ground mesh's vertex colour there (the default builder's grid) or the corridor builder's, times the grass picture's
+    let gm = null; o.root.traverse(m => { if (!gm && m.isMesh && m.material && !Array.isArray(m.material) && m.material.userData.grassLook) gm = m.material; });
+    const avg = texAvg(gm && gm.map), mc = gm ? gm.color : { r: 1, g: 1, b: 1 }, G = o.gGrid, gc = o.ground && o.ground.geometry.attributes.color, TL = LAWN[THEME] || [1, 1, 1];
+    const lawn = (x, z) => {
+      let r = TL[0], g = TL[1], b = TL[2];
+      if (G && gc) { const i = clamp(Math.round((x - G.x0) / G.cell), 0, G.nx), j = clamp(Math.round((z - G.z0) / G.cell), 0, G.nz), k = (j * (G.nx + 1) + i) * 3; r = gc.array[k]; g = gc.array[k + 1]; b = gc.array[k + 2]; }
+      return [r * avg[0] * mc.r, g * avg[1] * mc.g, b * avg[2] * mc.b];
+    };
+    const L = T.len;
+    for (let s = 0; s < L; s += 2.2) for (const side of [-1, 1]) {
+      const i = T.idx(s), h0 = crH(s, side, 5);
+      if (h0 < 0.14) continue;   // (gaps)
+      const bar = T.br ? (side > 0 ? T.br[i] : (T.bl ? T.bl[i] : T.w + 8)) : T.w + 8, d0 = T.w + 2.0, d1 = Math.min(bar - 0.7, T.w + 13);
+      if (d1 < d0 + 0.3) continue;
+      const d = d0 + (d1 - d0) * Math.pow(crH(s, side, 6), 1.6), x = T.px[i] + T.nx[i] * d * side, z = T.pz[i] + T.nz[i] * d * side;
+      if (T.surface(T.query(x, z, i, q)) !== 2) continue;   // (on the grass only: not on the gravel, the run-off, the paths)
+      const y = (gH ? gH(x, z) : (T.hasElev && T.hy ? T.hy[i] : 0)) - 0.02, u = crH(x, z, 7), g = 0.9 + 0.2 * crH(x, z, 8), lc = lawn(x, z);
+      tu.add(x, y, z, u * 26, 0.9 + 0.8 * crH(x, z, 9), 0.34 + 0.3 * crH(x, z, 10), [lc[0] * g, lc[1] * g, lc[2] * g]);
+      if (u < 0.2) { const f = 0.85 + 0.15 * crH(x, z, 11); fl.add(x + 0.2, y, z - 0.1, u * 41, 0.8 + 0.3 * crH(x, z, 12), 0.5 + 0.2 * crH(x, z, 13), [f, f, f]); }
+    }
+    const grp = new THREE.Group(); grp.name = 'verge'; o.root.add(grp);
+    const n1 = tu.addTo(grp, false); grp.traverse(m => { if (m.isInstancedMesh && m.instanceColor) m.instanceColor.ground = true; });   // (the seasons paint the clumps as grass: straw in the autumn, not red leaves)
+    o.nTufts = n1 + fl.addTo(grp, false);
+  }
+  function finish(o, tex) { if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); return clouds(o.root, o, tex); }
   // where the crowds are, for their sound (Sfx: x, z, how many 0..1), on a circuit whose builder has not given them (the Red Bull Ring's
   // does): the spectators of every crowd of this build in 24 m cells, and the packed grandstands (the crowd picture) as full ones
   function crowdPoints(o, tex) {
@@ -8839,7 +8949,7 @@ const World = (function () {
         for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const qx = px + a * S, qy = py + b * S; if (qx > -6 && qx < S + 6 && qy > -6 && qy < S + 6) { x.moveTo(qx, qy); x.lineTo(qx + dx, qy + dy); } } }
       x.stroke(); }
     for (const [st, n, sz] of [['#e6cd46', 110, 1], ['#ebebdc', 150, 1], ['#9a70a8', 40, 1], ['rgba(98,80,56,0.7)', 70, 2]]) { x.fillStyle = st; for (let k = 0; k < n; k++) x.fillRect(Math.floor(r() * (S - 1)), Math.floor(r() * (S - 1)), sz, sz); }   // flowers, soil
-    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = aniso || 4; return t;
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = aniso || 4; t.grassPic = true; return t;
   }
   function nrDecalTex() {   // paint and marks on the asphalt: a 1024 px atlas of 4 x 8 cells, 256 px across the road by 128 px along it (a cell's top points up the road):
     // 0-15 the fans' graffiti, 16-19 painted signs, 20-23 painted flags, 24-25 tar snakes, 26-27 tyre marks, 28-31 repair patches; transparent around them
@@ -9409,7 +9519,7 @@ const World = (function () {
         for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const qx = px + a * S, qy = py + b * S; if (qx > -6 && qx < S + 6 && qy > -6 && qy < S + 6) { x.moveTo(qx, qy); x.lineTo(qx + dx, qy + dy); } } }
       x.stroke(); }
     for (const [st, n, sz] of [['rgba(46,92,42,0.55)', 90, 3], ['#f2f2ea', 70, 1], ['#e6d24a', 24, 1]]) { x.fillStyle = st; for (let k = 0; k < n; k++) x.fillRect(Math.floor(r() * (S - sz)), Math.floor(r() * (S - sz)), sz, sz); }   // clover, daisies, buttercups
-    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = aniso || 4; return t;
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = aniso || 4; t.grassPic = true; return t;
   }
   function spaTreeGeo(kind) {   // unit trees (height 1, instances scale them): 0 a plantation spruce (tall and narrow, four drooping tiers, dark blue-green), 1 the same far out (two tiers), 2 a birch (a white trunk, a small light crown)
     const g = new GB(), R = rng(640 + kind), rs = ROCK_SMOOTH; ROCK_SMOOTH = true;   // (smooth normals, as nrTreeGeo; the flag restored below)
