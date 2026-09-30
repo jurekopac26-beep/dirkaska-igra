@@ -134,6 +134,16 @@ Gumb **Kariera** na naslovnem zaslonu odpre kariero: z dirkami služiš denar, z
 - **Nadgradnje:** vsaka stopnja stane 4.000 €, 7.000 € ali 12.000 € (cena je napisana na gumbu; preskočene stopnje se plačajo zraven). Kupljenih delov ne moreš prodati.
 - **Izklopi kariero** te vrne v prosto igro z vsemi avti in brezplačnimi nadgradnjami (te so ločene od kariere). Kariera ostane shranjena in jo kasneje nadaljuješ. **Nova kariera** (dvakrat tapni) začne znova.
 
+## Tekmeci z značajem
+
+Vsak voznik AI ima svoj značaj, ki je v vsaki dirki enak: vožnja je **agresivna**, **previdna** ali **uravnotežena**, pod pritiskom pa ima voznik **mirno kri** ali **popušča** (npr. L. Rossi vozi agresivno in popušča pod pritiskom, T. Hayashi vozi previdno z mirno krvjo).
+
+- **Prehitevanje:** previdni vozniki čakajo za avtom, dokler ni pred njimi dovolj prostora (ravnina, ne ovinek), razen če so precej hitrejši; agresivni se zapeljejo zraven tudi v ovinek in prehitevajo tesneje.
+- **Obramba:** ko je agresivnemu vozniku pred zaviranjem nekdo tik za petami, enkrat zapre notranjo linijo ovinka in jo drži skozi zaviranje (ne vijuga); previdni ne branijo.
+- **Napake pod pritiskom:** kdor ima nekoga tik za sabo več sekund, lahko pred ovinkom zavira prepozno in zapelje široko; nervozni vozniki pogosteje (v dirki jih je nekaj). Če se to zgodi blizu tebe, se na zaslonu pokaže **NAPAKA: IME**, komentator pa to omeni.
+- **Dvoboji:** ko se z voznikom tik pred tabo ali za tabo boriš dlje časa (manj kot 25 m narazen 15 s), se pokaže **DVOBOJ: IME**, v časovni tabeli je njegova vrstica obrobljena, komentator spremlja boj in pove, kdo ga je dobil. Voznik v dvoboju s tabo je bolj borben.
+- **Stalni tekmec v karieri:** po prvi dirki v karieri postane voznik, ki je bil tik pred tabo (če zmagaš, drugi), tvoj stalni tekmec. Na zaslonu Kariera sta njegov značaj in medsebojni izid (ti : tekmec), v dirkah je nad njegovim avtom njegovo ime, v časovni tabeli je rdeč, vozi malo hitreje in bolj borbeno, v rezultatih pa je njegovo mesto in skupni izid.
+
 ## Kvalifikacije
 
 Pred dirko na krožni progi odpelješ en leteči krog sam na progi (zaslon **Izberi progo** → Kvalifikacije: **Vklop**, privzeto vklopljeno). Začneš na ravnini pred ciljno črto, brez semaforja; ura teče od črte do črte. Medtem vsak tekmec odpelje svoj leteči krog z enakim avtom, težavnostjo, vremenom in fiziko kot na dirki. Igra njihove kroge izračuna sproti med vožnjo, zato se čakanja skoraj ne opazi.

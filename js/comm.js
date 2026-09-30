@@ -90,6 +90,12 @@ const Comm = (() => {
     fuelLow: ['Running low on fuel! Box for fuel this lap.', 'The fuel light is on! Time to come in and fill up.', 'Not much fuel left in that tank, pit now!'],
     fuelOut: ['Oh no, out of fuel! Spluttering along on the last drops!', 'Dry tank! That car is limping back to the pits now.'],
     fuelIn: ['Fuel in, and back out onto the track!', 'Tank full again, off it goes!'],
+    // the rivals' characters: a duel with the player, the standing rival, a mistake under pressure
+    duel: ['A proper duel with {name} now! Nose to tail, lap after lap.', 'You and {name}, this is a real fight!', 'This battle with {name} is getting intense!'],
+    duelRival: ['Here we go again: you and your old rival {name}, wheel to wheel!', 'The rivalry continues! {name} will not give you an inch.', '{name} again! These two just cannot stay away from each other.'],
+    duelWon: ['And you have shaken off {name}! Duel won.', 'That is the end of the fight with {name}, and you came out on top!'],
+    duelLost: ['{name} has got away from you this time.', 'The duel goes to {name}, for now.'],
+    aiMistake: ['{name} has run wide under the pressure!', 'A mistake from {name}! Locked up into the corner!', 'Oh, {name} cracks under pressure and goes wide!'],
     dusk: ['The sun is going down, the shadows are getting long.', 'Evening now, the light is fading over the circuit.'],
     nightFall: ['Night has fallen! Headlights on, the floodlights are blazing.', 'It is dark now, racing under the lights!'],
     rainStop: ['The rain has stopped! The track will start to dry.', 'No more rain! Watch for a dry line appearing.', 'The rain has eased off. A drying track now!'],

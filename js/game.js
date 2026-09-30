@@ -79,6 +79,7 @@
     career.cars = Array.isArray(career.cars) ? career.cars.filter((id, i, a) => ids.includes(id) && a.indexOf(id) === i) : [];
     if (!career.cars.includes(Core.CAREER.car0)) career.cars.unshift(Core.CAREER.car0);
     const u = isObj(career.upg) ? career.upg : {}; career.upg = {}; for (const id of career.cars) career.upg[id] = upgNorm(isObj(u[id]) ? u[id] : null);
+    const rv = career.rival; career.rival = isObj(rv) && Number.isInteger(rv.k) && rv.k >= 0 && rv.k < Core.DRIVER_NAMES.length ? { k: rv.k, me: num(rv.me), him: num(rv.him) } : null;   // (the standing rival: a roster index, the head-to-head)
   }
   const careerNew = () => ({ v: 1, on: true, money: Core.CAREER.start, cars: [Core.CAREER.car0], upg: { [Core.CAREER.car0]: upgNorm(null) }, earned: 0, races: 0, wins: 0 });
   function careerSave() { try { localStorage.setItem('tdgp-career', JSON.stringify(career)); } catch (_) { } }
@@ -681,8 +682,12 @@
   }
 
   /* ---------------- career ---------------- */
+  // the rivals' characters (Race opts.chars, Core.driverChar): in words
+  const chrWords = (k) => { const d = Core.driverChar(k); return [d.agg >= 0.7 ? 'agresivna vožnja' : d.agg <= 0.35 ? 'previdna vožnja' : 'uravnotežena vožnja', d.err >= 0.55 ? 'popušča pod pritiskom' : d.err <= 0.2 ? 'mirna kri' : ''].filter(Boolean).map(w => tr(w)).join(', '); };
+  const commName = (c) => String(c.name).split(/\s+/).pop();   // (the commentator: the surname)
   function buildCareerScreen() {
-    const on = inCareer(), C = Core.CAREER;
+    const on = inCareer(), C = Core.CAREER, rv = career && career.rival;
+    $('career-rival').textContent = !career ? '' : rv ? tr('Stalni tekmec: {0} ({1}) · ti {2}, tekmec {3}.', Core.DRIVER_NAMES[rv.k], chrWords(rv.k), rv.me, rv.him) : tr('Stalni tekmec: izbran bo po prvi dirki v karieri.');
     $('career-money').textContent = career ? eur(career.money) : eur(C.start);
     $('career-info').textContent = (career ? tr('Dirk: {0}, zmag: {1}, zasluženo skupaj {2}. ', career.races, career.wins, eur(career.earned)) : '') +
       tr('V karieri z dirkami, prvenstvi in kronometri služiš denar: več za boljše mesto, daljšo dirko in težje nasprotnike, še več za najhitrejši krog, prvo štartno mesto, naslov prvaka in medalje. ') +
@@ -1043,7 +1048,7 @@
     } else race = new Core.Race(track, Object.assign(mine, {   // time trial: alone on the start line, one run to the finish; qualifying: alone, one flying lap
       numAI: tt || quali ? 0 : nAI, playerGrid: tt || quali || chase ? 1 : duel ? 2 : Q ? Q.res.grid : PLAYER_GRID, aiOrder: Q ? Q.res.order : undefined, qualiBack: quali ? qual.back : 0,
       laps: tt || quali ? 1 : lapsOf(track.def), fuel: !tt && !quali && !!S.fuel, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali ? null : W.wx, tyres: !tt && !!track.def.pit, flags: !tt && !quali, winter: S.season === 'winter', champ: cr >= 0, tt,
-      traffic: duel, police: chase
+      traffic: duel, police: chase, chars: !tt && !quali, rival: !tt && !quali && inCareer() && career.rival ? career.rival.k : undefined
     }));
     race.champ = cr >= 0 ? { round: cr, n: cd.tracks.length, done: false } : null;
     race.quali = quali; race.storm = !on && !!W.storm;
@@ -1353,6 +1358,11 @@
       const diff = race.champ ? champ.diff : S.difficulty;
       career.races++; if (pos === 1) career.wins++;
       $('res-sub').textContent += careerPay(Core.careerPrize(pos, res.length, up ? track.raceLen : track.len * race.laps, diff) + (fl ? Core.CAREER.fastest : 0), 'Nagrada' + (fl ? ' (z najhitrejšim krogom)' : ''));
+      const ri = res.findIndex(r => r.car.chr && r.car.chr.rival);
+      if (ri >= 0 && career.rival) { if (myIdx < ri) career.rival.me++; else career.rival.him++; careerSave();   // the standing rival: who was ahead
+        $('res-sub').textContent += tr(' Stalni tekmec {0}: {1} mesto (skupaj ti {2}, tekmec {3}).', res[ri].car.name, Lang.ord(ri + 1), career.rival.me, career.rival.him); }
+      else if (!career.rival && !race.tf) { const o = res[myIdx > 0 ? myIdx - 1 : 1];   // the first race of the career: the one just ahead (the winner's: the second) is the standing rival from now on
+        if (o && o.car.chr) { career.rival = { k: o.car.chr.k, me: 0, him: 0 }; careerSave(); $('res-sub').textContent += tr(' {0} ({1}) je zdaj tvoj stalni tekmec.', o.car.name, chrWords(o.car.chr.k)); } }
     }
     const ch = race.champ;
     if (ch) {   // a championship round: counted now; the points in the table, the standings behind the button
@@ -1511,6 +1521,7 @@
     if (race.fl) { const F = race.fl; if (F.ev !== flSeen) { flSeen = F.ev; flagEvent(F.evK, P); } if (F.pev !== flPSeen) { flPSeen = F.pev; flagPlayer(F.pevK); } }
     if (race.tf) { if (race.tf.ev !== tfSeen) { tfSeen = race.tf.ev; roadEvent(race.tf.evK, race.tf.evCar, P); } roadSound(P); }
     if (race.pol && race.pol.ev !== polSeen) { polSeen = race.pol.ev; policeEvent(race.pol.evK, P); }
+    if (race.chr && race.chr.q.length) for (const e of race.chr.q.splice(0)) chrEvent(e.k, e.c, P);
     if (race.wst && race.wst.tyres && P.ty && !dryHint && P.ty.k === 'wet' && race.wst.wx && race.wst.line < 0.12 && race.rain === 0 && phase === 'racing' && !P.finished) {   // (the line is dry: time for slicks)
       dryHint = true; toast(tr('Idealna linija je suha: dežne gume se na suhem hitro obrabijo. Zapelji v bokse po suhe gume.'), 4600); Comm.say('dryLine', null, 2); }
     if (track.def.pit && !pitHint && dmgOn() && P.dmg > 0.45 && phase === 'racing') { pitHint = true; Comm.say('pitAdvice', null, 3); }   // (the commentator tells where the pits are, no text on the screen)
@@ -1651,6 +1662,15 @@
     const R0 = rec(track.def.id), B = Array.isArray(R0.bestSec) && R0.bestSec.length === 3 ? R0.bestSec.slice() : [Infinity, Infinity, Infinity];
     const PB = P.sec ? P.sec.best : P.secPB || []; let ch = false; for (let k = 0; k < 3; k++) if (PB[k] < B[k]) { B[k] = +PB[k].toFixed(4); ch = true; }
     if (ch) { R0.bestSec = B.map(v => isFinite(v) ? v : null); saveRecords(); }
+  }
+  // the rivals' characters: a duel with the player (and who came out of it ahead), a mistake under pressure (near the player or the
+  // standing rival's)
+  function chrEvent(k, c, P) {
+    if (phase !== 'racing') return;
+    const near = Math.abs(c.dist - P.dist) < 90, rv = c.chr && c.chr.rival;
+    if (k === 'duel') { showMsg(tr(rv ? 'DVOBOJ S STALNIM TEKMECEM' : 'DVOBOJ: {0}', String(c.name).toUpperCase()), 'gold', 1.8); Comm.say(rv ? 'duelRival' : 'duel', { name: commName(c) }, 3); }
+    else if (k === 'duelEnd') { const won = P.dist > c.dist; if (won) showMsg(tr('DVOBOJ DOBLJEN'), 'fast', 1.6); Comm.say(won ? 'duelWon' : 'duelLost', { name: commName(c) }, 2); }
+    else if (k === 'mistake' && (near || rv)) { if (near) showMsg(tr('NAPAKA: {0}', String(c.name).toUpperCase()), 'gold', 1.2); Comm.say('aiMistake', { name: commName(c) }, 2); }
   }
   function pitEvent(e) {
     if (phase !== 'racing') return;
@@ -2107,7 +2127,7 @@
       if (prev >= 0 && i > prev + 1) h += '<div class="tw-sep">⋯</div>';
       const c = O[i], down = !track.open && L.dist - c.dist >= track.len ? Math.floor((L.dist - c.dist) / track.len) : 0, g = i ? twGap(c, L) : null;
       const txt = !i ? tr('VODI') : c.inPit && !c.finished ? tr('BOKSI') : down ? '+' + lapWord(down) : g == null ? '' : '+' + (g >= 60 ? fmt(g).slice(0, -2) : g.toFixed(1));
-      h += '<div class="tw-r' + (c === P ? ' me' : '') + (c.finished ? ' fin' : '') + '"><b>' + (i + 1) + '</b><i style="background:' + hexCss(c.color) + '"></i><span>' + esc(twCode(c)) + '</span><em>' + txt + '</em></div>';
+      h += '<div class="tw-r' + (c === P ? ' me' : '') + (c.finished ? ' fin' : '') + (c.chr && c.chr.rival ? ' rv' : '') + (c.chr && c.chr.duelOn ? ' du' : '') + '"><b>' + (i + 1) + '</b><i style="background:' + hexCss(c.color) + '"></i><span>' + esc(twCode(c)) + '</span><em>' + txt + '</em></div>';
       prev = i;
     }
     if (h !== tw.html) { tw.html = h; $('h-tower').innerHTML = h; }

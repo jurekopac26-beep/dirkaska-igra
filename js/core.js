@@ -1871,6 +1871,28 @@ const Core = (function () {
   /* ---------------------------------------------------------------------
      AI
      --------------------------------------------------------------------- */
+  // the characters (opts.chars): how aggressive the driver is now (in a duel with the player, or the player's standing rival: more); a
+  // careful one waits behind for room to pass (no corner soon) unless much quicker; an aggressive one, with a car close
+  // behind it before a braking zone, covers the inside of the corner (once, held through the braking, not again for a few seconds)
+  const aiAgg = (c) => { const ch = c.chr; return Math.min(1, ch.agg + (ch.duelOn ? 0.2 : 0) + (ch.rival ? 0.15 : 0)); };
+  function aiWaits(c, o, race, v) {
+    const a = aiAgg(c); if (a >= 0.6) return false;
+    const T = race.track, vp = c.vprof || race.vprof, room = vp[T.idx(c.q.s + 50)] >= v - 3 && vp[T.idx(c.q.s + 100)] >= v - 3;
+    return !room && v - Math.max(0, o.vl) < 4 + 8 * (0.6 - a);
+  }
+  function aiDefend(c, race, v) {
+    const ch = c.chr, T = race.track, dt = 0.15; ch.defCool = Math.max(0, ch.defCool - dt);
+    if (ch.defT > 0) { ch.defT -= dt; return ch.defSide; }
+    if (ch.agg + (ch.rival ? 0.15 : 0) < 0.5 || ch.defCool > 0 || v < 15 || c.inPit || c.pitWant || race.state !== 'racing') return null;   // (a careful one never)
+    let chaser = null; for (const o of race.cars) { if (o === c || o.finished || o.inPit) continue; const g = c.dist - o.dist; if (g > 2 && g < 14 && o.vl > v - 1 && Math.abs(o.q.d - c.q.d) < 1.6) { chaser = o; break; } }   // (right behind, not yet alongside)
+    if (!chaser) return null;
+    const vp = c.vprof || race.vprof; let ai = -1, lo = 1e9;
+    for (let d = 30; d <= 110; d += 10) { const i = T.idx(c.q.s + d), w = vp[i]; if (w < lo) { lo = w; ai = i; } }
+    if (!(lo < v - 6) || ai < 0) return null;   // (no braking zone ahead)
+    const inside = Math.sign(T.rl[ai]) * (T.w - 1.6); if (!inside) return null;
+    ch.defSide = clamp(inside - T.rl[c.q.i], -2 * T.w, 2 * T.w); ch.defT = 2.4; ch.defCool = 6;
+    return ch.defSide;
+  }
   const _tfv = {};
   function aiControl(c, race, dt) {
     const T = race.track, M = c.m, A = c.assist;
@@ -1894,16 +1916,17 @@ const Core = (function () {
       c.aiThreat = threat; c.aiGap = tgap;
       if (race.tf) { const P = race.tf.aiPlan(c, v, _tfv); c.tfLo = P.lo; c.tfHi = P.hi; c.tfFol = P.fol; c.tfEdge = P.edge; }   // the open road: the corridor between the traffic, or behind it
       if (threat && race.fl && !(threat.fl && threat.fl.stopT > 0) && (c.sc || race._noPass(c))) { target = c.laneBias; c.passing = 0; }   // (a yellow flag or the safety car: no overtaking, stay in line; a stopped car is passed)
-      else if (threat) {
+      else if (threat && !(c.chr && aiWaits(c, threat, race, v))) {
         const rlHere = T.rl[q.i];
         const oPos = threat.q.d;
         // choose side with more room
         const roomL = oPos - (-T.w + 1.2), roomR = (T.w - 1.2) - oPos;
         const side = roomR > roomL ? 1 : -1;
-        const want = oPos + side * (M.aiPass || 3.3);   // (aiPass: the formula passes wider)
+        const want = oPos + side * (M.aiPass || 3.3) * (c.chr ? 1.08 - 0.16 * aiAgg(c) : 1);   // (aiPass: the formula passes wider; an aggressive driver a little closer)
         target = clamp(want - rlHere, -2 * T.w, 2 * T.w);
         c.passing = 1;
       } else c.passing = 0;
+      if (c.chr && !c.passing) { const d = aiDefend(c, race, v); if (d != null) target = d; }   // (a car close behind before a braking zone: an aggressive one covers the inside)
       c.aiOffT = target;
     }
     c.aiOff += clamp(c.aiOffT - c.aiOff, -3.2 * dt, 3.2 * dt);
@@ -1967,6 +1990,7 @@ const Core = (function () {
     // if displaced from line, be a little more careful
     if (offErr > 2.5) vT *= 0.94;
     if (c.passing) vT *= 1.01;
+    if (c.chr && c.chr.mist > 0) { c.chr.mist -= dt; vT *= c.chr.mk; }   // (a mistake under pressure: in too fast, wide)
     if (c.pitWant && T.def.pit) { const pz = T.pitAt(q.s + v * 0.8 + 6), pn = T.pitAt(q.s); if (pz || c.inPit) vT = Math.min(vT, (pz && pz.t < 0.98) || (pn && pn.t < 0.98) ? 15 : PIT_V * 0.97); }   // (easy through the S of the way in and out)
     { const o = c.aiThreat, g0 = M.aiGap || 3; if (o && c.aiGap < g0 + 6 && Math.abs(o.q.d - q.d) < 2.1) vT = Math.min(vT, Math.max(0, o.vl) + Math.max(0, c.aiGap - g0) * 0.8); }
     if (c.tfFol) { const F = c.tfFol, g = (F.o.m ? F.o.q.s : F.o.s) - q.s - M.len / 2 - F.len / 2; vT = Math.min(vT, Math.sqrt(F.vs * F.vs + (c.phys === 'cs' ? 10 : 7) * Math.max(0, g - 8))); }   // (the open road: no way past yet, behind it)   // right behind someone with no gap yet: follow, don't ram (M.aiGap: the formula keeps a longer gap)
@@ -1991,6 +2015,13 @@ const Core = (function () {
     if (v < vT - 0.8) thr = 1;
     else if (v < vT + 0.6) thr = 0.45;
     else { thr = 0; brk = clamp((v - vT) / 4.5, 0.15, 1); }
+    if (c.chr && !c.isPlayer) {   // a braking zone begins (once: until back on the throttle): a car under pressure (someone right behind for 4 s) may get it wrong, the more nervous the likelier
+      const ch = c.chr;
+      if (brk > 0.3 && !ch.brk) {
+        ch.brk = true;
+        if (v > 20 && ch.press > 4 && race.chr && race.state === 'racing' && !c.inPit && !c.pitWant && Math.random() < ch.err * 0.06) { ch.mist = 1.3; ch.mk = 1.1 + 0.06 * ch.err; ch.press = 0; race._chrEv('mistake', c); }
+      } else if (thr > 0.4) ch.brk = false;
+    }
     // don't stamp on the brakes while turning hard or sliding
     if (c.phys === 'cs') brk *= 1 - 0.3 * Math.min(1, Math.abs(c.inSteer));   // cs: trail-braking is stable (the slide is the design)
     else {
@@ -2674,6 +2705,10 @@ const Core = (function () {
      RACE
      --------------------------------------------------------------------- */
   const DRIVER_NAMES = ['M. Kovač', 'T. Hayashi', 'L. Rossi', 'J. Novak', 'K. Weber', 'A. Silva', 'R. Horvat', 'S. Tanaka', 'P. Dubois', 'N. Petek', 'E. Lindqvist', 'G. Moretti', 'D. Zupan', 'H. Kimura', 'F. Keller', 'O. Nieminen', 'B. Kranjc', 'C. Duarte', 'I. Kowalski', 'V. Andersen'];
+  // each driver's character (opts.chars), the same in every race: [agg 0 careful .. 1 aggressive, err 0 cool .. 1 cracks under pressure]
+  const DRIVER_CHAR = [[0.8, 0.2], [0.3, 0.1], [0.9, 0.65], [0.2, 0.3], [0.5, 0.2], [0.85, 0.35], [0.6, 0.55], [0.25, 0.15], [0.55, 0.75], [0.7, 0.4],
+    [0.35, 0.2], [0.75, 0.6], [0.4, 0.45], [0.3, 0.25], [0.65, 0.3], [0.5, 0.65], [0.8, 0.5], [0.45, 0.35], [0.6, 0.25], [0.2, 0.55]];
+  const driverChar = (k) => { const d = DRIVER_CHAR[((k % DRIVER_CHAR.length) + DRIVER_CHAR.length) % DRIVER_CHAR.length]; return { agg: d[0], err: d[1] }; };
   const AI_COLORS = [0xe8e8ee, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xf07a1a, 0x9a2bd8, 0x19b7c7, 0xd81f45, 0xc9c3b0, 0x6b8e23, 0xff5fa2, 0x3b3fa8, 0x8a1c2b, 0x0f5e4e, 0x8ec9e8, 0xb87333, 0x6b737c, 0xb4dc2c, 0xc2187a];
   const CAR_NUMS = [7, 3, 11, 21, 5, 44, 9, 16, 27, 8, 12, 33, 2, 55, 14, 23, 31, 46, 63, 77, 88];   // by grid slot (the player's own number replaces the one of its slot)
   // the AI drivers in grid order (the fastest first): name, car and colour are the same in every race (a championship's standings follow them)
@@ -2717,7 +2752,7 @@ const Core = (function () {
       const aiSpecs = [];
       for (let k = 0; k < nAI; k++) {
         const skill = lerp(diff[1], diff[0], k / Math.max(1, nAI - 1)) + (R() - 0.5) * 0.012;
-        aiSpecs.push(Object.assign({ skill }, aiDriver(k), oneMake ? { model: oneMake } : null));   // (a formula race: the same drivers, in formulas)
+        aiSpecs.push(Object.assign({ skill, rk: k }, aiDriver(k), oneMake ? { model: oneMake } : null));   // (a formula race: the same drivers, in formulas)
       }
       // grid: fastest first
       let ai = 0;
@@ -2733,6 +2768,11 @@ const Core = (function () {
           const s = aiSpecs[order ? order[ai++] : ai++];
           c = new Car(s.model, { id: g, name: s.name, color: s.color, skill: s.skill, assist: opts.phys === 'cs' ? CSK.aiAssist : 1, arcade: true, phys: opts.phys, laneBias: (R() - 0.5) * 1.6 });
           c.skCap = s.model.id === 'pico' ? 1.0 : opts.phys === 'cs' ? CSK.aiSkCap : 1.14;   // no point pushing a car past what it can hold (the light pico understeers into the walls beyond the line's own pace)
+          if (opts.chars) {   // a character (in an object: the golden references digest only the plain fields); the player's standing rival (opts.rival: its roster index) a touch quicker
+            const d = driverChar(s.rk), rv = opts.rival === s.rk;
+            c.chr = { k: s.rk, agg: d.agg, err: d.err, rival: rv, press: 0, mist: 0, mk: 1, brk: false, defT: 0, defCool: 0, duel: 0, duelOn: false };
+            if (rv) c.skill += 0.012;
+          }
         }
         c.grid = g; c.num = CAR_NUMS[(g - 1) % CAR_NUMS.length]; if (playerGrid > 0 && !c.isPlayer && c.num === opts.playerNum) c.num = CAR_NUMS[(playerGrid - 1) % CAR_NUMS.length];   // (not the player's own number: that car takes the one of the player's slot)
         c.rubber = 1;
@@ -2742,6 +2782,7 @@ const Core = (function () {
       }
       if (this.player) this.player.num = opts.playerNum || 1;
       if (this.remote) this.remote.num = RM.num || 2;
+      if (opts.chars) this.chr = { q: [] };   // the characters' events for the game ({ k, c }, taken by it): 'mistake' (under pressure), 'duel' and 'duelEnd' (with the player)
       // winter (opts.winter): cold tarmac grips a little less (x0.94), a gravel road packed with snow much less (x0.74): on every car's grip and the AI's profile
       this.cold = { gk: opts.winter ? (track.def.roadSurface === 'makadam' ? 0.74 : 0.94) : 1 };   // (in an object: the golden references digest only the plain fields)
       this.rain = 0; this._wet(opts.rain);
@@ -3045,6 +3086,24 @@ const Core = (function () {
       });
       for (let i = 0; i < this.order.length; i++) this.order[i].pos = i + 1;
       if (this.fl) this._flags(dt);
+      if (this.chr && this.state === 'racing') this._duels(dt);
+    }
+
+    // ---- the characters (opts.chars): a duel with the player (a rival within 25 m for 15 s, not in the start's crowd; over when 80 m
+    // apart or at the line); the pressure on a car with another right behind it, a mistake from it at a braking zone (see aiControl) ----
+    _chrEv(k, c) { const q = this.chr.q; q.push({ k, c }); if (q.length > 24) q.shift(); }
+    _duels(dt) {
+      const P = this.player;
+      for (const c of this.cars) {
+        const ch = c.chr; if (!ch) continue;
+        let near = false; for (const o of this.cars) { if (o === c || o.finished || o.inPit) continue; const g = c.dist - o.dist; if (g > 1 && g < 10 && o.speed > 12) { near = true; break; } }   // (someone right behind)
+        ch.press = near && !c.inPit ? ch.press + dt : Math.max(0, ch.press - dt * 0.5);
+        if (!P) continue;
+        const gp = Math.abs(c.dist - P.dist), on = !c.finished && !P.finished && !c.inPit && !P.inPit && this.time > 25 && Math.abs(c.pos - P.pos) === 1;   // (the car just ahead of the player or just behind)
+        ch.duel = on && gp < 25 ? ch.duel + dt : Math.max(0, ch.duel - dt * 2);
+        if (!ch.duelOn && ch.duel > 15 && !this.cars.some(o => o.chr && o.chr.duelOn)) { ch.duelOn = true; this._chrEv('duel', c); }   // (one duel at a time)
+        else if (ch.duelOn && (gp > 80 || c.finished || P.finished)) { ch.duelOn = false; ch.duel = 0; this._chrEv('duelEnd', c); }
+      }
     }
 
     // ---- pit lane: 60 km/h limit, the car pulls up at its box, the crew repairs it (time depends on the damage), then off you go ----
@@ -3358,7 +3417,7 @@ const Core = (function () {
   // the price of an upgrade from level `from` to level `to` (the levels in between too)
   const careerUpgPrice = (from, to) => { let p = 0; for (let l = from + 1; l <= to; l++) p += CAREER.upg[l] || 0; return p; };
 
-  return { G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, SURF, Car, Race, wallCollide, carCollide, aiControl, tire, DRIVER_NAMES, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
+  return { G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, SURF, Car, Race, wallCollide, carCollide, aiControl, tire, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, CAREER, careerPrize, careerUpgPrice };
 })();
 

@@ -223,13 +223,12 @@
   "instances": 50041,
   "props": 80,
   "crowd": 5617,
-  "world": "c06049d8",
+  "world": "531f3618",
   "propsHash": "5faf0407",
   "floor": "b3d517c3/14000",
   "groups": {
-   "-:MeshLambertMaterial": "b25dcab7",
+   "-:MeshLambertMaterial": "7f75a742",
    "-:MeshBasicMaterial": "7ae03018",
-   "-:MeshPhongMaterial": "4a03e534",
    "crowd:MeshLambertMaterial": "f4d17e82",
    "tyremarks:MeshBasicMaterial": "9a5c2c1e",
    "roadwear:MeshLambertMaterial": "ba5b3985"
