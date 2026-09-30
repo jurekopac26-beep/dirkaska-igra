@@ -483,6 +483,7 @@ select.txt:disabled { opacity: .75; }
 #h-tyre { display: none; margin-top: 3px; padding: 1px 6px; border-radius: 9px; border: 2px solid #ffd23f; background: rgba(10, 13, 18, .62); color: #fff; font: 700 italic clamp(9px, 2.5vh, 12px)/1.25 var(--f-ui); text-shadow: 0 1px 2px #000; white-space: nowrap; pointer-events: none; font-variant-numeric: tabular-nums; }
 #h-tyre.on { display: inline-block; }
 #h-tyre.wet { border-color: #4fa8ff; }
+#h-tyre.cS { border-color: #e8352b; } #h-tyre.cM { border-color: #f2c616; } #h-tyre.cH { border-color: #f4f4f0; }   /* (the slicks' compound, as the band on a formula's tyres) */
 #h-tyre.worn { color: #ffb347; }
 #h-tyre.bad { background: rgba(190, 30, 30, .78); }
 /* flags: a yellow flag, the safety car board, the countdown to give a place back */
@@ -532,3 +533,18 @@ select.txt:disabled { opacity: .75; }
 @media (orientation: landscape) { #pk-cer { top: 12%; padding: 8px 14px; } .pkc-flag { transform: scale(.8); margin: -6px auto -2px; } .pkc-time { font-size: clamp(30px, 11vh, 44px); } }
 @media (prefers-reduced-motion: reduce) { #pk-cer.show, .pkc-flag i, .pkc-rec { animation: none; } }
 
+
+/* the slicks for the next pit stop (the pause, a race with tyres); rows of choices too wide for their panel get smaller (game.js fitSegs) */
+.pit-row { margin-top: 12px; }
+.wx-row .seg button, .pit-row .seg button { white-space: nowrap; }
+.seg.tight button { padding-left: 5px; padding-right: 5px; font-size: 12px; }
+.seg.tighter button { padding-left: 4px; padding-right: 4px; font-size: 10.5px; }
+/* the replay's highlights (Najboljši trenutki): the moment's caption above the bar, the button lit while they play */
+#rp-hl-cap { position: absolute; left: 50%; bottom: calc(80px + var(--sb)); transform: translateX(-50%); max-width: calc(100% - 24px); padding: 7px 14px; border-radius: 6px; background: rgba(12,16,40,.78); font: 700 italic clamp(13px, 3.4vh, 19px)/1.25 var(--f-ui); color: var(--chalk); text-align: center; pointer-events: none; }
+#rp-hl-cap small { display: block; font-size: .7em; letter-spacing: .1em; color: #ffcf2e; }
+#replay-ui .rp-bar #rp-hl.on { background: rgba(255,207,46,.85); color: #14181f; border-color: #fff; }
+@media (max-width: 600px) {   /* a phone upright: the replay's buttons in two rows, the progress and the caption above them */
+  #replay-ui .rp-bar { flex-wrap: wrap; justify-content: center; width: calc(100% - 24px); }
+  #replay-ui .rp-prog { bottom: calc(114px + var(--sb)); }
+  #rp-hl-cap { bottom: calc(128px + var(--sb)); }
+}

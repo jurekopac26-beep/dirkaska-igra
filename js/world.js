@@ -9311,21 +9311,46 @@ const World = (function () {
     for (const t of tk) t.addTo(root, true);
     for (const t of tf) t.addTo(root, false);
 
-    /* ---- terrain tiles and the grass verges out past the barriers (256 m chunks), coloured now; the verges mown in stripes across the track ---- */
+    /* ---- terrain tiles and the grass verges out past the barriers (256 m chunks), coloured now; mown in stripes along the track (as at the
+       Red Bull Ring and Suzuka): MOW_W m bands on the verge inside the barrier, light and dark in turn from 1.2 m past the edge, and MOW_B dark
+       bands on the open lawns out past the barrier from 3.5 m behind it (the terrain's own colour and grass, fading out 20-36 m out, 5 cm over
+       the ground): not in the woods, the scrub or by the villages, under the stands and buildings, by the brook, where another leg of the track
+       is nearer, where the inside of a bend would fold them, nor on the pit lane's side ---- */
     let nTiles = 0;
     {
       const grp = new THREE.Group(); root.add(grp); out.ground = grp;
       for (let k = 0; k < tiles.length; k += 3) { const m = new THREE.Mesh(nrTileGeo(tiles[k], tiles[k + 1], tiles[k + 2] === 1 ? 1 : 4), gMat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m); nTiles++; }
-      const vA = [0.93, 1.1, 0.9], vB = [0.82, 0.97, 0.8];   // the mower's stripes, 6 m wide along the track
+      const vA = [0.93, 1.1, 0.9], vB = [0.82, 0.97, 0.8], MOW_D = vB.map((v, k) => 1 - v / vA[k]);   // the mower's stripes: light, dark (and how much darker)
+      const MOW_W = 3, MOW_N = 6, MOW_B = 5, MOW_O = 3.5, bandC = (b) => (b % 2 ? vA : vB), PD = def.pit, pitSd = PD ? Math.sign(PD[0]) : 0;
+      const own = (x, z, i) => { const n = nrNear(x, z), d = Math.abs(n.i - i); return n.i >= 0 && Math.min(d, N - d) < 30; };
+      const mowPt = (i, side, o) => { const p = Pt(i, side * o, 0), x = p[0], z = p[2]; if (excluded(x, z) || inBrook(x, z, 4) || !own(x, z, i)) return null;
+        const f = (1 - nrLCf(x, z, 1)) * (1 - nrLCf(x, z, 2)) * (1 - nrLCf(x, z, 3)) * sstep(36, 20, o - (side > 0 ? T.br[i] : T.bl[i])), c = nrGCol(x, z);
+        return f < 0.05 ? null : { p: [x, nrGround(x, z) + 0.05, z], c: c.map((v, k) => v * (1 - MOW_D[k] * f)) }; };
       for (let c0 = 0; c0 < N; c0 += CH) {
-        const gv = new RB(true), pv = [-1, -1];
+        const gv = new RB(true), pv = [-1, -1], pw = [null, null], pm = [new Array(MOW_B).fill(-1), new Array(MOW_B).fill(-1)];
         for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++) {
-          const i = ii % N, vg = Math.floor(ii * ds / 6) & 1 ? vA : vB;
+          const i = ii % N;
           for (const side of [-1, 1]) {
-            const si = side2(side), vr = spaVerge(i, side), pts = vr.map(([o, h]) => Pt(i, side * o, h)), cols = vr.map(([o], k) => { const p = pts[k]; if (k < 3) return vg; const gc = nrGCol(p[0], p[2]); return k === 3 ? [lerp(vg[0], gc[0], 0.5), lerp(vg[1], gc[1], 0.5), lerp(vg[2], gc[2], 0.5)] : gc; });
+            const si = side2(side), bar = side > 0 ? T.br[i] : T.bl[i], fold = side * T.k[i] > 0 ? 0.7 / Math.abs(T.k[i]) : 1e9;
+            const pit = side === pitSd && (T.pitAt(i * ds) || T.pitAt(i * ds + 25) || T.pitAt(i * ds - 25));
+            for (let b = 0; b < MOW_B; b++) {   // the lawns out past the barrier
+              const oa = bar + 3.5 + b * 2 * MOW_O, ob = oa + MOW_O, A = !pit && ob < fold ? mowPt(i, side, oa) : null, B = A ? mowPt(i, side, ob) : null;
+              if (!B) { pm[si][b] = -1; continue; }
+              const q = side > 0 ? [A, B] : [B, A], r = gv.row(q.map(e => e.p), q.map(e => e.c), q.map(e => [e.p[0] / 14, -e.p[2] / 14]));
+              if (pm[si][b] >= 0) gv.link(pm[si][b], r, 0, 1); pm[si][b] = r;
+            }
+            // the verge inside the barrier: its cross-section with the bands' edges on it (each edge twice: a sharp change of colour)
+            const vr = spaVerge(i, side), [o1, h1] = vr[1], [o2, h2] = vr[2], band = [], bc = [];
+            for (let b = 1; b <= MOW_N; b++) { const o = Math.min(o1 + b * MOW_W, o2), h = h1 + (h2 - h1) * (o - o1) / Math.max(1e-6, o2 - o1); band.push([o, h], [o, h]); bc.push(bandC(b), bandC(b + 1)); }
+            const bo = Math.max(1, Math.min(MOW_N + 1, Math.ceil((o2 - o1) / MOW_W - 1e-6)));   // (the band the verge ends in)
+            const pr = [vr[0], vr[1], ...band, vr[2], vr[3], vr[4]], pts = pr.map(([o, h]) => Pt(i, side * o, h)), nL = pr.length;
+            const g3 = nrGCol(pts[nL - 2][0], pts[nL - 2][2]), g4 = nrGCol(pts[nL - 1][0], pts[nL - 1][2]), vg = bandC(bo);
+            const cols = [vA, bandC(1), ...bc, vg, [lerp(vg[0], g3[0], 0.5), lerp(vg[1], g3[1], 0.5), lerp(vg[2], g3[2], 0.5)], g4];
             const ordered = side > 0 ? { p: pts, c: cols } : { p: pts.slice().reverse(), c: cols.slice().reverse() };   // rows run left -> right
             const rv = gv.row(ordered.p, ordered.c, ordered.p.map(p => [p[0] / 14, -p[2] / 14]));   // (the terrain tiles' grass scale: no seam)
-            if (pv[si] >= 0) gv.link(pv[si], rv, 0, 4); pv[si] = rv;
+            const ow = side > 0 ? pr.map(e => e[0]) : pr.map(e => e[0]).reverse(), qw = pw[si];
+            if (pv[si] >= 0) for (let k = 0; k < nL - 1; k++) if (Math.abs(ow[k + 1] - ow[k]) > 1e-3 || Math.abs(qw[k + 1] - qw[k]) > 1e-3) gv.link(pv[si], rv, k, k + 1);   // (not the bands of no width)
+            pv[si] = rv; pw[si] = ow;
           }
         }
         addM(gv, gMat);
@@ -10945,9 +10970,14 @@ const World = (function () {
     const CH = 128, offs = [-w, -w * 2 / 3, -w / 3, 0, w / 3, w * 2 / 3, w], tileL = 8;
     const shade = (i, o) => { const rl = T.rl[i]; let k = 0.86 - 0.15 * Math.exp(-((o - rl) * (o - rl)) / 5); if (Math.abs(o) > w * 0.92) k -= 0.03; return [k, k, k * 1.02]; };
     const vg = [0.97, 1.05, 0.92], conc = [0.74, 0.74, 0.72];
+    // the verge inside the barriers mown in stripes along the track (as at the Red Bull Ring): MOW_W m bands, light and dark in turn from 1.2 m
+    // past the edge (the dark ones a deeper green); each band's edge twice in the cross-section (a sharp change of colour), the quads of no width
+    // left out. (The lawns out past the barriers: striped at the end, once the stands and buildings stand.)
+    const MOW_D = [0.22, 0.15, 0.18], vgD = vg.map((v, k) => v * (1 - MOW_D[k])), MOW_W = 3, MOW_N = 6, MOW_B = 5, MOW_O = 3.5, bandC = (b) => (b % 2 ? vg : vgD);
     for (let c0 = 0; c0 < N; c0 += CH) {
       const gr = new RB(true), gl = new RB(), gv = new RB(true), gk = new RB(true), gs = new RB(true), grB = new RB(true), glB = new RB(), gvB = new RB();
       let pr = -1, pl = -1, pv = [-1, -1], pk = [-1, -1], ps = [-1, -1], prB = -1, plB = -1, pvB = [-1, -1], pd = false;
+      const pw = [null, null];
       for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++) {
         const i = ii % N, v = ii * ds / tileL, deck = !!onDeck(i), both = deck && pd; pd = deck;
         // (a quad between two rows on the bridge goes into the bridge meshes instead)
@@ -10958,12 +10988,21 @@ const World = (function () {
         if (pl >= 0 && !both) { gl.link(pl, l, 0, 1); gl.link(pl, l, 2, 3); } pl = l;
         if (lB >= 0 && plB >= 0) { glB.link(plB, lB, 0, 1); glB.link(plB, lB, 2, 3); } plB = lB;
         for (const side of [-1, 1]) {
-          const si = side > 0 ? 1 : 0, vr = SZ.verge(i, side), pts = vr.map(([o, h]) => Pt(i, side * o, h));
-          const cols = vr.map(([o], k) => { if (deck) return conc; const p = pts[k]; if (k < 3) return vg; const gc = szGCol(p[0], p[2]); return k === 3 ? [lerp(vg[0], gc[0], 0.5), lerp(vg[1], gc[1], 0.5), lerp(vg[2], gc[2], 0.5)] : gc; });
+          const si = side > 0 ? 1 : 0, vr = SZ.verge(i, side), [o1, h1] = vr[1], [o2, h2] = vr[2], band = [], bc = [];
+          for (let b = 1; b <= MOW_N; b++) { const o = Math.min(o1 + b * MOW_W, o2), h = h1 + (h2 - h1) * (o - o1) / Math.max(1e-6, o2 - o1); band.push([o, h], [o, h]); bc.push(bandC(b), bandC(b + 1)); }
+          const bo = Math.max(1, Math.min(MOW_N + 1, Math.ceil((o2 - o1) / MOW_W - 1e-6)));   // (the band the verge ends in)
+          const pv5 = [vr[0], vr[1], ...band, vr[2], vr[3], vr[4]], pts = pv5.map(([o, h]) => Pt(i, side * o, h)), nL = pv5.length;
+          let cols;
+          if (deck) cols = pv5.map(() => conc);
+          else { const g3 = szGCol(pts[nL - 2][0], pts[nL - 2][2]), g4 = szGCol(pts[nL - 1][0], pts[nL - 1][2]); cols = [vg, bandC(1), ...bc, bandC(bo), [lerp(vg[0], g3[0], 0.5), lerp(vg[1], g3[1], 0.5), lerp(vg[2], g3[2], 0.5)], g4]; }
           const ordered = side > 0 ? { p: pts, c: cols } : { p: pts.slice().reverse(), c: cols.slice().reverse() };   // rows run left -> right
           const rv = gv.row(ordered.p, ordered.c, ordered.p.map(p => [p[0] / 14, -p[2] / 14]));   // (the terrain tiles' grass scale: no seam)
-          if (pv[si] >= 0 && !both) gv.link(pv[si], rv, 0, 4); pv[si] = rv;
-          const rvB = deck ? gvB.row(ordered.p, ordered.c) : -1; if (rvB >= 0 && pvB[si] >= 0) gvB.link(pvB[si], rvB, 0, 4); pvB[si] = rvB;
+          const ow = side > 0 ? pv5.map(e => e[0]) : pv5.map(e => e[0]).reverse(), qw = pw[si];
+          const wide = (k) => Math.abs(ow[k + 1] - ow[k]) > 1e-3 || Math.abs(qw[k + 1] - qw[k]) > 1e-3;
+          if (pv[si] >= 0 && !both) for (let k = 0; k < nL - 1; k++) if (wide(k)) gv.link(pv[si], rv, k, k + 1);
+          pv[si] = rv;
+          const rvB = deck ? gvB.row(ordered.p, ordered.c) : -1; if (rvB >= 0 && pvB[si] >= 0) for (let k = 0; k < nL - 1; k++) if (wide(k)) gvB.link(pvB[si], rvB, k, k + 1);
+          pvB[si] = rvB; pw[si] = ow;
           if (kerb[si][i]) {   // red / white kerb, raised a little towards its outer edge
             const kp = side > 0 ? [Pt(i, w - 0.02, 0.04), Pt(i, w + T.curbW, 0.085)] : [Pt(i, -(w + T.curbW), 0.085), Pt(i, -w + 0.02, 0.04)];
             const rk = gk.row(kp, [[1, 1, 1], [1, 1, 1]], side > 0 ? [[0, ii * ds / 3], [1, ii * ds / 3]] : [[1, ii * ds / 3], [0, ii * ds / 3]]);
@@ -11334,6 +11373,33 @@ const World = (function () {
 
     // knockable tyre walls and roadside posts (not on the main straight, round the crossover or on the grid)
     suzukaProps(out, (i, side, x, z) => mainStr(i) || nearX(i, 70) || excluded(x, z) || inRects(x, z));
+
+    // the lawns out past the barriers, mown in stripes too: MOW_B darker bands along the track from 3.5 m past the barrier (the terrain's own
+    // colour and grass, a deeper green, fading out 20-36 m out), 5 cm over the ground; not in the woods, the scrub or the car parks, under the
+    // stands and buildings, in the ponds, along the main straight (the stands, the pits), round the crossover, where another leg of the track is
+    // nearer, nor where the inside of a bend would fold them
+    {
+      const own = (x, z, i) => { const n = szNear(x, z), d = Math.abs(n.i - i); return n.i >= 0 && Math.min(d, N - d) < 30; };
+      const mowPt = (i, side, o) => { const p = Pt(i, side * o, 0), x = p[0], z = p[2]; if (excluded(x, z) || inRects(x, z) || szPond(x, z) || !own(x, z, i)) return null;
+        const f = (1 - szLCf(x, z, 1)) * (1 - szLCf(x, z, 2)) * (1 - szLCf(x, z, 3)) * sstep(36, 20, o - (side > 0 ? T.br[i] : T.bl[i])), c = szGCol(x, z);
+        return f < 0.05 ? null : { p: [x, szGround(x, z) + 0.05, z], c: c.map((v, k) => v * (1 - MOW_D[k] * f)) }; };
+      for (let c0 = 0; c0 < N; c0 += CH) {
+        const gv = new RB(true), pm = [new Array(MOW_B).fill(-1), new Array(MOW_B).fill(-1)];
+        for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++) {
+          const i = ii % N, skip = mainStr(i) || nearX(i, 60);
+          for (const side of [-1, 1]) {
+            const si = side > 0 ? 1 : 0, bar = side > 0 ? T.br[i] : T.bl[i], fold = side * T.k[i] > 0 ? 0.7 / Math.abs(T.k[i]) : 1e9;
+            for (let b = 0; b < MOW_B; b++) {
+              const oa = bar + 3.5 + b * 2 * MOW_O, ob = oa + MOW_O, A = !skip && ob < fold ? mowPt(i, side, oa) : null, B = A ? mowPt(i, side, ob) : null;
+              if (!B) { pm[si][b] = -1; continue; }
+              const q = side > 0 ? [A, B] : [B, A], r = gv.row(q.map(e => e.p), q.map(e => e.c), q.map(e => [e.p[0] / 14, -e.p[2] / 14]));
+              if (pm[si][b] >= 0) gv.link(pm[si][b], r, 0, 1); pm[si][b] = r;
+            }
+          }
+        }
+        addM(gv, gMat);
+      }
+    }
 
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);

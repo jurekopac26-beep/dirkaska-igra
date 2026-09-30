@@ -351,12 +351,14 @@ const Render = (function () {
     fRod(g, [-0.3, 0.1, 0], [-0.78, 0.04, 0], 0.07, [0.62, 0.6, 0.56]);
     const geo = g.geometry(); geo.translate(0, 0.012, 0); return geo;
   }
-  // formula wheel (axle along z): a slick with the compound band on the sidewall (red soft; green intermediate in the rain), a dark rim,
-  // a flat aero cover with two lighter spokes (so the spin shows) and a gold nut (12 sides: ~200 triangles, a phone draws 52 of them)
-  const fWheelCache = new Map();
-  function fWheelGeo(r, wd, wet) {
-    const key = r + '|' + wd + '|' + (wet ? 1 : 0); if (fWheelCache.has(key)) return fWheelCache.get(key);
-    const g = new GB(), S = 12, T = [0.075, 0.075, 0.08], B = wet ? [0.12, 0.66, 0.24] : [0.88, 0.13, 0.1], RIM = [0.22, 0.22, 0.24], CV = [0.13, 0.13, 0.14], CV2 = [0.34, 0.34, 0.36], NUT = [0.86, 0.72, 0.12];
+  // formula wheel (axle along z): a slick with the compound band on the sidewall (red soft, yellow medium, white hard (Core.TYRE_CMP), green
+  // on the rain tyres), a dark rim, a flat aero cover with two lighter spokes (so the spin shows) and a gold nut (12 sides: ~200 triangles,
+  // a phone draws 52 of them)
+  const fWheelCache = new Map(), F_WET = 0x1fa83d, F_SOFT = 0xe02119;
+  const tyreCol = (c) => c.ty ? (c.ty.k === 'wet' ? F_WET : c.ty.c ? Core.TYRE_CMP[c.ty.c].col : F_SOFT) : c.wet < 0.9 ? F_WET : F_SOFT;   // (no tyres in the race: wets in the rain, else softs)
+  function fWheelGeo(r, wd, col) {
+    const key = r + '|' + wd + '|' + col; if (fWheelCache.has(key)) return fWheelCache.get(key);
+    const g = new GB(), S = 12, T = [0.075, 0.075, 0.08], B = colArr(col), RIM = [0.22, 0.22, 0.24], CV = [0.13, 0.13, 0.14], CV2 = [0.34, 0.34, 0.36], NUT = [0.86, 0.72, 0.12];
     const h = wd / 2, p = (a, z, rr) => [Math.cos(a) * rr, Math.sin(a) * rr, z];
     for (let i = 0; i < S; i++) {
       const a0 = i / S * Math.PI * 2, a1 = (i + 1) / S * Math.PI * 2;
@@ -663,7 +665,7 @@ const Render = (function () {
     } else if (M.body === 'formula') {
       fp = fPartMeshes(car, bodyG);
       for (const sd of [-1, 1]) {   // open wheels: all four separate (they steer and spin; the pit crew changes them)
-        const f = new THREE.Mesh(fWheelGeo(F_HUB.fr, F_HUB.fw, car.wet < 1), matWheel), r = new THREE.Mesh(fWheelGeo(F_HUB.rr, F_HUB.rw, car.wet < 1), matWheel);
+        const f = new THREE.Mesh(fWheelGeo(F_HUB.fr, F_HUB.fw, tyreCol(car)), matWheel), r = new THREE.Mesh(fWheelGeo(F_HUB.rr, F_HUB.rw, tyreCol(car)), matWheel);
         f.position.set(M.a, F_HUB.fr, sd * F_HUB.fz); r.position.set(-M.b, F_HUB.rr, sd * F_HUB.rz); f.castShadow = r.castShadow = !!car.isPlayer;   // (a field of 13: the rivals' wheels cast none)
         grp.add(f, r); wf.push(f); wr.push(r);
       }
@@ -2085,9 +2087,11 @@ const Render = (function () {
       v.spin += c.vl * dt / M.rw;
       for (const w of v.wf) { w.rotation.set(0, -c.delta, -v.spin); }
       for (const w of v.wr) { w.rotation.set(0, 0, -v.spin); }
+      if (v.noHead && c.ty) { const tk = c.ty.k + (c.ty.c || ''); if (v.tyreK !== tk) {   // new tyres after a pit stop: their band on the sidewalls
+        const col = tyreCol(c); v.tyreK = tk; for (const w of v.wf) w.geometry = fWheelGeo(F_HUB.fr, F_HUB.fw, col); for (const w of v.wr) w.geometry = fWheelGeo(F_HUB.rr, F_HUB.rw, col); } }
       const braking = (c.inBrk > 0.08 && c.vl > 0.5 && c.gear !== -1) || c.gear === -1 || c.inHand > 0.5;
       const rainL = v.noHead && (wet > 0 || (braking && time % 0.25 < 0.125));   // the formula's rain light: on in the rain, blinking while it brakes (harvesting)
-      v.tail.material = (v.noHead ? rain : braking) ? matTailOn : matTailOff;
+      v.tail.material = (v.noHead ? rainL : braking) ? matTailOn : matTailOff;
       if (v.glb) v.glb.tail.emissive.setHex(braking ? 0xff1a0a : 0x3a0000);
       if (v.drsFlap) { v.drsK = (v.drsK || 0) + ((c.drs ? 1 : 0) - (v.drsK || 0)) * Math.min(1, dt * 12); v.drsFlap.rotation.z = 0.5 * v.drsK; }   // the rear wing's flap opens with DRS
       // light glows: soft warm headlights, red tail lights that flare when braking
@@ -2450,7 +2454,7 @@ const Render = (function () {
       // until it has gone 60 m past it, then a cut to the next; zoomed so the car fills about the same part of the picture
       const C = tvCams(curTrack), s = c.q && Number.isFinite(c.q.s) ? c.q.s : 0, L = curTrack.len, n = C.length;
       let k = Math.floor(s / 170) % n; if (curTrack.open) k = Core.clamp(k, 0, n - 1);
-      const P = C[k]; px = P.x; py = P.y; pz = P.z; tx = x; ty = (c.y || 0) + 0.7; tz = z;
+      const P = tvPost(curTrack, k); px = P.x; py = P.y; pz = P.z; tx = x; ty = (c.y || 0) + 0.7; tz = z;
       if (cam.tvK !== k) { cam.tvK = k; cam.tx = tx; cam.tz = tz; }
       cam.tx += (tx - cam.tx) * (1 - Math.exp(-dt * 9)); cam.tz += (tz - cam.tz) * (1 - Math.exp(-dt * 9)); tx = cam.tx; tz = cam.tz;   // (a camera operator's smooth pan)
       const d = Math.hypot(px - tx, py - ty, pz - tz), fov = Core.clamp(2 * Math.atan(6.5 / Math.max(1, d)) * 180 / Math.PI, 4, 55);
@@ -2507,9 +2511,32 @@ const Render = (function () {
       const side = Math.abs(ks) > 0.004 ? (ks > 0 ? -1 : 1) : (k % 2 ? 1 : -1), off = side * ((T.br ? Math.max(T.w, side > 0 ? T.br[i] : (T.bl ? T.bl[i] : T.w)) : T.w) + 14);
       const x = T.px[i] + T.nx[i] * off, z = T.pz[i] + T.nz[i] * off; let y = (T.hasElev && T.hy ? T.hy[i] : 0) + 9;
       if (world && world.groundH) { const g = world.groundH(x, z); if (Number.isFinite(g)) y = Math.max(y, g + 5); }
-      out.push({ x, y, z, s });
+      out.push({ x, y, z, s, side, i });
     }
     return (T._tv = out);
+  }
+  // a post has to see the road where the car comes to it from (trees, stands and buildings, a bank in the way): the first time it films, the
+  // place above is checked with rays into the world, else the other side of the track, nearer the barrier, higher up; the first that sees
+  // the road 100 m and 45 m before it and 30 m past it is kept (none: the place above)
+  let _tvRc = null;
+  function tvSees(x, y, z, tx, ty, tz) {
+    if (!world || !world.root) return true;
+    if (!_tvRc) _tvRc = { rc: new THREE.Raycaster(), o: new THREE.Vector3(), d: new THREE.Vector3() };
+    const R = _tvRc; R.o.set(x, y, z); R.d.set(tx - x, ty - y, tz - z); const len = R.d.length(); if (len < 6) return true;
+    R.rc.set(R.o, R.d.multiplyScalar(1 / len)); R.rc.near = 0.5; R.rc.far = len - 3;
+    for (const h of R.rc.intersectObject(world.root, true)) { const m = h.object.material; if (!m || m.transparent || m.alphaTest > 0 || !h.object.visible) continue; return false; }   // (fences and other see-through meshes: seen through)
+    return true;
+  }
+  function tvPost(T, k) {
+    const P = tvCams(T)[k]; if (P.ok) return P; P.ok = true;
+    const gy = (i) => (T.hasElev && T.hy ? T.hy[i] : 0), road = [-100, -45, 30].map(d => { const j = T.idx(P.s + d); return [T.px[j], gy(j) + 0.8, T.pz[j]]; });
+    const at = (side, ex, up) => { const i = P.i, bar = T.br ? (side > 0 ? T.br[i] : (T.bl ? T.bl[i] : T.w)) : T.w, off = side * (Math.max(T.w, bar) + ex), x = T.px[i] + T.nx[i] * off, z = T.pz[i] + T.nz[i] * off;
+      let y = gy(i) + up; if (world && world.groundH) { const g = world.groundH(x, z); if (Number.isFinite(g)) y = Math.max(y, g + up - 4); } return { x, y, z }; };
+    for (const [sd, ex, up] of [[1, 14, 9], [1, 5, 9], [-1, 14, 9], [-1, 5, 9], [1, 5, 15], [-1, 5, 15]]) {
+      const c = at(sd * P.side, ex, up);
+      if (road.every(r => tvSees(c.x, c.y, c.z, r[0], r[1], r[2]))) { P.x = c.x; P.y = c.y; P.z = c.z; break; }
+    }
+    return P;
   }
   // Pikes Peak's TV cameras (the replay, 'tv'): a helicopter's high tracking shot over the open road (over the lower ground beside the car,
   // a little behind it), fixed cameras at the famous places (Engineer's Corner, the W's seen from high up, Devil's Playground, Bottomless

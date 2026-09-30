@@ -693,6 +693,12 @@ const Core = (function () {
   // rain tyres have less on a dry road (and wear fast there); the right ones give the old grip (1 dry, WET in the rain). Worn out: 10 % less
   const TYRE_GRIP = { dry: (w) => 1 - 0.38 * w, wet: (w) => 0.9 - (0.9 - WET) * w };
   const tyreFor = (w) => w > 0.3 ? 'wet' : 'dry';   // the tyres to fit for a road with this much water
+  // compounds of the slicks (Race opts compounds): g x their grip, wr x their wear, loss: the grip lost when worn out (the medium is the
+  // slick above; the soft quicker and short-lived, the hard slower and lasting); col: the band on a formula's sidewalls (the renderer)
+  const TYRE_CMP = { S: { g: 1.035, wr: 2.2, loss: 0.22, col: 0xe03027 }, M: { g: 1, wr: 1, loss: 0.1, col: 0xf2c616 }, H: { g: 0.97, wr: 0.55, loss: 0.07, col: 0xeeeeee } };
+  const cmpFor = (left) => left < 8000 ? 'S' : left < 16000 ? 'M' : 'H';   // the slicks for so much racing (m) still to do
+  const cmpAI = (D, g) => D < 8000 ? (g % 4 === 3 ? 'M' : 'S') : D < 16000 ? 'SMMH'[g % 4] : (g % 3 ? 'M' : 'H');   // an AI car's at the start: by the race's length, a mix over the grid
+  const tyreK = (ty) => ty.k === 'dry' && ty.c ? TYRE_CMP[ty.c] : null;   // (a slick's compound, if the race has them)
   // every car's grip and turn (first measured from SWGP2 gameplay video for the old slide model; stepCS builds on amax, kv and rmin):
   //   amax  : lateral grip (g) - the video's cars corner at ~1.6-2.2 g
   //   kv    : how fast momentum swings toward the nose, per radian of slide (1/s)
@@ -1640,6 +1646,10 @@ const Core = (function () {
       this.wst = { on: !!(opts.tyres || WX), tyres: !!opts.tyres, water: this.rain, line: this.rain, profW: (this.rain ? 1 - (1 - WET) * this.rain : 1) * this.cold.gk, ev: 0, evK: '',
         wx: WX ? { at: Math.max(0, +WX.at || 0), dur: Math.max(1, +WX.dur || 60), r0: this.rain, r1: clamp(+WX.to || 0, 0, 1) } : null };
       if (opts.tyres) for (const c of this.cars) c.ty = { k: c.isPlayer && (opts.playerTyre === 'dry' || opts.playerTyre === 'wet') ? opts.playerTyre : tyreFor(this.rain), wear: 0 };
+      // compounds (opts.compounds): every car's slicks one of TYRE_CMP (the rain tyres have none): the player's choice (opts.playerCmp, else by
+      // the race's length), the AI's by the race's length and the grid slot (no random draw); new ones at a stop as the car asks (c.pitCmp) or
+      // for what is left of the race
+      if (opts.tyres && opts.compounds) { const D = this.laps * track.len; for (const c of this.cars) if (c.ty) c.ty.c = c.isPlayer ? (TYRE_CMP[opts.playerCmp] ? opts.playerCmp : cmpFor(D)) : cmpAI(D, c.grid); }
       if (track.drs) this.drsLast = track.drs.map(() => null);   // (per DRS zone: who crossed its detection line last, and when)
       this.sec = { best: [Infinity, Infinity, Infinity] };   // sector times on a circuit without TV sectors (thirds of the lap, see _thirds): the fastest of anyone in this race
       // flags (opts.flags, a closed circuit with rivals): a yellow flag where a car has stopped on the track, the safety car after a heavy
@@ -1678,7 +1688,8 @@ const Core = (function () {
       else { W.water = Math.max(r, W.water - dt / 240); W.line = Math.min(W.water, Math.max(r, W.line - dt / 120)); }
       for (const c of this.cars) { if (c.net) continue;   // (the water where it drives: the racing line dries first)
         const w = c.q && c.q.i >= 0 && T.rl && Math.abs(c.q.d - T.rl[c.q.i]) < 2.2 ? W.line : W.water;
-        c.wet = (W.tyres && c.ty ? TYRE_GRIP[c.ty.k](w) * (1 - 0.1 * c.ty.wear) : 1 - (1 - WET) * w) * this.cold.gk; }
+        const K = W.tyres && c.ty ? tyreK(c.ty) : null;   // (a compound: its grip, and what wear takes from it)
+        c.wet = (W.tyres && c.ty ? TYRE_GRIP[c.ty.k](w) * (K ? K.g * (1 - K.loss * c.ty.wear) : 1 - 0.1 * c.ty.wear) : 1 - (1 - WET) * w) * this.cold.gk; }
       const pw = (W.tyres ? TYRE_GRIP[tyreFor(W.line)](W.line) : 1 - (1 - WET) * W.water) * this.cold.gk;
       if (Math.abs(pw - W.profW) > 0.012) { W.profW = pw; this._prof(); }
     }
@@ -1859,7 +1870,8 @@ const Core = (function () {
         else if (!T.open && this.state !== 'grid') this._thirds(c);   // (elsewhere: the thirds of the lap)
         if (c.ty && ds > 0 && this.state === 'racing') {   // tyre wear: 0.8 % a km, up to 4 % more a km in a full slide; rain tyres on a drying road 2.5 times as fast
           const W = this.wst, sl = Math.min(1, Math.abs(c.beta || 0) / 0.35);
-          c.ty.wear = Math.min(1, c.ty.wear + ds * (0.000008 + 0.00004 * sl) * (c.ty.k === 'wet' && W.line < 0.25 ? 2.5 : 1));
+          const K = tyreK(c.ty);
+          c.ty.wear = Math.min(1, c.ty.wear + ds * (0.000008 + 0.00004 * sl) * (c.ty.k === 'wet' && W.line < 0.25 ? 2.5 : 1) * (K ? K.wr : 1));
           // an AI car on the wrong tyres goes in for the right ones (a track with pits; not in the last 40 % of a lap)
           // (not in the pit zone: from before its way in; each driver with a threshold of its own, not all on the same lap; at most three on
           // their way in or in the lane at a time, the others wait a lap)
@@ -1869,6 +1881,11 @@ const Core = (function () {
               let n = 0; for (const o of cars) if (!o.isPlayer && (o.pitWant || o.inPit)) n++;
               if (n < 3) c.pitWant = true;
             }
+          }
+          // (compounds: worn-out slicks, with more than a lap still to go: in for a fresh set, by the same rules)
+          else if (K && T.def.pit && !c.isPlayer && !c.net && !c.finished && !c.pitWant && !c.inPit && c.ty.wear > 0.72 + 0.1 * (((c.grid * 7) % 13) / 12) && !T.pitAt(q.s) && this.laps * T.len - c.dist > T.len * 1.05) {
+            let n = 0; for (const o of cars) if (!o.isPlayer && (o.pitWant || o.inPit)) n++;
+            if (n < 3) c.pitWant = true;
           }
         }
         // wrong way
@@ -1903,7 +1920,11 @@ const Core = (function () {
       const sp = Math.hypot(c.vx, c.vz), lim = PIT_V;
       if (c.pitState === 'repair') {
         c.vx = c.vz = 0; c.w = 0; c.pitT += dt; c.stuckT = 0;
-        if (c.pitT >= c.pitDur) { this.repairCar(c); if (c.ty) { c.ty.k = tyreFor(this.wst.line); c.ty.wear = 0; } c.pitState = 'done'; c.pitDone = true; c.pitEv = 'done'; }   // (tyres: a new set, the ones for the water on the line)
+        if (c.pitT >= c.pitDur) {   // (tyres: a new set, the ones for the water on the line; slicks of the compound asked for, or for what is left)
+          this.repairCar(c);
+          if (c.ty) { c.ty.k = tyreFor(this.wst.line); c.ty.wear = 0; if (c.ty.c) c.ty.c = c.isPlayer && TYRE_CMP[c.pitCmp] ? c.pitCmp : cmpFor(this.laps * T.len - c.dist); }
+          c.pitState = 'done'; c.pitDone = true; c.pitEv = 'done';
+        }
         return;
       }
       let vmax = lim;
@@ -2195,7 +2216,7 @@ const Core = (function () {
   const careerUpgPrice = (from, to) => { let p = 0; for (let l = from + 1; l <= to; l++) p += CAREER.upg[l] || 0; return p; };
 
   return { G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, DRIVER_NAMES, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
-    aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, CAREER, careerPrize, careerUpgPrice };
+    aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, CAREER, careerPrize, careerUpgPrice };
 })();
 
 
