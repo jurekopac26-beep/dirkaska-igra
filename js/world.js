@@ -4699,7 +4699,7 @@ const World = (function () {
   }
   function pkOpsUpdate(ops, t, car) {
     const dt = clamp(t - ops.t, 0, 0.1); ops.t = t;
-    if (!car) return;
+    if (!car) { pkOpsCast(ops, null, null); return; }   // (no car: everything casts, as built; the world's fingerprint does not depend on the last view)
     const cx = car.x, cz = car.z, vx = car.vx || 0, vz = car.vz || 0;
     if (ops.fm) {   // flags: held out low; from ~60 m the arm goes up and waves, frantic while the car comes (and right by it), calmer once it has passed
       const E = ops.fm.instanceMatrix.array; let vis = false, ch = false;
@@ -5385,6 +5385,7 @@ const World = (function () {
           hi[q] = v; hi[q + 1] = v + W; hi[q + 2] = v + W + 1; hi[q + 3] = v; hi[q + 4] = v + W + 1; hi[q + 5] = v + 1; q += 6; }
       }
       hg.attributes.position.needsUpdate = true; hg.attributes.aH.needsUpdate = true; hg.index.needsUpdate = true; hg.setDrawRange(0, q); hm.visible = q > 0;
+      if (q < (hz.q || 0)) hi.fill(0, q, hz.q); hz.q = q;   // (no stale cells past the draw range: the buffer is the same for the same place)
     };
     am.hz = hz;
 
@@ -5447,6 +5448,7 @@ const World = (function () {
       am.pU.uF.value.set(leaf, mote, sstep(195, 235, y) * (1 - 0.4 * sstep(330, 400, y))); am.pU.uC.value.set(car.x, y, car.z);
     }
     hz.hU.uO.value.set(fr(t * 0.9 / 150), fr(-t * 1.2 / 150), fr(-t * 0.6 / 150), fr(t * 0.8 / 150));   // (the haze drifts slowly with the wind, its layers each their own way)
+    if (!car) { if (hz.cx !== 0 || hz.cz !== 0) hz.grid(0, 0); return; }   // (no car: the grid at a fixed place, so the world's fingerprint does not depend on the last view)
     if (!hz.cam) return;
     // the haze grid: 480 m round a point 150 m ahead of the camera along the view, rebuilt when that moves a cell
     const ca = Math.round((hz.cam[0] + hz.dir[0] * 150 - hz.x0) / hz.SC) - hz.NG / 2, cb = Math.round((hz.cam[1] + hz.dir[1] * 150 - hz.z0) / hz.SC) - hz.NG / 2;
