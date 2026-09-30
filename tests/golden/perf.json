@@ -55,6 +55,13 @@
   "maxKverts": 1265,
   "jsMs": 0.71
  },
+ "dolina": {
+  "calls": 303,
+  "maxCalls": 357,
+  "kverts": 1399,
+  "maxKverts": 1581,
+  "jsMs": 0.84
+ },
  "pikes": {
   "calls": 96,
   "maxCalls": 109,

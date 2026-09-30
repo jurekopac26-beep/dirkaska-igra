@@ -131,6 +131,21 @@
    "tyremarks:MeshBasicMaterial": "20e8e311"
   }
  },
+ "dolina": {
+  "meshes": 134,
+  "verts": 2267633,
+  "instances": 913,
+  "props": 298,
+  "crowd": 913,
+  "world": "e587ff23",
+  "propsHash": "e9f0dddf",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "cad763c7",
+   "-:MeshBasicMaterial": "3d699a2e",
+   "crowd:MeshLambertMaterial": "7428ad23"
+  }
+ },
  "pikes": {
   "meshes": 976,
   "verts": 1498368,

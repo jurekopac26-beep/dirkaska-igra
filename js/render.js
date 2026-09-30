@@ -911,9 +911,9 @@ const Render = (function () {
     birds.mesh.visible = !(r > 0); if (r > 0) birds.reset(birds.gull);   // (no birds in the rain)
     if (!world || !world.root) return;
     if (world.dyn.clouds) world.dyn.clouds.K.value = world.dyn.clouds.k0 * (1 - r);   // (no cloud shadows under the rain's overcast)
-    const maps = [tex.asphalt, tex.paving, tex.curb, tex.makadam, tex.dirtKR].filter(Boolean);
+    const maps = [tex.asphalt, tex.paving, tex.curb, tex.makadam].filter(Boolean);
     world.root.traverse(o => { for (const m of o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []) {
-      if (!m.color || !maps.includes(m.map)) continue;
+      if (!m.color || !(maps.includes(m.map) || (m.map && m.map.name === 'dirtKR'))) continue;   // (Smrekova dolina's dirt too: by name, its texture is made only with that world)
       if (!m.userData.dry) m.userData.dry = m.color.clone();
       m.color.copy(m.userData.dry).multiplyScalar(1 - (m.map === tex.curb ? 0.22 : 0.36) * r); } });
     const W = world.dyn.wet;   // (a gravel stage with a road of its own, Ouninpohja: its puddles show, the gravel darkens and glistens, the verges darken)

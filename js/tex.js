@@ -520,7 +520,7 @@ const Tex = (function () {
         g.fillStyle = 'rgba(92,62,40,0.35)'; g.beginPath(); g.ellipse(px + r * 0.3, py + r * 0.35, r, r * 0.75, a, 0, 6.2832); g.fill();
         g.fillStyle = pale ? 'rgba(236,212,176,0.9)' : 'rgba(150,108,76,0.9)'; g.beginPath(); g.ellipse(px, py, r, r * 0.75, a, 0, 6.2832); g.fill(); }
     }
-    return mk(c, true);
+    const t = mk(c, true); t.name = 'dirtKR'; return t;   // (the name: Render darkens this road in the rain without asking for the texture)
   }
   // trackside banners on the plastic barriers (mostly red with white letters, as in the picture), boards and the feather flags
   const sponsorsKR = () => boards8([['PRAH', '#c8261f', '#ffffff'], ['SMREKA', '#f3efe8', '#2f7a4a'], ['KROS', '#c8261f', '#ffffff'], ['SMREKOVA DOLINA', '#1f3f8c', '#ffffff'],
@@ -543,7 +543,9 @@ const Tex = (function () {
     cache.cracks = cracks(); cache.tiresRW = tiresRW(); cache.facadeBal = facadeBal();
     cache.sponsorsLJ = sponsorsLJ(); cache.bannerLJ = bannerLJ(); cache.sponsorsFO = sponsorsFO(); cache.fenceFO = fenceFO(); cache.boardsFO = boardsFO(); cache.curbRWB = curbRWB(); cache.tyreTex = tyreTex(); cache.sponsorsMC = sponsorsMC();
     cache.curbIT = curbIT(); cache.curbRY = curbRY(); cache.sponsorsIT = sponsorsIT(); cache.sponsorsKP = sponsorsKP(); cache.boardsIT = boardsIT(); cache.boardsKP = boardsKP(); cache.flagKP = flagKP();
-    cache.dirtKR = dirtKR(); cache.sponsorsKR = sponsorsKR(); cache.boardsKR = boardsKR(); cache.flagKR = flagKR();   // (last: the random stream of the textures above stays the same)
+    // Smrekova dolina's textures are made the first time its world asks for one, not at start-up: every three.js texture draws on
+    // Math.random for its id, so the start-up (and the tests' seeded runs on the other tracks) stay exactly as they were
+    for (const [k, f] of [['dirtKR', dirtKR], ['sponsorsKR', sponsorsKR], ['boardsKR', boardsKR], ['flagKR', flagKR]]) { let t = null; Object.defineProperty(cache, k, { get: () => t || (t = f()), enumerable: true }); }
     return cache;
   }
   return { all, number, SPONSORS };
