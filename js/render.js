@@ -989,7 +989,7 @@ const Render = (function () {
     curTrack = track; seasonWorld(); floodlights();   // (the season and the time of day on the new world)
     if (dryLn) { scene.remove(dryLn); dryLn.geometry.dispose(); dryLn.material.dispose(); dryLn = null; }
     birds.reset(!!(track.def && (track.def.sea || track.def.theme === 'monaco')));   // (gulls by the sea)
-    world.winMats = winPatch(world.root); valleyFog(); rainbow(false);   // (the windows lit by the time of day, the morning mist, no rainbow from the last world)
+    world.winMats = winPatch(world.root); valleyFog(); rainbow(false); setMarks(null);   // (the windows lit by the time of day, the morning mist, no rainbow or school marks from the last world)
     return world;
   }
 
@@ -3081,13 +3081,14 @@ const Render = (function () {
   const _m4 = new THREE.Matrix4();
   function streaksBegin() {
     const on = wetW > 0.25 && todK > 0.3 && !!curRace;
-    if (!on) { if (streaks.mesh) streaks.mesh.visible = false; streaks.on = false; return; }
+    if (!on) { if (streaks.mesh) { streaks.mesh.visible = false; streaks.mesh.count = 0; } streaks.on = false; return; }
     if (!streaks.mesh) {
       const c = document.createElement('canvas'); c.width = 64; c.height = 16; const x = c.getContext('2d'), gr = x.createLinearGradient(0, 0, 64, 0);
       gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.55, 'rgba(255,255,255,0.35)'); gr.addColorStop(1, 'rgba(255,255,255,1)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 16);
       const vg = x.createLinearGradient(0, 0, 0, 16); vg.addColorStop(0, 'rgba(0,0,0,1)'); vg.addColorStop(0.5, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,1)'); x.globalCompositeOperation = 'destination-out'; x.fillStyle = vg; x.fillRect(0, 0, 64, 16);
       const g = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2).rotateY(Math.PI);   // (the bright end, u = 1, under the lamp)
       streaks.mesh = new THREE.InstancedMesh(g, new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3, fog: true }), streaks.max);
+      streaks.mesh.name = 'streaks';   // (the lights' streaks on a wet road, not the floodlights' pools)
       streaks.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage); streaks.mesh.frustumCulled = false; streaks.mesh.renderOrder = 2; scene.add(streaks.mesh);
       streaks.mesh.setColorAt(0, _c1.setRGB(1, 1, 1));
     }
@@ -3103,6 +3104,66 @@ const Render = (function () {
   // the morning mist (the time of day Jutro): where the ground lies low round the track, three soft layers of mist over the valleys (none on
   // a flat world); its top a little over the lowest land, thinning where the land rises through it, drifting
   let vfog = null;
+  /* ---------------- the racing line for beginners (setLine): a ribbon on the road ahead of the followed car along the ideal line (the
+     AI's), 150 m of it, coloured by the speed the car would carry along it from its speed now (as fast as it picks up speed, never
+     faster than the AI's profile there): green where it rises, red where it must fall (the braking zone; its first metres white: the
+     braking point), yellow where it holds (the slowest part of a corner, or flat out). Unlit (it glows at night), under the fog ---------------- */
+  const rline = { on: false, mesh: null, n: 60, ds: 2.5, red: 0, green: 0, yellow: 0, brakes: 0 }, _bkL = {};
+  function setLine(on) { rline.on = !!on; if (!rline.on && rline.mesh) rline.mesh.visible = false; }
+  function lineStep(c) {
+    const R = curRace, T = R && R.track, vp = R && R.vprof;
+    if (!rline.on || !c || !T || !vp || !T.rl || !scene) { if (rline.mesh) rline.mesh.visible = false; return; }
+    const n = rline.n, ds = rline.ds;
+    if (!rline.mesh) {
+      const g = new THREE.BufferGeometry(), idx = [];
+      g.setAttribute('position', new THREE.BufferAttribute(new Float32Array((n + 1) * 6), 3)); g.setAttribute('aC', new THREE.BufferAttribute(new Float32Array((n + 1) * 8), 4)); g.setAttribute('aL', new THREE.BufferAttribute(new Float32Array((n + 1) * 2), 1));
+      for (let k = 0; k < n; k++) { const a = k * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } g.setIndex(idx);
+      const m = new THREE.ShaderMaterial({ uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog]), transparent: true, depthWrite: false, fog: true, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+        vertexShader: '#include <fog_pars_vertex>\nattribute vec4 aC; attribute float aL; varying vec4 vC; varying float vL; void main(){ vC = aC; vL = aL; vec4 mvPosition = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mvPosition;\n#include <fog_vertex>\n}',
+        fragmentShader: '#include <fog_pars_fragment>\nvarying vec4 vC; varying float vL; void main(){ float d = fract(vL / 3.0); gl_FragColor = vec4(vC.rgb, vC.a * (0.55 + 0.45 * step(0.4, d)));\n#include <fog_fragment>\n}' });
+      rline.mesh = new THREE.Mesh(g, m); rline.mesh.frustumCulled = false; rline.mesh.renderOrder = 2; scene.add(rline.mesh);
+    }
+    const P = rline.mesh.geometry.attributes.position.array, C = rline.mesh.geometry.attributes.aC.array, A = rline.mesh.geometry.attributes.aL.array, L = T.len, s0 = c.q.s + 4;
+    const vAt = (s) => { const f = ((s % L) + L) % L / T.ds, i = Math.floor(f) % T.N, j = (i + 1) % T.N; return lerp(vp[i], vp[j], f - Math.floor(f)); };
+    let prevRed = true, vs = Math.max(5, c.speed || 0); rline.red = rline.green = rline.yellow = rline.brakes = 0;
+    for (let k = 0; k <= n; k++) {
+      let s = s0 + k * ds; if (T.open) s = Math.min(s, L - 1);
+      const f = ((s % L) + L) % L / T.ds, i = Math.floor(f) % T.N, j = (i + 1) % T.N, t = f - Math.floor(f);
+      const nx = lerp(T.nx[i], T.nx[j], t), nz = lerp(T.nz[i], T.nz[j], t), off = lerp(T.rl[i], T.rl[j], t), cx = lerp(T.px[i], T.px[j], t) + nx * off, cz = lerp(T.pz[i], T.pz[j], t) + nz * off;
+      let y = T.hasElev ? T.elevAt(s).y : 0; if (T.bank) { T.bankAt(s, off, _bkL); y += _bkL.dy || 0; } y += 0.07;
+      P[k * 6] = cx - nx * 0.55; P[k * 6 + 1] = y; P[k * 6 + 2] = cz - nz * 0.55; P[k * 6 + 3] = cx + nx * 0.55; P[k * 6 + 4] = y; P[k * 6 + 5] = cz + nz * 0.55;
+      const vn = k ? Math.min(vAt(s), Math.sqrt(vs * vs + 2 * Math.max(0.3, 5 - 0.075 * vs) * ds)) : vs, dv = vn - vs; vs = vn;   // (the speed it can carry there)
+      const red = dv < -0.05, grn = dv > 0.08, brk = red && !prevRed;   // (the braking point: where the red starts)
+      if (brk) rline.brakes++; prevRed = red; if (red) rline.red++; else if (grn) rline.green++; else rline.yellow++;
+      const col = brk ? [1, 1, 1] : red ? [0.95, 0.18, 0.12] : grn ? [0.2, 0.9, 0.35] : [1, 0.82, 0.15], a = 0.8 * Math.min(1, k * ds / 10) * Math.min(1, (n - k) * ds / 30);
+      for (const e of [0, 1]) { C.set([col[0], col[1], col[2], a], (k * 2 + e) * 4); A[k * 2 + e] = s; }
+    }
+    rline.mesh.geometry.attributes.position.needsUpdate = true; rline.mesh.geometry.attributes.aC.needsUpdate = true; rline.mesh.geometry.attributes.aL.needsUpdate = true;
+    rline.mesh.visible = true;
+  }
+  /* ---------------- the driving school's marks (setMarks): a STOP line across the road (red and white) with its sign, boards at the
+     roadside (150, 100, 50: the metres to the line); null or [] clears them ---------------- */
+  let marks = null;
+  function markTex(txt, bg, fg) { const cv = document.createElement('canvas'); cv.width = 128; cv.height = 128; const x = cv.getContext('2d'); x.fillStyle = bg; x.fillRect(0, 0, 128, 128); x.strokeStyle = fg; x.lineWidth = 8; x.strokeRect(6, 6, 116, 116);
+    x.fillStyle = fg; x.font = 'bold ' + (txt.length > 3 ? 40 : 56) + 'px sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(txt, 64, 68); const t = new THREE.CanvasTexture(cv); return t; }
+  function setMarks(list) {
+    if (marks) { scene.remove(marks); marks.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } }); marks = null; }
+    const T = curTrack; if (!list || !list.length || !T || !scene) return;
+    marks = new THREE.Group();
+    for (const e of list) {
+      const s = e.s, f = ((s % T.len) + T.len) % T.len / T.ds, i = Math.floor(f) % T.N, x = T.px[i], z = T.pz[i], nx = T.nx[i], nz = T.nz[i], y = T.hasElev ? T.elevAt(s).y : 0;
+      if (e.kind === 'stop') {   // the line: 0.8 m deep, across the whole road, in red and white squares
+        const cv = document.createElement('canvas'); cv.width = 256; cv.height = 16; const cx = cv.getContext('2d'); for (let q = 0; q < 16; q++) { cx.fillStyle = q % 2 ? '#ffffff' : '#d8261c'; cx.fillRect(q * 16, 0, 16, 16); }
+        const tex = new THREE.CanvasTexture(cv), m = new THREE.Mesh(new THREE.PlaneGeometry(T.w * 2, 0.8), new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+        m.rotation.order = 'YXZ'; m.rotation.set(-Math.PI / 2, Math.atan2(-nz, nx), 0); m.position.set(x, y + 0.04, z); marks.add(m);   // (flat on the road, its long side across it)
+      }
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: markTex(e.label, e.kind === 'stop' ? '#d8261c' : '#1d4fa8', '#ffffff') }));   // the sign on the right, 2.2 m up
+      sp.scale.set(1.6, 1.6, 1); sp.position.set(x + nx * (T.w + 1.6), y + 2.2, z + nz * (T.w + 1.6)); marks.add(sp);
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.5, 6), new THREE.MeshLambertMaterial({ color: 0x9aa3ad })); post.position.set(sp.position.x, y + 0.75, sp.position.z); marks.add(post);
+    }
+    scene.add(marks);
+  }
+
   function valleyFog() {
     if (vfog) { for (const m of vfog.meshes) { scene.remove(m); m.geometry.dispose(); } vfog.mat.dispose(); vfog = null; }
     const T = curTrack; if (!dawn || !T || !world || !world.groundH) return;
@@ -3272,6 +3333,7 @@ const Render = (function () {
     particles.update(dt); sparkP.update(dt);
     World.update(world, time, target, camera);
     if (target) updateCamera(dt, target, mode, alpha);
+    lineStep(target);   // (the racing line helper, from the followed car's place of this frame)
     if (world && world.dyn.afterCam) world.dyn.afterCam(camera, target);   // (what depends on the camera of this very frame: Pikes Peak, which scenery chunks cast shadows)
     World.view(world, camera, target, alpha);   // (Ouninpohja: the forest between the camera and the car fades out)
     { const R = curRace, q = (v) => v > 0 ? Math.max(0.05, Math.round(v * 20) / 20) : 0;   // (a changing weather: in steps of 5 %)
@@ -3400,6 +3462,6 @@ const Render = (function () {
   function setDebug(o) { Object.assign(dbg, o); }
   function fxStats() { let n = 0; for (let i = 0; i < particles.max; i++) if (particles.life[i] > 0) n++; return { alive: n, emitted: particles.cur }; }
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { setDebug, fxStats, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, setGhost, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, setSaver, precompile, setTodK, rainbow, setStorm, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!nsky.stars && nsky.stars.visible, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, win: winU.value, winMats: world ? world.winMats || 0 : 0, bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks.mesh && streaks.mesh.visible ? streaks.mesh.count : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name) }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setDebug, fxStats, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, setGhost, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!nsky.stars && nsky.stars.visible, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, win: winU.value, winMats: world ? world.winMats || 0 : 0, bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks.mesh && streaks.mesh.visible ? streaks.mesh.count : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 

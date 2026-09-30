@@ -134,6 +134,21 @@ Gumb **Kariera** na naslovnem zaslonu odpre kariero: z dirkami služiš denar, z
 - **Nadgradnje:** vsaka stopnja stane 4.000 €, 7.000 € ali 12.000 € (cena je napisana na gumbu; preskočene stopnje se plačajo zraven). Kupljenih delov ne moreš prodati.
 - **Izklopi kariero** te vrne v prosto igro z vsemi avti in brezplačnimi nadgradnjami (te so ločene od kariere). Kariera ostane shranjena in jo kasneje nadaljuješ. **Nova kariera** (dvakrat tapni) začne znova.
 
+## Šola vožnje
+
+Gumb **Šola vožnje** na naslovnem zaslonu odpre štiri vaje z medaljami (zlato, srebro, bron). Vse vaje se vozijo z avtom KAZE RS (serijski, na suhem), igra pa za vsako fiziko hrani najboljši rezultat in medaljo.
+
+- **Štart** (Red Bull Ring): ko ugasnejo luči, čim hitreje prevozi 100 m. Plin moraš pritisniti šele, ko luči ugasnejo; če ga pritisneš prej, je to prehiter štart (samodejni plin je v tej vaji izklopljen). Medalje so merjene ob vožnji avtopilota: zlato do 0,3 s počasneje od njega, srebro do 0,5 s, bron do 0,9 s.
+- **Zaviranje do oznake** (ravnina Red Bull Ringa): pospeši z mesta in se ustavi čim bližje črti STOP (rdeče-bela črta čez cesto s tablo STOP), a ne čeznjo. Ob cesti stojijo table 150, 100 in 50 m do črte; mimo table 100 m moraš peljati vsaj 120 km/h. Zlato do 1 m pred črto, srebro do 3 m, bron do 8 m.
+- **Idealna linija** (Jezero Ring): en krog, na cesti pred avtom pa je narisana idealna linija. Šteje delež kroga, ko je avto manj kot 1,5 m od nje (zlato 75 %, srebro 55 %, bron 35 %), krog pa mora biti hitrejši od 1,25-kratnega časa avtopilota.
+- **Drift** (Jezero Ring): v 40 sekundah zberi čim več točk drsenja. Točke se nabirajo, dokler avto drsi bočno (več za večji kot in večjo hitrost), in se ob koncu drsenja prištejejo; ob udarcu v ograjo ali avto se veriga izgubi. Medalje so glede na točke avtopilota v isti vaji (zlato 115 %, srebro 85 %, bron 50 %).
+
+Med vajo je na vrhu zaslona vrstica z nalogo in sprotnim rezultatom (npr. »ZAVIRANJE · do črte STOP 87 m«), po vaji pa rezultat z medaljo, meje medalj in tvoj najboljši rezultat; **Ponovi vajo** jo začne znova, **Šola vožnje** te vrne na seznam vaj. Dosežka **Učenec** (prva zlata medalja) in **Diplomant** (zlato v vseh vajah).
+
+## Idealna linija za začetnike
+
+V **Nastavitvah** vklopiš **Idealno linijo**: na cesti pred avtom se na 150 m riše idealna linija, obarvana po hitrosti, ki jo avto od svoje trenutne hitrosti lahko nese po njej: **zeleno**, kjer lahko pospešuješ, **rdeče**, kjer moraš zavirati (prvi metri rdečega so **beli: točka zaviranja**), in **rumeno**, kjer hitrost ostane enaka (najpočasnejši del ovinka ali polna hitrost). Linija ni osvetljena, zato jo vidiš tudi ponoči; deluje na vseh progah.
+
 ## Tekmeci z značajem
 
 Vsak voznik AI ima svoj značaj, ki je v vsaki dirki enak: vožnja je **agresivna**, **previdna** ali **uravnotežena**, pod pritiskom pa ima voznik **mirno kri** ali **popušča** (npr. L. Rossi vozi agresivno in popušča pod pritiskom, T. Hayashi vozi previdno z mirno krvjo).
@@ -288,22 +303,22 @@ V izbiri avta je **FORMULA ORKAN**, dirkalnik formule z odprtimi kolesi, sprednj
 
 ## Dirka s prijateljem
 
-Dirka dveh igralcev, vsak na svojem telefonu (ali računalniku), preko interneta.
+Dirka dveh, treh ali štirih igralcev, vsak na svojem telefonu (ali računalniku), preko interneta.
 
 1. Oba odpreta igro. Različici morata biti enaki: po posodobitvi igre jo na obeh telefonih zapri in znova odpri.
 2. Oba na naslovnem zaslonu tapneta **Dirka s prijateljem**, vpišeta svoje ime in tapneta **Počakaj prijatelja**. Prvi počaka (**Prekliči** ga vrne nazaj), ko drugi tapne isto, sta takoj povezana, brez kode. Če tapne še kdo tretji, ga združi z naslednjim čakajočim. Priporočilo: dogovorita se za isti trenutek; kdorkoli drug, ki tapne v tem času, se lahko poveže z vama.
-3. Za zasebno sobo tapni manjši gumb **Zasebna soba s kodo**: eden tapne **Ustvari sobo** in drugemu pošlje kodo (4 znaki), drugi kodo vpiše in tapne **Pridruži se**.
-4. V sobi vsak izbere svoj avto (◀ ▶). Gostitelj (kdor je čakal oziroma ustvaril sobo) izbere progo in število krogov ter tapne **Začni dirko**.
+3. Za zasebno sobo tapni manjši gumb **Zasebna soba s kodo**: eden tapne **Ustvari sobo** in drugim pošlje kodo (4 znaki), drugi kodo vpišejo in tapnejo **Pridruži se**. V zasebni sobi so lahko **štirje** (gostitelj in trije prijatelji); peti izve, da je soba polna. Hitra povezava (Počakaj prijatelja) je vedno za dva.
+4. V sobi vsak izbere svoj avto (◀ ▶), vsi vidijo vse igralce z avti. Gostitelj (kdor je čakal oziroma ustvaril sobo) izbere progo in število krogov ter tapne **Začni dirko**; dirkajo vsi, ki so v sobi.
 
-- Na progi sta samo vidva, brez tekmecev z AI, drug ob drugem v prvi vrsti; kdo začne na levi, se menja od dirke do dirke. Vožnji proti uri (Pikes Peak in Ouninpohja) nista na voljo, Vršič pa je na voljo kot dirka na vrh (en vzpon, brez izbire krogov).
-- Semafor ugasne na obeh telefonih hkrati. Časi se merijo od skupnega starta, zato sta rezultata na obeh telefonih enaka.
+- Na progi ste samo vi, brez tekmecev z AI: dva drug ob drugem v prvi vrsti, tretji in četrti v drugi vrsti; vrstni red na štartu se menja od dirke do dirke. Vožnji proti uri (Pikes Peak in Ouninpohja) nista na voljo, Vršič pa je na voljo kot dirka na vrh (en vzpon, brez izbire krogov).
+- Semafor ugasne na vseh telefonih hkrati. Časi se merijo od skupnega starta, zato so rezultati na vseh telefonih enaki (vrstni red in vsi časi). Enake štartne številke se razlikujejo (kdor je prišel v sobo pozneje, dobi naslednjo prosto).
 - Fizika vožnje, poškodbe in vreme so po nastavitvah gostitelja (sprememba med dirko velja od naslednje dirke). Vsak vozi svoj avto z nadgradnjami.
-- Avta se lahko zadeneta. Vsak telefon premika le svoj avto, zato se ob trku odmakne vsak svoj.
+- Avti se lahko zadenejo. Vsak telefon premika le svoj avto, zato se ob trku odmakne vsak svoj.
 - Premor ustavi le tvoj avto: prijatelj vozi naprej in ura teče. Enako, če med dirko preklopiš v drugo aplikacijo; če telefon igro takrat ustavi za več kot 10 sekund, se povezava prekine.
-- Po cilju se vrneta v sobo na naslednjo dirko. Če prijatelj odide ali se povezava prekine, dirka teče naprej.
+- Po cilju se vrnete v sobo na naslednjo dirko (gostitelj lahko začne, ko je v sobi vsaj en prijatelj). Če kdo odide ali se povezava z njim prekine, ostali to izvedo, njegov avto izgine s proge, dirka pa teče naprej; če odide gostitelj, je soba zaprta.
 - Poškodbe prijateljevega avta (udrtine, odpadli deli, dim) vidi le prijatelj.
 
-Telefona sta povezana neposredno (WebRTC) s knjižnico [PeerJS](https://peerjs.com). Da se najdeta, uporabita brezplačni javni strežnik PeerJS: pri hitri povezavi imajo čakalna mesta stalna imena (z različico igre), pri zasebni sobi je koda njun naslov na njem. Čakajoči telefon mora imeti igro odprto na zaslonu. Za neposredno povezavo telefona prek Googlovega strežnika STUN izvesta svoj javni naslov; kadar neposredna povezava ni mogoča (nekatera mobilna omrežja), gre promet prek posredniškega strežnika PeerJS (TURN). Če gostitelj med čakanjem na prijatelja za hip izgubi povezavo s strežnikom (npr. ko preklopi v drugo aplikacijo, da pošlje kodo), se soba z isto kodo sama znova poveže. Brez interneta igra deluje naprej, dirka s prijateljem pa ne.
+Telefoni so povezani neposredno (WebRTC) s knjižnico [PeerJS](https://peerjs.com): vsak prijatelj z gostiteljem, ki stanja avtov (20-krat na sekundo) in novice pošilja naprej ostalim. Da se najdeta, uporabita brezplačni javni strežnik PeerJS: pri hitri povezavi imajo čakalna mesta stalna imena (z različico igre), pri zasebni sobi je koda njun naslov na njem. Čakajoči telefon mora imeti igro odprto na zaslonu. Za neposredno povezavo telefona prek Googlovega strežnika STUN izvesta svoj javni naslov; kadar neposredna povezava ni mogoča (nekatera mobilna omrežja), gre promet prek posredniškega strežnika PeerJS (TURN). Če gostitelj med čakanjem na prijatelja za hip izgubi povezavo s strežnikom (npr. ko preklopi v drugo aplikacijo, da pošlje kodo), se soba z isto kodo sama znova poveže. Brez interneta igra deluje naprej, dirka s prijateljem pa ne.
 
 ## Jezik (angleščina)
 

@@ -577,6 +577,20 @@ select.txt:disabled { opacity: .75; }
 .ltab.laps td.pb { color: #5ee36a; }
 /* Dosežki: the player's numbers in a grid, the achievements in a list (unlocked: gold) */
 .st-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; margin: 4px 0 8px; }
+/* the driving school: its lessons; the lesson's line on the HUD */
+.school-list { display: flex; flex-direction: column; gap: 8px; }
+.sch { padding: 8px 10px; border-radius: 10px; border: 2px solid rgba(255, 255, 255, .14); background: rgba(255, 255, 255, .04); }
+.sch.gold { border-color: #ffc629; }
+.sch-h { display: flex; align-items: center; justify-content: space-between; }
+.sch-h b { font: 700 italic clamp(13px, 3.6vh, 16px)/1.2 var(--f-ui); }
+.sch-m { font-size: 20px; }
+.sch p { margin: 4px 0; font: 500 clamp(11px, 2.9vh, 13px)/1.35 var(--f-ui); opacity: .88; }
+.sch .sch-t { font-weight: 700; opacity: 1; }
+.sch .sch-b { color: var(--meter); font-weight: 700; opacity: 1; }
+#h-school { display: none; position: absolute; top: calc(env(safe-area-inset-top, 0px) + 54px); left: 50%; transform: translateX(-50%); padding: 4px 12px; border-radius: 6px; background: rgba(10, 14, 20, .7);
+  font: 700 italic clamp(11px, 3vh, 15px)/1.2 var(--f-ui); color: #fff; white-space: nowrap; letter-spacing: .03em; pointer-events: none; }
+#hud.school #h-school { display: block; }
+#hud.school #h-rank > .h-lbl:first-child, #hud.school .h-rankrow, #hud.school #h-lap, #hud.school #h-sec, #hud.school #h-best { display: none; }
 .st-cell { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; border-radius: 8px; background: rgba(255, 255, 255, .06); }
 .st-cell b { font: 700 italic clamp(14px, 4vh, 19px)/1.1 var(--f-ui); color: var(--meter); font-variant-numeric: tabular-nums; }
 .st-cell span { font: 600 clamp(10px, 2.7vh, 12px)/1.2 var(--f-ui); opacity: .75; }

@@ -48,7 +48,9 @@ try {
   // 5. loading: no title demo made for a race started from the menus; after it, the title demo runs on the new track
   await startTrack(page, 'riviera');
   const l1 = await page.evaluate(() => ({ demo: window.__game.demo, ms: window.__game.loadMs, track: window.__game.race.track.def.id }));
-  await page.evaluate(() => window.__game.onAction('to-title')); await page.waitForTimeout(800);
+  await page.evaluate(() => window.__game.onAction('to-title'));
+  // (its first frames can be slow on a software renderer, the new track's shaders: waited for until the demo has moved on from its 4 s)
+  await page.waitForFunction(() => { const d = window.__game.demo; return d && d.time > 4.2; }, null, { timeout: 20000, polling: 100 }).catch(() => {});
   const l2 = await page.evaluate(() => { const d = window.__game.demo; return { track: d && d.track.def.id, cars: d && d.cars.length, t: d && d.time, moving: d && d.cars.some(c => c.speed > 5) }; });
   T.check('a track loads without the title demo (the race on it at once); on the title after it the demo races on the new track', l1.demo === null && l1.ms > 0 && l1.track === 'riviera' && l2.track === 'riviera' && l2.cars === 10 && l2.t > 4 && l2.moving, JSON.stringify({ l1, l2 }));
 

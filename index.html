@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
-<link rel="stylesheet" href="css/style.css?v=89f7b771">
+<link rel="stylesheet" href="css/style.css?v=b8ac09a0">
 </head>
 <body>
 <div id="app">
@@ -67,6 +67,7 @@
     <div id="h-note"><svg viewBox="0 0 64 64" aria-hidden="true"><path id="h-note-path" d="" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <div id="h-lights"><i></i><i></i><i></i><i></i><i></i></div>
     <div id="h-msg"></div>
+    <div id="h-school"></div><!-- the driving school: the lesson under way -->
     <div id="podium-cap"></div>
     <div id="h-ttsp"></div>
     <div id="pk-cer" aria-live="polite"></div><!-- Pikes Peak: the summit ceremony -->
@@ -107,6 +108,7 @@
         <button class="btn netbtn" data-act="to-online">Dirka s prijateljem</button>
         <button class="btn" data-act="to-board">Lestvica</button>
         <button class="btn" data-act="to-stats">Dosežki</button>
+        <button class="btn" data-act="to-school">Šola vožnje</button>
         <button class="btn" data-act="to-settings">Nastavitve</button>
         <button class="btn fsbtn" data-act="fullscreen" id="btn-fs">Celoten zaslon</button>
         <button class="btn appbtn off" data-act="install" id="btn-install">Namesti igro</button>
@@ -204,6 +206,7 @@
         <div class="row"><span class="rlbl">Samodejni plin</span><div class="seg" data-set="autoGas"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Opozorila za ovinke</span><div class="seg" data-set="notes"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Časovna tabela</span><div class="seg" data-set="tower"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row" title="Idealna linija na cesti pred avtom: zeleno plin, rumeno ovinek, rdeče zaviranje"><span class="rlbl">Idealna linija</span><div class="seg" data-set="line"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Duh najboljše vožnje</span><div class="seg" data-set="ghost"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Komentator (angleščina)</span><div class="seg" data-set="comm"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div><button class="mini" data-act="comm-test">&#9654; Preizkusi glas</button><span id="comm-voice" class="vinfo"></span></div>
         <div class="row"><span class="rlbl">Sovoznik na reliju (angleščina)</span><div class="seg" data-set="codrv"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
@@ -256,12 +259,12 @@
     <div class="panel set-panel online-panel">
       <h2>Dirka s prijateljem</h2>
       <div id="on-pick" class="set-list">
-        <p class="desc">Dirkaj proti prijatelju na drugem telefonu. Vpiši ime in tapni <b>Počakaj prijatelja</b>: ko prijatelj (ali kdorkoli drug) tapne isto, sta takoj povezana. Oba potrebujeta internetno povezavo.</p>
+        <p class="desc">Dirkaj proti prijatelju na drugem telefonu. Vpiši ime in tapni <b>Počakaj prijatelja</b>: ko prijatelj (ali kdorkoli drug) tapne isto, sta takoj povezana. Za dirko treh ali štirih ustvari zasebno sobo s kodo. Vsi potrebujejo internetno povezavo.</p>
         <div class="row"><span class="rlbl">Tvoje ime</span><input type="text" id="on-name" class="txt" maxlength="16" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" aria-label="Tvoje ime"></div>
         <div class="btns"><button class="btn primary" data-act="net-wait">Počakaj prijatelja</button></div>
         <div class="btns on-privbtn"><button class="btn mini" data-act="net-private" id="on-priv-btn" aria-expanded="false" aria-controls="on-priv">Zasebna soba s kodo</button></div>
         <div id="on-priv" class="on-priv off">
-          <p class="desc small">Ustvari sobo in prijatelju pošlji kodo, ali vpiši kodo, ki si jo dobil.</p>
+          <p class="desc small">Ustvari sobo in kodo pošlji prijateljem (v sobi so lahko štirje), ali vpiši kodo, ki si jo dobil.</p>
           <div class="btns"><button class="btn" data-act="net-host">Ustvari sobo</button></div>
           <div class="row on-join"><input type="text" id="on-code" class="txt code" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="go" placeholder="KODA" aria-label="Koda sobe"><button class="btn" data-act="net-join">Pridruži se</button></div>
         </div>
@@ -290,6 +293,7 @@
       <div class="btns horiz">
         <button class="btn ghost" data-act="to-title">Glavni meni</button>
         <button class="btn" data-act="replay" id="res-replay">Posnetek</button>
+        <button class="btn off" data-act="to-school" id="res-school">Šola vožnje</button>
         <button class="btn primary" data-act="restart" id="res-restart">Ponovi dirko</button>
       </div>
     </div>
@@ -304,6 +308,17 @@
         <button class="btn ghost" data-act="to-title">Nazaj</button>
         <button class="btn ghost off" data-act="champ-quit" id="ch-quit">Opusti</button>
         <button class="btn primary" data-act="champ-go" id="ch-go">Začni</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="s-school" class="screen">
+    <div class="panel board-panel">
+      <h2>Šola vožnje</h2>
+      <p class="desc">Štiri vaje z medaljami, vse z avtom KAZE RS (serijski, na suhem). Medalje za štart in drift ter časovna omejitev idealne linije so merjene ob vožnji avtopilota z istim avtom in fiziko.</p>
+      <div id="school-list" class="res-table-wrap school-list"></div>
+      <div class="btns horiz">
+        <button class="btn ghost" data-act="to-title">Nazaj</button>
       </div>
     </div>
   </section>
@@ -350,17 +365,17 @@
 <script src="js/tracks/spa.js?v=19166d8e"></script>
 <script src="js/tracks/rbring.js?v=d48ab134"></script>
 <script src="js/tracks/suzuka.js?v=4873be10"></script>
-<script src="js/lang.js?v=6bb8dd0f"></script>
-<script src="js/core.js?v=f93d53d8"></script>
+<script src="js/lang.js?v=710a9bb0"></script>
+<script src="js/core.js?v=87d49cf1"></script>
 <script src="js/tex.js?v=a4078fc3"></script>
 <script src="js/world.js?v=04c5c0ff"></script>
 <script src="js/data/p206.js?v=0016824f"></script>
-<script src="js/render.js?v=49ded0e6"></script>
+<script src="js/render.js?v=b165c6b2"></script>
 <script src="js/sfx.js?v=e342d689"></script>
 <script src="js/input.js?v=d322f5e4"></script>
-<script src="js/comm.js?v=ddc6c3b3"></script>
+<script src="js/comm.js?v=04b8a6a9"></script>
 <script src="js/vendor/peerjs.min.js?v=76b403e4"></script>
-<script src="js/net.js?v=1f45dfb1"></script>
-<script src="js/game.js?v=90a4463f"></script>
+<script src="js/net.js?v=f86e4907"></script>
+<script src="js/game.js?v=7ec118a3"></script>
 </body>
 </html>

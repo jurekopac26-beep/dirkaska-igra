@@ -38,6 +38,12 @@ try {
     for (let k = 0; k < 16; k++) eng.push(await page.evaluate(() => new Promise(res => { const g = window.__game; g.resume(); g.sim(1, true);   // (the sound on while the second is simulated: its gear changes heard)
  requestAnimationFrame(() => requestAnimationFrame(() => { g.pause(); res(Sfx.engines()); })); })));
     const last = eng[eng.length - 1], kinds = new Set(eng.flatMap(e => e.ai.filter(a => a.car).map(a => a.kind))), dops = eng.flatMap(e => e.ai.filter(a => a.car).map(a => a.dop));
+    // the blow-off: the engine held high on the throttle for a second of sound (the boost builds), then the throttle shut (the race paused: only the sound runs)
+    const bo = await page.evaluate(async () => { const g = window.__game, P = g.race.player; g.pause(); Sfx.resume(); const b0 = Sfx.engines().player.bov;
+      P.rpm = P.m.redline * 0.85; P.inThr = 1; for (let k = 0; k < 25; k++) { Sfx.update(g.race, P, null, 1); await new Promise(r => setTimeout(r, 40)); }
+      P.inThr = 0; for (let k = 0; k < 3; k++) { Sfx.update(g.race, P, null, 0); await new Promise(r => setTimeout(r, 40)); }
+      return { b0, b1: Sfx.engines().player.bov }; });
+    last.player.bov = bo.b1 - bo.b0;
     T.check('the player\'s engine: the rally car\'s turbo four with anti-lag (its pitch with the revs), gear changes, pops and a blow-off off the throttle',
       last.player.kind === 'al4' && eng.some(e => e.player.f > 30) && last.shifts > 0 && last.player.pops > 0 && last.player.bov > 0, JSON.stringify(last.player) + ' shifts ' + last.shifts);
     T.check('the rivals\' engines: on the nearest cars, each its own type (i6t, b4t, i4t, v6 by the model), the Doppler shift as they pass', eng.some(e => e.ai.filter(a => a.car).length >= 2) && [...kinds].every(k => ['i6t', 'b4t', 'i4t', 'v6', 'i4', 'al4', 'v10'].includes(k)) &&

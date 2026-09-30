@@ -47,7 +47,8 @@ try {
   // 4. driving: RT the throttle, the stick steers in proportion, the on-screen controls hidden
   const d = await page.evaluate(async () => {
     const P = window.__game.race.player, pad = window.__pad; pad.buttons[7].value = 1; pad.buttons[7].pressed = true; pad.axes[0] = -0.8;
-    await new Promise(r => setTimeout(r, 2500));
+    // (2.5 s; on a slow software renderer the race moves only as fast as its frames: then held on until the car is under way)
+    for (let t = 0; t < 2500 || (P.speed <= 3 && t < 20000); t += 250) await new Promise(r => setTimeout(r, 250));
     const o = { v: P.speed, thr: P.inThr, steer: P.inSteer, digital: P.digitalSteer, hidden: document.getElementById('touch').classList.contains('pad') };
     pad.buttons[7].value = 0; pad.buttons[7].pressed = false; pad.axes[0] = 0; return o; });
   T.check('driving: RT full throttle, the stick 80 % left steers ~2/3 left (in proportion, not digital), the car moves; no on-screen controls', d.v > 3 && d.thr === 1 && d.steer < -0.6 && d.steer > -0.75 && !d.digital && d.hidden, JSON.stringify(d));
