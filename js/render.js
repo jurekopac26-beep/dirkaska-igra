@@ -1081,7 +1081,7 @@ const Render = (function () {
     spa:      { fog: 0xc3ced7, sun: 0xfff1de, sunI: 0.98, sky: 0xd0dde9, gnd: 0x43522f, hemiI: 0.64, tint: [0.99, 1.0, 1.01], sat: 1.1 },   // the Ardennes: a little greyer, softer daylight (Spa's changeable weather)
     rbring:   { fog: 0xc6daea, sun: 0xfff1d8, sunI: 1.12, sky: 0xcfe3fb, gnd: 0x46602c, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.06, sunOff: [-86, 78, 52] },   // Styria in early summer, an afternoon sun (longer shadows): clear alpine air, fresh meadows, dark spruce woods
     suzuka:   { fog: 0xc8d9e6, sun: 0xfff1dc, sunI: 1.06, sky: 0xd5e7fa, gnd: 0x4f5c34, hemiI: 0.62, tint: [1.01, 1.0, 0.99], sat: 1.12 },   // Suzuka: a clear spring day in Mie
-    stelvio:  { fog: 0xc3d5e8, sun: 0xfff3e0, sunI: 1.14, sky: 0xcbe0ff, gnd: 0x565a44, hemiI: 0.6, tint: [1.0, 1.0, 1.02], sat: 1.08, sunOff: [-70, 94, 62] },   // the Stelvio: a clear summer afternoon high in the Alps, crisp air, a bright sun from the south-west
+    stelvio:  { fog: 0xb8cde4, sun: 0xffeccf, sunI: 1.2, sky: 0xc6dcfb, gnd: 0x565a44, hemiI: 0.58, tint: [1.02, 1.0, 0.99], sat: 1.12, con: 1.1, sunOff: [-70, 94, 62] },   // the Stelvio: a clear summer afternoon high in the Alps, crisp air (a deeper blue haze, and less of it: World fogK), a warm bright sun from the south-west
   };
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   function applyTheme(id) {
@@ -1092,7 +1092,7 @@ const Render = (function () {
     scene.fog.color.copy(mix(t.fog, 0x949ea7, 0.75)); renderer.setClearColor(scene.fog.color, 1);
     hemi.color.copy(mix(t.sky, 0xaab4bd, 0.7)); hemi.groundColor.copy(mix(t.gnd, 0x3a4032, 0.5)); hemi.intensity = t.hemiI * (1 + 0.3 * r);
     sun.color.copy(mix(t.sun, 0xe8eef4, 0.8)); sun.intensity = t.sunI * (1 - 0.62 * r);
-    if (post) { post.mat.uniforms.uTint.value.set(t.tint[0] - 0.03 * r, t.tint[1], t.tint[2] + 0.03 * r); post.mat.uniforms.uSat.value = t.sat * (1 - 0.2 * r); post.mat.uniforms.uHaze.value = (t.haze || 0) * (1 - r); if (t.hazeCol) post.mat.uniforms.uHazeCol.value.set(t.hazeCol[0], t.hazeCol[1], t.hazeCol[2]); }
+    if (post) { post.mat.uniforms.uTint.value.set(t.tint[0] - 0.03 * r, t.tint[1], t.tint[2] + 0.03 * r); post.mat.uniforms.uSat.value = t.sat * (1 - 0.2 * r); post.mat.uniforms.uCon.value = t.con || 1.04; post.mat.uniforms.uHaze.value = (t.haze || 0) * (1 - r); if (t.hazeCol) post.mat.uniforms.uHazeCol.value.set(t.hazeCol[0], t.hazeCol[1], t.hazeCol[2]); }
     // the time of day and the season on top (setAtmos): dusk a low orange sun and warm haze; night a dark blue sky and a weak moon (the
     // floodlights and headlights do the rest); winter a paler, colder light
     const A = atmos, to = (c, hex, k) => c.lerp(_c2.setHex(hex), k);
@@ -1132,7 +1132,7 @@ const Render = (function () {
     }
     for (const m of world.wetMats) m.color.copy(m.userData.dry).multiplyScalar(1 - (m.map === tex.curb ? 0.22 : 0.36) * w);
     const W = world.dyn.wet;   // (a gravel stage with a road of its own, Ouninpohja: its puddles show, the gravel darkens and glistens, the verges darken)
-    if (W) { W.puddles.visible = w > 0; W.road.color.setScalar((1 - 0.36 * w) * (atmos.season === 'winter' ? 0.86 : 1)); W.road.shininess = w > 0 ? 28 : W.base.sh; W.road.specular.setHex(w > 0 ? 0x3c3e40 : W.base.sp); W.ground.color.setScalar(1 - 0.2 * w); }
+    if (W) { W.puddles.visible = w > 0; W.road.color.setScalar((1 - 0.36 * w) * (atmos.season === 'winter' && !W.tarmac ? 0.86 : 1)); W.road.shininess = w > 0 ? 28 : W.base.sh; W.road.specular.setHex(w > 0 ? 0x3c3e40 : W.base.sp); W.ground.color.setScalar(1 - 0.2 * w); if (W.extra) for (const m of W.extra) m.color.setScalar(1 - 0.3 * w); }
   }
   // the dry line (a changing weather, Race opts weather: after the rain the racing line dries first): a band of dry road along it, as light as
   // the line is drier than the rest of the road. One mesh along the whole lap, built the first time it shows
@@ -1218,7 +1218,7 @@ const Render = (function () {
     for (const m of mats) {
       if (!m.color || roads.has(m.map)) continue;
       const U = m.userData; if (!U.c0) { U.c0 = m.color.clone(); U.map0 = m.map || null; if (U.dry) U.dry0 = U.dry.clone(); }
-      const tone = texTone(U.map0), grassy = tone && tone[1] > tone[0] * 1.08 && tone[1] > tone[2] * 1.2, gravel = U.map0 && (U.map0 === tex.makadam || (world.dyn.wet && m === world.dyn.wet.road));
+      const tone = texTone(U.map0), grassy = tone && tone[1] > tone[0] * 1.08 && tone[1] > tone[2] * 1.2, gravel = U.map0 && (U.map0 === tex.makadam || (world.dyn.wet && m === world.dyn.wet.road && !world.dyn.wet.tarmac));   // (a tarmac road with its own wet look, the Stelvio's: cleared)
       if (atmos.season === 'winter' && (grassy || gravel)) {   // (grass under snow; a gravel road packed with snow)
         if (!U.snowMap) U.snowMap = snowTexture(U.map0);
         m.map = U.snowMap; m.color.copy(gravel ? _sc.setRGB(0.86, 0.87, 0.9) : _sc.setRGB(1, 1, 1));
@@ -2264,7 +2264,7 @@ const Render = (function () {
     if (camera.near !== near) { camera.near = near; camera.updateProjectionMatrix(); }
     camera.position.set(px, py, pz); if (qc) camera.quaternion.copy(qc); else camera.lookAt(tx, ty, tz); cam.vcx = qc ? px + (tx - px) * 0.25 : tx; cam.vcz = qc ? pz + (tz - pz) * 0.25 : tz; cam.vd = Math.hypot(px - tx, py - ty, pz - tz);   // (the cockpit's view centre, for the rain round it: 18 m ahead)
     cam.ck = !!qc; if (!qc) ck.car = null;
-    { const dC = shot ? shot.fogD : Math.hypot(px - tx, py - ty, pz - tz), r = Math.max(0, wet); scene.fog.near = dC * (1.35 - 0.4 * r); scene.fog.far = dC * (5.5 - 1.6 * r); }   // (rain: a closer haze)
+    { const dC = shot ? shot.fogD : Math.hypot(px - tx, py - ty, pz - tz), r = Math.max(0, wet), fk = (world && world.fogK) || 1; scene.fog.near = dC * (1.35 - 0.4 * r) * fk; scene.fog.far = dC * (5.5 - 1.6 * r); }   // (rain: a closer haze; fogK: a world with clearer air, the haze beginning farther off)
     if (world && world.farClip) { const f = Math.min(700, scene.fog.far + 40); if (Math.abs(camera.far - f) > 6) { camera.far = f; camera.updateProjectionMatrix(); } }   // long corridor worlds: nothing past the fog is drawn
     // sun/shadow follows view center
     lastMode = qc ? 'cockpit' : mode;

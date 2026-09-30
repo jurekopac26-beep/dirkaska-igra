@@ -3797,7 +3797,7 @@ const World = (function () {
      under the rain's overcast). The uniforms are shared by every build (one world at a time) ---- */
   const CLOUD_S = 110, CLOUD_NP = 64;   // noise cell (m) and its period in cells (the drift offset wraps without a seam)
   const CLOUD_O = { value: new THREE.Vector2() }, CLOUD_K = { value: 0.16 };
-  const CLOUD_TH = { pikes: 0.18, ouni: 0.18, nring: 0.22, spa: 0.22, forest: 0.14, italia: 0.14, kamp: 0.14 };   // how much a cloud darkens, per theme (else 0.2)
+  const CLOUD_TH = { pikes: 0.18, ouni: 0.18, nring: 0.22, spa: 0.22, forest: 0.14, italia: 0.14, kamp: 0.14, stelvio: 0.27 };   // how much a cloud darkens, per theme (else 0.2)
   const CLOUD_VH = '#include <common>\nuniform vec2 clO;\nuniform float clK;\nvarying float vCloud;\n' +
     'float clHash(vec2 i, float n) { i = mod(i, n); return fract(sin(dot(i, vec2(12.9898, 78.233))) * 43758.5453); }\n' +
     'float clVN(vec2 p, float n) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(clHash(i, n), clHash(i + vec2(1.0, 0.0), n), f.x), mix(clHash(i + vec2(0.0, 1.0), n), clHash(i + 1.0, n), f.x), f.y); }';
@@ -9583,6 +9583,7 @@ const World = (function () {
     if (d.podium) d.podium.step(t);   // Red Bull Ring: the podium after the race
     if (d.screens) { const f = Math.floor(t / 6) % 4; if (f !== d.screens.f) { d.screens.f = f; d.screens.tex.offset.x = f * 0.25; } }   // Red Bull Ring: the video walls' next picture every 6 s
     if (d.water) { d.water.offset.x = (t * 0.012) % 1; d.water.offset.y = (t * 0.007) % 1; }
+    if (d.flow) { d.flow.water.offset.y = -((t * 0.3) % 1); d.flow.foam.offset.y = -((t * 0.55) % 1); }   // the Stelvio's streams run downhill (the foam faster)
     if (d.wind) d.wind.value = t % 1000;   // the trees sway (Nordschleife, Spa)
     if (d.clouds) { const n = CLOUD_NP; d.clouds.O.value.set(((t * 3.2 / CLOUD_S) % n + n) % n, ((-t * 2.5 / CLOUD_S) % n + n) % n); }   // the cloud shadows drift with the wind
     if (d.pk) pkUpdate(d.pk, t, car);   // Pikes Peak, Ouninpohja: the TV helicopter
@@ -9607,8 +9608,9 @@ const World = (function () {
      the lines). As on the Nordschleife only a corridor round the road is built, on the same terrain helpers (nrNear, nrH, nrGround, nrTileOn,
      the 8 m grid): stPrep reads the track's own data into them: the terrain def.dem (Copernicus, 32 m cells, 16-bit words, the cells far
      from the road left out and filled in here from their neighbours) and the land cover def.lc (8 classes). The ground is coloured in an
-     alpine palette (stCol) over a neutral grit (Pikes Peak's, faded out on steep faces): hay meadows in the valley, olive alpine turf with
-     dry patches higher up, the dark floor of the spruce and larch forest, dwarf pine, pale limestone scree and rock, the stream beds. */
+     alpine palette (stCol, the hollows a little darker than the knolls) over the ground's own detail (stGroundMat: grass, the forest floor,
+     scree and rock mixed per vertex, faded out on steep faces, the late snow patches of the pass): hay meadows in the valley, olive alpine
+     turf with dry patches higher up, the dark floor of the spruce and larch forest, dwarf pine, pale limestone scree and rock, the stream beds. */
   const STD = { wl: null };   // per build: the streams (a hash of their points: width, water level) and the building pads
   function stPrep() {
     const def = T.def, N = T.N, M = 480;
@@ -9682,9 +9684,10 @@ const World = (function () {
     const fo = nrLCf(x, z, 1), sh = nrLCf(x, z, 2), se = nrLCf(x, z, 3), rk = nrLCf(x, z, 4), sc = nrLCf(x, z, 5), sn = nrLCf(x, z, 6), wa = nrLCf(x, z, 7);
     const up = sstep(1450, 2300, alt);
     let r = lerp(0.33, 0.42, up), g = lerp(0.52, 0.51, up), b = lerp(0.19, 0.23, up);   // fresh hay meadows below, alpine turf above
-    const dry = sstep(0.55, 0.82, P.n5(x, z)) * (0.2 + 0.4 * up); r += dry * 0.08; g -= dry * 0.01; b += dry * 0.02;   // dry, straw-coloured patches
-    const lush = sstep(0.55, 0.82, P.n2(x, z)) * (1 - up * 0.6) * 0.7; r -= lush * 0.07; g += lush * 0.03; b -= lush * 0.02;
-    r *= 0.9 + m * 0.2; g *= 0.91 + m * 0.18; b *= 0.93 + m * 0.14;
+    const dry = sstep(0.52, 0.8, P.n5(x, z)) * (0.25 + 0.45 * up); r += dry * 0.11; g -= dry * 0.005; b += dry * 0.03;   // dry, straw-coloured patches
+    const lush = sstep(0.52, 0.8, P.n2(x, z)) * (1 - up * 0.6) * 0.8; r -= lush * 0.09; g += lush * 0.035; b -= lush * 0.03;
+    const bloom = sstep(0.62, 0.86, P.n6(x, z)) * (1 - up * 0.5) * (1 - lush) * 0.5; r += bloom * 0.07; g += bloom * 0.06; b += bloom * 0.05;   // meadows in flower (paler)
+    r *= 0.86 + m * 0.28; g *= 0.87 + m * 0.26; b *= 0.9 + m * 0.2;
     const stony = sstep(0.5, 0.85, q) * up * 0.35; r = lerp(r, 0.62, stony); g = lerp(g, 0.6, stony); b = lerp(b, 0.55, stony);   // grey stones through the turf
     const fl = Math.max(clamp(cov, 0, 1), fo * lerp(0.3, 1, sstep(225, 250, nrDist(x, z))));   // (no trees are planted beyond 250 m: the land cover alone there)
     r = lerp(r, 0.25 + q * 0.07, fl); g = lerp(g, 0.25 + q * 0.05, fl); b = lerp(b, 0.15 + q * 0.03, fl);   // needles and moss under the spruce and larch
@@ -9697,10 +9700,208 @@ const World = (function () {
     const st = sstep(0.82, 0.58, ny) * (1 - sn) * 0.8, ea = sstep(2150, 1900, alt);   // steep banks: brown earth low down, grey rock higher up
     r = lerp(r, lerp(0.6, 0.5, ea), st); g = lerp(g, lerp(0.58, 0.42, ea), st); b = lerp(b, lerp(0.54, 0.32, ea), st);
     if (dd < 3.5) { const t = sstep(3.5, 0.4, dd) * 0.5; r = lerp(r, 0.6, t); g = lerp(g, 0.57, t); b = lerp(b, 0.52, t); }   // the dusty verge
+    // the lie of the land (the real terrain's curvature over 24 and 64 m): hollows and gullies a little darker, ridges and knolls lighter
+    const h0 = alt - 900, l1 = (nrDem(x - 24, z) + nrDem(x + 24, z) + nrDem(x, z - 24) + nrDem(x, z + 24)) * 0.25 - h0, l2 = (nrDem(x - 64, z) + nrDem(x + 64, z) + nrDem(x, z - 64) + nrDem(x, z + 64)) * 0.25 - h0;
+    const ao = clamp(1 - l1 * 0.016 - l2 * 0.005, 0.78, 1.1); r *= ao; g *= ao; b *= ao;
     O[0] = r; O[1] = g; O[2] = b; return O;
   }
-  function stTileGeo(ti, tj, st) {   // one 256 m terrain tile as nrTileGeo, with the steep-face attribute of the grit material (pkGroundMat) and its 10 m UVs
+  // the Stelvio's ground detail: four tileable grey patterns in the channels of one 256 px texture (10 m across, each channel's mean
+  // 170 / 255), mixed per vertex by the ground's make-up (attribute surf, stSurf): R meadow grass (tufts, blades, bare soil between), G the
+  // forest floor (needles, moss, twigs, cones, dark hollows), B scree (angular stones lit from above, dark gaps), A rock (grain, lichen, cracks)
+  let stGTex = null;
+  function stGroundTex() {
+    if (stGTex) return stGTex;
+    const S = 256, out = new Uint8Array(S * S * 4), r = rng(8801);
+    const pn = (seed, cells) => {   // periodic value noise: 'cells' lattice cells across the tile
+      const R = rng(seed), g = new Float32Array(cells * cells); for (let k = 0; k < g.length; k++) g[k] = R();
+      const a = (p, q) => g[((q % cells) + cells) % cells * cells + ((p % cells) + cells) % cells];
+      return (x, y) => { const fx = x / S * cells, fy = y / S * cells, i = Math.floor(fx), j = Math.floor(fy), u = fx - i, v = fy - j, su = u * u * (3 - 2 * u), sv = v * v * (3 - 2 * v);
+        return (a(i, j) * (1 - su) + a(i + 1, j) * su) * (1 - sv) + (a(i, j + 1) * (1 - su) + a(i + 1, j + 1) * su) * sv; };
+    };
+    const layer = (draw) => { const c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'); draw(x); return x.getImageData(0, 0, S, S).data; };
+    const wrapped = (px, py, rad, f) => { for (const ox of [-S, 0, S]) for (const oy of [-S, 0, S]) { const X = px + ox, Y = py + oy; if (X + rad < 0 || X - rad > S || Y + rad < 0 || Y - rad > S) continue; f(X, Y); } };   // (tileable)
+    const gray = (v) => { const q = clamp(Math.round(v), 0, 255); return 'rgb(' + q + ',' + q + ',' + q + ')'; };
+    const base = (x, fn) => { const img = x.createImageData(S, S), d = img.data; for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) { const o = (j * S + i) * 4; d[o] = d[o + 1] = d[o + 2] = clamp(fn(i, j), 0, 255); d[o + 3] = 255; } x.putImageData(img, 0, 0); };
+    const n1 = pn(11, 64), n2 = pn(12, 16), n3 = pn(13, 8);
+    const LR = layer((x) => {   // meadow grass
+      base(x, (i, j) => 150 + n1(i, j) * 50 + n2(i, j) * 45 + n3(i, j) * 30 + (r() - 0.5) * 30);
+      for (let k = 0; k < 520; k++) { const px = r() * S, py = r() * S, nb = 6 + Math.floor(r() * 7), rr = 3 + r() * 6, v0 = r();   // tufts: blades radiating from a clump
+        wrapped(px, py, rr + 2, (X, Y) => { x.fillStyle = 'rgba(50,50,50,0.18)'; x.beginPath(); x.ellipse(X + 1, Y + 1.3, rr * 0.7, rr * 0.55, 0, 0, TAU); x.fill();
+          for (let q = 0; q < nb; q++) { const a = q / nb * TAU + (r() - 0.5) * 0.6, l = rr * (0.6 + r() * 0.6); x.strokeStyle = gray(v0 < 0.5 ? 225 + r() * 30 : 120 + r() * 40); x.lineWidth = 1 + r() * 0.8; x.globalAlpha = 0.55;
+            x.beginPath(); x.moveTo(X, Y); x.quadraticCurveTo(X + Math.cos(a) * l * 0.5, Y + Math.sin(a) * l * 0.5 - 1, X + Math.cos(a) * l, Y + Math.sin(a) * l); x.stroke(); } x.globalAlpha = 1; }); }
+      x.lineWidth = 1;
+      for (let k = 0; k < 2200; k++) { const px = r() * S, py = r() * S, a = r() * TAU, l = 2 + r() * 5, v = r() < 0.5 ? 230 : 115;
+        wrapped(px, py, l, (X, Y) => { x.strokeStyle = gray(v); x.globalAlpha = 0.35; x.beginPath(); x.moveTo(X, Y); x.lineTo(X + Math.cos(a) * l, Y + Math.sin(a) * l); x.stroke(); x.globalAlpha = 1; }); }
+      for (let k = 0; k < 60; k++) { const px = r() * S, py = r() * S, rr = 1.5 + r() * 3; wrapped(px, py, rr, (X, Y) => { x.fillStyle = 'rgba(60,55,48,0.55)'; x.beginPath(); x.ellipse(X, Y, rr, rr * 0.7, r() * 3, 0, TAU); x.fill(); }); }
+    });
+    const g1 = pn(21, 32), g2 = pn(22, 12), g3 = pn(23, 64);
+    const LG = layer((x) => {   // the forest floor
+      base(x, (i, j) => { const b = g2(i, j); return 125 + g1(i, j) * 60 + (b > 0.6 ? (b - 0.6) * 150 : 0) + g3(i, j) * 40 + (r() - 0.5) * 36; });
+      for (let k = 0; k < 140; k++) { const px = r() * S, py = r() * S, rr = 3 + r() * 9; wrapped(px, py, rr, (X, Y) => { x.fillStyle = 'rgba(25,22,18,0.2)'; x.beginPath(); x.ellipse(X, Y, rr, rr * (0.5 + r() * 0.5), r() * 3, 0, TAU); x.fill(); }); }
+      x.lineWidth = 1;
+      for (let k = 0; k < 2400; k++) { const px = r() * S, py = r() * S, a = r() * TAU, l = 2 + r() * 3, v = r() < 0.6 ? 205 : 95;   // needles
+        wrapped(px, py, l, (X, Y) => { x.strokeStyle = gray(v); x.globalAlpha = 0.4; x.beginPath(); x.moveTo(X, Y); x.lineTo(X + Math.cos(a) * l, Y + Math.sin(a) * l); x.stroke(); x.globalAlpha = 1; }); }
+      x.lineWidth = 1.2;
+      for (let k = 0; k < 160; k++) { const px = r() * S, py = r() * S, a = r() * TAU, l = 6 + r() * 14, v = 175 + r() * 40;   // twigs
+        wrapped(px, py, l, (X, Y) => { x.strokeStyle = gray(v); x.globalAlpha = 0.7; x.beginPath(); x.moveTo(X, Y); x.lineTo(X + Math.cos(a) * l, Y + Math.sin(a) * l); x.stroke(); x.globalAlpha = 1; }); }
+      for (let k = 0; k < 70; k++) { const px = r() * S, py = r() * S; wrapped(px, py, 3, (X, Y) => { x.fillStyle = gray(100); x.beginPath(); x.ellipse(X, Y, 2.2, 1.3, r() * 3, 0, TAU); x.fill(); }); }   // cones
+    });
+    const LB = layer((x) => {   // scree
+      base(x, () => 95 + (r() - 0.5) * 50);
+      for (let k = 0; k < 1500; k++) { const px = r() * S, py = r() * S, rr = 2 + Math.pow(r(), 2) * 11, n = 5 + Math.floor(r() * 3), rot = r() * TAU, v = 150 + r() * 95, pts = [];
+        for (let q = 0; q < n; q++) { const a = rot + q / n * TAU + (r() - 0.5) * 0.7, l = rr * (0.65 + r() * 0.45); pts.push([Math.cos(a) * l, Math.sin(a) * l * 0.8]); }
+        wrapped(px, py, rr + 2, (X, Y) => {
+          const poly = (dx, dy, f) => { x.beginPath(); pts.forEach(([a, b], q) => q ? x.lineTo(X + a * f + dx, Y + b * f + dy) : x.moveTo(X + a * f + dx, Y + b * f + dy)); x.closePath(); x.fill(); };
+          x.fillStyle = 'rgba(25,25,25,0.55)'; poly(1.3, 1.6, 1); x.fillStyle = gray(v); poly(0, 0, 1); x.fillStyle = gray(Math.min(255, v + 25)); poly(-rr * 0.15, -rr * 0.2, 0.55); });   // (shadow, stone, its lit top)
+      }
+    });
+    const a1 = pn(41, 16), a2 = pn(42, 48), a3 = pn(43, 8);
+    const LA = layer((x) => {   // rock
+      base(x, (i, j) => 150 + a1(i, j) * 55 + a2(i, j) * 35 + a3(i, j) * 30 + (r() - 0.5) * 26);
+      for (let k = 0; k < 120; k++) { const px = r() * S, py = r() * S, rr = 3 + r() * 10; wrapped(px, py, rr, (X, Y) => { x.fillStyle = r() < 0.6 ? 'rgba(240,240,235,0.3)' : 'rgba(70,70,65,0.25)'; x.beginPath(); x.ellipse(X, Y, rr, rr * (0.6 + r() * 0.4), r() * 3, 0, TAU); x.fill(); }); }
+      for (let k = 0; k < 18; k++) { let px = r() * S, py = r() * S, a = r() * TAU; const n = 8 + Math.floor(r() * 14), wd = 1 + r() * 1.6;   // cracks and joints
+        for (let q = 0; q < n; q++) { const qx = px + Math.cos(a) * 5, qy = py + Math.sin(a) * 5, mx = (px + qx) / 2, my = (py + qy) / 2, p0 = px, q0 = py;
+          wrapped(mx, my, 8, (X, Y) => { const dx = X - mx, dy = Y - my; x.strokeStyle = 'rgba(30,30,28,0.75)'; x.lineWidth = wd; x.beginPath(); x.moveTo(p0 + dx, q0 + dy); x.lineTo(qx + dx, qy + dy); x.stroke();
+            x.strokeStyle = 'rgba(235,235,230,0.3)'; x.lineWidth = 1; x.beginPath(); x.moveTo(p0 + dx + 1, q0 + dy + 1.2); x.lineTo(qx + dx + 1, qy + dy + 1.2); x.stroke(); });
+          px = qx; py = qy; a += (r() - 0.5) * 0.8; }
+      }
+    });
+    [LR, LG, LB, LA].forEach((L, c) => { let sm = 0; for (let k = 0; k < S * S; k++) sm += L[k * 4]; const m = sm / (S * S);
+      for (let k = 0; k < S * S; k++) out[k * 4 + c] = clamp(Math.round(170 + (L[k * 4] - m) * 0.9), 0, 255); });
+    const t = new THREE.DataTexture(out, S, S, THREE.RGBAFormat);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true; t.anisotropy = 4; t.needsUpdate = true;
+    return (stGTex = t);
+  }
+  // the terrain tiles' material: the detail sampled at two scales (10 m and 34 m across, against the tiling), weighted by surf and faded out
+  // on steep faces (where the top-down UVs smear); the late snow patches (attribute snow) with ragged edges from the detail
+  function stGroundMat(clip) {
+    const m = new THREE.MeshLambertMaterial({ map: stGroundTex(), vertexColors: true });
+    m.onBeforeCompile = (sh) => {
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float steep;\nattribute vec4 surf;\nattribute float snow;\nattribute float rsd;\nvarying float vSteep;\nvarying vec4 vSurf;\nvarying float vSnow;\nvarying float vRsd;')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvSteep = steep; vSurf = surf; vSnow = snow; vRsd = rsd;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vSteep;\nvarying vec4 vSurf;\nvarying float vSnow;\nvarying float vRsd;').replace('#include <map_fragment>', [
+        clip ? 'if ( vRsd < 0.0 ) discard;' : '',   // (over the asphalt: the road shows)
+        'float stSn = 0.0;',
+        '#ifdef USE_MAP',
+        '  vec4 tA = texture2D( map, vUv ), tB = texture2D( map, vUv * 0.29 + vec2( 0.37, 0.61 ) );',
+        '  float det = ( dot( tA, vSurf ) * 0.6 + dot( tB, vSurf ) * 0.4 ) * 1.5;',
+        '  diffuseColor.rgb *= mix( det, 1.0, vSteep * 0.75 );',
+        '  float sv = vSnow + ( tA.b - 0.667 ) * 0.4 + ( tB.g - 0.667 ) * 0.3; stSn = smoothstep( 0.46, 0.53, sv ) * ( 0.78 + 0.16 * smoothstep( 0.53, 0.68, sv ) );',   // (a greyer, dirtier rim)
+        '#endif'].join('\n')).replace('#include <color_fragment>', '#include <color_fragment>\n  diffuseColor.rgb = mix( diffuseColor.rgb, vec3( 1.0, 1.01, 1.04 ), stSn );');
+    };
+    m.customProgramCacheKey = () => clip ? 'stGroundClip' : 'stGround';
+    return m;
+  }
+  // the ground's make-up at a vertex, as stCol's palette has it: [grass, forest floor, scree, rock] summing to 1 (the detail's weights)
+  function stSurf(x, z, ny, dd, cov, O) {
+    const P = NR, alt = nrDem(x, z) + 900, up = sstep(1450, 2300, alt);
+    const fo = nrLCf(x, z, 1), sh = nrLCf(x, z, 2), rk = nrLCf(x, z, 4), sc = nrLCf(x, z, 5), wa = nrLCf(x, z, 7);
+    const fl = Math.max(clamp(cov, 0, 1), fo * lerp(0.3, 1, sstep(225, 250, nrDist(x, z)))), st = sstep(0.82, 0.58, ny), ea = sstep(2150, 1900, alt);
+    const wF = fl + sh * 0.5 + st * ea * 0.7, wS = sc + wa * 0.8 + sstep(0.5, 0.85, P.n4(x, z)) * up * 0.4 + (dd < 3.5 ? sstep(3.5, 0.4, dd) * 0.7 : 0), wR = rk + st * (1 - ea) * 0.9;
+    const wG = Math.max(0, 1 - wF - wS - wR) + 0.06, s = wG + wF + wS + wR;
+    O[0] = wG / s; O[1] = wF / s; O[2] = wS / s; O[3] = wR / s; return O;
+  }
+  // late-lying snow at the end of summer high on the pass: above ~2580 m, in the hollows and on the slopes that face north, never by the road
+  // or on steep faces; 0-1 (the ground material draws it from 0.5 on, its edge ragged)
+  function stSnowW(x, z, ny, nz, dd) {
+    const h0 = nrDem(x, z), alt = h0 + 900; if (alt < 2560) return 0;
+    const P = NR, l1 = (nrDem(x - 24, z) + nrDem(x + 24, z) + nrDem(x, z - 24) + nrDem(x, z + 24)) * 0.25 - h0;
+    const s = 0.34 + clamp(-nz * 2, -1, 1) * 0.22 + clamp(l1 * 0.05, -0.2, 0.25) + (P.n2(x, z) - 0.5) * 0.5 + (P.n7(x, z) - 0.5) * 0.25;
+    return sstep(2560, 2700, alt) * sstep(12, 26, dd) * sstep(0.5, 0.75, ny) * clamp(s, 0, 1);
+  }
+  // the Stelvio's asphalt (the pass road's own: 512 px across its whole width, 1024 px along 28 m): the grain of the chippings, darker and
+  // lighter stretches, the four wheel paths polished lighter, the oily middle of each lane, dust along the edges, a few repair patches,
+  // cracks sealed with tar and fine hairline ones
+  function stAsphaltTex() {
+    const W = 512, H = 1024, r = rng(8811), c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+    const pn = (seed, cx, cy) => { const R = rng(seed), g = new Float32Array(cx * cy); for (let k = 0; k < g.length; k++) g[k] = R();   // (periodic value noise)
+      const a = (p, q) => g[((q % cy) + cy) % cy * cx + ((p % cx) + cx) % cx];
+      return (px, py) => { const fx = px / W * cx, fy = py / H * cy, i = Math.floor(fx), j = Math.floor(fy), u = fx - i, v = fy - j, su = u * u * (3 - 2 * u), sv = v * v * (3 - 2 * v);
+        return (a(i, j) * (1 - su) + a(i + 1, j) * su) * (1 - sv) + (a(i, j + 1) * (1 - su) + a(i + 1, j + 1) * su) * sv; }; };
+    const n1 = pn(1, 4, 8), n2 = pn(2, 16, 32), n3 = pn(3, 64, 128), bell = (u, cs, sg) => { let k = 0; for (const c0 of cs) k = Math.max(k, Math.exp(-((u - c0) * (u - c0)) / (2 * sg * sg))); return k; };
+    const img = x.createImageData(W, H), d = img.data;
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+      const u = i / W, e = Math.min(u, 1 - u), wp = bell(u, [0.186, 0.314, 0.686, 0.814], 0.02), ol = bell(u, [0.25, 0.75], 0.018), g = r();
+      let k = 0.94 + (n1(i, j) - 0.5) * 0.14 + (n2(i, j) - 0.5) * 0.1 + (n3(i, j) - 0.5) * 0.06 + (g - 0.5) * (0.2 - wp * 0.08);   // (the chippings' grain finer where the tyres polish it)
+      if (g > 0.985) k += 0.28; else if (g < 0.02) k -= 0.2;
+      k += wp * 0.07 - ol * 0.05 * (0.5 + n3(i * 3, j));
+      if (e < 0.035) k += (0.035 - e) / 0.035 * 0.08 * (0.6 + n2(i * 2, j));
+      const o = (j * W + i) * 4, v = clamp(k, 0, 1.6); d[o] = clamp(98 * v, 0, 255); d[o + 1] = clamp(101 * v, 0, 255); d[o + 2] = clamp(106 * v, 0, 255); d[o + 3] = 255;
+    }
+    x.putImageData(img, 0, 0);
+    for (let k = 0; k < 3; k++) { const pw = 40 + r() * 90, ph = 60 + r() * 160, px = r() * (W - pw), py = 10 + r() * (H - ph - 20);
+      x.fillStyle = r() < 0.6 ? 'rgba(30,31,34,0.18)' : 'rgba(200,200,205,0.07)'; x.fillRect(px, py, pw, ph); x.strokeStyle = 'rgba(25,25,28,0.35)'; x.lineWidth = 1.5; x.strokeRect(px, py, pw, ph); }
+    const crack = (px, py, a, n, st, wd, col, turn) => { x.strokeStyle = col; x.lineWidth = wd; x.lineJoin = 'round'; x.beginPath(); x.moveTo(px, py);
+      for (let q = 0; q < n; q++) { px += Math.cos(a) * st; py += Math.sin(a) * st; a += (r() - 0.5) * turn; if (py < 12 || py > H - 12) break; x.lineTo(px, py); } x.stroke(); };
+    for (let k = 0; k < 7; k++) { const side = r() < 0.5 ? 0.04 + r() * 0.07 : 0.89 + r() * 0.07; crack(side * W, 60 + r() * (H - 300), Math.PI / 2 + (r() - 0.5) * 0.3, 10 + r() * 18, 7, 1.6 + r() * 1.2, 'rgba(20,20,22,0.55)', 0.5); }
+    for (let k = 0; k < 3; k++) crack(r() * W * 0.15, 80 + r() * (H - 160), (r() - 0.5) * 0.2, 20 + r() * 25, 8, 1.8, 'rgba(20,20,22,0.5)', 0.35);
+    for (let k = 0; k < 16; k++) crack(r() * W, 40 + r() * (H - 80), r() * TAU, 5 + r() * 8, 4, 0.8, 'rgba(40,40,44,0.3)', 0.8);
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t;
+  }
+  // the gutter's setts (a paved channel along the uphill edge of the road): rows of small grey stones, dark joints; 64 x 128 px for 0.8 x 1.6 m
+  function stSettsTex() {
+    const c = document.createElement('canvas'); c.width = 64; c.height = 128; const x = c.getContext('2d'), r = rng(8821);
+    x.fillStyle = '#3a3a3a'; x.fillRect(0, 0, 64, 128);
+    for (let row = 0; row < 16; row++) { const y0 = row * 8, off = (row % 2) * 5; for (let cx = -off; cx < 64; cx += 10 + Math.floor(r() * 3)) {
+      const v = 150 + Math.floor(r() * 60), w0 = 8 + r() * 2; x.fillStyle = 'rgb(' + v + ',' + (v - 2) + ',' + (v - 6) + ')'; x.fillRect(cx + 1, y0 + 1, w0, 6.2);
+      x.fillStyle = 'rgba(255,255,255,0.12)'; x.fillRect(cx + 1, y0 + 1, w0, 1.5); } }
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t;
+  }
+  // the walls' stones (the parapets over the drops, the dry-stone retaining walls): courses of rough blocks, dark joints, 256 x 128 px for
+  // 1.6 x 0.8 m; grey, the vertex colours tint it (the retaining walls browner)
+  function stStoneTex() {
+    const c = document.createElement('canvas'); c.width = 256; c.height = 128; const x = c.getContext('2d'), r = rng(8831);
+    x.fillStyle = '#4a4a4a'; x.fillRect(0, 0, 256, 128);
+    for (let y0 = 0; y0 < 128;) { const hh = 18 + Math.floor(r() * 16), h2 = Math.min(hh, 128 - y0); let x0 = -Math.floor(r() * 40);
+      while (x0 < 256) { const ww = 28 + Math.floor(r() * 52), v = 150 + Math.floor(r() * 70), in2 = 1.5 + r() * 1.5;
+        for (const ox of [0, 256]) { if (x0 + ox > 256) continue; x.fillStyle = 'rgb(' + v + ',' + (v - 3) + ',' + (v - 8) + ')'; x.beginPath(); x.roundRect ? x.roundRect(x0 + ox + in2, y0 + in2, ww - 2 * in2, h2 - 2 * in2, 4) : x.rect(x0 + ox + in2, y0 + in2, ww - 2 * in2, h2 - 2 * in2); x.fill();
+          x.fillStyle = 'rgba(255,255,255,0.14)'; x.fillRect(x0 + ox + in2 + 2, y0 + in2, ww - 2 * in2 - 4, 2.5); x.fillStyle = 'rgba(0,0,0,0.18)'; x.fillRect(x0 + ox + in2 + 2, y0 + h2 - in2 - 3, ww - 2 * in2 - 4, 2.5); }
+        x0 += ww; }
+      y0 += hh; }
+    for (let k = 0; k < 900; k++) { const v = Math.floor(r() * 255); x.fillStyle = 'rgba(' + v + ',' + v + ',' + v + ',0.12)'; x.fillRect(r() * 256, r() * 128, 2, 2); }   // (grain)
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t;
+  }
+  // roof shingles (tileable, 256 px for 2 x 2 m): eight courses of staggered shingles, each darker under the overlap; grey, the vertex colours
+  // tint it (slate grey, weathered larch, red-brown)
+  function stRoofTex() {
+    const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'), r = rng(8841);
+    x.fillStyle = '#3c3c3c'; x.fillRect(0, 0, 256, 256);
+    for (let row = 0; row < 8; row++) { const y0 = row * 32, ws = []; let t = 0; while (t < 256) { const ww = 16 + Math.floor(r() * 13); ws.push(ww); t += ww; }
+      const k = 256 / t; let x0 = row % 2 ? 11 : 0;
+      for (const w0 of ws) { const ww = w0 * k, v = 150 + Math.floor(r() * 70), g = x.createLinearGradient(0, y0, 0, y0 + 32);
+        g.addColorStop(0, 'rgb(' + (v - 30) + ',' + (v - 30) + ',' + (v - 28) + ')'); g.addColorStop(0.75, 'rgb(' + v + ',' + v + ',' + (v + 2) + ')'); g.addColorStop(1, 'rgb(' + (v - 55) + ',' + (v - 55) + ',' + (v - 52) + ')');
+        x.fillStyle = g; for (const ox of [0, -256]) x.fillRect(x0 + ox + 1, y0, ww - 1.5, 31); x0 += ww; } }
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t;
+  }
+  // the windows (2 x 2 cells): a white frame with mullions and a pane of sky, louvred shutters either side (0 green, 1 brown), cells 2 and 3
+  // the same with a window box of red and pink geraniums under it
+  function stWinTex() {
+    const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d');
+    const cell = (cx, cy, shut, flowers) => {
+      x.fillStyle = '#f2f0ea'; x.fillRect(cx, cy, 128, 128);
+      const top = cy + 8, h = flowers ? 86 : 104;
+      for (const sx of [cx + 2, cx + 94]) { x.fillStyle = shut; x.fillRect(sx, top, 32, h); x.fillStyle = 'rgba(0,0,0,0.28)'; for (let k = 6; k < h; k += 7) x.fillRect(sx + 3, top + k, 26, 2); x.fillStyle = 'rgba(255,255,255,0.15)'; x.fillRect(sx, top, 32, 3); }
+      x.fillStyle = '#e9e6de'; x.fillRect(cx + 34, top, 60, h); x.fillStyle = '#39424c'; x.fillRect(cx + 39, top + 5, 50, h - 10);
+      x.fillStyle = 'rgba(160,190,215,0.35)'; x.fillRect(cx + 42, top + 8, 18, h * 0.4); x.fillStyle = '#e9e6de'; x.fillRect(cx + 62, top + 5, 4, h - 10); x.fillRect(cx + 39, top + h * 0.45, 50, 4);
+      if (flowers) { x.fillStyle = '#6a4a2c'; x.fillRect(cx + 26, cy + 104, 76, 14); const R2 = rng(cx * 7 + cy + 1);
+        for (let k = 0; k < 44; k++) { const px = cx + 26 + R2() * 76, py = cy + 92 + R2() * 16; x.fillStyle = R2() < 0.35 ? '#2f6a2a' : R2() < 0.8 ? '#d0202a' : '#f05070'; x.beginPath(); x.arc(px, py, 3 + R2() * 2.5, 0, TAU); x.fill(); } }
+    };
+    cell(0, 0, '#2f6b3a', false); cell(128, 0, '#6b4a2a', false); cell(0, 128, '#2f6b3a', true); cell(128, 128, '#6b4a2a', true);
+    const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
+  }
+  // a stream's white water (tileable, 128 x 256 px, 4 m across and 8 m along): streaks and blobs of foam drawn out along the flow, the rest
+  // clear (alpha); the vertex alpha says how much of it shows (the rapids)
+  function stFoamTex() {
+    const c = document.createElement('canvas'); c.width = 128; c.height = 256; const x = c.getContext('2d'), r = rng(8851);
+    for (let k = 0; k < 260; k++) { const px = r() * 128, py = r() * 256, rw = 1.5 + r() * 5, rh = rw * (2 + r() * 5), a = 0.25 + r() * 0.6;
+      for (const ox of [-128, 0, 128]) for (const oy of [-256, 0, 256]) { const X = px + ox, Y = py + oy; if (X + rw < 0 || X - rw > 128 || Y + rh < 0 || Y - rh > 256) continue;
+        const gr = x.createRadialGradient(X, Y, 0, X, Y, rh); gr.addColorStop(0, 'rgba(255,255,255,' + a + ')'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+        x.fillStyle = gr; x.beginPath(); x.ellipse(X, Y, rw, rh, 0, 0, TAU); x.fill(); } }
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+  }
+  function stTileGeo(ti, tj, st) {   // one 256 m terrain tile as nrTileGeo, with the attributes of the ground material (stGroundMat: steep faces, the detail's weights, snow) and its 10 m UVs
     const G = NR.G, m = NRT / st, n = m + 1, pos = new Float32Array(n * n * 3), nor = new Float32Array(n * n * 3), col = new Float32Array(n * n * 3), uv = new Float32Array(n * n * 2), stp = new Float32Array(n * n), i0 = ti * NRT, j0 = tj * NRT;
+    const sf = new Float32Array(n * n * 4), sn = new Float32Array(n * n), W4 = [0, 0, 0, 0], rsd = new Float32Array(n * n).fill(99), hr = new Float32Array(n * n), tun = T.def.tunnels || [];
     let k = 0;
     for (let b = 0; b < n; b++) for (let a = 0; a < n; a++, k++) {
       const i = i0 + a * st, j = j0 + b * st, x = G.x0 + i * NRC, z = G.z0 + j * NRC, h = nrGH(i, j);
@@ -9709,23 +9910,36 @@ const World = (function () {
       if (st === 1) { const q = nrVCol(i, j), C = G.col; col[k * 3] = C[q]; col[k * 3 + 1] = C[q + 1]; col[k * 3 + 2] = C[q + 2]; }
       else { const kk = clamp(j, 0, G.nz - 1) * G.nx + clamp(i, 0, G.nx - 1), c = stCol(x, z, ny, G.dd[kk], G.cov[kk], NRCOL); col[k * 3] = c[0]; col[k * 3 + 1] = c[1]; col[k * 3 + 2] = c[2]; }
       uv[k * 2] = x / 10; uv[k * 2 + 1] = -z / 10; stp[k] = sstep(0.78, 0.5, ny);
+      const kk = clamp(j, 0, G.nz - 1) * G.nx + clamp(i, 0, G.nx - 1), w4 = stSurf(x, z, ny, G.dd[kk], G.cov[kk], W4);
+      sf[k * 4] = w4[0]; sf[k * 4 + 1] = w4[1]; sf[k * 4 + 2] = w4[2]; sf[k * 4 + 3] = w4[3]; sn[k] = stSnowW(x, z, ny, nz, G.dd[kk]);
+      if (st === 1 && G.dd[kk] < 14) { const q = nrNear(x, z), dq = q.i * T.ds - T.startS;
+        if (q.i >= 0 && !tun.some(([ta, tb]) => dq > ta - 40 && dq < tb + 40)) { rsd[k] = q.d - T.w; hr[k] = h - q.hn; } }   // (not by the tunnels: the mountain over the road there)
     }
-    const idx = new Uint16Array(m * m * 6); k = 0;
-    for (let b = 0; b < m; b++) for (let a = 0; a < m; a++) { const p = b * n + a, q = p + 1, c = p + n, d = c + 1; idx[k++] = p; idx[k++] = c; idx[k++] = q; idx[k++] = q; idx[k++] = c; idx[k++] = d; }
+    const I0 = [], I1 = [];
+    for (let b = 0; b < m; b++) for (let a = 0; a < m; a++) { const p = b * n + a, q = p + 1, c = p + n, d = c + 1;
+      for (const [u, v, t] of [[p, c, q], [q, c, d]]) (Math.min(rsd[u], rsd[v], rsd[t]) < 0.2 && Math.max(hr[u], hr[v], hr[t]) > 0.25 ? I1 : I0).push(u, v, t); }
+    const idx = new Uint16Array(I0);
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
-    g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setAttribute('steep', new THREE.BufferAttribute(stp, 1)); g.setIndex(new THREE.BufferAttribute(idx, 1));
-    g.computeBoundingSphere(); return g;
+    g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setAttribute('steep', new THREE.BufferAttribute(stp, 1));
+    g.setAttribute('surf', new THREE.BufferAttribute(sf, 4)); g.setAttribute('snow', new THREE.BufferAttribute(sn, 1)); g.setAttribute('rsd', new THREE.BufferAttribute(rsd, 1)); g.setIndex(new THREE.BufferAttribute(idx, 1));
+    g.computeBoundingSphere();
+    if (I1.length) g.userData.clip = I1;   // (the builder gathers them from every tile into one mesh)
+    return g;
   }
-  // unit trees of the Stelvio's forest (height 1, the instances scale them), soft shaded: 0 spruce (Nordschleife's), 1 larch (a narrow, open
+  // unit trees of the Stelvio's forest (height 1, the instances scale them), soft shaded: 0 spruce (three drooping tiers), 1 larch (a narrow, open
   // cone of light, feathery tiers on a longer bare trunk), 2 Swiss stone pine (a dark, dense, rounded crown), 3 dwarf pine / alder bush
   // (a low spreading lump), 4 the far spruce (two tiers), 5 the far larch
   function stTreeGeo(kind) {
-    if (kind === 0) return nrTreeGeo(0);
     if (kind === 4) return nrTreeGeo(2);
     const g = new GB(), R = rng(870 + kind), rs = ROCK_SMOOTH; ROCK_SMOOTH = true;
     const sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k], la = [0.23, 0.36, 0.16], laT = [0.33, 0.46, 0.22], pi = [0.1, 0.2, 0.12], piT = [0.16, 0.28, 0.16], bu = [0.16, 0.27, 0.12];
-    if (kind === 1) {   // larch
+    if (kind === 0) {   // spruce: a slim dark crown of three jagged tiers, their branch tips drooping, the lowest darkest, the top's fresh growth lighter
+      const sp = [0.1, 0.21, 0.13], spT = [0.17, 0.32, 0.2];
+      cone(g, 0, -0.02, 0, 0.035, 0.26, 4, [0.3, 0.22, 0.15], null, 0);
+      nrFir(g, 0, 0.08, 0, 0.31, 0.44, 7, sh(sp, 0.8), sh(spT, 0.86), 0.2, 0.07); nrFir(g, 0, 0.36, 0, 0.22, 0.38, 6, sh(sp, 0.95), spT, 0.75, 0.05);
+      nrFir(g, 0, 0.6, 0, 0.13, 0.4, 5, sh(sp, 1.1), sh(spT, 1.12), 1.3, 0.03);
+    } else if (kind === 1) {   // larch
       cone(g, 0, -0.02, 0, 0.03, 0.55, 4, [0.36, 0.25, 0.16], null, 0);
       nrFir(g, 0, 0.16, 0, 0.26, 0.36, 6, sh(la, 0.9), laT, 0.3, 0.05); nrFir(g, 0, 0.4, 0, 0.19, 0.32, 6, la, laT, 0.9, 0.04);
       nrFir(g, 0, 0.62, 0, 0.11, 0.38, 5, sh(la, 1.08), laT, 1.5, 0.02);
@@ -9890,7 +10104,7 @@ const World = (function () {
   function buildStelvio(scene, tex, opts) {
     const R = rng(9711), N = T.N, w = T.w, ds = T.ds, dens = opts.density || 1, sStart = T.startS, sFin = T.finishS, def = T.def, iE = N - 1;
     const root = new THREE.Group(); scene.add(root);
-    const out = { root, dyn: {}, groundH: nrGround, camFloor: nrGround, props: [], farClip: true, ownTex: [] };
+    const out = { root, dyn: {}, groundH: nrGround, camFloor: nrGround, props: [], farClip: true, ownTex: [], fogK: 1.35 };   // (fogK: the thin, clear mountain air: the haze begins farther off)
     stPrep();
     const P = NR, G = P.G;
     P.b0 = 1.5; P.b1 = 18; P.rise = 0.3;   // (nrH: the real slope comes up close behind the road, and rises steeply behind the uphill walls)
@@ -9991,23 +10205,25 @@ const World = (function () {
        centre line of an Italian state road (indexed ribbons, 120 m chunks) ---- */
     const aMat = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true }); out.asphaltMat = aMat;
     const lMat = new THREE.MeshLambertMaterial({ vertexColors: true });
-    const gMat = pkGroundMat(); const gvMat = new THREE.MeshLambertMaterial({ map: pkTex(), vertexColors: true });   // (terrain tiles: the grit fades on steep faces; the verges)
+    const gMat = stGroundMat(); const gvMat = new THREE.MeshLambertMaterial({ map: pkTex(), vertexColors: true });   // (terrain tiles: the ground's detail and its late snow; the verges: grit)
+    const rTex = stAsphaltTex(); out.ownTex.push(rTex);
+    const rMat = new THREE.MeshPhongMaterial({ map: rTex, vertexColors: true, shininess: 6, specular: 0x0e0e0f });   // (the pass road: its own asphalt; Render.applyRoad makes it glisten in the rain, out.dyn.wet)
     const CH = 60;
     {
-      const offs = [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8, secT = new Float32Array(N);
+      const offs = [-w, -w * 0.5, 0, w * 0.5, w], secT = new Float32Array(N);
       for (let i0 = 0, k = 0; i0 < N; k++) { const n = 50 + Math.floor(crH(k, 3, 97) * 90), t = 0.88 + crH(k, 5, 97) * 0.18; for (let i = i0; i < Math.min(N, i0 + n); i++) secT[i] = t; i0 += n; }
       const shade = (i, o) => { const rl = T.rl[i]; let k = (0.82 - 0.12 * Math.exp(-((o - rl) * (o - rl)) / 3)) * secT[i]; if (Math.abs(o) > w * 0.9) k -= 0.03; return [k, k, k * 1.02]; };
       const wht = [0.94, 0.94, 0.9], W4 = [wht, wht, wht, wht], dash = (i) => { const d = dOf(i); return ((d % 12) + 12) % 12 < 4.5; };   // 4.5 m dashes, 7.5 m gaps
       for (let c0 = 0; c0 < N - 1; c0 += CH) {
         const gr = new RB(true), gl = new RB(), gc = new RB(); let pr = -1, pl = -1, pc = -1;
         for (let i = c0; i <= Math.min(c0 + CH, N - 1); i++) {
-          const v = i * ds / tileL, r = gr.row(offs.map(o => Pt(i, o, 0.02)), offs.map(o => shade(i, o)), offs.map(o => [(o + w) / tileL, v]));
+          const v = i * ds / 28, r = gr.row(offs.map(o => Pt(i, o, 0.02)), offs.map(o => shade(i, o)), offs.map(o => [(o + w) / (2 * w), v]));
           if (pr >= 0) gr.link(pr, r, 0, offs.length - 1); pr = r;
           const l = gl.row([Pt(i, -(w - 0.18), 0.036), Pt(i, -(w - 0.32), 0.036), Pt(i, w - 0.32, 0.036), Pt(i, w - 0.18, 0.036)], W4);
           if (pl >= 0) { const dm = ((dOf(i) % 2) + 2) % 2 < 1; if (!mouth[0][i] || dm) gl.link(pl, l, 0, 1); if (!mouth[1][i] || dm) gl.link(pl, l, 2, 3); } pl = l;   // (across a junction's mouth: 1 m dashes)
           if (dash(i) || (i > 0 && dash(i - 1))) { const c = gc.row([Pt(i, -0.06, 0.036), Pt(i, 0.06, 0.036)], [wht, wht]); if (pc >= 0 && dash(i - 1)) gc.link(pc, c, 0, 1); pc = c; } else pc = -1;
         }
-        addM(gr, aMat); addM(gl, lMat); addM(gc, lMat);
+        addM(gr, rMat); addM(gl, lMat); addM(gc, lMat);
       }
       // chequered start and finish lines, a white line at each checkpoint
       const gq = new GB(true), gw = new GB(), uM = Math.round(w * 2 / 0.8) / 16, W1 = [1, 1, 1];
@@ -10016,6 +10232,28 @@ const World = (function () {
       for (const s0 of T.cpS) { const a = atSf(s0 - 0.25, -w + 0.1), b = atSf(s0 - 0.25, w - 0.1), c = atSf(s0 + 0.25, w - 0.1), d = atSf(s0 + 0.25, -w + 0.1), y = (p) => T.hy[p[3]] + 0.038;
         gw.quadUp([a[0], y(a), a[1]], [b[0], y(b), b[1]], [c[0], y(c), c[1]], [d[0], y(d), d[1]], W4); }
       tex.checker.repeat.set(1, 1); addM(gq, new THREE.MeshLambertMaterial({ map: tex.checker })); addM(gw, lMat);
+    }
+
+    let nPud = 0, nGut = 0;
+    /* ---- puddles of a race in the rain (hidden in the dry: Render shows them with the wet road, out.dyn.wet, the road glistening, the grass
+       darker): the grey sky mirrored in the middle, a darker rim, near the edges where the water runs off, more of them in the dips ---- */
+    {
+      const g = new GB(), RP = rng(7541), SKY = [0.56, 0.6, 0.64], MID = [0.37, 0.39, 0.41], RIM = [0.25, 0.25, 0.26], n = 14; nPud = 0;
+      const PP = (s, o) => { const f = s / ds, i = clamp(Math.floor(f), 0, N - 2), t = f - i, j = i + 1, nx = lerp(T.nx[i], T.nx[j], t), nz = lerp(T.nz[i], T.nz[j], t);
+        return [lerp(T.px[i], T.px[j], t) + nx * o, lerp(T.hy[i], T.hy[j], t) + 0.042, lerp(T.pz[i], T.pz[j], t) + nz * o]; };
+      for (let s = sStart + 40; s < sFin - 20; s += 16) {
+        const i = T.idx(s); if (inTunnel(i, 6) || onBridge(i, 6)) continue;
+        const dip = T.hy[i] < Math.min(T.hy[Math.max(0, i - 10)], T.hy[Math.min(N - 1, i + 10)]) - 0.08, flat = Math.abs(T.hy[Math.min(N - 1, i + 3)] - T.hy[Math.max(0, i - 3)]) < 0.25;
+        if (RP() > (dip ? 0.6 : flat ? 0.2 : 0.07)) continue;
+        const side = RP() < 0.5 ? -1 : 1, hl = 1.2 + RP() * 2.6, hw = 0.45 + RP() * 0.9, o = side * (w - 0.3 - hw - Math.pow(RP(), 2) * 2.5), ph = RP() * TAU, wob = [];
+        for (let k = 0; k < n; k++) { const a = k / n * TAU; wob.push([Math.cos(a), Math.sin(a), 0.84 + 0.16 * Math.sin(a * 3 + ph) * Math.cos(a * 2 - ph)]); }
+        const c = PP(s, o), below = [c[0], c[1] - 5, c[2]], ring = (f) => wob.map(([cx, sz, q]) => PP(s + cx * hl * q * f, o + sz * hw * q * f)), I = ring(0.6), O = ring(1);
+        for (let k = 0; k < n; k++) { const m = (k + 1) % n; g.triO(c, I[k], I[m], SKY, below); g.triO(I[k], O[k], O[m], MID, below, RIM, RIM); g.triO(I[k], O[m], I[m], MID, below, RIM, MID); }
+        nPud++;
+      }
+      const pm = new THREE.Mesh(g.geometry(), new THREE.MeshBasicMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }));
+      pm.matrixAutoUpdate = false; pm.visible = false; pm.name = 'puddles'; pm.renderOrder = 1; root.add(pm);
+      out.dyn.wet = { puddles: pm, road: rMat, ground: gMat, base: { sh: rMat.shininess, sp: rMat.specular.getHex() }, tarmac: true };   // (tarmac: cleared of the winter's snow, not packed with it)
     }
 
     /* ---- on the asphalt: the fans' paint of the Giro d'Italia (thickest on the hairpins above the tree line, where the crowds stand on a race
@@ -10055,7 +10293,7 @@ const World = (function () {
     /* ---- what stands at the edge of the road, per sample and side: 1 a low wall of stone blocks where the ground drops away (the old pass
        road), 2 a steel guardrail (the valley road below Trafoi, the bridges' approaches), 3 a dry-stone retaining wall where the slope rises
        right behind the road, 0 open ground (white marker posts) ---- */
-    const kindA = [new Uint8Array(N), new Uint8Array(N)], hA = [new Float32Array(N), new Float32Array(N)];
+    const kindA = [new Uint8Array(N), new Uint8Array(N)], hA = [new Float32Array(N), new Float32Array(N)], gutA = [new Uint8Array(N), new Uint8Array(N)];   // (gutA: a paved gutter)
     const villages = [[-200, 250], [3690, 3990], [5830, 6170], [9540, 10330], [T.raceLen - 120, T.raceLen + 500]];   // (Prad, Stilfser Brücke, Gomagoi, Trafoi, the pass)
     const inVillage = (d) => villages.some(([a, b]) => d > a && d < b);
     for (let i = 0; i < N; i++) for (const side of [-1, 1]) {
@@ -10064,6 +10302,7 @@ const World = (function () {
       const gAt = (e) => { const o = side * (bar + e); return nrGround(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o) - y; };
       const g3 = gAt(3), g8 = gAt(8);
       if (onBridge(i, 4)) { kindA[si][i] = 2; continue; }
+      if (g3 > 0.35 && !inVillage(d) && bar - w < 3) gutA[si][i] = 1;   // (the uphill edge: a paved gutter takes the water off the slope)
       if (g3 < -1.2 || g8 < -2.6) kindA[si][i] = d < 9450 && !inVillage(d) ? 2 : inVillage(d) ? 0 : 1;
       else if (g3 > 0.9 && !inVillage(d)) { kindA[si][i] = 3; hA[si][i] = clamp(g3 + 0.25, 0.8, 3.2); }
     }
@@ -10082,29 +10321,31 @@ const World = (function () {
       const stone = [0.55, 0.53, 0.5], cap = [0.72, 0.71, 0.68], steel = [0.78, 0.8, 0.82], steelB = [0.56, 0.58, 0.6], dry = [0.5, 0.47, 0.42];
       const postGeo = (() => { const g = new GB(); box(g, 0, 0, 0, 0.13, 1, 0.13, 0, [0.48, 0.49, 0.52], null, true); return g.geometry(); })();
       const posts = new IChunks(postGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), 256);
-      const rbs = new Map(), rbAt = (i) => { const k = Math.floor(i / CH); let r = rbs.get(k); if (!r) rbs.set(k, r = new RB()); return r; };
+      const rbs = new Map(), rbAt = (i, kind) => { const k = Math.floor(i / (CH * 2)) * 2 + (kind === 2 ? 1 : 0); let r = rbs.get(k); if (!r) rbs.set(k, r = new RB(kind !== 2)); return r; };   // (stone: with UVs; steel: without; 120 samples a mesh)
       for (const side of [-1, 1]) {
         const si = side > 0 ? 1 : 0, K = kindA[si], H = hA[si], bar = side > 0 ? T.br : T.bl;
         const Q = (i, e, y) => { const o = side * (bar[i] + e); return [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o]; };
         const row = (rb, i, k) => {   // cross-section at sample i, road side first (so the faces look at the road): three faces, their edges doubled (sharp)
           const shd = 0.9 + 0.2 * crH(i >> 2, side, 17), sc = [stone[0] * shd, stone[1] * shd, stone[2] * shd], dc = [dry[0] * shd, dry[1] * shd, dry[2] * shd];
-          let p, c;
-          if (k === 1) { const a = Q(i, 0, -0.3), b = Q(i, 0, 0.55), e = Q(i, 0.5, 0.55), f = Q(i, 0.5, -0.6), d = [sc[0] * 0.85, sc[1] * 0.85, sc[2] * 0.85]; p = [a, b, b, e, e, f]; c = [sc, sc, cap, cap, d, d]; }   // stone parapet
+          let p, c, uv = null; const u = dOf(i) / 1.6;
+          if (k === 1) { const a = Q(i, 0, -0.3), b = Q(i, 0, 0.55), e = Q(i, 0.5, 0.55), f = Q(i, 0.5, -0.6), d = [sc[0] * 0.85, sc[1] * 0.85, sc[2] * 0.85]; p = [a, b, b, e, e, f]; c = [sc, sc, cap, cap, d, d];   // stone parapet
+            uv = [[u, -0.375], [u, 0.69], [u, 0.69], [u, 1.31], [u, 0.69], [u, -0.75]]; }
           else if (k === 2) { const a = Q(i, 0.1, 0.45), b = Q(i, 0.1, 0.8), e = Q(i, 0.32, 0.8), f = Q(i, 0.32, 0.45), t = [0.86, 0.87, 0.89]; p = [a, b, b, e, e, f]; c = [steel, steel, t, t, steelB, steelB]; }   // W-beam
-          else { const h = H[i], a = Q(i, 0, -0.3), b = Q(i, 0.35, h), e = Q(i, 1.4, h + 0.1), f = Q(i, 1.6, h - 0.4), t = [dc[0] * 1.12, dc[1] * 1.12, dc[2] * 1.1]; p = [a, b, b, e, e, f]; c = [dc, dc, t, t, dc, dc]; }   // dry-stone retaining wall
-          if (side < 0) { p = p.reverse(); c = c.slice().reverse(); }
-          return rb.row(p, c);
+          else { const h = H[i], a = Q(i, 0, -0.3), b = Q(i, 0.35, h), e = Q(i, 1.4, h + 0.1), f = Q(i, 1.6, h - 0.4), t = [dc[0] * 1.12, dc[1] * 1.12, dc[2] * 1.1]; p = [a, b, b, e, e, f]; c = [dc, dc, t, t, dc, dc];   // dry-stone retaining wall
+            uv = [[u, -0.375], [u, h / 0.8], [u, h / 0.8], [u, (h + 1.05) / 0.8], [u, h / 0.8], [u, (h - 0.4) / 0.8]]; }
+          if (side < 0) { p = p.reverse(); c = c.slice().reverse(); if (uv) uv = uv.reverse(); }
+          return rb.row(p, c, uv);
         };
         let prev = -1, prevK = 0, prevC = -1;
         for (let i = 0; i < N - 1; i++) {
           const k = K[i]; if (!k || K[i + 1] !== k) { prev = -1; continue; }
-          const ck = Math.floor(i / CH), rb = rbAt(i), r0 = prev >= 0 && prevK === k && prevC === ck ? prev : row(rb, i, k), r1 = row(rb, i + 1, k);
+          const ck = Math.floor(i / (CH * 2)), rb = rbAt(i, k), r0 = prev >= 0 && prevK === k && prevC === ck ? prev : row(rb, i, k), r1 = row(rb, i + 1, k);
           rb.link(r0, r1, 0, 1); rb.link(r0, r1, 2, 3); rb.link(r0, r1, 4, 5); prev = r1; prevK = k; prevC = ck;
           if (k === 2) { if (i % 2 === 0) { const p = Q(i, 0.24, -0.35); posts.add(p[0], p[1], p[2], T.hd[i], 1, 1.1); } nRail++; } else if (k === 1) nWall++; else nRet++;
         }
       }
-      const wMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
-      for (const rb of rbs.values()) addM(rb, wMat, true);
+      const wMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), sMat = new THREE.MeshLambertMaterial({ map: stStoneTex(), vertexColors: true, side: THREE.DoubleSide }); out.ownTex.push(sMat.map);
+      for (const [key, rb] of rbs) addM(rb, key % 2 ? wMat : sMat, true);
       posts.addTo(root, true);
     }
 
@@ -10129,6 +10370,27 @@ const World = (function () {
           }
         }
         addM(gv, gvMat);
+      }
+    }
+
+    /* ---- the paved gutter along the uphill edge (gutA): a shallow channel of stone setts between the asphalt and the slope or its wall, open at
+       the side roads' mouths, no bits shorter than 10 m ---- */
+    {
+      const sMat = new THREE.MeshLambertMaterial({ map: stSettsTex(), vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }); out.ownTex.push(sMat.map); out.dyn.wet.extra = [sMat];   // (wet and darker in the rain with the road)
+      const lt = [0.82, 0.8, 0.77], dk = [0.6, 0.59, 0.57], prof = [[0.02, 0.02, lt], [0.28, -0.004, dk], [0.52, -0.004, dk], [0.8, 0.014, lt]];
+      for (const si of [0, 1]) { const G = gutA[si], Mo = mouth[si];
+        for (let i = 0; i < N; i++) if (Mo[i]) G[i] = 0;
+        for (let i = 0; i < N;) { if (!G[i]) { i++; continue; } let j = i; while (j < N && G[j]) j++; if (j - i < 5) G.fill(0, i, j); i = j; }
+      }
+      for (let c0 = 0; c0 < N - 1; c0 += CH * 4) {   // (240 samples a mesh: few draw calls)
+        const rb = new RB(true), pv = [-1, -1];
+        for (let i = c0; i <= Math.min(c0 + CH * 4, N - 1); i++) for (const side of [-1, 1]) {
+          const si = side > 0 ? 1 : 0; if (!gutA[si][i]) { pv[si] = -1; continue; }
+          let pts = prof.map(([e, h]) => Pt(i, side * (w + e), h)), cols = prof.map(q => q[2]), uvs = prof.map(([e]) => [e / 0.8, dOf(i) / 1.6]);
+          if (side < 0) { pts = pts.reverse(); cols = cols.slice().reverse(); uvs = uvs.reverse(); }   // (rows run left -> right: facing up)
+          const r = rb.row(pts, cols, uvs); if (pv[si] >= 0) { rb.link(pv[si], r, 0, 3); nGut++; } pv[si] = r;
+        }
+        addM(rb, sMat);
       }
     }
 
@@ -10258,6 +10520,27 @@ const World = (function () {
         const [x, z] = onSide(i * ds, side, 0.25); posts.add(x, T.hy[i] - 0.2, z, T.hd[i], 1, 1);
       }
       posts.addTo(root, true); }
+    // snow poles along the road above ~1950 m, every 20 m on the valley side (orange, black bands near the top: the snowploughs find the road's
+    // edge by them in the winter), just behind the parapet or the marker posts; they throw long thin shadows
+    let nPoles = 0;
+    { const pg = new GB(), OR = [0.96, 0.46, 0.07], BK = [0.1, 0.1, 0.1];
+      [[0, 1.8, OR], [1.8, 0.22, BK], [2.02, 0.16, OR], [2.18, 0.22, BK], [2.4, 0.18, OR]].forEach(([y, h, c]) => box(pg, 0, y, 0, 0.15, h, 0.15, 0, c, null, true));   // (thicker than the real ones: seen from the chase camera)
+      const poles = new IChunks(pg.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true }), 384);
+      for (let i = 5; i < N; i += 10) for (const side of [-1, 1]) {
+        const si = side > 0 ? 1 : 0, k = kindA[si][i], d = dOf(i);
+        if (T.hy[i] + 900 < 1950 || d < 0 || d > T.raceLen - 150 || mouth[si][i] || inTunnel(i, 6) || inVillage(d)) continue;
+        if (!(k === 1 || k === 2 || (k === 0 && kindA[1 - si][i] === 3))) continue;   // (the side where the ground falls away)
+        const [x, z] = onSide(i * ds, side, k === 0 ? 0.55 : 0.75), y = Math.max(nrGround(x, z), T.hy[i] - 0.6);
+        poles.add(x, y - 0.25, z, T.hd[i], 1, 1); nPoles++;
+      }
+      poles.addTo(root, true); }
+    // the kilometre stones (every km, on the right where the edge is open): white, a red top
+    { for (let km = 1; km * 1000 < T.raceLen; km++) {
+        let best = -1; for (let e = 0; e <= 40 && best < 0; e += 2) for (const sg of [1, -1]) { const i = T.idx(sAt(km * 1000 + sg * e)); if (best < 0 && !kindA[1][i] && !mouth[1][i] && !inTunnel(i, 4) && !onBridge(i, 4)) best = i; }
+        if (best < 0) continue;
+        const [x, z] = onSide(best * ds, 1, 0.3), y = T.hy[best] - 0.15, g = scen.get(x, z);
+        box(g, x, y, z, 0.3, 0.62, 0.16, T.hd[best], [0.93, 0.93, 0.9], null, true); box(g, x, y + 0.62, z, 0.31, 0.17, 0.17, T.hd[best], [0.78, 0.12, 0.1], null, true);
+      } }
     /* ---- the side roads drawn (see def.sideRoads above): the asphalt of the roads in its own shades (the roads to Stilfs and Sulden with edge
        lines, a dashed centre line and the give-way teeth at the pass road), the gravel tracks (two wheel ruts, grass between them), the paths
        and footways; each ribbon on its bed and never under the ground (it follows the ground where that is higher), a skirt down its edges,
@@ -10362,13 +10645,37 @@ const World = (function () {
     let nBld = 0;
     {
       const bc = new Chunks(110), wallC = [[0.93, 0.92, 0.87], [0.95, 0.93, 0.86], [0.9, 0.88, 0.84], [0.94, 0.9, 0.8], [0.92, 0.9, 0.9]], timber = [[0.36, 0.25, 0.16], [0.42, 0.3, 0.19], [0.3, 0.21, 0.14]];
+      const bt = new Chunks(600, true), bw = new Chunks(600, true), W1 = [1, 1, 1];   // (the shingled roof slopes; the windows; big chunks: few draw calls)
+      const roof = (g, x, y, z, L, D, h, a, col, colEnd, chim) => {   // a gable roof: its slopes shingled (2 m to a repeat), the gable ends plain, a ridge cap, maybe a chimney
+        const gt = bt.get(x, z), c = Math.cos(a), s = Math.sin(a), P = (lx, ly, lz) => [x + lx * c - lz * s, y + ly, z + lx * s + lz * c];
+        const b0 = P(-L / 2, 0, -D / 2), b1 = P(L / 2, 0, -D / 2), b2 = P(L / 2, 0, D / 2), b3 = P(-L / 2, 0, D / 2), r0 = P(-L / 2, h, 0), r1 = P(L / 2, h, 0), inn = [x, y + h * 0.3, z], sl = Math.hypot(D / 2, h) / 2, u = L / 2;
+        gt.quadO(b0, r0, r1, b1, col, inn, [[0, 0], [0, sl], [u, sl], [u, 0]]); gt.quadO(b3, b2, r1, r0, [col[0] * 0.93, col[1] * 0.93, col[2] * 0.93], inn, [[0, 0], [u, 0], [u, sl], [0, sl]]);
+        g.triO(b0, b3, r0, colEnd, inn); g.triO(b1, r1, b2, colEnd, inn);
+        box(g, x, y + h - 0.08, z, L + 0.06, 0.18, 0.34, a, [col[0] * 0.7, col[1] * 0.7, col[2] * 0.7], null, true);   // (the ridge)
+        if (chim) { const cu = (crH(x, z, 31) - 0.5) * L * 0.5, cv = D * 0.18, [qx, qz] = [x + cu * c - cv * s, z + cu * s + cv * c]; box(g, qx, y + h * 0.4, qz, 0.62, h * 0.6 + 0.9, 0.62, a, [0.93, 0.92, 0.88], [0.4, 0.4, 0.42], true); }
+      };
+      const windows = (x, y0, z, L, D, a, fl, cells, from) => {   // rows of windows round the walls (one row a storey), 2.8 m apart
+        const g = bw.get(x, z), c = Math.cos(a), s = Math.sin(a), inn = [x, y0 + 1, z];
+        for (const [ln, dp, rt] of [[L, D, 0], [D, L, 1]]) for (const sd of [-1, 1]) {
+          const n = Math.floor((ln - 1.2) / 2.8); if (n < 1) continue;
+          const nx = (rt ? c : -s) * sd, nz = (rt ? s : c) * sd, tx = rt ? -s : c, tz = rt ? c : s, ox = x + nx * (dp / 2 + 0.05), oz = z + nz * (dp / 2 + 0.05);
+          for (let f = from; f < fl; f++) for (let k = 0; k < n; k++) {
+            const cl = cells[(f + k) % cells.length], fw = cl >= 2, hh = fw ? 1.45 : 1.25, yb = y0 + 0.9 + f * 2.9 - (fw ? 0.2 : 0), e = ((k + 0.5) / n - 0.5) * ln, px = ox + tx * e, pz = oz + tz * e;
+            const u0 = (cl % 2) * 0.5 + 2 / 256, u1 = (cl % 2) * 0.5 + 126 / 256, v0 = fw ? 10 / 256 : 0.5 + 16 / 256, v1 = fw ? 120 / 256 : 0.5 + 120 / 256;
+            const A = [px - tx * 0.9, yb, pz - tz * 0.9], B = [px - tx * 0.9, yb + hh, pz - tz * 0.9], C = [px + tx * 0.9, yb + hh, pz + tz * 0.9], Dd = [px + tx * 0.9, yb, pz + tz * 0.9];
+            g.quadO(A, B, C, Dd, W1, inn, [[u0, v0], [u0, v1], [u1, v1], [u1, v0]]);
+          }
+        }
+      };
+      const ring = (g, x, y, z, L, D, a, h, t, col) => { const c = Math.cos(a), s = Math.sin(a);   // four thin boxes round a rectangle (a balcony's railing)
+        for (const [ln, dp, rt] of [[L, D, 0], [D, L, 1]]) for (const sd of [-1, 1]) { const e = sd * (dp / 2 - t / 2), px = x + (rt ? c * e : -s * e), pz = z + (rt ? s * e : c * e); box(g, px, y, pz, rt ? t : ln, h, rt ? ln : t, a, col, null, true); } };
       const roofC = [[0.34, 0.33, 0.33], [0.42, 0.3, 0.24], [0.28, 0.28, 0.3], [0.38, 0.36, 0.34]], win = [0.2, 0.22, 0.26];
       for (const b of blds) {
         const { x, z, L, W: Wd, a, kind } = b, y = b.y, g = bc.get(x, z), h = (q) => crH(x, z, q), fl = Math.max(1, b.fl), c = Math.cos(a), s = Math.sin(a);
         if (kind === 4) {   // shed / barn
-          const H = 2.6 + h(1) * 1.2, wd = timber[Math.floor(h(2) * 3)]; box(g, x, y - 0.3, z, L, H + 0.3, Wd, a, wd, null, true); gable(g, x, y + H, z, L + 0.5, Wd + 0.6, Math.min(2.2, Wd * 0.45), a, roofC[Math.floor(h(3) * 4)], wd);
+          const H = 2.6 + h(1) * 1.2, wd = timber[Math.floor(h(2) * 3)]; box(g, x, y - 0.3, z, L, H + 0.3, Wd, a, wd, null, true); roof(g, x, y + H, z, L + 0.5, Wd + 0.6, Math.min(2.2, Wd * 0.45), a, roofC[Math.floor(h(3) * 4)], wd, false);
         } else if (kind === 2) {   // church: a white nave, a tower with a pointed spire at one end
-          const H = 6.5, wc = [0.95, 0.94, 0.9]; box(g, x, y - 0.3, z, L, H + 0.3, Wd, a, wc, null, true); gable(g, x, y + H, z, L + 0.4, Wd + 0.6, Wd * 0.5, a, [0.36, 0.34, 0.33], wc);
+          const H = 6.5, wc = [0.95, 0.94, 0.9]; box(g, x, y - 0.3, z, L, H + 0.3, Wd, a, wc, null, true); roof(g, x, y + H, z, L + 0.4, Wd + 0.6, Wd * 0.5, a, [0.36, 0.34, 0.33], wc, false);
           const tx = x + c * (L / 2 - 2), tz = z + s * (L / 2 - 2); box(g, tx, y, tz, 3.4, H + 8, 3.4, a, wc, null, true); for (let k = 0; k < 2; k++) box(g, tx, y + H + 5.2, tz, 3.46, 1.2, 1.1 + k * 1.2, a + k * Math.PI / 2, [0.2, 0.18, 0.18], null, true);
           cone(g, tx, y + H + 8, tz, 2.5, 6.5, 4, [0.2, 0.36, 0.3], [0.22, 0.4, 0.33], a + Math.PI / 4);
         } else if (kind === 3) {   // the fort: grey stone, a flat roof, rows of loopholes, a parapet round the roof cut into merlons along its edges
@@ -10396,13 +10703,20 @@ const World = (function () {
           const H = fl * 2.9, big = kind === 1, wc = wallC[Math.floor(h(4) * 5)], tb = timber[Math.floor(h(6) * 3)], rc = roofC[Math.floor(h(7) * 4)], mid = kind === 7 ? 0 : fl >= 2 ? 1 : 0;
           box(g, x, y - 0.4, z, L, H + 0.4 - mid * 2.9, Wd, a, kind === 7 ? [0.55, 0.53, 0.5] : wc, null, true);
           if (mid) box(g, x, y + H - 2.9, z, L, 2.9, Wd, a, tb, null, true);   // the timber top storey
-          for (let f = 0; f < fl; f++) box(g, x, y + 1.1 + f * 2.9, z, L + 0.06, 1.1, Wd + 0.06, a, win, null, true);   // bands of windows
-          if (big && fl >= 3) for (let f = 1; f < fl; f++) box(g, x, y + f * 2.9 - 0.2, z, L + 1.4, 0.18, Wd + 1.4, a, tb, null, true);   // balconies round the hotels
-          gable(g, x, y + H, z, L + 1.2, Wd + 1.4, Math.min(big ? 4.5 : 3.4, Wd * 0.42), a, rc, kind === 7 ? [0.55, 0.53, 0.5] : mid ? tb : wc);
+          const sc = Math.floor(h(8) * 2), fw = big || h(9) < 0.45 ? 2 : 0;   // (green or brown shutters; geraniums on the hotels and on many houses)
+          windows(x, y, z, L, Wd, a, fl, kind === 7 ? [1] : [sc + fw, sc + fw, sc], 0);
+          if (big && fl >= 3) for (let f = 1; f < fl; f++) {   // balconies round the hotels: a timber floor, a railing, window boxes of red geraniums along it
+            const yb = y + f * 2.9 - 0.2; box(g, x, yb, z, L + 1.4, 0.18, Wd + 1.4, a, tb, null, true);
+            ring(g, x, yb + 0.18, z, L + 1.4, Wd + 1.4, a, 0.85, 0.12, tb); ring(g, x, yb + 1.03, z, L + 1.5, Wd + 1.5, a, 0.3, 0.3, [0.78, 0.14, 0.14]);
+          }
+          roof(g, x, y + H, z, L + 1.2, Wd + 1.4, Math.min(big ? 4.5 : 3.4, Wd * 0.42), a, rc, kind === 7 ? [0.55, 0.53, 0.5] : mid ? tb : wc, kind !== 7 && h(10) < 0.75);
         }
         nBld++;
       }
       const grp = new THREE.Group(); root.add(grp); bc.addTo(grp, bldMat, true, true);
+      const rfT = stRoofTex(), wnT = stWinTex(); out.ownTex.push(rfT, wnT);
+      bt.addTo(grp, ouCutMat(new THREE.MeshLambertMaterial({ map: rfT, vertexColors: true }), out.dyn.ouCut), true, true);
+      bw.addTo(grp, ouCutMat(new THREE.MeshLambertMaterial({ map: wnT, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }), out.dyn.ouCut), false, true);
     }
 
     /* ---- the car parks: asphalt, white bays, cars and the motorbikes that fill the pass all summer ---- */
@@ -10434,18 +10748,29 @@ const World = (function () {
     }
 
     /* ---- the streams: the Suldenbach and the Trafoier Bach beside the valley road, the brook down from the Madatsch: grey-green glacial water
-       over its bed of pale gravel, a little foam ---- */
+       over its bed of pale gravel, flowing downhill (its own copy of the water picture scrolls along each stream: out.dyn.flow), white foam
+       over it where the bed is steep (the rapids) and along the banks, racing faster ---- */
     {
-      const g = new GB(true), wc = [0.72, 0.78, 0.77], foam = [0.95, 0.97, 0.96];
-      for (const S of streams) for (let k = 0; k < S.n - 1; k++) {
-        const x0 = S.xs[k], z0 = S.zs[k], x1 = S.xs[k + 1], z1 = S.zs[k + 1], dx = x1 - x0, dz = z1 - z0, l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l, hw = S.wd / 2 - 0.3;
-        const y0 = S.ys[k] + 0.12, y1 = S.ys[k + 1] + 0.12, f = crH(x0, z0, 41) < 0.25 ? foam : wc;
-        g.quadUp([x0 - nx * hw, y0, z0 - nz * hw], [x0 + nx * hw, y0, z0 + nz * hw], [x1 + nx * hw, y1, z1 + nz * hw], [x1 - nx * hw, y1, z1 - nz * hw], [f, wc, f, wc], [[x0 / 6, z0 / 6], [(x0 + nx * hw) / 6, (z0 + nz * hw) / 6], [x1 / 6, z1 / 6], [(x1 - nx * hw) / 6, (z1 - nz * hw) / 6]]);
+      const g = new GB(true), gf = new GB(true, true), wc = [0.72, 0.78, 0.77];
+      for (const S of streams) {
+        const down = S.ys[0] >= S.ys[S.n - 1] ? 1 : -1; let v = 0;   // (v grows along the flow: the pictures scroll that way)
+        for (let k = 0; k < S.n - 1; k++) {
+          const x0 = S.xs[k], z0 = S.zs[k], x1 = S.xs[k + 1], z1 = S.zs[k + 1], dx = x1 - x0, dz = z1 - z0, l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l, hw = S.wd / 2 - 0.3;
+          const y0 = S.ys[k] + 0.12, y1 = S.ys[k + 1] + 0.12, v0 = v, v1 = v + down * l; v = v1;
+          const A = [x0 - nx * hw, y0, z0 - nz * hw], B = [x0 + nx * hw, y0, z0 + nz * hw], C = [x1 + nx * hw, y1, z1 + nz * hw], D = [x1 - nx * hw, y1, z1 - nz * hw], u1 = S.wd / 6;
+          g.quadUp(A, B, C, D, [wc, wc, wc, wc], [[0, v0 / 6], [u1, v0 / 6], [u1, v1 / 6], [0, v1 / 6]]);
+          const sl = Math.abs(S.ys[k] - S.ys[k + 1]) / l, fa = 0.3 + 0.65 * sstep(0.025, 0.09, sl), fc = [1, 1, 1, fa];   // (the rapids white; a little foam everywhere)
+          gf.quadUp([A[0], y0 + 0.03, A[2]], [B[0], y0 + 0.03, B[2]], [C[0], y1 + 0.03, C[2]], [D[0], y1 + 0.03, D[2]], [fc, fc, fc, fc], [[0, v0 / 4], [S.wd / 4, v0 / 4], [S.wd / 4, v1 / 4], [0, v1 / 4]]);
+        }
       }
-      const wm = new THREE.MeshPhongMaterial({ map: tex.water, color: 0xb2c9c2, shininess: 60, specular: 0x5f7f86, vertexColors: true, transparent: true, opacity: 0.88 });
-      wm.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n  diffuseColor.rgb = mix( vec3( dot( diffuseColor.rgb, vec3( 0.3, 0.59, 0.11 ) ) ), diffuseColor.rgb, 0.3 ) * 1.3;'); };   // (the lakes' blue picture, paled to the milky glacial water)
-      wm.customProgramCacheKey = () => 'stStream';
-      const m = addM(g, wm); if (m) m.renderOrder = 1; out.dyn.water = tex.water;
+      const flow = tex.water.clone(); flow.needsUpdate = true; flow.wrapS = flow.wrapT = THREE.RepeatWrapping; flow.repeat.set(1, 1); flow.offset.set(0, 0); out.ownTex.push(flow);   // (not the lakes' tiling and drift of the moment)
+      const wm = new THREE.MeshPhongMaterial({ map: flow, color: 0xb2c9c2, shininess: 60, specular: 0x5f7f86, vertexColors: true, transparent: true, opacity: 0.88 });
+      wm.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n  diffuseColor.rgb = mix( vec3( dot( diffuseColor.rgb, vec3( 0.3, 0.59, 0.11 ) ) ), diffuseColor.rgb, 0.3 ) * 1.3;'); };   // (the lakes' blue picture, paled to the glacial grey-green)
+      wm.customProgramCacheKey = () => 'stStream'; wm.userData.noCloud = true;
+      const m = addM(g, wm); if (m) m.renderOrder = 1;
+      const foam = stFoamTex(); out.ownTex.push(foam);
+      const fm = addM(gf, new THREE.MeshLambertMaterial({ map: foam, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 })); if (fm) fm.renderOrder = 2;
+      out.dyn.flow = { water: flow, foam };
     }
 
     /* ---- the forest on the land cover's woods: spruce and larch in the valley and up the hairpins, more larch higher up, Swiss stone pine
@@ -10473,6 +10798,8 @@ const World = (function () {
           const tl = 2130 + (P.n6(x, z) - 0.5) * 120;   // the tree line, ragged
           let p = cl === 1 ? 0.9 : cl === 2 ? 0.55 : cl === 0 ? (alt < tl - 60 ? 0.035 : alt < tl + 60 ? 0.05 : 0) : cl === 3 ? 0.03 : cl === 5 ? (alt < tl ? 0.05 : 0) : 0;
           if (cl === 1) p *= sstep(tl + 90, tl - 20, alt);
+          const edge = cl !== 1 && cl !== 2 && cl < 4 && alt < tl && !far && nrLCf(x, z, 1) > 0.06;   // (a meadow along the forest's edge: young trees and bushes)
+          if (edge) p = Math.max(p, 0.18);
           if (r1 > p) continue;
           if (rd < 48) { const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 2.4) continue; if (nn.i >= 0 && nn.dd < 6 && r2 < 0.35) continue; }
           if (excluded(x, z) || stWater(x, z) && STWQ.d < STWQ.w / 2 + 1.5) continue;
@@ -10480,17 +10807,57 @@ const World = (function () {
           let sp;
           if (cl === 2 || alt > tl + 20) sp = 3;
           else { const q = crH(x, z, 21), larch = 0.28 + 0.4 * up; sp = q < nearTL * 0.4 ? 2 : q < nearTL * 0.4 + larch * (1 - nearTL * 0.4) ? 1 : 0; }
-          const stunt = lerp(1, 0.55, nearTL), hq = R();
-          const hgt = sp === 3 ? 1.2 + hq * 1.6 : sp === 0 ? (13 + hq * 12) * stunt : sp === 1 ? (12 + hq * 12) * stunt : (6 + hq * 6) * lerp(1, 0.8, nearTL);
+          const stunt = lerp(1, 0.55, nearTL) * (edge ? 0.12 + crH(x, z, 25) * 0.28 : 1), hq = R();
+          const hgt = sp === 3 ? (1.2 + hq * 1.6) * (edge ? 0.8 : 1) : sp === 0 ? (13 + hq * 12) * stunt : sp === 1 ? (12 + hq * 12) * stunt : (6 + hq * 6) * lerp(1, 0.8, nearTL) * (edge ? 0.45 : 1);
           const wid = sp === 0 ? hgt * (0.6 + R() * 0.12) : sp === 1 ? hgt * (0.56 + R() * 0.1) : sp === 2 ? hgt * (0.8 + R() * 0.2) : hgt * (1.8 + R() * 0.8);
           const cv = 0.86 + R() * 0.28, c = [cv * (0.95 + R() * 0.1), cv, cv * (0.95 + R() * 0.1)];
           if (sp === 1 && crH(x, z, 22) < 0.12) { c[0] *= 1.15; c[1] *= 1.08; c[2] *= 0.8; }   // a larch already turning golden
+          const tv = crH(x, z, 23);
+          if (sp === 0 && tv < 0.22) { c[0] *= 0.86; c[2] *= 1.16; } else if (sp === 0 && tv > 0.88) { c[0] *= 1.12; c[1] *= 1.05; } else if (sp === 1 && tv < 0.3) { c[0] *= 1.06; c[1] *= 1.1; }   // (bluer and yellower spruce, fresher larch)
           plant(sp, far && sp !== 2, x, y - 0.1, z, R() * TAU, wid * (far ? 1.1 : 1), hgt * (far ? 1.1 : 1), c);
         }
       }
     }
     for (const t of TK) t.addTo(root, true);
     for (const t of TF) t.addTo(root, false);
+
+    /* ---- low plants and pebbles by the road (instanced, out to 14 m past the barriers, not on the side roads): tufts of grass on the meadows,
+       the lawns and the alpine turf in the ground's own colour, clumps of flowers in the summer meadows (white, yellow, purple, pink, and blue
+       gentians higher up), pebbles on the scree, the rock and along the edge of the verges; no shadows ---- */
+    let nLow = 0; const pebs = [];
+    {
+      const up = [0, 1, 0], blade = (g, a, lean, h, wd, c0, c1) => {   // one blade, both faces (lit as the ground: normals up)
+        const bx = Math.cos(a) * 0.07, bz = Math.sin(a) * 0.07, px = -Math.sin(a) * wd, pz = Math.cos(a) * wd, A = [bx - px, 0, bz - pz], B = [bx + px, 0, bz + pz], C = [Math.cos(a) * lean, h, Math.sin(a) * lean];
+        g.triN(A, B, C, up, up, up, c0, c0, c1); g.triN(B, A, C, up, up, up, c0, c0, c1); };
+      const tuftGeo = (() => { const g = new GB(), R2 = rng(9801); for (let k = 0; k < 5; k++) blade(g, k / 5 * TAU + (R2() - 0.5) * 0.6, 0.22 + R2() * 0.3, 0.65 + R2() * 0.35, 0.07, [0.5, 0.55, 0.44], [1.16, 1.17, 0.98]); return g.geometry(); })();
+      const flowerGeo = (() => { const g = new GB(), R2 = rng(9802), gr = [0.36, 0.5, 0.26];
+        for (let k = 0; k < 4; k++) blade(g, k / 4 * TAU + R2(), 0.15, 0.5, 0.035, [gr[0] * 0.8, gr[1] * 0.8, gr[2] * 0.8], gr);
+        for (let k = 0; k < 6; k++) { const a = R2() * TAU, rr = 0.05 + R2() * 0.2, cx = Math.cos(a) * rr, cz = Math.sin(a) * rr, y = 0.32 + R2() * 0.2, q = 0.07 + R2() * 0.03, W1 = [1, 1, 1];
+          g.triN([cx - q, y, cz], [cx, y, cz + q], [cx + q, y, cz], up, up, up, W1); g.triN([cx - q, y, cz], [cx + q, y, cz], [cx, y, cz - q], up, up, up, W1); }   // (the heads face up, white: the instance colour tints them)
+        return g.geometry(); })();
+      const lowMat = new THREE.MeshLambertMaterial({ vertexColors: true }), TU = new IChunks(tuftGeo, lowMat, 240), FL = new IChunks(flowerGeo, lowMat, 360);   // (big chunks: few draw calls)
+      const onSideRoad = (x, z) => { const Lh = STD.sh && STD.sh.get(Math.floor(x / 24) + ',' + Math.floor(z / 24)); if (!Lh) return false;
+        for (const q of Lh) { const ex = q[2] - q[0], ez = q[3] - q[1], l2 = ex * ex + ez * ez, t = l2 > 0 ? clamp(((x - q[0]) * ex + (z - q[1]) * ez) / l2, 0, 1) : 0; if (Math.hypot(x - q[0] - ex * t, z - q[1] - ez * t) < q[4] + 0.3) return true; } return false; };
+      const FC = [[1.25, 1.25, 1.2], [1.3, 1.08, 0.3], [0.78, 0.52, 1.12], [1.25, 0.72, 0.9], [0.55, 0.7, 1.3]], RL = rng(9811);
+      for (let s = 4; s < T.len - 4; s += 1.5) for (const side of [-1, 1]) {
+        const i = T.idx(s); if (inTunnel(i, 8) || onBridge(i, 3)) continue;
+        for (let q = 0; q < 2; q++) {
+          const e = 0.2 + Math.pow(RL(), 2) * 14, [x, z] = onSide(s + (RL() - 0.5) * 1.5, side, e), r1 = RL(), r2 = RL(), r3 = RL();   // (more of them close to the road, where the camera sees them)
+          if (excluded(x, z) || onSideRoad(x, z) || (stWater(x, z) && STWQ.d < STWQ.w / 2 + 0.5)) continue;
+          const cl = nrLC(x, z), alt = nrDem(x, z) + 900, fo = nrLCf(x, z, 1), sl = nrSlope(x, z);
+          if (fo > 0.6 || sl > 1.2) continue;   // (not in the forest, not on the steep cuts)
+          const y = nrGround(x, z);
+          if ((cl >= 4 && r1 < 0.3) || (e < 1.4 && r1 < 0.06)) {   // pebbles
+            const sz = 0.08 + Math.pow(r2, 2) * 0.32, v = 0.55 + r3 * 0.14; pebs.push(x, y - 0.03, z, r3 * TAU, sz, sz * 0.8, v); continue; }
+          if (cl !== 0 && cl !== 3 && cl !== 2) continue;
+          const c = nrGCol(x, z);
+          if (cl === 0 && alt < 2450 && P.n2(x, z) > 0.52 && r1 < 0.34) {   // a clump of flowers (the gentians higher up)
+            const f = FC[alt > 1900 && r2 < 0.45 ? 4 : Math.floor(r2 * 4)], sz = 0.35 + r3 * 0.3; FL.add(x, y - 0.02, z, r3 * TAU, sz, sz, f); nLow++; continue; }
+          if (r1 < 0.8) { const sz = (0.45 + r2 * 0.4) * (alt > 2200 ? 0.75 : 1), k = 1.0 + r3 * 0.14; TU.add(x, y - 0.03, z, r3 * TAU, sz * 1.3, sz, [c[0] * k, c[1] * k, c[2] * k]); nLow++; }
+        }
+      }
+      nLow = [TU.addTo(root, false), FL.addTo(root, false), pebs.length / 7];   // (tufts, flowers, pebbles: these go with the stones below)
+    }
 
     /* ---- stone: boulders on the scree and the rock, crags where the slope is steep, blocks fallen by the road above the tree line (instanced:
        four unit shapes, round and flat, scaled and tinted per stone) ---- */
@@ -10518,6 +10885,7 @@ const World = (function () {
         for (let q = 0; q < n; q++) { const r0 = 1.4 + R() * 2.4, qx = x + (R() - 0.5) * 7, qz = z + (R() - 0.5) * 7; if (nrNear(qx, qz).dd < r0 + 1) continue;
           put(qx, nrGround(qx, qz) - 0.1 * r0, qz, r0, r0 * (0.7 + R() * 0.7), vary(base, R, 0.08)); }
       }
+      for (let k = 0; k < pebs.length; k += 7) { const v = pebs[k + 6]; RK[0].add(pebs[k], pebs[k + 1], pebs[k + 2], pebs[k + 3], pebs[k + 4], pebs[k + 5], [v * 1.03, v, v * 0.94]); }   // (the pebbles by the road, from above)
       for (const k of RK) k.addTo(root, true);
     }
 
@@ -10533,9 +10901,15 @@ const World = (function () {
     }
 
     /* ---- terrain tiles, coloured now (the forest floor under the trees) ---- */
-    let nTiles = 0;
+    let nTiles = 0, nClip = 0;
     { const grp = new THREE.Group(); root.add(grp); out.ground = grp;
-      for (let k = 0; k < tiles.length; k += 3) { const m = new THREE.Mesh(stTileGeo(tiles[k], tiles[k + 1], tiles[k + 2] === 1 ? 1 : 4), gMat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m); nTiles++; } }
+      const CA = { position: 3, normal: 3, color: 3, uv: 2, steep: 1, surf: 4, snow: 1, rsd: 1 }, cl = {}; for (const a in CA) cl[a] = [];
+      for (let k = 0; k < tiles.length; k += 3) { const g = stTileGeo(tiles[k], tiles[k + 1], tiles[k + 2] === 1 ? 1 : 4), m = new THREE.Mesh(g, gMat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m); nTiles++;
+        const I = g.userData.clip; if (I) { for (const v of I) for (const a in CA) { const A = g.attributes[a].array, n = CA[a]; for (let q = 0; q < n; q++) cl[a].push(A[v * n + q]); } nClip += I.length / 3; } }
+      if (nClip) {   // the triangles that reach over the road's edge, from every tile: cut off over the asphalt (one mesh, so the tiles keep early depth testing)
+        const gc = new THREE.BufferGeometry(); for (const a in CA) gc.setAttribute(a, new THREE.Float32BufferAttribute(cl[a], CA[a])); gc.computeBoundingSphere();
+        const gcm = stGroundMat(true); gcm.color = gMat.color;   // (the same colour object: darker together in the rain, out.dyn.wet.ground)
+        const mc = new THREE.Mesh(gc, gcm); mc.receiveShadow = true; mc.matrixAutoUpdate = false; grp.add(mc); } }
     G.col = G.cov = P.edge = null;   // (build only)
 
     const nFar = stFarMesh(root, out);   // the distant mountains
@@ -10543,7 +10917,7 @@ const World = (function () {
     scen.addTo(sceneryGroup, matV, true, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, rocks: nRocks, buildings: nBld, signs: nSigns, decals: nDecals, parked: nParked, far: nFar, side: nSide, closed: nClosed, walls: +(nWall / (2 * N)).toFixed(3), rails: +(nRail / (2 * N)).toFixed(3), retaining: +(nRet / (2 * N)).toFixed(3) };   // (read by the tests)
+    out.stats = { puddles: nPud, gutter: +(nGut / (2 * N)).toFixed(3), low: nLow, poles: nPoles, tiles: nTiles, clipTris: nClip, trees: nTrees, rocks: nRocks, buildings: nBld, signs: nSigns, decals: nDecals, parked: nParked, far: nFar, side: nSide, closed: nClosed, walls: +(nWall / (2 * N)).toFixed(3), rails: +(nRail / (2 * N)).toFixed(3), retaining: +(nRet / (2 * N)).toFixed(3) };   // (read by the tests)
     return out;
   }
 
