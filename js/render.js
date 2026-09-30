@@ -43,9 +43,14 @@ const Render = (function () {
     return l > 0.6 ? [0.12, 0.24, 0.75] : [0.96, 0.96, 0.94];
   }
 
-  function wheelInto(g, cx, cy, cz, r, wd, tire, rim) {
+  // a wheel (x forward, y up, the axle along z): the tyre, its sidewalls, the rim's lip; behind the spokes the brake disc (a dark hub, the
+  // disc's bright ring, dark into the barrel); five twin spokes, the wheel nuts between them, the hub cap. cal: the calliper's colour (CAL_R,
+  // CAL_G): a curved block over the top of the disc, between the disc and the spokes (on a front wheel it stays at the top while the wheel
+  // spins: matWheel turns its vertices back)
+  const CAL_R = [0.8, 0.09, 0.07], CAL_G = [0.96, 0.66, 0.1];
+  function wheelInto(g, cx, cy, cz, r, wd, tire, rim, cal) {
     const S = 12, inn = [cx, cy, cz];
-    const dark = [rim[0] * 0.38, rim[1] * 0.38, rim[2] * 0.4], hub = [0.15, 0.15, 0.17];
+    const dark = [rim[0] * 0.3, rim[1] * 0.3, rim[2] * 0.32], hub = [0.15, 0.15, 0.17], disc = [0.52, 0.52, 0.54], discI = [0.3, 0.3, 0.32], nut = [0.32, 0.32, 0.34];
     const p = (a, z, rr) => [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr, cz + z];
     for (let i = 0; i < S; i++) {
       const a0 = i / S * Math.PI * 2, a1 = (i + 1) / S * Math.PI * 2;
@@ -54,14 +59,29 @@ const Render = (function () {
         const zf = sd * wd / 2, zr = sd * (wd / 2 + 0.006), out = [cx, cy, cz - sd];
         g.quadO(p(a0, zf, r * 0.68), p(a0, zf, r), p(a1, zf, r), p(a1, zf, r * 0.68), tire, out);          // sidewall
         g.quadO(p(a0, zr, r * 0.54), p(a0, zr, r * 0.68), p(a1, zr, r * 0.68), p(a1, zr, r * 0.54), rim, out); // rim lip
-        g.triO([cx, cy, cz + zf], p(a0, zf, r * 0.54), p(a1, zf, r * 0.54), dark, out);                       // recessed dish
+        g.triO([cx, cy, cz + zf], p(a0, zf, r * 0.2), p(a1, zf, r * 0.2), hub, out);                          // the hub
+        g.quadO(p(a0, zf, r * 0.2), p(a0, zf, r * 0.44), p(a1, zf, r * 0.44), p(a1, zf, r * 0.2), disc, out, null, [discI, disc, disc, discI]);   // the disc
+        g.quadO(p(a0, zf, r * 0.44), p(a0, zf, r * 0.54), p(a1, zf, r * 0.54), p(a1, zf, r * 0.44), dark, out, null, [disc, dark, dark, disc]);   // (into the barrel)
       }
     }
     for (const sd of [-1, 1]) {
       const zs = sd * (wd / 2 + 0.012), out = [cx, cy, cz - sd];
-      for (let k = 0; k < 5; k++) {                       // spokes
-        const a = k / 5 * Math.PI * 2, ca = Math.cos(a), sa = Math.sin(a), ox = -sa * r * 0.075, oy = ca * r * 0.075, r0 = r * 0.12, r1 = r * 0.56;
-        g.quadO([cx + ca * r0 + ox, cy + sa * r0 + oy, cz + zs], [cx + ca * r1 + ox, cy + sa * r1 + oy, cz + zs], [cx + ca * r1 - ox, cy + sa * r1 - oy, cz + zs], [cx + ca * r0 - ox, cy + sa * r0 - oy, cz + zs], rim, out);
+      for (let k = 0; k < 5; k++) {                       // twin spokes: from the hub out to the rim, apart towards it
+        const a = k / 5 * Math.PI * 2;
+        for (const e of [-1, 1]) {
+          const ah = a + e * 0.05, ar = a + e * 0.17, r0 = r * 0.13, r1 = r * 0.56, h0 = r * 0.04, h1 = r * 0.032, c0 = Math.cos(ah), s0 = Math.sin(ah), c1 = Math.cos(ar), s1 = Math.sin(ar);
+          g.quadO([cx + c0 * r0 - s0 * h0, cy + s0 * r0 + c0 * h0, cz + zs], [cx + c1 * r1 - s1 * h1, cy + s1 * r1 + c1 * h1, cz + zs], [cx + c1 * r1 + s1 * h1, cy + s1 * r1 - c1 * h1, cz + zs], [cx + c0 * r0 + s0 * h0, cy + s0 * r0 - c0 * h0, cz + zs], rim, out);
+        }
+        const an = a + Math.PI / 5, cn = Math.cos(an) * r * 0.19, sn = Math.sin(an) * r * 0.19, q = r * 0.028, zn = zs + sd * 0.004;   // a wheel nut
+        g.quadO([cx + cn - q, cy + sn - q, cz + zn], [cx + cn + q, cy + sn - q, cz + zn], [cx + cn + q, cy + sn + q, cz + zn], [cx + cn - q, cy + sn + q, cz + zn], nut, out);
+      }
+      if (cal) {   // the calliper over the top of the disc: its face and its rounded outer edge
+        const zc = sd * (wd / 2 + 0.005), zi = sd * (wd / 2 - 0.02);
+        for (let k = 0; k < 3; k++) {
+          const b0 = Math.PI / 2 - 0.42 + k * 0.28, b1 = b0 + 0.28;
+          g.quadO(p(b0, zc, r * 0.3), p(b0, zc, r * 0.5), p(b1, zc, r * 0.5), p(b1, zc, r * 0.3), cal, out);
+          g.quadO(p(b0, zi, r * 0.5), p(b0, zc, r * 0.5), p(b1, zc, r * 0.5), p(b1, zi, r * 0.5), cal, inn);
+        }
       }
       for (let i = 0; i < 6; i++) {                       // hub cap
         const a0 = i / 6 * Math.PI * 2, a1 = (i + 1) / 6 * Math.PI * 2;
@@ -176,13 +196,16 @@ const Render = (function () {
     // ---- details ----
     const front = secs[secs.length - 1], rear = secs[0];
     for (const sd of [-1, 1]) {
-      World.box(g, front.x - 0.02, 0.5, sd * 0.5, 0.08, 0.15, 0.32, 0, [1, 0.97, 0.84]);
+      World.box(g, front.x - 0.02, 0.5, sd * 0.5, 0.08, 0.15, 0.32, 0, [0.12, 0.12, 0.13]);   // the lamps' dark housing (the glass: the lens mesh)
       World.box(g, front.x - 0.02, 0.5, sd * 0.74, 0.08, 0.13, 0.12, 0, [1, 0.55, 0.12]);
     }
     World.box(g, front.x - 0.02, 0.5, 0, 0.07, 0.12, 0.6, 0, K);
     World.box(g, front.x - 0.03, 0.37, 0, 0.07, 0.1, 1.0, 0, K);
     World.box(g, rear.x + 0.02, 0.62, 0, 0.08, 0.2, 0.95, 0, K);
-    for (const sd of [-1, 1]) World.box(g, rear.x - 0.02, 0.36, sd * 0.36, 0.1, 0.08, 0.12, 0, [0.2, 0.2, 0.22]);
+    pipeInto(g, rear.x + 0.16, rear.x - 0.16, 0.345, 0.38 * sz, 0.055);   // one big tailpipe (under the rear bumper, out past it)
+    // the gaps: the doors, the bonnet's edge by the windscreen and its sides
+    gapDoor(g, secs, 0.72 * sx, false); gapDoor(g, secs, -0.18 * sx, true);
+    gapAcross(g, secs, 0.76 * sx); gapAlong(g, secs, 0.76 * sx, front.x - 0.14);
     // big rear wing over the hatch, on endplates from the roof edge
     const wx0 = -1.62 * sx, wy = 1.56;
     for (const sd of [-1, 1]) World.box(g, wx0 + 0.12, 1.36, sd * 0.62 * sz, 0.14, 0.2, 0.05, 0, K);
@@ -192,12 +215,17 @@ const Render = (function () {
     World.box(g, -0.62 * sx, 1.40, 0, 0.4, 0.1, 0.42, 0, B, B);
     World.box(g, -0.44 * sx, 1.43, 0, 0.03, 0.06, 0.34, 0, K);
     World.box(g, 0.05 * sx, 1.40, 0.3, 0.025, 0.55, 0.025, 0, K);
-    for (const sd of [-1, 1]) World.box(g, 0.66 * sx, 0.86, sd * (0.9 * sz + 0.07), 0.12, 0.1, 0.12, 0, K);
+    for (const sd of [-1, 1]) { const mx = 0.66 * sx, mz = sd * (0.9 * sz + 0.07); World.box(g, mx, 0.86, mz, 0.12, 0.1, 0.12, 0, K);
+      g.quadO([mx - 0.062, 0.876, mz - 0.048], [mx - 0.062, 0.876, mz + 0.048], [mx - 0.062, 0.944, mz + 0.048], [mx - 0.062, 0.944, mz - 0.048], [0.7, 0.76, 0.84], [mx, 0.9, mz]); }
     // rear wheels (fronts are separate meshes) + mud flaps
     const r = M.rw, fx = M.a * (M.len / 4.4) * 0.98 + 0.05, rx = -M.b * (M.len / 4.4) * 0.98;
     for (const sd of [-1, 1]) {
-      wheelInto(g, rx, r, sd * (M.wid * 0.5 - 0.1), r, 0.26, [0.07, 0.07, 0.08], [0.93, 0.93, 0.9]);
-      for (const wxp of [fx, rx]) World.box(g, wxp - 0.44, 0.17, sd * (M.wid * 0.5 - 0.08), 0.03, 0.26, 0.2, 0, K);
+      wheelInto(g, rx, r, sd * (M.wid * 0.5 - 0.1), r, 0.26, [0.07, 0.07, 0.08], [0.93, 0.93, 0.9], CAL_G);
+      for (const wxp of [fx, rx]) {   // mud flaps: rubber in the livery's colour, a white band across
+        const fxp = wxp - 0.44, fz = sd * (M.wid * 0.5 - 0.08);
+        World.box(g, fxp, 0.1, fz, 0.03, 0.33, 0.24, 0, B.map(v => v * 0.8));
+        for (const e of [-1, 1]) g.quadO([fxp + e * 0.017, 0.24, fz - 0.12], [fxp + e * 0.017, 0.24, fz + 0.12], [fxp + e * 0.017, 0.3, fz + 0.12], [fxp + e * 0.017, 0.3, fz - 0.12], W, [fxp, 0.27, fz]);
+      }
     }
     return g.geometry();
   }
@@ -370,6 +398,97 @@ const Render = (function () {
     for (const sd of [-1, 1]) for (let i = 0; i < 6; i++) { const a0 = i / 6 * Math.PI * 2, a1 = (i + 1) / 6 * Math.PI * 2; g.triO([0, 0, sd * (h - 0.004)], p(a0, sd * (h - 0.016), 0.05), p(a1, sd * (h - 0.016), 0.05), NUT, [0, 0, -sd * 5]); }
     const geo = g.geometry(); fWheelCache.set(key, geo); return geo;
   }
+  /* ---------------- the small parts of a car (its shape stays as it is): headlamps with a reflector behind the lens, the gaps round the
+     doors, the bonnet and the boot, the mirrors' glass, tailpipes, number plates (a Slovenian plate: the blue band, the town, the crest,
+     letters and digits in a 3 x 5 pixel font). All in the body's own geometry: no draw calls of their own ---------------- */
+  const PLATE_FONT = { 0: '111101101101111', 1: '010110010010111', 2: '111001111100111', 3: '111001111001111', 4: '101101111001001', 5: '111100111001111', 6: '111100111101111',
+    7: '111001001010010', 8: '111101111101111', 9: '111101111001111', A: '010101111101101', B: '110101110101110', C: '111100100100111', E: '111100110100111', J: '001001001101111', K: '101101110101101',
+    L: '100100100100111', M: '101111111101101', N: '110101101101101', O: '010101101101010', P: '111101111100100', R: '110101110101101', S: '111100111001111', T: '111010010010010', U: '101101101101111', '-': '000000111000000' };
+  const glyphCache = new Map();
+  function glyphRects(ch) {   // a glyph as rectangles [x0, y0, x1, y1] (pixels, y down): the runs along each row, stacked where the next rows repeat them
+    if (glyphCache.has(ch)) return glyphCache.get(ch);
+    const b = PLATE_FONT[ch] || '000000000000000', out = [], open = [];
+    for (let y = 0; y <= 5; y++) {
+      const runs = [];
+      if (y < 5) for (let x = 0; x < 3;) { if (b[y * 3 + x] !== '1') { x++; continue; } let e = x; while (e < 3 && b[y * 3 + e] === '1') e++; runs.push([x, e]); x = e; }
+      for (let k = open.length - 1; k >= 0; k--) { const o = open[k], m = runs.findIndex(r => r[0] === o[0] && r[1] === o[2]); if (m >= 0) runs.splice(m, 1); else { out.push([o[0], o[1], o[2], y]); open.splice(k, 1); } }
+      for (const r of runs) open.push([r[0], y, r[1]]);
+    }
+    glyphCache.set(ch, out); return out;
+  }
+  function plateText(key) {   // a plate for this car's look (the same every time): the town, then two letters and three digits
+    let h = 2166136261; for (let i = 0; i < key.length; i++) { h ^= key.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    const pick = (s) => { const c = s[h % s.length]; h = Math.imul(h ^ (h >>> 13), 2654435761) >>> 0; return c; };
+    const town = ['LJ', 'MB', 'KR', 'CE', 'NM', 'KP', 'PO', 'MS'][h % 8]; h = Math.imul(h ^ (h >>> 11), 2246822519) >>> 0;
+    return [town, pick('ACEJKLMNPRSTU') + pick('ACEJKLMNPRSTU') + '-' + pick('123456789') + pick('0123456789') + pick('0123456789')];
+  }
+  const PL_W = [0.97, 0.97, 0.95], PL_K = [0.07, 0.07, 0.09], PL_B = [0.12, 0.26, 0.66], PL_R = [0.8, 0.12, 0.12];
+  function plateInto(g, x, y, z, dir, txt, sc) {   // a number plate facing dir (+1: forwards, -1: backwards) round (x, y, z): 0.46 x 0.1 m (times sc)
+    const zd = -dir, W = 0.46, H = 0.1, ins = [x - dir, y, z], k = sc || 1;
+    const P = (u, v, d) => [x + dir * d, y + v * k, z + zd * u * k];   // u along the plate (its left end -W/2 as the viewer sees it), v up
+    const rect = (u0, v0, u1, v1, d, col) => g.quadO(P(u0, v0, d), P(u1, v0, d), P(u1, v1, d), P(u0, v1, d), col, ins);
+    rect(-W / 2 - 0.006, -H / 2 - 0.006, W / 2 + 0.006, H / 2 + 0.006, 0, PL_K);   // the black edge
+    rect(-W / 2, -H / 2, W / 2, H / 2, 0.002, PL_W);
+    rect(-W / 2, -H / 2, -W / 2 + 0.045, H / 2, 0.003, PL_B);                        // the blue band
+    const px = 0.0104, py = 0.0136, top = 0.034; let u = -W / 2 + 0.062;
+    const glyphs = (s) => { for (const ch of s) { for (const [a, b, c, d] of glyphRects(ch)) rect(u + a * px, top - d * py, u + c * px, top - b * py, 0.004, PL_K); u += 4 * px; } };
+    glyphs(txt[0]); u += px * 0.5;
+    rect(u, -0.026, u + 2.4 * px, 0.03, 0.004, PL_B); rect(u, -0.026, u + 2.4 * px, -0.004, 0.005, PL_R); u += 3.6 * px;   // the crest
+    glyphs(txt[1]);
+  }
+  let lensGeoC = null;
+  function lensGeo() {   // a headlamp's glass (the lens mesh: bright, dark when smashed): two round reflectors behind it, the bulb bright in each, chrome round it
+    if (lensGeoC) return lensGeoC;
+    const g = new GB(), glass = [0.9, 0.92, 0.94], hot = [1, 1, 0.96], chrome = [0.8, 0.82, 0.86], rim = [0.55, 0.57, 0.6];
+    World.box(g, 0, -0.055, 0, 0.045, 0.11, 0.28, 0, glass);
+    for (const zc of [-0.07, 0.07]) { const x = 0.0235, n = 8, R = 0.05, ins = [-1, 0, zc], p = (a, r) => [x, Math.sin(a) * r, zc + Math.cos(a) * r];
+      for (let i = 0; i < n; i++) { const a0 = i / n * Math.PI * 2, a1 = (i + 1) / n * Math.PI * 2;
+        g.triO([x, 0, zc], p(a0, R * 0.42), p(a1, R * 0.42), hot, ins, chrome, chrome);
+        g.quadO(p(a0, R * 0.42), p(a0, R), p(a1, R), p(a1, R * 0.42), chrome, ins, null, [chrome, rim, rim, chrome]); } }
+    return (lensGeoC = g.geometry());
+  }
+  function bumperGeo(D, H, W, dir, txt) {   // a bumper (a detachable part: dark trim) with its number plate on the outer face (the plate smaller on a slim bumper)
+    const g = new GB(); World.box(g, 0, -H / 2, 0, D, H, W, 0, [0.17, 0.18, 0.2]);
+    plateInto(g, dir * (D / 2 + 0.001), 0, 0, dir, txt, Math.min(1, (H - 0.012) / 0.112));
+    const geo = g.geometry(); geo.parameters = { width: D, height: H, depth: W }; return geo;
+  }
+  function pipeInto(g, x0, x1, y, z, r) {   // a tailpipe along x from x0 (under the body) to its tip x1: a steel tube, dark inside
+    const n = 8, st = [0.62, 0.62, 0.65], dk = [0.04, 0.04, 0.05], d = Math.sign(x1 - x0), p = (xx, a, rr) => [xx, y + Math.sin(a) * rr, z + Math.cos(a) * rr];
+    for (let i = 0; i < n; i++) { const a0 = i / n * Math.PI * 2, a1 = (i + 1) / n * Math.PI * 2;
+      g.quadO(p(x0, a0, r), p(x1, a0, r), p(x1, a1, r), p(x0, a1, r), st, [(x0 + x1) / 2, y, z]);
+      g.quadO(p(x1, a0, r * 0.72), p(x1, a0, r), p(x1, a1, r), p(x1, a1, r * 0.72), st, [x1 - d, y, z]);
+      g.triO([x1 - d * 0.02, y, z], p(x1, a0, r * 0.72), p(x1, a1, r * 0.72), dk, [x1 - d, y, z]); }
+  }
+  // the gaps: thin dark lines just off the paint. S: the body's sections (scaled); secAt(S, x): the section at x (linear between them)
+  function secAt(S, x) { if (x <= S[0].x) return S[0]; for (let k = 0; k < S.length - 1; k++) if (x <= S[k + 1].x) { const a = S[k], b = S[k + 1], t = (x - a.x) / (b.x - a.x), o = {}; for (const f of ['x', 'w', 'yb', 'ybelt', 'wt', 'yt', 'cr']) o[f] = a[f] + (b[f] - a[f]) * t; return o; } return S[S.length - 1]; }
+  const GAP = [0.05, 0.05, 0.06];
+  function topY(q, z) { const a = Math.abs(z); return a <= q.wt * 0.38 ? q.yt + q.cr : q.yt + q.cr * (q.wt - a) / (q.wt * 0.62); }
+  function gapDoor(g, S, x, handle) {   // a door's edge down its side (and its handle, just ahead of a rear edge)
+    for (const sd of [-1, 1]) { const q = secAt(S, x), zz = sd * (q.w + 0.003), y0 = q.yb + 0.17, y1 = q.ybelt - 0.012;
+      g.quadO([x - 0.006, y0, zz], [x + 0.006, y0, zz], [x + 0.006, y1, zz], [x - 0.006, y1, zz], GAP, [x, (y0 + y1) / 2, 0]);
+      if (handle) { const hx = x + 0.1, qh = secAt(S, hx), zh = sd * (qh.w + 0.004), yh = qh.ybelt - 0.075; g.quadO([hx - 0.06, yh, zh], [hx + 0.06, yh, zh], [hx + 0.06, yh + 0.022, zh], [hx - 0.06, yh + 0.022, zh], GAP, [hx, yh, 0]); } }
+  }
+  function gapAcross(g, S, x) {   // across the top at x (the bonnet's or the boot's edge by the glass)
+    const q = secAt(S, x), zs = [-q.wt, -q.wt * 0.38, q.wt * 0.38, q.wt];
+    for (let k = 0; k < 3; k++) { const za = zs[k], zb = zs[k + 1], ya = topY(q, za) + 0.005, yb = topY(q, zb) + 0.005;
+      g.quadO([x - 0.006, ya, za], [x + 0.006, ya, za], [x + 0.006, yb, zb], [x - 0.006, yb, zb], GAP, [x, q.yt - 0.5, 0]); }
+  }
+  function gapAlong(g, S, xa, xb) {   // along the top from xa to xb, both sides (the bonnet's or the boot lid's edges)
+    for (const sd of [-1, 1]) for (let k = 0; k < 4; k++) { const x0 = xa + (xb - xa) * k / 4, x1 = xa + (xb - xa) * (k + 1) / 4, q0 = secAt(S, x0), q1 = secAt(S, x1);
+      const z0 = sd * q0.wt * 0.93, z1 = sd * q1.wt * 0.93, y0 = topY(q0, z0) + 0.005, y1 = topY(q1, z1) + 0.005;
+      g.quadO([x0, y0, z0 - 0.006], [x1, y1, z1 - 0.006], [x1, y1, z1 + 0.006], [x0, y0, z0 + 0.006], GAP, [(x0 + x1) / 2, q0.yt - 0.5, (z0 + z1) / 2]); }
+  }
+  // per body (its own units, times its scale): the doors' edges, the bonnet's edge by the windscreen, the boot's by the rear window (null:
+  // a tailgate), the tailpipes (z of each)
+  const BITS = { coupe: { doors: [0.95, -0.42], bonnet: 1.02, boot: -1.06, pipes: [-0.5, 0.5] }, sedan: { doors: [1.05, 0.02, -0.98], bonnet: 1.14, boot: -1.22, pipes: [0.55] },
+    hatch: { doors: [0.82, -0.4], bonnet: 0.89, boot: null, pipes: [0.55] }, wedge: { doors: [1.0, -0.3], bonnet: 1.09, boot: -0.99, pipes: [-0.5, 0.5] } };
+  function exhaustTips(M) {   // the tailpipes' tips in the car's frame (Render: the flames on a lift)
+    if (M.glb === 'p206') return [[-M.len * 0.5 - 0.12, 0.3, 0.38]];
+    if (M.body === 'formula') return [[-2.7, 0.55, 0]];
+    if (M.body === 'rally') { const d = BODIES.rally, sx = M.len / d.len, sz = M.wid / d.wid; return [[d.secs[0][0] * sx - 0.16, 0.345, 0.38 * sz]]; }
+    const d = BODIES[M.body] || BODIES.coupe, sx = M.len / d.len, sz = M.wid / d.wid, r = d.secs[0], B = BITS[M.body] || BITS.coupe;
+    return B.pipes.map(pz => [r[0] * sx - 0.15, r[2] - 0.005, pz * r[1] * sz]);
+  }
   function carGeometry(bodyKey, M, color, stripe) {
     const key = bodyKey + '|' + M.id + '|' + color + '|' + stripe;
     if (geoCache.has(key)) return geoCache.get(key);
@@ -403,13 +522,20 @@ const Render = (function () {
     const front = secs[secs.length - 1], rear = secs[0];
     // headlights & grille
     const hly = (front.yb + front.ybelt) / 2 + 0.03;
-    for (const sd of [-1, 1]) World.box(g, front.x - 0.03, hly - 0.07, sd * front.w * 0.6, 0.1, 0.15, 0.34, 0, [1, 0.97, 0.82]);
+    for (const sd of [-1, 1]) World.box(g, front.x - 0.03, hly - 0.07, sd * front.w * 0.6, 0.1, 0.15, 0.34, 0, [0.12, 0.12, 0.13]);   // the lamp's dark housing (the glass: the lens mesh, lensGeo)
     World.box(g, front.x - 0.02, hly - 0.12, 0, 0.08, 0.14, front.w * 0.7, 0, [0.08, 0.08, 0.09]);
     // rear bumper dark band
     World.box(g, rear.x + 0.02, rear.yb + 0.02, 0, 0.1, 0.14, rear.w * 1.6, 0, [0.1, 0.1, 0.11]);
-    // mirrors
+    // mirrors (their glass facing back)
     const ws = secs.find(s => s.k === 'gf');
-    for (const sd of [-1, 1]) World.box(g, ws.x + 0.45, ws.ybelt, sd * (ws.w + 0.07), 0.14, 0.1, 0.12, 0, body);
+    for (const sd of [-1, 1]) { const mx = ws.x + 0.45, mz = sd * (ws.w + 0.07); World.box(g, mx, ws.ybelt, mz, 0.14, 0.1, 0.12, 0, body);
+      g.quadO([mx - 0.072, ws.ybelt + 0.016, mz - 0.048], [mx - 0.072, ws.ybelt + 0.016, mz + 0.048], [mx - 0.072, ws.ybelt + 0.084, mz + 0.048], [mx - 0.072, ws.ybelt + 0.084, mz - 0.048], [0.7, 0.76, 0.84], [mx, ws.ybelt + 0.05, mz]); }
+    // the gaps round the doors, the bonnet and the boot; the tailpipes; the number plates
+    const BT = BITS[bodyKey] || BITS.coupe;
+    BT.doors.forEach((dx, k) => gapDoor(g, secs, dx * sx, k > 0));
+    gapAcross(g, secs, BT.bonnet * sx); gapAlong(g, secs, BT.bonnet * sx, front.x - 0.14);
+    if (BT.boot != null) { gapAcross(g, secs, BT.boot * sx); gapAlong(g, secs, BT.boot * sx, rear.x + 0.14); }
+    for (const pz of BT.pipes) pipeInto(g, rear.x + 0.12, rear.x - 0.15, rear.yb - 0.005, pz * rear.w, BT.pipes.length > 1 ? 0.04 : 0.048);   // (under the rear bumper, out past it)
     // spoiler
     if (def.spoiler) {
       const sxp = rear.x + 0.28, top = secs[1].yt + 0.28;
@@ -418,7 +544,7 @@ const Render = (function () {
     }
     // rear wheels
     const r = M.rw, wx = -M.b * (M.len / 4.4) * 0.98;
-    for (const sd of [-1, 1]) wheelInto(g, wx, r, sd * (M.wid * 0.5 - 0.1), r, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68]);
+    for (const sd of [-1, 1]) wheelInto(g, wx, r, sd * (M.wid * 0.5 - 0.1), r, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68], CAL_R);
     const geo = smoothNormals(g.geometry(), 38);
     geoCache.set(key, geo);
     return geo;
@@ -426,9 +552,9 @@ const Render = (function () {
   let wheelGeo = null, tailGeoCache = new Map();
   let wheelGeoW = null;
   function getWheelGeo(white) {
-    if (white) { if (!wheelGeoW) { const g = new GB(); wheelInto(g, 0, 0, 0, 0.31, 0.26, [0.07, 0.07, 0.08], [0.93, 0.93, 0.9]); wheelGeoW = g.geometry(); } return wheelGeoW; }
+    if (white) { if (!wheelGeoW) { const g = new GB(); wheelInto(g, 0, 0, 0, 0.31, 0.26, [0.07, 0.07, 0.08], [0.93, 0.93, 0.9], CAL_G); wheelGeoW = g.geometry(); } return wheelGeoW; }
     if (wheelGeo) return wheelGeo;
-    const g = new GB(); wheelInto(g, 0, 0, 0, 0.31, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68]); wheelGeo = g.geometry(); return wheelGeo;
+    const g = new GB(); wheelInto(g, 0, 0, 0, 0.31, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68], CAL_R); wheelGeo = g.geometry(); return wheelGeo;
   }
   function tailGeo(bodyKey, M) {
     const key = bodyKey + M.id; if (tailGeoCache.has(key)) return tailGeoCache.get(key);
@@ -511,17 +637,202 @@ const Render = (function () {
     root.traverse(o => { for (const m of o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []) {
       if (!m || !maps.includes(m.map) || m.userData.roadWet || !(m.isMeshLambertMaterial || m.isMeshPhongMaterial)) continue;
       m.userData.roadWet = true;
-      const prev = m.onBeforeCompile, pk = m.customProgramCacheKey();
+      const prev = m.onBeforeCompile, pk = m.customProgramCacheKey(), rub = m.map === tex.asphalt && m.vertexColors;   // (the tarmac: its rubbered line, the vertex colours' darker band, darker still when wet)
       m.onBeforeCompile = (sh, r) => {
         if (prev) prev.call(m, sh, r);
         sh.uniforms.uRW = ROADWET_U.uRW; sh.uniforms.uWSky = WATER_U.uWSky; sh.uniforms.uWSun = WATER_U.uWSun; sh.uniforms.uWSunC = WATER_U.uWSunC;
         sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vRw;').replace('#include <project_vertex>', '#include <project_vertex>\nvRw = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+        if (rub) sh.fragmentShader = sh.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb *= 1.0 - uRW * clamp((0.98 - dot(vColor.rgb, vec3(0.3333))) * 2.4, 0.0, 0.42);');
         sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uRW; uniform vec3 uWSky; uniform vec3 uWSun; uniform vec3 uWSunC; varying vec3 vRw;')
           .replace('#include <fog_fragment>', 'if (uRW > 0.0) { vec3 V = normalize(cameraPosition - vRw); float fr = 0.02 + 0.98 * pow(1.0 - clamp(V.y, 0.0, 1.0), 5.0);\n' +
             '  gl_FragColor.rgb = mix(gl_FragColor.rgb, uWSky * 0.72, clamp(fr * uRW * 0.55, 0.0, 0.4)); gl_FragColor.rgb += uWSunC * pow(max(dot(reflect(-V, vec3(0.0, 1.0, 0.0)), uWSun), 0.0), 60.0) * 0.25 * uRW; }\n#include <fog_fragment>');
       };
-      m.customProgramCacheKey = () => 'wet|' + pk; m.needsUpdate = true;
+      m.customProgramCacheKey = () => 'wet' + (rub ? 'R' : '') + '|' + pk; m.needsUpdate = true;
     } });
+  }
+  /* ---------------- contact shadows (ambient occlusion), baked once when a track is built: the ground darkens where walls, rails, fences,
+     buildings, grandstands and tyre stacks stand on it. The scenery is drawn from above into height maps (256 m tiles, ~26 cm texels); for
+     every 64 m block within AO_NEAR m of the road, each 50 cm cell's occlusion (how far the heights in rings round it, out to 3 m, rise
+     above it: the dip between opposite points, so a plain slope gives none) goes into an atlas (four blocks per texel, one per colour
+     channel). The lit materials of the world read it through a table of the blocks: it takes some of the sky's light off the ground there,
+     and a little of the sun's, on surfaces facing up. The trees, the crowds, the water and what is see-through are left out (a canopy is
+     no wall). Nothing is drawn for it in a frame: two texture reads where the world is drawn ---------------- */
+  const AO_BS = 64, AO_TS = 256, AO_M = 4, AO_HPX = 1024, AO_PX = 128, AO_NEAR = 40;
+  const AO_U = { uAOi: { value: null }, uAOa: { value: null }, uAOg: { value: new THREE.Vector4(0, 0, AO_BS, 0) }, uAOn: { value: new THREE.Vector3(1, 1, 1) } };
+  let aoRes = null;   // this track's atlas and table (freed with the next track)
+  const AO_VS = ['#include <common>', 'varying vec3 vAOw; varying float vAOy;'].join('\n');
+  const AO_FS = ['#include <common>', 'uniform sampler2D uAOi; uniform sampler2D uAOa; uniform vec4 uAOg; uniform vec3 uAOn; varying vec3 vAOw; varying float vAOy;',
+    'float aoAt() {',
+    '  if (uAOg.w < 0.5) return 1.0;',
+    '  vec2 g = (vAOw.xz - uAOg.xy) / uAOg.z, c = floor(g);',
+    '  if (c.x < 0.0 || c.y < 0.0 || c.x >= uAOn.x || c.y >= uAOn.y) return 1.0;',
+    '  vec4 ix = texture2D(uAOi, (c + 0.5) / uAOn.xy);',
+    '  if (ix.a < 0.5) return 1.0;',
+    '  vec2 f = clamp(g - c, 0.004, 0.996), sl = floor(ix.xy * 255.0 + 0.5);',
+    '  vec4 a = texture2D(uAOa, (sl + vec2(f.x, 1.0 - f.y)) / uAOn.z);',
+    '  float ch = floor(ix.z * 255.0 + 0.5);',
+    '  return 1.0 - (ch < 0.5 ? a.r : ch < 1.5 ? a.g : ch < 2.5 ? a.b : a.a);',
+    '}'].join('\n');
+  function patchAO(root) {   // buildWorld: every lit, solid, non-instanced material of the new world (their own patches kept)
+    root.traverse(o => { if (!o.isMesh || o.isInstancedMesh || !o.receiveShadow) return;
+      for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
+        if (!m || m.userData.aoP || m.transparent || !(m.isMeshLambertMaterial || m.isMeshPhongMaterial || m.isMeshStandardMaterial)) continue;
+        m.userData.aoP = true;
+        const prev = m.onBeforeCompile, pk = m.customProgramCacheKey();
+        m.onBeforeCompile = (sh, r) => {
+          if (prev) prev.call(m, sh, r);
+          if (sh.fragmentShader.indexOf('#include <aomap_fragment>') < 0 || sh.vertexShader.indexOf('#include <project_vertex>') < 0 || sh.vertexShader.indexOf('#include <defaultnormal_vertex>') < 0) return;
+          for (const k in AO_U) sh.uniforms[k] = AO_U[k];
+          sh.vertexShader = sh.vertexShader.replace('#include <common>', AO_VS).replace('#include <defaultnormal_vertex>', '#include <defaultnormal_vertex>\nvAOy = normalize(mat3(modelMatrix) * objectNormal).y;')
+            .replace('#include <project_vertex>', '#include <project_vertex>\nvAOw = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+          sh.fragmentShader = sh.fragmentShader.replace('#include <common>', AO_FS).replace('#include <aomap_fragment>', '#include <aomap_fragment>\n' +
+            '{ float wN = smoothstep(0.5, 0.85, vAOy); if (wN > 0.0) { float ao = aoAt(); reflectedLight.indirectDiffuse *= mix(1.0, ao, wN); reflectedLight.directDiffuse *= mix(1.0, ao, wN * 0.5); }' +
+            ' if (uAOg.w > 1.5) { reflectedLight.directDiffuse = vec3(0.0); reflectedLight.indirectDiffuse = vec3(aoAt(), wN, uAOg.w > 2.5 ? 1.0 : 0.0); } }');
+        };
+        m.customProgramCacheKey = () => 'ao|' + pk; m.needsUpdate = true;
+      } });
+  }
+  function bakeAO(T) {
+    if (aoRes) { aoRes.rt.dispose(); aoRes.idx.dispose(); aoRes = null; }
+    AO_U.uAOg.value.w = 0; AO_U.uAOi.value = AO_U.uAOa.value = null;
+    if (!world || !world.root || !T || !T.N) return;
+    const t0 = performance.now();
+    // the blocks within AO_NEAR m of the road, and the height tiles they lie in
+    let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (let i = 0; i < T.N; i++) { const x = T.px[i], z = T.pz[i], y = T.hy ? T.hy[i] : 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (z < z0) z0 = z; if (z > z1) z1 = z; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    const gx0 = Math.floor((x0 - AO_NEAR - AO_BS) / AO_TS) * AO_TS, gz0 = Math.floor((z0 - AO_NEAR - AO_BS) / AO_TS) * AO_TS;
+    const nx = Math.ceil((x1 + AO_NEAR + AO_BS - gx0) / AO_TS) * (AO_TS / AO_BS), nz = Math.ceil((z1 + AO_NEAR + AO_BS - gz0) / AO_TS) * (AO_TS / AO_BS);
+    const need = new Uint8Array(nx * nz), R2 = AO_NEAR * AO_NEAR;
+    for (let i = 0; i < T.N; i += 2) { const x = T.px[i], z = T.pz[i], ia = Math.floor((x - AO_NEAR - gx0) / AO_BS), ib = Math.floor((x + AO_NEAR - gx0) / AO_BS), ja = Math.floor((z - AO_NEAR - gz0) / AO_BS), jb = Math.floor((z + AO_NEAR - gz0) / AO_BS);
+      for (let j = ja; j <= jb; j++) for (let k = ia; k <= ib; k++) { if (k < 0 || j < 0 || k >= nx || j >= nz) continue;   // (the block's nearest point within AO_NEAR of the road)
+        const bx = gx0 + k * AO_BS, bz = gz0 + j * AO_BS, dx = Math.max(bx - x, 0, x - bx - AO_BS), dz = Math.max(bz - z, 0, z - bz - AO_BS); if (dx * dx + dz * dz < R2) need[j * nx + k] = 1; } }
+    const blocks = []; for (let j = 0; j < nz; j++) for (let k = 0; k < nx; k++) if (need[j * nx + k]) blocks.push(k, j);
+    const nb = blocks.length / 2; if (!nb) return;
+    const spr = Math.ceil(Math.sqrt(Math.ceil(nb / 4))), aw = spr * AO_PX;
+    if (aw > Math.min(4096, renderer.capabilities.maxTextureSize)) return;   // (a world too long for the atlas: no contact shadows)
+    const rt = new THREE.WebGLRenderTarget(aw, aw, { depthBuffer: false, stencilBuffer: false, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: false });
+    const hrt = new THREE.WebGLRenderTarget(AO_HPX, AO_HPX, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, generateMipmaps: false, stencilBuffer: false });
+    const dMat = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, side: THREE.DoubleSide });
+    const span = AO_TS + 2 * AO_M, yTop = y1 + 160, yBot = y0 - 60;
+    const oc = new THREE.OrthographicCamera(-span / 2, span / 2, span / 2, -span / 2, 0, yTop - yBot); oc.up.set(0, 0, -1);
+    const aoMat = new THREE.ShaderMaterial({ uniforms: { uH: { value: hrt.texture }, uB: { value: new THREE.Vector4() }, uY: { value: new THREE.Vector2(yTop, yTop - yBot) }, uS: { value: span }, uCh: { value: new THREE.Vector4() } },
+      vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+      fragmentShader: ['#include <packing>', 'uniform sampler2D uH; uniform vec4 uB; uniform vec2 uY; uniform float uS; uniform vec4 uCh; varying vec2 vUv;',
+        'float H(vec2 p) { return uY.x - unpackRGBAToDepth(texture2D(uH, p)) * uY.y; }',
+        'void main() {',
+        '  vec2 p = uB.xy + vUv * uB.zw; float h0 = H(p), occ = 0.0;',
+        '  for (int r = 0; r < 4; r++) { float rr = r == 0 ? 0.35 : r == 1 ? 0.8 : r == 2 ? 1.6 : 3.0, w = r == 0 ? 0.3 : r == 1 ? 0.3 : r == 2 ? 0.25 : 0.15, s = 0.0;',
+        '    for (int k = 0; k < 4; k++) { float a = float(k) * 0.7854 + float(r) * 0.39; vec2 d = vec2(cos(a), sin(a)) * rr / uS;',
+        '      float e = 0.5 * (H(p + d) + H(p - d)) - h0 - 0.06; s += clamp(e / (rr * 0.9), 0.0, 1.0); }',   // (painted lines, low kerbs: none)
+        '    occ += w * s * 0.25; }',
+        '  gl_FragColor = uCh * clamp(occ * 1.5, 0.0, 0.7);',
+        '}'].join('\n'),
+      depthTest: false, depthWrite: false, blending: THREE.CustomBlending, blendEquation: THREE.AddEquation, blendSrc: THREE.OneFactor, blendDst: THREE.OneFactor });
+    const qs = new THREE.Scene(), quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), aoMat); quad.frustumCulled = false; qs.add(quad);
+    // draw: only the world's solid scenery (the rest of the scene and the left-out parts hidden for the while), no shadow maps
+    const hidden = [];
+    for (const o of scene.children) if (o !== world.root && o.visible) { o.visible = false; hidden.push(o); }
+    world.root.traverse(o => { if (!o.visible) return; if (o.isPoints || o.isLine || o.isSprite || o.isInstancedMesh) { o.visible = false; hidden.push(o); return; }
+      if (!o.isMesh) return; const ms = Array.isArray(o.material) ? o.material : [o.material];
+      if ((o.userData && o.userData.noAO) || (o.geometry && o.geometry.attributes.sway) || ms.some(m => !m || m.transparent || m.depthWrite === false || (m.userData && (m.userData.water || m.userData.noAO)))) { o.visible = false; hidden.push(o); } });
+    const pOver = scene.overrideMaterial, pAuto = renderer.autoClear, pSh = renderer.shadowMap.autoUpdate, pCol = renderer.getClearColor(new THREE.Color()), pA = renderer.getClearAlpha(), pFog = scene.fog, pBg = scene.background;
+    scene.overrideMaterial = dMat; scene.fog = null; scene.background = null; renderer.shadowMap.autoUpdate = false;
+    renderer.setRenderTarget(rt); renderer.setClearColor(0x000000, 0); renderer.clear(true, false, false);
+    const tiles = new Map(); for (let b = 0; b < nb; b++) { const k = Math.floor(blocks[b * 2] / 4) + ',' + Math.floor(blocks[b * 2 + 1] / 4); if (!tiles.has(k)) tiles.set(k, []); tiles.get(k).push(b); }
+    const idx = new Uint8Array(nx * nz * 4);
+    try {
+      for (const [k, list] of tiles) {
+        const [ti, tj] = k.split(',').map(Number), tx = gx0 + ti * AO_TS, tz = gz0 + tj * AO_TS;
+        oc.position.set(tx + AO_TS / 2, yTop, tz + AO_TS / 2); oc.lookAt(tx + AO_TS / 2, yTop - 1, tz + AO_TS / 2); oc.updateMatrixWorld(); oc.updateProjectionMatrix();
+        renderer.autoClear = true; renderer.setClearColor(0x000000, 1); renderer.setRenderTarget(hrt); renderer.render(scene, oc);
+        renderer.autoClear = false; renderer.setRenderTarget(rt);
+        for (const b of list) {
+          const bi = blocks[b * 2], bj = blocks[b * 2 + 1], bx = gx0 + bi * AO_BS, bz = gz0 + bj * AO_BS, slot = b >> 2, ch = b & 3, sx = slot % spr, sy = Math.floor(slot / spr);
+          aoMat.uniforms.uB.value.set((bx - tx + AO_M) / span, 1 - (bz + AO_BS - tz + AO_M) / span, AO_BS / span, AO_BS / span);   // (the height map's v runs from the tile's far z down)
+          aoMat.uniforms.uCh.value.set(ch === 0 ? 1 : 0, ch === 1 ? 1 : 0, ch === 2 ? 1 : 0, ch === 3 ? 1 : 0);
+          rt.viewport.set(sx * AO_PX, sy * AO_PX, AO_PX, AO_PX); renderer.setRenderTarget(rt); renderer.render(qs, oc);
+          const q = (bj * nx + bi) * 4; idx[q] = sx; idx[q + 1] = sy; idx[q + 2] = ch; idx[q + 3] = 255;
+        }
+      }
+    } finally {
+      rt.viewport.set(0, 0, aw, aw);
+      for (const o of hidden) o.visible = true;
+      scene.overrideMaterial = pOver; scene.fog = pFog; scene.background = pBg; renderer.shadowMap.autoUpdate = pSh; renderer.autoClear = pAuto; renderer.setClearColor(pCol, pA); renderer.setRenderTarget(null);
+      hrt.dispose(); dMat.dispose(); aoMat.dispose(); quad.geometry.dispose();
+    }
+    const it = new THREE.DataTexture(idx, nx, nz, THREE.RGBAFormat); it.magFilter = it.minFilter = THREE.NearestFilter; it.generateMipmaps = false; it.needsUpdate = true;
+    aoRes = { rt, idx: it, blocks: nb, tiles: tiles.size, size: aw, ms: Math.round(performance.now() - t0) };
+    AO_U.uAOi.value = it; AO_U.uAOa.value = rt.texture; AO_U.uAOg.value.set(gx0, gz0, AO_BS, settings.quality === 'retro' ? 0 : 1); AO_U.uAOn.value.set(nx, nz, spr);
+  }
+  /* ---------------- grass tufts and daisies along the track's edges, only round the view: a pool of instances filled from the track's spots
+     within TUFT_R m of the view's centre (again when the view has moved a few metres); on the grass past the kerbs and at the foot of the
+     barriers, swaying a little in the wind; yellower in autumn, none in winter (snow), darker when wet ---------------- */
+  const TUFT_R = 36, TUFT_MAX = 1100, TUFT_C = 16;
+  let tufts = null;
+  function tuftMesh() {
+    const P = [], C = [], F = [];
+    const v = (p, c, f) => { P.push(p[0], p[1], p[2]); C.push(c[0], c[1], c[2]); F.push(f); };
+    const base = [0.2, 0.34, 0.09], tip = [0.52, 0.78, 0.27];
+    for (let b = 0; b < 5; b++) { const a = b / 5 * Math.PI * 2 + (b % 2) * 0.5, ca = Math.cos(a), sa = Math.sin(a), h = 0.2 + ((b * 7) % 5) * 0.04, lean = 0.06 + (b % 3) * 0.04, wd = 0.04;
+      v([-sa * wd, 0, ca * wd], base, 0); v([sa * wd, 0, -ca * wd], base, 0); v([ca * lean, h, sa * lean], tip, 0); }
+    const hx = 0.035, hy = 0.26, hz = 0.02, st = [0.24, 0.38, 0.14], wh = [0.97, 0.97, 0.94], ye = [1, 0.82, 0.2];   // a daisy on its stalk (shown on some tufts: aF)
+    v([0.012, 0, 0], st, 1); v([-0.012, 0, 0], st, 1); v([hx, hy, hz], st, 1);
+    for (let k = 0; k < 5; k++) { const a0 = k / 5 * Math.PI * 2, a1 = (k + 1) / 5 * Math.PI * 2, r = 0.042;
+      v([hx, hy + 0.004, hz], ye, 1); v([hx + Math.cos(a0) * r, hy, hz + Math.sin(a0) * r], wh, 1); v([hx + Math.cos(a1) * r, hy, hz + Math.sin(a1) * r], wh, 1); }
+    const g = new THREE.BufferGeometry(), n = P.length / 3;
+    g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(new Array(n).fill(0).flatMap(() => [0, 1, 0]), 3));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); g.setAttribute('aDz', new THREE.Float32BufferAttribute(F, 1));
+    const aF = new THREE.InstancedBufferAttribute(new Float32Array(TUFT_MAX), 1); aF.setUsage(THREE.DynamicDrawUsage); g.setAttribute('aF', aF);
+    const uT = { value: 0 }, m = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
+    m.onBeforeCompile = (sh) => { sh.uniforms.uTT = uT;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aDz; attribute float aF; uniform float uTT;').replace('#include <begin_vertex>', '#include <begin_vertex>\n' +
+        'if (aDz > 0.5 && aF < 0.5) transformed = vec3(0.0);\n' +
+        'float tPh = instanceMatrix[3].x * 0.37 + instanceMatrix[3].z * 0.29; transformed.x += sin(uTT * 2.1 + tPh) * 0.035 * transformed.y / 0.3; transformed.z += cos(uTT * 1.7 + tPh) * 0.02 * transformed.y / 0.3;');
+      sh.fragmentShader = sh.fragmentShader.replace('( gl_FrontFacing ) ? vIndirectFront : vIndirectBack', 'vIndirectFront').replace('( gl_FrontFacing ) ? vLightFront : vLightBack', 'vLightFront'); };   // (both sides lit as the grass round them)
+    m.customProgramCacheKey = () => 'tuft';
+    const mesh = new THREE.InstancedMesh(g, m, TUFT_MAX); mesh.count = 0; mesh.frustumCulled = false; mesh.receiveShadow = true; mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(TUFT_MAX * 3), 3); mesh.instanceColor.setUsage(THREE.DynamicDrawUsage);
+    return { mesh, aF, uT, cand: null, cx: 1e9, cz: 1e9, key: '' };
+  }
+  function buildTufts(T) {   // buildWorld: the spots of this track (x, y, z, turn, size, daisy, tint), in TUFT_C m cells
+    if (!tufts) { tufts = tuftMesh(); scene.add(tufts.mesh); }
+    tufts.cand = null; tufts.cx = tufts.cz = 1e9; tufts.mesh.count = 0;
+    if (!world || !T || !T.N || !T.surface || (T.def && T.def.offSurface === 'paving')) return;
+    const R = Core.rng(4711), cand = new Map(), q = { a: 0, d: 0, s: 0 }, gH = world.surfH || world.groundH || (() => 0);
+    for (let i = 0; i < T.N; i++) for (const sd of [-1, 1]) {
+      const bar = sd > 0 ? T.br[i] : T.bl[i], edge = T.w + (T.curb[i] ? T.curbW : 0) + 0.12;
+      for (let m = 0; m < 6; m++) {
+        const lat = m < 5 ? edge + Math.pow(R(), 1.6) * 2.4 : bar - 0.2 - R() * 0.5, along = (R() - 0.5) * T.ds, rot = R() * 6.2832, sc = 0.9 + R() * 0.8, fl = R() < 0.15 ? 1 : 0, tn = R();
+        if (lat > bar - 0.12 || lat < edge) continue;
+        q.a = i; q.d = sd * lat; q.s = i * T.ds; if (T.surface(q) !== 2) continue;
+        const x = T.px[i] + T.nx[i] * sd * lat + T.tx[i] * along, z = T.pz[i] + T.nz[i] * sd * lat + T.tz[i] * along, y = gH(x, z);
+        const k = Math.floor(x / TUFT_C) + ',' + Math.floor(z / TUFT_C); let L = cand.get(k); if (!L) cand.set(k, L = []); L.push(x, y, z, rot, sc, fl, tn);
+      }
+    }
+    tufts.cand = cand;
+  }
+  const _tq = new THREE.Quaternion(), _tv = new THREE.Vector3(), _ts = new THREE.Vector3(), _tm = new THREE.Matrix4(), _ty = new THREE.Vector3(0, 1, 0);
+  function tuftStep() {   // Render.frame, after the camera: the tufts round the view's centre
+    if (!tufts) return;
+    const M = tufts.mesh, on = !!tufts.cand && atmos.season !== 'winter' && settings.quality !== 'retro';
+    M.visible = on; if (!on) return;
+    tufts.uT.value = time;
+    const cx = cam.vcx || 0, cz = cam.vcz || 0, key = atmos.season + '|' + (wetW > 0.1 ? 1 : 0);
+    if (Math.hypot(cx - tufts.cx, cz - tufts.cz) < 3 && key === tufts.key) return;
+    tufts.cx = cx; tufts.cz = cz; tufts.key = key;
+    const aut = atmos.season === 'autumn', wetK = wetW > 0.1 ? 0.8 : 1, R2 = TUFT_R * TUFT_R, c0 = Math.floor((cx - TUFT_R) / TUFT_C), c1 = Math.floor((cx + TUFT_R) / TUFT_C), r0 = Math.floor((cz - TUFT_R) / TUFT_C), r1 = Math.floor((cz + TUFT_R) / TUFT_C);
+    let n = 0;
+    for (let a = c0; a <= c1 && n < TUFT_MAX; a++) for (let b = r0; b <= r1 && n < TUFT_MAX; b++) {
+      const L = tufts.cand.get(a + ',' + b); if (!L) continue;
+      for (let e = 0; e < L.length && n < TUFT_MAX; e += 7) {
+        const x = L[e], z = L[e + 2]; if ((x - cx) ** 2 + (z - cz) ** 2 > R2) continue;
+        const s = L[e + 4]; _tq.setFromAxisAngle(_ty, L[e + 3]); _tv.set(x, L[e + 1] - 0.01, z); _ts.set(s, s * (0.85 + 0.3 * L[e + 6]), s);
+        _tm.compose(_tv, _tq, _ts); M.setMatrixAt(n, _tm);
+        const t = L[e + 6], g = 0.85 + 0.3 * t; M.instanceColor.setXYZ(n, (aut ? 1.5 : 0.9 + 0.2 * t) * wetK, (aut ? 1.05 : g) * wetK, (aut ? 0.55 : 0.8 + 0.2 * t) * wetK);
+        tufts.aF.setX(n, aut ? 0 : L[e + 5]); n++;
+      }
+    }
+    M.count = n; M.instanceMatrix.needsUpdate = true; M.instanceColor.needsUpdate = true; tufts.aF.needsUpdate = true;
   }
   function carPaint(color, refl) {   // a painted part's own material (the Peugeot's body, the formula's, a part knocked off)
     const m = new THREE.MeshPhongMaterial({ color, shininess: 80, specular: 0x505050, envMap: envTex, combine: THREE.MixOperation, reflectivity: refl == null ? 0.2 : refl });
@@ -777,7 +1088,7 @@ const Render = (function () {
     if (glb) { lights[0].y = lights[1].y = 0.68; lights[2].y = lights[3].y = 0.86; }
     const noHead = M.body === 'formula';   // the formula: no headlamps, one rain light at the tip of the crash structure
     if (noHead) { lights[0].set(2.62, 0.26, -0.05); lights[1].set(2.62, 0.26, 0.05); lights[2].set(-2.49, 0.34, -0.02); lights[3].set(-2.49, 0.34, 0.02); }
-    return { grp, bodyG, body, tail, dec, wf, wr, glb, fp, blob, marker, lights, noHead, dirtU: bodyMat.userData && bodyMat.userData.dirt || null, scrU: bodyMat.userData && bodyMat.userData.scr || null };
+    return { grp, bodyG, body, tail, dec, wf, wr, glb, fp, blob, marker, lights, noHead, exh: exhaustTips(M), dirtU: bodyMat.userData && bodyMat.userData.dirt || null, scrU: bodyMat.userData && bodyMat.userData.scr || null };
   }
 
   /* ---------------- ghosts of the time trials: the best run (slot 0) and the gold medal pace (slot 1) ---------------- */
@@ -947,26 +1258,35 @@ const Render = (function () {
   }
 
   /* ---------------- skid marks ---------------- */
+  // skid marks, wheel tracks in the grass and the gravel, dirt dropped on the road: quads on the ground, kept for the whole race (a ring of
+  // max; only the ones laid so far are drawn) and fading slowly with their age (to about half in four minutes: uSkT, each quad's aT)
   class Skids {
     constructor(max) {
-      this.max = max; this.cur = 0;
-      this.pos = new Float32Array(max * 12); this.col = new Float32Array(max * 16);
+      this.max = max; this.cur = 0; this.n = 0; this.t = 0;
+      this.pos = new Float32Array(max * 12); this.col = new Float32Array(max * 16); this.bt = new Float32Array(max * 4);
       const idx = [];
       for (let i = 0; i < max; i++) { const b = i * 4; idx.push(b, b + 2, b + 1, b + 1, b + 2, b + 3); }
       const g = new THREE.BufferGeometry();
       this.aPos = new THREE.BufferAttribute(this.pos, 3); this.aPos.setUsage(THREE.DynamicDrawUsage);
       this.aCol = new THREE.BufferAttribute(this.col, 4); this.aCol.setUsage(THREE.DynamicDrawUsage);
-      g.setAttribute('position', this.aPos); g.setAttribute('color', this.aCol); g.setIndex(idx);
+      this.aT = new THREE.BufferAttribute(this.bt, 1); this.aT.setUsage(THREE.DynamicDrawUsage);
+      g.setAttribute('position', this.aPos); g.setAttribute('color', this.aCol); g.setAttribute('aT', this.aT); g.setIndex(idx); g.setDrawRange(0, 0);
       g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
       const m = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
+      this.uT = { value: 0 };
+      m.onBeforeCompile = (sh) => { sh.uniforms.uSkT = this.uT;
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aT; uniform float uSkT; varying float vSkF;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvSkF = mix(1.0, 0.45, smoothstep(15.0, 240.0, uSkT - aT));');
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vSkF;').replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.a *= vSkF;'); };
+      m.customProgramCacheKey = () => 'skidAge';
       this.mesh = new THREE.Mesh(g, m); this.mesh.frustumCulled = false; this.mesh.renderOrder = 2;
       this.dirty = false; this.lo = 1e9; this.hi = -1;
     }
     add(x0, z0, x1, z1, wd, r, g, b, a0, a1, y0, y1) {
       const dx = x1 - x0, dz = z1 - z0, l = Math.hypot(dx, dz) || 1;
       const nx = -dz / l * wd, nz = dx / l * wd;
-      const i = this.cur; this.cur = (this.cur + 1) % this.max;
+      const i = this.cur; this.cur = (this.cur + 1) % this.max; if (this.n < this.max) this.n++;
       if (i < this.lo) this.lo = i; if (i > this.hi) this.hi = i;
+      this.bt[i * 4] = this.bt[i * 4 + 1] = this.bt[i * 4 + 2] = this.bt[i * 4 + 3] = this.t;
       const p = this.pos, o = i * 12, ya = 0.03 + (y0 || 0), yc = 0.03 + (y1 == null ? (y0 || 0) : y1);
       p[o] = x0 - nx; p[o + 1] = ya; p[o + 2] = z0 - nz; p[o + 3] = x0 + nx; p[o + 4] = ya; p[o + 5] = z0 + nz;
       p[o + 6] = x1 - nx; p[o + 7] = yc; p[o + 8] = z1 - nz; p[o + 9] = x1 + nx; p[o + 10] = yc; p[o + 11] = z1 + nz;
@@ -975,14 +1295,18 @@ const Render = (function () {
       this.dirty = true;
     }
     flush() {
+      this.uT.value = this.t;
       if (!this.dirty) return;
       if (this.hi >= this.lo) {
         this.aPos.updateRange.offset = this.lo * 12; this.aPos.updateRange.count = (this.hi - this.lo + 1) * 12;
         this.aCol.updateRange.offset = this.lo * 16; this.aCol.updateRange.count = (this.hi - this.lo + 1) * 16;
+        this.aT.updateRange.offset = this.lo * 4; this.aT.updateRange.count = (this.hi - this.lo + 1) * 4;
       }
-      this.aPos.needsUpdate = true; this.aCol.needsUpdate = true; this.dirty = false; this.lo = 1e9; this.hi = -1;
+      this.aPos.needsUpdate = true; this.aCol.needsUpdate = true; this.aT.needsUpdate = true; this.dirty = false; this.lo = 1e9; this.hi = -1;
+      this.mesh.geometry.setDrawRange(0, this.n * 6);
     }
-    clear() { this.pos.fill(0); this.col.fill(0); this.dirty = true; this.lo = 1e9; this.hi = -1; this.aPos.updateRange.count = -1; this.aCol.updateRange.count = -1; this.aPos.needsUpdate = true; this.aCol.needsUpdate = true; this.dirty = false; }
+    clear() { this.pos.fill(0); this.col.fill(0); this.bt.fill(0); this.n = 0; this.cur = 0; this.mesh.geometry.setDrawRange(0, 0); this.dirty = true; this.lo = 1e9; this.hi = -1;
+      for (const a of [this.aPos, this.aCol, this.aT]) { a.updateRange.count = -1; a.needsUpdate = true; } this.dirty = false; }
   }
 
   /* ---------------- rain: streaks falling in a box around the view centre. The shader wraps each drop into the box (its place
@@ -1077,6 +1401,28 @@ const Render = (function () {
   let time = 0;
   let showScene = null, showCam = null, showCar = null, showAngle = 0.6, showRefl = null, showShadow = null;
 
+  /* ---------------- sharper shadows by the car (Grafika: Visoko): a second directional light with no light of its own casts a small shadow
+     map (NEAR_R m round the car, ~2.3 cm texels); the sun's shadow takes it where it covers the ground, fading into the wide one towards
+     its edge. The shader chunks of every lit material learn it once (Lambert: getShadowMask; Phong, Standard: the lights' loop); with a
+     single shadow map (the other qualities) they are as before ---------------- */
+  const NEAR_R = 12;
+  let sunN = null;
+  function nearShadows() {
+    const C = THREE.ShaderChunk;
+    if (C.shadowmap_pars_fragment.indexOf('sunShadow2') >= 0) return;
+    C.shadowmap_pars_fragment += ['', '#if defined( USE_SHADOWMAP ) && NUM_DIR_LIGHT_SHADOWS == 2',
+      'float sunShadow2() {',
+      '  vec3 c = vDirectionalShadowCoord[ 1 ].xyz / vDirectionalShadowCoord[ 1 ].w; vec2 e = min(c.xy, 1.0 - c.xy);',
+      '  float w = smoothstep(0.0, 0.14, min(e.x, e.y)) * step(c.z, 1.0);',
+      '  float f = w < 0.999 ? getShadow( directionalShadowMap[ 0 ], directionalLightShadows[ 0 ].shadowMapSize, directionalLightShadows[ 0 ].shadowBias, directionalLightShadows[ 0 ].shadowRadius, vDirectionalShadowCoord[ 0 ] ) : 1.0;',
+      '  float n = w > 0.001 ? getShadow( directionalShadowMap[ 1 ], directionalLightShadows[ 1 ].shadowMapSize, directionalLightShadows[ 1 ].shadowBias, directionalLightShadows[ 1 ].shadowRadius, vDirectionalShadowCoord[ 1 ] ) : 1.0;',
+      '  return mix(f, n, w);', '}', '#endif', ''].join('\n');
+    const m0 = '#if NUM_DIR_LIGHT_SHADOWS > 0\n\tDirectionalLightShadow directionalLight;';
+    const L0 = 'directLight.color *= all( bvec2( directLight.visible, receiveShadow ) ) ? getShadow( directionalShadowMap[ i ], directionalLightShadow.shadowMapSize, directionalLightShadow.shadowBias, directionalLightShadow.shadowRadius, vDirectionalShadowCoord[ i ] ) : 1.0;';
+    if (C.shadowmask_pars_fragment.indexOf(m0) < 0 || C.lights_fragment_begin.indexOf(L0) < 0) { console.warn('near shadows: three.js chunks not as expected'); return; }
+    C.shadowmask_pars_fragment = C.shadowmask_pars_fragment.replace(m0, '#if NUM_DIR_LIGHT_SHADOWS == 2\n\tshadow *= receiveShadow ? sunShadow2() : 1.0;\n\t#elif NUM_DIR_LIGHT_SHADOWS > 0\n\tDirectionalLightShadow directionalLight;');
+    C.lights_fragment_begin = C.lights_fragment_begin.replace(L0, '#if NUM_DIR_LIGHT_SHADOWS == 2\n\t\tdirectLight.color *= all( bvec2( directLight.visible, receiveShadow ) ) ? ( UNROLLED_LOOP_INDEX == 0 ? sunShadow2() : 1.0 ) : 1.0;\n\t\t#else\n\t\t' + L0 + '\n\t\t#endif');
+  }
   function init(canvas) {
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', alpha: false, stencil: false });
     renderer.setClearColor(0x263f1f, 1);
@@ -1091,11 +1437,22 @@ const Render = (function () {
     const sc = sun.shadow.camera; sc.left = -80; sc.right = 80; sc.top = 80; sc.bottom = -80; sc.near = 10; sc.far = 320;
     sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.03;
     scene.add(sun); scene.add(sun.target);
+    sunN = new THREE.DirectionalLight(0xffffff, 0); sunN.castShadow = true; sunN.shadow.mapSize.set(1024, 1024);   // (Grafika: Visoko) the near cascade: no light of its own, a sharp shadow map round the car (nearShadows)
+    { const c = sunN.shadow.camera; c.left = -NEAR_R; c.right = NEAR_R; c.top = NEAR_R; c.bottom = -NEAR_R; c.near = 10; c.far = 320; }
+    sunN.shadow.bias = -0.00015; sunN.shadow.normalBias = 0.02;
+    nearShadows();
     tex = Tex.all(renderer.capabilities.getMaxAnisotropy());
     matCar = new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 80, specular: 0x505050 });
     envTex = makeEnv(); matCar.envMap = envTex; matCar.combine = THREE.MixOperation; matCar.reflectivity = 0.2;   // glossy paint: the sky, the horizon and the track round it (envPaint)
     matCar.onBeforeCompile = (sh) => carShader(sh, true); matCar.customProgramCacheKey = () => 'carPaintVC';
     matWheel = new THREE.MeshLambertMaterial({ vertexColors: true });
+    matWheel.onBeforeCompile = (sh) => {   // the calliper (its colour: CAL_R, CAL_G) stays at the top of a spinning wheel: its vertices turned back by the spin (the wheel's own up, the world's up seen in the wheel's plane)
+      sh.vertexShader = sh.vertexShader.replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\n' +
+        'float wCal = step(distance(color.rgb, vec3(' + CAL_R.join(', ') + ')), 0.01) + step(distance(color.rgb, vec3(' + CAL_G.join(', ') + ')), 0.01);\n' +
+        'vec2 wUp = normalize(vec2(modelMatrix[0].y, modelMatrix[1].y) + vec2(0.0, 1e-5)); mat2 wR = mat2(wUp.y, -wUp.x, wUp.x, wUp.y);\n' +
+        'if (wCal > 0.5) objectNormal.xy = wR * objectNormal.xy;').replace('#include <begin_vertex>', '#include <begin_vertex>\nif (wCal > 0.5) transformed.xy = wR * transformed.xy;');
+    };
+    matWheel.customProgramCacheKey = () => 'wheelCal';
     matTailOff = new THREE.MeshLambertMaterial({ color: 0x6a1212 });
     matTailOn = new THREE.MeshBasicMaterial({ color: 0xff2a1a });
     matBlob = new THREE.MeshBasicMaterial({ map: tex.blob, transparent: true, depthWrite: false, opacity: 0.8 });
@@ -1103,8 +1460,8 @@ const Render = (function () {
     matScOn = new THREE.MeshBasicMaterial({ color: 0xffa21a }); matScOff = new THREE.MeshLambertMaterial({ color: 0x4a3312 });   // (the safety car's lamps)
     particles = new Particles(2400); scene.add(particles.points);
     sparkP = new Particles(700, true); scene.add(sparkP.points);
-    glows = new Glows(4 * 16); scene.add(glows.points); wetGl = new WetGlows(4 * 16); scene.add(wetGl.points);
-    skids = new Skids(8000); scene.add(skids.mesh);
+    glows = new Glows(4 * 16 + 96); scene.add(glows.points); wetGl = new WetGlows(4 * 16); scene.add(wetGl.points);
+    skids = new Skids(16000); scene.add(skids.mesh);
     rain = new Rain(3200); scene.add(rain.mesh);
     snow = new Snow(2600); scene.add(snow.mesh);
     birds = new Birds(16); scene.add(birds.mesh);
@@ -1117,7 +1474,7 @@ const Render = (function () {
     camYaw = (track && track.def && track.def.camYaw) || 0;   // fixed heading of the 'kino' camera for this circuit (clockwise from north)
     if (world && world.root) {   // switching tracks: drop and free the previous scenery
       scene.remove(world.root);
-      world.root.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.dispose()); if (o.isInstancedMesh) o.dispose(); });   // (instanced: its instance buffers)
+      world.root.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.userData.geoRain) { o.userData.geoRain.dispose(); o.userData.geoDry.dispose(); } if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.dispose()); if (o.isInstancedMesh) o.dispose(); });   // (instanced: its instance buffers; the crowd's other figure)
       if (world.ownTex) world.ownTex.forEach(t => t.dispose());   // textures made for that track only (the shared ones stay cached)
       if (skids) skids.clear();
     }
@@ -1130,6 +1487,9 @@ const Render = (function () {
     if (dryLn) { scene.remove(dryLn); dryLn.geometry.dispose(); dryLn.material.dispose(); dryLn = null; }
     { const d = world.dyn; if (d.mist) d.mist.set(mist); if (d.rays) d.rays.material.uniforms.uA.value = 0.18 * (1 + 1.5 * mist); }   // (and the mist on its own banks)
     patchWater(world.root); patchRoadWet(world.root);   // (the waves, the glitter, the sky, the foam; the wet road's sheen)
+    bakeAO(track); patchAO(world.root);   // (the contact shadows: baked once, read by the world's materials)
+    buildTufts(track);   // (the grass tufts' spots along the edges)
+    patchNight(world.root); nightBoards();   // (lit windows and boards at night)
     birds.reset(!!(track.def && (track.def.sea || track.def.theme === 'monaco')));   // (gulls by the sea)
     return world;
   }
@@ -1237,6 +1597,10 @@ const Render = (function () {
     const ms = settings.quality === 'high' ? 2048 : 1024;
     if (sun.shadow.mapSize.x !== ms) { sun.shadow.mapSize.set(ms, ms); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
     if (!settings.shadows && sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }   // shadows off: free the shadow map
+    AO_U.uAOg.value.w = aoRes && settings.quality !== 'retro' ? 1 : 0;   // (the contact shadows: not in the retro look)
+    const nOn = settings.quality === 'high' && !!settings.shadows;   // the sharp near cascade: Grafika Visoko only
+    if (nOn && !sunN.parent) { scene.add(sunN); scene.add(sunN.target); }
+    else if (!nOn && sunN.parent) { scene.remove(sunN); scene.remove(sunN.target); if (sunN.shadow.map) { sunN.shadow.map.dispose(); sunN.shadow.map = null; } }
     // every material is rebuilt, so shadow receiving goes in or out of its shader (three.js r128 has no getter for needsUpdate:
     // it has to be set on each material; the shaders are compiled again at the next frame)
     const upd = (o) => { if (o.material) for (const m of Array.isArray(o.material) ? o.material : [o.material]) m.needsUpdate = true; };
@@ -1482,7 +1846,46 @@ const Render = (function () {
     return new THREE.CanvasTexture(c);
   }
   // night: floodlights on poles along the track (every 30 m, alternating sides), each a pool of warm light on the road
+  /* ---------------- lit windows and boards at night (at dusk a little): the windows of the town's facades (their texture's glass, one window
+     in two or three lit, warm), the glass of the pit buildings, the towers and the commentators' boxes (their glass colours: WIN_C), the
+     advertising boards and the text boards glowing from behind (their own picture as the glow). NIGHT_U: shared; patched at buildWorld ---------------- */
+  const NIGHT_U = { uNightW: { value: 0 } }, WIN_C = [[0.16, 0.24, 0.34], [0.14, 0.22, 0.32], [0.15, 0.23, 0.33]];
+  const WIN_HASH = 'float nwH(vec3 p) { return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }';
+  function patchNight(root) {
+    const boards = new Set(['sponsors', 'sponsorsLJ', 'sponsorsFO', 'sponsorsMC', 'sponsorsIT', 'sponsorsKP', 'boardsFO', 'boardsIT', 'boardsKP', 'bannerLJ'].map(k => tex[k]).filter(Boolean));
+    const fac = [tex.facade, tex.facadeBal].filter(Boolean), matV = world && world.matV;
+    root.traverse(o => { if (!o.isMesh) return; for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
+      if (!m || m.userData.nightP || !(m.isMeshLambertMaterial || m.isMeshPhongMaterial)) continue;
+      const board = boards.has(m.map) || m.userData.board, facade = fac.includes(m.map), glass = m === matV;
+      if (!board && !facade && !glass) continue;
+      m.userData.nightP = true;
+      if (board) { m.userData.nightBoard = true; continue; }   // (the boards: an emissive map at night, floodlights())
+      const prev = m.onBeforeCompile, pk = m.customProgramCacheKey(), rect = m.map === tex.facadeBal ? [0.22, 0.31, 0.78, 0.875] : [0.28, 0.22, 0.72, 0.75];
+      m.onBeforeCompile = (sh, r) => {
+        if (prev) prev.call(m, sh, r);
+        sh.uniforms.uNightW = NIGHT_U.uNightW;
+        if (glass) sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vNwP;').replace('#include <project_vertex>', '#include <project_vertex>\nvNwP = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+        const lit = facade
+          ? '{ vec2 f = fract(vUv), c = floor(vUv); float inG = step(' + rect[0] + ', f.x) * step(f.x, ' + rect[2] + ') * step(' + rect[1] + ', f.y) * step(f.y, ' + rect[3] + ');\n' +
+            '  float on = step(0.58, nwH(vec3(c, 3.1))); totalEmissiveRadiance += vec3(1.0, 0.78, 0.46) * inG * on * uNightW * (0.75 + 0.25 * nwH(vec3(c, 7.7))); }'
+          : '{ float g = 0.0; ' + WIN_C.map(c => 'g += step(distance(vColor.rgb, vec3(' + c.join(', ') + ')), 0.012);').join(' ') + '\n' +
+            '  float on = step(0.4, nwH(floor(vNwP * vec3(0.42, 0.45, 0.42)))); totalEmissiveRadiance += vec3(1.0, 0.82, 0.55) * min(g, 1.0) * on * uNightW * 0.9; }';
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uNightW;\n' + (glass ? 'varying vec3 vNwP;\n' : '') + WIN_HASH)
+          .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n' + lit);
+      };
+      m.customProgramCacheKey = () => 'nightW' + (facade ? 'F' : 'G') + '|' + pk; m.needsUpdate = true;
+    } });
+  }
+  function nightBoards() {   // floodlights(): the boards glow from behind at night (their picture as an emissive map), not by day
+    if (!world || !world.root) return; const on = atmos.tod === 'night' ? 0.62 : atmos.tod === 'dusk' ? 0.25 : 0;
+    world.root.traverse(o => { if (!o.isMesh) return; for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
+      if (!m || !m.userData.nightBoard || !m.emissive) continue;
+      const want = on > 0 ? m.map : null; if (m.emissiveMap !== want) { m.emissiveMap = want; m.needsUpdate = true; }
+      m.emissive.setScalar(on);
+    } });
+  }
   function floodlights() {
+    NIGHT_U.uNightW.value = atmos.tod === 'night' ? 1 : atmos.tod === 'dusk' ? 0.4 : 0; nightBoards();
     if (flood) { scene.remove(flood.pools); scene.remove(flood.poles); scene.remove(flood.heads); flood.pools.geometry.dispose(); flood.poles.geometry.dispose(); flood.heads.geometry.dispose(); flood = null; }
     const T = curTrack; if (atmos.tod !== 'night' || !T || !world) return;
     if (!lampTex) lampTex = radialTex(0.35, 0.55);
@@ -1627,7 +2030,7 @@ const Render = (function () {
   /* ---------------- race attach ---------------- */
   // the pieces every car shares (cached body / tail / wheel / Peugeot geometry, the common materials): never freed with a car
   function sharedCarRes() {
-    const g = new Set([wheelGeo, wheelGeoW, ...geoCache.values(), ...tailGeoCache.values(), ...fWheelCache.values()]);
+    const g = new Set([wheelGeo, wheelGeoW, lensGeoC, ...geoCache.values(), ...tailGeoCache.values(), ...fWheelCache.values()]);
     if (p206Geo) for (const n of p206Geo) for (const p of n.prims) g.add(p.g);
     const m = new Set([matCar, matWheel, matTailOff, matTailOn, matBlob, matMarker, matUnder, matEngine, matLens, matLensBroken, matScOn, matScOff]);
     if (p206Mats) for (const k in p206Mats) m.add(p206Mats[k]);
@@ -1787,6 +2190,39 @@ const Render = (function () {
      flames popping from the exhaust on a lift at high revs and on a gear change, brake discs glowing orange after a hard stop (cooling over
      a few seconds) and powder snow thrown up in the snow zone (above ~330 m of road height), in winter and while it snows. */
   const _pkE = new THREE.Vector3();
+  /* ---------------- flames and hot brakes on every other track (Pikes Peak has its own, pkFx): now and then a string of pops from the
+     tailpipes when the driver lifts off at high revs, a flame on some gear changes (only the cars near the view); brake discs glowing
+     orange after a hard stop, cooling over a few seconds, at night (a little at dusk: by day it is not seen). Into the shared pools ---------------- */
+  const fxR = Core.rng(5309);   // (the new effects' own random numbers: the race's Math.random sequence, which the AI draws from, is as it was)
+  function carFx(v, c, dt, live) {
+    const f = v.fx5 || (v.fx5 = { heat: [0, 0], thr: 0, pop: 0, pt: 0, sh: false, hub: null });
+    const M = c.m, R = fxR, night = atmos.tod === 'night' ? 1 : atmos.tod === 'dusk' ? 0.5 : 0;
+    if (!f.hub) { const sc = M.len / 4.4; f.hub = [v.wf.length ? v.wf[0].position.x : M.a * sc * 0.98 + 0.05, v.wr.length ? v.wr[0].position.x : -M.b * sc * 0.98, M.rw, v.wf.length ? Math.abs(v.wf[0].position.z) : M.wid * 0.5 - 0.1]; }
+    const bk = c.inBrk > 0.3 && c.vl > 6 && !c.air ? c.inBrk * (c.vl - 6) * dt * 0.04 : 0;   // (the fronts take 60 % of the heat)
+    for (let a = 0; a < 2; a++) {
+      if (dt > 0) f.heat[a] = Math.min(1.25, f.heat[a] * Math.exp(-dt / 2.6) + bk * (a ? 0.7 : 1));
+      const gl = Core.sstep(0.25, 0.95, f.heat[a]) * night; if (gl <= 0.01) continue;
+      for (const sd of [-1, 1]) { _pkE.set(a ? f.hub[1] : f.hub[0], f.hub[2], sd * (f.hub[3] + 0.16)).applyMatrix4(v.grp.matrixWorld);
+        glows.add(_pkE.x, _pkE.y, _pkE.z, 0.5 + 0.25 * gl, 1.0, 0.28 + 0.14 * gl, 0.04, gl * 0.85); }   // (the disc behind the spokes: about the rim's size)
+    }
+    if (!live) return;
+    const spd = c.speed, near = Math.hypot(c.x - (cam.vcx || 0), c.z - (cam.vcz || 0)) < 70, hiRev = c.rpm > M.redline * 0.72;
+    if (c.inThr < 0.2 && f.thr > 0.6 && hiRev && spd > 12) { if (R() < 0.6) f.pop = 0.25 + R() * 0.35; f.thr = 0; }   // (a quick lift from full throttle: now and then)
+    if (c.shiftT > 0 && !f.sh && spd > 8 && R() < 0.35) f.pop = Math.max(f.pop, 0.08);   // (a gear change: sometimes)
+    f.sh = c.shiftT > 0; f.thr = f.pop > 0 ? 0 : Math.max(c.inThr, f.thr - dt * 2.5);
+    if (f.pop <= 0) return;
+    f.pop -= dt; f.pt -= dt;
+    if (f.pt > 0 || !near || !v.exh) return;
+    f.pt = 0.05 + R() * 0.09;
+    const me = v.grp.matrixWorld.elements, fx = me[0], fz = me[2], gy = c.roadY != null ? c.roadY : c.y || 0, big = 0.6 + R() * 0.6;
+    for (const e of v.exh) {
+      _pkE.set(e[0] - 0.05, e[1], e[2]).applyMatrix4(v.grp.matrixWorld);
+      const bx = _pkE.x - c.vx * dt, bz = _pkE.z - c.vz * dt;   // (the pool moves them on this frame still: start them a frame back, level with the pipe)
+      for (let k = 0; k < 3; k++) { const d = k * 0.14 * big, sp = 2.5 + R() * 2.5, t = k / 2; sparkP.emit(bx - fx * d, _pkE.y + t * 0.04, bz - fz * d, c.vx * 0.96 - fx * sp + (R() - 0.5) * 0.6, 0.15 + R() * 0.2, c.vz * 0.96 - fz * sp + (R() - 0.5) * 0.6, 0.05 + R() * 0.05, (0.34 - t * 0.12) * big, (0.5 - t * 0.14) * big, 1, 0.62 - t * 0.3, 0.18 - t * 0.14, 0.85, -1, 2, gy); }   // a tongue of flame: yellow at the pipe, orange at the tip
+      sparkP.emit(bx, _pkE.y, bz, c.vx * 0.95 - fx * 2, 0.05, c.vz * 0.95 - fz * 2, 0.04, 0.12 * big, 0.2, 0.6, 0.72, 1, 0.7, 0, 2, gy);   // the blue-white core
+      glows.add(_pkE.x - fx * 0.2, _pkE.y, _pkE.z - fz * 0.2, 0.8 * big, 1, 0.45, 0.12, 0.15 + 0.25 * night);
+    }
+  }
   function pkFx(v, c, dt, live) {   // live: emit particles (not in a paused frame, the replay or the photo; the discs' glow shows in all of them)
     const f = v.pkFx || (v.pkFx = { acc: [0, 0, 0, 0], heat: [0, 0], thr: 0, pop: 0, pt: 0, sh: false, sc: 0 });
     const M = c.m, W = v.pk.w.value, me = v.grp.matrixWorld.elements, spd = c.speed, yb = c.y || 0, gy = c.roadY != null ? c.roadY : yb, R = Math.random;
@@ -2314,7 +2750,7 @@ const Render = (function () {
         let loose = 0; for (let k = 0; k < 4; k++) { const sf = c.ws[k]; if (sf === 2 || sf === 3 || sf >= 5) loose++; }
         if (loose) v.dirtU.value = Math.min(1, v.dirtU.value + dt * loose * (1 + 1.5 * Math.max(0, wetW)) * 0.012 * clamp(c.speed / 12, 0.2, 1.5));   // (rain: mud, two and a half times as fast)
       }
-      if (v.pk) pkCarTick(v, c, dt, opt);
+      if (v.pk) pkCarTick(v, c, dt, opt); else carFx(v, c, dt, !(opt && opt.noFx) && dt > 0);
       if (v.marker) { v.marker.visible = !!markerOn; v.marker.position.y = 4 + Math.sin(time * 5) * 0.3; v.marker.rotation.y = time * 2; }
       // --- effects ---
       if (!opt || !opt.noFx) emitFx(v, c, dt, x, z, h);
@@ -2331,7 +2767,7 @@ const Render = (function () {
       }
     }
     glows.end(); wetGl.end();
-    skids.flush();
+    skids.t = time; skids.flush();
   }
 
   /* ---------------- detachable parts, broken lamps, debris ---------------- */
@@ -2340,7 +2776,7 @@ const Render = (function () {
   let matUnder = null, matEngine = null, matLens = null, matLensBroken = null;
   function buildParts(v) {
     const c = v.car, M = c.m, dB = BODIES[M.body] || BODIES.coupe, S = dB.secs, sx = M.len / dB.len, sz = M.wid / dB.wid;
-    if (!matUnder) { matUnder = new THREE.MeshLambertMaterial({ color: 0x1b1d22 }); matEngine = new THREE.MeshLambertMaterial({ color: 0x5b5f66 }); matLens = new THREE.MeshBasicMaterial({ color: 0xfff1c8 }); matLensBroken = new THREE.MeshLambertMaterial({ color: 0x24272c }); }
+    if (!matUnder) { matUnder = new THREE.MeshLambertMaterial({ color: 0x1b1d22 }); matEngine = new THREE.MeshLambertMaterial({ color: 0x5b5f66 }); matLens = new THREE.MeshBasicMaterial({ vertexColors: true }); matLensBroken = new THREE.MeshLambertMaterial({ color: 0x24272c }); }
     const at = (x) => { const L = S[S.length - 1]; if (x <= S[0][0]) return S[0]; if (x >= L[0]) return L; for (let k = 0; k < S.length - 1; k++) if (x <= S[k + 1][0]) { const t = (x - S[k][0]) / (S[k + 1][0] - S[k][0]); return S[k].map((q, i) => typeof q === 'number' ? q + (S[k + 1][i] - q) * t : q); } return L; };
     const parts = {}, under = {};
     if (v.fp) fParts(v, parts, under);   // the formula: its own parts (built with its mesh)
@@ -2366,9 +2802,10 @@ const Render = (function () {
         else { const a = at(tail), H = (a[5] - a[3]) * 0.9 + 0.12, W = 2 * a[4] * sz * 0.86;
           add('trunk', new THREE.BoxGeometry(0.05, H, W), paint, tail * sx - 0.03, a[3] + H / 2 - 0.06, 0, 0, new THREE.BoxGeometry(0.03, H * 0.92, W * 0.9)); } }
       // bumpers
-      for (const [name, xs] of [['bumperF', nose], ['bumperR', tail]]) {
+      const ptx = plateText(M.id + '|' + c.color), trimV = new THREE.MeshLambertMaterial({ vertexColors: true }); v.partMats.push(trimV);
+      for (const [name, xs] of [['bumperF', nose], ['bumperR', tail]]) {   // (the number plates on them)
         const a = at(xs), H = (a[3] - a[2]) * 0.55, W = 2 * a[1] * sz * 0.97, sg = Math.sign(xs);
-        add(name, new THREE.BoxGeometry(0.13, H, W), trim, xs * sx + sg * 0.05, a[2] + H * 0.5 + 0.02, 0, 0, new THREE.BoxGeometry(0.06, 0.09, W * 0.8), matEngine);
+        add(name, bumperGeo(0.13, H, W, sg, ptx), trimV, xs * sx + sg * 0.05, a[2] + H * 0.5 + 0.02, 0, 0, new THREE.BoxGeometry(0.06, 0.09, W * 0.8), matEngine);
       }
       // front wings (fenders) above the front wheels
       { const fx = M.a * (M.len / 4.4) * 0.98 + 0.05, a = at(fx / sx), y0 = M.rw * 1.75, y1 = a[3] - 0.03;
@@ -2384,7 +2821,7 @@ const Render = (function () {
     }
     // head lamp lenses (they go dark when smashed); tail lamps get a dark cover when smashed
     v.lens = []; v.lightBroken = [0, 0, 0, 0];
-    for (let k = 0; k < 2; k++) { const L = v.lights[k], m = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.11, 0.28), matLens); m.position.set(L.x - 0.02, L.y, L.z); m.visible = !v.glb && !v.noHead; v.bodyG.add(m); v.lens.push(m); }
+    for (let k = 0; k < 2; k++) { const L = v.lights[k], m = new THREE.Mesh(lensGeo(), matLens); m.position.set(L.x - 0.02, L.y, L.z); m.visible = !v.glb && !v.noHead; v.bodyG.add(m); v.lens.push(m); }
   }
   // the formula's parts, built with the car's mesh (the garage and the ghost show them too): front wing (bumperF), nose (hood), rear wing with the
   // DRS flap (bumperR), engine cover (trunk), mirrors, bargeboards (fenderL/R). Each is centred on its own origin (a loose one tumbles about
@@ -2511,20 +2948,34 @@ const Render = (function () {
       // skid marks
       const onHard = surf <= 1 || (rainy && surf === 4);   // (rain: the paving sprays like the asphalt)
       const skidOn = intens > 0.14 && spd > 2.5 && !(rainy && onHard);   // (no rubber laid on a wet road)
-      if (skidOn) {
+      const rollOn = (surf === 2 || surf === 3) && spd > 3;   // off the road: the wheels leave their tracks in the grass and the gravel, sliding or not
+      if (skidOn || rollOn) {
         const last = v.sk[k];
         if (last) {
           const d = Math.hypot(px - last[0], pz - last[1]);
           if (d > 0.45 && d < 4) {
-            const a = clamp(0.4 + intens * 0.4, 0.4, 0.86);
+            const a = skidOn ? clamp(0.4 + intens * 0.4, 0.4, 0.86) : wetW > 0.1 ? 0.5 : 0.36;
             if (onHard) skids.add(last[0], last[1], px, pz, 0.2, 0.035, 0.035, 0.04, a * 0.92, a, last[2], yb);
-            else if (surf === 6 || (rainy && surf === 5)) skids.add(last[0], last[1], px, pz, 0.22, 0.17, 0.14, 0.1, a * 0.9, a, last[2], yb);   // (wet gravel, a puddle: dark, muddy)
-            else if (surf === 3 || surf === 5) skids.add(last[0], last[1], px, pz, 0.22, 0.42, 0.27, 0.14, a * 0.85, a * 0.95, last[2], yb);
+            else if (surf === 6 || (rainy && surf >= 3)) skids.add(last[0], last[1], px, pz, 0.22, 0.17, 0.14, 0.1, a * 0.9, a, last[2], yb);   // (wet gravel, a puddle: dark, muddy)
+            else if (surf === 3 || surf === 5) skids.add(last[0], last[1], px, pz, 0.22, skidOn ? 0.42 : 0.33, skidOn ? 0.27 : 0.27, skidOn ? 0.14 : 0.2, a * 0.85, a * 0.95, last[2], yb);   // (rolled: dark furrows)
+            else if (rainy) skids.add(last[0], last[1], px, pz, 0.22, 0.2, 0.15, 0.08, a * 0.85, a * 0.95, last[2], yb);   // (wet grass: churned mud)
             else skids.add(last[0], last[1], px, pz, 0.22, 0.14, 0.2, 0.07, a * 0.75, a * 0.85, last[2], yb);
             v.sk[k] = [px, pz, yb];
           } else if (d >= 4) v.sk[k] = [px, pz, yb];
         } else v.sk[k] = [px, pz, yb];
       } else v.sk[k] = null;
+      // back on the road from the grass or the gravel: the tyres drop earth and stones for a few metres (clumps along the wheel's line)
+      const dl = v.dl || (v.dl = [null, null, null, null]);
+      if (surf === 2 || surf === 3) { if (!dl[k] || dl[k].m < 9) dl[k] = { m: 9 + fxR() * 7, x: px, z: pz, g: surf === 3 }; else { dl[k].x = px; dl[k].z = pz; dl[k].g = surf === 3; } }
+      else if (dl[k] && (surf <= 1 || surf === 4) && spd > 2) {
+        const D = dl[k], d = Math.hypot(px - D.x, pz - D.z);
+        if (d > 0.55 + fxR() * 0.6) {
+          const f = clamp(D.m / 9, 0, 1), ux = (px - D.x) / d, uz = (pz - D.z) / d, j = (fxR() - 0.5) * 0.18, cx = px - uz * j, cz = pz + ux * j, L = 0.12 + fxR() * 0.2;
+          if (D.g) skids.add(cx - ux * L, cz - uz * L, cx, cz, 0.07 + fxR() * 0.06, 0.5, 0.45, 0.38, 0.55 * f, 0.4 * f, yb, yb);   // (grey-beige gravel)
+          else skids.add(cx - ux * L, cz - uz * L, cx, cz, 0.08 + fxR() * 0.07, 0.3, 0.23, 0.13, 0.62 * f, 0.45 * f, yb, yb);   // (earth, a bit of grass)
+          D.m -= d; D.x = px; D.z = pz; if (D.m <= 0) dl[k] = null;
+        }
+      } else if (surf === 5 || surf === 6) dl[k] = null;
       // smoke / dust (rain: spray, mud)
       if (front) continue;
       if (rainy && onHard) {   // a wet road: a mist of spray off the rear tyres at speed, thicker in a slide (no tyre smoke)
@@ -2586,7 +3037,7 @@ const Render = (function () {
     if (c.fxWall > 2.5) { sparks(c.wallX, c.wallZ, c.fxWall, yb); }
     if (c.fxCar > 3) { sparks(c.contactX, c.contactZ, c.fxCar * 0.7, yb); }
     c.fxWall = 0; c.fxCar = 0;
-    // backfire on upshift / lift at high rpm
+    // a puff from the exhaust on an upshift (the player's car; the flames on a lift: carFx)
     if (c.shiftT > 0.1 && c.isPlayer && Math.random() < 0.5) {
       const p = wheelWorld(c, -M.len * 0.5 - 0.1, 0.35, x, z, h);
       for (let k = 0; k < 3; k++) particles.emit(p.x, 0.35 + yb, p.z, -Math.cos(h) * 3 + (Math.random() - 0.5), 0.3, -Math.sin(h) * 3 + (Math.random() - 0.5), 0.14, 0.35, 0.8, 1, 0.55 + Math.random() * 0.3, 0.1, 0.95, 0, 3, yb);
@@ -2707,6 +3158,8 @@ const Render = (function () {
     sun.target.position.set(cx, baseY, cz);
     sun.position.set(cx + sunOff[0], baseY + sunOff[1], cz + sunOff[2]);
     sun.target.updateMatrixWorld();
+    if (sunN.parent) { const tn = 2 * NEAR_R / sunN.shadow.mapSize.x, nx = Math.round(x / tn) * tn, nz = Math.round(z / tn) * tn, ny = c.roadY || baseY;   // (texel steps: no crawling edges)
+      sunN.target.position.set(nx, ny, nz); sunN.position.set(nx + sunOff[0], ny + sunOff[1], nz + sunOff[2]); sunN.target.updateMatrixWorld(); }
   }
   let sunOff = [-80, 96, 70], camYaw = 0, lastMode = 'iso', tv = null;
   function setTv(c) { tv = c; }   // a directed TV shot (the rally replay): { x, y, z, tx, ty, tz, fov, near } with Render.frame's mode 'tv'; null: main's posts
@@ -2799,6 +3252,67 @@ const Render = (function () {
      the photo mode): the fog's colour at the horizon (the far world fades into it), a deeper colour overhead, a soft glow round the sun
      (by day and at dusk; the moon's at night) ---------------- */
   let sky = null;
+  /* ---------------- the distant horizon (the views with the sky: the cockpit, the TV cameras, the photo mode): a band of silhouettes all round
+     the view, far past the scenery, per track: mountains with snow on the peaks, rolling hills (cypress rows in Toskana, forest in Finland),
+     a town's roofs and towers (lit windows at night), open sea where the coast is (a far coast, a ship). Three layers, far to near, coloured
+     each frame from the haze, the time of day and the season (their shapes are the texture's channels: the band's top half; snow and
+     lights in its bottom half), fading into the haze at their foot ---------------- */
+  const HZ = { lake: ['hills', 0x3e5a36], city: ['town', 0x6f6a66, 1], ljubljana: ['alps', 0x5d6b7c, 1], forest: ['hills', 0x2c4a40], italia: ['tuscany', 0x55623c], kamp: ['hills', 0x4f5a3a, 1],
+    monaco: ['coast', 0x6a6f64, 1], mountain: ['alps', 0x5c6a82], ouni: ['forest', 0x24372a], pikes: ['alps', 0x6b6f7c], nring: ['hills', 0x33472c], spa: ['forest', 0x2f4430], rbring: ['alps', 0x4c5d6e], suzuka: ['hills', 0x3b5236, 1] };
+  let hz = null;
+  function hzTex(kind, seaA, town) {   // 2048 x 512: top half the three layers (r far, g middle, b near), bottom half r snow, g lit windows; u all round (from +x towards +z)
+    const W = 2048, H = 256, c = document.createElement('canvas'); c.width = W; c.height = H * 2; const x = c.getContext('2d'), img = x.createImageData(W, H * 2), D = img.data, r = Core.rng(kind.length * 977 + (seaA || 0) * 31);
+    const wave = (n, rough) => { const K = []; for (let k = 1; k <= n; k++) K.push([k * (1 + Math.floor(r() * 3)), r() * 6.2832, Math.pow(1 / k, rough)]); return (u) => { let s = 0, t = 0; for (const [f, p, a] of K) { s += a * Math.sin(u * 6.2832 * f + p); t += a; } return 0.5 + 0.5 * s / t; }; };
+    const ridge = (n) => { const K = []; for (let k = 1; k <= n; k++) K.push([k * 2 + Math.floor(r() * 3), r() * 6.2832, 1 / k]); return (u) => { let s = 0, t = 0; for (const [f, p, a] of K) { s += a * (1 - Math.abs(Math.sin(u * 6.2832 * f + p))); t += a; } return s / t; }; };
+    const sea = (u) => { if (seaA == null) return 1; let d = (((u * 6.2832 + 1.5708 - seaA) % 6.2832) + 6.2832) % 6.2832; d = Math.min(d, 6.2832 - d); return Core.sstep(0.9, 1.35, d); };   // 0 over the open sea (a column u looks towards the angle 2 pi u + pi / 2, from +x towards +z)
+    const L = kind === 'alps' ? [[ridge(9), 0.3, 0.72, 0.5], [ridge(7), 0.22, 0.5, 0.35], [wave(5, 1.2), 0.12, 0.2, 0.2]] : kind === 'coast' ? [[ridge(6), 0.26, 0.58, 0.4], [wave(6, 1), 0.16, 0.34, 0.26], [wave(4, 1.3), 0.1, 0.16, 0.18]]
+      : kind === 'town' ? [[wave(6, 1), 0.14, 0.2, 0.2], [wave(5, 1.2), 0.12, 0.14, 0.17], [wave(3, 1), 0.1, 0.08, 0.14]] : [[wave(7, 1), 0.16, 0.3, 0.22], [wave(6, 1.1), 0.13, 0.22, 0.19], [wave(5, 1.2), 0.1, 0.16, 0.16]];
+    const hAt = new Float32Array(W * 3);
+    for (let l = 0; l < 3; l++) { const [f, base, amp] = L[l]; for (let i = 0; i < W; i++) { const u = i / W; hAt[l * W + i] = (base + amp * f(u)) * sea(u) * (l === 2 && kind === 'town' ? 1 : 1); } }
+    if (kind === 'town' || town) for (let i = 0; i < W;) { const w = 3 + Math.floor(r() * 10), h = 0.08 + r() * 0.18 + (r() < 0.06 ? 0.25 : 0); for (let k = 0; k < w && i + k < W; k++) hAt[2 * W + i + k] = Math.max(hAt[2 * W + i + k], (0.16 + h * (kind === 'town' ? 1 : 0.6)) * sea((i + k) / W)); i += w; }   // (roofs and towers in the near layer)
+    const trees = kind === 'tuscany' || kind === 'forest' ? 1 : 0;
+    for (let i = 0; i < W; i++) for (let l = 0; l < 3; l++) {
+      let h = hAt[l * W + i]; if (trees && l > 0 && r() < (kind === 'forest' ? 0.5 : 0.08)) h += (kind === 'forest' ? 0.012 : 0.03) * (1 + r());   // (a ragged edge of treetops; cypresses)
+      const top = Math.max(0, Math.floor(H * (1 - h)));
+      for (let y = top; y < H; y++) { const o = (y * W + i) * 4; D[o + l] = 255; D[o + 3] = 255; }
+      if (l === 0 && kind === 'alps') { const sy = Math.floor(H * (1 - h + 0.06 + 0.05 * Math.sin(i * 0.05))); for (let y = top; y < Math.min(H, sy); y++) { const o = ((H + y) * W + i) * 4; D[o] = 255; } }   // snow on the far peaks
+      if (l === 2 && (kind === 'town' || town)) for (let y = top + 2; y < H - 4; y += 3) if (r() < 0.14) { const o = ((H + y) * W + i) * 4; D[o + 1] = 255; }   // lit windows
+    }
+    for (let o = 3; o < D.length; o += 4) D[o] = 255;
+    x.putImageData(img, 0, 0);
+    const t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; return t;
+  }
+  function horizonStep(on) {
+    const th = themeId && HZ[themeId];
+    if (!hz) { if (!on || !th) return;
+      const u = { uMap: { value: null }, uFog: { value: new THREE.Color() }, uC0: { value: new THREE.Color() }, uC1: { value: new THREE.Color() }, uSnow: { value: new THREE.Color() }, uA: { value: 1 }, uNight: { value: 0 } };
+      const mat = new THREE.ShaderMaterial({ uniforms: u, side: THREE.BackSide, depthWrite: false, depthTest: false, fog: false,   // (drawn with the opaque things, right after the sky: the world then covers it)
+        blending: THREE.CustomBlending, blendEquation: THREE.AddEquation, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
+        vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+        fragmentShader: ['uniform sampler2D uMap; uniform vec3 uFog; uniform vec3 uC0; uniform vec3 uC1; uniform vec3 uSnow; uniform float uA; uniform float uNight; varying vec2 vUv;',
+          'void main() { vec2 p = vec2(1.0 - vUv.x, 0.5 + 0.5 * vUv.y); vec3 t = texture2D(uMap, p).rgb, e = texture2D(uMap, p - vec2(0.0, 0.5)).rgb;',
+          '  vec3 c = uFog; float a = max(t.r, max(t.g, t.b));',
+          '  c = mix(c, mix(uFog, uC0, 0.45), t.r); c = mix(c, mix(uFog, uSnow, 0.7), e.r * t.r * (1.0 - step(0.5, t.g))); c = mix(c, mix(uFog, uC0, 0.64), t.g); c = mix(c, mix(uFog, uC1, 0.8), t.b);',
+          '  c += vec3(1.0, 0.8, 0.5) * e.g * t.b * uNight * 0.9;',
+          '  gl_FragColor = vec4(c, a * uA * smoothstep(0.0, 0.2, vUv.y)); }'].join('\n') });
+      const mesh = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 96, 1, true), mat); mesh.frustumCulled = false; mesh.renderOrder = -99;
+      scene.add(mesh); hz = { mesh, u, key: '' };
+    }
+    const vis = !!on && !!th && !!world; hz.mesh.visible = vis; if (!vis) return;
+    const sea = curTrack && curTrack.def && (curTrack.def.sea || themeId === 'monaco') ? 1 : 0;
+    const key = themeId + '|' + (curTrack && curTrack.def ? curTrack.def.id : '');
+    if (hz.key !== key) { hz.key = key;
+      const seaA = sea ? Math.PI / 2 : null;   // (Riviera's and Monaco's sea: to the south, +z)
+      if (hz.u.uMap.value) hz.u.uMap.value.dispose(); hz.u.uMap.value = hzTex(th[0], seaA, th[2]); }
+    const night = atmos.tod === 'night', dusk = atmos.tod === 'dusk', winter = atmos.season === 'winter', U = hz.u;
+    U.uFog.value.copy(scene.fog.color); U.uNight.value = night ? 1 : dusk ? 0.35 : 0;
+    U.uC0.value.setHex(th[1]).lerp(_c2.setRGB(0.55, 0.62, 0.74), 0.35); U.uC1.value.setHex(th[1]);
+    if (winter) { U.uC0.value.lerp(_c2.setRGB(0.86, 0.88, 0.92), 0.55); U.uC1.value.lerp(_c2.setRGB(0.8, 0.82, 0.86), 0.45); }
+    if (night) { U.uC0.value.multiplyScalar(0.18); U.uC1.value.multiplyScalar(0.12); } else if (dusk) { U.uC0.value.lerp(_c2.setRGB(0.42, 0.3, 0.38), 0.45); U.uC1.value.multiplyScalar(0.6); }
+    U.uSnow.value.setRGB(0.95, 0.96, 1.0).multiplyScalar(night ? 0.2 : dusk ? 0.75 : 1);
+    U.uA.value = clamp(1 - 0.75 * Math.max(0, wet) - 0.9 * mist, 0, 1);
+    const R = camera.far * 0.7, h = R * 0.23; hz.mesh.scale.set(R, h, R); hz.mesh.position.set(camera.position.x, camera.position.y - R * 0.035 + h / 2, camera.position.z);
+  }
   function skyStep(on) {
     if (!sky) {
       if (!on) return;
@@ -2990,6 +3504,8 @@ const Render = (function () {
     World.update(world, time, target, camera);
     if (target) updateCamera(dt, target, mode, alpha);
     if (world && world.dyn.afterCam) world.dyn.afterCam(camera, target);   // (what depends on the camera of this very frame: Pikes Peak, which scenery chunks cast shadows)
+    tuftStep();
+    { const pod = world && world.podium && world.podium.on, rn = atmos.season === 'winter' ? 0 : Math.max(0, wet); World.crowdEnv(rn, pod ? 2 : atmos.tod === 'night' ? 1 : atmos.tod === 'dusk' ? 0.6 : 0); World.crowdRain(world, rn > 0.05); }   // (the fans: umbrellas in the rain, photos at night and at a podium)
     World.view(world, camera, target, alpha);   // (Ouninpohja: the forest between the camera and the car fades out)
     { const R = curRace, q = (v) => v > 0 ? Math.max(0.05, Math.round(v * 20) / 20) : 0;   // (a changing weather: in steps of 5 %)
       const r = R ? q(R.rain || 0) : 0, w = R ? q(R.water != null ? R.water : R.rain || 0) : 0;
@@ -3010,7 +3526,7 @@ const Render = (function () {
       const tr = tn.mat.opacity < 0.985; if (tn.mat.transparent !== tr) { tn.mat.transparent = tr; tn.mat.needsUpdate = true; } tn.mat.depthWrite = !tr;
       if (tn.mats) for (const m of tn.mats) if (m !== tn.mat) { m.opacity = tn.mat.opacity; if (m.transparent !== tr) { m.transparent = tr; m.needsUpdate = true; } m.depthWrite = !tr; }   // (Suzuka: everything on the bridge)
     }
-    const skyOn = cam.ck || (lastMode === 'tv' && !cam.shot) || !!(cam.shot && cam.shot.sky); skyStep(skyOn);
+    const skyOn = cam.ck || (lastMode === 'tv' && !cam.shot) || !!(cam.shot && cam.shot.sky); skyStep(skyOn); horizonStep(skyOn);
     const ckOn = cam.ck && ck.car; if (ckOn) ckStep(ck.car, viewOf(ck.car));
     { const cv = ckOn ? viewOf(ck.car) : null;   // (the Peugeot's own model has its inside, seats and all: from the seat, the plain body round the driver)
       if (ck.glbV && ck.glbV !== cv) { ck.glbV.glb.bodyH.visible = true; ck.glbV.body.visible = false; ck.glbV = null; }
@@ -3135,10 +3651,12 @@ const Render = (function () {
     if (fov) { showCam.fov = f; showCam.updateProjectionMatrix(); }
   }
   function info() { return renderer ? renderer.info : null; }
+  function aoDebug(v) { AO_U.uAOg.value.w = v; }   // (tools) 2: show the occlusion (red) and the surface's weight (green)
+  function aoInfo() { return aoRes ? { blocks: aoRes.blocks, tiles: aoRes.tiles, size: aoRes.size, ms: aoRes.ms } : null; }   // (tests, tools)
   const dbg = { noSmoke: false };
   function setDebug(o) { Object.assign(dbg, o); }
   function fxStats() { let n = 0; for (let i = 0; i < particles.max; i++) if (particles.life[i] > 0) n++; return { alive: n, emitted: particles.cur }; }
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { setDebug, fxStats, flagInfo, setTv, setMist, get mist() { return mist; }, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, setGhost, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setDebug, fxStats, flagInfo, aoInfo, aoDebug, setTv, setMist, get mist() { return mist; }, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, setGhost, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 

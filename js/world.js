@@ -789,6 +789,9 @@ const World = (function () {
       const mat = new THREE.MeshLambertMaterial({ map: THEME === 'city' || THEME === 'ljubljana' || THEME === 'monaco' ? tex.paving : tex.grass, vertexColors: true });
       const m = new THREE.Mesh(g, mat); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m);
       out.ground = m;
+      out.surfH = (x, z) => {   // the ground mesh's own surface (the same two triangles per cell; groundH is the smooth height it samples)
+        const gx = clamp((x - B.minX) / cell, 0, nx - 0.001), gz = clamp((z - B.minZ) / cell, 0, nz - 0.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, Y = (a, b) => pos[((j + b) * (nx + 1) + i + a) * 3 + 1];
+        return u + v <= 1 ? Y(0, 0) + u * (Y(1, 0) - Y(0, 0)) + v * (Y(0, 1) - Y(0, 0)) : Y(1, 1) + (1 - u) * (Y(0, 1) - Y(1, 1)) + (1 - v) * (Y(1, 0) - Y(1, 1)); };
     }
 
     /* ================= TRACK SURFACE ================= */
@@ -804,9 +807,14 @@ const World = (function () {
     {
       const g = new GB(true);
       const offs = makadam ? Array.from({ length: 15 }, (_, k) => -w + 2 * w * k / 14) : [-w, -w * 0.75, -w * 0.5, -w * 0.25, 0, w * 0.25, w * 0.5, w * 0.75, w];
+      // the rubbered racing line, darker still in the braking zones of the slower corners; sections of 120-260 m laid at other times (a
+      // slightly different tone, a seam across the road) — hashed, no draws from R
+      const brk = new Float32Array(N), secT = new Float32Array(N);
+      if (!makadam) { for (const c of T.corners) if (c.sev >= 2) for (let k = -60; k <= 6; k++) { const i = (c.i0 + k + N) % N, f = k < -10 ? sstep(-60, -12, k) : sstep(6, -10, k); if (f > brk[i]) brk[i] = f; }
+        for (let i0 = 0, k = 0; i0 < N; k++) { const n = 60 + Math.floor(crH(k, 3, 131) * 70), t = 0.955 + crH(k, 5, 131) * 0.075; for (let i = i0; i < Math.min(N, i0 + n); i++) secT[i] = t; i0 += n; } }
       const shade = (i, o) => {
         const rl = T.rl[i];
-        let k = 1 - 0.2 * Math.exp(-((o - rl) * (o - rl)) / 5.5);
+        let k = (1 - (0.2 + 0.12 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5.5)) * (secT[i] || 1);
         k -= Math.abs(o) > w * 0.9 ? 0.04 : 0;
         return [k, k, k * 1.01];
       };
@@ -981,7 +989,7 @@ const World = (function () {
     /* ================= BARRIERS ================= */
     const scen = new Chunks(110);        // vertex-colored static scenery
     const treeCh = new Chunks(110), treeFar = new Chunks(180), RT = rng(9371), WIND = { value: 0 }; out.dyn.wind = WIND;   // the trees (their own chunks: they sway in the wind, treeMat; RT: the new trees' own random numbers, so the rest of the scenery stays where it was)
-    const treeAt = (x, z, y0, h, far) => (far ? treeFar : treeCh).get(x, z).sw(y0, h);   // the chunk for a tree standing at (x, z) on y0, h tall (far from the track: no shadow, bigger chunks)
+    const treePts = [], treeAt = (x, z, y0, h, far) => { treePts.push(x, z); return (far ? treeFar : treeCh).get(x, z).sw(y0, h); };   // the chunk for a tree standing at (x, z) on y0, h tall (far from the track: no shadow, bigger chunks); where they stand (the race-day kit keeps clear)
     const texTires = new GB(true), texSpons = new GB(true), texFence = new GB(true), texCrowd = new GB(true);
     const tyreCh = new Chunks(110, true), FO_TR = THEME === 'italia' ? [0.27, 0.6, 0.35] : THEME === 'kamp' ? [0.2, 0.2, 0.22] : [0.88, 0.33, 0.24], FO_TW = THEME === 'kamp' ? [0.13, 0.13, 0.15] : THEME === 'italia' ? [0.92, 0.89, 0.74] : [0.95, 0.95, 0.94];   // painted tyres (textured, in chunks so the unseen ones are culled): red / white, Toskana green / white, Gromski rt plain black
     if (THEME !== 'mountain') {
@@ -1121,12 +1129,17 @@ const World = (function () {
       const b0 = T.bl[im] + 3.2;
       const hd = T.hd[im];
       const tiers = 7;
+      const SEAT = [[0.16, 0.36, 0.78], [0.82, 0.16, 0.14], [0.95, 0.74, 0.12], [0.18, 0.56, 0.3]], nSec = Math.max(2, Math.round(L / 14)), sc0 = Math.floor(sm) % 4;   // the seats' colours, a block per section
       for (let k = 0; k < tiers; k++) {
         const lat = -(b0 + k * 1.55 + 0.8);
         const [x, z] = atS(sm, lat);
         const g = scen.get(x, z);
         const hgt = 0.6 + k * 0.72;
         box(g, x, 0, z, L, hgt, 1.55, hd, [0.62, 0.63, 0.66], [0.5, 0.52, 0.56]);
+        for (let e = 0; e < nSec; e++) {   // the seat backs along the tier's front, facing the track (lighter at the top edge)
+          const a0 = sa + e * L / nSec + 0.25, a1 = sa + (e + 1) * L / nSec - 0.25, sc = SEAT[(sc0 + e + (k > 3 ? 1 : 0)) % 4], lo = sc.map(v => v * 0.72), fl = -(b0 + k * 1.55 + 0.8) + 0.776;
+          const p0 = atS(a0, fl), p1 = atS(a1, fl), y0 = hgt - 0.42, y1 = hgt - 0.02, inn = atS((a0 + a1) / 2, fl - 1);
+          g.quadO([p0[0], y0, p0[1]], [p1[0], y0, p1[1]], [p1[0], y1, p1[1]], [p0[0], y1, p0[1]], sc, [inn[0], (y0 + y1) / 2, inn[1]], null, [lo, lo, sc, sc]); }
         // crowd strip on top of tier (textured)
         const a = atS(sa, lat - 0.7), bq = atS(sb, lat - 0.7), c = atS(sb, lat + 0.55), d = atS(sa, lat + 0.55);
         const y = hgt + 0.02;
@@ -1172,6 +1185,9 @@ const World = (function () {
       // pit lane line
       const gl = scen.get(...atS(sm, b0 + 6).slice(0, 2));
       for (let s = sa - 30; s < sb + 30; s += 2) { const a = atS(s, b0 + 6.3), bq = atS(s, b0 + 6.6), c = atS(s + 2, b0 + 6.6), d = atS(s + 2, b0 + 6.3); const cc = [0.95, 0.85, 0.2]; gl.quadUp([a[0], 0.03, a[1]], [bq[0], 0.03, bq[1]], [c[0], 0.03, c[1]], [d[0], 0.03, d[1]], [cc, cc, cc, cc]); }
+      { const wl = [0.94, 0.94, 0.92];   // the boxes painted on the working lane in front of the garages: a white line between each two, one along their front
+        for (let k = 0; k <= 12; k++) { const s = sa + k * (sb - sa) / 12, a = atSf(s - 0.06, b0 + 6.9), bq = atSf(s - 0.06, b0 + 12.4), c = atSf(s + 0.06, b0 + 12.4), d = atSf(s + 0.06, b0 + 6.9); gl.quadUp([a[0], 0.031, a[1]], [bq[0], 0.031, bq[1]], [c[0], 0.031, c[1]], [d[0], 0.031, d[1]], [wl, wl, wl, wl]); }
+        for (let s = sa; s < sb - 0.01; s += 2) { const s1 = Math.min(sb, s + 2), a = atSf(s, b0 + 6.9), bq = atSf(s, b0 + 7.02), c = atSf(s1, b0 + 7.02), d = atSf(s1, b0 + 6.9); gl.quadUp([a[0], 0.031, a[1]], [bq[0], 0.031, bq[1]], [c[0], 0.031, c[1]], [d[0], 0.031, d[1]], [wl, wl, wl, wl]); } }
       const lat = b0 + 13 + 7;
       const [x, z] = atS(sm, lat);
       const g = scen.get(x, z);
@@ -2960,6 +2976,70 @@ const World = (function () {
         const sea = new THREE.Mesh(gw, new THREE.MeshPhongMaterial({ map: tex.water, color: 0x3f8fc4, shininess: 90, specular: 0x6f9fcf })); sea.receiveShadow = true; root.add(sea); out.dyn.water = tex.water; }
     }
 
+    /* ---- race-day kit (hashed placements, its own random numbers): TV camera towers on the outside of the slower corners (a scaffold, a
+       platform with a railing, the cameraman at his camera under a sunshade), the commentators' glass box by the finish line (on the main
+       stand's roof, else on legs behind the barrier), flag poles with waving flags opposite the grid, a big screen showing the race (the
+       Red Bull Ring's pictures). Each where the ground is free (not excluded, not in the water) ---- */
+    const rd = { towers: 0, booth: 0, flags: 0, screen: 0 };
+    {
+      const gH5 = out.surfH || groundH, free = (x, z, r) => { if (clearance(x, z) < 1.2) return false;
+        for (const [dx, dz] of [[0, 0], [r, 0], [-r, 0], [0, r], [0, -r]]) { const X = x + dx * 0.7, Z = z + dz * 0.7; if (excluded(X, Z) || lakeSD(X, Z) < 4 || (SEA && Z > SEA.z - 6)) return false; }
+        for (let k = 0; k < treePts.length; k += 2) if ((treePts[k] - x) ** 2 + (treePts[k + 1] - z) ** 2 < (r + 0.8) ** 2) return false; return true; };
+      const DK = [0.2, 0.21, 0.24], ST = [0.72, 0.73, 0.76], SK = [0.96, 0.8, 0.62];
+      const person = (g, x, y, z, rot, shirt) => { box(g, x, y, z, 0.3, 0.8, 0.2, rot, [0.16, 0.18, 0.24]); box(g, x, y + 0.8, z, 0.4, 0.6, 0.24, rot, shirt); box(g, x, y + 1.42, z, 0.22, 0.25, 0.22, rot, SK, [0.12, 0.12, 0.13]); };
+      // TV camera towers
+      const cs = T.corners.filter(c => c.sev >= 2).sort((a, b) => b.sev - a.sev || a.i0 - b.i0);
+      for (const c of cs) {
+        if (rd.towers >= 3) break;
+        const i1 = c.i1 < c.i0 ? c.i1 + N : c.i1; let im = -1, x = 0, z = 0;
+        for (const [sd, e, f] of [[c.dir, 3.5, 0.5], [c.dir, 6, 0.5], [c.dir, 3.5, 0.2], [c.dir, 3.5, 0.8], [-c.dir, 8.5, 0.5], [-c.dir, 11, 0.2]]) {   // (the inside first: the corner crowds stand on the outside)
+          const k = (c.i0 + Math.floor((i1 - c.i0) * f)) % N, bar = sd > 0 ? T.br[k] : T.bl[k], lat = sd * (bar + e), X = T.px[k] + T.nx[k] * lat, Z = T.pz[k] + T.nz[k] * lat;
+          if (free(X, Z, 2)) { im = k; x = X; z = Z; break; } }
+        if (im < 0) continue;
+        const y = gH5(x, z), g = scen.get(x, z), rot = Math.atan2(T.pz[im] - z, T.px[im] - x), H = 5.2;
+        for (const [a, b] of [[-0.9, -0.9], [0.9, -0.9], [0.9, 0.9], [-0.9, 0.9]]) { const c5 = Math.cos(rot), s5 = Math.sin(rot); box(g, x + a * c5 - b * s5, y, z + a * s5 + b * c5, 0.08, H, 0.08, rot, ST); }   // the scaffold's legs
+        for (let lv = 1; lv <= 3; lv++) for (const [a, b, L5, r5] of [[0, -0.9, 1.9, 0], [0, 0.9, 1.9, 0], [-0.9, 0, 1.9, Math.PI / 2], [0.9, 0, 1.9, Math.PI / 2]]) { const c5 = Math.cos(rot), s5 = Math.sin(rot); box(g, x + a * c5 - b * s5, y + lv * H / 3.4, z + a * s5 + b * c5, L5, 0.06, 0.06, rot + r5, ST); }   // its rings of tubes
+        box(g, x, y + H, z, 2.2, 0.12, 2.2, rot, [0.5, 0.42, 0.3], [0.58, 0.48, 0.34]);   // the plank platform
+        for (const [a, b, L5, r5] of [[0, -1.05, 2.2, 0], [0, 1.05, 2.2, 0], [-1.05, 0, 2.2, Math.PI / 2]]) { const c5 = Math.cos(rot), s5 = Math.sin(rot); box(g, x + a * c5 - b * s5, y + H + 0.95, z + a * s5 + b * c5, L5, 0.06, 0.06, rot + r5, ST); }   // the railing (open towards the track)
+        { const c5 = Math.cos(rot), s5 = Math.sin(rot), cx = x + 0.45 * c5, cz = z + 0.45 * s5;   // the camera on its tripod, the cameraman behind it, a sunshade over them
+          box(g, cx, y + H + 0.12, cz, 0.1, 1.15, 0.1, rot, DK); box(g, cx, y + H + 1.27, cz, 0.6, 0.34, 0.3, rot, [0.14, 0.14, 0.16], [0.24, 0.24, 0.26]);
+          cyl(g, cx + 0.36 * c5, y + H + 1.35, cz + 0.36 * s5, 0.09, 0.14, 8, [0.08, 0.08, 0.09], [0.3, 0.35, 0.45]);
+          person(g, x - 0.35 * c5, y + H + 0.12, z - 0.35 * s5, rot, [0.9, 0.3, 0.12]);
+          for (const [a, b] of [[-0.95, -0.95], [-0.95, 0.95]]) box(g, x + a * c5 - b * s5, y + H + 0.12, z + a * s5 + b * c5, 0.05, 2.1, 0.05, rot, ST);
+          box(g, x - 0.15 * c5, y + H + 2.2, z - 0.15 * s5, 2.3, 0.06, 2.3, rot, [0.9, 0.9, 0.88], [0.18, 0.4, 0.8]); }
+        excl.push({ x, z, r: 2.6 }); rd.towers++;
+      }
+      // the commentators' box by the finish line: glass towards the track, lit at night (its glass colour: Render's windows)
+      { const WIN = [0.15, 0.23, 0.33], WH = [0.9, 0.9, 0.9], sb5 = sStart + 12;
+        const put5 = (x, z, y, rot) => { const g = scen.get(x, z); box(g, x, y, z, 7, 2.8, 3.2, rot, WH, [0.82, 0.83, 0.86]); const c5 = Math.cos(rot), s5 = Math.sin(rot), fx = x - s5 * 1.61, fz = z + c5 * 1.61, gx = x + s5 * 1.61, gz = z - c5 * 1.61;
+          const fr = [fx, fz], bk = [gx, gz], use = [fr, bk];   // (both long faces glazed: the side towards the track is whichever)
+          for (const [px, pz] of use) g.quadO([px - c5 * 3.2, y + 0.9, pz - s5 * 3.2], [px + c5 * 3.2, y + 0.9, pz + s5 * 3.2], [px + c5 * 3.2, y + 2.5, pz + s5 * 3.2], [px - c5 * 3.2, y + 2.5, pz - s5 * 3.2], WIN, [x, y + 1.4, z]);
+          box(g, x, y + 2.8, z, 7.6, 0.25, 3.8, rot, [0.84, 0.12, 0.12], [0.9, 0.9, 0.92]); rd.booth = 1; };
+        if (standSpecs.length) { const [sa5, sb6] = standSpecs[standSpecs.length - 1], im = T.idx((sa5 + sb6) / 2), b0 = T.bl[im] + 3.2, [x, z, hd] = atS(Math.min(sb6 - 6, Math.max(sa5 + 6, sb5)), -(b0 + 7 * 1.55 * 0.6)); put5(x, z, 8.95, hd); }
+        else for (const [side, d5, e5] of [[1, 12, 6], [-1, 12, 6], [1, 30, 7], [-1, 30, 7], [1, -20, 7], [-1, -20, 7], [1, 50, 9], [-1, 50, 9]]) { const i = T.idx(sStart + d5), bar = side > 0 ? T.br[i] : T.bl[i], [x, z, hd] = atS(sStart + d5, side * (bar + e5)); if (!free(x, z, 3.6)) continue;
+          const y = gH5(x, z), g = scen.get(x, z); for (const [a, b] of [[-3, -1.3], [3, -1.3], [-3, 1.3], [3, 1.3]]) { const c5 = Math.cos(hd), s5 = Math.sin(hd); box(g, x + a * c5 - b * s5, y, z + a * s5 + b * c5, 0.25, 4, 0.25, hd, [0.6, 0.62, 0.66]); }
+          put5(x, z, y + 4, hd); excl.push({ x, z, r: 4.5 }); break; } }
+      // flag poles opposite the grid (the side without the stands), with waving flags: the Slovenian flag, the chequered one, the sponsors' colours
+      { const FL = [[[0.95, 0.95, 0.95], [0.1, 0.3, 0.75], [0.85, 0.12, 0.12]], [[0.1, 0.1, 0.11], [0.95, 0.95, 0.95]], [[0.96, 0.78, 0.1], [0.1, 0.1, 0.11]], [[0.15, 0.4, 0.8], [0.95, 0.95, 0.95]], [[0.85, 0.12, 0.12], [0.95, 0.95, 0.95]]], fl = [];
+        for (const side of [1, -1]) { if (fl.length >= 3) break;
+          for (let d = -46; d <= 46; d += 11.5) { const s0 = sStart + d, i = T.idx(s0), bar = side > 0 ? T.br[i] : T.bl[i], [x, z, hd] = atS(s0, side * (bar + 2.6)); if (!free(x, z, 0.6)) continue;
+            const y = gH5(x, z); cyl(scen.get(x, z), x, y, z, 0.06, 7.2, 5, [0.88, 0.88, 0.9]); fl.push([x, y + 7.1, z, hd + (side > 0 ? Math.PI : 0) + 0.3, FL[fl.length % FL.length], 1.8, 1.1]); } }
+        if (fl.length) { root.add(rbFlags(fl, WIND)); rd.flags = fl.length; } }
+      // a big screen showing the race, across the track from the main stand (else by the start), on two legs
+      for (const [d, side, e5] of [[35, 1, 5], [35, 1, 9], [-60, 1, 5], [70, -1, 5], [110, 1, 6], [-90, -1, 6], [150, 1, 7], [150, -1, 7], [-130, 1, 7], [200, 1, 8], [200, -1, 8]]) {
+        const s0 = sStart + d, i = T.idx(s0), bar = side > 0 ? T.br[i] : T.bl[i], [x, z, hd] = atS(s0, side * (bar + e5)); if (!free(x, z, 3.4)) continue;
+        const y = gH5(x, z), g = scen.get(x, z), c5 = Math.cos(hd), s5 = Math.sin(hd), W5 = 6.4, H5 = 3.6, Y0 = y + 3.4;
+        for (const a of [-2.4, 2.4]) box(g, x + a * c5, y, z + a * s5, 0.35, Y0 + 0.2 - y, 0.35, hd, [0.3, 0.31, 0.34]);
+        box(g, x - s5 * side * 0.25, Y0 - 0.2, z + c5 * side * 0.25, W5 + 0.5, H5 + 0.4, 0.4, hd, [0.1, 0.1, 0.11]);   // the frame
+        const sg = new GB(true), fx = -s5 * side * 0.035, fz = c5 * side * 0.035, P5 = (u, v) => [x + c5 * (u - 0.5) * W5 * -side + fx - s5 * side * 0.0, Y0 + v * H5, z + s5 * (u - 0.5) * W5 * -side + fz];
+        const A = P5(0, 0), B5 = P5(1, 0), C = P5(1, 1), D = P5(0, 1), cc = [1, 1, 1];
+        sg.quadO(A, B5, C, D, cc, [x + s5 * side, Y0 + H5 / 2, z - c5 * side], [[0, 0], [0.25, 0], [0.25, 1], [0, 1]]);
+        const st = ownTex(rbScreenTex()), sm = new THREE.Mesh(sg.geometry(), new THREE.MeshBasicMaterial({ map: st })); sm.name = 'screen'; sm.matrixAutoUpdate = false; root.add(sm);
+        out.dyn.screens = { tex: st, f: -1 }; excl.push({ x, z, r: 4 }); rd.screen = 1; break;
+      }
+    }
+    out.raceKit = rd;
+
     /* ---- finalize meshes ---- */
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
@@ -4067,7 +4147,134 @@ const World = (function () {
     const mat = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
     for (const g of cells.values()) { if (g.empty) continue; const m = new THREE.Mesh(g.geometry(), mat); m.name = 'tyremarks'; m.renderOrder = 1; m.matrixAutoUpdate = false; root.add(m); }
   }
-  function finish(o, tex) { if (!o.ownMarks) tyreMarks(o.root); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); return clouds(o.root, o, tex); }
+  /* ---- a circuit's tarmac, worn: repair patches of fresher (or older, paler) asphalt and black sealed cracks, more on the town circuits
+     (the Nordschleife's decal atlas, its cells 24-25 and 28-31); strips that follow the road 4.5 cm up, per 256 m cell, drawn without
+     writing depth. Not on the tracks that paint their own (ownMarks), on gravel roads or on Pikes Peak (its own patches) ---- */
+  function roadDecals(o) {
+    const N = T.N, ds = T.ds, w = T.w, city = THEME === 'ljubljana' || THEME === 'monaco', RD = rng(8807), dcs = [], bk = { dy: 0, sl: 0 };
+    const HYi = (i) => (T.hasElev ? T.hy[i] : 0);
+    const deck = (i) => { for (const c of T.cross || []) { const d = Math.abs(i - c.up); if (Math.min(d, N - d) * ds < c.upZ + 30) return true; } return false; };
+    for (let d = 50; d < T.len - 40; d += 22) {   // (not on the grid)
+      const i = T.idx((T.startS + d) % T.len);
+      if (RD() < (city ? 0.1 : 0.05)) dcs.push([i, 4 + Math.floor(RD() * 5), (RD() - 0.5) * (w - 2.4) * 2, 1.2 + RD() * 0.6, 24 + Math.floor(RD() * 2), 0.8]);   // sealed cracks (tar snakes)
+      if (RD() < (city ? 0.09 : 0.045)) { const hw = 1.3 + RD() * 1.3; dcs.push([i, 2 + Math.floor(RD() * 5), (RD() < 0.5 ? -1 : 1) * Math.max(0, w - 0.7 - hw) * RD(), hw, 28 + Math.floor(RD() * 4), 0.85]); }   // repair patches, trenches, cracks
+    }
+    if (!dcs.length) return;
+    dcs.sort((a, b) => (a[4] >= 28 ? 0 : 1) - (b[4] >= 28 ? 0 : 1));   // (patches under the cracks)
+    const dTex = nrDecalTex(); dTex.anisotropy = (o.asphaltMat && o.asphaltMat.map && o.asphaltMat.map.anisotropy) || 4; o.ownTex.push(dTex);
+    const mat = new THREE.MeshLambertMaterial({ map: dTex, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4 });
+    const cells = new Map(), cellOf = (p) => { const k = Math.floor(p[0] / 256) + ',' + Math.floor(p[2] / 256); let g = cells.get(k); if (!g) cells.set(k, g = new GB(true, true)); return g; };
+    const P = (i, lat) => { let y = HYi(i) + 0.045; if (T.bank) y += T.bankAt(i * ds, lat, bk).dy; return [T.px[i] + T.nx[i] * lat, y, T.pz[i] + T.nz[i] * lat]; };
+    for (const [i0, n, c, hw, cell, a] of dcs) {
+      const cu = cell % 4, cv = Math.floor(cell / 4), u0 = cu / 4 + 1 / 512, u1 = (cu + 1) / 4 - 1 / 512, vt = 1 - cv / 8 - 1 / 1024, vb = 1 - (cv + 1) / 8 + 1 / 1024, col = [1, 1, 1, a];
+      for (let k = 0; k < n; k++) {
+        const i = (i0 + k) % N, j = (i0 + k + 1) % N; if (deck(i) || deck(j)) continue;
+        const ci = clamp(c, -(w - 0.6 - hw), w - 0.6 - hw), va = vb + (vt - vb) * k / n, vc = vb + (vt - vb) * (k + 1) / n;
+        const A = P(i, ci - hw), B = P(i, ci + hw), C = P(j, ci + hw), D = P(j, ci - hw);
+        cellOf(A).quadUp(A, B, C, D, [col, col, col, col], [[u0, va], [u1, va], [u1, vc], [u0, vc]]);
+      }
+    }
+    for (const g of cells.values()) { if (g.empty) continue; const m = new THREE.Mesh(g.geometry(), mat); m.name = 'roaddecals'; m.receiveShadow = true; m.renderOrder = 1; m.matrixAutoUpdate = false; o.root.add(m); }
+  }
+  // paint and wear beside the track: a 1024 px atlas of 2 x 8 cells, 512 px along the road by 128 px across it (the cell's top away from the
+  // road): 0-7 sponsors painted on the grass (white letters, or letters on a painted panel), 8-11 worn grass (bare brown earth where the cars
+  // run wide), 12-13 furrows in the gravel (a car's two tracks), 14-15 gravel spilled onto the road where the cars come back out
+  function vergeTex() {
+    const S = 1024, W = 512, H = 128, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), r = rng(6607);
+    const cell = (k, fn) => { x.save(); x.translate((k % 2) * W, Math.floor(k / 2) * H); x.beginPath(); x.rect(4, 4, W - 8, H - 8); x.clip(); fn(); x.restore(); };
+    const wear = (a) => { x.globalCompositeOperation = 'destination-out'; for (let q = 0; q < 900; q++) { x.fillStyle = `rgba(0,0,0,${(a * (0.2 + r() * 0.8)).toFixed(2)})`; const s = 1 + r() * 4; x.fillRect(r() * W, r() * H, s, s * (0.5 + r())); } x.globalCompositeOperation = 'source-over'; };
+    const SP = (typeof Tex !== 'undefined' && Tex.SPONSORS) || [['GRIP+', '#1f4c99', '#ffffff']];
+    for (let k = 0; k < 8; k++) cell(k, () => {
+      const [txt, bg, fg] = SP[(k * 3 + 1) % SP.length], panel = k % 2 === 1;
+      if (panel) { x.fillStyle = bg; x.globalAlpha = 0.9; x.fillRect(16, 14, W - 32, H - 28); x.globalAlpha = 1; }
+      x.fillStyle = panel ? fg : '#f4f4ee'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = '900 86px "Arial Black", Impact, Arial, sans-serif';
+      const kx = Math.min(1.25, (W - 60) / x.measureText(txt).width); x.save(); x.translate(W / 2, H / 2 + 4); x.scale(kx, 1); x.fillText(txt, 0, 0); x.restore();
+      wear(0.35 + r() * 0.2); });
+    for (const k of [8, 9, 10, 11]) cell(k, () => {   // worn grass: overlapping soft blotches of earth, darker in the middle of the wheels' path
+      for (let q = 0; q < 70; q++) { const px = 40 + r() * (W - 80), py = H * (0.25 + r() * 0.5), rx = 18 + r() * 60, ry = 8 + r() * 22, g = x.createRadialGradient(px, py, 0, px, py, rx);
+        const cc = k < 10 ? '96,74,44' : '128,104,66'; g.addColorStop(0, `rgba(${cc},${(0.16 + r() * 0.16).toFixed(2)})`); g.addColorStop(1, `rgba(${cc},0)`);
+        x.fillStyle = g; x.save(); x.translate(px, py); x.scale(1, ry / rx); x.translate(-px, -py); x.beginPath(); x.arc(px, py, rx, 0, 7); x.fill(); x.restore(); }
+      for (let q = 0; q < 160; q++) { x.fillStyle = `rgba(60,48,30,${(0.2 + r() * 0.3).toFixed(2)})`; x.fillRect(40 + r() * (W - 80), H * (0.25 + r() * 0.5), 2 + r() * 3, 1 + r() * 2); } });
+    for (const k of [12, 13]) cell(k, () => {   // furrows: two dark tracks with the pushed-up gravel beside them, curving a little
+      for (let px = 0; px < W; px += 2) { const t = px / W, a = Math.min(1, t / 0.15, (1 - t) / 0.2), bend = k === 13 ? Math.sin(t * 3.2) * 14 : t * 18;
+        for (const cy of [H * 0.3, H * 0.7]) { const y = cy + bend; x.fillStyle = `rgba(52,44,34,${(0.55 * a).toFixed(3)})`; x.fillRect(px, y - 9, 2, 18); x.fillStyle = `rgba(214,204,184,${(0.35 * a).toFixed(3)})`; x.fillRect(px, y - 14, 2, 4); x.fillRect(px, y + 10, 2, 4); } } });
+    for (const k of [14, 15]) cell(k, () => {   // spilled gravel: stones strewn on the tarmac, thicker at the road's edge (the cell's bottom)
+      for (let q = 0; q < 1400; q++) { const py = H - 6 - Math.pow(r(), k === 14 ? 2.2 : 1.5) * (H - 12), px = 8 + r() * (W - 16), s = 1.5 + r() * 2.5, l = 150 + r() * 70;
+        x.fillStyle = `rgba(${l | 0},${(l * 0.95) | 0},${(l * 0.86) | 0},${(0.5 + r() * 0.4).toFixed(2)})`; x.fillRect(px, py, s, s * (0.6 + r() * 0.6)); } });
+    return new THREE.CanvasTexture(c);
+  }
+  /* ---- beside a circuit's track: sponsors painted on the grass run-offs outside the corners (on the tarmac run-offs, the Red Bull Ring's), the grass
+     worn to earth just past the kerb at the corners' exits, furrows in the gravel traps where cars went off, gravel spilled back onto the road
+     at the traps' ends, stones strewn over the traps. One decal material (vergeTex), 256 m cells; the stones: vertex colours, 160 m chunks ---- */
+  function vergeDecals(o) {
+    const N = T.N, ds = T.ds, w = T.w, R = rng(7013), gH = o.surfH || o.groundH || groundH, logos = THEME !== 'nring' && THEME !== 'ljubljana' && THEME !== 'monaco';
+    const HYi = (i) => (T.hasElev ? T.hy[i] : 0), q = { a: 0, d: 0, s: 0 };
+    const surf = (i, d) => { q.a = i; q.d = d; q.s = i * ds; return T.surface(q); };
+    const deck = (i) => { for (const c of T.cross || []) { const d = Math.abs(i - c.up); if (Math.min(d, N - d) * ds < c.upZ + 30) return true; } return false; };
+    const at = (k) => (T.open ? clamp(k, 0, N - 1) : ((k % N) + N) % N);
+    const cells = new Map(), cellOf = (p) => { const k = Math.floor(p[0] / 256) + ',' + Math.floor(p[2] / 256); let g = cells.get(k); if (!g) cells.set(k, g = new GB(true, true)); return g; };
+    const Y = (i, lat, x, z, sf) => (sf === 4 || sf <= 1 ? HYi(i) + 0.05 : Math.max(gH(x, z), HYi(i) + 0.016) + 0.05);   // (tarmac run-off, kerb: the road's height; grass, gravel: the ground's)
+    // a decal from sample i0 over n samples on side sd, its near edge lat0 m from the centre line, lat1 its far edge; cell k of the atlas; a: alpha
+    const put = (i0, n, sd, lat0, lat1, k, a, needSurf) => {
+      const cu = k % 2, cv = Math.floor(k / 2), u0 = cu / 2 + 1 / 1024, u1 = (cu + 1) / 2 - 1 / 1024, vN = 1 - (cv + 1) / 8 + 1 / 2048, vF = 1 - cv / 8 - 1 / 2048;
+      for (let m = 0; m <= n; m++) { const i = at(i0 + m); if (deck(i)) return false; if (needSurf != null && m % 2 === 0) { const sf = surf(i, sd * (lat0 + lat1) / 2); if (needSurf === 23 ? sf !== 2 && sf !== 3 : sf !== needSurf) return false; } }
+      const col = [1, 1, 1, a], L = [lat0, (lat0 + lat1) / 2, lat1];
+      let prev = null;
+      for (let m = 0; m <= n; m++) {
+        const i = at(i0 + m), u = sd < 0 ? u0 + (u1 - u0) * m / n : u1 - (u1 - u0) * m / n, row = L.map((l, e) => { const x = T.px[i] + T.nx[i] * sd * l, z = T.pz[i] + T.nz[i] * sd * l; return [x, Y(i, sd * l, x, z, surf(i, sd * l)), z, u, vN + (vF - vN) * e / 2]; });
+        if (prev) for (let e = 0; e < 2; e++) { const A = prev[e], B = prev[e + 1], C = row[e + 1], D = row[e];
+          cellOf(A).quadUp([A[0], A[1], A[2]], [B[0], B[1], B[2]], [C[0], C[1], C[2]], [D[0], D[1], D[2]], [col, col, col, col], [[A[3], A[4]], [B[3], B[4]], [C[3], C[4]], [D[3], D[4]]]); }
+        prev = row;
+      }
+      return true;
+    };
+    const kerbW = (i, sd) => (T.curb[i] ? T.curbW : 0.2), bar = (i, sd) => (sd > 0 ? T.br[i] : T.bl[i]);
+    let nLogo = 0;
+    for (const c of T.corners) {
+      if (c.sev < 2) continue;
+      const out = -c.dir, i1 = c.i1 < c.i0 ? c.i1 + N : c.i1, len = i1 - c.i0;
+      // worn grass just past the kerb at the exit (the outside), a car's width or two; behind the inside kerb at the apex (cut)
+      { const ie = at(c.i0 + Math.floor(len * 0.6) + Math.floor(R() * 3)), l0 = w + kerbW(ie, out) + 0.1, n = 4 + Math.floor(R() * 4);
+        if (bar(ie, out) > l0 + 2.6) put(ie, n, out, l0, l0 + 1.4 + R() * 1.2, 8 + Math.floor(R() * 4), 0.75 + R() * 0.2, 2); }
+      { const ia = at(c.i0 + Math.floor(len * 0.4)), l0 = w + kerbW(ia, -out) + 0.05, n = 3 + Math.floor(R() * 3);
+        if (bar(ia, -out) > l0 + 2) put(ia, n, -out, l0, l0 + 0.9 + R() * 0.8, 8 + Math.floor(R() * 4), 0.6 + R() * 0.2, 2); }
+      // a sponsor painted on the run-off outside the corner (grass, or the tarmac of a run-off area)
+      if (logos) { const im = at(c.i0 + Math.floor(len * 0.35)), l0 = w + kerbW(im, out) + 2.2, sf = surf(im, out * (l0 + 1));
+        if ((sf === 2 || sf === 4) && bar(im, out) > l0 + 3.2 && put(im, 5, out, l0, l0 + 2.4, nLogo % 8, 0.85, sf)) nLogo++; }
+    }
+    // the gravel traps: furrows where cars went off, gravel spilled onto the road at their ends; stones strewn over them
+    const stones = new Chunks(160), stC = [[0.62, 0.6, 0.55], [0.52, 0.5, 0.46], [0.7, 0.67, 0.6], [0.45, 0.43, 0.4]];
+    let nStones = 0;
+    for (const sd of [-1, 1]) {
+      const flag = sd > 0 ? T.gravR : T.gravL; if (!flag) continue;
+      for (let i = 0; i < N; i++) {
+        if (!flag[i] || deck(i)) continue;
+        const l0 = w + kerbW(i, sd) + 0.4, l1 = bar(i, sd) - 1.0; if (l1 < l0 + 1) continue;
+        if (surf(i, sd * (l0 + 0.5)) !== 3) continue;
+        const pv = !flag[at(i - 1)];
+        if (pv && R() < 0.8) put(i, 3, sd, w - 1.1, w - 0.1, 14 + Math.floor(R() * 2), 0.7, null);   // (where the trap starts, gravel on the road's edge)
+        if (i % 9 === 0 && R() < 0.4) { const lf = l0 + R() * Math.max(0.2, l1 - l0 - 2); put(i, 6 + Math.floor(R() * 5), sd, lf, lf + 1.8, 12 + Math.floor(R() * 2), 0.7, 3); }
+        for (let m = 0; m < 1; m++) {   // stones (a low faceted lump each)
+          if (R() < 0.45) continue;
+          const lat = l0 + R() * (l1 - l0), x = T.px[i] + T.nx[i] * sd * lat + (R() - 0.5) * 2, z = T.pz[i] + T.nz[i] * sd * lat + (R() - 0.5) * 2, y = Math.max(gH(x, z), HYi(i) + 0.016);
+          const rr = 0.05 + R() * 0.1, col = stC[Math.floor(R() * 4)], a0 = R() * TAU, g = stones.get(x, z), top = [x, y + rr * 0.9, z];
+          for (let e = 0; e < 5; e++) { const b0 = a0 + e / 5 * TAU, b1 = a0 + (e + 1) / 5 * TAU, k0 = 0.8 + ((e * 7) % 3) * 0.15, k1 = 0.8 + (((e + 1) * 7) % 3) * 0.15;
+            g.triO(top, [x + Math.cos(b0) * rr * k0, y, z + Math.sin(b0) * rr * k0], [x + Math.cos(b1) * rr * k1, y, z + Math.sin(b1) * rr * k1], e % 2 ? col : col.map(v => v * 0.82), [x, y - 1, z]); }
+          nStones++;
+        }
+      }
+    }
+    if (cells.size) { const t = vergeTex(); t.anisotropy = 4; o.ownTex.push(t);
+      const mat = new THREE.MeshLambertMaterial({ map: t, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4 });
+      for (const g of cells.values()) { if (g.empty) continue; const m = new THREE.Mesh(g.geometry(), mat); m.name = 'verge'; m.receiveShadow = true; m.renderOrder = 1; m.matrixAutoUpdate = false; o.root.add(m); } }
+    if (nStones) { const c0 = o.root.children.length; stones.addTo(o.root, new THREE.MeshLambertMaterial({ vertexColors: true }), false, true); for (let k = c0; k < o.root.children.length; k++) o.root.children[k].name = 'stones'; }
+    o.verge = { logos: nLogo, stones: nStones };
+  }
+  function finish(o, tex) {
+    if (!o.ownMarks) tyreMarks(o.root);
+    if (T.def.roadSurface !== 'makadam' && !T.open && THEME !== 'pikes') { if (!o.ownMarks) roadDecals(o); vergeDecals(o); }   // (a circuit's tarmac and verges, worn)
+    if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); return clouds(o.root, o, tex);
+  }
   // where the crowds are, for their sound (Sfx: x, z, how many 0..1), on a circuit whose builder has not given them (the Red Bull Ring's
   // does): the spectators of every crowd of this build in 24 m cells, and the packed grandstands (the crowd picture) as full ones
   function crowdPoints(o, tex) {
@@ -7819,14 +8026,25 @@ const World = (function () {
     for (const sd of [-1, 1]) { const b = sd < 0 ? 10 : 20, x0 = sd < 0 ? -0.32 : 0.22; cub(x0, x0 + 0.1, 0.8, 1.4, -0.06, 0.06, { px: [b + 5, W1], nx: [b + 5, W1], pz: [b + 5, W1], nz: [b + 5, W1], ny: [b + 2, W1] }); }   // arms, the hand at the end
     quad([0.26, 0.82, 0.09], [0.3, 0.82, 0.09], [0.3, -0.68, 0.09], [0.26, -0.68, 0.09], [0.28, 0, 0], 40, [0.84, 0.84, 0.86]);   // flag pole, one quad (mirrored to face the camera)
     for (const [y0, y1, cg] of [[-0.955, -0.68, 56], [-1.23, -0.955, 57]]) quad([0.3, y1, 0.09], [1.2, y1, 0.09], [1.2, y0, 0.09], [0.3, y0, 0.09], [0.75, y0, 0], cg, W1);   // the cloth: two stripes
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(Nm, 3));
-    g.setAttribute('color', new THREE.Float32BufferAttribute(Cl, 3)); g.setAttribute('aPart', new THREE.Float32BufferAttribute(Pa, 1)); g.setIndex(Ix);
-    g.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 1.4, 0), 2.4);   // covers raised arms, the flag and a jump
-    return (crGeoC = g);
+    // (part 8) a cap's peak over the face (on the cap-wearers only); (part 9) an umbrella in the rain: its pole beside the head, the canopy above;
+    // (part 29) a phone or camera in the right hand, for the photos (it flashes at night and at the podium)
+    quad([-0.1, 1.64, 0.12], [0.1, 1.64, 0.12], [0.1, 1.62, 0.27], [-0.1, 1.62, 0.27], [0, 1.2, 0.18], 8, W1);
+    quad([0.22, 0.72, 0.075], [0.32, 0.72, 0.075], [0.32, 0.86, 0.075], [0.22, 0.86, 0.075], [0.27, 0.8, -0.5], 29, [0.14, 0.14, 0.16]);
+    const mk = () => { const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(Nm, 3));
+      g.setAttribute('color', new THREE.Float32BufferAttribute(Cl, 3)); g.setAttribute('aPart', new THREE.Float32BufferAttribute(Pa, 1)); g.setIndex(Ix.slice());
+      g.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 1.4, 0), 2.4); return g; };   // (covers raised arms, the flag, an umbrella and a jump)
+    crGeoC = mk();
+    // the rain's figure: the same, holding an umbrella (its pole beside the head, a canopy of 8 panels over it): drawn only in the rain (CrowdChunks)
+    const DKP = [0.18, 0.18, 0.2]; quad([0.2, 1.1, 0.14], [0.235, 1.1, 0.14], [0.235, 2.28, 0.03], [0.2, 2.28, 0.03], [0.2, 1.6, -0.5], 9, DKP);
+    for (let k = 0; k < 8; k += 2) { const a = (k0) => k0 / 8 * Math.PI * 2, R6 = 0.62, ap = [0.2, 2.44, 0.03], b = (k0) => [0.2 + Math.cos(a(k0)) * R6, 2.2, 0.03 + Math.sin(a(k0)) * R6];
+      quad(ap, b(k + 1), b(k), b(k + 1), [0.2, 1.8, 0.03], 9, W1); quad(ap, b(k + 2), b(k + 1), b(k + 2), [0.2, 1.8, 0.03], 9, [0.82, 0.82, 0.82]); }   // (triangles as quads with a repeated corner: one face, seen from above and the side)
+    crGeoR = mk();
+    return crGeoC;
   }
+  let crGeoR = null;   // (the rain's figure: crowdGeo builds both)
   const CR_VS_HEAD = [
-    'attribute float aPart;', 'attribute vec2 aCrowd;', 'uniform float uTime;', 'uniform vec3 uCar;', 'uniform vec4 uHype;',
+    'attribute float aPart;', 'attribute vec2 aCrowd;', 'uniform float uTime;', 'uniform vec3 uCar;', 'uniform vec4 uHype;', 'uniform float uRain;', 'uniform float uFlash;', 'varying float vCrF;',
     'mat3 crRx(float a) { float c = cos(a), s = sin(a); return mat3(1.0, 0.0, 0.0, 0.0, c, s, 0.0, -s, c); }',
     'mat3 crRz(float a) { float c = cos(a), s = sin(a); return mat3(c, s, 0.0, -s, c, 0.0, 0.0, 0.0, 1.0); }',
     'vec3 crP4(float i, vec3 a, vec3 b, vec3 c, vec3 d) { return i < 0.5 ? a : i < 1.5 ? b : i < 2.5 ? c : d; }'].join('\n');
@@ -7842,6 +8060,8 @@ const World = (function () {
     'else if (crCg > 2.5 && crCg < 3.5) crTint = crP4(mod(floor(crV / 4.0), 4.0), vec3(0.19, 0.27, 0.44), vec3(0.1, 0.1, 0.12), vec3(0.5, 0.44, 0.33), vec3(0.33, 0.34, 0.37));',
     'else if (crCg > 3.5 && crCg < 4.5) crTint = crHa < 3.5 ? crP4(crHa, vec3(0.1, 0.08, 0.06), vec3(0.3, 0.19, 0.11), vec3(0.68, 0.52, 0.28), vec3(0.56, 0.55, 0.53)) : crHa < 4.5 ? vec3(0.05) : crHa < 5.5 ? crShirt : crHa < 6.5 ? vec3(0.94) : vec3(0.08, 0.1, 0.18);',
     'else if (crCg > 4.5 && crCg < 5.5) crTint = mod(floor(crV / 128.0), 2.0) > 0.5 ? crShirt : crSkin;',
+    'else if (crCg > 7.5 && crCg < 8.5) crTint = crHa < 4.5 ? vec3(0.05) : crHa < 5.5 ? crShirt : crHa < 6.5 ? vec3(0.94) : vec3(0.08, 0.1, 0.18);',
+    'else if (crCg > 8.5) crTint = crBone > 0.5 ? vec3(1.0) : crP4(mod(floor(crV / 32.0), 4.0), vec3(0.86, 0.12, 0.12), vec3(0.12, 0.3, 0.8), vec3(0.98, 0.8, 0.12), mod(floor(crV / 8.0), 2.0) > 0.5 ? vec3(0.1) : vec3(0.15, 0.6, 0.3));',
     'else if (crCg > 5.5) crTint = crCg < 6.5 ? crP4(crFl, vec3(0.95), vec3(0.84, 0.1, 0.12), vec3(0.1, 0.33, 0.78), vec3(0.1, 0.5, 0.22)) : crP4(crFl, vec3(0.84, 0.1, 0.12), vec3(0.95), vec3(0.98, 0.8, 0.1), vec3(0.95));',
     'vColor = color * crTint;'].join('\n');
   const CR_VS_NORMAL = [   // after <beginnormal_vertex>: pose -> arm (or leg) rotation about its joint; the same matrix moves the vertex below
@@ -7863,7 +8083,10 @@ const World = (function () {
     'else if (crPose < 5.5) { rR = 2.8 + 0.14 * sin(crT * 2.4); fR = -0.12; rL = 0.1; }',
     'else if (crPose > 6.5) { float rn = sin(uTime * 11.0 + crPh); rL = 0.3; rR = 0.3; fL = 0.95 * rn; fR = -0.95 * rn; }',   // running (the fans who dash across the road behind the car): the arms pump
     'else { rL = 0.15; rR = 0.15; fL = 0.6; fR = 0.6; }',
+    'float crUm = step(0.05, uRain) * step(fract(crV * 0.01371 + 0.37), 0.42) * (1.0 - crSit) * step(0.5, abs(crPose - 5.0)) * step(crPose, 6.5);',   // in the rain ~4 in 10 hold an umbrella (not with a flag, sitting or running)
     'if (crPose < 4.5 || crSit > 0.5) { float up = 2.55 + 0.35 * sin(uTime * 9.0 + crPh); rL = mix(rL, up, crEx); rR = mix(rR, up + 0.1, crEx); fL = mix(fL, -0.25, crEx); fR = mix(fR, -0.25, crEx); }',
+    'if (crUm > 0.5) { rR = 0.25; fR = 1.05; }',
+    'else if (uFlash > 0.5 && crPose < 0.5 && fract(crV * 0.0173 + crPh) < 0.3) { rR = 2.2 + 0.1 * sin(crT); fR = -0.2; }',   // (at night some hold a phone up for a photo)
     'mat3 crM = mat3(1.0); vec3 crPv = vec3(0.0);',
     'if (crBone > 0.5 && crBone < 1.5) { crM = crRx(-fL) * crRz(-rL); crPv = vec3(-0.27, 1.37, 0.0); }',
     'else if ((crBone > 1.5 && crBone < 2.5) || crBone > 3.5) { crM = crRx(-fR) * crRz(rR); crPv = vec3(0.27, 1.37, 0.0); }',
@@ -7883,18 +8106,31 @@ const World = (function () {
     '  transformed = crPv + crM * (transformed - crPv);',
     '}',
     'if (crBone > 3.5 && abs(crPose - 5.0) > 0.5) transformed = crPv;',   // no flag: fold it into the hand (degenerate, draws nothing)
+    'if (crCg > 7.5 && crCg < 8.5 && crHa < 3.5) transformed = vec3(0.0, 1.6, 0.1);',   // (hair, no cap: no peak)
+    'if (crCg > 8.5 && crBone < 0.5 && crUm < 0.5) transformed = vec3(0.0, 1.6, 0.0);',   // (no umbrella)
+    'vCrF = 0.0;',
+    'if (crCg > 8.5 && crBone > 0.5) { float ph = abs(crPose - 2.0) < 0.5 || (uFlash > 1.5 && crPose < 4.5) || (uFlash > 0.5 && crPose < 0.5 && fract(crV * 0.0173 + crPh) < 0.3) ? 1.0 : 0.0; if (ph < 0.5) transformed = crPv;',   // (a phone for those with the right arm up; everyone at a podium)
+    '  vCrF = ph * step(0.5, uFlash) * step(0.92, fract(sin(floor(uTime * 6.0) * 12.9898 + crPh * 78.233 + crV * 0.37) * 43758.5453));',
+    '  if (vCrF > 0.5) { vec3 hc = crPv + crM * (vec3(0.27, 0.79, 0.075) - crPv); transformed = hc + (transformed - hc) * 2.6; } }',   // (the flash: a burst of light round the phone)
     'if (crSit > 0.5) transformed += vec3(0.0, -0.71, -0.55);',   // sitting: down on the grass, moved back so the feet stay behind the fence
     'else transformed.y += crEx * max(0.0, sin(uTime * 8.0 + crPh)) * 0.16;',
     'if (crPose > 6.5) { transformed = crRx(0.2) * transformed; transformed.y += abs(sin(uTime * 11.0 + crPh)) * 0.12; }'].join('\n');   // (running: leaning forward, bounding along)
   const CR_NOHYPE = { value: new THREE.Vector4(0, 0, -1000, 0) };   // (no wave)
+  const CR_ENV = { uRain: { value: 0 }, uFlash: { value: 0 } };   // (Render: the rain, 1 the night's photos, 2 a podium: everyone takes one)
+  function crowdEnv(rain, flash) { CR_ENV.uRain.value = rain; CR_ENV.uFlash.value = flash; }
+  function crowdRain(out, on) {   // the fans hold umbrellas (the rain's figure) or not: the crowd chunks' geometry swapped (the dry one draws less)
+    if (!out || !out.root || out.crowdWet === !!on) return; out.crowdWet = !!on;
+    out.root.traverse(o => { if (o.name === 'crowd' && o.userData.geoRain) o.geometry = on ? o.userData.geoRain : o.userData.geoDry; });
+  }
   function crowdMat(U) {
     const m = new THREE.MeshLambertMaterial({ vertexColors: true });
     m.onBeforeCompile = (sh) => {
-      sh.uniforms.uTime = U.uTime; sh.uniforms.uCar = U.uCar; sh.uniforms.uHype = U.uHype || CR_NOHYPE;
+      sh.uniforms.uTime = U.uTime; sh.uniforms.uCar = U.uCar; sh.uniforms.uHype = U.uHype || CR_NOHYPE; sh.uniforms.uRain = CR_ENV.uRain; sh.uniforms.uFlash = CR_ENV.uFlash;
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\n' + CR_VS_HEAD).replace('#include <color_vertex>', CR_VS_COLOR)
         .replace('#include <beginnormal_vertex>', CR_VS_NORMAL).replace('#include <begin_vertex>', CR_VS_POS);
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vCrF;').replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += vec3(1.0, 0.98, 0.94) * vCrF * 4.0;');
     };
-    m.customProgramCacheKey = () => 'crowd1';
+    m.customProgramCacheKey = () => 'crowd2';
     return m;
   }
   class CrowdChunks extends IChunks {   // IChunks plus a per-instance (pose + phase, variant) attribute
@@ -7910,9 +8146,11 @@ const World = (function () {
         if (L2.length) { this.map.set(k, L2); this.aux.set(k, A2); } else { this.map.delete(k); this.aux.delete(k); } }
       return n;
     }
-    addTo(group) {   // no shadow casting; every chunk mesh gets its aCrowd buffer (IChunks.addTo walks the chunks in map order)
+    addTo(group) {   // no shadow casting; every chunk mesh gets its aCrowd buffer (IChunks.addTo walks the chunks in map order), and a second geometry: the rain's figures (crowdRain)
       const c0 = group.children.length, n = super.addTo(group, false); let c = c0;
-      for (const k of this.map.keys()) { const im = group.children[c++]; im.name = 'crowd'; im.geometry.setAttribute('aCrowd', new THREE.InstancedBufferAttribute(new Float32Array(this.aux.get(k)), 2)); }
+      for (const k of this.map.keys()) { const im = group.children[c++]; im.name = 'crowd'; const aC = new THREE.InstancedBufferAttribute(new Float32Array(this.aux.get(k)), 2); im.geometry.setAttribute('aCrowd', aC);
+        const rg = new THREE.BufferGeometry(); for (const a in crGeoR.attributes) rg.setAttribute(a, crGeoR.attributes[a]); rg.setIndex(crGeoR.index); rg.setAttribute('aCrowd', aC); rg.boundingSphere = im.geometry.boundingSphere;
+        im.userData.geoDry = im.geometry; im.userData.geoRain = rg; }
       return n;
     }
   }
@@ -11020,7 +11258,9 @@ const World = (function () {
     const vY = (vr, o) => { let m = 0; while (m < vr.length - 2 && vr[m + 1][0] < o) m++; const a = vr[m], b = vr[m + 1]; return a[1] + (b[1] - a[1]) * clamp((o - a[0]) / Math.max(1e-3, b[0] - a[0]), 0, 1); };
     const gravW = (i, side) => { const gv = side > 0 ? T.gravR : T.gravL; let k = 0; for (let d = -3; d <= 3; d++) k += gv[(i + d + N) % N]; return k / 7; };   // gravel trap width share (tapers in and out)
     const CH = 128, offs = [-w, -w * 2 / 3, -w / 3, 0, w / 3, w * 2 / 3, w], tileL = 8;
-    const shade = (i, o) => { const rl = T.rl[i]; let k = 0.86 - 0.15 * Math.exp(-((o - rl) * (o - rl)) / 5); if (Math.abs(o) > w * 0.92) k -= 0.03; return [k, k, k * 1.02]; };
+    const brk = new Float32Array(N);   // (the braking zones of the slower corners: the rubber darker there)
+    for (const c of T.corners) if (c.sev >= 2) for (let k = -65; k <= 6; k++) { const i = (c.i0 + k + N) % N, f = k < -10 ? sstep(-65, -12, k) : sstep(6, -10, k); if (f > brk[i]) brk[i] = f; }
+    const shade = (i, o) => { const rl = T.rl[i]; let k = 0.86 - (0.15 + 0.11 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5); if (Math.abs(o) > w * 0.92) k -= 0.03; return [k, k, k * 1.02]; };
     const vg = [0.97, 1.05, 0.92], conc = [0.74, 0.74, 0.72];
     for (let c0 = 0; c0 < N; c0 += CH) {
       const gr = new RB(true), gl = new RB(), gv = new RB(true), gk = new RB(true), gs = new RB(true), grB = new RB(true), glB = new RB(), gvB = new RB();
@@ -11475,6 +11715,6 @@ const World = (function () {
     U.uCam.value.copy(cam.position); U.uCar.value.set(lerp(car.px, car.x, a), lerp(car.py == null ? car.y || 0 : car.py, car.y || 0, a) + 1, lerp(car.pz, car.z, a));
   }
 
-  return { build, update, view, GB, box, cyl, cone, ico, gable, hex, vary };
+  return { build, update, view, GB, box, cyl, cone, ico, gable, hex, vary, crowdEnv, crowdRain };
 })();
 
