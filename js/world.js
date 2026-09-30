@@ -183,6 +183,7 @@ const World = (function () {
 
   /* ---------------- helpers on track ---------------- */
   let T = null;
+  function WAt(i) { return T.wv ? T.wv[i] : T.w; }   // the road's half-width at sample i (Track.wv: a road of changing width)
   let hash = null, HC = 32;
   function buildHash() {
     hash = new Map();
@@ -228,7 +229,7 @@ const World = (function () {
      Returns { posts, stacks, spots } (spots: the o.spots entries that got a post). */
   function rpHash(a, b) { let h = Math.imul(a ^ 0x5bd1e995, 0x9e3779b1) ^ Math.imul((b + 0x7f4a7c15) | 0, 0x85ebca77); h ^= h >>> 15; h = Math.imul(h, 0x2c1b3c6d); h ^= h >>> 12; h = Math.imul(h, 0x297a2d39); h ^= h >>> 15; return (h >>> 0) / 4294967296; }
   function roadsideProps(list, o) {
-    const N = T.N, w = T.w, L = T.len, ds = T.ds, CELL = 8, grid = new Map(), res = { posts: 0, stacks: 0, spots: new Set(), nSpots: o.spots ? o.spots.length : 0 };   // (world.propStats, for the tests)
+    const N = T.N, L = T.len, ds = T.ds, CELL = 8, grid = new Map(), res = { posts: 0, stacks: 0, spots: new Set(), nSpots: o.spots ? o.spots.length : 0 };   // (world.propStats, for the tests)
     const RHK = { cone: 0.28, pylon: 0.36, tyre: 0.43, bale: 0.62, crate: 0.5, tstack: 0.43, bstack: 0.9, rbale: 0.62, rbstack: 0.9, post: 0.14 };
     const put = (x, z, r) => { const k = Math.floor(x / CELL) + ',' + Math.floor(z / CELL); let a = grid.get(k); if (!a) grid.set(k, a = []); a.push(x, z, r); };
     const free = (x, z, r) => { const cx = Math.floor(x / CELL), cz = Math.floor(z / CELL);   // clear of every prop already placed (r + its keep-out radius)
@@ -236,10 +237,10 @@ const World = (function () {
       return true; };
     for (const it of list) put(it.x, it.z, (RHK[it.kind] || 0.6) + 0.4);
     const onGrid = (s) => { if (T.open) return false; let d = s - T.startS; d = ((d % L) + L) % L; return d > L - 112 || d < 12; };   // the start grid
-    const band = (i, side, rh) => { const bar = side > 0 ? T.br[i] : T.bl[i]; return [w + (T.curb[i] ? T.curbW : 0) + rh + 0.3, Math.min(bar - rh - 0.15, o.maxLat || 1e9)]; };
+    const band = (i, side, rh) => { const bar = side > 0 ? T.br[i] : T.bl[i]; return [WAt(i) + (T.curb[i] ? T.curbW : 0) + rh + 0.3, Math.min(bar - rh - 0.15, o.maxLat || 1e9)]; };
     const fits = (i, side, x, z, rh) => {   // also on the verge of the nearest road sample (not on another leg's asphalt, not behind its barrier), and the track's own tests
       const n = nearest(x, z), a = Math.abs(n.lat);
-      if (n.i < 0 || a < w + rh + 0.25 || a > n.bar - rh - 0.1) return false;
+      if (n.i < 0 || a < WAt(n.i) + rh + 0.25 || a > n.bar - rh - 0.1) return false;
       if (o.floor) { const d = Math.abs((x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i]), f0 = o.floor({ i, d: side * (d - rh) }, true), f1 = o.floor({ i, d: side * (d + rh) }, true);
         if (Math.abs(f0 - f1) > 0.15 || f0 + f1 < -1.4) return false; }   // level ground under it (where the verge isn't at road height), not down in a dip
       return !(o.skip && o.skip(i, side, x, z, rh));
@@ -256,7 +257,7 @@ const World = (function () {
         for (let k = 0, s = s0; k < n; k++) {
           if ((T.open && (s < 2 || s > L - 2)) || onGrid(s)) break;
           const i = T.idx(s), [lo, hi] = band(i, side, 0.43); if (hi - lo < 0.4) break;
-          const lat = clamp(w + e, lo, hi), [x, z, hd, ii] = atSf(s, side * lat);
+          const lat = clamp(WAt(i) + e, lo, hi), [x, z, hd, ii] = atSf(s, side * lat);
           if (!fits(ii, side, x, z, 0.43) || !free(x, z, 0.35)) break;
           P.push({ x, z, hd, ii, k, lat, s }); s += step(s, lat, gap);
         }
@@ -276,7 +277,7 @@ const World = (function () {
     const post = (s, side, k) => {
       const i = T.idx(s), gv = side > 0 ? T.gravR : T.gravL; if ((gv && gv[i]) || onGrid(s)) return false;
       const [lo, hi] = band(i, side, 0.14); if (hi - lo < 0.4) return false;
-      const lat = clamp(w + lerp(o.postEdge[0], o.postEdge[1], rpHash(k, side + 31)), lo, hi), [x, z, hd, ii] = atSf(s, side * lat);
+      const lat = clamp(WAt(i) + lerp(o.postEdge[0], o.postEdge[1], rpHash(k, side + 31)), lo, hi), [x, z, hd, ii] = atSf(s, side * lat);
       if (!fits(ii, side, x, z, 0.14) || !free(x, z, 0.6)) return false;
       add('post', x, z, hd, o.postCol ? o.postCol(ii) : 0, ii, 0.5); res.posts++; return true;
     };
@@ -312,11 +313,11 @@ const World = (function () {
   function propFloorTable(vis, prof, opt) {
     const N = T.N, w = T.w, NE = 25, tab = new Float32Array(N * 2 * NE), cap = opt && opt.cap, EX = opt && opt.ex, TT = T, open = T.open, bank = !!T.bank;
     for (let i = 0; i < N; i++) for (let sd = 0; sd < 2; sd++) { const side = sd ? 1 : -1, ry = T.hasElev ? T.hy[i] : 0, P = prof ? prof(i, side) : null;
-      for (let k = 0, m = 0; k < NE; k++) { const o = w + k * 0.5; let y;
+      for (let k = 0, m = 0; k < NE; k++) { const o = WAt(i) + k * 0.5; let y;
         if (P) { while (m < P.length - 2 && P[m + 1][0] < o) m++; const a = P[m], b = P[m + 1]; y = a[1] + (b[1] - a[1]) * clamp((o - a[0]) / Math.max(1e-3, b[0] - a[0]), 0, 1); }
         else y = vis(T.px[i] + T.nx[i] * side * o, T.pz[i] + T.nz[i] * side * o, i, side, o) - ry;
         tab[(i * 2 + sd) * NE + k] = Math.min(cap ? cap(i, side, o) : 0.3, y); } }
-    return (q, near) => { const e = Math.abs(q.d) - w; if (!(e > 0)) return bank && q.s >= 0 ? TT.bankAt(q.s, q.d, _pfb).dy : 0;
+    return (q, near) => { const e = Math.abs(q.d) - (TT.wv ? TT.wv[q.a >= 0 && q.a < N ? q.a : q.i >= 0 && q.i < N ? q.i : 0] : w); if (!(e > 0)) return bank && q.s >= 0 ? TT.bankAt(q.s, q.d, _pfb).dy : 0;
       const f = Math.min(e * 2, NE - 1.001), k = Math.floor(f), u = f - k, sd = q.d > 0 ? 1 : 0;
       if (near || !(q.t >= 0) || !(q.a >= 0 && q.a < N)) { const b = ((q.i >= 0 && q.i < N ? q.i : 0) * 2 + sd) * NE + k; return tab[b] + (tab[b + 1] - tab[b]) * u; }
       const a = q.a; if (EX && EX.on[a * 2 + sd] && q.x !== undefined) { const ry = TT.hasElev ? TT.elevAt(q.s).y : 0; return EX.f(q.x, q.z, ry) - ry; }
@@ -2933,7 +2934,7 @@ const World = (function () {
     addTex(texFence, THEME === 'italia' ? new THREE.MeshBasicMaterial({ map: tex.fenceFO, color: 0xb4ab96, vertexColors: true, transparent: true, depthWrite: false, alphaTest: 0.02, side: THREE.DoubleSide })   // (Toskana: the light warm-grey chain-link of the reference)
       : CSX ? new THREE.MeshLambertMaterial({ map: tex.fenceFO, vertexColors: true, transparent: true, depthWrite: false, alphaTest: 0.02, side: THREE.DoubleSide })
       : new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide, transparent: false }), false);
-    addTex(texCrowd, new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), false);
+    fanCells(out, addTex(texCrowd, new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), false));
     crowdFinish(CR, root, out);   // the instanced spectators and their ground strips
     return finish(out, tex);
   }
@@ -6202,6 +6203,15 @@ const World = (function () {
       g.quadUp(a[0], b[0], b[1], a[1], [W1, W1, D, D]); g.quadUp(a[1], b[1], b[2], a[2], [D, D, D, D]); g.quadUp(a[2], b[2], b[3], a[3], [D, D, W1, W1]);
     }
   }
+  // the fans painted on a stand's rake (its crowd map; Sfx: the stands roar too): the mesh's area over the 24 m squares, 1.3 a square metre
+  function fanCells(out, mesh) {
+    if (!mesh || !mesh.geometry) return;
+    const cells = out.crowdCells || (out.crowdCells = new Map()), g = mesh.geometry, P = g.attributes.position.array, I = g.index ? g.index.array : null, n = I ? I.length : P.length / 3;
+    for (let t = 0; t + 2 < n; t += 3) { const a = (I ? I[t] : t) * 3, b = (I ? I[t + 1] : t + 1) * 3, c = (I ? I[t + 2] : t + 2) * 3;
+      const ux = P[b] - P[a], uy = P[b + 1] - P[a + 1], uz = P[b + 2] - P[a + 2], vx = P[c] - P[a], vy = P[c + 1] - P[a + 1], vz = P[c + 2] - P[a + 2];
+      const ar = 0.5 * Math.hypot(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx), k = Math.floor((P[a] + P[b] + P[c]) / 72) + ',' + Math.floor((P[a + 2] + P[b + 2] + P[c + 2]) / 72);
+      cells.set(k, (cells.get(k) || 0) + ar * 1.3); }
+  }
   function crowdFinish(C, root, out) {   // building footprints placed after the crowds hide nobody; the layer and the strips go into the world
     if (C.blocks.length) {
       const bh = new Map(); for (const b of C.blocks) { const r = Math.hypot(b.hw, b.hd); for (let a = Math.floor((b.x - r) / 32); a <= Math.floor((b.x + r) / 32); a++) for (let c = Math.floor((b.z - r) / 32); c <= Math.floor((b.z + r) / 32); c++) { const k = a + ',' + c; let L = bh.get(k); if (!L) bh.set(k, L = []); L.push(b); } }
@@ -6211,7 +6221,7 @@ const World = (function () {
     const n = C.ppl.addTo(grp);
     C.strip.addTo(grp, new THREE.MeshBasicMaterial({ vertexColors: true, blending: THREE.MultiplyBlending, transparent: true, depthWrite: false, fog: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4 }), false, false);
     out.dyn.crowd = C.U; out.crowdN = n; out.crowdLog = C.log;
-    const cells = out.crowdCells = new Map();   // the fans per 24 m square (Sfx: how many stand near the car, the cheering on a rally stage)
+    const cells = out.crowdCells = out.crowdCells || new Map();   // the fans per 24 m square (Sfx: how many stand near the car, their roar; the stands' own: fanCells)
     for (const L of C.sp.values()) for (let q = 0; q < L.length; q += 2) { const k = Math.floor(L[q] / 24) + ',' + Math.floor(L[q + 1] / 24); cells.set(k, (cells.get(k) || 0) + 1); }
     return n;
   }
@@ -6818,6 +6828,7 @@ const World = (function () {
         const tf = -side, [cx, cz] = at(0, 0.55 * tf), [mx, mz] = at(0.1, -0.35 * tf), ny = T.nx[i] * tf, nz = T.nz[i] * tf;
         for (let k = 0; k < 3; k++) { const a = k / 3 * TAU; cyl(g, cx + Math.cos(a) * 0.28, y + H + 0.08, cz + Math.sin(a) * 0.28, 0.025, 1.25, 3, dark, null, 0.02); }
         box(g, cx, y + H + 1.3, cz, 0.72, 0.36, 0.3, Math.atan2(nz, ny), dark, [0.25, 0.26, 0.28]);
+        (out.tvCams = out.tvCams || []).push([cx, y + H + 1.5, cz]);   // (the renderer's TV camera films from here)
         cyl(g, cx + ny * 0.45, y + H + 1.4, cz + nz * 0.45, 0.12, 0.12, 6, [0.08, 0.08, 0.09]);
         person(mx, y + H + 0.08, mz, ny, nz, [0.13, 0.3, 0.62], 3);
         exclPush(x, z, 4.5); CR.avoid(x, z, 2.4);
@@ -7032,7 +7043,7 @@ const World = (function () {
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
-    addM(crowdG, new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }));
+    fanCells(out, addM(crowdG, new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true })));
     fenceC.addTo(root, fMat, false, true); spC.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true);
     crowdFinish(CR, root, out);
     out.stats = { tiles: nTiles, trees: nTrees, edgeTrees: nEdge, posts: nPosts, buildings: nBld, fans: nFans, decals: nDecals };   // (read by the tests)
@@ -7850,7 +7861,7 @@ const World = (function () {
         out.dyn.fade = { list: fl, poly: cn, yTop: hyS(sAt(wd)) + 30, op: 1, t: null };   // (the footprint, a little wider, up to 30 m)
       }
     }
-    addM(crowdG[0], new THREE.MeshLambertMaterial({ map: crowdMats[0], vertexColors: true })); addM(crowdG[1], new THREE.MeshLambertMaterial({ map: crowdMats[1], vertexColors: true }));
+    fanCells(out, addM(crowdG[0], new THREE.MeshLambertMaterial({ map: crowdMats[0], vertexColors: true }))); fanCells(out, addM(crowdG[1], new THREE.MeshLambertMaterial({ map: crowdMats[1], vertexColors: true })));
 
     /* ---- the steel bull (Clemens Neugebauer and Martin Kölldorfer, 2012): 14.6 m of welded Corten plates on its cast aluminium arch
        (17.2 m in all), charging: head down, the gilded horns (7 m from tip to tip) forward, the hump over the shoulders, the tail up; built
@@ -7929,7 +7940,7 @@ const World = (function () {
       if (k === 1 || k === 4 || k === 7) return;   // (not at the kinks)
       const i0 = T.nearestIdx(tx0, tz0), side = T.k[i0] > 0 ? -1 : 1, s = i0 * ds + 30, i = T.idx(s); if (side > 0 && PD && T.pitAt(s)) return;
       const [x, z] = onSide(s, side, 7), y = nrGround(x, z), g = scen.get(x, z), hd = T.hd[i], ph = 6.5; if (excluded(x, z) || nrSlope(x, z) > 0.5) return;
-      tvTowerGeo(g, x, y, z, hd, -T.nx[i] * side, -T.nz[i] * side);
+      tvTowerGeo(g, x, y, z, hd, -T.nx[i] * side, -T.nz[i] * side); (out.tvCams = out.tvCams || []).push([x, y + ph + 1.5, z]);   // (the renderer's TV camera films from its platform)
       exclPush(x, z, 4); CR.avoid(x, z, 2.2); nTV++;
       if (k === 0 || k === 2 || k === 3) {   // at Turns 1, 3 and 4: a recovery truck and the medical car behind the barrier after the corner
         const s2 = i0 * ds + 70, i2 = T.idx(s2), [rx, rz] = onSide(s2, side, 5), ry = nrGround(rx, rz), hd2 = T.hd[i2], c2 = Math.cos(hd2), s3 = Math.sin(hd2), gr = scen.get(rx, rz);
@@ -8383,7 +8394,6 @@ const World = (function () {
   // crossover (its walls and the bridge), nor on a sloping verge. The props stand on the verge's own height. Drawn out to 150 m.
   function suzukaProps(out, skip) {
     out.propR = 150;
-    const w = T.w;
     out.propFloor = propFloorTable(null, (i, side) => SZ.verge(i, side));
     return out.propStats = roadsideProps(out.props, { post: [60, 80], postEdge: [1.8, 2.4], exits: 12, apexes: 2, wallEdge: [1.9, 2.5], stacks: [5, 7], rows2: 0.3,
       floor: out.propFloor, skip });
@@ -8540,11 +8550,11 @@ const World = (function () {
     const aMatB = bridgeMat(aMat), lMatB = bridgeMat(lMat), dMatB = bridgeMat(matV);
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     const kerb = [new Uint8Array(N), new Uint8Array(N)];   // kerbs: inside of every bend, outside only in the tighter ones
-    for (let i = 0; i < N; i++) if (T.curb[i] && !loWall(i) && !upWall(i)) { const k = T.k[i]; for (const side of [-1, 1]) { const inside = side * k > 0, p = side > 0 && pitR(i); if ((inside || Math.abs(k) > 1 / 60) && !(p && p.o - 3.5 < w + T.curbW + 0.3)) kerb[side > 0 ? 1 : 0][i] = 1; } }   // (none under the pit lane where it leaves the circuit)
+    for (let i = 0; i < N; i++) if (T.curb[i] && !loWall(i) && !upWall(i)) { const k = T.k[i]; for (const side of [-1, 1]) { const inside = side * k > 0, p = side > 0 && pitR(i); if ((inside || Math.abs(k) > 1 / 60) && !(p && p.o - 3.5 < WAt(i) + T.curbW + 0.3)) kerb[side > 0 ? 1 : 0][i] = 1; } }   // (none under the pit lane where it leaves the circuit)
     // the verge's cross-section beyond the road edge: [offset, height above the road], lifted onto the ground where it rises; flat on the
     // bridge (out to its edge) and between the underpass walls
     SZ.verge = (i, side) => {
-      const bar = side > 0 ? T.br[i] : T.bl[i];
+      const bar = side > 0 ? T.br[i] : T.bl[i], w = WAt(i);   // (the road's own half-width here)
       if (onDeck(i)) return [[w, 0], [w + 1.2, 0], [bar - 0.4, 0], [bar + 0.3, 0], [bar + 0.6, 0]];
       if (loWall(i) || upWall(i)) return [[w, 0], [w + 1.2, -0.03], [bar - 0.4, -0.06], [bar, -0.08], [bar + 0.12, -0.08]];
       const y = T.hy[i], lift = (o, h) => { const q = side * o, g = szGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) + 0.06 - y; return [o, Math.max(h, g)]; };
@@ -8552,20 +8562,21 @@ const World = (function () {
     };
     const vY = (vr, o) => { let m = 0; while (m < vr.length - 2 && vr[m + 1][0] < o) m++; const a = vr[m], b = vr[m + 1]; return a[1] + (b[1] - a[1]) * clamp((o - a[0]) / Math.max(1e-3, b[0] - a[0]), 0, 1); };
     const gravW = (i, side) => { const gv = side > 0 ? T.gravR : T.gravL; let k = 0; for (let d = -3; d <= 3; d++) k += gv[(i + d + N) % N]; return k / 7; };   // gravel trap width share (tapers in and out)
-    const CH = 128, offs = [-w, -w * 2 / 3, -w / 3, 0, w / 3, w * 2 / 3, w], tileL = 8;
-    const shade = (i, o) => { const rl = T.rl[i]; let k = 0.86 - 0.15 * Math.exp(-((o - rl) * (o - rl)) / 5); if (Math.abs(o) > w * 0.92) k -= 0.03; return [k, k, k * 1.02]; };
+    const CH = 128, OFFS = [-1, -2 / 3, -1 / 3, 0, 1 / 3, 2 / 3, 1], tileL = 8;   // (the road's cross-section: shares of its half-width at each sample; its texture
+    // runs from the widest edge, w, so it doesn't stretch where the road narrows)
+    const shade = (i, o) => { const rl = T.rl[i]; let k = 0.86 - 0.15 * Math.exp(-((o - rl) * (o - rl)) / 5); if (Math.abs(o) > WAt(i) * 0.92) k -= 0.03; return [k, k, k * 1.02]; };
     const vg = [0.97, 1.05, 0.92], conc = [0.74, 0.74, 0.72];
     const RO_C = [1.04, 1.04, 1.06], roMat = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true });   // (the asphalt run-offs: the road's texture, paler)
     for (let c0 = 0; c0 < N; c0 += CH) {
       const gr = new RB(true), gl = new RB(), gv = new RB(true), gk = new RB(true), gs = new RB(true), ga = new RB(true), grB = new RB(true), glB = new RB(), gvB = new RB();
       let pr = -1, pl = -1, pv = [-1, -1], pk = [-1, -1], ps = [-1, -1], pa = [-1, -1], pg = [-1, -1], prB = -1, plB = -1, pvB = [-1, -1], pd = false;
       for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++) {
-        const i = ii % N, v = ii * ds / tileL, deck = !!onDeck(i), both = deck && pd; pd = deck;
+        const i = ii % N, v = ii * ds / tileL, deck = !!onDeck(i), both = deck && pd, wi = WAt(i), offs = OFFS.map(f => f * wi); pd = deck;
         // (a quad between two rows on the bridge goes into the bridge meshes instead)
         const rp = offs.map(o => Pt(i, o, 0.02)), rc = offs.map(o => shade(i, o)), ru = offs.map(o => [(o + w) / tileL, v]);
         const r = gr.row(rp, rc, ru); if (pr >= 0 && !both) gr.link(pr, r, 0, offs.length - 1); pr = r;
         const rB = deck ? grB.row(rp, rc, ru) : -1; if (rB >= 0 && prB >= 0) grB.link(prB, rB, 0, offs.length - 1); prB = rB;
-        const wl = [0.94, 0.94, 0.9], lp = [Pt(i, -w + 0.2, 0.034), Pt(i, -w + 0.5, 0.034), Pt(i, w - 0.5, 0.034), Pt(i, w - 0.2, 0.034)], l = gl.row(lp, [wl, wl, wl, wl]), lB = deck ? glB.row(lp, [wl, wl, wl, wl]) : -1;
+        const wl = [0.94, 0.94, 0.9], lp = [Pt(i, -wi + 0.2, 0.034), Pt(i, -wi + 0.5, 0.034), Pt(i, wi - 0.5, 0.034), Pt(i, wi - 0.2, 0.034)], l = gl.row(lp, [wl, wl, wl, wl]), lB = deck ? glB.row(lp, [wl, wl, wl, wl]) : -1;
         if (pl >= 0 && !both) { gl.link(pl, l, 0, 1); gl.link(pl, l, 2, 3); } pl = l;
         if (lB >= 0 && plB >= 0) { glB.link(plB, lB, 0, 1); glB.link(plB, lB, 2, 3); } plB = lB;
         for (const side of [-1, 1]) {
@@ -8576,24 +8587,24 @@ const World = (function () {
           if (pv[si] >= 0 && !both) gv.link(pv[si], rv, 0, 4); pv[si] = rv;
           const rvB = deck ? gvB.row(ordered.p, ordered.c) : -1; if (rvB >= 0 && pvB[si] >= 0) gvB.link(pvB[si], rvB, 0, 4); pvB[si] = rvB;
           if (kerb[si][i]) {   // red / white kerb, raised a little towards its outer edge
-            const kp = side > 0 ? [Pt(i, w - 0.02, 0.04), Pt(i, w + T.curbW, 0.085)] : [Pt(i, -(w + T.curbW), 0.085), Pt(i, -w + 0.02, 0.04)];
+            const kp = side > 0 ? [Pt(i, wi - 0.02, 0.04), Pt(i, wi + T.curbW, 0.085)] : [Pt(i, -(wi + T.curbW), 0.085), Pt(i, -wi + 0.02, 0.04)];
             const rk = gk.row(kp, [[1, 1, 1], [1, 1, 1]], side > 0 ? [[0, ii * ds / 3], [1, ii * ds / 3]] : [[1, ii * ds / 3], [0, ii * ds / 3]]);
             if (pk[si] >= 0) gk.link(pk[si], rk, 0, 1); pk[si] = rk;
           } else pk[si] = -1;
           const gwv = gravW(i, side), bar = side > 0 ? T.br[i] : T.bl[i], tar = !!(T.roT && T.roT[si][i]);
           if (gwv > 0 && !deck && !tar) {   // gravel trap on the verge: from 3 m past the edge to 1.5 m short of the barrier, pinched in at its ends
-            const o0 = w + 3, o1 = lerp(o0, Math.max(o0 + 0.5, bar - 1.5), gwv), a = [o0, vY(vr, o0) + 0.03], b = [(o0 + o1) / 2, vY(vr, (o0 + o1) / 2) + 0.03], e = [o1, vY(vr, o1) + 0.03];
+            const o0 = wi + 3, o1 = lerp(o0, Math.max(o0 + 0.5, bar - 1.5), gwv), a = [o0, vY(vr, o0) + 0.03], b = [(o0 + o1) / 2, vY(vr, (o0 + o1) / 2) + 0.03], e = [o1, vY(vr, o1) + 0.03];
             const sp = [a, b, e].map(([o, h]) => Pt(i, side * o, h)), sc = [[0.88, 0.88, 0.9], [0.93, 0.93, 0.95], [0.9, 0.9, 0.92]], so = side > 0 ? sp : sp.slice().reverse(), sco = side > 0 ? sc : sc.slice().reverse();
             const rs = gs.row(so, sco, so.map(p => [p[0] / 6, -p[2] / 6])); if (ps[si] >= 0) gs.link(ps[si], rs, 0, 2); ps[si] = rs;
           } else ps[si] = -1;
           if (gwv > 0 && !deck && tar) {   // an asphalt run-off (def.tarmacRuns): older, paler asphalt from the kerb to just short of the barrier, pinched in at its ends
-            const o0 = w + (kerb[si][i] ? T.curbW : 0.05), o1 = lerp(o0 + 0.1, Math.max(o0 + 0.6, bar - 0.7), gwv), m = (o0 + o1) / 2;
+            const o0 = wi + (kerb[si][i] ? T.curbW : 0.05), o1 = lerp(o0 + 0.1, Math.max(o0 + 0.6, bar - 0.7), gwv), m = (o0 + o1) / 2;
             const sp = [[o0, vY(vr, o0) + 0.028], [m, vY(vr, m) + 0.028], [o1, vY(vr, o1) + 0.028]].map(([o, h]) => Pt(i, side * o, h)), so = side > 0 ? sp : sp.slice().reverse(), rc3 = [RO_C, RO_C, RO_C];
             const ra = ga.row(so, rc3, so.map(p => [p[0] / 8, -p[2] / 8])); if (pa[si] >= 0) ga.link(pa[si], ra, 0, 2); pa[si] = ra;
           } else pa[si] = -1;
           const gsw = T.gstrip ? T.gstrip[si][i] : 0;
           if (gsw > 0 && !deck) {   // a gravel strip just past the kerb (def.gravelStrips, the 2025 ones), over the verge and the start of a trap
-            const o0 = w + (kerb[si][i] ? T.curbW : 0.02), o1 = o0 + gsw, sp = [[o0, vY(vr, o0) + 0.036], [o1, vY(vr, o1) + 0.036]].map(([o, h]) => Pt(i, side * o, h)), so = side > 0 ? sp : sp.slice().reverse(), sc = [[0.9, 0.9, 0.92], [0.9, 0.9, 0.92]];
+            const o0 = wi + (kerb[si][i] ? T.curbW : 0.02), o1 = o0 + gsw, sp = [[o0, vY(vr, o0) + 0.036], [o1, vY(vr, o1) + 0.036]].map(([o, h]) => Pt(i, side * o, h)), so = side > 0 ? sp : sp.slice().reverse(), sc = [[0.9, 0.9, 0.92], [0.9, 0.9, 0.92]];
             const rg = gs.row(so, sc, so.map(p => [p[0] / 6, -p[2] / 6])); if (pg[si] >= 0) gs.link(pg[si], rg, 0, 1); pg[si] = rg;
           } else pg[si] = -1;
         }
@@ -8603,8 +8614,8 @@ const World = (function () {
     }
     // chequered start / finish line and the grid boxes (13 cars, staggered)
     {
-      const gq = new GB(true), gw = new GB(), uM = Math.round(w * 2 / 0.8) / 16, W1 = [1, 1, 1], wh = [0.93, 0.93, 0.9], HYp = (p) => T.hy[p[3]];
-      const a = atSf(sStart - 0.8, -w), b = atSf(sStart - 0.8, w), c = atSf(sStart + 0.8, w), d = atSf(sStart + 0.8, -w);
+      const w0 = WAt(T.idx(sStart)), gq = new GB(true), gw = new GB(), uM = Math.round(w0 * 2 / 0.8) / 16, W1 = [1, 1, 1], wh = [0.93, 0.93, 0.9], HYp = (p) => T.hy[p[3]];
+      const a = atSf(sStart - 0.8, -w0), b = atSf(sStart - 0.8, w0), c = atSf(sStart + 0.8, w0), d = atSf(sStart + 0.8, -w0);
       gq.quadUp([a[0], HYp(a) + 0.04, a[1]], [b[0], HYp(b) + 0.04, b[1]], [c[0], HYp(c) + 0.04, c[1]], [d[0], HYp(d) + 0.04, d[1]], [W1, W1, W1, W1], [[0, 0], [uM, 0], [uM, 0.5], [0, 0.5]]);
       for (let k = 1; k <= 14; k++) {
         const sb = sStart - 9 - (k - 1) * 7.5 + 2.6, lat = (k % 2 === 1 ? -1 : 1) * 3.4;
@@ -8841,7 +8852,7 @@ const World = (function () {
         if (prev) cap(prev.cs, prev.s, -1);
         nStands++;
       }
-      addM(gs, matV, true); addM(gc, new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true })); addM(gr, matV, true);
+      addM(gs, matV, true); fanCells(out, addM(gc, new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }))); addM(gr, matV, true);
     }
 
     /* ---- buildings (OpenStreetMap footprints near the track): houses, halls, the circuit's own buildings, the theme park's rides in bright colours ---- */
@@ -8946,7 +8957,7 @@ const World = (function () {
       if (![0, 1, 2, 6, 8, 10, 11, 12, 14, 15, 17].includes(k)) return;   // (turns 1-3, Dunlop, Degner 2, the Hairpin, 200R, Spoon, 130R, the chicane, the Final Curve)
       const i0 = T.nearestIdx(tx0, tz0), side = T.k[i0] > 0 ? -1 : 1, s = i0 * ds + 30, i = T.idx(s); if ((side > 0 && pitR(i)) || nearX(i, 60)) return;
       const [x, z] = onSide(s, side, 7), y = szGround(x, z), g = scen.get(x, z); if (excluded(x, z) || inRects(x, z) || szPond(x, z) || szSlope(x, z) > 0.5) return;
-      tvTowerGeo(g, x, y, z, T.hd[i], -T.nx[i] * side, -T.nz[i] * side); exclPush(x, z, 4); CR.avoid(x, z, 2.2); nTV++;
+      tvTowerGeo(g, x, y, z, T.hd[i], -T.nx[i] * side, -T.nz[i] * side); (out.tvCams = out.tvCams || []).push([x, y + 8, z]); exclPush(x, z, 4); CR.avoid(x, z, 2.2); nTV++;   // (the renderer's TV camera films from its platform)
       if (k === 0 || k === 10 || k === 12 || k === 15) {
         const s2 = i0 * ds + 70, i2 = T.idx(s2), [rx, rz] = onSide(s2, side, 5), ry = szGround(rx, rz), hd2 = T.hd[i2], c2 = Math.cos(hd2), s3 = Math.sin(hd2), gr = scen.get(rx, rz);
         if (excluded(rx, rz) || inRects(rx, rz) || szPond(rx, rz) || szSlope(rx, rz) > 0.3 || (side > 0 && pitR(i2))) return;

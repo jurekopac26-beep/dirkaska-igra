@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
-<link rel="stylesheet" href="css/style.css?v=076a9a6c">
+<link rel="stylesheet" href="css/style.css?v=5acfd1aa">
 </head>
 <body>
 <div id="app">
@@ -28,21 +28,25 @@
       <span id="h-alt" class="h-lbl"></span>
       <div id="speedo">
         <canvas id="speedo-c"></canvas>
-        <div id="h-speed">0</div><div id="h-kmh">KM/H</div><div id="h-gear">1</div><div id="h-drs">DRS</div>
+        <div id="h-speed">0</div><div id="h-kmh">KM/H</div><div id="h-gear">1</div><div id="h-drs">DRS</div><div id="h-flag">RUMENA</div>
       </div>
       <div id="h-dmg" aria-label="Poškodbe avta"><svg viewBox="0 0 30 50"><rect x="5" y="3" width="20" height="44" rx="6" class="dmg-body"/><rect id="dz0" x="7.5" y="5.5" width="15" height="9" rx="3" fill="hsl(120,78%,52%)"/><rect id="dz1" x="7.5" y="35.5" width="15" height="9" rx="3" fill="hsl(120,78%,52%)"/><rect id="dz2" x="7.5" y="16" width="4.5" height="18" rx="1.5" fill="hsl(120,78%,52%)"/><rect id="dz3" x="18" y="16" width="4.5" height="18" rx="1.5" fill="hsl(120,78%,52%)"/><rect x="13" y="17" width="4" height="16" rx="1.5" class="dmg-cab"/></svg></div>
+      <div id="h-tyre" aria-label="Gume"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7" class="ty-bg"/><circle id="h-tyre-a" cx="10" cy="10" r="7" class="ty-a" stroke="hsl(120,78%,52%)" stroke-dasharray="44 44"/></svg><span id="h-tyre-v">GUME 100 %</span></div>
     </div>
     <div id="h-times">
       <div id="h-time">00:00.000</div>
       <div id="h-best"><span class="h-lbl">NAJ</span> <span id="h-bestv">--:--.---</span></div>
       <div id="h-split"></div>
+      <div id="h-pen"></div>
     </div>
     <div id="h-map"><canvas id="minimap"></canvas></div>
+    <div id="h-tower"></div>
     <div id="h-note"><svg viewBox="0 0 64 64" aria-hidden="true"><path id="h-note-path" d="" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <div id="h-lights"><i></i><i></i><i></i><i></i><i></i></div>
     <div id="h-msg"></div>
     <div id="h-ttsp"></div>
   </div>
+  <div id="podium"></div>
 
   <!-- ============ TOUCH CONTROLS ============ -->
   <div id="touch" class="m-buttons off">
@@ -140,17 +144,20 @@
         <div class="row"><span class="rlbl">Upravljanje</span><div class="seg" data-set="control"><button data-v="buttons">Tipke</button><button data-v="wheel">Volan</button><button data-v="tilt">Nagib</button></div></div>
         <div class="row tiltrow"><span class="rlbl">Občutljivost nagiba</span><input type="range" id="tilt-sens" min="10" max="40" step="1"><span id="tilt-sens-v" class="val"></span></div>
         <div class="row tiltrow"><span class="rlbl">Nagib</span><div class="tilt-live"><div id="tilt-live-bar"></div></div><button class="btn mini" data-act="calibrate">Nastavi sredino</button><button class="btn mini" data-act="tilt-invert" id="tilt-inv-btn">Obrni smer</button></div>
-        <div class="row"><span class="rlbl">Kamera</span><div class="seg" data-set="camera"><button data-v="iso">Izometrična · ležeče</button><button data-v="chase">Za avtom · pokončno</button><button data-v="kino">Kino · ležeče</button></div></div>
+        <div class="row"><span class="rlbl">Kamera</span><div class="seg" data-set="camera"><button data-v="iso">Izometrična · ležeče</button><button data-v="chase">Za avtom · pokončno</button><button data-v="kino">Kino · ležeče</button><button data-v="tv">TV · ležeče</button></div></div>
         <div class="row"><span class="rlbl">Oddaljenost</span><div class="seg" data-set="zoom"><button data-v="0.85">Blizu</button><button data-v="1">Srednje</button><button data-v="1.2">Daleč</button></div></div>
         <div class="row"><span class="rlbl">Fizika vožnje</span><div class="seg" data-set="phys"><button data-v="cs">Circuit Superstars</button><button data-v="arcade">Arkadna</button></div></div>
         <div class="row"><span class="rlbl">Pomoč pri driftu</span><div class="seg" data-set="assist"><button data-v="0">Nizka</button><button data-v="1">Srednja</button><button data-v="2">Visoka</button></div></div>
         <div class="row"><span class="rlbl">Težavnost</span><div class="seg" data-set="difficulty"><button data-v="0">Lahka</button><button data-v="1">Srednja</button><button data-v="2">Težka</button></div></div>
         <div class="row"><span class="rlbl">Samodejni plin</span><div class="seg" data-set="autoGas"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Opozorila za ovinke</span><div class="seg" data-set="notes"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row"><span class="rlbl">Dolžina dirke</span><div class="seg" data-set="len"><button data-v="1">Kratka</button><button data-v="2">Srednja · 2×</button><button data-v="3">Dolga · 3×</button></div></div>
+        <div class="row"><span class="rlbl">Časovni stolp (mesta in zaostanki)</span><div class="seg" data-set="tower"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Duh najboljše vožnje</span><div class="seg" data-set="ghost"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Komentator (angleščina)</span><div class="seg" data-set="comm"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div><button class="mini" data-act="comm-test">&#9654; Preizkusi glas</button><span id="comm-voice" class="vinfo"></span></div>
         <div class="row"><span class="rlbl">Sovoznik na reliju (angleščina)</span><div class="seg" data-set="codrv"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Poškodbe avtov</span><div class="seg" data-set="damage"><button data-v="0">Izklop</button><button data-v="1">Samo videz</button><button data-v="2">Vklop</button></div></div>
+        <div class="row"><span class="rlbl">Sodniki (meje proge, prehitevanje pod rumeno)</span><div class="seg" data-set="rules"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Grafika</span><div class="seg" data-set="quality"><button data-v="retro">Retro</button><button data-v="normal">Normalno</button><button data-v="high">Visoko</button></div></div>
         <div class="row"><span class="rlbl">Sence</span><div class="seg" data-set="shadows"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Zvok</span><div class="seg" data-set="sound"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
@@ -256,19 +263,19 @@
 <script src="js/tracks/pikes.js?v=9ea49f63"></script>
 <script src="js/tracks/ouninpohja.js?v=0942c770"></script>
 <script src="js/tracks/nring.js?v=f5f4699b"></script>
-<script src="js/tracks/spa.js?v=6f82cd14"></script>
+<script src="js/tracks/spa.js?v=5d9344b8"></script>
 <script src="js/tracks/rbring.js?v=4f8972a6"></script>
-<script src="js/tracks/suzuka.js?v=8aae8d8f"></script>
-<script src="js/core.js?v=3752d4b6"></script>
+<script src="js/tracks/suzuka.js?v=5e46a5fd"></script>
+<script src="js/core.js?v=60236821"></script>
 <script src="js/tex.js?v=f643b690"></script>
-<script src="js/world.js?v=bb235de4"></script>
+<script src="js/world.js?v=f48a9173"></script>
 <script src="js/data/p206.js?v=0016824f"></script>
-<script src="js/render.js?v=427b645b"></script>
-<script src="js/sfx.js?v=0c150f32"></script>
+<script src="js/render.js?v=a7d9727c"></script>
+<script src="js/sfx.js?v=1f6dc8a7"></script>
 <script src="js/input.js?v=43b63819"></script>
-<script src="js/comm.js?v=fc42d4d0"></script>
+<script src="js/comm.js?v=05e5f751"></script>
 <script src="js/vendor/peerjs.min.js?v=76b403e4"></script>
 <script src="js/net.js?v=1f45dfb1"></script>
-<script src="js/game.js?v=6b883ef0"></script>
+<script src="js/game.js?v=8a0323db"></script>
 </body>
 </html>

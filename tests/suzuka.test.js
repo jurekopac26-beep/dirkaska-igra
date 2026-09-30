@@ -24,11 +24,11 @@ check('Suzuka: one crossing, the lower road after Degner, the bridge on the back
   X ? `lower road ${dLo.toFixed(0)} m, bridge ${dUp.toFixed(0)} m after the start line, at (${X.x.toFixed(1)}, ${X.z.toFixed(1)})` : 'none');
 check('the bridge 7.5-9 m over the lower road, the roads crossing at ~60 deg', X && X.dy > 7.5 && X.dy < 9 && X.sin > 0.8 && X.sin < 0.92,
   X ? `height gap ${X.dy.toFixed(2)} m, sin ${X.sin.toFixed(3)}` : '');
-{ const iu = Math.round(X.up), il = Math.round(X.lo);
-  check('parapets on the bridge 3 m from the road, the underpass walls 3.4 m', Math.abs(T.bl[iu] - T.w - 3) < 0.05 && Math.abs(T.br[iu] - T.w - 3) < 0.05 && Math.abs(T.bl[il] - T.w - 3.4) < 0.05 && Math.abs(T.br[il] - T.w - 3.4) < 0.05,
-    `bridge ${(T.bl[iu] - T.w).toFixed(2)} / ${(T.br[iu] - T.w).toFixed(2)} m, underpass ${(T.bl[il] - T.w).toFixed(2)} / ${(T.br[il] - T.w).toFixed(2)} m`);
+{ const iu = Math.round(X.up), il = Math.round(X.lo), wu = T.wAt(iu), wl = T.wAt(il);   // (the road's own half-width there)
+  check('parapets on the bridge 3 m from the road, the underpass walls 3.4 m', Math.abs(T.bl[iu] - wu - 3) < 0.05 && Math.abs(T.br[iu] - wu - 3) < 0.05 && Math.abs(T.bl[il] - wl - 3.4) < 0.05 && Math.abs(T.br[il] - wl - 3.4) < 0.05,
+    `bridge ${(T.bl[iu] - wu).toFixed(2)} / ${(T.br[iu] - wu).toFixed(2)} m, underpass ${(T.bl[il] - wl).toFixed(2)} / ${(T.br[il] - wl).toFixed(2)} m`);
   // (the old rule would have pinched both roads' barriers to the minimum wherever the other road passes within 80 m)
-  let wide = 0; for (let d = 60; d <= 90; d += 2) { const a = T.idx(sLo + d), b = T.idx(sLo - d); if (Math.min(T.bl[a], T.br[a], T.bl[b], T.br[b]) > T.w + 3.4 + 0.5) wide++; }
+  let wide = 0; for (let d = 60; d <= 90; d += 2) { const a = T.idx(sLo + d), b = T.idx(sLo - d); if (Math.min(T.bl[a] - T.wAt(a), T.br[a] - T.wAt(a), T.bl[b] - T.wAt(b), T.br[b] - T.wAt(b)) > 3.4 + 0.5) wide++; }
   check('away from the bridge the lower road has its normal run-off again', wide >= 12, `${wide} of 16 samples 60-90 m either side wider than the walls`); }
 
 // 2. two cars at the very same spot, one on the bridge, one under it, both driving on: they never touch
@@ -50,7 +50,7 @@ r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 2, phys: 'cs', playerModel: C
 P = r.player; place(r, P, sUp - 40, 32); r.start();
 let hit = 0, yMin = 1e9, dMax = 0;
 for (let k = 0; k < 3 / DT; k++) { P.inThr = 1; P.inBrk = 0; P.inSteer = k * DT > 0.4 ? 1 : 0; P.digitalSteer = true; r.step(DT); hit = Math.max(hit, P.hitWall); if (Math.abs(P.q.s - sUp) < 30) { yMin = Math.min(yMin, P.y); dMax = Math.max(dMax, Math.abs(P.q.d)); } }
-check('into the parapet on the bridge: the car hits it and stays up on the bridge', hit > 3 && yMin > T.hy[Math.round(X.lo)] + 6 && dMax < T.w + 3.2,
+check('into the parapet on the bridge: the car hits it and stays up on the bridge', hit > 3 && yMin > T.hy[Math.round(X.lo)] + 6 && dMax < T.wAt(Math.round(X.up)) + 3.2,
   `impact ${hit.toFixed(1)} m/s, lowest ${yMin.toFixed(2)} m over the bridge (the road below ${T.hy[Math.round(X.lo)].toFixed(2)} m), ${dMax.toFixed(2)} m off the centre line`);
 
 // 4. rescued right at the crossing: back on its own level
@@ -101,6 +101,7 @@ for (const phys of ['cs', 'arcade']) {
     C.aiControl(P, r, DT); r.step(DT); t += DT;
     if (P.pitEv) { ev.push(P.pitEv); if (P.pitEv === 'repair') stopAt = dd(P.q.s); P.pitEv = null; }
     if (P.inPit) hit = Math.max(hit, P.hitWall || 0);
+    P.hitWall = 0;   // (each knock counts where it happened: one on the track before the lane is not one in the lane)
   }
   const seq = ev.join('>');
   check(`pit stop (${phys}): in, stopped at its box, repaired, out again, finished, no knock in the lane`, /enter>box>repair>done>exit/.test(seq) && P.repairN === 1 && P.dmg === 0 && stopAt !== null && Math.abs(stopAt - PD[3]) < 4 && P.finished && hit < 2,
@@ -130,18 +131,18 @@ for (const phys of ['cs', 'arcade']) {
 
 // 9. run-offs: asphalt on the outside of the First Curve and of 130R, gravel traps elsewhere; the 2025 gravel strips just past the kerbs
 // at Turns 2, 7, 9, 14 and 17 (asphalt again beyond the one at Turn 2); a car coasting over the asphalt loses clearly less speed than in gravel
-{ const W = T.w, at = (d, lat) => { const s = T.startS + d, i = T.idx(s); return T.surface(T.query(T.px[i] + T.nx[i] * lat, T.pz[i] + T.nz[i] * lat, i, {})); };
-  const tar = [['First Curve', 500, -1], ['Turn 2', 640, -1], ['130R', -1040, 1], ['130R', -950, 1]].map(([n, d, sd]) => [n, at(d, sd * (W + 10))]);
-  const grv = [['S Curves', 930, -1], ['Degner 1', 2060, -1], ['Hairpin', 2700, 1], ['Spoon', -2200, 1], ['Casio Triangle', -640, -1], ['Final Curve', -450, -1]].map(([n, d, sd]) => [n, at(d, sd * (W + 10))]);
-  const strips = [['Turn 2', 600, -1], ['Turn 7', 1500, 1], ['Turn 9', 2250, -1], ['Turn 14', -2050, 1], ['Turn 17', -575, 1]].map(([n, d, sd]) => [n, at(d, sd * (W + T.curbW + 1.5))]);
+{ const at = (d, sd, e) => { const s = T.startS + d, i = T.idx(s), lat = sd * (T.wAt(i) + e); return T.surface(T.query(T.px[i] + T.nx[i] * lat, T.pz[i] + T.nz[i] * lat, i, {})); };   // (e: metres past the road's edge there)
+  const tar = [['First Curve', 500, -1], ['Turn 2', 640, -1], ['130R', -1040, 1], ['130R', -950, 1]].map(([n, d, sd]) => [n, at(d, sd, 10)]);
+  const grv = [['S Curves', 930, -1], ['Degner 1', 2060, -1], ['Hairpin', 2700, 1], ['Spoon', -2200, 1], ['Casio Triangle', -640, -1], ['Final Curve', -450, -1]].map(([n, d, sd]) => [n, at(d, sd, 10)]);
+  const strips = [['Turn 2', 600, -1], ['Turn 7', 1500, 1], ['Turn 9', 2250, -1], ['Turn 14', -2050, 1], ['Turn 17', -575, 1]].map(([n, d, sd]) => [n, at(d, sd, T.curbW + 1.5)]);
   check('run-offs: asphalt outside the First Curve and 130R, gravel traps at the other corners', tar.every(([, s]) => s === 4) && grv.every(([, s]) => s === 3),
     [...tar, ...grv].map(([nm, s]) => `${nm} ${['asphalt', 'kerb', 'grass', 'gravel', 'asphalt run-off'][s] || s}`).join(', '));
-  check('the 2025 gravel strips just past the kerbs (Turns 2, 7, 9, 14, 17), asphalt beyond the one at Turn 2', strips.every(([, s]) => s === 3) && at(600, -(W + T.curbW + 5)) === 4,
-    strips.map(([nm, s]) => `${nm} ${s === 3 ? 'gravel' : s}`).join(', ') + `, beyond Turn 2's: ${at(600, -(W + T.curbW + 5)) === 4 ? 'asphalt' : 'not asphalt'}`);
-  const coast = (d, lat) => { const r2 = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 2, phys: 'cs', playerModel: C.MODELS[0], seed: 5 }), P2 = r2.player, s = T.startS + d, i = T.idx(s);
+  check('the 2025 gravel strips just past the kerbs (Turns 2, 7, 9, 14, 17), asphalt beyond the one at Turn 2', strips.every(([, s]) => s === 3) && at(600, -1, T.curbW + 5) === 4,
+    strips.map(([nm, s]) => `${nm} ${s === 3 ? 'gravel' : s}`).join(', ') + `, beyond Turn 2's: ${at(600, -1, T.curbW + 5) === 4 ? 'asphalt' : 'not asphalt'}`);
+  const coast = (d, sd, e) => { const r2 = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 2, phys: 'cs', playerModel: C.MODELS[0], seed: 5 }), P2 = r2.player, s = T.startS + d, i = T.idx(s), lat = sd * (T.wAt(i) + e);
     P2.place(T.px[i] + T.nx[i] * lat, T.pz[i] + T.nz[i] * lat, T.hd[i]); P2.y = P2.py = T.hy[i]; P2.q = T.query(P2.x, P2.z, i, {}); P2.sPrev = P2.q.s; P2.vx = Math.cos(P2.h) * 25; P2.vz = Math.sin(P2.h) * 25; r2.start();
     for (let k = 0; k < 0.8 / DT; k++) { P2.inThr = 0; P2.inBrk = 0; P2.inSteer = 0; r2.step(DT); } return 25 - P2.speed; };
-  const lossA = coast(470, -(W + 9)), lossG = coast(-2230, W + 9);
+  const lossA = coast(470, -1, 9), lossG = coast(-2230, 1, 9);
   check('coasting at 90 km/h: the asphalt run-off (First Curve) slows the car clearly less than the gravel (Spoon)', lossA < lossG * 0.75, `${(lossA * 3.6).toFixed(1)} km/h lost on asphalt, ${(lossG * 3.6).toFixed(1)} km/h in the gravel in 0.8 s`); }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);

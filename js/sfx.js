@@ -8,7 +8,7 @@ const Sfx = (function () {
   let noiseBuf = null;
   let eng = null, ai = [], squeal = null, rumble = null, wind = null, curbV = null, rainV = null, hiss = null, heli = null, echo = null;
   let gravel = null, spray = null, crowd = null, lastT = 0, pudPrev = false;
-  let lastCrash = 0, running = false;
+  let lastCrash = 0, running = false, crowdLv = 0, applB = 0, cer = false;
 
   function create() {
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -165,7 +165,7 @@ const Sfx = (function () {
     // tyres
     const spd = player.speed;
     const onHard = player.ws[2] <= 1 && player.ws[3] <= 1;
-    const slide = (player.arcade ? Core.sstep(0.18, 0.55, Math.abs(player.beta || 0)) : Math.max(0, player.latR - 2.2) / 5) + player.spin * 0.8 + (player.lock ? 0.6 : 0) + (player.inHand > 0.5 && spd > 5 ? 0.5 : 0);
+    const slide = (player.arcade ? Core.sstep(0.18, 0.55, Math.abs(player.beta || 0)) : Math.max(0, (player.latR || 0) - 2.2) / 5) + (player.spin || 0) * 0.8 + (player.lock ? 0.6 : 0) + (player.inHand > 0.5 && spd > 5 ? 0.5 : 0);
     const sq = onHard && spd > 3 ? clamp(slide, 0, 1.2) : 0, wet = race ? race.rain || 0 : 0;
     set(squeal.out.gain, sq * 0.09 * (1 - 0.7 * wet), 0.04);   // (a wet road hardly squeals)
     set(rainV.out.gain, wet * 0.05, 0.4);
@@ -189,18 +189,21 @@ const Sfx = (function () {
     set(spray.out.gain, air ? 0 : loose / 4 * spf * 0.14 * wet, 0.05);
     if (pud && !pudPrev && !air && spd > 5) splash(clamp(spd / 30, 0.3, 1));
     pudPrev = pud;
-    // the fans (a rally stage: World's crowdCells, the fans per 24 m square round the car): a roar that swells as the car comes by (more
-    // over a jump), with whoops and air horns
-    const Wd = typeof Render !== 'undefined' ? Render.world : null, cc = race && race.track.def.rally && Wd ? Wd.crowdCells : null;
+    // the fans (World's crowdCells, the fans per 24 m square round the car; every track): a roar that swells as the car comes by, with
+    // whoops and air horns. A rally stage: more over a jump, the whoops often; a circuit: the stands roar as the cars go by at speed, a
+    // whoop now and then, the applause for an overtake in front of them (applause) and at the podium (setCeremony)
+    const Wd = typeof Render !== 'undefined' ? Render.world : null, rally = !!(race && race.track.def.rally), cc = race && Wd ? Wd.crowdCells : null;
     let cl = 0;
     if (cc) {
       const cx = Math.floor(player.x / 24), cz = Math.floor(player.z / 24); let n = 0;
       for (let a = -2; a <= 2; a++) for (let b = -2; b <= 2; b++) { const c = cc.get((cx + a) + ',' + (cz + b)); if (c) n += c * clamp(1 - Math.hypot((cx + a + 0.5) * 24 - player.x, (cz + b + 0.5) * 24 - player.z) / 60, 0, 1); }
       cl = clamp(n / 120, 0, 1);
     }
-    const ex = cl * (0.5 + 0.5 * clamp(spd / 30, 0, 1)) * (air ? 1.4 : 1);
-    set(crowd.out.gain, ex * 0.16, 0.3);
-    if (ex > 0.25 && Math.random() < dt * ex * 3) cheer(Math.min(1, ex));
+    crowdLv = cl; applB = Math.max(0, applB - dt * 0.5);
+    let ex = rally ? cl * (0.5 + 0.5 * clamp(spd / 30, 0, 1)) * (air ? 1.4 : 1) : cl * (0.3 + 0.7 * clamp(spd / 55, 0, 1));
+    if (cer) ex = Math.max(ex, 0.8);
+    set(crowd.out.gain, (ex + applB * 0.9) * (rally ? 0.16 : 0.11), 0.3);
+    if (ex > 0.25 && Math.random() < dt * ex * (rally ? 3 : cer ? 2 : 0.7)) cheer(Math.min(1, ex));
     // Pikes Peak: the engine echoes among the rocks above the treeline; the TV helicopter (World's dyn.pk: Pikes Peak's, and Ouninpohja's
     // that follows the car the whole run) by its distance to the camera
     const pikes = !!(race && race.track && race.track.def && race.track.def.id === 'pikes');
@@ -266,6 +269,30 @@ const Sfx = (function () {
     const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.05 * v, now + 0.06); g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
     o.connect(bp); bp.connect(g); g.connect(bus); o.start(now); o.stop(now + dur + 0.02);
   }
+  // applause (the player overtook in front of the fans, the podium): a burst of claps over ~1.8 s, the roar swelling, a cheer on top
+  function applause(v) {
+    if (!running || !ctx || ctx.state !== 'running') return;
+    v = clamp(v, 0, 1); if (v < 0.05) return;
+    const now = ctx.currentTime, src = ctx.createBufferSource(); src.buffer = noiseBuf; src.playbackRate.value = 1.4;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1900; bp.Q.value = 0.8;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now);
+    const n = Math.round(22 + 38 * v), ts = []; for (let k = 0; k < n; k++) ts.push(0.03 + Math.pow(Math.random(), 1.3) * 1.8); ts.sort((a, b) => a - b);
+    let last = -1; for (const t0 of ts) { if (t0 - last < 0.018) continue; last = t0; const t = now + t0, a = (0.05 + Math.random() * 0.06) * v * (1 - t0 / 2.2);
+      g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(a, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.03); }
+    src.connect(bp); bp.connect(g); g.connect(bus); src.start(now); src.stop(now + 2.2);
+    applB = Math.max(applB, v); cheer(Math.min(1, v + 0.2));
+  }
+  // a champagne cork: a short low thump, the fizz after it
+  function cork() {
+    if (!ctx || ctx.state !== 'running') return;
+    const now = ctx.currentTime, o = ctx.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(420, now); o.frequency.exponentialRampToValueAtTime(90, now + 0.08);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.35, now + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+    o.connect(g); g.connect(bus); o.start(now); o.stop(now + 0.14);
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf; const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 3500;
+    const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.0001, now + 0.05); g2.gain.exponentialRampToValueAtTime(0.06, now + 0.12); g2.gain.exponentialRampToValueAtTime(0.0001, now + 1.6);
+    src.connect(hp); hp.connect(g2); g2.connect(bus); src.start(now + 0.05); src.stop(now + 1.7);
+  }
+  function setCeremony(on) { cer = !!on; }
   function beep(freq, dur, vol) {
     if (!ctx || ctx.state !== 'running') return;
     const now = ctx.currentTime;
@@ -316,7 +343,7 @@ const Sfx = (function () {
     set(echo.send.gain, 0, 0.02);
   }
 
-  const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, shiftPop, knock, wrench, silence, get ready() { return !!ctx && ctx.state === 'running'; } };
+  const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, shiftPop, knock, wrench, silence, applause, cork, setCeremony, get crowd() { return crowdLv; }, get ready() { return !!ctx && ctx.state === 'running'; } };
   window.Sfx = api;
   return api;
 })();
