@@ -32,7 +32,9 @@ const page = await ctx.newPage();
 const errors = [];
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 page.on('console', m => { if (m.type() === 'error' || m.type() === 'warning') errors.push(m.type() + ': ' + m.text().slice(0, 200)); });
-page.on('requestfailed', r => { if (!/gstatic/.test(r.url())) errors.push('failed: ' + r.url()); });
+page.on('requestfailed', r => {   // a video still loading when its screen is left is cut off: not an error
+  const t = (r.failure() || {}).errorText || ''; if (!/gstatic/.test(r.url()) && !(/\.webm$/.test(r.url()) && /ABORTED/.test(t))) errors.push('failed: ' + r.url() + ' ' + t);
+});
 await page.goto(base + '/');
 await page.evaluate(() => document.fonts.ready);
 const wait = (ms) => page.waitForTimeout(ms);

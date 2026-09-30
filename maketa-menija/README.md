@@ -69,7 +69,8 @@ Pokažejo se proge izbranega načina:
 Za ceste in reli etape so tri različice zemljevida, da izbereš najboljšo. Preklopiš jih s stikalom **MAP 1 2 3** na vrhu zemljevida. Izbrana različica ostane izbrana tudi pri drugih progah in ob naslednjem obisku (shrani se v brskalnik).
 
 1. **Flyover**: posnetek preleta ceste, kot v posnetku etape kolesarske dirke.
-   - Kamera leti za svetlečo piko, ki gre od starta do cilja. Za njo se riše pot (pri cestah zlata, pri reliju oranžna).
+   - Kamera mirno leti za svetlečo piko, ki gre z enakomerno hitrostjo od starta do cilja. Pika je vedno na sredini slike, za njo se riše pot (pri cestah zlata, pri reliju oranžna).
+   - Posnetek ima 30 sličic na sekundo. Na koncu se kamera dvigne nad cilj, nato se posnetek s kratkim prehodom začne znova.
    - Ob poti se pokažejo imena krajev (na Vršiču: Jasna, Mihov dom, Ruska kapelica, Koča na Gozdu, Erjavčeva koča), start in cilj z višino.
    - Pri reliju so ob poti tudi vmesni časi (*Split 1*, *Split 2*).
 2. **Map & profile**: zemljevid cele poti od zgoraj, pod njim višinski profil.
@@ -194,9 +195,10 @@ pip install imageio-ffmpeg
 cd maketa-menija/orodja
 node routemap.mjs maps.json                      # zemljevidi od zgoraj in 3D bloki, suhi in v dežju -> raw/maps/ (maps.json: [[proga, "top"|"block", ime, nastavitve], …])
 node flyover.mjs flyovers.json                   # posnetki preleta -> raw/maps/fly-<proga>.webm (samo nekatere: node flyover.mjs flyovers.json vrsic,gora)
+                                                 # sličice riše več brskalnikov hkrati (PARALLEL=4), ustavljen zagon nadaljuje; kakovost CRF=44
 python3 routes.py                                # raw/maps -> ../assets/maps/ in ../routes.js
 ```
 
-V `flyovers.json` so za vsako progo kamera (`back`, `up`, `ahead`), megla, barva poti in kraji ob poti (ime in metri od starta).
+V `flyovers.json` so za vsako progo hitrost pike (`speed`, m/s), kamera (`back`, `up`, `ahead`), megla, barva poti in kraji ob poti (ime in metri od starta).
 
 Uporabljajo Playwright s Chromiumom (kot testi igre). Mape `game_main/`, `game_vrsic/` in `orodja/raw/` niso v repozitoriju.

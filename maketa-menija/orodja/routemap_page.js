@@ -262,19 +262,35 @@ window.RM = (function () {
   }
 
   // a flyover (like a stage presentation): the camera follows the run from behind and above through the haze, the route drawn up to a
-  // glowing point that runs ahead; at the end it circles over the finish. flyInit prepares it, flyFrame(k) draws frame k (JPEG) and
-  // tells where the start, the finish, the point and the chosen places are on it (the menu writes their names over the video).
+  // glowing point that runs at an even speed (it only speeds up at the start and slows down at the finish); at the end the camera rises
+  // over the finish. flyInit plans every frame: the point's place along the run between the road's points (no steps), the camera's
+  // heading and aim smoothed over time (it turns gently); flyFrame(k) draws frame k (JPEG) and tells where the start, the finish, the
+  // point and the chosen places are on it (the menu writes their names over the video).
   let F = null;
-  function smooth(arr, r) { const n = arr.length, out = new Array(n); for (let i = 0; i < n; i++) { let a = 0, c = 0; for (let k = -r; k <= r; k++) { const j = Math.min(n - 1, Math.max(0, i + k)); a += arr[j]; c++; } out[i] = a / c; } return out; }
+  function smooth(arr, r) {   // a moving average; near the ends a narrower one, so the ends stay where they are
+    const n = arr.length, out = new Array(n); for (let i = 0; i < n; i++) { const q = Math.min(r, i, n - 1 - i); let a = 0; for (let k = -q; k <= q; k++) a += arr[i + k]; out[i] = a / (2 * q + 1); } return out;
+  }
+  function gauss(arr, sig) { const r = Math.ceil(sig * 3), n = arr.length, out = new Array(n); for (let i = 0; i < n; i++) { let a = 0, c = 0; for (let k = -r; k <= r; k++) { const w = Math.exp(-k * k / (2 * sig * sig)), j = Math.min(n - 1, Math.max(0, i + k)); a += arr[j] * w; c += w; } out[i] = a / c; } return out; }
+  const at = (a, u) => { const i = Math.min(a.length - 2, Math.max(0, Math.floor(u))), f = Math.min(1, Math.max(0, u - i)); return a[i] * (1 - f) + a[i + 1] * f; };
+  const ease = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  // how far along the run at x (0..1 of its time): an even speed, reached smoothly over the first `e` and lost over the last `e`
+  function glide(x, e) {
+    const G = (y) => e * (Math.pow(y / e, 3) - Math.pow(y / e, 4) / 2); x = Math.min(1, Math.max(0, x));
+    return (x < e ? G(x) : x > 1 - e ? 1 - e - G(1 - x) : e / 2 + x - e) / (1 - e);
+  }
   function flyInit(id, opt) {
-    opt = Object.assign({ W: 824, H: 560, frames: 280, orbit: 44, fov: 48, back: 520, up: 330, ahead: 260, rain: 0, shadow: 2048, color: 0xffd23a, places: [], fogNear: 900, fogFar: 3400 }, opt || {});
+    // speed: the point's even speed (m/s); end: the seconds of the rise over the finish; turn: how slowly the camera turns and aim: how
+    // gently it follows the point (seconds);
+    // cull: the trees and other repeated things are left out from this far into the haze (0 its start, 1 its end), where they hardly show
+    opt = Object.assign({ W: 660, H: 544, fps: 30, speed: 300, ease: 0.12, end: 2.4, turn: 0.8, aim: 0.3, cull: 0.75, fov: 48, back: 520, up: 330, ahead: 260, rain: 0, shadow: 2048, color: 0xffd23a, places: [], fogNear: 900, fogFar: 3400 }, opt || {});
     const Bw = build(id), T = Bw.T, pts = run(T, Bw.open, 6), box = boxOf(pts, 120), th = THEMES[Bw.def.theme] || THEMES.lake; skirt(Bw, 3000, 40);
-    getR(opt.W, opt.H); wet(Bw, opt.rain);
+    const r = getR(opt.W, opt.H); wet(Bw, opt.rain);
     const L = lights(Bw, box, opt.rain); L[1].shadow.mapSize.set(opt.shadow, opt.shadow);
-    // haze: the world fades into the theme's haze in the distance; the sky a deeper blue above it
+    r.shadowMap.autoUpdate = false; r.shadowMap.needsUpdate = true;   // nothing in the world moves: its shadows are drawn once
+    // haze: the world fades into the theme's haze in the distance; the sky a light blue above it (the horizon is near the top)
     const fogC = new THREE.Color(th.fog); Bw.sc.fog = new THREE.Fog(fogC, opt.fogNear, opt.fogFar);
     const sk = document.createElement('canvas'); sk.width = 4; sk.height = 256; const gx = sk.getContext('2d'), gg = gx.createLinearGradient(0, 0, 0, 256);
-    gg.addColorStop(0, '#4f86c9'); gg.addColorStop(0.55, '#' + new THREE.Color(th.fog).lerp(new THREE.Color(0x4f86c9), 0.35).getHexString()); gg.addColorStop(1, '#' + fogC.getHexString());
+    gg.addColorStop(0, '#78a2d6'); gg.addColorStop(0.2, '#' + new THREE.Color(th.fog).lerp(new THREE.Color(0x78a2d6), 0.3).getHexString()); gg.addColorStop(1, '#' + fogC.getHexString());
     gx.fillStyle = gg; gx.fillRect(0, 0, 4, 256); Bw.sc.background = new THREE.CanvasTexture(sk);
     // the route: a flat ribbon 1 m over the road, 14 m wide, drawn up to the point
     const n = pts.length, pos = new Float32Array(n * 2 * 3), idx = [];
@@ -290,23 +306,42 @@ window.RM = (function () {
     const cv = document.createElement('canvas'); cv.width = cv.height = 128; const x = cv.getContext('2d'), gr = x.createRadialGradient(64, 64, 0, 64, 64, 64);
     gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.15, 'rgba(255,246,190,.95)'); gr.addColorStop(0.4, 'rgba(255,214,60,.35)'); gr.addColorStop(1, 'rgba(255,214,60,0)'); x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
     const dot = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), depthTest: false, transparent: true, fog: false })); dot.renderOrder = 10; Bw.sc.add(dot);
-    const sx = smooth(pts.map(p => p.x), 60), sz = smooth(pts.map(p => p.z), 60), sy = smooth(pts.map(p => p.y), 40);
+    // the camera's path: the road smoothed (the further back the camera, the more), and how far round it looks for the road's heading
+    const rs = Math.max(8, Math.round(opt.back * 0.7 / 6)), rh = Math.max(6, Math.round(opt.back * 0.3 / 6));
+    const sx = smooth(pts.map(p => p.x), rs), sz = smooth(pts.map(p => p.z), rs), sy = smooth(pts.map(p => p.y), Math.round(rs * 2 / 3));
     const cam = new THREE.PerspectiveCamera(opt.fov, opt.W / opt.H, 5, 60000);
     const places = opt.places.map(q => { const k = Math.min(n - 1, Math.max(0, Math.round(q.d / 6))); return { n: q.n, d: q.d, p: pts[k] }; });
-    F = { Bw, pts, n, ribbon, dot, cam, sx, sz, sy, opt, box, places };
-    return { frames: opt.frames, n, raceLen: Math.round(Bw.open ? T.raceLen : T.len) };
+    // the plan of every frame: the point's place (a fraction of the road's points), the camera's heading, and where it looks: a little
+    // ahead of the point (so the point always shows, low in the middle); at the end on the finish itself
+    const px = pts.map(p => p.x), pz = pts.map(p => p.z);
+    const runF = Math.max(2, Math.round(pts[n - 1].d / (opt.speed * (1 - opt.ease)) * opt.fps)), endF = Math.max(1, Math.round(opt.end * opt.fps)), N = runF + endF;
+    const U = [], E = [], TH = [], AX = [], AY = [], AZ = [];
+    for (let k = 0; k < N; k++) {
+      const u = glide(k / (runF - 1), opt.ease) * (n - 1), a = Math.max(0, u - rh), b = Math.min(n - 1, u + rh);
+      U.push(u); E.push(ease(Math.min(1, Math.max(0, (k - runF + 1) / endF)))); TH.push(Math.atan2(at(sz, b) - at(sz, a), at(sx, b) - at(sx, a)));
+    }
+    for (let k = 1; k < N; k++) { while (TH[k] - TH[k - 1] > Math.PI) TH[k] -= 2 * Math.PI; while (TH[k] - TH[k - 1] < -Math.PI) TH[k] += 2 * Math.PI; }
+    const TS = gauss(TH, Math.max(1, opt.turn * opt.fps));
+    for (let k = 0; k < N; k++) {
+      const u = U[k], f = opt.ahead * (1 - E[k]), ua = Math.min(n - 1, u + f / 6);
+      AX.push(at(px, u) + Math.cos(TS[k]) * f); AY.push(at(sy, ua)); AZ.push(at(pz, u) + Math.sin(TS[k]) * f);
+    }
+    const sg = Math.max(1, opt.aim * opt.fps);
+    // the repeated things (their bounding spheres in the world) for leaving out the far ones; the shadows first, drawn with all of them
+    const reps = []; Bw.sc.traverse(o => { if (o.isInstancedMesh && o.visible) { if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere(); const bs = o.geometry.boundingSphere; reps.push({ o, c: bs.center.clone().applyMatrix4(o.matrixWorld), r: bs.radius }); } });
+    cam.position.set(pts[0].x, pts[0].y + opt.up, pts[0].z); cam.lookAt(pts[1].x, pts[1].y, pts[1].z); cam.updateMatrixWorld(); r.render(Bw.sc, cam);
+    F = { Bw, pts, n, ribbon, dot, cam, sx, sz, sy, opt, box, places, reps, runF, endF, N, U, TH: TS, AX: gauss(AX, sg), AY: gauss(AY, sg), AZ: gauss(AZ, sg) };
+    return { frames: N, n, fps: opt.fps, W: opt.W, H: opt.H, raceLen: Math.round(Bw.open ? T.raceLen : T.len) };
   }
-  const ease = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
   function flyFrame(k) {
-    const { Bw, pts, n, ribbon, dot, cam, sx, sz, sy, opt, places } = F, r = getR(opt.W, opt.H), N = opt.frames, O = opt.orbit;
-    const tRun = Math.min(1, k / (N - O - 1)), tEnd = Math.max(0, (k - (N - O - 1)) / O);
-    const i = Math.min(n - 1, Math.round(ease(tRun) * (n - 1))), p = pts[i];
-    ribbon.geometry.setDrawRange(0, Math.max(0, i) * 6);
+    const { Bw, pts, n, ribbon, dot, cam, sx, sz, sy, opt, places, reps, runF, endF, U, TH, AX, AY, AZ } = F, r = getR(opt.W, opt.H);
+    const u = U[k], i = Math.min(n - 2, Math.floor(u)), f = u - i, a = pts[i], b = pts[i + 1];
+    const p = { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, z: a.z + (b.z - a.z) * f, d: a.d + (b.d - a.d) * f };
+    ribbon.geometry.setDrawRange(0, i * 6);
     dot.position.set(p.x, p.y + 6, p.z); dot.scale.set(90, 90, 1);
-    const hd = (a) => { const h = Math.max(0, a - 25), q = Math.min(n - 1, a + 25); let dx = sx[q] - sx[h], dz = sz[q] - sz[h]; const l = Math.hypot(dx, dz) || 1; return [dx / l, dz / l]; };
-    let [dx, dz] = hd(i);
-    const lift = 1 + 0.6 * ease(tEnd), j = Math.min(n - 1, i + Math.round(opt.ahead * (1 - tEnd) / 6));
-    cam.position.set(sx[i] - dx * opt.back * lift, sy[i] + opt.up * lift, sz[i] - dz * opt.back * lift); cam.lookAt(sx[j], sy[j], sz[j]); cam.updateMatrixWorld();
+    const lift = 1 + 0.6 * ease(Math.min(1, Math.max(0, (k - runF + 1) / endF))), c = Math.cos(TH[k]), s = Math.sin(TH[k]);
+    cam.position.set(at(sx, u) - c * opt.back * lift, at(sy, u) + opt.up * lift, at(sz, u) - s * opt.back * lift); cam.lookAt(AX[k], AY[k], AZ[k]); cam.updateMatrixWorld();
+    const far = opt.fogNear + opt.cull * (opt.fogFar - opt.fogNear); for (const q of reps) q.o.visible = q.c.distanceTo(cam.position) - q.r < far;
     r.setClearColor(0x000000, 1); r.render(Bw.sc, cam);
     const pr = (P) => { const v = new THREE.Vector3(P.x, P.y + 4, P.z).project(cam); return [Math.round((v.x + 1) / 2 * opt.W), Math.round((1 - v.y) / 2 * opt.H), v.z < 1 && Math.abs(v.x) < 1.4 && Math.abs(v.y) < 1.4 ? 1 : 0]; };
     return { jpg: CV.toDataURL('image/jpeg', 0.9), i, d: Math.round(p.d), s: pr(pts[0]), f: pr(pts[n - 1]), p: pr(p), q: places.map(q => pr(q.p)) };

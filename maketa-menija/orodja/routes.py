@@ -87,16 +87,25 @@ for t in TRACKS:
         W2, H2 = q.size
     bp = [(round((x - bb[0]) * sc, 1), round((y - bb[1]) * sc, 1)) for x, y in B['route']]
     R['block'] = { 'W': W2, 'H': H2, 'route': thin(bp, 220), 'vis': thin(B['vis'], 220) }
-    # the flyover (version 1): the video, its first frame, and per frame [metres, start, finish, point, places]
+    # the flyover (version 1): the video, its first frame, and per frame [metres, start, finish, 0, places] where the menu shows them
+    # (the start near the start, the finish near the end, a place near it; elsewhere 0: the menu hides it there anyway)
     fj = os.path.join(RAW, 'fly-%s.json' % t)
     if os.path.exists(fj):
         F = json.load(open(fj))
-        dst = os.path.join(OUT, 'fly-%s.webm' % t)   # smaller for a phone: 660 px wide (the names still use the frame's own size)
-        if not os.path.exists(dst) or os.path.getmtime(dst) < os.path.getmtime(os.path.join(RAW, 'fly-%s.webm' % t)):
-            subprocess.run([FF, '-hide_banner', '-loglevel', 'error', '-y', '-i', os.path.join(RAW, 'fly-%s.webm' % t), '-vf', 'scale=660:-2', '-c:v', 'libvpx-vp9', '-b:v', '0', '-crf', '42',
-                            '-row-mt', '1', '-deadline', 'good', '-cpu-used', '2', '-pix_fmt', 'yuv420p', '-an', dst], check=True)
-        Image.open(os.path.join(RAW, 'fly-%s-poster.jpg' % t)).convert('RGB').save(os.path.join(OUT, 'fly-%s.webp' % t), 'WEBP', quality=70, method=6)
-        R['fly'] = { 'fps': F['fps'], 'W': F['W'], 'H': F['H'], 'places': F['places'], 'frames': F['frames'] }
+        src, dst = os.path.join(RAW, 'fly-%s.webm' % t), os.path.join(OUT, 'fly-%s.webm' % t)
+        if not os.path.exists(dst) or os.path.getmtime(dst) < os.path.getmtime(src):
+            if F['W'] <= 660: shutil.copyfile(src, dst)   # drawn at the menu's size already
+            else:   # smaller for a phone: 660 px wide (the names still use the frame's own size)
+                subprocess.run([FF, '-hide_banner', '-loglevel', 'error', '-y', '-i', src, '-vf', 'scale=660:-2', '-c:v', 'libvpx-vp9', '-b:v', '0', '-crf', '42',
+                                '-row-mt', '1', '-deadline', 'good', '-cpu-used', '2', '-pix_fmt', 'yuv420p', '-an', dst], check=True)
+        Image.open(os.path.join(RAW, 'fly-%s-poster.jpg' % t)).convert('RGB').save(os.path.join(OUT, 'fly-%s.webp' % t), 'WEBP', quality=72, method=6)
+        pd = []
+        for nm in F['places']:
+            q = next((x for x in R['places'] if x[0] == nm or nm in x[0]), None)
+            pd.append(q[1] if q else L / 3 if nm == 'Split 1' else 2 * L / 3 if nm == 'Split 2' else -1e9)
+        keep = lambda P, on: P if on and P and P[2] else 0
+        fr = [[f[0], keep(f[1], f[0] < L * 0.14), keep(f[2], f[0] > L * 0.78), 0, [keep(P, abs(f[0] - pd[i]) < L * 0.09) for i, P in enumerate(f[4])]] for f in F['frames']]
+        R['fly'] = { 'fps': F['fps'], 'W': F['W'], 'H': F['H'], 'places': F['places'], 'frames': fr }
     data[t] = R
     print(t, 'len', L, 'places', len(R['places']), 'notes', len(R.get('notes', [])), 'fly', 'fly' in R, 'block', R['block']['W'], R['block']['H'])
 
