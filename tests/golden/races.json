@@ -247,7 +247,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "6469cf205e473becbc434ff0"
+  "digest": "5e69be49162c23f2b623c217"
  },
  "gora/arcade": {
   "finished": 13,
@@ -999,6 +999,106 @@
   "nan": false,
   "digest": "33d459c564359bce5c6c6aec"
  },
+ "vrsic/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 403.91,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "b87f4c0c7b9edcf4ba8b627f"
+ },
+ "vrsic/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 439.63,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "34a769f46e74110fe1330507"
+ },
+ "vrsic/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 369.83,
+  "spins": 4,
+  "walls": 8,
+  "rescues": 0,
+  "nan": false,
+  "digest": "a7e84565ee34e7f688db9881"
+ },
+ "vrsic/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 368.69,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "6cb912485594fc3cd1190fd6"
+ },
+ "vrsic/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 403.57,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "151ee3da8b4ebc54c01ed3eb"
+ },
+ "vrsic/arcade": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 427.33,
+  "spins": 0,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "b8b21ca2252fefc7d0973625"
+ },
+ "vrsic/arcade/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 462.91,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "ae43233cd0040f583519a93d"
+ },
+ "vrsic/arcade/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 371.1,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "95c080fe4227290c2efd6cdf"
+ },
+ "vrsic/arcade/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 372.67,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "09a72533db5cf506e084fb57"
+ },
+ "vrsic/arcade/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 425.64,
+  "spins": 0,
+  "walls": 10,
+  "rescues": 0,
+  "nan": false,
+  "digest": "302ca71204e98d5f5b8dd152"
+ },
  "nring/cs": {
   "finished": 21,
   "cars": 21,
@@ -1042,12 +1142,12 @@
  "nring/cs/car": {
   "finished": 21,
   "cars": 21,
-  "winner": 443.71,
+  "winner": 443.69,
   "spins": 0,
-  "walls": 15,
+  "walls": 20,
   "rescues": 0,
   "nan": false,
-  "digest": "316e0d23610d4a4f5b30a188"
+  "digest": "737e28c2edf7f7a70248b421"
  },
  "nring/arcade": {
   "finished": 21,
@@ -1092,12 +1192,12 @@
  "nring/arcade/car": {
   "finished": 21,
   "cars": 21,
-  "winner": 474.13,
+  "winner": 474.09,
   "spins": 0,
-  "walls": 33,
+  "walls": 10,
   "rescues": 0,
   "nan": false,
-  "digest": "fd7021f6e7f8de6833b7a740"
+  "digest": "6781408444d330d74f21dd1e"
  },
  "spa/cs": {
   "finished": 13,
@@ -1142,12 +1242,12 @@
  "spa/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 324.61,
-  "spins": 1,
-  "walls": 2,
+  "winner": 324.62,
+  "spins": 0,
+  "walls": 4,
   "rescues": 0,
   "nan": false,
-  "digest": "42f6f6f332c2706213238c3f"
+  "digest": "b63814d8bc8db6ce32d8935c"
  },
  "spa/arcade": {
   "finished": 13,
@@ -1192,12 +1292,12 @@
  "spa/arcade/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 340.62,
+  "winner": 339.54,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "8f2a6165fbb5b2c54dcb66c6"
+  "digest": "312b93d045dafbdf261c8671"
  },
  "rbring/cs": {
   "finished": 13,
@@ -1242,12 +1342,12 @@
  "rbring/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 201.43,
-  "spins": 1,
-  "walls": 2,
+  "winner": 200.54,
+  "spins": 0,
+  "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "80a50f970bccd45045c78f0f"
+  "digest": "62caa203ce25bcdb1e3f0ba3"
  },
  "rbring/arcade": {
   "finished": 13,
@@ -1292,12 +1392,12 @@
  "rbring/arcade/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 208.17,
+  "winner": 207.38,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "fea83919ae77bdf66f5447a8"
+  "digest": "336eda8d7ab1f6553e927f8b"
  },
  "suzuka/cs": {
   "finished": 13,
@@ -1342,12 +1442,12 @@
  "suzuka/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 274.87,
+  "winner": 277.08,
   "spins": 0,
-  "walls": 2,
+  "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "c6a84a326bb4ba6b9f1e92bf"
+  "digest": "1694077ccee4116debb3e4c4"
  },
  "suzuka/arcade": {
   "finished": 13,
@@ -1392,11 +1492,11 @@
  "suzuka/arcade/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 293.32,
+  "winner": 292.85,
   "spins": 0,
-  "walls": 1,
+  "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "35d9bd227c3184654d0dc6e2"
+  "digest": "cc134deb27128f896e9cc09f"
  }
 }
