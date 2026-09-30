@@ -16,6 +16,24 @@ const Comm = (() => {
   const LINES = {
     intro: ['Welcome to {track}! {laps} laps, thirteen cars, and you line up {grid} on the grid.', 'Good day and welcome to {track}. {laps} laps ahead, and you start from {grid}.', 'Here we are at {track}! Thirteen cars, {laps} laps, and you start {grid}.'],
     introNet: ['Welcome to {track}! Just two cars today, {laps}: you and {name}, side by side on the front row.', 'Here we are at {track} for a duel with {name} over {laps}. May the better driver win!', 'Good day and welcome to {track}! You against {name}, {laps}. Let\'s see who takes it.'],
+    // the open road (Vršič with its traffic): the duel with one rival, the run from the police
+    introTraffic: ['Welcome to {track}, and the road is open today: traffic both ways, cyclists and people on foot. Just you and {rival}, first to the pass wins!', 'Here we are in Kranjska Gora, at the foot of {track}. A duel with {rival} through the everyday traffic. Mind the walkers in the village!', 'Welcome to {track}! No closed road this time: cars, buses and bikes coming both ways. Beat {rival} to the top!'],
+    goTraffic: ["And they're off! Watch the traffic!", 'Go! Two cars racing up an open road, what could possibly go wrong?', 'Away they go! Keep your eyes on the oncoming cars!'],
+    introPolice: ['Welcome to {track}! The police want a word with you, and they are right behind. Get over the pass without getting caught!', 'Here we are in Kranjska Gora, and the blue lights are already flashing. Twelve kilometres to the pass. Do not stop!', 'Welcome to {track}! A patrol car on your tail, spike strips and roadblocks up the mountain. Run for the top!'],
+    goPolice: ['Go, go, go! The police are coming!', 'Foot down! Here come the blue lights!', 'Away you go! Do not let them box you in!'],
+    policeJoin: ['Another patrol car has joined the chase!', 'More police coming up behind you!', 'They are calling in reinforcements!'],
+    spikes: ['Spike strip ahead! Find the gap!', 'The police have laid a stinger across the road! Look for the gap at the edge!', 'Spikes on the road! Aim for the gap!'],
+    roadblock: ['Roadblock ahead! Two patrol cars across the road!', 'They have blocked the road up ahead! There is a gap at one edge!', 'Roadblock coming up! Squeeze through or go round on the verge!'],
+    flat: ['A tyre has gone! That will cost you grip.', 'Puncture! The car is going to be a handful now.', 'The spikes got you! Careful in the bends now.'],
+    policeWreck: ['That patrol car is out of the chase!', 'One police car down!', 'The police car is finished, but they will send another!'],
+    busted: ['Busted! That is the end of the road.', 'The police have got you! Game over.', 'Caught! No escape this time.'],
+    escaped: ['You made it over the pass! The police will have to wait for another day!', 'Escaped! Over the top and away!', 'What a getaway! Right over the Vrshich pass!'],
+    pedHit: ['Watch out for the people!', 'Oh no, mind the pedestrians!', 'Careful! There are people on the road!'],
+    bikeHit: ['A cyclist down! Careful out there!', 'Oh, that cyclist did not see you coming!', 'Mind the cyclists on the edge of the road!'],
+    trafficCrash: ['Contact with the traffic!', 'Ouch, that car will need a garage.', 'Straight into the traffic! That hurt.'],
+    // a race up an open road (Vršič, the north side: 24 cobbled hairpins up to the pass)
+    introPass: ['Welcome to {track}! Thirteen cars, twelve kilometres and twenty-four hairpins up to the top, and you start {grid}.', 'Here we are in Kranjska Gora, at the foot of {track}. A race all the way up the mountain, and you line up {grid}.', 'Welcome to {track}, the Russian Road! Thirteen cars heading for the pass, and you start {grid}.'],
+    goPass: ['Lights out, and away they go, up the mountain!', "And they're off! Thirteen cars heading for the pass!", 'Green light! The pack charges up the valley!', 'Go, go, go! Next stop, the top of the pass!'],
     introOne: ['Welcome to {track}, the Green Hell! One lap of more than twenty kilometres, and you start {grid}.', 'Here we are at {track}. One lap, a full field, and you line up {grid} on the grid.', 'Welcome to {track}! Twenty kilometres of forest, crests and jumps. One lap, and you start {grid}.'],
     // the Nordschleife's famous places
     nrFlug: ['Over the Flugplatz, and the car goes light!', 'Flugplatz! Airborne over the crest!'],
@@ -101,6 +119,9 @@ const Comm = (() => {
     // start line (short lines: the welcome, said as the countdown begins, ends before the green flag; the green flag call leaves room for the first place line)
     introTT: ['Welcome to the Pikes Peak International Hill Climb, the Race to the Clouds!', 'Twelve point four miles and a hundred and fifty-six turns to the summit!', "Welcome to America's Mountain! Fourteen thousand one hundred and fifteen feet, here we come!"],
     goTT: ['Green flag at the start line... the car is away!', 'The green flag drops, and the car is away!', 'Green flag! The car is away, next stop, the clouds!'],
+    // the time trial up a mountain pass (Vršič: the hairpins, the clock)
+    introPassTT: ['Welcome to {track}! Twenty-four hairpins, most of them cobbled, and just you and the clock.', 'Here we are in Kranjska Gora, at the foot of {track}. {cps} checkpoints between you and the top of the pass.', 'Welcome to {track}! No rivals this time, only the clock. Get to the pass as fast as you can.'],
+    goPassTT: ['Green light! The clock is running!', 'Go! Attack the pass!', "And you're away! Up the hairpins!"],
     cpFirst: ['Checkpoint {cp}, {time}.', 'Through checkpoint {cp}. Keep climbing!', 'Checkpoint {cp}. Up we go!'],
     cpFast: ['Checkpoint {cp}, {delta} seconds up on your best!', 'Green split at checkpoint {cp}! {delta} seconds faster!', 'Checkpoint {cp}. You are {delta} seconds ahead of your record pace!'],
     cpEven: ['Checkpoint {cp}, dead level with your best split!', 'Checkpoint {cp}. Right on your record pace, not a hair in it!'],

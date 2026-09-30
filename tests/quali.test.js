@@ -16,7 +16,7 @@ const runLap = (r, car, drive) => { let t = 0; const cap = r.track.len / 8 + 120
 
 // 1. the run-up: 120-400 m on every circuit, from the exit of the last corner before the line
 {
-  const bk = C.TRACKS.filter(d => !d.timeTrial).map(d => { const T = track(d.id); return [d.id, T.qualiBack()]; });
+  const bk = C.TRACKS.filter(d => !d.timeTrial && !d.open).map(d => { const T = track(d.id); return [d.id, T.qualiBack()]; });
   check('run-up to the flying lap: 120-400 m before the line on every circuit', bk.every(([, b]) => b >= 120 && b <= 400), bk.map(([id, b]) => id + ' ' + Math.round(b)).join(', '));
 }
 
