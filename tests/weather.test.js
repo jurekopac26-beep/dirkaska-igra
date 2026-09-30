@@ -15,10 +15,10 @@ const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? '
 const track = (id) => new C.Track(C.TRACKS.find(d => d.id === id));
 const f3 = (x) => (Number.isFinite(x) ? x.toFixed(3) : String(x));
 
-// 1. sector times: a race on the Red Bull Ring on autopilot
+// 1. sector times: a race on the Jezero Ring on autopilot (the thirds of a lap; the Red Bull Ring times its own TV sectors: races.test.js)
 {
   Math.random = seeded(41);
-  const T = track('rbring'), r = new C.Race(T, { numAI: 3, playerGrid: 4, laps: 2, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 3, difficulty: 1, damage: 0 });
+  const T = track('jezero'), r = new C.Race(T, { numAI: 3, playerGrid: 4, laps: 2, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 3, difficulty: 1, damage: 0 });
   r.start(); const P = r.player; let t = 0, evs = 0, last = 0;
   while (!P.finished && t < 400) { C.aiControl(P, r, DT); r.step(DT); t += DT; if (P.sec && P.sec.ev !== last) { last = P.sec.ev; evs++; } }
   const S = P.sec, lap2 = P.lapTimes[1], sum2 = S.prev[0] + S.prev[1] + S.prev[2];

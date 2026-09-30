@@ -18,6 +18,8 @@ try {
   // step the race (paused, on autopilot), then let two frames draw the HUD (it is updated only while the race runs) and pause again
   const sim = (t) => page.evaluate((t) => new Promise(res => { const g = window.__game; g.pause(); g.sim(t, true); g.resume();
     requestAnimationFrame(() => requestAnimationFrame(() => { g.pause(); res(); })); }), t);
+  // on until the race clock (from the lights) reads t: however long the intro before the lights is (the Red Bull Ring's jets fly over first)
+  const simTo = async (t) => { for (let k = 0; k < 40; k++) { const r = await page.evaluate(() => { const R = window.__game.race; return R.state === 'racing' ? R.time : -1; }); if (r >= t) return; await sim(Math.min(3, r < 0 ? 3 : t - r + 0.02)); } };
 
   // 1. the track screen: the set-up per track, the changing weather
   await act('to-track'); await page.waitForTimeout(300);
@@ -36,7 +38,7 @@ try {
   await sim(0.05);   // (two frames drawn: the HUD)
   const h0 = await hud();
   T.check('the race: the set-up of the track on the car, slicks, the tyres on the HUD', h0.setup.wing === 0 && h0.setup.gear === 2 && h0.ty.k === 'dry' && h0.tyre === 'on dry:SUHE 100%' && h0.sec.join() === ':S1,:S2,:S3', JSON.stringify(h0));
-  await sim(27);
+  await simTo(22);
   const h1 = await hud();
   T.check('the rain starts: "DEŽ", the hint to come in for rain tyres', h1.rain > 0 && h1.msg === 'DEŽ' && h1.msgOn && /dežne gume/.test(h1.toast), JSON.stringify(h1));
   await page.evaluate(() => { window.__game.race.player.pitWant = true; });   // (the autopilot takes the pit lane next time by)
@@ -54,7 +56,7 @@ try {
   await page.evaluate(() => { window.__game.wxNext = { rain: 1, wx: { at: 8, dur: 6, to: 0 } }; });
   await startTrack(page, 'rbring');
   const d0 = await hud();
-  await sim(26); const d1 = await hud();
+  await simTo(21); const d1 = await hud();
   await sim(60); const d2 = await hud();
   const line = await page.evaluate(() => { let m = null; Render.scene.traverse(o => { if (o.isMesh && o.renderOrder === 1 && o.geometry.attributes.color && o.geometry.attributes.color.itemSize === 4) m = o; }); return m && { vis: m.visible, op: +m.material.opacity.toFixed(2) }; });
   T.check('the rain stops: rain tyres at the start, "DEŽ JE PONEHAL", the road still wet', d0.ty.k === 'wet' && d0.rain === 1 && d1.rain === 0 && d1.msg === 'DEŽ JE PONEHAL' && d1.water > 0.8, JSON.stringify({ d0: d0.ty, d1 }));

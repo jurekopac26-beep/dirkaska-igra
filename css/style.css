@@ -53,7 +53,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-times { position: absolute; left: 50%; top: calc(6px + var(--st)); transform: translateX(-50%); text-align: center; }
 #h-time { font: 700 italic clamp(17px, 5.4vh, 28px)/1 var(--f-ui); color: var(--lcd); letter-spacing: .04em; text-shadow: 0 2px 0 rgba(0,0,0,.6), 0 0 10px rgba(255,190,40,.25); font-variant-numeric: tabular-nums; }
 #h-best { margin-top: 2px; font: 600 italic clamp(10px, 2.9vh, 14px)/1 var(--f-ui); color: var(--lcd); opacity: .9; text-shadow: 0 1px 2px #000; font-variant-numeric: tabular-nums; }
-#h-sec { display: flex; gap: 3px; justify-content: center; margin-top: 3px; }   /* sector times: S1-S3 of the lap under way */
+#h-sec { display: flex; gap: 3px; justify-content: center; margin-top: 3px; }   /* sector times: S1-S3 of the lap under way (a circuit's TV sectors, else the thirds of the lap) */
 #h-sec i { min-width: 3.4em; padding: 1px 4px; border-radius: 3px; font: 700 italic clamp(9px, 2.5vh, 12px)/1.2 var(--f-ui); font-style: normal; color: #d8dde6; background: rgba(10, 13, 18, 0.55); border-bottom: 2px solid rgba(255, 255, 255, 0.18); font-variant-numeric: tabular-nums; }
 #h-sec i.ob { border-color: #b45cff; color: #e3c4ff; }   /* the fastest of anyone */
 #h-sec i.pb { border-color: var(--meter); color: #d6ffb8; }   /* the player's best */
@@ -64,6 +64,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-split.fast, #h-msg.fast { color: var(--meter); }
 #h-split.slow { color: var(--curb); }
 #h-split.even { color: var(--chalk); }
+#h-split.sp { color: #c77dff; } #h-split.sg { color: #5ee36a; } #h-split.sy { color: #ffd23a; }   /* a TV sector: purple, green, yellow */
 /* time trial finish: compact splits table under the finish time (this run, the previous record, the difference) */
 #h-ttsp { display: none; position: absolute; left: 50%; top: calc(40% + clamp(28px, 10vh, 56px) + 10px); transform: translateX(-50%); padding: 4px 8px; background: rgba(10, 14, 20, .6); border-radius: 6px; font: 700 clamp(10px, 2.9vh, 13px)/1.25 var(--f-ui); font-variant-numeric: tabular-nums; color: var(--chalk); text-shadow: 0 1px 2px #000; }
 #h-ttsp.show { display: table; }
@@ -90,6 +91,11 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-lights.go i { background: #29e05a; box-shadow: 0 0 14px #2cff66; }
 #h-msg { position: absolute; left: 0; right: 0; top: 40%; text-align: center; font: 400 italic clamp(28px, 10vh, 56px)/1 var(--f-display); color: var(--chalk); text-shadow: 3px 4px 0 rgba(0,0,0,.55); opacity: 0; transform: scale(.9); transition: opacity .2s, transform .2s; }
 #h-msg.show { opacity: 1; transform: scale(1); }
+#hud.shot > *:not(#podium-cap) { visibility: hidden; }   /* a TV shot (the jets before the start, the podium): no HUD */
+#podium-cap { position: absolute; left: 50%; bottom: calc(10px + var(--sb, 0px)); transform: translateX(-50%); display: flex; gap: 14px; padding: 6px 14px; border-radius: 6px; background: rgba(12,16,40,.72); font: 700 italic clamp(12px, 3.4vh, 18px)/1.2 var(--f-ui); color: var(--chalk); white-space: nowrap; opacity: 0; transition: opacity .4s; pointer-events: none; }
+#podium-cap.show { opacity: 1; }
+#podium-cap b { color: #ffcf2e; }
+#podium-cap i { display: inline-block; width: .7em; height: .7em; margin: 0 .3em 0 .15em; border-radius: 2px; vertical-align: -.05em; }
 #h-msg.warn { color: var(--curb); }
 #h-msg.gold { color: var(--lcd); }
 #speedo { position: relative; margin-top: 2px; margin-left: -6px; width: clamp(120px, 36vh, 168px); height: clamp(75px, 22.5vh, 105px); }

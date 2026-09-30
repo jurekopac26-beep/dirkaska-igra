@@ -17,7 +17,7 @@
   };
   const CTRL_HELP_CS = 'Levi palec: levo in desno, desni: plin in zavora. Drži smer – avto sam zadrsa z nosom v ovinek in se na izhodu sam poravna; zavora v ovinku ga zavrti.';
   const CTRL_NAME = { buttons: 'Tipke', wheel: 'Volan', tilt: 'Nagib' };
-  const CAR_DESC = { kaze: 'Rad obrne rep, rojen za drift.', vortex: 'Veliko oprijema, stabilen tudi na robu.', pico: 'Lahek in okreten, rad podvija.', strega: 'Oster in živahen, hitro zavrti.', rally: 'Relijski dirkač iz 80-ih, ogromno moči, rojen za drift.', p206: 'Pravi 3D model, lahek in natančen v ovinkih.' };
+  const CAR_DESC = { kaze: 'Rad obrne rep, rojen za drift.', vortex: 'Veliko oprijema, stabilen tudi na robu.', pico: 'Lahek in okreten, rad podvija.', strega: 'Oster in živahen, hitro zavrti.', rally: 'Relijski dirkač iz 80-ih, ogromno moči, rojen za drift.', p206: 'Pravi 3D model, lahek in natančen v ovinkih.', formula: 'Odprta kolesa in krila, ki ga pri hitrosti pritisnejo ob cesto. Zavira izjemno, na travi in makadamu pa drsi. Z njim dirkaš proti samim formulam.' };
 
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
@@ -118,7 +118,10 @@
   let bg = 'demo';            // what renders behind menus: demo | show | race
   let screen = 'title';       // title | car | upg | track | board | settings | pause | results | none
   let settingsReturn = 'title';
-  let phase = 'none';         // intro | lights | racing | finish | done
+  let phase = 'none';         // intro | lights | racing | finish | podium | done
+  let introLen = 1.3;         // s of the intro before the lights (longer on the Red Bull Ring: the jets' fly-over)
+  const JET_SHOT = 6.1;       // (the jets' shot: from their start 470 m up the straight until they are nearly overhead)
+  const PODIUM_T = 8;         // s on the podium (the Red Bull Ring) before the results
   let phaseT = 0, lightsOn = 0, holdT = 0;
   let paused = false;
   let acc = 0, last = 0;
@@ -627,7 +630,7 @@
       if (!G.r) { G.r = new Core.Race(track, { numAI: Q.nAI, aiOrder: [G.k], noPlayer: true, laps: 1, qualiBack: Q.back, difficulty: Q.diff, phys: Q.phys, rain: Q.rain, seed: Q.seed, damage: 0 }); G.r.start(); G.t = 0; }
       const c = G.r.cars[0];
       for (let n = 0; n < 240 && !c.finished && G.t < cap; n++) { G.r.step(STEP); G.t += STEP; }
-      if (c.finished || G.t >= cap) { G.times[G.k] = { k: G.k, name: c.name, car: c.m.name, color: c.color, time: c.finished && c.lapTimes[0] > 0 ? c.lapTimes[0] : Infinity, sec: c.finished && c.sec ? c.sec.best.slice() : null }; G.k++; G.r = null; }   // (a lap never finished: last)
+      if (c.finished || G.t >= cap) { G.times[G.k] = { k: G.k, name: c.name, car: c.m.name, color: c.color, time: c.finished && c.lapTimes[0] > 0 ? c.lapTimes[0] : Infinity, sec: !c.finished ? null : c.sec ? c.sec.best.slice() : c.secPB ? c.secPB.slice() : null }; G.k++; G.r = null; }   // (a lap never finished: last)
       if (performance.now() - t0 > ms) break;
     }
     return G.k >= Q.nAI;
@@ -685,11 +688,15 @@
     Render.resetCam();
     adaptBreak();
     bg = 'race'; phase = 'intro'; phaseT = 0; lightsOn = 0; lastBeepLight = 0; paused = false; acc = 0;
-    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; dmgKey = ''; pitHint = false; drsN = 0; wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
+    introLen = 1.3; endPodium();
+    { const air = Render.world && Render.world.air;   // the Red Bull Ring: first the jets over the grid, filmed from the grid (not online, not in a time trial or qualifying)
+      if (air && !on && !tt && !quali) { air.go = true; introLen += JET_SHOT; Render.setShot(air.shot); $('hud').classList.add('shot'); } }
+    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; dmgKey = ''; pitHint = false; drsN = 0; secN = 0; wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
     $('h-msg').className = ''; $('h-split').className = ''; $('h-note').className = '';
     $('h-lights').className = ''; setLights(0, false);
     $('h-tot').textContent = quali ? '' : '/' + race.cars.length;
     $('hud').classList.toggle('drs', !!race.drsLast); $('h-drs').className = '';   // (a circuit with DRS zones)
+    $('hud').classList.toggle('sec', !!race.secBest);   // (a circuit with TV sectors)
     $('hud').classList.toggle('tt', race.timeTrial); $('pause-restart').textContent = race.timeTrial ? 'Ponovi ' + ttRun(track.def) : quali ? 'Ponovi krog' : 'Ponovi dirko';
     $('pause-skip').classList.toggle('off', !quali);
     $('pause-restart').classList.toggle('off', !!on);   // (online: no restart for one)
@@ -725,8 +732,21 @@
     Sfx.resume(); Sfx.setRunning(true);
     showScreen('none');
   }
+  // a TV shot the world directs (Render.setShot: the jets before the start, the podium) ends: the game's camera and the HUD back
+  function shotOff() { Render.setShot(null); $('hud').classList.remove('shot'); }
+  // the Red Bull Ring's podium after the race: the first three (in the order of the results) on the pit building's roof, champagne, the names
+  // under it; then the results
+  function startPodium(pod) {
+    phase = 'podium'; phaseT = 0;
+    const top = race.estimateResults().slice(0, 3).map(r => r.car), rgb = (h) => [(h >> 16 & 255) / 255, (h >> 8 & 255) / 255, (h & 255) / 255];
+    pod.show(top.map(c => rgb(c.color)));
+    Render.setShot(pod.shot); $('hud').classList.add('shot');
+    const el = $('podium-cap'); el.innerHTML = top.map((c, i) => '<span><b>' + (i + 1) + '.</b> <i style="background:' + hexCss(c.color) + '"></i>' + esc(c.isPlayer ? 'Ti' : c.name) + '</span>').join(''); el.className = 'show';
+    const w = top[0]; Comm.say(w && w.isPlayer ? 'podiumMe' : 'podiumRb', { name: w ? w.name : '' }, 3);
+  }
+  function endPodium() { const pod = Render.world && Render.world.podium; if (pod) pod.hide(); $('podium-cap').className = ''; shotOff(); }
   function toTitle() {
-    champRecord(); champRun = false; replay = null; recd = null; $('replay-ui').classList.add('off');
+    endPodium(); champRecord(); champRun = false; replay = null; recd = null; $('replay-ui').classList.add('off');
     paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); ghRec = ghPlay = ghLap = null; qual = null; Render.setGhost(null, true);
     Sfx.setRunning(false); Sfx.silence();
     Render.attachRace(demo); Render.resetCam();
@@ -984,14 +1004,14 @@
     if (race.fl) { const F = race.fl; if (F.ev !== flSeen) { flSeen = F.ev; flagEvent(F.evK, P); } if (F.pev !== flPSeen) { flPSeen = F.pev; flagPlayer(F.pevK); } }
     if (race.wst && race.wst.tyres && P.ty && !dryHint && P.ty.k === 'wet' && race.wst.wx && race.wst.line < 0.12 && race.rain === 0 && phase === 'racing' && !P.finished) {   // (the line is dry: time for slicks)
       dryHint = true; toast('Idealna linija je suha: dežne gume se na suhem hitro obrabijo. Zapelji v bokse po suhe gume.', 4600); Comm.say('dryLine', null, 2); }
-    if (track.def.pit && !pitHint && dmgOn() && P.dmg > 0.45 && phase === 'racing') { pitHint = true; toast('Avto je poškodovan: zapelji v bokse (desno takoj za zadnjim ovinkom pred ciljno ravnino), mehaniki ga popravijo.', 4600); }
+    if (track.def.pit && !pitHint && dmgOn() && P.dmg > 0.45 && phase === 'racing') { pitHint = true; Comm.say('pitAdvice', null, 3); }   // (the commentator tells where the pits are, no text on the screen)
     if (P.pitState === 'repair' && (!Render.crew || !Render.crew.P || Render.crew.gunOn)) { pitWrenchT -= dt; if (pitWrenchT <= 0) { pitWrenchT = 0.28 + Math.random() * 0.35; Sfx.wrench(); } }   // (with the crew: while the wheel guns rattle)
     if (P.propSnd) { Sfx.knock(P.propSnd, P.propSndV); if (P.propSndV > 9 && (P.propSnd === 'tstack' || P.propSnd === 'bstack' || P.propSnd === 'rbstack' || P.propSnd === 'crate')) vibrate(25); P.propSnd = null; P.propSndV = 0; }   // knocked a cone, tyres or bales
     for (const c of race.cars) { c.hitWall = 0; c.hitCar = 0; c.hitDebris = 0; }
   }
 
   /* ---------------- pit stops ---------------- */
-  let pitWrenchT = 0, pitHint = false, drsN = 0, pitFix = false;
+  let pitWrenchT = 0, pitHint = false, drsN = 0, secN = 0, pitFix = false;
   // a changing weather (Race opts weather) and tyres (opts tyres): the rain starts or stops (race.wst.ev), the tyres on the HUD
   let wxSeen = 0, dryHint = false, tyreKey = '';
   // flags (Race opts flags): a yellow flag where a car has stopped, the safety car after a heavy crash, the player overtaking under them
@@ -1039,27 +1059,31 @@
     const el = $('h-tyre'); el.className = on ? 'on ' + P.ty.k + (left < 35 ? ' worn' : '') + (bad ? ' bad' : '') : '';
     el.textContent = on ? (P.ty.k === 'wet' ? 'DEŽNE ' : 'SUHE ') + left + '%' : '';
   }
-  // sector times on the HUD (Race._sectors): the cells of the lap under way; purple: the fastest of anyone (in qualifying: faster than every
-  // rival's lap so far), green: the player's best (ever on this track, or in this race), yellow: slower. The bests go to the records at the end
-  let secSeen = 0, secRec = null, secMine = [Infinity, Infinity, Infinity];
+  // sector times on the HUD (Race._sectors: a circuit's TV sectors; Race._thirds elsewhere): the cells of the lap under way; purple: the
+  // fastest of anyone (in qualifying: faster than every rival's lap so far), green: the player's best of this race, yellow: slower. The time
+  // of sectors 1 and 2 also under the clock. The player's best sectors go to the track's records at the end (records.tracks[id].bestSec)
+  let secSeen = 0, secMine = [Infinity, Infinity, Infinity];
   const secTxt = (t) => t >= 60 ? fmt(t, true) : t.toFixed(t < 10 ? 3 : 2);
-  function secReset() { secSeen = 0; secMine = [Infinity, Infinity, Infinity]; const R0 = rec(track.def.id); secRec = Array.isArray(R0.bestSec) && R0.bestSec.length === 3 ? R0.bestSec.map(v => posNum(v) ? v : Infinity) : null;
+  function secReset() { secSeen = 0; secMine = [Infinity, Infinity, Infinity];
     [...$('h-sec').children].forEach((el, j) => { el.textContent = 'S' + (j + 1); el.className = ''; }); }
-  function secHUD(P) {
-    const S = P.sec; if (!S || S.ev === secSeen) return;
-    secSeen = S.ev; const k = S.evK, t = S.evT, cells = $('h-sec').children;
+  function secHUD(P) {   // a sector done: from the circuit's TV sectors (Race._sectors, P.secEv) or the thirds of the lap (Race._thirds, P.sec)
+    let k, t, ob;
+    if (P.secEv) { k = P.secEv[0]; t = P.secEv[1]; ob = P.secEv[2] === 'p'; P.secEv = null; }
+    else { const S = P.sec; if (!S || S.ev === secSeen) return; secSeen = S.ev; k = S.evK; t = S.evT; ob = S.evOb; }
+    const cells = $('h-sec').children;
     if (k === 0) for (let j = 1; j < 3; j++) { cells[j].textContent = 'S' + (j + 1); cells[j].className = ''; }   // (a new lap: its first sector)
-    let ob = S.evOb;
     if (race.quali && qual && qual.sims) for (const e of qual.sims.times) if (e && e.sec && !(t < e.sec[k])) { ob = false; break; }   // (qualifying: against the rivals' laps done so far)
     if (race.quali && !(qual && qual.sims && qual.sims.times.some(e => e && e.sec))) ob = false;
-    const pb = t < Math.min(secMine[k], secRec ? secRec[k] : Infinity);
+    const pb = t < secMine[k];
     secMine[k] = Math.min(secMine[k], t);
     cells[k].textContent = 'S' + (k + 1) + ' ' + secTxt(t); cells[k].className = ob ? 'ob' : pb ? 'pb' : 'sl';
+    if (k < 2 && !P.finished) { const el = $('h-split'); el.textContent = 'SEKTOR ' + (k + 1) + '  ' + (t >= 60 ? fmt(t) : t.toFixed(3)); el.className = 'show s' + (ob ? 'p' : pb ? 'g' : 'y'); splitT = 2.6; cornerShow = false; }   // (the third's time: the lap's)
+    if (ob && phase === 'racing') { Sfx.beep(1175, 0.06, 0.07); if (secN++ % 3 === 0) Comm.say('secPurple', { n: k + 1 }, 1); }   // (the commentator: now and then)
   }
   function secSave() {   // the player's best sectors of this race into the records (per sector)
-    const P = race && race.player; if (!P || !P.sec || race.timeTrial || (mp && mp.race)) return;
+    const P = race && race.player; if (!P || !(P.sec || P.secPB) || race.timeTrial || (mp && mp.race)) return;
     const R0 = rec(track.def.id), B = Array.isArray(R0.bestSec) && R0.bestSec.length === 3 ? R0.bestSec.slice() : [Infinity, Infinity, Infinity];
-    let ch = false; for (let k = 0; k < 3; k++) if (P.sec.best[k] < B[k]) { B[k] = +P.sec.best[k].toFixed(4); ch = true; }
+    const PB = P.sec ? P.sec.best : P.secPB || []; let ch = false; for (let k = 0; k < 3; k++) if (PB[k] < B[k]) { B[k] = +PB[k].toFixed(4); ch = true; }
     if (ch) { R0.bestSec = B.map(v => isFinite(v) ? v : null); saveRecords(); }
   }
   function pitEvent(e) {
@@ -1370,6 +1394,7 @@
 
   /* ---------------- commentator (English) ---------------- */
   const PART_EN = { bumperF: 'front bumper', bumperR: 'rear bumper', hood: 'bonnet', trunk: 'boot lid', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'front wing', fenderR: 'front wing' };
+  const PART_EN_F = { bumperF: 'front wing', bumperR: 'rear wing', hood: 'nose cone', trunk: 'engine cover', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'bargeboard', fenderR: 'bargeboard' };   // (the formula's parts)
   const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', ouninpohja: 'Ouninpohja', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka' };
   const cev = { wall: 0, car: 0 };          // impacts collected per physics step
   let cs = null;
@@ -1410,8 +1435,8 @@
     if (P.air && cs.jumpRoll && !cs.jumpSaid && P.airT > 0.45 && cool('jump', 9)) { cs.jumpSaid = true; Comm.say('jump', null, 1); }
     if (!P.air && cs.wasAir) { if (!cs.jumpSaid && (P.impactVY || 0) < -10 && cool('land', 12)) Comm.say('land', null, 1); cs.jumpSaid = false; }
     cs.wasAir = !!P.air;
-    { const n = Object.keys(P.lost).length; if (n > (cs.lostN || 0)) { const last = Object.keys(P.lost)[n - 1]; cs.lostN = n; if (cool('part', 6)) Comm.say('partLost', { part: PART_EN[last] || 'a panel' }, 2); } }
-    if (dmgOn() && P.dmg > 0.5 && !cs.dmg1) { cs.dmg1 = true; Comm.say('damage', null, 2); }
+    { const n = Object.keys(P.lost).length; if (n > (cs.lostN || 0)) { const last = Object.keys(P.lost)[n - 1]; cs.lostN = n; if (cool('part', 6)) Comm.say('partLost', { part: (P.m.body === 'formula' ? PART_EN_F : PART_EN)[last] || 'a panel' }, 2); } }
+    if (dmgOn() && P.dmg > 0.5 && !cs.dmg1) { cs.dmg1 = true; if (!pitHint) Comm.say('damage', null, 2); }   // (on a track with pits the pit advice said it already)
     if (dmgOn() && P.dmg > 0.8 && !cs.dmg2) { cs.dmg2 = true; Comm.say('heavyDamage', null, 3); }
     // knocked-over trackside props
     if (P.propKnock) { const k = P.propKnock, key = k === 'cone' ? 'propCone' : k === 'tyre' || k === 'tstack' ? 'propTyre' : k === 'bale' || k === 'bstack' || k === 'rbale' || k === 'rbstack' ? 'propBale' : k === 'pylon' ? 'propPylon' : k === 'post' ? 'propPost' : 'propCrate';
@@ -1447,7 +1472,8 @@
     if (on && (phase === 'intro' || phase === 'lights')) phaseT = (Net.now() - on.at) / 1000 - (phase === 'lights' ? 1.3 : 0);   // online: both phones follow the host's clock
     if (phase === 'intro' && phaseT > 1.3 && race.quali) {   // qualifying: no lights, the clock starts at the line
       phase = 'racing'; phaseT = 0; race.start(); showMsg('ČAS SE ZAČNE NA ČRTI', 'gold', 1.6); Comm.say('qualiGo', null, 3);
-    } else if (phase === 'intro' && phaseT > 1.3) {
+    } else if (phase === 'intro' && phaseT > introLen) {
+      if (introLen > 1.3) shotOff();   // (the jets' shot is over: the game's camera again)
       phase = 'lights'; phaseT = on ? phaseT - 1.3 : 0; $('h-lights').classList.add('show');
       holdT = on ? on.hold : 0.5 + Math.random() * 0.9;
       if (S.control === 'tilt' && Input.tiltAlive()) Input.calibrate();
@@ -1492,7 +1518,10 @@
         Input.reset();
       }
     } else if (phase === 'finish' && phaseT > 4.2) {
-      finishRace();
+      const pod = Render.world && Render.world.podium;
+      if (pod && !on && !race.timeTrial) startPodium(pod); else finishRace();
+    } else if (phase === 'podium' && phaseT > PODIUM_T) {
+      endPodium(); finishRace();
     }
   }
 
@@ -1530,7 +1559,7 @@
   function netTap() { if (S.control === 'tilt') enableTilt(true); Comm.unlock(); }
 
   function leaveRace() {   // the race (or its results) off the screen, the title demo back
-    Net.fixClock(false);
+    Net.fixClock(false); endPodium();
     paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); Sfx.setRunning(false); Sfx.silence();
     Render.attachRace(demo); Render.resetCam(); setLights(0, false);
   }
@@ -1773,12 +1802,18 @@
     const items = padItems(); if (!items.length) return;
     if (!items.includes(padSel)) { padFocus(padHome()); return; }
     const r0 = padSel.getBoundingClientRect(), x0 = r0.left + r0.width / 2, y0 = r0.top + r0.height / 2, h = dir === 'left' || dir === 'right';
-    let best = null, bd = Infinity;
-    for (const el of items) {
-      if (el === padSel) continue;
-      const r = el.getBoundingClientRect(), dx = r.left + r.width / 2 - x0, dy = r.top + r.height / 2 - y0;
-      const main = dir === 'left' ? -dx : dir === 'right' ? dx : dir === 'up' ? -dy : dy, d = main + (h ? Math.abs(dy) : Math.abs(dx)) * 2.5;
-      if (main > 4 && d < bd) { bd = d; best = el; }
+    // the nearest that way: first among those within about 55 degrees of it (a wide card's neighbour before a button just beside and
+    // below it), else any that way
+    let best = null;
+    for (const cone of [true, false]) {
+      let bd = Infinity;
+      for (const el of items) {
+        if (el === padSel) continue;
+        const r = el.getBoundingClientRect(), dx = r.left + r.width / 2 - x0, dy = r.top + r.height / 2 - y0;
+        const main = dir === 'left' ? -dx : dir === 'right' ? dx : dir === 'up' ? -dy : dy, perp = h ? Math.abs(dy) : Math.abs(dx), d = main + perp * 2.5;
+        if (main > 4 && (!cone || perp <= main * 1.45) && d < bd) { bd = d; best = el; }
+      }
+      if (best) break;
     }
     if (best) padFocus(best);
   }
