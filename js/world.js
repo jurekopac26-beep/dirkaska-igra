@@ -10358,10 +10358,10 @@ const World = (function () {
     }
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
-  const SZ_FAN = [   // the fans' banners [background, text, text, size, stripe]
-    ['#d3232a', '#fff', 'GO GO SUZUKA!', 32], ['#f7f7f4', '#d3232a', 'ARIGATO!', 40, '#d3232a'], ['#16181c', '#ffd21f', 'FULL THROTTLE', 30], ['#1a3f8f', '#fff', 'BANZAI!', 42],
-    ['#f7f7f4', '#16181c', 'I LOVE SUZUKA', 32, '#16181c'], ['#ff7a1a', '#fff', 'GANBARE!', 40], ['#16181c', '#fff', '130R', 46, '#d3232a'], ['#2a9d4b', '#fff', 'NIPPON', 42],
-    ['#ffd21f', '#16181c', 'SINCE 1962', 38], ['#f7f7f4', '#1a3f8f', 'S-CURVES CLUB', 30, '#1a3f8f']];
+  const SZ_FAN = [   // the fans' banners [background, text, text, size, stripe] (invented: no real name of a brand, person or place but the region's and the country's)
+    ['#d3232a', '#fff', 'GO GO MIE!', 36], ['#f7f7f4', '#d3232a', 'ARIGATO!', 40, '#d3232a'], ['#16181c', '#ffd21f', 'FOOT DOWN!', 36], ['#1a3f8f', '#fff', 'BANZAI!', 42],
+    ['#f7f7f4', '#16181c', 'I LOVE RACING', 32, '#16181c'], ['#ff7a1a', '#fff', 'GANBARE!', 40], ['#16181c', '#fff', 'NO LIFT!', 42, '#d3232a'], ['#2a9d4b', '#fff', 'NIPPON', 42],
+    ['#ffd21f', '#16181c', 'FIGURE EIGHT', 32], ['#f7f7f4', '#1a3f8f', 'S-CURVES CLUB', 30, '#1a3f8f']];
   const SZ_DRS = (B) => B + 8 + SZ_FAN.length + SZ_FLAG.length;   // the atlas cell of the DRS boards (B: the corner names' count)
   const SZ_FLAG = [['#f7f7f4', 'sun'], ['#f7f7f4', 'sun'], ['#f7f7f4', 'sun'], ['#d3232a', '#f7f7f4'], ['#1a3f8f', '#f7f7f4'], ['#2a9d4b', '#f7f7f4'], ['#ff7a1a', '#f7f7f4']];   // (Japan's, and the fans' own colours with a white band)
   function szGrassTex(aniso) {   // Suzuka's lawns under the vertex colours (256 px = 14 m, tileable, no mowing stripes: the vertex colours mow them): a fresh
@@ -10389,7 +10389,7 @@ const World = (function () {
     names.forEach((n, k) => cell(k, '#f4f4f0', '#d3232a', n.toUpperCase(), n.length > 13 ? 28 : 34, '#d3232a'));
     const B = names.length;
     for (let k = 0; k < 3; k++) cell(B + k, '#f4f4f0', '#111', String((k + 1) * 100), 44, '#111');   // braking boards 100 / 200 / 300
-    cell(B + 3, '#16181c', '#fff', 'START · FINISH', 34); cell(B + 4, '#d3232a', '#fff', 'SUZUKA', 44); cell(B + 5, '#f4f4f0', '#d3232a', 'SUZUKA', 44); cell(B + 6, '#1a3f8f', '#fff', 'JAPAN', 42);
+    cell(B + 3, '#16181c', '#fff', 'START · FINISH', 34); cell(B + 4, '#d3232a', '#fff', 'MIE · JAPAN', 44); cell(B + 5, '#f4f4f0', '#d3232a', 'MIE · JAPAN', 44); cell(B + 6, '#1a3f8f', '#fff', 'JAPAN', 42);
     // the fans' banners on the catch fences (SZ_FAN: their cells from B + 7 on), then the flags on poles (SZ_FLAG: the flag in the cell's first 96 x 64)
     SZ_FAN.forEach(([bg, fg, txt, px, st], k) => cell(B + 7 + k, bg, fg, txt, px, st));
     { const k = B + 7 + SZ_FAN.length, cx = (k % 4) * 256, cy = Math.floor(k / 4) * 64;   // a banner: the rising sun on white
@@ -11003,16 +11003,16 @@ const World = (function () {
       exclPush(x, z, 5); CR.avoid(x, z, 2.5);
     }
     T.names.forEach((q, k) => { const s = sAt(q.d - 60), i = T.idx(s); if (nearX(i, 50)) return; signPost(s, roomSide(s), 1.6, k, 3.4, 0.85, 1.2); });
-    for (const n of ['Prvi ovinek', 'Lasnica', 'Casio Triangle', 'Spoon']) {   // 300 / 200 / 100 boards before the heavy braking zones
+    for (const n of ['Zavoj 1', 'Zavoj 11', 'Zavoj 16', 'Zavoj 13']) {   // 300 / 200 / 100 boards before the heavy braking zones
       const d0 = nameD(n); if (d0 == null) continue;
       let at = d0, bk = 0; for (let dd = -40; dd <= 60; dd += 2) { const kk = Math.abs(T.k[T.idx(sAt(d0 + dd))]); if (kk > bk) { bk = kk; at = d0 + dd; } }   // the corner's apex
       const turn = T.corners.find(c => Math.abs(dS(c.s0) - at) < 120), s0 = turn ? dS(turn.s0) : at - 40, side = turn ? -turn.dir : -1;
       for (let m = 1; m <= 3; m++) signPost(sAt(s0 - m * 100), side, 1.4, AB + m - 1, 1.3, 0.75, 0.9);
     }
-    for (const d of [-200, -120, 120, 200]) { const s = sAt(d), q = crAt(s); if (!q) continue; const off = -(q.bl + 1.2), x = q.px + q.nx * off, z = q.pz + q.nz * off; board(x, T.hy[q.i] + 1.5, z, -q.nx, -q.nz, 9, 1.6, AB + 4 + ((d > 0) | 0)); }   // SUZUKA banners on the wall of the main grandstand
+    for (const d of [-200, -120, 120, 200]) { const s = sAt(d), q = crAt(s); if (!q) continue; const off = -(q.bl + 1.2), x = q.px + q.nx * off, z = q.pz + q.nz * off; board(x, T.hy[q.i] + 1.5, z, -q.nx, -q.nz, 9, 1.6, AB + 4 + ((d > 0) | 0)); }   // MIE · JAPAN banners on the wall of the main grandstand
     for (const z of T.drs || []) { const s = sAt(z.act), side = PD && T.pitAt(s) ? -1 : roomSide(s); signPost(s, side, 1.4, SZ_DRS(AB), 2.4, 1.0, 1.6); }   // a DRS board where the zone opens (on the side with more room; not beside the pit lane)
     let nPaint = 0;
-    {   // SUZUKA painted on the wide asphalt run-offs (def.tarmacRuns: outside Turns 1-2 and 130R) at their widest, across them, read from the
+    {   // MIE · JAPAN painted on the wide asphalt run-offs (def.tarmacRuns: outside Turns 1-2 and 130R) at their widest, across them, read from the
         // cars coming in (as the names on the Red Bull Ring's); on the run-off's own surface
       const gp = new GB(true), W1 = [1, 1, 1], [u0, v0, u1, v1] = aUV(AB + 4);
       for (const side of [-1, 1]) {
@@ -11088,10 +11088,10 @@ const World = (function () {
       const run = (d0, d1, side, o, fc) => { const n = crowdRun(CR, sStart + d0, sStart + d1, side, Object.assign({}, M, o));
         if (n && fc) for (let ii = T.idx(sStart + d0 - 6), k = 0; k < (d1 - d0 + 12) / ds; k++, ii = (ii + 1) % N) fence[side > 0 ? 1 : 0][ii] = 1; nFans += n; return n; };
       // [corner, side, rows, density, from, to (metres from the corner's name point)]
-      const SPOTS = [['Prvi ovinek', 1, 3, 0.55, -45, 70], ['S-zavoji', 1, 4, 0.65, -80, 120], ['S-zavoji', -1, 3, 0.55, -80, 120], ['Dunlop', 1, 3, 0.55, -60, 80], ['Dunlop', -1, 2, 0.4, -40, 60],
-        ['Degner', -1, 4, 0.65, -60, 80], ['Degner', 1, 2, 0.4, -40, 60], ['Lasnica', -1, 4, 0.75, -70, 90], ['Lasnica', 1, 3, 0.6, -60, 80], ['200R', -1, 3, 0.5, -60, 80],
-        ['Spoon', 1, 4, 0.7, -70, 170], ['Spoon', -1, 3, 0.5, -60, 120], ['Zadnja ravnina', 1, 2, 0.4, -100, 100], ['Zadnja ravnina', -1, 2, 0.35, -100, 100],
-        ['130R', 1, 4, 0.65, -80, 80], ['130R', -1, 3, 0.55, -60, 60], ['Casio Triangle', 1, 3, 0.55, -60, 60]];
+      const SPOTS = [['Zavoj 1', 1, 3, 0.55, -45, 70], ['Zavoj 3', 1, 4, 0.65, -80, 120], ['Zavoj 3', -1, 3, 0.55, -80, 120], ['Zavoj 7', 1, 3, 0.55, -60, 80], ['Zavoj 7', -1, 2, 0.4, -40, 60],
+        ['Zavoj 8', -1, 4, 0.65, -60, 80], ['Zavoj 8', 1, 2, 0.4, -40, 60], ['Zavoj 11', -1, 4, 0.75, -70, 90], ['Zavoj 11', 1, 3, 0.6, -60, 80], ['Zavoj 12', -1, 3, 0.5, -60, 80],
+        ['Zavoj 13', 1, 4, 0.7, -70, 170], ['Zavoj 13', -1, 3, 0.5, -60, 120], ['zadnja ravnina', 1, 2, 0.4, -100, 100], ['zadnja ravnina', -1, 2, 0.35, -100, 100],
+        ['Zavoj 15', 1, 4, 0.65, -80, 80], ['Zavoj 15', -1, 3, 0.55, -60, 60], ['Zavoj 16', 1, 3, 0.55, -60, 60]];
       const W1 = [1, 1, 1], fanC = AB + 7, sunC = fanC + SZ_FAN.length, flagC = sunC + 1;
       const cloth = (cx, cy, cz, tx, tz, Wd, H, cellK, uw) => {   // a cloth facing -t (as a board, without its back); uw: the share of the cell's width it shows
         const [u0, v0, u1f, v1] = aUV(cellK), u1 = u0 + (u1f - u0) * (uw || 1), ux = tz, uz = -tx, hw = -Wd / 2;
@@ -11214,7 +11214,7 @@ const World = (function () {
     scen.addTo(sceneryGroup, matV, true, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
     addM(fenceG, fMat);
-    if (!scrG.empty) { const st = ownTex(rbScreenTex({ name: ['SUZUKA', ''], info: ['5,807 km', '18 zavojev'] })); addM(scrG, new THREE.MeshBasicMaterial({ map: st })); out.dyn.screens = { tex: st, f: -1 }; }
+    if (!scrG.empty) { const st = ownTex(rbScreenTex({ name: ['MIE', 'JAPONSKA'], info: ['5,807 km', '18 zavojev'] })); addM(scrG, new THREE.MeshBasicMaterial({ map: st })); out.dyn.screens = { tex: st, f: -1 }; }
     crowdFinish(CR, root, out);
     out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, buildings: nBld, stands: nStands, fans: nFans, banners: nBanners, tv: nTV, boxes: nBoxes,
       screens: nScr, photographers: nPh, stalls: nStall, loos: nLoo, rides: out.dyn.rides ? out.dyn.rides.length : 0, decals: nDecals, painted: nPaint, mown: nMow };   // (read by the tests)
