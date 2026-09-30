@@ -5397,6 +5397,14 @@ const World = (function () {
     if (ca !== hz.cx || cb !== hz.cz) hz.grid(ca, cb);
   }
 
+  /* ---- round 5: roadside details: guardrails with reflectors and rust, stones and drains along the road (own random stream) ---- */
+  function pkRoadside(K) {
+  }
+
+  /* ---- round 5: race-day people: varied spectators (blankets, chairs, dogs), fan banners, lit hut windows (own random stream) ---- */
+  function pkFans5(K) {
+  }
+
   function buildPikes(scene, tex, opts) {
     const R = rng(7311), N = T.N, w = T.w, dens = opts.density || 1;
     const root = new THREE.Group(); scene.add(root);
@@ -5715,6 +5723,8 @@ const World = (function () {
     pkLandmarks2(K);
     pkLandmarks3(K);
     pkWildlife(K);
+    pkRoadside(K);
+    pkFans5(K);
 
     /* ---- more spectators (instanced, hashed: no draws from R): both sides of every hairpin, the insides of the forest bends, the "W's" ladder,
        more rows at the checkpoints, the start and the finish, small groups on the high side along the ridge; only where the ground is not below the road ---- */
