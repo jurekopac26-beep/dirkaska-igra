@@ -87,9 +87,10 @@ const Comm = (() => {
     propPylon: ['Took the marker post with him!', 'That marker post is history!'],
     propPost: ["He's clipped a marker post!", 'Roadside post down!', 'That post never stood a chance!', 'Flattened a post there!'],
     propCrate: ['Smashed straight into the crate!', 'There goes the crate!'],
-    // time trial (hill climb against the clock, no opponents)
-    introTT: ['Welcome to {track}, the race to the clouds! Just you, the mountain and the clock.', 'Here we are at the foot of {track}. {cps} checkpoints between you and the summit.', 'Welcome to {track}! No opponents today, only the clock. Get to the top as fast as you can.'],
-    goTT: ['Green light! The clock is running!', 'Go! Attack the mountain!', "And you're away! Up the hill!"],
+    // time trial (hill climb against the clock, no opponents): the hill climb is Pikes Peak, so the commentator speaks as its race announcer on the
+    // start line (short lines: the welcome, said as the countdown begins, ends before the green flag; the green flag call leaves room for the first place line)
+    introTT: ['Welcome to the Pikes Peak International Hill Climb, the Race to the Clouds!', 'Twelve point four miles and a hundred and fifty-six turns to the summit!', "Welcome to America's Mountain! Fourteen thousand one hundred and fifteen feet, here we come!"],
+    goTT: ['Green flag at the start line... the car is away!', 'The green flag drops, and the car is away!', 'Green flag! The car is away, next stop, the clouds!'],
     cpFirst: ['Checkpoint {cp}, {time}.', 'Through checkpoint {cp}. Keep climbing!', 'Checkpoint {cp}. Up we go!'],
     cpFast: ['Checkpoint {cp}, {delta} seconds up on your best!', 'Green split at checkpoint {cp}! {delta} seconds faster!', 'Checkpoint {cp}. You are {delta} seconds ahead of your record pace!'],
     cpEven: ['Checkpoint {cp}, dead level with your best split!', 'Checkpoint {cp}. Right on your record pace, not a hair in it!'],
