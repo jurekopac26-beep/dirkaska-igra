@@ -42,6 +42,7 @@ svg { display: block; }
 /* ---------------- screens ---------------- */
 .scr { position: absolute; inset: 0; display: flex; flex-direction: column; animation: scr-in .28s ease-out; }
 @keyframes scr-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.scr.still { animation: none; }
 @media (prefers-reduced-motion: reduce) { .scr, .float, .dio img { animation: none !important; } }
 
 /* top bar of the inner screens */
@@ -98,7 +99,8 @@ svg { display: block; }
 .drag { position: absolute; left: 0; right: 0; top: 6px; text-align: center; font: 600 11.5px/1 var(--f-ui); color: rgba(174, 181, 247, .7); letter-spacing: .06em; z-index: 3; pointer-events: none; }
 .soon-note { position: absolute; left: 50%; top: 48%; transform: translate(-50%, -50%); font: 900 italic 22px/1 var(--f-ui); color: rgba(63, 208, 255, .85); letter-spacing: .12em; text-shadow: 0 0 18px rgba(63, 208, 255, .5); pointer-events: none; z-index: 2; }
 .dio { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.dio img { width: 100%; height: 100%; object-fit: contain; animation: float 5s ease-in-out infinite; transition: opacity .25s ease; }
+.dio .isl { position: absolute; inset: 0; animation: float 5s ease-in-out infinite; }
+.dio img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 .dio.lock img { filter: saturate(.55) brightness(.8); }
 
@@ -399,3 +401,15 @@ svg { display: block; }
 .lapsrow > span { font: 800 italic 13px/1 var(--f-ui); letter-spacing: .08em; color: #cfd9ea; }
 @media (max-width: 380px) { .drow { gap: 7px; padding-left: 8px; } .drow img { width: 50px; } .drow b { font-size: 13px; } .drow.choose { padding-right: 17px; } .drow.choose .chev { right: 4px; width: 11px; height: 11px; } }
 @media (max-height: 700px) { .tbars, #s-car .desc { display: none; } .card { margin-top: 14px; } .tabs { margin: 10px 0 6px; } .tabpane { min-height: 0; } .brow { padding: 4px 0; } }
+
+/* ---------------- the weather on the track model: sun or overcast behind it, the wet model, the rain ---------------- */
+.dio img.wet { opacity: 0; transition: opacity .7s ease; }
+.stage.rainy .dio img.wet { opacity: 1; }
+.stage canvas.rainfx { pointer-events: none; cursor: default; touch-action: auto; transition: none; }
+.sky { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.sky i { position: absolute; transition: opacity .8s ease; }
+.sky .sun { right: -22%; top: -34%; width: 84%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 214, 150, .24), rgba(255, 190, 110, .08) 55%, transparent); }
+.sky .cloud { inset: 0; opacity: 0; background: linear-gradient(180deg, rgba(128, 142, 162, .32) 0%, rgba(96, 110, 130, .13) 45%, transparent 80%); }
+.stage.rainy .sky .sun { opacity: 0; }
+.stage.rainy .sky .cloud { opacity: 1; }
+.sheet-bg.clear { background: rgba(3, 6, 10, .16); }

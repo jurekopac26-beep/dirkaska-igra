@@ -376,6 +376,19 @@ window.DIO = (function () {
 
   /* Floating diorama on a transparent background (for a page that draws its own backdrop). Camera orbits the diorama. */
   let rendererA = null, canvasA = null;
+  // rain (0..1), as the game draws a race in the rain (render.js applyWeather): a darker road (asphalt, paving, kerbs, makadam),
+  // the puddles of a gravel stage, no cloud shadows under the overcast; the lights are mixed to an overcast sky in shot3
+  function wetWorld(B, r) {
+    const { w, tex } = B, maps = [tex.asphalt, tex.paving, tex.curb, tex.makadam].filter(Boolean);
+    w.root.traverse(o => { for (const m of o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []) {
+      if (!m.color || !maps.includes(m.map)) continue;
+      if (!m.userData.dry) m.userData.dry = m.color.clone();
+      m.color.copy(m.userData.dry).multiplyScalar(1 - (m.map === tex.curb ? 0.22 : 0.36) * r); } });
+    const W = w.dyn && w.dyn.wet;
+    if (W) { W.puddles.visible = r > 0; W.road.color.setScalar(1 - 0.36 * r); W.road.shininess = r > 0 ? 28 : W.base.sh; W.road.specular.setHex(r > 0 ? 0x3c3e40 : W.base.sp); W.ground.color.setScalar(1 - 0.2 * r); }
+    if (w.dyn && w.dyn.clouds) w.dyn.clouds.K.value = w.dyn.clouds.k0 * (1 - r);
+  }
+
   function shot3(id, opt) {
     opt = Object.assign({ margin: 45, sides: 40, soil: 24, rot: 0.25, el: 38, fov: 30, fitW: 0.97, W: 412, H: 440, drop: 0.55, shadowOpacity: 0.55, shadow: 4096, sunDir: [-6, 10, 7] }, opt || {});
     if (!rendererA) {
@@ -420,8 +433,10 @@ window.DIO = (function () {
     // lights: the track's race lighting, sun fixed relative to the camera
     const th = THEMES[def.theme] || THEMES.lake, L = [blob], ctr = new THREE.Vector3(cx, yBase, cz);
     const camDir = (v) => { const m = new THREE.Matrix4().extractRotation(cam.matrixWorld); return new THREE.Vector3(v[0], v[1], v[2]).applyMatrix4(m); };
-    const hemi = new THREE.HemisphereLight(th.sky, th.gnd, th.hemiI * (opt.hemiMul || 1)); sc.add(hemi); L.push(hemi);
-    const sun = new THREE.DirectionalLight(th.sun, th.sunI * (opt.sunMul || 1));
+    const rn = opt.rain || 0, mixC = (a, b, f) => new THREE.Color(a).lerp(new THREE.Color(b), f * rn);   // (rain: the game's overcast light)
+    wetWorld(B, rn);
+    const hemi = new THREE.HemisphereLight(mixC(th.sky, 0xaab4bd, 0.7), mixC(th.gnd, 0x3a4032, 0.5), th.hemiI * (opt.hemiMul || 1) * (1 + 0.3 * rn)); sc.add(hemi); L.push(hemi);
+    const sun = new THREE.DirectionalLight(mixC(th.sun, 0xe8eef4, 0.8), th.sunI * (opt.sunMul || 1) * (1 - 0.62 * rn));
     const sd = opt.sunWorld ? new THREE.Vector3(...opt.sunWorld) : d2w(opt.sunDir).sub(d2w([0, 0, 0]));
     sun.position.copy(sd.normalize().multiplyScalar(Rmax * 2.2).add(ctr)); sun.target.position.copy(ctr);
     sun.castShadow = true; sun.shadow.mapSize.set(opt.shadow, opt.shadow);

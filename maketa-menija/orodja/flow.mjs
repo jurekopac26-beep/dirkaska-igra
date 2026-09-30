@@ -70,7 +70,10 @@ await step('free-pick-car', async () => { await page.click('[data-act="pick-car"
 await step('free-car-paint', async () => { await page.click('[data-act="car:1"]'); await wait(300); await page.click('[data-act="tab:paint"]'); await wait(300); await page.click('[data-act="color:0"]'); await wait(1500); });
 await step('free-car-selected', async () => { await page.click('[data-act="car-select"]'); await wait(700); });
 await step('free-weather-sheet', async () => { await page.click('[data-act="pick-weather"]'); await wait(500); await page.click('[data-act="weather:1"]'); await wait(200); await page.click('[data-act="laps:1"]'); await wait(400); });
-await step('free-weather-done', async () => { await page.click('.sheet [data-act="close-sheet"]'); await wait(500); });
+await step('free-weather-done', async () => { await page.click('.sheet [data-act="close-sheet"]'); await wait(900); });
+await step('free-weather-random-a', async () => { await page.click('[data-act="pick-weather"]'); await wait(400); await page.click('[data-act="weather:2"]'); await wait(1200); });
+await step('free-weather-random-b', async () => { await wait(2600); });
+await step('free-weather-dry', async () => { await page.click('[data-act="weather:0"]'); await wait(1200); await page.click('.sheet [data-act="close-sheet"]'); await wait(400); await page.click('[data-act="pick-weather"]'); await wait(300); await page.click('[data-act="weather:1"]'); await wait(300); await page.click('.sheet [data-act="close-sheet"]'); await wait(900); });
 await step('free-single-result', async () => { await page.click('[data-act="race-single"]'); await wait(1700); await page.click('[data-finish="2"]'); await wait(600); });
 await step('free-career', () => open('free', 'career', {}, 800));
 await step('free-career-result', () => fin('career', '1'));

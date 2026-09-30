@@ -34,6 +34,11 @@ for (const [id, name, opt] of JOBS) {
   const r = await page.evaluate(([id, opt]) => { try { return window.DIO.shot3(id, opt); } catch (e) { return { err: e.message + ' ' + (e.stack || '').split('\n')[1] }; } }, [id, opt]);
   if (r && r.png) { fs.writeFileSync(path.join(OUT, name + '.png'), Buffer.from(r.png.split(',')[1], 'base64')); delete r.png; }
   console.log('render', id, name, ((Date.now() - t0) / 1000).toFixed(1) + ' s', JSON.stringify(r));
+  if (opt.wet) {   // the same diorama in the rain (same world, same framing): <name>-rain.png
+    const t1 = Date.now(), q = await page.evaluate(([id, opt]) => { try { return window.DIO.shot3(id, Object.assign({}, opt, { rain: 1 })); } catch (e) { return { err: e.message }; } }, [id, opt]);
+    if (q && q.png) { fs.writeFileSync(path.join(OUT, name + '-rain.png'), Buffer.from(q.png.split(',')[1], 'base64')); delete q.png; }
+    console.log('render', id, name + '-rain', ((Date.now() - t1) / 1000).toFixed(1) + ' s', JSON.stringify(q));
+  }
   await ctx.close();
 }
 await browser.close(); server.close();

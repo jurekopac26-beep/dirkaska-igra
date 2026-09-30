@@ -79,6 +79,9 @@
   const WEATHER = ['Dry', 'Rain', 'Random'];
   const wIcon = (w) => [I.sun, I.rain, I.dice][Math.max(0, WEATHER.indexOf(w))];
   const carImg = (c, ci) => 'assets/cars/img/' + c.model + '-' + ci + '.webp';
+  const trackImg = (t, wet) => 'assets/tracks/' + t.id + (wet ? '-rain' : '') + '.webp';
+  const dio = (t, lockd) => '<div class="sky" aria-hidden="true"><i class="sun"></i><i class="cloud"></i></div><div class="dio' + (lockd ? ' lock' : '') + '"><div class="isl" style="animation-delay:-' + Math.round(performance.now() % 5000) + 'ms">' +
+    '<img src="' + trackImg(t) + '" alt="3D model of the ' + esc(t.name) + ' track"><img class="wet" src="' + trackImg(t, true) + '" alt=""></div></div>';
 
   /* ---------------- progress: it changes as you "race" in the mockup, kept per state in this browser ---------------- */
   let ST, P;
@@ -128,7 +131,7 @@
   }
 
   /* ---------------- view state ---------------- */
-  let screen, carIdx, colorIdx, trackIdx, tab, seriesId, raceSel, lapsSel, weather, lbTrack, mpMode, history, sheet = null, sheetOn = false, settings, result = null;
+  let screen, shown = '', carIdx, colorIdx, trackIdx, tab, seriesId, raceSel, lapsSel, weather, lbTrack, mpMode, history, sheet = null, sheetOn = false, settings, result = null;
   const TRACKS = () => [null].concat(D.tracks);   // the Single race list: today's race first, then every track
   function resetView() {
     const s = S();
@@ -161,6 +164,54 @@
   let car3dReady = false;
   function ensureCar3D() { if (car3dReady || !window.THREE) return car3dReady; Car3D.init(carHost); car3dReady = true; Car3D.preload(['pico', 'kaze', 'rally']); return true; }
 
+  /* ---------------- the weather on the track model: the wet model fades in and rain falls; Random swaps between the two ---------------- */
+  const wx = (function () {
+    const cv = document.createElement('canvas'); cv.className = 'rainfx'; cv.setAttribute('aria-hidden', 'true');
+    const ctx = cv.getContext('2d'), calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let drops = [], raf = 0, a = 0, want = 0, last = 0, W = 0, H = 0, dpr = 1, timer = 0, wet = false, mode = '';
+    function fit() {
+      const r = cv.getBoundingClientRect(); dpr = Math.min(2, window.devicePixelRatio || 1);
+      if (!r.width || (r.width === W && r.height === H)) return;
+      W = r.width; H = r.height; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+      drops = Array.from({ length: Math.round(W * H / 1400) }, () => ({ x: Math.random() * (W + 60) - 60, y: Math.random() * H, l: 11 + Math.random() * 15, v: 620 + Math.random() * 380, o: 0.2 + Math.random() * 0.4 }));
+    }
+    function frame(t) {
+      raf = 0; const el = last ? (t - last) / 1000 : 0.016, dt = Math.min(0.05, el); last = t;   // (the fade follows the clock, the drops a capped step)
+      a = want > a ? Math.min(want, a + el / 0.5) : Math.max(want, a - el / 0.5);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+      if (a > 0) {
+        ctx.lineWidth = 1.2; ctx.lineCap = 'round';
+        for (const d of drops) {
+          d.y += d.v * dt; d.x += d.v * dt * 0.22;
+          if (d.y - d.l > H) { d.y = -Math.random() * 30; d.x = Math.random() * (W + 60) - 60; }
+          ctx.strokeStyle = 'rgba(214, 228, 255, ' + (d.o * a).toFixed(3) + ')';
+          ctx.beginPath(); ctx.moveTo(d.x, d.y); ctx.lineTo(d.x - d.l * 0.22, d.y - d.l); ctx.stroke();
+        }
+      }
+      if (a > 0 || want > 0) raf = requestAnimationFrame(frame); else last = 0;
+    }
+    function show(on) {
+      wet = on; want = on && !calm ? 1 : 0;
+      if (cv.parentNode) cv.parentNode.classList.toggle('rainy', on);
+      if (!raf && (want || a)) raf = requestAnimationFrame(frame);
+    }
+    return {
+      // after a render of the track screen (mode 'dry' | 'rain' | 'random'): the new stage starts in the weather shown before, so a
+      // change fades over; on entering the screen it starts in its own weather
+      attach(stage, m, entering) {
+        if (entering) { wet = m === 'rain'; a = wet && !calm ? 1 : 0; }
+        stage.classList.toggle('rainy', wet);   // (before anything measures the new stage, so the weather already shown does not fade in again)
+        stage.querySelector('.dio').after(cv); fit();
+        if (m !== mode || entering) { clearInterval(timer); timer = 0; mode = m; if (m === 'random') timer = setInterval(() => show(!wet), 2600); }
+        void stage.offsetWidth;
+        show(m === 'rain' ? true : m === 'dry' ? false : wet);
+      },
+      detach() { clearInterval(timer); timer = 0; mode = ''; want = 0; a = 0; wet = false; cv.remove(); if (raf) { cancelAnimationFrame(raf); raf = 0; } last = 0; },
+      resize() { if (cv.parentNode) { W = 0; fit(); } },
+    };
+  })();
+  const wxMode = () => (trackIdx === 0 ? daily().weather : WEATHER[weather]).toLowerCase();
+
   /* ---------------- rendering helpers ---------------- */
   const moneyPill = () => '<div class="money">' + I.coin + '<span>' + num(P.money) + '</span></div>';
   const topbar = (title, money) => '<div class="topbar"><button class="sq" data-act="back" aria-label="Back">' + I.back + '</button><h2>' + esc(title) + '</h2>' + (money ? moneyPill() : '') + '</div>';
@@ -181,7 +232,7 @@
       (ST === 'veteran' || totalTro() ? '<small>' + esc(S().player) + ' · Level ' + level() + '</small>' : '') + '</div></div>';
     h += '<div class="t-menu title-panel">';
     h += '<button class="tile t-single" data-act="single"><span class="tx"><b>' + M.single.title + '</b><small>' + esc(M.single.sub.replace('{track}', d.track.name).replace('{weather}', d.weather.toLowerCase())) + '</small>' + singleChip + '</span>' +
-      '<span class="im"><img src="assets/tracks/' + d.track.id + '.webp" alt=""></span></button>';
+      '<span class="im"><img src="' + trackImg(d.track, d.weather === 'Rain') + '" alt=""></span></button>';
     h += '<button class="tile t-multi" data-act="go:multi"><span class="tx"><b>' + M.multi.title + '</b><small>' + esc(M.multi.sub) + '</small>' + (owned() ? '' : '<em class="chip">3 TRACKS IN FREE</em>') + '</span>' +
       '<span class="im"><img src="' + M.multi.img + '" alt=""></span></button>';
     h += '<button class="tile t-career" data-act="go:career"><span class="tx"><b>' + M.career.title + '</b><small>' + esc(careerSub) + '</small><i class="pbar"><b style="width:' + cp + '%"></b></i></span>' +
@@ -199,7 +250,7 @@
     let h = '<section class="scr" id="s-track" aria-label="Single race">' + topbar('Single race', true);
     if (isDaily) {
       const d = daily(), t = d.track;
-      h += '<div class="stage" id="track-stage"><div class="dio"><img src="assets/tracks/' + t.id + '.webp" alt="3D model of the ' + esc(t.name) + ' track"></div><div class="ribbon">TODAY\'S RACE</div>' +
+      h += '<div class="stage" id="track-stage">' + dio(t) + '<div class="ribbon">TODAY\'S RACE</div>' +
         '<button class="arrow l" data-act="track:-1" aria-label="Previous track">' + I.left + '</button><button class="arrow r" data-act="track:1" aria-label="Next track">' + I.right + '</button>' + dots(list.length, trackIdx, (i) => i > 0 && trackLocked(list[i]), true) + '</div>';
       const mine = d.mine;
       h += '<div class="card daily">' + (mine ? '<div class="badge win">' + I.star.replace('<svg', '<svg style="width:16px;height:16px"') + '<span>YOU ARE ' + ord(mine.rank).toUpperCase() + ' TODAY</span></div>' : '<div class="badge"><span>NEW RACE EVERY DAY</span></div>');
@@ -215,7 +266,7 @@
     let badge = '';
     if (lockd) badge = '<div class="badge">' + I.lock('#ffc629') + '<span>FULL GAME</span></div>';
     else if (my) badge = '<div class="badge win">' + I.star.replace('<svg', '<svg style="width:16px;height:16px"') + '<span>YOUR RECORD · ' + esc(my) + '</span></div>';
-    h += '<div class="stage" id="track-stage"><div class="dio' + (lockd ? ' lock' : '') + '"><img src="assets/tracks/' + t.id + '.webp" alt="3D model of the ' + esc(t.name) + ' track"></div>' +
+    h += '<div class="stage" id="track-stage">' + dio(t, lockd) +
       '<button class="arrow l" data-act="track:-1" aria-label="Previous track">' + I.left + '</button><button class="arrow r" data-act="track:1" aria-label="Next track">' + I.right + '</button>' + dots(list.length, trackIdx, (i) => i > 0 && trackLocked(list[i]), true) + '</div>';
     h += '<div class="card">' + badge + '<h1>' + esc(t.name) + '<span class="tag ghost">' + esc(t.tag) + '</span></h1><p class="desc">' + esc(t.desc) + '</p>';
     h += info([[I.trophy(my ? 'gold' : ''), my ? 'Your record' : t.rec[0], my || t.rec[1], my ? 'gold' : ''], [I.flag, 'Length', t.km.toFixed(2) + ' km'], [I.corners, 'Corners', String(t.corners)]]);
@@ -399,12 +450,15 @@
     const sc = $('.scroll', app), top = keepScroll && sc ? sc.scrollTop : 0;
     if (screen === 'results' && !result) screen = 'title';
     app.innerHTML = VIEWS[screen]();
+    if (keepScroll && shown === screen) $('.scr', app).classList.add('still');   // an update in place (a choice, a sheet): no slide-in again
     if (keepScroll) { const n = $('.scroll', app); if (n) n.scrollTop = top; }
     if (screen === 'title') { $('#bg-slot', app).replaceWith(bg.el); bg.setOn(true); } else bg.setOn(false);
     if (screen === 'car' && ensureCar3D()) {
       const stage = $('#car-stage', app); stage.insertBefore(carHost, stage.firstChild);
       const c = D.cars[carIdx]; Car3D.show(c.model, colorIdx, { dark: !!c.soon }); Car3D.setVisible(true);
     } else if (car3dReady) Car3D.setVisible(false);
+    if (screen === 'track') wx.attach($('#track-stage', app), wxMode(), shown !== 'track'); else wx.detach();
+    shown = screen;
     if (sheet) { app.insertAdjacentHTML('beforeend', typeof sheet === 'function' ? sheet() : sheet); if (sheetOn) $('.sheet-bg', app).classList.add('still'); }
     sheetOn = !!sheet;
     const chip = $('.chips [aria-pressed="true"]', app); if (chip) chip.scrollIntoView({ block: 'nearest', inline: 'center' });
@@ -427,7 +481,7 @@
 
   function weatherSheet() {
     const t = TRACKS()[trackIdx] || D.tracks[0], lp = lapsSel || t.laps;
-    let h = '<div class="sheet-bg" data-act="close-sheet"><div class="sheet" role="dialog" aria-label="Weather"><h2>Weather</h2><div class="wopts">' +
+    let h = '<div class="sheet-bg clear" data-act="close-sheet"><div class="sheet" role="dialog" aria-label="Weather"><h2>Weather</h2><div class="wopts">' +
       WEATHER.map((w, i) => '<button aria-pressed="' + (weather === i) + '" data-act="weather:' + i + '">' + wIcon(w) + '<b>' + w + '</b></button>').join('') + '</div>';
     if (!t.trial) h += '<div class="lapsrow"><span>LAPS</span><div class="stepper"><button data-act="laps:-1" aria-label="Fewer laps">−</button><b>' + lp + '</b><button data-act="laps:1" aria-label="More laps">+</button></div></div>';
     return h + '<div class="row"><button class="go" data-act="close-sheet">Done</button></div></div></div>';
@@ -435,10 +489,11 @@
 
   /* ---------------- a race: loading, then "where did you finish?" (mockup), then the results ---------------- */
   let race = null;
+  const wxLabel = (w, wet) => (w === 'Random' ? 'random weather: ' : '') + (wet ? 'rain' : 'dry');
   function startRace(R) {
     race = R;
     const t = R.track, el = document.createElement('div'); el.className = 'loading'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Race');
-    el.innerHTML = '<img src="assets/tracks/' + t.id + '.webp" alt=""><h2>' + esc(fullName(t)) + '</h2><div class="bar"><b style="width:4%"></b></div><p>' + esc(R.label) + '</p>';
+    el.innerHTML = '<img src="' + trackImg(t, R.wet) + '" alt=""><h2>' + esc(fullName(t)) + '</h2><div class="bar"><b style="width:4%"></b></div><p>' + esc(R.label) + '</p>';
     app.appendChild(el);
     requestAnimationFrame(() => requestAnimationFrame(() => { $('.bar b', el).style.width = '100%'; }));
     setTimeout(() => {
@@ -499,8 +554,8 @@
       case 'track': { const n = TRACKS().length; trackIdx = (trackIdx + +v + n) % n; lapsSel = null; render(); break; }
       case 'laps': { const t = TRACKS()[trackIdx]; lapsSel = Math.max(1, Math.min(9, (lapsSel || t.laps) + +v)); render(true); break; }
       case 'weather': weather = +v; render(true); break;
-      case 'race-daily': { const d = daily(); startRace({ kind: 'daily', track: d.track, trial: !!d.track.trial, label: 'Today\'s race · ' + d.car.name + ' · ' + d.weather.toLowerCase() }); break; }
-      case 'race-single': { const t = TRACKS()[trackIdx] || D.tracks[0]; startRace({ kind: 'single', track: t, trial: !!t.trial, label: D.cars[P.car].name + ' · ' + (t.trial ? 'time trial' : laps(lapsSel || t.laps)) + ' · ' + ['dry', 'rain', 'random weather'][weather] }); break; }
+      case 'race-daily': { const d = daily(), wet = d.weather === 'Rain' || (d.weather === 'Random' && Math.random() < 0.5); startRace({ kind: 'daily', track: d.track, trial: !!d.track.trial, wet, label: 'Today\'s race · ' + d.car.name + ' · ' + wxLabel(d.weather, wet) }); break; }
+      case 'race-single': { const t = TRACKS()[trackIdx] || D.tracks[0], w = WEATHER[weather], wet = w === 'Rain' || (w === 'Random' && Math.random() < 0.5); startRace({ kind: 'single', track: t, trial: !!t.trial, wet, label: D.cars[P.car].name + ' · ' + (t.trial ? 'time trial' : laps(lapsSel || t.laps)) + ' · ' + wxLabel(w, wet) }); break; }
       case 'pick-car': carIdx = P.car; colorIdx = P.color; tab = 'stats'; go('car'); break;
       case 'pick-weather': sheet = weatherSheet; render(true); break;
       case 'car-select': { const c = D.cars[carIdx]; if (c.soon || carLocked(c)) break; P.car = carIdx; P.color = colorIdx; saveP(); back(); break; }
@@ -543,6 +598,7 @@
     if (screen === 'car' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) act('car:' + (e.key === 'ArrowLeft' ? -1 : 1));
     if (screen === 'track' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) act('track:' + (e.key === 'ArrowLeft' ? -1 : 1));
   });
+  window.addEventListener('resize', () => wx.resize());
   // swipe the track model to change the track
   let sw = null;
   app.addEventListener('pointerdown', (e) => { if (screen === 'track' && e.target.closest('.dio')) sw = { x: e.clientX, y: e.clientY }; });

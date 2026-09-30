@@ -18,7 +18,7 @@ Objavljena je kot zasebna stran: <https://claude.ai/artifact/LGhsPikqgs4To6phR2L
 ## Single race in današnja dirka
 
 - Najprej se odpre izbira proge. Na prvem mestu je **današnja dirka** (*Today's race*).
-  - Vsak dan je druga. Progo, avto in vreme izbere datum.
+  - Vsak dan je druga. Progo, avto in vreme izbere datum. Maketa proge pokaže vreme dneva.
   - Vsi vozijo isti avto.
 - Pri današnji dirki piše:
   - najboljši čas dneva na svetu in kdo ga ima (*Best today*),
@@ -32,6 +32,10 @@ Objavljena je kot zasebna stran: <https://claude.ai/artifact/LGhsPikqgs4To6phR2L
 - Druge proge: spodaj sta, kot pri današnji dirki, okvirčka s sliko za **avto** in **vreme**, le da ju tu lahko klikneš.
   - Klik na avto odpre izbiro avta (3D). Z gumbom *Select* se vrneš k progi z izbranim avtom in barvo.
   - Klik na vreme odpre izbiro vremena (Dry, Rain, Random) in števila krogov.
+  - Izbrano vreme se takoj vidi na 3D maketi proge:
+    - *Rain*: proga postane mokra (temnejša cesta, oblačna svetloba, kot v igri) in pada dež,
+    - *Dry*: suha proga v soncu,
+    - *Random*: suha in mokra proga se izmenjujeta; ob začetku dirke se naključno izbere eno od obeh.
   - Gumb spodaj je *Race!* (na zaklenjenih progah v brezplačni različici *Unlock · €3.99*).
 
 ## Namesto dirke: izbira mesta
@@ -96,7 +100,7 @@ Kako deluje:
 | `style.css` | videz (barve so na vrhu kot spremenljivke `--…`) |
 | `app.js` | zasloni, premikanje med njimi, izbira mesta in izračun rezultata |
 | `car3d.js` | 3D prikaz avta |
-| `assets/` | 3D modeli avtov (`cars/*.json`), slike vsakega avta v vseh 8 barvah (`cars/img/<avto>-<barva>.webp`), slike gumbov glavnega menija (`menu/`), makete prog (`tracks/*.webp`), posnetki ozadja (`video/`) |
+| `assets/` | 3D modeli avtov (`cars/*.json`), slike vsakega avta v vseh 8 barvah (`cars/img/<avto>-<barva>.webp`), slike gumbov glavnega menija (`menu/`), makete prog, suhe in mokre (`tracks/<proga>.webp`, `tracks/<proga>-rain.webp`), posnetki ozadja (`video/`) |
 | `outlines.js` | obrisi prog za majhne zemljevide (ustvarjeno, ne urejaj ročno) |
 
 Vsi časi, imena na lestvicah, število igralcev, denar (CR) in odstotki so primeri.
@@ -128,8 +132,8 @@ cd maketa-menija/orodja
 node cars3d.mjs                                  # avti -> ../assets/cars/*.json
 node carimgs.mjs && python3 menuimg.py           # avti v vseh barvah in slike gumbov -> ../assets/cars/img/, ../assets/menu/
 node bgvideo.mjs '[["jezero",7],["ljubljana",7],["gora",7]]' 1.25 14   # posnetki -> ../assets/video/
-node dio2.mjs proge.json                         # makete prog -> raw/tracks/*.png (proge.json: [[id, ime, nastavitve], …])
-python3 mkwebp.py                                # raw/tracks -> ../assets/tracks/*.webp
+node dio2.mjs proge.json                         # makete prog, suhe in v dežju -> raw/tracks/w_*.png (proge.json: [[id, ime, nastavitve], …])
+python3 mkwebp.py                                # raw/tracks -> ../assets/tracks/<proga>.webp in <proga>-rain.webp
 node gen_tracks2.js raw/tracks.js                # obrisi prog (nato v outlines.js)
 node check.mjs                                   # vsi zasloni v vseh stanjih -> shots/
 node flow.mjs                                    # odigra današnjo dirko, izbiro avta in vremena, kariero in multiplayer -> shots/
