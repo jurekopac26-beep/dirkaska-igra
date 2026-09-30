@@ -1,5 +1,5 @@
-// Determinism / regression net: every track x 4 set-ups (race, title demo, upgraded car, crash) x 2 physics, 60 s each
-// (the crash set-up on a track with pits 80 s or more: it ends with a pit stop and the repair). The full state of the race, every
+// Determinism / regression net: every track x 5 set-ups (race, title demo, upgraded car, crash, crash in the formula car) x 2
+// physics, 60 s each (the crash set-ups on a track with pits 80 s or more: they end with a pit stop and the repair). The full state of the race, every
 // car and the loose panels is hashed every 10 s and compared with tests/golden/sim.json: a change to the physics, AI,
 // damage, pits or race rules shows up here (finishing is covered by races.test.js). The crash runs must really crash
 // (damage, loose panels, the repair on a track with pits), so a change can not quietly turn them into a plain drive.
@@ -27,9 +27,9 @@ for (const tid of trackIds(C)) for (const sn of Object.keys(SETUPS)) for (const 
   out[key] = r; n++;
   const g = golden[key], cv = r.cover;
   const ok = g && g.digest === r.digest;
-  const covered = sn !== 'crash' || (cv.dmg >= 0.2 && cv.loose >= 1 && (!C.TRACKS.find(d => d.id === tid).pit || cv.repairs >= 1));
+  const covered = !SETUPS[sn].drive || (cv.dmg >= 0.2 && cv.loose >= 1 && (!C.TRACKS.find(d => d.id === tid).pit || cv.repairs >= 1));   // (the crash set-ups)
   if ((!update && !ok) || !covered) bad++;
-  console.log(`${key.padEnd(26)} ${r.digest} lead ${String(r.lead).padStart(7)} m ${sn === 'crash' ? `damage ${cv.dmg} loose ${cv.loose} rescues ${cv.rescues} repairs ${cv.repairs} ` : ''}` +
+  console.log(`${key.padEnd(26)} ${r.digest} lead ${String(r.lead).padStart(7)} m ${SETUPS[sn].drive ? `damage ${cv.dmg} loose ${cv.loose} rescues ${cv.rescues} repairs ${cv.repairs} ` : ''}` +
     `${!covered ? 'FAIL: this run does not really crash (damage 0.2+, a loose panel; the pit repair on a track with pits): adjust crashDrive in tests/lib/sim.js ' : ''}` +
     `${update ? '' : ok ? 'OK' : g ? 'CHANGED (was ' + g.digest + ', lead ' + g.lead + ' m)' : 'NO REFERENCE'}`);
 }

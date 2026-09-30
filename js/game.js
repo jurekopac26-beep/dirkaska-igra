@@ -19,7 +19,7 @@
   };
   const CTRL_HELP_CS = 'Levi palec: levo in desno, desni: plin in zavora. Drži smer – avto sam zadrsa z nosom v ovinek in se na izhodu sam poravna; zavora v ovinku ga zavrti.';
   const CTRL_NAME = { buttons: 'Tipke', wheel: 'Volan', tilt: 'Nagib' };
-  const CAR_DESC = { kaze: 'Rad obrne rep, rojen za drift.', vortex: 'Veliko oprijema, stabilen tudi na robu.', pico: 'Lahek in okreten, rad podvija.', strega: 'Oster in živahen, hitro zavrti.', rally: 'Relijski dirkač iz 80-ih, ogromno moči, rojen za drift.', p206: 'Pravi 3D model, lahek in natančen v ovinkih.' };
+  const CAR_DESC = { kaze: 'Rad obrne rep, rojen za drift.', vortex: 'Veliko oprijema, stabilen tudi na robu.', pico: 'Lahek in okreten, rad podvija.', strega: 'Oster in živahen, hitro zavrti.', rally: 'Relijski dirkač iz 80-ih, ogromno moči, rojen za drift.', p206: 'Pravi 3D model, lahek in natančen v ovinkih.', formula: 'Odprta kolesa in krila, ki ga pri hitrosti pritisnejo ob cesto. Zavira izjemno, na travi in makadamu pa drsi. Z njim dirkaš proti samim formulam.' };
 
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
@@ -102,7 +102,10 @@
   let bg = 'demo';            // what renders behind menus: demo | show | race
   let screen = 'title';       // title | car | upg | track | board | settings | pause | results | none
   let settingsReturn = 'title';
-  let phase = 'none';         // intro | lights | racing | finish | done
+  let phase = 'none';         // intro | lights | racing | finish | podium | done
+  let introLen = 1.3;         // s of the intro before the lights (longer on the Red Bull Ring: the jets' fly-over)
+  const JET_SHOT = 6.1;       // (the jets' shot: from their start 470 m up the straight until they are nearly overhead)
+  const PODIUM_T = 8;         // s on the podium (the Red Bull Ring) before the results
   let phaseT = 0, lightsOn = 0, holdT = 0;
   let paused = false;
   let acc = 0, last = 0;
@@ -450,12 +453,16 @@
     Render.attachRace(race);
     Render.resetCam();
     adaptBreak();
-    bg = 'race'; phase = 'intro'; phaseT = 0; lightsOn = 0; lastBeepLight = 0; paused = false; acc = 0; podiumEnd(); podDone = false; towerInit();
-    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; dmgKey = ''; pitHint = false; drsN = 0; tyreKey = -1; tyreSaid = 0; $('h-tyre').className = race.tyres ? 'on' : '';
+    bg = 'race'; phase = 'intro'; phaseT = 0; lightsOn = 0; lastBeepLight = 0; paused = false; acc = 0;
+    introLen = 1.3; endPodium(); towerInit();
+    { const air = Render.world && Render.world.air;   // the Red Bull Ring: first the jets over the grid, filmed from the grid (not online, not in a time trial)
+      if (air && !on && !tt) { air.go = true; introLen += JET_SHOT; Render.setShot(air.shot); $('hud').classList.add('shot'); } }
+    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; dmgKey = ''; pitHint = false; drsN = 0; secN = 0; tyreKey = -1; tyreSaid = 0; $('h-tyre').className = race.tyres ? 'on' : '';
     $('h-msg').className = ''; $('h-split').className = ''; $('h-note').className = '';
     $('h-lights').className = ''; setLights(0, false);
     $('h-tot').textContent = '/' + race.cars.length;
     $('hud').classList.toggle('drs', !!race.drsLast); $('h-drs').className = '';   // (a circuit with DRS zones)
+    $('hud').classList.toggle('sec', !!race.secBest); for (const e of $('h-sec').children) e.className = '';   // (a circuit with TV sectors)
     $('hud').classList.toggle('tt', race.timeTrial); $('pause-restart').textContent = race.timeTrial ? 'Ponovi ' + ttRun(track.def) : 'Ponovi dirko';
     $('pause-restart').classList.toggle('off', !!on);   // (online: no restart for one)
     cpSeen = race.player.cpEv; ttRes = null; cornerSeen = -1; cornerShow = false; placeInit(); codrvInit(); ghStart(); $('h-ttsp').className = '';
@@ -489,8 +496,28 @@
     Sfx.resume(); Sfx.setRunning(true);
     showScreen('none');
   }
+  // a TV shot the world directs (Render.setShot: the jets before the start, the podium) ends: the game's camera and the HUD back
+  function shotOff() { Render.setShot(null); $('hud').classList.remove('shot'); }
+  // the podium after the race (not online, not a run alone): the Red Bull Ring's own on its pit building's roof (World's podium, its TV
+  // shot), on every other circuit with a pit building the one over the pit lane (Render.setPodium: its own camera); the first three (in the
+  // order of the results) on it in their cars' colours, champagne, the crowd, their names under it (#podium-cap); then the results. A tap
+  // or Enter / space skips it
+  let podSkip = false, podCork = false;
+  const podiumOK = () => !(mp && mp.race) && !race.timeTrial && race.cars.length > 1;
+  function startPodium(pod) {
+    const top = race.estimateResults().slice(0, 3).map(r => r.car), rgb = (h) => [(h >> 16 & 255) / 255, (h >> 8 & 255) / 255, (h & 255) / 255];
+    if (pod) { pod.show(top.map(c => rgb(c.color))); Render.setShot(pod.shot); }
+    else if (!Render.setPodium(top)) return false;
+    phase = 'podium'; phaseT = 0; podSkip = false; podCork = false;
+    $('hud').classList.add('shot');
+    const el = $('podium-cap'); el.innerHTML = top.map((c, i) => '<span><b>' + (i + 1) + '.</b> <i style="background:' + hexCss(c.color) + '"></i>' + esc(c.isPlayer ? 'Ti' : c.name) + '</span>').join(''); el.className = 'show';
+    const w = top[0]; Comm.say(w && w.isPlayer ? (pod ? 'podiumMe' : 'ceremonyMe') : pod ? 'podiumRb' : 'ceremony', { name: w ? w.name : '' }, 3, { ttl: 6000 });
+    Sfx.setCeremony(true); Sfx.applause(1);
+    return true;
+  }
+  function endPodium() { const pod = Render.world && Render.world.podium; if (pod) pod.hide(); Render.setPodium(null); $('podium-cap').className = ''; shotOff(); Sfx.setCeremony(false); }
   function toTitle() {
-    champRecord(); champRun = false;
+    endPodium(); champRecord(); champRun = false;
     paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); ghRec = ghPlay = null; Render.setGhost(null, true);
     Sfx.setRunning(false); Sfx.silence();
     Render.attachRace(demo); Render.resetCam();
@@ -729,14 +756,14 @@
     if (P.air && !jmp.air) { jmp.air = true; jmp.x = P.x; jmp.z = P.z; jmp.s = P.q.s; }
     else if (!P.air && jmp.air) { jmp.air = false; if (phase === 'racing' && !P.finished) jumpLanded(Math.hypot(P.x - jmp.x, P.z - jmp.z), jmp.s); }
     if (P.pitEv) { const e = P.pitEv; P.pitEv = null; pitEvent(e); }
-    if (track.def.pit && !pitHint && dmgOn() && P.dmg > 0.45 && phase === 'racing') { pitHint = true; toast('Avto je poškodovan: zapelji v bokse (' + (track.def.pitWhere || 'desno takoj za zadnjim ovinkom pred ciljno ravnino') + '), mehaniki ga popravijo.', 4600); }
+    if (track.def.pit && !pitHint && dmgOn() && P.dmg > 0.45 && phase === 'racing') { pitHint = true; sayT('pitAdvice', null, 3); }   // (the commentator tells where the pits are, no text on the screen; a track's own lines: def.comm)
     if (P.pitState === 'repair' && (!Render.crew || !Render.crew.P || Render.crew.gunOn)) { pitWrenchT -= dt; if (pitWrenchT <= 0) { pitWrenchT = 0.28 + Math.random() * 0.35; Sfx.wrench(); } }   // (with the crew: while the wheel guns rattle)
     if (P.propSnd) { Sfx.knock(P.propSnd, P.propSndV); if (P.propSndV > 9 && (P.propSnd === 'tstack' || P.propSnd === 'bstack' || P.propSnd === 'rbstack' || P.propSnd === 'crate')) vibrate(25); P.propSnd = null; P.propSndV = 0; }   // knocked a cone, tyres or bales
     for (const c of race.cars) { c.hitWall = 0; c.hitCar = 0; c.hitDebris = 0; }
   }
 
   /* ---------------- pit stops ---------------- */
-  let pitWrenchT = 0, pitHint = false, drsN = 0, pitDmg = 0, tyreKey = -1, tyreSaid = 0;
+  let pitWrenchT = 0, pitHint = false, drsN = 0, secN = 0, pitDmg = 0, tyreKey = -1, tyreSaid = 0;
   function pitEvent(e) {
     if (phase !== 'racing') return;
     if (e === 'enter') { showMsg('BOKSI · 80 km/h', 'gold', 1.8); Sfx.beep(660, 0.1, 0.1); sayT('pitIn', null, 2); }
@@ -1099,6 +1126,13 @@
     updateDamageHUD(P); towerTick(dt); updateTyreHUD(P);
     if (race.drsLast) { const st = P.drs ? 'open' : P.drsA ? 'arm' : ''; if ($('h-drs').className !== st) $('h-drs').className = st; }
     if (P.drsEv) { P.drsEv = null; if (phase === 'racing') { Sfx.beep(1320, 0.07, 0.08); if (drsN++ % 2 === 0) sayT('drs', null, 1); } }   // the flap opens (the commentator: every other time)
+    if (P.secEv) {   // a TV sector done: its bar under the clock turns purple / green / yellow, its time shows (not the third's: the lap time does)
+      const [k, t, col] = P.secEv, bars = $('h-sec').children; P.secEv = null;
+      if (k === 0) { bars[1].className = ''; bars[2].className = ''; }
+      bars[k].className = col;
+      if (k < 2 && !P.finished) { const el = $('h-split'); el.textContent = 'SEKTOR ' + (k + 1) + '  ' + (t >= 60 ? fmt(t) : t.toFixed(3)); el.className = 'show s' + col; splitT = 2.6; cornerShow = false; }
+      if (col === 'p' && phase === 'racing') { Sfx.beep(1175, 0.06, 0.07); if (secN++ % 3 === 0) Comm.say('secPurple', { n: k + 1 }, 1); }   // (the commentator: now and then)
+    }
     if (P.flagEv) { const e = P.flagEv; P.flagEv = null; if (phase === 'racing') flagEvent(e, P); }
     { const fl = P.yellowIn && phase === 'racing' ? 'on' : ''; if ($('h-flag').className !== fl) $('h-flag').className = fl; setText('h-pen', P.pen > 0 ? '+' + P.pen + ' s' : ''); }
     setText('h-speed', String(Math.round(P.speed * 3.6)));
@@ -1129,6 +1163,7 @@
 
   /* ---------------- commentator (English) ---------------- */
   const PART_EN = { bumperF: 'front bumper', bumperR: 'rear bumper', hood: 'bonnet', trunk: 'boot lid', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'front wing', fenderR: 'front wing' };
+  const PART_EN_F = { bumperF: 'front wing', bumperR: 'rear wing', hood: 'nose cone', trunk: 'engine cover', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'bargeboard', fenderR: 'bargeboard' };   // (the formula's parts)
   const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', ouninpohja: 'Ouninpohja', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka' };
   const cev = { wall: 0, car: 0 };          // impacts collected per physics step
   let cs = null;
@@ -1169,8 +1204,8 @@
     if (P.air && cs.jumpRoll && !cs.jumpSaid && P.airT > 0.45 && cool('jump', 9)) { cs.jumpSaid = true; Comm.say('jump', null, 1); }
     if (!P.air && cs.wasAir) { if (!cs.jumpSaid && (P.impactVY || 0) < -10 && cool('land', 12)) Comm.say('land', null, 1); cs.jumpSaid = false; }
     cs.wasAir = !!P.air;
-    { const n = Object.keys(P.lost).length; if (n > (cs.lostN || 0)) { const last = Object.keys(P.lost)[n - 1]; cs.lostN = n; if (cool('part', 6)) Comm.say('partLost', { part: PART_EN[last] || 'a panel' }, 2); } }
-    if (dmgOn() && P.dmg > 0.5 && !cs.dmg1) { cs.dmg1 = true; Comm.say('damage', null, 2); }
+    { const n = Object.keys(P.lost).length; if (n > (cs.lostN || 0)) { const last = Object.keys(P.lost)[n - 1]; cs.lostN = n; if (cool('part', 6)) Comm.say('partLost', { part: (P.m.body === 'formula' ? PART_EN_F : PART_EN)[last] || 'a panel' }, 2); } }
+    if (dmgOn() && P.dmg > 0.5 && !cs.dmg1) { cs.dmg1 = true; if (!pitHint) Comm.say('damage', null, 2); }   // (on a track with pits the pit advice said it already)
     if (dmgOn() && P.dmg > 0.8 && !cs.dmg2) { cs.dmg2 = true; Comm.say('heavyDamage', null, 3); }
     // knocked-over trackside props
     if (P.propKnock) { const k = P.propKnock, key = k === 'cone' ? 'propCone' : k === 'tyre' || k === 'tstack' ? 'propTyre' : k === 'bale' || k === 'bstack' || k === 'rbale' || k === 'rbstack' ? 'propBale' : k === 'pylon' ? 'propPylon' : k === 'post' ? 'propPost' : 'propCrate';
@@ -1204,7 +1239,8 @@
     phaseT += dt;
     const on = mp && mp.race;
     if (on && (phase === 'intro' || phase === 'lights')) phaseT = (Net.now() - on.at) / 1000 - (phase === 'lights' ? 1.3 : 0);   // online: both phones follow the host's clock
-    if (phase === 'intro' && phaseT > 1.3) {
+    if (phase === 'intro' && phaseT > introLen) {
+      if (introLen > 1.3) shotOff();   // (the jets' shot is over: the game's camera again)
       phase = 'lights'; phaseT = on ? phaseT - 1.3 : 0; $('h-lights').classList.add('show');
       holdT = on ? on.hold : 0.5 + Math.random() * 0.9;
       if (S.control === 'tilt' && Input.tiltAlive()) Input.calibrate();
@@ -1244,28 +1280,14 @@
         Input.reset();
       }
     } else if (phase === 'finish' && phaseT > 4.2) {
-      if (podT < 0 && !podDone) { podDone = true; podiumStart(); }   // (a circuit with a pit building: the podium first)
-      if (podT >= 0) { podT += dt; if (!podCork && podT > 3) { podCork = true; Sfx.cork(); Sfx.applause(0.8); } }   // (the champagne: Render sprays it from 3 s)
-      if (podT < 0 || podT > POD_T || podSkip) { podiumEnd(); finishRace(); }
+      const pod = Render.world && Render.world.podium;   // (the Red Bull Ring's own on its pit building; elsewhere with a pit building the one over the pit lane)
+      if (!podiumOK() || !startPodium(pod || null)) finishRace();
+    } else if (phase === 'podium') {
+      if (!podCork && phaseT > 3) { podCork = true; Sfx.cork(); Sfx.applause(0.8); }   // (the champagne: sprayed from 3 s)
+      if (phaseT > PODIUM_T || podSkip) { endPodium(); finishRace(); }
     }
   }
 
-  /* ---------------- the podium ceremony (Render.setPodium): after the finish on a circuit with a pit building (not a run alone, not
-     online) the first three on the podium over the pit lane for a few seconds, their names below; then the results. A tap or a key skips it ---------------- */
-  const POD_T = 8.5;
-  let podT = -1, podSkip = false, podDone = false, podCork = false;
-  function podiumStart() {
-    if (race.timeTrial || (mp && mp.race) || race.cars.length < 2) return false;
-    const top = race.estimateResults().slice(0, 3).map(r => r.car);
-    if (!Render.setPodium(top)) return false;
-    podT = 0; podSkip = false;
-    const el = $('podium');
-    el.innerHTML = '<p class="pod-h">' + esc(track.def.name) + ' · stopničke</p><ol>' + top.map((c, k) => '<li class="' + (c.isPlayer ? 'me' : '') + '"><b>' + (k + 1) + '.</b><span class="dot" style="background:' + hexCss(c.color) + '"></span>' + (c.isPlayer ? 'Ti' : esc(c.name)) + '</li>').join('') + '</ol><p class="pod-tap">Tapni za rezultate</p>';
-    el.className = 'show'; $('hud').classList.add('pod'); Sfx.setCeremony(true); Sfx.applause(1); podCork = false;
-    Comm.say(top[0].isPlayer ? 'ceremonyMe' : 'ceremony', { name: top[0].name }, 3, { ttl: 6000 });
-    return true;
-  }
-  function podiumEnd() { if (podT < 0) return; podT = -1; Render.setPodium(null); $('podium').className = ''; $('hud').classList.remove('pod'); Sfx.setCeremony(false); }
 
   /* ---------------- a race with a friend over the internet (js/net.js) ---------------- */
   // One friend makes a room (the host) and sends the code, the other joins with it. The host picks the track and the laps
@@ -1301,8 +1323,8 @@
   function netTap() { if (S.control === 'tilt') enableTilt(true); Comm.unlock(); }
 
   function leaveRace() {   // the race (or its results) off the screen, the title demo back
-    Net.fixClock(false);
-    podiumEnd(); paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); Sfx.setRunning(false); Sfx.silence();
+    Net.fixClock(false); endPodium();
+    paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); Sfx.setRunning(false); Sfx.silence();
     Render.attachRace(demo); Render.resetCam(); setLights(0, false);
   }
   function openOnline() {
@@ -1724,8 +1746,8 @@
       nm.addEventListener('blur', () => { nm.value = S.name; });
     }
     $('btn-pause').addEventListener('click', (e) => { e.preventDefault(); pause(); });
-    $('podium').addEventListener('pointerdown', (e) => { e.preventDefault(); podSkip = true; });   // (the podium ceremony: a tap, or a key, for the results)
-    window.addEventListener('keydown', (e) => { if (podT >= 0 && !paused && (e.key === 'Enter' || e.key === ' ')) podSkip = true; });
+    document.addEventListener('pointerdown', (e) => { if (phase === 'podium' && !paused && !(e.target && e.target.closest && e.target.closest('button'))) podSkip = true; });   // (the podium: a tap, or a key, for the results)
+    window.addEventListener('keydown', (e) => { if (phase === 'podium' && !paused && (e.key === 'Enter' || e.key === ' ')) podSkip = true; });
     $('btn-rescue').addEventListener('click', (e) => { e.preventDefault(); if (race && phase === 'racing') { race.rescue(race.player); race.player.locked = false; $('btn-rescue').classList.add('off'); } });
     document.addEventListener('visibilitychange', () => { if (document.hidden) { pause(); Sfx.suspend(); } else checkUpdate(); });
     window.addEventListener('pagehide', () => { if (mp) Net.close(true); });   // (closing the game: the friend hears it at once, not only when the connection times out)
