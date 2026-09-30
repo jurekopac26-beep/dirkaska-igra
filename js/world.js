@@ -6086,6 +6086,20 @@ const World = (function () {
     out.pkVegStats = { plants: NI, kinds: nK, cells: cells.size, logs: nLog, rocks: nRock };
   }
 
+  // the side roads (pkJunctions; buildPikes breaks the Highway's white edge line across their mouths): where the real course has them, as far as the modelled mountain allows (s, side, the angle they leave at; picked by
+  // trying route() along the stretch: the least climb, clear of the scenery, off the rails and the tight bends)
+  const PK_JN = [
+    { s: 310, sd: 1, a: 1.2, L: 46, W: 6, fl: 4, lot: 5.5, cars: 5, close: 'bar', marshal: 1, name: 'CRYSTAL CREEK', sub: 'Visitor Center · Reservoir' },
+    { s: 580, sd: -1, a: 2.3, L: 46, W: 4.2, fl: 2.5, gravel: 1, close: 'gate', vol: 1, name: 'FOREST ROAD 330', sub: 'Catamount Trail', col: '#1f5a3a' },
+    { s: 1078, sd: 1, a: 1.2, L: 44, W: 5.4, fl: 2.5, close: 'bar', vol: 1, name: 'HALFWAY PICNIC GROUND', sub: 'Picnic loop · Restrooms' },
+    { s: 1602, sd: 1, a: 1.95, L: 46, W: 4.2, fl: 2.5, gravel: 1, close: 'gate', name: 'FOREST ROAD 334', sub: 'Limber Pine Trail', col: '#1f5a3a' },
+    { s: 2078, sd: -1, a: 1.95, L: 50, W: 4.6, fl: 3, gravel: 1, close: 'gate', vol: 1, name: 'SKI AREA ROAD', sub: 'Service vehicles only', col: '#1f5a3a' },
+    { s: 2232, cross: 1, a: 1.3, L: 18, W: 1.8, fl: 0.8, dirt: 1, name: 'ELK PARK TRAIL' },
+    { s: 2779, sd: -1, a: Math.PI / 2, apron: 2.2, W: 5.2, fl: 2, close: 'tape', vol: 1, name: 'GLEN COVE', sub: 'Inn · Gift shop · Parking' },
+    { s: 3642, sd: 1, a: 1.57, L: 40, W: 4.4, fl: 3, gravel: 1, lot: 4, cars: 3, close: 'tape', vol: 1, name: 'ELK PARK TRAILHEAD', sub: 'Barr Trail · Hikers' },
+    { s: 4020, sd: -1, a: 1.57, L: 40, W: 6, fl: 4, lot: 5.5, cars: 6, close: 'bar', marshal: 1, name: "DEVIL'S PLAYGROUND", sub: 'Parking · Crags Trail' },
+    { s: 6244, sd: -1, a: 1.2, L: 36, W: 6, fl: 4, lot: 5.5, cars: 5, close: 'bar', marshal: 1, name: 'SUMMIT PARKING', sub: 'Lot B · Shuttle' },
+  ];
   /* ---- round 6: side roads: junctions, turn-offs and car-park entrances along the course, closed for the race (own random stream) ---- */
   function pkJunctions(K) {
     const R = rng(9621), { scen, w, N } = K, gy = pkGround, out = K.out, PI = Math.PI, ds = T.ds;
@@ -6127,7 +6141,10 @@ const World = (function () {
 
     /* ---- laying a side road: its surface (asphalt, gravel or a dirt trail; the mouth flared out to the Highway's edge, the far end fading into the ground
        or widening into a car park), draped on the verge and the ground, merged into the terrain tiles (no shadow, no draw call of its own) ---- */
-    const asphC = [0.3, 0.3, 0.315], gravC = [0.44, 0.39, 0.33], dirtC = [0.4, 0.32, 0.23], W1 = [1, 1, 1];
+    const asphC = [0.26, 0.285, 0.34], gravC = [0.44, 0.39, 0.33], dirtC = [0.4, 0.32, 0.23], W1 = [1, 1, 1];
+    // (the season code snows over grey (saturation < 0.12), soil- and plant-coloured ground: the asphalt a cool slate grey (hue 0.61, saturation 0.13) stays plowed in winter;
+    // the gravel roads' two wheel tracks of packed pink grit (hue < 0.04, saturation 0.14) stay dark ruts in the winter's snow)
+    const trkC = [0.4, 0.32, 0.3];
     const lay = (J, r) => {
       const hm = J.W / 2, F = r.F, sd = r.sd, h0x = (r.P[1][0] - r.P[0][0]) / 2, h0z = (r.P[1][1] - r.P[0][1]) / 2, sa = Math.sin(r.a), ca = Math.abs(Math.cos(r.a));
       const nb = Math.ceil(((hm + J.fl + 0.8) * ca / sa + 1) / 2), P = [], dN = (F.nx * h0x + F.nz * h0z) * sd;   // (nb sections start inside the road: the mouth's corners slide out onto its edge)
@@ -6137,15 +6154,15 @@ const World = (function () {
       for (let k = 0; k < n; k++) {
         const a = P[Math.max(0, k - 1)], b = P[Math.min(n - 1, k + 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, hx = (b[0] - a[0]) / l, hz = (b[1] - a[1]) / l, mx = -hz, mz = hx, t = (k - nb) * 2;
         let hw = hm + J.fl * Math.max(0, 1 - Math.max(0, t) / Lf) ** 2; if (J.lot) hw += J.lot * sstep(r.t - 16, r.t - 11, t);
-        const fade = J.lot || J.apron ? 0 : sstep(r.t - 10, r.t, t), us = [-hw - 0.8, -hw, -hm, 0, hm, hw, hw + 0.8];
+        const fade = J.lot || J.apron ? 0 : sstep(r.t - 10, r.t, t), us = J.gravel ? [-hw - 0.8, -hw, -hm, -1.06, -0.96, -0.6, -0.5, 0, 0.5, 0.6, 0.96, 1.06, hm, hw, hw + 0.8] : [-hw - 0.8, -hw, -hm, 0, hm, hw, hw + 0.8], ne = us.length - 1;
         const pts = us.map((u, j) => { let x = P[k][0] + mx * u, z = P[k][1] + mz * u; const lt = latOf(x, z, F, sd);
           if (lt < w + 0.03 && dN > 0.2) { x += h0x * (w + 0.03 - lt) / dN; z += h0z * (w + 0.03 - lt) / dN; }   // (slid out along the side road onto the Highway's edge)
-          const edge = j === 0 || j === 6, y = under(x, z) + (edge ? 0.012 : 0.035 + 0.03 * sstep(0, 2, near(x, z).dd)), g = gcol(x, z);
-          return [x, y, z, edge ? g : mix(sh(base, 0.93 + 0.14 * crH(x, z, 31)), g, J.lot && k === n - 1 ? 0.6 : fade)]; });
+          const edge = j === 0 || j === ne, y = under(x, z) + (edge ? 0.012 : 0.035 + 0.03 * sstep(0, 2, near(x, z).dd)), g = gcol(x, z), trk = J.gravel && Math.abs(Math.abs(u) - 0.78) < 0.2;
+          return [x, y, z, edge ? g : mix(sh(trk ? trkC : base, 0.93 + 0.14 * crH(x, z, 31)), g, J.lot && k === n - 1 ? 0.6 : fade)]; });
         S.push({ t, hx, hz, mx, mz, hw, us, pts });
       }
       for (let k = 0; k + 1 < n; k++) { const A = S[k].pts, B = S[k + 1].pts;
-        for (let j = 0; j < 6; j++) { const a = A[j], b = A[j + 1], c = B[j + 1], d = B[j]; if (Math.hypot(a[0] - b[0], a[2] - b[2]) + Math.hypot(d[0] - c[0], d[2] - c[2]) < 0.02) continue;
+        for (let j = 0; j + 1 < A.length; j++) { const a = A[j], b = A[j + 1], c = B[j + 1], d = B[j]; if (Math.hypot(a[0] - b[0], a[2] - b[2]) + Math.hypot(d[0] - c[0], d[2] - c[2]) < 0.02) continue;
           K.noShadow(a[0], a[2]).quadUp(a, b, c, d, [a[3], b[3], c[3], d[3]]); } }
       return S;
     };
@@ -6171,11 +6188,13 @@ const World = (function () {
     const TXT = (s, x, y, px, col, max, wt) => { c2.fillStyle = col; c2.font = (wt || 800) + ' ' + px + 'px Arial, sans-serif'; c2.textAlign = 'center'; c2.textBaseline = 'middle'; c2.fillText(s, x, y, max); };
     const arrow = (x, y, dir, col) => { c2.save(); c2.translate(x, y); c2.scale(dir, 1); c2.fillStyle = col; c2.beginPath(); c2.moveTo(-30, -9); c2.lineTo(8, -9); c2.lineTo(8, -26); c2.lineTo(34, 0); c2.lineTo(8, 26); c2.lineTo(8, 9); c2.lineTo(-30, 9); c2.closePath(); c2.fill(); c2.restore(); };
     let nCell = 0;
-    const guideCell = (a, b, dir, col) => {   // a guide sign: brown (recreation) or green (forest roads), a white border, the name, a second line, the arrow towards the side road
+    const GA = 416;   // (a guide cell: the name panel 0..GA, bordered all round; the arrow panel GA..512, pointing right, its border on the outer edge only: guide() lays them either way round)
+    const guideCell = (a, b, col) => {   // a guide sign: brown (recreation) or green (forest roads), a white border, the name, a second line, the arrow towards the side road
       const k = nCell++, [x0, y0] = cell(k), bg = col || '#5b3a21';
-      c2.fillStyle = bg; c2.fillRect(x0, y0, 512, 128); c2.strokeStyle = '#efe6d2'; c2.lineWidth = 5; c2.strokeRect(x0 + 7, y0 + 7, 498, 114);
-      const tx = x0 + (dir > 0 ? 222 : 290); TXT(a, tx, y0 + 50, a.length > 16 ? 44 : 52, '#f3ecd8', 390, 900); TXT(b, tx, y0 + 97, 30, '#efe6d2', 390, 700);
-      arrow(dir > 0 ? x0 + 458 : x0 + 54, y0 + 64, dir, '#f3ecd8'); return cell(k); };
+      c2.fillStyle = bg; c2.fillRect(x0, y0, 512, 128); c2.strokeStyle = '#efe6d2'; c2.lineWidth = 5; c2.strokeRect(x0 + 7, y0 + 7, GA - 14, 114);
+      c2.beginPath(); c2.moveTo(x0 + GA - 4, y0 + 7); c2.lineTo(x0 + 505, y0 + 7); c2.lineTo(x0 + 505, y0 + 121); c2.lineTo(x0 + GA - 4, y0 + 121); c2.stroke();
+      const tx = x0 + GA / 2; TXT(a, tx, y0 + 50, a.length > 16 ? 44 : 52, '#f3ecd8', GA - 40, 900); TXT(b, tx, y0 + 97, 30, '#efe6d2', GA - 40, 700);
+      arrow(x0 + GA + 46, y0 + 64, 1, '#f3ecd8'); return cell(k); };
     const CLOSED = (() => { const k = nCell++, [x0, y0] = cell(k);   // the barricades' board: ROAD CLOSED / ZAPRTO, orange and white stripes at the ends
       c2.fillStyle = '#f4f3ee'; c2.fillRect(x0, y0, 512, 128);
       for (const e of [x0, x0 + 452]) { c2.save(); c2.beginPath(); c2.rect(e, y0, 60, 128); c2.clip(); c2.fillStyle = '#ef6a12'; for (let q = -4; q < 8; q++) { c2.beginPath(); c2.moveTo(e + q * 30, y0 + 128); c2.lineTo(e + q * 30 + 40, y0); c2.lineTo(e + q * 30 + 55, y0); c2.lineTo(e + q * 30 + 15, y0 + 128); c2.fill(); } c2.restore(); } c2.strokeStyle = '#141414'; c2.lineWidth = 4; c2.strokeRect(x0 + 3, y0 + 3, 506, 122);
@@ -6216,30 +6235,25 @@ const World = (function () {
     const marshalCar = (x, z, rot) => { K.carPk(x, z, rot, [0.93, 0.93, 0.92]); const y = gy(x, z), c = Math.cos(rot), s = Math.sin(rot), g = scen.get(x, z);   // white, an orange stripe, a light bar
       box(g, x, y + 0.6, z, 4.34, 0.14, 1.89, rot, orange, null, true); box(g, x - c * 0.35, y + 1.67, z - s * 0.35, 0.32, 0.13, 1.3, rot, [1, 0.62, 0.1], [1, 0.7, 0.2], true); };
     const person = (p, fx, fz, col) => { if (free(p) && !K.excluded(p[0], p[2])) K.putPerson(p[0], p[2], Math.atan2(-fx, fz), col); };   // facing (fx, fz)
-    const post2 = (x, z, fx, fz, Wd, H, h0, rc, tilt, col) => {   // a board on two posts beside the road
+    const post2 = (x, z, fx, fz, Wd, H, h0, rc, tilt, col, two) => {   // a board on two posts beside the road (two: a guide board, both faces: face2's side)
       const y = gy(x, z), ux = fz, uz = -fx, g = scen.get(x, z), an = Math.atan2(fz, fx);
       for (const e of [-Wd * 0.38, Wd * 0.38]) box(g, x + ux * e - fx * 0.07, y - 0.3, z + uz * e - fz * 0.07, 0.1, h0 + H * 0.9 + 0.3, 0.1, an, col || postB, null, true);
-      plate(x, y + h0, z, fx, fz, Wd, H, rc, tilt); };
+      if (two) face2(x, y + h0, z, fx, fz, Wd, H, rc, tilt, two); else plate(x, y + h0, z, fx, fz, Wd, H, rc, tilt); };
+    const face2 = (x, y, z, fx, fz, Wd, H, r, tilt, sd) => {   // a guide board, the same both ways (the high cameras see many from behind): the name, the arrow towards the side road
+      // (on the side road's side, the right way from either side: its panel mirrored on the back), leaning back by tilt
+      const ca = Math.cos(tilt), sa = Math.sin(tilt), kx = -fx * H * sa, ky = H * ca, kz = -fz * H * sa, q = uvR(r), uA = (r[0] + GA) / 1024, aw = Wd * (512 - GA) / 512;
+      for (const f of [1, -1]) { const ux = fz * f, uz = -fx * f, ox = fx * ca * 0.02 * f, oy = sa * 0.02 * f, oz = fz * ca * 0.02 * f, rt = f * sd > 0, e = Wd / 2, m = rt ? e - aw : aw - e;   // (u: the viewer's right)
+        const P = (l) => [x + ox + ux * l, y + oy, z + oz + uz * l], inn = [x + kx / 2 - fx * ca * f, y + ky / 2 - sa * f, z + kz / 2 - fz * ca * f];
+        const Q = (l0, l1, u0, u1) => { const A = P(l0), B = P(l1); tb.quadO(A, B, [B[0] + kx, B[1] + ky, B[2] + kz], [A[0] + kx, A[1] + ky, A[2] + kz], W1, inn, [[u0, q[1]], [u1, q[1]], [u1, q[3]], [u0, q[3]]]); };
+        if (rt) { Q(-e, m, q[0], uA); Q(m, e, uA, q[2]); } else { Q(-e, m, q[2], uA); Q(m, e, q[0], uA); } } };   // (left of the name: the arrow panel mirrored, pointing left)
     const guide = (J, rc) => {   // the direction sign before the mouth, on the verge beyond the barrier, facing the cars coming up and turned a little towards the road
       for (let b = 0; b <= 30; b += 3) { const s = J.s - (J.W / 2 + J.fl + 5 + b), q = frame(s), o = J.sd * ((J.sd > 0 ? q.br : q.bl) + 2.4), x = q.px + q.nx * o, z = q.pz + q.nz * o;
         if (near(x, z).dd < 1.8 || K.excluded(x, z) || pkSlope(x, z) > 0.7) continue;
-        const an = Math.atan2(-q.tz, -q.tx) - J.sd * 0.45; post2(x, z, Math.cos(an), Math.sin(an), 3.4, 0.85, 1.25, rc, 0.3); K.excl.push({ x, z, r: 2.2 }); return 1; }
+        const an = Math.atan2(-q.tz, -q.tx) - J.sd * 0.45; post2(x, z, Math.cos(an), Math.sin(an), 3.4, 0.85, 1.25, rc, 0.3, null, J.sd); K.excl.push({ x, z, r: 2.2 }); return 1; }
       return 0; };
 
-    /* ---- the side roads: where the real course has them, as far as the modelled mountain allows (s, side, the angle they leave at; picked by
-       trying route() along the stretch: the least climb, clear of the scenery, off the rails and the tight bends) ---- */
-    const JN = [
-      { s: 310, sd: 1, a: 1.2, L: 46, W: 6, fl: 4, lot: 5.5, cars: 5, close: 'bar', marshal: 1, name: 'CRYSTAL CREEK', sub: 'Visitor Center · Reservoir' },
-      { s: 580, sd: -1, a: 2.3, L: 46, W: 4.2, fl: 2.5, gravel: 1, close: 'gate', vol: 1, name: 'FOREST ROAD 330', sub: 'Catamount Trail', col: '#1f5a3a' },
-      { s: 1078, sd: 1, a: 1.2, L: 44, W: 5.4, fl: 2.5, close: 'bar', vol: 1, name: 'HALFWAY PICNIC GROUND', sub: 'Picnic loop · Restrooms' },
-      { s: 1602, sd: 1, a: 1.95, L: 46, W: 4.2, fl: 2.5, gravel: 1, close: 'gate', name: 'FOREST ROAD 334', sub: 'Limber Pine Trail', col: '#1f5a3a' },
-      { s: 2078, sd: -1, a: 1.95, L: 50, W: 4.6, fl: 3, gravel: 1, close: 'gate', vol: 1, name: 'SKI AREA ROAD', sub: 'Service vehicles only', col: '#1f5a3a' },
-      { s: 2232, cross: 1, a: 1.3, L: 18, W: 1.8, fl: 0.8, dirt: 1, name: 'ELK PARK TRAIL' },
-      { s: 2779, sd: -1, a: PI / 2, apron: 2.2, W: 5.2, fl: 2, close: 'tape', vol: 1, name: 'GLEN COVE', sub: 'Inn · Gift shop · Parking' },
-      { s: 3642, sd: 1, a: 1.57, L: 40, W: 4.4, fl: 3, gravel: 1, lot: 4, cars: 3, close: 'tape', vol: 1, name: 'ELK PARK TRAILHEAD', sub: 'Barr Trail · Hikers' },
-      { s: 4020, sd: -1, a: 1.57, L: 40, W: 6, fl: 4, lot: 5.5, cars: 6, close: 'bar', marshal: 1, name: "DEVIL'S PLAYGROUND", sub: 'Parking · Crags Trail' },
-      { s: 6244, sd: -1, a: 1.2, L: 36, W: 6, fl: 4, lot: 5.5, cars: 5, close: 'bar', marshal: 1, name: 'SUMMIT PARKING', sub: 'Lot B · Shuttle' },
-    ];
+    /* ---- the side roads (PK_JN, above) ---- */
+    const JN = PK_JN.map(J => Object.assign({}, J));   // (own copies: one() sets J.L on the aprons)
     const Wc = [0.93, 0.93, 0.9], Yc = [0.95, 0.72, 0.12], st = { roads: 0, signs: 0, cars: 0, marshals: 0 };
     const one = (J) => {   // one side road with all its parts; returns its sections
       if (J.apron) { const F = frame(J.s); J.L = (J.sd > 0 ? F.br : F.bl) - w + J.apron; J.straight = 1; }
@@ -6263,7 +6277,7 @@ const World = (function () {
       if (J.marshal && tC + 8 < r.t) { const c = at(S, tC + 6.5, hm * 0.45); marshalCar(c[0], c[2], Math.atan2(-q.hz, -q.hx)); st.marshals++; }
       if (J.marshal || J.vol) person(at(S, tC + 0.6, hc + 0.9), -q.hx, -q.hz, J.marshal ? vest : vest2);
       if (J.marshal && J.vol !== 0) person(at(S, tC + 1.2, -hc - 0.8), -q.hx * 0.7 + q.mx * 0.7, -q.hz * 0.7 + q.mz * 0.7, vest2);
-      if (J.name && !J.cross) st.signs += guide(J, guideCell(J.name, J.sub, J.sd, J.col));
+      if (J.name && !J.cross) st.signs += guide(J, guideCell(J.name, J.sub, J.col));
       if (J.cars) { let n = 0; for (let t = r.t - 10; t <= r.t - 1.5 && n < J.cars; t += 2.7) for (const sg of [1, -1]) { if (n >= J.cars || R() < 0.2) continue;   // parked across the car park, both rows
         const qq = sec(S, t), u = sg * (qq.hw - 2.6), p = at(S, t, u); if (near(p[0], p[2]).dd < 2.6 || exOld(p[0], p[2]) || pkSlope(p[0], p[2]) > 0.35) continue;
         K.carPk(p[0], p[2], Math.atan2(qq.mz, qq.mx) + (sg > 0 ? 0 : PI) + (R() - 0.5) * 0.1, vary(carC[Math.floor(R() * carC.length)], R, 0.15)); n++; st.cars++; } }
@@ -6284,6 +6298,11 @@ const World = (function () {
     const tx = new THREE.CanvasTexture(cv); tx.anisotropy = 4; out.ownTex.push(tx);
     if (!tb.empty) { const m = new THREE.Mesh(tb.geometry(), new THREE.MeshLambertMaterial({ map: tx, alphaTest: 0.5 })); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); K.root.add(m); }
     out.pkJnStats = st;
+    // for the render's sun shafts (pkRays): -1 on the road and its verge (within 1 m of the barrier line), else pkForest's tree density there (0 above the tree line, in the car parks, the camps ...)
+    const P = K.P;
+    out.pkWood = (x, z, road) => { if (PK !== P) return 0; const n = pkNear(x, z); if (n.i >= 0 && n.dd < 1) return -1; if (road) return 0;   // (road: only that)
+      if (pkTG(P.td, x, z) > 205 || K.excluded(x, z) || pkSlope(x, z) > 0.95) return 0; const y = gy(x, z), tl = pkTreeline(x, z); if (y > tl + 12) return 0;
+      return (0.35 + 0.6 * sstep(0.3, 0.62, P.n3(x * 1.3 + 100, z * 1.3))) * sstep(tl + 12, tl - 22, y); };
   }
 
   /* ---- round 6: the summit on race day (chimney smoke, sponsor flags, the car park, team tents) and the sea of clouds in the valleys below the upper road
@@ -6679,6 +6698,9 @@ const World = (function () {
         for (let i = 0; i < N; i++) a[i] = Math.min(0.8, 0.62 * sstep(0.52, 0.8, nF(i * T.ds / 45, q * 7.3)) + (sd ? 0.5 * sstep(1 / 70, 1 / 22, sd * T.k[i]) : 0)); return a; });
       const fc = (c, f) => [lerp(c[0], 0.4, f), lerp(c[1], 0.4, f), lerp(c[2], 0.41, f)];
       const gv = (i, k) => { const q = 0.9 + 0.2 * nF(i * T.ds / 9, 40 + k); return [gc[0] * q, gc[1] * q, gc[2] * q]; }, gIn = [0.66, 0.63, 0.6];   // the gravel's tone varies along it, greyer where it meets the asphalt
+      // the side roads' mouths (PK_JN): the white edge line broken across them, [side, s0, s1] (the mouth's flared edges meet the Highway's edge at s -+ half its width / sin of its angle)
+      const jGap = PK_JN.filter(J => J.sd).map(J => { const h = (J.W / 2 + J.fl) / Math.sin(J.a); return [J.sd, J.s - h, J.s + h]; });
+      const jCut = (a, b, sd) => { let P = [[a, b]]; for (const [g, g0, g1] of jGap) if (g === sd && g1 > a && g0 < b) P = [].concat(...P.map(([x, y]) => [[x, Math.min(y, g0)], [Math.max(x, g1), y]].filter(([u, v]) => v - u > 0.05))); return P; };
       let gs = null;   // (the gravel strip: few vertices, chunks 4 times as long)
       for (let c0 = 0; c0 < N - 1; c0 += RC) {
         const gr = new GB(true), gl = new GB(true), pp = []; if (c0 % (RC * 4) === 0) gs = new GB(true);
@@ -6687,7 +6709,8 @@ const World = (function () {
           for (let c = 0; c < offs.length - 1; c++) { const o0 = offs[c], o1 = offs[c + 1];
             gr.quadUp(Pt(i, o0, 0.02), Pt(i, o1, 0.02), Pt(j, o1, 0.02), Pt(j, o0, 0.02), [shade(i, o0), shade(i, o1), shade(j, o1), shade(j, o0)], [[(o0 + w) / tileL, v0], [(o1 + w) / tileL, v0], [(o1 + w) / tileL, v1], [(o0 + w) / tileL, v1]]); }
           [[-0.27, -0.12, yel], [0.12, 0.27, yel], [-(w - 0.28), -(w - 0.5), wht], [w - 0.5, w - 0.28, wht]].forEach(([o0, o1, col], q) => { const fi = fade[q][i], fj = fade[q][j], ci = fc(col, fi), cj = fc(col, fj), si = i * T.ds, sj = j * T.ds;
-            pp.push([decal(gl, [[si, o0], [si, o1], [sj, o1], [sj, o0]], [ci, ci, cj, cj], 0.016, null, 0.004), 1 - 0.5 * Math.max(fi, fj)]); });   // (pp: [vertices, paint] per piece of line)
+            for (const [a, b] of q < 2 ? [[si, sj]] : jCut(si, sj, q === 3 ? 1 : -1)) { const ca = ci.map((v, m) => lerp(v, cj[m], (a - si) / T.ds)), cb = ci.map((v, m) => lerp(v, cj[m], (b - si) / T.ds));
+              pp.push([decal(gl, [[a, o0], [a, o1], [b, o1], [b, o0]], [ca, ca, cb, cb], 0.016, null, 0.004), 1 - 0.5 * Math.max(fi, fj)]); } });   // (pp: [vertices, paint] per piece of line)
           for (const side of [-1, 1]) {
             const ci = vc[side > 0 ? 1 : 0][i], cj = vc[side > 0 ? 1 : 0][j];
             const ga = gv(i, side), gb = gv(j, side), gai = [ga[0] * gIn[0] * 1.15, ga[1] * gIn[1] * 1.15, ga[2] * gIn[2] * 1.15], gbi = [gb[0] * gIn[0] * 1.15, gb[1] * gIn[1] * 1.15, gb[2] * gIn[2] * 1.15];   // (coarse: the texture's stones ~5-25 cm)

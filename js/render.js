@@ -1251,7 +1251,7 @@ const Render = (function () {
      quads leaning along the sun's rays, anchored on the ground on a hashed 9 m grid round the view (they stay put as the view moves), each
      turned about its own axis to face the camera, fading in along its length, at the view's edge and close to the camera, breathing gently.
      One mesh, one draw call (none when hidden), its 48 corners written on the CPU ---------------- */
-  const pkR = { mesh: null, N: 12, c: [] };
+  const pkR = { mesh: null, N: 12, c: [], v: new WeakMap() };
   const _rV = new THREE.Vector3(), _rS = new THREE.Vector3(), _rM = new THREE.Vector3(), _rQ = new THREE.Quaternion();
   function pkRays(a, dt) {
     if (!pkR.mesh) {
@@ -1270,9 +1270,18 @@ const Render = (function () {
     const G = world.groundH, N = pkR.N, R = 40, C = 9, cx = cam.vcx || 0, cz = cam.vcz || 0, cp = camera.position, sl = Math.hypot(sunOff[0], sunOff[1], sunOff[2]);
     const dx = sunOff[0] / sl, dy = sunOff[1] / sl, dz = sunOff[2] / sl, hl = Math.hypot(dx, dz) || 1, qx = -dz / hl, qz = dx / hl;   // (d: towards the sun; q: across it, on the ground)
     const L = pkR.c; L.length = 0;
+    // only in the forest (World's pkWood: the trees' density round the foot of the shaft) and never over the road: the shaft's foot and its trace on the ground
+    // towards the sun (as far as it shows: its lower part) clear of the road and its verge; each cell's verdict kept per world (the sun stays put)
+    const Wd = world.pkWood; let E = pkR.v.get(world); if (!E || E.sun !== sunOff) pkR.v.set(world, E = { sun: sunOff, m: new Map() }); const V = E.m;
     for (let i = Math.floor((cx - R) / C); i <= Math.floor((cx + R) / C); i++) for (let j = Math.floor((cz - R) / C); j <= Math.floor((cz + R) / C); j++) {
-      const h = hash3(i * 7919 + j * 104729 + 0.5); if (h > 0.2) continue;
+      const h = hash3(i * 7919 + j * 104729 + 0.5); if (h > 0.5) continue;
       const x = (i + hash3(i * 31 + j * 57 + 1.3)) * C, z = (j + hash3(i * 91 + j * 13 + 2.7)) * C, d = Math.hypot(x - cx, z - cz); if (d > R) continue;
+      if (Wd) { const key = i * 65536 + j; let ok = V.get(key);
+        if (ok === undefined) { let wd = 0; ok = true;
+          for (const [a, b] of [[0, 0], [5, 0], [-5, 0], [0, 5], [0, -5]]) { const p = Wd(x + a, z + b); if (p < 0) ok = false; else wd += p / 5; }
+          for (let t = 3; t <= 15 && ok; t += 3) for (const sd of [-2, 2]) if (Wd(x + dx / hl * t + qx * sd, z + dz / hl * t + qz * sd, 1) < 0) ok = false;
+          ok = ok && h < 0.5 * Core.sstep(0.2, 0.5, wd); V.set(key, ok); }
+        if (!ok) continue; }
       L.push([d, x, z, h * 5]); }
     L.sort((p, q) => p[0] - q[0]);
     const P = M.geometry.attributes.position.array, AW = M.geometry.attributes.aw.array; let n = 0;
@@ -1646,6 +1655,10 @@ const Render = (function () {
     '  float arch = (1.0 - smoothstep(uPkW.z + 0.08, uPkW.z + 0.45, ar)) * smoothstep(0.35, 0.75, abs(n.z));',   // round the wheel arches
     '  float rear = smoothstep(0.25, 0.8, -n.x) * (1.0 - smoothstep(-0.75, -0.25, p.x / uPkW.w));',   // the tail (the dust swirls in behind the car)
     '  float off = smoothstep(uPkW.z * 0.9, uPkW.z + 0.03, ar), bm = (1.0 - uPkWh) * off * mix(1.0, 0.3, pkG);',   // (the body: not on the wheels themselves)
+    '  if (uPkX.w > 150.0) { float fa = abs(p.z);',   // the formula (all of it low): only its floor and diffuser, the sidepods' lower half (and the wheels)
+    '    float fl = (1.0 - smoothstep(0.1, 0.16, p.y - max(0.0, -1.75 - p.x) * 0.42)) * step(-2.4, p.x) * step(p.x, 1.15) * step(fa, 0.8);',
+    '    float fs = smoothstep(0.36, 0.46, fa) * step(fa, 0.75) * (1.0 - smoothstep(0.24, 0.32, p.y + (nz - 0.5) * 0.08)) * step(-1.35, p.x) * step(p.x, 0.66);',
+    '    bm *= max(fl, fs); }',
     '  float wb = max(uPkWh, (1.0 - off) * step(uPkX.w, abs(p.z))), wl = wb * (1.0 - 0.5 * smoothstep(uPkW.z * 0.5, uPkW.z * 1.7, p.y));',   // a wheel (its own mesh, or a stock rear wheel in the body), dirtier low down
     '  pkTy = wb * (1.0 - smoothstep(0.115, 0.14, dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11))));',   // its rubber (the rims and hubs are lighter)
     '  float w = max((max(max(low, arch), rear) + smoothstep(0.55, 0.95, n.y) * 0.12) * bm, wl * (0.75 - 0.3 * pkTy));',
@@ -1688,10 +1701,12 @@ const Render = (function () {
   function pkCarDress(v) {
     const c = v.car, M = c.m, sc = M.len / 4.4, A = pkCarDust.get(c) || [0, 0, 0];
     const u = { inv: { value: new THREE.Matrix4() }, d: { value: A[0] }, w: { value: new THREE.Vector4(M.a * sc * 0.98 + 0.05, -M.b * sc * 0.98, M.rw, M.len / 2) },
-      x: { value: new THREE.Vector4(A[1], A[2], 0, v.wr.length ? 99 : M.wid * 0.5 - 0.24) } };   // (mud, snow, the tyres' wetness, the inner face of the stock rear wheels drawn with the body)
+      x: { value: new THREE.Vector4(A[1], A[2], 0, v.fp ? 199 : v.wr.length ? 99 : M.wid * 0.5 - 0.24) } };   // (mud, snow, the tyres' wetness, the inner face of the stock rear wheels drawn with the body; 199: the formula)
     if (v.wf.length && v.wr.length) u.w.value.set(v.wf[0].position.x, v.wr[0].position.x, v.wf[0].position.y, M.len / 2);   // (the Peugeot, the formula: real wheels of their own)
     pkCarMat(v.body.material, u, 0, 'pkCarB'); v.dirtU = null;   // the stock dirt stays off: this layer replaces it here
-    if (v.partMats) pkCarMat(v.partMats[0], u, 0, 'pkCarP');
+    if (v.partMats) { pkCarMat(v.partMats[0], u, 0, 'pkCarP');
+      const t0 = v.partMats[1], tm = v.partMats[1] = pkCarMat(new THREE.MeshPhongMaterial({ color: t0.color, shininess: 12, specular: 0x141518 }), u, 0, 'pkCarT', 0);   // the bumpers (dark trim): an own Phong copy, so the snow and the dirt settle on them too
+      v.bodyG.traverse(o => { if (o.isMesh && o.material === t0) o.material = tm; }); t0.dispose(); }
     else if (v.fp) {   // the formula: its parts share the stock paint (an own patched copy for this car) and the side fenders have their own
       let pm = null; v.bodyG.traverse(o => { if (o.isMesh && o.material === matCar) o.material = pm = pm || pkCarMat(matCar.clone(), u, 0, 'pkCarP'); });
       const fm = v.fp.parts.fenderL && v.fp.parts.fenderL.material; if (fm && fm !== matCar) pkCarMat(fm, u, 0, 'pkCarP');
