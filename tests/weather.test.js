@@ -2,8 +2,8 @@
 // is the lap time, the car's best and the fastest of anyone); the set-up (Race opts playerSetup: wing and gears) on the car's drag, gearing
 // and grip; the tyres (Race opts tyres: slicks and rain tyres, their grip on a dry and a wet road, their wear); a changing weather (Race
 // opts weather: the rain starts or stops during the race, the water on the road follows it, the racing line dries first and grips
-// better); the AI's pit stops for the right tyres (no more than three cars on their way in at a time, none stuck in the pit lane); a race
-// without these options as before (the golden references hold the rest).
+// better); the AI's pit stops for the right tyres (no more than three cars on their way in at a time, none stuck in the pit lane); winter
+// (Race opts winter: less grip, a snowy gravel road much less); a race without these options as before (the golden references hold the rest).
 //   node tests/weather.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -104,7 +104,16 @@ const f3 = (x) => (Number.isFinite(x) ? x.toFixed(3) : String(x));
   check('AI pit stops: every car finishes', r.cars.every(c => c.finished || c.isPlayer), `${r.cars.filter(c => c.finished).length}/13 in ${t.toFixed(0)} s`);
 }
 
-// 6. without the new options: no tyres, no weather changes, the grip of the old rain
+// 6. winter (Race opts winter): cold tarmac grips a little less, a gravel road packed with snow much less; the AI's profile follows
+{
+  const mk = (id, winter, rain) => new C.Race(track(id), { numAI: 1, playerGrid: 2, laps: 1, playerModel: C.MODELS[4], phys: 'cs', seed: 3, winter, rain });
+  const a = mk('rbring', false), b = mk('rbring', true), g = mk('gora', true), gr = mk('gora', true, 1), R = (r) => r.vprof.reduce((x, v) => x + v, 0) / r.vprof.length;
+  check('winter: tarmac x0.94, a snowy gravel road x0.74 (and less again in the snow), the AI slower through the corners',
+    a.player.wet === 1 && Math.abs(b.player.wet - 0.94) < 1e-9 && Math.abs(g.player.wet - 0.74) < 1e-9 && Math.abs(gr.player.wet - 0.8 * 0.74) < 1e-9 && R(b) < R(a),
+    `grip ${a.player.wet} / ${b.player.wet} / ${g.player.wet} / ${gr.player.wet.toFixed(3)}, profile ${R(a).toFixed(1)} vs ${R(b).toFixed(1)} m/s`);
+}
+
+// 7. without the new options: no tyres, no weather changes, the grip of the old rain
 {
   const T = track('rbring'), r = new C.Race(T, { numAI: 2, playerGrid: 3, laps: 1, playerModel: C.MODELS[4], phys: 'cs', seed: 3, rain: 1 });
   check('without tyres and a changing weather: as before (no tyres on the cars, the rain\'s grip for all)', !r.wst.on && r.cars.every(c => !c.ty && Math.abs(c.wet - 0.8) < 1e-9) && r.water === 1, '');

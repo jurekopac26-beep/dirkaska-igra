@@ -178,6 +178,15 @@ Na vseh progah čez pokrajino počasi drsijo sence oblakov (v dežju jih ni, ker
 
 Na zaslonu **Izberi progo** izbereš vreme: **Suho**, **Dež**, **Menljivo** (glej zgoraj) ali **Naključno** (vsaka dirka posebej: dež približno v vsaki tretji dirki, na Spa v vsaki drugi, na Nordschleife skoraj v vsaki drugi). V dežju imajo vsi avti manj oprijema (v ovinkih in pri speljevanju za petino, zavore za desetino), zato drsijo bolj in dlje; tekmeci z AI zato vozijo ovinke počasneje in prej zavirajo, krog je 6–9 % počasnejši. Cesta je temna in mokra, nebo oblačno, vidljivost manjša, dež pada v curkih, izpod koles se dviga pršec (namesto dima iz gum), s trave in gramoza pa leti blato. Slišati je dež in šumenje gum po vodi, komentator pa ob štartu omeni dež. Kadar je izbran Dež, dežuje tudi na naslovnem zaslonu. Kronometra (Pikes Peak in Ouninpohja) imata v dežju svoje rekorde, lestvico in duha. Kadar je izbran Dež, kartica proge in lestvica pokažeta te.
 
+## Letni čas in čas dneva
+
+Na zaslonu **Izberi progo** izbereš še **letni čas** (Poletje, Jesen, Zima) in **čas dneva** (Dan, Večer, Noč). Sprememba se pokaže takoj, tudi na naslovnem zaslonu, in velja za vse proge.
+
+- **Jesen:** listje na drevesih porumeni, pordeči in porjavi (nekaj ga ostane zelenega), travniki postanejo slamnati in olivni, sonce je toplejše. Npr. jesenska Nordschleife.
+- **Zima:** trava in polja so pod snegom, drevesa zasnežena, asfalt je splužen, makadamske ceste (Ouninpohja, Gorski reli) pa so pokrite s steptanim snegom. Izpod koles se dviga snežni prah. Namesto dežja sneži. Oprijem je manjši: na asfaltu za 6 %, na zasneženem makadamu za četrtino (tekmeci vozijo temu primerno).
+- **Večer:** nizko oranžno sonce, dolge sence, topla meglica. Avti imajo prižgane žaromete.
+- **Noč:** temno modro nebo in šibka luna. Ob progi so vsakih 30 m reflektorji na drogovih, ki osvetlijo asfalt, avti pa na cesto pred sabo svetijo z žarometi. Npr. nočna dirka v Monaku.
+
 ## Dirka s prijateljem
 
 Dirka dveh igralcev, vsak na svojem telefonu (ali računalniku), preko interneta.

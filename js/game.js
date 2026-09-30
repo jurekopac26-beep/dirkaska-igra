@@ -21,7 +21,7 @@
 
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
-  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.2, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', ghost: 1, quali: 1, name: 'Igralec' };
+  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.2, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', season: 'summer', tod: 'day', ghost: 1, quali: 1, name: 'Igralec' };
   let S = Object.assign({}, DEF);
   let records = {};
   try { const j = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (j) S = Object.assign(S, j); } catch (_) { }
@@ -34,6 +34,8 @@
   for (const k in DEF) if (S[k] == null || typeof S[k] === 'object') S[k] = DEF[k];   // hand-edited storage: a setting is always a plain value
   if (S.phys !== 'arcade') S.phys = 'cs';   // the 'rally' physics was removed: its players (it was the default) and old saves get cs
   if (!['dry', 'rain', 'random', 'change'].includes(S.weather)) S.weather = 'dry';
+  if (!['summer', 'autumn', 'winter'].includes(S.season)) S.season = 'summer';
+  if (!['day', 'dusk', 'night'].includes(S.tod)) S.tod = 'day';
   S.name = cleanName(S.name) || DEF.name;
   // upgrades per car: S.upg[modelId] = {motor, gume, zavore, aero} 0..3 (own objects, never shared; old saves have none)
   const UPG_IDS = Core.UPG.map(u => u.id);
@@ -221,7 +223,7 @@
     $('ctrl-help').textContent = (S.control === 'buttons' && S.phys !== 'arcade' ? CTRL_HELP_CS : CTRL_HELP[S.control]) || '';
     { const d = Core.TRACKS.find(x => x.id === S.track) || Core.TRACKS[0], r = rec(d.id);   // the selected track and its record first (short screens may cut the end of the hint)
       if (isTT(d)) { $('title-hint').textContent = 'Proga: ' + d.name + (r.bestTime ? ' (osebni rekord ' + fmt(r.bestTime, true) + ')' : ' (še brez časa)') + '.'; $('title-sub').textContent = d.name + ' · kronometer · brez nasprotnikov'; }
-      else { $('title-hint').textContent = 'Proga: ' + d.name + (r.bestLap ? ' (rekord kroga ' + fmt(r.bestLap, true) + ')' : '') + '.'; $('title-sub').textContent = d.name + ' · ' + lapWord(d.laps || 3).toLowerCase() + ' · 12 nasprotnikov' + (S.weather === 'rain' ? ' · dež' : S.weather === 'random' ? ' · morda dež' : S.weather === 'change' ? ' · menljivo vreme' : ''); } }
+      else { $('title-hint').textContent = 'Proga: ' + d.name + (r.bestLap ? ' (rekord kroga ' + fmt(r.bestLap, true) + ')' : '') + '.'; $('title-sub').textContent = d.name + ' · ' + lapWord(d.laps || 3).toLowerCase() + ' · 12 nasprotnikov' + (S.weather === 'rain' ? ' · dež' : S.weather === 'random' ? ' · morda dež' : S.weather === 'change' ? ' · menljivo vreme' : '') + (S.season === 'autumn' ? ' · jesen' : S.season === 'winter' ? ' · zima' : '') + (S.tod === 'dusk' ? ' · večer' : S.tod === 'night' ? ' · noč' : ''); } }
     $('title-hint').textContent += ' Upravljanje: ' + CTRL_NAME[S.control] + ', kamera: ' + (S.camera === 'chase' ? 'za avtom (telefon pokončno)' : S.camera === 'kino' ? 'kino (telefon ležeče)' : 'izometrična (telefon ležeče)') + '. Spremeniš v nastavitvah.' + (records.bestLap ? ' Rekord kroga: ' + fmt(records.bestLap, true) + '.' : '');
     { const el = $('set-name'); if (el && document.activeElement !== el) el.value = S.name; }
     { const d = champDef(); $('btn-champ').textContent = 'Prvenstvo' + (d && !champDone() ? ' · ' + (champ.rounds.length + 1) + '/' + d.tracks.length : ''); }
@@ -267,6 +269,7 @@
     save(); applySettings();
     if (key === 'phys') { if (!(mp && mp.race)) applyPhys(race); applyPhys(demo); }   // (an online race keeps the host's physics)
     if (key === 'weather' && demo) demo.setRain(demoRain());   // (a race keeps its weather; the next one gets the new setting)
+    if (key === 'season' || key === 'tod') Render.setAtmos({ season: S.season, tod: S.tod });   // (the season and the time of day: at once, also on the title demo)
     if (key === 'weather' && screen === 'track') buildTrackScreen();   // (a time trial's records in the rain are its own: the cards show them)
     if (key === 'control' && v === 'tilt') enableTilt(false);
     if (key === 'camera') { lockOrientation(); updateOrientation(); }
@@ -674,7 +677,7 @@
         remote: { model: modelById(F.car), color: PLAYER_COLORS[F.color] || PLAYER_COLORS[0], num: same && host ? F.num + 1 : F.num, name: F.name, grid: left ? 2 : 1 } }));
     } else race = new Core.Race(track, Object.assign(mine, {   // time trial: alone on the start line, one run to the finish; qualifying: alone, one flying lap
       numAI: tt || quali ? 0 : nAI, playerGrid: tt || quali ? 1 : Q ? Q.res.grid : PLAYER_GRID, aiOrder: Q ? Q.res.order : undefined, qualiBack: quali ? qual.back : 0,
-      laps: tt || quali ? 1 : track.def.laps || LAPS, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali ? null : W.wx, tyres: !tt && !!track.def.pit, flags: !tt && !quali, champ: cr >= 0
+      laps: tt || quali ? 1 : track.def.laps || LAPS, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali ? null : W.wx, tyres: !tt && !!track.def.pit, flags: !tt && !quali, winter: S.season === 'winter', champ: cr >= 0
     }));
     race.champ = cr >= 0 ? { round: cr, n: cd.tracks.length, done: false } : null;
     race.quali = quali;
@@ -2042,6 +2045,7 @@
     try {
       track = getTrack(S.track);
       Render.init($('gl'));
+      Render.setAtmos({ season: S.season, tod: S.tod });   // (before the first world: it is built in the season)
       Render.buildWorld(track, S.quality === 'retro' ? 0.8 : 1);
       Input.init($('touch'), () => { if (screen === 'pause') resume(); else if (screen === 'none') pause(); });
       Input.onPad = () => toast('Igralni plošček je povezan: leva palica krmili, RT plin, LT zavora, B drift, Start pavza. V menijih izbiraš s palico in A, B je nazaj.', 5200);

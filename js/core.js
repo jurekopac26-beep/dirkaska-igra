@@ -2011,13 +2011,15 @@ const Core = (function () {
       }
       if (this.player) this.player.num = opts.playerNum || 1;
       if (this.remote) this.remote.num = RM.num || 2;
+      // winter (opts.winter): cold tarmac grips a little less (x0.94), a gravel road packed with snow much less (x0.74): on every car's grip and the AI's profile
+      this.cold = { gk: opts.winter ? (track.def.roadSurface === 'makadam' ? 0.74 : 0.94) : 1 };   // (in an object: the golden references digest only the plain fields)
       this.rain = 0; this._wet(opts.rain);
       // tyres and a changing weather (opts.tyres; opts.weather = { at, dur, to }: the rain goes from opts.rain to `to` over dur s from race time
       // at). The water on the road follows the rain (wet in about a minute, dry in about four, the racing line twice as fast); a car's grip
       // follows its tyres (c.ty = { k: 'dry' | 'wet', wear }), the water where it drives (on the line or off it) and the wear (see _weather).
       // wst.ev / evK: 'rain' when it starts to rain, 'dry' when it stops
       const WX = opts.weather && !opts.remote ? opts.weather : null;
-      this.wst = { on: !!(opts.tyres || WX), tyres: !!opts.tyres, water: this.rain, line: this.rain, profW: this.rain ? 1 - (1 - WET) * this.rain : 1, ev: 0, evK: '',
+      this.wst = { on: !!(opts.tyres || WX), tyres: !!opts.tyres, water: this.rain, line: this.rain, profW: (this.rain ? 1 - (1 - WET) * this.rain : 1) * this.cold.gk, ev: 0, evK: '',
         wx: WX ? { at: Math.max(0, +WX.at || 0), dur: Math.max(1, +WX.dur || 60), r0: this.rain, r1: clamp(+WX.to || 0, 0, 1) } : null };
       if (opts.tyres) for (const c of this.cars) c.ty = { k: c.isPlayer && (opts.playerTyre === 'dry' || opts.playerTyre === 'wet') ? opts.playerTyre : tyreFor(this.rain), wear: 0 };
       if (track.drs) this.drsLast = track.drs.map(() => null);   // (per DRS zone: who crossed its detection line last, and when)
@@ -2040,8 +2042,8 @@ const Core = (function () {
     }
 
     // rain (0 dry .. 1 wet, opts.rain): the grip of every car; the renderer follows race.rain (streaks, spray, a wet road)
-    _wet(r) { r = clamp(+r || 0, 0, 1); this.rain = r; const w = 1 - (1 - WET) * r; for (const c of this.cars) c.wet = w; }
-    setRain(r) { this._wet(r); const W = this.wst; if (W) { W.water = W.line = this.rain; W.profW = 1 - (1 - WET) * this.rain; } this._prof(); }   // (title demo: the weather setting at once)
+    _wet(r) { r = clamp(+r || 0, 0, 1); this.rain = r; const w = (1 - (1 - WET) * r) * this.cold.gk; for (const c of this.cars) c.wet = w; }
+    setRain(r) { this._wet(r); const W = this.wst; if (W) { W.water = W.line = this.rain; W.profW = (1 - (1 - WET) * this.rain) * this.cold.gk; } this._prof(); }   // (title demo: the weather setting at once)
     get water() { return this.wst ? this.wst.water : this.rain; }       // the water on the road (0..1; the renderer's wet road)
     get lineWater() { return this.wst ? this.wst.line : this.rain; }    // ... on the racing line (it dries first)
     // the rain on its schedule, the water on the road, every car's grip (with tyres); the AI's speed profile follows the grip on the line
@@ -2057,8 +2059,8 @@ const Core = (function () {
       else { W.water = Math.max(r, W.water - dt / 240); W.line = Math.min(W.water, Math.max(r, W.line - dt / 120)); }
       for (const c of this.cars) { if (c.net) continue;   // (the water where it drives: the racing line dries first)
         const w = c.q && c.q.i >= 0 && T.rl && Math.abs(c.q.d - T.rl[c.q.i]) < 2.2 ? W.line : W.water;
-        c.wet = W.tyres && c.ty ? TYRE_GRIP[c.ty.k](w) * (1 - 0.1 * c.ty.wear) : 1 - (1 - WET) * w; }
-      const pw = W.tyres ? TYRE_GRIP[tyreFor(W.line)](W.line) : 1 - (1 - WET) * W.water;
+        c.wet = (W.tyres && c.ty ? TYRE_GRIP[c.ty.k](w) * (1 - 0.1 * c.ty.wear) : 1 - (1 - WET) * w) * this.cold.gk; }
+      const pw = (W.tyres ? TYRE_GRIP[tyreFor(W.line)](W.line) : 1 - (1 - WET) * W.water) * this.cold.gk;
       if (Math.abs(pw - W.profW) > 0.012) { W.profW = pw; this._prof(); }
     }
     // an AI car's box in the pit lane (metres from the start line): along the crews' row (def.pitRow), by its grid slot, clear of the player's
@@ -2071,7 +2073,7 @@ const Core = (function () {
     // speed profile for the AI (on the racing line), per physics; an upgraded player's autopilot brakes later with better brakes (its own profile).
     // Rain: the corners as much slower as the grip is lower, the braking as the brakes (see Car)
     _prof() {
-      const opts = this.opts, track = this.track, w = this.wst && this.wst.on ? this.wst.profW : this.rain ? 1 - (1 - WET) * this.rain : 1;
+      const opts = this.opts, track = this.track, w = this.wst && this.wst.on ? this.wst.profW : (this.rain ? 1 - (1 - WET) * this.rain : 1) * this.cold.gk;
       const csP = opts.phys === 'cs', wM0 = csP ? CSK.aiWmax : 0;
       let latA0 = opts.aiLatA || (csP ? CSK.aiLatA : 16.5), brA0 = opts.aiBrakeA || (csP ? CSK.aiBrakeA : 13.0);
       if (w < 1) { latA0 *= w; brA0 *= 0.55 + 0.45 * w; }
