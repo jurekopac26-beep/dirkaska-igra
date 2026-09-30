@@ -146,6 +146,17 @@ const Sfx = (function () {
     const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.35 * vol, now); g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
     src.connect(lp); lp.connect(g2); g2.connect(bus); src.start(now, Math.random()); src.stop(now + 0.14);
   }
+  // the police radio: a burst of squelch (band-passed noise), then the short beep of the channel coming free
+  function radio() {
+    if (!ctx || ctx.state !== 'running' || !running) return;
+    const now = ctx.currentTime, src = ctx.createBufferSource(); src.buffer = noiseBuf;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1700; bp.Q.value = 1.6;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.12, now + 0.01); g.gain.setValueAtTime(0.12, now + 0.16); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+    src.connect(bp); bp.connect(g); g.connect(bus); src.start(now, Math.random()); src.stop(now + 0.24);
+    const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = 1250;
+    const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.0001, now + 0.24); g2.gain.exponentialRampToValueAtTime(0.05, now + 0.25); g2.gain.setValueAtTime(0.05, now + 0.31); g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.33);
+    o.connect(g2); g2.connect(bus); o.start(now + 0.23); o.stop(now + 0.35);
+  }
   // a tyre over the spikes: a sharp pop, then the air hissing out
   function pop() {
     if (!ctx || ctx.state !== 'running' || !running) return;
@@ -532,6 +543,9 @@ const Sfx = (function () {
       hv = a * a * 0.5;
       if (cam) { const e = cam.matrixWorld.elements; hp = clamp(((q.x - lx) * e[0] + (q.y - ly) * e[1] + (q.z - lz) * e[2]) / Math.max(d, 1) * 1.2, -0.8, 0.8); }
     }
+    const PH = race && race.pol && race.pol.heli;   // (Vršič, the run from the police: their helicopter)
+    if (PH) { const lx = cam ? cam.position.x : player.x, ly = cam ? cam.position.y : (player.roadY || 0), lz = cam ? cam.position.z : player.z, d = Math.hypot(PH.x - lx, PH.y - ly, PH.z - lz), a = clamp(1 - d / 380, 0, 1);
+      if (a * a * 0.55 > hv) { hv = a * a * 0.55; if (cam) { const e = cam.matrixWorld.elements; hp = clamp(((PH.x - lx) * e[0] + (PH.y - ly) * e[1] + (PH.z - lz) * e[2]) / Math.max(d, 1) * 1.2, -0.8, 0.8); } } }
     set(heli.out.gain, hv, 0.35);
     if (heli.pn) set(heli.pn.pan, hp, 0.1);
     standsStep(race, player, W, cam);
@@ -643,7 +657,7 @@ const Sfx = (function () {
   }
 
   const levels = () => ctx ? { stands: stands.lev, standsGain: stands.out.gain.value, tunnel: tun.send.gain.value, pk: atmo && atmo.x ? { ready: !atmo.gen && !atmo.x.gen, crunch: atmo.x.cr.map(c => +c.g.gain.value.toFixed(4)), slap: atmo.x.sG.gain.value, far: atmo.x.fG.gain.value, gust: atmo.x.wo.gain.value, wind: atmo.wo.gain.value } : null } : null;   // (tests: the crowd's and the tunnel's levels now)
-  const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, shiftPop, knock, wrench, silence, levels, siren, carHorn, thud, pop, get ready() { return !!ctx && ctx.state === 'running'; } };
+  const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, shiftPop, knock, wrench, silence, levels, siren, carHorn, thud, pop, radio, get ready() { return !!ctx && ctx.state === 'running'; } };
   window.Sfx = api;
   return api;
 })();

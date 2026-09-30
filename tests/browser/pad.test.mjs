@@ -44,10 +44,11 @@ try {
   await press(9);
   await page.waitForFunction((id) => { const g = window.__game; return g.race && g.race.track.def.id === id && g.phase === 'racing'; }, prevId, { timeout: 120000 });
 
-  // 4. driving: RT the throttle, the stick steers in proportion, the on-screen controls hidden
+  // 4. driving: RT the throttle, the stick steers in proportion, the on-screen controls hidden (for 1.5 s of the race's own time: a slow
+  //    machine draws few frames and plays in slow motion, so the wall clock says little about how far the car has got)
   const d = await page.evaluate(async () => {
-    const P = window.__game.race.player, pad = window.__pad; pad.buttons[7].value = 1; pad.buttons[7].pressed = true; pad.axes[0] = -0.8;
-    await new Promise(r => setTimeout(r, 2500));
+    const g = window.__game, P = g.race.player, pad = window.__pad; pad.buttons[7].value = 1; pad.buttons[7].pressed = true; pad.axes[0] = -0.8;
+    const t0 = g.race.time; for (let k = 0; k < 600 && g.race.time - t0 < 1.5; k++) await new Promise(r => setTimeout(r, 50));
     const o = { v: P.speed, thr: P.inThr, steer: P.inSteer, digital: P.digitalSteer, hidden: document.getElementById('touch').classList.contains('pad') };
     pad.buttons[7].value = 0; pad.buttons[7].pressed = false; pad.axes[0] = 0; return o; });
   T.check('driving: RT full throttle, the stick 80 % left steers ~2/3 left (in proportion, not digital), the car moves; no on-screen controls', d.v > 3 && d.thr === 1 && d.steer < -0.6 && d.steer > -0.75 && !d.digital && d.hidden, JSON.stringify(d));

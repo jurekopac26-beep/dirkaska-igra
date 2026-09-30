@@ -162,7 +162,8 @@ try {
   //     to the pass, its record and board under 'vrsic-tt@cs' (the race's records stay apart), a medal; Dirka: 12 rivals on the grid, the HUD
   //     shows the place, the km climbed and the altitude; Promet: the duel with one rival up the open road, the traffic and the people drawn,
   //     the HUD with the rival's gap; Policija: alone with the police after the player, the patrol cars drawn with their lights flashing, the
-  //     HUD with the patrol cars after the player and the heat (stars)
+  //     HUD with the patrol cars after the player and the heat (stars); the heat up to five stars: the helicopter drawn over the player, the
+  //     police radio talking
   {
     const r = await page.evaluate(async () => {
       const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)), frame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -192,6 +193,12 @@ try {
         const hud = document.getElementById('hud'), road = Object.assign({}, Render.roadInfo(), { lampOn: lamp });
         out[md] = { mode: g.S.mode, cars: g.race.cars.length, tf: !!g.race.tf, pol: g.race.pol ? g.race.pol.cars.length : 0, duel: hud.classList.contains('duel'), polHud: hud.classList.contains('pol'), gap: document.getElementById('h-gap').textContent,
           lbl: document.querySelector('#h-rank .h-lbl').textContent, pos: document.getElementById('h-pos').textContent, heat: document.getElementById('h-heat').textContent, road, dist: g.race.player.dist, phase: g.phase };
+        if (md === 'police') {   // the heat up (as if the player had wrecked half the police's cars): the helicopter comes, the radio says so
+          const el = document.getElementById('h-radio'); let radio = '', heli = false;
+          g.race.pol.cool = -3; for (let i = 0; i < 40 && !heli; i++) { g.sim(1, true); await frame(); if (el.className === 'show') radio = radio || el.textContent; heli = !!(Render.roadInfo() || {}).heli; }
+          for (let i = 0; i < 10; i++) { await frame(); if (el.className === 'show' && !radio) radio = el.textContent; }
+          Object.assign(out.police, { heli, radio, heli2: g.race.pol.heli ? g.race.pol.heli.st : '' });
+        }
       }
       return out;
     });
@@ -210,6 +217,8 @@ try {
     T.check('Vršič Policija: alone with the police after the player, patrol cars drawn with their lights flashing, the HUD with the patrol cars and the heat',
       P.mode === 'police' && P.cars === 1 && P.tf && P.pol >= 1 && P.polHud && !P.duel && P.lbl === 'POLICIJA' && +P.pos >= 1 && /^\u2605+\u2606*$/.test(P.heat) && P.heat.length === 5 && P.road && P.road.pol >= 1 && P.road.lampOn && P.dist > 300,
       `${P.pol} patrol cars, HUD "${P.lbl} ${P.pos}" "${P.heat}", drawn ${JSON.stringify(P.road)}, ${Math.round(P.dist)} m, ${P.phase}`);
+    T.check('Vršič Policija, the heat up: the helicopter drawn over the player, the police radio talking',
+      P.heli && /^RADIO.{12,}/.test(P.radio), `helicopter ${P.heli} (${P.heli2}), radio "${P.radio}"`);
   }
   T.check('no page errors during the whole run', !errors.length, errors.slice(0, 5).join(' | '));
   await ctx.close();

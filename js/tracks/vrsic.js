@@ -35,6 +35,9 @@ var TRACK_DEFS = TRACK_DEFS || [];
     zebras: [92, 492, 561, 1018, 1718],
     stops: [[1785, 1, 'Jasna'], [2003, -1, 'Jasna'], [3207, -1, 'Šumica'], [3208, 1, 'Šumica'], [5923, -1, 'Ruski križ'], [6534, 1, 'Mihov dom'], [6535, -1, 'Mihov dom'],
       [8237, -1, 'Koča na Gozdu'], [8251, 1, 'Koča na Gozdu'], [11165, -1, 'Erjavčeva koča'], [11172, 1, 'Erjavčeva koča'], [12292, -1, 'Vršič']],
+    // log piles by the road in the woods (the run from the police: a stake knocked over lets the logs roll across the road): [metres after the
+    // start line, side]; on the uphill bank, in the forest (Copernicus DEM, land cover), clear of the hairpins, stops, bridges and huts
+    logs: [[2490, -1], [4390, 1], [5160, 1], [8080, 1]],
     // the numbered hairpins (their signs): [metres after the start line, altitude on the sign, 1 right / -1 left]
     hairpins: [[3697.9,920,1],[3817.4,934,-1],[6036.9,1054,1],[6134.4,1060,-1],[6680.8,1109,-1],[6756.4,1118,1],[6854.1,1125,-1],[7038.8,1139,1],[7365.4,1158,-1],[8512.5,1251,1],[8731.0,1269,-1],[8828.5,1280,1],[9015.4,1299,-1],[9197.0,1307,1],[9376.1,1321,-1],[9585.4,1346,1],[10403.2,1426,-1],[10708.8,1454,1],[10830.8,1469,-1],[10902.8,1475,1],[11049.9,1489,-1],[11322.1,1519,-1],[11617.1,1541,1],[11772.2,1558,-1]],
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; spoken in English, the Slovenian names
