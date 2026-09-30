@@ -3064,6 +3064,8 @@ const World = (function () {
     const tu = sstep(0.56, 0.76, n6(x * 0.6 + 40, z * 0.6)) * sstep(tl - 5, tl + 20, h) * (1 - sstep(290, 350, h)) * 0.6, tq = q - 0.5;   // tundra: mottled green-brown
     ar = lerp(ar, 0.45 + tq * 0.12, tu); ag = lerp(ag, 0.41 - tq * 0.04, tu); ab = lerp(ab, 0.27, tu);
     r = lerp(r, ar, tun); g = lerp(g, ag, tun); b = lerp(b, ab, tun);
+    const sc = sstep(0.95, 0.8, ny) * tun * (0.5 + 0.5 * sstep(0.3, 0.7, q2)) * 0.85, sq = (q - 0.5) * 0.1;   // scree: loose grey-pink rubble on the middling slopes above the trees (paler, greyer than the gravel)
+    r = lerp(r, 0.57 + m * 0.08 + sq, sc); g = lerp(g, 0.51 + m * 0.06 + sq, sc); b = lerp(b, 0.47 + m * 0.05 + sq * 0.8, sc);
     const st = sstep(0.8, 0.6, ny) * 0.9;
     r = lerp(r, 0.62 + m * 0.06, st); g = lerp(g, 0.53 + m * 0.05, st); b = lerp(b, 0.48 + m * 0.04, st);
     if (h > 322) { const sn = sstep(330, 445, h); let c = h > 330 ? sstep(0.72 - 0.22 * sn, 0.8 - 0.22 * sn, P.n4(x * 0.8 + 50, z * 0.8)) : 0;
@@ -3073,6 +3075,10 @@ const World = (function () {
       r = lerp(r, 1.04, c); g = lerp(g, 1.06, c); b = lerp(b, 1.12, c);
       const e = 4 * c * (1 - c) * (0.45 + 0.3 * q); r = lerp(r, 0.76, e); g = lerp(g, 0.73, e); b = lerp(b, 0.7, e); }   // the dirty, wind-packed edge
     if (dd < 3) { const t = sstep(3, 0, dd) * 0.3; r = lerp(r, 0.6, t); g = lerp(g, 0.5, t); b = lerp(b, 0.42, t); }   // dusty verge
+    { // soft ambient occlusion: the ground's curvature over 6 and 18 m (opposite pairs, so a plain slope cancels out): darker in gullies, at the foot of slopes and of the road's cut, a touch lighter on the ridges
+      const G = pkGround, h0 = G(x, z), c6 = (G(x + 6, z) + G(x - 6, z) + G(x, z + 6) + G(x, z - 6) + G(x + 4.2, z + 4.2) + G(x - 4.2, z - 4.2) + G(x + 4.2, z - 4.2) + G(x - 4.2, z + 4.2)) / 8 - h0;
+      const c18 = (G(x + 18, z) + G(x - 18, z) + G(x, z + 18) + G(x, z - 18)) / 4 - h0, o = sstep(0.1, 1.1, c6) * 0.55 + sstep(0.4, 4, c18) * 0.45, k = 1 - 0.44 * o + 0.06 * sstep(-0.15, -1.2, c6);
+      r *= k; g *= k; b *= k * (1 + 0.04 * o); }   // (the shade a little bluer: skylight)
     PKCOL[0] = r; PKCOL[1] = g; PKCOL[2] = b; return PKCOL;
   }
   function pkTileOn(ti, tj) {   // 0: none, 1: full tile (5 m cells), 2: coarse outer ring (10 m cells; deep in the haze, but the top of a tall portrait view looks that far down into the valleys),
@@ -3103,7 +3109,7 @@ const World = (function () {
     }
     if (xs) { const [v, f] = xs, o = nb + na, M = 1 / +pkGMean.toFixed(3);   // (the shader's own rounding of the mean)
       pos.set(v.P, nb * 3); nor.set(v.N, nb * 3); col.set(v.C, nb * 3); uv.set(v.U, nb * 2);
-      pos.set(f.P, o * 3); nor.set(f.N, o * 3); for (let q = 0; q < nf * 3; q++) col[o * 3 + q] = f.C[q] * M; stp.fill(1, o); }
+      pos.set(f.P, o * 3); nor.set(f.N, o * 3); for (let q = 0; q < nf * 3; q++) col[o * 3 + q] = f.C[q] * M; stp.fill(2, o); }   // (steep 2: plain, no grit, no relief)
     const idx = nv > 65535 ? new Uint32Array(m * m * 6 + na + nf) : new Uint16Array(m * m * 6 + na + nf); k = 0;
     for (let b = 0; b < m; b++) for (let a = 0; a < m; a++) { const p = b * n + a, q = p + 1, c = p + n, d = c + 1; idx[k++] = p; idx[k++] = c; idx[k++] = q; idx[k++] = q; idx[k++] = c; idx[k++] = d; }
     for (let q = nb; q < nv; q++) idx[k++] = q;
@@ -3113,24 +3119,62 @@ const World = (function () {
     g.computeBoundingSphere(); return g;
   }
   let pkGTex = null, pkGMean = 0.9, pkATex = null, pkAKey = '';   // the ground and board textures are made once and reused by every Pikes build (the world teardown frees materials, not maps)
-  function pkTex() {   // neutral grey grit for the ground (the vertex colours give the hue): mottled, with small light and dark stones; tileable
+  function pkTex() {   // ground grit in three channels (tileable): r the grey grit (the vertex colours give the hue): mottled, with light and dark stones; g its relief (the stones as domes,
+    // for the sun-side emboss in pkGroundMat); b sparse glints (ice crystals, mica: the snow's sparkle)
     if (pkGTex) return pkGTex;
-    const S = 128, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), img = x.createImageData(S, S), d = img.data, r = rng(515), n = valueNoise2(516, 2), n2 = valueNoise2(517, 1);
-    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) { let k = 0.8 + n(i, j) * 0.16 + n2(i, j) * 0.08 + (r() - 0.5) * 0.1; const o = (j * S + i) * 4; d[o] = d[o + 1] = d[o + 2] = clamp(k * 255, 0, 255); d[o + 3] = 255; }
+    const S = 128, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), img = x.createImageData(S, S), d = img.data, r = rng(515), n = valueNoise2(516, 2), n2 = valueNoise2(517, 1), n3 = valueNoise2(518, 8);
+    const A = new Float32Array(S * S), H = new Float32Array(S * S);
+    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) { const k = j * S + i; A[k] = 0.8 + n(i, j) * 0.16 + n2(i, j) * 0.08 + (r() - 0.5) * 0.1; H[k] = 0.2 + n3(i, j) * 0.16 + n(i, j) * 0.1 + n2(i, j) * 0.04; }
+    const stone = (px, py, rr, tone, al, ht) => {   // a round stone (wrapped at the edges): the grit towards tone, the relief a dome
+      for (let v = Math.floor(py - rr - 1); v <= Math.ceil(py + rr + 1); v++) for (let u = Math.floor(px - rr - 1); u <= Math.ceil(px + rr + 1); u++) {
+        const q = Math.hypot(u + 0.5 - px, v + 0.5 - py), cov = clamp(rr + 0.5 - q, 0, 1); if (cov <= 0) continue;
+        const k = ((v + S) % S) * S + (u + S) % S, dm = Math.sqrt(Math.max(0, 1 - (q / (rr + 0.5)) ** 2)); A[k] = lerp(A[k], tone, cov * al); H[k] = Math.max(H[k], 0.28 + ht * dm); } };
+    for (let k = 0; k < 80; k++) stone(r() * S, r() * S, 1.5 + r() * 2.2, 0.74 + r() * 0.3, 0.45, 0.3 + r() * 0.3);   // pebbles and cobbles (10-30 cm)
+    for (let k = 0; k < 280; k++) stone(r() * S, r() * S, 0.6 + r() * 1.2, r() < 0.5 ? 0.3 : 1.1, 0.35, 0.12 + r() * 0.2);   // grit
+    let sum = 0;
+    for (let k = 0; k < S * S; k++) { const o = k * 4; d[o] = clamp(A[k], 0, 1) * 255; d[o + 1] = clamp(H[k], 0, 1) * 190; d[o + 2] = r() < 0.03 ? 120 + r() * 135 : 0; d[o + 3] = 255; sum += d[o]; }   // (g kept below r: the season code must not take the map for grass)
     x.putImageData(img, 0, 0);
-    for (let k = 0; k < 260; k++) { const px = r() * S, py = r() * S, rr = 0.6 + r() * 1.4; x.fillStyle = r() < 0.5 ? 'rgba(40,40,40,0.35)' : 'rgba(255,255,255,0.3)'; x.beginPath(); x.arc(px, py, rr, 0, TAU); x.fill(); }
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4;
-    let sum = 0; for (let o = 0; o < d.length; o += 4) sum += d[o]; pkGMean = sum / (S * S) / 255;   // steep faces fade to this (pkGroundMat; the few light and dark stones about cancel out)
+    pkGMean = sum / (S * S) / 255;   // steep faces fade to this (pkGroundMat)
     return (pkGTex = t);
   }
-  function pkGroundMat() {   // terrain tiles: the grit map fades to its mean grey on steep faces (attribute 'steep'), where the top-down UVs would smear it into streaks
+  function pkGroundMat() {   // terrain tiles (one material): the grit (map r) times a second, ~58 m copy of it (breaks up the 10 m repeat); on steep faces (attribute 'steep', where the top-down
+    // UVs would smear it) the grit projected sideways instead, stretched along the face like the granite's joints; the merged scenery (steep 2) takes the plain mean grey.
+    // Relief: the grit's height (map g) against its height a little towards the sun: the stones' sun side lit, their far side dark (strong under the low sun, none in shadow).
+    // Glints: bright, near-white ground (snow, ice; the winter's snow too) sparkles where the map's sparse b dots, shifted with the view, face the sun
     const t = pkTex(), m = new THREE.MeshLambertMaterial({ map: t, vertexColors: true }), mean = pkGMean.toFixed(3);
     m.onBeforeCompile = (sh) => {
-      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float steep;\nvarying float vSteep;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvSteep = steep;');
-      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vSteep;').replace('#include <map_fragment>',
-        '#ifdef USE_MAP\n  vec4 texelColor = mapTexelToLinear( texture2D( map, vUv ) );\n  diffuseColor *= mix( texelColor, vec4( vec3( ' + mean + ' ), 1.0 ), vSteep );\n#endif');
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float steep;\nvarying float vSteep;\nvarying float vPkY;\nvarying vec3 vPkN;\nvarying vec3 vPkV;')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvSteep = steep; vPkY = position.y;').replace('#include <defaultnormal_vertex>', '#include <defaultnormal_vertex>\nvPkN = transformedNormal;')
+        .replace('#include <project_vertex>', '#include <project_vertex>\nvPkV = -mvPosition.xyz;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vSteep;\nvarying float vPkY;\nvarying vec3 vPkN;\nvarying vec3 vPkV;').replace('#include <map_fragment>', [
+        'float pkE = 0.0, pkSc = step( 1.5, vSteep ), pkSt = min( vSteep, 1.0 ), pkW = smoothstep( 0.76, 0.9, min( vColor.r, min( vColor.g, vColor.b ) ) * mix( 1.0, ' + mean + ', pkSc ) );   // pkW: snow',
+        '#ifdef USE_MAP',
+        '  vec4 pkT = texture2D( map, vUv );',
+        '  float pkG = pkT.r * mix( 1.0, texture2D( map, vUv * 0.173 + vec2( 0.31, 0.57 ) ).r / ' + mean + ', 0.55 );',
+        '  if ( pkSt > 0.01 ) {',
+        '    vec3 pkNw = ( vec4( vPkN, 0.0 ) * viewMatrix ).xyz; float pkWx = abs( pkNw.x ) / ( abs( pkNw.x ) + abs( pkNw.z ) + 1e-4 );',
+        '    float pkR = mix( texture2D( map, vec2( vUv.x * 0.45, vPkY * 0.16 ) ).r, texture2D( map, vec2( vUv.y * 0.45 + 0.5, vPkY * 0.16 ) ).r, pkWx );',
+        '    pkG = mix( pkG, mix( pkR, ' + mean + ', 0.25 ), pkSt );',
+        '  }',
+        '  diffuseColor.rgb *= mix( mix( pkG, ' + mean + ' * 1.04, pkW * 0.75 ), ' + mean + ', pkSc );',   // (snow: smoother)
+        '  #if NUM_DIR_LIGHTS > 0',
+        '    vec3 pkL = ( vec4( directionalLights[ 0 ].direction, 0.0 ) * viewMatrix ).xyz; vec2 pkO = vec2( pkL.x, -pkL.z ); float pkOl = length( pkO );',
+        '    pkE = ( pkT.g - texture2D( map, vUv + pkO / max( pkOl, 1e-3 ) * 0.008 ).g ) * 1.6 * min( pkOl / max( pkL.y, 0.2 ), 2.5 ) * ( 1.0 - pkSt ) * ( 1.0 - pkSc ) * ( 1.0 - 0.85 * pkW );',
+        '  #endif',
+        '#endif'].join('\n'))
+        .replace('reflectedLight.directDiffuse *= BRDF_Diffuse_Lambert( diffuseColor.rgb ) * getShadowMask();', 'reflectedLight.directDiffuse *= BRDF_Diffuse_Lambert( diffuseColor.rgb ) * getShadowMask() * clamp( 1.0 + pkE, 0.4, 1.7 );')
+        .replace('#include <envmap_fragment>', [
+        '#include <envmap_fragment>',
+        '#if defined( USE_MAP ) && defined( USE_COLOR ) && NUM_DIR_LIGHTS > 0',
+        '  if ( pkW > 0.0 ) {',
+        '    vec3 pkV = normalize( vPkV ), pkN = normalize( vPkN ), pkLd = directionalLights[ 0 ].direction, pkH = normalize( pkLd + pkV );',
+        '    float pkS = texture2D( map, vUv * 0.61 + pkV.xy * 0.05 ).b;',
+        '    outgoingLight += directionalLights[ 0 ].color * ( smoothstep( 0.45, 0.9, pkS ) * 2.6 * smoothstep( 0.3, 0.95, dot( pkN, pkH ) ) * step( 0.0, dot( pkN, pkLd ) ) * pkW * getShadowMask() );',
+        '  }',
+        '#endif'].join('\n'));
     };
-    m.customProgramCacheKey = () => 'pkGround';
+    m.customProgramCacheKey = () => 'pkGround2';
     return m;
   }
   function pkAtlas(cps) {   // text boards (8 rows of 1024 x 128): START, CILJ, CP1-CP4 with altitude, the summit sign, the paddock banner
@@ -3152,6 +3196,16 @@ const World = (function () {
   function pkPine(g, x, y, z, h, col, R, far, sp) {   // dark conifer: thin trunk (not on the far ones) + three stacked tiers (51-60 vertices); far 2: two tiers (33 vertices), 3: one cone (the same draws from R)
     // sp (species; always the same 4 draws from R, the rest hashed from where it stands): 1 Engelmann spruce (narrow, pointed, dark blue-green), 2 Douglas fir (fuller),
     // 3 limber pine (rounder, lighter), 4 a dead grey snag, 5 krummholz (wind-stunted flag tree at the treeline: the branches stream east, away from the west wind)
+    // snow on the branches: each tier's tip takes an up-leaning normal (the season code takes it for ground: deep snow on the tips in winter, a dusting lower down); towards the
+    // treeline some old snow lies on the tips all year (hashed per tree: no draws from R, every tree stays as it was)
+    const hq = (((Math.round(x * 7) * 2654435761) ^ (Math.round(z * 7) * 40503)) >>> 0) % 1000 / 1000, tlp = pkTreeline(x, z), sn = sstep(tlp - 45, tlp + 5, y) * (0.2 + 0.55 * hq);
+    const snw = (c, k) => sn > 0 ? [lerp(c[0], 0.9, sn * k), lerp(c[1], 0.93, sn * k), lerp(c[2], 0.98, sn * k)] : c;
+    const tier = (g, cx, cy, cz, r, hh, sides, c0, cT, rot) => {   // a tier (as cone(), flat shaded) with the snowy tip
+      if (hh <= 0 || sides < 4) return cone(g, cx, cy, cz, r, hh, sides, c0, cT, rot);   // (trunks, the undersides: as they were)
+      const apex = [cx, cy + hh, cz], inn = [cx, cy + hh * 0.3, cz], L = Math.hypot(r, hh) || 1, ny = r / L, nh = hh / L, ct = snw(cT || c0, 1), cb = snw(c0, 0.2);
+      for (let i = 0; i < sides; i++) { const a0 = rot + i / sides * TAU, a1 = rot + (i + 1) / sides * TAU, am = (a0 + a1) / 2, cx1 = Math.cos(am) * nh, cz1 = Math.sin(am) * nh, l = Math.hypot(cx1 * 0.45, 0.9, cz1 * 0.45), fn = [cx1, ny, cz1];
+        g.triON([cx + Math.cos(a0) * r, cy, cz + Math.sin(a0) * r], apex, [cx + Math.cos(a1) * r, cy, cz + Math.sin(a1) * r], fn, [cx1 * 0.45 / l, 0.9 / l, cz1 * 0.45 / l], fn, inn, cb, ct, cb); }
+    };
     if (sp) {
       const rot = R() * TAU, r0 = h * (0.24 + R() * 0.05), v1 = vary([1, 1, 1], R, 0.08), v2 = vary([1, 1, 1], R, 0.08), H = rng((Math.round(x * 10) * 73856093) ^ (Math.round(z * 10) * 19349663) ^ 4099);
       const tn = (c, a, b, d) => [c[0] * a, c[1] * b, c[2] * d], lit = (c) => [c[0] * 1.3, c[1] * 1.28, c[2] * 1.2], sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k], bark = [0.3, 0.21, 0.14];
@@ -3159,35 +3213,35 @@ const World = (function () {
         for (let k = 0; k < 3; k++) { const e0 = a0 + k / 3 * TAU, e1 = e0 + TAU / 3; g.triO([b[0] + Math.cos(e0) * rb, b[1], b[2] + Math.sin(e0) * rb], t, [b[0] + Math.cos(e1) * rb, b[1], b[2] + Math.sin(e1) * rb], cb, inn, ct, cb); } };
       const flag = (p, ux, uz, L, w, hu, hd, c) => {   // a wind-streamed tuft: a spindle from just upwind of p to L downwind (8 faces), lit on top, dark below
         const A = [p[0] - ux * L * 0.12, p[1], p[2] - uz * L * 0.12], E = [p[0] + ux * L, p[1] - L * 0.1, p[2] + uz * L], q = [p[0] + ux * L * 0.35, p[1], p[2] + uz * L * 0.35];
-        const r = [[q[0], q[1] + hu, q[2]], [q[0] - uz * w, q[1], q[2] + ux * w], [q[0], q[1] - hd, q[2]], [q[0] + uz * w, q[1], q[2] - ux * w]], cs = [lit(c), c, sh(c, 0.6), c];
+        const r = [[q[0], q[1] + hu, q[2]], [q[0] - uz * w, q[1], q[2] + ux * w], [q[0], q[1] - hd, q[2]], [q[0] + uz * w, q[1], q[2] - ux * w]], cs = [snw(lit(c), 1), c, sh(c, 0.6), c];
         for (let k = 0; k < 4; k++) { const j = (k + 1) % 4; g.triO(A, r[k], r[j], sh(c, 0.85), q, cs[k], cs[j]); g.triO(E, r[j], r[k], sh(c, 0.9), q, cs[j], cs[k]); } };
       if (sp === 1) {   // Engelmann spruce
         const c = tn(col, 0.78, 0.9, 1.22), rr = r0 * 0.66;
-        if (far === 3) { cone(g, x, y + h * 0.1, z, rr * 0.95, h * 0.9, 6, c, lit(c), rot); return; }
-        if (far === 2) { cone(g, x, y + h * 0.1, z, rr, h * 0.5, 6, c, lit(c), rot); cone(g, x, y + h * 0.4, z, rr * 0.62, h * 0.6, 5, tn(c, v1[0], v1[0], v1[0]), lit(c), rot + 0.5); return; }
-        if (!far) cone(g, x, y - 0.3, z, h * 0.025 + 0.1, h * 0.3, 3, bark, null, rot);
-        cone(g, x, y + h * 0.08, z, rr, h * 0.38, 6, c, lit(c), rot);
-        cone(g, x, y + h * 0.3, z, rr * 0.78, h * 0.36, 6, sh(c, v1[0]), lit(c), rot + 0.5);
-        cone(g, x, y + h * 0.5, z, rr * 0.52, h * 0.5, 5, sh(c, v2[0]), lit(c), rot + 1); return;
+        if (far === 3) { tier(g, x, y + h * 0.1, z, rr * 0.95, h * 0.9, 6, c, lit(c), rot); return; }
+        if (far === 2) { tier(g, x, y + h * 0.1, z, rr, h * 0.5, 6, c, lit(c), rot); tier(g, x, y + h * 0.4, z, rr * 0.62, h * 0.6, 5, tn(c, v1[0], v1[0], v1[0]), lit(c), rot + 0.5); return; }
+        if (!far) tier(g, x, y - 0.3, z, h * 0.025 + 0.1, h * 0.3, 3, bark, null, rot);
+        tier(g, x, y + h * 0.08, z, rr, h * 0.38, 6, c, lit(c), rot);
+        tier(g, x, y + h * 0.3, z, rr * 0.78, h * 0.36, 6, sh(c, v1[0]), lit(c), rot + 0.5);
+        tier(g, x, y + h * 0.5, z, rr * 0.52, h * 0.5, 5, sh(c, v2[0]), lit(c), rot + 1); return;
       }
       if (sp === 2) {   // Douglas fir
         const c = tn(col, 1.06, 1.08, 0.8), rr = r0 * 1.14;
-        if (far === 3) { cone(g, x, y + h * 0.12, z, rr * 0.92, h * 0.88, 6, c, lit(c), rot); return; }
-        if (far === 2) { cone(g, x, y + h * 0.12, z, rr, h * 0.48, 6, c, lit(c), rot); cone(g, x, y + h * 0.4, z, rr * 0.68, h * 0.6, 6, sh(c, v1[0]), lit(c), rot + 0.5); return; }
-        if (!far) cone(g, x, y - 0.3, z, h * 0.03 + 0.14, h * 0.3, 3, bark, null, rot);
-        cone(g, x, y + h * 0.1, z, rr, h * 0.44, 6, sh(c, 0.92), lit(c), rot);
-        cone(g, x, y + h * 0.34, z, rr * 0.8, h * 0.4, 6, sh(c, v1[0]), lit(c), rot + 0.5);
-        cone(g, x, y + h * 0.56, z, rr * 0.54, h * 0.44, 5, sh(c, v2[0] * 1.04), lit(c), rot + 1); return;
+        if (far === 3) { tier(g, x, y + h * 0.12, z, rr * 0.92, h * 0.88, 6, c, lit(c), rot); return; }
+        if (far === 2) { tier(g, x, y + h * 0.12, z, rr, h * 0.48, 6, c, lit(c), rot); tier(g, x, y + h * 0.4, z, rr * 0.68, h * 0.6, 6, sh(c, v1[0]), lit(c), rot + 0.5); return; }
+        if (!far) tier(g, x, y - 0.3, z, h * 0.03 + 0.14, h * 0.3, 3, bark, null, rot);
+        tier(g, x, y + h * 0.1, z, rr, h * 0.44, 6, sh(c, 0.92), lit(c), rot);
+        tier(g, x, y + h * 0.34, z, rr * 0.8, h * 0.4, 6, sh(c, v1[0]), lit(c), rot + 0.5);
+        tier(g, x, y + h * 0.56, z, rr * 0.54, h * 0.44, 5, sh(c, v2[0] * 1.04), lit(c), rot + 1); return;
       }
       if (sp === 3) {   // limber pine: a rounded, lighter crown on a longer bare trunk (a bicone), often a side lobe
         const c = tn(col, 1.45, 1.22, 1.15), rr = r0 * 1.02, yc = y + h * 0.5;
-        cone(g, x, yc, z, rr, h * 0.48, 6, sh(c, v1[0]), lit(c), rot);
+        tier(g, x, yc, z, rr, h * 0.48, 6, sh(c, v1[0]), lit(c), rot);
         if (far === 3) return;
-        cone(g, x, yc, z, rr, -h * 0.26, 6, sh(c, 0.72), null, rot);
+        tier(g, x, yc, z, rr, -h * 0.26, 6, sh(c, 0.72), null, rot);
         if (far) return;
-        cone(g, x, y - 0.3, z, h * 0.03 + 0.12, h * 0.55, 3, [0.36, 0.3, 0.24], null, rot);
+        tier(g, x, y - 0.3, z, h * 0.03 + 0.12, h * 0.55, 3, [0.36, 0.3, 0.24], null, rot);
         const a = H() * TAU, o = rr * 0.75, lx = x + Math.cos(a) * o, lz = z + Math.sin(a) * o, ly = y + h * (0.32 + H() * 0.12);
-        cone(g, lx, ly, lz, rr * 0.55, h * 0.26, 4, sh(c, v2[0]), lit(c), rot + 0.3); cone(g, lx, ly, lz, rr * 0.55, -h * 0.12, 4, sh(c, 0.7), null, rot + 0.3); return;
+        tier(g, lx, ly, lz, rr * 0.55, h * 0.26, 4, sh(c, v2[0]), lit(c), rot + 0.3); tier(g, lx, ly, lz, rr * 0.55, -h * 0.12, 4, sh(c, 0.7), null, rot + 0.3); return;
       }
       if (sp === 4) {   // a dead snag: a bare grey trunk, a broken top, a few stubs
         const c = vary([0.62, 0.6, 0.57], H, 0.16), cf = sh(c, 0.62), hh = h * (0.7 + H() * 0.35), rb = h * 0.028 + 0.12, a0 = H() * TAU;
@@ -3209,12 +3263,12 @@ const World = (function () {
       return;
     }
     const rot = R() * TAU, rr = h * (0.24 + R() * 0.05), ct = [col[0] * 1.3, col[1] * 1.28, col[2] * 1.2];
-    if (far === 3) { cone(g, x, y + h * 0.13, z, rr * 0.9, h * 0.87, 6, col, ct, rot); vary(col, R, 0.08); vary(col, R, 0.08); return; }   // (3: one cone, 18 vertices, deep in the haze)
-    if (far === 2) { cone(g, x, y + h * 0.13, z, rr, h * 0.47, 6, col, ct, rot); cone(g, x, y + h * 0.42, z, rr * 0.64, h * 0.58, 5, vary(col, R, 0.08), ct, rot + 0.5); vary(col, R, 0.08); return; }
-    if (!far) cone(g, x, y - 0.3, z, h * 0.03 + 0.12, h * 0.3, 3, [0.3, 0.21, 0.14], null, rot);
-    cone(g, x, y + h * 0.13, z, rr, h * 0.42, 6, col, ct, rot);
-    cone(g, x, y + h * 0.37, z, rr * 0.76, h * 0.38, 6, vary(col, R, 0.08), ct, rot + 0.5);
-    cone(g, x, y + h * 0.59, z, rr * 0.5, h * 0.41, 5, vary(col, R, 0.08), ct, rot + 1);
+    if (far === 3) { tier(g, x, y + h * 0.13, z, rr * 0.9, h * 0.87, 6, col, ct, rot); vary(col, R, 0.08); vary(col, R, 0.08); return; }   // (3: one cone, 18 vertices, deep in the haze)
+    if (far === 2) { tier(g, x, y + h * 0.13, z, rr, h * 0.47, 6, col, ct, rot); tier(g, x, y + h * 0.42, z, rr * 0.64, h * 0.58, 5, vary(col, R, 0.08), ct, rot + 0.5); vary(col, R, 0.08); return; }
+    if (!far) tier(g, x, y - 0.3, z, h * 0.03 + 0.12, h * 0.3, 3, [0.3, 0.21, 0.14], null, rot);
+    tier(g, x, y + h * 0.13, z, rr, h * 0.42, 6, col, ct, rot);
+    tier(g, x, y + h * 0.37, z, rr * 0.76, h * 0.38, 6, vary(col, R, 0.08), ct, rot + 0.5);
+    tier(g, x, y + h * 0.59, z, rr * 0.5, h * 0.41, 5, vary(col, R, 0.08), ct, rot + 1);
   }
   function pkForest(scen, R, dens, excluded, flat) {   // conifer forest below the treeline, on a jittered grid over the corridor tiles; far from the road (flat(x, z): a GB that casts no shadow) simpler
     const G = PK.G, P = PK, step = 6.6 / Math.sqrt(dens), L = PKT * PKC, maxT = Math.round(15500 * dens);
@@ -3232,9 +3286,11 @@ const World = (function () {
     const spike = (g, b, rb, t, a0, cb, ct) => { const inn = [(b[0] * 2 + t[0]) / 3, (b[1] * 2 + t[1]) / 3, (b[2] * 2 + t[2]) / 3];   // 3-sided tapering tip (leans towards t)
       for (let k = 0; k < 3; k++) { const e0 = a0 + k / 3 * TAU, e1 = a0 + (k + 1) / 3 * TAU; g.triO([b[0] + Math.cos(e0) * rb, b[1], b[2] + Math.sin(e0) * rb], t, [b[0] + Math.cos(e1) * rb, b[1], b[2] + Math.sin(e1) * rb], cb, inn, ct, cb); } };
     const blob = (g, x, y, z, r, up, dn, n, col) => {   // rounded crown / needle tuft: a jittered ring with a top and a bottom point (2n faces), lit on top, dark below
-      const a0 = A() * TAU, ps = [], top = [x, y + r * up, z], bot = [x, y - r * dn, z], inn = [x, y, z], ct = sh(col, 1.25), cb = sh(col, 0.62);
+      const a0 = A() * TAU, ps = [], top = [x, y + r * up, z], bot = [x, y - r * dn, z], inn = [x, y, z], cb = sh(col, 0.62), tl = pkTreeline(x, z), sn = sstep(tl - 40, tl + 10, y) * (0.3 + 0.4 * (((Math.round(x * 9) * 73856093) ^ (Math.round(z * 9) * 19349663)) >>> 0) % 997 / 997);
+      const ct = [lerp(col[0] * 1.25, 0.9, sn), lerp(col[1] * 1.25, 0.93, sn), lerp(col[2] * 1.25, 0.98, sn)];   // (the top: old snow on the tufts at the treeline; its normal leans up, so winter puts snow there)
       for (let k = 0; k < n; k++) { const a = a0 + k / n * TAU, rr = r * (0.8 + A() * 0.35); ps.push([x + Math.cos(a) * rr, y + (A() - 0.5) * r * 0.3, z + Math.sin(a) * rr]); }
-      for (let k = 0; k < n; k++) { const p = ps[k], q = ps[(k + 1) % n]; g.triO(p, top, q, col, inn, ct, col); g.triO(p, q, bot, col, inn, col, cb); }
+      for (let k = 0; k < n; k++) { const p = ps[k], q = ps[(k + 1) % n], mx = (p[0] + q[0]) / 2 - x, mz = (p[2] + q[2]) / 2 - z, ml = Math.hypot(mx, mz) || 1, lq = Math.hypot(up, 1), fn = [mx / ml * up / lq, 1 / lq, mz / ml * up / lq];
+        g.triON(p, top, q, fn, [mx / ml * 0.35, 0.94, mz / ml * 0.35], fn, inn, col, ct, col); g.triO(p, q, bot, col, inn, col, cb); }
     };
     const ball = (g, x, y, z, r, sy, col) => {   // rounder crown: two staggered 4-rings between a top and a bottom point (16 faces)
       const a0 = A() * TAU, u = [], d = [], top = [x, y + r * sy, z], bot = [x, y - r * sy * 0.8, z], inn = [x, y, z], ct = sh(col, 1.18), cb = sh(col, 0.66);
