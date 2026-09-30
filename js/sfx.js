@@ -8,7 +8,7 @@ const Sfx = (function () {
   let noiseBuf = null;
   let eng = null, ai = [], squeal = null, rumble = null, wind = null, curbV = null, rainV = null, hiss = null, heli = null, echo = null;
   let gravel = null, spray = null, crowd = null, lastT = 0, pudPrev = false;
-  let stands = null, jet = null;   // the Red Bull Ring: the grandstands' crowd, the jets before the start
+  let stands = null, jet = null, tun = null;   // the grandstands' crowd (every circuit), the Red Bull Ring's jets before the start, a tunnel's ring
   let lastCrash = 0, running = false;
 
   function create() {
@@ -34,7 +34,7 @@ const Sfx = (function () {
     hiss = noiseVoice('bandpass', 1400, 0.8);
     heli = heliVoice(); echo = echoFx();
     gravel = noiseVoice('bandpass', 2600, 0.7); spray = noiseVoice('highpass', 1500, 0.5); crowd = crowdVoice();
-    stands = standsVoice(); jet = noiseVoice('lowpass', 500, 0.7);
+    stands = standsVoice(); jet = noiseVoice('lowpass', 500, 0.7); tun = tunnelFx();
     return true;
   }
   function shaperCurve(k) {
@@ -304,6 +304,16 @@ const Sfx = (function () {
     s.connect(g); g.connect(r.side > 0 ? atmo.pR : atmo.pL); s.start(Math.max(r.next, ctx.currentTime));
   }
   function atmoOff(tc) { atmo.on = false; set(atmo.wo.gain, 0, tc); set(atmo.cL.gain, 0, tc); set(atmo.cR.gain, 0, tc); }
+  // a tunnel (World's dyn.tunnel: Monaco's under the hotel, the short one under Suzuka's bridge): the engine rings off the walls and the roof,
+  // three short feedback delays (a small, hard room) behind a low-pass, fed by the player's engine and the nearest rivals'
+  function tunnelFx() {
+    const send = ctx.createGain(); send.gain.value = 0;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400; send.connect(lp);
+    const out = ctx.createGain(); out.gain.value = 0.7; out.connect(bus);
+    for (const [t, f] of [[0.029, 0.52], [0.043, 0.48], [0.061, 0.44]]) { const d = ctx.createDelay(0.2), fb = ctx.createGain(); d.delayTime.value = t; fb.gain.value = f; lp.connect(d); d.connect(fb); fb.connect(d); d.connect(out); }
+    eng.out.connect(send); for (const v of ai) v.out.connect(send);
+    return { send };
+  }
 
   function resume() {
     if (!ctx && !create()) return;
@@ -394,6 +404,8 @@ const Sfx = (function () {
     // that follows the car the whole run) by its distance to the camera
     const pikes = !!(race && race.track && race.track.def && race.track.def.id === 'pikes');
     set(echo.send.gain, pikes ? Core.sstep(186, 198, player.roadY || 0) * 0.32 : 0, 0.6);
+    { const tn = Wd && Wd.dyn && Wd.dyn.tunnel, sq = player.q ? player.q.s : -1e9;   // (in a tunnel: the ring of its walls)
+      set(tun.send.gain, tn && sq > tn.s0 - 3 && sq < tn.s1 + 3 ? 0.85 : 0, 0.08); }
     const W = Wd, pk = W && W.dyn ? W.dyn.pk || W.dyn.air : null, cam = typeof Render !== 'undefined' ? Render.camera : null;   // (the Red Bull Ring's: dyn.air)
     let hv = 0, hp = 0;
     if (pk && pk.heli && (pk.on || (pk.follow && pk.heli.visible))) {
@@ -508,11 +520,12 @@ const Sfx = (function () {
     if (!ctx) return;
     for (const v of [eng, ...ai]) set(v.out.gain, 0, 0.02);
     for (const v of [squeal, rumble, wind, curbV, rainV, hiss, heli, gravel, spray, crowd, stands, jet]) set(v.out.gain, 0, 0.02);
-    set(echo.send.gain, 0, 0.02);
+    set(echo.send.gain, 0, 0.02); set(tun.send.gain, 0, 0.02);
     if (atmo) atmoOff(0.02);
   }
 
-  const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, shiftPop, knock, wrench, silence, get ready() { return !!ctx && ctx.state === 'running'; } };
+  const levels = () => ctx ? { stands: stands.lev, standsGain: stands.out.gain.value, tunnel: tun.send.gain.value } : null;   // (tests: the crowd's and the tunnel's levels now)
+  const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, shiftPop, knock, wrench, silence, levels, get ready() { return !!ctx && ctx.state === 'running'; } };
   window.Sfx = api;
   return api;
 })();
