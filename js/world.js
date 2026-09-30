@@ -3037,15 +3037,24 @@ const World = (function () {
   }
   function pkSlope(x, z) { const a = pkGround(x - 2.5, z), b = pkGround(x + 2.5, z), c = pkGround(x, z - 2.5), d = pkGround(x, z + 2.5); return Math.hypot(b - a, d - c) / 5; }
   function pkTreeline(x, z) { return 186 + 34 * (PK.n1(x * 1.7, z * 1.7) - 0.5); }   // ~45 % of the climb, ragged
-  function pkCol(x, z, h, ny, dd) {   // ground colour: forest floor, then reddish granite gravel with olive grass, bare granite on steep slopes, snow fields near the top
-    const P = PK, m = P.n3(x, z), tun = sstep(pkTreeline(x, z) - 14, pkTreeline(x, z) + 22, h);
+  function pkCol(x, z, h, ny, dd) {   // ground colour: forest floor (rust needle litter in patches), then pinkish granite gravel with olive grass and green-brown tundra, bare granite on steep slopes,
+    // snow fields near the top (old snow lying on in the hollows, dirty wind-packed edges)
+    const P = PK, m = P.n3(x, z), tl = pkTreeline(x, z), tun = sstep(tl - 14, tl + 22, h), n5 = P.n5 || (P.n5 = valueNoise2(9431, 9)), n6 = P.n6 || (P.n6 = valueNoise2(9432, 34)), q = n5(x, z), q2 = n6(x, z);
     let r = 0.15 + m * 0.07, g = 0.21 + m * 0.07, b = 0.11 + m * 0.035;
-    const gs = sstep(0.42, 0.75, P.n4(x, z)) * (1 - sstep(300, 420, h)) * 0.85;
-    r = lerp(r, lerp(0.62 + m * 0.08, 0.5, gs), tun); g = lerp(g, lerp(0.43 + m * 0.05, 0.47, gs), tun); b = lerp(b, lerp(0.33 + m * 0.03, 0.27, gs), tun);
+    const nl = sstep(0.52, 0.78, q) * 0.55; r = lerp(r, 0.26 + m * 0.05, nl); g = lerp(g, 0.2 + m * 0.04, nl); b = lerp(b, 0.12, nl);   // needle litter
+    const gs = sstep(0.42, 0.75, P.n4(x, z)) * (1 - sstep(300, 420, h)) * 0.85, pk = (q2 - 0.5) * 0.12;   // (pk: pinker or greyer gravel)
+    let ar = lerp(0.62 + m * 0.08 + pk, 0.5, gs), ag = lerp(0.43 + m * 0.05 - pk * 0.25, 0.47, gs), ab = lerp(0.33 + m * 0.03 + pk * 0.2, 0.27, gs);
+    const tu = sstep(0.56, 0.76, n6(x * 0.6 + 40, z * 0.6)) * sstep(tl - 5, tl + 20, h) * (1 - sstep(290, 350, h)) * 0.6, tq = q - 0.5;   // tundra: mottled green-brown
+    ar = lerp(ar, 0.45 + tq * 0.12, tu); ag = lerp(ag, 0.41 - tq * 0.04, tu); ab = lerp(ab, 0.27, tu);
+    r = lerp(r, ar, tun); g = lerp(g, ag, tun); b = lerp(b, ab, tun);
     const st = sstep(0.8, 0.6, ny) * 0.9;
     r = lerp(r, 0.62 + m * 0.06, st); g = lerp(g, 0.53 + m * 0.05, st); b = lerp(b, 0.48 + m * 0.04, st);
-    if (h > 330) { const sn = sstep(330, 445, h), c = sstep(0.72 - 0.22 * sn, 0.8 - 0.22 * sn, P.n4(x * 0.8 + 50, z * 0.8)) * (1 - st * 0.7);
-      r = lerp(r, 1.04, c); g = lerp(g, 1.06, c); b = lerp(b, 1.12, c); }
+    if (h > 322) { const sn = sstep(330, 445, h); let c = h > 330 ? sstep(0.72 - 0.22 * sn, 0.8 - 0.22 * sn, P.n4(x * 0.8 + 50, z * 0.8)) : 0;
+      const cv = (pkGround(x + 8, z) + pkGround(x - 8, z) + pkGround(x, z + 8) + pkGround(x, z - 8)) / 4 - h;   // > 0 in a hollow
+      c = Math.max(c, sstep(0.3, 1.3, cv) * sstep(322, 365, h) * sstep(0.25, 0.55, q) * sstep(3, 9, dd));
+      c *= 1 - st * 0.7;
+      r = lerp(r, 1.04, c); g = lerp(g, 1.06, c); b = lerp(b, 1.12, c);
+      const e = 4 * c * (1 - c) * (0.45 + 0.3 * q); r = lerp(r, 0.76, e); g = lerp(g, 0.73, e); b = lerp(b, 0.7, e); }   // the dirty, wind-packed edge
     if (dd < 3) { const t = sstep(3, 0, dd) * 0.3; r = lerp(r, 0.6, t); g = lerp(g, 0.5, t); b = lerp(b, 0.42, t); }   // dusty verge
     PKCOL[0] = r; PKCOL[1] = g; PKCOL[2] = b; return PKCOL;
   }
@@ -3123,7 +3132,65 @@ const World = (function () {
     x.fillStyle = '#1d4f9a'; x.fillRect(0, 896, 1024, 128); txt('VZPON NA PIKES PEAK', 512, 964, 84, '#fff', 960);
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (pkATex = t);
   }
-  function pkPine(g, x, y, z, h, col, R, far) {   // dark conifer: thin trunk (not on the far ones) + three stacked tiers (51-60 vertices); far 2: two tiers (33 vertices), 3: one cone (the same draws from R)
+  function pkPine(g, x, y, z, h, col, R, far, sp) {   // dark conifer: thin trunk (not on the far ones) + three stacked tiers (51-60 vertices); far 2: two tiers (33 vertices), 3: one cone (the same draws from R)
+    // sp (species; always the same 4 draws from R, the rest hashed from where it stands): 1 Engelmann spruce (narrow, pointed, dark blue-green), 2 Douglas fir (fuller),
+    // 3 limber pine (rounder, lighter), 4 a dead grey snag, 5 krummholz (wind-stunted flag tree at the treeline: the branches stream east, away from the west wind)
+    if (sp) {
+      const rot = R() * TAU, r0 = h * (0.24 + R() * 0.05), v1 = vary([1, 1, 1], R, 0.08), v2 = vary([1, 1, 1], R, 0.08), H = rng((Math.round(x * 10) * 73856093) ^ (Math.round(z * 10) * 19349663) ^ 4099);
+      const tn = (c, a, b, d) => [c[0] * a, c[1] * b, c[2] * d], lit = (c) => [c[0] * 1.3, c[1] * 1.28, c[2] * 1.2], sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k], bark = [0.3, 0.21, 0.14];
+      const spike = (b, rb, t, cb, ct, a0) => { const inn = [(b[0] * 2 + t[0]) / 3, (b[1] * 2 + t[1]) / 3, (b[2] * 2 + t[2]) / 3];   // 3-sided tapering piece from a ring round b to the point t
+        for (let k = 0; k < 3; k++) { const e0 = a0 + k / 3 * TAU, e1 = e0 + TAU / 3; g.triO([b[0] + Math.cos(e0) * rb, b[1], b[2] + Math.sin(e0) * rb], t, [b[0] + Math.cos(e1) * rb, b[1], b[2] + Math.sin(e1) * rb], cb, inn, ct, cb); } };
+      const flag = (p, ux, uz, L, w, hu, hd, c) => {   // a wind-streamed tuft: a spindle from just upwind of p to L downwind (8 faces), lit on top, dark below
+        const A = [p[0] - ux * L * 0.12, p[1], p[2] - uz * L * 0.12], E = [p[0] + ux * L, p[1] - L * 0.1, p[2] + uz * L], q = [p[0] + ux * L * 0.35, p[1], p[2] + uz * L * 0.35];
+        const r = [[q[0], q[1] + hu, q[2]], [q[0] - uz * w, q[1], q[2] + ux * w], [q[0], q[1] - hd, q[2]], [q[0] + uz * w, q[1], q[2] - ux * w]], cs = [lit(c), c, sh(c, 0.6), c];
+        for (let k = 0; k < 4; k++) { const j = (k + 1) % 4; g.triO(A, r[k], r[j], sh(c, 0.85), q, cs[k], cs[j]); g.triO(E, r[j], r[k], sh(c, 0.9), q, cs[j], cs[k]); } };
+      if (sp === 1) {   // Engelmann spruce
+        const c = tn(col, 0.78, 0.9, 1.22), rr = r0 * 0.66;
+        if (far === 3) { cone(g, x, y + h * 0.1, z, rr * 0.95, h * 0.9, 6, c, lit(c), rot); return; }
+        if (far === 2) { cone(g, x, y + h * 0.1, z, rr, h * 0.5, 6, c, lit(c), rot); cone(g, x, y + h * 0.4, z, rr * 0.62, h * 0.6, 5, tn(c, v1[0], v1[0], v1[0]), lit(c), rot + 0.5); return; }
+        if (!far) cone(g, x, y - 0.3, z, h * 0.025 + 0.1, h * 0.3, 3, bark, null, rot);
+        cone(g, x, y + h * 0.08, z, rr, h * 0.38, 6, c, lit(c), rot);
+        cone(g, x, y + h * 0.3, z, rr * 0.78, h * 0.36, 6, sh(c, v1[0]), lit(c), rot + 0.5);
+        cone(g, x, y + h * 0.5, z, rr * 0.52, h * 0.5, 5, sh(c, v2[0]), lit(c), rot + 1); return;
+      }
+      if (sp === 2) {   // Douglas fir
+        const c = tn(col, 1.06, 1.08, 0.8), rr = r0 * 1.14;
+        if (far === 3) { cone(g, x, y + h * 0.12, z, rr * 0.92, h * 0.88, 6, c, lit(c), rot); return; }
+        if (far === 2) { cone(g, x, y + h * 0.12, z, rr, h * 0.48, 6, c, lit(c), rot); cone(g, x, y + h * 0.4, z, rr * 0.68, h * 0.6, 6, sh(c, v1[0]), lit(c), rot + 0.5); return; }
+        if (!far) cone(g, x, y - 0.3, z, h * 0.03 + 0.14, h * 0.3, 3, bark, null, rot);
+        cone(g, x, y + h * 0.1, z, rr, h * 0.44, 6, sh(c, 0.92), lit(c), rot);
+        cone(g, x, y + h * 0.34, z, rr * 0.8, h * 0.4, 6, sh(c, v1[0]), lit(c), rot + 0.5);
+        cone(g, x, y + h * 0.56, z, rr * 0.54, h * 0.44, 5, sh(c, v2[0] * 1.04), lit(c), rot + 1); return;
+      }
+      if (sp === 3) {   // limber pine: a rounded, lighter crown on a longer bare trunk (a bicone), often a side lobe
+        const c = tn(col, 1.45, 1.22, 1.15), rr = r0 * 1.02, yc = y + h * 0.5;
+        cone(g, x, yc, z, rr, h * 0.48, 6, sh(c, v1[0]), lit(c), rot);
+        if (far === 3) return;
+        cone(g, x, yc, z, rr, -h * 0.26, 6, sh(c, 0.72), null, rot);
+        if (far) return;
+        cone(g, x, y - 0.3, z, h * 0.03 + 0.12, h * 0.55, 3, [0.36, 0.3, 0.24], null, rot);
+        const a = H() * TAU, o = rr * 0.75, lx = x + Math.cos(a) * o, lz = z + Math.sin(a) * o, ly = y + h * (0.32 + H() * 0.12);
+        cone(g, lx, ly, lz, rr * 0.55, h * 0.26, 4, sh(c, v2[0]), lit(c), rot + 0.3); cone(g, lx, ly, lz, rr * 0.55, -h * 0.12, 4, sh(c, 0.7), null, rot + 0.3); return;
+      }
+      if (sp === 4) {   // a dead snag: a bare grey trunk, a broken top, a few stubs
+        const c = vary([0.62, 0.6, 0.57], H, 0.16), cf = sh(c, 0.62), hh = h * (0.7 + H() * 0.35), rb = h * 0.028 + 0.12, a0 = H() * TAU;
+        spike([x, y - 0.3, z], rb, [x + (H() - 0.5) * 0.4, y + hh, z + (H() - 0.5) * 0.4], cf, sh(c, 1.15), a0);
+        if (far > 1) return;
+        for (let k = 0; k < 3; k++) { const f = 0.35 + k * 0.2 + H() * 0.08, a = a0 + k * 2.2 + H(), L = h * (0.14 - k * 0.03);
+          spike([x, y + hh * f, z], rb * (0.5 - k * 0.1), [x + Math.cos(a) * L, y + hh * f + L * 0.35, z + Math.sin(a) * L], sh(c, 0.8), c, a); }
+        return;
+      }
+      // krummholz: a short trunk leaning downwind, a low mat and one or two flags streaming east (x+), away from the west wind
+      const wa = (H() - 0.5) * 0.6, ux = Math.cos(wa), uz = Math.sin(wa), c = tn(col, 0.95, 1.0, 1.08), hk = h * (0.5 + H() * 0.2);
+      flag([x - ux * r0 * 0.2, y + 0.15, z - uz * r0 * 0.2], ux, uz, r0 * 2.4, r0 * 0.9, 0.45 + h * 0.07, 0.2, sh(c, v1[0] * 0.9));
+      if (far === 3) return;
+      const tp = [x + ux * hk * 0.14, y + hk, z + uz * hk * 0.14];
+      flag([tp[0], tp[1] - hk * 0.12, tp[2]], ux, uz, r0 * (1.2 + H() * 0.5), r0 * 0.35, r0 * 0.28, r0 * 0.18, sh(c, v2[0]));
+      if (far === 2) return;
+      spike([x, y - 0.3, z], 0.1 + h * 0.02, tp, [0.36, 0.3, 0.25], [0.52, 0.46, 0.4], rot);
+      if (H() < 0.6) { const f = 0.45 + H() * 0.15; flag([x + ux * hk * 0.14 * f, y + hk * f, z + uz * hk * 0.14 * f], ux, uz, r0 * (1.0 + H() * 0.5), r0 * 0.3, r0 * 0.24, r0 * 0.16, sh(c, v1[0] * 1.05)); }
+      return;
+    }
     const rot = R() * TAU, rr = h * (0.24 + R() * 0.05), ct = [col[0] * 1.3, col[1] * 1.28, col[2] * 1.2];
     if (far === 3) { cone(g, x, y + h * 0.13, z, rr * 0.9, h * 0.87, 6, col, ct, rot); vary(col, R, 0.08); vary(col, R, 0.08); return; }   // (3: one cone, 18 vertices, deep in the haze)
     if (far === 2) { cone(g, x, y + h * 0.13, z, rr, h * 0.47, 6, col, ct, rot); cone(g, x, y + h * 0.42, z, rr * 0.64, h * 0.58, 5, vary(col, R, 0.08), ct, rot + 0.5); vary(col, R, 0.08); return; }
@@ -3136,7 +3203,7 @@ const World = (function () {
     const G = PK.G, P = PK, step = 6.6 / Math.sqrt(dens), L = PKT * PKC, maxT = Math.round(15500 * dens);
     const pineCs = [[0.09, 0.2, 0.11], [0.11, 0.24, 0.12], [0.08, 0.18, 0.1], [0.13, 0.26, 0.14], [0.1, 0.22, 0.14]];
     // species on their own stream (R keeps its sequence, so every tree stands where it did): quaking aspen groves low down, bristlecone pines at the treeline
-    const A = rng(9404), grove = valueNoise2(9405, 170);
+    const A = rng(9404), grove = valueNoise2(9405, 170), S = rng(9421);   // (S: the conifer species, heights of the young ones)
     const aspC = [[0.4, 0.54, 0.2], [0.36, 0.5, 0.17], [0.46, 0.57, 0.23]], gold = [0.82, 0.64, 0.16], barkA = [0.84, 0.84, 0.78], knotA = [0.3, 0.29, 0.27];
     const barkB = [0.74, 0.7, 0.64], footB = [0.46, 0.4, 0.34], snagB = [0.8, 0.78, 0.74], needB = [[0.11, 0.19, 0.16], [0.13, 0.22, 0.17], [0.1, 0.17, 0.15]];
     const sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
@@ -3201,7 +3268,10 @@ const World = (function () {
         const pb = y > tl - 30 ? 0.5 * sstep(tl - 30, tl - 18, y) : 0, q = A();
         if (q < pa || q > 1 - pb) { R(); R(); R(); R();   // (the draws pkPine would have made)
           if (q < pa) aspen(g, x, yp, z, h * (0.62 + A() * 0.2), far); else bristle(g, x, yp, z, h * (0.75 + A() * 0.3)); }
-        else pkPine(g, x, yp, z, h, col, R, far);
+        else {   // mixed conifers (own stream S): Douglas fir low down, Engelmann spruce and limber pine higher up, grey snags here and there, krummholz at the treeline
+          const u = S(), rel = y - tl + 8 * P.n2(x * 2.3, z * 2.3), sp = rel > -10 ? (u < 0.08 ? 4 : u < 0.2 ? 1 : 5) : u < 0.05 ? 4 : y < 120 ? (u < 0.5 ? 2 : u < 0.78 ? 1 : u < 0.9 ? 3 : 0) : u < 0.52 ? 1 : u < 0.76 ? 3 : u < 0.88 ? 2 : 0;
+          const hs = (sp === 3 ? 0.82 : 1) * (S() < 0.14 ? 0.55 + S() * 0.2 : 1);   // (some young ones)
+          pkPine(g, x, yp, z, h * hs, sp === 1 || sp === 2 || sp === 0 ? col : vary(col, S, 0.12), R, far, sp); }
         if (++n >= maxT) break grid;
       }
     }
@@ -5389,7 +5459,56 @@ const World = (function () {
     /* ---- vegetation and rock ---- */
     const nTrees = pkForest(scen, R, dens, excluded, noShadow);
     {
-      const bushC = [[0.14, 0.28, 0.12], [0.2, 0.34, 0.14], [0.26, 0.36, 0.14]], tuftC = [[0.5, 0.5, 0.26], [0.58, 0.54, 0.3], [0.44, 0.46, 0.22]], graniteC = [[0.54, 0.44, 0.39], [0.48, 0.42, 0.39], [0.58, 0.48, 0.43]], greyC = [0.44, 0.43, 0.41];
+      const bushC = [[0.13, 0.25, 0.11], [0.17, 0.28, 0.12], [0.21, 0.28, 0.11]], tuftC = [[0.5, 0.5, 0.26], [0.58, 0.54, 0.3], [0.44, 0.46, 0.22]], graniteC = [[0.54, 0.44, 0.39], [0.48, 0.42, 0.39], [0.58, 0.48, 0.43]], greyC = [0.44, 0.43, 0.41];
+      // the rocks' shapes, lichen, scree and snow, the undergrowth: own streams (Q, U); R keeps its sequence (skip: the draws the old boulders made), so everything stands where it did
+      const Q = rng(9433), U = rng(9436), nat = out.pkNat = { kin: 0, jun: 0, log: 0, krum: 0, block: 0, scree: 0, lee: 0, skipU: 0, screeAt: [] },   // (counts, for the tests and the screenshot tools)
+        skip = (k) => { for (let q = 0; q < k; q++) R(); }, sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
+      const lichO = valueNoise2(9434, 1.4), lichG = valueNoise2(9435, 2.2), orange = [0.8, 0.5, 0.17], sage = [0.58, 0.63, 0.44], blk = [0.2, 0.19, 0.18];
+      const sc = (p, yb, yt, col, up) => {   // a rock vertex's colour: darker at the foot, lichen blotches (orange, pale sage green, a few black streaks) where the weather reaches
+        const t = clamp((p[1] - yb) / Math.max(0.2, yt - yb), 0, 1), k = 0.7 + 0.42 * t; let r = col[0] * k, g = col[1] * k, b = col[2] * k;
+        if (up > -0.3) { const a = lichO(p[0] + p[1] * 0.6, p[2] - p[1] * 0.4), o = sstep(0.58, 0.66, a) * 0.9 * (0.5 + 0.5 * t), c = lichG(p[0] - 31, p[2] + p[1]), e = sstep(0.3, 0.2, c) * 0.5, d = sstep(0.88, 0.95, c) * 0.5;
+          r = lerp(lerp(lerp(r, orange[0], o), sage[0], e), blk[0], d); g = lerp(lerp(lerp(g, orange[1], o), sage[1], e), blk[1], d); b = lerp(lerp(lerp(b, orange[2], o), sage[2], e), blk[2], d); }
+        return [r, g, b];
+      };
+      const round = (g, cx, cy, cz, r, sy, col) => {   // a rounded granite boulder (an icosahedron, jittered, flat-bottomed; 60 vertices)
+        const yb = cy - r * sy * 0.75, vs = ICO_V.map(v => { const k = 1 + (Q() - 0.5) * 0.4; return [cx + v[0] * r * k, Math.max(yb, cy + v[1] * r * sy * k), cz + v[2] * r * k]; }), inn = [cx, cy, cz], yt = cy + r * sy;
+        const cs = vs.map((p, k) => sc(p, yb, yt, col, ICO_V[k][1]));
+        for (const f of ICO_F) g.triO(vs[f[0]], vs[f[1]], vs[f[2]], cs[f[0]], inn, cs[f[1]], cs[f[2]]);
+      };
+      const block = (g, cx, y0, cz, sx, sy, sz, rot, col, tip) => {   // a weathered granite block: 5 sunk foot corners on a rounded box outline, a bulging middle ring, an inset domed top (75 vertices); tip: lean of the top (x, z per m of height)
+        nat.block++; const c = Math.cos(rot), s = Math.sin(rot), tx = tip ? tip[0] * sy : 0, tz = tip ? tip[1] * sy : 0, n = 5, a0 = Q() * 0.5, cor = [];
+        for (let k = 0; k < n; k++) { const a = a0 + k / n * TAU + (Q() - 0.5) * 0.3, ca = Math.cos(a), sa = Math.sin(a); cor.push([Math.sign(ca) * Math.pow(Math.abs(ca), 0.55), Math.sign(sa) * Math.pow(Math.abs(sa), 0.55)]); }   // (a squarish outline with rounded corners)
+        const P = (a, b, y, f, ly) => { const lx = a * sx / 2 * f * (1 + (Q() - 0.5) * 0.16), lz = b * sz / 2 * f * (1 + (Q() - 0.5) * 0.16); return [cx + lx * c - lz * s + tx * ly, y, cz + lx * s + lz * c + tz * ly]; };
+        const yt = y0 + sy, B = cor.map(([a, b]) => P(a, b, y0 - 0.3, 0.88, 0)), M = cor.map(([a, b]) => P(a, b, y0 + sy * (0.5 + (Q() - 0.5) * 0.2), 1, 0.5)), Tp = cor.map(([a, b]) => P(a, b, yt - sy * (0.08 + Q() * 0.14), 0.66, 0.92));
+        const inn = [cx + tx * 0.5, y0 + sy * 0.45, cz + tz * 0.5], cl = (p, u) => sc(p, y0, yt, col, u), top = [cx + tx, yt, cz + tz], dn = [cx, y0 - 5, cz], ct = cl(top, 1);
+        for (let k = 0; k < n; k++) { const j = (k + 1) % n; g.quadO(B[k], B[j], M[j], M[k], null, inn, null, [cl(B[k], 0), cl(B[j], 0), cl(M[j], 0), cl(M[k], 0)]); g.quadO(M[k], M[j], Tp[j], Tp[k], null, inn, null, [cl(M[k], 0.5), cl(M[j], 0.5), cl(Tp[j], 1), cl(Tp[k], 1)]);
+          g.triO(Tp[k], Tp[j], top, cl(Tp[k], 1), dn, cl(Tp[j], 1), ct); }
+      };
+      const groundMin = (x, z, r) => Math.min(pkGround(x - r, z - r), pkGround(x + r, z - r), pkGround(x + r, z + r), pkGround(x - r, z + r), pkGround(x, z));
+      const patch = (x, z, pts, lift, cIn, t) => {   // a flat patch on the ground (scree, snow, a mat): a fan from (x, z) out to pts [[x, z]], its rim the ground's colour there, mixed with cIn by t (it fades in)
+        const g = noShadow(x, z), c = [x, pkGround(x, z) + lift * 1.6, z], n = pts.length, rim = pts.map(([px, pz]) => [px, pkGround(px, pz) + lift, pz]), rc = pts.map(([px, pz]) => { const q = pkGCol(px, pz); return [lerp(q[0], cIn[0], t), lerp(q[1], cIn[1], t), lerp(q[2], cIn[2], t)]; }), dn = [x, c[1] - 5, z];
+        for (let k = 0; k < n; k++) { const j = (k + 1) % n; g.triO(rim[k], rim[j], c, rc[k], dn, rc[j], cIn); }
+      };
+      const clearRing = (x, z, r, n) => { for (let k = 0; k < n; k++) { const a = k / n * TAU; if (pkNear(x + Math.cos(a) * r, z + Math.sin(a) * r).dd < 1.5) return false; } return true; };
+      const leeSnow = (x, z, r) => {   // snow lying in the lee (east, x+) of a rock above ~335 m: a tapering drift on the ground
+        const L = r * (1.8 + Q() * 1.4), w = r * (0.75 + Q() * 0.3), cx = x + L * 0.45, pts = [];
+        for (let k = 0; k < 8; k++) { const a = k / 8 * TAU, ca = Math.cos(a), f = 0.85 + Q() * 0.3; pts.push([cx + ca * L * 0.62 * f, z + Math.sin(a) * w * (1 - 0.55 * Math.max(0, ca)) * f]); }   // (a teardrop, tapering downwind)
+        if (pts.some(([a, b]) => pkNear(a, b).dd < 1.5 || excluded(a, b))) return;
+        patch(cx, z, pts, 0.07, [0.97, 0.99, 1.05], 0.5); nat.lee++;
+      };
+      const scree = (x, z, r, far) => {   // a talus fan below a crag: pale granite gravel down the fall line, the stones getting bigger towards its foot
+        const gx = pkGround(x + 3, z) - pkGround(x - 3, z), gz = pkGround(x, z + 3) - pkGround(x, z - 3), l = Math.hypot(gx, gz); if (l < 1.2) return;
+        const ux = -gx / l, uz = -gz / l, ox = x + ux * r * 0.8, oz = z + uz * r * 0.8, L = 7 + Q() * 9 + r, sp = 0.35 + Q() * 0.2, pts = [];
+        for (let k = 0; k <= 6; k++) { const a = Math.atan2(uz, ux) + (k / 6 - 0.5) * 2 * sp, d = L * (k === 0 || k === 6 ? 0.55 : 0.85 + Q() * 0.25); pts.push([ox + Math.cos(a) * d, oz + Math.sin(a) * d]); }
+        pts.push([ox - uz * r * 0.6, oz + ux * r * 0.6]); pts.unshift([ox + uz * r * 0.6, oz - ux * r * 0.6]);
+        let ok = pts.every(([a, b]) => pkNear(a, b).dd >= 1.5 && !excluded(a, b)); if (!ok) return;
+        patch(ox + ux * L * 0.3, oz + uz * L * 0.3, pts, 0.09, vary([0.64, 0.57, 0.53], Q, 0.08), 0.25);
+        const g = noShadow(ox, oz), nS = far ? 4 : 9; nat.scree++;
+        for (let k = 0; k < nS; k++) { const f = Math.pow(Q(), 0.7), a = Math.atan2(uz, ux) + (Q() - 0.5) * 2 * sp * 0.9, d = L * f * 0.9, px = ox + Math.cos(a) * d, pz = oz + Math.sin(a) * d, rs = 0.18 + f * 0.55 + Q() * 0.2;
+          const py = pkGround(px, pz) - rs * 0.25, a0 = Q() * TAU, col = vary(graniteC[Math.floor(Q() * 3)], Q, 0.16), tp = [px + (Q() - 0.5) * rs * 0.4, py + rs * (0.6 + Q() * 0.5), pz + (Q() - 0.5) * rs * 0.4];   // (a jagged stone: a tetrahedron, 12 vertices)
+          const b = [0, 1, 2].map(q => [px + Math.cos(a0 + q * 2.1) * rs, py, pz + Math.sin(a0 + q * 2.1) * rs]), inn = [px, py + rs * 0.2, pz], ct = sc(tp, py, tp[1], col, 1), cb = sh(col, 0.72);
+          for (let q = 0; q < 3; q++) g.triO(b[q], b[(q + 1) % 3], tp, cb, inn, cb, ct); }
+      };
       for (let s = 2; s < T.len - 2; s += 3.2) for (const side of [-1, 1]) {
         const i = T.idx(s), y0 = T.hy[i], tl = pkTreeline(T.px[i], T.pz[i]), above = y0 > tl, boulderPark = s > 5150 && s < 5980;
         const r = R();
@@ -5397,27 +5516,85 @@ const World = (function () {
           const [x, z] = onSide(s, side, 1.2 + R() * 7); if (pkNear(x, z).dd < 0.8 || excluded(x, z)) continue;
           const y = pkGround(x, z), g = scen.get(x, z);
           if (R() < 0.6) ico(g, x, y + 0.35, z, 0.7 + R() * 0.7, 0.75, vary(bushC[Math.floor(R() * 3)], R, 0.15), R, 0.3);
-          else pkPine(g, x, y, z, 2.5 + R() * 3, vary([0.12, 0.26, 0.13], R, 0.12), R);
+          else { const q = Q(); pkPine(g, x, y, z, 2.5 + R() * 3, vary([0.12, 0.26, 0.13], R, 0.12), R, 0, q < 0.45 ? 1 : q < 0.75 ? 2 : q < 0.9 ? 3 : 0); }
         } else if (above && r < 0.45) {   // alpine grass tufts along the verge
           const [x, z] = onSide(s, side, 0.6 + R() * 5); if (pkNear(x, z).dd < 0.3 || excluded(x, z)) continue;
           const y = pkGround(x, z), g = noShadow(x, z), col = tuftC[Math.floor(R() * 3)];   // (small: their shadows are a pixel or two)
           for (let q = 0; q < 2; q++) cone(g, x + (R() - 0.5) * 0.6, y, z + (R() - 0.5) * 0.6, 0.12 + R() * 0.1, 0.35 + R() * 0.4, 4, vary(col, R, 0.12), [col[0] * 1.25, col[1] * 1.2, col[2] * 1.1], R() * TAU);
         }
-        if ((above && R() < 0.34) || (boulderPark && R() < 0.5) || (!above && R() < 0.05)) {   // granite boulders, big ones in Boulder Park
+        if ((above && R() < 0.34) || (boulderPark && R() < 0.5) || (!above && R() < 0.05)) {   // granite boulders (rounded, split blocks, slabs), big ones in Boulder Park
           const o = 2 + Math.pow(R(), 1.6) * (boulderPark ? 40 : 70), [x, z] = onSide(s, side, o), sz = (boulderPark ? 0.9 + R() * 1.9 : 0.5 + R() * 1.3) * (o > 20 ? 1.3 : 1); if (pkNear(x, z).dd < sz + 0.5 || excluded(x, z)) continue;
           const y = pkGround(x, z), col = vary(above ? graniteC[Math.floor(R() * 3)] : greyC, R, 0.12), g = o > 40 ? noShadow(x, z) : scen.get(x, z);   // (a boulder's short shadow does not reach the road's surroundings from 40 m out)
-          ico(g, x, y + sz * 0.25, z, sz, 0.62 + R() * 0.3, col, R, 0.5);
-          if (R() < 0.4) ico(g, x + (R() - 0.5) * sz * 2.2, y + sz * 0.1, z + (R() - 0.5) * sz * 2.2, sz * 0.6, 0.7, vary(col, R, 0.1), R, 0.5);
+          const sy = 0.62 + R() * 0.3, kd = Q(); skip(12);
+          if (kd < 0.5 || sz < 1.1 || pkNear(x, z).dd < sz * 1.4 + 1.5) round(g, x, y + sz * 0.25, z, sz, sy, col);
+          else if (kd < 0.75) {   // a block split in two, the halves leaning apart
+            const rot = Q() * TAU, c = Math.cos(rot), sn = Math.sin(rot), gp = 0.1 + sz * 0.08, w = sz * 0.95, hh = sz * (0.9 + Q() * 0.5), y1 = groundMin(x, z, sz * 0.7) + 0.1;
+            for (const f of [-1, 1]) block(g, x + c * f * (w / 2 + gp), y1, z + sn * f * (w / 2 + gp), w, hh * (f > 0 ? 1 : 0.85 + Q() * 0.1), sz * 1.6, rot, vary(col, Q, 0.06), [c * f * 0.12, sn * f * 0.12]);
+          } else { const rot = Q() * TAU, y1 = groundMin(x, z, sz * 0.8) + 0.1, tl2 = Q() < 0.5;   // a squat block (a slab tilted up on one side), sometimes a rounded stone on top: a small tor
+            block(g, x, y1, z, sz * 2, sz * (tl2 ? 0.7 : 1.1), sz * 1.5, rot, col, tl2 ? [Math.cos(rot) * 0.3, Math.sin(rot) * 0.3] : null);
+            if (!tl2 && sz > 1.2 && Q() < 0.6) round(g, x + (Q() - 0.5) * sz * 0.4, y1 + sz * 1.1 + sz * 0.12, z + (Q() - 0.5) * sz * 0.5, sz * 0.55, 0.75, vary(col, Q, 0.08)); }
+          if (y > 335 && Q() < 0.7) leeSnow(x, z, sz);
+          if (R() < 0.4) { const bx = x + (R() - 0.5) * sz * 2.2, bz = z + (R() - 0.5) * sz * 2.2, c2 = vary(col, R, 0.1); skip(12);
+            if (pkNear(bx, bz).dd >= sz * 0.6 + 0.3) round(g, bx, y + sz * 0.1, bz, sz * 0.6, 0.7, c2); }
         }
       }
-      // granite outcrops and crags where the slope is steep
+      // granite outcrops and crags where the slope is steep: weathered blocks, split blocks and stacked tors, a scree fan below
       for (let s = 10; s < T.len - 10; s += 16) for (const side of [-1, 1]) {
         if (R() < 0.5) continue;
         const [x, z] = onSide(s, side, 10 + R() * 70), nd = pkNear(x, z); if (excluded(x, z) || nd.dd < 6) continue; const far = nd.i < 0 || nd.dd > 60;
         const sl = pkSlope(x, z); if (sl < 0.55) continue;
-        const y = pkGround(x, z), g = far ? noShadow(x, z) : scen.get(x, z), n = 2 + Math.floor(R() * 3), base = vary(graniteC[Math.floor(R() * 3)], R, 0.1);
+        const y = pkGround(x, z), g = far ? noShadow(x, z) : scen.get(x, z), n = 2 + Math.floor(R() * 3), base = vary(graniteC[Math.floor(R() * 3)], R, 0.1); let rm = 0;
         for (let q = 0; q < n; q++) { const r0 = 2.2 + R() * 3.5, qx = x + (R() - 0.5) * 7, qz = z + (R() - 0.5) * 7, qy = pkGround(qx, qz); if (pkNear(qx, qz).dd < r0 + 1) continue;
-          rock(g, qx, qy + r0 * 0.4, qz, r0, r0 * (0.8 + R() * 0.8), r0 * (0.7 + R() * 0.4), R() * TAU, vary(base, R, 0.08), R, 0.35); }
+          const ry = r0 * (0.8 + R() * 0.8), rz = r0 * (0.7 + R() * 0.4), rot = R() * TAU, col = vary(base, R, 0.08); skip(63); if (pkNear(qx, qz).dd < r0 * 1.3 + 1.5) continue; rm = Math.max(rm, r0);
+          const y1 = groundMin(qx, qz, r0 * 0.75) + 0.1, top = Math.max(qy + ry * 0.55, y1 + ry * 0.7) - y1, kd = Q();
+          if (kd < 0.5) block(g, qx, y1, qz, r0 * 1.7, top, rz * 1.7, rot, col, [(Q() - 0.5) * 0.3, (Q() - 0.5) * 0.3]);
+          else if (kd < 0.8) { const c = Math.cos(rot), sn = Math.sin(rot), w = r0 * 0.85, gp = 0.15 + Q() * 0.2;   // split
+            for (const f of [-1, 1]) block(g, qx + c * f * (w / 2 + gp), y1, qz + sn * f * (w / 2 + gp), w, top * (f > 0 ? 1 : 0.8), rz * 1.6, rot, vary(col, Q, 0.06), [c * f * 0.15, sn * f * 0.15]); }
+          else { const h1 = top * 0.62; block(g, qx, y1, qz, r0 * 1.8, h1, rz * 1.7, rot, col);   // a tor: blocks stacked smaller upwards, a rounded cap
+            const r2 = r0 * (0.6 + Q() * 0.15); block(g, qx + (Q() - 0.5) * 0.6, y1 + h1 - 0.25, qz + (Q() - 0.5) * 0.6, r2 * 1.8, r2 * 0.9, r2 * 1.5, rot + 0.4 + Q(), vary(col, Q, 0.06));
+            if (Q() < 0.4) round(g, qx + (Q() - 0.5) * 0.5, y1 + h1 - 0.25 + r2 * 1.1, qz + (Q() - 0.5) * 0.5, r2 * 0.6, 0.7, vary(col, Q, 0.06)); }
+          if (qy > 335 && Q() < 0.6) leeSnow(qx, qz, r0);
+        }
+        if (rm) { const k = nat.scree; scree(x, z, rm, far); if (nat.scree > k) nat.screeAt.push([s, side * Math.round(nd.dd)]); }
+      }
+      // undergrowth between the trees near the road (below the treeline): kinnikinnick mats, juniper patches, fallen logs; krummholz mats and flag trees in the ragged band just above it
+      const kinC = [[0.15, 0.29, 0.1], [0.13, 0.26, 0.09], [0.18, 0.31, 0.11]], bronze = [0.36, 0.21, 0.11], junC = [[0.18, 0.29, 0.22], [0.21, 0.31, 0.21], [0.16, 0.27, 0.21]], logC = [0.48, 0.42, 0.35];
+      for (let s = 4; s < T.len - 4; s += 3) for (const side of [-1, 1]) {
+        const i = T.idx(s), tl = pkTreeline(T.px[i], T.pz[i]), rel = T.hy[i] - tl, u = U(), o0 = U(), a0 = U() * TAU;
+        if (rel > 34 || s < T.startS + 30 && s > T.startS - 60) continue;
+        const [x, z] = onSide(s, side, 1.6 + Math.pow(o0, 1.7) * 22), y = pkGround(x, z); if (excluded(x, z)) { nat.skipU++; continue; }
+        if (rel > -8) {   // the ragged treeline: low krummholz, fewer higher up
+          if (u > 0.4 * sstep(34, 0, rel) || !clearRing(x, z, 2.5, 6) || pkSlope(x, z) > 0.9) continue;
+          const n = 1 + Math.floor(U() * 3);
+          for (let k = 0; k < n; k++) { const kx = x + (U() - 0.5) * 5, kz = z + (U() - 0.5) * 5; if (pkNear(kx, kz).dd < 2.5 || excluded(kx, kz)) continue;
+            nat.krum++; pkPine(scen.get(kx, kz), kx, pkGround(kx, kz), kz, (2.4 + U() * 2.6) * (1 - 0.4 * sstep(0, 30, rel)), vary([0.1, 0.21, 0.13], U, 0.2), U, 0, 5); }
+          continue;
+        }
+        if (u < 0.3) {   // kinnikinnick: a glossy dark green mat hugging the ground, bronze-red at the edges
+          const rr = 0.8 + U() * 1.3; if (!clearRing(x, z, rr, 5)) continue; const pts = [];
+          for (let k = 0; k < 8; k++) { const a = a0 + k / 8 * TAU, d = rr * (0.5 + U() * 0.6); pts.push([x + Math.cos(a) * d, z + Math.sin(a) * d]); }
+          nat.kin++; const g = noShadow(x, z), c = vary(kinC[Math.floor(U() * 3)], U, 0.15), cm = [x, y + 0.08, z], rim = pts.map(([a, b]) => [a, pkGround(a, b) + 0.03, b]), rc = pts.map(([a, b]) => { const q = U() < 0.2 ? vary(bronze, U, 0.2) : sh(c, 0.85), gc = pkGCol(a, b); return [lerp(q[0], gc[0], 0.3), lerp(q[1], gc[1], 0.3), lerp(q[2], gc[2], 0.3)]; }), dn = [x, y - 5, z];
+          for (let k = 0; k < 8; k++) g.triO(rim[k], rim[(k + 1) % 8], cm, rc[k], dn, rc[(k + 1) % 8], c);
+        } else if (u < 0.5) {   // common juniper: a low, spreading blue-green mound
+          const rr = 1 + U() * 1.3, hh = 0.25 + U() * 0.25, ex = 1 + U() * 0.5; if (!clearRing(x, z, rr * ex, 6)) continue;
+          nat.jun++; const g = noShadow(x, z), c = vary(junC[Math.floor(U() * 3)], U, 0.14), top = [x, y + hh, z], B = [], M = [], n = 6, inn = [x, y + hh * 0.3, z];
+          for (let k = 0; k < n; k++) { const a = a0 + k / n * TAU, d = rr * (0.75 + U() * 0.4), ca = Math.cos(a) * d * ex, sa = Math.sin(a) * d, px = x + ca * Math.cos(a0) - sa * Math.sin(a0), pz = z + ca * Math.sin(a0) + sa * Math.cos(a0);
+            B.push([px, pkGround(px, pz) + 0.02, pz]); M.push([x + (px - x) * 0.6, y + hh * (0.6 + U() * 0.25), z + (pz - z) * 0.6]); }
+          const cB = sh(c, 0.62), cM = c, cT = sh(c, 1.12);
+          for (let k = 0; k < n; k++) { const j = (k + 1) % n; g.quadO(B[k], B[j], M[j], M[k], null, inn, null, [cB, cB, cM, cM]); g.triO(M[k], M[j], top, cM, inn, cM, cT); }
+        } else if (u < 0.58) {   // a fallen, weathered log (its root plate on some), across the slope
+          const L = 3 + U() * 5.5, rb = 0.14 + U() * 0.14, ca = Math.cos(a0), sa = Math.sin(a0), p0 = [x - ca * L / 2, 0, z - sa * L / 2], p1 = [x + ca * L / 2, 0, z + sa * L / 2];
+          p0[1] = pkGround(p0[0], p0[2]) + rb * 0.75; p1[1] = pkGround(p1[0], p1[2]) + rb * 0.75;
+          if (Math.abs((p0[1] + p1[1]) / 2 - y - rb * 0.75) > 0.35 || pkNear(p0[0], p0[2]).dd < 1.8 || pkNear(p1[0], p1[2]).dd < 1.8 || pkNear(x, z).dd < 1.8 || excluded(p0[0], p0[2]) || excluded(p1[0], p1[2])) continue;
+          nat.log++; const g = scen.get(x, z), c = vary(logC, U, 0.18), ct = sh(c, 1.25), cb = sh(c, 0.55), end = [0.72, 0.6, 0.44], n = 5, px = -sa, pz = ca, ring = (p, r) => { const a = []; for (let k = 0; k < n; k++) { const t = k / n * TAU + 0.3; a.push([p[0] + px * Math.cos(t) * r, p[1] + Math.sin(t) * r, p[2] + pz * Math.cos(t) * r]); } return a; };
+          const A0 = ring(p0, rb), A1 = ring(p1, rb * 0.8), mid = [(p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2, (p0[2] + p1[2]) / 2], cl = (p, q) => p[1] > q[1] + 0.02 ? ct : p[1] < q[1] - rb * 0.3 ? cb : c;
+          for (let k = 0; k < n; k++) { const j = (k + 1) % n; g.quadO(A0[k], A1[k], A1[j], A0[j], null, mid, null, [cl(A0[k], p0), cl(A1[k], p1), cl(A1[j], p1), cl(A0[j], p0)]); }
+          for (let k = 1; k < n - 1; k++) { g.triO(A0[0], A0[k], A0[k + 1], end, mid); g.triO(A1[0], A1[k], A1[k + 1], sh(end, 0.9), mid); }
+          if (U() < 0.3) { const rp = rb * 4, q = [p0[0] - ca * 0.1, p0[1] - rb * 0.2, p0[2] - sa * 0.1], rs = [];   // the root plate: a ragged disc standing up at one end
+            for (let k = 0; k < 6; k++) { const t = k / 6 * TAU; rs.push([q[0] + px * Math.cos(t) * rp * (0.7 + U() * 0.4), Math.max(pkGround(q[0], q[2]) - 0.1, q[1] + Math.sin(t) * rp * (0.7 + U() * 0.4)), q[2] + pz * Math.cos(t) * rp * (0.7 + U() * 0.4)]); }
+            const rc = [0.36, 0.28, 0.2], ic = [q[0] + ca, q[1], q[2] + sa], oc = [q[0] - ca, q[1], q[2] - sa];
+            for (let k = 0; k < 6; k++) { const j = (k + 1) % 6; g.triO(rs[k], rs[j], q, rc, ic); g.triO(rs[k], rs[j], q, sh(rc, 0.8), oc); } }
+        }
       }
     }
 
