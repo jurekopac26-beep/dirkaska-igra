@@ -57,8 +57,26 @@ const Sfx = (function () {
     sh.connect(lp); lp.connect(out);
     let pn = null;
     if (pan && ctx.createStereoPanner) { pn = ctx.createStereoPanner(); out.connect(pn); pn.connect(bus); } else out.connect(bus);
-    o1.start(); o2.start(); o3.start();
-    return { o1, o2, o3, lp, out, pn, level };
+    // a big V8's lope: the note's loudness wobbling at half the firing rate (its uneven beat); nothing on the other engines
+    const lope = ctx.createOscillator(); lope.type = 'triangle'; const lopeG = ctx.createGain(); lopeG.gain.value = 0; lope.connect(lopeG); lopeG.connect(out.gain);
+    o1.start(); o2.start(); o3.start(); lope.start();
+    return { o1, o2, o3, g1, g2, g3, lp, out, pn, level, lope, lopeG, kind: 'ice' };
+  }
+  // the voice's character for a car: an engine's rasp; a V8's heavier low note (and its lope); an electric motor's clean whine (sine waves)
+  function voiceKind(v, M) {
+    const k = M.ev ? 'ev' : M.snd === 'v8' ? 'v8' : 'ice';
+    if (v.kind === k) return;
+    v.kind = k; const ev = k === 'ev';
+    v.o1.type = ev ? 'sine' : 'sawtooth'; v.o2.type = ev ? 'triangle' : 'square'; v.o3.type = ev ? 'sine' : 'sawtooth';
+    v.g1.gain.value = ev ? 0.34 : 0.5; v.g2.gain.value = ev ? 0.1 : k === 'v8' ? 0.48 : 0.32; v.g3.gain.value = ev ? 0.12 : 0.16;
+    if (k !== 'v8') set(v.lopeG.gain, 0, 0.02);
+  }
+  // an electric motor's whine: rising with the speed (it turns with the wheels: no revving, no gear changes), louder under power
+  function evWhine(v, speed, load, gain, tc) {
+    const f = 110 + speed * 21;
+    set(v.o1.frequency, f, tc); set(v.o2.frequency, f * 1.5, tc); set(v.o3.frequency, f * 2.98, tc);
+    set(v.lp.frequency, 5200, 0.05);
+    set(v.out.gain, gain * (0.02 + 0.06 * clamp(speed / 40, 0, 1) + 0.05 * load), 0.03);
   }
   function squealVoice() {
     const src = ctx.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
@@ -452,15 +470,20 @@ const Sfx = (function () {
     const tNow = ctx.currentTime, dt = clamp(tNow - lastT, 0, 0.1); lastT = tNow;
     const M = player.m;
     // player engine
-    let rpm = player.rpm;
-    if (player.locked) rpm = M.idle + (M.redline * 0.82 - M.idle) * (revInput || 0) + Math.random() * 60 * (revInput || 0);
-    const r = clamp(rpm / M.redline, 0.08, 1.05);
-    const base = (22 + r * 205) * (M.engHz || 1); // firing freq Hz (the formula screams higher)
-    set(eng.o1.frequency, base, 0.015); set(eng.o2.frequency, base * 0.5, 0.015); set(eng.o3.frequency, base * 2.01, 0.015);
-    const load = player.locked ? (revInput || 0) : player.inThr;
-    set(eng.lp.frequency, (380 + r * 1700 + load * 1300) * (M.engHz ? 1.35 : 1), 0.03);
-    const cut = player.shiftT > 0 ? 0.35 : 1;
-    set(eng.out.gain, (0.1 + 0.1 * r + 0.1 * load) * cut * eng.level, 0.02);
+    voiceKind(eng, M);
+    if (M.ev) evWhine(eng, player.speed, player.locked ? 0 : player.inThr, eng.level, 0.015);   // (the electric car: the motors' whine)
+    else {
+      let rpm = player.rpm;
+      if (player.locked) rpm = M.idle + (M.redline * 0.82 - M.idle) * (revInput || 0) + Math.random() * 60 * (revInput || 0);
+      const r = clamp(rpm / M.redline, 0.08, 1.05);
+      const base = (22 + r * 205) * (M.engHz || 1); // firing freq Hz (the formula screams higher, the V8s rumble lower)
+      set(eng.o1.frequency, base, 0.015); set(eng.o2.frequency, base * 0.5, 0.015); set(eng.o3.frequency, base * 2.01, 0.015);
+      const load = player.locked ? (revInput || 0) : player.inThr;
+      set(eng.lp.frequency, (380 + r * 1700 + load * 1300) * (M.engHz > 1 ? 1.35 : M.engHz < 1 ? 0.8 : 1), 0.03);
+      const cut = player.shiftT > 0 ? 0.35 : 1, gq = (0.1 + 0.1 * r + 0.1 * load) * cut * eng.level;
+      set(eng.out.gain, gq, 0.02);
+      if (eng.kind === 'v8') { set(eng.lope.frequency, base * 0.5, 0.015); set(eng.lopeG.gain, gq * 0.7 * clamp(1 - r * 1.4, 0.15, 1) * (1 - 0.5 * load), 0.05); }   // (the lope: strongest at idle and off the throttle)
+    }
     // two nearest AI engines
     if (race) {
       const others = [];
@@ -468,14 +491,19 @@ const Sfx = (function () {
       others.sort((a, b) => a[0] - b[0]);
       for (let k = 0; k < ai.length; k++) {
         const v = ai[k], o = others[k];
-        if (!o) { set(v.out.gain, 0); continue; }
-        const c = o[1], d = Math.sqrt(o[0]);
-        const rr = clamp(c.rpm / c.m.redline, 0.1, 1.05);
-        const f = (22 + rr * 205) * (c.m.engHz || 1);
-        set(v.o1.frequency, f); set(v.o2.frequency, f * 0.5); set(v.o3.frequency, f * 2.02);
-        set(v.lp.frequency, 400 + rr * 1500 + c.inThr * 800);
-        const att = clamp(1 - d / 70, 0, 1);
-        set(v.out.gain, att * att * (0.06 + 0.1 * rr) * v.level * 3, 0.05);
+        if (!o) { set(v.out.gain, 0); set(v.lopeG.gain, 0); continue; }
+        const c = o[1], d = Math.sqrt(o[0]), att = clamp(1 - d / 70, 0, 1);
+        voiceKind(v, c.m);
+        if (c.m.ev) evWhine(v, c.speed, c.inThr || 0, att * att * v.level * 2.4, 0.03);   // (a friend's electric car)
+        else {
+          const rr = clamp(c.rpm / c.m.redline, 0.1, 1.05);
+          const f = (22 + rr * 205) * (c.m.engHz || 1);
+          set(v.o1.frequency, f); set(v.o2.frequency, f * 0.5); set(v.o3.frequency, f * 2.02);
+          set(v.lp.frequency, 400 + rr * 1500 + c.inThr * 800);
+          const gq = att * att * (0.06 + 0.1 * rr) * v.level * 3;
+          set(v.out.gain, gq, 0.05);
+          if (v.kind === 'v8') { set(v.lope.frequency, f * 0.5); set(v.lopeG.gain, gq * 0.7 * clamp(1 - rr * 1.4, 0.15, 1), 0.05); }
+        }
         if (v.pn) set(v.pn.pan, clamp(o[2] / 40, -0.9, 0.9), 0.05);
       }
     }
@@ -661,13 +689,14 @@ const Sfx = (function () {
   }
   function silence() {
     if (!ctx) return;
-    for (const v of [eng, ...ai]) set(v.out.gain, 0, 0.02);
+    for (const v of [eng, ...ai]) { set(v.out.gain, 0, 0.02); set(v.lopeG.gain, 0, 0.02); }   // (a V8's lope too: it would still beat on a silent note)
     for (const v of [squeal, rumble, wind, curbV, rainV, hiss, heli, gravel, spray, crowd, stands, jet, sirenV]) set(v.out.gain, 0, 0.02);
     set(echo.send.gain, 0, 0.02); set(tun.send.gain, 0, 0.02);
     if (atmo) atmoOff(0.02);
   }
 
-  const levels = () => ctx ? { stands: stands.lev, standsGain: stands.out.gain.value, tunnel: tun.send.gain.value, pk: atmo && atmo.x ? { ready: !atmo.gen && !atmo.x.gen, crunch: atmo.x.cr.map(c => +c.g.gain.value.toFixed(4)), slap: atmo.x.sG.gain.value, far: atmo.x.fG.gain.value, gust: atmo.x.wo.gain.value, wind: atmo.wo.gain.value } : null } : null;   // (tests: the crowd's and the tunnel's levels now)
+  const levels = () => ctx ? { stands: stands.lev, standsGain: stands.out.gain.value, tunnel: tun.send.gain.value, pk: atmo && atmo.x ? { ready: !atmo.gen && !atmo.x.gen, crunch: atmo.x.cr.map(c => +c.g.gain.value.toFixed(4)), slap: atmo.x.sG.gain.value, far: atmo.x.fG.gain.value, gust: atmo.x.wo.gain.value, wind: atmo.wo.gain.value } : null,   // (tests: the crowd's and the tunnel's levels now,
+    engine: { kind: eng.kind, wave: eng.o1.type, f: eng.o1.frequency.value, gain: eng.out.gain.value, lope: eng.lopeG.gain.value } } : null;   // Pikes Peak's sounds, the player's engine note)
   const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, shiftPop, knock, wrench, silence, levels, siren, carHorn, thud, pop, applause, cork, setCeremony, get ready() { return !!ctx && ctx.state === 'running'; } };
   window.Sfx = api;
   return api;

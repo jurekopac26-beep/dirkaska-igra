@@ -122,11 +122,11 @@ const World = (function () {
     for (let i = 0; i < 6; i++) { const a0 = i / 6 * TAU, a1 = (i + 1) / 6 * TAU, b0 = [cx + Math.cos(a0) * r, cy, cz + Math.sin(a0) * r], b1 = [cx + Math.cos(a1) * r, cy, cz + Math.sin(a1) * r], t0 = [b0[0], cy + h, b0[2]], t1 = [b1[0], cy + h, b1[2]];
       g.quadO(b0, t0, t1, b1, col, inn, null, [low, col, col, low]); g.triO(top, t1, t0, dark, below, rim, rim); }
   }
-  function tyreCol(g, cx, cy, cz, h, r, col, rot) {   // a column of three fat painted tyres (24 faces): 8 sides with the tyre texture, a ring with a dark hole on top
+  function tyreCol(g, cx, cy, cz, h, r, col, rot, vb) {   // a column of three fat painted tyres (24 faces): 8 sides with the tyre texture, a ring with a dark hole on top (vb: the texture's bottom edge, 0.5 = three tyres; 0.832 = one)
     const n = 8, a0r = rot || 0, top = [cx, cy + h, cz], below = [cx, cy - 1, cz], inn = [cx, cy + h / 2, cz];
     for (let k = 0; k < n; k++) { const a0 = a0r + k / n * TAU, a1 = a0r + (k + 1) / n * TAU, c0 = Math.cos(a0), s0 = Math.sin(a0), c1 = Math.cos(a1), s1 = Math.sin(a1);
       const b0 = [cx + c0 * r, cy, cz + s0 * r], b1 = [cx + c1 * r, cy, cz + s1 * r], t0 = [b0[0], cy + h, b0[2]], t1 = [b1[0], cy + h, b1[2]], u0 = k / n * 2, u1 = (k + 1) / n * 2;
-      g.quadO(b0, t0, t1, b1, col, inn, [[u0, 0.5], [u0, 0.998], [u1, 0.998], [u1, 0.5]]);
+      g.quadO(b0, t0, t1, b1, col, inn, [[u0, vb || 0.5], [u0, 0.998], [u1, 0.998], [u1, vb || 0.5]]);
       g.triO(top, t1, t0, col, below, col, col, [0.5, 0.25], [0.5 + 0.49 * c1, 0.25 + 0.245 * s1], [0.5 + 0.49 * c0, 0.25 + 0.245 * s0]); }
   }
   const ICO_T = (1 + Math.sqrt(5)) / 2;
@@ -152,6 +152,14 @@ const World = (function () {
     for (const [a, b, c] of ICO_F) { const ab = m(a, b), bc = m(b, c), ca = m(c, a); F.push([a, ab, ca], [b, bc, ab], [c, ca, bc], [ab, bc, ca]); }
     return { V, F };
   })();
+  const ICO0 = { V: ICO_V, F: ICO_F };
+  function puff(g, cx, cy, cz, r, sy, col, r_, jit, lo, hi, fine) {   // soft round clump of foliage (icosphere, smooth normals; fine: subdivided once): dark underneath, warm and sunlit on top
+    const M = fine ? ICO1 : ICO0, V = M.V.map(v => { const k = 1 + (r_() - 0.5) * jit; return [cx + v[0] * r * k, cy + v[1] * r * sy * k, cz + v[2] * r * k]; }), inn = [cx, cy, cz];
+    const sc = (p, v) => { const t = v[1] * 0.5 + 0.5, k = lo + (hi - lo) * t * t; return [col[0] * k * (1 + 0.1 * t), col[1] * k, col[2] * k * (1 - 0.18 * t)]; };
+    const nn = (v) => { const x = v[0], y = v[1] / sy + 0.25, z = v[2], l = Math.hypot(x, y, z) || 1; return [x / l, y / l, z / l]; };   // (normals tipped up a little: the sun reaches over the top)
+    const C = M.V.map((v, k) => sc(V[k], v)), Nn = M.V.map(nn);
+    for (const [a, b, c] of M.F) g.triON(V[a], V[b], V[c], Nn[a], Nn[b], Nn[c], inn, C[a], C[b], C[c]);
+  }
   function rock(g, cx, cy, cz, rx, ry, rz, rot, col, r_, jit, flat) {   // chunky boulder (33 faces): 7-sided, bulging middle, chamfered flat top (cy = centre height)
     const c = Math.cos(rot), s = Math.sin(rot), yb = cy - 0.4 * ry, yt = cy + (flat == null ? 0.6 : flat) * ry, ym = yb + (yt - yb) * 0.52, n = 7;
     const ring = (y, f) => { const out = []; for (let k = 0; k < n; k++) { const a = (k + (r_() - 0.5) * 0.5) / n * Math.PI * 2, kk = f * (1 + (r_() - 0.5) * jit), lx = Math.cos(a) * rx * kk, lz = Math.sin(a) * rz * kk; out.push([cx + lx * c - lz * s, y + (r_() - 0.5) * jit * ry * 0.3, cz + lx * s + lz * c]); } return out; };
@@ -1070,8 +1078,8 @@ const World = (function () {
       const st2 = fd.stand2 ? [dS(iNear(...fd.stand2[0])), dS(iNear(...fd.stand2[1]))].sort((a, b) => a - b) : null;
       FO_TYRES = [new Uint8Array(N), new Uint8Array(N)];   // [left, right]: outside of every corner of severity >= 2 (Bakreni gozd: and the inside of the lakeside top-left corner)
       const iTL = THEME === 'forest' ? iNear(4, 6) : -1;
-      for (const c of T.corners) { if (c.sev < 2) continue; const i1c = c.i1 < c.i0 ? c.i1 + N : c.i1, out = -c.dir, inTL = iTL >= 0 && ((iTL - c.i0 + N) % N) <= (i1c - c.i0);
-        for (let k = c.i0 - 8; k <= i1c + 8; k++) { const ii = ((k % N) + N) % N; if (Math.abs(T.k[ii]) < 0.006 && (k < c.i0 || k > i1c)) continue; FO_TYRES[out > 0 ? 1 : 0][ii] = 1; if (inTL && c.sev >= 3) FO_TYRES[out > 0 ? 0 : 1][ii] = 1; } }
+      for (const c of T.corners) { if (c.sev < (THEME === 'forest' ? 2 : 1)) continue; const i1c = c.i1 < c.i0 ? c.i1 + N : c.i1, out = -c.dir, inTL = iTL >= 0 && ((iTL - c.i0 + N) % N) <= (i1c - c.i0);
+        for (let k = c.i0 - 8; k <= i1c + (THEME === 'forest' ? 8 : 16); k++) { const ii = ((k % N) + N) % N; if (Math.abs(T.k[ii]) < 0.006 && (k < c.i0 || k > i1c)) continue; FO_TYRES[out > 0 ? 1 : 0][ii] = 1; if (inTL && c.sev >= 3) FO_TYRES[out > 0 ? 0 : 1][ii] = 1; } }   // (the newer circuits: every corner, and on well past the exit, where the cars run wide, as in the reference)
       const ST = THEME === 'forest' ? null : fd.stands || [];   // the newer circuits: [from, to, side, rows] in metres from the start line
       FO_NOFENCE = ST ? (side, i) => { if (side > 0 && foPit(i)) return true; const d = dS(i); return ST.some(([a, b, sd]) => sd === side && [d, d - T.len, d + T.len].some(x => x > a - 4 && x < b + 4)) || (fd.flags || []).some(([a, b, sd]) => sd === side && d > a - 30 && d < b + 8); }   // (stands past half a lap too; the flag bank stands on open grass behind the bare rail)
         : (side, i) => { const d = dS(i);
@@ -1114,7 +1122,21 @@ const World = (function () {
           const segL = Math.hypot(T.px[j] - T.px[i], T.pz[j] - T.pz[i]);
           if (SKIPBAR && SKIPBAR(side, i)) { lenAcc += segL; continue; }
           const g = scen.get(T.px[i] + T.nx[i] * side * bar[i], T.pz[i] + T.nz[i] * side * bar[i]);
-          if (t === 0) { // armco
+          if (t === 0 && CSX && THEME !== 'forest') { // armco as in the reference: a grey W-beam (two bulges, a dark groove between, a pale top edge) on short dark red posts every 3 m, a chain-link fence behind
+            const rl = [0.78, 0.8, 0.83], rd = [0.5, 0.52, 0.56], rb = [0.46, 0.47, 0.5];
+            g.quadO(Q(i, 0, 0.36), Q(j, 0, 0.36), Q(j, 0, 0.55), Q(i, 0, 0.55), rl, inward(i));
+            g.quadO(Q(i, 0.05, 0.55), Q(j, 0.05, 0.55), Q(j, 0.05, 0.63), Q(i, 0.05, 0.63), rd, inward(i));
+            g.quadO(Q(i, 0, 0.63), Q(j, 0, 0.63), Q(j, 0, 0.82), Q(i, 0, 0.82), rl, inward(i));
+            g.quadO(Q(i, 0, 0.82), Q(j, 0, 0.82), Q(j, 0.1, 0.84), Q(i, 0.1, 0.84), [0.93, 0.94, 0.95], [Q(i, 0.05, -3)[0], -3, Q(i, 0.05, -3)[2]]);
+            g.quadO(Q(i, 0.1, 0.36), Q(j, 0.1, 0.36), Q(j, 0.1, 0.84), Q(i, 0.1, 0.84), rb, outward(i));
+            const pc = THEME === 'kamp' ? [0.52, 0.2, 0.17] : [0.5, 0.22, 0.18];
+            for (let q = Math.ceil(lenAcc / 3); q * 3 < lenAcc + segL; q++) { const f = (q * 3 - lenAcc) / segL, a = Q(i, 0.2, 0), b = Q(j, 0.2, 0), x = a[0] + (b[0] - a[0]) * f, z = a[2] + (b[2] - a[2]) * f, y = a[1] + (b[1] - a[1]) * f;
+              box(g, x, y, z, 0.16, 0.92, 0.16, T.hd[i], pc, pc.map(v => v * 1.35)); }
+            if (!(FO_NOFENCE && FO_NOFENCE(side, i))) {
+              const fu0 = lenAcc / 2.5, fu1 = (lenAcc + segL) / 2.5;
+              texFence.quadO(Q(i, 0.55, 0.3), Q(j, 0.55, 0.3), Q(j, 0.55, 3.0), Q(i, 0.55, 3.0), [1, 1, 1], inward(i), [[fu0, 0], [fu1, 0], [fu1, 1.1], [fu0, 1.1]]);
+              if (i % 3 === 0) { const pp = Q(i, 0.6, 0); box(g, pp[0], pp[1], pp[2], 0.1, 3.1, 0.1, T.hd[i], [0.62, 0.63, 0.66]); } }
+          } else if (t === 0) { // armco
             const rail = [0.8, 0.82, 0.85], railD = [0.55, 0.57, 0.6];
             g.quadO(Q(i, 0, 0.45), Q(j, 0, 0.45), Q(j, 0, 0.78), Q(i, 0, 0.78), rail, inward(i));
             g.quadO(Q(i, 0.02, 0.45), Q(j, 0.02, 0.45), Q(j, 0.02, 0.78), Q(i, 0.02, 0.78), railD, outward(i));
@@ -1144,12 +1166,13 @@ const World = (function () {
               if (i % 3 === 0) { const pp = Q(i, 0.3, 0); box(g, pp[0], 0, pp[2], 0.12, 3.8, 0.12, T.hd[i], [0.35, 0.36, 0.38]); }
             }
           } else if (CSX) { // tyre wall as in the reference: columns of three painted tyres (red and white in pairs), armco and mesh fence behind
-            const TYR = THEME === 'italia' ? [0.68, 1.23, 1.39, 0.45, 1.65, 2.55] : [0.43, 0.78, 0.88, 0.2, 0.95, 1.5];   // radius, height, spacing, the two rows' offsets, the rail behind (Toskana: the fat stacks of the reference)
+            const TYR = THEME === 'italia' ? [0.68, 1.23, 1.39, 0.45, 1.65, 2.55] : THEME === 'kamp' ? [0.56, 1.02, 1.14, 0.3, 1.3, 2.05] : [0.43, 0.78, 0.88, 0.2, 0.95, 1.5];   // radius, height (three tyres), spacing, the two rows' offsets, the rail behind (Toskana: the fat stacks of the reference, four high; Gromski rt: big black tyres)
             const SP = TYR[2], gt = tyreCh.get(T.px[i] + T.nx[i] * side * bar[i], T.pz[i] + T.nz[i] * side * bar[i]);
             for (const [row, off] of [[0, TYR[3]], [1, TYR[4]]]) {   // two staggered rows of fat painted tyres, three high, red and white in pairs (as in the reference)
               const a = Q(i, off, 0), b = Q(j, off, 0);
               for (let m = Math.ceil(lenAcc / SP - 0.5 * row); (m + 0.5 * row) * SP < lenAcc + segL; m++) { const t2 = ((m + 0.5 * row) * SP - lenAcc) / segL, x = a[0] + (b[0] - a[0]) * t2, z = a[2] + (b[2] - a[2]) * t2, y = a[1] + (b[1] - a[1]) * t2;
-                tyreCol(gt, x, y, z, TYR[1], TYR[0], ((m + row) >> 1) % 2 ? FO_TW : FO_TR, m * 0.7); } }
+                tyreCol(gt, x, y, z, TYR[1], TYR[0], ((m + row) >> 1) % 2 ? FO_TW : FO_TR, m * 0.7);
+                if (THEME === 'italia') tyreCol(gt, x, y + TYR[1], z, TYR[1] / 3, TYR[0], ((m + row) >> 1) % 2 ? FO_TW : FO_TR, m * 0.7 + 0.3, 0.832); } }
             g.quadO(Q(i, TYR[5], 0.32), Q(j, TYR[5], 0.32), Q(j, TYR[5], 0.72), Q(i, TYR[5], 0.72), [0.72, 0.73, 0.76], inward(i));
             const fu0 = lenAcc / 2.5, fu1 = (lenAcc + segL) / 2.5;
             texFence.quadO(Q(i, TYR[5] + 0.3, 0.72), Q(j, TYR[5] + 0.3, 0.72), Q(j, TYR[5] + 0.3, 3.2), Q(i, TYR[5] + 0.3, 3.2), [1, 1, 1], inward(i), [[fu0, 0], [fu1, 0], [fu1, 1.0], [fu0, 1.0]]);
@@ -1442,7 +1465,7 @@ const World = (function () {
       if (THEME === 'mountain') return 3.0;
       if (THEME === 'ljubljana') return 1.05;   // the pavement between the catch fence (bar + 0.5) and the house fronts (bar + 3.5)
       if (THEME === 'monaco') return 1.0;
-      if (CSX) return FO_TYRES && FO_TYRES[side > 0 ? 1 : 0][i] ? (THEME === 'italia' ? 3.6 : 2.6) : 1.4;
+      if (CSX) return FO_TYRES && FO_TYRES[side > 0 ? 1 : 0][i] ? (THEME === 'italia' ? 3.6 : THEME === 'kamp' ? 3.0 : 2.6) : 1.4;
       let d = i * T.ds - sStart; if (d > T.len / 2) d -= T.len; if (d < -T.len / 2) d += T.len; if (d > -200 && d < 215) return 1.2;   // concrete wall
       const grav = side > 0 ? T.gravR : T.gravL; for (let k = -4; k <= 4; k++) if (grav[(i + k + N) % N]) return 2.4;   // tyre wall, fence at bar + 1.65
       return 1.2;   // armco
@@ -2231,14 +2254,24 @@ const World = (function () {
         starCone(g, x, y0 + hgt * 0.42, z, rr * 0.66, hgt * 0.24, 5, c3, lit(1.4), rot + 1.0, hgt * 0.035);
         starCone(g, x, y0 + hgt * 0.57, z, rr * 0.48, hgt * 0.22, 4, c4, lit(1.46), rot + 1.5, hgt * 0.03);
         cone(g, x, y0 + hgt * 0.7, z, rr * 0.3, hgt * 0.32, 5, c4, lit(1.52), rot + 2.0); };
-      // Toskana and Gromski rt: round, bushy broadleaf trees (two or three soft blobs on a short trunk, sunlit tops) and, in Toskana, tall slim cypresses
+      // Toskana and Gromski rt: round, bushy broadleaf trees (soft blobs on a short trunk, sunlit tops; near the circuit smooth round clumps), in Toskana tall slim cypresses and rounded pines
       const LEAFC = ITA ? [[0.3, 0.55, 0.2], [0.26, 0.5, 0.19], [0.34, 0.58, 0.22], [0.24, 0.46, 0.2]] : [[0.28, 0.52, 0.2], [0.24, 0.47, 0.19], [0.32, 0.56, 0.22], [0.22, 0.44, 0.2]];
-      let leafCount = 0; const leafy = (x, z, hgt, yb) => { leafCount++;
+      let leafCount = 0, leafNear = 0; const leafy = (x, z, hgt, yb) => { leafCount++;
         const g = scen.get(x, z), y0 = yb != null ? yb : gH(x, z), col = vary(LEAFC[Math.floor(R() * LEAFC.length)], R, 0.1), r0 = hgt * (0.3 + R() * 0.06), rot = R() * TAU;
         box(g, x, y0 - 0.2, z, 0.42, hgt * 0.45, 0.42, rot, [0.36, 0.25, 0.17], null, true);
+        if (clearance(x, z) < 30) { leafNear++;   // near the circuit, where it is big on screen: a cloud of soft round clumps as in the reference (one big crown, two round its lower edge)
+          puff(g, x, y0 + hgt * 0.64, z, r0 * 1.04, 0.9, col, R, 0.12, 0.46, 1.3, true);
+          for (let q = 0; q < 2; q++) { const a = rot + q * 2.4 + (R() - 0.5) * 0.6, d = r0 * (0.7 + R() * 0.12);
+            puff(g, x + Math.cos(a) * d, y0 + hgt * (0.46 + R() * 0.08), z + Math.sin(a) * d, r0 * (0.62 + R() * 0.1), 0.86, col.map(v => v * (0.92 + R() * 0.12)), R, 0.12, 0.44, 1.24, true); }
+          return; }
         ico(g, x, y0 + hgt * 0.58, z, r0, 0.82, col, R, 0.25);
         ico(g, x + Math.cos(rot) * r0 * 0.45, y0 + hgt * 0.74, z + Math.sin(rot) * r0 * 0.45, r0 * 0.72, 0.86, col.map(v => v * 1.1), R, 0.25);
         if (R() < 0.6) ico(g, x - Math.cos(rot) * r0 * 0.5, y0 + hgt * 0.66, z - Math.sin(rot) * r0 * 0.5, r0 * 0.62, 0.84, col.map(v => v * 0.95), R, 0.25); };
+      const puffPine = (x, z, hgt) => { leafCount++;   // Toskana (as in the reference): a rounded conifer, three soft tiers narrowing to the top, dark green with sunlit crowns
+        const g = scen.get(x, z), y0 = gH(x, z), col = vary([0.2, 0.42, 0.2], R, 0.08), rr = hgt * (0.2 + R() * 0.03);
+        box(g, x, y0 - 0.2, z, 0.36, hgt * 0.2, 0.36, 0, [0.34, 0.24, 0.16], null, true);
+        if (clearance(x, z) > 30) { ico(g, x, y0 + hgt * 0.36, z, rr, 1.1, col, R, 0.2); ico(g, x, y0 + hgt * 0.66, z, rr * 0.62, 1.2, col.map(v => v * 1.12), R, 0.2); return; }
+        leafNear++; for (let q = 0; q < 3; q++) puff(g, x, y0 + hgt * (0.3 + q * 0.23), z, rr * (1 - q * 0.26), 0.62, col.map(v => v * (1 + q * 0.06)), R, 0.12, 0.44, 1.26, q === 0); };
       const cypress = (x, z, hgt, yb) => { leafCount++;   // Italian cypress: a tall, narrow dark column, a little lighter at the top
         const g = scen.get(x, z), y0 = yb != null ? yb : gH(x, z), col = vary([0.15, 0.34, 0.19], R, 0.08), rr = hgt * (0.1 + R() * 0.02);
         box(g, x, y0 - 0.2, z, 0.3, hgt * 0.16, 0.3, 0, [0.34, 0.24, 0.16], null, true);
@@ -2274,25 +2307,33 @@ const World = (function () {
       const standBlock = (sa, sb, side, rows) => {
         const sm = (sa + sb) / 2, im = T.idx(sm), hd = T.hd[im], L = sb - sa, bar = side > 0 ? T.br[im] : T.bl[im];
         const b0 = bar + 2.8, rowD = 0.8, rowH = 0.46, baseH = 1.1, P = (s1, d) => (FOR ? atS : atSf)(s1, side * d);   // (the newer circuits: interpolated, so the frames and figures sit where they belong)
-        const [gx, gz] = P(sm, b0 + 3), g = scen.get(gx, gz), white = [0.92, 0.92, 0.94], frame = KMP ? [0.48, 0.2, 0.2] : white, seat = [0.72, 0.17, 0.15];   // red seats (they show between the fans, as in the reference)
+        const [gx, gz] = P(sm, b0 + 3), g = scen.get(gx, gz), white = [0.92, 0.92, 0.94], frame = FOR ? white : [0.44, 0.24, 0.2], seat = FOR ? [0.72, 0.17, 0.15] : [0.38, 0.46, 0.64], step = FOR ? [0.56, 0.57, 0.62] : [0.36, 0.4, 0.5];   // red seats (they show between the fans, as in the reference; Toskana and Gromski rt: slate-blue terraces in a dark red-brown frame, as at Faenza and Thunder Point)
         { const [x, z] = P(sm, b0 - 0.15); box(g, x, 0, z, L, baseH + 0.25, 0.3, hd, frame, frame); }
-        for (let k = 0; k < rows; k++) { const [x, z] = P(sm, b0 + (k + 0.5) * rowD); box(g, x, 0, z, L, baseH + k * rowH, rowD, hd, [0.56, 0.57, 0.62], seat);
+        for (let k = 0; k < rows; k++) { const [x, z] = P(sm, b0 + (k + 0.5) * rowD); box(g, x, 0, z, L, baseH + k * rowH, rowD, hd, step, seat);
           const y = baseH + k * rowH + 0.015, A = P(sa, b0 + k * rowD + 0.05), Bq = P(sb, b0 + k * rowD + 0.05), C = P(sb, b0 + (k + 1) * rowD - 0.05), D = P(sa, b0 + (k + 1) * rowD - 0.05);   // packed crowd underneath the figures
           texCrowd.quadUp([A[0], y, A[1]], [Bq[0], y, Bq[1]], [C[0], y, C[1]], [D[0], y, D[1]], [[1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1]], [[0, k * 0.14], [L / 10, k * 0.14], [L / 10, k * 0.14 + 0.13], [0, k * 0.14 + 0.13]]); }
         const topH = baseH + rows * rowH, backD = b0 + rows * rowD + 0.15;
         { const [x, z] = P(sm, backD); box(g, x, 0, z, L + 0.3, topH + 2.4, 0.3, hd, frame, frame); }
         for (const s1 of [sa - 0.15, sb + 0.15]) for (let q = 0; q < 3; q++) { const d0 = b0 - 0.3 + q * rows * rowD / 3, dd = backD - d0 + 0.15, [x, z] = P(s1, d0 + dd / 2); box(g, x, 0, z, 0.3, baseH + (q + 1) * rows * rowH / 3 + 0.7, dd, hd, frame, frame); }
-        for (let k = 0; k < rows; k++) for (let s1 = sa + 0.55 + (k % 2) * 0.6, q = 0; s1 < sb - 0.35; s1 += 0.6, q++) { if (Math.abs(s1 - sm) < 0.75 || (q % 2 === 1 && R() < (FOR ? 0.85 : 0.1))) continue; /* figures in a loose checkerboard over the packed-crowd texture */ const [x, z] = P(s1, b0 + (k + 0.55) * rowD); spectator(crowdG, x, baseH + k * rowH, z, hd); }
+        for (let k = 0; k < rows; k++) for (let s1 = sa + 0.55 + (k % 2) * 0.6, q = 0; s1 < sb - 0.35; s1 += 0.6, q++) { if (Math.abs(s1 - sm) < (FOR ? 0.75 : 1.35) || (q % 2 === 1 && R() < (FOR ? 0.85 : 0.1))) continue; /* figures in a loose checkerboard over the packed-crowd texture */ const [x, z] = P(s1, b0 + (k + 0.55) * rowD); spectator(crowdG, x, baseH + k * rowH, z, hd); }
+        if (!FOR) { const dk = [0.1, 0.1, 0.13], nT = Math.min(4, rows - 2);   // the dark entrance tunnel in the middle of the block, low walls either side (as in the reference)
+          for (let k = 0; k < nT; k++) { const [x, z] = P(sm, b0 + (k + 0.5) * rowD); box(g, x, 0, z, 2.1, baseH + k * rowH + 0.03, rowD + 0.02, hd, dk, dk); }
+          for (const o of [-1.15, 1.15]) { const [x, z] = P(sm + o, b0 + nT * rowD / 2); box(g, x, 0, z, 0.22, baseH + (nT - 1) * rowH + 0.55, nT * rowD, hd, frame, frame); } }
         const flip = side > 0, behind = (s1, d, y) => { const [x, z] = P(s1, d); return [x, y, z]; };
         for (let s0 = sa + 0.3, q = 0; s0 < sb - 3.5; s0 += 4.1, q++) {   // yellow boards along the front wall
-          const slot = [0, 2, 3, 6][q % 4], u0 = (slot % 2) * 0.5, u1 = u0 + 0.5, vT = 1 - Math.floor(slot / 2) * 0.25, vB = vT - 0.25, d = b0 - 0.32;
+          const slot = (FOR ? [0, 2, 3, 6] : [0, 4, 2, 4])[q % 4], u0 = (slot % 2) * 0.5, u1 = u0 + 0.5, vT = 1 - Math.floor(slot / 2) * 0.25, vB = vT - 0.25, d = b0 - 0.32;
           const [ax, az] = P(s0, d), [bx, bz] = P(s0 + 3.9, d);
           texSpons.quadO([ax, 0.2, az], [bx, 0.2, bz], [bx, 1.15, bz], [ax, 1.15, az], [1, 1, 1], behind(s0 + 2, d + 2, 0.7), flip ? [[u1, vB], [u0, vB], [u0, vT], [u1, vT]] : [[u0, vB], [u1, vB], [u1, vT], [u0, vT]]); }
         for (let s0 = sa + 0.5, q = 0; s0 < sb - 4.5; s0 += 5.4, q++) {   // and along the top of the back wall
-          const slot = [3, 1, 0, 2][q % 4], u0 = (slot % 2) * 0.5, u1 = u0 + 0.5, vT = 1 - Math.floor(slot / 2) * 0.25, vB = vT - 0.25, d = backD - 0.17;
+          const slot = (FOR ? [3, 1, 0, 2] : [4, 0, 4, 2])[q % 4], u0 = (slot % 2) * 0.5, u1 = u0 + 0.5, vT = 1 - Math.floor(slot / 2) * 0.25, vB = vT - 0.25, d = backD - 0.17;
           const [ax, az] = P(s0, d), [bx, bz] = P(s0 + 5.1, d);
           texSpons.quadO([ax, topH + 0.95, az], [bx, topH + 0.95, bz], [bx, topH + 2.25, bz], [ax, topH + 2.25, az], [1, 1, 1], behind(s0 + 2.5, d + 2, topH + 1.5), flip ? [[u1, vB], [u0, vB], [u0, vT], [u1, vT]] : [[u0, vB], [u1, vB], [u1, vT], [u0, vT]]); }
         for (let s1 = sa + 2; s1 < sb; s1 += 11) { const [x, z] = P(s1, b0 - 1.2);   // loudspeaker and lamp poles in front of the stand
+          if (!FOR) {   // (Toskana, Gromski rt: taller poles with two big white horn loudspeakers turned along the track and a pair of lamps, as in the reference)
+            const pole = [0.3, 0.3, 0.33]; cyl(g, x, 0, z, 0.1, 7.6, 6, pole); box(g, x, 7.4, z, 1.3, 0.12, 0.12, hd, pole);
+            for (const o of [-0.55, 0.55]) { const [hx, hz] = P(s1 + o, b0 - 1.2); cyl(g, hx, 7.55, hz, 0.24, 0.42, 8, [0.97, 0.97, 0.95]); box(g, hx, 7.97, hz, 0.36, 0.1, 0.36, hd, [1, 0.97, 0.82], [1, 0.97, 0.82]); }
+            for (const o of [-0.4, 0.4]) { const [hx, hz] = P(s1 + o * 0.6, b0 - 1.2 - o); box(g, hx, 6.2, hz, 0.46, 0.46, 0.7, hd + Math.PI / 2 + o * 2.2, [0.96, 0.96, 0.95], [0.99, 0.99, 0.98]); }
+            continue; }
           cyl(g, x, 0, z, 0.08, 6.4, 6, white); box(g, x, 6.2, z, 0.55, 0.28, 0.35, hd, white, [0.98, 0.95, 0.8]);
           for (const o of [-0.3, 0.3]) { const [hx, hz] = P(s1 + o, b0 - 1.0); box(g, hx, 5.5, hz, 0.28, 0.28, 0.42, hd + o * 1.4, [0.95, 0.95, 0.95]); } }
         for (let s1 = sa - 4; s1 < sb + 4; s1 += 2) { const i = T.idx(s1), j = T.idx(s1 + 2), bi = side > 0 ? T.br : T.bl, Q = (k, y) => [T.px[k] + T.nx[k] * side * (bi[k] + 0.35), y, T.pz[k] + T.nz[k] * side * (bi[k] + 0.35)];   // see-through catch fence
@@ -2704,10 +2745,10 @@ const World = (function () {
           if (c < lawn || excluded(px, pz)) continue;
           let p = ITA ? 0.03 + 0.8 * sstep(0.46, 0.66, fN) : 0.42 + 0.5 * sstep(0.35, 0.6, fN); if (c > 45) p = Math.max(p, ITA ? 0.16 : 0.82); if (c < lawn + 6) p *= 0.6;   // (Toskana: groves on open lawns)
           if (R() > p) continue;
-          if (ITA) { if (R() < 0.16) cypress(px, pz, 11 + R() * 6); else leafy(px, pz, 7 + R() * 5); }
-          else if (c > 70 || R() < 0.5) fir(px, pz, 10 + R() * 8); else leafy(px, pz, 8 + R() * 5);   // (far off, where they are small on screen: the cheap far firs)
+          if (ITA) { const u = R(); if (u < 0.13) cypress(px, pz, 11 + R() * 6); else if (u < 0.3) puffPine(px, pz, 10 + R() * 6); else leafy(px, pz, 8 + R() * 5); }
+          else if (c > 70 || R() < 0.5) fir(px, pz, 10 + R() * 8 + 7 * sstep(0.5, 0.72, fN)); else leafy(px, pz, 8.5 + R() * 5);   // (far off, where they are small on screen: the cheap far firs; the pines tallest in the thick of the wood)
         } }
-      out.firCount = firCount + ' far ' + firFar + ' leafy ' + leafCount;
+      out.firCount = firCount + ' far ' + firFar + ' leafy ' + leafCount + (FOR ? '' : ' near ' + leafNear);
       // low bushes on the verges
       for (let k = 0; k < 160; k++) { const i = Math.floor(R() * N), side = R() < 0.5 ? -1 : 1, bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 2 + R() * 4), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
         if (clearance(x, z) > 1.5 && !excluded(x, z)) ico(scen.get(x, z), x, gH(x, z) + 0.5, z, 0.7 + R() * 0.6, 0.75, vary([0.2, 0.42, 0.2], R, 0.15), R, 0.3); }

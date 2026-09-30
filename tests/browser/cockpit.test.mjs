@@ -4,7 +4,7 @@
 // button on the HUD, kept as the setting); the formula's own cockpit (the camera in the helmet); the pause's Foto: the race stands, the
 // HUD and the controls hidden, the camera round the car (a drag turns it round, the car stays in the middle), the lens and the filter
 // on the picture, the picture saved (a PNG sharper than the screen, with the filter), Nazaj: the pause and the race's camera again;
-// the replay's cockpit camera and its Foto.
+// the prototype's cockpit (the formula's wheel under a roof), the electric car's D; the replay's cockpit camera and its Foto.
 //   node tests/browser/cockpit.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -20,7 +20,7 @@ try {
   const frames = (n) => page.evaluate((n) => new Promise(res => { let k = 0; const f = () => (++k >= n ? res() : requestAnimationFrame(f)); requestAnimationFrame(f); }), n);
   const view = () => page.evaluate(() => { const g = window.__game, P = g.race.player, C = Render.camera, ck = Render.cockpit, f = new THREE.Vector3(0, 0, -1).applyQuaternion(C.quaternion);
     return { d: Math.hypot(C.position.x - P.x, C.position.z - P.z), up: C.position.y - (P.roadY != null ? P.roadY : P.y || 0), ang: Math.abs(Core.wrapPi(Math.atan2(f.z, f.x) - P.h)),
-      ck: ck && { formula: ck.formula, wheel: +ck.wheel.toFixed(3), sky: ck.sky, near: ck.near }, delta: +(P.delta || 0).toFixed(4), cam: g.S.camera }; });
+      ck: ck && { formula: ck.formula, open: ck.open, gear: ck.gear, wheel: +ck.wheel.toFixed(3), sky: ck.sky, near: ck.near }, delta: +(P.delta || 0).toFixed(4), cam: g.S.camera }; });
   // where the car is on the picture (-1..1 both ways) and how far the camera is from it
   const onPic = () => page.evaluate(() => { const g = window.__game, P = g.race.player, C = Render.camera, p = new THREE.Vector3(P.x, (P.y || 0) + 0.7, P.z).project(C);
     return { x: +p.x.toFixed(3), y: +p.y.toFixed(3), camD: +Math.hypot(C.position.x - P.x, C.position.y - (P.y || 0), C.position.z - P.z).toFixed(2), cx: C.position.x, cz: C.position.z, fov: C.fov }; });
@@ -101,6 +101,20 @@ try {
   await page.evaluate(() => window.__game.resume()); await frames(3);
   const v4 = await view();
   T.check('Nazaj: the pause again, the picture without the filter; Nadaljuj: the cockpit again', back.screen === 'pause' && back.css === '' && !back.shot && !!v4.ck && v4.d < 1, JSON.stringify({ back, v4 }));
+
+  // 5b. the prototype: the formula's wheel (its display with the gear) in a closed canopy, the camera low in the car; the electric car:
+  // D on its gear display and on the HUD (one gear)
+  await page.evaluate(() => { const g = window.__game; g.pause(); g.S.car = Core.MODELS.findIndex(m => m.id === 'lm'); });
+  await startTrack(page, 'rbring');
+  for (let k = 0; k < 12; k++) { const t = await page.evaluate(() => { const R = window.__game.race; return R.state === 'racing' ? R.time : -1; }); if (t > 4) break; await step(3); }
+  const v5 = await view();
+  T.check('the prototype: the formula\'s wheel (a display with the gear) in its closed canopy, the camera low in the car',
+    !!v5.ck && v5.ck.formula && !v5.ck.open && /^[1-7]$/.test(v5.ck.gear) && v5.d < 1 && v5.up > 0.6 && v5.up < 1.1 && v5.ck.near <= 0.16 && v5.ang < 0.35, JSON.stringify(v5));
+  await page.evaluate(() => { const g = window.__game; g.pause(); g.S.car = Core.MODELS.findIndex(m => m.id === 'ev'); });
+  await startTrack(page, 'jezero');
+  await step(8);
+  const v6 = await view(), hg = await page.evaluate(() => document.getElementById('h-gear').textContent);
+  T.check('the electric car: D on its gear display and on the HUD (one gear)', !!v6.ck && !v6.ck.formula && v6.ck.gear === 'D' && hg === 'D', JSON.stringify({ v6, hg }));
 
   // 6. the replay: the cockpit among its cameras, its own Foto
   await page.evaluate(() => { const g = window.__game; g.pause(); g.S.car = 0; });
