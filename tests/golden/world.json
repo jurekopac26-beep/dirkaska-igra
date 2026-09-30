@@ -241,21 +241,25 @@
   }
  },
  "holjes": {
-  "meshes": 572,
-  "verts": 246610,
-  "instances": 17961,
+  "meshes": 596,
+  "verts": 300052,
+  "instances": 17947,
   "props": 152,
-  "crowd": 2047,
-  "world": "fa047e2a",
+  "crowd": 2044,
+  "world": "b1d41163",
   "propsHash": "65236429",
   "floor": "bd4aab96/2464",
   "groups": {
-   "-:MeshLambertMaterial": "499cffdf",
-   "-:MeshPhongMaterial": "64c01064",
+   "-:MeshLambertMaterial": "c65f4193",
+   "-:MeshPhongMaterial": "39121daf",
    "tyremarks:MeshBasicMaterial": "76d6801d",
-   "-:MeshBasicMaterial": "1f9332",
-   "crowd:MeshLambertMaterial": "2e46fa7c",
-   "flags:MeshLambertMaterial": "57d513e0"
+   "-:MeshBasicMaterial": "7c30fb13",
+   "champagne:ShaderMaterial": "8a3cbbec",
+   "smoke:ShaderMaterial": "328aa356",
+   "mist:MeshBasicMaterial": "5d863727",
+   "glow:ShaderMaterial": "f6958433",
+   "crowd:MeshLambertMaterial": "72837d4",
+   "flags:MeshLambertMaterial": "28bf7155"
   }
  }
 }

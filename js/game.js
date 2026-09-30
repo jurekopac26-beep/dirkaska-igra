@@ -860,7 +860,7 @@
   }
   // a TV shot the world directs (Render.setShot: the jets before the start, the podium) ends: the game's camera and the HUD back
   function shotOff() { Render.setShot(null); $('hud').classList.remove('shot'); }
-  // the Red Bull Ring's podium after the race: the first three (in the order of the results) on the pit building's roof, champagne, the names
+  // the podium after the race (the Red Bull Ring's on the pit building's roof, Höljes' behind the finish): the first three (in the order of the results), champagne, the names
   // under it; then the results
   function startPodium(pod) {
     phase = 'podium'; phaseT = 0;
@@ -868,7 +868,7 @@
     pod.show(top.map(c => rgb(c.color)));
     Render.setShot(pod.shot); $('hud').classList.add('shot');
     const el = $('podium-cap'); el.innerHTML = top.map((c, i) => '<span><b>' + (i + 1) + '.</b> <i style="background:' + hexCss(c.color) + '"></i>' + esc(c.isPlayer ? 'Ti' : c.name) + '</span>').join(''); el.className = 'show';
-    const w = top[0]; Comm.say(w && w.isPlayer ? 'podiumMe' : 'podiumRb', { name: w ? w.name : '' }, 3);
+    const w = top[0]; Comm.say(w && w.isPlayer ? (pod.sayMe || 'podiumMe') : (pod.say || 'podiumRb'), { name: w ? w.name : '' }, 3);   // (a world's own lines: Höljes)
   }
   function endPodium() { const pod = Render.world && Render.world.podium; if (pod) pod.hide(); $('podium-cap').className = ''; shotOff(); }
   function toTitle() {

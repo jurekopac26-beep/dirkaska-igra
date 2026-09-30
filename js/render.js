@@ -702,8 +702,8 @@ const Render = (function () {
       g.setAttribute('position', this.aPos); g.setAttribute('pcolor', this.aCol); g.setAttribute('psize', this.aSize);
       g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
       this.mat = new THREE.ShaderMaterial({
-        uniforms: { uScale: { value: 400 } },
-        vertexShader: 'attribute float psize; attribute vec4 pcolor; uniform float uScale; varying vec4 vC; void main(){ vC = pcolor; vec4 mv = modelViewMatrix * vec4(position,1.0); gl_PointSize = psize * uScale / max(1.0, -mv.z); gl_Position = projectionMatrix * mv; }',
+        uniforms: { uScale: { value: 400 }, uLit: { value: 1 } },
+        vertexShader: 'attribute float psize; attribute vec4 pcolor; uniform float uScale; uniform float uLit; varying vec4 vC; void main(){ vC = vec4(pcolor.rgb * uLit, pcolor.a); vec4 mv = modelViewMatrix * vec4(position,1.0); gl_PointSize = psize * uScale / max(1.0, -mv.z); gl_Position = projectionMatrix * mv; }',
         fragmentShader: 'varying vec4 vC; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d,d)*4.0; if (r > 1.0) discard; float a = vC.a * (1.0 - r) * (1.0 - r * 0.3); gl_FragColor = vec4(vC.rgb, a); }',
         transparent: true, depthWrite: false, blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
       });
@@ -941,7 +941,7 @@ const Render = (function () {
     world = World.build(scene, track, tex, { density });
     if (!world.farClip && camera.far !== 700) { camera.far = 700; camera.updateProjectionMatrix(); }
     applyTheme((track.def && track.def.theme) || 'lake'); wet = wetW = -1;   // (the weather again on the new world's road)
-    curTrack = track; seasonWorld(); floodlights();   // (the season and the time of day on the new world)
+    curTrack = track; seasonWorld(); floodlights(); todWorld();   // (the season and the time of day on the new world)
     if (dryLn) { scene.remove(dryLn); dryLn.geometry.dispose(); dryLn.material.dispose(); dryLn = null; }
     birds.reset(!!(track.def && (track.def.sea || track.def.theme === 'monaco')));   // (gulls by the sea)
     return world;
@@ -1081,7 +1081,7 @@ const Render = (function () {
     spa:      { fog: 0xc3ced7, sun: 0xfff1de, sunI: 0.98, sky: 0xd0dde9, gnd: 0x43522f, hemiI: 0.64, tint: [0.99, 1.0, 1.01], sat: 1.1 },   // the Ardennes: a little greyer, softer daylight (Spa's changeable weather)
     rbring:   { fog: 0xc6daea, sun: 0xfff1d8, sunI: 1.12, sky: 0xcfe3fb, gnd: 0x46602c, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.06, sunOff: [-86, 78, 52] },   // Styria in early summer, an afternoon sun (longer shadows): clear alpine air, fresh meadows, dark spruce woods
     suzuka:   { fog: 0xc8d9e6, sun: 0xfff1dc, sunI: 1.06, sky: 0xd5e7fa, gnd: 0x4f5c34, hemiI: 0.62, tint: [1.01, 1.0, 0.99], sat: 1.12 },   // Suzuka: a clear spring day in Mie
-    holjes:   { fog: 0xc9d8e2, sun: 0xfff0da, sunI: 1.1, sky: 0xcfe0f4, gnd: 0x44552e, hemiI: 0.6, tint: [1.01, 1.0, 0.98], sat: 1.08, sunOff: [-91, 78, 42], north: true, clouds: 0.5 },   // Höljes: a clear northern summer afternoon, the sun low in the south-west over the forest (long shadows), cool clean air, fair-weather clouds
+    holjes:   { fog: 0xc9d8e2, sun: 0xfff0da, sunI: 1.1, sky: 0xcfe0f4, gnd: 0x44552e, hemiI: 0.6, tint: [1.01, 1.0, 0.98], sat: 1.08, sunOff: [-91, 78, 42], north: true, clouds: 0.5, shadowR: 46 },   // Höljes: a clear northern summer afternoon, the sun low in the south-west over the forest (long shadows), cool clean air, fair-weather clouds; the chase view's shadows sharper
   };
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   function applyTheme(id) {
@@ -1124,6 +1124,11 @@ const Render = (function () {
       scene.fog.color.setHex(0x071321); renderer.setClearColor(scene.fog.color, 1); hemi.color.setHex(0x2c4a52); hemi.intensity = 0.62; sun.color.setHex(0x9fb8ff); sun.intensity = 0.24 * (1 - 0.6 * r);
       aur.on = r < 0.3; aur.base.copy(hemi.color);
     }
+    const lit = A.tod === 'night' ? (whiteNight() ? 0.82 : 0.42) : A.tod === 'dusk' ? 0.84 : 1;   // (the dust and the smoke as dark as the world round them)
+    if (particles) particles.mat.uniforms.uLit.value = lit; World.smokeLit.value = lit;
+    // the sun's shafts through the trees (the post-processing, where the sky is drawn and the sun is in front: the low sun of dusk, of the
+    // north's white night and winter; a little by day)
+    if (post) post.rays = (A.tod === 'night' ? (t.north && whiteNight() ? 0.8 : 0) : A.tod === 'dusk' ? 1 : t.north && A.season === 'winter' ? 0.6 : t.haze ? 0.6 : 0.35) * (1 - r);
   }
   // the aurora (a northern world's winter night): its curtains in the sky dome (the cockpit, the TV views), its green glow on the snow (the
   // sky light pulsing green and violet: every frame, from the colour applyTheme left)
@@ -1195,8 +1200,11 @@ const Render = (function () {
   function setAtmos(a) {
     const n = { season: ['autumn', 'winter'].includes(a && a.season) ? a.season : 'summer', tod: ['dusk', 'night'].includes(a && a.tod) ? a.tod : 'day' };
     if (n.season === atmos.season && n.tod === atmos.tod) return;
-    atmos = n; applyTheme(themeId); seasonWorld(); floodlights(); for (const v of views) { beams(v); carGlow(v); }
+    atmos = n; applyTheme(themeId); seasonWorld(); floodlights(); todWorld(); for (const v of views) { beams(v); carGlow(v); }
   }
+  // a world's own lights and air for the time of day (world.dyn.tod: Höljes' campfires, string lights, mist, the screens' glow, the
+  // cameras flashing in the crowd)
+  function todWorld() { if (world && world.dyn && world.dyn.tod) world.dyn.tod(atmos.tod, atmos.season, whiteNight()); }
   function carGlow(v) { const m = v.body && v.body.material; if (m && m.emissive) m.emissive.setScalar(atmos.tod === 'night' ? 0.16 : 0); }   // (at night the cars stay in sight under the floodlights)
   const _hsl = { h: 0, s: 0, l: 0 }, _sc = new THREE.Color();
   const hash3 = (a) => { const x = Math.sin(a * 91.37 + 17.1) * 43758.5453; return x - Math.floor(x); };
@@ -1278,7 +1286,7 @@ const Render = (function () {
   }
   // night: floodlights on poles along the track (every 30 m, alternating sides), each a pool of warm light on the road
   function floodlights() {
-    if (flood) { scene.remove(flood.pools); scene.remove(flood.poles); scene.remove(flood.heads); flood.pools.geometry.dispose(); flood.poles.geometry.dispose(); flood.heads.geometry.dispose(); flood = null; }
+    if (flood) { for (const m of [flood.pools, flood.poles, flood.heads, flood.halos, flood.cones]) { scene.remove(m); m.geometry.dispose(); if (m === flood.halos || m === flood.cones) m.material.dispose(); } flood = null; }
     const T = curTrack; if (atmos.tod !== 'night' || !T || !world || whiteNight()) return;   // (a white night: light enough)
     if (!lampTex) lampTex = radialTex(0.35, 0.55);
     const L = T.len, n = Math.floor(L / 30), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), p = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
@@ -1292,7 +1300,30 @@ const Render = (function () {
       p.y += 9; q.setFromAxisAngle(up, -Math.atan2(T.nz[i], T.nx[i])); m4.compose(p, q, sc); heads.setMatrixAt(k, m4);
     }
     pools.renderOrder = 1; pools.frustumCulled = false; poles.frustumCulled = false; heads.frustumCulled = false;
-    scene.add(pools); scene.add(poles); scene.add(heads); flood = { pools, poles, heads };
+    // the lamps' halos (in the damp night air) and their cones of light down onto the road, dust drifting in them
+    const HL = [], CP = [], CV = [], CN = [], CI = [], NS = 10, _h = new THREE.Vector3(), _b = new THREE.Vector3(), _a = new THREE.Vector3(), _u = new THREE.Vector3(), _w = new THREE.Vector3();
+    for (let k = 0; k < n; k++) {
+      heads.getMatrixAt(k, m4); _h.setFromMatrixPosition(m4); pools.getMatrixAt(k, m4); _b.setFromMatrixPosition(m4);
+      HL.push([_h.x, _h.y - 0.1, _h.z, 3.2, 1, 0.88, 0.66, 0.5, 0, 0]);
+      const A = [_h.x, _h.y - 0.2, _h.z], ax = _a.set(_b.x - A[0], _b.y - A[1], _b.z - A[2]), L = ax.length(), R = T.w * 1.25; ax.normalize();
+      _u.set(0, 1, 0).cross(ax).normalize(); _w.copy(ax).cross(_u).normalize();
+      for (let q = 0; q <= NS; q++) { const an = q / NS * Math.PI * 2, cs = Math.cos(an), sn = Math.sin(an), nx = _u.x * cs + _w.x * sn, ny = _u.y * cs + _w.y * sn, nz = _u.z * cs + _w.z * sn, b0 = CP.length / 3;
+        CP.push(A[0] + nx * 0.25, A[1] + ny * 0.25, A[2] + nz * 0.25, A[0] + ax.x * L + nx * R, A[1] + ax.y * L + ny * R, A[2] + ax.z * L + nz * R); CV.push(0, 1); CN.push(nx, ny, nz, nx, ny, nz);
+        if (q < NS) CI.push(b0, b0 + 1, b0 + 3, b0, b0 + 3, b0 + 2); }
+    }
+    const halos = World.glowQuads(HL, null);
+    const cg = new THREE.BufferGeometry(); cg.setAttribute('position', new THREE.Float32BufferAttribute(CP, 3)); cg.setAttribute('normal', new THREE.Float32BufferAttribute(CN, 3)); cg.setAttribute('aV', new THREE.Float32BufferAttribute(CV, 1)); cg.setIndex(CI); cg.computeBoundingSphere();
+    const cones = new THREE.Mesh(cg, new THREE.ShaderMaterial({ uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uA: { value: 0.3 } }]), transparent: true, depthWrite: false, fog: true, side: THREE.DoubleSide, blending: THREE.AdditiveBlending,
+      vertexShader: ['attribute float aV;', 'varying float vV;', 'varying vec3 vN;', 'varying vec3 vP;', 'varying vec3 vW;', '#include <fog_pars_vertex>',
+        'void main() { vV = aV; vN = normalize(normalMatrix * normal); vW = position; vec4 mvPosition = modelViewMatrix * vec4(position, 1.0); vP = mvPosition.xyz; gl_Position = projectionMatrix * mvPosition;', '  #include <fog_vertex>', '}'].join('\n'),
+      fragmentShader: ['uniform float uA;', 'varying float vV;', 'varying vec3 vN;', 'varying vec3 vP;', 'varying vec3 vW;', '#include <fog_pars_fragment>',
+        'void main() { float e = abs(dot(normalize(vN), normalize(-vP))), d = 0.7 + 0.3 * sin(vW.x * 1.7 + vW.y * 2.3) * sin(vW.z * 1.9 - vW.y * 1.3);',   // (soft edges; motes of dust)
+        '  float a = uA * e * e * (1.0 - 0.7 * vV) * smoothstep(0.0, 0.1, vV) * d, up = abs(dot(normalize(vP), normalize((viewMatrix * vec4(0.0, 1.0, 0.0, 0.0)).xyz)));',
+        '  a *= 1.0 - 0.8 * up * up;',   // (seen from above, as the game's cameras do, the beams are faint: they show against the night sky)
+        '  #ifdef USE_FOG', '  a *= 1.0 - smoothstep(fogNear, fogFar, fogDepth);', '  #endif',
+        '  gl_FragColor = vec4(1.0, 0.9, 0.72, a); }'].join('\n') }));
+    cones.renderOrder = 6; cones.matrixAutoUpdate = false;
+    scene.add(pools); scene.add(poles); scene.add(heads); scene.add(halos); scene.add(cones); flood = { pools, poles, heads, halos, cones };
   }
   // dusk and night: the headlights' beam on the road ahead of a car (a soft fan, additive)
   function beams(v) {
@@ -1341,10 +1372,10 @@ const Render = (function () {
     const mat = new THREE.ShaderMaterial({
       uniforms: { tD: { value: rt.texture }, uRes: { value: new THREE.Vector2(4, 4) }, uFocus: { value: 0.45 }, uBand: { value: 0.22 }, uBlur: { value: 0.8 }, uGam: { value: 0.88 },
         uTint: { value: new THREE.Vector3(1, 1, 1) }, uSat: { value: 1.1 }, uCon: { value: 1.04 }, uVig: { value: 0.17 },
-        uSun: { value: new THREE.Vector2(0, 1.2) }, uHaze: { value: 0 }, uHazeCol: { value: new THREE.Vector3(1, 0.8, 0.6) } },
+        uSun: { value: new THREE.Vector2(0, 1.2) }, uHaze: { value: 0 }, uHazeCol: { value: new THREE.Vector3(1, 0.8, 0.6) }, uRays: { value: 0 }, uSunR: { value: new THREE.Vector2(0.5, 1.2) } },
       vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
       fragmentShader: [
-        'uniform sampler2D tD; uniform vec2 uRes; uniform float uFocus; uniform float uBand; uniform float uBlur; uniform float uGam; uniform vec3 uTint; uniform float uSat; uniform float uCon; uniform float uVig; uniform vec2 uSun; uniform float uHaze; uniform vec3 uHazeCol; varying vec2 vUv;',
+        'uniform sampler2D tD; uniform vec2 uRes; uniform float uFocus; uniform float uBand; uniform float uBlur; uniform float uGam; uniform vec3 uTint; uniform float uSat; uniform float uCon; uniform float uVig; uniform vec2 uSun; uniform float uHaze; uniform vec3 uHazeCol; uniform float uRays; uniform vec2 uSunR; varying vec2 vUv;',
         'float lum(vec3 c){ return dot(c, vec3(0.299, 0.587, 0.114)); }',
         'void main(){',
         '  vec2 px = 1.0 / uRes; vec3 c = texture2D(tD, vUv).rgb;',
@@ -1360,6 +1391,10 @@ const Render = (function () {
         '    float mx = max(max(max(lN, lS), max(lE, lW)), lC), mn = min(min(min(lN, lS), min(lE, lW)), lC);',
         '    if (mx - mn > 0.08) { vec2 dir = vec2(lS - lN, lE - lW); dir = dir / (length(dir) + 1e-4) * px * 0.9; c = mix(c, 0.5 * (texture2D(tD, vUv + dir).rgb + texture2D(tD, vUv - dir).rgb), 0.55); }',
         '  }',
+        // shafts of sunlight: the bright sky round the sun smeared towards it, cut into rays by the trees and hills in front of it
+        '  if (uRays > 0.0) { vec2 as = vec2(uRes.x / uRes.y, 1.0), dv = uSunR - vUv, q2 = vUv; float L = length(dv * as), acc = 0.0, wt = 1.0; vec2 dl = dv * min(1.0, 0.34 / max(L, 1e-3)) / 20.0;',   // (at most a third of the screen towards the sun)
+        '    for (int i = 0; i < 20; i++) { q2 += dl; vec2 sd2 = (q2 - uSunR) * as; acc += smoothstep(0.78, 1.0, lum(texture2D(tD, q2).rgb)) * exp(-dot(sd2, sd2) * 12.0) * wt; wt *= 0.95; }',
+        '    c += uHazeCol * min(acc * 0.045, 0.45) * uRays * exp(-L * L * 5.0); }',
         '  c *= uTint; float l = lum(c); c = mix(vec3(l), c, uSat); c = (c - 0.5) * uCon + 0.5; c = pow(max(c, vec3(0.0)), vec3(uGam));',
         '  if (uHaze > 0.0) { vec2 sd = (vUv - uSun) * vec2(uRes.x / uRes.y, 1.0); float hg = exp(-dot(sd, sd) * 2.2); c = 1.0 - (1.0 - c) * (1.0 - uHazeCol * (uHaze * hg)); }',   // warm glow of the low sun just off screen (as in the reference)
         '  vec2 q = vUv - 0.5; c *= 1.0 - uVig * dot(q, q) * 1.8;',
@@ -1369,7 +1404,7 @@ const Render = (function () {
     });
     const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat); quad.frustumCulled = false;
     const sc = new THREE.Scene(); sc.add(quad);
-    post = { rt, mat, sc, cam: new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), focus: 0.45 };
+    post = { rt, mat, sc, cam: new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), focus: 0.45, rays: 0, sIn: 0 };
   }
   function sizePost() { if (!post) return; renderer.getDrawingBufferSize(_v2); post.rt.setSize(_v2.x, _v2.y); post.mat.uniforms.uRes.value.set(_v2.x, _v2.y); }
   function postOn() { return !!post && settings.quality === 'high' && settings.post !== false; }
@@ -2173,6 +2208,7 @@ const Render = (function () {
     }
     const slide = (c.arcade ? Core.sstep(0.26, 0.62, Math.abs(c.beta || 0)) * 1.2 : Math.max(0, c.latR - 1.0) / 3.5) + c.spin * 0.9 + (c.lock ? 0.55 : 0) + (c.inHand > 0.5 && spd > 5 ? 0.45 : 0);
     const rainy = wetW > 0.1, near = !rainy || Math.hypot(x - (cam.vcx || 0), z - (cam.vcz || 0)) < 140;   // (rain: spray only where it can be seen, the particles are shared)
+    const snowR = atmos.season === 'winter' && !!(world && world.snowRoad);   // (a winter road under a film of snow and ice: Höljes)
     const wheels = [[-M.b, -tw, 2], [-M.b, tw, 3], [M.a, -tw, 0], [M.a, tw, 1]];
     for (let k = 0; k < 4; k++) {
       const [lx, lz, wi] = wheels[k];
@@ -2226,6 +2262,13 @@ const Render = (function () {
           particles.emit(px, 0.3 + yb, pz, vxs, 1.2 + Math.random() * 1.6, vzs, 0.5 + Math.random() * 0.3, 0.35, 0.6, 0.34 * sh, 0.29 * sh, 0.2 * sh, 0.8, 9, 0.6, yb);
           if (Math.random() < 0.4) particles.emit(px, 0.3 + yb, pz, vxs * 0.6, 0.5 + Math.random() * 0.5, vzs * 0.6, 0.5 + Math.random() * 0.3, 0.8, 2.4, 0.62, 0.62, 0.58, 0.2, -0.05, 1.8, yb);
         }
+      } else if (snowR && onHard && spd > 5) {   // a snowy winter road: no tyre smoke, the tyres throw up powder snow (a light mist at speed, a cloud in a slide)
+        v.acc[k] += (0.3 * clamp(spd / 30, 0, 1.4) + Math.min(1.3, intens)) * 24 * dt;
+        while (v.acc[k] >= 1) {
+          v.acc[k] -= 1;
+          const sh = 0.95 + Math.random() * 0.05, sp = 0.3 + Math.random() * 0.2;
+          particles.emit(px, 0.3 + yb, pz, c.vx * sp + (Math.random() - 0.5) * 2.2, 0.5 + Math.random() * 0.8, c.vz * sp + (Math.random() - 0.5) * 2.2, 0.8 + Math.random() * 0.6, 0.8, 3.6 + Math.random() * 2, 0.93 * sh, 0.95 * sh, 0.99 * sh, 0.24 + 0.2 * Math.min(1, intens), -0.05, 1.5, yb);
+        }
       } else if (onHard && intens > 0.22 && spd > 3) {
         v.acc[k] += Math.min(1.3, intens) * 42 * dt;
         while (v.acc[k] >= 1) {
@@ -2247,7 +2290,10 @@ const Render = (function () {
             else if (dust) particles.emit(px, 0.35 + yb, pz, vxs, (0.7 + Math.random() * 0.9) * D.rise, vzs, (1.5 + Math.random() * 0.9) * D.life, 1.1 * D.s0, (5.2 + Math.random() * 2.6) * D.size, D.col[0] * sh, D.col[1] * sh, D.col[2] * sh, 0.42 * D.alpha, -0.04, 1.3 * D.drag, yb);
             else if (dc) particles.emit(px, 0.35 + yb, pz, vxs, 0.8 + Math.random() * 1.1, vzs, 1.8 + Math.random() * 1.0, 1.2, 6 + Math.random() * 3, dc[0] * sh, dc[1] * sh, dc[2] * sh, 0.55, -0.05, 1.2, yb);
             else particles.emit(px, 0.35 + yb, pz, vxs, 0.7 + Math.random() * 0.9, vzs, 1.5 + Math.random() * 0.9, 1.1, 5.2 + Math.random() * 2.6, 0.84 * sh, 0.69 * sh, 0.48 * sh, 0.42, -0.04, 1.3, yb);
-            if (Math.random() < 0.28) particles.emit(px, 0.2 + yb, pz, -c.vx * 0.04 + (Math.random() - 0.5) * 2.5, 2 + Math.random() * 2.5, -c.vz * 0.04 + (Math.random() - 0.5) * 2.5, 0.5 + Math.random() * 0.35, 0.3, 0.24, 0.32, 0.26, 0.19, 0.95, 14, 0.4, yb); // flying stones
+            if (Math.random() < 0.3 + 0.3 * Math.min(1, intens)) {   // flying stones: flung up off the tyre and back from it the more it spins, grey and brown (winter: clods of snow), bouncing where they land
+              const kb = 1 + 5 * Math.min(1, intens), u = Math.random(), sc = atmos.season === 'winter' ? [0.86, 0.88, 0.92] : u < 0.45 ? [0.44, 0.42, 0.39] : u < 0.8 ? [0.33, 0.27, 0.2] : [0.58, 0.55, 0.5];
+              particles.emit(px, 0.2 + yb, pz, c.vx * 0.12 - Math.cos(h) * kb + (Math.random() - 0.5) * 2.6, 2 + Math.random() * 3, c.vz * 0.12 - Math.sin(h) * kb + (Math.random() - 0.5) * 2.6, 0.6 + Math.random() * 0.5, 0.32 + Math.random() * 0.14, 0.26, sc[0], sc[1], sc[2], 1, 14, 0.3, yb);
+            }
           }
           else {
             particles.emit(px, 0.3 + yb, pz, vxs, 0.6 + Math.random() * 0.6, vzs, 0.8 + Math.random() * 0.5, 0.7, 2.6, 0.55, 0.52, 0.36, 0.34, 0.1, 1.6, yb);
@@ -2264,6 +2310,11 @@ const Render = (function () {
     if (c.shiftT > 0.1 && c.isPlayer && Math.random() < 0.5) {
       const p = wheelWorld(c, -M.len * 0.5 - 0.1, 0.35, x, z, h);
       for (let k = 0; k < 3; k++) particles.emit(p.x, 0.35 + yb, p.z, -Math.cos(h) * 3 + (Math.random() - 0.5), 0.3, -Math.sin(h) * 3 + (Math.random() - 0.5), 0.14, 0.35, 0.8, 1, 0.55 + Math.random() * 0.3, 0.1, 0.95, 0, 3, yb);
+    }
+    // winter: the exhaust's vapour in the cold air, a white puff trailing behind every car near the view (thicker standing still)
+    if (atmos.season === 'winter' && Math.random() < dt * (spd < 6 ? 16 : 7) && Math.hypot(x - (cam.vcx || 0), z - (cam.vcz || 0)) < 110) {
+      const p = wheelWorld(c, -M.len * 0.5 - 0.15, 0.35, x, z, h), sh = 0.94 + Math.random() * 0.06;
+      particles.emit(p.x, 0.34 + yb, p.z, c.vx * 0.6 - Math.cos(h) * 1.4 + (Math.random() - 0.5) * 0.5, 0.2 + Math.random() * 0.35, c.vz * 0.6 - Math.sin(h) * 1.4 + (Math.random() - 0.5) * 0.5, 1.2 + Math.random() * 0.9, 0.3, 1.9 + Math.random() * 1.1, 0.9 * sh, 0.92 * sh, 0.95 * sh, spd < 6 ? 0.3 : 0.2, -0.15, 1.3, yb);
     }
   }
   function sparks(x, z, imp, y) {
@@ -2363,14 +2414,18 @@ const Render = (function () {
     if (world && world.farClip) { const f = Math.min(700, scene.fog.far + 40); if (Math.abs(camera.far - f) > 6) { camera.far = f; camera.updateProjectionMatrix(); } }   // long corridor worlds: nothing past the fog is drawn
     // sun/shadow follows view center
     lastMode = qc ? 'cockpit' : mode;
-    const sx = qc ? px + (tx - px) * 0.65 : mode === 'kino' ? tx + Math.sin(camYaw) * 8 : tx, sz = qc ? pz + (tz - pz) * 0.65 : mode === 'chase' ? tz : mode === 'kino' ? tz - Math.cos(camYaw) * 8 : tz - 8;   // (the cockpit: the shadows round 45 m ahead)
-    const texel = 160 / sun.shadow.mapSize.x;
+    // the sun's shadows: a box 160 m across round the view; in the chase view on a landscape screen, where the theme asks for it (shadowR:
+    // Höljes), a smaller one round the ground that view sees (from ~15 m behind its target to ~30 m past it): sharper shadows round the car
+    const th = THEMES[themeId], sR = th && th.shadowR && mode === 'chase' && !qc && !shot && camera.aspect >= 1 ? th.shadowR : 80, chS = sR < 80;
+    if (sR !== shR) { shR = sR; const S = sun.shadow.camera; S.left = S.bottom = -sR; S.right = S.top = sR; S.updateProjectionMatrix(); }
+    const sx = qc ? px + (tx - px) * 0.65 : chS ? tx + Math.cos(cam.hs) * 6 : mode === 'kino' ? tx + Math.sin(camYaw) * 8 : tx, sz = qc ? pz + (tz - pz) * 0.65 : chS ? tz + Math.sin(cam.hs) * 6 : mode === 'chase' ? tz : mode === 'kino' ? tz - Math.cos(camYaw) * 8 : tz - 8;   // (the cockpit: the shadows round 45 m ahead)
+    const texel = 2 * sR / sun.shadow.mapSize.x;
     const cx = Math.round(sx / texel) * texel, cz = Math.round(sz / texel) * texel;
     sun.target.position.set(cx, baseY, cz);
     sun.position.set(cx + sunOff[0], baseY + sunOff[1], cz + sunOff[2]);
     sun.target.updateMatrixWorld();
   }
-  let sunOff = [-80, 96, 70], camYaw = 0, lastMode = 'iso';
+  let sunOff = [-80, 96, 70], camYaw = 0, lastMode = 'iso', shR = 80;
   // TV camera posts (the replay): every 170 m, 40 m past the start of its stretch, on the outside of the bend there (else alternating
   // sides), 14 m beyond the road's edge and 9 m above it (over the fences; higher where the ground beside the road is)
   function tvCams(T) {
@@ -2615,13 +2670,17 @@ const Render = (function () {
         post.focus += (fc - post.focus) * Math.min(1, dt * 6 + 0.02);
         post.span = Math.abs(fy - 0.5) / 2;
       }
-      if (post.haze > 0) {   // where the low sun is on (or just off) the screen; nothing when it is behind the camera
+      const rays = sky && sky.mesh.visible ? post.rays : 0;   // (the sun's shafts: only where the sky is drawn)
+      if (post.haze > 0 || rays > 0) {   // where the low sun is on (or just off) the screen; nothing when it is behind the camera
         camera.getWorldDirection(_sunV); const sl = Math.hypot(sunOff[0], sunOff[1], sunOff[2]), front = (_sunV.x * sunOff[0] + _sunV.y * sunOff[1] + _sunV.z * sunOff[2]) / sl;
-        if (front > 0.02) { _pv.set(cam.vcx + sunOff[0] * 20, (cam.gy || 0) + sunOff[1] * 20, cam.vcz + sunOff[2] * 20).project(camera);
+        let sIn = 0;
+        if (front > 0.02) { _pv.set(camera.position.x + sunOff[0] * 20, camera.position.y + sunOff[1] * 20, camera.position.z + sunOff[2] * 20).project(camera);
           const asp = camera.aspect, px = _pv.x * asp, py = _pv.y, pl = Math.hypot(px, py) || 1, far = pl > 1.15;   // the sun far off screen: put the glow just outside the edge, in its direction
           const ex = far ? px / pl * 1.15 : px, ey = far ? py / pl * 1.15 : py;
-          post.mat.uniforms.uSun.value.set((ex / asp) * 0.5 + 0.5, ey * 0.5 + 0.5); }
-        post.hk += ((front > 0.02 ? 1 : 0) - post.hk) * Math.min(1, dt * 3); post.mat.uniforms.uHaze.value = post.hk > 0.005 ? post.haze * post.hk : 0; }   // (fades in and out as a turning view brings the sun round: no pop)
+          post.mat.uniforms.uSun.value.set((ex / asp) * 0.5 + 0.5, ey * 0.5 + 0.5); post.mat.uniforms.uSunR.value.set(_pv.x * 0.5 + 0.5, _pv.y * 0.5 + 0.5); sIn = 1 - Core.sstep(1.1, 1.8, Math.max(Math.abs(_pv.x), Math.abs(_pv.y))); }
+        post.hk += ((front > 0.02 ? 1 : 0) - post.hk) * Math.min(1, dt * 3); if (post.haze > 0) post.mat.uniforms.uHaze.value = post.hk > 0.005 ? post.haze * post.hk : 0;   // (fades in and out as a turning view brings the sun round: no pop)
+        post.sIn += (sIn - post.sIn) * Math.min(1, dt * 3); post.mat.uniforms.uRays.value = rays * post.hk * post.sIn > 0.01 ? rays * post.hk * post.sIn : 0;
+      } else post.mat.uniforms.uRays.value = 0;
       const U = post.mat.uniforms; U.uFocus.value = post.focus; U.uBand.value = (lastMode === 'kino' ? 0.3 : camera.aspect < 1 ? 0.2 : 0.24) + (post.span || 0); U.uBlur.value = lastMode === 'kino' ? 0.7 : 0.8;   // kino: a soft depth of field only towards the edges, as in the reference
       if (cam.ck) U.uBlur.value = 0; else if (cam.shot && cam.shot.blur != null) { U.uBlur.value = cam.shot.blur; if (cam.shot.blur > 0) U.uBand.value = 0.06; }   // (no miniature look from the driver's seat; the photo mode's own: a narrow sharp band on the car)
       renderer.setRenderTarget(post.rt); renderer.render(scene, camera); if (ckOn) ckDraw();
