@@ -59,9 +59,13 @@ const World = (function () {
       this.quadO(a, b, c, d, cols[0], inside, uvs, cols);
     }
     get empty() { return this.P.length === 0; }
+    sw(base, h) { (this.S || (this.S = [])).push(this.P.length / 3, base, Math.max(1, h)); return this; }   // a tree starts here: its foot's height and its height (the wind: treeMat)
     geometry() {
       const g = new THREE.BufferGeometry();
       g.setAttribute('position', new THREE.Float32BufferAttribute(this.P, 3));
+      if (this.S) { const n = this.P.length / 3, w = new Float32Array(n), S = this.S;
+        for (let k = 0; k < S.length; k += 3) { const b = k + 3 < S.length ? S[k + 3] : n; for (let i = S[k]; i < b; i++) w[i] = clamp((this.P[i * 3 + 1] - S[k + 1]) / S[k + 2], 0, 1.2); }
+        g.setAttribute('sway', new THREE.BufferAttribute(w, 1)); }
       g.setAttribute('normal', new THREE.Float32BufferAttribute(this.N, 3));
       g.setAttribute('color', new THREE.Float32BufferAttribute(this.C, this.A ? 4 : 3));
       if (this.U) g.setAttribute('uv', new THREE.Float32BufferAttribute(this.U, 2));
@@ -73,6 +77,16 @@ const World = (function () {
     constructor(size, uv, alpha) { this.size = size; this.map = new Map(); this.uv = !!uv; this.alpha = !!alpha; }   // (alpha: RGBA vertex colours)
     get(x, z) { const k = Math.floor(x / this.size) + ',' + Math.floor(z / this.size); let g = this.map.get(k); if (!g) { g = new GB(this.uv, this.alpha); this.map.set(k, g); } return g; }
     addTo(group, mat, cast, recv) { for (const g of this.map.values()) { if (g.empty) continue; const m = new THREE.Mesh(g.geometry(), mat); m.castShadow = cast; m.receiveShadow = recv; m.matrixAutoUpdate = false; m.updateMatrix(); group.add(m); } }
+  }
+
+  // the trees of the merged scenery sway in the wind: the higher up (GB.sw's weight), the more, each in its own rhythm (by where it stands)
+  function treeMat(W) {
+    const m = new THREE.MeshLambertMaterial({ vertexColors: true });
+    m.onBeforeCompile = (sh) => { sh.uniforms.uWind = W;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uWind;\nattribute float sway;').replace('#include <begin_vertex>', '#include <begin_vertex>\n' +
+        'float wPh = position.x * 0.07 + position.z * 0.05, wK = sway * sway * 0.34;\ntransformed.x += wK * sin( uWind * 1.1 + wPh );\ntransformed.z += wK * 0.6 * sin( uWind * 0.83 + wPh * 1.7 );'); };
+    m.customProgramCacheKey = () => 'treeSway';
+    return m;
   }
 
   /* ---------------- primitives ---------------- */
@@ -966,6 +980,8 @@ const World = (function () {
     }
     /* ================= BARRIERS ================= */
     const scen = new Chunks(110);        // vertex-colored static scenery
+    const treeCh = new Chunks(110), treeFar = new Chunks(180), RT = rng(9371), WIND = { value: 0 }; out.dyn.wind = WIND;   // the trees (their own chunks: they sway in the wind, treeMat; RT: the new trees' own random numbers, so the rest of the scenery stays where it was)
+    const treeAt = (x, z, y0, h, far) => (far ? treeFar : treeCh).get(x, z).sw(y0, h);   // the chunk for a tree standing at (x, z) on y0, h tall (far from the track: no shadow, bigger chunks)
     const texTires = new GB(true), texSpons = new GB(true), texFence = new GB(true), texCrowd = new GB(true);
     const tyreCh = new Chunks(110, true), FO_TR = THEME === 'italia' ? [0.27, 0.6, 0.35] : THEME === 'kamp' ? [0.2, 0.2, 0.22] : [0.88, 0.33, 0.24], FO_TW = THEME === 'kamp' ? [0.13, 0.13, 0.15] : THEME === 'italia' ? [0.92, 0.89, 0.74] : [0.95, 0.95, 0.94];   // painted tyres (textured, in chunks so the unseen ones are culled): red / white, Toskana green / white, Gromski rt plain black
     if (THEME !== 'mountain') {
@@ -1428,6 +1444,19 @@ const World = (function () {
     }
 
     /* ================= TREES ================= */
+    // the near trees' shapes (as Ouninpohja's): a spruce of drooping tiers, light at the branch tips, dark under the next tier; a crown of
+    // three lumps, lit on top and darker underneath (the lumps' own random numbers: RT)
+    const fir3 = (g, x, y0, z, hgt, rr, col, c2, c3, rot) => {
+      const lit = (c, k) => [c[0] * k * 1.18, c[1] * k * 1.12, c[2] * k * 0.98];
+      starCone(g, x, y0 + hgt * 0.12, z, rr * 1.04, hgt * 0.3, 6, col, lit(col, 1.25), rot, hgt * 0.05);
+      starCone(g, x, y0 + hgt * 0.33, z, rr * 0.8, hgt * 0.28, 5, c2, lit(c2, 1.3), rot + 0.5, hgt * 0.045);
+      starCone(g, x, y0 + hgt * 0.52, z, rr * 0.56, hgt * 0.26, 5, c3, lit(c3, 1.36), rot + 1.0, hgt * 0.04);
+      cone(g, x, y0 + hgt * 0.68, z, rr * 0.3, hgt * 0.32, 5, c3, lit(c3, 1.45), rot + 1.5); };
+    const lumps = (g, x, y, z, r0, col, c2, ox, oz) => {
+      const dk = (c, k) => [c[0] * k, c[1] * k, c[2] * k], a = RT() * TAU;
+      ico(g, x, y, z, r0 * 0.92, 0.8, dk(col, 0.9), RT, 0.28);
+      ico(g, x + ox * 0.8 + Math.cos(a) * r0 * 0.3, y + r0 * 0.5, z + oz * 0.8 + Math.sin(a) * r0 * 0.3, r0 * 0.7, 0.85, dk(c2, 1.12), RT, 0.28);
+      ico(g, x - Math.cos(a) * r0 * 0.55, y + r0 * 0.12, z - Math.sin(a) * r0 * 0.55, r0 * 0.6, 0.85, dk(col, 1.04), RT, 0.28); };
     if (THEME === 'lake') {
       const step = 6.2 / Math.sqrt(dens);
       const pineC = [0.17, 0.34, 0.18], decC = [0.3, 0.52, 0.2], birchC = [0.46, 0.64, 0.28];
@@ -1444,25 +1473,28 @@ const World = (function () {
           if (c < 10) p *= 0.35;
           if (c > 110) p = Math.max(p, 0.5);
           if (R() > p) continue;
-          const g = scen.get(px, pz);
           const y0 = groundH(px, pz) - 0.2;
           const tn = typeN(px, pz);
-          const hgt = 8 + R() * 7;
+          const hgt = 8 + R() * 7, near = c < 60, g = treeAt(px, pz, y0, hgt, c > 70);
           if (tn < 0.55) { // pine
             box(g, px, y0, pz, 0.4, hgt * 0.3, 0.4, R(), [0.36, 0.25, 0.16]);
             const col = vary(pineC, R, 0.22);
             const rr = hgt * (0.26 + R() * 0.06);
             const rot = R() * TAU;
+            if (near) { const c2 = vary(col, R, 0.08), c3 = vary(col, R, 0.08); fir3(g, px, y0, pz, hgt, rr, col, c2, c3, rot); }   // (drooping tiers, light tips, dark under the next tier)
+            else {
             cone(g, px, y0 + hgt * 0.16, pz, rr, hgt * 0.44, 7, col, [col[0] * 1.2, col[1] * 1.2, col[2] * 1.2], rot);
             cone(g, px, y0 + hgt * 0.4, pz, rr * 0.76, hgt * 0.38, 7, vary(col, R, 0.08), [col[0] * 1.25, col[1] * 1.25, col[2] * 1.25], rot + 0.4);
-            cone(g, px, y0 + hgt * 0.62, pz, rr * 0.5, hgt * 0.38, 6, vary(col, R, 0.08), [col[0] * 1.3, col[1] * 1.3, col[2] * 1.3], rot + 0.8);
+            cone(g, px, y0 + hgt * 0.62, pz, rr * 0.5, hgt * 0.38, 6, vary(col, R, 0.08), [col[0] * 1.3, col[1] * 1.3, col[2] * 1.3], rot + 0.8); }
           } else if (tn < 0.8 || R() < 0.5) { // deciduous
             const au = R() < 0.07;
             const col = au ? autumn[Math.floor(R() * 3)] : vary(decC, R, 0.25);
             box(g, px, y0, pz, 0.45, hgt * 0.45, 0.45, R(), [0.38, 0.27, 0.17]);
             const r0 = hgt * (0.22 + R() * 0.06);
+            if (near) { const ox = (R() - 0.5) * r0, oz = (R() - 0.5) * r0; lumps(g, px, y0 + hgt * 0.62, pz, r0, col, vary(col, R, 0.1), ox, oz); for (let q = 0; q < 24; q++) R(); }   // (a crown of lumps, light on top, darker underneath)
+            else {
             ico(g, px, y0 + hgt * 0.62, pz, r0, 0.85, col, R, 0.3);
-            ico(g, px + (R() - 0.5) * r0, y0 + hgt * 0.78, pz + (R() - 0.5) * r0, r0 * 0.72, 0.9, vary(col, R, 0.1), R, 0.3);
+            ico(g, px + (R() - 0.5) * r0, y0 + hgt * 0.78, pz + (R() - 0.5) * r0, r0 * 0.72, 0.9, vary(col, R, 0.1), R, 0.3); }
           } else { // birch
             box(g, px, y0, pz, 0.28, hgt * 0.6, 0.28, R(), [0.9, 0.9, 0.86]);
             ico(g, px, y0 + hgt * 0.7, pz, hgt * 0.16, 1.2, vary(birchC, R, 0.2), R, 0.3);
@@ -1480,13 +1512,14 @@ const World = (function () {
         const g = new THREE.PlaneGeometry(x1 - x0, z1 - z0); g.rotateX(-Math.PI / 2); g.translate((x0 + x1) / 2, -0.3, (z0 + z1) / 2);
         const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * (x1 - x0) / 22, uv.getY(i) * (z1 - z0) / 22);
         const sea = new THREE.Mesh(g, new THREE.MeshPhongMaterial({ map: tex.water, color: 0x7fc2e8, shininess: 70, specular: 0x6f8faf }));
+        sea.material.userData.shore = [0, 1, seaZ + 14, 7];   // (the waves wash onto the beach: Render's water foam)
         sea.receiveShadow = true; root.add(sea); out.dyn.water = tex.water;
         const bg = new THREE.PlaneGeometry(x1 - x0, 18); bg.rotateX(-Math.PI / 2); bg.translate((x0 + x1) / 2, 0.04, seaZ + 5);
         const buv = bg.attributes.uv; for (let i = 0; i < buv.count; i++) buv.setXY(i, buv.getX(i) * (x1 - x0) / 9, buv.getY(i) * 2);
         const beach = new THREE.Mesh(bg, new THREE.MeshLambertMaterial({ map: tex.sand })); beach.receiveShadow = true; root.add(beach);
       }
       const palm = (x, z, h) => {
-        const g = scen.get(x, z), lean = (R() - 0.5) * 0.9, la = R() * TAU;
+        const g = treeAt(x, z, 0, h * 1.15), lean = (R() - 0.5) * 0.9, la = R() * TAU;   // (the palms sway too: the fronds, the tall trunk a little)
         const tx = x + Math.cos(la) * lean, tz = z + Math.sin(la) * lean;
         cyl(g, x, 0, z, 0.32, h * 0.55, 6, [0.5, 0.38, 0.24], null, 0.27);
         cyl(g, (x + tx) / 2, h * 0.55, (z + tz) / 2, 0.27, h * 0.45, 6, [0.56, 0.43, 0.28], null, 0.22);
@@ -1679,21 +1712,24 @@ const World = (function () {
           const y0 = groundH(px, pz);
           if (y0 > 96) p *= sstep(120, 96, y0); // treeline: fewer trees near the peaks
           if (R() > p) continue;
-          const g = scen.get(px, pz);
           const tn = typeN(px, pz);
-          const hgt = 9 + R() * 9;
+          const cl = clearance(px, pz), hgt = 9 + R() * 9, near = cl < 45, g = treeAt(px, pz, y0 - 0.2, hgt, cl > 70);
           if (tn < 0.72) { // spruce/fir (tall narrow conifer)
             box(g, px, y0 - 0.2, pz, 0.4, hgt * 0.28, 0.4, R(), [0.34, 0.24, 0.15]);
             const col = vary(tn < 0.4 ? pineC : firC, R, 0.2);
             const rr = hgt * (0.2 + R() * 0.05), rot = R() * TAU;
+            if (near) { const c2 = vary(col, R, 0.08), c3 = vary(col, R, 0.08); fir3(g, px, y0 - 0.1, pz, hgt, rr * 1.1, col, c2, c3, rot); }   // (drooping tiers)
+            else {
             cone(g, px, y0 + hgt * 0.12, pz, rr, hgt * 0.4, 7, col, [col[0] * 1.2, col[1] * 1.2, col[2] * 1.2], rot);
             cone(g, px, y0 + hgt * 0.36, pz, rr * 0.78, hgt * 0.38, 7, vary(col, R, 0.08), [col[0] * 1.25, col[1] * 1.25, col[2] * 1.25], rot + 0.5);
-            cone(g, px, y0 + hgt * 0.6, pz, rr * 0.5, hgt * 0.4, 6, vary(col, R, 0.08), [col[0] * 1.3, col[1] * 1.3, col[2] * 1.3], rot + 1.0);
+            cone(g, px, y0 + hgt * 0.6, pz, rr * 0.5, hgt * 0.4, 6, vary(col, R, 0.08), [col[0] * 1.3, col[1] * 1.3, col[2] * 1.3], rot + 1.0); }
           } else { // larch (rounder, lighter)
             box(g, px, y0 - 0.2, pz, 0.4, hgt * 0.4, 0.4, R(), [0.4, 0.3, 0.18]);
             const col = vary(larchC, R, 0.22), r0 = hgt * (0.22 + R() * 0.06);
+            if (near) { const ox = (R() - 0.5) * r0, oz = (R() - 0.5) * r0; lumps(g, px, y0 + hgt * 0.62, pz, r0, col, vary(col, R, 0.1), ox, oz); for (let q = 0; q < 24; q++) R(); }   // (a crown of lumps)
+            else {
             ico(g, px, y0 + hgt * 0.6, pz, r0, 0.95, col, R, 0.32);
-            ico(g, px + (R() - 0.5) * r0, y0 + hgt * 0.8, pz + (R() - 0.5) * r0, r0 * 0.7, 1.0, vary(col, R, 0.1), R, 0.3);
+            ico(g, px + (R() - 0.5) * r0, y0 + hgt * 0.8, pz + (R() - 0.5) * r0, r0 * 0.7, 1.0, vary(col, R, 0.1), R, 0.3); }
           }
           if (R() < 0.4) excl.push({ x: px, z: pz, r: 2 });
         }
@@ -1933,7 +1969,7 @@ const World = (function () {
           for (const sd of [-1, 1]) {
             const px = x0 + n0[0] * sd * (RWh + 3.2), pz = z0 + n0[1] * sd * (RWh + 3.2);
             if (clearance(px, pz) < 2.5 || excluded(px, pz) || gH(px, pz) > 1) continue;
-            const g = scen.get(px, pz);
+            const g = treeAt(px, pz, 0, 7);
             if (R() < 0.5) { cyl(g, px, 0, pz, 0.35, 3.2, 6, [0.42, 0.34, 0.24]); const lc = vary([0.52, 0.7, 0.3], R, 0.12);
               ico(g, px - n0[0] * sd * 1.2, 5.2, pz - n0[1] * sd * 1.2, 4.2, 1.15, lc, R, 0.3); ico(g, px - n0[0] * sd * 2.6, 3.4, pz - n0[1] * sd * 2.6, 2.8, 1.4, vary(lc, R, 0.1), R, 0.3); }
             else if (R() < 0.6) { cyl(g, px, 0, pz, 0.3, 4, 6, [0.5, 0.45, 0.36]); ico(g, px, 7, pz, 3.6 + R() * 1.2, 0.9, vary([0.3, 0.5, 0.22], R, 0.12), R, 0.3); }
@@ -2001,7 +2037,7 @@ const World = (function () {
         cyl(pg, cx, 0, cz, 4.5, 0.6, 14, [0.86, 0.84, 0.8]); cyl(pg, cx, 0.6, cz, 3.9, 0.05, 14, [0.4, 0.62, 0.72]);
         for (let k = 0; k < 80; k++) {
           const u = (R() * 2 - 1) * 0.95, v = (R() * 2 - 1) * 0.95; if (Math.abs(Math.abs(u) - Math.abs(v)) < 0.14 || Math.hypot(u, v) < 0.22) continue;
-          const px = cx + u * hx, pz = cz + v * hz, g = scen.get(px, pz); cyl(g, px, 0, pz, 0.35, 4.5, 6, [0.46, 0.4, 0.3]); ico(g, px, 7.6, pz, 3.8 + R() * 1.4, 0.9, vary([0.28, 0.48, 0.2], R, 0.12), R, 0.3);
+          const px = cx + u * hx, pz = cz + v * hz, g = treeAt(px, pz, 0, 10); cyl(g, px, 0, pz, 0.35, 4.5, 6, [0.46, 0.4, 0.3]); ico(g, px, 7.6, pz, 3.8 + R() * 1.4, 0.9, vary([0.28, 0.48, 0.2], R, 0.12), R, 0.3);
         } }
       // ---- the city: continuous frontage along the circuit, then the blocks behind ----
       const pal = [[0.95, 0.85, 0.58], [0.96, 0.91, 0.8], [0.8, 0.87, 0.74], [0.94, 0.72, 0.62], [0.87, 0.87, 0.85], [0.97, 0.96, 0.92], [0.8, 0.86, 0.92], [0.93, 0.8, 0.66]];
@@ -2090,7 +2126,7 @@ const World = (function () {
       // firs as in the reference: tall and slim, four drooping jagged tiers, sunlit tips green, shaded sides teal (soft shading).
       // Far from the circuit (more than 80 m beyond the barriers, small and hazy on screen) a cheaper two-tier fir with the same silhouette.
       let firCount = 0, firFar = 0; const fir = (x, z, hgt, yb) => { firCount++;
-        const far = clearance(x, z) > 80, g = scen.get(x, z), y0 = yb != null ? yb : gH(x, z), col = vary(pineCs[Math.floor(R() * pineCs.length)], R, 0.08), rr = hgt * (0.17 + R() * 0.03), rot = R() * TAU, lit = (k) => [col[0] * k * 1.2, col[1] * k * 1.1, col[2] * k * 0.82];
+        const far = clearance(x, z) > 80, y0 = yb != null ? yb : gH(x, z), g = treeAt(x, z, y0, hgt, far), col = vary(pineCs[Math.floor(R() * pineCs.length)], R, 0.08), rr = hgt * (0.17 + R() * 0.03), rot = R() * TAU, lit = (k) => [col[0] * k * 1.2, col[1] * k * 1.1, col[2] * k * 0.82];
         if (far) { firFar++; R(); R(); R();   // (same number of random draws as a near fir)
           starCone(g, x, y0 + hgt * 0.1, z, rr * 1.05, hgt * 0.4, 5, col, lit(1.32), rot, hgt * 0.05);
           starCone(g, x, y0 + hgt * 0.4, z, rr * 0.7, hgt * 0.34, 4, col, lit(1.42), rot + 0.6, hgt * 0.04);
@@ -2105,13 +2141,13 @@ const World = (function () {
       // Toskana and Gromski rt: round, bushy broadleaf trees (two or three soft blobs on a short trunk, sunlit tops) and, in Toskana, tall slim cypresses
       const LEAFC = ITA ? [[0.3, 0.55, 0.2], [0.26, 0.5, 0.19], [0.34, 0.58, 0.22], [0.24, 0.46, 0.2]] : [[0.28, 0.52, 0.2], [0.24, 0.47, 0.19], [0.32, 0.56, 0.22], [0.22, 0.44, 0.2]];
       let leafCount = 0; const leafy = (x, z, hgt, yb) => { leafCount++;
-        const g = scen.get(x, z), y0 = yb != null ? yb : gH(x, z), col = vary(LEAFC[Math.floor(R() * LEAFC.length)], R, 0.1), r0 = hgt * (0.3 + R() * 0.06), rot = R() * TAU;
+        const y0 = yb != null ? yb : gH(x, z), g = treeAt(x, z, y0, hgt, clearance(x, z) > 80), col = vary(LEAFC[Math.floor(R() * LEAFC.length)], R, 0.1), r0 = hgt * (0.3 + R() * 0.06), rot = R() * TAU;
         box(g, x, y0 - 0.2, z, 0.42, hgt * 0.45, 0.42, rot, [0.36, 0.25, 0.17], null, true);
         ico(g, x, y0 + hgt * 0.58, z, r0, 0.82, col, R, 0.25);
         ico(g, x + Math.cos(rot) * r0 * 0.45, y0 + hgt * 0.74, z + Math.sin(rot) * r0 * 0.45, r0 * 0.72, 0.86, col.map(v => v * 1.1), R, 0.25);
         if (R() < 0.6) ico(g, x - Math.cos(rot) * r0 * 0.5, y0 + hgt * 0.66, z - Math.sin(rot) * r0 * 0.5, r0 * 0.62, 0.84, col.map(v => v * 0.95), R, 0.25); };
       const cypress = (x, z, hgt, yb) => { leafCount++;   // Italian cypress: a tall, narrow dark column, a little lighter at the top
-        const g = scen.get(x, z), y0 = yb != null ? yb : gH(x, z), col = vary([0.15, 0.34, 0.19], R, 0.08), rr = hgt * (0.1 + R() * 0.02);
+        const y0 = yb != null ? yb : gH(x, z), g = treeAt(x, z, y0, hgt * 1.4, clearance(x, z) > 80), col = vary([0.15, 0.34, 0.19], R, 0.08), rr = hgt * (0.1 + R() * 0.02);   // (a cypress: stiff, it sways less)
         box(g, x, y0 - 0.2, z, 0.3, hgt * 0.16, 0.3, 0, [0.34, 0.24, 0.16], null, true);
         ico(g, x, y0 + hgt * 0.48, z, rr * 1.15, 3.3, col, R, 0.12);
         ico(g, x, y0 + hgt * 0.74, z, rr * 0.72, 3.1, col.map(v => v * 1.12), R, 0.12); };
@@ -2623,7 +2659,7 @@ const World = (function () {
         return y0;
       };
       const tri2 = (g, a, b, c, col) => { const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2]; const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx, l = Math.hypot(nx, ny, nz) || 1, m = [(a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3, (a[2] + b[2] + c[2]) / 3]; g.triO(a, b, c, col, [m[0] - nx / l, m[1] - ny / l, m[2] - nz / l]); g.triO(a, c, b, col, [m[0] + nx / l, m[1] + ny / l, m[2] + nz / l]); };
-      const palm = (x, z, h) => { const g = scen.get(x, z), y = gH(x, z), la = R() * TAU, tx = x + Math.cos(la) * 0.6, tz = z + Math.sin(la) * 0.6;
+      const palm = (x, z, h) => { const y = gH(x, z), g = treeAt(x, z, y, h * 1.15), la = R() * TAU, tx = x + Math.cos(la) * 0.6, tz = z + Math.sin(la) * 0.6;
         cyl(g, x, y, z, 0.3, h * 0.6, 6, [0.52, 0.4, 0.26], null, 0.26); cyl(g, (x + tx) / 2, y + h * 0.6, (z + tz) / 2, 0.26, h * 0.4, 6, [0.56, 0.44, 0.28], null, 0.2);
         const top = [tx, y + h, tz], below = [tx, y + h - 4, tz], n = 9, a0 = R() * TAU;
         for (let k = 0; k < n; k++) { const a = a0 + k / n * TAU, L = 3.4 + R(), dr = 1.2 + R() * 0.8, w = 0.5, mid = [tx + Math.cos(a) * L * 0.55, y + h + 0.3, tz + Math.sin(a) * L * 0.55], tip = [tx + Math.cos(a) * L, y + h - dr, tz + Math.sin(a) * L];
@@ -2793,7 +2829,7 @@ const World = (function () {
         const y = gH(x, z); if (y < 0.8) continue;
         const nearTrack = c < 16, onRockEdge = x > MC_ROCK.x0 - 20 && x < MC_ROCK.x1 + 20 && z > MC_ROCK.z0 - 20 && z < MC_ROCK.z1 + 20 && y > 8 && y < 50;
         if (nearTrack && R() < 0.5) palm(x, z, 7 + R() * 4);
-        else if ((onRockEdge || c > 60) && R() < 0.45) { const g = scen.get(x, z); cyl(g, x, y, z, 0.3, 2.5, 5, [0.4, 0.3, 0.2]); ico(g, x, y + 3.6, z, 2.4 + R() * 1.6, 0.9, vary([0.22, 0.42, 0.18], R, 0.18), R, 0.25); excl.push({ x, z, r: 2 }); }
+        else if ((onRockEdge || c > 60) && R() < 0.45) { const g = treeAt(x, z, y, 6); cyl(g, x, y, z, 0.3, 2.5, 5, [0.4, 0.3, 0.2]); ico(g, x, y + 3.6, z, 2.4 + R() * 1.6, 0.9, vary([0.22, 0.42, 0.18], R, 0.18), R, 0.25); excl.push({ x, z, r: 2 }); }
       }
       // ---- street furniture just behind the barriers: palms and cast-iron lamp posts, both sides of the whole lap ----
       { const tu = T.def.tunnel || [0.54, 0.69];
@@ -2927,6 +2963,7 @@ const World = (function () {
     /* ---- finalize meshes ---- */
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
+    { const tm = treeMat(WIND); treeCh.addTo(sceneryGroup, tm, true, true); treeFar.addTo(sceneryGroup, tm, false, true); }   // (the trees, swaying; far off, their shadows would fall outside the view's shadow map anyway)
     const addTex = (g, mat, cast) => { if (g.empty) return; const m = new THREE.Mesh(g.geometry(), mat); m.castShadow = !!cast; m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); return m; };
     addTex(texTires, new THREE.MeshLambertMaterial({ map: THEME === 'forest' ? tex.tiresRW : tex.tires, vertexColors: true }), true);
     tyreCh.addTo(root, new THREE.MeshLambertMaterial({ map: tex.tyreTex, vertexColors: true }), true, true);
@@ -3196,7 +3233,7 @@ const World = (function () {
         if (nn.i >= 0 && nn.dd < 8 && r2 < 0.2) continue;
         if (excluded(x, z) || pkSlope(x, z) > 0.95) continue;
         const hk = lerp(1, 0.45, sstep(tl - 45, tl + 8, y));   // stunted towards the treeline
-        const h = (7.5 + R() * 6) * hk, col = vary(pineCs[Math.floor(R() * pineCs.length)], R, 0.14), far = nn.i < 0 || nn.dd > 30, g = scen.get(x, z);
+        const h = (7.5 + R() * 6) * hk, col = vary(pineCs[Math.floor(R() * pineCs.length)], R, 0.14), far = nn.i < 0 || nn.dd > 30, g = scen.get(x, z).sw(y, h);   // (a tree: it sways, treeMat)
         const gv = grove(x, z), pa = y < 150 && y < tl - 35 ? (gv > 0.56 ? lerp(0.5, 0.82, sstep(0.56, 0.7, gv)) : 0.03) * sstep(150, 135, y) : 0;
         const pb = y > tl - 30 ? 0.5 * sstep(tl - 30, tl - 18, y) : 0, q = A();
         if (q < pa || q > 1 - pb) { R(); R(); R(); R();   // (the draws pkPine would have made)
@@ -3819,7 +3856,7 @@ const World = (function () {
     };
     const walk = (o) => { if (o.name === 'crowds') return; if (o.isMesh) (Array.isArray(o.material) ? o.material : [o.material]).forEach(patch); o.children.forEach(walk); };
     walk(root);
-    out.dyn.clouds = { O: CLOUD_O, K: CLOUD_K, k0: CLOUD_K.value };
+    out.dyn.clouds = { O: CLOUD_O, K: CLOUD_K, k0: CLOUD_K.value, S: CLOUD_S, NP: CLOUD_NP };   // (S, NP: the sky's clouds use the same noise, Render.skyStep)
     return out;
   }
 
@@ -4666,7 +4703,8 @@ const World = (function () {
     for (const e of CR.circ) excl.push(e);   // the trees, shrubs and boulders keep clear of the new crowds too
 
     /* ---- vegetation and rock ---- */
-    const nTrees = pkForest(scen, R, dens, excluded);
+    const pkTrees = new Chunks(110), WIND = { value: 0 }; out.dyn.wind = WIND;   // (the forest in its own chunks: the trees sway)
+    const nTrees = pkForest(pkTrees, R, dens, excluded);
     {
       const bushC = [[0.14, 0.28, 0.12], [0.2, 0.34, 0.14], [0.26, 0.36, 0.14]], tuftC = [[0.5, 0.5, 0.26], [0.58, 0.54, 0.3], [0.44, 0.46, 0.22]], graniteC = [[0.54, 0.44, 0.39], [0.48, 0.42, 0.39], [0.58, 0.48, 0.43]], greyC = [0.44, 0.43, 0.41];
       for (let s = 2; s < T.len - 2; s += 3.2) for (const side of [-1, 1]) {
@@ -4703,6 +4741,7 @@ const World = (function () {
     /* ---- knockable props' kinds are Core's; finish the meshes ---- */
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
+    pkTrees.addTo(sceneryGroup, treeMat(WIND), true, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: pkAtlas(cpAlt), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     crowdFinish(CR, root, out);
 
@@ -9024,6 +9063,14 @@ const World = (function () {
 
     /* ---- the woods: spruce and beech where the land cover has forest, bushes on the scrub, lone trees on the meadows and round the farms ---- */
     const tMat = new THREE.MeshLambertMaterial({ vertexColors: true });
+    const WIND = { value: 0 }; out.dyn.wind = WIND;   // the crowns sway a little, each tree in its own rhythm (as on the Nordschleife)
+    tMat.onBeforeCompile = (sh) => {
+      sh.uniforms.uWind = WIND;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uWind;').replace('#include <begin_vertex>', '#include <begin_vertex>\n' +
+        '#ifdef USE_INSTANCING\nfloat wPh = instanceMatrix[3].x * 0.07 + instanceMatrix[3].z * 0.05;\n#else\nfloat wPh = 0.0;\n#endif\n' +
+        'float wK = position.y * position.y * 0.018;\ntransformed.x += wK * sin( uWind * 1.1 + wPh );\ntransformed.z += wK * 0.6 * sin( uWind * 0.83 + wPh * 1.7 );');
+    };
+    tMat.customProgramCacheKey = () => 'nrTreeWind';
     const tk = [new IChunks(nrTreeGeo(0), tMat, 128), new IChunks(nrTreeGeo(1), tMat, 128)];   // near the road: casting shadows
     const tf = [new IChunks(nrTreeGeo(2), tMat, 192), new IChunks(nrTreeGeo(3), tMat, 192)];   // more than 70 m out: cheaper, no shadows (as on the Nordschleife)
     let nTrees = 0;
@@ -9761,6 +9808,14 @@ const World = (function () {
     /* ---- trees: Japanese cedars and broadleaves where the land cover has woods, bushes on the scrub, lone trees on the lawns, cherries in
        blossom along the main straight and round the theme park ---- */
     const tMat = new THREE.MeshLambertMaterial({ vertexColors: true });
+    const WIND = { value: 0 }; out.dyn.wind = WIND;   // the crowns sway a little, each tree in its own rhythm (as on the Nordschleife)
+    tMat.onBeforeCompile = (sh) => {
+      sh.uniforms.uWind = WIND;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uWind;').replace('#include <begin_vertex>', '#include <begin_vertex>\n' +
+        '#ifdef USE_INSTANCING\nfloat wPh = instanceMatrix[3].x * 0.07 + instanceMatrix[3].z * 0.05;\n#else\nfloat wPh = 0.0;\n#endif\n' +
+        'float wK = position.y * position.y * 0.018;\ntransformed.x += wK * sin( uWind * 1.1 + wPh );\ntransformed.z += wK * 0.6 * sin( uWind * 0.83 + wPh * 1.7 );');
+    };
+    tMat.customProgramCacheKey = () => 'nrTreeWind';
     const tk = [new IChunks(szTreeGeo(0), tMat, 128), new IChunks(szTreeGeo(1), tMat, 128), new IChunks(szTreeGeo(2), tMat, 128), new IChunks(szTreeGeo(3), tMat, 128)];
     let nTrees = 0;
     {

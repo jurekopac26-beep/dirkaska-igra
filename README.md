@@ -192,7 +192,17 @@ Igro lahko igraš z igralnim ploščkom (Xbox, PlayStation ali drug plošček s 
 
 ## Grafika
 
-Na vseh progah čez pokrajino počasi drsijo sence oblakov (v dežju jih ni, ker je nebo oblačno). Pred zavoji, kjer tekmeci močno zavirajo, so na asfaltu sledi gum, lažje sledi pa tudi na izhodih iz ovinkov (na makadamu jih ni; na Nordschleife in Red Bull Ringu so narisane skupaj z drugimi oznakami na asfaltu, na mostu Suzuke jih ni). Nad progo občasno preleti jata ptic, ob morju galebi, njihove sence pa drsijo po tleh; v dežju jih ni. Na Nordschleife in Spa se krošnje dreves rahlo zibljejo v vetru.
+Na vseh progah čez pokrajino počasi drsijo sence oblakov (v dežju jih ni, ker je nebo oblačno). Pred zavoji, kjer tekmeci močno zavirajo, so na asfaltu sledi gum, lažje sledi pa tudi na izhodih iz ovinkov (na makadamu jih ni; na Nordschleife in Red Bull Ringu so narisane skupaj z drugimi oznakami na asfaltu, na mostu Suzuke jih ni). Nad progo občasno preleti jata ptic, ob morju galebi, njihove sence pa drsijo po tleh; v dežju jih ni.
+
+- **Avti:** lak in stekla odsevajo nebo, obzorje in tla proge, na kateri voziš (zelen gozd, mesto, gore, morje), ob času dneva in letnem času (zvečer oranžno nebo, ponoči luči ob progi, pozimi sneg). Na robovih karoserije je odsev močnejši kot pri pravem laku, stekla odsevajo nebo bolj kot lak. V dežju so avti mokri: temnejši in bolj sijoči. V izbiri avta so v laku luči studia.
+- **Nebo** (kokpit, TV kamere posnetka, foto način): beli kopasti oblaki, ki se premikajo skupaj s sencami oblakov na tleh (vsak oblak ima svojo senco), osvetljeni s strani sonca in sivi spodaj; zvečer topli in rožnati, ponoči temni, v dežju je nebo oblačno. Ko kamera pogleda proti soncu, se v objektivu pokaže odblesk (pri grafiki Visoko).
+- **Sijaj** (grafika Visoko): najsvetlejši deli slike (sonce na vodi, luči, iskre, reflektorji) se mehko razlijejo, belo ne »pregori«, ampak se mehko zaokroži. Ponoči je sijaj močnejši, pozimi (sneg) šibkejši.
+- **Zameglitev ob hitrosti** (grafika Visoko, v nastavitvah se izklopi): pri veliki hitrosti se robovi slike rahlo zameglijo v smeri vožnje, avto in cesta okoli njega ostaneta ostra.
+- **Voda** (jezera, reka, morje): majhni valovi, ki se premikajo, na njih bleščeča pot iskric proti soncu. Od blizu je voda temnejša, v daljavi odseva nebo. Na Rivieri valovi pljuskajo na peščeno plažo (pena).
+- **Dež:** moker asfalt se rahlo sveti in odseva sivo nebo, pod avti se v cesti zrcalijo zavorne luči in žarometi (podolgovati odsevi). Ob robu ceste so luže, v katerih kaplje delajo kolobarje, po cesti okoli avta pljuskajo dežne kaplje. Na Ouninpohji so luže njene (v kolesnicah).
+- **Prah, dim in pršec:** mehke kepe z razcefranim robom, osvetljene s strani sonca in temnejše spodaj (ponoči in v dežju manj). Iskre imajo vroče belo jedro.
+- **Drevesa:** na Jezeru in Gori imajo drevesa ob progi nove oblike kot na Ouninpohji: smreke s povešenimi nazobčanimi vejami (svetle konice, temno pod naslednjim nivojem), listavci krošnje iz več kep. Na vseh progah se drevesa, tudi palme, rahlo zibljejo v vetru, vsako v svojem ritmu. Proge, narejene po referenčnih slikah (Bakreni gozd, Toskana, Gromski rt), obdržijo svoje oblike. Drevesa dlje kot 70–80 m od proge ne mečejo senc (tako ostane igra na telefonu tekoča).
+- **Izbira avta:** studio s sijočimi tlemi, v katerih se zrcali avto, mehka senca pod avtom, v ozadju pasovi luči.
 
 ## Vreme
 
