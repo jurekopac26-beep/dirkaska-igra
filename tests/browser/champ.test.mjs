@@ -49,14 +49,14 @@ try {
   await page.evaluate(() => document.getElementById('res-restart').click()); await page.waitForTimeout(300);
   const s1 = await standings();
   T.check('standings after round 1: 13 drivers, the player with the points of the place, round 2 (Ljubljana) next, saved', s1.screen === 'champ' && s1.rows === 13 && s1.me === 'Ana:' + p1 && s1.tag === 'dirka 2/4' &&
-    s1.go === 'Naslednja dirka: Ljubljana' && s1.chips.startsWith('done,next') && s1.saved && s1.saved.rounds.length === 1 && s1.saved.rounds[0].order.length === 13, JSON.stringify(s1));
+    s1.go === 'Naslednja dirka: Ljubljana, Slovenija' && s1.chips.startsWith('done,next') && s1.saved && s1.saved.rounds.length === 1 && s1.saved.rounds[0].order.length === 13, JSON.stringify(s1));
 
   // 4. a reload of the page: the championship is still there, the title button shows the round
   await page.reload(); await page.waitForFunction(() => !!(window.__game && window.__game.screen === 'title'), null, { timeout: 30000 }); await page.waitForTimeout(500);
   const title = await page.evaluate(() => document.getElementById('btn-champ').textContent);
   await act('to-champ'); await page.waitForTimeout(300);
   const s2 = await standings();
-  T.check('after a reload: "Prvenstvo · 2/4" on the title screen, the same standings', title === 'Prvenstvo · 2/4' && s2.me === 'Ana:' + p1 && s2.go === 'Naslednja dirka: Ljubljana', `title "${title}", ${JSON.stringify(s2)}`);
+  T.check('after a reload: "Prvenstvo · 2/4" on the title screen, the same standings', title === 'Prvenstvo · 2/4' && s2.me === 'Ana:' + p1 && s2.go === 'Naslednja dirka: Ljubljana, Slovenija', `title "${title}", ${JSON.stringify(s2)}`);
 
   // 5. round 2: a restart drives the same round again; left before the finish, it does not count
   await act('champ-go'); await raceOn('ljubljana', 1);
