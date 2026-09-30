@@ -35,25 +35,26 @@ window.MENU = {
   multiReward: [500, 200],                                                            // CR for winning / losing a duel
   friendName: 'Ana',
 
-  /* ---------- cars (the 3D model file is assets/cars/<model>.json) ---------- */
+  /* ---------- cars: the 3D model is assets/cars/<model>.json, the small pictures assets/cars/img/<model>-<paint>.webp;
+     color = the paint the car has in today's race (an index in colors) ---------- */
   colors: [
     { name: 'Red', hex: '#d81f2a' }, { name: 'White', hex: '#f5f5f0' }, { name: 'Blue', hex: '#1c5fd6' }, { name: 'Yellow', hex: '#f2c230' },
     { name: 'Black', hex: '#1a1a1f' }, { name: 'Green', hex: '#2fa84f' }, { name: 'Orange', hex: '#ff7a1a' }, { name: 'Purple', hex: '#8e3bd6' },
   ],
   cars: [
-    { id: 'pico', model: 'pico', name: 'PICO TURBO', tag: 'FWD', desc: 'Light front-wheel-drive hatchback. Easy to drive and quick through tight corners.',
+    { id: 'pico', model: 'pico', color: 2, name: 'PICO TURBO', tag: 'FWD', desc: 'Light front-wheel-drive hatchback. Easy to drive and quick through tight corners.',
       hp: 291, kg: 1040, drive: 'FWD', gears: 6, stats: { power: 8, grip: 12, light: 14, drift: 7 }, free: true },
-    { id: 'kaze', model: 'kaze', name: 'KAZE RS', tag: 'RWD', desc: 'Rear-wheel-drive coupé, born to drift. Loves long, open corners.',
+    { id: 'kaze', model: 'kaze', color: 0, name: 'KAZE RS', tag: 'RWD', desc: 'Rear-wheel-drive coupé, born to drift. Loves long, open corners.',
       hp: 356, kg: 1240, drive: 'RWD', gears: 6, stats: { power: 11, grip: 10, light: 10, drift: 15 }, free: true },
-    { id: 'rally', model: 'rally', name: 'BURJA R7', tag: 'AWD', desc: 'An 80s rally car with all-wheel drive and huge power. At home on gravel and in the air.',
+    { id: 'rally', model: 'rally', color: 0, name: 'BURJA R7', tag: 'AWD', desc: 'An 80s rally car with all-wheel drive and huge power. At home on gravel and in the air.',
       hp: 394, kg: 1150, drive: 'AWD', gears: 6, stats: { power: 13, grip: 13, light: 12, drift: 14 }, free: true },
-    { id: 'vortex', model: 'vortex', name: 'VORTEX 4WD', tag: 'AWD', desc: 'All-wheel-drive saloon, stable and fast in every weather.',
+    { id: 'vortex', model: 'vortex', color: 5, name: 'VORTEX 4WD', tag: 'AWD', desc: 'All-wheel-drive saloon, stable and fast in every weather.',
       hp: 404, kg: 1400, drive: 'AWD', gears: 6, stats: { power: 13, grip: 13, light: 7, drift: 9 } },
-    { id: 'strega', model: 'strega', name: 'STREGA MR', tag: 'MID', desc: 'Mid-engined and sharp. Turns in instantly, punishes a lazy exit.',
+    { id: 'strega', model: 'strega', color: 6, name: 'STREGA MR', tag: 'MID', desc: 'Mid-engined and sharp. Turns in instantly, punishes a lazy exit.',
       hp: 385, kg: 1180, drive: 'MID', gears: 6, stats: { power: 12, grip: 13, light: 11, drift: 12 } },
-    { id: 'vihra', model: 'pico', name: 'VIHRA S', tag: 'FWD', desc: 'Front-wheel-drive hot hatch with a rear wing. Still in the workshop.',
+    { id: 'vihra', model: 'pico', color: 3, name: 'VIHRA S', tag: 'FWD', desc: 'Front-wheel-drive hot hatch with a rear wing. Still in the workshop.',
       hp: 340, kg: 1080, drive: 'FWD', gears: 6, stats: { power: 11, grip: 13, light: 13, drift: 9 }, soon: true },
-    { id: 'formula', model: 'formula', name: 'FORMULA ORKAN', tag: 'OPEN', desc: 'Open-wheel formula car with front and rear wings. Brutal grip, no forgiveness.',
+    { id: 'formula', model: 'formula', color: 3, name: 'FORMULA ORKAN', tag: 'OPEN', desc: 'Open-wheel formula car with front and rear wings. Brutal grip, no forgiveness.',
       hp: 1000, kg: 798, drive: 'RWD', gears: 8, stats: { power: 16, grip: 16, light: 16, drift: 5 } },
   ],
 

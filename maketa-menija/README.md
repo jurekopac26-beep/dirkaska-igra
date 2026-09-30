@@ -6,6 +6,7 @@ Objavljena je kot zasebna stran: <https://claude.ai/artifact/LGhsPikqgs4To6phR2L
 
 ## Glavni meni
 
+- Gumbi so v temnem okvirju z rdeče-belim robnikom na levi, kot v prvi različici menija.
 - Trije veliki gumbi s sliko:
   - **Single race**: slika današnje proge.
   - **Multiplayer**: dva avta.
@@ -28,7 +29,10 @@ Objavljena je kot zasebna stran: <https://claude.ai/artifact/LGhsPikqgs4To6phR2L
   - pri progi,
   - na glavnem meniju,
   - v *Leaderboard → Today*.
-- Druge proge: *Next* → izbira avta → *Race!*
+- Druge proge: spodaj sta, kot pri današnji dirki, okvirčka s sliko za **avto** in **vreme**, le da ju tu lahko klikneš.
+  - Klik na avto odpre izbiro avta (3D). Z gumbom *Select* se vrneš k progi z izbranim avtom in barvo.
+  - Klik na vreme odpre izbiro vremena (Dry, Rain, Random) in števila krogov.
+  - Gumb spodaj je *Race!* (na zaklenjenih progah v brezplačni različici *Unlock · €3.99*).
 
 ## Namesto dirke: izbira mesta
 
@@ -49,10 +53,11 @@ Nato se odpre zaslon z rezultatom:
 
 ## Drugi zasloni
 
-- **Choose car**:
+- **Choose car** (odpre se s klikom na avto pri progi):
   - avto v pravem 3D (three.js r128, ista različica kot v igri),
   - obrneš ga s prstom,
-  - zavihki Stats / Upgrades / Paint, vseh 8 barv igre.
+  - zavihki Stats / Upgrades / Paint, vseh 8 barv igre,
+  - *Select* izbere avto in barvo za dirko.
 - **Career**:
   - odstotek celotne kariere in vsake serije (kot v Real Racing 3),
   - pokali za vsako dirko: bron za top 5, srebro za stopničke, zlato za zmago,
@@ -78,7 +83,7 @@ Zgoraj je vrstica **MOCKUP** s tremi stanji:
 Kako deluje:
 
 - *Free* in *Full game* začneta pri 0 %.
-- Napredek (denar, pokali, rekordi, današnja dirka) se shrani v brskalnik, za vsako stanje posebej.
+- Napredek (denar, pokali, rekordi, izbrani avto, današnja dirka) se shrani v brskalnik, za vsako stanje posebej.
 - Gumb ↻ v vrstici ali *Settings → Reset progress* postavi trenutno stanje nazaj na začetek.
 - Nakup v stanju *Free* (*Full Game* → *Buy*) preklopi na polno igro in obdrži napredek.
 - Z × skriješ vrstico, z gumbom M jo prikažeš nazaj.
@@ -91,7 +96,7 @@ Kako deluje:
 | `style.css` | videz (barve so na vrhu kot spremenljivke `--…`) |
 | `app.js` | zasloni, premikanje med njimi, izbira mesta in izračun rezultata |
 | `car3d.js` | 3D prikaz avta |
-| `assets/` | 3D modeli avtov (`cars/*.json`), slike avtov (`cars/img/`), slike gumbov glavnega menija (`menu/`), makete prog (`tracks/*.webp`), posnetki ozadja (`video/`) |
+| `assets/` | 3D modeli avtov (`cars/*.json`), slike vsakega avta v vseh 8 barvah (`cars/img/<avto>-<barva>.webp`), slike gumbov glavnega menija (`menu/`), makete prog (`tracks/*.webp`), posnetki ozadja (`video/`) |
 | `outlines.js` | obrisi prog za majhne zemljevide (ustvarjeno, ne urejaj ročno) |
 
 Vsi časi, imena na lestvicah, število igralcev, denar (CR) in odstotki so primeri.
@@ -121,13 +126,13 @@ mkdir -p maketa-menija/game_main
 git archive origin/main | tar -x -C maketa-menija/game_main
 cd maketa-menija/orodja
 node cars3d.mjs                                  # avti -> ../assets/cars/*.json
-node carimgs.mjs && python3 menuimg.py           # slike avtov in gumbov -> ../assets/cars/img/, ../assets/menu/
+node carimgs.mjs && python3 menuimg.py           # avti v vseh barvah in slike gumbov -> ../assets/cars/img/, ../assets/menu/
 node bgvideo.mjs '[["jezero",7],["ljubljana",7],["gora",7]]' 1.25 14   # posnetki -> ../assets/video/
 node dio2.mjs proge.json                         # makete prog -> raw/tracks/*.png (proge.json: [[id, ime, nastavitve], …])
 python3 mkwebp.py                                # raw/tracks -> ../assets/tracks/*.webp
 node gen_tracks2.js raw/tracks.js                # obrisi prog (nato v outlines.js)
 node check.mjs                                   # vsi zasloni v vseh stanjih -> shots/
-node flow.mjs                                    # odigra današnjo dirko, kariero in multiplayer z izbiro mesta -> shots/
+node flow.mjs                                    # odigra današnjo dirko, izbiro avta in vremena, kariero in multiplayer -> shots/
 ```
 
 Uporabljajo Playwright s Chromiumom (kot testi igre). Mapi `game_main/` in `orodja/raw/` nista v repozitoriju.

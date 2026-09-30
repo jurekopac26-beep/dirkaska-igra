@@ -18,7 +18,9 @@ const c = await b.newContext({ viewport: { width: 400, height: 300 } });
 await c.route('https://cdnjs.cloudflare.com/**', r => r.fulfill({ contentType: 'text/javascript', body: fs.readFileSync(THREE) }));
 const pg = await c.newPage(); pg.on('pageerror', e => console.log('pageerror', e.message));
 await pg.goto(`http://127.0.0.1:${server.address().port}/`);
-const JOBS = process.argv[2] ? JSON.parse(process.argv[2]) : [["kaze","kaze",0,-0.75],["vortex","vortex",5,-0.75],["pico","pico",2,-0.75],["strega","strega",6,-0.75],["rally","rally",0,-0.75],["formula","formula",3,-0.75],["duel_l","kaze",0,-0.62],["duel_r","pico",2,-2.52],["career_car","rally",0,-2.39]];
+const MODELS = ['pico', 'kaze', 'rally', 'vortex', 'strega', 'formula'];
+const JOBS = process.argv[2] ? JSON.parse(process.argv[2]) : MODELS.flatMap(m => [0, 1, 2, 3, 4, 5, 6, 7].map(c => [m + '-' + c, m, c, -0.75]))
+  .concat([['duel_l', 'kaze', 0, -0.62], ['duel_r', 'pico', 2, -2.52], ['career_car', 'rally', 0, -2.39]]);
 for (const [name, model, ci, ang, el] of JOBS) {
   const url = await pg.evaluate(([m, ci, a, el]) => window.Car3D.snapshot(m, ci, a, 900, 560, el), [model, ci, ang, el == null ? 12 : el]);
   fs.writeFileSync(path.join(OUT, name + '.png'), Buffer.from(url.split(',')[1], 'base64'));

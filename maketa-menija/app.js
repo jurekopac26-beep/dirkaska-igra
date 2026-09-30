@@ -58,6 +58,7 @@
     bolt2: '<svg width="26" height="26" viewBox="0 0 22 24"><path d="M13 1.5 3.5 14h6.5l-1.5 8.5L19 10h-6.8z" fill="#fff"/></svg>',
     sun: '<svg width="22" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.4" fill="#fff"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
     rain: '<svg width="22" height="24" viewBox="0 0 24 24"><path d="M6.5 15a4.5 4.5 0 0 1 .7-8.9A6 6 0 0 1 18.4 8 3.6 3.6 0 0 1 18 15z" fill="#fff"/><path d="M8 18l-1 3M12 18l-1 3M16 18l-1 3" stroke="#3fd0ff" stroke-width="2" stroke-linecap="round"/></svg>',
+    dice: '<svg width="22" height="24" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="17" rx="4" fill="#fff"/><g fill="#0b192b"><circle cx="8.6" cy="9.4" r="1.7"/><circle cx="12" cy="13" r="1.7"/><circle cx="15.4" cy="16.6" r="1.7"/><circle cx="15.4" cy="9.4" r="1.7"/><circle cx="8.6" cy="16.6" r="1.7"/></g></svg>',
     reset: '<svg viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M4 3.5v4.2h4.2" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   };
   const minimap = (id) => { const t = OUT[id]; if (!t) return ''; return '<svg viewBox="' + t.vb + '" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><path class="o" vector-effect="non-scaling-stroke" d="' + t.d + '"/><path class="i" vector-effect="non-scaling-stroke" d="' + t.d + '"/></svg>'; };
@@ -75,11 +76,14 @@
   const carById = (id) => D.cars.find(c => c.id === id);
   const seriesById = (id) => D.series.find(s => s.id === id);
   const fullName = (t) => t.country ? t.name + ', ' + t.country : t.name;
+  const WEATHER = ['Dry', 'Rain', 'Random'];
+  const wIcon = (w) => [I.sun, I.rain, I.dice][Math.max(0, WEATHER.indexOf(w))];
+  const carImg = (c, ci) => 'assets/cars/img/' + c.model + '-' + ci + '.webp';
 
   /* ---------------- progress: it changes as you "race" in the mockup, kept per state in this browser ---------------- */
   let ST, P;
-  const fresh = (st) => { const s = D.states[st]; return { owned: !!s.owned, money: s.money, trophies: clone(s.trophies || {}), upgrades: clone(s.upgrades || {}), myRecords: clone(s.myRecords || {}), daily: null, last: '' }; };
-  const loadP = (st) => { const p = store.get('p-' + st, null); return p && p.trophies ? p : fresh(st); };
+  const fresh = (st) => { const s = D.states[st]; return { owned: !!s.owned, money: s.money, car: s.car, color: s.color, trophies: clone(s.trophies || {}), upgrades: clone(s.upgrades || {}), myRecords: clone(s.myRecords || {}), daily: null, last: '' }; };
+  const loadP = (st) => { const p = store.get('p-' + st, null); if (!p || !p.trophies) return fresh(st); if (p.car == null) { p.car = D.states[st].car; p.color = D.states[st].color; } return p; };
   const saveP = () => store.set('p-' + ST, P);
   const S = () => D.states[ST];
   const owned = () => !!P.owned;
@@ -124,11 +128,11 @@
   }
 
   /* ---------------- view state ---------------- */
-  let screen, carIdx, colorIdx, trackIdx, tab, seriesId, raceSel, lapsSel, weather, lbTrack, mpMode, history, sheet = null, settings, result = null;
+  let screen, carIdx, colorIdx, trackIdx, tab, seriesId, raceSel, lapsSel, weather, lbTrack, mpMode, history, sheet = null, sheetOn = false, settings, result = null;
   const TRACKS = () => [null].concat(D.tracks);   // the Single race list: today's race first, then every track
   function resetView() {
     const s = S();
-    carIdx = s.car; colorIdx = s.color; trackIdx = s.track; tab = 'stats'; seriesId = null; raceSel = null; lapsSel = null; weather = 0; lbTrack = -1; mpMode = null; result = null;
+    carIdx = P.car; colorIdx = P.color; trackIdx = s.track; tab = 'stats'; seriesId = null; raceSel = null; lapsSel = null; weather = 0; lbTrack = -1; mpMode = null; result = null;
   }
 
   /* ---------------- persistent parts: video background, 3D car ---------------- */
@@ -170,11 +174,12 @@
     let singleChip;
     if (!owned()) singleChip = d.runsLeft > 0 ? '<em class="chip gold">1 FREE RUN TODAY</em>' : '<em class="chip">PLAYED TODAY · ' + ord(d.mine.rank) + '</em>';
     else singleChip = d.mine ? '<em class="chip">TODAY: ' + ord(d.mine.rank) + ' OF ' + num(d.players) + '</em>' : '<em class="chip gold">NEW TODAY</em>';
-    const careerSub = nx ? cp + ' % · ' + seriesById(nx[0]).name + ' · race ' + (nx[1] + 1) + ' of ' + seriesById(nx[0]).races.length : cp + ' % · career complete';
+    const nb = (x) => String(x).replace(/ /g, '\u00a0');
+    const careerSub = nx ? nb(cp + ' %') + '\u00a0· ' + nb(seriesById(nx[0]).name) + '\u00a0· ' + nb('race ' + (nx[1] + 1) + ' of ' + seriesById(nx[0]).races.length) : nb(cp + ' %') + '\u00a0· career complete';
     let h = '<section class="scr" id="s-title" aria-label="Main menu"><div id="bg-slot"></div>';
     h += '<div class="t-top"><h1 class="logo small"><span class="l1">' + esc(D.game.l1) + '</span><span class="l2">' + esc(D.game.l2) + '</span></h1><div class="t-me">' + moneyPill() +
       (ST === 'veteran' || totalTro() ? '<small>' + esc(S().player) + ' · Level ' + level() + '</small>' : '') + '</div></div>';
-    h += '<div class="t-menu">';
+    h += '<div class="t-menu title-panel">';
     h += '<button class="tile t-single" data-act="single"><span class="tx"><b>' + M.single.title + '</b><small>' + esc(M.single.sub.replace('{track}', d.track.name).replace('{weather}', d.weather.toLowerCase())) + '</small>' + singleChip + '</span>' +
       '<span class="im"><img src="assets/tracks/' + d.track.id + '.webp" alt=""></span></button>';
     h += '<button class="tile t-multi" data-act="go:multi"><span class="tx"><b>' + M.multi.title + '</b><small>' + esc(M.multi.sub) + '</small>' + (owned() ? '' : '<em class="chip">3 TRACKS IN FREE</em>') + '</span>' +
@@ -200,8 +205,8 @@
       h += '<div class="card daily">' + (mine ? '<div class="badge win">' + I.star.replace('<svg', '<svg style="width:16px;height:16px"') + '<span>YOU ARE ' + ord(mine.rank).toUpperCase() + ' TODAY</span></div>' : '<div class="badge"><span>NEW RACE EVERY DAY</span></div>');
       h += '<h1>' + esc(t.name) + '<span class="tag">TODAY</span></h1><p class="desc">Everyone drives the same car in the same weather. A new race in ' + d.resetIn + '.</p>';
       h += info([[I.globe, 'Best today', clock(d.best), 'gold'], [I.people, 'Players', num(d.players)], [I.medal, 'Your place', mine ? ord(mine.rank) : '—', mine ? 'cy' : '']]);
-      h += '<div class="drows"><div class="drow"><img src="assets/cars/img/' + d.car.model + '.webp" alt=""><div><small>CAR FOR EVERYONE</small><b>' + esc(d.car.name) + '</b></div></div>' +
-        '<div class="drow">' + (d.weather === 'Rain' ? I.rain : I.sun) + '<div><small>' + (t.trial ? 'TIME TRIAL' : laps(d.laps).toUpperCase()) + '</small><b>' + esc(d.weather) + '</b></div></div></div>';
+      h += '<div class="drows"><div class="drow"><img src="' + carImg(d.car, d.car.color) + '" alt=""><div><small>CAR FOR EVERYONE</small><b>' + esc(d.car.name) + '</b></div></div>' +
+        '<div class="drow">' + wIcon(d.weather) + '<div><small>' + (t.trial ? 'TIME TRIAL' : laps(d.laps).toUpperCase()) + '</small><b>' + esc(d.weather) + '</b></div></div></div>';
       h += '<p class="dnote">World best: ' + esc(d.holder) + (mine ? ' · your best: ' + esc(mine.time) : '') + '. ' + (owned() ? 'Unlimited runs in the full game.' : d.runsLeft > 0 ? 'Free version: one run today.' : 'Your free run for today is used. Come back tomorrow.') + '</p></div>';
       const go = d.runsLeft > 0 ? '<button class="go" data-act="race-daily">Race!</button>' : '<button class="go gold" data-act="offer">Unlimited · ' + esc(D.game.price) + '</button>';
       return h + foot(go) + '</section>';
@@ -213,17 +218,18 @@
     h += '<div class="stage" id="track-stage"><div class="dio' + (lockd ? ' lock' : '') + '"><img src="assets/tracks/' + t.id + '.webp" alt="3D model of the ' + esc(t.name) + ' track"></div>' +
       '<button class="arrow l" data-act="track:-1" aria-label="Previous track">' + I.left + '</button><button class="arrow r" data-act="track:1" aria-label="Next track">' + I.right + '</button>' + dots(list.length, trackIdx, (i) => i > 0 && trackLocked(list[i]), true) + '</div>';
     h += '<div class="card">' + badge + '<h1>' + esc(t.name) + '<span class="tag ghost">' + esc(t.tag) + '</span></h1><p class="desc">' + esc(t.desc) + '</p>';
-    h += info([[I.trophy(my ? 'gold' : ''), my ? 'Your record' : t.rec[0], my || t.rec[1], my ? 'gold' : ''], [I.flag, 'Length', t.km.toFixed(2) + ' km'], [I.corners, 'Corners', String(t.corners)], [I.flag, t.trial ? 'Run' : 'Laps', t.trial ? 'Timed' : String(lp)]]);
+    h += info([[I.trophy(my ? 'gold' : ''), my ? 'Your record' : t.rec[0], my || t.rec[1], my ? 'gold' : ''], [I.flag, 'Length', t.km.toFixed(2) + ' km'], [I.corners, 'Corners', String(t.corners)]]);
     const B = [['Speed', t.bars.speed], ['Technique', t.bars.tech], ['Drift', t.bars.drift], ['Grip', t.bars.grip]];
-    h += '<div class="bars" style="margin-top:6px">' + B.map(b => '<div class="brow"><span>' + b[0] + '</span>' + segBar(b[1]) + '<em>' + b[1] + '</em></div>').join('') + '</div>';
-    h += '<div class="opts"><span>LAPS</span>' + (t.trial ? '<div class="stepper"><b>1 run</b></div>' : '<div class="stepper"><button data-act="laps:-1" aria-label="Fewer laps">−</button><b>' + lp + '</b><button data-act="laps:1" aria-label="More laps">+</button></div>') +
-      '<span>WEATHER</span><div class="segs">' + ['Dry', 'Rain', 'Random'].map((w, i) => '<button aria-pressed="' + (weather === i) + '" data-act="weather:' + i + '">' + w + '</button>').join('') + '</div></div>';
+    h += '<div class="bars tbars" style="margin-top:6px">' + B.map(b => '<div class="brow"><span>' + b[0] + '</span>' + segBar(b[1]) + '<em>' + b[1] + '</em></div>').join('') + '</div>';
+    const car = D.cars[P.car];
+    h += '<div class="drows"><button class="drow choose" data-act="pick-car" aria-label="Your car: ' + esc(car.name) + '. Choose another car"><img src="' + carImg(car, P.color) + '" alt=""><div><small>YOUR CAR</small><b>' + esc(car.name) + '</b></div>' + I.chev + '</button>' +
+      '<button class="drow choose" data-act="pick-weather" aria-label="' + esc(WEATHER[weather]) + ', ' + (t.trial ? 'time trial' : laps(lp)) + '. Change the weather">' + wIcon(WEATHER[weather]) + '<div><small>' + (t.trial ? 'TIME TRIAL' : laps(lp).toUpperCase()) + '</small><b>' + WEATHER[weather] + '</b></div>' + I.chev + '</button></div>';
     h += '</div>';
-    const go = lockd ? '<button class="go gold" data-act="offer">Unlock · ' + esc(D.game.price) + '</button>' : '<button class="go" data-act="go:car">Next</button>';
+    const go = lockd ? '<button class="go gold" data-act="offer">Unlock · ' + esc(D.game.price) + '</button>' : '<button class="go" data-act="race-single">Race!</button>';
     return h + foot(go) + '</section>';
   }
 
-  /* ---------------- choose car (then race) ---------------- */
+  /* ---------------- choose car (opened from the car box of a single race) ---------------- */
   function vCar() {
     const c = D.cars[carIdx], lockd = carLocked(c), up = upgOf(c), upSum = sum(up), pw = Math.round(c.hp * (1 + 0.08 * up[0]));
     let badge = '';
@@ -250,7 +256,7 @@
     let go;
     if (c.soon) go = '<button class="go off" data-act="soon">Coming soon</button>';
     else if (lockd) go = '<button class="go gold" data-act="offer">Unlock · ' + esc(D.game.price) + '</button>';
-    else go = '<button class="go" data-act="race-single">Race!</button>';
+    else go = '<button class="go" data-act="car-select">Select</button>';
     return h + foot(go) + '</section>';
   }
 
@@ -399,7 +405,8 @@
       const stage = $('#car-stage', app); stage.insertBefore(carHost, stage.firstChild);
       const c = D.cars[carIdx]; Car3D.show(c.model, colorIdx, { dark: !!c.soon }); Car3D.setVisible(true);
     } else if (car3dReady) Car3D.setVisible(false);
-    if (sheet) app.insertAdjacentHTML('beforeend', sheet);
+    if (sheet) { app.insertAdjacentHTML('beforeend', typeof sheet === 'function' ? sheet() : sheet); if (sheetOn) $('.sheet-bg', app).classList.add('still'); }
+    sheetOn = !!sheet;
     const chip = $('.chips [aria-pressed="true"]', app); if (chip) chip.scrollIntoView({ block: 'nearest', inline: 'center' });
   }
   function go(to) { if (to !== screen) { history.push(screen); screen = to; } render(); }
@@ -416,6 +423,14 @@
     sheet = '<div class="sheet-bg" data-act="close-sheet"><div class="sheet" role="dialog" aria-label="Full game"><h2>' + esc(o.title) + '<span>' + esc(D.game.price) + '</span></h2><p>' + esc(o.lead) + '</p><ul>' +
       o.items.map(x => '<li>' + I.check + esc(x) + '</li>').join('') + '</ul><div class="row"><button class="back" data-act="close-sheet" aria-label="Close">' + I.back + '</button><button class="go gold" data-act="buy">Buy · ' + esc(D.game.price) + '</button></div></div></div>';
     render(true);
+  }
+
+  function weatherSheet() {
+    const t = TRACKS()[trackIdx] || D.tracks[0], lp = lapsSel || t.laps;
+    let h = '<div class="sheet-bg" data-act="close-sheet"><div class="sheet" role="dialog" aria-label="Weather"><h2>Weather</h2><div class="wopts">' +
+      WEATHER.map((w, i) => '<button aria-pressed="' + (weather === i) + '" data-act="weather:' + i + '">' + wIcon(w) + '<b>' + w + '</b></button>').join('') + '</div>';
+    if (!t.trial) h += '<div class="lapsrow"><span>LAPS</span><div class="stepper"><button data-act="laps:-1" aria-label="Fewer laps">−</button><b>' + lp + '</b><button data-act="laps:1" aria-label="More laps">+</button></div></div>';
+    return h + '<div class="row"><button class="go" data-act="close-sheet">Done</button></div></div></div>';
   }
 
   /* ---------------- a race: loading, then "where did you finish?" (mockup), then the results ---------------- */
@@ -485,7 +500,10 @@
       case 'laps': { const t = TRACKS()[trackIdx]; lapsSel = Math.max(1, Math.min(9, (lapsSel || t.laps) + +v)); render(true); break; }
       case 'weather': weather = +v; render(true); break;
       case 'race-daily': { const d = daily(); startRace({ kind: 'daily', track: d.track, trial: !!d.track.trial, label: 'Today\'s race · ' + d.car.name + ' · ' + d.weather.toLowerCase() }); break; }
-      case 'race-single': { const t = TRACKS()[trackIdx] || D.tracks[0]; startRace({ kind: 'single', track: t, trial: !!t.trial, label: D.cars[carIdx].name + ' · ' + laps(t.trial ? 1 : (lapsSel || t.laps)) + ' · ' + ['dry', 'rain', 'random weather'][weather] }); break; }
+      case 'race-single': { const t = TRACKS()[trackIdx] || D.tracks[0]; startRace({ kind: 'single', track: t, trial: !!t.trial, label: D.cars[P.car].name + ' · ' + (t.trial ? 'time trial' : laps(lapsSel || t.laps)) + ' · ' + ['dry', 'rain', 'random weather'][weather] }); break; }
+      case 'pick-car': carIdx = P.car; colorIdx = P.color; tab = 'stats'; go('car'); break;
+      case 'pick-weather': sheet = weatherSheet; render(true); break;
+      case 'car-select': { const c = D.cars[carIdx]; if (c.soon || carLocked(c)) break; P.car = carIdx; P.color = colorIdx; saveP(); back(); break; }
       case 'race-series': { const s = seriesById(seriesId), t = trackById(s.races[raceSel]); startRace({ kind: 'career', track: t, trial: !!s.trial, seriesId: s.id, raceIdx: raceSel, label: s.name + ' · race ' + (raceSel + 1) + ' of ' + s.races.length }); break; }
       case 'race-next': { const nx = nextRace(); if (!nx) break; const s = seriesById(nx[0]); seriesId = s.id; raceSel = nx[1]; startRace({ kind: 'career', track: trackById(s.races[nx[1]]), trial: !!s.trial, seriesId: s.id, raceIdx: nx[1], label: s.name + ' · race ' + (nx[1] + 1) + ' of ' + s.races.length }); break; }
       case 'race-multi': { const rival = mpMode === 'quick' ? 'T. Hayashi' : D.friendName; startRace({ kind: 'multi', track: D.tracks[0], rival, label: 'Duel with ' + rival }); break; }
@@ -551,7 +569,7 @@
       if (o.carIdx != null) carIdx = o.carIdx; if (o.colorIdx != null) colorIdx = o.colorIdx; if (o.trackIdx != null) trackIdx = o.trackIdx;
       if (o.tab) tab = o.tab; if (o.lbTrack != null) lbTrack = o.lbTrack; if (o.mpMode) mpMode = o.mpMode;
       if (o.seriesId) { seriesId = o.seriesId; raceSel = null; }
-      sheet = null; history = scr === 'title' ? [] : ['title']; screen = scr; render(); if (o.offer) offer();
+      sheet = null; history = scr === 'title' ? [] : ['title']; screen = scr; render(); if (o.offer) offer(); if (o.weatherSheet) act('pick-weather');
     },
     finish(kind, res) { const d = daily(); const R = kind === 'daily' ? { kind, track: d.track, trial: !!d.track.trial, label: '' } : kind === 'career' ? (() => { const nx = nextRace(), s = seriesById(nx[0]); return { kind, track: trackById(s.races[nx[1]]), trial: !!s.trial, seriesId: s.id, raceIdx: nx[1], label: '' }; })() : kind === 'multi' ? { kind, track: D.tracks[0], rival: D.friendName, label: '' } : { kind: 'single', track: D.tracks[0], label: '' }; race = R; finish(res); },
   };

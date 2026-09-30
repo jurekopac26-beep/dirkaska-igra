@@ -61,17 +61,17 @@ const plan = [
   ['free', 'career', {}], ['free', 'series', { seriesId: 'home' }], ['free', 'title', { offer: true }],
   ['full', 'title', {}, 1200], ['full', 'car', { carIdx: 2, tab: 'upg' }, 2000], ['full', 'track', { trackIdx: 3 }], ['full', 'career', {}], ['full', 'series', { seriesId: 'home' }],
   ['veteran', 'title', {}, 1200], ['veteran', 'car', { carIdx: 2, colorIdx: 0 }, 2000], ['veteran', 'car', { carIdx: 5 }, 1800], ['veteran', 'car', { carIdx: 6, colorIdx: 3 }, 2000],
-  ['veteran', 'track', { trackIdx: 8 }], ['veteran', 'track', { trackIdx: 9 }], ['veteran', 'career', {}], ['veteran', 'series', { seriesId: 'legends' }], ['veteran', 'series', { seriesId: 'attack' }],
+  ['veteran', 'track', { trackIdx: 8 }], ['veteran', 'track', { trackIdx: 9 }], ['veteran', 'track', { trackIdx: 3, weatherSheet: true }], ['veteran', 'career', {}], ['veteran', 'series', { seriesId: 'legends' }], ['veteran', 'series', { seriesId: 'attack' }],
   ['veteran', 'multi', { mpMode: 'create' }], ['veteran', 'multi', { mpMode: 'join' }], ['veteran', 'board', { lbTrack: -1 }], ['veteran', 'board', { lbTrack: 3 }], ['veteran', 'settings', {}],
 ];
 let n = 0;
 for (const [st, scr, o, ms] of plan) {
   n++;
-  const name = String(n).padStart(2, '0') + '-' + st + '-' + scr + (o.carIdx != null ? '-c' + o.carIdx : '') + (o.trackIdx != null ? '-t' + o.trackIdx : '') + (o.seriesId ? '-' + o.seriesId : '') + (o.tab ? '-' + o.tab : '') + (o.mpMode ? '-' + o.mpMode : '') + (o.lbTrack != null ? '-lb' + o.lbTrack : '') + (o.offer ? '-offer' : '');
+  const name = String(n).padStart(2, '0') + '-' + st + '-' + scr + (o.carIdx != null ? '-c' + o.carIdx : '') + (o.trackIdx != null ? '-t' + o.trackIdx : '') + (o.seriesId ? '-' + o.seriesId : '') + (o.tab ? '-' + o.tab : '') + (o.mpMode ? '-' + o.mpMode : '') + (o.lbTrack != null ? '-lb' + o.lbTrack : '') + (o.offer ? '-offer' : '') + (o.weatherSheet ? '-weather' : '');
   if (ONLY && !ONLY.some(x => name.includes(x))) continue;
   await open(st, scr, o, ms);
   await shot(name);
 }
-if (!ONLY) { await open('veteran', 'car', { carIdx: 2 }, 1500); await click('[data-act="race-single"]'); await wait(300); await shot('99-loading'); await wait(1600); await shot('99-picker'); }
+if (!ONLY) { await open('veteran', 'track', { trackIdx: 2 }, 900); await click('[data-act="race-single"]'); await wait(300); await shot('99-loading'); await wait(1600); await shot('99-picker'); }
 console.log(errors.length ? 'ERRORS:\n' + [...new Set(errors)].join('\n') : 'no console errors');
 await browser.close(); server.close();

@@ -66,7 +66,12 @@ await step('free-daily-result', async () => { await page.click('[data-finish="3"
 await step('free-daily-after', async () => { await page.click('[data-act="res-continue"]'); await wait(700); });
 await step('free-title-after', () => open('free', 'title', {}, 900));
 await step('free-track-jezero', () => open('free', 'track', { trackIdx: 1 }, 900));
-await step('free-car', () => open('free', 'car', { carIdx: 0 }, 2000));
+await step('free-pick-car', async () => { await page.click('[data-act="pick-car"]'); await wait(2000); });
+await step('free-car-paint', async () => { await page.click('[data-act="car:1"]'); await wait(300); await page.click('[data-act="tab:paint"]'); await wait(300); await page.click('[data-act="color:0"]'); await wait(1500); });
+await step('free-car-selected', async () => { await page.click('[data-act="car-select"]'); await wait(700); });
+await step('free-weather-sheet', async () => { await page.click('[data-act="pick-weather"]'); await wait(500); await page.click('[data-act="weather:1"]'); await wait(200); await page.click('[data-act="laps:1"]'); await wait(400); });
+await step('free-weather-done', async () => { await page.click('.sheet [data-act="close-sheet"]'); await wait(500); });
+await step('free-single-result', async () => { await page.click('[data-act="race-single"]'); await wait(1700); await page.click('[data-finish="2"]'); await wait(600); });
 await step('free-career', () => open('free', 'career', {}, 800));
 await step('free-career-result', () => fin('career', '1'));
 await step('free-series-after', async () => { await page.click('[data-act="res-continue"]'); await wait(700); });
@@ -81,6 +86,7 @@ await step('veteran-title', () => open('veteran', 'title', { fresh: true }, 1200
 await step('veteran-daily', () => open('veteran', 'track', { trackIdx: 0 }, 900));
 await step('veteran-career-result', () => fin('career', '1'));
 await step('veteran-board-today', () => open('veteran', 'board', { lbTrack: -1 }, 800));
-await step('veteran-trial-picker', async () => { await open('veteran', 'track', { trackIdx: 10 }); await open('veteran', 'car', { carIdx: 2 }, 1500); await page.click('[data-act="race-single"]'); await wait(1700); });
+await step('veteran-trial-track', () => open('veteran', 'track', { trackIdx: 10 }, 900));
+await step('veteran-trial-picker', async () => { await page.click('[data-act="race-single"]'); await wait(1700); });
 console.log(errors.length ? 'ERRORS:\n' + [...new Set(errors)].join('\n') : 'no console errors');
 await browser.close(); server.close();

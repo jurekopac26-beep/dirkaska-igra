@@ -8,14 +8,17 @@ def crop(im, pad):
 def load(name, pad=10):
     return crop(Image.open('raw/carimg/%s.png' % name).convert('RGBA'), pad)
 
-for m in ['kaze', 'vortex', 'pico', 'strega', 'rally', 'formula']:
-    im = load(m); im.thumbnail((520, 320), Image.LANCZOS)
-    im.save('../assets/cars/img/%s.webp' % m, 'WEBP', quality=86, method=6); print(m, im.size)
+# every car in every paint (8 colours of the game), for the car boxes of a race
+for m in ['pico', 'kaze', 'rally', 'vortex', 'strega', 'formula']:
+    for c in range(8):
+        im = load('%s-%d' % (m, c)); im.thumbnail((240, 136), Image.LANCZOS)
+        im.save('../assets/cars/img/%s-%d.webp' % (m, c), 'WEBP', quality=86, method=6)
+    print(m, im.size)
 
 # Multiplayer: the red car in front on the left, the blue one a little further away on the right
 L, R = load('duel_l', 6), load('duel_r', 6)
 R = R.resize((int(R.width * 0.9), int(R.height * 0.9)), Image.LANCZOS)
-ox, oy = int(L.width * 0.5), int(L.height * 0.28)
+ox, oy = int(L.width * 0.4), int(L.height * 0.28)
 W, H = max(ox + R.width, L.width), max(R.height, oy + L.height)
 c = Image.new('RGBA', (W, H), (0, 0, 0, 0))
 c.alpha_composite(R, (W - R.width, 0)); c.alpha_composite(L, (0, oy))
