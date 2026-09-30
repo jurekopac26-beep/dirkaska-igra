@@ -41,7 +41,7 @@ Okolica:
 
 ## Harju (kronometer v mestu)
 
-Mestna hitrostna preizkušnja Relija Finska na grebenu Harju sredi Jyväskyläja. Na njej so tekmovali že na prvih Jyväskylän Suurajot leta 1951, danes pa odpira reli v četrtek zvečer (in se ponovi v petek). Proga je v pravem merilu in po pravih ulicah (OpenStreetMap), višine so iz satelitskega višinskega modela ArcticDEM (2 m), iz katerega so odstranjena drevesa in stavbe. En krog od starta do cilja je dolg ~2,0 km (petkov »Harju 2« je bil leta 2024 dolg 2,01 km; v četrtek se isti krog prevozi dvakrat):
+Mestna hitrostna preizkušnja Relija Finska na grebenu Harju sredi Jyväskyläja. Na njej so tekmovali že na prvih Jyväskylän Suurajot leta 1951, danes pa odpira reli v četrtek zvečer (in se ponovi v petek). Proga je v pravem merilu in po pravih ulicah (OpenStreetMap), višine so iz satelitskega višinskega modela ArcticDEM (2 m), iz katerega so odstranjena drevesa in stavbe. En krog od starta do cilja je dolg ~2,0 km, kot petkov »Harju 2« leta 2024 (2,01 km; četrtkov »Harju 1« je bil tisto leto skoraj dva kroga, 3,48 km, v letih 2025 in 2026 pa je bila preizkušnja dolga 2,58 km):
 
 - start na jugovzhodnem vozišču Yliopistonkatu in znani pospešek navzdol do prve lasnice v levo: obrat okoli konca sredinskega otoka pri križišču Kilpisenkatu (vozišči sta tam 14 m narazen), med voziščema so betonski bloki,
 - vzpon nazaj po drugem vozišču Yliopistonkatu mimo vznožja Nerovih stopnic (Neron portaat), polnih gledalcev,

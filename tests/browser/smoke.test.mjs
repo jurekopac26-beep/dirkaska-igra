@@ -1,6 +1,6 @@
 // Browser smoke test: the page loads (over http like GitHub Pages, and from a local file), every track can be
 // raced for 20 s on autopilot, settings migrate, the physics can be switched mid-race, the title demo runs,
-// a Pikes Peak run and an Ouninpohja run finish and their records are saved per physics (Ouninpohja also in the rain, apart).
+// a Pikes Peak run, an Ouninpohja run and a Harju run finish and their records are saved per physics (Ouninpohja also in the rain, apart).
 // Zero page errors allowed.
 //   node tests/browser/smoke.test.mjs
 import path from 'node:path';
@@ -157,6 +157,25 @@ try {
     T.check('Ouninpohja in the rain: puddles drawn and on the road, finishes, its own record in the rain, back to dry',
       r.drawn && r.onRoad && r.phase === 'done' && r.rec && r.rec.bestTime > 0 && / v dežju/.test(r.sub) && r.dry,
       `puddles drawn ${r.drawn}, on the road ${r.onRoad}, time ${r.t && r.t.toFixed(2)} s, record ${r.rec && r.rec.bestTime}, "${r.sub}", dry again ${r.dry}`);
+  }
+
+  // 6d. Harju, the city stage in Jyväskylä, to the flying finish: the record under 'harju@cs', the distance to go on the HUD, the stage's
+  //     words and the medal on the results, the co-driver's calls ready (the changes of surface among them: onto the gravel, the cobbles, the tarmac)
+  {
+    await startTrack(page, 'harju');
+    const r = await page.evaluate(async () => {
+      const g = window.__game;
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const left = document.getElementById('h-alt').textContent, calls = g.codrv.calls, notes = g.race.track.paceNotes().map(n => n.text);
+      for (let i = 0; i < 200 && g.phase !== 'done'; i++) { g.sim(1, true); if (i % 10 === 0) await new Promise(r => setTimeout(r, 0)); }
+      await new Promise(r => setTimeout(r, 800));
+      const rec = JSON.parse(localStorage.getItem('tdgp-records') || '{}');
+      return { phase: g.phase, t: g.race.player.finishTime, left, calls, notes, again: document.getElementById('res-restart').textContent, sub: document.getElementById('res-sub').textContent, rec: rec.tracks && rec.tracks['harju@cs'] };
+    });
+    const surf = ['onto gravel', 'onto cobbles', 'onto tarmac'].filter(w => r.notes.some(n => n.includes(w)));
+    T.check('Harju stage finishes, record saved for cs, the distance to go on the HUD, a medal on the results, the co-driver\'s calls of the surfaces',
+      r.phase === 'done' && r.rec && r.rec.bestTime > 0 && r.left === 'še 2,0 km' && r.again === 'Ponovi preizkušnjo' && /Harju/.test(r.sub) && /medalja/.test(r.sub) && r.calls > 10 && surf.length === 3,
+      `time ${r.t && r.t.toFixed(2)} s, record ${r.rec && r.rec.bestTime}, HUD "${r.left}", button "${r.again}", "${r.sub}", ${r.calls} co-driver calls, surfaces: ${surf.join(', ')}`);
   }
   T.check('no page errors during the whole run', !errors.length, errors.slice(0, 5).join(' | '));
   await ctx.close();
