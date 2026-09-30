@@ -192,6 +192,10 @@ Na zaslonu **Izberi progo** izbereš še **letni čas** (Poletje, Jesen, Zima) i
 - **Večer:** nizko oranžno sonce, dolge sence, topla meglica. Avti imajo prižgane žaromete.
 - **Noč:** temno modro nebo in šibka luna. Ob progi so vsakih 30 m reflektorji na drogovih, ki osvetlijo asfalt, avti pa na cesto pred sabo svetijo z žarometi. Npr. nočna dirka v Monaku.
 
+## Zvok navijačev in predori
+
+Na vseh dirkališčih se ob tribunah in gledalcih sliši množica (bobni, trobente, vzklikanje), glasneje, ko pelješ bliže, in s tiste strani, kjer so. Ob štartu, ko koga prehitiš, in v cilju zagrmi glasneje. Na cestnih kronometrih tega ni, na Ouninpohji imajo navijači ob cesti svoj zvok (glej zgoraj). V predoru pod hotelom v Monaku motor in tekmeci odmevajo od sten in stropa (kratek odmev majhnega, trdega prostora), prav tako pod mostom na Suzuki; ko pripelješ ven, odmev utihne.
+
 ## Dirkalnik formule
 
 V izbiri avta je **FORMULA ORKAN**, dirkalnik formule z odprtimi kolesi, sprednjim in zadnjim krilom, zaščitnim lokom (halo) nad voznikom v čeladi in kamero na strehi. Voziš ga lahko na vseh progah. Ko ga izbereš, vozijo formule tudi vsi tekmeci, vsak v svoji barvi in s svojo številko, kot v formuli 1.

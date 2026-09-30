@@ -183,6 +183,7 @@ const World = (function () {
 
   /* ---------------- helpers on track ---------------- */
   let T = null;
+  let CROWDS = [];   // the spectator crowds (crowdCtx) of the world being built
   let hash = null, HC = 32;
   function buildHash() {
     hash = new Map();
@@ -652,6 +653,7 @@ const World = (function () {
 
   /* ---------------- BUILD ---------------- */
   function build(scene, track, tex, opts) {
+    CROWDS = [];   // (the crowds of this build: their sound, see crowdPoints)
     T = track; THEME = (track.def && track.def.theme) || 'lake'; CSX = THEME === 'forest' || THEME === 'italia' || THEME === 'kamp'; ROCK_SMOOTH = CSX; SEA = (track.def && track.def.sea) || null; RIVER = track.def.river || null; RW = track.def.riverW || 26; CASTLE = track.def.castle || null; buildHash();
     if (THEME !== 'nring' && THEME !== 'spa' && THEME !== 'rbring') NR = null;   // free the last corridor build's grids (the Nordschleife's, Spa's, the Red Bull Ring's)
     if (THEME !== 'suzuka') SZ = null;                             // (and Suzuka's)
@@ -3868,7 +3870,17 @@ const World = (function () {
     const mat = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
     for (const g of cells.values()) { if (g.empty) continue; const m = new THREE.Mesh(g.geometry(), mat); m.name = 'tyremarks'; m.renderOrder = 1; m.matrixAutoUpdate = false; root.add(m); }
   }
-  function finish(o, tex) { if (!o.ownMarks) tyreMarks(o.root); return clouds(o.root, o, tex); }   // (every world, at the end of its build; the Nordschleife's and the Red Bull Ring's builders paint their own tyre marks)
+  function finish(o, tex) { if (!o.ownMarks) tyreMarks(o.root); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); return clouds(o.root, o, tex); }
+  // where the crowds are, for their sound (Sfx: x, z, how many 0..1), on a circuit whose builder has not given them (the Red Bull Ring's
+  // does): the spectators of every crowd of this build in 24 m cells, and the packed grandstands (the crowd picture) as full ones
+  function crowdPoints(o, tex) {
+    const cells = new Map(), put = (x, z, n) => { const k = Math.floor(x / 24) + ',' + Math.floor(z / 24); const e = cells.get(k); if (e) { e[0] += x * n; e[1] += z * n; e[2] += n; } else cells.set(k, [x * n, z * n, n]); };
+    for (const C of CROWDS) for (const L of C.sp.values()) for (let i = 0; i < L.length; i += 2) put(L[i], L[i + 1], 1);
+    if (tex.crowd) o.root.traverse(m => { if (!m.isMesh || !m.material || m.material.map !== tex.crowd || !m.geometry.attributes.position) return;
+      const P = m.geometry.attributes.position.array; for (let i = 0; i < P.length; i += 3 * 24) put(P[i], P[i + 2], 6); });   // (the grandstands' vertices: in world coordinates)
+    const out = []; for (const e of cells.values()) if (e[2] >= 6) out.push(e[0] / e[2], e[1] / e[2], Math.min(1, 0.3 + e[2] / 60));
+    return Float32Array.from(out);
+  }   // (every world, at the end of its build; the Nordschleife's and the Red Bull Ring's builders paint their own tyre marks)
 
   /* ---- moving things: the TV helicopter (Pikes Peak: a fly-over and the finish; Ouninpohja: with the car the whole run) (built at the end of
      buildPikes and buildOuni; pkUpdate runs every frame from World.update; the cloud shadows are every world's, see clouds above) ---- */
@@ -6081,6 +6093,7 @@ const World = (function () {
   function crowdCtx(o) {
     const U = { uTime: { value: 0 }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) } };
     const C = Object.assign({ U, ppl: new CrowdChunks(U), strip: new Chunks(384), runs: 0, n: 0, busy: false, sp: new Map(), eh: new Map(), circ: [], blocks: [], avoidL: [], shirts: CR_SHIRTS, maxSlope: 0.6, log: [] }, o);
+    CROWDS.push(C);
     if (C.grid && !C.gH) { const G = C.grid; C.gH = (x, z) => {   // height of the ground mesh surface (the same two triangles per cell)
       const gx = clamp((x - G.x0) / G.cell, 0, G.nx - 1.001), gz = clamp((z - G.z0) / G.cell, 0, G.nz - 1.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, A = G.arr, Y = (a, b) => A[((j + b) * G.nx + i + a) * 3 + 1];
       return u + v <= 1 ? Y(0, 0) + u * (Y(1, 0) - Y(0, 0)) + v * (Y(0, 1) - Y(0, 0)) : Y(1, 1) + (1 - u) * (Y(0, 1) - Y(1, 1)) + (1 - v) * (Y(1, 0) - Y(1, 1)); }; }
