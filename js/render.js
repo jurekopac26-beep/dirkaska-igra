@@ -1588,7 +1588,7 @@ const Render = (function () {
     const at = (ax, ay, az) => _pkE.set(ax, ay, az).applyMatrix4(v.grp.matrixWorld);
     const wz = v.wf.length ? Math.abs(v.wf[0].position.z) : M.wid * 0.5 - 0.1, night = atmos.tod === 'night' ? 1 : atmos.tod === 'dusk' ? 0.85 : 0.65;
     const winter = atmos.season === 'winter', snowing = !!snow && snow.mesh.visible, zone = Core.sstep(322, 350, gy), sn = winter || snowing ? 1 : zone * 0.6;
-    const slide = (c.arcade ? Core.sstep(0.26, 0.62, Math.abs(c.beta || 0)) * 1.2 : Math.max(0, c.latR - 1.0) / 3.5) + c.spin * 0.9 + (c.lock ? 0.55 : 0);
+    const slide = Math.max(0, c.latR - 1.0) / 3.5 + c.spin * 0.9 + (c.lock ? 0.55 : 0);
     // brake discs: heat from hard braking at speed (front 60 %), cooling off over ~4 s; drawn as glows on the wheels' outer faces
     const bk = c.inBrk > 0.3 && c.vl > 6 && !c.air ? c.inBrk * (c.vl - 6) * dt * 0.04 : 0;
     for (let a = 0; a < 2; a++) {
@@ -2289,7 +2289,7 @@ const Render = (function () {
         if (dirt) for (let k = 0; k < 8; k++) { const a = Math.random() * Math.PI * 2, sp = 2 + Math.random() * 3; particles.emit(x, gy + 0.3, z, Math.cos(a) * sp + c.vx * 0.4, 3 + Math.random() * 2.5, Math.sin(a) * sp + c.vz * 0.4, 0.8 + Math.random() * 0.4, 0.3, 0.26, 0.34, 0.27, 0.2, 0.95, 14, 0.4, gy); }
       }
     }
-    const slide = (c.arcade ? Core.sstep(0.26, 0.62, Math.abs(c.beta || 0)) * 1.2 : Math.max(0, c.latR - 1.0) / 3.5) + c.spin * 0.9 + (c.lock ? 0.55 : 0) + (c.inHand > 0.5 && spd > 5 ? 0.45 : 0);
+    const slide = Math.max(0, c.latR - 1.0) / 3.5 + c.spin * 0.9 + (c.lock ? 0.55 : 0) + (c.inHand > 0.5 && spd > 5 ? 0.45 : 0);
     const rainy = wetW > 0.1, near = !rainy || Math.hypot(x - (cam.vcx || 0), z - (cam.vcz || 0)) < 140;   // (rain: spray only where it can be seen, the particles are shared)
     const wheels = [[-M.b, -tw, 2], [-M.b, tw, 3], [M.a, -tw, 0], [M.a, tw, 1]];
     for (let k = 0; k < 4; k++) {
@@ -2424,10 +2424,10 @@ const Render = (function () {
       near = E.near; ck.car = c;
       if (camera.fov !== 58) { camera.fov = 58; camera.updateProjectionMatrix(); updatePointScale(); }
     } else if (mode === 'chase') {
-      // in a drift, look along the direction of travel; with the 'cs' physics further along it and a lazier swing
-      // (Circuit Superstars: the view reads the drift along the travel, so a sliding car shows its angle)
-      const cs = c.phys === 'cs', hv = h + clamp(c.beta || 0, -1.2, 1.2) * (cs ? 0.85 : 0.65);
-      cam.hs += wrapPi(hv - cam.hs) * (1 - Math.exp(-dt * (cs ? 2.8 : 3.2)));
+      // in a drift, look along the direction of travel, with a lazy swing (Circuit Superstars: the view reads the drift along the
+      // travel, so a sliding car shows its angle)
+      const hv = h + clamp(c.beta || 0, -1.2, 1.2) * 0.85;
+      cam.hs += wrapPi(hv - cam.hs) * (1 - Math.exp(-dt * 2.8));
       cam.zoom += (pitZ * (1 + 0.25 * clamp(spd / 55, 0, 1)) - cam.zoom) * k2;
       // phone held upright: higher camera, wider lens, long view ahead, car in the lower part of the screen
       const portrait = camera.aspect < 1;

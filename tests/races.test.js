@@ -1,11 +1,10 @@
-// Full AI races on every track with both physics (12 AI + the player on autopilot; Pikes Peak: time trial), to the finish,
+// Full AI races on every track (Circuit Superstars physics; 12 AI + the player on autopilot; Pikes Peak: time trial), to the finish,
 // in the dry and in the rain ('/rain': every car with the wet grip, the AI's pace from it), and with the player in the formula car
 // ('/formula': every car a formula, as in the game).
 // Checks that every car finishes and compares with tests/golden/races.json: the exact result (finish order, finish times
 // and the final state of every car, as a digest) must be the same. When it is not, the other values show how big the
 // change is: spins (at most 2 more than the reference), wall contacts, rescues and the winner's time (within +-3 %).
-// A race in the rain must also be slower than the same race in the dry, by 0.5-30 % (6-9 % on most tracks; the arcade cars' slow
-// hairpins, where they turn by the slide rather than the grip, lose the least: Pikes Peak ~1 %).
+// A race in the rain must also be slower than the same race in the dry, by 0.5-30 % (6-9 % on most tracks).
 //   node tests/races.test.js [--update] [--only=gozd,cs] [--only=spa,rain]
 'use strict';
 const fs = require('fs');
