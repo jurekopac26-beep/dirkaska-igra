@@ -184,12 +184,12 @@
   }
  },
  "vrsic": {
-  "meshes": 4245,
-  "verts": 1888558,
+  "meshes": 4294,
+  "verts": 1891410,
   "instances": 68362,
   "props": 308,
   "crowd": 1431,
-  "world": "a32a2da",
+  "world": "b982e3a1",
   "propsHash": "b87090f3",
   "floor": "5926cf0f/25760",
   "groups": {
@@ -197,7 +197,8 @@
    "-:MeshPhongMaterial": "8705289c",
    "-:MeshBasicMaterial": "eb78c138",
    "crowd:MeshLambertMaterial": "567d2ee9",
-   "tyremarks:MeshBasicMaterial": "a695e87e"
+   "tyremarks:MeshBasicMaterial": "a695e87e",
+   "roadwear:MeshLambertMaterial": "a20f2891"
   }
  },
  "nring": {
