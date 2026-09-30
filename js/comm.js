@@ -120,6 +120,15 @@ const Comm = (() => {
     summitEven: ['At the summit in {time}. That is your record to the thousandth!', '{time} at the top, dead level with your best!'],
     // Pikes Peak: the TV helicopter (its fly-over after Glen Cove, and the escort to the finish)
     heliFly: ['The TV chopper is overhead!', 'Here comes the helicopter, catching the action!', 'Look up! The TV helicopter sweeps across the road!'],
+    // the highlights after the race (Najboljši trenutki in the replay)
+    rpStart: ['Here are the highlights! The start, and the whole field goes for turn one.', "Let's look back at the race. Here is the start: everybody wants the inside line!", 'Time for the highlights! Lights out, and into the first corner they go.'],
+    rpPass: ['{a} goes past {b}, and that is {pos} place.', 'A great move by {a} on {b}, for {pos}!', 'Watch {a} here, through on {b}!'],
+    rpPassMe: ['And here is your move on {b}, up to {pos}!', 'Look at this! You go past {b} for {pos}.'],
+    rpPassOnMe: ['{a} gets past you here, into {pos}.', 'Here {a} comes through on you, for {pos}.'],
+    rpCrash: ['A big moment for {a}!', 'Ouch! {a} hits hard here.', 'Look at this crash for {a}!'],
+    rpCrashMe: ['And here is your big moment. Ouch!', 'Your crash, from the TV cameras. That must have hurt!'],
+    rpFinish: ['And {a} takes the chequered flag!', 'The finish, and the win goes to {a}!'],
+    rpFinishMe: ['And you take the chequered flag! What a race!', 'Across the line, and the win is yours!'],
     podiumRb: ['{name} on the top step of the podium, and the champagne is flying!', 'The podium ceremony in Spielberg: {name} lifts the cup!', 'Champagne on the podium! {name} is the winner at the Red Bull Ring!'],
     podiumMe: ['You are on the top step! Enjoy the champagne!', 'The cup is yours! What a drive at the Red Bull Ring!', 'Champagne for the winner: that is you!'],
     heliRb: ['The TV helicopter sweeps across the main straight!', 'There goes the helicopter over the start and finish straight!', 'The chopper cameras catch you coming down the straight!'],
