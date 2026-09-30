@@ -1724,7 +1724,7 @@ const Render = (function () {
     for (const sd of [-0.5, 0.5]) World.box(g, 0.16, 1.37, sd * 1.1, 0.1, 0.16, 0.06, 0, K);   // (its feet)
     const bar = new THREE.Mesh(g.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })); v.bodyG.add(bar);
     v.scL = [-1, 1].map(sd => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.09, 0.4), new THREE.MeshBasicMaterial({ color: 0x4a3008 })); m.position.set(0.16, 1.465, sd * 0.3); v.bodyG.add(m); return m; });
-    v.dec.material.map = numTex('SC');
+    v.dec.material.map = numTex('SC'); renderer.initTexture(v.dec.material.map);   // (on the GPU at once, not only the first time it comes out)
   }
   function updateSC(dt, alpha) {
     const R = curRace, S = R && R.sc, c = R && R.scCar, v = scV;
