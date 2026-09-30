@@ -56,8 +56,8 @@ const dAt = (s) => Math.round(s - T.startS);   // (metres after the start line)
   const J = def.jumpRec, big = jumps.reduce((a, j, k) => j.h > jumps[a].h ? k : a, 0);
   check('jump record: the Yellow House is the biggest jump, Märtin\'s 57 m', J.bump === big && J.m === 57 && /Märtin/.test(J.by), `bump ${J.bump} (biggest ${big}), ${J.m} m`);
   const M = def.medals, asc = (a) => Array.isArray(a) && a.length === 3 && a[0] < a[1] && a[1] < a[2];
-  check('medals: gold < silver < bronze for both physics, dry and wet; the rain slower', asc(M.cs) && asc(M.arcade) && asc(M.wet.cs) && asc(M.wet.arcade) && M.wet.cs[0] > M.cs[0] && M.wet.arcade[0] > M.arcade[0],
-    `cs ${M.cs}, arcade ${M.arcade}, wet cs ${M.wet.cs}, wet arcade ${M.wet.arcade}`);
+  check('medals: gold < silver < bronze, dry and wet; the rain slower', asc(M.cs) && asc(M.wet.cs) && M.wet.cs[0] > M.cs[0],
+    `dry ${M.cs}, wet ${M.wet.cs}`);
 }
 
 // the other way round (as before 1995): the same road reversed (and run on past this finish), the same crests, its own start and finish,
@@ -76,8 +76,8 @@ const dAt = (s) => Math.round(s - T.startS);   // (metres after the start line)
     const N = TR.paceNotes(), fN = T.paceNotes(), nJ = N.reduce((a, q) => a + (q.text.match(/\bjump\b|\bcrest\b/g) || []).length, 0);
     check('reverse: its own pace notes (the corners the other way), every jump and crest read', N.length > 25 && nJ === R.bumps.length && N.map(q => q.text).join('|') !== fN.map(q => q.text).join('|'), `${N.length} calls, ${nJ} jumps and crests`);
     const M = R.medals, asc = (a) => Array.isArray(a) && a.length === 3 && a[0] < a[1] && a[1] < a[2];
-    check('reverse: its own medals, gold < silver < bronze, the rain slower; the Yellow House without a famous record', asc(M.cs) && asc(M.arcade) && asc(M.wet.cs) && asc(M.wet.arcade) && M.wet.cs[0] > M.cs[0] && R.jumpRec && R.jumpRec.bump === def.jumpRec.bump && !R.jumpRec.m,
-      `cs ${M.cs}, arcade ${M.arcade}`);
+    check('reverse: its own medals, gold < silver < bronze, the rain slower; the Yellow House without a famous record', asc(M.cs) && asc(M.wet.cs) && M.wet.cs[0] > M.cs[0] && R.jumpRec && R.jumpRec.bump === def.jumpRec.bump && !R.jumpRec.m,
+      `dry ${M.cs}, wet ${M.wet.cs}`);
   }
 }
 

@@ -1,7 +1,9 @@
 // The replay after a race (Jezero Ring, the player on autopilot): the results screen's "Posnetek" plays the race back (the HUD and the
 // on-screen controls hidden, the replay's own controls shown); the cars where the recording has them; TV cameras beside the track (the
 // camera on a post far from the car, zoomed in); pause, speed, the camera (TV, behind the car, from above, the cockpit), the car followed; "Končaj"
-// back to the results. A time trial (Ouninpohja): its full recording and the TV director.
+// back to the results. "Najboljši trenutki" (the results, or the replay's Trenutki): the start, the best moments of the race and the finish in
+// the order they happened, each on the TV cameras with the car of the moment followed and a caption; then back to the results. A time
+// trial (Ouninpohja): its full recording and the TV director.
 //   node tests/browser/replay.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -50,6 +52,26 @@ try {
   // the end: back to the results
   await act('rp-exit'); await page.waitForTimeout(300); const e = await st();
   T.check('"Končaj": back to the results', e.screen === 'results' && !e.ui, JSON.stringify(e));
+
+  // the highlights: from the results
+  const hl = () => page.evaluate(() => { const g = window.__game, P = g.replay, el = (id) => document.getElementById(id), H = P && P.hl;
+    return { screen: g.screen, on: !!H, i: H ? H.i : -1, n: H ? H.clips.length : 0, lbl: H ? H.clips[H.i].lbl : '', k: P ? P.k : -1, want: H ? H.clips[H.i].k : -2, t: P ? P.t : NaN, t0: H ? H.clips[H.i].t0 : NaN,
+      cam: el('rp-cam').textContent, cap: el('rp-hl-cap').classList.contains('off') ? '' : el('rp-hl-cap').textContent, lit: el('rp-hl').classList.contains('on'), ui: !el('replay-ui').classList.contains('off') }; });
+  const hb = await page.evaluate(() => !document.getElementById('res-hl').classList.contains('off'));
+  await act('replay-hl'); await frames(3); const h0 = await hl();
+  T.check('"Najboljši trenutki": the start first, on the TV cameras, the car on pole followed, a caption, the button lit', hb && h0.on && h0.i === 0 && h0.n >= 2 && h0.lbl === 'ŠTART' && h0.cam === 'TV' && h0.k === h0.want && /ŠTART/.test(h0.cap) && h0.lit && h0.ui && h0.screen === 'none' && h0.t - h0.t0 < 3,
+    JSON.stringify(h0));
+  await act('rp-speed'); await act('rp-speed');   // (4x: the programme sooner through)
+  const seen = [h0.lbl]; let last = h0, done = null;
+  for (let k = 0; k < 400 && !done; k++) {
+    await frames(4); const h = await hl();
+    if (!h.on) { done = h; break; }
+    if (h.i !== last.i) { seen.push(h.lbl + (h.k === h.want && h.cam === 'TV' && h.cap.length > 3 ? '' : '!')); }
+    last = h;
+  }
+  T.check('then the moments in turn (overtakes, crashes), the finish last, each with its car followed on TV and a caption; then the results again',
+    !!done && done.screen === 'results' && !done.ui && seen[seen.length - 1] === 'CILJ' && seen.length === last.n && seen.every(x => !x.endsWith('!')) && seen.slice(1, -1).every(x => x === 'PREHITEVANJE' || x === 'NESREČA'),
+    seen.join(' > '));
 
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
 
