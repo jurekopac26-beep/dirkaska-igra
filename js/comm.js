@@ -125,6 +125,12 @@ const Comm = (() => {
     cpFirstStage: ['Split {cp}, {time}.', 'Through split {cp}. Keep it flat!', 'Split {cp}, {time}. Hold on tight!'],
     stageRecord: ['Flying finish! A new personal best, {time}!', 'Record run through {track}! {time}!', 'What a stage! A new personal best, {time}!'],
     stageEven: ['Through the flying finish in {time}. That is your record to the thousandth!', '{time} at the finish, dead level with your best!'],
+    // Pikes Peak: the announcer at the summit finish line (say() swaps the summit* keys for these: the time read out in full, then a new record by how
+    // much, the first time on the board, level, or how far off the best)
+    pkFinRec: ['Across the line at the summit! The official time, {time}! That is a new record, {delta} seconds faster than the old best!', 'At the top of the mountain in {time}! A new record, ladies and gentlemen, by {delta} seconds!', 'The clock stops at {time}! A brand new record on Pikes Peak, {delta} seconds under the old mark!'],
+    pkFinFirst: ['Across the line at the summit! The official time, {time}! That is the record to beat on the mountain!', 'At the top in {time}! The first time on the board, and the new record!', 'The clock stops at {time}! A record at the summit, now go and beat it!'],
+    pkFinEven: ['Across the line at the summit! {time}, and that equals the record, to the thousandth!', 'The clock stops at {time}, dead level with the best time on the mountain!'],
+    pkFinOff: ['Across the line at the summit! The official time, {time}. That is {delta} seconds off the record.', 'At the top in {time}, {delta} seconds short of the best time on the mountain.', 'The clock stops at {time}. {delta} seconds away from the record.'],
     stageEnd: ['Flying finish in {time}, {delta} seconds off your best.', 'Across the line. {time}, just {delta} short of the record.', "That's the end of the stage. {time}. {delta} seconds to find next time."]
   };
 
@@ -192,6 +198,11 @@ const Comm = (() => {
   // opt.ttl = how long (ms) the line may wait in the queue. Returns the logged item (item.spoken / item.cut are set later), or null.
   function say(key, vars, prio, opt) {
     if (!on || !speech || !synth) return null;   // audio-only commentary: silent when sound is off
+    if (key === 'summitRecord' || key === 'summitEven' || key === 'summit') {   // Pikes Peak's finish: its announcer (minutes read out as minutes and seconds)
+      const t = vars && String(vars.time || ''), m = /^(\d+) minutes? ([\d.]+)$/.exec(t);
+      vars = Object.assign({}, vars, { time: m ? m[1] + (m[1] === '1' ? ' minute and ' : ' minutes and ') + m[2] + ' seconds' : t });
+      key = key === 'summitEven' ? 'pkFinEven' : key === 'summit' ? 'pkFinOff' : vars.delta ? 'pkFinRec' : 'pkFinFirst';
+    }
     const pool = LINES[key]; if (!pool) return null;
     let k = Math.floor(Math.random() * pool.length);
     if (pool.length > 1 && k === lastPick[key]) k = (k + 1) % pool.length;
