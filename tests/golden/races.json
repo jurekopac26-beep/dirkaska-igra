@@ -599,6 +599,66 @@
   "nan": false,
   "digest": "a9f84dfccb4d75709c9d8c84"
  },
+ "harju/cs": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 72.84,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "9e3d5c05e252ed20e68a8167"
+ },
+ "harju/cs/rain": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 78.79,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "95c0ed09f5b40929ced6a7a6"
+ },
+ "harju/cs/formula": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 68.49,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "97c89ebcc89a806db9ddc475"
+ },
+ "harju/arcade": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 75.16,
+  "spins": 0,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "ed9d2efa9571e28b0d2825ea"
+ },
+ "harju/arcade/rain": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 80.4,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "70bc2f283fa63d5ae9fb1200"
+ },
+ "harju/arcade/formula": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 69.07,
+  "spins": 0,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "574fcf528a09966e26744bc9"
+ },
  "nring/cs": {
   "finished": 21,
   "cars": 21,

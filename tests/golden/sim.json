@@ -1399,6 +1399,146 @@
    "repairs": 0
   }
  },
+ "harju/race/cs": {
+  "digest": "0764aefcbb66238fb3f1b688",
+  "lead": 1679,
+  "car0": [
+   -655.13,
+   219.08
+  ],
+  "cover": {
+   "dmg": 0.02,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "harju/race/arcade": {
+  "digest": "ed9f8634d49f64f5edbfb985",
+  "lead": 1638.4,
+  "car0": [
+   -648.01,
+   177.95
+  ],
+  "cover": {
+   "dmg": 0.25,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "harju/demo/cs": {
+  "digest": "9afaa82c705ccd43f9f9d61c",
+  "lead": 1688.2,
+  "car0": [
+   -653.01,
+   223.31
+  ],
+  "cover": {
+   "dmg": 0.03,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "harju/demo/arcade": {
+  "digest": "358a4fc5d8a52a339b777e88",
+  "lead": 1662,
+  "car0": [
+   -654.09,
+   199.81
+  ],
+  "cover": {
+   "dmg": 0.45,
+   "loose": 12,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "harju/upg/cs": {
+  "digest": "1cfa4b9a5d9d0f7fadc25ef0",
+  "lead": 1685.4,
+  "car0": [
+   -654.55,
+   220.92
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "harju/upg/arcade": {
+  "digest": "01c0bc1ee37abe5d23bbddb7",
+  "lead": 1681.2,
+  "car0": [
+   -655.37,
+   219.88
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "harju/crash/cs": {
+  "digest": "cf4a3b6697bf71ee4b622227",
+  "lead": 1555.5,
+  "car0": [
+   -592.69,
+   120.15
+  ],
+  "cover": {
+   "dmg": 0.46,
+   "loose": 1,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
+ "harju/crash/arcade": {
+  "digest": "26af8dec8e16be086790124e",
+  "lead": 1596.5,
+  "car0": [
+   -620.59,
+   148.17
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 5,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "harju/formula/cs": {
+  "digest": "31b86fa3d0bbcf8ec7266177",
+  "lead": 1628.1,
+  "car0": [
+   -642.96,
+   171.05
+  ],
+  "cover": {
+   "dmg": 0.44,
+   "loose": 1,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
+ "harju/formula/arcade": {
+  "digest": "1b6ff569e67fb189f4cff0ab",
+  "lead": 1687,
+  "car0": [
+   -654.4,
+   223.06
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
  "nring/race/cs": {
   "digest": "f6ddab7f086ed5bbbbec51a7",
   "lead": 2498.2,

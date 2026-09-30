@@ -39,6 +39,29 @@ Okolica:
 - **Helikopter in kamera**: TV helikopter se drži daleč od kamere (prej je v izometričnem pogledu pogosto prekril pol zaslona), njegova senca pa drsi po tleh. Drevesa in hiše med kamero in avtom se sproti razredčijo, da avta ne zakrijejo.
 - **Finske podrobnosti**: rumene table z losom ob gozdu, los na robu gozda in drugi, ki brodi po ribniku med trstiko. Na jezerih so čolni z navijači, na velikem jezeru otok z bori. Iz žarov ob taborih navijačev in iz dimnikov savn se vije dim. Na obzorju se dvigajo gozdnati griči.
 
+## Harju (kronometer v mestu)
+
+Mestna hitrostna preizkušnja Relija Finska na grebenu Harju sredi Jyväskyläja. Na njej so tekmovali že na prvih Jyväskylän Suurajot leta 1951, danes pa odpira reli v četrtek zvečer (in se ponovi v petek). Proga je v pravem merilu in po pravih ulicah (OpenStreetMap), višine so iz satelitskega višinskega modela ArcticDEM (2 m), iz katerega so odstranjena drevesa in stavbe. En krog od starta do cilja je dolg ~2,0 km (petkov »Harju 2« je bil leta 2024 dolg 2,01 km; v četrtek se isti krog prevozi dvakrat):
+
+- start na jugovzhodnem vozišču Yliopistonkatu in znani pospešek navzdol do prve lasnice v levo: obrat okoli konca sredinskega otoka pri križišču Kilpisenkatu (vozišči sta tam 14 m narazen), med voziščema so betonski bloki,
+- vzpon nazaj po drugem vozišču Yliopistonkatu mimo vznožja Nerovih stopnic (Neron portaat), polnih gledalcev,
+- legendarni desni zavoj z asfalta na makadam pri Cygnaeuksenkatu in strm vzpon po peščeni cesti med bori na vrh grebena (šikana iz bal na začetku vzpona),
+- vodni stolp Vesilinna na vrhu: rdeča opeka, 34 m, arhitekt Olavi Kivimaa, 1953; spodaj naravoslovni muzej, zgoraj kavarna in restavracija za velikimi okni, na strehi razgledna ploščad z gledalci,
+- strm spust ob stadionu Harju po Ihantolantie,
+- vogal Lasseja Lampija (Lasse Lammen puu: tam se je leta 1987 njegov Mitsubishi Starion zaletel v bor) in levo na Pitkäkatu,
+- Pitkäkatu med lesenimi hišami z dvema šikanama iz bal na asfaltu,
+- lasnica pri šoli Normaalikoulu (Norssi) na Oikokatu, še ena šikana, nato tlakovci ob šolskem dvorišču,
+- desno na Norssin kulma na Yliopistonkatu in leteči cilj, STOP pa na Voionmaankatu.
+
+Potek se iz leta v leto malo spreminja. Zaporedje krajev, začetek z lasnico in zavoj na makadam so po opisih preizkušnje, točna mesta šikan, ovir in črt starta in cilja pa so naša ocena.
+
+- **Površine**: asfalt, ~200 m makadama (pesek in drobni gramoz grebena, rumenkast prah) in ~130 m tlakovcev. Cesta je ponekod ožja (3–5 m od sredine do roba); sovoznik pove, kdaj pride makadam, tlakovci ali asfalt (»hairpin right onto gravel«, »onto cobbles«, »square right onto tarmac«).
+- **Čas dneva**: poletni večer ob 19:05 (četrtek konec julija ali v začetku avgusta), sonce je ~18° visoko tik severno od zahoda, sence borov in blokov so dolge.
+- **Dež**: luže so samo na makadamu. Kot na Ouninpohji ima vožnja v dežju svoje rekorde, duha in medalje. Medalje so tudi tu po času reli avta na avtopilotu.
+- **Mesto**: ~550 stavb iz OpenStreetMap v izmerjeni višini (bloki z okni in balkoni, trgovine, lesene hiše, lopi, šola, cerkev) z ravnimi ali dvokapnimi strehami, ulice, pločniki z granitnimi robniki, prehodi za pešce, parkirišča, poti in stopnice v parku, cestne luči, klopi, avtobusna postajališča, semaforji, ograje, žive meje in oporni zidovi. Tribuna stadiona je polna gledalcev.
+- **Park Harju**: ~2.700 dreves po modelu višine krošenj (stari rdečkasti bori na grebenu, smreke, breze; lipe in javorji na ulicah in dvoriščih), tla pod bori so iglice, mah in brusnice, na strmih pobočjih pesek. Dlje od ceste so drevesa preprostejša, da igra na telefonih ostane tekoča.
+- **Reli**: ~3.700 gledalcev na pobočjih, stopnicah in pločnikih za jeklenimi ograjami (v mestu) in oranžno mrežo (v parku), z reklamnimi pasicami izmišljenih znamk igre, table YLEISÖALUE in KIELLETTY ALUE (zaprte stranske ulice, redarji), bale slame v šikanah in okoli otoka lasnice, premakljive bale na zunanji strani ostrih ovinkov, start z lučmi, CP loki, rumena in rdeča tabla pred ciljem, STOP, TV stolpi s snemalci in TV helikopter. Na obzorju so gozdnati griči okoli mesta in jezero Jyväsjärvi.
+
 ## Nürburgring Nordschleife
 
 Pravi „Zeleni pekel“ v Nemčiji v pravem merilu: en krog (20,7 km) proti 20 tekmecem (na drugih progah jih je 12), ki so tu hitrejši kot drugod, start in cilj pri tribuni T13, vožnja v smeri urinega kazalca. Oblika proge je iz OpenStreetMap, višine pa iz satelitskih višinskih modelov (SRTM in Copernicus), zato so klanci in spusti pravi: od T13 (~620 m) po Fuchsröhre navzdol do Breidscheida (~335 m, najnižja točka), nato dolg vzpon do Hohe Acht (~617 m). Ovinka Karussell in Kleines Karussell sta nagnjena (betonska skleda na notranji strani, avto ju lahko odpelje hitreje), na Flugplatzu, v Pflanzgartnu in na Sprunghüglu avto poskoči. Med vožnjo se pod uro izpišejo imena ovinkov (Hatzenbach, Flugplatz, Fuchsröhre, Adenauer Forst, Wehrseifen, Breidscheid, Bergwerk, Kesselchen, Karussell, Hohe Acht, Brünnchen, Pflanzgarten, Schwalbenschwanz, Döttinger Höhe …), pri KROG pa, koliko kilometrov kroga je že za tabo. Gozd, travniki, vasi in mostovi so postavljeni po pravi rabi tal in stavbah iz OpenStreetMap; gozd ima smreke, bukve, macesne in suhe smreke, ob robu grmovje in mlado drevje, tla pod krošnjami so temna. Na asfaltu so grafiti in zastave navijačev (največ pri znanih ovinkih in na Döttinger Höhe), katranske razpoke, zaplate in sledi gum pred počasnimi ovinki. Ob progi so kampi navijačev (šotori, prikolice, paviljoni, zastave, odri), reklame na ograjah, maršalske hišice s številkami na vsakih 250 m, table 300/200/100 pred zaviranjem in puščice v najostrejših ovinkih; pod mostovi proge tečejo ceste, na Döttinger Höhe so drevored in ograje ob poljih.
@@ -90,7 +113,7 @@ Na obeh lahko zapelješ v bokse (desno takoj za zadnjim ovinkom pred ciljno ravn
 
 ## Kje na progi si (proge po resničnih krajih)
 
-Na progah Ljubljana, Monako, Pikes Peak, Ouninpohja, Nordschleife, Spa, Red Bull Ring in Suzuka se ~70 m pred vsakim znanim krajem pod uro izpiše njegovo ime (npr. Zmajski most, Prešernov trg, Casino, predor, Glen Cove, Devil's Playground, Keltainen talo, Kakaristo, Karussell, Eau Rouge, Zavoj 1 · Niki Lauda), in to v vsakem krogu. Komentator (v angleščini) občasno pove, kje si („Over the Dragon Bridge now!“, „Up into Casino Square!“), vsak kraj praviloma enkrat na dirko, z razmikom med takimi stavki, in samo takrat, ko ne govori o nečem pomembnejšem (prehitevanja, vmesni časi, nesreče in boksi imajo prednost in ga prekinejo). Kraj, ki ga v enem krogu ni utegnil omeniti, lahko pove v naslednjem. Čas kroga ali vmesni čas ostane na zaslonu, ime kraja pa se pokaže takoj za njim.
+Na progah Ljubljana, Monako, Pikes Peak, Ouninpohja, Harju, Nordschleife, Spa, Red Bull Ring in Suzuka se ~70 m pred vsakim znanim krajem pod uro izpiše njegovo ime (npr. Zmajski most, Prešernov trg, Casino, predor, Glen Cove, Devil's Playground, Keltainen talo, Kakaristo, Karussell, Eau Rouge, Zavoj 1 · Niki Lauda), in to v vsakem krogu. Komentator (v angleščini) občasno pove, kje si („Over the Dragon Bridge now!“, „Up into Casino Square!“), vsak kraj praviloma enkrat na dirko, z razmikom med takimi stavki, in samo takrat, ko ne govori o nečem pomembnejšem (prehitevanja, vmesni časi, nesreče in boksi imajo prednost in ga prekinejo). Kraj, ki ga v enem krogu ni utegnil omeniti, lahko pove v naslednjem. Čas kroga ali vmesni čas ostane na zaslonu, ime kraja pa se pokaže takoj za njim.
 
 ## Fizika vožnje
 
@@ -120,7 +143,7 @@ Pred dirko na krožni progi odpelješ en leteči krog sam na progi (zaslon **Izb
 
 - Po krogu so na zaslonu časi vseh voznikov in zaostanki za najhitrejšim. Štartna vrsta je po časih: najhitrejši na prvem mestu, ti tam, kamor te je postavil tvoj krog, tekmeci v vrstnem redu svojih časov. **Na štart** začne dirko; **Ponovi dirko** jo kasneje ponovi z isto štartno vrsto.
 - V Pavzi **Ponovi krog** krog ponovi (časi tekmecev ostanejo), **Preskoči kvalifikacije** pa gre naravnost na dirko z 12. mesta.
-- Kvalifikacije so tudi pred vsako dirko prvenstva. V dirki s prijateljem in na kronometrih (Pikes Peak, Ouninpohja) jih ni.
+- Kvalifikacije so tudi pred vsako dirko prvenstva. V dirki s prijateljem in na kronometrih (Pikes Peak, Ouninpohja, Harju) jih ni.
 - Krog iz kvalifikacij šteje tudi za rekord kroga proge.
 
 ## Sektorski časi
@@ -150,7 +173,7 @@ Vreme **Menljivo** (zaslon Izberi progo) pomeni, da se vreme med dirko na krožn
 
 - Ko začne deževati, je proga v približno minuti mokra. Ko dež poneha, se proga suši približno štiri minute. **Idealna linija se posuši prva**, približno dvakrat hitreje, in na cesti se pokaže svetlejši pas suhega asfalta. Na njej je oprijem boljši kot drugje na cesti.
 - Na progah z boksi je menjava gum ob pravem času taktika: prezgodnji postanek na dežne gume ali prepozen na suhe stane čas. Igra pove, ko je idealna linija suha.
-- Na kronometrih (Pikes Peak, Ouninpohja) Menljivo pomeni isto kot Naključno. V dirki s prijateljem se vreme med dirko ne spreminja.
+- Na kronometrih (Pikes Peak, Ouninpohja, Harju) Menljivo pomeni isto kot Naključno. V dirki s prijateljem se vreme med dirko ne spreminja.
 
 ## Zastave in varnostni avto
 
@@ -174,7 +197,7 @@ Kamero med dirko zamenjaš z gumbom s kamero pod gumbom za pavzo, s tipko **C**,
 
 ## Duh najboljše vožnje
 
-Prosojen avto (Nastavitve → Duh najboljše vožnje) vozi tvojo najboljšo vožnjo, da vidiš, kje izgubljaš ali pridobivaš čas. Na kronometrih (Pikes Peak, Ouninpohja) je to najboljša vožnja od starta do cilja. Na krožnih progah je to **najboljši leteči krog**: vsak krog, ki ga začneš pri polni hitrosti, se posname (krog iz kvalifikacij in na dirki vsi krogi od drugega naprej). Duh pelje na uri kroga, torej od črte do črte. Ko odpelješ hitrejši krog, ga duh vozi že v naslednjem krogu. Duh se shrani v brskalnik posebej za vsako progo in fiziko (na kronometrih še posebej za dež).
+Prosojen avto (Nastavitve → Duh najboljše vožnje) vozi tvojo najboljšo vožnjo, da vidiš, kje izgubljaš ali pridobivaš čas. Na kronometrih (Pikes Peak, Ouninpohja, Harju) je to najboljša vožnja od starta do cilja. Na krožnih progah je to **najboljši leteči krog**: vsak krog, ki ga začneš pri polni hitrosti, se posname (krog iz kvalifikacij in na dirki vsi krogi od drugega naprej). Duh pelje na uri kroga, torej od črte do črte. Ko odpelješ hitrejši krog, ga duh vozi že v naslednjem krogu. Duh se shrani v brskalnik posebej za vsako progo in fiziko (na kronometrih še posebej za dež).
 
 ## Igralni plošček
 
@@ -189,14 +212,14 @@ Na vseh progah čez pokrajino počasi drsijo sence oblakov (v dežju jih ni, ker
 
 ## Vreme
 
-Na zaslonu **Izberi progo** izbereš vreme: **Suho**, **Dež**, **Menljivo** (glej zgoraj) ali **Naključno** (vsaka dirka posebej: dež približno v vsaki tretji dirki, na Spa v vsaki drugi, na Nordschleife skoraj v vsaki drugi). V dežju imajo vsi avti manj oprijema (v ovinkih in pri speljevanju za petino, zavore za desetino), zato drsijo bolj in dlje; tekmeci z AI zato vozijo ovinke počasneje in prej zavirajo, krog je 6–9 % počasnejši. Cesta je temna in mokra, nebo oblačno, vidljivost manjša, dež pada v curkih, izpod koles se dviga pršec (namesto dima iz gum), s trave in gramoza pa leti blato. Slišati je dež in šumenje gum po vodi, komentator pa ob štartu omeni dež. Kadar je izbran Dež, dežuje tudi na naslovnem zaslonu. Kronometra (Pikes Peak in Ouninpohja) imata v dežju svoje rekorde, lestvico in duha. Kadar je izbran Dež, kartica proge in lestvica pokažeta te.
+Na zaslonu **Izberi progo** izbereš vreme: **Suho**, **Dež**, **Menljivo** (glej zgoraj) ali **Naključno** (vsaka dirka posebej: dež približno v vsaki tretji dirki, na Spa v vsaki drugi, na Nordschleife skoraj v vsaki drugi). V dežju imajo vsi avti manj oprijema (v ovinkih in pri speljevanju za petino, zavore za desetino), zato drsijo bolj in dlje; tekmeci z AI zato vozijo ovinke počasneje in prej zavirajo, krog je 6–9 % počasnejši. Cesta je temna in mokra, nebo oblačno, vidljivost manjša, dež pada v curkih, izpod koles se dviga pršec (namesto dima iz gum), s trave in gramoza pa leti blato. Slišati je dež in šumenje gum po vodi, komentator pa ob štartu omeni dež. Kadar je izbran Dež, dežuje tudi na naslovnem zaslonu. Kronometri (Pikes Peak, Ouninpohja in Harju) imajo v dežju svoje rekorde, lestvico in duha. Kadar je izbran Dež, kartica proge in lestvica pokažeta te.
 
 ## Letni čas in čas dneva
 
 Na zaslonu **Izberi progo** izbereš še **letni čas** (Poletje, Jesen, Zima) in **čas dneva** (Dan, Večer, Noč). Sprememba se pokaže takoj, tudi na naslovnem zaslonu, in velja za vse proge.
 
 - **Jesen:** listje na drevesih porumeni, pordeči in porjavi (nekaj ga ostane zelenega), travniki postanejo slamnati in olivni, sonce je toplejše. Npr. jesenska Nordschleife.
-- **Zima:** trava in polja so pod snegom, drevesa zasnežena, asfalt je splužen, makadamske ceste (Ouninpohja, Gorski reli) pa so pokrite s steptanim snegom. Izpod koles se dviga snežni prah. Namesto dežja sneži. Oprijem je manjši: na asfaltu za 6 %, na zasneženem makadamu za četrtino (tekmeci vozijo temu primerno).
+- **Zima:** trava in polja so pod snegom, drevesa zasnežena, asfalt je splužen, makadamske ceste (Ouninpohja, makadam na Harjuju, Gorski reli) pa so pokrite s steptanim snegom. Izpod koles se dviga snežni prah. Namesto dežja sneži. Oprijem je manjši: na asfaltu za 6 %, na zasneženem makadamu za četrtino (tekmeci vozijo temu primerno).
 - **Večer:** nizko oranžno sonce, dolge sence, topla meglica. Avti imajo prižgane žaromete.
 - **Noč:** temno modro nebo in šibka luna. Ob progi so vsakih 30 m reflektorji na drogovih, ki osvetlijo asfalt, avti pa na cesto pred sabo svetijo z žarometi. Npr. nočna dirka v Monaku.
 
@@ -224,7 +247,7 @@ Dirka dveh igralcev, vsak na svojem telefonu (ali računalniku), preko interneta
 3. Za zasebno sobo tapni manjši gumb **Zasebna soba s kodo**: eden tapne **Ustvari sobo** in drugemu pošlje kodo (4 znaki), drugi kodo vpiše in tapne **Pridruži se**.
 4. V sobi vsak izbere svoj avto (◀ ▶). Gostitelj (kdor je čakal oziroma ustvaril sobo) izbere progo in število krogov ter tapne **Začni dirko**.
 
-- Na progi sta samo vidva, brez tekmecev z AI, drug ob drugem v prvi vrsti; kdo začne na levi, se menja od dirke do dirke. Vožnji proti uri (Pikes Peak in Ouninpohja) nista na voljo.
+- Na progi sta samo vidva, brez tekmecev z AI, drug ob drugem v prvi vrsti; kdo začne na levi, se menja od dirke do dirke. Vožnje proti uri (Pikes Peak, Ouninpohja in Harju) niso na voljo.
 - Semafor ugasne na obeh telefonih hkrati. Časi se merijo od skupnega starta, zato sta rezultata na obeh telefonih enaka.
 - Fizika vožnje, poškodbe in vreme so po nastavitvah gostitelja (sprememba med dirko velja od naslednje dirke). Vsak vozi svoj avto z nadgradnjami.
 - Avta se lahko zadeneta. Vsak telefon premika le svoj avto, zato se ob trku odmakne vsak svoj.
@@ -285,5 +308,8 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 - Višine in teren Red Bull Ringa: © offene Daten Österreichs – Digitales Geländemodell (DGM) Österreich (Datenquelle: geoland.at, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)), prek [Terrain Tiles](https://registry.opendata.aws/terrain-tiles/) (Mapzen/Tilezen) na AWS.
 - Raba tal okoli Red Bull Ringa (gozd, travniki, polja, pozidano): © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Proga Suzuka (sredinska črta): [TUMFTM racetrack-database](https://github.com/TUMFTM/racetrack-database) (Tehniška univerza v Münchnu, licenca LGPL-3.0), izpeljana iz OpenStreetMap (© OpenStreetMap contributors, ODbL 1.0), umeščena v prostor po obrisu iz [f1-circuits](https://github.com/bacinger/f1-circuits) (Tomislav Bacinger, licenca MIT). Tribune, stavbe, ribniki in parkirišča: © OpenStreetMap contributors (ODbL 1.0), prek [Overture Maps Foundation](https://overturemaps.org). Iz njih izpeljani podatki v `js/tracks/suzuka.js` so na voljo pod ODbL 1.0.
+- Proga Harju (sredinska črta, stavbe, ulice, poti, raba tal, cestne luči in druga oprema): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/), prek [Overture Maps Foundation](https://overturemaps.org). Iz njih izpeljani podatki v `js/tracks/harju.js` so na voljo pod ODbL 1.0.
+- Višine in teren Harjuja: ArcticDEM (DEMs provided by the Polar Geospatial Center under NSF-OPP awards 1043681, 1559691, and 1542736; © Maxar), licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); daljna okolica in jezeri: Copernicus DEM GLO-30: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
+- Drevesa Harjuja: High Resolution Canopy Height Maps (Meta in World Resources Institute, 2024), licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Raba tal Suzuke: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium (licenca CC BY 4.0), prek Overture Maps.
 - Višine Suzuke: Copernicus DEM GLO-30: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.

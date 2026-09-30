@@ -195,7 +195,6 @@ const Core = (function () {
       const G = [1, 1, 1, 1, 0.94, 0.86], gk = this.gk = new Float64Array(N);
       for (let i = 0; i < N; i++) gk[i] = G[sf[i]] != null ? G[sf[i]] : 1;
     }
-    wAt(i) { return this.wa ? this.wa[i] : this.w; }   // the road's half width at sample i
 
     // the puddles: in the dips of the profile first (the water runs down into them), then spread along the rest of the run, some on the
     // racing line, 30 m apart at least, and none from a jump's approach to its landing (the jumps fly as tuned)

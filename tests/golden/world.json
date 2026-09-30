@@ -173,6 +173,24 @@
    "smoke:ShaderMaterial": "58e293e7"
   }
  },
+ "harju": {
+  "meshes": 613,
+  "verts": 1243948,
+  "instances": 6324,
+  "props": 21,
+  "crowd": 3650,
+  "world": "c09d917c",
+  "propsHash": "f70a7360",
+  "floor": "3202d0cb/4480",
+  "groups": {
+   "-:MeshLambertMaterial": "da094c67",
+   "-:MeshPhongMaterial": "5369271a",
+   "-:MeshBasicMaterial": "3338e055",
+   "puddles:MeshBasicMaterial": "219cf0ec",
+   "crowd:MeshLambertMaterial": "3d07b676",
+   "tyremarks:MeshBasicMaterial": "f03bef5d"
+  }
+ },
  "nring": {
   "meshes": 2757,
   "verts": 958092,

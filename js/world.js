@@ -7170,12 +7170,13 @@ const World = (function () {
     g.setIndex(idx); g.computeVertexNormals(); g.computeBoundingSphere(); return g;
   }
   let hjFTex = null, hjATex = null, hjAKey = '', hjBTex = null;   // (made once, reused by every Harju build: the teardown frees materials, not maps)
-  // the facades: 8 rows of one window bay (3.2 m) by one floor (128 x 128 px each), white where the vertex colour tints the wall: 0 a plastered block
-  // (a two-pane window, white frame, a sill), 1 a glazed balcony, 2 a shop front (a display window under a fascia), 3 painted boards with a window in
-  // white trim, 4 red brick with a white window, 5 a school's tall windows, 6 a blank wall, 7 plain (roofs)
+  // the facades: rows of one window bay (3.2 m) by one floor (128 x 128 px each, 16 rows), white where the vertex colour tints the wall: 0 a plastered
+  // block (a two-pane window, white frame, a sill), 1 a glazed balcony, 2 a shop front (a display window under a fascia), 3 painted boards with a window in
+  // white trim, 4 red brick with a white window, 5 a school's tall windows, 6 a blank wall, 7 plain (roofs), 8 plain red brick, 9 big windows between
+  // brick piers
   function hjFacadeTex() {
     if (hjFTex) return hjFTex;
-    const W = 128, c = document.createElement('canvas'); c.width = W; c.height = W * 8; const x = c.getContext('2d'), r = rng(8201);
+    const W = 128, c = document.createElement('canvas'); c.width = W; c.height = W * 16; const x = c.getContext('2d'), r = rng(8201);
     const row = (k) => k * W, fill = (col, a, b, cw, ch, k) => { x.fillStyle = col; x.fillRect(a, row(k) + b, cw, ch); };
     const glass = (a, b, cw, ch, k) => { const y0 = row(k) + b, gr = x.createLinearGradient(a, y0, a + cw * 0.6, y0 + ch); gr.addColorStop(0, '#6f8398'); gr.addColorStop(0.45, '#34424f'); gr.addColorStop(1, '#222b34'); x.fillStyle = gr; x.fillRect(a, y0, cw, ch); };
     const win = (a, b, cw, ch, k, frame, mull) => { fill(frame, a - 4, b - 4, cw + 8, ch + 8, k); glass(a, b, cw, ch, k); if (mull) fill(frame, a + cw / 2 - 2, b, 4, ch, k); fill(frame, a, b + ch * 0.28, cw, 3, k); };
@@ -7189,9 +7190,12 @@ const World = (function () {
     win(16, 18, 38, 88, 5, '#fbfbf8', false); win(74, 18, 38, 88, 5, '#fbfbf8', false); fill('#dcd9d0', 0, 112, W, 5, 5);
     fill('rgba(0,0,0,0.07)', 0, 60, W, 2, 6);
     fill('#ffffff', 0, 0, W, W, 7);
+    const brick = (k, y0, y1) => { for (let yy = y0; yy < y1; yy += 7) for (let xx = (yy / 7) % 2 ? -8 : 0; xx < W; xx += 16) { const t = r(); x.fillStyle = 'rgb(' + [150 + t * 30, 64 + t * 18, 48 + t * 12].map(v => v | 0).join(',') + ')'; x.fillRect(xx + 1, row(k) + yy + 1, 14, 5.5); } };
+    fill('#d8d1c6', 0, 0, W, W, 8); brick(8, 0, W);   // plain red brick
+    fill('#d8d1c6', 0, 0, W, W, 9); brick(9, 0, W); glass(12, 14, 104, 96, 9); fill('#e8e6e0', 8, 10, 112, 4, 9); fill('#e8e6e0', 8, 110, 112, 5, 9); fill('#e8e6e0', 62, 14, 4, 96, 9);   // a big window between brick piers, white frames
     const t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; t.anisotropy = 4; return (hjFTex = t);
   }
-  const hjFV = (k, f) => { const v1 = 1 - k / 8, v0 = v1 - 1 / 8, pad = 3 / 1024; return v0 + pad + (v1 - v0 - 2 * pad) * f; };   // (facade row k, height fraction f -> v)
+  const hjFV = (k, f) => { const v1 = 1 - k / 16, v0 = v1 - 1 / 16, pad = 3 / 2048; return v0 + pad + (v1 - v0 - 2 * pad) * f; };   // (facade row k, height fraction f -> v)
   // the stage's boards (8 rows of 1024 x 128): START, LETEČI CILJ (flying finish), CP1-CP2 with the distance, the stage banner (SS1 HARJU); row 5: STOP (0-511), the
   // yellow and the red chequered-flag boards (512-767, 768-1023); row 6: YLEISÖALUE (0-511), KIELLETTY ALUE (512-1023); row 7: the town's banners (JYVÄSKYLÄ, a sponsor-free RALLI board)
   function hjAtlas(cps) {
@@ -7256,7 +7260,7 @@ const World = (function () {
   // a building from its footprint (poly: [x, z], either winding), kind (0 flats, 1 a house, 2 a shed or garage, 3 a stand or a roof, 4 a school or public
   // building, 5 shops and offices, 6 a church, 7 industrial), roof (0 flat, 1 gabled), h: its measured height over the lowest ground at its walls.
   // Walls in floors of the facade atlas (hjFacadeTex), a dark plinth, a flat roof or a gable over the footprint's rectangle. g: a GB with UVs
-  function hjBuilding(g, poly, kind, roof, h, R) {
+  function hjBuilding(g, poly, kind, roof, h, R, o) {
     const n = poly.length; let area2 = 0, cx = 0, cz = 0, g0 = 1e9, g1 = -1e9;
     for (let k = 0; k < n; k++) { const [ax, az] = poly[k], [bx, bz] = poly[(k + 1) % n]; area2 += ax * bz - bx * az; cx += ax / n; cz += az / n; const y = hjGround(ax, az); g0 = Math.min(g0, y); g1 = Math.max(g1, y); }
     const sgn = area2 > 0 ? 1 : -1, u = R(), u2 = R();
@@ -7269,6 +7273,7 @@ const World = (function () {
     else if (kind === 5) { row = 2; rowUp = u < 0.5 ? 0 : 5; col = PAL0[Math.floor(u2 * PAL0.length)]; fh = 3.4; }
     else if (kind === 7 || kind === 3) { row = rowUp = 6; col = [0.66, 0.66, 0.64]; fh = 4; }
     else { const brick = u < 0.2; row = brick ? 4 : 0; rowUp = brick ? 4 : u < 0.55 ? 1 : 0; col = brick ? [0.97, 0.93, 0.9] : PAL0[Math.floor(u2 * PAL0.length)]; }
+    if (o) { row = o.row; rowUp = o.rowUp; col = o.col; fh = o.fh || fh; }
     col = vary(col, R, 0.08);
     const plinth = [0.42, 0.41, 0.4], yb = g0 - 1.2, y0 = g0 + 0.45;
     let top = Math.max(g0 + h, g1 + 2.6);
@@ -7493,25 +7498,29 @@ const World = (function () {
       nBld++;
     }
     function polyArea(p) { let a = 0; for (let k = 0; k < p.length; k++) { const [ax, az] = p[k], [bx, bz] = p[(k + 1) % p.length]; a += ax * bz - bx * az; } return a / 2; }
-    if (vesi) {   // Vesilinna: the museum's low wing over the whole footprint (light render, bands of windows), the tower rising from its middle to 34 m, glazed all
-      // round up top (the restaurant and the café), a terrace railing on the roof, the flag and an antenna mast; the whole Harju comes up here to watch
+    if (vesi) {   // Vesilinna (Olavi Kivimaa, 1953): a water and observation tower of red brick, 34 m, on the summit: the Natural History Museum in the low wing
+      // over the whole footprint, the 3 000 m3 tanks in the shaft rising from its middle, up top the café and the restaurant behind a band of big windows,
+      // the observation deck on the roof (its railing), the lift's machine room, the telecom masts and a flag; the whole Harju comes up here to watch
       const g = bch.get(vesi.cx, vesi.cz); g.dUV = UV7;
-      const pol = vesi.poly, wall = [0.9, 0.9, 0.87]; let bl = 0, dx = 1, dz = 0;
+      const pol = vesi.poly, BR = [0.97, 0.93, 0.9]; let bl = 0, dx = 1, dz = 0;
       for (let k = 0; k < pol.length; k++) { const [ax, az] = pol[k], [bx, bz] = pol[(k + 1) % pol.length], l = Math.hypot(bx - ax, bz - az); if (l > bl) { bl = l; dx = (bx - ax) / l; dz = (bz - az) / l; } }
-      const r = hjBuilding(g, pol, 0, 0, 10.5, rng(8131)), rot = Math.atan2(dz, dx), g0 = r.g0, tx = vesi.cx, tz = vesi.cz, H = g0 + 34, TL = 15.5, TD = 12.5;
+      const r = hjBuilding(g, pol, 4, 0, 10.5, rng(8131), { row: 4, rowUp: 4, col: BR, fh: 3.6 }), rot = Math.atan2(dz, dx), g0 = r.g0, tx = vesi.cx, tz = vesi.cz, H = g0 + 34, TL = 15.5, TD = 12.5;
       const c = Math.cos(rot), s = Math.sin(rot), at = (a, b) => [tx + c * a - s * b, tz + s * a + c * b];
-      box(g, tx, r.top - 0.5, tz, TL, H - 5.2 - r.top + 0.5, TD, rot, wall, wall);   // the shaft
-      for (const [a, b, L, D] of [[0, TD / 2 + 0.06, 1.4, 0.1], [0, -TD / 2 - 0.06, 1.4, 0.1], [TL / 2 + 0.06, 0, 0.1, 1.4], [-TL / 2 - 0.06, 0, 0.1, 1.4]]) { const [px, pz] = at(a, b); box(g, px, r.top + 1, pz, L, H - 7 - r.top, D, rot, [0.3, 0.36, 0.42]); }   // the stairwells' tall window strips
-      box(g, tx, H - 5.2, tz, TL + 1.2, 0.5, TD + 1.2, rot, [0.84, 0.84, 0.82]);   // the restaurant floor's slab
-      box(g, tx, H - 4.7, tz, TL + 0.8, 3.3, TD + 0.8, rot, [0.26, 0.33, 0.4]);   // glazed all round
-      for (let k = -3; k <= 3; k++) for (const sd of [-1, 1]) { const [px, pz] = at(k * (TL + 0.8) / 7, sd * (TD / 2 + 0.42)); box(g, px, H - 4.7, pz, 0.12, 3.3, 0.1, rot, [0.9, 0.9, 0.88]); }   // mullions
-      { const [px, pz] = at(0, TD / 2 + 0.4); cyl(g, px, H - 4.7, pz, TL * 0.36, 3.3, 10, [0.28, 0.35, 0.42], [0.84, 0.84, 0.82]); }   // the round bay facing south over the town
-      box(g, tx, H - 1.4, tz, TL + 1.2, 1.4, TD + 1.2, rot, wall, [0.5, 0.5, 0.5]);   // the roof's edge
-      for (let k = 0; k < 4; k++) { const sd = k < 2 ? 1 : -1, alongL = k % 2 === 0, L2 = alongL ? TL + 1 : TD + 1, [px, pz] = alongL ? at(0, sd * (TD / 2 + 0.55)) : at(sd * (TL / 2 + 0.55), 0);
-        box(g, px, H + 0.9, pz, alongL ? L2 : 0.06, 0.06, alongL ? 0.06 : L2, rot, [0.3, 0.3, 0.32]); }   // the terrace's railing
-      box(g, tx + c * 3, H, tz + s * 3, 3.2, 2.4, 3.2, rot, wall, [0.5, 0.5, 0.5]);   // the lift's machine room
-      cyl(g, tx - c * 4, H, tz - s * 4, 0.12, 14, 5, [0.8, 0.8, 0.82]); for (let k = 0; k < 3; k++) box(g, tx - c * 4, H + 5 + k * 3, tz - s * 4, 1.2, 0.1, 0.1, rot + k, [0.8, 0.8, 0.82]);   // the antenna mast
-      ouFlag(g, tx + c * 6.5 - s * 5, H, tz + s * 6.5 + c * 5, rot, 7);
+      const prism = (L, D, y0, y1, rowK, col, fh) => {   // the walls of an L x D block round the tower's axis from y0 to y1, in bands of the atlas row
+        const C4 = [at(-L / 2, -D / 2), at(L / 2, -D / 2), at(L / 2, D / 2), at(-L / 2, D / 2)], nb = Math.max(1, Math.round((y1 - y0) / fh)), bh = (y1 - y0) / nb;
+        for (let k = 0; k < 4; k++) { const [ax, az] = C4[k], [bx, bz] = C4[(k + 1) % 4], U = Math.max(1, Math.round(Math.hypot(bx - ax, bz - az) / 3.2)), inn = [tx, (y0 + y1) / 2, tz];
+          for (let q = 0; q < nb; q++) { const ya = y0 + q * bh, yb = ya + bh; g.quadO([ax, ya, az], [bx, ya, bz], [bx, yb, bz], [ax, yb, az], col, inn, [[0, hjFV(rowK, 0)], [U, hjFV(rowK, 0)], [U, hjFV(rowK, 1)], [0, hjFV(rowK, 1)]]); } } };
+      prism(TL, TD, r.top - 0.5, H - 5.0, 8, BR, 3.2);   // the shaft
+      for (const [a, b, L, D] of [[0, TD / 2 + 0.06, 1.1, 0.1], [0, -TD / 2 - 0.06, 1.1, 0.1], [TL / 2 + 0.06, 0, 0.1, 1.1], [-TL / 2 - 0.06, 0, 0.1, 1.1]]) { const [px, pz] = at(a, b); box(g, px, r.top + 1, pz, L, H - 7.5 - r.top, D, rot, [0.26, 0.31, 0.36]); }   // the stairwell's tall window slits
+      box(g, tx, H - 5.2, tz, TL + 0.9, 0.35, TD + 0.9, rot, [0.84, 0.84, 0.82]);   // the upper floor's slab
+      prism(TL + 0.6, TD + 0.6, H - 4.85, H - 1.3, 9, BR, 3.6);   // the café and the restaurant: big windows between brick piers
+      prism(TL + 0.8, TD + 0.8, H - 1.3, H, 8, BR, 1.3);   // the parapet of the deck
+      box(g, tx, H - 0.05, tz, TL + 0.6, 0.06, TD + 0.6, rot, [0.46, 0.45, 0.43], [0.52, 0.5, 0.47]);   // the deck
+      for (let k = 0; k < 4; k++) { const sd = k < 2 ? 1 : -1, alongL = k % 2 === 0, L2 = alongL ? TL + 0.8 : TD + 0.8, [px, pz] = alongL ? at(0, sd * (TD / 2 + 0.4)) : at(sd * (TL / 2 + 0.4), 0);
+        box(g, px, H + 1.05, pz, alongL ? L2 : 0.06, 0.06, alongL ? 0.06 : L2, rot, [0.3, 0.3, 0.32]); }   // the railing on the parapet
+      box(g, tx + c * 3, H, tz + s * 3, 3.4, 2.6, 3.4, rot, [0.62, 0.3, 0.24], [0.4, 0.4, 0.4]);   // the lift's machine room
+      for (const [a, b, hh] of [[-4, -3, 14], [-5.5, 3.5, 9]]) { const [px, pz] = at(a, b); cyl(g, px, H, pz, 0.12, hh, 5, [0.8, 0.8, 0.82]); for (let k = 0; k < 3; k++) box(g, px, H + hh * 0.45 + k * hh * 0.18, pz, 0.35, 1.3, 0.12, rot + k * 2.1, [0.86, 0.86, 0.88]); }   // the telecom masts
+      ouFlag(g, tx + c * 6 - s * 4.5, H, tz + s * 6 + c * 4.5, rot, 6);
       out.vesilinna = { x: tx, z: tz, top: H };
     }
     if (stand) {   // the Harju stadium's main stand: rows of seats rising away from the pitch under a roof on posts (full: the stage passes behind it)
@@ -7679,10 +7688,10 @@ const World = (function () {
       }
     }
 
-    /* ---- knockable straw bale stacks on the outside of the tight corners (the corner onto the gravel, Lasse Lampi's, the school's hairpin, Norssi) ---- */
+    /* ---- knockable straw bale stacks on the outside of the tight corners (the first hairpin, the corner onto the gravel, Lasse Lampi's, Norssi) ---- */
     out.propR = 150;
     out.propFloor = propFloorTable(null, (i, side) => VP[side > 0 ? 1 : 0][i]);
-    for (const c of T.corners) { if (c.sev < 4) continue; const side = -c.dir, sm = (c.i0 + c.i1) / 2 * ds; if (sm < sStart + 30 || sm > sFin + 20) continue;
+    for (const c of T.corners) { if (c.sev < 3 || c.angle < 1.2) continue; const side = -c.dir, sm = (c.i0 + c.i1) / 2 * ds; if (sm < sStart + 30 || sm > sFin + 20) continue;
       for (let d = -7; d <= 7.1; d += 2.8) { const s = sm + d, i = T.idx(s), bar = side > 0 ? T.br[i] : T.bl[i], room = bar - WA[i]; if (room < 2.6) continue;
         const [x, z, hd] = atSf(s, side * (WA[i] + Math.min(2.0, room - 1.1))); if (onBld(x, z)) continue; out.props.push({ kind: 'bstack', x, z, yaw: hd, col: 0, i }); exclPush(x, z, 1.5); } }
 

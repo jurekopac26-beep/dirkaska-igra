@@ -1,30 +1,33 @@
 /* Track definition 'harju'. index.html loads the track files before js/core.js, in the order of the track menu. */
 var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
-  // Harju (Rally Finland, Jyväskylä): the city's own special stage on the Harju ridge, the pine-covered esker in the middle of the town, run on
-  // the Thursday evening as the rally's opening stage since the 1950s (the Jyväskylän Suurajot). A POINT-TO-POINT time trial on tarmac, gravel
-  // and paving stones, at its real scale and on its real streets (the layout of 2022-2024, one lap, ~1.9 km): the start on Yliopistonkatu at
-  // the Kilpisenkatu junction, down the boulevard past the foot of the Nero steps (1925), the lane change and the tight right onto the gravel
-  // road at Cygnaeuksenkatu, the steep climb up the ridge, round the Vesilinna water tower (1953) on the summit, the plunge down beside the
-  // Harju stadium on Ihantolantie, the corner of Lasse Lampi's pine (1987; Didier Auriol hit it in 1990, then it was felled), Pitkäkatu past
-  // the wooden houses, the hairpin onto Oikokatu at the Normaalikoulu school, the paving stones along its yard and the flying finish at
-  // Norssin kulma on Yliopistonkatu.
+  // Harju (Rally Finland, Jyväskylä): the city's own special stage on the Harju ridge, the pine-covered esker in the middle of the town, run on the
+  // Thursday evening as the rally's opening stage (and again on the Friday) since the first Jyväskylän Suurajot in 1951. A POINT-TO-POINT time trial
+  // on tarmac, gravel and paving stones, at its real scale and on its real streets, one lap (~2.0 km, as the Friday's 'Harju 2' of 2024, 2.01 km;
+  // on the Thursday the stage is two laps): the start on Yliopistonkatu's south-east carriageway, the familiar sprint down to the first hairpin LEFT
+  // round the end of the median at the Kilpisenkatu junction, the climb back up the other carriageway past the foot of the Nero steps to the
+  // legendary right turn onto the gravel at Cygnaeuksenkatu, up the ridge to the Vesilinna water tower (Olavi Kivimaa, 1953) on the summit, the
+  // plunge down beside the Harju stadium on Ihantolantie, the corner of Lasse Lampi's pine (his Mitsubishi Starion hit it in 1987), Pitkäkatu past
+  // the wooden houses (bale chicanes on its tarmac), the hairpin onto Oikokatu at the Normaalikoulu school, the paving stones along its yard and the
+  // flying finish at Norssin kulma on Yliopistonkatu. (The layout changes a little from year to year; the chicanes' places and the barriers are ours.)
   // Centre line: the streets and paths of OpenStreetMap (© OpenStreetMap contributors, ODbL 1.0; read through Overture Maps), the junctions
-  // rounded to their kerb radii; metres, origin = 25.745 E, 62.243 N (x east, z south). Heights (m above the start line, ~104 m a.s.l.): the
+  // rounded to their kerb radii; metres, origin = 25.745 E, 62.243 N (x east, z south). Heights (m above the start line, ~110 m a.s.l.): the
   // ArcticDEM 2 m surface model (Polar Geospatial Center, Maxar; CC BY 4.0) with the trees (Meta / WRI global canopy height map, CC BY 4.0)
   // and the buildings (OpenStreetMap) taken out, along the road where it is open to the sky, smoothed.
   // Sections (metres after the start line): widths (half widths), surf (the road's surface: asphalt, makadam = the ridge's gravel road, paving =
   // the paving stones of the school yard), verge (the ground just past the edges: sidewalks, lawns, the other carriageway), walls (the barriers:
-  // fences, houses, straw bales, tape), notes (the co-driver's own call for the lane change).
+  // the concrete blocks between the two carriageways, fences, houses, straw bales), notes (the co-driver's calls for the chicanes), chicanes
+  // ([d, A, L]: the line swings A m to one side and back over L m round the bales), hairpin ([x, z, r]: the island at the end of the median),
+  // crowds ([d0, d1, rows, share]), tv ([d, side, off]: camera towers), marks ([d0, d1]: a dashed lane line), scen (the town: see js/world.js, buildHarju).
   TRACK_DEFS.push({
     id: 'harju', name: 'Harju', theme: 'harju', open: true, timeTrial: true, rally: true, laps: 1, halfWidth: 4,
-    desc: 'Mestna hitrostna preizkušnja Relija Finska sredi Jyväskyläja, na grebenu Harju: asfalt, makadam in tlakovci. Start na aveniji Yliopistonkatu, mimo Nerovih stopnic, menjava pasu in oster desni na makadam, strm vzpon na greben do vodnega stolpa Vesilinna, spust ob stadionu Harju, vogal Lasseja Lampija, Pitkäkatu med lesenimi hišami, lasnica pri šoli Normaalikoulu in cilj na vogalu Norssin kulma. Poletni večer ob 19:05, ~20.000 gledalcev.',
+    desc: 'Mestna hitrostna preizkušnja Relija Finska sredi Jyväskyläja, na grebenu Harju: asfalt, makadam in tlakovci. Start na Yliopistonkatu, pospešek do prve lasnice v levo, vzpon po aveniji mimo Nerovih stopnic do znamenitega zavoja na makadam, strm vzpon na greben do vodnega stolpa Vesilinna, spust ob stadionu Harju, vogal Lasseja Lampija, šikane iz bal na Pitkäkatu, lasnica pri šoli Normaalikoulu, tlakovci in leteči cilj na vogalu Norssin kulma. Poletni večer ob 19:05, pobočja polna gledalcev.',
     cityStage: true,
     start: [-188.1,139.3], finish: [-416.5,369.3], cps: [[-313.5,37.0],[-473.6,10.2]],
     roadSurface: 'asphalt', offSurface: 'paving', noCurbs: true, noGravel: true, gradeForce: true, runoff: 0.4, side: 2.5, inner: 2.5, elevSmooth: 6,
     // the dust off the dry esker gravel (sand and fine gravel, yellower than a forest road's), only where the road is gravel
     dust: { rate: 1.2, life: 2.0, size: 1.3, s0: 2.2, rise: 1.5, alpha: 1.0, drag: 0.6, col: [0.84, 0.76, 0.6] },
-    rain: { seed: 41, puddles: 9 },
+    rain: { seed: 41, puddles: 5 },
     medals: {"cs":[74,78,84],"arcade":[76,80,86],"wet":{"cs":[80,84,90],"arcade":[82,86,92]}},
     widths: [[-60,3.4],[109.8,3.4],[121.8,4.8],[141.7,4.8],[155.7,3.4],[473.6,3.4],[483.6,4.3],[501.6,4.1],[519.0,3.7],[544.0,3.2],[552.0,3.1],[586.0,3.1],[594.0,3.1],[708.8,3.7],[722.8,3.5],[928.5,3.5],[942.5,3.7],[1086.2,3.7],[1112.2,4.4],[1187.0,3.1],[1195.0,3.0],[1231.0,3.0],[1239.0,3.0],[1437.0,3.0],[1445.0,3.0],[1481.0,3.0],[1489.0,3.1],[1673.1,4.4],[1695.1,3.0],[1742.0,3.0],[1750.0,3.0],[1784.0,3.0],[1792.0,3.0],[1968.6,3.0],[1996.6,4.8],[2300,4.8]],
     surf: [[489.6,716.8,"makadam"],[1844.7,1974.6,"paving"]],
