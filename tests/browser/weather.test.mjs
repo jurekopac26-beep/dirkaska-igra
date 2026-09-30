@@ -37,7 +37,7 @@ try {
   await startTrack(page, 'rbring');
   await sim(0.05);   // (two frames drawn: the HUD)
   const h0 = await hud();
-  T.check('the race: the set-up of the track on the car, slicks, the tyres on the HUD', h0.setup.wing === 0 && h0.setup.gear === 2 && h0.ty.k === 'dry' && h0.tyre === 'on dry:SUHE 100%' && h0.sec.join() === ':S1,:S2,:S3', JSON.stringify(h0));
+  T.check('the race: the set-up of the track on the car, slicks, the tyres on the HUD', h0.setup.wing === 0 && h0.setup.gear === 2 && h0.ty.k === 'dry' && /^on dry c[SMH]:(MEHKE|SREDNJE|TRDE) 100%$/.test(h0.tyre) && h0.sec.join() === ':S1,:S2,:S3', JSON.stringify(h0));
   await simTo(22);
   const h1 = await hud();
   T.check('the rain starts: "DEŽ", the hint to come in for rain tyres', h1.rain > 0 && h1.msg === 'DEŽ' && h1.msgOn && /dežne gume/.test(h1.toast), JSON.stringify(h1));
@@ -45,7 +45,7 @@ try {
   let h2 = null, hb = null;
   for (let k = 0; k < 90; k++) { await sim(2); h2 = await hud(); if (!hb && h2.ty.k === 'dry' && h2.water > 0.4) hb = h2; if (h2.ty.k === 'wet') break; }   // (up to 3 min: the car comes round to the pit lane, a knock on slicks in the wet may add a repair first)
   const h2b = await hud();
-  T.check('slicks on a wet road: red on the HUD (the wrong tyres) until the stop', !!hb && /^on dry bad:SUHE \d+%$/.test(hb.tyre), JSON.stringify(hb));
+  T.check('slicks on a wet road: red on the HUD (the wrong tyres) until the stop', !!hb && /^on dry c[SMH] bad:(MEHKE|SREDNJE|TRDE) \d+%$/.test(hb.tyre), JSON.stringify(hb));
   await sim(0.6); const h3 = await hud();
   T.check('pit stop: rain tyres fitted ("DEŽNE GUME"), new on the HUD', h2.ty.k === 'wet' && /DEŽNE GUME/.test(h2.msg) && /^on wet:DEŽNE (100|99)%$/.test(h3.tyre), JSON.stringify({ h2, h3 }));
   T.check('sector times on the HUD: S1 with a time', /^(ob|pb|sl):S1 \d+\.\d+$/.test(h2b.sec[0]), h2b.sec.join(' | '));
