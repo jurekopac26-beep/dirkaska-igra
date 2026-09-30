@@ -17,8 +17,25 @@ Objavljena je kot zasebna stran: <https://claude.ai/artifact/LGhsPikqgs4To6phR2L
 
 ## Single race in današnja dirka
 
-- Najprej se odpre izbira proge. Na prvem mestu je **današnja dirka** (*Today's race*).
-  - Vsak dan je druga. Progo, avto in vreme izbere datum. Maketa proge pokaže vreme dneva.
+Single race ima dva koraka (zgoraj piše *Step 1 of 2* in *Step 2 of 2*).
+
+**1. korak: način dirke.** Izbereš enega od treh in klikneš *Next*:
+
+- **Circuit race**: dirka v krogih proti 12 tekmecem.
+- **Police chase**: policija ti je za petami, pobegniti ji moraš v 3 minutah.
+- **Time trial**: sam proti uri in svojemu duhu (*ghost*), za zlati, srebrni ali bronasti čas.
+
+**2. korak: proga.** Pokažejo se proge izbranega načina:
+
+- Pri Circuit race ni gorske dirke in reli etape (Colorado, Ouninpohja), ker to nista dirkališči.
+- Zgoraj na maketi piše način dirke, podatki o progi pa so prilagojeni načinu:
+  - pri Police chase: število policijskih avtov in čas za pobeg,
+  - pri Time trial: zlati čas.
+- Z gumbom nazaj se vrneš na izbiro načina.
+
+**Današnja dirka** (*Today's race*) je na prvem mestu pri svojem načinu: pri Circuit race, ali pri Time trial, kadar je proga dneva gorska dirka ali reli etapa.
+
+- Vsak dan je druga. Progo, avto in vreme izbere datum. Maketa proge pokaže vreme dneva.
   - Vsi vozijo isti avto.
 - Pri današnji dirki piše:
   - najboljši čas dneva na svetu in kdo ga ima (*Best today*),
@@ -44,6 +61,7 @@ Dirka se v maketi ne vozi. Ko klikneš *Race* (Single race, današnja dirka, Car
 
 - 1.–13. mesto,
 - pri časovnih preizkusih zlati, srebrni ali bronasti čas oziroma brez medalje,
+- pri Police chase: *Escaped* s tremi, dvema ali eno zvezdico (hitreje ko pobegneš, več zvezdic) ali *Busted* (policija te je ujela),
 - v Multiplayerju 1. ali 2. mesto.
 
 Nato se odpre zaslon z rezultatom:
@@ -96,11 +114,11 @@ Kako deluje:
 
 | Datoteka | Kaj je v njej |
 |---|---|
-| `data.js` | **vsa besedila, cene, avti, proge, serije kariere, pokali, nagrade po mestih, današnja dirka (proge, avti, vreme, število brezplačnih voženj) in začetna stanja** – tu spreminjaš vsebino |
+| `data.js` | **vsa besedila, cene, avti, proge, načini dirke (`modes`, `chase`), serije kariere, pokali, nagrade po mestih, današnja dirka (proge, avti, vreme, število brezplačnih voženj) in začetna stanja** – tu spreminjaš vsebino |
 | `style.css` | videz (barve so na vrhu kot spremenljivke `--…`) |
 | `app.js` | zasloni, premikanje med njimi, izbira mesta in izračun rezultata |
 | `car3d.js` | 3D prikaz avta |
-| `assets/` | 3D modeli avtov (`cars/*.json`), slike vsakega avta v vseh 8 barvah (`cars/img/<avto>-<barva>.webp`), slike gumbov glavnega menija (`menu/`), makete prog, suhe in mokre (`tracks/<proga>.webp`, `tracks/<proga>-rain.webp`), posnetki ozadja (`video/`) |
+| `assets/` | 3D modeli avtov (`cars/*.json`), slike vsakega avta v vseh 8 barvah (`cars/img/<avto>-<barva>.webp`), slike gumbov glavnega menija in načinov dirke (`menu/`), makete prog, suhe in mokre (`tracks/<proga>.webp`, `tracks/<proga>-rain.webp`), posnetki ozadja (`video/`) |
 | `outlines.js` | obrisi prog za majhne zemljevide (ustvarjeno, ne urejaj ročno) |
 
 Vsi časi, imena na lestvicah, število igralcev, denar (CR) in odstotki so primeri.
@@ -130,13 +148,13 @@ mkdir -p maketa-menija/game_main
 git archive origin/main | tar -x -C maketa-menija/game_main
 cd maketa-menija/orodja
 node cars3d.mjs                                  # avti -> ../assets/cars/*.json
-node carimgs.mjs && python3 menuimg.py           # avti v vseh barvah in slike gumbov -> ../assets/cars/img/, ../assets/menu/
+node carimgs.mjs && python3 menuimg.py           # avti v vseh barvah, slike gumbov in načinov (policijski avto: policebar.js) -> ../assets/cars/img/, ../assets/menu/
 node bgvideo.mjs '[["jezero",7],["ljubljana",7],["gora",7]]' 1.25 14   # posnetki -> ../assets/video/
 node dio2.mjs proge.json                         # makete prog, suhe in v dežju -> raw/tracks/w_*.png (proge.json: [[id, ime, nastavitve], …])
 python3 mkwebp.py                                # raw/tracks -> ../assets/tracks/<proga>.webp in <proga>-rain.webp
 node gen_tracks2.js raw/tracks.js                # obrisi prog (nato v outlines.js)
 node check.mjs                                   # vsi zasloni v vseh stanjih -> shots/
-node flow.mjs                                    # odigra današnjo dirko, izbiro avta in vremena, kariero in multiplayer -> shots/
+node flow.mjs                                    # odigra današnjo dirko, vse tri načine, izbiro avta in vremena, kariero in multiplayer -> shots/
 ```
 
 Uporabljajo Playwright s Chromiumom (kot testi igre). Mapi `game_main/` in `orodja/raw/` nista v repozitoriju.

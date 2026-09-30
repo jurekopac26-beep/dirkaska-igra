@@ -16,9 +16,18 @@ window.MENU = {
     buy: 'Full Game', buySub: '+8 tracks · +4 cars · the whole career · unlimited daily races', owned: 'Full game',
   },
 
+  /* ---------- single race, step 1: the mode (step 2: the track) ---------- */
+  modes: [
+    { id: 'race', name: 'Circuit race', sub: 'Laps against 12 rivals. Finish as high as you can.', chip: '12 RIVALS', img: 'assets/menu/mode-race.webp' },
+    { id: 'chase', name: 'Police chase', sub: 'The police are on your tail. Shake them off.', chip: 'GET AWAY IN 3:00', img: 'assets/menu/mode-chase.webp' },
+    { id: 'trial', name: 'Time trial', sub: 'Alone against the clock and your own ghost.', chip: 'GOLD · SILVER · BRONZE', img: 'assets/menu/mode-trial.webp' },
+  ],
+  chase: { police: 4, limit: '3:00', reward: [1500, 1000, 600, 150] },   // police cars, the time to get away, CR for 3, 2, 1 stars and for being caught
+
   /* ---------- today's race: first in Single race, a new one every day at midnight ----------
      The track, car and weather are picked from these lists by the date. Everyone drives the same car, so the
-     world ranking of the day is fair. The free version gets one run a day. */
+     world ranking of the day is fair. The free version gets one run a day. It is in the list of its own mode:
+     a circuit race, or a time trial on a hill climb or rally stage. */
   daily: {
     tracks: ['rbring', 'jezero', 'monaco', 'gora', 'suzuka', 'riviera', 'spa', 'ljubljana', 'ouninpohja', 'nring', 'pikes'],
     cars: ['kaze', 'rally', 'strega', 'pico', 'vortex', 'formula'],

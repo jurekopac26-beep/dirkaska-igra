@@ -44,11 +44,11 @@ const shot = async (name) => {
     const app = document.getElementById('app').getBoundingClientRect();
     for (const el of document.querySelectorAll('#app *')) {
       const r = el.getBoundingClientRect(); if (!r.width || getComputedStyle(el).visibility === 'hidden') continue;
-      if (el.closest('.scroll, .chips, .dio, .stage, .bgv, .tile .im')) continue;
+      if (el.closest('.scroll, .chips, .dio, .stage, .bgv, .tile .im, .mode .im')) continue;
       if (r.right > app.right + 1 || r.left < app.left - 1) out.push('outside x: ' + el.tagName + '.' + el.className + ' ' + Math.round(r.left) + '..' + Math.round(r.right));
       if (r.bottom > app.bottom + 1) out.push('below: ' + el.tagName + '.' + el.className + ' ' + Math.round(r.bottom));
     }
-    for (const el of document.querySelectorAll('#app h1, #app h2, #app h3, #app b, #app small, #app span, #app button:not(.tile)')) if (el.scrollWidth > el.clientWidth + 2 && getComputedStyle(el).overflow !== 'visible') out.push('clipped: ' + (el.textContent || '').trim().slice(0, 40));
+    for (const el of document.querySelectorAll('#app h1, #app h2, #app h3, #app b, #app small, #app span, #app button:not(.tile):not(.mode)')) if (el.scrollWidth > el.clientWidth + 2 && getComputedStyle(el).overflow !== 'visible') out.push('clipped: ' + (el.textContent || '').trim().slice(0, 40));
     return [...new Set(out)].slice(0, 8);
   });
   await page.screenshot({ path: path.join(OUT, name + '.png') });
@@ -57,21 +57,22 @@ const shot = async (name) => {
 const open = async (st, scr, o, ms) => { await page.evaluate(([st, scr, o]) => window.MENU_DEBUG.open(st, scr, o), [st, scr, o || {}]); await wait(ms || 700); };
 const ONLY = process.argv[2] ? process.argv[2].split(',') : null;
 const plan = [
-  ['free', 'title', {}, 2600], ['free', 'car', { carIdx: 0 }, 2200], ['free', 'car', { carIdx: 3, tab: 'paint' }, 1800], ['free', 'track', { trackIdx: 0 }], ['free', 'track', { trackIdx: 7 }],
+  ['free', 'title', {}, 2600], ['free', 'car', { carIdx: 0 }, 2200], ['free', 'car', { carIdx: 3, tab: 'paint' }, 1800], ['free', 'mode', {}], ['free', 'track', { daily: true }], ['free', 'track', { mode: 'race', trackId: 'suzuka' }],
   ['free', 'career', {}], ['free', 'series', { seriesId: 'home' }], ['free', 'title', { offer: true }],
-  ['full', 'title', {}, 1200], ['full', 'car', { carIdx: 2, tab: 'upg' }, 2000], ['full', 'track', { trackIdx: 3 }], ['full', 'career', {}], ['full', 'series', { seriesId: 'home' }],
+  ['full', 'title', {}, 1200], ['full', 'car', { carIdx: 2, tab: 'upg' }, 2000], ['full', 'track', { mode: 'race', trackId: 'gora' }], ['full', 'mode', { mode: 'chase' }], ['full', 'track', { mode: 'chase', trackId: 'monaco' }], ['full', 'career', {}], ['full', 'series', { seriesId: 'home' }],
   ['veteran', 'title', {}, 1200], ['veteran', 'car', { carIdx: 2, colorIdx: 0 }, 2000], ['veteran', 'car', { carIdx: 5 }, 1800], ['veteran', 'car', { carIdx: 6, colorIdx: 3 }, 2000],
-  ['veteran', 'track', { trackIdx: 8 }], ['veteran', 'track', { trackIdx: 9 }], ['veteran', 'track', { trackIdx: 3, weatherSheet: true }], ['veteran', 'career', {}], ['veteran', 'series', { seriesId: 'legends' }], ['veteran', 'series', { seriesId: 'attack' }],
+  ['veteran', 'track', { mode: 'race', trackId: 'spa' }], ['veteran', 'track', { mode: 'race', trackId: 'nring' }], ['veteran', 'track', { mode: 'race', trackId: 'gora', weatherSheet: true }],
+  ['veteran', 'track', { mode: 'trial', trackId: 'suzuka' }], ['veteran', 'track', { mode: 'trial', trackId: 'ouninpohja' }], ['veteran', 'track', { mode: 'chase', trackId: 'ljubljana', weatherSheet: true }], ['veteran', 'career', {}], ['veteran', 'series', { seriesId: 'legends' }], ['veteran', 'series', { seriesId: 'attack' }],
   ['veteran', 'multi', { mpMode: 'create' }], ['veteran', 'multi', { mpMode: 'join' }], ['veteran', 'board', { lbTrack: -1 }], ['veteran', 'board', { lbTrack: 3 }], ['veteran', 'settings', {}],
 ];
 let n = 0;
 for (const [st, scr, o, ms] of plan) {
   n++;
-  const name = String(n).padStart(2, '0') + '-' + st + '-' + scr + (o.carIdx != null ? '-c' + o.carIdx : '') + (o.trackIdx != null ? '-t' + o.trackIdx : '') + (o.seriesId ? '-' + o.seriesId : '') + (o.tab ? '-' + o.tab : '') + (o.mpMode ? '-' + o.mpMode : '') + (o.lbTrack != null ? '-lb' + o.lbTrack : '') + (o.offer ? '-offer' : '') + (o.weatherSheet ? '-weather' : '');
+  const name = String(n).padStart(2, '0') + '-' + st + '-' + scr + (o.carIdx != null ? '-c' + o.carIdx : '') + (o.mode ? '-' + o.mode : '') + (o.trackId ? '-' + o.trackId : '') + (o.daily ? '-daily' : '') + (o.seriesId ? '-' + o.seriesId : '') + (o.tab ? '-' + o.tab : '') + (o.mpMode ? '-' + o.mpMode : '') + (o.lbTrack != null ? '-lb' + o.lbTrack : '') + (o.offer ? '-offer' : '') + (o.weatherSheet ? '-weather' : '');
   if (ONLY && !ONLY.some(x => name.includes(x))) continue;
   await open(st, scr, o, ms);
   await shot(name);
 }
-if (!ONLY) { await open('veteran', 'track', { trackIdx: 2 }, 900); await click('[data-act="race-single"]'); await wait(300); await shot('99-loading'); await wait(1600); await shot('99-picker'); }
+if (!ONLY) { await open('veteran', 'track', { mode: 'race', trackId: 'riviera' }, 900); await click('[data-act="race-single"]'); await wait(300); await shot('99-loading'); await wait(1600); await shot('99-picker'); }
 console.log(errors.length ? 'ERRORS:\n' + [...new Set(errors)].join('\n') : 'no console errors');
 await browser.close(); server.close();

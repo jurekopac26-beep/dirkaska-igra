@@ -1,5 +1,5 @@
 // Mockup only: still pictures of the cars (Car3D.snapshot in the mockup page) for the menu's buttons -> raw/carimg/*.png,
-// then python3 menuimg.py makes the webp files. Usage: node carimgs.mjs ['[[name, model, colour, angle, elevation?], …]']
+// then python3 menuimg.py makes the webp files. Usage: node carimgs.mjs ['[[name, model, colour, angle, elevation?, "police"?], …]']
 import { createRequire } from 'node:module';
 import http from 'node:http';
 import fs from 'node:fs';
@@ -10,7 +10,8 @@ const HERE = path.dirname(new URL(import.meta.url).pathname), SITE = path.join(H
 const THREE = path.join(HERE, '..', 'game_main', 'js', 'vendor', 'three.r128.min.js');
 fs.mkdirSync(OUT, { recursive: true });
 const T = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.webm': 'video/webm' };
-const server = http.createServer((q, r) => { let p = decodeURIComponent(new URL(q.url, 'http://x').pathname); if (p === '/') { r.writeHead(200, { 'Content-Type': 'text/html' }); r.end('<!doctype html><html><body><div id="h" style="width:10px;height:10px"></div><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><script src="car3d.js"></script></body></html>'); return; }
+const server = http.createServer((q, r) => { let p = decodeURIComponent(new URL(q.url, 'http://x').pathname); if (p === '/') { r.writeHead(200, { 'Content-Type': 'text/html' }); r.end('<!doctype html><html><body><div id="h" style="width:10px;height:10px"></div><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><script src="car3d.js"></script><script src="/__tool/policebar.js"></script></body></html>'); return; }
+  if (p === '/__tool/policebar.js') { r.writeHead(200, { 'Content-Type': 'text/javascript' }); r.end(fs.readFileSync(path.join(HERE, 'policebar.js'))); return; }
   const f = path.join(SITE, p); if (!fs.existsSync(f)) { r.writeHead(404); r.end(); return; } r.writeHead(200, { 'Content-Type': T[path.extname(f)] || 'application/octet-stream' }); fs.createReadStream(f).pipe(r); });
 await new Promise(r => server.listen(0, '127.0.0.1', r));
 const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
@@ -20,9 +21,9 @@ const pg = await c.newPage(); pg.on('pageerror', e => console.log('pageerror', e
 await pg.goto(`http://127.0.0.1:${server.address().port}/`);
 const MODELS = ['pico', 'kaze', 'rally', 'vortex', 'strega', 'formula'];
 const JOBS = process.argv[2] ? JSON.parse(process.argv[2]) : MODELS.flatMap(m => [0, 1, 2, 3, 4, 5, 6, 7].map(c => [m + '-' + c, m, c, -0.75]))
-  .concat([['duel_l', 'kaze', 0, -0.62], ['duel_r', 'pico', 2, -2.52], ['career_car', 'rally', 0, -2.39]]);
-for (const [name, model, ci, ang, el] of JOBS) {
-  const url = await pg.evaluate(([m, ci, a, el]) => window.Car3D.snapshot(m, ci, a, 900, 560, el), [model, ci, ang, el == null ? 12 : el]);
+  .concat([['duel_l', 'kaze', 0, -0.62], ['duel_r', 'pico', 2, -2.52], ['career_car', 'rally', 0, -2.39], ['police', 'pico', 1, -0.75, 12, 'police']]);
+for (const [name, model, ci, ang, el, fx] of JOBS) {
+  const url = await pg.evaluate(([m, ci, a, el, fx]) => window.Car3D.snapshot(m, ci, a, 900, 560, el, fx === 'police' ? window.policeBar : null), [model, ci, ang, el == null ? 12 : el, fx || '']);
   fs.writeFileSync(path.join(OUT, name + '.png'), Buffer.from(url.split(',')[1], 'base64'));
   console.log('saved', name);
 }
