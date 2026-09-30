@@ -10281,6 +10281,21 @@ const World = (function () {
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = aniso || 4;
     return { tex: t, grass: (px, pz) => grassUV(wr(px / PM), wr(-pz / PM)) };
   }
+  function hjScreenTex(winter) {   // the big screens' picture (512 x 288): the race on TV, two cars sideways on the gravel in their dust under the pines, LIVE and the lap
+    // (winter: on the packed snow, the spray of it behind them, the pines white)
+    const W = 512, H = 288, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d'), r = rng(6131);
+    const gr = x.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, winter ? '#9fb9d6' : '#8fbbe6'); gr.addColorStop(0.44, '#dbe7ef'); gr.addColorStop(0.45, winter ? '#e4e9ef' : '#35502a'); gr.addColorStop(1, winter ? '#c9d2dc' : '#5d5038');
+    x.fillStyle = gr; x.fillRect(0, 0, W, H);
+    for (let k = 0; k < 46; k++) { const px = k * 11.5 + r() * 6, h = 34 + r() * 30; x.fillStyle = winter ? (r() < 0.5 ? '#46584c' : '#5d6e62') : r() < 0.5 ? '#1c3620' : '#24442a'; x.beginPath(); x.moveTo(px - 9, 132); x.lineTo(px, 132 - h); x.lineTo(px + 9, 132); x.fill(); }   // the pines on the skyline
+    x.fillStyle = winter ? '#aeb8c2' : '#8c7c61'; x.beginPath(); x.moveTo(0, 226); x.quadraticCurveTo(260, 146, 512, 166); x.lineTo(512, 246); x.quadraticCurveTo(260, 214, 0, 288); x.fill();   // the gravel (packed snow)
+    for (let k = 0; k < 34; k++) { x.fillStyle = winter ? 'rgba(248,250,255,0.16)' : 'rgba(225,214,192,0.13)'; x.beginPath(); x.arc(110 + k * 7 + r() * 10, 186 - r() * 26, 26 + k * 1.2, 0, TAU); x.fill(); }   // the dust (snow)
+    const car = (cx, cy, col, a) => { x.save(); x.translate(cx, cy); x.rotate(a); x.fillStyle = 'rgba(0,0,0,0.35)'; x.fillRect(-36, 4, 76, 16); x.fillStyle = col; x.fillRect(-38, -14, 76, 26); x.fillStyle = '#1b1e24'; x.fillRect(-14, -24, 34, 12); x.fillStyle = '#f2f2ef'; x.fillRect(-4, -10, 14, 14); x.fillStyle = '#111'; x.beginPath(); x.arc(-22, 12, 8, 0, TAU); x.arc(22, 12, 8, 0, TAU); x.fill(); x.restore(); };
+    car(330, 176, '#1f5fb8', -0.12); car(196, 204, '#d8262a', -0.2);
+    x.fillStyle = 'rgba(8,10,14,0.8)'; x.fillRect(0, 250, W, 38); x.fillStyle = '#e2262b'; x.fillRect(10, 256, 62, 26);
+    x.fillStyle = '#fff'; x.font = 'bold 19px sans-serif'; x.textBaseline = 'middle'; x.fillText('LIVE', 18, 270); x.fillText('VARV 3/6', 88, 270); x.fillStyle = '#f5c518'; x.fillText('JOKER', 200, 270);
+    x.fillStyle = '#fff'; x.textAlign = 'right'; x.fillText('HÖLJES', W - 14, 270);
+    const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
+  }
   function hjStoneGeo() {   // a stone (unit size): a squat, faceted lump of granite, the facets lit by the sun (12 faces)
     const g = new GB(), R = rng(6095), c = [0.6, 0.58, 0.55], ring = [];
     for (let k = 0; k < 6; k++) { const a = (k + (R() - 0.5) * 0.5) / 6 * TAU, r = 0.42 + R() * 0.16; ring.push([Math.cos(a) * r, 0.18 + (R() - 0.5) * 0.12, Math.sin(a) * r]); }
@@ -10702,6 +10717,13 @@ const World = (function () {
         const k = (n++ * 3 + (side > 0 ? 1 : 0)) % 8, u0 = (k % 2) * 0.5, v1 = 1 - Math.floor(k / 2) * 0.25, bar = side > 0 ? T.br : T.bl, o = (ii) => side * (bar[ii] + 0.1);
         const A = Pt(i, o(i), 0.14), B = Pt(j, o(j), 0.14), C = Pt(j, o(j), 0.96), D = Pt(i, o(i), 0.96), uL = side < 0 ? u0 : u0 + 0.5, uR = side < 0 ? u0 + 0.5 : u0;
         sb.get(A[0], A[2]).quadO(A, B, C, D, W1, Pt(i, side * (bar[i] + 2), 0.5), [[uL, v1 - 0.25], [uR, v1 - 0.25], [uR, v1], [uL, v1]]); }
+      // on the armco in front of the crowds too: banners tied to the rail, two boards in every three
+      const bankOn = [new Uint8Array(N), new Uint8Array(N)]; for (const [a, b, sd] of BANKS) for (let d = a; d <= b; d += ds) bankOn[side2(sd)][T.idx(sAt(d))] = 1;
+      for (const side of [-1, 1]) for (let i = 0, n = 0; i + 2 <= N; i += 2) {
+        const j = (i + 2) % N; if (!bankOn[side2(side)][i] || kindM(i, side) !== 0 || kindM(j, side) !== 0 || kindM((i + 1) % N, side) !== 0 || (i >> 1) % 3 === 2) continue;
+        const k = (n++ * 5 + (side > 0 ? 3 : 0)) % 8, u0 = (k % 2) * 0.5, v1 = 1 - Math.floor(k / 2) * 0.25, bar = side > 0 ? T.br : T.bl, o = (ii) => side * (bar[ii] + 0.05);
+        const A = Pt(i, o(i), 0.28), B = Pt(j, o(j), 0.28), C = Pt(j, o(j), 1.0), D = Pt(i, o(i), 1.0), uL = side < 0 ? u0 : u0 + 0.5, uR = side < 0 ? u0 + 0.5 : u0;
+        sb.get(A[0], A[2]).quadO(A, B, C, D, W1, Pt(i, side * (bar[i] + 2), 0.5), [[uL, v1 - 0.25], [uR, v1 - 0.25], [uR, v1], [uL, v1]]); }
       sb.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true); }
     // the debris fences (chain link on posts) on top of the concrete walls in front of the crowds
     const scen = new Chunks(128), ban = new GB(true), fenceG = new GB(true);
@@ -10920,6 +10942,14 @@ const World = (function () {
       if (!big) for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) box(g, bx + c * a * (bl / 2 - 0.06) - s * b * (bw / 2 - 0.06), y0, bz + s * a * (bl / 2 - 0.06) + c * b * (bw / 2 - 0.06), 0.16, ey - y0, 0.16, br, [0.95, 0.95, 0.92], null, true);   // white corner boards
       if (!tiny) { const nw = Math.max(1, Math.floor(bl / 3.2)); for (const sd of [-1, 1]) for (let k = 0; k < nw; k++) { const a = (k + 0.5) / nw - 0.5, wx = bx + c * a * bl - s * sd * (bw / 2 + 0.03), wz = bz + s * a * bl + c * sd * (bw / 2 + 0.03);
         box(g, wx, ey - (big ? 2.6 : 1.9), wz, big ? 2.2 : 1.1, big ? 1.2 : 1.1, 0.06, br, [0.93, 0.93, 0.9]); box(g, wx - s * sd * 0.02, ey - (big ? 2.5 : 1.8), wz + c * sd * 0.02, big ? 2.0 : 0.9, big ? 1.0 : 0.9, 0.06, br, [0.2, 0.24, 0.3]); } }
+      if (!big) {   // a grey stone plinth, the door (white frame, steps up to it) on the side away from the track, a brick chimney on the ridge
+        const gy = nrGround(bx, bz), dsd = (T.px[T.nearestIdx(bx, bz)] - bx) * -s + (T.pz[T.nearestIdx(bx, bz)] - bz) * c > 0 ? -1 : 1;
+        box(g, bx, y0, bz, bl + 0.08, gy - y0 + 0.42, bw + 0.08, br, [0.44, 0.44, 0.46], [0.5, 0.5, 0.52]);
+        if (!tiny) { const da = (hr < 0.5 ? -0.3 : 0.3) * bl, dx = bx + c * da - s * dsd * (bw / 2), dz = bz + s * da + c * dsd * (bw / 2);
+          box(g, dx - s * dsd * 0.04, gy + 0.35, dz + c * dsd * 0.04, 1.3, 2.25, 0.06, br, [0.95, 0.95, 0.92]); box(g, dx - s * dsd * 0.07, gy + 0.4, dz + c * dsd * 0.07, 1.0, 2.05, 0.06, br, hr < 0.72 ? [0.93, 0.93, 0.9] : [0.36, 0.14, 0.11]);
+          box(g, dx - s * dsd * 0.45, gy - 0.3, dz + c * dsd * 0.45, 1.5, 0.62, 0.8, br, [0.55, 0.55, 0.56]); }
+        if (!tiny && hr > 0.3) { const ca = (hr - 0.65) * bl * 0.6; box(g, bx + c * ca, ey + rh * 0.45, bz + s * ca, 0.62, rh * 0.55 + 1.1, 0.62, br, [0.56, 0.24, 0.18], [0.2, 0.2, 0.22]); }
+      }
       exclPush(bx, bz, Math.hypot(bl, bw) / 2 + 2); CR.block(bx, bz, bl, bw, br); nHouses++;
     }
 
@@ -10958,6 +10988,67 @@ const World = (function () {
       }
       // flags by the start and on the banks
       for (const d of [-20, 20, 60]) { const i = T.idx(sAt(d)), o = T.br[i] + 1.2, x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, y = nrGround(x, z); cyl(scen.get(x, z), x, y - 0.3, z, 0.06, 9.3, 6, [0.92, 0.92, 0.94]); flagL.push([x, y + 9, z, 2.4, d === 20 ? 'ch' : 'se', 2.4]); exclPush(x, z, 2); }
+    }
+
+    /* ---- the event's own kit (before the woods: the trees keep clear of it): TV camera platforms round the outside of the corners (a scaffold
+       tower, a plank deck with a rail, the camera on its tripod, the cameraman under a parasol); big video screens on a truss facing the crowd
+       at the Velodrome and the grandstand; rows of portable toilets and food stalls behind the big crowds ---- */
+    let nKit = 0, scrMat = null, scrMaps = null;   // (the screens' picture: a winter one, out.dyn.season)
+    {
+      const RK = rng(6121), tube = [0.72, 0.73, 0.76];
+      const spot = (d, sd, o0, o1, r) => {   // the first place from o0 to o1 m beyond the barrier, d m after the start line, with r m round it free: [x, z, i] or null
+        const s = sAt(d), i = T.idx(s), bar = sd > 0 ? T.br[i] : T.bl[i];
+        for (let o = o0; o <= o1; o += 1.5) { const [x, z] = atSf(s, sd * (bar + o)); if (free(x, z, r) && nrSlope(x, z) < 0.3) return [x, z, i]; }
+        return null; };
+      for (const [d, sd] of [[70, -1], [150, 1], [540, -1], [800, 1], [1000, 1], [1090, -1], [1180, -1]]) {   // TV platforms
+        const p = spot(d, sd, 5, 16, 2.6); if (!p) continue;
+        const [x, z, i] = p, y = nrGround(x, z), H = 4.2 + RK() * 1.6, g = scen.get(x, z), hd = T.hd[i], c = Math.cos(hd), sn = Math.sin(hd), fx = -T.nx[i] * sd, fz = -T.nz[i] * sd;   // (f: towards the road)
+        const Lp = (a, b, yy) => [x + c * a - sn * b, yy, z + sn * a + c * b], legs = [[-1.1, -1.1], [1.1, -1.1], [1.1, 1.1], [-1.1, 1.1]];
+        for (const [a, b] of legs) { const q = Lp(a, b, 0), gy = nrGround(q[0], q[2]); box(g, q[0], gy - 0.2, q[2], 0.08, y + H - gy + 0.2, 0.08, hd, tube); }
+        for (let k = 0; k < 4; k++) { const [a0, b0] = legs[k], [a1, b1] = legs[(k + 1) % 4];   // the braces: a zigzag up each side
+          ouRod(g, Lp(a0, b0, y + 0.2), Lp(a1, b1, y + H * 0.5), 0.03, tube, 4); ouRod(g, Lp(a1, b1, y + H * 0.5), Lp(a0, b0, y + H - 0.1), 0.03, tube, 4); }
+        box(g, x, y + H, z, 2.5, 0.12, 2.5, hd, [0.52, 0.38, 0.25], [0.6, 0.45, 0.3]);   // the deck
+        for (let k = 0; k < 4; k++) { const [a0, b0] = legs[k], [a1, b1] = legs[(k + 1) % 4]; ouRod(g, Lp(a0, b0, y + H + 1.0), Lp(a1, b1, y + H + 1.0), 0.03, [0.95, 0.6, 0.12], 4); }   // the rail
+        for (const [a, b] of legs) { const q = Lp(a, b, 0); box(g, q[0], y + H, q[2], 0.07, 1.05, 0.07, hd, tube); }
+        const cx = x + fx * 0.5, cz = z + fz * 0.5, cy = y + H + 1.35, ch = Math.atan2(fz, fx);   // the camera on its tripod, looking at the road
+        for (let k = 0; k < 3; k++) { const a = k / 3 * TAU; ouRod(g, [cx + Math.cos(a) * 0.35, y + H + 0.1, cz + Math.sin(a) * 0.35], [cx, cy - 0.15, cz], 0.02, [0.15, 0.15, 0.17], 3); }
+        box(g, cx, cy - 0.15, cz, 0.62, 0.34, 0.26, ch, [0.12, 0.12, 0.14], [0.2, 0.2, 0.22]); cyl(g, cx + fx * 0.42, cy - 0.06, cz + fz * 0.42, 0.09, 0.02, 6, [0.05, 0.05, 0.06]);
+        const pc = [[0.12, 0.13, 0.16], [0.95, 0.95, 0.93]], ux = x - fx * 0.3, uz = z - fz * 0.3, ay = y + H + 2.75, apex = [ux, ay + 0.35, uz];   // a parasol over them
+        box(g, ux, y + H, uz, 0.04, 2.8, 0.04, 0, [0.8, 0.8, 0.82]);
+        for (let q = 0; q < 8; q++) { const a0 = q / 8 * TAU, a1 = (q + 1) / 8 * TAU, p0 = [ux + Math.cos(a0) * 1.25, ay, uz + Math.sin(a0) * 1.25], p1 = [ux + Math.cos(a1) * 1.25, ay, uz + Math.sin(a1) * 1.25];
+          g.triO(p0, apex, p1, pc[q % 2], [ux, ay + 0.1, uz]); g.triO(p1, apex, p0, [0.1, 0.1, 0.1], [ux, ay + 2, uz]); }
+        crowdPut(CR, x - fx * 0.35, y + H + 0.06, z - fz * 0.35, fx, fz, { col: [0.1, 0.11, 0.14], flag: 0 }, 1);   // the cameraman
+        CR.exclAdd(x, z, 2); exclPush(x, z, 3.2); nKit++;
+      }
+      const scrS = ownTex(hjScreenTex(false)), scrW = ownTex(hjScreenTex(true)), scrG = new GB(true); scrMat = new THREE.MeshBasicMaterial({ map: scrS }); scrMaps = [scrS, scrW];
+      for (const [d0, d1, sd] of [[520, 600, -1], [1165, 1210, -1]]) {   // the big screens, across the road from the crowds they face
+        let p = null; for (let d = (d0 + d1) / 2, k = 0; k < 12 && !p; k++, d += (k % 2 ? 1 : -1) * k * 4) p = spot(d, sd, 8, 30, 6); if (!p) continue;
+        const [x, z, i] = p, y = nrGround(x, z), fx = -T.nx[i] * sd, fz = -T.nz[i] * sd, px = -fz, pz = fx, g = scen.get(x, z), W = 8, Hs = 4.5, y0 = y + 4.2;   // (f: to the road and the crowd beyond it)
+        for (const o of [-W / 2 + 0.6, W / 2 - 0.6]) { const lx = x + px * o, lz = z + pz * o, gy = nrGround(lx, lz); box(g, lx - fx * 0.3, gy - 0.3, lz - fz * 0.3, 0.45, y0 + Hs + 0.3 - gy + 0.3, 0.45, Math.atan2(pz, px), [0.3, 0.31, 0.34]); }
+        box(g, x - fx * 0.05, y0 - 0.25, z - fz * 0.05, W + 0.5, Hs + 0.5, 0.4, Math.atan2(pz, px), [0.08, 0.08, 0.09], [0.12, 0.12, 0.13]);   // the frame
+        const A = [x + fx * 0.17 - px * W / 2, y0, z + fz * 0.17 - pz * W / 2], B = [x + fx * 0.17 + px * W / 2, y0, z + fz * 0.17 + pz * W / 2];
+        scrG.quadO(A, B, [B[0], y0 + Hs, B[2]], [A[0], y0 + Hs, A[2]], W1, [x - fx * 2, y0 + Hs / 2, z - fz * 2], [[1, 0], [0, 0], [0, 1], [1, 1]]);
+        box(g, x - fx * 0.3, y, z - fz * 0.3, W, 0.35, 1.4, Math.atan2(pz, px), [0.3, 0.31, 0.34]);   // the ballast at its foot
+        exclPush(x, z, W / 2 + 1.5); CR.block(x, z, W + 1, 2, Math.atan2(pz, px)); nKit++;
+      }
+      if (!scrG.empty) { const m = new THREE.Mesh(scrG.geometry(), scrMat); m.matrixAutoUpdate = false; root.add(m); }
+      for (const [d, sd, n] of [[40, 1, 8], [300, 1, 6], [590, 1, 10], [1080, 1, 6]]) {   // portable toilets in a row, behind the crowds
+        const p = spot(d, sd, 22, 40, n * 0.75 + 1.5); if (!p) continue;
+        const [x, z, i] = p, hd = T.hd[i], c = Math.cos(hd), sn = Math.sin(hd), fx = -T.nx[i] * sd, fz = -T.nz[i] * sd, g = scen.get(x, z), col = RK() < 0.6 ? [0.12, 0.34, 0.7] : [0.14, 0.48, 0.28];
+        for (let k = 0; k < n; k++) { const o = (k - (n - 1) / 2) * 1.4, bx = x + c * o, bz = z + sn * o, by = nrGround(bx, bz);
+          box(g, bx, by - 0.1, bz, 1.25, 2.35, 1.25, hd, col, [0.92, 0.92, 0.9]); box(g, bx + fx * 0.63, by + 0.1, bz + fz * 0.63, 0.8, 1.95, 0.04, hd, [col[0] * 0.8, col[1] * 0.8, col[2] * 0.8]); }   // (the doors towards the road)
+        exclPush(x, z, n * 0.75 + 1); CR.block(x, z, n * 1.4 + 0.5, 1.8, hd); nKit++;
+      }
+      for (const [d, sd, k0] of [[560, 1, 0], [20, -1, 1], [1110, 1, 2], [90, 1, 3]]) {   // food stalls: a white van body with a striped awning over the counter towards the road
+        const p = spot(d, sd, 16, 34, 4); if (!p) continue;
+        const [x, z, i] = p, y = nrGround(x, z), hd = T.hd[i], fx = -T.nx[i] * sd, fz = -T.nz[i] * sd, g = scen.get(x, z), st = [[0.85, 0.12, 0.12], [0.1, 0.32, 0.66], [0.16, 0.5, 0.26], [0.98, 0.55, 0.1]][k0];
+        box(g, x, y - 0.1, z, 3.6, 2.7, 2.4, hd, [0.93, 0.93, 0.91], [0.8, 0.8, 0.82]);
+        box(g, x + fx * 1.22, y + 1.05, z + fz * 1.22, 3.0, 0.9, 0.04, hd, [0.16, 0.16, 0.18]);   // the open hatch
+        const c = Math.cos(hd), sn = Math.sin(hd);
+        for (let q = 0; q < 6; q++) { const o = -1.5 + q * 0.6, a = [x + c * o + fx * 1.2, y + 2.5, z + sn * o + fz * 1.2], b = [a[0] + c * 0.6, a[1], a[2] + sn * 0.6], cc = [b[0] + fx * 1.1, y + 2.05, b[2] + fz * 1.1], dd = [a[0] + fx * 1.1, y + 2.05, a[2] + fz * 1.1];
+          g.quadO(a, b, cc, dd, q % 2 ? [0.95, 0.95, 0.93] : st, [x + fx * 1.7, y, z + fz * 1.7]); g.quadO(a, b, cc, dd, [0.4, 0.4, 0.42], [x + fx * 1.7, y + 5, z + fz * 1.7]); }
+        exclPush(x, z, 3.5); CR.block(x, z, 4.2, 3.2, hd); nKit++;
+      }
     }
 
     /* ---- the woods: spruce, pine and birch where the land cover has forest (pines on the dry sand near the track, spruce deeper in, birch at the
@@ -11040,21 +11131,22 @@ const World = (function () {
       for (let k = 0; k < tiles.length; k += 3) { const m = new THREE.Mesh(nrTileGeo(tiles[k], tiles[k + 1], tiles[k + 2] === 2 ? 4 : 1), gMat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m); nTiles++; ownG.push(m.geometry.attributes.color); }
       const verge = (Tk, i, side, bar, y, P3) => { const lift = (o, h) => { const p = P3(i, side * o, 0); return [o, Math.max(h, nrGround(p[0], p[2]) + 0.06 - y)]; };
         return [[Tk.w + 0.85, -0.045], [Tk.w + 1.6, -0.07], lift(Math.max(Tk.w + 2.2, bar - 0.4), -0.1), lift(bar + 0.8, -0.16), lift(bar + 3.2, -0.4)]; };
-      const vg = [1.2, 1.12, 0.94];   // (trodden sand and grit along the shoulder)
-      const verges = (Tk, P3, barAt, skip) => {
+      const vg = [1.2, 1.12, 0.94], ao = 0.74;   // (trodden sand and grit along the shoulder; ao: the ground darker round the barrier's foot, where it shades it)
+      const verges = (Tk, P3, barAt, skip, bare) => {
         const Nk = Tk.N, open = !!Tk.open;
         for (let c0 = 0; c0 < Nk; c0 += CH) {
           const g = new RB(true), pv = [-1, -1], last = open ? Math.min(c0 + CH, Nk - 1) : Math.min(c0 + CH, Nk);
           for (let ii = c0; ii <= last; ii++) { const i = ii % Nk;
             for (const side of [-1, 1]) { const si = side2(side); if (skip(i, side)) { pv[si] = -1; continue; }
-              const pr = verge(Tk, i, side, barAt(i, side), Tk.hy[i], P3), pts = pr.map(([o, h]) => P3(i, side * o, h)), cols = pr.map(([o], k) => { const p = pts[k]; const gc = nrGCol(p[0], p[2]); return k < 2 ? [lerp(vg[0], gc[0], 0.35), lerp(vg[1], gc[1], 0.35), lerp(vg[2], gc[2], 0.35)] : gc; });
+              const pr = verge(Tk, i, side, barAt(i, side), Tk.hy[i], P3), pts = pr.map(([o, h]) => P3(i, side * o, h)), sh = bare && bare(i, side) ? 1 : ao;
+              const cols = pr.map(([o], k) => { const p = pts[k]; const gc = nrGCol(p[0], p[2]); return k < 2 ? [lerp(vg[0], gc[0], 0.35), lerp(vg[1], gc[1], 0.35), lerp(vg[2], gc[2], 0.35)] : k < 4 ? [gc[0] * sh, gc[1] * sh, gc[2] * sh * 1.03] : gc; });
               const o2 = side > 0 ? { p: pts, c: cols } : { p: pts.slice().reverse(), c: cols.slice().reverse() };
               const r = g.row(o2.p, o2.c, o2.p.map(p => [p[0] / 14, -p[2] / 14])); if (pv[si] >= 0) g.link(pv[si], r, 0, 4); pv[si] = r; } }
           const m = addM(g, gMat); if (m) ownG.push(m.geometry.attributes.color);
         }
       };
-      verges(T, Pt, (i, side) => (side > 0 ? T.br[i] : T.bl[i]), (i, side) => face(T, i, side));
-      if (J) verges(J, (j, o, y) => [J.px[j] + J.nx[j] * o, J.hy[j] + y, J.pz[j] + J.nz[j] * o], barJ, (j, side) => face(J, j, side) || j < 2 || j > NJ - 3);
+      verges(T, Pt, (i, side) => (side > 0 ? T.br[i] : T.bl[i]), (i, side) => face(T, i, side), (i, side) => notch[side2(side)][i]);   // (no barrier across a junction's mouth: no shade)
+      if (J) verges(J, (j, o, y) => [J.px[j] + J.nx[j] * o, J.hy[j] + y, J.pz[j] + J.nz[j] * o], barJ, (j, side) => face(J, j, side) || j < 2 || j > NJ - 3, (j, side) => kindJ(j, side) < 0);
       G.col = G.cov = P.edge = null;   // (build only)
     }
 
@@ -11114,6 +11206,7 @@ const World = (function () {
       out.dyn.season = (season) => {
         if (bm) bm.visible = season === 'winter'; stoneGrp.visible = season !== 'winter'; patchK.value = season === 'winter' ? 0 : 1;   // (the stones and the ground's patches under the snow)
         parasolGrp.visible = season === 'summer';   // (the parasols: a summer's day)
+        if (scrMat) { scrMat.map = scrMaps[season === 'winter' ? 1 : 0]; scrMat.needsUpdate = true; }   // (the race on the screens: on snow in winter)
         if (driftMat) driftMat.color.setRGB(...(season === 'winter' ? [0.7, 0.76, 0.86] : [1, 1, 1]));   // (the sand on the asphalt's edges: snow and slush)
         ownG.forEach((a, n) => { const src = orig0[n], dst = a.array;
           for (let k = 0; k < src.length; k += 3) { const r = src[k], g = src[k + 1], b = src[k + 2];
@@ -11158,7 +11251,7 @@ const World = (function () {
     addM(fenceG, fMat);
     crowdFinish(CR, root, out);
     if (flagL.length) root.add(hjFlags(flagL, CR.U.uTime));
-    out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, stands: nStands, roads: RDS.length, gates: nGates, houses: nHouses, rigs: nRigs, camp: nCamp, flags: flagL.length, props: out.props.length, water: nWater, far: nFarT, tufts: nTufts, stones: nStones, bushes: nBush, parasols: parasols.length };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, stands: nStands, roads: RDS.length, gates: nGates, houses: nHouses, rigs: nRigs, camp: nCamp, flags: flagL.length, props: out.props.length, water: nWater, far: nFarT, tufts: nTufts, stones: nStones, bushes: nBush, parasols: parasols.length, kit: nKit };   // (read by the tests)
     return out;
   }
 

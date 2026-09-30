@@ -98,10 +98,10 @@
   "jsMs": 0.67
  },
  "holjes": {
-  "calls": 239,
-  "maxCalls": 287,
-  "kverts": 765,
-  "maxKverts": 993,
-  "jsMs": 0.6
+  "calls": 240,
+  "maxCalls": 285,
+  "kverts": 771,
+  "maxKverts": 999,
+  "jsMs": 0.59
  }
 }
