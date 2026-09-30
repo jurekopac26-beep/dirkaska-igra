@@ -883,7 +883,7 @@ const Render = (function () {
     forest:   { fog: 0x9a90c6, sun: 0xff9e5e, sunI: 2.26, sky: 0x6d8cec, gnd: 0x1c357f, hemiI: 0.7, tint: [1.0, 0.95, 1.04], sat: 1.06, sunOff: [-55, 64, -106] },   // low sun in the NNW, in front of the kino camera: back-lit, long shadows falling towards the lower right (measured from the reference)   // warm key light, navy-blue shadows (as in the reference)   // warm evening: peach sun, lavender haze
     italia:   { fog: 0xa4a6d0, sun: 0xffb47c, sunI: 2.2, sky: 0x7090ea, gnd: 0x6e5a78, hemiI: 0.7, tint: [1.0, 0.96, 1.03], sat: 1.06, sunOff: [-100, 70, -58] },   // Toskana: the forest's warm key light and navy shadows, a little less orange, the sun in the west-north-west (measured from the reference)
     kamp:     { fog: 0xa4a8d0, sun: 0xff9468, sunI: 1.33, sky: 0xc6ceff, gnd: 0x7a7338, hemiI: 1.0, tint: [1.0, 0.96, 1.03], sat: 1.06, sunOff: [-100, 80, 30] },   // Gromski rt: sun in the west-south-west, a warm bright ambient: softer shadows, as in the reference
-    monaco:   { fog: 0xcfe2f1, sun: 0xfff0d6, sunI: 1.08, sky: 0xd8ebff, gnd: 0x8a7c62, hemiI: 0.6, tint: [1.03, 1.0, 0.95], sat: 1.14 },
+    monaco:   { fog: 0xc8dcee, sun: 0xffecd0, sunI: 1.2, sky: 0xd2e6ff, gnd: 0x86785e, hemiI: 0.52, tint: [1.04, 1.0, 0.94], sat: 1.2 },   // the Riviera in May: a bright, warm sun, crisp shadows, the colours of the sea
     mountain: { fog: 0xb4cadf, sun: 0xfff2e0, sunI: 1.0, sky: 0xc8dcff, gnd: 0x4d5c33, hemiI: 0.6, tint: [0.98, 1.0, 1.03], sat: 1.12 },
     ouni:     { fog: 0xc4d3dc, sun: 0xffe9c6, sunI: 1.18, sky: 0xcfe1f5, gnd: 0x4a5a2e, hemiI: 0.56, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-88, 72, 58] },   // Ouninpohja: a clear Finnish August afternoon, a warm sun lower in the west (the forest's long shadows across the road), soft haze over the lakes
     pikes:    { fog: 0xbfd3e8, sun: 0xfff4e4, sunI: 1.1, sky: 0xcfe0ff, gnd: 0x6b5847, hemiI: 0.6, tint: [1.0, 0.99, 1.02], sat: 1.1 },   // clear, thin high-altitude air: bright sun, pale blue haze over the valleys
@@ -910,7 +910,7 @@ const Render = (function () {
     birds.mesh.visible = !(r > 0); if (r > 0) birds.reset(birds.gull);   // (no birds in the rain)
     if (!world || !world.root) return;
     if (world.dyn.clouds) world.dyn.clouds.K.value = world.dyn.clouds.k0 * (1 - r);   // (no cloud shadows under the rain's overcast)
-    const maps = [tex.asphalt, tex.paving, tex.curb, tex.makadam].filter(Boolean);
+    const maps = [tex.asphalt, tex.paving, tex.curb, tex.makadam, ...(world.dyn.wetMaps || [])].filter(Boolean);   // (+ a world's own road textures: Monaco)
     world.root.traverse(o => { for (const m of o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []) {
       if (!m.color || !maps.includes(m.map)) continue;
       if (!m.userData.dry) m.userData.dry = m.color.clone();
@@ -1808,10 +1808,11 @@ const Render = (function () {
     }
     // tunnel roof (and the hotel above it) fades out while the followed car is inside, so you can see it (Suzuka: the bridge, while it drives underneath)
     if (world && world.dyn.tunnel && target && target.q) {
-      const tn = world.dyn.tunnel, sq = target.q.s, inside = sq > tn.s0 - 30 && sq < tn.s1 + 12, goal = inside ? 0.14 : 1;
+      const tn = world.dyn.tunnel, sq = target.q.s, inside = sq > tn.s0 - 30 && sq < tn.s1 + 12, goal = inside ? (tn.min != null ? tn.min : 0.14) : 1;
       tn.mat.opacity += (goal - tn.mat.opacity) * Math.min(1, dt * 5 + 0.02);
       const tr = tn.mat.opacity < 0.985; if (tn.mat.transparent !== tr) { tn.mat.transparent = tr; tn.mat.needsUpdate = true; } tn.mat.depthWrite = !tr;
       if (tn.mats) for (const m of tn.mats) if (m !== tn.mat) { m.opacity = tn.mat.opacity; if (m.transparent !== tr) { m.transparent = tr; m.needsUpdate = true; } m.depthWrite = !tr; }   // (Suzuka: everything on the bridge)
+      if (tn.hide) { const v = tn.mat.opacity > 0.03; for (const o of tn.hide) o.visible = v; }   // (Monaco: the roof and the hotel over it gone altogether)
     }
     if (postOn()) {
       if (target) {   // keep the sharp band of the tilt-shift on the followed car
