@@ -75,6 +75,29 @@ const World = (function () {
     addTo(group, mat, cast, recv) { for (const g of this.map.values()) { if (g.empty) continue; const m = new THREE.Mesh(g.geometry(), mat); m.castShadow = cast; m.receiveShadow = recv; m.matrixAutoUpdate = false; m.updateMatrix(); group.add(m); } }
   }
 
+  /* ---------------- swaying trees (the default builder's woods): their own chunks, each vertex with its share of the sway (aSway: 0 at the
+     foot of its tree, 1 at the top, squared), bent by the wind in the vertex shader (World.update drives the uniform: out.dyn.wind) ---------------- */
+  function swayMat(W) {
+    const m = new THREE.MeshLambertMaterial({ vertexColors: true });
+    m.onBeforeCompile = (sh) => {
+      sh.uniforms.uWind = W;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uWind; attribute float aSway;').replace('#include <begin_vertex>', '#include <begin_vertex>\n' +
+        'float wPh = position.x * 0.045 + position.z * 0.061;\ntransformed.x += aSway * 0.34 * sin(uWind * 1.15 + wPh);\ntransformed.z += aSway * 0.22 * sin(uWind * 0.87 + wPh * 1.6);');
+    };
+    m.customProgramCacheKey = () => 'treeSway';
+    return m;
+  }
+  function treeMark(g, n0, y0, h) { (g.sw || (g.sw = [])).push(n0, g.P.length / 3, y0, h); }   // (after a tree is added to g: its vertices from n0 sway by their height)
+  function treesTo(ch, group, mat) {
+    for (const g of ch.map.values()) {
+      if (g.empty) continue;
+      const geo = g.geometry(), n = g.P.length / 3, A = new Float32Array(n), L = g.sw || [];
+      for (let k = 0; k < L.length; k += 4) { const y0 = L[k + 2], h = L[k + 3]; for (let v = L[k]; v < L[k + 1]; v++) { const f = Math.max(0, Math.min(1, (g.P[v * 3 + 1] - y0) / h - 0.15)); A[v] = f * f; } }
+      geo.setAttribute('aSway', new THREE.BufferAttribute(A, 1));
+      const m = new THREE.Mesh(geo, mat); m.castShadow = true; m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); group.add(m);
+    }
+  }
+
   /* ---------------- primitives ---------------- */
   const vary = (c, r, amt) => { const k = 1 + (r() - 0.5) * amt; return [c[0] * k, c[1] * k, c[2] * k]; };
   const hex = (h) => [((h >> 16) & 255) / 255, ((h >> 8) & 255) / 255, (h & 255) / 255];
@@ -1089,6 +1112,7 @@ const World = (function () {
     }
     /* ================= BARRIERS ================= */
     const scen = new Chunks(110);        // vertex-colored static scenery
+    const treeCh = new Chunks(110);      // the woods that sway in the wind (lake, mountain: see swayMat)
     const texTires = new GB(true), texSpons = new GB(true), texFence = new GB(true), texCrowd = new GB(true);
     const tyreCh = new Chunks(110, true), FO_TR = THEME === 'italia' ? [0.27, 0.6, 0.35] : THEME === 'kamp' ? [0.2, 0.2, 0.22] : [0.88, 0.33, 0.24], FO_TW = THEME === 'kamp' ? [0.13, 0.13, 0.15] : THEME === 'italia' ? [0.92, 0.89, 0.74] : [0.95, 0.95, 0.94];   // painted tyres (textured, in chunks so the unseen ones are culled): red / white, Toskana green / white, Gromski rt plain black
     if (THEME !== 'mountain') {
@@ -1553,7 +1577,7 @@ const World = (function () {
 
     /* ================= TREES ================= */
     if (THEME === 'lake') {
-      const step = 6.2 / Math.sqrt(dens);
+      const step = 6.2 / Math.sqrt(dens), rs = ROCK_SMOOTH; ROCK_SMOOTH = true;   // (the crowns and tiers softly shaded, as in the forest)
       const pineC = [0.17, 0.34, 0.18], decC = [0.3, 0.52, 0.2], birchC = [0.46, 0.64, 0.28];
       const autumn = [[0.86, 0.52, 0.12], [0.93, 0.72, 0.16], [0.72, 0.3, 0.12]];
       for (let z = B.minZ; z < B.maxZ; z += step) {
@@ -1568,7 +1592,7 @@ const World = (function () {
           if (c < 10) p *= 0.35;
           if (c > 110) p = Math.max(p, 0.5);
           if (R() > p) continue;
-          const g = scen.get(px, pz);
+          const g = treeCh.get(px, pz), n0 = g.P.length / 3;
           const y0 = groundH(px, pz) - 0.2;
           const tn = typeN(px, pz);
           const hgt = 8 + R() * 7;
@@ -1577,9 +1601,11 @@ const World = (function () {
             const col = vary(pineC, R, 0.22);
             const rr = hgt * (0.26 + R() * 0.06);
             const rot = R() * TAU;
-            cone(g, px, y0 + hgt * 0.16, pz, rr, hgt * 0.44, 7, col, [col[0] * 1.2, col[1] * 1.2, col[2] * 1.2], rot);
-            cone(g, px, y0 + hgt * 0.4, pz, rr * 0.76, hgt * 0.38, 7, vary(col, R, 0.08), [col[0] * 1.25, col[1] * 1.25, col[2] * 1.25], rot + 0.4);
-            cone(g, px, y0 + hgt * 0.62, pz, rr * 0.5, hgt * 0.38, 6, vary(col, R, 0.08), [col[0] * 1.3, col[1] * 1.3, col[2] * 1.3], rot + 0.8);
+            const lt = (k) => [col[0] * k, col[1] * k, col[2] * k];   // (jagged, drooping tiers as the forest's firs; sunlit tips)
+            starCone(g, px, y0 + hgt * 0.16, pz, rr, hgt * 0.4, 7, col, lt(1.28), rot, hgt * 0.05);
+            starCone(g, px, y0 + hgt * 0.38, pz, rr * 0.76, hgt * 0.34, 6, vary(col, R, 0.08), lt(1.34), rot + 0.4, hgt * 0.04);
+            starCone(g, px, y0 + hgt * 0.58, pz, rr * 0.5, hgt * 0.3, 5, vary(col, R, 0.08), lt(1.4), rot + 0.8, hgt * 0.03);
+            cone(g, px, y0 + hgt * 0.76, pz, rr * 0.24, hgt * 0.24, 5, col, lt(1.46), rot + 1.2);
           } else if (tn < 0.8 || R() < 0.5) { // deciduous
             const au = R() < 0.07;
             const col = au ? autumn[Math.floor(R() * 3)] : vary(decC, R, 0.25);
@@ -1587,12 +1613,16 @@ const World = (function () {
             const r0 = hgt * (0.22 + R() * 0.06);
             ico(g, px, y0 + hgt * 0.62, pz, r0, 0.85, col, R, 0.3);
             ico(g, px + (R() - 0.5) * r0, y0 + hgt * 0.78, pz + (R() - 0.5) * r0, r0 * 0.72, 0.9, vary(col, R, 0.1), R, 0.3);
+            { const a = crH(px, pz, 21) * TAU, k = 0.55 + 0.2 * crH(px, pz, 22), c3 = [col[0] * 1.08, col[1] * 1.08, col[2] * 1.02];   // a third, sunlit lobe to the side (a hash, no RNG draw)
+              let q = 0; ico(g, px + Math.cos(a) * r0 * 0.75, y0 + hgt * 0.7, pz + Math.sin(a) * r0 * 0.75, r0 * k, 0.85, c3, () => crH(px, pz, 30 + q++), 0.3); }
           } else { // birch
             box(g, px, y0, pz, 0.28, hgt * 0.6, 0.28, R(), [0.9, 0.9, 0.86]);
             ico(g, px, y0 + hgt * 0.7, pz, hgt * 0.16, 1.2, vary(birchC, R, 0.2), R, 0.3);
           }
+          treeMark(g, n0, y0, hgt);
         }
       }
+      ROCK_SMOOTH = rs;
     }
 
     /* ================= COASTAL CITY (Riviera) ================= */
@@ -1792,7 +1822,7 @@ const World = (function () {
         crRun(496, 542, 1, Object.assign({ rows: 3, dens: 0.6, label: '500 out' }, M)); crRun(574, 640, 1, Object.assign({ rows: 3, dens: 0.62, label: '578 out' }, M));
         crRun(780, 834, 1, Object.assign({ rows: 2, dens: 0.55, label: '788 in' }, M)); crRun(1382, 1436, -1, Object.assign({ rows: 2, dens: 0.55, label: '1389 in' }, M)); }
       // --- dense alpine forest on the slopes ---
-      const step = 5.0 / Math.sqrt(dens);
+      const step = 5.0 / Math.sqrt(dens), rs = ROCK_SMOOTH; ROCK_SMOOTH = true;
       for (let z = B.minZ; z < B.maxZ; z += step) {
         for (let x = B.minX; x < B.maxX; x += step) {
           const px = x + (R() - 0.5) * step * 0.9, pz = z + (R() - 0.5) * step * 0.9;
@@ -1805,25 +1835,29 @@ const World = (function () {
           const y0 = groundH(px, pz);
           if (y0 > 96) p *= sstep(120, 96, y0); // treeline: fewer trees near the peaks
           if (R() > p) continue;
-          const g = scen.get(px, pz);
+          const g = treeCh.get(px, pz), n0 = g.P.length / 3;
           const tn = typeN(px, pz);
           const hgt = 9 + R() * 9;
           if (tn < 0.72) { // spruce/fir (tall narrow conifer)
             box(g, px, y0 - 0.2, pz, 0.4, hgt * 0.28, 0.4, R(), [0.34, 0.24, 0.15]);
             const col = vary(tn < 0.4 ? pineC : firC, R, 0.2);
             const rr = hgt * (0.2 + R() * 0.05), rot = R() * TAU;
-            cone(g, px, y0 + hgt * 0.12, pz, rr, hgt * 0.4, 7, col, [col[0] * 1.2, col[1] * 1.2, col[2] * 1.2], rot);
-            cone(g, px, y0 + hgt * 0.36, pz, rr * 0.78, hgt * 0.38, 7, vary(col, R, 0.08), [col[0] * 1.25, col[1] * 1.25, col[2] * 1.25], rot + 0.5);
-            cone(g, px, y0 + hgt * 0.6, pz, rr * 0.5, hgt * 0.4, 6, vary(col, R, 0.08), [col[0] * 1.3, col[1] * 1.3, col[2] * 1.3], rot + 1.0);
+            const lt = (k) => [col[0] * k, col[1] * k, col[2] * k];   // (jagged, drooping tiers; sunlit tips)
+            starCone(g, px, y0 + hgt * 0.12, pz, rr, hgt * 0.36, 7, col, lt(1.28), rot, hgt * 0.05);
+            starCone(g, px, y0 + hgt * 0.33, pz, rr * 0.78, hgt * 0.33, 6, vary(col, R, 0.08), lt(1.34), rot + 0.5, hgt * 0.04);
+            starCone(g, px, y0 + hgt * 0.53, pz, rr * 0.54, hgt * 0.3, 5, vary(col, R, 0.08), lt(1.4), rot + 1.0, hgt * 0.035);
+            cone(g, px, y0 + hgt * 0.72, pz, rr * 0.26, hgt * 0.28, 5, col, lt(1.46), rot + 1.5);
           } else { // larch (rounder, lighter)
             box(g, px, y0 - 0.2, pz, 0.4, hgt * 0.4, 0.4, R(), [0.4, 0.3, 0.18]);
             const col = vary(larchC, R, 0.22), r0 = hgt * (0.22 + R() * 0.06);
             ico(g, px, y0 + hgt * 0.6, pz, r0, 0.95, col, R, 0.32);
             ico(g, px + (R() - 0.5) * r0, y0 + hgt * 0.8, pz + (R() - 0.5) * r0, r0 * 0.7, 1.0, vary(col, R, 0.1), R, 0.3);
           }
+          treeMark(g, n0, y0, hgt);
           if (R() < 0.4) excl.push({ x: px, z: pz, r: 2 });
         }
       }
+      ROCK_SMOOTH = rs;
       // --- roadside understory: bushes, ferns, small rocks right behind the fence (always in camera view) ---
       {
         const bushC = [[0.2, 0.36, 0.14], [0.26, 0.42, 0.16], [0.3, 0.4, 0.12]], fernC = [0.34, 0.52, 0.18], rockC = [0.52, 0.5, 0.47];
@@ -3057,6 +3091,7 @@ const World = (function () {
     /* ---- finalize meshes ---- */
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
+    if (treeCh.map.size) treesTo(treeCh, sceneryGroup, swayMat(out.dyn.wind || (out.dyn.wind = { value: 0 })));
     const addTex = (g, mat, cast) => { if (g.empty) return; const m = new THREE.Mesh(g.geometry(), mat); m.castShadow = !!cast; m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); return m; };
     addTex(texTires, new THREE.MeshLambertMaterial({ map: THEME === 'forest' ? tex.tiresRW : tex.tires, vertexColors: true }), true);
     tyreCh.addTo(root, new THREE.MeshLambertMaterial({ map: tex.tyreTex, vertexColors: true }), true, true);
