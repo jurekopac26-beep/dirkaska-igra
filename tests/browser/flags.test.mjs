@@ -20,9 +20,10 @@ try {
   await startTrack(page, 'rbring');
   await sim(30);
 
-  // 1. the safety car out (brought out here for the leader, at a moment when no car is beside the player: a pass already under way would
-  //    finish under the safety car and put the give-the-place-back warning on the HUD first), the field behind it, in again, green at the line
-  for (let k = 0; k < 30 && await page.evaluate(() => { const r = window.__game.race, P = r.player; return r.cars.some(c => c !== P && !c.finished && Math.abs(c.dist - P.dist) < 15); }); k++) await sim(0.5);
+  // 1. the safety car out (brought out here for the leader, at a moment when no car is beside the player or less than 45 m ahead: a pass
+  //    under way would finish under the safety car and put the give-the-place-back warning on the HUD first), the field behind it, in again,
+  //    green at the line
+  for (let k = 0; k < 40 && await page.evaluate(() => { const r = window.__game.race, P = r.player; return r.cars.some(c => c !== P && !c.finished && c.dist - P.dist < 45 && c.dist - P.dist > -8); }); k++) await sim(0.5);
   await page.evaluate(() => { const r = window.__game.race; r._scOut(r.order.find(c => !c.finished)); });
   await sim(0.5);
   const s1 = await hud();
