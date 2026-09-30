@@ -6109,14 +6109,15 @@ const World = (function () {
     const sMat = new THREE.MeshPhongMaterial({ map: tex.makadam, bumpMap: tex.makadamBump, bumpScale: 0.04, shininess: 5, specular: 0x14110d, vertexColors: true });
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     const sett = T.settAt || new Uint8Array(N), onBr = new Uint8Array(N), sw = 0.6;
+    const WK = T.walk, wE = (si, i) => w + (WK ? WK[si][i] : 0);   // the edge of the road on a side (0 left, 1 right): past its sidewalk (Kranjska Gora, Jasna)
     for (const [a, b] of def.bridges || []) for (let s = sStart + a - 3; s <= sStart + b + 3; s += T.ds / 2) onBr[T.idx(s)] = 1;
     const altAt = (i) => T.hy[i] + base;
     // the verge's cross-section per sample and side (5 points: [offset, height above the road]): the grass out to the ditch past the barrier line, onto the
     // ground; a bridge: its deck out past the parapet, then the deck's edge down
-    const vProf = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i];
-      if (onBr[i]) return [[w + sw, -0.02], [bar - 0.45, -0.02], [bar + 0.58, -0.02], [bar + 0.62, -1.3], [bar + 0.68, -1.4]];
+    const vProf = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i], e = wE(side > 0 ? 1 : 0, i);
+      if (onBr[i]) return [[e + sw, -0.02], [bar - 0.45, -0.02], [bar + 0.58, -0.02], [bar + 0.62, -1.3], [bar + 0.68, -1.4]];
       const y = T.hy[i], gAt = (o) => { const q = side * o; return vrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - y; }, lift = (o, h) => [o, Math.max(h, gAt(o) + 0.05)];
-      return [[w + sw, -0.02], lift(Math.max(w + sw + 0.6, bar - 0.7), -0.12), [bar + 0.45, Math.min(-0.42, gAt(bar + 0.45) - 0.25)], lift(bar + 1.15, -0.3), [bar + 1.9, gAt(bar + 1.9) + 0.03]]; };
+      return [[e + sw, -0.02], lift(Math.max(e + sw + 0.6, bar - 0.7), -0.12), [bar + 0.45, Math.min(-0.42, gAt(bar + 0.45) - 0.25)], lift(bar + 1.15, -0.3), [bar + 1.9, gAt(bar + 1.9) + 0.03]]; };
     const vp = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vProf(i, side)); return a; });
     {
       const offs = [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8;
@@ -6143,7 +6144,14 @@ const World = (function () {
           }
           for (const side of [-1, 1]) {
             const si = side > 0 ? 1 : 0, ci = vc[si][i], cj = vc[si][j], qi = vp[si][i], qj = vp[si][j], sc = onBr[i] ? deck : gc;
-            gs.quadUp(Pt(i, side * w, 0.012), Pt(i, side * (w + sw), -0.02), Pt(j, side * (w + sw), -0.02), Pt(j, side * w, 0.012), [sc, sc, sc, sc], [[0, s0], [sw / 4, s0], [sw / 4, s1], [0, s1]]);
+            const ei = wE(si, i), ej = wE(si, j);
+            gs.quadUp(Pt(i, side * ei, 0.012), Pt(i, side * (ei + sw), -0.02), Pt(j, side * (ej + sw), -0.02), Pt(j, side * ej, 0.012), [sc, sc, sc, sc], [[0, s0], [sw / 4, s0], [sw / 4, s1], [0, s1]]);
+            if (ei > w + 0.02 || ej > w + 0.02) {   // a sidewalk, flush with the road (part of it): a granite kerb line, then small grey pavers
+              const ki = Math.min(ei, w + 0.22), kj = Math.min(ej, w + 0.22), kc = [0.8, 0.8, 0.78], pc = (o) => { const k = 0.8 + 0.05 * rpHash(i, 31 + Math.round(o)); return [k, k * 0.98, k * 0.95]; };
+              gl.quadUp(Pt(i, side * w, 0.03), Pt(i, side * ki, 0.03), Pt(j, side * kj, 0.03), Pt(j, side * w, 0.03), [kc, kc, kc, kc]);
+              if (ei > ki + 0.01 || ej > kj + 0.01) gp.quadUp(Pt(i, side * ki, 0.028), Pt(i, side * ei, 0.028), Pt(j, side * ej, 0.028), Pt(j, side * kj, 0.028), [pc(ki), pc(ei), pc(ej), pc(kj)],
+                [[ki * 0.55, s0 * 3.3], [ei * 0.55, s0 * 3.3], [ej * 0.55, s1 * 3.3], [kj * 0.55, s1 * 3.3]]);
+            }
             for (let k = 0; k < 4; k++) { const a = Pt(i, side * qi[k][0], qi[k][1]), b = Pt(i, side * qi[k + 1][0], qi[k + 1][1]), c = Pt(j, side * qj[k + 1][0], qj[k + 1][1]), d = Pt(j, side * qj[k][0], qj[k][1]);
               gv.quadUp(a, b, c, d, [ci[k], ci[k + 1], cj[k + 1], cj[k]], [wuv(a), wuv(b), wuv(c), wuv(d)]); }
           }
@@ -6156,6 +6164,9 @@ const World = (function () {
         gq.quadUp([a[0], y(a), a[1]], [b[0], y(b), b[1]], [c[0], y(c), c[1]], [d[0], y(d), d[1]], [W1, W1, W1, W1], [[0, 0], [uM, 0], [uM, 0.5], [0, 0.5]]); }
       for (const s0 of T.cpS) { const a = atSf(s0 - 0.25, -w + 0.1), b = atSf(s0 - 0.25, w - 0.1), c = atSf(s0 + 0.25, w - 0.1), d = atSf(s0 + 0.25, -w + 0.1), y = (p) => T.hy[p[3]] + 0.042;
         gw.quadUp([a[0], y(a), a[1]], [b[0], y(b), b[1]], [c[0], y(c), c[1]], [d[0], y(d), d[1]], [wht, wht, wht, wht]); }
+      for (const z0 of def.zebras || []) { const s0 = sStart + z0;   // the zebra crossings: white bars along the road, 0.5 m wide and 0.5 m apart, 3 m long, over the carriageway
+        for (let o = -w + 0.35; o + 0.5 <= w - 0.3; o += 1.0) { const a = atSf(s0 - 1.5, o), b = atSf(s0 - 1.5, o + 0.5), c = atSf(s0 + 1.5, o + 0.5), d = atSf(s0 + 1.5, o), y = (p) => T.hy[p[3]] + 0.04;
+          gw.quadUp([a[0], y(a), a[1]], [b[0], y(b), b[1]], [c[0], y(c), c[1]], [d[0], y(d), d[1]], [wht, wht, wht, wht]); } }
       tex.checker.repeat.set(1, 1); addM(gq, new THREE.MeshLambertMaterial({ map: tex.checker })); addM(gw, lMat);
     }
 
@@ -6245,6 +6256,32 @@ const World = (function () {
       { const [bx, bz, bi] = onSide(sStart + 16, 1, 1.6), by = vrGround(bx, bz), gb = scen.get(bx, bz), [v0, v1] = row(7);   // the race's banner beside the road after the line
         for (const o of [-3.3, 3.3]) box(gb, bx + T.tx[bi] * o, by - 0.2, bz + T.tz[bi] * o, 0.14, 3.0, 0.14, T.hd[bi], [0.3, 0.3, 0.32]);
         bannerQ(bx, by + 1.5, bz, -T.nx[bi], -T.nz[bi], 6.6, 0.82, v0, v1); exclPush(bx, bz, 4.5); }
+    }
+
+    /* ---- the signs of the zebra crossings (a blue board with a white triangle, both sides of the road, both ways) and the bus stops (a pole with the
+       blue board and its white bus, a bench; a shelter at the bigger ones) ---- */
+    {
+      const blue = [0.1, 0.3, 0.72], wh = [0.95, 0.95, 0.94], poleC = [0.62, 0.63, 0.66];
+      const board = (s0, side, fig) => {   // a square board on a pole beside the road's edge, its faces along the road (seen by the cars both ways)
+        const i = T.idx(s0), o = side * (wE(side > 0 ? 1 : 0, i) + 0.7), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, y = vrGround(x, z), g = scen.get(x, z), hd = T.hd[i];
+        if (excluded(x, z)) return null;
+        cyl(g, x, y - 0.2, z, 0.04, 2.75, 5, poleC); box(g, x, y + 1.95, z, 0.05, 0.64, 0.64, hd, blue);
+        const c = Math.cos(hd), sn = Math.sin(hd), L = (lx, ly, lz) => [x + lx * c - lz * sn, y + ly, z + lx * sn + lz * c], inn = [x, y + 2.27, z];
+        for (const f of [-1, 1]) { const fx = f * 0.032;
+          if (fig === 'zebra') g.triO(L(fx, 2.47, 0), L(fx, 2.05, -0.25), L(fx, 2.05, 0.25), wh, inn);
+          else { g.quadO(L(fx, 2.12, -0.22), L(fx, 2.12, 0.22), L(fx, 2.4, 0.22), L(fx, 2.4, -0.22), wh, inn); g.quadO(L(f * 0.034, 2.26, -0.19), L(f * 0.034, 2.26, 0.19), L(f * 0.034, 2.36, 0.19), L(f * 0.034, 2.36, -0.19), blue, inn); } }
+        exclPush(x, z, 1.2); return [x, y, z, i];
+      };
+      for (const z0 of def.zebras || []) for (const side of [-1, 1]) board(sStart + z0 - side * 4, side, 'zebra');
+      (def.stops || []).forEach(([d, side, name]) => { const b = board(sStart + d, side, 'bus'); if (!b) return;
+        const [x, y, z, i] = b, g = scen.get(x, z), o = side * (wE(side > 0 ? 1 : 0, i) + 1.9), bx = T.px[i] + T.nx[i] * o - T.tx[i] * 2.2, bz = T.pz[i] + T.nz[i] * o - T.tz[i] * 2.2, by = vrGround(bx, bz);
+        if (excluded(bx, bz)) return;
+        box(g, bx, by + 0.42, bz, 1.8, 0.06, 0.45, T.hd[i], [0.46, 0.32, 0.2]); for (const u of [-0.75, 0.75]) box(g, bx + T.tx[i] * u, by, bz + T.tz[i] * u, 0.08, 0.42, 0.4, T.hd[i], [0.3, 0.3, 0.32]);   // (a bench)
+        if (name === 'Jasna' || name === 'Vršič' || name === 'Mihov dom') {   // a shelter: a back wall of glass, a flat roof on posts
+          const ox = T.nx[i] * side * 0.9, oz = T.nz[i] * side * 0.9;
+          box(g, bx + ox, by, bz + oz, 3.2, 2.3, 0.06, T.hd[i], [0.62, 0.74, 0.8]); box(g, bx + ox * 0.4, by + 2.3, bz + oz * 0.4, 3.5, 0.1, 1.7, T.hd[i], [0.36, 0.38, 0.42]);
+          for (const u of [-1.6, 1.6]) box(g, bx + ox + T.tx[i] * u, by, bz + oz + T.tz[i] * u, 0.08, 2.3, 0.08, T.hd[i], [0.36, 0.38, 0.42]); }
+        exclPush(bx, bz, 2.6); CR.block(bx, bz, 3.4, 1.8, T.hd[i]); });
     }
 
     /* ---- checkpoints: a green gantry "CPn  altitude" ---- */

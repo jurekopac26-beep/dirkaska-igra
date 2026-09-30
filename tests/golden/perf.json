@@ -70,11 +70,11 @@
   "jsMs": 0.58
  },
  "vrsic": {
-  "calls": 279,
-  "maxCalls": 357,
-  "kverts": 669,
-  "maxKverts": 1013,
-  "jsMs": 1.43
+  "calls": 284,
+  "maxCalls": 394,
+  "kverts": 712,
+  "maxKverts": 1041,
+  "jsMs": 1.49
  },
  "nring": {
   "calls": 191,

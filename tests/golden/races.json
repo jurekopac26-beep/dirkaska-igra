@@ -602,62 +602,62 @@
  "vrsic/cs": {
   "finished": 13,
   "cars": 13,
-  "winner": 411.88,
+  "winner": 408.9,
   "spins": 0,
-  "walls": 26,
+  "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "a1e91c9634bfcdc79ee09e03"
+  "digest": "46859aca05e1b3683e077022"
  },
  "vrsic/cs/rain": {
   "finished": 13,
   "cars": 13,
-  "winner": 452.67,
+  "winner": 450.1,
   "spins": 0,
-  "walls": 13,
+  "walls": 4,
   "rescues": 0,
   "nan": false,
-  "digest": "7eef47fbfb86615e1ab840e5"
+  "digest": "6828236cd062bba90d0b0506"
  },
  "vrsic/cs/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 373.39,
-  "spins": 0,
-  "walls": 13,
+  "winner": 371.39,
+  "spins": 1,
+  "walls": 8,
   "rescues": 0,
   "nan": false,
-  "digest": "8bc4b1f543a0b0c320e6ab58"
+  "digest": "ac7eb6c112a0b135c20a2a0a"
  },
  "vrsic/arcade": {
   "finished": 13,
   "cars": 13,
-  "winner": 441.09,
+  "winner": 434.41,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "e2c56c0d2b38accd578b614c"
+  "digest": "6264551822212f762dfbc68c"
  },
  "vrsic/arcade/rain": {
   "finished": 13,
   "cars": 13,
-  "winner": 478.49,
+  "winner": 474.92,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "44254a0478246dc6374a0415"
+  "digest": "e87c4f0e1734cf03fc6cbc11"
  },
  "vrsic/arcade/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 381.7,
+  "winner": 379.03,
   "spins": 0,
-  "walls": 1,
+  "walls": 3,
   "rescues": 0,
   "nan": false,
-  "digest": "7d9bc48701d5b7694aafa3d7"
+  "digest": "5eb38c73a67c91d8c0967012"
  },
  "nring/cs": {
   "finished": 21,
