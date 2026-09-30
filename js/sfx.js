@@ -492,7 +492,7 @@ const Sfx = (function () {
     // tyres
     const spd = player.speed;
     const hardW = (w) => w <= 1 || w >= 7, onHard = hardW(player.ws[2]) && hardW(player.ws[3]);   // (asphalt, a kerb, the cobbles)
-    const slide = (player.arcade ? Core.sstep(0.18, 0.55, Math.abs(player.beta || 0)) : Math.max(0, player.latR - 2.2) / 5) + player.spin * 0.8 + (player.lock ? 0.6 : 0) + (player.inHand > 0.5 && spd > 5 ? 0.5 : 0);
+    const slide = Math.max(0, player.latR - 2.2) / 5 + player.spin * 0.8 + (player.lock ? 0.6 : 0) + (player.inHand > 0.5 && spd > 5 ? 0.5 : 0);
     const sq = onHard && spd > 3 ? clamp(slide, 0, 1.2) : 0, wet = race ? race.rain || 0 : 0;
     set(squeal.out.gain, sq * 0.09 * (1 - 0.7 * wet), 0.04);   // (a wet road hardly squeals)
     set(rainV.out.gain, wet * 0.05, 0.4);

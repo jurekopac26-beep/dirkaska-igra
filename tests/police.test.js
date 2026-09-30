@@ -82,7 +82,7 @@ const finite = (r) => r.pol.cars.every(c => Number.isFinite(c.x + c.z + c.vx + c
     `stopped at ${tStop.toFixed(1)} s, busted at ${t.toFixed(1)} s`);
 }
 
-// 6. a spike strip: the tyres that roll over it go flat, the ones in its gap do not; flat tyres: less grip and more drag (both physics)
+// 6. a spike strip: the tyres that roll over it go flat, the ones in its gap do not; flat tyres: less grip and more drag
 {
   const over = (d, phys) => {
     Math.random = seeded(3);
@@ -100,17 +100,17 @@ const finite = (r) => r.pol.cars.every(c => Number.isFinite(c.x + c.z + c.vx + c
   const a = over('mid', 'cs'), b = over('gap', 'cs');
   check('a spike strip: all four tyres over it go flat; through its gap none', a.flat === 15 && b.flat === 0 && a.past > 6 && b.past > 6, `over it: flat bits ${a.flat}, through the gap: ${b.flat} (${a.past.toFixed(0)} / ${b.past.toFixed(0)} m past it)`);
   // flat tyres: up the road from the straight after the first strip, full throttle (steered along the middle) for 6 s from 15 m/s: slower with them
-  const run = (phys, flat) => {
+  const run = (flat) => {
     Math.random = seeded(3);
-    const r = new C.Race(T, opts({ phys, police: false })), P = r.player; r.start();
+    const r = new C.Race(T, opts({ police: false })), P = r.player; r.start();
     const i = T.idx(T.startS + 3480); P.place(T.px[i], T.pz[i], T.hd[i]); P.y = P.py = P.roadY = T.hy[i]; P.vx = T.tx[i] * 15; P.vz = T.tz[i] * 15; P.q = T.query(P.x, P.z, i, P.q); P.sPrev = P.q.s; P.flat = flat;
     for (let k = 0; k < 120 * 6; k++) { const j = T.idx(P.q.s + 12), tx = T.px[j], tz = T.pz[j], ch = Math.cos(P.h), sh = Math.sin(P.h), lx = (tx - P.x) * ch + (tz - P.z) * sh, ly = -(tx - P.x) * sh + (tz - P.z) * ch;
       P.inSteer = Math.max(-1, Math.min(1, 18 * ly / (lx * lx + ly * ly))); P.inThr = 1; P.inBrk = 0; r.step(DT); }
     Math.random = orig;
     return { v: P.speed, s: P.q.s - T.startS - 3480 };
   };
-  const res = ['cs', 'arcade'].map(ph => ({ ph, ok: run(ph, 0), fl: run(ph, 15) }));
-  check('flat tyres: the car is slower (both physics)', res.every(x => x.fl.s < x.ok.s * 0.85), res.map(x => `${x.ph}: ${x.ok.s.toFixed(0)} m in 6 s, with flat tyres ${x.fl.s.toFixed(0)} m`).join(', '));
+  const ok = run(0), fl = run(15);
+  check('flat tyres: the car is slower', fl.s < ok.s * 0.85, `${ok.s.toFixed(0)} m in 6 s, with flat tyres ${fl.s.toFixed(0)} m`);
 }
 
 // the new elements, each on its own: a race with the police at the normal difficulty, the seeded random numbers, the autopilot driving the player
