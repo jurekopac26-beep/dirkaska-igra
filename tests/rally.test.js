@@ -55,8 +55,8 @@ const dAt = (s) => Math.round(s - T.startS);   // (metres after the start line)
   const J = def.jumpRec, big = jumps.reduce((a, j, k) => j.h > jumps[a].h ? k : a, 0);
   check('jump record: the Yellow House is the biggest jump, Märtin\'s 57 m', J.bump === big && J.m === 57 && /Märtin/.test(J.by), `bump ${J.bump} (biggest ${big}), ${J.m} m`);
   const M = def.medals, asc = (a) => Array.isArray(a) && a.length === 3 && a[0] < a[1] && a[1] < a[2];
-  check('medals: gold < silver < bronze, dry and wet; the rain slower', asc(M.cs) && asc(M.wet.cs) && M.wet.cs[0] > M.cs[0],
-    `dry ${M.cs}, wet ${M.wet.cs}`);
+  check('medals: gold < silver < bronze for both physics, dry and wet; the rain slower', asc(M.cs) && asc(M.arcade) && asc(M.wet.cs) && asc(M.wet.arcade) && M.wet.cs[0] > M.cs[0] && M.wet.arcade[0] > M.arcade[0],
+    `cs ${M.cs}, arcade ${M.arcade}, wet cs ${M.wet.cs}, wet arcade ${M.wet.arcade}`);
 }
 
 console.log(bad ? `FAIL: ${bad} check(s)` : 'OK: all rally checks');

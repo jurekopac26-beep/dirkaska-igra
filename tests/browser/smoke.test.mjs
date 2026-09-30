@@ -1,6 +1,6 @@
 // Browser smoke test: the page loads (over http like GitHub Pages, and from a local file), every track can be
-// raced for 20 s on autopilot, settings migrate (one driving physics: Circuit Superstars), the title demo runs,
-// a Pikes Peak run and an Ouninpohja run finish and their records are saved (Ouninpohja also in the rain, apart).
+// raced for 20 s on autopilot, settings migrate, the physics can be switched mid-race, the title demo runs,
+// a Pikes Peak run and an Ouninpohja run finish and their records are saved per physics (Ouninpohja also in the rain, apart).
 // Zero page errors allowed.
 //   node tests/browser/smoke.test.mjs
 import path from 'node:path';
@@ -11,14 +11,14 @@ const T = checker('smoke');
 const srv = await serve();
 const browser = await launch();
 try {
-  // 1. settings: one driving physics (no row for it) and the migration of old saves (the 'rally' and 'arcade' physics were removed)
-  for (const [seed, want] of [[null, 'cs'], ['{"phys":"rally"}', 'cs'], ['{"phys":"arcade"}', 'cs'], ['{"sound":0}', 'cs']]) {
+  // 1. settings: the physics row and the migration of old saves ('rally' was removed)
+  for (const [seed, want] of [[null, 'cs'], ['{"phys":"rally"}', 'cs'], ['{"phys":"arcade"}', 'arcade'], ['{"sound":0}', 'cs']]) {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', seed);
     const got = await page.evaluate(() => window.__game.S.phys);
     T.check(`saved settings ${seed || '(none)'} -> physics '${want}'`, got === want && !errors.length, `got '${got}'${errors.length ? ', errors: ' + errors.join(' | ') : ''}`);
     if (seed === null) {
-      const row = await page.evaluate(() => document.querySelectorAll('[data-set="phys"]').length);
-      T.check('settings: no driving-physics row (Circuit Superstars only)', row === 0, row + ' rows');
+      const row = await page.evaluate(() => [...document.querySelectorAll('[data-set="phys"] button')].map(b => b.textContent + (b.classList.contains('sel') ? '*' : '')).join(' | '));
+      T.check('settings row: Circuit Superstars (selected) | Arkadna', row === 'Circuit Superstars* | Arkadna', row);
     }
     await ctx.close();
   }
@@ -53,6 +53,18 @@ try {
       `dist ${r.dist} m, phys ${r.phys}, pit crew ${r.crew}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
   }
 
+  // 4. switch the physics in the middle of a race: cs -> arcade -> cs
+  {
+    await startTrack(page, 'monaco');
+    await simulate(page, 5);
+    const click = (v) => page.evaluate((v) => document.querySelector(`[data-set="phys"] button[data-v="${v}"]`).click(), v);
+    await click('arcade'); const n1 = await simulate(page, 10);
+    const a = await page.evaluate(() => window.__game.race.cars.every(c => c.phys === 'arcade'));
+    await click('cs'); const n2 = await simulate(page, 10);
+    const b = await page.evaluate(() => ({ all: window.__game.race.cars.every(c => c.phys === 'cs'), dist: window.__game.race.player.dist }));
+    T.check('physics switch mid-race (cs -> arcade -> cs)', a && b.all && !n1 && !n2 && b.dist > 300, `dist ${Math.round(b.dist)} m`);
+  }
+
   // 5. the title-screen demo drives behind the menu (two screenshots 1.5 s apart must differ)
   {
     await page.evaluate(() => window.__game.onAction('to-title'));
@@ -64,26 +76,26 @@ try {
     T.check('title screen with the demo race moving behind it', scr === 'title' && diff > n * 0.05, `screen ${scr}, ${(100 * diff / n).toFixed(0)} % of the image bytes changed`);
   }
 
-  // 6b. rain: the weather row on the track screen; a race at Spa in the rain (every car on wets, the wet grip, the streaks drawn, spray behind
+  // 6b. rain: the weather row on the track screen; a race at Spa in the rain (every car on rain tyres: the wet grip, a little less as they wear; the streaks drawn, spray behind
   //     the cars), the title demo follows the setting; back to dry, the next race is dry again
   {
     const row = await page.evaluate(() => [...document.querySelectorAll('[data-set="weather"] button')].map(b => b.textContent + (b.classList.contains('sel') ? '*' : '')).join(' | '));
-    T.check('weather row: Suho (selected) | Dež | Spremenljivo | Naključno', row === 'Suho* | Dež | Spremenljivo | Naključno', row);
+    T.check('weather row: Suho (selected) | Dež | Naključno | Menljivo', row === 'Suho* | Dež | Naključno | Menljivo', row);
     const e0 = errors.length;
     await page.evaluate(() => document.querySelector('[data-set="weather"] button[data-v="rain"]').click());
     await startTrack(page, 'spa');
     const nan = await simulate(page, 20);
     await page.waitForTimeout(1500);   // (a second and a half of real frames: the spray)
-    const r = await page.evaluate(() => { const g = window.__game, R = g.race; return { rain: R.rain, wet: R.cars.every(c => c.tyre === 'W' && c.wet > 0.79 && c.wet <= 0.8), drawn: Render.raining, spray: Render.fxStats().alive, dist: Math.round(R.player.dist), saved: JSON.parse(localStorage.getItem('tdgp-settings')).weather,
+    const r = await page.evaluate(() => { const g = window.__game, R = g.race; return { rain: R.rain, wet: R.cars.every(c => c.wet <= 0.8 && c.wet > 0.79 && c.ty && c.ty.k === 'wet'), drawn: Render.raining, spray: Render.fxStats().alive, dist: Math.round(R.player.dist), saved: JSON.parse(localStorage.getItem('tdgp-settings')).weather,
       birds: Render.birds.mesh.visible, clouds: Render.world.dyn.clouds.K.value }; });
-    T.check('Spa in the rain: every car on wets (the wet grip), rain drawn, spray, the setting saved; no birds, no cloud shadows', r.rain === 1 && r.wet && r.drawn && r.spray > 10 && r.dist > 200 && r.saved === 'rain' && !r.birds && r.clouds === 0 && !nan && errors.length === e0, JSON.stringify(r) + (errors.length > e0 ? ' errors: ' + errors.slice(e0).join(' | ') : ''));
+    T.check('Spa in the rain: wet grip for every car, rain drawn, spray, the setting saved; no birds, no cloud shadows', r.rain === 1 && r.wet && r.drawn && r.spray > 10 && r.dist > 200 && r.saved === 'rain' && !r.birds && r.clouds === 0 && !nan && errors.length === e0, JSON.stringify(r) + (errors.length > e0 ? ' errors: ' + errors.slice(e0).join(' | ') : ''));
     await page.evaluate(() => window.__game.onAction('to-title')); await page.waitForTimeout(600);
     const d = await page.evaluate(() => ({ demo: window.__game.demo ? window.__game.demo.rain : null, drawn: Render.raining }));
     await page.evaluate(() => document.querySelector('[data-set="weather"] button[data-v="dry"]').click()); await page.waitForTimeout(600);
     const d2 = await page.evaluate(() => ({ demo: window.__game.demo ? window.__game.demo.rain : null, drawn: Render.raining }));
     await startTrack(page, 'spa'); await simulate(page, 3);
-    const r2 = await page.evaluate(() => { let marks = (Render.world.stats && Render.world.stats.decals) || 0; Render.world.root.traverse(o => { if (o.name === 'tyremarks') marks++; });   // (Spa: the tyre marks among the builder's decals)
-      return { rain: window.__game.race.rain, wet: window.__game.race.cars.every(c => c.tyre !== 'W' && c.wet > 0.95), drawn: Render.raining, birds: Render.birds.mesh.visible, clouds: Render.world.dyn.clouds.K.value, marks }; });
+    const r2 = await page.evaluate(() => { let marks = 0; Render.world.root.traverse(o => { if (o.name === 'tyremarks') marks++; });
+      return { rain: window.__game.race.rain, wet: window.__game.race.cars.every(c => c.wet === 1), drawn: Render.raining, birds: Render.birds.mesh.visible, clouds: Render.world.dyn.clouds.K.value, marks }; });
     T.check('title demo in the rain with the setting, dry again without it; the next race dry (birds, cloud shadows, tyre marks)', d.demo === 1 && d.drawn && d2.demo === 0 && !d2.drawn && r2.rain === 0 && r2.wet && !r2.drawn && r2.birds && r2.clouds > 0.1 && r2.marks > 5 && errors.length === e0, JSON.stringify({ d, d2, r2 }));
   }
 

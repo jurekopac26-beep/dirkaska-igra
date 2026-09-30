@@ -143,9 +143,10 @@ const Tex = (function () {
     return mk(c, true);
   }
 
+  // the sponsors on the boards: all invented (no real brand, no name of a real person or place: check a new one before adding it)
   const SPONSORS = [
-    ['TURBOX', '#101418', '#ffd23f'], ['KAZE OIL', '#d8342a', '#fff'], ['GRIP+', '#1b4fd6', '#fff'], ['HIRO TYRES', '#f5f5f0', '#111'],
-    ['VOLTEX', '#1a1a1a', '#6df26d'], ['RADIO JEZERO', '#2aa6e0', '#fff'], ['PIXEL GAS', '#ff8a1c', '#141414'], ['LIPA COLA', '#b3122e', '#fff3c4'],
+    ['HITROLET', '#101418', '#ffd23f'], ['KAZE OIL', '#d8342a', '#fff'], ['GRIP+', '#1b4fd6', '#fff'], ['KOLOTEK TYRES', '#f5f5f0', '#111'],
+    ['KRESILO', '#1a1a1a', '#6df26d'], ['RADIO JEZERO', '#2aa6e0', '#fff'], ['BENCINKO', '#ff8a1c', '#141414'], ['ŠUMKA COLA', '#b3122e', '#fff3c4'],
   ];
   function sponsors() {
     const c = cv(512, 256), x = c.getContext('2d');
@@ -503,6 +504,43 @@ const Tex = (function () {
     return mk(c, false);
   }
 
+  // the wear of a tarmac road (World's roadWear decals): two long sealed cracks, black tar bands (the top two strips, 512 x 64 px each), a
+  // network of joined cracks and a short crack with branches (the next row, 256 x 128 each), a patch of newer asphalt with its sealed seam
+  // round the edge (bottom left) and streaks along a tyre's track, the rubber laid in lines (bottom right, the same all the way down)
+  function wear() {
+    const W = 512, c = cv(W, W), x = c.getContext('2d'), r = Core.rng(77), img = x.createImageData(W, W), d = img.data, n1 = makeNoise(8, 61), n2 = makeNoise(32, 62);
+    const col = []; for (let i = 0; i < 256; i++) col.push(0.62 + 0.38 * (0.6 * n1(i / 32, 0.5) + 0.4 * (r() < 0.15 ? r() * 0.4 : 0.6 + r() * 0.4)));   // (the streaks' columns)
+    const edge = [0, 1, 2, 3].map(() => r() * 4);   // (the patch's sides a little off square)
+    for (let j = 256; j < W; j++) for (let i = 0; i < W; i++) {
+      const o = (j * W + i) * 4;
+      if (i >= 256) { const k = col[i - 256] * 255; d[o] = d[o + 1] = d[o + 2] = k; d[o + 3] = 255; continue; }
+      const u = i / 256, v = (j - 256) / 256, inR = i > 12 + edge[0] && i < 244 - edge[1] && j - 256 > 12 + edge[2] && j - 256 < 244 - edge[3];
+      if (!inR) { d[o + 3] = 0; continue; }
+      const k = (0.9 + (n1(u * 8, v * 8) * 0.6 + n2(u * 32, v * 32) * 0.4) * 0.14 + (r() - 0.5) * 0.16 + (r() < 0.02 ? 0.22 : 0)) * 0.97;   // (the road's own grain, finer)
+      d[o] = cl(104 * k); d[o + 1] = cl(107 * k); d[o + 2] = cl(112 * k); d[o + 3] = 255;
+    }
+    x.putImageData(img, 0, 0);
+    x.lineCap = x.lineJoin = 'round';
+    const band = (pts, wd) => { for (const [lw, a] of [[wd * 1.9, 0.28], [wd, 0.92]]) { x.strokeStyle = 'rgba(13,13,15,' + a + ')'; x.lineWidth = lw; x.beginPath(); x.moveTo(pts[0][0], pts[0][1]); for (const p of pts) x.lineTo(p[0], p[1]); x.stroke(); } };
+    const clamp = (v, lo, hi) => v < lo ? lo : v > hi ? hi : v;
+    // a crack across a box (x0, y0, x1, y1) from its left end to its right: a walk that keeps its heading, wandering a little
+    const across = (x0, y0, x1, y1) => { const P = [], m = (y0 + y1) / 2, hh = (y1 - y0) / 2 - 8; let px = x0 + 6, py = m + (r() - 0.5) * hh, a = 0;
+      while (px < x1 - 6) { P.push([px, py]); a = clamp(a + (r() - 0.5) * 0.7, -0.5, 0.5); if (Math.abs(py - m) > hh * 0.7) a -= Math.sign(py - m) * 0.3; px += Math.cos(a) * 7; py += Math.sin(a) * 7; }
+      P.push([x1 - 6, py]); return P; };
+    band(across(0, 0, 512, 64), 4.2); band(across(0, 64, 512, 128), 3.6);   // the two long ones
+    for (let k = 0; k < 4; k++) { const hz = k < 2, t = 30 + (k % 2) * 56 + r() * 20;   // the network: two lines each way, meandering
+      const P = []; let px = hz ? 8 : t, py = hz ? 128 + t : 136, a = hz ? 0 : Math.PI / 2;
+      while (px > 6 && px < 250 && py > 134 && py < 250) { P.push([px, py]); a += (r() - 0.5) * 0.5; px += Math.cos(a) * 7; py += Math.sin(a) * 7; }
+      if (P.length > 1) band(P, 3.4); }
+    { const P = across(256, 128, 512, 256); band(P, 3.8);   // the short one with its branches
+      for (let b = 0; b < 3; b++) { const q = P[2 + Math.floor(r() * (P.length - 4))], Q = [q]; let a = (r() < 0.5 ? 1 : -1) * (0.8 + r() * 0.8), px = q[0], py = q[1];
+        for (let s = 0; s < 8; s++) { a += (r() - 0.5) * 0.6; px += Math.cos(a) * 7; py += Math.sin(a) * 7; if (py < 134 || py > 250 || px < 262 || px > 506) break; Q.push([px, py]); }
+        if (Q.length > 1) band(Q, 2.6); } }
+    x.strokeStyle = 'rgba(16,16,18,0.85)'; x.lineWidth = 5;   // the patch's seam
+    x.strokeRect(12 + edge[0], 268 + edge[2], 232 - edge[0] - edge[1], 232 - edge[2] - edge[3]);
+    return mk(c, false);
+  }
+
   let cache = null;
   function all(maxAniso) {
     if (cache) return cache;
@@ -512,6 +550,7 @@ const Tex = (function () {
     cache.cracks = cracks(); cache.tiresRW = tiresRW(); cache.facadeBal = facadeBal();
     cache.sponsorsLJ = sponsorsLJ(); cache.bannerLJ = bannerLJ(); cache.sponsorsFO = sponsorsFO(); cache.fenceFO = fenceFO(); cache.boardsFO = boardsFO(); cache.curbRWB = curbRWB(); cache.tyreTex = tyreTex(); cache.sponsorsMC = sponsorsMC();
     cache.curbIT = curbIT(); cache.curbRY = curbRY(); cache.sponsorsIT = sponsorsIT(); cache.sponsorsKP = sponsorsKP(); cache.boardsIT = boardsIT(); cache.boardsKP = boardsKP(); cache.flagKP = flagKP();
+    cache.wear = wear();
     return cache;
   }
   return { all, number, SPONSORS };

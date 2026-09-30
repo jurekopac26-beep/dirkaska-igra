@@ -18,7 +18,7 @@ const plane = { hasElev: false, def: {}, open: false,
 
 function mkCar(id, o) {
   const M = C.MODELS.find(m => m.id === id);
-  const c = new C.Car(M, { isPlayer: true, phys: 'cs', assist: o.assist != null ? o.assist : 2 });
+  const c = new C.Car(M, { isPlayer: true, arcade: false, phys: 'cs', assist: o.assist != null ? o.assist : 2 });
   c.place(0, 0, 0); c.locked = false; c.q = { i: 0, s: 0, d: 0, tx: 1, tz: 0, nx: 0, nz: 1 };
   c.digitalSteer = !!o.digital;
   const v = (o.v || 0) / 3.6; c.vx = v; c.vz = 0;

@@ -8,7 +8,7 @@ const Sfx = (function () {
   let noiseBuf = null;
   let eng = null, ai = [], squeal = null, rumble = null, wind = null, curbV = null, rainV = null, hiss = null, heli = null, echo = null;
   let gravel = null, spray = null, crowd = null, lastT = 0, pudPrev = false;
-  let stands = null, jet = null;   // the Red Bull Ring: the grandstands' crowd, the jets before the start
+  let stands = null, jet = null, tun = null;   // the grandstands' crowd (every circuit), the Red Bull Ring's jets before the start, a tunnel's ring
   let lastCrash = 0, running = false;
 
   function create() {
@@ -34,7 +34,7 @@ const Sfx = (function () {
     hiss = noiseVoice('bandpass', 1400, 0.8);
     heli = heliVoice(); echo = echoFx();
     gravel = noiseVoice('bandpass', 2600, 0.7); spray = noiseVoice('highpass', 1500, 0.5); crowd = crowdVoice();
-    stands = standsVoice(); jet = noiseVoice('lowpass', 500, 0.7);
+    stands = standsVoice(); jet = noiseVoice('lowpass', 500, 0.7); tun = tunnelFx();
     return true;
   }
   function shaperCurve(k) {
@@ -170,6 +170,224 @@ const Sfx = (function () {
     return { send };
   }
 
+  /* ---- Pikes Peak atmosphere, set up on the first Pikes Peak frame with the sound on (nothing on the other tracks, nothing with the sound off):
+     a gusty mountain wind that grows with the altitude (hardly a breath in the forest) and a little with speed, and the spectators at the hairpins,
+     the checkpoints, the start and the finish, who cheer as the car goes by (from their side of the screen) and ring cowbells ---- */
+  let atmo = null;
+  const AT_WIND = 0.25, AT_CROWD = 0.3, AT_BELL = 0.18, AT_SR = 22050;   // levels (the buffers below are normalised); the buffers' rate (nothing in them above ~5 kHz)
+  const bpf = (f, q, sr) => { const w = 2 * Math.PI * f / sr, al = Math.sin(w) / (2 * q), a0 = 1 + al; return [al / a0, -2 * Math.cos(w) / a0, (1 - al) / a0]; };   // band-pass biquad: b0 (b1 = 0, b2 = -b0), a1, a2
+  const rmsTo = (a, v) => { let s = 0; for (let i = 0; i < a.length; i++) s += a[i] * a[i]; const k = v / Math.sqrt(s / a.length + 1e-12); for (let i = 0; i < a.length; i++) a[i] *= k; };
+  const mkPan = (v) => { if (!ctx.createStereoPanner) return ctx.createGain(); const p = ctx.createStereoPanner(); p.pan.value = v; return p; };
+  // the crowd's loop and the cowbell clanks, made in small slices (~16k samples, one clapper, one whoop, one bell partial) while the car waits on the
+  // start line, as many a frame as fit in ~2 ms (a slow phone: one); then the crowd starts
+  function* atmoGen(A) {
+    const sr = AT_SR, n = Math.floor(4.3 * sr), R = Core.rng(7141), rn = () => R() * 2 - 1, { sstep, lerp } = Core;
+    // 4.3 s of a crowd that loops without a seam: a babbling roar in vowel formants, applause and many overlapping whoops, swelling a little
+    const roar = new Float32Array(n), clap = new Float32Array(n), voc = new Float32Array(n), w = new Float32Array(n);
+    for (let i = 0; i < n; i++) w[i] = rn();
+    for (const [f, q, a] of [[480, 1.2, 1], [1120, 1.5, 0.75], [2400, 2, 0.2]]) {   // (each filter warmed up on the loop's end, so it joins without a click; each band flickers at syllable pace)
+      const [b0, a1, a2] = bpf(f, q, sr), K = 22, cp = []; for (let k = 0; k < K; k++) cp.push(0.3 + 0.7 * R());
+      let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+      for (let j = -1024; j < n; j++) { const x = w[j < 0 ? n + j : j], y = b0 * (x - x2) - a1 * y1 - a2 * y2; x2 = x1; x1 = x; y2 = y1; y1 = y;
+        if (j >= 0) { const u = j / n * K, k = Math.floor(u), t = u - k; roar[j] += y * a * (cp[k] + (cp[(k + 1) % K] - cp[k]) * t * t * (3 - 2 * t)); }
+        if ((j & 16383) === 16383) yield; }
+      yield;
+    }
+    for (let c = 0; c < 28; c++) {   // clappers, 2.8-4.6 claps a second: each clap a short burst of noise with the clapper's own brightness
+      const rate = 2.8 + R() * 1.8, [b0, a1, a2] = bpf(900 + R() * 1600, 0.8 + R() * 0.7, sr), k = Math.exp(-1 / ((0.005 + R() * 0.007) * sr)), L = Math.floor(0.045 * sr), amp = 0.4 + R() * 0.6;
+      for (let t = R() / rate; t < 4.3; t += (0.92 + R() * 0.16) / rate) {
+        let i = Math.floor(t * sr), e = amp * (0.6 + R() * 0.4), x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+        for (let j = 0; j < L; j++, i++) { const x = rn() * e * (j < 14 ? j / 14 : 1), y = b0 * (x - x2) - a1 * y1 - a2 * y2; x2 = x1; x1 = x; y2 = y1; y1 = y; if (j >= 14) e *= k; clap[i % n] += y; }
+      }
+      yield;
+    }
+    for (let v = 0; v < 26; v++) {   // whoops ("woo", "yeah", "hey"): a buzz gliding up and down through two moving vowel formants, with some breath
+      const i0 = Math.floor(R() * n), L = Math.floor((0.35 + R() * 0.8) * sr), f0 = R() < 0.6 ? 160 + R() * 130 : 270 + R() * 180, up = 0.15 + R() * 0.35, a = 0.5 + R() * 0.5, vr = R();
+      const V = vr < 0.4 ? [330, 800, 720, 1150] : vr < 0.75 ? [420, 2000, 660, 1650] : [480, 2100, 560, 1900];
+      let ph = 0, f = f0, F = null, G = null, x1 = 0, x2 = 0, y1 = 0, y2 = 0, z1 = 0, z2 = 0;
+      for (let j = 0; j < L; j++) {
+        const u = j / L;
+        if (j % 16 === 0) { f = f0 * (1 + up * Math.sin(Math.min(1, u / 0.4) * 1.571) - 0.12 * sstep(0.55, 1, u) + 0.012 * Math.sin(j * 36 / sr)) / sr;
+          if (j % 64 === 0) { const m = sstep(0.1, 0.6, u); F = bpf(lerp(V[0], V[2], m), 4, sr); G = bpf(lerp(V[1], V[3], m), 8, sr); } }
+        ph += f; ph -= Math.floor(ph);
+        const x = 2 * ph - 1 + 0.3 * rn(), y = F[0] * (x - x2) - F[1] * y1 - F[2] * y2, z = G[0] * (x - x2) - G[1] * z1 - G[2] * z2;
+        x2 = x1; x1 = x; y2 = y1; y1 = y; z2 = z1; z1 = z;
+        voc[(i0 + j) % n] += (y + 0.5 * z) * a * Math.min(1, u / 0.08, (1 - u) / 0.3);
+      }
+      yield;
+    }
+    rmsTo(roar, 0.05); rmsTo(clap, 0.085); rmsTo(voc, 0.06);
+    const buf = ctx.createBuffer(1, n, sr), d = buf.getChannelData(0), p0 = R() * 6.28, p1 = R() * 6.28; let pk = 0;
+    for (let b = 0; b < n; b += 64) { const u = b / n * 6.2832, kc = 0.75 + 0.25 * Math.sin(3 * u + p1), sw = 0.82 + 0.12 * Math.sin(2 * u + p0) + 0.06 * Math.sin(7 * u + p1);
+      for (let i = b; i < b + 64 && i < n; i++) { d[i] = (roar[i] + clap[i] * kc + voc[i]) * sw; pk = Math.max(pk, Math.abs(d[i])); }
+      if ((b & 16383) === 16320) yield; }
+    if (pk > 0.95) for (let i = 0; i < n; i++) d[i] *= 0.95 / pk;
+    yield;
+    // cowbell clanks, four sizes: inharmonic partials (the lower ones slightly detuned pairs: the metal shimmers), the upper ones dying faster, the clapper's click
+    const Rb = Core.rng(2291);
+    for (const f0 of [540, 640, 760, 890]) {
+      const m = Math.floor(0.45 * sr), bb = ctx.createBuffer(1, m, sr), e = bb.getChannelData(0), fb = f0 * (0.97 + Rb() * 0.06);
+      for (const [r, a, tau, np] of [[1, 1, 0.24, 2], [1.48, 0.7, 0.17, 2], [2.03, 0.36, 0.1, 2], [2.71, 0.25, 0.075, 1], [3.56, 0.14, 0.05, 1], [4.42, 0.08, 0.035, 1]])
+        for (let q = 0; q < np; q++) {
+          const wq = 2 * Math.PI * fb * r * (1 + (np > 1 ? (q ? 0.003 : -0.003) : 0) + (Rb() - 0.5) * 0.008) / sr, c2 = 2 * Math.cos(wq), k = Math.exp(-1 / (tau * (0.8 + Rb() * 0.4) * sr));
+          let s1 = Math.sin(-wq), s2 = Math.sin(-2 * wq), g = a / np;
+          for (let i = 0; i < m; i++) { const s = c2 * s1 - s2; s2 = s1; s1 = s; e[i] += s * g * (i < 12 ? i / 12 : 1); g *= k; }   // (a sine by recursion)
+          yield;
+        }
+      for (let i = 0, g = 0.35; i < 45; i++, g *= 0.9) e[i] += (Rb() * 2 - 1) * g;
+      let pb = 0; for (let i = 0; i < m; i++) pb = Math.max(pb, Math.abs(e[i]));
+      for (let i = 0; i < m; i++) e[i] *= 0.8 / pb * Math.min(1, (m - i) / (0.3 * m));   // (faded out at the end)
+      A.bells.push(bb); yield;
+    }
+    for (const [g, rate, off] of [[A.cL, 0.97, 0], [A.cR, 1.03, 2.1]]) { const s = ctx.createBufferSource(); s.buffer = buf; s.loop = true; s.playbackRate.value = rate; s.connect(g); s.start(0, off); }   // (one loop on each side)
+  }
+  function atmoBuild() {
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf; src.loop = true; src.playbackRate.value = 0.5;   // wind: darkened noise, a body and a whistle
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 400; lp.Q.value = 0.5;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 7;
+    const wh = ctx.createGain(), wo = ctx.createGain(), wp = mkPan(0); wh.gain.value = 0; wo.gain.value = 0;
+    src.connect(lp); lp.connect(wo); src.connect(bp); bp.connect(wh); wh.connect(wo); wo.connect(wp); wp.connect(bus); src.start();
+    const lo = ctx.createBiquadFilter(); lo.type = 'lowpass'; lo.frequency.value = 5200; lo.Q.value = 0.5; lo.connect(bus);   // crowd and cowbells: a side each, nothing shrill
+    const side = (pan) => { const g = ctx.createGain(), pn = mkPan(pan); g.gain.value = 0; g.connect(pn); pn.connect(lo); return [g, pn]; };
+    const [cL, pL] = side(-0.6), [cR, pR] = side(0.6);
+    atmo = { wo, lp, bp, wh, wp, cL, cR, pL, pR, bells: [], ring: [0, 1, 2].map(() => ({ next: 0, left: 0, ivl: 0.14, side: 1, bell: 0 })), g: 0.5, gGoal: 0.5, gNext: 0, t: 0, T: null, spots: null, on: false };
+    atmo.gen = atmoGen(atmo); pkxBuild(atmo);   // (round 5: the verge's crunch, the rock echo, the summit wind)
+  }
+  function atmoSpots(T) {   // where the spectators stand, on both sides of the road: every hairpin, the checkpoints, the start and the finish areas
+    const S = [], put = (s, w) => { const i = T.idx(s); for (const sd of [-1, 1]) { const o = sd * ((sd > 0 ? T.br[i] : T.bl[i]) + 4); S.push({ x: T.px[i] + T.nx[i] * o, y: T.hy ? T.hy[i] : 0, z: T.pz[i] + T.nz[i] * o, w }); } };
+    for (const c of T.corners) if (c.sev >= 3) put((c.i0 + c.i1) / 2 * T.ds, 1);
+    for (const s of T.cpS) put(s, 0.85);
+    put(T.startS + 20, 1.1); put(T.startS + 85, 0.9); put(T.finishS - 60, 1); put(T.finishS, 1.1);
+    atmo.T = T; atmo.spots = S;
+  }
+  function atmoUpdate(race, player, pikes, cam) {
+    if (!pikes || !enabled) { if (atmo && atmo.on) atmoOff(0.3); return; }
+    if (!atmo) atmoBuild();
+    if (atmo.gen) { const t0 = performance.now(); do { if (atmo.gen.next().done) { atmo.gen = null; break; } } while (performance.now() - t0 < 2); }   // (the next slices of its buffers: ~2 ms a frame)
+    else if (atmo.x.gen) { const t0 = performance.now(); do { if (atmo.x.gen.next().done) { atmo.x.gen = null; break; } } while (performance.now() - t0 < 2); }   // (then the crunch's, the same way)
+    if (atmo.T !== race.track) atmoSpots(race.track);
+    const { sstep, lerp } = Core, now = ctx.currentTime, dt = clamp(now - atmo.t, 0, 0.25), y = player.roadY || 0, spd = player.speed || 0;
+    atmo.t = now; atmo.on = true;
+    // wind: the gusts ease towards a new goal every 1-4 s (faster up than down); louder with the altitude, almost nothing below the treeline (~186 m)
+    if (now >= atmo.gNext) { const r = Math.random(); atmo.gGoal = 0.15 + 0.85 * r * r; atmo.gNext = now + 1 + Math.random() * 3; }
+    atmo.g += (atmo.gGoal - atmo.g) * (1 - Math.exp(-dt / (atmo.gGoal > atmo.g ? 0.7 : 1.6)));
+    const g = atmo.g, alt = sstep(150, 440, y), open = lerp(0.25, 1, sstep(172, 215, y));
+    set(atmo.wo.gain, AT_WIND * (0.1 + 0.9 * alt * open) * (0.3 + 0.7 * g) * (1 + 0.5 * sstep(8, 50, spd)) * (1 - 0.3 * sstep(360, 405, y)), 0.12);   // (at the summit the squalls take over: pkxUpdate)
+    set(atmo.lp.frequency, 240 + 460 * g + 220 * alt, 0.15); set(atmo.bp.frequency, 620 + 700 * g + 60 * Math.sin(now * 1.3), 0.15); set(atmo.wh.gain, 0.6 * alt * g * g, 0.15);
+    if (atmo.wp.pan) set(atmo.wp.pan, 0.3 * Math.sin(now * 0.11) + 0.15 * Math.sin(now * 0.37 + 1), 0.3);
+    // crowd: each group by its distance to the car, split between the sides by where it is on the screen; livelier with the car's speed
+    // (a murmur while it stands on the start line) and when it slides
+    let wl = 0, wr = 0;
+    const e = cam ? cam.matrixWorld.elements : null, cp = cam ? cam.position : null;
+    for (const q of atmo.spots) {
+      const dx = q.x - player.x, dz = q.z - player.z; if (dx > 150 || dx < -150 || dz > 150 || dz < -150) continue;
+      const dy = q.y - y, d = Math.sqrt(dx * dx + dy * dy + dz * dz); if (d >= 150) continue;
+      const a = q.w * (1 - sstep(12, 150, d)) ** 2;
+      let p = clamp(dx / 40, -1, 1);
+      if (e) { const lx = q.x - cp.x, ly = q.y - cp.y, lz = q.z - cp.z; p = clamp((lx * e[0] + ly * e[1] + lz * e[2]) / Math.max(1, Math.hypot(lx, ly, lz)) * 1.6, -1, 1); }
+      wl += a * (1 - p) / 2; wr += a * (1 + p) / 2;
+    }
+    const exc = Math.min(1.2, 0.35 + 0.65 * sstep(1.5, 14, spd) + 0.2 * sstep(0.2, 0.6, Math.abs(player.beta || 0)));
+    set(atmo.cL.gain, AT_CROWD * Math.min(1.3, wl) * exc, 0.25); set(atmo.cR.gain, AT_CROWD * Math.min(1.3, wr) * exc, 0.25);
+    // cowbells: up to three ringers near a crowd, each shaking a bell in bursts of 2-6 clanks, more often on the louder side
+    const c = Math.min(1, (wl + wr) * 0.8), nR = atmo.gen ? 0 : c > 0.55 ? 3 : c > 0.25 ? 2 : c > 0.06 ? 1 : 0;
+    for (let k = 0; k < nR; k++) {
+      const r = atmo.ring[k];
+      if (r.next < now - 0.3) { r.next = now + Math.random() * 0.4; r.left = 0; }   // (was idle, or the game was paused)
+      while (r.next < now + 0.12) {
+        if (r.left > 0) { clank(r, AT_BELL * c * (0.5 + 0.4 * exc) * (0.55 + 0.45 * Math.random())); r.left--; r.next += r.ivl * (0.85 + Math.random() * 0.3); }
+        else { r.left = 2 + Math.floor(Math.random() * 5); r.ivl = 0.1 + Math.random() * 0.09; r.next += 0.4 + Math.random() * 1.6; r.side = Math.random() * (wl + wr) < wr ? 1 : -1; r.bell = Math.floor(Math.random() * atmo.bells.length); }
+      }
+    }
+    pkxUpdate(race, player, cam, dt, now);   // (round 5)
+  }
+  function clank(r, v) {   // one cowbell clank at r.next (the nodes go when it has played)
+    const s = ctx.createBufferSource(), g = ctx.createGain(); s.buffer = atmo.bells[r.bell]; s.playbackRate.value = 0.98 + Math.random() * 0.04; g.gain.value = v;
+    s.connect(g); g.connect(r.side > 0 ? atmo.pR : atmo.pL); s.start(Math.max(r.next, ctx.currentTime));
+  }
+  function atmoOff(tc) { atmo.on = false; set(atmo.wo.gain, 0, tc); set(atmo.cL.gain, 0, tc); set(atmo.cR.gain, 0, tc); pkxOff(tc); }
+  /* ---- Pikes Peak, round 5 (extends the atmosphere block above): the gravel verge crunching under the wheels, the engine slapping back off the
+     rocks (Devil's Playground, the Bottomless Pit, Double Cut, Boulder Park) and a harder, gustier wind at the summit (above ~380 m) ---- */
+  const PX_CRUNCH = 0.34, PX_WIND = 0.42;
+  // where the engine echoes: [from, to (m after the start line), the slap's delay (s), the slap's level, the far echo's level] (the Bottomless Pit: a
+  // long echo off the far side of the drop, no near wall)
+  const PX_ROCK = [[3990, 4250, 0.085, 0.42, 0], [4400, 4545, 0.09, 0, 0.3], [4585, 4700, 0.052, 0.55, 0], [5240, 5600, 0.07, 0.45, 0]];
+  function pkxBuild(A) {
+    const X = A.x = { gen: null, cr: [], cf: null, sG: null, sD: null, fG: null, zone: -1, G: 0.3, gGoal: 0.3, gNext: 0, fl: 0, flNext: 0, t: 0 };
+    // crunch: one grain loop per side of the car (filled by pkxGen), panned to that side on the screen, darker at a crawl
+    const cf = ctx.createBiquadFilter(); cf.type = 'lowpass'; cf.frequency.value = 2000; cf.Q.value = 0.5; cf.connect(bus); X.cf = cf;
+    for (const p of [-0.5, 0.5]) { const g = ctx.createGain(), pn = mkPan(p); g.gain.value = 0; g.connect(pn); pn.connect(cf); X.cr.push({ g, pn, src: null }); }
+    // the rock echo: the engine through a band (the rock sends back no deep rumble, no fizz), a short slap with a little feedback and a far echo
+    const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 170; const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2200;
+    eng.out.connect(hp); hp.connect(lp);
+    const sD = ctx.createDelay(0.5), sF = ctx.createGain(), sG = ctx.createGain(); sD.delayTime.value = 0.07; sF.gain.value = 0.2; sG.gain.value = 0;
+    lp.connect(sD); sD.connect(sF); sF.connect(sD); sD.connect(sG); sG.connect(bus);
+    const fD = ctx.createDelay(1), fL = ctx.createBiquadFilter(), fF = ctx.createGain(), fG = ctx.createGain(); fD.delayTime.value = 0.38; fL.type = 'lowpass'; fL.frequency.value = 900; fF.gain.value = 0.34; fG.gain.value = 0;
+    lp.connect(fD); fD.connect(fL); fL.connect(fF); fF.connect(fD); fL.connect(fG); fG.connect(bus);
+    Object.assign(X, { sG, sD, fG });
+    // the summit wind: a low buffeting of the car (flutter), two howling tones that rise with each gust and the hiss of a squall; its own pan
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf; src.loop = true; src.playbackRate.value = 0.83;
+    const out = ctx.createGain(), pn = mkPan(0); out.gain.value = 0; out.connect(pn); pn.connect(bus);
+    const bl = ctx.createBiquadFilter(); bl.type = 'lowpass'; bl.frequency.value = 120; bl.Q.value = 0.9; const bg = ctx.createGain(); bg.gain.value = 0;
+    const h1 = ctx.createBiquadFilter(); h1.type = 'bandpass'; h1.frequency.value = 480; h1.Q.value = 16; const h2 = ctx.createBiquadFilter(); h2.type = 'bandpass'; h2.frequency.value = 740; h2.Q.value = 22; const hg = ctx.createGain(); hg.gain.value = 0;
+    const sh = ctx.createBiquadFilter(); sh.type = 'bandpass'; sh.frequency.value = 3000; sh.Q.value = 0.6; const sg = ctx.createGain(); sg.gain.value = 0;
+    src.connect(bl); bl.connect(bg); bg.connect(out); src.connect(h1); src.connect(h2); h1.connect(hg); h2.connect(hg); hg.connect(out); src.connect(sh); sh.connect(sg); sg.connect(out); src.start();
+    Object.assign(X, { wo: out, wp: pn, bg, h1, h2, hg, sg, sh });
+    X.gen = pkxGen(X);
+  }
+  // the crunch's loop (1.6 s, seamless): stones crushed under the tread (low knocks, 7-22 ms) and grit (short high ticks), in clumps
+  function* pkxGen(X) {
+    const sr = AT_SR, n = Math.floor(1.6 * sr), R = Core.rng(5303), d = new Float32Array(n), K = 16, cl = []; for (let k = 0; k < K; k++) cl.push(0.35 + 0.65 * R());
+    const clump = (i) => { const u = i / n * K, k = Math.floor(u), t = u - k; return cl[k] + (cl[(k + 1) % K] - cl[k]) * t; };
+    for (const [cnt, f0, f1, q0, t0, t1, a0] of [[720, 180, 950, 3, 0.007, 0.022, 1], [1500, 1800, 4600, 5, 0.0015, 0.005, 0.45]]) {
+      for (let c = 0; c < cnt; c++) {
+        let i = Math.floor(R() * n); if (R() > clump(i)) i = Math.floor(R() * n);   // (more grains where the clump is thick)
+        const [b0, a1, a2] = bpf(f0 + (f1 - f0) * R() * R(), q0 * (0.6 + R() * 0.8), sr), k = Math.exp(-1 / ((t0 + (t1 - t0) * R()) * sr)), L = Math.floor(0.06 * sr);
+        let e = a0 * (0.3 + 0.7 * R()) * clump(i), x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+        for (let j = 0; j < L && e > 0.002; j++, e *= k) { const x = (R() * 2 - 1) * e, y = b0 * (x - x2) - a1 * y1 - a2 * y2; x2 = x1; x1 = x; y2 = y1; y1 = y; d[(i + j) % n] += y; }
+        if (c % 60 === 59) yield;
+      }
+      yield;
+    }
+    rmsTo(d, 0.2); yield; let pk = 0; for (let i = 0; i < n; i++) pk = Math.max(pk, Math.abs(d[i])); if (pk > 0.95) for (let i = 0; i < n; i++) d[i] *= 0.95 / pk;
+    const buf = ctx.createBuffer(1, n, sr); buf.getChannelData(0).set(d); yield;
+    X.cr.forEach((c, k) => { const s = ctx.createBufferSource(); s.buffer = buf; s.loop = true; s.connect(c.g); s.start(0, k * 0.71); c.src = s; });
+  }
+  function pkxUpdate(race, player, cam, dt, now) {
+    const X = atmo.x, { sstep } = Core, T = race.track, spd = player.speed || 0, y = player.roadY || 0, wet = race.rain || 0;
+    // crunch: the wheels on the verge (surface 3) on each side of the car, louder and denser with the speed (nothing in the air or at a standstill)
+    let dot = 1; if (cam) { const e = cam.matrixWorld.elements, h = player.h || 0; dot = clamp(-Math.sin(h) * e[0] + Math.cos(h) * e[2], -1, 1); }   // (the car's +side on the screen)
+    const v = player.air ? 0 : PX_CRUNCH * (0.12 + 0.88 * sstep(2, 38, spd)) * Math.min(1, spd / 2.5) * (1 - 0.4 * wet), W = player.ws || [];
+    for (let k = 0; k < 2; k++) { const c = X.cr[k], nw = (W[k] === 3 ? 1 : 0) + (W[k + 2] === 3 ? 1 : 0);   // (k 0: the -side wheels 0 and 2, k 1: the +side ones)
+      set(c.g.gain, c.src ? v * nw / 2 : 0, 0.04); if (c.src) set(c.src.playbackRate, 0.7 + 0.55 * sstep(3, 40, spd), 0.1); if (c.pn.pan) set(c.pn.pan, (k ? 0.55 : -0.55) * dot, 0.1); }
+    set(X.cf.frequency, 900 + 2600 * sstep(3, 35, spd), 0.1);
+    // the rock echo: fades in and out along the road; the slap's delay changes only while it is silent (no pitch glide)
+    const d = (player.q ? player.q.s : 0) - T.startS; let zs = 0, zf = 0, zi = -1;
+    for (let k = 0; k < PX_ROCK.length; k++) { const z = PX_ROCK[k], w = sstep(z[0] - 25, z[0], d) * (1 - sstep(z[1], z[1] + 25, d)); if (w > 0) { zi = k; zs = z[3] * w; zf = z[4] * w; } }
+    if (zi >= 0 && zi !== X.zone && PX_ROCK[zi][3] > 0 && X.sG.gain.value < 0.02) { X.sD.delayTime.setValueAtTime(PX_ROCK[zi][2], now); X.zone = zi; }
+    set(X.sG.gain, zi === X.zone ? zs : 0, 0.25); set(X.fG.gain, zf, 0.4);
+    // the summit wind: squalls every 0.6-2.6 s (up fast, down slower, now and then a big one), the car buffeted 5-11 times a second in them
+    if (now >= X.gNext) { const r = Math.random(); X.gGoal = r < 0.15 ? 1 : 0.2 + 0.65 * r; X.gNext = now + 0.6 + Math.random() * 2; }
+    X.G += (X.gGoal - X.G) * (1 - Math.exp(-dt / (X.gGoal > X.G ? 0.28 : 0.9)));
+    const su = sstep(360, 405, y), G = X.G;
+    set(X.wo.gain, PX_WIND * su * (0.55 + 0.45 * sstep(5, 45, spd)), 0.2);
+    if (now >= X.flNext) { X.fl = 0.45 + 0.55 * Math.random(); X.flNext = now + 0.09 + Math.random() * 0.1; }
+    set(X.bg.gain, 1.6 * G * X.fl, 0.035); set(X.hg.gain, 3.2 * G * G, 0.12); set(X.sg.gain, 0.3 * sstep(0.45, 1, G), 0.1);
+    const hf = 400 + 520 * G + 30 * Math.sin(now * 2.3); set(X.h1.frequency, hf, 0.2); set(X.h2.frequency, hf * 1.52 + 25 * Math.sin(now * 1.7), 0.2); set(X.sh.frequency, 2400 + 1400 * G, 0.2);
+    if (X.wp.pan) set(X.wp.pan, 0.45 * Math.sin(now * 0.29 + 2) + 0.2 * (G - 0.5), 0.3);
+  }
+  function pkxOff(tc) { const X = atmo.x; if (!X) return; for (const c of X.cr) set(c.g.gain, 0, tc); set(X.sG.gain, 0, tc); set(X.fG.gain, 0, tc); set(X.wo.gain, 0, tc); }
+  // a tunnel (World's dyn.tunnel: Monaco's under the hotel, the short one under Suzuka's bridge): the engine rings off the walls and the roof,
+  // three short feedback delays (a small, hard room) behind a low-pass, fed by the player's engine and the nearest rivals'
+  function tunnelFx() {
+    const send = ctx.createGain(); send.gain.value = 0;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400; send.connect(lp);
+    const out = ctx.createGain(); out.gain.value = 0.7; out.connect(bus);
+    for (const [t, f] of [[0.029, 0.52], [0.043, 0.48], [0.061, 0.44]]) { const d = ctx.createDelay(0.2), fb = ctx.createGain(); d.delayTime.value = t; fb.gain.value = f; lp.connect(d); d.connect(fb); fb.connect(d); d.connect(out); }
+    eng.out.connect(send); for (const v of ai) v.out.connect(send);
+    return { send };
+  }
+
   function resume() {
     if (!ctx && !create()) return;
     if (ctx.state !== 'running') { try { ctx.resume(); } catch (_) { } }
@@ -219,11 +437,10 @@ const Sfx = (function () {
     // tyres
     const spd = player.speed;
     const onHard = player.ws[2] <= 1 && player.ws[3] <= 1;
-    const slide = Math.max(0, player.latR - 2.2) / 5 + player.spin * 0.8 + (player.lock ? 0.6 : 0) + (player.inHand > 0.5 && spd > 5 ? 0.5 : 0);
-    const rn = race ? race.rain || 0 : 0, wet = player.wl != null ? player.wl : rn;   // the rain; the water under the car (a race with tyres: the drier racing line)
-    const sq = onHard && spd > 3 ? clamp(slide, 0, 1.2) : 0;
+    const slide = (player.arcade ? Core.sstep(0.18, 0.55, Math.abs(player.beta || 0)) : Math.max(0, player.latR - 2.2) / 5) + player.spin * 0.8 + (player.lock ? 0.6 : 0) + (player.inHand > 0.5 && spd > 5 ? 0.5 : 0);
+    const sq = onHard && spd > 3 ? clamp(slide, 0, 1.2) : 0, wet = race ? race.rain || 0 : 0;
     set(squeal.out.gain, sq * 0.09 * (1 - 0.7 * wet), 0.04);   // (a wet road hardly squeals)
-    set(rainV.out.gain, rn * 0.05, 0.4);
+    set(rainV.out.gain, wet * 0.05, 0.4);
     set(hiss.out.gain, onHard ? wet * clamp(spd / 45, 0, 1) * 0.1 : 0, 0.08);
     set(squeal.bp.frequency, 980 + clamp(spd, 0, 50) * 6, 0.1);
     // offroad rumble
@@ -260,6 +477,8 @@ const Sfx = (function () {
     // that follows the car the whole run) by its distance to the camera
     const pikes = !!(race && race.track && race.track.def && race.track.def.id === 'pikes');
     set(echo.send.gain, pikes ? Core.sstep(186, 198, player.roadY || 0) * 0.32 : 0, 0.6);
+    { const tn = Wd && Wd.dyn && Wd.dyn.tunnel, sq = player.q ? player.q.s : -1e9;   // (in a tunnel: the ring of its walls)
+      set(tun.send.gain, tn && sq > tn.s0 - 3 && sq < tn.s1 + 3 ? 0.85 : 0, 0.08); }
     const W = Wd, pk = W && W.dyn ? W.dyn.pk || W.dyn.air : null, cam = typeof Render !== 'undefined' ? Render.camera : null;   // (the Red Bull Ring's: dyn.air)
     let hv = 0, hp = 0;
     if (pk && pk.heli && (pk.on || (pk.follow && pk.heli.visible))) {
@@ -275,6 +494,7 @@ const Sfx = (function () {
     let jv = 0; const A = W && W.dyn && W.dyn.air;
     if (A && A.t0 >= 0) for (const m of A.jets) if (m.visible) { const q = m.position, lx = cam ? cam.position.x : player.x, ly = cam ? cam.position.y : 0, lz = cam ? cam.position.z : player.z; jv = Math.max(jv, clamp(1 - Math.hypot(q.x - lx, q.y - ly, q.z - lz) / 420, 0, 1) ** 2); }
     set(jet.out.gain, jv * 0.55, 0.12); set(jet.flt.frequency, 300 + jv * 900, 0.12);
+    atmoUpdate(race, player, pikes, cam);   // (Pikes Peak: wind, crowds, cowbells)
   }
 
   function crash(imp) {
@@ -373,10 +593,12 @@ const Sfx = (function () {
     if (!ctx) return;
     for (const v of [eng, ...ai]) set(v.out.gain, 0, 0.02);
     for (const v of [squeal, rumble, wind, curbV, rainV, hiss, heli, gravel, spray, crowd, stands, jet]) set(v.out.gain, 0, 0.02);
-    set(echo.send.gain, 0, 0.02);
+    set(echo.send.gain, 0, 0.02); set(tun.send.gain, 0, 0.02);
+    if (atmo) atmoOff(0.02);
   }
 
-  const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, shiftPop, knock, wrench, silence, get ready() { return !!ctx && ctx.state === 'running'; } };
+  const levels = () => ctx ? { stands: stands.lev, standsGain: stands.out.gain.value, tunnel: tun.send.gain.value, pk: atmo && atmo.x ? { ready: !atmo.gen && !atmo.x.gen, crunch: atmo.x.cr.map(c => +c.g.gain.value.toFixed(4)), slap: atmo.x.sG.gain.value, far: atmo.x.fG.gain.value, gust: atmo.x.wo.gain.value, wind: atmo.wo.gain.value } : null } : null;   // (tests: the crowd's and the tunnel's levels now)
+  const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, shiftPop, knock, wrench, silence, levels, get ready() { return !!ctx && ctx.state === 'running'; } };
   window.Sfx = api;
   return api;
 })();

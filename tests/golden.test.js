@@ -1,6 +1,5 @@
-// Determinism / regression net: every track x 6 set-ups (race, title demo, upgraded car, crash, crash in the formula car, crash in a
-// race with tyres, rain coming and the safety car)
-// (Circuit Superstars physics, keys .../cs), 60 s each (the crash set-ups on a track with pits 80 s or more: they end with a pit stop and the repair). The full state of the race, every
+// Determinism / regression net: every track x 5 set-ups (race, title demo, upgraded car, crash, crash in the formula car) x 2
+// physics, 60 s each (the crash set-ups on a track with pits 80 s or more: they end with a pit stop and the repair). The full state of the race, every
 // car and the loose panels is hashed every 10 s and compared with tests/golden/sim.json: a change to the physics, AI,
 // damage, pits or race rules shows up here (finishing is covered by races.test.js). The crash runs must really crash
 // (damage, loose panels, the repair on a track with pits), so a change can not quietly turn them into a plain drive.
@@ -28,13 +27,10 @@ for (const tid of trackIds(C)) for (const sn of Object.keys(SETUPS)) for (const 
   out[key] = r; n++;
   const g = golden[key], cv = r.cover;
   const ok = g && g.digest === r.digest;
-  const pits = !!C.TRACKS.find(d => d.id === tid).pit;
-  const covered = (!SETUPS[sn].drive || (cv.dmg >= 0.2 && cv.loose >= 1 && (!pits || cv.repairs >= 1))) &&   // (the crash set-ups)
-    (cv.rain == null || (cv.rain >= 0.99 && cv.wet >= 0.5 && (!pits || cv.stops >= 3)));   // (the rain set-up: it rained, the track got wet, cars changed tyres in the pits)
+  const covered = !SETUPS[sn].drive || (cv.dmg >= 0.2 && cv.loose >= 1 && (!C.TRACKS.find(d => d.id === tid).pit || cv.repairs >= 1));   // (the crash set-ups)
   if ((!update && !ok) || !covered) bad++;
   console.log(`${key.padEnd(26)} ${r.digest} lead ${String(r.lead).padStart(7)} m ${SETUPS[sn].drive ? `damage ${cv.dmg} loose ${cv.loose} rescues ${cv.rescues} repairs ${cv.repairs} ` : ''}` +
-    `${cv.rain != null ? `rain ${cv.rain} wet ${cv.wet} sc ${cv.sc} stops ${cv.stops} ` : ''}` +
-    `${!covered ? 'FAIL: this run does not really crash (damage 0.2+, a loose panel; the pit repair on a track with pits) or its weather does not change (rain, a wet track, tyre stops): adjust crashDrive / the set-up in tests/lib/sim.js ' : ''}` +
+    `${!covered ? 'FAIL: this run does not really crash (damage 0.2+, a loose panel; the pit repair on a track with pits): adjust crashDrive in tests/lib/sim.js ' : ''}` +
     `${update ? '' : ok ? 'OK' : g ? 'CHANGED (was ' + g.digest + ', lead ' + g.lead + ' m)' : 'NO REFERENCE'}`);
 }
 if (update) {

@@ -16,20 +16,19 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // the voestalpine wing on top of the main grandstand and the steel bull on the infield hill; the 2024 gravel strips and the DRS zones.
   const RBR_H = [1,1,1,2,2,3,6,5,8,8,9,13,16,19,22,27,32,36,40,46,52,59,66,74,81,89,96,104,111,119,128,137,145,153,158,164,169,173,177,180,183,185,186,188,189,189,190,189,189,188,188,187,185,185,183,183,182,182,182,182,183,184,185,186,187,189,191,194,196,198,200,203,205,208,210,213,215,218,220,222,225,227,230,232,235,237,241,244,248,252,256,261,266,271,277,283,289,295,303,310,318,326,334,342,352,361,370,381,391,402,413,424,435,447,459,471,483,495,507,520,532,544,556,568,580,592,605,616,623,627,631,633,634,635,635,635,634,633,632,630,628,626,624,620,617,613,608,603,597,592,586,582,577,574,569,564,559,554,551,547,544,541,537,534,532,531,529,526,524,522,520,519,517,513,510,507,506,502,498,495,492,489,487,483,479,475,471,467,463,459,454,450,445,441,436,431,426,421,416,411,406,400,394,388,382,377,371,367,362,357,351,345,339,333,327,321,315,310,306,302,298,295,292,290,288,287,287,286,287,287,288,290,292,293,295,296,298,300,302,303,305,306,308,309,310,312,314,314,315,317,318,320,321,322,322,321,320,319,317,314,311,307,303,299,293,288,281,274,267,259,250,242,233,224,215,206,197,189,181,173,166,160,154,148,143,138,134,131,128,126,124,123,122,122,122,123,124,127,129,131,134,136,139,140,143,145,146,147,148,149,150,150,151,151,151,152,152,153,155,157,159,161,165,168,172,177,181,186,191,196,201,205,208,211,214,217,219,222,224,226,229,230,231,233,234,234,235,235,235,235,235,234,232,231,230,228,226,224,222,221,218,216,212,210,207,201,197,192,188,184,179,173,168,162,156,150,143,136,129,123,115,108,100,92,85,78,71,64,58,53,48,44,41,38,36,34,33,31,30,29,27,25,24,23,21,20,18,17,16,14,12,11,11,9,8,7,6,3,3,3,2,2,3,2,1,1,-1,-1,0,0,0,1];
   TRACK_DEFS.push({
-    id: 'rbring', name: 'Red Bull Ring', theme: 'rbring', laps: 2, halfWidth: 6.5,
-    desc: 'Red Bull Ring v Avstriji (Spielberg na Štajerskem), proga formule 1 v pravem merilu: 4,3 km, 10 zavojev in 64 m višinske razlike. Strm vzpon (12 %) od 1. zavoja do lasnice na vrhu hriba, spust do 4. zavoja, hitra leva zavoja 6 in 7 ter zavoja 9 in 10 nazaj na ciljno ravnino. Tribune s krilom, boksi (zapelji vanje in mehaniki ti popravijo avto), jekleni bik in štajerski gozdovi. Podatki: © OpenStreetMap (ODbL), DGM Avstrija, ESA WorldCover.',
+    id: 'rbring', name: 'Štajerska, Avstrija', theme: 'rbring', laps: 2, halfWidth: 6.5,
+    desc: 'Hitra proga v štajerskih hribih: 4,3 km, 10 zavojev in 64 m višinske razlike. Strm vzpon (12 %) od 1. zavoja do lasnice na vrhu hriba, spust do 4. zavoja, hitra leva zavoja 6 in 7 ter zavoja 9 in 10 nazaj na ciljno ravnino. Tribune, boksi (zapelji vanje in mehaniki ti popravijo avto) in štajerski gozdovi. Podatki: © OpenStreetMap (ODbL), DGM Avstrija, ESA WorldCover.',
     start: [0, 0], runoff: 1, inner: 4.2, side: 5, gradeForce: true, elevSmooth: 12, realKm: 4.318, runoffTarmac: true,
     elev: RBR_H.map((h, i) => [i / RBR_H.length, h / 10]),
-    // named places ([HUD label, x, z, the commentator's lines]): the turns by their numbers, as in Formula 1 (the sponsors' names change from
-    // year to year); Turn 1 carries Niki Lauda's name (since 2019), Turn 9 Jochen Rindt's
+    // named places ([HUD label, x, z, the commentator's lines]): the turns by their numbers only (no names of people, places or sponsors)
     names: [
-      ["Zavoj 1 · Niki Lauda", -314.9, 81.6, ["Turn one, the Niki Lauda corner!", "Hard on the brakes, uphill into Turn One!", "Into Turn One, named after the three-time champion Niki Lauda!"]],
-      ["Vzpon · 12 %", -642.6, -470.3, ["Up the hill, twelve percent!", "Flat out through the kink, climbing hard!", "Climbing towards Turn Three!"]],
-      ["Zavoj 3 · vrh hriba", -837.7, -689, ["Turn three, the big stop at the top of the hill!", "Into Turn Three, the best place to overtake!", "Turn three, the highest point of the lap!"]],
+      ["Zavoj 1", -314.9, 81.6, ["Turn one, the first big stop!", "Hard on the brakes, uphill into Turn One!", "Into Turn One, and the long climb begins!"]],
+      ["Zavoj 2", -642.6, -470.3, ["Up the hill, twelve percent!", "Flat out through the kink, climbing hard!", "Climbing towards Turn Three!"]],
+      ["Zavoj 3", -837.7, -689, ["Turn three, the big stop at the top of the hill!", "Into Turn Three, the best place to overtake!", "Turn three, the highest point of the lap!"]],
       ["Zavoj 4", -36.3, -619.2, ["Down the hill and hard on the brakes for Turn Four!", "Turn four, braking downhill!", "Into Turn Four at the bottom of the hill!"]],
       ["Zavoj 6", -461.8, -494.1, ["Turn six, the first of the fast lefts!", "Sweeping left through Turn Six!", "Turn six, keep it on the kerbs!"]],
       ["Zavoj 7", -328, -230.7, ["Turn seven, fast and downhill!", "Left again through Turn Seven!", "Turn seven, that one is quick!"]],
-      ["Zavoj 9 · Jochen Rindt", 357.8, -336, ["Turn nine, the Jochen Rindt corner!", "Through Turn Nine, named after the 1970 champion!", "Turn nine, fast and blind over the crest!"]],
+      ["Zavoj 9", 357.8, -336, ["Turn nine, flat out over the crest!", "Through Turn Nine, brave and blind!", "Turn nine, fast and blind over the crest!"]],
       ["Zavoj 10", 417.5, -148.9, ["The last corner, Turn Ten!", "Turn ten, and onto the main straight!", "Through Turn Ten, the lap is nearly done!"]],
     ],
     pit: [18, -360, 245, -95],   // pit lane on the right of the straight: [centre offset to the right, from, to, the player's box] (metres from the start line)

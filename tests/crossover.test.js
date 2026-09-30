@@ -52,7 +52,7 @@ check('into the parapet on the bridge: the car hits it and stays up on the bridg
   `impact ${hit.toFixed(1)} m/s, lowest ${yMin.toFixed(2)} m over the bridge (the road below ${T.hy[Math.round(X.lo)].toFixed(2)} m), ${dMax.toFixed(2)} m off the centre line`);
 
 // 4. rescued right at the crossing: back on its own level
-r = new C.Race(T, { numAI: 1, playerGrid: 1, laps: 2, phys: 'cs', playerModel: C.MODELS[1], seed: 5 });
+r = new C.Race(T, { numAI: 1, playerGrid: 1, laps: 2, phys: 'arcade', playerModel: C.MODELS[1], seed: 5 });
 P = r.player; A = r.cars.find(c => c !== P); place(r, P, sUp, 0); place(r, A, sLo, 0); r.start();
 r.rescue(P); r.rescue(A); r.step(DT);
 check('rescued at the crossing: the car on the bridge stays on it, the one below stays below', Math.abs(P.q.s - sUp) < 12 && Math.abs(A.q.s - sLo) < 12 && P.y > A.y + 6,
@@ -66,8 +66,8 @@ for (let k = 0; k < 2 / DT; k++) { P.inThr = 0; P.inBrk = 1; r.step(DT); }
 check('a panel lost on the bridge lands on the bridge (not on the road below)', deb && Math.abs(deb.y - T.elevAt(deb.q.s).y) < 0.5 && deb.y > T.hy[Math.round(X.lo)] + 6,
   deb ? `the bumper at ${deb.y.toFixed(2)} m, the bridge ${T.elevAt(sUp).y.toFixed(2)} m, the road below ${T.hy[Math.round(X.lo)].toFixed(2)} m` : 'no debris');
 
-// 6. a whole race (13 cars): nobody's road height ever jumps from one level to the other
-for (const phys of ['cs']) {
+// 6. a whole race (13 cars, both physics): nobody's road height ever jumps from one level to the other
+for (const phys of ['cs', 'arcade']) {
   Math.random = seeded(7);
   r = new C.Race(T, { numAI: 12, playerGrid: 12, laps: 2, playerModel: C.MODELS[4], assist: 2, phys, seed: 11, difficulty: 1 });
   r.start();

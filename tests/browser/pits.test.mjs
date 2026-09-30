@@ -1,6 +1,5 @@
 // Bakreni gozd (gozd): a full race on autopilot with one pit stop on lap 2. The car must stop in its box, the crew
-// must go out, work (car up on the jacks) and clear, the repair must finish, the tyres chosen for the stop (hard) must be
-// on the car, and all 13 cars must finish the race.
+// must go out, work (car up on the jacks) and clear, the repair must finish, and all 13 cars must finish the race.
 //   node tests/browser/pits.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -17,10 +16,10 @@ try {
     r = await page.evaluate(() => {
       const g = window.__game, P = g.race.player, st = []; Render.scene.visible = false;
       for (let i = 0; i < 20; i++) { g.sim(0.05, true); Render.frame(0.05, 1, P, g.S.camera, {}); const c = Render.crew; st.push([P.pitState, c && c.mode, c ? c.lift : 0]); }
-      if (P.lap === 2 && !P.repairN && !P.inPit) { P.pitWant = true; P.pitTyre = 'H'; }
+      if (P.lap === 2 && !P.repairN && !P.inPit) P.pitWant = true;
       if (P.repairN && !P.inPit) P.pitWant = false;
       Render.scene.visible = true;
-      return { phase: g.phase, fin: !!P.finished, t: g.race.time, repairN: P.repairN || 0, tyre: P.tyre, tyreN: P.tyreN, st, finished: g.race.cars.filter(c => c.finished).length, n: g.race.cars.length };
+      return { phase: g.phase, fin: !!P.finished, t: g.race.time, repairN: P.repairN || 0, st, finished: g.race.cars.filter(c => c.finished).length, n: g.race.cars.length };
     });
     for (const [s, m, l] of r.st) { if (s !== lastSt) { states.push(`${r.t.toFixed(1)} s ${s}`); lastSt = s; } if (m) modes.add(m); maxLift = Math.max(maxLift, l); }
     if (r.fin && r.finished === r.n) break;
@@ -31,7 +30,6 @@ try {
   T.check('the crew goes out, works and clears', ['out', 'work', 'clear'].every(m => modes.has(m)), [...modes].join(','));
   T.check('the car goes up on the jacks', maxLift > 0.05, `max lift ${maxLift.toFixed(3)} m`);
   T.check('repaired once', r.repairN === 1, `repairs ${r.repairN}`);
-  T.check('the tyres chosen for the stop (hard) on the car', r.tyre === 'H' && r.tyreN === 1, `${r.tyre}, ${r.tyreN} change(s)`);
   T.check('player finishes, all cars finish', r.fin && r.finished === r.n, `${r.finished}/${r.n} after ${r.t.toFixed(1)} s`);
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
 } finally {

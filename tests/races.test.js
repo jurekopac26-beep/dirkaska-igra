@@ -1,12 +1,11 @@
-// Full AI races on every track (Circuit Superstars physics; 12 AI + the player on autopilot; Pikes Peak: time trial), to the finish,
-// in the dry and in the rain ('/rain': every car with the wet grip, the AI's pace from it), with the player in the formula car
-// ('/formula': every car a formula, as in the game), and on the circuits a race as the game drives it now ('/wx': tyres that wear,
-// the rain coming at 30 % of the distance (the AI change to wets where there are pits, each at its own moment), the safety car
-// after a heavy crash).
+// Full AI races on every track with both physics (12 AI + the player on autopilot; Pikes Peak: time trial), to the finish,
+// in the dry and in the rain ('/rain': every car with the wet grip, the AI's pace from it), and with the player in the formula car
+// ('/formula': every car a formula, as in the game).
 // Checks that every car finishes and compares with tests/golden/races.json: the exact result (finish order, finish times
 // and the final state of every car, as a digest) must be the same. When it is not, the other values show how big the
 // change is: spins (at most 2 more than the reference), wall contacts, rescues and the winner's time (within +-3 %).
-// A race in the rain must also be slower than the same race in the dry, by 0.5-30 % (6-9 % on most tracks).
+// A race in the rain must also be slower than the same race in the dry, by 0.5-30 % (6-9 % on most tracks; the arcade cars' slow
+// hairpins, where they turn by the slide rather than the grip, lose the least: Pikes Peak ~1 %).
 //   node tests/races.test.js [--update] [--only=gozd,cs] [--only=spa,rain]
 'use strict';
 const fs = require('fs');
@@ -21,13 +20,13 @@ const only = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7).sp
 const C = loadCore();
 const ref = fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, 'utf8')) : {};
 
-function race(tid, phys, rain, model, wx) {
+function race(tid, phys, rain, model) {
   const orig = Math.random;
   try {
     Math.random = seeded(3);
     const T = new C.Track(C.TRACKS.find(d => d.id === tid)), tt = !!T.def.timeTrial;
     const laps = tt || tid === 'nring' ? 1 : 2;
-    const r = new C.Race(T, Object.assign({ numAI: tt ? 0 : 12, playerGrid: tt ? 1 : 12, laps, playerModel: model || C.MODELS[4], assist: 2, phys, seed: 11, difficulty: 1, rain }, wx ? { tyres: true, wx: { at: 0.3, to: 1 }, sc: true } : {}));
+    const r = new C.Race(T, { numAI: tt ? 0 : 12, playerGrid: tt ? 1 : 12, laps, playerModel: model || C.MODELS[4], assist: 2, phys, seed: 11, difficulty: 1, rain });
     r.start();
     const P = r.player, st = new Map(r.cars.map(c => [c, { spins: 0, spinning: false, walls: 0, resc: 0 }]));
     const tmax = T.len * laps / 12 + 120;
@@ -53,11 +52,10 @@ function race(tid, phys, rain, model, wx) {
 
 const out = {}; let bad = 0; const t0 = Date.now();
 const FORMULA = C.MODELS.find(m => m.id === 'formula');
-for (const tid of trackIds(C)) for (const phys of PHYSICS) for (const v of ['', 'rain', 'formula', 'wx']) {
-  if (v === 'wx' && C.TRACKS.find(d => d.id === tid).timeTrial) continue;   // (tyres, the weather's change, the safety car: races on circuits)
+for (const tid of trackIds(C)) for (const phys of PHYSICS) for (const v of ['', 'rain', 'formula']) {
   const rain = v === 'rain' ? 1 : 0, key = `${tid}/${phys}` + (v ? '/' + v : '');
   if (only.length && !only.every(o => key.split('/').includes(o))) { if (ref[key]) out[key] = ref[key]; continue; }
-  const r = race(tid, phys, rain, v === 'formula' ? FORMULA : null, v === 'wx'); out[key] = r;
+  const r = race(tid, phys, rain, v === 'formula' ? FORMULA : null); out[key] = r;
   const g = ref[key], why = [], dry = rain && (out[`${tid}/${phys}`] || ref[`${tid}/${phys}`]);
   if (r.nan) why.push('NaN in car state');
   if (r.finished !== r.cars) why.push(`only ${r.finished}/${r.cars} finished`);
