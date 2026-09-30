@@ -51,7 +51,7 @@ try {
   const carMenu = () => page.evaluate(async () => {
     const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)), raf = () => new Promise(r => requestAnimationFrame(r));
     g.onAction('to-car'); await wait(300);
-    for (let k = 0; k < 12; k++) { g.onAction('car-next'); await raf(); await raf(); }
+    for (let k = 0; k < 2 * Core.MODELS.length; k++) { g.onAction('car-next'); await raf(); await raf(); }   // (back at the same car: every round ends the same)
     g.onAction('to-title'); await wait(200);
   });
   const rounds = [];
