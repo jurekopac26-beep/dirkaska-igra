@@ -1237,9 +1237,9 @@ const Render = (function () {
     }
   }
 
-  /* ---------------- birds: now and then a small flock flies across the view a little above the trees (gulls by the sea), its shadows
-     sweeping over the ground; the wings beat, then the birds glide a while. Not in the rain. One mesh: three triangles a bird, written
-     every frame ---------------- */
+  /* ---------------- birds: once a race a small flock flies across the view a little above the trees (gulls by the sea), 10-38 s after
+     the start, its shadows sweeping over the ground; the wings beat, then the birds glide a while. Not in the rain. One mesh: three
+     triangles a bird, written every frame ---------------- */
   class Birds {
     constructor(n) {
       this.n = n; this.pos = new Float32Array(n * 27);
@@ -1247,16 +1247,16 @@ const Render = (function () {
       g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
       this.mat = new THREE.MeshBasicMaterial({ color: 0x2a2c31, side: THREE.DoubleSide });
       this.mesh = new THREE.Mesh(g, this.mat); this.mesh.frustumCulled = false; this.mesh.castShadow = true; this.mesh.visible = false;
-      this.flocks = [0, 1].map((k) => ({ on: false, wait: 3 + k * 7 + Math.random() * 5, m: [] }));
+      this.flocks = [0, 1].map((k) => ({ on: false, wait: 3 + k * 7 + Math.random() * 5, m: [] })); this.left = 1;
     }
-    reset(gull) { this.gull = !!gull; this.mat.color.setHex(gull ? 0xe6e9ec : 0x2a2c31); for (const f of this.flocks) { f.on = false; f.wait = 2 + Math.random() * 8; } this.vx = this.vz = 0; this.cx = this.cz = null; this.pos.fill(0); this.attr.needsUpdate = true; }
+    reset(gull, race) { this.gull = !!gull; this.mat.color.setHex(gull ? 0xe6e9ec : 0x2a2c31); for (const f of this.flocks) { f.on = false; f.wait = 2 + Math.random() * 8; } this.vx = this.vz = 0; this.cx = this.cz = null; this.pos.fill(0); this.attr.needsUpdate = true; if (race) { this.left = 1; for (const f of this.flocks) f.wait = 10 + (f.wait - 2) * 3.5; } }   // (race: one flock in it, 10-38 s after the start)
     update(dt, cx, cz, gH) {
       const P = this.pos; let b = 0;
       // the view moves as fast as the cars: a new flock appears ahead of it (the cars then pass under it), else anywhere around
       if (dt > 0) { const k = Math.min(1, dt * 2); this.vx = (this.vx || 0) + ((cx - (this.cx == null ? cx : this.cx)) / dt - (this.vx || 0)) * k; this.vz = (this.vz || 0) + ((cz - (this.cz == null ? cz : this.cz)) / dt - (this.vz || 0)) * k; }
       this.cx = cx; this.cz = cz;
       for (const f of this.flocks) {
-        if (!f.on) { f.wait -= dt; if (f.wait > 0 || !(dt > 0)) continue;
+        if (!f.on) { f.wait -= dt; if (f.wait > 0 || !(dt > 0) || this.left <= 0) continue; this.left--;
           const vv = Math.hypot(this.vx, this.vz), moving = vv > 8, a = moving ? Math.atan2(this.vz, this.vx) + (Math.random() - 0.5) * 0.9 : Math.random() * Math.PI * 2;
           const r = moving ? 70 + Math.min(90, vv * 1.6) * Math.random() : 75 + Math.random() * 25, tx = cx + (Math.random() - 0.5) * 60, tz = cz + (Math.random() - 0.5) * 60;
           f.x = cx + Math.cos(a) * r; f.z = cz + Math.sin(a) * r; f.h = moving ? a + Math.PI / 2 * (Math.random() < 0.5 ? 1 : -1) + (Math.random() - 0.5) * 0.8 : Math.atan2(tz - f.z, tx - f.x);   // (ahead of the view: flying across the cars' way)
@@ -2006,7 +2006,7 @@ const Render = (function () {
     scDrop();
     const old = views;
     views = []; curTrack = race.track; curRace = race; clearDebris(); dust = race.track.def.dust ? Object.assign({}, DUST0, race.track.def.dust) : null;
-    birds.reset(birds.gull);   // (a new race, a fresh sky: nothing left over from the frames before it, so a race stepped from a seeded start draws the same)
+    birds.reset(birds.gull, true);   // (a new race, a fresh sky: nothing left over from the frames before it, so a race stepped from a seeded start draws the same; its one flock)
     if (world && world.props && world.props.length && race.setProps && !race.props) race.setProps(world.props, world.propFloor);
     setupProps(race);
     for (const c of race.cars) views.push(makeView(c));
@@ -3453,7 +3453,8 @@ const Render = (function () {
       if (camera.fov !== shot.fov) { camera.fov = shot.fov; camera.updateProjectionMatrix(); updatePointScale(); }
       if (shot.floor && world) { const gH = world.groundH ? world.groundH(px, pz) : NaN, gf = Math.max(Number.isFinite(gH) ? gH : -1e9, c.roadY != null ? c.roadY - 3 : -1e9) + 0.35; if (py < gf) py = gf; }   // (the photo mode: never under the ground)
     } else if (podC) {   // the podium ceremony: the TV camera on the pit wall (podCam)
-      const [pp, pt] = podCam(); px = pp.x; py = pp.y; pz = pp.z; tx = pt.x; ty = pt.y; tz = pt.z; baseY = podC.F.y0;
+      const [pp, pt] = podCam(), Wd = world && world.dyn; px = pp.x; py = pp.y; pz = pp.z; tx = pt.x; ty = pt.y + (Wd && Wd.podUp || 0); tz = pt.z; baseY = podC.F.y0;
+      if (Wd && Wd.podBack) { const dx = px - tx, dz = pz - tz, l = Math.hypot(dx, dz) || 1; px += dx / l * Wd.podBack; pz += dz / l * Wd.podBack; }   // (a world's dyn.podBack, podUp: Mie's is further back and looks up, at the sky over the pit building's tower, the helicopter and the fireworks in it)
       const fov = camera.aspect < 1 ? 50 : 32; if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); updatePointScale(); }
     } else if (mode === 'cockpit' && viewOf(c)) {
       // the driver's eyes (eyeOf) in the car as drawn (its slope and bank; the body's roll only in the cockpit round them), the head a

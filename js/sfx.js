@@ -553,7 +553,7 @@ const Sfx = (function () {
     set(echo.send.gain, pikes ? Core.sstep(186, 198, player.roadY || 0) * 0.32 : 0, 0.6);
     { const tn = Wd && Wd.dyn && Wd.dyn.tunnel, sq = player.q ? player.q.s : -1e9;   // (in a tunnel: the ring of its walls)
       set(tun.send.gain, tn && sq > tn.s0 - 3 && sq < tn.s1 + 3 ? 0.85 : 0, 0.08); }
-    const W = Wd, pk = W && W.dyn ? W.dyn.pk || W.dyn.air : null, cam = typeof Render !== 'undefined' ? Render.camera : null;   // (the Red Bull Ring's: dyn.air)
+    const W = Wd, pk = W && W.dyn ? W.dyn.pk || W.dyn.air || W.dyn.heli : null, cam = typeof Render !== 'undefined' ? Render.camera : null;   // (the Red Bull Ring's: dyn.air; Mie's at the finish: dyn.heli)
     let hv = 0, hp = 0;
     if (pk && pk.heli && (pk.on || (pk.follow && pk.heli.visible))) {
       const q = pk.heli.position, lx = cam ? cam.position.x : player.x, ly = cam ? cam.position.y : (player.roadY || 0), lz = cam ? cam.position.z : player.z;
