@@ -521,11 +521,11 @@ const Tex = (function () {
     x.putImageData(img, 0, 0);
     x.lineCap = x.lineJoin = 'round';
     const band = (pts, wd) => { for (const [lw, a] of [[wd * 1.9, 0.28], [wd, 0.92]]) { x.strokeStyle = 'rgba(13,13,15,' + a + ')'; x.lineWidth = lw; x.beginPath(); x.moveTo(pts[0][0], pts[0][1]); for (const p of pts) x.lineTo(p[0], p[1]); x.stroke(); } };
+    const clamp = (v, lo, hi) => v < lo ? lo : v > hi ? hi : v;
     // a crack across a box (x0, y0, x1, y1) from its left end to its right: a walk that keeps its heading, wandering a little
     const across = (x0, y0, x1, y1) => { const P = [], m = (y0 + y1) / 2, hh = (y1 - y0) / 2 - 8; let px = x0 + 6, py = m + (r() - 0.5) * hh, a = 0;
       while (px < x1 - 6) { P.push([px, py]); a = clamp(a + (r() - 0.5) * 0.7, -0.5, 0.5); if (Math.abs(py - m) > hh * 0.7) a -= Math.sign(py - m) * 0.3; px += Math.cos(a) * 7; py += Math.sin(a) * 7; }
       P.push([x1 - 6, py]); return P; };
-    const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
     band(across(0, 0, 512, 64), 4.2); band(across(0, 64, 512, 128), 3.6);   // the two long ones
     for (let k = 0; k < 4; k++) { const hz = k < 2, t = 30 + (k % 2) * 56 + r() * 20;   // the network: two lines each way, meandering
       const P = []; let px = hz ? 8 : t, py = hz ? 128 + t : 136, a = hz ? 0 : Math.PI / 2;
