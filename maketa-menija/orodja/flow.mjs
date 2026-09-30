@@ -1,6 +1,6 @@
-// Local check of the menu mockup (the folder above): serves index.html, maps the CDN three.js and Google Fonts to local copies,
-// opens every screen in every state and saves phone-size screenshots.
-// Usage: node check.mjs [01-,veteran-]  (only the shots whose name contains one of these; env W, H = screen size, OUTDIR = folder)
+// Local check of the menu mockup (the folder above), like check.mjs, but it plays the flows: today's race, career races and a multiplayer
+// duel. After Race it picks a finishing place, then saves the results screen and the screens that follow.
+// Usage: node flow.mjs [01-,free-]  (a step whose name contains one of these; a step can need the one before it; env W, H, OUTDIR)
 import { createRequire } from 'node:module';
 import http from 'node:http';
 import fs from 'node:fs';
@@ -55,23 +55,32 @@ const shot = async (name) => {
   console.log(name, o.length ? JSON.stringify(o) : 'ok');
 };
 const open = async (st, scr, o, ms) => { await page.evaluate(([st, scr, o]) => window.MENU_DEBUG.open(st, scr, o), [st, scr, o || {}]); await wait(ms || 700); };
+const fin = async (kind, res) => { await page.evaluate(([k, r]) => window.MENU_DEBUG.finish(k, r), [kind, res]); await wait(500); };
 const ONLY = process.argv[2] ? process.argv[2].split(',') : null;
-const plan = [
-  ['free', 'title', {}, 2600], ['free', 'car', { carIdx: 0 }, 2200], ['free', 'car', { carIdx: 3, tab: 'paint' }, 1800], ['free', 'track', { trackIdx: 0 }], ['free', 'track', { trackIdx: 7 }],
-  ['free', 'career', {}], ['free', 'series', { seriesId: 'home' }], ['free', 'title', { offer: true }],
-  ['full', 'title', {}, 1200], ['full', 'car', { carIdx: 2, tab: 'upg' }, 2000], ['full', 'track', { trackIdx: 3 }], ['full', 'career', {}], ['full', 'series', { seriesId: 'home' }],
-  ['veteran', 'title', {}, 1200], ['veteran', 'car', { carIdx: 2, colorIdx: 0 }, 2000], ['veteran', 'car', { carIdx: 5 }, 1800], ['veteran', 'car', { carIdx: 6, colorIdx: 3 }, 2000],
-  ['veteran', 'track', { trackIdx: 8 }], ['veteran', 'track', { trackIdx: 9 }], ['veteran', 'career', {}], ['veteran', 'series', { seriesId: 'legends' }], ['veteran', 'series', { seriesId: 'attack' }],
-  ['veteran', 'multi', { mpMode: 'create' }], ['veteran', 'multi', { mpMode: 'join' }], ['veteran', 'board', { lbTrack: -1 }], ['veteran', 'board', { lbTrack: 3 }], ['veteran', 'settings', {}],
-];
 let n = 0;
-for (const [st, scr, o, ms] of plan) {
-  n++;
-  const name = String(n).padStart(2, '0') + '-' + st + '-' + scr + (o.carIdx != null ? '-c' + o.carIdx : '') + (o.trackIdx != null ? '-t' + o.trackIdx : '') + (o.seriesId ? '-' + o.seriesId : '') + (o.tab ? '-' + o.tab : '') + (o.mpMode ? '-' + o.mpMode : '') + (o.lbTrack != null ? '-lb' + o.lbTrack : '') + (o.offer ? '-offer' : '');
-  if (ONLY && !ONLY.some(x => name.includes(x))) continue;
-  await open(st, scr, o, ms);
-  await shot(name);
-}
-if (!ONLY) { await open('veteran', 'car', { carIdx: 2 }, 1500); await click('[data-act="race-single"]'); await wait(300); await shot('99-loading'); await wait(1600); await shot('99-picker'); }
+const step = async (name, fn) => { n++; const nm = String(n).padStart(2, '0') + '-' + name; if (ONLY && !ONLY.some(x => nm.includes(x))) return; await fn(); await shot(nm); };
+await step('free-title', () => open('free', 'title', { fresh: true }, 2600));
+await step('free-daily', () => open('free', 'track', { trackIdx: 0 }, 900));
+await step('free-picker', async () => { await open('free', 'track', { trackIdx: 0 }); await page.click('[data-act="race-daily"]'); await wait(1700); });
+await step('free-daily-result', async () => { await page.click('[data-finish="3"]'); await wait(600); });
+await step('free-daily-after', async () => { await page.click('[data-act="res-continue"]'); await wait(700); });
+await step('free-title-after', () => open('free', 'title', {}, 900));
+await step('free-track-jezero', () => open('free', 'track', { trackIdx: 1 }, 900));
+await step('free-car', () => open('free', 'car', { carIdx: 0 }, 2000));
+await step('free-career', () => open('free', 'career', {}, 800));
+await step('free-career-result', () => fin('career', '1'));
+await step('free-series-after', async () => { await page.click('[data-act="res-continue"]'); await wait(700); });
+await step('free-offer', () => open('free', 'title', { offer: true }, 900));
+await step('full-title', () => open('full', 'title', { fresh: true }, 1200));
+await step('full-career-r2', async () => { await fin('career', '1'); await page.click('[data-act="res-continue"]'); await wait(300); await fin('career', '2'); });
+await step('full-career-r3', async () => { await page.click('[data-act="res-continue"]'); await wait(300); await fin('career', '1'); });
+await step('full-career', () => open('full', 'career', {}, 800));
+await step('full-multi', () => open('full', 'multi', { mpMode: 'create' }, 800));
+await step('full-multi-result', () => fin('multi', '2'));
+await step('veteran-title', () => open('veteran', 'title', { fresh: true }, 1200));
+await step('veteran-daily', () => open('veteran', 'track', { trackIdx: 0 }, 900));
+await step('veteran-career-result', () => fin('career', '1'));
+await step('veteran-board-today', () => open('veteran', 'board', { lbTrack: -1 }, 800));
+await step('veteran-trial-picker', async () => { await open('veteran', 'track', { trackIdx: 10 }); await open('veteran', 'car', { carIdx: 2 }, 1500); await page.click('[data-act="race-single"]'); await wait(1700); });
 console.log(errors.length ? 'ERRORS:\n' + [...new Set(errors)].join('\n') : 'no console errors');
 await browser.close(); server.close();

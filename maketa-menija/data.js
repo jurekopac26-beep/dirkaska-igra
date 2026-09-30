@@ -7,6 +7,34 @@
 window.MENU = {
   game: { l1: 'APEX', l2: 'RACING', price: '€3.99', currency: 'CR' },
 
+  /* ---------- main menu: three big buttons with a picture, two small ones, the purchase ---------- */
+  menu: {
+    single: { title: 'SINGLE RACE', sub: 'Today: {track} · {weather}' },
+    multi: { title: 'MULTIPLAYER', sub: 'Race friends online', img: 'assets/menu/multiplayer.webp' },
+    career: { title: 'CAREER', img: 'assets/menu/career.webp' },
+    settings: 'Settings', board: 'Leaderboard',
+    buy: 'Full Game', buySub: '+8 tracks · +4 cars · the whole career · unlimited daily races', owned: 'Full game',
+  },
+
+  /* ---------- today's race: first in Single race, a new one every day at midnight ----------
+     The track, car and weather are picked from these lists by the date. Everyone drives the same car, so the
+     world ranking of the day is fair. The free version gets one run a day. */
+  daily: {
+    tracks: ['rbring', 'jezero', 'monaco', 'gora', 'suzuka', 'riviera', 'spa', 'ljubljana', 'ouninpohja', 'nring', 'pikes'],
+    cars: ['kaze', 'rally', 'strega', 'pico', 'vortex', 'formula'],
+    weather: ['Dry', 'Rain', 'Dry', 'Dry', 'Rain', 'Dry', 'Random'],
+    playersBase: 9000, playersRange: 8000,   // example: how many played it today (grows during the day)
+    freeRuns: 1,
+    reward: 2000,                            // CR for 1st place (less for the other places, see prizes)
+  },
+
+  /* ---------- race results ---------- */
+  prizes: [1, 0.6, 0.45, 0.3, 0.25, 0.2, 0.15, 0.12, 0.1, 0.08, 0.06, 0.05, 0.04],   // share of the winner's reward by finishing place (1st..13th)
+  trophyPlaces: { gold: 1, silver: 3, bronze: 5 },                                    // career: gold for a win, silver for the podium, bronze for the top 5
+  singleReward: 800,                                                                  // CR for winning a single race
+  multiReward: [500, 200],                                                            // CR for winning / losing a duel
+  friendName: 'Ana',
+
   /* ---------- cars (the 3D model file is assets/cars/<model>.json) ---------- */
   colors: [
     { name: 'Red', hex: '#d81f2a' }, { name: 'White', hex: '#f5f5f0' }, { name: 'Blue', hex: '#1c5fd6' }, { name: 'Yellow', hex: '#f2c230' },
@@ -69,31 +97,25 @@ window.MENU = {
   /* ---------- the three states of the mockup ---------- */
   states: {
     free: {
-      label: 'Free', player: 'Player', level: 3, money: 1500, owned: false,
-      car: 0, color: 2, track: 0,
-      trophies: { rookie: [2, 0, 0] },
-      next: ['rookie', 1],
+      label: 'Free', player: 'Player', money: 10000, owned: false,
+      car: 0, color: 2, track: 1,
+      trophies: {},
       upgrades: {},
       myRecords: {},
-      lastRace: 'Rookie Cup · 2nd place at Jezero Ring',
     },
     full: {
-      label: 'Full game', player: 'Player', level: 6, money: 8200, owned: true,
-      car: 2, color: 2, track: 3,
-      trophies: { rookie: [3, 3, 3], home: [3, 0, 0, 0] },
-      next: ['home', 1],
-      upgrades: { rally: [1, 1, 0, 0] },
-      myRecords: { jezero: '0:52.61' },
-      lastRace: 'Home Cup · win at Jezero Ring',
+      label: 'Full game', player: 'Player', money: 10000, owned: true,
+      car: 0, color: 2, track: 1,
+      trophies: {},
+      upgrades: {},
+      myRecords: {},
     },
     veteran: {
-      label: 'Veteran', player: 'Luka', level: 14, money: 58400, owned: true, titles: 2, records: 8,
-      car: 2, color: 0, track: 8,
+      label: 'Veteran', player: 'Luka', money: 58400, owned: true, titles: 2,
+      car: 2, color: 0, track: 1,
       trophies: { rookie: [3, 3, 3], home: [3, 3, 2, 3], attack: [2, 3], legends: [3, 2, 3, 1, 0], grand: [3, 1, 2, 0, 0, 0, 0, 0, 0] },
-      next: ['legends', 4],
       upgrades: { rally: [2, 3, 2, 1], kaze: [1, 1, 1, 0] },
       myRecords: { jezero: '0:50.97', riviera: '0:38.84', gora: '0:57.02', ljubljana: '0:54.40', monaco: '1:33.95', rbring: '1:31.42', pikes: '5:09.88', ouninpohja: '4:51.30' },
-      lastRace: 'Legends · 4th place at Ardennes',
     },
   },
 
@@ -110,6 +132,6 @@ window.MENU = {
   ],
   offer: {
     title: 'FULL GAME', lead: 'One purchase unlocks everything. No ads, no subscription.',
-    items: ['All 11 tracks (8 more)', 'All cars (4 more)', 'All 5 career series', 'Race a friend on every track'],
+    items: ['All 11 tracks (8 more)', 'All cars (4 more)', 'All 5 career series', 'Unlimited runs in today\'s race', 'Race a friend on every track'],
   },
 };

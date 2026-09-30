@@ -153,5 +153,23 @@ window.Car3D = (function () {
   }
   function setVisible(v) { visible = v; last = 0; if (v) { size(); if (!raf) raf = requestAnimationFrame(frame); } }
   function preload(models) { models.forEach(m => load(m).catch(() => {})); }
-  return { init, show, setColor, setVisible, preload };
+  // a still picture of a car on a transparent background (used to make the menu's images)
+  function snapshot(model, ci, ang, w, h, el) {
+    return load(model).then(car => {
+      const cv = document.createElement('canvas'), r = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true, preserveDrawingBuffer: true });
+      r.setPixelRatio(1); r.setSize(w, h, false); r.setClearColor(0x000000, 0);
+      const sc = new THREE.Scene();
+      sc.add(new THREE.HemisphereLight(0xdfe9ff, 0x303848, 0.75));
+      const k = new THREE.DirectionalLight(0xfff2dd, 0.9); k.position.set(-6, 10, 7); sc.add(k);
+      const b = new THREE.DirectionalLight(0x7fb8ff, 0.55); b.position.set(6, 4, -8); sc.add(b);
+      const parent = car.obj.parent; darken(car, false); paint(car, ci); sc.add(car.obj); car.obj.rotation.y = ang;
+      const c = new THREE.PerspectiveCamera(24, w / h, 0.1, 200), R = Math.max(2.2, car.r * 1.05), e = (el == null ? 12 : el) * Math.PI / 180;
+      const vf = c.fov * Math.PI / 360, hf = Math.atan(Math.tan(vf) * c.aspect), D = R / Math.sin(Math.min(vf, hf)) * 0.86;
+      c.position.set(0, R * 0.1 + D * Math.sin(e), D * Math.cos(e)); c.lookAt(0, R * 0.08, 0);
+      r.render(sc, c); const url = cv.toDataURL('image/png');
+      if (parent) parent.add(car.obj); r.dispose();
+      return url;
+    });
+  }
+  return { init, show, setColor, setVisible, preload, snapshot };
 })();
