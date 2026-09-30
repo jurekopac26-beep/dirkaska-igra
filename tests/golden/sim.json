@@ -1540,35 +1540,35 @@
   }
  },
  "spa/race/cs": {
-  "digest": "5608c6697310399ccdb45df7",
+  "digest": "d78f45383c2d604a38965422",
   "lead": 2542.4,
   "car0": [
-   859,
-   1449.12
+   873.78,
+   1421.94
   ],
   "cover": {
-   "dmg": 0.73,
-   "loose": 7,
+   "dmg": 0.68,
+   "loose": 9,
    "rescues": 0,
    "repairs": 0
   }
  },
  "spa/race/arcade": {
-  "digest": "0d936ba68963ce7e39ff422e",
-  "lead": 2494.1,
+  "digest": "9748de327bc4a28cd52a7391",
+  "lead": 2494.6,
   "car0": [
-   824.39,
-   1479.39
+   822.82,
+   1487.38
   ],
   "cover": {
-   "dmg": 0.13,
-   "loose": 1,
+   "dmg": 0.08,
+   "loose": 0,
    "rescues": 0,
    "repairs": 0
   }
  },
  "spa/demo/cs": {
-  "digest": "ee7ddb8df1831659d648d23f",
+  "digest": "a7c9967c71af73d76f7c50ff",
   "lead": 2648.3,
   "car0": [
    756.79,
@@ -1582,7 +1582,7 @@
   }
  },
  "spa/demo/arcade": {
-  "digest": "cec39e6220002cc3f889fbcd",
+  "digest": "89b5cf947f9457888bda0d4f",
   "lead": 2595,
   "car0": [
    802.13,
@@ -1596,7 +1596,7 @@
   }
  },
  "spa/upg/cs": {
-  "digest": "d6ab56423ee6ad896b845876",
+  "digest": "82e717a91da7c35faf934bab",
   "lead": 2656.1,
   "car0": [
    749.48,
@@ -1610,11 +1610,11 @@
   }
  },
  "spa/upg/arcade": {
-  "digest": "b0557a88fe602f96c5f83283",
+  "digest": "8eb13a5201ac98dbb5f3c5cf",
   "lead": 2596,
   "car0": [
-   838.83,
-   1630.37
+   839.02,
+   1629.74
   ],
   "cover": {
    "dmg": 0,
@@ -1624,7 +1624,7 @@
   }
  },
  "spa/crash/cs": {
-  "digest": "afe51cfd46a06f99c964899b",
+  "digest": "9a05b31968cc572e1b3dc836",
   "lead": 10867.5,
   "car0": [
    619.67,
@@ -1632,49 +1632,49 @@
   ],
   "cover": {
    "dmg": 1,
-   "loose": 11,
+   "loose": 9,
    "rescues": 0,
    "repairs": 1
   }
  },
  "spa/crash/arcade": {
-  "digest": "9c937124449f544b2c0004ab",
-  "lead": 10348.3,
+  "digest": "fd48483a9a50c4b2e6b4af21",
+  "lead": 10353.5,
   "car0": [
-   833.51,
-   1544.28
+   840.93,
+   1596.67
   ],
   "cover": {
-   "dmg": 0.78,
+   "dmg": 0.64,
    "loose": 3,
    "rescues": 0,
    "repairs": 1
   }
  },
  "spa/formula/cs": {
-  "digest": "85d3467c6f41c58da31a7847",
+  "digest": "722a56954f305ec100025e60",
   "lead": 13682.9,
   "car0": [
-   -268.17,
-   1687.67
+   -228.46,
+   1701.83
   ],
   "cover": {
    "dmg": 1,
-   "loose": 30,
+   "loose": 14,
    "rescues": 0,
    "repairs": 1
   }
  },
  "spa/formula/arcade": {
-  "digest": "9b357546d1a6385fc8c5c4a0",
+  "digest": "4bfd9b791e19dce7ed897ae7",
   "lead": 13284.6,
   "car0": [
-   18.12,
-   1505.44
+   19.97,
+   1506.19
   ],
   "cover": {
    "dmg": 1,
-   "loose": 3,
+   "loose": 4,
    "rescues": 1,
    "repairs": 1
   }
