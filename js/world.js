@@ -4298,7 +4298,7 @@ const World = (function () {
       const wind = 2.2;   // the flags all stream the same way
       const flag = (x, z, h) => { const y = gy(x, z), g = scen.get(x, z), c = flagC[Math.floor(R() * flagC.length)], wx = Math.cos(wind), wz = Math.sin(wind);
         cyl(g, x, y - 0.2, z, 0.05, h + 0.2, 5, [0.82, 0.82, 0.84]);
-        for (let k = 0; k < 3; k++) box(g, x + wx * 1.15, y + h - 0.45 - k * 0.42, z + wz * 1.15, 2.2, 0.42, 0.05, wind, c[k], null, true); };
+        (K.out.pkFl || (K.out.pkFl = [])).push([x + wx * 0.05, y + h - 0.03, z + wz * 0.05, wind, [[c[0]], [c[1]], [c[2]]], 2.2, 1.26]); };   // (the cloth: pkAmbient's waving flags)
       for (let s = a0; s < a1; s += 11) for (const side of [-1, 1]) for (const v of [4, 8.5, 14, 21]) {
         if (R() > 0.45) continue;
         const [x, z] = fr(s, side).at((R() - 0.5) * 8, v), nn = pkNear(x, z); if (nn.dd < 3.5 || nn.i < 0) continue;
@@ -4885,7 +4885,7 @@ const World = (function () {
         B(-1.62, 0, y + 0.4, 0.1, 3.75, 7.5, [0.1, 0.12, 0.18]);
         { const [x, z] = P(-1.55, 0); tq(x, y + 0.48, z, f[0], f[1], 7.2, 3.6, ins(AT.back), 0, 0); }
         for (const b of [-4.7, 4.7]) { const [x, z] = P(-1.3, b); cyl(g, x, y - 0.2, z, 0.05, 5.6, 5, [0.85, 0.85, 0.88]);   // chequered flags, flying out to the sides
-          for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) { const [qx, qz] = P(-1.3, b + Math.sign(b) * (0.2 + i * 0.3)); box(g, qx, y + 4.35 + j * 0.3, qz, 0.03, 0.3, 0.3, ro, (i + j) % 2 ? [0.08, 0.08, 0.08] : [0.96, 0.96, 0.96], null, true); } }
+          const sg = Math.sign(b), [qx, qz] = P(-1.3, b + sg * 0.05), K0 = [0.08, 0.08, 0.08], W0 = [0.96, 0.96, 0.96]; (K.out.pkFl || (K.out.pkFl = [])).push([qx, y + 5.25, qz, Math.atan2(-f[0] * sg, f[1] * sg), [[W0, K0, W0, K0], [K0, W0, K0, W0], [W0, K0, W0, K0]], 1.2, 0.9]); }   // (pkAmbient's waving flags)
         for (const [b, h, k] of steps) { const [x, z] = P(0.05, b); crowdPut(CR, x, y + h, z, f[0], f[1], { col: [[0.86, 0.12, 0.1], [0.15, 0.35, 0.8], [0.95, 0.95, 0.95]][k], flag: 0 }, 1); }   // the winners in their race suits
         for (const [a, b] of [[0.7, -3.3], [0.5, 3.4]]) { const [x, z] = P(a, b); crowdPut(CR, x, y, z, f[0], f[1], { col: [0.12, 0.13, 0.16], flag: 0 }, 1); }   // officials
         for (const [a, b] of [[3.2, -2.4], [3.6, 0.2], [3.3, 2.6], [4.5, -1.1], [4.7, 1.4], [2.6, -4.2], [2.7, 4.3]]) { const [x, z] = P(a, b), [px, pz] = P(0, b * 0.3); if (ok(x, z)) crowdPut(CR, x, gy(x, z), z, px - x, pz - z, {}, 1); }   // photographers and fans
@@ -5151,9 +5151,156 @@ const World = (function () {
      flags fluttering in the wind, dust and leaves in the air, smoke from the grills at the picnic grounds (built at the end of buildPikes;
      pkAmbientUpdate runs every frame when out.dyn.pkAmb is set) ---- */
   function pkAmbient(K) {
+    const out = K.out, root = K.root, P = K.P, G = P.G, uT = { value: 0 }, WD = 2.2, wx = Math.cos(WD), wz = Math.sin(WD);   // (the wind: the way the W's camp flags stream)
+    const am = { uT, grove: valueNoise2(9405, 170) };   // (the aspen groves, as pkForest's)
+
+    // flags on poles waving in the wind (the cloth that the start, the finish, the W's camps and the podium left in out.pkFl): [x, y (the cloth's top at the pole), z,
+    // the way it flies (rad from +x), its cells in rows top to bottom, width, height]; pushed out of its plane in the vertex shader, more towards the free end and
+    // higher up the mountain, the phase by position. One material, a mesh per place (the start, the W's, the summit; culled)
+    const FL = out.pkFl || []; delete out.pkFl;
+    if (FL.length) {
+      const fm = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), cells = new Map();
+      fm.onBeforeCompile = (sh) => { sh.uniforms.uT = uT;
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec3 aFl;\nuniform float uT;').replace('#include <begin_vertex>', '#include <begin_vertex>\n' +
+          '{ float u = aFl.x, ph = aFl.y, g = 0.75 + 0.25 * sin(uT * 0.9 + ph * 0.3), w = sin(uT * 7.0 - u * 6.5 + ph) + 0.45 * sin(uT * 11.3 - u * 11.0 + ph * 1.7);\n' +
+          '  transformed += objectNormal * w * aFl.z * g * u; transformed.y -= (0.6 - 0.4 * g) * aFl.z * 1.5 * u * u; }'); };
+      fm.customProgramCacheKey = () => 'pkFlag';
+      for (const [x, y, z, rot, rows, W, H] of FL) {
+        const k = y < 100 ? 0 : y < 330 ? 1 : 2; let c = cells.get(k); if (!c) cells.set(k, c = { P: [], N: [], C: [], F: [], I: [] });
+        const cs = Math.cos(rot), sn = Math.sin(rot), nc = Math.max(...rows.map(r => r.length)), sub = Math.ceil(4 / nc), ph = (x * 0.37 + z * 0.23) % TAU + (y % 7), amp = W * (0.055 + 0.05 * sstep(0, 440, y));
+        rows.forEach((row, r) => { for (let q = 0; q < nc; q++) { const col = row[q % row.length], v = c.P.length / 3;
+          for (let m = 0; m <= sub; m++) { const u = (q + m / sub) / nc;
+            for (const f of [r / rows.length, (r + 1) / rows.length]) { c.P.push(x + cs * W * u, y - H * f - u * u * 0.06 * H, z + sn * W * u); c.N.push(-sn, 0, cs); c.C.push(col[0], col[1], col[2]); c.F.push(u, ph, amp); } }
+          for (let m = 0; m < sub; m++) { const a = v + m * 2; c.I.push(a, a + 2, a + 3, a, a + 3, a + 1); } } });
+      }
+      for (const c of cells.values()) {
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(c.P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(c.N, 3));
+        g.setAttribute('color', new THREE.Float32BufferAttribute(c.C, 3)); g.setAttribute('aFl', new THREE.Float32BufferAttribute(c.F, 3)); g.setIndex(c.I); g.computeBoundingSphere(); g.boundingSphere.radius += 1;
+        const m = new THREE.Mesh(g, fm); m.receiveShadow = true; m.matrixAutoUpdate = false; m.name = 'pkFlags'; root.add(m);
+      }
+    }
+
+    // soft haze lying in the valleys below the road, in three layers 20, 42 and 75 m under the road's height trend there (never within 12 m of a road within 80 m), draped
+    // over the ground where it rises into them, thick where the ground lies deep below; lit warm by the low sun, drifting with the wind. Precomputed on a 20 m field over the
+    // corridor; drawn as a 480 m grid ahead of the camera, rebuilt when that moves a cell (pkAmbientUpdate); one draw where there is haze in it.
+    // (No distant peaks: a ring of ridge silhouettes round the camera, even at 0.6 of the fog's end, was never seen in any camera anywhere on the road: the views look
+    // down, and the nearer ground always fills the top of the frame)
+    const FS = 4, SC = FS * PKC, fnx = Math.floor((G.nx - 1) / FS) + 1, fnz = Math.floor((G.nz - 1) / FS) + 1, NL = 3, DL = [20, 42, 75], AL = [0.3, 0.36, 0.42];
+    const minR = new Float32Array(fnx * fnz).fill(1e9), LY = new Float32Array(fnx * fnz * NL), LA = new Float32Array(fnx * fnz * NL);
+    for (let i = 0; i < T.N; i += 3) { const cx = (T.px[i] - G.x0) / SC, cz = (T.pz[i] - G.z0) / SC, hy = T.hy[i];
+      for (let b = Math.max(0, Math.ceil(cz - 4)); b <= Math.min(fnz - 1, Math.floor(cz + 4)); b++) for (let a = Math.max(0, Math.ceil(cx - 4)); a <= Math.min(fnx - 1, Math.floor(cx + 4)); a++) {
+        if ((a - cx) ** 2 + (b - cz) ** 2 > 16) continue; const k = b * fnx + a; if (hy < minR[k]) minR[k] = hy; } }
+    for (let b = 0; b < fnz; b++) for (let a = 0; a < fnx; a++) {
+      const k = b * fnx + a, x = G.x0 + a * SC, z = G.z0 + b * SC, ref = pkTG(P.th, x, z), far = pkTG(P.td, x, z) > 480;
+      let gm = -1e9, dd = 999;
+      if (!far) { const i = a * FS, j = b * FS; for (const [p, q] of [[0, 0], [-2, -2], [2, -2], [-2, 2], [2, 2], [0, -2], [0, 2], [-2, 0], [2, 0]]) gm = Math.max(gm, pkGH(i + p, j + q)); dd = G.dd[clamp(j, 0, G.nz - 1) * G.nx + clamp(i, 0, G.nx - 1)]; }
+      for (let L = 0; L < NL; L++) { const yl = Math.min(ref - DL[L], minR[k] - 12 - L * 6), o = k * NL + L;
+        if (far) { LY[o] = yl; LA[o] = 0; continue; }
+        LY[o] = Math.max(yl, gm + 1.2); LA[o] = AL[L] * sstep(2, 24, yl - gm) * sstep(6, 28, dd); }
+    }
+    const NG = 24, NV = (NG + 1) * (NG + 1), hp = new Float32Array(NV * NL * 3), ha = new Float32Array(NV * NL * 2), hi = new Uint16Array(NG * NG * NL * 6);
+    for (let L = 0; L < NL; L++) for (let k = 0; k < NV; k++) ha[(L * NV + k) * 2 + 1] = L;
+    const ht = (() => {   // soft haze noise (tileable, 128 px; own stream)
+      const n = 128, cv = document.createElement('canvas'); cv.width = cv.height = n; const cx = cv.getContext('2d'), im = cx.createImageData(n, n), acc = new Float32Array(n * n), R = rng(7753); let lo = 1e9, hi2 = -1e9;
+      for (let o = 0, Q = 4, amp = 1; o < 3; o++, Q *= 2, amp *= 0.5) { const g = new Float32Array(Q * Q); for (let k = 0; k < g.length; k++) g[k] = R();
+        for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const fx = x / n * Q, fy = y / n * Q, xi = Math.floor(fx), yi = Math.floor(fy), u = sstep(0, 1, fx - xi), w = sstep(0, 1, fy - yi), x1 = (xi + 1) % Q, y1 = (yi + 1) % Q;
+          acc[y * n + x] += amp * lerp(lerp(g[yi * Q + xi], g[yi * Q + x1], u), lerp(g[y1 * Q + xi], g[y1 * Q + x1], u), w); } }
+      for (const v of acc) { lo = Math.min(lo, v); hi2 = Math.max(hi2, v); }
+      for (let k = 0; k < n * n; k++) { const v = Math.round((acc[k] - lo) / (hi2 - lo) * 255); im.data[k * 4] = im.data[k * 4 + 1] = im.data[k * 4 + 2] = v; im.data[k * 4 + 3] = 255; }
+      cx.putImageData(im, 0, 0); const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; out.ownTex.push(t); return t; })();
+    const hg = new THREE.BufferGeometry(); hg.setAttribute('position', new THREE.BufferAttribute(hp, 3)); hg.setAttribute('aH', new THREE.BufferAttribute(ha, 2)); hg.setIndex(new THREE.BufferAttribute(hi, 1));
+    hg.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5); hg.setDrawRange(0, 0);
+    const hU = THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTex: { value: null }, uO: { value: new THREE.Vector4() } }]);
+    hU.uTex.value = ht;
+    const hm = new THREE.Mesh(hg, new THREE.ShaderMaterial({ uniforms: hU, fog: true, transparent: true, depthWrite: false, side: THREE.DoubleSide,
+      vertexShader: 'uniform vec4 uO; attribute vec2 aH; varying vec2 vW, vA, vB; varying float vFd;\n' +
+        'void main() { float L = aH.y; vW = aH; vA = position.xz / 150.0 + (L > 1.5 ? uO.xy : uO.zw) + L * 0.31; vB = position.xz / 55.0 + uO.zw * 1.7 - uO.xy + L * 0.17;\n' +
+        '  vec4 mv = modelViewMatrix * vec4(position, 1.0); vFd = -mv.z; gl_Position = projectionMatrix * mv; }',
+      fragmentShader: 'uniform sampler2D uTex; uniform vec3 fogColor; uniform float fogNear, fogFar; varying vec2 vW, vA, vB; varying float vFd;\n' +
+        'void main() { float n = texture2D(uTex, vA).r * 0.65 + texture2D(uTex, vB).r * 0.35, a = vW.x * smoothstep(0.2, 0.75, n);\n' +
+        '  vec3 c = mix(vec3(1.0, 0.88, 0.72), vec3(0.93, 0.87, 0.86), vW.y * 0.5) * (0.92 + 0.14 * n);\n' +   // (warm in the low sun; the deeper layers greyer)
+        '  gl_FragColor = vec4(mix(c, fogColor, smoothstep(fogNear, fogFar, vFd)), a); }' }));
+    hm.frustumCulled = false; hm.renderOrder = 3; hm.matrixAutoUpdate = false; hm.visible = false; hm.name = 'pkHaze'; root.add(hm);
+    const hz = { hm, hg, hp, ha, hi, hU, NG, NV, NL, fnx, fnz, SC, LY, LA, cx: 1e9, cz: 1e9, dir: [0, -1], cam: null, x0: G.x0, z0: G.z0 };
+    hz.grid = (ca, cb) => {   // (pkAmbientUpdate: the haze grid's positions and alphas from the precomputed field, its cells where there is haze)
+      hz.cx = ca; hz.cz = cb;
+      const W = NG + 1; let q = 0;
+      for (let L = NL - 1; L >= 0; L--) {   // (the deepest layer first)
+        const v0 = L * NV;
+        for (let b = 0; b <= NG; b++) for (let a = 0; a <= NG; a++) {
+          const fa = clamp(ca + a, 0, fnx - 1), fb = clamp(cb + b, 0, fnz - 1), k = (fb * fnx + fa) * NL + L, v = v0 + b * W + a, inn = fa === ca + a && fb === cb + b;
+          hp[v * 3] = G.x0 + (ca + a) * SC; hp[v * 3 + 1] = LY[k]; hp[v * 3 + 2] = G.z0 + (cb + b) * SC; ha[v * 2] = inn ? LA[k] : 0; }
+        for (let b = 0; b < NG; b++) for (let a = 0; a < NG; a++) { const v = v0 + b * W + a;
+          if (ha[v * 2] + ha[(v + 1) * 2] + ha[(v + W) * 2] + ha[(v + W + 1) * 2] < 0.01) continue;
+          hi[q] = v; hi[q + 1] = v + W; hi[q + 2] = v + W + 1; hi[q + 3] = v; hi[q + 4] = v + W + 1; hi[q + 5] = v + 1; q += 6; }
+      }
+      hg.attributes.position.needsUpdate = true; hg.attributes.aH.needsUpdate = true; hg.index.needsUpdate = true; hg.setDrawRange(0, q); hm.visible = q > 0;
+    };
+    am.hz = hz;
+
+    // in the air round the car (one Points, recycled in a box that follows it): golden aspen leaves tumbling down where the groves stand, a few sunlit motes in the
+    // forest, dust wisps blowing low across the road on the bare heights; and the grill smoke at the Halfway Picnic Grounds (puffs rising from the two pedestal grills,
+    // drifting with the wind, growing and thinning)
+    const grills = [];
+    { const s0 = K.sStart + 1000, fl = (sd) => { const p = K.onSide(s0, sd, 14); return Math.abs(pkGround(p[0], p[1]) - T.hy[p[2]]); }, side = fl(1) <= fl(-1) ? 1 : -1;   // (as pkLandmarks)
+      for (const [d, v] of [[5.2, 2.3], [-2.6, 6.8]]) { const q = crAt(s0 + d), o = side * ((side > 0 ? q.br : q.bl) + v), x = q.px + q.nx * o, z = q.pz + q.nz * o; grills.push([x, pkGround(x, z) + 1.0, z]); } }
+    const NA = 150, ND = 80, NS = 22, np = NA + ND + NS * grills.length, pp = new Float32Array(np * 3), pk = new Float32Array(np * 4), BX = 56, BY = 18;
+    { const R = rng(7759); let v = 0;
+      for (let k = 0; k < NA + ND; k++, v++) { pp[v * 3] = R() * BX; pp[v * 3 + 1] = R() * BY; pp[v * 3 + 2] = R() * BX; pk[v * 4] = k < NA ? 0 : 1; pk[v * 4 + 1] = R(); pk[v * 4 + 2] = R(); pk[v * 4 + 3] = R(); }
+      for (const [x, y, z] of grills) for (let k = 0; k < NS; k++, v++) { pp[v * 3] = x + (R() - 0.5) * 0.3; pp[v * 3 + 1] = y; pp[v * 3 + 2] = z + (R() - 0.5) * 0.3; pk[v * 4] = 2; pk[v * 4 + 1] = (k + R() * 0.5) / NS; pk[v * 4 + 2] = R(); pk[v * 4 + 3] = R(); } }
+    const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(pp, 3)); pg.setAttribute('aK', new THREE.BufferAttribute(pk, 4)); pg.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
+    const pU = THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uC: { value: new THREE.Vector3() }, uW: { value: new THREE.Vector2(wx, wz) }, uS: { value: 400 }, uF: { value: new THREE.Vector3() } }]);
+    pU.uT = uT;
+    const pts = new THREE.Points(pg, new THREE.ShaderMaterial({ uniforms: pU, fog: true, transparent: true, depthWrite: false,
+      vertexShader: 'uniform vec3 uC, uF; uniform vec2 uW; uniform float uT, uS; attribute vec4 aK; varying vec4 vC; varying float vK, vQ, vFd; varying vec2 vD;\n' +
+        'void main() { vec3 p; float sz, a, ph = aK.z * 6.2832, t = uT; vec3 col; vK = aK.x; vQ = 1.0; vD = vec2(1.0, 0.0);\n' +
+        '  if (aK.x > 1.5) {\n' +   // grill smoke: aK.y its phase
+        '    float life = 7.0 + 3.0 * aK.w, u = fract(t / life + aK.y), age = u * life;\n' +
+        '    p = position + vec3(0.0, 6.5 * (1.0 - (1.0 - u) * (1.0 - u)), 0.0); p.xz += uW * age * (0.15 + 0.55 * u) + vec2(sin(age * 0.8 + ph), cos(age * 0.7 + ph)) * 0.6 * u;\n' +
+        '    sz = 0.5 + 2.8 * sqrt(u); a = smoothstep(0.0, 0.1, u) * pow(1.0 - u, 1.4) * 0.55; col = mix(vec3(0.6, 0.64, 0.72), vec3(0.8, 0.82, 0.86), u);\n' +
+        '  } else {\n' +
+        '    vec3 B = vec3(' + BX.toFixed(1) + ', ' + BY.toFixed(1) + ', ' + BX.toFixed(1) + '), q, lo;\n' +
+        '    if (aK.x < 0.5) { bool leaf = aK.y < uF.x;\n' +   // leaves (share uF.x) and motes (uF.y): slow, swaying
+        '      q = position + vec3(uW.x * t * 1.2 + sin(t * 0.9 + ph) * 1.6, -t * (leaf ? 0.9 + 0.6 * aK.w : 0.12), uW.y * t * 1.2 + cos(t * 0.75 + ph) * 1.6);\n' +
+        '      lo = uC - vec3(B.x * 0.5, 2.0, B.z * 0.5); p = lo + mod(q - lo, B);\n' +
+        '      if (leaf) { sz = 0.3 + 0.16 * aK.w; a = 1.0; col = mix(vec3(0.98, 0.76, 0.16), vec3(0.86, 0.48, 0.1), aK.w); vQ = 0.25 + 0.75 * abs(sin(t * (2.0 + 2.0 * aK.w) + ph)); col *= 0.75 + 0.35 * vQ; }\n' +
+        '      else { sz = 0.12; a = step(aK.y, uF.x + uF.y) * 0.55 * (0.6 + 0.4 * sin(t * 1.7 + ph)); col = vec3(1.0, 0.94, 0.78); vK = 1.0; } }\n' +
+        '    else {\n' +   // dust wisps: fast, low over the road, in gusts
+        '      q = position * vec3(1.0, 0.12, 1.0) + vec3(uW.x * t * 7.0, 0.9 + sin(t * 1.3 + ph) * 0.4, uW.y * t * 7.0);\n' +
+        '      lo = uC - vec3(B.x * 0.5, 0.0, B.z * 0.5); p = lo + mod(q - lo, B); p.y = uC.y + q.y;\n' +
+        '      float gu = sin(dot(p.xz, uW) * 0.09 - t * 0.9 + aK.w * 2.0);\n' +
+        '      sz = 4.0 + 4.0 * aK.w; a = uF.z * 0.3 * smoothstep(-0.3, 0.6, gu); col = vec3(0.95, 0.86, 0.72); vK = 3.0;\n' +
+        '      vec4 s0 = modelViewMatrix * vec4(p, 1.0), s1 = modelViewMatrix * vec4(p + vec3(uW.x, 0.0, uW.y), 1.0); vec2 e = s1.xy / max(0.1, -s1.z) - s0.xy / max(0.1, -s0.z); vD = length(e) > 1e-5 ? normalize(e) : vec2(1.0, 0.0); }\n' +
+        '    vec3 r = (p - lo) / B; a *= smoothstep(0.0, 0.1, r.x) * smoothstep(1.0, 0.9, r.x) * smoothstep(0.0, 0.1, r.z) * smoothstep(1.0, 0.9, r.z);\n' +
+        '    if (aK.x < 0.5) a *= smoothstep(0.0, 0.08, r.y) * smoothstep(1.0, 0.85, r.y);\n' +
+        '  }\n' +
+        '  vec4 mv = modelViewMatrix * vec4(p, 1.0); float z = -mv.z; vFd = z; a *= smoothstep(4.0, 12.0, z);\n' +
+        '  gl_PointSize = a > 0.003 ? clamp(sz * uS / max(1.0, z), 1.5, 128.0) : 0.0; gl_Position = projectionMatrix * mv; vC = vec4(col, a); }',
+      fragmentShader: 'uniform vec3 fogColor; uniform float fogNear, fogFar; varying vec4 vC; varying float vK, vQ, vFd; varying vec2 vD;\n' +
+        'void main() { vec2 d = gl_PointCoord - 0.5; float a;\n' +
+        '  if (vK < 0.5) { d.x /= vQ; float r = dot(d, d) * 4.0; if (r > 1.0) discard; a = smoothstep(1.0, 0.7, r); }\n' +   // a leaf: a small disc, squashed as it tumbles
+        '  else { if (vK > 2.5) { d = vec2(d.x * vD.x - d.y * vD.y, (d.x * vD.y + d.y * vD.x) * 3.6); }\n' +   // a dust wisp: a streak along the wind (point coords run down the screen)
+        '    float r = dot(d, d) * 4.0; if (r > 1.0) discard; a = (1.0 - r) * (1.0 - r); if (vK > 2.5) a *= 1.0 - r; }\n' +
+        '  gl_FragColor = vec4(mix(vC.rgb, fogColor, smoothstep(fogNear, fogFar, vFd)), vC.a * a); }' }));
+    pts.frustumCulled = false; pts.renderOrder = 7; pts.matrixAutoUpdate = false; pts.name = 'pkAir'; root.add(pts);
+    pts.onBeforeRender = (r, sc, cam) => { pU.uS.value = r.domElement.height * cam.projectionMatrix.elements[5] / 2;   // (pixels per metre at 1 m; and where the camera looks from, for the haze grid)
+      const e = cam.matrixWorld.elements, h = am.hz, fl = Math.hypot(e[8], e[10]); if (fl > 1e-3) { h.dir[0] = -e[8] / fl; h.dir[1] = -e[10] / fl; } h.cam = h.cam || [0, 0]; h.cam[0] = e[12]; h.cam[1] = e[14]; };
+    am.pU = pU; am.pts = pts; am.grills = grills;
+    out.dyn.pkAmb = am;
   }
 
   function pkAmbientUpdate(am, t, car) {
+    am.uT.value = t % 1000;
+    const hz = am.hz, y = car ? car.roadY || 0 : 0, fr = (v) => v - Math.floor(v);
+    if (car) {   // what is in the air here: aspen leaves in the groves, motes in the forest, dust on the bare heights
+      const g = am.grove(car.x, car.z), leaf = 0.4 * sstep(0.52, 0.62, g) * sstep(152, 136, y), mote = 0.35 * sstep(200, 175, y);
+      am.pU.uF.value.set(leaf, mote, sstep(195, 235, y) * (1 - 0.4 * sstep(330, 400, y))); am.pU.uC.value.set(car.x, y, car.z);
+    }
+    hz.hU.uO.value.set(fr(t * 0.9 / 150), fr(-t * 1.2 / 150), fr(-t * 0.6 / 150), fr(t * 0.8 / 150));   // (the haze drifts slowly with the wind, its layers each their own way)
+    if (!hz.cam) return;
+    // the haze grid: 480 m round a point 150 m ahead of the camera along the view, rebuilt when that moves a cell
+    const ca = Math.round((hz.cam[0] + hz.dir[0] * 150 - hz.x0) / hz.SC) - hz.NG / 2, cb = Math.round((hz.cam[1] + hz.dir[1] * 150 - hz.z0) / hz.SC) - hz.NG / 2;
+    if (ca !== hz.cx || cb !== hz.cz) hz.grid(ca, cb);
   }
 
   function buildPikes(scene, tex, opts) {
@@ -5330,7 +5477,7 @@ const World = (function () {
       box(gh, hx, hy, hz, 4.2, 2.7, 3, T.hd[i], [0.92, 0.9, 0.84], [0.5, 0.3, 0.2], true); box(gh, hx, hy + 1.3, hz, 4.25, 0.9, 3.05, T.hd[i], [0.2, 0.3, 0.42], null, true); gable(gh, hx, hy + 2.7, hz, 4.6, 3.4, 1.1, T.hd[i], [0.62, 0.2, 0.14], [0.92, 0.9, 0.84]);
       excl.push({ x: hx, z: hz, r: 6 });
       for (let s = 4; s < sStart + 60; s += 9) for (const side of [-1, 1]) { const [px, pz, ii] = onSide(s, side, 1.6), py = pkGround(px, pz), gg = scen.get(px, pz);
-        cyl(gg, px, py, pz, 0.06, 5.4, 5, [0.85, 0.85, 0.88]); box(gg, px + T.tx[ii] * 0.55, py + 4.2, pz + T.tz[ii] * 0.55, 1.1, 0.8, 0.05, T.hd[ii], fans[Math.floor(R() * fans.length)], null, true); }
+        cyl(gg, px, py, pz, 0.06, 5.4, 5, [0.85, 0.85, 0.88]); (out.pkFl || (out.pkFl = [])).push([px, py + 5.0, pz, T.hd[ii], [[fans[Math.floor(R() * fans.length)]]], 1.1, 0.8]); }   // (the cloth: pkAmbient's waving flags)
       crowd(sStart - 4, sStart + 60, 1, 3, 0.7, 2.8); crowd(sStart + 6, sStart + 60, -1, 3, 0.65, 2.8);
       // the end of the road: concrete blocks across it (the cars cannot go past), the paddock behind
       const i0 = 0, e0 = [T.px[0] - T.tx[0] * 0.9, T.pz[0] - T.tz[0] * 0.9];
@@ -5361,7 +5508,7 @@ const World = (function () {
       const [x, y, z, i] = arch(sFin, 1, [0.95, 0.95, 0.95], [0.1, 0.1, 0.12]);
       for (const side of [-1, 1]) for (let s = sFin - 30; s < sFin + 12; s += 7) { const [px, pz, ii] = onSide(s, side, 1.5), py = pkGround(px, pz), gg = scen.get(px, pz);
         cyl(gg, px, py, pz, 0.06, 5, 5, [0.9, 0.9, 0.92]);
-        for (let a = 0; a < 3; a++) for (let b = 0; b < 2; b++) box(gg, px + T.tx[ii] * (0.36 + a * 0.55), py + 3.8 + b * 0.55, pz + T.tz[ii] * (0.36 + a * 0.55), 0.55, 0.55, 0.05, T.hd[ii], (a + b) % 2 ? [0.08, 0.08, 0.08] : [0.96, 0.96, 0.96], null, true); }   // chequered flags
+        const K0 = [0.08, 0.08, 0.08], W0 = [0.96, 0.96, 0.96]; (out.pkFl || (out.pkFl = [])).push([px + T.tx[ii] * 0.085, py + 4.9, pz + T.tz[ii] * 0.085, T.hd[ii], [[K0, W0, K0], [W0, K0, W0]], 1.65, 1.1]); }   // chequered flags (pkAmbient's waving flags)
       crowd(sFin - 40, sFin + 14, 1, 3, 0.6); crowd(sFin - 36, sFin + 10, -1, 2, 0.5);
       // end of the road: a row of granite boulders
       const eX = T.px[iE] + T.tx[iE] * 1.2, eZ = T.pz[iE] + T.tz[iE] * 1.2;
