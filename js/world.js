@@ -8902,7 +8902,7 @@ const World = (function () {
     }
 
     /* ---- barriers: double armco on posts with a tall catch fence the whole lap round (sponsor boards on the rails), the tunnel's walls ---- */
-    const texSpons = new GB(true), fenceG = new GB(true), tun = new GB();
+    const texSpons = new GB(true), fenceG = new GB(true), tun = new GB(), tunIn = new GB();
     {
       const steel = [0.8, 0.82, 0.85], steelD = [0.52, 0.54, 0.58], rMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
       for (let c0 = 0; c0 < N; c0 += 256) {
@@ -8950,17 +8950,29 @@ const World = (function () {
       for (let i = i0; i !== i1; i = (i + 1) % N) {
         const j = (i + 1) % N, y = T.hy[i], yj = T.hy[j], W = (k, o, yy) => [T.px[k] + T.nx[k] * o, yy, T.pz[k] + T.nz[k] * o];
         const oL = -(T.bl[i] + 0.12), oR = T.br[i] + 0.12, oLj = -(T.bl[j] + 0.12), oRj = T.br[j] + 0.12, wc = [0.78, 0.77, 0.74], tile = [0.92, 0.9, 0.84], dk = [0.36, 0.36, 0.35];
-        const lit = 0.62 + 0.3 * Math.max(0, Math.cos(i / 5 * TAU)), wl = (c, k) => [c[0] * k, c[1] * k * 0.95, c[2] * k * 0.84];   // (the walls in the lamps' warm light, brighter under each pair)
+        const lit = (k) => 0.62 + 0.3 * Math.max(0, Math.cos(k / 5 * TAU)), li = lit(i), lj = lit(i + 1), wl = (c, k) => [c[0] * k, c[1] * k * 0.95, c[2] * k * 0.84];   // (the walls in the lamps' warm light, brighter under each pair)
+        const band = (g, o, oj, h0, h1, c, f, out2) => { const a = wl(c, li * f), b = wl(c, lj * f); g.quadO(W(i, o, y + h0), W(j, oj, yj + h0), W(j, oj, yj + h1), W(i, o, y + h1), a, out2, null, [a, b, b, a]); };
         for (const [o, oj] of [[oL, oLj], [oR, oRj]]) {
-          const inn = W(i, o * 0.5, y + 3), g = scen.get(T.px[i], T.pz[i]);
-          g.quadO(W(i, o, y - 0.05), W(j, oj, yj - 0.05), W(j, oj, yj + 1.1), W(i, o, y + 1.1), wl(dk, lit), inn);
-          g.quadO(W(i, o, y + 1.1), W(j, oj, yj + 1.1), W(j, oj, yj + 3.6), W(i, o, y + 3.6), wl(tile, lit), inn);
-          g.quadO(W(i, o, y + 3.6), W(j, oj, yj + 3.6), W(j, oj, yj + 6.4), W(i, o, y + 6.4), wl(wc, lit * 0.8), inn);
+          const out2 = W(i, o * 1.6, y + 3), inn = W(i, o * 0.5, y + 3), g = scen.get(T.px[i], T.pz[i]);   // (the faces towards the road; their backs, the outside, go with the roof)
+          band(g, o, oj, -0.05, 1.1, dk, 1, out2); band(g, o, oj, 1.1, 3.6, tile, 1, out2); band(g, o, oj, 3.6, 6.4, wc, 0.8, out2);
+          tun.quadO(W(i, o, y - 0.05), W(j, oj, yj - 0.05), W(j, oj, yj + 6.4), W(i, o, y + 6.4), wc, inn);
         }
         tun.quadO(W(i, oL - 1, y + 6.4), W(j, oLj - 1, yj + 6.4), W(j, oRj + 1, yj + 6.4), W(i, oR + 1, y + 6.4), [0.5, 0.5, 0.49], W(i, 0, y + 3));
         tun.quadO(W(i, oL - 1, y + 7.4), W(j, oLj - 1, yj + 7.4), W(j, oRj + 1, yj + 7.4), W(i, oR + 1, y + 7.4), [0.55, 0.54, 0.52], W(i, 0, y + 20));
         for (const [o, oj] of [[oL - 1, oLj - 1], [oR + 1, oRj + 1]]) tun.quadO(W(i, o, y + 6.4), W(j, oj, yj + 6.4), W(j, oj, yj + 7.4), W(i, o, y + 7.4), wc, W(i, 0, y + 7));
         if (i % 5 === 0) for (const o of [-2.2, 2.2]) box(tun, T.px[i] + T.nx[i] * o, y + 6.15, T.pz[i] + T.nz[i] * o, 2.2, 0.22, 0.5, T.hd[i], [1, 0.93, 0.72], [1, 0.93, 0.72]);
+        // seen from inside (the roof and the hotel gone): the walls' tops cut, the hotel's concrete a dark mass on either side, its outer face down to the
+        // ground (all of it only while the roof is gone: the town round it is hidden under the tunnel's own mass)
+        for (const [o, oj, sg] of [[oL, oLj, -1], [oR, oRj, 1]]) {
+          const rimC = [0.6, 0.59, 0.56], capC = [0.2, 0.2, 0.21], a = o + sg * 0.5, aj = oj + sg * 0.5, e = o + sg * 22, ej = oj + sg * 22;
+          tunIn.quadUp(W(i, o, y + 6.4), W(j, oj, yj + 6.4), W(j, aj, yj + 6.4), W(i, a, y + 6.4), [rimC, rimC, rimC, rimC]);
+          tunIn.quadUp(W(i, a, y + 6.4), W(j, aj, yj + 6.4), W(j, ej, yj + 6.4), W(i, e, y + 6.4), [capC, capC, capC, capC]);
+          tunIn.quadO(W(i, e, y + 6.4), W(j, ej, yj + 6.4), W(j, ej, yj - 14), W(i, e, y - 14), [0.16, 0.16, 0.17], W(i, 0, y));
+        }
+      }
+      for (const [ie, dir] of [[i0, 1], [i1, -1]]) for (const sg of [-1, 1]) {   // the mass's ends at the portals
+        const y = T.hy[ie], o = sg < 0 ? -(T.bl[ie] + 0.12) : T.br[ie] + 0.12, W = (oo, yy) => [T.px[ie] + T.nx[ie] * oo, yy, T.pz[ie] + T.nz[ie] * oo];
+        tunIn.quadO(W(o, y + 6.4), W(o + sg * 22, y + 6.4), W(o + sg * 22, y - 14), W(o, y - 14), [0.72, 0.71, 0.68], [T.px[ie] + T.tx[ie] * dir * 5, y, T.pz[ie] + T.tz[ie] * dir * 5]);
       }
       for (const [ie, dir] of [[i0, 1], [i1, -1]]) {   // the portals: a heavy lintel over the mouth
         const y = T.hy[ie], L = -(T.bl[ie] + 1.5), Rr = T.br[ie] + 1.5, W = (o, yy, a) => [T.px[ie] + T.nx[ie] * o - T.tx[ie] * a * dir, yy, T.pz[ie] + T.nz[ie] * o - T.tz[ie] * a * dir];
@@ -8981,7 +8993,7 @@ const World = (function () {
     const facCh = [new Chunks(512, true), new Chunks(512, true), new Chunks(512, true)], roofCh = new Chunks(256, true);   // (the roofs: textured, the courses of their tiles or slabs along the building)
     const rUV = (p, rot) => { const c = Math.cos(rot || 0), s = Math.sin(rot || 0); return [(p[0] * c + p[2] * s) / 4, (-p[0] * s + p[2] * c) / 4]; };   // (planar, along the building's axis, 4 m a tile)
     // over the tunnel (the Fairmont, the Auditorium, the Monte Carlo Star): their own meshes, faded with the tunnel
-    const tunFac = new GB(true), tunFacM = new THREE.MeshLambertMaterial({ map: facT[1], vertexColors: true });
+    const tunFac = new GB(true), tunFacM = new THREE.MeshLambertMaterial({ map: facT[1], vertexColors: true }), tunRf = new GB(true);   // (their roofs: tunRf, textured)
     const WALL = [[0.97, 0.9, 0.76], [0.96, 0.83, 0.62], [0.96, 0.76, 0.64], [0.98, 0.85, 0.8], [0.98, 0.93, 0.72], [0.98, 0.97, 0.94], [0.9, 0.89, 0.87], [0.94, 0.8, 0.7], [0.99, 0.95, 0.86]];
     const ROOF = [[0.8, 0.78, 0.74], [0.88, 0.87, 0.83], [0.72, 0.7, 0.66], [0.85, 0.8, 0.73]], TILE = [[0.79, 0.43, 0.31], [0.72, 0.38, 0.27], [0.83, 0.5, 0.36], [0.76, 0.46, 0.34]];
     const COPPER = [0.45, 0.62, 0.55], SLATE = [0.42, 0.45, 0.5], CREAM = [0.95, 0.88, 0.72], STONE = [0.93, 0.9, 0.84];
@@ -9009,8 +9021,9 @@ const World = (function () {
     };
     const walls = (g, r, y0, yt, col, bay, fh) => {   // the facade on every wall of a ring (whole bays of 3.3 m, floors of fh m counted down from the top)
       let cx = 0, cz = 0; for (const [x, z] of r) { cx += x; cz += z; } cx /= r.length; cz /= r.length; const inn = [cx, (y0 + yt) / 2, cz], fl = (yt - y0) / (fh || 3.1);
+      const cb = [col[0] * 0.78, col[1] * 0.78, col[2] * 0.8], cs = [cb, cb, col, col];   // (darker towards the street: less sky down there)
       for (let k = 0; k < r.length; k++) { const [xa, za] = r[k], [xb, zb] = r[(k + 1) % r.length], L = Math.hypot(xb - xa, zb - za); if (L < 0.05) continue;
-        const u1 = Math.max(1, Math.round(L / (bay || 3.3))); g.quadO([xa, y0, za], [xb, y0, zb], [xb, yt, zb], [xa, yt, za], col, inn, [[0, -fl], [u1, -fl], [u1, 0], [0, 0]]); }
+        const u1 = Math.max(1, Math.round(L / (bay || 3.3))); g.quadO([xa, y0, za], [xb, y0, zb], [xb, yt, zb], [xa, yt, za], col, inn, [[0, -fl], [u1, -fl], [u1, 0], [0, 0]], cs); }
     };
     const flatRoof = (g, r, yt, rc, pc, par, rot) => {   // a roof on the ring at yt; par: a parapet this high round its edge; rot: the courses' direction
       const tri = THREE.ShapeUtils.triangulateShape(r.map(([x, z]) => new THREE.Vector2(x, z)), []);
@@ -9037,10 +9050,16 @@ const World = (function () {
       const tri = THREE.ShapeUtils.triangulateShape(ins.map(([x, z]) => new THREE.Vector2(x, z)), []);
       for (const [a, b, c] of tri) { const A = [ins[a][0], yt + h, ins[a][1]], B = [ins[b][0], yt + h, ins[b][1]], C = [ins[c][0], yt + h, ins[c][1]]; const fu = (p) => { const q = rUV(p); return [q[0] / 3, q[1] / 3]; }; triUp(g, A, B, C, [topCol, topCol, topCol], [fu(A), fu(B), fu(C)]); }
     };
+    const pastel = (c) => { const L = c[0] * 0.3 + c[1] * 0.59 + c[2] * 0.11, m = (v) => (v + (L - v) * 0.45) * 0.62 + 0.36; return [m(c[0]), m(c[1]), m(c[2])]; };   // (a tag's 'yellow': a pale ochre wash)
     const groundUnder = (r) => { let a = 1e9, b = -1e9; for (const [x, z] of r) { const y = mcGround(x, z); a = Math.min(a, y); b = Math.max(b, y); } return [a, b]; };
     let nBld = 0;
     MC.bldR = [];
     const lmList = [];
+    const tunP = []; for (let i = T.idx(tS0), i1 = T.idx(tS1); i !== i1; i = (i + 1) % N) for (const f of [-0.9, 0, 0.9]) { const o = f * (f < 0 ? T.bl[i] : T.br[i]); tunP.push([T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o]); }
+    const tunOver = (r, cx, cz) => {   // a house over the tunnel's road (on the roof of the hotel round it)?
+      if (!tunP.some(([x, z]) => Math.abs(x - cx) < 150 && Math.abs(z - cz) < 150)) return false;
+      return tunP.some(([x, z]) => inRing(r, x, z)) || r.some(([x, z]) => { const n = mcNear(x, z); return n.i >= 0 && n.dd < 0.5 && inTun(n.i); });
+    };
     for (const b of Dd.bld) {
       let r = ccw(b.r); if (r.length < 3) continue;
       if (b.lm) { lmList.push({ id: b.lm, r, h: b.h }); continue; }   // (below)
@@ -9053,7 +9072,16 @@ const World = (function () {
       const [gmin, gmax] = groundUnder(r), H = Math.max(3, b.h), y0 = gmin - 0.4, yt = (gmin + gmax) / 2 + H, area = Math.abs(ringArea(r)), rr = bldRect(r);
       const fh = b.fl > 0 ? clamp(H / b.fl, 2.7, 4.6) : 3.1;   // (the real number of floors where OpenStreetMap has it)
       const style = (b.k === 4 && H > 14) || H > 48 ? 2 : (b.fl > 0 ? b.fl >= 7 : H > 22) ? 1 : 0;   // (offices, hotels and the towers in glass; the newer, taller blocks with balconies)
-      const col = b.fc ? [b.fc[0] * 0.75 + 0.24, b.fc[1] * 0.75 + 0.24, b.fc[2] * 0.75 + 0.22] : style === 2 ? vary([0.95, 0.96, 0.98], R, 0.04) : vary(WALL[Math.floor(R() * WALL.length)], R, 0.05);   // (OpenStreetMap's colour, a little softened)
+      const col = b.fc ? pastel(b.fc) : style === 2 ? vary([0.95, 0.96, 0.98], R, 0.04) : vary(WALL[Math.floor(R() * WALL.length)], R, 0.05);   // (OpenStreetMap's colour as the Riviera's pastel of it)
+      if (tunOver(r, cx, cz)) {   // over the tunnel: standing on its roof, drawn with it (gone while the followed car is inside, like the hotel)
+        let tr = -1e9; for (const [x, z] of r) { const n = mcNear(x, z); if (n.i >= 0 && n.d < 30) tr = Math.max(tr, T.hy[n.i]); }
+        const yb = Math.max(y0, tr + 7.3), ytb = Math.max(yt, yb + 3.1), tc = vary(TILE[Math.floor(R() * TILE.length)], R, 0.06);
+        walls(tunFac, r, yb, ytb, col, 3.3, fh);
+        if (b.roof === 2 || b.roof === 4) hipRoof(tunRf, rr.x, ytb, rr.z, rr.L + 0.5, rr.D + 0.5, Math.min(3.2, rr.D * 0.32), rr.rot, tc);
+        else if (b.roof === 3) gableRoof(tunRf, tun, rr.x, ytb, rr.z, rr.L + 0.5, rr.D + 0.5, Math.min(3.4, rr.D * 0.36), rr.rot, tc, col);
+        else flatRoof(tunRf, r, ytb, vary(ROOF[Math.floor(R() * ROOF.length)], R, 0.06), [col[0] * 0.92, col[1] * 0.92, col[2] * 0.92], 0.75, rr.rot);
+        nBld++; exclPush(cx, cz, Math.min(Math.sqrt(area) * 0.6 + 2, 40)); MC.bldR.push({ r, x: cx, z: cz, top: ytb, lm: -1 }); continue;
+      }
       walls(facCh[style].get(cx, cz), r, y0, yt, col, 3.3, fh);
       const pool = Dd.pools.some(pl => { let px = 0, pz = 0; for (const [x, z] of pl.r) { px += x; pz += z; } px /= pl.r.length; pz /= pl.r.length; return Math.abs(px - cx) < 60 && Math.abs(pz - cz) < 60 && inRing(r, px, pz); });
       const roofK = pool ? 1 : b.roof || (rr.fill > 0.86 && area < 600 && H < 17 && b.k !== 4 && b.k !== 5 ? 2 : 1);   // (OpenStreetMap's roof shape; not known: tiles on the small, low, compact houses, flat on the rest)
@@ -9113,7 +9141,7 @@ const World = (function () {
         let tr = -1e9; for (const [x, z] of r) { const n = mcNear(x, z); if (n.i >= 0 && n.d < 20) tr = Math.max(tr, T.hy[n.i]); }
         const y0 = Math.min(gmin, tr > -1e8 ? tr : gmin) - 0.5, yt = L.id === 5 ? 46 : L.id === 11 ? Math.max(gmax, tr + 8) + 6 : Math.max(gmax, tr + 8) + 10;
         walls(tunFac, r, y0, yt, L.id === 11 ? [0.9, 0.9, 0.9] : [0.96, 0.95, 0.9]);
-        flatRoof(tun, r, yt, L.id === 11 ? [0.58, 0.6, 0.62] : [0.8, 0.79, 0.76], [0.9, 0.9, 0.88], 1);
+        flatRoof(tunRf, r, yt, L.id === 11 ? [0.58, 0.6, 0.62] : [0.8, 0.79, 0.76], [0.9, 0.9, 0.88], 1, rr.rot);
         if (L.id === 5) { box(tun, cx, yt, cz, 24, 0.1, 10, rr.rot, [0.3, 0.72, 0.86], [0.36, 0.8, 0.92]); for (let k = -2; k <= 2; k++) box(tun, cx + Math.cos(rr.rot) * k * 12 + 8, yt, cz + Math.sin(rr.rot) * k * 12 - 6, 4, 2.6, 4, rr.rot, [0.9, 0.9, 0.88], [0.7, 0.7, 0.72]); }
       } else if (L.id === 6) {   // the Yacht Club de Monaco: an ocean liner of white decks and dark glass on the quay
         const y0 = gmin - 0.3; let yy = y0;
@@ -9217,7 +9245,7 @@ const World = (function () {
         for (let k = 0; k < r.length; k++) { const [xa, za] = r[k], [xb, zb] = r[(k + 1) % r.length]; g.quadO([xa, y - 0.3, za], [xb, y - 0.3, zb], [xb, wy + 0.12, zb], [xa, wy + 0.12, za], rim, [cx, wy - 1, cz]); }
         exclPush(cx, cz, 4);
       }
-      addM(poolG, new THREE.MeshPhongMaterial({ map: tex.water, color: 0x9fe8ff, shininess: 80, specular: 0x88aacc, vertexColors: true }));
+      addM(poolG, new THREE.MeshPhongMaterial({ map: out.dyn.water, color: 0x9fe8ff, shininess: 80, specular: 0x88aacc, vertexColors: true }));   // (the sea's ripples: they drift with it)
     }
 
     /* ---- trees: palms by the sea and along the boulevards, plane trees and umbrella pines in the parks and streets (OpenStreetMap's trees,
@@ -9277,9 +9305,11 @@ const World = (function () {
             for (let m = 1; m + 1 < cs.length; m++) g.triO(cs[0], cs[m], cs[m + 1], standD, inn); }
           const cp = [P2(front + 1.2, y0 + 1.27), P2(front + depth - 0.2, top + 0.02)], u = n / 4, cuv = [[u, 0.004], [u, 0.996 * Math.min(1, depth / 15)]];
           const rc = gc.row(side > 0 ? cp : cp.slice().reverse(), [[1, 1, 1], [1, 1, 1]], side > 0 ? cuv : cuv.slice().reverse()); if (pc >= 0) gc.link(pc, rc, 0, 1); pc = rc;
-          if (roof) { const rp = [P2(front + depth + 0.3, top + 4.4), P2(front - 1.2, top + 3.4), P2(front - 1.2, top + 3.1), P2(front + depth + 0.3, top + 4.1)], rcol = roofCol || [0.92, 0.93, 0.95];
-            if (prev && prev.rp) { g.quadO(prev.rp[0], prev.rp[1], rp[1], rp[0], rcol, P2(front + depth / 2, top - 5)); g.quadO(prev.rp[3], prev.rp[2], rp[2], rp[3], [0.7, 0.71, 0.74], P2(front + depth / 2, top + 9)); }
-            if (k % 3 === 0 || k === S.length - 1) { const [bx, , bz] = P2(front + depth - 0.4, 0); box(scen.get(bx, bz), bx, yb, bz, 0.4, top + 4.3 - yb, 0.4, 0, [0.86, 0.87, 0.9]); } prev = { cs, rp }; }
+          if (roof) { const rp = [P2(front + depth + 0.3, top + 4.4), P2(front - 1.2, top + 3.4), P2(front - 1.2, top + 3.1), P2(front + depth + 0.3, top + 4.1)], rc0 = roofCol || [0.92, 0.93, 0.95], rcol = k % 2 ? rc0 : [rc0[0] * 0.93, rc0[1] * 0.93, rc0[2] * 0.94];   // (the roof in 3 m panels)
+            if (prev && prev.rp) { g.quadO(prev.rp[0], prev.rp[1], rp[1], rp[0], rcol, P2(front + depth / 2, top - 5)); g.quadO(prev.rp[3], prev.rp[2], rp[2], rp[3], [0.7, 0.71, 0.74], P2(front + depth / 2, top + 9));
+              const fa = P2(front - 1.25, top + 3.45), fb = P2(front - 1.25, top + 2.7), pa = prev.fa || fa, pb = prev.fb || fb; g.quadO(pa, fa, fb, pb, [0.74, 0.09, 0.12], P2(front + 2, top + 3));   // (a red fascia along its front edge)
+            }
+            if (k % 3 === 0 || k === S.length - 1) { const [bx, , bz] = P2(front + depth - 0.4, 0); box(scen.get(bx, bz), bx, yb, bz, 0.4, top + 4.3 - yb, 0.4, 0, [0.86, 0.87, 0.9]); } prev = { cs, rp, fa: P2(front - 1.25, top + 3.45), fb: P2(front - 1.25, top + 2.7) }; }
           else prev = { cs };
           const [cx, , cz] = P2(front + depth / 2, 0); exclPush(cx, cz, depth / 2 + 3); CR.block(cx, cz, 4, depth + 2, Math.atan2(q.tz, q.tx)); n++;
         });
@@ -9569,8 +9599,9 @@ const World = (function () {
     addM(texSpons, new THREE.MeshLambertMaterial({ map: tex.sponsorsMC, vertexColors: true }));
     addM(fenceG, new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide }));
     { const tm = new THREE.Mesh(tun.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })); tm.castShadow = true; tm.receiveShadow = true; tm.matrixAutoUpdate = false; root.add(tm);
-      const fm = addM(tunFac, tunFacM, true);
-      out.dyn.tunnel = { mat: tm.material, mats: fm ? [tm.material, tunFacM] : null, s0: tS0, s1: tS1, min: 0, hide: fm ? [tm, fm] : [tm] }; }   // (gone while the followed car is inside)
+      const tunRfM = new THREE.MeshLambertMaterial({ map: rfM.map, vertexColors: true }), fm = addM(tunFac, tunFacM, true), rm = addM(tunRf, tunRfM, true);
+      const im = addM(tunIn, new THREE.MeshLambertMaterial({ vertexColors: true }), true); if (im) im.visible = false;
+      out.dyn.tunnel = { mat: tm.material, mats: [tm.material, tunFacM, tunRfM], s0: tS0, s1: tS1, min: 0, hide: [tm, fm, rm].filter(Boolean), show: im ? [im] : null, covered: true }; }   // (gone while the followed car is inside, the mass round it shown instead; no rain in it)
     // knockable tyre walls at the exits of the slow corners (not in the tunnel), standing on the verge
     out.propR = 110;
     out.propFloor = propFloorTable(null, (i, side) => MC.verge(i, side));

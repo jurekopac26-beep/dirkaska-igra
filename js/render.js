@@ -1804,7 +1804,8 @@ const Render = (function () {
       const U = rain.mat.uniforms, B = lastMode === 'chase' ? [62, 30, 62] : lastMode === 'kino' ? [72, 34, 72] : [86, 38, 86];
       U.uBox.value.set(B[0], B[1], B[2]); U.uC.value.set(cam.vcx || 0, (cam.gy || 0) + B[1] * 0.42, cam.vcz || 0); U.uT.value = time % 600;
       const sn = world && world.dyn.pkWx ? world.dyn.pkWx.sU.uD.value : 0;   // (Pikes Peak: it snows near the summit, the rain fades out there)
-      U.uA.value = 0.5 * Math.min(1, wet * 1.5) * (1 - clamp(sn * 1.5, 0, 1));
+      const tn = world && world.dyn.tunnel, cov = tn && tn.covered ? tn.mat.opacity : 1;   // (Monaco: none under the tunnel's roof while the followed car is in it)
+      U.uA.value = 0.5 * Math.min(1, wet * 1.5) * (1 - clamp(sn * 1.5, 0, 1)) * cov;
     }
     // tunnel roof (and the hotel above it) fades out while the followed car is inside, so you can see it (Suzuka: the bridge, while it drives underneath)
     if (world && world.dyn.tunnel && target && target.q) {
@@ -1813,6 +1814,7 @@ const Render = (function () {
       const tr = tn.mat.opacity < 0.985; if (tn.mat.transparent !== tr) { tn.mat.transparent = tr; tn.mat.needsUpdate = true; } tn.mat.depthWrite = !tr;
       if (tn.mats) for (const m of tn.mats) if (m !== tn.mat) { m.opacity = tn.mat.opacity; if (m.transparent !== tr) { m.transparent = tr; m.needsUpdate = true; } m.depthWrite = !tr; }   // (Suzuka: everything on the bridge)
       if (tn.hide) { const v = tn.mat.opacity > 0.03; for (const o of tn.hide) o.visible = v; }   // (Monaco: the roof and the hotel over it gone altogether)
+      if (tn.show) for (const o of tn.show) o.visible = tn.mat.opacity < 0.6;   // (Monaco: the dark mass round the tunnel in their place)
     }
     if (postOn()) {
       if (target) {   // keep the sharp band of the tilt-shift on the followed car
