@@ -30,9 +30,9 @@
  "monaco": {
   "calls": 261,
   "maxCalls": 345,
-  "kverts": 712,
+  "kverts": 711,
   "maxKverts": 759,
-  "jsMs": 0.7
+  "jsMs": 0.68
  },
  "gozd": {
   "calls": 301,
