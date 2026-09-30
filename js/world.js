@@ -469,6 +469,124 @@ const World = (function () {
   let MC_TER = null;   // terrace under the Fairmont hairpin's retaining wall (set per build)
   function inPoly(poly, x, z) { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const xi = poly[i][0], zi = poly[i][1], xj = poly[j][0], zj = poly[j][1]; if ((zi > z) !== (zj > z) && x < (xj - xi) * (z - zi) / (zj - zi) + xi) c = !c; } return c; }
   function polyDist(poly, x, z) { let d = 1e9; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const ax = poly[j][0], az = poly[j][1], vx = poly[i][0] - ax, vz = poly[i][1] - az, l2 = vx * vx + vz * vz || 1; const t = clamp(((x - ax) * vx + (z - az) * vz) / l2, 0, 1); d = Math.min(d, Math.hypot(x - ax - vx * t, z - az - vz * t)); } return d; }
+
+  /* ---------------- water (every lake, sea, river and pond; Pikes Peak's mountain lake and creek have shaders of their own): the sky mirrored in it
+     (more of it where the view grazes the water: a Fresnel term; the race's sky, WSKY, which the renderer sets every frame), trains of wavelets
+     across it (longer on the sea: they ruffle the normal, so the sun glints off them where no shadow falls; calm far off, so nothing shimmers),
+     and along the shore a band of its own (shoreBand: drawn over the water, with the same waves) with paler shallows, the foam lapping at the
+     waterline and on a beach the surf rolling in. The texture's scrolling offset (out.dyn.water) is the clock: every wave turns a whole number
+     of times per wrap, so nothing jumps ---------------- */
+  const WSKY = { top: { value: new THREE.Color(0.45, 0.62, 0.86) }, hor: { value: new THREE.Color(0.8, 0.86, 0.9) } };
+  const W_WAV = [[0.8, 0.6, 3.1, 14, 0.028], [-0.5, 0.87, 1.9, 19, 0.018], [0.97, -0.26, 1.2, 29, 0.01], [-0.9, -0.44, 0.75, 41, 0.006]];   // [direction x, z, length (m), turns per wrap, height (m)]
+  // o: color, vc (vertex colours), len (the waves' length: 1 a lake, 2.4 the sea), amp (their steepness), refl (the most of the sky mirrored), land (how much of
+  // the view low over the water mirrors the land round it, dark, instead of the sky's horizon: a lake among trees, 0..1), shal (the shallows' paler tint, 0..1),
+  // lap (the foam lapping at the waterline, 0..1), surf (the surf rolling in, 0..1), band (the shore band's copy: its 'shore' attribute, metres from the waterline)
+  function waterMat(tex, o) {
+    o = o || {};
+    const f3 = (v) => (+v).toFixed(3), L = o.len || 1, A = o.amp == null ? 1 : o.amp, band = !!o.band, refl = o.refl || 0.55, shal = o.shal == null ? 0.5 : o.shal, surf = o.surf || 0, land = o.land || 0, lap = o.lap == null ? 1 : o.lap;
+    const wav = W_WAV.map(([dx, dz, l, n, a]) => { const f = TAU / (l * L);
+      return 'wG += ' + f3(a * L * f * A) + ' * vec2( ' + f3(dx) + ', ' + f3(dz) + ' ) * cos( dot( wP, vec2( ' + f3(dx * f) + ', ' + f3(dz * f) + ' ) ) + wPh * ' + Math.max(1, Math.round(n / Math.sqrt(L))) + '.0 );'; }).join('\n');
+    const m = new THREE.MeshPhongMaterial({ map: tex.water, color: o.color == null ? 0xffffff : o.color, vertexColors: !!o.vc, shininess: 30, specular: 0 });
+    if (band) Object.assign(m, { polygonOffset: true, polygonOffsetFactor: 0, polygonOffsetUnits: -4 });   // (over the water under it, never over the shore)
+    m.onBeforeCompile = (sh) => {
+      sh.uniforms.uWTop = WSKY.top; sh.uniforms.uWHor = WSKY.hor;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWw;\nvarying float vWt;' + (band ? '\nattribute float shore;\nvarying float vWs;' : ''))
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWw = ( modelMatrix * vec4( transformed, 1.0 ) ).xyz;\nvWt = uvTransform[ 2 ].x;' + (band ? '\nvWs = shore;' : ''));
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', ['#include <common>', 'varying vec3 vWw;', 'varying float vWt;', band ? 'varying float vWs;' : '', 'uniform vec3 uWTop;', 'uniform vec3 uWHor;',
+        'float wHash( vec2 p ) { return fract( sin( dot( p, vec2( 127.1, 311.7 ) ) ) * 43758.5453 ); }',
+        'float wNoise( vec2 p ) { vec2 i = floor( p ), f = fract( p ); f = f * f * ( 3.0 - 2.0 * f ); return mix( mix( wHash( i ), wHash( i + vec2( 1.0, 0.0 ) ), f.x ), mix( wHash( i + vec2( 0.0, 1.0 ) ), wHash( i + vec2( 1.0, 1.0 ) ), f.x ), f.y ); }'].join('\n'))
+        .replace('#include <color_fragment>', ['#include <color_fragment>', 'float wS = ' + (band ? 'vWs' : '40.0') + ';',   // (metres from the waterline)
+          'diffuseColor.rgb = mix( diffuseColor.rgb, diffuseColor.rgb * vec3( 1.22, 1.32, 1.15 ) + vec3( 0.02, 0.035, 0.03 ), ' + f3(shal) + ' * ( 1.0 - smoothstep( 0.5, 7.0, wS ) ) );'].join('\n'))
+        .replace('#include <normal_fragment_maps>', ['#include <normal_fragment_maps>', 'float wPh = 6.2831853 * vWt;', 'vec2 wG = vec2( 0.0 );',
+          'vec2 wP = vWw.xz + vec2( sin( vWw.z * ' + f3(0.21 / L) + ' + wPh * 2.0 ), sin( vWw.x * ' + f3(0.17 / L) + ' - wPh * 3.0 ) ) * ' + f3(1.6 * L) + ';',   // (the wave fronts bent: no regular lattice)
+          wav,
+          'wG *= ( 1.0 - smoothstep( 50.0, 220.0, length( vWw - cameraPosition ) ) ) * ( 0.35 + 0.65 * smoothstep( 0.0, 4.0, wS ) );',   // (calm far off, and in the foam)
+          'normal = normalize( ( viewMatrix * vec4( -wG.x, 1.0, -wG.y, 0.0 ) ).xyz );'].join('\n'))
+        .replace('#include <envmap_fragment>', ['#include <envmap_fragment>',
+          '{ vec3 wV = normalize( vViewPosition ), wR = reflect( -wV, normal ), wRw = ( vec4( wR, 0.0 ) * viewMatrix ).xyz;',
+          '  float wF = pow( 1.0 - clamp( dot( normal, wV ), 0.0, 1.0 ), 4.0 );',
+          '  vec3 wL = ( reflectedLight.directDiffuse + reflectedLight.indirectDiffuse ) / max( diffuseColor.rgb, vec3( 0.03 ) );',   // (the light falling here: the foam's)
+          '  vec3 wSk = mix( mix( uWHor, uWTop, smoothstep( 0.0, 0.4, wRw.y ) ), uWHor * vec3( 0.22, 0.27, 0.22 ), ' + f3(land) + ' * ( 1.0 - smoothstep( 0.04, 0.3, wRw.y ) ) );',   // (the sky, the land low round it)
+          '  outgoingLight = mix( outgoingLight, wSk, clamp( 0.02 + 0.9 * wF, 0.0, ' + f3(refl) + ' ) );',
+          '#if NUM_DIR_LIGHTS > 0',   // the sun's glints (none in a shadow: how much of its light reaches the water here)
+          '  vec3 wU = max( dot( normal, directionalLights[ 0 ].direction ), 0.0 ) * directionalLights[ 0 ].color * diffuseColor.rgb;',
+          '  float wSh = clamp( dot( reflectedLight.directDiffuse, vec3( 1.0 ) ) / max( dot( wU, vec3( 1.0 ) ), 1e-4 ), 0.0, 1.0 ), wSd = max( dot( wR, directionalLights[ 0 ].direction ), 0.0 );',
+          '  outgoingLight += directionalLights[ 0 ].color * wSh * ( 0.07 * pow( wSd, 8.0 ) + 1.1 * pow( wSd, 160.0 ) );',
+          '#endif',
+          band ? ['  float wN = wNoise( vWw.xz * 0.55 ) * 0.6 + wNoise( vWw.xz * 1.7 + 7.3 ) * 0.4;',
+            '  float wFl = ' + f3(lap) + ' * ( 1.0 - smoothstep( 0.05, ' + f3(0.4 + 0.8 * lap) + ', wS + 0.3 * sin( wPh * 7.0 + ( vWw.x - vWw.z ) * 0.33 ) ) );',   // the foam lapping at the waterline
+            '  float wFb = ' + f3(surf) + ' * smoothstep( 0.3, 0.85, sin( wS * 1.15 + wPh * 23.0 + wN * 1.8 ) ) * ( 1.0 - smoothstep( 2.0, 9.0, wS ) ) * smoothstep( 0.3, 1.2, wS );',   // the surf rolling in
+            '  outgoingLight = mix( outgoingLight, vec3( 0.88, 0.9, 0.92 ) * wL, 0.85 * smoothstep( 0.3, 0.75, max( wFl, wFb ) * ( 0.2 + 1.0 * wN ) ) );'].join('\n') : '',
+          '}'].join('\n'));
+    };
+    m.customProgramCacheKey = () => 'water|' + [L, A, refl, land, shal, lap, surf, band].join('|');
+    return m;
+  }
+  // the waterline on a terrain grid at the water level y (the ground's height h(i, j) at (x0 + i c, z0 + j c), every cell split as the terrain meshes
+  // are: (i, j) (i, j+1) (i+1, j) and (i+1, j) (i, j+1) (i+1, j+1)) over the cells [i0, i1) x [j0, j1): its segments, and sd(x, z), the distance to the
+  // nearest (up to 24 m), + where the ground lies below the water (outside the cells: open water)
+  function waterline(h, x0, z0, c, i0, i1, j0, j1, y) {
+    const H = 16, R = 24, hash = new Map(), key = (a, b) => a * 65536 + b, P = [];
+    const cut = (xa, za, da, xb, zb, db) => { if ((da > 0) !== (db > 0)) { const t = da / (da - db); P.push(xa + (xb - xa) * t, za + (zb - za) * t); } };
+    const tri = (xa, za, da, xb, zb, db, xc, zc, dc) => { P.length = 0; cut(xa, za, da, xb, zb, db); cut(xb, zb, db, xc, zc, dc); cut(xc, zc, dc, xa, za, da);
+      if (P.length !== 4) return; const k = key(Math.floor((P[0] + P[2]) / 2 / H), Math.floor((P[1] + P[3]) / 2 / H)); let Lc = hash.get(k); if (!Lc) hash.set(k, Lc = []); Lc.push(P[0], P[1], P[2], P[3]); };
+    for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
+      const a = h(i, j) - y, b = h(i + 1, j) - y, e = h(i, j + 1) - y, d = h(i + 1, j + 1) - y, xa = x0 + i * c, za = z0 + j * c;
+      if ((a > 0 && b > 0 && e > 0 && d > 0) || (a <= 0 && b <= 0 && e <= 0 && d <= 0)) continue;
+      tri(xa, za, a, xa, za + c, e, xa + c, za, b); tri(xa + c, za, b, xa, za + c, e, xa + c, za + c, d);
+    }
+    const depth = (x, z) => { const gx = (x - x0) / c, gz = (z - z0) / c; if (gx < i0 || gz < j0 || gx >= i1 || gz >= j1) return 1;
+      const i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, a = h(i, j), d = h(i + 1, j + 1);
+      return y - (u + v <= 1 ? a + u * (h(i + 1, j) - a) + v * (h(i, j + 1) - a) : d + (1 - u) * (h(i, j + 1) - d) + (1 - v) * (h(i + 1, j) - d)); };
+    return (x, z) => {
+      let best = R * R; const a0 = Math.floor(x / H), b0 = Math.floor(z / H);
+      for (let b = b0 - 2; b <= b0 + 2; b++) for (let a = a0 - 2; a <= a0 + 2; a++) { const Lc = hash.get(key(a, b)); if (!Lc) continue;
+        for (let q = 0; q < Lc.length; q += 4) { const ax = Lc[q], az = Lc[q + 1], vx = Lc[q + 2] - ax, vz = Lc[q + 3] - az, t = clamp(((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz || 1e-9), 0, 1), dx = x - ax - vx * t, dz = z - az - vz * t, dd = dx * dx + dz * dz; if (dd < best) best = dd; } }
+      return Math.sqrt(best) * (depth(x, z) > 0 ? 1 : -1);
+    };
+  }
+  // the band of water along a shore (waterMat's band copy draws it over the water): cells of F m (a quadtree over the box) wherever the waterline is near,
+  // from 3 m in under the land to 10 m out on the water (sd(x, z): metres from it, + on the water; lip: how much faster than a true distance it may change),
+  // nothing elsewhere; every vertex has its distance ('shore', -2..10) and uv in metres / uvS as the water under it (col(x, z): its vertex colour too)
+  function shoreBand(x0, z0, x1, z1, y, sd, uvS, o) {
+    o = o || {};
+    const F = o.F || 4, SM = 10, lip = o.lip || 1.1, col = o.col || null, pos = [], sh = [], uv = [], cl = [], idx = [], vm = new Map();
+    const vert = (x, z) => { const k = Math.round(x * 4) * 100003 + Math.round(z * 4); let v = vm.get(k);
+      if (v === undefined) { v = sh.length; vm.set(k, v); pos.push(x, y, z); sh.push(clamp(sd(x, z), -2, SM)); uv.push(x / uvS, -z / uvS); if (col) cl.push(...col(x, z)); }
+      return v; };
+    const cell = (x, z, s) => {
+      const c = sd(x + s / 2, z + s / 2), hd = s * 0.71 * lip;
+      if (c - hd > SM || c + hd < -3) return;   // (open water: the water under it; or deep under the land)
+      if (s > F) { const q = s / 2; cell(x, z, q); cell(x + q, z, q); cell(x, z + q, q); cell(x + q, z + q, q); return; }
+      const a = vert(x, z), b = vert(x + s, z), cc = vert(x + s, z + s), d = vert(x, z + s);
+      idx.push(a, d, cc, a, cc, b);   // (facing up)
+    };
+    const S = F * 16;
+    for (let z = z0; z < z1; z += S) for (let x = x0; x < x1; x += S) cell(x, z, S);
+    if (!idx.length) return null;
+    const g = new THREE.BufferGeometry(), n = sh.length, nrm = new Float32Array(n * 3); for (let k = 0; k < n; k++) nrm[k * 3 + 1] = 1;
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setAttribute('shore', new THREE.Float32BufferAttribute(sh, 1));
+    if (col) g.setAttribute('color', new THREE.Float32BufferAttribute(cl, 3));
+    g.setIndex(n > 65535 ? new THREE.Uint32BufferAttribute(idx, 1) : new THREE.Uint16BufferAttribute(idx, 1)); g.computeBoundingSphere();
+    return g;
+  }
+  // several shore bands in one geometry (one draw for all the ponds of a world)
+  function mergeBands(list) {
+    list = list.filter(Boolean); if (list.length < 2) return list[0] || null;
+    const names = Object.keys(list[0].attributes), out = new THREE.BufferGeometry(), idx = []; let base = 0;
+    for (const nm of names) { const it = list[0].attributes[nm].itemSize, arr = new Float32Array(list.reduce((n, g) => n + g.attributes[nm].count * it, 0)); let o = 0;
+      for (const g of list) { arr.set(g.attributes[nm].array, o); o += g.attributes[nm].array.length; } out.setAttribute(nm, new THREE.BufferAttribute(arr, it)); }
+    for (const g of list) { const I = g.index.array; for (let k = 0; k < I.length; k++) idx.push(I[k] + base); base += g.attributes.position.count; g.dispose(); }
+    out.setIndex(base > 65535 ? new THREE.Uint32BufferAttribute(idx, 1) : new THREE.Uint16BufferAttribute(idx, 1)); out.computeBoundingSphere();
+    return out;
+  }
+  // the shore band as a mesh of the world (a copy of the water's material with the band's attributes; lit, no shadow of its own)
+  function addShore(root, g, wm, o) {
+    if (!g) return null;
+    const m = new THREE.Mesh(g, waterMat({ water: wm.map }, Object.assign({}, o, { band: true, color: wm.color.getHex(), vc: !!g.attributes.color })));
+    m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); root.add(m); return m;
+  }
   function monacoH(x, z) {
     const r = MC_ROCK, inRock = x > r.x0 && x < r.x1 && z > r.z0 && z < r.z1;
     if (!inRock && inPoly(MC_WATER, x, z)) return -0.6 - 5 * sstep(0, 14, polyDist(MC_WATER, x, z));   // harbour / sea floor
@@ -717,6 +835,7 @@ const World = (function () {
     const excluded = (x, z) => { for (const e of excl) if ((x - e.x) ** 2 + (z - e.z) ** 2 < e.r * e.r) return true; for (const r of exclRect) if (inRect(x, z, r)) return true; for (const f of exclF) if (f(x, z)) return true; return false; };
 
     /* ================= GROUND ================= */
+    let GM = null;   // (the ground mesh's heights: where its surface meets a water level is the waterline, gmLine)
     {
       const cell = THEME === 'mountain' ? 6 : 8;
       const nx = Math.ceil((B.maxX - B.minX) / cell), nz = Math.ceil((B.maxZ - B.minZ) / cell);
@@ -774,8 +893,10 @@ const World = (function () {
       g.setIndex(idx); g.computeVertexNormals();
       const mat = new THREE.MeshLambertMaterial({ map: THEME === 'city' || THEME === 'ljubljana' || THEME === 'monaco' ? tex.paving : tex.grass, vertexColors: true });
       const m = new THREE.Mesh(g, mat); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m);
-      out.ground = m;
+      out.ground = m; GM = { pos, nx, nz, cell, x0: B.minX, z0: B.minZ };
     }
+    const gmLine = (y) => waterline((i, j) => GM.pos[(clamp(j, 0, GM.nz) * (GM.nx + 1) + clamp(i, 0, GM.nx)) * 3 + 1], GM.x0, GM.z0, GM.cell, 0, GM.nx, 0, GM.nz, y);
+    const gmBox = (x0, z0, x1, z1) => [Math.max(x0, GM.x0), Math.max(z0, GM.z0), Math.min(x1, GM.x0 + GM.nx * GM.cell), Math.min(z1, GM.z0 + GM.nz * GM.cell)];   // (a box within the ground mesh)
 
     /* ================= TRACK SURFACE ================= */
     const N = T.N, w = T.w;
@@ -1219,8 +1340,9 @@ const World = (function () {
       wg.setIndex(idx); wg.computeVertexNormals();
       // ensure normals up
       const nrm = wg.getAttribute('normal'); for (let k = 0; k < nrm.count; k++) nrm.setXYZ(k, 0, 1, 0);
-      const wmat = new THREE.MeshPhongMaterial({ color: 0xffffff, map: tex.water, specular: 0x9fd8ff, shininess: 90, transparent: true, opacity: 0.93 });
+      const WO = { len: 1, amp: 1, refl: 0.45, land: 0.6, shal: 0.6, lap: 0.7, surf: 0.2 }, wmat = waterMat(tex, WO);
       const wm = new THREE.Mesh(wg, wmat); wm.receiveShadow = true; root.add(wm);
+      addShore(root, shoreBand(...gmBox(LAKE.cx - LAKE.rx * 1.35, LAKE.cz - LAKE.rz * 1.35, LAKE.cx + LAKE.rx * 1.35, LAKE.cz + LAKE.rz * 1.35), -0.385, gmLine(-0.4), 22), wmat, WO);   // (the shore, the island's too)
       out.dyn.water = tex.water;
       excl.push({ x: LAKE.cx, z: LAKE.cz, r: 0 });
       // island church
@@ -1478,9 +1600,11 @@ const World = (function () {
       {
         const x0 = B.minX - 260, x1 = B.maxX + 260, z0 = seaZ + 12, z1 = B.maxZ + 340;
         const g = new THREE.PlaneGeometry(x1 - x0, z1 - z0); g.rotateX(-Math.PI / 2); g.translate((x0 + x1) / 2, -0.3, (z0 + z1) / 2);
-        const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * (x1 - x0) / 22, uv.getY(i) * (z1 - z0) / 22);
-        const sea = new THREE.Mesh(g, new THREE.MeshPhongMaterial({ map: tex.water, color: 0x7fc2e8, shininess: 70, specular: 0x6f8faf }));
+        const uv = g.attributes.uv, gp = g.attributes.position; for (let i = 0; i < uv.count; i++) uv.setXY(i, gp.getX(i) / 22, -gp.getZ(i) / 22);   // (uv in metres, as the shore band's)
+        const WO = { len: 2.4, amp: 1.3, refl: 0.32, shal: 0.7, lap: 1, surf: 1 }, sea = new THREE.Mesh(g, waterMat(tex, Object.assign({ color: 0x7fc2e8 }, WO)));
         sea.receiveShadow = true; root.add(sea); out.dyn.water = tex.water;
+        const wl = gmLine(-0.3), bz = seaZ + 14;   // (the waterline: the beach's edge, and wherever else the ground meets the sea)
+        addShore(root, shoreBand(x0, seaZ + 4, x1, Math.min(z1, seaZ + 60), -0.285, (x, z) => Math.min(wl(x, z), z - bz), 22), sea.material, WO);
         const bg = new THREE.PlaneGeometry(x1 - x0, 18); bg.rotateX(-Math.PI / 2); bg.translate((x0 + x1) / 2, 0.04, seaZ + 5);
         const buv = bg.attributes.uv; for (let i = 0; i < buv.count; i++) buv.setXY(i, buv.getX(i) * (x1 - x0) / 9, buv.getY(i) * 2);
         const beach = new THREE.Mesh(bg, new THREE.MeshLambertMaterial({ map: tex.sand })); beach.receiveShadow = true; root.add(beach);
@@ -1916,8 +2040,10 @@ const World = (function () {
             if (clearance(mx + n0[0] * sd * 0.8, mz + n0[1] * sd * 0.8) > 1.5) box(g, mx + n0[0] * sd * 0.35, 0, mz + n0[1] * sd * 0.35, Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) + 0.05, 0.95, 0.45, Math.atan2(p1[1] - p0[1], p1[0] - p0[0]), [0.88, 0.86, 0.8], [0.93, 0.92, 0.88]);
           }
         }
-        const water = new THREE.Mesh(wg.geometry(), new THREE.MeshPhongMaterial({ map: tex.water, color: 0x43a07f, shininess: 80, specular: 0x557766, vertexColors: true }));
+        const WO = { len: 0.8, amp: 0.7, refl: 0.45, land: 0.7, shal: 0, lap: 0.5, surf: 0 }, water = new THREE.Mesh(wg.geometry(), waterMat(tex, Object.assign({ color: 0x43a07f, vc: true }, WO)));
         water.receiveShadow = true; root.add(water); out.dyn.water = tex.water;
+        { let bx0 = 1e9, bz0 = 1e9, bx1 = -1e9, bz1 = -1e9; for (const [x, z] of RIVER) { bx0 = Math.min(bx0, x); bz0 = Math.min(bz0, z); bx1 = Math.max(bx1, x); bz1 = Math.max(bz1, z); }   // the ripples lapping at the embankments
+          addShore(root, shoreBand(bx0 - RWh - 4, bz0 - RWh - 4, bx1 + RWh + 4, bz1 + RWh + 4, -1.235, (x, z) => RWh - distRiver(x, z), 16), water.material, WO); }
         // Plečnik's colonnade along the Central Market bank (south bank between the Triple and Dragon bridges)
         for (let k = 0; k < rs.length - 1; k++) {
           const [x0, z0] = rs[k]; if (x0 < 28 || x0 > 232) continue;
@@ -2198,8 +2324,9 @@ const World = (function () {
           wx0 = Math.max(wx0, Math.min(...lx) - 10); wx1 = Math.min(wx1, Math.max(...lx) + 10); wz0 = Math.max(wz0, Math.min(...lz) - 10); wz1 = Math.min(B.maxZ + 260, Math.max(...lz) + 10); }
         const wg = new THREE.PlaneGeometry(wx1 - wx0, wz1 - wz0, 1, 1); wg.rotateX(-Math.PI / 2); wg.translate((wx0 + wx1) / 2, -1.25, (wz0 + wz1) / 2);
         const uvA = wg.getAttribute('uv'), pA = wg.getAttribute('position'); for (let k = 0; k < uvA.count; k++) uvA.setXY(k, pA.getX(k) / 26, -pA.getZ(k) / 26);
-        const wm = new THREE.Mesh(wg, new THREE.MeshLambertMaterial({ map: tex.water, color: FOR ? 0x86677a : 0x7c6672 }));   // (Toskana: dark navy-teal water, as in the reference)
+        const WO = { len: 1.3, amp: 1, refl: 0.5, land: 0.4, shal: 0.5, lap: 0.8, surf: 0.25 }, wm = new THREE.Mesh(wg, waterMat(tex, Object.assign({ color: FOR ? 0x86677a : 0x7c6672 }, WO)));   // (Toskana: dark navy-teal water, as in the reference)
         wm.receiveShadow = true; wm.matrixAutoUpdate = false; wm.updateMatrix(); root.add(wm); out.dyn.water = tex.water;
+        addShore(root, shoreBand(...gmBox(wx0, wz0, wx1, wz1), -1.235, gmLine(-1.25), 26), wm.material, WO);
         const L = fd.lake, stoneC = [0.62, 0.67, 0.58];
         for (let e = 0; e < L.length; e++) { const [ax, az] = L[e], [bx, bz] = L[(e + 1) % L.length], len = Math.hypot(bx - ax, bz - az), ux = (bx - ax) / len, uz = (bz - az) / len;
           for (let q = 0; q < len; q += FOR ? 5.5 + R() * 3 : 30 + R() * 20) { const px0 = ax + ux * q, pz0 = az + uz * q;   // (Toskana: only a boulder here and there)
@@ -2920,8 +3047,9 @@ const World = (function () {
         const tu = T.def.tunnel || [0.54, 0.69]; out.dyn.tunnel = { mat: tm.material, s0: tu[0] * T.len, s1: tu[1] * T.len }; }
       // the Mediterranean and Port Hercule
       { const x0 = B.minX - 500, x1 = B.maxX + 700, z0 = B.minZ - 300, z1 = B.maxZ + 700, gw = new THREE.PlaneGeometry(x1 - x0, z1 - z0); gw.rotateX(-Math.PI / 2); gw.translate((x0 + x1) / 2, 0, (z0 + z1) / 2);
-        const uv = gw.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * (x1 - x0) / 24, uv.getY(i) * (z1 - z0) / 24);
-        const sea = new THREE.Mesh(gw, new THREE.MeshPhongMaterial({ map: tex.water, color: 0x3f8fc4, shininess: 90, specular: 0x6f9fcf })); sea.receiveShadow = true; root.add(sea); out.dyn.water = tex.water; }
+        const uv = gw.attributes.uv, gp = gw.attributes.position; for (let i = 0; i < uv.count; i++) uv.setXY(i, gp.getX(i) / 24, -gp.getZ(i) / 24);   // (uv in metres, as the shore band's)
+        const WO = { len: 2.2, amp: 1.2, refl: 0.45, land: 0.2, shal: 0.3, lap: 0.9, surf: 0.35 }, sea = new THREE.Mesh(gw, waterMat(tex, Object.assign({ color: 0x3f8fc4 }, WO))); sea.receiveShadow = true; root.add(sea); out.dyn.water = tex.water;
+        addShore(root, shoreBand(...gmBox(x0, z0, x1, z1), 0.015, gmLine(0), 24), sea.material, WO); }   // (the quays, the harbour walls, the Rock)
     }
 
     /* ---- finalize meshes ---- */
@@ -4030,7 +4158,81 @@ const World = (function () {
     const mat = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
     for (const g of cells.values()) { if (g.empty) continue; const m = new THREE.Mesh(g.geometry(), mat); m.name = 'tyremarks'; m.renderOrder = 1; m.matrixAutoUpdate = false; root.add(m); }
   }
-  function finish(o, tex) { if (!o.ownMarks) tyreMarks(o.root); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); return clouds(o.root, o, tex); }
+  /* ---- the wear of a tarmac road (every world but the gravel ones and Pikes Peak, at the end of the build as the tyre marks): patches of newer (darker) or older
+     (greyer) asphalt with their sealed seams, sealed cracks (black tar bands: a long one with branches, or a network), and on a circuit the rubber
+     laid down along the racing line in the two tyre tracks, darkest where the cars brake and turn. Decals just over the road in the road's own
+     colour (lit, its shadows on them; the rain darkens them with it: userData.wear), indexed, in 256 m chunks (culled) ---- */
+  function roadWear(o, tex) {
+    if (T.def.roadSurface === 'makadam' || THEME === 'pikes' || !T.rl || !tex.wear) return;   // (Pikes Peak's road has its own cracks and patches)
+    const N = T.N, ds = T.ds, w = T.w, len = T.len, open = T.open, R = rng(4242), bk = { dy: 0, sl: 0 }, cells = new Map(), lim = w - 0.6;
+    const at = (k) => (open ? clamp(k, 0, N - 1) : ((k % N) + N) % N), HYi = (i) => (T.hasElev ? T.hy[i] : 0);
+    const deck = (i) => { for (const c of T.cross || []) { const d = Math.abs(i - c.up); if (Math.min(d, N - d) * ds < c.upZ + 30) return true; } return false; };   // (Suzuka's bridge fades out while the car drives under it)
+    const chunk = (p) => { const k = Math.floor(p[0] / 256) + ',' + Math.floor(p[2] / 256); let c = cells.get(k); if (!c) cells.set(k, c = { P: [], C: [], U: [], I: [] }); return c; };
+    const vtx = (c, p, col, uv) => { c.P.push(p[0], p[1], p[2]); c.C.push(col[0], col[1], col[2], col[3]); c.U.push(uv[0], uv[1]); return c.P.length / 3 - 1; };
+    const face = (c, a, b, d) => {   // a triangle facing up
+      const P = c.P, ux = P[b * 3] - P[a * 3], uz = P[b * 3 + 2] - P[a * 3 + 2], vx = P[d * 3] - P[a * 3], vz = P[d * 3 + 2] - P[a * 3 + 2];
+      if (uz * vx - ux * vz > 0) c.I.push(a, b, d); else c.I.push(a, d, b); };
+    const pt = (s, lo) => {   // on the road at s (m along the lap), lo (m across), just over the surface
+      const f = s / ds, i0 = Math.floor(f), t = f - i0, i = at(i0), j = at(i0 + 1), L = (A) => A[i] + (A[j] - A[i]) * t;
+      let y = HYi(i) + (HYi(j) - HYi(i)) * t + 0.035; if (T.bank) y += T.bankAt(s, lo, bk).dy;
+      return [L(T.px) + L(T.nx) * lo, y, L(T.pz) + L(T.nz) * lo]; };
+    const decal = (s, lo, hl, hw, rot, u0, v0, u1, v1, col) => {   // centre (s, lo), half length and width along and across the road, turned by rot; an atlas cell
+      const cs = Math.cos(rot), sn = Math.sin(rot), Q = [[-hl, -hw, u0, v0], [hl, -hw, u1, v0], [hl, hw, u1, v1], [-hl, hw, u0, v1]].map(([a, b, u, v]) => [pt(s + a * cs - b * sn, lo + a * sn + b * cs), [u, v]]);
+      const c = chunk(Q[0][0]), k = Q.map(q => vtx(c, q[0], col, q[1])); face(c, k[0], k[1], k[2]); face(c, k[0], k[2], k[3]); };
+    // patches, every 40-100 m, more often in a wheel track than not
+    for (let s = R() * 50; s < len - 6; s += 40 + R() * 60) {
+      const i = at(Math.round(s / ds)); if (deck(i)) continue;
+      const hl = 0.8 + R() * 1.8, hw = 0.5 + R() * 1.1, lo = clamp((R() < 0.6 ? T.rl[i] + (R() < 0.5 ? -0.78 : 0.78) : (R() * 2 - 1) * w) + (R() - 0.5) * 0.6, -lim + hw, lim - hw), k = R() < 0.55 ? 0.78 + R() * 0.1 : 1.06 + R() * 0.1;
+      decal(s, lo, hl, hw, (R() - 0.5) * 0.08, 0.02, 0.02, 0.48, 0.48, [k, k, k * 1.01, 1]);
+    }
+    // sealed cracks (the texture's long strips are 8:1): across the road every 25-60 m, along it every 50-110 m, a network of them or one
+    // with its branches every 120-260 m
+    const strip = (s, lo, L, rot) => { const b = R() < 0.5; decal(s, lo, L / 2, L / 16, rot, 0.004, b ? 0.752 : 0.877, 0.996, b ? 0.873 : 0.998, [1, 1, 1, 0.8 + R() * 0.2]); };
+    for (let s = R() * 40; s < len - 4; s += 25 + R() * 35) {
+      const i = at(Math.round(s / ds)); if (deck(i)) continue;
+      const L = Math.min(2 * lim, 3 + R() * (2 * lim - 2)), lo = (R() * 2 - 1) * Math.max(0, lim - L / 2);
+      strip(s, lo, L, Math.PI / 2 + (R() - 0.5) * 0.3);
+    }
+    for (let s = R() * 60; s < len - 8; s += 50 + R() * 60) {
+      const i = at(Math.round(s / ds)); if (deck(i)) continue;
+      strip(s, (R() * 2 - 1) * (lim - 0.5), 4 + R() * 5, (R() - 0.5) * 0.08);
+    }
+    for (let s = R() * 100; s < len - 4; s += 120 + R() * 140) {
+      const i = at(Math.round(s / ds)); if (deck(i)) continue;
+      const h = 1.4 + R() * 0.8, lo = (R() * 2 - 1) * Math.max(0, lim - h * 1.12), net = R() < 0.5;
+      decal(s, lo, h, h / 2, R() * TAU, net ? 0.002 : 0.502, 0.502, net ? 0.498 : 0.998, 0.748, [1, 1, 1, 0.8 + R() * 0.2]);
+    }
+    // the rubber on a circuit's racing line: two tyre tracks, a little everywhere, dark where the pace falls (braking) and where it is slow (the corners)
+    if (!open) {
+      const v = T.speedProfile(16.5, 13, 85), st = Math.max(1, Math.round(3 / ds)), a8 = Math.max(1, Math.round(8 / ds)), m15 = Math.max(1, Math.round(15 / ds));
+      let vmax = 0; for (let i = 0; i < N; i++) vmax = Math.max(vmax, v[i]);
+      const raw = new Float32Array(N), use = new Float32Array(N);
+      for (let i = 0; i < N; i++) raw[i] = clamp((v[i] - v[at(i + a8)]) * 0.035 + (1 - v[i] / vmax) * 0.6, 0, 1);
+      { let acc = 0; for (let k = -m15; k <= m15; k++) acc += raw[at(k)]; for (let i = 0; i < N; i++) { use[i] = acc / (2 * m15 + 1); acc += raw[at(i + m15 + 1)] - raw[at(i - m15)]; } }   // (smoothed over 30 m)
+      for (const sd of [-1, 1]) {
+        let prev = null;
+        for (let k = 0; k <= N; k += st) {
+          const i = at(k), cc = T.rl[i] + sd * 0.78;
+          if (deck(i) || Math.abs(cc) > w - 0.5) { prev = null; continue; }
+          const a = (0.1 + 0.46 * use[i]) * (0.8 + 0.4 * R()), row = [cc - 0.36, cc - 0.13, cc + 0.13, cc + 0.36].map(lo => pt(i * ds, lo)), c = chunk(row[1]);
+          const put = (R4, al) => R4.map((p, q) => vtx(c, p, [0.07, 0.07, 0.08, q === 1 || q === 2 ? al : 0], [[0.53, 0.66, 0.84, 0.97][q], 0.25])), ids = put(row, a);
+          if (prev && prev.c !== c) prev = { ids: put(prev.row, prev.a) };   // (into the next chunk: the last row again, so the strip goes on)
+          if (prev) for (let q = 0; q < 3; q++) { face(c, prev.ids[q], prev.ids[q + 1], ids[q + 1]); face(c, prev.ids[q], ids[q + 1], ids[q]); }
+          prev = { ids, c, row, a };
+        }
+      }
+    }
+    const mat = new THREE.MeshLambertMaterial({ map: tex.wear, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
+    if (o.asphaltMat && o.asphaltMat.color) mat.color.copy(o.asphaltMat.color);   // (the road's own tint)
+    mat.userData.wear = true;
+    for (const c of cells.values()) {
+      if (!c.I.length) continue;
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(c.P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(c.C, 4)); g.setAttribute('uv', new THREE.Float32BufferAttribute(c.U, 2));
+      g.setIndex(c.P.length / 3 > 65535 ? new THREE.Uint32BufferAttribute(c.I, 1) : new THREE.Uint16BufferAttribute(c.I, 1)); g.computeVertexNormals(); g.computeBoundingSphere();
+      const m = new THREE.Mesh(g, mat); m.name = 'roadwear'; m.receiveShadow = true; m.renderOrder = 2; m.matrixAutoUpdate = false; o.root.add(m);   // (after the tyre marks and the drying line: the rubber shows on a drying line too)
+    }
+  }
+  function finish(o, tex) { if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); return clouds(o.root, o, tex); }
   // where the crowds are, for their sound (Sfx: x, z, how many 0..1), on a circuit whose builder has not given them (the Red Bull Ring's
   // does): the spectators of every crowd of this build in 24 m cells, and the packed grandstands (the crowd picture) as full ones
   function crowdPoints(o, tex) {
@@ -6303,7 +6505,7 @@ const World = (function () {
       // the reservoir far below in the valley
       const L = P.lk, wg = new THREE.CircleGeometry(1, 40); wg.rotateX(-Math.PI / 2); wg.scale(L.rx * 1.04, 1, L.rz * 1.04); wg.translate(L.x, L.y, L.z);
       const uvw = wg.attributes.uv; for (let k = 0; k < uvw.count; k++) uvw.setXY(k, uvw.getX(k) * L.rx / 12, uvw.getY(k) * L.rz / 12);
-      const lake = new THREE.Mesh(wg, new THREE.MeshPhongMaterial({ map: tex.water, color: 0x3a7fc0, shininess: 80, specular: 0x6f9fcf })); lake.receiveShadow = true; lake.matrixAutoUpdate = false; lake.updateMatrix(); root.add(lake); out.dyn.water = tex.water;
+      const lake = new THREE.Mesh(wg, waterMat(tex, { color: 0x3a7fc0, len: 2, refl: 0.45, land: 0.5 })); lake.receiveShadow = true; lake.matrixAutoUpdate = false; lake.updateMatrix(); root.add(lake); out.dyn.water = tex.water;
     }
 
     /* ---- road: asphalt with its paint (double yellow centre line, white edge lines, the checkpoints' lines) in one mesh, a strip of gravel, then the verge
@@ -7264,16 +7466,15 @@ const World = (function () {
         const on = ouTileOn(ti, tj); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; else nFar++;   // (G.on: the full tiles, which get the forest)
         const m = new THREE.Mesh(ouTileGeo(ti, tj, on), gMat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m);
       }
-      const wMat = new THREE.MeshPhongMaterial({ map: tex.water, vertexColors: true, shininess: 90, specular: 0x7fa6c8 });
-      const deep = [0.19, 0.31, 0.44], sky = [0.37, 0.5, 0.63], wood = [0.09, 0.15, 0.13], shal = [0.31, 0.35, 0.29];
+      const WO = { len: 1, amp: 0.8, refl: 0.25, land: 0.9, shal: 0.3, lap: 0.35, surf: 0 }, wMat = waterMat(tex, Object.assign({ vc: true }, WO));   // (less of the sky: the colours paint the lake's own mirror image)
+      const deep = [0.19, 0.31, 0.44], sky = [0.37, 0.5, 0.63], wood = [0.09, 0.15, 0.13], shal = [0.31, 0.35, 0.29], bands = [];
       for (const L of P.lakes) {   // the water: a 5 m grid at the lake's level wherever the ground lies below it (the terrain rises out of it at the shore), coloured as a still
         // Finnish lake seen from the road: dark water, the pale sky mirrored across the middle, the forest on the far shore mirrored almost black, brown shallows
         const cs = 5, x0 = L.x0 - 10, z0 = L.z0 - 10, nx = Math.ceil((L.x1 - L.x0 + 20) / cs) + 1, nz = Math.ceil((L.z1 - L.z0 + 20) / cs) + 1, wet = new Uint8Array(nx * nz);
         for (let b = 0; b < nz; b++) for (let a = 0; a < nx; a++) wet[b * nx + a] = ouGround(x0 + a * cs, z0 + b * cs) < L.h + 0.4 ? 1 : 0;
-        const cc = new Map(), wc = (a, b) => { const key = b * nx + a; let c = cc.get(key); if (c) return c;
-          const x = x0 + a * cs, z = z0 + b * cs, e = ouWater(x, z).e, far = clamp((ouSeg(x, z).lat * L.side - L.gap) / L.depth, 0, 1), ks = 0.75 * sstep(0.06, 0.32, far) * sstep(0.9, 0.55, far);
-          c = [0, 1, 2].map(k => lerp(lerp(lerp(deep[k], sky[k], ks), wood[k], sstep(0.62, 0.93, far)), shal[k], sstep(10, 3, e)));
-          cc.set(key, c); return c; };
+        const colAt = (x, z) => { const e = ouWater(x, z).e, far = clamp((ouSeg(x, z).lat * L.side - L.gap) / L.depth, 0, 1), ks = 0.75 * sstep(0.06, 0.32, far) * sstep(0.9, 0.55, far);
+          return [0, 1, 2].map(k => lerp(lerp(lerp(deep[k], sky[k], ks), wood[k], sstep(0.62, 0.93, far)), shal[k], sstep(10, 3, e))); };
+        const cc = new Map(), wc = (a, b) => { const key = b * nx + a; let c = cc.get(key); if (c) return c; c = colAt(x0 + a * cs, z0 + b * cs); cc.set(key, c); return c; };
         const g = new GB(true), uv = (q) => [q[0] / 14, -q[2] / 14];
         for (let b = 0; b < nz - 1; b++) for (let a = 0; a < nx - 1; a++) {
           if (!(wet[b * nx + a] | wet[b * nx + a + 1] | wet[(b + 1) * nx + a] | wet[(b + 1) * nx + a + 1])) continue;
@@ -7281,8 +7482,10 @@ const World = (function () {
           g.quadUp(A, B, C, D, [wc(a, b), wc(a + 1, b), wc(a + 1, b + 1), wc(a, b + 1)], [uv(A), uv(B), uv(C), uv(D)]);
         }
         const m = new THREE.Mesh(g.geometry(), wMat); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); root.add(m);
+        const i0 = Math.max(0, Math.floor((x0 - G.x0) / OUC)), j0 = Math.max(0, Math.floor((z0 - G.z0) / OUC)), i1 = Math.min(G.nx - 1, i0 + nx), j1 = Math.min(G.nz - 1, j0 + nz);   // the shore: where the terrain's own mesh meets the water
+        bands.push(shoreBand(x0, z0, x0 + (nx - 1) * cs, z0 + (nz - 1) * cs, L.h + 0.015, waterline(ouGH, G.x0, G.z0, OUC, i0, i1, j0, j1, L.h), 14, { col: colAt }));
       }
-      if (P.lakes.length) out.dyn.water = tex.water;
+      if (P.lakes.length) { out.dyn.water = tex.water; addShore(root, mergeBands(bands), wMat, WO); }
     }
 
     /* ---- the road: clay-bound gravel with two darker wheel tracks along the driving line and loose gravel on the crown and the shoulders,
@@ -11596,15 +11799,17 @@ const World = (function () {
 
     /* ---- ponds (the water flat, a little below the lowest ground on the shore) ---- */
     {
-      const wt = tex.water, wMat = new THREE.MeshLambertMaterial({ map: wt, color: 0xa8c8d8 });
-      const g = new GB(true);
+      const wt = tex.water, WO = { len: 0.7, amp: 0.6, refl: 0.45, land: 0.7, shal: 0.5, lap: 0.45, surf: 0 }, wMat = waterMat(tex, Object.assign({ color: 0xa8c8d8 }, WO));
+      const g = new GB(true), bands = [];
       for (const p of P.ponds) {
         const shape = p.poly.map(([x, z]) => new THREE.Vector2(x, z)), tri = THREE.ShapeUtils.triangulateShape(shape, []);
         for (const [a, b, c] of tri) { const A = p.poly[a], B = p.poly[b], C = p.poly[c], P3 = (q) => [q[0], p.y, q[1]], U = (q) => [q[0] / 30, -q[1] / 30];
           g.quadUp(P3(A), P3(B), P3(C), P3(C), [[1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1]], [U(A), U(B), U(C), U(C)]); }
         exclPush((p.bx0 + p.bx1) / 2, (p.bz0 + p.bz1) / 2, Math.max(p.bx1 - p.bx0, p.bz1 - p.bz0) / 2);
+        const G = P.G, i0 = Math.max(0, Math.floor((p.bx0 - 16 - G.x0) / SZC)), j0 = Math.max(0, Math.floor((p.bz0 - 16 - G.z0) / SZC)), i1 = Math.min(G.nx - 1, Math.ceil((p.bx1 + 16 - G.x0) / SZC)), j1 = Math.min(G.nz - 1, Math.ceil((p.bz1 + 16 - G.z0) / SZC));
+        bands.push(shoreBand(p.bx0 - 12, p.bz0 - 12, p.bx1 + 12, p.bz1 + 12, p.y + 0.015, waterline(szGH, G.x0, G.z0, SZC, i0, i1, j0, j1, p.y), 30));   // (where the terrain meets the pond)
       }
-      addM(g, wMat); out.dyn.water = wt;
+      addM(g, wMat); out.dyn.water = wt; addShore(root, mergeBands(bands), wMat, WO);
     }
     CR.water = (x, z) => !!szPond(x, z);
 
@@ -11739,6 +11944,6 @@ const World = (function () {
     U.uCam.value.copy(cam.position); U.uCar.value.set(lerp(car.px, car.x, a), lerp(car.py == null ? car.y || 0 : car.py, car.y || 0, a) + 1, lerp(car.pz, car.z, a));
   }
 
-  return { build, update, view, GB, box, cyl, cone, ico, gable, hex, vary };
+  return { build, update, view, GB, box, cyl, cone, ico, gable, hex, vary, waterSky: WSKY };
 })();
 
