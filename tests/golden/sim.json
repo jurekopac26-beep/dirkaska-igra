@@ -490,15 +490,15 @@
   }
  },
  "grom/race/cs": {
-  "digest": "02d22545258b080c9ccb2d4d",
+  "digest": "6349ec7005cf0bff7a469fc2",
   "lead": 1891.2,
   "car0": [
-   57.56,
-   -81.02
+   54.28,
+   -82.29
   ],
   "cover": {
-   "dmg": 0.56,
-   "loose": 3,
+   "dmg": 0.64,
+   "loose": 4,
    "rescues": 0,
    "repairs": 0
   }
@@ -518,7 +518,7 @@
   }
  },
  "grom/upg/cs": {
-  "digest": "0f185d9050a6f1b3d2774f76",
+  "digest": "fc1742786d31e5defff4e859",
   "lead": 1970.8,
   "car0": [
    -168.48,
@@ -532,29 +532,29 @@
   }
  },
  "grom/crash/cs": {
-  "digest": "96b61be0208f04a76a73b9fa",
-  "lead": 2527.7,
+  "digest": "29f8f95eb02e263a466e9b83",
+  "lead": 2528.9,
   "car0": [
-   -48.69,
-   -39.88
+   -169.34,
+   21.71
   ],
   "cover": {
-   "dmg": 0.91,
-   "loose": 13,
+   "dmg": 0.32,
+   "loose": 7,
    "rescues": 0,
    "repairs": 1
   }
  },
  "grom/formula/cs": {
-  "digest": "c0445d0d6a62d29a4a19375c",
-  "lead": 3562.8,
+  "digest": "2bd716b5b9bc5f09d077cd0a",
+  "lead": 3561.3,
   "car0": [
-   53.13,
-   -81.61
+   88.45,
+   -94.08
   ],
   "cover": {
    "dmg": 1,
-   "loose": 26,
+   "loose": 16,
    "rescues": 0,
    "repairs": 1
   }
