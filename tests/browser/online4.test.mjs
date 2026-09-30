@@ -53,8 +53,8 @@ try {
   T.check('the race: four cars on every page, the same grid everywhere (each at its place), two rows of two', grids.every(g => g.n === 4 && g.grid.join() === g0.join() && g.mine === g.grid.indexOf(g.me) + 1 && g.others.every(o => o.grid === g.grid.indexOf(o.id) + 1)) &&
     grids.every(g => g.d[0] === g.d[1] && g.d[2] === g.d[3] && g.d[0] - g.d[2] > 5) && grids.every(g => new Set(g.nums).size === 4), JSON.stringify(grids));
   // (the pages draw slowly, four software renderers at once: each page is waited for until it sees all three others off the grid)
-  const moved = await Promise.all(pages.map(p => until(p, () => { const r = window.__game.race; return r && r.remotes.every(c => c.dist > 5) ? r.remotes.map(c => Math.round(c.dist)) : null; }, null, 120000).catch(() => p.evaluate(() => window.__game.race.remotes.map(c => Math.round(c.dist))))));
-  T.check('every page sees the three others\' cars move (the friends\' states through the host)', moved.every(m => m.length === 3 && m.every(d => d > 5)), JSON.stringify(moved));
+  const moved = await Promise.all(pages.map(p => until(p, () => { const r = window.__game.race; return r && r.remotes.every(c => c.dist > 5) ? r.remotes.map(c => c.dist) : null; }, null, 120000).catch(() => p.evaluate(() => window.__game.race.remotes.map(c => c.dist)))));
+  T.check('every page sees the three others\' cars move (the friends\' states through the host)', moved.every(m => m.length === 3 && m.every(d => d > 5)), JSON.stringify(moved.map(m => m.map(d => +d.toFixed(1)))));
   const fins = await Promise.all(pages.map(p => until(p, () => { const n = window.__game.net, R = n && n.race; return R && R.mine != null && Object.values(R.fins).every(t => t != null) && document.getElementById('s-results').classList.contains('show') ? { me: n.me, mine: R.mine, fins: R.fins } : null; }, null, 400000)));
   const times = (f) => { const o = Object.assign({}, f.fins); o[f.me] = f.mine; return o; };
   const t0 = times(fins[0]);
