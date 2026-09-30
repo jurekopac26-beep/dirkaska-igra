@@ -1,5 +1,5 @@
 /* =========================================================================
-   INPUT — touch buttons, on-screen steering wheel, tilt, keyboard
+   INPUT — touch buttons, on-screen steering wheel, tilt, keyboard, gamepad
    ========================================================================= */
 const Input = (function () {
   'use strict';
@@ -40,6 +40,7 @@ const Input = (function () {
       if (e.repeat) return;
       keys[e.code] = true;
       if ((e.code === 'Escape' || e.code === 'KeyP') && onPause) onPause();
+      if (e.code === 'KeyC' && onCam && !(e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName))) onCam();   // (the camera; not while typing a name)
     });
     window.addEventListener('keyup', e => { keys[e.code] = false; });
     window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; ptrs.clear(); wheel.pid = null; });
@@ -72,6 +73,7 @@ const Input = (function () {
 
   function onDown(e) {
     e.preventDefault();
+    if (pad.on) { pad.on = false; padShow(); }   // (a touch: the on-screen controls again)
     try { layer.setPointerCapture(e.pointerId); } catch (_) { }
     const p = { x: e.clientX, y: e.clientY };
     ptrs.set(e.pointerId, p);
@@ -150,6 +152,40 @@ const Input = (function () {
     return v < 0 ? -s : s;
   }
 
+  /* ---------------- gamepad (the browser's Gamepad API: Xbox, PlayStation and other pads in the standard layout) ----------------
+     Left stick: steering in proportion (the d-pad: full lock); RT / R2 or A / Cross: throttle (the trigger in proportion); LT / L2 or
+     X / Square: brake; B / Circle or RB / R1: drift. padRead() once a frame (game.js): the values for update() and the presses since the
+     last frame for the menus and the pause (start, a, b, y, lb, rb and the directions of the stick or the d-pad, repeated while held).
+     From its first press the pad is the controller (the on-screen controls hide) until the screen is touched again. */
+  const PAD_DZ = 0.15, PAD_B = { a: 0, b: 1, x: 2, y: 3, lb: 4, rb: 5, back: 8, start: 9 };
+  const pad = { on: false, name: '', steer: 0, dsteer: 0, thr: 0, brk: 0, hand: 0, rx: 0, ry: 0, rt: 0, lt: 0, prev: {}, hold: {}, pressed: [] };
+  let onPad = null, onCam = null;
+  function padAxis(v) { const a = Math.abs(v || 0); if (!(a > PAD_DZ)) return 0; return Math.sign(v) * Math.pow(Math.min(1, (a - PAD_DZ) / (1 - PAD_DZ)), 1.5); }   // (a dead zone, finer near the middle)
+  function padShow() { const t = $('touch'); if (t) t.classList.toggle('pad', pad.on); }
+  function padRead(dt) {
+    pad.pressed.length = 0;
+    let gp = null;
+    try { const list = navigator.getGamepads ? navigator.getGamepads() : null; if (list) for (const g of list) if (g && g.connected !== false && g.buttons && g.buttons.length) { gp = g; break; } } catch (_) { }
+    if (!gp) { pad.steer = pad.dsteer = pad.thr = pad.brk = pad.hand = pad.rx = pad.ry = pad.rt = pad.lt = 0; pad.name = ''; return pad; }
+    if (gp.id !== pad.name) { pad.name = gp.id; pad.prev = {}; pad.hold = {}; }
+    const bv = (i) => { const b = gp.buttons[i]; if (!b) return 0; if (typeof b === 'number') return b; return b.value > 0 ? b.value : b.pressed ? 1 : 0; };
+    const lx = padAxis(gp.axes && gp.axes[0]), ly = padAxis(gp.axes && gp.axes[1]);
+    pad.steer = lx; pad.dsteer = (bv(15) > 0.5 ? 1 : 0) - (bv(14) > 0.5 ? 1 : 0); pad.rx = padAxis(gp.axes && gp.axes[2]); pad.ry = padAxis(gp.axes && gp.axes[3]); pad.rt = bv(7); pad.lt = bv(6);   // (the right stick and the triggers alone: the photo mode's camera)
+    pad.thr = Math.max(bv(7), bv(0) > 0.5 ? 1 : 0); pad.brk = Math.max(bv(6), bv(2) > 0.5 ? 1 : 0); pad.hand = bv(1) > 0.5 || bv(5) > 0.5 ? 1 : 0;
+    const down = { up: bv(12) > 0.5 || ly < -0.55, down: bv(13) > 0.5 || ly > 0.55, left: bv(14) > 0.5 || lx < -0.55, right: bv(15) > 0.5 || lx > 0.55 };
+    for (const k in PAD_B) down[k] = bv(PAD_B[k]) > 0.5;
+    let any = false;
+    for (const k in down) {
+      if (!down[k]) { pad.prev[k] = false; pad.hold[k] = 0; continue; }
+      any = true;
+      if (!pad.prev[k]) { pad.pressed.push(k); pad.hold[k] = 0; }
+      else if (!(k in PAD_B)) { const h0 = pad.hold[k]; pad.hold[k] = h0 + dt; if (pad.hold[k] > 0.42 && Math.floor((pad.hold[k] - 0.42) / 0.13) !== Math.floor((h0 - 0.42) / 0.13)) pad.pressed.push(k); }   // (a direction held: again after 0.42 s, then every 0.13 s; a button once per press)
+      pad.prev[k] = true;
+    }
+    if ((any || Math.abs(lx) > 0.3 || pad.thr > 0.2 || pad.brk > 0.2) && !pad.on) { pad.on = true; padShow(); if (onPad) onPad(gp.id); }
+    return pad;
+  }
+
   /* ---------------- per-frame ---------------- */
   function update(dt) {
     const W = window.innerWidth, H = window.innerHeight;
@@ -181,10 +217,14 @@ const Input = (function () {
       steer = clamp(wheel.ang / (wheel.max * 0.86), -1, 1); digital = false;
     } else if (mode === 'tilt') { tilt.value = tiltSteer(); steer = tilt.value; digital = false; }
     gas = gas || kU; brake = brake || kD; drift = drift || kH;
+    if (pad.on) {   // the gamepad (padRead: this frame's values): the stick over the other steering, the triggers in proportion
+      if (pad.steer) { steer = pad.steer; digital = false; } else if (pad.dsteer && !steer) steer = pad.dsteer;
+      if (pad.brk > 0.05) brake = true;
+    }
     S.steer = steer; S.digital = digital;
-    S.brk = brake ? 1 : 0;
-    S.thr = gas ? 1 : (autoGas && !brake ? 1 : 0);
-    S.hand = drift ? 1 : 0;
+    S.brk = Math.max(brake ? 1 : 0, pad.on ? pad.brk : 0);
+    S.thr = Math.max(gas ? 1 : (autoGas && !brake ? 1 : 0), pad.on ? pad.thr : 0);
+    S.hand = drift || (pad.on && pad.hand) ? 1 : 0;
     // visuals
     setPressed('left', left || kL); setPressed('right', right || kR); setPressed('gas', gas || (autoGas && !brake)); setPressed('brake', brake); setPressed('drift', drift);
     if (wheel.el && mode === 'wheel') wheel.el.style.transform = 'rotate(' + (wheel.ang / DEG).toFixed(1) + 'deg)';
@@ -196,6 +236,6 @@ const Input = (function () {
   function reset() { ptrs.clear(); wheel.pid = null; wheel.ang = 0; for (const k in keys) keys[k] = false; }
   function vibrate(ms) { if (vib && navigator.vibrate) { try { navigator.vibrate(ms); } catch (_) { } } }
 
-  return { init, layout, setMode, setOptions, update, requestTilt, tiltAlive, calibrate, reset, vibrate, state: S, tilt, get mode() { return mode; } };
+  return { init, layout, setMode, setOptions, update, requestTilt, tiltAlive, calibrate, reset, vibrate, padRead, set onPad(fn) { onPad = fn; }, set onCam(fn) { onCam = fn; }, pad, state: S, tilt, get mode() { return mode; } };
 })();
 

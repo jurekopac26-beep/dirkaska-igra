@@ -27,13 +27,15 @@ try {
   };
   // Bakreni gozd: at racing speed full throttle and full left lock for 2.5 s (damage, loose panels on the track), then on
   // autopilot into the pits (rescued when stuck, like a player pressing the button) until the car is repaired: the
-  // renderer swaps in a fresh car while the panels still lie on the track; the next race start frees them
+  // renderer swaps in a fresh car while the panels still lie on the track; the next race start frees them.
+  // How hard the car hits depends on the traffic around it (the random numbers drawn on the tracks before, the real-time
+  // frames in between): when no panel came off, the car is put back on the road and sent into the barrier again (at most 3 more times)
   const crashAndRepair = async () => {
     await startTrack(page, 'gozd');
     return page.evaluate(async () => {
       const g = window.__game, P = g.race.player, raf = () => new Promise(r => requestAnimationFrame(r));
       for (let i = 0; i < 40 && g.race.time < 6; i++) g.sim(0.5, true);
-      g.sim(2.5, false, -1); await raf(); await raf();
+      for (let k = 0; k < 4 && (k === 0 || !g.race.debris.length); k++) { if (k) { g.race.rescue(P); g.sim(4, true); } g.sim(2.5, false, -1); await raf(); await raf(); }
       let dmg = P.dmg, loose = g.race.debris.length;
       for (let i = 0; i < 180 && !P.repairN; i++) {
         if (P.stuckT > 3 || P.wrongT > 3) g.race.rescue(P);
@@ -49,7 +51,7 @@ try {
   const carMenu = () => page.evaluate(async () => {
     const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)), raf = () => new Promise(r => requestAnimationFrame(r));
     g.onAction('to-car'); await wait(300);
-    for (let k = 0; k < 12; k++) { g.onAction('car-next'); await raf(); await raf(); }
+    for (let k = 0; k < 2 * Core.MODELS.length; k++) { g.onAction('car-next'); await raf(); await raf(); }   // (back at the same car: every round ends the same)
     g.onAction('to-title'); await wait(200);
   });
   const rounds = [];
