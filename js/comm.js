@@ -61,7 +61,27 @@ const Comm = (() => {
     partLost: ['There goes the {part}!', 'The {part} has come clean off!', 'Bits flying everywhere, that was the {part}!'],
     heavyDamage: ["Smoke pouring from the engine! That doesn't look good!", 'Heavy damage! Nurse it home!', 'That car is badly hurt now!'],
     pitIn: ['Into the pit lane!', 'Coming in for repairs!', 'He dives into the pits!'],
+    pitAdvice: ['That car is damaged! Box, box: the pit lane is on the right, just after the last corner, and the mechanics will fix it.', 'Heavy damage there! Bring it into the pits after the final corner, the crew are ready.', 'Time to pit! The entry is on the right after the last corner, the mechanics will put it right.'],
+    // flags: a yellow flag, the safety car, overtaking under them
+    yellow: ['Yellow flags! A car has stopped on the track.', 'Yellow flag waving, careful through there!', 'Yellow flags, a stranded car ahead!'],
+    sc: ['The safety car is out! No overtaking!', 'Safety car deployed! The field will bunch up behind it.', 'Here comes the safety car! Everyone slows down.'],
+    scIn: ['The safety car is coming in! Get ready for the restart!', 'Safety car in this lap! Warm up those tyres!', 'The lights are off on the safety car, restart coming!'],
+    green: ['Green flag! We are racing again!', 'And we are green! Back to racing!', 'Green, green, green! Racing resumes!'],
+    passWarn: ['Overtaking under the flag! Give that place back!', 'That was a pass under yellow! Let him back through!', 'No overtaking under the flag! Give the position back!'],
+    penalty: ['A five second penalty!', 'That will cost you: five seconds added!', 'Penalty! Five seconds on your race time!'],
+    // a changing weather (the rain starts or stops during the race) and the tyres
+    rainStart: ['And here comes the rain! The track is getting wet!', 'Spots of rain on the visors! Slicks or rain tyres now?', 'It is starting to rain! The grip is going away!'],
+    rainStop: ['The rain has stopped! The track will start to dry.', 'No more rain! Watch for a dry line appearing.', 'The rain has eased off. A drying track now!'],
+    dryLine: ['A dry line is appearing! Those rain tyres are overheating!', 'The racing line is dry now. Time for slicks?', 'Dry line! The rain tyres will not last on this.'],
     drs: ['DRS open down the straight!', 'The rear wing opens, DRS is on!', 'Within a second at the line, DRS for the chase!'],
+    secPurple: ['Purple sector!', 'Fastest sector {n} of the race so far!', 'That is a purple sector {n}!', 'Nobody has been quicker through sector {n}!'],
+    // qualifying: one flying lap alone, the rivals' times make the grid
+    qualiIntro: ['Welcome to {track}! Qualifying first: one flying lap, and your time decides where you start.', 'Here we are at {track} for qualifying. One lap on your own, give it everything!', 'Qualifying at {track}! Just you and the clock for one lap.'],
+    qualiGo: ['Build up the speed, the clock starts at the line!', 'Here we go! The lap starts when you cross the line.', 'Out onto the straight, the flying lap begins at the line!'],
+    qualiLap: ['The clock is running! Push!', 'Across the line, the flying lap is on!', 'And the lap begins! Every hundredth counts!'],
+    qualiEnd: ['Lap complete, {time}! Let us see where that puts you.', 'Across the line in {time}. How does that compare?', '{time} on the clock. Now we wait for the order.'],
+    pole: ['Pole position! Nobody was faster!', 'Fastest of all! You start from pole!', 'Pole position! What a lap!'],
+    qualiGrid: ['You will start {grid} on the grid.', 'That puts you {grid} on the grid.', 'Starting position: {grid}.'],
     pitWork: ['The crew get to work!', 'Mechanics all over the car!', 'Quick work needed here from the crew!'],
     pitOut: ['Back out, good as new!', 'Great stop from the crew!', 'Repaired and rejoining the race!'],
     propCone: ['Cone down!', 'There goes a cone!', 'Sending the cones flying!'],
@@ -82,6 +102,9 @@ const Comm = (() => {
     summitEven: ['At the summit in {time}. That is your record to the thousandth!', '{time} at the top, dead level with your best!'],
     // Pikes Peak: the TV helicopter (its fly-over after Glen Cove, and the escort to the finish)
     heliFly: ['The TV chopper is overhead!', 'Here comes the helicopter, catching the action!', 'Look up! The TV helicopter sweeps across the road!'],
+    podiumRb: ['{name} on the top step of the podium, and the champagne is flying!', 'The podium ceremony in Spielberg: {name} lifts the cup!', 'Champagne on the podium! {name} is the winner at the Red Bull Ring!'],
+    podiumMe: ['You are on the top step! Enjoy the champagne!', 'The cup is yours! What a drive at the Red Bull Ring!', 'Champagne for the winner: that is you!'],
+    heliRb: ['The TV helicopter sweeps across the main straight!', 'There goes the helicopter over the start and finish straight!', 'The chopper cameras catch you coming down the straight!'],
     heliFin: ['And the helicopter is back, escorting you to the summit!', 'The TV chopper picks you up for the final run to the line!', 'Here comes the helicopter again, the cameras follow you home!'],
     summit: ['At the summit in {time}, {delta} seconds off your best.', 'Across the line at the top. {time}, just {delta} short of the record.', "That's the summit. {time}. {delta} seconds to find next time."],
     // time trial on a rally special stage (Ouninpohja): gravel, crests and jumps, a flying finish
@@ -192,7 +215,7 @@ const Comm = (() => {
   // news from the world: the Pikes Peak TV helicopter shows up (World's dyn.pk.news: { key, n }, each said once)
   let heliSeen = null;
   function heliNews() {
-    const w = typeof Render !== 'undefined' && Render.world, pk = w && w.dyn && w.dyn.pk, nw = pk && pk.news;
+    const w = typeof Render !== 'undefined' && Render.world, pk = w && w.dyn && (w.dyn.pk || w.dyn.air), nw = pk && pk.news;   // (the Red Bull Ring's: dyn.air)
     if (!nw || nw === heliSeen) return;
     heliSeen = nw; say(nw.key, null, 1, { ttl: 4000 });
   }

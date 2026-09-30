@@ -1,5 +1,6 @@
 // Full AI races on every track with both physics (12 AI + the player on autopilot; Pikes Peak: time trial), to the finish,
-// in the dry and in the rain ('/rain': every car with the wet grip, the AI's pace from it).
+// in the dry and in the rain ('/rain': every car with the wet grip, the AI's pace from it), and with the player in the formula car
+// ('/formula': every car a formula, as in the game).
 // Checks that every car finishes and compares with tests/golden/races.json: the exact result (finish order, finish times
 // and the final state of every car, as a digest) must be the same. When it is not, the other values show how big the
 // change is: spins (at most 2 more than the reference), wall contacts, rescues and the winner's time (within +-3 %).
@@ -19,13 +20,13 @@ const only = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7).sp
 const C = loadCore();
 const ref = fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, 'utf8')) : {};
 
-function race(tid, phys, rain) {
+function race(tid, phys, rain, model) {
   const orig = Math.random;
   try {
     Math.random = seeded(3);
     const T = new C.Track(C.TRACKS.find(d => d.id === tid)), tt = !!T.def.timeTrial;
     const laps = tt || tid === 'nring' ? 1 : 2;
-    const r = new C.Race(T, { numAI: tt ? 0 : 12, playerGrid: tt ? 1 : 12, laps, playerModel: C.MODELS[4], assist: 2, phys, seed: 11, difficulty: 1, rain });
+    const r = new C.Race(T, { numAI: tt ? 0 : 12, playerGrid: tt ? 1 : 12, laps, playerModel: model || C.MODELS[4], assist: 2, phys, seed: 11, difficulty: 1, rain });
     r.start();
     const P = r.player, st = new Map(r.cars.map(c => [c, { spins: 0, spinning: false, walls: 0, resc: 0 }]));
     const tmax = T.len * laps / 12 + 120;
@@ -50,10 +51,11 @@ function race(tid, phys, rain) {
 }
 
 const out = {}; let bad = 0; const t0 = Date.now();
-for (const tid of trackIds(C)) for (const phys of PHYSICS) for (const rain of [0, 1]) {
-  const key = `${tid}/${phys}` + (rain ? '/rain' : '');
+const FORMULA = C.MODELS.find(m => m.id === 'formula');
+for (const tid of trackIds(C)) for (const phys of PHYSICS) for (const v of ['', 'rain', 'formula']) {
+  const rain = v === 'rain' ? 1 : 0, key = `${tid}/${phys}` + (v ? '/' + v : '');
   if (only.length && !only.every(o => key.split('/').includes(o))) { if (ref[key]) out[key] = ref[key]; continue; }
-  const r = race(tid, phys, rain); out[key] = r;
+  const r = race(tid, phys, rain, v === 'formula' ? FORMULA : null); out[key] = r;
   const g = ref[key], why = [], dry = rain && (out[`${tid}/${phys}`] || ref[`${tid}/${phys}`]);
   if (r.nan) why.push('NaN in car state');
   if (r.finished !== r.cars) why.push(`only ${r.finished}/${r.cars} finished`);
@@ -67,7 +69,7 @@ for (const tid of trackIds(C)) for (const phys of PHYSICS) for (const rain of [0
   if (!update && !g) why.push('no reference');
   const changed = !update && g && g.digest !== r.digest;   // (a different result, even if every value above is within its limit)
   if (why.length || changed) bad++;
-  console.log(`${key.padEnd(22)} fin ${r.finished}/${r.cars} winner ${String(r.winner).padStart(7)} s spins ${r.spins} walls ${r.walls} rescues ${r.rescues} ${r.digest} ` +
+  console.log(`${key.padEnd(25)} fin ${r.finished}/${r.cars} winner ${String(r.winner).padStart(7)} s spins ${r.spins} walls ${r.walls} rescues ${r.rescues} ${r.digest} ` +
     (why.length ? 'FAIL: ' + why.join('; ') : changed ? `CHANGED: not the same result as the reference (was ${g.digest}, winner ${g.winner} s); if the change was intended: npm run golden:update` : 'OK'));
 }
 const secs = ((Date.now() - t0) / 1000).toFixed(0);
