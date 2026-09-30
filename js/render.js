@@ -725,6 +725,28 @@ const Render = (function () {
   }
 
   /* ---------------- particles ---------------- */
+  // smoke, dust and spray puffs: a 2 x 2 atlas of soft cloudy blobs (alpha = density, fading to nothing at the rim), drawn once; a
+  // particle takes one of the four by its seed and turns it (so no two puffs look alike and a cloud is not made of discs)
+  let puffTexC = null;
+  function puffTex() {
+    if (puffTexC) return puffTexC;
+    const N = 128, H = N / 2, cv = document.createElement('canvas'); cv.width = cv.height = N; const g = cv.getContext('2d');
+    let sd = 7331; const R = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };   // (a fixed pattern: the same puffs every time)
+    for (let k = 0; k < 4; k++) {
+      const ox = (k % 2) * H, oy = Math.floor(k / 2) * H, cx = ox + H / 2, cy = oy + H / 2;
+      g.save(); g.beginPath(); g.rect(ox, oy, H, H); g.clip();
+      for (let n = 0; n < 11; n++) {   // overlapping soft blobs: denser in the middle, lumpy at the edge
+        const a = R() * Math.PI * 2, d = Math.pow(R(), 0.8) * H * 0.2, x = cx + Math.cos(a) * d, y = cy + Math.sin(a) * d, r = H * (0.15 + R() * 0.16);
+        const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgba(255,255,255,' + (0.4 + R() * 0.25).toFixed(3) + ')'); gr.addColorStop(0.55, 'rgba(255,255,255,' + (0.18 + R() * 0.12).toFixed(3) + ')'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+        g.fillStyle = gr; g.fillRect(ox, oy, H, H);
+      }
+      g.globalCompositeOperation = 'destination-in';   // (a round rim: nothing past it, however the puff is turned)
+      const m = g.createRadialGradient(cx, cy, 0, cx, cy, H * 0.48); m.addColorStop(0, 'rgba(0,0,0,1)'); m.addColorStop(0.62, 'rgba(0,0,0,0.9)'); m.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = m; g.fillRect(ox, oy, H, H); g.restore();
+    }
+    puffTexC = new THREE.CanvasTexture(cv); puffTexC.minFilter = THREE.LinearFilter; puffTexC.generateMipmaps = false;
+    return puffTexC;
+  }
   class Particles {
     constructor(max, additive) {
       this.max = max; this.cur = 0;
@@ -738,12 +760,33 @@ const Render = (function () {
       this.aSize = new THREE.BufferAttribute(this.size, 1); this.aSize.setUsage(THREE.DynamicDrawUsage);
       g.setAttribute('position', this.aPos); g.setAttribute('pcolor', this.aCol); g.setAttribute('psize', this.aSize);
       g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
-      this.mat = new THREE.ShaderMaterial({
+      if (additive) this.mat = new THREE.ShaderMaterial({   // sparks and flames: glowing dots
         uniforms: { uScale: { value: 400 } },
         vertexShader: 'attribute float psize; attribute vec4 pcolor; uniform float uScale; varying vec4 vC; void main(){ vC = pcolor; vec4 mv = modelViewMatrix * vec4(position,1.0); gl_PointSize = psize * uScale / max(1.0, -mv.z); gl_Position = projectionMatrix * mv; }',
         fragmentShader: 'varying vec4 vC; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d,d)*4.0; if (r > 1.0) discard; float a = vC.a * (1.0 - r) * (1.0 - r * 0.3); gl_FragColor = vec4(vC.rgb, a); }',
-        transparent: true, depthWrite: false, blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
+        transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
       });
+      else {   // smoke, dust, spray: puffs from the atlas, each turned its own way and slowly turning as it grows; lit from above (a darker
+        // underside), and darker with the light of the scene (uLit: dusk, night, a grey rainy day)
+        this.info = new Float32Array(max * 2);   // (per particle: its seed 0..1, its age 0..1)
+        for (let i = 0; i < max; i++) { const h = Math.sin(i * 12.9898 + 78.233) * 43758.5453; this.info[i * 2] = h - Math.floor(h); }   // (a fixed seed per slot: no random numbers drawn)
+        this.aInfo = new THREE.BufferAttribute(this.info, 2); this.aInfo.setUsage(THREE.DynamicDrawUsage); g.setAttribute('pinfo', this.aInfo);
+        this.mat = new THREE.ShaderMaterial({
+          uniforms: { uScale: { value: 400 }, uPuff: { value: puffTex() }, uLit: { value: new THREE.Vector3(1, 1, 1) } },
+          vertexShader: 'attribute float psize; attribute vec4 pcolor; attribute vec2 pinfo; uniform float uScale; varying vec4 vC; varying vec2 vI; void main(){ vC = pcolor; vI = pinfo; vec4 mv = modelViewMatrix * vec4(position,1.0); gl_PointSize = psize * uScale / max(1.0, -mv.z); gl_Position = projectionMatrix * mv; }',
+          fragmentShader: ['uniform sampler2D uPuff; uniform vec3 uLit; varying vec4 vC; varying vec2 vI;',
+            'void main(){',
+            '  vec2 d = gl_PointCoord - 0.5; if (dot(d, d) > 0.25) discard;',
+            '  float an = vI.x * 6.2832 + vI.y * (vI.x - 0.5) * 2.4, cs = cos(an), sn = sin(an);',
+            '  vec2 q = clamp(vec2(cs * d.x - sn * d.y, sn * d.x + cs * d.y) + 0.5, 0.0, 1.0);',
+            '  float k = floor(vI.x * 3.999); vec2 cell = vec2(mod(k, 2.0), floor(k * 0.5)) * 0.5;',
+            '  float a = vC.a * min(1.0, texture2D(uPuff, cell + q * 0.5).a * 1.4);',
+            '  if (a < 0.004) discard;',
+            '  gl_FragColor = vec4(vC.rgb * uLit * (1.05 - 0.15 * gl_PointCoord.y), a);',
+            '}'].join('\n'),
+          transparent: true, depthWrite: false, blending: THREE.NormalBlending,
+        });
+      }
       this.points = new THREE.Points(g, this.mat); this.points.frustumCulled = false; this.points.renderOrder = additive ? 6 : 5;
     }
     emit(x, y, z, vx, vy, vz, life, s0, s1, r, g, b, a, grav, drag, floor) {
@@ -755,7 +798,7 @@ const Render = (function () {
       this.col[i * 4] = r; this.col[i * 4 + 1] = g; this.col[i * 4 + 2] = b; this.col[i * 4 + 3] = a;
     }
     update(dt) {
-      const n = this.max;
+      const n = this.max, I = this.info;
       for (let i = 0; i < n; i++) {
         if (this.life[i] <= 0) { this.size[i] = 0; this.col[i * 4 + 3] = 0; continue; }
         this.life[i] -= dt;
@@ -766,8 +809,9 @@ const Render = (function () {
         if (this.pos[i * 3 + 1] < this.floor[i]) { this.pos[i * 3 + 1] = this.floor[i]; this.vel[i * 3 + 1] *= -0.3; this.vel[i * 3] *= 0.6; this.vel[i * 3 + 2] *= 0.6; }
         this.size[i] = this.s0[i] + (this.s1[i] - this.s0[i]) * Math.sqrt(t);
         this.col[i * 4 + 3] = this.a0[i] * (1 - t) * Math.min(1, t * 8 + 0.2);
+        if (I) I[i * 2 + 1] = t;
       }
-      this.aPos.needsUpdate = true; this.aCol.needsUpdate = true; this.aSize.needsUpdate = true;
+      this.aPos.needsUpdate = true; this.aCol.needsUpdate = true; this.aSize.needsUpdate = true; if (I) this.aInfo.needsUpdate = true;
     }
     clear() { this.life.fill(0); }
   }
@@ -1147,6 +1191,8 @@ const Render = (function () {
     }
     if (A.season === 'winter' && A.tod !== 'night') { to(scene.fog.color, 0xdfe6ee, 0.4); renderer.setClearColor(scene.fog.color, 1); to(sun.color, 0xeef3ff, 0.5); hemi.intensity *= 1.12; if (post) post.mat.uniforms.uSat.value *= 0.88; }
     if (A.season === 'autumn' && A.tod === 'day' && !t.season) { to(sun.color, 0xffd9a8, 0.3); if (post) post.mat.uniforms.uTint.value.set(1.04, 0.99, 0.93); }
+    // the smoke and dust in that light: warm at dusk, dark and blue at night (only the lit parts glow: the floodlights, the headlights' beams)
+    if (particles && particles.mat.uniforms.uLit) { const L = particles.mat.uniforms.uLit.value; if (A.tod === 'night') L.set(0.36, 0.4, 0.5); else if (A.tod === 'dusk') L.set(0.97, 0.85, 0.74); else L.set(1, 1, 1); }
   }
   // the weather of the race on screen (race.rain 0..1): the sky and the streaks
   function applyWeather(r) {
@@ -2615,7 +2661,7 @@ const Render = (function () {
           if (Math.random() < 0.4) particles.emit(px, 0.3 + yb, pz, vxs * 0.6, 0.5 + Math.random() * 0.5, vzs * 0.6, 0.5 + Math.random() * 0.3, 0.8, 2.4, 0.62, 0.62, 0.58, 0.2, -0.05, 1.8, yb);
         }
       } else if (onHard && intens > 0.22 && spd > 3) {
-        v.acc[k] += Math.min(1.3, intens) * 42 * dt;
+        v.acc[k] += Math.min(1.3, intens) * 42 * dt * (c.latR < 1.5 && spd < 18 ? 0.4 : 1);   // (wheelspin getting away, the car straight: a light haze, not the drift's cloud)
         while (v.acc[k] >= 1) {
           v.acc[k] -= 1;
           const vxs = c.vx * 0.12 + (Math.random() - 0.5) * 1.6, vzs = c.vz * 0.12 + (Math.random() - 0.5) * 1.6;
