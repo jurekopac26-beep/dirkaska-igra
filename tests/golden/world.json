@@ -184,21 +184,21 @@
   }
  },
  "vrsic": {
-  "meshes": 4294,
-  "verts": 1891410,
-  "instances": 68362,
-  "props": 308,
-  "crowd": 1431,
-  "world": "b982e3a1",
-  "propsHash": "b87090f3",
-  "floor": "5926cf0f/25760",
+  "meshes": 4288,
+  "verts": 1889480,
+  "instances": 67606,
+  "props": 304,
+  "crowd": 1460,
+  "world": "21d32edf",
+  "propsHash": "de1601ff",
+  "floor": "90eb1e9e/25760",
   "groups": {
-   "-:MeshLambertMaterial": "9939a4b9",
-   "-:MeshPhongMaterial": "8705289c",
-   "-:MeshBasicMaterial": "eb78c138",
-   "crowd:MeshLambertMaterial": "567d2ee9",
-   "tyremarks:MeshBasicMaterial": "a695e87e",
-   "roadwear:MeshLambertMaterial": "a20f2891"
+   "-:MeshLambertMaterial": "b2457ef2",
+   "-:MeshPhongMaterial": "4e626e81",
+   "-:MeshBasicMaterial": "9b1d56ae",
+   "crowd:MeshLambertMaterial": "56769656",
+   "tyremarks:MeshBasicMaterial": "23e69b41",
+   "roadwear:MeshLambertMaterial": "8c36670b"
   }
  },
  "nring": {

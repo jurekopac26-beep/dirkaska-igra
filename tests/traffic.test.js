@@ -117,7 +117,7 @@ const orig = Math.random;
   // a cyclist knocked: the rider falls off (thrown as a person), the bicycle slides away; 5 s more
   const r2 = duel({}), tf2 = r2.tf, P2 = r2.player, b = tf2.veh.find(v => v.kind === 4 && v.dir > 0 && v.s - T.startS > 2500 && v.s - T.startS < 6000);
   put(r2, b.s - T.startS - 7, b.d, b.v + 12);
-  let evB = null; for (let k = 0; k < 120 * 2; k++) { P2.inThr = 0.5; P2.inBrk = 0; P2.inSteer = 0; P2.steer = 0; r2.step(DT); if (!evB && tf2.ev) evB = tf2.evK; }
+  let evB = null; for (let k = 0; k < 120 * 2; k++) { P2.inThr = evB ? 0 : 0.5; P2.inBrk = evB ? 1 : 0; P2.inSteer = 0; P2.steer = 0; r2.step(DT); if (!evB && tf2.ev) evB = tf2.evK; }   // (braking once it is hit: nobody else on the verge knocked down)
   const rider = b.rider;
   check('a cyclist knocked falls off (thrown), the bicycle comes loose; 5 s in the duel', evB === 'bike' && b.st > 0 && rider && rider.kind === 3 && P2.tfPen === 5, `event ${evB}, bicycle ${b.st}, rider ${rider ? rider.st : '-'}, penalty ${P2.tfPen || 0} s`);
 }

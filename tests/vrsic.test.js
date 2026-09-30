@@ -1,5 +1,5 @@
 // Vršič: an open road with four ways to drive it on one card (def.modes: the race, the time trial, the duel in the traffic and the run from
-// the police; the last two: tests/traffic.test.js, tests/police.test.js). The road 10 m wide, the sidewalks of Kranjska Gora and Jasna part
+// the police; the last two: tests/traffic.test.js, tests/police.test.js). The road 13 m wide, the sidewalks of Kranjska Gora and Jasna part
 // of it (asphalt, drivable). In Core: opts.tt makes the time trial (the player alone on the start line), without it the race (12 AI behind
 // the line on the circuits' grid), and an online race (opts.remote) is always the race; the cobbled hairpins (def.setts) are a surface of
 // their own (7, 8 in the rain) with less grip, and the AI takes them slower; a whole race up the pass (12 AI + the player on autopilot):
@@ -19,10 +19,10 @@ const opts = (o) => Object.assign({ numAI: 12, playerGrid: 12, laps: 1, playerMo
 // 1. the track: an open road, both ways to drive it, its hairpins and cobbles; not a round of the big championship
 check('track: an open road with four ways to drive it (def.modes: race, time trial, traffic, police), not a time trial only', def.open && !def.timeTrial && (def.modes || []).join(',') === 'race,tt,traffic,police' && T.cpS.length === 4,
   `race ${Math.round(T.raceLen)} m, ${T.cpS.length} checkpoints, climb ${def.alt.join('-')} m, modes ${(def.modes || []).join(',')}`);
-{ // the road 10 m wide; in Kranjska Gora and at Jasna the sidewalks are part of it (asphalt to the kerb's far side), elsewhere past the edge the verge
+{ // the road 13 m wide; in Kranjska Gora and at Jasna the sidewalks are part of it (asphalt to the kerb's far side), elsewhere past the edge the verge
   const at = (s, d) => { const i = T.idx(T.startS + s); return T.surface(T.query(T.px[i] + T.nx[i] * d, T.pz[i] + T.nz[i] * d, i, {})); };
   const town = [300, 700, 1100, 1700, 2000].every(s => at(s, T.w + 1.6) === 0 && at(s, -T.w - 1.6) === 0), out = [4000, 6200, 9000].every(s => at(s, T.w + 1.6) !== 0 && at(s, 0) === 0);
-  check('track: the road 10 m wide, the sidewalks in the villages part of it (drivable asphalt), the verge elsewhere; zebra crossings and bus stops', T.w === 5 && T.walk && town && out && def.zebras.length === 5 && def.stops.length >= 10,
+  check('track: the road 13 m wide, the sidewalks in the villages part of it (drivable asphalt), the verge elsewhere; zebra crossings and bus stops', T.w === 6.5 && T.walk && town && out && def.zebras.length === 5 && def.stops.length >= 10,
     `half width ${T.w} m, sidewalks ${def.walks.map(w => w[0] + '-' + w[1] + ' m').join(', ')}, ${def.zebras.length} zebras, ${def.stops.length} bus stops`);
 }
 check('track: 24 numbered hairpins, the cobbled stretches marked on the samples', def.hairpins.length === 24 && T.settAt && T.settAt.reduce((a, b) => a + b, 0) > 300,

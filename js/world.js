@@ -7812,6 +7812,16 @@ const World = (function () {
     return out.propStats = roadsideProps(out.props, { spots, postEdge: [1.2, 1.6], postCol: (i) => (alt(i) > 1450 ? 1 : 0), exits: 0, apexes: 0, wallEdge: [1.4, 1.9], stacks: [5, 6], rows2: 0, maxLat: T.w + 2,
       floor: out.propFloor, skip: (i) => { const s = i * T.ds; return s < sA || s > sB; } });
   }
+  // the verge ribbons' grit: Pikes Peak's (pkTex: the grey grit in r, its relief in g, glints in b, read by its own ground shader) as a plain
+  // grey map (r in all three channels), the vertex colours giving the hue
+  let vrGTex = null;
+  function vrGritTex() {
+    if (vrGTex) return vrGTex;
+    const src = pkTex().image, S = src.width, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d');
+    x.drawImage(src, 0, 0); const img = x.getImageData(0, 0, S, S), d = img.data; for (let o = 0; o < d.length; o += 4) d[o + 1] = d[o + 2] = d[o];
+    x.putImageData(img, 0, 0); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4;
+    return (vrGTex = t);
+  }
   function buildVrsic(scene, tex, opts) {
     const R = rng(7611), N = T.N, w = T.w, dens = opts.density || 1, def = T.def, PI = Math.PI;
     const root = new THREE.Group(); scene.add(root);
@@ -7849,7 +7859,7 @@ const World = (function () {
 
     /* ---- terrain tiles, the lakes ---- */
     let nFar = 0;
-    const tMat = pkGroundMat(), gMat = new THREE.MeshLambertMaterial({ map: pkTex(), vertexColors: true });   // terrain tiles (the grit fades on steep faces) / verge ribbons
+    const tMat = pkGroundMat(), gMat = new THREE.MeshLambertMaterial({ map: vrGritTex(), vertexColors: true });   // terrain tiles (the grit fades on steep faces) / verge ribbons
     {
       const G = P.G, grp = new THREE.Group(); root.add(grp); out.ground = grp;
       for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {

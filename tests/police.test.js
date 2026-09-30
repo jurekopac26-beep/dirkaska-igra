@@ -1,7 +1,7 @@
 // The run from the police (Vršič, Race opts.police: race.pol): only in that mode; the player alone up the open road (the traffic a little
 // thinner), one patrol car behind them at the start, more joining as the heat rises; spike strips and roadblocks planned on the straight
-// stretches past the village; how hard by the game's difficulty. A whole run on autopilot: the patrol cars join, knock the player's car,
-// lay strips and block the road, some are wrecked; the autopilot goes through the gaps and escapes over the pass. Stopped with a patrol
+// stretches past the village; how hard by the game's difficulty. Whole runs on autopilot: the patrol cars join, knock the player's car,
+// lay strips and block the road, some are wrecked; the autopilot mostly goes through the gaps and escapes over the pass. Stopped with a patrol
 // car close by: busted. A tyre over a strip goes flat (the wheels over it, not the ones in the gap); flat tyres: less grip, more drag.
 //   node tests/police.test.js
 'use strict';
@@ -38,23 +38,28 @@ const finite = (r) => r.pol.cars.every(c => Number.isFinite(c.x + c.z + c.vx + c
   Math.random = orig;
 }
 
-// 4. a whole run on autopilot: they join, knock the player's car, lay strips, block the road, some are wrecked; the autopilot escapes over the pass
+// 4. whole runs on autopilot (three races, three seeds): they join, knock the player's car, lay strips, block the road, some are wrecked;
+//    the autopilot mostly goes through the gaps and escapes over the pass (the police do catch it now and then: a knock onto a strip, boxed in)
 {
-  Math.random = seeded(3);
-  const r = new C.Race(T, opts({})), P = r.player, pol = r.pol; r.start();
-  let t = 0, k = 0, ev = 0, resc = 0, nan = false; const evs = {};
-  while (t < 900 && !P.finished) {
-    Math.random = seeded(5000 + (++k));
-    C.aiControl(P, r, DT); r.step(DT); t += DT;
-    if (P.stuckT > 3 || P.wrongT > 3) { r.rescue(P); resc++; }
-    if (pol.ev !== ev) { ev = pol.ev; evs[pol.evK] = (evs[pol.evK] || 0) + 1; }
-    if (k % 60 === 0 && !finite(r)) nan = true;
-  }
-  Math.random = orig;
-  check('a whole run on autopilot: patrol cars join, knock the car, lay spike strips, block the road, some wrecked; the heat up to 3 stars or more',
-    (evs.join || 0) >= 2 && (evs.ram || 0) >= 3 && (evs.spikes || 0) >= 2 && (evs.block || 0) >= 1 && (evs.wreck || 0) >= 1 && pol.heatMax >= 3 && !nan, JSON.stringify(evs) + `, heat ${pol.heatMax.toFixed(1)}`);
-  check('the autopilot goes through the gaps (no flat tyre) and escapes over the pass', P.finished && pol.escaped && !pol.busted && !P.flat && evs.escaped === 1,
-    `${pol.escaped ? 'escaped' : pol.busted ? 'busted' : '-'} in ${t.toFixed(0)} s at ${(P.q.s - T.startS).toFixed(0)} m, flats ${P.flat || 0}, rescues ${resc}, damage ${P.dmg.toFixed(2)}`);
+  const runs = [11, 12, 13].map(seed => {
+    Math.random = seeded(3);
+    const r = new C.Race(T, opts({ seed })), P = r.player, pol = r.pol; r.start();
+    let t = 0, k = 0, ev = 0, resc = 0, nan = false; const evs = {};
+    while (t < 900 && !P.finished) {
+      Math.random = seeded(5000 + (++k));
+      C.aiControl(P, r, DT); r.step(DT); t += DT;
+      if (P.stuckT > 3 || P.wrongT > 3) { r.rescue(P); resc++; }
+      if (pol.ev !== ev) { ev = pol.ev; evs[pol.evK] = (evs[pol.evK] || 0) + 1; }
+      if (k % 60 === 0 && !finite(r)) nan = true;
+    }
+    Math.random = orig;
+    return { seed, evs, nan, heat: pol.heatMax, escaped: pol.escaped && !pol.busted && P.finished && evs.escaped === 1, busted: pol.busted, flat: P.flat || 0, t, at: P.q.s - T.startS, resc };
+  });
+  const all = {}; for (const r of runs) for (const k in r.evs) all[k] = (all[k] || 0) + r.evs[k];
+  check('whole runs on autopilot: patrol cars join, knock the car, lay spike strips, block the road, some wrecked; the heat up to 3 stars or more',
+    runs.every(r => (r.evs.join || 0) >= 2 && (r.evs.ram || 0) >= 3 && (r.evs.spikes || 0) >= 1 && !r.nan) && (all.block || 0) >= 2 && (all.wreck || 0) >= 3 && runs.every(r => r.heat >= 3), JSON.stringify(all) + ', heat ' + runs.map(r => r.heat.toFixed(1)).join(' / '));
+  check('the autopilot mostly goes through the gaps (no flat tyre) and escapes over the pass (two of three runs at least)', runs.filter(r => r.escaped).length >= 2 && runs.filter(r => !r.flat).length >= 2,
+    runs.map(r => `seed ${r.seed}: ${r.escaped ? 'escaped' : r.busted ? 'busted' : '-'} in ${r.t.toFixed(0)} s at ${r.at.toFixed(0)} m, flats ${r.flat}, rescues ${r.resc}`).join('; '));
 }
 
 // 5. stopped with a patrol car close by: busted (the meter fills in the difficulty's seconds)

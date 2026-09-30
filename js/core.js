@@ -2148,6 +2148,7 @@ const Core = (function () {
       const over = (d, w) => Math.abs(d - a.d) < (w + a.wid) / 2 + 0.25;
       for (let j = k + 1; j < L.length; j++) { const b = L[j], g = (b.s - a.s) * dir - (a.len + b.len) / 2; if (g > 160) break; if (over(b.d, b.wid)) { cand(g, b.v, b, false); break; } }
       for (const b of this.hz) { const g = (b.s - a.s) * dir - (a.len + b.len) / 2; if (g > -1 && g < 160 && over(b.d, b.wid)) cand(g, 0, b, true); }
+      if (this.race.pol) for (const pc of this.race.pol.cars) if (pc.pol.block && pc.pol.mode === 'park') { const g = (pc.q.s - a.s) * dir - a.len / 2 - 80; if (g > -6 && g < 160) cand(Math.max(0, g), 0, pc, false); }   // (a roadblock ahead: the police hold the traffic ~80 m before it, both ways: room to drive round it)
       for (const p of this.onRoad) { const g = (p.s - a.s) * dir - a.len / 2 - 0.5; if (g > -0.5 && g < 60 && over(p.d, 0.8)) cand(g, 0, p, p.st !== 'cross' && p.st !== 'xcross' && p.st !== 'flee'); }
       let dT = this._lane(a), fromBehind = false, horn = false, side = 0, siren = false;
       for (const c of this.cl) {
@@ -2429,7 +2430,7 @@ const Core = (function () {
       let lo = -1e9, hi = 1e9, fg = 1e9, clearL = 1e9, ng = 1e9, nO = null, nLen = 0, nVs = 0;
       out.fol = null;
       for (const o of this.veh) {   // the ones coming down: to their right
-        if (o.off || o.st !== 0 || o.dir > 0) continue;
+        if (o.off || o.st !== 0 || o.dir > 0 || o.v < 1) continue;   // (one standing still: below, with the other things standing)
         const g = o.s - s - cl2 - o.len / 2; if (g < -o.len - 2 || g > 260) continue;
         if (o.d < 1.2 && g > 0 && g < clearL) clearL = g;
         if (g < 20 + (v + o.v) * 2.2) lo = Math.max(lo, o.d + o.wid / 2 + hw + mg(o.s));
@@ -2444,17 +2445,27 @@ const Core = (function () {
         if (vs > 1) { if (rL >= 0.3 || (pL > -edge + hw && clearL > g + 45 + v * 2)) hi = Math.min(hi, pL); else block(g, o, olen, vs); return; }   // same way, slower
         if (rL >= 0 && rL >= rR) hi = Math.min(hi, pL); else if (rR >= 0) lo = Math.max(lo, pR); else block(g, o, olen, 0);   // standing
       };
-      for (const o of this.veh) { if (o.off || (o.st === 0 && o.dir < 0)) continue; const g = o.s - s; if (g < -20 || g > 220) continue; one(o, o.s, o.d, o.wid, o.len, o.st === 0 ? o.v * o.dir : 0); }
+      for (const o of this.veh) { if (o.off || (o.st === 0 && o.dir < 0 && o.v >= 1)) continue; const g = o.s - s; if (g < -20 || g > 220) continue; one(o, o.s, o.d, o.wid, o.len, o.st === 0 ? o.v * o.dir : 0); }
       for (const p of this.onRoad) { const t = Math.min(1.5, Math.max(0, p.s - s) / Math.max(5, v)), dP = clamp(p.d + (p.dd || 0) * t, -T.w - 1, T.w + 1); one(p, p.s, (p.d + dP) / 2, Math.abs(dP - p.d) + 0.7, 0.5, 0); }   // (someone on the road: from where they are to where they will be as it gets there)
-      let vE = 0;   // (past a patrol car parked across the road the verge will do: how far out)
-      if (this.race.pol) for (const pc of this.race.pol.cars) if (pc !== c && pc.pol.mode !== 'chase') {   // (a patrol car parked: a roadblock, at a strip)
-        const rel = pc.h - Math.atan2(T.tz[pc.q.i], T.tx[pc.q.i]), cs = Math.abs(Math.cos(rel)), sn = Math.abs(Math.sin(rel)), W = pc.m.len * sn + pc.m.wid * cs, L = pc.m.len * cs + pc.m.wid * sn;
-        const g = pc.q.s - s - cl2 - L / 2; if (g < -L - c.m.len - 1 || g > 25 + v * 3) continue;
-        const i = pc.q.i, eL = T.bl[i] - 0.7, eR = T.br[i] - 0.7, pL = pc.q.d - W / 2 - hw - 0.5, pR = pc.q.d + W / 2 + hw + 0.5, rL = pL - Math.max(lo, -eL + hw), rR = Math.min(hi, eR - hw) - pR;
-        if (g < 0) { if (c.q.d < pc.q.d) { hi = Math.min(hi, pL); vE = Math.max(vE, -pL + hw); } else { lo = Math.max(lo, pR); vE = Math.max(vE, pR + hw); } continue; }
-        if (rL >= 0 && rL >= rR) { hi = Math.min(hi, pL); vE = Math.max(vE, -pL + hw); } else if (rR >= 0) { lo = Math.max(lo, pR); vE = Math.max(vE, pR + hw); } else block(g, pc, L, 0); }
-      let sLo = -1e9, sHi = 1e9;   // (a spike strip ahead: through its gap, whatever else is there)
-      if (this.race.pol) for (const sp of this.race.pol.spikes) { const g = sp.s - s - cl2; if (!sp.on || g < -cl2 * 2 || g > 20 + v * 3) continue;
+      let vE = 0, sLo = -1e9, sHi = 1e9;   // (past a patrol car parked across the road the verge will do: how far out; a roadblock's or a spike strip's gap: a hard limit)
+      if (this.race.pol) {
+        let u0 = 1e9, u1 = -1e9, ub = null, ug = 1e9, uL = 0, ui = -1;   // (the roadblock: its cars together, from one edge across the road)
+        for (const pc of this.race.pol.cars) if (pc !== c && pc.pol.mode !== 'chase') {   // (a patrol car parked: a roadblock, at a strip)
+          const rel = pc.h - Math.atan2(T.tz[pc.q.i], T.tx[pc.q.i]), cs = Math.abs(Math.cos(rel)), sn = Math.abs(Math.sin(rel)), W = pc.m.len * sn + pc.m.wid * cs, L = pc.m.len * cs + pc.m.wid * sn;
+          const g = pc.q.s - s - cl2 - L / 2; if (g < -L - c.m.len - 1 || g > 25 + v * 3) continue;
+          if (pc.pol.block) { u0 = Math.min(u0, pc.q.d - W / 2); u1 = Math.max(u1, pc.q.d + W / 2); if (g < ug) { ug = g; ub = pc; uL = L; ui = pc.q.i; } continue; }
+          const i = pc.q.i, eL = T.bl[i] - 0.7, eR = T.br[i] - 0.7, pL = pc.q.d - W / 2 - hw - 0.5, pR = pc.q.d + W / 2 + hw + 0.5, rL = pL - Math.max(lo, -eL + hw), rR = Math.min(hi, eR - hw) - pR;
+          if (g < 0) { if (c.q.d < pc.q.d) { hi = Math.min(hi, pL); vE = Math.max(vE, -pL + hw); } else { lo = Math.max(lo, pR); vE = Math.max(vE, pR + hw); } continue; }
+          if (rL >= 0 && rL >= rR) { hi = Math.min(hi, pL); vE = Math.max(vE, -pL + hw); } else if (rR >= 0) { lo = Math.max(lo, pR); vE = Math.max(vE, pR + hw); } else block(g, pc, L, 0);
+        }
+        if (ub) {   // through the gap beside the roadblock (the side with more room; once alongside it, the side it is on)
+          const eL = T.bl[ui] - 0.7, eR = T.br[ui] - 0.7, pL = u0 - hw - 0.5, pR = u1 + hw + 0.5, rL = pL - (-eL + hw), rR = (eR - hw) - pR;
+          const toL = ug < 0 ? c.q.d < (u0 + u1) / 2 : rL >= rR;
+          if ((toL ? rL : rR) < 0 && ug >= 0) block(ug, ub, uL, 0);
+          else if (toL) { sHi = Math.min(sHi, pL); vE = Math.max(vE, -pL + hw); } else { sLo = Math.max(sLo, pR); vE = Math.max(vE, pR + hw); }
+        }
+      }
+      if (this.race.pol) for (const sp of this.race.pol.spikes) { const g = sp.s - s - cl2; if (!sp.on || g < -cl2 * 2 || g > 20 + v * 3) continue;   // (a spike strip ahead: through its gap, whatever else is there)
         if (sp.side > 0) sHi = Math.min(sHi, sp.d0 - hw - 0.35); else sLo = Math.max(sLo, sp.d1 + hw + 0.35); }
       const E = Math.max(edge, vE);
       if (sLo > lo || sHi < hi) {   // the gap: a hard limit; with no room in it beside the rest, behind the nearest thing, in the gap
@@ -2609,11 +2620,12 @@ const Core = (function () {
       sp.car = this._car(s - 7, side * (w + wk + 1.6), 0, 'park', 0);
       this.spikes.push(sp);
     }
-    // a roadblock at s: two patrol cars across the road in a V, a 3 m gap at one edge
+    // a roadblock at s: two patrol cars across the road in a V (each ~4.7 m across it), from one edge to a 3 m gap at the other, on any width
     _block(s) {
       const T = this.T, w = T.w, g = this.R() < 0.5 ? -1 : 1;
-      const a = this._car(s, -g * (w - 2.0), -g * 1.2, 'park', 0), b = this._car(s + 3.5, -g * (w - 5.2), g * 1.25, 'park', 0);
+      const a = this._car(s, -g * (w - 2.3), -g * 1.2, 'park', 0), b = this._car(s + 3.5, g * (w - 5.5), g * 1.25, 'park', 0);
       a.pol.block = b.pol.block = true;
+      const tf = this.race.tf; if (tf) for (const v of tf.veh) if (!v.off && Math.abs(v.s - s) < 150) tf._recycle(v);   // (the road closed there: the traffic by it gone, out of the player's sight 500 m below)
       this._event('block', a.x, a.z);
     }
   }
