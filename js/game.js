@@ -103,7 +103,7 @@
   const medalLine = (d, t) => { const M = medalSet(d); if (!M) return ''; const k = medalOf(d, t), n = k < 0 ? 2 : k - 1;   // (won, and how far the next one is)
     return (k >= 0 ? MEDAL_ICON[k] + ' ' + MEDAL[k].charAt(0).toUpperCase() + MEDAL[k].slice(1) + ' medalja' : 'Brez medalje') + (n >= 0 ? ' · do ' + (k < 0 ? 'brona' : n === 0 ? 'zlata' : 'srebra') + ' ' + fmt(M[n], true) + ' (' + sgn(t - M[n]) + ')' : '') + '.'; };
   const ttRun = (d) => isRally(d) ? 'preizkušnjo' : 'vzpon';   // (Ponovi vzpon / Ponovi preizkušnjo)
-  const TT_LINES = { intro: ['introTT', 'introStage', 'introPassTT'], go: ['goTT', 'goStage'], cpFirst: ['cpFirst', 'cpFirstStage'], record: ['summitRecord', 'stageRecord'], even: ['summitEven', 'stageEven'], end: ['summit', 'stageEnd'] };
+  const TT_LINES = { intro: ['introTT', 'introStage', 'introPassTT'], go: ['goTT', 'goStage', 'goPassTT'], cpFirst: ['cpFirst', 'cpFirstStage'], record: ['summitRecord', 'stageRecord'], even: ['summitEven', 'stageEven'], end: ['summit', 'stageEnd'] };
   const ttLine = (d, k) => TT_LINES[k][isRally(d) ? 1 : d && d.modes ? 2 : 0] || TT_LINES[k][0];   // (a hill climb, a rally stage, a mountain pass)
   const numDot = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');   // 3048 -> 3.048
   const kmTxt = (m, dec) => (m / 1000).toFixed(dec).replace('.', ',');
@@ -286,7 +286,7 @@
     S[key] = num.includes(key) ? +v : v;
     if (key === 'shadows') { autoNoShadows = false; perf.pending = perf.restore = false; perf.keep = true; }   // the player's own choice wins for the rest of the visit
     save(); applySettings();
-    if (key === 'phys') { if (!(mp && mp.race)) applyPhys(race); applyPhys(demo); }   // (an online race keeps the host's physics)
+    if (key === 'phys') { if (!(mp && mp.race)) { applyPhys(race); ghPhys(); } applyPhys(demo); }   // (an online race keeps the host's physics)
     if (key === 'weather' && demo) demo.setRain(demoRain());   // (a race keeps its weather; the next one gets the new setting)
     if (key === 'season' || key === 'tod') Render.setAtmos({ season: S.season, tod: S.tod });   // (the season and the time of day: at once, also on the title demo)
     if ((key === 'weather' || key === 'mode') && screen === 'track') buildTrackScreen();   // (a time trial's records in the rain are its own, and a race's: the cards show them)
@@ -848,6 +848,7 @@
     $('pause-skip').classList.toggle('off', !quali);
     $('pause-restart').classList.toggle('off', !!on);   // (online: no restart for one)
     cpSeen = race.player.cpEv; ttRes = null; cornerSeen = -1; cornerShow = false; placeInit(); codrvInit(); ghStart(); secReset(); recStart(); replay = null; $('replay-ui').classList.add('off'); $('h-ttsp').className = '';
+    hxStart();   // (time trial: turn counter, live difference to the best run, height profile)
     Input.reset();
     showScreen('none');
     Sfx.resume(); Sfx.setRunning(true);
@@ -1468,6 +1469,7 @@
   }
   // time trial: CP counter, altitude, clock from the green light, personal best, split popups with the difference to the PB splits
   function updateHUDTT(dt, P) {
+    hxFrame(dt, P);   // (turn counter, live difference to the best run, height profile: below)
     const nCP = track.cpS.length, R0 = rec(track.def.id);
     setText('h-lap', P.finished ? 'CILJ' : 'CP ' + P.cp + '/' + nCP);
     // altitude of the road under the car (not the body, as in the splits table), between start and summit; frozen at the summit after the finish.
@@ -1487,6 +1489,92 @@
       if (!has) Comm.say(ttLine(track.def, 'cpFirst'), { cp: k, time: spkTime(t) }, 2);
       else Comm.say(Math.abs(d) < 0.005 ? 'cpEven' : d < 0 ? 'cpFast' : 'cpSlow', { cp: k, delta: spkDelta(d) }, 3);
     }
+  }
+  /* ---------------- time trial HUD: turn counter, live difference to the best run, height profile ---------------- */
+  // OVINEK n/156 (def.turnNos): the real number of the next modelled corner ahead of the car; 156/156 after the last one. The live
+  // difference to the best run (its stored ghost), on the NAJ line under the clock: this run's clock against the time the best run
+  // passed the same point of the road (its samples projected onto the road once, at the start: a rising s -> time table), smoothed and
+  // written ~8 times a second. It also shows with the ghost car switched off: like the CP split popups it is data (the setting
+  // hides the see-through car on the road). The height profile (def.alt): the road from the start line to the finish drawn
+  // once (CP ticks, start and finish marks), the part climbed in yellow, the player's dot and the best run's see-through ring; redrawn
+  // only when one of them moves. Only in a time trial alone (never online): every other race keeps its HUD as it was.
+  const hx = { turns: null, gs: null, gt: 0, dSm: 0, dT: 0, prof: false };
+  const pf = { cv: null, g: null, w: 0, h: 0, dpr: 1, key: '', base: null, done: null, ys: null, x0: 0, x1: 0, lp: -1, lg: -1, hooked: false };
+  function hxStart() {   // newRace (after ghStart): what this race shows
+    const on = race.timeTrial && !(mp && mp.race), d = track.def;
+    hx.turns = on && typeof d.turnNos === 'function' ? d.turnNos(track) : null; if (hx.turns && !hx.turns.length) hx.turns = null;
+    hx.gs = on && ghPlay ? hxTable(ghPlay) : null; hx.gt = ghPlay ? ghPlay.t : 0; hx.dSm = 0; hx.dT = 0; setText('h-delta', '\u00b10.00'); $('h-delta').className = 'even';
+    hx.prof = on && !!d.alt; pf.key = '';
+    $('hud').classList.toggle('ttn', !!hx.turns); $('hud').classList.toggle('ttd', !!hx.gs); $('hud').classList.toggle('ttp', hx.prof);
+    if (!pf.hooked) { pf.hooked = true; const re = () => { pf.key = ''; }; window.addEventListener('resize', re); window.addEventListener('orientationchange', () => setTimeout(re, 250)); }   // (a new size: drawn again)
+  }
+  // the best run's place on the road at each sample: projected onto the centre line from the last sample's place (no jump between the
+  // legs of a hairpin ladder), kept rising (after a spin or a moment backwards it counts from the first time the best run got there)
+  function hxTable(G) {
+    const s = new Float32Array(G.n), q = {}; let hint = track.startIdx, m = -1e9;
+    for (let k = 0; k < G.n; k++) { track.query(G.f[k * GH_CH], G.f[k * GH_CH + 2], hint, q); hint = q.i; if (q.s > m) m = q.s; s[k] = m; }
+    return s;
+  }
+  function hxTimeAt(s) {   // the race time at which the best run reached road position s (null past its end)
+    const a = hx.gs, n = a.length; if (s > a[n - 1]) return null; if (s <= a[0]) return 0;
+    let lo = 0, hi = n - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (a[m] < s) lo = m; else hi = m; }
+    return (lo + (s - a[lo]) / (a[hi] - a[lo])) * GH_DT;
+  }
+  const hxSAt = (t) => { const a = hx.gs, u = clamp(t / GH_DT, 0, a.length - 1), k = Math.min(a.length - 2, Math.floor(u)); return a[k] + (a[k + 1] - a[k]) * (u - k); };   // the best run's road position at race time t
+  function ghPhys() {   // the physics switched during a time trial: the record moves to the other physics, so do its best run (the ghost car) and the live difference
+    if (!race || !race.timeTrial || (mp && mp.race)) return;
+    const R0 = rec(track.def.id); ghPlay = R0.bestTime ? ghLoad(track.def.id, R0.bestTime) : null;
+    hx.gs = ghPlay ? hxTable(ghPlay) : null; hx.gt = ghPlay ? ghPlay.t : 0; hx.dSm = 0; hx.dT = 0; pf.lg = -9;
+    setText('h-delta', '\u00b10.00'); $('h-delta').className = 'even'; $('hud').classList.toggle('ttd', !!hx.gs);
+  }
+  function hxFrame(dt, P) {   // every HUD frame of a time trial
+    const sp = track.startS + P.dist;
+    if (hx.turns) { const L = hx.turns, N = track.def.turns || L[L.length - 1].n; let k = 0; while (k < L.length && L[k].s <= sp) k++;
+      setText('h-turn', 'OVINEK ' + (P.finished || k === L.length ? N : L[k].n) + '/' + N); }
+    if (hx.gs) {   // ±0.00 until the green light; at the finish the exact final difference (as in the finish popup), held
+      const racing = phase === 'racing' && !P.finished, tg = racing ? hxTimeAt(sp) : null;
+      const d = P.finished ? P.finishTime - hx.gt : racing ? (tg == null ? hx.dSm : race.time - tg) : 0;
+      if (!racing || Math.abs(d - hx.dSm) > 1.5) hx.dSm = d; else hx.dSm += (d - hx.dSm) * Math.min(1, dt / 0.3);   // (a rescue: at once)
+      if ((hx.dT -= dt) <= 0 || !racing) { hx.dT = 0.12; const v = hx.dSm, a = Math.abs(v), r = Math.round(a * 100), el = $('h-delta');
+        setText('h-delta', r ? (v < 0 ? '\u2212' : '+') + (a >= 60 ? fmt(a).slice(0, -1) : (r / 100).toFixed(2)) : '\u00b10.00');   // −1.24 / +0.87 / ±0.00 / +1:02.35
+        const c = !r ? 'even' : v < 0 ? 'fast' : 'slow'; if (el.className !== c) el.className = c; }
+    }
+    if (hx.prof) hxProfile(P);
+  }
+  function hxProfBuild() {   // the static picture for this track and the panel's size, twice: still to climb (white) and climbed (yellow)
+    const T = track, cv = pf.cv || (pf.cv = $('h-prof-c')), r = cv.getBoundingClientRect(), d = Math.min(2, window.devicePixelRatio || 1);
+    pf.key = T.def.id; pf.base = null; pf.lp = pf.lg = -1;
+    const w = Math.round(r.width * d), h = Math.round(r.height * d); if (w < 40 * d || h < 24 * d) return;   // (hidden or too small: not drawn)
+    cv.width = w; cv.height = h; pf.w = w; pf.h = h; pf.dpr = d; pf.g = cv.getContext('2d');
+    const x0 = pf.x0 = 6 * d, x1 = pf.x1 = w - 6 * d, top = 6 * d, bot = h - Math.max(4 * d, h * 0.2), a = Math.floor(x0), b = Math.ceil(x1);
+    let lo = 1e9, hi = -1e9; for (let i = T.startIdx; i <= T.finishIdx; i++) { lo = Math.min(lo, T.hy[i]); hi = Math.max(hi, T.hy[i]); }
+    const ys = pf.ys = new Float32Array(w);   // the profile's height on the canvas per pixel column (the lowest point a little above the bottom)
+    for (let x = 0; x < w; x++) ys[x] = bot - (T.hy[T.idx(T.startS + clamp((x - x0) / (x1 - x0), 0, 1) * T.raceLen)] - lo) / Math.max(1, hi - lo) * (bot - top);
+    const mk = (line, f0, f1, lw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d');
+      g.beginPath(); g.moveTo(a, h); for (let x = a; x <= b; x++) g.lineTo(x, ys[x]); g.lineTo(b, h); g.closePath();
+      const gr = g.createLinearGradient(0, top, 0, h); gr.addColorStop(0, f0); gr.addColorStop(1, f1); g.fillStyle = gr; g.fill();
+      g.beginPath(); g.moveTo(a, ys[a]); for (let x = a + 1; x <= b; x++) g.lineTo(x, ys[x]);
+      g.lineJoin = g.lineCap = 'round'; g.strokeStyle = line; g.lineWidth = lw; g.stroke();
+      for (const s of T.cpS) { const x = Math.round(x0 + (x1 - x0) * (s - T.startS) / T.raceLen), y = ys[x];   // checkpoints: yellow ticks
+        g.fillStyle = 'rgba(255,198,41,.5)'; g.fillRect(x - 0.5 * d, y, d, h - y); g.fillStyle = '#ffc629'; g.fillRect(x - d, y - 3.5 * d, 2 * d, 7 * d); }
+      g.fillStyle = '#e63b2e'; g.fillRect(a - d, ys[a] - 3.5 * d, 2 * d, 7 * d);   // the start (red, as on the minimap) and the finish
+      chequer(g, b, ys[b], 2.6 * d);
+      return c; };
+    pf.base = mk('rgba(255,255,255,.9)', 'rgba(255,255,255,.3)', 'rgba(255,255,255,.05)', 1.5 * d);
+    pf.done = mk('#ffc629', 'rgba(255,198,41,.62)', 'rgba(255,198,41,.14)', 2 * d);
+  }
+  function hxProfile(P) {   // the player's dot and the best run's ring over it (a halo when level); nothing drawn while neither moved half a pixel
+    if (pf.key !== track.def.id) hxProfBuild();
+    if (!pf.base) return;
+    const T = track, X = (s) => pf.x0 + (pf.x1 - pf.x0) * clamp((s - T.startS) / T.raceLen, 0, 1);
+    const xp = P.finished ? pf.x1 : X(T.startS + P.dist), xg = hx.gs ? X(hxSAt(race.time)) : -1;
+    if (Math.abs(xp - pf.lp) < 0.5 && Math.abs(xg - pf.lg) < 0.5) return;
+    pf.lp = xp; pf.lg = xg;
+    const g = pf.g, d = pf.dpr, w = pf.w, h = pf.h, yAt = (x) => pf.ys[clamp(Math.round(x), 0, w - 1)], cw = Math.round(xp);
+    g.clearRect(0, 0, w, h); g.drawImage(pf.base, 0, 0);
+    if (cw > 0) g.drawImage(pf.done, 0, 0, cw, h, 0, 0, cw, h);
+    g.fillStyle = '#ffd23f'; g.strokeStyle = '#111'; g.lineWidth = 1.4 * d; g.beginPath(); g.arc(xp, yAt(xp), 3.4 * d, 0, 6.2832); g.fill(); g.stroke();
+    if (xg >= 0) { g.beginPath(); g.arc(xg, yAt(xg), 4.4 * d, 0, 6.2832); g.strokeStyle = 'rgba(8,12,18,.5)'; g.lineWidth = 3 * d; g.stroke(); g.strokeStyle = 'rgba(207,228,255,.92)'; g.lineWidth = 1.4 * d; g.stroke(); }   // (the ghost car's colour)
   }
   // named places (tracks on real places: Ljubljana, Monaco, Pikes Peak, the Nordschleife, Spa, the Red Bull Ring, Suzuka): the name under the clock ~70 m before each
   // one, every lap (also in the time trial), and now and then the commentator says where the driver is (each place's own lines)
