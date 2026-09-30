@@ -9,7 +9,7 @@ const T = checker('sectors, set-up, tyres and a changing weather');
 const srv = await serve();
 const browser = await launch();
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'rbring', weather: 'dry' }, { width: 390, height: 844 });
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'rbring', weather: 'dry' }, { width: 390, height: 844 }, { seed: 7 });   // (seeded: the rivals race the same way every run, no random knock on the way to the pits)
   const act = (a) => page.evaluate((a) => window.__game.onAction(a), a);
   const hud = () => page.evaluate(() => { const r = window.__game.race, P = r.player, el = (id) => document.getElementById(id);
     return { rain: r.rain, water: r.water, line: r.lineWater, ty: P.ty && { k: P.ty.k, wear: P.ty.wear }, pit: P.pitState, inPit: P.inPit, lap: P.lap,
@@ -30,7 +30,7 @@ try {
     return { before, after: { wing: seg('wing'), gear: seg('gear') }, S: JSON.stringify(window.__game.S.setup), toast: document.getElementById('toast').textContent }; });
   T.check('track screen: wing and gears (standard at first), "Menljivo" weather; a choice is kept for the chosen track',
     ui.before.wing === 'Malo,Srednje*,Veliko' && ui.before.gear === 'Kratke,Srednje*,Dolge' && /Menljivo/.test(ui.before.weather) && ui.after.wing === 'Malo*,Srednje,Veliko' && ui.after.gear === 'Kratke,Srednje,Dolge*'
-    && ui.S === '{"rbring":{"wing":0,"gear":2}}' && /Red Bull Ring: malo krila, dolge prestave/.test(ui.toast), JSON.stringify(ui));
+    && ui.S === '{"rbring":{"wing":0,"gear":2}}' && /Štajerska, Avstrija: malo krila, dolge prestave/.test(ui.toast), JSON.stringify(ui));
 
   // 2. a race where the rain starts at 20 s (dry, slicks at the start)
   await page.evaluate(() => { window.__game.wxNext = { rain: 0, wx: { at: 20, dur: 15, to: 1 } }; });
@@ -43,7 +43,8 @@ try {
   T.check('the rain starts: "DEŽ", the hint to come in for rain tyres', h1.rain > 0 && h1.msg === 'DEŽ' && h1.msgOn && /dežne gume/.test(h1.toast), JSON.stringify(h1));
   await page.evaluate(() => { window.__game.race.player.pitWant = true; });   // (the autopilot takes the pit lane next time by)
   let h2 = null, hb = null;
-  for (let k = 0; k < 60; k++) { await sim(2); h2 = await hud(); if (!hb && h2.ty.k === 'dry' && h2.water > 0.4) hb = h2; if (h2.ty.k === 'wet') break; }
+  // (up to three minutes of race: on slicks in the rain the autopilot's lap to the pit entry takes about two, longer after a spin or a knock from a rival)
+  for (let k = 0; k < 90; k++) { await sim(2); h2 = await hud(); if (!hb && h2.ty.k === 'dry' && h2.water > 0.4) hb = h2; if (h2.ty.k === 'wet') break; }
   const h2b = await hud();
   T.check('slicks on a wet road: red on the HUD (the wrong tyres) until the stop', !!hb && /^on dry bad:SUHE \d+%$/.test(hb.tyre), JSON.stringify(hb));
   await sim(0.6); const h3 = await hud();

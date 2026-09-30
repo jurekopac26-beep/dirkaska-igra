@@ -56,11 +56,11 @@
   "jsMs": 0.79
  },
  "pikes": {
-  "calls": 101,
-  "maxCalls": 129,
-  "kverts": 263,
-  "maxKverts": 337,
-  "jsMs": 0.26
+  "calls": 79,
+  "maxCalls": 88,
+  "kverts": 241,
+  "maxKverts": 319,
+  "jsMs": 0.22
  },
  "ouninpohja": {
   "calls": 160,

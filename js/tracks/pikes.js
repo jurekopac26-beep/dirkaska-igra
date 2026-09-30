@@ -12,6 +12,16 @@ var TRACK_DEFS = TRACK_DEFS || [];
     id: 'pikes', name: 'Pikes Peak', theme: 'pikes', open: true, timeTrial: true, laps: 1, halfWidth: 7,
     desc: 'Vzpon na Pikes Peak: kronometer od starta na 2862 m do vrha na 4301 m. Gozdni zavoji, lasnice \u201eW\u201c, hiter greben in serpentine pod zasneženim vrhom. Ni nasprotnikov, dirkaš proti uri.',
     realKm: 19.99, alt: [2862, 4301],
+    // the real course's 156 turns: every modelled corner between the start and the finish carries the number the real turn at its place would
+    // have (from the share of the course before it, strictly rising), for the corner boards (World) and the HUD counter (Game): [{ s, n, sev, dir }] in road order
+    turns: 156,
+    turnNos(T) {
+      if (T.turnList) return T.turnList;
+      const L = T.corners.filter(c => c.s0 > T.startS && c.s0 < T.finishS).sort((a, b) => a.s0 - b.s0), out = [];
+      let n = 0;
+      for (const c of L) { n = Math.min(this.turns, Math.max(n + 1, Math.round(this.turns * (c.s0 - T.startS) / (T.finishS - T.startS)))); out.push({ s: c.s0, n, sev: c.sev, dir: c.dir }); }
+      return (T.turnList = out);
+    },
     start: [10, -39], finish: [-536, -3695], cps: [[-199,-991],[-186,-1666],[-362,-2164],[-519,-3202]],
     elev: [[0,0,-1],[10,-39,0],[-199,-991,57],[-186,-1666,150],[-362,-2164,244],[-519,-3202,337],[-536,-3695,440],[-483,-3781,443]],
     runoff: 0.55, inner: 3.2, side: 3.6, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true,
@@ -21,14 +31,14 @@ var TRACK_DEFS = TRACK_DEFS || [];
     names: [
       { n: 'Crystal Reservoir', d: 150, say: ['Past Crystal Reservoir on the right, the climb begins!', 'Crystal Reservoir down to the right, eyes on the road!', 'Along Crystal Reservoir, still low down in the forest!'] },
       { n: "Hansen's Corner", d: 240, say: ["Through Hansen's Corner, the climb is on!", "Hansen's Corner, up into the pines!"] },
-      { n: "Engineer's Corner", d: 578, say: ["Engineer's Corner!", "Into Engineer's Corner, still in the trees!", "Engineer's Corner, keep it tidy!"] },
+      { n: "Engineer's Corner", d: 578, say: ["Engineer's Corner, past the old surveyor's cairn!", "Into Engineer's Corner, the road builders' benchmark up on the left!", "Engineer's Corner, keep it tidy past the old stone culvert!"] },
       { n: 'Halfway Picnic Grounds', d: 1000, say: ['Halfway Picnic Grounds, the fastest part of the course!', 'Flat out past the Halfway Picnic Grounds!', 'Through the picnic grounds, three thousand metres up!'] },
-      { n: 'Brown Bush Corner', d: 1720, say: ['Brown Bush Corner, the first big hairpin!', 'Hard on the brakes for Brown Bush Corner!', 'Round Brown Bush Corner!'] },
+      { n: 'Brown Bush Corner', d: 1720, say: ['Brown Bush Corner, the first big hairpin, brown scrub all round the inside!', "Hard on the brakes for Brown Bush Corner, don't clip the bushes!", 'Round Brown Bush Corner, tight past the brown thicket!'] },
       { n: 'Ski Area', d: 1964, say: ['The Ski Area hairpin, the old chairlift towers still up the slope!', 'Round the Ski Area, where the old lift used to run!', 'The Ski Area hairpin, climbing through the trees!'] },
       { n: 'Glen Cove', d: 2688, say: ['Glen Cove, the trees are thinning out!', 'Hard on the brakes by the Glen Cove Inn, about halfway up!', 'Glen Cove, and now the switchbacks!', 'Past the Glen Cove Inn, the TV helicopter right overhead!'] },
       { n: "The W's", d: 2918, say: ["Into the W's! Hairpin after hairpin!", "The famous W's, left, right, left!", "Climbing the W's above the tree line!"] },
-      { n: 'Cove Creek', d: 3564, say: ['Cove Creek, out of the switchbacks!', 'Past Cove Creek, the air is getting thin!'] },
-      { n: "Devil's Playground", d: 4050, say: ["Devil's Playground! Nothing but rock and sky!", "Out across Devil's Playground, flat out on the ridge!", "Devil's Playground, lightning country up here!"] },
+      { n: 'Cove Creek', d: 3564, say: ['Over Cove Creek, the stream rushing through the culvert under the road!', 'Cove Creek, willows along the water, out of the switchbacks!', 'Past Cove Creek, the air is getting thin!'] },
+      { n: "Devil's Playground", d: 4050, say: ["Devil's Playground! Granite towers, nothing but rock and sky!", "Out across Devil's Playground, flat out past the rock stacks!", "Devil's Playground, lightning country among the granite tors!"] },
       { n: 'Bottomless Pit', d: 4466, say: ["Past the Bottomless Pit, don't look down!", 'The Bottomless Pit, a huge drop off the side!'] },
       { n: 'Double Cut', d: 4632, say: ['Through Double Cut, carry the speed!', 'Double Cut, one wide corner!'] },
       { n: 'Boulder Park', d: 5360, say: ['Boulder Park! Granite boulders everywhere!', 'The Boulder Park switchbacks, over four thousand metres up!', 'Into Boulder Park, the summit is close!'] },
