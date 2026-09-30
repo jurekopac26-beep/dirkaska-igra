@@ -455,7 +455,7 @@
     if (goldLast && goldLast.key === key) { gold = goldLast; return; }
     const orig = Math.random; Math.random = goldRnd(4711);
     try {
-      const r = new Core.Race(track, { playerModel: P0.m, playerUpg: upg, playerColor: PLAYER_COLORS[S.color], playerNum: carNum(), seed: 11, difficulty: 1, assist: S.assist,
+      const r = new Core.Race(track, { playerModel: modelById(P0.m.id), playerUpg: upg,   // (the stock model: P0.m is already the upgraded copy) playerColor: PLAYER_COLORS[S.color], playerNum: carNum(), seed: 11, difficulty: 1, assist: S.assist,
         numAI: 0, playerGrid: 1, laps: 1, damage: 0, phys: physOf(), rain: race.rain });
       r.start(); gold = { key, r, f: new Float32Array(GH_MAX * GH_CH), n: 0, done: false, Ta: 0, Tg: M[0], sp: null, k: 1, q: 5000 };
     } catch (e) { gold = null; } finally { Math.random = orig; }
@@ -575,7 +575,8 @@
   }
   function rpPast(sh) { const P = race.player, d = Math.hypot(P.x - sh.x, P.z - sh.z); return (P.q.s > sh.s + 8 && d > 28) || d > 190; }   // the car has gone by (or the camera is far behind it)
   function rpCamera(dt) {   // this frame's camera for the shot
-    const D = replay, sh = D.shot, P = race.player, x = P.x, y = P.y, z = P.z, fx = Math.cos(P.h), fz = Math.sin(P.h), c = D.cam || (D.cam = { x: 0, y: 0, z: 0, tx: x, ty: y, tz: z, fov: 40, init: false });
+    const D = replay, sh = D.shot, P = race.player, x = P.x, y = P.y, z = P.z, fx = Math.cos(P.h), fz = Math.sin(P.h), c = D.cam || (D.cam = { x: 0, y: 0, z: 0, tx: x, ty: y, tz: z, fov: 40, near: 4, init: false });
+    c.near = sh.kind === 'roof' ? 0.25 : sh.kind === 'low' ? 1.5 : sh.kind === 'heli' || sh.kind === 'tower' ? 4 : 2;   // (the near plane: close only where the camera is close to the car)
     const e = (k) => 1 - Math.exp(-dt * k);
     let cx, cy, cz, tx = x, ty = y + 0.9, tz = z, fov = 40, snap = !c.init;
     if (sh.kind === 'heli') { sh.a += dt * 0.07; const gH = Render.world && Render.world.groundH; cx = x + Math.cos(sh.a) * sh.r; cz = z + Math.sin(sh.a) * sh.r; cy = Math.max(y + sh.hh, (gH ? gH(cx, cz) : y) + 12); fov = 30; }
@@ -616,7 +617,7 @@
       numAI: tt ? 0 : NUM_AI, playerGrid: tt ? 1 : PLAYER_GRID, laps: tt ? 1 : track.def.laps || LAPS, damage: +S.damage, phys: physOf(), rain: rainOf(), champ: cr >= 0
     }));
     race.champ = cr >= 0 ? { round: cr, n: cd.tracks.length, done: false } : null;
-    mistRun = !race.rain && S.weather === 'mist' ? 1 : 0;
+    mistRun = !race.rain && S.weather === 'mist' ? 1 : 0; $('res-replay').classList.add('off');   // (finishTT shows it again for a time trial)
     Render.attachRace(race);
     Render.resetCam();
     adaptBreak();

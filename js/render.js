@@ -1127,7 +1127,7 @@ const Render = (function () {
   let post = null;
   const _lv = new THREE.Vector3(), _pv = new THREE.Vector3(), _v2 = new THREE.Vector2(), _sunV = new THREE.Vector3();
   function initPost() {
-    const rtOpt = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, depthBuffer: true, stencilBuffer: false };
+    const rtOpt = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, depthBuffer: true, stencilBuffer: true };   // (stencil: r128 then gives it a 24-bit depth, not 16: thin layers far off do not flicker)
     // WebGL2: 4x multisampled target, so the edges are really anti-aliased (the shader's edge blur only softens them)
     const rt = renderer.capabilities.isWebGL2 && THREE.WebGLMultisampleRenderTarget ? new THREE.WebGLMultisampleRenderTarget(4, 4, rtOpt) : new THREE.WebGLRenderTarget(4, 4, rtOpt);
     if (rt.isWebGLMultisampleRenderTarget) rt.samples = 4;
@@ -1989,7 +1989,7 @@ const Render = (function () {
     } else if (mode === 'tv' && tv) {
       // the replay's TV cameras (js/game.js directs them): where the camera is, what it looks at, its lens
       px = tv.x; py = tv.y; pz = tv.z; tx = tv.tx; ty = tv.ty; tz = tv.tz;
-      if (camera.fov !== tv.fov || camera.near !== 0.25) { camera.fov = tv.fov; camera.near = 0.25; camera.updateProjectionMatrix(); updatePointScale(); }   // (near: a camera on the car itself)
+      const nr = tv.near || 4; if (camera.fov !== tv.fov || camera.near !== nr) { camera.fov = tv.fov; camera.near = nr; camera.updateProjectionMatrix(); updatePointScale(); }   // (near: close only for a camera on the car itself; far off the depth buffer, 16 bits behind the post-processing, needs it far)
     } else if (mode === 'kino') {
       // 'kino': the fixed, lower and closer view of the reference racer: heading set per circuit, ~42 deg tilt, look-ahead along the travel
       const fx = Math.sin(camYaw), fz = -Math.cos(camYaw);
@@ -2030,7 +2030,7 @@ const Render = (function () {
     sun.target.updateMatrixWorld();
   }
   let sunOff = [-80, 96, 70], camYaw = 0, lastMode = 'iso', tv = null;
-  function setTv(c) { tv = c; }   // the replay's TV camera: { x, y, z, tx, ty, tz, fov } (Render.frame with mode 'tv')
+  function setTv(c) { tv = c; }   // the replay's TV camera: { x, y, z, tx, ty, tz, fov, near } (Render.frame with mode 'tv')
   function shake(a) { cam.shake = Math.max(cam.shake, Math.min(1.2, a)); }
   function resetCam() { cam.init = false; }
   // a TV shot: { px, py, pz (the camera), tx, ty, tz (where it looks), fov, fogD (the fog as for a camera this far from its target) },
