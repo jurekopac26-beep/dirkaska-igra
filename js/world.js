@@ -5725,6 +5725,21 @@ const World = (function () {
     delete out.pk5; delete out.pkGlow; delete out.pkRefl;
   }
 
+  /* ---- round 6: plants that move: grass and shrubs swaying by the road, alpine flowers on the tundra, aspen groves, more fallen logs and rocks (own random stream) ---- */
+  function pkVeg(K) {
+  }
+
+  /* ---- round 6: side roads: junctions, turn-offs and car-park entrances along the course, closed for the race (own random stream) ---- */
+  function pkJunctions(K) {
+  }
+
+  /* ---- round 6: the summit on race day (chimney smoke, sponsor flags, the car park, team tents) and the sea of clouds in the valleys below the upper road
+     (own random stream; pkSummitUpdate runs every frame when out.dyn.pkSum is set) ---- */
+  function pkSummit6(K) {
+  }
+  function pkSummitUpdate(sm, t, car) {
+  }
+
   function buildPikes(scene, tex, opts) {
     const R = rng(7311), N = T.N, w = T.w, dens = opts.density || 1;
     const root = new THREE.Group(); scene.add(root);
@@ -6067,6 +6082,8 @@ const World = (function () {
     pkWildlife(K);
     pkRoadside(K);
     pkFans5(K);
+    pkJunctions(K);
+    pkVeg(K);
 
     /* ---- more spectators (instanced, hashed: no draws from R): both sides of every hairpin, the insides of the forest bends, the "W's" ladder,
        more rows at the checkpoints, the start and the finish, small groups on the high side along the ridge; only where the ground is not below the road ---- */
@@ -6284,6 +6301,8 @@ const World = (function () {
     pkWeather(K);
 
     pkAmbient(K);
+
+    pkSummit6(K);
 
     out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, rails: +(nRail / (2 * N)).toFixed(3) };   // (read by the tests)
     return out;
@@ -11160,7 +11179,8 @@ const World = (function () {
     if (d.clouds) { const n = CLOUD_NP; d.clouds.O.value.set(((t * 3.2 / CLOUD_S) % n + n) % n, ((-t * 2.5 / CLOUD_S) % n + n) % n); }   // the cloud shadows drift with the wind
     if (d.pk) pkUpdate(d.pk, t, car);   // Pikes Peak, Ouninpohja: the TV helicopter
     if (d.pkWx) pkWeatherUpdate(d.pkWx, t, car);   // Pikes Peak: cloud banks, snowfall
-    if (d.pkOps) pkOpsUpdate(d.pkOps, t, car);   // Pikes Peak: the marshals' flags
+    if (d.pkOps) pkOpsUpdate(d.pkOps, t, car);
+    if (d.pkSum) pkSummitUpdate(d.pkSum, t, car);   // Pikes Peak: the summit's smoke and flags, the sea of clouds   // Pikes Peak: the marshals' flags
     if (d.wheel) szWheel(d.wheel, t);   // Suzuka: the Ferris wheel turns
     if (d.pkLife) pkWildlifeUpdate(d.pkLife, t, car);   // Pikes Peak: marmots and bighorn sheep
     if (d.pkAmb) pkAmbientUpdate(d.pkAmb, t, car);   // Pikes Peak: flags, dust and leaves, grill smoke
