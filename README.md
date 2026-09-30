@@ -202,6 +202,8 @@ Igro lahko igraš z igralnim ploščkom (Xbox, PlayStation ali drug plošček s 
 
 Na vseh progah čez pokrajino počasi drsijo sence oblakov (v dežju jih ni, ker je nebo oblačno). Pred zavoji, kjer tekmeci močno zavirajo, so na asfaltu sledi gum, lažje sledi pa tudi na izhodih iz ovinkov (na makadamu jih ni; na Nordschleife in Red Bull Ringu so narisane skupaj z drugimi oznakami na asfaltu, na mostu Suzuke jih ni). Nad progo občasno preleti jata ptic, ob morju galebi, njihove sence pa drsijo po tleh; v dežju jih ni. Na Nordschleife in Spa se krošnje dreves rahlo zibljejo v vetru.
 
+Asfalt je obrabljen: zalite razpoke vzdolž ceste (največ ob kolesnicah in robovih) in počez, krpe novejšega, temnejšega asfalta. Največ jih je na starih javnih cestah (Nordschleife, Pikes Peak, Ljubljana), manj v Rivieri, Monaku, na Jezero Ringu in Spa, malo na novih dirkališčih (Red Bull Ring, Suzuka); na makadamu in na progah v slogu Circuit Superstars (Bakreni gozd, Toskana, Gromski rt) jih ni. Na Nordschleife, Spa, Red Bull Ringu in Suzuki so tla ob vznožju ograj temnejša (ograja jih zasenči), trava ima večje zaplate (bujnejše temnejše, bolj suhe rumenkaste, detelja; pozimi pod snegom jih ni), na Nordschleife in Spa za ograjami, kamor kosilnica ne seže, rastejo šopi visoke trave.
+
 ## Vreme
 
 Na zaslonu **Izberi progo** izbereš vreme: **Suho**, **Dež**, **Menljivo** (glej zgoraj) ali **Naključno** (vsaka dirka posebej: dež približno v vsaki tretji dirki, na Spa v vsaki drugi, na Nordschleife skoraj v vsaki drugi). V dežju imajo vsi avti manj oprijema (v ovinkih in pri speljevanju za petino, zavore za desetino), zato drsijo bolj in dlje; tekmeci z AI zato vozijo ovinke počasneje in prej zavirajo, krog je 6–9 % počasnejši. Cesta je temna in mokra, nebo oblačno, vidljivost manjša, dež pada v curkih, izpod koles se dviga pršec (namesto dima iz gum), s trave in gramoza pa leti blato. Slišati je dež in šumenje gum po vodi, komentator pa ob štartu omeni dež. Kadar je izbran Dež, dežuje tudi na naslovnem zaslonu. Kronometra (Pikes Peak in Ouninpohja) imata v dežju svoje rekorde, lestvico in duha. Kadar je izbran Dež, kartica proge in lestvica pokažeta te.
@@ -215,6 +217,7 @@ Na zaslonu **Izberi progo** izbereš še **letni čas** (Poletje, Jesen, Zima) i
 - **Večer:** nizko oranžno sonce, dolge sence, topla meglica. Avti imajo prižgane žaromete. Pri visoki kakovosti se skozi drevesa pred soncem vidijo sončni žarki (pogled iz kokpita, TV kamere).
 - **Noč:** temno modro nebo in šibka luna. Ob progi so vsakih 30 m reflektorji na drogovih, ki osvetlijo asfalt (okoli luči je sij, v zraku pod njimi se vidi svetlobni stožec), avti pa na cesto pred sabo svetijo z žarometi. Prah in dim sta ponoči temnejša. Npr. nočna dirka v Monaku.
 - **Höljes** je na severu (61° severne širine): pozimi je sonce nizko tudi opoldne, zimska noč ima severni sij, poletna noč pa je bela (svetla, brez reflektorjev); pozimi so ob progi snežne bankine. Glej razdelek Höljes.
+- **Oblaki:** podnevi in ob mraku so na nebu oblaki lepega vremena (na vsaki progi po svoje: največ na Spa in Nordschleife, malo na Pikes Peaku), vidni iz kokpita, s TV kamer in v fotografskem načinu; v dežju jih prekrije oblačno nebo.
 
 ## Zvok navijačev in predori
 

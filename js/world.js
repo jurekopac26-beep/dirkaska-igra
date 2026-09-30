@@ -3975,7 +3975,39 @@ const World = (function () {
     const mat = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
     for (const g of cells.values()) { if (g.empty) continue; const m = new THREE.Mesh(g.geometry(), mat); m.name = 'tyremarks'; m.renderOrder = 1; m.matrixAutoUpdate = false; root.add(m); }
   }
-  function finish(o, tex) { if (!o.ownMarks) tyreMarks(o.root); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); return clouds(o.root, o, tex); }
+  /* ---- the asphalt's wear (every realistic tarmac road; Höljes paints its own): sealed cracks, black, wandering along the road near the
+     wheel tracks and the edges, joints straight across it, patches of newer, darker asphalt; how much by the world (ROAD_WEAR: the old
+     public roads the most, the new circuits little). Decals as the tyre marks' (256 m cells, under them) ---- */
+  const ROAD_WEAR = { nring: 1.3, pikes: 1.1, ljubljana: 0.9, monaco: 0.7, city: 0.8, lake: 0.6, spa: 0.8, rbring: 0.35, suzuka: 0.4 };
+  function roadWear(root) {
+    const K = ROAD_WEAR[THEME]; if (!K || T.def.roadSurface === 'makadam') return;
+    const N = T.N, ds = T.ds, open = T.open, w = T.w, R = rng(519), bk = { dy: 0, sl: 0 }, cells = new Map(), km = T.len / 1000;
+    const cell = (p) => { const k = Math.floor(p[0] / 256) + ',' + Math.floor(p[2] / 256); let g = cells.get(k); if (!g) cells.set(k, g = new GB(false, true)); return g; };
+    const deck = (i) => { for (const c of T.cross || []) { const d = Math.abs(i - c.up); if (Math.min(d, N - d) * ds < c.upZ + 30) return true; } return false; };
+    const ok = (i) => i >= 0 && i < N && !deck(i) && !(T.srf && T.srf[i]);
+    const Pw = (i, o, dy) => { let h = (T.hasElev ? T.hy[i] : 0) + dy; if (T.bank) h += T.bankAt(i * ds, o, bk).dy; return [T.px[i] + T.nx[i] * o, h, T.pz[i] + T.nz[i] * o]; };
+    const line = (pts, wd, al) => { const c = [0.05, 0.05, 0.055, al];   // (a strip wd either side of the points, any direction)
+      for (let k = 0; k + 1 < pts.length; k++) { const A = pts[k], B = pts[k + 1], dx = B[0] - A[0], dz = B[2] - A[2], l = Math.hypot(dx, dz) || 1, px = -dz / l * wd, pz = dx / l * wd;
+        cell(A).quadUp([A[0] - px, A[1], A[2] - pz], [A[0] + px, A[1], A[2] + pz], [B[0] + px, B[1], B[2] + pz], [B[0] - px, B[1], B[2] - pz], [c, c, c, c]); } };
+    const at = (k) => (open ? k : ((k % N) + N) % N);
+    for (let n = Math.round(24 * km * K); n > 0; n--) {   // along the road: a crack wanders 8-40 m, most near the wheel tracks and the edges
+      const i0 = Math.floor(R() * N), len = Math.round((8 + R() * 32) / ds), o = R() < 0.4 ? Math.sign(R() - 0.5) * (w - 0.6 - R() * 0.8) : (R() - 0.5) * w * 1.2, pts = []; let oo = o;
+      for (let k = 0; k <= len; k++) { const i = at(i0 + k); if (!ok(i)) break; oo = clamp(oo + (R() - 0.5) * 0.18, -w + 0.3, w - 0.3); pts.push(Pw(i, oo, 0.028)); }
+      if (pts.length > 2) line(pts, 0.025 + R() * 0.02, 0.55);
+    }
+    for (let n = Math.round(26 * km * K); n > 0; n--) {   // across it: a joint from edge to edge, a little crooked
+      const i = Math.floor(R() * N); if (!ok(i)) continue; const pts = []; let da = 0;
+      for (let o = -w + 0.2; o <= w - 0.2 + 1e-6; o += w / 5) { const q = Pw(i, o, 0.028); q[0] += T.tx[i] * da; q[2] += T.tz[i] * da; pts.push(q); da += (R() - 0.5) * 0.3; }
+      line(pts, 0.02 + R() * 0.015, 0.48);
+    }
+    for (let n = Math.round(11 * km * K); n > 0; n--) {   // patches of newer asphalt: darker, square-cut, along the road
+      const i0 = Math.floor(R() * N), len = Math.max(1, Math.round((2 + R() * 5) / ds)), o0 = -w + 0.3 + R() * (w * 2 - 2.6), o1 = Math.min(w - 0.3, o0 + 1.2 + R() * 1.8), c = [0.07, 0.07, 0.08, 0.26];
+      for (let k = 0; k < len; k++) { const i = at(i0 + k), j = at(i0 + k + 1); if (!ok(i) || !ok(j) || (open && j >= N - 1)) break; cell(Pw(i, o0, 0)).quadUp(Pw(i, o0, 0.027), Pw(i, o1, 0.027), Pw(j, o1, 0.027), Pw(j, o0, 0.027), [c, c, c, c]); }
+    }
+    const mat = new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
+    for (const g of cells.values()) { if (g.empty) continue; const m = new THREE.Mesh(g.geometry(), mat); m.name = 'wear'; m.renderOrder = 1; m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); }
+  }
+  function finish(o, tex) { if (!o.ownWear) roadWear(o.root); if (!o.ownMarks) tyreMarks(o.root); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); return clouds(o.root, o, tex); }
   // where the crowds are, for their sound (Sfx: x, z, how many 0..1), on a circuit whose builder has not given them (the Red Bull Ring's
   // does): the spectators of every crowd of this build in 24 m cells, and the packed grandstands (the crowd picture) as full ones
   function crowdPoints(o, tex) {
@@ -7600,7 +7632,7 @@ const World = (function () {
     const nameD = (n) => { const f = T.names.find(q => q.n === n); return f ? f.d : null; };
 
     /* ---- terrain tiles: which ones (they are built at the end, when the trees have darkened the ground under them) ---- */
-    const gMat = new THREE.MeshLambertMaterial({ map: nrGrassTex(tex.grass.anisotropy), vertexColors: true }); out.ownTex.push(gMat.map);
+    const gMat = new THREE.MeshLambertMaterial({ map: nrGrassTex(tex.grass.anisotropy), vertexColors: true }); out.ownTex.push(gMat.map); nrPatches(gMat, out, tex.grass.anisotropy);
     const tiles = [];
     for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) { const on = nrTileOn(ti, tj); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; tiles.push(ti, tj, on); }
 
@@ -7700,6 +7732,7 @@ const World = (function () {
       addM(gr, rMat, true);
     }
     const nPosts = posts.addTo(root, true);
+    barShade(root, Pt, vergeRow, null); const nTus = nrTussocks(root, t13, dens);   // (Höljes' details: the ground darker at the barriers' foot, long grass behind them)
     nringProps(out, t13, onBridge, inKar);   // knockable tyre walls and roadside posts
 
     /* ---- the banked bowls (Karussell, Kleines Karussell): the inner half of the road in concrete slabs, laid on the road's own quads (the same
@@ -8074,7 +8107,7 @@ const World = (function () {
     addM(crowdG, new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }));
     fenceC.addTo(root, fMat, false, true); spC.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, edgeTrees: nEdge, posts: nPosts, buildings: nBld, fans: nFans, decals: nDecals };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, edgeTrees: nEdge, posts: nPosts, buildings: nBld, fans: nFans, decals: nDecals, tussocks: nTus };   // (read by the tests)
     return out;
   }
 
@@ -8207,7 +8240,7 @@ const World = (function () {
     const excluded = (x, z) => { const Lc = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!Lc) return false; for (let k = 0; k < Lc.length; k++) { const e = Lc[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
 
     /* ---- terrain tiles: which ones (they are built at the end, when the trees have darkened the ground under them) ---- */
-    const gMat = new THREE.MeshLambertMaterial({ map: ownTex(spaGrassTex(tex.grass.anisotropy)), vertexColors: true }), tiles = [];
+    const gMat = new THREE.MeshLambertMaterial({ map: ownTex(spaGrassTex(tex.grass.anisotropy)), vertexColors: true }), tiles = []; nrPatches(gMat, out, tex.grass.anisotropy);
     for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) { const on = nrTileOn(ti, tj); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; tiles.push(ti, tj, on); }
 
     /* ---- road: asphalt (resurfaced in 2022: even, the rubbered line darker, more so in the braking zones), white edge lines, red and white
@@ -8360,6 +8393,7 @@ const World = (function () {
       addM(gr, rMat, true); addM(gt, tyMat, true);
     }
     const nPosts = posts.addTo(root, true);
+    barShade(root, Pt, spaVerge, (i, side) => kindAt(i, side) < 0); const nTus = nrTussocks(root, t13, dens);   // (Höljes' details: the ground darker at the barriers' foot, long grass behind them)
     spaProps(out, (i) => t13(i));   // knockable tyre stacks at the exits and apexes
     // advertising on the concrete walls (the game's own brands, tex.sponsors: 4 m boards, the text read from the road)
     { const sb = new Chunks(128, true);
@@ -8786,7 +8820,7 @@ const World = (function () {
     numC.addTo(root, new THREE.MeshLambertMaterial({ map: numTex }), false, true);
     fenceC.addTo(root, fMat, false, true); spC.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, rows: nRows, posts: nPosts, buildings: nBld, stands: nStands, fans: nFans };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, rows: nRows, posts: nPosts, buildings: nBld, stands: nStands, fans: nFans, tussocks: nTus };   // (read by the tests)
     return out;
   }
 
@@ -9205,6 +9239,63 @@ const World = (function () {
     const w = T.w, bar = side > 0 ? T.br[i] : T.bl[i], y = T.hy[i], lift = (o, h) => { const q = side * o; return [o, Math.max(h, nrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) + 0.06 - y)]; };
     return [[w, 0.0], [w + 1.2, -0.04], lift(Math.max(w + 1.8, bar - 0.4), -0.1), lift(bar + 0.8, -0.16), lift(bar + 3.2, -0.4)];
   }
+  /* ---- Höljes' ground details on the other corridor worlds (the Nordschleife, Spa, the Red Bull Ring, Suzuka) ----
+     barShade: the ground darker at the foot of the barriers, where they shade it: a dark strip on the verge from 1.2 m in front of the barrier
+     to just behind it, fading out at both ends (verge(i, side): the world's cross-section beyond the road, [offset, height above the road];
+     P3: its point function; skip(i, side): no barrier there) */
+  function barShade(root, P3, verge, skip) {
+    const N = T.N, CH = 128, OF = [-1.2, -0.45, -0.02, 0.35, 0.9], AL = [0, 0.7, 1, 0.5, 0], A = 0.32;
+    const mat = new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
+    const hAt = (vr, o) => { let m = 0; while (m < vr.length - 2 && vr[m + 1][0] < o) m++; const a = vr[m], b = vr[m + 1]; return a[1] + (b[1] - a[1]) * clamp((o - a[0]) / Math.max(1e-3, b[0] - a[0]), 0, 1); };
+    for (let c0 = 0; c0 < N; c0 += CH) {
+      const g = new RB(false, true), pv = [-1, -1];
+      for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++) { const i = ii % N;
+        for (const side of [-1, 1]) { const si = side > 0 ? 1 : 0, bar = side > 0 ? T.br[i] : T.bl[i];
+          if ((skip && skip(i, side)) || bar - 1.2 < T.w + 0.4) { pv[si] = -1; continue; }   // (no barrier; or it stands at the road's edge)
+          const vr = verge(i, side); let pts = OF.map(o => P3(i, side * (bar + o), hAt(vr, bar + o) + 0.025)), cols = AL.map(a => [0.1, 0.1, 0.09, a * A]);
+          if (side < 0) { pts = pts.reverse(); cols = cols.slice().reverse(); }
+          const r = g.row(pts, cols); if (pv[si] >= 0) g.link(pv[si], r, 0, 4); pv[si] = r; } }
+      if (!g.empty) { const m = new THREE.Mesh(g.geometry(), mat); m.name = 'barshade'; m.renderOrder = 1; m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); }
+    }
+  }
+  // the meadows at the scale of 48 m over the grass texture and the vertex colours (a colour factor round 1, 128 = x1; tileable): lusher,
+  // darker patches, drier, yellower ones, clover; none under the snow, less in autumn (out.dyn.season, chained to the world's own)
+  let nrPatchT = null;
+  function nrPatches(gMat, out, aniso) {
+    if (!nrPatchT) {
+      const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), img = x.createImageData(S, S), d = img.data, r = rng(6201);
+      const n1 = nrPN(4, 6202), n2 = nrPN(11, 6203), n3 = nrPN(26, 6204), n4 = nrPN(6, 6205);
+      for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) {
+        const u = (i + 0.5) / S, v = 1 - (j + 0.5) / S, lush = sstep(0.5, 0.66, n1(u, v) * 0.6 + n2(u, v) * 0.4), dry = sstep(0.58, 0.72, n4(u, v) * 0.7 + n3(u, v) * 0.3) * (1 - lush), q = r(), o = (j * S + i) * 4;
+        let fr = 1, fg = 1, fb = 1;
+        fr = lerp(fr, 0.86, lush); fg = lerp(fg, 0.93, lush); fb = lerp(fb, 0.84, lush);
+        fr = lerp(fr, 1.14, dry); fg = lerp(fg, 1.06, dry); fb = lerp(fb, 0.86, dry);
+        const sp = q < 0.012 ? 1.3 : q < 0.1 ? 0.9 : 1;   // (clover and daisies, dark blades)
+        d[o] = clamp(fr * sp * 128, 0, 255); d[o + 1] = clamp(fg * sp * 128, 0, 255); d[o + 2] = clamp(fb * (q < 0.012 ? 1.5 : sp) * 128, 0, 255); d[o + 3] = 255;
+      }
+      x.putImageData(img, 0, 0); nrPatchT = new THREE.CanvasTexture(c); nrPatchT.wrapS = nrPatchT.wrapT = THREE.RepeatWrapping;
+    }
+    nrPatchT.anisotropy = aniso || 4;
+    const K = { value: 1 };
+    gMat.onBeforeCompile = (sh) => { sh.uniforms.nrP = { value: nrPatchT }; sh.uniforms.nrPK = K;
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D nrP;\nuniform float nrPK;')
+        .replace('#include <map_fragment>', '#include <map_fragment>\ndiffuseColor.rgb *= mix( vec3( 1.0 ), texture2D( nrP, vUv * 0.2916667 ).rgb * 2.0, nrPK );'); };
+    gMat.customProgramCacheKey = () => 'nrpatch';
+    const prev = out.dyn.season; out.dyn.season = (season) => { K.value = season === 'winter' ? 0 : season === 'autumn' ? 0.5 : 1; if (prev) prev(season); };
+    return K;
+  }
+  // tussocks of long grass behind the barriers, where no mower reaches (instanced in 96 m chunks, no shadows): on the meadows and the scrub,
+  // not in the woods, not on the built-up ground; skip(i): none at sample i (the start / finish areas)
+  function nrTussocks(root, skip, dens) {
+    const N = T.N, R = rng(6211), I = new IChunks(hjTuftGeo(), new THREE.MeshLambertMaterial({ vertexColors: true }), 96); let n = 0;   // (nrLC, nrDist, nrGround: the corridor's)
+    for (let i = 0; i < N; i += 2) { if (skip && skip(i)) continue;
+      for (const side of [-1, 1]) { const bar = side > 0 ? T.br[i] : T.bl[i];
+        for (let k = 0; k < 2; k++) { if (R() > 0.55 * dens) continue;
+          const o = side * (bar + 0.7 + R() * R() * 7), a = (R() - 0.5) * T.ds * 2, x = T.px[i] + T.nx[i] * o + T.tx[i] * a, z = T.pz[i] + T.nz[i] * o + T.tz[i] * a, cl = nrLC(x, z);
+          if (cl === 1 || cl === 3 || nrDist(x, z) < bar + 0.5) continue;
+          const s = 0.55 + R() * 0.6, g = 0.9 + R() * 0.2; I.add(x, nrGround(x, z) - 0.04, z, R() * TAU, s * 1.2, s * (0.75 + R() * 0.5), [0.72 * g, 1.0 * g, 0.62 * g]); n++; } } }
+    I.addTo(root, false); return n;
+  }
   // knockable props: posts every 95-130 m and tyre walls at the corner exits, on level verge only; not on the grid and the pit straight, not
   // on the run-offs (their tarmac is drawn above the verge), nor where the pit lane leaves and joins
   function rbringProps(out, skip) {
@@ -9255,6 +9346,7 @@ const World = (function () {
 
     /* ---- terrain tiles: which ones (they are built at the end, when the trees have darkened the ground under them) ---- */
     const gMat = new THREE.MeshLambertMaterial({ map: ownTex(nrGrassTex(tex.grass.anisotropy)), vertexColors: true }), tiles = [];   // (the Nordschleife's meadow grass: no mowing stripes; the vertex colours make it Styrian)
+    nrPatches(gMat, out, tex.grass.anisotropy);
     for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) { const on = nrTileOn(ti, tj); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; tiles.push(ti, tj, on); }
 
     /* ---- road: asphalt, white edge lines, red and white kerbs (256 m chunks, culled; the grass verges out past the barriers at the end) ---- */
@@ -9436,6 +9528,7 @@ const World = (function () {
       addM(gr, rMat, true); addM(gt, tyMat, true);
     }
     const nPosts = posts.addTo(root, true);
+    barShade(root, Pt, rbVerge, (i, side) => kindAt(i, side) < 0);   // (Höljes' detail: the ground darker at the barriers' foot)
     // advertising boards on the concrete walls (the game's own brands, tex.sponsors: 4 m boards, the text read from the road)
     { const sb = new Chunks(128, true);
       for (const side of [-1, 1]) for (let i = 0, n = 0; i + 2 <= N; i += 2) {
@@ -10367,7 +10460,7 @@ const World = (function () {
   function buildHoljes(scene, tex, opts) {
     const R = rng(6071), N = T.N, w = T.w, ds = T.ds, dens = opts.density || 1, sStart = T.startS, def = T.def, L = T.len, J = T.jk, NJ = J ? J.N : 0;
     const root = new THREE.Group(); scene.add(root);
-    const out = { root, dyn: {}, groundH: nrGround, camFloor: nrGround, props: [], farClip: true, ownTex: [], ownMarks: true, dust: [0.64, 0.6, 0.53], snowRoad: true };   // (dust: the grey-brown gravel's; snowRoad: in winter the asphalt under a film of snow, Render: the tyres throw it up)
+    const out = { root, dyn: {}, groundH: nrGround, camFloor: nrGround, props: [], farClip: true, ownTex: [], ownMarks: true, ownWear: true, dust: [0.64, 0.6, 0.53], snowRoad: true };   // (dust: the grey-brown gravel's; snowRoad: in winter the asphalt under a film of snow, Render: the tyres throw it up)
     const ownTex = (t) => { out.ownTex.push(t); return t; };
     const dS = (s) => { let d = s - sStart; d = ((d % L) + L) % L; return d > L / 2 ? d - L : d; };   // metres from the start line (-L/2 .. L/2)
     const sAt = (d) => (((sStart + d) % L) + L) % L;
@@ -11729,7 +11822,7 @@ const World = (function () {
     const nearX = (i, m) => { for (const X of XC) if (szCd(i, X.up) < m || szCd(i, X.lo) < m) return true; return false; };
 
     /* ---- terrain tiles ---- */
-    const gMat = new THREE.MeshLambertMaterial({ map: tex.grass, vertexColors: true });
+    const gMat = new THREE.MeshLambertMaterial({ map: tex.grass, vertexColors: true }); nrPatches(gMat, out, tex.grass.anisotropy);
     let nTiles = 0;
     {
       const grp = new THREE.Group(); root.add(grp); out.ground = grp;
@@ -11882,6 +11975,7 @@ const World = (function () {
       addM(gr, rMat, true); addM(grB, dMatB, true); addM(gt, tyMat, true);
     }
     const nPosts = posts.addTo(root, true);
+    barShade(root, Pt, SZ.verge, (i, side) => !!onDeck(i) || kind(i, side) === 2 || kind(i, side) === 3);   // (Höljes' detail: the ground darker at the barriers' foot)
     for (let i = 0; i < N; i++) if (mainStr(i)) { fence[0][i] = 1; fence[1][i] = 1; }
 
     /* ---- the bridge: a concrete deck under the back straight, from wall to wall of the underpass (its fascias and underside seen from below) ---- */
