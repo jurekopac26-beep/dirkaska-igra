@@ -152,16 +152,16 @@
   }
  },
  "ouninpohja": {
-  "meshes": 5014,
+  "meshes": 5149,
   "verts": 3329669,
   "instances": 93217,
   "props": 64,
   "crowd": 6912,
-  "world": "d27c71ed",
+  "world": "c3300e40",
   "propsHash": "863cbddb",
   "floor": "a40171a3/20048",
   "groups": {
-   "-:MeshLambertMaterial": "3b5471a9",
+   "-:MeshLambertMaterial": "5130e43f",
    "-:MeshPhongMaterial": "6a26637d",
    "mirror:MeshPhongMaterial": "7dda658a",
    "potholes:MeshPhongMaterial": "5aafd7ae",
@@ -174,16 +174,16 @@
   }
  },
  "ouninpohja-r": {
-  "meshes": 5084,
+  "meshes": 5221,
   "verts": 3386920,
   "instances": 94913,
   "props": 63,
   "crowd": 6909,
-  "world": "4d6a151a",
+  "world": "8715deca",
   "propsHash": "bdc4b0a2",
   "floor": "2cb29107/20384",
   "groups": {
-   "-:MeshLambertMaterial": "6bd751f3",
+   "-:MeshLambertMaterial": "d70f07e5",
    "-:MeshPhongMaterial": "6e01cb42",
    "mirror:MeshPhongMaterial": "b946042e",
    "potholes:MeshPhongMaterial": "2e2cb7a8",
@@ -211,19 +211,20 @@
   }
  },
  "spa": {
-  "meshes": 923,
-  "verts": 477399,
-  "instances": 32682,
+  "meshes": 1045,
+  "verts": 496798,
+  "instances": 50041,
   "props": 80,
-  "crowd": 5645,
-  "world": "b4238827",
+  "crowd": 5617,
+  "world": "b2b7be2f",
   "propsHash": "5faf0407",
-  "floor": "23c041d3/14000",
+  "floor": "b3d517c3/14000",
   "groups": {
-   "-:MeshLambertMaterial": "e9612ff5",
-   "-:MeshBasicMaterial": "a9efda71",
+   "-:MeshLambertMaterial": "b25dcab7",
+   "-:MeshBasicMaterial": "7ae03018",
    "-:MeshPhongMaterial": "4a03e534",
-   "crowd:MeshLambertMaterial": "e05cf9b4"
+   "crowd:MeshLambertMaterial": "f4d17e82",
+   "tyremarks:MeshBasicMaterial": "9a5c2c1e"
   }
  },
  "rbring": {

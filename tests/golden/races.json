@@ -722,62 +722,62 @@
  "spa/cs": {
   "finished": 13,
   "cars": 13,
-  "winner": 323.83,
+  "winner": 322.29,
   "spins": 0,
-  "walls": 1,
+  "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "f79abae82436aa612b636ce1"
+  "digest": "e3cc66b1ed3a723132a68c42"
  },
  "spa/cs/rain": {
   "finished": 13,
   "cars": 13,
-  "winner": 342.44,
+  "winner": 343.93,
   "spins": 0,
-  "walls": 8,
+  "walls": 6,
   "rescues": 0,
   "nan": false,
-  "digest": "24727488d98f7e0abcf14bce"
+  "digest": "64f5e8b3c318833a49ec98cc"
  },
  "spa/cs/formula": {
   "finished": 13,
   "cars": 13,
   "winner": 269.67,
   "spins": 6,
-  "walls": 5,
+  "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "72cdc4df36c70e8cf636a264"
+  "digest": "3a7690577aa29354d31adb9f"
  },
  "spa/arcade": {
   "finished": 13,
   "cars": 13,
-  "winner": 336.15,
+  "winner": 336.04,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "4c53333b29dcf3394a84d3d3"
+  "digest": "b4847ad8333da3699f667d1d"
  },
  "spa/arcade/rain": {
   "finished": 13,
   "cars": 13,
-  "winner": 355.57,
+  "winner": 355.24,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "17136ed5335da888f2c941da"
+  "digest": "9ca665b9e37c39232a8cc7b2"
  },
  "spa/arcade/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 278.63,
+  "winner": 276.77,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "4c187792aeaa6c612bf25654"
+  "digest": "8e521e1723581bd97af7df36"
  },
  "rbring/cs": {
   "finished": 13,
