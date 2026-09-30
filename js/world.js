@@ -8737,12 +8737,46 @@ const World = (function () {
       pext[side > 0 ? 1 : 0][i] = e;
     }
     for (const a of pext) { const b = Float32Array.from(a); for (let i = 0; i < N; i++) { let m = 1e9; for (let d = -3; d <= 3; d++) m = Math.min(m, b[(i + d + N) % N]); a[i] = m; } }
+    const ext = (i, si) => Math.max(0.62, Math.min(pext[si][i], SW + 1.6));   // (the pavement's outer edge, metres beyond the barrier)
+    // the junctions: where a town street (OpenStreetMap) comes to the circuit from the side, its mouth. mouth[side (0 left, 1 right)][i] 0..1: the
+    // pavement drops to the road there (a lowered kerb either side) and the street's asphalt runs up to the barrier; for the race the street is
+    // closed behind the fence (the closures, stop lines and traffic lights: with the street furniture below). Not in the tunnel, the pit lane
+    const mouth = [new Float32Array(N), new Float32Array(N)], mouths = [];
+    {
+      const pitLane = (i, side) => { if (side < 0) return false; const d = dS(i * ds); return d > T.len - 306 || d < 76; };
+      for (const st of Dd.streets) {
+        if (st.br || st.c === 8) continue;   // (the bridges; the footpaths just join the pavement)
+        const hw = st.w / 2;
+        for (const r of [st.r, st.r.slice().reverse()]) {
+          const P = []; for (let k = 0; k + 1 < r.length; k++) { const [xa, za] = r[k], [xb, zb] = r[k + 1], n = Math.max(1, Math.ceil(Math.hypot(xb - xa, zb - za) / 1.5)); for (let m = 0; m < n; m++) P.push([xa + (xb - xa) * m / n, za + (zb - za) * m / n]); }
+          P.push(r[r.length - 1]);
+          const Q = P.map(([x, z]) => { const n = mcNear(x, z); return n.i < 0 ? null : { i: n.i, dd: n.dd, si: n.lat > 0 ? 1 : 0 }; });
+          for (let k = 0; k + 1 < P.length; k++) {
+            const a = Q[k]; if (a && a.dd <= ext(a.i, a.si) + 0.3) continue;   // from outside the pavement ...
+            let j = -1; for (let m = k + 1; m < Math.min(P.length, k + 11); m++) { const q = Q[m]; if (!q || (a && q.si !== a.si)) break; if (q.dd <= 0.3) { j = m; break; } }   // ... to the barrier within 15 m
+            if (j < 0) continue;
+            const q = Q[j], si = q.si, side = si ? 1 : -1; let kc = k; for (let m = k + 1; m < j; m++) if (Q[m].dd > ext(q.i, si)) kc = m;   // (kc: the last point beyond the pavement)
+            const ux0 = P[k][0] - P[j][0], uz0 = P[k][1] - P[j][1], ul = Math.hypot(ux0, uz0) || 1, ux = ux0 / ul, uz = uz0 / ul;   // (outwards, along the street)
+            const mx = (P[kc][0] + P[j][0]) / 2, mz = (P[kc][1] + P[j][1]) / 2, mn = mcNear(mx, mz), i = mn.i >= 0 ? mn.i : q.i; k = j;
+            const sinA = Math.abs(ux * T.tz[i] - uz * T.tx[i]); if (sinA < 0.35) continue;   // (a road alongside, not into the circuit)
+            if (inTun(i, 20) || pitLane(i, side) || pext[si][i] < 1.2) continue;
+            if (mouths.some(mo => mo.side === side && cyc(mo.i, i) <= 3 && mo.ux * ux + mo.uz * uz > 0.9)) continue;   // (the same street twice)
+            const hl = Math.min(18, hw / sinA + 1.2 + 0.5 * ext(i, si) * Math.sqrt(1 - sinA * sinA) / sinA), n0 = Math.ceil((hl + 1.6) / ds);   // half its width along the barrier
+            for (let d = -n0; d <= n0; d++) { const ii = (i + d + N) % N, v = clamp((hl + 1.5 - Math.abs(d) * ds) / 1.5, 0, 1); if (v > mouth[si][ii]) mouth[si][ii] = v; }
+            mouths.push({ i, side, hw, hl, ux, uz, px: P[kc][0], pz: P[kc][1], c: st.c });
+          }
+        }
+      }
+    }
     // the cross-section beyond the road edge on one side: [offset, height above the road] (verge: 0-3, pavement: 3-6)
     MC.verge = (i, side) => {
       const bar = side > 0 ? T.br[i] : T.bl[i], e = pext[side > 0 ? 1 : 0][i];
       if (inTun(i, 2)) return [[w, 0], [w + 1, -0.02], [bar - 0.3, -0.04], [bar + 0.12, -0.04], [bar + 0.13, -0.04], [bar + 0.14, -0.04], [bar + 0.15, -0.04]];
       const y = T.hy[i], o5 = bar + Math.min(SW, Math.max(0.61, e - 0.4)), o6 = bar + Math.max(0.62, Math.min(e, SW + 1.6)), q = side * o6, gy = mcGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) + 0.04 - y;
-      return [[w, 0], [w + 1, -0.02], [bar - 0.3, -0.05], [bar + 0.45, -0.05], [bar + 0.5, 0.13], [o5, 0.14], [o6, e < SW + 1.5 ? 0.14 : clamp(gy, -1.2, 1.2)]];
+      const h6 = e < SW + 1.5 ? 0.14 : clamp(gy, -1.2, 1.2), m = mouth[side > 0 ? 1 : 0][i];
+      if (!(m > 0)) return [[w, 0], [w + 1, -0.02], [bar - 0.3, -0.05], [bar + 0.45, -0.05], [bar + 0.5, 0.13], [o5, 0.14], [o6, h6]];
+      const g6 = clamp(gy - 0.03, -1.2, 1.2), f5 = (o5 - bar - 0.5) / Math.max(0.1, o6 - bar - 0.5);   // (in a junction's mouth)
+      return [[w, 0], [w + 1, -0.02], [bar - 0.3, -0.05], [bar + 0.45, -0.05], [bar + 0.5, lerp(0.13, -0.05, m)], [o5, lerp(0.14, -0.05 + (g6 + 0.05) * f5, m)], [o6, lerp(h6, g6, m)]];
     };
     const HI = [0.93, 0.93, 0.9];
     {
@@ -9030,7 +9064,8 @@ const World = (function () {
         const r = st.r, hw = st.w / 2, pts = [], ped = st.c === 8;
         for (let k = 0; k + 1 < r.length; k++) { const [xa, za] = r[k], [xb, zb] = r[k + 1], L = Math.hypot(xb - xa, zb - za), n = Math.max(1, Math.ceil(L / 3)); for (let m = 0; m < n; m++) pts.push([xa + (xb - xa) * m / n, za + (zb - za) * m / n]); }
         pts.push(r[r.length - 1]);
-        const free = pts.map(([x, z]) => { const n = mcNear(x, z); return !(n.i >= 0 && n.dd < (pext[n.lat > 0 ? 1 : 0][n.i] || 0.6) + hw + 0.5) && mcSD(x, z) > 1; });
+        const free = pts.map(([x, z]) => { if (mcSD(x, z) <= 1) return false; const n = mcNear(x, z); if (!(n.i >= 0 && n.dd < (pext[n.lat > 0 ? 1 : 0][n.i] || 0.6) + hw + 0.5)) return true;
+          return n.dd > ext(n.i, n.lat > 0 ? 1 : 0) + 0.3 && mouths.some(mo => (x - mo.px) ** 2 + (z - mo.pz) ** 2 < (mo.hw + 4) ** 2); });   // (up to the pavement at a junction)
         let run = [];
         const flush = () => {
           if (run.length >= 2) {
@@ -9047,6 +9082,21 @@ const World = (function () {
         };
         for (let k = 0; k < pts.length; k++) { if (free[k]) run.push(pts[k]); else flush(); }
         flush();
+      }
+      for (let si = 0; si < 2; si++) {   // the junctions' mouths: the street's asphalt from the barrier's foot over the lowered pavement and 3 m on into the street
+        const side = si ? 1 : -1, row = (i) => {
+          const vr = MC.verge(i, side), gi = vr.length - 1, o7 = vr[gi][0] + 3.2, q = side * o7, x7 = T.px[i] + T.nx[i] * q, z7 = T.pz[i] + T.nz[i] * q;
+          const pts = [...vr.slice(3).map(([o, h]) => Pt(i, side * o, h + 0.045)), [x7, mcGround(x7, z7) + 0.035, z7]], off = [...vr.slice(3).map(([o]) => o), o7];
+          return pts.map((p, k) => ({ p, u: off[k] / 8, c: k ? AS : [0.56, 0.56, 0.57] }));
+        };
+        let prev = null;
+        for (let n = 0; n <= N; n++) {
+          const i = n % N; if (!(mouth[si][i] >= 0.5)) { prev = null; continue; }
+          const r = row(i), v = n * ds / 8;
+          if (prev) { const g = stCh.get(r[0].p[0], r[0].p[2]); for (let m = 0; m < 4; m++) { const A = side > 0 ? [prev[m], prev[m + 1], r[m + 1], r[m]] : [prev[m + 1], prev[m], r[m], r[m + 1]];
+            g.quadUp(A[0].p, A[1].p, A[2].p, A[3].p, A.map(e => e.c), [[A[0].u, prev.v], [A[1].u, prev.v], [A[2].u, v], [A[3].u, v]]); } }
+          prev = r; prev.v = v;
+        }
       }
       stCh.addTo(root, sMat, false, true);
     }
@@ -9174,6 +9224,7 @@ const World = (function () {
     addM(gc, new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }));
 
     /* ---- street furniture (OpenStreetMap): benches and bus shelters along the kerbs, bollards, statues on their plinths, the retaining walls ---- */
+    let nJunc = 0;
     {
       const segs = []; for (const st of Dd.streets) for (let k = 0; k + 1 < st.r.length; k++) segs.push(st.r[k][0], st.r[k][1], st.r[k + 1][0], st.r[k + 1][1]);
       const kerbDir = (x, z) => {   // [ux, uz, nx, nz]: along the nearest street (or the circuit), and the normal from it towards (x, z)
@@ -9201,6 +9252,34 @@ const World = (function () {
       for (const [x, z] of Dd.bollards) { if (!spot(x, z, 0.2)) continue; cyl(scen.get(x, z), x, mcGround(x, z), z, 0.07, 0.85, 5, [0.3, 0.32, 0.33], [0.62, 0.62, 0.6]); }
       for (const [x, z] of Dd.art) { if (!spot(x, z, 1.5)) continue; const y = mcGround(x, z), g = scen.get(x, z), h = 1.6 + R() * 1.4;   // a bronze on a stone plinth
         box(g, x, y, z, 1.3, 1.1, 1.3, R() * TAU, STONE2, [0.88, 0.86, 0.82]); ico(g, x, y + 1.1 + h * 0.5, z, 0.45, h / 0.9, [0.46, 0.38, 0.24], R, 0.4); exclPush(x, z, 2); }
+      // the junctions: the street closed a little behind the fence (red and white water-filled barriers across it), its stop line (a dashed give-way
+      // line on a service road), traffic lights at the bigger ones; zebra crossings on the town's streets (OpenStreetMap's, off the circuit)
+      const mkG = new GB(), WL = [0.95, 0.95, 0.93];
+      const flatQ = (x, z, ux, uz, a0, a1, b0, b1) => {   // a painted quad on the street: a0..a1 along (ux, uz), b0..b1 across it
+        const P = (a, b) => { const px = x + ux * a - uz * b, pz = z + uz * a + ux * b; return [px, mcGround(px, pz) + 0.06, pz]; }; mkG.quadUp(P(a0, b0), P(a1, b0), P(a1, b1), P(a0, b1), [WL, WL, WL, WL]); };
+      for (const mo of mouths) {
+        const { ux, uz, hw } = mo, lx = mo.px + ux * 1.3, lz = mo.pz + uz * 1.3;
+        if (mo.c === 7) { for (let b = -hw + 0.3; b < hw - 0.5; b += 1.0) flatQ(lx, lz, ux, uz, 0, 0.3, b, b + 0.5); }
+        else flatQ(lx, lz, ux, uz, 0, 0.45, -hw + 0.25, hw - 0.25);
+        const bx = mo.px + ux * 2.9, bz = mo.pz + uz * 2.9, oc = MC.ocAt(bx, bz); if (oc === 6 || oc === 1 || mcSD(bx, bz) < 1) continue;
+        nJunc++; const nb = Math.max(2, Math.round((2 * hw + 0.4) / 1.25)), rot = Math.atan2(ux, -uz);   // (across the street)
+        for (let k = 0; k < nb; k++) { const b = (k - (nb - 1) / 2) * 1.25, x = bx - uz * b, z = bz + ux * b; box(scen.get(x, z), x, mcGround(x, z) - 0.02, z, 1.2, 0.85, 0.48, rot, k % 2 ? [0.95, 0.95, 0.94] : [0.86, 0.13, 0.11]); }
+        exclPush(bx, bz, hw + 1);
+        if (mo.c <= 4) {   // a traffic light on the corner (switched off for the race)
+          const si = mo.side > 0 ? 1 : 0, ie = (mo.i + Math.round((mo.hl + 1.4) / ds)) % N, bar = si ? T.br[ie] : T.bl[ie], o = mo.side * (bar + 0.9), x = T.px[ie] + T.nx[ie] * o, z = T.pz[ie] + T.nz[ie] * o;
+          const oc2 = MC.ocAt(x, z); if (oc2 !== 6 && oc2 !== 1 && mouth[si][ie] < 0.2) { const g = scen.get(x, z), y = mcGround(x, z);
+            cyl(g, x, y, z, 0.07, 3.3, 5, [0.24, 0.26, 0.27]); box(g, x, y + 2.3, z, 0.34, 0.95, 0.3, rot, [0.12, 0.13, 0.14]); box(g, x - uz * 0.17, y + 2.95, z + ux * 0.17, 0.2, 0.2, 0.06, rot, [0.5, 0.1, 0.08]); } }
+      }
+      { const zs = []; for (const st of Dd.streets) { if (st.br || st.c === 8) continue; for (let k = 0; k + 1 < st.r.length; k++) zs.push([st.r[k][0], st.r[k][1], st.r[k + 1][0], st.r[k + 1][1], st.w / 2]); }
+        const done = [];
+        for (const [zx, zz] of Dd.zebra) {
+          const n = mcNear(zx, zz); if (n.i >= 0 && (n.d <= w + 1.5 || n.dd < ext(n.i, n.lat > 0 ? 1 : 0) + 3.5)) continue;   // (on the circuit: painted out, above; the junctions' mouths)
+          let bd = 1e9, B = null; for (const [ax, az, bx2, bz2, hw] of zs) { const dx = bx2 - ax, dz = bz2 - az, L2 = dx * dx + dz * dz; if (L2 < 1e-4) continue;
+            const t = clamp(((zx - ax) * dx + (zz - az) * dz) / L2, 0, 1), px = ax + dx * t, pz = az + dz * t, d = Math.hypot(zx - px, zz - pz); if (d < bd && d < hw + 0.8) { const L = Math.sqrt(L2); bd = d; B = [px, pz, dx / L, dz / L, hw]; } }
+          if (!B || done.some(([x, z]) => (x - B[0]) ** 2 + (z - B[1]) ** 2 < 36) || MC.ocAt(B[0], B[1]) === 6) continue; done.push([B[0], B[1]]);
+          for (let b = -B[4] + 0.4; b <= B[4] - 0.9; b += 1.0) flatQ(B[0], B[1], B[2], B[3], -1.5, 1.5, b, b + 0.5);
+        } }
+      addM(mkG, new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -5 }));
       for (const r of Dd.walls) for (let k = 0; k + 1 < r.length; k++) {   // retaining and garden walls: 0.4 m of stone, 1.4 m high (not across the streets)
         const [xa, za] = r[k], [xb, zb] = r[k + 1], L = Math.hypot(xb - xa, zb - za); if (L < 0.3) continue;
         const n = Math.max(1, Math.ceil(L / 4)), ux = (xb - xa) / L, uz = (zb - za) / L, px = -uz * 0.2, pz = ux * 0.2;
@@ -9296,7 +9375,7 @@ const World = (function () {
     }
     {   // lamp posts along the lap (the town's cast-iron candelabra, both sides every ~34 m) and OpenStreetMap's own
       const lamp = (x, z) => { if (!free(x, z) && MC.ocAt(x, z) !== 3) return; const g = scen.get(x, z), y = mcGround(x, z); cyl(g, x, y, z, 0.12, 5.6, 6, [0.16, 0.2, 0.18]); box(g, x, y + 5.6, z, 0.9, 0.12, 0.2, 0, [0.16, 0.2, 0.18]); for (const o of [-0.42, 0.42]) box(g, x + o, y + 5.1, z, 0.34, 0.5, 0.34, 0, [0.96, 0.93, 0.78], [0.2, 0.22, 0.2]); CR.avoid(x, z, 0.8); };
-      for (const side of [-1, 1]) for (let d = 17 * (side + 2); d < T.len; d += 34) { const q = crAt(sAt(d)); if (!q || inTun(q.i, 25)) continue; const o = (side > 0 ? q.br : q.bl) + 1.6; lamp(q.px + q.nx * side * o, q.pz + q.nz * side * o); }
+      for (const side of [-1, 1]) for (let d = 17 * (side + 2); d < T.len; d += 34) { const q = crAt(sAt(d)); if (!q || inTun(q.i, 25) || mouth[side > 0 ? 1 : 0][q.i] > 0.1) continue; const o = (side > 0 ? q.br : q.bl) + 1.6; lamp(q.px + q.nx * side * o, q.pz + q.nz * side * o); }
       for (const [x, z] of Dd.lamps) lamp(x, z);
     }
     {   // Monaco's flags (red over white) on the quays and round the grandstands; marshals in orange behind the fences at the big corners
@@ -9363,7 +9442,7 @@ const World = (function () {
     out.propFloor = propFloorTable(null, (i, side) => MC.verge(i, side));
     out.propStats = roadsideProps(out.props, { exits: 7, apexes: 1, wallEdge: [1.9, 2.5], stacks: [5, 8], rows2: 0.3, floor: out.propFloor, skip: (i, side, x, z) => inTun(i, 30) || excluded(x, z) });
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, buildings: nBld, streets: nStreets, trees: nTrees, yachts: nYachts, stands: nStands, fans: nFans };   // (read by the tests)
+    out.stats = { tiles: nTiles, buildings: nBld, streets: nStreets, junctions: nJunc, trees: nTrees, yachts: nYachts, stands: nStands, fans: nFans };   // (read by the tests)
     return out;
   }
 

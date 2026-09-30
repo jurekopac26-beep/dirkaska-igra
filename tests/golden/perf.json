@@ -28,11 +28,11 @@
   "jsMs": 0.6
  },
  "monaco": {
-  "calls": 260,
-  "maxCalls": 344,
-  "kverts": 699,
-  "maxKverts": 750,
-  "jsMs": 0.57
+  "calls": 261,
+  "maxCalls": 345,
+  "kverts": 712,
+  "maxKverts": 759,
+  "jsMs": 0.7
  },
  "gozd": {
   "calls": 301,
