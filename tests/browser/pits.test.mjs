@@ -17,7 +17,7 @@ try {
     // 1 s of game time in 20 steps, the renderer (and the pit crew) stepped along without drawing
     r = await page.evaluate(() => {
       const g = window.__game, P = g.race.player, st = []; Render.scene.visible = false;
-      for (let i = 0; i < 20; i++) { g.sim(0.05, true); Render.frame(0.05, 1, P, g.S.camera, {}); const c = Render.crew; st.push([P.pitState, c && c.mode, c ? c.lift : 0, P.tyre]); }
+      for (let i = 0; i < 20; i++) { g.sim(0.05, true); Render.frame(0.05, 1, P, g.S.camera, {}); const c = Render.crew; st.push([P.pitState, c && c.mode, c ? c.lift : 0, P.ty ? P.ty.wear : null]); }
       if (P.lap === 2 && !P.repairN && !P.inPit) P.pitWant = true;
       if (P.repairN && !P.inPit) P.pitWant = false;
       Render.scene.visible = true;
@@ -32,7 +32,7 @@ try {
   T.check('the crew goes out, works and clears', ['out', 'work', 'clear'].every(m => modes.has(m)), [...modes].join(','));
   T.check('the car goes up on the jacks', maxLift > 0.05, `max lift ${maxLift.toFixed(3)} m`);
   T.check('repaired once', r.repairN === 1, `repairs ${r.repairN}`);
-  T.check('new tyres at the stop', tyreIn > 0.15 && tyreOut < 0.01, `tyre wear ${tyreIn == null ? '-' : tyreIn.toFixed(2)} in, ${tyreOut == null ? '-' : tyreOut.toFixed(2)} out`);
+  T.check('new tyres at the stop', tyreIn > 0 && tyreOut < 0.001, `tyre wear ${tyreIn == null ? '-' : tyreIn.toFixed(4)} in, ${tyreOut == null ? '-' : tyreOut.toFixed(4)} out`);
   T.check('player finishes, all cars finish', r.fin && r.finished === r.n, `${r.finished}/${r.n} after ${r.t.toFixed(1)} s`);
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
 } finally {

@@ -8,8 +8,8 @@ const Sfx = (function () {
   let noiseBuf = null;
   let eng = null, ai = [], squeal = null, rumble = null, wind = null, curbV = null, rainV = null, hiss = null, heli = null, echo = null;
   let gravel = null, spray = null, crowd = null, lastT = 0, pudPrev = false;
-  let stands = null, jet = null;   // the Red Bull Ring: the grandstands' crowd, the jets before the start
-  let lastCrash = 0, running = false, crowdLv = 0, applB = 0, cer = false;
+  let stands = null, jet = null, tun = null;   // the grandstands' crowd (every circuit), the Red Bull Ring's jets before the start, a tunnel's ring
+  let lastCrash = 0, running = false, cer = false;   // (cer: the podium ceremony, setCeremony)
 
   function create() {
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -34,7 +34,7 @@ const Sfx = (function () {
     hiss = noiseVoice('bandpass', 1400, 0.8);
     heli = heliVoice(); echo = echoFx();
     gravel = noiseVoice('bandpass', 2600, 0.7); spray = noiseVoice('highpass', 1500, 0.5); crowd = crowdVoice();
-    stands = standsVoice(); jet = noiseVoice('lowpass', 500, 0.7);
+    stands = standsVoice(); jet = noiseVoice('lowpass', 500, 0.7); tun = tunnelFx();
     return true;
   }
   function shaperCurve(k) {
@@ -137,6 +137,7 @@ const Sfx = (function () {
     if (race.state !== C.state) { if (race.state === 'racing') C.cheer = 1; C.state = race.state; }   // the lights go out
     if (race.state === 'racing' && player.pos < C.pos && !player.finished) { C.cheer = 1; C.tHorn = Math.min(C.tHorn, now + 0.15); }   // the player passes a car
     if (player.finished && !C.fin) { C.fin = true; C.cheer = 1; } else if (!player.finished) C.fin = false;
+    if (cer) C.cheer = Math.max(C.cheer, 0.7);   // (the podium ceremony: the stands keep cheering)
     C.pos = player.pos || 0;
     const dt = clamp(now - (C.tPrev || now), 0, 0.1); C.tPrev = now;
     C.cheer = Math.max(0, C.cheer - dt / 4); C.lev += (lev - C.lev) * Math.min(1, dt * 5);
@@ -167,6 +168,17 @@ const Sfx = (function () {
     const fb = ctx.createGain(); fb.gain.value = 0.28; const g2 = ctx.createGain(); g2.gain.value = 0.6;
     send.connect(lp); lp.connect(d1); lp.connect(d2); d2.connect(g2); d2.connect(fb); fb.connect(d2); d1.connect(bus); g2.connect(bus);
     eng.out.connect(send);
+    return { send };
+  }
+
+  // a tunnel (World's dyn.tunnel: Monaco's under the hotel, the short one under Suzuka's bridge): the engine rings off the walls and the roof,
+  // three short feedback delays (a small, hard room) behind a low-pass, fed by the player's engine and the nearest rivals'
+  function tunnelFx() {
+    const send = ctx.createGain(); send.gain.value = 0;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400; send.connect(lp);
+    const out = ctx.createGain(); out.gain.value = 0.7; out.connect(bus);
+    for (const [t, f] of [[0.029, 0.52], [0.043, 0.48], [0.061, 0.44]]) { const d = ctx.createDelay(0.2), fb = ctx.createGain(); d.delayTime.value = t; fb.gain.value = f; lp.connect(d); d.connect(fb); fb.connect(d); d.connect(out); }
+    eng.out.connect(send); for (const v of ai) v.out.connect(send);
     return { send };
   }
 
@@ -243,27 +255,24 @@ const Sfx = (function () {
     set(spray.out.gain, air ? 0 : loose / 4 * spf * 0.14 * wet, 0.05);
     if (pud && !pudPrev && !air && spd > 5) splash(clamp(spd / 30, 0.3, 1));
     pudPrev = pud;
-    // the fans (World's crowdCells, the fans per 24 m square round the car; every track): a roar that swells as the car comes by, with
-    // whoops and air horns. A rally stage: more over a jump, the whoops often; a circuit: the stands roar as the cars go by at speed, a
-    // whoop now and then, the applause for an overtake in front of them (applause) and at the podium (setCeremony). The Red Bull Ring's
-    // stands and grass banks have their own voice (standsStep): there only the applause
-    const Wd = typeof Render !== 'undefined' ? Render.world : null, rally = !!(race && race.track.def.rally), cc = race && Wd ? Wd.crowdCells : null;
+    // the fans (a rally stage: World's crowdCells, the fans per 24 m square round the car): a roar that swells as the car comes by (more
+    // over a jump), with whoops and air horns
+    const Wd = typeof Render !== 'undefined' ? Render.world : null, cc = race && race.track.def.rally && Wd ? Wd.crowdCells : null;
     let cl = 0;
     if (cc) {
       const cx = Math.floor(player.x / 24), cz = Math.floor(player.z / 24); let n = 0;
       for (let a = -2; a <= 2; a++) for (let b = -2; b <= 2; b++) { const c = cc.get((cx + a) + ',' + (cz + b)); if (c) n += c * clamp(1 - Math.hypot((cx + a + 0.5) * 24 - player.x, (cz + b + 0.5) * 24 - player.z) / 60, 0, 1); }
       cl = clamp(n / 120, 0, 1);
     }
-    crowdLv = cl; applB = Math.max(0, applB - dt * 0.5);
-    const ownStands = !rally && !!(Wd && Wd.crowdPts);   // (the Red Bull Ring: its stands have their own voice, standsStep)
-    let ex = rally ? cl * (0.5 + 0.5 * clamp(spd / 30, 0, 1)) * (air ? 1.4 : 1) : ownStands ? 0 : cl * (0.3 + 0.7 * clamp(spd / 55, 0, 1));
-    if (cer && !ownStands) ex = Math.max(ex, 0.8);
-    set(crowd.out.gain, (ex + applB * 0.9) * (rally ? 0.16 : 0.11), 0.3);
-    if (ex > 0.25 && Math.random() < dt * ex * (rally ? 3 : cer ? 2 : 0.7)) cheer(Math.min(1, ex));
+    const ex = cl * (0.5 + 0.5 * clamp(spd / 30, 0, 1)) * (air ? 1.4 : 1);
+    set(crowd.out.gain, ex * 0.16, 0.3);
+    if (ex > 0.25 && Math.random() < dt * ex * 3) cheer(Math.min(1, ex));
     // Pikes Peak: the engine echoes among the rocks above the treeline; the TV helicopter (World's dyn.pk: Pikes Peak's, and Ouninpohja's
     // that follows the car the whole run) by its distance to the camera
     const pikes = !!(race && race.track && race.track.def && race.track.def.id === 'pikes');
     set(echo.send.gain, pikes ? Core.sstep(186, 198, player.roadY || 0) * 0.32 : 0, 0.6);
+    { const tn = Wd && Wd.dyn && Wd.dyn.tunnel, sq = player.q ? player.q.s : -1e9;   // (in a tunnel: the ring of its walls)
+      set(tun.send.gain, tn && sq > tn.s0 - 3 && sq < tn.s1 + 3 ? 0.85 : 0, 0.08); }
     const W = Wd, pk = W && W.dyn ? W.dyn.pk || W.dyn.air : null, cam = typeof Render !== 'undefined' ? Render.camera : null;   // (the Red Bull Ring's: dyn.air)
     let hv = 0, hp = 0;
     if (pk && pk.heli && (pk.on || (pk.follow && pk.heli.visible))) {
@@ -330,7 +339,7 @@ const Sfx = (function () {
     const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.05 * v, now + 0.06); g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
     o.connect(bp); bp.connect(g); g.connect(bus); o.start(now); o.stop(now + dur + 0.02);
   }
-  // applause (the player overtook in front of the fans, the podium): a burst of claps over ~1.8 s, the roar swelling, a cheer on top
+  // applause (the podium): a burst of claps over ~1.8 s, a cheer on top
   function applause(v) {
     if (!running || !ctx || ctx.state !== 'running') return;
     v = clamp(v, 0, 1); if (v < 0.05) return;
@@ -341,7 +350,7 @@ const Sfx = (function () {
     let last = -1; for (const t0 of ts) { if (t0 - last < 0.018) continue; last = t0; const t = now + t0, a = (0.05 + Math.random() * 0.06) * v * (1 - t0 / 2.2);
       g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(a, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.03); }
     src.connect(bp); bp.connect(g); g.connect(bus); src.start(now); src.stop(now + 2.2);
-    applB = Math.max(applB, v); cheer(Math.min(1, v + 0.2));
+    cheer(Math.min(1, v + 0.2));
   }
   // a champagne cork: a short low thump, the fizz after it
   function cork() {
@@ -401,10 +410,11 @@ const Sfx = (function () {
     if (!ctx) return;
     for (const v of [eng, ...ai]) set(v.out.gain, 0, 0.02);
     for (const v of [squeal, rumble, wind, curbV, rainV, hiss, heli, gravel, spray, crowd, stands, jet]) set(v.out.gain, 0, 0.02);
-    set(echo.send.gain, 0, 0.02);
+    set(echo.send.gain, 0, 0.02); set(tun.send.gain, 0, 0.02);
   }
 
-  const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, shiftPop, knock, wrench, silence, applause, cork, setCeremony, get crowd() { return crowdLv; }, get ready() { return !!ctx && ctx.state === 'running'; } };
+  const levels = () => ctx ? { stands: stands.lev, standsGain: stands.out.gain.value, tunnel: tun.send.gain.value } : null;   // (tests: the crowd's and the tunnel's levels now)
+  const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, shiftPop, knock, wrench, silence, levels, applause, cork, setCeremony, get ready() { return !!ctx && ctx.state === 'running'; } };
   window.Sfx = api;
   return api;
 })();

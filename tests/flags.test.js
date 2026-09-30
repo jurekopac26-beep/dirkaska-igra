@@ -1,4 +1,9 @@
-// Race control (Core Race._flags): yellow flags, overtaking under yellow, track limits, the penalties in the results.
+// Yellow flags, the safety car and penalties (Race opts flags; Core only, no browser): a car stopped on the track brings out a yellow
+// flag (the section from 250 m before it to 30 m past it; gone 5 s after the car moves on); a heavy crash (a car stopped for long) the
+// safety car: it comes out ahead of the leader, the field queues up behind it without overtaking, it goes in (into the pit lane or away
+// up the road) and the race is green again at the line; no DRS under the flags; the player overtaking under a flag has to give the place
+// back within 10 s, else +5 s on the race time (in the results); a race without flags as before. Track limits (Race._limits, with the
+// flags): three warnings, then +5 s for each time all four wheels are past the kerb where the stewards watch.
 //   node tests/flags.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -7,92 +12,111 @@ const { DT, seeded } = require('./lib/sim.js');
 const C = loadCore();
 let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
-
 const track = (id) => new C.Track(C.TRACKS.find(d => d.id === id));
-const race = (T, o) => { const r = new C.Race(T, Object.assign({ numAI: 6, playerGrid: 7, laps: 3, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1 }, o || {})); r.start(); return r; };
-const dS = (T, a, b) => { const L = T.len; let d = a - b; d = ((d % L) + L) % L; return d > L / 2 ? d - L : d; };
-const place = (T, c, s, lat, v) => { const i = T.idx(s); c.place(T.px[i] + T.nx[i] * lat, T.pz[i] + T.nz[i] * lat, T.hd[i]); if (T.hasElev) c.y = c.py = T.hy[i]; c.q = T.query(c.x, c.z, i, {}); c.sPrev = c.q.s; c.vx = Math.cos(c.h) * v; c.vz = Math.sin(c.h) * v; };
-const hold = (T, c, s, lat) => { place(T, c, s, lat, 0); c.stuckT = 0; c.inThr = 0; c.inBrk = 1; };   // (a car kept stopped on the circuit: re-placed before every step, never rescued)
 
-// 1. a stopped car: a yellow zone from 150 m before it to 40 m past it after 0.6 s, the cars there in it, cleared 4 s after it moves on
-{ const T = track('jezero'), r = race(T), P = r.player, A = r.cars.find(c => c !== P), B = r.cars.filter(c => c !== P)[1];
+// a race where the player stops on the track at t0 for `hold` seconds (braking, then the handbrake), else on autopilot
+function run(tid, t0, hold, extra) {
   Math.random = seeded(3);
-  for (let k = 0; k < 7 / DT; k++) { C.aiControl(P, r, DT); r.step(DT); }   // (past the start: race control is live after 6 s)
-  const s0 = T.startS + 600;   // (A stopped on the road, held there)
-  let t0 = null; for (let k = 0; k < 1.5 / DT; k++) { hold(T, A, s0, 0); r.step(DT); if (t0 == null && r.yellow.length) t0 = (k + 1) * DT; }
-  const z = r.yellow[0];
-  hold(T, A, s0, 0); place(T, B, s0 - 100, 0, 20); r.step(DT); const inB = !!z && B.yellowIn === z;
-  hold(T, A, s0, 0); place(T, B, s0 - 170, 0, 20); r.step(DT); const outB = !B.yellowIn;
-  check('a stopped car: a yellow zone after ~0.6 s, from 150 m before it to 40 m past it', z && z.car === A && t0 > 0.5 && t0 < 0.8 && inB && outB,
-    `zone ${z ? 'at the stopped car' : 'none'} after ${t0 == null ? '-' : t0.toFixed(2)} s; a car 100 m before it ${inB ? 'in' : 'out'}, 170 m before ${outB ? 'out' : 'in'}`);
-  place(T, A, s0, 0, 25); let clear = null;
-  for (let k = 0; k < 6 / DT; k++) { A.inThr = 1; r.step(DT); if (clear == null && !r.yellow.length) clear = k * DT; }
-  check('the zone clears ~4 s after the car moves on', clear != null && clear > 3.5 && clear < 4.6, `cleared after ${clear == null ? '-' : clear.toFixed(2)} s`);
-}
-
-// 2. under yellow the AI lifts and does not overtake: a line of AI cars passes a stopped one, their order holds in the zone
-{ const T = track('jezero'); Math.random = seeded(5);
-  const r = race(T, { numAI: 8, playerGrid: 9 }), P = r.player;
-  for (let k = 0; k < 7 / DT; k++) { C.aiControl(P, r, DT); r.step(DT); }
-  const ai = r.cars.filter(c => c !== P), X = ai[0], s0 = T.startS + 900;
-  const xl = T.rl[T.idx(s0)] + 3;   // (X stopped just off the racing line)
-  for (let k = 0; k < 1 / DT; k++) { hold(T, X, s0, xl); r.step(DT); }
-  const q = ai.slice(1, 6); q.forEach((c, k) => place(T, c, s0 - 260 - k * 14, T.rl[T.idx(s0 - 260 - k * 14)] + (k % 2 ? 1.6 : -1.6), 32));
-  const ps = s0 - 500;   // (the player parked well behind, out of the way)
-  let swaps = 0, contacts = 0, vIn = 0, nIn = 0; const order = () => q.slice().sort((a, b) => b.dist - a.dist).map(c => c.name).join();
-  let prev = null;
-  for (let k = 0; k < 14 / DT; k++) {
-    Math.random = seeded(900 + k); hold(T, X, s0, xl); hold(T, P, ps, -T.w + 1); r.step(DT);
-    const inZone = q.filter(c => c.yellowIn); if (inZone.length) { const o = order(); if (prev && o !== prev && q.every(c => c.yellowIn || dS(T, c.q.s, s0) > 40)) swaps++; prev = o; }
-    for (const c of inZone) { vIn += c.speed; nIn++; if (c.hitCar > 2) contacts++; }
-    for (const c of r.cars) { c.hitCar = 0; c.hitWall = 0; }   // (as the game does after every frame)
+  const T = track(tid), r = new C.Race(T, Object.assign({ numAI: 12, playerGrid: 12, laps: 3, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1, flags: true }, extra));
+  r.start(); const P = r.player, log = []; let t = 0, k = 0, ev = 0;
+  const S = { log, r, P, T, scOrder: null, passes: 0, queue: null, drsFlag: 0 };
+  let prevOrder = null;
+  while (t < 700 && r.cars.some(c => !c.finished)) {
+    Math.random = seeded(5000 + (++k));
+    const stop = t > t0 && t < t0 + hold;
+    if (stop) { P.inThr = 0; P.inBrk = P.speed > 2 ? 1 : 0; P.inHand = P.speed > 2 ? 0 : 1; P.inSteer = 0; P.digitalSteer = true; } else { P.digitalSteer = false; C.aiControl(P, r, DT); if (P.stuckT > 3) r.rescue(P); }
+    r.step(DT); t += DT;
+    const F = r.fl;
+    if (F.ev !== ev) { ev = F.ev; log.push({ t, k: F.evK }); if (F.evK === 'sc') S.scAt = t; }
+    // under the safety car: the running AI cars (not stopped, not pitting) keep their order (from 5 s after it came out: a move already
+    // under way side by side is finished)
+    if (F.sc && F.sc.car && F.sc.t > 5) {
+      const ord = r.order.filter(c => !c.isPlayer && !c.finished && !c.inPit && !c.pitWant && c.fl.stopT === 0).map(c => c.name);
+      if (prevOrder) { const a = prevOrder.filter(x => ord.includes(x)), b = ord.filter(x => prevOrder.includes(x)); if (a.join() !== b.join()) S.passes++; }
+      prevOrder = ord;
+      if (F.sc.state === 'in' && !S.queue) { const X = F.sc.car; S.queue = r.order.filter(c => !c.finished && !c.isPlayer).slice(0, 5).map(c => Math.round(X.dist - c.dist)); }
+      for (const c of r.cars) if (c.drs) S.drsFlag++;
+    } else prevOrder = null;
   }
-  check('under yellow the AI does not overtake and lifts', swaps === 0 && nIn > 0 && contacts === 0, `${swaps} changes of order in the zone, mean speed there ${(vIn / Math.max(1, nIn) * 3.6).toFixed(0)} km/h, ${contacts} contacts`);
+  S.t = t; return S;
 }
 
-// 3. the player overtaking under yellow: a warning, then 5 s
-{ const T = track('jezero'); Math.random = seeded(7);
-  const r = race(T, { numAI: 3, playerGrid: 4 }), P = r.player, [X, O] = r.cars.filter(c => c !== P);
-  for (let k = 0; k < 7 / DT; k++) { C.aiControl(P, r, DT); r.step(DT); }
-  const s0 = T.startS + 800;
-  for (let k = 0; k < 1 / DT; k++) { hold(T, X, s0, 3); r.step(DT); }
-  const pass = () => { O.q.s = P.q.s + 3; r._flags(DT); O.q.s = P.q.s - 3; r._flags(DT); };   // (the player moves past O on the road, both in the zone and moving)
-  place(T, P, s0 - 80, -2, 20); place(T, O, s0 - 76, 2, 20); r._flags(DT);   // (both moving at 20 m/s, in the zone)
-  const ev = []; P.flagEv = null; pass(); ev.push(P.flagEv, P.pen); P.flagEv = null; pass(); ev.push(P.flagEv, P.pen);
-  check('the player overtaking under yellow: a warning, then 5 s', ev.join() === 'yellowPass,0,yellowPen,5', ev.join());
+// 1. a short stop at the back of a small field (nobody runs into it): a yellow flag, no safety car
+{
+  const S = run('rbring', 60, 6, { numAI: 3, playerGrid: 4 }), ks = S.log.map(e => e.k);
+  const y = S.log.find(e => e.k === 'yellow');
+  check('a car stopped on the track: a yellow flag (no safety car for a short stop), gone once it moves on', !!y && y.t > 60 && y.t < 67 && !ks.includes('sc') && S.r.fl.yel.length === 0, ks.join(', '));
+  // the zone: from 250 m before the stopped car to 30 m past it
+  const r = S.r, T = S.T, s0 = 1000; r.fl.yel.push({ s: s0, t: 5, car: S.P });
+  check('the yellow zone: 250 m before the car to 30 m past it', !!r._yelAt(s0 - 240) && !!r._yelAt(s0 + 20) && !r._yelAt(s0 - 270) && !r._yelAt(s0 + 45), '');
+  r.fl.yel.length = 0;
 }
 
-// 4. track limits: all four wheels past the kerb where the stewards watch; three warnings, then 5 s each; the kerb itself is track;
-//    nowhere else; no stewards (rules 0): nothing
+// 2. a long stop: the safety car on the Red Bull Ring (with pits) and Jezero (none)
+for (const tid of ['rbring', 'jezero']) {
+  const S = run(tid, 50, 14), ks = S.log.map(e => e.k), seq = ['yellow', 'sc', 'scIn', 'scGone'];
+  const order = seq.every((k, i) => ks.indexOf(k) >= 0 && (i === 0 || ks.indexOf(k) > ks.indexOf(seq[i - 1])));
+  check(`${tid}: a long stop brings out the safety car; it goes in (${tid === 'rbring' ? 'the pit lane' : 'away up the road'}), then green at the line`,
+    order && (ks.includes('green') || S.r.finishOrder.length) && S.r.fl.sc === null && S.r.fl.scUsed, ks.join(', '));
+  check(`${tid}: the field queued behind the safety car (15-40 m apart) and nobody overtook under it, no DRS`, !!S.queue && S.queue[0] > 8 && S.queue[0] < 30 && S.queue.every((g, i) => i === 0 || g - S.queue[i - 1] < 45) && S.passes === 0 && S.drsFlag === 0,
+    `gaps to the safety car ${S.queue && S.queue.join(', ')}; ${S.passes} overtakes`);
+  check(`${tid}: every car finishes`, S.r.cars.every(c => c.finished), `${S.r.cars.filter(c => c.finished).length}/13`);
+}
+
+// 3. the player overtaking under a yellow flag: give the place back, else +5 s
+{
+  Math.random = seeded(8);
+  const T = track('grom'), mk = () => new C.Race(T, { numAI: 1, playerGrid: 2, laps: 2, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 4, difficulty: 0, flags: true });
+  const pass = (r, back) => {
+    r.start(); const P = r.player, A = r.cars.find(c => !c.isPlayer); let t = 0; const ev = [];
+    while (t < 40) { C.aiControl(P, r, DT); r.step(DT); t += DT; }
+    // a yellow flag over the next stretch (a car stopped far ahead that stays stopped), the player put behind the rival, then 8 m past it inside the zone
+    const stp = { fl: { stopT: 99 } }; r.fl.yel.push({ s: A.q.s + 150, t: 99, car: stp });
+    let pe = r.fl.pev;
+    const put = (d) => { const i = T.idx(A.q.s + d), off = T.rl[i]; P.place(T.px[i] + T.nx[i] * off, T.pz[i] + T.nz[i] * off, T.hd[i]); if (T.hasElev) P.y = P.py = T.hy[i];
+      P.q = T.query(P.x, P.z, i, P.q); P.sPrev = P.q.s; P.dist = A.dist + d; P.vx = A.vx; P.vz = A.vz; P.locked = false; };
+    put(-12); for (let k = 0; k < 6; k++) { C.aiControl(P, r, DT); r.step(DT); }   // (behind the rival first, then past it)
+    put(8);
+    for (let k = 0; k < 120 * 14; k++) {
+      if (back && P.fl.owe) { P.inThr = 0; P.inBrk = 1; P.inSteer = 0; P.digitalSteer = true; } else { P.digitalSteer = false; C.aiControl(P, r, DT); }
+      r.step(DT);
+      if (r.fl.pev !== pe) { pe = r.fl.pev; ev.push(r.fl.pevK); }
+    }
+    return ev;
+  };
+  const r1 = mk(), e1 = pass(r1, false), r2 = mk(), e2 = pass(r2, true);
+  check('overtaking under a yellow flag and staying ahead: a warning, then +5 s', e1.join() === 'passWarn,pen' && r1.player.fl.pen === 5, e1.join());
+  check('... given back in time: no penalty', e2[0] === 'passWarn' && e2.includes('passOk') && !e2.includes('pen') && r2.player.fl.pen === 0, e2.join());
+  const res = r1.estimateResults(), me = res.find(e => e.car === r1.player);
+  check('the penalty in the results: 5 s on the race time', me.pen === 5, JSON.stringify({ pen: me.pen, time: me.time.toFixed(2) }));
+}
+
+// 4. without flags: nothing of it
+{
+  const r = new C.Race(track('rbring'), { numAI: 3, playerGrid: 4, laps: 1, playerModel: C.MODELS[4], phys: 'cs', seed: 3 });
+  check('a race without flags: no flag state, no penalties', r.fl === null && r.estimateResults().every(e => !e.pen), '');
+}
+
+// track limits (Race._limits, with the flags): all four wheels past the kerb where the stewards watch (Track.limZ); three warnings, then
+// 5 s each; the kerb itself is track; nowhere else; no stewards (rules 0): nothing; the penalty counts in the results
 { const T = track('jezero'); Math.random = seeded(9);
   const byPit = (i) => T.def.pit && T.pitAt(i * T.ds);
   const zi = (() => { for (let i = 0; i < T.N; i++) if (T.limZ[1][i] && !T.limZ[0][i] && !byPit(i)) return i; return -1; })();
   const zfree = (() => { for (let i = 0; i < T.N; i++) if (!T.limZ[0][i] && !T.limZ[1][i] && !byPit(i)) return i; return -1; })();
-  const go = (r, P, i, ws, n) => { for (let k = 0; k < n; k++) { P.q = { i, d: 8, s: i * T.ds }; P.ws = ws.slice(); P.vx = 25; P.vz = 0; r.time = Math.max(r.time, 20); r._flags(0.05); } };
-  const run = (opts, i, ws) => { const r = race(T, opts), P = r.player; r.state = 'racing'; P.locked = false; P.hitAt = -1e9; const ev = [];
-    for (let e = 0; e < 5; e++) { go(r, P, i, ws, 8); ev.push(P.flagEv || '-'); P.flagEv = null; go(r, P, i, [0, 0, 0, 0], 2); }
-    return { ev, warn: P.warn, pen: P.pen, r, P }; };
-  const a = run({}, zi, [2, 3, 2, 2]);
-  check('track limits: three warnings, then 5 s for each', a.ev.join() === 'limits,limits,limits,limitsPen,limitsPen' && a.warn === 5 && a.pen === 10, `${a.ev.join()}, ${a.warn} warnings, +${a.pen} s`);
-  const b = run({}, zi, [1, 1, 1, 1]), c = run({}, zfree, [2, 2, 2, 2]), d = run({ rules: 0 }, zi, [2, 2, 2, 2]);
-  check('the kerb is track, and only where the stewards watch; no stewards: no warnings', b.warn === 0 && c.warn === 0 && d.warn === 0 && d.pen === 0,
+  const mk = (o) => { const r = new C.Race(T, Object.assign({ numAI: 6, playerGrid: 7, laps: 3, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1, flags: true }, o)); r.start(); return r; };
+  const go = (r, P, i, ws, n) => { for (let k = 0; k < n; k++) { P.q = { i, d: 8, s: i * T.ds }; P.ws = ws.slice(); P.vx = 25; P.vz = 0; r.time = Math.max(r.time, 20); r._limits(0.05); } };
+  const lim = (o, i, ws) => { const r = mk(o), P = r.player; r.state = 'racing'; P.locked = false; P.fl = { stopT: 0, v: 30, yel: null, pen: 0, owe: null, ah: null }; const ev = []; let pev = r.fl.pev;
+    for (let e = 0; e < 5; e++) { go(r, P, i, ws, 8); ev.push(r.fl.pev !== pev ? r.fl.pevK : '-'); pev = r.fl.pev; go(r, P, i, [0, 0, 0, 0], 2); }
+    return { ev, warn: P.fl.warn || 0, pen: P.fl.pen, r, P }; };
+  const a = lim({}, zi, [2, 3, 2, 2]);
+  check('track limits: three warnings, then 5 s for each', zi >= 0 && a.ev.join() === 'limits,limits,limits,limitsPen,limitsPen' && a.warn === 5 && a.pen === 10, `${a.ev.join()}, ${a.warn} warnings, +${a.pen} s`);
+  const b = lim({}, zi, [1, 1, 1, 1]), c = lim({}, zfree, [2, 2, 2, 2]), d = lim({ rules: 0 }, zi, [2, 2, 2, 2]);
+  check('track limits: the kerb is track, and only where the stewards watch; no stewards: no warnings', zfree >= 0 && b.warn === 0 && c.warn === 0 && d.warn === 0 && d.pen === 0,
     `all four on the kerb ${b.warn}, off at an unwatched spot ${c.warn}, with the stewards off ${d.warn}`);
-  // the penalty counts in the results (the classification by time + penalty)
   const r = a.r, P = a.P; r.cars.forEach((c, k) => { c.finished = true; c.finishTime = 100 + k; if (!r.finishOrder.includes(c)) r.finishOrder.push(c); });
   P.finishTime = 90; const res = r.estimateResults(), me = res.findIndex(e => e.car === P);
-  check('a penalty is added to the race time in the results', Math.abs(res[me].time - 100) < 1e-9 && me === 1, `the player's time ${res[me].time} s (crossed the line in 90 s, +10 s), classified ${me + 1}.`);
+  check('track limits: the penalty is added to the race time in the results', Math.abs(res[me].time - 100) < 1e-9 && res[me].pen === 10 && me === 1, `the player's time ${res[me].time} s (crossed the line in 90 s, +${res[me].pen} s), classified ${me + 1}.`);
 }
 
-// 5. whole races with both physics: race control never stops a race, the AI is never penalised
-{ let ok = true, info = [];
-  for (const [tid, phys] of [['gozd', 'cs'], ['suzuka', 'arcade'], ['monaco', 'arcade']]) {
-    Math.random = seeded(11); const T = track(tid), r = race(T, { numAI: 12, playerGrid: 12, laps: 2, phys });
-    let t = 0, k = 0; while (t < T.len * 2 / 12 + 200 && r.cars.some(c => !c.finished)) { Math.random = seeded(2000 + (++k)); C.aiControl(r.player, r, DT); r.step(DT); t += DT; for (const c of r.cars) { c.hitCar = 0; c.hitWall = 0; } }
-    const aiPen = r.cars.filter(c => !c.isPlayer && (c.pen || c.warn)).length, fin = r.cars.every(c => c.finished);
-    if (aiPen || !fin) ok = false; info.push(`${tid}/${phys} ${fin ? 'all finished' : 'NOT all finished'}, AI penalised ${aiPen}, player +${r.player.pen} s`);
-  }
-  check('whole races: everybody finishes, no AI car is penalised', ok, info.join('; '));
-}
-
-console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
+console.log(`\n${n - bad}/${n} passed`);
 process.exit(bad ? 1 : 0);
