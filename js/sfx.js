@@ -105,7 +105,8 @@ const Sfx = (function () {
     src.start(); lfo.start();
     return { out };
   }
-  // an echo of the player's engine off the rock walls (Pikes Peak above the treeline): two short delays, one fed back, dulled
+  // an echo of the player's engine off the rock walls (Pikes Peak above the treeline): two short delays, one fed back, dulled; in a tunnel
+  // (Monaco's) the walls are close: short, dense reflections that ring on (set by update)
   function echoFx() {
     const send = ctx.createGain(); send.gain.value = 0;
     const d1 = ctx.createDelay(1), d2 = ctx.createDelay(1); d1.delayTime.value = 0.14; d2.delayTime.value = 0.31;
@@ -113,7 +114,7 @@ const Sfx = (function () {
     const fb = ctx.createGain(); fb.gain.value = 0.28; const g2 = ctx.createGain(); g2.gain.value = 0.6;
     send.connect(lp); lp.connect(d1); lp.connect(d2); d2.connect(g2); d2.connect(fb); fb.connect(d2); d1.connect(bus); g2.connect(bus);
     eng.out.connect(send);
-    return { send };
+    return { send, d1, d2, fb, lp, tun: false };
   }
 
   function resume() {
@@ -204,7 +205,14 @@ const Sfx = (function () {
     // Pikes Peak: the engine echoes among the rocks above the treeline; the TV helicopter (World's dyn.pk: Pikes Peak's, and Ouninpohja's
     // that follows the car the whole run) by its distance to the camera
     const pikes = !!(race && race.track && race.track.def && race.track.def.id === 'pikes');
-    set(echo.send.gain, pikes ? Core.sstep(186, 198, player.roadY || 0) * 0.32 : 0, 0.6);
+    // Monaco: the engine rings in the tunnel (World's dyn.tunnel with a roof: covered), fading in and out at the portals
+    const tn = Wd && Wd.dyn ? Wd.dyn.tunnel : null, ps = player.q ? player.q.s : -1;
+    const inT = tn && tn.covered && ps >= 0 ? Math.min(Core.sstep(tn.s0 - 8, tn.s0 + 12, ps), Core.sstep(tn.s1 + 8, tn.s1 - 12, ps)) : 0;
+    if ((inT > 0.02) !== echo.tun) {   // (the reflections' timing switched while the echo is silent: at a portal)
+      echo.tun = inT > 0.02; const k = echo.tun;
+      set(echo.d1.delayTime, k ? 0.037 : 0.14, 0.02); set(echo.d2.delayTime, k ? 0.071 : 0.31, 0.02); set(echo.fb.gain, k ? 0.52 : 0.28, 0.05); set(echo.lp.frequency, k ? 2600 : 1300, 0.05);
+    }
+    set(echo.send.gain, pikes ? Core.sstep(186, 198, player.roadY || 0) * 0.32 : inT * 0.55, inT > 0 ? 0.12 : 0.6);
     const W = Wd, pk = W && W.dyn ? W.dyn.pk : null, cam = typeof Render !== 'undefined' ? Render.camera : null;
     let hv = 0, hp = 0;
     if (pk && pk.heli && (pk.on || (pk.follow && pk.heli.visible))) {

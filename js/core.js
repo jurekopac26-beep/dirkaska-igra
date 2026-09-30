@@ -441,11 +441,16 @@ const Core = (function () {
       this.rds = rds;
     }
 
-    // speed profile for a given lateral accel limit (m/s^2) and braking decel
-    speedProfile(latA, brakeA, vtop, wMax) {
+    // speed profile for a given lateral accel limit (m/s^2) and braking decel; phys: the AI's speed limits the track sets for that
+    // physics (def.aiCap = { cs|arcade: [[from, to, km/h], ...] }, metres after the start line, closed circuits; eased in and out over
+    // 12 m): where the cars would come out of a bend too fast for the wall beyond it (Monaco: the exit of Mirabeau)
+    speedProfile(latA, brakeA, vtop, wMax, phys) {
       const N = this.N, rk = this.rk, rds = this.rds;
       const v = new Float32Array(N);
       for (let i = 0; i < N; i++) v[i] = Math.min(vtop, Math.sqrt(latA / Math.max(Math.abs(rk[i]), 1e-5)));
+      const cap = phys && !this.open && this.def.aiCap ? this.def.aiCap[phys] : null;
+      if (cap) for (const [a, b, kmh] of cap) for (let d = a - 12; d <= b + 12; d += this.ds / 2) {
+        const i = this.idx(this.startS + d), f = Math.min(sstep(a - 12, a, d), sstep(b + 12, b, d)); v[i] = Math.min(v[i], lerp(v[i], kmh / 3.6, f)); }
       if (this.bank) for (let i = 0; i < N; i++) { const b = this.bank[i]; if (b > 0) v[i] = Math.min(vtop, Math.sqrt((latA + G * b / Math.sqrt(1 + b * b)) / Math.max(Math.abs(rk[i]), 1e-5))); }   // a banked bend carries part of the cornering force
       if (wMax) for (let i = 0; i < N; i++) v[i] = Math.min(v[i], wMax / Math.max(Math.abs(rk[i]), 1e-5));   // cs: the car turns no faster than wMax (rad/s) along its path
       if (this.open) {   // open road: come to a stop at the far end of the road, nothing wraps
@@ -1991,8 +1996,8 @@ const Core = (function () {
       const csP = opts.phys === 'cs', wM0 = csP ? CSK.aiWmax : 0;
       let latA0 = opts.aiLatA || (csP ? CSK.aiLatA : 16.5), brA0 = opts.aiBrakeA || (csP ? CSK.aiBrakeA : 13.0);
       if (this.rain) { latA0 *= w; brA0 *= 0.55 + 0.45 * w; }
-      this.vprof = track.speedProfile(latA0, brA0, 85, wM0);
-      if (this.player && this.player.upg && this.player.brakeG !== BRAKE_G) this.player.vprof = track.speedProfile(latA0, brA0 * this.player.brakeG / BRAKE_G, 85, wM0);
+      this.vprof = track.speedProfile(latA0, brA0, 85, wM0, csP ? 'cs' : 'arcade');
+      if (this.player && this.player.upg && this.player.brakeG !== BRAKE_G) this.player.vprof = track.speedProfile(latA0, brA0 * this.player.brakeG / BRAKE_G, 85, wM0, csP ? 'cs' : 'arcade');
     }
 
     // switch the driving physics of a running race at once ('cs' | 'arcade'): every car, the AI set-up and the AI speed profile

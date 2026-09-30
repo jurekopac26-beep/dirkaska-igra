@@ -462,14 +462,14 @@
   }
  },
  "monaco/race/arcade": {
-  "digest": "2279dcf9ebd4d7f46b4bf522",
-  "lead": 1798.2,
+  "digest": "31a45e07ff399bc2a1792d3e",
+  "lead": 1739.3,
   "car0": [
-   676.33,
-   -334.77
+   702.11,
+   -377.14
   ],
   "cover": {
-   "dmg": 0.03,
+   "dmg": 0.14,
    "loose": 1,
    "rescues": 0,
    "repairs": 0
@@ -490,15 +490,15 @@
   }
  },
  "monaco/demo/arcade": {
-  "digest": "ddb09b652318e606542d2877",
-  "lead": 1904.7,
+  "digest": "556888b201c48465e645f8ec",
+  "lead": 1866.9,
   "car0": [
-   438.85,
-   -177.65
+   474.63,
+   -189.24
   ],
   "cover": {
-   "dmg": 0.28,
-   "loose": 2,
+   "dmg": 0,
+   "loose": 0,
    "rescues": 0,
    "repairs": 0
   }
@@ -518,11 +518,11 @@
   }
  },
  "monaco/upg/arcade": {
-  "digest": "f8b2d465563dca14e0deb7ed",
-  "lead": 1915.5,
+  "digest": "43da9c6dca8d5c0684f3cba7",
+  "lead": 1866.8,
   "car0": [
-   507.06,
-   -203.23
+   557.28,
+   -224.3
   ],
   "cover": {
    "dmg": 0,
@@ -546,14 +546,14 @@
   }
  },
  "monaco/crash/arcade": {
-  "digest": "515b3448d60fa070d918c80b",
-  "lead": 1801.3,
+  "digest": "286d9bb381302d6393011d2b",
+  "lead": 1742.6,
   "car0": [
-   664.2,
-   -319.43
+   699.98,
+   -378.8
   ],
   "cover": {
-   "dmg": 0.95,
+   "dmg": 1,
    "loose": 3,
    "rescues": 0,
    "repairs": 0
