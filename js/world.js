@@ -7530,10 +7530,10 @@ const World = (function () {
 
     /* ---- the stage's boards and gantries, the start with its lights, the splits, the flying finish, STOP; flags ---- */
     const ban = new GB(true), W1 = [1, 1, 1], row = (k) => [1 - (k + 1) / 8, 1 - k / 8];
-    const bannerQ = (cx, cy, cz, tx, tz, Wd, H, v0, v1, u0, u1) => { const ux = tz, uz = -tx; u0 = u0 || 0; u1 = u1 == null ? 1 : u1;   // a double-sided board (bottom centre cx, cy, cz), readable from +t and -t
+    const bannerQ = (cx, cy, cz, tx, tz, Wd, H, v0, v1, u0, u1, gb) => { const ux = tz, uz = -tx; u0 = u0 || 0; u1 = u1 == null ? 1 : u1;   // a double-sided board (bottom centre cx, cy, cz), readable from +t and -t (gb: another texture's GB)
       for (const f of [-1, 1]) { const ox = tx * 0.04 * f, oz = tz * 0.04 * f, hw = Wd / 2 * f;
         const A = [cx + ox - ux * hw, cy, cz + oz - uz * hw], B = [cx + ox + ux * hw, cy, cz + oz + uz * hw], C = [B[0], cy + H, B[2]], D = [A[0], cy + H, A[2]];
-        ban.quadO(A, B, C, D, W1, [cx - tx * f, cy + H / 2, cz - tz * f], [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]); } };
+        (gb || ban).quadO(A, B, C, D, W1, [cx - tx * f, cy + H / 2, cz - tz * f], [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]); } };
     const arch = (s, rowK, postCol, beamCol) => {   // a gantry over the road: two posts beyond the verge, a beam, a board both ways
       const i = T.idx(s), x = T.px[i], z = T.pz[i], y = T.hy[i], nx = T.nx[i], nz = T.nz[i], L1 = WA[i] + 1.6, g = scen.get(x, z), hd = T.hd[i];
       for (const o of [-L1, L1]) box(g, x + nx * o, y - 0.5, z + nz * o, 0.5, 7.0, 0.5, hd, postCol);
@@ -7570,7 +7570,7 @@ const World = (function () {
 
     /* ---- the stage's edges on race day: straw bales where the barrier stands on the street itself (the chicanes, the lane change), the steel crowd
        barriers along the town's streets, the orange mesh fence in the park; a KIELLETTY ALUE board and a marshal where a side street is closed ---- */
-    const fGB = new Chunks(110, true), bales = [], STRAW = [0.84, 0.7, 0.4], STRAWT = [0.9, 0.78, 0.48];
+    const fGB = new Chunks(110, true), spG = new Chunks(110, true), bales = [], STRAW = [0.84, 0.7, 0.4], STRAWT = [0.9, 0.78, 0.48];
     const barType = (i, side) => { const si = side > 0 ? 1 : 0, bar = side > 0 ? T.br[i] : T.bl[i]; if (bar - WA[i] < 1.3) return 1; const t = VT[si][i]; return t === 4 || t === 0 ? 2 : 3; };   // 1 bales, 2 steel barriers, 3 mesh fence
     const hard = (x, z) => onBld(x, z) || excluded(x, z);
     for (const side of [-1, 1]) {
@@ -7583,7 +7583,10 @@ const World = (function () {
         if (bt === 1) { const g = scen.get(x, z); for (let q = 0; q < 2; q++) box(g, x, y + q * 0.45, z, 1.2, 0.46, 0.55, T.hd[i] + (q ? 0.06 : -0.03), STRAW, STRAWT, true); bales.push([x, z]); exclPush(x, z, 1); prev = null; pk = bt; continue; }
         const P0 = [x, y, z];
         if (prev && pk === bt && Math.hypot(x - prev[0], z - prev[2]) < 3.6) { const g = fGB.get(x, z), hgt = bt === 2 ? 1.12 : 1.2, u0 = bt === 2 ? 0 : 0.5, u1 = u0 + 0.5;
-          g.quadO([prev[0], prev[1] - 0.05, prev[2]], [x, y - 0.05, z], [x, y + hgt, z], [prev[0], prev[1] + hgt, prev[2]], W1, [(x + prev[0]) / 2 - T.nx[i] * side, y + 0.5, (z + prev[2]) / 2 - T.nz[i] * side], [[u0, 0.02], [u1, 0.02], [u1, 0.98], [u0, 0.98]]); }
+          g.quadO([prev[0], prev[1] - 0.05, prev[2]], [x, y - 0.05, z], [x, y + hgt, z], [prev[0], prev[1] + hgt, prev[2]], W1, [(x + prev[0]) / 2 - T.nx[i] * side, y + 0.5, (z + prev[2]) / 2 - T.nz[i] * side], [[u0, 0.02], [u1, 0.02], [u1, 0.98], [u0, 0.98]]);
+          const hs = crH(x, z, 41); if (hs < 0.34 && s > sStart - 20 && s < sFin + 20) {   // a sponsor's banner tied to the barrier (the game's own brands), readable from the road
+            const k = Math.floor(crH(x, z, 42) * 8), bu = (k % 2) * 0.5, bv = 1 - Math.floor(k / 2) * 0.25, L = Math.hypot(x - prev[0], z - prev[2]);
+            bannerQ((x + prev[0]) / 2, Math.min(y, prev[1]) + (bt === 2 ? 0.22 : 0.3), (z + prev[2]) / 2, T.nx[i], T.nz[i], L - 0.15, bt === 2 ? 0.62 : 0.7, bv - 0.25, bv, bu, bu + 0.5, spG.get(x, z)); } }
         prev = P0; pk = bt;
       }
     }
@@ -7720,6 +7723,7 @@ const World = (function () {
     bch.addTo(root, fMat, true, true);
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup); scen.addTo(sceneryGroup, matV, true, true);
     fGB.addTo(root, new THREE.MeshLambertMaterial({ map: hjBarTex(), vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide }), true, true);
+    spG.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: hjAtlas(T.cpS.map(kmS)), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     { const vg = new THREE.Group(); vg.name = 'plants'; root.add(vg); veg.addTo(vg, ouVegMat(), false, true); }
     crowdFinish(CR, root, out);

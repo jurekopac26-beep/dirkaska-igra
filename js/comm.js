@@ -111,6 +111,9 @@ const Comm = (() => {
     jumpPB: ['{m} metres at {place}, your longest jump there!', 'A new personal best at {place}, {m} metres!'],
     jumpBeat: ['{m} metres at {place}! Longer than {by}!', "Unbelievable! {m} metres, beyond {by}'s {rec}!"],
     medal: ['That is a {medal} medal time!', 'And that is worth a {medal} medal!', 'A {medal} medal on this stage!'],
+    // the city stage (def.cityStage: Harju): tarmac, gravel and cobbles through the town, the whole of Jyvaskyla watching
+    introCity: ['Welcome to {track}, the city stage of the Rally of Finland, right in the heart of Jyvaskyla!', 'Here we are at {track}. Tarmac, gravel and cobbles, and the whole town is watching!', 'Welcome to {track}! Up the ridge, round the water tower and back into town. {cps} splits, just you and the clock.'],
+    goCity: ['Go! Down the boulevard!', "And you're away! Flat out down the university street!", 'Green light! Listen to that crowd!'],
     goStage: ['Go! Flat out into the forest!', "And you're away! Keep it flat over the crests!", 'Green light! The clock is running!'],
     cpFirstStage: ['Split {cp}, {time}.', 'Through split {cp}. Keep it flat!', 'Split {cp}, {time}. Hold on tight!'],
     stageRecord: ['Flying finish! A new personal best, {time}!', 'Record run through {track}! {time}!', 'What a stage! A new personal best, {time}!'],
