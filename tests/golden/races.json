@@ -319,6 +319,46 @@
   "nan": false,
   "digest": "af010f5994cf455949b9827e"
  },
+ "dolina/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 156.28,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "29949bb5fd856d0fc90d12c3"
+ },
+ "dolina/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 171.76,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d06c62a138ea626e725c30a9"
+ },
+ "dolina/arcade": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 164.54,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "8a8fa7c198a4dac7918e76c6"
+ },
+ "dolina/arcade/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 181.57,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "058f8ca7b8ebf4f18ef6a18f"
+ },
  "pikes/cs": {
   "finished": 1,
   "cars": 1,

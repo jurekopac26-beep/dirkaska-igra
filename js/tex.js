@@ -503,6 +503,37 @@ const Tex = (function () {
     return mk(c, false);
   }
 
+  // Smrekova dolina: the dirt of the picture drawn in the reference racer's flat style. A warm tan base with soft blotches, the
+  // tracks of many tyres as faint streaks along the road (the texture's v runs along it), a little grit and a few flat pebbles
+  function dirtKR() {
+    const S = 256, n = makeNoise(8, 181), n2 = makeNoise(32, 182), st = makeNoise(64, 183);
+    const c = pixels(S, S, (i, j) => {
+      const blot = 0.92 + 0.12 * n(i / 32, j / 32) + 0.05 * n2(i / 8, j / 8);
+      const u = i + 5 * n(i / 64, j / 24), streak = Math.sin(u * 0.55 + 2.1 * st(u / 4, j / 64)) * Math.sin(u * 0.21 + 1.3), fine = Math.sin(u * 1.9 + 3 * st(u / 2, j / 40));   // tyre tracks along v: wide grooves and fine lines
+      const k = blot * (1 + 0.06 * streak + 0.018 * fine) + (R() - 0.5) * 0.05;
+      return [cl(208 * k), cl(166 * k), cl(124 * k)];
+    });
+    const g = c.getContext('2d');
+    for (let k = 0; k < 170; k++) {   // flat pebbles: a dark underside and a pale top (the style's two-tone stones), wrapped so the tile stays seamless
+      const x = R() * S, y = R() * S, r = 0.9 + R() * 1.8, a = R() * Math.PI, pale = R() < 0.6;
+      for (const ox of [-S, 0, S]) for (const oy of [-S, 0, S]) { const px = x + ox, py = y + oy; if (px < -6 || px > S + 6 || py < -6 || py > S + 6) continue;
+        g.fillStyle = 'rgba(92,62,40,0.35)'; g.beginPath(); g.ellipse(px + r * 0.3, py + r * 0.35, r, r * 0.75, a, 0, 6.2832); g.fill();
+        g.fillStyle = pale ? 'rgba(236,212,176,0.9)' : 'rgba(150,108,76,0.9)'; g.beginPath(); g.ellipse(px, py, r, r * 0.75, a, 0, 6.2832); g.fill(); }
+    }
+    return mk(c, true);
+  }
+  // trackside banners on the plastic barriers (mostly red with white letters, as in the picture), boards and the feather flags
+  const sponsorsKR = () => boards8([['PRAH', '#c8261f', '#ffffff'], ['SMREKA', '#f3efe8', '#2f7a4a'], ['KROS', '#c8261f', '#ffffff'], ['SMREKOVA DOLINA', '#1f3f8c', '#ffffff'],
+    ['DOBRI DNEVI', '#f3efe8', '#c8261f'], ['BLATO', '#c8261f', '#f5c332'], ['PRAH', '#f3efe8', '#c8261f'], ['SMOLA', '#f5c332', '#c8261f']]);
+  const boardsKR = () => boards4([['SMREKOVA DOLINA', '#f3efe8', '#2f7a4a', 'swoosh'], ['PRAH', '#f3efe8', '#c8261f', 'bars'], ['KROS', '#f5c332', '#7c3b22', 'frame'], ['BLATO', '#c3231c', '#c3231c', 'disc']]);
+  function flagKR() {   // a tall dark-blue feather flag with KROS running up it in white, a red stripe along the pole side
+    const c = cv(64, 256), x = c.getContext('2d');
+    x.fillStyle = '#1d2a55'; x.fillRect(0, 0, 64, 256); x.fillStyle = '#c8261f'; x.fillRect(0, 0, 9, 256);
+    x.save(); x.translate(36, 150); x.rotate(-Math.PI / 2); x.fillStyle = '#f3f1ec'; x.font = 'italic 900 34px "Russo One", "Arial Black", Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.scale(Math.min(1, 200 / Math.max(1, x.measureText('KROS').width)), 1); x.fillText('KROS', 0, 0); x.restore();
+    return mk(c, false);
+  }
+
   let cache = null;
   function all(maxAniso) {
     if (cache) return cache;
@@ -512,6 +543,7 @@ const Tex = (function () {
     cache.cracks = cracks(); cache.tiresRW = tiresRW(); cache.facadeBal = facadeBal();
     cache.sponsorsLJ = sponsorsLJ(); cache.bannerLJ = bannerLJ(); cache.sponsorsFO = sponsorsFO(); cache.fenceFO = fenceFO(); cache.boardsFO = boardsFO(); cache.curbRWB = curbRWB(); cache.tyreTex = tyreTex(); cache.sponsorsMC = sponsorsMC();
     cache.curbIT = curbIT(); cache.curbRY = curbRY(); cache.sponsorsIT = sponsorsIT(); cache.sponsorsKP = sponsorsKP(); cache.boardsIT = boardsIT(); cache.boardsKP = boardsKP(); cache.flagKP = flagKP();
+    cache.dirtKR = dirtKR(); cache.sponsorsKR = sponsorsKR(); cache.boardsKR = boardsKR(); cache.flagKR = flagKR();   // (last: the random stream of the textures above stays the same)
     return cache;
   }
   return { all, number, SPONSORS };

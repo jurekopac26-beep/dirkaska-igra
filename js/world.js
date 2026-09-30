@@ -298,6 +298,7 @@ const World = (function () {
     forest:    { post: [190, 240], postEdge: [0.9, 1.3], exits: 0, apexes: 0, wallEdge: [2.5, 3.0], stacks: [5, 6], rows2: 0 },
     italia:    { post: [150, 190], postEdge: [0.9, 1.3], exits: 0, apexes: 0, wallEdge: [2.5, 3.0], stacks: [5, 6], rows2: 0 },
     kamp:      { post: [150, 190], postEdge: [0.9, 1.3], exits: 0, apexes: 0, wallEdge: [2.5, 3.0], stacks: [5, 6], rows2: 0 },
+    kros:      { post: [150, 190], postEdge: [0.9, 1.3], exits: 0, apexes: 0, wallEdge: [2.5, 3.0], stacks: [5, 6], rows2: 0 },
   };
   // the verge's real height beyond the asphalt edge, relative to the road (per sample and side, every 0.5 m out to 12 m): the knockable
   // props stand and land on it (Core: Race.setProps(list, floor)). vis(x, z, i, side, o): the visible ground height there, or
@@ -495,6 +496,13 @@ const World = (function () {
     let h = 0; for (const [rx, rz, rr] of fd.rocks) { const d = Math.hypot(x - rx, z - rz); if (d < rr * 1.7) h = Math.max(h, (1.8 + rr * 0.2) * sstep(rr * 1.7, rr * 0.35, d)); }
     return h * sstep(5, 16, c);
   }
+  function streamD(x, z) {   // distance to a stream's centre line (def.stream, Smrekova dolina: a ribbon of water on the ground); 1e9 far from it
+    const S = T && T.def && T.def.stream; if (!S) return 1e9;
+    let bx0 = 1e9, bx1 = -1e9, bz0 = 1e9, bz1 = -1e9; for (const p of S) { bx0 = Math.min(bx0, p[0]); bx1 = Math.max(bx1, p[0]); bz0 = Math.min(bz0, p[1]); bz1 = Math.max(bz1, p[1]); }
+    if (x < bx0 - 30 || x > bx1 + 30 || z < bz0 - 30 || z > bz1 + 30) return 1e9;
+    let best = 1e18; for (let k = 0; k < S.length - 1; k++) { const [ax, az] = S[k], [cx, cz] = S[k + 1], dx = cx - ax, dz = cz - az, L2 = dx * dx + dz * dz || 1, t = clamp(((x - ax) * dx + (z - az) * dz) / L2, 0, 1), ex = ax + dx * t - x, ez = az + dz * t - z; best = Math.min(best, ex * ex + ez * ez); }
+    return Math.sqrt(best);
+  }
   function forestH(x, z) {
     const fd = T && T.def; if (!fd || !(fd.rocks || fd.lake || fd.hill)) return 0;
     const c = clearance(x, z);
@@ -588,6 +596,7 @@ const World = (function () {
       for (let q = pq0; q < pq1 + 6; q += 10) { const s0 = T.startS + q, pc = T.pitAt(s0 + 5); if (!pc || pc.t < 0.999) continue;
         const k = ((q - pq0) / 10) | 0, o = pc.o + 3.5 + 9 + 3.6, ik = T.idx(s0 + 1), g = scen.get(T.px[ik] + T.nx[ik] * o, T.pz[ik] + T.nz[ik] * o), f0 = o - 3.6, b0 = o + 3.6;   // (the chunks the old garages were in)
         kbox(g, s0, 5, o, 4.0, 10.02, 0.4, 7.2, WH, WT);                                                   // roof
+        if (opt.krs) kbox(g, s0, 5, f0 - 0.1, 3.9, 10.02, 0.55, 0.14, [0.8, 0.15, 0.12]);                 // (Smrekova dolina: the long roof's red edge, as in the picture)
         kbox(g, s0, 5, b0 - 0.15, 0, 10.02, 4.0, 0.3, WH, null, true);                                     // back wall
         for (const sd of [-1, 1]) { kbox(g, s0, 5 + sd * 4.885, o, 0, 0.25, 4.0, 7.2, WH, null, true); kbox(g, s0, 5 + sd * 4.56, f0 + 0.15, 0, 0.9, 3.3, 0.3, WH, null, true); }   // side walls, front pillars
         kbox(g, s0, 5, f0 + 0.15, 3.3, 10.02, 0.7, 0.3, WH);                                               // header over the door
@@ -648,13 +657,13 @@ const World = (function () {
         box(g, x, yS(1.8, sE), z, 4.4, 2.8, 0.2, Math.atan2(-fx, fz), [0.86, 0.85, 0.82], [0.86, 0.85, 0.82]);
         for (const q2 of [-1.6, 1.6]) box(g, x + fz * q2, yS(0, sE), z - fx * q2, 0.22, 2.0, 0.22, 0, [0.62, 0.63, 0.66]);
         excl(x, z, 3.5); } }
-    const ml = new THREE.Mesh(gl.geometry(), out.asphaltMat); ml.receiveShadow = true; ml.matrixAutoUpdate = false; root.add(ml);
+    const ml = new THREE.Mesh(gl.geometry(), opt.laneMat || out.asphaltMat); ml.receiveShadow = true; ml.matrixAutoUpdate = false; root.add(ml);   // (Smrekova dolina: a concrete lane beside the dirt)
     const mpit = new THREE.Mesh(gp.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })); mpit.receiveShadow = true; mpit.matrixAutoUpdate = false; root.add(mpit);
   }
 
   /* ---------------- BUILD ---------------- */
   function build(scene, track, tex, opts) {
-    T = track; THEME = (track.def && track.def.theme) || 'lake'; CSX = THEME === 'forest' || THEME === 'italia' || THEME === 'kamp'; ROCK_SMOOTH = CSX; SEA = (track.def && track.def.sea) || null; RIVER = track.def.river || null; RW = track.def.riverW || 26; CASTLE = track.def.castle || null; buildHash();
+    T = track; THEME = (track.def && track.def.theme) || 'lake'; CSX = THEME === 'forest' || THEME === 'italia' || THEME === 'kamp' || THEME === 'kros'; ROCK_SMOOTH = CSX; SEA = (track.def && track.def.sea) || null; RIVER = track.def.river || null; RW = track.def.riverW || 26; CASTLE = track.def.castle || null; buildHash();
     if (THEME !== 'nring' && THEME !== 'spa' && THEME !== 'rbring') NR = null;   // free the last corridor build's grids (the Nordschleife's, Spa's, the Red Bull Ring's)
     if (THEME !== 'suzuka') SZ = null;                             // (and Suzuka's)
     if (THEME !== 'ouni') OU = null;                               // (and the last Ouninpohja build's)
@@ -748,6 +757,10 @@ const World = (function () {
           const sh = shoreFO(x, z);
           if (sh < 7) { const t = sstep(7, 1.5, sh); r = lerp(r, 1.45, t); g = lerp(g, 1.2, t); b = lerp(b, 1.25, t); }   // pale stony bank along the lake
           if (sh < 0) { const t = sstep(0, -6, sh); r = lerp(r, 0.28, t); g = lerp(g, 0.45, t); b = lerp(b, 0.7, t); } }   // lake bed
+        if (THEME === 'kros') { r *= 0.84; g *= 0.87; b *= 0.9;   // Smrekova dolina: the fresh green lawns of the reference, a touch warmer in the evening
+          const sd = streamD(x, z), hw = (T.def.streamW || 7) / 2;
+          if (sd < hw + 6) { const t = sstep(hw + 6, hw + 1, sd); r = lerp(r, 1.3, t); g = lerp(g, 1.16, t); b = lerp(b, 1.1, t); }   // pale stony banks
+        }
         if (THEME === 'monaco') { r *= 0.86; g *= 0.8; b *= 0.72; if (h < -0.3) { r *= 0.6; g *= 0.7; b *= 0.8; } }
         if (THEME === 'ljubljana') { r *= 0.8; g *= 0.77; b *= 0.72; if (h > 1.5) { const t = sstep(1.5, 6, h); r = lerp(r, 0.36, t); g = lerp(g, 0.5, t); b = lerp(b, 0.26, t); } }
         if (THEME === 'mountain') {
@@ -781,8 +794,8 @@ const World = (function () {
     const HYi = (i) => (T.hy ? T.hy[i] : 0);            // road surface height at sample i
     const P = (i, o, y) => [T.px[i] + T.nx[i] * o, HYi(i) + y, T.pz[i] + T.nz[i] * o];
     const HY = (p) => (T.hy ? T.hy[p[3]] : 0);          // height at an atS() result (uses its sample index)
-    const makadam = T.def.roadSurface === 'makadam';
-    const tileL = makadam ? 6 : 8;                                   // texture tile size (m)
+    const makadam = T.def.roadSurface === 'makadam', KR = THEME === 'kros';
+    const tileL = KR ? 9 : makadam ? 6 : 8;                          // texture tile size (m)
     const rep = T.len / Math.round(T.len / tileL); // texture repeat length (seamless)
     // gravel roads get an irregular, wavy edge instead of a ruler-straight line (visual only, ±0.4 m)
     const edgeW = (i, side) => w + (makadam ? 0.26 * Math.sin(i * 0.37 + side * 1.7) * Math.sin(i * 0.113 + side) + 0.13 * Math.sin(i * 1.31 + side * 2.3) : 0);
@@ -806,6 +819,12 @@ const World = (function () {
         const r = k * (1 + 0.05 * rut), gg = k * (1 - 0.015 * rut), b = k * (1 - 0.08 * rut);   // driven line: darker, browner
         return Math.abs(o) >= w - 1e-6 ? [r * 0.9, gg * 0.97, b * 0.78] : [r, gg, b];   // grassy tint right at the edge
       };
+      // Smrekova dolina: the reference's flat dirt, the driven line packed darker and browner, loose paler dirt either side and at the edges
+      const shadeK = (i, o) => {
+        const dl = (o - T.rl[i]) / 2.6, line = Math.exp(-dl * dl), e = sstep(w - 2.2, w, Math.abs(o));
+        const k = (0.95 + 0.05 * Math.sin(i * 0.037 + o * 0.21) * Math.sin(i * 0.011 + 0.7)) * (1.03 - 0.15 * line + 0.07 * e);
+        return [k * (1 + 0.02 * line), k * (1 - 0.02 * line), k * (1 - 0.08 * line)];
+      };
       const off = (i, o) => (makadam && Math.abs(o) >= w - 1e-6 ? Math.sign(o) * edgeW(i, Math.sign(o)) : o);
       for (let i = 0; i < N; i++) {
         const j = (i + 1) % N;
@@ -813,11 +832,12 @@ const World = (function () {
         for (let c = 0; c < offs.length - 1; c++) {
           const o0 = offs[c], o1 = offs[c + 1];
           const a = P(i, off(i, o0), 0.02), b = P(i, off(i, o1), 0.02), cc = P(j, off(j, o1), 0.02), d = P(j, off(j, o0), 0.02);
-          const sh = makadam ? shadeM : shade;
+          const sh = KR ? shadeK : makadam ? shadeM : shade;
           g.quadUp(a, b, cc, d, [sh(i, o0), sh(i, o1), sh(j, o1), sh(j, o0)], [[(o0 + w) / tileL, v0], [(o1 + w) / tileL, v0], [(o1 + w) / tileL, v1], [(o0 + w) / tileL, v1]]);
         }
       }
-      const mat = makadam
+      const mat = KR ? new THREE.MeshLambertMaterial({ map: tex.dirtKR, vertexColors: true })   // (the flat look of the reference: no shine, no bumps)
+        : makadam
         ? new THREE.MeshPhongMaterial({ map: tex.makadam, bumpMap: tex.makadamBump, bumpScale: 0.045, shininess: 7, specular: 0x1c1813, vertexColors: true })
         : new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true });
       if (THEME === 'forest') mat.color.setRGB(0.87, 0.89, 1.0);   // a touch more mauve, like the reference
@@ -922,7 +942,7 @@ const World = (function () {
       root.add(new THREE.Mesh(g.geometry(), mat));
       const gw = new GB();
       const wh = [0.93, 0.93, 0.9];
-      for (let k = 1; k <= 14; k++) {
+      for (let k = 1; k <= (KR ? 0 : 14); k++) {   // (no painted grid boxes on the dirt of Smrekova dolina)
         const sb = s0 - 9 - (k - 1) * 7.5 + 2.6;
         const lat = (k % 2 === 1 ? -1 : 1) * 3.4;
         const p0 = atSf(sb, lat - 1.5), p1 = atSf(sb, lat + 1.5), p2 = atSf(sb + 0.35, lat + 1.5), p3 = atSf(sb + 0.35, lat - 1.5);
@@ -930,7 +950,7 @@ const World = (function () {
         const q0 = atSf(sb - 1.6, lat - 1.5), q1 = atSf(sb + 0.35, lat - 1.5), q2 = atSf(sb + 0.35, lat - 1.25), q3 = atSf(sb - 1.6, lat - 1.25);
         gw.quadUp([q0[0], HY(q0) + 0.037, q0[1]], [q1[0], HY(q1) + 0.037, q1[1]], [q2[0], HY(q2) + 0.037, q2[1]], [q3[0], HY(q3) + 0.037, q3[1]], [wh, wh, wh, wh]);
       }
-      root.add(new THREE.Mesh(gw.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })));
+      if (!gw.empty) root.add(new THREE.Mesh(gw.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })));
       void i0;
     }
 
@@ -989,7 +1009,21 @@ const World = (function () {
           const segL = Math.hypot(T.px[j] - T.px[i], T.pz[j] - T.pz[i]);
           if (SKIPBAR && SKIPBAR(side, i)) { lenAcc += segL; continue; }
           const g = scen.get(T.px[i] + T.nx[i] * side * bar[i], T.pz[i] + T.nz[i] * side * bar[i]);
-          if (t === 0) { // armco
+          if (t === 0 && KR) {   // Smrekova dolina (as in the picture): red and white plastic barrier blocks nose to tail, a banner on some (below), a rustic post-and-rail fence behind
+            const a = Q(i, 0.12, 0), b = Q(j, 0.12, 0), dx = b[0] - a[0], dz = b[2] - a[2], L = Math.hypot(dx, dz) || 1, px = -dz / L, pz = dx / L, H = 0.82;
+            const V = (p, o, y) => [p[0] + px * o, p[1] + y, p[2] + pz * o], mid = [(a[0] + b[0]) / 2, a[1] + 0.3, (a[2] + b[2]) / 2];
+            const col = (((lenAcc + segL * 0.5) / 2.1) | 0) % 2 ? [0.93, 0.92, 0.9] : [0.84, 0.16, 0.13], dk = col.map(v => v * 0.78), tp = col.map(v => Math.min(1, v * 1.08));
+            for (const sd of [-1, 1]) g.quadO(V(a, sd * 0.33, 0), V(b, sd * 0.33, 0), V(b, sd * 0.2, H), V(a, sd * 0.2, H), col, mid, null, [dk, dk, col, col]);   // the two sloped faces
+            g.quadO(V(a, -0.2, H), V(b, -0.2, H), V(b, 0.2, H), V(a, 0.2, H), tp, [mid[0], -5, mid[2]]);
+            const pi = (i - 1 + N) % N, openA = type[pi] !== 0 || (SKIPBAR && SKIPBAR(side, pi)), openB = type[j] !== 0 || (SKIPBAR && SKIPBAR(side, j));
+            if (openA) g.quadO(V(a, -0.33, 0), V(a, 0.33, 0), V(a, 0.2, H), V(a, -0.2, H), dk, mid);   // an end block's end
+            if (openB) g.quadO(V(b, -0.33, 0), V(b, 0.33, 0), V(b, 0.2, H), V(b, -0.2, H), dk, mid);
+            if (!(FO_NOFENCE && FO_NOFENCE(side, i))) {
+              const wood = [0.48, 0.33, 0.22], woodL = [0.6, 0.43, 0.29];
+              for (const y of [0.52, 1.0]) { const a1 = Q(i, 1.45, y), b1 = Q(j, 1.45, y), a2 = Q(i, 1.45, y + 0.13), b2 = Q(j, 1.45, y + 0.13); g.quadO(a1, b1, b2, a2, woodL, inward(i)); g.quadO(a1, b1, b2, a2, wood, outward(i)); }
+              if (((lenAcc / 2.6) | 0) !== (((lenAcc + segL) / 2.6) | 0)) { const pp = Q(i, 1.45, 0); box(g, pp[0], pp[1], pp[2], 0.17, 1.28, 0.17, T.hd[i], wood, woodL, true); }
+            }
+          } else if (t === 0) { // armco
             const rail = [0.8, 0.82, 0.85], railD = [0.55, 0.57, 0.6];
             g.quadO(Q(i, 0, 0.45), Q(j, 0, 0.45), Q(j, 0, 0.78), Q(i, 0, 0.78), rail, inward(i));
             g.quadO(Q(i, 0.02, 0.45), Q(j, 0.02, 0.45), Q(j, 0.02, 0.78), Q(i, 0.02, 0.78), railD, outward(i));
@@ -1043,13 +1077,13 @@ const World = (function () {
           }
           // sponsor boards
           sponsorAcc += segL;
-          if ((t === 1 || (t === 2 && !CSX) || THEME === 'monaco') && sponsorAcc > 9 && type[j] === t) {
+          if ((t === 1 || (t === 2 && !CSX) || THEME === 'monaco' || (KR && t === 0)) && sponsorAcc > (KR ? 11 : 9) && type[j] === t && !(KR && SKIPBAR && SKIPBAR(side, j))) {
             sponsorAcc = 0;
             const k = Math.floor(R() * 8);
             const u0 = (k % 2) * 0.5, u1 = u0 + 0.5, vTop = 1 - Math.floor(k / 2) * 0.25, vBot = vTop - 0.25;
             const i2 = (i + 2) % N;
-            const extra = t === 2 ? -0.35 : -0.03;
-            const y0 = t === 2 ? 0.1 : 0.12, y1 = t === 2 ? 0.95 : 0.74;
+            const extra = t === 2 ? -0.35 : KR ? -0.26 : -0.03;   // (Smrekova dolina: the banner hangs in front of the plastic blocks)
+            const y0 = t === 2 ? 0.1 : KR ? 0.08 : 0.12, y1 = t === 2 ? 0.95 : 0.74;
             const A = Q(i, extra, y0), Bp = Q(i2, extra, y0), Cp = Q(i2, extra, y1), D = Q(i, extra, y1);
             // reading direction: right side barrier reads against track direction
             const uv = side > 0 ? [[u1, vBot], [u0, vBot], [u0, vTop], [u1, vTop]] : [[u0, vBot], [u1, vBot], [u1, vTop], [u0, vTop]];
@@ -1316,7 +1350,7 @@ const World = (function () {
       if (THEME === 'mountain') return 3.0;
       if (THEME === 'ljubljana') return 1.05;   // the pavement between the catch fence (bar + 0.5) and the house fronts (bar + 3.5)
       if (THEME === 'monaco') return 1.0;
-      if (CSX) return FO_TYRES && FO_TYRES[side > 0 ? 1 : 0][i] ? (THEME === 'italia' ? 3.6 : 2.6) : 1.4;
+      if (CSX) return FO_TYRES && FO_TYRES[side > 0 ? 1 : 0][i] ? (THEME === 'italia' ? 3.6 : 2.6) : THEME === 'kros' ? 2.3 : 1.4;   // (Smrekova dolina: behind the wooden fence)
       let d = i * T.ds - sStart; if (d > T.len / 2) d -= T.len; if (d < -T.len / 2) d += T.len; if (d > -200 && d < 215) return 1.2;   // concrete wall
       const grav = side > 0 ? T.gravR : T.gravL; for (let k = -4; k <= 4; k++) if (grav[(i + k + N) % N]) return 2.4;   // tyre wall, fence at bar + 1.65
       return 1.2;   // armco
@@ -2053,11 +2087,13 @@ const World = (function () {
     }
 
     /* ================= CS STYLE: the circuits from the stylised top-down racer =================
-       Bakreni gozd ('forest': a V with a tongue, rocks, firs), Toskana ('italia': cypresses, farmhouses, a lake) and Gromski rt ('kamp': a pine wood,
-       a campsite full of vans and tents). The stands, the pit lane with its crews, the dirt shoulders, cones, bales, tyre stacks and edge lines are
-       shared; each circuit adds its own scenery. The newer circuits place theirs from their track file (stands, boards, houses, camp, crowd). */
+       Bakreni gozd ('forest': a V with a tongue, rocks, firs), Toskana ('italia': cypresses, farmhouses, a lake), Gromski rt ('kamp': a pine wood,
+       a campsite full of vans and tents) and Smrekova dolina ('kros': the player's own dirt circuit in a spruce forest, from a picture: plastic
+       barriers and wooden fences, roofed stands, floodlights, wooden towers, log piles, a stream with a footbridge; no edge lines on the dirt).
+       The stands, the pit lane with its crews, the dirt shoulders, cones, bales, tyre stacks and edge lines are shared; each circuit adds its own
+       scenery. The newer circuits place theirs from their track file (stands, boards, houses, camp, crowd). */
     if (CSX) {
-      const fd = T.def, FOR = THEME === 'forest', ITA = THEME === 'italia', KMP = THEME === 'kamp';
+      const fd = T.def, FOR = THEME === 'forest', ITA = THEME === 'italia', KMP = THEME === 'kamp', KRS = THEME === 'kros';
       // ---- the raised lawn in the bottom of the V (as in the reference): a flat grass terrace behind a curved concrete retaining wall
       //      with a rope fence along its edge; objects placed on it stand on its top ----
       const PL = fd.plateau ? (() => { const pts = [], S0 = T.startS, P0 = fd.plateau;
@@ -2084,7 +2120,8 @@ const World = (function () {
               prev = [x, z]; acc = t + 3.2 - L; } } }
         exclF.push((x, z) => inPoly(PL.pts, x, z) && polyDist(PL.pts, x, z) < 3.2);   // keep the edge of the terrace clear
       }
-      const pineCs = KMP ? [[0.2, 0.44, 0.27], [0.17, 0.4, 0.25], [0.23, 0.48, 0.28], [0.26, 0.51, 0.26], [0.19, 0.42, 0.28]]   // Gromski rt: fresh green pines
+      const pineCs = KRS ? [[0.14, 0.36, 0.24], [0.12, 0.33, 0.22], [0.17, 0.4, 0.25], [0.2, 0.44, 0.24], [0.13, 0.35, 0.25]]   // Smrekova dolina: dark spruces, warm tips in the low sun
+        : KMP ? [[0.2, 0.44, 0.27], [0.17, 0.4, 0.25], [0.23, 0.48, 0.28], [0.26, 0.51, 0.26], [0.19, 0.42, 0.28]]   // Gromski rt: fresh green pines
         : [[0.17, 0.43, 0.42], [0.15, 0.4, 0.4], [0.2, 0.47, 0.44], [0.22, 0.5, 0.43], [0.16, 0.42, 0.44]];   // teal-green firs: dark teal in shade, fresh green where the low sun catches them (measured from the reference)
       // firs as in the reference: tall and slim, four drooping jagged tiers, sunlit tips green, shaded sides teal (soft shading).
       // Far from the circuit (more than 80 m beyond the barriers, small and hazy on screen) a cheaper two-tier fir with the same silhouette.
@@ -2118,6 +2155,7 @@ const World = (function () {
         if (r > 1.6) rock(g, x, y0 + r * sy * 0.36, z, r * (0.9 + R() * 0.4), r * sy, r * (0.8 + R() * 0.3), R() * TAU, col, R, 0.22); else ico(g, x, y0 + r * sy * 0.4, z, r, sy, col, R, 0.38); };
       const slab = (x, z, r) => { const g = scen.get(x, z), y0 = gH(x, z) - 0.4, rot = R() * TAU, h = r * (0.8 + R() * 0.9), c1 = vary([0.6, 0.65, 0.54], R, 0.05);   // blocky sandstone with a chamfered top
         box(g, x, y0, z, r * 1.7, h, r * 1.3, rot, c1, c1.map(v => v * 1.08)); box(g, x + (R() - 0.5) * r * 0.3, y0 + h, z + (R() - 0.5) * r * 0.3, r * 1.25, r * 0.35, r * 0.9, rot + 0.15, c1.map(v => v * 1.03), c1.map(v => v * 1.12)); };
+      const kLow = (x, z) => { if (!KRS || clearance(x, z) > 26) return false; const nn = nearest(x, z); return nn.i >= 0 && z > T.pz[nn.i] + 3; };   // (Smrekova dolina: within 26 m south of the road the trees stay low, so the iso and kino cameras see the cars over them)
       const sNearF = (px, pz) => { let bi = 0, bd = 1e9; for (let i = 0; i < N; i++) { const d = Math.hypot(T.px[i] - px, T.pz[i] - pz); if (d < bd) { bd = d; bi = i; } } return bi * T.ds; };
       const fAt = (px, pz) => ((sNearF(px, pz) - T.startS) % T.len + T.len) % T.len / T.len;   // lap fraction from the start line
       const sAt = (px, pz) => sNearF(px, pz);                                                     // track distance of the nearest sample
@@ -2130,6 +2168,7 @@ const World = (function () {
       const inField = (x, z, m) => { const n = nearest(x, z); if (n.i < 0 || n.lat <= 0) return false; const sq = n.i * T.ds; return sq >= FARM.sa - m && sq <= FARM.sb + m && n.lat > T.br[n.i] + FARM.o0 - m && n.lat < T.br[n.i] + FARM.o1 + m; };
       if (FARM) exclF.push((x, z) => inField(x, z, 3) || (x > FARM.yard.x0 && x < FARM.yard.x1 && z > FARM.yard.z0 && z < FARM.yard.z1));
       if (foPit) exclF.push((x, z) => { const n = nearest(x, z); if (n.i < 0) return false; const p = foPit(n.i); return !!p && n.lat > 0 && n.lat < p.o + 3.5 + 9 + 9; });   // pit lane, apron and garages
+      if (foPit && KRS) { const P0 = fd.pit, sm = T.startS + (P0[1] + P0[2]) / 2, [x, z, hd] = atS(sm, 20); exclRect.push({ x, z, hx: (P0[2] - P0[1]) / 2 + 4, hz: 20, rot: hd }); }   // (Smrekova dolina: the whole pit complex beside the straight, also where another road is nearer than the straight)
       // ---- grandstands as in the reference: short open blocks, raked rows packed with spectators (lots of straw hats), white frame,
       //      yellow sponsor boards front and back, loudspeaker poles, a see-through catch fence in front ----
       const SHIRTS = [[0.78, 0.24, 0.2], [0.26, 0.36, 0.6], [0.92, 0.9, 0.86], [0.2, 0.2, 0.23], [0.56, 0.44, 0.34], [0.36, 0.5, 0.36], [0.72, 0.56, 0.4], [0.86, 0.62, 0.32], [0.46, 0.32, 0.5], [0.62, 0.66, 0.72], [0.92, 0.9, 0.86], [0.3, 0.26, 0.24]];   // muted, like the reference crowd
@@ -2144,7 +2183,7 @@ const World = (function () {
       const standBlock = (sa, sb, side, rows) => {
         const sm = (sa + sb) / 2, im = T.idx(sm), hd = T.hd[im], L = sb - sa, bar = side > 0 ? T.br[im] : T.bl[im];
         const b0 = bar + 2.8, rowD = 0.8, rowH = 0.46, baseH = 1.1, P = (s1, d) => (FOR ? atS : atSf)(s1, side * d);   // (the newer circuits: interpolated, so the frames and figures sit where they belong)
-        const [gx, gz] = P(sm, b0 + 3), g = scen.get(gx, gz), white = [0.92, 0.92, 0.94], frame = KMP ? [0.48, 0.2, 0.2] : white, seat = [0.72, 0.17, 0.15];   // red seats (they show between the fans, as in the reference)
+        const [gx, gz] = P(sm, b0 + 3), g = scen.get(gx, gz), white = [0.92, 0.92, 0.94], frame = KMP ? [0.48, 0.2, 0.2] : white, seat = KRS ? [0.18, 0.34, 0.7] : [0.72, 0.17, 0.15];   // red seats (they show between the fans, as in the reference; Smrekova dolina: blue, as in the picture)
         { const [x, z] = P(sm, b0 - 0.15); box(g, x, 0, z, L, baseH + 0.25, 0.3, hd, frame, frame); }
         for (let k = 0; k < rows; k++) { const [x, z] = P(sm, b0 + (k + 0.5) * rowD); box(g, x, 0, z, L, baseH + k * rowH, rowD, hd, [0.56, 0.57, 0.62], seat);
           const y = baseH + k * rowH + 0.015, A = P(sa, b0 + k * rowD + 0.05), Bq = P(sb, b0 + k * rowD + 0.05), C = P(sb, b0 + (k + 1) * rowD - 0.05), D = P(sa, b0 + (k + 1) * rowD - 0.05);   // packed crowd underneath the figures
@@ -2168,6 +2207,12 @@ const World = (function () {
         for (let s1 = sa - 4; s1 < sb + 4; s1 += 2) { const i = T.idx(s1), j = T.idx(s1 + 2), bi = side > 0 ? T.br : T.bl, Q = (k, y) => [T.px[k] + T.nx[k] * side * (bi[k] + 0.35), y, T.pz[k] + T.nz[k] * side * (bi[k] + 0.35)];   // see-through catch fence
           const fu0 = s1 / 2.5, fu1 = (s1 + 2) / 2.5; texFence.quadO(Q(i, 0.95), Q(j, 0.95), Q(j, 3.5), Q(i, 3.5), [1, 1, 1], [T.px[i], 2, T.pz[i]], [[fu0, 0], [fu1, 0], [fu1, 1.0], [fu0, 1.0]]);
           if (((s1 - sa + 4) / 2 | 0) % 2 === 0) { const q = Q(i, 0); box(g, q[0], 0, q[2], 0.1, 3.6, 0.1, 0, [0.62, 0.63, 0.66]); } }
+        if (KRS) {   // Smrekova dolina (as in the picture): a blue roof on white posts over the back rows (the front rows stay open to the camera)
+          const rY = topH + 2.6, d0 = b0 + rows * rowD * 0.4, d1 = backD + 0.7, np = Math.max(1, Math.round(L / 9));
+          for (let q = 0; q <= np; q++) { const [x, z] = P(sa + (L * q) / np, backD + 0.25); box(g, x, 0, z, 0.3, rY, 0.3, hd, white); }
+          for (let q = 0, s1 = sa - 0.5; s1 < sb + 0.5 - 0.01; s1 += 3.2, q++) { const s2 = Math.min(sb + 0.5, s1 + 3.2), [x, z] = P((s1 + s2) / 2, (d0 + d1) / 2);
+            box(g, x, rY, z, s2 - s1 + 0.02, 0.3, d1 - d0, hd, [0.8, 0.82, 0.86], q % 2 ? [0.9, 0.92, 0.95] : [0.2, 0.4, 0.76]); }
+          { const [x, z] = P(sm, d0 + 0.05); box(g, x, rY - 0.35, z, L + 1, 0.4, 0.12, hd, [0.2, 0.4, 0.76]); } }   // a blue fascia along the front edge
         const [cx, cz] = P(sm, b0 + rows * rowD / 2); exclRect.push({ x: cx, z: cz, hx: L / 2 + 3, hz: rows * rowD / 2 + 4, rot: hd });
       };
       if (FOR) { const S0 = T.startS; flushCrowd(); standBlock(S0 - 106, S0 - 81, -1, 7); standBlock(S0 - 77, S0 - 52, -1, 7); standBlock(S0 - 48, S0 - 23, -1, 7); flushCrowd();
@@ -2241,11 +2286,11 @@ const World = (function () {
         const n = 4 + Math.round(rr / 2.2);
         for (let k = 0; k < n; k++) { const a = R() * TAU, d = Math.sqrt(R()) * rr * 0.85, x = rx + Math.cos(a) * d, z = rz + Math.sin(a) * d, r = 2.4 + R() * rr * 0.34;
           if (clearance(x, z) < r + 2) continue; if (R() < 0.55) slab(x, z, r * 0.8); else boulder(x, z, r, 0.55 + R() * 0.45); }
-        for (let k = 0; k < 2 + rr / 6; k++) { const a = R() * TAU, d = rr * (0.4 + R() * 0.7), x = rx + Math.cos(a) * d, z = rz + Math.sin(a) * d; if (clearance(x, z) > 6) fir(x, z, 9 + R() * 6); }
+        for (let k = 0; k < 2 + rr / 6; k++) { const a = R() * TAU, d = rr * (0.4 + R() * 0.7), x = rx + Math.cos(a) * d, z = rz + Math.sin(a) * d; if (clearance(x, z) > 6) fir(x, z, kLow(x, z) ? 5.5 + R() * 3 : 9 + R() * 6); }
         excl.push({ x: rx, z: rz, r: rr });
       }
       // scattered single boulders along the verges (as in the video, right behind the tyres)
-      if (FOR) for (let k = 0; k < 90; k++) { const i = Math.floor(R() * N), side = R() < 0.5 ? -1 : 1, bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 3 + R() * 10), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
+      if (FOR || KRS) for (let k = 0; k < 90; k++) { const i = Math.floor(R() * N), side = R() < 0.5 ? -1 : 1, bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 3 + R() * 10), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
         if (clearance(x, z) > 3 && !excluded(x, z)) { const r = 1.2 + R() * 2.6; boulder(x, z, r, 0.6 + R() * 0.4); excl.push({ x, z, r: r + 1 }); } }
       // ---- the farm (as in the reference): a ploughed field of long orange ridges behind a red wooden fence and a plank walkway,
       //      a vegetable garden, a round wooden tower with a blue top and a white balcony, a brown barn with white trim, an open shed ----
@@ -2348,10 +2393,10 @@ const World = (function () {
           board(327, 116, -1, 4.5, 0, 3, 2.4, 2.4);     // OPRIJEM sign inside the S of the right leg
           board(165, -18, 1, 3.6, 0, 0, 4.2, 3.9); }      // DOBRI DNEVI again at the top of the tongue
         else for (const b of fd.boards || []) board(...b);   // (from the track file: [x, z, side, out, along, slot, half width, height])
-        const mb = new THREE.Mesh(gb.geometry(), new THREE.MeshLambertMaterial({ map: FOR ? tex.boardsFO : ITA ? tex.boardsIT : tex.boardsKP, vertexColors: true })); mb.castShadow = true; mb.receiveShadow = true; root.add(mb);
+        const mb = new THREE.Mesh(gb.geometry(), new THREE.MeshLambertMaterial({ map: FOR ? tex.boardsFO : ITA ? tex.boardsIT : KRS ? tex.boardsKR : tex.boardsKP, vertexColors: true })); mb.castShadow = true; mb.receiveShadow = true; root.add(mb);
         const mp = new THREE.Mesh(gpost.geometry(), matV); mp.castShadow = true; mp.receiveShadow = true; root.add(mp); }
       // ---- orange-brown dirt shoulders along both edges of the whole circuit (the look of the reference track; Toskana: wide run-offs round the outside of the corners) ----
-      { const gs = new GB(), sAtStart = T.startS, [wOut, wIn, back] = ITA ? [9, 2.2, 0.9] : KMP ? [3.6, 0.9, 0.6] : [3.4, 1.7, 0.5], dirtC = ITA ? [0.52, 0.35, 0.245] : KMP ? [0.44, 0.32, 0.21] : [0.58, 0.39, 0.31];
+      { const gs = new GB(), sAtStart = T.startS, [wOut, wIn, back] = ITA ? [9, 2.2, 0.9] : KMP ? [3.6, 0.9, 0.6] : KRS ? [3.2, 1.4, 0.5] : [3.4, 1.7, 0.5], dirtC = ITA ? [0.52, 0.35, 0.245] : KMP ? [0.44, 0.32, 0.21] : KRS ? [0.6, 0.44, 0.3] : [0.58, 0.39, 0.31];   // (Smrekova dolina: loose dirt thrown off the road)
         const WD = FOR ? null : [-1, 1].map(side => {   // the newer circuits: the run-off widens and narrows smoothly round the outside of a corner (no steps)
           let a = new Float32Array(N); for (let i = 0; i < N; i++) a[i] = (T.k[i] * side < 0 && Math.abs(T.k[i]) > 0.015) ? wOut : wIn;
           for (let it = 0; it < 3; it++) { const o = new Float32Array(N); for (let i = 0; i < N; i++) { let m = 0; for (let d = -4; d <= 4; d++) m += a[(i + d + N) % N]; o[i] = Math.max(a[i] * (it ? 0 : 1), m / 9); } a = o; }
@@ -2368,7 +2413,7 @@ const World = (function () {
         for (const at of [c.i0 - 6, i1c + 6]) { const i = ((at % N) + N) % N, side = -c.dir, bar = side > 0 ? T.br[i] : T.bl[i], [x, z] = atS(i * T.ds, side * (bar - 1.15));
           prop(ITA ? 'rbstack' : 'bstack', x, z, T.hd[i] + (R() - 0.5) * 0.12); R(); R(); } }   // (Toskana: round bales, as in the reference)
       // ---- pit lane (as in the reference): lane, apron, crews' boxes, garages (pitLaneScenery) ----
-      if (foPit) pitLaneScenery({ R, scen, prop, excl: (x, z, r) => excl.push({ x, z, r }), root, out, ownTex });
+      if (foPit) pitLaneScenery({ R, scen, prop, excl: (x, z, r) => excl.push({ x, z, r }), root, out, ownTex, krs: KRS, laneMat: KRS ? new THREE.MeshLambertMaterial({ map: tex.asphalt, color: 0xd6d0c6, vertexColors: true }) : null });
       // ---- taller rock masses: a second layer of boulders on the bigger formations ----
       for (const [rx, rz, rr] of fd.rocks || []) { if (rr < 14) continue; for (let k = 0; k < 3; k++) { const a = R() * TAU, d = R() * rr * 0.4, x = rx + Math.cos(a) * d, z = rz + Math.sin(a) * d, r = 3.5 + R() * rr * 0.25;
         if (clearance(x, z) > r + 4) { const g = scen.get(x, z), y0 = gH(x, z); rock(g, x, y0 + r * 1.1, z, r * 1.1, r * 0.8, r, R() * TAU, vary([0.58, 0.64, 0.54], R, 0.05), R, 0.2); } } }
@@ -2383,7 +2428,7 @@ const World = (function () {
             gd.quadUp([a[0] - px2 * 0.6, 0.025, a[1] - pz2 * 0.6], [b[0] - px2 * 0.6, 0.025, b[1] - pz2 * 0.6], [b[0] + px2 * 0.6, 0.025, b[1] + pz2 * 0.6], [a[0] + px2 * 0.6, 0.025, a[1] + pz2 * 0.6], [dc, dc, dc, dc]); } }
         const m = new THREE.Mesh(gd.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); }
       // ---- mowing stripes on the lawns beside the circuit ----
-      if (!ITA) { const gm = new GB(), dk = [0.86, 0.86, 0.86];   // (Toskana: even lawns, as in the reference)
+      if (!ITA && !KRS) { const gm = new GB(), dk = [0.86, 0.86, 0.86];   // (Toskana: even lawns, as in the reference; Smrekova dolina: rough grass, as in the picture)
         for (const side of [-1, 1]) for (let q = 0; q < T.len; q += 2) { const i = T.idx(q), j = T.idx(q + 2), bar = side > 0 ? T.br : T.bl;
           for (let band = 0; band < 4; band++) { const o1 = bar[i] + 2 + band * 6, o2 = o1 + 3, P = (k, o) => [T.px[k] + T.nx[k] * o * side, 0.008, T.pz[k] + T.nz[k] * o * side];
             const a = P(i, o1), b = P(j, o1), c = P(j, o2), d = P(i, o2); if (clearance(a[0], a[2]) < 1 || clearance(c[0], c[2]) < 1 || excluded(a[0], a[2]) || excluded(c[0], c[2]) || gH(a[0], a[2]) > 0.2) continue;
@@ -2402,8 +2447,8 @@ const World = (function () {
         for (let q = sa; q < sb; q += 2) { const i = T.idx(q), j = T.idx(q + 2); if (T.curb[i]) continue;
           const v0 = (q - sa) / 9, v1 = (q - sa + 2) / 9; gk.quadUp(P(i, w, 0.045), P(i, w + cw, 0.085), P(j, w + cw, 0.085), P(j, w, 0.045), [wc, wc, wc, wc], [[0, v0], [1, v0], [1, v1], [0, v1]]); }
         const km = new THREE.Mesh(gk.geometry(), new THREE.MeshLambertMaterial({ map: tex.curbRWB, vertexColors: true })); km.receiveShadow = true; km.matrixAutoUpdate = false; root.add(km); }   // red / white / blue
-      // ---- white edge lines along the asphalt wherever there is no kerb ----
-      { const gl = new GB(), wc = [0.93, 0.92, 0.94];
+      // ---- white edge lines along the asphalt wherever there is no kerb (not on the dirt of Smrekova dolina) ----
+      if (!KRS) { const gl = new GB(), wc = [0.93, 0.92, 0.94];
         for (const side of [-1, 1]) for (let q = 0; q < T.len - 1; q += 2) { const i = T.idx(q), j = T.idx(q + 2); if (T.curb[i] && T.curb[j] && (FOR || !(side * T.k[i] < 0 && Math.abs(T.k[i]) < 0.035))) continue;   // (the newer circuits: also round the outside of a corner, where the kerb is left out) a solid line right at the edge of the asphalt, as in the reference
           const P = (k, o) => [T.px[k] + T.nx[k] * o * side, 0.036, T.pz[k] + T.nz[k] * o * side];
           gl.quadUp(P(i, w - 0.34), P(j, w - 0.34), P(j, w - 0.12), P(i, w - 0.12), [wc, wc, wc, wc]); }
@@ -2427,7 +2472,7 @@ const World = (function () {
       // ---- the newer circuits: tyre stacks and cones across the short cut of every chicane (a run of corners turning alternately left and right
       //      close together): wherever a straight line from the road before the chicane to the road after it leaves the asphalt, so a car
       //      that drives straight on instead of round the chicane smashes into them ----
-      if (!FOR) { const cs = T.corners, nC = cs.length, done = new Set(), put = [];
+      if (!FOR && !KRS) { const cs = T.corners, nC = cs.length, done = new Set(), put = [];
         const gap = (a, b) => ((((b.i0 - a.i1) % N) + N) % N) * T.ds;
         for (let a = 0; a < nC; a++) { if (done.has(a)) continue; let b = a;
           while (b - a < nC - 1 && cs[(b + 1) % nC].dir === -cs[b % nC].dir && gap(cs[b % nC], cs[(b + 1) % nC]) < 26) b++;
@@ -2452,7 +2497,7 @@ const World = (function () {
         for (let k = 0; k < 420; k++) { const i = Math.floor(R() * N), side = R() < 0.5 ? -1 : 1, bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 1.5 + R() * 16), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
           if (clearance(x, z) < 1 || excluded(x, z)) continue; fern(scen.get(x, z), x, z, 0.5 + R() * 0.5); } }
       // ---- the newer circuits: a dashed white centre line through the corners (as in both reference races) ----
-      if (!FOR) { const gd = new GB(), wc = [0.93, 0.93, 0.9];
+      if (!FOR && !KRS) { const gd = new GB(), wc = [0.93, 0.93, 0.9];
         for (let s0 = 0; s0 < T.len - 3; s0 += 6) { let km = 0; for (let d = -6; d <= 9; d += 3) km = Math.max(km, Math.abs(T.k[T.idx(s0 + d)])); if (km < 0.012) continue;
           let dS = Math.abs(s0 - T.startS); dS = Math.min(dS, T.len - dS); if (dS < 8) continue;
           const a = atSf(s0, -0.13), b = atSf(s0, 0.13), c = atSf(s0 + 3, 0.13), d = atSf(s0 + 3, -0.13);
@@ -2500,8 +2545,92 @@ const World = (function () {
             m.position.set(x + nx * o - tx * 0.82, y0 + H - 1.7, z + nz * o - tz * 0.82); m.rotation.y = -T.hd[i]; root.add(m); lights.push(m); }
           out.dyn.lights = lights; }
       }
+      // ---- Smrekova dolina (the things of the player's picture, drawn in the reference's style): floodlight masts, wooden marshal and
+      //      camera towers, log piles, the paddock's service buildings, the stream with its rapids and the wooden footbridge over it ----
+      if (KRS) {
+        const wood = [0.5, 0.34, 0.22], woodD = [0.38, 0.25, 0.16], woodL = [0.64, 0.47, 0.31], steel = [0.6, 0.62, 0.66], dark = [0.22, 0.23, 0.26];
+        const beam = (g, p0, p1, bw, col) => {   // a square beam from p0 to p1 (any direction)
+          const d = [p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]], L = Math.hypot(d[0], d[1], d[2]) || 1, t = d.map(v => v / L), q = Math.abs(t[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
+          let u = [t[1] * q[2] - t[2] * q[1], t[2] * q[0] - t[0] * q[2], t[0] * q[1] - t[1] * q[0]]; const ul = Math.hypot(u[0], u[1], u[2]); u = u.map(v => v / ul);
+          const v = [t[1] * u[2] - t[2] * u[1], t[2] * u[0] - t[0] * u[2], t[0] * u[1] - t[1] * u[0]], h = bw / 2, mid = [(p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2, (p0[2] + p1[2]) / 2];
+          const C = (p, s1, s2) => [p[0] + (u[0] * s1 + v[0] * s2) * h, p[1] + (u[1] * s1 + v[1] * s2) * h, p[2] + (u[2] * s1 + v[2] * s2) * h];
+          for (const [a0, b0, a1, b1] of [[1, 1, 1, -1], [1, -1, -1, -1], [-1, -1, -1, 1], [-1, 1, 1, 1]]) g.quadO(C(p0, a0, b0), C(p0, a1, b1), C(p1, a1, b1), C(p1, a0, b0), col, mid); };
+        const figure = (g, x, y, z, rot, shirt) => { box(g, x, y, z, 0.5, 0.95, 0.4, rot, shirt, shirt, true); box(g, x, y + 0.95, z, 0.34, 0.34, 0.34, rot, [0.93, 0.74, 0.58], [0.2, 0.15, 0.12], true); };
+        const toTrack = (x, z) => { const n = nearest(x, z), i = n.i < 0 ? 0 : n.i, fx = T.px[i] - x, fz = T.pz[i] - z, l = Math.hypot(fx, fz) || 1; return [fx / l, fz / l]; };
+        // floodlight masts: a tall grey pole, a frame with two rows of lamps turned to the circuit (the lamp faces glow: an unlit mesh of their own)
+        const glow = new GB();
+        for (const [x, z, h0] of fd.lights || []) { const g = scen.get(x, z), y0 = gH(x, z), H = h0 || 15, [ux, uz] = toTrack(x, z), rot = Math.atan2(uz, ux) + Math.PI / 2, cr = Math.cos(rot), sr = Math.sin(rot);
+          cyl(g, x, y0, z, 0.24, H + 1.6, 6, steel, steel, 0.14); box(g, x, y0, z, 0.9, 0.5, 0.9, 0, [0.7, 0.7, 0.68]);   // pole on a concrete foot
+          for (const dy of [0, 1.35]) box(g, x + ux * 0.25, y0 + H + dy - 0.1, z + uz * 0.25, 3.4, 0.14, 0.18, rot, steel);   // the frame's rails
+          for (let a = -1; a <= 1; a++) for (let b = 0; b < 2; b++) { const lx = x + cr * a * 1.1 + ux * 0.45, lz = z + sr * a * 1.1 + uz * 0.45, ly = y0 + H + 0.05 + b * 0.66;
+            box(g, lx, ly, lz, 0.9, 0.56, 0.32, rot, dark);   // lamp housings
+            const c = [lx + ux * 0.17, ly + 0.28, lz + uz * 0.17], hx = cr * 0.38, hz = sr * 0.38;
+            glow.quadO([c[0] - hx, c[1] - 0.22, c[2] - hz], [c[0] + hx, c[1] - 0.22, c[2] + hz], [c[0] + hx, c[1] + 0.22, c[2] + hz], [c[0] - hx, c[1] + 0.22, c[2] - hz], [1, 0.96, 0.84], [c[0] - ux, c[1], c[2] - uz]); }
+          excl.push({ x, z, r: 2.2 }); CR.avoid(x, z, 1.3); }
+        if (!glow.empty) { const m = new THREE.Mesh(glow.geometry(), new THREE.MeshBasicMaterial({ vertexColors: true })); m.matrixAutoUpdate = false; root.add(m); }
+        // wooden towers (marshals and TV cameras over the infield): four legs with X braces, a platform with a plank railing, a pyramid roof
+        for (const [x, z, h0, cam] of fd.towers || []) { const g = scen.get(x, z), y0 = gH(x, z), H = h0 || 5, [ux, uz] = toTrack(x, z), rot = Math.atan2(uz, ux), c = Math.cos(rot), sn = Math.sin(rot);
+          const Pt = (lx, y, lz) => [x + lx * c - lz * sn, y0 + y, z + lx * sn + lz * c], Lg = [[-1.1, -1.1], [1.1, -1.1], [1.1, 1.1], [-1.1, 1.1]];
+          for (const [lx, lz] of Lg) { const p = Pt(lx, 0, lz); box(g, p[0], p[1], p[2], 0.26, H + 2.5, 0.26, rot, woodD, wood); }
+          for (let k = 0; k < 4; k++) { const a = Lg[k], b = Lg[(k + 1) % 4]; beam(g, Pt(a[0], 0.4, a[1]), Pt(b[0], H - 0.3, b[1]), 0.13, woodD); beam(g, Pt(b[0], 0.4, b[1]), Pt(a[0], H - 0.3, a[1]), 0.13, woodD); }
+          { const p = Pt(0, H, 0); box(g, p[0], p[1], p[2], 3.0, 0.22, 3.0, rot, wood, woodL); }
+          for (const [lx, lz, along] of [[0, -1.45, 1], [0, 1.45, 1], [-1.45, 0, 0], [1.45, 0, 0]]) { const p = Pt(lx, H + 0.22, lz); box(g, p[0], p[1], p[2], along ? 3.0 : 0.1, 0.85, along ? 0.1 : 3.0, rot, woodL, woodL); }
+          { const p = Pt(0, H + 2.5, 0); box(g, p[0], p[1], p[2], 3.3, 0.14, 3.3, rot, woodD); cone(g, p[0], p[1] + 0.14, p[2], 2.55, 1.15, 4, [0.33, 0.3, 0.3], [0.4, 0.37, 0.36], rot + Math.PI / 4); }
+          { const p = Pt(0.7, H + 0.22, 0.4); figure(g, p[0], p[1], p[2], rot, cam ? [0.16, 0.17, 0.2] : [0.96, 0.5, 0.1]);   // a cameraman in black or a marshal in orange
+            if (cam) { const q = Pt(1.15, H + 1.05, 0.4); box(g, q[0], q[1], q[2], 0.75, 0.4, 0.32, rot, [0.14, 0.14, 0.15], [0.3, 0.3, 0.32]); } }
+          excl.push({ x, z, r: 3.2 }); CR.block(x, z, 3.4, 3.4, rot); }
+        // log piles (stacked in a pyramid, pale cut ends)
+        const logH = (g, x, y, z, r, L, rot, col) => { const c = Math.cos(rot), sn = Math.sin(rot), n = 7, ends = [0.8, 0.64, 0.44], inn = [x, y, z];
+          const P = (a, t) => [x + c * t * L / 2 - sn * Math.cos(a) * r, y + Math.sin(a) * r, z + sn * t * L / 2 + c * Math.cos(a) * r];
+          for (let k = 0; k < n; k++) { const a0 = k / n * TAU, a1 = (k + 1) / n * TAU; g.quadO(P(a0, -1), P(a1, -1), P(a1, 1), P(a0, 1), col, inn);
+            g.triO([x - c * L / 2, y, z - sn * L / 2], P(a0, -1), P(a1, -1), ends, inn); g.triO([x + c * L / 2, y, z + sn * L / 2], P(a1, 1), P(a0, 1), ends, inn); } };
+        for (const [x, z, rot, L0, n0] of fd.logs || []) { const g = scen.get(x, z), y0 = gH(x, z), L = L0 || 6, n = n0 || 4, r = 0.32, c = Math.cos(rot), sn = Math.sin(rot);
+          for (let row = 0; row < n; row++) for (let k = 0; k < n - row; k++) { const o = (k - (n - row - 1) / 2) * 2.02 * r, jit = (R() - 0.5) * 0.6;
+            logH(g, x - sn * o + c * jit, y0 + r + row * r * 1.72, z + c * o + sn * jit, r * (0.88 + R() * 0.2), L * (0.9 + R() * 0.14), rot, vary([0.47, 0.31, 0.2], R, 0.12)); }
+          excl.push({ x, z, r: L / 2 + 1.2 }); CR.block(x, z, L + 1, n * 0.7 + 1, rot); }
+        // the paddock's service buildings: long and white under a low grey roof, roller doors on the long side, a blue awning
+        for (const [x, z, rot, L, D] of fd.paddock || []) { const g = scen.get(x, z), y0 = gH(x, z) - 0.1, c = Math.cos(rot), sn = Math.sin(rot), Pl = (lx, lz) => [x + lx * c - lz * sn, z + lx * sn + lz * c];
+          box(g, x, y0, z, L, 3.8, D, rot, [0.92, 0.92, 0.92], [0.92, 0.92, 0.92]);
+          gable(g, x, y0 + 3.8, z, L + 0.8, D + 0.9, 0.8, rot, [0.5, 0.52, 0.57], [0.92, 0.92, 0.92]);
+          for (let q = -L / 2 + 2.4; q < L / 2 - 1.5; q += 4.6) { const [dx, dz] = Pl(q, D / 2 + 0.03); box(g, dx, y0, dz, 3.2, 2.9, 0.06, rot, [0.44, 0.46, 0.5]);
+            for (let k = 1; k < 6; k++) { const [lx, lz] = Pl(q, D / 2 + 0.07); box(g, lx, y0 + k * 0.48, lz, 3.2, 0.04, 0.03, rot, [0.36, 0.38, 0.42]); } }
+          { const [ax, az] = Pl(0, D / 2 + 1.6); box(g, ax, y0 + 3.0, az, L * 0.6, 0.12, 3.2, rot, [0.2, 0.42, 0.78], [0.22, 0.46, 0.84]); for (const q of [-L * 0.3, L * 0.3]) { const [px2, pz2] = Pl(q, D / 2 + 3.0); box(g, px2, y0, pz2, 0.12, 3.0, 0.12, rot, [0.85, 0.86, 0.88]); } }
+          excl.push({ x, z, r: Math.hypot(L, D) / 2 + 2 }); exclRect.push({ x, z, hx: L / 2 + 1, hz: D / 2 + 4.5, rot }); CR.block(x, z, L + 2, D + 8, rot); }
+        // the stream: a ribbon of dark water with white rapids, pale stones along the banks, boulders in it and on the banks
+        if (fd.stream) { const S = fd.stream, hw = (fd.streamW || 7) / 2, gw = new GB(true), gf = new GB(), pts = [];
+          for (let k = 0; k < S.length - 1; k++) { const [ax, az] = S[k], [bx, bz] = S[k + 1], L2 = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.round(L2 / 2)); for (let q = 0; q < n; q++) { const t = q / n; pts.push([ax + (bx - ax) * t, az + (bz - az) * t]); } }
+          pts.push(S[S.length - 1]);
+          const nrm = pts.map((p, k) => { const a = pts[Math.max(0, k - 1)], b = pts[Math.min(pts.length - 1, k + 1)], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1; return [-dz / l, dx / l]; });
+          const wd = (k) => hw * (1 + 0.14 * Math.sin(k * 0.23) + 0.08 * Math.sin(k * 0.61 + 1));
+          const E = (k, o, y) => [pts[k][0] + nrm[k][0] * o, y, pts[k][1] + nrm[k][1] * o], wc = [1, 1, 1];
+          let acc = 0;
+          for (let k = 0; k < pts.length - 1; k++) { const l = Math.hypot(pts[k + 1][0] - pts[k][0], pts[k + 1][1] - pts[k][1]), wa = wd(k), wb = wd(k + 1);
+            gw.quadUp(E(k, -wa, 0.05), E(k, wa, 0.05), E(k + 1, wb, 0.05), E(k + 1, -wb, 0.05), [wc, wc, wc, wc], [[0, acc / 7], [wa * 2 / 7, acc / 7], [wb * 2 / 7, (acc + l) / 7], [0, (acc + l) / 7]]);
+            for (const sd of [-1, 1]) { const st2 = [0.72, 0.7, 0.66];   // a pale stony rim along both banks
+              if (sd < 0) gf.quadUp(E(k, -wa - 1.1, 0.04), E(k, -wa + 0.2, 0.04), E(k + 1, -wb + 0.2, 0.04), E(k + 1, -wb - 1.1, 0.04), [st2, st2, st2, st2]);
+              else gf.quadUp(E(k, wa - 0.2, 0.04), E(k, wa + 1.1, 0.04), E(k + 1, wb + 1.1, 0.04), E(k + 1, wb - 0.2, 0.04), [st2, st2, st2, st2]); }
+            if (R() < 0.35) { const o = (R() - 0.5) * wa * 1.3, L3 = 1.4 + R() * 2.4, W3 = 0.25 + R() * 0.35, fc = R() < 0.5 ? [0.95, 0.97, 0.98] : [0.82, 0.91, 0.95], c0 = E(k, o, 0.07);   // white water: pointed streaks of foam along the flow
+              const t2 = pts[k + 1], tx2 = (t2[0] - pts[k][0]) / (l || 1), tz2 = (t2[1] - pts[k][1]) / (l || 1), nx2 = -tz2, nz2 = tx2, m = [c0[0] + tx2 * L3 * 0.35, 0.07, c0[2] + tz2 * L3 * 0.35];
+              gf.quadUp(c0, [m[0] + nx2 * W3, 0.07, m[2] + nz2 * W3], [c0[0] + tx2 * L3, 0.07, c0[2] + tz2 * L3], [m[0] - nx2 * W3, 0.07, m[2] - nz2 * W3], [fc, fc, fc, fc]); }
+            if (R() < 0.3) { const o = (R() - 0.5) * wa * 1.6, [x, , z] = E(k, o, 0), r = 0.5 + R() * 0.9; ico(scen.get(x, z), x, 0.15, z, r, 0.55, vary([0.6, 0.62, 0.6], R, 0.08), R, 0.3); }   // stones in the water
+            if (R() < 0.4) { const sd = R() < 0.5 ? -1 : 1, o = sd * (wa + 1.2 + R() * 2.5), [x, , z] = E(k, o, 0); if (clearance(x, z) > 3) boulder(x, z, 1.2 + R() * 2.2, 0.6 + R() * 0.4); }   // boulders on the banks
+            acc += l; }
+          const mw = new THREE.Mesh(gw.geometry(), new THREE.MeshLambertMaterial({ map: tex.water, color: 0x78a2b4, vertexColors: true })); mw.receiveShadow = true; mw.matrixAutoUpdate = false; root.add(mw); out.dyn.water = tex.water;
+          const mf = new THREE.Mesh(gf.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })); mf.receiveShadow = true; mf.matrixAutoUpdate = false; root.add(mf);
+          exclF.push((x, z) => streamD(x, z) < hw * 1.3 + 1.8);
+          // the wooden footbridge: a plank deck on posts, handrails, fans leaning on them
+          if (fd.bridge) { const [bx, bz, rot, BL, BW] = fd.bridge, g = scen.get(bx, bz), c = Math.cos(rot), sn = Math.sin(rot), Pb = (lx, y, lz) => [bx + lx * c - lz * sn, y, bz + lx * sn + lz * c], deckY = 0.9;
+            for (let q = -BL / 2; q < BL / 2 - 0.01; q += 0.7) { const [x, , z] = Pb(q + 0.35, 0, 0); box(g, x, deckY, z, 0.64, 0.14, BW, rot, (q / 0.7 | 0) % 2 ? woodL : wood, (q / 0.7 | 0) % 2 ? woodL : [0.56, 0.4, 0.27]); }   // the planks
+            for (const lz of [-BW / 2, BW / 2]) { const a = Pb(-BL / 2, 0, lz), b = Pb(BL / 2, 0, lz); box(g, (a[0] + b[0]) / 2, deckY - 0.35, (a[2] + b[2]) / 2, BL, 0.35, 0.2, rot, woodD);   // the beams
+              for (let q = -BL / 2; q <= BL / 2 + 0.01; q += 2.5) { const [x, , z] = Pb(q, 0, lz); box(g, x, deckY - 1.2, z, 0.22, 2.3, 0.22, rot, woodD, wood); }   // posts (down into the stream and up to the rail)
+              const r0 = Pb(0, 0, lz); box(g, r0[0], deckY + 1.0, r0[2], BL, 0.12, 0.14, rot, woodL); box(g, r0[0], deckY + 0.5, r0[2], BL, 0.08, 0.1, rot, wood); }   // handrail and mid rail
+            for (let q = -BL / 2 + 1.2; q < BL / 2 - 1; q += 1.3) for (const sd of [-1, 1]) { if (R() < 0.35) continue; const [x, , z] = Pb(q + (R() - 0.5) * 0.4, 0, sd * (BW / 2 - 0.5));   // fans at both handrails
+              figure(g, x, deckY + 0.14, z, rot, SHIRTS[Math.floor(R() * SHIRTS.length)]); }
+            excl.push({ x: bx, z: bz, r: BL / 2 + 1 }); CR.block(bx, bz, BL + 2, BW + 2, rot); }
+        }
+      }
       // ---- Gromski rt: the campsite (vans, caravans, tents, gazebos, cars) and the GORIVO feather flags along the start straight ----
-      if (KMP) {
+      if (KMP || KRS) {
         const VAN = [[0.84, 0.2, 0.17], [0.23, 0.58, 0.6], [0.93, 0.62, 0.2], [0.3, 0.46, 0.72], [0.47, 0.62, 0.36], [0.2, 0.2, 0.23]], TENT = [[0.93, 0.55, 0.16], [0.28, 0.55, 0.3], [0.24, 0.45, 0.76], [0.9, 0.8, 0.24], [0.82, 0.26, 0.2]];
         const CARC = [[0.8, 0.1, 0.1], [0.1, 0.3, 0.8], [0.9, 0.9, 0.9], [0.15, 0.15, 0.17], [0.9, 0.75, 0.1], [0.2, 0.6, 0.3]], wht = [0.95, 0.94, 0.9], dark = [0.18, 0.2, 0.24];
         const van = (g, x, y, z, rot) => { const c1 = VAN[Math.floor(R() * VAN.length)], c = Math.cos(rot), sn = Math.sin(rot);   // a split-screen camper: coloured lower half, white top, a window band, sometimes a pop-top or a roof rack
@@ -2543,7 +2672,7 @@ const World = (function () {
             for (let k = 0; k < 4; k++) { const y0 = 0.7 + k, y1 = y0 + 1, w1 = k === 3 ? 0.7 : 1.2;   // (the top of the banner rounds off towards the pole)
               gf.quadO(P(0, y0), P(1.2, y0), P(w1, y1), P(0, y1), [1, 1, 1], [x - side * T.nx[i] * 3, y0 + 0.5, z - side * T.nz[i] * 3], [[0, k / 4], [1, k / 4], [w1 / 1.2, (k + 1) / 4], [0, (k + 1) / 4]]); }
             excl.push({ x, z, r: 1.2 }); }
-          const mf = new THREE.Mesh(gf.geometry(), new THREE.MeshLambertMaterial({ map: tex.flagKP, color: 0xffe8b0, emissive: 0x6a5c3a, emissiveMap: tex.flagKP, side: THREE.DoubleSide })); mf.castShadow = true; mf.receiveShadow = true; root.add(mf);   // (thin fabric: the sun shines through it)
+          const fT = KRS ? tex.flagKR : tex.flagKP, mf = new THREE.Mesh(gf.geometry(), new THREE.MeshLambertMaterial({ map: fT, color: 0xffe8b0, emissive: 0x6a5c3a, emissiveMap: fT, side: THREE.DoubleSide })); mf.castShadow = true; mf.receiveShadow = true; root.add(mf);   // (thin fabric: the sun shines through it)
           const mp = new THREE.Mesh(gp.geometry(), matV); mp.castShadow = true; root.add(mp); }
       }
       // ---- spectators (muted clothes, as in the reference): on the raised lawn above the V hairpin (inside its rope fence), round the hairpins,
@@ -2567,14 +2696,14 @@ const World = (function () {
         else fir(px, pz, 10 + R() * 9);
       }
       // Toskana: open lawns round the circuit, groves of round trees and cypresses farther out; Gromski rt: a pine wood with broadleaf trees mixed in
-      if (!FOR) { const st = (ITA ? 6.4 : 5.4) / Math.sqrt(dens);
+      if (!FOR) { const st = (ITA ? 6.4 : KRS ? 5.4 : 5.4) / Math.sqrt(dens);
         for (let z = B.minZ - 60; z < B.maxZ + 60; z += st) for (let x = B.minX - 60; x < B.maxX + 60; x += st) {
-          const px = x + (R() - 0.5) * st * 0.9, pz = z + (R() - 0.5) * st * 0.9, c = clearance(px, pz), fN = forestN(px, pz), lawn = (ITA ? 8 : 6) + 10 * (1 - sstep(0.35, 0.6, fN));
+          const px = x + (R() - 0.5) * st * 0.9, pz = z + (R() - 0.5) * st * 0.9, c = clearance(px, pz), fN = forestN(px, pz), lawn = (ITA ? 8 : KRS ? 4.5 : 6) + 10 * (1 - sstep(0.35, 0.6, fN));
           if (c < lawn || excluded(px, pz)) continue;
-          let p = ITA ? 0.03 + 0.8 * sstep(0.46, 0.66, fN) : 0.42 + 0.5 * sstep(0.35, 0.6, fN); if (c > 45) p = Math.max(p, ITA ? 0.16 : 0.82); if (c < lawn + 6) p *= 0.6;   // (Toskana: groves on open lawns)
+          let p = ITA ? 0.03 + 0.8 * sstep(0.46, 0.66, fN) : KRS ? 0.48 + 0.44 * sstep(0.35, 0.6, fN) : 0.42 + 0.5 * sstep(0.35, 0.6, fN); if (c > 45) p = Math.max(p, ITA ? 0.16 : KRS ? 0.84 : 0.82); if (c < lawn + 6) p *= 0.6;   // (Toskana: groves on open lawns; Smrekova dolina: a dense spruce forest)
           if (R() > p) continue;
           if (ITA) { if (R() < 0.16) cypress(px, pz, 11 + R() * 6); else leafy(px, pz, 7 + R() * 5); }
-          else if (c > 70 || R() < 0.5) fir(px, pz, 10 + R() * 8); else leafy(px, pz, 8 + R() * 5);   // (far off, where they are small on screen: the cheap far firs)
+          else if (c > 70 || R() < (KRS ? 0.84 : 0.5)) fir(px, pz, kLow(px, pz) ? 5.5 + R() * 3.5 : 10 + R() * 8); else leafy(px, pz, kLow(px, pz) ? 5 + R() * 2 : 8 + R() * 5);   // (far off, where they are small on screen: the cheap far firs)
         } }
       out.firCount = firCount + ' far ' + firFar + ' leafy ' + leafCount;
       // low bushes on the verges
@@ -2929,7 +3058,7 @@ const World = (function () {
     const addTex = (g, mat, cast) => { if (g.empty) return; const m = new THREE.Mesh(g.geometry(), mat); m.castShadow = !!cast; m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); return m; };
     addTex(texTires, new THREE.MeshLambertMaterial({ map: THEME === 'forest' ? tex.tiresRW : tex.tires, vertexColors: true }), true);
     tyreCh.addTo(root, new THREE.MeshLambertMaterial({ map: tex.tyreTex, vertexColors: true }), true, true);
-    addTex(texSpons, new THREE.MeshLambertMaterial({ map: THEME === 'ljubljana' ? tex.sponsorsLJ : THEME === 'monaco' ? tex.sponsorsMC : THEME === 'forest' ? tex.sponsorsFO : THEME === 'italia' ? tex.sponsorsIT : THEME === 'kamp' ? tex.sponsorsKP : tex.sponsors, vertexColors: true }), false);
+    addTex(texSpons, new THREE.MeshLambertMaterial({ map: THEME === 'ljubljana' ? tex.sponsorsLJ : THEME === 'monaco' ? tex.sponsorsMC : THEME === 'forest' ? tex.sponsorsFO : THEME === 'italia' ? tex.sponsorsIT : THEME === 'kamp' ? tex.sponsorsKP : THEME === 'kros' ? tex.sponsorsKR : tex.sponsors, vertexColors: true }), false);
     addTex(texFence, THEME === 'italia' ? new THREE.MeshBasicMaterial({ map: tex.fenceFO, color: 0xb4ab96, vertexColors: true, transparent: true, depthWrite: false, alphaTest: 0.02, side: THREE.DoubleSide })   // (Toskana: the light warm-grey chain-link of the reference)
       : CSX ? new THREE.MeshLambertMaterial({ map: tex.fenceFO, vertexColors: true, transparent: true, depthWrite: false, alphaTest: 0.02, side: THREE.DoubleSide })
       : new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide, transparent: false }), false);
