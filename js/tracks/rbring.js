@@ -50,7 +50,6 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // detection 160 m before Turn 1, open from 102 m after it up to Turn 3; 40 m before Turn 3, open from 100 m after it down to Turn 4;
     // 120 m before Turn 10, open from 106 m after it along the main straight
     drs: [[1, -160, 102, 3], [3, -40, 100, 4], [10, -120, 106, 1]],
-    rain: true,                  // a race in the rain may be chosen (the track screen: Vreme)
     sectors: [1400, 3000],       // the three sectors of the timing screens (metres from the start line where the 2nd and the 3rd begin): the climb
                                  // and Turn 3, down to Turn 4 and the infield to Turn 7, Turns 8-10 and the straight (roughly the TV split)
     bull: [-590.5, -669.5, -2.67],   // the steel bull (14.6 m, 17.2 m with its arch): [x, z, facing (radians from +x)]: on the infield hill right of the

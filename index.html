@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
-<link rel="stylesheet" href="css/style.css?v=fcd601d5">
+<link rel="stylesheet" href="css/style.css?v=ce7e9cd1">
 </head>
 <body>
 <div id="app">
@@ -75,6 +75,7 @@
       <p class="sub" id="title-sub">Jezero Ring &middot; 3 krogi &middot; 12 nasprotnikov</p>
       <div class="btns">
         <button class="btn primary" data-act="to-car">Dirkaj</button>
+        <button class="btn champbtn" data-act="to-champ" id="btn-champ">Prvenstvo</button>
         <button class="btn netbtn" data-act="to-online">Dirka s prijateljem</button>
         <button class="btn" data-act="to-board">Lestvica</button>
         <button class="btn" data-act="to-settings">Nastavitve</button>
@@ -125,7 +126,7 @@
     <div class="panel track-panel">
       <h2>Izberi progo</h2>
       <div id="track-list" class="track-list"></div>
-      <div class="row off" id="weather-row"><span class="rlbl">Vreme</span><div class="seg" data-set="weather"><button data-v="sun">Sončno</button><button data-v="rain">Dež</button></div></div>
+      <div class="row wx-row"><span class="rlbl">Vreme</span><div class="seg" data-set="weather"><button data-v="dry">Suho</button><button data-v="rain">Dež</button><button data-v="random">Naključno</button></div></div>
       <div class="btns horiz">
         <button class="btn ghost" data-act="to-car">Nazaj</button>
         <button class="btn primary" data-act="start">Start</button>
@@ -150,6 +151,7 @@
         <div class="row"><span class="rlbl">Opozorila za ovinke</span><div class="seg" data-set="notes"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Duh najboljše vožnje</span><div class="seg" data-set="ghost"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Komentator (angleščina)</span><div class="seg" data-set="comm"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div><button class="mini" data-act="comm-test">&#9654; Preizkusi glas</button><span id="comm-voice" class="vinfo"></span></div>
+        <div class="row"><span class="rlbl">Sovoznik na reliju (angleščina)</span><div class="seg" data-set="codrv"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Poškodbe avtov</span><div class="seg" data-set="damage"><button data-v="0">Izklop</button><button data-v="1">Samo videz</button><button data-v="2">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Grafika</span><div class="seg" data-set="quality"><button data-v="retro">Retro</button><button data-v="normal">Normalno</button><button data-v="high">Visoko</button></div></div>
         <div class="row"><span class="rlbl">Sence</span><div class="seg" data-set="shadows"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
@@ -215,6 +217,19 @@
     </div>
   </section>
 
+  <section id="s-champ" class="screen">
+    <div class="panel champ-panel">
+      <div class="car-head"><h2 id="ch-title">Prvenstvo</h2><span id="ch-tag" class="tag"></span></div>
+      <div id="ch-body" class="res-table-wrap"></div>
+      <div class="row ch-car"><span class="rlbl">Avto</span><button class="btn mini" data-act="champ-car-prev" aria-label="Prejšnji avto">&#9664;</button><span id="ch-mycar" class="on-mycar"></span><button class="btn mini" data-act="champ-car-next" aria-label="Naslednji avto">&#9654;</button><span id="ch-diff" class="ch-diff"></span></div>
+      <div class="btns horiz">
+        <button class="btn ghost" data-act="to-title">Nazaj</button>
+        <button class="btn ghost off" data-act="champ-quit" id="ch-quit">Opusti</button>
+        <button class="btn primary" data-act="champ-go" id="ch-go">Začni</button>
+      </div>
+    </div>
+  </section>
+
   <section id="s-board" class="screen">
     <div class="panel board-panel">
       <h2>Lestvica</h2>
@@ -241,20 +256,21 @@
 <script src="js/tracks/toskana.js?v=7439009f"></script>
 <script src="js/tracks/grom.js?v=e271bc6b"></script>
 <script src="js/tracks/pikes.js?v=9ea49f63"></script>
-<script src="js/tracks/ouninpohja.js?v=1c341f1d"></script>
+<script src="js/tracks/ouninpohja.js?v=0942c770"></script>
 <script src="js/tracks/nring.js?v=f5f4699b"></script>
-<script src="js/tracks/rbring.js?v=8e122b73"></script>
+<script src="js/tracks/spa.js?v=6f82cd14"></script>
+<script src="js/tracks/rbring.js?v=1a67b386"></script>
 <script src="js/tracks/suzuka.js?v=52b89a62"></script>
-<script src="js/core.js?v=97c832ef"></script>
+<script src="js/core.js?v=6dc7d1ff"></script>
 <script src="js/tex.js?v=f643b690"></script>
-<script src="js/world.js?v=abc794b9"></script>
+<script src="js/world.js?v=48f1915d"></script>
 <script src="js/data/p206.js?v=0016824f"></script>
-<script src="js/render.js?v=8fc9b2f0"></script>
-<script src="js/sfx.js?v=c84e925f"></script>
+<script src="js/render.js?v=231c1f8a"></script>
+<script src="js/sfx.js?v=f0ba0f46"></script>
 <script src="js/input.js?v=43b63819"></script>
-<script src="js/comm.js?v=1c70304b"></script>
+<script src="js/comm.js?v=f8f313a3"></script>
 <script src="js/vendor/peerjs.min.js?v=76b403e4"></script>
 <script src="js/net.js?v=1f45dfb1"></script>
-<script src="js/game.js?v=cf3147a6"></script>
+<script src="js/game.js?v=301d3584"></script>
 </body>
 </html>

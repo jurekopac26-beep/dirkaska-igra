@@ -6,7 +6,7 @@
    ========================================================================= */
 const Comm = (() => {
   const synth = (typeof window !== 'undefined' && window.speechSynthesis) || null;
-  let on = true, speech = true, voice = null, speaking = false, cur = null, lastEnd = 0, queue = null;
+  let on = true, speech = true, voice = null, speaking = false, cur = null, lastEnd = 0, queue = null, notesOn = true, voice2 = null;
   const log = [], lastPick = {};
   const GAP = 500;
   const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
@@ -25,6 +25,12 @@ const Comm = (() => {
     nrHohe: ['Hohe Acht, the highest point of the circuit!', 'Up at Hohe Acht, over six hundred metres high.'],
     nrPflanz: ['Pflanzgarten! Hold on for the jump!', 'Over the Pflanzgarten jump!'],
     nrDott: ['Onto the Döttinger Höhe, the long straight home!', 'Flat out down the Döttinger Höhe!'],
+    // the end of a championship (at the results of its last round)
+    champWin: ['And that makes you the champion! What a season!', 'Champion! The title is yours!', 'You have won the championship! Brilliant driving all season!'],
+    champEnd: ['That is the end of the championship. You finish {pos} overall.', 'The season is over, and you are {pos} in the final standings.'],
+    // the weather (after the welcome, in a wet race)
+    rain: ["And it's raining! A wet track today, so brake early and go easy on the throttle.", 'Rain is falling, and the track is wet. Watch out for the spray!', 'The heavens have opened! Grip will be hard to find today.'],
+    rainSpa: ["Typical Spa weather, it's raining in the Ardennes! Brake early today.", "It's wet at Spa! Eau Rouge in the rain, that takes courage.", 'Rain at Spa, of course! Spray everywhere, and grip will be hard to find.'],
     goNet: ['Lights out, and away they go!', "And they're off!", 'Green light! Side by side into turn one!', 'Go, go, go! The duel is on!'],
     go: ['Lights out, and away we go!', "And they're off!", 'Green light! The pack charges into turn one!', 'Go, go, go! The race is on!'],
     gain: ["What a move! Up to {pos}!", "Brilliant overtake, you're now {pos}!", "Straight past! That's {pos} place!", "Another one bites the dust. You're up to {pos}!", 'Clean pass, into {pos}!'],
@@ -54,7 +60,6 @@ const Comm = (() => {
     pitIn: ['Into the pit lane!', 'Coming in for repairs!', 'He dives into the pits!'],
     pitAdvice: ['That car is damaged! Box, box: the pit lane is on the right, just after the last corner, and the mechanics will fix it.', 'Heavy damage there! Bring it into the pits after the final corner, the crew are ready.', 'Time to pit! The entry is on the right after the last corner, the mechanics will put it right.'],
     drs: ['DRS open down the straight!', 'The rear wing opens, DRS is on!', 'Within a second at the line, DRS for the chase!'],
-    rainIntro: ['Rain at {track} today! {laps} laps on a wet track, careful on the brakes!', 'A wet race at {track}: the grip is down, the spray is up! {laps} laps to go.', 'It is raining at {track}! Brake early and keep it on the road. {laps} laps.'],
     secPurple: ['Purple sector!', 'Fastest sector {n} of the race so far!', 'That is a purple sector {n}!', 'Nobody has been quicker through sector {n}!'],
     pitWork: ['The crew get to work!', 'Mechanics all over the car!', 'Quick work needed here from the crew!'],
     pitOut: ['Back out, good as new!', 'Great stop from the crew!', 'Repaired and rejoining the race!'],
@@ -82,6 +87,11 @@ const Comm = (() => {
     summit: ['At the summit in {time}, {delta} seconds off your best.', 'Across the line at the top. {time}, just {delta} short of the record.', "That's the summit. {time}. {delta} seconds to find next time."],
     // time trial on a rally special stage (Ouninpohja): gravel, crests and jumps, a flying finish
     introStage: ['Welcome to {track}, the most famous stage of the Rally of Finland! Just you, the gravel and the clock.', 'Here we are at the start of {track}. {cps} splits, crest after crest, and nobody to race but the clock.', 'Welcome to {track}! Fast gravel, blind crests and big jumps. Keep it flat!'],
+    // the famous jump (def.jumpRec: Ouninpohja's Yellow House, Markko Märtin's 57 m)
+    jumpRec: ['{m} metres at {place}! The record there is {rec}, by {by}.', 'Over {place}, {m} metres! {by} flew {rec} here.', '{m} metres through the air at {place}!'],
+    jumpPB: ['{m} metres at {place}, your longest jump there!', 'A new personal best at {place}, {m} metres!'],
+    jumpBeat: ['{m} metres at {place}! Longer than {by}!', "Unbelievable! {m} metres, beyond {by}'s {rec}!"],
+    medal: ['That is a {medal} medal time!', 'And that is worth a {medal} medal!', 'A {medal} medal on this stage!'],
     goStage: ['Go! Flat out into the forest!', "And you're away! Keep it flat over the crests!", 'Green light! The clock is running!'],
     cpFirstStage: ['Split {cp}, {time}.', 'Through split {cp}. Keep it flat!', 'Split {cp}, {time}. Hold on tight!'],
     stageRecord: ['Flying finish! A new personal best, {time}!', 'Record run through {track}! {time}!', 'What a stage! A new personal best, {time}!'],
@@ -110,10 +120,21 @@ const Comm = (() => {
     }
     voice = best;
     voiceMale = !!best && MALE.test((best.name || '') + ' ' + (best.voiceURI || ''));
+    // the co-driver (pace notes on a rally stage): another English voice, the other sex first; none: the commentator's, higher and faster
+    let b2 = null, s2 = -1e9;
+    for (const v of en) {
+      if (v === best) continue;
+      const id = (v.name || '') + ' ' + (v.voiceURI || '');
+      let sc = (voiceMale ? FEMALE.test(id) : MALE.test(id)) ? 6 : 0;
+      sc += /GB/i.test(v.lang) ? 2 : /AU|IE/i.test(v.lang) ? 1.5 : /US/i.test(v.lang) ? 1 : 0.5;
+      if (v.localService) sc += 0.5;
+      if (sc > s2) { s2 = sc; b2 = v; }
+    }
+    voice2 = b2;
     if (typeof onVoice === 'function') onVoice(voiceInfo());
   }
   let onVoice = null;
-  const voiceInfo = () => ({ name: voice ? voice.name : '', lang: voice ? voice.lang : 'en-GB', male: voiceMale, any: !!synth });
+  const voiceInfo = () => ({ name: voice ? voice.name : '', lang: voice ? voice.lang : 'en-GB', male: voiceMale, any: !!synth, codrv: voice2 ? voice2.name : '' });
   if (synth) { pickVoice(); try { synth.addEventListener('voiceschanged', pickVoice); } catch (_) { synth.onvoiceschanged = pickVoice; } }
 
   function speakNow(item) {
@@ -121,9 +142,11 @@ const Comm = (() => {
     const me = cur = { prio: item.prio, t: now(), maxT, item };
     if (!synth || !speech) { speaking = false; return; }
     try {
-      const u = new SpeechSynthesisUtterance(item.text);
-      if (voice) u.voice = voice;
-      u.lang = voice ? voice.lang : 'en-GB'; u.rate = 1.08; u.pitch = voiceMale ? 0.95 : 0.72; u.volume = 1;   // deeper tone when no male voice exists
+      const u = new SpeechSynthesisUtterance(item.text), v = item.note ? voice2 || voice : voice;
+      if (v) u.voice = v;
+      u.lang = v ? v.lang : 'en-GB'; u.volume = 1;
+      if (item.note) { u.rate = 1.22; u.pitch = voice2 ? 1 : 1.3; }   // the co-driver: brisk (in the commentator's voice, higher)
+      else { u.rate = 1.08; u.pitch = voiceMale ? 0.95 : 0.72; }   // deeper tone when no male voice exists
       // only the line that is still current may end it (a cancelled line reports its end/error later, after the next one started)
       u.onend = u.onerror = () => { if (cur !== me) return; speaking = false; lastEnd = now(); cur = null; };
       speaking = true; synth.speak(u); item.spoken = true;
@@ -155,6 +178,18 @@ const Comm = (() => {
     return item;
   }
 
+  // the co-driver's pace notes (a rally stage, game.js reads them ahead of the car): its own voice, said at once. The commentator's line
+  // is cut off; the co-driver's own call is not: the next one waits in line (before any chatter) and is dropped if it cannot start in 1.5 s
+  function note(text) {
+    if (!notesOn || !speech || !synth || !text) return null;
+    const item = { key: 'note', text, prio: 4, t: now(), note: true, ttl: 1500 };
+    log.push(item); if (log.length > 200) log.shift();
+    if (!busy()) { speakNow(item); return item; }
+    if (cur && !cur.item.note) { cancelSpeech(); speakNow(item); return item; }
+    queue = item;
+    return item;
+  }
+
   // news from the world: the Pikes Peak TV helicopter shows up (World's dyn.pk.news: { key, n }, each said once)
   let heliSeen = null;
   function heliNews() {
@@ -181,6 +216,7 @@ const Comm = (() => {
   function setOnVoice(fn) { onVoice = fn; fn(voiceInfo()); }
   function setEnabled(v) { on = !!v; if (!on) stop(); }
   function setSpeech(v) { speech = !!v; if (!speech) cancelSpeech(); }
+  function setNotes(v) { notesOn = !!v; if (!notesOn && cur && cur.item.note) cancelSpeech(); }
   const available = () => !!synth;
   // register (or replace) a pool at run time, e.g. a track's place lines; say() ignores keys that have no pool
   function addLines(key, arr) {
@@ -192,7 +228,7 @@ const Comm = (() => {
   // what the commentator is doing: busy (speaking or in the pause after a line), the priority speaking now and waiting (-1 = none)
   function state() { const b = busy(); return { busy: b, prio: speaking && cur ? cur.prio : -1, queued: queue ? queue.prio : -1 }; }
 
-  return { say, update, stop, unlock, setEnabled, setSpeech, ordinal, available, log, test, voiceInfo, setOnVoice, addLines, state };
+  return { say, note, update, stop, unlock, setEnabled, setSpeech, setNotes, ordinal, available, log, test, voiceInfo, setOnVoice, addLines, state };
 })();
 if (typeof module !== 'undefined') module.exports = Comm;
 
