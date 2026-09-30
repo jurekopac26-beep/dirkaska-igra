@@ -39,6 +39,26 @@ Okolica:
 - **Helikopter in kamera**: TV helikopter se drži daleč od kamere (prej je v izometričnem pogledu pogosto prekril pol zaslona), njegova senca pa drsi po tleh. Drevesa in hiše med kamero in avtom se sproti razredčijo, da avta ne zakrijejo.
 - **Finske podrobnosti**: rumene table z losom ob gozdu, los na robu gozda in drugi, ki brodi po ribniku med trstiko. Na jezerih so čolni z navijači, na velikem jezeru otok z bori. Iz žarov ob taborih navijačev in iz dimnikov savn se vije dim. Na obzorju se dvigajo gozdnati griči.
 
+## Vršič (dirka, kronometer, promet, policija)
+
+Cesta čez prelaz Vršič (regionalna cesta R1-206, »Ruska cesta«), njena severna stran: od križišča v Kranjski Gori (~800 m) mimo jezera Jasna, skozi gozd in po 24 oštevilčenih serpentinah do prelaza na 1611 m, v pravem merilu (v igri 12,3 km, uradno 12,35 km, 811 m vzpona). Cesta je široka 13 m (kot Spa ali Suzuka); v Kranjski Gori in pri Jasni sta na obeh straneh pločnika (2,2 m, granitni robnik in tlakovci), ki sta del ceste: po njiju se da voziti z enakim oprijemom kot po asfaltu. Čez cesto vodi pet prehodov za pešce (zebre s tablami), ob njej je dvanajst avtobusnih postaj z nadstreški. Kartica proge je ena, na njej pa je stikalo **Dirka / Kronometer / Promet / Policija**:
+
+- **Dirka**: 12 tekmecev, start v Kranjski Gori (štartna mreža kot na krožnih progah), en vzpon do prelaza. Pod mestom so prevoženi kilometri (npr. 3,2/12,3 KM) in nadmorska višina, na zemljevidu so tudi tekmeci. Po cilju vsak avto zapelje na svoje mesto ob cesti za ciljem (izmenično levo in desno) in tam obstane. V rezultatih je namesto najboljšega kroga povprečna hitrost. Kvalifikacij ni (na odprti cesti ni letečega kroga), zastav in varnostnega avta tudi ne; v karieri je nagrada kot za dirko na 12,3 km (brez nagrade za najhitrejši krog). Dirka na Vršič je tudi v dirki s prijateljem (en vzpon), v prvenstvih pa ne (tam so samo krožne proge).
+- **Kronometer**: vzpon proti uri kot na Pikes Peaku: sam na startu, štiri kontrolne točke z vmesnimi časi in višino (CP1 pri 1. serpentini, CP2 pri Ruski kapelici, CP3 pri 16. serpentini, CP4 pri Erjavčevi koči), lestvica najboljših 10, duh najboljše vožnje in medalje (zlato je približno čas relijskega avta na avtopilotu). Rekordi kronometra so ločeni od rekordov dirke, v dežju pa imata oba še svoje.
+- **Promet**: dvoboj z enim tekmecem (AI, hitrost po težavnosti) po cesti, ki ni zaprta. V obe smeri vozijo avtomobili, kombiji, avtobusi (ustavljajo se na postajah) in motoristi, ob robu kolesarji. Promet se drži svoje polovice ceste (navzgor desno, navzdol levo), ustavlja pred zebrami, kadar jih prečka pešec, se umakne dirkalniku, ki prihaja od zadaj, trobi in se izogne tistemu, ki mu pripelje naproti po njegovi polovici. Po pločnikih hodijo pešci (tudi otroci), na postajah čakajo ljudje, ob kočah hodijo pohodniki, nekateri prečkajo cesto na zebrah ali drugod. Pešec, ki vidi, da avto pelje proti njemu, se prestraši in zbeži (s pločnika stran od ceste, s ceste na stran, ki je dlje od avta; blizu se vrže vstran), zato ga je težko zbiti. Zbit pešec ali kolesar odleti, obleži in čez čas vstane; za vsakega je **5 s kazni** (tudi za tekmeca). Močno zadet avto iz prometa zdrsne vstran in obstane z vklopljenimi smerniki, dirkalnik pa se poškoduje. Pod uro piše, koliko sekund je tekmec pred tabo ali za tabo. V rezultatih je čas s kaznimi in število zbitih pešcev in kolesarjev; rekord dvoboja je ločen od rekordov dirke.
+- **Policija**: beg pred policijo po odprti cesti (s prometom): sam si, za tabo pa je patrulja z utripajočimi modrimi lučmi in sireno, ki spelje 2 s za tabo. S časom se pridružijo nove (od zadaj, izven vidnega polja), odvisno od **stopnje pregona** (1–5 zvezdic pod uro), ki raste s prevoženo potjo, z zbitimi pešci in z izločenimi patruljami. Patrulje se zaletavajo vate (od zadaj v odbijač in od strani v zadnji del, da te zavrtijo), največ dve naenkrat, ostale se držijo za tabo. Pred tabo policija na ravninah za vasjo položi **bodičaste trakove** čez skoraj vso cesto (vrzel ob enem robu, ob traku parkirana patrulja in policist, ki maha) in postavi **zaporo** iz dveh avtov (vrzel ob robu). Guma, ki zapelje čez trak, se prebije: avto ima manj oprijema in počasneje pospešuje. Patrulja, ki je močno poškodovana, ima prebite gume ali obtiči, je izločena. **Ulovljen** si, če skoraj stojiš (pod 10 km/h) s patruljo v bližini 3 s (merilnik pod zvezdicami se polni in prazni); ko se ustaviš, patrulje zapeljejo tik zate. **Pobegneš**, ko prideš čez prelaz. Levo zgoraj namesto mesta piše, koliko patrulj te lovi, pod zvezdicami pa, koliko gum imaš prebitih. Težavnost določa, koliko patrulj te napada hkrati (lahka ena, sicer dve), koliko jih je največ (3 ali 4), kako hitro se pridružujejo in v kolikšnem času te ulovijo (4 / 3 / 2,5 s). V rezultatih so čas, prevožena pot, najvišja stopnja pregona, izločene patrulje, prebite gume in zbiti pešci; shrani se najhitrejši pobeg ter število pobegov in aretacij, v karieri je nagrada za pobeg.
+- **Tlakovane serpentine**: kjer so serpentine tlakovane z granitnimi kockami (24 odsekov), je oprijem za desetino manjši kot na asfaltu, v dežju pa precej manjši (mokre kocke so spolzke); tekmeci jih zato vozijo počasneje. Pod kolesi se sliši drdranje kock.
+- **Oblika**: sredinska črta je iz OpenStreetMap. Kjer sta kraka serpentin v resnici bližje, kot ju igra lahko loči z ograjo (19 mest), sta razmaknjena, najožje serpentine pa odprte na polmer 10,5 m; cesta se je v povprečju premaknila za 0,4 m, največ za 10 m, noben ovinek ni odrezan. Višine so iz satelitskega višinskega modela Copernicus, očiščene in z naklonom največ 12 %.
+- Med vožnjo se pod uro izpišejo serpentine (številka in višina; 3. Ruski križ, 8. Ruska kapelica, 17. Tonkina koča) in kraji (Jasna, Eriški most, Mihov dom, Koča na Gozdu, Ajdovska deklica, Erjavčeva koča, Vršič · 1.611 m), komentator pa jih občasno omeni.
+
+Okolica:
+
+- **Jesen**: jasno oktobrsko popoldne z nizkim soncem in dolgimi sencami. Bukve so bakrene in oranžne, macesni zlato rumeni (višje jih je vedno več), smreke temno zelene, ob cesti breze, jerebike in grmovje v jesenskih barvah. Travniki so rjavo rumeni, višje je borovničevje pordečelo, tla pod bukvami pokriva listje.
+- **Sneg na vrhu**: od ~1480 m leži prvi sneg, okoli prelaza skoraj povsod (razen na strmih skalah). Smreke, macesni in ruševje so pobeljeni, strehe koč bele, ob cesti ležijo nasipi spluženega snega, smerniki so tam visoki oranžni kolci.
+- **Teren in gozd**: teren je iz pravega višinskega modela, gozd, ruševje, travniki, naselje in melišča pa so razporejeni po rabi tal iz OpenStreetMap. Strma pobočja so iz svetlega apnenca, ob cesti ležijo skale.
+- **Kraji**: hiše in hoteli Kranjske Gore po obrisih iz OpenStreetMap, jezero Jasna s kipom Zlatoroga na skali ob vodi, Mihov dom, Ruska kapelica (lesena, z dvema čebulastima kupolama), Koča na Gozdu, Erjavčeva koča, Tičarjev dom in Poštarski dom na prelazu; ob cesti pri kočah so table z imeni, pred vsako serpentino tabla z njeno številko in višino.
+- **Cesta**: asfalt s prekinjeno sredinsko črto, tlakovane serpentine s kamnitim zidom na zunanji strani, jeklene varnostne ograje, kjer teren pada, betonske ograje na mostovih (pod daljšimi je struga potoka), ob cesti smerniki. Start z lučmi v Kranjski Gori, zeleni loki kontrolnih točk, cilj na prelazu s tablo PRELAZ VRŠIČ 1.611 m, parkiriščem in gledalci.
+
 ## Nürburgring Nordschleife
 
 Pravi „Zeleni pekel“ v Nemčiji v pravem merilu: en krog (20,7 km) proti 20 tekmecem (na drugih progah jih je 12), ki so tu hitrejši kot drugod, start in cilj pri tribuni T13, vožnja v smeri urinega kazalca. Oblika proge je iz OpenStreetMap, višine pa iz satelitskih višinskih modelov (SRTM in Copernicus), zato so klanci in spusti pravi: od T13 (~620 m) po Fuchsröhre navzdol do Breidscheida (~335 m, najnižja točka), nato dolg vzpon do Hohe Acht (~617 m). Ovinka Karussell in Kleines Karussell sta nagnjena (betonska skleda na notranji strani, avto ju lahko odpelje hitreje), na Flugplatzu, v Pflanzgartnu in na Sprunghüglu avto poskoči. Med vožnjo se pod uro izpišejo imena ovinkov (Hatzenbach, Flugplatz, Fuchsröhre, Adenauer Forst, Wehrseifen, Breidscheid, Bergwerk, Kesselchen, Karussell, Hohe Acht, Brünnchen, Pflanzgarten, Schwalbenschwanz, Döttinger Höhe …), pri KROG pa, koliko kilometrov kroga je že za tabo. Gozd, travniki, vasi in mostovi so postavljeni po pravi rabi tal in stavbah iz OpenStreetMap; gozd ima smreke, bukve, macesne in suhe smreke, ob robu grmovje in mlado drevje, tla pod krošnjami so temna. Na asfaltu so grafiti in zastave navijačev (največ pri znanih ovinkih in na Döttinger Höhe), katranske razpoke, zaplate in sledi gum pred počasnimi ovinki. Ob progi so kampi navijačev (šotori, prikolice, paviljoni, zastave, odri), reklame na ograjah, maršalske hišice s številkami na vsakih 250 m, table 300/200/100 pred zaviranjem in puščice v najostrejših ovinkih; pod mostovi proge tečejo ceste, na Döttinger Höhe so drevored in ograje ob poljih.
@@ -91,7 +111,7 @@ Na obeh lahko zapelješ v bokse (desno takoj za zadnjim ovinkom pred ciljno ravn
 
 ## Kje na progi si (proge po resničnih krajih)
 
-Na progah Ljubljana, Monako, Pikes Peak, Ouninpohja, Nordschleife, Spa, Red Bull Ring in Suzuka se ~70 m pred vsakim znanim krajem pod uro izpiše njegovo ime (npr. Zmajski most, Prešernov trg, Casino, predor, Glen Cove, Devil's Playground, Keltainen talo, Kakaristo, Karussell, Eau Rouge, Zavoj 1 · Niki Lauda), in to v vsakem krogu. Komentator (v angleščini) občasno pove, kje si („Over the Dragon Bridge now!“, „Up into Casino Square!“), vsak kraj praviloma enkrat na dirko, z razmikom med takimi stavki, in samo takrat, ko ne govori o nečem pomembnejšem (prehitevanja, vmesni časi, nesreče in boksi imajo prednost in ga prekinejo). Kraj, ki ga v enem krogu ni utegnil omeniti, lahko pove v naslednjem. Čas kroga ali vmesni čas ostane na zaslonu, ime kraja pa se pokaže takoj za njim.
+Na progah Ljubljana, Monako, Pikes Peak, Ouninpohja, Vršič, Nordschleife, Spa, Red Bull Ring in Suzuka se ~70 m pred vsakim znanim krajem pod uro izpiše njegovo ime (npr. Zmajski most, Prešernov trg, Casino, predor, Glen Cove, Devil's Playground, Keltainen talo, Kakaristo, Serpentina 8 · Ruska kapelica, Karussell, Eau Rouge, Zavoj 1 · Niki Lauda), in to v vsakem krogu. Komentator (v angleščini) občasno pove, kje si („Over the Dragon Bridge now!“, „Up into Casino Square!“), vsak kraj praviloma enkrat na dirko, z razmikom med takimi stavki, in samo takrat, ko ne govori o nečem pomembnejšem (prehitevanja, vmesni časi, nesreče in boksi imajo prednost in ga prekinejo). Kraj, ki ga v enem krogu ni utegnil omeniti, lahko pove v naslednjem. Čas kroga ali vmesni čas ostane na zaslonu, ime kraja pa se pokaže takoj za njim.
 
 ## Fizika vožnje
 
@@ -121,7 +141,7 @@ Pred dirko na krožni progi odpelješ en leteči krog sam na progi (zaslon **Izb
 
 - Po krogu so na zaslonu časi vseh voznikov in zaostanki za najhitrejšim. Štartna vrsta je po časih: najhitrejši na prvem mestu, ti tam, kamor te je postavil tvoj krog, tekmeci v vrstnem redu svojih časov. **Na štart** začne dirko; **Ponovi dirko** jo kasneje ponovi z isto štartno vrsto.
 - V Pavzi **Ponovi krog** krog ponovi (časi tekmecev ostanejo), **Preskoči kvalifikacije** pa gre naravnost na dirko z 12. mesta.
-- Kvalifikacije so tudi pred vsako dirko prvenstva. V dirki s prijateljem in na kronometrih (Pikes Peak, Ouninpohja) jih ni.
+- Kvalifikacije so tudi pred vsako dirko prvenstva. V dirki s prijateljem, na kronometrih (Pikes Peak, Ouninpohja, Vršič) in na dirki na Vršič (odprta cesta, brez letečega kroga) jih ni.
 - Krog iz kvalifikacij šteje tudi za rekord kroga proge.
 
 ## Sektorski časi
@@ -153,7 +173,8 @@ Vreme **Menljivo** (zaslon Izberi progo) pomeni, da se vreme med dirko na krožn
 
 - Ko začne deževati, je proga v približno minuti mokra. Ko dež poneha, se proga suši približno štiri minute. **Idealna linija se posuši prva**, približno dvakrat hitreje, in na cesti se pokaže svetlejši pas suhega asfalta. Na njej je oprijem boljši kot drugje na cesti.
 - Na progah z boksi je menjava gum ob pravem času taktika: prezgodnji postanek na dežne gume ali prepozen na suhe stane čas. Igra pove, ko je idealna linija suha.
-- Na kronometrih (Pikes Peak, Ouninpohja) Menljivo pomeni isto kot Naključno. V dirki s prijateljem se vreme med dirko ne spreminja.
+- Tudi na dirki na Vršič se vreme lahko spremeni: dež začne padati med vzponom ali pa poneha.
+- Na kronometrih (Pikes Peak, Ouninpohja, Vršič v načinu Kronometer) Menljivo pomeni isto kot Naključno. V dirki s prijateljem se vreme med dirko ne spreminja.
 
 ## Zastave in varnostni avto
 
@@ -198,7 +219,7 @@ Na vseh progah čez pokrajino počasi drsijo sence oblakov (v dežju jih ni, ker
 
 ## Vreme
 
-Na zaslonu **Izberi progo** izbereš vreme: **Suho**, **Dež**, **Menljivo** (glej zgoraj) ali **Naključno** (vsaka dirka posebej: dež približno v vsaki tretji dirki, na Spa v vsaki drugi, na Nordschleife skoraj v vsaki drugi). V dežju imajo vsi avti manj oprijema (v ovinkih in pri speljevanju za petino, zavore za desetino), zato drsijo bolj in dlje; tekmeci z AI zato vozijo ovinke počasneje in prej zavirajo, krog je 6–9 % počasnejši. Cesta je temna in mokra, nebo oblačno, vidljivost manjša, dež pada v curkih, izpod koles se dviga pršec (namesto dima iz gum), s trave in gramoza pa leti blato. Slišati je dež in šumenje gum po vodi, komentator pa ob štartu omeni dež. Kadar je izbran Dež, dežuje tudi na naslovnem zaslonu. Kronometra (Pikes Peak in Ouninpohja) imata v dežju svoje rekorde, lestvico in duha. Kadar je izbran Dež, kartica proge in lestvica pokažeta te.
+Na zaslonu **Izberi progo** izbereš vreme: **Suho**, **Dež**, **Menljivo** (glej zgoraj) ali **Naključno** (vsaka dirka posebej: dež približno v vsaki tretji dirki, na Spa v vsaki drugi, na Nordschleife in na Vršiču (jesen v Julijskih Alpah) skoraj v vsaki drugi). V dežju imajo vsi avti manj oprijema (v ovinkih in pri speljevanju za petino, zavore za desetino), zato drsijo bolj in dlje; tekmeci z AI zato vozijo ovinke počasneje in prej zavirajo, krog je 6–9 % počasnejši. Cesta je temna in mokra, nebo oblačno, vidljivost manjša, dež pada v curkih, izpod koles se dviga pršec (namesto dima iz gum), s trave in gramoza pa leti blato. Slišati je dež in šumenje gum po vodi, komentator pa ob štartu omeni dež. Kadar je izbran Dež, dežuje tudi na naslovnem zaslonu. Kronometri (Pikes Peak, Ouninpohja in Vršič v načinu Kronometer) imajo v dežju svoje rekorde, lestvico in duha. Kadar je izbran Dež, kartica proge in lestvica pokažeta te.
 
 ## Letni čas in čas dneva
 
@@ -206,6 +227,7 @@ Na zaslonu **Izberi progo** izbereš še **letni čas** (Poletje, Jesen, Zima) i
 
 - **Jesen:** listje na drevesih porumeni, pordeči in porjavi (nekaj ga ostane zelenega), travniki postanejo slamnati in olivni, sonce je toplejše. Npr. jesenska Nordschleife.
 - **Zima:** trava in polja so pod snegom, drevesa zasnežena, asfalt je splužen, makadamske ceste (Ouninpohja, Gorski reli) pa so pokrite s steptanim snegom. Izpod koles se dviga snežni prah. Namesto dežja sneži. Oprijem je manjši: na asfaltu za 6 %, na zasneženem makadamu za četrtino (tekmeci vozijo temu primerno).
+- **Vršič** je vedno jeseni (zlati macesni, prvi sneg na vrhu): Poletje in Jesen ga pustita takega, Zima ga vsega zasneži.
 - **Večer:** nizko oranžno sonce, dolge sence, topla meglica. Avti imajo prižgane žaromete.
 - **Noč:** temno modro nebo in šibka luna. Ob progi so vsakih 30 m reflektorji na drogovih, ki osvetlijo asfalt, avti pa na cesto pred sabo svetijo z žarometi. Npr. nočna dirka v Monaku.
 
@@ -233,7 +255,7 @@ Dirka dveh igralcev, vsak na svojem telefonu (ali računalniku), preko interneta
 3. Za zasebno sobo tapni manjši gumb **Zasebna soba s kodo**: eden tapne **Ustvari sobo** in drugemu pošlje kodo (4 znaki), drugi kodo vpiše in tapne **Pridruži se**.
 4. V sobi vsak izbere svoj avto (◀ ▶). Gostitelj (kdor je čakal oziroma ustvaril sobo) izbere progo in število krogov ter tapne **Začni dirko**.
 
-- Na progi sta samo vidva, brez tekmecev z AI, drug ob drugem v prvi vrsti; kdo začne na levi, se menja od dirke do dirke. Vožnji proti uri (Pikes Peak in Ouninpohja) nista na voljo.
+- Na progi sta samo vidva, brez tekmecev z AI, drug ob drugem v prvi vrsti; kdo začne na levi, se menja od dirke do dirke. Vožnji proti uri (Pikes Peak in Ouninpohja) nista na voljo, Vršič pa je na voljo kot dirka na vrh (en vzpon, brez izbire krogov).
 - Semafor ugasne na obeh telefonih hkrati. Časi se merijo od skupnega starta, zato sta rezultata na obeh telefonih enaka.
 - Poškodbe in vreme so po nastavitvah gostitelja (sprememba med dirko velja od naslednje dirke). Vsak vozi svoj avto z nadgradnjami.
 - Avta se lahko zadeneta. Vsak telefon premika le svoj avto, zato se ob trku odmakne vsak svoj.
@@ -260,11 +282,11 @@ Igra ne potrebuje namestitve ali prevajanja: `index.html` naloži datoteke po vr
 | `css/style.css` | slogi |
 | `js/vendor/three.r128.min.js` | knjižnica three.js (MIT) |
 | `js/tracks/<id>.js` | ena datoteka na progo: oblika, višine, sidrišča okolice, imena krajev (vrstni red v `index.html` = vrstni red v meniju) |
-| `js/core.js` | proge, fizika (Circuit Superstars, oprijem v dežju), AI, pravila dirke in prvenstva (brez DOM in three.js) |
+| `js/core.js` | proge, fizika (Circuit Superstars, oprijem v dežju), AI, pravila dirke in prvenstva, promet in pešci na odprti cesti, policija (brez DOM in three.js) |
 | `js/tex.js` | proceduralne teksture |
-| `js/world.js` | 3D svet prog (teren, drevesa, gledalci, rekviziti, boksi); Nordschleife in Red Bull Ring si delita gradnjo terena iz višinskih podatkov |
+| `js/world.js` | 3D svet prog (teren, drevesa, gledalci, rekviziti, boksi); Nordschleife in Red Bull Ring si delita gradnjo terena iz višinskih podatkov, Vršič ima svojega graditelja (teren iz višinskega modela, raba tal, stavbe, jesenski gozd in sneg) |
 | `js/data/p206.js` | 3D model Peugeota 206 |
-| `js/render.js` | izris, avti, delci, kamere, mehaniki v boksih, dež (curki, pršec, mokra cesta, oblačno nebo) |
+| `js/render.js` | izris, avti, delci, kamere, mehaniki v boksih, dež (curki, pršec, mokra cesta, oblačno nebo), promet, pešci, patrulje in bodičasti trakovi |
 | `js/sfx.js`, `js/input.js`, `js/comm.js` | zvok, upravljanje, komentator |
 | `js/net.js`, `js/vendor/peerjs.min.js` | povezava dveh telefonov za dirko s prijateljem (soba s kodo, usklajena ura); knjižnica PeerJS (MIT) |
 | `js/game.js` | meniji, nastavitve, HUD, rekordi, prvenstvo, dirka s prijateljem, glavna zanka |
@@ -295,4 +317,6 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 - Raba tal okoli Red Bull Ringa (gozd, travniki, polja, pozidano): © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Proga Suzuka (sredinska črta): [TUMFTM racetrack-database](https://github.com/TUMFTM/racetrack-database) (Tehniška univerza v Münchnu, licenca LGPL-3.0), izpeljana iz OpenStreetMap (© OpenStreetMap contributors, ODbL 1.0), umeščena v prostor po obrisu iz [f1-circuits](https://github.com/bacinger/f1-circuits) (Tomislav Bacinger, licenca MIT). Tribune, stavbe, ribniki in parkirišča: © OpenStreetMap contributors (ODbL 1.0), prek [Overture Maps Foundation](https://overturemaps.org). Iz njih izpeljani podatki v `js/tracks/suzuka.js` so na voljo pod ODbL 1.0.
 - Raba tal Suzuke: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium (licenca CC BY 4.0), prek Overture Maps.
+- Proga Vršič (sredinska črta, tlakovani odseki, mostovi, raba tal, stavbe, jezeri pri Jasni): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/), prek [Overture Maps Foundation](https://overturemaps.org). Iz njih izpeljani podatki v `js/tracks/vrsic.js` so na voljo pod ODbL 1.0.
+- Višine in teren Vršiča: Copernicus DEM GLO-30: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
 - Višine Suzuke: Copernicus DEM GLO-30: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.

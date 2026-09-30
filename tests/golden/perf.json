@@ -69,6 +69,13 @@
   "maxKverts": 785,
   "jsMs": 0.78
  },
+ "vrsic": {
+  "calls": 276,
+  "maxCalls": 313,
+  "kverts": 663,
+  "maxKverts": 932,
+  "jsMs": 1.32
+ },
  "nring": {
   "calls": 194,
   "maxCalls": 237,

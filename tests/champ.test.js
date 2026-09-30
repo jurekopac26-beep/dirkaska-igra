@@ -43,13 +43,14 @@ check("drivers: the race's AI drivers are the championship's (same names, cars a
   check('standings: after one round the order of that race, with its points and the last place', t3.every((e, i) => e.key === keys[i] && e.pts === C.champPoints(i + 1) && e.last === i + 1), t3.slice(0, 4).map(e => e.key + ' ' + e.pts).join(', '));
 }
 
-// 4. the series: every track exists and is a circuit (no time trial), at least three rounds, the ids are all different
+// 4. the series: every track exists and is a circuit (no time trial, no open road: Vršič's race goes up it once), at least three rounds, the ids are all different
 {
-  const ids = C.TRACKS.map(d => d.id), bads = C.CHAMPS.filter(s => s.tracks.length < 3 || s.tracks.some(t => !ids.includes(t) || C.TRACKS.find(d => d.id === t).timeTrial));
+  const circuit = (d) => !d.timeTrial && !d.open;
+  const ids = C.TRACKS.map(d => d.id), bads = C.CHAMPS.filter(s => s.tracks.length < 3 || s.tracks.some(t => !ids.includes(t) || !circuit(C.TRACKS.find(d => d.id === t))));
   check('series: every round a circuit of the game, at least three rounds each', C.CHAMPS.length >= 3 && !bads.length && new Set(C.CHAMPS.map(s => s.id)).size === C.CHAMPS.length,
     C.CHAMPS.map(s => `${s.id}: ${s.tracks.join(' ')}`).join(' | '));
   const all = C.CHAMPS.find(s => s.id === 'veliko');
-  check('series: the big championship has every circuit', !!all && all.tracks.length === C.TRACKS.filter(d => !d.timeTrial).length, all && all.tracks.join(' '));
+  check('series: the big championship has every circuit', !!all && all.tracks.length === C.TRACKS.filter(circuit).length, all && all.tracks.join(' '));
 }
 
 // 5. a whole championship ("Domači pokal", four races of the game's length, 12 AI, the player on autopilot from 12th on the grid)

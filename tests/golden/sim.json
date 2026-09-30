@@ -699,6 +699,76 @@
    "repairs": 0
   }
  },
+ "vrsic/race/cs": {
+  "digest": "c85237f93401703dcf6fd673",
+  "lead": 2451.8,
+  "car0": [
+   -358.26,
+   1658.73
+  ],
+  "cover": {
+   "dmg": 0.21,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "vrsic/demo/cs": {
+  "digest": "8624d50e4ac58a538fc4920a",
+  "lead": 2637.7,
+  "car0": [
+   -401.98,
+   1933.33
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "vrsic/upg/cs": {
+  "digest": "600c95b1257d9266d251459b",
+  "lead": 2627.6,
+  "car0": [
+   -388.22,
+   1917.81
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "vrsic/crash/cs": {
+  "digest": "ccdeb57574453aa426bddabd",
+  "lead": 2425.8,
+  "car0": [
+   -351.4,
+   1518.67
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 7,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "vrsic/formula/cs": {
+  "digest": "145360abcab713704a8ad630",
+  "lead": 2858.6,
+  "car0": [
+   -429.14,
+   1964.57
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 17,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
  "nring/race/cs": {
   "digest": "226de2795e8383490d52d651",
   "lead": 2498.2,

@@ -299,6 +299,36 @@
   "nan": false,
   "digest": "a4cb6c3576c305c6156c083e"
  },
+ "vrsic/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 403.91,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "5bc0953adad7b58efd8dab0a"
+ },
+ "vrsic/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 439.63,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "0f7646c2fa55580c1ea990b1"
+ },
+ "vrsic/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 369.83,
+  "spins": 4,
+  "walls": 8,
+  "rescues": 0,
+  "nan": false,
+  "digest": "9137bf0d60b367299e57255a"
+ },
  "nring/cs": {
   "finished": 21,
   "cars": 21,
