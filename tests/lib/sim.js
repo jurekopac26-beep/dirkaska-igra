@@ -5,7 +5,7 @@ const crypto = require('crypto');
 
 const DT = 1 / 120;
 const trackIds = (C) => C.TRACKS.map(d => d.id);   // every track the game has (a new track file is tested automatically)
-const PHYSICS = ['cs', 'arcade'];
+const PHYSICS = ['cs'];   // (one driving physics: Circuit Superstars)
 
 // Park-Miller generator (the same one the physics comparisons used during development)
 const seeded = (s) => () => { s = (s * 16807) % 2147483647; return s / 2147483647; };

@@ -34,12 +34,14 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
   const [a, b] = def.setts[5], mid = T.startS + (a + b) / 2, i = T.idx(mid), q = T.query(T.px[i], T.pz[i], i, {}), j = T.idx(T.startS + (b + def.setts[6][0]) / 2), q2 = T.query(T.px[j], T.pz[j], j, {});
   const dry = T.surface(q); T.inRain = true; const wet = T.surface(q), wet0 = T.surface(q2); T.inRain = false; const dry0 = T.surface(q2);
   check('surface: cobbles on the setts (7, in the rain 8), asphalt between them', dry === 7 && wet === 8 && dry0 === 0 && wet0 === 0, `setts ${dry}/${wet}, between ${dry0}/${wet0}`);
-  check('surface: the cobbles grip less than asphalt, in the rain less still (both physics)', C.SURF[7].mu < C.SURF[0].mu && C.SURF[8].mu < C.SURF[7].mu && C.CSSURF[7].lat < C.CSSURF[0].lat && C.CSSURF[8].lat < C.CSSURF[7].lat,
-    `arcade ${C.SURF[0].mu} / ${C.SURF[7].mu} / ${C.SURF[8].mu}, cs ${C.CSSURF[0].lat} / ${C.CSSURF[7].lat} / ${C.CSSURF[8].lat}`);
-  // (cs: the tightest hairpins are held by the AI's turn-rate cap, the same in the rain; the arcade AI turns by the grip alone)
-  const r = new C.Race(T, opts({})), ra = new C.Race(T, opts({ phys: 'arcade' })), rw = new C.Race(T, opts({ phys: 'arcade', rain: 1 })), ks = def.setts.map(([s0, s1]) => T.idx(T.startS + (s0 + s1) / 2));
-  const cap = (k, latA) => Math.sqrt(latA * 0.9 / Math.max(Math.abs(T.rk[k]), 1e-5)) + 1e-3, onCob = ks.filter(k => r.vprof[k] <= cap(k, C.CSK.aiLatA) && ra.vprof[k] <= cap(k, 16.5)).length, slower = ks.filter(k => rw.vprof[k] < ra.vprof[k] - 0.01).length;
-  check('AI: its speed profile takes the cobbled hairpins at the cobbles\' grip (both physics), slower in the rain', onCob === ks.length && slower === ks.length, `${onCob}/${ks.length} hairpins at the cobbles' grip, ${slower} slower in the rain (arcade)`);
+  check('surface: the cobbles grip less than asphalt, in the rain less still', C.CSSURF[7].lat < C.CSSURF[0].lat && C.CSSURF[8].lat < C.CSSURF[7].lat && C.CSSURF[7].tr < C.CSSURF[0].tr && C.CSSURF[8].tr < C.CSSURF[7].tr,
+    `side grip ${C.CSSURF[0].lat} / ${C.CSSURF[7].lat} / ${C.CSSURF[8].lat}, traction ${C.CSSURF[0].tr} / ${C.CSSURF[7].tr} / ${C.CSSURF[8].tr}`);
+  // (the tightest hairpins are held by the AI's turn-rate cap, the same in the rain; the rain makes the wider ones slower)
+  const r = new C.Race(T, opts({})), rw = new C.Race(T, opts({ rain: 1 })), ks = def.setts.map(([s0, s1]) => T.idx(T.startS + (s0 + s1) / 2));
+  const cap = (k, latA) => Math.sqrt(latA * 0.9 / Math.max(Math.abs(T.rk[k]), 1e-5)) + 1e-3, onCob = ks.filter(k => r.vprof[k] <= cap(k, C.CSK.aiLatA)).length;
+  const slower = ks.filter(k => rw.vprof[k] < r.vprof[k] - 0.01).length, faster = ks.filter(k => rw.vprof[k] > r.vprof[k] + 1e-6).length;
+  check('AI: its speed profile takes the cobbled hairpins at the cobbles\' grip; in the rain none faster, the wider ones slower', onCob === ks.length && !faster && slower > 0,
+    `${onCob}/${ks.length} hairpins at the cobbles' grip, in the rain ${slower} slower, ${faster} faster`);
 }
 
 // 3. the two ways to drive it (and an online race: always the race)

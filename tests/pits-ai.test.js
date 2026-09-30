@@ -1,4 +1,4 @@
-// The AI cars' pit stops, on every track with a pit lane, with both physics. Every AI car has a box of its own. A badly damaged AI
+// The AI cars' pit stops, on every track with a pit lane (Circuit Superstars physics). Every AI car has a box of its own. A badly damaged AI
 // car (damage that costs pace, half or worse) comes in at the end of the lap: in by the pit wall (the fast lane), over to the working
 // lane in front of its garage, stops in its box, is repaired, back out; nobody touches another car or a wall in the pit lane, and every
 // car finishes. Never on its last lap, and not when damage is only for show. Several cars at once (two of them in neighbouring boxes):
@@ -46,7 +46,7 @@ function race(tid, phys, hurt, opts) {
 
 const PIT = C.TRACKS.filter(d => d.pit).map(d => d.id);
 check('tracks with a pit lane', PIT.length >= 5, PIT.join(', '));
-for (const tid of PIT) for (const phys of ['cs', 'arcade']) {
+for (const tid of PIT) for (const phys of ['cs']) {
   const R = race(tid, phys, [2, 7]), { T, P, ai, st, hits } = R, key = `${tid}/${phys}`;
   if (phys === 'cs') {   // the boxes: one each, all different, none the player's, all in the row of garages
     const boxes = ai.map(c => c.pitBox), [q0, q1] = T.def.pitRow || [-152, 44];

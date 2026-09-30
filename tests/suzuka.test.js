@@ -3,7 +3,7 @@
 // walls, the two roads' corridors do not cut into each other there; cars and loose parts on the bridge and under it do not touch; a
 // car keeps to its own level when it drives across, hits the parapet, is rescued or loses a panel there; a whole race never snaps a
 // car from one level to the other. The pit lane: in after the Casio Triangle, out before the First Curve, a damaged car stops at its
-// box, is repaired and rejoins (both physics). DRS: one zone on the start / finish straight, used by the cars that follow closely.
+// box, is repaired and rejoins. DRS: one zone on the start / finish straight, used by the cars that follow closely.
 // Run-offs: asphalt at the First Curve and 130R, gravel traps at the other corners, the 2025 gravel strips just past five kerbs.
 //   node tests/suzuka.test.js
 'use strict';
@@ -54,7 +54,7 @@ check('into the parapet on the bridge: the car hits it and stays up on the bridg
   `impact ${hit.toFixed(1)} m/s, lowest ${yMin.toFixed(2)} m over the bridge (the road below ${T.hy[Math.round(X.lo)].toFixed(2)} m), ${dMax.toFixed(2)} m off the centre line`);
 
 // 4. rescued right at the crossing: back on its own level
-r = new C.Race(T, { numAI: 1, playerGrid: 1, laps: 2, phys: 'arcade', playerModel: C.MODELS[1], seed: 5 });
+r = new C.Race(T, { numAI: 1, playerGrid: 1, laps: 2, phys: 'cs', playerModel: C.MODELS[1], seed: 5 });
 P = r.player; A = r.cars.find(c => c !== P); place(r, P, sUp, 0); place(r, A, sLo, 0); r.start();
 r.rescue(P); r.rescue(A); r.step(DT);
 check('rescued at the crossing: the car on the bridge stays on it, the one below stays below', Math.abs(P.q.s - sUp) < 12 && Math.abs(A.q.s - sLo) < 12 && P.y > A.y + 6,
@@ -68,8 +68,8 @@ for (let k = 0; k < 2 / DT; k++) { P.inThr = 0; P.inBrk = 1; r.step(DT); }
 check('a panel lost on the bridge lands on the bridge (not on the road below)', deb && Math.abs(deb.y - T.elevAt(deb.q.s).y) < 0.5 && deb.y > T.hy[Math.round(X.lo)] + 6,
   deb ? `the bumper at ${deb.y.toFixed(2)} m, the bridge ${T.elevAt(sUp).y.toFixed(2)} m, the road below ${T.hy[Math.round(X.lo)].toFixed(2)} m` : 'no debris');
 
-// 6. a whole race (13 cars, both physics): nobody's road height ever jumps from one level to the other
-for (const phys of ['cs', 'arcade']) {
+// 6. a whole race (13 cars): nobody's road height ever jumps from one level to the other
+for (const phys of ['cs']) {
   Math.random = seeded(7);
   r = new C.Race(T, { numAI: 12, playerGrid: 12, laps: 2, playerModel: C.MODELS[4], assist: 2, phys, seed: 11, difficulty: 1 });
   r.start();
@@ -89,7 +89,7 @@ const L = T.len, dd = (s) => { let d = s - T.startS; d = ((d % L) + L) % L; retu
   let wallOk = 0, wallN = 0, grav = 0; for (let d = PD[1]; d <= PD[2]; d += 2) { const s = T.startS + d, p = T.pitAt(s), i = T.idx(s); if (T.gravR[i]) grav++; if (p && !p.gap) { wallN++; if (p.o - 3.5 >= p.wall + 0.5) wallOk++; } }
   check('the pit lane: in after the Casio Triangle and its gravel, out before the First Curve, the pit wall between it and the track', PD[1] > t16 + 120 && PD[2] < t1 - 150 && grav === 0 && wallN > 250 && wallOk === wallN,
     `lane ${PD[1]} .. ${PD[2]} m (Turn 16 at ${t16.toFixed(0)} m, Turn 1 at ${t1.toFixed(0)} m), ${wallN * 2} m of it behind the pit wall, gravel under it: ${grav}`); }
-for (const phys of ['cs', 'arcade']) {
+for (const phys of ['cs']) {
   Math.random = seeded(21);
   r = new C.Race(T, { numAI: 12, playerGrid: 12, laps: 2, playerModel: C.MODELS[4], assist: 2, phys, seed: 9, difficulty: 1, damage: 2 });
   r.start(); P = r.player; P.dmg = 0.6; P.lost = { bumperF: 1 };
@@ -113,7 +113,7 @@ for (const phys of ['cs', 'arcade']) {
 { const Z = T.drs || [], z = Z[0] || {}, t16 = dd(T.nearestIdx(...T.def.turns[15]) * ds), t1 = dd(T.nearestIdx(...T.def.turns[0]) * ds);
   check('DRS: one zone on the start / finish straight', Z.length === 1 && Math.abs(dz(z.det) - (t16 - 50)) < 4 && dz(z.act) > -420 && dz(z.act) < -340 && Math.abs(dz(z.end) - (t1 - 60)) < 4,
     Z.map(q => `detection ${dz(q.det).toFixed(0)} m, open ${dz(q.act).toFixed(0)} m, closed ${dz(q.end).toFixed(0)} m`).join(' | ')); }
-for (const phys of ['cs', 'arcade']) {
+for (const phys of ['cs']) {
   Math.random = seeded(7);
   r = new C.Race(T, { numAI: 12, playerGrid: 12, laps: 2, playerModel: C.MODELS[4], assist: 2, phys, seed: 11, difficulty: 1 });
   r.start(); const z = T.drs[0], prev = new Map(); let t = 0, opens = 0, early = 0, outside = 0, longest = 0; const since = new Map();

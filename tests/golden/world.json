@@ -219,15 +219,15 @@
  },
  "spa": {
   "meshes": 1074,
-  "verts": 526602,
+  "verts": 650628,
   "instances": 50041,
   "props": 80,
   "crowd": 5617,
-  "world": "c06049d8",
+  "world": "f3f6a29b",
   "propsHash": "5faf0407",
   "floor": "b3d517c3/14000",
   "groups": {
-   "-:MeshLambertMaterial": "b25dcab7",
+   "-:MeshLambertMaterial": "458a6f2a",
    "-:MeshBasicMaterial": "7ae03018",
    "-:MeshPhongMaterial": "4a03e534",
    "crowd:MeshLambertMaterial": "f4d17e82",
