@@ -105,11 +105,27 @@ Na naslovnem zaslonu tapni **Prvenstvo** in izberi serijo dirk: **Domači pokal*
 
 ## Grafika
 
-Na vseh progah čez pokrajino počasi drsijo sence oblakov (v dežju jih ni, ker je nebo oblačno). Pred zavoji, kjer tekmeci močno zavirajo, so na asfaltu sledi gum, lažje sledi pa tudi na izhodih iz ovinkov (na makadamu jih ni; na Nordschleife, Spa in Red Bull Ringu so narisane skupaj z drugimi oznakami na asfaltu, na mostu Suzuke jih ni). Nad progo občasno preleti jata ptic, ob morju galebi, njihove sence pa drsijo po tleh; v dežju jih ni. Na Nordschleife in Spa se krošnje dreves rahlo zibljejo v vetru.
+Na vseh progah čez pokrajino počasi drsijo sence oblakov (v dežju jih ni, ker je nebo oblačno). Pred zavoji, kjer tekmeci močno zavirajo, so na asfaltu sledi gum, lažje sledi pa tudi na izhodih iz ovinkov (na makadamu jih ni; na Nordschleife, Spa in Red Bull Ringu so narisane skupaj z drugimi oznakami na asfaltu, na mostu Suzuke jih ni). Nad progo občasno preleti jata ptic, ob morju galebi, njihove sence pa drsijo po tleh; v dežju jih ni. Na Nordschleife in Spa se krošnje dreves rahlo zibljejo v vetru. Na Spa, Red Bull Ringu in Suzuki je trava pokošena v pasove kot na TV: ob progi (med robom proge in ogrado) svetli in temnejši pasovi po 3 m, na odprtih zelenicah za ogrado pa temnejši pasovi do ~35 m daleč (ne v gozdu in grmovju, pod tribunami, na parkiriščih, v ribnikih, ob boksih in ob drugem delu proge).
 
 ## Vreme
 
-Na zaslonu **Izberi progo** izbereš vreme: **Suho**, **Dež** ali **Naključno** (vsaka dirka posebej: dež približno v vsaki tretji dirki, na Spa v vsaki drugi, na Nordschleife skoraj v vsaki drugi). V dežju imajo vsi avti manj oprijema (v ovinkih in pri speljevanju za petino, zavore za desetino), zato drsijo bolj in dlje; tekmeci z AI zato vozijo ovinke počasneje in prej zavirajo, krog je 6–9 % počasnejši. Cesta je temna in mokra, nebo oblačno, vidljivost manjša, dež pada v curkih, izpod koles se dviga pršec (namesto dima iz gum), s trave in gramoza pa leti blato. Slišati je dež in šumenje gum po vodi, komentator pa ob štartu omeni dež. Kadar je izbran Dež, dežuje tudi na naslovnem zaslonu. Kronometra (Pikes Peak in Ouninpohja) imata v dežju svoje rekorde, lestvico in duha. Kadar je izbran Dež, kartica proge in lestvica pokažeta te.
+Na zaslonu **Izberi progo** izbereš vreme: **Suho**, **Dež**, **Spremenljivo** ali **Naključno** (vsaka dirka posebej: dež približno v vsaki tretji dirki, na Spa v vsaki drugi, na Nordschleife skoraj v vsaki drugi; v vsaki tretji dirki se vreme med dirko še spremeni). V dežju imajo vsi avti manj oprijema (v ovinkih in pri speljevanju za petino, zavore za desetino), zato drsijo bolj in dlje; tekmeci z AI zato vozijo ovinke počasneje in prej zavirajo, krog je 6–9 % počasnejši. Cesta je temna in mokra, nebo oblačno, vidljivost manjša, dež pada v curkih, izpod koles se dviga pršec (namesto dima iz gum), s trave in gramoza pa leti blato. Slišati je dež in šumenje gum po vodi, komentator pa ob štartu omeni dež. Kadar je izbran Dež, dežuje tudi na naslovnem zaslonu. Kronometra (Pikes Peak in Ouninpohja) imata v dežju svoje rekorde, lestvico in duha. Kadar je izbran Dež, kartica proge in lestvica pokažeta te.
+
+**Spremenljivo vreme**: dirka se začne na suhem ali v dežju (pol-pol), nekje med četrtino in dobro polovico dirke pa se vreme obrne. Ko začne deževati, se na zaslonu izpiše **DEŽ!** in komentator to pove; dež se v ~20 s okrepi, cesta se v pol minute zmoči (vidno temnejša, pršec izpod koles), oprijem na gumah za suho pada. Ko dež poneha (**DEŽ JE PONEHAL**), se proga suši postopoma: najprej idealna linija, ki se na mokri cesti vidi kot svetlejši pas (tam je spet več oprijema, izpod koles ni več pršca in spet ostajajo sledi gum), ob njej pa je še mokro; vsa proga je suha v ~2 minutah. Komentator pove, ko se pokaže suha linija. Tekmeci vozijo po oprijemu na idealni liniji in zapeljejo v bokse po gume za dež oziroma nazaj na gume za suho (vsak ob svojem trenutku). Kronometri imajo le stalno vreme.
+
+## Gume in postanki v boksih
+
+V dirkah na krožnih progah ima vsak avto gume ene od zmesi: **mehke** (največ oprijema, najhitreje se obrabijo), **srednje**, **trde** (najmanj oprijema, najdlje zdržijo) ali **za dež** (na suhem počasne in se na vroči suhi cesti hitro uničijo, na mokrem pa imajo mnogo več oprijema kot gume za suho). Na zaslonu proge izbereš gume za štart (**Samodejno** izbere po dolžini dirke in vremenu: mehke za kratke dirke, srednje in trde za daljše, za dež v dežju), tekmeci si jih izberejo sami. Gume se obrabljajo z vožnjo, bolj v drsenju, blokiranju koles in vrtenju: obrabljene imajo nekaj odstotkov manj oprijema. Na zaslonu je ob kazalniku poškodb krog z barvo zmesi (M, S, T, D) in obroč, ki kaže, koliko gume je še ostalo.
+
+Na progah z boksi (Bakreni gozd, Toskana, Gromski rt, Spa, Red Bull Ring) mehaniki ob postanku zamenjajo gume in popravijo avto. Katere gume dobiš, izbereš v premoru (**Gume v boksih**: samodejno, mehke, srednje, trde ali za dež); samodejno pomeni gume za dež na mokri progi in sicer najmehkejše, ki zdržijo do cilja. Tekmeci zapeljejo v bokse, ko jim gume ne ustrezajo več (dež ali suha linija) ali so obrabljene, vsak v svoj boks; po boksarski stezi peljejo mimo tistih, ki stojijo v boksih. Komentator ti svetuje zamenjavo, ko voziš na gumah za suho po mokri progi, na gumah za dež po suhi ali na obrabljenih.
+
+## Varnostni avto
+
+Po hudi nesreči (močan trk v ogrado ali med avtoma) pride na progo **varnostni avto** (srebrn, z lučmi na strehi, ki utripajo oranžno), ~260 m pred vodilnim. Na zaslonu piše **VARNOSTNI AVTO**, komentator to pove. Tekmeci se postavijo v kolono za njim in ne prehitevajo; če prehitiš ti, imaš 8 s, da mesto vrneš (**NE PREHITEVAJ · VRNI MESTO**), sicer dobiš 5 s kazni, ki se prišteje k času dirke (na rezultatih). Po ~20 s, ko spet vsi vozijo in je kolona strnjena, ugasne luči in se ob koncu kroga umakne v bokse (**VARNOSTNI AVTO V BOKSE**; kjer boksov ni ali je krog dolg, odpelje naprej). Dirka se nadaljuje, ko vodilni prečka ciljno črto (**PONOVNI START**, nato **ZELENA ZASTAVA!**). Na dirko pride največ dvakrat in ne v zadnji polovici zadnjega kroga. V nastavitvah ga lahko izklopiš (**Varnostni avto**: Izklop/Vklop).
+
+## Posnetek po dirki
+
+Po vsaki dirki proti tekmecem je na rezultatih gumb **Posnetek**: kratek povzetek dirke, posnet kot na televiziji. Najprej štart, nato najboljši trenutki v vrstnem redu, kot so se zgodili (največ štirje: prednost imajo tvoja prehitevanja, boji za vodstvo, prehitevanja v ovinkih in izmenjave mest, pa tudi hude nesreče), na koncu zmagovalec v cilju. Vsak trenutek snemajo kamere na stojalih ob progi (na zunanji strani ovinkov, nad izletnim pasom), ki avte približajo, da so vedno enako veliki, in se preklopijo na naslednjo, ko avti odpeljejo mimo; kamera, ki ji pogled zapira stavba ali hrib, se ne uporabi. Spodaj piše, kaj se dogaja (npr. **PREHITEVANJE** · Ti ▸ R. Horvat · 8. mesto), komentator pa trenutek opiše. **Naprej** preskoči na naslednji trenutek, **Konec** (ali tipka Esc) vrne na rezultate. Med posnetkom dirka v ozadju stoji, po njem so avti tam, kjer so bili. V kronometrih in v dirki s prijateljem posnetka ni.
 
 ## Dirkalnik formule
 
@@ -120,7 +136,7 @@ V izbiri avta je **FORMULA ORKAN**, dirkalnik formule z odprtimi kolesi, sprednj
 - Gume so gladke (slik): na travi, produ in makadamu imajo le 70 % oprijema, zato je tam reli avto BURJA R7 hitrejši.
 - Ob trkih odletijo sprednje krilo, nos, zadnje krilo, pokrov motorja (pod njim se vidi motor), ogledali in stranski deflektorji. Brez sprednjega krila izgubi pol pritiska na cesto, brez zadnjega še 40 %; mehaniki v boksih avto popravijo.
 - Tekmeci v formulah vozijo kot formule: hitreje skozi hitre ovinke in pozneje zavirajo, sledijo z večjo razdaljo, prehitevajo širše in se bolj držijo stran od roba proge; brez krila zapeljejo v hitre ovinke počasneje.
-- V conah DRS na Red Bull Ringu se loputa zadnjega krila res odpre. Zadaj ima rdečo luč kot v formuli 1: v dežju sveti, med zaviranjem utripa. V dežju vozi na gumah za moker asfalt (zelen pas na boku gume), sicer na mehkih (rdeč pas).
+- V conah DRS na Red Bull Ringu se loputa zadnjega krila res odpre. Zadaj ima rdečo luč kot v formuli 1: v dežju sveti, med zaviranjem utripa. Barvni pas na boku gume kaže zmes kot v formuli 1: rdeč mehke, rumen srednje, bel trde, zelen gume za dež; po postanku v boksih ima avto nove gume v barvi izbrane zmesi. Rdeča luč sveti tudi na mokri cesti, ko ne dežuje več.
 
 ## Dirka s prijateljem
 
@@ -158,14 +174,14 @@ Igra ne potrebuje namestitve ali prevajanja: `index.html` naloži datoteke po vr
 | `css/style.css` | slogi |
 | `js/vendor/three.r128.min.js` | knjižnica three.js (MIT) |
 | `js/tracks/<id>.js` | ena datoteka na progo: oblika, višine, sidrišča okolice, imena krajev (vrstni red v `index.html` = vrstni red v meniju) |
-| `js/core.js` | proge, fizika (Circuit Superstars, oprijem v dežju), AI, pravila dirke in prvenstva (brez DOM in three.js) |
+| `js/core.js` | proge, fizika (Circuit Superstars, oprijem v dežju, gume in njihova obraba), AI, pravila dirke in prvenstva, spremenljivo vreme, varnostni avto (brez DOM in three.js) |
 | `js/tex.js` | proceduralne teksture |
 | `js/world.js` | 3D svet prog (teren, drevesa, gledalci, rekviziti, boksi); Nordschleife in Red Bull Ring si delita gradnjo terena iz višinskih podatkov |
 | `js/data/p206.js` | 3D model Peugeota 206 |
-| `js/render.js` | izris, avti, delci, kamere, mehaniki v boksih, dež (curki, pršec, mokra cesta, oblačno nebo) |
+| `js/render.js` | izris, avti, delci, kamere, mehaniki v boksih, dež (curki, pršec, mokra cesta, suha linija, oblačno nebo), varnostni avto |
 | `js/sfx.js`, `js/input.js`, `js/comm.js` | zvok, upravljanje, komentator |
 | `js/net.js`, `js/vendor/peerjs.min.js` | povezava dveh telefonov za dirko s prijateljem (soba s kodo, usklajena ura); knjižnica PeerJS (MIT) |
-| `js/game.js` | meniji, nastavitve, HUD, rekordi, prvenstvo, dirka s prijateljem, glavna zanka |
+| `js/game.js` | meniji, nastavitve, HUD, rekordi, prvenstvo, dirka s prijateljem, posnetek po dirki (TV kamere), glavna zanka |
 | `manifest.webmanifest`, `icons/` | opis aplikacije (ime, ikone, celoten zaslon) za namestitev na telefon; ikone nariše `node tools/icons.mjs` |
 | `sw.js` | service worker: igra brez interneta in vedno najnovejša različica, ko je internet na voljo (opis v datoteki) |
 | `tests/` | samodejni testi (glej `tests/README.md`) |

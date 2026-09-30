@@ -351,12 +351,14 @@ const Render = (function () {
     fRod(g, [-0.3, 0.1, 0], [-0.78, 0.04, 0], 0.07, [0.62, 0.6, 0.56]);
     const geo = g.geometry(); geo.translate(0, 0.012, 0); return geo;
   }
-  // formula wheel (axle along z): a slick with the compound band on the sidewall (red soft; green intermediate in the rain), a dark rim,
-  // a flat aero cover with two lighter spokes (so the spin shows) and a gold nut (12 sides: ~200 triangles, a phone draws 52 of them)
+  // formula wheel (axle along z): a slick with the compound band on the sidewall (Core.TYRES: red soft, yellow medium, white hard, green
+  // for the rain), a dark rim, a flat aero cover with two lighter spokes (so the spin shows) and a gold nut (12 sides: ~200 triangles, a
+  // phone draws 52 of them)
   const fWheelCache = new Map();
-  function fWheelGeo(r, wd, wet) {
-    const key = r + '|' + wd + '|' + (wet ? 1 : 0); if (fWheelCache.has(key)) return fWheelCache.get(key);
-    const g = new GB(), S = 12, T = [0.075, 0.075, 0.08], B = wet ? [0.12, 0.66, 0.24] : [0.88, 0.13, 0.1], RIM = [0.22, 0.22, 0.24], CV = [0.13, 0.13, 0.14], CV2 = [0.34, 0.34, 0.36], NUT = [0.86, 0.72, 0.12];
+  const tyreCol = (c) => { const T = Core.TYRES; return c.tyre && T[c.tyre] ? T[c.tyre].col : c.wet < 1 ? T.W.col : T.S.col; };   // (a race without tyre choice: soft, wets in the rain)
+  function fWheelGeo(r, wd, col) {
+    const key = r + '|' + wd + '|' + col; if (fWheelCache.has(key)) return fWheelCache.get(key);
+    const g = new GB(), S = 12, T = [0.075, 0.075, 0.08], B = colArr(col).map(k => k * 0.94), RIM = [0.22, 0.22, 0.24], CV = [0.13, 0.13, 0.14], CV2 = [0.34, 0.34, 0.36], NUT = [0.86, 0.72, 0.12];
     const h = wd / 2, p = (a, z, rr) => [Math.cos(a) * rr, Math.sin(a) * rr, z];
     for (let i = 0; i < S; i++) {
       const a0 = i / S * Math.PI * 2, a1 = (i + 1) / S * Math.PI * 2;
@@ -627,7 +629,7 @@ const Render = (function () {
     } else if (M.body === 'formula') {
       fp = fPartMeshes(car, bodyG);
       for (const sd of [-1, 1]) {   // open wheels: all four separate (they steer and spin; the pit crew changes them)
-        const f = new THREE.Mesh(fWheelGeo(F_HUB.fr, F_HUB.fw, car.wet < 1), matWheel), r = new THREE.Mesh(fWheelGeo(F_HUB.rr, F_HUB.rw, car.wet < 1), matWheel);
+        const f = new THREE.Mesh(fWheelGeo(F_HUB.fr, F_HUB.fw, tyreCol(car)), matWheel), r = new THREE.Mesh(fWheelGeo(F_HUB.rr, F_HUB.rw, tyreCol(car)), matWheel);
         f.position.set(M.a, F_HUB.fr, sd * F_HUB.fz); r.position.set(-M.b, F_HUB.rr, sd * F_HUB.rz); f.castShadow = r.castShadow = !!car.isPlayer;   // (a field of 13: the rivals' wheels cast none)
         grp.add(f, r); wf.push(f); wr.push(r);
       }
@@ -885,7 +887,8 @@ const Render = (function () {
   let dust = null;
   const debrisMeshes = [];
   let particles, skids, views = [];
-  let rain = null, wet = -1, themeId = 'lake', birds = null;   // rain streaks; the weather drawn now (race.rain; -1: not applied yet), the world's theme
+  let rain = null, wet = -1, wetR = -1, themeId = 'lake', birds = null;   // rain streaks; the weather drawn now (race.rain; -1: not applied yet) and the water on the road (race.wetness), the world's theme
+  let wetMats = null, dryLine = null;   // the world's road materials (they darken when wet); the dry racing line's overlay (a race with changing weather)
   let basePR = 1, dynScale = 1;
   let settings = { quality: 'high', shadows: true, camera: 'iso' };
   const cam = { x: 0, z: 0, lx: 0, lz: 0, zoom: 1, hs: 0, shake: 0, init: false, userZoom: 1 };
@@ -936,7 +939,7 @@ const Render = (function () {
     clearPropMeshes();
     world = World.build(scene, track, tex, { density });
     if (!world.farClip && camera.far !== 700) { camera.far = 700; camera.updateProjectionMatrix(); }
-    applyTheme((track.def && track.def.theme) || 'lake'); wet = -1;   // (the weather again on the new world's road)
+    applyTheme((track.def && track.def.theme) || 'lake'); wet = wetR = -1; wetMats = null;   // (the weather again on the new world's road)
     birds.reset(!!(track.def && (track.def.sea || track.def.theme === 'monaco')));   // (gulls by the sea)
     return world;
   }
@@ -1087,20 +1090,54 @@ const Render = (function () {
     sun.color.copy(mix(t.sun, 0xe8eef4, 0.8)); sun.intensity = t.sunI * (1 - 0.62 * r);
     if (post) { post.mat.uniforms.uTint.value.set(t.tint[0] - 0.03 * r, t.tint[1], t.tint[2] + 0.03 * r); post.mat.uniforms.uSat.value = t.sat * (1 - 0.2 * r); post.mat.uniforms.uHaze.value = (t.haze || 0) * (1 - r); if (t.hazeCol) post.mat.uniforms.uHazeCol.value.set(t.hazeCol[0], t.hazeCol[1], t.hazeCol[2]); }
   }
-  // the weather of the race on screen (race.rain 0..1): the sky, the streaks, and a darker road (asphalt, paving, kerbs, makadam: every
-  // material of the world with one of those textures, back to its own colour when dry)
-  function applyWeather(r) {
-    wet = r; applyTheme(themeId); rain.mesh.visible = r > 0; rain.mat.uniforms.uA.value = 0.5 * Math.min(1, r * 1.5);
-    birds.mesh.visible = !(r > 0); if (r > 0) birds.reset(birds.gull);   // (no birds in the rain)
+  // the weather of the race on screen (race.rain 0..1: the sky, the streaks) and the water on the road (race.wetness, else the rain): a darker
+  // road (asphalt, paving, kerbs, makadam: every material of the world with one of those textures, back to its own colour when dry). The
+  // weather may change during a race: redrawn in small steps (the road's materials are found once per world)
+  function applyWeather(r, rw) {
+    const was = wet;
+    wet = r; wetR = rw; applyTheme(themeId); rain.mesh.visible = r > 0; rain.mat.uniforms.uA.value = 0.5 * Math.min(1, r * 1.5);
+    birds.mesh.visible = !(r > 0); if (r > 0 && !(was > 0)) birds.reset(birds.gull);   // (no birds in the rain)
     if (!world || !world.root) return;
     if (world.dyn.clouds) world.dyn.clouds.K.value = world.dyn.clouds.k0 * (1 - r);   // (no cloud shadows under the rain's overcast)
-    const maps = [tex.asphalt, tex.paving, tex.curb, tex.makadam].filter(Boolean);
-    world.root.traverse(o => { for (const m of o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []) {
-      if (!m.color || !maps.includes(m.map)) continue;
-      if (!m.userData.dry) m.userData.dry = m.color.clone();
-      m.color.copy(m.userData.dry).multiplyScalar(1 - (m.map === tex.curb ? 0.22 : 0.36) * r); } });
+    if (!wetMats || wetMats.n !== world.root.children.length) {
+      const maps = [tex.asphalt, tex.paving, tex.curb, tex.makadam].filter(Boolean), set = new Set();
+      world.root.traverse(o => { for (const m of o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []) {
+        if (!m.color || !maps.includes(m.map)) continue;
+        if (!m.userData.dry) m.userData.dry = m.color.clone();
+        set.add(m); } });
+      wetMats = [...set]; wetMats.n = world.root.children.length;
+    }
+    for (const m of wetMats) m.color.copy(m.userData.dry).multiplyScalar(1 - (m.map === tex.curb ? 0.22 : 0.36) * rw);
     const W = world.dyn.wet;   // (a gravel stage with a road of its own, Ouninpohja: its puddles show, the gravel darkens and glistens, the verges darken)
-    if (W) { W.puddles.visible = r > 0; W.road.color.setScalar(1 - 0.36 * r); W.road.shininess = r > 0 ? 28 : W.base.sh; W.road.specular.setHex(r > 0 ? 0x3c3e40 : W.base.sp); W.ground.color.setScalar(1 - 0.2 * r); }
+    if (W) { W.puddles.visible = rw > 0; W.road.color.setScalar(1 - 0.36 * rw); W.road.shininess = rw > 0 ? 28 : W.base.sh; W.road.specular.setHex(rw > 0 ? 0x3c3e40 : W.base.sp); W.ground.color.setScalar(1 - 0.2 * rw); }
+  }
+  // the dry line: as a wet track dries, the racing line dries first (Race.lineK: its share of the track's wetness, fading out ~3 m either
+  // side of it, as the grip does in Core). A band along it that brightens the road drawn under it (out = road x (1 + gain)) back towards
+  // its dry colour: whatever the track's own asphalt; on the asphalt only, under the paint (4 mm over the road, the paint 1 cm)
+  function setupDryLine(race) {
+    if (dryLine) { scene.remove(dryLine); dryLine.geometry.dispose(); dryLine.material.dispose(); dryLine = null; }
+    const T = race.track; if (!race.wx || T.open) return;
+    const N = T.N, st = Math.max(1, Math.round(3 / T.ds)), D = [-3.2, -2.2, -1.2, 0, 1.2, 2.2, 3.2], nc = D.length, w = T.w - 0.15;
+    const pos = [], col = [], idx = [], bk = { dy: 0, sl: 0 };
+    let rows = 0;
+    for (let ii = 0; ii <= N; ii += st) {
+      const i = ii % N, s = ii * T.ds, y0 = T.hasElev ? T.hy[i] : 0;
+      for (let k = 0; k < nc; k++) {
+        const o = clamp(T.rl[i] + D[k], -w, w), p = k === 0 || k === nc - 1 ? 0 : Math.exp(-D[k] * D[k] / 4.8); if (T.bank) T.bankAt(s, o, bk);
+        pos.push(T.px[i] + T.nx[i] * o, y0 + (T.bank ? bk.dy : 0) + 0.024, T.pz[i] + T.nz[i] * o); col.push(p, p, p);
+      }
+      if (rows) { const b = (rows - 1) * nc; for (let k = 0; k < nc - 1; k++) idx.push(b + k, b + k + 1, b + nc + k, b + k + 1, b + nc + k + 1, b + nc + k); }
+      rows++;
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); geo.setIndex(idx);
+    const mat = new THREE.MeshBasicMaterial({ color: 0, vertexColors: true, transparent: true, depthWrite: false, fog: false,
+      blending: THREE.CustomBlending, blendEquation: THREE.AddEquation, blendSrc: THREE.DstColorFactor, blendDst: THREE.OneFactor });
+    dryLine = new THREE.Mesh(geo, mat); dryLine.visible = false; dryLine.renderOrder = -1; dryLine.matrixAutoUpdate = false; scene.add(dryLine);
+  }
+  function updateDryLine() {   // (the road is darkened by 0.36 x wetness: the line by 0.36 x wetness x lineK)
+    const R = curRace, w = Math.max(0, wetR), g = R && R.wx ? 0.36 * w * (1 - R.lineK) / (1 - 0.36 * w) : 0;
+    dryLine.visible = g > 0.004; dryLine.material.color.setScalar(g);
   }
 
   /* ---------------- post-processing (high quality): tilt-shift miniature look, edge smoothing, colour grade, vignette ---------------- */
@@ -1195,6 +1232,9 @@ const Render = (function () {
     setupProps(race);
     for (const c of race.cars) views.push(makeView(c));
     for (const v of old) disposeView(v);   // (after the new cars exist: their shaders are reused, not compiled again)
+    if (scV) { disposeView(scV); scV = null; }
+    if (race.scCar) { scV = makeView(race.scCar); scLightBar(scV); scV.grp.visible = false; }
+    setupDryLine(race);
     setupCrew(race);
     particles.clear(); sparkP.clear(); skids.clear(); cam.init = false;
   }
@@ -1629,9 +1669,14 @@ const Render = (function () {
       v.spin += c.vl * dt / M.rw;
       for (const w of v.wf) { w.rotation.set(0, -c.delta, -v.spin); }
       for (const w of v.wr) { w.rotation.set(0, 0, -v.spin); }
+      if (v.noHead && c.tyre && v.tyreK !== c.tyre) {   // new tyres after a pit stop: the compound's colour on the sidewalls
+        const col = tyreCol(c); v.tyreK = c.tyre;
+        for (const w of v.wf) w.geometry = fWheelGeo(F_HUB.fr, F_HUB.fw, col);
+        for (const w of v.wr) w.geometry = fWheelGeo(F_HUB.rr, F_HUB.rw, col);
+      }
       const braking = (c.inBrk > 0.08 && c.vl > 0.5 && c.gear !== -1) || c.gear === -1 || c.inHand > 0.5;
-      const rainL = v.noHead && (wet > 0 || (braking && time % 0.25 < 0.125));   // the formula's rain light: on in the rain, blinking while it brakes (harvesting)
-      v.tail.material = (v.noHead ? rain : braking) ? matTailOn : matTailOff;
+      const rainL = v.noHead && (wet > 0 || wetR > 0.3 || (braking && time % 0.25 < 0.125));   // the formula's rain light: on in the rain (and on a wet track), blinking while it brakes (harvesting)
+      v.tail.material = (v.noHead ? rainL : braking) ? matTailOn : matTailOff;
       if (v.glb) v.glb.tail.emissive.setHex(braking ? 0xff1a0a : 0x3a0000);
       if (v.drsFlap) { v.drsK = (v.drsK || 0) + ((c.drs ? 1 : 0) - (v.drsK || 0)) * Math.min(1, dt * 12); v.drsFlap.rotation.z = 0.5 * v.drsK; }   // the rear wing's flap opens with DRS
       // light glows: soft warm headlights, red tail lights that flare when braking
@@ -1648,7 +1693,7 @@ const Render = (function () {
       if (v.scrU) v.scrU.value = Core.sstep(0.3, 0.9, c.dmg || 0);
       if (v.dirtU && !(opt && opt.noFx) && !c.air && dt > 0) {
         let loose = 0; for (let k = 0; k < 4; k++) { const sf = c.ws[k]; if (sf === 2 || sf === 3 || sf >= 5) loose++; }
-        if (loose) v.dirtU.value = Math.min(1, v.dirtU.value + dt * loose * (1 + 1.5 * Math.max(0, wet)) * 0.012 * clamp(c.speed / 12, 0.2, 1.5));   // (rain: mud, two and a half times as fast)
+        if (loose) v.dirtU.value = Math.min(1, v.dirtU.value + dt * loose * (1 + 1.5 * Math.max(0, wet, wetR)) * 0.012 * clamp(c.speed / 12, 0.2, 1.5));   // (rain, wet ground: mud, two and a half times as fast)
       }
       if (v.marker) { v.marker.visible = !!markerOn; v.marker.position.y = 4 + Math.sin(time * 5) * 0.3; v.marker.rotation.y = time * 2; }
       // --- effects ---
@@ -1665,8 +1710,43 @@ const Render = (function () {
         }
       }
     }
+    if (scV) updateSC(dt, alpha);
     glows.end();
     skids.flush();
+  }
+
+  /* ---------------- the safety car (Race.sc, Race.scCar): a silver saloon with a light bar on the roof, its two amber lamps flashing in turn
+     while it leads the field (off on its last lap, as it comes in). Drawn only while it is out on the track; not a car of the race ---- */
+  let scV = null;
+  function scLightBar(v) {
+    const g = new GB(), K = [0.1, 0.1, 0.11];
+    World.box(g, 0.16, 1.37, 0, 0.3, 0.05, 1.18, 0, K);   // (the bar across the roof, the lamps on it)
+    for (const sd of [-0.5, 0.5]) World.box(g, 0.16, 1.37, sd * 1.1, 0.1, 0.16, 0.06, 0, K);   // (its feet)
+    const bar = new THREE.Mesh(g.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })); v.bodyG.add(bar);
+    v.scL = [-1, 1].map(sd => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.09, 0.4), new THREE.MeshBasicMaterial({ color: 0x4a3008 })); m.position.set(0.16, 1.465, sd * 0.3); v.bodyG.add(m); return m; });
+    v.dec.material.map = numTex('SC');
+  }
+  function updateSC(dt, alpha) {
+    const R = curRace, S = R && R.sc, c = R && R.scCar, v = scV;
+    if (!S || !c || !S.onTrack) { v.grp.visible = false; v.seen = false; return; }
+    const a = v.seen ? alpha : 1; v.seen = v.grp.visible = true;   // (out again: straight to its place, not from where it was)
+    const x = lerp(c.px, c.x, a), z = lerp(c.pz, c.z, a), y = lerp(c.py, c.y, a), h = c.ph + wrapPi(c.h - c.ph) * a, T = R.track;
+    v.grp.position.set(x, y, z);
+    v.gpitch += (Math.atan(T.hasElev ? T.elevAt(T.startS + S.d).grade : 0) - v.gpitch) * Math.min(1, dt * 6);
+    v.grp.rotation.set(0, -h, v.gpitch, 'YZX');
+    v.spin += S.v * dt / c.m.rw;
+    for (const w of v.wf) w.rotation.set(0, 0, -v.spin);
+    for (const w of v.wr) w.rotation.set(0, 0, -v.spin);
+    const on = S.phase === 'on', fl = time % 0.6 < 0.3 ? 0 : 1;
+    v.grp.updateMatrixWorld(true);
+    for (let k = 0; k < 2; k++) {
+      const lit = on && k === fl; v.scL[k].material.color.setHex(lit ? 0xffb21e : 0x4a3008);
+      if (lit) { _lv.set(0.16, 1.5, (k ? 1 : -1) * 0.3).applyMatrix4(v.grp.matrixWorld); glows.add(_lv.x, _lv.y, _lv.z, 2.2, 1.0, 0.62, 0.1, 0.95); }
+    }
+    for (let k = 0; k < 4; k++) {   // headlamps, tail lamps
+      _lv.copy(v.lights[k]).applyMatrix4(v.grp.matrixWorld);
+      if (k < 2) glows.add(_lv.x, _lv.y, _lv.z, 0.95, 1.0, 0.88, 0.62, 0.3); else glows.add(_lv.x, _lv.y, _lv.z, 0.95, 1.0, 0.15, 0.08, 0.3);
+    }
   }
 
   /* ---------------- detachable parts, broken lamps, debris ---------------- */
@@ -1823,7 +1903,7 @@ const Render = (function () {
       const hard = -(c.impactVY || 0), gy = c.roadY || 0;
       if (hard > 2.2) {
         let loose = 0; for (let k = 0; k < 4; k++) { const sf = c.ws[k]; if (sf >= 2 && sf !== 4) loose++; }
-        const dirt = loose >= 2, n = Math.min(26, 8 + hard * 2.2), wetL = wet > 0;   // (in the rain: a splash of muddy water)
+        const dirt = loose >= 2, n = Math.min(26, 8 + hard * 2.2), wetL = (c.wl != null ? c.wl : wet) > 0.2;   // (in the rain, on wet ground: a splash of muddy water)
         for (let k = 0; k < n; k++) {
           const a = k / n * Math.PI * 2 + Math.random() * 0.4, sp = (2.5 + Math.random() * 3) * Math.min(1.6, hard / 6);
           const cr = wetL ? 0.66 : dirt ? 0.8 : 0.78, cg = wetL ? 0.67 : dirt ? 0.66 : 0.77, cb = wetL ? 0.68 : dirt ? 0.46 : 0.75;
@@ -1833,7 +1913,8 @@ const Render = (function () {
       }
     }
     const slide = Math.max(0, c.latR - 1.0) / 3.5 + c.spin * 0.9 + (c.lock ? 0.55 : 0) + (c.inHand > 0.5 && spd > 5 ? 0.45 : 0);
-    const rainy = wet > 0, near = !rainy || Math.hypot(x - (cam.vcx || 0), z - (cam.vcz || 0)) < 140;   // (rain: spray only where it can be seen, the particles are shared)
+    const cw = c.wl != null ? c.wl : Math.max(0, wet);   // the water where the car drives (a race with tyres: Race's wetness there, the drier racing line)
+    const rainy = cw > 0.08, near = !rainy || Math.hypot(x - (cam.vcx || 0), z - (cam.vcz || 0)) < 140;   // (rain: spray only where it can be seen, the particles are shared)
     const wheels = [[-M.b, -tw, 2], [-M.b, tw, 3], [M.a, -tw, 0], [M.a, tw, 1]];
     for (let k = 0; k < 4; k++) {
       const [lx, lz, wi] = wheels[k];
@@ -1864,7 +1945,7 @@ const Render = (function () {
       if (front) continue;
       if (rainy && onHard) {   // a wet road: a mist of spray off the rear tyres at speed, thicker in a slide (no tyre smoke)
         if (spd > 7 && near) {
-          v.acc[k] += (clamp(spd / 36, 0, 1.4) + intens * 0.7) * 26 * wet * dt;
+          v.acc[k] += (clamp(spd / 36, 0, 1.4) + intens * 0.7) * 26 * cw * dt;
           while (v.acc[k] >= 1) {
             v.acc[k] -= 1;
             const sh = 0.9 + Math.random() * 0.1, sp = 0.35 + Math.random() * 0.15;
@@ -2023,7 +2104,10 @@ const Render = (function () {
     World.update(world, time, target, camera);
     if (target) updateCamera(dt, target, mode, alpha);
     World.view(world, camera, target, alpha);   // (Ouninpohja: the forest between the camera and the car fades out)
-    { const r = curRace ? curRace.rain || 0 : 0; if (r !== wet) applyWeather(r); }
+    { const R = curRace, r = R ? R.rain || 0 : 0, rw = R && R.wetness != null ? R.wetness : r;   // (changing weather: redrawn every 2 %, and at its ends)
+      const ch = (a, b) => a !== b && (b < 0 || Math.abs(a - b) >= 0.02 || a === 0 || a === 1);
+      if (ch(r, wet) || ch(rw, wetR)) applyWeather(r, rw);
+      if (dryLine) updateDryLine(); }
     if (birds.mesh.visible && target && world) birds.update(Math.min(dt, 0.1), cam.vcx || 0, cam.vcz || 0, world.groundH || (() => 0));
     if (rain.mesh.visible) {   // the box of streaks around the view centre (the iso camera sees the most ground, the chase camera the least)
       const U = rain.mat.uniforms, B = lastMode === 'chase' ? [62, 30, 62] : lastMode === 'kino' ? [72, 34, 72] : [86, 38, 86];
@@ -2119,6 +2203,7 @@ const Render = (function () {
   const dbg = { noSmoke: false };
   function setDebug(o) { Object.assign(dbg, o); }
   function fxStats() { let n = 0; for (let i = 0; i < particles.max; i++) if (particles.life[i] > 0) n++; return { alive: n, emitted: particles.cur }; }
-  return { setDebug, fxStats, setGhost, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setDebug, fxStats, setGhost, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; },
+    get wetDrawn() { return { rain: wet, road: wetR }; }, get dryLine() { return dryLine ? { visible: dryLine.visible, gain: dryLine.material.color.r } : null; }, get scShown() { return !!scV && scV.grp.visible; } };
 })();
 

@@ -186,15 +186,15 @@
  },
  "spa": {
   "meshes": 923,
-  "verts": 477399,
+  "verts": 601353,
   "instances": 32682,
   "props": 80,
   "crowd": 5645,
-  "world": "b4238827",
+  "world": "ecea3c9b",
   "propsHash": "5faf0407",
   "floor": "23c041d3/14000",
   "groups": {
-   "-:MeshLambertMaterial": "e9612ff5",
+   "-:MeshLambertMaterial": "d074e429",
    "-:MeshBasicMaterial": "a9efda71",
    "-:MeshPhongMaterial": "4a03e534",
    "crowd:MeshLambertMaterial": "e05cf9b4"
@@ -220,16 +220,16 @@
   }
  },
  "suzuka": {
-  "meshes": 739,
-  "verts": 314831,
+  "meshes": 754,
+  "verts": 400617,
   "instances": 15267,
   "props": 147,
   "crowd": 1522,
-  "world": "b087c04",
+  "world": "ba750ca9",
   "propsHash": "1cdfec55",
   "floor": "72b445dd/11620",
   "groups": {
-   "-:MeshLambertMaterial": "ed6592c9",
+   "-:MeshLambertMaterial": "db74144c",
    "-:MeshBasicMaterial": "b674325b",
    "crowd:MeshLambertMaterial": "23a36833",
    "tyremarks:MeshBasicMaterial": "b6a15a32"

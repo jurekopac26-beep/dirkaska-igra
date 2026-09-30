@@ -220,9 +220,10 @@ const Sfx = (function () {
     const spd = player.speed;
     const onHard = player.ws[2] <= 1 && player.ws[3] <= 1;
     const slide = Math.max(0, player.latR - 2.2) / 5 + player.spin * 0.8 + (player.lock ? 0.6 : 0) + (player.inHand > 0.5 && spd > 5 ? 0.5 : 0);
-    const sq = onHard && spd > 3 ? clamp(slide, 0, 1.2) : 0, wet = race ? race.rain || 0 : 0;
+    const rn = race ? race.rain || 0 : 0, wet = player.wl != null ? player.wl : rn;   // the rain; the water under the car (a race with tyres: the drier racing line)
+    const sq = onHard && spd > 3 ? clamp(slide, 0, 1.2) : 0;
     set(squeal.out.gain, sq * 0.09 * (1 - 0.7 * wet), 0.04);   // (a wet road hardly squeals)
-    set(rainV.out.gain, wet * 0.05, 0.4);
+    set(rainV.out.gain, rn * 0.05, 0.4);
     set(hiss.out.gain, onHard ? wet * clamp(spd / 45, 0, 1) * 0.1 : 0, 0.08);
     set(squeal.bp.frequency, 980 + clamp(spd, 0, 50) * 6, 0.1);
     // offroad rumble

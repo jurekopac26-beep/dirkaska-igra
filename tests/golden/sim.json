@@ -69,6 +69,24 @@
    "repairs": 0
   }
  },
+ "jezero/wx/cs": {
+  "digest": "0be0ca04b5ab94e046ece7cc",
+  "lead": 2753.4,
+  "car0": [
+   48.08,
+   -144.31
+  ],
+  "cover": {
+   "dmg": 0.92,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0,
+   "rain": 1,
+   "wet": 0.95,
+   "sc": 1,
+   "stops": 0
+  }
+ },
  "riviera/race/cs": {
   "digest": "143a2647378a688bcf4b21aa",
   "lead": 2030.5,
@@ -137,6 +155,24 @@
    "loose": 15,
    "rescues": 0,
    "repairs": 0
+  }
+ },
+ "riviera/wx/cs": {
+  "digest": "2ef96cff98b460396ad0dad5",
+  "lead": 2747.6,
+  "car0": [
+   -19.61,
+   196.11
+  ],
+  "cover": {
+   "dmg": 0.45,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0,
+   "rain": 1,
+   "wet": 0.96,
+   "sc": 0,
+   "stops": 0
   }
  },
  "gora/race/cs": {
@@ -209,6 +245,24 @@
    "repairs": 0
   }
  },
+ "gora/wx/cs": {
+  "digest": "ad64bad2f1994773a619e0c2",
+  "lead": 2986.8,
+  "car0": [
+   61.65,
+   -90.38
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 12,
+   "rescues": 0,
+   "repairs": 0,
+   "rain": 1,
+   "wet": 0.95,
+   "sc": 0,
+   "stops": 0
+  }
+ },
  "ljubljana/race/cs": {
   "digest": "c4caaec310ed61b2e49076ad",
   "lead": 2054.6,
@@ -277,6 +331,24 @@
    "loose": 8,
    "rescues": 1,
    "repairs": 0
+  }
+ },
+ "ljubljana/wx/cs": {
+  "digest": "7b9d939042f8e5a3a57fd37b",
+  "lead": 2599.5,
+  "car0": [
+   62.24,
+   13.86
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0,
+   "rain": 1,
+   "wet": 0.95,
+   "sc": 1,
+   "stops": 0
   }
  },
  "monaco/race/cs": {
@@ -349,6 +421,24 @@
    "repairs": 0
   }
  },
+ "monaco/wx/cs": {
+  "digest": "59037e13ec78aa7e543a6deb",
+  "lead": 3085.3,
+  "car0": [
+   33.39,
+   421.12
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0,
+   "rain": 1,
+   "wet": 0.94,
+   "sc": 1,
+   "stops": 0
+  }
+ },
  "gozd/race/cs": {
   "digest": "aab25615f910c71c59d52ac9",
   "lead": 1813,
@@ -417,6 +507,24 @@
    "loose": 8,
    "rescues": 0,
    "repairs": 1
+  }
+ },
+ "gozd/wx/cs": {
+  "digest": "0f9fd692b45400fa962c1893",
+  "lead": 3196.3,
+  "car0": [
+   240.53,
+   290.2
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 8,
+   "rescues": 0,
+   "repairs": 1,
+   "rain": 1,
+   "wet": 0.99,
+   "sc": 1,
+   "stops": 13
   }
  },
  "toskana/race/cs": {
@@ -489,6 +597,24 @@
    "repairs": 1
   }
  },
+ "toskana/wx/cs": {
+  "digest": "017691bd576e3f3eff56ef27",
+  "lead": 3279.1,
+  "car0": [
+   -56.11,
+   147.49
+  ],
+  "cover": {
+   "dmg": 0.45,
+   "loose": 6,
+   "rescues": 0,
+   "repairs": 1,
+   "rain": 1,
+   "wet": 0.99,
+   "sc": 1,
+   "stops": 13
+  }
+ },
  "grom/race/cs": {
   "digest": "02d22545258b080c9ccb2d4d",
   "lead": 1891.2,
@@ -559,6 +685,24 @@
    "repairs": 1
   }
  },
+ "grom/wx/cs": {
+  "digest": "2fb00e1a542214c161f454ed",
+  "lead": 3397.5,
+  "car0": [
+   -108.29,
+   53.47
+  ],
+  "cover": {
+   "dmg": 0.86,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 1,
+   "rain": 1,
+   "wet": 0.99,
+   "sc": 0,
+   "stops": 13
+  }
+ },
  "pikes/race/cs": {
   "digest": "4ffb9bb0df8f11e46575a32f",
   "lead": 2051.1,
@@ -626,6 +770,20 @@
    "dmg": 1,
    "loose": 3,
    "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "pikes/wx/cs": {
+  "digest": "4168d2cb84037db7b61975a1",
+  "lead": 2838.3,
+  "car0": [
+   -302.73,
+   -1820.56
+  ],
+  "cover": {
+   "dmg": 0.86,
+   "loose": 3,
+   "rescues": 1,
    "repairs": 0
   }
  },
@@ -699,6 +857,20 @@
    "repairs": 0
   }
  },
+ "ouninpohja/wx/cs": {
+  "digest": "8a6596fdddebd19ec705e827",
+  "lead": 3690.6,
+  "car0": [
+   800.6,
+   -2750.47
+  ],
+  "cover": {
+   "dmg": 0.82,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
  "nring/race/cs": {
   "digest": "226de2795e8383490d52d651",
   "lead": 2498.2,
@@ -767,6 +939,24 @@
    "loose": 52,
    "rescues": 0,
    "repairs": 0
+  }
+ },
+ "nring/wx/cs": {
+  "digest": "52962a6cf07ed62c8923305f",
+  "lead": 8011.8,
+  "car0": [
+   -430.19,
+   -4301.17
+  ],
+  "cover": {
+   "dmg": 0.46,
+   "loose": 21,
+   "rescues": 1,
+   "repairs": 0,
+   "rain": 1,
+   "wet": 0.99,
+   "sc": 2,
+   "stops": 0
   }
  },
  "spa/race/cs": {
@@ -839,6 +1029,24 @@
    "repairs": 1
   }
  },
+ "spa/wx/cs": {
+  "digest": "62a00ae42fee7409c7aff885",
+  "lead": 9435.6,
+  "car0": [
+   736.44,
+   908.46
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 6,
+   "rescues": 0,
+   "repairs": 1,
+   "rain": 1,
+   "wet": 1,
+   "sc": 1,
+   "stops": 13
+  }
+ },
  "rbring/race/cs": {
   "digest": "40edf8c04096909df93a1638",
   "lead": 2480.6,
@@ -909,6 +1117,24 @@
    "repairs": 1
   }
  },
+ "rbring/wx/cs": {
+  "digest": "32e91001158d944d21acff81",
+  "lead": 5792.8,
+  "car0": [
+   -581.18,
+   -350.84
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 4,
+   "rescues": 2,
+   "repairs": 1,
+   "rain": 1,
+   "wet": 1,
+   "sc": 1,
+   "stops": 13
+  }
+ },
  "suzuka/race/cs": {
   "digest": "5f80d4be2c4d931b6f3372df",
   "lead": 2283.6,
@@ -977,6 +1203,24 @@
    "loose": 18,
    "rescues": 0,
    "repairs": 0
+  }
+ },
+ "suzuka/wx/cs": {
+  "digest": "71fc275e3b7ce96de877be12",
+  "lead": 2987.2,
+  "car0": [
+   -926.87,
+   -399.74
+  ],
+  "cover": {
+   "dmg": 0.85,
+   "loose": 5,
+   "rescues": 0,
+   "repairs": 0,
+   "rain": 1,
+   "wet": 0.87,
+   "sc": 2,
+   "stops": 0
   }
  }
 }

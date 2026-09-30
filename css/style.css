@@ -406,3 +406,28 @@ select.txt:disabled { opacity: .75; }
 #h-dmg .dmg-cab { fill: rgba(255,255,255,.28); }
 #h-dmg rect[id^="dz"] { transition: fill .25s; }
 
+/* tyres: the compound's badge by the damage figure (its colour --tc, a ring for what is left of it --tw); the safety car's banner */
+#h-tyre { display: none; width: clamp(22px, 5.6vh, 28px); height: clamp(22px, 5.6vh, 28px); border-radius: 50%; padding: 3px; box-sizing: border-box; background: conic-gradient(var(--tc, #ddd) var(--tw, 100%), rgba(255,255,255,.16) 0); filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); pointer-events: none; }
+#h-tyre.show { display: inline-block; }
+#h-tyre span { display: flex; width: 100%; height: 100%; border-radius: 50%; background: #15171b; align-items: center; justify-content: center; font: 700 clamp(10px, 2.6vh, 13px)/1 var(--f-display); color: var(--tc, #fff); }
+#h-sc { display: none; position: absolute; left: 50%; top: 17%; transform: translateX(-50%); padding: 4px 12px 3px; border-radius: 4px; background: #f5c400; color: #111; font: 700 italic clamp(12px, 3vh, 18px)/1.1 var(--f-display); letter-spacing: .04em; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.45); pointer-events: none; }
+#h-sc.show { display: block; }
+#h-sc.warn { background: #e0262c; color: #fff; }
+#hud.shot #h-sc { display: none; }
+#h-msg.blue { color: #86c9ff; }
+#h-msg.green { color: #6be07f; }
+.pit-row { margin-top: 12px; }
+.wx-row .seg button, .pit-row .seg button { padding-left: 6px; padding-right: 6px; white-space: nowrap; }   /* (four weathers, five tyre choices: across a phone) */
+.seg.tight button { padding-left: 5px; padding-right: 5px; font-size: 12px; }   /* (a row still too wide for its panel: smaller, game.js fitSegs) */
+.seg.tighter button { padding-left: 4px; padding-right: 4px; font-size: 10.5px; }
+
+/* the highlights after a race: a TV bug top left, skip / end, the moment's caption at the bottom */
+#rp { position: fixed; inset: 0; z-index: 6; pointer-events: none; }
+#rp.off { display: none; }
+#rp-top { position: absolute; top: calc(10px + var(--st, 0px)); left: 12px; right: 12px; display: flex; gap: 8px; align-items: center; }
+#rp-tag { margin-right: auto; padding: 4px 10px 4px 22px; border-radius: 4px; background: rgba(12,16,40,.78); font: 700 italic 14px/1.2 var(--f-ui); letter-spacing: .08em; color: var(--chalk); position: relative; }
+#rp-tag::before { content: ''; position: absolute; left: 8px; top: 50%; width: 8px; height: 8px; margin-top: -4px; border-radius: 50%; background: #e8352b; animation: rpDot 1s steps(2) infinite; }
+@keyframes rpDot { 50% { opacity: .2; } }
+#rp-top .btn { pointer-events: auto; background: rgba(12,16,40,.78); border: 1px solid rgba(255,255,255,.35); color: var(--chalk); opacity: 1; }
+#rp-cap { position: absolute; left: 50%; bottom: calc(18px + var(--sb, 0px)); transform: translateX(-50%); max-width: calc(100% - 24px); padding: 7px 14px; border-radius: 6px; background: rgba(12,16,40,.78); font: 700 italic clamp(13px, 3.4vh, 19px)/1.25 var(--f-ui); color: var(--chalk); text-align: center; }
+#rp-cap small { display: block; font-size: .7em; letter-spacing: .1em; color: #ffcf2e; }
