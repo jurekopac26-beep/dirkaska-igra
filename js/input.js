@@ -40,6 +40,7 @@ const Input = (function () {
       if (e.repeat) return;
       keys[e.code] = true;
       if ((e.code === 'Escape' || e.code === 'KeyP') && onPause) onPause();
+      if (e.code === 'KeyC' && onCam && !(e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName))) onCam();   // (the camera; not while typing a name)
     });
     window.addEventListener('keyup', e => { keys[e.code] = false; });
     window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; ptrs.clear(); wheel.pid = null; });
@@ -157,19 +158,19 @@ const Input = (function () {
      last frame for the menus and the pause (start, a, b, y, lb, rb and the directions of the stick or the d-pad, repeated while held).
      From its first press the pad is the controller (the on-screen controls hide) until the screen is touched again. */
   const PAD_DZ = 0.15, PAD_B = { a: 0, b: 1, x: 2, y: 3, lb: 4, rb: 5, back: 8, start: 9 };
-  const pad = { on: false, name: '', steer: 0, dsteer: 0, thr: 0, brk: 0, hand: 0, prev: {}, hold: {}, pressed: [] };
-  let onPad = null;
+  const pad = { on: false, name: '', steer: 0, dsteer: 0, thr: 0, brk: 0, hand: 0, rx: 0, ry: 0, rt: 0, lt: 0, prev: {}, hold: {}, pressed: [] };
+  let onPad = null, onCam = null;
   function padAxis(v) { const a = Math.abs(v || 0); if (!(a > PAD_DZ)) return 0; return Math.sign(v) * Math.pow(Math.min(1, (a - PAD_DZ) / (1 - PAD_DZ)), 1.5); }   // (a dead zone, finer near the middle)
   function padShow() { const t = $('touch'); if (t) t.classList.toggle('pad', pad.on); }
   function padRead(dt) {
     pad.pressed.length = 0;
     let gp = null;
     try { const list = navigator.getGamepads ? navigator.getGamepads() : null; if (list) for (const g of list) if (g && g.connected !== false && g.buttons && g.buttons.length) { gp = g; break; } } catch (_) { }
-    if (!gp) { pad.steer = pad.dsteer = pad.thr = pad.brk = pad.hand = 0; pad.name = ''; return pad; }
+    if (!gp) { pad.steer = pad.dsteer = pad.thr = pad.brk = pad.hand = pad.rx = pad.ry = pad.rt = pad.lt = 0; pad.name = ''; return pad; }
     if (gp.id !== pad.name) { pad.name = gp.id; pad.prev = {}; pad.hold = {}; }
     const bv = (i) => { const b = gp.buttons[i]; if (!b) return 0; if (typeof b === 'number') return b; return b.value > 0 ? b.value : b.pressed ? 1 : 0; };
     const lx = padAxis(gp.axes && gp.axes[0]), ly = padAxis(gp.axes && gp.axes[1]);
-    pad.steer = lx; pad.dsteer = (bv(15) > 0.5 ? 1 : 0) - (bv(14) > 0.5 ? 1 : 0);
+    pad.steer = lx; pad.dsteer = (bv(15) > 0.5 ? 1 : 0) - (bv(14) > 0.5 ? 1 : 0); pad.rx = padAxis(gp.axes && gp.axes[2]); pad.ry = padAxis(gp.axes && gp.axes[3]); pad.rt = bv(7); pad.lt = bv(6);   // (the right stick and the triggers alone: the photo mode's camera)
     pad.thr = Math.max(bv(7), bv(0) > 0.5 ? 1 : 0); pad.brk = Math.max(bv(6), bv(2) > 0.5 ? 1 : 0); pad.hand = bv(1) > 0.5 || bv(5) > 0.5 ? 1 : 0;
     const down = { up: bv(12) > 0.5 || ly < -0.55, down: bv(13) > 0.5 || ly > 0.55, left: bv(14) > 0.5 || lx < -0.55, right: bv(15) > 0.5 || lx > 0.55 };
     for (const k in PAD_B) down[k] = bv(PAD_B[k]) > 0.5;
@@ -235,6 +236,6 @@ const Input = (function () {
   function reset() { ptrs.clear(); wheel.pid = null; wheel.ang = 0; for (const k in keys) keys[k] = false; }
   function vibrate(ms) { if (vib && navigator.vibrate) { try { navigator.vibrate(ms); } catch (_) { } } }
 
-  return { init, layout, setMode, setOptions, update, requestTilt, tiltAlive, calibrate, reset, vibrate, padRead, set onPad(fn) { onPad = fn; }, pad, state: S, tilt, get mode() { return mode; } };
+  return { init, layout, setMode, setOptions, update, requestTilt, tiltAlive, calibrate, reset, vibrate, padRead, set onPad(fn) { onPad = fn; }, set onCam(fn) { onCam = fn; }, pad, state: S, tilt, get mode() { return mode; } };
 })();
 

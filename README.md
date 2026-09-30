@@ -162,7 +162,15 @@ Na dirkah na krožnih progah (ne v kvalifikacijah in ne v dirki s prijateljem) v
 
 ## Posnetek dirke
 
-Po cilju gumb **Posnetek** na zaslonu z rezultati predvaja celo dirko od štarta do cilja (igra jo med vožnjo posname, vsak avto 20-krat na sekundo). Privzeto jo kažejo **TV kamere** ob progi: vsakih 170 m stoji kamera na zunanji strani ovinka, 9 m visoko, ki avto približa in mu sledi, dokler ne odpelje mimo, nato preklopi na naslednjo. Spodaj so gumbi: na začetek, predvajaj ali ustavi, hitrost (1×, 2×, 4×, ½×, ¼×), kamera (TV, za avtom, od zgoraj), prejšnji in naslednji avto (slediš lahko kateremukoli tekmecu) in **Končaj** (nazaj na rezultate). Vidi se tudi varnostni avto, če je bil na progi.
+Po cilju gumb **Posnetek** na zaslonu z rezultati predvaja celo dirko od štarta do cilja (igra jo med vožnjo posname, vsak avto 20-krat na sekundo). Privzeto jo kažejo **TV kamere** ob progi: vsakih 170 m stoji kamera na zunanji strani ovinka, 9 m visoko, ki avto približa in mu sledi, dokler ne odpelje mimo, nato preklopi na naslednjo. Spodaj so gumbi: na začetek, predvajaj ali ustavi, hitrost (1×, 2×, 4×, ½×, ¼×), kamera (TV, za avtom, od zgoraj, kokpit), prejšnji in naslednji avto (slediš lahko kateremukoli tekmecu), **Foto** (glej spodaj) in **Končaj** (nazaj na rezultate). Vidi se tudi varnostni avto, če je bil na progi.
+
+## Pogled iz kokpita in foto način
+
+V **Nastavitvah** je med kamerami (izometrična, za avtom, kino) še **Kokpit** (telefon ležeče): dirkaš z voznikovega sedeža. Pred sabo vidiš pokrov motorja svojega avta, okoli pa armaturno ploščo z merilnikom vrtljajev (rdeče polje pri omejevalniku), merilnikom hitrosti in prestavo, volan, ki se obrača s prednjimi kolesi, okvir vetrobranskega stekla, streho in vzvratno ogledalo; relijski avto ima varnostno kletko. V dirkalniku formule sediš v čeladi: pred tabo so nos, prednja kolesa in zaščitni lok (halo), volan pa ima zaslon s prestavo in hitrostjo ter lučke za prestavljanje (zelene, rdeče, modre). Glava se malo nagne v ovinek in pogleda v smer drsenja. Nad pokrajino je nebo (bolj modro nad obzorjem, sij sonca; ponoči temno), v predoru v Monaku pa strop, ki ga iz drugih kamer ni.
+
+Kamero med dirko zamenjaš z gumbom s kamero pod gumbom za pavzo, s tipko **C**, z gumbom View/Select na igralnem plošku ali v pavzi (**Kamera: …**). Na telefonu v ležečem položaju se menjajo izometrična, kino in kokpit (za avtom je za pokončen telefon), na računalniku vse štiri. Izbira ostane shranjena.
+
+**Foto** v pavzi (ali v posnetku dirke) ustavi čas in skrije prikaz dirke, kamera pa gre iz avta ven. Z vlečenjem prsta ali miške jo vrtiš okoli avta in višje ali nižje, z dvema prstoma, koleščkom miške ali gumboma − in + jo približaš ali oddaljiš (na tipkovnici puščice, + in −; na igralnem plošku desna palica in sprožilca). **Objektiv** (24, 35, 50, 85 mm), **Filter** (brez, živo, črno-belo, sepija, film z vinjeto), **Ostrina** (pri visoki kakovosti: oster avto, zamegljena okolica), **Skrij gumbe** (tapni sliko, da se vrnejo). **Shrani sliko** sliko nariše še enkrat, ostreje (1920 pik v širino), s filtrom, in jo shrani kot PNG (npr. `dirka-spa-20260930-141502.png`); na telefonu se odpre meni za deljenje (npr. shranjevanje v galerijo). **Nazaj** te vrne v pavzo ali v posnetek.
 
 ## Duh najboljše vožnje
 
@@ -172,7 +180,7 @@ Prosojen avto (Nastavitve → Duh najboljše vožnje) vozi tvojo najboljšo vož
 
 Igro lahko igraš z igralnim ploščkom (Xbox, PlayStation ali drug plošček s standardno razporeditvijo), ki ga povežeš s telefonom ali računalnikom (Bluetooth ali kabel). Ob prvem pritisku se pokaže kratko navodilo, gumbi na zaslonu pa se skrijejo (ko se dotakneš zaslona, se vrnejo).
 
-- **Vožnja:** leva palica krmili sorazmerno z nagibom (smerne tipke: do konca), RT / R2 je plin in LT / L2 zavora (oba sorazmerno s pritiskom), A / ✕ je tudi plin, X / ▢ tudi zavora, B / ○ ali RB / R1 je drift. **Start** ustavi dirko, **Y** / △ postavi obtičal avto nazaj na progo.
+- **Vožnja:** leva palica krmili sorazmerno z nagibom (smerne tipke: do konca), RT / R2 je plin in LT / L2 zavora (oba sorazmerno s pritiskom), A / ✕ je tudi plin, X / ▢ tudi zavora, B / ○ ali RB / R1 je drift. **Start** ustavi dirko, **Y** / △ postavi obtičal avto nazaj na progo, **View** / Select zamenja kamero.
 - **Meniji:** palica ali smerne tipke premikajo izbiro do najbližjega gumba v tisti smeri, A ga pritisne, B gre nazaj (Nazaj, Glavni meni, iz pavze v dirko), Start pritisne glavni gumb zaslona (Dirkaj, Naprej, Start, Nadaljuj …), LB / RB listata med avti.
 
 ## Grafika
@@ -228,7 +236,7 @@ Telefona sta povezana neposredno (WebRTC) s knjižnico [PeerJS](https://peerjs.c
 
 ## Igra kot aplikacija
 
-- **Android (Chrome):** na naslovnem zaslonu tapni **Namesti igro** (ali v meniju Chroma ⋮ → *Namesti aplikacijo*). Igra dobi svojo ikono, odpre se čez cel zaslon in se obrne tako, kot zahteva izbrana kamera (za avtom: pokončno; izometrična in kino: ležeče).
+- **Android (Chrome):** na naslovnem zaslonu tapni **Namesti igro** (ali v meniju Chroma ⋮ → *Namesti aplikacijo*). Igra dobi svojo ikono, odpre se čez cel zaslon in se obrne tako, kot zahteva izbrana kamera (za avtom: pokončno; izometrična, kino in kokpit: ležeče).
 - **iPhone (Safari):** Deli → *Dodaj na začetni zaslon*.
 - Ko je igra enkrat odprta, deluje tudi brez interneta (in pri zelo slabem signalu). Ko je internet na voljo, igra ob zagonu naloži najnovejšo različico; če ostane odprta v ozadju, se posodobi sama, ko se vrneš vanjo na naslovnem zaslonu. Po objavi na GitHubu lahko traja nekaj minut, da je nova različica na voljo.
 - V brskalniku se zaslon zaklene le v celozaslonskem načinu (gumb **Celoten zaslon**); tam, kjer brskalnik tega ne dovoli (Safari na iPhonu), se med dirko pokaže obvestilo, naj telefon obrneš.

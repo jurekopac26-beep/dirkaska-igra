@@ -1,6 +1,6 @@
 // The replay after a race (Jezero Ring, the player on autopilot): the results screen's "Posnetek" plays the race back (the HUD and the
 // on-screen controls hidden, the replay's own controls shown); the cars where the recording has them; TV cameras beside the track (the
-// camera on a post far from the car, zoomed in); pause, speed, the camera (TV, behind the car, from above), the car followed; "Končaj"
+// camera on a post far from the car, zoomed in); pause, speed, the camera (TV, behind the car, from above, the cockpit), the car followed; "Končaj"
 // back to the results.
 //   node tests/browser/replay.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -42,7 +42,8 @@ try {
   await act('rp-cam'); await frames(1); const c1 = await st();
   await act('rp-cam'); await frames(1); const c2 = await st();
   await act('rp-cam'); await frames(1); const c3 = await st();
-  T.check('the camera: TV → behind the car → from above → TV', c1.cam === 'Za avtom' && c2.cam === 'Od zgoraj' && c3.cam === 'TV', [c1.cam, c2.cam, c3.cam].join(' → '));
+  await act('rp-cam'); await frames(1); const c4 = await st();
+  T.check('the camera: TV → behind the car → from above → the cockpit → TV', c1.cam === 'Za avtom' && c2.cam === 'Od zgoraj' && c3.cam === 'Kokpit' && c4.cam === 'TV', [c1.cam, c2.cam, c3.cam, c4.cam].join(' → '));
   await act('rp-next'); await frames(2); const n1 = await st();
   T.check('another car followed', !/^Ti · /.test(n1.info) && /·/.test(n1.info), n1.info);
   // the end: back to the results

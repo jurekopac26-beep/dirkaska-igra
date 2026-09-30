@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
-<link rel="stylesheet" href="css/style.css?v=7e4cf55a">
+<link rel="stylesheet" href="css/style.css?v=45495f9b">
 </head>
 <body>
 <div id="app">
@@ -30,6 +30,7 @@
       <button data-act="rp-cam" id="rp-cam">TV</button>
       <button data-act="rp-prev" aria-label="Prejšnji avto">&#9664;</button>
       <button data-act="rp-next" aria-label="Naslednji avto">&#9654;</button>
+      <button data-act="rp-photo" id="rp-photo">Foto</button>
       <button data-act="rp-exit" class="rp-exit">Končaj</button>
     </div>
   </div>
@@ -82,6 +83,7 @@
     <div id="c-gas" class="tb pedal gas"><span>PLIN</span></div>
     <div id="tilt-ind"><div class="ti-bar"></div><span>NAGIB</span></div>
   </div>
+  <button id="btn-cam" class="off" aria-label="Kamera"><svg viewBox="0 0 24 24"><path d="M4 8.5h3l1.6-2.2h6.8L17 8.5h3a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.4" r="3.4" class="lens"/></svg></button>
   <button id="btn-pause" class="off" aria-label="Pavza"><svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
   <button id="btn-rescue" class="off">&#8634; Na progo</button>
 
@@ -181,7 +183,7 @@
         <div class="row"><span class="rlbl">Upravljanje</span><div class="seg" data-set="control"><button data-v="buttons">Tipke</button><button data-v="wheel">Volan</button><button data-v="tilt">Nagib</button></div></div>
         <div class="row tiltrow"><span class="rlbl">Občutljivost nagiba</span><input type="range" id="tilt-sens" min="10" max="40" step="1"><span id="tilt-sens-v" class="val"></span></div>
         <div class="row tiltrow"><span class="rlbl">Nagib</span><div class="tilt-live"><div id="tilt-live-bar"></div></div><button class="btn mini" data-act="calibrate">Nastavi sredino</button><button class="btn mini" data-act="tilt-invert" id="tilt-inv-btn">Obrni smer</button></div>
-        <div class="row"><span class="rlbl">Kamera</span><div class="seg" data-set="camera"><button data-v="iso">Izometrična · ležeče</button><button data-v="chase">Za avtom · pokončno</button><button data-v="kino">Kino · ležeče</button></div></div>
+        <div class="row"><span class="rlbl">Kamera</span><div class="seg" data-set="camera"><button data-v="iso">Izometrična · ležeče</button><button data-v="chase">Za avtom · pokončno</button><button data-v="kino">Kino · ležeče</button><button data-v="cockpit">Kokpit · ležeče</button></div></div>
         <div class="row"><span class="rlbl">Oddaljenost</span><div class="seg" data-set="zoom"><button data-v="0.85">Blizu</button><button data-v="1">Srednje</button><button data-v="1.2">Daleč</button></div></div>
         <div class="row"><span class="rlbl">Fizika vožnje</span><div class="seg" data-set="phys"><button data-v="cs">Circuit Superstars</button><button data-v="arcade">Arkadna</button></div></div>
         <div class="row"><span class="rlbl">Pomoč pri driftu</span><div class="seg" data-set="assist"><button data-v="0">Nizka</button><button data-v="1">Srednja</button><button data-v="2">Visoka</button></div></div>
@@ -201,6 +203,23 @@
     </div>
   </section>
 
+  <!-- the photo mode (Foto in the pause and in the replay): the camera round the car, the buttons over the picture -->
+  <section id="s-photo" class="screen">
+    <div id="ph-pad"></div>
+    <div id="ph-vig"></div>
+    <div class="ph-top"><span class="ph-tag">FOTO</span><span class="ph-hint">Povleci: kamera okoli avta · dva prsta ali kolešček: bližje, dlje</span></div>
+    <div class="ph-bar">
+      <button class="btn" data-act="ph-out" aria-label="Dlje">&minus;</button>
+      <button class="btn" data-act="ph-in" aria-label="Bližje">+</button>
+      <button class="btn" data-act="ph-lens" id="ph-lens">Objektiv</button>
+      <button class="btn" data-act="ph-filter" id="ph-filter">Filter</button>
+      <button class="btn" data-act="ph-blur" id="ph-blur">Ostrina</button>
+      <button class="btn" data-act="ph-hide">Skrij gumbe</button>
+      <button class="btn primary" data-act="ph-save">Shrani sliko</button>
+      <button class="btn ghost" data-act="ph-exit">Nazaj</button>
+    </div>
+  </section>
+
   <section id="s-pause" class="screen">
     <div class="panel small-panel">
       <h2>Pavza</h2>
@@ -209,6 +228,8 @@
         <button class="btn fsbtn" data-act="fullscreen">Celoten zaslon</button>
         <button class="btn" data-act="restart" id="pause-restart">Ponovi dirko</button>
         <button class="btn off" data-act="quali-skip" id="pause-skip">Preskoči kvalifikacije</button>
+        <button class="btn" data-act="cam-next" id="pause-cam">Kamera</button>
+        <button class="btn" data-act="photo" id="pause-photo">Foto</button>
         <button class="btn" data-act="to-settings">Nastavitve</button>
         <button class="btn ghost" data-act="to-title">Glavni meni</button>
       </div>
@@ -306,12 +327,12 @@
 <script src="js/tex.js?v=f643b690"></script>
 <script src="js/world.js?v=8780ea7e"></script>
 <script src="js/data/p206.js?v=0016824f"></script>
-<script src="js/render.js?v=5a1f9cc0"></script>
+<script src="js/render.js?v=4e9a9b16"></script>
 <script src="js/sfx.js?v=75f77024"></script>
-<script src="js/input.js?v=4c5428b1"></script>
+<script src="js/input.js?v=d322f5e4"></script>
 <script src="js/comm.js?v=ff89f123"></script>
 <script src="js/vendor/peerjs.min.js?v=76b403e4"></script>
 <script src="js/net.js?v=1f45dfb1"></script>
-<script src="js/game.js?v=9ebd21a8"></script>
+<script src="js/game.js?v=c50a600d"></script>
 </body>
 </html>

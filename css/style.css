@@ -137,6 +137,25 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #touch.m-tilt #c-brake { right: auto; left: calc(14px + var(--sl)); }
 #btn-pause { position: absolute; z-index: 6; right: calc(10px + var(--sr)); top: calc(8px + var(--st)); width: 44px; height: 44px; border-radius: 12px; border: 2px solid rgba(255,255,255,.5); background: rgba(14,18,25,.55); display: flex; align-items: center; justify-content: center; padding: 0; }
 #btn-pause svg { width: 22px; height: 22px; fill: var(--chalk); }
+/* the camera during a race (under the pause button; a phone held upright has only the one behind the car) */
+#btn-cam { position: absolute; z-index: 6; right: calc(10px + var(--sr)); top: calc(60px + var(--st)); width: 44px; height: 44px; border-radius: 12px; border: 2px solid rgba(255,255,255,.5); background: rgba(14,18,25,.55); display: flex; align-items: center; justify-content: center; padding: 0; }
+#btn-cam svg { width: 24px; height: 24px; fill: var(--chalk); }
+#btn-cam svg .lens { fill: rgba(14,18,25,.85); stroke: var(--chalk); stroke-width: 1.4; }
+#btn-cam.dis { display: none; }
+@media (orientation: portrait) and (pointer: coarse) { #btn-cam { display: none; } }
+/* the photo mode: the picture under a drag surface, a hint at the top, the buttons at the bottom (hidden: only the picture) */
+#s-photo { padding: 0; z-index: 12; }
+#s-photo.show { display: block; }
+#ph-pad { position: absolute; inset: 0; touch-action: none; cursor: grab; }
+#ph-pad:active { cursor: grabbing; }
+#ph-vig { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, rgba(0,0,0,0) 45%, rgba(0,0,0,.5) 100%); opacity: 0; }
+#ph-vig.on { opacity: 1; }
+#s-photo .ph-top { position: absolute; left: calc(12px + var(--sl)); right: calc(12px + var(--sr)); top: calc(10px + var(--st)); display: flex; gap: 12px; align-items: center; pointer-events: none; font: 700 italic clamp(12px, 3.4vh, 16px)/1.2 var(--f-ui); color: #fff; text-shadow: 0 1px 3px #000; }
+#s-photo .ph-tag { color: var(--lcd); letter-spacing: .08em; }
+#s-photo .ph-bar { position: absolute; left: calc(8px + var(--sl)); right: calc(8px + var(--sr)); bottom: calc(10px + var(--sb)); display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+#s-photo .ph-bar .btn { width: auto; min-width: 44px; min-height: 40px; margin: 0; padding: 0 12px; font-size: clamp(13px, 3.6vh, 16px); background: rgba(8,11,16,.7); }
+#s-photo .ph-bar .btn.off { display: none; }
+#s-photo.hidden .ph-top, #s-photo.hidden .ph-bar { display: none; }
 #btn-rescue { position: absolute; z-index: 6; left: 50%; top: 58%; transform: translateX(-50%); padding: 10px 18px; border-radius: 22px; border: 2px solid var(--lcd); background: rgba(14,18,25,.8); color: var(--lcd); font: 700 italic 15px/1 var(--f-ui); }
 
 /* ================= SCREENS ================= */
@@ -357,6 +376,8 @@ select.txt { width: min(15em, 100%); font-style: normal; }
 select.txt option { color: #111; background: #fff; }
 select.txt:disabled { opacity: .75; }
 @media (orientation: landscape) and (max-height: 400px) { #on-pick > .desc:first-child { display: none; } }   /* (short landscape phones: room for the name, the code and a message) */
+/* the pause on a phone on its side: the buttons in two columns (Nadaljuj across both), so Glavni meni stays in sight */
+@media (orientation: landscape) and (max-height: 500px) { #s-pause .small-panel { width: min(560px, 88vw); } #s-pause .btns { display: grid; grid-template-columns: 1fr 1fr; } #s-pause .btns .btn { padding-left: 12px; padding-right: 12px; white-space: nowrap; font-size: clamp(13px, 3.9vh, 17px); } #s-pause .btns .btn.primary { grid-column: 1 / -1; } }
 
 /* ================= LEADERBOARD (Lestvica) + time-trial results ================= */
 #s-board { justify-content: center; }

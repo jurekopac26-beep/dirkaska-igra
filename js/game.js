@@ -210,6 +210,7 @@
     $('hud').classList.toggle('off', !(bg === 'race' && (name === 'none' || name === 'pause')));
     $('touch').classList.toggle('off', !(bg === 'race' && name === 'none' && phase !== 'finish' && phase !== 'done'));
     $('btn-pause').classList.toggle('off', !(bg === 'race' && inRace));
+    $('btn-cam').classList.toggle('off', !(bg === 'race' && inRace)); if (inRace) camLabel();
     if (!inRace) $('btn-rescue').classList.add('off');
     if (inRace) requestAnimationFrame(() => Input.layout());
     updateOrientation();
@@ -227,7 +228,7 @@
     { const d = Core.TRACKS.find(x => x.id === S.track) || Core.TRACKS[0], r = rec(d.id);   // the selected track and its record first (short screens may cut the end of the hint)
       if (isTT(d)) { $('title-hint').textContent = 'Proga: ' + d.name + (r.bestTime ? ' (osebni rekord ' + fmt(r.bestTime, true) + ')' : ' (še brez časa)') + '.'; $('title-sub').textContent = d.name + ' · kronometer · brez nasprotnikov'; }
       else { $('title-hint').textContent = 'Proga: ' + d.name + (r.bestLap ? ' (rekord kroga ' + fmt(r.bestLap, true) + ')' : '') + '.'; $('title-sub').textContent = d.name + ' · ' + lapWord(d.laps || 3).toLowerCase() + ' · 12 nasprotnikov' + (S.weather === 'rain' ? ' · dež' : S.weather === 'random' ? ' · morda dež' : S.weather === 'change' ? ' · menljivo vreme' : '') + (S.season === 'autumn' ? ' · jesen' : S.season === 'winter' ? ' · zima' : '') + (S.tod === 'dusk' ? ' · večer' : S.tod === 'night' ? ' · noč' : ''); } }
-    $('title-hint').textContent += ' Upravljanje: ' + CTRL_NAME[S.control] + ', kamera: ' + (S.camera === 'chase' ? 'za avtom (telefon pokončno)' : S.camera === 'kino' ? 'kino (telefon ležeče)' : 'izometrična (telefon ležeče)') + '. Spremeniš v nastavitvah.' + (records.bestLap ? ' Rekord kroga: ' + fmt(records.bestLap, true) + '.' : '');
+    $('title-hint').textContent += ' Upravljanje: ' + CTRL_NAME[S.control] + ', kamera: ' + (S.camera === 'chase' ? 'za avtom (telefon pokončno)' : S.camera === 'kino' ? 'kino (telefon ležeče)' : S.camera === 'cockpit' ? 'kokpit (telefon ležeče)' : 'izometrična (telefon ležeče)') + '. Spremeniš v nastavitvah.' + (records.bestLap ? ' Rekord kroga: ' + fmt(records.bestLap, true) + '.' : '');
     { const el = $('set-name'); if (el && document.activeElement !== el) el.value = S.name; }
     { const d = champDef(); $('btn-champ').textContent = 'Prvenstvo' + (d && !champDone() ? ' · ' + (champ.rounds.length + 1) + '/' + d.tracks.length : ''); }
     $('btn-career').textContent = 'Kariera' + (inCareer() ? ' · ' + eur(career.money) : '');
@@ -277,6 +278,17 @@
     if (key === 'control' && v === 'tilt') enableTilt(false);
     if (key === 'camera') { lockOrientation(); updateOrientation(); }
   }
+  // the camera during a race (C on the keyboard, the View / Select button of a pad, the button on the HUD or in the pause): the next one
+  // that suits the phone as it is held (lying: isometric, kino, cockpit; upright: behind the car; a computer: all four), kept as the setting
+  const CAMS = ['iso', 'chase', 'kino', 'cockpit'], CAM_NAME = { iso: 'izometrična', chase: 'za avtom', kino: 'kino', cockpit: 'kokpit' };
+  function camPool() { const coarse = matchMedia('(pointer: coarse)').matches, portrait = window.innerHeight > window.innerWidth; return coarse ? CAMS.filter(c => (c === 'chase') === portrait) : CAMS; }
+  function cycleCam() {
+    const pool = camPool(); if (pool.length < 2 && pool[0] === S.camera) return;
+    const next = pool[(pool.indexOf(S.camera) + 1) % pool.length];
+    setOption('camera', next); Render.resetCam(); camLabel();
+    if (screen === 'none') toast('Kamera: ' + CAM_NAME[next], 1300);
+  }
+  function camLabel() { const b = $('pause-cam'); if (b) b.textContent = 'Kamera: ' + CAM_NAME[S.camera]; const h = $('btn-cam'); if (h) h.classList.toggle('dis', camPool().length < 2); }
   function enableTilt(fromStart) {
     Input.requestTilt().then(res => {
       if (res !== 'granted') { toast(res === 'denied' ? 'Dostop do senzorja nagiba je zavrnjen. Uporabi tipke ali volan.' : 'Ta naprava ne podpira nagiba. Uporabi tipke ali volan.', 3600); return; }
@@ -372,7 +384,7 @@
   function replayStart() {
     const R = recd; if (!R || R.frames.length < 40) { toast('Posnetka ni.', 2000); return; }
     replay = { t: R.frames[0][0], t1: R.frames[R.frames.length - 1][0], i: 0, speed: 1, play: true, cam: 'tv', k: Math.max(0, R.cars.indexOf(race.player)), sc: null };
-    showScreen('none'); $('hud').classList.add('off'); $('btn-pause').classList.add('off'); $('touch').classList.add('off'); $('replay-ui').classList.remove('off');
+    showScreen('none'); $('hud').classList.add('off'); $('btn-pause').classList.add('off'); $('btn-cam').classList.add('off'); $('touch').classList.add('off'); $('replay-ui').classList.remove('off');
     Sfx.setRunning(false); Sfx.silence(); Comm.stop(); Render.setGhost(null); Render.resetCam(); replayUI();
   }
   function replayEnd() {
@@ -381,7 +393,7 @@
     if (race && race.fl) race.fl.sc = null;
     showScreen('results');
   }
-  const RP_CAM = { tv: 'TV', chase: 'Za avtom', iso: 'Od zgoraj' }, RP_SPEED = [1, 2, 4, 0.5, 0.25];
+  const RP_CAM = { tv: 'TV', chase: 'Za avtom', iso: 'Od zgoraj', cockpit: 'Kokpit' }, RP_SPEED = [1, 2, 4, 0.5, 0.25];
   function replayUI() {
     const P = replay; if (!P) return;
     $('rp-play').innerHTML = P.play ? '&#10074;&#10074;' : '&#9654;'; $('rp-speed').textContent = (P.speed < 1 ? P.speed.toString().replace('.', ',') : P.speed) + '\u00d7'; $('rp-cam').textContent = RP_CAM[P.cam];
@@ -401,7 +413,8 @@
     const L = (j) => A[o + j] + (B[o + j] - A[o + j]) * u;
     c.x = c.px = L(0); c.y = c.py = L(1); c.z = c.pz = L(2); c.h = c.ph = A[o + 3] + Core.wrapPi(B[o + 3] - A[o + 3]) * u;
     c.vl = L(4); c.delta = L(5); c.inBrk = A[o + 6] & 1 ? 1 : 0; c.vx = Math.cos(c.h) * c.vl; c.vz = Math.sin(c.h) * c.vl;
-    c.w = 0; c.beta = 0; c.air = 0; c.axF = 0; c.gear = c.vl < -0.5 ? -1 : 3; c.inHand = 0; c.roadY = c.y; c.onCurb = false;
+    const gv = Math.abs(c.vl) / 14;   // (the gear and the revs as they might have been: a gear every 14 m/s; the cockpit's instruments)
+    c.w = 0; c.beta = 0; c.air = 0; c.axF = 0; c.gear = c.vl < -0.5 ? -1 : Math.min(6, 1 + Math.floor(gv)); c.rpm = (c.m.redline || 7000) * (c.gear >= 6 ? Math.min(0.95, 0.5 + 0.08 * (gv - 5)) : 0.5 + 0.42 * (gv % 1)); c.inHand = 0; c.roadY = c.y; c.onCurb = false;
     c.q = track.query(c.x, c.z, c.q && c.q.i >= 0 ? c.q.i : -1, c.q || {});
   }
   function replayFrame(dt) {
@@ -419,6 +432,116 @@
     $('rp-info').textContent = (c.isPlayer ? 'Ti' : c.name) + ' · ' + fmt(Math.max(0, P.t), true);
     $('rp-prog').style.width = (100 * (P.t - F[0][0]) / Math.max(1e-3, P.t1 - F[0][0])).toFixed(1) + '%';
     Render.frame(dt, 1, c, P.cam, { noFx: true });
+  }
+
+  /* ---------------- photo mode (Foto in the pause, or in the replay): the race (or the recording) stands still, the HUD and the controls
+     hidden; the camera circles the car (a drag: round it and up or down; two fingers, the mouse wheel or - / +: nearer or farther), a
+     lens, a filter, a sharp car in a soft world (the high quality's depth of field); the picture saved: the phone's share sheet, else a
+     PNG file ---------------- */
+  const PH_LENS = [[24, 70], [35, 52], [50, 38], [85, 23]];   // (mm, the vertical field of view for it)
+  const PH_FILT = [   // name, the CSS filter on the screen, and the same in steps for the saved picture (saturate, sepia, contrast)
+    ['brez', '', []], ['živo', 'saturate(1.45) contrast(1.08)', [['sat', 1.45], ['con', 1.08]]], ['črno-belo', 'grayscale(1) contrast(1.15)', [['sat', 0], ['con', 1.15]]],
+    ['sepija', 'sepia(0.85) contrast(1.05)', [['sep', 0.85], ['con', 1.05]]], ['film', 'contrast(1.12) saturate(0.85) sepia(0.18)', [['con', 1.12], ['sat', 0.85], ['sep', 0.18]], true]];
+  let photo = null;
+  function photoStart(from) {
+    const car = from === 'replay' && replay ? recd.cars[replay.k] : race && race.player; if (!car) return;
+    if (from === 'replay') { replay.play = false; replayUI(); $('replay-ui').classList.add('off'); }
+    const cm = Render.camera, cy = (car.y || 0) + 0.7, dx = cm.position.x - car.x, dz = cm.position.z - car.z, dy = cm.position.y - cy, d = Math.hypot(dx, dy, dz);
+    const inCar = d < 3;   // (from the cockpit: behind the car, a little above it)
+    photo = { from, car, yaw: inCar ? car.h + Math.PI + 0.5 : Math.atan2(dz, dx), pitch: inCar ? 0.22 : Core.clamp(Math.asin(dy / Math.max(1, d)), 0.03, 1.4), dist: inCar ? 8 : Core.clamp(d, 4, 40),
+      lens: 1, filt: 0, blur: false, hide: false, ptrs: new Map(), pinch: 0, moved: 0, prev: Render.cam.shot || null, shot: { sky: true, floor: true, near: 0.3, blur: 0 } };
+    showScreen('photo'); photoUI(); photoPose(); Render.setShot(photo.shot); Render.clearSparks();
+  }
+  function photoEnd() {
+    if (!photo) return;
+    const P = photo; photo = null; $('gl').style.filter = ''; $('s-photo').classList.remove('hidden');
+    Render.setShot(P.prev);
+    if (P.from === 'replay' && replay) { showScreen('none'); $('hud').classList.add('off'); $('btn-pause').classList.add('off'); $('btn-cam').classList.add('off'); $('touch').classList.add('off'); $('replay-ui').classList.remove('off'); }
+    else showScreen('pause');
+  }
+  function photoPose() {
+    const P = photo, c = P.car, S0 = P.shot, cy = (c.y || 0) + 0.7, cp = Math.cos(P.pitch);
+    S0.px = c.x + Math.cos(P.yaw) * cp * P.dist; S0.pz = c.z + Math.sin(P.yaw) * cp * P.dist; S0.py = cy + Math.sin(P.pitch) * P.dist;
+    S0.tx = c.x; S0.ty = cy; S0.tz = c.z; S0.fov = PH_LENS[P.lens][1]; S0.fogD = Math.max(70, P.dist * 1.6); S0.blur = P.blur ? 0.9 : 0;
+  }
+  function photoUI() {
+    const P = photo; if (!P) return;
+    $('ph-lens').textContent = 'Objektiv ' + PH_LENS[P.lens][0] + ' mm'; $('ph-filter').textContent = 'Filter: ' + PH_FILT[P.filt][0];
+    $('ph-blur').textContent = 'Ostrina: ' + (P.blur ? 'avto' : 'vse'); $('ph-blur').classList.toggle('off', S.quality !== 'high');   // (the depth of field: the high quality's picture only)
+    $('gl').style.filter = PH_FILT[P.filt][1]; $('ph-vig').classList.toggle('on', !!PH_FILT[P.filt][3]);
+    $('s-photo').classList.toggle('hidden', P.hide);
+  }
+  function photoAct(a) {
+    const P = photo; if (!P) return;
+    if (a === 'ph-lens') P.lens = (P.lens + 1) % PH_LENS.length;
+    else if (a === 'ph-filter') P.filt = (P.filt + 1) % PH_FILT.length;
+    else if (a === 'ph-blur') P.blur = !P.blur;
+    else if (a === 'ph-in' || a === 'ph-out') P.dist = Core.clamp(P.dist * (a === 'ph-in' ? 0.8 : 1.25), 2.5, 60);
+    else if (a === 'ph-hide') P.hide = true;
+    else if (a === 'ph-save') { photoSave(); return; }
+    else if (a === 'ph-exit') { photoEnd(); return; }
+    photoUI(); photoPose();
+  }
+  // the saved picture: drawn again sharper (Render.snapshot), the filter's steps on its pixels (as the CSS filter shows it), the film's vignette
+  function photoSave() {
+    const P = photo; photoPose();
+    let cv = null; try { cv = Render.snapshot(P.car, replay ? replay.cam : S.camera, 1920); } catch (_) { }
+    if (!cv) { toast('Slike ni bilo mogoče narediti.', 2400); return; }
+    const F = PH_FILT[P.filt], x = cv.getContext('2d'), w = cv.width, h = cv.height;
+    if (F[2].length) {
+      const img = x.getImageData(0, 0, w, h), d = img.data;
+      for (const [op, v] of F[2]) {
+        if (op === 'con') { for (let i = 0; i < d.length; i += 4) { d[i] = (d[i] - 127.5) * v + 127.5; d[i + 1] = (d[i + 1] - 127.5) * v + 127.5; d[i + 2] = (d[i + 2] - 127.5) * v + 127.5; } continue; }
+        const m = op === 'sat' ? [0.213 + 0.787 * v, 0.715 - 0.715 * v, 0.072 - 0.072 * v, 0.213 - 0.213 * v, 0.715 + 0.285 * v, 0.072 - 0.072 * v, 0.213 - 0.213 * v, 0.715 - 0.715 * v, 0.072 + 0.928 * v]
+          : (u => [0.393 + 0.607 * u, 0.769 - 0.769 * u, 0.189 - 0.189 * u, 0.349 - 0.349 * u, 0.686 + 0.314 * u, 0.168 - 0.168 * u, 0.272 - 0.272 * u, 0.534 - 0.534 * u, 0.131 + 0.869 * u])(1 - v);   // (the CSS filters' own matrices)
+        for (let i = 0; i < d.length; i += 4) { const r = d[i], g = d[i + 1], b = d[i + 2]; d[i] = m[0] * r + m[1] * g + m[2] * b; d[i + 1] = m[3] * r + m[4] * g + m[5] * b; d[i + 2] = m[6] * r + m[7] * g + m[8] * b; }
+      }
+      x.putImageData(img, 0, 0);
+    }
+    if (F[3]) { const gr = x.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.hypot(w, h) / 2); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,0.5)'); x.fillStyle = gr; x.fillRect(0, 0, w, h); }
+    const dt = new Date(), p2 = (n) => String(n).padStart(2, '0'), name = 'dirka-' + track.def.id + '-' + dt.getFullYear() + p2(dt.getMonth() + 1) + p2(dt.getDate()) + '-' + p2(dt.getHours()) + p2(dt.getMinutes()) + p2(dt.getSeconds()) + '.png';
+    const done = (how) => { toast(how === 'share' ? 'Slika je pripravljena za deljenje.' : 'Slika shranjena: ' + name, 2600); };
+    cv.toBlob((b) => {
+      if (!b) { toast('Slike ni bilo mogoče shraniti.', 2400); return; }
+      window.__game.lastPhoto = { w, h, bytes: b.size, name, filter: F[0] };   // (the tests)
+      const file = typeof File === 'function' ? new File([b], name, { type: 'image/png' }) : null;
+      const down = () => { const url = URL.createObjectURL(b), a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000); done('file'); };
+      if (file && matchMedia('(pointer: coarse)').matches && navigator.canShare && navigator.canShare({ files: [file] })) navigator.share({ files: [file], title: 'Dirka · ' + track.def.name }).then(() => done('share'), (e) => { if (!e || e.name !== 'AbortError') down(); });
+      else down();
+    }, 'image/png');
+  }
+  // the drag round the car, two fingers for the distance; a tap shows the hidden buttons again
+  function photoPtr(e) {
+    const P = photo; if (!P) return;
+    const pd = () => { const a = [...P.ptrs.values()]; return a.length >= 2 ? Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) : 0; };
+    if (e.type === 'pointerdown') { P.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); P.moved = 0; P.pinch = pd(); try { e.target.setPointerCapture(e.pointerId); } catch (_) { } return; }
+    const q = P.ptrs.get(e.pointerId); if (!q) return;
+    if (e.type === 'pointermove') {
+      const dx = e.clientX - q.x, dy = e.clientY - q.y; q.x = e.clientX; q.y = e.clientY; P.moved += Math.abs(dx) + Math.abs(dy);
+      if (P.ptrs.size >= 2) { const d = pd(); if (P.pinch > 0 && d > 0) P.dist = Core.clamp(P.dist * P.pinch / d, 2.5, 60); P.pinch = d; }
+      else { P.yaw += dx * 0.008; P.pitch = Core.clamp(P.pitch + dy * 0.006, 0.02, 1.45); }
+      photoPose(); return;
+    }
+    P.ptrs.delete(e.pointerId); P.pinch = pd();   // (up, cancel)
+    if (P.hide && P.moved < 8) { P.hide = false; photoUI(); }
+  }
+  function photoKey(e) {
+    const P = photo; if (!P || screen !== 'photo') return;
+    const k = e.code, step = e.shiftKey ? 0.2 : 0.07;
+    if (k === 'ArrowLeft' || k === 'ArrowRight') P.yaw += (k === 'ArrowLeft' ? -1 : 1) * step;
+    else if (k === 'ArrowUp' || k === 'ArrowDown') P.pitch = Core.clamp(P.pitch + (k === 'ArrowUp' ? 1 : -1) * step * 0.6, 0.02, 1.45);
+    else if (k === 'Equal' || k === 'NumpadAdd' || k === 'KeyW') P.dist = Core.clamp(P.dist * 0.9, 2.5, 60);
+    else if (k === 'Minus' || k === 'NumpadSubtract' || k === 'KeyS') P.dist = Core.clamp(P.dist * 1.11, 2.5, 60);
+    else if (k === 'Enter' || k === 'Space') { e.preventDefault(); photoSave(); return; }
+    else if (k === 'Escape' || k === 'Backspace') { photoEnd(); return; }
+    else if (k === 'KeyH') { P.hide = !P.hide; photoUI(); return; }
+    else return;
+    e.preventDefault(); photoPose();
+  }
+  // a pad in the photo mode: the right stick circles the car, the triggers nearer and farther (the buttons: the menus' A, B, the stick)
+  function photoPad(dt) {
+    const P = photo, G = Input.pad; if (!P || !G.on) return;
+    if (G.rx || G.ry || G.rt > 0.05 || G.lt > 0.05) { P.yaw += (G.rx || 0) * dt * 1.8; P.pitch = Core.clamp(P.pitch - (G.ry || 0) * dt * 1.2, 0.02, 1.45); P.dist = Core.clamp(P.dist * Math.exp(((G.lt || 0) - (G.rt || 0)) * dt * 1.2), 2.5, 60); photoPose(); }
   }
 
   /* ---------------- career ---------------- */
@@ -724,6 +847,7 @@
   function pause() {
     if (bg !== 'race' || paused || phase === 'done') return;
     paused = true; Sfx.setRunning(false); Input.reset(); Comm.stop();
+    camLabel(); $('pause-photo').classList.toggle('off', !!(mp && mp.race));   // (online the race goes on: no photos)
     showScreen('pause');
     adaptBreak();
   }
@@ -1819,11 +1943,13 @@
   }
   function padFrame(dt) {
     const P = Input.padRead(dt);
+    if (photo) photoPad(dt);
     if (P.on && (screen !== padScreen || (padSel && !padSel.isConnected))) { padScreen = screen; padFocus(screen === 'none' ? null : padHome()); }   // (a new screen, or its list drawn again: the highlight on the main button or the chosen item)
     for (const k of P.pressed) {
       if (screen === 'none') {   // racing
         if (k === 'start' && bg === 'race') pause();
         else if (k === 'y' && !$('btn-rescue').classList.contains('off')) $('btn-rescue').click();
+        else if (k === 'back' && bg === 'race' && !replay) cycleCam();
         continue;
       }
       if (k === 'start') { const m = padFind('.btn.primary'); if (m) m.click(); }
@@ -1945,6 +2071,10 @@
       case 'car-buy': carBuy(); break;
       case 'replay': replayStart(); break;
       case 'rp-restart': case 'rp-play': case 'rp-speed': case 'rp-cam': case 'rp-prev': case 'rp-next': case 'rp-exit': replayAct(act); break;
+      case 'rp-photo': photoStart('replay'); break;
+      case 'photo': photoStart('pause'); break;
+      case 'ph-lens': case 'ph-filter': case 'ph-blur': case 'ph-in': case 'ph-out': case 'ph-hide': case 'ph-save': case 'ph-exit': photoAct(act); break;
+      case 'cam-next': cycleCam(); break;
       case 'champ-go': {
         if (champDone()) { champ = null; champSave(); buildChampScreen(); break; }   // (finished: "Novo prvenstvo" -> the choice of a series)
         if (!owned(Core.MODELS[S.car].id)) { toast('Ta avto še ni tvoj: izberi avto iz garaže ali ga kupi.', 3000); break; }
@@ -2051,6 +2181,12 @@
       nm.addEventListener('blur', () => { nm.value = S.name; });
     }
     $('btn-pause').addEventListener('click', (e) => { e.preventDefault(); pause(); });
+    $('btn-cam').addEventListener('click', (e) => { e.preventDefault(); Sfx.click(); cycleCam(); });
+    { const pd = $('ph-pad'), o = { passive: false };   // the photo mode: a drag round the car, two fingers or the wheel for the distance
+      for (const t of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) pd.addEventListener(t, (e) => { e.preventDefault(); photoPtr(e); }, o);
+      pd.addEventListener('wheel', (e) => { e.preventDefault(); if (photo) { photo.dist = Core.clamp(photo.dist * Math.exp(e.deltaY * 0.0012), 2.5, 60); photoPose(); } }, o);
+      pd.addEventListener('touchstart', (e) => e.preventDefault(), o); pd.addEventListener('touchmove', (e) => e.preventDefault(), o);
+      window.addEventListener('keydown', photoKey); }
     $('btn-rescue').addEventListener('click', (e) => { e.preventDefault(); if (race && phase === 'racing') { race.rescue(race.player); race.player.locked = false; $('btn-rescue').classList.add('off'); } });
     document.addEventListener('visibilitychange', () => { if (document.hidden) { pause(); Sfx.suspend(); } else checkUpdate(); });
     window.addEventListener('pagehide', () => { if (mp) Net.close(true); });   // (closing the game: the friend hears it at once, not only when the connection times out)
@@ -2083,6 +2219,7 @@
       Render.setAtmos({ season: S.season, tod: S.tod });   // (before the first world: it is built in the season)
       Render.buildWorld(track, S.quality === 'retro' ? 0.8 : 1);
       Input.init($('touch'), () => { if (screen === 'pause') resume(); else if (screen === 'none') pause(); });
+      Input.onCam = () => { if (bg === 'race' && !replay && (screen === 'none' || screen === 'pause')) cycleCam(); };   // (C on the keyboard)
       Input.onPad = () => toast('Igralni plošček je povezan: leva palica krmili, RT plin, LT zavora, B drift, Start pavza. V menijih izbiraš s palico in A, B je nazaj.', 5200);
       applySettings();
       demo = new Core.Race(track, { numAI: 10, noPlayer: true, difficulty: 2, laps: 9999, seed: 11, phys: physOf(), rain: demoRain() });
