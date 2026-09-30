@@ -6432,7 +6432,7 @@ const World = (function () {
     for (const r of F.run) { const u = (t - r.t0) / r.d; if (u < 0) continue; const x = r.x0 + (r.x1 - r.x0) * u, z = r.z0 + (r.z1 - r.z0) * u;
       _fe.set(0, Math.atan2(r.x1 - r.x0, r.z1 - r.z0), 0); _fq.setFromEuler(_fe); _fv.set(x, F.gH(x, z), z); _fm.compose(_fv, _fq, _fs); im.setMatrixAt(k++, _fm); }
     for (let q = k; q < im.count; q++) { if (F.drawn != null && q >= F.drawn) break; _fm.makeScale(0, 0, 0); im.setMatrixAt(q, _fm); }
-    F.drawn = k; im.instanceMatrix.needsUpdate = true;
+    F.drawn = k; im.instanceMatrix.needsUpdate = true; im.visible = k > 0;   // (nobody running: no draw)
     // the wave: when the car comes down from a jump (the crowd stands at every jump), from where it landed, bigger at the famous one
     if (car) { if (car.air && !F.air) F.air = { s }; else if (!car.air && F.air) { const big = F.big > 0 && Math.abs(F.air.s - F.big) < 60; if (s - F.air.s > 14) F.U.uHype.value.set(car.x, car.z, tm, big ? 1 : 0.75); F.air = null; } }
   }

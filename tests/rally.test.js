@@ -1,5 +1,6 @@
 // The rally stage's extras (Ouninpohja): the co-driver's pace notes, the puddles of a race in the rain, the famous jump and the
-// medal times. Fast checks on the track data and the core (the races themselves: races.test.js, also in the rain).
+// medal times; the stage the other way round (ouninpohja-r). Fast checks on the track data and the core (the races themselves:
+// races.test.js, also in the rain).
 //   node tests/rally.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -46,8 +47,8 @@ const dAt = (s) => Math.round(s - T.startS);   // (metres after the start line)
   const dry = mk(0), wet = mk(1);
   wet.step(1 / 120); const w1 = T.inRain; dry.step(1 / 120); const w2 = T.inRain;
   check('rain: the track has its puddles while the wet race steps, none for the dry one; the wet grip on the car', w1 === true && w2 === false && wet.player.wet < 1 && dry.player.wet === 1, `wet ${w1}, then dry ${w2}; grip ${wet.player.wet} / ${dry.player.wet}`);
-  const others = C.TRACKS.filter(d => d.id !== 'ouninpohja' && d.rain);
-  check('puddles only on the rally stage (def.rain)', !others.length, others.map(d => d.id).join(', '));
+  const others = C.TRACKS.filter(d => !d.rally && d.rain);
+  check('puddles only on the rally stages (def.rain)', !others.length, others.map(d => d.id).join(', '));
 }
 
 // the famous jump and the medals
@@ -57,6 +58,27 @@ const dAt = (s) => Math.round(s - T.startS);   // (metres after the start line)
   const M = def.medals, asc = (a) => Array.isArray(a) && a.length === 3 && a[0] < a[1] && a[1] < a[2];
   check('medals: gold < silver < bronze for both physics, dry and wet; the rain slower', asc(M.cs) && asc(M.arcade) && asc(M.wet.cs) && asc(M.wet.arcade) && M.wet.cs[0] > M.cs[0] && M.wet.arcade[0] > M.arcade[0],
     `cs ${M.cs}, arcade ${M.arcade}, wet cs ${M.wet.cs}, wet arcade ${M.wet.arcade}`);
+}
+
+// the other way round (as before 1995): the same road reversed (and run on past this finish), the same crests, its own start and finish,
+// the places in the reverse order, the co-driver's notes for this direction, its own medals and no famous record at the Yellow House
+{
+  const R = C.TRACKS.find(d => d.id === 'ouninpohja-r'); check('the reverse stage is on the track list', !!R); if (R) {
+    const TR = new C.Track(R), n = def.points.length, rp = R.points.slice(0, n).reverse();
+    const same = rp.every((p, k) => p[0] === def.points[k][0] && p[1] === def.points[k][1]) && R.points.length > n;
+    check('reverse: the same road the other way (and on past its finish), the same heights and crests', same && R.bumps.length === def.bumps.length && JSON.stringify(R.elev) === JSON.stringify(def.elev),
+      `${R.points.length} points (${n} forward), ${R.bumps.length} bumps`);
+    const crests = def.bumps.map(b => { const i = T.idx(b.at * T.len); return [T.px[i], T.pz[i]]; }), rc = R.bumps.map(b => { const i = TR.idx(b.at * TR.len); return [TR.px[i], TR.pz[i]]; });
+    check('reverse: every crest where it is on the forward stage (within 5 m: two 2 m samples)', crests.every((c, k) => Math.hypot(c[0] - rc[k][0], c[1] - rc[k][1]) < 5), crests.map((c, k) => Math.hypot(c[0] - rc[k][0], c[1] - rc[k][1]).toFixed(1)).join(' '));
+    const names = TR.names.map(q => q.n), fwd = T.names.map(q => q.n).reverse();
+    check('reverse: the places in the reverse order, from Hassintie to Hämepohja', names.join('|') === fwd.join('|') && names[0] === 'Hassintie' && names[names.length - 1] === 'Hämepohja', names.join(', '));
+    check('reverse: ~9.8 km, the run-out past the finish at least 250 m', TR.raceLen > 9500 && TR.raceLen < 10100 && TR.len - TR.finishS >= 250, `${TR.raceLen.toFixed(0)} m, ${(TR.len - TR.finishS).toFixed(0)} m past the finish`);
+    const N = TR.paceNotes(), fN = T.paceNotes(), nJ = N.reduce((a, q) => a + (q.text.match(/\bjump\b|\bcrest\b/g) || []).length, 0);
+    check('reverse: its own pace notes (the corners the other way), every jump and crest read', N.length > 25 && nJ === R.bumps.length && N.map(q => q.text).join('|') !== fN.map(q => q.text).join('|'), `${N.length} calls, ${nJ} jumps and crests`);
+    const M = R.medals, asc = (a) => Array.isArray(a) && a.length === 3 && a[0] < a[1] && a[1] < a[2];
+    check('reverse: its own medals, gold < silver < bronze, the rain slower; the Yellow House without a famous record', asc(M.cs) && asc(M.arcade) && asc(M.wet.cs) && asc(M.wet.arcade) && M.wet.cs[0] > M.cs[0] && R.jumpRec && R.jumpRec.bump === def.jumpRec.bump && !R.jumpRec.m,
+      `cs ${M.cs}, arcade ${M.arcade}`);
+  }
 }
 
 console.log(bad ? `FAIL: ${bad} check(s)` : 'OK: all rally checks');

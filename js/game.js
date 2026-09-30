@@ -228,7 +228,7 @@
   // ends in a light haze); the title demo in a steady mist. Render lowers the visibility, pales the sky, and a world may add its own
   // banks of mist (Ouninpohja: over the lakes and in the hollows)
   let mistRun = 0;
-  const mistNow = () => bg === 'demo' ? (S.weather === 'mist' ? 0.85 : 0) : race && mistRun ? mistRun * (1 - 0.72 * Core.sstep(8, 190, race.time)) : 0;
+  const mistNow = () => bg === 'demo' ? (S.weather === 'mist' ? 0.85 : 0) : race && mistRun ? mistRun * (1 - 0.72 * Core.sstep(8, 190, replay ? replay.t : race.time)) : 0;
   function applyPhys(r) { if (r) r.setPhys(physOf()); }
   function setOption(key, v) {
     const num = ['zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'codrv', 'damage', 'ghost', 'gold'];
@@ -443,16 +443,18 @@
   // race time t the gold ghost is where the autopilot was at t * Ta / Tg. At each checkpoint the HUD gives the gap to it (the autopilot's
   // split times stretched the same way). It appears once the autopilot's run is complete (on a slow phone a moment after the start).
   const GOLD_MS = 3;
-  let gold = null;   // { r (its race), f, n (samples), done, Ta (the autopilot's time), Tg (gold), sp (its split times), k (Ta / Tg), q (seed) }
+  let gold = null, goldLast = null;   // { key, r (its race), f, n (samples), done, Ta (the autopilot's time), Tg (gold), sp (its split times), k (Ta / Tg), q (seed) }; the last one done
   const goldRnd = (s) => () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
-  function goldStart() {   // newRace
+  function goldStart() {   // newRace (a restart with the same car and conditions takes the last run again)
     Render.setGhost(null, true, 1); gold = null; $('h-gold').className = '';
     const M = medalSet(track.def); if (!S.gold || !M || !race.timeTrial || (mp && mp.race)) return;
+    const P0 = race.player, upg = Object.assign({}, upgOf(P0.m.id)), key = [track.def.id, P0.m.id, JSON.stringify(upg), physOf(), race.rain, S.assist, M[0]].join('|');
+    if (goldLast && goldLast.key === key) { gold = goldLast; return; }
     const orig = Math.random; Math.random = goldRnd(4711);
     try {
-      const P0 = race.player, r = new Core.Race(track, { playerModel: P0.m, playerUpg: Object.assign({}, upgOf(P0.m.id)), playerColor: PLAYER_COLORS[S.color], playerNum: carNum(), seed: 11, difficulty: 1, assist: S.assist,
+      const r = new Core.Race(track, { playerModel: P0.m, playerUpg: upg, playerColor: PLAYER_COLORS[S.color], playerNum: carNum(), seed: 11, difficulty: 1, assist: S.assist,
         numAI: 0, playerGrid: 1, laps: 1, damage: 0, phys: physOf(), rain: race.rain });
-      r.start(); gold = { r, f: new Float32Array(GH_MAX * GH_CH), n: 0, done: false, Ta: 0, Tg: M[0], sp: null, k: 1, q: 5000 };
+      r.start(); gold = { key, r, f: new Float32Array(GH_MAX * GH_CH), n: 0, done: false, Ta: 0, Tg: M[0], sp: null, k: 1, q: 5000 };
     } catch (e) { gold = null; } finally { Math.random = orig; }
   }
   function goldTick(ms) {   // every drawn frame of the run until the autopilot is home: a slice of its drive (more of it before the start)
@@ -465,7 +467,7 @@
           if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P);
           const t1 = r.time, ta = t1 - STEP; while (G.n < GH_MAX && G.n * GH_DT <= t1 + 1e-9) { ghPose(P, G.f, G.n, clamp((G.n * GH_DT - ta) / STEP, 0, 1)); G.n++; }
         }
-        if (P.finished) { if (G.n < GH_MAX) { ghPose(P, G.f, G.n, 1); G.n++; } G.done = true; G.Ta = P.finishTime; G.sp = P.splits.slice(); G.k = G.Ta / G.Tg; G.r = null; }
+        if (P.finished) { if (G.n < GH_MAX) { ghPose(P, G.f, G.n, 1); G.n++; } G.done = true; G.Ta = P.finishTime; G.sp = P.splits.slice(); G.k = G.Ta / G.Tg; G.r = null; goldLast = G; }
         else if (r.time > 900 || G.n >= GH_MAX - 1) { gold = null; return; }   // (never home: no gold ghost this run)
       }
     } finally { Math.random = orig; if (race) track.inRain = race.rain > 0; }   // (the track's rain flag is the player's race's again)
@@ -658,7 +660,7 @@
   function toTitle() {
     champRecord(); champRun = false;
     if (replay) replayEnd();
-    paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); ghRec = ghPlay = null; Render.setGhost(null, true); gold = null; Render.setGhost(null, true, 1); rpRec = null;
+    paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); ghRec = ghPlay = null; Render.setGhost(null, true); gold = goldLast = null; Render.setGhost(null, true, 1); rpRec = null;
     Sfx.setRunning(false); Sfx.silence();
     Render.attachRace(demo); Render.resetCam();
     setLights(0, false);

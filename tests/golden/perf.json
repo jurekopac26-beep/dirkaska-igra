@@ -63,11 +63,18 @@
   "jsMs": 0.23
  },
  "ouninpohja": {
-  "calls": 164,
-  "maxCalls": 176,
-  "kverts": 606,
-  "maxKverts": 789,
-  "jsMs": 0.85
+  "calls": 160,
+  "maxCalls": 195,
+  "kverts": 623,
+  "maxKverts": 851,
+  "jsMs": 0.88
+ },
+ "ouninpohja-r": {
+  "calls": 148,
+  "maxCalls": 181,
+  "kverts": 565,
+  "maxKverts": 710,
+  "jsMs": 1.01
  },
  "nring": {
   "calls": 193,
