@@ -238,17 +238,18 @@
   }
  },
  "suzuka": {
-  "meshes": 821,
-  "verts": 553113,
+  "meshes": 835,
+  "verts": 623931,
   "instances": 17291,
   "props": 145,
   "crowd": 3526,
-  "world": "9c74b4d4",
+  "world": "88bbe5f2",
   "propsHash": "1341661a",
   "floor": "9bfcb202/11620",
   "groups": {
-   "-:MeshLambertMaterial": "55ad938f",
-   "-:MeshBasicMaterial": "3c5d956a",
+   "-:MeshLambertMaterial": "10527431",
+   "-:MeshBasicMaterial": "dfad6245",
+   "szWindows:MeshLambertMaterial": "dcd123d0",
    "-:MeshPhongMaterial": "52111492",
    "crowd:MeshLambertMaterial": "1b2fd395",
    "tyremarks:MeshBasicMaterial": "ec8940b4",
