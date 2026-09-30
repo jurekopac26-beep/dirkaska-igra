@@ -9139,7 +9139,26 @@ const World = (function () {
     ['#d3232a', '#fff', 'GO GO SUZUKA!', 32], ['#f7f7f4', '#d3232a', 'ARIGATO!', 40, '#d3232a'], ['#16181c', '#ffd21f', 'FULL THROTTLE', 30], ['#1a3f8f', '#fff', 'BANZAI!', 42],
     ['#f7f7f4', '#16181c', 'I LOVE SUZUKA', 32, '#16181c'], ['#ff7a1a', '#fff', 'GANBARE!', 40], ['#16181c', '#fff', '130R', 46, '#d3232a'], ['#2a9d4b', '#fff', 'NIPPON', 42],
     ['#ffd21f', '#16181c', 'SINCE 1962', 38], ['#f7f7f4', '#1a3f8f', 'S-CURVES CLUB', 30, '#1a3f8f']];
+  const SZ_DRS = (B) => B + 8 + SZ_FAN.length + SZ_FLAG.length;   // the atlas cell of the DRS boards (B: the corner names' count)
   const SZ_FLAG = [['#f7f7f4', 'sun'], ['#f7f7f4', 'sun'], ['#f7f7f4', 'sun'], ['#d3232a', '#f7f7f4'], ['#1a3f8f', '#f7f7f4'], ['#2a9d4b', '#f7f7f4'], ['#ff7a1a', '#f7f7f4']];   // (Japan's, and the fans' own colours with a white band)
+  function szGrassTex(aniso) {   // Suzuka's lawns under the vertex colours (256 px = 14 m, tileable, no mowing stripes: the vertex colours mow them): a fresh
+    // spring green (the race is in April), fine and even, a few darker tufts and white clover flowers
+    const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), img = x.createImageData(S, S), d = img.data, r = rng(4601);
+    const n1 = nrPN(8, 4602), n2 = nrPN(24, 4603), n3 = nrPN(64, 4604);
+    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) {   // (fine detail only: the vertex colours make the patches)
+      const u = i / S, v = j / S, n = n1(u, v) * 0.3 + n2(u, v) * 0.4 + n3(u, v) * 0.3, k = 0.86 + n * 0.24 + (r() - 0.5) * 0.12, y = n2(u + 0.29, v + 0.53) - 0.5, o = (j * S + i) * 4;
+      d[o] = clamp((84 + y * 12) * k, 0, 255); d[o + 1] = clamp((121 + y * 6) * k, 0, 255); d[o + 2] = clamp((52 + y * 4) * k, 0, 255); d[o + 3] = 255;
+    }
+    x.putImageData(img, 0, 0);
+    x.lineWidth = 1;
+    for (const [st, n] of [['rgba(40,78,30,0.45)', 820], ['rgba(150,190,110,0.35)', 520]]) {   // blades (drawn across the edges too: tileable)
+      x.strokeStyle = st; x.beginPath();
+      for (let k = 0; k < n; k++) { const px = r() * S, py = r() * S, dx = (r() - 0.5) * 2, dy = -(1.2 + r() * 2.4);
+        for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const qx = px + a * S, qy = py + b * S; if (qx > -6 && qx < S + 6 && qy > -6 && qy < S + 6) { x.moveTo(qx, qy); x.lineTo(qx + dx, qy + dy); } } }
+      x.stroke(); }
+    for (const [st, n, sz] of [['rgba(44,90,36,0.5)', 80, 3], ['#f0f0e6', 40, 1]]) { x.fillStyle = st; for (let k = 0; k < n; k++) x.fillRect(Math.floor(r() * (S - sz)), Math.floor(r() * (S - sz)), sz, sz); }   // tufts, clover flowers
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = aniso || 4; return t;
+  }
   function szAtlas(names) {   // text boards (4 x 16 cells of 256 x 64): the corner names, braking boards, banners
     const c = document.createElement('canvas'); c.width = 1024; c.height = 1024; const x = c.getContext('2d');
     const cell = (k, bg, fg, txt, px, stripe) => { const cx = (k % 4) * 256, cy = Math.floor(k / 4) * 64; x.fillStyle = bg; x.fillRect(cx, cy, 256, 64); if (stripe) { x.fillStyle = stripe; x.fillRect(cx, cy + 56, 256, 8); x.fillRect(cx, cy, 256, 4); }
@@ -9155,6 +9174,7 @@ const World = (function () {
     SZ_FLAG.forEach((f, k) => { const n = B + 8 + SZ_FAN.length + k, cx = (n % 4) * 256, cy = Math.floor(n / 4) * 64;   // flags: Japan, then plain team colours with a stripe
       x.fillStyle = f[0]; x.fillRect(cx, cy, 96, 64);
       if (f[1] === 'sun') { x.fillStyle = '#c8102e'; x.beginPath(); x.arc(cx + 48, cy + 32, 19, 0, TAU); x.fill(); } else { x.fillStyle = f[1]; x.fillRect(cx, cy + 24, 96, 16); } });
+    cell(SZ_DRS(B), '#101114', '#fff', 'DRS', 44, '#39c84a');   // (where the DRS zone opens)
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
   }
   // knockable props (as the Nordschleife's): posts every 60-80 m, tyre walls at the corner exits; not on the start / finish straight, the
@@ -9296,7 +9316,7 @@ const World = (function () {
     const nearX = (i, m) => { for (const X of XC) if (szCd(i, X.up) < m || szCd(i, X.lo) < m) return true; return false; };
 
     /* ---- terrain tiles ---- */
-    const gMat = new THREE.MeshLambertMaterial({ map: tex.grass, vertexColors: true });
+    const gMat = new THREE.MeshLambertMaterial({ map: ownTex(szGrassTex(tex.grass.anisotropy)), vertexColors: true });   // (the lawns' own grass: no stripes in the picture, the vertex colours mow them)
     let nTiles = 0;
     {
       const grp = new THREE.Group(); root.add(grp); out.ground = grp;
@@ -9331,12 +9351,20 @@ const World = (function () {
     const gravW = (i, side) => { const gv = side > 0 ? T.gravR : T.gravL; let k = 0; for (let d = -3; d <= 3; d++) k += gv[(i + d + N) % N]; return k / 7; };   // gravel trap width share (tapers in and out)
     const CH = 128, OFFS = [-1, -2 / 3, -1 / 3, 0, 1 / 3, 2 / 3, 1], tileL = 8;   // (the road's cross-section: shares of its half-width at each sample; its texture
     // runs from the widest edge, w, so it doesn't stretch where the road narrows)
-    const shade = (i, o) => { const rl = T.rl[i]; let k = 0.86 - 0.15 * Math.exp(-((o - rl) * (o - rl)) / 5); if (Math.abs(o) > WAt(i) * 0.92) k -= 0.03; return [k, k, k * 1.02]; };
-    const vg = [0.97, 1.05, 0.92], conc = [0.74, 0.74, 0.72];
+    // the asphalt's tone (as on the Red Bull Ring): resurfaced sections of 120-260 m (seams across the road), the rubbered racing line, darker
+    // still in the braking zones of the slower corners
+    const secT = new Float32Array(N), brk = new Float32Array(N);
+    for (let i0 = 0, k = 0; i0 < N; k++) { const n = 60 + Math.floor(crH(k, 3, 101) * 70), t = 0.94 + crH(k, 5, 101) * 0.09; for (let i = i0; i < Math.min(N, i0 + n); i++) secT[i] = t; i0 += n; }
+    for (const c of T.corners) if (c.sev >= 2) for (let k = -70; k <= 6; k++) { const i = (c.i0 + k + N) % N, f = k < -10 ? sstep(-70, -12, k) : sstep(6, -10, k); if (f > brk[i]) brk[i] = f; }
+    const shade = (i, o) => { const rl = T.rl[i]; let k = (0.8 - (0.14 + 0.12 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > WAt(i) * 0.92) k -= 0.03; return [k, k, k * 1.02]; };
+    // the verge inside the barriers, mown in stripes along the track: MOW_W m bands from 1.2 m past the edge, light and dark in turn (the
+    // dark ones a deeper green; as on the Red Bull Ring)
+    const vg = [0.97, 1.05, 0.92], conc = [0.74, 0.74, 0.72], MOW_D = [0.2, 0.13, 0.16], vgD = vg.map((v, k) => v * (1 - MOW_D[k])), MOW_W = 3, MOW_N = 6;
     const RO_C = [1.04, 1.04, 1.06], roMat = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true });   // (the asphalt run-offs: the road's texture, paler)
     for (let c0 = 0; c0 < N; c0 += CH) {
       const gr = new RB(true), gl = new RB(), gv = new RB(true), gk = new RB(true), gs = new RB(true), ga = new RB(true), grB = new RB(true), glB = new RB(), gvB = new RB();
       let pr = -1, pl = -1, pv = [-1, -1], pk = [-1, -1], ps = [-1, -1], pa = [-1, -1], pg = [-1, -1], prB = -1, plB = -1, pvB = [-1, -1], pd = false;
+      const pw = [null, null], pwB = [null, null];   // (the previous verge rows' offsets: which quads have a width)
       for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++) {
         const i = ii % N, v = ii * ds / tileL, deck = !!onDeck(i), both = deck && pd, wi = WAt(i), offs = OFFS.map(f => f * wi); pd = deck;
         // (a quad between two rows on the bridge goes into the bridge meshes instead)
@@ -9347,16 +9375,22 @@ const World = (function () {
         if (pl >= 0 && !both) { gl.link(pl, l, 0, 1); gl.link(pl, l, 2, 3); } pl = l;
         if (lB >= 0 && plB >= 0) { glB.link(plB, lB, 0, 1); glB.link(plB, lB, 2, 3); } plB = lB;
         for (const side of [-1, 1]) {
-          const si = side > 0 ? 1 : 0, vr = SZ.verge(i, side), pts = vr.map(([o, h]) => Pt(i, side * o, h));
-          const cols = vr.map(([o], k) => { if (deck) return conc; const p = pts[k]; if (k < 3) return vg; const gc = szGCol(p[0], p[2]); return k === 3 ? [lerp(vg[0], gc[0], 0.5), lerp(vg[1], gc[1], 0.5), lerp(vg[2], gc[2], 0.5)] : gc; });
+          const si = side > 0 ? 1 : 0, vr = SZ.verge(i, side), mow = !deck && !loWall(i) && !upWall(i), [o1, h1] = vr[1], [o2, h2] = vr[2], band = [];
+          for (let b = 1; b <= MOW_N; b++) { const o = mow ? Math.min(o1 + b * MOW_W, o2) : o1, h = h1 + (h2 - h1) * (o - o1) / Math.max(1e-3, o2 - o1); band.push([o, h], [o, h]); }   // (each edge twice: a sharp change of colour)
+          const pr = [vr[0], vr[1], ...band, vr[2], vr[3], vr[4]], nb = 2 + 2 * MOW_N, pts = pr.map(([o, h]) => Pt(i, side * o, h));
+          const cols = pr.map(([o], k) => { if (deck) return conc; const p = pts[k]; if (k <= nb) return k < 2 || !mow ? vg : (Math.floor((k - 1) / 2) % 2 ? vg : vgD); const gc = szGCol(p[0], p[2]); return k === nb + 1 ? [lerp(vg[0], gc[0], 0.5), lerp(vg[1], gc[1], 0.5), lerp(vg[2], gc[2], 0.5)] : gc; });
           const ordered = side > 0 ? { p: pts, c: cols } : { p: pts.slice().reverse(), c: cols.slice().reverse() };   // rows run left -> right
           const rv = gv.row(ordered.p, ordered.c, ordered.p.map(p => [p[0] / 14, -p[2] / 14]));   // (the terrain tiles' grass scale: no seam)
-          if (pv[si] >= 0 && !both) gv.link(pv[si], rv, 0, 4); pv[si] = rv;
-          const rvB = deck ? gvB.row(ordered.p, ordered.c) : -1; if (rvB >= 0 && pvB[si] >= 0) gvB.link(pvB[si], rvB, 0, 4); pvB[si] = rvB;
-          if (kerb[si][i]) {   // red / white kerb, raised a little towards its outer edge
-            const kp = side > 0 ? [Pt(i, wi - 0.02, 0.04), Pt(i, wi + T.curbW, 0.085)] : [Pt(i, -(wi + T.curbW), 0.085), Pt(i, -wi + 0.02, 0.04)];
-            const rk = gk.row(kp, [[1, 1, 1], [1, 1, 1]], side > 0 ? [[0, ii * ds / 3], [1, ii * ds / 3]] : [[1, ii * ds / 3], [0, ii * ds / 3]]);
-            if (pk[si] >= 0) gk.link(pk[si], rk, 0, 1); pk[si] = rk;
+          const ow = side > 0 ? pr.map(e => e[0]) : pr.map(e => e[0]).reverse(), qw = pw[si];
+          if (pv[si] >= 0 && !both) for (let k = 0; k < ow.length - 1; k++) if (Math.abs(ow[k + 1] - ow[k]) > 1e-3 || Math.abs(qw[k + 1] - qw[k]) > 1e-3) gv.link(pv[si], rv, k, k + 1);
+          pv[si] = rv; pw[si] = ow;
+          const rvB = deck ? gvB.row(ordered.p, ordered.c) : -1; if (rvB >= 0 && pvB[si] >= 0) for (let k = 0; k < ow.length - 1; k++) if (Math.abs(ow[k + 1] - ow[k]) > 1e-3 || Math.abs(pwB[si][k + 1] - pwB[si][k]) > 1e-3) gvB.link(pvB[si], rvB, k, k + 1);
+          pvB[si] = rvB; pwB[si] = ow;
+          if (kerb[si][i]) {   // red / white kerb in 1.5 m blocks: a sloped inner edge, a flat top, a low outer lip (as on the Red Bull Ring)
+            const cw = T.curbW, pf = [[wi - 0.02, 0.035], [wi + 0.14, 0.078], [wi + cw - 0.12, 0.085], [wi + cw + 0.02, 0.03]], kv = ii * ds / 3;
+            const sh = [0.84, 1, 1, 0.78].map(k => [k, k, k]), us = [0, 0.1, 0.92, 1], o = side > 0 ? [0, 1, 2, 3] : [3, 2, 1, 0];
+            const rk = gk.row(o.map(k => Pt(i, side * pf[k][0], pf[k][1])), o.map(k => sh[k]), o.map(k => [us[k], kv]));
+            if (pk[si] >= 0) gk.link(pk[si], rk, 0, 3); pk[si] = rk;
           } else pk[si] = -1;
           const gwv = gravW(i, side), bar = side > 0 ? T.br[i] : T.bl[i], tar = !!(T.roT && T.roT[si][i]);
           if (gwv > 0 && !deck && !tar) {   // gravel trap on the verge: from 3 m past the edge to 1.5 m short of the barrier, pinched in at its ends
@@ -9378,6 +9412,44 @@ const World = (function () {
       }
       addM(gr, aMat); addM(gl, lMat); addM(gv, gMat); addM(gk, cMat); addM(gs, sMat); addM(ga, roMat);
       addM(grB, aMatB); addM(glB, lMatB); addM(gvB, dMatB);
+    }
+    /* ---- on the asphalt: a few repair patches and sealed cracks (the Nordschleife's decal atlas; the tyre marks are the common ones, World's
+       tyreMarks), not on the bridge (its road fades while the car drives underneath) nor on the grid; and the DRS lines across the road: a
+       solid one at the detection point, a dashed one where the zone opens (as on the Red Bull Ring). Strips 5 cm over the road, per road
+       chunk, drawn without writing depth ---- */
+    let nDecals = 0;
+    {
+      const dTex = ownTex(nrDecalTex()); dTex.anisotropy = tex.asphalt.anisotropy || 4;
+      const dMat = new THREE.MeshLambertMaterial({ map: dTex, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4 });
+      const RD = rng(5320), dcs = [], put = (i0, n, c, hw, cell, a, lay) => { for (let k = 0; k <= n; k++) if (onDeck((i0 + k) % N)) return; dcs.push([i0, n, c, hw, cell, a, lay]); };   // (their own random stream: R() is not drawn from)
+      for (let d = 60; d < T.len - 130; d += 30) {   // (not on the grid)
+        const i = T.idx(sAt(d)), wi = WAt(i);
+        if (RD() < 0.05) put(i, 5 + Math.floor(RD() * 4), (RD() - 0.5) * 6, 1.2 + RD() * 0.6, 24 + Math.floor(RD() * 2), 0.75, 1);   // sealed cracks
+        if (RD() < 0.06) { const hw = 1.5 + RD() * 1.2; put(i, 2 + Math.floor(RD() * 6), (RD() < 0.5 ? -1 : 1) * Math.max(0, wi - 0.8 - hw) * RD(), hw, 28 + Math.floor(RD() * 4), 0.85, 0); }   // repair patches
+      }
+      dcs.sort((a, b) => a[6] - b[6]);   // (patches under cracks)
+      const rbs = new Map();
+      for (const [i0, n, c, hw, cell, a] of dcs) {
+        const key = Math.floor(i0 / CH); let rb = rbs.get(key); if (!rb) rbs.set(key, rb = new RB(true, true));
+        const cu = cell % 4, cv = Math.floor(cell / 4), u0 = cu / 4 + 1 / 512, u1 = (cu + 1) / 4 - 1 / 512, vt = 1 - cv / 8 - 1 / 1024, vb = 1 - (cv + 1) / 8 + 1 / 1024, col = [1, 1, 1, a];
+        let pr = -1;
+        for (let k = 0; k <= n; k++) {
+          const i = (i0 + k) % N, lim = Math.max(0, WAt(i) - 0.7 - hw), cc = clamp(c, -lim, lim), v = vb + (vt - vb) * k / n;
+          const r = rb.row([Pt(i, cc - hw, 0.05), Pt(i, cc + hw, 0.05)], [col, col], [[u0, v], [u1, v]]);
+          if (pr >= 0) rb.link(pr, r, 0, 1); pr = r;
+        }
+      }
+      for (const rb of rbs.values()) { const m = addM(rb, dMat); if (m) m.renderOrder = 1; }
+      nDecals = dcs.length;
+      if (T.drs) {   // the DRS lines: 0.3 m across the whole road
+        const gd = new GB(), wl = [0.95, 0.95, 0.92];
+        for (const z of T.drs) for (const [at, dash] of [[z.det, false], [z.act, true]]) {
+          const s0 = sAt(at), s1 = s0 + 0.3, wd = WAt(T.idx(s0));
+          for (let o = -wd + 0.2; o < wd - 0.2 - 1e-6; o += dash ? 1.2 : 2) { const o1 = Math.min(wd - 0.2, o + (dash ? 0.7 : 2)), A = atSf(s0, o), B = atSf(s0, o1), C = atSf(s1, o1), D = atSf(s1, o);
+            gd.quadUp([A[0], hyS(s0) + 0.036, A[1]], [B[0], hyS(s0) + 0.036, B[1]], [C[0], hyS(s1) + 0.036, C[1]], [D[0], hyS(s1) + 0.036, D[1]], [wl, wl, wl, wl]); }
+        }
+        addM(gd, lMat);
+      }
     }
     // chequered start / finish line and the grid boxes (13 cars, staggered)
     {
@@ -9715,6 +9787,24 @@ const World = (function () {
       for (let m = 1; m <= 3; m++) signPost(sAt(s0 - m * 100), side, 1.4, AB + m - 1, 1.3, 0.75, 0.9);
     }
     for (const d of [-200, -120, 120, 200]) { const s = sAt(d), q = crAt(s); if (!q) continue; const off = -(q.bl + 1.2), x = q.px + q.nx * off, z = q.pz + q.nz * off; board(x, T.hy[q.i] + 1.5, z, -q.nx, -q.nz, 9, 1.6, AB + 4 + ((d > 0) | 0)); }   // SUZUKA banners on the wall of the main grandstand
+    for (const z of T.drs || []) { const s = sAt(z.act), side = PD && T.pitAt(s) ? -1 : roomSide(s); signPost(s, side, 1.4, SZ_DRS(AB), 2.4, 1.0, 1.6); }   // a DRS board where the zone opens (on the side with more room; not beside the pit lane)
+    let nPaint = 0;
+    {   // SUZUKA painted on the wide asphalt run-offs (def.tarmacRuns: outside Turns 1-2 and 130R) at their widest, across them, read from the
+        // cars coming in (as the names on the Red Bull Ring's); on the run-off's own surface
+      const gp = new GB(true), W1 = [1, 1, 1], [u0, v0, u1, v1] = aUV(AB + 4);
+      for (const side of [-1, 1]) {
+        const si = side > 0 ? 1 : 0, bar = side > 0 ? T.br : T.bl, ro = T.roT ? T.roT[si] : null;
+        for (let i = 0; ro && i < N;) {
+          if (!ro[i]) { i++; continue; }
+          let bi = -1, bw = 0, j = i; for (; j < N && ro[j]; j++) { const wd = bar[j] - WAt(j) - T.curbW; if (gravW(j, side) > 0.95 && wd > bw) { bw = wd; bi = j; } }
+          i = j; if (bi < 0 || bw < 13 || onDeck(bi)) continue;
+          const o0 = WAt(bi) + T.curbW + 2.2, o1 = Math.min(bar[bi] - 1.6, o0 + 15), s0 = bi * ds, s1 = s0 + (o1 - o0) / 4;
+          const Q = (s, o) => { const q = atSf(s, side * o), k = q[3]; return [q[0], T.hy[k] + vY(SZ.verge(k, side), o) + 0.036, q[1]]; }, oL = side < 0 ? o1 : o0, oR = side < 0 ? o0 : o1;   // (the text's left on the driver's left)
+          const mc = Q(s0, (o0 + o1) / 2); gp.quadO(Q(s0, oL), Q(s0, oR), Q(s1, oR), Q(s1, oL), W1, [mc[0], mc[1] - 5, mc[2]], [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]); nPaint++;
+        }
+      }
+      const mp = addM(gp, new THREE.MeshLambertMaterial({ map: atlas, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 })); if (mp) mp.castShadow = false;
+    }
 
     /* ---- TV camera towers outside the big corners; a recovery truck and the medical car behind the barrier after Turn 1, the Hairpin, Spoon
        and the Casio Triangle ---- */
@@ -9870,6 +9960,30 @@ const World = (function () {
     }
     for (const t of tk) t.addTo(root, true);
 
+    /* ---- the lawns out past the barriers, mown in stripes too (as on the Red Bull Ring): MOW_B darker bands along the track from 3.5 m past
+       the barrier (the ground's own colour, a deeper green, fading out 20-36 m out), 5 cm over the ground; not on the pit side of the pit
+       lane, round the crossover, under the stands, the buildings and the crowds, on the ponds, nor where the inside of a bend would fold them;
+       the woods, the scrub and the car parks keep their own ground ---- */
+    let nMow = 0;
+    {
+      const MOW_B = 5, MOW_O = 3.5, gm = new Chunks(256, true);
+      const mowPt = (i, side, o) => { const p = Pt(i, side * o, 0), x = p[0], z = p[2];
+        if (szDist(x, z) < o - 4 || excluded(x, z) || inRects(x, z) || szPond(x, z)) return null;   // (nearer another part of the track: its lawn)
+        const f = (1 - szLCf(x, z, 1)) * (1 - szLCf(x, z, 2)) * (1 - szLCf(x, z, 3)) * sstep(36, 20, o - (side > 0 ? T.br[i] : T.bl[i]));
+        if (f < 0.05) return null; const c = szGCol(x, z); return { p: [x, szGround(x, z) + 0.05, z], c: c.map((v, k) => v * (1 - MOW_D[k] * f)) }; };
+      for (const side of [-1, 1]) for (let b = 0; b < MOW_B; b++) {
+        let prev = null;
+        for (let i = 0; i <= N; i += 2) {   // (every other sample: 4 m quads)
+          const ii = i % N, bar = side > 0 ? T.br[ii] : T.bl[ii], fold = side * T.k[ii] > 0 ? 0.7 / Math.abs(T.k[ii]) : 1e9, oa = bar + 3.5 + b * 2 * MOW_O, ob = oa + MOW_O;
+          const skip = ob >= fold || nearX(ii, 70) || (side > 0 && (pitR(ii) || pitR((ii + 10) % N) || pitR((ii - 10 + N) % N)));
+          const A = skip ? null : mowPt(ii, side, oa), B = A ? mowPt(ii, side, ob) : null, cur = A && B ? (side > 0 ? [A, B] : [B, A]) : null;
+          if (cur && prev) { const [a, bq] = prev, [d, c] = cur; gm.get(a.p[0], a.p[2]).quadUp(a.p, bq.p, c.p, d.p, [a.c, bq.c, c.c, d.c], [a, bq, c, d].map(e => [e.p[0] / 14, -e.p[2] / 14])); nMow++; }
+          prev = cur;
+        }
+      }
+      gm.addTo(root, gMat, false, true);
+    }
+
     // knockable tyre walls and roadside posts (not on the main straight, round the crossover or on the grid)
     suzukaProps(out, (i, side, x, z) => mainStr(i) || nearX(i, 70) || (side > 0 && pitR(i)) || excluded(x, z) || inRects(x, z));
 
@@ -9880,7 +9994,7 @@ const World = (function () {
     if (!scrG.empty) { const st = ownTex(rbScreenTex({ name: ['SUZUKA', ''], info: ['5,807 km', '18 zavojev'] })); addM(scrG, new THREE.MeshBasicMaterial({ map: st })); out.dyn.screens = { tex: st, f: -1 }; }
     crowdFinish(CR, root, out);
     out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, buildings: nBld, stands: nStands, fans: nFans, banners: nBanners, tv: nTV, boxes: nBoxes,
-      screens: nScr, photographers: nPh, stalls: nStall, loos: nLoo, rides: out.dyn.rides ? out.dyn.rides.length : 0 };   // (read by the tests)
+      screens: nScr, photographers: nPh, stalls: nStall, loos: nLoo, rides: out.dyn.rides ? out.dyn.rides.length : 0, decals: nDecals, painted: nPaint, mown: nMow };   // (read by the tests)
     return out;
   }
 
