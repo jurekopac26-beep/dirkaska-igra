@@ -1960,6 +1960,10 @@ const Core = (function () {
       brk *= 1 - 0.55 * Math.min(1, Math.abs(c.inSteer));
       if (Math.abs(c.beta) > 0.22) brk *= 0.55;
     }
+    // arcade: a hairpin whose racing line is tighter than 5 m (the Stelvio's), near the cars' tightest turning circle (4-5 m), they turn by
+    // the slide, not the grip: in 8 % under the grip's speed, on the brakes through the turn-in (else the car comes in too fast and slides
+    // wide into the wall at the exit)
+    if (c.phys !== 'cs' && Math.abs(T.rk[ia]) > 0.2 && v > vT * 0.92) { thr = 0; brk = Math.max(brk, 0.3); }
     // traction management (tyre-model cars only; SWGP-style cars slide by design)
     const ab = Math.abs(c.beta);
     if (!c.arcade && c.phys !== 'cs' && ab > 0.1 && c.vl > 6) thr *= clamp(1 - (ab - 0.1) * 3.5, 0.25, 1);

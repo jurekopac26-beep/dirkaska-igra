@@ -602,62 +602,62 @@
  "stelvio/cs": {
   "finished": 1,
   "cars": 1,
-  "winner": 738.39,
+  "winner": 717.66,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "ee498c020375cfbd9526039d"
+  "digest": "f3078685d7f92e42e567344c"
  },
  "stelvio/cs/rain": {
   "finished": 1,
   "cars": 1,
-  "winner": 793.11,
+  "winner": 769.99,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "3adff973e106afde755c7ae8"
+  "digest": "2e81dbf7449df3bde779b075"
  },
  "stelvio/cs/formula": {
   "finished": 1,
   "cars": 1,
-  "winner": 662.99,
+  "winner": 642.35,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "754ebd021b37477f8b26c18a"
+  "digest": "702bbac69fb108e5f7a640e9"
  },
  "stelvio/arcade": {
   "finished": 1,
   "cars": 1,
-  "winner": 805.84,
+  "winner": 757.64,
   "spins": 0,
-  "walls": 67,
+  "walls": 15,
   "rescues": 0,
   "nan": false,
-  "digest": "cf47691e09e1cc795f70950f"
+  "digest": "7b276cae7772cb53f8c84bd5"
  },
  "stelvio/arcade/rain": {
   "finished": 1,
   "cars": 1,
-  "winner": 814.72,
+  "winner": 785.69,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "d3d7dfc9c664abb0f0553a9b"
+  "digest": "0339bf495935259ba6537a9d"
  },
  "stelvio/arcade/formula": {
   "finished": 1,
   "cars": 1,
-  "winner": 713.21,
+  "winner": 660.27,
   "spins": 0,
-  "walls": 156,
+  "walls": 19,
   "rescues": 0,
   "nan": false,
-  "digest": "ce6a4e6666d5890178a67b02"
+  "digest": "567c59f3dcb8da62a66eaaf1"
  },
  "nring/cs": {
   "finished": 21,

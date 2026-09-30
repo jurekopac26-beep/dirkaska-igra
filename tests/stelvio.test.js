@@ -18,24 +18,24 @@ const nearest = (x, z) => { let b = 0, bd = Infinity; for (let i = 0; i < T.N; i
 {
   const a0 = alt(0), a1 = alt(T.raceLen);
   let top = -Infinity, steep = 0; for (let d = 0; d <= T.raceLen; d += 10) { top = Math.max(top, alt(d)); if (d >= 50) steep = Math.max(steep, (alt(d) - alt(d - 50)) / 50); }
-  check('the climb: 24.5 km (the real road 24.3 km, its hairpins opened for the wider road), an open road against the clock', T.raceLen > 24400 && T.raceLen < 24700 && T.open && def.timeTrial && def.realKm === 24.3, `${(T.raceLen / 1000).toFixed(2)} km`);
-  // the road wider than the real one (more fun to race on): 10 m; no two legs of it closer than their asphalt (hairpins apart)
+  check('the climb: 24.8 km (the real road 24.3 km, its hairpins opened for the wider road), an open road against the clock', T.raceLen > 24700 && T.raceLen < 24950 && T.open && def.timeTrial && def.realKm === 24.3, `${(T.raceLen / 1000).toFixed(2)} km`);
+  // the road wider than the real one (more fun to race on): 14 m; no two legs of it closer than their asphalt and a gap (hairpins apart)
   let close = Infinity; for (let i = 0; i < T.N; i += 2) for (let j = i + 60; j < T.N; j += 2) { const d = Math.hypot(T.px[i] - T.px[j], T.pz[i] - T.pz[j]); if (d < close) close = d; if (d > 300) j += 40; }
-  check('the road: 10 m wide (the real one 6 m), no two legs closer than 12 m (their asphalt apart)', T.w === 5 && close > 12, `half width ${T.w} m, closest legs ${close.toFixed(1)} m`);
+  check('the road: 14 m wide (the real one 6 m), no two legs closer than 16 m (their asphalt apart)', T.w === 7 && close > 16, `half width ${T.w} m, closest legs ${close.toFixed(1)} m`);
   check('heights: the start at 920 m, the pass at 2757 m the top of the run, no ramp over 15 %', Math.abs(a0 - 920) < 5 && Math.abs(a1 - 2757) < 3 && top <= a1 + 0.5 && steep < 0.15,
     `start ${a0.toFixed(1)} m, finish ${a1.toFixed(1)} m, top ${top.toFixed(1)} m, steepest 50 m ${(steep * 100).toFixed(1)} %`);
   check('the altitude on the screen: def.alt the start and the pass', def.alt[0] === 920 && def.alt[1] === 2757, `${def.alt}`);
 }
 
-// the 48 hairpins: numbered 48 (at the bottom) to 1 (below the pass) up the road, each on the centre line, a turn of 140-190 degrees
+// the 48 hairpins: numbered 48 (at the bottom) to 1 (below the pass) up the road, each on the centre line, a turn of 135-195 degrees
 // over 120 m round its apex the way def.hairpins says (1 right, -1 left)
 {
   const H = def.hairpins, turn = (i) => { let a = 0; for (let k = Math.max(1, i - 30); k < Math.min(T.N - 1, i + 30); k++) a += Math.atan2(T.tx[k + 1] * -T.tz[k] + T.tz[k + 1] * T.tx[k], T.tx[k + 1] * T.tx[k] + T.tz[k + 1] * T.tz[k]); return a * 180 / Math.PI; };
   const at = H.map(([n, x, z, dir]) => { const [i, off] = nearest(x, z); return { n, d: dAt(i), off, dir, turn: turn(i) }; });
   const numbered = H.length === 48 && H.every(([n], k) => n === 48 - k), up = at.every((h, k) => k === 0 || h.d > at[k - 1].d), inRun = at.every(h => h.d > 0 && h.d < T.raceLen);
   check('hairpins: 48, numbered 48 to 1 up the road, all within the run', numbered && up && inRun, `${H.length} hairpins, 48 at ${at[0].d} m, 1 at ${at[at.length - 1].d} m`);
-  const wrong = at.filter(h => h.off > 2 || Math.abs(h.turn) < 140 || Math.abs(h.turn) > 190 || Math.sign(h.turn) !== h.dir);
-  check('hairpins: on the centre line, each a turn of 140-190 degrees to its side', !wrong.length, wrong.length ? wrong.map(h => `${h.n}: ${h.turn.toFixed(0)} deg, ${h.off.toFixed(1)} m off`).join('; ') : `turns ${Math.min(...at.map(h => Math.abs(h.turn))).toFixed(0)}-${Math.max(...at.map(h => Math.abs(h.turn))).toFixed(0)} deg`);
+  const wrong = at.filter(h => h.off > 2 || Math.abs(h.turn) < 135 || Math.abs(h.turn) > 195 || Math.sign(h.turn) !== h.dir);
+  check('hairpins: on the centre line, each a turn of 135-195 degrees to its side', !wrong.length, wrong.length ? wrong.map(h => `${h.n}: ${h.turn.toFixed(0)} deg, ${h.off.toFixed(1)} m off`).join('; ') : `turns ${Math.min(...at.map(h => Math.abs(h.turn))).toFixed(0)}-${Math.max(...at.map(h => Math.abs(h.turn))).toFixed(0)} deg`);
   check('hairpins: the first two below Trafoi, the rest above it', at[1].d < 9800 && at[2].d > 9800, `47 at ${at[1].d} m, 46 at ${at[2].d} m`);
 }
 
@@ -72,7 +72,7 @@ const nearest = (x, z) => { let b = 0, bd = Infinity; for (let i = 0; i < T.N; i
   const sides = def.bld.filter(b => b[6] === 3).map(([x, z]) => { const [i] = nearest(x, z); return Math.sign((x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i]); });
   check('the fort at Gomagoi: two blockhouses, one either side of the road', forts === 2 && sides[0] === -sides[1], `${forts} parts, sides ${sides}`);
   const i = T.idx(T.startS + 200);
-  check('Prad: the street out of the village wider than the pass road', T.bl[i] > 8 && T.br[i] > 7 && T.bl[T.idx(T.startS + 5000)] < 6, `at 200 m ${T.bl[i].toFixed(1)} / ${T.br[i].toFixed(1)} m`);
+  check('Prad: the street out of the village wider than the pass road', T.bl[i] > T.w + 3 && T.br[i] > T.w + 2 && T.bl[T.idx(T.startS + 5000)] < T.w + 1, `at 200 m ${T.bl[i].toFixed(1)} / ${T.br[i].toFixed(1)} m`);
 }
 
 // the distant mountains (def.far): the grids decode to their sizes (heights predicted from their neighbours, 5-bit characters; classes
@@ -99,7 +99,7 @@ const nearest = (x, z) => { let b = 0, bd = Infinity; for (let i = 0; i < T.N; i
   const S = def.sideRoads || [], J = S.filter(l => l[2] & 1), pts = (l) => { const o = []; for (let k = 3; k + 1 < l.length; k += 2) o.push([l[k], l[k + 1]]); return o; };
   const at = (l) => { const [p] = pts(l), [i, off] = nearest(p[0], p[1]); return { d: dAt(i), off, side: 0, i }; };
   const js = J.map(l => Object.assign(at(l), { kind: l[0] }));
-  check('side roads: over 150 roads, tracks and paths, over 90 from junctions on the pass road, each junction on its centre line', S.length > 150 && J.length > 90 && js.every(j => j.off < 5 && j.d > -145 && j.d < T.raceLen + 330),
+  check('side roads: over 150 roads, tracks and paths, over 90 from junctions on the pass road, each junction on its asphalt', S.length > 150 && J.length > 90 && js.every(j => j.off < T.w && j.d > -145 && j.d < T.raceLen + 330),
     `${S.length} lines, ${J.length} junctions, farthest off the centre line ${Math.max(...js.map(j => j.off)).toFixed(1)} m`);
   let over = 0; for (const l of S) { const P = pts(l); for (let k = (l[2] & 1) ? 4 : 0; k < P.length; k++) { const [i, d] = nearest(P[k][0], P[k][1]); if (d < T.w - 0.5) over++; } }
   check('side roads: none runs over the pass road\'s asphalt (beyond its junction)', over === 0, `${over} points on it`);
