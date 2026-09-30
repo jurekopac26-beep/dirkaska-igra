@@ -241,16 +241,16 @@
   }
  },
  "holjes": {
-  "meshes": 283,
-  "verts": 203871,
-  "instances": 6895,
+  "meshes": 571,
+  "verts": 232692,
+  "instances": 18022,
   "props": 152,
   "crowd": 2045,
-  "world": "4496b531",
+  "world": "6b4e5b10",
   "propsHash": "65236429",
   "floor": "bd4aab96/2464",
   "groups": {
-   "-:MeshLambertMaterial": "42991e54",
+   "-:MeshLambertMaterial": "e9bcd8de",
    "-:MeshPhongMaterial": "64c01064",
    "tyremarks:MeshBasicMaterial": "76d6801d",
    "-:MeshBasicMaterial": "bdc22f4c",

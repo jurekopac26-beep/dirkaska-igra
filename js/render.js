@@ -1081,7 +1081,7 @@ const Render = (function () {
     spa:      { fog: 0xc3ced7, sun: 0xfff1de, sunI: 0.98, sky: 0xd0dde9, gnd: 0x43522f, hemiI: 0.64, tint: [0.99, 1.0, 1.01], sat: 1.1 },   // the Ardennes: a little greyer, softer daylight (Spa's changeable weather)
     rbring:   { fog: 0xc6daea, sun: 0xfff1d8, sunI: 1.12, sky: 0xcfe3fb, gnd: 0x46602c, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.06, sunOff: [-86, 78, 52] },   // Styria in early summer, an afternoon sun (longer shadows): clear alpine air, fresh meadows, dark spruce woods
     suzuka:   { fog: 0xc8d9e6, sun: 0xfff1dc, sunI: 1.06, sky: 0xd5e7fa, gnd: 0x4f5c34, hemiI: 0.62, tint: [1.01, 1.0, 0.99], sat: 1.12 },   // Suzuka: a clear spring day in Mie
-    holjes:   { fog: 0xc9d8e2, sun: 0xfff0da, sunI: 1.1, sky: 0xcfe0f4, gnd: 0x44552e, hemiI: 0.6, tint: [1.01, 1.0, 0.98], sat: 1.08, sunOff: [-91, 78, 42], north: true },   // Höljes: a clear northern summer afternoon, the sun low in the south-west over the forest (long shadows), cool clean air
+    holjes:   { fog: 0xc9d8e2, sun: 0xfff0da, sunI: 1.1, sky: 0xcfe0f4, gnd: 0x44552e, hemiI: 0.6, tint: [1.01, 1.0, 0.98], sat: 1.08, sunOff: [-91, 78, 42], north: true, clouds: 0.5 },   // Höljes: a clear northern summer afternoon, the sun low in the south-west over the forest (long shadows), cool clean air, fair-weather clouds
   };
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   function applyTheme(id) {
@@ -2393,17 +2393,28 @@ const Render = (function () {
 
   /* ---------------- the sky: a dome round the camera for the views that look out to the horizon (the cockpit, the replay's TV cameras,
      the photo mode): the fog's colour at the horizon (the far world fades into it), a deeper colour overhead, a soft glow round the sun
-     (by day and at dusk; the moon's at night) ---------------- */
+     (by day and at dusk; the moon's at night); where the theme asks for them (clouds: how many), fair-weather clouds drifting on a deck
+     overhead, lit on the sun's side, thinning into the haze at the horizon (by day and at dusk, not in the rain) ---------------- */
   let sky = null;
   function skyStep(on) {
     if (!sky) {
       if (!on) return;
-      const u = { uBot: { value: new THREE.Color() }, uTop: { value: new THREE.Color() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uSunC: { value: new THREE.Color() }, uSunA: { value: 0 }, uAur: { value: 0 }, uT: { value: 0 } };
+      const u = { uBot: { value: new THREE.Color() }, uTop: { value: new THREE.Color() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uSunC: { value: new THREE.Color() }, uSunA: { value: 0 }, uAur: { value: 0 }, uT: { value: 0 },
+        uCld: { value: 0 }, uCO: { value: new THREE.Vector2() }, uCB: { value: 1 } };
       const mat = new THREE.ShaderMaterial({ uniforms: u, depthWrite: false, depthTest: false, fog: false, side: THREE.BackSide,
         vertexShader: 'varying vec3 vD; void main(){ vD = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-        fragmentShader: 'uniform vec3 uBot; uniform vec3 uTop; uniform vec3 uSun; uniform vec3 uSunC; uniform float uSunA; uniform float uAur; uniform float uT; varying vec3 vD;' +
+        fragmentShader: 'uniform vec3 uBot; uniform vec3 uTop; uniform vec3 uSun; uniform vec3 uSunC; uniform float uSunA; uniform float uAur; uniform float uT; uniform float uCld; uniform vec2 uCO; uniform float uCB; varying vec3 vD;' +
+          // (the clouds' noise: value noise with a 64-cell period, so the drifting offset wraps without a seam)
+          'float cH(vec2 i) { i = mod(i, 64.0); return fract(sin(dot(i, vec2(12.9898, 78.233))) * 43758.5453); }' +
+          'float cN(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(cH(i), cH(i + vec2(1.0, 0.0)), f.x), mix(cH(i + vec2(0.0, 1.0)), cH(i + 1.0), f.x), f.y); }' +
+          'float cF(vec2 p) { return 0.5 * cN(p) + 0.25 * cN(p * 2.0 + 13.0) + 0.125 * cN(p * 4.0 + 7.0) + 0.0625 * cN(p * 8.0 + 3.0); }' +
           'void main(){ vec3 d = normalize(vD); vec3 c = mix(uBot, uTop, pow(smoothstep(0.0, 0.85, d.y), 0.75)); float s = max(dot(d, uSun), 0.0);' +
           ' c += uSunC * uSunA * (pow(s, 90.0) * 0.8 + pow(s, 8.0) * 0.15);' +
+          ' if (uCld > 0.0 && d.y > 0.0) { vec2 q = d.xz / (d.y + 0.12) * 1.6 + uCO; float n = cF(q);' +
+          '  float cov = smoothstep(0.62 - 0.22 * uCld, 0.8 - 0.2 * uCld, n) * smoothstep(0.0, 0.2, d.y);' +
+          '  float lit = clamp((n - cF(q + uSun.xz * 0.35)) * 3.0 + 0.6, 0.0, 1.0);' +
+          '  vec3 cc = mix(vec3(0.64, 0.68, 0.77), vec3(1.0, 0.99, 0.96), lit) * mix(vec3(1.0), uSunC, 0.25) * uCB;' +
+          '  c = mix(c, mix(cc, uBot, 1.0 - smoothstep(0.0, 0.35, d.y)), cov); }' +
           // the aurora: curtains in a band over the northern sky (-z), folded along the horizon and drifting; green below, violet at the top
           ' if (uAur > 0.0) { float az = atan(d.x, -d.z), h = d.y, w = sin(az * 3.0 + uT * 0.05) * 0.6 + sin(az * 7.0 - uT * 0.08) * 0.25;' +
           '  float band = smoothstep(0.08, 0.2 + 0.05 * w, h) * (1.0 - smoothstep(0.3 + 0.1 * w, 0.62 + 0.08 * w, h)) * smoothstep(0.15, -0.55, d.z);' +
@@ -2420,6 +2431,8 @@ const Render = (function () {
     U.uBot.value.copy(scene.fog.color);
     const wn = whiteNight(); U.uTop.value.copy(scene.fog.color).lerp(_c2.setHex(wn ? 0x6f86c0 : night ? 0x010207 : dusk ? 0x34497f : atmos.season === 'winter' ? 0x86a6d0 : 0x3f7cd0), (night && !wn ? 0.8 : 0.55) * (1 - 0.8 * r));
     U.uAur.value = aur.on ? 1 : 0; U.uT.value = time % 1000;
+    const th = THEMES[themeId]; U.uCld.value = th && th.clouds && (!night || wn) ? th.clouds * (1 - r) : 0; U.uCB.value = wn ? 0.8 : dusk ? 0.85 : 1;
+    U.uCO.value.set((time * 0.004) % 64, (time * 0.0015) % 64);   // (the clouds drift slowly with the wind)
     const sl = Math.hypot(sunOff[0], sunOff[1], sunOff[2]); U.uSun.value.set(sunOff[0] / sl, sunOff[1] / sl, sunOff[2] / sl);
     U.uSunC.value.copy(sun.color); U.uSunA.value = (night ? 0.35 : dusk ? 1.3 : 1) * (1 - 0.85 * r);
     sky.mesh.position.copy(camera.position); sky.mesh.scale.setScalar(camera.far * 0.8);
