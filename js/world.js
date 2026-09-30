@@ -3066,6 +3066,8 @@ const World = (function () {
     const tu = sstep(0.56, 0.76, n6(x * 0.6 + 40, z * 0.6)) * sstep(tl - 5, tl + 20, h) * (1 - sstep(290, 350, h)) * 0.6, tq = q - 0.5;   // tundra: mottled green-brown
     ar = lerp(ar, 0.45 + tq * 0.12, tu); ag = lerp(ag, 0.41 - tq * 0.04, tu); ab = lerp(ab, 0.27, tu);
     r = lerp(r, ar, tun); g = lerp(g, ag, tun); b = lerp(b, ab, tun);
+    const sc = sstep(0.95, 0.8, ny) * tun * (0.5 + 0.5 * sstep(0.3, 0.7, q2)) * 0.85, sq = (q - 0.5) * 0.1;   // scree: loose grey-pink rubble on the middling slopes above the trees (paler, greyer than the gravel)
+    r = lerp(r, 0.57 + m * 0.08 + sq, sc); g = lerp(g, 0.51 + m * 0.06 + sq, sc); b = lerp(b, 0.47 + m * 0.05 + sq * 0.8, sc);
     const st = sstep(0.8, 0.6, ny) * 0.9;
     r = lerp(r, 0.62 + m * 0.06, st); g = lerp(g, 0.53 + m * 0.05, st); b = lerp(b, 0.48 + m * 0.04, st);
     if (h > 322) { const sn = sstep(330, 445, h); let c = h > 330 ? sstep(0.72 - 0.22 * sn, 0.8 - 0.22 * sn, P.n4(x * 0.8 + 50, z * 0.8)) : 0;
@@ -3075,6 +3077,10 @@ const World = (function () {
       r = lerp(r, 1.04, c); g = lerp(g, 1.06, c); b = lerp(b, 1.12, c);
       const e = 4 * c * (1 - c) * (0.45 + 0.3 * q); r = lerp(r, 0.76, e); g = lerp(g, 0.73, e); b = lerp(b, 0.7, e); }   // the dirty, wind-packed edge
     if (dd < 3) { const t = sstep(3, 0, dd) * 0.3; r = lerp(r, 0.6, t); g = lerp(g, 0.5, t); b = lerp(b, 0.42, t); }   // dusty verge
+    { // soft ambient occlusion: the ground's curvature over 6 and 18 m (opposite pairs, so a plain slope cancels out): darker in gullies, at the foot of slopes and of the road's cut, a touch lighter on the ridges
+      const G = pkGround, h0 = G(x, z), c6 = (G(x + 6, z) + G(x - 6, z) + G(x, z + 6) + G(x, z - 6) + G(x + 4.2, z + 4.2) + G(x - 4.2, z - 4.2) + G(x + 4.2, z - 4.2) + G(x - 4.2, z + 4.2)) / 8 - h0;
+      const c18 = (G(x + 18, z) + G(x - 18, z) + G(x, z + 18) + G(x, z - 18)) / 4 - h0, o = sstep(0.1, 1.1, c6) * 0.55 + sstep(0.4, 4, c18) * 0.45, k = 1 - 0.44 * o + 0.06 * sstep(-0.15, -1.2, c6);
+      r *= k; g *= k; b *= k * (1 + 0.04 * o); }   // (the shade a little bluer: skylight)
     PKCOL[0] = r; PKCOL[1] = g; PKCOL[2] = b; return PKCOL;
   }
   function pkTileOn(ti, tj) {   // 0: none, 1: full tile (5 m cells), 2: coarse outer ring (10 m cells; deep in the haze, but the top of a tall portrait view looks that far down into the valleys),
@@ -3105,7 +3111,7 @@ const World = (function () {
     }
     if (xs) { const [v, f] = xs, o = nb + na, M = 1 / +pkGMean.toFixed(3);   // (the shader's own rounding of the mean)
       pos.set(v.P, nb * 3); nor.set(v.N, nb * 3); col.set(v.C, nb * 3); uv.set(v.U, nb * 2);
-      pos.set(f.P, o * 3); nor.set(f.N, o * 3); for (let q = 0; q < nf * 3; q++) col[o * 3 + q] = f.C[q] * M; stp.fill(1, o); }
+      pos.set(f.P, o * 3); nor.set(f.N, o * 3); for (let q = 0; q < nf * 3; q++) col[o * 3 + q] = f.C[q] * M; stp.fill(2, o); }   // (steep 2: plain, no grit, no relief)
     const idx = nv > 65535 ? new Uint32Array(m * m * 6 + na + nf) : new Uint16Array(m * m * 6 + na + nf); k = 0;
     for (let b = 0; b < m; b++) for (let a = 0; a < m; a++) { const p = b * n + a, q = p + 1, c = p + n, d = c + 1; idx[k++] = p; idx[k++] = c; idx[k++] = q; idx[k++] = q; idx[k++] = c; idx[k++] = d; }
     for (let q = nb; q < nv; q++) idx[k++] = q;
@@ -3115,24 +3121,62 @@ const World = (function () {
     g.computeBoundingSphere(); return g;
   }
   let pkGTex = null, pkGMean = 0.9, pkATex = null, pkAKey = '';   // the ground and board textures are made once and reused by every Pikes build (the world teardown frees materials, not maps)
-  function pkTex() {   // neutral grey grit for the ground (the vertex colours give the hue): mottled, with small light and dark stones; tileable
+  function pkTex() {   // ground grit in three channels (tileable): r the grey grit (the vertex colours give the hue): mottled, with light and dark stones; g its relief (the stones as domes,
+    // for the sun-side emboss in pkGroundMat); b sparse glints (ice crystals, mica: the snow's sparkle)
     if (pkGTex) return pkGTex;
-    const S = 128, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), img = x.createImageData(S, S), d = img.data, r = rng(515), n = valueNoise2(516, 2), n2 = valueNoise2(517, 1);
-    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) { let k = 0.8 + n(i, j) * 0.16 + n2(i, j) * 0.08 + (r() - 0.5) * 0.1; const o = (j * S + i) * 4; d[o] = d[o + 1] = d[o + 2] = clamp(k * 255, 0, 255); d[o + 3] = 255; }
+    const S = 128, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), img = x.createImageData(S, S), d = img.data, r = rng(515), n = valueNoise2(516, 2), n2 = valueNoise2(517, 1), n3 = valueNoise2(518, 8);
+    const A = new Float32Array(S * S), H = new Float32Array(S * S);
+    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) { const k = j * S + i; A[k] = 0.8 + n(i, j) * 0.16 + n2(i, j) * 0.08 + (r() - 0.5) * 0.1; H[k] = 0.2 + n3(i, j) * 0.16 + n(i, j) * 0.1 + n2(i, j) * 0.04; }
+    const stone = (px, py, rr, tone, al, ht) => {   // a round stone (wrapped at the edges): the grit towards tone, the relief a dome
+      for (let v = Math.floor(py - rr - 1); v <= Math.ceil(py + rr + 1); v++) for (let u = Math.floor(px - rr - 1); u <= Math.ceil(px + rr + 1); u++) {
+        const q = Math.hypot(u + 0.5 - px, v + 0.5 - py), cov = clamp(rr + 0.5 - q, 0, 1); if (cov <= 0) continue;
+        const k = ((v + S) % S) * S + (u + S) % S, dm = Math.sqrt(Math.max(0, 1 - (q / (rr + 0.5)) ** 2)); A[k] = lerp(A[k], tone, cov * al); H[k] = Math.max(H[k], 0.28 + ht * dm); } };
+    for (let k = 0; k < 80; k++) stone(r() * S, r() * S, 1.5 + r() * 2.2, 0.74 + r() * 0.3, 0.45, 0.3 + r() * 0.3);   // pebbles and cobbles (10-30 cm)
+    for (let k = 0; k < 280; k++) stone(r() * S, r() * S, 0.6 + r() * 1.2, r() < 0.5 ? 0.3 : 1.1, 0.35, 0.12 + r() * 0.2);   // grit
+    let sum = 0;
+    for (let k = 0; k < S * S; k++) { const o = k * 4; d[o] = clamp(A[k], 0, 1) * 255; d[o + 1] = clamp(H[k], 0, 1) * 190; d[o + 2] = r() < 0.03 ? 120 + r() * 135 : 0; d[o + 3] = 255; sum += d[o]; }   // (g kept below r: the season code must not take the map for grass)
     x.putImageData(img, 0, 0);
-    for (let k = 0; k < 260; k++) { const px = r() * S, py = r() * S, rr = 0.6 + r() * 1.4; x.fillStyle = r() < 0.5 ? 'rgba(40,40,40,0.35)' : 'rgba(255,255,255,0.3)'; x.beginPath(); x.arc(px, py, rr, 0, TAU); x.fill(); }
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4;
-    let sum = 0; for (let o = 0; o < d.length; o += 4) sum += d[o]; pkGMean = sum / (S * S) / 255;   // steep faces fade to this (pkGroundMat; the few light and dark stones about cancel out)
+    pkGMean = sum / (S * S) / 255;   // steep faces fade to this (pkGroundMat)
     return (pkGTex = t);
   }
-  function pkGroundMat() {   // terrain tiles: the grit map fades to its mean grey on steep faces (attribute 'steep'), where the top-down UVs would smear it into streaks
+  function pkGroundMat() {   // terrain tiles (one material): the grit (map r) times a second, ~58 m copy of it (breaks up the 10 m repeat); on steep faces (attribute 'steep', where the top-down
+    // UVs would smear it) the grit projected sideways instead, stretched along the face like the granite's joints; the merged scenery (steep 2) takes the plain mean grey.
+    // Relief: the grit's height (map g) against its height a little towards the sun: the stones' sun side lit, their far side dark (strong under the low sun, none in shadow).
+    // Glints: bright, near-white ground (snow, ice; the winter's snow too) sparkles where the map's sparse b dots, shifted with the view, face the sun
     const t = pkTex(), m = new THREE.MeshLambertMaterial({ map: t, vertexColors: true }), mean = pkGMean.toFixed(3);
     m.onBeforeCompile = (sh) => {
-      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float steep;\nvarying float vSteep;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvSteep = steep;');
-      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vSteep;').replace('#include <map_fragment>',
-        '#ifdef USE_MAP\n  vec4 texelColor = mapTexelToLinear( texture2D( map, vUv ) );\n  diffuseColor *= mix( texelColor, vec4( vec3( ' + mean + ' ), 1.0 ), vSteep );\n#endif');
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float steep;\nvarying float vSteep;\nvarying float vPkY;\nvarying vec3 vPkN;\nvarying vec3 vPkV;')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvSteep = steep; vPkY = position.y;').replace('#include <defaultnormal_vertex>', '#include <defaultnormal_vertex>\nvPkN = transformedNormal;')
+        .replace('#include <project_vertex>', '#include <project_vertex>\nvPkV = -mvPosition.xyz;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vSteep;\nvarying float vPkY;\nvarying vec3 vPkN;\nvarying vec3 vPkV;').replace('#include <map_fragment>', [
+        'float pkE = 0.0, pkSc = step( 1.5, vSteep ), pkSt = min( vSteep, 1.0 ), pkW = smoothstep( 0.76, 0.9, min( vColor.r, min( vColor.g, vColor.b ) ) * mix( 1.0, ' + mean + ', pkSc ) );   // pkW: snow',
+        '#ifdef USE_MAP',
+        '  vec4 pkT = texture2D( map, vUv );',
+        '  float pkG = pkT.r * mix( 1.0, texture2D( map, vUv * 0.173 + vec2( 0.31, 0.57 ) ).r / ' + mean + ', 0.55 );',
+        '  if ( pkSt > 0.01 ) {',
+        '    vec3 pkNw = ( vec4( vPkN, 0.0 ) * viewMatrix ).xyz; float pkWx = abs( pkNw.x ) / ( abs( pkNw.x ) + abs( pkNw.z ) + 1e-4 );',
+        '    float pkR = mix( texture2D( map, vec2( vUv.x * 0.45, vPkY * 0.16 ) ).r, texture2D( map, vec2( vUv.y * 0.45 + 0.5, vPkY * 0.16 ) ).r, pkWx );',
+        '    pkG = mix( pkG, mix( pkR, ' + mean + ', 0.25 ), pkSt );',
+        '  }',
+        '  diffuseColor.rgb *= mix( mix( pkG, ' + mean + ' * 1.04, pkW * 0.75 ), ' + mean + ', pkSc );',   // (snow: smoother)
+        '  #if NUM_DIR_LIGHTS > 0',
+        '    vec3 pkL = ( vec4( directionalLights[ 0 ].direction, 0.0 ) * viewMatrix ).xyz; vec2 pkO = vec2( pkL.x, -pkL.z ); float pkOl = length( pkO );',
+        '    pkE = ( pkT.g - texture2D( map, vUv + pkO / max( pkOl, 1e-3 ) * 0.008 ).g ) * 1.6 * min( pkOl / max( pkL.y, 0.2 ), 2.5 ) * ( 1.0 - pkSt ) * ( 1.0 - pkSc ) * ( 1.0 - 0.85 * pkW );',
+        '  #endif',
+        '#endif'].join('\n'))
+        .replace('reflectedLight.directDiffuse *= BRDF_Diffuse_Lambert( diffuseColor.rgb ) * getShadowMask();', 'reflectedLight.directDiffuse *= BRDF_Diffuse_Lambert( diffuseColor.rgb ) * getShadowMask() * clamp( 1.0 + pkE, 0.4, 1.7 );')
+        .replace('#include <envmap_fragment>', [
+        '#include <envmap_fragment>',
+        '#if defined( USE_MAP ) && defined( USE_COLOR ) && NUM_DIR_LIGHTS > 0',
+        '  if ( pkW > 0.0 ) {',
+        '    vec3 pkV = normalize( vPkV ), pkN = normalize( vPkN ), pkLd = directionalLights[ 0 ].direction, pkH = normalize( pkLd + pkV );',
+        '    float pkS = texture2D( map, vUv * 0.61 + pkV.xy * 0.05 ).b;',
+        '    outgoingLight += directionalLights[ 0 ].color * ( smoothstep( 0.45, 0.9, pkS ) * 2.6 * smoothstep( 0.3, 0.95, dot( pkN, pkH ) ) * step( 0.0, dot( pkN, pkLd ) ) * pkW * getShadowMask() );',
+        '  }',
+        '#endif'].join('\n'));
     };
-    m.customProgramCacheKey = () => 'pkGround';
+    m.customProgramCacheKey = () => 'pkGround2';
     return m;
   }
   function pkAtlas(cps) {   // text boards (8 rows of 1024 x 128): START, CILJ, CP1-CP4 with altitude, the summit sign, the paddock banner
@@ -3154,6 +3198,16 @@ const World = (function () {
   function pkPine(g, x, y, z, h, col, R, far, sp) {   // dark conifer: thin trunk (not on the far ones) + three stacked tiers (51-60 vertices); far 2: two tiers (33 vertices), 3: one cone (the same draws from R)
     // sp (species; always the same 4 draws from R, the rest hashed from where it stands): 1 Engelmann spruce (narrow, pointed, dark blue-green), 2 Douglas fir (fuller),
     // 3 limber pine (rounder, lighter), 4 a dead grey snag, 5 krummholz (wind-stunted flag tree at the treeline: the branches stream east, away from the west wind)
+    // snow on the branches: each tier's tip takes an up-leaning normal (the season code takes it for ground: deep snow on the tips in winter, a dusting lower down); towards the
+    // treeline some old snow lies on the tips all year (hashed per tree: no draws from R, every tree stays as it was)
+    const hq = (((Math.round(x * 7) * 2654435761) ^ (Math.round(z * 7) * 40503)) >>> 0) % 1000 / 1000, tlp = pkTreeline(x, z), sn = sstep(tlp - 45, tlp + 5, y) * (0.2 + 0.55 * hq);
+    const snw = (c, k) => sn > 0 ? [lerp(c[0], 0.9, sn * k), lerp(c[1], 0.93, sn * k), lerp(c[2], 0.98, sn * k)] : c;
+    const tier = (g, cx, cy, cz, r, hh, sides, c0, cT, rot) => {   // a tier (as cone(), flat shaded) with the snowy tip
+      if (hh <= 0 || sides < 4) return cone(g, cx, cy, cz, r, hh, sides, c0, cT, rot);   // (trunks, the undersides: as they were)
+      const apex = [cx, cy + hh, cz], inn = [cx, cy + hh * 0.3, cz], L = Math.hypot(r, hh) || 1, ny = r / L, nh = hh / L, ct = snw(cT || c0, 1), cb = snw(c0, 0.2);
+      for (let i = 0; i < sides; i++) { const a0 = rot + i / sides * TAU, a1 = rot + (i + 1) / sides * TAU, am = (a0 + a1) / 2, cx1 = Math.cos(am) * nh, cz1 = Math.sin(am) * nh, l = Math.hypot(cx1 * 0.45, 0.9, cz1 * 0.45), fn = [cx1, ny, cz1];
+        g.triON([cx + Math.cos(a0) * r, cy, cz + Math.sin(a0) * r], apex, [cx + Math.cos(a1) * r, cy, cz + Math.sin(a1) * r], fn, [cx1 * 0.45 / l, 0.9 / l, cz1 * 0.45 / l], fn, inn, cb, ct, cb); }
+    };
     if (sp) {
       const rot = R() * TAU, r0 = h * (0.24 + R() * 0.05), v1 = vary([1, 1, 1], R, 0.08), v2 = vary([1, 1, 1], R, 0.08), H = rng((Math.round(x * 10) * 73856093) ^ (Math.round(z * 10) * 19349663) ^ 4099);
       const tn = (c, a, b, d) => [c[0] * a, c[1] * b, c[2] * d], lit = (c) => [c[0] * 1.3, c[1] * 1.28, c[2] * 1.2], sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k], bark = [0.3, 0.21, 0.14];
@@ -3161,35 +3215,35 @@ const World = (function () {
         for (let k = 0; k < 3; k++) { const e0 = a0 + k / 3 * TAU, e1 = e0 + TAU / 3; g.triO([b[0] + Math.cos(e0) * rb, b[1], b[2] + Math.sin(e0) * rb], t, [b[0] + Math.cos(e1) * rb, b[1], b[2] + Math.sin(e1) * rb], cb, inn, ct, cb); } };
       const flag = (p, ux, uz, L, w, hu, hd, c) => {   // a wind-streamed tuft: a spindle from just upwind of p to L downwind (8 faces), lit on top, dark below
         const A = [p[0] - ux * L * 0.12, p[1], p[2] - uz * L * 0.12], E = [p[0] + ux * L, p[1] - L * 0.1, p[2] + uz * L], q = [p[0] + ux * L * 0.35, p[1], p[2] + uz * L * 0.35];
-        const r = [[q[0], q[1] + hu, q[2]], [q[0] - uz * w, q[1], q[2] + ux * w], [q[0], q[1] - hd, q[2]], [q[0] + uz * w, q[1], q[2] - ux * w]], cs = [lit(c), c, sh(c, 0.6), c];
+        const r = [[q[0], q[1] + hu, q[2]], [q[0] - uz * w, q[1], q[2] + ux * w], [q[0], q[1] - hd, q[2]], [q[0] + uz * w, q[1], q[2] - ux * w]], cs = [snw(lit(c), 1), c, sh(c, 0.6), c];
         for (let k = 0; k < 4; k++) { const j = (k + 1) % 4; g.triO(A, r[k], r[j], sh(c, 0.85), q, cs[k], cs[j]); g.triO(E, r[j], r[k], sh(c, 0.9), q, cs[j], cs[k]); } };
       if (sp === 1) {   // Engelmann spruce
         const c = tn(col, 0.78, 0.9, 1.22), rr = r0 * 0.66;
-        if (far === 3) { cone(g, x, y + h * 0.1, z, rr * 0.95, h * 0.9, 6, c, lit(c), rot); return; }
-        if (far === 2) { cone(g, x, y + h * 0.1, z, rr, h * 0.5, 6, c, lit(c), rot); cone(g, x, y + h * 0.4, z, rr * 0.62, h * 0.6, 5, tn(c, v1[0], v1[0], v1[0]), lit(c), rot + 0.5); return; }
-        if (!far) cone(g, x, y - 0.3, z, h * 0.025 + 0.1, h * 0.3, 3, bark, null, rot);
-        cone(g, x, y + h * 0.08, z, rr, h * 0.38, 6, c, lit(c), rot);
-        cone(g, x, y + h * 0.3, z, rr * 0.78, h * 0.36, 6, sh(c, v1[0]), lit(c), rot + 0.5);
-        cone(g, x, y + h * 0.5, z, rr * 0.52, h * 0.5, 5, sh(c, v2[0]), lit(c), rot + 1); return;
+        if (far === 3) { tier(g, x, y + h * 0.1, z, rr * 0.95, h * 0.9, 6, c, lit(c), rot); return; }
+        if (far === 2) { tier(g, x, y + h * 0.1, z, rr, h * 0.5, 6, c, lit(c), rot); tier(g, x, y + h * 0.4, z, rr * 0.62, h * 0.6, 5, tn(c, v1[0], v1[0], v1[0]), lit(c), rot + 0.5); return; }
+        if (!far) tier(g, x, y - 0.3, z, h * 0.025 + 0.1, h * 0.3, 3, bark, null, rot);
+        tier(g, x, y + h * 0.08, z, rr, h * 0.38, 6, c, lit(c), rot);
+        tier(g, x, y + h * 0.3, z, rr * 0.78, h * 0.36, 6, sh(c, v1[0]), lit(c), rot + 0.5);
+        tier(g, x, y + h * 0.5, z, rr * 0.52, h * 0.5, 5, sh(c, v2[0]), lit(c), rot + 1); return;
       }
       if (sp === 2) {   // Douglas fir
         const c = tn(col, 1.06, 1.08, 0.8), rr = r0 * 1.14;
-        if (far === 3) { cone(g, x, y + h * 0.12, z, rr * 0.92, h * 0.88, 6, c, lit(c), rot); return; }
-        if (far === 2) { cone(g, x, y + h * 0.12, z, rr, h * 0.48, 6, c, lit(c), rot); cone(g, x, y + h * 0.4, z, rr * 0.68, h * 0.6, 6, sh(c, v1[0]), lit(c), rot + 0.5); return; }
-        if (!far) cone(g, x, y - 0.3, z, h * 0.03 + 0.14, h * 0.3, 3, bark, null, rot);
-        cone(g, x, y + h * 0.1, z, rr, h * 0.44, 6, sh(c, 0.92), lit(c), rot);
-        cone(g, x, y + h * 0.34, z, rr * 0.8, h * 0.4, 6, sh(c, v1[0]), lit(c), rot + 0.5);
-        cone(g, x, y + h * 0.56, z, rr * 0.54, h * 0.44, 5, sh(c, v2[0] * 1.04), lit(c), rot + 1); return;
+        if (far === 3) { tier(g, x, y + h * 0.12, z, rr * 0.92, h * 0.88, 6, c, lit(c), rot); return; }
+        if (far === 2) { tier(g, x, y + h * 0.12, z, rr, h * 0.48, 6, c, lit(c), rot); tier(g, x, y + h * 0.4, z, rr * 0.68, h * 0.6, 6, sh(c, v1[0]), lit(c), rot + 0.5); return; }
+        if (!far) tier(g, x, y - 0.3, z, h * 0.03 + 0.14, h * 0.3, 3, bark, null, rot);
+        tier(g, x, y + h * 0.1, z, rr, h * 0.44, 6, sh(c, 0.92), lit(c), rot);
+        tier(g, x, y + h * 0.34, z, rr * 0.8, h * 0.4, 6, sh(c, v1[0]), lit(c), rot + 0.5);
+        tier(g, x, y + h * 0.56, z, rr * 0.54, h * 0.44, 5, sh(c, v2[0] * 1.04), lit(c), rot + 1); return;
       }
       if (sp === 3) {   // limber pine: a rounded, lighter crown on a longer bare trunk (a bicone), often a side lobe
         const c = tn(col, 1.45, 1.22, 1.15), rr = r0 * 1.02, yc = y + h * 0.5;
-        cone(g, x, yc, z, rr, h * 0.48, 6, sh(c, v1[0]), lit(c), rot);
+        tier(g, x, yc, z, rr, h * 0.48, 6, sh(c, v1[0]), lit(c), rot);
         if (far === 3) return;
-        cone(g, x, yc, z, rr, -h * 0.26, 6, sh(c, 0.72), null, rot);
+        tier(g, x, yc, z, rr, -h * 0.26, 6, sh(c, 0.72), null, rot);
         if (far) return;
-        cone(g, x, y - 0.3, z, h * 0.03 + 0.12, h * 0.55, 3, [0.36, 0.3, 0.24], null, rot);
+        tier(g, x, y - 0.3, z, h * 0.03 + 0.12, h * 0.55, 3, [0.36, 0.3, 0.24], null, rot);
         const a = H() * TAU, o = rr * 0.75, lx = x + Math.cos(a) * o, lz = z + Math.sin(a) * o, ly = y + h * (0.32 + H() * 0.12);
-        cone(g, lx, ly, lz, rr * 0.55, h * 0.26, 4, sh(c, v2[0]), lit(c), rot + 0.3); cone(g, lx, ly, lz, rr * 0.55, -h * 0.12, 4, sh(c, 0.7), null, rot + 0.3); return;
+        tier(g, lx, ly, lz, rr * 0.55, h * 0.26, 4, sh(c, v2[0]), lit(c), rot + 0.3); tier(g, lx, ly, lz, rr * 0.55, -h * 0.12, 4, sh(c, 0.7), null, rot + 0.3); return;
       }
       if (sp === 4) {   // a dead snag: a bare grey trunk, a broken top, a few stubs
         const c = vary([0.62, 0.6, 0.57], H, 0.16), cf = sh(c, 0.62), hh = h * (0.7 + H() * 0.35), rb = h * 0.028 + 0.12, a0 = H() * TAU;
@@ -3211,12 +3265,12 @@ const World = (function () {
       return;
     }
     const rot = R() * TAU, rr = h * (0.24 + R() * 0.05), ct = [col[0] * 1.3, col[1] * 1.28, col[2] * 1.2];
-    if (far === 3) { cone(g, x, y + h * 0.13, z, rr * 0.9, h * 0.87, 6, col, ct, rot); vary(col, R, 0.08); vary(col, R, 0.08); return; }   // (3: one cone, 18 vertices, deep in the haze)
-    if (far === 2) { cone(g, x, y + h * 0.13, z, rr, h * 0.47, 6, col, ct, rot); cone(g, x, y + h * 0.42, z, rr * 0.64, h * 0.58, 5, vary(col, R, 0.08), ct, rot + 0.5); vary(col, R, 0.08); return; }
-    if (!far) cone(g, x, y - 0.3, z, h * 0.03 + 0.12, h * 0.3, 3, [0.3, 0.21, 0.14], null, rot);
-    cone(g, x, y + h * 0.13, z, rr, h * 0.42, 6, col, ct, rot);
-    cone(g, x, y + h * 0.37, z, rr * 0.76, h * 0.38, 6, vary(col, R, 0.08), ct, rot + 0.5);
-    cone(g, x, y + h * 0.59, z, rr * 0.5, h * 0.41, 5, vary(col, R, 0.08), ct, rot + 1);
+    if (far === 3) { tier(g, x, y + h * 0.13, z, rr * 0.9, h * 0.87, 6, col, ct, rot); vary(col, R, 0.08); vary(col, R, 0.08); return; }   // (3: one cone, 18 vertices, deep in the haze)
+    if (far === 2) { tier(g, x, y + h * 0.13, z, rr, h * 0.47, 6, col, ct, rot); tier(g, x, y + h * 0.42, z, rr * 0.64, h * 0.58, 5, vary(col, R, 0.08), ct, rot + 0.5); vary(col, R, 0.08); return; }
+    if (!far) tier(g, x, y - 0.3, z, h * 0.03 + 0.12, h * 0.3, 3, [0.3, 0.21, 0.14], null, rot);
+    tier(g, x, y + h * 0.13, z, rr, h * 0.42, 6, col, ct, rot);
+    tier(g, x, y + h * 0.37, z, rr * 0.76, h * 0.38, 6, vary(col, R, 0.08), ct, rot + 0.5);
+    tier(g, x, y + h * 0.59, z, rr * 0.5, h * 0.41, 5, vary(col, R, 0.08), ct, rot + 1);
   }
   function pkForest(scen, R, dens, excluded, flat) {   // conifer forest below the treeline, on a jittered grid over the corridor tiles; far from the road (flat(x, z): a GB that casts no shadow) simpler
     const G = PK.G, P = PK, step = 6.6 / Math.sqrt(dens), L = PKT * PKC, maxT = Math.round(15500 * dens);
@@ -3234,9 +3288,11 @@ const World = (function () {
     const spike = (g, b, rb, t, a0, cb, ct) => { const inn = [(b[0] * 2 + t[0]) / 3, (b[1] * 2 + t[1]) / 3, (b[2] * 2 + t[2]) / 3];   // 3-sided tapering tip (leans towards t)
       for (let k = 0; k < 3; k++) { const e0 = a0 + k / 3 * TAU, e1 = a0 + (k + 1) / 3 * TAU; g.triO([b[0] + Math.cos(e0) * rb, b[1], b[2] + Math.sin(e0) * rb], t, [b[0] + Math.cos(e1) * rb, b[1], b[2] + Math.sin(e1) * rb], cb, inn, ct, cb); } };
     const blob = (g, x, y, z, r, up, dn, n, col) => {   // rounded crown / needle tuft: a jittered ring with a top and a bottom point (2n faces), lit on top, dark below
-      const a0 = A() * TAU, ps = [], top = [x, y + r * up, z], bot = [x, y - r * dn, z], inn = [x, y, z], ct = sh(col, 1.25), cb = sh(col, 0.62);
+      const a0 = A() * TAU, ps = [], top = [x, y + r * up, z], bot = [x, y - r * dn, z], inn = [x, y, z], cb = sh(col, 0.62), tl = pkTreeline(x, z), sn = sstep(tl - 40, tl + 10, y) * (0.3 + 0.4 * (((Math.round(x * 9) * 73856093) ^ (Math.round(z * 9) * 19349663)) >>> 0) % 997 / 997);
+      const ct = [lerp(col[0] * 1.25, 0.9, sn), lerp(col[1] * 1.25, 0.93, sn), lerp(col[2] * 1.25, 0.98, sn)];   // (the top: old snow on the tufts at the treeline; its normal leans up, so winter puts snow there)
       for (let k = 0; k < n; k++) { const a = a0 + k / n * TAU, rr = r * (0.8 + A() * 0.35); ps.push([x + Math.cos(a) * rr, y + (A() - 0.5) * r * 0.3, z + Math.sin(a) * rr]); }
-      for (let k = 0; k < n; k++) { const p = ps[k], q = ps[(k + 1) % n]; g.triO(p, top, q, col, inn, ct, col); g.triO(p, q, bot, col, inn, col, cb); }
+      for (let k = 0; k < n; k++) { const p = ps[k], q = ps[(k + 1) % n], mx = (p[0] + q[0]) / 2 - x, mz = (p[2] + q[2]) / 2 - z, ml = Math.hypot(mx, mz) || 1, lq = Math.hypot(up, 1), fn = [mx / ml * up / lq, 1 / lq, mz / ml * up / lq];
+        g.triON(p, top, q, fn, [mx / ml * 0.35, 0.94, mz / ml * 0.35], fn, inn, col, ct, col); g.triO(p, q, bot, col, inn, col, cb); }
     };
     const ball = (g, x, y, z, r, sy, col) => {   // rounder crown: two staggered 4-rings between a top and a bottom point (16 faces)
       const a0 = A() * TAU, u = [], d = [], top = [x, y + r * sy, z], bot = [x, y - r * sy * 0.8, z], inn = [x, y, z], ct = sh(col, 1.18), cb = sh(col, 0.66);
@@ -4645,7 +4701,7 @@ const World = (function () {
   }
   function pkOpsUpdate(ops, t, car) {
     const dt = clamp(t - ops.t, 0, 0.1); ops.t = t;
-    if (!car) return;
+    if (!car) { pkOpsCast(ops, null, null); return; }   // (no car: everything casts, as built; the world's fingerprint does not depend on the last view)
     const cx = car.x, cz = car.z, vx = car.vx || 0, vz = car.vz || 0;
     if (ops.fm) {   // flags: held out low; from ~60 m the arm goes up and waves, frantic while the car comes (and right by it), calmer once it has passed
       const E = ops.fm.instanceMatrix.array; let vis = false, ch = false;
@@ -5331,6 +5387,7 @@ const World = (function () {
           hi[q] = v; hi[q + 1] = v + W; hi[q + 2] = v + W + 1; hi[q + 3] = v; hi[q + 4] = v + W + 1; hi[q + 5] = v + 1; q += 6; }
       }
       hg.attributes.position.needsUpdate = true; hg.attributes.aH.needsUpdate = true; hg.index.needsUpdate = true; hg.setDrawRange(0, q); hm.visible = q > 0;
+      if (q < (hz.q || 0)) hi.fill(0, q, hz.q); hz.q = q;   // (no stale cells past the draw range: the buffer is the same for the same place)
     };
     am.hz = hz;
 
@@ -5393,10 +5450,281 @@ const World = (function () {
       am.pU.uF.value.set(leaf, mote, sstep(195, 235, y) * (1 - 0.4 * sstep(330, 400, y))); am.pU.uC.value.set(car.x, y, car.z);
     }
     hz.hU.uO.value.set(fr(t * 0.9 / 150), fr(-t * 1.2 / 150), fr(-t * 0.6 / 150), fr(t * 0.8 / 150));   // (the haze drifts slowly with the wind, its layers each their own way)
+    if (!car) { if (hz.cx !== 0 || hz.cz !== 0) hz.grid(0, 0); return; }   // (no car: the grid at a fixed place, so the world's fingerprint does not depend on the last view)
     if (!hz.cam) return;
     // the haze grid: 480 m round a point 150 m ahead of the camera along the view, rebuilt when that moves a cell
     const ca = Math.round((hz.cam[0] + hz.dir[0] * 150 - hz.x0) / hz.SC) - hz.NG / 2, cb = Math.round((hz.cam[1] + hz.dir[1] * 150 - hz.z0) / hz.SC) - hz.NG / 2;
     if (ca !== hz.cx || cb !== hz.cz) hz.grid(ca, cb);
+  }
+
+  /* ---- round 5: roadside details: guardrails with reflectors and rust, stones and drains along the road (own random stream) ---- */
+  function pkRoadside(K) {
+    const R = rng(9561), { scen, sStart, sFin } = K, gy = pkGround, glow = K.out.pkGlow, out = K.out;
+    const fr = (s, side, v) => { const q = crAt(s), o = side * ((side > 0 ? q.br : q.bl) + v); return [q.px + q.nx * o, q.pz + q.nz * o, q.i]; };   // a point v beyond the barrier line at s (interpolated)
+    const free = (x, z, d) => pkNear(x, z).dd >= (d == null ? 1.5 : d) && !K.excluded(x, z);
+    // (an exclusion circle that cannot move a tree: the forest draws its random stream per accepted tree, so one tree less would re-roll the whole forest;
+    // only where no tree can grow: above the treeline, within 3 m of the barrier, or where the circles already there keep them off)
+    const safeEx = (x, z, r) => [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1], [0.7, 0.7], [-0.7, 0.7], [0.7, -0.7], [-0.7, -0.7], [0.5, 0], [-0.5, 0], [0, 0.5], [0, -0.5]].map(([u, w]) => [x + u * r, z + w * r]).every(([a, b]) => gy(a, b) > pkTreeline(a, b) + 13 || pkNear(a, b).dd < 3 || K.excluded(a, b));
+    const sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
+    const lowY = (x, z, r) => Math.min(gy(x, z), gy(x + r, z), gy(x - r, z), gy(x, z + r), gy(x, z - r));
+    const stoneC = [[0.52, 0.46, 0.42], [0.45, 0.43, 0.41], [0.57, 0.51, 0.46], [0.4, 0.38, 0.36], [0.6, 0.53, 0.47]];
+    // a loose stone: a jittered ring on the ground (sunk a little), a smaller ring higher up, a point on top (n = 5: 45 vertices); a pebble (n = 4, no middle ring: 12)
+    const stone = (x, z, r, h, col, n) => {
+      const g = K.noShadow(x, z), y0 = lowY(x, z, r) - 0.05 - r * 0.15, a0 = R() * TAU, B = [], M = [];   // (no shadow: baked into the terrain tiles)
+      for (let k = 0; k < n; k++) { const a = a0 + (k + (R() - 0.5) * 0.6) / n * TAU, rr = r * (0.8 + R() * 0.4); B.push([x + Math.cos(a) * rr, y0, z + Math.sin(a) * rr]); M.push([x + Math.cos(a) * rr * 0.8, y0 + h * (0.5 + R() * 0.2), z + Math.sin(a) * rr * 0.8]); }
+      const top = [x + (R() - 0.5) * r * 0.4, y0 + h, z + (R() - 0.5) * r * 0.4], inn = [x, y0 + h * 0.3, z], c = vary(col, R, 0.16);
+      for (let k = 0; k < n; k++) { const j = (k + 1) % n;
+        if (n > 4) { g.quadO(B[k], B[j], M[j], M[k], sh(c, 0.8), inn); g.triO(M[k], M[j], top, sh(c, 1.02), inn); } else g.triO(B[k], B[j], top, sh(c, 0.9 + 0.1 * (k % 2)), inn); }
+    };
+
+    /* ---- stones and rock debris on the verge: fallen from the cuts on the high side, pushed off the road by the graders; more above the treeline ---- */
+    let nSt = 0;
+    for (const side of [-1, 1]) for (let s = sStart + 20; s < sFin + 30; s += 9 + R() * 10) {
+      const [x0, z0, i] = fr(s, side, 0), up = gy(...fr(s, side, 8)) > T.hy[i] + 1, bare = T.hy[i] > pkTreeline(x0, z0), p = (bare ? 0.75 : 0.45) * (up ? 1.2 : 0.8);
+      if (R() > p) continue;
+      const v = 1.8 + R() * 2.4, [x, z] = fr(s, side, v); if (!free(x, z) || pkSlope(x, z) > 1.1) continue;
+      const col = stoneC[Math.floor(R() * stoneC.length)], gc = pkGCol(x, z), c = [lerp(col[0], gc[0], 0.25), lerp(col[1], gc[1], 0.25), lerp(col[2], gc[2], 0.25)];
+      const r0 = 0.3 + R() * R() * 0.55; stone(x, z, r0, r0 * (0.7 + R() * 0.5), c, 5); nSt++;   // a rock, and a smaller one or two beside it
+      for (let k = Math.floor(R() * 2.6); k > 0; k--) { const a = R() * TAU, d = r0 + 0.2 + R() * 0.7, px = x + Math.cos(a) * d, pz = z + Math.sin(a) * d; if (!free(px, pz)) continue; const r = 0.14 + R() * 0.2; stone(px, pz, r, r * (0.7 + R() * 0.6), vary(c, R, 0.1), 4 + (R() < 0.5 ? 1 : 0)); nSt++; }
+    }
+
+    // and gravel and small stones on the shoulder between the road and the barrier line (flat, off the asphalt: debris the cars pass by)
+    for (const side of [-1, 1]) for (let s = sStart + 20; s < sFin + 30; s += 6 + R() * 8) {
+      const q = crAt(s); if (!q) continue; const bar = side > 0 ? q.br : q.bl, room = bar - K.w - 0.9; if (room < 0.6 || R() < 0.35) continue;
+      const lat = K.w + 0.7 + R() * Math.min(room, 3.5), x = q.px + q.nx * side * lat, z = q.pz + q.nz * side * lat; if (K.excluded(x, z)) continue;
+      const c = stoneC[Math.floor(R() * stoneC.length)], r = 0.1 + R() * 0.14; stone(x, z, r, r * (0.5 + R() * 0.4), c, 4); nSt++; }
+
+    /* ---- drains: where a gully comes down the high side to the road, a concrete ditch along the verge into a grated catch basin; the pipe under the road
+       comes out on the low side through a concrete headwall, stones below its mouth ---- */
+    const conc = [0.64, 0.63, 0.6], concD = [0.5, 0.49, 0.47], dark = [0.07, 0.07, 0.08], grate = [0.16, 0.16, 0.17], pipeC = [0.44, 0.45, 0.47];
+    const drains = [];
+    {
+      const i0 = T.idx(sStart + 90), i1 = T.idx(sFin - 90), off = (i, side, v) => { const o = side * ((side > 0 ? T.br[i] : T.bl[i]) + v); return gy(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o) - T.hy[i]; };
+      const cand = [];   // gullies: the ground up the high side dips (a local low along the road), the ground falls away on the other side
+      for (const side of [-1, 1]) { const G = new Float32Array(K.N); for (let i = i0 - 10; i <= i1 + 10; i++) G[i] = off(i, side, 10);
+        for (let i = i0; i <= i1; i++) { const lo = off(i, -side, 10); if (G[i] - lo < 2) continue;
+          let mn = true, mx = -1e9; for (let k = -6; k <= 6; k++) { if (k && G[i + k] < G[i]) { mn = false; break; } mx = Math.max(mx, G[i + k]); }
+          if (mn) cand.push({ i, side, d: mx - G[i] + (G[i] - lo) * 0.05 }); } }
+      cand.sort((a, b) => b.d - a.d); for (const c of cand) if (!drains.some(d => Math.abs(d.i - c.i) < 55)) drains.push(c);
+    }
+    const V = (i, side, v, y, u) => { const o = side * ((side > 0 ? T.br[i] : T.bl[i]) + v), uu = u || 0; return [T.px[i] + T.nx[i] * o + T.tx[i] * uu, y, T.pz[i] + T.nz[i] * o + T.tz[i] * uu]; };
+    let nDr = 0;
+    for (const d of drains) {
+      const { i, side } = d, [bx, , bz] = V(i, side, 2.2, 0), [hx, , hz] = V(i, -side, 2.6, 0);
+      if (!free(bx, bz) || !free(hx, hz, 1.2) || !safeEx(hx, hz, 2.6) || !safeEx(bx, bz, 1.6)) continue;
+      nDr++;
+      // the ditch: a shallow V of concrete slabs along the verge, 16 m up the road and 10 m down to the basin, following the ground
+      for (let k = -8; k < 5; k++) { const a = i + k, b = a + 1, g = scen.get(T.px[a], T.pz[a]); if (k === 0 || k === -1) continue;
+        const P = (j, v, dy) => { const p = V(j, side, v, 0); p[1] = gy(p[0], p[2]) + 0.05 + dy; return p; };
+        const inn = [T.px[a], T.hy[a] - 3, T.pz[a]];
+        g.quadO(P(a, 1.6, 0), P(b, 1.6, 0), P(b, 2.2, -0.12), P(a, 2.2, -0.12), concD, inn); g.quadO(P(a, 2.2, -0.12), P(b, 2.2, -0.12), P(b, 2.8, 0), P(a, 2.8, 0), conc, inn); }
+      { const y = lowY(bx, bz, 0.8), g = scen.get(bx, bz);   // the catch basin: a concrete box, its grate
+        box(g, bx, y - 0.3, bz, 1.3, 0.42, 1.3, T.hd[i], conc, [0.6, 0.59, 0.56], true); box(g, bx, y + 0.1, bz, 0.9, 0.03, 0.9, T.hd[i], grate, [0.13, 0.13, 0.14], true); }
+      // the stones the water brought down the gully above it
+      for (let k = 0; k < 5; k++) { const [x, , z] = V(i + Math.round((R() - 0.5) * 3), side, 3.4 + R() * 5, 0); if (free(x, z)) { const r = 0.15 + R() * 0.3; stone(x, z, r, r, stoneC[k % 5], 5); } }
+      // the headwall on the low side: a concrete wall across the slope, the pipe's mouth in it, a wet dark fan of stones below
+      { const nx = -side * T.nx[i], nz = -side * T.nz[i], tx = T.tx[i], tz = T.tz[i], pT = V(i, -side, 1.9, 0), yT = gy(pT[0], pT[2]) + 0.2;
+        const [fx, , fz] = V(i, -side, 3.3, 0), yF = gy(fx, fz), yM = Math.min(yF + 0.55, yT - 0.45), g = scen.get(hx, hz);
+        box(g, hx, Math.min(yF, yM - 0.6) - 0.3, hz, 2.8, yT - Math.min(yF, yM - 0.6) + 0.3, 0.35, T.hd[i], conc, [0.68, 0.67, 0.64], true);
+        for (const e of [-1.5, 1.5]) box(g, hx + tx * e + nx * 0.5, Math.min(yF, yM - 0.6) - 0.3, hz + tz * e + nz * 0.5, 0.3, yT - 0.3 - Math.min(yF, yM - 0.6), 1.2, T.hd[i], concD, null, true);   // wing walls
+        const c0 = [hx + nx * 0.17, yM, hz + nz * 0.17], ring = (k, r, e) => { const a = k / 8 * TAU; return [c0[0] + tx * Math.cos(a) * r + nx * e, c0[1] + Math.sin(a) * r, c0[2] + tz * Math.cos(a) * r + nz * e]; };
+        for (let k = 0; k < 8; k++) { g.quadO(ring(k, 0.42, 0), ring(k + 1, 0.42, 0), ring(k + 1, 0.42, 0.28), ring(k, 0.42, 0.28), pipeC, c0);   // corrugated pipe end
+          g.quadO(ring(k, 0.42, 0.28), ring(k + 1, 0.42, 0.28), ring(k + 1, 0.34, 0.28), ring(k, 0.34, 0.28), sh(pipeC, 1.15), [c0[0] + nx, c0[1], c0[2] + nz]);
+          g.triO(ring(k, 0.34, 0.2), ring(k + 1, 0.34, 0.2), [c0[0] + nx * 0.2, c0[1], c0[2] + nz * 0.2], dark, [c0[0] + nx * 3, c0[1], c0[2] + nz * 3]); }
+        for (let k = 0; k < 7; k++) { const a = (R() - 0.5) * 1.6, v = 0.6 + R() * 2.8, x = fx + tx * a + nx * v, z = fz + tz * a + nz * v, r = 0.18 + R() * 0.25; stone(x, z, r, r * 0.8, [0.34, 0.33, 0.31], 5); }
+      }
+      { K.excl.push({ x: hx, z: hz, r: 2.6 }); K.excl.push({ x: bx, z: bz, r: 1.6 }); }
+    }
+
+    /* ---- snow poles above the treeline: tall red-orange and black striped sticks, one side then the other, a reflector near the top (glows at night) ---- */
+    const poleO = [0.95, 0.27, 0.07], poleK = [0.09, 0.09, 0.1];
+    let nPole = 0;
+    for (let s = sStart + 60, k = 0; s < sFin - 30; s += 34 + R() * 8, k++) {
+      const i = T.idx(s); if (T.hy[i] < 250) continue;
+      const side = k % 2 ? 1 : -1, [x, z] = fr(s, side, 0.75); if (pkNear(x, z).dd < 0.3 || K.excluded(x, z)) continue;
+      const y0 = gy(x, z) - 0.15, H = 2.7, n = 7, w = 0.035, g = scen.get(x, z), tx = T.tx[i], tz = T.tz[i], nx = T.nx[i], nz = T.nz[i];
+      const C = (a, b, y) => [x + tx * a + nx * b, y, z + tz * a + nz * b];
+      for (let b = 0; b < n; b++) { const ya = y0 + H * b / n, yb = y0 + H * (b + 1) / n, c = b % 2 ? poleK : poleO, inn = [x, (ya + yb) / 2, z];
+        for (const [p, q] of [[[-w, -w], [w, -w]], [[w, -w], [0, w * 1.3]], [[0, w * 1.3], [-w, -w]]]) g.quadO(C(p[0], p[1], ya), C(q[0], q[1], ya), C(q[0], q[1], yb), C(p[0], p[1], yb), c, inn); }
+      const f = -side * (w + 0.01);
+      K.out.pkRefl(C(0, f, y0 + H - 0.05), tx, tz, side * nx, side * nz, 0.07, [1, 1, 1]);
+      nPole++;
+    }
+
+    /* ---- kilometre posts: every km from the start, a green plate with the km and the altitude on a steel post, facing the cars coming up ---- */
+    // the text (plates here, the fans' banners in pkFans5): one canvas atlas 1024 x 1024 and one mesh, made in pkFans5; plates in the bottom quarter (256 x 128 each)
+    const cv = document.createElement('canvas'); cv.width = cv.height = 1024; const c2 = cv.getContext('2d'), tb = new GB(true);
+    out.pk5 = { cv, c2, tb, stats: { stones: nSt, drains: nDr, poles: nPole } };
+    const plate = (x, y, z, fx, fz, W, H, r, tilt) => {   // a two-sided board (bottom centre x, y, z) facing (fx, fz), leaning back by tilt; r: atlas rect [x0, y0, x1, y1] (px); the back plain
+      const ca = Math.cos(tilt), sa = Math.sin(tilt), ux = fz, uz = -fx, kx = -fx * H * sa, ky = H * ca, kz = -fz * H * sa;
+      for (const f of [1, -1]) { const u0 = r[0] / 1024, u1 = r[2] / 1024, v1 = 1 - r[1] / 1024, v0 = 1 - r[3] / 1024, hw = W / 2 * f, ox = fx * ca * 0.02 * f, oy = sa * 0.02 * f, oz = fz * ca * 0.02 * f;
+        const A = [x + ox - ux * hw, y + oy, z + oz - uz * hw], B = [x + ox + ux * hw, y + oy, z + oz + uz * hw], C = [B[0] + kx, B[1] + ky, B[2] + kz], D = [A[0] + kx, A[1] + ky, A[2] + kz];
+        const uv = f > 0 ? [[u0, v0], [u1, v0], [u1, v1], [u0, v1]] : [[1012 / 1024, 4 / 1024], [1020 / 1024, 4 / 1024], [1020 / 1024, 12 / 1024], [1012 / 1024, 12 / 1024]];
+        tb.quadO(A, B, C, D, [1, 1, 1], [x + kx / 2 - fx * ca * f, y + ky / 2 - sa * f, z + kz / 2 - fz * ca * f], uv); }
+    };
+    for (let km = 1; km <= 6; km++) {
+      const s = sStart + km * 1000; if (s > sFin - 20) continue;
+      let done = false;
+      for (const side of [1, -1]) { if (done) break;
+        for (const ds of [0, 6, -6, 12, -12, 18]) { const [x, z, i] = fr(s + ds, side, 1.9); if (!free(x, z) || !safeEx(x, z, 1.2)) continue;
+          const y = gy(x, z), a = Math.atan2(-T.tz[i], -T.tx[i]) - side * 0.45, fx = Math.cos(a), fz = Math.sin(a), g = scen.get(x, z);   // facing the arriving cars, turned towards the road
+          box(g, x - fx * 0.05, y - 0.3, z - fz * 0.05, 0.09, 1.9, 0.09, a, [0.55, 0.57, 0.6], null, true);
+          const col = km - 1, r = [(col % 4) * 256, 768 + Math.floor(col / 4) * 128, (col % 4) * 256 + 256, 768 + Math.floor(col / 4) * 128 + 128];
+          plate(x, y + 0.95, z, fx, fz, 1.3, 0.65, r, 0.5);
+          c2.fillStyle = '#1d5a3c'; c2.fillRect(r[0], r[1], 256, 128); c2.strokeStyle = '#f2f2ea'; c2.lineWidth = 6; c2.strokeRect(r[0] + 7, r[1] + 7, 242, 114);
+          c2.fillStyle = '#f2f2ea'; c2.textAlign = 'center'; c2.textBaseline = 'middle'; c2.font = '900 60px Arial, sans-serif'; c2.fillText('KM ' + km, r[0] + 128, r[1] + 50, 230);
+          c2.font = '700 30px Arial, sans-serif'; c2.fillText(String(Math.round(T.altAt ? T.altAt(T.hy[i]) : 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' m', r[0] + 128, r[1] + 98, 230);
+          K.excl.push({ x, z, r: 1.2 }); done = true; break; }
+      }
+    }
+    c2.fillStyle = '#1d5a3c'; c2.fillRect(1008, 1008, 16, 16);   // (the plates' plain green backs)
+  }
+
+  /* ---- round 5: race-day people: varied spectators (blankets, chairs, dogs), fan banners, lit hut windows (own random stream) ---- */
+  function pkFans5(K) {
+    const R = rng(9571), { scen, sStart, sFin, CR } = K, gy = pkGround, out = K.out, glow = out.pkGlow, PI = Math.PI;
+    const { cv, c2, tb } = out.pk5;
+    const nRef = glow.P.length / 3;   // (the reflectors so far: lit by the headlights; the windows below glow on their own)
+    const hard = (x, z) => { for (const e of K.excl) if (!K.crSoft.has(e) && (x - e.x) ** 2 + (z - e.z) ** 2 < e.r * e.r) return true; return false; };   // buildings, pads, landmarks (not the crowds' tree-only circles)
+    // (an exclusion circle that cannot move a tree: the forest draws its random stream per accepted tree, so one tree less would re-roll the whole forest;
+    // only where no tree can grow: above the treeline, within 3 m of the barrier, or where the circles already there keep them off)
+    const safeEx = (x, z, r) => [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1], [0.7, 0.7], [-0.7, 0.7], [0.7, -0.7], [-0.7, -0.7], [0.5, 0], [-0.5, 0], [0, 0.5], [0, -0.5]].map(([u, w]) => [x + u * r, z + w * r]).every(([a, b]) => gy(a, b) > pkTreeline(a, b) + 13 || pkNear(a, b).dd < 3 || K.excluded(a, b));
+    const busy = (x, z, r) => { const L = CR.ppl.map.get(Math.floor(x / CR.ppl.size) + ',' + Math.floor(z / CR.ppl.size)); if (!L) return false; for (let q = 0; q < L.length; q += 9) if ((L[q] - x) ** 2 + (L[q + 2] - z) ** 2 < r * r) return true; return false; };
+    const fr = (s, side, v) => { const q = crAt(s), o = side * ((side > 0 ? q.br : q.bl) + v); return [q.px + q.nx * o, q.pz + q.nz * o, q.i]; };
+    const sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
+    const pick = (a) => a[Math.floor(R() * a.length)];
+    const shirt = () => K.fans[Math.floor(R() * K.fans.length)];
+    // a spectator at (x, z) facing (fx, fz), sitting (on the ground, or on a seat dy up) or standing: -> [its yaw jitter applied facing (sx, sz), height scale] or null
+    const pers = (x, z, fx, fz, sit, dy) => {
+      if (!crowdPut(CR, x, gy(x, z) + (dy || 0), z, fx, fz, { col: shirt(), sit: sit ? 1 : 0 }, 0)) return null;
+      const a = Math.atan2(fx, fz) + (crH(x, z, 8) - 0.5) * 0.5, kid = crH(x, z, 3) < 0.04;
+      return [Math.sin(a), Math.cos(a), kid ? 0.7 : 0.9 + 0.2 * crH(x, z, 5), a];
+    };
+
+    /* ---- the props: blankets (laid on the ground, no shadow), camping chairs, coolers, dogs, cameras; all in the scenery chunks ---- */
+    const blanketC = [[[0.72, 0.12, 0.1], [0.88, 0.84, 0.76]], [[0.15, 0.22, 0.48], [0.86, 0.82, 0.72]], [[0.8, 0.62, 0.12], [0.14, 0.2, 0.42]], [[0.62, 0.1, 0.22], [0.12, 0.12, 0.14]], [[0.85, 0.35, 0.08], [0.9, 0.88, 0.82]]];
+    const blanket = (x, z, tx, tz, L, D) => {   // a 3 x 3 check laid over the ground (L along t, D across), 4 cm up
+      const [ca, cb] = pick(blanketC), nx = -tz, nz = tx, P = (a, b) => { const px = x + tx * a + nx * b, pz = z + tz * a + nz * b; return [px, gy(px, pz) + 0.05, pz]; }, g = K.noShadow(x, z);
+      for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) { const u0 = -L / 2 + L * a / 3, u1 = u0 + L / 3, v0 = -D / 2 + D * b / 3, v1 = v0 + D / 3, c = (a + b) % 2 ? ca : cb;
+        g.quadUp(P(u0, v0), P(u1, v0), P(u1, v1), P(u0, v1), [c, c, c, c]); }
+    };
+    const chairC = [[0.16, 0.3, 0.62], [0.7, 0.14, 0.12], [0.2, 0.22, 0.24], [0.1, 0.42, 0.48], [0.62, 0.12, 0.4]], frameC = [0.2, 0.2, 0.22];
+    const chair = (x, z, fx, fz) => { // a folding camping chair facing (fx, fz): fabric seat, back and arms on a thin frame
+      const y = gy(x, z), g = K.noShadow(x, z), r = Math.atan2(fz, fx), c = pick(chairC), ax = -fz, az = fx, P = (u, w) => [x + fx * u + ax * w, z + fz * u + az * w];
+      box(g, x, y + 0.36, z, 0.46, 0.07, 0.5, r, c, sh(c, 1.1), true);
+      { const [bx, bz] = P(-0.25, 0); box(g, bx, y + 0.4, bz, 0.06, 0.55, 0.5, r, sh(c, 0.9), null, true); }
+      for (const w of [-0.27, 0.27]) { const [bx, bz] = P(0, w); box(g, bx, y - 0.05, bz, 0.46, 0.66, 0.035, r, frameC, null, true); }   // (the side frames, arms on top)
+    };
+    const coolerC = [[0.78, 0.12, 0.1], [0.14, 0.32, 0.7], [0.12, 0.5, 0.5], [0.9, 0.9, 0.88]];
+    const cooler = (x, z, rot) => { const y = gy(x, z), g = K.noShadow(x, z), c = pick(coolerC); box(g, x, y - 0.03, z, 0.58, 0.36, 0.38, rot, c, c, true); box(g, x, y + 0.33, z, 0.6, 0.06, 0.4, rot, [0.93, 0.93, 0.9], [0.95, 0.95, 0.93], true); };
+    const dogC = [[[0.1, 0.09, 0.08], [0.1, 0.09, 0.08]], [[0.55, 0.16, 0.07], [0.55, 0.16, 0.07]], [[0.1, 0.09, 0.08], [0.9, 0.89, 0.86]], [[0.9, 0.89, 0.86], [0.9, 0.89, 0.86]]];
+    let nDog = 0;
+    const dog = (x, z, hx, hz, sit) => {   // a dog heading (hx, hz): body, chest, head and snout, ears, four legs, the tail
+      const y = gy(x, z) - 0.02, g = K.noShadow(x, z), r = Math.atan2(hz, hx), [c, cc] = pick(dogC), ax = -hz, az = hx, P = (u, w) => [x + hx * u + ax * w, z + hz * u + az * w], k = 0.85 + R() * 0.3;
+      const B = (u, w, yb, sx, sy, sz, col) => { const [px, pz] = P(u * k, w * k); box(g, px, y + yb * k, pz, sx * k, sy * k, sz * k, r, col, null, true); };
+      if (sit) { B(-0.1, 0, 0.12, 0.42, 0.34, 0.28, c); B(0.1, 0, 0.3, 0.2, 0.3, 0.26, cc); B(0.18, 0, 0.58, 0.26, 0.22, 0.2, c); B(0.36, 0, 0.6, 0.14, 0.1, 0.12, c); for (const w of [-0.08, 0.08]) { B(0.16, w, 0.78, 0.06, 0.1, 0.05, c); B(0.15, w, 0, 0.07, 0.3, 0.07, c); } B(-0.36, 0, 0.02, 0.24, 0.06, 0.07, c); }
+      else { B(0, 0, 0.3, 0.66, 0.26, 0.26, c); B(0.27, 0, 0.26, 0.14, 0.28, 0.24, cc); B(0.4, 0, 0.5, 0.24, 0.22, 0.2, c); B(0.58, 0, 0.52, 0.14, 0.1, 0.12, c); for (const w of [-0.08, 0.08]) B(0.36, w, 0.7, 0.06, 0.1, 0.05, c);
+        for (const [u, w] of [[0.24, 0.08], [0.24, -0.08], [-0.25, 0.08], [-0.25, -0.08]]) B(u, w, 0, 0.07, 0.32, 0.07, c); B(-0.4, 0, 0.5, 0.2, 0.06, 0.06, c); }
+      nDog++;
+    };
+    let nCam = 0;
+    const camera = (x, z, p, tripod) => {   // a camera held up to the face of the spectator p (or on a tripod in front of him), a long lens pointing where he looks
+      const [sx, sz, sy] = p, y = gy(x, z), g = K.noShadow(x, z), r = Math.atan2(sz, sx), hy = tripod ? y + 1.42 * sy : y + 1.5 * sy, cx = x + sx * (tripod ? 0.45 : 0.2), cz = z + sz * (tripod ? 0.45 : 0.2);
+      box(g, cx, hy - 0.06, cz, 0.12, 0.12, 0.16, r, [0.08, 0.08, 0.09], null, false); box(g, cx + sx * 0.14, hy - 0.04, cz + sz * 0.14, 0.18, 0.08, 0.08, r, tripod ? [0.86, 0.86, 0.82] : [0.12, 0.12, 0.13], null, false);
+      if (tripod) { const yb = gy(cx, cz), top = [cx, hy - 0.08, cz], inn = [cx, yb - 1, cz]; for (let k = 0; k < 3; k++) { const a = r + k / 3 * TAU + 0.5, fx = cx + Math.cos(a) * 0.36, fz = cz + Math.sin(a) * 0.36, ex = Math.cos(a + PI / 2) * 0.025, ez = Math.sin(a + PI / 2) * 0.025;
+        g.quadO([fx - ex, yb - 0.05, fz - ez], [fx + ex, yb - 0.05, fz + ez], [top[0] + ex, top[1], top[2] + ez], [top[0] - ex, top[1], top[2] - ez], [0.15, 0.15, 0.16], [cx, hy - 0.8, cz]); } }
+      nCam++;
+    };
+
+    /* ---- the fans' camps: a blanket with people sitting on it, camping chairs, a cooler, now and then a dog; a photographer nearer the road; a banner behind ---- */
+    const BAN = ['GO GO GO', 'PIKES 2026', 'KING OF THE HILL', 'NAPREJ!', 'DAJ GAS!', 'FULL SEND', '156 TURNS', 'HI MOM!', 'SUMMIT OR BUST', 'FLAT OUT!', 'GAS GAS GAS', 'ALLEZ!'];
+    const plate = (x, y, z, fx, fz, W, H, slot, tilt) => {   // a two-sided cloth (bottom centre x, y, z) facing (fx, fz), its top leaning back by tilt; its atlas slot (512 x 128 cells, 2 per row), the back mirrored
+      const r = [(slot % 2) * 512, Math.floor(slot / 2) * 128, (slot % 2) * 512 + 512, Math.floor(slot / 2) * 128 + 128];
+      const ca = Math.cos(tilt), sa = Math.sin(tilt), ux = fz, uz = -fx, kx = -fx * H * sa, ky = H * ca, kz = -fz * H * sa;
+      for (const f of [1, -1]) { const u0 = r[0] / 1024, u1 = r[2] / 1024, v1 = 1 - r[1] / 1024, v0 = 1 - r[3] / 1024, hw = W / 2 * f, ox = fx * ca * 0.015 * f, oy = sa * 0.015 * f, oz = fz * ca * 0.015 * f;
+        const A = [x + ox - ux * hw, y + oy, z + oz - uz * hw], B = [x + ox + ux * hw, y + oy, z + oz + uz * hw], C = [B[0] + kx, B[1] + ky, B[2] + kz], D = [A[0] + kx, A[1] + ky, A[2] + kz];
+        tb.quadO(A, B, C, D, [1, 1, 1], [x + kx / 2 - fx * ca * f, y + ky / 2 - sa * f, z + kz / 2 - fz * ca * f], [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]); }
+    };
+    let nBan = 0, nCamp = 0, ban0 = Math.floor(R() * BAN.length);
+    const banner = (x, z, fx, fz, W) => {   // on two poles stuck in the slope, facing (fx, fz)
+      const ux = fz, uz = -fx, pa = [x - ux * W / 2, z - uz * W / 2], pb = [x + ux * W / 2, z + uz * W / 2];
+      if (![pa, pb].every(([a, b]) => pkNear(a, b).dd >= 1.5 && !hard(a, b))) return false;
+      const H = W / 4, ya = gy(...pa), yb = gy(...pb), y0 = Math.max(ya, yb) + 0.7, tl = 0.3, g = K.noShadow(x, z);
+      for (const [[px, pz], yy] of [[pa, ya], [pb, yb]]) box(g, px, yy - 0.2, pz, 0.06, y0 - yy + H * Math.cos(tl) + 0.35, 0.06, 0, [0.35, 0.3, 0.25], null, true);
+      plate(x - fx * 0.0, y0, z, fx, fz, W - 0.1, H, ban0++ % BAN.length, tl); nBan++; return true;
+    };
+    const camp = (s, side, v, withBan) => {
+      const q = crAt(s); if (!q) return false; const tx = q.tx, tz = q.tz, fx = -side * q.nx, fz = -side * q.nz;   // (f: towards the road)
+      const [x, z] = fr(s, side, v), L = (u, w) => [x + tx * u + fx * w, z + tz * u + fz * w];
+      const key = [[0, 0], [-1.4, -0.9], [1.4, -0.9], [-2.4, 0], [2.6, 0.3], [0, 1.2], [0, -1.2]].map(([u, w]) => L(u, w));
+      if (pkSlope(x, z) > 0.5 || !key.every(([a, b]) => pkNear(a, b).dd >= 1.5 && !hard(a, b) && !busy(a, b, 1.1))) return false;
+      if (!safeEx(x, z, 3.3)) return false;
+      const th = Math.atan2(tz, tx);
+      blanket(x, z, tx, tz, 2.2, 1.7);
+      const n = 1 + Math.floor(R() * 2);   // sitting on it, facing the road
+      for (let k = 0; k < n; k++) { const [px, pz] = L(-0.6 + k * 0.6 + (R() - 0.5) * 0.2, 0.1 + 0.55); pers(px, pz, fx + tx * (R() - 0.5) * 0.4, fz + tz * (R() - 0.5) * 0.4, true); }
+      { const [cx, cz] = L(1.45 * (R() < 0.5 ? 1 : -1), -0.5); cooler(cx, cz, th + (R() - 0.5) * 0.6); }
+      for (const u of R() < 0.6 ? [-2.2, 2.4] : [R() < 0.5 ? -2.2 : 2.4]) {   // camping chairs, most with someone in them
+        const [px, pz] = L(u, 0.25 + 0.55), p = R() < 0.8 ? pers(px, pz, fx - tx * u * 0.08, fz - tz * u * 0.08, true, 0.29) : null;
+        if (p) chair(px - p[0] * 0.55, pz - p[1] * 0.55, p[0], p[1]); else { const [cx, cz] = L(u, 0.25); chair(cx, cz, fx, fz); } }
+      if (R() < 0.35) { const [dx, dz] = L(0.8 + R(), 1.1), a = R() * TAU, sit = R() < 0.5; if (!hard(dx, dz)) dog(dx, dz, sit ? fx : Math.cos(a), sit ? fz : Math.sin(a), sit); }
+      if (R() < 0.6) {   // the photographer, a few metres nearer the road
+        for (const u of [-1, 1.5, 3]) { const w = v - 2.4, [px, pz] = L(u, w), tr = R() < 0.35; if (pkNear(px, pz).dd < 1.6 || hard(px, pz) || busy(px, pz, 0.8)) continue;
+          const lk = (R() - 0.5) * 0.8, p = pers(px, pz, fx + tx * (lk + (tr ? 0 : 0.4)), fz + tz * (lk + (tr ? 0 : 0.4)), false); if (p) camera(px, pz, p, tr); break; }
+      }
+      if (withBan) { const [bx, bz] = L((R() - 0.5) * 2, -2.6 - R()); banner(bx, bz, fx, fz, 3.6 + R() * 1.2); }
+      K.excl.push({ x, z, r: 3.3 }); nCamp++; return true;
+    };
+    const tryCamp = (s, side, withBan) => { for (const ds of [0, 7, -7, 14, -14]) for (const v of [7.5, 10, 13]) if (camp(s + ds, side, v, withBan)) return true; return false; };
+    const upSide = (s) => { const [xa, za] = fr(s, 1, 8), [xb, zb] = fr(s, -1, 8); return gy(xa, za) > gy(xb, zb) ? 1 : -1; };
+    // the hairpins (behind the rows of spectators, on the high side, and now and then on the low side too), the W's, Glen Cove, Devil's Playground, Boulder Park, the summit
+    T.corners.forEach((c, k) => { if (c.sev < 3) return; const sm = (c.i0 + c.i1) / 2 * T.ds; if (sm < sStart + 80 || sm > sFin - 60) return;
+      const up = upSide(sm); tryCamp(sm + (k % 2 ? 24 : -24), up, true); if (k % 4 === 0) tryCamp(sm - (k % 2 ? 28 : -28), -up, false); });
+    for (const d of [2650, 3090, 3330, 4020, 4110, 5340, 6040]) { const s = sStart + d; tryCamp(s, upSide(s), d % 3 !== 0); }   // Glen Cove, the W's, Devil's Playground, Boulder Park, the summit
+    for (const d of [3000, 3150, 3330, 4050, 5360]) { const s = sStart + d, sd = upSide(s); for (const ds of [0, 10, -10, 20]) { const [x, z] = fr(s + ds, sd, 15 + R() * 5), q = crAt(s + ds); if (safeEx(x, z, 2.9) && banner(x, z, -sd * q.nx, -sd * q.nz, 4.8)) { K.excl.push({ x, z, r: 2.9 }); break; } } }   // bigger banners up the slope
+
+    /* ---- lit windows: the glass of the huts, the inn, the booth, the timing tower, the visitor center and the train (found by its colour in the scenery chunks),
+       drawn again a few cm out in the glow mesh: warm light at dusk and at night, a faint warm tint by day ---- */
+    const GL = [[0.16, 0.2, 0.25, 0], [0.16, 0.18, 0.2, 0], [0.17, 0.22, 0.27, 0], [0.1, 0.13, 0.16, 0], [0.2, 0.26, 0.3, 0], [0.13, 0.16, 0.2, 1], [0.17, 0.24, 0.3, 1], [0.12, 0.15, 0.2, 1]];   // [r, g, b, cool light]
+    const warm = [[1, 0.84, 0.56], [1, 0.9, 0.68], [1, 0.8, 0.5], [1, 0.87, 0.62]], cool = [[0.95, 0.97, 1], [0.9, 0.94, 1]];
+    let nWin = 0;
+    for (const g of scen.map.values()) { const P = g.P, Nn = g.N, C = g.C, n = P.length;
+      for (let t = 0; t < n; t += 9) { if (Math.abs(Nn[t + 1]) > 0.3) continue;
+        let m = -1; for (let k = 0; k < GL.length; k++) { const c = GL[k]; let ok = true; for (let v = 0; v < 9 && ok; v += 3) ok = Math.abs(C[t + v] - c[0]) < 0.004 && Math.abs(C[t + v + 1] - c[1]) < 0.004 && Math.abs(C[t + v + 2] - c[2]) < 0.004; if (ok) { m = k; break; } }
+        if (m < 0) continue;
+        const o = 0.03, V = [0, 3, 6].map(v => [P[t + v] + Nn[t + v] * o, P[t + v + 1] + Nn[t + v + 1] * o, P[t + v + 2] + Nn[t + v + 2] * o]), pal = GL[m][3] ? cool : warm;
+        const cl = V.map(p => pal[Math.floor(crH(Math.floor(p[0] / 2.4), Math.floor(p[1] / 2.2), Math.floor(p[2] / 2.4)) * pal.length)]);
+        glow.tri(V[0], V[1], V[2], cl[0], cl[1], cl[2]); nWin++; } }
+
+    /* ---- the text atlas: the fans' banners (bed sheets and painted cloth, hand-lettered) above the km plates (pkRoadside) ---- */
+    const bg = ['#f4f1e8', '#f3d23a', '#c8231d', '#1d3f8f', '#141416', '#f4f1e8', '#2a7a3a', '#f08a1c', '#f4f1e8', '#c8231d', '#141416', '#1d3f8f'], ink = ['#c8231d', '#141416', '#f4f1e8', '#f3d23a', '#f3d23a', '#1d3f8f', '#f4f1e8', '#141416', '#141416', '#f3d23a', '#f08a1c', '#f4f1e8'];
+    for (let k = 0; k < 12; k++) { const x0 = (k % 2) * 512, y0 = Math.floor(k / 2) * 128;
+      c2.fillStyle = bg[k]; c2.fillRect(x0, y0, 512, 128);
+      c2.fillStyle = 'rgba(0,0,0,0.08)'; for (let q = 0; q < 5; q++) c2.fillRect(x0 + R() * 512, y0, 6 + R() * 20, 128);   // (folds in the cloth)
+      if (k % 3 === 1) { c2.strokeStyle = ink[k]; c2.lineWidth = 6; c2.strokeRect(x0 + 10, y0 + 10, 492, 108); }
+      c2.save(); c2.translate(x0 + 256, y0 + 66); c2.rotate((R() - 0.5) * 0.06); c2.textAlign = 'center'; c2.textBaseline = 'middle'; c2.font = (k % 4 === 2 ? 'italic ' : '') + '900 ' + (BAN[k].length > 11 ? 58 : 80) + 'px Impact, "Arial Black", Arial, sans-serif';
+      c2.lineWidth = 8; c2.strokeStyle = 'rgba(0,0,0,0.25)'; c2.strokeText(BAN[k], 3, 3, 470); c2.fillStyle = ink[k]; c2.fillText(BAN[k], 0, 0, 470); c2.restore(); }
+    const tx = new THREE.CanvasTexture(cv); tx.anisotropy = 4; out.ownTex.push(tx);
+    if (!tb.empty) { const m = new THREE.Mesh(tb.geometry(), new THREE.MeshLambertMaterial({ map: tx })); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); K.root.add(m); }
+
+    /* ---- the glow mesh (the reflectors of the guardrail block and pkRoadside, the windows above): its own light by the time of day, read from the fog colour
+       (night: dark, dusk: warm), 1 draw; reflectors (aK = 1) lit full by day and brightest near the camera (the headlights) ---- */
+    if (!glow.empty) {
+      const gg = glow.geometry(), nv = gg.attributes.position.count, aK = new Float32Array(nv); aK.fill(1, 0, nRef); gg.setAttribute('aK', new THREE.BufferAttribute(aK, 1));
+      const U = { uGlow: { value: 0.07 }, uDim: { value: 0.22 } }, gm = new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
+      gm.onBeforeCompile = (s) => { s.uniforms.uGlow = U.uGlow; s.uniforms.uDim = U.uDim;
+        s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nattribute float aK; varying float vK; varying float vD;').replace('#include <project_vertex>', '#include <project_vertex>\nvK = aK; vD = -mvPosition.z;');
+        s.fragmentShader = s.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uGlow; uniform float uDim; varying float vK; varying float vD;')
+          .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb *= mix(uDim, 1.0, vK);')
+          .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += vColor * uGlow * mix(1.0, 2.2 * clamp(1.7 - vD / 90.0, 0.45, 1.0), vK);'); };
+      gm.customProgramCacheKey = () => 'pkGlow5';
+      const m = new THREE.Mesh(gg, gm); m.matrixAutoUpdate = false; m.updateMatrix(); m.name = 'pkGlow';
+      m.onBeforeRender = (r, sc) => { const f = sc.fog && sc.fog.color; if (!f) return; const l = 0.3 * f.r + 0.59 * f.g + 0.11 * f.b, night = l < 0.2, dusk = !night && f.r - f.b > 0.17;
+        U.uGlow.value = night ? 1 : dusk ? 0.6 : 0.07; U.uDim.value = night ? 0.1 : dusk ? 0.18 : 0.22; };
+      K.root.add(m);
+    }
+    out.pk5stats = Object.assign(out.pk5.stats, { dents: (glow.dents || []).length, camps: nCamp, banners: nBan, dogs: nDog, cams: nCam, winTris: nWin, glowV: glow.P.length / 3, reflV: nRef });
+    delete out.pk5; delete out.pkGlow; delete out.pkRefl;
   }
 
   function buildPikes(scene, tex, opts) {
@@ -5682,6 +6010,22 @@ const World = (function () {
         for (const d of [5, 9, 14, 19, 25, 31]) { const o = side * (bar + d);
           if (pkGround(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o) < T.hy[i] - (d <= 9 ? 2.8 : 2.8 + (d - 9) * 0.33)) { need[side > 0 ? 1 : 0][i] = 1; if (i + 1 < N) need[side > 0 ? 1 : 0][i + 1] = 1; break; } } }
       const iS0 = T.idx(sStart + 64), iS1 = T.idx(sFin - 44), steel = [0.78, 0.8, 0.82], steelB = [0.56, 0.58, 0.6], postC = [0.48, 0.49, 0.52];
+      // round 5: weathering (old runs dull and rusty, rust streaks running down from the bolts), a few rails bent outward at the hairpins, reflectors on the
+      // posts (out.pkGlow: one mesh with the lit windows, glowing at dusk and at night; built in pkFans5); hashes only, R is not drawn from
+      const glow = out.pkGlow = new GB(), refl = (c, tx, tz, rx, rz, w, col) => {   // a reflector plate at c (its lower edge, w either side along t) tilted back away from the road (r), so the high cameras see it too
+        const a = [c[0] - tx * w, c[1], c[2] - tz * w], b = [c[0] + tx * w, c[1], c[2] + tz * w], d = [a[0] + rx * 0.16, c[1] + 0.2, a[2] + rz * 0.16], e = [b[0] + rx * 0.16, c[1] + 0.2, b[2] + rz * 0.16];
+        glow.quadO(a, b, e, d, col, [c[0] + rx, c[1] - 0.5, c[2] + rz]); };
+      out.pkRefl = refl;
+      const rN = valueNoise2(9551, 9), hq = (a, b) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
+      const rustA = [0.5, 0.29, 0.16], rustB = [0.36, 0.22, 0.14], oldF = [0.64, 0.64, 0.61], oldB = [0.47, 0.47, 0.45], refW = [1, 1, 1], refA = [1, 0.75, 0.42];
+      const dent = [new Float32Array(N), new Float32Array(N)];   // outward offset of the beam (m) per side
+      { let k = 0; for (const c of T.corners) { if (c.sev < 3) continue; if (k++ % 3 !== 1) continue;   // every third hairpin: a car went into it once
+        const sd = -c.dir > 0 ? 1 : 0, im = Math.round((c.i0 + c.i1) / 2 + (hq(c.i0, 3) - 0.5) * (c.i1 - c.i0)), L = 2 + Math.round(hq(c.i0, 4) * 2), a = 0.4 + 0.25 * hq(c.i0, 5);
+        (glow.dents || (glow.dents = [])).push(im); for (let q = -L; q <= L; q++) { const j = im + q; if (j >= 0 && j < N) dent[sd][j] = Math.max(dent[sd][j], a * (1 - (q / (L + 1)) ** 2)); } } }
+      const rcol = (i, sd, c, old, low) => {   // the beam's colour at sample i: galvanised steel, rust patches (more on the old runs), streaks down from the bottom edge
+        const x = T.px[i], z = T.pz[i], n = rN(x + sd * 37, z), st = hq(i, sd + 7), d = dent[sd > 0 ? 1 : 0][i];
+        let r = old ? sstep(0.38, 0.72, n) * 0.75 : sstep(0.64, 0.82, n) * 0.3; r = Math.min(0.9, r * (low ? 1 : 0.55) + (st > 0.72 ? (low ? 0.35 : 0.12) : 0) + (d > 0.05 ? 0.25 : 0));
+        const base = old ? (c === steel ? oldF : oldB) : c, ru = st > 0.5 ? rustA : rustB; return [lerp(base[0], ru[0], r), lerp(base[1], ru[1], r), lerp(base[2], ru[2], r)]; };
       for (const side of [-1, 1]) {
         const nd = need[side > 0 ? 1 : 0], bar = side > 0 ? T.br : T.bl;
         for (let i = 0; i < N; i++) if (i < iS0 || i > iS1) nd[i] = 0;   // start and summit areas stay open (crowds, car parks)
@@ -5689,11 +6033,16 @@ const World = (function () {
         for (let i = 0; i < N;) { if (!nd[i]) { i++; continue; } let j = i; while (j < N && nd[j]) j++; if (j - i < 8) for (let k = i; k < j; k++) nd[k] = 0; i = j; }   // drop tiny bits
         nRail += nd.reduce((a, b) => a + b, 0);
         const Q = (i, y, e) => { const o = side * (bar[i] + 0.12 + (e || 0)); return [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o]; };
+        const dn = dent[side > 0 ? 1 : 0], Qd = (i, y) => Q(i, y - dn[i] * 0.3 * (y > 0.6 ? 1 : 0), dn[i] * (y > 0.6 ? 1.5 : 1));   // (a bent beam: pushed out, its top edge more and a little down)
+        let old = false;
         for (let i = 0; i < N - 1; i++) {
           if (nd[i] && nd[i + 1]) {   // W-beam: a front and a back face, posts every 4 m
-            const g = scen.get(T.px[i], T.pz[i]), a = Q(i, 0.45), b = Q(i + 1, 0.45), c = Q(i + 1, 0.8), d = Q(i, 0.8), ins = Q(i, 0.6, 3), ino = Q(i, 0.6, -3);
-            g.quadO(a, b, c, d, steel, ins); g.quadO(a, b, c, d, steelB, ino);
-            if (i % 2 === 0) { const p = Q(i, -0.3, 0.14); box(g, p[0], p[1], p[2], 0.13, 1.08, 0.13, T.hd[i], postC, null, true); }
+            if (!nd[i - 1]) old = hq(i, side) < 0.45;   // (a run of rail: old and weathered, or newer)
+            const g = scen.get(T.px[i], T.pz[i]), a = Qd(i, 0.45), b = Qd(i + 1, 0.45), c = Qd(i + 1, 0.8), d = Qd(i, 0.8), ins = Q(i, 0.6, 3), ino = Q(i, 0.6, -3);
+            g.quadO(a, b, c, d, steel, ins, null, [rcol(i, side, steel, old, 1), rcol(i + 1, side, steel, old, 1), rcol(i + 1, side, steel, old, 0), rcol(i, side, steel, old, 0)]);
+            g.quadO(a, b, c, d, steelB, ino, null, [rcol(i, side, steelB, old, 1), rcol(i + 1, side, steelB, old, 1), rcol(i + 1, side, steelB, old, 0), rcol(i, side, steelB, old, 0)]);
+            if (i % 2 === 0) { const p = Q(i, -0.3, 0.14 + dn[i]), pc = old ? [0.42, 0.4, 0.38] : postC; box(g, p[0], p[1], p[2], 0.13, 1.08, 0.13, T.hd[i], pc, null, true);
+              if (i % 8 === 0 && dn[i] < 0.05) refl(Q(i, 0.8, -0.03), T.tx[i], T.tz[i], side * T.nx[i], side * T.nz[i], 0.18, side > 0 ? refW : refA); }   // a reflector on the beam at the post
           } else if (!nd[i] && i % 12 === 0 && i > 2) mkPosts.push([i, side]);   // a marker post (below)
         }
       }
@@ -5703,6 +6052,7 @@ const World = (function () {
         // white marker post with a black band and an orange reflector (taller snow poles near the top)
         box(g, p[0], p[1] - 0.2, p[2], 0.13, 1.2 * tall, 0.13, T.hd[i], tall > 1 ? [0.95, 0.5, 0.12] : [0.94, 0.94, 0.92], null, true);
         box(g, p[0], p[1] + 0.72 * tall, p[2], 0.14, 0.2, 0.14, T.hd[i], [0.1, 0.1, 0.1], null, true);
+        refl([p[0] - side * T.nx[i] * 0.07, p[1] - 0.2 + 1.2 * tall, p[2] - side * T.nz[i] * 0.07], T.tx[i], T.tz[i], side * T.nx[i], side * T.nz[i], 0.08, refA);   // its reflector on top (glows at night)
       }
     }
 
@@ -5717,6 +6067,8 @@ const World = (function () {
     pkLandmarks2(K);
     pkLandmarks3(K);
     pkWildlife(K);
+    pkRoadside(K);
+    pkFans5(K);
 
     /* ---- more spectators (instanced, hashed: no draws from R): both sides of every hairpin, the insides of the forest bends, the "W's" ladder,
        more rows at the checkpoints, the start and the finish, small groups on the high side along the ridge; only where the ground is not below the road ---- */
