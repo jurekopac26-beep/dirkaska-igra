@@ -7371,8 +7371,15 @@ const World = (function () {
     // the verge's cross-section per sample and side: six points [offset, height above the road] from the road's edge out to 1.9 m past the barrier
     // (lifted over the ground where it rises), and the kind of each of the five strips (0 tarmac, 1 kerb, 2 grass, 4 sidewalk, 5 gravel)
     const VK = { 4: [1, 1, 4, 4, 4], 0: [0, 0, 0, 0, 0], 2: [2, 2, 2, 2, 2], 3: [5, 5, 5, 2, 2], 5: [5, 5, 5, 2, 2] };
+    const vEnd = (i, side, e) => {   // how far the verge goes: short of the centre of a tight bend on its inside, and of another part of the stage beside it (the
+      // other carriageway: to the middle between the two), at most e
+      let km = 0; for (let j = Math.max(0, i - 4); j <= Math.min(N - 1, i + 4); j++) if (Math.sign(T.k[j]) === side) km = Math.max(km, Math.abs(T.k[j]));
+      if (km > 0) e = Math.min(e, Math.max(WA[i] + 0.3, 1 / km - 0.4));
+      for (let o = WA[i] + 0.3; o <= e + 0.01; o += 0.5) { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o, n = hjNear(x, z);
+        if (n.i >= 0 && Math.abs(n.i - i) * ds > 24 && Math.abs(n.lat) < o) return Math.max(WA[i] + 0.25, (o + Math.abs(n.lat)) / 2 - 0.1); }
+      return e; };
     const vProf = (i, side) => {
-      const t = vType(i, side), wi = WA[i], bar = side > 0 ? T.br[i] : T.bl[i], y = T.hy[i], e = Math.max(bar + 1.9, wi + 1.4);
+      const t = vType(i, side), wi = WA[i], bar = side > 0 ? T.br[i] : T.bl[i], y = T.hy[i], e = vEnd(i, side, Math.max(bar + 1.9, wi + 1.4));
       const gAt = (o) => { const q = side * o; return hjGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - y; }, lift = (o, h) => [o, Math.max(h, gAt(o) + 0.04)];
       const o3 = lerp(wi + 0.2, e - 0.4, 0.5);
       if (t === 4) return [[wi, 0], lift(wi + 0.03, 0.13), lift(wi + 0.2, 0.13), lift(o3, 0.13), lift(e - 0.4, 0.13), [e, gAt(e) + 0.03]];
@@ -7415,14 +7422,12 @@ const World = (function () {
         addM(gA, aMat); addM(gK, kMat); addM(gP, pMat); addM(gK2, matV); addM(gV, gMat);
       }
       for (let i = 0; i < N - 1; i++) { const a = [T.px[i], T.pz[i]], b = [T.px[i + 1], T.pz[i + 1]]; hjMarkSeg(a[0], a[1], b[0], b[1], Math.max(WA[i], (T.bl[i] + T.br[i]) / 2) + 0.6, 2); }   // (no trees in the corridor)
-      // markings: on the boulevard a yellow centre line (opposite directions) and white dashed lane lines, a white dashed line on the one-way carriageway; the
-      // start, split and finish lines in lime; zebra crossings where the town's crossings meet the stage
-      const gm = new GB(), YEL = [0.93, 0.74, 0.16], WHT = [0.95, 0.95, 0.93];
+      // markings: the white dashed lane line down a carriageway of two lanes (def.marks); the start, split and finish lines in lime; zebra crossings where
+      // the town's crossings meet the stage
+      const gm = new GB(), WHT = [0.95, 0.95, 0.93];
       const strip = (s0, s1, o, hw, col) => { for (let s = s0; s < s1 - 0.01; s += 2) { const e = Math.min(s1, s + 2), a = atSf(s, o - hw), b = atSf(s, o + hw), c = atSf(e, o + hw), d = atSf(e, o - hw), y0 = T.hy[a[3]] + 0.045, y1 = T.hy[c[3]] + 0.045;
         gm.quadUp([a[0], y0, a[1]], [b[0], y0, b[1]], [c[0], y1, c[1]], [d[0], y1, d[1]], [col, col, col, col]); } };
-      for (let s = 4; s < T.len - 4; s += 12) { const i = T.idx(s); if (SF[i] !== 0 || inChic(s)) continue; const wi = WA[i];
-        if (wi >= 5.5) { strip(s, s + 12, -0.09, 0.05, YEL); strip(s, s + 12, 0.09, 0.05, YEL); strip(s, s + 3, -3.2, 0.06, WHT); strip(s, s + 3, 3.2, 0.06, WHT); }
-        else if (wi >= 4.6) strip(s, s + 3, 0, 0.06, WHT); }
+      for (const [d0, d1] of def.marks || []) for (let s = sAt(d0); s < sAt(d1) - 3; s += 12) { const i = T.idx(s); if (SF[i] !== 0 || inChic(s)) continue; strip(s, s + 3, 0, 0.06, WHT); }   // (def.marks [d0, d1])
       for (const [s0, hw] of [[sStart, 0.4], [sFin, 0.4]].concat(T.cpS.map(s => [s, 0.2]))) { const i = T.idx(s0), wi = WA[i]; strip(s0 - hw, s0 + hw, 0, wi - 0.1, WHT); }
       const PT = hjI16(S.pts); out.zebras = 0;
       for (let k = 0; k < PT.length; k += 3) { if (PT[k] !== 4) continue; const x = PT[k + 1] / 2, z = PT[k + 2] / 2, n = hjNear(x, z); if (n.i < 0 || Math.abs(n.lat) > WA[n.i] + 1 || SF[n.i] !== 0) continue;
@@ -7456,9 +7461,8 @@ const World = (function () {
       const rA = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
       const rP = new THREE.MeshLambertMaterial({ map: tex.paving, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
       const rG = new THREE.MeshLambertMaterial({ map: ouGTex(), vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
-      gA.addTo(root, rA, false, true); gP.addTo(root, rP, false, true); gG.addTo(root, rG, false, true); gS.addTo(root, matV, true, true);
       // car parks (tarmac) and squares (paving) laid on the ground: the polygons triangulated and cut into ~3 m triangles that follow it
-      const cA = new Chunks(120, true), cP = new Chunks(120, true);
+      const cA = gA, cP = gP;   // (the car parks and squares in the streets' own chunks: fewer draws)
       const lay = (ch, a, b, c, us, col, dep) => { const l = Math.max(Math.hypot(a[0] - b[0], a[1] - b[1]), Math.hypot(b[0] - c[0], b[1] - c[1]), Math.hypot(c[0] - a[0], c[1] - a[1]));
         if (l > 3.2 && dep < 7) { const ab = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], bc = [(b[0] + c[0]) / 2, (b[1] + c[1]) / 2], ca = [(c[0] + a[0]) / 2, (c[1] + a[1]) / 2]; lay(ch, a, ab, ca, us, col, dep + 1); lay(ch, ab, b, bc, us, col, dep + 1); lay(ch, ca, bc, c, us, col, dep + 1); lay(ch, ab, bc, ca, us, col, dep + 1); return; }
         const mx = (a[0] + b[0] + c[0]) / 3, mz = (a[1] + b[1] + c[1]) / 3; if (nearDD(mx, mz) < 0.5 || onBld(mx, mz)) return;
@@ -7469,7 +7473,7 @@ const World = (function () {
         for (const [a, b, c] of tris) lay(park ? cA : cP, ar.poly[a], ar.poly[b], ar.poly[c], park ? 7 : 2, col, 0);
         for (let q = 0; q < ar.poly.length; q++) { const a = ar.poly[q], b = ar.poly[(q + 1) % ar.poly.length]; hjMarkSeg(a[0], a[1], b[0], b[1], 1.0, 1); }
         hjFill(ar.poly, (v) => { G.pv[v] = Math.max(G.pv[v], 1); }); }
-      cA.addTo(root, rA, false, true); cP.addTo(root, rP, false, true);
+      gA.addTo(root, rA, false, true); gP.addTo(root, rP, false, true); gG.addTo(root, rG, false, true); gS.addTo(root, matV, true, true);
     }
 
     /* ---- the buildings (def.scen.bld): the blocks of flats and the shops of the centre, the wooden houses, sheds, schools, the church, the stadium's stand,
@@ -7570,17 +7574,21 @@ const World = (function () {
 
     /* ---- the stage's edges on race day: straw bales where the barrier stands on the street itself (the chicanes, the lane change), the steel crowd
        barriers along the town's streets, the orange mesh fence in the park; a KIELLETTY ALUE board and a marshal where a side street is closed ---- */
-    const fGB = new Chunks(110, true), spG = new Chunks(110, true), bales = [], STRAW = [0.84, 0.7, 0.4], STRAWT = [0.9, 0.78, 0.48];
-    const barType = (i, side) => { const si = side > 0 ? 1 : 0, bar = side > 0 ? T.br[i] : T.bl[i]; if (bar - WA[i] < 1.3) return 1; const t = VT[si][i]; return t === 4 || t === 0 ? 2 : 3; };   // 1 bales, 2 steel barriers, 3 mesh fence
-    const hard = (x, z) => onBld(x, z) || excluded(x, z);
+    const fGB = new Chunks(110, true), spG = new Chunks(200, true), bales = [], STRAW = [0.84, 0.7, 0.4], STRAWT = [0.9, 0.78, 0.48];
+    const barType = (i, side) => { const si = side > 0 ? 1 : 0, bar = side > 0 ? T.br[i] : T.bl[i]; if (bar - WA[i] < 0.45) return 4; if (bar - WA[i] < 1.3) return 1; const t = VT[si][i]; return t === 4 || t === 0 ? 2 : 3; };   // 1 bales, 2 steel barriers, 3 mesh fence, 4 concrete blocks
+    const hard = (x, z) => onBld(x, z) || excluded(x, z), blk = new Map(), blkNear = (x, z) => { const cx = Math.floor(x), cz = Math.floor(z); for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const L = blk.get((cx + a) + ',' + (cz + b)); if (L) for (let q = 0; q < L.length; q += 2) if ((L[q] - x) ** 2 + (L[q + 1] - z) ** 2 < 0.8) return true; } return false; };
+    const CONC = [0.62, 0.62, 0.6], CONCT = [0.7, 0.7, 0.68];
     for (const side of [-1, 1]) {
       let prev = null, pk = 0;
       for (let s = Math.max(2, sStart - 30); s < T.len - 6; s += 2.5) {
-        const i = T.idx(s), bt = barType(i, side), bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + (bt === 1 ? 0.3 : 0.15)), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
-        const nn = hjNear(x, z), other = nn.i >= 0 && Math.abs(nn.i - i) * ds > 20 && nn.dd < 0.3;   // (not across another part of the road)
-        if (other || onBld(x, z) || (bt !== 1 && mouth[side > 0 ? 1 : 0][i] && pk !== 1)) { prev = null; pk = bt; continue; }
+        const i = T.idx(s), bt = barType(i, side), bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + (bt === 1 || bt === 4 ? 0.3 : 0.15)), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
+        const nn = hjNear(x, z), other = nn.i >= 0 && Math.abs(nn.i - i) * ds > 20 && nn.dd < 0.3;   // (not across another part of the road; the barrier the two carriageways share: once)
+        if ((other && bt !== 4 && bt !== 1) || onBld(x, z) || (bt !== 1 && bt !== 4 && mouth[side > 0 ? 1 : 0][i] && pk !== 1)) { prev = null; pk = bt; continue; }
         const y = hjGround(x, z);
-        if (bt === 1) { const g = scen.get(x, z); for (let q = 0; q < 2; q++) box(g, x, y + q * 0.45, z, 1.2, 0.46, 0.55, T.hd[i] + (q ? 0.06 : -0.03), STRAW, STRAWT, true); bales.push([x, z]); exclPush(x, z, 1); prev = null; pk = bt; continue; }
+        if (bt === 1 || bt === 4) { if (blkNear(x, z)) { prev = null; pk = bt; continue; } const g = scen.get(x, z), k = Math.floor(x) + ',' + Math.floor(z); let L = blk.get(k); if (!L) blk.set(k, L = []); L.push(x, z);
+          if (bt === 1) for (let q = 0; q < 2; q++) box(g, x, y + q * 0.45, z, 1.2, 0.46, 0.55, T.hd[i] + (q ? 0.06 : -0.03), STRAW, STRAWT, true);
+          else { box(g, x, y - 0.05, z, 2.3, 0.35, 0.6, T.hd[i], CONC, CONCT, true); box(g, x, y + 0.3, z, 2.3, 0.5, 0.32, T.hd[i], CONC, CONCT, true); }   // (a concrete block: a wide foot, a narrower top)
+          bales.push([x, z]); exclPush(x, z, 1); prev = null; pk = bt; continue; }
         const P0 = [x, y, z];
         if (prev && pk === bt && Math.hypot(x - prev[0], z - prev[2]) < 3.6) { const g = fGB.get(x, z), hgt = bt === 2 ? 1.12 : 1.2, u0 = bt === 2 ? 0 : 0.5, u1 = u0 + 0.5;
           g.quadO([prev[0], prev[1] - 0.05, prev[2]], [x, y - 0.05, z], [x, y + hgt, z], [prev[0], prev[1] + hgt, prev[2]], W1, [(x + prev[0]) / 2 - T.nx[i] * side, y + 0.5, (z + prev[2]) / 2 - T.nz[i] * side], [[u0, 0.02], [u1, 0.02], [u1, 0.98], [u0, 0.98]]);
@@ -7600,13 +7608,13 @@ const World = (function () {
 
     /* ---- the spectators: the start, the boulevard past the Nero steps, the lane change and the corner onto the gravel, both sides of the climb, round the water
        tower, down past the stadium, Lasse Lampi's corner, Pitkäkatu, the hairpin at the school and Norssi corner; people on the Nero steps and on the tower's terrace ---- */
-    const CR = crowdCtx({ gH: hjGround, near: nearDD, excluded: hard, maxSlope: 0.95 }), crSoft = new Set();
+    // nobody behind the concrete blocks between the two carriageways (a car passes on either side), nor on the island round which the hairpin turns (def.hairpin [x, z, r])
+    const HP = def.hairpin, crowdOut = (x, z) => { if (hard(x, z)) return true; if (HP && Math.hypot(x - HP[0], z - HP[1]) < HP[2] + 1.5) return true;
+      const n = hjNear(x, z); return n.i >= 0 && barType(n.i, n.lat > 0 ? 1 : -1) === 4; };
+    const CR = crowdCtx({ gH: hjGround, near: nearDD, excluded: crowdOut, maxSlope: 0.95 }), crSoft = new Set();
     const M = { first: 0.8, gap: 0.95, below: 3.5, above: 9, maxSlope: 0.95, sit: 0.12, flag: 0.1, keepBar: 0.6 };
     const run = (d0, d1, side, o) => { const a = Math.max(sAt(d0), 2), b = Math.min(sAt(d1), T.len - 4); if (b <= a) return 0; return crowdRun(CR, a, b, side, Object.assign({}, M, o)); };
-    const K = def.key || {};
-    const C1 = [[-30, 70, 3, 0.55], [70, 130, 3, 0.4], [130, 215, 5, 0.75], [215, 262, 3, 0.45], [262, 330, 4, 0.7], [330, 372, 5, 0.85], [372, 470, 3, 0.55], [470, 560, 3, 0.45], [560, 700, 4, 0.6],
-      [700, 790, 3, 0.45], [790, 930, 3, 0.5], [930, 985, 5, 0.85], [985, 1040, 2, 0.35], [1040, 1090, 3, 0.6], [1090, 1290, 2, 0.3], [1290, 1340, 3, 0.6], [1340, 1510, 2, 0.35], [1510, 1565, 5, 0.85],
-      [1565, 1700, 3, 0.45], [1700, 1810, 3, 0.45], [1810, 1880, 4, 0.7]];
+    const C1 = def.crowds || [];   // (def.crowds [d0, d1, rows, share])
     for (const [a, b, rows, dn] of C1) for (const sd of [-1, 1]) run(a, b, sd, { rows, dens: dn * (sd > 0 ? 0.86 : 0.78), label: 'HJ ' + a + (sd > 0 ? 'R' : 'L') });
     for (const r of roads) { if (r.cls !== 8) continue;   // on the steps (the Nero steps and the ridge's other flights): people standing along them, looking towards the stage
       for (let q = 0; q < r.d.length; q++) { const [x, z] = r.d[q], n = hjNear(x, z); if (n.i < 0 || n.d > 70 || n.dd < 2) continue;
@@ -7627,7 +7635,7 @@ const World = (function () {
       box(g, x, y + h, z, 2.3, 0.12, 2.3, rot, [0.5, 0.4, 0.28]); exclPush(x, z, 3.2); return y + h + 0.12; };
     const tvCam = (x, y, z, fx, fz) => { const g = scen.get(x, z); box(g, x, y, z, 0.1, 1.2, 0.1, 0, [0.15, 0.15, 0.16]); box(g, x, y + 1.2, z, 0.72, 0.4, 0.3, Math.atan2(fz, fx), [0.16, 0.16, 0.18], [0.3, 0.3, 0.32]);
       ouRod(g, [x + fx * 0.3, y + 1.4, z + fz * 0.3], [x + fx * 0.72, y + 1.4, z + fz * 0.72], 0.1, [0.07, 0.07, 0.08], 6); };
-    for (const [d, sd, off] of [[610, -1, 7], [30, 1, 5]]) { const s = sAt(d), i = T.idx(s), o = sd * ((sd > 0 ? T.br[i] : T.bl[i]) + off), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
+    for (const [d, sd, off] of def.tv || []) { const s = sAt(d), i = T.idx(s), o = sd * ((sd > 0 ? T.br[i] : T.bl[i]) + off), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
       if (hard(x, z) || nearDD(x, z) < 4) continue; const yd = tower(x, z, T.hd[i], 4.6), fx = -T.nx[i] * sd, fz = -T.nz[i] * sd; tvCam(x + fx * 0.5, yd, z + fz * 0.5, fx, fz); crowdPut(CR, x - T.tx[i] * 0.5, yd, z - T.tz[i] * 0.5, fx, fz, {}, 1); }
 
     /* ---- the town's things (def.scen.pts): street lamps (tall on the streets, lanterns in the park), benches, bus stops, traffic lights, bollards, litter bins,
@@ -7681,7 +7689,7 @@ const World = (function () {
     /* ---- the trees: every crown the canopy height model found (def.scen.trees: the ridge's Scots pines, spruces, birches, the lindens and maples of the
        streets and yards) at its measured height, and where the canopy is closed a fill of the same kind (instanced per 128 m chunk) ---- */
     const tMat = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
-    const TK = {}, TKF = {}; for (const k of [0, 1, 2, 4]) TK[k] = new IChunks(hjTreeGeo(k), tMat, 128);
+    const TK = {}, TKF = {}; for (const k of [0, 1, 2, 4]) TK[k] = new IChunks(hjTreeGeo(k), tMat, 160);
     TKF[1] = TKF[0] = new IChunks(hjTreeGeo(1, true), tMat, 128); TKF[4] = TKF[2] = new IChunks(hjTreeGeo(4, true), tMat, 128);   // (over 60 m from the road: the plain pine and the plain broadleaf, casting no shadow)
     let nTrees = 0; const tHash = new Map(), THC = 4;   // (the planted trees in 4 m cells: the fill keeps 3.4 m from them)
     const treeOK = (x, z) => { if (onBld(x, z) || onPaved(x, z) || excluded(x, z)) return false; const n = hjNear(x, z); return !(n.i >= 0 && n.dd < 1.2); };
