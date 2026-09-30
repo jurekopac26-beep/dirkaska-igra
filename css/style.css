@@ -58,6 +58,11 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-split.fast, #h-msg.fast { color: var(--meter); }
 #h-split.slow { color: var(--curb); }
 #h-split.even { color: var(--chalk); }
+#h-split.sp { color: #c77dff; } #h-split.sg { color: #5ee36a; } #h-split.sy { color: #ffd23a; }   /* a TV sector: purple, green, yellow */
+#h-sec { display: none; justify-content: center; gap: 3px; margin-top: 4px; }   /* the three sector bars (#hud.sec: a circuit with TV sectors) */
+#hud.sec #h-sec { display: flex; }
+#h-sec i { width: clamp(16px, 4.4vh, 28px); height: clamp(3px, .9vh, 5px); border-radius: 2px; background: rgba(255,255,255,.26); box-shadow: 0 1px 2px rgba(0,0,0,.6); transition: background-color .2s; }
+#h-sec i.p { background: #b45cff; } #h-sec i.g { background: #3fd84c; } #h-sec i.y { background: #ffcf2e; }
 /* time trial finish: compact splits table under the finish time (this run, the previous record, the difference) */
 #h-ttsp { display: none; position: absolute; left: 50%; top: calc(40% + clamp(28px, 10vh, 56px) + 10px); transform: translateX(-50%); padding: 4px 8px; background: rgba(10, 14, 20, .6); border-radius: 6px; font: 700 clamp(10px, 2.9vh, 13px)/1.25 var(--f-ui); font-variant-numeric: tabular-nums; color: var(--chalk); text-shadow: 0 1px 2px #000; }
 #h-ttsp.show { display: table; }
@@ -84,6 +89,11 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-lights.go i { background: #29e05a; box-shadow: 0 0 14px #2cff66; }
 #h-msg { position: absolute; left: 0; right: 0; top: 40%; text-align: center; font: 400 italic clamp(28px, 10vh, 56px)/1 var(--f-display); color: var(--chalk); text-shadow: 3px 4px 0 rgba(0,0,0,.55); opacity: 0; transform: scale(.9); transition: opacity .2s, transform .2s; }
 #h-msg.show { opacity: 1; transform: scale(1); }
+#hud.shot > *:not(#podium-cap) { visibility: hidden; }   /* a TV shot (the jets before the start, the podium): no HUD */
+#podium-cap { position: absolute; left: 50%; bottom: calc(10px + var(--sb, 0px)); transform: translateX(-50%); display: flex; gap: 14px; padding: 6px 14px; border-radius: 6px; background: rgba(12,16,40,.72); font: 700 italic clamp(12px, 3.4vh, 18px)/1.2 var(--f-ui); color: var(--chalk); white-space: nowrap; opacity: 0; transition: opacity .4s; pointer-events: none; }
+#podium-cap.show { opacity: 1; }
+#podium-cap b { color: #ffcf2e; }
+#podium-cap i { display: inline-block; width: .7em; height: .7em; margin: 0 .3em 0 .15em; border-radius: 2px; vertical-align: -.05em; }
 #h-msg.warn { color: var(--curb); }
 #h-msg.gold { color: var(--lcd); }
 #speedo { position: relative; margin-top: 2px; margin-left: -6px; width: clamp(120px, 36vh, 168px); height: clamp(75px, 22.5vh, 105px); }
@@ -278,6 +288,7 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 /* ================= TRACK SELECT ================= */
 #s-track { justify-content: center; }
 .track-panel { width: min(760px, 96vw); max-height: 100%; display: flex; flex-direction: column; }
+.wx-row { margin: 2px 0 0; } .wx-row .rlbl { min-width: 0; }
 .track-list { display: flex; gap: 12px; overflow-x: auto; padding: 4px 2px 8px; touch-action: pan-x pan-y; }
 .track-card { flex: 1 0 220px; max-width: 340px; border: 2px solid rgba(255,255,255,.2); border-radius: 12px; padding: 10px; background: rgba(255,255,255,.04); cursor: pointer; text-align: left; color: inherit; font: inherit; }
 .track-card.sel { border-color: var(--curb); background: rgba(230,59,46,.14); box-shadow: 0 0 0 2px rgba(230,59,46,.35); }
@@ -309,7 +320,7 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 /* short landscape phones: title buttons two per row, each label on one line, so the hint still fits (Dirkaj next to Dirka s
    prijateljem; Celoten zaslon spans both, and when Namesti igro shows, it sits next to it, so the panel is no taller); track
    cards without the long description */
-@media (orientation: landscape) and (max-height: 500px) { .title-panel .btns { display: grid; grid-template-columns: 1fr 1fr; } .title-panel .btns .btn { padding-left: 12px; padding-right: 12px; white-space: nowrap; font-size: clamp(13px, 3.9vh, 17px); } .title-panel .btn.fsbtn { grid-column: 1 / -1; } .title-panel .btns:has(.appbtn:not(.off)) .btn.fsbtn { grid-column: auto; } .track-card .tdesc { display: none; } }
+@media (orientation: landscape) and (max-height: 500px) { .title-panel .btns { display: grid; grid-template-columns: 1fr 1fr; } .title-panel .btns .btn { padding-left: 12px; padding-right: 12px; white-space: nowrap; font-size: clamp(13px, 3.9vh, 17px); } .title-panel .btns:has(.appbtn:not(.off)) .btn.appbtn { grid-column: 1 / -1; } .title-panel .btns:has(.fsbtn.off):has(.appbtn.off) .btn[data-act="to-settings"] { grid-column: 1 / -1; } .track-card .tdesc { display: none; } }
 
 /* ================= Dirka s prijateljem (online) ================= */
 .on-join { margin-top: 14px; }
@@ -368,6 +379,33 @@ select.txt:disabled { opacity: .75; }
   .ltab th, .ltab td, #res-table th, #res-table td { padding-left: 4px; padding-right: 4px; }
   #hud.tt #h-lap { font-size: clamp(12px, 3.6vw, 17px); }
 }
+
+/* ================= CHAMPIONSHIP (Prvenstvo) ================= */
+#s-champ { justify-content: center; }
+.champ-panel { width: min(760px, 96vw); height: 100%; display: flex; flex-direction: column; }
+.champ-panel #ch-body { flex: 1 1 auto; min-height: 0; }
+.ch-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 10px; padding: 2px; }
+.ch-card { border: 2px solid rgba(255,255,255,.2); border-radius: 12px; padding: 10px 12px; background: rgba(255,255,255,.04); cursor: pointer; text-align: left; color: inherit; font: inherit; }
+.ch-card.sel { border-color: var(--curb); background: rgba(230,59,46,.14); box-shadow: 0 0 0 2px rgba(230,59,46,.35); }
+.ch-card h3 { margin: 0 0 4px; font: 400 italic clamp(18px, 5.2vh, 23px)/1 var(--f-display); }
+.ch-card .tmeta { font: 700 italic clamp(11px, 3vh, 13px)/1.3 var(--f-ui); color: var(--lcd); }
+.ch-card .tdesc { font: 500 clamp(11px, 3vh, 12.5px)/1.35 var(--f-ui); color: var(--muted); margin-top: 4px; }
+.ch-card .trec { font: 700 italic clamp(11px, 3vh, 12.5px)/1.3 var(--f-ui); color: var(--meter); margin-top: 4px; }
+.ch-rounds { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 8px; padding: 0; list-style: none; }
+.ch-rounds li { padding: 5px 9px; border-radius: 9px; border: 2px solid rgba(255,255,255,.18); font: 700 italic clamp(11px, 3vh, 13px)/1 var(--f-ui); color: var(--muted); white-space: nowrap; }
+.ch-rounds li.done { color: var(--chalk); border-color: rgba(255,255,255,.3); }
+.ch-rounds li.done b { color: var(--lcd); }
+.ch-rounds li.next { color: #14181f; background: var(--chalk); border-color: var(--chalk); }
+.ch-final { display: flex; align-items: center; gap: 14px; margin: 2px 0 6px; }
+.ch-final .res-pos { font-size: clamp(36px, 12vh, 64px); }
+.ch-final p { margin: 2px 0 0; }
+.ch-car { flex: 0 0 auto; margin: 6px 0 0; }
+.ch-diff { font: 600 italic clamp(11px, 3vh, 13px)/1.2 var(--f-ui); color: var(--muted); }
+.ltab td.pts { font-weight: 700; color: var(--lcd); } .ltab tr.me td.pts { color: #111; }
+#res-table td.pts { font-weight: 700; color: var(--lcd); } #res-table tr.me td.pts { color: #111; }
+@media (orientation: portrait) { .champ-panel { width: 100%; } .ch-diff { flex-basis: 100%; } }
+.ch-card .ttracks { font: 600 clamp(11px, 3vh, 12.5px)/1.35 var(--f-ui); color: var(--chalk); opacity: .85; margin-top: 4px; }
+@media (max-height: 420px) { .ch-card .tdesc { display: none; } }
 
 /* ================= COMMENTATOR CAPTIONS ================= */
   padding: 6px 12px; border-radius: 10px; background: rgba(8, 11, 16, .62); color: #fff; font: 600 italic clamp(12px, 3.4vh, 15px)/1.3 var(--f-ui);

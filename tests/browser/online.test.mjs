@@ -5,6 +5,7 @@
 // - the clocks: the friend's clock matches the host's
 // - the race: both start at the same planned moment, each sees the other's car where the other really is, both finish, and
 //   both result screens show the same two times
+// - the host's weather: the second race in the rain on both phones
 // - the friend leaves in the middle of a race: the host is told, the race goes on alone, the friend is shown as gone
 // - quick match (no code): the first waits, the next connects at once; a third waits for the next; two tapping at the same
 //   moment meet; a leftover of a dead waiter is skipped
@@ -106,11 +107,15 @@ try {
   T.check('back to the room: the host can start only once the friend is back; the car that left is off the track', hideB.title === qB.title && waitA.go && /vrne v sobo/.test(waitA.status) && /v sobi/.test(inA),
     `friend's results: ${hideB.title}, host's car off the track | host waiting: "${waitA.status}", start disabled ${waitA.go} | then: "${inA}"`);
 
-  // 6. a second race (the friend on the left of the front row this time); the friend leaves in the middle of it
+  // 6. a second race (the friend on the left of the front row this time), in the rain the host chose (the friend's own setting is dry);
+  //    the friend leaves in the middle of it
+  await A.page.evaluate(() => document.querySelector('[data-set="weather"] button[data-v="rain"]').click());
   await A.page.evaluate(() => window.__game.onAction('net-go'));
   await until(B.page, () => { const g = window.__game; return !!(g.race && g.race.state === 'racing'); }, null, 60000);
   const gA = await A.page.evaluate(() => [window.__game.race.player.grid, window.__game.race.remote.grid]), gB = await B.page.evaluate(() => [window.__game.race.player.grid, window.__game.race.remote.grid]);
   T.check('second race: the sides of the front row change', gA.join() === '2,1' && gB.join() === '1,2', `host ${gA}, friend ${gB}`);
+  const wx = await Promise.all([A.page, B.page].map(p => p.evaluate(() => ({ rain: window.__game.race.rain, wet: window.__game.race.player.wet, own: window.__game.S.weather }))));
+  T.check("second race: the host's weather (rain) on both phones", wx.every(w => w.rain === 1 && w.wet < 1) && wx[1].own === 'dry', JSON.stringify(wx));
   await wait(3000);
   await B.ctx.close();
   const gone = await until(A.page, () => { const n = window.__game.net; return n && n.race && n.race.left ? { toast: document.getElementById('toast').textContent, dist: window.__game.race.remote.dist, state: window.__game.race.state } : null; }, null, 40000);
