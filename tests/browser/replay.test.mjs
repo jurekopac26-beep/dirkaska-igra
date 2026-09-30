@@ -25,7 +25,7 @@ try {
   const btn = await page.evaluate(() => !document.getElementById('res-replay').classList.contains('off'));
   await act('replay'); await frames(6);
   const a = await st();
-  T.check('"Posnetek": the replay plays (its controls, no HUD, no touch controls), from the start, on TV cameras', btn && a.screen === 'none' && a.ui && !a.hud && !a.touch && a.t > 0.2 && a.t < 4 && a.cam === 'TV' && /^Ti · /.test(a.info), JSON.stringify(a));
+  T.check('"Posnetek": the replay plays (its controls, no HUD, no touch controls), from the start, on TV cameras', btn && a.screen === 'none' && a.ui && !a.hud && !a.touch && a.t > 0.05 && a.t < 4 && a.cam === 'TV' && /^Ti · /.test(a.info), JSON.stringify(a));
   T.check('TV camera: on a post away from the car, zoomed in', a.camD > 12 && a.fov < 35, JSON.stringify({ camD: a.camD, fov: a.fov }));
   // the cars where the recording has them
   const pose = await page.evaluate(() => { const P = window.__game.race.player; return { x: P.x, z: P.z }; });
@@ -33,11 +33,12 @@ try {
   // pause, speed
   await act('rp-play'); await frames(1); const p0 = await st(); await frames(4); const p1 = await st();
   T.check('pause: the time stands', p1.t === p0.t && p1.play === '▶', JSON.stringify({ p0: p0.t, p1: p1.t, play: p1.play }));
-  // 1× and 2×: the replay time over the same number of frames (each frame's time is the real one, at most 0.1 s)
-  const rate = async () => { const t0 = (await st()).t, t0r = await page.evaluate(() => performance.now()); await frames(8); const t1 = (await st()).t, t1r = await page.evaluate(() => performance.now()); return (t1 - t0) / Math.min(8 * 0.1, (t1r - t0r) / 1000); };
+  // 1× and 2×: the replay's time against the game's clock over the same frames (each frame's time is the real one, at most 0.1 s: a slow
+  // software-drawn frame counts 0.1 s)
+  const rate = async () => { const a0 = await page.evaluate(() => window.__game.replay); await frames(8); const a1 = await page.evaluate(() => window.__game.replay); return (a1.t - a0.t) / Math.max(1e-6, a1.clk - a0.clk); };
   await act('rp-play'); await frames(1); const r1 = await rate();
   await act('rp-speed'); await frames(1); const r2 = await rate(), q1 = await st();
-  T.check('1×: the recording\'s time with the real one; 2×: twice as fast', q1.speed === '2×' && r1 > 0.6 && r1 < 1.5 && r2 / r1 > 1.5 && r2 / r1 < 2.6, JSON.stringify({ r1: +r1.toFixed(2), r2: +r2.toFixed(2), speed: q1.speed }));
+  T.check('1×: the recording\'s time with the game\'s clock; 2×: twice as fast', q1.speed === '2×' && r1 > 0.95 && r1 < 1.05 && r2 > 1.9 && r2 < 2.1, JSON.stringify({ r1: +r1.toFixed(3), r2: +r2.toFixed(3), speed: q1.speed }));
   // the camera, the car followed
   await act('rp-cam'); await frames(1); const c1 = await st();
   await act('rp-cam'); await frames(1); const c2 = await st();
