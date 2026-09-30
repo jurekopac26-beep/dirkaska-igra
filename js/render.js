@@ -1001,7 +1001,7 @@ const Render = (function () {
     matScOn = new THREE.MeshBasicMaterial({ color: 0xffa21a }); matScOff = new THREE.MeshLambertMaterial({ color: 0x4a3312 });   // (the safety car's lamps)
     particles = new Particles(2400); scene.add(particles.points);
     sparkP = new Particles(700, true); scene.add(sparkP.points);
-    glows = new Glows(4 * 16 + 240); scene.add(glows.points);   // (the race's cars; the open road's traffic and patrol cars)
+    glows = new Glows(10 * 16 + 240); scene.add(glows.points);   // (the race's cars, up to three points a lamp at night; the open road's traffic and patrol cars)
     skids = new Skids(8000); scene.add(skids.mesh);
     rain = new Rain(3200); scene.add(rain.mesh);
     snow = new Snow(2600); scene.add(snow.mesh);
@@ -1023,7 +1023,7 @@ const Render = (function () {
     world = World.build(scene, track, tex, { density });
     if (!world.farClip && camera.far !== 700) { camera.far = 700; camera.updateProjectionMatrix(); }
     applyTheme((track.def && track.def.theme) || 'lake'); wet = wetW = -1;   // (the weather again on the new world's road)
-    curTrack = track; seasonWorld(); floodlights();   // (the season and the time of day on the new world)
+    curTrack = track; seasonWorld(); floodlights(); litWindows();   // (the season and the time of day on the new world)
     if (dryLn) { scene.remove(dryLn); dryLn.geometry.dispose(); dryLn.material.dispose(); dryLn = null; }
     birds.reset(!!(track.def && (track.def.sea || track.def.theme === 'monaco')));   // (gulls by the sea)
     return world;
@@ -1191,6 +1191,7 @@ const Render = (function () {
     }
     if (A.season === 'winter' && A.tod !== 'night') { to(scene.fog.color, 0xdfe6ee, 0.4); renderer.setClearColor(scene.fog.color, 1); to(sun.color, 0xeef3ff, 0.5); hemi.intensity *= 1.12; if (post) post.mat.uniforms.uSat.value *= 0.88; }
     if (A.season === 'autumn' && A.tod === 'day' && !t.season) { to(sun.color, 0xffd9a8, 0.3); if (post) post.mat.uniforms.uTint.value.set(1.04, 0.99, 0.93); }
+    if (post) { const B = post.bl.bright.uniforms; post.bloom = A.tod === 'night' ? 1.05 + 0.25 * r : A.tod === 'dusk' ? 0.5 : 0; B.uThr.value = A.tod === 'night' ? 0.62 : 0.8; }   // (the lights' glow: at dusk only what is brighter than the sky)
     // the smoke and dust in that light: warm at dusk, dark and blue at night (only the lit parts glow: the floodlights, the headlights' beams)
     if (particles && particles.mat.uniforms.uLit) { const L = particles.mat.uniforms.uLit.value; if (A.tod === 'night') L.set(0.36, 0.4, 0.5); else if (A.tod === 'dusk') L.set(0.97, 0.85, 0.74); else L.set(1, 1, 1); }
   }
@@ -1283,9 +1284,32 @@ const Render = (function () {
   function setAtmos(a) {
     const n = { season: ['autumn', 'winter'].includes(a && a.season) ? a.season : 'summer', tod: ['dusk', 'night'].includes(a && a.tod) ? a.tod : 'day' };
     if (n.season === atmos.season && n.tod === atmos.tod) return;
-    atmos = n; applyTheme(themeId); seasonWorld(); floodlights(); for (const v of views) { beams(v); carGlow(v); }
+    atmos = n; applyTheme(themeId); seasonWorld(); floodlights(); litWindows(); for (const v of views) { beams(v); carGlow(v); }
   }
   function carGlow(v) { const m = v.body && v.body.material; if (m && m.emissive) m.emissive.setScalar(atmos.tod === 'night' ? 0.16 : 0); }   // (at night the cars stay in sight under the floodlights)
+  // dusk and night: lights in the buildings' windows (the facade pictures, tex.facade and tex.facadeBal: the glass is the blue in them).
+  // Some of the windows lit, each with a warm light of its own (now and then a television's cold blue), by a hash of the window (its bay
+  // and floor, the wall's colour); the facade materials get it in their shader at the first dusk or night (winU 0 by day: as built)
+  const winU = { value: 0 };
+  const WIN_GLSL = ['#include <emissivemap_fragment>',
+    '{ vec4 wt = texture2D( map, vUv ); float wg = smoothstep( 0.05, 0.13, wt.b - wt.r ); vec3 ws = vec3( floor( vUv ), 0.0 );',
+    '#ifdef USE_COLOR', '  ws.z = floor( dot( vColor.rgb, vec3( 7.1, 3.7, 5.3 ) ) * 4.0 + 0.5 );', '#endif',   // (whole numbers: the hash of an interpolated colour would sparkle)
+    '  float wh = fract( sin( dot( ws, vec3( 12.9898, 78.233, 37.719 ) ) ) * 43758.5453 );',
+    '  vec3 wc = wh > 0.965 ? vec3( 0.5, 0.68, 1.0 ) : mix( vec3( 1.0, 0.62, 0.28 ), vec3( 1.0, 0.85, 0.58 ), fract( wh * 7.3 ) );',
+    '  totalEmissiveRadiance += wc * wg * step( 0.56, wh ) * ( 0.42 + 0.38 * fract( wh * 13.7 ) ) * uWinK; }'].join('\n');
+  function litWindows() {
+    winU.value = atmos.tod === 'night' ? 1 : atmos.tod === 'dusk' ? 0.4 : 0;
+    if (!winU.value || !world || !world.root || world.winLit) return;
+    world.winLit = true;
+    const maps = [tex.facade, tex.facadeBal].filter(Boolean);
+    world.root.traverse(o => { for (const m of o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []) {
+      if (!m.map || !maps.includes(m.map) || m.userData.win) continue;
+      const prev = m.onBeforeCompile, key = m.customProgramCacheKey(); m.userData.win = true;   // (on top of what the material's shader has already: Ouninpohja's cut-out)
+      m.onBeforeCompile = (sh, r) => { prev.call(m, sh, r); sh.uniforms.uWinK = winU;
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uWinK;').replace('#include <emissivemap_fragment>', WIN_GLSL); };
+      m.customProgramCacheKey = () => key + '|win'; m.needsUpdate = true;
+    } });
+  }
   const _hsl = { h: 0, s: 0, l: 0 }, _sc = new THREE.Color();
   const hash3 = (a) => { const x = Math.sin(a * 91.37 + 17.1) * 43758.5453; return x - Math.floor(x); };
   // a colour of the world in the season: plants (greens) and soil (browns) change, the rest stays. ground: a surface facing up (grass,
@@ -1358,42 +1382,62 @@ const Render = (function () {
     }
     wetW = -1;   // (the road's wet colour again)
   }
-  function radialTex(inner, soft) {   // a soft round spot (floodlight pools, lamp heads)
+  function radialTex(stops) {   // a soft round spot (the floodlights' pools): [radius 0..1, alpha] stops
     const S = 64, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), gr = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
-    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(inner, 'rgba(255,255,255,' + soft + ')'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, S, S);
+    for (const [r, a] of stops) gr.addColorStop(r, 'rgba(255,255,255,' + a + ')'); g.fillStyle = gr; g.fillRect(0, 0, S, S);
     return new THREE.CanvasTexture(c);
   }
-  // night: floodlights on poles along the track (every 30 m, alternating sides), each a pool of warm light on the road
+  // night: floodlights on poles along the track (every 30 m, alternating sides), each a pool of warm light on the road (brightest under the
+  // lamp, fading out softly) and a glow round the lamp (the glows' points: one draw call for all of them)
   function floodlights() {
-    if (flood) { scene.remove(flood.pools); scene.remove(flood.poles); scene.remove(flood.heads); flood.pools.geometry.dispose(); flood.poles.geometry.dispose(); flood.heads.geometry.dispose(); flood = null; }
+    if (flood) { for (const o of [flood.pools, flood.poles, flood.heads, flood.halo]) { scene.remove(o); o.geometry.dispose(); } flood = null; }
     const T = curTrack; if (atmos.tod !== 'night' || !T || !world) return;
-    if (!lampTex) lampTex = radialTex(0.35, 0.55);
+    if (!lampTex) lampTex = radialTex([[0, 1], [0.18, 0.86], [0.42, 0.46], [0.68, 0.16], [1, 0]]);
     const L = T.len, n = Math.floor(L / 30), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), p = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
-    const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: lampTex, color: 0xffe2b0, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), n);
+    const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: lampTex, color: 0xffd9a6, transparent: true, opacity: 0.56, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), n);
     const poles = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.09, 0.12, 9, 5).translate(0, 4.5, 0), new THREE.MeshLambertMaterial({ color: 0x3a3d42 }), n);
     const heads = new THREE.InstancedMesh(new THREE.BoxGeometry(0.9, 0.3, 0.5), new THREE.MeshBasicMaterial({ color: 0xfff1cf }), n);
+    const hp = new Float32Array(n * 3), hc = new Float32Array(n * 4), hs = new Float32Array(n);
     for (let k = 0; k < n; k++) {
       const s = k * 30 + 10, i = T.idx(s), sd = k % 2 ? 1 : -1, y = T.hasElev && T.hy ? T.hy[i] : 0, e = sd > 0 ? (T.br ? T.br[i] : T.w) : (T.bl ? T.bl[i] : T.w), d = sd * (Math.max(T.w, Math.min(e, T.w + 6)) + 1.2);
       p.set(T.px[i] + T.nx[i] * sd * T.w * 0.35, y + 0.07, T.pz[i] + T.nz[i] * sd * T.w * 0.35); q.identity(); sc.set(T.w * 3.2, 1, T.w * 3.2); m4.compose(p, q, sc); pools.setMatrixAt(k, m4);
       p.set(T.px[i] + T.nx[i] * d, y, T.pz[i] + T.nz[i] * d); sc.set(1, 1, 1); m4.compose(p, q, sc); poles.setMatrixAt(k, m4);
       p.y += 9; q.setFromAxisAngle(up, -Math.atan2(T.nz[i], T.nx[i])); m4.compose(p, q, sc); heads.setMatrixAt(k, m4);
+      hp[k * 3] = p.x - T.nx[i] * sd * 0.3; hp[k * 3 + 1] = p.y - 0.3; hp[k * 3 + 2] = p.z - T.nz[i] * sd * 0.3;   // (the glow just under the lamp, towards the road)
+      hc[k * 4] = 1; hc[k * 4 + 1] = 0.84; hc[k * 4 + 2] = 0.6; hc[k * 4 + 3] = 0.5; hs[k] = 5.5;
     }
-    pools.renderOrder = 1; pools.frustumCulled = false; poles.frustumCulled = false; heads.frustumCulled = false;
-    scene.add(pools); scene.add(poles); scene.add(heads); flood = { pools, poles, heads };
+    const hg = new THREE.BufferGeometry(); hg.setAttribute('position', new THREE.BufferAttribute(hp, 3)); hg.setAttribute('pcolor', new THREE.BufferAttribute(hc, 4)); hg.setAttribute('psize', new THREE.BufferAttribute(hs, 1));
+    const halo = new THREE.Points(hg, glows.mat); halo.renderOrder = 7;   // (the car lights' glow material: no program of its own)
+    pools.renderOrder = 1; pools.frustumCulled = false; poles.frustumCulled = false; heads.frustumCulled = false; halo.frustumCulled = false;
+    scene.add(pools); scene.add(poles); scene.add(heads); scene.add(halo); flood = { pools, poles, heads, halo };
   }
-  // dusk and night: the headlights' beam on the road ahead of a car (a soft fan, additive)
+  // dusk and night: the headlights' beam on the road ahead of a car (additive): the two lamps' cones, each widening and fading with the
+  // distance (a soft edge all round, the brightest a few metres ahead), merging into one warm fan further out
+  function beamTexture() {
+    const W = 64, H = 128, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'), img = g.createImageData(W, H), d = img.data;
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+      const x = ((i + 0.5) / W - 0.5) * 9, y = (j + 0.5) / H * 22, dy = y - 0.3, o = (j * W + i) * 4;   // (metres: x across, y ahead from the plane's near edge, the lamps 0.3 m in)
+      let a = 0;
+      if (dy > 0) {
+        const along = (1 - Math.exp(-dy / 1.4)) / (1 + (dy / 10) ** 2) * Math.min(1, (22 - y) / 5), sx = 0.22 + 0.16 * dy;
+        for (const xl of [-0.62, 0.62]) a += Math.exp(-((x - xl) ** 2) / (2 * sx * sx)) * along;
+        a += 0.22 * Math.exp(-(x * x) / (2 * (0.8 + 0.3 * dy) ** 2)) * along;   // (the spill round the cones)
+        a = (1 - Math.exp(-1.5 * a)) * Math.min(1, (4.5 - Math.abs(x)) / 1.2);
+      }
+      d[o] = d[o + 1] = d[o + 2] = 255; d[o + 3] = Math.round(255 * clamp(a, 0, 1));
+    }
+    g.putImageData(img, 0, 0); return new THREE.CanvasTexture(c);
+  }
   function beams(v) {
     const on = atmos.tod !== 'day';
     if (!on) { if (v.beam) v.beam.visible = false; return; }
     if (!v.beam) {
-      if (!beamTex) { const W = 64, H = 128, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'), img = g.createImageData(W, H), d = img.data;
-        for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const u = (i + 0.5) / W - 0.5, t = j / H, w = 0.12 + 0.38 * t, a = Math.max(0, 1 - Math.abs(u) / w) * Math.min(1, t * 6) * (1 - t) ** 1.2, o = (j * W + i) * 4; d[o] = d[o + 1] = d[o + 2] = 255; d[o + 3] = Math.round(255 * Math.min(1, a * 1.4)); }
-        g.putImageData(img, 0, 0); beamTex = new THREE.CanvasTexture(c); }
+      if (!beamTex) beamTex = beamTexture();
       const M = v.car.m, g = new THREE.PlaneGeometry(9, 22); g.rotateX(-Math.PI / 2); g.rotateY(-Math.PI / 2); g.translate(M.len * 0.5 + 10.5, 0.08, 0);
-      v.beam = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ map: beamTex, color: 0xfff0d0, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+      v.beam = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ map: beamTex, color: 0xffe9c6, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
       v.beam.renderOrder = 1; v.grp.add(v.beam);
     }
-    v.beam.visible = true; v.beam.material.opacity = atmos.tod === 'night' ? 0.55 : 0.22;
+    v.beam.visible = true; v.beam.material.opacity = atmos.tod === 'night' ? 0.36 : 0.18;
   }
   // winter: snowflakes instead of the rain's streaks (a box of flakes around the view centre, drifting down)
   class Snow {
@@ -1428,10 +1472,10 @@ const Render = (function () {
     const mat = new THREE.ShaderMaterial({
       uniforms: { tD: { value: rt.texture }, uRes: { value: new THREE.Vector2(4, 4) }, uFocus: { value: 0.45 }, uBand: { value: 0.22 }, uBlur: { value: 0.8 }, uGam: { value: 0.88 },
         uTint: { value: new THREE.Vector3(1, 1, 1) }, uSat: { value: 1.1 }, uCon: { value: 1.04 }, uVig: { value: 0.17 },
-        uSun: { value: new THREE.Vector2(0, 1.2) }, uHaze: { value: 0 }, uHazeCol: { value: new THREE.Vector3(1, 0.8, 0.6) } },
+        uSun: { value: new THREE.Vector2(0, 1.2) }, uHaze: { value: 0 }, uHazeCol: { value: new THREE.Vector3(1, 0.8, 0.6) }, tB: { value: null }, uBloom: { value: 0 } },
       vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
       fragmentShader: [
-        'uniform sampler2D tD; uniform vec2 uRes; uniform float uFocus; uniform float uBand; uniform float uBlur; uniform float uGam; uniform vec3 uTint; uniform float uSat; uniform float uCon; uniform float uVig; uniform vec2 uSun; uniform float uHaze; uniform vec3 uHazeCol; varying vec2 vUv;',
+        'uniform sampler2D tD; uniform vec2 uRes; uniform float uFocus; uniform float uBand; uniform float uBlur; uniform float uGam; uniform vec3 uTint; uniform float uSat; uniform float uCon; uniform float uVig; uniform vec2 uSun; uniform float uHaze; uniform vec3 uHazeCol; uniform sampler2D tB; uniform float uBloom; varying vec2 vUv;',
         'float lum(vec3 c){ return dot(c, vec3(0.299, 0.587, 0.114)); }',
         'void main(){',
         '  vec2 px = 1.0 / uRes; vec3 c = texture2D(tD, vUv).rgb;',
@@ -1449,6 +1493,7 @@ const Render = (function () {
         '  }',
         '  c *= uTint; float l = lum(c); c = mix(vec3(l), c, uSat); c = (c - 0.5) * uCon + 0.5; c = pow(max(c, vec3(0.0)), vec3(uGam));',
         '  if (uHaze > 0.0) { vec2 sd = (vUv - uSun) * vec2(uRes.x / uRes.y, 1.0); float hg = exp(-dot(sd, sd) * 2.2); c = 1.0 - (1.0 - c) * (1.0 - uHazeCol * (uHaze * hg)); }',   // warm glow of the low sun just off screen (as in the reference)
+        '  if (uBloom > 0.0) { vec3 bl = min(texture2D(tB, vUv).rgb * uBloom, vec3(1.0)); c = 1.0 - (1.0 - c) * (1.0 - bl); }',   // the lights' glow (dusk and night: bloomPass)
         '  vec2 q = vUv - 0.5; c *= 1.0 - uVig * dot(q, q) * 1.8;',
         '  gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);',
         '}'].join('\n'),
@@ -1456,9 +1501,31 @@ const Render = (function () {
     });
     const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat); quad.frustumCulled = false;
     const sc = new THREE.Scene(); sc.add(quad);
-    post = { rt, mat, sc, cam: new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), focus: 0.45 };
+    // the glow of the lights at dusk and at night (bloomPass): what is bright in the picture, at a quarter of its size, blurred twice
+    // (a wide, soft halo), screened over it in the grade. Two small targets; drawn only when post.bloom > 0 (by day nothing of it runs)
+    const bOpt = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, depthBuffer: false, stencilBuffer: false };
+    const bA = new THREE.WebGLRenderTarget(4, 4, bOpt), bB = new THREE.WebGLRenderTarget(4, 4, bOpt); bA.texture.generateMipmaps = bB.texture.generateMipmaps = false;
+    const vs = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }', opt = { depthTest: false, depthWrite: false };
+    const bright = new THREE.ShaderMaterial({ ...opt, uniforms: { tD: { value: rt.texture }, uPx: { value: new THREE.Vector2(0.25, 0.25) }, uThr: { value: 0.55 } }, vertexShader: vs,
+      fragmentShader: 'uniform sampler2D tD; uniform vec2 uPx; uniform float uThr; varying vec2 vUv;' +
+        'vec3 bp(vec2 o){ vec3 c = texture2D(tD, vUv + o * uPx).rgb; return c * smoothstep(uThr, uThr + 0.3, max(c.r, max(c.g, c.b))); }' +
+        'void main(){ gl_FragColor = vec4((bp(vec2(-1.0, -1.0)) + bp(vec2(1.0, -1.0)) + bp(vec2(-1.0, 1.0)) + bp(vec2(1.0, 1.0))) * 0.25, 1.0); }' });
+    const blurFs = 'uniform sampler2D tD; uniform vec2 uDir; varying vec2 vUv;' +
+      'void main(){ vec3 s = texture2D(tD, vUv).rgb * 0.227 + (texture2D(tD, vUv + uDir * 1.385).rgb + texture2D(tD, vUv - uDir * 1.385).rgb) * 0.316 + (texture2D(tD, vUv + uDir * 3.231).rgb + texture2D(tD, vUv - uDir * 3.231).rgb) * 0.07; gl_FragColor = vec4(s, 1.0); }';
+    const blur = [0, 1, 2, 3].map(() => new THREE.ShaderMaterial({ ...opt, uniforms: { tD: { value: null }, uDir: { value: new THREE.Vector2() } }, vertexShader: vs, fragmentShader: blurFs }));   // (one a pass: its own uniforms)
+    mat.uniforms.tB.value = bA.texture;
+    post = { rt, mat, sc, quad, cam: new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), focus: 0.45, bloom: 0, bl: { a: bA, b: bB, bright, blur, w: 1, h: 1 } };
   }
-  function sizePost() { if (!post) return; renderer.getDrawingBufferSize(_v2); post.rt.setSize(_v2.x, _v2.y); post.mat.uniforms.uRes.value.set(_v2.x, _v2.y); }
+  function bloomPass() {
+    const B = post.bl, q = post.quad, pass = (m, to) => { q.material = m; renderer.setRenderTarget(to); renderer.render(post.sc, post.cam); };
+    pass(B.bright, B.a);
+    [[B.a, B.b, 1, 0], [B.b, B.a, 0, 1], [B.a, B.b, 2.2, 0], [B.b, B.a, 0, 2.2]].forEach(([from, to, x, y], k) => { const U = B.blur[k].uniforms; U.tD.value = from.texture; U.uDir.value.set(x / B.w, y / B.h); pass(B.blur[k], to); });
+    q.material = post.mat;
+  }
+  function sizePost() {
+    if (!post) return; renderer.getDrawingBufferSize(_v2); post.rt.setSize(_v2.x, _v2.y); post.mat.uniforms.uRes.value.set(_v2.x, _v2.y);
+    const B = post.bl; B.w = Math.max(1, Math.floor(_v2.x / 4)); B.h = Math.max(1, Math.floor(_v2.y / 4)); B.a.setSize(B.w, B.h); B.b.setSize(B.w, B.h); B.bright.uniforms.uPx.value.set(1 / _v2.x, 1 / _v2.y);
+  }
   function postOn() { return !!post && settings.quality === 'high' && settings.post !== false; }
 
   function updatePointScale() {
@@ -2406,15 +2473,17 @@ const Render = (function () {
       v.tail.material = (v.noHead ? rainL : braking) ? matTailOn : matTailOff;
       if (v.glb) v.glb.tail.emissive.setHex(braking ? 0xff1a0a : 0x3a0000);
       if (v.drsFlap) { v.drsK = (v.drsK || 0) + ((c.drs ? 1 : 0) - (v.drsK || 0)) * Math.min(1, dt * 12); v.drsFlap.rotation.z = 0.5 * v.drsK; }   // the rear wing's flap opens with DRS
-      // light glows: soft warm headlights, red tail lights that flare when braking
+      // light glows: soft warm headlights, red tail lights that flare when braking; at dusk and at night a bright lamp in a wide, faint halo
       v.grp.updateMatrixWorld(true);
+      const nt = atmos.tod === 'night' ? 1 : atmos.tod === 'dusk' ? 0.5 : 0, rl = (1 + Math.max(0, wet) * 0.9) * (1 + 0.5 * nt);   // (rain, dusk, night: the lights stand out more in the gloom)
       for (let k = 0; k < 4 && c !== ck.car; k++) {   // (not the lamps of the car the cockpit camera sits in)
         if (v.lightBroken && v.lightBroken[k]) continue;   // smashed lamp: no glow
         _lv.copy(v.lights[k]).applyMatrix4(v.grp.matrixWorld);
-        const rl = (1 + Math.max(0, wet) * 0.9) * (atmos.tod === 'night' ? 1.5 : atmos.tod === 'dusk' ? 1.25 : 1);   // (rain, dusk, night: the lights stand out more in the gloom)
         if (v.noHead) { if (k === 2 && rainL) glows.add(_lv.x, _lv.y, _lv.z, 1.5, 1.0, 0.15, 0.08, 0.9); }
-        else if (k < 2) glows.add(_lv.x, _lv.y, _lv.z, 0.95, 1.0, 0.88, 0.62, 0.17 * rl);
-        else glows.add(_lv.x, _lv.y, _lv.z, braking ? 1.8 : 0.95, 1.0, 0.15, 0.08, braking ? 0.95 : 0.3 * rl);
+        else if (k < 2) { glows.add(_lv.x, _lv.y, _lv.z, 0.95, 1.0, 0.88, 0.62, 0.17 * rl);
+          if (nt) { glows.add(_lv.x, _lv.y, _lv.z, 0.42, 1.0, 0.97, 0.9, 0.85 * nt); glows.add(_lv.x, _lv.y, _lv.z, 2.8, 1.0, 0.86, 0.66, 0.085 * nt * rl); } }
+        else { glows.add(_lv.x, _lv.y, _lv.z, braking ? 1.8 : 0.95, 1.0, 0.15, 0.08, braking ? 0.95 : 0.3 * rl);
+          if (nt) glows.add(_lv.x, _lv.y, _lv.z, braking ? 3.4 : 2.1, 1.0, 0.12, 0.06, (braking ? 0.24 : 0.1) * nt * rl); }
       }
       // dirt builds up while driving on grass/gravel/makadam, faster in the rain (mud; never washes off during a race)
       if (v.scrU) v.scrU.value = Core.sstep(0.3, 0.9, c.dmg || 0);
@@ -2930,12 +2999,19 @@ const Render = (function () {
   function skyStep(on) {
     if (!sky) {
       if (!on) return;
-      const u = { uBot: { value: new THREE.Color() }, uTop: { value: new THREE.Color() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uSunC: { value: new THREE.Color() }, uSunA: { value: 0 } };
+      const u = { uBot: { value: new THREE.Color() }, uTop: { value: new THREE.Color() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uSunC: { value: new THREE.Color() }, uSunA: { value: 0 }, uStar: { value: 0 } };
       const mat = new THREE.ShaderMaterial({ uniforms: u, depthWrite: false, depthTest: false, fog: false, side: THREE.BackSide,
         vertexShader: 'varying vec3 vD; void main(){ vD = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-        fragmentShader: 'uniform vec3 uBot; uniform vec3 uTop; uniform vec3 uSun; uniform vec3 uSunC; uniform float uSunA; varying vec3 vD;' +
+        fragmentShader: 'uniform vec3 uBot; uniform vec3 uTop; uniform vec3 uSun; uniform vec3 uSunC; uniform float uSunA; uniform float uStar; varying vec3 vD;' +
           'void main(){ vec3 d = normalize(vD); vec3 c = mix(uBot, uTop, pow(smoothstep(0.0, 0.85, d.y), 0.75)); float s = max(dot(d, uSun), 0.0);' +
-          ' c += uSunC * uSunA * (pow(s, 90.0) * 0.8 + pow(s, 8.0) * 0.15); gl_FragColor = vec4(c, 1.0); }' });
+          ' c += uSunC * uSunA * (pow(s, 90.0) * 0.8 + pow(s, 8.0) * 0.15);' +
+          // the night's stars: one in a few hundred cells of the sky a star (a hash of the cell), of its own brightness and tint, fewer and
+          // fainter down in the haze towards the horizon
+          ' if (uStar > 0.0) { vec3 p = d * 150.0, cl = floor(p); float h = fract(sin(dot(cl, vec3(127.1, 311.7, 74.7))) * 43758.5453);' +
+          '  if (h > 0.972) { vec3 o = vec3(fract(h * 17.13), fract(h * 71.71), fract(h * 37.37)); float b = (h - 0.972) / 0.028;' +
+          '   float k = smoothstep(0.34, 0.06, length(p - cl - 0.2 - 0.6 * o)) * (0.35 + 0.65 * b * b) * smoothstep(0.03, 0.3, d.y);' +
+          '   c += mix(vec3(1.0, 0.86, 0.7), vec3(0.78, 0.88, 1.0), o.x) * k * uStar; } }' +
+          ' gl_FragColor = vec4(c, 1.0); }' });
       const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 16), mat); mesh.frustumCulled = false; mesh.renderOrder = -100;   // (drawn first, under everything)
       scene.add(mesh); sky = { mesh, u };
     }
@@ -2944,7 +3020,7 @@ const Render = (function () {
     const r = Math.max(0, wet), U = sky.u, night = atmos.tod === 'night', dusk = atmos.tod === 'dusk';
     U.uBot.value.copy(scene.fog.color); skyTop(U.uTop.value);
     const sl = Math.hypot(sunOff[0], sunOff[1], sunOff[2]); U.uSun.value.set(sunOff[0] / sl, sunOff[1] / sl, sunOff[2] / sl);
-    U.uSunC.value.copy(sun.color); U.uSunA.value = (night ? 0.35 : dusk ? 1.3 : 1) * (1 - 0.85 * r);
+    U.uSunC.value.copy(sun.color); U.uSunA.value = (night ? 0.35 : dusk ? 1.3 : 1) * (1 - 0.85 * r); U.uStar.value = night ? 0.9 * (1 - 0.95 * r) : 0;   // (the rain's clouds hide them)
     sky.mesh.position.copy(camera.position); sky.mesh.scale.setScalar(camera.far * 0.8);
   }
 
@@ -3137,6 +3213,7 @@ const Render = (function () {
       const U = post.mat.uniforms; U.uFocus.value = post.focus; U.uBand.value = (lastMode === 'kino' ? 0.3 : camera.aspect < 1 ? 0.2 : 0.24) + (post.span || 0); U.uBlur.value = lastMode === 'kino' ? 0.7 : 0.8;   // kino: a soft depth of field only towards the edges, as in the reference
       if (cam.ck) U.uBlur.value = 0; else if (cam.shot && cam.shot.blur != null) { U.uBlur.value = cam.shot.blur; if (cam.shot.blur > 0) U.uBand.value = 0.06; }   // (no miniature look from the driver's seat; the photo mode's own: a narrow sharp band on the car)
       renderer.setRenderTarget(post.rt); renderer.render(scene, camera); if (ckOn) ckDraw();
+      if (post.bloom > 0) bloomPass(); U.uBloom.value = post.bloom;
       renderer.setRenderTarget(null); renderer.render(post.sc, post.cam);
     } else { renderer.render(scene, camera); if (ckOn) ckDraw(); }
   }

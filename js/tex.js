@@ -33,14 +33,14 @@ const Tex = (function () {
   const cl = (v) => v < 0 ? 0 : v > 255 ? 255 : v;
 
   function grass() {
-    const n1 = makeNoise(8, 3), n2 = makeNoise(32, 4), n3 = makeNoise(64, 5);
+    const n1 = makeNoise(8, 3), n2 = makeNoise(32, 4), n3 = makeNoise(64, 5), sum = [0, 0, 0];
     const c = pixels(256, 256, (i, j) => {
       const u = i / 256, v = j / 256;
       const n = n1(u * 8, v * 8) * 0.5 + n2(u * 32, v * 32) * 0.35 + n3(u * 64, v * 64) * 0.15;
       const stripe = j < 128 ? 1.035 : 0.965;
       const sp = R() < 0.08 ? (R() < 0.5 ? 0.86 : 1.12) : 1;
-      const k = (0.84 + n * 0.3) * stripe * sp;
-      return [cl(88 * k), cl(146 * k), cl(58 * k)];
+      const k = (0.84 + n * 0.3) * stripe * sp, col = [cl(88 * k), cl(146 * k), cl(58 * k)];
+      sum[0] += col[0]; sum[1] += col[1]; sum[2] += col[2]; return col;
     });
     const x = c.getContext('2d');
     for (let k = 0; k < 900; k++) { // blades
@@ -48,7 +48,7 @@ const Tex = (function () {
       x.strokeStyle = R() < 0.5 ? 'rgba(40,86,30,0.45)' : 'rgba(150,196,90,0.35)';
       x.lineWidth = 1; x.beginPath(); x.moveTo(px, py); x.lineTo(px + (R() - 0.5) * 2, py - l); x.stroke();
     }
-    return mk(c, true);
+    const t = mk(c, true); t.avgCol = sum.map(v => v / 65536 / 255); return t;   // (its average colour, 0..1: the world's clumps of grass take it)
   }
 
   function asphalt() {

@@ -1601,11 +1601,10 @@ const World = (function () {
             const col = vary(pineC, R, 0.22);
             const rr = hgt * (0.26 + R() * 0.06);
             const rot = R() * TAU;
-            const lt = (k) => [col[0] * k, col[1] * k, col[2] * k];   // (jagged, drooping tiers as the forest's firs; sunlit tips)
-            starCone(g, px, y0 + hgt * 0.16, pz, rr, hgt * 0.4, 7, col, lt(1.28), rot, hgt * 0.05);
-            starCone(g, px, y0 + hgt * 0.38, pz, rr * 0.76, hgt * 0.34, 6, vary(col, R, 0.08), lt(1.34), rot + 0.4, hgt * 0.04);
-            starCone(g, px, y0 + hgt * 0.58, pz, rr * 0.5, hgt * 0.3, 5, vary(col, R, 0.08), lt(1.4), rot + 0.8, hgt * 0.03);
-            cone(g, px, y0 + hgt * 0.76, pz, rr * 0.24, hgt * 0.24, 5, col, lt(1.46), rot + 1.2);
+            const lt = (k) => [col[0] * k, col[1] * k, col[2] * k];   // (jagged, drooping tiers as the forest's firs, the top one to the tip; sunlit tips)
+            starCone(g, px, y0 + hgt * 0.16, pz, rr, hgt * 0.4, 5, col, lt(1.28), rot, hgt * 0.05);
+            starCone(g, px, y0 + hgt * 0.38, pz, rr * 0.76, hgt * 0.34, 4, vary(col, R, 0.08), lt(1.34), rot + 0.4, hgt * 0.04);
+            starCone(g, px, y0 + hgt * 0.58, pz, rr * 0.5, hgt * 0.42, 4, vary(col, R, 0.08), lt(1.44), rot + 1.2, hgt * 0.03);
           } else if (tn < 0.8 || R() < 0.5) { // deciduous
             const au = R() < 0.07;
             const col = au ? autumn[Math.floor(R() * 3)] : vary(decC, R, 0.25);
@@ -1839,16 +1838,15 @@ const World = (function () {
           const tn = typeN(px, pz);
           const hgt = 9 + R() * 9;
           if (tn < 0.72) { // spruce/fir (tall narrow conifer)
-            box(g, px, y0 - 0.2, pz, 0.4, hgt * 0.28, 0.4, R(), [0.34, 0.24, 0.15]);
+            box(g, px, y0 - 0.2, pz, 0.4, hgt * 0.28, 0.4, R(), [0.34, 0.24, 0.15], null, true);
             const col = vary(tn < 0.4 ? pineC : firC, R, 0.2);
             const rr = hgt * (0.2 + R() * 0.05), rot = R() * TAU;
-            const lt = (k) => [col[0] * k, col[1] * k, col[2] * k];   // (jagged, drooping tiers; sunlit tips)
-            starCone(g, px, y0 + hgt * 0.12, pz, rr, hgt * 0.36, 7, col, lt(1.28), rot, hgt * 0.05);
-            starCone(g, px, y0 + hgt * 0.33, pz, rr * 0.78, hgt * 0.33, 6, vary(col, R, 0.08), lt(1.34), rot + 0.5, hgt * 0.04);
-            starCone(g, px, y0 + hgt * 0.53, pz, rr * 0.54, hgt * 0.3, 5, vary(col, R, 0.08), lt(1.4), rot + 1.0, hgt * 0.035);
-            cone(g, px, y0 + hgt * 0.72, pz, rr * 0.26, hgt * 0.28, 5, col, lt(1.46), rot + 1.5);
+            const lt = (k) => [col[0] * k, col[1] * k, col[2] * k];   // (jagged, drooping tiers, the top one to the tip; sunlit tips)
+            starCone(g, px, y0 + hgt * 0.12, pz, rr, hgt * 0.36, 5, col, lt(1.28), rot, hgt * 0.05);
+            starCone(g, px, y0 + hgt * 0.33, pz, rr * 0.78, hgt * 0.33, 4, vary(col, R, 0.08), lt(1.34), rot + 0.5, hgt * 0.04);
+            starCone(g, px, y0 + hgt * 0.53, pz, rr * 0.54, hgt * 0.47, 4, vary(col, R, 0.08), lt(1.44), rot + 1.4, hgt * 0.035);
           } else { // larch (rounder, lighter)
-            box(g, px, y0 - 0.2, pz, 0.4, hgt * 0.4, 0.4, R(), [0.4, 0.3, 0.18]);
+            box(g, px, y0 - 0.2, pz, 0.4, hgt * 0.4, 0.4, R(), [0.4, 0.3, 0.18], null, true);
             const col = vary(larchC, R, 0.22), r0 = hgt * (0.22 + R() * 0.06);
             ico(g, px, y0 + hgt * 0.6, pz, r0, 0.95, col, R, 0.32);
             ico(g, px + (R() - 0.5) * r0, y0 + hgt * 0.8, pz + (R() - 0.5) * r0, r0 * 0.7, 1.0, vary(col, R, 0.1), R, 0.3);
@@ -4332,14 +4330,10 @@ const World = (function () {
     g.computeBoundingSphere();
     return (tuftGeoC[+flower] = g);
   }
-  function texAvg(t) {   // the average colour of a (canvas) texture, 0..1
-    if (!t || !t.image) return [0.4, 0.6, 0.25];
-    if (t.avgCol) return t.avgCol;
-    let r = 0, g = 0, b = 0, n = 0;
-    try { const im = t.image, c = im.getContext ? im : null, d = c && c.getContext('2d').getImageData(0, 0, im.width, im.height).data;
-      if (d) for (let i = 0; i < d.length; i += 4 * 7) { r += d[i]; g += d[i + 1]; b += d[i + 2]; n++; } } catch (_) { }
-    return (t.avgCol = n ? [r / n / 255, g / n / 255, b / n / 255] : [0.4, 0.6, 0.25]);
+  function texAvg(t) {   // the average colour of a grass picture, 0..1: as its maker measured it (t.avgCol; reading a canvas back would stall the build)
+    return (t && t.avgCol) || [0.35, 0.53, 0.23];
   }
+  function pixAvg(d) { const s = [0, 0, 0]; for (let o = 0; o < d.length; o += 4) { s[0] += d[o]; s[1] += d[o + 1]; s[2] += d[o + 2]; } const n = d.length / 4 * 255; return [s[0] / n, s[1] / n, s[2] / n]; }   // (of an ImageData's pixels)
   const LAWN = { nring: [0.92, 0.95, 0.82], spa: [0.95, 1.0, 0.95], rbring: [0.96, 1.0, 0.9], suzuka: [0.95, 1.0, 0.92] };   // (the corridor builders' lawns: their vertex colours, roughly)
   function verge(o) {
     if (T.open || ['city', 'ljubljana', 'monaco'].includes(THEME)) return;
@@ -4357,7 +4351,7 @@ const World = (function () {
     const tu = new IChunks(tuftGeo(false), mat, 160), fl = new IChunks(tuftGeo(true), mat, 160), q = {}, gH = o.groundH;
     // the lawn's colour under a clump: the ground mesh's vertex colour there (the default builder's grid) or the corridor builder's, times the grass picture's
     let gm = null; o.root.traverse(m => { if (!gm && m.isMesh && m.material && !Array.isArray(m.material) && m.material.userData.grassLook) gm = m.material; });
-    const avg = texAvg(gm && gm.map), mc = gm ? gm.color : { r: 1, g: 1, b: 1 }, G = o.gGrid, gc = o.ground && o.ground.geometry.attributes.color, TL = LAWN[THEME] || [1, 1, 1];
+    const avg = texAvg(gm && gm.map), mc = gm ? gm.color : { r: 1, g: 1, b: 1 }, G = o.gGrid, gc = o.ground && o.ground.geometry && o.ground.geometry.attributes.color, TL = LAWN[THEME] || [1, 1, 1];   // (a corridor builder's ground is a group: its lawn TL)
     const lawn = (x, z) => {
       let r = TL[0], g = TL[1], b = TL[2];
       if (G && gc) { const i = clamp(Math.round((x - G.x0) / G.cell), 0, G.nx), j = clamp(Math.round((z - G.z0) / G.cell), 0, G.nz), k = (j * (G.nx + 1) + i) * 3; r = gc.array[k]; g = gc.array[k + 1]; b = gc.array[k + 2]; }
@@ -8976,7 +8970,7 @@ const World = (function () {
       const u = i / S, v = j / S, n = n1(u, v) * 0.3 + n2(u, v) * 0.4 + n3(u, v) * 0.3, k = 0.84 + n * 0.3 + (r() - 0.5) * 0.14, y = n2(u + 0.37, v + 0.61) - 0.5, o = (j * S + i) * 4;
       d[o] = clamp((88 + y * 14) * k, 0, 255); d[o + 1] = clamp((124 + y * 4) * k, 0, 255); d[o + 2] = clamp(56 * k, 0, 255); d[o + 3] = 255;
     }
-    x.putImageData(img, 0, 0);
+    x.putImageData(img, 0, 0); const avg = pixAvg(d);
     x.lineWidth = 1;
     for (const [st, n] of [['rgba(44,66,28,0.5)', 900], ['rgba(150,158,96,0.4)', 560], ['rgba(172,160,100,0.35)', 260]]) {   // blades (drawn across the edges too: tileable)
       x.strokeStyle = st; x.beginPath();
@@ -8984,7 +8978,7 @@ const World = (function () {
         for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const qx = px + a * S, qy = py + b * S; if (qx > -6 && qx < S + 6 && qy > -6 && qy < S + 6) { x.moveTo(qx, qy); x.lineTo(qx + dx, qy + dy); } } }
       x.stroke(); }
     for (const [st, n, sz] of [['#e6cd46', 110, 1], ['#ebebdc', 150, 1], ['#9a70a8', 40, 1], ['rgba(98,80,56,0.7)', 70, 2]]) { x.fillStyle = st; for (let k = 0; k < n; k++) x.fillRect(Math.floor(r() * (S - 1)), Math.floor(r() * (S - 1)), sz, sz); }   // flowers, soil
-    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = aniso || 4; t.grassPic = true; return t;
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = aniso || 4; t.grassPic = true; t.avgCol = avg; return t;
   }
   function nrDecalTex() {   // paint and marks on the asphalt: a 1024 px atlas of 4 x 8 cells, 256 px across the road by 128 px along it (a cell's top points up the road):
     // 0-15 the fans' graffiti, 16-19 painted signs, 20-23 painted flags, 24-25 tar snakes, 26-27 tyre marks, 28-31 repair patches; transparent around them
@@ -9546,7 +9540,7 @@ const World = (function () {
       const u = i / S, v = j / S, n = n1(u, v) * 0.3 + n2(u, v) * 0.4 + n3(u, v) * 0.3, k = 0.86 + n * 0.26 + (r() - 0.5) * 0.12, y = n2(u + 0.31, v + 0.57) - 0.5, o = (j * S + i) * 4;
       d[o] = clamp((64 + y * 10) * k, 0, 255); d[o + 1] = clamp((126 + y * 6) * k, 0, 255); d[o + 2] = clamp((62 + y * 4) * k, 0, 255); d[o + 3] = 255;
     }
-    x.putImageData(img, 0, 0);
+    x.putImageData(img, 0, 0); const avg = pixAvg(d);
     x.lineWidth = 1;
     for (const [st, n] of [['rgba(38,74,34,0.45)', 800], ['rgba(138,178,112,0.35)', 480]]) {   // blades (drawn across the edges too: tileable)
       x.strokeStyle = st; x.beginPath();
@@ -9554,7 +9548,7 @@ const World = (function () {
         for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const qx = px + a * S, qy = py + b * S; if (qx > -6 && qx < S + 6 && qy > -6 && qy < S + 6) { x.moveTo(qx, qy); x.lineTo(qx + dx, qy + dy); } } }
       x.stroke(); }
     for (const [st, n, sz] of [['rgba(46,92,42,0.55)', 90, 3], ['#f2f2ea', 70, 1], ['#e6d24a', 24, 1]]) { x.fillStyle = st; for (let k = 0; k < n; k++) x.fillRect(Math.floor(r() * (S - sz)), Math.floor(r() * (S - sz)), sz, sz); }   // clover, daisies, buttercups
-    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = aniso || 4; t.grassPic = true; return t;
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = aniso || 4; t.grassPic = true; t.avgCol = avg; return t;
   }
   function spaTreeGeo(kind) {   // unit trees (height 1, instances scale them): 0 a plantation spruce (tall and narrow, four drooping tiers, dark blue-green), 1 the same far out (two tiers), 2 a birch (a white trunk, a small light crown)
     const g = new GB(), R = rng(640 + kind), rs = ROCK_SMOOTH; ROCK_SMOOTH = true;   // (smooth normals, as nrTreeGeo; the flag restored below)
