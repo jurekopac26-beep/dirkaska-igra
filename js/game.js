@@ -622,7 +622,7 @@
       if (wetRec(d)) meta = meta.replace(' · kronometer', ' · kronometer v dežju');
       if (isTT(d) && medalOf(d, r.bestTime) >= 0) meta += ' ' + MEDAL_ICON[medalOf(d, r.bestTime)];
       return '<button class="track-card' + (d.id === S.track ? ' sel' : '') + '" data-track="' + d.id + '"><canvas></canvas><h3>' + d.name + '</h3>' +
-        '<div class="tmeta">' + meta + '</div>' +
+        '<div class="tmeta">' + meta + '</div>' + (pkIs(d) ? pkTrackTag(r) : '') +
         '<div class="tdesc">' + (d.desc || '').replace(/\b(\d{1,3})(\d{3}) m\b/g, '$1.$2\u00a0m') + '</div></button>'; }).join('');   // 2862 m -> 2.862 m (as on the HUD)
     requestAnimationFrame(() => list.querySelectorAll('.track-card').forEach(el => drawTrackMini(el.querySelector('canvas'), getTrack(el.dataset.track))));
   }
@@ -825,6 +825,7 @@
     $('pause-restart').classList.toggle('off', !!on);   // (online: no restart for one)
     cpSeen = race.player.cpEv; ttRes = null; cornerSeen = -1; cornerShow = false; placeInit(); codrvInit(); ghStart(); secReset(); recStart(); replay = null; $('replay-ui').classList.add('off'); $('h-ttsp').className = '';
     hxStart();   // (time trial: turn counter, live difference to the best run, height profile)
+    pkStart();   // (Pikes Peak: the class, its splits)
     Input.reset();
     showScreen('none');
     Sfx.resume(); Sfx.setRunning(true);
@@ -892,6 +893,7 @@
     R0.board = board.slice(0, 10);
     saveRecords();
     ttRes = { time, splits, prev, prevSplits, newPB, rank, date, entry };
+    if (pk.on) ttRes.pk = pkFinish(R0, entry);   // (Pikes Peak: the class board)
     return ttRes;
   }
   // split rows, CP1..CPn + finish: this run's time, the previous best run's time there and the difference (alt: with the altitude)
@@ -930,6 +932,7 @@
       '<p class="ltab-h">Lestvica · ' + esc(T.def.name) + '</p>';
     $('res-table').querySelector('thead').innerHTML = TT_HEAD;
     $('res-table').querySelector('tbody').innerHTML = boardRows(R0.board || [], r.entry);
+    if (pk.on) pkResults(r);   // (Pikes Peak: its class)
     $('res-restart').textContent = 'Ponovi ' + ttRun(T.def);
     const wrap = $('res-table').parentElement; wrap.scrollTop = 0;
     showScreen('results');
@@ -953,6 +956,7 @@
           h += '<p class="ltab-h">Osebni rekord ' + fmt(r.bestTime, true) + ' · vmesni časi</p><table class="ltab"><thead><tr><th>Točka</th><th>' + ttWhereHead(d) + '</th><th>Čas</th></tr></thead><tbody>' +
             pts.map((p, k) => '<tr><td>' + p[0] + '</td><td>' + ttWhere(T, p[1]) + '</td><td>' + fmt(r.bestSplits[k], true) + '</td></tr>').join('') + '</tbody></table>';
         }
+        if (pkIs(d)) h += pkBoardHTML(r);   // (Pikes Peak: the top 5 of each class)
       }
     } else {
       const v = (x) => x ? x : '\u2013';
@@ -964,6 +968,80 @@
       if (M) h += '<p class="ltab-h">Medalje (' + (physOf() === 'cs' ? 'Circuit Superstars' : 'arkadna fizika') + (wetRec(d) ? ', dež' : '') + ') · ' + M.map((t, k) => MEDAL_ICON[k] + ' ' + fmt(t, true)).join(' · ') + '</p>';
       if (J) h += '<p class="ltab-h">' + esc(J.name) + ': tvoj najdaljši skok ' + (R.jumpRec ? Math.round(R.jumpRec) + ' m' : '\u2013') + ' · ' + esc(J.by) + ' ' + J.m + ' m</p>'; }
     $('board-body').innerHTML = h; $('board-body').scrollTop = 0;
+  }
+  /* ---------------- PIKES PEAK: race classes, the summit ceremony, TV splits ---------------- */
+  // Classes as at the real race, from the car's performance (Core.MODELS): the formula (735 kW, wings) Unlimited; the purpose-built AWD
+  // cars (BURJA R7, VORTEX) Open; the quick road-based coupes (STREGA, KAZE) Pikes Peak Open; the light hatchbacks (PICO, 206) Time Attack 1.
+  // Each class keeps its own top 5 in the track's records (R0.pkCls[class], per physics and weather like the rest of the record). Times set
+  // before the classes (R0.board) go, once, into the class of the car they were set with. The overall board, best time and ghost are as they were.
+  // At each checkpoint: the TV pill (split time, the difference to the class best run's split) and the CP1-CP4 bar (#h-sec); at the summit
+  // the ceremony (#pk-cer) for the 4.2 s before the results. Only a Pikes Peak time trial alone (never online).
+  const PK_CLS = [{ id: 'unl', name: 'Unlimited' }, { id: 'open', name: 'Open' }, { id: 'ppo', name: 'Pikes Peak Open' }, { id: 'ta1', name: 'Time Attack 1' }];
+  const PK_CAR = { formula: 'unl', rally: 'open', vortex: 'open', strega: 'ppo', kaze: 'ppo', pico: 'ta1', p206: 'ta1' };
+  const pk = { on: false, cls: null, best: null };
+  const pkIs = (d) => !!d && d.id === 'pikes';
+  function pkClsOf(carId, carName) {   // (an unknown car: by its power and drive; an entry with no known car: Open, the class of the game's own car)
+    const M = Core.MODELS.find(m => m.id === carId) || Core.MODELS.find(m => m.name === carName);
+    const id = !M ? 'open' : PK_CAR[M.id] || (M.kw >= 500 ? 'unl' : M.drive === 'AWD' ? 'open' : M.kw >= 260 ? 'ppo' : 'ta1');
+    return PK_CLS.find(c => c.id === id);
+  }
+  function pkBoards(R0) {   // the class boards of a record: made from its overall board the first time, kept clean and sorted
+    if (!isObj(R0.pkCls)) { R0.pkCls = {}; for (const e of Array.isArray(R0.board) ? R0.board : []) { const c = pkClsOf(e.carId, e.car).id; (R0.pkCls[c] || (R0.pkCls[c] = [])).push(e); } }
+    for (const c of PK_CLS) { const a = R0.pkCls[c.id]; R0.pkCls[c.id] = Array.isArray(a) ? a.map(boardEntry).filter(e => e).sort((x, y) => x.time - y.time).slice(0, 5) : []; }
+    return R0.pkCls;
+  }
+  const pkTag = (c) => '<span class="pk-cls pk-' + c.id + '">' + esc(c.name) + '</span>';
+  function pkTrackTag(r) {   // the track card: the class of the chosen car and its best time
+    const M = Core.MODELS[S.car], c = pkClsOf(M.id), b = pkBoards(r)[c.id][0];
+    return '<div class="tmeta pk-meta">Razred ' + pkTag(c) + ' ' + esc(M.name) + (b ? ' · rekord razreda ' + fmt(b.time, true) : ' · v razredu še ni časa') + '</div>';
+  }
+  function pkStart() {   // newRace (after hxStart)
+    const on = pk.on = !!race.timeTrial && pkIs(track.def) && !(mp && mp.race), H = $('h-sec');
+    $('hud').classList.toggle('pkc', on); $('pk-cer').className = '';
+    while (H.children.length > 3) H.lastChild.remove();
+    if (!on) return;
+    pk.cls = pkClsOf(Core.MODELS[S.car].id);
+    const b = pkBoards(rec(track.def.id))[pk.cls.id][0]; pk.best = b ? { time: b.time, splits: b.splits.slice() } : null;
+    while (H.children.length < track.cpS.length) H.appendChild(document.createElement('i'));
+    [...H.children].forEach((el, j) => { el.innerHTML = '<small>CP' + (j + 1) + '</small>\u2013'; el.className = ''; });
+    const el = $('h-pkcls'); el.textContent = pk.cls.name.toUpperCase(); el.className = 'h-lbl pk-' + pk.cls.id;
+  }
+  const pkSplit = (k) => pk.best && posNum(pk.best.splits[k]) ? pk.best.splits[k] : NaN;   // the class best run's time at checkpoint k (0-based)
+  function pkSplitHUD(k, t, d, has) {   // checkpoint k (1-based) at time t, d: against the class best run's split there
+    const el = $('h-split'), c = has ? dCls(d) : 'even';
+    el.innerHTML = '<b>CP' + k + '</b><span>' + fmt(t) + '</span>' + (has ? '<em class="' + c + '">' + sgn(d) + '</em>' : '<em class="even">' + esc(pk.cls.name) + '</em>');
+    el.className = 'show pk ' + c;
+    const cell = $('h-sec').children[k - 1];
+    if (cell) { const a = Math.abs(d); cell.innerHTML = '<small>CP' + k + '</small>' + (has ? (d < 0 ? '\u2212' : '+') + (a >= 60 ? fmt(a).slice(0, -4) : a.toFixed(a < 10 ? 2 : 1)) : secTxt(t)); cell.className = has ? (d < 0.0005 ? 'pkf' : 'pks') : 'pkn'; }
+  }
+  function pkFinish(R0, e) {   // ttFinish: the run into its class board (stored); its place there and the class best before it
+    const B = pkBoards(R0), c = pk.cls, a = B[c.id], prev = a[0] ? a[0].time : 0;
+    a.push(e); a.sort((x, y) => x.time - y.time); const rank = a.indexOf(e) + 1; B[c.id] = a.slice(0, 5);
+    saveRecords();
+    return { cls: c, rank, prev, newCB: !prev || e.time < prev };
+  }
+  const pkPlace = (p) => (p.rank <= 5 ? p.rank + '. v razredu ' : 'Izven prvih 5 v razredu ') + pkTag(p.cls);
+  const pkDiff = (r) => { const p = r.pk, d = r.time - p.prev;
+    return !p.prev ? 'Prvi čas v razredu' : p.newCB ? '<span class="fast">' + sgn(d) + '</span> pod prejšnjim rekordom razreda (' + fmt(p.prev, true) + ')' : '<span class="slow">' + sgn(d) + '</span> za rekordom razreda (' + fmt(p.prev, true) + ')'; };
+  function pkCeremony(r) {   // the summit: the chequered flag, the time, the place in the class, the record badge, the difference to the class best
+    const p = r.pk, el = $('pk-cer'); if (!p) return;
+    $('h-msg').className = ''; msgT = 0; $('h-ttsp').className = ''; $('h-split').className = ''; splitT = 0;   // (the ceremony has it all)
+    const alt = track.def.alt ? numDot(track.def.alt[1]) + ' m' : '';
+    el.innerHTML = '<div class="pkc-flag"><i></i></div><div class="pkc-top">VRH' + (alt ? ' · ' + alt : '') + '</div>' +
+      '<div class="pkc-time">' + fmt(r.time, true) + '</div><div class="pkc-pos">' + (p.rank === 1 ? '\u{1F3C6} ' : '') + pkPlace(p) + '</div>' +
+      (p.newCB ? '<div class="pkc-rec">' + (p.prev ? 'NOV REKORD RAZREDA' : 'PRVI REKORD RAZREDA') + '</div>' : r.newPB ? '<div class="pkc-rec">NOV OSEBNI REKORD</div>' : '') +
+      '<div class="pkc-d">' + pkDiff(r) + '</div>';
+    el.className = 'show' + (p.newCB ? ' rec' : '');
+  }
+  function pkResults(r) {   // the results screen: the class line under the overall one, the class top 5 above the overall board
+    const p = r.pk; $('pk-cer').className = ''; if (!p) return;
+    $('res-sub').innerHTML += '<br>' + pkPlace(p) + ' · ' + pkDiff(r) + '.';
+    const hs = $('res-tt').querySelectorAll('.ltab-h'), h = hs[hs.length - 1], b = pkBoards(rec(track.def.id))[p.cls.id];
+    if (h) h.insertAdjacentHTML('beforebegin', '<p class="ltab-h">Razred ' + esc(p.cls.name) + ' · najboljših 5</p><table class="ltab b"><thead>' + TT_HEAD + '</thead><tbody>' + boardRows(b, r.entry) + '</tbody></table>');
+  }
+  function pkBoardHTML(r) {   // Lestvica: the top 5 of each class
+    const B = pkBoards(r);
+    return PK_CLS.map(c => '<p class="ltab-h">' + pkTag(c) + ' najboljših 5</p>' + (B[c.id].length ? '<table class="ltab b"><thead>' + TT_HEAD + '</thead><tbody>' + boardRows(B[c.id], null) + '</tbody></table>' : '<p class="board-empty">V tem razredu še ni časov (' + Core.MODELS.filter(m => pkClsOf(m.id) === c).map(m => esc(m.name)).join(', ') + ').</p>')).join('');
   }
   function finishRace() {
     phase = 'done';
@@ -1395,8 +1473,9 @@
     if (cpSeen < P.cpEv) {   // new checkpoint (if the HUD fell behind, only the latest; none after the finish, the finish popup has the word)
       cpSeen = P.cpEv;
       const k = P.cp, t = P.splits[k - 1]; if (P.finished || !(k >= 1) || !(t >= 0)) return;
-      const pb = Array.isArray(R0.bestSplits) ? R0.bestSplits[k - 1] : NaN, d = t - pb, has = isFinite(d);
+      const pb = pk.on ? pkSplit(k - 1) : Array.isArray(R0.bestSplits) ? R0.bestSplits[k - 1] : NaN, d = t - pb, has = isFinite(d);   // (Pikes Peak: the class best run's)
       const el = $('h-split'); el.textContent = 'CP' + k + '  ' + fmt(t, true) + (has ? '  ' + sgn(d) : ''); el.className = 'show ' + (has ? dCls(d) : 'even'); splitT = 3.5; cornerShow = false;   // (a place name waits until the split clears)
+      if (pk.on) pkSplitHUD(k, t, d, has); else   // (Pikes Peak: the TV pill instead of the big popup)
       showMsg('CP' + k + (has ? ' ' + sgn(d) : ''), has ? (d < 0 ? 'fast' : 'warn') : 'gold', 1.5);
       Sfx.beep(has && d < 0 ? 990 : 740, 0.12, 0.12);
       if (!has) Comm.say(ttLine(track.def, 'cpFirst'), { cp: k, time: spkTime(t) }, 2);
@@ -1721,6 +1800,7 @@
           showMsg(r.newPB ? 'NOV REKORD!' : 'CILJ! ' + sgn(d), r.newPB ? 'fast' : 'gold', 4);
           Comm.say(ttLine(track.def, r.newPB ? 'record' : isFinite(d) && Math.abs(d) < 0.005 ? 'even' : 'end'), { time: spkTime(r.time), delta: isFinite(d) ? spkDelta(d) : '', track: EN_NAME[track.def.id] || track.def.name }, 5);
           { const k = medalOf(track.def, r.time); if (k >= 0) Comm.say('medal', { medal: MEDAL_EN[k] }, 3, { ttl: 9000 }); }   // (waits for the finish call)
+          if (pk.on) pkCeremony(r);   // (Pikes Peak: the summit ceremony)
         } else {
           showMsg(pos === 1 ? 'ZMAGA!' : 'CILJ! ' + pos + '. MESTO', 'gold', 4);
           Comm.say(pos === 1 ? 'win' : pos <= 3 ? 'podium' : 'finish', { pos: Comm.ordinal(pos) }, 5);
