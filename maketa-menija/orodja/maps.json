@@ -1,0 +1,10 @@
+[
+  ["vrsic", "top", "top-vrsic", {"W": 824, "H": 620, "wet": true}],
+  ["vrsic", "block", "block-vrsic", {"W": 824, "H": 600, "wet": true}],
+  ["pikes", "top", "top-pikes", {"W": 824, "H": 620, "wet": true}],
+  ["pikes", "block", "block-pikes", {"W": 824, "H": 600, "wet": true}],
+  ["ouninpohja", "top", "top-ouninpohja", {"W": 824, "H": 620, "wet": true}],
+  ["ouninpohja", "block", "block-ouninpohja", {"W": 824, "H": 600, "wet": true}],
+  ["gora", "top", "top-gora", {"W": 824, "H": 620, "wet": true, "pad": 0.3}],
+  ["gora", "block", "block-gora", {"W": 824, "H": 600, "wet": true, "margin": 0.25}]
+]

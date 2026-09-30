@@ -442,3 +442,82 @@ svg { display: block; }
 .res-head.word .pos { font-size: 24px; }
 .res-head.busted .pos { background: linear-gradient(90deg, #d42a33 0 50%, #2a5fd4 50% 100%); color: #fff; border-color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
 .places button.busted { background: linear-gradient(90deg, #c8262f, #2856c8); border-color: rgba(255, 255, 255, .6); }
+
+/* ---------------- single race, step 2: the group tabs, the maps of the open roads and rally stages (three versions) ---------------- */
+.groups { flex: 0 0 auto; display: flex; gap: 6px; padding: 4px 14px 2px; }
+.groups button { flex: 1 1 0; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 4px; border-radius: 10px; background: rgba(255, 255, 255, .05); border: 1.5px solid rgba(255, 255, 255, .12);
+  font: 800 italic 13px/1 var(--f-ui); color: var(--lbl); white-space: nowrap; }
+.groups button i { font-style: normal; font: 800 10.5px/1 var(--f-ui); padding: 2px 5px; border-radius: 6px; background: rgba(255, 255, 255, .1); color: #dfe6f1; }
+.groups button[aria-selected="true"] { background: rgba(63, 208, 255, .16); border-color: var(--cyan); color: #fff; }
+.groups button[aria-selected="true"] i { background: var(--cyan); color: #0b1626; }
+.groups button:disabled { opacity: .4; }
+@media (max-width: 380px) { .groups button { font-size: 12px; gap: 4px; } }
+.ribbon.side { left: auto; right: 12px; transform: skewX(-10deg); }
+.mapv { position: absolute; left: 10px; top: 8px; z-index: 4; display: flex; align-items: center; gap: 3px; padding: 3px 4px 3px 8px; border-radius: 999px; background: rgba(7, 12, 20, .82); border: 1px dashed rgba(255, 198, 41, .7); }
+.mapv span { font: 800 italic 10px/1 var(--f-ui); letter-spacing: .1em; color: var(--gold); margin-right: 2px; }
+.mapv button { width: 22px; height: 22px; border-radius: 50%; font: 900 12px/22px var(--f-ui); color: var(--lbl); }
+.mapv button[aria-pressed="true"] { background: var(--gold); color: var(--gold-ink); }
+.mapv em { font: 700 italic 10.5px/1 var(--f-ui); color: #dfe6f1; padding: 0 6px 0 3px; white-space: nowrap; }
+@media (max-width: 380px) { .mapv em { display: none; } }
+/* version 1: the flyover video and the names over it */
+.dio.fly { background: #0b1626; }
+.dio.fly video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: filter .7s ease; }
+.stage.rainy .dio.fly video { filter: saturate(.72) brightness(.8) contrast(1.05); }
+.flab { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.flab > div { position: absolute; left: 0; top: 0; opacity: 0; transition: opacity .35s ease; will-change: transform; }
+.fl-s { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; translate: -3px -100%; }
+.fl-s b { order: 1; background: #fff; color: #10151d; font: 900 italic 15px/1 var(--f-ui); letter-spacing: .02em; padding: 5px 9px 4px; transform: skewX(-10deg); text-transform: uppercase; box-shadow: 3px 3px 0 rgba(0, 0, 0, .35); white-space: nowrap; }
+.fl-s small { order: 2; background: var(--gold); color: var(--gold-ink); font: 900 italic 11px/1 var(--f-ui); padding: 3px 8px; transform: skewX(-10deg); margin-left: 12px; white-space: nowrap; }
+.fl-s svg { order: 3; margin-top: 1px; }
+.fl-s.finish b { background: #101820; color: #fff; }
+.fl-q { translate: -50% -100%; display: flex; flex-direction: column; align-items: center; }
+.fl-q b { background: rgba(10, 16, 26, .84); color: #fff; font: 800 italic 12px/1 var(--f-ui); padding: 5px 8px 4px; border-left: 3px solid var(--gold); white-space: nowrap; box-shadow: 0 3px 8px rgba(0, 0, 0, .35); }
+.fl-q::after { content: ''; width: 2px; height: 16px; background: rgba(255, 255, 255, .85); }
+.fly .fl svg, .fl-s svg path { stroke: #fff; }
+.fl path { stroke: #fff; stroke-width: 2.4; stroke-linecap: round; fill: none; }
+.fl .fg { fill: #3fd0ff; stroke: none; }
+.fl.fin rect { fill: #fff; stroke: none; } .fl.fin .ck { fill: #10151d; stroke: none; }
+/* the route on a map or a block: gold on an open road, orange with a white centre line on a rally stage; a point runs along it */
+.rt-o { fill: none; stroke: rgba(8, 12, 20, .75); stroke-width: 11; stroke-linejoin: round; stroke-linecap: round; }
+.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: rtdraw 1.6s ease-out forwards; }
+.rally .rt { stroke: #ff8a2a; }
+.rt-c { fill: none; stroke: #fff; stroke-width: 1.6; stroke-dasharray: 10 9; opacity: .9; }
+.rt-dot { fill: #fff8d0; filter: drop-shadow(0 0 6px #ffe07a) drop-shadow(0 0 12px rgba(255, 210, 58, .8)); }
+@keyframes rtdraw { to { stroke-dashoffset: 0; } }
+.mk circle { fill: #fff; stroke: #10151d; stroke-width: 3; }
+.mk text { font: 900 italic 21px/1 var(--f-ui); fill: #fff; stroke: rgba(8, 12, 20, .92); stroke-width: 6; paint-order: stroke; stroke-linejoin: round; text-transform: uppercase; }
+.mk text .sub { font-size: 16px; fill: var(--gold); }
+.sp rect { fill: #10151d; stroke: #fff; stroke-width: 2.5; } .sp text { font: 900 italic 15px/1 var(--f-ui); fill: #fff; }
+/* version 2: the map from above and the height profile (a rally stage: its pace notes) */
+.dio.topmap { display: grid; grid-template-rows: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 36px 10px 46px; }
+.topmap .mapsvg { display: block; width: 100%; height: 100%; min-height: 0; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .5)); }
+.mapsvg .frame { fill: none; stroke: rgba(255, 255, 255, .22); stroke-width: 2; }
+.topmap image.wet, .blockv image.wet { opacity: 0; transition: opacity .7s ease; }
+.stage.rainy .dio image.wet { opacity: 1; }
+.profw { width: 100%; flex: 0 1 auto; min-height: 0; padding: 4px 6px 2px; border-radius: 12px; background: rgba(8, 14, 24, .72); border: 1px solid rgba(255, 255, 255, .1); }
+.prof { display: block; width: 100%; height: auto; max-height: 100px; }
+.prof .pa { fill: url(#pg); stroke: #ffd23a; stroke-width: 1.6; stroke-linejoin: round; }
+.prof .ax { stroke: rgba(255, 255, 255, .5); stroke-width: 1; }
+.prof .pt, .prof .pg, .prof .pn, .prof .lr { font: 800 italic 10.5px/1 var(--f-ui); fill: #dfe6f1; }
+.prof .pg { fill: var(--gold); }
+.prof .pn { font-size: 9.5px; fill: #fff; }
+.prof .pl { stroke: rgba(255, 255, 255, .7); stroke-width: 1; }
+.prof .spl { stroke: rgba(255, 255, 255, .45); stroke-width: 1; stroke-dasharray: 3 3; }
+.prof .lr { fill: var(--lbl); }
+/* version 3: the floating block with the route on it */
+.dio.blockv .isl { display: flex; align-items: center; justify-content: center; padding: 30px 6px 36px; }
+.dio.blockv svg { width: 100%; height: 100%; }
+.dio.blockv.lock svg image, .dio.topmap.lock .mapsvg image, .dio.fly.lock video { filter: saturate(.55) brightness(.8); }
+/* a map: the arrows beside the dots at the bottom (not over the names on the map) */
+.stage.route .arrow { top: auto; bottom: 2px; margin-top: 0; width: 34px; height: 34px; border-width: 2px; z-index: 4; }
+.stage.route .arrow.l { left: calc(50% - 76px); } .stage.route .arrow.r { right: calc(50% - 76px); }
+.stage.route .arrow svg { width: 14px; height: 14px; }
+.stage.route .dots { bottom: 15px; }
+/* a short screen: the track's description gives way to the map; the profile lies over the lower part of the map */
+@media (max-height: 700px) {
+  #s-track .card .desc { display: none; }
+  .dio.topmap { display: block; padding: 34px 8px 38px; }
+  .topmap .mapsvg { width: 100%; height: 100%; }
+  .topmap .profw { position: absolute; left: 12px; right: 12px; bottom: 38px; width: auto; padding: 2px 6px 0; background: rgba(8, 14, 24, .8); }
+  .prof { max-height: 56px; margin: 0 auto; }
+}

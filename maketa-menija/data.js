@@ -67,31 +67,46 @@ window.MENU = {
       hp: 1000, kg: 798, drive: 'RWD', gears: 8, stats: { power: 16, grip: 16, light: 16, drift: 5 } },
   ],
 
-  /* ---------- tracks (hero image: assets/tracks/<id>.webp). A real place shows as "name, country". ---------- */
+  /* ---------- tracks (hero image: assets/tracks/<id>.webp). A real place shows as "name, country".
+     group: the tab of the track list: circuit, road (an open road through places) or rally ---------- */
+  groups: [{ id: 'circuit', name: 'Circuits' }, { id: 'road', name: 'Open roads' }, { id: 'rally', name: 'Rally' }],
   tracks: [
-    { id: 'jezero', name: 'Jezero Ring', tag: 'CIRCUIT', desc: 'A lakeside circuit with an island church, forest and grandstands. Fast and flowing.',
+    { id: 'jezero', group: 'circuit', name: 'Jezero Ring', tag: 'CIRCUIT', desc: 'A lakeside circuit with an island church, forest and grandstands. Fast and flowing.',
       km: 1.77, corners: 11, laps: 3, rec: ['M. Kovač', '0:51.84'], bars: { speed: 12, tech: 8, drift: 11, grip: 12 }, free: true },
-    { id: 'riviera', name: 'Riviera', tag: 'STREET', desc: 'A seaside street circuit past palms and the promenade. Short and technical, full of hairpins.',
+    { id: 'riviera', group: 'circuit', name: 'Riviera', tag: 'STREET', desc: 'A seaside street circuit past palms and the promenade. Short and technical, full of hairpins.',
       km: 1.26, corners: 9, laps: 4, rec: ['J. Novak', '0:39.20'], bars: { speed: 8, tech: 13, drift: 12, grip: 11 }, free: true },
-    { id: 'gora', name: 'Mountain Rally', tag: 'GRAVEL', desc: 'Gravel climbs and descents with jumps over the crests, between forest and rocks.',
+    { id: 'gora', group: 'rally', name: 'Mountain Rally', tag: 'GRAVEL', desc: 'Gravel climbs and descents with jumps over the crests, between forest and rocks.',
       km: 1.64, corners: 6, laps: 2, rec: ['R. Horvat', '0:58.30'], bars: { speed: 10, tech: 10, drift: 15, grip: 6 }, free: true },
-    { id: 'ljubljana', country: 'Slovenia', name: 'Ljubljana', tag: 'SLOVENIA', desc: 'A city circuit along the river: bridges, the market and the old town, with the castle above.',
+    { id: 'ljubljana', group: 'circuit', country: 'Slovenia', name: 'Ljubljana', tag: 'SLOVENIA', desc: 'A city circuit along the river: bridges, the market and the old town, with the castle above.',
       km: 1.87, corners: 7, laps: 3, rec: ['N. Petek', '0:55.12'], bars: { speed: 9, tech: 12, drift: 11, grip: 12 } },
-    { id: 'monaco', country: 'Monaco', name: 'La Condamine', tag: 'MONACO', desc: 'A harbour street circuit: up the hill, round a tight hairpin, through the tunnel and along the water.',
+    { id: 'monaco', group: 'circuit', country: 'Monaco', name: 'La Condamine', tag: 'MONACO', desc: 'A harbour street circuit: up the hill, round a tight hairpin, through the tunnel and along the water.',
       km: 3.34, corners: 9, laps: 2, rec: ['D. Zupan', '1:34.60'], bars: { speed: 9, tech: 15, drift: 8, grip: 13 } },
-    { id: 'rbring', country: 'Austria', name: 'Styria', tag: 'AUSTRIA', desc: 'Short and fast in the green hills: a steep climb to the top hairpin and long runs back down.',
+    { id: 'rbring', group: 'circuit', country: 'Austria', name: 'Styria', tag: 'AUSTRIA', desc: 'Short and fast in the green hills: a steep climb to the top hairpin and long runs back down.',
       km: 4.31, corners: 10, laps: 2, rec: ['B. Kranjc', '1:31.90'], bars: { speed: 14, tech: 9, drift: 9, grip: 13 } },
-    { id: 'suzuka', country: 'Japan', name: 'Mie', tag: 'JAPAN', desc: 'A figure-of-eight circuit: uphill esses, a hairpin, fast sweepers and a last chicane.',
+    { id: 'suzuka', group: 'circuit', country: 'Japan', name: 'Mie', tag: 'JAPAN', desc: 'A figure-of-eight circuit: uphill esses, a hairpin, fast sweepers and a last chicane.',
       km: 5.80, corners: 17, laps: 2, rec: ['H. Kimura', '2:02.10'], bars: { speed: 13, tech: 14, drift: 10, grip: 13 } },
-    { id: 'spa', country: 'Belgium', name: 'Ardennes', tag: 'BELGIUM', desc: 'Seven kilometres through the forests: a steep climb after the first corner, long straights and fast sweepers.',
+    { id: 'spa', group: 'circuit', country: 'Belgium', name: 'Ardennes', tag: 'BELGIUM', desc: 'Seven kilometres through the forests: a steep climb after the first corner, long straights and fast sweepers.',
       km: 7.00, corners: 13, laps: 2, rec: ['P. Dubois', '2:31.40'], bars: { speed: 15, tech: 11, drift: 9, grip: 12 } },
-    { id: 'nring', country: 'Germany', name: 'Eifel', tag: 'GERMANY', desc: 'One lap of almost 21 km through the forest: crests, jumps, banked corners and 300 m of climbing.',
+    { id: 'nring', group: 'circuit', country: 'Germany', name: 'Eifel', tag: 'GERMANY', desc: 'One lap of almost 21 km through the forest: crests, jumps, banked corners and 300 m of climbing.',
       km: 20.69, corners: 48, laps: 1, rec: ['E. Lindqvist', '7:58.30'], bars: { speed: 14, tech: 16, drift: 11, grip: 12 } },
-    { id: 'pikes', country: 'USA', name: 'Colorado', tag: 'USA', desc: 'A hill climb against the clock, from 2,862 m to the summit at 4,301 m. Hairpins, forest and snow at the top.',
+    { id: 'vrsic', group: 'road', country: 'Slovenia', name: 'Vršič', tag: 'SLOVENIA', desc: 'The road over the pass from Kranjska Gora: past Lake Jasna, through the autumn larches and up 24 cobbled hairpins to 1,611 m.',
+      km: 12.30, corners: 24, laps: 1, rec: ['A. Koren', '6:21.80'], bars: { speed: 11, tech: 15, drift: 12, grip: 10 } },
+    { id: 'pikes', group: 'road', country: 'USA', name: 'Colorado', tag: 'USA', desc: 'A hill climb against the clock, from 2,862 m to the summit at 4,301 m. Hairpins, forest and snow at the top.',
       km: 6.26, corners: 36, laps: 1, trial: true, rec: ['O. Nieminen', '5:12.40'], bars: { speed: 11, tech: 15, drift: 12, grip: 9 } },
-    { id: 'ouninpohja', country: 'Finland', name: 'Ouninpohja', tag: 'FINLAND', desc: 'A gravel special stage against the clock: crest after crest, big jumps and a long lakeside right.',
+    { id: 'ouninpohja', group: 'rally', country: 'Finland', name: 'Ouninpohja', tag: 'FINLAND', desc: 'A gravel special stage against the clock: crest after crest, big jumps and a long lakeside right.',
       km: 10.02, corners: 19, laps: 1, trial: true, rec: ['T. Hayashi', '4:48.90'], bars: { speed: 16, tech: 12, drift: 13, grip: 7 } },
   ],
+
+  /* ---------- the maps of the open roads and rally stages (routes.js has the lines and heights, made from the game's worlds) ----------
+     start / finish: the names on the map; alt: the real height at the start and at the finish (m); stage, surface: a rally stage */
+  routeMaps: {
+    vrsic: { start: 'Kranjska Gora', finish: 'Vršič', alt: [810, 1611] },
+    pikes: { start: 'Crystal Reservoir', finish: 'Summit', alt: [2862, 4301] },
+    ouninpohja: { start: 'Hämepohja', finish: 'Flying finish', stage: 'SS 4', surface: 'Gravel' },
+    gora: { start: 'Start', finish: 'Finish', stage: 'SS 1', surface: 'Gravel' },
+  },
+  // the three ways to show them, to choose from (the switch over the map)
+  mapVersions: [{ n: 1, name: 'Flyover' }, { n: 2, name: 'Map & profile' }, { n: 3, name: '3D block' }],
 
   /* ---------- career: every race gives up to three trophies ---------- */
   trophyRules: { race: ['Bronze: top 5', 'Silver: podium', 'Gold: win'], trial: ['Bronze time', 'Silver time', 'Gold time'] },

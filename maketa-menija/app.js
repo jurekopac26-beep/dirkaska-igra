@@ -134,14 +134,16 @@
   }
 
   /* ---------------- view state ---------------- */
-  let screen, shown = '', mode = 'race', carIdx, colorIdx, trackIdx, tab, seriesId, raceSel, lapsSel, weather, lbTrack, mpMode, history, sheet = null, sheetOn = false, settings, result = null;
+  let screen, shown = '', mode = 'race', group = 'circuit', mapV = 1, carIdx, colorIdx, trackIdx, tab, seriesId, raceSel, lapsSel, weather, lbTrack, mpMode, history, sheet = null, sheetOn = false, settings, result = null;
   const modeOf = (id) => D.modes.find(m => m.id === id) || D.modes[0];
   const dailyMode = () => daily().track.trial ? 'trial' : 'race';   // today's race is a circuit race, or a time trial on a hill climb or a rally stage
-  // the tracks of the chosen mode (null: today's race, first in its own mode); a circuit race needs a circuit
-  const TRACKS = () => (mode === dailyMode() ? [null] : []).concat(D.tracks.filter(t => mode !== 'race' || !t.trial));
+  // the tracks of a group in the chosen mode (null: today's race, first in its own mode and group); a circuit race needs a track that races
+  const inMode = (t) => mode !== 'race' || !t.trial;
+  const groupList = (g) => (mode === dailyMode() && daily().track.group === g ? [null] : []).concat(D.tracks.filter(t => t.group === g && inMode(t)));
+  const TRACKS = () => groupList(group);
   function resetView() {
     const s = S();
-    carIdx = P.car; colorIdx = P.color; mode = 'race'; trackIdx = 0; tab = 'stats'; seriesId = null; raceSel = null; lapsSel = null; weather = 0; lbTrack = -1; mpMode = null; result = null;
+    carIdx = P.car; colorIdx = P.color; mode = 'race'; group = 'circuit'; trackIdx = 0; tab = 'stats'; seriesId = null; raceSel = null; lapsSel = null; weather = 0; lbTrack = -1; mpMode = null; result = null;
   }
 
   /* ---------------- persistent parts: video background, 3D car ---------------- */
@@ -252,6 +254,107 @@
     return h;
   }
 
+  /* ---------------- the maps of the open roads and rally stages (routes.js), in three versions to choose from ----------------
+     1 a flyover video (the route drawn in the game's world, the names over it), 2 a map from above with the height profile (a rally
+     stage: its pace notes), 3 a floating block of the land with the route on it (as the circuits' models) */
+  const RT = window.ROUTES || {};
+  const isRoute = (t) => !!t && t.group !== 'circuit' && !!RT[t.id];
+  const loadImg = (t, wet) => isRoute(t) ? 'assets/maps/block-' + t.id + (wet ? '-rain' : '') + '.webp' : trackImg(t, wet);
+  const pathD = (pts) => 'M' + pts.map(p => p[0] + ' ' + p[1]).join('L');
+  const altOf = (R, M, h) => M.alt ? M.alt[0] + (h - R.prof[0]) * (M.alt[1] - M.alt[0]) / ((R.prof[R.prof.length - 1] - R.prof[0]) || 1) : null;
+  const km = (m) => (m / 1000).toFixed(1) + ' km';
+  const flagSvg = (fin) => fin ? '<g class="fl fin"><path d="M0 0V-26" /><rect x="0" y="-26" width="16" height="11"/><path class="ck" d="M0-26h4v3.7h-4zM8-26h4v3.7h-4zM4-22.3h4v3.6h-4zM12-22.3h4v3.6h-4zM0-18.7h4v3.7h-4zM8-18.7h4v3.7h-4z"/></g>'
+    : '<g class="fl"><path d="M0 0V-26"/><path class="fg" d="M0-26h16l-4 5.5 4 5.5H0z"/></g>';
+  function mark(x, y, name, sub, fin, cls) {   // a flag on the map and its name (with a dark edge round the letters: readable on any land)
+    return '<g class="mk ' + (cls || '') + '" transform="translate(' + x + ' ' + y + ')"><circle r="6"/>' + flagSvg(fin) + '<text x="' + (fin ? -6 : 6) + '" y="-32" text-anchor="' + (fin ? 'end' : 'start') + '">' + esc(name) + (sub ? '<tspan class="sub" x="' + (fin ? -6 : 6) + '" dy="-20">' + esc(sub) + '</tspan>' : '') + '</text></g>';
+  }
+  function routeLines(id, pts, rally) {
+    const d = pathD(pts);
+    return '<path class="rt-o" d="' + d + '"/><path class="rt" id="rt-' + id + '" d="' + d + '" pathLength="1"/>' + (rally ? '<path class="rt-c" d="' + d + '"/>' : '') +
+      '<circle class="rt-dot" r="10" opacity="0"><set attributeName="opacity" to="1" begin="1.6s"/><animateMotion dur="' + (rally ? 7 : 9) + 's" begin="1.6s" repeatCount="indefinite"><mpath href="#rt-' + id + '"/></animateMotion></circle>';
+  }
+  function splitMarks(pts) {   // a rally stage: the two split times at a third and two thirds of it
+    return [1, 2].map(k => { const p = pts[Math.round((pts.length - 1) * k / 3)]; return '<g class="sp" transform="translate(' + p[0] + ' ' + p[1] + ')"><rect x="-15" y="-15" width="30" height="30" rx="6"/><text y="6" text-anchor="middle">S' + k + '</text></g>'; }).join('');
+  }
+  function flyView(t, R, lockd) {
+    const F = R.fly;
+    return '<div class="dio fly' + (lockd ? ' lock' : '') + '" data-route="' + t.id + '"><video muted loop playsinline autoplay preload="auto" poster="assets/maps/fly-' + t.id + '.webp" src="assets/maps/fly-' + t.id + '.webm"></video><div class="flab" aria-hidden="true"></div></div>';
+  }
+  function topView(t, R, M, rally, lockd) {
+    const T = R.top, pts = T.route; let y0 = 1e9, y1 = -1e9; for (const p of pts) { y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); }
+    const vy = Math.max(0, y0 - 92), vh = Math.min(T.H - vy, y1 - y0 + 150), a = pts[0], b = pts[pts.length - 1];
+    let h = '<div class="dio topmap' + (rally ? ' rally' : '') + (lockd ? ' lock' : '') + '"><svg class="mapsvg" viewBox="0 ' + vy + ' ' + T.W + ' ' + vh + '" aria-label="Map of ' + esc(t.name) + '">' +
+      '<defs><clipPath id="mc-' + t.id + '"><rect x="0" y="' + vy + '" width="' + T.W + '" height="' + vh + '" rx="22"/></clipPath></defs><g clip-path="url(#mc-' + t.id + ')">' +
+      '<image href="assets/maps/top-' + t.id + '.webp" width="' + T.W + '" height="' + T.H + '"/><image class="wet" href="assets/maps/top-' + t.id + '-rain.webp" width="' + T.W + '" height="' + T.H + '"/></g>' +
+      '<rect class="frame" x="1" y="' + (vy + 1) + '" width="' + (T.W - 2) + '" height="' + (vh - 2) + '" rx="22"/>' +
+      routeLines(t.id, pts, rally) + (rally ? splitMarks(pts) : '');
+    const A = M.alt ? [M.alt[0], M.alt[1]] : null;
+    if (R.open) h += mark(a[0], a[1], M.start || 'Start', A ? num(A[0]) + ' m' : rally ? 'SS start' : '', false, 's') + mark(b[0], b[1], M.finish || 'Finish', A ? num(A[1]) + ' m' : '', true, 'f');
+    else h += mark(a[0], a[1], 'Start · finish', '', false, 's');
+    h += '</svg>' + (rally ? paceNotes(t, R, M) : profile(t, R, M)) + '</div>';
+    return h;
+  }
+  function profile(t, R, M) {   // the heights along the run (as a stage presentation): the real heights where known
+    const P = R.prof, n = P.length, L = R.len, alts = P.map(h => altOf(R, M, h) != null ? altOf(R, M, h) : h);
+    const lo = Math.min(...alts), hi = Math.max(...alts), span = Math.max(40, hi - lo), X = (k) => 18 + k / (n - 1) * 364, Y = (v) => 96 - (v - lo) / span * 60;
+    let pd = 'M18 104', gain = 0; alts.forEach((v, k) => { pd += 'L' + X(k).toFixed(1) + ' ' + Y(v).toFixed(1); if (k && v > alts[k - 1]) gain += v - alts[k - 1]; }); pd += 'L382 104Z';
+    let h = '<svg class="prof" viewBox="0 0 400 124" aria-label="Height profile"><defs><linearGradient id="pg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd23a"/><stop offset="1" stop-color="#ffd23a" stop-opacity=".12"/></linearGradient></defs>';
+    h += '<path class="pa" d="' + pd + '"/><line class="ax" x1="18" y1="104" x2="382" y2="104"/>';
+    const places = ((R.fly && R.fly.places) || []).slice(0, 3);
+    places.forEach(nm => { const q = R.places.find(x => x[0] === nm || x[0].indexOf(nm) >= 0); if (!q) return; const k = Math.round(q[1] / L * (n - 1)), x = X(k), y = Y(alts[Math.min(n - 1, k)]); h += '<line class="pl" x1="' + x + '" y1="' + y + '" x2="' + x + '" y2="' + (y - 14) + '"/><text class="pn" x="' + x + '" y="' + (y - 18) + '" text-anchor="middle">' + esc(nm) + '</text>'; });
+    h += '<text class="pt" x="18" y="118">0</text><text class="pt" x="382" y="118" text-anchor="end">' + km(L) + '</text><text class="pg" x="200" y="118" text-anchor="middle">' + (M.alt ? 'Climb +' + num(Math.round(gain)) + ' m' : 'Height ±' + Math.round(span) + ' m') + '</text></svg>';
+    return '<div class="profw">' + h + '</div>';
+  }
+  function paceNotes(t, R, M) {   // a rally stage: its corners along it, left ones above the line, right ones below, the tighter the taller
+    const N = R.notes || [], L = R.len, X = (d) => 18 + d / L * 364, col = (g) => g <= 2 ? '#ff4b4b' : g <= 4 ? '#ff9a3a' : '#ffe07a';
+    let h = '<svg class="prof pace" viewBox="0 0 400 124" aria-label="Pace notes"><line class="ax" x1="18" y1="62" x2="382" y2="62"/>';
+    [1, 2].forEach(k => { const x = X(L * k / 3); h += '<line class="spl" x1="' + x + '" y1="18" x2="' + x + '" y2="106"/><text class="pt" x="' + x + '" y="14" text-anchor="middle">SPLIT ' + k + '</text>'; });
+    N.forEach(([d, side, g]) => { const x = X(d), hgt = 8 + (7 - g) * 5.5, y = side < 0 ? 58 - hgt : 66; h += '<rect x="' + (x - 2.2).toFixed(1) + '" y="' + y.toFixed(1) + '" width="4.4" height="' + hgt.toFixed(1) + '" rx="2" fill="' + col(g) + '"/>'; });
+    h += '<text class="pt" x="18" y="120">' + esc((M.stage || 'SS') + ' START') + '</text><text class="pt" x="382" y="120" text-anchor="end">' + (R.open ? 'STOP · ' : 'LAP · ') + km(L) + '</text>';
+    h += '<text class="pg" x="200" y="120" text-anchor="middle">' + N.length + ' corners · ' + esc(M.surface || 'Gravel').toUpperCase() + '</text><text class="lr" x="386" y="36" text-anchor="end">L</text><text class="lr" x="386" y="96" text-anchor="end">R</text></svg>';
+    return '<div class="profw">' + h + '</div>';
+  }
+  function blockView(t, R, M, rally, lockd) {
+    const B = R.block, pts = B.route, a = pts[0], b = pts[pts.length - 1], A = M.alt;
+    let h = '<div class="dio blockv' + (lockd ? ' lock' : '') + (rally ? ' rally' : '') + '"><div class="isl" style="animation-delay:-' + Math.round(performance.now() % 5000) + 'ms"><svg viewBox="0 0 ' + B.W + ' ' + B.H + '" aria-label="3D model of ' + esc(t.name) + '">' +
+      '<image href="assets/maps/block-' + t.id + '.webp" width="' + B.W + '" height="' + B.H + '"/><image class="wet" href="assets/maps/block-' + t.id + '-rain.webp" width="' + B.W + '" height="' + B.H + '"/>' +
+      routeLines(t.id + '-b', pts, rally) + (rally ? splitMarks(pts) : '');
+    h += R.open ? mark(a[0], a[1], M.start || 'Start', A ? num(A[0]) + ' m' : '', false, 's') + mark(b[0], b[1], M.finish || 'Finish', A ? num(A[1]) + ' m' : '', true, 'f') : mark(a[0], a[1], 'Start · finish', '', false, 's');
+    return h + '</svg></div></div>';
+  }
+  function routeView(t, lockd) {
+    const R = RT[t.id], M = D.routeMaps[t.id] || {}, rally = t.group === 'rally';
+    let h = '<div class="sky" aria-hidden="true"><i class="sun"></i><i class="cloud"></i></div>';
+    if (mapV === 1 && R.fly) h += flyView(t, R, lockd); else if (mapV === 3) h += blockView(t, R, M, rally, lockd); else h += topView(t, R, M, rally, lockd);
+    const V = D.mapVersions.find(v => v.n === mapV) || D.mapVersions[0];
+    h += '<div class="mapv" role="group" aria-label="Map version (mockup)"><span>MAP</span>' + D.mapVersions.map(v => '<button aria-pressed="' + (mapV === v.n) + '" data-act="mapv:' + v.n + '" title="' + esc(v.name) + '">' + v.n + '</button>').join('') + '<em>' + esc(V.name) + '</em></div>';
+    return h;
+  }
+  const stageView = (t, lockd) => isRoute(t) ? routeView(t, lockd) : dio(t, lockd);
+  // the flyover's names: each frame of the video says where the start, the finish and the places are
+  let flyRaf = 0;
+  function flyLabels() {
+    cancelAnimationFrame(flyRaf); flyRaf = 0;
+    const box = $('.fly', app); if (!box) return;
+    const R = RT[box.dataset.route], F = R.fly, M = D.routeMaps[box.dataset.route] || {}, v = $('video', box), lab = $('.flab', box), L = R.len;
+    const alt = M.alt ? M.alt.map(a => num(a) + ' m') : ['', ''];
+    const tag = (cls, name, sub, icon) => '<div class="fl-' + cls + '">' + (icon || '') + '<b>' + esc(name) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</div>';
+    const loop = !R.open, sub0 = alt[0] || (M.stage ? M.stage + ' start' : ''), sub1 = alt[1] || '';
+    lab.innerHTML = tag('s start', loop ? 'Start · finish' : M.start || 'Start', sub0, flagSvg(false).replace('<g', '<svg viewBox="-2 -28 20 30" width="18" height="26"><g') + '</svg>') + tag('s finish', loop ? 'Finish' : M.finish || 'Finish', sub1, '<svg viewBox="-2 -28 20 30" width="18" height="26">' + flagSvg(true) + '</svg>') +
+      F.places.map(n => tag('q', n, '')).join('');
+    const els = [...lab.children], pd = F.places.map(n => { const q = R.places.find(x => x[0] === n || x[0].indexOf(n) >= 0); return q ? q[1] : (n === 'Split 1' ? L / 3 : n === 'Split 2' ? 2 * L / 3 : -1e9); });
+    const step = () => {
+      if (!document.contains(v)) return;
+      const f = F.frames[Math.min(F.frames.length - 1, Math.floor((v.currentTime || 0) * F.fps))], W = box.clientWidth, H = box.clientHeight, k = Math.max(W / F.W, H / F.H), ox = (W - F.W * k) / 2, oy = (H - F.H * k) / 2;
+      const put = (el, P, on) => { const vis = on && P[2] && P[0] > -40 && P[0] < F.W + 40 && P[1] > 0 && P[1] < F.H + 20; el.style.opacity = vis ? 1 : 0; if (vis) el.style.transform = 'translate(' + (ox + P[0] * k).toFixed(1) + 'px,' + (oy + P[1] * k).toFixed(1) + 'px)'; };
+      const d = f[0];
+      put(els[0], f[1], d < L * 0.12); put(els[1], f[2], d > L * 0.8);
+      pd.forEach((q, i) => put(els[2 + i], f[4][i], Math.abs(d - q) < L * 0.07));
+      flyRaf = requestAnimationFrame(step);
+    };
+    flyRaf = requestAnimationFrame(step);
+  }
+
   // what the race is, under the weather: the laps of a circuit race, else the mode
   const modeWhat = (t) => mode === 'race' && !t.trial ? laps(lapsSel || t.laps).toUpperCase() : modeOf(mode).name.toUpperCase();
   const goldTime = (t) => secs(t.rec[1]) + 1.2 * Math.max(1, t.km / 3);
@@ -268,9 +371,10 @@
   function vTrack() {
     const list = TRACKS(), isDaily = list[trackIdx] == null, M = modeOf(mode), lockDot = (i) => !!list[i] && trackLocked(list[i]);
     let h = '<section class="scr" id="s-track" aria-label="Single race">' + topbar('Single race', true, [2, 2, M.name]);
+    h += '<div class="groups" role="tablist" aria-label="Track group">' + D.groups.map(g => { const n = groupList(g.id).length; return '<button role="tab" aria-selected="' + (group === g.id) + '" data-act="group:' + g.id + '"' + (n ? '' : ' disabled') + '>' + esc(g.name) + '<i>' + n + '</i></button>'; }).join('') + '</div>';
     if (isDaily) {
       const d = daily(), t = d.track;
-      h += '<div class="stage" id="track-stage">' + dio(t) + '<div class="ribbon">TODAY\'S RACE</div>' +
+      h += '<div class="stage' + (isRoute(t) ? ' route' : '') + '" id="track-stage">' + stageView(t) + '<div class="ribbon' + (isRoute(t) ? ' side' : '') + '">TODAY\'S RACE</div>' +
         '<button class="arrow l" data-act="track:-1" aria-label="Previous track">' + I.left + '</button><button class="arrow r" data-act="track:1" aria-label="Next track">' + I.right + '</button>' + dots(list.length, trackIdx, lockDot, list[0] == null) + '</div>';
       const mine = d.mine;
       h += '<div class="card daily">' + (mine ? '<div class="badge win">' + I.star.replace('<svg', '<svg style="width:16px;height:16px"') + '<span>YOU ARE ' + ord(mine.rank).toUpperCase() + ' TODAY</span></div>' : '<div class="badge"><span>NEW RACE EVERY DAY</span></div>');
@@ -287,12 +391,13 @@
     if (lockd) badge = '<div class="badge">' + I.lock('#ffc629') + '<span>FULL GAME</span></div>';
     else if (my) badge = '<div class="badge win">' + I.star.replace('<svg', '<svg style="width:16px;height:16px"') + '<span>YOUR RECORD · ' + esc(my) + '</span></div>';
     else if (stars) badge = '<div class="badge win">' + I.star.replace('<svg', '<svg style="width:16px;height:16px"') + '<span>YOUR BEST ESCAPE · ' + '★'.repeat(stars) + '</span></div>';
-    h += '<div class="stage" id="track-stage">' + dio(t, lockd) + '<div class="ribbon rmode r-' + mode + '">' + esc(M.name.toUpperCase()) + '</div>' +
+    h += '<div class="stage' + (isRoute(t) ? ' route' : '') + '" id="track-stage">' + stageView(t, lockd) + '<div class="ribbon rmode r-' + mode + (isRoute(t) ? ' side' : '') + '">' + esc(M.name.toUpperCase()) + '</div>' +
       '<button class="arrow l" data-act="track:-1" aria-label="Previous track">' + I.left + '</button><button class="arrow r" data-act="track:1" aria-label="Next track">' + I.right + '</button>' + dots(list.length, trackIdx, lockDot, list[0] == null) + '</div>';
     h += '<div class="card">' + badge + '<h1>' + esc(t.name) + '<span class="tag ghost">' + esc(t.tag) + '</span></h1><p class="desc">' + esc(t.desc) + '</p>';
     const rec = [I.trophy(my ? 'gold' : ''), my ? 'Your record' : t.rec[0], my || t.rec[1], my ? 'gold' : ''], len = [I.flag, 'Length', t.km.toFixed(2) + ' km'];
     if (chase) h += info([[I.siren, 'Police', D.chase.police + ' cars'], [I.watch, 'Get away in', D.chase.limit], len]);
     else if (mode === 'trial') h += info([rec, [I.medal, 'Gold time', clock(goldTime(t))], len]);
+    else if (t.group === 'road' && D.routeMaps[t.id] && D.routeMaps[t.id].alt) { const A = D.routeMaps[t.id].alt; h += info([rec, len, [I.corners, 'Climb', '+' + num(A[1] - A[0]) + ' m']]); }
     else h += info([rec, len, [I.corners, 'Corners', String(t.corners)]]);
     const B = [['Speed', t.bars.speed], ['Technique', t.bars.tech], ['Drift', t.bars.drift], ['Grip', t.bars.grip]];
     h += '<div class="bars tbars" style="margin-top:6px">' + B.map(b => '<div class="brow"><span>' + b[0] + '</span>' + segBar(b[1]) + '<em>' + b[1] + '</em></div>').join('') + '</div>';
@@ -494,6 +599,7 @@
       const c = D.cars[carIdx]; Car3D.show(c.model, colorIdx, { dark: !!c.soon }); Car3D.setVisible(true);
     } else if (car3dReady) Car3D.setVisible(false);
     if (screen === 'track') wx.attach($('#track-stage', app), wxMode(), shown !== 'track'); else wx.detach();
+    flyLabels();
     shown = screen;
     if (sheet) { app.insertAdjacentHTML('beforeend', typeof sheet === 'function' ? sheet() : sheet); if (sheetOn) $('.sheet-bg', app).classList.add('still'); }
     sheetOn = !!sheet;
@@ -529,7 +635,7 @@
   function startRace(R) {
     race = R;
     const t = R.track, el = document.createElement('div'); el.className = 'loading'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Race');
-    el.innerHTML = '<img src="' + trackImg(t, R.wet) + '" alt=""><h2>' + esc(fullName(t)) + '</h2><div class="bar"><b style="width:4%"></b></div><p>' + esc(R.label) + '</p>';
+    el.innerHTML = '<img src="' + loadImg(t, R.wet) + '" alt=""><h2>' + esc(fullName(t)) + '</h2><div class="bar"><b style="width:4%"></b></div><p>' + esc(R.label) + '</p>';
     app.appendChild(el);
     requestAnimationFrame(() => requestAnimationFrame(() => { $('.bar b', el).style.width = '100%'; }));
     setTimeout(() => {
@@ -585,7 +691,9 @@
       case 'back': back(); break;
       case 'single': go('mode'); break;
       case 'mode': mode = v; render(true); break;
-      case 'mode-next': trackIdx = 0; lapsSel = null; go('track'); break;
+      case 'mode-next': trackIdx = 0; lapsSel = null; if (!groupList(group).length) group = 'circuit'; go('track'); break;
+      case 'group': group = v; trackIdx = 0; lapsSel = null; render(true); break;
+      case 'mapv': mapV = +v; store.set('mapv', mapV); render(true); break;
       case 'car': carIdx = (carIdx + +v + D.cars.length) % D.cars.length; render(); break;
       case 'color': colorIdx = +v; if (car3dReady) Car3D.setColor(colorIdx); render(true); break;
       case 'tab': tab = v; render(); break;
@@ -618,7 +726,7 @@
         const R = result.R; result = null;
         if (R.kind === 'career') { seriesId = R.seriesId; raceSel = null; history = ['title', 'career']; screen = 'series'; }
         else if (R.kind === 'multi') { history = ['title']; screen = 'multi'; }
-        else { if (R.kind === 'daily') { mode = dailyMode(); trackIdx = 0; } else mode = R.mode; history = ['title', 'mode']; screen = 'track'; }
+        else { if (R.kind === 'daily') { mode = dailyMode(); group = R.track.group; trackIdx = 0; } else mode = R.mode; history = ['title', 'mode']; screen = 'track'; }
         render(); break;
       }
       case 'offer': offer(); break;
@@ -674,8 +782,9 @@
       if (D.states[st] && st !== ST) { ST = st; P = loadP(ST); resetView(); drawStates(); }
       if (o.fresh) { P = fresh(ST); saveP(); resetView(); }
       if (o.carIdx != null) carIdx = o.carIdx; if (o.colorIdx != null) colorIdx = o.colorIdx; if (o.mode) mode = o.mode; if (o.trackIdx != null) trackIdx = o.trackIdx;
-      if (o.daily) { mode = dailyMode(); trackIdx = 0; }
-      if (o.trackId) { const i = TRACKS().findIndex(t => t && t.id === o.trackId); if (i >= 0) trackIdx = i; }
+      if (o.group) group = o.group; if (o.mapV) mapV = o.mapV;
+      if (o.daily) { mode = dailyMode(); group = daily().track.group; trackIdx = 0; }
+      if (o.trackId) { const tt = D.tracks.find(x => x.id === o.trackId); if (tt) group = tt.group; const i = TRACKS().findIndex(t => t && t.id === o.trackId); if (i >= 0) trackIdx = i; }
       if (o.tab) tab = o.tab; if (o.lbTrack != null) lbTrack = o.lbTrack; if (o.mpMode) mpMode = o.mpMode;
       if (o.seriesId) { seriesId = o.seriesId; raceSel = null; }
       sheet = null; history = scr === 'title' ? [] : scr === 'track' ? ['title', 'mode'] : ['title']; screen = scr; render(); if (o.offer) offer(); if (o.weatherSheet) act('pick-weather');
@@ -688,16 +797,16 @@
     data = data || {};
     ST = D.states[data.st] ? data.st : D.states[store.get('state', '')] ? store.get('state', '') : 'free';
     P = loadP(ST); resetView();
-    settings = D.settings.map(s => s.sel);
+    settings = D.settings.map(s => s.sel); mapV = +store.get('mapv', 1) || 1;
     history = [];
     screen = VIEWS[data.screen] && data.screen !== 'results' ? data.screen : 'title';
-    if (data.screen && data.carIdx != null) { carIdx = data.carIdx; colorIdx = data.colorIdx; mode = modeOf(data.mode).id; trackIdx = Math.min(data.trackIdx || 0, TRACKS().length - 1); tab = data.tab || 'stats'; seriesId = data.seriesId || null; }
+    if (data.screen && data.carIdx != null) { carIdx = data.carIdx; colorIdx = data.colorIdx; mode = modeOf(data.mode).id; group = D.groups.some(g => g.id === data.group) ? data.group : 'circuit'; trackIdx = Math.max(0, Math.min(data.trackIdx || 0, TRACKS().length - 1)); tab = data.tab || 'stats'; seriesId = data.seriesId || null; }
     if (screen === 'series' && !seriesId) screen = 'career';
     if (screen !== 'title') history = screen === 'track' ? ['title', 'mode'] : ['title'];
     if (store.get('bar', true) === false) { $('#mockbar').hidden = true; $('#mockdot').hidden = false; }
     drawStates(); render();
   }
   const hot = window.claude && window.claude.hot;
-  if (hot && hot.snapshot) hot.snapshot(() => ({ st: ST, screen, mode, carIdx, colorIdx, trackIdx, tab, seriesId }));
+  if (hot && hot.snapshot) hot.snapshot(() => ({ st: ST, screen, mode, group, carIdx, colorIdx, trackIdx, tab, seriesId }));
   if (hot && hot.ready) hot.ready(start); else start((hot && hot.data) || {});
 })();

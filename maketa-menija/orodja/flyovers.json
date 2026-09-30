@@ -1,0 +1,10 @@
+[
+  ["vrsic", {"W": 824, "H": 680, "frames": 280, "orbit": 44, "back": 520, "up": 330, "ahead": 260, "fogNear": 900, "fogFar": 3400, "color": 16765498,
+    "places": [{"n": "Jasna", "d": 1814}, {"n": "Mihov dom", "d": 6533}, {"n": "Ruska kapelica", "d": 7039}, {"n": "Koča na Gozdu", "d": 8281}, {"n": "Erjavčeva koča", "d": 11244}]}],
+  ["pikes", {"W": 824, "H": 680, "frames": 280, "orbit": 44, "back": 360, "up": 230, "ahead": 180, "fogNear": 650, "fogFar": 2600, "color": 16765498,
+    "places": [{"n": "Halfway Picnic Grounds", "d": 1000}, {"n": "Glen Cove", "d": 2688}, {"n": "Devil's Playground", "d": 4050}, {"n": "Bottomless Pit", "d": 4466}]}],
+  ["ouninpohja", {"W": 824, "H": 680, "frames": 280, "orbit": 44, "back": 420, "up": 270, "ahead": 210, "fogNear": 760, "fogFar": 2900, "color": 16746026,
+    "places": [{"n": "Naarajärvi", "d": 820}, {"n": "Keltainen talo", "d": 2192}, {"n": "Split 1", "d": 3229}, {"n": "Split 2", "d": 6458}, {"n": "Amazon", "d": 8001}]}],
+  ["gora", {"W": 824, "H": 680, "frames": 280, "orbit": 44, "back": 170, "up": 110, "ahead": 90, "fogNear": 340, "fogFar": 1400, "color": 16746026,
+    "places": [{"n": "Split 1", "d": 545}, {"n": "Split 2", "d": 1090}]}]
+]

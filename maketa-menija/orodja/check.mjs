@@ -62,13 +62,16 @@ const plan = [
   ['full', 'title', {}, 1200], ['full', 'car', { carIdx: 2, tab: 'upg' }, 2000], ['full', 'track', { mode: 'race', trackId: 'gora' }], ['full', 'mode', { mode: 'chase' }], ['full', 'track', { mode: 'chase', trackId: 'monaco' }], ['full', 'career', {}], ['full', 'series', { seriesId: 'home' }],
   ['veteran', 'title', {}, 1200], ['veteran', 'car', { carIdx: 2, colorIdx: 0 }, 2000], ['veteran', 'car', { carIdx: 5 }, 1800], ['veteran', 'car', { carIdx: 6, colorIdx: 3 }, 2000],
   ['veteran', 'track', { mode: 'race', trackId: 'spa' }], ['veteran', 'track', { mode: 'race', trackId: 'nring' }], ['veteran', 'track', { mode: 'race', trackId: 'gora', weatherSheet: true }],
-  ['veteran', 'track', { mode: 'trial', trackId: 'suzuka' }], ['veteran', 'track', { mode: 'trial', trackId: 'ouninpohja' }], ['veteran', 'track', { mode: 'chase', trackId: 'ljubljana', weatherSheet: true }], ['veteran', 'career', {}], ['veteran', 'series', { seriesId: 'legends' }], ['veteran', 'series', { seriesId: 'attack' }],
+  ['veteran', 'track', { mode: 'trial', trackId: 'suzuka' }], ['veteran', 'track', { mode: 'chase', trackId: 'ljubljana', weatherSheet: true }],
+  ['veteran', 'track', { mode: 'trial', trackId: 'vrsic', mapV: 1 }, 2600], ['veteran', 'track', { mode: 'trial', trackId: 'vrsic', mapV: 2 }], ['veteran', 'track', { mode: 'trial', trackId: 'vrsic', mapV: 3 }],
+  ['veteran', 'track', { mode: 'trial', trackId: 'pikes', mapV: 1 }, 2600], ['veteran', 'track', { mode: 'trial', trackId: 'ouninpohja', mapV: 1 }, 2600], ['veteran', 'track', { mode: 'trial', trackId: 'ouninpohja', mapV: 2 }],
+  ['veteran', 'track', { mode: 'race', trackId: 'gora', mapV: 3 }], ['veteran', 'track', { mode: 'chase', trackId: 'vrsic', mapV: 2, weatherSheet: true }], ['veteran', 'career', {}], ['veteran', 'series', { seriesId: 'legends' }], ['veteran', 'series', { seriesId: 'attack' }],
   ['veteran', 'multi', { mpMode: 'create' }], ['veteran', 'multi', { mpMode: 'join' }], ['veteran', 'board', { lbTrack: -1 }], ['veteran', 'board', { lbTrack: 3 }], ['veteran', 'settings', {}],
 ];
 let n = 0;
 for (const [st, scr, o, ms] of plan) {
   n++;
-  const name = String(n).padStart(2, '0') + '-' + st + '-' + scr + (o.carIdx != null ? '-c' + o.carIdx : '') + (o.mode ? '-' + o.mode : '') + (o.trackId ? '-' + o.trackId : '') + (o.daily ? '-daily' : '') + (o.seriesId ? '-' + o.seriesId : '') + (o.tab ? '-' + o.tab : '') + (o.mpMode ? '-' + o.mpMode : '') + (o.lbTrack != null ? '-lb' + o.lbTrack : '') + (o.offer ? '-offer' : '') + (o.weatherSheet ? '-weather' : '');
+  const name = String(n).padStart(2, '0') + '-' + st + '-' + scr + (o.carIdx != null ? '-c' + o.carIdx : '') + (o.mode ? '-' + o.mode : '') + (o.trackId ? '-' + o.trackId : '') + (o.mapV ? '-m' + o.mapV : '') + (o.daily ? '-daily' : '') + (o.seriesId ? '-' + o.seriesId : '') + (o.tab ? '-' + o.tab : '') + (o.mpMode ? '-' + o.mpMode : '') + (o.lbTrack != null ? '-lb' + o.lbTrack : '') + (o.offer ? '-offer' : '') + (o.weatherSheet ? '-weather' : '');
   if (ONLY && !ONLY.some(x => name.includes(x))) continue;
   await open(st, scr, o, ms);
   await shot(name);

@@ -25,15 +25,24 @@ Single race ima dva koraka (zgoraj piše *Step 1 of 2* in *Step 2 of 2*).
 - **Police chase**: policija ti je za petami, pobegniti ji moraš v 3 minutah.
 - **Time trial**: sam proti uri in svojemu duhu (*ghost*), za zlati, srebrni ali bronasti čas.
 
-**2. korak: proga.** Pokažejo se proge izbranega načina:
+**2. korak: proga.** Proge so razdeljene v tri skupine. Skupine so zavihki nad maketo, pri vsakem piše število prog:
 
-- Pri Circuit race ni gorske dirke in reli etape (Colorado, Ouninpohja), ker to nista dirkališči.
+- **Circuits** (privzeto): dirkališča s 3D maketo proge kot doslej (Jezero Ring, Riviera, Ljubljana, La Condamine, Styria, Mie, Ardennes, Eifel).
+- **Open roads**: dirke po cestah skozi kraje: Vršič (od Kranjske Gore mimo Jasne do prelaza) in Colorado.
+- **Rally**: reli etape: Mountain Rally in Ouninpohja.
+
+Pri cestah in reli etapah je namesto makete zemljevid (glej [Zemljevidi cest in reli etap](#zemljevidi-cest-in-reli-etap)).
+
+Pokažejo se proge izbranega načina:
+
+- Pri Circuit race ni Colorada in Ouninpohje, ker sta samo za časovni preizkus.
 - Zgoraj na maketi piše način dirke, podatki o progi pa so prilagojeni načinu:
   - pri Police chase: število policijskih avtov in čas za pobeg,
-  - pri Time trial: zlati čas.
+  - pri Time trial: zlati čas,
+  - pri Circuit race na cesti: vzpon od starta do cilja namesto števila ovinkov (npr. *Climb +801 m*).
 - Z gumbom nazaj se vrneš na izbiro načina.
 
-**Današnja dirka** (*Today's race*) je na prvem mestu pri svojem načinu: pri Circuit race, ali pri Time trial, kadar je proga dneva gorska dirka ali reli etapa.
+**Današnja dirka** (*Today's race*) je na prvem mestu v svoji skupini pri svojem načinu: pri Circuit race, ali pri Time trial, kadar je proga dneva gorska dirka ali reli etapa.
 
 - Vsak dan je druga. Progo, avto in vreme izbere datum. Maketa proge pokaže vreme dneva.
   - Vsi vozijo isti avto.
@@ -54,6 +63,24 @@ Single race ima dva koraka (zgoraj piše *Step 1 of 2* in *Step 2 of 2*).
     - *Dry*: suha proga v soncu,
     - *Random*: suha in mokra proga se izmenjujeta; ob začetku dirke se naključno izbere eno od obeh.
   - Gumb spodaj je *Race!* (na zaklenjenih progah v brezplačni različici *Unlock · €3.99*).
+
+## Zemljevidi cest in reli etap
+
+Za ceste in reli etape so tri različice zemljevida, da izbereš najboljšo. Preklopiš jih s stikalom **MAP 1 2 3** na vrhu zemljevida. Izbrana različica ostane izbrana tudi pri drugih progah in ob naslednjem obisku (shrani se v brskalnik).
+
+1. **Flyover**: posnetek preleta ceste, kot v posnetku etape kolesarske dirke.
+   - Kamera leti za svetlečo piko, ki gre od starta do cilja. Za njo se riše pot (pri cestah zlata, pri reliju oranžna).
+   - Ob poti se pokažejo imena krajev (na Vršiču: Jasna, Mihov dom, Ruska kapelica, Koča na Gozdu, Erjavčeva koča), start in cilj z višino.
+   - Pri reliju so ob poti tudi vmesni časi (*Split 1*, *Split 2*).
+2. **Map & profile**: zemljevid cele poti od zgoraj, pod njim višinski profil.
+   - Pot se nariše od starta do cilja, start in cilj imata zastavici.
+   - Pri cestah profil pokaže vzpon in kraje ob poti.
+   - Pri reliju sta na poti oznaki vmesnih časov (S1, S2), namesto profila pa so *pace notes*: vsi ovinki etape po vrsti (levi nad črto, desni pod njo; višji in bolj rdeč je ostrejši ovinek), vmesna časa ter start in cilj z dolžino etape.
+3. **3D block**: pokrajina okoli ceste kot 3D blok, ki lebdi, s potjo, startom in ciljem.
+
+Vse tri različice pokažejo tudi vreme (*Rain*: mokra, bolj siva pokrajina in dež).
+
+Zemljevidi in posnetki so zajeti iz sveta igre. Igra ima pokrajino samo ob cesti (približno 500 m na vsako stran), zato je pokrajina dlje od ceste na zemljevidih dodana (hribi in gore iz višin ob cesti). Vršič je vzet iz veje `ccr-461bd7ea-r4na44`, kjer se ta cesta gradi.
 
 ## Namesto dirke: izbira mesta
 
@@ -114,12 +141,13 @@ Kako deluje:
 
 | Datoteka | Kaj je v njej |
 |---|---|
-| `data.js` | **vsa besedila, cene, avti, proge, načini dirke (`modes`, `chase`), serije kariere, pokali, nagrade po mestih, današnja dirka (proge, avti, vreme, število brezplačnih voženj) in začetna stanja** – tu spreminjaš vsebino |
+| `data.js` | **vsa besedila, cene, avti, proge, skupine prog (`groups` in pri vsaki progi `group`), imena na zemljevidih cest in reli etap (`routeMaps`), imena treh različic zemljevida (`mapVersions`), načini dirke (`modes`, `chase`), serije kariere, pokali, nagrade po mestih, današnja dirka (proge, avti, vreme, število brezplačnih voženj) in začetna stanja** – tu spreminjaš vsebino |
 | `style.css` | videz (barve so na vrhu kot spremenljivke `--…`) |
 | `app.js` | zasloni, premikanje med njimi, izbira mesta in izračun rezultata |
 | `car3d.js` | 3D prikaz avta |
-| `assets/` | 3D modeli avtov (`cars/*.json`), slike vsakega avta v vseh 8 barvah (`cars/img/<avto>-<barva>.webp`), slike gumbov glavnega menija in načinov dirke (`menu/`), makete prog, suhe in mokre (`tracks/<proga>.webp`, `tracks/<proga>-rain.webp`), posnetki ozadja (`video/`) |
+| `assets/` | 3D modeli avtov (`cars/*.json`), slike vsakega avta v vseh 8 barvah (`cars/img/<avto>-<barva>.webp`), slike gumbov glavnega menija in načinov dirke (`menu/`), makete prog, suhe in mokre (`tracks/<proga>.webp`, `tracks/<proga>-rain.webp`), posnetki ozadja (`video/`), zemljevidi cest in reli etap (`maps/`: `top-<proga>` od zgoraj, `block-<proga>` 3D blok, oba tudi mokra `-rain`, `fly-<proga>.webm` posnetek preleta in `fly-<proga>.webp` njegova prva slika) |
 | `outlines.js` | obrisi prog za majhne zemljevide (ustvarjeno, ne urejaj ročno) |
+| `routes.js` | poti cest in reli etap na zemljevidih, višine, kraji, ovinki (*pace notes*) in kje so start, cilj in kraji v vsaki sliki preleta (ustvarjeno z `orodja/routes.py`, ne urejaj ročno) |
 
 Vsi časi, imena na lestvicah, število igralcev, denar (CR) in odstotki so primeri.
 
@@ -157,4 +185,18 @@ node check.mjs                                   # vsi zasloni v vseh stanjih ->
 node flow.mjs                                    # odigra današnjo dirko, vse tri načine, izbiro avta in vremena, kariero in multiplayer -> shots/
 ```
 
-Uporabljajo Playwright s Chromiumom (kot testi igre). Mapi `game_main/` in `orodja/raw/` nista v repozitoriju.
+Zemljevidi cest in reli etap potrebujejo igro z Vršičem v `maketa-menija/game_vrsic/` in ffmpeg z VP9 (paket `imageio-ffmpeg`):
+
+```
+mkdir -p maketa-menija/game_vrsic
+git archive origin/ccr-461bd7ea-r4na44 | tar -x -C maketa-menija/game_vrsic
+pip install imageio-ffmpeg
+cd maketa-menija/orodja
+node routemap.mjs maps.json                      # zemljevidi od zgoraj in 3D bloki, suhi in v dežju -> raw/maps/ (maps.json: [[proga, "top"|"block", ime, nastavitve], …])
+node flyover.mjs flyovers.json                   # posnetki preleta -> raw/maps/fly-<proga>.webm (samo nekatere: node flyover.mjs flyovers.json vrsic,gora)
+python3 routes.py                                # raw/maps -> ../assets/maps/ in ../routes.js
+```
+
+V `flyovers.json` so za vsako progo kamera (`back`, `up`, `ahead`), megla, barva poti in kraji ob poti (ime in metri od starta).
+
+Uporabljajo Playwright s Chromiumom (kot testi igre). Mape `game_main/`, `game_vrsic/` in `orodja/raw/` niso v repozitoriju.

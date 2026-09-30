@@ -74,7 +74,12 @@ await step('free-chase-busted', async () => { await page.click('[data-act="again
 await step('free-chase-after', async () => { await page.click('[data-act="res-continue"]'); await wait(900); });
 await step('free-trial-track', async () => { await page.click('[data-act="back"]'); await wait(500); await page.click('[data-act="mode:trial"]'); await wait(300); await page.click('[data-act="mode-next"]'); await wait(900); });
 await step('free-trial-result', async () => { await page.click('[data-act="race-single"]'); await wait(1700); await page.click('[data-finish="gold"]'); await wait(600); });
-await step('free-track-jezero', () => open('free', 'track', { mode: 'race', trackId: 'jezero' }, 900));
+await step('free-group-road', async () => { await page.click('[data-act="res-continue"]'); await wait(700); await page.click('[data-act="group:road"]'); await wait(1400); });
+await step('free-group-rally', async () => { await page.click('[data-act="group:rally"]'); await wait(1400); });
+await step('free-mapv-2', async () => { await page.click('[data-act="mapv:2"]'); await wait(1600); });
+await step('free-mapv-3', async () => { await page.click('[data-act="mapv:3"]'); await wait(1600); });
+await step('free-rally-result', async () => { await page.click('[data-act="race-single"]'); await wait(1700); await page.click('[data-finish="silver"]'); await wait(700); });
+await step('free-track-jezero', () => open('free', 'track', { mode: 'race', trackId: 'jezero', mapV: 1 }, 900));
 await step('free-pick-car', async () => { await page.click('[data-act="pick-car"]'); await wait(2000); });
 await step('free-car-paint', async () => { await page.click('[data-act="car:1"]'); await wait(300); await page.click('[data-act="tab:paint"]'); await wait(300); await page.click('[data-act="color:0"]'); await wait(1500); });
 await step('free-car-selected', async () => { await page.click('[data-act="car-select"]'); await wait(700); });
