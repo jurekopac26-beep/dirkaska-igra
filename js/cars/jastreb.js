@@ -18,6 +18,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     parts: { set: 'car', ht: 1.22, y0: 0.2,   // (the debris thrown from where the look has the parts: the tailgate is the fastback's glass, the wings run to the nose)
       over: { trunk: { lx: -0.5, y: 1.07 }, fenderL: { lx: 0.71, lz: -0.77, y: 0.57 }, fenderR: { lx: 0.71, lz: 0.77, y: 0.57 }, doorL: { lx: -0.085, lz: -0.94, y: 0.67 }, doorR: { lx: -0.085, lz: 0.94, y: 0.67 },
         mirrorL: { lx: 0.09, lz: -0.89, y: 0.94 }, mirrorR: { lx: 0.09, lz: 0.89, y: 0.94 }, quarterL: { lx: -0.575, lz: -0.84, y: 0.68 }, quarterR: { lx: -0.575, lz: 0.84, y: 0.68 } } },
+    // the look (KIT API v1, render.js; look units = metres): one loft through the sections below, cut by the regions into the bonnet's top (with
+    // the power bulge), the wings to the nose (the covered lamps with them), the doors (their glass), the rear wings (the quarter lights), the
+    // tailgate (the fastback's glass in its frame) and the nose and tail ends (bumpers: the mouth, the chrome blades); the windows and their
+    // chrome are strips on the window band; the livery: the paint, a centre stripe in the stripe colour, the start number in white roundels
     look: {
       body: { len: 4.45, wid: 1.66, roofY: 1.22,
         // (the sections at 0.95 .. 1.71 and -1.49 .. -0.73 sit exactly where the wheel arches cut the shell: they shape the bonnet's wings and
@@ -114,7 +118,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.headLamp(2.112, 0.57, sd * 0.5, 0.058, { host: 'fender' + s });
           K.discX(2.138, 0.455, sd * 0.51, 0.026, 6, K.rgb(0xff9a1e), 1, { host: 'fender' + s });                         // the indicator under it
         }
-        // ---- the centre stripe (the stripe colour; the paint when the car has none) on along the roof and the tail's deck ----
+        // ---- the centre stripe (the stripe colour; the paint when the car has none) along the roof and the tail's deck ----
         for (const [x0, x1] of [[-0.72, -0.17], [-2.2, -1.5]]) DC.top([[x0, -0.11], [x1, -0.11], [x1, 0.11], [x0, 0.11]], S, 0.007);
         // ---- the tail: the lamps over the blades (chrome bezels), the blades round the corners, the plate between them, the twin pipes ----
         for (const sd of [-1, 1]) { K.tailLamp(-2.226, 0.545, sd * 0.37, 0.1, 0.1, { round: true }); K.discX(-2.224, 0.545, sd * 0.37, 0.062, 8, CH, -1, { part: 'body' }); }
