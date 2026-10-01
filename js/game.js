@@ -42,6 +42,7 @@
   if (!['dry', 'rain', 'random', 'change'].includes(S.weather)) S.weather = 'dry';
   for (const k of ['cmp', 'pitCmp']) if (!['auto', 'S', 'M', 'H'].includes(S[k])) S[k] = 'auto';   // (the slicks: for the start, for a pit stop)
   if (!['summer', 'autumn', 'winter'].includes(S.season)) S.season = 'summer';
+  if (!['iso', 'chase', 'kino', 'tv'].includes(S.camera)) S.camera = 'kino';   // (the cockpit is no longer a race camera, only the replay's: an old save gets kino, also lying)
   if (!['day', 'dusk', 'night'].includes(S.tod)) S.tod = 'day';
   if (!['race', 'tt', 'traffic', 'police'].includes(S.mode)) S.mode = 'race';   // (Vršič: the race against the rivals, the time trial, the duel in the traffic, the run from the police)
   S.name = cleanName(S.name) || DEF.name;
@@ -262,7 +263,7 @@
         $('title-sub').textContent = d.name + (pol ? ' · beg pred policijo · odprta cesta' : ' · dvoboj z enim tekmecem · promet na cesti') + (S.weather === 'rain' ? ' · dež' : S.weather === 'random' ? ' · morda dež' : S.weather === 'change' ? ' · menljivo vreme' : '') + (S.season === 'autumn' ? ' · jesen' : S.season === 'winter' ? ' · zima' : '') + (S.tod === 'dusk' ? ' · večer' : S.tod === 'night' ? ' · noč' : ''); }
       else if (upRace(d)) { $('title-hint').textContent = 'Proga: ' + d.name + (r.bestRace ? ' (najboljša dirka ' + fmt(r.bestRace, true) + ')' : '') + '.'; $('title-sub').textContent = d.name + ' · dirka na vrh · ' + NUM_AI + ' nasprotnikov' + (S.weather === 'rain' ? ' · dež' : S.weather === 'random' ? ' · morda dež' : S.weather === 'change' ? ' · menljivo vreme' : '') + (S.season === 'autumn' ? ' · jesen' : S.season === 'winter' ? ' · zima' : '') + (S.tod === 'dusk' ? ' · večer' : S.tod === 'night' ? ' · noč' : ''); }
       else { $('title-hint').textContent = 'Proga: ' + d.name + (r.bestLap ? ' (rekord kroga ' + fmt(r.bestLap, true) + ')' : '') + '.'; $('title-sub').textContent = d.name + ' · ' + lapWord(lapsOf(d)).toLowerCase() + ' · 12 nasprotnikov' + (S.weather === 'rain' ? ' · dež' : S.weather === 'random' ? ' · morda dež' : S.weather === 'change' ? ' · menljivo vreme' : '') + (S.season === 'autumn' ? ' · jesen' : S.season === 'winter' ? ' · zima' : '') + (S.tod === 'dusk' ? ' · večer' : S.tod === 'night' ? ' · noč' : ''); } }
-    $('title-hint').textContent += ' Upravljanje: ' + CTRL_NAME[S.control] + ', kamera: ' + (S.camera === 'chase' ? 'za avtom (telefon pokončno)' : S.camera === 'kino' ? 'kino (telefon ležeče)' : S.camera === 'cockpit' ? 'kokpit (telefon ležeče)' : S.camera === 'tv' ? 'TV kamere ob progi (telefon ležeče)' : 'izometrična (telefon ležeče)') + '. Spremeniš v nastavitvah.' + (records.bestLap ? ' Rekord kroga: ' + fmt(records.bestLap, true) + '.' : '');
+    $('title-hint').textContent += ' Upravljanje: ' + CTRL_NAME[S.control] + ', kamera: ' + (S.camera === 'chase' ? 'za avtom (telefon pokončno)' : S.camera === 'kino' ? 'kino (telefon ležeče)' : S.camera === 'tv' ? 'TV kamere ob progi (telefon ležeče)' : 'izometrična (telefon ležeče)') + '. Spremeniš v nastavitvah.' + (records.bestLap ? ' Rekord kroga: ' + fmt(records.bestLap, true) + '.' : '');
     { const el = $('set-name'); if (el && document.activeElement !== el) el.value = S.name; }
     { const d = champDef(); $('btn-champ').textContent = 'Prvenstvo' + (d && !champDone() ? ' · ' + (champ.rounds.length + 1) + '/' + d.tracks.length : ''); }
     $('btn-career').textContent = 'Kariera' + (inCareer() ? ' · ' + eur(career.money) : '');
@@ -314,8 +315,9 @@
     if (key === 'tower' && race) towerShow();
   }
   // the camera during a race (C on the keyboard, the View / Select button of a pad, the button on the HUD or in the pause): the next one
-  // that suits the phone as it is held (lying: isometric, kino, cockpit; upright: behind the car; a computer: all four), kept as the setting
-  const CAMS = ['iso', 'chase', 'kino', 'cockpit', 'tv'], CAM_NAME = { iso: 'izometrična', chase: 'za avtom', kino: 'kino', cockpit: 'kokpit', tv: 'TV' };
+  // that suits the phone as it is held (lying: isometric, kino, TV; upright: behind the car; a computer: all four), kept as the setting.
+  // (The cockpit is not one of them: only the replay has it, RP_CAM)
+  const CAMS = ['iso', 'chase', 'kino', 'tv'], CAM_NAME = { iso: 'izometrična', chase: 'za avtom', kino: 'kino', tv: 'TV' };
   const camMode = () => S.camera === 'tv' ? 'tvlive' : S.camera;   // (the race's TV cameras: Render's 'tvlive'; the replay's own are 'tv')
   function camPool() { const coarse = matchMedia('(pointer: coarse)').matches, portrait = window.innerHeight > window.innerWidth; return coarse ? CAMS.filter(c => (c === 'chase') === portrait) : CAMS; }
   function cycleCam() {
