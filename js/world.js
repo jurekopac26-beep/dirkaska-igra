@@ -6565,7 +6565,7 @@ const World = (function () {
       return 0; };
 
     /* ---- the side roads (PK_JN, above) ---- */
-    const JN = PK_JN.map(J => Object.assign({}, J));   // (own copies: one() sets J.L on the aprons)
+    const JN = PK_JN.map(J => Object.assign({}, J, T.def.roadSurface === 'makadam' && !J.dirt ? { gravel: 1 } : null));   // (own copies: one() sets J.L on the aprons; the historic gravel road's side roads: gravel too)
     const Wc = [0.93, 0.93, 0.9], Yc = [0.95, 0.72, 0.12], st = { roads: 0, signs: 0, cars: 0, marshals: 0 };
     const one = (J) => {   // one side road with all its parts; returns its sections
       if (J.apron) { const F = frame(J.s); J.L = (J.sd > 0 ? F.br : F.bl) - w + J.apron; J.straight = 1; }
@@ -6950,10 +6950,34 @@ const World = (function () {
     };
     aMat.customProgramCacheKey = () => 'pkRoad';
     const sMat = new THREE.MeshPhongMaterial({ map: tex.makadam, bumpMap: tex.makadamBump, bumpScale: 0.04, shininess: 5, specular: 0x14110d, vertexColors: true });
+    // the historic gravel road (def.roadSurface 'makadam': 'pikesg', the Highway as it was until 2011): the same road mesh, in a material of its own: the gravel
+    // picture (an own copy of the texture: the season code keeps it uncovered, like the asphalt, and the rain darkens it: userData.wear) half greyed, the pink of
+    // the granite from the vertex colours; from the raw uv (lateral offset, s; the vertex shader is highp): two packed wheel ruts in each lane, smoother and
+    // darker, wandering a little; a windrow of loose stones along each edge; washboard ripples across the road in stretches. No paint but the checkpoints'
+    const mk = T.def.roadSurface === 'makadam';
+    let gMat = null;
+    if (mk) {
+      const gT = tex.makadam.clone(); gT.needsUpdate = true; out.ownTex.push(gT);
+      gMat = new THREE.MeshPhongMaterial({ map: gT, bumpMap: tex.makadamBump, bumpScale: 0.05, shininess: 4, specular: 0x14110d, vertexColors: true }); gMat.userData.wear = true;
+      gMat.onBeforeCompile = (sh) => {
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float paint;\nvarying float vPaint;\nvarying vec2 vRd;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvPaint = paint;\nvRd = vec2( uv.x * 8.0 - 7.0, uv.y * 8.0 );');
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vPaint;\nvarying vec2 vRd;').replace('#include <map_fragment>',
+          '#ifdef USE_MAP\n  vec4 texelColor = mapTexelToLinear( texture2D( map, vUv ) );\n' +
+          '  float pkL = dot( texelColor.rgb, vec3( 0.3, 0.59, 0.11 ) ), pkW = vRd.x + 0.35 * sin( vRd.y * 0.021 ) + 0.15 * sin( vRd.y * 0.093 + 1.1 ), pkA = abs( pkW );\n' +
+          '  float pkR = ( exp( -pow( ( pkA - 1.65 ) * 1.7, 2.0 ) ) + exp( -pow( ( pkA - 3.5 ) * 1.7, 2.0 ) ) ) * ( 0.55 + 0.45 * sin( vRd.y * 0.047 + pkW * 0.3 ) * sin( vRd.y * 0.0171 + 2.0 ) ), pkB = smoothstep( 5.6, 6.6, abs( vRd.x ) );\n' +
+          '  vec3 pkT = mix( mix( texelColor.rgb, vec3( pkL ), 0.78 ), vec3( pkL * 0.9 + 0.04 ), 0.4 * pkR );\n' +
+          '  pkT = mix( pkT, pkT * pkT * 2.1, 0.45 * pkB );\n' +
+          '  float pkWb = clamp( 0.45 + 0.7 * sin( vRd.y * 0.031 + 1.7 ) * sin( vRd.y * 0.0113 + 0.4 ), 0.0, 1.0 );\n' +
+          '  float pkF = 1.3 * ( 1.0 - 0.14 * pkR + 0.06 * pkB ) * ( 1.0 + 0.07 * pkWb * ( 1.0 - pkB ) * sin( vRd.y * 8.98 + pkW * 0.5 ) );\n' +
+          '  diffuseColor.rgb *= mix( pkT * pkF, vec3( 1.0 ), vPaint );\n#endif\n');
+      };
+      gMat.customProgramCacheKey = () => 'pkGrav';
+    }
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     {
       const offs = [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8;
-      const shade = (i, o) => { const rl = T.rl[i]; let k = 0.84 - 0.15 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.9) k -= 0.03; return [k, k, k * 1.02]; };
+      const shade = mk ? (i, o) => { const rl = T.rl[i], k = 0.9 - 0.07 * Math.exp(-((o - rl) * (o - rl)) / 5.5); return [k, k * 0.91, k * 0.885]; }   // (the gravel: pink granite, a hue the winter leaves uncovered; packed a little darker on the line)
+        : (i, o) => { const rl = T.rl[i]; let k = 0.84 - 0.15 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.9) k -= 0.03; return [k, k, k * 1.02]; };
       const yel = [0.98, 0.74, 0.1], wht = [0.95, 0.95, 0.92], gc = [0.92, 0.84, 0.78], sw = 0.9;
       const wuv = (p) => [p[0] / 10, -p[2] / 10];
       // verge cross-section per sample and side: [offset, height above the road] from the gravel strip out past the barrier, lifted onto the ground where the slope starts to rise
@@ -6992,6 +7016,13 @@ const World = (function () {
       const seal = [0.2, 0.2, 0.21], crack = (P, cw) => { if (!keep(P[0][0], P[P.length - 1][0])) return; const g = xC[xAt(P[0][0])];   // P: [s, o] points
         for (let k = 0; k + 1 < P.length; k++) { const [s0, o0] = P[k], [s1, o1] = P[k + 1], l = Math.hypot(s1 - s0, o1 - o0) || 1, ps = -(o1 - o0) / l * cw / 2, po = (s1 - s0) / l * cw / 2, e = 0.02 / l, a = s0 - (s1 - s0) * e, b = s1 + (s1 - s0) * e, oa = o0 - (o1 - o0) * e, ob = o1 + (o1 - o0) * e;
           decal(g, [[a - ps, oa - po], [a + ps, oa + po], [b + ps, ob + po], [b - ps, ob - po]], seal, 0.011, [ruv(a, oa - po), ruv(a, oa + po), ruv(b, ob + po), ruv(b, ob - po)], 0.001); } };
+      if (mk) {   // the gravel: loose stones thrown out of the ruts, little heaps of them by the edges and on the crown (own random stream)
+        const XS = rng(4481), sc = [[0.95, 0.86, 0.84], [0.62, 0.55, 0.53], [0.8, 0.66, 0.6], [0.5, 0.47, 0.47]];
+        for (let s = 14; s < T.len - 14; s += 2.5 + XS() * 4) { if (!keep(s - 2, s + 2)) continue;
+          const u = XS(), oc = u < 0.4 ? (XS() < 0.5 ? -1 : 1) * (5.6 + XS() * 1.1) : u < 0.65 ? (XS() - 0.5) * 1.2 : (XS() - 0.5) * 2 * (w - 0.6), n = 2 + Math.floor(XS() * 4);
+          for (let k = 0; k < n; k++) { const sz = 0.07 + XS() * XS() * 0.2, s0 = s + (XS() - 0.5) * 1.6, o0 = clamp(oc + (XS() - 0.5) * 1.2, -w + 0.2, w - 0.2), c = sc[Math.floor(XS() * sc.length)], a = XS() * 1.5;
+            const ca = Math.cos(a) * sz, sa = Math.sin(a) * sz * 0.8; decal(xP[xAt(s0)], [[s0 - ca, o0 - sa], [s0 + sa, o0 - ca], [s0 + ca, o0 + sa], [s0 - sa, o0 + ca]], c, 0.012, null, 0.002); } }
+      } else {
       for (let s = 30 + XR() * 20; s < T.len - 40;) {   // patches (never overlapping)
         const r = XR(), sd = XR() < 0.5 ? -1 : 1, tone = 0.5 + XR() * 0.2, col = [tone, tone, tone * 1.04]; let L;
         if (r < 0.55) { L = 1.2 + XR() * 3; const W = 0.9 + XR() * 1.6, oc = 0.45 + W / 2 + XR() * (w - 1.3 - W); patch(s, s + L, sd * (oc - W / 2), sd * (oc + W / 2), col); }   // a pothole patch
@@ -7006,6 +7037,7 @@ const World = (function () {
         const L = 6 + XR() * 30, joint = XR() < 0.5, sd = XR() < 0.5 ? -1 : 1, P = []; let o = sd * (joint ? 0.42 + XR() * 0.15 : 1.6 + XR() * 3.8);
         for (let q = 0; q <= L; q += 1.1) { P.push([s + q, o]); o += (XR() - 0.5) * 0.16; if (joint) o = sd * clamp(o * sd, 0.36, 0.7); }
         crack(P, 0.08); }
+      }
       const nF = valueNoise2(4473, 1), fade = [0, 1, 2, 3].map(q => { const a = new Float32Array(N), sd = q < 2 ? 0 : q === 2 ? -1 : 1;   // paint wear per line (the two yellow, the left and right white) and sample
         for (let i = 0; i < N; i++) a[i] = Math.min(0.8, 0.62 * sstep(0.52, 0.8, nF(i * T.ds / 45, q * 7.3)) + (sd ? 0.5 * sstep(1 / 70, 1 / 22, sd * T.k[i]) : 0)); return a; });
       const fc = (c, f) => [lerp(c[0], 0.4, f), lerp(c[1], 0.4, f), lerp(c[2], 0.41, f)];
@@ -7020,7 +7052,7 @@ const World = (function () {
           const j = i + 1, v0 = i * T.ds / tileL, v1 = j * T.ds / tileL, s0 = i * T.ds / 6, s1 = j * T.ds / 6;
           for (let c = 0; c < offs.length - 1; c++) { const o0 = offs[c], o1 = offs[c + 1];
             gr.quadUp(Pt(i, o0, 0.02), Pt(i, o1, 0.02), Pt(j, o1, 0.02), Pt(j, o0, 0.02), [shade(i, o0), shade(i, o1), shade(j, o1), shade(j, o0)], [[(o0 + w) / tileL, v0], [(o1 + w) / tileL, v0], [(o1 + w) / tileL, v1], [(o0 + w) / tileL, v1]]); }
-          [[-0.27, -0.12, yel], [0.12, 0.27, yel], [-(w - 0.28), -(w - 0.5), wht], [w - 0.5, w - 0.28, wht]].forEach(([o0, o1, col], q) => { const fi = fade[q][i], fj = fade[q][j], ci = fc(col, fi), cj = fc(col, fj), si = i * T.ds, sj = j * T.ds;
+          if (!mk) [[-0.27, -0.12, yel], [0.12, 0.27, yel], [-(w - 0.28), -(w - 0.5), wht], [w - 0.5, w - 0.28, wht]].forEach(([o0, o1, col], q) => { const fi = fade[q][i], fj = fade[q][j], ci = fc(col, fi), cj = fc(col, fj), si = i * T.ds, sj = j * T.ds;
             for (const [a, b] of q < 2 ? [[si, sj]] : jCut(si, sj, q === 3 ? 1 : -1)) { const ca = ci.map((v, m) => lerp(v, cj[m], (a - si) / T.ds)), cb = ci.map((v, m) => lerp(v, cj[m], (b - si) / T.ds));
               pp.push([decal(gl, [[a, o0], [a, o1], [b, o1], [b, o0]], [ca, ca, cb, cb], 0.016, null, 0.004), 1 - 0.5 * Math.max(fi, fj)]); } });   // (pp: [vertices, paint] per piece of line)
           for (const side of [-1, 1]) {
@@ -7040,7 +7072,7 @@ const World = (function () {
           const cat = (f) => [].concat(...L.map(f));
           g.setAttribute('position', new THREE.Float32BufferAttribute(cat(q => q.P), 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(cat(q => q.N), 3));
           g.setAttribute('color', new THREE.Float32BufferAttribute(cat(q => q.C), 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(cat(q => q.U), 2)); g.setAttribute('paint', new THREE.BufferAttribute(paint, 1)); g.computeBoundingSphere();
-          const m = new THREE.Mesh(g, aMat); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); }
+          const m = new THREE.Mesh(g, mk ? gMat : aMat); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); }
         if ((c0 + RC) % (RC * 4) === 0 || c0 + RC >= N - 1) addM(gs, sMat);
       }
       // chequered start and finish lines (a mesh each: drawn only there)
@@ -7196,11 +7228,11 @@ const World = (function () {
         let old = false;
         for (let i = 0; i < N - 1; i++) {
           if (nd[i] && nd[i + 1]) {   // W-beam: a front and a back face, posts every 4 m
-            if (!nd[i - 1]) old = hq(i, side) < 0.45;   // (a run of rail: old and weathered, or newer)
+            if (!nd[i - 1]) old = mk || hq(i, side) < 0.45;   // (a run of rail: old and weathered, or newer; on the historic gravel road all of them)
             const g = scen.get(T.px[i], T.pz[i]), a = Qd(i, 0.45), b = Qd(i + 1, 0.45), c = Qd(i + 1, 0.8), d = Qd(i, 0.8), ins = Q(i, 0.6, 3), ino = Q(i, 0.6, -3);
             g.quadO(a, b, c, d, steel, ins, null, [rcol(i, side, steel, old, 1), rcol(i + 1, side, steel, old, 1), rcol(i + 1, side, steel, old, 0), rcol(i, side, steel, old, 0)]);
             g.quadO(a, b, c, d, steelB, ino, null, [rcol(i, side, steelB, old, 1), rcol(i + 1, side, steelB, old, 1), rcol(i + 1, side, steelB, old, 0), rcol(i, side, steelB, old, 0)]);
-            if (i % 2 === 0) { const p = Q(i, -0.3, 0.14 + dn[i]), pc = old ? [0.42, 0.4, 0.38] : postC; box(g, p[0], p[1], p[2], 0.13, 1.08, 0.13, T.hd[i], pc, null, true);
+            if (i % 2 === 0) { const p = Q(i, -0.3, 0.14 + dn[i]), pc = mk ? [0.34, 0.26, 0.18] : old ? [0.42, 0.4, 0.38] : postC; box(g, p[0], p[1], p[2], 0.13, 1.08, 0.13, T.hd[i], pc, null, true);   // (the historic gravel road's posts: wooden)
               if (i % 8 === 0 && dn[i] < 0.05) refl(Q(i, 0.8, -0.03), T.tx[i], T.tz[i], side * T.nx[i], side * T.nz[i], 0.18, side > 0 ? refW : refA); }   // a reflector on the beam at the post
           } else if (!nd[i] && i % 12 === 0 && i > 2) mkPosts.push([i, side]);   // a marker post (below)
         }
