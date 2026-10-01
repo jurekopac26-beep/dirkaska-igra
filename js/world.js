@@ -10196,6 +10196,45 @@ const World = (function () {
       else { x.fillStyle = '#f6f5f0'; x.fillRect(x0, y0, 512, 128); x.strokeStyle = '#151515'; x.lineWidth = 6; x.strokeRect(x0 + 8, y0 + 8, 496, 112); txt(n, x0 + 256, y0 + 50, 52, '#151515', 470); txt('altitude 787 m', x0 + 256, y0 + 98, 32, '#151515', 470, 700); } });
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (mvA2Tex = t);
   }
+  /* ---- Montvernier, round 3 (Izboljšaj grafiko): the meadows' ground and their grass ---- */
+  // the ground of the meadows: where the ground's colour is grass (green or straw: more red and green than blue), the grit gives way to the grass
+  // picture (tex.grass at a finer repeat, kept at the grit's mean brightness), in lighter and darker patches, some drier and yellower (world-space
+  // noise); the grit's relief fades there. The rock, the forest floor, the yards and the verges stay grit
+  const MV_NOISE = 'float mvHash(vec2 p) { p = fract(p * vec2(0.1031, 0.1030)); p += dot(p, p.yx + 33.33); return fract((p.x + p.y) * p.x); }\n' +
+    'float mvNoise(vec2 p) { vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f); return mix(mix(mvHash(i), mvHash(i + vec2(1.0, 0.0)), u.x), mix(mvHash(i + vec2(0.0, 1.0)), mvHash(i + vec2(1.0, 1.0)), u.x), u.y); }\n';
+  function mvGroundMat(tex) {
+    const m = pkGroundMat(), prev = m.onBeforeCompile, gm = tex.grass, avg = texAvg(gm), gL = (0.3 * avg[0] + 0.59 * avg[1] + 0.11 * avg[2]).toFixed(3), mean = pkGMean.toFixed(3);
+    m.onBeforeCompile = (sh, r) => { prev.call(m, sh, r); sh.uniforms.mvG = { value: gm };
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D mvG;\n' + MV_NOISE)
+        .replace('  diffuseColor.rgb *= mix( mix( pkG,', [
+          '  float mvGw = smoothstep( 0.11, 0.21, ( vColor.r + vColor.g ) * 0.5 - vColor.b ) * ( 1.0 - pkSt ) * ( 1.0 - pkSc ) * ( 1.0 - pkW );',
+          '  if ( mvGw > 0.0 ) {',
+          '    vec2 mvP = vUv * 10.0;',   // (metres)
+          '    float mvN1 = mvNoise( mvP * 0.045 ) * 0.6 + mvNoise( mvP * 0.15 + 7.3 ) * 0.4, mvN2 = mvNoise( mvP * 0.03 + 31.7 ), mvN3 = mvNoise( mvP * 0.9 );',
+          '    vec2 mvQ = mat2( 0.8, -0.6, 0.6, 0.8 ) * vUv * 1.9;',   // (two copies of the picture, one turned: no mower's stripes in a wild meadow)
+          '    float mvT = 0.5 * dot( texture2D( mvG, vUv * 2.6 ).rgb + texture2D( mvG, mvQ + vec2( 0.37, 0.11 ) ).rgb, vec3( 0.3, 0.59, 0.11 ) ) / ' + gL + ' * ' + mean + ';',
+          '    pkG = mix( pkG, mvT * ( 0.82 + 0.3 * mvN1 + 0.08 * mvN3 ), mvGw );',
+          '    diffuseColor.rgb = mix( diffuseColor.rgb, diffuseColor.rgb * vec3( 1.12, 1.04, 0.74 ), mvGw * smoothstep( 0.58, 0.9, mvN2 ) * 0.55 );',   // (drier, yellower patches)
+          '    diffuseColor.rgb = mix( diffuseColor.rgb, diffuseColor.rgb * vec3( 0.9, 1.06, 0.88 ), mvGw * smoothstep( 0.62, 0.92, 1.0 - mvN2 ) * 0.45 );',   // (lusher, greener hollows)
+          '  }',
+          '  diffuseColor.rgb *= mix( mix( pkG,'].join('\n'))
+        .replace('* ( 1.0 - 0.85 * pkW );', '* ( 1.0 - 0.85 * pkW ) * ( 1.0 - 0.75 * mvGw );');
+    };
+    m.customProgramCacheKey = () => 'mvGround';
+    return m;
+  }
+  // tufts of longer grass and wild flowers (main's clumps: tuftGeo), swaying in the wind (dyn.wind), instanced in 160 m chunks
+  function mvTuftMat(W) {
+    const mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
+    mat.onBeforeCompile = (sh) => { sh.uniforms.uWind = W;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uWind;').replace('#include <begin_vertex>', '#include <begin_vertex>\n' +
+        '#ifdef USE_INSTANCING\nfloat wPh = instanceMatrix[3].x * 0.31 + instanceMatrix[3].z * 0.23;\n#else\nfloat wPh = 0.0;\n#endif\n' +
+        'float wK = position.y * position.y * 0.16;\ntransformed.x += wK * sin(uWind * 2.1 + wPh);\ntransformed.z += wK * 0.7 * sin(uWind * 1.63 + wPh * 1.3);');
+      sh.fragmentShader = sh.fragmentShader.replace('( gl_FrontFacing ) ? vIndirectFront : vIndirectBack', 'vIndirectFront').replace('( gl_FrontFacing ) ? vLightFront : vLightBack', 'vLightFront'); };
+    mat.customProgramCacheKey = () => 'tuftWind';
+    return mat;
+  }
+
   /* ---- Montvernier, round 2 (Posodobi progo): the Tour's mountain prize, the fans' art in the meadows, the belvédère, the chevron boards, the street
      lamps, the reflectors, the rockfall nets, the far mountains round the horizon, the fans running beside the car, the birds and the paragliders ---- */
   let mvA3Tex = null, mvPTex = null, mvArtT = null, mvNetT = null;
@@ -10458,7 +10497,7 @@ const World = (function () {
 
     /* ---- terrain tiles, the water (the Arc: grey-green glacier water; the ponds) ---- */
     let nFar = 0;
-    const tMat = pkGroundMat(), gMat = new THREE.MeshLambertMaterial({ map: vrGritTex(), vertexColors: true });
+    const tMat = mvGroundMat(tex), gMat = new THREE.MeshLambertMaterial({ map: vrGritTex(), vertexColors: true });   // (round 3: the meadows grassy)
     {
       const G = P.G, grp = new THREE.Group(); root.add(grp); out.ground = grp;
       for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
@@ -11121,6 +11160,39 @@ const World = (function () {
       }
     }
 
+    /* ---- round 3: tufts of longer grass and wild flowers on the verges between the road and its barriers, round the barriers and the walls' feet,
+       out on the meadows near the road and up the banks' grassy feet (in the ground's own colour; fewer on the dry crests, none on rock) ---- */
+    let nTufts = 0;
+    {
+      const W = out.dyn.wind || (out.dyn.wind = { value: 0 }), mat = mvTuftMat(W), tu = new IChunks(tuftGeo(false), mat, 160), fl = new IChunks(tuftGeo(true), mat, 160);
+      const avg = texAvg(tex.grass), gl = (0.3 * avg[0] + 0.59 * avg[1] + 0.11 * avg[2]), kT = pkGMean * 1.06;
+      const grassy = (c) => (c[0] + c[1]) * 0.5 - c[2] > 0.17;
+      const put = (x, y, z, sd, s) => { const c = mvCol(x, z, y, 1, 6); if (!grassy(c)) return;
+        const g = (0.88 + 0.24 * crH(x, z, 8)) * kT, u = crH(x, z, 7);
+        tu.add(x, y - 0.02, z, u * 26, (0.8 + 0.9 * crH(x, z, 9)) * s, (0.3 + 0.32 * crH(x, z, 10)) * s, [c[0] * g, c[1] * g, c[2] * g]); nTufts++;
+        if (u < 0.16 + 0.1 * vrLCf(x, z, 6)) { const f = 0.86 + 0.14 * crH(x, z, 11); fl.add(x + 0.25, y - 0.02, z - 0.1, u * 41, 0.75 + 0.35 * crH(x, z, 12), 0.45 + 0.25 * crH(x, z, 13), [f, f, f]); } };
+      const yAt = (i, side, o) => { const q = vp[side > 0 ? 1 : 0][i]; if (o <= q[0][0]) return T.hy[i] + q[0][1];   // (on the verge's own profile between the road and the barrier)
+        for (let k = 0; k < q.length - 1; k++) if (o <= q[k + 1][0]) return T.hy[i] + lerp(q[k][1], q[k + 1][1], (o - q[k][0]) / (q[k + 1][0] - q[k][0])); return null; };
+      for (let s = 3; s < T.len - 3; s += 1.6) for (const side of [-1, 1]) {   // the verges, round the barriers
+        const i = T.idx(s), t = legT(i, side), h0 = crH(s, side, 5); if (onBr[i] || h0 < 0.18) continue;
+        const bar = side > 0 ? T.br[i] : T.bl[i], o0 = w + 1.0, o1 = t === 1 ? bar - 0.25 : bar + 1.6, o = o0 + (o1 - o0) * crH(s, side, 6);
+        if (t === 1 && crH(s, side, 14) > 0.35) continue;   // (by the parapets the shelf is gravel: a tuft at its foot now and then)
+        const y = yAt(i, side, o); if (y == null) continue;
+        const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o; if (excluded(x, z)) continue;
+        put(x, y, z, side, o > bar ? 1.1 : 0.9);
+      }
+      for (let s = 3; s < T.len - 3; s += 2.4) for (const side of [-1, 1]) {   // out on the ground beside the road (thinning out to ~35 m)
+        const i = T.idx(s); if (onBr[i] || legT(i, side) === 1) continue;
+        for (let k = 0; k < 3; k++) { const r = crH(s * 3 + k, side, 15), o = (side > 0 ? T.br[i] : T.bl[i]) + 2.2 + 33 * r * r;
+          if (crH(s + k, side, 16) > 0.55 - 0.3 * r) continue;
+          const x = T.px[i] + T.nx[i] * side * o + (crH(s, k, 17) - 0.5) * 2, z = T.pz[i] + T.nz[i] * side * o + (crH(k, s, 18) - 0.5) * 2;
+          if (excluded(x, z) || vrNear(x, z).dd < 1.2 || vrWater(x, z).e > -2 || !(vrSlope(x, z) < 0.8) || (P.onVroad && P.onVroad(x, z))) continue;
+          const y = mvGround(x, z); if (!Number.isFinite(y)) continue; put(x, y, z, side, 1.0 + 0.25 * r); }
+      }
+      const grp = new THREE.Group(); grp.name = 'tufts'; root.add(grp);
+      tu.addTo(grp, false); fl.addTo(grp, false); grp.traverse(m => { if (m.isInstancedMesh && m.instanceColor) m.instanceColor.ground = true; });   // (the seasons paint them as grass)
+    }
+
     /* ---- finish the meshes ---- */
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
@@ -11164,7 +11236,7 @@ const World = (function () {
       out.dyn.mv = { t: null, lampMat, night: nightU, balloon, sky: mvSkyLife(root, CR.U, ctrB, ctrG), run: mvRunners(root, CR.U), spots, zero: new THREE.Matrix4().makeScale(0, 0, 0) };
     }
     out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, walls: +(nWall / (2 * N)).toFixed(3), banks: +(nBank / (2 * N)).toFixed(3), rails: +(nRail / (2 * N)).toFixed(3), decals: nDecals, vroads: nVr,
-      chevrons: nChev, nets: nNet, art: nArt, lamps: lamps.length / 7, smoke: smoke.length };   // (read by the tests)
+      chevrons: nChev, nets: nNet, art: nArt, lamps: lamps.length / 7, smoke: smoke.length, tufts: nTufts };   // (read by the tests)
     return out;
   }
 

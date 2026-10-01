@@ -1,7 +1,7 @@
 // Lacets de Montvernier, round 2 (Posodobi progo): the Tour's mountain prize over the road and its balloon, the belvédère, the fans' art in the
 // meadows, chevron boards round every lacet, rockfall nets, street lamps and reflectors, the fans' picnics (grill smoke), the far mountains round
 // the horizon, the TV helicopter with the car, the crowds' cheer for the sound; the flyover before the start (with its captions, skipped by a key),
-// the fans who run beside the car, the lamps and the reflectors lit at night.
+// the fans who run beside the car, the lamps and the reflectors lit at night; round 3: the grassy meadows, the tufts and the wild flowers.
 //   node tests/browser/montvernier.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -26,7 +26,7 @@ try {
   const w = await page.evaluate(() => {
     const W = Render.world, names = {}; W.root.traverse(o => { if (o.name) names[o.name] = (names[o.name] || 0) + 1; });
     const pk = W.dyn.pk, ch = W.dyn.pkCheer;
-    return { marks: Object.keys(W.marks), st: W.stats, names, lamps: W.lamps.length / 7, heli: !!(pk && pk.follow && pk.heli), cheer: ch ? ch.spots.length / 4 : 0, mv: !!W.dyn.mv, wind: !!W.dyn.wind };
+    return { ground: W.ground.children[0].material.customProgramCacheKey(), marks: Object.keys(W.marks), st: W.stats, names, lamps: W.lamps.length / 7, heli: !!(pk && pk.follow && pk.heli), cheer: ch ? ch.spots.length / 4 : 0, mv: !!W.dyn.mv, wind: !!W.dyn.wind };
   });
   const has = (k) => w.marks.includes(k);
   T.check('the Tour: the polka-dot arch of the Grand Prix de la Montagne over the road, its balloon on a rope beside it', has('Grand Prix de la Montagne') && has('balloon') && w.names.komArch === 1 && w.names.balloon === 1, w.marks.join(', '));
@@ -34,6 +34,8 @@ try {
   T.check('the road: chevron boards round all 18 lacets (4 each), rockfall nets on the high banks, street lamps (the villages, the lacets), reflectors',
     w.st.chevrons === 72 && w.st.nets >= 4 && w.lamps >= 30 && w.lamps === w.st.lamps && w.names.rockNets === 1 && w.names.reflectors === 1, JSON.stringify({ chevrons: w.st.chevrons, nets: w.st.nets, lamps: w.lamps }));
   T.check('the fans\' picnics by the camper vans (grills and their smoke), the far mountains round the horizon (two rings)', w.st.smoke >= 3 && w.names.mountains === 1 && w.names.mvMountains === 2, JSON.stringify({ smoke: w.st.smoke, names: w.names }));
+  T.check('round 3: the meadows grassy (the ground\'s own material), tufts of longer grass and wild flowers along the road and out on the meadows',
+    w.st.tufts > 1500 && w.names.tufts === 1 && /mvGround/.test(w.ground), JSON.stringify({ tufts: w.st.tufts, ground: w.ground }));
   T.check('alive: the TV helicopter with the car, the runners, the birds and the paragliders; the crowds\' groups for the cheer\'s sound',
     w.heli && w.mv && w.names.runners === 1 && w.names.birds === 1 && w.names.paragliders === 1 && w.cheer > 20 && w.wind, JSON.stringify({ heli: w.heli, cheer: w.cheer }));
 
