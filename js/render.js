@@ -1080,7 +1080,7 @@ const Render = (function () {
     nring:    { fog: 0xb7c7cc, sun: 0xfff0d8, sunI: 1.1, sky: 0xcadcf0, gnd: 0x3e4a2a, hemiI: 0.6, tint: [1.03, 1.0, 0.95], sat: 1.04, sunOff: [-80, 76, 70] },   // the Eifel: a summer afternoon over the 'green hell' (a lower sun: longer shadows)
     spa:      { fog: 0xc3ced7, sun: 0xfff1de, sunI: 0.98, sky: 0xd0dde9, gnd: 0x43522f, hemiI: 0.64, tint: [0.99, 1.0, 1.01], sat: 1.1 },   // the Ardennes: a little greyer, softer daylight (Spa's changeable weather)
     rbring:   { fog: 0xc6daea, sun: 0xfff1d8, sunI: 1.12, sky: 0xcfe3fb, gnd: 0x46602c, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.06, sunOff: [-86, 78, 52] },   // Styria in early summer, an afternoon sun (longer shadows): clear alpine air, fresh meadows, dark spruce woods
-    harju:    { fog: 0xd9cdbd, sun: 0xffd9a6, sunI: 1.45, sky: 0xc7d8ec, gnd: 0x4d5733, hemiI: 0.58, tint: [1.05, 0.99, 0.93], sat: 1.08, haze: 0.14, hazeCol: [1, 0.8, 0.55], sunOff: [-100, 34, -9] },   // Harju at 19:05 on a late-July evening: the sun ~18 degrees up just north of west, long shadows of the pines and the blocks across the streets, a warm light, a pale sky
+    harju:    { fog: 0xcdd5dc, sun: 0xffcf96, sunI: 1.65, sky: 0xbad0ee, gnd: 0x58553f, hemiI: 0.58, tint: [1.02, 1.0, 0.97], sat: 1.1, haze: 0.16, hazeCol: [1, 0.82, 0.6], sunOff: [-100, 33, -8], skyTop: 0x3d74c4, skyK: 0.72, skyWarm: 0xf3dcb2, skyWarmK: 0.7, sunDist: 190 },   // Harju at 19:05 on a late-July evening: the sun 18 degrees up just north of west (as on 31 July), shadows three times as long as the pines and the blocks across the streets, a warm sun and cool shade, the clear blue sky of a Finnish summer evening with a warm glow towards the sun
     suzuka:   { fog: 0xc8d9e6, sun: 0xfff1dc, sunI: 1.06, sky: 0xd5e7fa, gnd: 0x4f5c34, hemiI: 0.62, tint: [1.01, 1.0, 0.99], sat: 1.12 },   // Suzuka: a clear spring day in Mie
   };
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
@@ -2340,7 +2340,8 @@ const Render = (function () {
     const texel = 160 / sun.shadow.mapSize.x;
     const cx = Math.round(sx / texel) * texel, cz = Math.round(sz / texel) * texel;
     sun.target.position.set(cx, baseY, cz);
-    sun.position.set(cx + sunOff[0], baseY + sunOff[1], cz + sunOff[2]);
+    const thm = THEMES[themeId], sd = thm && thm.sunDist ? thm.sunDist / Math.hypot(sunOff[0], sunOff[1], sunOff[2]) : 1;   // (theme.sunDist: a low sun placed further up its ray, so the long shadows of casters far up-sun reach the view)
+    sun.position.set(cx + sunOff[0] * sd, baseY + sunOff[1] * sd, cz + sunOff[2] * sd);
     sun.target.updateMatrixWorld();
   }
   let sunOff = [-80, 96, 70], camYaw = 0, lastMode = 'iso';
@@ -2371,11 +2372,13 @@ const Render = (function () {
   function skyStep(on) {
     if (!sky) {
       if (!on) return;
-      const u = { uBot: { value: new THREE.Color() }, uTop: { value: new THREE.Color() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uSunC: { value: new THREE.Color() }, uSunA: { value: 0 } };
+      const u = { uBot: { value: new THREE.Color() }, uTop: { value: new THREE.Color() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uSunC: { value: new THREE.Color() }, uSunA: { value: 0 }, uWarm: { value: new THREE.Color() }, uWarmK: { value: 0 } };
       const mat = new THREE.ShaderMaterial({ uniforms: u, depthWrite: false, depthTest: false, fog: false, side: THREE.BackSide,
         vertexShader: 'varying vec3 vD; void main(){ vD = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-        fragmentShader: 'uniform vec3 uBot; uniform vec3 uTop; uniform vec3 uSun; uniform vec3 uSunC; uniform float uSunA; varying vec3 vD;' +
+        fragmentShader: 'uniform vec3 uBot; uniform vec3 uTop; uniform vec3 uSun; uniform vec3 uSunC; uniform float uSunA; uniform vec3 uWarm; uniform float uWarmK; varying vec3 vD;' +
           'void main(){ vec3 d = normalize(vD); vec3 c = mix(uBot, uTop, pow(smoothstep(0.0, 0.85, d.y), 0.75)); float s = max(dot(d, uSun), 0.0);' +
+          ' if (uWarmK > 0.0) { float hl = length(d.xz), sl = length(uSun.xz); float a = hl > 1e-4 && sl > 1e-4 ? max(dot(d.xz / hl, uSun.xz / sl), 0.0) : 0.0;' +   // (a warm band low over the horizon towards the sun)
+          ' c = mix(c, uWarm, uWarmK * pow(a, 3.0) * smoothstep(-0.01, 0.05, d.y) * (1.0 - smoothstep(0.0, 0.55, d.y))); }' +
           ' c += uSunC * uSunA * (pow(s, 90.0) * 0.8 + pow(s, 8.0) * 0.15); gl_FragColor = vec4(c, 1.0); }' });
       const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 16), mat); mesh.frustumCulled = false; mesh.renderOrder = -100;   // (drawn first, under everything)
       scene.add(mesh); sky = { mesh, u };
@@ -2384,7 +2387,9 @@ const Render = (function () {
     if (!on) return;
     const r = Math.max(0, wet), U = sky.u, night = atmos.tod === 'night', dusk = atmos.tod === 'dusk';
     U.uBot.value.copy(scene.fog.color);
-    U.uTop.value.copy(scene.fog.color).lerp(_c2.setHex(night ? 0x010207 : dusk ? 0x34497f : atmos.season === 'winter' ? 0x86a6d0 : 0x3f7cd0), (night ? 0.8 : 0.55) * (1 - 0.8 * r));
+    const T = THEMES[themeId] || {}, own = T.skyTop != null && !night && !dusk && atmos.season !== 'winter';   // (theme.skyTop, skyK: its own zenith; skyWarm, skyWarmK: the glow towards the sun)
+    U.uTop.value.copy(scene.fog.color).lerp(_c2.setHex(own ? T.skyTop : night ? 0x010207 : dusk ? 0x34497f : atmos.season === 'winter' ? 0x86a6d0 : 0x3f7cd0), (own ? T.skyK : night ? 0.8 : 0.55) * (1 - 0.8 * r));
+    U.uWarmK.value = own && T.skyWarm != null ? T.skyWarmK * (1 - r) : 0; if (U.uWarmK.value > 0) U.uWarm.value.setHex(T.skyWarm);
     const sl = Math.hypot(sunOff[0], sunOff[1], sunOff[2]); U.uSun.value.set(sunOff[0] / sl, sunOff[1] / sl, sunOff[2] / sl);
     U.uSunC.value.copy(sun.color); U.uSunA.value = (night ? 0.35 : dusk ? 1.3 : 1) * (1 - 0.85 * r);
     sky.mesh.position.copy(camera.position); sky.mesh.scale.setScalar(camera.far * 0.8);
