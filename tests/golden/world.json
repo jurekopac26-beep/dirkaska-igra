@@ -277,19 +277,19 @@
   }
  },
  "muur": {
-  "meshes": 567,
-  "verts": 561787,
-  "instances": 11171,
+  "meshes": 632,
+  "verts": 573991,
+  "instances": 11222,
   "props": 0,
-  "crowd": 7122,
-  "world": "c92366f2",
+  "crowd": 7099,
+  "world": "a8016a4c",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "6680aa5b",
+   "-:MeshLambertMaterial": "a77a33f0",
    "-:MeshBasicMaterial": "1692cebe",
    "-:MeshPhongMaterial": "3aed9d53",
-   "crowd:MeshLambertMaterial": "fed0fb1f",
+   "crowd:MeshLambertMaterial": "aa6b8a31",
    "tyremarks:MeshBasicMaterial": "f84717a8",
    "roadwear:MeshLambertMaterial": "67030610"
   }

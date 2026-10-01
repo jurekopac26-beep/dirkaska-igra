@@ -105,10 +105,10 @@
   "jsMs": 0.79
  },
  "muur": {
-  "calls": 281,
-  "maxCalls": 392,
-  "kverts": 530,
-  "maxKverts": 827,
-  "jsMs": 0.7
+  "calls": 306,
+  "maxCalls": 419,
+  "kverts": 658,
+  "maxKverts": 989,
+  "jsMs": 1.7
  }
 }
