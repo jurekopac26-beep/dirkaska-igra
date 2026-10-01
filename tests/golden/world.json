@@ -323,16 +323,16 @@
   }
  },
  "montvernier": {
-  "meshes": 1253,
-  "verts": 879107,
-  "instances": 11472,
+  "meshes": 1295,
+  "verts": 880655,
+  "instances": 14481,
   "props": 61,
   "crowd": 2071,
-  "world": "46abb300",
+  "world": "31f690fe",
   "propsHash": "339b4640",
   "floor": "bd92f252/8316",
   "groups": {
-   "-:MeshLambertMaterial": "eca99fe8",
+   "-:MeshLambertMaterial": "5034148d",
    "-:MeshPhongMaterial": "85856f0d",
    "-:MeshBasicMaterial": "5e77a36d",
    "balloon:MeshLambertMaterial": "a2a34544",

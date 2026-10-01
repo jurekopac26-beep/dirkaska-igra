@@ -119,10 +119,10 @@
   "jsMs": 2.04
  },
  "montvernier": {
-  "calls": 348,
-  "maxCalls": 428,
-  "kverts": 883,
-  "maxKverts": 1145,
-  "jsMs": 1.6
+  "calls": 365,
+  "maxCalls": 425,
+  "kverts": 939,
+  "maxKverts": 1084,
+  "jsMs": 1.65
  }
 }
