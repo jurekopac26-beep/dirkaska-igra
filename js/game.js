@@ -298,6 +298,7 @@
     if (key === 'pitCmp' && race && race.player) race.player.pitCmp = S.pitCmp;   // (the slicks for the next pit stop)
     if (key === 'weather' && demo) demo.setRain(demoRain());   // (a race keeps its weather; the next one gets the new setting)
     if (key === 'season' || key === 'tod') Render.setAtmos({ season: S.season, tod: S.tod });   // (the season and the time of day: at once, also on the title demo)
+    if (key === 'season' && track && Render.worldStale) ensureTrack(track.def.id, () => { });   // (a world painted for the season (Vršič): built again in the new one)
     if ((key === 'weather' || key === 'mode') && screen === 'track') buildTrackScreen();   // (a time trial's records in the rain are its own, and a race's: the cards show them)
     if (key === 'control' && v === 'tilt') enableTilt(false);
     if (key === 'camera') { lockOrientation(); updateOrientation(); }
@@ -724,7 +725,7 @@
     fitSegs();   // (the tyres' row comes and goes with the track)
   }
   function ensureTrack(id, cb) {
-    if (track && track.def.id === id) { cb(); return; }
+    if (track && track.def.id === id && !Render.worldStale) { cb(); return; }   // (the same track: rebuilt only when it paints itself for the season and that changed: Vršič)
     $('ld-msg').textContent = 'Nalagam progo ' + ((Core.TRACKS.find(d => d.id === id) || {}).name || '') + '…';
     $('loading').classList.remove('off');
     setTimeout(() => {

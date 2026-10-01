@@ -8101,9 +8101,10 @@ const World = (function () {
   }
 
   /* ================= VRŠIČ (theme 'vrsic') =================
-     The road over the Vršič pass (Slovenia), its north side, in the autumn: from the junction in Kranjska Gora (~800 m) past the lakes at Jasna,
-     through the beech and spruce woods and up the 24 numbered hairpins (the cobbled stretches: def.setts) to the pass at 1611 m, among golden
-     larches, dwarf pines and limestone scree, the first snow of the season lying on the top. As on the other open roads only a corridor round the
+     The road over the Vršič pass (Slovenia), its north side: from the junction in Kranjska Gora (~800 m) past the lakes at Jasna, through the
+     beech and spruce woods and up the 24 numbered hairpins (the cobbled stretches: def.setts) to the pass at 1611 m, among larches, dwarf pines
+     and limestone scree. Painted for the season (VRS, from the game's setting): in summer green meadows and leaves; in autumn golden larches,
+     copper beeches and the first snow of the season on the top (in winter the render's season code snows the autumn look over). As on the other open roads only a corridor round the
      road is built: a 5 m height grid in 100 m tiles; near the road the road's own height (blended from the nearby samples), farther out the real
      terrain (def.dem: Copernicus GLO-30 on a 32 m grid) with a little noise. The OpenStreetMap land cover (def.lc) colours the ground and decides
      where the woods, the dwarf pines and the scree are; the OpenStreetMap buildings (def.bld: the houses and hotels of Kranjska Gora, the mountain
@@ -8111,6 +8112,7 @@ const World = (function () {
      Guardrails where the ground falls away and round the outside of the bends, stone parapets round the cobbled hairpins and on the bridges, a
      numbered sign before every hairpin. Hot loops live in these small functions (the big builder is not optimised by V8). */
   const VRC = 5, VRT = 20, VRHC = 32;          // terrain cell (m), tile size (cells), road-sample hash cell (m)
+  let VRS = 'summer';                          // the season the world is painted in ('summer' or 'autumn': buildVrsic, from opts.season; winter: the autumn look, the render's season code snows it over)
   let VR = null;                               // per-build data: sample hash, the terrain, the land cover, the distance to the road, lakes, pads, gullies, terrain height grid
   const VRN = { i: -1, d: 1e9, dd: 1e9, lat: 0, h: 0, hn: 0 };   // vrNear: nearest sample, its distance and lateral offset, distance beyond the barrier, blended and exact road height
   const VRCOL = [0, 0, 0], VRW = { L: null, e: -1e9 };            // (vrCol's colour; vrWater's lake and how deep inside its shore line)
@@ -8235,6 +8237,7 @@ const World = (function () {
   function vrSlope(x, z) { const a = vrGround(x - 2.5, z), b = vrGround(x + 2.5, z), c = vrGround(x, z - 2.5), d = vrGround(x, z + 2.5); return Math.hypot(b - a, d - c) / 5; }
   function vrSnow(x, z, A, ny) {   // how much of the first snow of the autumn lies at (x, z) (A: metres above the sea, ny: the ground's slope): from ~1480 m on the flatter
     // ground, nearly everywhere round the pass; it slides off the steep faces
+    if (VRS === 'summer') return 0;   // (no snow in summer)
     const line = 1480 + (VR.n5(x, z) - 0.5) * 110;
     return sstep(line, line + 90, A) * sstep(0.5, 0.74, ny);
   }
@@ -8243,17 +8246,27 @@ const World = (function () {
     // the first snow near the top, a trodden verge
     const P = VR, m = P.n3(x, z), q = P.n4(x, z), A = h + P.D.base, up = sstep(1050, 1450, A);
     const fo = vrLCf(x, z, 1), sc = vrLCf(x, z, 2), se = vrLCf(x, z, 3), rk = vrLCf(x, z, 4);
-    let r = 0.64 + (m - 0.5) * 0.14 + (q - 0.5) * 0.1, g = 0.54 + (m - 0.5) * 0.1 + (q - 0.5) * 0.07, b = 0.3 + (m - 0.5) * 0.06;   // dry autumn grass
-    const gr = sstep(0.38, 0.72, P.n2(x, z)) * lerp(0.85, 0.3, up); r = lerp(r, 0.4, gr); g = lerp(g, 0.5, gr); b = lerp(b, 0.22, gr);   // patches still green (most in the valley, few up high)
-    const bil = up * sstep(0.52, 0.76, P.n7(x, z)) * 0.75; r = lerp(r, 0.6, bil); g = lerp(g, 0.25, bil); b = lerp(b, 0.14, bil);   // bilberry leaves turned red
-    const ms = sstep(0.5, 0.78, P.n7(x * 1.7 + 90, z * 1.7)) * 0.7, lr = lerp(lerp(0.5, 0.34, up), 0.25, ms), lg = lerp(lerp(0.32, 0.29, up), 0.32, ms), lb = lerp(0.17, 0.14, ms);   // beech leaves low, needles higher, moss in patches
+    const su = VRS === 'summer', ms = sstep(0.5, 0.78, P.n7(x * 1.7 + 90, z * 1.7)) * 0.7;
+    let r, g, b, lr, lg, lb;
+    if (su) {
+      r = 0.36 + (m - 0.5) * 0.1 + (q - 0.5) * 0.08; g = 0.52 + (m - 0.5) * 0.1 + (q - 0.5) * 0.06; b = 0.2 + (m - 0.5) * 0.05;   // fresh meadow grass
+      const lu = sstep(0.38, 0.72, P.n2(x, z)) * lerp(0.7, 0.3, up); r = lerp(r, 0.27, lu); g = lerp(g, 0.44, lu); b = lerp(b, 0.15, lu);   // lush, darker patches (most in the valley)
+      const al = up * 0.55; r = lerp(r, 0.44 + (m - 0.5) * 0.08, al); g = lerp(g, 0.5, al); b = lerp(b, 0.27, al);   // higher up the short, grey-green alpine sward
+      const bil = up * sstep(0.52, 0.76, P.n7(x, z)) * 0.6; r = lerp(r, 0.24, bil); g = lerp(g, 0.36, bil); b = lerp(b, 0.14, bil);   // bilberry and alpenrose: dark green
+      lr = lerp(lerp(0.36, 0.3, up), 0.22, ms); lg = lerp(lerp(0.34, 0.3, up), 0.33, ms); lb = lerp(0.17, 0.13, ms);   // last year's leaves and needles, moss in patches
+    } else {
+      r = 0.64 + (m - 0.5) * 0.14 + (q - 0.5) * 0.1; g = 0.54 + (m - 0.5) * 0.1 + (q - 0.5) * 0.07; b = 0.3 + (m - 0.5) * 0.06;   // dry autumn grass
+      const gr = sstep(0.38, 0.72, P.n2(x, z)) * lerp(0.85, 0.3, up); r = lerp(r, 0.4, gr); g = lerp(g, 0.5, gr); b = lerp(b, 0.22, gr);   // patches still green (most in the valley, few up high)
+      const bil = up * sstep(0.52, 0.76, P.n7(x, z)) * 0.75; r = lerp(r, 0.6, bil); g = lerp(g, 0.25, bil); b = lerp(b, 0.14, bil);   // bilberry leaves turned red
+      lr = lerp(lerp(0.5, 0.34, up), 0.25, ms); lg = lerp(lerp(0.32, 0.29, up), 0.32, ms); lb = lerp(0.17, 0.14, ms);   // beech leaves low, needles higher, moss in patches
+    }
     r = lerp(r, lr + m * 0.07, fo); g = lerp(g, lg + m * 0.05, fo); b = lerp(b, lb + m * 0.03, fo);
     r = lerp(r, 0.22 + m * 0.05, sc * 0.8); g = lerp(g, 0.28 + m * 0.05, sc * 0.8); b = lerp(b, 0.15, sc * 0.8);   // under the dwarf pines
-    r = lerp(r, 0.44, se * 0.6); g = lerp(g, 0.52, se * 0.6); b = lerp(b, 0.26, se * 0.6);   // lawns and gardens
+    r = lerp(r, su ? 0.34 : 0.44, se * 0.6); g = lerp(g, su ? 0.5 : 0.52, se * 0.6); b = lerp(b, su ? 0.2 : 0.26, se * 0.6);   // lawns and gardens
     const st = Math.max(rk * 0.9, sstep(0.8, 0.58, ny) * 0.95);   // scree and rock, and every steep face: limestone
     r = lerp(r, 0.78 + m * 0.07, st); g = lerp(g, 0.77 + m * 0.06, st); b = lerp(b, 0.74 + m * 0.06, st);
     const sn = vrSnow(x, z, A, ny); r = lerp(r, 1.04, sn); g = lerp(g, 1.06, sn); b = lerp(b, 1.12, sn);
-    if (dd < 4) { const t = sstep(4, 0.5, dd) * 0.4 * (1 - sn); r = lerp(r, 0.54, t); g = lerp(g, 0.49, t); b = lerp(b, 0.36, t); }   // trodden verge
+    if (dd < 4) { const t = sstep(4, 0.5, dd) * 0.4 * (1 - sn); r = lerp(r, su ? 0.48 : 0.54, t); g = lerp(g, su ? 0.5 : 0.49, t); b = lerp(b, su ? 0.32 : 0.36, t); }   // trodden verge
     VRCOL[0] = r; VRCOL[1] = g; VRCOL[2] = b; return VRCOL;
   }
   function vrGCol(x, z) {   // the terrain mesh's own vertex colour at (x, z) (bilinear over the grid vertices, each coloured as in vrTileGeo)
@@ -8332,20 +8345,21 @@ const World = (function () {
         const kk = k % 2 ? 1.1 : 1, c = [col[0] * kk, col[1] * kk, col[2] * kk]; starCone(g, 0, y, 0, r, h, 5, kind === 5 ? snow : c, kind === 5 ? c : tip, k * 0.66, dr); });
       cone(g, 0, 0.78, 0, 0.055, 0.22, 4, kind === 5 ? snow : col, tip, 0.4);
     } else if (kind === 1 || kind === 6) {   // larch: a slim trunk, five light, open tiers of drooping branches and a thin spire, golden (under snow: white on the tips)
-      const col = [0.86, 0.6, 0.16], tip = [0.97, 0.8, 0.32];
+      const col = VRS === 'summer' ? [0.3, 0.48, 0.16] : [0.86, 0.6, 0.16], tip = VRS === 'summer' ? [0.48, 0.66, 0.26] : [0.97, 0.8, 0.32];
       cyl(g, 0, -0.02, 0, 0.018, 0.3, 3, [0.36, 0.26, 0.18], null, 0.012);
       [[0.1, 0.27, 0.26], [0.26, 0.23, 0.24], [0.42, 0.18, 0.22], [0.57, 0.13, 0.2], [0.71, 0.09, 0.18]].forEach(([y, r, h], k) => starCone(g, 0, y, 0, r, h, 4, kind === 6 ? snow : col, kind === 6 ? col : tip, k * 0.9 + 0.3, 0.05));
       cone(g, 0, 0.86, 0, 0.035, 0.14, 3, col, tip, 0.2);
     } else if (kind === 2) {   // beech: a smooth grey trunk, a broad crown of three clumps
       cyl(g, 0, -0.02, 0, 0.03, 0.45, 4, [0.55, 0.55, 0.52], null, 0.022);
-      ico(g, 0, 0.62, 0, 0.3, 0.72, [0.82, 0.44, 0.13], R, 0.3); ico(g, 0.14, 0.5, 0.08, 0.2, 0.8, [0.76, 0.38, 0.11], R, 0.35); ico(g, -0.13, 0.52, -0.08, 0.2, 0.8, [0.86, 0.52, 0.16], R, 0.35);
+      const su = VRS === 'summer';
+      ico(g, 0, 0.62, 0, 0.3, 0.72, su ? [0.2, 0.36, 0.12] : [0.82, 0.44, 0.13], R, 0.3); ico(g, 0.14, 0.5, 0.08, 0.2, 0.8, su ? [0.18, 0.32, 0.11] : [0.76, 0.38, 0.11], R, 0.35); ico(g, -0.13, 0.52, -0.08, 0.2, 0.8, su ? [0.24, 0.4, 0.14] : [0.86, 0.52, 0.16], R, 0.35);
     } else if (kind === 3 || kind === 7) {   // dwarf pine: a mound of dark needle clumps (under snow a white cap on it)
       const col = [0.11, 0.21, 0.1];
       for (let k = 0; k < 5; k++) { const a = k / 5 * TAU + R() * 0.5, d = k ? 0.3 : 0; ico(g, Math.cos(a) * d, 0.4 - d * 0.45, Math.sin(a) * d, 0.3, 0.8, vary(col, R, 0.2), R, 0.35); }
       if (kind === 7) ico(g, 0.02, 0.6, 0, 0.34, 0.34, snow, R, 0.25);
     } else {   // birch (a rowan when the instance tints it red): a slim white trunk, a light crown of two clumps in autumn yellow
       cyl(g, 0, -0.02, 0, 0.019, 0.16, 3, [0.3, 0.28, 0.26], null, 0.016); cyl(g, 0, 0.14, 0, 0.016, 0.5, 3, [0.9, 0.9, 0.86], null, 0.009);
-      ico(g, 0, 0.7, 0, 0.15, 1.5, [0.9, 0.72, 0.2], R, 0.3); ico(g, 0.07, 0.56, -0.05, 0.1, 1.2, [0.86, 0.66, 0.18], R, 0.35);
+      ico(g, 0, 0.7, 0, 0.15, 1.5, VRS === 'summer' ? [0.28, 0.44, 0.14] : [0.9, 0.72, 0.2], R, 0.3); ico(g, 0.07, 0.56, -0.05, 0.1, 1.2, VRS === 'summer' ? [0.31, 0.47, 0.16] : [0.86, 0.66, 0.18], R, 0.35);
     }
     ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
@@ -8421,7 +8435,8 @@ const World = (function () {
   function buildVrsic(scene, tex, opts) {
     const R = rng(7611), N = T.N, w = T.w, dens = opts.density || 1, def = T.def, PI = Math.PI;
     const root = new THREE.Group(); scene.add(root);
-    const out = { root, dyn: {}, groundH: vrGround, camFloor: vrGround, props: [], farClip: true, ownTex: [] };
+    VRS = opts.season === 'autumn' || opts.season === 'winter' ? 'autumn' : 'summer';   // (summer: green meadows and leaves; autumn and winter: the autumn look, which winter's season code snows over)
+    const out = { root, dyn: {}, groundH: vrGround, camFloor: vrGround, props: [], farClip: true, ownTex: [], season: VRS, paintFor: (s) => (s === 'autumn' || s === 'winter' ? 'autumn' : 'summer') };
     vrPrep();
     const P = VR, iE = N - 1, sStart = T.startS, sFin = T.finishS, base = P.D.base;
     // the buildings (def.bld [x, z, length, width, angle, height (0: unknown), kind, name]; kind 0 house, 1 hotel, 2 chapel or church, 3 shed or garage,
@@ -8597,7 +8612,7 @@ const World = (function () {
           for (const yy of [4.5, 8.4]) box(g, b.x, y + yy, b.z, 3.9, 0.2, 3.9, b.ang, [0.52, 0.38, 0.24]);
           box(g, b.x, y + 8.6, b.z, 3.9, 1.0, 3.9, b.ang, [0.5, 0.36, 0.22]); cone(g, b.x, y + 10.2, b.z, 3.0, 2.0, 4, [0.3, 0.24, 0.18], [0.3, 0.24, 0.18], b.ang + PI / 4);
         }
-        else if (b.kind === 4) vrHut(g, b.x, b.pad ? b.pad.h : hi, b.z, b.ang, Math.max(8, Math.min(24, b.L)), Math.max(7, Math.min(14, b.W)), A > 1500);
+        else if (b.kind === 4) vrHut(g, b.x, b.pad ? b.pad.h : hi, b.z, b.ang, Math.max(8, Math.min(24, b.L)), Math.max(7, Math.min(14, b.W)), A > 1500 && VRS !== 'summer');   // (snow on the roofs up high: autumn's first snow)
         else if (b.kind === 3) {   // shed, garage, hay barn: timber on a low stone base, a shallow roof
           const wd = vary(woods[Math.floor(RB() * 3)], RB, 0.12); box(g, b.x, lo - 0.3, b.z, b.L, hi - lo + 0.3 + 2.4, b.W, b.ang, wd, null, true);
           gable(g, b.x, hi + 2.1, b.z, b.L + 0.8, b.W + 0.8, Math.min(b.L, b.W) * 0.24, b.ang, vary(roofs[Math.floor(RB() * 4)], RB, 0.1), wd);
@@ -8794,10 +8809,10 @@ const World = (function () {
           const shrink = lerp(1, 0.5, sstep(1350, 1700, A)), far = hd > 90 ? 1.15 : 1;
           let hgt, wid, col;
           if (sp === 0) { hgt = (16 + r4 * 12) * shrink; wid = hgt * (0.5 + r2 * 0.12); col = [0.9 + r2 * 0.2, 0.92 + r4 * 0.16, 0.9 + r3 * 0.2]; }
-          else if (sp === 1) { hgt = (14 + r4 * 10) * shrink; wid = hgt * (0.55 + r2 * 0.15); col = r2 < 0.18 ? [0.82, 0.96, 0.7] : r2 < 0.78 ? [1, 0.98, 0.94] : [1.06, 0.82, 0.6]; }   // yellow-green, gold, orange
-          else if (sp === 2) { hgt = (14 + r4 * 10) * shrink; wid = hgt * (0.8 + r2 * 0.25); col = r2 < 0.22 ? [1.06, 1.18, 0.92] : r2 < 0.6 ? [1, 1, 1] : r2 < 0.86 ? [0.88, 0.76, 0.68] : [0.74, 0.6, 0.55]; }   // yellow, copper, rust, brown
+          else if (sp === 1) { hgt = (14 + r4 * 10) * shrink; wid = hgt * (0.55 + r2 * 0.15); col = VRS === 'summer' ? (r2 < 0.25 ? [0.9, 1, 0.9] : r2 < 0.8 ? [1, 1, 1] : [1.08, 1.05, 0.9]) : r2 < 0.18 ? [0.82, 0.96, 0.7] : r2 < 0.78 ? [1, 0.98, 0.94] : [1.06, 0.82, 0.6]; }   // yellow-green, gold, orange
+          else if (sp === 2) { hgt = (14 + r4 * 10) * shrink; wid = hgt * (0.8 + r2 * 0.25); col = VRS === 'summer' ? (r2 < 0.22 ? [1.1, 1.08, 0.95] : r2 < 0.6 ? [1, 1, 1] : r2 < 0.86 ? [0.9, 0.95, 0.9] : [0.82, 0.88, 0.84]) : r2 < 0.22 ? [1.06, 1.18, 0.92] : r2 < 0.6 ? [1, 1, 1] : r2 < 0.86 ? [0.88, 0.76, 0.68] : [0.74, 0.6, 0.55]; }   // yellow, copper, rust, brown
           else if (sp === 3) { hgt = 1.3 + r4 * 1.5; wid = 3 + r2 * 3; col = [0.9 + r3 * 0.2, 0.95 + r4 * 0.1, 0.9]; }
-          else { hgt = 9 + r4 * 6; wid = hgt * (0.7 + r2 * 0.2); col = r3 < 0.35 ? [0.88, 0.36, 0.28] : [1, 1, 1]; }   // (a third of them rowans in red)
+          else { hgt = 9 + r4 * 6; wid = hgt * (0.7 + r2 * 0.2); col = r3 < 0.35 ? (VRS === 'summer' ? [0.92, 1.02, 0.9] : [0.88, 0.36, 0.28]) : [1, 1, 1]; }   // (a third of them rowans in red)
           const kind = vrSnow(x, z, A, 0.9) > 0.4 ? [5, 6, 2, 7, 4][sp] : sp;
           tk[kind].add(x, y - 0.15, z, r1 * 70, wid * far, hgt * far, col);
           if (++nTrees >= maxT) break grid;
@@ -8809,7 +8824,8 @@ const World = (function () {
     /* ---- the verges: shrubs in their autumn colours right behind the barrier (hazel yellow, bramble and dogwood red, faded olive), tufts of dry
        grass higher up; limestone boulders and crags where the slope rises steep beside the road; up high the snow the ploughs pushed off the road ---- */
     {
-      const RV = rng(7651), bushC = [[0.72, 0.56, 0.2], [0.62, 0.26, 0.12], [0.44, 0.44, 0.18], [0.78, 0.44, 0.14], [0.5, 0.34, 0.14]], tuftC = [[0.66, 0.58, 0.32], [0.6, 0.5, 0.28], [0.54, 0.5, 0.26]];
+      const RV = rng(7651), su = VRS === 'summer', bushC = su ? [[0.3, 0.44, 0.16], [0.24, 0.36, 0.13], [0.36, 0.46, 0.18], [0.28, 0.4, 0.2], [0.34, 0.4, 0.15]] : [[0.72, 0.56, 0.2], [0.62, 0.26, 0.12], [0.44, 0.44, 0.18], [0.78, 0.44, 0.14], [0.5, 0.34, 0.14]],
+        tuftC = su ? [[0.42, 0.5, 0.24], [0.36, 0.46, 0.2], [0.48, 0.52, 0.28]] : [[0.66, 0.58, 0.32], [0.6, 0.5, 0.28], [0.54, 0.5, 0.26]];
       const lime = [[0.76, 0.75, 0.71], [0.7, 0.69, 0.66], [0.8, 0.78, 0.73]], snowC = [0.95, 0.96, 1.0];
       ROCK_SMOOTH = true;
       for (let s = 4; s < T.len - 4; s += 3.2) for (const side of [-1, 1]) {

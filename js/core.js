@@ -175,7 +175,7 @@ const Core = (function () {
       }
       // sidewalks (def.walks = [[from, to, side (-1 left, 1 right, 0 both), width], ...], metres after the start line; open roads: Kranjska
       // Gora and Jasna on Vršič): part of the road, drivable with the grip of asphalt (surface 0), eased in and out over 10 m; the barriers
-      // stand 1.8 m past them. walk: per side ([0] left, [1] right) the sidewalk's width at every sample (0: none)
+      // stand 1.8 m past them (1 m on a road widened between its barriers, def.barW). walk: per side ([0] left, [1] right) the sidewalk's width at every sample (0: none)
       this.walk = null;
       if (def.walks && open) {
         const W = this.walk = [new Float32Array(N), new Float32Array(N)];
@@ -184,7 +184,8 @@ const Core = (function () {
           const f = Math.min(sstep(a - 10, a, d), sstep(b + 10, b, d)) * wd;
           if (sd <= 0) W[0][i] = Math.max(W[0][i], f); if (sd >= 0) W[1][i] = Math.max(W[1][i], f);
         }
-        for (let i = 0; i < N; i++) { this.bl[i] = Math.max(this.bl[i], this.w + W[0][i] + 1.8); this.br[i] = Math.max(this.br[i], this.w + W[1][i] + 1.8); }
+        const wb = def.barW ? 1.0 : 1.8;   // (a road widened between its barriers (def.barW): the barrier 1 m past the sidewalk)
+        for (let i = 0; i < N; i++) { this.bl[i] = Math.max(this.bl[i], this.w + W[0][i] + wb); this.br[i] = Math.max(this.br[i], this.w + W[1][i] + wb); }
       }
     }
 
@@ -336,7 +337,8 @@ const Core = (function () {
     }
 
     _buildEdges() {
-      const N = this.N, w = this.w, k = this.k, ds = this.ds;
+      // (def.barW: the barriers laid out as for a road this wide when the asphalt is wider than that: Vršič's 30 % wider road between the same barriers)
+      const N = this.N, w = this.def.barW || this.w, k = this.k, ds = this.ds;
       const bl = new Float32Array(N), br = new Float32Array(N);
       // outside runoff grows with curvature
       for (let i = 0; i < N; i++) {
@@ -390,8 +392,8 @@ const Core = (function () {
       limitInside(); limitNear();
       BL = smooth(BL, 3, 2); BR = smooth(BR, 3, 2);
       limitInside(); limitNear();
-      const minB = Math.min(3.5, this.def.side || 3.5);
-      for (let i = 0; i < N; i++) { BL[i] = Math.max(BL[i], w + minB); BR[i] = Math.max(BR[i], w + minB); }
+      const minB = Math.min(3.5, this.def.side || 3.5), minA = this.w + 0.8;   // (minA: never closer than 0.8 m to the asphalt's edge)
+      for (let i = 0; i < N; i++) { BL[i] = Math.max(BL[i], w + minB, minA); BR[i] = Math.max(BR[i], w + minB, minA); }
       // ... and there the upper leg runs between the parapets of its bridge (3 m from the road), the lower one between the walls of the
       // underpass (3.4 m), each narrowing in over the next 30 / 24 m
       for (const c of X) for (let i = 0; i < N; i++) {
@@ -1080,6 +1082,8 @@ const Core = (function () {
       const aX = Math.max(Math.abs(F), fb) / m;                                                  // (brakes first: the cornering gets what they leave)
       const aN = Math.min(aL, Math.sqrt(Math.max(0, aC * aC - aX * aX)));
       wN = clamp(wN, -aN / v, aN / v);
+      const gl = this.ck ? this.ck.gl : 0;   // (a crash in the run from the police: the grip lost for a moment, see CRASH)
+      if (gl > 0) wN *= 1 - gl;
       this.csAn = wN * spd;
       // ---- forces (body frame): drive along the body (its sideways part is inside the path law), brakes along the travel, slide scrub ----
       let Fx = 0, Fy = 0;
@@ -1089,6 +1093,7 @@ const Core = (function () {
       if (fwd && grounded && spd > 1.5) { const sc = m * K.scrub * Math.abs(this.csAn) * Math.min(2, Math.tan(Math.min(1.1, ab))); Fx -= ux * sc; Fy -= uy * sc; }
       const lowGrip = 1 - sstep(3, 8, spd);
       if ((lowGrip > 0 || !fwd) && grounded) Fy += clamp(-vt * m / dt, -G * m * 1.5, G * m * 1.5) * (fwd ? lowGrip : 1);
+      if (gl > 0 && grounded && fwd) Fy += clamp(-vt * m / dt, -G * m * CRASH.slide, G * m * CRASH.slide) * gl * (1 - lowGrip);   // (the tyres scrub the slide)
       // ---- air + rolling + surface drag, slope, bank (shared blocks) ----
       const cdA = m * SW_DRAG * (M.cDrag / 0.42) * (this.drs ? DRS_DRAG : 1);
       Fx -= cdA * vl * spd + (grounded ? (0.015 * m * G) * Math.tanh(vl * 1.5) : 0);
@@ -1110,7 +1115,8 @@ const Core = (function () {
       if (!fwd) rT = (vl < -0.5 ? -stIn : 0) * Math.min(Math.abs(vl) / P.rmin, 1.6);   // reversing: kinematic
       if (!grounded) rT = this.w * Math.exp(-dt / K.airYawT);                            // no steering in the air; the spin dies away
       const rA = bF > 0.3 ? K.rAccB : K.rAcc;
-      if (grounded) this.w += clamp((rT - this.w) * Math.min(1, dt / K.tR), -rA * dt, rA * dt); else this.w = rT;
+      if (gl > 0 && grounded) { const w0 = this.w, wF = w0 * Math.exp(-dt / CRASH.yawT) - Math.sign(w0) * Math.min(Math.abs(w0), CRASH.yawC * dt), wS = w0 + clamp((rT - w0) * Math.min(1, dt / K.tR), -rA * dt, rA * dt); this.w = wS + (wF - wS) * gl; }   // (spinning freely, the steering coming back)
+      else if (grounded) this.w += clamp((rT - this.w) * Math.min(1, dt / K.tR), -rA * dt, rA * dt); else this.w = rT;
       // ---- integrate: forces, then the path turn as an exact rotation of the velocity (no speed gained or lost by turning) ----
       const ax = (Fx * ch - Fy * sh) / m, az = (Fx * sh + Fy * ch) / m;
       this.vx += ax * dt; this.vz += az * dt;
@@ -1133,6 +1139,7 @@ const Core = (function () {
       this.delta = vl >= -0.3 ? clamp(0.1 * s + 0.5 * (aT - att), -0.26, 0.26) : clamp(-0.35 * stIn, -M.steerMax, M.steerMax);   // small, into the turn (C2)
       const rt = this.rpmTarget + (this.spin > 0.05 ? Math.min(2500, this.spin * 5000) : 0) + (this.drift > 0.3 && thr > 0.5 ? 500 * this.drift : 0);
       this.rpm += (Math.min(M.redline * 1.02, rt) - this.rpm) * Math.min(1, dt * 14);
+      if (gl > 0) this.ck.gl = Math.max(0, gl - dt / this.ck.glT);
     }
 
     step(dt, trk) { return this.stepCS(dt, trk); }
@@ -1478,6 +1485,80 @@ const Core = (function () {
     return imp;
   }
 
+  /* The contacts of the run from the police (the cars that carry c.ck: the player and the patrol cars; and the traffic's vehicles there), as in
+     GTA V (frame by frame from a chase): the bodies do not bounce apart (restitution 0.05, none at a slow push), they grind along each other
+     (friction 0.5 at the contact) and share their speed by their real masses (ck.m: a patrol car 1750 kg, the van 2900, a motorbike with its
+     rider 430); the push at the true contact point of the two boxes turns them (a nudge on the rear quarter, the PIT, spins a car 90-180 deg);
+     a car hit hard or behind its middle loses its grip for a moment (ck.gl, fading over ck.glT s: the travel no longer follows the nose, the
+     tyres only scrub the slide, the yaw spins freely), the player's less (they never lose the controls); each car takes damage by its own
+     change of speed. CRASH: e, eV (closing speed below which no bounce), mu, slop / push (overlap left / taken away per step: no pop),
+     glDv / glK / glW / glT0 / glT1 / glTmax (the grip loss by the change of speed and of yaw rate, and how long), lat0 / latK (a side push
+     behind the middle against what the rear tyres hold), slide (the scrub, g), yawT / yawC (a free spin dying away), dv0 / dmg (damage),
+     pl (the player's share of a grip loss) */
+  const CRASH = { e: 0.05, eV: 1.5, mu: 0.5, slop: 0.03, push: 0.35, glDv: 1.5, glK: 0.16, glW: 0.25, glT0: 0.5, glT1: 0.07, glTmax: 1.6, lat0: 0.35, latK: 1.5,
+    slide: 0.9, yawT: 0.8, yawC: 1.2, dv0: 2.5, dmg: 0.022, pl: 0.6 };
+  const _ob = { pen: 0, nx: 0, nz: 0, px: 0, pz: 0 };
+  // two boxes (centre, heading, length, width) by their separating axes: null apart, else _ob = the overlap along the face normal of least
+  // overlap (pointing from b to a) and the contact point (the deepest corner of the other box; the middle of two when a face lies flat on a face)
+  function obbHit(ax, az, ah, al, aw, bx, bz, bh, bl, bw) {
+    const dx0 = bx - ax, dz0 = bz - az, ca = Math.cos(ah), sa = Math.sin(ah), cb = Math.cos(bh), sb = Math.sin(bh);
+    const AX = [ca, sa, -sa, ca, cb, sb, -sb, cb], ea = al / 2, wa = aw / 2, eb = bl / 2, wb = bw / 2;
+    let ov = 1e9, k = -1, nx = 0, nz = 0;
+    for (let q = 0; q < 4; q++) {
+      const Lx = AX[q * 2], Lz = AX[q * 2 + 1];
+      const ra = ea * Math.abs(ca * Lx + sa * Lz) + wa * Math.abs(-sa * Lx + ca * Lz), rb = eb * Math.abs(cb * Lx + sb * Lz) + wb * Math.abs(-sb * Lx + cb * Lz);
+      const dd = dx0 * Lx + dz0 * Lz, o = ra + rb - Math.abs(dd);
+      if (o <= 0) return null;
+      if (o < ov) { ov = o; k = q; const sg = dd > 0 ? -1 : 1; nx = Lx * sg; nz = Lz * sg; }
+    }
+    const ib = k < 2, ix = ib ? bx : ax, iz = ib ? bz : az, ci = ib ? cb : ca, si = ib ? sb : sa, hl = ib ? eb : ea, hw = ib ? wb : wa, sg = ib ? 1 : -1;
+    let d1 = -1e9, d2 = -1e9, p1x = 0, p1z = 0, p2x = 0, p2z = 0;
+    for (let q = 0; q < 4; q++) {
+      const lx = q < 2 ? hl : -hl, lz = q & 1 ? -hw : hw, px = ix + lx * ci - lz * si, pz = iz + lx * si + lz * ci, dd = (px * nx + pz * nz) * sg;
+      if (dd > d1) { d2 = d1; p2x = p1x; p2z = p1z; d1 = dd; p1x = px; p1z = pz; } else if (dd > d2) { d2 = dd; p2x = px; p2z = pz; }
+    }
+    if (d1 - d2 < 0.06) { _ob.px = (p1x + p2x) / 2; _ob.pz = (p1z + p2z) / 2; } else { _ob.px = p1x; _ob.pz = p1z; }
+    _ob.pen = ov; _ob.nx = nx; _ob.nz = nz;
+    return _ob;
+  }
+  const crashMass = (c) => (c.ck ? c.ck.m : c.m.mass);
+  // a car's grip lost to a push P (impulse) at (cx, cz) that changed its speed by dv and its yaw rate by dw (see CRASH)
+  function crashLoss(c, dv, dw, Px, Pz, m, cx, cz) {
+    if (!c.ck || c.air || c.net) return;
+    const ch = Math.cos(c.h), sh = Math.sin(c.h), xl = (cx - c.x) * ch + (cz - c.z) * sh;
+    const lat = Math.abs(-Px * sh + Pz * ch) * 120 / (m * G * CRASH.slide * 0.5), rear = clamp(-xl / (c.m.len * 0.25), 0, 1);
+    const g = clamp((dv - CRASH.glDv) * CRASH.glK + Math.abs(dw) * CRASH.glW + Math.max(0, lat - CRASH.lat0) * CRASH.latK * rear, 0, 1) * (c.isPlayer ? CRASH.pl : 1);
+    if (g > c.ck.gl) { c.ck.gl = g; c.ck.glT = Math.min(CRASH.glTmax, CRASH.glT0 + CRASH.glT1 * dv); }
+  }
+  // two cars of the run from the police (a, b: Car), as above; returns the closing speed (m/s) as carCollide does
+  function crashCollide(a, b) {
+    const dx0 = b.x - a.x, dz0 = b.z - a.z;
+    if (dx0 * dx0 + dz0 * dz0 > 49) return 0;
+    const o = obbHit(a.x, a.z, a.h, a.m.len, a.m.wid, b.x, b.z, b.h, b.m.len, b.m.wid);
+    if (!o) return 0;
+    const best = o.pen, bnx = o.nx, bnz = o.nz, bpx = o.px, bpz = o.pz;
+    const ma = crashMass(a), mb = crashMass(b), ia = 1 / ma, ib = 1 / mb, tot = ia + ib, Ia = a.I * ma / a.m.mass, Ib = b.I * mb / b.m.mass;
+    const corr = Math.max(0, best - CRASH.slop) * CRASH.push + Math.max(0, best - 0.25);   // (pushed apart softly: no pop, no jitter; a deep overlap at once)
+    a.x += bnx * corr * ia / tot; a.z += bnz * corr * ia / tot; b.x -= bnx * corr * ib / tot; b.z -= bnz * corr * ib / tot;
+    const rax = bpx - a.x, raz = bpz - a.z, rbx = bpx - b.x, rbz = bpz - b.z;
+    const vrx = (a.vx - a.w * raz) - (b.vx - b.w * rbz), vrz = (a.vz + a.w * rax) - (b.vz + b.w * rbx), vrel = vrx * bnx + vrz * bnz;
+    if (vrel >= 0) return 0;
+    const rna = rax * bnz - raz * bnx, rnb = rbx * bnz - rbz * bnx, e = -vrel > CRASH.eV ? CRASH.e : 0;
+    const J = -(1 + e) * vrel / (tot + rna * rna / Ia + rnb * rnb / Ib);
+    const tx = -bnz, tz = bnx, vt = vrx * tx + vrz * tz, rta = rax * tz - raz * tx, rtb = rbx * tz - rbz * tx;
+    const Jt = clamp(-vt / (tot + rta * rta / Ia + rtb * rtb / Ib), -CRASH.mu * J, CRASH.mu * J);   // (the bodies grind: they do not slide past each other)
+    const Px = J * bnx + Jt * tx, Pz = J * bnz + Jt * tz, dwa = (rna * J + rta * Jt) / Ia, dwb = -(rnb * J + rtb * Jt) / Ib;
+    a.vx += Px * ia; a.vz += Pz * ia; a.w += dwa; b.vx -= Px * ib; b.vz -= Pz * ib; b.w += dwb;
+    const P = Math.hypot(Px, Pz), dva = P * ia, dvb = P * ib;
+    crashLoss(a, dva, dwa, Px, Pz, ma, bpx, bpz); crashLoss(b, dvb, dwb, -Px, -Pz, mb, bpx, bpz);
+    const imp = -vrel;
+    a.hitCar = Math.max(a.hitCar, imp); b.hitCar = Math.max(b.hitCar, imp);
+    for (let n = 0; n < 2; n++) { const c = n ? b : a, dv = n ? dvb : dva; if (dv > CRASH.dv0) { const dx = bpx - c.x, dz = bpz - c.z, ch = Math.cos(c.h), sh = Math.sin(c.h); applyDamage(c, (dv - CRASH.dv0) * CRASH.dmg, dx * ch + dz * sh, -dx * sh + dz * ch); } }
+    const fx = Math.max(imp, Math.abs(vt) * 0.5); a.fxCar = Math.max(a.fxCar || 0, fx); b.fxCar = Math.max(b.fxCar || 0, fx);   // (grinding throws sparks too)
+    a.contactX = b.contactX = bpx; a.contactZ = b.contactZ = bpz;
+    return imp;
+  }
+
   /* ---------------------------------------------------------------------
      AI
      --------------------------------------------------------------------- */
@@ -1789,21 +1870,21 @@ const Core = (function () {
       const T = this.T;
       if (v.st === 1) {
         const ch = Math.cos(v.h), sh = Math.sin(v.h); let vl = v.vx * ch + v.vz * sh, vt = -v.vx * sh + v.vz * ch;
-        const fl = (v.kind >= 3 ? 7 : 4.5) * dt, ft = 8 * dt;
+        const pm = !!this.race.pol, fl = (v.kind >= 3 ? 7 : pm ? 6 : 4.5) * dt, ft = 8 * dt;   // (pm: the run from the police, as in GTA: no bounce, wrecks stay)
         vl = Math.abs(vl) <= fl ? 0 : vl - Math.sign(vl) * fl; vt = Math.abs(vt) <= ft ? 0 : vt - Math.sign(vt) * ft;
         v.vx = vl * ch - vt * sh; v.vz = vl * sh + vt * ch; v.w *= Math.exp(-2.2 * dt);
         v.x += v.vx * dt; v.z += v.vz * dt; v.h += v.w * dt;
         const q = T.query(v.x, v.z, v.q.i, v.q), hw = v.wid / 2;
         if (q.d > q.br - hw || q.d < -q.bl + hw) {   // the barrier: back inside, the speed into it gone
           const pen = q.d > 0 ? q.d - (q.br - hw) : -q.bl + hw - q.d, sg = q.d > 0 ? -1 : 1;
-          v.x += q.nx * pen * sg; v.z += q.nz * pen * sg; const vn = v.vx * q.nx + v.vz * q.nz; if (vn * sg < 0) { v.vx -= q.nx * vn * 1.3; v.vz -= q.nz * vn * 1.3; }
+          v.x += q.nx * pen * sg; v.z += q.nz * pen * sg; const vn = v.vx * q.nx + v.vz * q.nz, kb = pm ? 1.05 : 1.3; if (vn * sg < 0) { v.vx -= q.nx * vn * kb; v.vz -= q.nz * vn * kb; }
         }
         v.s = q.s; v.d = q.d; v.i = q.a; v.y = T.hy ? T.elevAt(q.s).y : 0; v.v = 0; v.brake = true;
         if (Math.hypot(v.vx, v.vz) < 0.25 && Math.abs(v.w) < 0.25) { v.st = 2; v.t = 0; v.vx = v.vz = v.w = 0; }
       } else if (v.st === 2) {
         v.t += dt;
         const f = Math.cos(v.h - Math.atan2(T.tz[v.i] * v.dir, T.tx[v.i] * v.dir));
-        if (v.t > 6 && v.kind !== 4 && f > 0.6 && Math.abs(v.d) < T.w) { v.st = 0; v.v = 0; v.dT = this._lane(v); v.wait = 0; v.pass = null; }
+        if (v.t > 6 && v.kind !== 4 && !v.wreck && f > 0.6 && Math.abs(v.d) < T.w) { v.st = 0; v.v = 0; v.dT = this._lane(v); v.wait = 0; v.pass = null; }
         else if (v.t > 20) { let far = true; for (const c of this.cl) if (Math.abs(c.q.s - v.s) < 350) { far = false; break; } if (far) { v.off = true; this._recycle(v); } }
       }
     }
@@ -1814,7 +1895,7 @@ const Core = (function () {
       for (const c of this.cl) if (Math.abs(c.q.s - s) < 170) return;
       for (const o of this.veh) if (o !== v && !o.off && o.dir === v.dir && Math.abs(o.s - s) < 45) return;
       if (v.rider) { const k = this.ped.indexOf(v.rider); if (k >= 0) this.ped.splice(k, 1); v.rider = null; }
-      v.off = false; v.st = 0; v.s = s; v.d = v.dT = this._lane(v); v.v = Math.min(v.v0, this._vpAt(v)) * 0.7; v.w = 0; v.t = 0; v.wait = 0; v.pass = null; v.stopS = -1; v.stopT = 0; v.lean = 0;
+      v.off = false; v.st = 0; v.wreck = 0; v.s = s; v.d = v.dT = this._lane(v); v.v = Math.min(v.v0, this._vpAt(v)) * 0.7; v.w = 0; v.t = 0; v.wait = 0; v.pass = null; v.stopS = -1; v.stopT = 0; v.lean = 0;
       this._pose(v, 0);
     }
     // two vehicles touching (a loose one against another): pushed apart, an impulse between them; a driving one knocked hard enough comes loose
@@ -1824,7 +1905,7 @@ const Core = (function () {
       const [pen, nx, nz] = hit, ia = 1 / a.mass, ib = 1 / b.mass, tot = ia + ib;
       a.x += nx * pen * ia / tot; a.z += nz * pen * ia / tot;
       const vrel = (a.vx - b.vx) * nx + (a.vz - b.vz) * nz; if (vrel >= 0) return;
-      const J = -1.3 * vrel / tot;
+      const J = -(this.race.pol ? 1.05 : 1.3) * vrel / tot;   // (the run from the police: no bounce, CRASH)
       a.vx += J * nx * ia; a.vz += J * nz * ia;
       if (b.st === 0 && J * ib > 1.2) { b.st = 1; b.t = 0; b.vx += -J * nx * ib; b.vz += -J * nz * ib; b.w += (this.R() - 0.5) * 1.2; if (b.kind >= 3) this._throwRider(b, a.vx, a.vz); }
       else if (b.st === 1) { b.vx -= J * nx * ib; b.vz -= J * nz * ib; b.x -= nx * pen * ib / tot; b.z -= nz * pen * ib / tot; }
@@ -1842,6 +1923,7 @@ const Core = (function () {
     // bodies. A vehicle knocked by more than ~1.4 m/s (a bicycle or a motorbike by any real knock) comes loose; the car takes damage as
     // from another car (more from a bus, less from a bicycle)
     _hitVeh(c, v) {
+      if (c.ck) return this._hitVehP(c, v);   // (the run from the police: the contacts as in GTA, CRASH)
       const dx0 = v.x - c.x, dz0 = v.z - c.z, rr = (c.m.len + v.len) / 2 + 0.5; if (dx0 * dx0 + dz0 * dz0 > rr * rr) return 0;
       const cha = Math.cos(c.h), sha = Math.sin(c.h), chb = Math.cos(v.h), shb = Math.sin(v.h), nb = Math.max(2, Math.round(v.len / v.wid)), rb = v.wid / 2;
       let best = 0, bnx = 0, bnz = 0, bpx = 0, bpz = 0;
@@ -1866,6 +1948,38 @@ const Core = (function () {
       else { const tx = this.T.tx[v.i], tz = this.T.tz[v.i]; v.v = Math.max(0, v.v - (J * bnx * ib * tx + J * bnz * ib * tz) * v.dir); }
       c.hitCar = Math.max(c.hitCar, imp); c.fxCar = Math.max(c.fxCar || 0, imp); c.contactX = bpx; c.contactZ = bpz;
       if (imp > 3.5 && v.kind < 4) { const dx = bpx - c.x, dz = bpz - c.z; applyDamage(c, (imp - 3.5) * 0.016 * clamp(mb / 1300, 0.4, 1.8), dx * cha + dz * sha, -dx * sha + dz * cha); }
+      if (imp > 3 && v.kind < 3) this._event('crash', c, bpx, bpz);
+      v.horn = Math.max(v.horn, v.kind < 4 ? 1.5 : 0);
+      return imp;
+    }
+    // ... in the run from the police (a car with c.ck): the two boxes, no bounce, the bodies grinding, the push at the true contact point, both
+    // turned by it (CRASH); a vehicle knocked by more than ~0.6 m/s comes loose and slides as a body (more than 6 m/s, or a hard hit: a wreck
+    // that stays there, hazard lights on); the car takes damage by its own change of speed, loses its grip for a moment when hit hard
+    _hitVehP(c, v) {
+      const dx0 = v.x - c.x, dz0 = v.z - c.z, rr = (c.m.len + v.len) / 2 + 0.5; if (dx0 * dx0 + dz0 * dz0 > rr * rr) return 0;
+      const o = obbHit(c.x, c.z, c.h, c.m.len, c.m.wid, v.x, v.z, v.h, v.len, v.wid); if (!o) return 0;
+      const best = o.pen, bnx = o.nx, bnz = o.nz, bpx = o.px, bpz = o.pz, T = this.T;
+      const ma = crashMass(c), mb = v.mass, ia = 1 / ma, ib = 1 / mb, tot = ia + ib, Ia = c.I * ma / c.m.mass, Ib = mb * (v.len * v.len + v.wid * v.wid) / 12;
+      const corr = Math.max(0, best - CRASH.slop) * CRASH.push + Math.max(0, best - 0.25);
+      c.x += bnx * corr * ia / tot; c.z += bnz * corr * ia / tot;
+      if (v.st !== 0) { v.x -= bnx * corr * ib / tot; v.z -= bnz * corr * ib / tot; }
+      else { const f = corr * ib / tot; v.s -= (bnx * T.tx[v.i] + bnz * T.tz[v.i]) * f; v.d -= (bnx * T.nx[v.i] + bnz * T.nz[v.i]) * f; }
+      const rax = bpx - c.x, raz = bpz - c.z, rbx = bpx - v.x, rbz = bpz - v.z;
+      const vrx = (c.vx - c.w * raz) - (v.vx - v.w * rbz), vrz = (c.vz + c.w * rax) - (v.vz + v.w * rbx), vrel = vrx * bnx + vrz * bnz;
+      if (vrel >= 0) return 0;
+      const rna = rax * bnz - raz * bnx, rnb = rbx * bnz - rbz * bnx, e = -vrel > CRASH.eV ? CRASH.e : 0;
+      const J = -(1 + e) * vrel / (tot + rna * rna / Ia + rnb * rnb / Ib);
+      const tx = -bnz, tz = bnx, vt = vrx * tx + vrz * tz, rta = rax * tz - raz * tx, rtb = rbx * tz - rbz * tx;
+      const Jt = clamp(-vt / (tot + rta * rta / Ia + rtb * rtb / Ib), -CRASH.mu * J, CRASH.mu * J);
+      const Px = J * bnx + Jt * tx, Pz = J * bnz + Jt * tz, P = Math.hypot(Px, Pz), dva = P * ia, dvb = P * ib, dwa = (rna * J + rta * Jt) / Ia;
+      const imp = -vrel;
+      if (v.st === 0 && (dvb > 0.6 || (v.kind >= 3 && dvb > 0.3))) { v.st = 1; v.t = 0; v.w = 0; if (v.kind >= 3) this._throwRider(v, c.vx, c.vz, c); }
+      c.vx += Px * ia; c.vz += Pz * ia; c.w += dwa;
+      crashLoss(c, dva, dwa, Px, Pz, ma, bpx, bpz);
+      if (v.st === 1) { v.vx -= Px * ib; v.vz -= Pz * ib; v.w -= (rnb * J + rtb * Jt) / Ib; if (dvb > 6 || imp > 9) v.wreck = 1; }
+      else { v.v = Math.max(0, v.v - (Px * ib * T.tx[v.i] + Pz * ib * T.tz[v.i]) * v.dir); }
+      c.hitCar = Math.max(c.hitCar, imp); c.fxCar = Math.max(c.fxCar || 0, imp, Math.abs(vt) * 0.5); c.contactX = bpx; c.contactZ = bpz;
+      if (dva > CRASH.dv0 && v.kind < 4) { const dx = bpx - c.x, dz = bpz - c.z, ch = Math.cos(c.h), sh = Math.sin(c.h); applyDamage(c, (dva - CRASH.dv0) * CRASH.dmg, dx * ch + dz * sh, -dx * sh + dz * ch); }
       if (imp > 3 && v.kind < 3) this._event('crash', c, bpx, bpz);
       v.horn = Math.max(v.horn, v.kind < 4 ? 1.5 : 0);
       return imp;
@@ -2162,7 +2276,7 @@ const Core = (function () {
       this.traps = (T.def.logs || []).map(([d, side]) => ({ s: T.startS + d, side, st: 0, t: 0, logs: [] }));
       this.mprof = null;
       this._car(T.startS - 38, 2.3, 0, 'chase', 2);   // (the first one, on the grid behind the player)
-      if (race.player) race.player.dmgK = 0.6;
+      if (race.player) { race.player.dmgK = 0.6; race.player.ck = { m: race.player.m.mass + 90, gl: 0, glT: 1 }; }   // (ck: the contacts as in GTA, CRASH; the mass with the driver)
     }
     // a patrol car at s (m along the road), d across it, turned by rot from the road's direction; mode 'chase', 'park', 'wait' (an ambush) or
     // 'civil' (the unmarked car); off `delay` s after the start; kind 'car' (a VORTEX), 'moto', 'van' or 'uc' (the unmarked car, dark)
@@ -2175,6 +2289,7 @@ const Core = (function () {
       c.skCap = moto ? 1.16 : 1.14; c.rubber = 1; c.dmgMode = o.damage == null ? 2 : o.damage; c.dmgK = moto ? 0.5 : 0.3; c.wet = race.cars[0] ? race.cars[0].wet : 1;
       if (moto) c.vprof = this._motoProf();
       c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s; c.dist = c.q.s - T.startS; c.locked = mode !== 'chase' || race.state !== 'racing' || delay > 0;
+      c.ck = { m: moto ? 430 : van ? 2900 : K === 'uc' ? 1650 : 1750, gl: 0, glT: 1 };   // (the real masses with the crew: a patrol saloon, the unmarked car, the van, a motorbike with its rider)
       c.num = 0; this.cars.push(c); return c;
     }
     // the motorcyclists' speed along the road: the race's AI profile, up to 10 % quicker in the slow bends (the hairpins)
@@ -2262,10 +2377,10 @@ const Core = (function () {
     collide() {
       const T = this.T, cars = this.race.cars, pc = this.cars;
       for (let i = 0; i < pc.length; i++) {
-        for (const c of cars) { const imp = carCollide(pc[i], c); if (imp > 2 && c.isPlayer) { pc[i].pol.hitP = this.race.time;
+        for (const c of cars) { const imp = crashCollide(pc[i], c); if (imp > 2 && c.isPlayer) { pc[i].pol.hitP = this.race.time;
           if (pc[i].pol.mode === 'chase' && pc[i].pol.kind !== 'moto') { this.rams++; if (!(pc[i].pol.cool > 0) && imp > 4) { this._event('ram', c.contactX, c.contactZ, pc[i]); this.st.eur += POL_EUR.ram; } pc[i].pol.cool = this.D.cool + this.R() * this.D.coolR; }
           else if (pc[i].pol.block && imp > 4) this.st.eur += POL_EUR.block; } }   // (after a knock it keeps its distance for a moment)
-        for (let j = i + 1; j < pc.length; j++) carCollide(pc[i], pc[j]);
+        for (let j = i + 1; j < pc.length; j++) crashCollide(pc[i], pc[j]);
         wallCollide(pc[i], T);
       }
     }
@@ -3186,7 +3301,7 @@ const Core = (function () {
   // the price of an upgrade from level `from` to level `to` (the levels in between too)
   const careerUpgPrice = (from, to) => { let p = 0; for (let l = from + 1; l <= to; l++) p += CAREER.upg[l] || 0; return p; };
 
-  return { G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, DRIVER_NAMES, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
+  return { crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, DRIVER_NAMES, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, CAREER, careerPrize, careerUpgPrice };
 })();
 
