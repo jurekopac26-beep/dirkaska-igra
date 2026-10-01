@@ -213,8 +213,11 @@
     const portrait = window.innerHeight > window.innerWidth;
     const inRace = bg === 'race' && (screen === 'none' || screen === 'pause');
     const mismatch = coarse && inRace && portrait !== wantPortrait();
-    const el = $('rotate');
+    const el = $('rotate'), CN = { iso: 'izometrična', chase: 'za avtom', kino: 'kino', cockpit: 'kokpit' };
     $('rotate-txt').textContent = wantPortrait() ? 'Obrni telefon v pokončni položaj' : 'Obrni telefon v ležeči položaj';
+    // (or keep it as it is: the camera for that way (Nastavitve, Kamera); the button switches to it)
+    $('rotate-why').textContent = 'Kamera »' + (CN[S.camera] || S.camera) + '« je za ' + (wantPortrait() ? 'pokončni' : 'ležeči') + ' položaj. Lahko pa igraš ' + (portrait ? 'pokončno s kamero za avtom.' : 'ležeče z izometrično kamero.');
+    $('rotate-cam').textContent = portrait ? 'Igraj pokončno' : 'Igraj ležeče';
     el.classList.toggle('to-portrait', wantPortrait());
     el.classList.toggle('show', mismatch);
     orientBlock = mismatch;
@@ -3123,6 +3126,7 @@
       case 'quali-go': newRace(); break;   // (the grid qualifying gave)
       case 'quali-skip': qual = null; newRace(); break;
       case 'resume': resume(); break;
+      case 'rot-cam': { const wasP = screen === 'pause'; setOption('camera', window.innerHeight > window.innerWidth ? 'chase' : 'iso'); Render.resetCam(); camLabel(); if (wasP && race && !orientBlock) resume(); break; }   // (the phone held the other way than the camera wants: the camera for the way it is held; "Igraj": on with the race)
       case 'restart': if (race && race.quali) newRace('quali'); else if (race && race.champ && race.player.finished) openChamp(); else newRace(); break;   // (qualifying: its lap again; a championship round already driven counts: on to the standings)
       case 'calibrate': Input.calibrate(); toast('Sredina nagiba je nastavljena.'); break;
       case 'tilt-invert': S.tiltInvert = S.tiltInvert ? 0 : 1; save(); applySettings(); break;

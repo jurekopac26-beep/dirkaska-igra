@@ -305,6 +305,8 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 #rotate .phone { width: 54px; height: 92px; border: 4px solid var(--chalk); border-radius: 10px; animation: rot 2.2s ease-in-out infinite; }
 @keyframes rot { 0%, 25% { transform: rotate(0); } 55%, 100% { transform: rotate(-90deg); } }
 #rotate.show { display: flex; }
+#rotate #rotate-why { font: 500 14px/1.4 var(--f-ui); font-style: normal; color: #c7d0e0; max-width: 34em; }   /* (why: the camera chosen is for the other way round; the button: the one for the way it is held) */
+#rotate #rotate-cam { margin-top: 6px; }
 #rotate.to-portrait .phone { animation-name: rotp; }
 @keyframes rotp { 0%, 25% { transform: rotate(-90deg); } 55%, 100% { transform: rotate(0); } }
 #toast { position: absolute; left: 50%; bottom: 22%; transform: translateX(-50%); z-index: 30; max-width: 80vw; padding: 10px 16px; border-radius: 10px; background: rgba(14,18,25,.92); border: 1px solid var(--panel-edge); font: 600 14px/1.35 var(--f-ui); text-align: center; opacity: 0; pointer-events: none; transition: opacity .25s; }
