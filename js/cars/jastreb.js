@@ -57,7 +57,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       regions: (std) => std.map(r => /^fender/.test(r.part) ? Object.assign({}, r, { x: [r.x[0], 2.6] }) : /^quarter/.test(r.part) ? Object.assign({}, r, { x: [-2.6, r.x[1]] })
         : r.part === 'trunk' ? Object.assign({}, r, { x: [-1.49, -0.73], bands: ['edge', 'crown'] }) : r),
       build(K) {
-        const P = K.paint, S = K.strp, B = K.black, CH = K.chrome, G = K.GLASS, D = [0.07, 0.07, 0.075], W = [0.95, 0.95, 0.93], SH = K.shade(P, 0.62);
+        const P = K.paint, S = K.strp, B = K.black, CH = K.chrome, G = K.GLASS, D = [0.07, 0.07, 0.075], W = [0.95, 0.95, 0.93], SH = K.shade(P, 0.62), COV = [0.2, 0.23, 0.28];
         // ---- the shell: the paint; the windscreen and the tailgate's glass; the sills a darker shade, black over the arches ----
         const L = K.loft(K.secs(K.body.secs), (k, e, kind, at) => {
           if (e === 0 || e === 8) return at.arch ? B : SH;
@@ -109,8 +109,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         }, { hinge: [[2.2, 0.3, -0.4], [2.2, 0.3, 0.4]] });
         for (const sd of [-1, 1]) {
           const s = sd < 0 ? 'L' : 'R';
-          DC.band([[1.86, 0.5], [1.97, 0.14], [2.08, 0.1], [2.12, 0.5], [2.08, 0.9], [1.97, 0.86]], [0.2, 0.23, 0.28], [sd], 0.008);   // the lamp's cover: a dark glass teardrop
-          K.headLamp(2.115, 0.565, sd * 0.43, 0.06, { host: 'fender' + s });
+          DC.band([[1.84, 0.5], [1.95, 0.14], [2.06, 0.1], [2.1, 0.5], [2.06, 0.9], [1.95, 0.86]], COV, [sd], 0.008);   // the lamp's cover: a dark glass teardrop on the wing's tip,
+          K.cyl([1.99, 0.57, sd * 0.5], [2.11, 0.57, sd * 0.5], 0.068, COV, { n: 10, capA: null, capB: null });            // its round front proud of the tip (the lamp's pod)
+          K.headLamp(2.112, 0.57, sd * 0.5, 0.058, { host: 'fender' + s });
         }
         // ---- the centre stripe (the stripe colour; the paint when the car has none) on along the roof and the tail's deck ----
         for (const [x0, x1] of [[-0.72, -0.17], [-2.2, -1.5]]) DC.top([[x0, -0.11], [x1, -0.11], [x1, 0.11], [x0, 0.11]], S, 0.007);
@@ -121,12 +122,20 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.rect(-2.228, 0.465, 0, 0.28, 0.1, [0.93, 0.93, 0.9], { dir: '-x' });
         });
         for (const sd of [-1, 1]) K.exhaust(-2.25, 0.25, sd * 0.07, 0.028, 0.3, { part: 'body' });
-        // ---- the cowl's three wipers ----
+        // ---- the windscreen's chrome frame (its top and its base, on the glass), the cowl's three wipers ----
+        for (const [x0, x1] of [[-0.158, -0.118], [0.318, 0.358]]) { const w = (x) => L.prop(x, 'wt') - 0.012, c = (x) => 0.38 * L.prop(x, 'wt');
+          for (const [f0, f1] of [[(x) => -w(x), (x) => -c(x)], [(x) => -c(x), c], [c, w]]) DC.top([[x0, f0(x0)], [x1, f0(x1)], [x1, f1(x1)], [x0, f1(x0)]], CH, 0.006); }   // (three flat pieces: the top's two edges and its crown)
         for (const z of [-0.42, -0.08, 0.26]) K.bar([0.4, 0.86, z - 0.13], [0.37, 0.87, z + 0.13], 0.008, B, { n: 4, part: 'body' });
         K.hinge('trunk', [-1.49, 0.895, 0.42], [-0.73, 1.168, 0.52]);
         // ---- inside (seen once a part is off): the bucket seats, the dashboard, the long six under the bonnet ----
         for (const sd of [-1, 1]) K.seat(-0.58, 0.33, sd * 0.33, { w: 0.46, l: 0.48, back: 0.56, tilt: 0.32 });
-        K.box(0.22, 0.52, 0, 0.24, 0.24, 1.3, 0, D, null, false, { inner: true, part: 'body' });
+        K.box(0.22, 0.52, 0, 0.24, 0.24, 1.3, 0, D, null, false, { inner: true, part: 'body' });                       // the dashboard,
+        K.box(-0.25, 0.17, 0, 1.1, 0.2, 0.24, 0, D, null, false, { inner: true, part: 'body' });                        // the gearbox's tunnel,
+        K.inner(() => K.part('body', () => {                                                                           // the wood-rimmed wheel (right-hand drive)
+          const C = [-0.08, 0.76, 0.33], r = 0.19, a = 0.42, pt = (t) => [C[0] - Math.sin(a) * Math.sin(t) * r, C[1] + Math.cos(a) * Math.sin(t) * r, C[2] + Math.cos(t) * r];
+          for (let i = 0; i < 6; i++) K.bar(pt(i * Math.PI / 3), pt((i + 1) * Math.PI / 3), 0.014, [0.42, 0.26, 0.13], { n: 3 });
+          K.bar([C[0] + 0.32, C[1] - 0.14, C[2]], C, 0.018, [0.55, 0.56, 0.58], { n: 4 });
+        }));
         K.engine(0.85, 0.28, 0, { l: 0.85, w: 0.46, h: 0.44, cover: [0.72, 0.73, 0.76] });
       },
     },
