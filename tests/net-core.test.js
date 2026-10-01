@@ -1,5 +1,6 @@
-// The friend's car in an online race (Core only, no browser): the race leaves it to the network, a collision moves only the
-// local car (the friend's phone moves the friend's car), and the finish order follows the times from both phones.
+// The friends' cars in an online race (Core only, no browser): the race leaves them to the network, a collision moves only the
+// local car (the friend's phone moves the friend's car), and the finish order follows the times from the phones. A room of four:
+// three friends' cars on their slots, two rows of two.
 //   node tests/net-core.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -64,6 +65,22 @@ check('finish: a repeated finish message changes nothing', r.remote.finishTime =
 r.netFinish(r.player, 60.7);   // my time measured on the shared clock replaces the local one, and the order follows it
 check('finish: my time on the shared clock replaces the local one, the order follows', r.player.finishTime === 60.7 && r.player.finishPos === 1 && r.remote.finishPos === 2 && r.finishOrder.length === 2,
   `player ${r.player.finishPos}. (${r.player.finishTime} s), friend ${r.remote.finishPos}. (${r.remote.finishTime} s)`);
+
+// 3. a race of four (a private room): the three friends' cars, each on its slot; two rows of two; none of them driven here; the
+// order of the finish from the four times
+{
+  const q = new C.Race(T, { numAI: 0, playerGrid: 3, laps: 1, phys: 'cs', playerModel: C.MODELS[0], seed: 3,
+    remote: [{ id: 'h', model: C.MODELS[1], num: 1, name: 'Ana', grid: 1 }, { id: 'g1', model: C.MODELS[2], num: 2, name: 'Bor', grid: 2 }, { id: 'g3', model: C.MODELS[3], num: 4, name: 'Dan', grid: 4 }] });
+  const R = q.remotes, byGrid = q.cars.slice().sort((a, b) => a.grid - b.grid);
+  check('four: the player and three friends, each friend on its slot with its id and number, the first of them the friend', q.cars.length === 4 && R.length === 3 && R.every(c => c.net) && q.remote === R[0] && q.player.grid === 3 &&
+    R.map(c => c.netOf.id + '@' + c.grid + '#' + c.num).join() === 'h@1#1,g1@2#2,g3@4#4', R.map(c => c.netOf.id + '@' + c.grid + '#' + c.num).join());
+  check('four: two rows of two (9 m and 16.5 m behind the line)', byGrid.map(c => c.dist).join() === '-9,-9,-16.5,-16.5', byGrid.map(c => c.dist).join());
+  q.start(); const xs = R.map(c => c.x + ',' + c.z);
+  for (let k = 0; k < 2 / DT; k++) { C.aiControl(q.player, q, DT); q.step(DT); }
+  check('four: none of the friends\' cars is driven here', R.every((c, i) => c.x + ',' + c.z === xs[i]), '');
+  q.netFinish(R[2], 61.5); q.netFinish(R[0], 60.2); q.netFinish(q.player, 60.9); q.netFinish(R[1], 62.0); q.step(DT);
+  check('four: the finish order from the four times', q.finishOrder.map(c => c.name).join() === 'Ana,TI,Dan,Bor' && q.order[0] === R[0] && q.player.finishPos === 2, q.finishOrder.map(c => c.name + ' ' + c.finishTime).join(', '));
+}
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
 process.exit(bad ? 1 : 0);

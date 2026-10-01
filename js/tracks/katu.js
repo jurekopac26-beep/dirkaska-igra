@@ -24,6 +24,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     id: 'katu', name: 'Katu-Jaryk', theme: 'katu', open: true, timeTrial: true, descent: true, laps: 1, halfWidth: 5.5,
     desc: 'Legendarni spust s prelaza Katu-Jaryk v Altaju (Rusija): kronometer po makadamu z roba Ulaganske planote po sedmih lasnicah in strmem prečenju pobočja nad kanjonom do reke Čulišman, 559 m niže. Naklon do 22 %, ni nasprotnikov, dirkaš proti uri.',
+    en: { name: 'Katu-Yaryk', desc: 'The legendary descent of the Katu-Yaryk pass in the Altai (Russia): a time trial on gravel from the edge of the Ulagan plateau down seven hairpins and a steep traverse above the canyon to the Chulyshman river, 559 m lower. Grades up to 22 %, no rivals, you race against the clock.' },   // (the English page: Jezik · Language)
     alt: [1242,683],
     start: [0,0], finish: [-102.6,-1455.5], cps: [[787.3,119.2],[977.4,127.2],[932.3,-288.8],[429.7,-967.9]],
     roadSurface: 'makadam', runoff: 0.55, inner: 3, side: 3.2, gradeForce: true, elevSmooth: 14,
