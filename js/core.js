@@ -736,6 +736,19 @@ const Core = (function () {
     const wr = M.redline * TAU / 60;
     M.Tmax = M.kw * 1000 / (wr * tqShape(1.0));
   }
+  // vehicle categories (CATS, in display order: car screen, garage, championship, online; within one: career price, then id). The 11
+  // vehicles above get theirs here; every registered vehicle (js/cars/<id>.js, see registerVehicles) names its own
+  const CATS = [
+    { id: 'mali', name: 'Mali avti' }, { id: 'sportni', name: 'Športni' }, { id: 'super', name: 'Superšportni' }, { id: 'klasika', name: 'Klasika' },
+    { id: 'reli', name: 'Reli' }, { id: 'teren', name: 'Terenski' }, { id: 'dirkalni', name: 'Dirkalni' }, { id: 'tovornjaki', name: 'Tovornjaki' },
+    { id: 'elektricni', name: 'Električni' }, { id: 'posebni', name: 'Posebni' },
+  ];
+  { const C0 = { pico: 'mali', p206: 'mali', kaze: 'sportni', vortex: 'sportni', strega: 'super', rally: 'reli', formula: 'dirkalni', lm: 'dirkalni', muscle: 'klasika', ev: 'elektricni', truck: 'teren' };
+    for (const M of MODELS) M.cat = C0[M.id]; }   // (not a Car field: the golden digests never see a model's own keys)
+  // the engine sound presets a vehicle may name (def.snd.kind; Sfx implements every one): straight 2-6, flat 4 / 6, rotary, V8 (cross-plane),
+  // v8fp flat-plane, v8hi 1960s high-revving, v8s supercharged methanol (blower whine), V10, V12, i8s 1930s supercharged straight-8, diesel,
+  // kart2t two-stroke kart, hybrid (V8 + motor whine), ev (motors only)
+  const SND_KINDS = ['i2', 'i3', 'i4', 'i5', 'i6', 'flat4', 'flat6', 'rotary', 'v8', 'v8fp', 'v8hi', 'v8s', 'v10', 'v12', 'i8s', 'diesel', 'kart2t', 'hybrid', 'ev'];
 
   // assist presets
   const ASSISTS = [
@@ -745,6 +758,9 @@ const Core = (function () {
   ];
 
   const FLAT = { tr: 0.6, c0: 2.6, c1: 0.03 };   // a flat tyre (Car.flat, bit k: wheel k; the police's spike strips): its share of the grip, the drag of the rim on the road
+  // a wheel knocked off (a kit vehicle, Car.wreck.wl bit k): like a flat tyre, a little worse (the hub on the road), through the same
+  // per-wheel share and drag; any two gone still leave every vehicle >= 40 km/h on flat asphalt (fleet.test), so it limps to the pits
+  const LOSTW = { tr: 0.55, c0: 2.0, c1: 0.03 };
   const LOOSE = [0, 0, 1, 1, 0, 1];     // grass, gravel, makadam: where a car on slicks (model.loose) has only that share of its grip
   // rain: the grip left on a wet track (x every surface's grip: cornering and traction; the brakes keep 0.55 + 0.45 x of theirs).
   // Less grip also means bigger, lazier slides (as on the loose surfaces)
@@ -958,6 +974,20 @@ const Core = (function () {
       this.corners = [[b.len * 0.5, -b.wid * 0.5], [b.len * 0.5, b.wid * 0.5], [-b.len * 0.5, -b.wid * 0.5], [-b.len * 0.5, b.wid * 0.5]];
       this.circles = [-b.len * 0.3, 0, b.len * 0.3];
       this.rad = b.wid * 0.5 + 0.02;
+      // a registered vehicle (model.kit): its contact circles end at its bumpers, n of them evenly spaced (no more than 0.9 rad apart, so
+      // the waist between two is >= 0.8 rad; model.circ: a count of its own)
+      if (b.kit) {
+        const r = this.rad, sp = Math.max(0, b.len - 2 * r), n = b.circ || Math.max(3, Math.ceil(sp / (0.9 * r)) + 1);
+        this.circles = []; for (let i = 0; i < n; i++) this.circles.push(-sp / 2 + sp * i / (n - 1));
+      }
+      // a vehicle that breaks apart (kitParts: a part table with wheels, every registered one; one of the 11 once a patch def gives it one):
+      // its destruction state, nested (golden digests hash only plain fields): wl lost wheels (bit k = wheel k), nL their count, fix a
+      // counter bumped by every marshals' refit of lost wheels (a partial repair: the renderer and the commentator drop their lost-wheel
+      // latches when it changes; a full repair bumps repairN), seq the wreck's parts still to shed (st: s to the next one, at: the race
+      // time it began), dnf retired (dnfT when, side: the run-off it pulls onto, stop: standing there, cr: s spent short of it, crawling or
+      // knocked back onto the asphalt: the marshals move it after 8), hold: s left waiting for the marshals to refit its wheels, lt: s since
+      // a wheel came off
+      if (kitParts(b)) this.wreck = wreck0({});
     }
 
     get speed() { return Math.hypot(this.vx, this.vz); }
@@ -998,13 +1028,15 @@ const Core = (function () {
       for (let k = 0; k < 4; k++) {
         const wx = this.x + wpos[k][0] * ch - wpos[k][1] * sh, wz = this.z + wpos[k][0] * sh + wpos[k][1] * ch;
         const q = trk.query(wx, wz, this.wq[k].i >= 0 ? this.wq[k].i : this.q.i, this.wq[k]);
-        const sf = trk.surface(q), off = LOOSE[sf] && !(this.inPit && M.loose > 1), fl = this.flat & (1 << k); this.ws[k] = sf; const S = CSSURF[sf], lk = (M.loose && off ? M.loose : 1) * (fl ? FLAT.tr : 1), tr = S.tr * lk, lt = S.lat * lk;   // (slicks on loose ground; a flat tyre)
+        const sf = trk.surface(q), off = LOOSE[sf] && !(this.inPit && M.loose > 1), fl = this.flat & (1 << k), wl = this.wreck ? this.wreck.wl & (1 << k) : 0; this.ws[k] = sf;
+        const S = CSSURF[sf], lk = (M.loose && off ? M.loose : 1) * (wl ? LOSTW.tr : fl ? FLAT.tr : 1), tr = S.tr * lk, lt = S.lat * lk;   // (slicks on loose ground; a flat tyre; a wheel knocked off: the hub)
         muSum += tr; if (k < 2) muF += tr * 0.5; else muR += tr * 0.5; if (sf === 1) curb++;
         const ld = M.looseDrag && off ? M.looseDrag : 1;   // (the truck: the loose ground holds it back less. Its pit lane is paved, not loose ground: there it is as every car)
-        const c0 = fl ? S.c0 * ld + FLAT.c0 : S.c0 * ld, c1 = fl ? S.c1 * ld + FLAT.c1 : S.c1 * ld;   // (a flat tyre's drag: the tyre's, not the ground's)
+        const c0 = wl ? S.c0 * ld + LOSTW.c0 : fl ? S.c0 * ld + FLAT.c0 : S.c0 * ld, c1 = wl ? S.c1 * ld + LOSTW.c1 : fl ? S.c1 * ld + FLAT.c1 : S.c1 * ld;   // (a flat tyre's drag: the tyre's, not the ground's)
         const dk = (c0 * Math.min(1, spd / 3) + c1 * spd) * 0.25, lw = 0.5 * (1 + ldK * sgO * (k & 1 ? -1 : 1));   // (k odd: +lateral side = inner in a + turn)
         dragC0 += c0 * 0.25; dragC1 += c1 * 0.25;
-        if (k < 2) { latF += lt * 0.5; latFw += lt * lw; } else { latB += lt * 0.5; latBw += lt * lw; }
+        const ltw = wl ? lt / LOSTW.tr : lt;   // (a wheel knocked off costs grip, but it is no surface edge: no edge kick from it)
+        if (k < 2) { latF += lt * 0.5; latFw += ltw * lw; } else { latB += lt * 0.5; latBw += ltw * lw; }
         if (k & 1) dragP += dk; else dragN += dk;
       }
       this.onCurb = curb;
@@ -1034,6 +1066,7 @@ const Core = (function () {
       } else if (this.inBrk > 0.1 && this.inThr < 0.1 && vl < 0.6 && !this.locked && !this.noReverse && !this.revNo) {
         this.revHold += dt; if (this.revHold > 0.3) { this.gear = -1; this.revHold = 0; }
       } else this.revHold = 0;
+      if (M.vLim && this.gear > 0) thr *= clamp((M.vLim / 3.6 - vl) / 0.6, 0, 1);   // a speed limiter (model.vLim, km/h: the racing truck's 160): the throttle fades over the last 0.6 m/s
       let F = 0; const eff = 0.88;
       if (this.gear > 0) {
         const gr = M.gears[this.gear - 1] * M.final;
@@ -1062,7 +1095,7 @@ const Core = (function () {
       if (this.shiftT > 0) this.shiftT -= dt;
       if (this.locked) this.rpmTarget = M.ev ? 0 : M.idle + (M.redline * 0.88 - M.idle) * this.inThr;   // (on the grid: revving, but not an electric motor)
       if (!grounded) F = 0;
-      const share = M.drive === 'AWD' ? 0.68 : M.drive === 'FF' ? 0.6 : 0.55;
+      const share = M.drive === 'AWD' ? 0.68 : M.drive === 'FF' ? 0.6 : M.drive === 'RR' ? 0.62 : 0.55;   // (RR: the engine over the driven wheels)
       const Fdmax = this.tracG * G * m * share * muDrv * (0.42 + 0.58 * sstep(0.5, 9, Math.abs(vl))) * (M.aero ? 1 + this.aeroK * spd * spd : 1);   // (the formula's wings press the driven wheels down too)
       let spin = 0;
       if (Math.abs(F) > Fdmax) { spin = Math.abs(F) / Fdmax - 1; F = Math.sign(F) * Fdmax; }
@@ -1185,6 +1218,13 @@ const Core = (function () {
 
     step(dt, trk) { return this.stepCS(dt, trk); }
   }
+  // a breakable vehicle's destruction state as new (Car.wreck; repairCar: all but the retirement and the refit counter)
+  const wreck0 = (W) => Object.assign(W, { wl: 0, nL: 0, fix: W.fix || 0, seq: null, st: 0, at: null, hold: 0, lt: 0, dnf: !!W.dnf, dnfT: W.dnfT != null ? W.dnfT : null, side: W.side || 0,
+    stop: !!W.stop, cr: W.cr || 0 });
+  const dnf = (c) => !!(c.wreck && c.wreck.dnf);   // out of the race (Odstop, see Race.retire)
+  // a model whose part table has wheels (model.parts: every registered vehicle's; one of the 11 only once a patch def gives it a table):
+  // its wheels come off and it drives on the hub, a wreck sheds what still hangs on, an AI one retires (the 11 without one: as always)
+  const kitParts = (M) => !!(M && M.parts && M.parts.wheelFL);
 
   /* ---------------------------------------------------------------------
      COLLISIONS
@@ -1195,28 +1235,53 @@ const Core = (function () {
   function applyDamage(c, amt, lx, lz) {
     if (!c.dmgMode || !(amt > 0)) return;
     if (c.dmgK) amt *= c.dmgK;   // (the run from the police: the patrol cars' reinforced bumpers, the player's car a little tougher)
+    if (c.m.dmgK) amt *= c.m.dmgK;   // (a vehicle's own toughness, model.dmgK: a truck's frame, a kart's tubes)
     c.dmg = Math.min(1, c.dmg + amt);
-    if (lx == null) { for (let k = 0; k < 4; k++) c.dz[k] = Math.min(1, c.dz[k] + amt * 0.6); c.roofDmg = Math.max(c.roofDmg, clamp((c.dmg - 0.4) / 0.55, 0, 1)); return; }
-    const hl = c.m.len * 0.5, hw = c.m.wid * 0.5;
+    if (lx == null) { for (let k = 0; k < 4; k++) c.dz[k] = Math.min(1, c.dz[k] + amt * 0.6); c.roofDmg = Math.max(c.roofDmg, clamp((c.dmg - 0.4) / 0.55, 0, 1)); if (c.wreck) wreckCheck(c); return; }
+    const M = c.m, hl = M.len * 0.5, hw = M.wid * 0.5;
     const zone = Math.abs(lx) / hl >= Math.abs(lz) / hw ? (lx >= 0 ? 0 : 1) : (lz < 0 ? 2 : 3);
     c.dz[zone] = Math.min(1, c.dz[zone] + amt * 1.7);
     if (c.dents.length < 24) c.dents.push({ lx, lz, amt });
-    // corner damage (FL, FR, RL, RR): a solid hit on a corner breaks that corner's light
-    const kx = [hl, hl, -hl, -hl], kz = [-hw, hw, -hw, hw];
-    for (let k = 0; k < 4; k++) { const wg = Math.max(0, 1 - Math.hypot(lx - kx[k], lz - kz[k]) / 1.6); c.cd[k] = Math.min(1, c.cd[k] + amt * wg * 1.8); if (c.cd[k] >= 0.16) c.lightOut[k] = 1; }
+    // corner damage (FL, FR, RL, RR): a solid hit on a corner breaks that corner's light (a breakable vehicle, kitParts: the reach of a
+    // hit grows with its length, so the wheels of a long one, far in from its corners, still feel it)
+    const kx = [hl, hl, -hl, -hl], kz = [-hw, hw, -hw, hw], fo = kitParts(M) ? 1.6 * clamp(M.len / 4.4, 1, 1.5) : 1.6;
+    for (let k = 0; k < 4; k++) { const wg = Math.max(0, 1 - Math.hypot(lx - kx[k], lz - kz[k]) / fo); c.cd[k] = Math.min(1, c.cd[k] + amt * wg * 1.8); if (c.cd[k] >= 0.16) c.lightOut[k] = 1; }
     // windows shatter when their side of the car is badly hit (all of them in a total wreck); the roof sags as the car gets battered
     const WIN = [0.55, 0.55, 0.42, 0.42];
     for (let k = 0; k < 4; k++) if (!c.winOut[k] && (c.dz[k] >= WIN[k] || c.dmg >= 0.92)) c.winOut[k] = 1;
     c.roofDmg = Math.max(c.roofDmg, clamp((c.dmg - 0.4) / 0.55, 0, 1));
-    // body parts come off once their area is damaged enough
-    for (const name in PARTS) {
+    // body parts come off once their area is damaged enough (a corner part also from its corner); a wheel (a part table with wheels,
+    // kitParts) only in a heavy crash with damage on (dmgMode 2): its corner crushed (cd >= 0.7) and the car three quarters destroyed
+    const PT = partsOf(M);
+    for (const name in PT) {
       if (c.lost[name]) continue;
-      const P = PARTS[name];
-      if (c.dz[P.z] >= P.th || (P.corner != null && c.cd[P.corner] >= 0.55)) {
-        c.lost[name] = 1; c.detach.push(name);
-        if (c.aeroK0 != null && WING[name]) c.aeroK = Math.max(0, c.aeroK - c.m.aero * WING[name]);   // the formula: a wing gone, its downforce with it
-      }
+      const P = PT[name];
+      if (P.wh != null ? c.dmgMode === 2 && c.cd[P.wh] >= 0.7 && c.dmg >= 0.75 : c.dz[P.z] >= P.th || (P.corner != null && c.cd[P.corner] >= (P.cth || 0.55))) detachPart(c, name, P);
     }
+    if (c.wreck) wreckCheck(c);
+  }
+  // a part comes off: lost, onto the race's debris list (Race.step), its share of the downforce with it (P.df; a model with the 8 old
+  // parts: the WING table, the formula's wings are its bumper parts), a wheel into the wheel bits (stepCS: the hub on the road)
+  function detachPart(c, name, P) {
+    P = P || partsOf(c.m)[name];
+    c.lost[name] = 1; c.detach.push(name);
+    const df = P.df != null ? P.df : c.m.parts ? 0 : WING[name];
+    if (c.aeroK0 != null && df) c.aeroK = Math.max(0, c.aeroK - c.m.aero * df);   // the formula: a wing gone, its downforce with it
+    if (P.wh != null && c.wreck) { c.wreck.wl |= 1 << P.wh; c.wreck.nL++; c.wreck.lt = 0; }
+  }
+  // the wreck (breakable vehicles, kitParts; from both of applyDamage's paths): from dmg 0.96 the car sheds what still hangs on, one part every 0.4 s
+  // (Race._wreckStep): the bonnet (or its cover), the boot (tailgate), both bumpers and the wing, whatever their zone, the most battered
+  // zone's first (ties: in that order), and the wheel at the most damaged corner when that corner is crushed (cd >= 0.4; dmgMode 2)
+  const WRECK_SEQ = [['hood', 'cover'], ['trunk', 'tailgate'], ['bumperF'], ['bumperR'], ['wing']];
+  function wreckCheck(c) {
+    const W = c.wreck;
+    if (W.seq || c.dmg < 0.96 || !kitParts(c.m)) return;
+    const PT = partsOf(c.m), L = [];
+    for (const alt of WRECK_SEQ) { const n = alt.find(a => PT[a]); if (n && !c.lost[n]) L.push(n); }
+    if (c.dmgMode === 2) { let k = 0; for (let j = 1; j < 4; j++) if (c.cd[j] > c.cd[k]) k = j; const n = WHEELS[k]; if (c.cd[k] >= 0.4 && PT[n] && !c.lost[n]) L.push(n); }
+    const dzOf = (n) => c.dz[PT[n].z];
+    W.seq = L.map((n, i) => [n, i]).sort((a, b) => dzOf(b[0]) - dzOf(a[0]) || a[1] - b[1]).map(e => e[0]);
+    W.st = 0;
   }
   const WING = { bumperF: 0.5, bumperR: 0.4 };   // (the formula's front and rear wings are its bumper parts: their share of the downforce)
   // detachable parts: damage zone + threshold, mass (kg), collision radius, thickness, local position (fraction of half length/width), height
@@ -1230,6 +1295,120 @@ const Core = (function () {
     hood:    { z: 0, th: 0.78, m: 14, r: 0.8, h: 0.07, lx: 0.62, lz: 0, y: 0.9 },
     trunk:   { z: 1, th: 0.78, m: 11, r: 0.7, h: 0.07, lx: -0.7, lz: 0, y: 0.9 },
   };
+  const partsOf = (M) => M.parts || PARTS;   // a model's part table: a registered vehicle's own (model.parts), else the 8 above
+  // ---- a registered vehicle's parts (model.parts), expanded from its def's parts = { set, ht, y0, drop, over, extra } ----
+  // set: 'car' (bumpers, bonnet, boot, front fenders, rear quarters, doors, mirrors, the four wheels), 'race' (the car's and a rear
+  // wing), 'open' (the car's: a roadster, no roof to lose), 'truck' (bumpers, doors, mirrors, wheels: a cab; its other panels are
+  // extras), 'none' (the wheels only: karts, open-wheelers, buggies, a monster truck's shell; everything else extras). drop: standard
+  // ids taken out of the set; extra: { id: entry } more parts (a standard id: its standard entry, the given keys over it; another id,
+  // /^[a-z][A-Za-z0-9]{1,15}$/: every key of an entry); over: { id: keys } changes to any of them. An entry:
+  //   z  zone (0 front, 1 rear, 2 left, 3 right), th: off when the zone's damage reaches it; corner / cth: also when that corner's
+  //      (FL FR RL RR) damage reaches cth
+  //   m  a gameplay mass (<= 14, not kg: how hard a car running over it is knocked, debrisHit), r its radius lying on the road (rW: r =
+  //      rW x the vehicle's width), h its thickness
+  //   lx / lz where it sits (a fraction of the half length / half width; 'a' / 'b': over the front / rear axle): the debris starts
+  //      there, y = y0 + f (ht - y0) up (y0 the sill or ride height, ht the body's height; or y in metres)
+  //   df the share of model.aero it takes with it (0 unless set; an aero vehicle's wing .55 and front bumper / splitter .3 by default)
+  // The standard entries:
+  //   id          z    th    corner cth   m    r         h     lx       lz      f
+  //   bumperF     0    .50   -      -     7    .42 wid   .16   1.0      0       .12
+  //   bumperR     1    .50   -      -     7    .42 wid   .16   -1.0     0       .12
+  //   hood        0    .78   -      -     14   .45 wid   .07   .58      0       .55
+  //   trunk       1    .78   -      -     11   .39 wid   .07   -.70     0       .55
+  //   fenderL/R   2/3  .60   FL/FR  .55   5    .55       .06   a        -1/+1   .32
+  //   quarterL/R  2/3  .62   RL/RR  .58   5    .55       .06   b        -1/+1   .32
+  //   doorL/R     2/3  .72   -      -     9    .6        .08   .04      -1/+1   .38
+  //   mirrorL/R   2/3  .35   -      -     1    .2        .1    .2       -1.1/+1.1 .62
+  //   wing        1    .55   -      -     6    .33 wid   .08   -.92     0       .82
+  //   wheelFL..RR 0/1  (wh)  -      -     20 rw (4..14)  rw (radius)  .75 rw (.12-.6)  a / b  -/+.86  y = rw
+  // A wheel (wh: its index, 0 FL 1 FR 2 RL 3 RR) comes off only with damage on (dmgMode 2), its corner crushed (cd >= 0.7) and the car
+  // three quarters destroyed (dmg >= 0.75), or as the last of a wreck's parts (wreckCheck); then it drives on the hub (LOSTW)
+  const PART_STD = {
+    bumperF: { z: 0, th: 0.5, m: 7, rW: 0.42, h: 0.16, lx: 1.0, lz: 0, f: 0.12 },
+    bumperR: { z: 1, th: 0.5, m: 7, rW: 0.42, h: 0.16, lx: -1.0, lz: 0, f: 0.12 },
+    hood: { z: 0, th: 0.78, m: 14, rW: 0.45, h: 0.07, lx: 0.58, lz: 0, f: 0.55 },
+    trunk: { z: 1, th: 0.78, m: 11, rW: 0.39, h: 0.07, lx: -0.7, lz: 0, f: 0.55 },
+    fenderL: { z: 2, th: 0.6, corner: 0, cth: 0.55, m: 5, r: 0.55, h: 0.06, lx: 'a', lz: -1, f: 0.32 },
+    fenderR: { z: 3, th: 0.6, corner: 1, cth: 0.55, m: 5, r: 0.55, h: 0.06, lx: 'a', lz: 1, f: 0.32 },
+    quarterL: { z: 2, th: 0.62, corner: 2, cth: 0.58, m: 5, r: 0.55, h: 0.06, lx: 'b', lz: -1, f: 0.32 },
+    quarterR: { z: 3, th: 0.62, corner: 3, cth: 0.58, m: 5, r: 0.55, h: 0.06, lx: 'b', lz: 1, f: 0.32 },
+    doorL: { z: 2, th: 0.72, m: 9, r: 0.6, h: 0.08, lx: 0.04, lz: -1, f: 0.38 },
+    doorR: { z: 3, th: 0.72, m: 9, r: 0.6, h: 0.08, lx: 0.04, lz: 1, f: 0.38 },
+    mirrorL: { z: 2, th: 0.35, m: 1, r: 0.2, h: 0.1, lx: 0.2, lz: -1.1, f: 0.62 },
+    mirrorR: { z: 3, th: 0.35, m: 1, r: 0.2, h: 0.1, lx: 0.2, lz: 1.1, f: 0.62 },
+    wing: { z: 1, th: 0.55, m: 6, rW: 0.33, h: 0.08, lx: -0.92, lz: 0, f: 0.82 },
+    wheelFL: { wh: 0 }, wheelFR: { wh: 1 }, wheelRL: { wh: 2 }, wheelRR: { wh: 3 },
+  };
+  const WHEELS = ['wheelFL', 'wheelFR', 'wheelRL', 'wheelRR'];
+  const PART_SETS = { car: ['bumperF', 'bumperR', 'hood', 'trunk', 'fenderL', 'fenderR', 'quarterL', 'quarterR', 'doorL', 'doorR', 'mirrorL', 'mirrorR'], truck: ['bumperF', 'bumperR', 'doorL', 'doorR', 'mirrorL', 'mirrorR'], none: [] };
+  PART_SETS.race = PART_SETS.car.concat(['wing']); PART_SETS.open = PART_SETS.car.slice();
+  for (const k in PART_SETS) PART_SETS[k] = PART_SETS[k].concat(WHEELS);
+  const PART_KEYS = ['z', 'th', 'corner', 'cth', 'm', 'r', 'rW', 'h', 'lx', 'lz', 'f', 'y', 'df'];
+  // an entry's problems ('' when fine); full: every key a part needs is there (an extra that is not a standard id)
+  function partBad(e, full) {
+    if (!e || typeof e !== 'object') return 'not an object';
+    for (const k in e) if (PART_KEYS.indexOf(k) < 0) return 'unknown key ' + k; else if (!(Number.isFinite(e[k]) || ((k === 'lx') && (e[k] === 'a' || e[k] === 'b')))) return k + ' not a number';
+    const has = (k) => e[k] != null;
+    if (full) for (const k of ['z', 'th', 'm', 'h', 'lx', 'lz']) if (!has(k)) return 'missing ' + k;
+    if (full && !has('r') && !has('rW')) return 'missing r';
+    if (full && !has('f') && !has('y')) return 'missing f (or y)';
+    if (has('z') && [0, 1, 2, 3].indexOf(e.z) < 0) return 'z not 0..3';
+    if (has('corner') && [0, 1, 2, 3].indexOf(e.corner) < 0) return 'corner not 0..3';
+    for (const [k, lo, hi] of [['th', 0.05, 1], ['cth', 0.05, 1], ['m', 0.1, 14], ['r', 0.05, 2], ['rW', 0.02, 0.8], ['h', 0.01, 1.5], ['f', 0, 1.3], ['y', 0, 4], ['df', 0, 1]]) if (has(k) && !(e[k] >= lo && e[k] <= hi)) return k + ' not ' + lo + '..' + hi;
+    for (const k of ['lx', 'lz']) if (has(k) && typeof e[k] === 'number' && Math.abs(e[k]) > 1.4) return k + ' beyond 1.4';
+    if (full && has('cth') && !has('corner')) return 'cth without a corner';
+    return '';
+  }
+  // the def's part spec -> its entries before they are resolved (id -> keys): the set less drop, the extras (a standard id: its standard
+  // entry with the given keys over it), then over; a key given takes the place of its alternative (r / rW, f / y)
+  function mergeParts(sp) {
+    const raw = {}, put = (e, o) => { if (o.r != null) delete e.rW; if (o.rW != null) delete e.r; if (o.f != null) delete e.y; if (o.y != null) delete e.f; return Object.assign(e, o); };
+    for (const id of PART_SETS[sp.set]) if (!(sp.drop || []).includes(id)) raw[id] = Object.assign({}, PART_STD[id]);
+    for (const id in sp.extra || {}) raw[id] = put(Object.assign({}, PART_STD[id] || {}), sp.extra[id] === true ? {} : sp.extra[id]);
+    for (const id in sp.over || {}) put(raw[id], sp.over[id]);
+    return raw;
+  }
+  // the def's part spec -> the table (name -> { z, th, corner?, cth?, m, r, h, lx, lz, y, df?, wh? }); ph: the vehicle's physics
+  function expandParts(sp, ph) {
+    const hl = ph.len / 2, out = {}, res = (e) => {
+      const o = { z: e.z, th: e.th }; if (e.corner != null) { o.corner = e.corner; o.cth = e.cth || 0.55; }
+      o.m = e.m; o.r = e.r != null ? e.r : e.rW * ph.wid; o.h = e.h; o.lx = e.lx === 'a' ? ph.a / hl : e.lx === 'b' ? -ph.b / hl : e.lx; o.lz = e.lz;
+      o.y = e.y != null ? e.y : sp.y0 + e.f * (sp.ht - sp.y0); if (e.df != null) o.df = e.df; return o;
+    };
+    const wheel = (k) => ({ wh: k, z: k < 2 ? 0 : 1, th: 1, m: clamp(Math.round(20 * ph.rw), 4, 14), r: ph.rw, h: clamp(0.75 * ph.rw, 0.12, 0.6), lx: (k < 2 ? ph.a : -ph.b) / hl, lz: k & 1 ? 0.86 : -0.86, y: ph.rw });
+    const raw = mergeParts(sp);
+    for (const id in raw) { const e = raw[id]; if (e.wh != null) { out[id] = wheel(e.wh); if (e.m != null) out[id].m = e.m; } else out[id] = res(e); }
+    if (ph.aero) { if (out.wing && out.wing.df == null) out.wing.df = 0.55; if (out.bumperF && out.bumperF.df == null) out.bumperF.df = 0.3; }
+    return out;
+  }
+  // the problems of a def's part spec ('' when fine)
+  function partsBad(sp) {
+    if (!sp || typeof sp !== 'object') return 'parts missing';
+    for (const k in sp) if (['set', 'ht', 'y0', 'drop', 'over', 'extra'].indexOf(k) < 0) return 'parts: unknown key ' + k;
+    if (!PART_SETS[sp.set]) return 'parts.set not one of ' + Object.keys(PART_SETS).join(' ');
+    if (!(sp.ht > 0.4 && sp.ht <= 4)) return 'parts.ht not 0.4..4';
+    if (!(sp.y0 >= 0 && sp.y0 < sp.ht)) return 'parts.y0 not 0..ht';
+    const ids = PART_SETS[sp.set].slice();
+    if (sp.drop != null) { if (!Array.isArray(sp.drop)) return 'parts.drop not a list'; for (const id of sp.drop) if (ids.indexOf(id) < 0 || WHEELS.indexOf(id) >= 0) return 'parts.drop: ' + id + ' not a (non-wheel) part of the set'; }
+    const live = ids.filter(id => (sp.drop || []).indexOf(id) < 0);
+    if (sp.extra != null) for (const id in sp.extra) {
+      if (!/^[a-z][A-Za-z0-9]{1,15}$/.test(id)) return 'parts.extra: bad id ' + id;
+      if (live.indexOf(id) >= 0) return 'parts.extra: ' + id + ' already in the set';
+      if (PART_STD[id] && PART_STD[id].wh != null) return 'parts.extra: ' + id + ' (the wheels are in every set)';
+      if (sp.extra[id] === true && !PART_STD[id]) return 'parts.extra.' + id + ': true only for a standard part (another needs its entry)';
+      const why = sp.extra[id] === true ? '' : partBad(sp.extra[id], !PART_STD[id]); if (why) return 'parts.extra.' + id + ': ' + why;
+      live.push(id);
+    }
+    if (sp.over != null) for (const id in sp.over) {
+      if (live.indexOf(id) < 0) return 'parts.over: ' + id + ' not a part';
+      const why = partBad(sp.over[id], false); if (why) return 'parts.over.' + id + ': ' + why;
+      if (WHEELS.indexOf(id) >= 0 && sp.over[id] && Object.keys(sp.over[id]).some(k => k !== 'm')) return 'parts.over.' + id + ': a wheel takes only m (its place and size are the physics\' a / b / rw)';
+    }
+    // every entry as it will be used: complete and sound (nothing the expansion would drop or guess)
+    const raw = mergeParts(sp);
+    for (const id in raw) if (raw[id].wh == null) { const why = partBad(raw[id], true); if (why) return 'parts.' + id + ': ' + why; }
+    return '';
+  }
 
   // ---- debris lying on the road: flies off, tumbles, slides, rests; cars hitting it knock it away ----
   const relaxAng = (a, dt) => { const t = Math.round(a / Math.PI) * Math.PI; return a + (t - a) * Math.min(1, dt * 8); };
@@ -1269,10 +1448,10 @@ const Core = (function () {
     d.yaw += d.wy * dt;
   }
   function debrisHit(c, d) {
-    const dx = d.x - c.x, dz = d.z - c.z;
-    if (dx * dx + dz * dz > 16 || d.y - (c.y || 0) > 1.3) return;
+    const dx = d.x - c.x, dz = d.z - c.z, R = c.circles[c.circles.length - 1] + c.rad + d.r * 0.7 + 0.1;   // (beyond the car's reach: nothing to touch)
+    if (dx * dx + dz * dz > R * R || d.y - (c.y || 0) > 1.3) return;
     const ch = Math.cos(c.h), sh = Math.sin(c.h);
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < c.circles.length; i++) {
       const ax = c.x + ch * c.circles[i], az = c.z + sh * c.circles[i];
       const ex = d.x - ax, ez = d.z - az, r = c.rad + d.r * 0.7, e2 = ex * ex + ez * ez;
       if (e2 >= r * r) continue;
@@ -1336,11 +1515,11 @@ const Core = (function () {
     if (vrel > 1.5 && (!c.propSnd || vrel > c.propSndV)) { c.propSnd = kind; c.propSndV = vrel; }
   }
   function propCarHit(race, c, b) {
-    const K = b.K, dx = b.x - c.x, dz = b.z - c.z;
-    if (dx * dx + dz * dz > 20) return;
+    const K = b.K, dx = b.x - c.x, dz = b.z - c.z, R = c.circles[c.circles.length - 1] + c.rad + K.rh + 0.1;   // (beyond the car's reach)
+    if (dx * dx + dz * dz > R * R) return;
     const cy = c.y || 0; if (b.y - K.rb > cy + 1.3 || b.y + K.rb < cy + 0.05) return;
     const ch = Math.cos(c.h), sh = Math.sin(c.h);
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < c.circles.length; i++) {
       const ax = c.x + ch * c.circles[i], az = c.z + sh * c.circles[i], ex = b.x - ax, ez = b.z - az, r = c.rad + K.rh, e2 = ex * ex + ez * ez;
       if (e2 >= r * r) continue;
       const e = Math.sqrt(e2) || 0.01, nx = ex / e, nz = ez / e;
@@ -1482,13 +1661,13 @@ const Core = (function () {
   }
 
   function carCollide(a, b) {
-    const dx0 = b.x - a.x, dz0 = b.z - a.z;
-    if (dx0 * dx0 + dz0 * dz0 > 49) return 0;
+    const dx0 = b.x - a.x, dz0 = b.z - a.z, R = a.circles[a.circles.length - 1] + a.rad + b.circles[b.circles.length - 1] + b.rad + 0.1;   // (the two cars' reach)
+    if (dx0 * dx0 + dz0 * dz0 > R * R) return 0;
     const cha = Math.cos(a.h), sha = Math.sin(a.h), chb = Math.cos(b.h), shb = Math.sin(b.h);
     let best = 0, bnx = 0, bnz = 0, bpx = 0, bpz = 0;
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < a.circles.length; i++) {
       const ax = a.x + cha * a.circles[i], az = a.z + sha * a.circles[i];
-      for (let j = 0; j < 3; j++) {
+      for (let j = 0; j < b.circles.length; j++) {
         const bx = b.x + chb * b.circles[j], bz = b.z + shb * b.circles[j];
         const dx = ax - bx, dz = az - bz; const d2 = dx * dx + dz * dz;
         const r = a.rad + b.rad;
@@ -1547,7 +1726,7 @@ const Core = (function () {
         if (gap < -4 || gap > 22) continue;
         const lat = o.q.d - q.d;
         const closing = v - Math.max(0, o.vl);
-        if (gap > 0 && Math.abs(lat) < 3.2 && (closing > -1 || gap < 7) && gap < tgap) { threat = o; tgap = gap; }
+        if (gap > 0 && Math.abs(lat) < (M.aiLat || 3.2) && (closing > -1 || gap < 7) && gap < tgap) { threat = o; tgap = gap; }   // (M.aiLat: a wide vehicle sees a car further to its side as in its way)
       }
       c.aiThreat = threat; c.aiGap = tgap;
       if (race.tf) { const P = race.tf.aiPlan(c, v, _tfv); c.tfLo = P.lo; c.tfHi = P.hi; c.tfFol = P.fol; c.tfEdge = P.edge; }   // the open road: the corridor between the traffic, or behind it
@@ -1608,11 +1787,12 @@ const Core = (function () {
     if (c.upgGrip) vT *= Math.pow(c.upgGrip * (1 + c.aeroK * vT * vT), 0.25);   // upgraded tyres / aero: carry more speed through the corners (half the grip gain: safe for every car)
     if (race.wst && race.wst.tyres && c.ty) vT *= Math.sqrt(clamp(c.wet / race.wst.profW, 0.5, 1.4));   // its own tyres (and their wear) against the grip the profile assumes
     if (c.aeroK0 != null && c.aeroK < c.aeroK0) vT *= Math.sqrt((1 + c.aeroK * vT * vT) / (1 + c.aeroK0 * vT * vT));   // the formula with a wing knocked off: less grip at speed
+    if (c.wreck && c.wreck.nL) vT *= Math.sqrt(1 - 0.175 * c.wreck.nL);   // a kit vehicle on a hub or two (LOSTW): each wheel gone costs ~17.5 % of its grip
     // if displaced from line, be a little more careful
     if (offErr > 2.5) vT *= 0.94;
     if (c.passing) vT *= 1.01;
     if (c.pitWant && T.def.pit) { const pz = T.pitAt(q.s + v * 0.8 + 6), pn = T.pitAt(q.s); if (pz || c.inPit) vT = Math.min(vT, (pz && pz.t < 0.98) || (pn && pn.t < 0.98) ? 15 : PIT_V * 0.97); }   // (easy through the S of the way in and out)
-    { const o = c.aiThreat, g0 = M.aiGap || 3; if (o && c.aiGap < g0 + 6 && Math.abs(o.q.d - q.d) < 2.1) vT = Math.min(vT, Math.max(0, o.vl) + Math.max(0, c.aiGap - g0) * 0.8); }
+    { const o = c.aiThreat, g0 = M.aiGap || 3; if (o && c.aiGap < g0 + 6 && Math.abs(o.q.d - q.d) < (M.aiFol || 2.1)) vT = Math.min(vT, Math.max(0, o.vl) + Math.max(0, c.aiGap - g0) * 0.8); }   // (M.aiFol: a wide vehicle follows one further to its side)
     if (c.tfFol) { const F = c.tfFol, g = (F.o.m ? F.o.q.s : F.o.s) - q.s - M.len / 2 - F.len / 2; vT = Math.min(vT, Math.sqrt(F.vs * F.vs + 10 * Math.max(0, g - 8))); }   // (the open road: no way past yet, behind it)   // right behind someone with no gap yet: follow, don't ram (M.aiGap: the formula keeps a longer gap)
     if (race.fl) {   // flags: the safety car's steady pace; slower through a yellow; the queue behind the safety car, 15 m apart
       const F = race.fl, S = F.sc;
@@ -1621,7 +1801,7 @@ const Core = (function () {
         if (F.yel.length && race._yelAt(q.s)) vT *= 0.8;
         if (S && S.car && !c.inPit && !c.pitWant) {
           let gap = 1e9, a = null;
-          for (const o of race.cars) { if (o === c || o.finished || o.inPit || o.pitWant) continue; const g = o.dist - c.dist; if (g > 0 && g < gap) { gap = g; a = o; } }
+          for (const o of race.cars) { if (o === c || o.finished || o.inPit || o.pitWant || dnf(o)) continue; const g = o.dist - c.dist; if (g > 0 && g < gap) { gap = g; a = o; } }   // (not behind a retired car)
           const off = S.state === 'in' && !S.pit;   // (speeding off up the road: the field lets it go, at a steady pace)
           const gS = S.car.dist - c.dist; if (gS > 0 && gS < gap && !off && !(S.car.pitWant && T.pitAt(S.car.q.s))) { gap = gS; a = S.car; }   // (the safety car turning into the pit lane: not any more)
           if (off) vT = Math.min(vT, 0.7 * vpA);
@@ -1630,7 +1810,7 @@ const Core = (function () {
         }
       }
     }
-    if (c.ty && !c.isPlayer && (c.inPit || c.pitWant)) { const o = c.aiThreat; if (o && Math.abs(o.q.d - q.d) < 2.4) vT = Math.min(vT, Math.sqrt(Math.max(0, o.vl) ** 2 + 10 * Math.max(0, c.aiGap - 6))); }   // (the pit lane: wait behind a car stopping at its box or pulling out)
+    if (c.ty && !c.isPlayer && (c.inPit || c.pitWant)) { const o = c.aiThreat; if (o && Math.abs(o.q.d - q.d) < (M.aiFol ? M.aiFol + 0.3 : 2.4)) vT = Math.min(vT, Math.sqrt(Math.max(0, o.vl) ** 2 + 10 * Math.max(0, c.aiGap - 6))); }   // (the pit lane: wait behind a car stopping at its box or pulling out)
     let thr = 0, brk = 0;
     if (v < vT - 0.8) thr = 1;
     else if (v < vT + 0.6) thr = 0.45;
@@ -1891,7 +2071,7 @@ const Core = (function () {
       const dx0 = v.x - c.x, dz0 = v.z - c.z, rr = (c.m.len + v.len) / 2 + 0.5; if (dx0 * dx0 + dz0 * dz0 > rr * rr) return 0;
       const cha = Math.cos(c.h), sha = Math.sin(c.h), chb = Math.cos(v.h), shb = Math.sin(v.h), nb = Math.max(2, Math.round(v.len / v.wid)), rb = v.wid / 2;
       let best = 0, bnx = 0, bnz = 0, bpx = 0, bpz = 0;
-      for (let i = 0; i < 3; i++) { const ax = c.x + cha * c.circles[i], az = c.z + sha * c.circles[i];
+      for (let i = 0; i < c.circles.length; i++) { const ax = c.x + cha * c.circles[i], az = c.z + sha * c.circles[i];
         for (let j = 0; j < nb; j++) { const o = -(v.len - v.wid) / 2 + j * (v.len - v.wid) / (nb - 1), bx = v.x + chb * o, bz = v.z + shb * o, dx = ax - bx, dz = az - bz, d2 = dx * dx + dz * dz, r = c.rad + rb;
           if (d2 < r * r) { const d = Math.sqrt(d2) || 1e-3, pen = r - d; if (pen > best) { best = pen; bnx = dx / d; bnz = dz / d; bpx = (ax + bx) / 2; bpz = (az + bz) / 2; } } } }
       if (best <= 0) return 0;
@@ -2297,6 +2477,36 @@ const Core = (function () {
     const close = sp - P.speed;
     c.inThr = gap > 10 || close < 7 ? 1 : 0.35; c.inBrk = gap < 3 && close > 12 ? 0.4 : 0; c.inHand = 0;
   }
+  // a retired car (Race.retire) on its way off the line: it steers for its side's run-off (its centre 1.6 m past where its inner edge
+  // clears the asphalt, nearer where the barrier is), eases off to a crawl on the way (7 m/s: no hard stop on the racing line) and drives
+  // on at that pace once slower (one that retired standing, or spun, too; facing the wrong way: to the run-off ahead of its nose); there
+  // (retiredOff) it stops and stands (wreck.stop). W.cr: seconds spent at a crawl short of it (the marshals take over, see Race._wreckStep)
+  function retireControl(c, race, dt) {
+    const T = race.track, q = c.q, W = c.wreck, v = Math.max(0, c.vl), hw = c.m.wid * 0.5;
+    c.inHand = 0;
+    if (retiredOff(T, c, 0.3)) {   // there: brake to a stop, then stand
+      if (v <= 0.8) { parkBrake(c); W.stop = true; W.cr = 0; } else { c.inThr = 0; c.inBrk = 0.5; c.inSteer = 0; }
+      return;
+    }
+    const lim = (W.side > 0 ? q.br : q.bl) - hw - 0.4, out = W.side * Math.max(T.w * 0.4, Math.min(T.w + hw + 1.6, lim));
+    const back = Math.cos(c.h) * q.tx + Math.sin(c.h) * q.tz < 0, la = 4 + v * 0.7, i = T.idx(q.s + (back ? -la : la));
+    steerAt(c, T.px[i] + T.nx[i] * out, T.pz[i] + T.nz[i] * out);
+    if (v > 9) { c.inThr = 0; c.inBrk = clamp((v - 7) / 40, 0.12, 0.3); }
+    else if (v < 6) { c.inThr = clamp(0.3 + (7 - v) * 0.04, 0.3, 0.6); c.inBrk = 0; }
+    else { c.inThr = 0.15; c.inBrk = 0; }
+    if (v < 2.5) W.cr += dt;
+  }
+  // where a retired car may stand (tol: how far its inner edge must be past the asphalt's edge): off the asphalt, or as far out as the
+  // barrier lets it where the run-off is a little narrower than the car (0.7 m of it on the asphalt at most: GOLJAT's 3.2 m in Monaco),
+  // and not in the way into or out of the pit lane (its side of the road)
+  function retiredOff(T, c, tol) {
+    const q = c.q, W = c.wreck, hw = c.m.wid * 0.5, ld = W.side * q.d, lim = (W.side > 0 ? q.br : q.bl) - hw - 0.4, pz = W.side > 0 && T.def.pit ? T.pitAt(q.s) : null;
+    if (pz && pz.gap) return false;
+    return ld - hw >= T.w + tol || (ld >= lim - 0.3 + Math.min(0, tol) && ld - hw >= T.w - 0.7);
+  }
+  // standing still on purpose (retired, waiting for the marshals): a light brake and the handbrake (a held brake pedal at a standstill
+  // would engage reverse)
+  function parkBrake(c) { c.inThr = 0; c.inBrk = 0.1; c.inHand = 1; c.inSteer = 0; }
   // steer a car at a point (the AI's pure pursuit, as in aiControl)
   function steerAt(c, tx, tz) {
     const v = Math.max(0, c.vl);
@@ -2311,8 +2521,22 @@ const Core = (function () {
   const DRIVER_NAMES = ['M. Kovač', 'T. Hayashi', 'L. Rossi', 'J. Novak', 'K. Weber', 'A. Silva', 'R. Horvat', 'S. Tanaka', 'P. Dubois', 'N. Petek', 'E. Lindqvist', 'G. Moretti', 'D. Zupan', 'H. Kimura', 'F. Keller', 'O. Nieminen', 'B. Kranjc', 'C. Duarte', 'I. Kowalski', 'V. Andersen'];
   const AI_COLORS = [0xe8e8ee, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xf07a1a, 0x9a2bd8, 0x19b7c7, 0xd81f45, 0xc9c3b0, 0x6b8e23, 0xff5fa2, 0x3b3fa8, 0x8a1c2b, 0x0f5e4e, 0x8ec9e8, 0xb87333, 0x6b737c, 0xb4dc2c, 0xc2187a];
   const CAR_NUMS = [7, 3, 11, 21, 5, 44, 9, 16, 27, 8, 12, 33, 2, 55, 14, 23, 31, 46, 63, 77, 88];   // by grid slot (the player's own number replaces the one of its slot)
-  // the AI drivers in grid order (the fastest first): name, car and colour are the same in every race (a championship's standings follow them)
-  const aiDriver = (k) => ({ name: DRIVER_NAMES[k % DRIVER_NAMES.length], model: MODELS[(k * 3 + 1) % 4], color: AI_COLORS[k % AI_COLORS.length] });
+  // the AI drivers in grid order (the fastest first): name, car and colour are the same in every race (a championship's standings follow them).
+  // Their cars (aiModel, the one place that picks them): the field of the player's vehicle (pm.field: ids; left out: a retired model, and
+  // one with a glb player-only skin and no render look of its own for the AI's cars (def.look: the PEUGEOT 206 once its loft is there);
+  // a field left empty: none), driver k in field[k % n]; without a vehicle or a field, the four road cars in turn (MODELS[(k * 3 + 1) % 4],
+  // the same objects as always)
+  const aiBody = (M) => !M.glb || !!(M.def && M.def.look);
+  function fieldOf(pm) {
+    if (!pm || !pm.field) return null;
+    const L = []; for (const id of pm.field) { const M = MODELS.find(m => m.id === id); if (M && aiBody(M) && !M.retired) L.push(M); }
+    return L.length ? L : null;
+  }
+  function aiModel(k, pm) { const F = fieldOf(pm); return F ? F[k % F.length] : MODELS[(k * 3 + 1) % 4]; }
+  // how many AI cars a race of this vehicle has when n are asked for: model.fieldN at most when its field races (not a one-make class:
+  // the formula's rivals are formulas); the qualifying sim sizes itself by it
+  const fieldSize = (pm, n) => { const F = pm && !pm.oneMake ? fieldOf(pm) : null; return F && pm.fieldN ? Math.min(n, pm.fieldN) : n; };
+  const aiDriver = (k, pm) => ({ name: DRIVER_NAMES[k % DRIVER_NAMES.length], model: aiModel(k, pm), color: AI_COLORS[k % AI_COLORS.length] });
   // AI pace per difficulty: [slowest skill, fastest skill, rubber band: slow-down when far ahead of the player (max, from metres), speed-up when behind (max, from metres)]
   // (skill 1 = the racing-line speed profile; the cars' own limit on the autopilot is about 1.12, the little pico understeers past ~1.08)
   const DIFF = [
@@ -2335,7 +2559,12 @@ const Core = (function () {
       // opts.tt): the player alone, standing ON the start line; the clock is race.time
       this.timeTrial = !!((track.def.timeTrial || (opts.tt && !opts.remote && (track.def.modes || []).indexOf('tt') >= 0)) && !opts.noPlayer);
       this._rq = [];   // open road + noPlayer (menu demo): cars that reached the top, waiting for a free spot at the start
-      const nAI = this.timeTrial ? 0 : opts.numAI == null ? 12 : opts.numAI;
+      // a field race: the AI drive the field of the player's vehicle (or of opts.fieldModel: a championship's car, the title demo's
+      // category; see aiModel), at most model.fieldN of them (the big vehicles); this.field: its models, null in any other race
+      const oneMake = opts.playerModel && opts.playerModel.oneMake ? opts.playerModel : null;   // the player in the formula: every rival in one too
+      const FM = oneMake ? null : opts.fieldModel || opts.playerModel || null, field = fieldOf(FM);
+      this.field = field;
+      const nAI = fieldSize(FM, this.timeTrial ? 0 : opts.numAI == null ? 12 : opts.numAI);
       const RM = opts.remote || null;   // online race: the friend's car { model, color, num, name, grid }, driven by the friend's phone
       // opts.aiOrder: which AI drivers (their roster indices, 0 the fastest) stand on the grid and in what order (after qualifying; one
       // of them alone for its qualifying lap), each with its own skill as in the full roster; default: all of them, the fastest first
@@ -2347,12 +2576,11 @@ const Core = (function () {
       const R = rng(opts.seed || 7);
       // AI roster
       const diff = DIFF[opts.difficulty == null ? 1 : opts.difficulty]; this.diff = diff;
-      const oneMake = opts.playerModel && opts.playerModel.oneMake ? opts.playerModel : null;   // the player in the formula: every rival in one too
       if (oneMake) this.oneMake = oneMake;
       const aiSpecs = [];
       for (let k = 0; k < nAI; k++) {
         const skill = lerp(diff[1], diff[0], k / Math.max(1, nAI - 1)) + (R() - 0.5) * 0.012;
-        aiSpecs.push(Object.assign({ skill }, aiDriver(k), oneMake ? { model: oneMake } : null));   // (a formula race: the same drivers, in formulas)
+        aiSpecs.push(Object.assign({ skill }, aiDriver(k, field ? FM : null), oneMake ? { model: oneMake } : null));   // (a formula race: the same drivers, in formulas)
       }
       // grid: fastest first
       let ai = 0;
@@ -2453,10 +2681,19 @@ const Core = (function () {
       const wM0 = CSK.aiWmax;
       let latA0 = opts.aiLatA || CSK.aiLatA, brA0 = opts.aiBrakeA || CSK.aiBrakeA;
       if (w < 1) { latA0 *= w; brA0 *= 0.55 + 0.45 * w; }
-      const lat = latA0 * (F ? ARC[F.id].amax / 1.8 : 1), fb = F ? F.brakeK : 1, br = brA0 * fb, wM = wM0 * (F ? CSP[F.id].w : 1), aero = F ? F.aero : 0, bG = BRAKE_G * fb;
+      const lat = latA0 * (F ? ARC[F.id].amax / 1.8 : 1), fb = F ? (F.brakeK || 1) : 1, br = brA0 * fb, wM = wM0 * (F ? CSP[F.id].w : 1), aero = F ? F.aero : 0, bG = BRAKE_G * fb;
       const sM = (this.wst && this.wst.on ? this.wst.water : this.rain) > 0 ? 0.78 : 0.9;   // the cobbles' grip (CSSURF 7 / 8, relative: the rain is already in w)
       this.vprof = track.speedProfile(lat, br, 85, wM, aero, sM);
-      if (this.player && this.player.upg && this.player.brakeG !== bG) this.player.vprof = track.speedProfile(lat, br * this.player.brakeG / bG, 85, wM, aero, sM);
+      if (this.field) {   // a field race: every model's own profile (its grip, brakes, path-rate cap, wings), for each AI car and the player's autopilot
+        const own = new Map(), of = (M) => {
+          let v = own.get(M.id);
+          if (!v) { v = track.speedProfile(latA0 * (ARC[M.id] || ARC.kaze).amax / 1.8, brA0 * (M.brakeK || 1), 85, wM0 * (CSP[M.id] || CSP.kaze).w, M.aero || 0, sM); own.set(M.id, v); }
+          return v;
+        };
+        for (const c of this.cars) if (!c.net && !c.isPlayer) c.vprof = of(c.m);
+        const P = this.player;   // (upgraded brakes: its own model's profile, braking later by as much)
+        if (P) { const Mp = P.m, bP = BRAKE_G * (Mp.brakeK || 1); P.vprof = P.upg && P.brakeG !== bP ? track.speedProfile(latA0 * (ARC[Mp.id] || ARC.kaze).amax / 1.8, brA0 * (Mp.brakeK || 1) * P.brakeG / bP, 85, wM0 * (CSP[Mp.id] || CSP.kaze).w, Mp.aero || 0, sM) : of(Mp); }
+      } else if (this.player && this.player.upg && this.player.brakeG !== bG) this.player.vprof = track.speedProfile(lat, br * this.player.brakeG / bG, 85, wM, aero, sM);
     }
 
     _gridBack(g) {   // metres behind the start line of grid slot g
@@ -2487,7 +2724,7 @@ const Core = (function () {
     }
 
     spawnDebris(c, name) {
-      const P = PARTS[name], hl = c.m.len * 0.5, hw = c.m.wid * 0.5, ch = Math.cos(c.h), sh = Math.sin(c.h);
+      const P = partsOf(c.m)[name], hl = c.m.len * 0.5, hw = c.m.wid * 0.5, ch = Math.cos(c.h), sh = Math.sin(c.h);
       const ox = P.lx * hl, oz = P.lz * hw, x = c.x + ox * ch - oz * sh, z = c.z + ox * sh + oz * ch;
       const ol = Math.hypot(ox, oz) || 1, ux = (ox * ch - oz * sh) / ol, uz = (ox * sh + oz * ch) / ol, out = 2 + Math.random() * 3;
       const d = { id: ++this.debrisId, car: c.id, part: name, x, z, y: (c.y || 0) + P.y, vx: c.vx * 0.7 + ux * out, vz: c.vz * 0.7 + uz * out, vy: 2.5 + Math.random() * 2.5,
@@ -2565,10 +2802,11 @@ const Core = (function () {
           c.rubber += (target - c.rubber) * dt * 0.5;
         }
         if (!c.locked) {
-          aiControl(c, this, dt);
+          if (!dnf(c)) aiControl(c, this, dt);
           if (c.finished) { c.inThr *= 0.5; }
         } else { c.inThr = 0; c.inBrk = c.parkQ ? 1 : 0; c.inSteer = 0; }
       }
+      for (const c of cars) if (c.wreck && !c.net) this._wreckStep(c, dt);   // kit vehicles: a wreck sheds its parts, a destroyed one retires (see _wreckStep)
       for (const c of cars) {
         if (c.net) continue;   // (the friend's car: placed from the network, see game.js)
         if (c.pitState === 'repair') { c.inThr = 0; c.inBrk = 0; c.inSteer = 0; c.inHand = 0; }   // on the jacks: the mechanics are working (held in place below; no brake, so the gearbox stays in first)
@@ -2607,7 +2845,7 @@ const Core = (function () {
         c.dist += ds;
         if (T.open) this._progressOpen(c, q, ds, dt);
         const lapsDone = Math.floor(c.dist / T.len);
-        if (this.state !== 'grid' && !T.open) {
+        if (this.state !== 'grid' && !T.open && !dnf(c)) {   // (a retired car rolling over the line: no lap, never a finish)
           while (c.lap <= lapsDone && c.lap <= this.laps) {
             if (c.lap >= 1) { c.lapTimes.push(this.time - c.lapStart); }
             c.lapStart = this.time;
@@ -2624,10 +2862,18 @@ const Core = (function () {
           const W = this.wst, sl = Math.min(1, Math.abs(c.beta || 0) / 0.35);
           const K = tyreK(c.ty);
           c.ty.wear = Math.min(1, c.ty.wear + ds * (0.000008 + 0.00004 * sl) * (c.ty.k === 'wet' && W.line < 0.25 ? 2.5 : 1) * (K ? K.wr : 1));
+          // a breakable vehicle with a wheel knocked off: in for a new one first (a track with pits; not in the last 40 % of a lap; the stop
+          // gives it the tyres for the water too), by the rules of the tyre stops below
+          if (c.wreck && c.wreck.wl && !c.wreck.dnf) {
+            if (T.def.pit && !c.isPlayer && !c.net && !c.finished && !c.pitWant && !c.inPit && !T.pitAt(q.s) && this.laps * T.len - c.dist > T.len * 0.4) {
+              let n = 0; for (const o of cars) if (!o.isPlayer && (o.pitWant || o.inPit)) n++;
+              if (n < 3) c.pitWant = true;
+            }
+          }
           // an AI car on the wrong tyres goes in for the right ones (a track with pits; not in the last 40 % of a lap)
           // (not in the pit zone: from before its way in; each driver with a threshold of its own, not all on the same lap; at most three on
           // their way in or in the lane at a time, the others wait a lap)
-          if (T.def.pit && !c.isPlayer && !c.net && !c.finished && !c.pitWant && !c.inPit && c.ty.k !== tyreFor(W.line) && !T.pitAt(q.s)) {
+          else if (T.def.pit && !c.isPlayer && !c.net && !c.finished && !c.pitWant && !c.inPit && c.ty.k !== tyreFor(W.line) && !T.pitAt(q.s)) {
             const j = ((c.grid * 7) % 13) / 12;
             if ((c.ty.k === 'dry' ? W.line > 0.35 + 0.35 * j : W.line < 0.04 + 0.16 * j && this.rain < 0.05) && this.laps * T.len - c.dist > T.len * 0.4) {
               let n = 0; for (const o of cars) if (!o.isPlayer && (o.pitWant || o.inPit)) n++;
@@ -2645,7 +2891,7 @@ const Core = (function () {
         if (fwd < -0.2 && c.speed > 3) c.wrongT += dt; else c.wrongT = Math.max(0, c.wrongT - dt * 2);
         // stuck detection (AI auto-rescue)
         if (!c.locked && (!c.pitState || (c.ty && !c.isPlayer && c.pitState === 'done')) && c.speed < 1.2 && (this.state === 'racing' || this.state === 'done') && !(T.open && c.finished)) c.stuckT += dt; else c.stuckT = Math.max(0, c.stuckT - dt);   // (an AI car that came in for tyres: also when stuck on its way out; pulled up past the finish of an open road: not stuck)
-        if (!c.isPlayer && (c.stuckT > (c.ty && c.inPit ? 12 : 3.5) || c.wrongT > 3) && !(T.open && c.finished)) this.rescue(c);   // (in for tyres: waiting in the pit lane behind a car at its box is no reason; not a car pulled up past the finish of an open road)
+        if (!c.isPlayer && (c.stuckT > (c.ty && c.inPit ? 12 : 3.5) || c.wrongT > 3) && !(T.open && c.finished) && !(c.wreck && (c.wreck.dnf || c.wreck.hold > 0))) this.rescue(c);   // (in for tyres: waiting in the pit lane behind a car at its box is no reason; not a car pulled up past the finish of an open road, nor a retired one or one the marshals are fixing)
       }
       if (this._rq.length) this._serveRespawn();
       if (this.pol) this.pol.post(dt);
@@ -2654,6 +2900,7 @@ const Core = (function () {
       this.order = cars.slice().sort((a, b) => {
         if (a.finished && b.finished) return a.finishPos - b.finishPos;
         if (a.finished) return -1; if (b.finished) return 1;
+        const ra = dnf(a), rb = dnf(b); if (ra !== rb) return ra ? 1 : -1;   // (a retired car: behind everyone still racing)
         return b.dist - a.dist;
       });
       for (let i = 0; i < this.order.length; i++) this.order[i].pos = i + 1;
@@ -2689,6 +2936,7 @@ const Core = (function () {
           if (sp < 1.5 && Math.abs(ds) < 4) {   // (its drive holds ~0.9 m/s against the stop curve at part throttle)
             let lost = 0; for (const k in c.lost) lost++;
             c.pitState = 'repair'; c.pitT = 0; c.pitDur = Math.min(5, 1.2 + 3.3 * c.dmg + lost * 0.15); if (c.ty) c.pitDur = Math.max(c.pitDur, 2.6); c.vx = c.vz = 0; c.w = 0; c.pitEv = 'repair';   // (tyres: 2.6 s at least)
+            if (c.wreck) c.pitDur += c.wreck.nL;   // (a kit vehicle: a second more for every wheel knocked off)
           }
         }
       }
@@ -2701,7 +2949,7 @@ const Core = (function () {
     // when the leader has more than a lap and a quarter to go. It comes out 90-350 m ahead of the leader, the field queues up behind it
     // (15 m apart, no overtaking); after 25 s, with the queue formed (or after 40 s), it goes in (into the pit lane when that is less than
     // half a lap ahead, else it speeds off up the road), and nobody overtakes until the leader is back at the line. The player: overtaking under a flag (not a stopped car,
-    // not one in the pit lane) has to be given back within 10 s, else +5 s on the race time (c.fl.pen)
+    // not one in the pit lane, not a retired one) has to be given back within 10 s, else +5 s on the race time (c.fl.pen)
     _yelAt(s) {
       const L = this.track.len;
       for (const y of this.fl.yel) { let d = y.s - s; d = ((d % L) + L) % L; if (d > L / 2) d -= L; if (d > -30 && d < 250) return y; }
@@ -2711,12 +2959,12 @@ const Core = (function () {
     _flags(dt) {
       const F = this.fl, T = this.track, L = T.len, cars = this.cars;
       if (this.state !== 'racing') return;
-      let lead = null; for (const c of this.order) if (!c.finished) { lead = c; break; }
+      let lead = null; for (const c of this.order) if (!c.finished && !dnf(c)) { lead = c; break; }
       // incidents: cars stopped on the track
       const stop = [];
       for (const c of cars) {
         const f = c.fl || (c.fl = { stopT: 0, v: 30, yel: null, pen: 0, owe: null, ah: null });
-        if (c.net || c.finished) { f.stopT = 0; continue; }
+        if (c.net || c.finished || (dnf(c) && this.time - c.wreck.dnfT > 30)) { f.stopT = 0; continue; }   // (a retired car: an incident for 30 s, then the marshals have it behind the barrier)
         f.v += (c.speed - f.v) * Math.min(1, dt * 2);   // (the speed over about half a second: a knock from another car does not end a stop)
         const onTrack = !c.inPit && !c.pitWant && !c.pitState, stopped = onTrack && c.lap >= 1 && f.v < 3;
         f.stopT = stopped ? f.stopT + dt : 0;
@@ -2741,7 +2989,7 @@ const Core = (function () {
         const gl = lead ? X.dist - lead.dist : 1e9;
         if (S.state === 'out' && S.t > 25 && gl < 45) {   // in this lap: once the field has closed up behind it (or after 80 s)
           let formed = true, prev = lead.dist;
-          for (const c of this.order) { if (c === lead || c.finished || c.inPit || c.pitWant || (c.fl && c.fl.stopT > 0) || lead.dist - c.dist > L / 2) continue; if (prev - c.dist > 40) { formed = false; break; } prev = c.dist; }
+          for (const c of this.order) { if (c === lead || c.finished || c.inPit || c.pitWant || (c.fl && c.fl.stopT > 0) || dnf(c) || lead.dist - c.dist > L / 2) continue; if (prev - c.dist > 40) { formed = false; break; } prev = c.dist; }
           if (formed || S.t > 40) {   // (into the pit lane when its way in is less than half a lap ahead; else it speeds off up the road)
             let dp = T.def.pit ? T.startS + T.def.pit[1] - q.s : 0; dp = ((dp % L) + L) % L;
             S.state = 'in'; S.pit = !!T.def.pit && dp < L / 2; F.ev++; F.evK = 'scIn'; if (S.pit) X.pitWant = true;
@@ -2765,11 +3013,11 @@ const Core = (function () {
         for (const o of cars) {   // (clearly ahead: 1 m, clearly past it: 3 m; side by side changes nothing)
           if (o === P) continue;
           const d = o.dist - P.dist, was = f.ah.get(o), ahead = d > 1 ? true : d < -3 ? false : was;
-          if (ban && was === true && ahead === false && !o.finished && !o.inPit && !o.pitWant && o.speed > 8 && !P.inPit && !f.owe) { f.owe = { car: o, t: 10 }; F.pev++; F.pevK = 'passWarn'; }
+          if (ban && was === true && ahead === false && !o.finished && !o.inPit && !o.pitWant && !dnf(o) && o.speed > 8 && !P.inPit && !f.owe) { f.owe = { car: o, t: 10 }; F.pev++; F.pevK = 'passWarn'; }   // (not a retired car, still rolling off the line)
           f.ah.set(o, ahead);
         }
         if (f.owe) {
-          if (f.owe.car.dist > P.dist + 1 || f.owe.car.finished) { f.owe = null; F.pev++; F.pevK = 'passOk'; }
+          if (f.owe.car.dist > P.dist + 1 || f.owe.car.finished || dnf(f.owe.car)) { f.owe = null; F.pev++; F.pevK = 'passOk'; }   // (the car passed retired since: nothing to give back)
           else if ((f.owe.t -= dt) <= 0) { f.owe = null; f.pen += 5; F.pev++; F.pevK = 'pen'; }
         }
       }
@@ -2848,6 +3096,7 @@ const Core = (function () {
     repairCar(c) {   // good as new: body, panels, lamps, glass; the renderer rebuilds the car when repairN changes
       c.dmg = 0; c.dz = [0, 0, 0, 0]; c.dents = []; c.cd = [0, 0, 0, 0]; c.lightOut = [0, 0, 0, 0]; c.lost = {}; c.detach = []; c.winOut = [0, 0, 0, 0]; c.roofDmg = 0;
       if (c.aeroK0 != null) c.aeroK = c.aeroK0;   // (new wings)
+      if (c.wreck) wreck0(c.wreck);   // (a kit vehicle: its wheels back on, no wreck to shed; a retirement stays)
       c.repairN = (c.repairN || 0) + 1;
     }
 
@@ -2855,7 +3104,7 @@ const Core = (function () {
     // Crossing times are interpolated inside the step from the distance covered in it.
     _progressOpen(c, q, ds, dt) {
       const T = this.track;
-      if (this.state === 'grid' || c.finished || c.parkQ) return;
+      if (this.state === 'grid' || c.finished || c.parkQ || dnf(c)) return;
       const tAt = (target) => this.time - dt * (ds > 1e-9 ? clamp((c.dist - target) / ds, 0, 1) : 0);
       if (c.lap === 0 && c.dist >= 0) { c.lap = 1; if (c.dist - ds < 0) c.lapStart = tAt(0); }
       // (the projected position must agree - within 30 m - so a lookup snapped to another leg of the road can not trigger anything)
@@ -2892,7 +3141,7 @@ const Core = (function () {
     rescue(c) {
       const T = this.track;
       if (c.ty && !c.isPlayer) c.pitWant = false;   // (an AI car in for tyres: it tries again from the next lap)
-      const s = c.q.s;
+      const s = c.q.s, s0d = c.q.d || 0;
       let i = T.idx(s);
       if (T.open) i = clamp(i, 3, T.N - 4);   // not into the wall at an end of the road
       const off = T.rl[i] * 0.5;
@@ -2901,15 +3150,86 @@ const Core = (function () {
       c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s;
       if (T.open && Number.isFinite(s) && Number.isFinite(c.dist)) c.dist += c.q.s - s;   // open road: the distance follows the car back to the sample (checkpoints / finish stay exact)
       c.stuckT = 0; c.wrongT = 0; c.rescued = 1.2; c.inPit = false; c.pitState = null; c.pitDone = false;   // (back on the circuit, not in the pit lane)
-      const v = T.open && T.len - c.q.s < 25 ? 0 : 8;   // (near the top end of an open road: standing, not off into the end wall)
+      // a breakable vehicle on a track without pits: the marshals put its lost wheels back on, beside the road (off its side's edge, clear of
+      // the barrier); it stands for the 6 s that takes (Race._wreckStep), then drives back on. W.fix counts the refits (a partial repair:
+      // repairN stays, the renderer's and the commentator's lost-wheel latches follow W.fix)
+      const W = c.wreck, fix = !!(W && W.wl && !W.dnf && (!T.def.pit || this.opts.noPlayer));   // (the demo: with pits too)
+      if (fix) {
+        for (const n of WHEELS) delete c.lost[n]; W.wl = 0; W.nL = 0; W.lt = 0; W.hold = 6; W.fix++;
+        const sd = s0d >= 0 ? 1 : -1, room = (sd > 0 ? c.q.br : c.q.bl) - c.m.wid * 0.5 - 0.4, d = sd * clamp(T.w + 2, T.w * 0.6, Math.max(T.w * 0.6, room)) - off;
+        c.x += T.nx[i] * d; c.z += T.nz[i] * d; c.px = c.x; c.pz = c.z; c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s;
+      }
+      const v = fix || (T.open && T.len - c.q.s < 25) ? 0 : 8;   // (near the top end of an open road: standing, not off into the end wall)
       c.vx = Math.cos(c.h) * v; c.vz = Math.sin(c.h) * v;
+    }
+    // a car out of the race (Odstop): an AI car that can not race on (see _wreckStep), or the player pressing Odstopi (game.js; any car).
+    // It pulls off onto its side's run-off (the nearer one; from the middle of the road the one with more room) and stops there
+    // (retireControl); it never finishes: behind every running car in the order, a DNF at the end of the results (estimateResults: dnf);
+    // the flags see it as a stopped car for 30 s, by when it stands off the asphalt (the marshals see to that, see _wreckStep)
+    retire(c) {
+      const W = c.wreck || (c.wreck = wreck0({}));
+      if (W.dnf || c.finished || c.net) return;
+      const q = c.q, d = q && Number.isFinite(q.d) ? q.d : 0;
+      W.dnf = true; W.dnfT = this.time; W.side = Math.abs(d) > 1.5 ? Math.sign(d) : q && q.br >= q.bl ? 1 : -1; W.stop = false; W.hold = 0; W.cr = 0;
+      if (c.pitWant) c.pitWant = false;
+    }
+    isOut(c) { return c.finished || dnf(c); }   // (a race is over when every car is: finished or retired)
+    // a breakable vehicle every step (before the cars move): a wreck sheds its next part every 0.4 s (wreckCheck); an AI car with two wheels
+    // gone at once can not race on: it retires (not on its way into the pits or in the lane: the crew puts them back on), then pulls off
+    // (retireControl). Destroyed at dmg 1 it limps on, as every car does (retiring each one the AI's contacts take to 100 % emptied a
+    // one-make field: 3-8 cars a lap on the Nordschleife; tests/fleet.test.js keeps count). One waiting for the marshals stands (hold);
+    // an AI car with a wheel off on a track without pits is rescued after 1.5 s (rescue: the marshals refit it; with pits and tyres it goes
+    // in for a new one, see step). A retired car the marshals move (_parkRetired) when it has crawled 8 s short of the run-off, stood 8 s
+    // where it may not (knocked back onto the asphalt, in the way into the pits), or not got off the line 30 s after retiring. A race with
+    // no player (the title screen's demo, never over) has no retirements: the marshals refit the wheels wherever it runs
+    _wreckStep(c, dt) {
+      const W = c.wreck, T = this.track;
+      if (W.seq) {
+        if (W.at == null) W.at = this.time;
+        while (W.seq.length && c.lost[W.seq[0]]) W.seq.shift();   // (knocked off meanwhile)
+        if ((W.st -= dt) <= 0 && W.seq.length) { const n = W.seq.shift(); detachPart(c, n); W.st = 0.4; }
+      }
+      if (W.nL) W.lt += dt;
+      const racing = this.state === 'racing';
+      if (!W.dnf && !c.isPlayer && kitParts(c.m) && !c.finished && racing && W.nL >= 2 && !c.pitWant && !c.inPit && !this.opts.noPlayer) this.retire(c);
+      if (W.dnf) {
+        if (!W.stop) retireControl(c, this, dt);
+        else { parkBrake(c); W.cr = retiredOff(T, c, -0.2) ? 0 : W.cr + dt; }
+        if (W.cr > 8 || (!W.stop && this.time - W.dnfT > 30)) this._parkRetired(c);
+        return;
+      }
+      if (W.hold > 0) { W.hold -= dt; parkBrake(c); c.stuckT = 0; return; }
+      if (W.nL && !c.isPlayer && (!T.def.pit || this.opts.noPlayer) && !c.finished && racing && W.lt > 1.5) this.rescue(c);
+    }
+    // the marshals put a retired car where it should stand: on its side's run-off as retireControl parks it, at the first spot from where
+    // it is (on along the road, 3 m at a time, up to 300 m) clear of the other retired cars on that side and of the way into the pits,
+    // with the room for it off the asphalt (else the free one with the most room); standing there (wreck.stop)
+    _parkRetired(c) {
+      const T = this.track, W = c.wreck, sd = W.side || 1, hw = c.m.wid * 0.5, L = T.len;
+      const room = (i) => (sd > 0 ? T.br[i] : T.bl[i]) - hw - 0.4;
+      const gap = (a, b) => { let d = a - b; if (!T.open) { d = ((d % L) + L) % L; if (d > L / 2) d -= L; } return Math.abs(d); };
+      const free = (s) => { const pz = sd > 0 && T.def.pit ? T.pitAt(s) : null; if (pz && pz.gap) return false;
+        for (const o of this.cars) if (o !== c && dnf(o) && o.wreck.side === sd && gap(s, o.q.s) < (c.m.len + o.m.len) / 2 + 1.5) return false;
+        return true; };
+      let best = null, bestR = -Infinity;
+      for (let k = 0; k <= 100; k++) {
+        let s = c.q.s + 3 * k; if (T.open) { if (s > T.len - 30) break; } else s = ((s % L) + L) % L;
+        if (!free(s)) continue;
+        const r = room(T.idx(s));
+        if (r >= T.w + hw + 0.3) { best = s; break; }
+        if (r > bestR) { bestR = r; best = s; }
+      }
+      const i = T.idx(best != null ? best : c.q.s), d = sd * Math.max(T.w * 0.4, Math.min(T.w + hw + 1.6, room(i)));
+      c.place(T.px[i] + T.nx[i] * d, T.pz[i] + T.nz[i] * d, T.hd[i]); if (T.hasElev) c.y = c.py = T.hy[i];
+      c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s;
+      W.stop = true; W.cr = 0; parkBrake(c);
     }
 
     // estimated finish times for unfinished cars (for results)
     estimateResults() {
       const T = this.track, res = [];
       const done = this.finishOrder.slice();
-      const rest = this.cars.filter(c => !c.finished).sort((a, b) => b.dist - a.dist);
+      const rest = this.cars.filter(c => !c.finished && !dnf(c)).sort((a, b) => b.dist - a.dist);
       const pen = (c) => ((c.fl && c.fl.pen) || 0) + (c.tfPen || 0);   // (flags, the open road's duel: time penalties)
       for (const c of done) res.push({ car: c, time: c.finishTime + pen(c), est: false, pen: pen(c) });
       for (const c of rest) {
@@ -2919,6 +3239,7 @@ const Core = (function () {
         res.push({ car: c, time: t, est: true, pen: pen(c) });
       }
       res.sort((a, b) => a.time - b.time);
+      for (const c of this.cars.filter(dnf).sort((a, b) => b.dist - a.dist)) res.push({ car: c, time: Infinity, est: true, pen: pen(c), dnf: true });   // (retired: Odstop, the furthest first)
       return res;
     }
   }
@@ -2971,8 +3292,169 @@ const Core = (function () {
   // the price of an upgrade from level `from` to level `to` (the levels in between too)
   const careerUpgPrice = (from, to) => { let p = 0; for (let l = from + 1; l <= to; l++) p += CAREER.upg[l] || 0; return p; };
 
+  // the stat bars (1..10) a vehicle's physics give (every registered vehicle's own bars are these +-1: tests/fleet.test.js). Moč: the
+  // engine, a little its power-to-weight; Oprijem: the tyres (amax), the wings' grip at ~120 km/h on top; Lahkost: the mass; Drift: the
+  // drive-type layer's power rotation, less grip (bigger slides), the slides' time constant, the wheelspin. Fitted on the 11 models above:
+  // each bar within 1 of the hand-made one, all but the rally car's drift (9 by design: the formula gives it 5)
+  function statsOf(M) {
+    const a = (ARC[M.id] || ARC.kaze).amax, P = CSP[M.id] || CSP.kaze, r = (v) => clamp(Math.round(v), 1, 10);
+    return {
+      power: r(-27.5 + 5 * Math.log(M.kw) + 1.25 * Math.log(M.kw * 1000 / M.mass)),
+      grip: r(6.5 + 17 * (a * (1 + (M.aero || 0) * 1111) - 1.72)),
+      weight: r(10 - 10.5 * Math.pow(Math.max(0, Math.log(M.mass / 760)), 1.7)),
+      drift: r(2.75 + 38 * P.pwr + 11 * (1.9 - a) + 2 * ((P.tv || 1) - 1) + 0.25 * Math.log(M.spinK || 1)),
+    };
+  }
+
+  // a total wreck at once, the same every time (tests, the renderer's checks): hits at the four corners, the nose, the tail and both sides
+  // until the car is destroyed: dmg 1, every zone and corner at the top, every part of its table off (the wheels only with damage on,
+  // dmgMode 2) and a kit vehicle's wreck sequence done. No random numbers; the parts go onto c.detach (Race.step makes them debris). A car
+  // with damage off (dmgMode 0) stays whole
+  function wreckCar(c) {
+    const hl = c.m.len * 0.5, hw = c.m.wid * 0.5, pts = [[hl, -hw], [hl, hw], [-hl, -hw], [-hl, hw], [hl, 0], [-hl, 0], [0, -hw], [0, hw]];
+    for (let n = 0; n < 16 && c.dmgMode && (c.dmg < 1 || Math.min(...c.dz, ...c.cd) < 1); n++) for (const [x, z] of pts) applyDamage(c, 0.25, x, z);
+    const W = c.wreck, PT = partsOf(c.m);
+    if (W && W.seq) while (W.seq.length) { const n = W.seq.shift(); if (!c.lost[n] && PT[n]) detachPart(c, n, PT[n]); }
+    return c;
+  }
+
+  /* ---------------------------------------------------------------------
+     VEHICLE REGISTRY: js/cars/<id>.js, one file per vehicle, loaded before this file (as the tracks: index.html lists them after the
+     track files, in registration order). Each pushes one def onto VEHICLE_DEFS (the template: any of them): its physics, grip (ARC),
+     drive-type layer (CSP), stat bars, career price, Pikes Peak class, AI field, sound preset, handling targets (expect: the fleet test),
+     part table and render look. A valid def becomes a model appended to MODELS (kit: true; MODELS[0..10] never move, the registration
+     order is append-only: a shipped vehicle is retired, never removed), with Tmax as the loop at the models computes it, its ARC and CSP
+     entries, its career price and its expanded part table. An invalid one is skipped with a console warning and listed in DEFS_SKIPPED
+     (the fleet test fails on any). A patch def ({ id, patch: true, ... }) attaches fields to a vehicle already registered, one of the 11
+     included (its look, its part table, its field ...): cat, ord, desc, stats, price, pk, field, fieldN, snd, expect, partNames, parts,
+     glb, credit, retired, look.
+     --------------------------------------------------------------------- */
+  const DEFS = (typeof VEHICLE_DEFS !== 'undefined' ? VEHICLE_DEFS : []).slice(), DEFS_SKIPPED = [];
+  const DRIVES = ['FR', 'FF', 'MR', 'AWD', 'RR'], PK_IDS = ['ta1', 'ppo', 'open', 'unl'];
+  const BODY_KEYS = ['coupe', 'sedan', 'hatch', 'wedge', 'rally', 'formula', 'lm', 'muscle', 'ev', 'truck', 'p206'];   // (the renderer's body names: no vehicle's id)
+  const PHYS_REQ = ['mass', 'a', 'b', 'kI', 'kw', 'redline', 'idle', 'gears', 'final', 'rw', 'cDrag', 'len', 'wid', 'steerMax'];
+  const PHYS_OPT = { tracK: [0.2, 3], brakeK: [0.2, 3], spinK: [0.02, 3], aero: [0, 0.0005], loose: [0.2, 2], looseDrag: [0.1, 2], landV: [3, 40], landK: [0, 2], ev: null, sway: [0, 4],
+    dmgK: [0.3, 2], vLim: [20, 400], aiGap: [2, 10], aiPass: [2, 8], aiEdge: [0.5, 4], aiLat: [1, 8], aiFol: [1, 6], circ: [3, 9] };
+  const DEF_REQ = ['id', 'name', 'cat', 'drive', 'desc', 'phys', 'arc', 'csp', 'stats', 'price', 'pk', 'snd', 'parts'];
+  const DEF_OPT = ['ord', 'field', 'fieldN', 'num', 'expect', 'partNames', 'glb', 'credit', 'retired', 'look'];
+  const PATCH_KEYS = ['cat', 'ord', 'desc', 'stats', 'price', 'pk', 'field', 'fieldN', 'snd', 'expect', 'partNames', 'parts', 'glb', 'credit', 'retired', 'look'];
+  const isNum = (v, lo, hi) => typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi;
+  const isObj = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
+  // the checks of a def's fields ('' when fine); a patch def's fields get the same
+  const DEF_CHECK = {
+    name: (v) => typeof v === 'string' && v.length >= 1 && v.length <= 18 ? '' : 'name: 1-18 characters',
+    cat: (v) => CATS.some(c => c.id === v) ? '' : 'cat not one of ' + CATS.map(c => c.id).join(' '),
+    ord: (v) => isNum(v, -1e6, 1e6) ? '' : 'ord not a number',
+    drive: (v) => DRIVES.indexOf(v) >= 0 ? '' : 'drive not one of ' + DRIVES.join(' '),
+    desc: (v) => typeof v === 'string' && v.length >= 1 && v.length <= 90 && !/\d\s*(kW|KM|kg)\b/.test(v) ? '' : 'desc: 1-90 characters, no kW / KM / kg (the game adds them)',
+    stats: (v) => isObj(v) && ['power', 'grip', 'weight', 'drift'].every(k => isNum(v[k], 0, 10)) && Object.keys(v).length === 4 ? '' : 'stats: { power, grip, weight, drift } 0..10',
+    price: (v) => Number.isInteger(v) && v >= 0 && v <= 1e7 ? '' : 'price not a whole number of euros',
+    pk: (v) => PK_IDS.indexOf(v) >= 0 ? '' : 'pk not one of ' + PK_IDS.join(' '),
+    field: (v) => v === null || (Array.isArray(v) && v.length >= 1 && v.length <= 12 && v.every(x => typeof x === 'string')) ? '' : 'field: null or a list of 1-12 ids',
+    fieldN: (v) => Number.isInteger(v) && v >= 1 && v <= 20 ? '' : 'fieldN not 1..20',
+    num: (v) => Number.isInteger(v) && v >= 1 && v <= 99 ? '' : 'num not 1..99',
+    snd: (v) => isObj(v) && SND_KINDS.indexOf(v.kind) >= 0 && isNum(v.hz, 0.3, 3) && isNum(v.loud, 0.1, 3) && (v.turbo == null || isNum(v.turbo, 0, 1)) && Object.keys(v).every(k => ['kind', 'hz', 'loud', 'turbo'].indexOf(k) >= 0) ? '' : 'snd: { kind (SND_KINDS), hz 0.3..3, loud 0.1..3, turbo? 0..1 }',
+    expect: (v) => isObj(v) && Object.keys(v).every(k => ['t100', 'vmax', 'latG', 'd100'].indexOf(k) >= 0 && Array.isArray(v[k]) && v[k].length === 2 && isNum(v[k][0], 0, 1e4) && isNum(v[k][1], v[k][0], 1e4)) ? '' : 'expect: { t100, vmax, latG, d100: [lo, hi] }',
+    partNames: (v) => isObj(v) && Object.keys(v).every(k => typeof v[k] === 'string' && v[k].length >= 1 && v[k].length <= 24) ? '' : 'partNames: { id: English name, 1-24 characters }',
+    glb: (v) => v === null || typeof v === 'string' ? '' : 'glb: null or a name',   // (a patch may take a glb skin away: null)
+    credit: (v) => typeof v === 'string' ? '' : 'credit not a text',
+    retired: (v) => typeof v === 'boolean' ? '' : 'retired not true / false',
+    look: (v) => v === null || isObj(v) ? '' : 'look: null or an object',
+  };
+  function physBad(P) {
+    if (!isObj(P)) return 'phys missing';
+    for (const k in P) if (PHYS_REQ.indexOf(k) < 0 && !(k in PHYS_OPT)) return 'phys: unknown key ' + k;
+    for (const k of PHYS_REQ) {
+      if (k === 'gears') { if (!Array.isArray(P.gears) || !P.gears.length || P.gears.length > 12 || !P.gears.every(g => isNum(g, 0.05, 20))) return 'phys.gears: 1-12 ratios > 0'; }
+      else if (k === 'idle') { if (!isNum(P.idle, 0, 8000)) return 'phys.idle not 0..8000'; }
+      else if (!isNum(P[k], 1e-6, 1e6)) return 'phys.' + k + ' not a number > 0';
+    }
+    if (P.len > 6.4 || P.wid > 3.2) return 'phys: longer than 6.4 m or wider than 3.2 m';
+    if (!(P.a + P.b < P.len)) return 'phys: the wheelbase (a + b) as long as the vehicle';
+    if (!(P.redline > P.idle) || P.redline > 25000) return 'phys.redline not above idle (and up to 25000)';
+    if (P.rw > 1.1 || P.kI > 3 || P.cDrag > 3 || P.steerMax > 1.2) return 'phys: rw, kI, cDrag or steerMax out of range';
+    for (const k in PHYS_OPT) { if (P[k] == null) continue; const R = PHYS_OPT[k]; if (R ? !isNum(P[k], R[0], R[1]) : typeof P[k] !== 'boolean') return 'phys.' + k + (R ? ' not ' + R[0] + '..' + R[1] : ' not true / false'); }
+    if (P.circ != null && !Number.isInteger(P.circ)) return 'phys.circ not a whole number';
+    return '';
+  }
+  // a full def's problems ('' when fine): every key known, the required ones there, each one sound
+  function defBad(d) {
+    if (!isObj(d)) return 'not an object';
+    if (typeof d.id !== 'string' || !/^[a-z][a-z0-9]{1,15}$/.test(d.id)) return 'id: 2-16 lower-case letters / digits';
+    for (const k in d) if (DEF_REQ.indexOf(k) < 0 && DEF_OPT.indexOf(k) < 0) return 'unknown key ' + k;
+    for (const k of DEF_REQ) if (d[k] == null) return 'missing ' + k;
+    for (const k in DEF_CHECK) if (d[k] !== undefined && !(k === 'field' && d[k] === null)) { const why = DEF_CHECK[k](d[k]); if (why) return why; }
+    const pb = physBad(d.phys); if (pb) return pb;
+    const A = d.arc; if (!isObj(A) || !isNum(A.amax, 0.8, 2.6) || !isNum(A.kv, 0.1, 10) || !isNum(A.rmin, 1, 20) || (A.bscale != null && !isNum(A.bscale, 0.3, 3)) || Object.keys(A).some(k => ['amax', 'kv', 'rmin', 'bscale'].indexOf(k) < 0)) return 'arc: { amax 0.8..2.6, kv 0.1..10, rmin 1..20, bscale? 0.3..3 }';
+    const S = d.csp; if (!isObj(S) || !['bx', 'coast', 'thr', 'liftP', 'pwr'].every(k => isNum(S[k], -1, 1)) || !['out', 'turn', 'w'].every(k => isNum(S[k], 0.1, 3)) || (S.tv != null && !isNum(S.tv, 0.1, 3))
+      || Object.keys(S).some(k => ['bx', 'coast', 'thr', 'liftP', 'pwr', 'out', 'turn', 'w', 'tv'].indexOf(k) < 0)) return 'csp: { bx, coast, thr, liftP, pwr -1..1; out, turn, w 0.1..3; tv? }';
+    const pp = partsBad(d.parts); if (pp) return pp;
+    let df = 0; const PT = expandParts(d.parts, d.phys); for (const k in PT) df += PT[k].df || 0;
+    if (df > 1 + 1e-9) return 'parts: the downforce shares (df) add up to more than 1';
+    return '';
+  }
+  function registerVehicles() {
+    const skip = (d, why) => { DEFS_SKIPPED.push({ id: d && d.id, why }); if (typeof console !== 'undefined') console.warn('vehicle ' + (d && d.id) + ' skipped: ' + why); };
+    // full defs: each sound, its id new (no model's, no body's, no earlier def's) ...
+    const ok = [];
+    for (const d of DEFS) {
+      if (isObj(d) && d.patch) continue;
+      const why = defBad(d) || (MODELS.some(m => m.id === d.id) || ok.some(o => o.id === d.id) ? 'id ' + d.id + ' taken' : BODY_KEYS.indexOf(d.id) >= 0 ? 'id ' + d.id + ' is a body name' : '');
+      if (why) skip(d, why); else ok.push(d);
+    }
+    // ... and every id of its field a vehicle (dropping a def can take another's field with it: until nothing changes)
+    for (let again = true; again;) {
+      again = false;
+      for (let i = ok.length - 1; i >= 0; i--) {
+        const d = ok[i], miss = (d.field || []).find(id => !MODELS.some(m => m.id === id) && !ok.some(o => o.id === id));
+        if (miss) { skip(d, 'field: no vehicle ' + miss); ok.splice(i, 1); again = true; }
+      }
+    }
+    for (const d of ok) {
+      const P = d.phys, M = Object.assign({}, P, {
+        id: d.id, name: d.name, drive: d.drive, cat: d.cat, ord: d.ord != null ? d.ord : 0, kit: true, def: d, sndP: d.snd, stats: Object.assign({}, d.stats),
+        body: 'hatch',   // INTERIM (stage A, no render kit yet): every registered vehicle drawn as the generic hatch; the kit flips this to d.id
+        parts: expandParts(d.parts, P), field: d.field ? d.field.slice() : null,
+      });
+      for (const k of ['fieldN', 'num', 'glb', 'credit', 'retired']) if (d[k] != null) M[k] = d[k];
+      // the AI's room for a big vehicle (unless the def sets its own): the edge margin, the passing offset, the follow gap (centre to
+      // centre), how far to its side a car counts as in its way and as one to follow (the hard-coded 3.2 / 2.1 for the others)
+      if (P.aiEdge == null) M.aiEdge = Math.max(1.25, 0.43 * P.wid + 0.5);
+      if (P.aiPass == null) M.aiPass = Math.max(3.3, P.wid + 1.5);
+      if (P.aiGap == null) M.aiGap = Math.max(3, P.len - 0.2);
+      if (P.aiLat == null) M.aiLat = Math.max(3.2, P.wid + 1.8);
+      if (P.aiFol == null) M.aiFol = Math.max(2.1, P.wid + 0.1);
+      const wr = M.redline * TAU / 60;   // (as the loop at the models)
+      M.Tmax = M.kw * 1000 / (wr * tqShape(1.0));
+      ARC[M.id] = { amax: d.arc.amax, kv: d.arc.kv, bscale: d.arc.bscale != null ? d.arc.bscale : 1, rmin: d.arc.rmin };
+      CSP[M.id] = Object.assign({}, d.csp);
+      CAREER.car[M.id] = d.price;
+      MODELS.push(M);
+    }
+    // patch defs, in order: onto a vehicle registered by now
+    for (const d of DEFS) {
+      if (!isObj(d) || !d.patch) continue;
+      const M = MODELS.find(m => m.id === d.id);
+      let why = !M ? 'patch: no vehicle ' + d.id : '';
+      for (const k in d) if (!why && k !== 'id' && k !== 'patch' && PATCH_KEYS.indexOf(k) < 0) why = 'patch: unknown key ' + k;
+      for (const k of PATCH_KEYS) if (!why && d[k] !== undefined && !(k === 'field' && d[k] === null)) why = k === 'parts' ? partsBad(d[k]) : DEF_CHECK[k](d[k]);
+      if (!why && d.parts) { let df = 0; const PT = expandParts(d.parts, M); for (const k in PT) df += PT[k].df || 0; if (df > 1 + 1e-9) why = 'parts: the downforce shares (df) add up to more than 1'; }
+      if (!why && d.field) { const miss = d.field.find(id => !MODELS.some(m => m.id === id)); if (miss) why = 'field: no vehicle ' + miss; }
+      if (why) { skip(d, why); continue; }
+      const D = M.def = Object.assign({}, M.def || { id: M.id, name: M.name });
+      for (const k of PATCH_KEYS) if (d[k] !== undefined) D[k] = d[k];
+      if (d.cat !== undefined) M.cat = d.cat; if (d.ord !== undefined) M.ord = d.ord; if (d.stats !== undefined) M.stats = Object.assign({}, d.stats);
+      if (d.field !== undefined) M.field = d.field ? d.field.slice() : null; if (d.fieldN !== undefined) M.fieldN = d.fieldN;
+      if (d.parts !== undefined) M.parts = expandParts(d.parts, M);
+      if (d.snd !== undefined) M.sndP = d.snd; if (d.price !== undefined) CAREER.car[M.id] = d.price;
+      for (const k of ['glb', 'credit', 'retired']) if (d[k] !== undefined) M[k] = d[k];
+    }
+  }
+  registerVehicles();
+
   return { G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, DRIVER_NAMES, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
-    aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, CAREER, careerPrize, careerUpgPrice };
+    aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, CAREER, careerPrize, careerUpgPrice,
+    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, aiModel, fieldSize, statsOf, ARC };
 })();
 
 
