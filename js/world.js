@@ -7450,7 +7450,7 @@ const World = (function () {
     };
     const VP = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vProf(i, side)); return a; }), VT = [-1, 1].map(side => { const a = new Uint8Array(N); for (let i = 0; i < N; i++) a[i] = vType(i, side); return a; });
     {
-      const tileL = 7, grav = [1.14, 1.1, 1.02], pave = [0.84, 0.8, 0.77];
+      const tileL = 7, grav = [1.2, 1.25, 1.3], pave = [0.84, 0.8, 0.77];   // (grav: the esker's pale, grey-beige sand and gravel over the shared makadam picture)
       const cols = (i) => { const wi = WA[i], rl = clamp(T.rl[i], -wi + 2.3, wi - 2.3); return [-wi, -wi + 0.5, rl - 1.7, rl - 1.2, rl - 0.7, rl - 0.25, rl + 0.25, rl + 0.7, rl + 1.2, rl + 1.7, wi - 0.5, wi]; };
       const shade = (i, o) => { const a = Math.abs(o - T.rl[i]), trk = sstep(0.45, 0.72, a) * sstep(1.45, 1.18, a), ao = Math.abs(o), wi = WA[i], s = SF[i];
         if (s === 5) { let k = 1.0 - 0.2 * trk + 0.06 * sstep(0.5, 0.2, a);
@@ -7465,7 +7465,8 @@ const World = (function () {
           const si = side > 0 ? 1 : 0, o = VP[si][i][k][0], q = side * o, c = hjGCol(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q), bar = side > 0 ? T.br[i] : T.bl[i];
           const wear = 0.42 * sstep(WA[i] + 1.2, WA[i] + 0.2, o) + 0.25 * sstep(1.4, 0.2, Math.abs(o - bar)), m = P.n3(T.px[i] * 2 + o, T.pz[i] * 2);
           return [lerp(c[0], 0.47 + m * 0.05, wear), lerp(c[1], 0.43 + m * 0.04, wear), lerp(c[2], 0.31, wear)]; }
-        if (kind === 5) return [grav[0] * 0.98, grav[1] * 0.98, grav[2] * 0.98];
+        if (kind === 5) { if (k < 3) return [grav[0] * 0.98, grav[1] * 0.98, grav[2] * 0.98];   // (the gravel shoulder: loose sand spilling into the needles and the grass at its outer edge)
+          const q = side * VP[side > 0 ? 1 : 0][i][k][0], c = hjGCol(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q), f = k === 3 ? 0.45 : 0.8; return [lerp(grav[0] * 0.95, c[0] * 1.6, f), lerp(grav[1] * 0.95, c[1] * 1.6, f), lerp(grav[2] * 0.95, c[2] * 1.6, f)]; }
         if (kind === 4) return [0.9, 0.88, 0.85]; return [0.96, 0.96, 0.97]; };
       const vuv = (p) => [p[0] / 2, -p[2] / 2], vuvA = (p) => [p[0] / tileL, -p[2] / tileL];
       for (let c0 = 0; c0 < N - 1; c0 += 100) {
@@ -7668,12 +7669,13 @@ const World = (function () {
         prev = P0; pk = bt;
       }
     }
+    const closedAt = [];   // (the closed side streets' boards: a marshal stands by each, placed with the crowds)
     { // the closed side streets: a board across, a marshal in orange
       for (const side of [-1, 1]) { const si = side > 0 ? 1 : 0; let run0 = -1;
         for (let i = 0; i <= N; i++) { const on = i < N && mouth[si][i]; if (on && run0 < 0) run0 = i; if (!on && run0 >= 0) { const im = Math.round((run0 + i - 1) / 2), s = im * ds; run0 = -1; if (s < sStart - 20 || s > sFin + 60) continue;
           const [px, pz, ii] = onSide(s, side, 2.4); if (hard(px, pz)) continue; const py = hjGround(px, pz), g = scen.get(px, pz);
           for (const o of [-1.25, 1.25]) box(g, px + T.tx[ii] * o, py - 0.2, pz + T.tz[ii] * o, 0.09, 2.3, 0.09, T.hd[ii], [0.35, 0.3, 0.24]);
-          const [v0, v1] = row(6); bannerQ(px, py + 1.25, pz, T.nx[ii] * side, T.nz[ii] * side, 3.2, 0.8, v0, v1, 0.5, 1); exclPush(px, pz, 2.5); } } }
+          const [v0, v1] = row(6); bannerQ(px, py + 1.25, pz, T.nx[ii] * side, T.nz[ii] * side, 3.2, 0.8, v0, v1, 0.5, 1); exclPush(px, pz, 2.5); closedAt.push([px, pz, ii, side]); } } }
     }
 
     /* ---- the spectators: the start, the boulevard past the Nero steps, the lane change and the corner onto the gravel, both sides of the climb, round the water
@@ -7681,8 +7683,10 @@ const World = (function () {
     // nobody behind the concrete blocks between the two carriageways (a car passes on either side), nor on the island round which the hairpin turns (def.hairpin [x, z, r])
     const HP = def.hairpin, crowdOut = (x, z) => { if (hard(x, z)) return true; if (HP && Math.hypot(x - HP[0], z - HP[1]) < HP[2] + 1.5) return true;
       const n = hjNear(x, z); return n.i >= 0 && barType(n.i, n.lat > 0 ? 1 : -1) === 4; };
-    const CR = crowdCtx({ gH: hjGround, near: nearDD, excluded: crowdOut, maxSlope: 0.95, chunk: 64 }), crSoft = new Set();   // (64 m chunks: the chase view draws ~1/3 of the people a 128 m chunk would)
-    const M = { first: 0.8, gap: 0.95, below: 3.5, above: 9, maxSlope: 0.95, sit: 0.12, flag: 0.1, keepBar: 0.6 };
+    // a Finnish summer evening's crowd: blue and white, black rally merchandise, light summer clothes, a few in orange and red
+    const SHIRTS = [[0.94, 0.94, 0.92], [0.9, 0.91, 0.92], [0.16, 0.36, 0.78], [0.2, 0.42, 0.86], [0.1, 0.11, 0.13], [0.14, 0.15, 0.17], [0.55, 0.6, 0.66], [0.4, 0.62, 0.85], [0.82, 0.16, 0.13], [0.95, 0.8, 0.2], [0.2, 0.5, 0.3], [0.96, 0.52, 0.12], [0.35, 0.36, 0.38], [0.74, 0.72, 0.62]];
+    const CR = crowdCtx({ gH: hjGround, near: nearDD, excluded: crowdOut, maxSlope: 0.95, chunk: 32, shirts: SHIRTS }), crSoft = new Set();   // (64 m chunks: the chase view draws ~1/3 of the people a 128 m chunk would)
+    const M = { first: 0.8, gap: 0.95, below: 3.5, above: 9, maxSlope: 0.95, sit: 0.22, flag: 0.1, keepBar: 0.6 };
     const run = (d0, d1, side, o) => { const a = Math.max(sAt(d0), 2), b = Math.min(sAt(d1), T.len - 4); if (b <= a) return 0; return crowdRun(CR, a, b, side, Object.assign({}, M, o)); };
     const C1 = def.crowds || [];   // (def.crowds [d0, d1, rows, share])
     for (const [a, b, rows, dn] of C1) for (const sd of [-1, 1]) run(a, b, sd, { rows, dens: dn * (sd > 0 ? 0.86 : 0.78), label: 'HJ ' + a + (sd > 0 ? 'R' : 'L') });
@@ -7691,6 +7695,7 @@ const World = (function () {
         for (const o of [-0.7, 0.7]) { const a = r.d[Math.max(0, q - 1)], b = r.d[Math.min(r.d.length - 1, q + 1)], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1, px = x - dz / l * o, pz = z + dx / l * o;
           if (crH(px, pz, 31) > 0.55) continue; crowdPut(CR, px, hjGround(px, pz), pz, T.px[n.i] - px, T.pz[n.i] - pz, { flag: 0.1 }, 1); } } }
     if (out.vesilinna) { const V = out.vesilinna; for (let k = 0; k < 40; k++) { const a = k / 40 * TAU, px = V.x + Math.cos(a) * 7.6, pz = V.z + Math.sin(a) * 6.1; if (crH(px, pz, 33) < 0.35) continue; crowdPut(CR, px, V.top, pz, Math.cos(a), Math.sin(a), { flag: 0.08 }, 1); } }
+    for (const [bx, bz, ii, sd] of closedAt) { const mx = bx + T.tx[ii] * 1.9, mz = bz + T.tz[ii] * 1.9; crowdPut(CR, mx, hjGround(mx, mz), mz, -T.nx[ii] * sd, -T.nz[ii] * sd, { col: [1, 0.5, 0.06], flag: 0 }, 1); }   // (the marshals, hi-vis orange)
     for (const e of CR.circ) exclPush(e.x, e.z, e.r);   // (the trees keep clear of the crowds)
     // YLEISÖALUE boards where the big crowds begin
     for (const [a, b, rows] of C1) if (rows >= 4) for (const sd of [-1, 1]) { const [px, pz, ii] = onSide(sAt(a) - 3, sd, 0.6); if (hard(px, pz) || nearDD(px, pz) < 0.2) continue; const py = hjGround(px, pz), g = scen.get(px, pz);
@@ -7849,6 +7854,17 @@ const World = (function () {
     spG.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: hjAtlas(T.cpS.map(kmS)), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     { const vg = new THREE.Group(); vg.name = 'plants'; root.add(vg); veg.addTo(vg, ouVegMat(), false, true); }
+    { // every spectator's long evening shadow (the sun 18 degrees up from the west: THEMES.harju.sunOff), a soft dark band in the crowd's multiply strip
+      const SX = 0.9968, SZ = 0.0797, N0 = [0.7, 0.7, 0.73], N1 = [0.84, 0.84, 0.86];
+      const surfY = (x, z) => { const n = hjNear(x, z); if (n.i < 0) return hjGround(x, z); const i = n.i, o = Math.abs(n.lat); if (o <= WA[i]) return T.hy[i] + 0.02;   // (the top surface: the road, the sidewalk, the verge, the ground)
+        const pr = VP[n.lat > 0 ? 1 : 0][i]; if (o >= pr[pr.length - 1][0]) return hjGround(x, z);
+        for (let k = 0; k < pr.length - 1; k++) if (o <= pr[k + 1][0]) return T.hy[i] + lerp(pr[k][1], pr[k + 1][1], (o - pr[k][0]) / (pr[k + 1][0] - pr[k][0]));
+        return hjGround(x, z); };
+      for (const L of CR.ppl.map.values()) for (let q = 0; q < L.length; q += 9) {
+        const x = L[q], y = L[q + 1], z = L[q + 2], len = 5.2 * L[q + 5], fx = x + SX * len, fz = z + SZ * len; if (Math.abs(y - hjGround(x, z)) > 0.8) continue;   // (not the ones up on the tower or a TV scaffold)
+        const y0 = Math.max(y, surfY(x, z)) + 0.06, y1 = surfY(fx, fz) + 0.06, w0 = 0.26, w1 = 0.16, a = [x - SZ * w0, y0, z + SX * w0], b = [x + SZ * w0, y0, z - SX * w0];
+        CR.strip.get(x, z).quadUp(a, b, [fx + SZ * w1, y1, fz - SX * w1], [fx - SZ * w1, y1, fz + SX * w1], [N0, N0, N1, N1]); }
+    }
     crowdFinish(CR, root, out);
     pkSky({ root, tex, out, sStart, gH: hjGround, far: true });
     out.stats = { trees: nTrees, tiles: G.ntx * G.ntz, buildings: nBld, bales: bales.length };   // (read by the tests)
