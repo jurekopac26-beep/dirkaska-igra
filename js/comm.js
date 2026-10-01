@@ -75,6 +75,16 @@ const Comm = (() => {
     damage: ["That car's taking a real beating!", 'The bodywork is looking battered now!', "There's some serious damage there!"],
     partLost: ['There goes the {part}!', 'The {part} has come clean off!', 'Bits flying everywhere, that was the {part}!'],
     heavyDamage: ["Smoke pouring from the engine! That doesn't look good!", 'Heavy damage! Nurse it home!', 'That car is badly hurt now!'],
+    // destruction (game.js commWreck): the player's car losing a wheel ({wheel}), still going on three, destroyed, on fire, retired; the
+    // rivals near the player ({a}: the driver) losing a wheel, out of the race with the car destroyed, on fire
+    wheelLost: ['There goes a wheel! The {wheel} is bouncing away down the road!', 'The {wheel} has come clean off!', 'Oh no, you have lost the {wheel}!'],
+    threeWheels: ['Still going on three wheels! What a sight!', 'Three wheels and a shower of sparks, but you are still moving!', 'Limping on three wheels, the hub scraping along the tarmac!'],
+    wreck: ['That car is destroyed! There is hardly anything left of it!', 'The car is a wreck! It is held together by hope alone.', 'Totally destroyed! Can it even make it to the flag?'],
+    fireMe: ['Your car is on fire! Flames from the engine bay!', 'Fire! The engine is burning!', 'Flames pouring out of your car!'],
+    retired: ['And that is the end of your race. The car is retired.', 'You pull off and retire. A painful end to the race.', 'Out of the race! That car could not go on.'],
+    rivalWheel: ['{a} has lost a wheel!', "A wheel comes off {a}'s car!", 'Look at that, {a} is down to three wheels!'],
+    rivalWreck: ['{a} is out, that car is destroyed!', '{a} pulls off, that car is finished!', 'That is the end of the race for {a}, the car is wrecked!'],
+    fire: ["{a}'s car is on fire!", "Flames from {a}'s car!", 'Smoke and flames, {a} is in big trouble!'],
     pitIn: ['Into the pit lane!', 'Coming in for repairs!', 'He dives into the pits!'],
     pitAdvice: ['That car is damaged! Box, box: the pit lane is on the right, just after the last corner, and the mechanics will fix it.', 'Heavy damage there! Bring it into the pits after the final corner, the crew are ready.', 'Time to pit! The entry is on the right after the last corner, the mechanics will put it right.'],
     // flags: a yellow flag, the safety car, overtaking under them
