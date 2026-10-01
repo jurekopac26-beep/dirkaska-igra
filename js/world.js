@@ -13131,9 +13131,10 @@ const World = (function () {
     const root = new THREE.Group(); scene.add(root);
     const out = { root, dyn: {}, groundH: nrGround, camFloor: nrGround, props: [], farClip: true, ownTex: [] };
     const ownTex = (t) => { out.ownTex.push(t); return t; };
-    const dS = (s) => ((s - sStart) % L + L) % L, sAt = (d) => ((sStart + d) % L + L) % L, side2 = (side) => (side > 0 ? 1 : 0);
+    const OPEN = !!T.open, LD = OPEN ? L - sStart - 1 : L;   // (an open road, the Ronde's finale: no wrapping round the lap; LD: the metres after the line there are)
+    const dS = OPEN ? (s) => s - sStart : (s) => ((s - sStart) % L + L) % L, sAt = OPEN ? (d) => clamp(sStart + d, 0, L - 0.01) : (d) => ((sStart + d) % L + L) % L, side2 = (side) => (side > 0 ? 1 : 0);
     const nameD = (n) => { const f = T.names.find(q => q.n === n); return f ? f.d : null; };
-    const inR = (d, ranges) => { for (const [a, b] of ranges || []) { const dd = ((d - a) % L + L) % L; if (dd <= ((b - a) % L + L) % L) return true; } return false; };   // d (m after the line) in one of the [from, to] stretches (wrapping)
+    const inR = (d, ranges) => { for (const [a, b] of ranges || []) { if (OPEN) { if (d >= a && d <= b) return true; continue; } const dd = ((d - a) % L + L) % L; if (dd <= ((b - a) % L + L) % L) return true; } return false; };   // d (m after the line) in one of the [from, to] stretches (wrapping)
     nrPrep();
     const P = NR, G = P.G, SNOWB = typeof Render !== 'undefined' && Render.atmos && Render.atmos.season === 'winter';
     // the water (def.water: the Dender, the ponds): its level and shore polygon; the ground is dug out under it (NR.pad, called by nrH)
@@ -13187,7 +13188,7 @@ const World = (function () {
     const VP = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vrg(i, side)); return a; });
     {
       const CH = 128, offs = [-w, -w * 2 / 3, -w / 3, 0, w / 3, w * 2 / 3, w], tileL = 8, K = 2.4, wl = [0.95, 0.95, 0.92];
-      const brk = new Float32Array(N); for (const c of T.corners) if (c.sev >= 2) for (let k = -60; k <= 6; k++) { const i = (c.i0 + k + N) % N, f = k < -10 ? sstep(-60, -12, k) : sstep(6, -10, k); if (f > brk[i]) brk[i] = f; }
+      const brk = new Float32Array(N); for (const c of T.corners) if (c.sev >= 2) for (let k = -60; k <= 6; k++) { if (OPEN && (c.i0 + k < 0 || c.i0 + k >= N)) continue; const i = (c.i0 + k + N) % N, f = k < -10 ? sstep(-60, -12, k) : sstep(6, -10, k); if (f > brk[i]) brk[i] = f; }
       const shA = (i, o) => { const rl = T.rl[i]; let k = 0.84 - (0.12 + 0.1 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5); if (Math.abs(o) > w * 0.9) k -= 0.04; return [k, k, k * 1.02]; };
       const shK = (i, o) => { const rl = T.rl[i], t = Math.exp(-((Math.abs(o - rl) - 0.8) ** 2) / 0.6); let k = (0.95 + 0.06 * rpHash(i, 13)) * (1 - 0.08 * t) * (Math.abs(o) > w - 0.5 ? 0.86 : 1);
         const ms = town[i] ? 0 : sstep(w - 2.4, w - 0.3, Math.abs(o)) * (0.5 + 0.5 * rpHash(i, 19));   // (moss and grass between the stones at the edges, where no wheel goes: in the park)
@@ -13197,6 +13198,7 @@ const World = (function () {
       for (let c0 = 0; c0 < N; c0 += CH) {
         const ga = new GB(true), gk = new GB(true), gt = new GB(true), gl = new GB(), gp = gt, gv = new GB(true), gc2 = gl;   // (the tiles and the pavers one mesh, the lines and the kerbs one)
         for (let ii = c0; ii < Math.min(c0 + CH, N); ii++) {
+          if (OPEN && ii >= N - 1) break;
           const i = ii, j = (ii + 1) % N, kd = kindR[i], v0 = ii * ds, v1 = (ii + 1) * ds;
           for (let c = 0; c < offs.length - 1; c++) { const o0 = offs[c], o1 = offs[c + 1], A = Pt(i, o0, 0.02), B = Pt(i, o1, 0.02), C = Pt(j, o1, 0.02), D = Pt(j, o0, 0.02);
             if (kd === 1) gk.quadUp(A, B, C, D, [shK(i, o0), shK(i, o1), shK(j, o1), shK(j, o0)], [[(o0 + w) / K, v0 / K], [(o1 + w) / K, v0 / K], [(o1 + w) / K, v1 / K], [(o0 + w) / K, v1 / K]]);
@@ -13252,13 +13254,13 @@ const World = (function () {
         const gn = new RB(true), gr = new RB();
         for (const side of [-1, 1]) {
           let pn = -1, pr = -1, acc = c0 * ds;
-          for (let ii = c0; ii <= Math.min(c0 + CHB, N); ii++, acc += ds) {
+          for (let ii = c0; ii <= Math.min(c0 + CHB, OPEN ? N - 1 : N); ii++, acc += ds) {
             const i = ii % N, bar = side > 0 ? T.br[i] : T.bl[i], y0 = town[i] ? 0.13 : 0.0;
             if (nad[i]) {   // a Nadar panel row: bottom and top of the fence
               const o = side * (bar + 0.06), u = acc / 2.3, p = [Pt(i, o, y0 + 0.04), Pt(i, o, y0 + 1.14)], cl = [W1, W1];
               const r = gn.row(side > 0 ? p : p.slice().reverse(), cl, side > 0 ? [[u, 0], [u, 1]] : [[u, 1], [u, 0]]);
               if (pn >= 0) gn.link(pn, r, 0, 1); pn = r; pr = -1;
-              if (ii % 9 === 0 && ii < c0 + CHB && nad[(i + 2) % N] && crH(i, side, 61) < 0.45) {   // a sponsor's cloth over two panels, read from the road
+              if (ii % 9 === 0 && ii < c0 + CHB && (!OPEN || i + 2 < N) && nad[(i + 2) % N] && crH(i, side, 61) < 0.45) {   // a sponsor's cloth over two panels, read from the road
                 const j2 = (i + 2) % N, k = Math.floor(crH(i, side, 62) * 8), su = (k % 2) / 2, sv = 1 - Math.floor(k / 2) / 4, oo = (ix) => side * ((side > 0 ? T.br[ix] : T.bl[ix]) + 0.0);
                 const A = Pt(i, oo(i), y0 + 0.16), B = Pt(j2, oo(j2), y0 + 0.16), C = Pt(j2, oo(j2), y0 + 1.06), D = Pt(i, oo(i), y0 + 1.06), ins = Pt(i, side * (bar + 2), 0.5);
                 spC.get(A[0], A[2]).quadO(A, B, C, D, W1, ins, side > 0 ? [[su + 0.5, sv - 0.25], [su, sv - 0.25], [su, sv], [su + 0.5, sv]] : [[su, sv - 0.25], [su + 0.5, sv - 0.25], [su + 0.5, sv], [su, sv]]);
@@ -13441,7 +13443,7 @@ const World = (function () {
         exclPush(x, z, 1.8); CR.avoid(x, z, 1.9);
       }
       // benches (wood on cast iron) and bins along the sidewalks, every ~45 m
-      for (let d = 30; d < L; d += 45) { const s = sAt(d), i = T.idx(s); if (!town[i]) continue;
+      for (let d = 30; d < LD; d += 45) { const s = sAt(d), i = T.idx(s); if (!town[i]) continue;
         const sd = crH(d, 0, 34) < 0.5 ? -1 : 1, [x, z, ii] = onSide(s, sd, 2.55); if (excluded(x, z) || nrNear(x, z).dd < 2.2) continue;
         const y = nrGround(x, z), g = scen.get(x, z), hd = T.hd[ii], nx = T.nx[ii] * sd, nz = T.nz[ii] * sd;
         box(g, x, y + 0.42, z, 1.8, 0.07, 0.45, hd, [0.5, 0.34, 0.2]); box(g, x + nx * 0.22, y + 0.5, z + nz * 0.22, 1.8, 0.4, 0.06, hd, [0.5, 0.34, 0.2]);
@@ -13511,7 +13513,7 @@ const World = (function () {
     {
       const BC = [[0.1, 0.1, 0.12], [0.16, 0.3, 0.6], [0.7, 0.12, 0.1], [0.85, 0.85, 0.82], [0.2, 0.42, 0.28], [0.55, 0.4, 0.25]], CC = [[0.75, 0.76, 0.78], [0.12, 0.13, 0.15], [0.6, 0.1, 0.1], [0.2, 0.28, 0.48], [0.88, 0.88, 0.86], [0.35, 0.37, 0.4]];
       const dC = nameD('Kapel Oudenberg') || 880;
-      for (let d = 6; d < L; d += 7) for (const sd of [-1, 1]) {
+      for (let d = 6; d < LD; d += 7) for (const sd of [-1, 1]) {
         const s = sAt(d), i = T.idx(s); if (!town[i]) continue;
         const h = crH(d, sd, 90); if (h > 0.62) continue;
         const [x, z, ii] = onSide(s, sd, 4.4 + crH(d, sd, 91) * 2.6); if (excluded(x, z) || inWater(x, z, 2)) continue;
@@ -13570,7 +13572,7 @@ const World = (function () {
     const lanterns = [];   // (the lamps' lanterns: their glow at night)
     /* ---- street lamps along the town's sidewalks (dark green cast iron, a lantern over the road), every ~26 m on alternate sides, behind the fence ---- */
     { const lamps = new IChunks(muLampGeo(), new THREE.MeshLambertMaterial({ vertexColors: true }), 512); let side = 1;
-      for (let d = 13; d < L; d += 26) { const s = sAt(d), i = T.idx(s); side = -side; if (!town[i]) continue;
+      for (let d = 13; d < LD; d += 26) { const s = sAt(d), i = T.idx(s); side = -side; if (!town[i]) continue;
         const [x, z, ii] = onSide(s, side, 0.62); if (excluded(x, z) || nrNear(x, z).dd < 0.4) continue;
         const th = Math.atan2(T.nz[ii] * side, -T.nx[ii] * side), ly = nrGround(x, z) - 0.05; lamps.add(x, ly, z, th, 1, 1); lanterns.push(x + Math.cos(th) * 0.62, ly + 4.2, z - Math.sin(th) * 0.62); CR.avoid(x, z, 0.6); }
       lamps.addTo(root, true); }
@@ -13604,7 +13606,7 @@ const World = (function () {
       exclPush(x - nx * L1, z - nz * L1, 2); exclPush(x + nx * L2, z + nz * L2, 2); CR.avoid(x - nx * L1, z - nz * L1, 1.3); CR.avoid(x + nx * L2, z + nz * L2, 1.3);
     };
     { const d1 = nameD('Kapelmuur'), d2 = nameD('Kapel Oudenberg'); if (d1 != null) arch(d1 + 8, B0); if (d2 != null) arch(d2 - 38, B0 + 3);
-      if (climb) arch(dS(sOf(climb, climb.finishS)), B0 + 31); }
+      if (climb) arch(dS(sOf(climb, climb.finishS)), B0 + 31); else if (OPEN && T.finishS != null) arch(dS(T.finishS), B0 + 31); }
     /* ---- the street names on their poles (blue on white, the Belgian street plates) before each named place; painted words on the Muur's cobbles ---- */
     T.names.forEach((q, k) => { const s = sAt(q.d - 30), i = T.idx(s); let side = 0, best = -1;
       for (const sd of [-1, 1]) { const [px, pz] = onSide(s, sd, 1.1); const f = excluded(px, pz) ? 0 : 1 + crH(k, sd, 3); if (f > best) { best = f; side = sd; } }
@@ -13633,6 +13635,12 @@ const World = (function () {
         run(110, dK - 20, sd, { rows: 3, dens: 0.66, label: 'MU Vesten' });
         run(dK - 20, dD + 30, sd, { rows: 5, dens: 0.8, gap: 0.9, first: 1.2, maxSlope: 1.2, label: 'MU Kapelmuur' });
         run(dD + 30, dD + 170, sd, { rows: 2, dens: 0.45, label: 'MU Driepikkel' });
+        if (OPEN) {   // the Ronde's finale: groups along the road out, the Bosberg lined from its foot, packed at the top
+          const dB = nameD('Bosberg') || LD - 1300, dF = dS(T.finishS);
+          run(dD + 170, dB - 40, sd, { rows: 2, dens: 0.07, clump: 0.95, strip: false, label: 'MU groups' });
+          run(dB - 40, dF - 120, sd, { rows: 3, dens: 0.5, clump: 0.6, maxSlope: 1.2, label: 'MU Bosberg' });
+          run(dF - 120, Math.min(LD - 20, dF + 60), sd, { rows: 4, dens: 0.8, maxSlope: 1.2, label: 'MU Bosberg top' });
+          continue; }
         run(dD + 170, dH - 80, sd, { rows: 2, dens: 0.07, clump: 0.95, strip: false, label: 'MU groups' });
         run(dH - 80, dH + 70, sd, { rows: 3, dens: 0.55, label: 'MU hairpin' });
         run(dH + 70, L - 190, sd, { rows: 2, dens: 0.3, clump: 0.7, label: 'MU old town' });
@@ -13858,7 +13866,7 @@ const World = (function () {
       for (let k = 0; k < n; k++) { const c = CL[k % 4]; col.set(c, k * 3); pos[k * 3 + 1] = -1e4; }
       const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
       const pts = new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.16, vertexColors: true, sizeAttenuation: true })); pts.frustumCulled = false; pts.visible = false; root.add(pts);
-      const [fx, fz, , fi] = atS(climb ? sOf(climb, climb.finishS) : sStart, 0);
+      const [fx, fz, , fi] = atS(climb ? sOf(climb, climb.finishS) : T.open ? T.finishS : sStart, 0);
       out.dyn.confetti = { pts, pos, vel, n, x: fx, z: fz, y: T.hy[fi] + 7, t0: -1, tp: 0, done: false };
     }
     /* ---- the sky over Flanders: a dome round the camera (inside its far plane) with fair-weather cumulus drifting from the west; its colours from the
