@@ -26,7 +26,7 @@
 
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
-  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.2, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 1, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, line: 0 };
+  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.2, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 1, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, hlv: 1, line: 0 };
   let S = Object.assign({}, DEF);
   let records = {};
   try { const j = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (j) S = Object.assign(S, j); } catch (_) { }
@@ -414,7 +414,7 @@
       const d = Core.TRACKS.find(x => x.id === S.track), W = ['malo krila', 'srednje krilo', 'veliko krila'], G = ['kratke prestave', 'srednje prestave', 'dolge prestave'], U = setupOf(S.track);
       if (d) toast(tr('Nastavitev za {0}: {1}, {2}.', Lang.of(d, 'name'), tr(W[U.wing]), tr(G[U.gear])), 2400);
       return; }
-    const num = ['zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'codrv', 'damage', 'ghost', 'quali', 'tower', 'fuel', 'line', 'faults', 'radio'];
+    const num = ['zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'codrv', 'damage', 'ghost', 'quali', 'tower', 'fuel', 'line', 'faults', 'radio', 'hlv'];
     S[key] = num.includes(key) ? +v : v;
     if (key === 'lang') Lang.set(S.lang);   // (before the settings apply: what they write is in the new language)
     if (key === 'shadows') { autoNoShadows = false; perf.pending = perf.restore = false; perf.keep = true; }   // the player's own choice wins for the rest of the visit
@@ -607,7 +607,8 @@
     if (++H.i >= H.clips.length) { hlOff(); replayEnd(); return; }   // (the last moment done: back to the results)
     const C = H.clips[H.i]; P.t = C.t0; P.i = 0; P.k = C.k; P.cam = 'tv'; P.play = true; Render.resetCam();
     const el = $('rp-hl-cap'); el.innerHTML = '<small>' + esc(C.lbl) + '</small>' + esc(C.cap); el.classList.remove('off');
-    Comm.say(C.say, C.vars || null, 4); replayUI();
+    if (C.say) Comm.say(C.say, C.vars || null, 4);
+    replayUI();
   }
   function hlOff() { if (replay) replay.hl = null; $('rp-hl-cap').classList.add('off'); }
   function replayStart() {
@@ -618,7 +619,8 @@
   }
   function replayEnd() {
     if (!replay) return;
-    hlOff(); replay = null; $('replay-ui').classList.add('off');
+    hlOff(); replay = null; $('replay-ui').classList.add('off'); $('replay-ui').classList.remove('auto');
+    hlvStop();   // (the best moment's video: done)
     if (race && race.fl) race.fl.sc = null;
     showScreen('results');
   }
@@ -637,7 +639,7 @@
     else if (a === 'rp-speed') P.speed = RP_SPEED[(RP_SPEED.indexOf(P.speed) + 1) % RP_SPEED.length];
     else if (a === 'rp-cam') { const K = Object.keys(RP_CAM); P.cam = K[(K.indexOf(P.cam) + 1) % K.length]; Render.resetCam(); }
     else if (a === 'rp-prev' || a === 'rp-next') { P.k = (P.k + (a === 'rp-next' ? 1 : R.n - 1)) % R.n; Render.resetCam(); }
-    else if (a === 'rp-exit') { replayEnd(); return; }
+    else if (a === 'rp-exit' || a === 'rp-skip') { replayEnd(); return; }   // (Preskoči: the best moment cut short)
     replayUI();
   }
   // a car where the recording has it at time t (between two samples)
@@ -650,7 +652,7 @@
     c.q = track.query(c.x, c.z, c.q && c.q.i >= 0 ? c.q.i : -1, c.q || {});
   }
   function replayFrame(dt) {
-    if (replay.hl && replay.play && replay.t >= replay.hl.clips[replay.hl.i].t1) { hlNext(); if (!replay) return; }   // (the highlights: the next moment)
+    if (replay.hl && (replay.play || replay.hl.auto) && replay.t >= replay.hl.clips[replay.hl.i].t1 && !hlRec) { hlNext(); if (!replay) return; }   // (the highlights: the next moment; the best moment: once its video is done)
     const P = replay, R = recd, F = R.frames;
     if (P.play) { P.t = Math.min(P.t1, P.t + dt * P.speed); P.clk = (P.clk || 0) + dt; if (P.t >= P.t1) { P.play = false; replayUI(); } }   // (clk: the game's clock while it plays, for the tests)
     let i = P.i; while (i < F.length - 2 && F[i + 1][0] <= P.t) i++; while (i > 0 && F[i][0] > P.t) i--; P.i = i;
@@ -661,10 +663,107 @@
       if (scOn) { if (!P.sc) P.sc = new Core.Car(Core.MODELS[1], { id: 0, name: 'Varnostni avto', color: 0xdfe3e8, phys: physOf() }); P.sc.sc = true; P.sc.num = 0; rpPose(P.sc, A, B[o + 6] >= 2 ? B : A, o, u); race.fl.sc = { car: P.sc, state: A[o + 6] & 4 ? 'out' : 'in' }; }
       else race.fl.sc = null;
     }
-    const c = R.cars[P.k];
+    const c = R.cars[P.k], H = P.hl, C = H && H.auto ? H.clips[H.i] : null;   // (the best moment: its own progress)
     $('rp-info').textContent = (c.isPlayer ? tr('Ti') : c.name) + ' · ' + fmt(Math.max(0, P.t), true);
-    $('rp-prog').style.width = (100 * (P.t - F[0][0]) / Math.max(1e-3, P.t1 - F[0][0])).toFixed(1) + '%';
+    $('rp-prog').style.width = (C ? Core.clamp(100 * (P.t - C.t0) / Math.max(1e-3, C.t1 - C.t0), 0, 100) : 100 * (P.t - F[0][0]) / Math.max(1e-3, P.t1 - F[0][0])).toFixed(1) + '%';
     Render.frame(dt, 1, c, P.cam, { noFx: true });
+    if (hlRec) { hlvDraw(dt); if (C && P.t >= C.t1 && ++hlRec.tail >= HLV_TAIL) hlvStop(); }   // (the video ends with the moment's last picture, held a few frames: the encoder's last ones are lost at its stop)
+  }
+
+  /* ---------------- the best moment as a video (Nastavitve · Video po dirki, on by default): when a race is over the moment the
+     highlights rate highest for the player (the player's own pass or win first, a fight at the front, a crash; else the player's finish)
+     plays by itself from the TV cameras, about 12 s (Preskoči cuts it short), and is recorded as it plays: the picture with its caption
+     (a canvas of its own, MediaRecorder; MP4 where the browser makes it, else WebM; no sound). Under the results then the video, looping,
+     with Deli: the phone's share sheet (WhatsApp, Instagram, the gallery ...), elsewhere a file. Not online, not in a time trial. */
+  const HLV_TYPES = ['video/mp4;codecs=avc1.42E01E', 'video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+  const HLV_LEN = 12, HLV_MIN = 3, HLV_TAIL = 8;   // (s: the moment; the least of it kept as a video when cut short; frames the last picture is held)
+  let hlRec = null, hlVid = null;   // the recording under way { cv, x, mr, ch, mime, C, dur, on, track, id, race }; the video made { blob, url, type, name, dur, w, h, cap, track }
+  function hlBest(pos) {   // the best moment of the race (pos: the player's place in the results): { t0, t1, k (the car followed), lbl, cap, say, vars }, or null
+    const R = recd; if (!R || race.timeTrial || R.frames.length < 200) return null;
+    const F = R.frames, tA = F[0][0], tEnd = F[F.length - 1][0], cars = R.cars, P = race.player, pi = cars.indexOf(P);
+    let best = null, bs = -1;
+    for (const e of R.ev) {   // (a pass with the player in it counts 2 more; a crash only as the highlights rate it)
+      if (e.t < tA + 6 || e.t > tEnd - 2) continue;
+      const s = e.sc + (e.kind === 'pass' && (e.a === pi || e.b === pi) ? 2 : 0); if (s > bs) { bs = s; best = e; }
+    }
+    const tf = P.finished && P.finishTime <= tEnd - 1 ? P.finishTime : null, fs = pos === 1 ? 8 : pos <= 3 ? 5 : 3;   // (the player's finish: a win, the podium, the line)
+    let C;
+    if (tf != null && (!best || fs >= bs)) C = { t: tf, pre: 9, k: pi, lbl: tr(pos === 1 ? 'ZMAGA' : 'CILJ'), cap: pos === 1 ? tr('Tvoja zmaga!') : tr('Ti · {0} mesto', Lang.ord(pos)), say: pos === 1 ? 'rpFinishMe' : '', vars: null };
+    else if (best) {
+      const a = cars[best.a], b = best.b >= 0 ? cars[best.b] : null;
+      C = best.kind === 'pass' ? { t: best.t, pre: 8, k: best.a, lbl: tr('PREHITEVANJE'), cap: hlName(a) + ' ▸ ' + hlName(b) + ' · ' + tr('{0} mesto', Lang.ord(best.pos)),
+        say: a.isPlayer ? 'rpPassMe' : b.isPlayer ? 'rpPassOnMe' : 'rpPass', vars: { a: a.name, b: b.name, pos: Comm.ordinal(best.pos) } }
+        : { t: best.t, pre: 6, k: best.a, lbl: tr('NESREČA'), cap: hlName(a), say: a.isPlayer ? 'rpCrashMe' : 'rpCrash', vars: { a: a.name } };
+    } else return null;
+    let t0 = Math.max(tA, C.t - C.pre), t1 = Math.min(tEnd - 0.1, t0 + HLV_LEN); t0 = Math.max(tA, Math.min(t0, t1 - HLV_LEN));   // (12 s round the moment, inside the recording)
+    if (t1 - t0 < 5) return null;
+    return { t0, t1, k: Math.max(0, C.k), lbl: tr('NAJBOLJŠI TRENUTEK') + ' · ' + C.lbl, cap: C.cap, say: C.say, vars: C.vars };
+  }
+  function hlvAuto(pos) {   // finishRace: the best moment, when there is one (and the setting is on): true while it plays
+    if (!S.hlv || race.chal || race.quali || race.timeTrial || school || (mp && mp.race)) return false;
+    const C = hlBest(pos); if (!C) return false;
+    replayStart(); if (!replay) return false;
+    replay.hl = { clips: [C], i: -1, auto: true }; $('replay-ui').classList.add('auto');
+    hlNext(); hlvStart(C);
+    return true;
+  }
+  const hlvMime = () => { try { return window.MediaRecorder && HTMLCanvasElement.prototype.captureStream ? HLV_TYPES.find(t => MediaRecorder.isTypeSupported(t)) || null : null; } catch (_) { return null; } };
+  function hlvStart(C) {   // the recorder on (the picture drawn into its canvas by hlvDraw after each of the replay's frames)
+    const mime = hlvMime(), gl = $('gl'); if (!mime || !gl.width || !gl.height) return;
+    const m16 = (v) => Math.max(16, Math.round(v / 16) * 16), k = Math.min(1, 1280 / Math.max(gl.width, gl.height));   // (the screen's shape, at most 1280 pixels; sides a multiple of 16 for the encoders)
+    const cv = document.createElement('canvas'); cv.width = m16(gl.width * k); cv.height = m16(gl.height * k);
+    const x = cv.getContext('2d'); if (!x) return;
+    let mr; try { mr = new MediaRecorder(cv.captureStream(30), { mimeType: mime, videoBitsPerSecond: 5e6 }); } catch (_) { return; }
+    const R = hlRec = { cv, x, mr, ch: [], mime, C, dur: 0, on: false, tail: 0, track: Lang.of(track.def, 'name'), id: track.def.id, race };
+    mr.ondataavailable = (e) => { if (e.data && e.data.size) R.ch.push(e.data); };
+    mr.onstop = () => hlvMade(R);
+    R.vis = () => { try { if (document.hidden) mr.pause(); else if (mr.state === 'paused') { mr.resume(); R.gap = true; } } catch (_) { } };   // (the game hidden: the video waits too)
+    document.addEventListener('visibilitychange', R.vis);
+  }
+  function hlvDraw(dt) {   // the replay's frame into the video: the picture, the game and the track at the top, the caption at the bottom
+    const R = hlRec, x = R.x, gl = $('gl'), W = R.cv.width, H = R.cv.height, u = Math.min(W, H) / 720, C = R.C;
+    if (R.on) R.dur += dt;
+    x.drawImage(gl, 0, 0, W, H);
+    const font = (w, px) => w + ' ' + Math.round(px * u) + "px 'Chakra Petch', 'Segoe UI', Roboto, sans-serif";
+    x.textBaseline = 'alphabetic'; x.shadowColor = 'rgba(0,0,0,.8)'; x.shadowBlur = 6 * u;
+    x.textAlign = 'left'; x.fillStyle = '#ffc629'; x.font = font('italic 700', 26); x.fillText('APEX RACING', 26 * u, 46 * u);
+    x.fillStyle = '#f6f6f1'; x.font = font('italic 600', 22); x.fillText(R.track, 26 * u, 76 * u);
+    x.shadowBlur = 0; x.textAlign = 'center';
+    const f1 = font('italic 700', 19), f2 = font('italic 700', 34); x.font = f1; const w1 = x.measureText(C.lbl).width; x.font = f2; const w2 = x.measureText(C.cap).width;
+    const bw = Math.min(W - 24 * u, Math.max(w1, w2) + 48 * u), bh = (C.cap ? 92 : 52) * u, by = H - bh - 30 * u;
+    x.fillStyle = 'rgba(12,16,40,.78)'; x.beginPath(); if (x.roundRect) x.roundRect((W - bw) / 2, by, bw, bh, 8 * u); else x.rect((W - bw) / 2, by, bw, bh); x.fill();
+    x.fillStyle = '#ffcf2e'; x.font = f1; x.fillText(C.lbl, W / 2, by + 34 * u, bw - 24 * u);
+    if (C.cap) { x.fillStyle = '#f6f6f1'; x.font = f2; x.fillText(C.cap, W / 2, by + 76 * u, bw - 24 * u); }
+    if (!R.on) { R.on = true; try { R.mr.start(); } catch (_) { hlvStop(); } }   // (the recorder on with the first picture)
+  }
+  function hlvDt(d) {   // the replay's step while it is recorded: a frame's real time (the first picture at the moment's start, the last one held; back from hidden: the time away left out)
+    const R = hlRec; if (!R.on || R.tail) return 0;
+    if (R.gap) { R.gap = false; return Math.min(d, 0.1); }
+    return Math.min(d, 2);
+  }
+  function hlvStop() { const R = hlRec; if (!R) return; hlRec = null; document.removeEventListener('visibilitychange', R.vis); try { if (R.mr.state !== 'inactive') R.mr.stop(); else hlvMade(R); } catch (_) { } }
+  function hlvMade(R) {   // the recorder done: the video (long enough) under the results
+    const type = R.mime.split(';')[0], blob = new Blob(R.ch, { type });
+    if (R.dur < HLV_MIN || !blob.size || R.race !== race) return;   // (too short; or the race left meanwhile)
+    hlvClear();
+    const dt = new Date(), p2 = (n) => String(n).padStart(2, '0'), name = 'dirka-' + R.id + '-' + dt.getFullYear() + p2(dt.getMonth() + 1) + p2(dt.getDate()) + '-' + p2(dt.getHours()) + p2(dt.getMinutes()) + p2(dt.getSeconds()) + (type === 'video/mp4' ? '.mp4' : '.webm');
+    hlVid = { blob, url: URL.createObjectURL(blob), type, name, dur: R.dur, w: R.cv.width, h: R.cv.height, cap: R.C.lbl + (R.C.cap ? ' · ' + R.C.cap : ''), track: R.track };
+    const v = $('res-vid-v'); v.src = hlVid.url; v.play().catch(() => { });
+    $('res-vid-cap').textContent = R.C.cap || R.C.lbl; $('res-vid').classList.remove('off');
+  }
+  function hlvClear() {   // a new race, the title: the video gone
+    if (hlRec) { const R = hlRec; R.dur = 0; hlvStop(); }   // (cut off: no video)
+    if (hlVid) { const v = $('res-vid-v'); v.pause(); v.removeAttribute('src'); v.load(); URL.revokeObjectURL(hlVid.url); hlVid = null; }
+    $('res-vid').classList.add('off'); $('res-vid').classList.remove('big');
+  }
+  function hlvShare() {   // Deli: the phone's share sheet with the video; elsewhere (or when the phone cannot share a video) the file
+    const V = hlVid; if (!V) return;
+    const file = typeof File === 'function' ? new File([V.blob], V.name, { type: V.type }) : null, title = tr('Moj najboljši trenutek · {0}', V.track);
+    const down = () => { const a = document.createElement('a'); a.href = V.url; a.download = V.name; document.body.appendChild(a); a.click(); a.remove(); toast(tr('Video shranjen: {0}', V.name), 2600); return 'file'; };
+    let how = null;
+    if (file && matchMedia('(pointer: coarse)').matches && navigator.canShare && navigator.canShare({ files: [file] })) how = navigator.share({ files: [file], title, text: title + ' (APEX RACING)' }).then(() => 'share', (e) => (e && e.name === 'AbortError' ? 'abort' : down()));
+    else how = Promise.resolve(down());
+    how.then((h) => { window.__game.lastVideo = { how: h, name: V.name, type: V.type, bytes: V.blob.size }; });   // (the tests)
   }
 
   /* ---------------- photo mode (Foto in the pause, or in the replay): the race (or the recording) stands still, the HUD and the controls
@@ -1283,7 +1382,7 @@
     $('pause-skip').classList.toggle('off', !quali);
     $('pause-restart').classList.toggle('off', !!on);   // (online: no restart for one)
     stRun = { drift: 0, lapWall: false, wall: false, car: false, laps: 0, pole: !!(Q && Q.res.grid === 1), done: false }; achNew = [];
-    cpSeen = race.player.cpEv; ttRes = null; cornerSeen = -1; cornerShow = false; placeInit(); codrvInit(); twStart(); ghStart(); secReset(); recStart(); $('res-hl').classList.add('off'); replay = null; $('replay-ui').classList.add('off'); $('h-ttsp').className = '';
+    cpSeen = race.player.cpEv; ttRes = null; cornerSeen = -1; cornerShow = false; placeInit(); codrvInit(); twStart(); ghStart(); secReset(); recStart(); $('res-hl').classList.add('off'); hlvClear(); replay = null; $('replay-ui').classList.add('off'); $('replay-ui').classList.remove('auto'); $('h-ttsp').className = '';
     hxStart();   // (time trial: turn counter, live difference to the best run, height profile)
     pkStart();   // (Pikes Peak: the class, its splits)
     Input.reset();
@@ -1340,7 +1439,7 @@
   function endPodium() { const pod = Render.world && Render.world.podium; if (pod) pod.hide(); $('podium-cap').className = ''; shotOff(); pkFlyEnd(); }   // (and Pikes Peak's flyover, left for the title)
   function toTitle() {
     stSave();   // (the km of a race left before its end)
-    endPodium(); champRecord(); champRun = false; replay = null; recd = null; $('replay-ui').classList.add('off');
+    endPodium(); champRecord(); champRun = false; hlvClear(); replay = null; recd = null; $('replay-ui').classList.add('off'); $('replay-ui').classList.remove('auto');
     paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); ghRec = ghPlay = ghLap = ghFr = null; qual = null; Render.setGhost(null, true); Render.setGhostF(null, true);
     school = null; Render.setLine(false); Render.setMarks(null); Input.setOptions({ autoGas: !!S.autoGas }); $('hud').classList.remove('school');
     Sfx.setRunning(false); Sfx.silence();
@@ -1903,7 +2002,7 @@
         (ch ? '<td class="pts">' + (p ? '+' + p : '') + '</td>' : '') + '</tr>';
     }).join('');
     $('res-hl').classList.toggle('off', !hlPlan());   // (the highlights of the race, when there are some)
-    showScreen('results');
+    if (!hlvAuto(pos)) showScreen('results');   // (the best moment first, as a video; then the results)
   }
 
   // the run from the police is over: over the pass (the fastest escape is the record), or caught; what it took
@@ -3379,7 +3478,7 @@
     let dt = (now - last) / 1000; last = now;
     if (!(dt > 0)) dt = 0.001;
     padFrame(Math.min(dt, 0.1));
-    const dtNet = Math.min(dt, 0.5); if (dt > 0.1) dt = 0.1;
+    const dtNet = Math.min(dt, 0.5), dtRaw = dt; if (dt > 0.1) dt = 0.1;
     if (race && race.quali && qual && !qual.res && bg === 'race' && qsimStep(qual, qual.wait ? 30 : paused || screen !== 'none' ? 12 : 2.5) && qual.wait) qualiShow();   // (qualifying: the rivals' laps; the grid once they are in)
     if (bg === 'show') { Render.renderShowroom(dt); if (screen === 'settings') updateTiltLive(); return; }
     if (bg === 'demo') {
@@ -3396,7 +3495,7 @@
     // race (online: netFrame() after this frame's steps sends my car as it is now to the friend and places the friend's car;
     // also while paused or turned the wrong way, when the friend drives on)
     if (orientBlock) { if (mp && mp.race) netFrame(true); ghShow(1); Render.frame(0, 1, race.player, S.camera, { noFx: true }); return; }
-    if (replay) { replayFrame(dt); return; }
+    if (replay) { replayFrame(hlRec ? hlvDt(dtRaw) : dt); return; }   // (the best moment being recorded: on the real clock, as the video's, also when the frames are slow)
     const inp = Input.update(dt);
     if (!paused && screen === 'none' || (!paused && (phase === 'finish' || phase === 'done'))) {
       if (phase !== 'done') updatePhase(dt, inp);
@@ -3505,8 +3604,10 @@
         break;
       case 'car-buy': carBuy(); break;
       case 'replay': replayStart(); break;
-      case 'rp-restart': case 'rp-play': case 'rp-speed': case 'rp-cam': case 'rp-prev': case 'rp-next': case 'rp-exit': case 'rp-hl': replayAct(act); break;
+      case 'rp-restart': case 'rp-play': case 'rp-speed': case 'rp-cam': case 'rp-prev': case 'rp-next': case 'rp-exit': case 'rp-hl': case 'rp-skip': replayAct(act); break;
       case 'replay-hl': replayHL(); break;
+      case 'vid-share': hlvShare(); break;
+      case 'vid-big': $('res-vid').classList.toggle('big'); break;
       case 'rp-photo': photoStart('replay'); break;
       case 'photo': photoStart('pause'); break;
       case 'ph-lens': case 'ph-filter': case 'ph-blur': case 'ph-in': case 'ph-out': case 'ph-hide': case 'ph-save': case 'ph-exit': photoAct(act); break;
@@ -3683,7 +3784,7 @@
         get net() { if (!mp) return null; const R = mp.race, F = R && [...R.cars.values()][0];   // (theirs, left, got: the first of the others)
           return { role: mp.role, code: mp.code, open: Net.open, synced: Net.synced, peer: mp.peer, me: mp.me, players: mp.players.map(p => ({ id: p.id, name: p.name, car: p.car, in: p.in !== false })), track: mp.track, laps: mp.laps,
             race: R && { at: R.at, goAt: R.goAt, mine: R.mine, theirs: F ? F.fin : null, left: F ? F.left : false, got: F ? F.buf.length : 0, fins: Object.fromEntries([...R.cars].map(([k, C]) => [k, C.fin])), grid: R.grid, frameT: R.frameT, startT: R.startT } }; },
-        now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, get chal() { return chal && Object.assign({}, chal); }, chalPack: (o) => packStr(JSON.stringify(o)), get radio() { return rd && { log: rd.log.slice(), cur: rd.cur && rd.cur.text }; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get replay() { return replay && { t: replay.t, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; },
+        now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, get chal() { return chal && Object.assign({}, chal); }, chalPack: (o) => packStr(JSON.stringify(o)), get radio() { return rd && { log: rd.log.slice(), cur: rd.cur && rd.cur.text }; }, get hlv() { return { rec: hlRec && { mime: hlRec.mime, dur: hlRec.dur, w: hlRec.cv.width, h: hlRec.cv.height, lbl: hlRec.C.lbl, cap: hlRec.C.cap, t0: hlRec.C.t0, t1: hlRec.C.t1 }, vid: hlVid && { type: hlVid.type, name: hlVid.name, bytes: hlVid.blob.size, dur: hlVid.dur, w: hlVid.w, h: hlVid.h, cap: hlVid.cap } }; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get replay() { return replay && { t: replay.t, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; },
         sim(sec, auto, steer) { pkFlySkip(); /* (a simulated race starts without Pikes Peak's flyover) */ const inp = { steer: steer || 0, thr: 1, brk: 0, hand: 0, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; } if (phase !== 'done') updatePhase(STEP, inp); stepRace(STEP, inp); } },
         drive(sec, f) { pkFlySkip(); const inp = { steer: 0, thr: 0, brk: 0, hand: 0, digital: true }; for (let t = 0; t < sec && race && phase !== 'done'; t += STEP) { Core.aiControl(race.player, race, STEP); const o = f(race.player, school && school.live, phase) || {}; inp.steer = race.player.inSteer; inp.thr = o.thr || 0; inp.brk = o.brk || 0; updatePhase(STEP, inp); stepRace(STEP, inp); } },   // (tests: the autopilot's steering, the throttle and the brake given)
         get school() { return school && { id: school.L.id, live: school.live, done: !!school.done }; }, schoolMedals: (id) => { const L = SCHOOL.find(x => x.id === id); return L && { m: schoolMedals(L), ref: schoolRef(L), rec: schoolRec(L) }; } };

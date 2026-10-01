@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
-<link rel="stylesheet" href="css/style.css?v=872b817a">
+<link rel="stylesheet" href="css/style.css?v=0a951949">
 </head>
 <body>
 <div id="app">
@@ -33,6 +33,7 @@
       <button data-act="rp-hl" id="rp-hl" aria-label="Najboljši trenutki">&#9733; Trenutki</button>
       <button data-act="rp-photo" id="rp-photo">Foto</button>
       <button data-act="rp-exit" class="rp-exit">Končaj</button>
+      <button data-act="rp-skip" id="rp-skip" class="rp-skip">Preskoči</button>
     </div>
     <div id="rp-hl-cap" class="off"></div>
   </div>
@@ -224,6 +225,7 @@
         <div class="row"><span class="rlbl">Poškodbe avtov</span><div class="seg" data-set="damage"><button data-v="0">Izklop</button><button data-v="1">Samo videz</button><button data-v="2">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Okvare (predrta guma, vroče zavore in motor)</span><div class="seg" data-set="faults"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Radio ekipe (razlike, postanki, vreme)</span><div class="seg" data-set="radio"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row"><span class="rlbl">Video najboljšega trenutka po dirki</span><div class="seg" data-set="hlv"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Grafika</span><div class="seg" data-set="quality"><button data-v="retro">Retro</button><button data-v="normal">Normalno</button><button data-v="high">Visoko</button></div></div>
         <div class="row"><span class="rlbl">Sence</span><div class="seg" data-set="shadows"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Varčevanje z baterijo</span><div class="seg" data-set="saver"><button data-v="off">Izklop</button><button data-v="auto">Samodejno</button><button data-v="on">Vklop</button></div></div>
@@ -306,6 +308,7 @@
   <section id="s-results" class="screen">
     <div class="panel res-panel">
       <div class="res-head" id="res-head"><div id="res-pos" class="res-pos">1.</div><div><h2 id="res-title">Zmaga!</h2><p id="res-sub" class="desc"></p></div></div>
+      <div id="res-vid" class="res-vid off" data-act="vid-big"><video id="res-vid-v" muted loop playsinline aria-label="Najboljši trenutek"></video><div class="rv-txt"><b>Najboljši trenutek</b><span id="res-vid-cap"></span></div><button class="btn primary rv-share" data-act="vid-share" id="res-vid-share">Deli</button></div>
       <div class="res-table-wrap"><div id="res-tt" class="off"></div><table id="res-table"><thead><tr><th>#</th><th>Voznik</th><th>Avto</th><th>Čas</th><th>Naj. krog</th></tr></thead><tbody></tbody></table><div id="res-laps" class="off"></div><div id="res-ch" class="off"></div></div>
       <div class="btns horiz">
         <button class="btn ghost" data-act="to-title">Glavni meni</button>
@@ -400,7 +403,7 @@
 <script src="js/tracks/suzuka.js?v=8aebe76c"></script>
 <script src="js/tracks/pikesg.js?v=9d05a281"></script>
 <script src="js/tracks/caracoles.js?v=84009a26"></script>
-<script src="js/lang.js?v=b6b25f11"></script>
+<script src="js/lang.js?v=d1bd747c"></script>
 <script src="js/core.js?v=a6dd2667"></script>
 <script src="js/tex.js?v=cd783b5d"></script>
 <script src="js/world.js?v=43e47004"></script>
@@ -411,6 +414,6 @@
 <script src="js/comm.js?v=a5473d60"></script>
 <script src="js/vendor/peerjs.min.js?v=76b403e4"></script>
 <script src="js/net.js?v=ba863f32"></script>
-<script src="js/game.js?v=651d4adf"></script>
+<script src="js/game.js?v=53a2aa92"></script>
 </body>
 </html>

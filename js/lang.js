@@ -215,6 +215,9 @@
     'Vroče zavore slabše zavirajo: zaviraj prej in nežneje, na ravnini se ohladijo.': 'Hot brakes stop the car less well: brake earlier and more gently, they cool down on the straights.',
     'Vroč motor ima manj moči: popusti plin, v hitri vožnji se ohladi.': 'A hot engine has less power: ease off the throttle, it cools down at speed.',
     'Okvare': 'Failures', 'Okvare (predrta guma, vroče zavore in motor)': 'Failures (punctures, hot brakes and engine)',
+    // the best moment as a video after a race
+    'Video najboljšega trenutka po dirki': 'Video of the best moment after a race', 'Najboljši trenutek': 'Best moment', 'NAJBOLJŠI TRENUTEK': 'BEST MOMENT', 'ZMAGA': 'WIN',
+    'Ti · {0} mesto': 'You · {0} place', 'Preskoči': 'Skip', 'Deli': 'Share', 'Moj najboljši trenutek · {0}': 'My best moment · {0}', 'Video shranjen: {0}': 'Video saved: {0}',
     // a championship over the internet (the room)
     'Prvenstvo · končno stanje · prvak: {0}': 'Championship · final standings · champion: {0}', 'Prvenstvo · po {0}. dirki od {1}': 'Championship · after race {0} of {1}', 'Začni dirko {0}/{1}': 'Start race {0}/{1}',
     'Odstrani': 'Remove', 'Dodaj izbrano progo': 'Add the chosen track', 'PRVENSTVO · DIRKA {0}/{1}': 'CHAMPIONSHIP · RACE {0}/{1}',
