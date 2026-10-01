@@ -22,6 +22,7 @@ try {
     const fp = await page.evaluate(() => {
       const W = Render.world, race = window.__game.race, Tr = race.track;
       World.update(W, 0, null);   // animated scenery (boats on the lake, water) to its pose at time 0, so the fingerprint does not depend on timing
+      World.view(W, null, null, 1, 0, null);   // and without the race's conditions (the Stelvio's snow walls stand in half the summer races, at random)
       Render.setStartLights(0, false);   // (the start lights change colour a moment after the race starts)
       const fnv = (h, u32) => { for (let i = 0; i < u32.length; i++) { h ^= u32[i]; h = Math.imul(h, 16777619) >>> 0; } return h; };
       const u32 = (a) => {   // any array as 32-bit words
