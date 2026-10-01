@@ -2,6 +2,7 @@
 // (World.build: crowdPts, from the spectators and the grandstands); the crowd louder near them; in the tunnel under the hotel the engine
 // rings off its walls (a short reverb), outside it not. The engines: each car its own type (the rally car a turbo four with anti-lag: pops
 // and the blow-off off the throttle, a clack at each gear), the rivals' engines on the nearest cars with the Doppler shift, the formula a V10.
+// The police radio (Vršič, the run from the police): static under its lines only.
 //   node tests/browser/sound.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -53,6 +54,20 @@ try {
     await startTrack(page, 'jezero');
     const f = await page.evaluate(() => new Promise(res => { const g = window.__game; g.sim(4, true); requestAnimationFrame(() => requestAnimationFrame(() => { g.pause(); const P = g.race.player; res({ e: Sfx.engines().player, r: P.rpm / P.m.redline }); })); }));
     T.check('the formula: a V10 (ten firings a cycle: several hundred Hz)', f.e.kind === 'v10' && f.e.f * 10 > 300, JSON.stringify(f));
+    // 4. the run from the police (Vršič, last: the race it starts is the police's, no rivals): the police radio's static under each line it says (the squelch opens, a bed of static, the roger
+    //    beep), quiet between the lines
+    await page.evaluate(() => { window.__game.S.mode = 'police'; });
+    await startTrack(page, 'vrsic');
+    const rad = await page.evaluate(async () => {
+      const g = window.__game, out = { on: [], off: [], caps: [] };
+      for (let k = 0; k < 150 && (out.on.length < 3 || out.off.length < 3); k++) {   // (real time: the radio speaks at its own pace)
+        await new Promise(r => setTimeout(r, 100)); const c = g.radio.cur, lv = Sfx.levels().radio;
+        if (c && /^(OKC|KG)/.test(c)) { out.on.push(+lv.toFixed(3)); out.caps.push(c); } else if (!c && !g.radio.cap) out.off.push(+lv.toFixed(3));
+      }
+      return out;
+    });
+    T.check('the police radio: static under a line it says, none between the lines', rad.on.length >= 3 && rad.on.filter(v => v > 0.012).length >= 2 && rad.off.length >= 1 && rad.off.some(v => v < 0.004),
+      JSON.stringify({ on: rad.on.slice(0, 8), off: rad.off.slice(0, 8), said: [...new Set(rad.caps)].slice(0, 2) }));
   }
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {

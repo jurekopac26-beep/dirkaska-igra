@@ -45,6 +45,7 @@
   if (!['summer', 'autumn', 'winter'].includes(S.season)) S.season = 'summer';
   if (!['day', 'dusk', 'night', 'dawn'].includes(S.tod)) S.tod = 'day';
   if (!['race', 'tt', 'traffic', 'police'].includes(S.mode)) S.mode = 'race';   // (Vršič: the race against the rivals, the time trial, the duel in the traffic, the run from the police)
+  S.difficulty = Number.isFinite(+S.difficulty) ? clamp(Math.round(+S.difficulty), 0, 3) : DEF.difficulty;   // (lahka, srednja, težka, super težka: the police all four, a race takes the last as težka)
   if (S.lang !== 'en') S.lang = 'sl';
   if (!['off', 'auto', 'on'].includes(S.saver)) S.saver = 'off';
   if (!['short', 'normal', 'long', 'endurance'].includes(S.length)) S.length = 'normal';
@@ -316,8 +317,11 @@
     const portrait = window.innerHeight > window.innerWidth;
     const inRace = bg === 'race' && (screen === 'none' || screen === 'pause');
     const mismatch = coarse && inRace && portrait !== wantPortrait();
-    const el = $('rotate');
+    const el = $('rotate'), CN = { iso: 'izometrična', chase: 'za avtom', kino: 'kino', cockpit: 'kokpit' };
     $('rotate-txt').textContent = tr(wantPortrait() ? 'Obrni telefon v pokončni položaj' : 'Obrni telefon v ležeči položaj');
+    // (or keep it as it is: the camera for that way (Nastavitve, Kamera); the button switches to it)
+    $('rotate-why').textContent = tr(wantPortrait() ? 'Kamera »{0}« je za pokončni položaj.' : 'Kamera »{0}« je za ležeči položaj.', tr(CN[S.camera] || S.camera)) + ' ' + tr(portrait ? 'Lahko pa igraš pokončno s kamero za avtom.' : 'Lahko pa igraš ležeče z izometrično kamero.');
+    $('rotate-cam').textContent = tr(portrait ? 'Igraj pokončno' : 'Igraj ležeče');
     el.classList.toggle('to-portrait', wantPortrait());
     el.classList.toggle('show', mismatch);
     orientBlock = mismatch;
@@ -383,7 +387,7 @@
     renderSettings();
     Render.cam.userZoom = +S.zoom;
     Comm.setEnabled(!!+S.comm); Comm.setSpeech(!!+S.sound); Comm.setNotes(!!+S.codrv);
-    Comm.setOnVoice(v => { const el = $('comm-voice'); if (el) el.textContent = !v.any ? tr('Ta brskalnik ne podpira govora – komentatorja ne bo slišati.') : tr('Glas: {0} ({1})', v.name || tr('privzeti angleški'), v.lang) + tr(v.male ? ' – moški' : ' – nižji ton') + (v.codrv ? tr(' · sovoznik: {0}', v.codrv) : ''); });
+    Comm.setOnVoice(v => { const el = $('comm-voice'); if (el) el.textContent = !v.any ? tr('Ta brskalnik ne podpira govora – komentatorja ne bo slišati.') : tr('Glas: {0} ({1})', v.name || tr('privzeti angleški'), v.lang) + tr(v.male ? ' – moški' : ' – nižji ton') + (v.codrv ? tr(' · sovoznik: {0}', v.codrv) : '') + (v.radio ? tr(' · policijski radio: {0} ({1})', v.radio, v.radioLang) : tr(' · policijski radio: ni glasu za slovenščino, govori angleško')); });
     Input.setMode(S.control);
     Input.setOptions({ autoGas: !!S.autoGas, tiltSens: S.tiltSens, tiltInvert: !!S.tiltInvert, vibrate: !!S.vibrate });
     Sfx.setEnabled(!!S.sound);
@@ -425,6 +429,7 @@
     if (key === 'pitCmp' && race && race.player) race.player.pitCmp = S.pitCmp;   // (the slicks for the next pit stop)
     if (key === 'weather' && demo) { demo.setRain(demoRain()); if (!race) Render.setStorm(S.weather === 'storm'); }   // (a race keeps its weather; the next one gets the new setting)
     if (key === 'season' || key === 'tod') Render.setAtmos({ season: S.season, tod: S.tod });   // (the season and the time of day: at once, also on the title demo)
+    if (key === 'season' && track && Render.worldStale) ensureTrack(track.def.id, () => { });   // (a world painted for the season (Vršič): built again in the new one)
     if ((key === 'weather' || key === 'mode' || key === 'length' || key === 'pkGhost' || key === 'pkRoad') && screen === 'track') buildTrackScreen();   // (a time trial's records in the rain are its own, and a race's: the cards show them)
     if (key === 'control' && v === 'tilt') enableTilt(false);
     if (key === 'camera') { lockOrientation(); updateOrientation(); }
@@ -873,7 +878,7 @@
   // a track loaded: its world built and its shaders compiled while the loading screen is up. The title demo on it is made only when a menu
   // shows it (demoOn): a race started from the menus does not wait for its cars to drive their first seconds
   function ensureTrack(id, cb) {
-    if (track && track.def.id === id) { cb(); return; }
+    if (track && track.def.id === id && !Render.worldStale) { cb(); return; }   // (the same track: rebuilt only when it paints itself for the season and that changed: Vršič)
     $('ld-msg').textContent = tr('Nalagam progo {0}…', Lang.of(Core.TRACKS.find(d => d.id === id), 'name') || '');
     $('loading').classList.remove('off');
     setTimeout(() => {
@@ -1180,7 +1185,8 @@
     $('hud').classList.toggle('sec', !!race.secBest);   // (a circuit with TV sectors)
     $('hud').classList.toggle('tt', race.timeTrial); $('hud').classList.toggle('up', track.open && !race.timeTrial); $('pause-restart').textContent = restartTxt();
     $('hud').classList.toggle('pol', !!race.pol); $('hud').classList.toggle('duel', !!race.tf && !race.pol);   // (the open road: the police's panel, the rival's gap)
-    tfSeen = race.tf ? race.tf.ev : 0; polSeen = race.pol ? race.pol.ev : 0; tfHits = { ped: 0, bike: 0 }; Sfx.siren(0, 0);
+    tfSeen = race.tf ? race.tf.ev : 0; polSeen = race.pol ? race.pol.ev : 0; tfHits = { ped: 0, bike: 0 }; Sfx.siren(0, 0); rdOn = !!race.pol && rdKnows(track.def); radioReset(); polRun = { why: '', docs: false, park: false };
+    if (mm.img && mm.open && mm.pol !== !!race.pol) mm.img = null;   // (the open road's map: the building at the top in the run from the police, else the finish)
     $('pause-skip').classList.toggle('off', !quali);
     $('pause-restart').classList.toggle('off', !!on);   // (online: no restart for one)
     stRun = { drift: 0, lapWall: false, wall: false, car: false, laps: 0, pole: !!(Q && Q.res.grid === 1), done: false }; achNew = [];
@@ -1190,12 +1196,13 @@
     Input.reset();
     showScreen('none');
     Sfx.resume(); Sfx.setRunning(true);
-    Comm.stop(); commReset();
+    Comm.stop(); commReset(); Comm.setRadioMode(rdOn);   // (the run from the police on Vršič: only the police radio speaks)
     const wetTxt = race.rain ? tr(' · DEŽ') : '';
     if (race.timeTrial) { Comm.say(ownLine(track.def, ttLine(track.def, 'intro')), { track: EN_NAME[track.def.id] || track.def.name, cps: track.cpS.length }, 2); showMsg(tr(isRally(track.def) ? 'POLNI PLIN!' : 'VZPON NA VRH!') + wetTxt, 'gold', race.rain ? 1.8 : 1.2); }
     else if (quali) { Comm.say('qualiIntro', { track: EN_NAME[track.def.id] || track.def.name }, 2); showMsg((race.champ ? tr('DIRKA {0}/{1} · ', race.champ.round + 1, race.champ.n) : '') + tr('KVALIFIKACIJE') + wetTxt, 'gold', 1.8); }
     else {
-      if (race.pol) { Comm.say(ownLine(track.def, 'introPolice'), { track: EN_NAME[track.def.id] || track.def.name }, 2); showMsg(tr('POLICIJA TE LOVI!') + wetTxt, 'slow', 1.8); }   // (the run from the police)
+      if (race.pol && race.pol.chk) { showMsg('KRANJSKA GORA' + wetTxt, 'gold', 1.8); if (race.pol.goal) toast(tr('Misija: pripelji avto do garaže na vrhu Vršiča (desno ob cesti, takoj za prelazom).'), 4200); }   // (the run from the police up to its checkpoint: a calm start, nobody after the player yet)
+      else if (race.pol) { Comm.say(ownLine(track.def, 'introPolice'), { track: EN_NAME[track.def.id] || track.def.name }, 2); showMsg(tr('POLICIJA TE LOVI!') + wetTxt, 'slow', 1.8); }   // (a road without the checkpoint, Los Caracoles: the chase from the start)
       else if (race.tf) { const o = race.cars.find(c => !c.isPlayer); Comm.say(ownLine(track.def, 'introTraffic'), { track: EN_NAME[track.def.id] || track.def.name, rival: o ? o.name : 'your rival' }, 2); showMsg(tr('DVOBOJ V PROMETU!') + wetTxt, 'gold', 1.8); }   // (the duel in the traffic)
       else {
         if (on) Comm.say(race.remotes.length > 1 ? 'introNetN' : 'introNet', { track: EN_NAME[track.def.id] || track.def.name, laps: track.open ? 'one run to the top' : race.laps === 1 ? 'one lap' : race.laps + ' laps', name: race.remote.name, n: race.remotes.length + 1 }, 2);
@@ -1239,7 +1246,7 @@
   function toTitle() {
     stSave();   // (the km of a race left before its end)
     endPodium(); champRecord(); champRun = false; replay = null; recd = null; $('replay-ui').classList.add('off');
-    paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); ghRec = ghPlay = ghLap = ghFr = null; qual = null; Render.setGhost(null, true); Render.setGhostF(null, true);
+    paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); Comm.setRadioMode(false); rdOn = false; radioReset(); ghRec = ghPlay = ghLap = ghFr = null; qual = null; Render.setGhost(null, true); Render.setGhostF(null, true);
     school = null; Render.setLine(false); Render.setMarks(null); Input.setOptions({ autoGas: !!S.autoGas }); $('hud').classList.remove('school');
     Sfx.setRunning(false); Sfx.silence();
     demoShow(); Render.resetCam(); Render.setStorm(S.weather === 'storm'); Render.setAtmos({ season: S.season, tod: S.tod }, true);   // (after an endurance race: the time of day of the setting again)
@@ -1764,11 +1771,11 @@
     $('res-pos').textContent = Lang.ord(pos);
     $('res-title').textContent = tr(pos === 1 ? 'Zmaga!' : pos <= 3 ? 'Na stopničkah!' : 'Cilj');
     $('res-sub').textContent = tr('Čas dirke {0}', fmt(tot, true)) + (res[myIdx].pen ? tr(' (s {0} s kazni)', res[myIdx].pen) : '') + (up ? '' : tr(', najboljši krog {0}', fmt(best, true))) + (newRec ? tr(' (nov rekord proge)') : '') + tr('. Štartal si z {0} mesta.', Lang.ord(P.grid));
-    if (race.tf) $('res-sub').textContent += tr(' Zbiti pešci: {0}, kolesarji: {1}', tfHits.ped, tfHits.bike) + (tfHits.ped + tfHits.bike ? tr(' (5 s kazni za vsakega)') : '') + '.';
+    if (race.tf) $('res-sub').textContent += tr(' Povoženi pešci: {0}, kolesarji: {1}', tfHits.ped, tfHits.bike) + (tfHits.ped + tfHits.bike ? tr(' (5 s kazni za vsakega)') : '') + '.';
     const fl = !up && best > 0 && race.cars.every(c => c === P || !c.lapTimes.length || Math.min(...c.lapTimes) >= best);   // (the fastest lap of the race)
     stRace(pos, res.length, fl);
     if (inCareer()) {   // the career: prize money (the place, the distance, the difficulty), the fastest lap of the race (a race up the road: no laps)
-      const diff = race.champ ? champ.diff : S.difficulty;
+      const diff = race.champ ? champ.diff : raceDiff();
       career.races++; if (pos === 1) career.wins++;
       $('res-sub').textContent += careerPay(Core.careerPrize(pos, res.length, up ? track.raceLen : track.len * race.laps, diff) + (fl ? Core.CAREER.fastest : 0), 'Nagrada' + (fl ? ' (z najhitrejšim krogom)' : ''));
       const ri = res.findIndex(r => r.car.chr && r.car.chr.rival);
@@ -1802,19 +1809,35 @@
     showScreen('results');
   }
 
-  // the run from the police is over: over the pass (the fastest escape is the record), or caught; what it took
+  // the run from the police is over: the mission done (into the building at the top: the fastest one is the record), arrested at the checkpoint
+  // (no documents, parked as told), or caught in the chase; what it took (the rap sheet)
   function finishPolice() {
-    const P = race.player, pol = race.pol, esc = !pol.busted, t = P.finishTime || race.time, R0 = rec(track.def.id), L = track.raceLen, done = clamp(P.dist, 0, L);
+    const P = race.player, pol = race.pol, esc = !pol.busted, chk = pol.arrestK === 'chk', t = P.finishTime || race.time, R0 = rec(track.def.id), L = polLen(), done = esc ? L : clamp(P.dist, 0, L);
     let newRec = false; if (esc && t > 0 && (!R0.bestRace || t < R0.bestRace)) { R0.bestRace = t; newRec = true; }
     if (esc) R0.escapes = (R0.escapes || 0) + 1; else R0.busts = (R0.busts || 0) + 1; saveRecords();
     if (!stRun.done) { stRun.done = true; st.races++; st.tracks[track.def.id] = (st.tracks[track.def.id] || 0) + 1; if (esc) { st.escapes++; achGet('escape'); } if (trackCards().every(droveCard)) achGet('allTracks'); stSave(); }
     $('res-head').classList.remove('tt'); $('res-tt').classList.add('off'); $('res-restart').textContent = tr('Ponovi beg');
-    $('res-pos').textContent = esc ? '\u2713' : '\u2715'; $('res-title').textContent = tr(esc ? 'Pobegnil si!' : 'Ulovljen!');
-    $('res-sub').textContent = esc ? (track.def.escTo ? tr('{0} v {1}', Lang.of(track.def, 'escTo'), fmt(t, true)) : tr('Čez prelaz v {0}', fmt(t, true))) + (newRec ? tr(' (najhitrejši pobeg).') : '.') : tr('Policija te je ujela po {0} km, v {1}.', kmTxt(done, 1), fmt(t, true));
-    const st = (h) => '\u2605'.repeat(Math.round(h)) + '\u2606'.repeat(5 - Math.round(h)), rows = [['Čas', fmt(t, true)], ['Prevožena pot', kmTxt(done, 1) + ' / ' + kmTxt(L, 1) + ' km'], ['Najvišja stopnja pregona', st(pol.heatMax || pol.heat)],
-      ['Izločene patrulje', pol.wrecked], ['Prebite gume', pol.flats], ['Zbiti pešci in kolesarji', pol.hitPeople], ['Pobegi / aretacije', (R0.escapes || 0) + ' / ' + (R0.busts || 0)]];
-    $('res-table').querySelector('thead').innerHTML = '<tr><th>' + tr('Beg pred policijo') + '</th><th></th></tr>';
-    $('res-table').querySelector('tbody').innerHTML = rows.map(([a, b]) => '<tr' + (a === 'Čas' ? ' class="me"' : '') + '><td>' + tr(a) + '</td><td>' + b + '</td></tr>').join('');
+    $('res-pos').textContent = esc ? '✓' : '✕'; $('res-title').textContent = tr(esc ? (pol.goal ? 'Misija opravljena!' : 'Pobegnil si!') : chk ? 'Aretiran na kontroli' : 'Ulovljen!');
+    $('res-sub').textContent = esc ? (pol.goal ? tr('Skril si se v garažo na vrhu Vršiča v {0}', fmt(t, true)) : track.def.escTo ? tr('{0} v {1}', Lang.of(track.def, 'escTo'), fmt(t, true)) : tr('Čez prelaz v {0}', fmt(t, true))) + (newRec ? tr(' (najhitrejši pobeg).') : '.')
+      : chk ? tr('Brez dokumentov si parkiral ob cesti in s policistom odšel na postajo ({0}).', fmt(t, true)) : tr('Policija te je ujela po {0} km, v {1}.', kmTxt(done, 1), fmt(t, true));
+    const stars = (h) => '★'.repeat(Math.round(h)) + '☆'.repeat(5 - Math.round(h)), O = pol.off, T2 = pol.st, sec = (v) => Math.round(v) + ' s';   // (stars: not st, the stats kept across the runs)
+    const offs = [O.speed >= 1 && tr('prehitra vožnja v naselju {0}', sec(O.speed)), O.walk >= 0.5 && tr('vožnja po pločniku {0}', sec(O.walk)), O.crash && tr('trki s prometom {0}×', O.crash),
+      pol.hitPeople && tr('povoženi pešci in kolesarji {0}×', pol.hitPeople), O.moto && tr('zbiti policisti na motorju {0}×', O.moto)].filter(Boolean);
+    const W = polRun.why, ctl = chk ? tr('brez dokumentov, aretiran') : W === 'hit' ? tr('zbil si policista in pobegnil') : W === 'skip' ? tr('nisi ustavil, pobegnil') : polRun.docs ? tr('brez dokumentov, pobegnil') : W ? tr('ustavil, nato pobegnil') : '–';   // (how the checkpoint went)
+    const rows = [['Čas', fmt(t, true)], ['Prevožena pot', kmTxt(done, 1) + ' / ' + kmTxt(L, 1) + ' km']];
+    if (pol.chk) rows.push(['Kontrola prometa', ctl]);   // (a road without the checkpoint, Los Caracoles: none)
+    if (chk) rows.push(['Prekrški', offs.length ? offs.join('<br>') : tr('brez')]);   // (arrested at the checkpoint: no chase to tell of)
+    else {
+      rows.push(['Najvišja stopnja pregona', stars(pol.heatMax || pol.heat)], ['Prekrški', offs.length ? offs.join('<br>') : tr('brez')], ['Izločene patrulje', pol.wrecked], ['Zapore / trakovi za tabo', T2.blocks + ' / ' + T2.strips],
+        ['Skrivanje', T2.evaded ? tr('{0}× so izgubili sled<br>najdlje {1} izven pogleda', T2.evaded, sec(T2.hideMax)) : tr('nikoli jim nisi ušel izpred oči')]);
+      if (T2.heliT > 0) rows.push(['Helikopter nad tabo', sec(T2.heliT)]);
+      if (T2.ambush) rows.push(['Zasede', T2.ambush]);
+      if (T2.logs) rows.push(['Pasti s hlodi', T2.logs + (T2.logHits ? tr(' (patrulje na hlodih: {0}×)', T2.logHits) : '')]);
+      rows.push(['Prebite gume', pol.flats], ['Škoda', Lang.eur(Math.round(T2.eur / 50) * 50)]);
+    }
+    rows.push(['Pobegi / aretacije', (R0.escapes || 0) + ' / ' + (R0.busts || 0)]);
+    $('res-table').querySelector('thead').innerHTML = '<tr><th>' + tr('Kartoteka') + '</th><th></th></tr>';
+    $('res-table').querySelector('tbody').innerHTML = rows.map(([a, b]) => '<tr' + (a === 'Čas' ? ' class="me"' : '') + '><td>' + tr(a) + '</td><td class="wrap">' + b + '</td></tr>').join('');   // (the offences one a line)
     if (inCareer() && esc) { career.races++; career.wins++; $('res-sub').textContent += careerPay(Core.careerPrize(1, 2, L, S.difficulty), 'Nagrada za pobeg'); }
     $('res-sub').textContent += achLine();
     showScreen('results');
@@ -1847,7 +1870,8 @@
   const raceWord = (n) => Lang.cur === 'en' ? n + (n === 1 ? ' race' : ' races') : n + (n === 1 ? ' dirka' : n === 2 ? ' dirki' : n <= 4 ? ' dirke' : ' dirk');
   const ptsWord = (n) => Lang.cur === 'en' ? (n === 1 ? 'point' : 'points') : n % 100 === 1 ? 'točka' : n % 100 === 2 ? 'točki' : n % 100 === 3 || n % 100 === 4 ? 'točke' : 'točk';
   const winsWord = (n) => Lang.cur === 'en' ? (!n ? 'no wins' : n + (n === 1 ? ' win' : ' wins')) : !n ? 'brez zmage' : n + (n === 1 ? ' zmaga' : n === 2 ? ' zmagi' : n <= 4 ? ' zmage' : ' zmag');
-  const DIFF_NAME = ['lahka', 'srednja', 'težka'];
+  const DIFF_NAME = ['lahka', 'srednja', 'težka', 'super težka'];
+  const raceDiff = () => Math.min(S.difficulty, 2);   // (a race, a championship: super težka is the police's own, raced as težka)
   const champDriver = (key) => { if (key === Core.PLAYER_KEY) return { name: S.name, car: Core.MODELS[S.car].name, color: PLAYER_COLORS[S.color] };
     const a = Core.aiDriver(Math.max(0, CH_KEYS.indexOf(key) - 1)); return { name: a.name, car: a.model.name, color: a.color }; };
   // the championship round just driven: its finishing order into the standings (once); after the last round the final place into the records
@@ -1874,7 +1898,7 @@
     if (!d) {   // the choice of a series: its tracks, its length, the best final place so far
       if (!Core.CHAMPS.some(c => c.id === champPick)) champPick = Core.CHAMPS[0].id;
       $('ch-title').textContent = tr('Prvenstvo'); $('ch-tag').textContent = tr('točke kot v F1');
-      $('ch-diff').textContent = tr('Težavnost: {0} (spremeniš v Nastavitvah)', tr(DIFF_NAME[S.difficulty]));
+      $('ch-diff').textContent = S.difficulty > 2 ? tr('Težavnost: {0} (super težka je samo za beg pred policijo; spremeniš v Nastavitvah)', tr(DIFF_NAME[raceDiff()])) : tr('Težavnost: {0} (spremeniš v Nastavitvah)', tr(DIFF_NAME[raceDiff()]));
       $('ch-body').innerHTML = '<div class="ch-cards">' + Core.CHAMPS.map(c => {
         const R0 = records.champ[c.id] || {}, km = c.tracks.reduce((a, id) => { const T = getTrack(id); return a + T.len * lapsOf(T.def); }, 0);
         return '<button class="ch-card' + (c.id === champPick ? ' sel' : '') + '" data-champ="' + c.id + '"><h3>' + esc(Lang.of(c, 'name')) + '</h3><div class="tmeta">' + raceWord(c.tracks.length) + ' · ' + kmTxt(km, 0) + ' km</div>' +
@@ -1902,7 +1926,8 @@
   function stepRace(dt, inp) {
     recStep();
     const P = race.player;
-    if ((phase === 'finish' || phase === 'done') && race.timeTrial) { P.inThr = 0; P.inBrk = 1; P.inSteer = 0; P.inHand = 0; P.digitalSteer = false; }   // time trial: brake to a stop past the finish (the road ends)
+    const pol = race.pol, hold = pol && (pol.hold || (pol.stage === 'check' && /^(stopped|walk|docs)$/.test(pol.chk.st) && !(inp.gas > 0) && !autoDrive));   // (the police: parked, arrested, in the building; stopped at the officer: the foot on the brake unless on the gas itself (Samodejni plin: the gas pressed to drive off))
+    if (((phase === 'finish' || phase === 'done') && (race.timeTrial || P.busted)) || hold) { P.inThr = 0; P.inBrk = 1; P.inSteer = 0; P.inHand = 0; P.digitalSteer = false; }   // time trial: brake to a stop past the finish (the road ends); busted by the police: stays where they stopped it
     else if (phase === 'finish' || phase === 'done' || autoDrive) { P.pitWant = !!P.inPit; Core.aiControl(P, race, dt); P.digitalSteer = false; }   // (autoDrive: automated tests of online races drive in real time)
     else { P.inSteer = inp.steer; P.inThr = inp.thr; P.inBrk = inp.brk; P.inHand = inp.hand; P.digitalSteer = inp.digital; }
     race.step(dt);
@@ -1935,8 +1960,8 @@
     if (P.pitEv) { const e = P.pitEv; P.pitEv = null; pitEvent(e); }
     if (race.wst && race.wst.ev !== wxSeen) { wxSeen = race.wst.ev; wxEvent(race.wst.evK, P); }
     if (race.fl) { const F = race.fl; if (F.ev !== flSeen) { flSeen = F.ev; flagEvent(F.evK, P); } if (F.pev !== flPSeen) { flPSeen = F.pev; flagPlayer(F.pevK); } }
-    if (race.tf) { if (race.tf.ev !== tfSeen) { tfSeen = race.tf.ev; roadEvent(race.tf.evK, race.tf.evCar, P); } roadSound(P); }
-    if (race.pol && race.pol.ev !== polSeen) { polSeen = race.pol.ev; policeEvent(race.pol.evK, P); }
+    if (race.tf) { const L = race.tf; if (L.ev !== tfSeen) { for (const e of L.log) if (e.n > tfSeen) roadEvent(e.k, e.c, P); tfSeen = L.ev; } roadSound(P); }   // (the traffic's events in order: two in one step both heard)
+    if (race.pol && race.pol.ev !== polSeen) for (const e of race.pol.log) if (e.n > polSeen) { polSeen = e.n; policeEvent(e.k, P, e); }
     if (race.chr && race.chr.q.length) for (const e of race.chr.q.splice(0)) chrEvent(e.k, e.c, P);
     if (race.wst && race.wst.tyres && P.ty && !dryHint && P.ty.k === 'wet' && race.wst.wx && race.wst.line < 0.12 && race.rain === 0 && phase === 'racing' && !P.finished) {   // (the line is dry: time for slicks)
       dryHint = true; toast(tr('Idealna linija je suha: dežne gume se na suhem hitro obrabijo. Zapelji v bokse po suhe gume.'), 4600); Comm.say('dryLine', null, 2); }
@@ -1947,31 +1972,421 @@
   }
 
   /* ---------------- the open road (Vršič: the duel in the traffic, the run from the police) ---------------- */
-  // what happened on the road (race.tf.ev: someone on foot or on a bicycle knocked down, a crash with the traffic) and with the police
-  // (race.pol.ev: one more patrol car, a spike strip laid, a roadblock ahead, a flat tyre, a patrol car out of it); the siren of the nearest
-  // chasing patrol car, the horns of the traffic
-  let tfSeen = 0, polSeen = 0, tfHits = { ped: 0, bike: 0 };
+  // what happened on the road (race.tf.log: someone on foot or on a bicycle run over, a crash with the traffic) and with the police
+  // (race.pol.log: the checkpoint, the chase, one more patrol car, a spike strip laid, a roadblock ahead, a flat tyre, a patrol car out of it,
+  // the building at the top); the siren of the nearest chasing patrol car, the horns of the traffic
+  let tfSeen = 0, polSeen = 0, tfHits = { ped: 0, bike: 0 }, polRun = { why: '', docs: false, park: false };   // (polRun: how the checkpoint went: fled how, asked for the documents, told to park)
   function roadEvent(k, c, P) {
     if (phase !== 'racing' || P.finished) return;
     const pen = race.pol ? '' : ' +5 s';
     if (c === P) {
-      if (k === 'ped') { tfHits.ped++; showMsg(tr('ZBIL SI PEŠCA!') + pen, 'slow', 2); Sfx.thud(0.8); vibrate(70); Comm.say('pedHit', null, 3); }
-      else if (k === 'bike') { tfHits.bike++; showMsg(tr('ZBIL SI KOLESARJA!') + pen, 'slow', 2); Sfx.thud(0.9); vibrate(70); Comm.say('bikeHit', null, 3); }
+      if (k === 'ped') { tfHits.ped++; showMsg(tr('POVOZIL SI PEŠCA!') + pen, 'slow', 2); Sfx.thud(0.8); vibrate(70); Comm.say('pedHit', null, 3); }
+      else if (k === 'bike') { tfHits.bike++; showMsg(tr('POVOZIL SI KOLESARJA!') + pen, 'slow', 2); Sfx.thud(0.9); vibrate(70); Comm.say('bikeHit', null, 3); }
       else if (k === 'crash' && Math.random() < 0.5) Comm.say('trafficCrash', null, 2);
-    } else if (c && !c.police && (k === 'ped' || k === 'bike')) showMsg(tr(k === 'ped' ? 'TEKMEC JE ZBIL PEŠCA' : 'TEKMEC JE ZBIL KOLESARJA') + pen, 'gold', 1.6);
+      if (rdOn) rdRoad(k, P);   // (the run from the police on Vršič: the radio hears of it)
+    } else if (c && !c.police && (k === 'ped' || k === 'bike')) showMsg(tr(k === 'ped' ? 'TEKMEC JE POVOZIL PEŠCA' : 'TEKMEC JE POVOZIL KOLESARJA') + pen, 'gold', 1.6);
   }
-  function policeEvent(k, P) {
+  function policeEvent(k, P, e) {
+    e = e || { s: P.q.s, u: 0, kind: '' };
+    if (rdOn) polRadio(k, e, P);
+    if (k === 'fled') polRun.why = e.why || 'drive';
+    else if (k === 'chkDocs') polRun.docs = true;
+    else if (k === 'chkPark') polRun.park = true;
+    else if (k === 'chkParked') chkShot();   // (the driver gets out: the walk to the patrol car, filmed up the road)
+    else if (k === 'hideout' && Render.goalShot) { Render.goalShot(race.pol.goal); $('hud').classList.add('shot'); }   // (into the building at the top: the camera outside its door)
     if (phase !== 'racing' || P.finished) return;
-    if (k === 'join') Comm.say('policeJoin', null, 2);
-    else if (k === 'spikes') { showMsg(tr('BODIČASTI TRAK!'), 'slow', 2.2); Comm.say('spikes', null, 3); }
-    else if (k === 'block') { showMsg(tr('ZAPORA NAPREJ!'), 'slow', 2.2); Comm.say('roadblock', null, 3); }
-    else if (k === 'flat') { showMsg(tr('PREBITA GUMA!'), 'slow', 2); Sfx.pop(); vibrate(90); Comm.say('flat', null, 3); }
+    if (!rdOn && POL_COMM[k]) Comm.say(POL_COMM[k], null, k === 'join' || k === 'wreck' ? 2 : 3);   // (a road the radio does not know: the commentator)
+    if (k === 'fled') { showMsg(tr(e.why === 'hit' ? 'ZBIL SI POLICISTA!' : 'POLICIJA TE LOVI!'), 'slow', 2.2); if (e.why === 'hit') { Sfx.thud(0.9); vibrate(70); } }
+    else if (k === 'spikes') showMsg(tr('BODIČASTI TRAK!'), 'slow', 2.2);
+    else if (k === 'block') showMsg(tr(e.heavy ? 'TEŽKA ZAPORA NAPREJ!' : 'ZAPORA NAPREJ!'), 'slow', 2.2);
+    else if (k === 'flat') { showMsg(tr('PREBITA GUMA!'), 'slow', 2); Sfx.pop(); vibrate(90); }
     else if (k === 'ram') vibrate(50);
-    else if (k === 'wreck') { showMsg(tr('PATRULJA JE IZLOČENA!'), 'fast', 1.6); Comm.say('policeWreck', null, 2); }
+    else if (k === 'wreck') showMsg(tr('PATRULJA JE IZLOČENA!'), 'fast', 1.6);
+    else if (k === 'heli') showMsg(tr('HELIKOPTER!'), 'slow', 2);
+    else if (k === 'ambush') showMsg(tr('ZASEDA!'), 'slow', 2);
+    else if (k === 'undercover') showMsg(tr('NEOZNAČENA PATRULJA!'), 'slow', 2.2);
+    else if (k === 'lost') showMsg(tr('IZGUBILI SO SLED!'), 'fast', 2.2);
+    else if (k === 'spotted') showMsg(tr('SPET TE VIDIJO!'), 'slow', 1.8);
+    else if (k === 'motoDown') { if (e.byP) { showMsg(tr('ZBIL SI POLICISTA!'), 'slow', 2); Sfx.thud(0.9); vibrate(70); } }
+    else if (k === 'logs') { showMsg(tr('HLODI NA CESTI!'), 'fast', 2); Sfx.thud(1); setTimeout(() => Sfx.thud(0.7), 180); vibrate(60); }
+  }
+
+  /* ---------------- the police radio (the run from the police) ----------------
+     Instead of the commentator (Comm.setRadioMode) the police talk on the radio the whole run, in Slovenian (Comm.radio: a voice that reads it;
+     none: an English voice reads the line's English twin, the places spelt for it; no speech: captions only). The squelch opens, the line is
+     said and shown at the bottom (its speaker's call sign first), the roger beep closes it, low static under it (Sfx.radioOpen / radioClose /
+     radioBed). Who talks: the dispatcher (OKC Kranj), the units by their call signs (a patrol car by its unit number: Kranjska Gora 2; the
+     motorcyclists, the unmarked car, the van), the helicopter (Bober, from Brnik), the station across the pass (PP Bovec); in person (no
+     squelch) the officer at the checkpoint and the player's driver. A queue by priority (0 chatter, 1 an event, 2 a turn of the run, 3 in
+     person; one too old is dropped, two up cuts in), never the same variant of a line twice running. Chatter by the stage: routine traffic
+     before the checkpoint; the car called in there; in the chase where the player is (the real places: the streets of Kranjska Gora, Jasna,
+     the bridge, the hairpins by number, the huts, the pass), how fast and which way, the requests and the replies (spike strips, roadblocks,
+     the helicopter, no firearms, the road closed on the Trenta side, backup), the search once they lost the player; every event of the core
+     (race.pol.log) and the people run over (race.tf.log) */
+  // the places by the road: [locative with its preposition, dative (after 'proti'), instrumental (after 'pred'), English, its English preposition]
+  const RD_PL = { 'Kranjska Gora': ['v Kranjski Gori', 'Kranjski Gori', 'Kranjsko Goro', 'Kranyska Gora', 'in'], 'Jasna': ['pri Jasni', 'Jasni', 'Jasno', 'Lake Yasna', 'at'],
+    'Razgledni stolp': ['pri razglednem stolpu na Jasni', 'razglednemu stolpu', 'razglednim stolpom', 'the lookout tower at Yasna', 'by'], 'Eriški most': ['pri Eriškem mostu', 'Eriškemu mostu', 'Eriškim mostom', 'the Erishki bridge', 'at'],
+    'Šumica': ['pri Šumici', 'Šumici', 'Šumico', 'Shoomitsa', 'at'], 'Ruski križ': ['pri Ruskem križu', 'Ruskemu križu', 'Ruskim križem', 'the Russian Cross', 'at'],
+    'Mihov dom': ['pri Mihovem domu', 'Mihovemu domu', 'Mihovim domom', 'Meehov dom', 'at'], 'Ruska kapelica': ['pri Ruski kapelici', 'Ruski kapelici', 'Rusko kapelico', 'the Russian Chapel', 'at'],
+    'Koča na Gozdu': ['pri Koči na Gozdu', 'Koči na Gozdu', 'Kočo na Gozdu', 'Kocha na Gozdu', 'at'], 'Ajdovska deklica': ['pod Ajdovsko deklico', 'Ajdovski deklici', 'Ajdovsko deklico', 'the Heathen Maiden', 'below'],
+    'Tonkina koča': ['pri Tonkini koči', 'Tonkini koči', 'Tonkino kočo', 'Tonkina kocha', 'at'], 'Erjavčeva koča': ['pri Erjavčevi koči', 'Erjavčevi koči', 'Erjavčevo kočo', 'the Erjavets hut', 'at'],
+    'Vršič': ['na Vršiču', 'Vršiču', 'Vršičem', 'the Vrshich pass', 'on'], 'Tičarjev dom': ['pri Tičarjevem domu', 'Tičarjevemu domu', 'Tičarjevim domom', 'Ticharyev dom', 'at'],
+    'Poštarski dom': ['pri Poštarskem domu', 'Poštarskemu domu', 'Poštarskim domom', 'Poshtarski dom', 'at'] };
+  const RD_EXTRA = [['Razgledni stolp', 2106], ['Tičarjev dom', 12593], ['Poštarski dom', 12667]];   // (by the road, not among def.names: metres after the start line)
+  // the streets of Kranjska Gora (Track.stubs by name): [in it, into it, out of it, with it (a junction), English, its dead end, English 'on' (a road) not 'in']
+  const RD_ST = { 'Naselje Slavka Černeta': ['v Naselju Slavka Černeta', 'v Naselje Slavka Černeta', 'iz Naselja Slavka Černeta', 'z Naseljem Slavka Černeta', 'the Slavko Cherne estate', 'ulica', 0],
+    'Koroška ulica': ['v Koroški ulici', 'v Koroško ulico', 'iz Koroške ulice', 's Koroško ulico', 'Koroshka street', 'ulica', 0],
+    'Borovška cesta': ['na Borovški cesti', 'na Borovško cesto', 'z Borovške ceste', 'z Borovško cesto', 'Borovshka street', 'dela', 1],
+    'Ulica Josipa Vandota': ['v Ulici Josipa Vandota', 'v Ulico Josipa Vandota', 'iz Ulice Josipa Vandota', 'z Ulico Josipa Vandota', 'Vandot street', 'ulica', 0],
+    'Podbreg': ['v Podbregu', 'v Podbreg', 'iz Podbrega', 's Podbregom', 'Podbreg', 'ulica', 0],
+    'Ulica dr. Josipa Tičarja': ['v Ulici dr. Josipa Tičarja', 'v Ulico dr. Josipa Tičarja', 'iz Ulice dr. Josipa Tičarja', 'z Ulico dr. Josipa Tičarja', 'Tichar street', 'ulica', 0],
+    'Naselje Ivana Krivca': ['v Naselju Ivana Krivca', 'v Naselje Ivana Krivca', 'iz Naselja Ivana Krivca', 'z Naseljem Ivana Krivca', 'the Ivan Krivets estate', 'ulica', 0] };
+  // a side road without a name by its kind (0 a street, 1 a driveway, 2 a forest road; a driveway of gravel), as RD_ST
+  const RD_SK = [['v stranski ulici', 'v stransko ulico', 'iz stranske ulice', 's stransko ulico', 'a side street', 'ulica', 0], ['na dovozni poti', 'na dovozno pot', 'z dovozne poti', 'z dovozno potjo', 'a driveway', 'pot', 1],
+    ['na gozdni cesti', 'na gozdno cesto', 'z gozdne ceste', 'z gozdno cesto', 'a forest road', 'cesta', 1]], RD_SKG = ['na makadamski poti', 'na makadamsko pot', 'z makadamske poti', 'z makadamsko potjo', 'a gravel track', 'pot', 1];
+  const RD_DEAD = { ulica: ['to je slepa ulica', 'it is a dead end'], cesta: ['to je slepa cesta', 'it is a dead end'], pot: ['to je slepa pot', 'it is a dead end'], dela: ['tam je cesta zaprta zaradi del', 'the road is closed for works there'] };
+  // the speakers: [caption, call sign said in Slovenian, in English] (the units: rdCall)
+  const RD_WHO = { okc: ['OKC KRANJ', '', ''], heli: ['BOBER', 'Bober', 'Bober'], bov: ['PP BOVEC', 'Postaja Bovec', 'Bovets station'], cop: ['POLICIST', '', ''], drv: ['TI', '', ''] };
+  const rdCall = (u, kind) => kind === 'moto' ? [tr('MOTORIST {0}', u), 'Motorist ' + u, 'Bike ' + u] : kind === 'uc' ? [tr('CIVILNA {0}', u), 'Civilna ' + u, 'Unmarked ' + u] : kind === 'van' || !u ? [tr('KOMBI'), 'Kombi', 'Van'] : ['KG-' + u, 'Kranjska Gora ' + u, 'Kranyska Gora ' + u];   // (the labels on the page in its language)
+  // the player's car as the police describe it: the colour (the formula is feminine), the model ([Slovenian, English])
+  const RD_COL = [['rdeč', 'rdeča', 'red'], ['bel', 'bela', 'white'], ['moder', 'modra', 'blue'], ['rumen', 'rumena', 'yellow'], ['črn', 'črna', 'black'], ['zelen', 'zelena', 'green'], ['oranžen', 'oranžna', 'bright orange'], ['vijoličen', 'vijolična', 'purple']];
+  // the lines: key -> its variants [Slovenian, English] ({at} where, {to} which way, {dir} heading for, {v} km/h, {car} the player's car, {U} the
+  // unit spoken to, {sacc} / {sgen} / {sloc} into / out of / in a side road, {dead} its dead end)
+  const RL = {
+    chkSeen: [['Proti kontroli prihaja {car}. Ustavljam {ga}.', 'A {car} coming up to the checkpoint. Pulling it over.'], ['Prihaja {car}, smer Vršič. Ustavil {ga} bom.', 'A {car} heading for the pass. I will stop it.'], ['Na kontroli ustavljam {carA}.', 'Stopping a {car} at the checkpoint.']],
+    chkSeenFast: [['Proti kontroli zelo hitro prihaja {car}! Ustavil {ga} bom.', 'A {car} coming up to the checkpoint very fast! I will stop it.']],
+    chkStop: [['Voznik je ustavil, grem k njemu.', 'He has stopped, going over to him.'], ['Ustavil je, preverjam dokumente.', 'He has stopped, checking his papers.']],
+    chkDocs: [['Dober dan, prometna kontrola. Vozniško in prometno dovoljenje, prosim.', 'Good afternoon, traffic control. Driving licence and registration, please.'], ['Dober dan, policija. Vozniško in prometno dovoljenje, prosim.', 'Good afternoon, police. Licence and registration, please.']],
+    chkNoDocs: [['Ehm... nimam jih pri sebi.', 'Erm... I don\'t have them on me.'], ['Ehm... nimam jih pri sebi. Doma so ostali.', 'Erm... I don\'t have them on me. I left them at home.']],
+    chkPark: [['Potem zapeljite ob rob vozišča, parkirajte in pojdite z mano na policijsko postajo.', 'Then pull over to the side of the road, park, and come with me to the police station.'], ['Potem zapeljite ob rob vozišča in parkirajte. Z mano greste na policijsko postajo.', 'Then pull over to the side of the road and park. You are coming with me to the police station.']],
+    chkParked: [['Ugasnite motor in izstopite, prosim.', 'Switch off the engine and step out, please.'], ['Izstopite, prosim. Greva do patrulje.', 'Step out, please. We are going to the patrol car.']],
+    chkTake: [['Voznik nima dokumentov, peljemo ga na postajo.', 'The driver has no papers, we are taking him to the station.'], ['Voznik brez dokumentov, pridržan. Peljemo ga na postajo.', 'A driver without papers, detained. Taking him to the station.']],
+    arrested: [['Razumem, {U}. Vozilo ostane ob Vršiški cesti, pošiljam pajka.', 'Copy, {U}. The car stays on the Vrshich road, sending a tow truck.'], ['Razumem, {U}. Pripeljite ga na postajo.', 'Copy, {U}. Bring him to the station.']],
+    fledShout: [['Stojte! Policija!', 'Stop! Police!'], ['Hej! Ustavite!', 'Hey! Stop!'], ['Stoj! Stoj!', 'Stop! Stop!']],
+    fledSkip: [['Voznik ni ustavil, zapeljal je skozi kontrolo! Gre za {carA}, smer Jasna. Gremo za njim!', 'The driver did not stop, he drove straight through the checkpoint! A {car}, heading for Lake Yasna. In pursuit!'], ['Ni ustavil na kontroli na Vršiški cesti! Gre za {carA}, gremo za njim!', 'He did not stop at the checkpoint on the Vrshich road! A {car}, in pursuit!']],
+    fledDrive: [['Voznik je pobegnil s kontrole na Vršiški cesti! Gre za {carA}, smer Vršič. Gremo za njim!', 'The driver has fled the checkpoint on the Vrshich road! A {car}, heading for the pass. In pursuit!'], ['Ustavil je, potem pa speljal s kontrole! Gre za {carA}. Gremo za njim!', 'He stopped, then drove off from the checkpoint! A {car}. In pursuit!']],
+    fledDocs: [['Pobegnil je s kontrole, ko sem hotel dokumente! Gre za {carA}, smer Vršič. Gremo za njim!', 'He drove off when I asked for his papers! A {car}, heading for the pass. In pursuit!']],
+    fledPark: [['Namesto da bi parkiral, je pobegnil s kontrole! Gre za {carA}, smer Vršič. Gremo za njim!', 'Instead of pulling over he has fled the checkpoint! A {car}, heading for the pass. In pursuit!']],
+    fledHit: [['Voznik je zbil policista na kontroli in pobegnil! Pošljite reševalce na Vršiško cesto!', 'The driver has knocked down an officer at the checkpoint and fled! Send an ambulance to the Vrshich road!']],
+    fledAll: [['Razumem. Vsem enotam: pobegli voznik na Vršiški cesti, vozilo je {car}, smer Jasna in Vršič. Previdno.', 'Copy. All units: a driver fleeing on the Vrshich road, a {car}, heading for Lake Yasna and the pass. Careful.'], ['Razumem, {U}. Vsem enotam: pobeg s kontrole v Kranjski Gori, vozilo je {car}, smer Vršič.', 'Copy, {U}. All units: a driver has fled the checkpoint in Kranyska Gora, a {car}, heading for the pass.']],
+    join: [['Priključujem se zasledovanju {at}.', 'Joining the pursuit {at}.'], ['Za vami sem {at}.', 'Right behind you {at}.'], ['Na poti sem, za vami {at}.', 'On my way, behind you {at}.']],
+    joinMoto: [['Na motorju sem za njim {at}.', 'On the bike, on his tail {at}.'], ['Za njim sem {at}, v serpentinah sem hitrejši.', 'On his tail {at}, I am quicker in the hairpins.']],
+    joinStub: [['Prihajam {sgen}, pred njim sem!', 'Coming {sgen}, I am ahead of him!'], ['Čakal sem {sloc}, zdaj grem ven pred njega!', 'I was waiting {sloc}, pulling out in front of him!']],
+    spikes: [['Bodice so položene {at}.', 'The stinger is down {at}.'], ['Trak z bodicami je čez cesto {at}.', 'Spike strip across the road {at}.'], ['Bodice {at} so pripravljene, čakamo ga.', 'Spikes ready {at}, waiting for him.']],
+    block: [['Zapora {at} je postavljena.', 'The roadblock {at} is in place.'], ['Cesta {at} je zaprta z vozili.', 'The road is blocked with cars {at}.']],
+    blockHeavy: [['Kombi stoji prečno čez cesto {at}, z bodicami. Ne bo prišel skozi!', 'A van across the road {at}, with spikes. He won\'t get through!'], ['Težka zapora {at}: kombi, patrulja in bodice.', 'A heavy roadblock {at}: a van, a patrol car and spikes.']],
+    flat: [['Zadel je bodice, guma je prebita!', 'He hit the spikes, a tyre is gone!'], ['Prebita guma! Upočasnjuje.', 'Flat tyre! He is slowing down.'], ['Bodice so ga dobile!', 'The spikes got him!']],
+    ram: [['Zadel sem ga, še vedno pelje.', 'Made contact, he is still going.'], ['Kontakt! Še vedno vozi.', 'Contact! Still moving.'], ['Rinem ga s ceste!', 'Pushing him off the road!']],
+    wreck: [['Avto je razbit, izločen sem {at}. Potrebujem vleko.', 'The car is wrecked, I am out {at}. I need a tow.'], ['Ne morem več naprej, avto je uničen {at}.', 'I cannot go on, the car is finished {at}.']],
+    wreckFlat: [['Prebite gume, ne morem naprej {at}.', 'My tyres are gone, I cannot go on {at}.'], ['Vozim na platiščih, izločen sem {at}.', 'I am on the rims, I am out {at}.']],
+    wreckStuck: [['Obtičal sem {at}. Nadaljujte brez mene.', 'I am stuck {at}. Carry on without me.'], ['Zagozdil sem se {at}, ne pridem ven.', 'I am wedged in {at}, I cannot get out.']],
+    motoDownP: [['Motorist je padel {at}! Osumljenec ga je zbil. Pošljite reševalce!', 'The motorcyclist is down {at}! The suspect knocked him off. Send an ambulance!'], ['Zbil je našega motorista {at}! Rabimo reševalce!', 'He has knocked our motorcyclist off {at}! We need an ambulance!']],
+    motoDown: [['Padel sem {at}. V redu sem, nadaljujte.', 'I came off {at}. I am fine, carry on.'], ['Motor mi je zdrsnil {at}. Nič hudega, nadaljujte.', 'My bike slid away {at}. Nothing serious, carry on.']],
+    heli: [['Nad osumljencem sem {at}. Vidim ga.', 'Over the suspect {at}. I have him.'], ['Prevzemam sledenje {at}. Ne bo nam ušel.', 'Taking over the pursuit {at}. He won\'t get away.']],
+    heliOut: [['Gorivo mi pohaja, vračam se na Brnik.', 'Running low on fuel, heading back to Brnik.'], ['Moram natočiti gorivo. Nadaljujte brez mene.', 'I need to refuel. Carry on without me.']],
+    ambush: [['V zasedi {at}: vidim ga, grem za njim!', 'Waiting {at}: I see him, going after him!'], ['Peljal je mimo zasede {at}. Za njim sem!', 'He went past the ambush {at}. On him!']],
+    undercover: [['Osumljenec je tik za mano, prižigam modre luči!', 'The suspect is right behind me, lights on!'], ['Pred njim sem {at}, zaviram ga!', 'I am ahead of him {at}, slowing him down!']],
+    lost: [['Izgubil sem ga {at}.', 'I have lost him {at}.'], ['Ne vidim ga več. Zadnjič je bil {at}.', 'I cannot see him any more. Last seen {at}.']],
+    lostAll: [['Vsem enotam: preiščite cesto {to} in stranske poti.', 'All units: search the road {to} and the side roads.'], ['Vsem enotam: osumljenca iščemo {at}. Preverite gozdne ceste.', 'All units: we are looking for the suspect {at}. Check the forest roads.']],
+    spotted: [['Spet ga vidim {at}!', 'I have him again {at}!'], ['Imamo ga spet, {at}, smer {dir}!', 'Got him again, {at}, heading for {dir}!']],
+    busted: [['Osumljenec je ustavljen {at}. Aretacija!', 'The suspect is stopped {at}. Making the arrest!'], ['Imamo ga {at}! Konec je.', 'We have him {at}! It is over.']],
+    bustedAll: [['Razumem. Vsem enotam: zasledovanje je končano.', 'Copy. All units: the pursuit is over.'], ['Odlično. Vsem enotam: konec zasledovanja.', 'Well done. All units: the pursuit is over.']],
+    logs: [['Pozor, hlodi na cesti {at}! Vse enote, previdno!', 'Watch out, logs on the road {at}! All units, careful!'], ['Hlodi so se zakotalili čez cesto {at}!', 'Logs rolling across the road {at}!']],
+    logHit: [['Zapeljal sem na hlode!', 'I have hit the logs!'], ['Hlodi! Zadel sem jih.', 'Logs! I hit them.']],
+    hideout: [['Izgubili smo ga na Vršiču. Kot bi se udrl v zemljo.', 'We have lost him on Vrshich. Vanished into thin air.'], ['Na prelazu ga ni več. Nikjer ga ne vidim.', 'He is gone at the pass. I cannot see him anywhere.']],
+    hideoutAll: [['Vsem enotam: preverite parkirišča na prelazu in cesto proti Trenti.', 'All units: check the car parks at the pass and the road to Trenta.'], ['Vsem enotam: preverite parkirišče pri Poštarskem domu in koče na prelazu.', 'All units: check the car park at Poshtarski dom and the huts at the pass.']],
+    hideoutBov: [['Pri Tičarjevem domu ga ni bilo, cesta v Trento je zaprta.', 'He did not come past Ticharyev dom, the road to Trenta is closed.']],
+    stubIn: [['Zavil je {sacc}, {dead}! Gremo za njim, zaprite izvoz.', 'He turned {sacc}, {dead}! Going in after him, block the exit.'], ['Osumljenec je zavil {sacc}. Za njim sem, {dead}!', 'The suspect turned {sacc}. I am on him, {dead}!']],
+    stubInAck: [['Razumem. Naslednja enota naj zapre izvoz.', 'Copy. Next unit, block the exit.'], ['Razumem. Ostanite pri izvozu, da ne uide.', 'Copy. Stay at the exit so he does not get away.']],
+    stubEnd: [['Na koncu ceste je, obkoljen! Ne more nikamor.', 'He is at the end of the road, boxed in! Nowhere to go.'], ['Konec ceste, obkoljen je. Pazite, lahko se obrne!', 'End of the road, he is surrounded. Careful, he may turn round!']],
+    stubOut: [['Spet je na glavni cesti {at}, smer {dir}!', 'Back on the main road {at}, heading for {dir}!'], ['Ušel je {sgen}, spet je na glavni cesti!', 'He got {sgen}, back on the main road!']],
+    ped: [['Povozil je pešca {at}! Pokličite reševalce!', 'He has run over a pedestrian {at}! Call an ambulance!'], ['Pešec je povožen {at}! Rabimo reševalce!', 'A pedestrian has been hit {at}! We need an ambulance!']],
+    pedFree: [['Vsem enotam: {at} je voznik povozil pešca in odpeljal naprej. Vozilo je {car}, smer Vršič.', 'All units: a driver has run over a pedestrian {at} and driven on. A {car}, heading for the pass.']],
+    bike: [['Zbil je kolesarja {at}! Potrebujemo reševalce.', 'He has knocked a cyclist off {at}! We need an ambulance.'], ['Kolesar je zbit {at}, pokličite reševalce!', 'A cyclist has been hit {at}, call an ambulance!']],
+    bikeFree: [['Vsem enotam: {at} je voznik zbil kolesarja in odpeljal naprej. Vozilo je {car}.', 'All units: a driver has knocked a cyclist off {at} and driven on. A {car}.']],
+    medic: [['Reševalci so na poti.', 'An ambulance is on its way.'], ['Razumem, pošiljam reševalce.', 'Copy, sending an ambulance.']],
+    crash: [['Trčil je v vozilo {at}, pelje naprej!', 'He hit a car {at}, still going!'], ['Zadel je avto {at} in vozi naprej!', 'He has hit a car {at} and keeps going!']],
+    pos: [['Osumljenec je {at}, pelje {to}, okoli {v} km/h.', 'The suspect is {at}, heading {to}, doing about {v}.'], ['Sem za njim {at}, hitrost {v} km/h, smer {dir}.', 'Behind him {at}, doing {v}, heading for {dir}.'], ['Še vedno ga imam, {at}. Pelje {to}.', 'Still have him, {at}. Heading {to}.'], ['Je {at}, okoli {v} km/h. Ostajam za njim.', 'He is {at}, about {v}. Staying with him.']],
+    posVillage: [['Divja skozi Kranjsko Goro, {v} km/h! Pazite na pešce.', 'Tearing through Kranyska Gora at {v}! Watch out for people on foot.'], ['Po Vršiški cesti pelje {v} km/h, proti Jasni.', 'Doing {v} up the Vrshich road, towards Lake Yasna.']],
+    posJasna: [['Pelje mimo jezera Jasna, {v} km/h.', 'Going past Lake Yasna at {v}.'], ['Ob jezeru Jasna je, pelje {to}.', 'He is by Lake Yasna, heading {to}.']],
+    posHair: [['V serpentinah je, {at}. Tlakovci so spolzki.', 'In the hairpins, {at}. The cobbles are slippery.'], ['Gre skozi serpentine, {at}, smer {dir}.', 'Going through the hairpins, {at}, heading for {dir}.']],
+    posFast: [['Vozi kot nor, {at}, {v} km/h!', 'Driving like a maniac, {at}, {v}!'], ['Nevarna vožnja {at}, več kot {v} km/h!', 'Dangerous driving {at}, over {v}!']],
+    posSlow: [['Upočasnil je {at}. Morda bo ustavil.', 'He has slowed down {at}. He may stop.'], ['Komaj še pelje, {at}. Pripravite se.', 'He is barely moving, {at}. Get ready.']],
+    posDown: [['Obrnil je! Pelje nazaj proti Kranjski Gori, {at}.', 'He has turned round! Heading back down to Kranyska Gora, {at}.'], ['Pozor, vozi navzdol, {at}!', 'Careful, he is driving back down, {at}!']],
+    posTop: [['Skoraj je na prelazu, na 1611 metrih. Pelje {to}.', 'Nearly at the top of the pass, sixteen hundred metres up. Heading {to}.'], ['Tik pod vrhom Vršiča je, okoli {v} km/h.', 'Just below the top of Vrshich, about {v}.']],
+    posStub: [['Še vedno je {at}, za njim smo.', 'Still {at}, we are right behind him.'], ['Je {at}, ven ne more.', 'He is {at}, he cannot get out.']],
+    posHeli: [['Vidim ga {at}, pelje {to}.', 'I see him {at}, heading {to}.'], ['Še vedno je pod mano, {at}, okoli {v} km/h.', 'Still right below me, {at}, about {v}.']],
+    ack: [['Razumem, {U}.', 'Copy, {U}.'], ['Razumem. Ostanite za njim.', 'Copy. Stay with him.'], ['Razumem, {U}. Pazite na promet.', 'Copy, {U}. Mind the traffic.']],
+    spikeAsk: [['Prosim za dovoljenje za bodice {at}.', 'Requesting permission for a stinger {at}.'], ['OKC, lahko položimo bodice {at}?', 'Control, can we lay a stinger {at}?']],
+    spikeOk1: [['Odobreno, {U}. Samo bodice, orožje ni dovoljeno.', 'Approved, {U}. Spikes only, no firearms.']],
+    spikeOk: [['Dovoljenje odobreno. Bodice {at}.', 'Permission granted. A stinger {at}.'], ['Odobreno, {U}.', 'Approved, {U}.']],
+    blockSet: [['Postavljamo zaporo {at}.', 'Setting up a roadblock {at}.'], ['Gremo zapret cesto {at}.', 'Going to close the road {at}.']],
+    blockOk: [['Razumem. Previdno, voznik je nevaren.', 'Copy. Careful, the driver is dangerous.'], ['Razumem, {U}. Pustite vrzel za promet.', 'Copy, {U}. Leave a gap for the traffic.']],
+    heliAsk: [['OKC, potrebujemo helikopter!', 'Control, we need the helicopter!'], ['Prosim za helikopter, ne moremo ga dohiteti.', 'Requesting the helicopter, we cannot catch him.']],
+    heliOk: [['Bober vzleta z Brnika.', 'Bober is taking off from Brnik.'], ['Razumem. Bober je že na poti z Brnika.', 'Copy. Bober is already on its way from Brnik.']],
+    guns: [['Lahko streljamo v gume?', 'Can we shoot at his tyres?']],
+    gunsNo: [['Negativno! Orožje ni dovoljeno, samo bodice.', 'Negative! No firearms, spikes only.']],
+    trenta: [['Obvestili smo policijsko postajo Bovec. Cesto zapirajo na trentarski strani, pri Tičarjevem domu.', 'Bovets station is informed. They are closing the road on the Trenta side, at Ticharyev dom.']],
+    trentaBov: [['Cesta je zaprta pri Tičarjevem domu. Čez prelaz ne bo prišel.', 'The road is closed at Ticharyev dom. He won\'t get over the pass.']],
+    backup: [['Potrebujemo okrepitve!', 'We need backup!'], ['OKC, pošljite še eno enoto!', 'Control, send another unit!']],
+    backupOk: [['Pošiljam enoto z Jesenic.', 'Sending a unit from Yesenitse.'], ['Razumem, okrepitve so na poti.', 'Copy, backup is on its way.']],
+    where: [['Kje je osumljenec? Javite položaj.', 'Where is the suspect? Report his position.']],
+    whereU: [['Ne vidim ga, zadnjič je bil {at}.', 'I have lost sight of him, last seen {at}.'], ['Nimam ga na očeh. Nazadnje {at}.', 'I do not have him in sight. Last seen {at}.']],
+    search: [['Vsem enotam: iščemo ga {at}. Preverite stranske poti in parkirišča.', 'All units: we are searching {at}. Check the side roads and the car parks.'], ['Vsem enotam: počasi naprej in glejte v gozdne ceste {at}.', 'All units: slowly on, look into the forest roads {at}.']],
+    searchU: [['{at} ga ni.', 'He is not {at}.'], ['Preverjam cesto {at}, nič.', 'Checking the road {at}, nothing.']]
+  };
+  // before the checkpoint: routine traffic on the radio, one exchange at a time ([who, Slovenian, English]; u1..u3 the units of Kranjska Gora;
+  // the first one always: the checkpoint set up), the weather's own (RD_WX)
+  const RD_FREE = [
+    [['okc', 'Vsem enotam: na Vršiški cesti v Kranjski Gori je postavljena kontrola prometa.', 'All units: a traffic checkpoint is set up on the Vrshich road in Kranyska Gora.'], ['u1', 'Kontrola stoji, ustavljamo vozila proti Vršiču.', 'The checkpoint is up, stopping cars heading for the pass.']],
+    [['okc', 'Kranjska Gora 2, manjša prometna nesreča v Gozdu Martuljku, brez poškodovanih. Prevzemi.', 'Unit two, a minor collision at Gozd Martoolyek, nobody hurt. Take it.'], ['u2', 'Razumem, na poti sem.', 'Copy, on my way.']],
+    [['okc', 'Vsem enotam: skupina kolesarjev na cesti proti Jasni. Previdno.', 'All units: a group of cyclists on the road to Lake Yasna. Careful.']],
+    [['u3', 'Patrulja v Podkorenu, vse je mirno.', 'Patrol at Podkoren, all quiet.'], ['okc', 'Razumem, Kranjska Gora 3.', 'Copy, unit three.']],
+    [['okc', 'Kranjska Gora 1, kako je na kontroli?', 'Unit one, how is the checkpoint?'], ['u1', 'Mirno. Nekaj turistov, vsi imajo dokumente.', 'Quiet. A few tourists, all with their papers.']],
+    [['okc', 'Pohodniki pri Erjavčevi koči prijavljajo slabo parkirana vozila ob cesti.', 'Hikers at the Erjavets hut report cars parked badly along the road.'], ['u3', 'Razumem, pogledam, ko bom zgoraj.', 'Copy, I will have a look when I am up there.']],
+    [['u2', 'Pri Jasni je veliko pešcev, previdno skozi.', 'Lots of people on foot at Lake Yasna, go easy through there.']],
+    [['okc', 'Avtobus proti Vršiču je odpeljal iz Kranjske Gore, ustavlja na vseh postajah.', 'The bus to Vrshich has left Kranyska Gora, stopping at every stop.']],
+    [['u1', 'Na kontroli smo oglobili voznika brez varnostnega pasu.', 'We fined a driver without a seat belt at the checkpoint.']],
+    [['okc', 'Pri Ruski kapelici je danes spominska slovesnost, na cesti bo več avtobusov.', 'A memorial at the Russian Chapel today, more buses on the road.']],
+    [['bov', 'Kolegi, na trentarski strani je vse mirno.', 'All quiet on the Trenta side, colleagues.']]];
+  const RD_WX = { dry: [['okc', 'Poročilo z Vršiča: cesta je prevozna, na prelazu je gneča.', 'Report from Vrshich: the road is open, busy at the pass.']],
+    rain: [['okc', 'Na Vršiču dežuje, tlakovane serpentine so spolzke.', 'It is raining on Vrshich, the cobbled hairpins are slippery.']],
+    snow: [['okc', 'Na Vršiču sneži, vozila brez verig obračamo pri Mihovem domu.', 'Snow on Vrshich, cars without chains are turned back at Meehov dom.']] };
+  // the hairpins' ordinals as a Slovenian voice says them (stems; the ending by the case: pri osmi, med osmo in deveto)
+  const RD_ORD = ['', 'prv', 'drug', 'tretj', 'četrt', 'pet', 'šest', 'sedm', 'osm', 'devet', 'deset', 'enajst', 'dvanajst', 'trinajst', 'štirinajst', 'petnajst', 'šestnajst', 'sedemnajst', 'osemnajst', 'devetnajst', 'dvajset', 'enaindvajset', 'dvaindvajset', 'triindvajset', 'štiriindvajset'];
+  const rdOrd = (n, e) => RD_ORD[n] ? RD_ORD[n] + e : n + '.';
+  // a caption's text as the voice should read it: the ordinals in words, km/h, metres, "dr."
+  const rdSpeech = (t) => t.replace(/(\d+)\. in (\d+)\. serpentin([aeio])/g, (_, a, b, e) => rdOrd(+a, e) + ' in ' + rdOrd(+b, e) + ' serpentin' + e).replace(/(\d+)\. serpentin([aeio])/g, (_, a, e) => rdOrd(+a, e) + ' serpentin' + e)
+    .replace(/(\d+) km\/h/g, '$1 na uro').replace(/(\d+) m\b/g, '$1 metrov').replace(/\bdr\. /g, 'doktorja ');
+  let rd = null, rdGeoT = null, rdGeoV = null;
+  // the roads the radio knows (its places, call signs and chatter are Vršič's): there it speaks instead of the commentator (rdOn: this run's);
+  // elsewhere (Los Caracoles) the commentator calls the run from the police (POL_COMM: its lines for the events)
+  const rdKnows = (d) => !!d && d.id === 'vrsic';
+  let rdOn = false;
+  const POL_COMM = { join: 'policeJoin', spikes: 'spikes', block: 'roadblock', flat: 'flat', wreck: 'policeWreck' };
+  // the places up the road (def.names, the bus stops, a few more) and the named streets' junctions, in metres after the start line
+  function rdGeo() {
+    if (rdGeoT === track) return rdGeoV;
+    const D = track.def, pl = [], add = (n, d) => { if (RD_PL[n] && !pl.some(p => p.n === n && Math.abs(p.d - d) < 300)) pl.push({ n, d, f: RD_PL[n] }); };
+    for (const q of D.names || []) { const m = /^Serpentina \d+ · (.+)$/.exec(q.n); add(m ? m[1] : q.n.split(' · ')[0], q.d); }
+    for (const [d, , n] of D.stops || []) add(n, d);
+    for (const [n, d] of RD_EXTRA) add(n, d);
+    pl.sort((a, b) => a.d - b.d);
+    rdGeoT = track; return (rdGeoV = { pl, hp: (D.hairpins || []).map(h => h[0]), st: (track.stubs || []).filter(S => RD_ST[S.name]).map(S => ({ d: S.s0 - track.startS, f: RD_ST[S.name] })) });
+  }
+  // where s (m along the road) is, as the police say it ([Slovenian, English]); k: the side road it is in (-1 none)
+  function rdWhere(s, k) {
+    const G = rdGeo(), d = s - track.startS, hp = G.hp;
+    if (k >= 0 && track.stubs && track.stubs[k]) return rdStub(track.stubs[k], 0);
+    let hi = -1, pb = null;
+    for (let i = 0; i < hp.length; i++) if (Math.abs(hp[i] - d) < 60) hi = i;
+    for (const p of G.pl) if (Math.abs(p.d - d) < 220 && (!pb || Math.abs(p.d - d) < Math.abs(pb.d - d))) pb = p;
+    if (hi >= 0) { const nm = pb && Math.abs(pb.d - hp[hi]) < 25 ? pb : null;   // (a hairpin by its number, and its name: pri 8. serpentini, Ruska kapelica)
+      return ['pri ' + (hi + 1) + '. serpentini' + (nm ? ', ' + nm.n : ''), 'at hairpin ' + (hi + 1) + (nm ? ', ' + nm.f[3] : '')]; }
+    if (pb) return [pb.f[0], pb.f[4] + ' ' + pb.f[3]];
+    let i = 0; while (i < hp.length - 1 && hp[i + 1] < d) i++;
+    if (hp.length > 1 && d > hp[0] && d < hp[hp.length - 1] && hp[i + 1] - hp[i] < 700) return ['med ' + (i + 1) + '. in ' + (i + 2) + '. serpentino', 'between hairpins ' + (i + 1) + ' and ' + (i + 2)];
+    if (d < 1300) { let sb = null; for (const q of G.st) if (Math.abs(q.d - d) < 60 && (!sb || Math.abs(q.d - d) < Math.abs(sb.d - d))) sb = q;   // (the village: the junctions of its streets)
+      return sb ? ['na Vršiški cesti pri križišču ' + sb.f[3], 'on the Vrshich road at the junction with ' + sb.f[4]] : ['na Vršiški cesti v Kranjski Gori', 'on the Vrshich road in Kranyska Gora']; }
+    const nx = G.pl.find(p => p.d > d), nh = hp.findIndex(h => h > d), h = nh >= 0 && (!nx || hp[nh] < nx.d);   // (the next place up the road, or the next hairpin: so far below it)
+    const gap = h ? hp[nh] - d : nx ? nx.d - d : 1e9, m = Math.max(100, Math.round(gap / 100) * 100);
+    if (gap < 950) return h ? ['okoli ' + m + ' m pred ' + (nh + 1) + '. serpentino', 'about ' + m + ' metres below hairpin ' + (nh + 1)] : ['okoli ' + m + ' m pred ' + nx.f[2], 'about ' + m + ' metres below ' + nx.f[3]];
+    return nx ? ['na cesti proti ' + nx.f[1], 'on the road to ' + nx.f[3]] : ['pod prelazom', 'below the pass'];
+  }
+  // a side road as the police name it ([Slovenian, English]); c: 0 in it, 1 into it, 2 out of it; one without a name by its kind and where it is
+  function rdStub(S, c) {
+    const f = RD_ST[S.name], g = f || (S.kind === 1 && S.grav ? RD_SKG : RD_SK[S.kind] || RD_SK[0]), en = (g[6] ? ['on ', 'onto ', 'off '] : ['in ', 'into ', 'out of '])[c] + g[4];
+    if (f) return [g[c], en];
+    const at = S.s0 - track.startS < 1300 ? ['v Kranjski Gori', 'in Kranyska Gora'] : rdWhere(S.s0, -1);
+    return [g[c] + ' ' + at[0], en + ' ' + at[1]];
+  }
+  // the side road of an event (its name, kind and junction: extra { stub, sKind }, s)
+  const rdStubOf = (e) => (track.stubs || []).find(S => S.name === (e.stub || '') && S.kind === e.sKind && Math.abs(S.s0 - e.s) < 3) || { name: e.stub || '', kind: e.sKind || 0, s0: e.s, grav: false };
+  // which way the player drives (up: on to the pass; down: back to Kranjska Gora), towards where
+  const rdUp = (P) => !(P.speed > 4 && P.q.i >= 0 && P.vx * track.tx[P.q.i] + P.vz * track.tz[P.q.i] < 0);
+  function rdToward(s, up) {
+    if (!up) return ['proti Kranjski Gori', 'back down to Kranyska Gora'];
+    const nx = rdGeo().pl.find(p => p.d > s - track.startS + 230 && p.d < track.raceLen + 100);   // (past the one they are at: rdWhere names one up to 220 m off)
+    return nx ? ['proti ' + nx.f[1], 'towards ' + nx.f[3]] : ['proti prelazu', 'towards the pass'];
+  }
+  function rdCar() {
+    const P = race.player, C = RD_COL[Math.max(0, PLAYER_COLORS.indexOf(P.color))] || RD_COL[0], f = P.m.id === 'formula';
+    const nm = P.m.name.split(' ').map(w => /\d/.test(w) || w.length <= 2 ? w : w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
+    return [C[f ? 1 : 0] + ' ' + (f ? nm.charAt(0).toLowerCase() + nm.slice(1) : nm), C[2] + ' ' + nm];
+  }
+  // the player's car for the radio's lines: car (who, what: the nominative), carA (whom, what: the accusative, "gre za ..."), ga (it: ga / jo; the
+  // formula is feminine: "rdeča formula Orkan", "rdečo formulo Orkan", "jo")
+  function rdCarV() {
+    const c = rdCar(), f = race.player.m.id === 'formula', acc = f ? c[0].replace(/a(?= )/g, 'o') : c[0];
+    return { car: c, carA: [acc, c[1]], ga: [f ? 'jo' : 'ga', 'it'] };
+  }
+  // the patrol car in the chase nearest to the player (within r m along the road; in a side road in a straight line): it speaks for the units
+  function rdNear(P, r) {
+    let b = null, bd = r || 300;
+    for (const c of race.pol.cars) { if (c.pol.mode !== 'chase' || c.locked || !c.pol.unit) continue; const d = c.q.k >= 0 || P.q.k >= 0 ? Math.hypot(c.x - P.x, c.z - P.z) : Math.abs(P.q.s - c.q.s); if (d < bd) { bd = d; b = c; } }
+    return b;
+  }
+  const rdUnit = (c) => c ? { u: c.pol.unit, kind: c.pol.kind } : null;
+  function radioReset() {
+    if (rd && rd.cur && rd.cur.item) Comm.radioStop();
+    Sfx.radioBed(false);
+    rd = { q: [], cur: null, gapT: 0, capT: 0, chatT: performance.now() / 1000 + 2.2, last: {}, log: [], free: null, said: {}, ramT: -1e9, logT: -1e9, crashT: -1e9 };
+    const el = $('h-radio'); el.className = ''; el.textContent = '';
+  }
+  // a line on the radio: key (its pool in RL: a variant never the same as the last), who ('okc', 'u': a unit, o.u its number, o.kind its kind;
+  // 'heli', 'bov'; in person 'cop', 'drv'), vars ({ name: [Slovenian, English] or one value for both }), o.prio (0 chatter .. 3 in person), o.ttl (s)
+  function rsay(key, who, vars, o) {
+    const pool = RL[key]; if (!pool || !rd) return;
+    let k = Math.floor(Math.random() * pool.length); if (pool.length > 1 && k === rd.last[key]) k = (k + 1) % pool.length; rd.last[key] = k;
+    rline(who, pool[k][0], pool[k][1], vars, Object.assign({ key }, o));
+  }
+  function rline(who, sl, en, vars, o) {
+    if (!rd) return;
+    o = o || {};
+    const fill = (t, L) => { const s = t.replace(/\{(\w+)\}/g, (_, n) => { const v = vars && vars[n]; return v == null ? '' : Array.isArray(v) ? v[L] : String(v); }); return s.charAt(0).toUpperCase() + s.slice(1); };
+    const person = who === 'cop' || who === 'drv', cs = who === 'u' ? rdCall(o.u || 0, o.kind || 'car') : RD_WHO[who] || RD_WHO.okc, prio = o.prio != null ? o.prio : person ? 3 : 1;
+    rd.q.push({ key: o.key || '', who, u: o.u || 0, lbl: tr(cs[0]), csl: cs[1], cen: cs[2], sl: fill(sl, 0), en: fill(en, 1), prio, t: performance.now() / 1000, ttl: o.ttl || [9, 14, 20, 30][prio], person });
+    if (rd.q.length > 8) { let w = 0; for (let i = 1; i < rd.q.length; i++) if (rd.q[i].prio < rd.q[w].prio) w = i; rd.q.splice(w, 1); }   // (the least urgent, the oldest of those)
+  }
+  // what the police say to an event of the run (race.pol.log)
+  function polRadio(k, e, P) {
+    const pol = race.pol, up = rdUp(P), at = rdWhere(e.s, -1), dir = up ? ['Vršič', 'the pass'] : ['Kranjska Gora', 'Kranyska Gora'], V = { at, dir, to: rdToward(P.q.s, up) };
+    const U = { u: e.u, kind: e.kind || 'car' }, ucs = rdCall(e.u, e.kind), near = rdNear(P), N = rdUnit(near), t = performance.now() / 1000;
+    const N2 = N || rdUnit(rdNear(P, 1500)), say = (key, vars, o) => { if (N2) rsay(key, 'u', vars, Object.assign({}, N2, o)); };   // (the nearest unit says it (a unit's own words); none within 1.5 km: not said)
+    V.U = [ucs[1], ucs[2]];
+    switch (k) {
+      case 'chkSeen': rsay(P.speed > 19 ? 'chkSeenFast' : 'chkSeen', 'u', rdCarV(), U); break;
+      case 'chkStop': rsay('chkStop', 'u', null, Object.assign({ prio: 0 }, U)); break;
+      case 'chkDocs': rsay('chkDocs', 'cop'); break;
+      case 'chkNoDocs': rsay('chkNoDocs', 'drv'); break;
+      case 'chkPark': rsay('chkPark', 'cop'); break;
+      case 'chkParked': rsay('chkParked', 'cop'); rsay('chkTake', 'u', null, U); break;
+      case 'arrested': rsay('arrested', 'okc', V, { prio: 2 }); break;
+      case 'fled':
+        if (e.why !== 'hit') rsay('fledShout', 'cop');
+        rsay(e.why === 'hit' ? 'fledHit' : e.why === 'skip' ? 'fledSkip' : polRun.park ? 'fledPark' : polRun.docs ? 'fledDocs' : 'fledDrive', 'u', rdCarV(), Object.assign({ prio: 2 }, U));   // (polRun: how far the checkpoint had come)
+        rsay('fledAll', 'okc', Object.assign(rdCarV(), { U: V.U }), { prio: 2 }); break;
+      case 'join': if (e.stub != null || e.sKind != null) { const S = rdStubOf(e); rsay('joinStub', 'u', { sgen: rdStub(S, 2), sloc: rdStub(S, 0) }, U); }
+        else rsay(e.kind === 'moto' ? 'joinMoto' : 'join', 'u', V, U);
+        if (!rd.said.backup && pol.heat >= 1.8 && Math.random() < 0.4) { rd.said.backup = 1; rsay('backupOk', 'okc', null, { prio: 0 }); }
+        break;
+      case 'spikes': rsay('spikes', e.u ? 'u' : 'okc', V, U); break;
+      case 'block': rsay(e.heavy ? 'blockHeavy' : 'block', e.u ? 'u' : 'okc', V, U); break;
+      case 'flat': say('flat', V); break;
+      case 'ram': if (t - rd.ramT > 14 && Math.random() < 0.6) { rd.ramT = t; rsay('ram', 'u', null, Object.assign({ prio: 0 }, U)); } break;
+      case 'wreck': rsay(e.why === 'flat' ? 'wreckFlat' : e.why === 'stuck' ? 'wreckStuck' : 'wreck', 'u', V, U); break;
+      case 'motoDown': if (e.byP) say('motoDownP', V); else rsay('motoDown', 'u', V, Object.assign({ prio: 0 }, U)); break;
+      case 'heli': rsay('heli', 'heli', V, { prio: 2 }); break;
+      case 'heliOut': rsay('heliOut', 'heli', null, { prio: 0 }); break;
+      case 'ambush': rsay('ambush', 'u', V, U); break;
+      case 'undercover': rsay('undercover', 'u', V, U); break;
+      case 'lost': { const c = pol.cars.find(q => q.pol.mode === 'search' && q.pol.unit); if (c) rsay('lost', 'u', V, rdUnit(c)); rsay('lostAll', 'okc', V); break; }
+      case 'spotted': if (e.u) rsay('spotted', 'u', V, U); else if (pol.heli && pol.heli.st === 'track') rsay('spotted', 'heli', V); else rsay('spotted', 'okc', V); break;
+      case 'busted': say('busted', V, { prio: 2 }); rsay('bustedAll', 'okc', V, { prio: 2 }); break;
+      case 'logs': say('logs', V); break;
+      case 'logHit': if (t - rd.logT > 6 && e.u) { rd.logT = t; rsay('logHit', 'u', null, Object.assign({ prio: 0 }, U)); } break;
+      case 'hideout': if (pol.heli && pol.heli.st === 'track') rsay('hideout', 'heli', V, { prio: 2 }); else say('hideout', V, { prio: 2 });
+        rsay('hideoutAll', 'okc', V, { prio: 2 }); if (rd.said.trenta) rsay('hideoutBov', 'bov', V, { prio: 2 }); break;
+      case 'stubIn': { const S = rdStubOf(e), f = RD_ST[S.name], dead = RD_DEAD[f ? f[5] : (RD_SK[S.kind] || RD_SK[0])[5]];
+        say('stubIn', { sacc: rdStub(S, 1), dead }, { prio: 2 }); rsay('stubInAck', 'okc', null, { prio: 1 }); break; }
+      case 'stubEnd': say('stubEnd', V); break;
+      case 'stubOut': say('stubOut', Object.assign({ sgen: rdStub(rdStubOf(e), 2) }, V)); break;
+    }
+  }
+  // the people run over by the player, a crash into the traffic: before the chase the dispatcher calls it out (a hit-and-run), in the chase a unit
+  function rdRoad(k, P) {
+    const pol = race.pol, at = rdWhere(P.q.s, P.q.k), N = rdUnit(rdNear(P)), t = performance.now() / 1000;
+    if (k === 'crash') { if (pol.stage === 'chase' && t - rd.crashT > 20 && Math.random() < 0.5) { rd.crashT = t; rsay('crash', N ? 'u' : 'okc', { at }, Object.assign({ prio: 0 }, N)); } return; }
+    if (k !== 'ped' && k !== 'bike') return;
+    if (pol.stage !== 'chase' || !N) { rsay(k === 'ped' ? 'pedFree' : 'bikeFree', 'okc', Object.assign(rdCarV(), { at })); return; }   // (no unit near to see it: the dispatcher calls it out)
+    rsay(k, N ? 'u' : 'okc', { at }, N); rsay('medic', 'okc');
+  }
+  // the radio's chatter: before the checkpoint the routine of the day, in the chase where the player is and the requests, lost: the search
+  function rdChat(P, t) {
+    const pol = race.pol, K = pol.chk, st = pol.stage;
+    rd.chatT = t + 3;
+    if (st === 'free') {
+      if (K.s - P.q.s < 300) return;   // (near the checkpoint: the unit there speaks next)
+      if (!rd.free) rd.free = [RD_FREE[0]];
+      if (!rd.free.length) { rd.free = RD_FREE.slice(1).concat([RD_WX[S.season === 'winter' ? 'snow' : race.rain ? 'rain' : 'dry']]); for (let i = rd.free.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [rd.free[i], rd.free[j]] = [rd.free[j], rd.free[i]]; } }
+      for (const [w, sl, en] of rd.free.shift()) rline(w.charAt(0) === 'u' ? 'u' : w, sl, en, null, { u: +w.charAt(1) || 0, prio: 0, ttl: 25 });
+      rd.chatT = t + 12 + Math.random() * 6; return;
+    }
+    if (st !== 'chase') return;
+    const near = rdNear(P), N = rdUnit(near), ncs = N ? rdCall(N.u, N.kind) : null, H = pol.heli && pol.heli.st === 'track', up = rdUp(P), d = P.q.s - track.startS, v = Math.round(P.speed * 3.6 / 5) * 5;
+    const V = { at: rdWhere(P.q.s, P.q.k), to: rdToward(P.q.s, up), dir: up ? ['Vršič', 'the pass'] : ['Kranjska Gora', 'Kranyska Gora'], v, U: ncs ? [ncs[1], ncs[2]] : '' };
+    const o0 = (o) => Object.assign({ prio: 0, ttl: 14 }, o);
+    rd.chatT = t + 7 + Math.random() * 5;
+    if (pol.lost) {   // the search: the dispatcher sends them along the road, a unit reports where it is not
+      rd.chatT = t + 9 + Math.random() * 5;
+      const c = pol.cars.find(c => c.pol.mode === 'search' && c.pol.unit && Math.random() < 0.6);
+      if (c && Math.random() < 0.6) rsay('searchU', 'u', { at: rdWhere(c.q.s, c.q.k) }, o0(rdUnit(c))); else rsay('search', 'okc', { at: rdWhere(P.q.s - 250, -1) }, o0());
+      return;
+    }
+    // the requests and replies, each once (the strips and roadblocks of the plan ahead, before they are laid; the helicopter again after a while)
+    const plan = pol.plan.find(q => !q.done && q.s - P.q.s > 450 && q.s - P.q.s < 1700 && !rd.said['p' + q.s]);
+    if (plan && N) { rd.said['p' + plan.s] = 1; const W = { at: rdWhere(plan.s, -1), U: V.U };
+      if (plan.kind === 'spike') { rsay('spikeAsk', 'u', W, o0(N)); rsay(rd.said.spikeOk ? 'spikeOk' : 'spikeOk1', 'okc', W, o0()); rd.said.spikeOk = 1; }
+      else { rsay('blockSet', 'u', W, o0(N)); rsay('blockOk', 'okc', W, o0()); }
+      return; }
+    if (!pol.heli && N && pol.heat >= pol.D.heli - 0.8 && t - (rd.said.heliT || -1e9) > 120) { rd.said.heliT = t; rsay('heliAsk', 'u', null, o0(N)); rsay('heliOk', 'okc', null, o0()); return; }
+    if (!rd.said.trenta && (d > 5200 || pol.heat >= 3)) { rd.said.trenta = 1; rsay('trenta', 'okc', null, o0({ ttl: 20 })); rsay('trentaBov', 'bov', null, o0({ ttl: 24 })); return; }
+    if (!rd.said.guns && rd.said.spikeOk && N && pol.heat >= 2) { rd.said.guns = 1; rsay('guns', 'u', null, o0(N)); rsay('gunsNo', 'okc', null, o0()); return; }
+    if (!rd.said.backup && N && pol.heat >= 1.8 && Math.random() < 0.3) { rd.said.backup = 1; rsay('backup', 'u', null, o0(N)); rsay('backupOk', 'okc', null, o0()); return; }
+    if (!pol.seen && !H && pol.hide > 0.2 && t - (rd.said.whereT || -1e9) > 25) {   // (out of their sight: where is he?)
+      rd.said.whereT = t; rsay('where', 'okc', null, o0()); const c = rdNear(P, 1500); if (c) rsay('whereU', 'u', V, o0(rdUnit(c))); return; }
+    // where the player is: the nearest unit (or the helicopter over them), what fits the place and the speed
+    if (!near && !H) return;
+    const heli = H && (!near || Math.random() < 0.35), G = rdGeo(), hp = G.hp.length > 1 && d > G.hp[0] - 60 && d < G.hp[G.hp.length - 1] + 60;
+    const key = heli ? 'posHeli' : P.q.k >= 0 ? 'posStub' : !up ? 'posDown' : v >= 135 && Math.random() < 0.5 ? 'posFast' : v < 35 ? 'posSlow' : d < 1300 && Math.random() < 0.5 ? 'posVillage' :
+      Math.abs(d - 1850) < 250 && Math.random() < 0.5 ? 'posJasna' : d > 11850 && Math.random() < 0.5 ? 'posTop' : hp && Math.random() < 0.3 ? 'posHair' : 'pos';
+    rsay(key, heli ? 'heli' : 'u', V, o0(heli ? null : N));
+    if (!heli && Math.random() < 0.3) rsay('ack', 'okc', V, o0());
+  }
+  // the radio director (each frame of the run from the police, in real time like the speech): the line playing, the next one from the queue,
+  // the caption, the chatter
+  function radioStep(P) {
+    if (!rd) radioReset();
+    const t = performance.now() / 1000, el = $('h-radio'), C = rd.cur;
+    if (C && !C.on && t >= C.at) {   // (the squelch is open: said and shown)
+      C.on = true;
+      const E = Lang.cur === 'en', txt = E ? C.en : C.sl, say = E ? (C.cen ? C.cen + ', ' + C.en : C.en) : rdSpeech(C.csl ? C.csl + ', ' + C.sl : C.sl);   // (the English page: the radio's English lines)
+      C.item = Comm.radio(say, { who: C.who, u: C.u, en: C.cen ? C.cen + ', ' + C.en : C.en, enOnly: E });
+      C.until = t + (C.item ? 2.5 + say.length * 0.085 : Math.max(1.8, txt.length * 0.065));   // (said: until its end, at most this; captions only: by its length)
+      el.innerHTML = '<b>' + esc(C.lbl) + '</b> ' + esc(txt); el.className = 'show' + (C.person ? ' person' : '');
+      rd.log.push({ k: C.key, who: C.lbl, txt, t: race.time, said: !!C.item }); if (rd.log.length > 80) rd.log.shift();
+    } else if (C && C.on && (t > C.until || (C.item && (C.item.done || C.item.cut)))) rdEnd(t, false);
+    if (rd.cur && rd.q.some(L => L.prio >= rd.cur.prio + 2 || (L.prio > 0 && !rd.cur.prio))) { if (rd.cur.item) Comm.radioStop(); rdEnd(t, true); }   // (news cuts the chatter off; the officer in person, a turn of the run cut any line)
+    if (!rd.cur && t >= rd.gapT && rd.q.length && phase !== 'done') {
+      rd.q = rd.q.filter(L => t - L.t < L.ttl);
+      let b = null; for (const L of rd.q) if (!b || L.prio > b.prio) b = L;   // (the most urgent; of those the oldest)
+      if (b) { rd.q.splice(rd.q.indexOf(b), 1); rd.cur = b; b.on = false; b.at = t + (b.person ? 0.05 : 0.18); if (!b.person) { Sfx.radioOpen(); Sfx.radioBed(true); } }
+    }
+    if (!rd.cur && el.className && t > rd.capT) el.className = '';
+    if (phase === 'racing' && !P.finished && !rd.cur && !rd.q.length && t >= rd.chatT) rdChat(P, t);
+  }
+  function rdEnd(t, cut) {
+    const C = rd.cur; rd.cur = null; if (!C) return;
+    if (!C.person) { if (!cut && C.on) Sfx.radioClose(); Sfx.radioBed(false); }
+    rd.capT = t + (cut ? 0 : 0.8); rd.gapT = t + (cut ? 0.12 : 0.5 + Math.random() * 0.4);
+  }
+  // busted: the camera beside the road (on the side of the road's middle), the player's car and the officers walking up to it
+  function bustShot() {
+    const P = race.player, ch = Math.cos(P.h), sh = Math.sin(P.h), sd = P.q && P.q.d > 0 ? -1 : 1, y = P.roadY != null ? P.roadY : P.y;
+    Render.setShot({ px: P.x - ch * 6.5 - sh * sd * 8.5, py: y + 2.8, pz: P.z - sh * 6.5 + ch * sd * 8.5, tx: P.x + ch * 0.8, ty: y + 0.9, tz: P.z + sh * 0.8, fov: 44, floor: true, near: 0.3 });
+    $('hud').classList.add('shot');
+  }
+  // parked at the checkpoint (the arrest there): the camera down the road on the lane by the kerb, looking up it at the patrol car, the
+  // player's car in the box beyond it and the driver walking to the patrol car with the officer (all of it in a phone held upright too)
+  function chkShot() {
+    const P = race.player, K = race.pol.chk, c = K.car, T = track; if (!c) return;
+    const mx = (P.x + c.x) / 2, mz = (P.z + c.z) / 2, i = T.idx((P.q.s + c.q.s) / 2 - 26), d = K.side * 2.5, y = P.roadY != null ? P.roadY : P.y;
+    Render.setShot({ px: T.px[i] + T.nx[i] * d, py: T.hy[i] + 4.2, pz: T.pz[i] + T.nz[i] * d, tx: mx, ty: y + 1, tz: mz, fov: 40, floor: true, near: 0.3 });
+    $('hud').classList.add('shot');
   }
   function roadSound(P) {
     let best = 1e9, pan = 0;
-    if (race.pol) for (const c of race.pol.cars) if (c.pol.mode === 'chase' || c.pol.mode === 'park') { const dx = c.x - P.x, dz = c.z - P.z, d = Math.hypot(dx, dz); if (d < best) { best = d; pan = (dx * -Math.sin(P.h) + dz * Math.cos(P.h)) / Math.max(12, d); } }
+    if (race.pol) for (const c of race.pol.cars) if ((c.pol.mode === 'chase' || (c.pol.mode === 'park' && !c.pol.chk)) && c.pol.kind !== 'van') { const dx = c.x - P.x, dz = c.z - P.z, d = Math.hypot(dx, dz); if (d < best) { best = d; pan = (dx * -Math.sin(P.h) + dz * Math.cos(P.h)) / Math.max(12, d); } }   // (the checkpoint's car parked there: its lights on, no siren)
     Sfx.siren(race.pol && phase === 'racing' && !P.finished ? Math.pow(clamp(1 - best / 260, 0, 1), 1.4) : 0, pan);
     for (const v of race.tf.veh) {
       if (v.horn > 0 && !v.hornOn && !v.off) { v.hornOn = true; const dx = v.x - P.x, dz = v.z - P.z, d = Math.hypot(dx, dz); if (d < 90) Sfx.carHorn(clamp(1 - d / 90, 0.1, 1), (dx * -Math.sin(P.h) + dz * Math.cos(P.h)) / Math.max(12, d), v.kind === 2); }
@@ -2137,6 +2552,10 @@
     const g = img.getContext('2d'), X = (i) => track.px[i] * sc + mm.ox, Y = (i) => track.pz[i] * sc + mm.oz;
     const path = () => { g.beginPath(); g.moveTo(X(0), Y(0)); for (let i = 1; i < track.N; i++) g.lineTo(X(i), Y(i)); };
     g.lineJoin = 'round'; g.lineCap = 'round';
+    if (track.stubs) {   // the side roads: thin grey lines to their ends (under the road)
+      g.beginPath(); for (const S of track.stubs) { g.moveTo(S.x[0] * sc + mm.ox, S.z[0] * sc + mm.oz); for (let j = 1; j < S.n && j * 2 <= S.L; j++) g.lineTo(S.x[j] * sc + mm.ox, S.z[j] * sc + mm.oz); }
+      g.strokeStyle = 'rgba(0,0,0,.4)'; g.lineWidth = 3.2 * dpr; g.stroke(); g.strokeStyle = 'rgba(190,194,200,.85)'; g.lineWidth = 1.4 * dpr; g.stroke();
+    }
     path(); g.strokeStyle = 'rgba(0,0,0,.55)'; g.lineWidth = 7 * dpr; g.stroke();
     path(); g.strokeStyle = '#ffffff'; g.lineWidth = 3.4 * dpr; g.stroke();
     const tick = (i, col, len) => { g.strokeStyle = col; g.beginPath(); g.moveTo(X(i) - track.nx[i] * len, Y(i) - track.nz[i] * len); g.lineTo(X(i) + track.nx[i] * len, Y(i) + track.nz[i] * len); g.stroke(); };
@@ -2144,7 +2563,11 @@
     g.font = '700 italic ' + Math.round(9 * dpr) + 'px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
     track.cpS.forEach((s, k) => { const i = track.idx(s); g.lineWidth = 3 * dpr; tick(i, '#ffc629', 7 * dpr);
       const lx = X(i) + track.nx[i] * 14 * dpr, ly = Y(i) + track.nz[i] * 14 * dpr; g.lineWidth = 3 * dpr; g.strokeStyle = 'rgba(0,0,0,.8)'; g.strokeText(String(k + 1), lx, ly); g.fillStyle = '#ffc629'; g.fillText(String(k + 1), lx, ly); });
-    chequer(g, X(track.finishIdx), Y(track.finishIdx), 5 * dpr);
+    const G = race && race.pol && race.pol.goal; mm.pol = !!(race && race.pol);
+    if (G) { const x = G.x * sc + mm.ox, y = G.z * sc + mm.oz, r = 5 * dpr;   // the run from the police: the building at the top (a house) instead of the finish
+      g.beginPath(); g.moveTo(x - r, y + r); g.lineTo(x - r, y - r * 0.15); g.lineTo(x, y - r * 1.1); g.lineTo(x + r, y - r * 0.15); g.lineTo(x + r, y + r); g.closePath();
+      g.fillStyle = '#2f6fe0'; g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 1.5 * dpr; g.stroke(); }
+    else chequer(g, X(track.finishIdx), Y(track.finishIdx), 5 * dpr);
     mm.img = img;
   }
   function drawMinimapOpen(g, d) {
@@ -2162,17 +2585,28 @@
     for (const c of race.cars) { if (c === P) continue;
       const x = c.x * sc + mm.ox + tx, y = c.z * sc + mm.oz + ty; if (x < -4 || y < -4 || x > w + 4 || y > h + 4) continue;
       g.fillStyle = hexCss(c.color); g.strokeStyle = 'rgba(0,0,0,.7)'; g.lineWidth = 1 * d; g.beginPath(); g.arc(x, y, 2.6 * d, 0, 6.2832); g.fill(); g.stroke(); }
+    if (race.pol) {   // the run from the police: the patrol cars (blue and red in the chase, grey searching; the ones waiting unseen not shown), the helicopter, strips and roadblocks ahead, logs on the road
+      const pol = race.pol, bl = (performance.now() / 260 | 0) % 2, X = (x) => x * sc + mm.ox + tx, Y = (z) => z * sc + mm.oz + ty, inb = (x, y) => x > -6 && y > -6 && x < w + 6 && y < h + 6;
+      g.strokeStyle = '#ff3b3b'; g.lineWidth = 2 * d;
+      for (const sp of pol.spikes) if (sp.on) { const i = track.idx(sp.s), x = X(track.px[i]), y = Y(track.pz[i]); if (inb(x, y)) { g.beginPath(); g.moveTo(x - track.nx[i] * 5 * d, y - track.nz[i] * 5 * d); g.lineTo(x + track.nx[i] * 5 * d, y + track.nz[i] * 5 * d); g.stroke(); } }
+      for (const b of pol.blocks) if (!b.passed) { const i = track.idx(b.s), x = X(track.px[i]), y = Y(track.pz[i]), r2 = 3.6 * d; if (inb(x, y)) { g.beginPath(); g.moveTo(x - r2, y - r2); g.lineTo(x + r2, y + r2); g.moveTo(x + r2, y - r2); g.lineTo(x - r2, y + r2); g.stroke(); } }
+      g.fillStyle = '#9a6b3c'; for (const L of pol.traps) if (L.st === 1) for (const q of L.logs) { const x = X(q.x), y = Y(q.z); if (inb(x, y)) g.fillRect(x - 1.2 * d, y - 1.2 * d, 2.4 * d, 2.4 * d); }
+      for (const c of pol.cars) { const m = c.pol.mode; if (m === 'wait' || m === 'civil') continue; const x = X(c.x), y = Y(c.z); if (!inb(x, y)) continue;
+        g.fillStyle = m === 'chase' ? (bl ^ (c.id & 1) ? '#3a78ff' : '#ff3b3b') : m === 'search' ? '#9aa3b5' : m === 'park' ? '#3a78ff' : '#5a5f68';
+        g.strokeStyle = 'rgba(0,0,0,.75)'; g.lineWidth = 1 * d; g.beginPath(); g.arc(x, y, (c.pol.kind === 'moto' ? 1.9 : c.pol.kind === 'van' ? 3 : 2.6) * d, 0, 6.2832); g.fill(); g.stroke(); }
+      const H = pol.heli; if (H) { const x = X(H.x), y = Y(H.z), a = performance.now() / 90, r2 = 4.2 * d; if (inb(x, y)) { g.strokeStyle = '#ffffff'; g.lineWidth = 1.4 * d; g.beginPath(); g.arc(x, y, r2, 0, 6.2832); g.moveTo(x + Math.cos(a) * r2, y + Math.sin(a) * r2); g.lineTo(x - Math.cos(a) * r2, y - Math.sin(a) * r2); g.stroke(); } }
+    }
     // player: arrow in the driving direction
     const ch = Math.cos(P.h), sh = Math.sin(P.h), r = 5.5 * d;
     g.fillStyle = '#ffd23f'; g.strokeStyle = '#111'; g.lineWidth = 1.5 * d; g.beginPath();
     g.moveTo(cx + ch * r * 1.3, cy + sh * r * 1.3); g.lineTo(cx - ch * r * 0.8 - sh * r * 0.8, cy - sh * r * 0.8 + ch * r * 0.8); g.lineTo(cx - ch * r * 0.8 + sh * r * 0.8, cy - sh * r * 0.8 - ch * r * 0.8); g.closePath(); g.fill(); g.stroke();
     // course overview: a slim bar on the right edge, start at the bottom, CP ticks, the player
-    const bx = w - 6 * d, y0 = h - 7 * d, y1 = 7 * d, f = clamp((P.finished ? track.raceLen : P.dist) / track.raceLen, 0, 1);
+    const bx = w - 6 * d, y0 = h - 7 * d, y1 = 7 * d, LR = polLen(), f = clamp((P.finished && !P.busted ? LR : P.dist) / LR, 0, 1);   // (the run from the police: to the building at the top; caught: where they stopped the player)
     g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(bx - 2.5 * d, y1 - 1 * d, 5 * d, y0 - y1 + 2 * d);
     g.fillStyle = 'rgba(255,255,255,.85)'; g.fillRect(bx - 1 * d, y1, 2 * d, y0 - y1);
     g.fillStyle = '#ffc629'; g.fillRect(bx - 1 * d, y0 - (y0 - y1) * f, 2 * d, (y0 - y1) * f);
-    for (const cd of track.cpDist) { const y = y0 - (y0 - y1) * cd / track.raceLen; g.fillRect(bx - 3 * d, y - 0.75 * d, 6 * d, 1.5 * d); }
-    for (const c of race.cars) if (c !== P) { const y = y0 - (y0 - y1) * clamp((c.finished ? track.raceLen : c.dist) / track.raceLen, 0, 1); g.fillStyle = hexCss(c.color); g.fillRect(bx - 3 * d, y - 1 * d, 6 * d, 2 * d); }   // (the rivals on the bar)
+    for (const cd of track.cpDist) { const y = y0 - (y0 - y1) * cd / LR; g.fillRect(bx - 3 * d, y - 0.75 * d, 6 * d, 1.5 * d); }
+    for (const c of race.cars) if (c !== P) { const y = y0 - (y0 - y1) * clamp((c.finished ? LR : c.dist) / LR, 0, 1); g.fillStyle = hexCss(c.color); g.fillRect(bx - 3 * d, y - 1 * d, 6 * d, 2 * d); }   // (the rivals on the bar)
     g.fillStyle = '#ffd23f'; g.strokeStyle = '#111'; g.lineWidth = 1 * d; g.beginPath(); g.arc(bx, y0 - (y0 - y1) * f, 2.8 * d, 0, 6.2832); g.fill(); g.stroke();
   }
   function drawMinimap() {
@@ -2444,7 +2878,7 @@
       setText('h-time', fmt(P.finished ? P.lapTimes[0] || 0 : P.lap >= 1 && phase === 'racing' ? race.time - P.lapStart : 0, true));
       setText('h-bestv', fmt(rec(track.def.id).bestLap || NaN, true));
       if (P.lap >= 1 && !P.finished && !qual.lapShown) { qual.lapShown = true; showMsg(tr('LETEČI KROG!'), 'gold', 1.4); Sfx.beep(990, 0.12, 0.12); Comm.say('qualiLap', null, 3); }
-    } else if (track.open) updateHUDUp(P);
+    } else if (track.open) { updateHUDUp(P); if (rdOn) radioStep(P); }
     else {
       setText('h-pos', String(P.pos || race.cars.length));
       const lapShown = clamp(P.lap, 1, race.laps);
@@ -2477,28 +2911,80 @@
     // wrong way
     if (phase === 'racing') {
       if (P.wrongT > 1.1) { if ($('h-msg').textContent !== tr('NAPAČNA SMER!')) showMsg(tr('NAPAČNA SMER!'), 'warn', 0.5); else msgT = 0.4; }
-      const stuck = P.stuckT > 2.5 || P.wrongT > 4;
+      const stuck = (P.stuckT > 2.5 || P.wrongT > 4) && !(race.pol && (race.pol.hold || race.pol.stage === 'check'));   // (stopped at the police checkpoint on purpose: no rescue)
       $('btn-rescue').classList.toggle('off', !stuck);
     }
     if (P.pitState === 'repair' && P.pitDur > 0) { const pct = Math.min(99, Math.floor(P.pitT / P.pitDur * 100)); const txt = tr('POPRAVILO {0} %', pct); if ($('h-msg').textContent !== txt) { $('h-msg').textContent = txt; $('h-msg').className = 'show gold'; } msgT = 0.3; }
     if (msgT > 0) { msgT -= dt; if (msgT <= 0) $('h-msg').className = ''; }
   }
   function updateHUDUp(P) {   // a race up an open road (Vršič): the place, km done of the whole road, the altitude, the race clock, the best race so far
-    const L = track.raceLen, al = track.def.alt, done = P.finished && !P.busted, alt = track.altAt(done ? track.hy[track.finishIdx] : P.roadY || 0);   // (busted by the police: where they were stopped)
+    const L = polLen(), al = track.def.alt, done = P.finished && !P.busted, alt = track.altAt(done && !race.pol ? track.hy[track.finishIdx] : P.roadY || 0);   // (busted by the police: where they were stopped; the run from the police: the building at the top)
     setText('h-pos', race.pol ? String(race.pol.cars.filter(c => c.pol.mode === 'chase').length) : String(P.pos || race.cars.length));
     setText('h-lap', kmTxt(clamp(done ? L : P.dist, 0, L), 1) + '/' + kmTxt(L, 1) + ' KM');
     setText('h-alt', alt != null ? numDot(al ? clamp(alt, al[0], al[1]) : alt) + ' m' : '');
     setText('h-time', fmt(P.finished ? P.finishTime : phase === 'racing' ? race.time : 0, true));
     setText('h-bestv', fmt(rec(track.def.id).bestRace || NaN, true));
-    if (race.pol) {   // the run from the police: the heat (stars), the busted meter, the flat tyres
-      const pol = race.pol, h = Math.round(pol.heat), nf = [0, 1, 2, 3].filter(k => (P.flat || 0) & (1 << k)).length;
-      setText('h-heat', '\u2605'.repeat(h) + '\u2606'.repeat(5 - h)); $('h-bustbar').style.width = (pol.bust * 100).toFixed(0) + '%'; $('h-pol').classList.toggle('warn', pol.bust > 0.02);
+    if (race.pol) {   // the run from the police: before the chase the checkpoint (chkHUD); in it the heat (stars), the busted meter, the flat tyres, hiding; the arrows of the patrol cars behind (tailHUD)
+      const pol = race.pol, ch = pol.stage === 'chase' || (pol.stage === 'over' && !!polRun.why), h = Math.round(pol.heat), nf = [0, 1, 2, 3].filter(k => (P.flat || 0) & (1 << k)).length;
+      $('h-pol').classList.toggle('pre', !ch);   // (no stars, no busted meter before the chase)
+      setText('h-heat', ch ? '\u2605'.repeat(h) + '\u2606'.repeat(5 - h) : ''); $('h-bustbar').style.width = (pol.bust * 100).toFixed(0) + '%'; $('h-pol').classList.toggle('warn', ch && pol.bust > 0.02);
       setText('h-flat', nf ? tr('PREBITE GUME: {0}', nf) : '');
+      const hid = ch && !pol.lost && pol.hide > 0.02 && !P.finished; $('h-pol').classList.toggle('hid', hid); $('h-pol').classList.toggle('lost', pol.lost && !P.finished);   // (out of their sight: the meter; lost: grey stars)
+      $('h-hidebar').style.width = (pol.hide * 100).toFixed(0) + '%'; setText('h-hidel', P.finished || !ch ? '' : tr(pol.lost ? 'IZGUBILI SO SLED' : hid ? 'SKRIVANJE' : pol.heli && pol.heli.st === 'track' ? 'HELIKOPTER NAD TABO' : ''));
+      chkHUD(P, pol); tailHUD(P, pol);
+      if (pol.hold && phase === 'racing') $('touch').classList.add('off');   // (parked at the checkpoint: the brakes held, the arrest on the screen)
     } else if (race.tf) {   // the duel: how far the rival is ahead or behind (in seconds at the speed now)
       const o = race.cars.find(c => c !== P);
       if (o) { const g = (o.finished ? L : o.dist) - (P.finished ? L : P.dist), t = Math.abs(g) / Math.max(12, P.speed, o.speed), f = Lang.dec(t.toFixed(1));
         setText('h-gap', o.finished && P.finished ? '' : tr(g >= 0 ? 'TEKMEC {0} s PRED TABO' : 'TEKMEC {0} s ZA TABO', f)); $('h-gap').classList.toggle('behind', g < 0); }
     }
+  }
+  // the length of the run up the open road: the run from the police to the building at the top (pol.goal), else to the finish
+  const polLen = () => race && race.pol && race.pol.goal ? race.pol.goal.s - track.startS : track.raceLen;
+  // the run from the police, a line under the police's panel: the checkpoint ahead and what to do at it (before the chase), the building at the
+  // top near the end (where to hide)
+  let chkKey = '';
+  function chkHUD(P, pol) {
+    const K = pol.chk, g = K ? K.s - P.q.s : -1e9, G = pol.goal; let t = '', s = '';   // (a road without the checkpoint: K null, the chase from the start)
+    if (!P.finished && phase === 'racing') {
+      if (pol.stage === 'free' && g > 0 && g < 650) t = tr('KONTROLA PROMETA · {0} m', Math.round(g / 10) * 10);
+      else if (pol.stage === 'check') switch (K.st) {
+        case 'approach': t = tr('POLICIJSKA KONTROLA') + (g > 3 ? ' · ' + Math.round(g) + ' m' : ''); s = tr('Ustavi pri policistu (ali pobegni)'); break;
+        case 'stopped': case 'walk': t = tr('POLICIJSKA KONTROLA'); s = tr('Policist prihaja k oknu (ali pobegni)'); break;
+        case 'docs': t = tr('POLICIJSKA KONTROLA'); s = tr('Policist hoče dokumente (ali pobegni)'); break;
+        case 'park': { const b = Math.hypot(P.x - K.box.x, P.z - K.box.z); t = tr('ZAPELJI OB ROB VOZIŠČA'); s = tr('Parkiraj v označeno polje') + (b > 2.5 ? ' · ' + Math.round(b) + ' m' : '') + tr(' (ali pobegni)'); break; }
+        case 'parked': t = tr('POLICIJSKA KONTROLA'); s = tr('Greš s policistom na postajo'); break;
+      }
+      else if (pol.stage === 'chase' && G && G.s - P.q.s < 800 && G.s - P.q.s > -30) { t = tr('SKRIVALIŠČE · {0} m', Math.max(0, Math.round((G.s - P.q.s) / 10) * 10)); s = tr(G.side > 0 ? 'Garaža desno ob cesti: zapelji noter' : 'Garaža levo ob cesti: zapelji noter'); }
+    }
+    const h = t ? '<b>' + t + '</b>' + (s ? '<span>' + s + '</span>' : '') : '';
+    if (h !== chkKey) { chkKey = h; const el = $('h-chk'); el.innerHTML = h; el.classList.toggle('on', !!h); }
+  }
+  // the run from the police: the patrol cars behind the player (in the chase or searching; just alongside too), the nearest four by the road:
+  // an arrow at the bottom pointing where each is from the player's heading, placed across by that, with how far back it is along the road
+  // (a car in a side road, or the player in one: in a straight line); blue and red flashing in the chase, grey searching, fainter far back
+  const tail = { el: null, k: [] };
+  function tailHUD(P, pol) {
+    if (!tail.el) { tail.el = [...$('h-tail').children]; tail.k = tail.el.map(() => ''); }
+    const ch = Math.cos(P.h), sh = Math.sin(P.h), inS = P.q.k >= 0, L = [], bl = (performance.now() / 260 | 0) % 2;
+    if (!P.finished && phase === 'racing') for (const c of pol.cars) {
+      const m = c.pol.mode; if (m !== 'chase' && m !== 'search') continue;
+      const dx = c.x - P.x, dz = c.z - P.z, lon = dx * ch + dz * sh, lat = -dx * sh + dz * ch, st = inS || c.q.k >= 0, g = st ? Math.hypot(dx, dz) : P.q.s - c.q.s;
+      if (st ? g > 400 || lon > 6 : g < -6 || g > 600) continue;
+      L.push({ c, g, m, a: Math.atan2(lat, -lon) });   // (a: 0 straight behind, + to the right)
+    }
+    L.sort((a, b) => a.g - b.g); L.length = Math.min(L.length, tail.el.length);
+    const X0 = L.map(e => 50 + 44 * Math.sin(e.a)), X = X0.slice(), ord = X.map((x, i) => i).sort((a, b) => X[a] - X[b]);   // (across by the angle, then kept 13 % apart, the group where it was)
+    for (let j = 1; j < ord.length; j++) X[ord[j]] = Math.max(X[ord[j]], X[ord[j - 1]] + 13);
+    if (ord.length) { let d = (X0.reduce((a, b) => a + b, 0) - X.reduce((a, b) => a + b, 0)) / X.length; const lo = X[ord[0]] + d, hi = X[ord[ord.length - 1]] + d;
+      if (lo < 6) d += 6 - lo; else if (hi > 94) d -= hi - 94; for (let i = 0; i < X.length; i++) X[i] += d; }
+    tail.el.forEach((el, i) => {
+      const e = L[i], key = e ? [X[i].toFixed(1), Math.round(180 - e.a * 180 / Math.PI), e.m === 'search' ? 's' : bl ^ (e.c.id & 1) ? 'b' : 'r', e.g < 5 ? 'ob tebi' : (e.g < 50 ? Math.round(e.g) : Math.round(e.g / 5) * 5) + ' m', (e.g > 300 ? clamp(1 - (e.g - 300) / 500, 0.4, 1) : 1).toFixed(2)].join('|') : '';
+      if (key === tail.k[i]) return;
+      tail.k[i] = key; if (!e) { el.className = ''; return; }
+      const [x, r, cl, txt, op] = key.split('|');
+      el.className = 'on ' + cl + (i ? '' : ' n'); el.style.left = x + '%'; el.style.opacity = op; el.firstElementChild.style.transform = 'rotate(' + r + 'deg)'; el.lastElementChild.textContent = txt;
+    });
   }
 
   /* ---------------- the timing tower (Časovna tabela): the order with the gaps to the leader, as on TV ----------------
@@ -2638,6 +3124,9 @@
     if (on && (phase === 'intro' || phase === 'lights')) phaseT = (Net.now() - on.at) / 1000 - (phase === 'lights' ? 1.3 : 0);   // online: both phones follow the host's clock
     if (phase === 'intro' && phaseT > 1.3 && race.quali) {   // qualifying: no lights, the clock starts at the line
       phase = 'racing'; phaseT = 0; race.start(); showMsg(tr('ČAS SE ZAČNE NA ČRTI'), 'gold', 1.6); Comm.say('qualiGo', null, 3);
+    } else if (phase === 'intro' && phaseT > 1.3 && race.pol && race.pol.chk) {   // the run from the police up to its checkpoint: no lights, the player just drives off (nobody after them yet)
+      phase = 'racing'; phaseT = 0; race.start(); showMsg(tr('VOZI PROTI VRŠIČU'), 'gold', 1.6);
+      if (S.control === 'tilt' && Input.tiltAlive()) Input.calibrate();
     } else if (phase === 'intro' && phaseT > introLen) {
       if (introLen > 1.3) shotOff();   // (the jets' shot is over: the game's camera again)
       phase = 'lights'; phaseT = on ? phaseT - 1.3 : 0; $('h-lights').classList.add('show');
@@ -2676,8 +3165,10 @@
           Comm.say(ownLine(track.def, ttLine(track.def, r.newPB ? 'record' : isFinite(d) && Math.abs(d) < 0.005 ? 'even' : 'end')), { time: spkTime(r.time), delta: isFinite(d) ? spkDelta(d) : '', track: EN_NAME[track.def.id] || track.def.name }, 5);
           { const k = medalOf(track.def, r.time); if (k >= 0) Comm.say('medal', { medal: MEDAL_EN[k] }, 3, { ttl: 9000 }); }   // (waits for the finish call)
           if (pk.on) pkCeremony(r);   // (Pikes Peak: the summit ceremony)
-        } else if (race.pol) {   // the run from the police: caught, or over the pass
-          const b = race.pol.busted; showMsg(tr(b ? 'ULOVLJEN!' : 'POBEGNIL SI!'), b ? 'slow' : 'fast', 4); Comm.say(b ? 'busted' : ownLine(track.def, 'escaped'), null, 5); Sfx.siren(0, 0);
+        } else if (race.pol) {   // the run from the police: the mission done (into the building at the top; a road without it: over the finish), arrested at the checkpoint, caught in the chase
+          const pol = race.pol, b = pol.busted, chk = pol.arrestK === 'chk';
+          showMsg(tr(!b ? (pol.goal ? 'MISIJA OPRAVLJENA!' : 'POBEGNIL SI!') : chk ? 'ARETIRAN!' : 'ULOVLJEN!'), b ? 'slow' : 'fast', 4); Sfx.siren(0, 0); if (b && !chk) bustShot();   // (the checkpoint: its own shot since the driver got out, chkShot)
+          if (!rdOn) Comm.say(b ? 'busted' : ownLine(track.def, 'escaped'), null, 5);   // (a road the police radio does not know: the commentator)
         } else {
           showMsg(pos === 1 ? tr('ZMAGA!') : tr('CILJ! {0} MESTO', Lang.ord(pos).toUpperCase()), 'gold', 4);
           Comm.say(pos === 1 ? 'win' : pos <= 3 ? 'podium' : 'finish', { pos: Comm.ordinal(pos) }, 5);
@@ -3214,7 +3705,7 @@
       case 'champ-go': {
         if (champDone()) { champ = null; champSave(); buildChampScreen(); break; }   // (finished: "Novo prvenstvo" -> the choice of a series)
         if (!owned(Core.MODELS[S.car].id)) { toast(tr('Ta avto še ni tvoj: izberi avto iz garaže ali ga kupi.'), 3000); break; }
-        if (!champ) { const d = Core.CHAMPS.find(c => c.id === champPick) || Core.CHAMPS[0]; champ = { v: 1, id: d.id, diff: S.difficulty, rounds: [] }; champSave(); }
+        if (!champ) { const d = Core.CHAMPS.find(c => c.id === champPick) || Core.CHAMPS[0]; champ = { v: 1, id: d.id, diff: raceDiff(), rounds: [] }; champSave(); }   // (super težka is the police's: a championship is raced as težka)
         if (S.control === 'tilt') enableTilt(true);
         Comm.unlock(); champRun = true; ensureTrack(champDef().tracks[champ.rounds.length], startRace); break;
       }
@@ -3231,6 +3722,7 @@
       case 'quali-go': newRace(); break;   // (the grid qualifying gave)
       case 'quali-skip': qual = null; newRace(); break;
       case 'resume': resume(); break;
+      case 'rot-cam': { const wasP = screen === 'pause'; setOption('camera', window.innerHeight > window.innerWidth ? 'chase' : 'iso'); Render.resetCam(); camLabel(); if (wasP && race && !orientBlock) resume(); break; }   // (the phone held the other way than the camera wants: the camera for the way it is held; "Igraj": on with the race)
       case 'restart': if (race && race.quali) newRace('quali'); else if (race && race.champ && race.player.finished) openChamp(); else newRace(); break;   // (qualifying: its lap again; a championship round already driven counts: on to the standings)
       case 'calibrate': Input.calibrate(); toast(tr('Sredina nagiba je nastavljena.')); break;
       case 'tilt-invert': S.tiltInvert = S.tiltInvert ? 0 : 1; save(); applySettings(); break;
@@ -3381,7 +3873,9 @@
           return { role: mp.role, code: mp.code, open: Net.open, synced: Net.synced, peer: mp.peer, me: mp.me, players: mp.players.map(p => ({ id: p.id, name: p.name, car: p.car, in: p.in !== false })), track: mp.track, laps: mp.laps,
             race: R && { at: R.at, goAt: R.goAt, mine: R.mine, theirs: F ? F.fin : null, left: F ? F.left : false, got: F ? F.buf.length : 0, fins: Object.fromEntries([...R.cars].map(([k, C]) => [k, C.fin])), grid: R.grid, frameT: R.frameT, startT: R.startT } }; },
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get replay() { return replay && { t: replay.t, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; },
-        sim(sec, auto, steer) { pkFlySkip(); /* (a simulated race starts without Pikes Peak's flyover) */ const inp = { steer: steer || 0, thr: 1, brk: 0, hand: 0, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; } if (phase !== 'done') updatePhase(STEP, inp); stepRace(STEP, inp); } },
+        get radio() { return rd && { cap: $('h-radio').className ? $('h-radio').textContent : '', cur: rd.cur ? rd.cur.lbl + ' ' + rd.cur.sl : '', q: rd.q.length, log: rd.log.slice(), voice: Comm.radioVoice(), mode: Comm.radioMode }; },   // (tests: the police radio,
+        radioPlace: (d, k) => track ? rdWhere(track.startS + d, k == null ? -1 : k).concat([rdSpeech(rdWhere(track.startS + d, k == null ? -1 : k)[0])]) : null,   // where d m after the start line is as the police say it, and as the voice reads it)
+        sim(sec, auto, steer) { pkFlySkip(); /* (a simulated race starts without Pikes Peak's flyover) */ const inp = { steer: steer || 0, thr: 1, brk: 0, hand: 0, gas: 1, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; inp.gas = inp.thr > 0.05 ? 1 : 0; } if (phase !== 'done') updatePhase(STEP, inp); stepRace(STEP, inp); } },
         drive(sec, f) { pkFlySkip(); const inp = { steer: 0, thr: 0, brk: 0, hand: 0, digital: true }; for (let t = 0; t < sec && race && phase !== 'done'; t += STEP) { Core.aiControl(race.player, race, STEP); const o = f(race.player, school && school.live, phase) || {}; inp.steer = race.player.inSteer; inp.thr = o.thr || 0; inp.brk = o.brk || 0; updatePhase(STEP, inp); stepRace(STEP, inp); } },   // (tests: the autopilot's steering, the throttle and the brake given)
         get school() { return school && { id: school.L.id, live: school.live, done: !!school.done }; }, schoolMedals: (id) => { const L = SCHOOL.find(x => x.id === id); return L && { m: schoolMedals(L), ref: schoolRef(L), rec: schoolRec(L) }; } };
     } catch (e) {

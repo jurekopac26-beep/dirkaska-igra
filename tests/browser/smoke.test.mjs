@@ -1,7 +1,8 @@
 // Browser smoke test: the page loads (over http like GitHub Pages, and from a local file), every track can be
-// raced for 20 s on autopilot, settings migrate (one driving physics: Circuit Superstars), the title demo runs,
-// a Pikes Peak run, an Ouninpohja run and a Harju run finish and their records are saved (Ouninpohja also in the rain, apart).
-// Zero page errors allowed.
+// raced for 20 s on autopilot, settings migrate (one driving physics: Circuit Superstars; four difficulty levels), the
+// title demo runs, a Pikes Peak run, an Ouninpohja run and a Harju run finish and their records are saved (Ouninpohja
+// also in the rain, apart), Vršič's four ways to drive it (the run from the police: the checkpoint, the chase, the police
+// radio, the arrows, the mission in the building at the top). Zero page errors allowed.
 //   node tests/browser/smoke.test.mjs
 import path from 'node:path';
 import url from 'node:url';
@@ -29,6 +30,24 @@ try {
     await page.waitForTimeout(1500);
     const r = await page.evaluate(() => ({ demo: window.__game.demo && window.__game.demo.rain, drawn: Render.raining, sub: document.getElementById('title-sub').textContent }));
     T.check('saved weather: rain -> the title demo rains', r.demo === 1 && r.drawn && / · dež$/.test(r.sub) && !errors.length, JSON.stringify(r) + (errors.length ? ' errors: ' + errors.join(' | ') : ''));
+    await ctx.close();
+  }
+
+  // 1c. four difficulty levels (Lahka, Srednja, Težka, Super težka: the police all four, a race and a championship take the last as težka);
+  //     a saved value out of range is brought into it
+  {
+    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', '{"difficulty":7,"sound":0,"comm":0}');
+    const r = await page.evaluate(async () => {
+      const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)), seg = () => [...document.querySelectorAll('[data-set="difficulty"] button')].map(b => b.textContent + (b.classList.contains('sel') ? '*' : '')).join('|');
+      const out = { saved: g.S.difficulty }; g.onAction('to-settings'); await wait(200); out.row = seg();
+      g.onAction('settings-done'); await wait(150); g.onAction('to-champ'); await wait(300); out.champ = document.getElementById('ch-diff').textContent;
+      g.onAction('to-title'); await wait(150); g.onAction('to-settings'); await wait(150); document.querySelector('[data-set="difficulty"] button[data-v="0"]').click(); await wait(150);
+      out.row2 = seg(); out.stored = JSON.parse(localStorage.getItem('tdgp-settings')).difficulty;
+      return out;
+    });
+    T.check('settings: four difficulty levels (Lahka, Srednja, Težka, Super težka), a saved 7 becomes super težka, a championship is raced as težka',
+      r.saved === 3 && r.row === 'Lahka|Srednja|Težka|Super težka*' && /^Težavnost: težka \(super težka je samo za beg pred policijo/.test(r.champ) && r.row2 === 'Lahka*|Srednja|Težka|Super težka' && r.stored === 0 && !errors.length,
+      JSON.stringify(r) + (errors.length ? ' errors: ' + errors.join(' | ') : ''));
     await ctx.close();
   }
 
@@ -151,8 +170,13 @@ try {
   // 6d. Vršič: one card, four ways to drive it (the switch Dirka / Kronometer / Promet / Policija on the card). Kronometer: the time trial alone
   //     to the pass, its record and board under 'vrsic-tt@cs' (the race's records stay apart), a medal; Dirka: 12 rivals on the grid, the HUD
   //     shows the place, the km climbed and the altitude; Promet: the duel with one rival up the open road, the traffic and the people drawn,
-  //     the HUD with the rival's gap; Policija: alone with the police after the player, the patrol cars drawn with their lights flashing, the
-  //     HUD with the patrol cars after the player and the heat (stars)
+  //     the HUD with the rival's gap; Policija: a calm start (no start lights, nobody after the player, no stars, the commentator silent and
+  //     the police radio on the air, the checkpoint ahead on the HUD), the autopilot drives through the checkpoint in Kranjska Gora (the
+  //     officer shouts, the unit there calls it in): the chase, the patrol cars drawn with their lights flashing, the HUD with the patrol cars
+  //     after the player and the heat (stars), arrows at the bottom for the patrol cars behind (how many metres back); the heat up to five
+  //     stars: the helicopter drawn over the player, the radio hears of it (Bober); the radio names the real places (the streets of Kranjska
+  //     Gora, Jasna, the hairpins by number, the huts, the pass); placed below the building at the top, the autopilot drives into it: the
+  //     mission done, the rap sheet with the checkpoint
   {
     const r = await page.evaluate(async () => {
       const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)), frame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -173,16 +197,49 @@ try {
       g.onAction('start'); for (let k = 0; k < 1200 && !(g.race && g.race.track.def.id === 'vrsic' && !g.race.timeTrial); k++) await wait(100);
       g.sim(30, true); await frame(); await frame();
       Object.assign(out, { cars: g.race.cars.length, up: document.getElementById('hud').classList.contains('up'), lap: document.getElementById('h-lap').textContent, alt: document.getElementById('h-alt').textContent, pos: document.getElementById('h-pos').textContent, racing: g.phase });
-      for (const md of ['traffic', 'police']) {   // the open road: the duel in the traffic, the run from the police (30 s of each)
+      const txt = (id) => document.getElementById(id).textContent;
+      for (const md of ['traffic', 'police']) {   // the open road: the duel in the traffic (30 s), the run from the police (through the checkpoint, then 30 s of the chase)
         g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(300);
         document.querySelector('[data-track="vrsic"] .tc-mode button[data-v="' + md + '"]').click(); await wait(200);
         g.onAction('start'); for (let k = 0; k < 1200 && !(g.race && g.race.track.def.id === 'vrsic' && (md === 'police' ? g.race.pol : g.race.tf && !g.race.pol)); k++) await wait(100);
-        for (let i = 0; i < 30; i++) { g.sim(1, true); await frame(); }
+        if (md === 'police') {   // the start: the free drive to the checkpoint, through it on autopilot (the officer waves it down: it does not stop)
+          const pol = g.race.pol, pre = { pc: pol.cars.length, mode: pol.cars[0] && pol.cars[0].pol.mode, chkCar: !!(pol.cars[0] && pol.cars[0].pol.chk), lights: false, phases: [], pos: [], heat: [], chk: [], caps: [], radioMode: g.radio && g.radio.mode };
+          for (let i = 0; i < 70 && pol.stage !== 'chase'; i++) {
+            g.sim(1, true); await frame();
+            pre.lights = pre.lights || document.getElementById('h-lights').classList.contains('show'); pre.phases.push(g.phase);
+            if (pol.stage !== 'chase') { pre.pos.push(txt('h-pos')); pre.heat.push(txt('h-heat')); pre.chk.push(pol.chk.st + ':' + txt('h-chk')); }
+            if (g.radio.cap) pre.caps.push(g.radio.cap);
+          }
+          Object.assign(pre, { stage: pol.stage, why: (pol.log.find(e => e.k === 'fled') || {}).why, seen: pol.log.some(e => e.k === 'chkSeen') });
+          out.pre = pre;
+          pol.D = Object.assign({}, pol.D, { bust: 1e9 });   // (this run is about what is drawn and said: the autopilot is not to be caught before the mission at the top)
+        }
+        let peds = 0, tail = [], rot = [], caps = [];
+        for (let i = 0; i < 30; i++) { g.sim(1, true); await frame(); peds = Math.max(peds, (Render.roadInfo() || {}).ped || 0);   // (people drawn on the way: between the villages there may be nobody about)
+          if (md === 'police') { for (const el of document.querySelectorAll('#h-tail i.on')) { tail.push(el.className.replace('on ', '') + ' ' + el.lastElementChild.textContent); rot.push(parseFloat((/rotate\(([-\d.]+)deg\)/.exec(el.firstElementChild.style.transform) || [])[1])); }
+            if (g.radio.cap) caps.push(g.radio.cap); } }
         let lamp = false; for (let i = 0; i < 16; i++) { await frame(); if ((Render.roadInfo() || {}).lampOn) lamp = true; }   // (the lights flash: on in some of the frames)
-        const hud = document.getElementById('hud'), road = Object.assign({}, Render.roadInfo(), { lampOn: lamp });
-        out[md] = { mode: g.S.mode, cars: g.race.cars.length, tf: !!g.race.tf, pol: g.race.pol ? g.race.pol.cars.length : 0, duel: hud.classList.contains('duel'), polHud: hud.classList.contains('pol'), gap: document.getElementById('h-gap').textContent,
-          lbl: document.querySelector('#h-rank .h-lbl').textContent, pos: document.getElementById('h-pos').textContent, heat: document.getElementById('h-heat').textContent, road, dist: g.race.player.dist, phase: g.phase };
+        const hud = document.getElementById('hud'), road = Object.assign({}, Render.roadInfo(), { lampOn: lamp, ped: Math.max(peds, (Render.roadInfo() || {}).ped || 0) });
+        out[md] = { mode: g.S.mode, cars: g.race.cars.length, tf: !!g.race.tf, pol: g.race.pol ? g.race.pol.cars.length : 0, duel: hud.classList.contains('duel'), polHud: hud.classList.contains('pol'), gap: txt('h-gap'),
+          lbl: document.querySelector('#h-rank .h-lbl').textContent, pos: txt('h-pos'), heat: txt('h-heat'), road, dist: g.race.player.dist, phase: g.phase, radioMode: g.radio && g.radio.mode, tail: [...new Set(tail)].slice(0, 12), rot, caps: [...new Set(caps)] };
+        if (md === 'police') {   // the heat up (as if the player had wrecked half the police's cars): the helicopter comes, the radio says so
+          let heli = false;
+          g.race.pol.cool = -3; for (let i = 0; i < 40 && !heli; i++) { g.sim(1, true); await frame(); heli = !!(Render.roadInfo() || {}).heli; }
+          g.autoDrive = true; for (let i = 0; i < 300 && !g.radio.log.some(e => e.who === 'BOBER'); i++) await wait(100);   // (the radio's lines take their time (real time): the car drives on meanwhile)
+          g.autoDrive = false;
+          Object.assign(out.police, { heli, heli2: g.race.pol.heli ? g.race.pol.heli.st : '', bober: (g.radio.log.find(e => e.who === 'BOBER') || {}).txt, log: g.radio.log.map(e => e.who + ': ' + e.txt) });
+          // the places on the radio: [as written, in English, as the voice reads it]
+          out.places = [1813, 6533, 7038, 7300, 12297, 860].map(d => g.radioPlace(d));
+          // the mission: placed below the building at the top on the right lane, going up; the autopilot drives into it
+          const R = g.race, T = R.track, P = R.player, G = R.pol.goal, i = T.idx(G.s - 140), d = T.w * 0.42, msgs = [];
+          P.place(T.px[i] + T.nx[i] * d, T.pz[i] + T.nz[i] * d, T.hd[i]); P.y = P.py = P.roadY = T.hy[i]; P.vx = Math.cos(P.h) * 15; P.vz = Math.sin(P.h) * 15; P.q = T.query(P.x, P.z, i, P.q); P.sPrev = P.q.s;
+          let goal = '';
+          for (let k = 0; k < 80 && g.screen !== 'results'; k++) { g.sim(0.5, true); await frame(); const m = document.getElementById('h-msg'); if (m.className.includes('show')) msgs.push(m.textContent); if (!goal && /SKRIVALIŠČE/.test(txt('h-chk'))) goal = txt('h-chk'); }
+          await wait(300);
+          out.mission = { escaped: R.pol.escaped, busted: R.pol.busted, goal, msgs: [...new Set(msgs)], screen: g.screen, title: txt('res-title'), sub: txt('res-sub'), rows: [...document.querySelectorAll('#res-table tbody tr')].map(r => r.firstElementChild.textContent + ': ' + r.lastElementChild.textContent) };
+        }
       }
+      g.onAction('to-title'); await wait(250); out.radioOff = !g.radio.mode;
       return out;
     });
     T.check('Vršič: one card with the switch Dirka / Kronometer / Promet / Policija, a tap on Kronometer picks the track and the time trial',
@@ -193,13 +250,37 @@ try {
     T.check('Vršič race: 13 cars, the HUD with the place, the km climbed and the altitude',
       r.back === 'race' && r.cars === 13 && r.up && /^\d+,\d\/12,3 KM$/.test(r.lap) && /^\d+(\.\d{3})? m$/.test(r.alt) && +r.pos >= 1 && r.racing === 'racing',
       `${r.cars} cars, HUD "${r.lap}" "${r.alt}", place ${r.pos}, ${r.racing}`);
-    const D = r.traffic, P = r.police;
-    T.check('Vršič Promet: the duel with one rival in the traffic, vehicles and people drawn, the HUD with the rival\'s gap',
-      D.mode === 'traffic' && D.cars === 2 && D.tf && !D.pol && D.duel && !D.polHud && /^TEKMEC \d+,\d s (PRED|ZA) TABO$/.test(D.gap) && D.road && D.road.veh > 0 && D.road.ped > 0 && D.dist > 300 && D.phase === 'racing',
-      `${D.cars} cars, gap "${D.gap}", drawn ${JSON.stringify(D.road)}, ${Math.round(D.dist)} m`);
-    T.check('Vršič Policija: alone with the police after the player, patrol cars drawn with their lights flashing, the HUD with the patrol cars and the heat',
+    const D = r.traffic, P = r.police, Q = r.pre, M = r.mission;
+    T.check('Vršič Promet: the duel with one rival in the traffic, vehicles and people drawn, the HUD with the rival\'s gap (the commentator on, no police radio)',
+      D.mode === 'traffic' && D.cars === 2 && D.tf && !D.pol && D.duel && !D.polHud && /^TEKMEC \d+,\d s (PRED|ZA) TABO$/.test(D.gap) && D.road && D.road.veh > 0 && D.road.ped > 0 && D.dist > 300 && D.phase === 'racing' && !D.radioMode && !D.tail.length,
+      `${D.cars} cars, gap "${D.gap}", drawn ${JSON.stringify(D.road)}, ${Math.round(D.dist)} m, radio mode ${D.radioMode}`);
+    T.check('Vršič Policija, the start: no start lights, nobody after the player (the checkpoint\'s patrol car parked ahead), no stars, the commentator silent, the police radio on the air (the checkpoint set up on Vršiška cesta), the checkpoint ahead on the HUD',
+      Q.pc === 1 && Q.mode === 'park' && Q.chkCar && !Q.lights && !Q.phases.includes('lights') && Q.phases.includes('racing') && Q.pos.every(p => p === '0') && Q.heat.every(h => h === '') && Q.radioMode &&
+      Q.caps.some(c => /^OKC KRANJ .*kontrola prometa/.test(c)) && Q.chk.some(c => /^wait:KONTROLA PROMETA · \d+ m$/.test(c)) && Q.chk.some(c => /^approach:POLICIJSKA KONTROLA · \d+ mUstavi pri policistu \(ali pobegni\)$/.test(c)),
+      `lights ${Q.lights}, phases ${[...new Set(Q.phases)]}, patrol cars ${Q.pc} (${Q.mode}), HUD ${[...new Set(Q.pos)]} "${[...new Set(Q.heat)]}", radio ${JSON.stringify([...new Set(Q.caps)].slice(0, 3))}, prompts ${JSON.stringify([...new Set(Q.chk)].filter((c, i, a) => i < 2 || i === a.length - 1))}`);
+    T.check('Vršič Policija: the autopilot drives through the checkpoint (it does not stop): the chase; the officer shouts, the unit there calls it in (the car\'s colour and model)',
+      Q.stage === 'chase' && Q.why === 'skip' && Q.seen && P.log.some(l => /^POLICIST: (Stojte|Hej|Stoj)/.test(l)) && P.log.some(l => /^KG-1: .*kontrol.*Gre za [a-zčšž]+ [A-Z]/.test(l)),
+      `${Q.stage} (${Q.why}), radio: ${JSON.stringify(P.log.slice(0, 7))}`);
+    T.check('Vršič Policija: the chase: patrol cars drawn with their lights flashing, the HUD with the patrol cars after the player and the heat',
       P.mode === 'police' && P.cars === 1 && P.tf && P.pol >= 1 && P.polHud && !P.duel && P.lbl === 'POLICIJA' && +P.pos >= 1 && /^\u2605+\u2606*$/.test(P.heat) && P.heat.length === 5 && P.road && P.road.pol >= 1 && P.road.lampOn && P.dist > 300,
       `${P.pol} patrol cars, HUD "${P.lbl} ${P.pos}" "${P.heat}", drawn ${JSON.stringify(P.road)}, ${Math.round(P.dist)} m, ${P.phase}`);
+    T.check('Vršič Policija: arrows at the bottom for the patrol cars behind (blue and red in the chase), how many metres back, pointing back',
+      P.tail.length >= 1 && P.tail.every(t => /^[brs]( n)? (\d+ m|ob tebi)$/.test(t)) && P.rot.filter(a => a > 95 && a < 265).length >= P.rot.length * 0.6,
+      `${JSON.stringify(P.tail)}, angles ${P.rot.slice(0, 8).join(' ')}`);
+    T.check('Vršič Policija: the police radio talks in the chase (the speakers\' call signs, the real places)',
+      P.caps.some(c => /^(KG-\d+|OKC KRANJ|MOTORIST \d+|CIVILNA \d+|BOBER|PP BOVEC|POLICIST) .{12,}/.test(c)) && P.log.some(l => /(pri|na|v|pod|pred) (Jasni|Jasno|Kranjski Gori|Vršiški cesti|Eriškem|Eriškim|razglednem|Šumici|\d+\. serpentin)/.test(l)),
+      JSON.stringify(P.caps.slice(0, 4)));
+    T.check('Vršič Policija, the heat up: the helicopter drawn over the player, the radio hears of it (Bober)',
+      P.heli && !!P.bober, `helicopter ${P.heli} (${P.heli2}), Bober: "${P.bober}"`);
+    const pl = r.places;
+    T.check('the police radio names the real places: Jasna, Mihov dom, the hairpins by number (said in words), the pass, the streets of Kranjska Gora',
+      pl[0][0] === 'pri Jasni' && pl[1][0] === 'pri Mihovem domu' && pl[2][0] === 'pri 8. serpentini, Ruska kapelica' && pl[2][2] === 'pri osmi serpentini, Ruska kapelica' && pl[3][0] === 'med 8. in 9. serpentino' && pl[3][2] === 'med osmo in deveto serpentino' &&
+      pl[4][0] === 'na Vršiču' && /^na Vršiški cesti/.test(pl[5][0]) && pl.every(p => p[1] && !/[čšž]/.test(p[1])),
+      JSON.stringify(pl.map(p => p[0])));
+    T.check('Vršič Policija, the mission: below the building at the top (the way to it on the HUD), the autopilot drives into it: MISIJA OPRAVLJENA!, the results, the rap sheet with the checkpoint, the commentator back after the run',
+      M.escaped && !M.busted && /^SKRIVALIŠČE · \d+ m/.test(M.goal) && M.msgs.includes('MISIJA OPRAVLJENA!') && M.screen === 'results' && M.title === 'Misija opravljena!' && /garažo/.test(M.sub) &&
+      M.rows.includes('Kontrola prometa: nisi ustavil, pobegnil') && M.rows.some(r => /^Prevožena pot: 12,3 \/ 12,3 km$/.test(r)) && r.radioOff,
+      `${M.title} "${M.sub}", HUD "${M.goal}", messages ${JSON.stringify(M.msgs)}, rows ${JSON.stringify(M.rows.slice(0, 4))}`);
   }
 
   // 6e. Harju, the city stage in Jyväskylä: first its evening sky from the cockpit (the sky dome drawn: the theme's own zenith and its warm glow
