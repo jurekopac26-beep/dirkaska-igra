@@ -64,12 +64,13 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         decalX: -0.82, decalY: 1.425, decalRz: 0.05, decalS: 0.55,
       },
       wheels: { style: 'std', spokes: 6, w: 0.235, rim: [0.9, 0.9, 0.88], cap: [0.3, 0.3, 0.32], gap: 0.05 },
-      // the standard regions, but the bumper's top (behind the tailgate's foot) goes with the bumper, the tailgate is the panel between
-      // the lamps up to the roof (the top and the crown: its glass, the panel under it), the bonnet is the cowl (the windscreen's base) to
-      // its front edge (the lamps' panel is the body's; the std's xWs is the first windscreen section's end: here the door's front edge)
+      // the standard regions, but the bumpers' tops (behind the tailgate's foot, under the lamps' face) go with the bumpers, the tailgate is
+      // the panel between the lamps up to the roof (the top's edge and crown: its glass, the panel under it), the bonnet is the cowl (the
+      // windscreen's base) to its front edge between the wings (edge and crown: the wings' tops and the lamps' face are the body's; the
+      // std's xWs is the first windscreen section's end: here the door's front edge)
       regions(std) {
-        const out = [{ part: 'bumperR', x: [-2.2, -1.885], bands: ['tuck', 'side', 'window', 'edge', 'crown'] }];
-        for (const r of std) out.push(r.part === 'trunk' ? Object.assign({}, r, { x: [-2.6, -1.38], bands: ['edge', 'crown'] }) : r.part === 'hood' ? Object.assign({}, r, { x: [1.035, 1.935] }) : r);
+        const all = ['tuck', 'side', 'window', 'edge', 'crown'], out = [{ part: 'bumperR', x: [-2.2, -1.885], bands: all }, { part: 'bumperF', x: [1.975, 2.2], bands: all }];
+        for (const r of std) out.push(r.part === 'trunk' ? Object.assign({}, r, { x: [-2.6, -1.38], bands: ['edge', 'crown'] }) : r.part === 'hood' ? Object.assign({}, r, { x: [1.035, 1.935], bands: ['edge', 'crown'] }) : r);
         return out;
       },
       build(K) {
@@ -128,6 +129,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const XS = L.secs.map(q => q.x).filter(x => x > -1.85 && x < 1.995).concat([-1.84]).sort((a, b) => a - b);
         const tt = (x) => (XN - x) / 3.84, lo = (x) => 0.25 + 0.42 * Math.pow(tt(x), 1.7), hi = (x) => lo(x) + (tt(x) < 0.75 ? 0.07 + 0.13 * tt(x) / 0.75 : 0.2 - 0.4 * (tt(x) - 0.75));
         for (let i = 0; i < XS.length - 1; i++) { const a = XS[i], b = XS[i + 1]; DC.side([[a, lo(a)], [b, lo(b)], [b, hi(b)], [a, hi(a)]], S, null, 0.007); }
+        for (const x of [0.785, -0.495]) DC.side([[x - 0.006, 0.2], [x + 0.006, 0.2], [x + 0.006, 1.2], [x - 0.006, 1.2]], D, null, 0.009);   // the doors' shut lines
         // the number panels on the doors, the handles
         for (const sd of [-1, 1]) { const f = sd < 0 ? '-z' : 'z', h = sd < 0 ? 'doorL' : 'doorR';
           K.number(0.15, 0.7, sd * (pr(0.15, 'w') + 0.01), 0.22, { dir: f, w: 0.36, host: h });
@@ -163,19 +165,21 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const sd of [-1, 1]) {
           const out = [-1, 0.1, sd * 0.3];
           K.tailLamp(-1.86, 0.765, sd * 0.715, 0.17, 0.1, { d: 0.02 });
-          lay([on(-1.878, 0, sd, 0), on(-1.84, 0, sd, 0), on(-1.84, 1, sd, 0), on(-1.878, 1, sd, 0)], RED, out, 0.005, { host: 'body' });
-          onBand([[-1.84, 0.0], [-1.84, 1.0], [-1.72, 0.97], [-1.66, 0.62], [-1.635, 0.2], [-1.7, 0.0]], RED, sd, [-0.5, 0.6, sd * 0.6], false, { host: 'body' });   // (over the shoulder: climbing to the glass's foot)
-          lay([on(-1.874, 0.66, sd, 0), on(-1.852, 0.66, sd, 0), on(-1.852, 0.94, sd, 0), on(-1.874, 0.94, sd, 0)], REV, out, 0.008, { host: 'body' });
+          const QH = { host: sd < 0 ? 'quarterL' : 'quarterR' };   // (on the quarters' corners: they go with them)
+          lay([on(-1.878, 0, sd, 0), on(-1.84, 0, sd, 0), on(-1.84, 1, sd, 0), on(-1.878, 1, sd, 0)], RED, out, 0.005, QH);
+          onBand([[-1.84, 0.0], [-1.84, 1.0], [-1.72, 0.97], [-1.66, 0.62], [-1.635, 0.2], [-1.7, 0.0]], RED, sd, [-0.5, 0.6, sd * 0.6], false, QH);   // (over the shoulder: climbing to the glass's foot)
+          lay([on(-1.874, 0.66, sd, 0), on(-1.852, 0.66, sd, 0), on(-1.852, 0.94, sd, 0), on(-1.874, 0.94, sd, 0)], REV, out, 0.008, QH);
+          DC.side([[-1.885, 0.6], [-1.8, 0.72], [-1.66, 0.88], [-1.62, 0.95], [-1.62, 1.0], [-1.885, 1.0]], RED, [sd], 0.005, QH);   // (the lamps' sides)
         }
-        DC.side([[-1.885, 0.6], [-1.8, 0.72], [-1.66, 0.88], [-1.62, 0.95], [-1.62, 1.0], [-1.885, 1.0]], RED, null, 0.005, { host: 'body' });   // (the lamps' sides)
         K.rect(-1.873, 0.74, 0, 0.42, 0.1, W, { dir: '-x' });                             // the plate on the tailgate
         K.part('bumperR', () => {
           K.exhaust(-1.995, 0.245, 0.42, 0.055, 0.22, { n: 6 });
+          K.rect(-2.005, 0.3, -0.3, 0.045, 0.05, K.rgb(0xe8261c), { dir: '-x' });          // the towing strap
         }, { hinge: [[-1.97, 0.3, -0.6], [-1.97, 0.3, 0.6]] });
         // ---- the wing on its endplates (their feet on the C-pillars), over the tailgate ----
         K.part('wing', () => {
-          K.wingPlank(-1.43, 1.37, -1.83, 1.405, 0.032, -0.69, 0.69, P);
-          K.wingPlank(-1.78, 1.425, -1.9, 1.455, 0.016, -0.69, 0.69, S);
+          K.wingPlank(-1.43, 1.37, -1.83, 1.405, 0.032, -0.69, 0.69, S);
+          K.wingPlank(-1.78, 1.425, -1.9, 1.455, 0.016, -0.69, 0.69, P);
           for (const sd of [-1, 1]) K.endplate([[-1.42, 1.145], [-1.56, 1.055], [-1.92, 1.32], [-1.92, 1.475], [-1.44, 1.41]], sd * 0.69, 0.02, P);
         }, { noCrush: true, hinge: [[-1.42, 1.3, -0.7], [-1.42, 1.3, 0.7]] });
         // ---- the roof scoop ----
@@ -200,7 +204,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const CG = [0.78, 0.79, 0.82], cy = 1.3;
         K.cage([[[-0.8, 0.3, -0.6], [-0.8, cy, -0.5]], [[-0.8, 0.3, 0.6], [-0.8, cy, 0.5]], [[-0.8, cy, -0.5], [-0.8, cy, 0.5]], [[-0.8, 0.3, -0.6], [-0.8, cy, 0.5]],
           [[0.62, 0.62, -0.62], [0.2, cy, -0.46]], [[0.62, 0.62, 0.62], [0.2, cy, 0.46]], [[0.2, cy, -0.46], [-0.8, cy, -0.5]], [[0.2, cy, 0.46], [-0.8, cy, 0.5]],
-          [[-0.8, 0.4, -0.66], [0.6, 0.4, -0.66]], [[-0.8, 0.4, 0.66], [0.6, 0.4, 0.66]], [[-0.8, cy, -0.5], [-1.6, 0.6, -0.6]], [[-0.8, cy, 0.5], [-1.6, 0.6, 0.6]]], 0.022, CG, { n: 4 });
+          [[-0.8, 0.4, -0.66], [0.6, 0.4, -0.66]], [[-0.8, 0.4, 0.66], [0.6, 0.4, 0.66]], [[-0.8, cy, -0.5], [-1.6, 0.6, -0.6]], [[-0.8, cy, 0.5], [-1.6, 0.6, 0.6]]], 0.022, CG, { n: 4, noCrush: true, noDent: true });
         K.engine(1.35, 0.3, 0, { l: 0.5, w: 0.62, h: 0.42 });
         K.tyre(-1.3, 0.37, 0, { axis: 'y', w: 0.2, inner: true, part: 'body' });   // the spare wheel lying in the boot
       },
