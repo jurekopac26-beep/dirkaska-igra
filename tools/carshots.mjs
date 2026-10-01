@@ -3,7 +3,13 @@
 //   side, front, rear, top   near-orthographic views (fov 4 degrees from 70 m) with a 1 m grid, the target box from the def's header
 //                            (L x H, W in front / rear / top; yellow) and the wheel centres (cyan crosses, where the physics has the hubs)
 //   34f, 34r                 the showroom's three-quarter views, front and rear (a fixed angle, the turntable under the car)
-//   chase, chase-wreck       a race on Jezero, paused, the chase camera at zoom 1.2 (as a phone sees the car); then after Core.wreckCar
+//   chase                    a race on Jezero, paused, the chase camera at zoom 1.2 (as a phone sees the car)
+//   chase-wreck, wreck-34(r) the car stopped and battered (the field held still): the front zone gone (bonnet, bumper ...), the left side
+//                            torn off (door, fender, quarter, mirror), the right side and the rear hanging loose (doors ajar, the boot lid open,
+//                            the rear bumper's end down), the front left wheel off (the body down on that corner), three lamps and two panes
+//                            broken, the roof half crushed, its pieces lying round it: from the chase camera, from the front left and from
+//                            the rear right (the other cars hidden)
+//   chase-total              then Core.wreckCar: everything off
 //   cockpit                  the driver's view (the car intact)
 //   cut                      the three-quarter view with the bonnet, the right door and the tailgate taken off (the lining, the floor, the cabin)
 //   sheet.png                all of them on one picture (at most 1600 px wide: one Read call), with the measured size against the header's
@@ -93,11 +99,30 @@ try {
         const chase = snap('chase', true);
         g.S.camera = 'cockpit'; for (let k = 0; k < 4; k++) { g.resume(); await raf(); g.pause(); } const cockpit = snap('cockpit'); g.S.camera = 'chase';
         for (let k = 0; k < 4; k++) { g.resume(); await raf(); g.pause(); }
-        Core.wreckCar(P); g.sim(1.5, true); for (let k = 0; k < 4; k++) { g.resume(); await raf(); g.pause(); }
-        const wreck = snap('chase', true);
-        return { chase, cockpit, wreck, dmg: P.dmg, lost: Object.keys(P.lost).length };
+        // the staged wreck: the car stopped where it is, the rest of the field held still (no one runs into it), its state set by zone: what
+        // the zone's damage knocks off (dz >= th) off, what it loosens (dz >= 0.6 th) hanging loose; the front left wheel off
+        const R = g.race, PT = Core.partsOf(P.m), hl = P.m.len / 2, hw = P.m.wid / 2, still = (sec) => { for (let i = 0; i < sec * 120; i++) {
+          for (const c of R.cars) { c.vx = 0; c.vz = 0; c.w = 0; } P.inThr = 0; P.inBrk = 1; P.inSteer = 0; R.step(1 / 120); } };
+        // a close look from a corner (o: the corner, front / back and left / right): the other cars hidden
+        const look = (fs, rs) => { const ch = Math.cos(P.h), sh = Math.sin(P.h), at = (f, r, y) => [P.x + ch * f - sh * r, (P.y || 0) + y, P.z + sh * f + ch * r];
+          const cp = at(fs * (hl + 3.2), rs * (hw + 3.2), 1.9 + P.m.len * 0.12), ct = at(fs * 0.2, 0, 0.55), hid = R.cars.filter(c => c !== P).map(c => Render.viewOf(c)).filter(v => v && v.grp.visible);
+          for (const v of hid) v.grp.visible = false;
+          Render.setShot({ px: cp[0], py: cp[1], pz: cp[2], tx: ct[0], ty: ct[1], tz: ct[2], fov: 38 + 4 * (P.m.len > 5 ? 1 : 0), fogD: 90, near: 0.3 });
+          const u = Render.snapshot(P, 'chase', 960).toDataURL('image/png'); Render.setShot(null); for (const v of hid) v.grp.visible = true; return u; };
+        P.vx = 0; P.vz = 0; P.w = 0; still(0.5);
+        for (const [x, z] of [[0.9, -1], [0.5, -1], [-0.2, -1], [-0.7, -1], [-1, 0.4], [-1, -0.5], [0.3, 1], [-0.5, 1], [1, 0.3]]) Core.applyDamage(P, 0.02, x * hl, z * hw);   // (dents and scrapes where it was hit)
+        P.dmg = 0.86; P.dz = [1, 0.48, 0.8, 0.5]; P.cd = [1, 0.3, 0.5, 0.4]; P.lightOut = [1, 0, 1, 1]; P.winOut = [1, 0, 1, 0]; P.roofDmg = 0.5;
+        for (const n in PT) if (!P.lost[n] && (PT[n].wh != null ? PT[n].wh === 0 : P.dz[PT[n].z] >= PT[n].th)) Core.detachPart(P, n, PT[n]);
+        still(1.6); for (let k = 0; k < 90; k++) Render.frame(1 / 60, 1, P, 'chase', {});   // (1.5 s drawn: the burst of bits and sparks over, the smoke there)
+        const wreck = snap('chase', true), w34 = look(1, -1), w34r = look(-1, 1);
+        const staged = { dmg: P.dmg, lost: Object.keys(P.lost).length, ajar: Object.keys(Render.viewOf(P).kit ? Render.viewOf(P).kit.ajar : {}).filter(n => !P.lost[n]).length };
+        Core.wreckCar(P); still(1.5); for (let k = 0; k < 90; k++) Render.frame(1 / 60, 1, P, 'chase', {});
+        const total = snap('chase', true);
+        return { chase, cockpit, wreck, w34, w34r, total, staged, dmg: P.dmg, lost: Object.keys(P.lost).length };
       });
-      for (const [k, v] of [['chase', race.chase], ['chase-wreck', race.wreck], ['cockpit', race.cockpit]]) { png(path.join(dir, k + '.png'), v); tiles.push({ src: v, label: k + (k === 'chase-wreck' ? ' (dmg ' + race.dmg.toFixed(2) + ', ' + race.lost + ' parts off)' : '') }); }
+      for (const [k, v] of [['chase', race.chase], ['chase-wreck', race.wreck], ['wreck-34', race.w34], ['wreck-34r', race.w34r], ['chase-total', race.total], ['cockpit', race.cockpit]]) {
+        png(path.join(dir, k + '.png'), v);
+        tiles.push({ src: v, label: k + (k === 'chase-wreck' ? ` (${race.staged.lost} parts off, ${race.staged.ajar} loose)` : k === 'chase-total' ? ' (dmg ' + race.dmg.toFixed(2) + ', ' + race.lost + ' parts off)' : '') }); }
       await page.evaluate(async () => { const g = window.__game; g.resume(); g.onAction('to-title'); await new Promise(r => setTimeout(r, 300)); g.onAction('to-car'); await new Promise(r => setTimeout(r, 400)); });
     }
     const bb = info.bbox, mL = bb.max[0] - bb.min[0], mW = bb.max[2] - bb.min[2], mH = bb.max[1];

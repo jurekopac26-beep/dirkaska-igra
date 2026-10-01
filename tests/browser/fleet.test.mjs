@@ -267,6 +267,132 @@ try {
   T.check('no colour that is not glass within 0.06 of a glass colour (the paint and the stripe aside)', R4.every(r => !r.near), R4.filter(r => r.near).slice(0, 3).map(r => `${r.id}: ${r.near} vertices, e.g. ${r.nearC.map(c => c.toFixed(3))}`).join(' | '));
   T.check('the start number lit on every K.number panel (as many bars as the car\'s number has)', R4.every(r => r.num !== false), lim(r => r.num === false) || R4.filter(r => r.num).map(r => r.id).join(', '));
 
+  // ---- 4b. the wreck (stage B2), each vehicle as the player on Bakreni gozd (the pit crew knows the car), paused and stepped: a part hanging
+  //          loose first (its zone at 65 % of its threshold: its ranges turned rigidly), then Core.wreckCar, one step (the core throws the
+  //          pieces), a frame: every lost part's ranges collapsed to one point, the whole buffer drawn; each piece a mesh of its own (a body
+  //          part: its own geometry, as many vertices as its ranges, a real volume, the car's own body material; a wheel: the model's wheel);
+  //          each part's range centroid within 0.35 m of where the core throws its piece from; the panes without the lost parts' glass; the
+  //          lamps out (the head lenses dark, the tail mesh's sides collapsed); the wheels hidden, the body down on its corners; 60 frames on
+  //          (the pit crew at work round the car each frame): the wheels stay hidden, no new burst of bits; the marshals' refit (wreck.fix):
+  //          the wheels back, the body up; a repair: the car built afresh, its pieces on the road still drawn; the materials' program keys ----
+  const R5 = [], t5 = Date.now();
+  await page.setViewportSize({ width: 320, height: 180 });   // (a small picture: the 60 frames a vehicle draws cost little; what is checked does not depend on it)
+  for (const m of kits) {
+    const r = await page.evaluate((id) => {
+      const g = window.__game, M = Core.MODELS.find(q => q.id === id), PT = Core.partsOf(M), LO = [0.22, 0.23, 0.25];
+      let seed = 991; Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+      g.S.car = Core.MODELS.indexOf(M); g.onAction('restart'); g.pause();
+      // (the frames draw only the lights, the cars and what is added meanwhile (the pieces): the world hidden, every frame cheap; what is
+      // checked here is the car's own state, the same either way)
+      const S = Render.scene, saved = S.children.map(o => [o, o.visible]); for (const o of S.children) o.visible = !!o.isLight;
+      const R = g.race, P = R.player, F = (n) => { for (let i = 0; i < n; i++) { g.sim(1 / 60, true); Render.frame(1 / 60, 1, P, 'chase', { noFx: true }); } };
+      F(2); let v = Render.viewOf(P); v.grp.visible = true;
+      const geo = v.body.geometry, U = geo.userData, pa = geo.attributes.position.array, E = Render.kitInfo(id);
+      // the static rule: each part's range centroid near the core's spawn point (lx, lz of the half length / width, y)
+      const far = []; for (const n in PT) { const p = PT[n], rc = E.ranges[n] && E.ranges[n].c; if (p.wh != null || !rc) continue; const d = Math.hypot(rc[0] - p.lx * M.len / 2, rc[1] - p.y, rc[2] - p.lz * M.wid / 2); if (d > 0.35) far.push(n + ' ' + d.toFixed(2) + ' m'); }
+      // loose: the part with the biggest outer range, its zone at 65 % of its threshold
+      const parts = Object.keys(U.ranges).filter(n => n !== 'body' && PT[n]), lp = parts.sort((a, b) => (U.ranges[b].o[1] - U.ranges[b].o[0]) - (U.ranges[a].o[1] - U.ranges[a].o[0]))[0], LR = U.ranges[lp];
+      const P0 = Float32Array.from(pa); P.dz[PT[lp].z] = Math.max(P.dz[PT[lp].z], 0.65 * PT[lp].th); F(1);
+      let lmx = 0, lrig = 0; const idx = []; for (const [s, e] of [LR.o, LR.i]) for (let i = s; i < e; i++) idx.push(i);
+      for (const i of idx) lmx = Math.max(lmx, Math.hypot(pa[i * 3] - P0[i * 3], pa[i * 3 + 1] - P0[i * 3 + 1], pa[i * 3 + 2] - P0[i * 3 + 2]));
+      for (let q = 0; q < 300; q++) { const i = idx[(q * 7919) % idx.length], j = idx[(q * 104729 + 17) % idx.length];
+        lrig = Math.max(lrig, Math.abs(Math.hypot(P0[i * 3] - P0[j * 3], P0[i * 3 + 1] - P0[j * 3 + 1], P0[i * 3 + 2] - P0[j * 3 + 2]) - Math.hypot(pa[i * 3] - pa[j * 3], pa[i * 3 + 1] - pa[j * 3 + 1], pa[i * 3 + 2] - pa[j * 3 + 2]))); }
+      const loose = { part: lp, ajar: !!(v.kit.ajar[lp] && !P.lost[lp]), moved: +lmx.toFixed(3), rigid: lrig < 1e-4 };
+      // the wreck: every part off (the wheels too: damage on), the pieces thrown at the next step, then drawn
+      const f0 = Render.fxStats(); Core.wreckCar(P); g.sim(1 / 120, true); Render.frame(1 / 60, 1, P, 'chase', { noFx: true });
+      const f1 = Render.fxStats(); v = Render.viewOf(P); const full = geo.drawRange.count === U.N;
+      const lost = Object.keys(P.lost), dead = [], notOne = [], pieces = [];
+      for (const n of lost) { const p = PT[n]; if (p.wh != null) continue; const Rr = U.ranges[n]; if (!v.kit.dead[n]) dead.push(n);
+        const at = Rr.o[1] > Rr.o[0] ? Rr.o[0] : Rr.i[0]; for (const [s, e] of [Rr.o, Rr.i]) for (let i = s; i < e; i++) if (pa[i * 3] !== pa[at * 3] || pa[i * 3 + 1] !== pa[at * 3 + 1] || pa[i * 3 + 2] !== pa[at * 3 + 2]) { notOne.push(n); break; } }
+      for (const d of R.debris.filter(q => q.car === P.id)) {
+        const p = PT[d.part], ms = []; if (d.mesh && d.mesh.traverse) d.mesh.traverse(o => { if (o.isMesh) ms.push(o); });
+        if (ms.length !== 1) { pieces.push(d.part + ': ' + ms.length + ' meshes'); continue; }
+        const mm = ms[0], gg = mm.geometry; if (!gg.boundingBox) gg.computeBoundingBox();
+        const bb = gg.boundingBox, vol = (bb.max.x - bb.min.x) * (bb.max.y - bb.min.y) * (bb.max.z - bb.min.z);
+        if (p.wh != null) { const w = (p.wh < 2 ? v.wf : v.wr).find(q => Math.sign(q.position.z) === (p.wh % 2 ? 1 : -1)); if (!w || gg !== w.geometry) pieces.push(d.part + ': not the model\'s wheel'); continue; }
+        const Rr = U.ranges[d.part], want = (Rr.o[1] - Rr.o[0]) + (Rr.i[1] - Rr.i[0]);
+        if (gg.attributes.position.count !== want || !(vol > 1e-4) || mm.material !== v.body.material || gg === geo) pieces.push(`${d.part}: ${gg.attributes.position.count}/${want} vertices, ${vol.toExponential(1)} m3, ${mm.material === v.body.material ? 'body' : 'other'} material`);
+      }
+      const nPieces = R.debris.filter(q => q.car === P.id).length;
+      // the glass of the lost parts out of the panes; the lamps out
+      const deadT = (t) => lost.some(n => { const Rr = U.ranges[n]; return Rr && ((t * 3 >= Rr.o[0] && t * 3 < Rr.o[1]) || (t * 3 >= Rr.i[0] && t * 3 < Rr.i[1])); });
+      const glassLeft = v.glassTris.reduce((s, G) => s + G.filter(deadT).length, 0), ca = geo.attributes.color.array;
+      let lens = 0, lensBad = 0; for (const s of ['FL', 'FR']) for (const [a, b, host] of (U.lamps && U.lamps[s]) || []) if (!P.lost[host]) for (let i = a; i < b; i++) { lens++; if (Math.abs(ca[i * 3] - LO[0]) > 1e-4 || Math.abs(ca[i * 3 + 1] - LO[1]) > 1e-4 || Math.abs(ca[i * 3 + 2] - LO[2]) > 1e-4) lensBad++; }
+      const tg = v.tail.geometry, tr = tg.userData.tail || {}, tp = tg.attributes.position.array; let tailLit = 0;
+      for (const s of ['L', 'R']) { const q = tr[s]; if (q && q[1] > q[0]) for (let i = q[0]; i < q[1]; i++) if (tp[i * 3] !== tp[q[0] * 3] || tp[i * 3 + 1] !== tp[q[0] * 3 + 1] || tp[i * 3 + 2] !== tp[q[0] * 3 + 2]) { tailLit++; break; } }
+      // the wheels hidden, the body down on its corners (the sag's turn and lift, v.sagQ / v.sagP, composed after the body's pose each frame:
+      // the hubs' feet moved by it)
+      const hw = E.body.hw, X = [M.a, M.a, -M.b, -M.b], Z = [-hw, hw, -hw, hw], wl = P.wreck ? P.wreck.wl : 0, corner = () => X.map((x, k) => v.sagQ ? new THREE.Vector3(x, 0, Z[k]).applyQuaternion(v.sagQ).add(v.sagP).y : 0);
+      const hid0 = [...v.wf, ...v.wr].filter(w => !w.visible).length, cy0 = corner(), sag = { wl, hidden: hid0, corners: cy0.map(q => +q.toFixed(3)), hubs: v.hubs.filter(hb => hb && hb.visible).length };
+      // 60 frames on (the pit crew round the car: crewWheel every frame): still hidden, no new burst
+      const crew = !!(Render.crew && Render.crew.P === P);
+      let shown = 0; for (let i = 0; i < 60; i++) { g.sim(1 / 60, true); Render.frame(1 / 60, 1, P, 'chase', { noFx: true }); shown = Math.max(shown, [...v.wf, ...v.wr].filter(w => w.visible).length - (4 - hid0)); }
+      const f2 = Render.fxStats();
+      // the marshals' refit (what Race.rescue does on a track without pits): the wheels back, the body up
+      if (P.wreck) { for (const n of ['wheelFL', 'wheelFR', 'wheelRL', 'wheelRR']) delete P.lost[n]; P.wreck.wl = 0; P.wreck.nL = 0; P.wreck.fix++; }
+      Render.frame(1 / 60, 1, P, 'chase', { noFx: true });
+      const refit = { shown: [...v.wf, ...v.wr].filter(w => w.visible).length, sagGone: !v.sagQ, hubs: v.hubs.filter(hb => hb && hb.visible).length };
+      // the materials (the player's view and its pieces)
+      const keys = [], key = (o) => (o && o.customProgramCacheKey !== THREE.Material.prototype.customProgramCacheKey ? o.customProgramCacheKey() : '');
+      const mats = (root) => root.traverse(o => { if (!o.isMesh || !o.material || Array.isArray(o.material)) return; const mt = o.material;
+        if (mt.userData && mt.userData.dirt) keys.push('body:' + key(mt)); else if (mt.isMeshPhongMaterial && mt.envMap && !mt.vertexColors && mt.reflectivity === 0.2) keys.push('paint:' + key(mt)); });
+      mats(v.grp); for (const d of R.debris) if (d.car === P.id && d.mesh && d.mesh.traverse) mats(d.mesh);
+      // a repair: the car built afresh (whole, every wheel on), its pieces on the road still drawn with their own geometry
+      R.repairCar(P); Render.frame(1 / 60, 1, P, 'chase', { noFx: true });
+      const nv = Render.viewOf(P), ng = nv.body.geometry, onRoad = R.debris.filter(q => q.car === P.id && q.mesh && q.mesh.parent).length;
+      const rebuilt = nv !== v && ng.drawRange.count === ng.userData.outerN && !Object.keys(nv.kit.dead).length && [...nv.wf, ...nv.wr].every(w => w.visible) && !nv.sagQ;
+      for (const [o, vis] of saved) o.visible = vis;
+      return { id, far, loose, lost: lost.length, dead, notOne, pieces, nPieces, full, glassLeft, lens, lensBad, tailLit, sag, crew, shown, burst: f1.total - f0.total, after: f2.total - f1.total,
+        refit, keys: [...new Set(keys)], rebuilt, onRoad, rw: M.rw, clear: E.clear };
+    }, m.id);
+    R5.push(r);
+  }
+  await page.setViewportSize({ width: 844, height: 390 });
+  console.log(`info the wrecks: ${((Date.now() - t5) / 1000).toFixed(0)} s for ${R5.length} vehicles`);
+  T.check('each part\'s range centroid within 0.35 m of where the core throws its piece from (the part table\'s lx, lz, y)', R5.every(r => !r.far.length), R5.filter(r => r.far.length).slice(0, 4).map(r => r.id + ': ' + r.far.slice(0, 4).join(', ')).join(' | '));
+  T.check('a part hanging loose (its zone at 65 % of its threshold): its ranges turned once, rigidly (the shell and its lining together)', R5.every(r => r.loose.ajar && r.loose.moved > 0.005 && r.loose.rigid),
+    R5.map(r => `${r.id} ${r.loose.part} ${r.loose.ajar ? 'loose' : 'not loose'} ${r.loose.moved} m${r.loose.rigid ? '' : ' NOT RIGID'}`).slice(0, 6).join(', '));
+  T.check('Core.wreckCar: every lost part off the view (dead), its ranges collapsed to one point, the whole buffer drawn', R5.every(r => r.lost > 0 && !r.dead.length && !r.notOne.length && r.full),
+    R5.map(r => `${r.id} ${r.lost} lost${r.dead.length ? ', not dead ' + r.dead.join(' ') : ''}${r.notOne.length ? ', not collapsed ' + r.notOne.join(' ') : ''}${r.full ? '' : ', not the whole buffer'}`).slice(0, 6).join(' | '));
+  T.check('each piece on the road a mesh of its own: a body part\'s copy (its ranges\' vertex count, a real volume > 1e-4 m3, the car\'s own body material), a wheel the model\'s wheel', R5.every(r => r.nPieces === r.lost && !r.pieces.length),
+    R5.map(r => `${r.id} ${r.nPieces}/${r.lost} pieces${r.pieces.length ? ': ' + r.pieces.slice(0, 3).join('; ') : ''}`).slice(0, 6).join(' | '));
+  T.check('the lost parts\' glass out of the panes; the head lamps\' lenses dark, the tail lamps out', R5.every(r => !r.glassLeft && !r.lensBad && !r.tailLit),
+    R5.map(r => `${r.id}: glass of lost parts ${r.glassLeft}, lens vertices ${r.lensBad} of ${r.lens} lit, tail sides lit ${r.tailLit}`).slice(0, 6).join(' | '));
+  T.check('the wheels off: hidden, a bare hub at each, the body down on its corners (each by min(0.6 rw, its clearance), give or take 2 cm)', R5.every(r => !r.sag.wl || (r.sag.hidden === 4 && r.sag.hubs === 4 &&
+    r.sag.corners.every((q, k) => Math.abs(q + Math.min(0.6 * r.rw, r.clear[k])) <= 0.02))),
+    R5.map(r => `${r.id} wl ${r.sag.wl} hidden ${r.sag.hidden} hubs ${r.sag.hubs} corners ${r.sag.corners.join(' ')} (clearance ${r.clear.map(q => q.toFixed(2)).join(' ')})`).slice(0, 6).join(' | '));
+  T.check('60 frames on with the pit crew round the car (Bakreni gozd): the lost wheels stay hidden, the bits came once (no new burst)', R5.every(r => r.crew && !r.shown && r.after <= 40 && r.burst > 0),
+    R5.map(r => `${r.id} crew ${r.crew}, shown ${r.shown}, bits ${r.burst} then ${r.after}`).slice(0, 6).join(', '));
+  T.check('the marshals\' refit (wreck.fix): the wheels back on, the body up, no bare hubs', R5.every(r => !r.sag.wl || (r.refit.shown === 4 && r.refit.sagGone && !r.refit.hubs)), R5.map(r => r.id + ' ' + JSON.stringify(r.refit)).slice(0, 4).join(', '));
+  T.check('a repair: the car built afresh (whole, its outer shell, every wheel on), its pieces on the road still drawn', R5.every(r => r.rebuilt && r.onRoad === r.nPieces), R5.map(r => `${r.id} rebuilt ${r.rebuilt}, ${r.onRoad}/${r.nPieces} pieces drawn`).slice(0, 6).join(', '));
+  T.check('the wreck\'s materials keep their program keys (the body and its pieces \'dirtyCarCg\', any paint \'carCg\')', R5.every(r => r.keys.length && r.keys.every(k => k === 'body:dirtyCarCg' || k === 'paint:carCg')), R5.filter(r => !r.keys.length || r.keys.some(k => k !== 'body:dirtyCarCg' && k !== 'paint:carCg')).slice(0, 3).map(r => r.id + ' ' + r.keys.join(',')).join(' | ') || R5.map(r => r.id + ' ' + r.keys.join(',')).slice(0, 3).join(' | '));
+
+  // ---- 4c. the run from the police (Vršič, Policija): a patrol car wrecked: its pieces on the road drawn (syncDebris finds the patrol cars'
+  //          views); the patrol car gone: its view freed but for what its pieces still use; its pieces gone too: freed then ----
+  const t6 = Date.now(), PO = await page.evaluate(async () => {
+    const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)), mode = async (md) => { g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(300);
+      document.querySelector('[data-track="vrsic"] .tc-mode button[data-v="' + md + '"]').click(); await wait(200); };
+    await mode('police');
+    g.onAction('start'); for (let k = 0; k < 1200 && !(g.race && g.race.track.def.id === 'vrsic' && g.race.pol); k++) await wait(100);
+    g.pause(); const R = g.race, P = R.player;
+    for (let i = 0; i < 40 && !R.pol.cars.length; i++) g.sim(0.25, true);
+    Render.frame(1 / 60, 1, P, 'chase', { noFx: true });
+    const pc = R.pol.cars[0], out = { cars: R.pol.cars.length };
+    if (pc) {
+      Core.wreckCar(pc); g.sim(1 / 120, true); Render.frame(1 / 60, 1, P, 'chase', { noFx: true });
+      const mine = R.debris.filter(d => d.car === pc.id), drawn = mine.filter(d => d.mesh && d.mesh.isObject3D), freed = [];
+      for (const d of drawn) d.mesh.traverse(o => { if (o.geometry) o.geometry.addEventListener('dispose', () => freed.push('g')); if (o.material) o.material.addEventListener('dispose', () => freed.push('m')); });
+      R.pol.cars.splice(R.pol.cars.indexOf(pc), 1); Render.frame(1 / 60, 1, P, 'chase', { noFx: true });
+      Object.assign(out, { lost: Object.keys(pc.lost).length, pieces: mine.length, drawn: drawn.length, gone: !Render.viewOf(pc), freedAtGone: freed.length });
+      for (const d of drawn) d.dead = true; Render.frame(1 / 60, 1, P, 'chase', { noFx: true });
+      out.freedAtDeath = freed.length - out.freedAtGone;
+    }
+    g.resume(); await mode('race');
+    return out;
+  });
+  console.log(`info the run from the police: ${((Date.now() - t6) / 1000).toFixed(0)} s`);
+  T.check('the run from the police: a wrecked patrol car\'s pieces drawn; its view gone, what its pieces use kept; its pieces gone, freed', PO.cars > 0 && PO.lost > 0 && PO.pieces === PO.lost && PO.drawn === PO.pieces && PO.gone && PO.freedAtGone === 0 && PO.freedAtDeath > 0, JSON.stringify(PO));
+
   // ---- 5. the field's cost on Jezero and the Nordschleife: the frame without the default field's rivals (perf.test.mjs's samples) plus
   //         the vehicle as the player and its field of rivals (all of them, as if all were in view), within the phone budget ----
   const fields = R4.filter(r => !r.swapped);
