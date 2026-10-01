@@ -31,7 +31,8 @@ jobs:
   browser:
     name: Igra v brskalniku
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    # (testi v brskalniku tečejo na GitHubu s programskim WebGL okoli 45 minut; obtičal test ustavi že tests/run.js po 15 minutah)
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
