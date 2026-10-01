@@ -18,14 +18,15 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     parts: { set: 'race', ht: 1.23, y0: 0.18,
       over: {
         wing: { f: 0.72, lx: -0.95, m: 3 },
-        trunk: { lx: -0.62, y: 1.06 },   // (where the look has them: the glass hatch up on the fastback, the bonnet with the nose's top,
-        hood: { lx: 0.68 }, doorL: { y: 0.75 }, doorR: { y: 0.75 }, quarterL: { y: 0.66 }, quarterR: { y: 0.66 },   // the doors with their glass, the hips)
+        // (where the look has them: the glass hatch up on the fastback, the bonnet with the nose's top, the doors with their glass, the hips)
+        trunk: { lx: -0.62, y: 1.06 }, hood: { lx: 0.68 }, doorL: { y: 0.75 }, doorR: { y: 0.75 }, quarterL: { y: 0.66 }, quarterR: { y: 0.66 },
       },
     },
     // the look (KIT API v1, render.js; look units = metres): one loft, tail to nose: the ducktail rising behind the glass hatch, the bubble
-    // canopy (its glass wrapping round, black pillars and frames), the long bonnet sunk between the front wings' crests, the smooth round
-    // nose. The standard regions split it (doors with their glass, the wings and quarters with the side glass behind the doors, the bonnet
-    // with the nose's top); the ducktail is its own part ('wing': the tail's top behind the glass), the glass hatch the 'trunk'
+    // canopy (its glass wrapping round, black pillars and frames, two bubbles on the roof), the long bonnet sunk between the front wings'
+    // crests (the pop-up lamps shut on them), the smooth round nose with its wide mouth. The standard regions split it (doors with their
+    // glass, the wings and quarters with the side glass behind the doors, the bonnet with the nose's top); the ducktail is its own part
+    // ('wing': the tail's top behind the glass and the lip on it), the glass hatch the 'trunk'
     look: {
       body: { len: 4.29, wid: 1.76, roofY: 1.23,
         //       x       w      yb    ybelt  wt     yt     cr     kind  tuck
@@ -91,13 +92,14 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           const ring = ([z, k]) => { const t = (x) => L.topY(x, z); return [[-2.02, t(-2.02) - 0.006, z], [-2.115, t(-2.115) + 0.046 * k, z], [-2.165, t(-2.145) + 0.068 * k, z], [-2.158, t(-2.145) + 0.02 * k, z], [-2.147, t(-2.145) - 0.012, z]]; };
           K.skin([[-0.67, 0.3], [-0.45, 0.85], [0, 1], [0.45, 0.85], [0.67, 0.3]].map(ring), P, P, P);
         }, { noCrush: true });
-        // the side: a pinstripe in the stripe colour over the sills from arch to arch; the door handles
+        // the side: a pinstripe in the stripe colour over the sills from arch to arch, the side markers, the doors' shut lines and handles; the
+        // glass hatch's black foot, the bonnet's shut line at the cowl
         D2.side([[XA + 0.04, 0.395], [XB - 0.04, 0.395], [XB - 0.04, 0.418], [XA + 0.04, 0.418]], K.strp, null, 0.006);
-        D2.side([[1.93, 0.43], [2.01, 0.43], [2.01, 0.46], [1.93, 0.46]], [0.95, 0.55, 0.1], null, 0.006);     // the side markers: amber in front,
-        D2.side([[-2.06, 0.5], [-1.99, 0.5], [-1.99, 0.53], [-2.06, 0.53]], [0.6, 0.06, 0.05], null, 0.006);  // red behind
-        D2.top([[-1.845, -0.64], [-1.8, -0.64], [-1.8, 0.64], [-1.845, 0.64]], B, 0.006);                      // (the glass hatch's black foot)
-        for (const x of [0.62, -0.5]) D2.side([[x - 0.006, 0.3], [x + 0.006, 0.3], [x + 0.006, 0.9], [x - 0.006, 0.9]], D, null, 0.004);   // (the doors' shut lines,
-        D2.top([[0.618, -0.66], [0.632, -0.66], [0.632, 0.66], [0.618, 0.66]], D, 0.004);                                             //  the bonnet's at the cowl)
+        D2.side([[1.93, 0.43], [2.01, 0.43], [2.01, 0.46], [1.93, 0.46]], [0.95, 0.55, 0.1], null, 0.006);     // (amber in front,
+        D2.side([[-2.06, 0.5], [-1.99, 0.5], [-1.99, 0.53], [-2.06, 0.53]], [0.6, 0.06, 0.05], null, 0.006);  //  red behind)
+        for (const x of [0.62, -0.5]) D2.side([[x - 0.006, 0.3], [x + 0.006, 0.3], [x + 0.006, 0.9], [x - 0.006, 0.9]], D, null, 0.004);
+        D2.top([[-1.845, -0.64], [-1.8, -0.64], [-1.8, 0.64], [-1.845, 0.64]], B, 0.006);
+        D2.top([[0.618, -0.66], [0.632, -0.66], [0.632, 0.66], [0.618, 0.66]], D, 0.004);
         for (const sd of [-1, 1]) K.rect(-0.36, 0.785, sd * 0.864, 0.13, 0.024, B, { dir: sd < 0 ? '-z' : 'z', host: sd < 0 ? 'doorL' : 'doorR' });
         // ---- the nose: the wide mouth (the intercooler behind it), a lamp slot at each corner (the parking lamps over the brake ducts),
         //      the chin ----
