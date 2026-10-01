@@ -7162,6 +7162,282 @@ const World = (function () {
   /* ---- round 9: the historic race on the gravel variant (1990s-2000s): hay bales, wooden fences and drums, period cars and camper vans,
      wooden timing huts and a hand-written board, the old Summit House, a TV van, GRAVEL ROAD signs (own random stream) ---- */
   function pkHistoric(K) {
+    const R = rng(9901), { scen, excl, crSoft, CR, sStart, sFin, root } = K, gy = pkGround, PI = Math.PI, W1 = [1, 1, 1], tb = new GB(true);   // (all the text in one mesh: one draw call wherever it is seen)
+    const st = K.out.pkHist = { bales: 0, fence: 0, drums: 0, cars: 0, huts: 0, signs: 0, foto: 0, vc: 0 };   // (counts, for the tests and the screenshot tools)
+    // the hard exclusions (not the crowds' and gantries' soft ones) in a 16 m grid; ex() adds ours (the forest, the later crowds and pkSummit6 keep off them too)
+    const EG = new Map(), egAdd = (e) => { for (let a = Math.floor((e.x - e.r) / 16); a <= Math.floor((e.x + e.r) / 16); a++) for (let b = Math.floor((e.z - e.r) / 16); b <= Math.floor((e.z + e.r) / 16); b++) { const k = a + ',' + b; let L = EG.get(k); if (!L) EG.set(k, L = []); L.push(e); } };
+    for (const e of excl) if (!crSoft.has(e)) egAdd(e);
+    const hard = (x, z, mr) => { const L = EG.get(Math.floor(x / 16) + ',' + Math.floor(z / 16)); if (L) for (const e of L) if (e.r >= (mr || 0) && (x - e.x) ** 2 + (z - e.z) ** 2 < e.r * e.r) return true; return false; };
+    const SG = (x, z) => { const g = scen.map.get(Math.floor(x / 110) + ',' + Math.floor(z / 110)); return g && !g.empty ? g : K.noShadow(x, z); };   // the scenery chunk there; where there is none yet, no new mesh (two draws with its shadow): the ground's, no shadow
+    const ex = (x, z, r) => { const e = { x, z, r }; excl.push(e); egAdd(e); };
+    const ok = (x, z, mr) => pkNear(x, z).dd >= 1.5 && !hard(x, z, mr);   // (mr: only the exclusions this big count: the bales and fences may stand by a chair or a cooler)
+    const L4 = (x, z, rot) => { const c = Math.cos(rot), s = Math.sin(rot); return (u, w) => [x + c * u - s * w, z + s * u + c * w]; };   // local frame: u along rot, w across
+    const fits = (x, z, rot, hl, hw, mr) => { const L = L4(x, z, rot); for (const [u, w] of [[0, 0], [hl, hw], [hl, -hw], [-hl, hw], [-hl, -hw], [hl, 0], [-hl, 0], [0, hw], [0, -hw]]) { const [px, pz] = L(u, w); if (!ok(px, pz, mr)) return false; } return true; };
+    const lowest = (x, z, rot, hl, hw) => { const L = L4(x, z, rot); let m = gy(x, z); for (const [u, w] of [[hl, hw], [hl, -hw], [-hl, hw], [-hl, -hw]]) m = Math.min(m, gy(...L(u, w))); return m; };
+    const tang = (q) => Math.atan2(q.tz, q.tx);   // the road's direction as a box rotation
+
+    /* ---- the text atlas (1024 x 1024; rects in px [x0, y0, x1, y1]): the Summit House, the TV van, the old road signs, the hand-written time board, the timing huts' boards ---- */
+    const A = { sh: [0, 0, 1024, 128], don: [0, 128, 512, 256], tv: [512, 128, 1024, 256], grv: [0, 256, 512, 512], pph: [512, 256, 1024, 512], brd: [0, 512, 512, 1024],
+      spd: [538, 520, 742, 768], d1: [768, 512, 1024, 768], d2: [512, 768, 768, 1024], hut: (k) => [768, 768 + k * 48, 1024, 816 + k * 48], back: [772, 1010, 1020, 1022] };
+    const UV = (r) => { const u0 = r[0] / 1024, u1 = r[2] / 1024, v1 = 1 - r[1] / 1024, v0 = 1 - r[3] / 1024; return [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]; };
+    const face = (a, b, c, d, r, inn) => tb.quadO(a, b, c, d, W1, inn, UV(r));   // one side of a board (a, b: bottom left, right as seen; c, d: top right, left)
+    // a board (bottom centre cx, cy, cz) facing (fx, fz), its top leaning back by tilt; r: its rect, rb: the back's (the plain back of a road sign) or the same text
+    const tq = (cx, cy, cz, fx, fz, W, H, r, tilt, rb) => {
+      const ca = Math.cos(tilt || 0), sa = Math.sin(tilt || 0), ux = fz, uz = -fx, kx = -fx * H * sa, ky = H * ca, kz = -fz * H * sa;
+      for (const f of [1, -1]) { const hw = W / 2 * f, ox = fx * ca * 0.03 * f, oy = sa * 0.03 * f, oz = fz * ca * 0.03 * f;
+        const a = [cx + ox - ux * hw, cy + oy, cz + oz - uz * hw], b = [cx + ox + ux * hw, cy + oy, cz + oz + uz * hw], c = [b[0] + kx, b[1] + ky, b[2] + kz], d = [a[0] + kx, a[1] + ky, a[2] + kz];
+        face(a, b, c, d, f > 0 ? r : (rb || r), [cx + kx / 2 - fx * ca * f, cy + ky / 2 - sa * f, cz + kz / 2 - fz * ca * f]); }
+    };
+    const cv = document.createElement('canvas'); cv.width = cv.height = 1024; const c2 = cv.getContext('2d');
+    const txt = (s, x, y, font, col, w) => { c2.fillStyle = col; c2.font = font; c2.textAlign = 'center'; c2.textBaseline = 'middle'; c2.fillText(s, x, y, w); };
+    const rr = (x, y, w, h, r, fill, stroke, lw) => { c2.beginPath(); c2.moveTo(x + r, y); c2.arcTo(x + w, y, x + w, y + h, r); c2.arcTo(x + w, y + h, x, y + h, r); c2.arcTo(x, y + h, x, y, r); c2.arcTo(x, y, x + w, y, r); c2.closePath();
+      if (fill) { c2.fillStyle = fill; c2.fill(); } if (stroke) { c2.strokeStyle = stroke; c2.lineWidth = lw; c2.stroke(); } };
+    const grain = (x0, y0, w, h, n, a) => { for (let k = 0; k < n; k++) { c2.fillStyle = `rgba(${R() < 0.5 ? '255,250,235' : '40,25,10'},${a * R()})`; c2.fillRect(x0 + R() * w, y0 + R() * h, 2 + R() * w * 0.2, 1 + R() * 3); } };
+    const SANS = (px, wt) => (wt || 700) + ' ' + px + 'px "Highway Gothic", "DejaVu Sans Condensed", "Arial Narrow", Arial, sans-serif';
+    { // SUMMIT HOUSE: cream letters routed into a stained board, a thin rule
+      c2.fillStyle = '#4b2c18'; c2.fillRect(0, 0, 1024, 128); grain(0, 0, 1024, 128, 160, 0.18); rr(8, 8, 1008, 112, 10, null, '#e8d9b4', 5);
+      txt('SUMMIT  HOUSE', 512, 68, '900 92px Georgia, "Times New Roman", serif', '#f1e3bf', 960); }
+    { // the gift shop's board: red with cream letters
+      c2.fillStyle = '#8c2a1e'; c2.fillRect(0, 128, 512, 128); rr(6, 134, 500, 116, 8, null, '#f3e6c4', 4);
+      txt('FAMOUS DONUTS', 256, 172, '900 50px Georgia, serif', '#f6ead0', 470); txt('GIFTS  ·  RESTAURANT', 256, 222, '700 34px Georgia, serif', '#f6ead0', 470); }
+    { // the TV van's side: a 1990s station logo (fictional)
+      c2.fillStyle = '#eef0f2'; c2.fillRect(512, 128, 512, 128); c2.fillStyle = '#1d3f8f'; c2.fillRect(512, 214, 512, 26); c2.fillStyle = '#c8231d'; c2.fillRect(512, 240, 512, 10);
+      c2.fillStyle = '#1d3f8f'; c2.beginPath(); c2.arc(586, 172, 40, 0, TAU); c2.fill(); txt('11', 586, 174, 'italic 900 46px Arial, sans-serif', '#fff', 70);
+      txt('KPKT', 742, 160, 'italic 900 58px Arial, sans-serif', '#1d3f8f', 220); txt('SPORTS', 742, 200, 'italic 700 30px Arial, sans-serif', '#c8231d', 220);
+      txt('LIVE · SATELLITE', 908, 180, '700 22px Arial, sans-serif', '#555', 200); }
+    { // GRAVEL ROAD NEXT 12 MILES: black on a white plate, black rim (weathered)
+      c2.fillStyle = '#7a7a76'; c2.fillRect(0, 256, 512, 256); rr(8, 264, 496, 240, 18, '#efeee6', '#151515', 12);
+      txt('GRAVEL ROAD', 256, 330, SANS(70, 800), '#151515', 450); txt('NEXT', 256, 400, SANS(52, 800), '#151515', 440); txt('12 MILES', 256, 462, SANS(66, 800), '#151515', 450); grain(16, 272, 480, 224, 60, 0.12); }
+    { // PIKES PEAK HIGHWAY: the forest service's brown with white letters and rule
+      c2.fillStyle = '#5b3a22'; c2.fillRect(512, 256, 512, 256); rr(524, 268, 488, 232, 14, null, '#f2ede0', 6);
+      c2.fillStyle = '#f2ede0'; c2.beginPath(); c2.moveTo(560, 470); c2.lineTo(620, 372); c2.lineTo(650, 412); c2.lineTo(676, 386); c2.lineTo(730, 470); c2.fill();
+      txt('PIKES PEAK', 860, 336, SANS(60, 800), '#f2ede0', 290); txt('HIGHWAY', 860, 410, SANS(60, 800), '#f2ede0', 290); txt('ELEV. 14,110 FT', 860, 466, SANS(26, 700), '#f2ede0', 290); grain(512, 256, 512, 256, 80, 0.14); }
+    { // SPEED LIMIT 25: the white regulatory plate
+      c2.fillStyle = '#7a7a76'; c2.fillRect(512, 512, 256, 256); rr(542, 524, 196, 240, 14, '#f4f4ee', '#151515', 8);
+      txt('SPEED', 640, 572, SANS(40, 800), '#151515', 170); txt('LIMIT', 640, 618, SANS(40, 800), '#151515', 170); txt('25', 640, 700, SANS(104, 800), '#151515', 170); }
+    const diamond = (x0, y0, draw) => {   // a yellow warning diamond: the quad is built as a diamond (its corners at the square's), so the picture is drawn turned 45 degrees
+      c2.fillStyle = '#222'; c2.fillRect(x0, y0, 256, 256); rr(x0 + 6, y0 + 6, 244, 244, 16, '#f0c419', '#151515', 9);
+      c2.save(); c2.translate(x0 + 128, y0 + 128); c2.rotate(PI / 4); c2.fillStyle = '#151515'; c2.strokeStyle = '#151515'; draw(); c2.restore(); grain(x0, y0, 256, 256, 40, 0.1); };
+    diamond(768, 512, () => { c2.lineWidth = 22; c2.lineCap = 'butt'; c2.beginPath(); c2.moveTo(-26, 80); c2.lineTo(-26, -6); c2.quadraticCurveTo(-26, -40, 8, -40); c2.lineTo(18, -40); c2.stroke();   // a sharp bend right
+      c2.beginPath(); c2.moveTo(16, -72); c2.lineTo(62, -40); c2.lineTo(16, -8); c2.fill(); });
+    diamond(512, 768, () => { c2.lineWidth = 16; c2.beginPath(); c2.moveTo(-40, 84); c2.lineTo(-40, 40); c2.bezierCurveTo(-40, 6, 30, 30, 30, -4); c2.bezierCurveTo(30, -38, -36, -16, -36, -50); c2.lineTo(-36, -54); c2.stroke();   // switchbacks
+      c2.beginPath(); c2.moveTo(-62, -48); c2.lineTo(-36, -86); c2.lineTo(-10, -48); c2.fill(); });
+    { // the hand-written results board: a whiteboard in a wooden frame, marker in black, blue and red (fictional drivers)
+      const x0 = 0, y0 = 512; c2.fillStyle = '#6b4a2c'; c2.fillRect(x0, y0, 512, 512); c2.fillStyle = '#f4f3ee'; c2.fillRect(x0 + 16, y0 + 16, 480, 480);
+      c2.fillStyle = 'rgba(120,130,150,0.10)'; for (let k = 0; k < 8; k++) c2.fillRect(x0 + 16 + R() * 400, y0 + 16 + R() * 420, 40 + R() * 120, 6 + R() * 18);   // smudges of wiped marker
+      const HW = (px) => 'italic 700 ' + px + 'px "Comic Sans MS", "Segoe Print", "Bradley Hand", cursive';
+      c2.save(); c2.translate(x0 + 256, y0 + 54); c2.rotate(-0.015); txt('UNLIMITED  -  OFFICIAL', 0, 0, HW(36), '#c8231d', 460); c2.restore();
+      c2.strokeStyle = '#c8231d'; c2.lineWidth = 3; c2.beginPath(); c2.moveTo(x0 + 50, y0 + 80); c2.lineTo(x0 + 462, y0 + 76); c2.stroke();
+      const rows = [['1.', 'T. HALVORSEN', '10:11.42'], ['2.', 'M. DUCHESNE', '10:19.87'], ['3.', 'J. OKAFOR', '10:27.15'], ['4.', 'B. KRANJC', '10:41.03'], ['5.', 'L. VANTERPOOL', '10:58.60'],
+        ['6.', 'D. MAREK', '11:06.21'], ['7.', 'K. ODEGAARD', '11:22.94'], ['8.', 'P. RENWICK', '11:40.08']];
+      rows.forEach(([n, who, t], k) => { const y = y0 + 120 + k * 46, ink = k < 3 ? '#1b2a8a' : '#141414';
+        c2.save(); c2.translate(0, y); c2.rotate((R() - 0.5) * 0.02); c2.fillStyle = ink; c2.font = HW(30); c2.textBaseline = 'middle';
+        c2.textAlign = 'left'; c2.fillText(n, x0 + 34, 0); c2.fillText(who, x0 + 74, 0, 250); c2.textAlign = 'right'; c2.fillText(t, x0 + 482, 0); c2.restore(); });
+      c2.strokeStyle = '#141414'; c2.lineWidth = 3; c2.beginPath(); c2.moveTo(x0 + 380, y0 + 304); c2.lineTo(x0 + 486, y0 + 296); c2.stroke();   // a time struck through, the right one above it
+      c2.save(); c2.translate(x0 + 430, y0 + 272); c2.rotate(-0.05); txt('10:41.30', 0, 0, HW(20), '#c8231d', 110); c2.restore();
+      c2.save(); c2.translate(x0 + 256, y0 + 476); c2.rotate(0.01); txt('PIKES PEAK INT\'L HILL CLIMB', 0, 0, HW(26), '#1b2a8a', 440); c2.restore(); }
+    ['TIMING  ·  CP 1', 'TIMING  ·  CP 2', 'TIMING  ·  CP 3', 'TIMING  ·  CP 4', 'FINISH  TIMING'].forEach((s, k) => { const y0 = 768 + k * 48;   // the timing huts' boards: white letters on green
+      c2.fillStyle = k === 4 ? '#7d1d16' : '#244a2e'; c2.fillRect(768, y0, 256, 48); c2.strokeStyle = '#efe6cc'; c2.lineWidth = 3; c2.strokeRect(772, y0 + 4, 248, 40); txt(s, 896, y0 + 26, SANS(28, 800), '#f3ecd6', 236); });
+    c2.fillStyle = '#8b8d8f'; c2.fillRect(768, 1008, 256, 16);   // the plain grey back of a road sign
+
+    /* ---- the old Summit House (the summit's building until 2021) on the visitor center's pad: the Summit Visitor Center (pkLandmarks2, 2021), its name and its monument
+       by the road and its lit windows (pkFans5) are taken out of the chunks and meshes already built (found by place and colour, or by their rows of pkLandmarks2's atlas) ---- */
+    const pd = K.padH, ih = pd.i, htx = T.tx[ih], htz = T.tz[ih], hnx = T.nx[ih], hnz = T.nz[ih], hrot = Math.atan2(htz, htx);
+    {
+      const inBox = (x, z) => { const dx = x - pd.x, dz = z - pd.z, a = dx * htx + dz * htz, b = dx * hnx + dz * hnz; return Math.abs(a) < 18.2 && b > -15.4 && b < 7.4; };
+      const like = (r, g, b, L) => L.some(c => { const k = r / c[0]; return k > 0.84 && k < 1.16 && Math.abs(g - c[1] * k) < 0.004 && Math.abs(b - c[2] * k) < 0.004; });
+      const vcC = [[0.5, 0.45, 0.41], [0.62, 0.6, 0.57], [0.1, 0.13, 0.16], [0.2, 0.26, 0.3], [0.6, 0.55, 0.5], [0.3, 0.3, 0.31], [0.2, 0.2, 0.21], [0.33, 0.42, 0.2], [0.52, 0.46, 0.24], [0.28, 0.28, 0.29], [0.4, 0.4, 0.4], [0.52, 0.62, 0.66], [0.31, 0.21, 0.13], [0.24, 0.18, 0.12]];
+      const cutGB = (g, drop) => { const n = g.P.length / 9, nc = g.A ? 12 : 9; let w = 0;   // drop(P, C, t): leave triangle t out
+        for (let t = 0; t < n; t++) { if (drop(g.P, g.C, t, nc)) continue; if (w !== t) { for (let q = 0; q < 9; q++) { g.P[w * 9 + q] = g.P[t * 9 + q]; g.N[w * 9 + q] = g.N[t * 9 + q]; } for (let q = 0; q < nc; q++) g.C[w * nc + q] = g.C[t * nc + q]; if (g.U) for (let q = 0; q < 6; q++) g.U[w * 6 + q] = g.U[t * 6 + q]; } w++; }
+        g.P.length = g.N.length = w * 9; g.C.length = w * nc; if (g.U) g.U.length = w * 6; return n - w; };
+      const cutMesh = (m, drop) => { const G = m.geometry, n = G.attributes.position.count / 3, keep = []; for (let t = 0; t < n; t++) if (!drop(G, t)) keep.push(t); if (keep.length === n) return 0;
+        const ng = new THREE.BufferGeometry(); for (const k in G.attributes) { const a = G.attributes[k], s = a.itemSize, arr = new Float32Array(keep.length * 3 * s); keep.forEach((t, j) => arr.set(a.array.subarray(t * 3 * s, (t + 1) * 3 * s), j * 3 * s)); ng.setAttribute(k, new THREE.BufferAttribute(arr, s)); }
+        ng.computeBoundingSphere(); m.geometry = ng; G.dispose(); return n - keep.length; };
+      st.vc += cutGB(scen.get(pd.x, pd.z), (P, C, t, nc) => { for (let v = 0; v < 3; v++) if (!inBox(P[t * 9 + v * 3], P[t * 9 + v * 3 + 2]) || P[t * 9 + v * 3 + 1] < pd.h - 12) return false; return like(C[t * nc], C[t * nc + 1], C[t * nc + 2], vcC); });
+      let mon = null;   // its name (rows 192-256 of pkLandmarks2's atlas) and the monument's face (rows 768-1024): only they use those rows (its self-lit material tells the mesh)
+      for (const m of root.children.slice()) { if (!m.isMesh || !m.material || !m.material.customProgramCacheKey || m.material.customProgramCacheKey() !== 'pkSignLit') continue;
+        const vrow = (G, t) => { const U = G.attributes.uv.array; let lo = 1, hi = 0; for (let v = 0; v < 3; v++) { lo = Math.min(lo, U[(t * 3 + v) * 2 + 1]); hi = Math.max(hi, U[(t * 3 + v) * 2 + 1]); } return hi <= 0.2501 ? 1 : lo >= 0.7499 && hi <= 0.8126 ? 2 : 0; };
+        { const G = m.geometry, Pp = G.attributes.position.array; let sx = 0, sz = 0, n = 0; for (let t = 0; t < Pp.length / 9; t++) if (vrow(G, t) === 1) for (let v = 0; v < 3; v++) { sx += Pp[t * 9 + v * 3]; sz += Pp[t * 9 + v * 3 + 2]; n++; } if (n) mon = [sx / n, sz / n]; }
+        st.vc += cutMesh(m, (G, t) => vrow(G, t) > 0); }
+      if (mon) for (const g of new Set([[-6, -6], [6, -6], [-6, 6], [6, 6]].map(([p, q]) => scen.get(mon[0] + p, mon[1] + q)))) st.vc += cutGB(g, (P, C, t, nc) => { for (let v = 0; v < 3; v++) if (Math.hypot(P[t * 9 + v * 3] - mon[0], P[t * 9 + v * 3 + 2] - mon[1]) > 5.8) return false; return like(C[t * nc], C[t * nc + 1], C[t * nc + 2], [[0.55, 0.51, 0.47], [0.6, 0.57, 0.52]]); });
+      const gl = root.getObjectByName('pkGlow');   // the visitor center's lit windows
+      if (gl) st.vc += cutMesh(gl, (G, t) => { const Pp = G.attributes.position.array; return inBox((Pp[t * 9] + Pp[t * 9 + 3] + Pp[t * 9 + 6]) / 3, (Pp[t * 9 + 2] + Pp[t * 9 + 5] + Pp[t * 9 + 8]) / 3); });
+      st.mon = mon;
+    }
+    {
+      // long and low (the 1960s house): a stone base, weathered board walls with a row of windows, a low pitched roof of green steel; the big name on the roof slope
+      // towards the road (the cameras look down), the gift shop's board over the porch; the restaurant's windows and a deck face the view (away from the road)
+      const at = (a, b) => [pd.x + htx * a + hnx * b, pd.z + htz * a + hnz * b], c0 = -2.5, Lb = 32, Db = 12, y0 = pd.h + 0.15, g = scen.get(pd.x, pd.z);
+      const B = (a, b, y, sa, sy, sb, col, top, nb) => { const [x, z] = at(a, b); box(g, x, y, z, sa, sy, sb, hrot, col, top, nb !== false); };
+      const stone = [0.52, 0.48, 0.44], stoneT = [0.6, 0.57, 0.52], board = [0.47, 0.36, 0.25], trim = [0.86, 0.82, 0.72], glass = [0.12, 0.14, 0.16], roofC = [0.27, 0.36, 0.3], wood = [0.36, 0.25, 0.16];
+      let lo = 1e9; for (let a = -Lb / 2; a <= Lb / 2; a += 4) for (let b = c0 - Db / 2 - 5; b <= c0 + Db / 2 + 2; b += 2.5) lo = Math.min(lo, gy(...at(a, b)));
+      B(0, -4.45, lo - 0.5, Lb + 1.5, y0 - lo + 0.5, 17.7, stone, stoneT);   // the stone plinth (the deck's too), down to the slope
+      B(0, c0, y0, Lb, 1.25, Db, stone);   // the stone base of the walls
+      B(0, c0, y0 + 1.25, Lb - 0.1, 2.45, Db - 0.1, board);   // board walls
+      B(0, c0, y0 + 3.6, Lb + 0.1, 0.16, Db + 0.1, trim);   // the eaves' trim
+      for (let k = -4; k <= 4; k++) { if (k === -1) continue; B(k * 3.4, c0 + Db / 2 + 0.03, y0 + 1.6, 2.1, 1.15, 0.1, glass); B(k * 3.4, c0 + Db / 2 + 0.06, y0 + 1.5, 2.3, 0.1, 0.12, trim); }   // windows to the road, white sills
+      for (let k = -3; k <= 3; k++) B(k * 4.4, c0 - Db / 2 - 0.03, y0 + 1.35, 3.6, 1.75, 0.1, glass);   // the restaurant's big windows to the view
+      for (const sa of [-1, 1]) B(sa * (Lb / 2 + 0.03), c0, y0 + 1.6, 0.1, 1.2, 3.2, glass);
+      gable(g, ...(() => { const [x, z] = at(0, c0); return [x, y0 + 3.7, z]; })(), Lb + 1.6, Db + 2.2, 1.9, hrot, roofC, board);   // the low pitched roof (ridge along the house)
+      B(12.5, -5.2, y0 + 3.75, 1.5, 1.45, 1.5, stone, stoneT);   // the chimney's stone stack (pkSummit6 stands its steel flue and smoke on it, at the visitor center's roof height)
+      B(-3.4, c0 + Db / 2 + 0.06, y0, 2.2, 2.4, 0.12, [0.32, 0.2, 0.12]);   // the door, the porch roof on two posts over it
+      B(-3.4, c0 + Db / 2 + 1.3, y0 + 2.75, 6, 0.18, 2.6, wood, roofC);
+      for (const a of [-6, -0.8]) B(a, c0 + Db / 2 + 2.4, y0, 0.2, 2.75, 0.2, wood);
+      B(0, c0 - Db / 2 - 2.2, y0 - 0.02, Lb - 2, 0.1, 4.2, [0.44, 0.33, 0.22]);   // the deck to the view, its rail
+      B(0, c0 - Db / 2 - 4.2, y0 + 0.9, Lb - 2, 0.1, 0.12, wood); for (let k = -7; k <= 7; k++) B(k * 2.1, c0 - Db / 2 - 4.2, y0, 0.12, 1.0, 0.12, wood);
+      for (const a of [-9, -3, 3, 9]) { B(a, c0 - Db / 2 - 2.2, y0 + 0.08, 1.8, 0.72, 0.8, [0.55, 0.42, 0.28]); }   // picnic tables
+      { const yR = y0 + 3.7 + 1.9 * (1 - 4.1 / (Db / 2 + 1.1)), [x, z] = at(1.5, c0 + 4.1); tq(x, yR - 0.15, z, hnx, hnz, 17, 2.1, A.sh, 0.62); B(1.5, c0 + 3.9, yR - 0.25, 17.4, 0.3, 0.3, wood); }   // the name on the roof
+      { const [x, z] = at(-3.4, c0 + Db / 2 + 2.62); tq(x, y0 + 2.94, z, hnx, hnz, 5, 1.25, A.don, 0.25); }   // the gift shop's board on the porch roof
+      { const [x, z] = at(0, c0); CR.block(x, z, Lb + 2, Db + 9, hrot); }
+    }
+
+    /* ---- builders: a hay bale, an oil drum, a stretch of post-and-rail fence, the period cars, a timing hut, a road sign (the thin things, the drums, fences and
+       tripods, cast no shadow: K.noShadow, in the ground's tiles, so they cost no draws and no shadow pass) ---- */
+    const straw = [[0.8, 0.69, 0.4], [0.76, 0.64, 0.36], [0.84, 0.74, 0.46]], strawT = [0.88, 0.8, 0.54];
+    const bale = (x, y, z, rot, e0, e1) => {   // 1.25 x 0.62, 0.52 high: its long sides and top (its neighbours in the row hide its ends; e0, e1: draw the end)
+      const g = SG(x, z), c = Math.cos(rot), s = Math.sin(rot), P = (u, h, w) => [x + c * u - s * w, y + h, z + s * u + c * w], inn = [x, y + 0.26, z], col = vary(straw[Math.floor(R() * 3)], R, 0.08), H = 0.52, U = 0.625, W = 0.31;
+      g.quadO(P(-U, 0, -W), P(U, 0, -W), P(U, H, -W), P(-U, H, -W), col, inn); g.quadO(P(-U, 0, W), P(U, 0, W), P(U, H, W), P(-U, H, W), col, inn); g.quadO(P(-U, H, -W), P(U, H, -W), P(U, H, W), P(-U, H, W), strawT, inn);
+      if (e0) g.quadO(P(-U, 0, -W), P(-U, 0, W), P(-U, H, W), P(-U, H, -W), col, inn); if (e1) g.quadO(P(U, 0, -W), P(U, 0, W), P(U, H, W), P(U, H, -W), col, inn); st.bales++; };
+    const drum = (x, z) => { const g = K.noShadow(x, z), y = gy(x, z) - 0.04, red = [0.74, 0.12, 0.1], wh = [0.92, 0.9, 0.86];
+      cyl(g, x, y, z, 0.29, 0.31, 7, red); cyl(g, x, y + 0.31, z, 0.29, 0.27, 7, wh); cyl(g, x, y + 0.58, z, 0.29, 0.3, 7, red, [0.3, 0.08, 0.06]); st.drums++; };
+    const beam = (g, a, b, w, h, col) => {   // a square bar from a to b (the fences' rails)
+      const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], l = Math.hypot(d[0], d[2]) || 1, s = [-d[2] / l * w / 2, 0, d[0] / l * w / 2], inn = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2], P = (p, i, j) => [p[0] + s[0] * i, p[1] + j * h / 2, p[2] + s[2] * i];
+      for (const [i0, j0, i1, j1] of [[-1, -1, 1, -1], [1, -1, 1, 1], [1, 1, -1, 1], [-1, 1, -1, -1]]) g.quadO(P(a, i0, j0), P(a, i1, j1), P(b, i1, j1), P(b, i0, j0), col, inn); };
+    const fence = (s0, s1, side, v) => {   // post-and-rail, v beyond the barrier line: posts every 2.6 m, two rails between neighbours that both stood
+      let prev = null; const wd = [0.45, 0.37, 0.28];
+      for (let s = s0; s <= s1; s += 2.6) { const q = crAt(s); if (!q) { prev = null; continue; }
+        const o = (side > 0 ? q.br : q.bl) + v, x = q.px + q.nx * side * o, z = q.pz + q.nz * side * o;
+        if (!ok(x, z, 2) || gy(x, z) < q.hy - 2.5) { prev = null; continue; }
+        const y = gy(x, z), g = K.noShadow(x, z), c = vary(wd, R, 0.12); box(g, x, y - 0.25, z, 0.14, 1.4, 0.14, tang(q), c, null, true); st.fence++;
+        if (prev) for (const h of [0.42, 0.92]) { const a = [prev[0], prev[1] + h, prev[2]], b = [x, y + h, z], d = [(a[0] + b[0]) / 2 + q.nx * side, (a[1] + b[1]) / 2 - 0.3, (a[2] + b[2]) / 2 + q.nz * side];   // a rail: its face to the road and its top
+          g.quadO([a[0], a[1] - 0.07, a[2]], [b[0], b[1] - 0.07, b[2]], [b[0], b[1] + 0.07, b[2]], [a[0], a[1] + 0.07, a[2]], c, d);
+          const ox = q.nx * side * 0.08, oz = q.nz * side * 0.08; g.quadO([a[0], a[1] + 0.07, a[2]], [b[0], b[1] + 0.07, b[2]], [b[0] + ox, b[1] + 0.07, b[2] + oz], [a[0] + ox, a[1] + 0.07, a[2] + oz], c, [a[0], a[1] - 1, a[2]]); }
+        prev = [x, y, z]; } };
+    const glass = [0.13, 0.15, 0.17], tyre = [0.08, 0.08, 0.09], cream = [0.86, 0.83, 0.74];
+    const faded = [[0.62, 0.55, 0.42], [0.58, 0.3, 0.24], [0.4, 0.45, 0.32], [0.46, 0.54, 0.6], [0.55, 0.42, 0.28], [0.72, 0.7, 0.64], [0.36, 0.28, 0.22], [0.7, 0.55, 0.28], [0.5, 0.5, 0.48], [0.3, 0.38, 0.48], [0.62, 0.38, 0.22], [0.48, 0.2, 0.18]];
+    const pcar = (x, z, rot, kind, col) => {   // 0 an estate (woodgrain sides now and then), 1 a pickup (some with a camper shell), 2 a camper van (two-tone), 3 a motorhome, 4 a boxy saloon; length along rot
+      const g = SG(x, z), L = L4(x, z, rot), hl = [2.4, 2.55, 2.25, 3.6, 2.3][kind], y = lowest(x, z, rot, hl, 0.9) - 0.05;
+      const Bx = (u, w, yb, lu, hy, lw, c, top) => { const [px, pz] = L(u, w); box(g, px, y + yb, pz, lu, hy, lw, rot, c, top, true); };
+      if (kind === 0) { Bx(0, 0, 0.28, 4.7, 0.7, 1.76, col); Bx(-0.4, 0, 0.98, 3.1, 0.6, 1.62, glass, col); Bx(-0.5, 0, 1.58, 2.0, 0.07, 1.3, [0.16, 0.16, 0.17]);
+        if (R() < 0.45) for (const w of [-0.89, 0.89]) Bx(-0.2, w, 0.42, 3.6, 0.36, 0.03, [0.42, 0.27, 0.15]); }
+      else if (kind === 1) { Bx(0, 0, 0.36, 5.0, 0.74, 1.86, col); Bx(0.85, 0, 1.1, 1.6, 0.72, 1.76, glass, col);
+        if (R() < 0.5) Bx(-1.25, 0, 1.1, 2.45, 0.68, 1.84, vary(cream, R, 0.1), vary(cream, R, 0.1)); else { for (const w of [-0.88, 0.88]) Bx(-1.25, w, 1.1, 2.4, 0.34, 0.1, col); Bx(-2.45, 0, 1.1, 0.1, 0.34, 1.86, col); } }
+      else if (kind === 2) { Bx(0, 0, 0.3, 4.5, 0.86, 1.8, col); Bx(0, 0, 1.16, 4.45, 0.92, 1.78, cream, cream); Bx(-0.25, 0, 1.36, 3.5, 0.5, 1.82, glass); Bx(2.23, 0, 1.32, 0.04, 0.56, 1.5, glass);
+        if (R() < 0.4) Bx(-0.3, 0, 2.08, 2.6, 0.32, 1.6, vary(cream, R, 0.08)); }   // a pop-top on some
+      else if (kind === 3) { Bx(-0.5, 0, 0.4, 6.2, 2.5, 2.3, cream, [0.8, 0.79, 0.75]); Bx(-0.5, 0, 1.2, 6.22, 0.24, 2.32, col); Bx(-0.5, 0, 1.5, 6.22, 0.08, 2.32, vary(col, R, 0.3));
+        Bx(3.0, 0, 0.4, 1.3, 1.35, 2.1, cream); Bx(3.62, 0, 1.0, 0.06, 0.62, 1.8, glass); Bx(2.75, 0, 1.75, 1.8, 0.95, 2.26, cream); Bx(-1.4, 0, 1.75, 1.5, 0.6, 2.34, glass); }
+      else { Bx(0, 0, 0.3, 4.5, 0.68, 1.72, col); Bx(-0.25, 0, 0.98, 2.2, 0.56, 1.56, glass, col); }
+      const ax = [[1.45, 1.4], [1.65, 1.7], [1.4, 1.35], [2.6, 1.9], [1.4, 1.35]][kind], half = kind === 3 ? 0.95 : 0.8;
+      for (const u of kind === 3 ? [ax[0], -ax[1], -ax[1] - 0.75] : [ax[0], -ax[1]]) { const [px, pz] = L(u, 0); box(g, px, y, pz, 0.66, 0.62, half * 2 + 0.24, rot, tyre, null, true); }   // (a dark box per axle: its wheels)
+      st.cars++; };
+    const carKinds = [0, 0, 1, 1, 2, 2, 4, 4, 3];
+    const parkRow = (sa, sb, side, nMax, vMax) => {   // spectators' cars parked along the road beyond the barrier where the ground is flat, nose to tail
+      let n = 0; for (let s = sa; s < sb && n < nMax;) { const q = crAt(s); if (!q) break; const rot = tang(q) + (R() < 0.5 ? PI : 0), kind = carKinds[Math.floor(R() * carKinds.length)], hl = kind === 3 ? 3.9 : 2.8, bar = side > 0 ? q.br : q.bl;
+        let done = false;
+        for (let v = 2.6; v <= (vMax || 9) && !done; v += 0.7) { const x = q.px + q.nx * side * (bar + v), z = q.pz + q.nz * side * (bar + v);
+          if (!fits(x, z, rot, hl + 0.2, 1.4) || pkSlope(x, z) > 0.3 || gy(x, z) < q.hy - 2.2 || gy(x, z) > q.hy + 2.5) continue;
+          pcar(x, z, rot, kind, vary(faded[Math.floor(R() * faded.length)], R, 0.12)); ex(x, z, hl + 0.4); CR.block(x, z, hl * 2, 2.2, rot); n++; done = true; }
+        s += done ? hl * 2 + 0.6 + R() * 2.5 : 1.5; }
+      return n; };
+    const hut = (x, z, rot, slot) => {   // a small timing hut: board walls, a window to the road, a tin roof, its board over the window; rot: the side facing the road is +w
+      const g = SG(x, z), L = L4(x, z, rot), y = lowest(x, z, rot, 1.3, 1.1) - 0.1, wd = [0.5, 0.37, 0.24], fx = -Math.sin(rot), fz = Math.cos(rot);
+      box(g, x, y, z, 2.5, 2.4, 2.1, rot, wd, null, true);
+      { const [px, pz] = L(0.2, 1.06); box(g, px, y + 1.05, pz, 1.5, 0.72, 0.06, rot, [0.12, 0.13, 0.15], null, true); box(g, px, y + 0.98, pz + 0, 1.7, 0.08, 0.2, rot, [0.82, 0.78, 0.68], null, true); }   // the window, its sill
+      { const [px, pz] = L(-1.26, 0.2); box(g, px, y, pz, 0.06, 1.95, 0.85, rot, [0.33, 0.22, 0.13], null, true); }   // the door
+      gable(g, x, y + 2.4, z, 2.9, 2.6, 0.55, rot, [0.56, 0.57, 0.58], wd);
+      { const [px, pz] = L(0, 1.08); tq(px, y + 1.87, pz, fx, fz, 2.3, 0.43, A.hut(slot), 0); }
+      { const [px, pz] = L(0.3, 1.6); K.putPerson(px, pz, Math.atan2(fx, fz), [0.32, 0.34, 0.3]); }   // the timekeeper with a stopwatch, at the window
+      ex(x, z, 2.4); CR.block(x, z, 2.9, 2.5, rot); st.huts++; };
+    const spotNear = (sa, sb, sides, vs, hl, hw, rotF) => {   // the first spot that fits: [x, z, rot, q-frame values]
+      for (let s = sa; s <= sb; s += 1) for (const side of sides) for (let v = vs[0]; v <= vs[1]; v += 0.5) { const q = crAt(s); if (!q) continue;
+        const o = (side > 0 ? q.br : q.bl) + v, x = q.px + q.nx * side * o, z = q.pz + q.nz * side * o, rot = rotF(q, side);
+        if (fits(x, z, rot, hl, hw) && pkSlope(x, z) < 0.45 && gy(x, z) > q.hy - 2) return { x, z, rot, side, s, fx: -q.nx * side, fz: -q.nz * side, tx: q.tx, tz: q.tz }; }
+      return null; };
+    const post = (g, x, y, z, h, col) => box(g, x, y - 0.3, z, 0.12, h + 0.3, 0.12, 0, col, null, true);
+    const sign = (s0, side, kind) => {   // an old road sign beside the road at about s0, facing the cars coming up, leaning back so the high cameras read it
+      const W = [3.2, 3.2, 1.25, 1.5, 1.5][kind], H = [1.6, 1.6, 1.55, 1.5, 1.5][kind], r = [A.pph, A.grv, A.spd, A.d1, A.d2][kind], tl = 0.5;
+      const sp = spotNear(s0, s0 + 24, [side, -side], [W / 2 + 0.2, W / 2 + 2.5], W / 2 + 0.3, 0.45, (q) => Math.atan2(q.nz, q.nx)); if (!sp) return;
+      const fx = -sp.tx * 0.955 + sp.fx * 0.296, fz = -sp.tz * 0.955 + sp.fz * 0.296, a = Math.atan2(fz, fx), ux = fz, uz = -fx, y = lowest(sp.x, sp.z, a, 0.4, W / 2), g = SG(sp.x, sp.z);   // (facing back down the road, turned a little to its middle; sp.fx: towards the road)
+      const pc = kind === 0 ? [0.36, 0.25, 0.15] : [0.55, 0.56, 0.58], h0 = kind >= 3 ? 1.3 : 1.0, lx = H * Math.sin(tl);
+      if (kind >= 3) {   // a diamond on one post: the quad's corners at the diamond's points
+        const hd = H / Math.SQRT2 * 1.0, cx = sp.x, cz = sp.z, kx = -fx * Math.sin(tl), ky = Math.cos(tl), kz = -fz * Math.sin(tl), yc = y + h0 + hd * ky;
+        post(g, cx - fx * (0.08 + hd * Math.sin(tl)), y, cz - fz * (0.08 + hd * Math.sin(tl)), h0 + hd * 1.6, pc);
+        for (const f of [1, -1]) { const ox = fx * 0.03 * f, oz = fz * 0.03 * f, u = [ux * hd * f, 0, uz * hd * f], k = [kx * hd, ky * hd, kz * hd], c = [cx + ox, yc, cz + oz];
+          const P = (i, j) => [c[0] + u[0] * i + k[0] * j, c[1] + k[1] * j, c[2] + u[2] * i + k[2] * j];
+          face(P(0, -1), P(1, 0), P(0, 1), P(-1, 0), f > 0 ? r : A.back, [cx - fx * f, yc, cz - fz * f]); }
+      } else {
+        for (const o of [-W * 0.33, W * 0.33]) { const px = sp.x + ux * o, pz = sp.z + uz * o; post(g, px - fx * 0.1, y, pz - fz * 0.1, h0 + 0.3, pc); post(g, px - fx * (lx + 0.08), y, pz - fz * (lx + 0.08), h0 + H * Math.cos(tl) + 0.1, pc); }
+        tq(sp.x, y + h0, sp.z, fx, fz, W, H, r, tl, kind === 0 ? r : A.back);
+      }
+      ex(sp.x, sp.z, W / 2 + 0.8); st.signs++; };
+    const foto = (x, z, tx, tz) => { if (!ok(x, z)) return; const g = K.noShadow(x, z), y = gy(x, z), col = [[0.46, 0.42, 0.3], [0.24, 0.3, 0.42], [0.16, 0.17, 0.18], [0.36, 0.3, 0.22]][Math.floor(R() * 4)], ro = R() * PI;   // a photographer (film camera, a bag at his feet; no hi-vis then): khaki, denim or a dark jacket
+      if (!K.putPerson(x, z, Math.atan2(tx - x, tz - z), col)) return; box(g, x + 0.45, y - 0.02, z + 0.3, 0.38, 0.26, 0.24, ro, [0.1, 0.1, 0.11], null, true);
+      const d = Math.hypot(tx - x, tz - z) || 1, fx = (tx - x) / d, fz = (tz - z) / d, cx = x + fx * 0.55, cz = z + fz * 0.55, top = [cx, y + 1.42, cz], blk = [0.09, 0.09, 0.1];   // the camera on its tripod in front of him
+      for (let k = 0; k < 3; k++) { const a = k / 3 * TAU + ro; beam(g, [cx + Math.cos(a) * 0.32, y - 0.05, cz + Math.sin(a) * 0.32], top, 0.04, 0.04, [0.2, 0.2, 0.21]); }
+      box(g, cx, y + 1.42, cz, 0.16, 0.13, 0.12, Math.atan2(fz, fx) + PI / 2, blk, null, true); box(g, cx + fx * 0.12, y + 1.44, cz + fz * 0.12, 0.12, 0.08, 0.08, Math.atan2(fz, fx), [0.16, 0.16, 0.17], null, true); st.foto++; };
+
+    /* ---- the corners: hay bales stacked two high behind the barrier on the outside of the hairpins and the fast bends, red and white drums at their ends;
+       a post-and-rail fence in front of the spectators on the inside of the hairpins, a photographer or two by it ---- */
+    for (const c of T.corners) { const sm = (c.i0 + c.i1) / 2 * T.ds; if (sm < sStart + 60 || sm > sFin - 40) continue;
+      const fast = c.sev === 1 && c.angle > 0.75; if (c.sev < 2 && !fast) continue;
+      const side = -c.dir, len = c.sev === 3 ? 13 : 7, row = [];
+      for (let s = sm - len; s <= sm + len; s += 1.29) { const q = crAt(s); if (!q) continue; const rot = tang(q), o = (side > 0 ? q.br : q.bl) + 2.15, x = q.px + q.nx * side * o, z = q.pz + q.nz * side * o;
+        if (!fits(x, z, rot, 0.64, 0.32, 2) || gy(x, z) < q.hy - 1.4 || pkSlope(x, z) > 0.6) { row.push(null); continue; }
+        row.push([x, lowest(x, z, rot, 0.62, 0.3) - 0.06, z, rot]); }
+      const lay = (L) => L.forEach((b, k) => { if (b) bale(b[0], b[1], b[2], b[3], !L[k - 1], !L[k + 1]); });
+      lay(row); if (c.sev === 3) lay(row.slice(0, -1).map((p, k) => { const q2 = row[k + 1]; return p && q2 ? [(p[0] + q2[0]) / 2, Math.max(p[1], q2[1]) + 0.51, (p[2] + q2[2]) / 2, (p[3] + q2[3]) / 2] : null; }));   // stacked two high at the hairpins
+      const ends = row.filter(Boolean); if (ends.length > 3) for (const e of [ends[0], ends[ends.length - 1]]) { drum(e[0] + Math.cos(e[3]) * (e === ends[0] ? -1.1 : 1.1), e[2] + Math.sin(e[3]) * (e === ends[0] ? -1.1 : 1.1)); }
+      if (ends.length) { const e = ends[ends.length - 1]; ex(e[0], e[2], 1.2); ex(ends[0][0], ends[0][2], 1.2); }
+      if (c.sev === 3) { fence(sm - 15, sm + 15, c.dir, 1.75);
+        for (const d of [-6, 7]) { const q = crAt(sm + d); if (!q) continue; const o = (c.dir > 0 ? q.br : q.bl) + 2.3; foto(q.px + q.nx * c.dir * o, q.pz + q.nz * c.dir * o, q.px, q.pz); } }
+    }
+
+    /* ---- the checkpoints and the finish: a timing hut beside the line, the fence in front of the spectators; at the finish the hand-written results board,
+       the TV station's outside-broadcast van with its dish, photographers by the line ---- */
+    [...T.cpS, sFin].forEach((s0, k) => {
+      const sp = spotNear(s0 + 3, s0 + 22, [1, -1], [2.4, 6], 1.5, 1.35, (q, side) => Math.atan2(q.nx * side, -q.nz * side));   // (its +w, the window, towards the road)
+      if (sp) hut(sp.x, sp.z, sp.rot, k);
+      for (const side of [1, -1]) fence(s0 - 30, s0 - 2, side, 1.75);
+    });
+    { const F = (s, side, v) => { const q = crAt(s), o = (side > 0 ? q.br : q.bl) + v; return [q.px + q.nx * side * o, q.pz + q.nz * side * o, q]; };
+      // the results board where the visitor center's monument stood: on two legs, leaning back a little, facing the arriving cars
+      { const mon = st.mon || F(sFin + 17, -1, 6).slice(0, 2), q = crAt(sFin + 17), fx = -q.tx * 0.94 + q.nx * 0.34, fz = -q.tz * 0.94 + q.nz * 0.34, a = Math.atan2(fz, fx), ux = fz, uz = -fx, W = 4.4, H = 4.4, tl = 0.3;
+        const x = mon[0], z = mon[1], y = lowest(x, z, a, 0.4, W / 2) - 0.05, g = SG(x, z), lx = H * Math.sin(tl);
+        for (const o of [-W / 2 + 0.2, W / 2 - 0.2]) { const px = x + ux * o, pz = z + uz * o; box(g, px - fx * 0.1, y - 0.3, pz - fz * 0.1, 0.16, 1.2, 0.16, a, [0.42, 0.3, 0.2], null, true); box(g, px - fx * (lx + 0.06), y - 0.3, pz - fz * (lx + 0.06), 0.16, 0.9 + H * Math.cos(tl) + 0.3, 0.16, a, [0.42, 0.3, 0.2], null, true); }
+        tq(x, y + 0.9, z, fx, fz, W, H, A.brd, tl, A.back); ex(x, z, 3); CR.block(x, z, 1.5, W + 0.6, a + PI / 2);
+        for (let k = 0; k < 3; k++) { const px = x + fx * (2.2 + k * 0.5) + ux * (k - 1) * 1.2, pz = z + fz * (2.2 + k * 0.5) + uz * (k - 1) * 1.2; if (ok(px, pz)) K.putPerson(px, pz, Math.atan2(-fx, -fz) + (R() - 0.5) * 0.6, K.fans[Math.floor(R() * K.fans.length)]); } }
+      // the TV van behind the finish crowd: a white box truck, the station's name on its sides, a dish on the roof aimed up at the sky, a cable reel
+      { const sp = spotNear(sFin - 34, sFin + 6, [1, -1], [8, 15], 3.9, 1.6, (q) => Math.atan2(q.tz, q.tx));
+        if (sp) { const g = SG(sp.x, sp.z), L = L4(sp.x, sp.z, sp.rot), y = lowest(sp.x, sp.z, sp.rot, 3.6, 1.2) - 0.05, wht = [0.9, 0.9, 0.88];
+          const Bx = (u, w, yb, lu, hy, lw, c, top) => { const [px, pz] = L(u, w); box(g, px, y + yb, pz, lu, hy, lw, sp.rot, c, top, true); };
+          Bx(-0.7, 0, 0.5, 5.6, 2.7, 2.35, wht, [0.82, 0.82, 0.8]); Bx(2.75, 0, 0.45, 1.7, 1.75, 2.2, wht); Bx(3.62, 0, 1.25, 0.05, 0.75, 1.9, glass); Bx(2.75, 0, 0.45, 1.72, 0.3, 2.22, [0.11, 0.25, 0.56]);
+          Bx(-0.7, 0, 0.45, 5.62, 0.28, 2.37, [0.11, 0.25, 0.56]);
+          for (const [u, w] of [[2.6, 1.0], [2.6, -1.0], [-2.3, 1.0], [-2.3, -1.0], [-1.4, 1.0], [-1.4, -1.0]]) { const [px, pz] = L(u, w); box(g, px, y, pz, 0.78, 0.78, 0.28, sp.rot, tyre, null, true); }
+          { const [px, pz] = L(-1.6, 0); cyl(g, px, y + 3.2, pz, 0.12, 0.5, 6, [0.6, 0.6, 0.62]); const dx = -Math.sin(sp.rot) * -sp.side, dz = Math.cos(sp.rot) * -sp.side, el = 0.75, ax = [dx * Math.cos(el), Math.sin(el), dz * Math.cos(el)], c0 = [px, y + 4.35, pz];   // the dish: a shallow bowl 2.3 m across, aimed up over the road (its white face to the cameras)
+            const e1 = [-dz, 0, dx], e2 = [ax[1] * dx, -(ax[2] * dz + ax[0] * dx), ax[1] * dz], rim = [], dc = [0.93, 0.93, 0.91], bc = [0.62, 0.63, 0.64];
+            for (let k = 0; k < 10; k++) { const t = k / 10 * TAU, cs = Math.cos(t) * 1.15, sn = Math.sin(t) * 1.15; rim.push([c0[0] + e1[0] * cs + e2[0] * sn + ax[0] * 0.3, c0[1] + e2[1] * sn + ax[1] * 0.3, c0[2] + e1[2] * cs + e2[2] * sn + ax[2] * 0.3]); }
+            for (let k = 0; k < 10; k++) { const a = rim[k], b = rim[(k + 1) % 10]; g.triO(c0, a, b, dc, [c0[0] - ax[0], c0[1] - ax[1], c0[2] - ax[2]]); g.triO(c0, a, b, bc, [c0[0] + ax[0], c0[1] + ax[1], c0[2] + ax[2]]); }
+            box(g, px, y + 3.2, pz, 0.5, 1.15, 0.5, sp.rot, [0.5, 0.5, 0.52], null, true); beam(g, rim[0], [c0[0] + ax[0] * 1.1, c0[1] + ax[1] * 1.1, c0[2] + ax[2] * 1.1], 0.06, 0.06, [0.3, 0.3, 0.32]); }   // its mount, the feed arm
+          { const [px, pz] = L(0.6, 0); box(g, px, y + 3.2, pz, 1.2, 0.35, 0.9, sp.rot, [0.7, 0.7, 0.7], null, true); }   // the air conditioner
+          for (const f of [1, -1]) { const [px, pz] = L(-0.9, f * 1.19), nx = -Math.sin(sp.rot) * f, nz = Math.cos(sp.rot) * f; tq(px, y + 1.4, pz, nx, nz, 4.6, 1.15, A.tv, 0); }
+          { const [px, pz] = L(-0.5, sp.side > 0 ? -2.3 : 2.3); if (ok(px, pz)) { const g2 = SG(px, pz); cyl(g2, px, gy(px, pz), pz, 0.45, 0.5, 8, [0.2, 0.2, 0.22], [0.6, 0.15, 0.1]); } }
+          ex(sp.x, sp.z, 4.6); CR.block(sp.x, sp.z, 7.6, 2.8, sp.rot); st.tv = [Math.round(sp.s), sp.side];
+          { const [px, pz] = L(1.0, (sp.side > 0 ? -1 : 1) * 2.0); K.putPerson(px, pz, sp.rot, [0.24, 0.3, 0.42]); } } }
+      // photographers by the line, both sides, behind the barrier
+      for (const [d, side] of [[2, 1], [4.5, -1], [6, 1], [8, -1], [10.5, 1]]) { const [x, z, q] = F(sFin + d, side, 1.9); foto(x, z, q.px - q.tx * 30, q.pz - q.tz * 30); }
+    }
+
+    /* ---- the old road signs: the highway's brown sign, GRAVEL ROAD NEXT 12 MILES and SPEED LIMIT 25 after the start, more 25s up the road, warning diamonds before the hairpins ---- */
+    sign(sStart + 236, -1, 0); sign(sStart + 258, 1, 1); sign(sStart + 284, 1, 2);
+    for (const d of [1500, 2900, 4300, 5500]) sign(sStart + d, 1, 2);
+    { let k = 0; for (const c of T.corners) { if (c.sev < 3) continue; const sm = c.i0 * T.ds; if (sm < sStart + 300 || sm > sFin - 80) continue; if (k++ % 2) continue; sign(sm - 46, -c.dir, c.angle > 2.4 ? 4 : 3); } }
+
+    /* ---- the spectators' cars and camper vans, parked along the road at the picnic grounds, Glen Cove, Devil's Playground and Boulder Park, and below the reservoir ---- */
+    for (const [d, side, n] of [[120, -1, 5], [180, 1, 4], [950, 1, 6], [950, -1, 6], [1660, 1, 5], [1660, -1, 4], [2600, 1, 5], [2600, -1, 5], [3980, 1, 6], [3980, -1, 6], [5300, 1, 4], [5300, -1, 4]]) parkRow(sStart + d, sStart + d + 150, side, n);
+
+    /* ---- the text: one atlas, one mesh ---- */
+    const tx = new THREE.CanvasTexture(cv); tx.anisotropy = 4; K.out.ownTex.push(tx);
+    if (!tb.empty) { const m = new THREE.Mesh(tb.geometry(), new THREE.MeshLambertMaterial({ map: tx })); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); m.name = 'pkHistText'; root.add(m); }
   }
 
   /* ---- round 9: moving race-day machines: drones over the road and LED split boards (asphalt), the water truck and a grader, dust over the
