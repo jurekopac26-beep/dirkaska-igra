@@ -56,30 +56,61 @@ const Render = (function () {
     return l > 0.6 ? [0.12, 0.24, 0.75] : [0.96, 0.96, 0.94];
   }
 
+  // a wheel (axis along z, centre cx, cy, cz; r its radius, wd its width): a rounded tyre (its profile turned round the axis: the sidewall
+  // bulging out of the rim, round shoulders, a flat tread; smooth normals), on each face the rim's lip, the dish set back behind thick spokes
+  // with the brake disc between them, the hub cap. Both faces alike (the same wheel on either side of the car)
   function wheelInto(g, cx, cy, cz, r, wd, tire, rim) {
-    const S = 12, inn = [cx, cy, cz];
-    const dark = [rim[0] * 0.38, rim[1] * 0.38, rim[2] * 0.4], hub = [0.15, 0.15, 0.17];
+    const S = 14, h = wd / 2, ctr = [cx, cy, cz];
+    const lip = [Math.min(1, rim[0] * 1.12), Math.min(1, rim[1] * 1.12), Math.min(1, rim[2] * 1.12)], dark = [rim[0] * 0.3, rim[1] * 0.3, rim[2] * 0.32], hub = [0.15, 0.15, 0.17], disc = [0.56, 0.56, 0.58];
+    const tread = [tire[0] * 1.25 + 0.01, tire[1] * 1.25 + 0.01, tire[2] * 1.25 + 0.01];   // (the tread a little lighter: worn rubber)
     const p = (a, z, rr) => [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr, cz + z];
+    // the tyre's profile (z across, radius): inner sidewall at the rim, shoulder, tread, shoulder, outer sidewall; its normals in (radius, z)
+    const prof = [[-h, 0.7 * r], [-h * 0.9, 0.975 * r], [-h * 0.62, r], [h * 0.62, r], [h * 0.9, 0.975 * r], [h, 0.7 * r]];
+    const segN = []; for (let i = 0; i + 1 < prof.length; i++) { const dz = prof[i + 1][0] - prof[i][0], dr = prof[i + 1][1] - prof[i][1], l = Math.hypot(dz, dr) || 1; segN.push([dz / l, -dr / l]); }   // ((n_r, n_z): outward)
+    const vN = prof.map((_, i) => { const a = segN[Math.max(0, i - 1)], b = segN[Math.min(segN.length - 1, i)], nr = a[0] + b[0], nz = a[1] + b[1], l = Math.hypot(nr, nz) || 1; return [nr / l, nz / l]; });
+    vN[0] = [0.35, -0.94]; vN[prof.length - 1] = [0.35, 0.94];   // (the sidewalls face out of the wheel where they meet the rim)
+    const n3 = (a, k) => [Math.cos(a) * vN[k][0], Math.sin(a) * vN[k][0], vN[k][1]];
     for (let i = 0; i < S; i++) {
       const a0 = i / S * Math.PI * 2, a1 = (i + 1) / S * Math.PI * 2;
-      g.quadO(p(a0, -wd / 2, r), p(a0, wd / 2, r), p(a1, wd / 2, r), p(a1, -wd / 2, r), tire, inn);
+      for (let k = 0; k + 1 < prof.length; k++) {
+        const c0 = k === 2 ? tread : tire;
+        g.quadON(p(a0, prof[k][0], prof[k][1]), p(a0, prof[k + 1][0], prof[k + 1][1]), p(a1, prof[k + 1][0], prof[k + 1][1]), p(a1, prof[k][0], prof[k][1]), n3(a0, k), n3(a0, k + 1), n3(a1, k + 1), n3(a1, k), ctr, c0, c0, c0, c0);
+      }
       for (const sd of [-1, 1]) {
-        const zf = sd * wd / 2, zr = sd * (wd / 2 + 0.006), out = [cx, cy, cz - sd];
-        g.quadO(p(a0, zf, r * 0.68), p(a0, zf, r), p(a1, zf, r), p(a1, zf, r * 0.68), tire, out);          // sidewall
-        g.quadO(p(a0, zr, r * 0.54), p(a0, zr, r * 0.68), p(a1, zr, r * 0.68), p(a1, zr, r * 0.54), rim, out); // rim lip
-        g.triO([cx, cy, cz + zf], p(a0, zf, r * 0.54), p(a1, zf, r * 0.54), dark, out);                       // recessed dish
+        const out = [cx, cy, cz - sd * 4], zl = sd * (h + 0.004), zd = sd * (h - 0.05), zc = sd * (h - 0.026);
+        g.quadO(p(a0, zl, r * 0.6), p(a0, zl, r * 0.7), p(a1, zl, r * 0.7), p(a1, zl, r * 0.6), lip, out);           // the rim's lip
+        { const am = (a0 + a1) / 2; g.quadO(p(a0, zl, r * 0.6), p(a0, zd, r * 0.56), p(a1, zd, r * 0.56), p(a1, zl, r * 0.6), dark, p(am, (zl + zd) / 2, r * 0.8)); }   // its barrel, into the wheel (facing the axis)
+        g.triO([cx, cy, cz + zd], p(a0, zd, r * 0.56), p(a1, zd, r * 0.56), dark, out);                              // the dish behind
+        if (i % 2 === 0) { const b0 = a0, b1 = (i + 2) / S * Math.PI * 2;                                             // the brake disc between the spokes (7 segments)
+          g.quadO(p(b0, zc, r * 0.24), p(b0, zc, r * 0.5), p(b1, zc, r * 0.5), p(b1, zc, r * 0.24), disc, out); }
       }
     }
     for (const sd of [-1, 1]) {
-      const zs = sd * (wd / 2 + 0.012), out = [cx, cy, cz - sd];
-      for (let k = 0; k < 5; k++) {                       // spokes
-        const a = k / 5 * Math.PI * 2, ca = Math.cos(a), sa = Math.sin(a), ox = -sa * r * 0.075, oy = ca * r * 0.075, r0 = r * 0.12, r1 = r * 0.56;
-        g.quadO([cx + ca * r0 + ox, cy + sa * r0 + oy, cz + zs], [cx + ca * r1 + ox, cy + sa * r1 + oy, cz + zs], [cx + ca * r1 - ox, cy + sa * r1 - oy, cz + zs], [cx + ca * r0 - ox, cy + sa * r0 - oy, cz + zs], rim, out);
+      const zs = sd * (h + 0.012), zb = sd * (h - 0.02), out = [cx, cy, cz - sd * 4];
+      for (let k = 0; k < 5; k++) {   // the spokes: a face and its two sides (they stand out of the dish)
+        const a = k / 5 * Math.PI * 2 + 0.3, ca = Math.cos(a), sa = Math.sin(a), w0 = r * 0.1, w1 = r * 0.065, r0 = r * 0.12, r1 = r * 0.6;
+        const A = [cx + ca * r0 - sa * w0, cy + sa * r0 + ca * w0], B = [cx + ca * r1 - sa * w1, cy + sa * r1 + ca * w1], C = [cx + ca * r1 + sa * w1, cy + sa * r1 - ca * w1], D = [cx + ca * r0 + sa * w0, cy + sa * r0 - ca * w0];
+        g.quadO([A[0], A[1], cz + zs], [B[0], B[1], cz + zs], [C[0], C[1], cz + zs], [D[0], D[1], cz + zs], rim, out);
+        for (const [E, F] of [[A, B], [C, D]]) g.quadO([E[0], E[1], cz + zs], [F[0], F[1], cz + zs], [F[0], F[1], cz + zb], [E[0], E[1], cz + zb], [rim[0] * 0.75, rim[1] * 0.75, rim[2] * 0.78], [cx + ca * (r0 + r1) / 2, cy + sa * (r0 + r1) / 2, cz + zb]);
       }
-      for (let i = 0; i < 6; i++) {                       // hub cap
+      for (let i = 0; i < 6; i++) {   // hub cap
         const a0 = i / 6 * Math.PI * 2, a1 = (i + 1) / 6 * Math.PI * 2;
-        g.triO([cx, cy, cz + zs * 1.1], [cx + Math.cos(a0) * r * 0.15, cy + Math.sin(a0) * r * 0.15, cz + zs * 1.04], [cx + Math.cos(a1) * r * 0.15, cy + Math.sin(a1) * r * 0.15, cz + zs * 1.04], hub, out);
+        g.triO([cx, cy, cz + zs * 1.12], [cx + Math.cos(a0) * r * 0.15, cy + Math.sin(a0) * r * 0.15, cz + zs * 1.04], [cx + Math.cos(a1) * r * 0.15, cy + Math.sin(a1) * r * 0.15, cz + zs * 1.04], hub, out);
       }
+    }
+  }
+
+  // the brake calipers (in the body: they neither spin with the wheels nor steer), red, yellow or graphite by the model, between the disc and
+  // the spokes, inside the rim (fx, rx the axles, r the wheels' radius, h half their width). At the back a block on the disc's edge above and
+  // behind the axle; at the front a flatter one over the top of the disc, straddling it: a front wheel on full lock swings its face round the
+  // vertical line through its centre, and a caliper off that line would come out through the spokes
+  const CALIPER = { kaze: 0, vortex: 1, pico: 2, strega: 0, rally: 1 };   // (red, yellow, graphite; any other model by its name)
+  function calipersInto(g, M, fx, rx, r, h) {
+    let k = 0; for (const ch of String(M.id)) k += ch.charCodeAt(0);
+    const col = [[0.78, 0.09, 0.07], [0.95, 0.74, 0.1], [0.22, 0.22, 0.24]][CALIPER[M.id] != null ? CALIPER[M.id] : k % 3], zw = M.wid * 0.5 - 0.1;
+    for (const sd of [-1, 1]) {
+      World.box(g, rx - r * 0.345, r * 1.14, sd * (zw + h - 0.012), r * 0.3, r * 0.3, 0.03, 0, col);
+      World.box(g, fx, r * 1.32, sd * (zw + h - 0.03), r * 0.34, r * 0.2, 0.03, 0, col);
     }
   }
 
@@ -212,6 +243,7 @@ const Render = (function () {
       wheelInto(g, rx, r, sd * (M.wid * 0.5 - 0.1), r, 0.26, [0.07, 0.07, 0.08], [0.93, 0.93, 0.9]);
       for (const wxp of [fx, rx]) World.box(g, wxp - 0.44, 0.17, sd * (M.wid * 0.5 - 0.08), 0.03, 0.26, 0.2, 0, K);
     }
+    calipersInto(g, M, fx, rx, r, 0.13);
     return g.geometry();
   }
   /* ---------------- formula car: open wheels, wings, halo ----------------
@@ -432,6 +464,7 @@ const Render = (function () {
     // rear wheels
     const r = M.rw, wx = -M.b * (M.len / 4.4) * 0.98;
     for (const sd of [-1, 1]) wheelInto(g, wx, r, sd * (M.wid * 0.5 - 0.1), r, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68]);
+    if (bodyKey !== 'formula') calipersInto(g, M, M.a * (M.len / 4.4) * 0.98 + 0.05, wx, r, 0.12);
     const geo = smoothNormals(g.geometry(), 38);
     geoCache.set(key, geo);
     return geo;
@@ -456,6 +489,20 @@ const Render = (function () {
 
   /* ---------------- materials (shared) ---------------- */
   let matCar, matWheel, matTailOff, matTailOn, matBlob, matMarker, matScOn, matScOff;
+  // the shade under a car (its blob, 1.25 x its length, 1.45 x its width): the ground darkest under the floor, the darkest of all where each
+  // tyre stands, fading out softly round the car (what the sky's light does not reach: it grounds the car whatever the sun does)
+  function carShadeTex() {
+    const W = 128, H = 64, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d'), img = x.createImageData(W, H), d = img.data;
+    const sstep = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+      const u = (i + 0.5) / W - 0.5, v = (j + 0.5) / H - 0.5;
+      const ex = Math.max(0, Math.abs(u) - 0.33), ey = Math.max(0, Math.abs(v) - 0.24), e = Math.hypot(ex / 0.17, ey / 0.26);   // (outside the floor's rounded rectangle, out to the blob's edge)
+      let a = 0.5 * (1 - sstep(0, 1, e)) * (0.82 + 0.18 * (1 - sstep(0.1, 0.36, Math.abs(u))));
+      for (const wu of [-0.264, 0.264]) for (const wv of [-0.29, 0.29]) { const q = Math.hypot((u - wu) / 0.085, (v - wv) / 0.11); a += 0.38 * (1 - sstep(0.2, 1, q)); }   // (the tyres' contact)
+      const o = (j * W + i) * 4; d[o] = d[o + 1] = d[o + 2] = 0; d[o + 3] = Math.round(255 * clamp(a, 0, 0.9));
+    }
+    x.putImageData(img, 0, 0); return new THREE.CanvasTexture(c);
+  }
   // scratches: thin bright streaks through the paint, mostly lengthwise, patchy; strongest on the roof/upper body
   const SCRATCH_GLSL = [
     '{ vec3 p = vLp;',
@@ -834,12 +881,22 @@ const Render = (function () {
       this.aPos = new THREE.BufferAttribute(this.pos, 3); this.aPos.setUsage(THREE.DynamicDrawUsage);
       this.aCol = new THREE.BufferAttribute(this.col, 4); this.aCol.setUsage(THREE.DynamicDrawUsage);
       this.aSize = new THREE.BufferAttribute(this.size, 1); this.aSize.setUsage(THREE.DynamicDrawUsage);
-      g.setAttribute('position', this.aPos); g.setAttribute('pcolor', this.aCol); g.setAttribute('psize', this.aSize);
+      const seed = new Float32Array(max); for (let i = 0; i < max; i++) seed[i] = Math.random();   // (each slot its own puff: the billows' pattern, turned)
+      g.setAttribute('position', this.aPos); g.setAttribute('pcolor', this.aCol); g.setAttribute('psize', this.aSize); g.setAttribute('pseed', new THREE.BufferAttribute(seed, 1));
       g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
+      // smoke, dust and spray (not the additive sparks): at high quality (uBill) a billowing puff, not a flat disc: its edge broken by two
+      // octaves of noise that turn with the puff and change as it grows old, lighter at its top (lit from the sky), darker underneath
       this.mat = new THREE.ShaderMaterial({
-        uniforms: { uScale: { value: 400 }, uLit: { value: 1 }, uHB: HLB.uHB, uHD: HLB.uHD },
-        vertexShader: 'attribute float psize; attribute vec4 pcolor; uniform float uScale; uniform float uLit; varying vec4 vC;\n' + HB_GLSL + 'void main(){ vC = vec4(pcolor.rgb * min(1.2, uLit + hbeam(position) * 1.1), pcolor.a); vec4 mv = modelViewMatrix * vec4(position,1.0); gl_PointSize = psize * uScale / max(1.0, -mv.z); gl_Position = projectionMatrix * mv; }',
-        fragmentShader: 'varying vec4 vC; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d,d)*4.0; if (r > 1.0) discard; float a = vC.a * (1.0 - r) * (1.0 - r * 0.3); gl_FragColor = vec4(vC.rgb, a); }',
+        uniforms: { uScale: { value: 400 }, uLit: { value: 1 }, uBill: { value: 0 }, uHB: HLB.uHB, uHD: HLB.uHD },
+        vertexShader: 'attribute float psize; attribute vec4 pcolor; attribute float pseed; uniform float uScale; uniform float uLit; varying vec4 vC; varying float vS;\n' + HB_GLSL + 'void main(){ vC = vec4(pcolor.rgb * min(1.2, uLit + hbeam(position) * 1.1), pcolor.a); vS = pseed; vec4 mv = modelViewMatrix * vec4(position,1.0); gl_PointSize = psize * uScale / max(1.0, -mv.z); gl_Position = projectionMatrix * mv; }',
+        fragmentShader: 'uniform float uBill; varying vec4 vC; varying float vS;' +
+          'float pH(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }' +
+          'float pN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(pH(i), pH(i + vec2(1.0, 0.0)), f.x), mix(pH(i + vec2(0.0, 1.0)), pH(i + 1.0), f.x), f.y); }' +
+          'void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d,d)*4.0; if (r > 1.0) discard; float a = vC.a * (1.0 - r) * (1.0 - r * 0.3); vec3 c = vC.rgb;' +
+          ' if (uBill > 0.5' + (additive ? ' && false' : '') + ') { float an = vS * 6.2832, ca = cos(an), sa = sin(an); vec2 q = vec2(ca * d.x - sa * d.y, sa * d.x + ca * d.y) * 3.2 + vS * 23.0;' +
+          '  float n = pN(q) * 0.62 + pN(q * 2.3 + 5.1) * 0.38; a *= smoothstep(0.18, 0.62, n * 0.9 + (1.0 - r) * 0.42);' +
+          '  c *= 0.82 + 0.3 * (0.5 - d.y) + 0.08 * (n - 0.5); }' +
+          ' gl_FragColor = vec4(c, a); }',
         transparent: true, depthWrite: false, blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
       });
       this.points = new THREE.Points(g, this.mat); this.points.frustumCulled = false; this.points.renderOrder = additive ? 6 : 5;
@@ -1111,7 +1168,7 @@ const Render = (function () {
     matWheel = new THREE.MeshLambertMaterial({ vertexColors: true });
     matTailOff = new THREE.MeshLambertMaterial({ color: 0x6a1212 });
     matTailOn = new THREE.MeshBasicMaterial({ color: 0xff2a1a });
-    matBlob = new THREE.MeshBasicMaterial({ map: tex.blob, transparent: true, depthWrite: false, opacity: 0.8 });
+    matBlob = new THREE.MeshBasicMaterial({ map: carShadeTex(), transparent: true, depthWrite: false, opacity: 0.8 });
     matMarker = new THREE.MeshBasicMaterial({ color: 0xffd23f });
     matScOn = new THREE.MeshBasicMaterial({ color: 0xffa21a }); matScOff = new THREE.MeshLambertMaterial({ color: 0x4a3312 });   // (the safety car's lamps)
     particles = new Particles(2400); scene.add(particles.points);
@@ -1258,6 +1315,7 @@ const Render = (function () {
     const ms = settings.quality === 'high' ? 2048 : 1024;
     if (sun.shadow.mapSize.x !== ms) { sun.shadow.mapSize.set(ms, ms); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
     if (!settings.shadows && sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }   // shadows off: free the shadow map
+    for (const P of [particles, hazeP]) if (P) P.mat.uniforms.uBill.value = settings.quality === 'high' ? 1 : 0;   // (the billowing puffs: high quality)
     // every material is rebuilt, so shadow receiving goes in or out of its shader (three.js r128 has no getter for needsUpdate:
     // it has to be set on each material; the shaders are compiled again at the next frame)
     const upd = (o) => { if (o.material) for (const m of Array.isArray(o.material) ? o.material : [o.material]) m.needsUpdate = true; };
@@ -1900,11 +1958,11 @@ const Render = (function () {
       uniforms: { tD: { value: rt.texture }, uRes: { value: new THREE.Vector2(4, 4) }, uFocus: { value: 0.45 }, uBand: { value: 0.22 }, uBlur: { value: 0.8 }, uGam: { value: 0.88 },
         uTint: { value: new THREE.Vector3(1, 1, 1) }, uSat: { value: 1.1 }, uCon: { value: 1.04 }, uVig: { value: 0.17 },
         uSun: { value: new THREE.Vector2(0, 1.2) }, uHaze: { value: 0 }, uHazeCol: { value: new THREE.Vector3(1, 0.8, 0.6) }, uRays: { value: 0 }, uSunR: { value: new THREE.Vector2(0.5, 1.2) },
-        tB: { value: null }, uBloom: { value: 0 }, tFv: { value: null }, uFlare: { value: 0 }, uFlC: { value: new THREE.Vector3(1, 0.9, 0.75) }, uHeat: { value: 0 }, uHz: { value: 2 }, uHt: { value: 0 }, ...LENS_U },
+        tB: { value: null }, uBloom: { value: 0 }, tFv: { value: null }, uFlare: { value: 0 }, uFlC: { value: new THREE.Vector3(1, 0.9, 0.75) }, uHeat: { value: 0 }, uHz: { value: 2 }, uHt: { value: 0 }, tAO: { value: null }, uAO: { value: 0 }, uAOPx: { value: new THREE.Vector2(0.01, 0.01) }, uSpd: { value: 0 }, ...LENS_U },
       vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
       fragmentShader: [
         'uniform sampler2D tD; uniform vec2 uRes; uniform float uFocus; uniform float uBand; uniform float uBlur; uniform float uGam; uniform vec3 uTint; uniform float uSat; uniform float uCon; uniform float uVig; uniform vec2 uSun; uniform float uHaze; uniform vec3 uHazeCol; uniform float uRays; uniform vec2 uSunR; uniform sampler2D tB; uniform float uBloom; varying vec2 vUv;',
-        'uniform sampler2D tFv; uniform float uFlare; uniform vec3 uFlC; uniform float uHeat; uniform float uHz; uniform float uHt;', DROP_GLSL,
+        'uniform sampler2D tFv; uniform float uFlare; uniform vec3 uFlC; uniform float uHeat; uniform float uHz; uniform float uHt; uniform sampler2D tAO; uniform float uAO; uniform vec2 uAOPx; uniform float uSpd;', DROP_GLSL,
         'float lum(vec3 c){ return dot(c, vec3(0.299, 0.587, 0.114)); }',
         'void main(){',
         // the heat haze (a hot summer's day, high quality): the band of the picture just below the horizon (uHz) wavers
@@ -1926,6 +1984,10 @@ const Render = (function () {
         '    if (mx - mn > 0.08) { vec2 dir = vec2(lS - lN, lE - lW); dir = dir / (length(dir) + 1e-4) * px * 0.9; c = mix(c, 0.5 * (texture2D(tD, tc + dir).rgb + texture2D(tD, tc - dir).rgb), 0.55); }',
         '  }',
         // shafts of sunlight: the bright sky round the sun smeared towards it, cut into rays by the trees and hills in front of it
+        // the speed (high quality, fast in the chase and kino views): the picture's edges smeared away from its middle, more the further out
+        '  if (uSpd > 0.0) { vec2 cv = vUv - vec2(0.5, 0.48); float e = smoothstep(0.12, 0.62, length(cv * vec2(uRes.x / uRes.y, 1.0))) * uSpd; if (e > 0.003) { vec3 sb = c; for (int i = 1; i <= 5; i++) sb += texture2D(tD, tc - cv * (0.018 * float(i) * e)).rgb; c = mix(c, sb / 6.0, min(1.0, e * 1.6)); } }',
+        // the ambient occlusion (high quality, WebGL2: post.ao from the depth): the creases, the foot of the walls, the ground under the cars darker
+        '  if (uAO > 0.0) { float ao = (texture2D(tAO, vUv).r * 2.0 + texture2D(tAO, vUv + vec2(uAOPx.x, 0.0)).r + texture2D(tAO, vUv - vec2(uAOPx.x, 0.0)).r + texture2D(tAO, vUv + vec2(0.0, uAOPx.y)).r + texture2D(tAO, vUv - vec2(0.0, uAOPx.y)).r) / 6.0; c *= mix(1.0, ao, uAO); }',
         '  if (dk > 0.0) { vec3 nn = normalize(vec3(dr.xy, max(dr.z, 0.05))); float hl = pow(max(dot(nn, normalize(vec3(-0.45, 0.6, 0.66))), 0.0), 24.0);',   // (the drop: lighter inside, a highlight, a darker rim; snow: a white flake melting)
         '    if (uDSnow > 0.5) c = mix(c, vec3(0.93, 0.95, 1.0) * (0.75 + 0.3 * lum(c)), smoothstep(0.0, 0.7, dr.z) * 0.6);',
         '    else { c *= 0.92 + 0.16 * dr.z; c += hl * 0.35 * dk; c *= 1.0 - 0.3 * dk * (1.0 - smoothstep(0.0, 0.45, dr.z)); } }',
@@ -1981,10 +2043,34 @@ const Render = (function () {
         '  gl_FragColor = vec4(v / 12.0, 0.0, 0.0, 1.0); }'].join('\n') });
     const fvQ = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), fvM); fvQ.frustumCulled = false; const fvS = new THREE.Scene(); fvS.add(fvQ);
     post.fv = { rt: fvT, mat: fvM, sc: fvS }; mat.uniforms.tFv.value = fvT.texture; post.flare = 0; post.fk = 0;
+    // ambient occlusion (WebGL2: the scene's depth is a texture): at half the size, from the depth, the position of each point and the slope
+    // of its surface (its normal); twelve samples round it within ~0.6 m (more far off) that stand above its surface hide some of the sky from
+    // it. Faded into the fog. The post pass blurs it a little and darkens the picture with it
+    if (rt.depthTexture) {
+      const aoT = new THREE.WebGLRenderTarget(4, 4, bo); aoT.texture.generateMipmaps = false;
+      const aoM = new THREE.ShaderMaterial({ uniforms: { tDepth: { value: rt.depthTexture }, uNear: { value: 0.1 }, uFar: { value: 700 }, uTan: { value: new THREE.Vector2(1, 1) }, uFog: { value: new THREE.Vector2(100, 300) }, uDRes: { value: new THREE.Vector2(4, 4) } },
+        vertexShader: vs, depthTest: false, depthWrite: false,
+        fragmentShader: ['uniform sampler2D tDepth; uniform float uNear; uniform float uFar; uniform vec2 uTan; uniform vec2 uFog; uniform vec2 uDRes; varying vec2 vUv;',
+          'vec2 tcn(vec2 uv){ return (floor(uv * uDRes) + 0.5) / uDRes; }',   // (on a depth texel's centre: never between two)
+          'float lz(vec2 uv){ float d = texture2D(tDepth, uv).x; return uNear * uFar / (uFar - d * (uFar - uNear)); }',
+          'vec3 vp(vec2 uv, float z){ return vec3((uv * 2.0 - 1.0) * uTan * z, -z); }',
+          'vec3 pAt(vec2 uv){ return vp(uv, lz(uv)); }',
+          'float h12(vec2 p){ return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715)))); }',   // (interleaved gradient noise: no banding)
+          'void main(){ vec2 uv0 = tcn(vUv); float z = lz(uv0); if (z > uFar * 0.9 || z > uFog.y) { gl_FragColor = vec4(1.0); return; }',
+          '  vec2 tx = vec2(1.0 / uDRes.x, 0.0), ty = vec2(0.0, 1.0 / uDRes.y); vec3 P = vp(uv0, z), Pr = pAt(uv0 + tx), Pl = pAt(uv0 - tx), Pu = pAt(uv0 + ty), Pd = pAt(uv0 - ty);',
+          '  vec3 ex = abs(Pr.z - P.z) < abs(P.z - Pl.z) ? Pr - P : P - Pl, ey = abs(Pu.z - P.z) < abs(P.z - Pd.z) ? Pu - P : P - Pd, n = normalize(cross(ex, ey));',   // (the surface's slope from its smoother side: not across an edge)
+          '  float Rw = 0.6 + z * 0.01, occ = 0.0, rot = h12(gl_FragCoord.xy) * 6.2832; vec2 Ruv = Rw / (2.0 * uTan * z);',
+          '  for (int i = 0; i < 12; i++) { float fi = float(i), a = fi * 2.39996 + rot, rr = sqrt((fi + 0.5) / 12.0); vec2 uv2 = tcn(uv0 + vec2(cos(a), sin(a)) * rr * Ruv);',
+          '    vec3 v = pAt(uv2) - P; float d = length(v); occ += max(0.0, dot(n, v) / (d + 1e-3) - 0.12) * (1.0 - smoothstep(Rw * 0.7, Rw * 1.7, d)); }',
+          '  float ao = clamp(1.0 - occ / 12.0 * 2.1, 0.3, 1.0); gl_FragColor = vec4(vec3(mix(ao, 1.0, smoothstep(uFog.x, uFog.y, z))), 1.0); }'].join('\n') });
+      const aoQ = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), aoM); aoQ.frustumCulled = false; const aoS = new THREE.Scene(); aoS.add(aoQ);
+      post.ao = { rt: aoT, mat: aoM, sc: aoS }; mat.uniforms.tAO.value = aoT.texture;
+    }
   }
   function sizePost() {
     if (!post) return; renderer.getDrawingBufferSize(_v2); post.rt.setSize(_v2.x, _v2.y); post.mat.uniforms.uRes.value.set(_v2.x, _v2.y);
     const B = post.bl, w = Math.max(1, Math.round(_v2.x / 4)), h = Math.max(1, Math.round(_v2.y / 4)); B.A.setSize(w, h); B.B.setSize(w, h); B.bright.uniforms.uPx.value.set(1 / _v2.x, 1 / _v2.y); B.w = w; B.h = h;
+    if (post.ao) { const aw = Math.max(1, Math.round(_v2.x / 2)), ah = Math.max(1, Math.round(_v2.y / 2)); post.ao.rt.setSize(aw, ah); post.mat.uniforms.uAOPx.value.set(1 / aw, 1 / ah); post.ao.mat.uniforms.uDRes.value.set(_v2.x, _v2.y); }   // (the occlusion at half the size)
   }
   function bloomPass() {   // (after the scene is in post.rt): the bright parts into bl.A, blurred there
     const B = post.bl, U = B.blur.uniforms;
@@ -3007,7 +3093,8 @@ const Render = (function () {
         const rl = (1 + Math.max(0, wet) * 0.9) * (atmos.tod === 'night' ? 1.5 : atmos.tod === 'dusk' ? 1.25 : atmos.tod === 'dawn' ? 1.15 : 1);   // (rain, dusk, night: the lights stand out more in the gloom)
         if (v.noHead) { if (k === 2 && rainL) glows.add(_lv.x, _lv.y, _lv.z, 1.5, 1.0, 0.15, 0.08, 0.9); }
         else if (k < 2) glows.add(_lv.x, _lv.y, _lv.z, 0.95, 1.0, 0.88, 0.62, 0.17 * rl);
-        else glows.add(_lv.x, _lv.y, _lv.z, braking ? 1.8 : 0.95, 1.0, 0.15, 0.08, braking ? 0.95 : 0.3 * rl);
+        else { const dk = clamp((atmos.tod === 'night' ? 1 : atmos.tod === 'day' ? 0.35 : 0.7) + 0.5 * Math.max(0, wet), 0, 1);   // (by day a brake light is a lamp, hardly a halo; in the gloom it flares)
+          glows.add(_lv.x, _lv.y, _lv.z, braking ? 0.9 + 0.9 * dk : 0.95, 1.0, 0.15, 0.08, braking ? 0.4 + 0.55 * dk : 0.3 * rl); }
       }
       if (hlK) hlAdd(v, c, dt, hlK);   // (the beams in the air)
       if (v.scrU) v.scrU.value = Core.sstep(0.3, 0.9, c.dmg || 0);
@@ -3211,6 +3298,9 @@ const Render = (function () {
       }
     }
     const slide = (c.arcade ? Core.sstep(0.26, 0.62, Math.abs(c.beta || 0)) * 1.2 : Math.max(0, c.latR - 1.0) / 3.5) + c.spin * 0.9 + (c.lock ? 0.55 : 0) + (c.inHand > 0.5 && spd > 5 ? 0.45 : 0);
+    // how hard the rear tyres smoke (0..1.2): only a big slide (the CS cars drift through every fast corner: that is the skid marks', not smoke),
+    // real wheelspin (the start, a slide out of a slow corner), a locked wheel, the handbrake
+    const smk = clamp((c.arcade ? Core.sstep(0.3, 0.75, Math.abs(c.beta || 0)) : clamp((c.latR - 2.3) / 2.2, 0, 1)) + clamp(((c.spin || 0) - 0.45) / 1.2, 0, 1) + (c.lock ? 0.6 : 0) + (c.inHand > 0.5 && spd > 5 ? 0.5 : 0), 0, 1.2);
     const rainy = wetW > 0.1, near = !rainy || Math.hypot(x - (cam.vcx || 0), z - (cam.vcz || 0)) < 140;   // (rain: spray only where it can be seen, the particles are shared)
     const snowR = atmos.season === 'winter' && !!(world && world.snowRoad);   // (a winter road under a film of snow and ice: Höljes)
     const wheels = [[-M.b, -tw, 2], [-M.b, tw, 3], [M.a, -tw, 0], [M.a, tw, 1]];
@@ -3280,13 +3370,13 @@ const Render = (function () {
           const sh = 0.95 + Math.random() * 0.05, sp = 0.3 + Math.random() * 0.2;
           particles.emit(px, 0.3 + yb, pz, c.vx * sp + (Math.random() - 0.5) * 2.2, 0.5 + Math.random() * 0.8, c.vz * sp + (Math.random() - 0.5) * 2.2, 0.8 + Math.random() * 0.6, 0.8, 3.6 + Math.random() * 2, 0.93 * sh, 0.95 * sh, 0.99 * sh, 0.24 + 0.2 * Math.min(1, intens), -0.05, 1.5, yb);
         }
-      } else if (onHard && intens > 0.22 && spd > 3) {
-        v.acc[k] += Math.min(1.3, intens) * 42 * dt;
+      } else if (onHard && smk > 0.02 && spd > 3) {   // tyre smoke: a big slide, wheelspin, a locked wheel (not the drift of every fast corner)
+        v.acc[k] += smk * 30 * dt;
         while (v.acc[k] >= 1) {
           v.acc[k] -= 1;
           const vxs = c.vx * 0.12 + (Math.random() - 0.5) * 1.6, vzs = c.vz * 0.12 + (Math.random() - 0.5) * 1.6;
-          const g = 0.88 + Math.random() * 0.1;
-          particles.emit(px, 0.35 + yb, pz, vxs, 0.5 + Math.random() * 0.6, vzs, 1.6 + Math.random() * 1.0, 0.9, 4.4 + Math.random() * 1.8, g, g, g + 0.02, 0.4, -0.05, 1.2, yb);
+          const g = 0.84 + Math.random() * 0.1;
+          particles.emit(px, 0.3 + yb, pz, vxs, 0.4 + Math.random() * 0.5, vzs, 0.9 + Math.random() * 0.6, 0.8, 2.8 + Math.random() * 1.4, g, g, g + 0.02, 0.14 + 0.16 * Math.min(1, smk), -0.05, 1.3, yb);
         }
       } else if (!onHard && spd > 4) {
         const amt = (surf === 3 || surf === 5 ? 1.0 : 0.45) * clamp(spd / 20, 0.2, 1.4) + intens * 0.5, D = dust || DUST0;
@@ -3997,6 +4087,10 @@ const Render = (function () {
       if (cam.ck) U.uBlur.value = 0; else if (cam.shot && cam.shot.blur != null) { U.uBlur.value = cam.shot.blur; if (cam.shot.blur > 0) U.uBand.value = 0.06; }   // (no miniature look from the driver's seat; the photo mode's own: a narrow sharp band on the car)
       renderer.setRenderTarget(post.rt); renderer.render(scene, camera); if (ckOn) ckDraw();
       U.uBloom.value = post.bloom * (1 - 0.75 * stm.f); if (U.uBloom.value > 0) bloomPass();   // (a lightning flash: not blown out by the glow)
+      U.uAO.value = post.ao && !cam.ck && !dbg.noAO ? 0.9 : 0;   // (not from the cockpit: its own pass is in the depth there; tests: dbg.noAO)
+      if (U.uAO.value > 0) { const A = post.ao.mat.uniforms, tf = Math.tan(camera.fov * Math.PI / 360); A.uNear.value = camera.near; A.uFar.value = camera.far; A.uTan.value.set(tf * camera.aspect, tf); A.uFog.value.set(scene.fog.near, scene.fog.far); renderer.setRenderTarget(post.ao.rt); renderer.render(post.ao.sc, post.cam); }
+      { const fast = target && !cam.shot && !cam.ck && (lastMode === 'chase' || lastMode === 'kino') ? clamp(((target.speed || 0) - 38) / 32, 0, 1) : 0;   // (from ~140 km/h: the edges smeared, the faster the more; not from the cockpit, which moves with the driver)
+        post.spd = (post.spd || 0) + (fast - (post.spd || 0)) * Math.min(1, dt * 3); U.uSpd.value = post.spd > 0.01 ? post.spd * 0.9 : 0; }
       { const hot = atmos.season === 'summer' && atmos.tod === 'day' && wet <= 0 && !(curTrack && curTrack.def.theme === 'pikes');   // the heat haze: a dry summer's day (not up on Pikes Peak)
         let hz = 2; if (hot) { camera.getWorldDirection(_sunV); const hl = Math.hypot(_sunV.x, _sunV.z), D = camera.far * 0.85; if (hl > 0.2) { _pv.set(camera.position.x + _sunV.x / hl * D, camera.position.y, camera.position.z + _sunV.z / hl * D).project(camera); if (_pv.z < 1) hz = _pv.y * 0.5 + 0.5; } }   // (the horizon: a point far off at the camera's height, inside its far plane)
         U.uHeat.value = hot && hz < 1.2 ? 1 : 0; U.uHz.value = hz; U.uHt.value = time % 100; }

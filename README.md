@@ -240,6 +240,13 @@ Asfalt je obrabljen: zalite razpoke vzdolž ceste (največ ob kolesnicah in robo
 - **Vetrnice in daljnovod:** na vzpetinah 250–480 m od proge se vrtijo vetrne elektrarne (Nordschleife, Spa, Toskana, Suzuka, Höljes), čez pokrajino 150–300 m od proge teče daljnovod na jeklenih stebrih (Nordschleife, Red Bull Ring, Gorski reli, Jezero Ring, Toskana, Spa). Ob mraku in ponoči na vetrnicah, stebrih in TV žerjavih v Monaku hkrati utripajo rdeče opozorilne luči.
 - **Boksarski zid in padok:** na progah z boksi mož iz tvoje ekipe ob tvojem boksu pomoli tablo čez boksarski zid, ko pripelješ po ciljni ravnini: tvoje mesto, zaostanek za avtom pred tabo in krog (kakor je bilo v prejšnjem krogu). Mehaniki nosijo gume vzdolž garaž, mimo se pelje skuter.
 - **Vročinska meglica, samo pri visoki kakovosti:** na vročem poletnem dnevu (suho, podnevi, ne na Pikes Peaku) pas slike tik pod obzorjem trepeta.
+- **Dim gum:** gume se kadijo le ob velikem zdrsu, ob vrtenju koles na mestu (štart, speljevanje iz počasnega ovinka), ob blokiranem kolesu in z ročno zavoro, ne pa v vsakem hitrem ovinku. Ob štartu ostanejo na asfaltu črne sledi in rahel dim, ki se hitro razkadi. Pri visoki kakovosti so oblački dima, prahu in pršca puhasti (razcefran rob, ki se spreminja), zgoraj svetlejši in spodaj temnejši.
+- **Kolesa:** zaobljene gume (bok, ramena, nekoliko svetlejši tekalni sloj), rob platišča, globlje platišče z debelimi naperami, med njimi zavorni kolut z zavorno čeljustjo (rdečo, rumeno ali grafitno, odvisno od avta).
+- **Senca pod avtom:** tla so najtemnejša pod podvozjem in tam, kjer stojijo gume, okoli avta pa mehko zbledijo, zato avto stoji na cesti tudi v oblačnem vremenu in ponoči.
+- **Zavorne luči:** podnevi zasveti luč z majhnim sijem, ob mraku, ponoči in v dežju pa je sij večji.
+- **Prodišča:** na Jezero Ringu je prod v prodiščih naraven: sivo bež kamenčki različnih velikosti, osvetljeni od zgoraj in s senco, velike svetlejše in temnejše lise, ki skrijejo ponavljanje vzorca, in temnejši pas ob cesti, kjer avti zapeljejo vanj. Proge v slogu Circuit Superstars (Bakreni gozd, Toskana, Gromski rt) ohranijo razpokano zemljo.
+- **Senčenje kotov (ambient occlusion), samo pri visoki kakovosti:** kjer se ploskve stikajo, je temneje: ob vznožju sten, ograj in tribun, ob nogah gledalcev, na tleh okoli avtov. V megli zbledi, iz kokpita ga ni. Potrebuje WebGL2.
+- **Občutek hitrosti, samo pri visoki kakovosti:** nad približno 140 km/h se v pogledu za avtom in v kino pogledu robovi slike razmažejo navzven, bolj, kolikor hitreje pelješ. Iz kokpita in v prizorih (TV kamere, foto način) tega ni.
 
 ## Vreme
 

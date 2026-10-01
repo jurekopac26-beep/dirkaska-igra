@@ -98,6 +98,15 @@ const World = (function () {
           'if (uDew > 0.0) { vec2 dg = floor(vGw * 7.0); float dh = fract(sin(dot(dg, vec2(12.9898, 78.233))) * 43758.5453); float tw = step(0.975, dh) * pow(max(0.0, sin(dot(cameraPosition.xz, vec2(0.37, 0.29)) * 0.9 + dh * 80.0)), 6.0);\n' +
           '  gl_FragColor.rgb += vec3(1.0, 0.97, 0.9) * tw * uDew * (1.0 - smoothstep(8.0, 45.0, dwD)); }\n#include <fog_fragment>'); });
   }
+  // a gravel trap's bed (its pebbles a 2.6 m tile): large soft blotches over it, lighter and darker, a little warmer and greyer (two scales of
+  // noise on the ground's own position), so the tile does not repeat to the eye; a darker band of disturbed gravel along its edge by the road
+  function gravelBed(mat) {
+    return chainShader(mat, 'gBed', (sh) => {
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vGb;').replace('#include <project_vertex>', '#include <project_vertex>\nvGb = (modelMatrix * vec4(transformed, 1.0)).xz;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec2 vGb;\nfloat gbH(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }\nfloat gbN(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(gbH(i), gbH(i + vec2(1.0, 0.0)), f.x), mix(gbH(i + vec2(0.0, 1.0)), gbH(i + 1.0), f.x), f.y); }')
+        .replace('#include <map_fragment>', '#include <map_fragment>\n{ float b = gbN(vGb / 7.0) * 0.6 + gbN(vGb / 2.3 + 17.0) * 0.4; diffuseColor.rgb *= vec3(0.84, 0.85, 0.87) + vec3(0.3, 0.28, 0.25) * b; }');
+    });
+  }
   const chainShader = (mat, key, f) => { const prev = mat.onBeforeCompile, pk = mat.customProgramCacheKey ? mat.customProgramCacheKey() : '';
     mat.onBeforeCompile = (sh, r) => { if (prev) prev.call(mat, sh, r); f(sh); }; mat.customProgramCacheKey = () => key + '|' + pk; return mat; };
   function treeSway(mat) {
@@ -964,12 +973,12 @@ const World = (function () {
           const inI = w + (T.curb[i] ? T.curbW : 0.35), inJ = w + (T.curb[j] ? T.curbW : 0.35);
           const outI = lerp(inI + 0.1, bar[i] - 0.7, fi), outJ = lerp(inJ + 0.1, bar[j] - 0.7, fj);
           const a = P(i, side * inI, 0.016), b = P(i, side * outI, 0.016), c = P(j, side * outJ, 0.016), d = P(j, side * inJ, 0.016);
-          const uvp = (p) => [p[0] / 10, -p[2] / 10];
-          const col = [1, 1, 1];
-          g.quadUp(a, b, c, d, [col, col, col, col], [uvp(a), uvp(b), uvp(c), uvp(d)]);
+          const sc = CSX ? 10 : 2.6, uvp = (p) => [p[0] / sc, -p[2] / sc];   // (the cracked earth of the Circuit Superstars tracks a 10 m tile; the pebbles 2.6 m)
+          const col = [1, 1, 1], cin = CSX ? col : [0.84, 0.84, 0.85];   // (the pebbles: darker where the cars have run through by the road)
+          g.quadUp(a, b, c, d, [cin, col, col, cin], [uvp(a), uvp(b), uvp(c), uvp(d)]);
         }
       }
-      const m = new THREE.Mesh(g.geometry(), new THREE.MeshLambertMaterial({ map: tex.gravel, vertexColors: true })); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m);
+      const m = new THREE.Mesh(g.geometry(), CSX ? new THREE.MeshLambertMaterial({ map: tex.gravel, vertexColors: true }) : gravelBed(new THREE.MeshLambertMaterial({ map: tex.pebbles, vertexColors: true }))); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m);
     }
     // start line + grid slots
     {
@@ -9654,7 +9663,7 @@ const World = (function () {
   const _lfM = new THREE.Matrix4(), _lfQ = new THREE.Quaternion(), _lfS = new THREE.Vector3(), _lfP = new THREE.Vector3(), _lfY = new THREE.Vector3(0, 1, 0), _lfC = new THREE.Color();
   function lifeUpdate(L, t, car, cam) {
     const dt = L.t < 0 ? 0 : clamp(t - L.t, 0, 0.1); L.t = t;
-    if (!cam) { for (const kd in L.M) { const E = L.M[kd]; E.vis.length = 0; E.mesh.count = 0; E.mesh.visible = false; } L.sel = -1; return; }   // (no camera: none in sight; the tests' fingerprint of the world does not depend on where the camera was)
+    if (!cam) { for (const kd in L.M) { const E = L.M[kd]; E.vis.length = 0; E.mesh.count = 0; E.mesh.visible = false; E.aH.array.fill(0); E.aH.needsUpdate = true; } L.sel = -1; return; }   // (no camera: none in sight; the tests' fingerprint of the world does not depend on where the camera was)
     const cx = cam.position.x, cz = cam.position.z;
     if (t - L.sel > 0.5 || L.sel < 0 || Math.hypot(cx - (L.cx || 0), cz - (L.cz || 0)) > 60) {   // which are near the camera (every half second, or moved on): their instances
       L.sel = t; L.cx = cx; L.cz = cz; for (const kd in L.M) { const E = L.M[kd]; E.vis.length = 0; }

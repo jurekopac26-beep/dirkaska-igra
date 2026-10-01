@@ -113,6 +113,29 @@ const Tex = (function () {
     return mk(c, true);
   }
 
+  // a gravel trap's pebbles (the realistic tracks; the Circuit Superstars ones keep their cracked earth): a light grey-beige bed of grit and
+  // pebbles of every size, each lit from the sky (lighter on top, a shadow under it), tileable (each pebble drawn again across the edges);
+  // a tile is 2.6 m (World: gravelBed adds the large-scale blotches that hide the repeat)
+  function pebbles() {
+    const S = 256, c = cv(S, S), x = c.getContext('2d'), r = Core.rng(311), n = makeNoise(16, 312);
+    const img = x.createImageData(S, S), d = img.data;
+    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) { const k = 0.8 + n(i / 16, j / 16) * 0.16 + (r() - 0.5) * 0.18, o = (j * S + i) * 4; d[o] = cl(176 * k); d[o + 1] = cl(166 * k); d[o + 2] = cl(148 * k); d[o + 3] = 255; }
+    x.putImageData(img, 0, 0);
+    const pal = [[196, 188, 172], [178, 170, 156], [150, 144, 134], [206, 200, 188], [168, 150, 128], [126, 120, 114], [188, 176, 150]];
+    for (let k = 0; k < 1500; k++) {
+      const big = r() < 0.12, rad = big ? 3.5 + r() * 3.5 : 1.2 + r() * 2.4, px = r() * S, py = r() * S, el = 0.6 + r() * 0.4, rot = r() * Math.PI, P = pal[Math.floor(r() * pal.length)], v = 0.9 + r() * 0.2;
+      for (const ox of [-S, 0, S]) for (const oy of [-S, 0, S]) {
+        const cx = px + ox, cy = py + oy; if (cx < -8 || cx > S + 8 || cy < -8 || cy > S + 8) continue;
+        x.save(); x.translate(cx, cy); x.rotate(rot);
+        x.fillStyle = 'rgba(40,36,30,0.45)'; x.beginPath(); x.ellipse(rad * 0.25, rad * 0.35, rad, rad * el, 0, 0, Math.PI * 2); x.fill();   // (its shadow, down to the lower right)
+        x.fillStyle = 'rgb(' + (P[0] * v | 0) + ',' + (P[1] * v | 0) + ',' + (P[2] * v | 0) + ')'; x.beginPath(); x.ellipse(0, 0, rad, rad * el, 0, 0, Math.PI * 2); x.fill();
+        x.fillStyle = 'rgba(255,255,250,0.28)'; x.beginPath(); x.ellipse(-rad * 0.3, -rad * 0.3 * el, rad * 0.45, rad * 0.3 * el, 0, 0, Math.PI * 2); x.fill();   // (the sky on its top)
+        x.restore();
+      }
+    }
+    return mk(c, true);
+  }
+
   function water() {
     const n1 = makeNoise(8, 31), n2 = makeNoise(16, 32);
     const c = pixels(256, 256, (i, j) => {
@@ -508,7 +531,7 @@ const Tex = (function () {
   function all(maxAniso) {
     if (cache) return cache;
     aniso = Math.min(8, maxAniso || 4);
-    cache = { grass: grass(), asphalt: asphalt(), curb: curb(), gravel: gravel(), water: water(), crowd: crowd(), sponsors: sponsors(), tires: tires(), fence: fence(), checker: checker(), blob: blob(), sand: sand(), paving: paving(), facade: facade(), makadam: null, makadamBump: null };
+    cache = { grass: grass(), asphalt: asphalt(), curb: curb(), gravel: gravel(), pebbles: pebbles(), water: water(), crowd: crowd(), sponsors: sponsors(), tires: tires(), fence: fence(), checker: checker(), blob: blob(), sand: sand(), paving: paving(), facade: facade(), makadam: null, makadamBump: null };
     { const m = makadam(); cache.makadam = m.map; cache.makadamBump = m.bump; }
     cache.cracks = cracks(); cache.tiresRW = tiresRW(); cache.facadeBal = facadeBal();
     cache.sponsorsLJ = sponsorsLJ(); cache.bannerLJ = bannerLJ(); cache.sponsorsFO = sponsorsFO(); cache.fenceFO = fenceFO(); cache.boardsFO = boardsFO(); cache.curbRWB = curbRWB(); cache.tyreTex = tyreTex(); cache.sponsorsMC = sponsorsMC();

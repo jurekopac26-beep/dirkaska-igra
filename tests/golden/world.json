@@ -5,11 +5,11 @@
   "instances": 5657,
   "props": 102,
   "crowd": 2936,
-  "world": "842b463d",
+  "world": "29e4efb4",
   "propsHash": "8c07ccb7",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "2ef081e1",
+   "-:MeshLambertMaterial": "88047472",
    "-:MeshBasicMaterial": "e705d937",
    "-:MeshPhongMaterial": "87fa8193",
    "crowd:MeshLambertMaterial": "f662c1b4",
@@ -43,7 +43,7 @@
   "instances": 3678,
   "props": 76,
   "crowd": 1510,
-  "world": "390129d5",
+  "world": "944d0c40",
   "propsHash": "e4a0fab6",
   "floor": "49bbc346/3276",
   "groups": {
@@ -54,7 +54,7 @@
    "-:MeshBasicMaterial": "deb30354",
    "crowd:MeshLambertMaterial": "2e630303",
    "umbrella:MeshLambertMaterial": "a839f287",
-   "life_cow:MeshLambertMaterial": "e3e5050a"
+   "life_cow:MeshLambertMaterial": "729e883d"
   }
  },
  "ljubljana": {
@@ -282,7 +282,7 @@
   "instances": 18572,
   "props": 152,
   "crowd": 2044,
-  "world": "b11e6fbf",
+  "world": "b9184c32",
   "propsHash": "65236429",
   "floor": "bd4aab96/2464",
   "groups": {
@@ -302,7 +302,7 @@
    "ruts:MeshLambertMaterial": "b9776774",
    "ridges:MeshLambertMaterial": "65dce585",
    "puddles:MeshBasicMaterial": "a64b305a",
-   "life_deer:MeshLambertMaterial": "727ecdff",
+   "life_deer:MeshLambertMaterial": "4217106e",
    "life_stag:MeshLambertMaterial": "42ad1bd2"
   }
  }
