@@ -8,7 +8,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     id: 'gad', name: 'GAD 7L', cat: 'klasika', ord: 2, drive: 'FR',
     desc: 'Ameriški roadster iz 60-ih z velikim V8, stranskimi izpuhi in razširjenimi blatniki.',
     phys: { mass: 1100, a: 1.2, b: 1.09, kI: 1.12, kw: 300, redline: 6500, idle: 750, gears: [2.5, 1.75, 1.3, 1], final: 3.31, rw: 0.33, cDrag: 0.5, len: 3.96, wid: 1.73, steerMax: 0.62,
-      tracK: 0.95, brakeK: 0.9, spinK: 1 },
+      tracK: 0.95, brakeK: 0.9, spinK: 1, aiGap: 7.5, aiPass: 4 },   // (aiGap / aiPass: its AI follows further back and passes wider: fewer pile-ups on the Nordschleife, tests/fleet.test.js 8b)
     arc: { amax: 1.58, kv: 1.9, rmin: 4.4 },
     csp: { bx: 0.14, coast: -0.044, thr: 0, liftP: 0.16, pwr: 0.14, out: 1.4, turn: 1.02, w: 0.97, tv: 1.1 },   // (the FR layer: lift-off and power rotation; its own liftP, pwr, out, turn, w, tv)
     stats: { power: 8, grip: 4, weight: 8, drift: 10 },

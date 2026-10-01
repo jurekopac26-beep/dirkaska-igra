@@ -985,8 +985,8 @@ const Core = (function () {
       // counter bumped by every marshals' refit of lost wheels (a partial repair: the renderer and the commentator drop their lost-wheel
       // latches when it changes; a full repair bumps repairN), seq the wreck's parts still to shed (st: s to the next one, at: the race
       // time it began), dnf retired (dnfT when, side: the run-off it pulls onto, stop: standing there, cr: s spent short of it, crawling or
-      // knocked back onto the asphalt: the marshals move it after 8), hold: s left waiting for the marshals to refit its wheels, lt: s since
-      // a wheel came off
+      // knocked back onto the asphalt: the marshals move it after 8; fin: [x, z] where the marshals left it for want of a better spot, null
+      // otherwise), hold: s left waiting for the marshals to refit its wheels, lt: s since a wheel came off
       if (kitParts(b)) this.wreck = wreck0({});
     }
 
@@ -1220,7 +1220,7 @@ const Core = (function () {
   }
   // a breakable vehicle's destruction state as new (Car.wreck; repairCar: all but the retirement and the refit counter)
   const wreck0 = (W) => Object.assign(W, { wl: 0, nL: 0, fix: W.fix || 0, seq: null, st: 0, at: null, hold: 0, lt: 0, dnf: !!W.dnf, dnfT: W.dnfT != null ? W.dnfT : null, side: W.side || 0,
-    stop: !!W.stop, cr: W.cr || 0 });
+    stop: !!W.stop, cr: W.cr || 0, fin: W.fin || null });
   const dnf = (c) => !!(c.wreck && c.wreck.dnf);   // out of the race (Odstop, see Race.retire)
   // a model whose part table has wheels (model.parts: every registered vehicle's; one of the 11 only once a patch def gives it a table):
   // its wheels come off and it drives on the hub, a wreck sheds what still hangs on, an AI one retires (the 11 without one: as always)
@@ -2330,7 +2330,7 @@ const Core = (function () {
   class Police {
     constructor(race) {
       const T = race.track;
-      this.race = race; this.T = T; this.R = rng(((race.opts.seed || 7) * 104729 + 7) >>> 0);
+      this.race = race; this.T = T; this.R = rng(((race.opts.seed || 7) * 104729 + 7) >>> 0); this.RD = rng(((race.opts.seed || 7) * 7919 + 13) >>> 0);   // (RD: the patrol cars' loose panels, Race.step)
       this.D = POL_DIFF[clamp(race.opts.difficulty == null ? 1 : race.opts.difficulty, 0, 2)];
       this.cars = []; this.spikes = []; this.nid = 0;
       this.heat = 1; this.bust = 0; this.busted = false; this.escaped = false; this.joinT = 0; this.slowT = 0;
@@ -2503,6 +2503,15 @@ const Core = (function () {
     const q = c.q, W = c.wreck, hw = c.m.wid * 0.5, ld = W.side * q.d, lim = (W.side > 0 ? q.br : q.bl) - hw - 0.4, pz = W.side > 0 && T.def.pit ? T.pitAt(q.s) : null;
     if (pz && pz.gap) return false;
     return ld - hw >= T.w + tol || (ld >= lim - 0.3 + Math.min(0, tol) && ld - hw >= T.w - 0.7);
+  }
+  // how a retired car of half width hw could stand at s (sample i) on side sd, its centre as far out as retireControl steers it and the
+  // marshals put it (T.w + hw + 1.6 m, or 0.4 m short of the barrier): 2 clear of the asphalt (its inner edge 0.3 m past the edge or
+  // more), 1 at the barrier with at most 0.7 m of it on the asphalt (retiredOff, tol -0.2: a run-off narrower than the car), 0 not (more
+  // of it on the asphalt, or in the way into the pits)
+  function standQ(T, s, i, sd, hw) {
+    const lim = (sd > 0 ? T.br[i] : T.bl[i]) - hw - 0.4, pz = sd > 0 && T.def.pit ? T.pitAt(s) : null;
+    if (pz && pz.gap) return 0;
+    return lim >= T.w + hw + 0.3 ? 2 : lim >= T.w + hw - 0.7 ? 1 : 0;
   }
   // standing still on purpose (retired, waiting for the marshals): a light brake and the handbrake (a held brake pedal at a standstill
   // would engage reverse)
@@ -2723,12 +2732,13 @@ const Core = (function () {
       c.locked = true;
     }
 
-    spawnDebris(c, name) {
+    spawnDebris(c, name, R) {   // (R: the random numbers for its throw, default Math.random; a patrol car's: the police's own, see step)
+      const rnd = R || Math.random;
       const P = partsOf(c.m)[name], hl = c.m.len * 0.5, hw = c.m.wid * 0.5, ch = Math.cos(c.h), sh = Math.sin(c.h);
       const ox = P.lx * hl, oz = P.lz * hw, x = c.x + ox * ch - oz * sh, z = c.z + ox * sh + oz * ch;
-      const ol = Math.hypot(ox, oz) || 1, ux = (ox * ch - oz * sh) / ol, uz = (ox * sh + oz * ch) / ol, out = 2 + Math.random() * 3;
-      const d = { id: ++this.debrisId, car: c.id, part: name, x, z, y: (c.y || 0) + P.y, vx: c.vx * 0.7 + ux * out, vz: c.vz * 0.7 + uz * out, vy: 2.5 + Math.random() * 2.5,
-        yaw: c.h, rx: 0, rz: 0, wx: (Math.random() - 0.5) * 16, wy: (Math.random() - 0.5) * 12, wz: (Math.random() - 0.5) * 16, r: P.r, m: P.m, h: P.h, rest: false, ground: false,
+      const ol = Math.hypot(ox, oz) || 1, ux = (ox * ch - oz * sh) / ol, uz = (ox * sh + oz * ch) / ol, out = 2 + rnd() * 3;
+      const d = { id: ++this.debrisId, car: c.id, part: name, x, z, y: (c.y || 0) + P.y, vx: c.vx * 0.7 + ux * out, vz: c.vz * 0.7 + uz * out, vy: 2.5 + rnd() * 2.5,
+        yaw: c.h, rx: 0, rz: 0, wx: (rnd() - 0.5) * 16, wy: (rnd() - 0.5) * 12, wz: (rnd() - 0.5) * 16, r: P.r, m: P.m, h: P.h, rest: false, ground: false,
         q: this.track.cross.length && c.q.i >= 0 ? { i: c.q.i } : null, dead: false };   // (a figure of eight: the part starts on its car's level, not on the nearest leg)
       this.debris.push(d);
       if (this.debris.length > 40) { const old = this.debris.shift(); old.dead = true; }   // keep the road readable
@@ -2832,6 +2842,7 @@ const Core = (function () {
       for (const c of cars) if (!c.net) wallCollide(c, T);
       if (T.def.pit) for (const c of cars) if (c.isPlayer || c.pitWant || c.inPit) this.pitStep(c, dt, false);  // speed limiter, stopping at the box, repair
       for (const c of cars) if (c.detach.length) { for (const name of c.detach) this.spawnDebris(c, name); c.detach.length = 0; }
+      if (this.pol) for (const c of this.pol.cars) if (c.detach.length) { for (const name of c.detach) this.spawnDebris(c, name, this.pol.RD); c.detach.length = 0; }   // (the run from the police: a battered patrol car's panels on the road too, thrown with the police's own random numbers: the race's draws stay as they were)
       for (const c of cars) if (!c.net && !Number.isFinite(c.x + c.z + c.vx + c.vz + c.h + c.w + (c.y || 0))) { c.x = c.z = c.vx = c.vz = c.w = c.h = 0; c.y = 0; c.vy = 0; c.air = 0; c.q.s = c.goodS || 0; c.q.i = -1; this.rescue(c); }
       if (this.debris.length) { for (const d of this.debris) stepDebris(d, T, dt); for (const c of cars) if (!c.net) for (const d of this.debris) if (!lv || Math.abs(d.y - (c.y || 0)) < 4) debrisHit(c, d); }
       // progress
@@ -2964,7 +2975,7 @@ const Core = (function () {
       const stop = [];
       for (const c of cars) {
         const f = c.fl || (c.fl = { stopT: 0, v: 30, yel: null, pen: 0, owe: null, ah: null });
-        if (c.net || c.finished || (dnf(c) && this.time - c.wreck.dnfT > 30)) { f.stopT = 0; continue; }   // (a retired car: an incident for 30 s, then the marshals have it behind the barrier)
+        if (c.net || c.finished || (dnf(c) && this.time - c.wreck.dnfT > 30 && retiredOff(T, c, -0.2))) { f.stopT = 0; continue; }   // (a retired car: an incident for 30 s and until it stands where it may: off the asphalt, or at the barrier)
         f.v += (c.speed - f.v) * Math.min(1, dt * 2);   // (the speed over about half a second: a knock from another car does not end a stop)
         const onTrack = !c.inPit && !c.pitWant && !c.pitState, stopped = onTrack && c.lap >= 1 && f.v < 3;
         f.stopT = stopped ? f.stopT + dt : 0;
@@ -3163,15 +3174,35 @@ const Core = (function () {
       c.vx = Math.cos(c.h) * v; c.vz = Math.sin(c.h) * v;
     }
     // a car out of the race (Odstop): an AI car that can not race on (see _wreckStep), or the player pressing Odstopi (game.js; any car).
-    // It pulls off onto its side's run-off (the nearer one; from the middle of the road the one with more room) and stops there
-    // (retireControl); it never finishes: behind every running car in the order, a DNF at the end of the results (estimateResults: dnf);
-    // the flags see it as a stopped car for 30 s, by when it stands off the asphalt (the marshals see to that, see _wreckStep)
+    // It pulls off onto a run-off (_retireSide) and stops there (retireControl); it never finishes: behind every running car in the order,
+    // a DNF at the end of the results (estimateResults: dnf); the flags see it as a stopped car for 30 s and until it stands where it may
+    // (retiredOff; the marshals see to that, see _wreckStep)
     retire(c) {
       const W = c.wreck || (c.wreck = wreck0({}));
       if (W.dnf || c.finished || c.net) return;
-      const q = c.q, d = q && Number.isFinite(q.d) ? q.d : 0;
-      W.dnf = true; W.dnfT = this.time; W.side = Math.abs(d) > 1.5 ? Math.sign(d) : q && q.br >= q.bl ? 1 : -1; W.stop = false; W.hold = 0; W.cr = 0;
+      W.dnf = true; W.dnfT = this.time; W.side = this._retireSide(c); W.stop = false; W.hold = 0; W.cr = 0; W.fin = null;
       if (c.pitWant) c.pitWant = false;
+    }
+    // the run-off a retired car pulls onto, by the room over its next 150 m (along its nose; from where it can be over: 1.5 s at its speed,
+    // 30 m at most): on each side the first spot where it could stand (standQ) and how well. Its own side (the one it is on, 1.5 m or more
+    // from the middle) unless the other side's spot is better (clear of the asphalt where its own is at the barrier, or none on its own) or
+    // as good and over 60 m nearer; from the middle of the road the better one (a tie: the side with more room here). Spa's Kemmel straight:
+    // 1.5 m to the barrier on the right for 500 m, so a car retiring on the right crosses to the left
+    _retireSide(c) {
+      const T = this.track, q = c.q, hw = c.m.wid * 0.5;
+      if (!q || !(q.i >= 0) || !Number.isFinite(q.s + q.d)) return 1;
+      const dir = Math.cos(c.h) * q.tx + Math.sin(c.h) * q.tz < 0 ? -1 : 1, m0 = Math.min(30, Math.max(0, c.vl) * 1.5), L = T.len;
+      const spot = (sd) => {   // [how well, how far]
+        for (let x = m0; x <= 150; x += 3) {
+          let s = q.s + dir * x; if (T.open) { if (s < 0 || s > L) break; } else s = ((s % L) + L) % L;
+          const k = standQ(T, s, T.idx(s), sd, hw); if (k) return [k, x];
+        }
+        return [0, Infinity];
+      };
+      const R = spot(1), Lf = spot(-1), better = (a, b) => a[0] > b[0] || (a[0] === b[0] && a[1] < b[1] - 60);
+      const own = Math.abs(q.d) > 1.5 ? Math.sign(q.d) : 0;
+      if (own) return better(own > 0 ? Lf : R, own > 0 ? R : Lf) ? -own : own;
+      return better(R, Lf) ? 1 : better(Lf, R) ? -1 : q.br >= q.bl ? 1 : -1;
     }
     isOut(c) { return c.finished || dnf(c); }   // (a race is over when every car is: finished or retired)
     // a breakable vehicle every step (before the cars move): a wreck sheds its next part every 0.4 s (wreckCheck); an AI car with two wheels
@@ -3180,8 +3211,9 @@ const Core = (function () {
     // one-make field: 3-8 cars a lap on the Nordschleife; tests/fleet.test.js keeps count). One waiting for the marshals stands (hold);
     // an AI car with a wheel off on a track without pits is rescued after 1.5 s (rescue: the marshals refit it; with pits and tyres it goes
     // in for a new one, see step). A retired car the marshals move (_parkRetired) when it has crawled 8 s short of the run-off, stood 8 s
-    // where it may not (knocked back onto the asphalt, in the way into the pits), or not got off the line 30 s after retiring. A race with
-    // no player (the title screen's demo, never over) has no retirements: the marshals refit the wheels wherever it runs
+    // where it may not (knocked back onto the asphalt, in the way into the pits; not where they put it for want of a better spot, wreck.fin,
+    // unless knocked off it), or not got off the line 30 s after retiring. A race with no player (the title screen's demo, never over) has
+    // no retirements: the marshals refit the wheels wherever it runs
     _wreckStep(c, dt) {
       const W = c.wreck, T = this.track;
       if (W.seq) {
@@ -3194,35 +3226,43 @@ const Core = (function () {
       if (!W.dnf && !c.isPlayer && kitParts(c.m) && !c.finished && racing && W.nL >= 2 && !c.pitWant && !c.inPit && !this.opts.noPlayer) this.retire(c);
       if (W.dnf) {
         if (!W.stop) retireControl(c, this, dt);
-        else { parkBrake(c); W.cr = retiredOff(T, c, -0.2) ? 0 : W.cr + dt; }
+        else {
+          parkBrake(c); if (W.fin && Math.hypot(c.x - W.fin[0], c.z - W.fin[1]) > 1) W.fin = null;
+          W.cr = W.fin || retiredOff(T, c, -0.2) ? 0 : W.cr + dt;
+        }
         if (W.cr > 8 || (!W.stop && this.time - W.dnfT > 30)) this._parkRetired(c);
         return;
       }
       if (W.hold > 0) { W.hold -= dt; parkBrake(c); c.stuckT = 0; return; }
       if (W.nL && !c.isPlayer && (!T.def.pit || this.opts.noPlayer) && !c.finished && racing && W.lt > 1.5) this.rescue(c);
     }
-    // the marshals put a retired car where it should stand: on its side's run-off as retireControl parks it, at the first spot from where
-    // it is (on along the road, 3 m at a time, up to 300 m) clear of the other retired cars on that side and of the way into the pits,
-    // with the room for it off the asphalt (else the free one with the most room); standing there (wreck.stop)
+    // the marshals put a retired car where it may stand (standQ; retiredOff holds there), as retireControl parks it (its centre T.w + hw +
+    // 1.6 m out, or 0.4 m short of the barrier): the nearest spot from where it is, on along the road (3 m at a time, up to 1 km), on
+    // either side, clear of the other retired cars on that side and of the way into the pits; its own side and clear of the asphalt
+    // preferred (a spot on the other side counts as 100 m further, one at the barrier with some of the car on the asphalt as 150 m). No
+    // such spot: the free one with the most room, and there it stays (wreck.fin: where they put it; not moved again unless knocked off
+    // it). It stands there (wreck.stop) on the side used (wreck.side)
     _parkRetired(c) {
-      const T = this.track, W = c.wreck, sd = W.side || 1, hw = c.m.wid * 0.5, L = T.len;
-      const room = (i) => (sd > 0 ? T.br[i] : T.bl[i]) - hw - 0.4;
+      const T = this.track, W = c.wreck, own = W.side || 1, hw = c.m.wid * 0.5, L = T.len;
       const gap = (a, b) => { let d = a - b; if (!T.open) { d = ((d % L) + L) % L; if (d > L / 2) d -= L; } return Math.abs(d); };
-      const free = (s) => { const pz = sd > 0 && T.def.pit ? T.pitAt(s) : null; if (pz && pz.gap) return false;
-        for (const o of this.cars) if (o !== c && dnf(o) && o.wreck.side === sd && gap(s, o.q.s) < (c.m.len + o.m.len) / 2 + 1.5) return false;
-        return true; };
-      let best = null, bestR = -Infinity;
-      for (let k = 0; k <= 100; k++) {
+      const free = (s, sd) => { for (const o of this.cars) if (o !== c && dnf(o) && o.wreck.side === sd && gap(s, o.q.s) < (c.m.len + o.m.len) / 2 + 1.5) return false; return true; };
+      let best = null, bestC = Infinity, fb = null, fbR = -Infinity;
+      for (let k = 0; k <= 333 && 3 * k < bestC; k++) {
         let s = c.q.s + 3 * k; if (T.open) { if (s > T.len - 30) break; } else s = ((s % L) + L) % L;
-        if (!free(s)) continue;
-        const r = room(T.idx(s));
-        if (r >= T.w + hw + 0.3) { best = s; break; }
-        if (r > bestR) { bestR = r; best = s; }
+        const i = T.idx(s);
+        for (const sd of [own, -own]) {
+          if (!free(s, sd)) continue;
+          const g = standQ(T, s, i, sd, hw), cost = 3 * k + (sd === own ? 0 : 100) + (g === 2 ? 0 : 150), pz = sd > 0 && T.def.pit ? T.pitAt(s) : null;
+          if (g && cost < bestC) { bestC = cost; best = [s, sd]; }
+          else if (!g && !(pz && pz.gap) && (sd > 0 ? T.br[i] : T.bl[i]) > fbR) { fbR = sd > 0 ? T.br[i] : T.bl[i]; fb = [s, sd]; }
+        }
       }
-      const i = T.idx(best != null ? best : c.q.s), d = sd * Math.max(T.w * 0.4, Math.min(T.w + hw + 1.6, room(i)));
+      const [s, sd] = best || fb || [c.q.s, own], i = T.idx(s), d = sd * Math.max(T.w * 0.4, Math.min(T.w + hw + 1.6, (sd > 0 ? T.br[i] : T.bl[i]) - hw - 0.4));
+      W.side = sd;
       c.place(T.px[i] + T.nx[i] * d, T.pz[i] + T.nz[i] * d, T.hd[i]); if (T.hasElev) c.y = c.py = T.hy[i];
       c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s;
       W.stop = true; W.cr = 0; parkBrake(c);
+      W.fin = retiredOff(T, c, -0.2) ? null : [c.x, c.z];
     }
 
     // estimated finish times for unfinished cars (for results)

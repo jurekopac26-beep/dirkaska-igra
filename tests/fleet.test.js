@@ -15,11 +15,13 @@
 //  - the AI: aiModel without a vehicle is the old four cars (the same objects), fieldSize and the qualifying sim follow the field; a
 //    one-make race of every vehicle for 20 s (every rival > 150 m on, every speed profile its model's own and finite, no NaN); retiring:
 //    two wheels off (damage alone, or damage for looks only, never); a retired car drives off onto the run-off (from speed, or standing
-//    across the road) and stands there, the marshals place one that does not get there (never two on one spot), never a lap or a finish
-//    for it; the flags: an incident for 30 s, no penalty for passing it; a lost wheel: refitted by the marshals without pits (W.fix
-//    counts), a pit stop in a tyre race (in the rain too); whole races on the Nordschleife and in Monaco with wheels knocked off (three
-//    seeds each: invariants, not one seed's outcome); attrition: retirements per race in the most contact-prone one-make fields (four
-//    seeds, the Nordschleife and Spa); SOKOL R and PANTER 6 (they race the four road cars) within 2.5 % of the KAZE RS's lap on three tracks
+//    across the road; on Spa's Kemmel straight over to the side with room) and stands there, the marshals place one that does not get
+//    there (never two on one spot; with no spot that takes it, once, and there it stays), never a lap or a finish for it; the flags: an
+//    incident for 30 s (and as long as it stands on the asphalt), no penalty for passing it; a lost wheel: refitted by the marshals
+//    without pits (W.fix counts), a pit stop in a tyre race (in the rain too); whole races on the Nordschleife and in Monaco with wheels
+//    knocked off (three seeds each: invariants, not one seed's outcome); attrition: one Nordschleife race in each of the eight one-make
+//    fields with the most retirements (five of them with wider AI spacing): no race with more than 4 retired, at most 6 in the eight;
+//    SOKOL R and PANTER 6 (they race the four road cars) within 2.5 % of the KAZE RS's lap on three tracks
 //  - patch defs and broken defs (a throwaway Core with extra defs): a patch attaches its fields (a part table: that model breaks apart
 //    as a registered one does), a glb model joins a field only with a look of its own, a bad def is skipped and listed (nothing of a
 //    def silently dropped or replaced)
@@ -343,8 +345,9 @@ const fmtStand = (T, c) => { const p = standOf(T, c); return `inner edge ${p.inn
     dm.m.id === 'kozorog' && !dm.wreck.dnf && dm.wreck.wl === 0 && dm.wreck.fix === 1,
     `two wheels ${cOut}; dmg 1: dnf ${a.wreck.dnf} at ${a.speed.toFixed(1)} m/s; one wheel: dnf ${b.wreck.dnf}, refits ${b.wreck.fix}; looks only: dnf ${v.wreck.dnf}, wheels off ${v.wreck.nL}; demo: dnf ${dm.wreck.dnf}, refits ${dm.wreck.fix}`);
 }
-{ // where a retired car stands: wrecked at 15-25 m/s on narrow and twisty tracks, or standing across the middle of the road; off the
-  // asphalt (or at the barrier), no hard knock from the others once it stands, never a lap or a finish for it
+{ // where a retired car stands: wrecked at 15-25 m/s on narrow and twisty tracks, or standing across the middle of the road; on Spa's
+  // Kemmel straight, where its own side has no room; off the asphalt (or at the barrier), no hard knock from the others once it stands,
+  // never a lap or a finish for it
   const bad = [], rows = [];
   for (const [tid, id] of [['gora', 'titan'], ['toskana', 'jelen'], ['grom', 'titan'], ['monaco', 'goljat'], ['monaco', 'jelen']]) {
     const T = track(tid); Math.random = seeded(3);
@@ -371,6 +374,25 @@ const fmtStand = (T, c) => { const p = standOf(T, c); return `inner edge ${p.inn
     rows.push(`${tid}/${id} across the road: stood after ${tStop.toFixed(1)} s`);
     if (!parkedOff(T, X) || tStop < 0 || tStop > 15) bad.push(`${tid}/${id} across the road: ${fmtStand(T, X)}, stood after ${tStop.toFixed(1)} s`);
   }
+  // Spa's Kemmel straight (s 360-860): 1.5 m from the asphalt to the barrier on the right, 3.8 m or more on the left. Wrecked on the right
+  // at 20 m/s (s 380): over to the left, standing off the asphalt, at most one placement by the marshals; held on the right (its run-off
+  // the right one, as one retiring before the narrow stretch would choose): after 8 s the marshals put it on the left, once (no re-placing)
+  for (const id of ['titan', 'jelen']) for (const held of [false, true]) {
+    const T = track('spa'); Math.random = seeded(5);
+    const r = new C.Race(T, { numAI: 3, playerGrid: 4, laps: 2, playerModel: model(id), assist: 2, seed: 5, difficulty: 1, damage: 2, flags: true, tyres: true });
+    r.start(); const P = r.player; let k = 0; const step = () => { Math.random = seeded(5000 + ++k); C.aiControl(P, r, DT); r.step(DT); };
+    for (let i = 0; i < 3 / DT; i++) step();
+    const X = r.cars.find(c => !c.isPlayer), i0 = T.idx(380), v0 = held ? 0 : 20;
+    X.place(T.px[i0] + T.nx[i0] * 4, T.pz[i0] + T.nz[i0] * 4, T.hd[i0]); if (T.hasElev) X.y = X.py = T.hy[i0];
+    X.q = T.query(X.x, X.z, i0, X.q); X.sPrev = X.q.s; X.vx = Math.cos(X.h) * v0; X.vz = Math.sin(X.h) * v0;
+    let places = 0; const park = r._parkRetired.bind(r); r._parkRetired = (c) => { if (c === X) places++; return park(c); };
+    if (held) { X.locked = true; r.retire(X); X.wreck.side = 1; } else C.wreckCar(X);
+    let tStop = -1; for (let t = 0; t < 40; t += DT) { step(); if (X.wreck.stop && tStop < 0) tStop = t; }
+    const what = `spa/${id} ${held ? 'held on the right' : 'at 20 m/s on the right'}`;
+    rows.push(`${what}: stood after ${tStop.toFixed(1)} s on the ${X.wreck.side > 0 ? 'right' : 'left'}, ${places} placement${places === 1 ? '' : 's'}`);
+    if (!parkedOff(T, X) || places > 1 || X.wreck.side !== -1 || tStop < 0 || tStop > (held ? 9.5 : 12) || (held && places !== 1))
+      bad.push(`${what}: ${fmtStand(T, X)}, on the ${X.wreck.side > 0 ? 'right' : 'left'}, stood after ${tStop.toFixed(1)} s, ${places} placements by the marshals`);
+  }
   { // the leader retiring 40 m before the line of a one-lap race rolls over it: no lap, no finish
     const T = track('jezero'); Math.random = seeded(17);
     const r = new C.Race(T, { numAI: 4, playerGrid: 5, laps: 1, playerModel: model('jelen'), assist: 2, seed: 17, difficulty: 1, damage: 2 });
@@ -380,7 +402,7 @@ const fmtStand = (T, c) => { const p = standOf(T, c); return `inner edge ${p.inn
     rows.push(`retired 40 m before the line: ${L ? (L.finished ? 'finished!' : 'no finish, ' + (L.dist - T.len).toFixed(0) + ' m past the line') : '(no leader there)'}`);
     if (!L || L.finished || r.finishOrder.includes(L) || L.lap > 1) bad.push('retired before the line: ' + (L ? 'lap ' + L.lap + ', finished ' + L.finished : 'no set-up'));
   }
-  check('a retired car drives off onto the run-off and stands there: from 15-25 m/s within 12 s, from standing across the road within 15 s; off the asphalt (or at the barrier), no hard knock once it stands, no lap or finish past the line', !bad.length, bad.length ? bad.join('; ') : rows.join('; '));
+  check('a retired car drives off onto the run-off and stands there: from 15-25 m/s within 12 s, from standing across the road within 15 s; off the asphalt (or at the barrier), no hard knock once it stands, no lap or finish past the line; on Spa\'s Kemmel straight (no room on the right): over to the left, or put there by the marshals once', !bad.length, bad.length ? bad.join('; ') : rows.join('; '));
 }
 { // the marshals: a retired car that can not get off (here held where it is: locked) is put on its side's run-off after 8 s, clear of a
   // retired car standing there; the flags: a retired car is an incident (a yellow flag) for 30 s, by when it stands off the road, then not
@@ -400,6 +422,20 @@ const fmtStand = (T, c) => { const p = standOf(T, c); return `inner edge ${p.inn
   check('the marshals: a retired car held on the asphalt 8 s is put on its run-off, a second one there clear of the first; the flags: a yellow for it 20 s on, none 45 s on',
     tx > 7.9 && tx < 9.5 && ty > 7.9 && ty < 9.5 && parkedOff(T, X) && parkedOff(T, Y) && X.wreck.side === Y.wreck.side && gap >= need - 0.01 && yel20 && late,
     `placed after ${tx.toFixed(1)} / ${ty.toFixed(1)} s, ${gap.toFixed(1)} m apart (>= ${need.toFixed(1)}), ${fmtStand(T, X)} / ${fmtStand(T, Y)}, yellow at 20 s ${yel20}, none at 45 s ${late}`);
+}
+{ // ... and where no spot takes it (the barrier 0.6 m past the asphalt all round): the marshals put it where it is least on the asphalt,
+  // once, and leave it there (no placing it again every 8 s); the flags keep the yellow for it past 30 s (it stands on the asphalt)
+  const T = track('jezero'); T.br.fill(T.w + 0.6); T.bl.fill(T.w + 0.6); Math.random = seeded(19);
+  const r = new C.Race(T, { numAI: 3, playerGrid: 4, laps: 3, playerModel: model('jelen'), assist: 2, seed: 19, difficulty: 1, damage: 2, flags: true });
+  r.start(); const P = r.player; let k = 0; const step = () => { Math.random = seeded(19000 + ++k); C.aiControl(P, r, DT); r.step(DT); };
+  for (let i = 0; i < 20 / DT; i++) step();
+  const X = r.order.filter(c => !c.isPlayer).pop(), i0 = (P.q.i + Math.round(300 / T.ds)) % T.N;
+  X.place(T.px[i0] + T.nx[i0] * 3, T.pz[i0] + T.nz[i0] * 3, T.hd[i0]); X.q = T.query(X.x, X.z, i0, X.q); X.sPrev = X.q.s; X.locked = true; r.retire(X);
+  let places = 0, tp = -1; const park = r._parkRetired.bind(r); r._parkRetired = (c) => { if (c === X) { places++; if (tp < 0) tp = r.time - X.wreck.dnfT; } return park(c); };
+  while (r.time - X.wreck.dnfT < 45) step();
+  const yel = r.fl.yel.some(y => y.car === X), p = standOf(T, X);
+  check('... no spot that takes it within 1 km (the barrier 0.6 m past the asphalt all round): put where it is least on the asphalt once, after 8 s, and left there; the flags keep its yellow past 30 s',
+    places === 1 && tp > 7.9 && tp < 9.5 && !!X.wreck.fin && X.wreck.stop && p.slack < 0.05 && yel, `${places} placement${places === 1 ? '' : 's'} (the first after ${tp.toFixed(1)} s), ${fmtStand(T, X)}, yellow at 45 s ${yel}`);
 }
 { // the flags: the player overtaking a retired car under the safety car owes nothing (it never comes back past)
   const T = track('jezero'); let found = 0, warned = 0, pen = 0;
@@ -490,30 +526,30 @@ const fmtStand = (T, c) => { const p = standOf(T, c); return `inner edge ${p.inn
   }
 }
 
-// ---- 8b. attrition: the most contact-prone one-make fields (the rule: two wheels off), whole races as the game runs them (its fields,
-//      flags, tyres where there are pits), four seeds: retirements per race. Destroyed cars (dmg 1) race on, so a field stays a field
-//      (with the old rule, dmg >= 0.98, these lost 3-8 cars a Nordschleife lap); about one a race at most (1.25 on average over the four,
-//      never more than four in one) ----
+// ---- 8b. attrition (the rule: two wheels off): whole one-lap races on the Nordschleife as the game runs them (its 20 rivals, flags),
+//      one race (seed 7) in each of the eight one-make fields with the most retirements in a survey of all 29 (seeds 7-12, the eight also
+//      13-24; retired a race: tornado 1.11, superkombi .94, skorpijon .89, modras .44, jelen .33, gad .28, perun .22, lev .17, the rest .17
+//      at most; up to 5 in one race; Spa, 2 laps: 1 in 116 races, so not here). The first five drive with wider AI spacing (aiGap 7.5,
+//      aiPass 4; over seeds 7-24 then .39, .06, .33, .22 and 0 a race, at most 2 in one). Destroyed cars (dmg 1) race on, so a field
+//      stays a field (with the old rule, dmg >= 0.98, they lost 3-8 cars a lap here). Enforced: those five with that spacing, every race
+//      over, no race with more than 4 retired, at most 6 in the eight ----
 if (!only.length) {
-  const rows = [], bad = [];
-  for (const [tid, ids] of [['nring', ['jelen', 'skorpijon']], ['spa', ['superkombi']]]) {
-    const d = C.TRACKS.find(x => x.id === tid), T = new C.Track(d), laps = d.laps || 3;
-    for (const id of ids) {
-      const per = [];
-      for (const sd of [7, 8, 9, 10]) {
-        Math.random = seeded(sd);
-        const r = new C.Race(T, { numAI: 12, playerGrid: 12, laps, playerModel: model(id), assist: 2, seed: sd, difficulty: 1, damage: 2, tyres: !!d.pit, compounds: true, flags: true });
-        r.start(); const P = r.player; let t = 0, k = 0; const cap = T.len * laps / 10 + 120;
-        while (t < cap && !out(r)) { Math.random = seeded(sd * 1000 + ++k); C.aiControl(P, r, DT); r.step(DT); t += DT; if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P); }
-        per.push(r.cars.filter(c => c.wreck && c.wreck.dnf).length);
-        if (!out(r)) bad.push(`${tid}/${id} seed ${sd}: not over after ${t.toFixed(0)} s`);
-      }
-      const mean = per.reduce((a, b) => a + b, 0) / per.length;
-      rows.push(`${tid} ${id} [${per.join(' ')}]`);
-      if (mean > 1.25 || Math.max(...per) > 4) bad.push(`${tid}/${id}: ${per.join(' ')} retired (mean ${mean.toFixed(2)})`);
-    }
+  const d = C.TRACKS.find(x => x.id === 'nring'), T = new C.Track(d), laps = d.laps || 3, sd = 7, rows = [], bad = [];
+  const FIELDS = ['tornado', 'superkombi', 'skorpijon', 'modras', 'gad', 'jelen', 'perun', 'lev'], spaced = FIELDS.slice(0, 5);
+  let tot = 0, most = 0;
+  for (const id of FIELDS) {
+    Math.random = seeded(sd);
+    const r = new C.Race(T, { numAI: 12, playerGrid: 12, laps, playerModel: model(id), assist: 2, seed: sd, difficulty: 1, damage: 2, tyres: !!d.pit, compounds: true, flags: true });
+    r.start(); const P = r.player; let t = 0, k = 0; const cap = T.len * laps / 10 + 120;
+    while (t < cap && !out(r)) { Math.random = seeded(sd * 1000 + ++k); C.aiControl(P, r, DT); r.step(DT); t += DT; if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P); }
+    const n = r.cars.filter(c => c.wreck && c.wreck.dnf).length; tot += n; most = Math.max(most, n);
+    rows.push(`${id} ${n}`);
+    if (!out(r)) bad.push(`${id}: not over after ${t.toFixed(0)} s`);
   }
-  check('attrition: the most contact-prone one-make fields lose about one car a race at most (1.25 on average, never more than four; Nordschleife 1 lap, 20 rivals; Spa 2 laps, 12; four seeds)', !bad.length, bad.length ? bad.join('; ') : rows.join(', '));
+  const sp = spaced.filter(id => !(model(id).aiGap === 7.5 && model(id).aiPass === 4));
+  if (sp.length) bad.push('no wider AI spacing: ' + sp.join(', '));
+  check(`attrition on the Nordschleife (1 lap, 20 rivals, flags), one race (seed ${sd}) in each of the eight fields with the most retirements in the survey (${spaced.join(', ')}: wider AI spacing, aiGap 7.5 / aiPass 4; ${FIELDS.slice(5).join(', ')}): no race with more than 4 retired, at most 6 in the eight`,
+    !bad.length && most <= 4 && tot <= 6, (bad.length ? bad.join('; ') + '; ' : '') + `retired ${rows.join(', ')} (${tot} in all)`);
 }
 
 // ---- 9. pace: SOKOL R and PANTER 6 race the four road cars (no field): their autopilot lap within 2.5 % of the KAZE RS's ----

@@ -8,7 +8,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     id: 'superkombi', name: 'SUPERKOMBI', cat: 'posebni', ord: 1, drive: 'MR',
     desc: 'Dirkalni kombi iz 80-ih in 90-ih z dirkalnim motorjem na sredini.',
     phys: { mass: 1250, a: 1.5, b: 1.3, kI: 1.28, kw: 520, redline: 8500, idle: 1000, gears: [3.2, 2.08, 1.5, 1.17, 0.95, 0.8], final: 4.84, rw: 0.34, cDrag: 0.5, len: 4.7, wid: 1.95, steerMax: 0.6,
-      tracK: 1.1, brakeK: 1.05, spinK: 0.25, aero: 0.00005, loose: 0.8, sway: 1.3 },
+      tracK: 1.1, brakeK: 1.05, spinK: 0.25, aero: 0.00005, loose: 0.8, sway: 1.3, aiGap: 7.5, aiPass: 4 },   // (aiGap / aiPass: its AI follows further back and passes wider: fewer pile-ups on the Nordschleife, tests/fleet.test.js 8b)
     arc: { amax: 1.8, kv: 2.2, rmin: 4.8 },
     csp: { bx: 0.14, coast: -0.044, thr: 0, liftP: 0.14, pwr: 0.07, out: 1.2, turn: 1.05, w: 1.02 },   // (the MR layer: quick turn-in, lift rotation; its own liftP, pwr, turn)
     stats: { power: 10, grip: 10, weight: 7, drift: 6 },
