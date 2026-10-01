@@ -215,6 +215,9 @@
     'Vroče zavore slabše zavirajo: zaviraj prej in nežneje, na ravnini se ohladijo.': 'Hot brakes stop the car less well: brake earlier and more gently, they cool down on the straights.',
     'Vroč motor ima manj moči: popusti plin, v hitri vožnji se ohladi.': 'A hot engine has less power: ease off the throttle, it cools down at speed.',
     'Okvare': 'Failures', 'Okvare (predrta guma, vroče zavore in motor)': 'Failures (punctures, hot brakes and engine)',
+    // a championship over the internet (the room)
+    'Prvenstvo · končno stanje · prvak: {0}': 'Championship · final standings · champion: {0}', 'Prvenstvo · po {0}. dirki od {1}': 'Championship · after race {0} of {1}', 'Začni dirko {0}/{1}': 'Start race {0}/{1}',
+    'Odstrani': 'Remove', 'Dodaj izbrano progo': 'Add the chosen track', 'PRVENSTVO · DIRKA {0}/{1}': 'CHAMPIONSHIP · RACE {0}/{1}',
     // a challenge from a friend (the challenge link)
     'Izziv': 'Challenge', 'Zavrni': 'Decline', 'Kasneje': 'Later', 'Sprejmi izziv': 'Accept the challenge', 'Izzovi prijatelja': 'Challenge a friend', 'Pošlji odgovor': 'Send your reply', 'Pošlji izziv': 'Send a challenge',
     'Leteči krog': 'Flying lap', 'Način': 'Mode', 'Poskusi znova': 'Try again', 'ti: {0}': 'you: {0}', 'Izziv: {0} · {1}': 'Challenge: {0} · {1}', 'Izziv · {0} · {1}': 'Challenge · {0} · {1}',

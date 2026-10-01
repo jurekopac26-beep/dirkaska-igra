@@ -1303,6 +1303,7 @@
       }
     }
     if (race.rain) Comm.say(track.def.id === 'spa' ? 'rainSpa' : 'rain', null, 2, { ttl: 12000 });   // (after the welcome)
+    if (on && mp.ch && mp.ch.on && !mp.ch.done) showMsg(tr('PRVENSTVO · DIRKA {0}/{1}', mp.ch.round + 1, mp.ch.tracks.length) + wetTxt, 'gold', 2.2);   // (a championship over the internet: which race)
     if (race.chal) { showMsg(tr('IZZIV: {0} · {1}', race.chal.name.toUpperCase(), fmt(race.chal.time, true)) + wetTxt, 'gold', 2.2); Comm.say('chalIntro', { name: race.chal.name, time: spkTime(race.chal.time) }, 3); }
   }
   function setLights(n, go) {
@@ -2954,7 +2955,7 @@
   function roster() {   // host: the list round to every friend (each with its own id), as it is now
     if (!mp || mp.role !== 'host') return;
     mp.players.sort((a, b) => idOrd(a.id) - idOrd(b.id)); syncPeer();
-    for (const id of Net.ids) Net.sendTo(id, { t: 'roster', you: id, v: gameVer(), list: mp.players, track: mp.track, laps: mp.laps });
+    for (const id of Net.ids) Net.sendTo(id, { t: 'roster', you: id, v: gameVer(), list: mp.players, track: mp.track, laps: mp.laps, ch: mp.ch || null });
   }
 
   function leaveRace() {   // the race (or its results) off the screen, the title demo back
@@ -3022,7 +3023,9 @@
           for (const p of was) if (p.id !== 'h' && p.id !== mp.me && !mp.players.some(x => x.id === p.id)) toast(tr('Igralec {0} je odšel.', p.name), 3000); }   // (another friend gone)
         syncPeer();
         if (netTracks().some(d => d.id === m.track)) { mp.track = m.track; mp.laps = Core.clamp(m.laps | 0, 1, 5); }
+        mp.ch = chClean(m.ch);
         buildRoom(); break;
+      case 'champ': if (!host) { mp.ch = chClean(m.ch); if (screen === 'online') buildRoom(); else if (screen === 'results' && mp.race) netResults(); } break;   // (the championship as the host has it: its tracks, the points)
       case 'me': if (host) { const p = pById(id); if (p) { Object.assign(p, peerOf(m)); roster(); buildRoom(); } } break;
       case 'lobby': if (!host && netTracks().some(d => d.id === m.track)) { mp.track = m.track; mp.laps = Core.clamp(m.laps | 0, 1, 5); buildRoom(); } break;
       case 'nope': if (host) { Net.drop(id); mp.players = mp.players.filter(x => x.id !== id); roster(); buildRoom(); } else { Net.close(); openOnline(); onErr(netErr(m.why)); } break;   // (the host: just that friend off)
@@ -3067,6 +3070,7 @@
     }
     toast(others().length > 1 ? tr(said ? 'Igralec {0} je odšel.' : 'Povezava z igralcem {0} je prekinjena.', name) : tr(said ? inRace ? 'Prijatelj je zapustil dirko.' : 'Prijatelj je zapustil sobo.' : 'Povezava s prijateljem je prekinjena.'), 3600);
     if (said) Net.drop(id);   // (the room stays open; no second message when the friend's phone then closes the line)
+    if (mp.ch && mp.ch.on && id in mp.ch.pts) { mp.ch.gone[id] = 1; chSend(); }   // (a championship: its points stay, marked)
     mp.players = mp.players.filter(x => x.id !== id); roster();
     if (mp.setup && mp.setup.grid.includes(id)) netCancel();
     if (R && R.cars.has(id)) { for (const o of R.grid) if (o !== 'h' && o !== id) Net.sendTo(o, { t: 'out', no: R.no, id }); carGone(id); }
@@ -3109,7 +3113,8 @@
     for (const b of document.querySelectorAll('#on-room [data-act^="net-car-"]')) b.disabled = busy;   // (all phones build the race now)
     $('on-note').textContent = host ? tr(many ? 'Poškodbe in vreme: tvoje nastavitve veljajo za vse.' : 'Poškodbe in vreme: tvoje nastavitve veljajo za oba.') : tr('Poškodbe in vreme: po nastavitvah gostitelja.');
     $('on-go').classList.toggle('off', !host);
-    $('on-go').disabled = !open || !inRoom || busy;
+    $('on-go').disabled = !open || !inRoom || busy || !!(mp.ch && mp.ch.on && (mp.ch.done || !mp.ch.tracks.length));
+    chRoom(host, busy);
   }
   function netCar(d) {   // my car in the room: the others see it at once
     if (!mp || mp.setup) return;
@@ -3128,6 +3133,7 @@
   // the start is set 1.2 s ahead on the host's clock. The grid: the players in turn from race to race (the first on the left of the front row)
   function netGo() {
     if (!mp || mp.role !== 'host' || !Net.open || mp.setup) return;
+    const C = mp.ch; if (C && C.on) { if (C.done || !C.tracks.length) return; mp.track = C.tracks[C.round]; const d = Core.TRACKS.find(x => x.id === mp.track); if (d && d.open) mp.laps = 1; }   // (a championship: its next race)
     const ins = mp.players.filter(p => p.id === 'h' || (p.in !== false && Net.ids.includes(p.id))).map(p => p.id);
     if (ins.length < 2) return;
     const no = ++mp.no, k = (no - 1) % ins.length, grid = ins.slice(k).concat(ins.slice(0, k));
@@ -3231,12 +3237,15 @@
     $('res-table').querySelector('tbody').innerHTML = rows.map((r, i) => '<tr class="' + (r.me ? 'me' : '') + '"><td>' + (r.t == null ? '–' : i + 1) + '</td><td><span class="dot" style="background:' + hexCss(r.me ? PLAYER_COLORS[r.col] : r.color) + '"></span>' + esc(r.name) + (r.me ? tr(' (ti)') : '') + '</td><td>' + esc(r.car) + '</td><td>' +
       (r.t != null ? fmt(r.t, true) : tr(r.left ? 'odšel' : 'vozi …')) + '</td><td>' + (r.me ? fmt(r.best, true) : '') + '</td></tr>').join('');
     const back = $('res-restart'); back.textContent = tr(!mp.err && (mp.role === 'host' || (Net.open && !mp.gone)) ? 'Nazaj v sobo' : 'Dirka s prijateljem'); back.dataset.act = 'net-room';
+    if (mp.role === 'host' && !waiting && R.mine != null) chAward();   // (a championship: the points once everyone is in)
+    chResults();
     showScreen('results');
   }
   // after the race: back to the room (the host picks the next track), or, if the room is gone, to the start of Dirka s prijateljem
   function netRoom() {
     netTap();
     const alive = mp && !mp.err && Net.open && (mp.role === 'host' || !mp.gone);
+    if (mp && mp.role === 'host' && mp.race) chAward();   // (back before everyone was in: the points for those who were)
     if (alive && mp.race) { if (mp.role === 'host') { for (const id of mp.race.grid) if (id !== 'h') Net.sendTo(id, { t: 'out', no: mp.race.no, id: 'h' }); } else Net.send({ t: 'out', no: mp.race.no }); }
     leaveRace();
     if (!mp || mp.err || (mp.role === 'guest' && !alive)) { const e = mp && mp.err; mp = null; Net.close(); openOnline(); if (e) onErr(netErr(e)); return; }
@@ -3244,6 +3253,66 @@
     if (mp.role === 'host') roster();
     $('on-pick').classList.add('off'); $('on-room').classList.remove('off');
     showScreen('online'); buildRoom();
+  }
+
+  /* ---------------- a championship over the internet (the room: Prvenstvo) ----------------
+     The host switches it on and lists its tracks (the one chosen in the room is added, up to eight; changed only before the first race).
+     The races run in that order, each started by the host from the room as before. At the end of each one the host gives the points by
+     the finishing order (25, 18, 15, ...: those who did not get to the line none) and sends the standings round; every phone shows them
+     under the race's results and in the room. A player who leaves keeps the points (marked: odšel); one who comes later starts from
+     nothing. After the last race the champion; the host can start a new one with the same tracks. */
+  const CH_MAX = 8;
+  function chClean(o) {   // the championship as a friend gets it (checked); null: none
+    if (!isObj(o) || !o.on || !Array.isArray(o.tracks)) return null;
+    const num = (x) => (typeof x === 'number' && isFinite(x) ? Math.max(0, Math.round(x)) : 0), map = (x, f) => { const r = {}; if (isObj(x)) for (const k of Object.keys(x).slice(0, 8)) if (/^[\w-]{1,12}$/.test(k)) r[k] = f(x[k]); return r; };
+    const tracks = o.tracks.filter(id => netTracks().some(d => d.id === id)).slice(0, CH_MAX);
+    return { on: true, tracks, round: Core.clamp(num(o.round), 0, tracks.length), pts: map(o.pts, num), last: map(o.last, num), names: map(o.names, (v) => cleanName(v) || tr('Prijatelj')), gone: map(o.gone, () => 1), done: !!o.done };
+  }
+  function chSend() { if (mp && mp.role === 'host') for (const id of Net.ids) Net.sendTo(id, { t: 'champ', ch: mp.ch }); }
+  function chSet(on) {   // host: the championship on (the track chosen in the room its first race) or off
+    if (!mp || mp.role !== 'host' || mp.setup || mp.race) return;
+    mp.ch = on ? { on: true, tracks: [mp.track], round: 0, pts: {}, last: {}, names: {}, gone: {}, done: false } : null;
+    chSend(); buildRoom();
+  }
+  function chAdd() { const C = mp && mp.ch; if (!C || mp.role !== 'host' || C.round > 0 || C.tracks.length >= CH_MAX) return; C.tracks.push($('on-track').value || mp.track); chSend(); buildRoom(); }
+  function chDel(i) { const C = mp && mp.ch; if (!C || mp.role !== 'host' || C.round > 0 || !(i >= 0 && i < C.tracks.length)) return; C.tracks.splice(i, 1); if (C.tracks.length) mp.track = C.tracks[0]; chSend(); buildRoom(); }
+  function chNew() { const C = mp && mp.ch; if (!C || mp.role !== 'host' || !C.done) return; Object.assign(C, { round: 0, pts: {}, last: {}, names: {}, gone: {}, done: false }); mp.track = C.tracks[0]; chSend(); buildRoom(); }
+  function chAward() {   // host: a race of the championship is over: the points by the finishing order, the round counted, the standings round
+    const C = mp && mp.ch, R = mp && mp.race; if (!C || !C.on || C.done || !R || R.awarded) return;
+    R.awarded = true;
+    const rows = [{ id: mp.me, t: R.mine }].concat([...R.cars].map(([id, X]) => ({ id, t: X.fin }))).filter(r => r.t != null).sort((a, b) => a.t - b.t);
+    C.last = {};
+    for (const id of R.grid) { if (!(id in C.pts)) C.pts[id] = 0; const p = pById(id) || (R.roster || []).find(x => x.id === id); if (p) C.names[id] = id === mp.me ? S.name || tr('Igralec') : p.name; }
+    rows.forEach((r, i) => { const p = Core.CHAMP_PTS[i] || 0; C.pts[r.id] += p; C.last[r.id] = p; });
+    C.round++; if (C.round >= C.tracks.length) C.done = true; else mp.track = C.tracks[C.round];
+    chSend();
+  }
+  function chTable(C) {   // the standings: the place, the driver (ti; odšel), the points (+ the last race's)
+    const ids = Object.keys(C.pts).sort((a, b) => C.pts[b] - C.pts[a] || (C.names[a] || '').localeCompare(C.names[b] || ''));
+    return '<table class="ltab ch-tab"><thead><tr><th>#</th><th>' + tr('Voznik') + '</th><th>' + tr('Točke') + '</th></tr></thead><tbody>' + ids.map((id, i) =>
+      '<tr class="' + (id === mp.me ? 'me' : '') + '"><td>' + (i + 1) + '</td><td class="nm">' + esc(id === mp.me ? tr('Ti') : C.names[id] || '?') + (C.gone[id] ? ' <small>(' + tr('odšel') + ')</small>' : '') + '</td><td>' + C.pts[id] + (C.last[id] ? ' <small class="fast">+' + C.last[id] + '</small>' : '') + '</td></tr>').join('') + '</tbody></table>';
+  }
+  const chChampion = (C) => { const ids = Object.keys(C.pts).sort((a, b) => C.pts[b] - C.pts[a]); return ids.length ? (ids[0] === mp.me ? tr('Ti') : C.names[ids[0]] || '?') : ''; };
+  function chResults() {   // under the race's results: the championship after this race (once the host has counted it)
+    const el = $('res-ch'), C = mp && mp.ch;
+    if (!C || !C.on || !(C.round > 0)) { el.classList.add('off'); el.innerHTML = ''; return; }
+    el.innerHTML = '<p class="ltab-h">' + (C.done ? tr('Prvenstvo · končno stanje · prvak: {0}', esc(chChampion(C))) : tr('Prvenstvo · po {0}. dirki od {1}', C.round, C.tracks.length)) + '</p>' + chTable(C);
+    el.classList.remove('off');
+  }
+  function chRoom(host, busy) {   // the room: the championship's switch (the host), its tracks (done, next) and the standings
+    const C = mp.ch, on = !!(C && C.on), el = $('on-ch');
+    for (const b of $('on-chseg').children) { b.classList.toggle('sel', (b.dataset.act === 'net-ch-on') === on); b.disabled = !host || busy || !!mp.race; }
+    $('on-chrow').classList.toggle('off', !host && !on);
+    $('on-go').textContent = on && !C.done && C.tracks.length ? tr('Začni dirko {0}/{1}', C.round + 1, C.tracks.length) : tr('Začni dirko');
+    $('on-track').disabled = $('on-track').disabled || (on && C.round > 0);
+    if (!on) { el.classList.add('off'); el.innerHTML = ''; return; }
+    const edit = host && C.round === 0 && !busy;
+    let h = '<ol class="on-ch-tracks">' + C.tracks.map((id, i) => '<li class="' + (i < C.round ? 'done' : i === C.round && !C.done ? 'next' : '') + '">' + esc(Lang.of(Core.TRACKS.find(d => d.id === id), 'name')) +
+      (edit ? ' <button class="btn mini" data-act="net-ch-del" data-i="' + i + '" aria-label="' + tr('Odstrani') + '">\u2715</button>' : '') + '</li>').join('') + '</ol>';
+    if (edit && C.tracks.length < CH_MAX) h += '<button class="btn mini" data-act="net-ch-add">' + tr('Dodaj izbrano progo') + '</button>';
+    if (C.round > 0) h += '<p class="ltab-h">' + (C.done ? tr('Prvenstvo · končno stanje · prvak: {0}', esc(chChampion(C))) : tr('Prvenstvo · po {0}. dirki od {1}', C.round, C.tracks.length)) + '</p>' + chTable(C);
+    if (C.done && host) h += '<button class="btn mini" data-act="net-ch-new">' + tr('Novo prvenstvo') + '</button>';
+    el.innerHTML = h; el.classList.remove('off');
   }
 
   /* ---------------- gamepad on the menus (Input.padRead: this frame's presses) ---------------- */
@@ -3398,6 +3467,11 @@
       case 'net-car-prev': netCar(-1); break;
       case 'net-car-next': netCar(1); break;
       case 'net-room': netRoom(); break;
+      case 'net-ch-on': chSet(true); break;
+      case 'net-ch-off': chSet(false); break;
+      case 'net-ch-add': chAdd(); break;
+      case 'net-ch-del': chDel(+(el && el.dataset.i)); break;
+      case 'net-ch-new': chNew(); break;
       case 'to-settings': settingsReturn = screen; showScreen('settings'); refreshSegs(); break;
       case 'settings-done': showScreen(settingsReturn === 'settings' ? 'title' : settingsReturn); if (settingsReturn === 'car') buildCarScreen(); break;
       case 'car-prev': S.car = (S.car + Core.MODELS.length - 1) % Core.MODELS.length; save(); buildCarScreen(); break;

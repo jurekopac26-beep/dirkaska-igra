@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
-<link rel="stylesheet" href="css/style.css?v=618e22a2">
+<link rel="stylesheet" href="css/style.css?v=872b817a">
 </head>
 <body>
 <div id="app">
@@ -292,6 +292,8 @@
         <div class="row"><span class="rlbl">Moj avto</span><button class="btn mini" data-act="net-car-prev" aria-label="Prejšnji avto">&#9664;</button><span id="on-mycar" class="on-mycar"></span><button class="btn mini" data-act="net-car-next" aria-label="Naslednji avto">&#9654;</button></div>
         <div class="row"><span class="rlbl">Proga</span><select id="on-track" class="txt" aria-label="Proga"></select></div>
         <div class="row"><span class="rlbl">Krogi</span><select id="on-laps" class="txt" aria-label="Število krogov"></select></div>
+        <div class="row off" id="on-chrow"><span class="rlbl">Prvenstvo</span><div class="seg" id="on-chseg"><button data-act="net-ch-off">Izklop</button><button data-act="net-ch-on">Vklop</button></div></div>
+        <div id="on-ch" class="on-ch off"></div>
         <p id="on-note" class="desc small"></p>
       </div>
       <div class="btns horiz">
@@ -304,7 +306,7 @@
   <section id="s-results" class="screen">
     <div class="panel res-panel">
       <div class="res-head" id="res-head"><div id="res-pos" class="res-pos">1.</div><div><h2 id="res-title">Zmaga!</h2><p id="res-sub" class="desc"></p></div></div>
-      <div class="res-table-wrap"><div id="res-tt" class="off"></div><table id="res-table"><thead><tr><th>#</th><th>Voznik</th><th>Avto</th><th>Čas</th><th>Naj. krog</th></tr></thead><tbody></tbody></table><div id="res-laps" class="off"></div></div>
+      <div class="res-table-wrap"><div id="res-tt" class="off"></div><table id="res-table"><thead><tr><th>#</th><th>Voznik</th><th>Avto</th><th>Čas</th><th>Naj. krog</th></tr></thead><tbody></tbody></table><div id="res-laps" class="off"></div><div id="res-ch" class="off"></div></div>
       <div class="btns horiz">
         <button class="btn ghost" data-act="to-title">Glavni meni</button>
         <button class="btn" data-act="replay" id="res-replay">Posnetek</button>
@@ -398,7 +400,7 @@
 <script src="js/tracks/suzuka.js?v=8aebe76c"></script>
 <script src="js/tracks/pikesg.js?v=9d05a281"></script>
 <script src="js/tracks/caracoles.js?v=84009a26"></script>
-<script src="js/lang.js?v=6c09031c"></script>
+<script src="js/lang.js?v=b6b25f11"></script>
 <script src="js/core.js?v=a6dd2667"></script>
 <script src="js/tex.js?v=cd783b5d"></script>
 <script src="js/world.js?v=43e47004"></script>
@@ -409,6 +411,6 @@
 <script src="js/comm.js?v=a5473d60"></script>
 <script src="js/vendor/peerjs.min.js?v=76b403e4"></script>
 <script src="js/net.js?v=ba863f32"></script>
-<script src="js/game.js?v=4454439d"></script>
+<script src="js/game.js?v=651d4adf"></script>
 </body>
 </html>
