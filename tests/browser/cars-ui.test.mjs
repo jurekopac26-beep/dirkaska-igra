@@ -118,6 +118,14 @@ try {
     });
     T.check('the online picker: the same order (PICO TURBO → MIŠKA → KOLIBRI → RAKETA 16V → PEUGEOT 206 → LISICA), the friend told each time',
       net.ids.join() === 'miska,kolibri,raketa,p206,lisica,kaze' && net.prev === 'lisica' && net.sent.join() === net.ids.concat(['lisica']).join() && net.shown === 'LISICA', JSON.stringify(net));
+    // 5b. the championship's picker in the same order too (the arrows; Y on a pad: the next category's car)
+    const chp = await page.evaluate(async () => { const g = window.__game, id = () => Core.MODELS[g.S.car].id, ids = [];
+      g.onAction('to-champ'); await new Promise(r => setTimeout(r, 150)); g.S.car = Core.MODELS.findIndex(m => m.id === 'pico');
+      for (let k = 0; k < 3; k++) { g.onAction('champ-car-next'); ids.push(id()); } g.onAction('champ-car-prev'); ids.push(id());
+      return { ids, shown: document.getElementById('ch-mycar').textContent }; });
+    await press(3); const chY = await page.evaluate(() => ({ id: Core.MODELS[window.__game.S.car].id, shown: document.getElementById('ch-mycar').textContent }));
+    T.check('the championship\'s picker: the same order (MIŠKA → KOLIBRI → RAKETA 16V, back to KOLIBRI); Y on the pad: the next category\'s car (LISICA)',
+      chp.ids.join() === 'miska,kolibri,raketa,kolibri' && chp.shown === 'KOLIBRI' && chY.id === 'lisica' && chY.shown === 'LISICA', JSON.stringify({ chp, chY }));
     T.check('no page errors (844×390)', !errors.length, errors.slice(0, 5).join(' | '));
     await ctx.close();
   }
@@ -286,6 +294,12 @@ try {
       const s = Render.cam.shot, P = g.race.player, d = s ? Math.hypot(s.px - P.x, s.pz - P.z) : -1; const scr = g.screen;
       g.onAction('ph-exit'); await new Promise(r => setTimeout(r, 150)); return { scr, d, back: g.screen }; });
     T.check('"Ogled vozila" on the results: the photo mode on the player\'s car (up close), back to the results', v.scr === 'photo' && v.d > 4 && v.d < 18 && v.back === 'results', JSON.stringify(v));
+    // every new pool of the commentator has its lines, the names filled in
+    const pools = await page.evaluate(() => { Comm.setEnabled(true); Comm.setSpeech(true); const out = {};
+      for (const k of ['wheelLost', 'threeWheels', 'wreck', 'fireMe', 'retired', 'rivalWheel', 'rivalWreck', 'fire']) { const it = Comm.say(k, { a: 'M. Kovač', wheel: 'front left wheel' }, 9); out[k] = it ? it.text : null; }
+      Comm.stop(); Comm.setEnabled(false); return { avail: Comm.available(), out }; });
+    T.check('the commentator\'s new pools (wheelLost, threeWheels, wreck, fireMe, retired, rivalWheel, rivalWreck, fire): lines with the names filled in',
+      pools.avail && Object.values(pools.out).every(t => typeof t === 'string' && t.length > 12 && !/[{}]/.test(t)) && /front left wheel/.test(pools.out.wheelLost) && /M\. Kovač/.test(pools.out.rivalWreck), JSON.stringify(pools));
     T.check('no page errors (retiring)', !errors.length, errors.slice(0, 5).join(' | '));
     await ctx.close();
   }
