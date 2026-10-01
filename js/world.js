@@ -146,6 +146,14 @@ const World = (function () {
       g.triO(a, b, c, [col[0] * shade, col[1] * shade, col[2] * shade], inn);
     }
   }
+  function icoLeaf(g, cx, cy, cz, r, sy, col, r_, jit) {   // a clump of foliage (Monaco's trees): the icosahedron of ico, shaded soft and leafy:
+    // the normals of its ellipsoid, nudged at each corner (the same corner, the same nudge: no seams), sunlit on top, darker underneath and inside
+    const vs = ICO_V.map(v => { const k = 1 + (r_() - 0.5) * jit; return [cx + v[0] * r * k, cy + v[1] * r * sy * k, cz + v[2] * r * k]; }), inn = [cx, cy, cz];
+    const hs = (p, k) => { const h = Math.sin(p[0] * 12.9898 + p[1] * 78.233 + p[2] * 37.719 + k * 11.3) * 43758.5453; return h - Math.floor(h) - 0.5; };
+    const nn = (p) => { let x = (p[0] - cx) / r, y = (p[1] - cy) / (r * sy * sy), z = (p[2] - cz) / r; const l = Math.hypot(x, y, z) || 1; x = x / l + hs(p, 1) * 0.7; y = y / l + hs(p, 2) * 0.5; z = z / l + hs(p, 3) * 0.7; const m = Math.hypot(x, y, z) || 1; return [x / m, y / m, z / m]; };
+    const sc = (p) => { const t = clamp((p[1] - cy) / (r * sy) * 0.5 + 0.5, 0, 1), k = (0.64 + 0.5 * t) * (1 + hs(p, 4) * 0.16); return [col[0] * k * (1 - 0.06 * t), col[1] * k, col[2] * k * (1 - 0.1 * t)]; };   // (the sunlit top a touch yellower)
+    for (const f of ICO_F) { const a = vs[f[0]], b = vs[f[1]], c = vs[f[2]]; g.triON(a, b, c, nn(a), nn(b), nn(c), inn, sc(a), sc(b), sc(c)); }
+  }
   const ICO1 = (() => {   // icosphere subdivided once (42 vertices, 80 faces)
     const V = ICO_V.map(v => { const l = Math.hypot(v[0], v[1], v[2]); return [v[0] / l, v[1] / l, v[2] / l]; }), F = [], mid = new Map();
     const m = (a, b) => { const k = a < b ? a + ',' + b : b + ',' + a; if (mid.has(k)) return mid.get(k); const p = V[a], q = V[b], x = p[0] + q[0], y = p[1] + q[1], z = p[2] + q[2], l = Math.hypot(x, y, z); V.push([x / l, y / l, z / l]); mid.set(k, V.length - 1); return V.length - 1; };
@@ -8629,10 +8637,10 @@ const World = (function () {
   // ground textures made for Monaco (each build: ownTex frees them with the scenery): the town's pale stone paving, a lawn
   function mcPaveTex() {   // 9 m a tile: pale limestone slabs of a few sizes in courses, fine joints, a little grime (neutral: the vertex colours tint it)
     const S = 512, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), R = rng(8121), px = S / 9;
-    g.fillStyle = '#d8d4cc'; g.fillRect(0, 0, S, S);
+    g.fillStyle = '#aca69c'; g.fillRect(0, 0, S, S);   // (the joints between the slabs: darker)
     for (let row = 0; row < 12; row++) {   // courses 0.75 m high, slabs 0.6-1.5 m long, each course a whole number of slabs round the tile (it repeats)
       const ws = []; let sum = 0; while (sum < 9) { const w = 0.6 + R() * 0.9; ws.push(w); sum += w; }
-      let x = R() * 9; for (const w0 of ws) { const w = w0 * 9 / sum, k = 200 + Math.floor(R() * 36), t = Math.floor(R() * 10) - 5;
+      let x = R() * 9; for (const w0 of ws) { const w = w0 * 9 / sum, k = 190 + Math.floor(R() * 42), t = Math.floor(R() * 10) - 5;
         g.fillStyle = 'rgb(' + (k + 4 + t) + ',' + (k + t) + ',' + (k - 8 + t) + ')'; for (const o of [0, -9]) g.fillRect((x + o) * px + 1, row * 0.75 * px + 1, w * px - 2, 0.75 * px - 2); x += w; } }
     g.strokeStyle = 'rgba(80,72,64,0.35)'; g.lineWidth = 1.2;
     for (let y = 0; y <= 9; y += 0.75) { g.beginPath(); g.moveTo(0, y * px); g.lineTo(S, y * px); g.stroke(); }
@@ -8787,6 +8795,37 @@ const World = (function () {
     }
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t;
   }
+  function mcLeafTex() {   // foliage, 1.25 m a tile, 256 px, tileable: small leaves every way, lighter and darker, the shade between them (grey: the
+    // vertex colours paint it)
+    const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), R = rng(8201);
+    g.fillStyle = '#3c3c3c'; g.fillRect(0, 0, S, S);
+    for (let k = 0; k < 1500; k++) {
+      const x = R() * S, y = R() * S, a = R() * Math.PI, rx = 4 + R() * 5, ry = 1.8 + R() * 2.2, v = Math.round(120 + R() * 135);
+      for (const ox of [-S, 0, S]) for (const oy of [-S, 0, S]) {
+        if (x + ox < -12 || x + ox > S + 12 || y + oy < -12 || y + oy > S + 12) continue;
+        g.save(); g.translate(x + ox, y + oy); g.rotate(a); g.fillStyle = 'rgb(' + v + ',' + v + ',' + v + ')'; g.beginPath(); g.ellipse(0, 0, rx, ry, 0, 0, TAU); g.fill();
+        g.strokeStyle = 'rgba(0,0,0,0.18)'; g.lineWidth = 0.8; g.beginPath(); g.moveTo(-rx * 0.8, 0); g.lineTo(rx * 0.8, 0); g.stroke(); g.restore(); }
+    }
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t;
+  }
+  function mcPoolTex(lanes) {   // a pool's floor, 2.5 m a tile, 256 px: small pale blue tiles in white grout, a few a shade off; lanes: a dark blue line down
+    // the middle of the lane (along u), as in the swimming pools of a race
+    const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), R = rng(8181 + (lanes ? 1 : 0)), n = 16, t = S / n;
+    g.fillStyle = '#e4f2f6'; g.fillRect(0, 0, S, S);
+    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const k = R(), v = k < 0.08 ? [150, 205, 225] : k < 0.16 ? [190, 228, 240] : [172, 218, 234]; g.fillStyle = 'rgb(' + v.join(',') + ')'; g.fillRect(i * t + 1, j * t + 1, t - 2, t - 2); }
+    if (lanes) { g.fillStyle = '#1d3f8f'; g.fillRect(0, S / 2 - t * 0.6, S, t * 1.2); }
+    const tx = new THREE.CanvasTexture(c); tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.anisotropy = 4; return tx;
+  }
+  function mcCausticTex() {   // the light's net on a pool's floor, 256 px, tileable: bright where two cells of a random tiling meet (Worley, F2 - F1)
+    const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), img = g.createImageData(S, S), d = img.data, R = rng(8191), P = [];
+    for (let k = 0; k < 22; k++) P.push([R() * S, R() * S]);
+    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) {
+      let f1 = 1e9, f2 = 1e9;
+      for (const [px, py] of P) for (const ox of [-S, 0, S]) for (const oy of [-S, 0, S]) { const dd = Math.hypot(i - px - ox, j - py - oy); if (dd < f1) { f2 = f1; f1 = dd; } else if (dd < f2) f2 = dd; }
+      const v = Math.max(0, 1 - (f2 - f1) / 7), o = (j * S + i) * 4; d[o] = d[o + 1] = d[o + 2] = Math.round(v * v * 255); d[o + 3] = 255;
+    }
+    g.putImageData(img, 0, 0); const tx = new THREE.CanvasTexture(c); tx.wrapS = tx.wrapT = THREE.RepeatWrapping; return tx;
+  }
   function mcRoadDecalTex() {   // the road's details, 512 x 256 (transparent round them): along the top a sewer's round manhole cover (cast iron in a
     // steel frame: rings, ribs, two pick holes), a square utility cover (a diamond pattern), a small water valve's cover, a gutter's drain grate;
     // below, two patches of asphalt, a fresh dark one and an older grey one, each with its sealed edge
@@ -8937,7 +8976,7 @@ const World = (function () {
   function mcTreeGeo(kind, v, lo) {   // unit trees (height 1, the instances scale them), two of each kind (v): 0 palm (a ringed, leaning trunk; a crown of arching
     // fronds, their leaflets hanging either side of the midrib, two dead ones hanging under it), 1 plane tree (a pale trunk, a crown of four clumps),
     // 2 umbrella pine (a tall leaning trunk, a flat crown of clumps), 3 olive (a gnarled trunk, a low silvery crown)
-    const g = new GB(), R = rng(830 + kind * 7 + (v || 0) * 131);
+    const g = new GB(), gc = new GB(), R = rng(830 + kind * 7 + (v || 0) * 131);   // (g: the wood, gc: the leaves, drawn with the foliage's texture)
     const tint = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
     if (lo) {   // the far ones (lo): fewer faces (a palm's crown a star of folded fronds, a broadleaf's or a pine's two clumps)
       if (kind === 0) {
@@ -8947,12 +8986,12 @@ const World = (function () {
           const a = k / 9 * TAU + R() * 0.3, L = 0.42 + R() * 0.1, dr = 0.12 + R() * 0.1, ca = Math.cos(a), sa = Math.sin(a), w = 0.07;
           const mid = [top[0] + ca * L * 0.5, top[1] + 0.07, top[2] + sa * L * 0.5], tip = [top[0] + ca * L, top[1] - dr, top[2] + sa * L];
           const pl = [mid[0] - sa * w, mid[1] - 0.03, mid[2] + ca * w], pr = [mid[0] + sa * w, mid[1] - 0.03, mid[2] - ca * w], col = k % 2 ? [0.26, 0.42, 0.18] : [0.32, 0.5, 0.2], below = [top[0], top[1] - 0.4, top[2]];
-          g.triO(top, pl, mid, col, below); g.triO(top, mid, pr, col, below); g.triO(pl, tip, mid, col, below); g.triO(mid, tip, pr, tint(col, 1.1), below);
+          gc.triO(top, pl, mid, col, below); gc.triO(top, mid, pr, col, below); gc.triO(pl, tip, mid, col, below); gc.triO(mid, tip, pr, tint(col, 1.1), below);
         }
-      } else if (kind === 1) { cyl(g, 0, -0.02, 0, 0.035, 0.42, 5, [0.62, 0.58, 0.5], null, 0.028); ico(g, 0, 0.6, 0, 0.33, 0.85, [0.29, 0.43, 0.2], R, 0.3); ico(g, 0.1, 0.74, 0.03, 0.22, 0.8, [0.33, 0.47, 0.22], R, 0.3); }
-      else if (kind === 2) { cyl(g, 0, -0.02, 0, 0.03, 0.8, 5, [0.5, 0.36, 0.26], null, 0.02); ico(g, 0.06, 0.84, 0.03, 0.46, 0.34, [0.21, 0.36, 0.17], R, 0.25); ico(g, 0.18, 0.93, -0.07, 0.3, 0.38, [0.24, 0.39, 0.18], R, 0.25); }
-      else { cyl(g, 0, -0.02, 0, 0.075, 0.5, 5, [0.46, 0.43, 0.37], null, 0.05); ico(g, 0, 0.62, 0, 0.42, 0.55, [0.44, 0.5, 0.36], R, 0.35); ico(g, 0.2, 0.7, 0.1, 0.26, 0.5, [0.49, 0.55, 0.41], R, 0.35); }
-      const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+      } else if (kind === 1) { cyl(g, 0, -0.02, 0, 0.035, 0.42, 5, [0.62, 0.58, 0.5], null, 0.028); icoLeaf(gc, 0, 0.6, 0, 0.33, 0.85, [0.29, 0.43, 0.2], R, 0.3); icoLeaf(gc, 0.1, 0.74, 0.03, 0.22, 0.8, [0.33, 0.47, 0.22], R, 0.3); }
+      else if (kind === 2) { cyl(g, 0, -0.02, 0, 0.03, 0.8, 5, [0.5, 0.36, 0.26], null, 0.02); icoLeaf(gc, 0.06, 0.84, 0.03, 0.46, 0.34, [0.21, 0.36, 0.17], R, 0.25); icoLeaf(gc, 0.18, 0.93, -0.07, 0.3, 0.38, [0.24, 0.39, 0.18], R, 0.25); }
+      else { cyl(g, 0, -0.02, 0, 0.075, 0.5, 5, [0.46, 0.43, 0.37], null, 0.05); icoLeaf(gc, 0, 0.62, 0, 0.42, 0.55, [0.44, 0.5, 0.36], R, 0.35); icoLeaf(gc, 0.2, 0.7, 0.1, 0.26, 0.5, [0.49, 0.55, 0.41], R, 0.35); }
+      return [g.geometry(), gc.geometry()];
     }
     if (kind === 0) {
       const lean = 0.03 + R() * 0.05, BK = [[0.5, 0.42, 0.32], [0.42, 0.35, 0.26]];
@@ -8960,7 +8999,7 @@ const World = (function () {
       const top = [lean * 2.2, 0.9, 0]; cone(g, top[0], top[1] - 0.07, top[2], 0.07, 0.11, 5, [0.4, 0.38, 0.22], [0.32, 0.36, 0.18], 0);
       for (let k = 0; k < 2; k++) {   // dead fronds hanging down the trunk
         const a = (k + R() * 0.5) * Math.PI, ca = Math.cos(a), sa = Math.sin(a), b = [top[0] + ca * 0.03, top[1] - 0.04, top[2] + sa * 0.03], t = [top[0] + ca * 0.12, top[1] - 0.36, top[2] + sa * 0.12], w = 0.04;
-        g.triO(b, [t[0] - sa * w, t[1], t[2] + ca * w], [t[0] + sa * w, t[1], t[2] - ca * w], [0.5, 0.4, 0.25], top);
+        gc.triO(b, [t[0] - sa * w, t[1], t[2] + ca * w], [t[0] + sa * w, t[1], t[2] - ca * w], [0.5, 0.4, 0.25], top);
       }
       const NF = 11;
       for (let f = 0; f < NF; f++) {   // the fronds: the midrib arching up and out, drooping at the tip (the lower, older ones more)
@@ -8970,25 +9009,25 @@ const World = (function () {
         for (const sd of [-1, 1]) for (let j = 0; j < 2; j++) {
           const A = pt[j], B = pt[j + 1], wa = WD[j], wb = WD[j + 1], As = [A[0] - sa * wa * sd, A[1] - wa * 0.6, A[2] + ca * wa * sd], Bs = [B[0] - sa * wb * sd, B[1] - wb * 0.6, B[2] + ca * wb * sd];
           const bl = [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2 - 1, (A[2] + B[2]) / 2], c0 = tint(cf, 1.12), c1 = tint(cf, sd > 0 ? 0.86 : 0.78);   // (the midrib lit, the leaflets' edges darker; one side more)
-          if (wb > 0) g.quadO(A, B, Bs, As, null, bl, null, [c0, c0, c1, c1]); else g.triO(A, B, As, c0, bl, c0, c1);
+          if (wb > 0) gc.quadO(A, B, Bs, As, null, bl, null, [c0, c0, c1, c1]); else gc.triO(A, B, As, c0, bl, c0, c1);
         }
       }
     } else if (kind === 1) {
       cyl(g, 0, -0.02, 0, 0.036, 0.46, 5, [0.64, 0.6, 0.52], null, 0.026);
       const C = [[0.29, 0.43, 0.2], [0.33, 0.47, 0.22], [0.26, 0.4, 0.19], [0.31, 0.46, 0.24]], a0 = R() * TAU;
-      ico(g, 0, 0.67, 0, 0.27, 0.8, C[0], R, 0.35);
-      for (let k = 0; k < 3; k++) { const a = a0 + k / 3 * TAU + (R() - 0.5) * 0.6, e = 0.17 + R() * 0.05; ico(g, Math.cos(a) * e, 0.54 + R() * 0.08, Math.sin(a) * e, 0.2 + R() * 0.04, 0.78, C[k + 1], R, 0.35); }
+      icoLeaf(gc, 0, 0.68, 0, 0.25, 0.8, C[0], R, 0.5);
+      for (let k = 0; k < 5; k++) { const a = a0 + k / 5 * TAU + (R() - 0.5) * 0.7, e = 0.17 + R() * 0.07; icoLeaf(gc, Math.cos(a) * e, 0.52 + R() * 0.16, Math.sin(a) * e, 0.15 + R() * 0.05, 0.8, C[(k % 3) + 1], R, 0.5); }   // (a crown of clumps, uneven)
     } else if (kind === 2) {
       const tx = 0.06 + R() * 0.04, tz = (R() - 0.5) * 0.06;
       cyl(g, 0, -0.02, 0, 0.03, 0.42, 5, [0.5, 0.37, 0.27], null, 0.025); cyl(g, tx * 0.45, 0.38, tz * 0.45, 0.025, 0.42, 5, [0.48, 0.35, 0.26], null, 0.018);
       const C = [[0.21, 0.36, 0.17], [0.24, 0.39, 0.18], [0.19, 0.33, 0.16], [0.23, 0.37, 0.19]], a0 = R() * TAU;
-      ico(g, tx, 0.88, tz, 0.3, 0.34, C[0], R, 0.25);
-      for (let k = 0; k < 3; k++) { const a = a0 + k / 3 * TAU + (R() - 0.5) * 0.5, e = 0.22 + R() * 0.05; ico(g, tx + Math.cos(a) * e, 0.84 + R() * 0.05, tz + Math.sin(a) * e, 0.19 + R() * 0.04, 0.4, C[k + 1], R, 0.25); }
+      icoLeaf(gc, tx, 0.88, tz, 0.28, 0.34, C[0], R, 0.4);
+      for (let k = 0; k < 4; k++) { const a = a0 + k / 4 * TAU + (R() - 0.5) * 0.6, e = 0.21 + R() * 0.07; icoLeaf(gc, tx + Math.cos(a) * e, 0.83 + R() * 0.07, tz + Math.sin(a) * e, 0.16 + R() * 0.05, 0.42, C[(k % 3) + 1], R, 0.4); }
     } else {   // an olive
       cyl(g, 0, -0.02, 0, 0.075, 0.3, 5, [0.46, 0.43, 0.37], null, 0.06); cyl(g, 0.03, 0.26, 0.02, 0.055, 0.2, 5, [0.44, 0.41, 0.35], null, 0.042);
-      ico(g, 0, 0.62, 0, 0.42, 0.55, [0.44, 0.5, 0.36], R, 0.35); ico(g, 0.2, 0.7, 0.1, 0.26, 0.5, [0.49, 0.55, 0.41], R, 0.35); ico(g, -0.17, 0.66, -0.09, 0.25, 0.5, [0.4, 0.47, 0.34], R, 0.35);
+      icoLeaf(gc, 0, 0.62, 0, 0.42, 0.55, [0.44, 0.5, 0.36], R, 0.35); icoLeaf(gc, 0.2, 0.7, 0.1, 0.26, 0.5, [0.49, 0.55, 0.41], R, 0.35); icoLeaf(gc, -0.17, 0.66, -0.09, 0.25, 0.5, [0.4, 0.47, 0.34], R, 0.35);
     }
-    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+    return [g.geometry(), gc.geometry()];   // (the wood, the leaves)
   }
   // a flat polygon (outer ring + holes, [[x, z], ...]) triangulated and cut into triangles no longer than lim m a side, each vertex put at y(x, z):
   // f(a, b, c) gets the three [x, y, z] corners
@@ -9108,7 +9147,7 @@ const World = (function () {
     }
     const bandCh = new Chunks(256, true);
     for (const rings of Dd.band) mcFill(rings, 7, (x, z) => mcLand(x, z) - 0.06, (a, b, c) => {
-      const g = bandCh.get((a[0] + b[0] + c[0]) / 3, (a[2] + b[2] + c[2]) / 3), col = (p) => { const k = 0.93 + (P.n4(p[0], p[2]) - 0.5) * 0.1; return [0.97 * k, 0.93 * k, 0.86 * k]; };
+      const g = bandCh.get((a[0] + b[0] + c[0]) / 3, (a[2] + b[2] + c[2]) / 3), col = (p) => { const k = 0.93 + (P.n4(p[0], p[2]) - 0.5) * 0.1; return [0.92 * k, 0.88 * k, 0.82 * k]; };
       triUp(g, a, b, c, [col(a), col(b), col(c)], [[a[0] / 9, -a[2] / 9], [b[0] / 9, -b[2] / 9], [c[0] / 9, -c[2] / 9]]); });
     const scen = new Chunks(256);
     {   // the quay walls: dressed stone from the edge of the quay down into the water, a pale coping along the top, a dark band of weed at the waterline
@@ -9189,7 +9228,7 @@ const World = (function () {
     };
     const HI = [0.93, 0.93, 0.9];
     {
-      const CH = 256, offs = [-w, -w * 2 / 3, -w / 3, 0, w / 3, w * 2 / 3, w], tileL = 8, ASP = [0.74, 0.74, 0.74], UND = [0.46, 0.46, 0.47], KB = [0.62, 0.61, 0.6], KBm = [0.8, 0.8, 0.79], SWc = [0.87, 0.87, 0.86];   // (KB, KBm: the pavement darker at the foot of the barrier, out to 1.1 m)
+      const CH = 256, offs = [-w, -w * 2 / 3, -w / 3, 0, w / 3, w * 2 / 3, w], tileL = 8, ASP = [0.74, 0.74, 0.74], UND = [0.46, 0.46, 0.47], KB = [0.6, 0.59, 0.58], KBm = [0.75, 0.75, 0.74], SWc = [0.81, 0.81, 0.8];   // (KB, KBm: the pavement darker at the foot of the barrier, out to 1.1 m)
       // in the tunnel the road is darker, brighter under each pair of lights (every 10 m), fading in over the first 14 m from the portals
       const tunK = (i) => { const s = i * ds, e = Math.min(s - tS0, tS1 - s); if (e <= 0) return 1; const f = sstep(0, 14, e); return 1 - f * (0.62 - 0.3 * Math.max(0, Math.cos(i / 5 * TAU))); };
       const tint = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
@@ -9432,7 +9471,7 @@ const World = (function () {
     // over the tunnel (the Fairmont, the Auditorium, the Monte Carlo Star): their own meshes, faded with the tunnel
     const tunFac = new GB(true), tunFacM = new THREE.MeshLambertMaterial({ map: facT[1], vertexColors: true }), tunRf = new GB(true), tunFl = new GB(true);   // (their roofs: tunRf, textured; the flat ones' surfaces tunFl)
     const WALL = [[0.97, 0.9, 0.76], [0.96, 0.83, 0.62], [0.96, 0.76, 0.64], [0.98, 0.85, 0.8], [0.98, 0.93, 0.72], [0.98, 0.97, 0.94], [0.9, 0.89, 0.87], [0.94, 0.8, 0.7], [0.99, 0.95, 0.86]];
-    const ROOF = [[0.8, 0.78, 0.74], [0.88, 0.87, 0.83], [0.72, 0.7, 0.66], [0.85, 0.8, 0.73]], TILE = [[0.79, 0.43, 0.31], [0.72, 0.38, 0.27], [0.83, 0.5, 0.36], [0.76, 0.46, 0.34]];
+    const ROOF = [[0.8, 0.78, 0.74], [0.88, 0.87, 0.83], [0.72, 0.7, 0.66], [0.85, 0.8, 0.73], [0.93, 0.93, 0.92], [0.64, 0.65, 0.66], [0.6, 0.56, 0.5], [0.77, 0.7, 0.62]], TILE = [[0.79, 0.43, 0.31], [0.72, 0.38, 0.27], [0.83, 0.5, 0.36], [0.76, 0.46, 0.34]];   // (ROOF, the flat roofs: membranes, white, gravel grey, bitumen, tiled terraces)
     const COPPER = [0.45, 0.62, 0.55], SLATE = [0.42, 0.45, 0.5], CREAM = [0.95, 0.88, 0.72], STONE = [0.93, 0.9, 0.84];
     const ringArea = (r) => { let a = 0; for (let k = 0; k < r.length; k++) { const [x0, z0] = r[k], [x1, z1] = r[(k + 1) % r.length]; a += x0 * z1 - x1 * z0; } return a / 2; };
     const inRing = (r, x, z) => { let c = false; for (let a = 0, b = r.length - 1; a < r.length; b = a++) { const [xa, za] = r[a], [xb, zb] = r[b]; if ((za > z) !== (zb > z) && x < (xb - xa) * (z - za) / (zb - za) + xa) c = !c; } return c; };
@@ -9485,6 +9524,12 @@ const World = (function () {
       const fu = (p) => { const q = rUV(p, rot), k = gs ? 0.25 : 1 / 3; return [q[0] * k, q[1] * k]; };
       for (const [a, b, c] of tri) { const A = [r[a][0], yt, r[a][1]], B = [r[b][0], yt, r[b][1]], C = [r[c][0], yt, r[c][1]]; triUp(gs || g, A, B, C, [rc, rc, rc], [fu(A), fu(B), fu(C)]); }
       if (!par) return; let cx = 0, cz = 0; for (const [x, z] of r) { cx += x; cz += z; } cx /= r.length; cz /= r.length; const top = yt + par, inn = [cx, yt, cz];
+      {   // the roof darker along the foot of its parapet (out of the sky's light, the grime), fading out over 1.4 m: a band just over it, the same texture
+        const ins = insetRing(r, 1.4), dk = [rc[0] * 0.68, rc[1] * 0.68, rc[2] * 0.7], yb = yt + 0.012;
+        for (let k = 0; k < r.length; k++) { const m = (k + 1) % r.length; if (!inRing(r, ins[k][0], ins[k][1]) || !inRing(r, ins[m][0], ins[m][1])) continue;
+          const A = [r[k][0], yb, r[k][1]], B = [r[m][0], yb, r[m][1]], C = [ins[m][0], yb, ins[m][1]], D = [ins[k][0], yb, ins[k][1]];
+          (gs || g).quadUp(A, B, C, D, [dk, dk, rc, rc], [fu(A), fu(B), fu(C), fu(D)]); }
+      }
       for (let k = 0; k < r.length; k++) {
         const [xa, za] = r[k], [xb, zb] = r[(k + 1) % r.length], L = Math.hypot(xb - xa, zb - za); if (L < 0.3) continue;
         const nx = -(zb - za) / L * 0.25, nz = (xb - xa) / L * 0.25;   // (inwards: the ring runs counter-clockwise)
@@ -9518,7 +9563,7 @@ const World = (function () {
       if (mcDist(rr.x, rr.z) > 140) return;   // (near the circuit: far off they are specks)
       const c = Math.cos(rr.rot), s = Math.sin(rr.rot), spot = () => { for (let t = 0; t < 12; t++) { const a = (RK() - 0.5) * rr.L * 0.75, b = (RK() - 0.5) * rr.D * 0.75, x = rr.x + a * c - b * s, z = rr.z + a * s + b * c; if (inRing(r, x, z)) return [x, z]; } return null; };
       const AC = [0.84, 0.85, 0.86], ACT = [0.78, 0.79, 0.8], FAN = [0.2, 0.21, 0.22];
-      for (let row = 0, nr = Math.min(3, Math.floor(area / 260) + (RK() < 0.6 ? 1 : 0)); row < nr; row++) {
+      for (let row = 0, nr = Math.min(area > 1200 ? 6 : 3, Math.floor(area / 260) + (RK() < 0.6 ? 1 : 0)); row < nr; row++) {   // (more on the big roofs)
         const p = spot(); if (!p) continue; const n = 2 + Math.floor(RK() * 4), w = style === 2 ? 1.6 : 1.0;
         for (let k = 0; k < n; k++) { const x = p[0] + c * k * (w + 0.25), z = p[1] + s * k * (w + 0.25); if (!inRing(r, x, z)) break; const g = scen.get(x, z);
           box(g, x, yt, z, w, 0.85, 0.75 * w, rr.rot, AC, ACT, true); const h = 0.3 * w; g.quadUp([x - h, yt + 0.87, z - h], [x + h, yt + 0.87, z - h], [x + h, yt + 0.87, z + h], [x - h, yt + 0.87, z + h], [FAN, FAN, FAN, FAN]); }
@@ -9528,7 +9573,7 @@ const World = (function () {
           for (let k = 0; k < n; k++) { const x = p[0] + k * 1.15, z = p[1]; if (!inRing(r, x, z) || !inRing(r, x, z - 2)) break; const g = scen.get(x, z);
             g.quadO([x - 0.5, yt + 0.25, z], [x + 0.5, yt + 0.25, z], [x + 0.5, yt + 1.3, z - 1.5], [x - 0.5, yt + 1.3, z - 1.5], null, [x, yt, z - 2], null, [PNL, PNL, PNH, PNH]);
             box(g, x, yt + 1.2, z - 1.75, 1.0, 0.42, 0.42, 0, [0.93, 0.93, 0.92], null, true); } } }
-      if (area > 300 && RK() < 0.45) for (let k = 0, n = 1 + Math.floor(RK() * 3); k < n; k++) {   // skylights
+      if (area > 300 && RK() < 0.45) for (let k = 0, n = 1 + Math.floor(RK() * 3) + Math.floor(area / 900); k < n; k++) {   // skylights
         const p = spot(); if (!p) continue; box(scen.get(p[0], p[1]), p[0], yt, p[1], 2.4, 0.3, 1.4, rr.rot, [0.8, 0.8, 0.79], [0.32, 0.4, 0.48], true); }
       if (style < 2 && area > 150 && RK() < 0.32) {   // a terrace on the flats: a deck, planters along one side, a parasol or a pergola, two loungers
         const p = spot(), tw = Math.min(9, rr.L * 0.45), td = Math.min(6, rr.D * 0.45), Q = (a, b, y) => [p[0] + a * c - b * s, y, p[1] + a * s + b * c];
@@ -9540,6 +9585,21 @@ const World = (function () {
           else { for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { const q = Q(a * tw * 0.3, b * td * 0.3, y); cyl(g, q[0], q[1], q[2], 0.06, 2.3, 4, [0.45, 0.33, 0.22]); }   // (a pergola: posts, slats)
             for (let k = -2; k <= 2; k++) { const q = Q(k * tw * 0.14, 0, y + 2.3); box(g, q[0], q[1], q[2], 0.12, 0.1, td * 0.66, rr.rot, [0.5, 0.37, 0.25], null, true); } }
           for (const b of [-0.8, 0.8]) { const q = Q(tw / 4, b, y); box(g, q[0], q[1], q[2], 1.8, 0.3, 0.6, rr.rot, [0.96, 0.96, 0.95], null, true); }   // (loungers)
+        }
+      }
+      if (area > 600 && rr.fill > 0.85) {   // on the big roofs walkways of pale concrete slabs, along and across through the middle (the service paths)
+        const g = detCh.get(rr.x, rr.z), WK = [0.86, 0.85, 0.82], WK2 = [0.8, 0.79, 0.76], y = yt + 0.03, Q = (a, b) => [rr.x + a * c - b * s, y, rr.z + a * s + b * c];
+        for (const [l, w] of [[rr.L * 0.84, 1.2], [1.2, rr.D * 0.84]]) g.quadUp(Q(-l / 2, -w / 2), Q(l / 2, -w / 2), Q(l / 2, w / 2), Q(-l / 2, w / 2), [WK, WK2, WK, WK2]);
+      }
+      if (area > 200 && RK() < 0.3) {   // a roof garden: a lawn between raised beds of shrubs and flowers, now and then a small olive
+        const p = spot(), gw = Math.min(10, rr.L * 0.5), gd = Math.min(7, rr.D * 0.5), Q = (a, b, y) => [p[0] + a * c - b * s, y, p[1] + a * s + b * c];
+        if (p && gd > 2.5 && [[-1, -1], [1, -1], [1, 1], [-1, 1]].every(([a, b]) => { const q = Q(a * gw / 2, b * gd / 2, 0); return inRing(r, q[0], q[2]); })) {
+          const g = detCh.get(p[0], p[1]), y = yt + 0.04, GR = [0.38, 0.54, 0.25], GR2 = [0.33, 0.49, 0.22], SH = [[0.27, 0.42, 0.2], [0.33, 0.48, 0.23], [0.24, 0.38, 0.19]];
+          g.quadUp(Q(-gw / 2, -gd / 2, y), Q(gw / 2, -gd / 2, y), Q(gw / 2, gd / 2, y), Q(-gw / 2, gd / 2, y), [GR, GR2, GR, GR2]);
+          for (const b of [-1, 1]) { const q = Q(0, b * (gd / 2 - 0.35), y); box(g, q[0], q[1], q[2], gw, 0.45, 0.7, rr.rot, [0.66, 0.62, 0.56], [0.3, 0.44, 0.2], true); }
+          for (let k = 0, n = 3 + Math.floor(RK() * 4); k < n; k++) { const b = RK() < 0.5 ? -1 : 1, q = Q((RK() - 0.5) * gw * 0.85, b * (gd / 2 - 0.35), y + 0.45), fl = RK() < 0.3;
+            icoLeaf(g, q[0], q[1] + 0.2, q[2], 0.3 + RK() * 0.2, 0.75, fl ? FLOWER[Math.floor(RK() * 5)] : SH[Math.floor(RK() * 3)], RK, 0.4); }
+          if (RK() < 0.6) { const q = Q(gw * 0.25, 0, y); cyl(g, q[0], q[1], q[2], 0.07, 1.4, 5, [0.46, 0.43, 0.37], null, 0.05); icoLeaf(g, q[0], q[1] + 1.9, q[2], 0.85, 0.7, [0.44, 0.5, 0.36], RK, 0.4); }
         }
       }
     };
@@ -9837,18 +9897,31 @@ const World = (function () {
       }
       lawnCh.addTo(root, lawnM, false, true); gardCh.addTo(root, gardM, false, true);
       bandCh.addTo(root, aoMat(new THREE.MeshLambertMaterial({ map: pave, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -3 }), true), false, true);   // (the quay band and the squares)
-      const poolG = new GB(true), rim = [0.95, 0.95, 0.93];
+      const poolG = new GB(true), laneG = new GB(true), rim = [0.95, 0.95, 0.93];
       for (const pl of Dd.pools) {
         const r = pl.r; let cx = 0, cz = 0; for (const [x, z] of r) { cx += x; cz += z; } cx /= r.length; cz /= r.length;
+        const pr = bldRect(r), pc = Math.cos(pr.rot), ps = Math.sin(pr.rot), lanes = pr.L > 20 && pr.D > 8, pu = (x, z) => [(x * pc + z * ps) / 2.5, (-x * ps + z * pc) / 2.5 + 0.5];   // (the floor's tiles along the pool; lanes in the big ones)
         const n = mcNear(cx, cz); if (n.i >= 0 && n.dd < 1) continue;
         let y = 1e9; for (const [x, z] of r) y = Math.min(y, mcGround(x, z)); if (y > 1e8) continue; const g = scen.get(cx, cz);
         const on = MC.bldR.find(bd => !bd.lm && bd.flat && Math.abs(bd.x - cx) < 60 && Math.abs(bd.z - cz) < 60 && inRing(bd.r, cx, cz)); if (on) y = on.top + 0.15;   // (on a roof)
         const tri = THREE.ShapeUtils.triangulateShape(r.map(([x, z]) => new THREE.Vector2(x, z)), []), wy = y + (pl.k === 1 ? 0.35 : 0.05);
-        for (const [a, b, c] of tri) triUp(poolG, [r[a][0], wy, r[a][1]], [r[b][0], wy, r[b][1]], [r[c][0], wy, r[c][1]], [[1, 1, 1], [1, 1, 1], [1, 1, 1]], [[r[a][0] / 6, -r[a][1] / 6], [r[b][0] / 6, -r[b][1] / 6], [r[c][0] / 6, -r[c][1] / 6]]);
+        for (const [a, b, c] of tri) triUp(lanes ? laneG : poolG, [r[a][0], wy, r[a][1]], [r[b][0], wy, r[b][1]], [r[c][0], wy, r[c][1]], [[1, 1, 1], [1, 1, 1], [1, 1, 1]], [pu(...r[a]), pu(...r[b]), pu(...r[c])]);
         for (let k = 0; k < r.length; k++) { const [xa, za] = r[k], [xb, zb] = r[(k + 1) % r.length]; g.quadO([xa, y - 0.3, za], [xb, y - 0.3, zb], [xb, wy + 0.12, zb], [xa, wy + 0.12, za], rim, [cx, wy - 1, cz]); }
         exclPush(cx, cz, 4);
       }
-      addM(poolG, new THREE.MeshPhongMaterial({ map: out.dyn.water, color: 0x2a86ae, shininess: 30, specular: 0x0a1014, vertexColors: true }));   // (the sea's ripples: they drift with it; pool blue, a soft sheen: a sharp sun's highlight washed it white)
+      // the water: the floor's tiles seen through it (tinted), the light's net drifting over them (two layers), towards the horizon the sky mirrored;
+      // a soft sheen (a sharp sun's highlight washed it white)
+      const cau = ownTex(mcCausticTex()), uT = out.dyn.wind = out.dyn.wind || { value: 0 };
+      const poolMat = (lanes) => { const m = new THREE.MeshPhongMaterial({ map: ownTex(mcPoolTex(lanes)), color: 0x5fb4d2, shininess: 30, specular: 0x0a1014, vertexColors: true });
+        m.onBeforeCompile = (sh) => { sh.uniforms.uCau = { value: cau }; sh.uniforms.uT = uT;
+          sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uCau;\nuniform float uT;')
+            .replace('#include <map_fragment>', ['#include <map_fragment>',
+              '{ float c1 = texture2D(uCau, vUv * 0.61 + vec2(uT * 0.031, uT * 0.017)).r, c2 = texture2D(uCau, vUv * 0.83 + vec2(-uT * 0.022, uT * 0.035)).r;',
+              '  diffuseColor.rgb += vec3(0.75, 0.95, 1.0) * (0.55 * min(c1, c2) + 0.12 * (c1 + c2)); }'].join('\n'))
+            .replace('#include <envmap_fragment>', '#include <envmap_fragment>\n{ float pF = 1.0 - clamp(dot(normalize(vViewPosition), normal), 0.0, 1.0); outgoingLight = mix(outgoingLight, vec3(0.72, 0.84, 0.92), 0.08 + 0.55 * pF * pF * pF); }');
+        };
+        m.customProgramCacheKey = () => 'mcPool1'; return m; };
+      addM(poolG, poolMat(false)); addM(laneG, poolMat(true));
     }
 
     /* ---- trees: palms by the sea and along the boulevards, plane trees and umbrella pines in the parks and streets (OpenStreetMap's trees,
@@ -10130,14 +10203,18 @@ const World = (function () {
     }
     const tGeo = [0, 1, 2, 3, 4, 5, 6, 7].map(k => mcTreeGeo(k >> 1, k & 1)).concat([0, 1, 2, 3].map(k => mcTreeGeo(k, 0, true)));   // (two of each kind; the simple ones for the far trees)
     const aoT = [];   // (the trees: x, z, the crown's width, the kind; for the ground's occlusion)
-    const tk = tGeo.map((geo, gi) => ({ add: (x, y, z, rot, sxz, sy, col) => {   // (a copy of the unit model into the scenery chunk: turned, scaled, tinted)
+    const folCh = new Chunks(256);   // (the trees' leaves: their own material, a texture of leaves on them)
+    const tk = tGeo.map((geos, gi) => ({ add: (x, y, z, rot, sxz, sy, col) => {   // (a copy of the unit model into the scenery chunks, the wood and the leaves: turned, scaled, tinted)
       aoT.push(x, z, sxz, gi < 8 ? gi >> 1 : gi - 8);
-      const g = scen.get(x, z), p = geo.attributes.position.array, n = geo.attributes.normal.array, c = geo.attributes.color.array, co = Math.cos(rot), si = Math.sin(rot);
-      for (let k = 0; k < p.length; k += 3) {
-        const px = p[k] * sxz, pz = p[k + 2] * sxz; g.P.push(x + px * co - pz * si, y + p[k + 1] * sy, z + px * si + pz * co);
-        let nx = n[k] / sxz, ny = n[k + 1] / sy, nz = n[k + 2] / sxz; const l = Math.hypot(nx, ny, nz) || 1; nx /= l; ny /= l; nz /= l;
-        g.N.push(nx * co - nz * si, ny, nx * si + nz * co); g.C.push(c[k] * col[0], c[k + 1] * col[1], c[k + 2] * col[2]);
-      } } }));
+      const co = Math.cos(rot), si = Math.sin(rot);
+      geos.forEach((geo, gk) => {
+        const g = (gk ? folCh : scen).get(x, z), p = geo.attributes.position.array, n = geo.attributes.normal.array, c = geo.attributes.color.array;
+        for (let k = 0; k < p.length; k += 3) {
+          const px = p[k] * sxz, pz = p[k + 2] * sxz; g.P.push(x + px * co - pz * si, y + p[k + 1] * sy, z + px * si + pz * co);
+          let nx = n[k] / sxz, ny = n[k + 1] / sy, nz = n[k + 2] / sxz; const l = Math.hypot(nx, ny, nz) || 1; nx /= l; ny /= l; nz /= l;
+          g.N.push(nx * co - nz * si, ny, nx * si + nz * co); g.C.push(c[k] * col[0], c[k + 1] * col[1], c[k + 2] * col[2]);
+        }
+      }); } }));
     const plant = (x, z, kind, s, tint) => {
       const n = mcNear(x, z); if (n.i >= 0 && n.dd < 1.2) return false; if (mcSD(x, z) < 1.5 || excluded(x, z)) return false;
       const oc = ocAt(x, z); if (oc === 1 || oc === 2 || oc === 3 || oc === 6 || oc === 255) return false;
@@ -10685,6 +10762,19 @@ const World = (function () {
       sdU.value = st; sdB.value.set(x0 - RES / 2, z0 - RES / 2, 1 / (NX * RES), 1 / (NZ * RES)); sdH.value.set(h0, hr);
     }
     scen.addTo(root, roofM, true, true); detCh.addTo(root, roofM, false, true); roofCh.addTo(root, rfM, true, true); flatCh.addTo(root, flM, true, true);
+    {   // the trees' leaves: the texture of leaves laid on them from all three sides (by their normals), darker in the shade between the leaves
+      const folM = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut, 2, 9, true), cutC = folM.onBeforeCompile, lT = { value: ownTex(mcLeafTex()) };
+      folM.onBeforeCompile = (sh, r) => { cutC.call(folM, sh, r); sh.uniforms.uLeaf = lT;
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vLfW;\nvarying vec3 vLfN;').replace('#include <project_vertex>', '#include <project_vertex>\nvLfW = (modelMatrix * vec4(transformed, 1.0)).xyz; vLfN = mat3(modelMatrix) * objectNormal;');
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uLeaf;\nvarying vec3 vLfW;\nvarying vec3 vLfN;')
+          .replace('#include <color_fragment>', ['#include <color_fragment>',
+            '{ vec3 lw = abs(normalize(vLfN)); lw = pow(lw, vec3(3.0)); lw /= lw.x + lw.y + lw.z; vec3 lp = vLfW * 0.8;',
+            '  float lf = texture2D(uLeaf, lp.zy).r * lw.x + texture2D(uLeaf, lp.xz).r * lw.y + texture2D(uLeaf, lp.xy).r * lw.z;',
+            '  diffuseColor.rgb *= 0.45 + 1.05 * lf; }'].join('\n'));
+      };
+      folM.customProgramCacheKey = () => 'mcLeaf1';
+      folCh.addTo(root, folM, true, true);
+    }
     addM(texSpons, new THREE.MeshLambertMaterial({ map: tex.sponsorsMC, vertexColors: true }));
     addM(fenceG, new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide }));
     { const tm = new THREE.Mesh(tun.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })); tm.castShadow = true; tm.receiveShadow = true; tm.matrixAutoUpdate = false; root.add(tm);

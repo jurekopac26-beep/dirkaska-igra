@@ -67,17 +67,17 @@
   }
  },
  "monaco": {
-  "meshes": 479,
-  "verts": 1850574,
+  "meshes": 511,
+  "verts": 1914786,
   "instances": 2883,
   "props": 37,
   "crowd": 2883,
-  "world": "2911908d",
+  "world": "9c7486e6",
   "propsHash": "c499adad",
   "floor": "62d14c53/6636",
   "groups": {
-   "-:MeshLambertMaterial": "9ed5b7f3",
-   "-:MeshPhongMaterial": "7b0beb73",
+   "-:MeshLambertMaterial": "5b7c5a60",
+   "-:MeshPhongMaterial": "4ff08b68",
    "puddles:MeshBasicMaterial": "e978ae5",
    "-:MeshBasicMaterial": "9941efe2",
    "boat:MeshLambertMaterial": "edc8955d",
