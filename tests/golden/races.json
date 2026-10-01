@@ -532,22 +532,22 @@
  "vrsic/cs/lm": {
   "finished": 13,
   "cars": 13,
-  "winner": 368.69,
+  "winner": 371.93,
   "spins": 0,
-  "walls": 0,
+  "walls": 5,
   "rescues": 0,
   "nan": false,
-  "digest": "040cb4d420edea64d90eab7c"
+  "digest": "03e218a4332bf02446a8d5ee"
  },
  "vrsic/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 403.57,
+  "winner": 402.8,
   "spins": 0,
-  "walls": 0,
+  "walls": 5,
   "rescues": 0,
   "nan": false,
-  "digest": "f398f825ddf1d7ead8b122d9"
+  "digest": "621a6a04c4c58d176b0463b4"
  },
  "nring/cs": {
   "finished": 21,

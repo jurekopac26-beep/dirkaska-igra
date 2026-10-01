@@ -1050,30 +1050,30 @@
   }
  },
  "vrsic/lm/cs": {
-  "digest": "89859318562a0fda12c2f51b",
-  "lead": 2821.4,
+  "digest": "e919b2abc315939671517054",
+  "lead": 2828.3,
   "car0": [
-   -416.18,
-   1951.35
-  ],
-  "cover": {
-   "dmg": 1,
-   "loose": 4,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
- "vrsic/car/cs": {
-  "digest": "aa1d0c4d4b82b2963d676457",
-  "lead": 2429.8,
-  "car0": [
-   -364.81,
-   1563
+   -433.15,
+   1964.45
   ],
   "cover": {
    "dmg": 1,
    "loose": 5,
    "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "vrsic/car/cs": {
+  "digest": "83bbc348526006887689a13d",
+  "lead": 2436.5,
+  "car0": [
+   -361.28,
+   1565.38
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 5,
+   "rescues": 1,
    "repairs": 0
   }
  },
