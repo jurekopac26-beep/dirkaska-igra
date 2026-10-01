@@ -72,8 +72,8 @@
  "harju": {
   "calls": 161,
   "maxCalls": 178,
-  "kverts": 659,
-  "maxKverts": 755,
+  "kverts": 685,
+  "maxKverts": 778,
   "jsMs": 0.3
  },
  "nring": {

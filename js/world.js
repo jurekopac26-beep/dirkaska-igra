@@ -7190,8 +7190,8 @@ const World = (function () {
   let hjFTex = null, hjATex = null, hjAKey = '', hjBTex = null;   // (made once, reused by every Harju build: the teardown frees materials, not maps)
   // the facades: rows of one window bay (3.2 m) by one floor (128 x 128 px each, 16 rows), white where the vertex colour tints the wall: 0 a plastered
   // block (a two-pane window, white frame, a sill), 1 a glazed balcony, 2 a shop front (a display window under a fascia), 3 painted boards with a window in
-  // white trim, 4 red brick with a white window, 5 a school's tall windows, 6 a blank wall, 7 plain (roofs), 8 plain red brick, 9 big windows between
-  // brick piers
+  // white trim, 4 red brick with a white window, 5 a school's tall windows, 6 a blank wall, 7 plain, 8 plain red brick, 9 big windows between brick
+  // piers, 10 roofing felt, 11 a standing-seam metal roof, 12 a staircase entrance
   function hjFacadeTex() {
     if (hjFTex) return hjFTex;
     const W = 128, c = document.createElement('canvas'); c.width = W; c.height = W * 16; const x = c.getContext('2d'), r = rng(8201);
@@ -7203,14 +7203,23 @@ const World = (function () {
     fill('#2a3440', 30, 16, 68, 92, 1); glass(34, 20, 26, 84, 1); fill('#d8d6cf', 4, 104, 120, 12, 1); fill('rgba(170,200,215,0.55)', 4, 58, 120, 46, 1); fill('#e9e8e3', 4, 56, 120, 4, 1); fill('#e9e8e3', 4, 58, 3, 46, 1); fill('#e9e8e3', 121, 58, 3, 46, 1);   // (the balcony's glass front, its slab)
     fill('#d9d7d0', 0, 6, W, 20, 2); fill('#9a9890', 0, 24, W, 3, 2); win(10, 34, 108, 84, 2, '#4a4f55', false); fill('#4a4f55', 62, 34, 4, 84, 2);
     for (let yy = 0; yy < W; yy += 8) { fill('rgba(0,0,0,0.13)', 0, yy, W, 1.5, 3); fill('rgba(255,255,255,0.12)', 0, yy + 2, W, 1, 3); } win(40, 30, 48, 58, 3, '#fbfbf8', true); fill('#fbfbf8', 34, 88, 60, 7, 3); fill('#fbfbf8', 34, 20, 60, 6, 3);
-    for (let yy = 0; yy < W; yy += 7) for (let xx = (yy / 7) % 2 ? -8 : 0; xx < W; xx += 16) { const t = r(); x.fillStyle = 'rgb(' + [150 + t * 30, 64 + t * 18, 48 + t * 12].map(v => v | 0).join(',') + ')'; x.fillRect(xx + 1, row(4) + yy + 1, 14, 5.5); }
-    fill('rgba(0,0,0,0.0)', 0, 0, 1, 1, 4); { const k = 4, y0 = row(k); x.fillStyle = '#d8d1c6'; for (let yy = 0; yy < W; yy += 7) x.fillRect(0, y0 + yy, W, 1); } win(36, 26, 56, 70, 4, '#f4f2ec', true); fill('#e2ddd2', 30, 100, 68, 6, 4);
+    const brick = (k, y0, y1) => { x.fillStyle = '#d8d1c6'; x.fillRect(0, row(k) + y0, W, y1 - y0); for (let c = 0, yy = y0; yy < y1; yy += 3.5, c++) for (let xx = c % 2 ? -4 : 0; xx < W; xx += 8) {   // (courses of 3.5 px: ~36 to a storey, as real facing brick)
+      const t = r(); x.fillStyle = 'rgb(' + [146 + t * 34, 62 + t * 20, 46 + t * 14].map(v => v | 0).join(',') + ')'; x.fillRect(xx + 0.6, row(k) + yy + 0.6, 6.8, 2.6); } };
+    brick(4, 0, W); win(36, 26, 56, 70, 4, '#f4f2ec', true); fill('#e2ddd2', 30, 100, 68, 6, 4);
     win(16, 18, 38, 88, 5, '#fbfbf8', false); win(74, 18, 38, 88, 5, '#fbfbf8', false); fill('#dcd9d0', 0, 112, W, 5, 5);
     fill('rgba(0,0,0,0.07)', 0, 60, W, 2, 6);
     fill('#ffffff', 0, 0, W, W, 7);
-    const brick = (k, y0, y1) => { for (let yy = y0; yy < y1; yy += 7) for (let xx = (yy / 7) % 2 ? -8 : 0; xx < W; xx += 16) { const t = r(); x.fillStyle = 'rgb(' + [150 + t * 30, 64 + t * 18, 48 + t * 12].map(v => v | 0).join(',') + ')'; x.fillRect(xx + 1, row(k) + yy + 1, 14, 5.5); } };
-    fill('#d8d1c6', 0, 0, W, W, 8); brick(8, 0, W);   // plain red brick
-    fill('#d8d1c6', 0, 0, W, W, 9); brick(9, 0, W); glass(12, 14, 104, 96, 9); fill('#e8e6e0', 8, 10, 112, 4, 9); fill('#e8e6e0', 8, 110, 112, 5, 9); fill('#e8e6e0', 62, 14, 4, 96, 9);   // a big window between brick piers, white frames
+    brick(8, 0, W);   // plain red brick
+    brick(9, 0, W); glass(12, 14, 104, 96, 9); fill('#e8e6e0', 8, 10, 112, 4, 9); fill('#e8e6e0', 8, 110, 112, 5, 9); fill('#e8e6e0', 62, 14, 4, 96, 9);   // a big window between brick piers, white frames
+    // 10: a flat roof's bitumen felt (u along the roof: the strips' seams, patches; the colour from the vertex), 11: a standing-seam sheet-metal roof
+    // (u along the ridge, v from the eave up: a seam every 0.5 m, lighter towards the ridge), 12: a staircase entrance (a glazed door under a canopy, a lamp)
+    fill('#ffffff', 0, 0, W, W, 10); for (let xx = 0; xx < W; xx += 32) { fill('rgba(0,0,0,0.16)', xx, 0, 2, W, 10); fill('rgba(255,255,255,0.08)', xx + 2, 0, 1, W, 10); }
+    for (let q = 0; q < 26; q++) { x.fillStyle = r() < 0.6 ? 'rgba(0,0,0,0.09)' : 'rgba(255,255,255,0.07)'; x.fillRect(r() * W, row(10) + r() * W, 6 + r() * 26, 4 + r() * 20); }
+    for (let q = 0; q < 400; q++) { x.fillStyle = r() < 0.5 ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)'; x.fillRect(r() * W, row(10) + r() * W, 1 + r() * 2, 1 + r() * 2); }
+    { const gr = x.createLinearGradient(0, row(11) + W, 0, row(11)); gr.addColorStop(0, '#e2e2e2'); gr.addColorStop(1, '#ffffff'); x.fillStyle = gr; x.fillRect(0, row(11), W, W); }
+    for (let xx = 0; xx < W; xx += 20) { fill('rgba(0,0,0,0.28)', xx, 0, 2, W, 11); fill('rgba(255,255,255,0.35)', xx + 2, 0, 1.5, W, 11); }
+    fill('#f6f5f1', 0, 0, W, W, 12); fill('#3a3f45', 38, 34, 52, 94, 12); glass(43, 40, 42, 50, 12); fill('#c9c6bd', 41, 92, 46, 3, 12); glass(43, 97, 42, 31, 12);   // (the door)
+    fill('#d4d2cb', 26, 20, 76, 9, 12); fill('rgba(0,0,0,0.18)', 30, 29, 68, 5, 12); fill('#f2e7b0', 98, 40, 7, 10, 12); fill('#9a9890', 32, 120, 64, 8, 12);   // (the canopy, its shadow, the lamp, the step)
     const t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; t.anisotropy = 4; return (hjFTex = t);
   }
   const hjFV = (k, f) => { const v1 = 1 - k / 16, v0 = v1 - 1 / 16, pad = 3 / 2048; return v0 + pad + (v1 - v0 - 2 * pad) * f; };   // (facade row k, height fraction f -> v)
@@ -7291,51 +7300,70 @@ const World = (function () {
   function hjBuilding(g, poly, kind, roof, h, R, o) {
     const n = poly.length; let area2 = 0, cx = 0, cz = 0, g0 = 1e9, g1 = -1e9;
     for (let k = 0; k < n; k++) { const [ax, az] = poly[k], [bx, bz] = poly[(k + 1) % n]; area2 += ax * bz - bx * az; cx += ax / n; cz += az / n; const y = hjGround(ax, az); g0 = Math.min(g0, y); g1 = Math.max(g1, y); }
-    const sgn = area2 > 0 ? 1 : -1, u = R(), u2 = R();
+    const sgn = area2 > 0 ? 1 : -1, u = R(), u2 = R(), bare = !!(o && o.bare);
     const PAL0 = [[0.93, 0.87, 0.7], [0.9, 0.8, 0.62], [0.93, 0.92, 0.88], [0.8, 0.8, 0.78], [0.88, 0.71, 0.58], [0.77, 0.81, 0.73], [0.85, 0.75, 0.6], [0.72, 0.7, 0.66]];
     const PALW = [[0.9, 0.74, 0.38], [0.62, 0.2, 0.14], [0.93, 0.92, 0.88], [0.7, 0.76, 0.8], [0.58, 0.67, 0.5], [0.52, 0.37, 0.25], [0.92, 0.84, 0.6]];
-    let row = 0, rowUp = 0, col, fh = 3.1;
-    if (kind === 1) { const wood = u < 0.72; row = rowUp = wood ? 3 : 0; col = wood ? PALW[Math.floor(u2 * PALW.length)] : PAL0[Math.floor(u2 * PAL0.length)]; fh = 2.9; }
+    let row = 0, rowUp = 0, col, fh = 3.1, wood = false;
+    if (kind === 1) { wood = u < 0.72; row = rowUp = wood ? 3 : 0; col = wood ? PALW[Math.floor(u2 * PALW.length)] : PAL0[Math.floor(u2 * PAL0.length)]; fh = 2.9; }
     else if (kind === 2) { row = rowUp = 6; col = [[0.6, 0.2, 0.14], [0.55, 0.4, 0.27], [0.62, 0.62, 0.6], [0.88, 0.8, 0.55]][Math.floor(u2 * 4)]; fh = 3.0; }
     else if (kind === 4 || kind === 6) { const brick = kind === 6 || u < 0.35; row = rowUp = brick ? 4 : 5; col = brick ? [0.97, 0.92, 0.9] : PAL0[Math.floor(u2 * 4)]; fh = 3.8; if (brick) { row = 4; rowUp = kind === 6 ? 5 : 4; } }
     else if (kind === 5) { row = 2; rowUp = u < 0.5 ? 0 : 5; col = PAL0[Math.floor(u2 * PAL0.length)]; fh = 3.4; }
     else if (kind === 7 || kind === 3) { row = rowUp = 6; col = [0.66, 0.66, 0.64]; fh = 4; }
     else { const brick = u < 0.2; row = brick ? 4 : 0; rowUp = brick ? 4 : u < 0.55 ? 1 : 0; col = brick ? [0.97, 0.93, 0.9] : PAL0[Math.floor(u2 * PAL0.length)]; }
-    if (o) { row = o.row; rowUp = o.rowUp; col = o.col; fh = o.fh || fh; }
+    if (o && o.row != null) { row = o.row; rowUp = o.rowUp; col = o.col; fh = o.fh || fh; }
     col = vary(col, R, 0.08);
     const plinth = [0.42, 0.41, 0.4], yb = g0 - 1.2, y0 = g0 + 0.45;
     let top = Math.max(g0 + h, g1 + 2.6);
-    // a gable over the footprint's rectangle (its longest edge along the ridge) when the footprint is near one
+    // the footprint's long axis (its longest edge) and the extents along and across it: the gable's ridge, the roof's textures, the machine rooms
+    let bl = 0, dx = 1, dz = 0; for (let k = 0; k < n; k++) { const [ax, az] = poly[k], [bx, bz] = poly[(k + 1) % n], l = Math.hypot(bx - ax, bz - az); if (l > bl) { bl = l; dx = (bx - ax) / l; dz = (bz - az) / l; } }
+    let u0 = 1e9, u1 = -1e9, v0 = 1e9, v1 = -1e9; for (const [x, z] of poly) { const a = (x - cx) * dx + (z - cz) * dz, b = -(x - cx) * dz + (z - cz) * dx; u0 = Math.min(u0, a); u1 = Math.max(u1, a); v0 = Math.min(v0, b); v1 = Math.max(v1, b); }
+    const L = u1 - u0, D = v1 - v0, rect = Math.abs(area2) / 2 > 0.8 * L * D, ax0 = (x, z) => (x - cx) * dx + (z - cz) * dz, ac0 = (x, z) => -(x - cx) * dz + (z - cz) * dx;
+    // a gable over the footprint's rectangle when the footprint is near one; many of the 1950s blocks of flats round the ridge have a low saddle roof of sheet metal too
+    const saddle = !bare && roof === 0 && kind === 0 && h < 17 && rect && D > 6 && crH(cx, cz, 61) < 0.4;
     let gab = null;
-    if (roof === 1 && n >= 4) {
-      let bl = 0, dx = 1, dz = 0; for (let k = 0; k < n; k++) { const [ax, az] = poly[k], [bx, bz] = poly[(k + 1) % n], l = Math.hypot(bx - ax, bz - az); if (l > bl) { bl = l; dx = (bx - ax) / l; dz = (bz - az) / l; } }
-      let u0 = 1e9, u1 = -1e9, v0 = 1e9, v1 = -1e9; for (const [x, z] of poly) { const a = (x - cx) * dx + (z - cz) * dz, b = -(x - cx) * dz + (z - cz) * dx; u0 = Math.min(u0, a); u1 = Math.max(u1, a); v0 = Math.min(v0, b); v1 = Math.max(v1, b); }
-      const L = u1 - u0, D = v1 - v0;
-      if (Math.abs(area2) / 2 > 0.8 * L * D && D > 3) { const rh = Math.min(D * 0.32, 5.5), mx = cx + dx * (u0 + u1) / 2 - dz * (v0 + v1) / 2, mz = cz + dz * (u0 + u1) / 2 + dx * (v0 + v1) / 2;
-        top = Math.max(top, g1 + 2.6 + rh); gab = { L, D, rh, x: mx, z: mz, rot: Math.atan2(dz, dx), eave: top - rh }; }
-    }
+    if ((roof === 1 || saddle) && n >= 4 && rect && D > 3) { const rh = saddle ? Math.min(D * 0.17, 3.2) : Math.min(D * 0.32, 5.5), mx = cx + dx * (u0 + u1) / 2 - dz * (v0 + v1) / 2, mz = cz + dz * (u0 + u1) / 2 + dx * (v0 + v1) / 2;
+      top = Math.max(top, g1 + 2.6 + rh); gab = { L, D, rh, x: mx, z: mz, rot: Math.atan2(dz, dx), eave: top - rh }; }
     const yTop = gab ? gab.eave : top, nf = Math.max(1, Math.round((yTop - y0) / fh)), fhh = (yTop - y0) / nf;
+    const para = !gab && !bare && (kind === 0 || kind === 4 || kind === 5 || kind === 7) && yTop - y0 > 5 ? 0.5 : 0;   // (a parapet round a flat roof, a light metal coping on it)
+    const door = kind === 0 && !(o && o.row != null), foot = [col[0] * 0.8, col[1] * 0.8, col[2] * 0.8], COP = [0.78, 0.78, 0.77];
     for (let k = 0; k < n; k++) {
-      const [ax, az] = poly[k], [bx, bz] = poly[(k + 1) % n], L = Math.hypot(bx - ax, bz - az); if (L < 0.05) continue;
-      const ox = sgn * (bz - az) / L, oz = -sgn * (bx - ax) / L, inn = [(ax + bx) / 2 - ox, (y0 + yTop) / 2, (az + bz) / 2 - oz], bays = Math.max(1, Math.round(L / 3.2)), U1 = bays;
+      const [ax, az] = poly[k], [bx, bz] = poly[(k + 1) % n], Le = Math.hypot(bx - ax, bz - az); if (Le < 0.05) continue;
+      const ox = sgn * (bz - az) / Le, oz = -sgn * (bx - ax) / Le, inn = [(ax + bx) / 2 - ox, (y0 + yTop) / 2, (az + bz) / 2 - oz], bays = Math.max(1, Math.round(Le / 3.2)), U1 = bays;
       const q = (ya, yb2, rk, c, fa, fb) => g.quadO([ax, ya, az], [bx, ya, bz], [bx, yb2, bz], [ax, yb2, az], c, inn, [[0, hjFV(rk, fa)], [U1, hjFV(rk, fa)], [U1, hjFV(rk, fb)], [0, hjFV(rk, fb)]]);
       q(yb, y0, 6, plinth, 0, 1);
-      for (let f = 0; f < nf; f++) q(y0 + f * fhh, y0 + (f + 1) * fhh, f === 0 ? row : rowUp, col, 0, 1);
+      // the ground floor in runs of bays (a staircase's entrance every fifth bay of a block of flats), darker at its foot
+      const P = (t, y) => [lerp(ax, bx, t), y, lerp(az, bz, t)], y1 = y0 + fhh;
+      for (let b0 = 0; b0 < bays;) { const isD = door && bays >= 3 && b0 % 5 === 2; let b1 = b0 + 1; if (!isD) while (b1 < bays && !(door && bays >= 3 && b1 % 5 === 2)) b1++;
+        const rk = isD ? 12 : row, t0 = b0 / bays, t1 = b1 / bays;
+        g.quadO(P(t0, y0), P(t1, y0), P(t1, y1), P(t0, y1), col, inn, [[b0, hjFV(rk, 0)], [b1, hjFV(rk, 0)], [b1, hjFV(rk, 1)], [b0, hjFV(rk, 1)]], [foot, foot, col, col]); b0 = b1; }
+      for (let f = 1; f < nf; f++) q(y0 + f * fhh, y0 + (f + 1) * fhh, rowUp, col, 0, 1);
+      if (para) { const ix = -ox * 0.25, iz = -oz * 0.25, cp = [col[0] * 0.96, col[1] * 0.96, col[2] * 0.96], U7 = [0.5, hjFV(7, 0.5)];
+        q(yTop, yTop + para, 7, cp, 0.2, 0.8);   // (outside)
+        g.quadO([ax + ix, yTop, az + iz], [bx + ix, yTop, bz + iz], [bx + ix, yTop + para, bz + iz], [ax + ix, yTop + para, az + iz], cp, [(ax + bx) / 2 + ox, yTop, (az + bz) / 2 + oz], [U7, U7, U7, U7]);   // (inside)
+        g.quadO([ax, yTop + para, az], [bx, yTop + para, bz], [bx + ix, yTop + para, bz + iz], [ax + ix, yTop + para, az + iz], COP, [(ax + bx) / 2, yTop, (az + bz) / 2], [U7, U7, U7, U7]); }   // (the coping)
+      if (wood) box(g, ax, y0, az, 0.17, yTop - y0, 0.17, Math.atan2(bz - az, bx - ax), [0.95, 0.94, 0.9], null, true);   // (a wooden house's white corner board)
     }
-    const RC = kind === 1 || kind === 2 ? [[0.3, 0.3, 0.32], [0.5, 0.18, 0.12], [0.18, 0.18, 0.2], [0.36, 0.25, 0.18]][Math.floor(R() * 4)] : [[0.24, 0.24, 0.25], [0.3, 0.29, 0.28], [0.52, 0.5, 0.47]][Math.floor(R() * 3)];
+    const metal = [[0.3, 0.3, 0.32], [0.5, 0.18, 0.12], [0.18, 0.18, 0.2], [0.36, 0.25, 0.18]], rc = R();
+    const RC = kind === 1 || kind === 2 ? metal[Math.floor(rc * 4)] : saddle ? metal[Math.floor(crH(cx, cz, 62) * 4)] : [[0.24, 0.24, 0.25], [0.3, 0.29, 0.28], [0.52, 0.5, 0.47]][Math.floor(rc * 3)];
     const UV7 = [0.5, hjFV(7, 0.5)];
-    if (gab) {   // two roof slopes with a 0.4 m overhang, the gable ends in the wall's colour
+    if (gab) {   // two roof slopes of standing-seam metal with a 0.4 m overhang (the seams from the eave to the ridge), the gable ends in the wall's colour
       const c = Math.cos(gab.rot), s = Math.sin(gab.rot), at = (a, b, y) => [gab.x + c * a - s * b, y, gab.z + s * a + c * b], hl = gab.L / 2 + 0.4, hd = gab.D / 2 + 0.45, e = gab.eave - 0.12, rt = gab.eave + gab.rh, inn = [gab.x, gab.eave, gab.z];
-      const rc2 = [RC[0] * 0.9, RC[1] * 0.9, RC[2] * 0.9];
-      g.quadO(at(-hl, -hd, e), at(hl, -hd, e), at(hl, 0, rt), at(-hl, 0, rt), RC, inn, [UV7, UV7, UV7, UV7]);
-      g.quadO(at(-hl, hd, e), at(hl, hd, e), at(hl, 0, rt), at(-hl, 0, rt), rc2, inn, [UV7, UV7, UV7, UV7]);
+      const rc2 = [RC[0] * 0.9, RC[1] * 0.9, RC[2] * 0.9], UR = 2 * hl / 3.2, ruv = [[0, hjFV(11, 0)], [UR, hjFV(11, 0)], [UR, hjFV(11, 1)], [0, hjFV(11, 1)]];
+      g.quadO(at(-hl, -hd, e), at(hl, -hd, e), at(hl, 0, rt), at(-hl, 0, rt), RC, inn, ruv);
+      g.quadO(at(-hl, hd, e), at(hl, hd, e), at(hl, 0, rt), at(-hl, 0, rt), rc2, inn, ruv);
       for (const a of [-gab.L / 2, gab.L / 2]) g.triO(at(a, -gab.D / 2, gab.eave), at(a, gab.D / 2, gab.eave), at(a, 0, rt - 0.1), col, inn, col, col, [0, hjFV(6, 0)], [2, hjFV(6, 0)], [1, hjFV(6, 1)]);
       if (kind === 1 && R() < 0.8) { const a = gab.L * (R() - 0.5) * 0.5; box(g, gab.x + c * a - s * gab.D * 0.15, rt - gab.rh * 0.3, gab.z + s * a + c * gab.D * 0.15, 0.55, gab.rh * 0.3 + 0.8, 0.55, gab.rot, [0.55, 0.28, 0.2], null, true); }   // a chimney
-    } else {   // a flat roof: the footprint triangulated (earcut), a dark roofing felt or pale gravel
+      if (saddle) R(), R();   // (as the flat roof's draws: the other buildings keep their colours)
+      if (saddle) for (let m = 0, nm = Math.max(1, Math.round(gab.L / 16)); m < nm; m++) { const a = -gab.L / 2 + (m + 0.5) * gab.L / nm; box(g, gab.x + c * a + s * 1.2, rt - 0.7, gab.z + s * a - c * 1.2, 0.5, 1.5, 0.5, gab.rot, [0.5, 0.48, 0.46], null, true); }   // (a vent stack per staircase)
+    } else {   // a flat roof: the footprint triangulated (earcut), roofing felt in strips (or pale gravel), a machine room for each staircase, vent pipes
       const pts = poly.map(([x, z]) => new THREE.Vector2(x, z)), tris = THREE.ShapeUtils.triangulateShape(pts, []), below = [cx, top - 5, cz];
-      for (const [a, b, c] of tris) g.triO([poly[a][0], top, poly[a][1]], [poly[b][0], top, poly[b][1]], [poly[c][0], top, poly[c][1]], RC, below, RC, RC, UV7, UV7, UV7);
-      if (kind === 0 || kind === 5 || kind === 4) {   // things on a flat roof: a stairwell's machine room, vents
-        const k = Math.floor(R() * n), [ax, az] = poly[k], mx = lerp(ax, cx, 0.6), mz = lerp(az, cz, 0.6); box(g, mx, top, mz, 2.6, 1.6, 2.2, Math.atan2(poly[(k + 1) % n][1] - az, poly[(k + 1) % n][0] - ax), vary(col, R, 0.1), RC, true);
+      const ruv = (p) => [(ax0(p[0], p[1]) - u0) / 3.2, hjFV(10, D > 0.1 ? (ac0(p[0], p[1]) - v0) / D : 0.5)];
+      for (const [a, b, c] of tris) g.triO([poly[a][0], top, poly[a][1]], [poly[b][0], top, poly[b][1]], [poly[c][0], top, poly[c][1]], RC, below, RC, RC, ruv(poly[a]), ruv(poly[b]), ruv(poly[c]));
+      if (kind === 0 || kind === 5 || kind === 4) {
+        R(); const mc = vary(col, R, 0.1), nm = bare ? 0 : Math.max(1, Math.round(L / 18)), rot = Math.atan2(dz, dx), vm = (v0 + v1) / 2;   // (two draws, as before: the other buildings keep their colours)
+        for (let m = 0; m < nm; m++) { const a = u0 + (m + 0.5) * L / nm, mx = cx + dx * a - dz * vm, mz = cz + dz * a + dx * vm; if (!inPoly(poly, mx, mz)) continue;
+          box(g, mx, top, mz, 2.6, 1.7, 2.2, rot, mc, RC, true);
+          for (const [pa, pb] of [[2.2, 1.6], [-2.4, -1.8]]) { const px = mx + dx * pa - dz * pb, pz = mz + dz * pa + dx * pb; if (inPoly(poly, px, pz)) cyl(g, px, top, pz, 0.16, 0.9, 4, [0.4, 0.4, 0.41]); } }   // (vent pipes)
       }
     }
     return { g0, g1, top, cx, cz };
@@ -7537,7 +7565,7 @@ const World = (function () {
       const g = bch.get(vesi.cx, vesi.cz); g.dUV = UV7;
       const pol = vesi.poly, BR = [0.97, 0.93, 0.9]; let bl = 0, dx = 1, dz = 0;
       for (let k = 0; k < pol.length; k++) { const [ax, az] = pol[k], [bx, bz] = pol[(k + 1) % pol.length], l = Math.hypot(bx - ax, bz - az); if (l > bl) { bl = l; dx = (bx - ax) / l; dz = (bz - az) / l; } }
-      const r = hjBuilding(g, pol, 4, 0, 10.5, rng(8131), { row: 4, rowUp: 4, col: BR, fh: 3.6 }), rot = Math.atan2(dz, dx), g0 = r.g0, tx = vesi.cx, tz = vesi.cz, H = g0 + 34, TL = 15.5, TD = 12.5;
+      const r = hjBuilding(g, pol, 4, 0, 10.5, rng(8131), { row: 4, rowUp: 4, col: BR, fh: 3.6, bare: true }), rot = Math.atan2(dz, dx), g0 = r.g0, tx = vesi.cx, tz = vesi.cz, H = g0 + 34, TL = 15.5, TD = 12.5;
       const c = Math.cos(rot), s = Math.sin(rot), at = (a, b) => [tx + c * a - s * b, tz + s * a + c * b];
       const prism = (L, D, y0, y1, rowK, col, fh) => {   // the walls of an L x D block round the tower's axis from y0 to y1, in bands of the atlas row
         const C4 = [at(-L / 2, -D / 2), at(L / 2, -D / 2), at(L / 2, D / 2), at(-L / 2, D / 2)], nb = Math.max(1, Math.round((y1 - y0) / fh)), bh = (y1 - y0) / nb;
