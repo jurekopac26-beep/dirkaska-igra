@@ -52,6 +52,11 @@ const Comm = (() => {
     goNet: ['Lights out, and away they go!', "And they're off!", 'Green light! Side by side into turn one!', 'Go, go, go! The duel is on!'],
     go: ['Lights out, and away we go!', "And they're off!", 'Green light! The pack charges into turn one!', 'Go, go, go! The race is on!'],
     gain: ["What a move! Up to {pos}!", "Brilliant overtake, you're now {pos}!", "Straight past! That's {pos} place!", "Another one bites the dust. You're up to {pos}!", 'Clean pass, into {pos}!'],
+    // the Kapelmuur: a pass on the Muur's cobbles (game.js kasPass)
+    muurPass: ['A pass on the Muur! Up to {pos}, and the crowd goes wild!', 'Past him on the cobbles of the Muur! You are {pos}!', 'Up the Moor and through! That is {pos}!', 'What a move on the Kapelmuur! Into {pos}!'],
+    muurRamp: ['On the final ramp to the chapel! Up to {pos}!', 'Past him on the steepest part, twenty per cent! You are {pos}!', 'Right under the chapel! What a pass, into {pos}!'],
+    muurLead: ['Into the lead on the Muur! The whole hill is roaring!', 'You take the lead on the Kapelmuur, a legendary place to do it!', 'First place, right there on the Moor! Magnificent!'],
+    kasPass: ['A pass on the cobbles! Up to {pos}!', 'Over the kasseien and past! You are {pos}!', 'Rattling past on the cobbles, into {pos}!'],
     lose: ["Oh, you've lost a place. Down to {pos}.", 'Overtaken! You drop to {pos}.', "They come through, you're now {pos}."],
     lead: ['And you take the lead!', "You're leading the race!", 'Into first place! Now hold on to it!'],
     lostLead: ["You've lost the lead!", 'Out of first place. Fight back!'],

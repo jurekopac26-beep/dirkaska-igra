@@ -869,6 +869,12 @@ const Core = (function () {
     { lat: 0.9, tr: 0.9, c0: 0.12, c1: 0.008 },     // cobbles (granite setts): a little less grip than asphalt, a little drag from the bumps
     { lat: 0.78, tr: 0.8, c0: 0.12, c1: 0.008 },    // cobbles in the rain (on top of WET)
   ];
+  // the Flemish kasseien (def.kassei: the Kapelmuur): rougher, rounder stones than Vršič's setts, worn smooth in the wheel tracks: less grip still,
+  // more drag from the bumps, and in the rain treacherous (in place of CSSURF 7 / 8 on such a track)
+  const CSKAS = [
+    { lat: 0.85, tr: 0.84, c0: 0.25, c1: 0.014 },
+    { lat: 0.68, tr: 0.7, c0: 0.25, c1: 0.014 },
+  ];
   // cs per model (drive-type layer, targets §5.4): bx brake excess at full brake + full demand, coast / thr steady attitude
   // change at full demand, liftP / pwr FR/MR rotation, out = unwind factor, turn = turn-in speed factor, w = path-rate cap factor
   const CSP = {
@@ -1006,7 +1012,7 @@ const Core = (function () {
       for (let k = 0; k < 4; k++) {
         const wx = this.x + wpos[k][0] * ch - wpos[k][1] * sh, wz = this.z + wpos[k][0] * sh + wpos[k][1] * ch;
         const q = trk.query(wx, wz, this.wq[k].i >= 0 ? this.wq[k].i : this.q.i, this.wq[k]);
-        const sf = trk.surface(q), off = LOOSE[sf] && !(this.inPit && M.loose > 1), fl = this.flat & (1 << k); this.ws[k] = sf; const S = CSSURF[sf], lk = (M.loose && off ? M.loose : 1) * (fl ? FLAT.tr : 1), tr = S.tr * lk, lt = S.lat * lk;   // (slicks on loose ground; a flat tyre)
+        const sf = trk.surface(q), off = LOOSE[sf] && !(this.inPit && M.loose > 1), fl = this.flat & (1 << k); this.ws[k] = sf; const S = sf >= 7 && trk.def.kassei ? CSKAS[sf - 7] : CSSURF[sf], lk = (M.loose && off ? M.loose : 1) * (fl ? FLAT.tr : 1), tr = S.tr * lk, lt = S.lat * lk;   // (slicks on loose ground; a flat tyre)
         muSum += tr; if (k < 2) muF += tr * 0.5; else muR += tr * 0.5; if (sf === 1) curb++;
         const ld = M.looseDrag && off ? M.looseDrag : 1;   // (the truck: the loose ground holds it back less. Its pit lane is paved, not loose ground: there it is as every car)
         const c0 = fl ? S.c0 * ld + FLAT.c0 : S.c0 * ld, c1 = fl ? S.c1 * ld + FLAT.c1 : S.c1 * ld;   // (a flat tyre's drag: the tyre's, not the ground's)
@@ -2462,7 +2468,7 @@ const Core = (function () {
       let latA0 = opts.aiLatA || CSK.aiLatA, brA0 = opts.aiBrakeA || CSK.aiBrakeA;
       if (w < 1) { latA0 *= w; brA0 *= 0.55 + 0.45 * w; }
       const lat = latA0 * (F ? ARC[F.id].amax / 1.8 : 1), fb = F ? F.brakeK : 1, br = brA0 * fb, wM = wM0 * (F ? CSP[F.id].w : 1), aero = F ? F.aero : 0, bG = BRAKE_G * fb;
-      const sM = (this.wst && this.wst.on ? this.wst.water : this.rain) > 0 ? 0.78 : 0.9;   // the cobbles' grip (CSSURF 7 / 8, relative: the rain is already in w)
+      const wetC = (this.wst && this.wst.on ? this.wst.water : this.rain) > 0, kas = track.def.kassei, sM = kas ? (wetC ? CSKAS[1].lat : CSKAS[0].lat) : wetC ? 0.78 : 0.9;   // the cobbles' grip (CSSURF 7 / 8 or the kasseien's, relative: the rain is already in w)
       this.vprof = track.speedProfile(lat, br, 85, wM, aero, sM);
       if (this.player && this.player.upg && this.player.brakeG !== bG) this.player.vprof = track.speedProfile(lat, br * this.player.brakeG / bG, 85, wM, aero, sM);
     }
@@ -2979,7 +2985,7 @@ const Core = (function () {
   // the price of an upgrade from level `from` to level `to` (the levels in between too)
   const careerUpgPrice = (from, to) => { let p = 0; for (let l = from + 1; l <= to; l++) p += CAREER.upg[l] || 0; return p; };
 
-  return { G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, DRIVER_NAMES, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
+  return { G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, DRIVER_NAMES, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF, CSKAS,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, CAREER, careerPrize, careerUpgPrice };
 })();
 

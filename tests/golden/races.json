@@ -752,51 +752,51 @@
  "muur/cs": {
   "finished": 13,
   "cars": 13,
-  "winner": 255.19,
-  "spins": 0,
-  "walls": 3,
-  "rescues": 0,
-  "nan": false,
-  "digest": "ed5d6db0178a0038828d2302"
- },
- "muur/cs/rain": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 278.41,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "3d6f60269010edf99e7c2025"
- },
- "muur/cs/formula": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 230.6,
-  "spins": 0,
-  "walls": 1,
-  "rescues": 0,
-  "nan": false,
-  "digest": "4b92c7adecc49f05aa072bb6"
- },
- "muur/cs/lm": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 236.59,
+  "winner": 255.83,
   "spins": 0,
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "c28806e9e2711acb11bd9630"
+  "digest": "deb05e669ec347532a7cfb80"
+ },
+ "muur/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 288.46,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "4f0ef36ffea6222d781d2b00"
+ },
+ "muur/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 235.41,
+  "spins": 2,
+  "walls": 10,
+  "rescues": 0,
+  "nan": false,
+  "digest": "6a6b9a562a2e131fc8091c5f"
+ },
+ "muur/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 238.27,
+  "spins": 0,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "bf2a9ef978de548cab2e0306"
  },
  "muur/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 255.16,
+  "winner": 257.97,
   "spins": 0,
-  "walls": 3,
+  "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "cb04eb9d1189e8f576850412"
+  "digest": "880394837a531da3ac7fcf3e"
  }
 }

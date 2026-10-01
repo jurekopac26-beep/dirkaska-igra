@@ -520,8 +520,10 @@ const Sfx = (function () {
     set(rumble.out.gain, off / 4 * clamp(spd / 18, 0, 1) * 0.5, 0.05);
     set(rumble.flt.frequency, (player.ws.indexOf(3) >= 0 || player.ws.some(w => w === 5 || w === 6)) ? 520 : 240, 0.1);
     // a kerb: a hard buzz; the cobbles (the setts in the hairpins of Vršič): a softer, quicker drumming under the tyres
-    set(curbV.out.gain, player.onCurb ? clamp(spd / 20, 0, 1) * 0.35 : player.air ? 0 : cob / 4 * clamp(spd / 22, 0, 1) * 0.2, 0.03);
-    set(curbV.flt.frequency, player.onCurb || !cob ? 40 + spd * 3.5 : 60 + spd * 6, 0.05);
+    const kas = !!(race && race.track.def.kassei);   // (the Kapelmuur's kasseien: a deeper, harder rattle, the whole car shaking)
+    set(curbV.out.gain, player.onCurb ? clamp(spd / 20, 0, 1) * 0.35 : player.air ? 0 : cob / 4 * clamp(spd / 22, 0, 1) * (kas ? 0.34 : 0.2), 0.03);
+    set(curbV.flt.frequency, player.onCurb || !cob ? 40 + spd * 3.5 : kas ? 42 + spd * 4.2 : 60 + spd * 6, 0.05);
+    if (kas) set(rumble.out.gain, (off / 4 * 0.5 + cob / 4 * 0.22) * clamp(spd / 18, 0, 1), 0.05);
     set(wind.out.gain, clamp(spd / 70, 0, 1) ** 2 * 0.12, 0.1);
     // loose gravel (gravel traps, makadam): the crunch, louder in a slide, and stones pinging off the underbody; in the rain the crunch muffled by
     // a hiss of water off the tyres (the hard roads' is above), and a splash into each puddle

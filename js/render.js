@@ -2923,7 +2923,9 @@ const Render = (function () {
       v.broll = (v.broll || 0) + (bankT - (v.broll || 0)) * Math.min(1, dt * 10);
       v.grp.rotation.set(v.broll, -h, v.gpitch + (jk ? crew.liftP : 0), 'YZX');   // whole car (incl. separate front wheels) follows the slope (and the bank)
       v.bodyG.rotation.set(v.roll, 0, v.pitch);
-      v.bodyG.position.y = Math.abs(v.roll) * 0.4 + (c.onCurb ? Math.sin(time * 60) * 0.015 : 0);
+      const cob = !c.air && c.ws && (c.ws[0] >= 7 || c.ws[2] >= 7) && c.speed > 2 ? clamp(c.speed / 18, 0.2, 1) * (curTrack && curTrack.def.kassei ? 1 : 0.6) : 0;   // (the cobbles: the body hops over the setts)
+      v.bodyG.position.y = Math.abs(v.roll) * 0.4 + (c.onCurb ? Math.sin(time * 60) * 0.015 : 0) + (cob ? (Math.sin(time * 52 + (c.id || 0) * 1.7) * 0.6 + Math.sin(time * 97 + (c.id || 0)) * 0.4) * 0.016 * cob : 0);
+      if (cob) v.bodyG.rotation.x += Math.sin(time * 71 + (c.id || 0) * 2.3) * 0.006 * cob;
       if (v.blob) v.blob.position.y = (c.roadY - c.y) + 0.05 - (jk ? crew.lift : 0); // shadow stays on the ground during jumps (and on the jacks)
       v.landed = !!(v.wasAir && !c.air);   // landing this frame (dust ring is emitted in emitFx)
       if (v.landed && c.isPlayer && c.speed > 3) shake(0.15 + clamp(-(c.impactVY || 0) / 8, 0, 1) * 0.45);
@@ -3331,6 +3333,9 @@ const Render = (function () {
       if (camera.fov !== 30) { camera.fov = 30; camera.updateProjectionMatrix(); updatePointScale(); }
     }
     if (world && world.camFloor && !shot && !qc) { const gf = world.camFloor(px, pz) + 4; if (py < gf) py = gf; }   // mountain worlds: never under the slope behind the car
+    if (!shot && !c.air && c.ws && (c.ws[0] >= 7 || c.ws[2] >= 7) && spd > 3) {   // the cobbles: the view trembles with the car, more in the cockpit, more the faster (the Kapelmuur's kasseien more than Vršič's setts)
+      const kk = (curTrack && curTrack.def.kassei ? 1 : 0.55) * clamp(spd / 20, 0.2, 1.1) * (qc ? 0.02 : 0.035), tm = performance.now() / 1000;
+      py += (Math.sin(tm * 47) * 0.6 + Math.sin(tm * 83 + 1.3) * 0.4) * kk; px += Math.sin(tm * 61 + 0.7) * kk * 0.4; pz += Math.sin(tm * 53 + 2.1) * kk * 0.4; }
     if (cam.shake > 0) { const k = qc ? 0.15 : 1; px += (Math.random() - 0.5) * cam.shake * k; py += (Math.random() - 0.5) * cam.shake * k; pz += (Math.random() - 0.5) * cam.shake * k; cam.shake = Math.max(0, cam.shake - dt * 3); }   // (in the cockpit: a jolt, not a leap)
     if (camera.near !== near) { camera.near = near; camera.updateProjectionMatrix(); }
     camera.position.set(px, py, pz); if (qc) camera.quaternion.copy(qc); else camera.lookAt(tx, ty, tz); cam.vcx = qc ? px + (tx - px) * 0.25 : tx; cam.vcz = qc ? pz + (tz - pz) * 0.25 : tz; cam.vd = Math.hypot(px - tx, py - ty, pz - tz);   // (the cockpit's view centre, for the rain round it: 18 m ahead)

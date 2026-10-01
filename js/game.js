@@ -1881,6 +1881,15 @@
       driftT: 0, offT: 0, pressT: 0, wasAir: false, jumpRoll: false, jumpSaid: false, chatT: 20 + Math.random() * 8, finalSaid: false, cd: {} };
     cev.wall = 0; cev.car = 0;
   }
+  // where on the Kapelmuur the player just passed someone: the last ramp up to the chapel (muurRamp), the climb (muurPass), the other cobbles (kasPass)
+  function kasPass(P) {
+    const T = race.track, nm = (n) => { const f = (T.names || []).find(q => q.n === n); return f ? f.d : null; }, s = P.q && Number.isFinite(P.q.s) ? P.q.s : null;
+    if (s == null) return null;
+    const d = ((s - T.startS) % T.len + T.len) % T.len, k = nm('Kapelmuur'), r = nm('Kapelmuur · 20 %'), c = nm('Kapel Oudenberg');
+    if (r != null && c != null && d > r - 25 && d < c + 15) return 'muurRamp';
+    if (k != null && c != null && d > k - 40 && d < c + 15) return 'muurPass';
+    return T.settAt && T.settAt[T.idx(s)] ? 'kasPass' : null;
+  }
   const cool = (k, sec) => { const t = race.time; if (cs.cd[k] != null && t - cs.cd[k] < sec) return false; cs.cd[k] = t; return true; };
   function commTick(dt) {
     if (!cs || !race) return;
@@ -1890,7 +1899,9 @@
     if (!tt && pos !== cs.lastPos) {
       cs.posHold += dt;
       if (cs.posHold > 1.0) {
-        if (pos < cs.lastPos) { if (pos === 1) Comm.say('lead', null, 4); else Comm.say('gain', { pos: Comm.ordinal(pos) }, 2); }
+        const kp = pos < cs.lastPos && race.track.def.kassei ? kasPass(P) : null;   // (the Kapelmuur: a pass on the Muur, on its last ramp, on the cobbles)
+        if (kp && pos > 1) Comm.say(kp, { pos: Comm.ordinal(pos) }, 2);
+        else if (pos < cs.lastPos) { if (pos === 1) Comm.say(kp === 'muurRamp' || kp === 'muurPass' ? 'muurLead' : 'lead', null, 4); else Comm.say('gain', { pos: Comm.ordinal(pos) }, 2); }
         else if (cs.lastPos === 1) Comm.say('lostLead', null, 3); else Comm.say('lose', { pos: Comm.ordinal(pos) }, 2);
         cs.lastPos = pos; cs.posHold = 0;
       }

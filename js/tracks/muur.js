@@ -23,7 +23,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     id: 'muur', name: 'Kapelmuur, Belgija', theme: 'muur', laps: 2, halfWidth: 6.5,
     desc: 'Muur van Geraardsbergen (Kapelmuur), najslavnejši tlakovani klanec dirke po Flandriji, v krogu po pravih ulicah mesta Geraardsbergen: od reke Dender po Brugstraat čez Markt (mestna hiša, Manneken Pis, vodnjak Marbol, cerkev sv. Bartolomeja), ostro levo na Vesten, ostro desno v Oudenbergstraat in po kasejih skozi park do kapele na vrhu (do 20 % naklona, 109 m), nato navzdol po Guilleminlaanu z veliko lasnico in skozi staro mesto nazaj. Cesta je širša kot v resnici, da se lepo dirka.',
-    start: [0, 0], runoff: 0.4, inner: 2.6, side: 2.6, noCurbs: true, noGravel: true, offSurface: 'paving', gradeForce: true, elevSmooth: 6,
+    start: [0, 0], runoff: 0.4, inner: 2.6, side: 2.6, noCurbs: true, noGravel: true, offSurface: 'paving', kassei: true, gradeForce: true, elevSmooth: 6,
     elev: MUUR_H.map((h, i) => [i / MUUR_H.length, h / 10]),
     // the cobbles (kasseien): from the Markt up the Vesten, the Oudenbergstraat and the Kapelmuur, round the chapel and down the Oudeberg and
     // the Driepikkel to the Oude Steenweg ([from, to], metres after the start line)
