@@ -29,6 +29,11 @@ var TRACK_DEFS = TRACK_DEFS || [];
     medals: { cs: [148,156,167], wet: { cs: [159,167,180] } },
     // the commentator's own welcome and start lines (Vršič's speak of Kranjska Gora and its 24 hairpins)
     lines: { introPass: 'introMv', goPass: 'goMv', introPassTT: 'introMvTT', goPassTT: 'goMvTT' },
+    // the flyover before the start (Render's prelet proge: its captions, [metres after the start line, name], -1 the finish), the replay's TV cameras
+    // ([metres of the spot, its stretch from, to, kind: 1 by the road, 2 the ladder from afar, 3 above the finish]); the woods go all the way up (treeY)
+    fly: [[0, 'Pontamafrey'], [530, 'Lacet 1'], [1846, 'Lacet 9'], [2795, 'Lacet 18'], [2913, 'Notre-Dame de la Balme'], [-1, 'Montvernier']],
+    tvSpots: [[530, 440, 640, 1], [1100, 760, 1500, 2], [1960, 1520, 2320, 2], [2795, 2560, 2860, 1], [2913, 2860, 3010, 1], [3745, 3560, 3800, 3]],
+    treeY: 1e4,
     // the ladder's parapets: on both sides 2.4 m past the road edge, from below the first lacet to past the last (the real road's walls stand right at its edge)
     walls: [[480, 2865, 0, 2.4]],
     // the bridge on the plateau (over the stream from the cliff): [from, to] in metres after the start line

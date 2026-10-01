@@ -78,6 +78,16 @@ Okolica:
 - **Dolina**: reka Arc (motna, sivozelena ledeniška voda) z ribniki, železniška proga Maurienne z drogovi vozne mreže, cesta D1006 in avtocesta A43 z varnostnimi ograjami.
 - **Cesta**: asfalt s prekinjeno sredinsko črto. Start z lučmi DÉPART je v Pontamafreyju, modri loki kontrolnih točk so na poti, cilj ARRIVÉE pa v Montvernierju. Pred vsakim lacetom je modra tabla z njegovo številko in višino.
 - **Nova grafika**: drevesa se zibljejo v vetru (višja bolj), ob mraku in ponoči v hišah Pontamafreyja in Montvernierja svetijo okna, v dežju pa so na asfaltu luže ob robovih in v kotanjah.
+- **Prelet proge**: pred dirko in pred kronometrom kamera z višine preleti progo od Pontamafreyja čez lestvico serpentin do Montvernierja (napisi: Pontamafrey, Lacet 1, Lacet 9, Lacet 18, Notre-Dame de la Balme, Montvernier). Tipka ali dotik ga preskoči, izklopi se v Nastavitvah (Prelet proge pred startom).
+- **Gorski cilj Toura**: na vrhu lestvice je čez cesto napihljiv lok z rdečimi pikami in napisom GRAND PRIX DE LA MONTAGNE, ob njem pa na vrvi lebdi velik balon s pikami.
+- **Razgledišče** (belvédère) za kapelo, nad prepadom: ploščad z ograjo, klopema, orientacijsko mizo, tablo z narisano lestvico serpentin in daljnogledom; ob cesti rjava tabla.
+- **Slike navijačev na travnikih** ob cesti na planoti, kot jih kmetje naredijo za Tour: veliko kolo iz sena z napisom ALLEZ ! in majica najboljšega hribolazca (bela z rdečimi pikami) z napisom MONTVERNIER. Najlepše se vidita s preleta.
+- **Piknik ob avtodomih**: šotori, mize s klopmi, senčniki in žari, iz katerih se kadi.
+- **Cesta**: na zunanji strani vsake serpentine štirje rumeno-črni smerniki (na zidu, kjer je), na visokih brežinah zgornje lestvice jeklene mreže proti padajočemu kamenju z opozorilnimi tablami, na asfaltu zaplate novejšega (temnejšega) in starega (zbledelega) asfalta. Na zidovih in belih količkih so odsevniki (levo beli, desno oranžni), ki ponoči zasvetijo v lučeh avta.
+- **Svetilke**: ob ulicah obeh vasi in ob vsaki serpentini savojske svetilke na temnih drogovih; ponoči osvetlijo cesto (na lestvici ni drugih luči, kot na pravi cesti).
+- **Skale in gore**: ob lestvici velike sive skalne plošče, kjer je pobočje najbolj strmo. Na obzorju so gore Mauriennea (tri igle Aiguilles d'Arves na jugu, Grandes Rousses, Belledonne, La Lauzière, Vanoise), najvišje s snegom, pred njimi gozdnata pobočja doline.
+- **Živo**: TV helikopter spremlja avto vso pot navzgor. Navijači ob serpentinah stečejo ob cesti, ko pripelješ do njih (nekateri z zastavo), zavpijejo, ko pelješ mimo, in fotografirajo z bliskavico. Nad lestvico krožijo škarniki, nad dolino jadralni padalci. Slišati je navijanje in kravje zvonce, glasnejše tam, kjer je več ljudi.
+- **TV posnetek**: kamere s helikopterja nad avtom in nepremične kamere, ki lestvico pokažejo od daleč, ob 1. in 18. serpentini, pri kapeli in nad ciljem.
 
 ## Nürburgring Nordschleife
 

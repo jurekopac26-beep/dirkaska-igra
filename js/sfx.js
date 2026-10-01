@@ -232,7 +232,7 @@ const Sfx = (function () {
     return { send };
   }
 
-  /* ---- Pikes Peak atmosphere, set up on the first Pikes Peak frame with the sound on (nothing on the other tracks, nothing with the sound off):
+  /* ---- Pikes Peak atmosphere (and Montvernier's: its crowds and cowbells, a lighter wind), set up on the first frame there with the sound on (nothing on the other tracks, nothing with the sound off):
      a gusty mountain wind that grows with the altitude (hardly a breath in the forest) and a little with speed, and the spectators at the hairpins,
      the checkpoints, the start and the finish, who cheer as the car goes by (from their side of the screen) and ring cowbells ---- */
   let atmo = null;
@@ -428,14 +428,14 @@ const Sfx = (function () {
       set(c.g.gain, c.src ? v * nw / 2 : 0, 0.04); if (c.src) set(c.src.playbackRate, 0.7 + 0.55 * sstep(3, 40, spd), 0.1); if (c.pn.pan) set(c.pn.pan, (k ? 0.55 : -0.55) * dot, 0.1); }
     set(X.cf.frequency, 900 + 2600 * sstep(3, 35, spd), 0.1);
     // the rock echo: fades in and out along the road; the slap's delay changes only while it is silent (no pitch glide)
-    const d = (player.q ? player.q.s : 0) - T.startS; let zs = 0, zf = 0, zi = -1;
-    for (let k = 0; k < PX_ROCK.length; k++) { const z = PX_ROCK[k], w = sstep(z[0] - 25, z[0], d) * (1 - sstep(z[1], z[1] + 25, d)); if (w > 0) { zi = k; zs = z[3] * w; zf = z[4] * w; } }
+    const d = (player.q ? player.q.s : 0) - T.startS, PK = T.def.theme === 'pikes'; let zs = 0, zf = 0, zi = -1;   // (the rock echo and the summit wind: Pikes Peak's only)
+    for (let k = 0; k < (PK ? PX_ROCK.length : 0); k++) { const z = PX_ROCK[k], w = sstep(z[0] - 25, z[0], d) * (1 - sstep(z[1], z[1] + 25, d)); if (w > 0) { zi = k; zs = z[3] * w; zf = z[4] * w; } }
     if (zi >= 0 && zi !== X.zone && PX_ROCK[zi][3] > 0 && X.sG.gain.value < 0.02) { X.sD.delayTime.setValueAtTime(PX_ROCK[zi][2], now); X.zone = zi; }
     set(X.sG.gain, zi === X.zone ? zs : 0, 0.25); set(X.fG.gain, zf, 0.4);
     // the summit wind: squalls every 0.6-2.6 s (up fast, down slower, now and then a big one), the car buffeted 5-11 times a second in them
     if (now >= X.gNext) { const r = Math.random(); X.gGoal = r < 0.15 ? 1 : 0.2 + 0.65 * r; X.gNext = now + 0.6 + Math.random() * 2; }
     X.G += (X.gGoal - X.G) * (1 - Math.exp(-dt / (X.gGoal > X.G ? 0.28 : 0.9)));
-    const su = sstep(360, 405, y), G = X.G;
+    const su = PK ? sstep(360, 405, y) : 0, G = X.G;
     set(X.wo.gain, PX_WIND * su * (0.55 + 0.45 * sstep(5, 45, spd)), 0.2);
     if (now >= X.flNext) { X.fl = 0.45 + 0.55 * Math.random(); X.flNext = now + 0.09 + Math.random() * 0.1; }
     set(X.bg.gain, 1.6 * G * X.fl, 0.035); set(X.hg.gain, 3.2 * G * G, 0.12); set(X.sg.gain, 0.3 * sstep(0.45, 1, G), 0.1);
@@ -632,7 +632,7 @@ const Sfx = (function () {
     let jv = 0; const A = W && W.dyn && W.dyn.air;
     if (A && A.t0 >= 0) for (const m of A.jets) if (m.visible) { const q = m.position, lx = cam ? cam.position.x : player.x, ly = cam ? cam.position.y : 0, lz = cam ? cam.position.z : player.z; jv = Math.max(jv, clamp(1 - Math.hypot(q.x - lx, q.y - ly, q.z - lz) / 420, 0, 1) ** 2); }
     set(jet.out.gain, jv * 0.55, 0.12); set(jet.flt.frequency, 300 + jv * 900, 0.12);
-    atmoUpdate(race, player, pikes, cam);   // (Pikes Peak: wind, crowds, cowbells)
+    atmoUpdate(race, player, pikes || (race && race.track && race.track.def && race.track.def.theme === 'montvernier'), cam);   // (Pikes Peak: wind, crowds, cowbells; Montvernier: the Tour's crowds and their cowbells too)
   }
 
   function crash(imp) {

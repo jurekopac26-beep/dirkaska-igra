@@ -924,7 +924,7 @@
     introLen = 1.3; endPodium();
     { const air = Render.world && Render.world.air;   // the Red Bull Ring: first the jets over the grid, filmed from the grid (not online, not in a time trial or qualifying)
       if (air && !on && !tt && !quali) { air.go = true; introLen += JET_SHOT; Render.setShot(air.shot); $('hud').classList.add('shot'); } }
-    pkFlyStart(!on && tt && !quali);   // (Pikes Peak: the course flyover first, at a fresh start only)
+    pkFlyStart(!on && !quali && (tt || !!track.def.fly));   // (Pikes Peak: the course flyover first, at a fresh start only; Montvernier's (def.fly) before the race too)
     lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; dmgKey = ''; pitHint = false; drsN = 0; secN = 0; wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
     $('h-msg').className = ''; $('h-split').className = ''; $('h-note').className = '';
     $('h-lights').className = ''; setLights(0, false);
@@ -1141,7 +1141,7 @@
   function pkFlyStart(ok) {
     pkFlyEnd();
     const fresh = pkF.fresh; pkF.fresh = false;
-    if (!ok || !fresh || !pkIs(track.def) || !+S.pkFly || !Render.pkFly || !Render.pkFly.at(0)) return;
+    if (!ok || !fresh || !(pkIs(track.def) || track.def.fly) || !+S.pkFly || !Render.pkFly || !Render.pkFly.at(0)) return;
     if (!pkF.bound) { pkF.bound = true;
       const eat = (e) => { e.stopImmediatePropagation(); if (e.cancelable) e.preventDefault(); };
       window.addEventListener('keydown', (e) => { if (!pkF.on || screen !== 'none' || paused) return; if (!e.repeat) pkFlySkip(); eat(e); }, true);
