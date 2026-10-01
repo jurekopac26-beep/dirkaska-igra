@@ -37,7 +37,7 @@ try {
     !!inSeen && /^on scin:SC GRE S PROGE$/.test(inSeen.flag) && !inSeen.lamp && !s2.sc && !s2.scDrawn && lampSeen && (/ZELENA ZASTAVA/.test(s2.msg) || /(^|,)green(,|$)/.test(said) || s2.phase !== 'racing'), JSON.stringify({ inSeen, s2, said }));
 
   // 2. a rival stopped 550 m ahead of the player (put there, at the edge of the road): a yellow flag, the marshal's flag, the flag on the HUD in the zone
-  await page.evaluate(() => { const r = window.__game.race, P = r.player, T = r.track, c = r.order.filter(o => !o.isPlayer && !o.finished).pop();
+  await page.evaluate(() => { const r = window.__game.race, P = r.player, T = r.track, c = r.order.filter(o => !o.isPlayer && !o.finished).pop(); if (!c) return;   // (every rival already home: nothing to stop)
     const i = T.idx(P.q.s + 550), off = T.w - 1.5; c.place(T.px[i] + T.nx[i] * off, T.pz[i] + T.nz[i] * off, T.hd[i]); if (T.hasElev) c.y = c.py = T.hy[i];
     c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s; c.dist = P.dist + 550; window.__stop = c; });
   const hasStop = await page.evaluate(() => !!window.__stop);
