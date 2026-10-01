@@ -4245,6 +4245,8 @@ const World = (function () {
     if (T.def.roadSurface === 'makadam' || THEME === 'pikes' || !T.rl || !tex.wear) return;   // (Pikes Peak's road has its own cracks and patches)
     const N = T.N, ds = T.ds, w = T.w, len = T.len, open = T.open, R = rng(4242), bk = { dy: 0, sl: 0 }, cells = new Map(), lim = w - 0.6;
     const at = (k) => (open ? clamp(k, 0, N - 1) : ((k % N) + N) % N), HYi = (i) => (T.hasElev ? T.hy[i] : 0);
+    // (a stage of several widths and surfaces, Track.wa / sf (Harju): its own width at each sample, and only its tarmac worn, not the gravel or the cobbles)
+    const wAt = (i) => (T.wa ? T.wa[i] : w), limAt = (i) => (T.wa ? T.wa[i] - 0.6 : lim), bare = (s) => !!T.sf && T.sf[at(Math.round(s / ds))] !== 0;
     const deck = (i) => { for (const c of T.cross || []) { const d = Math.abs(i - c.up); if (Math.min(d, N - d) * ds < c.upZ + 30) return true; } return false; };   // (Suzuka's bridge fades out while the car drives under it)
     const chunk = (p) => { const k = Math.floor(p[0] / 256) + ',' + Math.floor(p[2] / 256); let c = cells.get(k); if (!c) cells.set(k, c = { P: [], C: [], U: [], I: [] }); return c; };
     const vtx = (c, p, col, uv) => { c.P.push(p[0], p[1], p[2]); c.C.push(col[0], col[1], col[2], col[3]); c.U.push(uv[0], uv[1]); return c.P.length / 3 - 1; };
@@ -4260,25 +4262,26 @@ const World = (function () {
       const c = chunk(Q[0][0]), k = Q.map(q => vtx(c, q[0], col, q[1])); face(c, k[0], k[1], k[2]); face(c, k[0], k[2], k[3]); };
     // patches, every 40-100 m, more often in a wheel track than not
     for (let s = R() * 50; s < len - 6; s += 40 + R() * 60) {
-      const i = at(Math.round(s / ds)); if (deck(i)) continue;
-      const hl = 0.8 + R() * 1.8, hw = 0.5 + R() * 1.1, lo = clamp((R() < 0.6 ? T.rl[i] + (R() < 0.5 ? -0.78 : 0.78) : (R() * 2 - 1) * w) + (R() - 0.5) * 0.6, -lim + hw, lim - hw), k = R() < 0.55 ? 0.78 + R() * 0.1 : 1.06 + R() * 0.1;
-      decal(s, lo, hl, hw, (R() - 0.5) * 0.08, 0.02, 0.02, 0.48, 0.48, [k, k, k * 1.01, 1]);
+      const i = at(Math.round(s / ds)); if (deck(i) || bare(s)) continue;
+      const li = limAt(i), hl = 0.8 + R() * 1.8, hw = 0.5 + R() * 1.1, lo = clamp((R() < 0.6 ? T.rl[i] + (R() < 0.5 ? -0.78 : 0.78) : (R() * 2 - 1) * wAt(i)) + (R() - 0.5) * 0.6, -li + hw, li - hw), k = R() < 0.55 ? 0.78 + R() * 0.1 : 1.06 + R() * 0.1;
+      const rot = (R() - 0.5) * 0.08; if (bare(s - hl) || bare(s + hl)) continue;
+      decal(s, lo, hl, hw, rot, 0.02, 0.02, 0.48, 0.48, [k, k, k * 1.01, 1]);
     }
     // sealed cracks (the texture's long strips are 8:1): across the road every 25-60 m, along it every 50-110 m, a network of them or one
     // with its branches every 120-260 m
     const strip = (s, lo, L, rot) => { const b = R() < 0.5; decal(s, lo, L / 2, L / 16, rot, 0.004, b ? 0.752 : 0.877, 0.996, b ? 0.873 : 0.998, [1, 1, 1, 0.8 + R() * 0.2]); };
     for (let s = R() * 40; s < len - 4; s += 25 + R() * 35) {
-      const i = at(Math.round(s / ds)); if (deck(i)) continue;
-      const L = Math.min(2 * lim, 3 + R() * (2 * lim - 2)), lo = (R() * 2 - 1) * Math.max(0, lim - L / 2);
+      const i = at(Math.round(s / ds)); if (deck(i) || bare(s)) continue;
+      const li = limAt(i), L = Math.min(2 * li, 3 + R() * (2 * li - 2)), lo = (R() * 2 - 1) * Math.max(0, li - L / 2);
       strip(s, lo, L, Math.PI / 2 + (R() - 0.5) * 0.3);
     }
     for (let s = R() * 60; s < len - 8; s += 50 + R() * 60) {
-      const i = at(Math.round(s / ds)); if (deck(i)) continue;
-      strip(s, (R() * 2 - 1) * (lim - 0.5), 4 + R() * 5, (R() - 0.5) * 0.08);
+      const i = at(Math.round(s / ds)); if (deck(i) || bare(s - 4.5) || bare(s) || bare(s + 4.5)) continue;
+      strip(s, (R() * 2 - 1) * (limAt(i) - 0.5), 4 + R() * 5, (R() - 0.5) * 0.08);
     }
     for (let s = R() * 100; s < len - 4; s += 120 + R() * 140) {
-      const i = at(Math.round(s / ds)); if (deck(i)) continue;
-      const h = 1.4 + R() * 0.8, lo = (R() * 2 - 1) * Math.max(0, lim - h * 1.12), net = R() < 0.5;
+      const i = at(Math.round(s / ds)); if (deck(i) || bare(s - 2.2) || bare(s) || bare(s + 2.2)) continue;
+      const h = 1.4 + R() * 0.8, lo = (R() * 2 - 1) * Math.max(0, limAt(i) - h * 1.12), net = R() < 0.5;
       decal(s, lo, h, h / 2, R() * TAU, net ? 0.002 : 0.502, 0.502, net ? 0.498 : 0.998, 0.748, [1, 1, 1, 0.8 + R() * 0.2]);
     }
     // the rubber on a circuit's racing line: two tyre tracks, a little everywhere, dark where the pace falls (braking) and where it is slow (the corners)
@@ -9028,12 +9031,6 @@ const World = (function () {
           const j = i + 1, v0 = i * ds / tileL, v1 = j * ds / tileL, oi = cols(i), oj = cols(j), s = SF[i], gr = s === 5 ? gK : s === 4 ? gP : gA, us = s === 4 ? 2 : tileL;
           for (let c = 0; c < oi.length - 1; c++) { const a0 = oi[c], a1 = oi[c + 1], b0 = oj[c], b1 = oj[c + 1];
             gr.quadUp(Pt(i, a0, 0.02), Pt(i, a1, 0.02), Pt(j, b1, 0.02), Pt(j, b0, 0.02), [shade(i, a0), shade(i, a1), shade(j, b1), shade(j, b0)], [[(a0 + WA[i]) / us, v0 * tileL / us], [(a1 + WA[i]) / us, v0 * tileL / us], [(b1 + WA[j]) / us, v1 * tileL / us], [(b0 + WA[j]) / us, v1 * tileL / us]]); }
-          if (s === 0 && !inChic(i * ds) && crH(T.px[i], T.pz[i], 81) < 0.05) {   // a repair in the tarmac: a trench filled across a lane or the street, or a patch in a lane (fresher, darker asphalt with a grain of its own; now and then an old, paler one)
-            const h2 = crH(T.px[i], T.pz[i], 82), h3 = crH(T.px[i], T.pz[i], 83), wi = WA[i], k = h3 < 0.75 ? 0.8 + 0.07 * h2 : 1.07, C = [k, k, k * 1.01], s0 = i * ds;
-            let o0, o1, l; if (h2 < 0.4) { o0 = -wi + 0.25; o1 = h3 < 0.4 ? wi - 0.25 : 0.1; l = 0.9 + 0.5 * h3; } else { const c = (h3 < 0.5 ? -0.5 : 0.5) * wi + (h2 - 0.7) * 1.2, hw = 0.7 + 0.7 * h2; o0 = c - hw; o1 = c + hw; l = 2 + 4 * h3; }
-            o0 = Math.max(o0, -wi + 0.2); o1 = Math.min(o1, wi - 0.2);
-            const P4 = (sv, o) => { const p = atSf(sv, o), f = Math.min(N - 1.001, sv / ds), i0 = Math.floor(f); return [p[0], lerp(T.hy[i0], T.hy[i0 + 1], f - i0) + 0.028, p[1]]; }, U = (sv, o) => [(o + wi) / tileL + 0.31, sv / tileL + 0.47];
-            for (let sa = s0; sa < s0 + l - 0.01; sa += ds) { const sb = Math.min(s0 + l, sa + ds); gA.quadUp(P4(sa, o0), P4(sa, o1), P4(sb, o1), P4(sb, o0), [C, C, C, C], [U(sa, o0), U(sa, o1), U(sb, o1), U(sb, o0)]); } }
           for (const side of [-1, 1]) {
             const si = side > 0 ? 1 : 0, qi = VP[si][i], qj = VP[si][j], kinds = VK[VT[si][i]] || VK[2];
             for (let k = 0; k < 5; k++) { const a = Pt(i, side * qi[k][0], qi[k][1]), b = Pt(i, side * qi[k + 1][0], qi[k + 1][1]), c = Pt(j, side * qj[k + 1][0], qj[k + 1][1]), d = Pt(j, side * qj[k][0], qj[k][1]), kind = kinds[k];

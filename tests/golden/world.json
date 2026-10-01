@@ -276,5 +276,24 @@
    "tyremarks:MeshBasicMaterial": "b6a15a32",
    "roadwear:MeshLambertMaterial": "446ce30d"
   }
+ },
+ "harju": {
+  "meshes": 772,
+  "verts": 1423939,
+  "instances": 8723,
+  "props": 21,
+  "crowd": 4722,
+  "world": "46895dea",
+  "propsHash": "f70a7360",
+  "floor": "3202d0cb/4480",
+  "groups": {
+   "-:MeshLambertMaterial": "1d7d8b29",
+   "-:MeshPhongMaterial": "6ef6de83",
+   "-:MeshBasicMaterial": "1edff4b2",
+   "puddles:MeshBasicMaterial": "219cf0ec",
+   "crowd:MeshLambertMaterial": "91b7a892",
+   "tyremarks:MeshBasicMaterial": "f03bef5d",
+   "roadwear:MeshLambertMaterial": "808d70ba"
+  }
  }
 }
