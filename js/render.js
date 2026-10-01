@@ -1653,7 +1653,7 @@ const Render = (function () {
     const A = atmos, to = (c, hex, k) => c.lerp(_c2.setHex(hex), k);
     if (A.tod === 'dusk') {
       sunOff = [sunOff[0] * 1.6, 30, sunOff[2] * 1.6];   // (a low sun: long shadows)
-      to(scene.fog.color, 0xeea070, 0.55); renderer.setClearColor(scene.fog.color, 1); to(hemi.color, 0xc49ab8, 0.34); to(hemi.groundColor, 0x6a4430, 0.3); hemi.intensity *= 0.74;   // (the shade lit by the rosy sky: a little cooler than the sun)
+      to(scene.fog.color, 0xeea070, 0.55); renderer.setClearColor(scene.fog.color, 1); to(hemi.color, 0xc49ab8, 0.34); to(hemi.groundColor, 0x6a4430, 0.3); hemi.intensity *= 0.84;   // (the shade lit by the rosy sky: a little cooler than the sun, not black)
       to(sun.color, 0xff8a40, 0.74); sun.intensity *= 1.0;
       if (post) { const U = post.mat.uniforms; U.uTint.value.set(1.1, 0.97, 0.86); U.uHaze.value = 0.34 * (1 - r); U.uHazeCol.value.set(1, 0.6, 0.32); U.uShT.value.set(0.97, 0.96, 1.04); U.uHiT.value.set(1.07, 0.99, 0.88); }
     } else if (A.tod === 'night') {
