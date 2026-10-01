@@ -13838,7 +13838,10 @@ const World = (function () {
       const put = (m, k, x, y, z, rot, sc) => { E4.set(0, rot, 0); Q4.setFromEuler(E4); V4.set(x, y, z); S4.setScalar(sc || 1); M4.compose(V4, Q4, S4); m.setMatrixAt(k, M4); };
       const RUN = { on: false, s: [], lat: [], v: [] };
       out.dyn.people = (t, car) => {
-        if (!car) { bikesM.visible = riders.visible = runners.visible = false; return; }
+        if (!car) {   // (no car: all hidden, in a fixed pose, the same whatever ran before: the world tests' fingerprint)
+          bikesM.visible = riders.visible = runners.visible = false; RUN.on = false; RUN.t = 0; M4.makeScale(0, 0, 0);
+          for (const m of [bikesM, riders, runners]) { for (let k = 0; k < m.count; k++) m.setMatrixAt(k, M4); m.instanceMatrix.needsUpdate = true; }
+          return; }
         const still = car.isPlayer && !(car.dist > 0.5) && (car.speed || 0) < 0.5;   // (on the grid: the peloton rides away up the street ahead)
         bikesM.visible = riders.visible = still;
         if (still) { const go = (t * 8.5) % 900;
