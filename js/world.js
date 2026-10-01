@@ -7602,7 +7602,14 @@ const World = (function () {
         box(g, px, y0 - 0.5, pz, L, y - y0 + 0.5, (D - 3) / rows + 0.02, rot, [0.6, 0.6, 0.6], [0.72, 0.72, 0.72], true);
         const a = [px - dx * L / 2 + fx * 0.2, y + 0.02, pz - dz * L / 2 + fz * 0.2], b = [px + dx * L / 2 + fx * 0.2, y + 0.02, pz + dz * L / 2 + fz * 0.2], cT = [b[0] - fx * 0.3, y + 0.62, b[2] - fz * 0.3], dT = [a[0] - fx * 0.3, y + 0.62, a[2] - fz * 0.3];
         crowdG.quadO(a, b, cT, dT, CW, [px - fx * 3, y, pz - fz * 3], [[0, 0], [L / 3, 0], [L / 3, 1], [0, 1]]); }
-      const back = [mx - fx * (D / 2), mz - fz * (D / 2)]; box(g, back[0], y0 - 0.3, back[1], L, 0.4 + rows * 0.45 + 3.4, 0.3, rot, [0.56, 0.57, 0.58]);
+      const back = [mx - fx * (D / 2), mz - fz * (D / 2)], BH = 0.4 + rows * 0.45 + 3.4; box(g, back[0], y0 - 0.3, back[1], L, BH, 0.3, rot, [0.56, 0.57, 0.58]);
+      { // its back, seen from the stage: red-ochre boards, doors under the seats every few bays, a band of small windows above
+        const WC = [0.62, 0.3, 0.22], ox = back[0] - fx * 0.16, oz = back[1] - fz * 0.16, bays = Math.max(1, Math.round(L / 3.2)), inn = [back[0] + fx, y0 + 2, back[1] + fz], yb = y0 - 0.3, ym = y0 + 3.3, yt = y0 - 0.3 + BH;
+        for (let b0 = 0; b0 < bays; b0++) { const a0 = -L / 2 + b0 * L / bays, a1 = a0 + L / bays, A = [ox + dx * a0, oz + dz * a0], B = [ox + dx * a1, oz + dz * a1], rk = b0 % 6 === 3 ? 12 : 6;
+          g.quadO([A[0], yb, A[1]], [B[0], yb, B[1]], [B[0], ym, B[1]], [A[0], ym, A[1]], WC, inn, [[0, hjFV(rk, 0)], [1, hjFV(rk, 0)], [1, hjFV(rk, 1)], [0, hjFV(rk, 1)]]);
+          g.quadO([A[0], ym, A[1]], [B[0], ym, B[1]], [B[0], yt, B[1]], [A[0], yt, A[1]], WC, inn, [[0, hjFV(3, 0)], [1, hjFV(3, 0)], [1, hjFV(3, 1)], [0, hjFV(3, 1)]]); }
+        const fy = y0 + 0.4 + rows * 0.45 + 3.0, e = D * 0.1 + D * 0.425 + 0.02, P1 = [mx - fx * e - dx * (L / 2 + 0.5), mz - fz * e - dz * (L / 2 + 0.5)], P2 = [mx - fx * e + dx * (L / 2 + 0.5), mz - fz * e + dz * (L / 2 + 0.5)];
+        g.quadO([P1[0], fy - 0.35, P1[1]], [P2[0], fy - 0.35, P2[1]], [P2[0], fy + 0.32, P2[1]], [P1[0], fy + 0.32, P1[1]], [0.24, 0.24, 0.26], [mx, fy, mz]); }   // (the roof's dark fascia)
       for (let k = 0; k <= 10; k++) { const a = -L / 2 + k * L / 10; box(g, back[0] + dx * a - fx * 0.2, y0 - 0.3, back[1] + dz * a - fz * 0.2, 0.5, 0.4 + rows * 0.45 + 3.6, 0.3, rot, [0.48, 0.49, 0.5]); }   // (its pillars)
       box(g, mx - fx * (D * 0.1), y0 + 0.4 + rows * 0.45 + 3.0, mz - fz * (D * 0.1), L + 1, 0.3, D * 0.85, rot, [0.86, 0.86, 0.84], [0.3, 0.32, 0.34]);
       for (let k = 0; k <= 5; k++) { const a = -L / 2 + k * L / 5, px = mx + dx * a + fx * (D * 0.3), pz = mz + dz * a + fz * (D * 0.3); box(g, px, y0, pz, 0.25, 0.4 + rows * 0.45 + 3.0, 0.25, rot, [0.4, 0.4, 0.42]); }
