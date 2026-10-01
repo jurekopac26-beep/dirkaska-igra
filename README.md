@@ -73,7 +73,7 @@ Najslavnejši odsek čilske ceste Ruta 60 (iz Los Andesa čez prelaz Los Liberta
 
 Okolica:
 
-- **Andsko poletje**: jasno popoldne, močno sonce s severozahoda (južna polobla), modrikasta izmaglica. Gola pobočja iz sivega, rjastega in okrastega melišča in skal, plasti kamnine na strmih stenah, šopi rumene trave (coirón), nizko grmičevje, višje gor zelene blazine (llareta), balvani in skalne čeri. Raba tal je iz satelitske karte ESA WorldCover. Stari sneg leži na senčnih južnih pobočjih od ~2.750 m, na prisojnih šele nad ~3.400 m; pozimi (letni čas Zima) je vse pod snegom kot v smučarski sezoni v Portillu.
+- **Andsko poletje**: jasno popoldne, močno sonce s severozahoda (južna polobla), modrikasta izmaglica. Gola pobočja iz sivega, rjastega in okrastega melišča in skal, ponekod svetla od vulkanskega pepela, plasti kamnine na strmih stenah, po pobočjih vršaji svežega melišča in temnejši žlebovi, ob cesti povsod drobno kamenje, šopi rumene trave (coirón), ki se zibljejo v vetru, nizko grmičevje, višje gor olivno zelene blazine (llareta), balvani in skalne čeri. Raba tal je iz satelitske karte ESA WorldCover. Stari sneg leži na senčnih južnih pobočjih od ~2.700 m, na prisojnih šele nad ~3.350 m; pozimi (letni čas Zima) je vse pod snegom kot v smučarski sezoni v Portillu.
 - **Portillo**: rumeni Hotel Portillo ob jezeru Laguna del Inca (smaragdna voda), Oktogon, koče in hiše smučišča, ustavljene žičnice s stebri, vrvmi in sedeži (sedežnica Juncalillo pelje čez cesto).
 - **Stara železnica Transandino** (zaprta od leta 1984): nasip z zarjavelimi tiri v dolini in pri Portillu, betonske galerije proti plazovom nad njo, mostovi.
 - **Cesta**: dvojna rumena sredinska črta (prehitevanje prepovedano), bele robne črte, jeklene ograje, kjer teren pada, in na zunanji strani ovinkov, oranžni snežni količki pri Portillu, most čez Juncalillo s potokom, ribnik ob startu.
@@ -258,7 +258,7 @@ Na zaslonu **Izberi progo** izbereš še **letni čas** (Poletje, Jesen, Zima) i
 - **Vršič** je vedno jeseni (zlati macesni, prvi sneg na vrhu): Poletje in Jesen ga pustita takega, Zima ga vsega zasneži.
 - **Los Caracoles** je poleti suha andska pokrajina s snežišči visoko gor; jeseni trava porumeni, pozimi je vse pod snegom (zid lestve in asfalt ostaneta siva).
 - **Večer:** nizko oranžno sonce, dolge sence v hladnejšem, rožnatem odtenku, topla meglica. Avti imajo prižgane žaromete.
-- **Noč:** temno modro nebo, šibka luna in zvezde (vidne iz kokpita, s TV kamer in v foto načinu). Ob progi so vsakih 30 m reflektorji na drogovih, ki na asfaltu delajo mehke kroge svetlobe, okoli luči pa je sij. Avti na cesto pred sabo svetijo s toplim snopom obeh žarometov; okoli žarometov, zadnjih in zavornih luči je sij. V stavbah so prižgana okna (topla luč, ponekod modra luč televizorja). Pri kakovosti »Visoka« luči še žarijo (bloom). Npr. nočna dirka v Monaku.
+- **Noč:** temno modro nebo, šibka luna in zvezde (vidne iz kokpita, s TV kamer in v foto načinu). Ob progi so vsakih 30 m reflektorji na drogovih, ki na asfaltu delajo mehke kroge svetlobe (na klancih nagnjene s cesto), okoli luči pa je sij. Avti na cesto pred sabo svetijo s toplim snopom obeh žarometov; okoli žarometov, zadnjih in zavornih luči je sij. V stavbah so prižgana okna (topla luč, ponekod modra luč televizorja). Pri kakovosti »Visoka« luči še žarijo (bloom). Npr. nočna dirka v Monaku.
 
 ## Zvok navijačev in predori
 
