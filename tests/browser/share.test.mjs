@@ -27,7 +27,7 @@ try {
   await pa.waitForTimeout(300);
   const s2 = await pa.evaluate(() => ({ cells: [...document.querySelectorAll('.st-cell')].map(c => c.innerText.replace(/\s+/g, ' ')), got: [...document.querySelectorAll('.ach.got b')].map(b => b.textContent), all: document.querySelectorAll('.ach').length,
     km100: [...document.querySelectorAll('.ach')].find(a => /100 kilometrov/.test(a.innerText)).innerText }));
-  T.check('Dosežki: the numbers (Dirke 1, Proge 1/15 ...), every achievement, the unlocked ones gold, the counting ones how far', s2.cells.some(c => /^1 Dirke$/.test(c)) && s2.cells.some(c => /^1\/15 Proge$/.test(c)) && s2.got.includes('Prvi cilj') && s2.all >= 25 && /\(\d+,\d\/100\)/.test(s2.km100), JSON.stringify(s2));
+  T.check('Dosežki: the numbers (Dirke 1, Proge 1/16 ...), every achievement, the unlocked ones gold, the counting ones how far', s2.cells.some(c => /^1 Dirke$/.test(c)) && s2.cells.some(c => /^1\/16 Proge$/.test(c)) && s2.got.includes('Prvi cilj') && s2.all >= 25 && /\(\d+,\d\/100\)/.test(s2.km100), JSON.stringify(s2));
 
   // 2. the ghost of the flying lap shared: a link and a file
   await pa.evaluate(() => { const g = window.__game; g.onAction('to-title'); g.onAction('to-board'); });

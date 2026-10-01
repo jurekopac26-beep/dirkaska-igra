@@ -189,7 +189,7 @@
     'Nagrada (z najhitrejšim krogom)': 'Prize (with the fastest lap)', ' {0}: +{1} {2}, skupaj {3} in {4} mesto': ' {0}: +{1} {2}, {3} in total and {4} place',
     ' v končni razvrstitvi.': ' in the final standings.', ' po {0} dirki.': ' after the {0} race.', 'Za naslov prvaka': 'For the title', 'Za {0} mesto v prvenstvu': 'For {0} place in the championship',
     'Končna razvrstitev': 'Final standings', 'Lestvica prvenstva': 'Championship standings',
-    'Pobegnil si!': 'You escaped!', 'Ulovljen!': 'Busted!', 'Čez prelaz v {0}': 'Over the pass in {0}', ' (najhitrejši pobeg).': ' (fastest escape).',
+    'Pobegnil si!': 'You escaped!', 'Ulovljen!': 'Busted!', 'Čez prelaz v {0}': 'Over the pass in {0}', '{0} v {1}': '{0} in {1}', ' (najhitrejši pobeg).': ' (fastest escape).',
     'Policija te je ujela po {0} km, v {1}.': 'The police caught you after {0} km, in {1}.', 'Prevožena pot': 'Distance driven', 'Najvišja stopnja pregona': 'Highest heat level',
     'Izločene patrulje': 'Patrol cars wrecked', 'Prebite gume': 'Flat tyres', 'Zbiti pešci in kolesarji': 'Pedestrians and cyclists hit', 'Pobegi / aretacije': 'Escapes / arrests',
     'Beg pred policijo': 'Police chase', 'Nagrada za pobeg': 'Escape prize', 'SKOK {0} m': 'JUMP {0} m', 'REKORD SKOKA! ': 'JUMP RECORD! ', 'Najdaljši skok {0} m': 'Longest jump {0} m',
