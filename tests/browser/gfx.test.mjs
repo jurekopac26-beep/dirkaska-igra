@@ -1,14 +1,15 @@
 // The common graphics of every track (Posodobi grafiko): the sun's glint on the cars' paint and glass (one shader patch on every paint
 // material; Pikes Peak keeps its own dust-and-glint layer), the water (the sky mirrored in it, waves, and along the real waterline a
 // shore band with the foam and the shallows), the worn tarmac (patches, sealed cracks, the rubber on a circuit's racing line; none on a
-// gravel road nor on Pikes Peak, whose road has its own). On every track all of it is built and drawn without an error; the water
-// mirrors the race's sky (dark at night), the foam shows at the shore, the wear darkens with the rain.
+// gravel road nor on Pikes Peak, whose road has its own; on Mie's new tarmac the rubber only). On every track all of it is built and
+// drawn without an error; the water mirrors the race's sky (dark at night), the foam shows at the shore, the wear darkens with the rain.
 //   node tests/browser/gfx.test.mjs
 import { serve, launch, openGame, startTrack, trackIds, checker } from './lib.mjs';
 
 const T = checker('graphics: car glint, water, worn tarmac');
 const WATER = ['jezero', 'riviera', 'ljubljana', 'monaco', 'gozd', 'toskana', 'suzuka', 'ouninpohja'];   // (with a shore band; Pikes Peak: its reservoir only)
 const NO_WEAR = ['gora', 'ouninpohja', 'pikes', 'pikesg'];   // (pikesg: Pikes Peak on its historic gravel road)
+const FRESH = ['suzuka'];   // (Mie, resurfaced in 2025-2026: the rubber on its racing line only, no patches nor sealed cracks)
 const srv = await serve();
 const browser = await launch();
 try {
@@ -16,14 +17,14 @@ try {
   const frames = (n) => page.evaluate((n) => new Promise(r => { let k = 0; const f = () => (++k >= n ? r() : requestAnimationFrame(f)); requestAnimationFrame(f); }), n);
   const look = () => page.evaluate(() => {
     const key = (m) => (m && m.customProgramCacheKey !== THREE.Material.prototype.customProgramCacheKey ? m.customProgramCacheKey() : '');
-    const cars = { body: {}, paint: {} }, water = [], bands = [], wear = { meshes: 0, verts: 0, alpha: 0 };
+    const cars = { body: {}, paint: {} }, water = [], bands = [], wear = { meshes: 0, verts: 0, alpha: 0, patch: 0 };
     Render.scene.traverse(o => {
       if (!o.isMesh || !o.material || Array.isArray(o.material)) return;
       const m = o.material, k = key(m);
       if (m.userData && m.userData.dirt) cars.body[k] = (cars.body[k] || 0) + 1;   // (a car's body)
       else if (m.isMeshPhongMaterial && m.envMap && !m.vertexColors && m.reflectivity === 0.2) cars.paint[k] = (cars.paint[k] || 0) + 1;   // (its painted panels)
       if (k.startsWith('water|')) { const a = o.geometry.attributes.shore; if (a) { let mn = 1e9, mx = -1e9; for (let i = 0; i < a.count; i++) { mn = Math.min(mn, a.getX(i)); mx = Math.max(mx, a.getX(i)); } bands.push([mn, mx, a.count]); } else water.push(o.geometry.attributes.position.count); }
-      if (o.name === 'roadwear') { wear.meshes++; const c = o.geometry.attributes.color; wear.verts += c.count; for (let i = 3; i < c.array.length; i += 4) wear.alpha = Math.max(wear.alpha, c.array[i]); }
+      if (o.name === 'roadwear') { wear.meshes++; const c = o.geometry.attributes.color; wear.verts += c.count; for (let i = 3; i < c.array.length; i += 4) { wear.alpha = Math.max(wear.alpha, c.array[i]); if (c.array[i - 3] > 0.5) wear.patch++; } }   // (patch: the light corners of patches and cracks; the rubber is dark)
     });
     return { cars, water, bands, wear };
   });
@@ -40,8 +41,8 @@ try {
     const wet = WATER.includes(id);
     if (wet !== !!L.bands.length || (wet && L.bands.some(b => b[0] > -1.99 || b[1] < 9.99 || b[2] < 50))) why.push('shore bands ' + JSON.stringify(L.bands));
     if ((wet || pk) !== !!L.water.length) why.push('water ' + JSON.stringify(L.water));
-    const worn = !NO_WEAR.includes(id);
-    if (worn !== L.wear.meshes > 0 || (worn && (L.wear.verts < 500 || L.wear.alpha < 0.5))) why.push('wear ' + JSON.stringify(L.wear));
+    const worn = !NO_WEAR.includes(id), fresh = FRESH.includes(id);
+    if (worn !== L.wear.meshes > 0 || (worn && (L.wear.verts < 500 || L.wear.alpha < (fresh ? 0.3 : 0.5))) || (fresh && L.wear.patch)) why.push('wear ' + JSON.stringify(L.wear));
     if (why.length) bad.push(id + ': ' + why.join('; '));
     console.log(`  ${id.padEnd(11)} cars ${JSON.stringify(L.cars.body)} water ${L.water.length} bands ${L.bands.map(b => b[2]).join('+') || 0} wear ${L.wear.meshes}/${L.wear.verts}`);
   }

@@ -17,6 +17,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     elev: SPA_H.map((h, i) => [i / SPA_H.length, h / 10]),
     pit: [15.5, -245, 195, -95, 100],   // pit lane right of the pit straight: [centre offset to the right, from, to, the player's box, a long way in] (metres from the start line)
     pitRow: [-140, 140],                // the first and the last box (the crews in the first 13, as many garages as boxes)
+    podium: { h: 9.2 },                 // the podium over the pit lane (the renderer's, after the race): on the paddock club's roof edge
     walls: [[360, 860, 1, 1.5]],        // the support pit lane's wall on the way down to Eau Rouge, 1.5 m past the road edge (the lane and its garages behind it)
     // run-offs as at a Formula 1 circuit: asphalt where the barriers stand far out (Core: they drive as asphalt), gravel from the kerb out in a few
     // corners (the outside of Raidillon, Les Combes, Bruxelles, Pouhon, Paul Frère and Blanchimont): [from, to, side (-1 left, 1 right), width]

@@ -10,7 +10,7 @@ const Sfx = (function () {
   let gravel = null, spray = null, crowd = null, lastT = 0, pudPrev = false;
   let stands = null, jet = null, tun = null;   // the grandstands' crowd (every circuit), the Red Bull Ring's jets before the start, a tunnel's ring
   let sirenV = null;   // the open road: the police siren (the nearest patrol car chasing)
-  let lastCrash = 0, running = false;
+  let lastCrash = 0, running = false, cer = false;   // (cer: the podium ceremony, setCeremony)
 
   function create() {
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -199,6 +199,7 @@ const Sfx = (function () {
     if (race.state !== C.state) { if (race.state === 'racing') C.cheer = 1; C.state = race.state; }   // the lights go out
     if (race.state === 'racing' && player.pos < C.pos && !player.finished) { C.cheer = 1; C.tHorn = Math.min(C.tHorn, now + 0.15); }   // the player passes a car
     if (player.finished && !C.fin) { C.fin = true; C.cheer = 1; } else if (!player.finished) C.fin = false;
+    if (cer) C.cheer = Math.max(C.cheer, 0.7);   // (the podium ceremony: the stands keep cheering)
     C.pos = player.pos || 0;
     const dt = clamp(now - (C.tPrev || now), 0, 0.1); C.tPrev = now;
     C.cheer = Math.max(0, C.cheer - dt / 4); C.lev += (lev - C.lev) * Math.min(1, dt * 5);
@@ -574,7 +575,7 @@ const Sfx = (function () {
     // tyres
     const spd = player.speed;
     const hardW = (w) => w <= 1 || w >= 7, onHard = hardW(player.ws[2]) && hardW(player.ws[3]);   // (asphalt, a kerb, the cobbles)
-    const slide = Math.max(0, player.latR - 2.2) / 5 + player.spin * 0.8 + (player.lock ? 0.6 : 0) + (player.inHand > 0.5 && spd > 5 ? 0.5 : 0);
+    const slide = Math.max(0, (player.latR || 0) - 2.2) / 5 + (player.spin || 0) * 0.8 + (player.lock ? 0.6 : 0) + (player.inHand > 0.5 && spd > 5 ? 0.5 : 0);
     const sq = onHard && spd > 3 ? clamp(slide, 0, 1.2) : 0, wet = race ? race.rain || 0 : 0;
     set(squeal.out.gain, sq * 0.09 * (1 - 0.7 * wet), 0.04);   // (a wet road hardly squeals)
     set(rainV.out.gain, wet * 0.05, 0.4);
@@ -585,8 +586,9 @@ const Sfx = (function () {
     set(rumble.out.gain, off / 4 * clamp(spd / 18, 0, 1) * 0.5, 0.05);
     set(rumble.flt.frequency, (player.ws.indexOf(3) >= 0 || player.ws.some(w => w === 5 || w === 6)) ? 520 : 240, 0.1);
     // a kerb: a hard buzz; the cobbles (the setts in the hairpins of Vršič): a softer, quicker drumming under the tyres
-    set(curbV.out.gain, player.onCurb ? clamp(spd / 20, 0, 1) * 0.35 : player.air ? 0 : cob / 4 * clamp(spd / 22, 0, 1) * 0.2, 0.03);
-    set(curbV.flt.frequency, player.onCurb || !cob ? 40 + spd * 3.5 : 60 + spd * 6, 0.05);
+    const hiK = player.ws.indexOf(9) >= 0;   // (a dual kerb's raised part: a harder, lower drumming)
+    set(curbV.out.gain, player.onCurb ? clamp(spd / 20, 0, 1) * (hiK ? 0.5 : 0.35) : player.air ? 0 : cob / 4 * clamp(spd / 22, 0, 1) * 0.2, 0.03);
+    set(curbV.flt.frequency, player.onCurb || !cob ? (hiK ? 28 + spd * 2.2 : 40 + spd * 3.5) : 60 + spd * 6, 0.05);
     set(wind.out.gain, clamp(spd / 70, 0, 1) ** 2 * 0.12, 0.1);
     // loose gravel (gravel traps, makadam): the crunch, louder in a slide, and stones pinging off the underbody; in the rain the crunch muffled by
     // a hiss of water off the tyres (the hard roads' is above), and a splash into each puddle
@@ -617,7 +619,7 @@ const Sfx = (function () {
     set(echo.send.gain, pikes ? Core.sstep(186, 198, player.roadY || 0) * 0.32 : race && race.track && race.track.def && race.track.def.id === 'caracoles' ? 0.16 : 0, 0.6);   // (Los Caracoles: off the rock walls of the ladder)
     { const tn = Wd && Wd.dyn && Wd.dyn.tunnel, sq = player.q ? player.q.s : -1e9;   // (in a tunnel: the ring of its walls)
       set(tun.send.gain, tn && (tn.ranges ? tn.ranges.some(r => sq > r[0] - 3 && sq < r[1] + 3) : sq > tn.s0 - 3 && sq < tn.s1 + 3) ? 0.85 : 0, 0.08); }   // (Los Caracoles: two galleries, tn.ranges)
-    const W = Wd, pk = W && W.dyn ? W.dyn.pk || W.dyn.air : null, cam = typeof Render !== 'undefined' ? Render.camera : null;   // (the Red Bull Ring's: dyn.air)
+    const W = Wd, pk = W && W.dyn ? W.dyn.pk || W.dyn.air || W.dyn.heli : null, cam = typeof Render !== 'undefined' ? Render.camera : null;   // (the Red Bull Ring's: dyn.air; Mie's at the finish: dyn.heli)
     let hv = 0, hp = 0;
     if (pk && pk.heli && (pk.on || (pk.follow && pk.heli.visible))) {
       const q = pk.heli.position, lx = cam ? cam.position.x : player.x, ly = cam ? cam.position.y : (player.roadY || 0), lz = cam ? cam.position.z : player.z;
@@ -684,6 +686,30 @@ const Sfx = (function () {
     const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.05 * v, now + 0.06); g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
     o.connect(bp); bp.connect(g); g.connect(bus); o.start(now); o.stop(now + dur + 0.02);
   }
+  // applause (the podium): a burst of claps over ~1.8 s, a cheer on top
+  function applause(v) {
+    if (!running || !ctx || ctx.state !== 'running') return;
+    v = clamp(v, 0, 1); if (v < 0.05) return;
+    const now = ctx.currentTime, src = ctx.createBufferSource(); src.buffer = noiseBuf; src.playbackRate.value = 1.4;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1900; bp.Q.value = 0.8;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now);
+    const n = Math.round(22 + 38 * v), ts = []; for (let k = 0; k < n; k++) ts.push(0.03 + Math.pow(Math.random(), 1.3) * 1.8); ts.sort((a, b) => a - b);
+    let last = -1; for (const t0 of ts) { if (t0 - last < 0.018) continue; last = t0; const t = now + t0, a = (0.05 + Math.random() * 0.06) * v * (1 - t0 / 2.2);
+      g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(a, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.03); }
+    src.connect(bp); bp.connect(g); g.connect(bus); src.start(now); src.stop(now + 2.2);
+    cheer(Math.min(1, v + 0.2));
+  }
+  // a champagne cork: a short low thump, the fizz after it
+  function cork() {
+    if (!ctx || ctx.state !== 'running') return;
+    const now = ctx.currentTime, o = ctx.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(420, now); o.frequency.exponentialRampToValueAtTime(90, now + 0.08);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.35, now + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+    o.connect(g); g.connect(bus); o.start(now); o.stop(now + 0.14);
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf; const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 3500;
+    const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.0001, now + 0.05); g2.gain.exponentialRampToValueAtTime(0.06, now + 0.12); g2.gain.exponentialRampToValueAtTime(0.0001, now + 1.6);
+    src.connect(hp); hp.connect(g2); g2.connect(bus); src.start(now + 0.05); src.stop(now + 1.7);
+  }
+  function setCeremony(on) { cer = !!on; }
   function beep(freq, dur, vol) {
     if (!ctx || ctx.state !== 'running') return;
     const now = ctx.currentTime;
@@ -737,7 +763,7 @@ const Sfx = (function () {
 
   const levels = () => ctx ? { stands: stands.lev, standsGain: stands.out.gain.value, tunnel: tun.send.gain.value, pk: atmo && atmo.x ? { ready: !atmo.gen && !atmo.x.gen, crunch: atmo.x.cr.map(c => +c.g.gain.value.toFixed(4)), slap: atmo.x.sG.gain.value, far: atmo.x.fG.gain.value, gust: atmo.x.wo.gain.value, wind: atmo.wo.gain.value, crowd: [atmo.cL.gain.value, atmo.cR.gain.value], cheer: atmo.p7.L.map(l => l.g.gain.value), cheerEv: [atmo.p7.nH, atmo.p7.nW] } : null,   // (tests: the crowd's and the tunnel's levels now,
     engine: { kind: eng.kind, wave: eng.o1.type, f: eng.o1.frequency.value, gain: eng.out.gain.value, lope: eng.lopeG.gain.value } } : null;   // Pikes Peak's sounds, the player's engine note)
-  const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, shiftPop, knock, wrench, silence, levels, siren, carHorn, thud, pop, get ready() { return !!ctx && ctx.state === 'running'; } };
+  const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, shiftPop, knock, wrench, silence, levels, siren, carHorn, thud, pop, applause, cork, setCeremony, get ready() { return !!ctx && ctx.state === 'running'; } };
   window.Sfx = api;
   return api;
 })();

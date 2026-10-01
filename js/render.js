@@ -1362,9 +1362,9 @@ const Render = (function () {
     clear() { this.T.fill(-99); this.dirty = true; }
   }
 
-  /* ---------------- birds: now and then a small flock flies across the view a little above the trees (gulls by the sea), its shadows
-     sweeping over the ground; the wings beat, then the birds glide a while. Not in the rain. One mesh: three triangles a bird, written
-     every frame ---------------- */
+  /* ---------------- birds: once a race a small flock flies across the view a little above the trees (gulls by the sea), 10-38 s after
+     the start, its shadows sweeping over the ground; the wings beat, then the birds glide a while. Not in the rain. One mesh: three
+     triangles a bird, written every frame ---------------- */
   class Birds {
     constructor(n) {
       this.n = n; this.pos = new Float32Array(n * 27);
@@ -1372,16 +1372,16 @@ const Render = (function () {
       g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
       this.mat = new THREE.MeshBasicMaterial({ color: 0x2a2c31, side: THREE.DoubleSide });
       this.mesh = new THREE.Mesh(g, this.mat); this.mesh.frustumCulled = false; this.mesh.castShadow = true; this.mesh.visible = false;
-      this.flocks = [0, 1].map((k) => ({ on: false, wait: 3 + k * 7 + Math.random() * 5, m: [] }));
+      this.flocks = [0, 1].map((k) => ({ on: false, wait: 3 + k * 7 + Math.random() * 5, m: [] })); this.left = 1;
     }
-    reset(gull) { this.gull = !!gull; this.mat.color.setHex(gull ? 0xe6e9ec : 0x2a2c31); for (const f of this.flocks) { f.on = false; f.wait = 2 + Math.random() * 8; } this.vx = this.vz = 0; this.cx = this.cz = null; this.pos.fill(0); this.attr.needsUpdate = true; }
+    reset(gull, race) { this.gull = !!gull; this.mat.color.setHex(gull ? 0xe6e9ec : 0x2a2c31); for (const f of this.flocks) { f.on = false; f.wait = 2 + Math.random() * 8; } this.vx = this.vz = 0; this.cx = this.cz = null; this.pos.fill(0); this.attr.needsUpdate = true; if (race) { this.left = 1; for (const f of this.flocks) f.wait = 10 + (f.wait - 2) * 3.5; } }   // (race: one flock in it, 10-38 s after the start)
     update(dt, cx, cz, gH) {
       const P = this.pos; let b = 0;
       // the view moves as fast as the cars: a new flock appears ahead of it (the cars then pass under it), else anywhere around
       if (dt > 0) { const k = Math.min(1, dt * 2); this.vx = (this.vx || 0) + ((cx - (this.cx == null ? cx : this.cx)) / dt - (this.vx || 0)) * k; this.vz = (this.vz || 0) + ((cz - (this.cz == null ? cz : this.cz)) / dt - (this.vz || 0)) * k; }
       this.cx = cx; this.cz = cz;
       for (const f of this.flocks) {
-        if (!f.on) { f.wait -= dt; if (f.wait > 0 || !(dt > 0)) continue;
+        if (!f.on) { f.wait -= dt; if (f.wait > 0 || !(dt > 0) || this.left <= 0) continue; this.left--;
           const vv = Math.hypot(this.vx, this.vz), moving = vv > 8, a = moving ? Math.atan2(this.vz, this.vx) + (Math.random() - 0.5) * 0.9 : Math.random() * Math.PI * 2;
           const r = moving ? 70 + Math.min(90, vv * 1.6) * Math.random() : 75 + Math.random() * 25, tx = cx + (Math.random() - 0.5) * 60, tz = cz + (Math.random() - 0.5) * 60;
           f.x = cx + Math.cos(a) * r; f.z = cz + Math.sin(a) * r; f.h = moving ? a + Math.PI / 2 * (Math.random() < 0.5 ? 1 : -1) + (Math.random() - 0.5) * 0.8 : Math.atan2(tz - f.z, tx - f.x);   // (ahead of the view: flying across the cars' way)
@@ -1475,15 +1475,16 @@ const Render = (function () {
     return renderer;
   }
 
+  const staleMats = new Set();   // the last world's materials, freed after the new world's first frame: its materials take over the shader programs the two share instead of compiling them again
   function buildWorld(track, density) {
     camYaw = (track && track.def && track.def.camYaw) || 0;   // fixed heading of the 'kino' camera for this circuit (clockwise from north)
     if (world && world.root) {   // switching tracks: drop and free the previous scenery
       scene.remove(world.root);
-      world.root.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.dispose()); if (o.isInstancedMesh) o.dispose(); });   // (instanced: its instance buffers)
+      world.root.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => staleMats.add(m)); if (o.isInstancedMesh) o.dispose(); });   // (instanced: its instance buffers)
       if (world.ownTex) world.ownTex.forEach(t => t.dispose());   // textures made for that track only (the shared ones stay cached)
       if (skids) skids.clear();
     }
-    clearPropMeshes();
+    clearPropMeshes(); dropPodium(); tvC = null;
     world = World.build(scene, track, tex, { density });
     if (!world.farClip && camera.far !== 700) { camera.far = 700; camera.updateProjectionMatrix(); }
     applyTheme((track.def && track.def.theme) || 'lake'); wet = wetW = -1;   // (the weather again on the new world's road)
@@ -1628,7 +1629,7 @@ const Render = (function () {
     nring:    { fog: 0xb7c7cc, sun: 0xfff0d8, sunI: 1.1, sky: 0xcadcf0, gnd: 0x3e4a2a, hemiI: 0.6, tint: [1.03, 1.0, 0.95], sat: 1.04, sunOff: [-80, 76, 70] },   // the Eifel: a summer afternoon over the 'green hell' (a lower sun: longer shadows)
     spa:      { fog: 0xc3ced7, sun: 0xfff1de, sunI: 0.98, sky: 0xd0dde9, gnd: 0x43522f, hemiI: 0.64, tint: [0.99, 1.0, 1.01], sat: 1.1 },   // the Ardennes: a little greyer, softer daylight (Spa's changeable weather)
     rbring:   { fog: 0xc6daea, sun: 0xfff1d8, sunI: 1.12, sky: 0xcfe3fb, gnd: 0x46602c, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.06, sunOff: [-86, 78, 52] },   // Styria in early summer, an afternoon sun (longer shadows): clear alpine air, fresh meadows, dark spruce woods
-    suzuka:   { fog: 0xc8d9e6, sun: 0xfff1dc, sunI: 1.06, sky: 0xd5e7fa, gnd: 0x4f5c34, hemiI: 0.62, tint: [1.01, 1.0, 0.99], sat: 1.12 },   // Suzuka: a clear spring day in Mie
+    suzuka:   { fog: 0xc8d9e6, sun: 0xfff0d8, sunI: 1.12, sky: 0xd3e5f8, gnd: 0x4a5a32, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.05, sunOff: [-82, 80, 72] },   // Mie: a clear spring afternoon (the sun in the south-west, behind the kino camera, a little lower: longer shadows)
     caracoles: { fog: 0xc2d3e8, sun: 0xfff3de, sunI: 1.32, sky: 0xb4cdf2, gnd: 0x6e5e4c, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.07, sunOff: [-72, 98, -62] },   // Los Caracoles: a clear afternoon of the Andean summer, the thin air's strong sun from the north-west (the southern hemisphere), a cool blue haze
   };
   // each track's own grade on top (high quality, the post pass): its shadows and its highlights tinted apart, a little (split toning:
@@ -1734,7 +1735,7 @@ const Render = (function () {
     const hint = target.q && target.q.a >= 0 ? target.q.a : -1;
     for (; splash.acc >= 1; splash.acc -= 1) {
       const x = cx + (spRnd() - 0.5) * 2 * R, z = cz + (spRnd() - 0.5) * 2 * R, q = T.query(x, z, hint, _sq);
-      if (Math.abs(q.d) > T.w + 0.6) continue;   // (on the road only)
+      if (Math.abs(q.d) > T.wAt(q.a) + 0.6) continue;   // (on the road only: as wide as it is there)
       let y = T.hasElev && T.hy ? T.hy[q.a] : 0; if (T.bank) y += T.bankAt(q.s, q.d, _bk).dy;
       splash.put(x, y + 0.04, z, time);
     }
@@ -1755,10 +1756,11 @@ const Render = (function () {
   }
   function buildPuddles(T) {
     const pos = [], uv = [], idx = [], P = (s, o) => { const i = T.idx(s); let y = (T.hasElev && T.hy ? T.hy[i] : 0) + 0.035; if (T.bank) y += T.bankAt(s, o, _bk).dy; pos.push(T.px[i] + T.nx[i] * o, y, T.pz[i] + T.nz[i] * o); };
+    const ups = (T.cross || []).map(c => c.up * T.ds), onBridge = (s) => ups.some(u => { const d = Math.abs(s - u) % T.len; return Math.min(d, T.len - d) < 25; });   // (none on a bridge's deck: Mie's fades while a car drives under it)
     for (let s = 7; s < T.len - 7; s += 8) {
-      const h = hash3(s * 0.137 + 5); if (h < 0.45) continue;
-      const mid = hash3(s * 0.71 + 3) < 0.12, sd = hash3(s * 0.29 + 1) < 0.5 ? -1 : 1, L = 1.8 + 4 * hash3(s * 0.53 + 7), W = Math.min(0.8 + 1.4 * hash3(s * 0.91 + 2), T.w * 0.5);
-      const o = mid ? (hash3(s * 0.37 + 9) - 0.5) * T.w * 0.7 : sd * (T.w - 0.25 - W / 2 - 0.8 * hash3(s * 0.43 + 4)), b = pos.length / 3, k = Math.floor(hash3(s * 0.19 + 8) * 4), cu = (k & 1) * 0.5, cv = (k >> 1) * 0.5;
+      const h = hash3(s * 0.137 + 5); if (h < 0.45 || onBridge(s)) continue;
+      const hw = T.wAt(T.idx(s)), mid = hash3(s * 0.71 + 3) < 0.12, sd = hash3(s * 0.29 + 1) < 0.5 ? -1 : 1, L = 1.8 + 4 * hash3(s * 0.53 + 7), W = Math.min(0.8 + 1.4 * hash3(s * 0.91 + 2), hw * 0.5);   // (hw: the road's half-width here)
+      const o = mid ? (hash3(s * 0.37 + 9) - 0.5) * hw * 0.7 : sd * (hw - 0.25 - W / 2 - 0.8 * hash3(s * 0.43 + 4)), b = pos.length / 3, k = Math.floor(hash3(s * 0.19 + 8) * 4), cu = (k & 1) * 0.5, cv = (k >> 1) * 0.5;
       P(s - L / 2, o - W / 2); P(s - L / 2, o + W / 2); P(s + L / 2, o + W / 2); P(s + L / 2, o - W / 2);
       uv.push(cu, cv, cu + 0.5, cv, cu + 0.5, cv + 0.5, cu, cv + 0.5);
       idx.push(b, b + 1, b + 2, b, b + 2, b + 3);   // (facing up)
@@ -1836,6 +1838,17 @@ const Render = (function () {
     pkFlare(A.tod !== 'night' && r < 0.5 && (lastMode === 'cockpit' || (lastMode === 'tv' && !cam.shot)) ? 1 - 2 * r : 0, dt);
   }
 
+  // Mie (world.dyn.rays): Pikes Peak's shafts of sun, in its woods only (dyn.rayAt), and its flare when the sun is in the picture of a TV
+  // camera, the replay's cockpit or the podium's
+  const szL = { on: false, t: 0 };
+  function szLight() {
+    const on = !!(world && world.dyn && world.dyn.rays) && themeId !== 'pikes';
+    if (!on) { if (szL.on) { szL.on = false; pkRays(0); pkFlare(0); } return; }
+    szL.on = true; const dt = clamp(time - szL.t, 0, 0.25), r = Math.max(0, wet); szL.t = time;
+    pkRays(settings.quality === 'high' && atmos.tod === 'day' && r <= 0 ? 0.8 : 0, dt);
+    pkFlare(atmos.tod !== 'night' && r < 0.5 && (lastMode === 'cockpit' || ((lastMode === 'tv' || lastMode === 'tvlive') && !cam.shot) || !!podC) ? 1 - 2 * r : 0, dt);
+  }
+
   /* ---------------- Pikes Peak's shafts of sun through the forest (the 'high' quality only, by day, below the tree line): a dozen long soft
      quads leaning along the sun's rays, anchored on the ground on a hashed 9 m grid round the view (they stay put as the view moves), each
      turned about its own axis to face the camera, fading in along its length, at the view's edge and close to the camera, breathing gently.
@@ -1871,6 +1884,7 @@ const Render = (function () {
           for (let t = 3; t <= 15 && ok; t += 3) for (const sd of [-2, 2]) if (Wd(x + dx / hl * t + qx * sd, z + dz / hl * t + qz * sd, 1) < 0) ok = false;
           ok = ok && h < 0.5 * Core.sstep(0.2, 0.5, wd); V.set(key, ok); }
         if (!ok) continue; }
+      if (world.dyn.rayAt && (h > 0.2 || !world.dyn.rayAt(x, z))) continue;   // (Mie: only in its woods, a fifth of the cells as before)
       L.push([d, x, z, h * 5]); }
     L.sort((p, q) => p[0] - q[0]);
     const P = M.geometry.attributes.position.array, AW = M.geometry.attributes.aw.array; let n = 0;
@@ -2020,6 +2034,11 @@ const Render = (function () {
         if (m.map !== U.map0) m.map = U.map0;
         seasonCol(U.c0, n++, m.color, grassy);
         if (sea === 'autumn' && grassy) m.color.multiply(_sc.setRGB(1.18, 0.92, 0.62));   // (a green grass picture: drier, browner)
+      }
+      if (U.bloom) {   // a world's blossom (Mie's cherries): autumn leaves and bare twigs out of season; the fallen petals only as built (spring)
+        if (U.bloom === 'petals') m.visible = sea === 'summer';
+        else if (sea === 'autumn') m.color.multiply(_sc.setRGB(0.85, 0.53, 0.24));
+        else if (sea === 'winter') m.color.multiply(_sc.setRGB(0.5, 0.6, 0.54));
       }
       if (U.dry) U.dry.copy(m.color);   // (the wet road darkens from this colour)
       m.needsUpdate = true;
@@ -2216,13 +2235,31 @@ const Render = (function () {
   function disposeView(v, keep) { scene.remove(v.grp); disposeCarMesh(v, keep); }
   // geometry and materials the loose panels on the track are drawn with
   function debrisRes() { const s = new Set(); for (const d of debrisMeshes) if (d.mesh && d.mesh.traverse) d.mesh.traverse(o => { if (o.geometry) s.add(o.geometry); if (o.material) s.add(o.material); }); return s; }
+  /* ---------------- level of detail: a car small on the screen (under ~64 px long) is drawn as its body, wheels and start number only; its
+     small things (the tail lamps, the loose panels and what is under them, the head lamp lenses; their glows stay) sit in one group, v.det,
+     hidden then (11 draw calls less per car, and as many in the shadow map); back from 76 px. Not the player's car, nor a model car. The
+     formula's and the prototype's wings, nose and engine cover stay: they are its shape (their mirrors and louvre panels go) ---------------- */
+  const LOD_KEEP = new Set(['bumperF', 'bumperR', 'hood', 'trunk']);   // (the formula's, the prototype's: front wing or splitter, rear wing, nose, engine cover)
+  function lodGroup(v) {
+    if (v.glb) return;
+    const keep = (k) => !!v.fp && LOD_KEEP.has(k), det = new THREE.Group(), move = (m) => { if (m && m.parent === v.bodyG) { v.bodyG.remove(m); det.add(m); } };
+    move(v.tail); for (const k in v.parts) if (!keep(k)) move(v.parts[k]); for (const k in v.under) if (!keep(k)) move(v.under[k]); for (const m of v.lens || []) move(m);
+    v.bodyG.add(det); v.det = det; v.lod = false;
+  }
+  let lodPs = 0;   // pixels per metre at 1 m from the camera (the CSS pixels of the view's height)
+  function lodCheck(v, x, y, z) {
+    if (!v.det || v.car.isPlayer) return;
+    if (dbg.noLod) { if (v.lod) { v.lod = false; v.det.visible = true; } return; }   // (tests: every car in full)
+    const d = Math.hypot(x - camera.position.x, y - camera.position.y, z - camera.position.z), px = v.car.m.len * lodPs / Math.max(1, d);
+    const far = v.lod ? px < 76 : px < 64; if (far !== v.lod) { v.lod = far; v.det.visible = !far; }
+  }
   function makeView(c) {
     if (c.stripe === undefined) c.stripe = (c.id * 7) % 3 !== 0;
     const v = makeCarMesh(c);
     v.body.geometry = v.body.geometry.clone(); v.ownGeo = true; v.smokeAcc = 0;   // own copy: dents stay on this car
     v.car = c; v.roll = 0; v.pitch = 0; v.gpitch = 0; v.spin = 0; v.sk = [null, null, null, null]; v.acc = [0, 0, 0, 0]; v.repairN = c.repairN || 0;
     v.grp.rotation.order = 'YXZ';   // yaw first, then pitch about the car's own lateral axis (slopes/jumps)
-    buildParts(v);
+    buildParts(v); lodGroup(v);
     if (atmos.tod !== 'day') beams(v);
     carGlow(v);
     if (curTrack && curTrack.def.theme === 'pikes') pkCarDress(v);   // Pikes Peak: dust + morning glint on the paint
@@ -2275,14 +2312,15 @@ const Render = (function () {
     scDrop();
     const old = views;
     views = []; curTrack = race.track; curRace = race; clearDebris(); dust = race.track.def.dust ? Object.assign({}, DUST0, race.track.def.dust) : null;
-    birds.reset(birds.gull);   // (a new race, a fresh sky: nothing left over from the frames before it, so a race stepped from a seeded start draws the same)
+    birds.reset(birds.gull, true);   // (a new race, a fresh sky: nothing left over from the frames before it, so a race stepped from a seeded start draws the same; its one flock)
     if (world && world.props && world.props.length && race.setProps && !race.props) race.setProps(world.props, world.propFloor);
     setupProps(race);
     for (const c of race.cars) views.push(makeView(c));
     for (const v of old) disposeView(v);   // (after the new cars exist: their shaders are reused, not compiled again)
     setupRoad(race);   // (the open road: its traffic, people and patrol cars)
     setupCrew(race);
-    particles.clear(); sparkP.clear(); skids.clear(); cam.init = false;
+    if (!podB || podB.T !== race.track || podB.world !== world) { dropPodium(); podB = world && world.podium ? null : makePodium(race.track); if (podB) podB.world = world; } else setPodium(null);   // (the podium of this circuit, no ceremony on it; the Red Bull Ring has its own on the pit building's roof: World's podium)
+    particles.clear(); sparkP.clear(); skids.clear(); cam.init = false; if (tvC) { tvC.cur = -1; tvC.cut = true; }
   }
 
   /* ---------------- Pikes Peak: the car gathers dust on the climb, the low morning sun glints on the paint ----------------
@@ -2429,7 +2467,7 @@ const Render = (function () {
     const am = world && world.dyn.pkAmb, wv = am ? am.pU.uW.value : null, ws = 1.1 + 1.4 * Core.sstep(190, 420, gy), dc = (world && world.dust) || [0.86, 0.76, 0.62];   // (the wind of pkAmbient)
     skids.pkIn = true;
     for (let k = 0; k < 4; k++) {
-      const front = k < 2, surf = c.ws[k], px = S.x[k], pz = S.z[k], verge = surf >= 2, wetK = rainy || S.fw[k] > 0, snowy = verge && winter, sz = snowy ? 1 : zone * 0.5;   // (the snow zone's verge: gravel, slushy)
+      const front = k < 2, surf = c.ws[k], px = S.x[k], pz = S.z[k], verge = surf >= 2 && surf !== 9, wetK = rainy || S.fw[k] > 0, snowy = verge && winter, sz = snowy ? 1 : zone * 0.5;   // (the snow zone's verge: gravel, slushy)
       const it = front ? (c.lock ? 0.5 : 0) + Math.max(0, c.slipF - 0.3) * 1.4 : slide;
       let a = 0, wd = 0.2, cr = 0.035, cg = 0.035, cb = 0.04;
       if (!verge) { if (!wetK) a = it > 0.14 ? clamp(0.4 + it * 0.4, 0.4, 0.86) : hb * (front ? 0.26 : 0.16); }
@@ -2735,12 +2773,13 @@ const Render = (function () {
     crArm(m, 0, pe); crArm(m, 1, pe);
   }
 
+  const CREW_POOL = 4;   // stop crews for the AI cars: each is sent to the garage of a car coming in for repairs (Core: c.pitWant, c.pitBox)
   function setupCrew(race) {
     if (crew) { scene.remove(crew.grp); for (const m of crew.meshes) { m.geometry.dispose(); if (m.dispose) m.dispose(); } crew.mats.forEach(m => m.dispose()); crew = null; }
     const boxes = world && world.pitBoxes; if (!boxes || !boxes.length || !race) return;
     const P = race.player || null, pb = world.pitBox, ai = race.cars.filter(c => c !== P); let ai0 = 0;
-    for (const bx of boxes) bx.col = new THREE.Color().setRGB(...bx.team);   // the teams: the player's box in the player's colour, the others in the AI cars' colours
-    for (const bx of boxes) { if (bx.mine && P) bx.col = new THREE.Color(P.color); else if (ai[ai0]) bx.col = new THREE.Color(ai[ai0++].color); }
+    for (const bx of boxes) { bx.col = new THREE.Color().setRGB(...bx.team); bx.car = null; }   // the teams: the player's box in the player's colour, the others in the AI cars' colours
+    for (const bx of boxes) { if (bx.mine && P) bx.col = new THREE.Color(P.color); else if (ai[ai0]) { bx.car = ai[ai0]; bx.col = new THREE.Color(ai[ai0++].color); } }   // (in grid order, as Core gives the cars their boxes)
     const men = [], bpt = (bx, a, w) => [bx.ox + bx.tx * a + bx.nx * w, bx.oz + bx.tz * a + bx.nz * w];
     const man = (bx, a, w, yaw, act, role, helmet) => { const id = men.length + bx.k * 17, h1 = crHash(id * 1.37 + 0.5), h2 = crHash(id * 2.71 + 1.3), h3 = crHash(id * 0.91 + 7.1), [x, z] = bpt(bx, a, w);
       const m = { id, role: role || 'idle', act, act0: act, bx, team: bx.col, x, y: bx.y || 0, z, yaw, hx: x, hz: z, hyaw: yaw, gx: x, gz: z, gyaw: yaw, style: 'walk', spd: 0, ph: h2 * 6, t0: h3 * 50, h1, h2,
@@ -2756,77 +2795,134 @@ const Render = (function () {
         if (j === 2 || j === 3) { const o = SLOTS[j === 2 ? 3 : 2], [ox, oz] = bpt(bx, o[0], bx.base + o[1]); yaw = Math.atan2(oz - z, ox - x); }   // the talkers face each other
         const m = man(bx, a + ja, bx.base + w + jw, yaw + (crHash(bx.k + j * 9.1) - 0.5) * 0.4, act); if (act === 'gun') m.gun = true; }
       man(bx, crHash(bx.k * 1.9) < 0.5 ? -0.62 : 0.62, bx.wall + 1.5, faceN(bx, -1), 'sit', null, false); }
-    // the player's crew: waits in the garage (two rows), comes out when the car is in the lane
-    let roles = null;
-    if (P && pb) { const bx = boxes.find(b => b.mine); if (bx) {
-      roles = { G: [], O: [], N: [] }; const wA = bx.base + 9.45, wB = bx.base + 10.4, lane = faceN(bx, -1);
-      const rowA = [['N', 3], ['G', 3], ['N', 2], ['G', 2], ['G', 0], ['N', 0], ['G', 1], ['N', 1]], rowB = [['O', 3], ['O', 2], ['LP'], ['O', 0], ['O', 1]];
-      rowA.forEach(([r, k], j) => { const m = man(bx, -3.5 + j, wA, lane, r === 'G' ? 'gun' : 'stand', r, true); m.wheel = k; roles[r][k] = m; if (r === 'G') m.gun = true; });
-      rowB.forEach(([r, k], j) => { const m = man(bx, -2.6 + j * 1.3, wB, lane, r === 'LP' ? 'lolliD' : (j % 2 ? 'cross' : 'talk'), r, true); if (r === 'LP') roles.LP = m; else { m.wheel = k; roles.O[k] = m; } });
-      roles.JF = man(bx, 3.9, bx.base + 11.7, faceT(bx, -1), 'stand', 'JF', true); roles.JR = man(bx, -3.9, bx.base + 11.7, faceT(bx, 1), 'stand', 'JR', true);
-      roles.ENG = man(bx, -0.62, bx.wall + 1.5, lane, 'sit', 'ENG', false);
-      for (const k of ['JF', 'JR']) roles[k].jack = { beta: CR_B0, man: roles[k] };
-      for (const m of roles.G) m.air = bpt(bx, (m.hx - bx.ox) * bx.tx + (m.hz - bx.oz) * bx.tz, bx.base + 9.05);   // the air line comes out of the garage front
-      roles.bx = bx; } }
+    // a stop crew: waits in the garage (two rows), comes out when its car is in the lane. m.home: where in the garage of a box (crHome)
+    const ROW_A = [['N', 3], ['G', 3], ['N', 2], ['G', 2], ['G', 0], ['N', 0], ['G', 1], ['N', 1]], ROW_B = [['O', 3], ['O', 2], ['LP'], ['O', 0], ['O', 1]];
+    const crewMen = (bx, eng) => {
+      const R = { G: [], O: [], N: [] }, wA = bx.base + 9.45, wB = bx.base + 10.4, lane = faceN(bx, -1);
+      ROW_A.forEach(([r, k], j) => { const m = man(bx, -3.5 + j, wA, lane, r === 'G' ? 'gun' : 'stand', r, true); m.home = [-3.5 + j, 9.45, 0]; m.wheel = k; R[r][k] = m; if (r === 'G') m.gun = true; });
+      ROW_B.forEach(([r, k], j) => { const m = man(bx, -2.6 + j * 1.3, wB, lane, r === 'LP' ? 'lolliD' : (j % 2 ? 'cross' : 'talk'), r, true); m.home = [-2.6 + j * 1.3, 10.4, 0]; if (r === 'LP') R.LP = m; else { m.wheel = k; R.O[k] = m; } });
+      R.JF = man(bx, 3.9, bx.base + 11.7, faceT(bx, -1), 'stand', 'JF', true); R.JF.home = [3.9, 11.7, -1]; R.JR = man(bx, -3.9, bx.base + 11.7, faceT(bx, 1), 'stand', 'JR', true); R.JR.home = [-3.9, 11.7, 1];
+      if (eng) R.ENG = man(bx, -0.62, bx.wall + 1.5, lane, 'sit', 'ENG', false);
+      for (const k of ['JF', 'JR']) R[k].jack = { beta: CR_B0, man: R[k] };
+      for (const m of R.G) m.air = bpt(bx, (m.hx - bx.ox) * bx.tx + (m.hz - bx.oz) * bx.tz, bx.base + 9.05);   // the air line comes out of the garage front
+      R.bx = bx; return R; };
+    const units = [], unit = (R, car, upb, m0) => { const u = { k: units.length, roles: R, P: car, pb: upb, men: men.slice(m0), mode: 'home', frame: null, lift: 0, liftP: 0, liftF: 0, liftR: 0, gunOn: false, clearT: 0,
+      dim: car ? crDims(car) : null, active: !!car, tyres: [] }; for (const m of u.men) m.unit = u; units.push(u); return u; };
+    // the player's crew (unit 0: always there), then the AI cars' stop crews (hidden until sent to a garage: crewSend)
+    let mine = null;
+    if (P && pb) { const bx = boxes.find(b => b.mine); if (bx) { const m0 = men.length; mine = unit(crewMen(bx, true), P, pb, m0); } }
+    const bx0 = boxes.find(b => b.car);
+    if (bx0 && race.cars.some(c => !c.isPlayer && !c.net)) for (let k = 0; k < CREW_POOL; k++) { const m0 = men.length; unit(crewMen(bx0, false), null, null, m0); }
     // meshes: every part and tool one InstancedMesh; the bounding sphere covers the whole pit so the frustum culling works
     let cx = 0, cz = 0; for (const b of boxes) { cx += b.ox; cz += b.oz; } cx /= boxes.length; cz /= boxes.length;
     let rad = 0; for (const b of boxes) rad = Math.max(rad, Math.hypot(b.ox - cx, b.oz - cz)); rad += 40;
-    const bs = new THREE.Sphere(new THREE.Vector3(cx, 2, cz), rad), geo = crewGeos(), mat = crewMaterial(false), matS = crewMaterial(true), grp = new THREE.Group(), meshes = [], nM = men.length;
+    const bs = new THREE.Sphere(new THREE.Vector3(cx, 2, cz), rad), geo = crewGeos(), mat = crewMaterial(false), matS = crewMaterial(true), grp = new THREE.Group(), meshes = [], nM = men.length, nU = units.length;
     const mk = (g, n, cast, mt) => { if (!n) { g.dispose(); return null; } g.boundingSphere = bs.clone(); const im = new THREE.InstancedMesh(g, mt || mat, n);
       im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); im.castShadow = cast; im.receiveShadow = true;
-      for (let i = 0; i < n; i++) { im.setMatrixAt(i, _zero); im.setColorAt(i, _pc.setRGB(1, 1, 1)); } grp.add(im); meshes.push(im); return im; };
-    const gunMen = men.filter(m => m.gun), nT = roles ? 8 : 0;
+      for (let i = 0; i < n; i++) { im.setMatrixAt(i, _zero); im.setColorAt(i, _pc.setRGB(1, 1, 1)); } grp.add(im); meshes.push(im); im.nMax = n; return im; };
+    const gunMen = men.filter(m => m.gun);
     geo.head.setAttribute('crewSkin', new THREE.InstancedBufferAttribute(new Float32Array(nM * 3), 3));
     const M = { trunk: mk(geo.trunk, nM, true), head: mk(geo.head, nM, true, matS), helmet: mk(geo.helmet, nM, false), uarm: mk(geo.uarm, nM * 2, true), farm: mk(geo.farm, nM * 2, true),
-      thigh: mk(geo.thigh, nM * 2, true), shin: mk(geo.shin, nM * 2, true), gun: mk(geo.gun, gunMen.length, false), tyre: mk(geo.tyre, nT, true), jack: mk(geo.jack, roles ? 2 : 0, true),
-      rod: mk(geo.rod, (roles ? 13 : 0) + boxes.length, false), disc: mk(geo.disc, roles ? 1 : 0, false) };
+      thigh: mk(geo.thigh, nM * 2, true), shin: mk(geo.shin, nM * 2, true), gun: mk(geo.gun, gunMen.length, false), tyre: mk(geo.tyre, nU * 8, true), jack: mk(geo.jack, nU * 2, true),
+      rod: mk(geo.rod, boxes.length + nU * 13, false), disc: mk(geo.disc, nU, false) };
     const skinA = geo.head.attributes.crewSkin;
-    men.forEach((m, i) => { for (const k of ['trunk', 'head', 'helmet']) M[k].setColorAt(i, m.team); for (const k of ['uarm', 'farm', 'thigh', 'shin']) { M[k].setColorAt(i * 2, m.team); M[k].setColorAt(i * 2 + 1, m.team); }
-      skinA.setXYZ(i, m.skin[0], m.skin[1], m.skin[2]); });
-    gunMen.forEach((m, i) => { m.gunI = i; M.gun.setColorAt(i, m.team); });
-    const tyres = [];
-    if (roles) { const cmp = [new THREE.Color(0.95, 0.8, 0.14), new THREE.Color(0.86, 0.14, 0.12)];   // new set: yellow bands, the old ones: red
-      for (let k = 0; k < 4; k++) { const tn = { i: k, mode: 'floor', man: roles.N[k] }, to = { i: 4 + k, mode: 'hidden', man: roles.O[k] }; tyres.push(tn, to); roles.N[k].tyre = tn; roles.O[k].tyre = to;
-        M.tyre.setColorAt(k, cmp[0]); M.tyre.setColorAt(4 + k, cmp[1]); }
-      M.jack.setColorAt(0, roles.bx.col); M.jack.setColorAt(1, roles.bx.col);
-      for (let i = 0; i < 13; i++) M.rod.setColorAt(i, _pc.setRGB(...(i < 8 ? [0.12, 0.12, 0.13] : i < 12 ? [0.62, 0.63, 0.66] : [0.8, 0.8, 0.78]))); }
-    const rb = roles ? 13 : 0;   // the band over each crew's garage door in the team's colour (the rods after the player's)
-    boxes.forEach((bx, j) => { const [ax, az] = bpt(bx, -4.7, bx.base + 8.93), [bx2, bz2] = bpt(bx, 4.7, bx.base + 8.93), by = (bx.y || 0) + 3.7; crSetRod(M.rod, rb + j, ax, by, az, bx2, by, bz2, 0.04, 0.5); M.rod.setColorAt(rb + j, bx.col); });   // (bx.y: the box floor's height, where the pit lane is not at 0)
+    men.forEach((m, i) => { m.i = i; skinA.setXYZ(i, m.skin[0], m.skin[1], m.skin[2]); });
+    gunMen.forEach((m, i) => { m.gunI = i; });
+    for (const m of men) crTeam(M, m);
+    const cmp = [new THREE.Color(0.95, 0.8, 0.14), new THREE.Color(0.86, 0.14, 0.12)];   // new set: yellow bands, the old ones: red
+    for (const u of units) { const R = u.roles, t0 = u.k * 8; u.r0 = boxes.length + u.k * 13;   // (the rods: the garage bands first, then 13 per crew)
+      for (let k = 0; k < 4; k++) { const tn = { i: t0 + k, mode: 'floor', man: R.N[k], unit: u }, to = { i: t0 + 4 + k, mode: 'hidden', man: R.O[k], unit: u }; u.tyres.push(tn, to); R.N[k].tyre = tn; R.O[k].tyre = to;
+        M.tyre.setColorAt(t0 + k, cmp[0]); M.tyre.setColorAt(t0 + 4 + k, cmp[1]); }
+      M.jack.setColorAt(u.k * 2, R.bx.col); M.jack.setColorAt(u.k * 2 + 1, R.bx.col);
+      for (let i = 0; i < 13; i++) M.rod.setColorAt(u.r0 + i, _pc.setRGB(...(i < 8 ? [0.12, 0.12, 0.13] : i < 12 ? [0.62, 0.63, 0.66] : [0.8, 0.8, 0.78]))); }
+    boxes.forEach((bx, j) => { const [ax, az] = bpt(bx, -4.7, bx.base + 8.93), [bx2, bz2] = bpt(bx, 4.7, bx.base + 8.93), by = (bx.y || 0) + 3.7; crSetRod(M.rod, j, ax, by, az, bx2, by, bz2, 0.04, 0.5); M.rod.setColorAt(j, bx.col); });   // the band over each crew's garage door in the team's colour (bx.y: the box floor's height, where the pit lane is not at 0)
     for (const im of meshes) if (im.instanceColor) im.instanceColor.needsUpdate = true;
     scene.add(grp);
-    crew = { grp, meshes, mats: [mat, matS], M, men, roles, tyres, P: roles ? P : null, pb, cx, cz, rad, mode: 'home', frame: null, lift: 0, liftP: 0, liftF: 0, liftR: 0, gunOn: false, clearT: 0, dim: roles ? crDims(P) : null };
+    crew = { grp, meshes, mats: [mat, matS], M, men, units, pool: units.filter(u => u !== mine), byCar: new Map(mine ? [[P, mine]] : []), boxes, bpt, faceN, faceT, mine, roles: mine ? mine.roles : null,
+      P: mine ? P : null, pb, cx, cz, rad, mode: 'home', lift: 0, gunOn: false, nIdle: units.length ? units[0].men[0].i : men.length };
     for (const m of men) crPose(m, 0, m.O, m.H);   // (start in the pose, not standing up from it)
+    crewCounts();
+  }
+  function crTeam(M, m) {   // a man's instances (and his gun) in his team's colour
+    for (const k of ['trunk', 'head', 'helmet']) M[k].setColorAt(m.i, m.team);
+    for (const k of ['uarm', 'farm', 'thigh', 'shin']) { M[k].setColorAt(m.i * 2, m.team); M[k].setColorAt(m.i * 2 + 1, m.team); }
+    if (m.gun) M.gun.setColorAt(m.gunI, m.team);
   }
   function crDims(P) {   // the car's hubs, nose and tail (car frame: forward, right), as the car mesh builds them
     const M = P.m, d = BODIES[M.body], sx = M.len / d.len, fx = M.a * (M.len / 4.4) * 0.98 + 0.05, rx = -M.b * (M.len / 4.4) * 0.98, hw = M.wid * 0.5 - 0.1;
     if (d.nose != null) return { fx: M.a, rx: -M.b, hw: d.hw, rw: M.rw, wid: M.wid, nose: d.nose, tail: d.tail, wb: M.a + M.b };   // (the formula: its own wheels)
     return { fx, rx, hw, rw: M.rw, wid: M.wid, nose: d.secs[d.secs.length - 1][0] * sx + 0.05, tail: d.secs[0][0] * sx - 0.06, wb: fx - rx };
   }
+  // the AI cars' stop crews: one is sent to the garage of every car that decides to come in (it waits there, in the team's colours),
+  // and it is taken off again once the car has left the lane and everybody is back inside
+  function crewAssign() {
+    const c = crew, T = curTrack; if (!c.pool.length || !curRace || !T) return;
+    for (const u of c.pool) if (u.active && u.mode === 'home' && !(u.P.pitWant || u.P.inPit) && u.men.every(m => Math.hypot(m.x - m.hx, m.z - m.hz) < 0.3)) crewHide(u);
+    const L = T.len;
+    for (const car of curRace.cars) { if (car.isPlayer || !car.pitWant || car.pitBox == null || c.byCar.has(car)) continue;
+      const u = c.pool.find(u => !u.active); if (!u) break;
+      const bx = c.boxes.find(b => { let d = b.s - T.startS - car.pitBox; d = ((d % L) + L) % L; return d < 1.5 || d > L - 1.5; }); if (bx) crewSend(u, car, bx); }
+  }
+  function crewSend(u, car, bx) {
+    const c = crew, R = u.roles, lane = c.faceN(bx, -1), o = bx.lane + Core.PIT_WORK;
+    u.P = car; u.dim = crDims(car); u.active = true; u.mode = 'home'; u.frame = null; u.lift = u.liftP = u.liftF = u.liftR = 0; u.clearT = 0; u.gunOn = false; R.bx = bx;
+    u.pb = { s: bx.s, lane: bx.lane, wallO: bx.wall, nx: bx.nx, nz: bx.nz, tx: bx.tx, tz: bx.tz, stopO: o, stop: c.bpt(bx, 0, o) };
+    for (const m of u.men) { const [a, w, f] = m.home, [x, z] = c.bpt(bx, a, bx.base + w), yaw = f ? c.faceT(bx, f) : lane;
+      m.bx = bx; m.team = bx.col; m.x = m.hx = m.gx = x; m.z = m.hz = m.gz = z; m.yaw = m.hyaw = m.gyaw = yaw; m.y = bx.y || 0; m.act = m.act0; m.spd = 0; m.carry = false; m.aim = null; m.pd = null;
+      crPose(m, 0, m.O, m.H); crTeam(c.M, m); }
+    for (const m of R.G) m.air = c.bpt(bx, a0(m, bx), bx.base + 9.05);
+    for (const k of ['JF', 'JR']) R[k].jack.beta = CR_B0;
+    for (let k = 0; k < 4; k++) { R.N[k].tyre.mode = 'floor'; R.O[k].tyre.mode = 'hidden'; }
+    c.M.jack.setColorAt(u.k * 2, bx.col); c.M.jack.setColorAt(u.k * 2 + 1, bx.col);
+    for (const im of c.meshes) if (im.instanceColor) im.instanceColor.needsUpdate = true;
+    c.byCar.set(car, u); crewCounts();
+  }
+  const a0 = (m, bx) => (m.hx - bx.ox) * bx.tx + (m.hz - bx.oz) * bx.tz;   // (a man's home, along the box)
+  function crewHide(u) {
+    const c = crew, M = c.M;
+    for (let k = 0; k < 4; k++) crewWheel(u, k, false);
+    for (const m of u.men) { for (const k of ['trunk', 'head', 'helmet']) M[k].setMatrixAt(m.i, _zero); for (const k of ['uarm', 'farm', 'thigh', 'shin']) { M[k].setMatrixAt(m.i * 2, _zero); M[k].setMatrixAt(m.i * 2 + 1, _zero); } if (m.gun) M.gun.setMatrixAt(m.gunI, _zero); }
+    for (const t of u.tyres) M.tyre.setMatrixAt(t.i, _zero);
+    M.jack.setMatrixAt(u.k * 2, _zero); M.jack.setMatrixAt(u.k * 2 + 1, _zero); M.disc.setMatrixAt(u.k, _zero); for (let i = 0; i < 13; i++) M.rod.setMatrixAt(u.r0 + i, _zero);
+    c.byCar.delete(u.P); u.P = null; u.active = false; u.lift = u.liftP = 0;
+    for (const im of c.meshes) im.instanceMatrix.needsUpdate = true;
+    crewCounts();
+  }
+  function crewCounts() {   // draw only up to the last crew at work (the others' instances stand at zero scale)
+    const c = crew, M = c.M; let last = null; for (const u of c.units) if (u.active) last = u;
+    const nMen = last ? last.men[last.men.length - 1].i + 1 : c.nIdle, nU = last ? last.k + 1 : 0;
+    let nGun = 0; for (let i = 0; i < nMen; i++) if (c.men[i].gun) nGun = c.men[i].gunI + 1;
+    for (const k of ['trunk', 'head', 'helmet']) M[k].count = nMen;
+    for (const k of ['uarm', 'farm', 'thigh', 'shin']) M[k].count = nMen * 2;
+    if (M.gun) M.gun.count = nGun;
+    M.tyre.count = nU * 8; M.jack.count = nU * 2; M.disc.count = nU; M.rod.count = c.boxes.length + nU * 13;
+  }
 
-  // ---- the player's crew: what everybody does, from the pit state ----
-  function crewLogic(dt) {
-    const c = crew, P = c.P, R = c.roles, D = c.dim, T = curTrack; if (!P || !R || !T) return;
+  // ---- a stop crew (u: the player's, or one sent to an AI car's garage): what everybody does, from its car's pit state ----
+  function crewLogic(c, dt) {
+    const P = c.P, R = c.roles, D = c.dim, T = curTrack; if (!P || !R || !T) return;
     const L = T.len; let dB = c.pb.s - (P.q ? P.q.s : c.pb.s + 999); dB = ((dB % L) + L) % L; if (dB > L / 2) dB -= L;   // metres from the car to its box (along the lane)
     const prev = c.mode; let mode;
     if (P.pitState === 'repair') mode = 'work';
     else if (prev === 'work' || prev === 'clear') mode = P.inPit && dB > -13 && c.clearT < 5 ? 'clear' : 'home';
     else mode = P.inPit && !P.pitDone && dB > -4 ? 'out' : 'home';
     if (mode !== prev) { c.mode = mode; c.clearT = 0;
-      if (mode === 'out') { const st = c.pb.stop; c.frame = { x: st[0], z: st[1], h: Math.atan2(c.pb.tz, c.pb.tx) };
+      if (mode === 'out') { if (c !== crew.mine) { c.pb.stopO = c.pb.lane + (P.pitFast ? -Core.PIT_FAST : Core.PIT_WORK); c.pb.stop = crew.bpt(R.bx, 0, c.pb.stopO); }   // (an AI car: in the working lane, or in the fast lane)
+        const st = c.pb.stop; c.frame = { x: st[0], z: st[1], h: Math.atan2(c.pb.tz, c.pb.tx) };
         for (const k of [0, 1, 2, 3]) { R.N[k].tyre.mode = 'hands'; R.O[k].tyre.mode = 'hidden'; } }
       if (mode === 'home') for (const m of c.men) if (m.role !== 'idle') m.act = m.act0; }
     if (mode === 'work') c.frame = { x: P.x, z: P.z, h: P.h };
     if (mode === 'clear') c.clearT += dt;
     const F = c.frame, u = mode === 'work' ? clamp(P.pitT / Math.max(0.1, P.pitDur), 0, 1) : mode === 'clear' ? 1 : 0;
     const ch = F ? Math.cos(F.h) : 1, sh = F ? Math.sin(F.h) : 0, Wp = (f, r) => [F.x + ch * f - sh * r, F.z + sh * f + ch * r], yawC = (df, dr) => Math.atan2(sh * df + ch * dr, ch * df - sh * dr);
-    const pb = c.pb, wMin = pb.wallO + 0.35;   // (nobody is sent across the pit-wall rail, wherever the car stands)
-    const go = (m, p, yaw, style, act) => { const wo = pb.lane + (p[0] - pb.stop[0]) * pb.nx + (p[1] - pb.stop[1]) * pb.nz; if (wo < wMin) p = [p[0] + pb.nx * (wMin - wo), p[1] + pb.nz * (wMin - wo)];
+    const pb = c.pb, wMin = pb.wallO + 0.35, o0 = pb.stopO != null ? pb.stopO : pb.lane;   // (nobody is sent across the pit-wall rail, wherever the car stands)
+    const go = (m, p, yaw, style, act) => { const wo = o0 + (p[0] - pb.stop[0]) * pb.nx + (p[1] - pb.stop[1]) * pb.nz; if (wo < wMin) p = [p[0] + pb.nx * (wMin - wo), p[1] + pb.nz * (wMin - wo)];
       m.gx = p[0]; m.gz = p[1]; m.gyaw = yaw; m.style = style; m.act = act; };
     const lf = c.liftF, lr = c.liftR, y0 = P.y || 0;
     const hub = (k) => { const f = k < 2 ? D.fx : D.rx, sd = k % 2 ? 1 : -1, [x, z] = Wp(f, sd * D.hw); return [x, y0 + D.rw + (k < 2 ? lf : lr), z]; };
     c.gunOn = false;
     if (mode === 'home') {
-      for (const m of c.men) { if (m.role === 'idle') continue; m.gx = m.hx; m.gz = m.hz; m.gyaw = m.hyaw; m.style = 'walk'; m.aim = null;
+      for (const m of c.men) { if (m.role === 'idle' || m.role === 'ENG') continue; m.gx = m.hx; m.gz = m.hz; m.gyaw = m.hyaw; m.style = 'walk'; m.aim = null;
         const home = Math.hypot(m.x - m.hx, m.z - m.hz) < 0.3;
         if (m.role === 'O') { m.carry = m.tyre.mode === 'hands'; if (home && m.carry) { m.tyre.mode = 'floor'; m.carry = false; } m.act = m.carry ? 'carry' : m.act0; }
         if (m.role === 'N') { if (home && m.tyre.mode !== 'floor') m.tyre.mode = 'floor'; m.carry = false; }
@@ -2853,7 +2949,7 @@ const Render = (function () {
         else if (u < 0.46) { const t2 = crSS(0.34, 0.46, u); go(N, Wp(fk - dO * (0.72 - 0.3 * t2), sd * (D.hw + 0.86 - 0.25 * t2)), nYaw, 'snap', 'carry'); N.carry = true; tN.mode = 'lerp'; tN.to = hb; tN.t = t2; }
         else if (u < 0.58) { go(N, Wp(fk - dO * 0.42, sd * (D.hw + 0.61)), nYaw, 'snap', 'pushT'); N.aim = hb; N.carry = false; tN.mode = 'hidden'; }
         else { go(N, Wp(fk - dO * 0.8, sd * (D.hw + 1.1 + (mode === 'clear' ? 0.3 : 0))), nYaw, 'snap', 'stand'); N.carry = false; tN.mode = 'hidden'; }
-        crewWheel(k, mode === 'work' && u > 0.24 && u < 0.46); }
+        crewWheel(c, k, mode === 'work' && u > 0.24 && u < 0.46); }
       // jack men: front one in front of the nose (the car stops before him), rear one steps in behind the tail once it has stopped
       const JF = R.JF, JR = R.JR, dj = 0.52 + 1.3 * Math.cos(CR_B0);
       const fSpot = Wp(D.nose + 0.22 + dj, 0), rSpot = Wp(D.tail - 0.22 - dj, 0);
@@ -2873,12 +2969,12 @@ const Render = (function () {
     }
     if (mode !== 'work') { c.liftF = 0; c.liftR = 0; }
     c.lift = (c.liftF + c.liftR) / 2; c.liftP = Math.atan2(c.liftF - c.liftR, D.wb);
-    // the engineer on the pit wall follows his car
-    const E = R.ENG; E.lookAt = Math.hypot(P.x - E.x, P.z - E.z) < 160 ? [P.x, P.z] : null;
-    if (mode !== 'work') for (let k = 0; k < 4; k++) crewWheel(k, false);
+    // the engineer on the pit wall follows his car (the player's crew)
+    const E = R.ENG; if (E) E.lookAt = Math.hypot(P.x - E.x, P.z - E.z) < 160 ? [P.x, P.z] : null;
+    if (mode !== 'work') for (let k = 0; k < 4; k++) crewWheel(c, k, false);
   }
-  function crewWheel(k, hide) {   // the player's car wheel k (0 FL, 1 FR, 2 RL, 3 RR) is off the car while the tyre men swap it (only wheels that are separate meshes)
-    const P = crew.P, v = views.find(v => v.car === P); if (!v) return;
+  function crewWheel(u, k, hide) {   // the crew's car's wheel k (0 FL, 1 FR, 2 RL, 3 RR) is off the car while the tyre men swap it (only wheels that are separate meshes)
+    const P = u.P, v = P && views.find(v => v.car === P); if (!v) return;
     const list = k < 2 ? v.wf : v.wr, want = k % 2 ? 1 : -1;
     for (const w of list) if (Math.sign(w.position.z) === want && w.visible === hide) w.visible = !hide;
   }
@@ -2900,8 +2996,8 @@ const Render = (function () {
     const walk = clamp(m.spd / 0.8, 0, 1), run = clamp((m.spd - 2) / 1.6, 0, 1);
     crPose(m, time, _cO, _cH);
     if (walk > 0) { crGait(m, run, _cO2, _cH2); for (let k = 0; k < 12; k++) _cO[k] += (_cO2[k] - _cO[k]) * walk; if (!m.carry) for (let k = 0; k < 12; k++) _cH[k] += (_cH2[k] - _cH[k]) * walk; }
-    // where he looks: his car when it is near (the engineer always), otherwise now and then around
-    let lk = null; const P = crew.P;
+    // where he looks: his car when it is near (the engineer always), otherwise now and then around (the other teams: at the player's car)
+    let lk = null; const P = m.unit ? m.unit.P : crew.P;
     if (m.lookAt) lk = m.lookAt; else if (P && m.act !== 'bench' && m.act !== 'kneel' && m.act !== 'gunK' && Math.hypot(P.x - m.x, P.z - m.z) < 45) lk = [P.x, P.z];
     const la = lk ? -wrapPi(Math.atan2(lk[1] - m.z, lk[0] - m.x) - m.yaw) : Math.sin(time * 0.23 + m.t0) * 0.7 * Math.max(0, Math.sin(time * 0.11 + m.t0 * 2));
     m.look += (clamp(la, -1.2, 1.2) - m.look) * Math.min(1, dt * 4); _cO[5] += m.look * (1 - walk * 0.7); _cO[2] += m.look * 0.2;
@@ -2926,40 +3022,42 @@ const Render = (function () {
     const fx = Math.cos(m.yaw), fz = Math.sin(m.yaw), s = m.sc; let ang = yawM + Math.PI / 2;
     _cv.set(m.x + fx * 0.42 * s, m.y + 0.99 * s, m.z + fz * 0.42 * s);
     if (t.mode === 'lerp') {   // between his hands and the hub: off the car (from the hub) or onto it (to the hub); the axle turns to the car's
-      const hubP = t.from || t.to, k = t.from ? 1 - t.t : t.t, F = crew.frame; let hubA = Math.PI / 2 - F.h; if (Math.abs(wrapPi(hubA - ang)) > Math.PI / 2) hubA += Math.PI;
+      const hubP = t.from || t.to, k = t.from ? 1 - t.t : t.t, F = t.unit.frame; let hubA = Math.PI / 2 - F.h; if (Math.abs(wrapPi(hubA - ang)) > Math.PI / 2) hubA += Math.PI;
       _cv.set(_cv.x + (hubP[0] - _cv.x) * k, _cv.y + (hubP[1] - _cv.y) * k, _cv.z + (hubP[2] - _cv.z) * k); ang += wrapPi(hubA - ang) * k; }
     _cQ.setFromEuler(_ce.set(0, ang, 0, 'YXZ')); out.compose(_cv, _cQ, _cS); return true;
   }
   function updateCrew(dt) {
     if (!crew) return;
-    const c = crew; crewLogic(dt);
+    const c = crew; crewAssign();
+    for (const u of c.units) if (u.active) crewLogic(u, dt);
+    if (c.mine) { c.mode = c.mine.mode; c.lift = c.mine.lift; c.gunOn = c.mine.gunOn; }   // (the player's crew, for the game and the tests)
     const near = Math.hypot(cam.vcx - c.cx, cam.vcz - c.cz) < c.rad + 170;
     if (c.grp.visible !== near) c.grp.visible = near;
-    if (!near) { for (const m of c.men) { m.x = m.gx; m.z = m.gz; m.yaw = m.gyaw; m.spd = 0; } return; }   // off screen: everybody just is where he is going
+    if (!near) { for (const m of c.men) { if (m.unit && !m.unit.active) continue; m.x = m.gx; m.z = m.gz; m.yaw = m.gyaw; m.spd = 0; } return; }   // off screen: everybody just is where he is going
     const M = c.M, rel = (im, i, src) => im.setMatrixAt(i, src);
-    for (let i = 0; i < c.men.length; i++) { const m = c.men[i];
+    for (let i = 0; i < c.men.length; i++) { const m = c.men[i], U = m.unit; if (U && !U.active) continue;
       crewMan(m, dt); crRig(m);
       _cM.copy(CRM.pel); { const e = _cM.elements, bz = 0.6 + 0.4 * m.bulk; e[0] *= m.bulk; e[1] *= m.bulk; e[2] *= m.bulk; e[8] *= bz; e[9] *= bz; e[10] *= bz; } rel(M.trunk, i, _cM);
       rel(M.head, i, CRM.neck); rel(M.helmet, i, m.helmet ? CRM.neck : _zero);
       rel(M.uarm, i * 2, CRM.shL); rel(M.uarm, i * 2 + 1, CRM.shR); rel(M.farm, i * 2, CRM.elL); rel(M.farm, i * 2 + 1, CRM.elR);
       rel(M.thigh, i * 2, CRM.hipL); rel(M.thigh, i * 2 + 1, CRM.hipR); rel(M.shin, i * 2, CRM.knL); rel(M.shin, i * 2 + 1, CRM.knR);
       if (m.gun) rel(M.gun, m.gunI, CRM.hdR);
-      if (m.role === 'G' && M.rod) {   // air hose: gun -> the floor behind him -> the garage
+      if (m.role === 'G' && U) {   // air hose: gun -> the floor behind him -> the garage
         _cv.set(0, 0.07, 0.05).applyMatrix4(CRM.hdR); const bx = m.x - Math.cos(m.yaw) * 0.55, bz = m.z - Math.sin(m.yaw) * 0.55;
-        crSetRod(M.rod, m.wheel * 2, _cv.x, _cv.y, _cv.z, bx, m.y + 0.03, bz, 0.032); crSetRod(M.rod, m.wheel * 2 + 1, bx, m.y + 0.03, bz, m.air[0], m.y + 0.03, m.air[1], 0.032); }
-      if (m.jack && M.jack) { const j = m.jack, fx = Math.cos(m.yaw), fz = Math.sin(m.yaw), dj = 0.52 + 1.3 * Math.cos(CR_B0), ax = m.x + fx * dj, az = m.z + fz * dj, ji = m.role === 'JF' ? 0 : 1;
-        _cQ.setFromEuler(_ce.set(0, Math.PI / 2 - m.yaw, 0, 'YXZ')); _cM2.compose(_cv.set(ax, m.y, az), _cQ, _cS); M.jack.setMatrixAt(ji, _cM2);
+        crSetRod(M.rod, U.r0 + m.wheel * 2, _cv.x, _cv.y, _cv.z, bx, m.y + 0.03, bz, 0.032); crSetRod(M.rod, U.r0 + m.wheel * 2 + 1, bx, m.y + 0.03, bz, m.air[0], m.y + 0.03, m.air[1], 0.032); }
+      if (m.jack && U) { const j = m.jack, fx = Math.cos(m.yaw), fz = Math.sin(m.yaw), dj = 0.52 + 1.3 * Math.cos(CR_B0), ax = m.x + fx * dj, az = m.z + fz * dj, ji = m.role === 'JF' ? 0 : 1;
+        _cQ.setFromEuler(_ce.set(0, Math.PI / 2 - m.yaw, 0, 'YXZ')); _cM2.compose(_cv.set(ax, m.y, az), _cQ, _cS); M.jack.setMatrixAt(U.k * 2 + ji, _cM2);
         const px = ax - fx * 0.1, pz = az - fz * 0.1, gl = 0.1 + 1.3 * Math.cos(j.beta), gx = ax - fx * gl, gz = az - fz * gl, gy = m.y + 0.14 + 1.3 * Math.sin(j.beta), lx = Math.sin(m.yaw) * 0.24, lz = -Math.cos(m.yaw) * 0.24;
-        crSetRod(M.rod, 8 + ji, px, m.y + 0.14, pz, gx, gy, gz, 0.045); crSetRod(M.rod, 10 + ji, gx - lx, gy, gz - lz, gx + lx, gy, gz + lz, 0.035); }
-      if (m.role === 'LP' && M.disc) {   // the lollipop: the pole out of his hand (across, raised or resting upright), the sign at its end facing along the car
+        crSetRod(M.rod, U.r0 + 8 + ji, px, m.y + 0.14, pz, gx, gy, gz, 0.045); crSetRod(M.rod, U.r0 + 10 + ji, gx - lx, gy, gz - lz, gx + lx, gy, gz + lz, 0.035); }
+      if (m.role === 'LP' && U) {   // the lollipop: the pole out of his hand (across, raised or resting upright), the sign at its end facing along the car
         const want = m.act === 'lolliH' ? [Math.cos(m.yaw), 0, Math.sin(m.yaw)] : [0, 1, 0]; m.pd = m.pd || [0, 1, 0];
         for (let k = 0; k < 3; k++) m.pd[k] += (want[k] - m.pd[k]) * Math.min(1, dt * 8); const l = Math.hypot(...m.pd) || 1, d0 = m.pd[0] / l, d1 = m.pd[1] / l, d2 = m.pd[2] / l;
-        _cv.setFromMatrixPosition(CRM.hdR); const ex = _cv.x + d0 * 1.35, ey = _cv.y + d1 * 1.35, ez = _cv.z + d2 * 1.35; crSetRod(M.rod, 12, _cv.x, _cv.y, _cv.z, ex, ey, ez, 0.03);
+        _cv.setFromMatrixPosition(CRM.hdR); const ex = _cv.x + d0 * 1.35, ey = _cv.y + d1 * 1.35, ez = _cv.z + d2 * 1.35; crSetRod(M.rod, U.r0 + 12, _cv.x, _cv.y, _cv.z, ex, ey, ez, 0.03);
         const nx = Math.sin(m.yaw), nz = -Math.cos(m.yaw);   // the sign's face points along his left-right, i.e. along the car (y = the pole, z = that normal, x = y cross z)
         const xx = d1 * nz, xy = d2 * nx - d0 * nz, xz = -d1 * nx, xl = Math.hypot(xx, xy, xz) || 1;
-        _cM.set(xx / xl, d0, nx, ex + d0 * 0.2, xy / xl, d1, 0, ey + d1 * 0.2, xz / xl, d2, nz, ez + d2 * 0.2, 0, 0, 0, 1); M.disc.setMatrixAt(0, _cM); }
+        _cM.set(xx / xl, d0, nx, ex + d0 * 0.2, xy / xl, d1, 0, ey + d1 * 0.2, xz / xl, d2, nz, ez + d2 * 0.2, 0, 0, 0, 1); M.disc.setMatrixAt(U.k, _cM); }
     }
-    for (const t of c.tyres) M.tyre.setMatrixAt(t.i, crTyreMat(t, _cM) ? _cM : _zero);
+    for (const u of c.units) if (u.active) for (const t of u.tyres) M.tyre.setMatrixAt(t.i, crTyreMat(t, _cM) ? _cM : _zero);
     for (const im of c.meshes) im.instanceMatrix.needsUpdate = true;
   }
 
@@ -3260,14 +3358,15 @@ const Render = (function () {
 
   function updateCars(dt, alpha, opt) {
     const markerOn = opt && opt.marker, wk = wetW > 0.05 ? Math.min(1, wetW * 1.4) : 0;   // wk: how much the wet road mirrors the lights
+    lodPs = (renderer.domElement.clientHeight || window.innerHeight || 400) / (2 * Math.tan(camera.fov * Math.PI / 360));
     _sunN.set(sunOff[0], sunOff[1], sunOff[2]).normalize();
     const sk = (atmos.tod === 'night' ? 0 : atmos.tod === 'dusk' ? 0.8 : 1) * (1 - Math.min(1, Math.max(0, wet) * 1.6)) * Math.min(1, sun.intensity);   // sk: the sun's glint on the paint
     glows.begin(); streaks.begin();
     for (const v of views) {
       const c = v.car, M = c.m;
       const x = lerp(c.px, c.x, alpha), z = lerp(c.pz, c.z, alpha), h = c.ph + wrapPi(c.h - c.ph) * alpha;
-      const y = lerp(c.py, c.y, alpha), jk = crew && c === crew.P;   // jk: the player's car, maybe up on the jacks in its pit box
-      v.grp.position.set(x, y + (jk ? crew.lift : 0), z);
+      const y = lerp(c.py, c.y, alpha), cu = crew && crew.byCar.get(c), jk = cu && cu.active ? cu : null;   // jk: the crew of a car in its pit box (maybe up on the jacks)
+      v.grp.position.set(x, y + (jk ? jk.lift : 0), z); lodCheck(v, x, y, z);
       const lat = clamp(c.w * c.speed, -16, 16), sw = M.sway || 1;   // (sway: the truck's soft, tall body rolls and pitches more)
       v.roll += (clamp(-lat * 0.0042 * sw, -0.06 * sw, 0.06 * sw) - v.roll) * Math.min(1, dt * 7);
       v.pitch += (clamp(c.axF * 0.0035 * sw, -0.045 * sw, 0.04 * sw) - v.pitch) * Math.min(1, dt * 7);
@@ -3276,10 +3375,11 @@ const Render = (function () {
       v.gpitch += (pitchTarget - v.gpitch) * Math.min(1, dt * (c.air ? 9 : 6));
       const bankT = c.bankSl && !c.air ? -Math.atan(c.bankSl * (-Math.sin(h) * c.q.nx + Math.cos(h) * c.q.nz)) : 0;   // a banked corner: tilt with the surface
       v.broll = (v.broll || 0) + (bankT - (v.broll || 0)) * Math.min(1, dt * 10);
-      v.grp.rotation.set(v.broll, -h, v.gpitch + (jk ? crew.liftP : 0), 'YZX');   // whole car (incl. separate front wheels) follows the slope (and the bank)
+      v.grp.rotation.set(v.broll, -h, v.gpitch + (jk ? jk.liftP : 0), 'YZX');   // whole car (incl. separate front wheels) follows the slope (and the bank)
       v.bodyG.rotation.set(v.roll, 0, v.pitch);
-      v.bodyG.position.y = Math.abs(v.roll) * 0.4 + (c.onCurb ? Math.sin(time * 60) * 0.015 : 0);
-      if (v.blob) v.blob.position.y = (c.roadY - c.y) + 0.05 - (jk ? crew.lift : 0); // shadow stays on the ground during jumps (and on the jacks)
+      const hiK = c.ws[0] === 9 || c.ws[1] === 9 || c.ws[2] === 9 || c.ws[3] === 9;   // (a wheel on a dual kerb's raised part, surface 9: the car hops over its ridges)
+      v.bodyG.position.y = Math.abs(v.roll) * 0.4 + (c.onCurb ? Math.sin(time * (hiK ? 38 : 60)) * (hiK ? 0.04 : 0.015) : 0);
+      if (v.blob) v.blob.position.y = (c.roadY - c.y) + 0.05 - (jk ? jk.lift : 0); // shadow stays on the ground during jumps (and on the jacks)
       v.landed = !!(v.wasAir && !c.air);   // landing this frame (dust ring is emitted in emitFx)
       if (v.landed && c.isPlayer && c.speed > 3) shake(0.15 + clamp(-(c.impactVY || 0) / 8, 0, 1) * 0.45);
       v.spin += c.vl * dt / M.rw;
@@ -3522,6 +3622,11 @@ const Render = (function () {
     const slide = Math.max(0, c.latR - 1.0) / 3.5 + c.spin * 0.9 + (c.lock ? 0.55 : 0) + (c.inHand > 0.5 && spd > 5 ? 0.45 : 0);
     const rainy = wetW > 0.1, near = !rainy || Math.hypot(x - (cam.vcx || 0), z - (cam.vcz || 0)) < 140;   // (rain: spray only where it can be seen, the particles are shared)
     const wheels = [[-M.b, -tw, 2], [-M.b, tw, 3], [M.a, -tw, 0], [M.a, tw, 1]];
+    if (world && world.dyn.gravelDrop && !c.air) {   // (gravel carried out of a trap: shed on the road over the next ~30 m, where the world keeps it: Mie)
+      let g = 0, hard = 0; for (let k = 0; k < 4; k++) { if (c.ws[k] === 3) g++; else if (c.ws[k] <= 1) hard++; }
+      if (g >= 2) v.grav = 30; else if (v.grav > 0 && hard >= 3 && spd > 3) { const l = spd * dt; v.grav -= l; v.gravAcc = (v.gravAcc || 0) + l;
+        if (v.gravAcc > 1.7) { v.gravAcc = 0; world.dyn.gravelDrop(x - Math.cos(h) * M.b, z - Math.sin(h) * M.b, c.roadY != null ? c.roadY : c.y || 0, h, clamp(v.grav / 30, 0, 1)); } }
+    }
     for (let k = 0; k < 4; k++) {
       const [lx, lz, wi] = wheels[k];
       if (c.air) { v.sk[k] = null; v.acc[k] = 0; continue; }
@@ -3626,6 +3731,111 @@ const Render = (function () {
   }
 
   /* ---------------- camera ---------------- */
+  /* ---------------- the live TV camera ('tvlive': the race's Kamera TV, every circuit and stage; the replay's is 'tv', tvCams): as in a broadcast, from fixed cameras beside the road: the TV towers
+     of Spa, the Red Bull Ring and Suzuka (world.tvCams) and elsewhere poles 13 m tall just behind the barrier: one on the outside of each
+     bend at its middle, one every ~200 m along the straights. The camera ahead of the car that sees it (tvGrid) picks it up, follows it with
+     its zoom (the car about a quarter of the picture's height) until it is 55 m past or hidden behind something, then the picture cuts to
+     the next camera along the road (tvPick; a shot lasts at least 1.2 s, and one the car is past keeps it while no other camera sees it) ---- */
+  let tvC = null;
+  function tvSetup(T) {
+    const cams = [], L = T.len, N = T.N, ds = T.ds, gH = world && world.groundH, wrap = (d) => { if (T.open) return Math.abs(d); d = Math.abs(d) % L; return Math.min(d, L - d); };
+    for (const c of (world && world.tvCams) || []) cams.push({ x: c[0], y: c[1], z: c[2], s: T.nearestIdx(c[0], c[2]) * ds });
+    const s0 = T.open ? T.startS || 0 : 0, s1 = T.open ? T.finishS || L : L, inRace = (s) => !T.open || (s > s0 + 20 && s < s1 - 10);
+    const spot = (s, side0) => {   // a pole just behind the barrier (the outside of the bend first), 13 m up, clear of any other leg of the road
+      const i = T.idx(s);
+      for (const side of [side0, -side0]) for (const extra of [0.8, 4]) {
+        const lat = side * ((side > 0 ? T.br[i] : T.bl[i]) + extra), x = T.px[i] + T.nx[i] * lat, z = T.pz[i] + T.nz[i] * lat, j = T.nearestIdx(x, z);
+        let dj = Math.abs(j - i); if (!T.open) dj = Math.min(dj, N - dj);
+        if (dj * ds > 30 && Math.hypot(x - T.px[j], z - T.pz[j]) < Math.max(T.br[j], T.bl[j]) + 3) continue;
+        const yr = T.hasElev ? T.hy[i] : 0, yg = gH ? gH(x, z) : yr;
+        return { x, y: Math.max(yr, yg) + 13, z, s: i * ds };
+      }
+      return null; };
+    // the bends: a camera on the outside of each one, at its middle (where both the way in and the way out are in view)
+    for (const c of T.corners || []) { let n = c.i1 - c.i0; if (n < 0) n += N; const s = ((c.i0 + n / 2) % N) * ds;
+      if (!inRace(s) || cams.some(o => wrap(o.s - s) < 90)) continue; const p = spot(s, -c.dir); if (p) cams.push(p); }
+    // the gaps (straights): one every ~200 m where no camera is within 130 m
+    for (let s = s0 + 60; s < s1 - 20; s += 60) {
+      if (cams.some(c => wrap(c.s - s) < 130)) continue;
+      let k = 0; for (let e = -12; e <= 12; e++) k += T.k[T.idx(s + e * 5)];
+      const p = spot(s, k > 0 ? -1 : 1); if (p) cams.push(p);
+    }
+    cams.sort((a, b) => a.s - b.s);
+    const t0 = performance.now(), G = world && world.root ? tvGrid(T) : null;
+    return { T, W: world, cams, G, gridMs: performance.now() - t0, cur: -1, prev: -1, fov: 30, lx: 0, ly: 0, lz: 0, cut: true, hid: 0, since: 9 };
+  }
+  // the TV cameras' line of sight: a coarse height grid of the world (built once, for this camera only: the highest surface in each 4 m cell
+  // within the track's box and 250 m around it: the ground, stands, buildings, bridges; the instanced trees as discs of their crowns' height;
+  // not the small instanced things, people and flags). A view is blocked where the line from the camera to the car (its roof; not the last
+  // 8 m before it: the barriers there) passes under the grid
+  function tvGrid(T) {
+    let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9; for (let i = 0; i < T.N; i++) { x0 = Math.min(x0, T.px[i]); x1 = Math.max(x1, T.px[i]); z0 = Math.min(z0, T.pz[i]); z1 = Math.max(z1, T.pz[i]); }
+    x0 -= 250; z0 -= 250; x1 += 250; z1 += 250;
+    const C = Math.max(4, Math.sqrt((x1 - x0) * (z1 - z0) / 1.2e6)), nx = Math.ceil((x1 - x0) / C) + 1, nz = Math.ceil((z1 - z0) / C) + 1, h = new Float32Array(nx * nz).fill(-1e9);
+    const put = (x, z, y) => { const i = Math.floor((x - x0) / C), j = Math.floor((z - z0) / C); if (i < 0 || j < 0 || i >= nx || j >= nz) return; const k = j * nx + i; if (y > h[k]) h[k] = y; };
+    const v = new THREE.Vector3(), A = [0, 0, 0], B = [0, 0, 0], D = [0, 0, 0], m4 = new THREE.Matrix4(), bb = new THREE.Box3();
+    world.root.updateMatrixWorld(true);
+    world.root.traverse(o => {
+      if (!o.isMesh || !o.visible || !o.geometry || !o.geometry.attributes.position) return;
+      const pa = o.geometry.attributes.position, ix = o.geometry.index;
+      if (o.isInstancedMesh) {   // trees: a disc each (the base shape's footprint and top, scaled and placed by the instance)
+        bb.setFromBufferAttribute(pa); const r0 = Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z) / 2, top = bb.max.y;
+        for (let k = 0; k < o.count; k++) { o.getMatrixAt(k, m4); m4.premultiply(o.matrixWorld); const e = m4.elements, sc = Math.hypot(e[0], e[1], e[2]), r = r0 * sc * 0.8, ht = top * Math.hypot(e[4], e[5], e[6]);
+          if (r < 1 || ht < 4) continue;   // (people, flags, cones: small)
+          const cx = e[12], cz = e[14], y = e[13] + ht;
+          for (let a = -r; a <= r; a += C * 0.7) for (let b = -r; b <= r; b += C * 0.7) if (a * a + b * b <= r * r) put(cx + a, cz + b, y); put(cx, cz, y); }
+        return; }
+      const me = o.matrixWorld.elements, P = pa.array, st = pa.itemSize || 3, n = ix ? ix.count : pa.count, I = ix ? ix.array : null;
+      const get = (k, out) => { const b = k * st, x = P[b], y = P[b + 1], z = P[b + 2]; out[0] = me[0] * x + me[4] * y + me[8] * z + me[12]; out[1] = me[1] * x + me[5] * y + me[9] * z + me[13]; out[2] = me[2] * x + me[6] * y + me[10] * z + me[14]; };
+      for (let t = 0; t + 2 < n; t += 3) {
+        get(I ? I[t] : t, A); get(I ? I[t + 1] : t + 1, B); get(I ? I[t + 2] : t + 2, D);
+        const ia = Math.floor((Math.min(A[0], B[0], D[0]) - x0) / C), ib = Math.floor((Math.max(A[0], B[0], D[0]) - x0) / C), ja = Math.floor((Math.min(A[2], B[2], D[2]) - z0) / C), jb = Math.floor((Math.max(A[2], B[2], D[2]) - z0) / C);
+        if (ib < 0 || jb < 0 || ia >= nx || ja >= nz) continue;
+        put(A[0], A[2], A[1]); put(B[0], B[2], B[1]); put(D[0], D[2], D[1]);
+        if (ib - ia < 1 && jb - ja < 1) continue;
+        const d = (B[0] - A[0]) * (D[2] - A[2]) - (D[0] - A[0]) * (B[2] - A[2]); if (Math.abs(d) < 1e-6) continue;   // (a wall seen from above: its corners are in)
+        for (let i = Math.max(0, ia); i <= Math.min(nx - 1, ib); i++) for (let j = Math.max(0, ja); j <= Math.min(nz - 1, jb); j++) {
+          const px = x0 + (i + 0.5) * C, pz = z0 + (j + 0.5) * C, u = ((px - A[0]) * (D[2] - A[2]) - (D[0] - A[0]) * (pz - A[2])) / d, w = ((B[0] - A[0]) * (pz - A[2]) - (px - A[0]) * (B[2] - A[2])) / d;
+          if (u < -0.02 || w < -0.02 || u + w > 1.02) continue;
+          const y = A[1] + (B[1] - A[1]) * u + (D[1] - A[1]) * w, k = j * nx + i; if (y > h[k]) h[k] = y; }
+      }
+    });
+    return { x0, z0, C, nx, nz, h };
+  }
+  function tvSees(G, cx, cy, cz, x, y, z) {   // from the camera (cx, cy, cz) to the point (x, y, z)
+    if (!G) return true;
+    const dx = x - cx, dy = y - cy, dz = z - cz, L = Math.hypot(dx, dz); if (L < 12) return true;
+    const n = Math.ceil((L - 8) / (G.C * 0.5));
+    for (let k = 1; k <= n; k++) { const f = (k * G.C * 0.5) / L; if (f * L < 2.2) continue;   // (not its own pole or tower)
+      const i = Math.floor((cx + dx * f - G.x0) / G.C), j = Math.floor((cz + dz * f - G.z0) / G.C); if (i < 0 || j < 0 || i >= G.nx || j >= G.nz) continue;
+      if (G.h[j * G.nx + i] > cy + dy * f + 0.25) return false; }
+    return true;
+  }
+  function tvScore(G, c, T) {   // how much of its stretch of road (150 m before it to 50 m past) a camera sees (cached)
+    if (c.score != null) return c.score;
+    let n = 0, ok = 0; for (let d = -150; d <= 50; d += 25) { const i = T.idx(c.s + d); n++; if (tvSees(G, c.x, c.y, c.z, T.px[i], (T.hasElev ? T.hy[i] : 0) + 1.4, T.pz[i])) ok++; }
+    return (c.score = ok / n);
+  }
+  // the camera for the car at s: the next one along the road at least 25 m ahead that sees the car and the road 25 m on (where it will be in a
+  // moment), and most of its stretch; else the nearest that sees both and that it is not already 55 m past; else the current one (cur), while
+  // it still sees the car; else the nearest that sees it at all; else the next one ahead. strict: only the first two (-1 if neither), so a
+  // camera that lost the car for a moment does not hand it to one it is past (the picture would cut straight back)
+  function tvPick(C, s, T, car, G, cur, strict) {
+    const L = T.len, dS = (a, b) => { let d = a - b; if (!T.open) { d = ((d % L) + L) % L; if (d > L / 2) d -= L; } return d; };
+    const ahead = [], all = [];
+    for (let k = 0; k < C.length; k++) { const d = dS(C[k].s, s); all.push([Math.abs(d) + (d < 0 ? 60 : 0), k, d]); if (d > 25 && d < 400) ahead.push([d, k]); }
+    ahead.sort((a, b) => a[0] - b[0]); all.sort((a, b) => a[0] - b[0]);
+    const cy = car ? (car.y || 0) + 1.4 : 0, sees = (c) => !car || tvSees(G, c.x, c.y, c.z, car.x, cy, car.z);
+    const i2 = T.idx(s + 25), x2 = T.px[i2], y2 = (T.hasElev ? T.hy[i2] : 0) + 1.4, z2 = T.pz[i2], keeps = (c) => sees(c) && tvSees(G, c.x, c.y, c.z, x2, y2, z2);
+    for (let n = 0; n < Math.min(4, ahead.length); n++) { const c = C[ahead[n][1]]; if (tvScore(G, c, T) >= 0.6 && keeps(c)) return ahead[n][1]; }
+    for (let n = 0; n < Math.min(8, all.length); n++) { const c = C[all[n][1]]; if (all[n][0] < 260 && all[n][2] >= -55 && keeps(c)) return all[n][1]; }
+    if (strict) return -1;
+    if (C[cur] && sees(C[cur])) return cur;
+    for (let n = 0; n < Math.min(8, all.length); n++) { const c = C[all[n][1]]; if (all[n][0] < 260 && sees(c)) return all[n][1]; }
+    return ahead.length ? ahead[0][1] : all.length ? all[0][1] : -1;
+  }
+
+
   function updateCamera(dt, target, mode, alpha) {
     const c = target;
     const x = lerp(c.px, c.x, alpha), z = lerp(c.pz, c.z, alpha);
@@ -3633,7 +3843,7 @@ const Render = (function () {
     const spd = c.speed, pitZ = crew && c === crew.P && (crew.mode === 'work' || (crew.mode === 'out' && c.pitState === 'stop')) ? 0.62 : 1;   // pitZ: closer while the car pulls into its box and the crew works on it
     if (!cam.init) { cam.lx = 0; cam.lz = 0; cam.zoom = 1; cam.hs = h; cam.gy = c.roadY || 0; cam.init = true; }
     if (cam.shot && cam.shot.gy != null) cam.gy = cam.shot.gy; else cam.gy += ((c.roadY || 0) - cam.gy) * (1 - Math.exp(-dt * 5));   // (a shot may say how high its view is: Pikes Peak's flyover, for the altitude's light and the sun's shadow box)
-    const baseY = cam.gy;
+    let baseY = cam.gy;
     const k1 = 1 - Math.exp(-dt * 2.0), k2 = 1 - Math.exp(-dt * 1.4);
     let px, py, pz, tx, ty, tz;
     const shot = cam.shot;
@@ -3642,6 +3852,10 @@ const Render = (function () {
       px = shot.px; py = shot.py; pz = shot.pz; tx = shot.tx; ty = shot.ty; tz = shot.tz; near = shot.near || 4;
       if (camera.fov !== shot.fov) { camera.fov = shot.fov; camera.updateProjectionMatrix(); updatePointScale(); }
       if (shot.floor && world) { const gH = world.groundH ? world.groundH(px, pz) : NaN, gf = Math.max(Number.isFinite(gH) ? gH : -1e9, c.roadY != null ? c.roadY - 3 : -1e9) + 0.35; if (py < gf) py = gf; }   // (the photo mode: never under the ground)
+    } else if (podC) {   // the podium ceremony: the TV camera on the pit wall (podCam)
+      const [pp, pt] = podCam(), Wd = world && world.dyn; px = pp.x; py = pp.y; pz = pp.z; tx = pt.x; ty = pt.y + (Wd && Wd.podUp || 0); tz = pt.z; baseY = podC.F.y0;
+      if (Wd && Wd.podBack) { const dx = px - tx, dz = pz - tz, l = Math.hypot(dx, dz) || 1; px += dx / l * Wd.podBack; pz += dz / l * Wd.podBack; }   // (a world's dyn.podBack, podUp: Mie's is further back and looks up, at the sky over the pit building's tower, the helicopter and the fireworks in it)
+      const fov = camera.aspect < 1 ? 50 : 32; if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); updatePointScale(); }
     } else if (mode === 'cockpit' && viewOf(c)) {
       // the driver's eyes (eyeOf) in the car as drawn (its slope and bank; the body's roll only in the cockpit round them), the head a
       // little down, looking into the corner and along a slide, swaying with the corner's pull
@@ -3667,6 +3881,34 @@ const Render = (function () {
       tx = x + fx * ahead; tz = z + fz * ahead; ty = baseY;
       px = tx - fx * D * Math.cos(pitch); pz = tz - fz * D * Math.cos(pitch); py = baseY + D * Math.sin(pitch);
       if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); updatePointScale(); }
+    } else if (mode === 'tvlive' && curTrack) {
+      if (!tvC || tvC.T !== curTrack || tvC.W !== world) tvC = tvSetup(curTrack);
+      const C = tvC.cams, T = curTrack, L = T.len, s = c.q ? c.q.s : 0;
+      if (C.length) {
+        const seesCar = (q) => tvSees(tvC.G, q.x, q.y, q.z, x, (c.y || 0) + 1.4, z);
+        const pick = (strict) => {   // (never straight back to the camera before this one within 2 s of the cut: a hidden car stays in this shot, a car past it too while this camera still sees it)
+          const t0 = performance.now(); let k = tvPick(C, s, T, c, tvC.G, tvC.cur, strict);
+          if (k >= 0 && k === tvC.prev && tvC.since < 2 && (strict || (C[tvC.cur] && seesCar(C[tvC.cur])))) k = strict ? -1 : tvC.cur;
+          tvC.ms = performance.now() - t0; return k; };
+        let cur = C[tvC.cur], k = -2;   // (k: the camera picked in this frame; -2: none picked)
+        if (!cur) k = pick(false);
+        else { let d = s - cur.s; if (!T.open) { d = ((d % L) + L) % L; if (d > L / 2) d -= L; } if (d > 55 || d < -450) k = pick(false); }   // (past it, or nowhere near: the next one; this one while no other sees the car)
+        if (k === -2 && dt > 0) {   // hidden behind something: another camera that sees it, if one does (a shot lasts at least 1.2 s); not while this one sees the road just ahead of the car (it comes out in a moment), unless that takes 1.5 s
+          tvC.hid = seesCar(cur) ? 0 : tvC.hid + dt;
+          if (tvC.hid > 0.4 && tvC.since > 1.2) { const i2 = T.idx(s + 25), soon = tvSees(tvC.G, cur.x, cur.y, cur.z, T.px[i2], (T.hasElev ? T.hy[i2] : 0) + 1.4, T.pz[i2]);
+            if (!soon || tvC.hid > 1.5) { k = pick(true); tvC.hid = 0; } }
+        }
+        if (k >= 0 && k !== tvC.cur) { tvC.prev = tvC.cur; tvC.cur = k; tvC.cuts = (tvC.cuts || 0) + 1; tvC.cut = true; tvC.hid = 0; tvC.since = 0; }   // (a cut: the new camera's view at once)
+        tvC.since += dt;
+        cur = C[tvC.cur];
+        px = cur.x; py = cur.y; pz = cur.z;
+      } else { px = x - 30; py = baseY + 20; pz = z + 30; }
+      const gx = x + c.vx * 0.25, gz = z + c.vz * 0.25, gy = (c.y != null ? c.y : baseY) + 0.6, kk = tvC.cut ? 1 : 1 - Math.exp(-dt * 7);   // (a little ahead of the car, panned with a slight lag)
+      tvC.lx += (gx - tvC.lx) * kk; tvC.ly += (gy - tvC.ly) * kk; tvC.lz += (gz - tvC.lz) * kk;
+      tx = tvC.lx; ty = tvC.ly; tz = tvC.lz;
+      const dd = Math.hypot(px - tx, py - ty, pz - tz), want = clamp(2 * Math.atan((camera.aspect < 1 ? 13 : 8.5) / Math.max(1, dd)) * 180 / Math.PI, 5, 55);
+      tvC.fov = tvC.cut ? want : tvC.fov + (want - tvC.fov) * (1 - Math.exp(-dt * 4)); tvC.cut = false;
+      if (Math.abs(camera.fov - tvC.fov) > 0.02) { camera.fov = tvC.fov; camera.updateProjectionMatrix(); updatePointScale(); }
     } else if (mode === 'tv' && curTrack.def.theme === 'pikes' && world && world.groundH && curTrack.hy) {
       // Pikes Peak's own TV cameras (pkTv): the helicopter over the open road, fixed cameras at the famous places, the summit's view
       const o = pkTv(c, dt, x, z); px = o.px; py = o.py; pz = o.pz; tx = x; ty = (c.y || 0) + 0.7; tz = z;
@@ -3715,11 +3957,12 @@ const Render = (function () {
     if (camera.near !== near) { camera.near = near; camera.updateProjectionMatrix(); }
     camera.position.set(px, py, pz); if (qc) camera.quaternion.copy(qc); else camera.lookAt(tx, ty, tz); cam.vcx = qc ? px + (tx - px) * 0.25 : tx; cam.vcz = qc ? pz + (tz - pz) * 0.25 : tz; cam.vd = Math.hypot(px - tx, py - ty, pz - tz);   // (the cockpit's view centre, for the rain round it: 18 m ahead)
     cam.ck = !!qc; if (!qc) ck.car = null;
-    { const dC = shot ? shot.fogD : Math.hypot(px - tx, py - ty, pz - tz), r = Math.max(0, wet); scene.fog.near = dC * (1.35 - 0.4 * r); scene.fog.far = dC * (5.5 - 1.6 * r); }   // (rain: a closer haze)
+    { const dC = shot ? shot.fogD : Math.max(Math.hypot(px - tx, py - ty, pz - tz), mode === 'tvlive' && !podC ? 90 : 0), r = Math.max(0, wet); scene.fog.near = dC * (1.35 - 0.4 * r); scene.fog.far = dC * (5.5 - 1.6 * r); }   // (rain: a closer haze; the live TV camera close to the car: the scenery behind it clear)
+    if (podC && !shot) { scene.fog.near = 90; scene.fog.far = 520; }   // (the podium close up: the circuit behind it clear)
     if (world && world.farClip) { const f = Math.min(700, scene.fog.far + 40); if (Math.abs(camera.far - f) > 6) { camera.far = f; camera.updateProjectionMatrix(); } }   // long corridor worlds: nothing past the fog is drawn
     // sun/shadow follows view center
     lastMode = qc ? 'cockpit' : mode;
-    const sx = qc ? px + (tx - px) * 0.65 : mode === 'kino' ? tx + Math.sin(camYaw) * 8 : tx, sz = qc ? pz + (tz - pz) * 0.65 : mode === 'chase' ? tz : mode === 'kino' ? tz - Math.cos(camYaw) * 8 : tz - 8;   // (the cockpit: the shadows round 45 m ahead)
+    const sx = qc ? px + (tx - px) * 0.65 : mode === 'kino' ? tx + Math.sin(camYaw) * 8 : tx, sz = qc ? pz + (tz - pz) * 0.65 : mode === 'chase' || mode === 'tvlive' ? tz : mode === 'kino' ? tz - Math.cos(camYaw) * 8 : tz - 8;   // (the cockpit: the shadows round 45 m ahead)
     const texel = 160 / sun.shadow.mapSize.x;
     const cx = Math.round(sx / texel) * texel, cz = Math.round(sz / texel) * texel;
     sun.target.position.set(cx, baseY, cz);
@@ -3896,6 +4139,151 @@ const Render = (function () {
   // a TV shot: { px, py, pz (the camera), tx, ty, tz (where it looks), fov, fogD (the fog as for a camera this far from its target) },
   // updated by its owner every frame; null: back to the game's camera (from scratch)
   function setShot(s) { if (!s && cam.shot) cam.init = false; cam.shot = s || null; }
+
+  /* ---------------- the podium (the circuits with a pit building) ----------------
+     A balcony over the pit lane from the garages' front, in front of one garage (def.podium: { d: metres after the start line, h: its
+     floor's height }; the garage nearest the start line, 6.2 m): four columns in line with the garages' walls, a glass railing, three
+     steps with their numbers, a backdrop with the circuit's name, flag poles. Built with the
+     race (makePodium: two meshes); after the race (setPodium) the first three drivers stand on it in their cars' colours and spray
+     champagne, the host country's flag goes up the middle pole and a TV camera on the pit wall looks up at them (updateCamera). */
+  const POD_FLAG = { suzuka: 'jp', spa: 'be', rbring: 'at', toskana: 'it' };   // the host country (the invented circuits: Slovenia)
+  let podB = null, podC = null;
+  function podiumFrame(T) {
+    const def = T.def, P = def.podium || {}; if (!def.pit || T.open) return null;
+    const pq0 = def.pitRow ? def.pitRow[0] : -152, d = P.d != null ? P.d : pq0 + 5 + 10 * Math.round((-pq0 - 5) / 10);   // (a garage's middle: the columns stand on its walls)
+    const s = T.startS + d, i = T.idx(s), p = T.pitAt(s); if (!p || p.t < 0.999) return null;
+    const y0 = T.hasElev ? T.hy[i] : 0, m = new THREE.Matrix4().makeBasis(new THREE.Vector3(T.tx[i], 0, T.tz[i]), new THREE.Vector3(0, 1, 0), new THREE.Vector3(T.nx[i], 0, T.nz[i])).setPosition(T.px[i], y0, T.pz[i]);
+    return { m, o: p.o, wall: p.wall, H: P.h || 6.2, y0 };   // (the frame: x along the track, y up, z across it towards the pits)
+  }
+  function flagCanvas(k) {   // 96 x 64, the hoist on the left
+    const cv = document.createElement('canvas'); cv.width = 96; cv.height = 64; const x = cv.getContext('2d');
+    const h3 = (a, b, c) => { x.fillStyle = a; x.fillRect(0, 0, 96, 22); x.fillStyle = b; x.fillRect(0, 21, 96, 22); x.fillStyle = c; x.fillRect(0, 42, 96, 22); };
+    const v3 = (a, b, c) => { x.fillStyle = a; x.fillRect(0, 0, 33, 64); x.fillStyle = b; x.fillRect(32, 0, 33, 64); x.fillStyle = c; x.fillRect(64, 0, 32, 64); };
+    if (k === 'jp') { x.fillStyle = '#fafafa'; x.fillRect(0, 0, 96, 64); x.fillStyle = '#bc002d'; x.beginPath(); x.arc(48, 32, 19, 0, Math.PI * 2); x.fill(); }
+    else if (k === 'be') v3('#141414', '#fdda24', '#ef3340');
+    else if (k === 'it') v3('#009246', '#f4f5f0', '#ce2b37');
+    else if (k === 'at') h3('#c8102e', '#fafafa', '#c8102e');
+    else if (k === 'chk') { for (let i = 0; i < 8; i++) for (let j = 0; j < 6; j++) { x.fillStyle = (i + j) % 2 ? '#151515' : '#f2f2f2'; x.fillRect(i * 12, Math.round(j * 64 / 6), 12, 11); } }
+    else {   // Slovenia: white, blue, red, the coat of arms (Triglav under three stars) over the white and the blue
+      h3('#fafafa', '#0b4ea2', '#e2231a');
+      x.beginPath(); x.moveTo(17, 7); x.lineTo(35, 7); x.lineTo(35, 21); x.quadraticCurveTo(35, 30, 26, 34); x.quadraticCurveTo(17, 30, 17, 21); x.closePath();
+      x.fillStyle = '#0b4ea2'; x.fill(); x.lineWidth = 2; x.strokeStyle = '#e2231a'; x.stroke();
+      x.beginPath(); x.moveTo(18.5, 26); x.lineTo(22, 20); x.lineTo(24, 22.5); x.lineTo(26, 15); x.lineTo(28, 22.5); x.lineTo(30, 20); x.lineTo(33.5, 26); x.closePath(); x.fillStyle = '#fafafa'; x.fill();
+      x.fillStyle = '#ffd200'; for (const [a, b] of [[21.5, 10.5], [26, 9.5], [30.5, 10.5]]) { x.beginPath(); x.arc(a, b, 1.4, 0, 7); x.fill(); }
+    }
+    return cv;
+  }
+  function podiumTexture(name) {   // the backdrop (512 x 160: navy, chequered bands, the circuit's name) over the steps' numbers (three 64 x 64 cells)
+    const cv = document.createElement('canvas'); cv.width = 512; cv.height = 256; const x = cv.getContext('2d');
+    x.fillStyle = '#16214d'; x.fillRect(0, 0, 512, 160);
+    for (let i = 0; i < 64; i++) for (let j = 0; j < 2; j++) { x.fillStyle = (i + j) % 2 ? '#f2f2f2' : '#16214d'; x.fillRect(i * 8, j * 8 + 4, 8, 8); x.fillRect(i * 8, 140 + j * 8 - 4, 8, 8); }
+    x.fillStyle = '#ffffff'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = 'italic 700 58px sans-serif';
+    let f = 58; while (f > 20 && x.measureText(name).width > 470) { f -= 4; x.font = 'italic 700 ' + f + 'px sans-serif'; }
+    x.fillText(name, 256, 82);
+    const CC = ['#d8b13a', '#c4c9ce', '#be7c45'];
+    for (let k = 0; k < 3; k++) { x.fillStyle = CC[k]; x.fillRect(k * 64, 176, 64, 64); x.fillStyle = 'rgba(0,0,0,.35)'; x.font = '700 50px sans-serif'; x.fillText(String(k + 1), k * 64 + 34, 211); x.fillStyle = '#ffffff'; x.fillText(String(k + 1), k * 64 + 32, 209); }
+    const t = new THREE.CanvasTexture(cv); t.anisotropy = 4; return t;
+  }
+  function makePodium(T) {
+    const F = podiumFrame(T); if (!F) return null;
+    const W = World, g = new W.GB(), gt = new W.GB(true), { o, H } = F, f0 = o + 12.5, a0 = -5.3, a1 = 5.3;
+    const WH = [0.93, 0.93, 0.91], GR = [0.74, 0.75, 0.77], NV = [0.09, 0.13, 0.3], RD = [0.8, 0.1, 0.12], ST = [0.55, 0.57, 0.6], CP = [0.2, 0.21, 0.26];
+    const bx = (A0, A1, Y0, Y1, L0, L1, col, top) => W.box(g, (A0 + A1) / 2, Y0, (L0 + L1) / 2, A1 - A0, Y1 - Y0, L1 - L0, 0, col, top || col);
+    bx(a0, a1, H - 0.45, H, o + 2.5, f0, WH, GR);                                                   // the slab
+    bx(a0 - 0.01, a1 + 0.01, H - 1.15, H - 0.3, o + 2.4, o + 2.56, RD);                             // the red fascia along its front
+    bx(a0, a1, H + 0.98, H + 1.06, o + 2.58, o + 2.7, ST);                                          // the railing's top rail
+    for (const a of [-5, 5]) for (const l of [o + 4.1, f0 - 0.45]) bx(a - 0.22, a + 0.22, 0, H - 0.45, l - 0.22, l + 0.22, WH);   // the columns
+    bx(a0, a1, H, H + 3.8, f0 - 0.5, f0 - 0.2, NV);                                                 // the backdrop
+    for (const [A0, A1, h] of [[-0.85, 0.85, 1.0], [0.9, 2.6, 0.7], [-2.6, -0.9, 0.45]]) bx(A0, A1, H, H + h, o + 5.6, o + 7.2, WH, CP);   // the steps: 1st, 2nd (on the winner's right), 3rd
+    { const seg = (A, B, r) => {   // a thin square rod from A to B
+        const d = [B[0] - A[0], B[1] - A[1], B[2] - A[2]], L = Math.hypot(...d), u = d.map(v => v / L), p = Math.abs(u[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
+        let v1 = [u[1] * p[2] - u[2] * p[1], u[2] * p[0] - u[0] * p[2], u[0] * p[1] - u[1] * p[0]]; const l1 = Math.hypot(...v1); v1 = v1.map(v => v / l1 * r);
+        const v2 = [u[1] * v1[2] - u[2] * v1[1], u[2] * v1[0] - u[0] * v1[2], u[0] * v1[1] - u[1] * v1[0]], C = [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2, (A[2] + B[2]) / 2];
+        const q = (P, s1, s2) => [P[0] + v1[0] * s1 + v2[0] * s2, P[1] + v1[1] * s1 + v2[1] * s2, P[2] + v1[2] * s1 + v2[2] * s2], sq = [[1, 1], [-1, 1], [-1, -1], [1, -1]];
+        for (let k = 0; k < 4; k++) { const [s1, s2] = sq[k], [t1, t2] = sq[(k + 1) % 4]; g.quadO(q(A, s1, s2), q(B, s1, s2), q(B, t1, t2), q(A, t1, t2), ST, C); } };
+      for (const [a, top] of [[0, H + 7.8], [a0 + 0.05, H + 6.3], [a1 - 0.05, H + 6.3]]) seg([a, H + 3.8, f0 - 0.35], [a, top, f0 - 0.35], 0.045); }   // the flag poles
+    // the textured faces (towards the track): the circuit's name on the backdrop, the numbers on the steps
+    const face = (A0, A1, Y0, Y1, l, u0, v0, u1, v1) => gt.quadO([A1, Y0, l], [A0, Y0, l], [A0, Y1, l], [A1, Y1, l], [1, 1, 1], [0, (Y0 + Y1) / 2, l + 1], [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]);
+    face(-5.1, 5.1, H + 0.35, H + 3.55, f0 - 0.52, 0, 96 / 256, 1, 1);   // (the canvas' top 160 rows: v from 96/256 up to 1)
+    for (const [k, A0, A1, h] of [[0, -0.85, 0.85, 1.0], [1, 0.9, 2.6, 0.7], [2, -2.6, -0.9, 0.45]]) { const m = Math.min(h - 0.1, 0.62), c = (A0 + A1) / 2, y = H + (h - m) / 2;
+      face(c - m / 2, c + m / 2, y, y + m, o + 5.58, k * 64 / 512, 16 / 256, (k + 1) * 64 / 512, 80 / 256); }
+    const root = new THREE.Group(); root.matrixAutoUpdate = false; root.matrix.copy(F.m); scene.add(root);
+    const mat = new THREE.MeshLambertMaterial({ vertexColors: true }), map = podiumTexture((T.def.name || '').toUpperCase()), matT = new THREE.MeshLambertMaterial({ map });
+    const glass = new THREE.MeshLambertMaterial({ color: 0xbcd6e6, transparent: true, opacity: 0.32, depthWrite: false, side: THREE.DoubleSide });
+    const add = (geo, m, cast) => { const me = new THREE.Mesh(geo, m); me.castShadow = !!cast; me.receiveShadow = true; me.matrixAutoUpdate = false; root.add(me); return me; };
+    add(g.geometry(), mat, true); add(gt.geometry(), matT, false);
+    { const gg = new THREE.PlaneGeometry(a1 - a0 - 0.2, 0.98); gg.translate(0, H + 0.49, o + 2.64); add(gg, glass, false); }
+    root.updateMatrixWorld(true);
+    return { root, F, T, mats: [mat, matT, glass], tex: [map] };
+  }
+  function disposeGroup(r) { r.traverse(o => { if (o.geometry) o.geometry.dispose(); }); if (r.parent) r.parent.remove(r); }
+  function dropPodium() { setPodium(null); if (!podB) return; disposeGroup(podB.root); podB.mats.forEach(m => m.dispose()); podB.tex.forEach(t => t.dispose()); podB = null; }
+  // a driver on the podium: legs, a body and arms in the car's colour, a cap; the right hand holds a bottle, the winner's left the trophy
+  function podDriver(col, winner) {
+    const suit = new THREE.MeshLambertMaterial({ color: col }), cap = new THREE.MeshLambertMaterial({ color: new THREE.Color(col).multiplyScalar(0.55) });
+    const skin = new THREE.MeshLambertMaterial({ color: 0xd9a27a }), dark = new THREE.MeshLambertMaterial({ color: 0x1f3a24 }), gold = new THREE.MeshLambertMaterial({ color: 0xe0b43c });
+    const g = new THREE.Group(), box = (w, h, d, m, x, y, z, par) => { const me = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); me.position.set(x, y, z); me.castShadow = true; (par || g).add(me); return me; };
+    box(0.18, 0.84, 0.24, suit, -0.11, 0.42, 0); box(0.18, 0.84, 0.24, suit, 0.11, 0.42, 0); box(0.48, 0.64, 0.3, suit, 0, 1.15, 0);
+    box(0.25, 0.27, 0.25, skin, 0, 1.61, 0); box(0.27, 0.08, 0.27, cap, 0, 1.76, 0); box(0.22, 0.03, 0.14, cap, 0, 1.73, 0.18);   // (the cap and its peak: the figure faces its +z)
+    const arm = (sd) => { const a = new THREE.Group(); a.position.set(sd * 0.3, 1.4, 0); g.add(a); box(0.11, 0.6, 0.11, suit, 0, 0.27, 0, a); box(0.1, 0.1, 0.1, skin, 0, 0.6, 0, a); return a; };
+    const R = arm(-1), L = arm(1), bottle = new THREE.Group(); bottle.position.set(0, 0.62, 0.06); R.add(bottle);
+    { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.24, 8), dark); b.position.y = 0.1; bottle.add(b); const n = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.05, 0.12, 8), dark); n.position.y = 0.28; bottle.add(n); }
+    if (winner) { const tr = new THREE.Group(); tr.position.set(0, 0.64, 0); L.add(tr);
+      const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.05, 0.22, 10), gold); cup.position.y = 0.16; tr.add(cup);
+      const st = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.07, 0.1, 8), gold); st.position.y = 0.02; tr.add(st); }
+    g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+    return { g, R, L, bottle, mats: [suit, cap, skin, dark, gold] };
+  }
+  function flagMesh(k, w, h) {
+    const cv = flagCanvas(k), tx = new THREE.CanvasTexture(cv), m = new THREE.MeshLambertMaterial({ map: tx, side: THREE.DoubleSide });
+    const geo = new THREE.PlaneGeometry(w, h, 12, 1); geo.translate(w / 2, -h / 2, 0);   // (the hoist's top at the origin)
+    const me = new THREE.Mesh(geo, m); me.castShadow = true; me.userData.base = Float32Array.from(geo.attributes.position.array); me.userData.w = w;
+    return { me, m, tx };
+  }
+  function waveFlag(me, t, ph) {
+    const a = me.geometry.attributes.position, b = me.userData.base, w = me.userData.w;
+    for (let i = 0; i < a.count; i++) { const u = b[i * 3] / w; a.array[i * 3 + 2] = Math.sin(u * 5.5 - t * 6.5 + ph) * 0.13 * u; a.array[i * 3 + 1] = b[i * 3 + 1] - u * u * 0.06; }
+    a.needsUpdate = true; me.geometry.computeVertexNormals();
+  }
+  // the ceremony: cars = the first three (setPodium(null): over). Returns false where there is no podium
+  function setPodium(cars) {
+    if (podC) { disposeGroup(podC.root); podC.mats.forEach(m => m.dispose()); podC.tex.forEach(t => t.dispose()); podC = null; cam.init = false; }
+    if (!cars || !podB) return false;
+    const { F } = podB, { o, H } = F, root = new THREE.Group(); root.matrixAutoUpdate = true; podB.root.add(root);
+    const mats = [], tex = [], men = [];
+    const spots = [[0, 1.0], [1.75, 0.7], [-1.75, 0.45]];
+    cars.slice(0, 3).forEach((c, k) => { if (!c) return; const d = podDriver(c.color != null ? c.color : 0xdddddd, k === 0); d.g.position.set(spots[k][0], H + spots[k][1], o + 6.4); d.g.rotation.y = Math.PI; root.add(d.g); mats.push(...d.mats); men.push(Object.assign(d, { k, y: H + spots[k][1] })); });
+    const flags = [], f0 = o + 12.5;
+    for (const [k, a, top] of [[POD_FLAG[podB.T.def.id] || 'si', 0, H + 7.8], ['chk', -5.25, H + 6.3], ['chk', 5.25, H + 6.3]]) {
+      const f = flagMesh(k, k === 'chk' ? 1.2 : 1.8, k === 'chk' ? 0.8 : 1.2); f.me.position.set(a, k === 'chk' ? top - 0.05 : H + 5.5, f0 - 0.3); f.me.rotation.y = Math.PI; root.add(f.me);   // (the host's flag at the foot of its pole, above the backdrop)
+      mats.push(f.m); tex.push(f.tx); flags.push({ me: f.me, up: k !== 'chk', top: top - 0.05, y0: H + 5.5 }); }
+    podC = { root, men, flags, mats, tex, t: 0, pop: false, F };
+    return true;
+  }
+  const _pa = new THREE.Vector3(), _pb = new THREE.Vector3(), _pq = new THREE.Quaternion();
+  function updatePodium(dt) {
+    if (!podC) return;
+    const P = podC, t = (P.t += dt), H = P.F.H, sm = (a, b, x) => { const u = clamp((x - a) / (b - a), 0, 1); return u * u * (3 - 2 * u); };
+    for (const f of P.flags) { waveFlag(f.me, time, f.up ? 0 : 1.7); if (f.up) f.me.position.y = lerp(f.y0, f.top, sm(0.6, 4.6, t)); }
+    for (const m of P.men) {
+      const w = m.k === 0, jump = w ? Math.max(0, Math.sin((t - 0.4) * Math.PI * 1.6)) * (t > 0.4 && t < 1.65 ? 0.32 : 0) : 0;
+      m.g.position.y = m.y + jump + Math.abs(Math.sin(t * 3.1 + m.k * 1.3)) * 0.03;
+      const shake = t > 2.1 && t < 3.0, spray = t >= 3.0;
+      m.R.rotation.set(spray ? 0.95 + Math.sin(t * 2.2 + m.k) * 0.25 : shake ? 0.35 + Math.sin(t * 34) * 0.35 : lerp(2.7, 0.5, sm(0.2, 1.4, t)), 0, spray ? (m.k === 1 ? -0.35 : m.k === 2 ? 0.35 : 0) : 0.15);   // (the bottle: up, shaken, then sprayed forward)
+      m.L.rotation.set(0, 0, lerp(0.2 - Math.PI, w ? -0.2 : -0.45, w ? sm(0.9, 1.8, t) : sm(1.5, 2.3, t)));   // (out to the side and up: the winner lifts the trophy, the others wave)
+      if (spray) {
+        m.bottle.updateMatrixWorld(true); _pa.set(0, 0.36, 0); m.bottle.localToWorld(_pa); m.bottle.getWorldQuaternion(_pq); _pb.set(0, 1, 0).applyQuaternion(_pq);
+        const n = Math.min(12, Math.round(dt * (t < 3.4 ? 160 : 70) + Math.random())), y0 = P.F.y0;
+        for (let i = 0; i < n; i++) { const v = 5.5 + Math.random() * 3.5; particles.emit(_pa.x, _pa.y, _pa.z, _pb.x * v + (Math.random() - 0.5) * 1.6, _pb.y * v + (Math.random() - 0.5) * 1.2, _pb.z * v + (Math.random() - 0.5) * 1.6, 0.7 + Math.random() * 0.5, 0.07, 0.3, 1, 0.96, 0.8, 0.85, 7, 0.7, y0); }
+      }
+    }
+  }
+  function podCam(k1) {   // the TV camera on the pit wall, a slow dolly towards the podium: [position, the point it looks at] in the world
+    const P = podC, F = P.F, u = clamp(P.t / 9, 0, 1), e = u * u * (3 - 2 * u);
+    _pa.set(lerp(-13, -9.5, e), F.H + lerp(1.6, 1.1, e), F.wall + lerp(0.2, 1.2, e)).applyMatrix4(F.m);
+    _pb.set(0, F.H + 1.9, F.o + 6.4).applyMatrix4(F.m);
+    return [_pa, _pb];
+  }
 
   /* ---------------- the sky: a dome round the camera for the views that look out to the horizon (the cockpit, the replay's TV cameras,
      the photo mode): the fog's colour at the horizon (the far world fades into it), a deeper colour overhead, a soft glow round the sun
@@ -4078,6 +4466,7 @@ const Render = (function () {
       const nv = makeView(c); nv.sk = v.sk; nv.acc = v.acc; disposeView(v, debrisRes()); views[k] = nv;   // (its loose panels on the track stay drawable)
       for (let n = 0; n < 12; n++) sparkP.emit(c.x + (Math.random() - 0.5) * 3, (c.y || 0) + 0.4 + Math.random() * 1.2, c.z + (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 2, 1 + Math.random() * 2, (Math.random() - 0.5) * 2, 0.4 + Math.random() * 0.3, 0.45, 0.8, 1, 0.95, 0.7, 0.7, -1, 1.2, c.y || 0); } }
     particles.update(dt); sparkP.update(dt);
+    updatePodium(dt);
     World.update(world, time, target, camera);
     if (target) updateCamera(dt, target, mode, alpha);
     if (world && world.dyn.afterCam) world.dyn.afterCam(camera, target);   // (what depends on the camera of this very frame: Pikes Peak, which scenery chunks cast shadows)
@@ -4086,6 +4475,7 @@ const Render = (function () {
       const r = R ? q(R.rain || 0) : 0, w = R ? q(R.water != null ? R.water : R.rain || 0) : 0;
       if (r !== wet) applyWeather(r); if (w !== wetW) applyRoad(w); dryLine(R); puddles(R); }
     pkLight(target);   // (Pikes Peak: its shadows and the light of the altitude, on top of the theme's)
+    szLight();   // (Mie: the sun's shafts through its woods, a low sun's flare)
     if (birds.mesh.visible && target && world) birds.update(Math.min(dt, 0.1), cam.vcx || 0, cam.vcz || 0, world.groundH || (() => 0));
     if (snow.mesh.visible) { const U = snow.mat.uniforms, B = lastMode === 'cockpit' ? [28, 12, 28] : lastMode === 'chase' ? [62, 30, 62] : [80, 36, 80]; U.uBox.value.set(B[0], B[1], B[2]); U.uC.value.set(cam.vcx || 0, (cam.gy || 0) + B[1] * 0.42, cam.vcz || 0); U.uT.value = time % 600; U.uA.value = 0.9 * Math.min(1, wet * 1.5); U.uScale.value = particles.mat.uniforms.uScale.value; }
     if (rain.mesh.visible) {   // the box of streaks around the view centre (the iso camera sees the most ground, the chase camera the least)
@@ -4102,7 +4492,7 @@ const Render = (function () {
       const tr = tn.mat.opacity < 0.985; if (tn.mat.transparent !== tr) { tn.mat.transparent = tr; tn.mat.needsUpdate = true; } tn.mat.depthWrite = !tr;
       if (tn.mats) for (const m of tn.mats) if (m !== tn.mat) { m.opacity = tn.mat.opacity; if (m.transparent !== tr) { m.transparent = tr; m.needsUpdate = true; } m.depthWrite = !tr; }   // (Suzuka: everything on the bridge)
     }
-    skyStep(cam.ck || (lastMode === 'tv' && !cam.shot) || !!(cam.shot && cam.shot.sky)); cgSet(false);
+    skyStep(cam.ck || ((lastMode === 'tv' || lastMode === 'tvlive') && !cam.shot) || !!(cam.shot && cam.shot.sky) || !!(podC && world && world.dyn.podSky)); cgSet(false);
     { const W = World.waterSky; W.hor.value.copy(scene.fog.color); skyTop(W.top.value); }   // (the sky the water mirrors)
     const ckOn = cam.ck && ck.car; if (ckOn) ckStep(ck.car, viewOf(ck.car));
     { const cv = ckOn ? viewOf(ck.car) : null;   // (the Peugeot's own model has its inside, seats and all: from the seat, the plain body round the driver)
@@ -4112,7 +4502,7 @@ const Render = (function () {
       if (cv) { const m = cv.body.material; if (m && m.emissive && m.emissive.r) m.emissive.setScalar(0); ck.litV = cv; } }
     if (postOn()) {
       if (target) {   // keep the sharp band of the tilt-shift on the followed car
-        _pv.set(lerp(target.px, target.x, alpha), (target.y || 0) + 0.6, lerp(target.pz, target.z, alpha)).project(camera);
+        if (cam.shot) _pv.set(cam.shot.tx, cam.shot.ty, cam.shot.tz).project(camera); else if (podC) _pv.copy(podCam()[1]).project(camera); else _pv.set(lerp(target.px, target.x, alpha), (target.y || 0) + 0.6, lerp(target.pz, target.z, alpha)).project(camera);   // (a TV shot, the ceremony: on what they look at)
         const fy = clamp(_pv.y * 0.5 + 0.5, 0.1, 0.9);
         const fc = (fy + 0.5) / 2;                              // midpoint car <-> look-ahead (screen centre)
         post.focus += (fc - post.focus) * Math.min(1, dt * 6 + 0.02);
@@ -4131,6 +4521,7 @@ const Render = (function () {
       if (post.bloom > 0) bloomPass(); U.uBloom.value = post.bloom;
       renderer.setRenderTarget(null); renderer.render(post.sc, post.cam);
     } else { renderer.render(scene, camera); if (ckOn) ckDraw(); }
+    if (staleMats.size) { staleMats.forEach(m => m.dispose()); staleMats.clear(); }   // (the previous world's materials, now that the new world's have their programs)
   }
   // a still of the view as it is now (the photo mode): drawn again at a higher resolution (the long side up to maxSide pixels, never less
   // than on the screen), copied to a 2D canvas at once (a WebGL canvas keeps its picture only until the page shows it)
@@ -4212,6 +4603,7 @@ const Render = (function () {
   }
   function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.opacity.toFixed(3) : 0, water: wetW }; }   // (tests)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { setDebug, fxStats, wetFx, lookInfo, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, open: !!ck.parts.open, gear: ck.parts.scr && ck.parts.scr.txt ? ck.parts.scr.txt.split('|')[0] : null, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, setGhost, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, pkFly, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setDebug, fxStats, wetFx, lookInfo, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, open: !!ck.parts.open, gear: ck.parts.scr && ck.parts.scr.txt ? ck.parts.scr.txt.split('|')[0] : null, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, setGhost, init, buildWorld, applySettings, resize, attachRace, frame, setPodium, get lod() { return views.map(v => !!v.lod); }, get tv() { return tvC ? { n: tvC.cams.length, cur: tvC.cur, cams: tvC.cams, fov: tvC.fov, ms: tvC.ms, cuts: tvC.cuts, gridMs: tvC.gridMs } : null; }, get podium() { return podB ? { root: podB.root, F: podB.F, on: !!podC, t: podC ? podC.t : 0 } : null; }, setStartLights, shake, resetCam, setShot, pkFly, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get rainK() { return Math.max(0, wet); }, get wetRoad() { return Math.max(0, wetW); },
+    get sunDir() { const l = Math.hypot(sunOff[0], sunOff[1], sunOff[2]); return [sunOff[0] / l, sunOff[1] / l, sunOff[2] / l]; }, get podiumOn() { return !!podC; }, get birds() { return birds; } };
 })();
 

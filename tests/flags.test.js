@@ -2,7 +2,8 @@
 // flag (the section from 250 m before it to 30 m past it; gone 5 s after the car moves on); a heavy crash (a car stopped for long) the
 // safety car: it comes out ahead of the leader, the field queues up behind it without overtaking, it goes in (into the pit lane or away
 // up the road) and the race is green again at the line; no DRS under the flags; the player overtaking under a flag has to give the place
-// back within 10 s, else +5 s on the race time (in the results); a race without flags as before.
+// back within 10 s, else +5 s on the race time (in the results); a race without flags as before. Track limits (Race._limits, with the
+// flags): three warnings, then +5 s for each time all four wheels are past the kerb where the stewards watch.
 //   node tests/flags.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -94,6 +95,27 @@ for (const tid of ['rbring', 'jezero']) {
 {
   const r = new C.Race(track('rbring'), { numAI: 3, playerGrid: 4, laps: 1, playerModel: C.MODELS[4], phys: 'cs', seed: 3 });
   check('a race without flags: no flag state, no penalties', r.fl === null && r.estimateResults().every(e => !e.pen), '');
+}
+
+// track limits (Race._limits, with the flags): all four wheels past the kerb where the stewards watch (Track.limZ); three warnings, then
+// 5 s each; the kerb itself is track; nowhere else; no stewards (rules 0): nothing; the penalty counts in the results
+{ const T = track('jezero'); Math.random = seeded(9);
+  const byPit = (i) => T.def.pit && T.pitAt(i * T.ds);
+  const zi = (() => { for (let i = 0; i < T.N; i++) if (T.limZ[1][i] && !T.limZ[0][i] && !byPit(i)) return i; return -1; })();
+  const zfree = (() => { for (let i = 0; i < T.N; i++) if (!T.limZ[0][i] && !T.limZ[1][i] && !byPit(i)) return i; return -1; })();
+  const mk = (o) => { const r = new C.Race(T, Object.assign({ numAI: 6, playerGrid: 7, laps: 3, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1, flags: true }, o)); r.start(); return r; };
+  const go = (r, P, i, ws, n) => { for (let k = 0; k < n; k++) { P.q = { i, d: 8, s: i * T.ds }; P.ws = ws.slice(); P.vx = 25; P.vz = 0; r.time = Math.max(r.time, 20); r._limits(0.05); } };
+  const lim = (o, i, ws) => { const r = mk(o), P = r.player; r.state = 'racing'; P.locked = false; P.fl = { stopT: 0, v: 30, yel: null, pen: 0, owe: null, ah: null }; const ev = []; let pev = r.fl.pev;
+    for (let e = 0; e < 5; e++) { go(r, P, i, ws, 8); ev.push(r.fl.pev !== pev ? r.fl.pevK : '-'); pev = r.fl.pev; go(r, P, i, [0, 0, 0, 0], 2); }
+    return { ev, warn: P.fl.warn || 0, pen: P.fl.pen, r, P }; };
+  const a = lim({}, zi, [2, 3, 2, 2]);
+  check('track limits: three warnings, then 5 s for each', zi >= 0 && a.ev.join() === 'limits,limits,limits,limitsPen,limitsPen' && a.warn === 5 && a.pen === 10, `${a.ev.join()}, ${a.warn} warnings, +${a.pen} s`);
+  const b = lim({}, zi, [1, 1, 1, 1]), c = lim({}, zfree, [2, 2, 2, 2]), d = lim({ rules: 0 }, zi, [2, 2, 2, 2]);
+  check('track limits: the kerb is track, and only where the stewards watch; no stewards: no warnings', zfree >= 0 && b.warn === 0 && c.warn === 0 && d.warn === 0 && d.pen === 0,
+    `all four on the kerb ${b.warn}, off at an unwatched spot ${c.warn}, with the stewards off ${d.warn}`);
+  const r = a.r, P = a.P; r.cars.forEach((c, k) => { c.finished = true; c.finishTime = 100 + k; if (!r.finishOrder.includes(c)) r.finishOrder.push(c); });
+  P.finishTime = 90; const res = r.estimateResults(), me = res.findIndex(e => e.car === P);
+  check('track limits: the penalty is added to the race time in the results', Math.abs(res[me].time - 100) < 1e-9 && res[me].pen === 10 && me === 1, `the player's time ${res[me].time} s (crossed the line in 90 s, +${res[me].pen} s), classified ${me + 1}.`);
 }
 
 console.log(`\n${n - bad}/${n} passed`);

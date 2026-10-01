@@ -95,7 +95,7 @@ const f3 = (x) => (Number.isFinite(x) ? x.toFixed(3) : String(x));
     Math.random = seeded(5000 + (++k));
     if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P);
     C.aiControl(P, r, DT); r.step(DT); t += DT;
-    let nIn = 0; for (const c of r.cars) { if (!c.isPlayer && (c.pitWant || c.inPit)) nIn++; if (c.pitState === 'repair') stops.add(c); }
+    let nIn = 0; for (const c of r.cars) { if (!c.isPlayer && (c.pitWant || c.inPit) && c.pitWhy !== 'dmg') nIn++; if (c.pitState === 'repair') stops.add(c); }   // (the tyre stops; a car in for repairs, Race._aiPitCall, is not held to three)
     maxIn = Math.max(maxIn, nIn);
   }
   const wets = r.cars.filter(c => !c.isPlayer && c.ty.k === 'wet').length;
