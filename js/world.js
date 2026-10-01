@@ -4247,6 +4247,7 @@ const World = (function () {
     const at = (k) => (open ? clamp(k, 0, N - 1) : ((k % N) + N) % N), HYi = (i) => (T.hasElev ? T.hy[i] : 0);
     // (a stage of several widths and surfaces, Track.wa / sf (Harju): its own width at each sample, and only its tarmac worn, not the gravel or the cobbles)
     const wAt = (i) => (T.wa ? T.wa[i] : w), limAt = (i) => (T.wa ? T.wa[i] - 0.6 : lim), bare = (s) => !!T.sf && T.sf[at(Math.round(s / ds))] !== 0;
+    const sp = T.sf ? 0.5 : 1;   // (and a stage through a town, its streets patched and cracked twice as often)
     const deck = (i) => { for (const c of T.cross || []) { const d = Math.abs(i - c.up); if (Math.min(d, N - d) * ds < c.upZ + 30) return true; } return false; };   // (Suzuka's bridge fades out while the car drives under it)
     const chunk = (p) => { const k = Math.floor(p[0] / 256) + ',' + Math.floor(p[2] / 256); let c = cells.get(k); if (!c) cells.set(k, c = { P: [], C: [], U: [], I: [] }); return c; };
     const vtx = (c, p, col, uv) => { c.P.push(p[0], p[1], p[2]); c.C.push(col[0], col[1], col[2], col[3]); c.U.push(uv[0], uv[1]); return c.P.length / 3 - 1; };
@@ -4261,7 +4262,7 @@ const World = (function () {
       const cs = Math.cos(rot), sn = Math.sin(rot), Q = [[-hl, -hw, u0, v0], [hl, -hw, u1, v0], [hl, hw, u1, v1], [-hl, hw, u0, v1]].map(([a, b, u, v]) => [pt(s + a * cs - b * sn, lo + a * sn + b * cs), [u, v]]);
       const c = chunk(Q[0][0]), k = Q.map(q => vtx(c, q[0], col, q[1])); face(c, k[0], k[1], k[2]); face(c, k[0], k[2], k[3]); };
     // patches, every 40-100 m, more often in a wheel track than not
-    for (let s = R() * 50; s < len - 6; s += 40 + R() * 60) {
+    for (let s = R() * 50; s < len - 6; s += (40 + R() * 60) * sp) {
       const i = at(Math.round(s / ds)); if (deck(i) || bare(s)) continue;
       const li = limAt(i), hl = 0.8 + R() * 1.8, hw = 0.5 + R() * 1.1, lo = clamp((R() < 0.6 ? T.rl[i] + (R() < 0.5 ? -0.78 : 0.78) : (R() * 2 - 1) * wAt(i)) + (R() - 0.5) * 0.6, -li + hw, li - hw), k = R() < 0.55 ? 0.78 + R() * 0.1 : 1.06 + R() * 0.1;
       const rot = (R() - 0.5) * 0.08; if (bare(s - hl) || bare(s + hl)) continue;
@@ -4270,16 +4271,16 @@ const World = (function () {
     // sealed cracks (the texture's long strips are 8:1): across the road every 25-60 m, along it every 50-110 m, a network of them or one
     // with its branches every 120-260 m
     const strip = (s, lo, L, rot) => { const b = R() < 0.5; decal(s, lo, L / 2, L / 16, rot, 0.004, b ? 0.752 : 0.877, 0.996, b ? 0.873 : 0.998, [1, 1, 1, 0.8 + R() * 0.2]); };
-    for (let s = R() * 40; s < len - 4; s += 25 + R() * 35) {
+    for (let s = R() * 40; s < len - 4; s += (25 + R() * 35) * sp) {
       const i = at(Math.round(s / ds)); if (deck(i) || bare(s)) continue;
       const li = limAt(i), L = Math.min(2 * li, 3 + R() * (2 * li - 2)), lo = (R() * 2 - 1) * Math.max(0, li - L / 2);
       strip(s, lo, L, Math.PI / 2 + (R() - 0.5) * 0.3);
     }
-    for (let s = R() * 60; s < len - 8; s += 50 + R() * 60) {
+    for (let s = R() * 60; s < len - 8; s += (50 + R() * 60) * sp) {
       const i = at(Math.round(s / ds)); if (deck(i) || bare(s - 4.5) || bare(s) || bare(s + 4.5)) continue;
       strip(s, (R() * 2 - 1) * (limAt(i) - 0.5), 4 + R() * 5, (R() - 0.5) * 0.08);
     }
-    for (let s = R() * 100; s < len - 4; s += 120 + R() * 140) {
+    for (let s = R() * 100; s < len - 4; s += (120 + R() * 140) * sp) {
       const i = at(Math.round(s / ds)); if (deck(i) || bare(s - 2.2) || bare(s) || bare(s + 2.2)) continue;
       const h = 1.4 + R() * 0.8, lo = (R() * 2 - 1) * Math.max(0, limAt(i) - h * 1.12), net = R() < 0.5;
       decal(s, lo, h, h / 2, R() * TAU, net ? 0.002 : 0.502, 0.502, net ? 0.498 : 0.998, 0.748, [1, 1, 1, 0.8 + R() * 0.2]);

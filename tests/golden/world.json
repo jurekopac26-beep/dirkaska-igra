@@ -279,11 +279,11 @@
  },
  "harju": {
   "meshes": 772,
-  "verts": 1423939,
+  "verts": 1424339,
   "instances": 8723,
   "props": 21,
   "crowd": 4722,
-  "world": "46895dea",
+  "world": "3bb0a6",
   "propsHash": "f70a7360",
   "floor": "3202d0cb/4480",
   "groups": {
@@ -293,7 +293,7 @@
    "puddles:MeshBasicMaterial": "219cf0ec",
    "crowd:MeshLambertMaterial": "91b7a892",
    "tyremarks:MeshBasicMaterial": "f03bef5d",
-   "roadwear:MeshLambertMaterial": "808d70ba"
+   "roadwear:MeshLambertMaterial": "e8d5194b"
   }
  }
 }
