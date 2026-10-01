@@ -30,6 +30,7 @@
   let S = Object.assign({}, DEF);
   let records = {};
   try { const j = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (j) S = Object.assign(S, j); } catch (_) { }
+  if (S.pkFly == null) S.pkFly = 1;   // (Pikes Peak: the course flyover before a fresh start, on unless switched off in Nastavitve)
   // one-time move to the new recommended defaults (chase camera, far view, high drift assist) for existing players
   try { if (!localStorage.getItem('tdgp-defaults-v2')) { S.camera = 'chase'; S.zoom = 1.2; S.assist = 2; localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
   try { records = JSON.parse(localStorage.getItem('tdgp-records') || '{}') || {}; } catch (_) { records = {}; }
@@ -417,7 +418,7 @@
     if (key === 'pitCmp' && race && race.player) race.player.pitCmp = S.pitCmp;   // (the slicks for the next pit stop)
     if (key === 'weather' && demo) { demo.setRain(demoRain()); if (!race) Render.setStorm(S.weather === 'storm'); }   // (a race keeps its weather; the next one gets the new setting)
     if (key === 'season' || key === 'tod') Render.setAtmos({ season: S.season, tod: S.tod });   // (the season and the time of day: at once, also on the title demo)
-    if ((key === 'weather' || key === 'mode' || key === 'length') && screen === 'track') buildTrackScreen();   // (a time trial's records in the rain are its own, and a race's: the cards show them)
+    if ((key === 'weather' || key === 'mode' || key === 'length' || key === 'pkGhost') && screen === 'track') buildTrackScreen();   // (a time trial's records in the rain are its own, and a race's: the cards show them)
     if (key === 'control' && v === 'tilt') enableTilt(false);
     if (key === 'camera') { lockOrientation(); updateOrientation(); }
   }
@@ -988,10 +989,10 @@
     return g;
   }
   function ghShow(alpha) {   // every drawn frame of a race: the player's own best run and a friend's shared one
-    const on = !!race && !!S.ghost && (phase === 'racing' || phase === 'finish' || phase === 'done') && race.state !== 'grid';
-    Render.setGhost(on && ghPlay ? ghAt(ghPlay, alpha, _gp) : null);
-    if (on && ghFr) _gpF.tag = ghFr.name + ' ' + fmt(ghFr.t);
-    Render.setGhostF(on && ghFr ? ghAt(ghFr.g, alpha, _gpF) : null);
+    const on = !!race && (phase === 'racing' || phase === 'finish' || phase === 'done') && race.state !== 'grid';   // (Pikes Peak: its own setting, Duh, picks the ghost)
+    Render.setGhost(on && ghPlay && (S.ghost || pk.on) ? ghAt(ghPlay, alpha, _gp) : null);
+    if (on && S.ghost && ghFr) _gpF.tag = ghFr.name + ' ' + fmt(ghFr.t);
+    Render.setGhostF(on && S.ghost && ghFr ? ghAt(ghFr.g, alpha, _gpF) : null);
   }
 
   /* ---------------- sharing: the profile (all the game keeps: settings, records, career, championship, achievements, ghosts) and a ghost ----------------
@@ -1076,7 +1077,7 @@
   // (pause menu) goes straight to the race: the usual grid, the player 12th.
   let qual = null;   // { id, cr (a championship round, or -1), seed, rain, nAI, back, diff, phys, sims: { k, r, t, times }, lap, lapShown, newRec, wait, res: { grid, order, rows } }
   const qualiOn = (d) => !!S.quali && !isTT(d) && !d.open && !(mp && mp.race);   // (a race up an open road, Vršič: no lap to fly, straight to the grid)
-  function startRace() { qual = null; newRace(qualiOn(track.def) ? 'quali' : undefined); }   // the menus' Start: a new qualifying first, when it is on
+  function startRace() { qual = null; pkF.fresh = true; newRace(qualiOn(track.def) ? 'quali' : undefined); }   // the menus' Start: a new qualifying first, when it is on
   function qsimStep(Q, ms) {   // the rivals' laps, for about ms milliseconds; true when all are done
     if (Q.phys !== physOf()) { Q.phys = physOf(); Q.sims = null; }   // (the physics changed in the pause menu: their laps again with it)
     const G = Q.sims || (Q.sims = { k: 0, r: null, t: 0, times: [] }), cap = track.len / 8 + 120, t0 = performance.now();
@@ -1162,6 +1163,7 @@
     introLen = 1.3; endPodium();
     { const air = Render.world && Render.world.air;   // the Red Bull Ring: first the jets over the grid, filmed from the grid (not online, not in a time trial or qualifying)
       if (air && !on && !tt && !quali && !school) { air.go = true; introLen += JET_SHOT; Render.setShot(air.shot); $('hud').classList.add('shot'); } }
+    pkFlyStart(!on && tt && !quali);   // (Pikes Peak: the course flyover first, at a fresh start only)
     lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; dmgKey = ''; pitHint = false; drsN = 0; secN = 0; wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
     $('h-msg').className = ''; $('h-split').className = ''; $('h-note').className = '';
     $('h-lights').className = ''; setLights(0, false);
@@ -1225,7 +1227,7 @@
     const el = $('podium-cap'); el.innerHTML = top.map((c, i) => '<span><b>' + (i + 1) + '.</b> <i style="background:' + hexCss(c.color) + '"></i>' + esc(c.isPlayer ? tr('Ti') : c.name) + '</span>').join(''); el.className = 'show';
     const w = top[0]; Comm.say(w && w.isPlayer ? 'podiumMe' : 'podiumRb', { name: w ? w.name : '' }, 3);
   }
-  function endPodium() { const pod = Render.world && Render.world.podium; if (pod) pod.hide(); $('podium-cap').className = ''; shotOff(); }
+  function endPodium() { const pod = Render.world && Render.world.podium; if (pod) pod.hide(); $('podium-cap').className = ''; shotOff(); pkFlyEnd(); }   // (and Pikes Peak's flyover, left for the title)
   function toTitle() {
     stSave();   // (the km of a race left before its end)
     endPodium(); champRecord(); champRun = false; replay = null; recd = null; $('replay-ui').classList.add('off');
@@ -1496,11 +1498,11 @@
   const pkTag = (c) => '<span class="pk-cls pk-' + c.id + '">' + esc(c.name) + '</span>';
   function pkTrackTag(r) {   // the track card: the class of the chosen car and its best time
     const M = Core.MODELS[S.car], c = pkClsOf(M.id), b = pkBoards(r)[c.id][0];
-    return '<div class="tmeta pk-meta">' + tr('Razred {0} {1}', pkTag(c), esc(M.name)) + (b ? tr(' · rekord razreda {0}', fmt(b.time, true)) : tr(' · v razredu še ni časa')) + '</div>';
+    return '<div class="tmeta pk-meta">' + tr('Razred {0} {1}', pkTag(c), esc(M.name)) + (b ? tr(' · rekord razreda {0}', fmt(b.time, true)) : tr(' · v razredu še ni časa')) + '</div>' + pkCardMed(r, c);   // (+ the class's medal times)
   }
   function pkStart() {   // newRace (after hxStart)
     const on = pk.on = !!race.timeTrial && pkIs(track.def) && !(mp && mp.race), H = $('h-sec');
-    $('hud').classList.toggle('pkc', on); $('pk-cer').className = '';
+    $('hud').classList.toggle('pkc', on); $('pk-cer').className = ''; $('hud').classList.remove('pkn', 'pkleg');
     while (H.children.length > 3) H.lastChild.remove();
     if (!on) return;
     pk.cls = pkClsOf(Core.MODELS[S.car].id);
@@ -1508,7 +1510,40 @@
     while (H.children.length < track.cpS.length) H.appendChild(document.createElement('i'));
     [...H.children].forEach((el, j) => { el.innerHTML = '<small>CP' + (j + 1) + '</small>\u2013'; el.className = ''; });
     const el = $('h-pkcls'); el.textContent = pk.cls.name.toUpperCase(); el.className = 'h-lbl pk-' + pk.cls.id;
+    pk7Start();   // (the chosen ghost, the corner warnings)
   }
+  // Pikes Peak's course flyover (prelet proge; Render.pkFly films it): a TV sweep up the course with captions at the famous places, during
+  // the race's intro before the lights (the race clock starts after it, the race is not touched). At a fresh start from the menus only:
+  // not online, not after Ponovi, not with the setting off. A tap, a click, any key or pad button skips it (the input is used up by that)
+  const pkF = { on: false, fresh: false, k: -2, eat: 0, bound: false };
+  function pkFlyStart(ok) {
+    pkFlyEnd();
+    const fresh = pkF.fresh; pkF.fresh = false;
+    if (!ok || !fresh || !pkIs(track.def) || !+S.pkFly || !Render.pkFly || !Render.pkFly.at(0)) return;
+    if (!pkF.bound) { pkF.bound = true;
+      const eat = (e) => { e.stopImmediatePropagation(); if (e.cancelable) e.preventDefault(); };
+      window.addEventListener('keydown', (e) => { if (!pkF.on || screen !== 'none' || paused) return; if (!e.repeat) pkFlySkip(); eat(e); }, true);
+      window.addEventListener('pointerdown', (e) => { if (!pkF.on || screen !== 'none' || paused) return; pkFlySkip(); pkF.eat = performance.now() + 700; eat(e); }, true);
+      window.addEventListener('click', (e) => { if (performance.now() < pkF.eat) { pkF.eat = 0; eat(e); } }, true); }   // (the tap's click: not a pause as well)
+    pkF.on = true; pkF.k = -2; introLen += Render.pkFly.DUR;
+    Render.pkFly.warm();   // (every shader of the world now, while the screen still changes over from the menu: none compiles mid-flight)
+    Render.setShot(Render.pkFly.at(0).shot); $('hud').classList.add('shot'); document.body.classList.add('pkfly');
+    pkFlyStep();
+  }
+  function pkFlyStep() {   // updatePhase, in the intro: the shot and its caption at this moment
+    const o = Render.pkFly.at(phaseT), el = $('pk-fly');
+    if (!o || phaseT >= Render.pkFly.DUR) { pkFlyEnd(); return; }
+    if (o.k !== pkF.k && o.k >= 0) { const C = Render.pkFly.caps, c = C[o.k], al = track.def.alt, a = al && !o.k ? al[0] : al && o.k === C.length - 1 ? al[1] : track.altAt(track.hy[track.idx(c.s)]);   // (the start's and the finish's: as the HUD shows them)
+      el.children[1].textContent = tr(c.n); el.children[2].textContent = a != null ? numDot(al ? clamp(a, al[0], al[1]) : a) + ' m' : ''; }
+    pkF.k = o.k; el.className = 'show';
+    el.style.opacity = Math.min(1, phaseT / 0.3, (Render.pkFly.DUR - phaseT) / 0.3).toFixed(2);
+    const a = o.k >= 0 ? o.a.toFixed(2) : '0'; el.children[1].style.opacity = a; el.children[2].style.opacity = a;
+  }
+  function pkFlyEnd() {   // the flyover over (or skipped, or a new race): the game's camera, the HUD back
+    if (!pkF.on) return;
+    pkF.on = false; $('pk-fly').className = ''; document.body.classList.remove('pkfly'); shotOff(); Render.pkFly.end();
+  }
+  function pkFlySkip() { if (!pkF.on) return; if (phase === 'intro' && phaseT < Render.pkFly.DUR) phaseT = Render.pkFly.DUR; pkFlyEnd(); }   // (the usual 1.3 s of the intro, then the lights)
   const pkSplit = (k) => pk.best && posNum(pk.best.splits[k]) ? pk.best.splits[k] : NaN;   // the class best run's time at checkpoint k (0-based)
   function pkSplitHUD(k, t, d, has) {   // checkpoint k (1-based) at time t, d: against the class best run's split there
     const el = $('h-split'), c = has ? dCls(d) : 'even';
@@ -1518,10 +1553,11 @@
     if (cell) { const a = Math.abs(d); cell.innerHTML = '<small>CP' + k + '</small>' + (has ? (d < 0 ? '\u2212' : '+') + (a >= 60 ? fmt(a).slice(0, -4) : a.toFixed(a < 10 ? 2 : 1)) : secTxt(t)); cell.className = has ? (d < 0.0005 ? 'pkf' : 'pks') : 'pkn'; }
   }
   function pkFinish(R0, e) {   // ttFinish: the run into its class board (stored); its place there and the class best before it
-    const B = pkBoards(R0), c = pk.cls, a = B[c.id], prev = a[0] ? a[0].time : 0;
+    const B = pkBoards(R0), c = pk.cls, a = B[c.id], prev = a[0] ? a[0].time : 0, mp0 = pkMeds(R0, track.def)[c.id], m0 = mp0 != null ? mp0 : -1;
     a.push(e); a.sort((x, y) => x.time - y.time); const rank = a.indexOf(e) + 1; B[c.id] = a.slice(0, 5);
+    const med = pkMedOf(pkMedSet(track.def)[c.id], e.time), newMed = med >= 0 && (m0 < 0 || med < m0); if (newMed) R0.pkMed[c.id] = med;   // (the class's best medal, kept with its board)
     saveRecords();
-    return { cls: c, rank, prev, newCB: !prev || e.time < prev };
+    return { cls: c, rank, prev, newCB: !prev || e.time < prev, med, newMed };
   }
   const pkPlace = (p) => p.rank <= 5 ? tr('{0} v razredu {1}', Lang.ord(p.rank), pkTag(p.cls)) : tr('Izven prvih 5 v razredu {0}', pkTag(p.cls));
   const pkDiff = (r) => { const p = r.pk, d = r.time - p.prev;
@@ -1533,18 +1569,149 @@
     el.innerHTML = '<div class="pkc-flag"><i></i></div><div class="pkc-top">' + tr('VRH') + (alt ? ' · ' + alt : '') + '</div>' +
       '<div class="pkc-time">' + fmt(r.time, true) + '</div><div class="pkc-pos">' + (p.rank === 1 ? '\u{1F3C6} ' : '') + pkPlace(p) + '</div>' +
       (p.newCB ? '<div class="pkc-rec">' + tr(p.prev ? 'NOV REKORD RAZREDA' : 'PRVI REKORD RAZREDA') + '</div>' : r.newPB ? '<div class="pkc-rec">' + tr('NOV OSEBNI REKORD') + '</div>' : '') +
-      '<div class="pkc-d">' + pkDiff(r) + '</div>';
+      '<div class="pkc-d">' + pkDiff(r) + '</div>' + pkCerMed(r);
     el.className = 'show' + (p.newCB ? ' rec' : '');
   }
   function pkResults(r) {   // the results screen: the class line under the overall one, the class top 5 above the overall board
     const p = r.pk; $('pk-cer').className = ''; if (!p) return;
-    $('res-sub').innerHTML += '<br>' + pkPlace(p) + ' · ' + pkDiff(r) + '.';
+    $('res-sub').innerHTML += '<br>' + pkPlace(p) + ' · ' + pkDiff(r) + '.<br>' + pkMedLine(p, r.time);
     const hs = $('res-tt').querySelectorAll('.ltab-h'), h = hs[hs.length - 1], b = pkBoards(rec(track.def.id))[p.cls.id];
     if (h) h.insertAdjacentHTML('beforebegin', '<p class="ltab-h">' + tr('Razred {0} · najboljših 5', esc(p.cls.name)) + '</p><table class="ltab b"><thead>' + ttHead() + '</thead><tbody>' + boardRows(b, r.entry) + '</tbody></table>');
   }
   function pkBoardHTML(r) {   // Lestvica: the top 5 of each class
     const B = pkBoards(r);
-    return PK_CLS.map(c => '<p class="ltab-h">' + tr('{0} najboljših 5', pkTag(c)) + '</p>' + (B[c.id].length ? '<table class="ltab b"><thead>' + ttHead() + '</thead><tbody>' + boardRows(B[c.id], null) + '</tbody></table>' : '<p class="board-empty">' + tr('V tem razredu še ni časov ({0}).', Core.MODELS.filter(m => pkClsOf(m.id) === c).map(m => esc(m.name)).join(', ')) + '</p>')).join('');
+    const Md = pkMeds(r, Core.TRACKS.find(pkIs)), A = pkMedSet(Core.TRACKS.find(pkIs));
+    return PK_CLS.map(c => '<p class="ltab-h">' + tr('{0} najboljših 5', pkTag(c)) + '</p><p class="pk-medl">' + pkMedTxt(A[c.id]) + ' · ' + (Md[c.id] != null ? tr('tvoja najboljša {0}', MEDAL_ICON[Md[c.id]]) : tr('še brez medalje')) + '</p>' + (B[c.id].length ? '<table class="ltab b"><thead>' + ttHead() + '</thead><tbody>' + boardRows(B[c.id], null) + '</tbody></table>' : '<p class="board-empty">' + tr('V tem razredu še ni časov ({0}).', Core.MODELS.filter(m => pkClsOf(m.id) === c).map(m => esc(m.name)).join(', ')) + '</p>')).join('');
+  }
+  /* ---------------- PIKES PEAK: corner warnings, medals per class, the legend ghost ---------------- */
+  // Medals per class, dry and wet (s): measured with the autopilot (Core.aiControl, assist 2, no upgrades, as tests/races.test.js drives)
+  // on the fastest car of each class: dry FORMULA ORKAN 164.26, BURJA R7 182.30, STREGA MR 186.80, PEUGEOT 206 184.58 (VORTEX 185.13,
+  // KAZE 189.19, PICO 186.12); wet 180.68, 196.83, 204.23, 200.20. Gold ~1.5 % under that run, silver ~2.5 % over it, bronze ~8 % over.
+  // The class's best medal is kept with its board (R0.pkMed[class] 0 gold .. 2 bronze; the board's best time counts too).
+  const PK_MED = { unl: [161, 168, 177], open: [176, 183, 193], ppo: [183, 191, 201], ta1: [181, 189, 199] }, PK_MED_WET = { unl: [177, 185, 195], open: [189, 197, 208], ppo: [201, 209, 220], ta1: [197, 205, 216] };
+  const PK_LEG = { unl: 'formula', open: 'ev', ppo: 'strega', ta1: 'p206' };   // the legend's car: the class's fastest on the autopilot
+  if (!['best', 'legend', 'off'].includes(S.pkGhost)) S.pkGhost = S.ghost ? 'best' : 'off';   // Duh: moj najboljši / legenda / brez (first time: as the ghost setting)
+  S.pkNotes = +S.pkNotes === 0 ? 0 : 1;   // Opozorila na ovinke (on unless turned off)
+  const pkMedSet = (d) => wetRec(d) ? PK_MED_WET : PK_MED;
+  const pkMedOf = (A, t) => t > 0 ? A.findIndex(x => t <= x) : -1;
+  const pkMs = (t) => Math.floor(t / 60) + ':' + String(Math.round(t % 60)).padStart(2, '0');
+  const pkMedTxt = (A) => A.map((t, k) => MEDAL_ICON[k] + ' ' + pkMs(t)).join(' · ');
+  function pkMeds(R0, d) {   // the best medal of each class (stored, or from the class board's best time)
+    const A = pkMedSet(d), B = pkBoards(R0), o = isObj(R0.pkMed) ? R0.pkMed : {}, m = {};
+    for (const c of PK_CLS) { let k = [0, 1, 2].includes(o[c.id]) ? o[c.id] : -1; const b = B[c.id][0], kb = b ? pkMedOf(A[c.id], b.time) : -1; if (kb >= 0 && (k < 0 || kb < k)) k = kb; if (k >= 0) m[c.id] = k; }
+    return (R0.pkMed = m);
+  }
+  function pkCardMed(r, c) {   // the track card: the medal times of the chosen car's class, the one already won; the ghost's row, the legend made ready
+    const d = Core.TRACKS.find(pkIs), k = pkMeds(r, d)[c.id], sel = S.track === d.id, row = $('pk-gh-row');
+    if (row) row.classList.toggle('off', !sel);
+    if (sel && S.pkGhost === 'legend') pkLegWarm(c.id, wetRec(d));
+    return '<div class="tmeta pk-meta pk-medl">' + pkMedTxt(pkMedSet(d)[c.id]) + (k != null ? tr(' · tvoja {0}', MEDAL_ICON[k]) : '') + '</div>';
+  }
+  const pkMedName = (k) => tr(MEDAL[k]);   // (Zlata medalja ...)
+  function pkMedLine(p, t) {   // results: the medal won in the class, and how far the next one was
+    const A = pkMedSet(track.def)[p.cls.id], k = p.med, n = k < 0 ? 2 : k - 1;
+    return (k >= 0 ? MEDAL_ICON[k] + ' ' + tr('{0} v razredu {1}', pkMedName(k), esc(p.cls.name)) + (p.newMed ? tr(' (nova najboljša)') : '') : tr('Brez medalje v razredu {0}', esc(p.cls.name))) +
+      (n >= 0 ? tr(k < 0 ? ' · do brona {0} ({1})' : n === 0 ? ' · do zlata {0} ({1})' : ' · do srebra {0} ({1})', pkMs(A[n]), '<span class="slow">' + sgn(t - A[n]) + '</span>') : '') + '.';
+  }
+  function pkCerMed(r) {   // the summit ceremony: the medal (or how far bronze was)
+    const p = r.pk, k = p.med;
+    if (k >= 0) { Comm.say('medal', { medal: MEDAL_EN[k] }, 3, { ttl: 9000 }); return '<div class="pkc-med m' + k + '"><i>' + MEDAL_ICON[k] + '</i><span>' + tr(MEDAL[k]).toUpperCase() + (p.newMed ? '<small>' + tr('nova najboljša v razredu') + '</small>' : '') + '</span></div>'; }
+    const B = pkMedSet(track.def)[p.cls.id][2];
+    return '<div class="pkc-med none">' + tr('Do brona {0} še {1}', pkMs(B), sgn(r.time - B)) + '</div>';
+  }
+  // The legend (Duh: legenda): the autopilot's run with the class's legend car, sampled like a ghost and put on the gold clock (sample j
+  // is the run at j * GH_DT * run / gold), so it crosses the line on the gold time. Made once per class and weather, a slice at a time
+  // while the menus are up (the rest at the start, if it is not ready), with its own seeded random numbers (the same run every time; the
+  // game's untouched), on a race of its own (the race driven is never touched); kept in localStorage (tdgp-pklegend-*). Not a record.
+  const PK_LEG_V = 1, pkLeg = { mem: {}, job: null };
+  const pkLegKey = (c, wet) => 'tdgp-pklegend-' + c + '-' + PK_LEG[c] + (wet ? '-wet' : '');   // (the car in the key: a new legend car makes a new run)
+  const pkLegTrk = (T) => Math.round(T.len * 10) + '/' + T.N;   // (the road it was driven on)
+  function pkLegGet(c, wet) {   // the legend's run, or null when it is not made yet
+    const key = pkLegKey(c, wet), T = getTrack('pikes'), gold = (wet ? PK_MED_WET : PK_MED)[c][0];
+    if (pkLeg.mem[key]) return pkLeg.mem[key];
+    let o = null; try { o = JSON.parse(localStorage.getItem(key) || 'null'); } catch (_) { return null; }
+    if (!isObj(o) || o.v !== PK_LEG_V || o.trk !== pkLegTrk(T) || o.t !== gold || !(o.n >= 2 && o.n <= GH_MAX) || typeof o.d !== 'string' || !Array.isArray(o.q0) || o.q0.length !== 3) return null;
+    let b; try { b = atob(o.d); } catch (_) { return null; }
+    if (b.length !== o.n * GH_CH * 2) return null;
+    const u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
+    const a = new Int16Array(u.buffer), f = new Float32Array(o.n * GH_CH), q = o.q0.map(v => +v || 0);
+    for (let k = 0; k < o.n; k++) { const i = k * GH_CH; for (let ch = 0; ch < 3; ch++) { q[ch] += a[i + ch]; f[i + ch] = q[ch] / 100; } for (let ch = 3; ch < 7; ch++) f[i + ch] = a[i + ch] / 1e4; }
+    return (pkLeg.mem[key] = { n: o.n, t: gold, M: modelById(PK_LEG[c]), color: 0xe0b22a, stripe: true, f, lap: false, leg: true });
+  }
+  function pkLegRun(J, ms) {   // the legend's run for about ms milliseconds; true when it is over (made and kept, or given up)
+    const r = J.r, P = r.player, t0 = performance.now(), orig = Math.random, cap = 420;
+    Math.random = J.rnd;
+    try {
+      while (!P.finished && r.time < cap) {
+        for (let n = 0; n < 120 && !P.finished && r.time < cap; n++) {
+          Core.aiControl(P, r, STEP); r.step(STEP);
+          if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P);
+          const t1 = r.time, tp = t1 - STEP;
+          while (J.n < GH_MAX && J.n * GH_DT <= t1 + 1e-9) { ghPose(P, J.f, J.n, clamp((J.n * GH_DT - tp) / STEP, 0, 1)); J.n++; }
+        }
+        if (performance.now() - t0 > ms) break;
+      }
+    } finally { Math.random = orig; }
+    if (!P.finished && r.time < cap) return false;
+    if (pkLeg.job === J) pkLeg.job = null;
+    if (!P.finished || J.n < 2) return true;   // (never got there: no legend)
+    if (J.n < GH_MAX) { ghPose(P, J.f, J.n, 1); J.n++; }
+    const gold = (J.wet ? PK_MED_WET : PK_MED)[J.c][0], q = P.finishTime / gold, n = Math.min(GH_MAX, Math.floor(gold / GH_DT) + 2), F = J.f, L = J.n - 1, f = new Float32Array(n * GH_CH);
+    for (let j = 0; j < n; j++) { const u = Math.min(L, j * q), k = Math.min(L - 1, Math.floor(u)), a = u - k, o = k * GH_CH, p = o + GH_CH, w = j * GH_CH;
+      for (let ch = 0; ch < GH_CH; ch++) f[w + ch] = ch === 3 ? F[o + 3] + Core.wrapPi(F[p + 3] - F[o + 3]) * a : F[o + ch] + (F[p + ch] - F[o + ch]) * a; }
+    const key = pkLegKey(J.c, J.wet), e = ghEncode({ n, f });
+    pkLeg.mem[key] = { n, t: gold, M: modelById(PK_LEG[J.c]), color: 0xe0b22a, stripe: true, f, lap: false, leg: true };
+    if (e) try { localStorage.setItem(key, JSON.stringify({ v: PK_LEG_V, trk: pkLegTrk(r.track), t: gold, car: PK_LEG[J.c], n, q0: e.q0, d: e.d })); } catch (_) { }
+    return true;
+  }
+  function pkLegJob(c, wet) {   // a new run of the legend (its own race on the Pikes Peak road; the one driven is never touched)
+    let s = 97; const rnd = () => { s = (s * 16807) % 2147483647; return s / 2147483647; }, orig = Math.random; let r;
+    Math.random = rnd; try { r = new Core.Race(getTrack('pikes'), { numAI: 0, playerGrid: 1, laps: 1, playerModel: modelById(PK_LEG[c]), assist: 2, phys: physOf(), seed: 7, difficulty: 1, rain: wet ? 1 : 0, damage: 0, tt: true }); r.start(); } finally { Math.random = orig; }
+    return (pkLeg.job = { c, wet, r, f: new Float32Array(GH_MAX * GH_CH), n: 0, rnd });
+  }
+  function pkLegWarm(c, wet) {   // the menus: make the legend in the background (8 ms slices), unless it is there or on the way
+    if (pkLegGet(c, wet) || (pkLeg.job && pkLeg.job.c === c && pkLeg.job.wet === wet)) return;
+    const J = pkLegJob(c, wet);
+    const go = () => { if (pkLeg.job !== J) return; if (bg === 'race' && phase !== 'done') { setTimeout(go, 500); return; } if (!pkLegRun(J, 8)) setTimeout(go, 24); };   // (never during a race)
+    setTimeout(go, 60);
+  }
+  function pkLegNow(c, wet) {   // the start: the legend, made right now if it is not ready (once; about a third of a second)
+    const G = pkLegGet(c, wet); if (G) return G;
+    const J = pkLeg.job && pkLeg.job.c === c && pkLeg.job.wet === wet ? pkLeg.job : pkLegJob(c, wet);
+    pkLegRun(J, 1e9); return pkLegGet(c, wet);
+  }
+  // The corner warnings (Opozorila na ovinke, S.pkNotes): a pace-note pill under the clock for the next corner, from 2.6 s before it
+  // at the current speed (40-230 m) until the car is in it: a hairpin big and red, a medium bend orange, a fast one faint; the arrow
+  // and the rally grade (2 a slow corner .. 6 a flat-out kink), the distance. It replaces the generic arrow (#h-note) on Pikes Peak.
+  const PK_NP = { r3: 'M20 56 V28 Q20 12 32 12 Q44 12 44 28 V42 M35 34 L44 43 L53 34', l3: 'M44 56 V28 Q44 12 32 12 Q20 12 20 28 V42 M29 34 L20 43 L11 34',
+    r2: 'M22 56 V36 Q22 20 38 20 H48 M39 11 L48 20 L39 29', l2: 'M42 56 V36 Q42 20 26 20 H16 M25 11 L16 20 L25 29',
+    r1: 'M26 56 V40 Q26 24 42 15 M32 10 L43 14 L39 25', l1: 'M38 56 V40 Q38 24 22 15 M32 10 L21 14 L25 25' };
+  function pk7Start() {   // pkStart: the ghost chosen for Pikes Peak (the live difference and the profile follow it), the corners ahead
+    const wet = !!race.rain;
+    if (S.pkGhost === 'off') ghPlay = null;
+    else if (S.pkGhost === 'legend') ghPlay = pkLegNow(pk.cls.id, wet);
+    hxStart();   // (again: the difference and the profile against this ghost)
+    $('hud').classList.toggle('pkleg', !!(ghPlay && ghPlay.leg));
+    const T = track, nos = T.def.turnNos(T);
+    pk.notes = nos.map(q => { const c = T.corners.find(x => x.s0 === q.s), hp = q.sev === 3 && !!c && c.angle > 2.0, a = c ? c.angle : 0;
+      return { s: q.s, n: q.n, sev: q.sev, dir: q.dir, hp, g: hp ? 1 : q.sev === 3 ? 2 : q.sev === 2 ? (a > 1.2 ? 3 : 4) : a < 0.5 ? 6 : 5 }; });
+    pk.nk = -2; pk.nd = ''; pk.non = -1; $('pk-note').className = '';
+  }
+  function pkNoteFrame(P) {   // every HUD frame: the pill (the DOM touched only when the corner or its 10 m step changes)
+    const on = +S.pkNotes ? 1 : 0, el = $('pk-note');
+    if (on !== pk.non) { pk.non = on; $('hud').classList.toggle('pkn', !!on); }
+    const L = pk.notes, sp = track.startS + P.dist; let k = -1;
+    if (on && L && phase === 'racing' && !P.finished) { for (let i = 0; i < L.length; i++) if (L[i].s + 6 > sp) { k = i; break; } if (k >= 0 && L[k].s - sp > clamp(P.speed * 2.6, 40, 230)) k = -1; }
+    if (k !== pk.nk) { pk.nk = k; pk.nd = '';
+      if (k < 0) { el.classList.remove('show'); return; }
+      const c = L[k], lr = c.dir > 0 ? 'r' : 'l';
+      $('pk-note-path').setAttribute('d', PK_NP[lr + (c.hp ? 3 : c.sev === 1 ? 1 : 2)]);
+      el.children[1].textContent = c.hp ? tr(c.dir > 0 ? 'DESNA LASNICA' : 'LEVA LASNICA') : tr(c.dir > 0 ? 'DESNI {0}' : 'LEVI {0}', c.g);
+      el.className = 's' + c.sev + (c.hp ? ' hp' : '') + ' show';
+    }
+    if (k < 0) return;
+    const d = Math.max(0, Math.round((L[k].s - sp) / 10) * 10), t = d ? d + ' m' : '';
+    if (t !== pk.nd) { pk.nd = t; el.children[2].textContent = t; }
   }
   function finishRace() {
     phase = 'done';
@@ -2074,6 +2241,7 @@
   // time trial: CP counter, altitude, clock from the green light, personal best, split popups with the difference to the PB splits
   function updateHUDTT(dt, P) {
     hxFrame(dt, P);   // (turn counter, live difference to the best run, height profile: below)
+    if (pk.on) pkNoteFrame(P);   // (Pikes Peak: the corner warnings)
     const nCP = track.cpS.length, R0 = rec(track.def.id);
     setText('h-lap', P.finished ? tr('CILJ') : 'CP ' + P.cp + '/' + nCP);
     // altitude of the road under the car (not the body, as in the splits table), between start and summit; frozen at the summit after the finish.
@@ -2440,6 +2608,7 @@
   /* ---------------- phases ---------------- */
   function updatePhase(dt, inp) {
     phaseT += dt;
+    if (pkF.on) pkFlyStep();
     const on = mp && mp.race;
     if (on && (phase === 'intro' || phase === 'lights')) phaseT = (Net.now() - on.at) / 1000 - (phase === 'lights' ? 1.3 : 0);   // online: both phones follow the host's clock
     if (phase === 'intro' && phaseT > 1.3 && race.quali) {   // qualifying: no lights, the clock starts at the line
@@ -2871,6 +3040,7 @@
   function padFrame(dt) {
     const P = Input.padRead(dt);
     if (photo) photoPad(dt);
+    if (pkF.on && P.pressed.length && screen === 'none' && !paused) { pkFlySkip(); return; }   // (any button: the flyover skipped)
     if (P.on && (screen !== padScreen || (padSel && !padSel.isConnected))) { padScreen = screen; padFocus(screen === 'none' ? null : padHome()); }   // (a new screen, or its list drawn again: the highlight on the main button or the chosen item)
     for (const k of P.pressed) {
       if (screen === 'none') {   // racing
@@ -3179,15 +3349,15 @@
       ghHash();   // (opened with a friend's ghost's link)
       // offline play and the newest version when online (sw.js); a service worker needs http(s), not a local file
       if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => { });
-      window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get saver() { return saverOn(); }, set batLow(v) { batLow = !!v; renderSettings(); }, get screen() { return screen; }, S, onAction, pause, resume,
+      window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get pkFly() { return pkF.on ? { t: phaseT, k: pkF.k } : null; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get saver() { return saverOn(); }, set batLow(v) { batLow = !!v; renderSettings(); }, get screen() { return screen; }, S, onAction, pause, resume,
         get qual() { return qual && { id: qual.id, cr: qual.cr, seed: qual.seed, rain: qual.rain, sims: qual.sims ? qual.sims.k : 0, n: qual.nAI, lap: qual.lap, grid: qual.res ? qual.res.grid : 0 }; },
         get adapt() { return { dyn: Render.getDynScale(), shadowsOn: shadowsOn(), auto: autoNoShadows, pending: perf.pending, restore: perf.restore, keep: perf.keep, check: perf.check }; },
         get net() { if (!mp) return null; const R = mp.race, F = R && [...R.cars.values()][0];   // (theirs, left, got: the first of the others)
           return { role: mp.role, code: mp.code, open: Net.open, synced: Net.synced, peer: mp.peer, me: mp.me, players: mp.players.map(p => ({ id: p.id, name: p.name, car: p.car, in: p.in !== false })), track: mp.track, laps: mp.laps,
             race: R && { at: R.at, goAt: R.goAt, mine: R.mine, theirs: F ? F.fin : null, left: F ? F.left : false, got: F ? F.buf.length : 0, fins: Object.fromEntries([...R.cars].map(([k, C]) => [k, C.fin])), grid: R.grid, frameT: R.frameT, startT: R.startT } }; },
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get replay() { return replay && { t: replay.t, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; },
-        sim(sec, auto, steer) { const inp = { steer: steer || 0, thr: 1, brk: 0, hand: 0, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; } if (phase !== 'done') updatePhase(STEP, inp); stepRace(STEP, inp); } },
-        drive(sec, f) { const inp = { steer: 0, thr: 0, brk: 0, hand: 0, digital: true }; for (let t = 0; t < sec && race && phase !== 'done'; t += STEP) { Core.aiControl(race.player, race, STEP); const o = f(race.player, school && school.live, phase) || {}; inp.steer = race.player.inSteer; inp.thr = o.thr || 0; inp.brk = o.brk || 0; updatePhase(STEP, inp); stepRace(STEP, inp); } },   // (tests: the autopilot's steering, the throttle and the brake given)
+        sim(sec, auto, steer) { pkFlySkip(); /* (a simulated race starts without Pikes Peak's flyover) */ const inp = { steer: steer || 0, thr: 1, brk: 0, hand: 0, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; } if (phase !== 'done') updatePhase(STEP, inp); stepRace(STEP, inp); } },
+        drive(sec, f) { pkFlySkip(); const inp = { steer: 0, thr: 0, brk: 0, hand: 0, digital: true }; for (let t = 0; t < sec && race && phase !== 'done'; t += STEP) { Core.aiControl(race.player, race, STEP); const o = f(race.player, school && school.live, phase) || {}; inp.steer = race.player.inSteer; inp.thr = o.thr || 0; inp.brk = o.brk || 0; updatePhase(STEP, inp); stepRace(STEP, inp); } },   // (tests: the autopilot's steering, the throttle and the brake given)
         get school() { return school && { id: school.L.id, live: school.live, done: !!school.done }; }, schoolMedals: (id) => { const L = SCHOOL.find(x => x.id === id); return L && { m: schoolMedals(L), ref: schoolRef(L), rec: schoolRec(L) }; } };
     } catch (e) {
       console.error(e);
