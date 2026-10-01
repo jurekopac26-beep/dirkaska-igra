@@ -36,6 +36,13 @@ var TRACK_DEFS = TRACK_DEFS || [];
     hairpins: [[1120,1173,-1],[1458,1133,1],[1884,1079,-1],[2100,1052,1],[2298,1023,-1],[2686,947,1],[2810,927,-1]],
     // where the old road (Katu-Yaryk) leaves the plateau and where it reaches the valley floor: metres after the start line
     top: 500, bottom: 4480,
+    // more of the pass and the valley (OpenStreetMap, as the rest): the camp sites [x, z, name], the toilets [x, z], the footbridge over the Chulyshman (its path
+    // [x, z, x, z], from the paid gate [x, z] across to the waterfalls)
+    camps: [[-228.8,-1550.7,''],[1237.6,-671.8,'Куркуре'],[411,-198.1,'Ажу'],[-6.8,292.3,'База отдыха Айхан'],[-491,221.9,'']],
+    toilets: [[-225.7,-1533.9],[79.1,-1447.4],[83.4,-1356.5],[405.7,-183.9],[-289.8,409.2],[463.1,-149]],
+    footbridge: { path: [574.6,-1235.2,638,-1336.7], gate: [573.6,-1233.6] },
+    // the course flyover before a fresh start (Render.pkFly, as on Pikes Peak): its captions, [metres after the start line (-1: the finish), name]
+    fly: [[0, 'START'], [500, 'Prelaz Katu-Jaryk'], [1120, 'Sedem serpentin'], [3260, 'Prečka nad Čulišmanom'], [-1, 'CILJ']],
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; spoken in English: Katu-Yaryk, Chulyshman)
     names: [
       {"n":"Prelaz Katu-Jaryk · 1.206 m","d":500,"say":["Over the edge at Katu-Yaryk! Five hundred metres down to the river!","The Katu-Yaryk pass, and the road drops into the canyon!","Past the viewpoints at the top of Katu-Yaryk. Now hold on!"]},

@@ -926,7 +926,7 @@
     introLen = 1.3; endPodium();
     { const air = Render.world && Render.world.air;   // the Red Bull Ring: first the jets over the grid, filmed from the grid (not online, not in a time trial or qualifying)
       if (air && !on && !tt && !quali) { air.go = true; introLen += JET_SHOT; Render.setShot(air.shot); $('hud').classList.add('shot'); } }
-    pkFlyStart(!on && tt && !quali);   // (Pikes Peak: the course flyover first, at a fresh start only)
+    pkFlyStart(!on && tt && !quali);   // (Pikes Peak, Katu-Jaryk: the course flyover first, at a fresh start only)
     lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; dmgKey = ''; pitHint = false; drsN = 0; secN = 0; wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
     $('h-msg').className = ''; $('h-split').className = ''; $('h-note').className = '';
     $('h-lights').className = ''; setLights(0, false);
@@ -989,7 +989,7 @@
     const el = $('podium-cap'); el.innerHTML = top.map((c, i) => '<span><b>' + (i + 1) + '.</b> <i style="background:' + hexCss(c.color) + '"></i>' + esc(c.isPlayer ? 'Ti' : c.name) + '</span>').join(''); el.className = 'show';
     const w = top[0]; Comm.say(w && w.isPlayer ? 'podiumMe' : 'podiumRb', { name: w ? w.name : '' }, 3);
   }
-  function endPodium() { const pod = Render.world && Render.world.podium; if (pod) pod.hide(); $('podium-cap').className = ''; shotOff(); pkFlyEnd(); }   // (and Pikes Peak's flyover, left for the title)
+  function endPodium() { const pod = Render.world && Render.world.podium; if (pod) pod.hide(); $('podium-cap').className = ''; shotOff(); pkFlyEnd(); }   // (and the course flyover, left for the title)
   function toTitle() {
     endPodium(); champRecord(); champRun = false; replay = null; recd = null; $('replay-ui').classList.add('off');
     paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); ghRec = ghPlay = ghLap = null; qual = null; Render.setGhost(null, true);
@@ -1136,14 +1136,14 @@
     const el = $('h-pkcls'); el.textContent = pk.cls.name.toUpperCase(); el.className = 'h-lbl pk-' + pk.cls.id;
     pk7Start();   // (the chosen ghost, the corner warnings)
   }
-  // Pikes Peak's course flyover (prelet proge; Render.pkFly films it): a TV sweep up the course with captions at the famous places, during
+  // the course flyover (prelet proge; Render.pkFly films it) on Pikes Peak and Katu-Jaryk (def.fly): a TV sweep along the course with captions at the famous places, during
   // the race's intro before the lights (the race clock starts after it, the race is not touched). At a fresh start from the menus only:
   // not online, not after Ponovi, not with the setting off. A tap, a click, any key or pad button skips it (the input is used up by that)
   const pkF = { on: false, fresh: false, k: -2, eat: 0, bound: false };
   function pkFlyStart(ok) {
     pkFlyEnd();
     const fresh = pkF.fresh; pkF.fresh = false;
-    if (!ok || !fresh || !pkIs(track.def) || !+S.pkFly || !Render.pkFly || !Render.pkFly.at(0)) return;
+    if (!ok || !fresh || !(pkIs(track.def) || track.def.fly) || !+S.pkFly || !Render.pkFly || !Render.pkFly.at(0)) return;
     if (!pkF.bound) { pkF.bound = true;
       const eat = (e) => { e.stopImmediatePropagation(); if (e.cancelable) e.preventDefault(); };
       window.addEventListener('keydown', (e) => { if (!pkF.on || screen !== 'none' || paused) return; if (!e.repeat) pkFlySkip(); eat(e); }, true);
@@ -1158,7 +1158,7 @@
     const o = Render.pkFly.at(phaseT), el = $('pk-fly');
     if (!o || phaseT >= Render.pkFly.DUR) { pkFlyEnd(); return; }
     if (o.k !== pkF.k && o.k >= 0) { const C = Render.pkFly.caps, c = C[o.k], al = track.def.alt, a = al && !o.k ? al[0] : al && o.k === C.length - 1 ? al[1] : track.altAt(track.hy[track.idx(c.s)]);   // (the start's and the finish's: as the HUD shows them)
-      el.children[1].textContent = c.n; el.children[2].textContent = a != null ? numDot(al ? clamp(a, al[0], al[1]) : a) + ' m' : ''; }
+      el.children[1].textContent = c.n; el.children[2].textContent = a != null ? numDot(al ? clamp(a, Math.min(al[0], al[1]), Math.max(al[0], al[1])) : a) + ' m' : ''; }   // (a descent: its alt falls)
     pkF.k = o.k; el.className = 'show';
     el.style.opacity = Math.min(1, phaseT / 0.3, (Render.pkFly.DUR - phaseT) / 0.3).toFixed(2);
     const a = o.k >= 0 ? o.a.toFixed(2) : '0'; el.children[1].style.opacity = a; el.children[2].style.opacity = a;
@@ -2795,7 +2795,7 @@
         get adapt() { return { dyn: Render.getDynScale(), shadowsOn: shadowsOn(), auto: autoNoShadows, pending: perf.pending, restore: perf.restore, keep: perf.keep, check: perf.check }; },
         get net() { return mp ? { role: mp.role, code: mp.code, open: Net.open, synced: Net.synced, peer: mp.peer, track: mp.track, laps: mp.laps, race: mp.race && { at: mp.race.at, goAt: mp.race.goAt, mine: mp.race.mine, theirs: mp.race.theirs, left: mp.race.left, got: mp.race.buf.length, frameT: mp.race.frameT, startT: mp.race.startT } } : null; },
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get replay() { return replay && { t: replay.t, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; },
-        sim(sec, auto, steer) { pkFlySkip(); /* (a simulated race starts without Pikes Peak's flyover) */ const inp = { steer: steer || 0, thr: 1, brk: 0, hand: 0, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; } if (phase !== 'done') updatePhase(STEP, inp); stepRace(STEP, inp); } } };
+        sim(sec, auto, steer) { pkFlySkip(); /* (a simulated race starts without the course flyover) */ const inp = { steer: steer || 0, thr: 1, brk: 0, hand: 0, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; } if (phase !== 'done') updatePhase(STEP, inp); stepRace(STEP, inp); } } };
     } catch (e) {
       console.error(e);
       $('ld-msg').textContent = 'Napaka pri zagonu: ' + e.message;
