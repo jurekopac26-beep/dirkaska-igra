@@ -613,9 +613,9 @@ const Sfx = (function () {
     // Pikes Peak: the engine echoes among the rocks above the treeline; the TV helicopter (World's dyn.pk: Pikes Peak's, and Ouninpohja's
     // that follows the car the whole run) by its distance to the camera
     const pikes = !!(race && race.track && race.track.def && race.track.def.id === 'pikes');
-    set(echo.send.gain, pikes ? Core.sstep(186, 198, player.roadY || 0) * 0.32 : 0, 0.6);
+    set(echo.send.gain, pikes ? Core.sstep(186, 198, player.roadY || 0) * 0.32 : race && race.track && race.track.def && race.track.def.id === 'caracoles' ? 0.16 : 0, 0.6);   // (Los Caracoles: off the rock walls of the ladder)
     { const tn = Wd && Wd.dyn && Wd.dyn.tunnel, sq = player.q ? player.q.s : -1e9;   // (in a tunnel: the ring of its walls)
-      set(tun.send.gain, tn && sq > tn.s0 - 3 && sq < tn.s1 + 3 ? 0.85 : 0, 0.08); }
+      set(tun.send.gain, tn && (tn.ranges ? tn.ranges.some(r => sq > r[0] - 3 && sq < r[1] + 3) : sq > tn.s0 - 3 && sq < tn.s1 + 3) ? 0.85 : 0, 0.08); }   // (Los Caracoles: two galleries, tn.ranges)
     const W = Wd, pk = W && W.dyn ? W.dyn.pk || W.dyn.air : null, cam = typeof Render !== 'undefined' ? Render.camera : null;   // (the Red Bull Ring's: dyn.air)
     let hv = 0, hp = 0;
     if (pk && pk.heli && (pk.on || (pk.follow && pk.heli.visible))) {
