@@ -31,7 +31,7 @@ jobs:
   browser:
     name: Igra v brskalniku
     runs-on: ubuntu-24.04
-    timeout-minutes: 75
+    timeout-minutes: 100   # (brskalniški sklop v CI traja okoli 77 minut)
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5

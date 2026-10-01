@@ -5,9 +5,9 @@ v brskalniku Playwright (`npm install` ga namesti, `npx playwright install chrom
 
 ```sh
 npm install          # enkrat
-npm test             # vse (~65 min)
+npm test             # vse (~80 min)
 npm run test:node    # samo fizika, AI, dirke in prvenstvo (~4 min)
-npm run test:browser # samo testi v brskalniku (~60 min s programskim WebGL)
+npm run test:browser # samo testi v brskalniku (~75 min s programskim WebGL)
 ```
 
 Na GitHubu se ob vsakem pull requestu in vsaki spremembi veje `main` samodejno poženejo vsi testi
