@@ -12844,6 +12844,22 @@ const World = (function () {
     }
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
   }
+  function muFacadeGlow() {   // the facade atlas's night: the glass of its windows and shop windows lit warm (the emissive map; which windows are lit: see buildMuur)
+    const S = 1024, Q = 256, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d');
+    x.fillStyle = '#000'; x.fillRect(0, 0, S, S);
+    for (let col = 0; col < 4; col++) for (let row = 0; row < 4; row++) { const X = col * Q, Y = row * Q, g = x.createLinearGradient(0, Y, 0, Y + Q);
+      g.addColorStop(0, '#ffd99a'); g.addColorStop(1, '#f2a856'); x.fillStyle = g;
+      if (row === 0) x.fillRect(X + 84, Y + 56, 88, 148); else if (row === 1) x.fillRect(X + 92, Y + 62, 72, 138);
+      else if (row === 2) { x.fillRect(X + 18, Y + 96, 150, 140); x.fillStyle = '#fff2c8'; x.fillRect(X + 40, Y + 54, 170, 14); }
+      else { x.fillRect(X + 40, Y + 86, 48, 28); x.fillRect(X + 138, Y + 78, 80, 138); }
+      x.fillStyle = '#000'; if (row < 2) { const wx = row ? X + 86 : X + 78, ww = row ? 84 : 100, wy = row ? Y + 56 : Y + 50, wh = row ? 150 : 160; x.fillRect(wx + ww / 2 - 3, wy, 6, wh); x.fillRect(wx, wy + wh * 0.32, ww, 5); } }   // (the frame's cross stays dark)
+    return new THREE.CanvasTexture(c);
+  }
+  function muGlowTex() {   // a soft round glow (the lanterns at night)
+    const S = 64, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), gr = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+    gr.addColorStop(0, 'rgba(255,240,200,1)'); gr.addColorStop(0.25, 'rgba(255,214,140,0.6)'); gr.addColorStop(1, 'rgba(255,200,120,0)'); g.fillStyle = gr; g.fillRect(0, 0, S, S);
+    return new THREE.CanvasTexture(c);
+  }
   function muNadarTex() {   // a crowd barrier (Nadar fence) panel: galvanised steel frame and vertical bars, see-through between them (256 x 128 = 2.3 x 1.1 m)
     const c = document.createElement('canvas'); c.width = 256; c.height = 128; const x = c.getContext('2d');
     x.clearRect(0, 0, 256, 128); x.fillStyle = '#c9ccd0';
@@ -12916,6 +12932,11 @@ const World = (function () {
       for (const [a, l] of [[0.4, 0.18], [2.5, 0.16], [4.4, 0.17]]) ouRod(g, [0, 0.34, 0], [Math.cos(a) * l, 0.52, Math.sin(a) * l], 0.012, bark, 3);
       puff(g, 0, 0.66, 0, 0.26, 0.9, col, R, 0.14, 0.48, 1.15, false);
       for (let k = 0; k < 3; k++) { const a = k / 3 * TAU + 0.4 + R() * 0.4, d = 0.19; puff(g, Math.cos(a) * d, 0.52 + R() * 0.12, Math.sin(a) * d, 0.16 + R() * 0.03, 0.85, col.map(v => v * (0.88 + R() * 0.16)), R, 0.14, 0.44, 1.12, false); }
+    } else if (kind === 2) {   // winter: the bare crown (the Omloop's February), branches and twigs
+      const bk = [0.38, 0.36, 0.33]; cyl(g, 0, -0.02, 0, 0.026, 0.42, 5, bk, null, 0.018);
+      for (let k = 0; k < 6; k++) { const a = k / 6 * TAU + R() * 0.5, l = 0.2 + R() * 0.08, y0 = 0.3 + R() * 0.12, A = [Math.cos(a) * l, y0 + 0.28 + R() * 0.12, Math.sin(a) * l];
+        ouRod(g, [0, y0, 0], A, 0.011, bk, 3);
+        for (let q = 0; q < 2; q++) { const b2 = a + (q ? 0.5 : -0.5), l2 = 0.1 + R() * 0.06; ouRod(g, A, [A[0] + Math.cos(b2) * l2, A[1] + 0.1 + R() * 0.08, A[2] + Math.sin(b2) * l2], 0.006, bk, 3); } }
     } else {
       cyl(g, 0, -0.02, 0, 0.03, 0.35, 4, bark, null, 0.02);
       puff(g, 0, 0.6, 0, 0.32, 0.95, col, R, 0.18, 0.48, 1.1, false);
@@ -12951,6 +12972,23 @@ const World = (function () {
     puff(g, 0, 0.72, 0, 0.36, 0.55, col, R, 0.12, 0.55, 1.15, false);
     ROCK_SMOOTH = rs;
     const cu = col.map(v => v * 0.86); cyl(g, 0, 0.12, 0, 0.5, 0.6, 12, cu, null, 0.34);   // the curtain (open, hanging from the crown's rim)
+    return g.geometry();
+  }
+  // a racing cyclist on his bike (the peloton before the start): the rider bent over the bars (local x forward; the instance colour his jersey)
+  function muRiderGeo() {
+    const g = new GB(), W = [1, 1, 1], sk = [0.92, 0.74, 0.6], sh = [0.1, 0.1, 0.12];
+    ouRod(g, [-0.18, 0.95, 0], [0.28, 1.22, 0], 0.15, W, 6);   // the back
+    for (const z of [-0.14, 0.14]) { ouRod(g, [0.26, 1.2, z], [0.34, 0.98, z * 1.4], 0.045, W, 4); ouRod(g, [-0.16, 0.92, z * 0.8], [0.02, 0.62, z * 0.8], 0.06, sh, 4); ouRod(g, [0.02, 0.62, z * 0.8], [-0.03, 0.3, z * 0.7], 0.045, sk, 4); }   // arms, thighs (shorts), calves
+    ico(g, 0.4, 1.33, 0, 0.13, 0.9, W, rng(1), 0);   // the helmet
+    return g.geometry();
+  }
+  // a fan running beside the cars up the last ramp (unit: 1.75 m; the instance colour the shirt)
+  function muRunnerGeo() {
+    const g = new GB(), W = [1, 1, 1], sk = [0.92, 0.74, 0.6], jn = [0.2, 0.24, 0.36];
+    box(g, 0, 0.82, 0, 0.26, 0.6, 0.42, 0, W); ico(g, 0, 1.6, 0, 0.13, 1.1, sk, rng(2), 0);
+    for (const z of [-0.11, 0.11]) ouRod(g, [0, 0.82, z], [z * 2.2, 0.05, z], 0.07, jn, 4);   // legs apart: mid-stride
+    ouRod(g, [0, 1.38, 0.24], [0.15, 1.95, 0.3], 0.045, sk, 4); ouRod(g, [0, 1.38, -0.24], [-0.2, 1.05, -0.3], 0.045, sk, 4);   // one arm up (a flag), one down
+    box(g, 0.15, 1.95, 0.6, 0.02, 0.5, 0.7, 0, [0.98, 0.84, 0.1]);   // the lion flag he waves
     return g.geometry();
   }
   function muLampGeo() {   // a street lamp of the old town: a dark green cast-iron post (4.6 m), a short arm and a lantern
@@ -13097,7 +13135,7 @@ const World = (function () {
     const nameD = (n) => { const f = T.names.find(q => q.n === n); return f ? f.d : null; };
     const inR = (d, ranges) => { for (const [a, b] of ranges || []) { const dd = ((d - a) % L + L) % L; if (dd <= ((b - a) % L + L) % L) return true; } return false; };   // d (m after the line) in one of the [from, to] stretches (wrapping)
     nrPrep();
-    const P = NR, G = P.G;
+    const P = NR, G = P.G, SNOWB = typeof Render !== 'undefined' && Render.atmos && Render.atmos.season === 'winter';
     // the water (def.water: the Dender, the ponds): its level and shore polygon; the ground is dug out under it (NR.pad, called by nrH)
     const WAT = (def.water || []).map(a => { const poly = []; for (let k = 1; k + 1 < a.length; k += 2) poly.push([a[k], a[k + 1]]);
       let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of poly) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
@@ -13115,7 +13153,7 @@ const World = (function () {
       r = lerp(r, 0.88, pk * 0.5); g = lerp(g, 1.02, pk * 0.5); b = lerp(b, 0.84, pk * 0.5);   // mown lawns (a deeper, calmer green than the meadows' fresh one)
       const fl = Math.max(clamp(cov, 0, 1), fo * lerp(0.35, 1, sstep(225, 250, nrDist(x, z))));
       r = lerp(r, 0.78 + m * 0.12, fl); g = lerp(g, 0.7 + m * 0.1, fl); b = lerp(b, 0.56, fl);   // leaf litter
-      const pv = tw * Math.max(sstep(30, 8, dd), 0.25 + 0.5 * sstep(0.45, 0.7, P.n2(x, z))); r = lerp(r, 1.75, pv); g = lerp(g, 0.92, pv); b = lerp(b, 1.75, pv);   // paving, yards, drives, car parks (grey on the grass map)
+      const pv = tw * Math.max(sstep(30, 8, dd), 0.25 + 0.5 * sstep(0.45, 0.7, P.n2(x, z))); if (SNOWB) { r = lerp(r, 0.86, pv); g = lerp(g, 0.87, pv); b = lerp(b, 0.9, pv); } else { r = lerp(r, 1.75, pv); g = lerp(g, 0.92, pv); b = lerp(b, 1.75, pv); }   // paving, yards, drives, car parks (grey on the grass map; under the snow map, built in winter, plain grey)
       const st = sstep(0.86, 0.62, ny) * 0.8; r = lerp(r, 1.1, st); g = lerp(g, 0.86, st); b = lerp(b, 0.78, st);   // bare banks
       if (dd < 5) { const t = sstep(5, 0.5, dd); r = lerp(r, 0.94, t); g = lerp(g, 1.08, t); b = lerp(b, 0.92, t); }
       o[0] = r * 0.97; o[1] = g * 0.88; o[2] = b * 0.9; return o;   // (Flemish grass: a deep, slightly blue green, not the grass map's bright one)
@@ -13529,11 +13567,12 @@ const World = (function () {
     }
     const nBikes = bikes.addTo(root, false), nCars = cars.addTo(root, true);   // (the bikes' thin shadows would cost more than they show)
 
+    const lanterns = [];   // (the lamps' lanterns: their glow at night)
     /* ---- street lamps along the town's sidewalks (dark green cast iron, a lantern over the road), every ~26 m on alternate sides, behind the fence ---- */
     { const lamps = new IChunks(muLampGeo(), new THREE.MeshLambertMaterial({ vertexColors: true }), 512); let side = 1;
       for (let d = 13; d < L; d += 26) { const s = sAt(d), i = T.idx(s); side = -side; if (!town[i]) continue;
         const [x, z, ii] = onSide(s, side, 0.62); if (excluded(x, z) || nrNear(x, z).dd < 0.4) continue;
-        lamps.add(x, nrGround(x, z) - 0.05, z, Math.atan2(T.nz[ii] * side, -T.nx[ii] * side), 1, 1); CR.avoid(x, z, 0.6); }
+        const th = Math.atan2(T.nz[ii] * side, -T.nx[ii] * side), ly = nrGround(x, z) - 0.05; lamps.add(x, ly, z, th, 1, 1); lanterns.push(x + Math.cos(th) * 0.62, ly + 4.2, z - Math.sin(th) * 0.62); CR.avoid(x, z, 0.6); }
       lamps.addTo(root, true); }
     /* ---- START / FINISH on the Markt: the gantry with the start lights and the banner; Flemish and Belgian flags on poles round the square ---- */
     // (the climb against the clock, opts.climb: its start by the Dender has the lights, its finish by the chapel an arch; the circuit's line stays)
@@ -13623,8 +13662,9 @@ const World = (function () {
           .replace('#include <color_fragment>', '#include <color_fragment>\nif ( vLh > 0.3 ) { float lf = lN( vLw * 1.1 ) * 0.6 + lN( vLw * 2.9 ) * 0.4; diffuseColor.rgb *= 0.7 + 0.55 * lf; diffuseColor.r *= 0.96 + 0.1 * lN( vLw * 0.31 ); }');
       };
       tMat.customProgramCacheKey = () => 'muTreeLeaf'; }
-    const tk = [new IChunks(muTreeGeo(0), tMat, 128)];   // near: broadleaf (the birches and the odd spruce drawn as it too, a lighter green: one draw per chunk for phones)
-    const tf = [new IChunks(muTreeGeo(1), tMat, 192)];
+    const winter = typeof Render !== 'undefined' && Render.atmos && Render.atmos.season === 'winter';   // (built in winter: the broadleaf trees bare)
+    const tk = [new IChunks(muTreeGeo(winter ? 2 : 0), tMat, 128)];   // near: broadleaf (the birches and the odd spruce drawn as it too, a lighter green: one draw per chunk for phones)
+    const tf = [new IChunks(muTreeGeo(winter ? 2 : 1), tMat, 192)];
     const willow = new IChunks(muWillowGeo(), tMat, 512);
     let nTrees = 0;
     {
@@ -13716,6 +13756,16 @@ const World = (function () {
       }
       const wm = addM(wg, wMat); if (wm) wm.castShadow = false;
       out.dyn.water = tex.water; addShore(root, mergeBands(bands), wMat, WO);
+      { // the mist lying over the Dender on an autumn or winter morning (shown by out.dyn.atmos): soft layers a metre or two over the water and its meadows
+        const c = document.createElement('canvas'); c.width = c.height = 64; const q = c.getContext('2d'), gr = q.createRadialGradient(32, 32, 0, 32, 32, 32);
+        gr.addColorStop(0, 'rgba(255,255,255,0.9)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); q.fillStyle = gr; q.fillRect(0, 0, 64, 64);
+        const mt = ownTex(new THREE.CanvasTexture(c)), mg = new GB(true), RM = rng(9641), wh = [0.93, 0.94, 0.95];
+        for (const Wt of WAT) { if (Math.hypot((Wt.x0 + Wt.x1) / 2, (Wt.z0 + Wt.z1) / 2) > 900) continue;
+          for (let k = 0; k < Wt.poly.length; k += 2) { const [x, z] = Wt.poly[k], r = 16 + RM() * 14;
+            for (const dy of [0.9, 2.1]) { const y = Wt.lev + dy + RM() * 0.6, a = RM() * PI; const P4 = (u, v) => [x + Math.cos(a) * u - Math.sin(a) * v, y, z + Math.sin(a) * u + Math.cos(a) * v];
+              mg.quadUp(P4(-r, -r), P4(r, -r), P4(r, r), P4(-r, r), [wh, wh, wh, wh], [[0, 0], [1, 0], [1, 1], [0, 1]]); } } }
+        const mm = new THREE.Mesh(mg.geometry(), new THREE.MeshBasicMaterial({ map: mt, vertexColors: true, transparent: true, opacity: 0.32, depthWrite: false, side: THREE.DoubleSide }));
+        mm.visible = false; mm.renderOrder = 3; mm.matrixAutoUpdate = false; root.add(mm); out.dyn.mist = mm; }
       if (marks.bridge) {   // the bridge: from the bank by the road across the river (its axis from the nearest point of the road through the mark)
         const [mx, mz] = marks.bridge; let ux = 1, uz = 0;
         const end = (sg) => { let t = 0, dry = 0; while (t < 80 && dry < 4) { t += 1; dry = inWater(mx + ux * t * sg, mz + uz * t * sg, 0) ? 0 : dry + 1; } return t - 4; };
@@ -13743,15 +13793,66 @@ const World = (function () {
 
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
-    fac.addTo(sceneryGroup, new THREE.MeshLambertMaterial({ map: ownTex(muFacadeTex()), vertexColors: true }), true, true);
+    const facMat = new THREE.MeshLambertMaterial({ map: ownTex(muFacadeTex()), vertexColors: true, emissiveMap: ownTex(muFacadeGlow()), emissive: 0x000000 });
+    facMat.onBeforeCompile = (sh) => {   // (at night about half the windows lit: one hash per bay and storey, from where the wall stands)
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vFw;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvFw = ( modelMatrix * vec4( transformed, 1.0 ) ).xyz;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vFw;').replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n' +
+        'totalEmissiveRadiance *= step( 0.48, fract( sin( dot( floor( vFw.xz / 3.1 ) + floor( vFw.y / 3.0 ) * 7.13, vec2( 12.9898, 78.233 ) ) ) * 43758.5453 ) );'); };
+    facMat.customProgramCacheKey = () => 'muFacNight';
+    fac.addTo(sceneryGroup, facMat, true, true);
     roofSl.addTo(sceneryGroup, new THREE.MeshLambertMaterial({ map: ownTex(muRoofTex(false)), vertexColors: true }), false, true);   // (the roofs cast no shadow of their own: the walls under them do; two draws fewer per chunk for phones)
     roofCl.addTo(sceneryGroup, new THREE.MeshLambertMaterial({ map: ownTex(muRoofTex(true)), vertexColors: true }), false, true);
-    stn.addTo(sceneryGroup, new THREE.MeshLambertMaterial({ map: ownTex(muStoneTex(false)), vertexColors: true }), true, true);
-    brk.addTo(sceneryGroup, new THREE.MeshLambertMaterial({ map: ownTex(muStoneTex(true)), vertexColors: true }), true, true);
+    const stnMat = new THREE.MeshLambertMaterial({ map: ownTex(muStoneTex(false)), vertexColors: true }), brkMat = new THREE.MeshLambertMaterial({ map: ownTex(muStoneTex(true)), vertexColors: true });
+    stn.addTo(sceneryGroup, stnMat, true, true); brk.addTo(sceneryGroup, brkMat, true, true);
+    // the night (Render.setAtmos): windows lit, the lanterns glowing, the town hall, the church and the chapel floodlit; autumn and winter: mist over the Dender
+    const glow = (() => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(lanterns, 3));
+      const m = new THREE.Points(g, new THREE.PointsMaterial({ map: ownTex(muGlowTex()), size: 2.6, sizeAttenuation: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+      m.visible = false; m.frustumCulled = false; root.add(m); return m; })();
+    out.dyn.atmos = (A) => { const night = A.tod === 'night', dusk = A.tod === 'dusk';
+      facMat.emissive.setHex(night ? 0xffffff : dusk ? 0x5a4a3a : 0x000000); glow.visible = night || dusk; glow.material.opacity = night ? 1 : 0.5;
+      for (const m of [stnMat, brkMat]) m.emissive.setRGB(night ? 0.34 : dusk ? 0.1 : 0, night ? 0.29 : dusk ? 0.08 : 0, night ? 0.2 : dusk ? 0.05 : 0);
+      if (out.dyn.mist) out.dyn.mist.visible = A.season !== 'summer' || dusk; };
     flg.addTo(root, new THREE.MeshLambertMaterial({ map: ownTex(muFlagTex()) }), false, false);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
     spC.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true);
     pkSky({ root, tex, out, sStart, gH: nrGround, far: true });   // the TV helicopter over the race
+    { // the moving people of a race day: the peloton riding ahead of the grid before the start (gone once the cars move), fans running beside the
+      // cars up the last ramp, and the TV cameras of the Muur in the replay (Render's 'tv' camera: the motorbike ahead on the climb, the helicopter
+      // over the town)
+      const mk = (geo, n) => { const m = new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial({ vertexColors: true }), n); m.frustumCulled = false; m.castShadow = true; m.visible = false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); root.add(m); return m; };
+      const NR2 = 18, NRN = 5, bikesM = mk(muBikeGeo(), NR2), riders = mk(muRiderGeo(), NR2), runners = mk(muRunnerGeo(), NRN), cc = new THREE.Color();
+      const JER = [[0.98, 0.84, 0.1], [0.16, 0.36, 0.8], [0.86, 0.14, 0.12], [0.95, 0.95, 0.95], [0.1, 0.1, 0.12], [0.2, 0.6, 0.35]];
+      for (let k = 0; k < NR2; k++) { cc.setRGB(...JER[k % JER.length]); riders.setColorAt(k, cc); cc.setRGB(0.15, 0.15, 0.17); bikesM.setColorAt(k, cc); }
+      for (let k = 0; k < NRN; k++) { cc.setRGB(...MU_SHIRTS[k * 3 % MU_SHIRTS.length]); runners.setColorAt(k, cc); }
+      const s0 = climb ? sOf(climb, climb.startS) : sStart, dK = nameD('Kapelmuur') || 600, dR = nameD('Kapelmuur · 20 %') || 750, dC = nameD('Kapel Oudenberg') || 880, dV = nameD('Vesten') || 128;
+      const q = {}, M4 = new THREE.Matrix4(), Q4 = new THREE.Quaternion(), E4 = new THREE.Euler(), V4 = new THREE.Vector3(), S4 = new THREE.Vector3(1, 1, 1);
+      const where = (c) => { T.query(c.x, c.z, q.i != null ? q.i : -1, q); return q; };
+      const put = (m, k, x, y, z, rot, sc) => { E4.set(0, rot, 0); Q4.setFromEuler(E4); V4.set(x, y, z); S4.setScalar(sc || 1); M4.compose(V4, Q4, S4); m.setMatrixAt(k, M4); };
+      const RUN = { on: false, s: [], lat: [], v: [] };
+      out.dyn.people = (t, car) => {
+        if (!car) { bikesM.visible = riders.visible = runners.visible = false; return; }
+        const still = car.isPlayer && !(car.dist > 0.5) && (car.speed || 0) < 0.5;   // (on the grid: the peloton rides away up the street ahead)
+        bikesM.visible = riders.visible = still;
+        if (still) { const go = (t * 8.5) % 900;
+          for (let k = 0; k < NR2; k++) { const sk = s0 + 25 + go + Math.floor(k / 3) * 2.4 + (k % 2) * 0.6, i = T.idx(sk), lat = ((k % 3) - 1) * 1.3, x = T.px[i] + T.nx[i] * lat, z = T.pz[i] + T.nz[i] * lat, rot = Math.atan2(-T.tz[i], T.tx[i]);
+            put(bikesM, k, x, T.hy[i], z, rot); put(riders, k, x, T.hy[i] + Math.abs(Math.sin(t * 6 + k)) * 0.03, z, rot); }
+          bikesM.instanceMatrix.needsUpdate = riders.instanceMatrix.needsUpdate = true; }
+        const p = where(car), d = dS(p.s), onRamp = d > dR - 30 && d < dC - 10;
+        if (onRamp && !RUN.on) { RUN.on = true; for (let k = 0; k < NRN; k++) { RUN.s[k] = p.s + 14 + k * 9 + crH(k, t, 3) * 5; RUN.lat[k] = (k % 2 ? 1 : -1) * (T.w + 0.9 + crH(k, 1, 4) * 0.8); RUN.v[k] = 5.5 + crH(k, 2, 5) * 2; } }
+        if (!onRamp) RUN.on = false;
+        runners.visible = RUN.on;
+        if (RUN.on) { const dt = Math.min(0.1, Math.max(0, t - (RUN.t || t))); RUN.t = t;
+          for (let k = 0; k < NRN; k++) { RUN.s[k] += RUN.v[k] * dt; const i = T.idx(RUN.s[k]), x = T.px[i] + T.nx[i] * RUN.lat[k], z = T.pz[i] + T.nz[i] * RUN.lat[k];
+            put(runners, k, x, T.hy[i] + Math.abs(Math.sin(t * 9 + k * 1.3)) * 0.12, z, Math.atan2(-T.tz[i], T.tx[i]), 1); }
+          runners.instanceMatrix.needsUpdate = true; } else RUN.t = 0;
+      };
+      out.dyn.tvShot = (c) => {   // the replay's TV picture on the Muur: the motorbike just ahead filming back down the climb; the helicopter over the Vesten
+        const p = where(c), d = dS(p.s), i = T.idx(p.s);
+        if (d > dK - 25 && d < dC + 15) { const sA = p.s + 9, j = T.idx(sA), o = (Math.floor(d / 120) % 2 ? 1 : -1) * 1.8; return { x: T.px[j] + T.nx[j] * o, y: T.hy[j] + 1.7, z: T.pz[j] + T.nz[j] * o }; }
+        if (d > dV - 20 && d < dK - 25) { const sd = Math.floor(d / 150) % 2 ? 1 : -1; return { x: T.px[i] - T.tx[i] * 30 + T.nx[i] * 30 * sd, y: T.hy[i] + 42, z: T.pz[i] - T.tz[i] * 30 + T.nz[i] * 30 * sd }; }
+        return null;
+      };
+    }
     { // confetti over the finish line (the circuit's on the Markt, the climb's at the chapel) when the player's car crosses it: yellow, black, red, white
       const n = 600, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), vel = new Float32Array(n * 3), CL = [[0.98, 0.84, 0.1], [0.1, 0.1, 0.1], [0.86, 0.14, 0.12], [0.96, 0.96, 0.94]];
       for (let k = 0; k < n; k++) { const c = CL[k % 4]; col.set(c, k * 3); pos[k * 3 + 1] = -1e4; }
@@ -13810,6 +13911,7 @@ const World = (function () {
     if (d.water) { d.water.offset.x = (t * 0.012) % 1; d.water.offset.y = (t * 0.007) % 1; }
     if (d.wind) d.wind.value = t % 1000;
     if (d.skyT) d.skyT.value = t % 4000;   // (the Kapelmuur's clouds drift)
+    if (d.people) d.people(t, car);   // (the Kapelmuur's peloton before the start, the fans running up the last ramp)
     if (d.confetti) {   // (the Kapelmuur's finish: a burst as the player's car crosses the line, drifting down for ten seconds)
       const C = d.confetti, fin = !!(car && car.isPlayer && car.finished);
       if (fin && !C.done) { C.done = true; C.t0 = t; C.tp = t; for (let k = 0; k < C.n; k++) { const a = Math.random() * TAU, r = Math.random() * 7;

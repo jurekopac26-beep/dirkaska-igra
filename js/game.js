@@ -256,6 +256,7 @@
         $('title-sub').textContent = d.name + (pol ? ' · beg pred policijo · odprta cesta' : ' · dvoboj z enim tekmecem · promet na cesti') + (S.weather === 'rain' ? ' · dež' : S.weather === 'random' ? ' · morda dež' : S.weather === 'change' ? ' · menljivo vreme' : '') + (S.season === 'autumn' ? ' · jesen' : S.season === 'winter' ? ' · zima' : '') + (S.tod === 'dusk' ? ' · večer' : S.tod === 'night' ? ' · noč' : ''); }
       else if (upRace(d)) { $('title-hint').textContent = 'Proga: ' + d.name + (r.bestRace ? ' (najboljša dirka ' + fmt(r.bestRace, true) + ')' : '') + '.'; $('title-sub').textContent = d.name + ' · dirka na vrh · ' + NUM_AI + ' nasprotnikov' + (S.weather === 'rain' ? ' · dež' : S.weather === 'random' ? ' · morda dež' : S.weather === 'change' ? ' · menljivo vreme' : '') + (S.season === 'autumn' ? ' · jesen' : S.season === 'winter' ? ' · zima' : '') + (S.tod === 'dusk' ? ' · večer' : S.tod === 'night' ? ' · noč' : ''); }
       else { $('title-hint').textContent = 'Proga: ' + d.name + (r.bestLap ? ' (rekord kroga ' + fmt(r.bestLap, true) + ')' : '') + '.'; $('title-sub').textContent = d.name + ' · ' + lapWord(d.laps || 3).toLowerCase() + ' · 12 nasprotnikov' + (S.weather === 'rain' ? ' · dež' : S.weather === 'random' ? ' · morda dež' : S.weather === 'change' ? ' · menljivo vreme' : '') + (S.season === 'autumn' ? ' · jesen' : S.season === 'winter' ? ' · zima' : '') + (S.tod === 'dusk' ? ' · večer' : S.tod === 'night' ? ' · noč' : ''); } }
+    { const c = muChFor(S.track); if (c) $('title-hint').textContent += ' Izziv dneva: ' + c.txt + '.'; }
     $('title-hint').textContent += ' Upravljanje: ' + CTRL_NAME[S.control] + ', kamera: ' + (S.camera === 'chase' ? 'za avtom (telefon pokončno)' : S.camera === 'kino' ? 'kino (telefon ležeče)' : S.camera === 'cockpit' ? 'kokpit (telefon ležeče)' : 'izometrična (telefon ležeče)') + '. Spremeniš v nastavitvah.' + (records.bestLap ? ' Rekord kroga: ' + fmt(records.bestLap, true) + '.' : '');
     { const el = $('set-name'); if (el && document.activeElement !== el) el.value = S.name; }
     { const d = champDef(); $('btn-champ').textContent = 'Prvenstvo' + (d && !champDone() ? ' · ' + (champ.rounds.length + 1) + '/' + d.tracks.length : ''); }
@@ -277,7 +278,7 @@
   const physOf = () => 'cs';
   // the weather: dry, rain, or at random for every race (rain more often in the Ardennes, the Eifel and the Julian Alps in the autumn);
   // the title demo rains only with 'rain'
-  const RAIN_P = { spa: 0.5, nring: 0.45, vrsic: 0.45, muur: 0.45, muurtt: 0.45 };
+  const RAIN_P = { spa: 0.5, nring: 0.45, vrsic: 0.45, muur: 0.45, muurtt: 0.45, muur8: 0.45 };
   const rainOf = () => S.weather === 'rain' ? 1 : (S.weather === 'random' || S.weather === 'change') && Math.random() < (RAIN_P[track && track.def.id] || 0.35) ? 1 : 0;
   // 'change': the weather changes during a race (on a circuit, or up the Vršič; Race opts weather): it starts dry and rains later on, or it starts wet,
   // the rain stops and the road dries (the racing line first). Somewhere between a fifth and a half of the race (by its usual length); a time trial: as 'random'
@@ -658,6 +659,22 @@
     toast(inCareer() ? 'Kariera: ' + eur(career.money) + ' na računu.' : 'Kariera je izklopljena, voziš prosto.', 2600);
     buildCareerScreen(); refreshSegs();
   }
+  // the Kapelmuur's challenge of the day (a new one each day, the same for everyone): on the circuit five passes on the Muur, on the narrow
+  // streets a win, on the climb a run under the gold time (in the rain under the wet gold). Done once a day: 2.500 € in the career, a line
+  // on the results either way
+  const MU_CH = [
+    { id: 'pass5', tracks: ['muur', 'muur8'], txt: 'prehiti 5 avtov na Muuru' },
+    { id: 'win8', tracks: ['muur8'], txt: 'zmagaj na ozkih ulicah' },
+    { id: 'gold', tracks: ['muurtt'], txt: 'vzpon na Muur hitreje od zlate medalje' },
+  ];
+  const muDay = () => Math.floor(Date.now() / 86400000), muCh = () => MU_CH[muDay() % MU_CH.length];
+  const muChFor = (id) => { const c = muCh(); return c.tracks.includes(id) ? c : MU_CH.find(q => q.tracks.includes(id)) || null; };   // (today's, or this card's own)
+  function muChDone(id, ok) {   // a race on a Kapelmuur card is over: the challenge's line ('' when today's is not for this card)
+    const c = muChFor(id); if (!c) return '';
+    if (!ok) return ' Izziv dneva (' + c.txt + '): tokrat ne.';
+    const key = 'tdgp-muurch-' + muDay(); let done = false; try { done = localStorage.getItem(key) === '1'; localStorage.setItem(key, '1'); } catch (_) { }
+    return ' Izziv dneva opravljen: ' + c.txt + '!' + (done ? '' : careerPay(2500, 'Nagrada za izziv'));
+  }
   // the reward of a race / qualifying / time trial in the career: added now; the line for the results screen ('' outside the career)
   function careerPay(sum, what) {
     if (!inCareer() || !(sum > 0) || (mp && mp.race)) return '';
@@ -803,7 +820,28 @@
     ghLap = circ ? { n: 0, f: new Float32Array(GH_MAX * GH_CH), t0: 0, lap: -1, on: false } : null;
     const R0 = tt ? rec(track.def.id) : null;
     ghPlay = R0 && R0.bestTime ? ghLoad(track.def.id, R0.bestTime) : circ ? ghLoad(track.def.id, 0, true) : null;
+    if (tt && !ghPlay && track.def.legend) ghPlay = ghLegend();   // (no run of one's own yet: the legend's)
     Render.setGhost(null, true);
+  }
+  // the legend's run (def.legend: the Kapelmuur's climb): the stock rally car on the autopilot driven up now, in this weather, sampled as a
+  // ghost (a gold car), for a player with no best run of their own yet to chase
+  // the souvenir photo of a climb (def.photo): the car at the finish by the chapel, from a photographer's spot ahead of it and to one side
+  let muPhoto = null;
+  function muSnap(P) {
+    try {
+      const ch = Math.cos(P.h), sh = Math.sin(P.h), x = P.x, z = P.z, y = P.y || 0;
+      Render.setShot({ px: x + ch * 13 - sh * 5, py: y + 1.9, pz: z + sh * 13 + ch * 5, tx: x, ty: y + 0.8, tz: z, fov: 42, near: 0.3 });
+      const cv = Render.snapshot(P, 'chase', 900); Render.setShot(null); return cv.toDataURL('image/jpeg', 0.86);
+    } catch (_) { try { Render.setShot(null); } catch (__) { } return null; }
+  }
+  function ghLegend() {
+    const M = Core.MODELS.find(m => m.id === 'rally') || Core.MODELS[4], r = new Core.Race(track, { numAI: 0, playerGrid: 1, laps: 1, playerModel: M, assist: 2, phys: physOf(), seed: 11, difficulty: 1, rain: race.rain });
+    r.start(); const P = r.player, f = new Float32Array(GH_MAX * GH_CH); let n = 0;
+    while (!P.finished && r.time < 240 && n < GH_MAX) { Core.aiControl(P, r, STEP); r.step(STEP); const t1 = r.time, t0 = t1 - STEP;
+      while (n < GH_MAX && n * GH_DT <= t1 + 1e-9) { ghPose(P, f, n, clamp((n * GH_DT - t0) / STEP, 0, 1)); n++; } }
+    if (!P.finished || n >= GH_MAX) return null;
+    ghPose(P, f, n, 1); n++;
+    return { n, t: P.finishTime, M, color: 0xd9a930, stripe: true, f: f.slice(0, n * GH_CH), lap: false, legend: true };
   }
   function ghLapSample(P) {   // a circuit, after each physics step: the flying lap under way (see ghStart)
     const G = ghLap; if (!G || race.state !== 'racing') return;
@@ -1032,6 +1070,8 @@
       : '<span class="slow">' + sgn(d) + '</span> za rekordom (rekord ' + fmt(r.prev, true) + ').') +
       ' ' + esc(T.def.name) + (race && race.rain ? ' v dežju' : '') + ' · ' + esc(Core.MODELS[S.car].name) + ' · ' + (r.rank <= 10 ? r.rank + '. mesto na lestvici.' : 'izven prvih 10.') +
       (medalSet(T.def) ? '<br>' + medalLine(T.def, r.time) : '') + (jumpLine() ? '<br>' + jumpLine() : '');
+    if (muChFor(T.def.id)) { const M = medalSet(T.def); $('res-sub').innerHTML += '<br>' + esc(muChDone(T.def.id, !!M && r.time <= M[0]).trim()); }
+    if (muPhoto && T.def.photo) $('res-sub').innerHTML += '<br><a class="mu-photo" download="kapelmuur-' + fmt(r.time, true).replace(/[^0-9]/g, '') + '.jpg" href="' + muPhoto + '"><img src="' + muPhoto + '" alt="Fotografija s kapele" style="width:min(320px,80vw);border-radius:8px;margin-top:6px;display:block"></a><small>Fotografija s kapele · klikni za shranjevanje</small>';
     if (inCareer() && !r.paid) {   // the career: a medal, a personal best, or a little for getting there (once per run)
       r.paid = true; const k = medalSet(T.def) ? medalOf(T.def, r.time) : -1, C = Core.CAREER, sum = k >= 0 ? C.medal[['gold', 'silver', 'bronze'][k]] : r.newPB ? C.pb : C.finishTT;
       career.races++; const line = careerPay(sum, k >= 0 ? 'Nagrada za medaljo' : r.newPB ? 'Nagrada za osebni rekord' : 'Nagrada');
@@ -1182,6 +1222,7 @@
     $('res-title').textContent = pos === 1 ? 'Zmaga!' : pos <= 3 ? 'Na stopničkah!' : 'Cilj';
     $('res-sub').textContent = 'Čas dirke ' + fmt(tot, true) + (res[myIdx].pen ? ' (s ' + res[myIdx].pen + ' s kazni)' : '') + (up ? '' : ', najboljši krog ' + fmt(best, true)) + (newRec ? ' (nov rekord proge)' : '') + '. Štartal si z ' + P.grid + '. mesta.';
     if (race.tf) $('res-sub').textContent += ' Zbiti pešci: ' + tfHits.ped + ', kolesarji: ' + tfHits.bike + (tfHits.ped + tfHits.bike ? ' (5 s kazni za vsakega)' : '') + '.';
+    if (muChFor(track.def.id) && !race.champ) { const c = muChFor(track.def.id); $('res-sub').textContent += muChDone(track.def.id, c.id === 'win8' ? pos === 1 : (cs && cs.muurPasses || 0) >= 5); }
     if (inCareer()) {   // the career: prize money (the place, the distance, the difficulty), the fastest lap of the race (a race up the road: no laps)
       const diff = race.champ ? champ.diff : S.difficulty, fl = !up && best > 0 && race.cars.every(c => c === P || !c.lapTimes.length || Math.min(...c.lapTimes) >= best);
       career.races++; if (pos === 1) career.wins++;
@@ -1875,7 +1916,7 @@
   const PART_EN = { bumperF: 'front bumper', bumperR: 'rear bumper', hood: 'bonnet', trunk: 'boot lid', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'front wing', fenderR: 'front wing' };
   const PART_EN_F = { bumperF: 'front wing', bumperR: 'rear wing', hood: 'nose cone', trunk: 'engine cover', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'bargeboard', fenderR: 'bargeboard' };   // (the formula's parts)
   const PART_EN_LM = { bumperF: 'splitter', bumperR: 'rear wing', hood: 'nose', trunk: 'engine cover', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'louvre panel', fenderR: 'louvre panel' };   // (the prototype's)
-  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', ouninpohja: 'Ouninpohja', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka', vrsic: 'the Vrshich pass', muur: 'the Moor of Gerardsbergen', muurtt: 'the climb of the Moor of Gerardsbergen' };
+  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', ouninpohja: 'Ouninpohja', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka', vrsic: 'the Vrshich pass', muur: 'the Moor of Gerardsbergen', muurtt: 'the climb of the Moor of Gerardsbergen', muur8: 'the narrow streets of Gerardsbergen' };
   const cev = { wall: 0, car: 0 };          // impacts collected per physics step
   let cs = null;
   function commReset() {
@@ -1902,6 +1943,7 @@
       cs.posHold += dt;
       if (cs.posHold > 1.0) {
         const kp = pos < cs.lastPos && race.track.def.kassei ? kasPass(P) : null;   // (the Kapelmuur: a pass on the Muur, on its last ramp, on the cobbles)
+        if (kp === 'muurPass' || kp === 'muurRamp') cs.muurPasses = (cs.muurPasses || 0) + (cs.lastPos - pos);   // (the challenge of the day)
         if (kp && pos > 1) Comm.say(kp, { pos: Comm.ordinal(pos) }, 2);
         else if (pos < cs.lastPos) { if (pos === 1) Comm.say(kp === 'muurRamp' || kp === 'muurPass' ? 'muurLead' : 'lead', null, 4); else Comm.say('gain', { pos: Comm.ordinal(pos) }, 2); }
         else if (cs.lastPos === 1) Comm.say('lostLead', null, 3); else Comm.say('lose', { pos: Comm.ordinal(pos) }, 2);
@@ -1983,6 +2025,7 @@
       if (!race.player.finished) commTick(dt);
       if (race.player.finished) {
         phase = 'finish'; phaseT = 0;
+        muPhoto = race.timeTrial && track.def.photo ? muSnap(race.player) : null;   // (the Kapelmuur's climb: the souvenir photo at the chapel)
         const pos = race.player.finishPos;
         if (on) {   // online: my time on the shared clock (netMyFinish) goes to the friend; who won shows on the results (the friend may still be on the way)
           const other = on.theirs, won = other == null || on.mine < other;

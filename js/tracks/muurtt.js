@@ -17,7 +17,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     id: 'muurtt', name: 'Kapelmuur · vzpon', theme: 'muur', open: true, timeTrial: true, laps: 1, halfWidth: 6.5, circuitOf: 'muur', elevOf: 'muur',
     desc: 'Vzpon na Muur van Geraardsbergen proti uri: od reke Dender po nabrežju in Brugstraat, čez Markt, po tlakovanih Vesten in Oudenbergstraat, skozi park na Kapelmuur in po zadnji 20-odstotni rampi do kapele na Oudenbergu. Dobrih 1,1 km kasejev in 90 m vzpona, rekordi in medalje.',
-    realKm: 1.2, alt: [17, 109], maxGrade: 20, gradeHud: true,   // (the card: the steepest ramp; the HUD: the gradient under the car next to the altitude)
+    realKm: 1.2, alt: [17, 109], maxGrade: 20, gradeHud: true, legend: true, photo: true,   // (the card: the steepest ramp; the HUD: the gradient under the car next to the altitude)
     start: at(A), finish: at(Lc + 893), cps: [at(A + 240), at(A + 475), at(A + 710), at(A + 945)],
     runoff: M.runoff, inner: M.inner, side: M.side, noCurbs: true, noGravel: true, offSurface: 'paving', kassei: true, gradeForce: true,
     // medal times (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
