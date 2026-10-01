@@ -8546,6 +8546,106 @@ const World = (function () {
     SA.addTo(root, aMat, false, true); SG.addTo(root, sMat, false, true); SL.addTo(root, lMat, false, true);
     return { n: (T.stubs || []).length, posts: nPost, cones: nCone };
   }
+  // the building at the top of the run from the police (def.hideout { s: metres after the start line of its middle, side, len, wid, door }; only in
+  // that mode: Render.attachRace shows it and hides the finish): a timber garage of the road service on the verge just past the pass, where the
+  // core has it (Police: its middle at s, side * (w + 0.3 + wid / 2) across, along the road there; the walls 0.3 m thick where the core's are,
+  // the cars collide with those), the open door (door m wide) in the end facing down the road. A stone plinth, weathered larch boards, small
+  // windows with green shutters, a steep roof with deep eaves (under the first snow in autumn); inside, dim: a concrete floor at the height the
+  // cars drive at, dark walls, a ceiling, a workbench, shelves, tyres, a snow plough's blade; a gravel yard from the asphalt to the door. The
+  // roller door (its own mesh, rolled up under the lintel) comes down once the player is in (Render). Returns { grp, door, ... } or null
+  function vrHideout(K) {
+    const HO = T.def.hideout; if (!HO) return null;
+    const { root, matV, sMat, exclPush, CR } = K, w = T.w, sd = HO.side, L = HO.len, W = HO.wid, t = 0.3, dw = HO.door, R = rng(9911);
+    const gs = T.startS + HO.s, gi = T.idx(gs), gh = T.hd[gi], gd = sd * (w + 0.3 + W / 2), gx = T.px[gi] + T.nx[gi] * gd, gz = T.pz[gi] + T.nz[gi] * gd, ch = Math.cos(gh), sh = Math.sin(gh);
+    const P = (lx, lz, y) => [gx + ch * lx - sh * lz, y, gz + sh * lx + ch * lz];   // (its own frame: lx up the road, lz across it, + to the right)
+    const Q = {}, yR = (lx, lz) => { const p = P(lx, lz, 0); return T.yAt(T.query(p[0], p[2], gi, Q)); };   // (the height the cars drive at there: the road's)
+    const hx = L / 2 + t / 2, hz = W / 2 + t / 2, ix = L / 2 - t / 2, iz = W / 2 - t / 2;   // (the walls' outer and inner faces)
+    let y0 = -1e9; for (const [a, b] of [[-ix, -iz], [ix, -iz], [ix, iz], [-ix, iz], [0, 0], [-hx, 0]]) y0 = Math.max(y0, yR(a, b) + 0.025);
+    const E = y0 + 3.7, Hd = 3.2, rh = 2.45, kr = rh / hz, oe = 0.65, og = 0.75, rt = 0.14, snow = VRS !== 'summer';   // (the eaves, the door's height, the roof's rise and slope, its overhangs and thickness)
+    const g = new GB(), mid = P(0, 0, y0 + 2), wood = [0.44, 0.31, 0.2], dark = [0.19, 0.15, 0.12], stone = [0.55, 0.53, 0.5];
+    const away = (lx, lz, y, k) => [gx + (P(lx, lz, y)[0] - gx) * k, y, gz + (P(lx, lz, y)[2] - gz) * k];   // (a point past a face seen from the middle: orients an inside face)
+    const pan = (a, b, y0a, y0b, y1a, y1b, col, inner) => {   // a vertical face from a = [lx, lz] to b, from the bottom (y0a, y0b) to the top (y1a, y1b), facing out (inner: into the building)
+      const c = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (y0a + y0b + y1a + y1b) / 4];
+      g.quadO(P(a[0], a[1], y0a), P(b[0], b[1], y0b), P(b[0], b[1], y1b), P(a[0], a[1], y1a), col, inner ? away(c[0], c[1], c[2], 3) : mid); };
+    const gab = (lz) => E + rh * (1 - Math.abs(lz) / hz);   // (the gable's top at lz)
+    // the boards outside (planks ~0.24 m wide, each a shade of its own) from y = bot(u) to top(u) along a wall from a to b
+    const boards = (a, b, bot, top) => { const n = Math.max(1, Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]) / 0.24));
+      for (let k = 0; k < n; k++) { const u0 = k / n, u1 = (k + 1) / n, A = [a[0] + (b[0] - a[0]) * u0, a[1] + (b[1] - a[1]) * u0], B = [a[0] + (b[0] - a[0]) * u1, a[1] + (b[1] - a[1]) * u1], s = (k % 2 ? 0.9 : 1) * (0.92 + 0.14 * R());
+        const yb0 = bot(A), yb1 = bot(B); if (top(A) - yb0 < 0.01 && top(B) - yb1 < 0.01) continue;
+        pan(A, B, yb0, yb1, top(A), top(B), [wood[0] * s, wood[1] * s, wood[2] * s]); } };
+    const pl = y0 + 0.45, lo = y0 - 0.9, flat = () => E, pB = () => pl, gT = (p) => gab(p[1]), hd = dw / 2;   // (the plinth's top, the walls' foot in the ground)
+    // the long walls, the back with its gable, the door's end (its gable over the lintel), boards over the plinth
+    for (const s of [-1, 1]) boards([-hx, s * hz], [hx, s * hz], pB, flat);
+    boards([hx, -hz], [hx, hz], pB, gT);
+    boards([-hx, -hz], [-hx, -hd], pB, gT); boards([-hx, -hd], [-hx, hd], () => y0 + Hd + 0.24, gT); boards([-hx, hd], [-hx, hz], pB, gT);
+    // the plinth (proud of the boards by 4 cm, a ledge on top; at the door's end cut out down to the floor), the lintel beam over the door
+    const pe = hz + 0.04, xe = hx + 0.04, led = [0.62, 0.6, 0.57], ps = (a, b, top) => { pan(a, b, lo, lo, top, top, stone); }, ledge = (a, b, c, d) => g.quadO(P(a[0], a[1], pl), P(b[0], b[1], pl), P(c[0], c[1], pl), P(d[0], d[1], pl), led, P(0, 0, pl - 1));
+    for (const s of [-1, 1]) { ps([-xe, s * pe], [xe, s * pe], pl); ledge([-xe, s * pe], [xe, s * pe], [hx, s * hz], [-hx, s * hz]); }
+    ps([xe, -pe], [xe, pe], pl); ledge([xe, -pe], [xe, pe], [hx, hz], [hx, -hz]);
+    for (const s of [-1, 1]) { ps([-xe, s * pe], [-xe, s * hd], pl); ledge([-xe, s * pe], [-xe, s * hd], [-hx, s * hd], [-hx, s * hz]); pan([-xe, s * hd], [-hx, s * hd], lo, lo, pl, pl, stone, true); }
+    ps([-xe, -hd], [-xe, hd], y0 - 0.02);
+    { const [bx, , bz] = P(-hx - 0.05, 0, 0); box(g, bx, y0 + Hd, bz, 0.12, 0.24, dw + 0.5, gh, [0.3, 0.2, 0.13]); }
+    for (const a of [-hx, hx]) for (const b of [-hz, hz]) { const [bx, , bz] = P(a, b, 0); box(g, bx, pl, bz, 0.2, E - pl, 0.2, gh, [0.33, 0.23, 0.15]); }
+    // the door's opening: the plinth's cut (the floor runs out under it), the reveals and the soffit (dark), the roller door's housing inside
+    for (const s of [-1, 1]) { pan([-hx, s * dw / 2], [-ix, s * dw / 2], y0, y0, y0 + Hd, y0 + Hd, [0.26, 0.19, 0.13], true); }
+    g.quadO(P(-hx, -dw / 2, y0 + Hd), P(-ix, -dw / 2, y0 + Hd), P(-ix, dw / 2, y0 + Hd), P(-hx, dw / 2, y0 + Hd), [0.24, 0.18, 0.12], P(-L / 2, 0, y0 + Hd + 1));
+    { const [bx, , bz] = P(-ix + 0.22, 0, 0); box(g, bx, y0 + Hd - 0.02, bz, 0.42, 0.46, dw + 0.3, gh, [0.42, 0.43, 0.45]); }
+    // inside (dim): the walls, the door's end round the opening, the ceiling under the eaves, the floor (concrete, darker towards the back)
+    for (const s of [-1, 1]) pan([-ix, s * iz], [ix, s * iz], y0 - 0.1, y0 - 0.1, E, E, dark, true);
+    pan([ix, -iz], [ix, iz], y0 - 0.1, y0 - 0.1, E, E, dark, true);
+    for (const s of [-1, 1]) pan([-ix, s * iz], [-ix, s * dw / 2], y0 - 0.1, y0 - 0.1, E, E, dark, true);
+    pan([-ix, -dw / 2], [-ix, dw / 2], y0 + Hd, y0 + Hd, E, E, dark, true);
+    g.quadO(P(-ix, -iz, E), P(ix, -iz, E), P(ix, iz, E), P(-ix, iz, E), [0.15, 0.12, 0.1], P(0, 0, E + 1));
+    { const nx = 8, nz = 3, fy = (a, b) => yR(a, b) + 0.025, fc = (a) => { const k = lerp(0.46, 0.24, (a + hx) / (hx + ix)); return [k, k, k * 0.98]; };
+      for (let a = 0; a < nx; a++) for (let b = 0; b < nz; b++) { const x0 = -hx + (hx + ix) * a / nx, x1 = -hx + (hx + ix) * (a + 1) / nx, z0 = -iz + 2 * iz * b / nz, z1 = -iz + 2 * iz * (b + 1) / nz;
+        g.quadUp(P(x0, z0, fy(x0, z0)), P(x1, z0, fy(x1, z0)), P(x1, z1, fy(x1, z1)), P(x0, z1, fy(x0, z1)), [fc(x0), fc(x1), fc(x1), fc(x0)]); } }
+    // the windows on the long walls (dark glass in a white frame, green shutters open beside it), a lamp over the door
+    for (const s of [-1, 1]) for (const a of [-2.6, 2.4]) { const o = s * (hz + 0.02), [wx, , wz] = P(a, o, 0), [fx, , fz] = P(a, s * (hz + 0.05), 0);
+      g.quadO(P(a - 0.45, o, y0 + 1.3), P(a + 0.45, o, y0 + 1.3), P(a + 0.45, o, y0 + 2.15), P(a - 0.45, o, y0 + 2.15), [0.13, 0.15, 0.19], mid);
+      for (const [dx, dy, sx, sy] of [[0, 1.24, 1.04, 0.07], [0, 2.15, 1.04, 0.07], [-0.5, 1.24, 0.07, 0.98], [0.5, 1.24, 0.07, 0.98]]) box(g, wx + ch * dx, y0 + dy, wz + sh * dx, sx, sy, 0.06, gh, [0.9, 0.89, 0.85]);
+      for (const q of [-0.8, 0.8]) box(g, fx + ch * q, y0 + 1.24, fz + sh * q, 0.5, 0.98, 0.04, gh, [0.2, 0.42, 0.26]); }
+    { const [lx, , lz] = P(-hx - 0.12, 0, 0); box(g, lx, y0 + Hd + 0.4, lz, 0.22, 0.14, 0.3, gh, [0.15, 0.15, 0.16]); box(g, lx, y0 + Hd + 0.33, lz, 0.16, 0.07, 0.22, gh, [1.0, 0.96, 0.82]); }
+    // inside: a workbench along the back wall, shelves with boxes, a stack of tyres, the orange blade of a snow plough against the wall
+    { const at = (a, b) => { const p = P(a, b, 0); return [p[0], p[2]]; }, fyA = (a, b) => yR(a, b);
+      let [x, z] = at(ix - 0.3, -sd * 0.9); box(g, x, fyA(ix - 0.3, -sd * 0.9), z, 0.55, 0.92, 2.6, gh, [0.36, 0.25, 0.16], [0.46, 0.35, 0.23]);
+      const fs = fyA(1.0, sd * (iz - 0.25)), stl = [0.3, 0.31, 0.33];   // (the shelves: two uprights, four boards, boxes on them)
+      for (const a of [-0.6, 2.6]) { [x, z] = at(a, sd * (iz - 0.25)); box(g, x, fs, z, 0.06, 2.1, 0.45, gh, stl); }
+      [x, z] = at(1.0, sd * (iz - 0.25)); for (const yy of [0.1, 0.75, 1.4, 2.05]) box(g, x, fs + yy, z, 3.2, 0.04, 0.45, gh, stl);
+      for (let k = 0; k < 6; k++) { const a = -0.25 + (k % 3) * 1.05 + (k > 2 ? 0.4 : 0), yy = fs + (k > 2 ? 1.44 : 0.79); [x, z] = at(a, sd * (iz - 0.25)); box(g, x, yy, z, 0.55, 0.34 + (k % 2) * 0.12, 0.38, gh, k % 3 ? [0.62, 0.5, 0.34] : [0.72, 0.18, 0.12]); }
+      [x, z] = at(ix - 0.6, sd * (iz - 0.6)); for (let k = 0; k < 4; k++) cyl(g, x, fyA(ix - 0.6, sd * (iz - 0.6)) + k * 0.23, z, 0.33, 0.22, 10, [0.08, 0.08, 0.09], [0.16, 0.16, 0.17]);
+      [x, z] = at(-3.2, -sd * (iz - 0.18)); box(g, x, fyA(-3.2, -sd * (iz - 0.18)), z, 2.7, 0.95, 0.16, gh, [0.95, 0.5, 0.1], [0.98, 0.62, 0.2]); }
+    // the roof: a slope each side from the ridge over the walls to the eaves (its top: shingles or the first snow; under it dark boards), the
+    // fascia boards along the eaves and up the gables
+    { const top = snow ? [0.9, 0.92, 0.96] : [0.32, 0.31, 0.32], und = [0.27, 0.19, 0.12], fas = [0.36, 0.25, 0.16], rx = hx + og, ez = hz + oe, ey = E - kr * oe, R0 = E + rh;
+      for (const s of [-1, 1]) {
+        g.quadO(P(-rx, 0, R0 + rt), P(rx, 0, R0 + rt), P(rx, s * ez, ey + rt), P(-rx, s * ez, ey + rt), top, P(0, 0, E - 5));
+        g.quadO(P(-rx, 0, R0), P(rx, 0, R0), P(rx, s * ez, ey), P(-rx, s * ez, ey), und, P(0, 0, R0 + 5));
+        g.quadO(P(-rx, s * ez, ey), P(rx, s * ez, ey), P(rx, s * ez, ey + rt), P(-rx, s * ez, ey + rt), fas, P(0, 0, ey));
+        for (const e of [-1, 1]) g.quadO(P(e * rx, 0, R0), P(e * rx, s * ez, ey), P(e * rx, s * ez, ey + rt), P(e * rx, 0, R0 + rt), fas, P(0, 0, E)); }
+      if (snow) for (const s of [-1, 1]) g.quadO(P(-rx, s * (ez - 0.02), ey + rt), P(rx, s * (ez - 0.02), ey + rt), P(rx, s * (ez + 0.06), ey + rt - 0.12), P(-rx, s * (ez + 0.06), ey + rt - 0.12), [0.86, 0.88, 0.93], P(0, 0, E - 5)); }   // (the snow's lip over the eaves)
+    const grp = new THREE.Group(); grp.name = 'vrHide'; grp.visible = false; root.add(grp);
+    const shell = new THREE.Mesh(g.geometry(), matV); shell.castShadow = true; shell.receiveShadow = true; shell.matrixAutoUpdate = false; grp.add(shell);
+    // the gravel yard from the asphalt's edge to the door (over the shoulder and the verge; along the road, to the barrier line), its edges
+    // down into the ground
+    const yd = new GB(true), s1 = gs - hx, s0 = s1 - 24, gc = [0.8, 0.76, 0.7];   // (from where the cars leave the road for it)
+    { const rows = []; for (let s = s0; s <= s1 + 0.01; s += 1) { const ss = Math.min(s, s1), i = T.idx(ss), ob = Math.min((sd > 0 ? T.br[i] : T.bl[i]) - 0.25, Math.abs(gd) + hz), y = T.elevAt(ss).y + 0.035, os = [w + 0.02, w + 0.6, (w + 0.6 + ob) / 2, ob];
+        rows.push(os.map(o => { const [x, z] = atSf(ss, sd * o); return [x, y, z, o, ss]; })); }
+      const uv = (p) => [p[3] / 4, p[4] / 6], col = (p) => { const k = 0.9 + 0.1 * rpHash(Math.round(p[4]), Math.round(p[3] * 3)); return [gc[0] * k, gc[1] * k, gc[2] * k]; };
+      for (let a = 0; a + 1 < rows.length; a++) for (let b = 0; b < 3; b++) { const p = rows[a][b], q = rows[a][b + 1], r = rows[a + 1][b + 1], u = rows[a + 1][b];
+        yd.quadUp([p[0], p[1], p[2]], [q[0], q[1], q[2]], [r[0], r[1], r[2]], [u[0], u[1], u[2]], [col(p), col(q), col(r), col(u)], [uv(p), uv(q), uv(r), uv(u)]); }
+      const sk = (p, q, inn) => yd.quadO([p[0], p[1], p[2]], [q[0], q[1], q[2]], [q[0], q[1] - 0.45, q[2]], [p[0], p[1] - 0.45, p[2]], [gc[0] * 0.7, gc[1] * 0.7, gc[2] * 0.7], inn, [uv(p), uv(q), uv(q), uv(p)]);
+      for (let a = 0; a + 1 < rows.length; a++) { const p = rows[a][3], q = rows[a + 1][3]; sk(p, q, [(rows[a][0][0] + q[0]) / 2, p[1], (rows[a][0][2] + q[2]) / 2]); }
+      for (let b = 0; b < 3; b++) { const p = rows[0][b], q = rows[0][b + 1]; sk(p, q, [rows[1][b][0], p[1], rows[1][b][2]]); } }
+    const yard = new THREE.Mesh(yd.geometry(), sMat); yard.receiveShadow = true; yard.matrixAutoUpdate = false; grp.add(yard);
+    // the roller door: grey steel slats from the lintel down (scale.y: 0 rolled up, 1 down), both faces
+    const dg = new GB(), n = 20;
+    for (let k = 0; k < n; k++) { const ya = -k * Hd / n, yb = -(k + 1) * Hd / n, c = k === n - 1 ? [0.36, 0.37, 0.39] : k % 2 ? [0.66, 0.67, 0.68] : [0.76, 0.77, 0.78];
+      for (const f of [-1, 1]) dg.quadO([0, ya, -dw / 2 - 0.05], [0, ya, dw / 2 + 0.05], [0, yb, dw / 2 + 0.05], [0, yb, -dw / 2 - 0.05], c, [f, (ya + yb) / 2, 0]); }
+    const door = new THREE.Mesh(dg.geometry(), matV), dp = P(-hx + 0.09, 0, y0 + Hd);
+    door.position.set(dp[0], dp[1], dp[2]); door.rotation.y = -gh; door.scale.y = 0.02; door.castShadow = true; door.receiveShadow = true; door.matrixAutoUpdate = false; door.updateMatrix(); grp.add(door);
+    exclPush(gx, gz, Math.hypot(L, W) / 2 + 4); CR.block(gx, gz, L + 1.4, W + 1.4, gh);   // (no trees, shrubs or people in it, no crowns in its eaves)
+    return { grp, door, x: gx, z: gz, y: y0, h: gh, len: L, wid: W, Hd, k: 0, lamp: P(-hx - 0.12, 0, y0 + Hd + 0.3), lit: P(1, 0, E - 0.35) };   // (k: the door's share down; lamp: over the door, lit: the light inside, at dusk and at night: Render)
+  }
   function buildVrsic(scene, tex, opts) {
     const R = rng(7611), N = T.N, w = T.w, dens = opts.density || 1, def = T.def, PI = Math.PI;
     const root = new THREE.Group(); scene.add(root);
@@ -8623,7 +8723,10 @@ const World = (function () {
     const cMat = new THREE.MeshLambertMaterial({ map: tex.paving, vertexColors: true });
     const lMat = new THREE.MeshLambertMaterial({ vertexColors: true });
     const sMat = new THREE.MeshPhongMaterial({ map: tex.makadam, bumpMap: tex.makadamBump, bumpScale: 0.04, shininess: 5, specular: 0x14110d, vertexColors: true });
-    const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
+    const addM = (g, mat, cast, grp) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; (grp || root).add(m); return m; };
+    // the race's finish at the pass (the gantry, the chequered line, the flags, the crowd) in a group of its own: not in the run from the police,
+    // whose mission ends in the building past it instead (vrHideout; Render.attachRace shows the one or the other)
+    const finG = new THREE.Group(); finG.name = 'vrFin'; root.add(finG); out.dyn.vrFin = finG;
     const sett = T.settAt || new Uint8Array(N), onBr = new Uint8Array(N), sw = 0.6;
     const WK = T.walk, wE = (si, i) => w + (WK ? WK[si][i] : 0);   // the edge of the road on a side (0 left, 1 right): past its sidewalk (Kranjska Gora, Jasna)
     for (const [a, b] of def.bridges || []) for (let s = sStart + a - 3; s <= sStart + b + 3; s += T.ds / 2) onBr[T.idx(s)] = 1;
@@ -8681,20 +8784,21 @@ const World = (function () {
         }
         addM(gr, aMat); addM(gp, cMat); addM(gl, lMat); addM(gs, sMat); addM(gv, gMat);
       }
-      // chequered start and finish lines, a white line at each checkpoint
-      const gq = new GB(true), gw = new GB(), uM = Math.round(w * 2 / 0.8) / 16, W1 = [1, 1, 1];
+      // chequered start and finish lines (the finish's in its group), a white line at each checkpoint
+      const gq = new GB(true), gqF = new GB(true), gw = new GB(), uM = Math.round(w * 2 / 0.8) / 16, W1 = [1, 1, 1];
       for (const s0 of [sStart, sFin]) { const a = atSf(s0 - 0.8, -w), b = atSf(s0 - 0.8, w), c = atSf(s0 + 0.8, w), d = atSf(s0 + 0.8, -w), y = (p) => T.hy[p[3]] + 0.045;
-        gq.quadUp([a[0], y(a), a[1]], [b[0], y(b), b[1]], [c[0], y(c), c[1]], [d[0], y(d), d[1]], [W1, W1, W1, W1], [[0, 0], [uM, 0], [uM, 0.5], [0, 0.5]]); }
+        (s0 === sFin ? gqF : gq).quadUp([a[0], y(a), a[1]], [b[0], y(b), b[1]], [c[0], y(c), c[1]], [d[0], y(d), d[1]], [W1, W1, W1, W1], [[0, 0], [uM, 0], [uM, 0.5], [0, 0.5]]); }
       for (const s0 of T.cpS) { const a = atSf(s0 - 0.25, -w + 0.1), b = atSf(s0 - 0.25, w - 0.1), c = atSf(s0 + 0.25, w - 0.1), d = atSf(s0 + 0.25, -w + 0.1), y = (p) => T.hy[p[3]] + 0.042;
         gw.quadUp([a[0], y(a), a[1]], [b[0], y(b), b[1]], [c[0], y(c), c[1]], [d[0], y(d), d[1]], [wht, wht, wht, wht]); }
       for (const z0 of def.zebras || []) { const s0 = sStart + z0;   // the zebra crossings: white bars along the road, 0.5 m wide and 0.5 m apart, 3 m long, over the carriageway
         for (let o = -w + 0.35; o + 0.5 <= w - 0.3; o += 1.0) { const a = atSf(s0 - 1.5, o), b = atSf(s0 - 1.5, o + 0.5), c = atSf(s0 + 1.5, o + 0.5), d = atSf(s0 + 1.5, o), y = (p) => T.hy[p[3]] + 0.04;
           gw.quadUp([a[0], y(a), a[1]], [b[0], y(b), b[1]], [c[0], y(c), c[1]], [d[0], y(d), d[1]], [wht, wht, wht, wht]); } }
-      tex.checker.repeat.set(1, 1); addM(gq, new THREE.MeshLambertMaterial({ map: tex.checker })); addM(gw, lMat);
+      tex.checker.repeat.set(1, 1); const qMat = new THREE.MeshLambertMaterial({ map: tex.checker }); addM(gq, qMat); addM(gqF, qMat, false, finG); addM(gw, lMat);
     }
 
     /* ---- scenery (vertex coloured, 110 m chunks) ---- */
     const scen = new Chunks(110), fac = new Chunks(110, true), ban = new GB(true), ban2 = new GB(true), W1 = [1, 1, 1];   // (fac: the houses' walls; ban: the race's boards, ban2: the signs)
+    const finS = new GB(), finB = new GB(true);   // (the finish's gantry and flags, its board: finG)
     const onSide = (s, side, extra) => { const i = T.idx(s), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + extra); return [T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, i]; };
     const fans = [[0.86, 0.14, 0.12], [0.96, 0.82, 0.2], [0.16, 0.36, 0.78], [0.95, 0.95, 0.95], [0.2, 0.6, 0.3], [1, 0.55, 0.1], [0.12, 0.14, 0.2], [0.16, 0.36, 0.78], [0.95, 0.95, 0.95]];   // (Slovenian white, blue and red twice)
     const CR = crowdCtx({ gH: vrGround, near: (x, z) => vrNear(x, z).dd, excluded, maxSlope: 0.6, water: (x, z) => vrWater(x, z).e > -4 }), crSoft = new Set();
@@ -8705,11 +8809,11 @@ const World = (function () {
         (gb || ban).quadO(A, B, C, D, W1, [cx + kx / 2 - tx * ca * f, cy + ky / 2 + sa * f, cz + kz / 2 - tz * ca * f], [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]); }
     };
     const row = (k) => [1 - (k + 1) / 8, 1 - k / 8];   // atlas row k (0 = top) -> [v0, v1]
-    const arch = (s, rowK, postCol, beamCol) => {   // gantry over the road: two posts at the barriers, a beam, a board both ways; returns [x, y, z, i]
-      const i = T.idx(s), x = T.px[i], z = T.pz[i], y = T.hy[i], nx = T.nx[i], nz = T.nz[i], L1 = T.bl[i] + 0.9, L2 = T.br[i] + 0.9, g = scen.get(x, z), hd = T.hd[i];
+    const arch = (s, rowK, postCol, beamCol, G, B) => {   // gantry over the road: two posts at the barriers, a beam, a board both ways (into G and B, else the scenery and ban); returns [x, y, z, i]
+      const i = T.idx(s), x = T.px[i], z = T.pz[i], y = T.hy[i], nx = T.nx[i], nz = T.nz[i], L1 = T.bl[i] + 0.9, L2 = T.br[i] + 0.9, g = G || scen.get(x, z), hd = T.hd[i];
       box(g, x - nx * L1, y - 0.6, z - nz * L1, 0.6, 7.4, 0.6, hd, postCol); box(g, x + nx * L2, y - 0.6, z + nz * L2, 0.6, 7.4, 0.6, hd, postCol);
       const cx = x + nx * (L2 - L1) / 2, cz = z + nz * (L2 - L1) / 2; box(g, cx, y + 6.1, cz, 0.55, 0.65, L1 + L2 + 0.6, hd, beamCol);
-      const [v0, v1] = row(rowK); bannerQ(x, y + 4.3, z, T.tx[i], T.tz[i], 12.8, 1.6, v0, v1);
+      const [v0, v1] = row(rowK); bannerQ(x, y + 4.3, z, T.tx[i], T.tz[i], 12.8, 1.6, v0, v1, 0, 1, B);
       const e = exclPush(x, z, Math.max(L1, L2) + 6); crSoft.add(e); return [x, y, z, i];
     };
     const person = (x, z, ro, col) => crowdPut(CR, x, vrGround(x, z), z, -Math.sin(ro), Math.cos(ro), { col: col || fans[Math.floor(R() * fans.length)] }, 1);
@@ -8810,10 +8914,10 @@ const World = (function () {
     /* ---- checkpoints: a green gantry "CPn  altitude" ---- */
     T.cpS.forEach((s, k) => arch(s, 2 + k, [0.86, 0.86, 0.88], [0.12, 0.42, 0.24]));
 
-    /* ---- FINISH (the pass): chequered gantry and flags, the pass sign on a stone plinth, the car park with its cars and walkers, the road closed farther on ---- */
+    /* ---- FINISH (the pass): chequered gantry and flags (the race's: finG), the pass sign on a stone plinth, the car park with its cars and walkers, the road closed farther on ---- */
     {
-      arch(sFin, 1, [0.95, 0.95, 0.95], [0.1, 0.1, 0.12]);
-      for (const side of [-1, 1]) for (let s = sFin - 28; s < sFin + 12; s += 7) { const [px, pz, ii] = onSide(s, side, 1.4), py = vrGround(px, pz), gg = scen.get(px, pz);
+      arch(sFin, 1, [0.95, 0.95, 0.95], [0.1, 0.1, 0.12], finS, finB);
+      for (const side of [-1, 1]) for (let s = sFin - 28; s < sFin + 12; s += 7) { const [px, pz, ii] = onSide(s, side, 1.4), py = vrGround(px, pz), gg = finS;
         cyl(gg, px, py, pz, 0.06, 5, 5, [0.9, 0.9, 0.92]);
         for (let a = 0; a < 3; a++) for (let b = 0; b < 2; b++) box(gg, px + T.tx[ii] * (0.36 + a * 0.55), py + 3.8 + b * 0.55, pz + T.tz[ii] * (0.36 + a * 0.55), 0.55, 0.55, 0.05, T.hd[ii], (a + b) % 2 ? [0.08, 0.08, 0.08] : [0.96, 0.96, 0.96], null, true); }
       const [sx, sz, si] = onSide(sFin + 18, sdP, 3.2), sy = vrGround(sx, sz), gs = scen.get(sx, sz), tl = 0.9, W2 = 7, H2 = W2 / 8;   // the pass sign: a board on posts leaning back, facing the arriving cars
@@ -8827,6 +8931,9 @@ const World = (function () {
       const eX = T.px[iE] + T.tx[iE] * 1.2, eZ = T.pz[iE] + T.tz[iE] * 1.2;   // the end of the road down the far side: concrete blocks across it
       for (let o = -T.bl[iE]; o <= T.br[iE]; o += 2.05) { const bx = eX + T.nx[iE] * o, bz = eZ + T.nz[iE] * o; box(scen.get(bx, bz), bx, T.hy[iE] - 0.1, bz, 0.7, 0.9, 1.95, T.hd[iE], [0.76, 0.75, 0.72], [0.84, 0.83, 0.8]); }
     }
+
+    /* ---- the building at the top of the run from the police, just past the pass (vrHideout; only in that mode) ---- */
+    out.dyn.vrHide = vrHideout({ root, matV, sMat, exclPush, CR });
 
     /* ---- guardrails where the ground falls away and round the outside of the bends (not in the village), stone parapets round the cobbled hairpins
        and on the bridges; a marker post every ~50 m where there is neither (knockable where it fits: vrsicProps) ---- */
@@ -8903,12 +9010,14 @@ const World = (function () {
       }
     }
 
-    /* ---- spectators: the start and the finish, the checkpoints, the insides and outsides of every third hairpin, the lake shore at Jasna ---- */
+    /* ---- spectators: the start and the finish (the finish's in a layer of its own, CRF: finG), the checkpoints, the insides and outsides of every
+       third hairpin, the lake shore at Jasna ---- */
+    const CRF = crowdSub(CR);
     {
       const hard = (x, z) => { for (let k = 0; k < excl.length; k++) { const e = excl[k]; if (crSoft.has(e)) continue; const dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };   // buildings, plots
       const M = { first: 2.6, gap: 1.05, below: 1.2, maxSlope: 0.55, excluded: hard, sit: 0.25, flag: 0.12, keepBar: 1.6 };
-      const run = (sa, sb, side, o) => crowdRun(CR, Math.max(sa, 8), Math.min(sb, T.len - 8), side, Object.assign({}, M, o));
-      for (const sd of [-1, 1]) { run(sStart - 70, sStart + 70, sd, { rows: 3, dens: 0.6, label: 'VR start' }); run(sFin - 70, sFin + 14, sd, { rows: 3, dens: 0.6, label: 'VR finish' }); }
+      const run = (sa, sb, side, o, C) => crowdRun(C || CR, Math.max(sa, 8), Math.min(sb, T.len - 8), side, Object.assign({}, M, o));
+      for (const sd of [-1, 1]) { run(sStart - 70, sStart + 70, sd, { rows: 3, dens: 0.6, label: 'VR start' }); run(sFin - 70, sFin + 14, sd, { rows: 3, dens: 0.6, label: 'VR finish' }, CRF); }
       T.cpS.forEach((s0) => { const i = T.idx(s0), side = T.br[i] > T.bl[i] ? 1 : -1; run(s0 - 24, s0 + 20, side, { rows: 2, dens: 0.55, label: 'VR cp+' }); run(s0 - 20, s0 + 16, -side, { rows: 2, dens: 0.4, label: 'VR cp-' }); });
       (def.hairpins || []).forEach(([d, , turn], k) => { if (k % 3 !== 1) return; const sm = sStart + d; for (const sd of [-1, 1]) run(sm - 22, sm + 22, sd, { rows: 3, dens: sd === turn ? 0.5 : 0.35, flag: 0.2, label: 'VR hairpin ' + (k + 1) }); });
       { const jn = T.names.find(n => n.n === 'Jasna'); if (jn) for (const sd of [-1, 1]) run(sStart + jn.d - 60, sStart + jn.d + 90, sd, { rows: 2, dens: 0.3, clump: 0.9, label: 'VR Jasna' }); }
@@ -8997,10 +9106,13 @@ const World = (function () {
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     fac.addTo(sceneryGroup, ouCutMat(new THREE.MeshLambertMaterial({ map: tex.facade, vertexColors: true }), cut), true, true);
-    const bm = addM(ban, new THREE.MeshLambertMaterial({ map: vrAtlas(cpAlt), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
+    const banMat = new THREE.MeshLambertMaterial({ map: vrAtlas(cpAlt), side: THREE.FrontSide });
+    const bm = addM(ban, banMat, true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: vrAtlas2(def.hairpins || []), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     const bm3 = addM(ban3, new THREE.MeshLambertMaterial({ map: vrAtlas3(stubNames), side: THREE.FrontSide }), true); if (bm3) bm3.castShadow = false;   // (the side roads' boards)
+    addM(finS, matV, true, finG); addM(finB, banMat, false, finG);   // (the finish's gantry, flags and board)
     crowdFinish(CR, root, out);
+    out.crowdN += crowdLayer(CRF, finG);   // (the finish's crowd)
     out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), sideRoads: out.stubStats.n };   // (read by the tests)
     return out;
   }
@@ -9488,7 +9600,16 @@ const World = (function () {
       g.quadUp(a[0], b[0], b[1], a[1], [W1, W1, D, D]); g.quadUp(a[1], b[1], b[2], a[2], [D, D, D, D]); g.quadUp(a[2], b[2], b[3], a[3], [D, D, W1, W1]);
     }
   }
-  function crowdFinish(C, root, out) {   // building footprints placed after the crowds hide nobody; the layer and the strips go into the world
+  // a crowd of C's in a layer of its own (shown and hidden apart from the rest: Vršič's finish crowd, not there in the run from the police): placed
+  // by C's rules, with its spacing, its exclusions and its runs' numbers (the same people as in C itself), drawn apart (crowdLayer)
+  function crowdSub(C) {
+    const F = Object.create(C); F.ppl = new CrowdChunks(C.U); F.strip = new Chunks(384);
+    Object.defineProperty(F, 'runs', { get: () => C.runs, set: (v) => { C.runs = v; } });
+    return F;
+  }
+  // C's spectators (the building footprints placed after them hide nobody) and the ground strips under them into a group of their own in
+  // root (named 'crowds': the clouds' shader leaves their own alone); returns how many
+  function crowdLayer(C, root) {
     if (C.blocks.length) {
       const bh = new Map(); for (const b of C.blocks) { const r = Math.hypot(b.hw, b.hd); for (let a = Math.floor((b.x - r) / 32); a <= Math.floor((b.x + r) / 32); a++) for (let c = Math.floor((b.z - r) / 32); c <= Math.floor((b.z + r) / 32); c++) { const k = a + ',' + c; let L = bh.get(k); if (!L) bh.set(k, L = []); L.push(b); } }
       C.culled = C.ppl.cull((x, z) => { const L = bh.get(Math.floor(x / 32) + ',' + Math.floor(z / 32)); if (L) for (const b of L) { const dx = x - b.x, dz = z - b.z; if (Math.abs(dx * b.c + dz * b.s) < b.hw && Math.abs(-dx * b.s + dz * b.c) < b.hd) return true; } return false; });
@@ -9496,6 +9617,10 @@ const World = (function () {
     const grp = new THREE.Group(); grp.name = 'crowds'; root.add(grp);
     const n = C.ppl.addTo(grp);
     C.strip.addTo(grp, new THREE.MeshBasicMaterial({ vertexColors: true, blending: THREE.MultiplyBlending, transparent: true, depthWrite: false, fog: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4 }), false, false);
+    return n;
+  }
+  function crowdFinish(C, root, out) {   // building footprints placed after the crowds hide nobody; the layer and the strips go into the world
+    const n = crowdLayer(C, root);
     out.dyn.crowd = C.U; out.crowdN = n; out.crowdLog = C.log;
     const cells = out.crowdCells = new Map();   // the fans per 24 m square (Sfx: how many stand near the car, the cheering on a rally stage)
     for (const L of C.sp.values()) for (let q = 0; q < L.length; q += 2) { const k = Math.floor(L[q] / 24) + ',' + Math.floor(L[q + 1] / 24); cells.set(k, (cells.get(k) || 0) + 1); }
@@ -12956,7 +13081,7 @@ const World = (function () {
   // the followed car fade out (the car where it is drawn this frame: interpolated by alpha)
   function view(out, cam, car, alpha) {
     const U = out && out.dyn.ouCut; if (!U) return;
-    if (!car || !cam) { U.uCar.value.set(1e6, 0, 1e6); return; }
+    if (!car || !cam) { U.uCar.value.set(1e6, 0, 1e6); U.uCam.value.set(1e6, 0, 1e6); return; }   // (nothing cut)
     const a = alpha == null ? 1 : alpha;
     U.uCam.value.copy(cam.position); U.uCar.value.set(lerp(car.px, car.x, a), lerp(car.py == null ? car.y || 0 : car.py, car.y || 0, a) + 1, lerp(car.pz, car.z, a));
   }
