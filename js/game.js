@@ -2023,7 +2023,7 @@
   function enduStep() {
     if (!race.endu) return;
     const L = race.order && race.order[0] ? race.order[0] : race.player, k = clamp(Math.max(0, L.dist) / (race.laps * track.len) * 1.12, 0, 1);
-    if (Math.abs(k - enduK) < 0.004) return;
+    if (Math.abs(k - enduK) < 0.004 && !(k === 1 && enduK < 1)) return;   // (in steps; the night itself whatever the last step's size)
     if (enduK < 0.45 && k >= 0.45) { showMsg(tr('VEČER'), 'gold', 2); Comm.say('dusk', null, 1); }
     if (enduK < 0.8 && k >= 0.8) { showMsg(tr('PADA NOČ'), 'gold', 2.2); Comm.say('nightFall', null, 2); }
     enduK = k; Render.setTodK(k);

@@ -1978,7 +1978,7 @@ const Render = (function () {
   }
   // an endurance race's time of day (0 day .. 0.5 dusk .. 1 night), moved on with its clock: the light blended, the lamps coming on
   function setTodK(k) {
-    k = clamp(k, 0, 1); if (Math.abs(k - todK) < 0.002 && !dawn) return;
+    k = clamp(k, 0, 1); if (Math.abs(k - todK) < 0.002 && !dawn && !(k === 1 && todK < 1)) return;   // (the full night always, not one small step short)
     const was = atmos.tod; todK = k; dawn = false; atmos = { season: atmos.season, tod: k >= 0.75 ? 'night' : k >= 0.25 ? 'dusk' : 'day' };
     applyTheme(themeId); todLights(atmos.tod !== was);
   }

@@ -43,9 +43,11 @@ try {
     for (let k = 0; k < 60 && !window.__msgs.some(m => /Malo goriva/.test(m)); k++) { g.sim(4, true); g.resume(); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); g.pause(); }
     return { fuel: P.fuel, lap: P.lap, warned: window.__msgs.some(m => /Malo goriva/.test(m)) }; });
   const pit = await page.evaluate(async () => { const g = window.__game, P = g.race.player; let done = false, low = 1;
+    // (most of the field comes in on the same lap: a car knocked across the crowded lane is pushed straight by the marshals, the player's too)
     for (let k = 0; k < 2400 && !done; k++) { P.pitWant = true; g.sim(0.25, true); low = Math.min(low, P.fuel); done = P.fuel > 0.99 && !P.inPit && low < 0.5; }
     P.pitWant = false; g.resume(); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r)))); g.pause();
-    return { done, fuel: P.fuel, low, gauge: document.getElementById('h-fuel').textContent, msg: window.__msgs.filter(m => /POLNO/.test(m)) }; });
+    return { done, fuel: P.fuel, low, gauge: document.getElementById('h-fuel').textContent, msg: window.__msgs.filter(m => /POLNO/.test(m)),
+      at: done ? undefined : { lap: P.lap, fin: P.finished, inPit: P.inPit, pit: P.pitState, v: +P.speed.toFixed(1), stuck: +(P.stuckT || 0).toFixed(1), wrong: +(P.wrongT || 0).toFixed(1), state: g.race.state, phase: g.phase, sc: g.race.fl && g.race.fl.sc ? g.race.fl.sc.state : null } }; });   // (where it stands, when it did not get the stop)
   T.check('a long race (6 laps): no tick at first; the warning on the lap it would not last another (Malo goriva)', f2.laps === 6 && !f2.tick && w.warned && w.fuel > 0.05 && w.fuel < 0.45, JSON.stringify({ f2, w }));
   T.check('in the pits: filled up (new slicks · POLNO), the gauge full again', pit.done && pit.fuel > 0.99 && /^GORIVO 100%/.test(pit.gauge) && pit.msg.some(m => /(SUHE|MEHKE|SREDNJE|TRDE) GUME( · POPRAVLJENO)? · POLNO/.test(m)), JSON.stringify(pit));
   await page.evaluate(() => { const g = window.__game; g.resume(); g.onAction('to-title'); });

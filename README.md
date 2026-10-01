@@ -208,7 +208,7 @@ Z vrstico **Gorivo** (Vklop) na progah z boksi (Bakreni gozd, Toskana, Gromski r
 - Na zaslonu je pod gumami merilnik **GORIVO** z belo oznako, koliko goriva potrebuješ do cilja (po tvoji dosedanji porabi): če je rumeni pas daljši od oznake, prideš do cilja brez postanka. V krogu, ko goriva ne bo dovolj za še en krog, te igra in komentator opozorita, da je čas za bokse.
 - V boksih mehaniki natočijo poln rezervoar (skupaj s popravilom in gumami). Postanek traja 1,6 s in še 0,9 s za vsako desetino rezervoarja (s četrtino goriva približno 8 s).
 - Brez goriva motor dobi le še zadnje kapljice: avto se do boksov privleče z največ 40 km/h.
-- Tekmeci z AI pridejo v bokse v krogu, po katerem jim goriva ne bi ostalo za še en krog (ali krog prej, kadar jih to ne stane dodatnega postanka). V boksih zapeljejo mimo avtov, ki stojijo pred svojim boksom.
+- Tekmeci z AI pridejo v bokse v krogu, po katerem jim goriva ne bi ostalo za še en krog (ali krog prej, kadar jih to ne stane dodatnega postanka). V boksih zapeljejo mimo avtov, ki stojijo pred svojim boksom. Kadar v istem krogu v bokse zapelje veliko avtov in avto v gneči zasuče počez čez boksarsko stezo, ga redarji kar tam poravnajo v smer steze (tudi tvojega), postanek pa ga še čaka.
 
 ## Vzdržljivostna dirka
 
