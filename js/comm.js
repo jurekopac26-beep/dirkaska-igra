@@ -90,6 +90,9 @@ const Comm = (() => {
     // fuel (a race with fuel on) and an endurance race's evening and night
     fuelLow: ['Running low on fuel! Box for fuel this lap.', 'The fuel light is on! Time to come in and fill up.', 'Not much fuel left in that tank, pit now!'],
     fuelOut: ['Oh no, out of fuel! Spluttering along on the last drops!', 'Dry tank! That car is limping back to the pits now.'],
+    puncture: ['Puncture! That tyre is going down!', 'That knock has cut a tyre! A puncture!', 'A slow puncture, the car is pulling to one side now!'],
+    brakesHot: ['The brakes are overheating! They will not stop the car as well now.', 'Smoking hot brakes! Brake a little earlier for a while.'],
+    engineHot: ['The engine is running hot! Losing power now.', 'Temperature warning, that engine is overheating!'],
     fuelIn: ['Fuel in, and back out onto the track!', 'Tank full again, off it goes!'],
     // the rivals' characters: a duel with the player, the standing rival, a mistake under pressure
     duel: ['A proper duel with {name} now! Nose to tail, lap after lap.', 'You and {name}, this is a real fight!', 'This battle with {name} is getting intense!'],

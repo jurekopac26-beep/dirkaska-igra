@@ -509,6 +509,10 @@ select.txt:disabled { opacity: .75; }
 #h-tyre.cS { border-color: #e8352b; } #h-tyre.cM { border-color: #f2c616; } #h-tyre.cH { border-color: #f4f4f0; }   /* (the slicks' compound, as the band on a formula's tyres) */
 #h-tyre.worn { color: #ffb347; }
 #h-tyre.bad { background: rgba(190, 30, 30, .78); }
+#h-flt { display: none; margin-top: 3px; gap: 4px; flex-wrap: wrap; pointer-events: none; }   /* failures: a cut tyre, hot brakes, a hot engine */
+#h-flt.on { display: flex; }
+#h-flt span { padding: 1px 6px; border-radius: 9px; color: #fff; font: 700 italic clamp(9px, 2.5vh, 12px)/1.25 var(--f-ui); text-shadow: 0 1px 2px #000; white-space: nowrap; }
+#h-flt .pk { background: rgba(190, 30, 30, .82); } #h-flt .br { background: rgba(214, 104, 18, .85); } #h-flt .en { background: rgba(196, 58, 28, .85); }
 /* flags: a yellow flag, the safety car board, the countdown to give a place back */
 #h-flag { display: none; margin-top: 3px; padding: 2px 7px; border-radius: 4px; font: 800 italic clamp(9px, 2.6vh, 12px)/1.2 var(--f-ui); white-space: nowrap; pointer-events: none; }
 #h-flag.on { display: inline-block; }

@@ -146,6 +146,17 @@ Igra ima eno fiziko, **Circuit Superstars**: avto drsi z nosom v ovinek toliko, 
 Na dirki s tekmeci (ne v kronometru in ne v kvalifikacijah) ima avto v vrtincu za avtom pred sabo manj zračnega upora: do 40 m za njim in največ 2,4 m vstran od njegove linije, oba v hitrosti in ne v boksarski stezi. Bližje in bolj natanko za njim je, manj je upora (največ za četrtino). Na ravnini zato hitreje pridobiva hitrost in doseže večjo končno hitrost, v polnem zavetrju približno 10 % večjo. Na merilniku hitrosti se takrat prižge modra oznaka **ZAVETRJE**.
 
 Tekmeci z AI zavetrje izkoristijo: na ravnini ostanejo za avtom in se mu približujejo, vstran zapeljejo šele, ko so blizu ali ko se bliža zaviranje, in prehitijo. Pred zaviranjem za avtom pred sabo pustijo nekaj več prostora, ker jih zavetrje pripelje hitreje. Zavetrje velja tudi v dirki s prijatelji.
+
+## Okvare
+
+Na dirki s tekmeci (ne v kronometru in ne v kvalifikacijah) se avto lahko pokvari. Okvare vklopiš ali izklopiš v **Nastavitvah** (**Okvare**, privzeto so vklopljene). Na zaslonu se pod prikazom poškodb in gum za vsako okvaro prikaže rdeča ali oranžna oznaka.
+
+- **Predrta guma:** močan udarec v zid ali v drug avto (od približno 40 km/h naravnost v oviro) lahko prereže gumo na vogalu, ki je udaril, največ v četrtini primerov. Guma se izprazni v 10 sekundah. Potem prime za petino slabše in vleče avto na svojo stran (sprednja bolj kot zadnja), zato moraš rahlo zavijati v drugo smer. Na progah z boksi mehaniki ob postanku namestijo novo gumo.
+- **Vroče zavore:** zavore se segrejejo z vsakim zaviranjem in se v vožnji ohladijo. Nad 550 °C zavirajo slabše, pri 750 °C le še z dobro polovico moči. Tako vroče postanejo po več močnih zaviranjih zapored, na primer šestkrat zapored z 200 na 80 km/h. Na ravnini se ohladijo.
+- **Vroč motor:** motor se segreje, ko dolgo vozi počasi s polnim plinom in visokimi obrati, na primer ko kolesa zdrsavajo v pesku. Nad 112 °C ima manj moči, pri 130 °C 30 % manj. V hitri vožnji se ohladi.
+
+Ob vsaki okvari se prikaže sporočilo (**PREDRTA GUMA!**, **ZAVORE SE PREGREVAJO**, **MOTOR SE PREGREVA**), komentator jo omeni, spodaj pa piše, kaj storiti. Tekmeci s predrto gumo vozijo previdneje in zapeljejo v bokse po novo (kjer boksov ni, previdno pripeljejo do cilja). V dirki s prijatelji velja nastavitev gostitelja.
+
 ## Prvenstvo
 
 Na naslovnem zaslonu tapni **Prvenstvo** in izberi serijo dirk: **Domači pokal** (Jezero Ring, Ljubljana, Gorski reli, Riviera), **Superstars** (Bakreni gozd, Toskana, Gromski rt, Monako), **Legende** (Monako, Spa-Francorchamps, Red Bull Ring, Suzuka, Nordschleife) ali **Veliko prvenstvo** (vseh dvanajst krožnih prog). Dirke so enake kot sicer (12 tekmecev, tudi na Nordschleife, kjer jih je sicer 20; pred vsako dirko kvalifikacije, brez njih štart z 12. mesta; število krogov proge, vreme po nastavitvi), le da za mesto v cilju dobiš točke kot v formuli 1: 25, 18, 15, 12, 10, 8, 6, 4, 2 in 1 za prvih deset. Tekmeci so v vseh dirkah isti vozniki z istimi avti, zato med dirkami vodiš lestvico proti njim; pri enakem številu točk je pred tistim, ki ima več zmag (nato več drugih mest …).
