@@ -2715,7 +2715,7 @@ const Core = (function () {
         // to steer out: the AI and the autopilot have no reverse gear) is pushed straight by the marshals where it stands, its stop still to come
         // (a rescue would cost it the stop; the player's car too, spared backing out of the jam)
         if (c.inPit && !c.net && c.pitState !== 'repair' && c.speed < 1.2 && fwd < 0.85 && (this.state === 'racing' || this.state === 'done')) c.wedgeT = (c.wedgeT || 0) + dt; else if (c.wedgeT) c.wedgeT = 0;   // (the timer only on a car that got knocked across)
-        if (c.wedgeT > 2) { const y = c.y; c.place(c.x, c.z, Math.atan2(q.tz, q.tx)); c.y = c.py = y; c.wedgeT = 0; }
+        if (c.wedgeT > 2) { const y = c.y, i = q.i; c.place(c.x, c.z, Math.atan2(q.tz, q.tx)); c.y = c.py = y; c.q.i = i; c.wedgeT = 0; }   // (where it stands: its height and its road sample kept, the autopilot steers from it before the next step)
         // stuck detection (AI auto-rescue)
         if (!c.locked && (!c.pitState || (c.ty && !c.isPlayer && c.pitState === 'done')) && c.speed < 1.2 && (this.state === 'racing' || this.state === 'done') && !(T.open && c.finished)) c.stuckT += dt; else c.stuckT = Math.max(0, c.stuckT - dt);   // (an AI car that came in for tyres: also when stuck on its way out; pulled up past the finish of an open road: not stuck)
         if (!c.isPlayer && (c.stuckT > (c.inPit && c.fuel != null ? 30 : c.ty && c.inPit ? 12 : 3.5) || c.wrongT > 3) && !(T.open && c.finished)) this.rescue(c);   // (in for tyres: waiting in the pit lane behind a car at its box is no reason, behind one filling up longer still; not a car pulled up past the finish of an open road)
