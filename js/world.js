@@ -4504,9 +4504,7 @@ const World = (function () {
   }
   function pixAvg(d) { const s = [0, 0, 0]; for (let o = 0; o < d.length; o += 4) { s[0] += d[o]; s[1] += d[o + 1]; s[2] += d[o + 2]; } const n = d.length / 4 * 255; return [s[0] / n, s[1] / n, s[2] / n]; }   // (of an ImageData's pixels)
   const LAWN = { nring: [0.92, 0.95, 0.82], spa: [0.95, 1.0, 0.95], rbring: [0.96, 1.0, 0.9], suzuka: [0.95, 1.0, 0.92] };   // (the corridor builders' lawns: their vertex colours, roughly)
-  function verge(o) {
-    if (T.open || ['city', 'ljubljana', 'monaco'].includes(THEME)) return;
-    const W = o.dyn.wind || (o.dyn.wind = { value: 0 });
+  function tuftWindMat(W) {   // the clumps' material (the verges' tufts, Los Caracoles' bunch grass): vertex colours, the blades bent by the wind (W: World's dyn.wind)
     const mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
     mat.onBeforeCompile = (sh) => {
       sh.uniforms.uWind = W;
@@ -4517,6 +4515,11 @@ const World = (function () {
       sh.fragmentShader = sh.fragmentShader.replace('( gl_FrontFacing ) ? vIndirectFront : vIndirectBack', 'vIndirectFront').replace('( gl_FrontFacing ) ? vLightFront : vLightBack', 'vLightFront');
     };
     mat.customProgramCacheKey = () => 'tuftWind';
+    return mat;
+  }
+  function verge(o) {
+    if (T.open || ['city', 'ljubljana', 'monaco'].includes(THEME)) return;
+    const mat = tuftWindMat(o.dyn.wind || (o.dyn.wind = { value: 0 }));
     const tu = new IChunks(tuftGeo(false), mat, 160), fl = new IChunks(tuftGeo(true), mat, 160), q = {}, gH = o.groundH;
     // the lawn's colour under a clump: the ground mesh's vertex colour there (the default builder's grid) or the corridor builder's, times the grass picture's
     let gm = null; o.root.traverse(m => { if (!gm && m.isMesh && m.material && !Array.isArray(m.material) && m.material.userData.grassLook) gm = m.material; });
@@ -9757,27 +9760,31 @@ const World = (function () {
   }
   function caSlope(x, z) { const a = caGround(x - 2.5, z), b = caGround(x + 2.5, z), c = caGround(x, z - 2.5), d = caGround(x, z + 2.5); return Math.hypot(b - a, d - c) / 5; }
   function caSnow(x, z, A, ny, sz) {   // how much of the old summer snow lies at (x, z) (A: metres above the sea, ny / sz: the ground's up and south
-    // components): above ~3400 m on the sunny north faces, from ~2750 m on the shady south faces (the southern hemisphere), in patches and in the
+    // components): above ~3350 m on the sunny north faces, from ~2690 m on the shady south faces (the southern hemisphere), in patches and in the
     // hollows, off the steepest faces; and the snowfields WorldCover maps (lc 4)
-    const P = VR, line = 3080 - 330 * clamp(sz * 2.4, -1, 1) + (P.c4(x, z) - 0.5) * 240;
+    const P = VR, line = 3020 - 330 * clamp(sz * 2.4, -1, 1) + (P.c4(x, z) - 0.5) * 240;
     const k = sstep(line, line + 160, A) * sstep(0.42, 0.7, ny) * sstep(0.42, 0.66, P.c5(x, z) + 0.3 * sstep(line, line + 450, A));
     return Math.max(k, vrLCf(x, z, 4) * sstep(0.32, 0.6, ny));
   }
-  function caCol(x, z, h, ny, sz, dd) {   // ground colour (times the grey grit map): the scree and rock in grey-brown, banded with rust and ochre (the volcanic
-    // layers of the range), darker and banded on the steep faces; straw over it where the bunch grass grows (lc 1), olive under the shrubs (lc 2),
-    // gravel yards in Portillo (lc 3), the summer snow, a trodden gravel verge
+  function caCol(x, z, h, ny, sz, dd, sx) {   // ground colour (times the grey grit map): the scree and rock in grey-brown, banded with rust and ochre (the
+    // volcanic layers of the range), pale with ash here and there, darker and banded on the steep faces; on the slopes the scree's fans and runnels down the
+    // fall line (sx, sz: the ground's east and south components); straw in patches where the bunch grass grows (lc 1: thin on the scree, the tufts
+    // themselves are the plants), olive under the shrubs (lc 2), gravel yards in Portillo (lc 3), the summer snow, a trodden gravel verge
     const P = VR, A = h + P.D.base, m = P.c1(x, z), q = P.c2(x, z), r = P.c3(x, z), f = P.n4(x, z);
     const gr = vrLCf(x, z, 1), sh = vrLCf(x, z, 2), se = vrLCf(x, z, 3);
-    let R = 0.6, G = 0.57, B = 0.53;
-    const rust = sstep(0.6, 0.86, m), och = sstep(0.58, 0.84, q) * (1 - 0.6 * rust), dark = sstep(0.62, 0.86, r);
-    R = lerp(R, 0.62, rust); G = lerp(G, 0.51, rust); B = lerp(B, 0.44, rust);
-    R = lerp(R, 0.69, och); G = lerp(G, 0.62, och); B = lerp(B, 0.5, och);
-    R = lerp(R, 0.47, dark * 0.65); G = lerp(G, 0.46, dark * 0.65); B = lerp(B, 0.45, dark * 0.65);
-    R += (f - 0.5) * 0.08; G += (f - 0.5) * 0.075; B += (f - 0.5) * 0.07;
+    let R = 0.575, G = 0.555, B = 0.53;
+    const rust = sstep(0.6, 0.86, m), och = sstep(0.58, 0.84, q) * (1 - 0.6 * rust), dark = sstep(0.6, 0.84, r), ash = sstep(0.6, 0.86, P.c4(x * 1.4, z * 1.4)) * (1 - rust) * (1 - dark);
+    R = lerp(R, 0.62, rust); G = lerp(G, 0.5, rust); B = lerp(B, 0.43, rust);
+    R = lerp(R, 0.68, och); G = lerp(G, 0.6, och); B = lerp(B, 0.48, och);
+    R = lerp(R, 0.45, dark * 0.75); G = lerp(G, 0.44, dark * 0.75); B = lerp(B, 0.43, dark * 0.75);
+    R = lerp(R, 0.69, ash * 0.6); G = lerp(G, 0.68, ash * 0.6); B = lerp(B, 0.65, ash * 0.6);
+    R += (f - 0.5) * 0.09; G += (f - 0.5) * 0.085; B += (f - 0.5) * 0.08;
     const st = sstep(0.8, 0.52, ny);   // the steep faces: rock in bands along the height
+    const hz = Math.hypot(sx || 0, sz), fan = sstep(0.12, 0.3, hz) * (1 - st);   // the scree slopes: fans of fresher, paler scree and darker runnels down the fall line
+    if (fan > 0) { const u = (z * (sx || 0) - x * sz) / hz, w = Math.sin(u * 0.23 + P.c5(x, z) * 6 + P.n2(x, z) * 4), k = w * fan * (0.06 + 0.09 * P.n3(x, z)); R += k; G += k * 0.97; B += k * 0.92; }
     if (st > 0) { const band = 0.5 + 0.5 * Math.sin(A / 7.5 + P.c2(x * 0.4, z * 0.4) * 7), k = 0.8 + 0.18 * band; R = lerp(R, 0.57 * k + rust * 0.06, st); G = lerp(G, 0.53 * k, st); B = lerp(B, 0.5 * k, st); }
-    const gk = gr * (0.35 + 0.4 * sstep(0.3, 0.7, P.n2(x, z))) * (1 - 0.7 * st);
-    R = lerp(R, 0.7, gk); G = lerp(G, 0.66, gk); B = lerp(B, 0.51, gk);
+    const gk = gr * sstep(0.4, 0.78, P.n2(x * 1.9, z * 1.9)) * 0.55 * (1 - 0.7 * st);
+    R = lerp(R, 0.69, gk); G = lerp(G, 0.64, gk); B = lerp(B, 0.5, gk);
     R = lerp(R, 0.52, sh * 0.6); G = lerp(G, 0.52, sh * 0.6); B = lerp(B, 0.35, sh * 0.6);
     R = lerp(R, 0.68, se * 0.5); G = lerp(G, 0.65, se * 0.5); B = lerp(B, 0.6, se * 0.5);
     const sn = caSnow(x, z, A, ny, sz); R = lerp(R, CA_SNC[0], sn); G = lerp(G, CA_SNC[1], sn); B = lerp(B, CA_SNC[2], sn);
@@ -9787,7 +9794,7 @@ const World = (function () {
   function caGCol(x, z) {   // the terrain mesh's own vertex colour at (x, z) (bilinear over the grid vertices, each coloured as in caTileGeo)
     const G = VR.G, gx = clamp((x - G.x0) / VRC, 1, G.nx - 2.001), gz = clamp((z - G.z0) / VRC, 1, G.nz - 2.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, o = [0, 0, 0];
     for (const [a, b, w] of [[0, 0, (1 - u) * (1 - v)], [1, 0, u * (1 - v)], [0, 1, (1 - u) * v], [1, 1, u * v]]) { const ii = i + a, jj = j + b, h = caGH(ii, jj);
-      const nx = -(caGH(ii + 1, jj) - caGH(ii - 1, jj)) / (2 * VRC), nz = -(caGH(ii, jj + 1) - caGH(ii, jj - 1)) / (2 * VRC), l = Math.hypot(nx, 1, nz), c = caCol(G.x0 + ii * VRC, G.z0 + jj * VRC, h, 1 / l, nz / l, G.dd[jj * G.nx + ii]);
+      const nx = -(caGH(ii + 1, jj) - caGH(ii - 1, jj)) / (2 * VRC), nz = -(caGH(ii, jj + 1) - caGH(ii, jj - 1)) / (2 * VRC), l = Math.hypot(nx, 1, nz), c = caCol(G.x0 + ii * VRC, G.z0 + jj * VRC, h, 1 / l, nz / l, G.dd[jj * G.nx + ii], nx / l);
       o[0] += c[0] * w; o[1] += c[1] * w; o[2] += c[2] * w; }
     return o;
   }
@@ -9802,7 +9809,7 @@ const World = (function () {
       const i = i0 + a * st, j = j0 + b * st, x = G.x0 + i * VRC, z = G.z0 + j * VRC, h = caGH(i, j);
       let nx = -(caGH(i + st, j) - caGH(i - st, j)) / (2 * VRC * st), nz = -(caGH(i, j + st) - caGH(i, j - st)) / (2 * VRC * st), l = Math.hypot(nx, 1, nz); nx /= l; nz /= l; const ny = 1 / l;
       pos[k * 3] = x; pos[k * 3 + 1] = h; pos[k * 3 + 2] = z; nor[k * 3] = nx; nor[k * 3 + 1] = ny; nor[k * 3 + 2] = nz;
-      const c = caCol(x, z, h, ny, nz, G.dd[clamp(j, 0, G.nz - 1) * G.nx + clamp(i, 0, G.nx - 1)]); col[k * 3] = c[0]; col[k * 3 + 1] = c[1]; col[k * 3 + 2] = c[2];
+      const c = caCol(x, z, h, ny, nz, G.dd[clamp(j, 0, G.nz - 1) * G.nx + clamp(i, 0, G.nx - 1)], nx); col[k * 3] = c[0]; col[k * 3 + 1] = c[1]; col[k * 3 + 2] = c[2];
       uv[k * 2] = x / 10; uv[k * 2 + 1] = -z / 10; stp[k] = sstep(0.78, 0.5, ny);
     }
     if (st === 1) {   // (no cracks against a coarse neighbour: as vrTileGeo)
@@ -9854,7 +9861,7 @@ const World = (function () {
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (caA2Tex = t);
   }
   function caPlantGeo(kind) {   // unit plants (height 1; the instances scale and tint them): 0 a tuft of bunch grass (coirón), 1 a low Andean shrub, 2 a cushion plant
-    // (llareta: a hard green mound on the rocks), 3 a boulder half sunk in the scree
+    // (llareta: a hard green mound on the rocks), 3 a boulder half sunk in the scree, 4 a few stones of the scree
     const g = new GB(), R = rng(740 + kind), rs = ROCK_SMOOTH;
     if (kind === 0) {   // seven blades from a tight base, leaning out, straw with green-grey hearts
       const base = [0.62, 0.6, 0.36], tip = [0.95, 0.86, 0.56];
@@ -9863,9 +9870,18 @@ const World = (function () {
     } else if (kind === 1) {   // three soft grey-olive lumps
       ROCK_SMOOTH = true; const col = [0.46, 0.47, 0.32];
       ico(g, 0, 0.45, 0, 0.42, 0.9, col, R, 0.3); ico(g, 0.3, 0.32, 0.14, 0.3, 0.85, [col[0] * 0.92, col[1] * 0.95, col[2] * 0.9], R, 0.35); ico(g, -0.26, 0.3, -0.16, 0.3, 0.85, [col[0] * 1.08, col[1] * 1.06, col[2]], R, 0.35);
-    } else if (kind === 2) {   // a flat, bright green dome, a little lumpy
-      ROCK_SMOOTH = true; ico(g, 0, 0.35, 0, 0.5, 0.75, [0.5, 0.62, 0.2], R, 0.18); ico(g, 0.24, 0.28, 0.1, 0.3, 0.7, [0.46, 0.58, 0.18], R, 0.2);
-    } else { ROCK_SMOOTH = false; rock(g, 0, 0.3, 0, 0.6, 0.62, 0.5, 0, [0.66, 0.6, 0.53], R, 0.3); }
+    } else if (kind === 2) {   // a flat, deep olive-green dome, lumpy
+      ROCK_SMOOTH = true; ico(g, 0, 0.33, 0, 0.5, 0.72, [0.31, 0.37, 0.16], R, 0.2); ico(g, 0.24, 0.27, 0.1, 0.3, 0.7, [0.29, 0.35, 0.15], R, 0.22); ico(g, -0.2, 0.25, -0.16, 0.26, 0.66, [0.35, 0.41, 0.19], R, 0.22);
+    } else if (kind === 3) { ROCK_SMOOTH = false; rock(g, 0, 0.3, 0, 0.6, 0.62, 0.5, 0, [0.66, 0.6, 0.53], R, 0.3); }
+    else {   // three stones of the scree, sunk in it (the unit about a metre across; 15 faces each, the foot darker, the top lit): grey, rust, dark
+      const C = [[0.64, 0.6, 0.55], [0.63, 0.52, 0.45], [0.5, 0.48, 0.47]];
+      for (let k = 0; k < 3; k++) {
+        const a0 = R() * TAU, d = k ? 0.22 + R() * 0.28 : 0, cx = Math.cos(a0) * d, cz = Math.sin(a0) * d, rx = k ? 0.09 + R() * 0.08 : 0.15 + R() * 0.07, ry = rx * (0.55 + R() * 0.35), t = 0.9 + R() * 0.2;
+        const col = C[Math.floor(R() * 3)].map(v => v * t), lo = col.map(v => v * 0.68), hi = col.map(v => v * 1.14), B = [], M = [], top = [cx + (R() - 0.5) * rx * 0.4, ry, cz + (R() - 0.5) * rx * 0.4], inn = [cx, ry * 0.2, cz];
+        for (let q = 0; q < 5; q++) { const a = (q + (R() - 0.5) * 0.6) / 5 * TAU, f = 0.8 + R() * 0.4; B.push([cx + Math.cos(a) * rx * f, -ry * 0.25, cz + Math.sin(a) * rx * f]); M.push([cx + Math.cos(a) * rx * f * 0.85, ry * 0.45, cz + Math.sin(a) * rx * f * 0.85]); }
+        for (let q = 0; q < 5; q++) { const j = (q + 1) % 5; g.quadO(B[q], B[j], M[j], M[q], col, inn, null, [lo, lo, col, col]); g.triO(M[q], M[j], top, col, inn, col, hi); }
+      }
+    }
     ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
@@ -10342,7 +10358,9 @@ const World = (function () {
     /* ---- the plants (instanced per 96 m chunk): tufts of bunch grass where the grass grows (lc 1) and here and there on the scree, low shrubs, green
        cushion plants on the rocky ground up high; boulders half sunk in the scree. Thicker near the road, none on the snow, the water, the cliffs ---- */
     const pMat = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
-    const pk = [0, 1, 2, 3].map(k => new IChunks(caPlantGeo(k), pMat, 96));
+    const wMat = tuftWindMat(out.dyn.wind || (out.dyn.wind = { value: 0 })), wB = wMat.onBeforeCompile; ouCutMat(wMat, cut);   // (the bunch grass: in the wind, and the cut)
+    { const cB = wMat.onBeforeCompile; wMat.onBeforeCompile = (sh) => { wB(sh); cB(sh); }; wMat.customProgramCacheKey = () => 'tuftWindCut'; wMat.side = THREE.FrontSide; }   // (the blades have both faces, each lit as it faces)
+    const pk = [0, 1, 2, 3, 4].map(k => new IChunks(caPlantGeo(k), k === 0 ? wMat : pMat, k === 4 ? 64 : 96));   // (the stones: in smaller chunks, culled closer to the view)
     let nPlants = 0;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(70000 * dens), RT = rng(2961), SP = 3.4 / Math.sqrt(dens);
@@ -10355,7 +10373,7 @@ const World = (function () {
           if (hd > 70 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // (farther out every other spot)
           const c = vrLC(x, z), y0 = caGround(x, z), A = y0 + base, sl = caSlope(x, z);
           let kind = -1;
-          if (c === 1) kind = r1 < 0.42 ? 0 : r1 < 0.46 ? 1 : -1;
+          if (c === 1) kind = r1 < 0.52 ? 0 : r1 < 0.56 ? 1 : -1;
           else if (c === 2) kind = r1 < 0.3 ? 1 : r1 < 0.42 ? 0 : -1;
           else if (c === 0) kind = r1 < 0.05 ? 0 : r1 < 0.065 ? 3 : A > 2620 && r1 < 0.085 ? 2 : r1 < 0.09 ? 1 : -1;
           if (kind < 0) continue;
@@ -10370,6 +10388,19 @@ const World = (function () {
           else { const k = 0.85 + r3 * 0.3, rc = r2 < 0.3 ? [1.04, 0.92, 0.84] : r2 < 0.55 ? [1.04, 1.0, 0.9] : [0.92, 0.92, 0.94]; pk[3].add(x, y0 - 0.15, z, r4 * TAU, 0.5 + r3 * 1.4, 0.4 + r4 * 1.0, [rc[0] * k, rc[1] * k, rc[2] * k]); }
           if (++nPlants >= maxT) break grid;
         }
+      }
+    }
+    {   // the scree's stones: little clusters strewn beside the road, thickest at its edge and thinning out over ~45 m; fewer on the grass, none on the
+      // road, the snow or the water
+      const RS = rng(2967), maxS = Math.round(26000 * dens); let nS = 0;
+      edge: for (let s = 12; s < T.len - 12; s += 0.9 / dens) for (const side of [-1, 1]) {
+        if (galAt[T.idx(s)]) continue;
+        const o = 1.7 + Math.pow(RS(), 2) * 42, [x, z] = onSide(s, side, o), r1 = RS(), r2 = RS(), r3 = RS();
+        if (vrNear(x, z).dd < 1.2 || excluded(x, z) || vrWater(x, z).e > -3) continue;
+        const y0 = caGround(x, z), sl = caSlope(x, z); if (sl > 1.15 || (vrLC(x, z) === 1 && r1 < 0.45)) continue;
+        if (caSnow(x, z, y0 + base, 1 / Math.sqrt(1 + sl * sl), 0) > 0.3) continue;
+        const k = 0.84 + r3 * 0.28, sc = 0.85 + r1 * 1.25 - 0.006 * o; pk[4].add(x, y0 - 0.04, z, r2 * TAU, sc, sc * (0.8 + r3 * 0.5), [k, k, k]);   // (a little bigger at the road's edge)
+        if (++nS >= maxS) break edge;
       }
     }
     for (const t of pk) t.addTo(root, false);
