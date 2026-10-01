@@ -9095,19 +9095,21 @@ const World = (function () {
     MC.bldR = [];
     const lmList = [];
     const balc = [];   // the spectators' places on the balconies (set after the crowds' context exists): [x, y, z, facing x, facing z]
-    const balconies = (r, y0, yt, fh, style) => {   // on the walls of a house that face the circuit close by: a balcony along the wall on each floor
-      // above the ground floor (up to four), its railing (glass on the newer blocks, iron on the older houses), people on it watching the race
+    const balconies = (r, y0, yt, fh, style) => {   // on the walls of a house that face the circuit (right behind the pavement or across a street or a square from
+      // it): a balcony along the wall on each floor above the ground floor (up to four; three across a street), its railing (glass on the newer
+      // blocks, iron on the older houses), people on it watching the race
       for (let k = 0; k < r.length; k++) {
         const [xa, za] = r[k], [xb, zb] = r[(k + 1) % r.length], L = Math.hypot(xb - xa, zb - za); if (L < 5) continue;
         const ux = (xb - xa) / L, uz = (zb - za) / L, ox = uz, oz = -ux, mx = (xa + xb) / 2, mz = (za + zb) / 2;   // (outwards: the rings run counter-clockwise)
-        const n = mcNear(mx + ox * 2, mz + oz * 2); if (n.i < 0 || n.dd < 1.5 || n.dd > 9 || inTun(n.i, 20)) continue;
-        const tx = T.px[n.i] - mx, tz = T.pz[n.i] - mz, tl = Math.hypot(tx, tz) || 1; if ((tx * ox + tz * oz) / tl < 0.55) continue;   // (the wall looks at the track)
+        const n = mcNear(mx + ox * 2, mz + oz * 2); if (n.i < 0 || n.dd < 1.5 || n.dd > 24 || inTun(n.i, 20)) continue;
+        const tx = T.px[n.i] - mx, tz = T.pz[n.i] - mz, tl = Math.hypot(tx, tz) || 1; if ((tx * ox + tz * oz) / tl < 0.4) continue;   // (the wall looks at the track)
+        const near = n.dd < 9, nf = near ? 4 : 3, dens = near ? 0.6 : 0.34;
         const g = scen.get(mx, mz), rot = Math.atan2(uz, ux), first = yt - fh * Math.floor((yt - (y0 + 3.2)) / fh), rail = style ? [0.56, 0.66, 0.72] : [0.2, 0.22, 0.23];
-        for (let f = 0, y = first; f < 4 && y <= yt - fh + 0.1; f++, y += fh) {
+        for (let f = 0, y = first; f < nf && y <= yt - fh + 0.1; f++, y += fh) {
           box(g, mx + ox * 0.55, y - 0.16, mz + oz * 0.55, L - 1, 0.16, 1.1, rot, [0.86, 0.85, 0.82], [0.8, 0.79, 0.76], true);
           const e = (L - 1) / 2, P = (a, h) => [mx + ux * a + ox * 1.08, y + h, mz + uz * a + oz * 1.08];
           g.quadO(P(-e, 0), P(e, 0), P(e, 1.0), P(-e, 1.0), rail, [mx, y + 0.5, mz]);
-          for (let a = -e + 0.6; a <= e - 0.6; a += 1.25) if (crH(mx + a, y, 41) < 0.55) balc.push([mx + ux * a + ox * 0.6, y, mz + uz * a + oz * 0.6, ox, oz]);
+          for (let a = -e + 0.6; a <= e - 0.6; a += 1.25) if (crH(mx + a, y, 41) < dens) balc.push([mx + ux * a + ox * 0.6, y, mz + uz * a + oz * 0.6, ox, oz]);
         }
       }
     };
@@ -9615,30 +9617,293 @@ const World = (function () {
       const gd = sstep(0.42, 0.62, P.n5(px * 2.3 + 100, pz * 2.3)); if (r1 > 0.05 + gd * 0.5) continue;
       plant(px, pz, r2 < 0.3 ? 0 : r2 < 0.65 ? 1 : 2, r2 > 0.9 ? 0.45 : 1);
     }
-    /* ---- the harbour on race weekend: yachts stern-to along the pontoons and the quays (superyachts on the long quays), more at anchor in the
-       bay; a cruise ship off the harbour mouth ---- */
-    let nYachts = 0;
+    /* ---- the harbour on race weekend: yachts moored stern-to along the pontoons and the quays (the superyachts on the long quays), more at
+       anchor in the bay, a cruise ship off the harbour mouth. Every yacht to a design of its own (yDesign: the type by its length, then its
+       proportions, colours and fittings at random): a hull lofted from stations (the sheer rising to the bow, flared sides, a raked or upright
+       stem over the bow's overhang, the transom with a swim platform; a boot stripe at the waterline, on some a coloured sheer line or a row of
+       hull windows), a teak deck, decks of superstructure with raked fronts, bands of dark glass and overhanging aft terraces, a flybridge
+       with a hardtop or a radar arch, a mast with radar domes; sailing yachts with a tall mast, boom and furled sail; catamarans; explorers
+       with an upright bow; classic yachts in varnished wood with a funnel. In their own meshes, less detailed away from the circuit (tier),
+       a soft shadow on the water under each; on deck up to six people cheering the cars ---- */
+    let nYachts = 0, nYachtFans = 0;
     {
-      const yard = [], hullC = [[0.97, 0.97, 0.98], [0.97, 0.97, 0.98], [0.97, 0.97, 0.98], [0.1, 0.14, 0.26], [0.14, 0.14, 0.16], [0.62, 0.64, 0.66]];
+      const yCh = new Chunks(128), ySh = new Chunks(256), yard = [], RY = rng(9157), TP = Math.PI / 2;
+      const pickW = (L) => { let t = 0; for (const e of L) t += e[1]; let r = RY() * t; for (const e of L) { r -= e[1]; if (r <= 0) return e[0]; } return L[0][0]; };
+      const jit = (c, k) => { const f = 1 + (RY() - 0.5) * k; return [clamp(c[0] * f, 0, 1), clamp(c[1] * f, 0, 1), clamp(c[2] * f, 0, 1)]; };
+      const sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
+      const WHITE = [0.95, 0.95, 0.96], NAVY = [0.07, 0.11, 0.24], BLACK = [0.06, 0.06, 0.07];
+      const HULLS = [[WHITE, 10], [NAVY, 3], [[0.16, 0.17, 0.19], 2], [BLACK, 2], [[0.6, 0.63, 0.67], 2], [[0.1, 0.21, 0.16], 1], [[0.36, 0.08, 0.1], 1], [[0.68, 0.74, 0.79], 1], [[0.9, 0.86, 0.76], 1], [[0.2, 0.3, 0.42], 1]];
+      const GLASS = [[[0.05, 0.08, 0.14], 5], [[0.15, 0.12, 0.09], 2], [[0.07, 0.12, 0.12], 1], [[0.16, 0.22, 0.31], 2]];
+      const ACCENT = [[0.78, 0.62, 0.3], [0.72, 0.74, 0.76], NAVY, [0.7, 0.1, 0.1], [0.36, 0.56, 0.78], BLACK];
+      const TEAK = [0.45, 0.41, 0.37], WOOD = [0.52, 0.31, 0.15];
       const clear = (x, z, L, W, rot) => {   // all in the sea, clear of the other boats and the pontoons
         const c = Math.cos(rot), s = Math.sin(rot);
         for (const [a, b] of [[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5], [0, 0], [0.5, 0], [-0.5, 0]]) { const px = x + c * L * a - s * W * b, pz = z + s * L * a + c * W * b; if (mcSD(px, pz) > -0.4 || MC.ocAt(px, pz) === 6) return false; }
         for (const y of yard) if (Math.hypot(y[0] - x, y[1] - z) < (y[2] + Math.hypot(L, W) / 2) * 0.72) return false;
         return true;
       };
-      const yacht = (x, z, L, rot) => {   // L long, bow along +rot: a white hull with a raked bow, a teak deck, one to three decks of superstructure with dark glass, a mast
-        const W = L * (L > 30 ? 0.19 : 0.3); if (!clear(x, z, L, W, rot)) return false;
-        yard.push([x, z, Math.hypot(L, W) / 2]); nYachts++;
-        const g = scen.get(x, z), c = Math.cos(rot), s = Math.sin(rot), Q = (a, y, b) => [x + c * a - s * b, y, z + s * a + c * b], hull = hullC[Math.floor(R() * hullC.length)];
-        const fb = 0.8 + L * 0.03, teak = [0.72, 0.58, 0.4], white = [0.98, 0.98, 0.98], glass = [0.1, 0.13, 0.18];
-        box(g, x - c * L * 0.08, -0.6, z - s * L * 0.08, L * 0.84, fb + 0.6, W, rot, hull, teak);   // the hull aft of the bow
-        const b0 = L * 0.34, b1 = L * 0.5, i0 = Q(b0, fb, -W / 2), i1 = Q(b0, fb, W / 2), tip = Q(b1, fb + 0.2, 0), l0 = Q(b0, -0.6, -W / 2), l1 = Q(b0, -0.6, W / 2), lt = Q(b1 - L * 0.06, -0.6, 0), inn = Q(b0, fb / 2, 0);
-        g.triO(i0, i1, tip, teak, Q(b0, -2, 0)); g.quadO(i0, tip, lt, l0, hull, inn); g.quadO(i1, l1, lt, tip, hull, inn);
-        const dh = 1.4 + L * 0.03; box(g, x - c * L * 0.1, fb, z - s * L * 0.1, L * 0.46, dh, W * 0.78, rot, white, [0.94, 0.94, 0.95]); box(g, x - c * L * 0.07, fb + dh * 0.45, z - s * L * 0.07, L * 0.4, dh * 0.4, W * 0.8, rot, glass);
-        if (L > 22) { const y2 = fb + dh; box(g, x - c * L * 0.14, y2, z - s * L * 0.14, L * 0.3, dh * 0.9, W * 0.66, rot, white, [0.93, 0.93, 0.94]); box(g, x - c * L * 0.12, y2 + dh * 0.4, z - s * L * 0.12, L * 0.26, dh * 0.38, W * 0.68, rot, glass);
-          if (L > 40) { const y3 = y2 + dh * 0.9; box(g, x - c * L * 0.18, y3, z - s * L * 0.18, L * 0.16, dh * 0.8, W * 0.5, rot, white, [0.9, 0.9, 0.92]); cyl(g, x - c * L * 0.16, y3 + dh * 0.8, z - s * L * 0.16, 0.18, 3.5, 5, white); ico(g, x - c * L * 0.16, y3 + dh * 0.8 + 3.8, z - s * L * 0.16, 0.7, 1, white, R, 0);
-            if (R() < 0.5) box(g, x - c * L * 0.38, fb, z - s * L * 0.38, L * 0.1, 0.12, W * 0.5, rot, [0.3, 0.7, 0.86], [0.3, 0.72, 0.88]); } }   // (a pool on the aft deck)
-        else if (L < 15 && R() < 0.45) cyl(g, x + c * L * 0.05, fb, z + s * L * 0.05, 0.08, L * 1.1, 4, [0.9, 0.9, 0.92]);   // a sailing boat's mast
+      // ---- the design: type, hull, colours, decks of superstructure (levels), fittings ----
+      const yDesign = (L) => {
+        const type = pickW(L < 12 ? [['sport', 45], ['sail', 35], ['fly', 20]] : L < 20 ? [['sport', 25], ['fly', 35], ['sail', 25], ['cat', 15]]
+          : L < 32 ? [['fly', 30], ['super', 30], ['sail', 18], ['cat', 10], ['classic', 6], ['explorer', 6]] : [['super', 60], ['explorer', 14], ['sail', 14], ['classic', 6], ['cat', 6]]);
+        const D = { type, L, sp: 1.8, tw: 0.86 + RY() * 0.1, tb: 0.48 + RY() * 0.12, bp: 1.9 + RY() * 0.4, fl: 0.88 + RY() * 0.08, rk: 0.08 + RY() * 0.06, plat: 0, levels: [] };
+        let hull = pickW(HULLS);
+        if (type === 'super') { D.B = Math.max(5.2, L * (0.18 + RY() * 0.03)); D.fS = 1.3 + L * 0.034; D.fB = D.fS + 0.6 + L * 0.02; D.plat = 1.2 + L * 0.03; }
+        else if (type === 'fly') { D.B = L * (0.27 + RY() * 0.04); D.fS = 1.1 + L * 0.03; D.fB = D.fS + 0.5 + L * 0.02; D.plat = 0.8 + L * 0.02; }
+        else if (type === 'sport') { D.B = L * (0.28 + RY() * 0.04); D.fS = 0.95 + L * 0.025; D.fB = D.fS + 0.3 + L * 0.01; D.rk = 0.1 + RY() * 0.06; D.tb = 0.4 + RY() * 0.1; D.bp = 1.6; D.plat = 0.6 + L * 0.02; }
+        else if (type === 'sail') { D.B = L * (L < 20 ? 0.29 : 0.23); D.fS = 0.75 + L * 0.033; D.fB = D.fS + 0.25 + L * 0.012; D.tw = 0.68 + RY() * 0.18; D.tb = 0.38 + RY() * 0.14; D.bp = 1.45; D.rk = RY() < 0.25 ? 0.12 + RY() * 0.06 : 0.02 + RY() * 0.05; D.fl = 0.93; D.plat = RY() < 0.5 ? 0.5 + L * 0.015 : 0; if (RY() < 0.6) hull = pickW([[WHITE, 5], [NAVY, 2], [BLACK, 1], [[0.6, 0.63, 0.67], 1]]); }
+        else if (type === 'cat') { D.B = L * (0.46 + RY() * 0.06); D.hb = L * (0.1 + RY() * 0.02); D.fS = 1.05 + L * 0.025; D.fB = D.fS + 0.25; D.rk = 0.02 + RY() * 0.03; D.tb = 0.55; D.bp = 1.7; D.tw = 0.75; D.fl = 0.95; D.sailing = RY() < 0.5; }
+        else if (type === 'explorer') { D.B = L * (0.2 + RY() * 0.02); D.fS = 1.6 + L * 0.035; D.fB = D.fS + 1.8 + L * 0.035; D.rk = 0.005 + RY() * 0.015; D.tb = 0.58 + RY() * 0.08; D.bp = 2.8; D.sp = 2.6; D.plat = 1 + L * 0.02; hull = pickW([[NAVY, 3], [[0.16, 0.17, 0.19], 3], [BLACK, 2], [[0.6, 0.63, 0.67], 2], [[0.82, 0.38, 0.12], 1], [WHITE, 2]]); }
+        else { D.B = L * (0.17 + RY() * 0.02); D.fS = 1.15 + L * 0.03; D.fB = D.fS + 0.9; D.sp = 2.4; D.rk = 0.15 + RY() * 0.05; D.tw = 0.55 + RY() * 0.1; D.tb = 0.42; D.bp = 1.5; hull = pickW([[NAVY, 3], [BLACK, 2], [[0.1, 0.21, 0.16], 2], [WHITE, 2], [[0.36, 0.08, 0.1], 1]]); }   // classic
+        D.hull = jit(hull, 0.06); const dark = hull[0] + hull[1] + hull[2] < 1.2;
+        D.boot = dark ? (RY() < 0.6 ? WHITE : sh(D.hull, 0.6)) : pickW([[NAVY, 3], [BLACK, 3], [[0.2, 0.21, 0.23], 2], [[0.62, 0.1, 0.1], 1], [[0.24, 0.42, 0.62], 1]]);
+        D.acc = RY() < 0.35 ? ACCENT[Math.floor(RY() * ACCENT.length)] : null;
+        D.glass = jit(pickW(GLASS), 0.15);
+        D.sup = type === 'classic' ? jit(WOOD, 0.15) : dark && RY() < 0.25 ? jit([0.2, 0.21, 0.23], 0.2) : RY() < 0.12 ? jit([0.78, 0.8, 0.82], 0.08) : jit(WHITE, 0.03);
+        D.roof = type === 'classic' ? jit([0.92, 0.9, 0.84], 0.04) : D.sup[0] < 0.5 ? sh(D.sup, 1.15) : jit([0.9, 0.9, 0.9], 0.04);
+        D.deck = RY() < (type === 'sport' || type === 'fly' ? 0.55 : 0.8) ? jit(TEAK, 0.12) : RY() < 0.7 ? jit([0.84, 0.84, 0.82], 0.04) : jit([0.38, 0.33, 0.28], 0.1);   // (teak, a white non-skid deck, dark teak)
+        D.hullWin = (type === 'super' || type === 'explorer') && L > 28 && RY() < 0.55;
+        D.taper = type === 'super' ? 0.4 + RY() * 0.5 : type === 'fly' || type === 'sport' || type === 'cat' ? 0.2 + RY() * 0.5 : 0;   // (how much the side windows narrow to the front)
+        D.fascia = type === 'super' && RY() < 0.2 ? [0.12, 0.13, 0.15] : null;
+        const lv = (a0, a1, h, o) => D.levels.push(Object.assign({ a0: a0 * L, a1: a1 * L, h, rake: 0.7 + RY() * 0.6, gl0: 0.28 + RY() * 0.1, gl1: 0.76 + RY() * 0.08, ov: 0, side: 0.7, nose: 0.12 * L, wide: false }, o));
+        if (type === 'super') {   // the main deck long, every deck above it shorter at both ends (its roof reaching aft over the terrace below), the fronts raked
+          const n = L < 38 ? 2 : L < 62 ? 3 : 4, h = 2.2 + Math.min(0.45, L * 0.006), da = 0.08 + RY() * 0.04, d1 = 0.06 + RY() * 0.04, wideK = RY() < 0.5 ? 1 : -1;
+          let a0 = -0.35 + RY() * 0.04, a1 = 0.19 + RY() * 0.05;
+          for (let k = 0; k < n; k++) { lv(a0, a1, h - k * 0.06, { ov: (0.05 + RY() * 0.05) * L * (k === 0 ? 1 : 0.8), side: k === 0 ? (L > 30 ? 0.9 : 0.55) : 0.35, wide: k === wideK, nose: (0.09 + RY() * 0.05) * L,
+            rake: k === 0 ? 1.2 + RY() * 0.5 : 0.9 + RY() * 0.5, gl0: k === 0 ? 0.24 + RY() * 0.08 : 0.3 + RY() * 0.08, gl1: 0.8 + RY() * 0.07, visor: k === n - 1 ? 0.5 : 0.25 });
+            a0 += da * (0.8 + RY() * 0.4); a1 -= d1 * (0.8 + RY() * 0.4); }
+          D.mast = true; D.hardtop = RY() < 0.75; D.spa = RY() < 0.5; D.heli = L > 60 && RY() < 0.5; D.tenderF = RY() < 0.6;
+        } else if (type === 'fly') {
+          lv(-0.24 + RY() * 0.04, 0.12 + RY() * 0.06, 1.95 + L * 0.01, { ov: 0.6 + RY() * 1.2, side: 0.4, nose: 0.14 * L, rake: 1.1 + RY() * 0.5 });
+          D.fly = true; D.hardtop = RY() < 0.6; D.arch = !D.hardtop || RY() < 0.5;
+        } else if (type === 'sport') {
+          D.cabin = [-0.02 * L, 0.3 * L, 0.5 + RY() * 0.25]; D.hardtop = RY() < 0.55; D.pad = RY() < 0.6 ? (RY() < 0.5 ? [0.92, 0.9, 0.84] : [0.3, 0.32, 0.36]) : null;
+        } else if (type === 'sail') {
+          lv(-0.18 + RY() * 0.06, 0.12 + RY() * 0.06, 0.55 + L * 0.012, { ov: 0, side: Math.max(0.5, D.B * 0.18), nose: 0.08 * L, rake: 0.9, gl0: 0.35, gl1: 0.7 });
+          D.mastH = L * (1.2 + RY() * 0.3); D.mastA = (0.08 + RY() * 0.06) * L; D.cover = RY() < 0.5 ? WHITE : RY() < 0.6 ? NAVY : [0.86, 0.82, 0.7]; D.ketch = L > 30 && RY() < 0.5;
+          D.sup = RY() < 0.8 ? jit(WHITE, 0.03) : jit([0.8, 0.82, 0.84], 0.05); D.roof = sh(D.sup, 0.97); D.genoa = RY() < 0.65; D.hood = RY() < 0.6 ? (RY() < 0.5 ? NAVY : [0.62, 0.6, 0.56]) : null;
+        } else if (type === 'cat') {
+          lv(-0.3, 0.1 + RY() * 0.05, 2.0 + L * 0.005, { ov: 0.8 + RY(), side: 0.3, wide: true, nose: 0.08 * L, rake: 1.3, gl0: 0.25, gl1: 0.84 });
+          if (D.sailing) { D.mastH = L * (1.15 + RY() * 0.2); D.mastA = 0.1 * L; D.cover = WHITE; } else { D.fly = true; D.hardtop = true; }
+        } else if (type === 'explorer') {
+          const n = L < 35 ? 2 : 3, h = 2.3 + Math.min(0.5, L * 0.006);
+          for (let k = 0; k < n; k++) lv(-0.22 + k * 0.08, 0.24 - k * 0.07, h, { ov: 1 + RY(), side: 0.8, nose: 0.05 * L, rake: k === n - 1 ? -0.35 : 0.2, gl0: 0.35, gl1: 0.78 });
+          D.sup = RY() < 0.5 ? jit([0.66, 0.68, 0.7], 0.08) : jit(WHITE, 0.03); D.mast = true; D.funnel = RY() < 0.5;
+        } else {   // classic: low deckhouses in varnished wood, a buff funnel, two masts
+          lv(-0.26, 0.14, 1.9, { ov: 0.4, side: 0.9, nose: 0.06 * L, rake: 0.1, gl0: 0.4, gl1: 0.72 });
+          if (L > 25) lv(-0.12, 0.06, 1.8, { ov: 0.3, side: 0.6, nose: 0.05 * L, rake: 0.1, gl0: 0.4, gl1: 0.72 });
+        }
+        D.Lx = L + D.plat;
+        return D;
+      };
+      // ---- building one yacht: the local frame (a along, + to the bow; y up from the water; b across) ----
+      let g, X0, Z0, Cr, Sr, YO = 0;
+      const W3 = (a, y, b) => [X0 + Cr * a - Sr * b, y + YO, Z0 + Sr * a + Cr * b];
+      const N3 = (na, ny, nb) => [Cr * na - Sr * nb, ny, Sr * na + Cr * nb];
+      const st = (D, t) => {   // the hull at station t (0 the transom, 1 the stem): half-beam w, sheer s, the lowest point lo, k: 1 where the stem's overhang closes the bottom
+        const s = D.fS + (D.fB - D.fS) * Math.pow(t, D.sp);
+        const wf = t < 0.3 ? D.tw + (1 - D.tw) * Math.sin(t / 0.3 * TP) : t < D.tb ? 1 : Math.pow(Math.max(0, 1 - Math.pow((t - D.tb) / (1 - D.tb), D.bp)), 0.62);
+        const tw = 1 - D.rk, k = clamp((t - tw) / 0.05 + 0.5, 0, 1), lo = t <= tw ? -0.25 : -0.25 + (s * 0.88 + 0.25) * Math.pow((t - tw) / Math.max(0.01, D.rk), 1.3);
+        return { a: (t - 0.5) * D.L, s, w: (D.hb || D.B) / 2 * wf, lo: Math.min(lo, s - 0.05), k };
+      };
+      const hb = (D, H, y) => { const q = clamp((y - H.lo) / Math.max(0.01, H.s - H.lo), 0, 1), r = Math.sqrt(q); return H.w * (D.fl + (1 - D.fl) * r) * (1 - H.k + H.k * r); };
+      const deckY = (D, a) => st(D, clamp(a / D.L + 0.5, 0, 1)).s;   // the deck's height at a
+      const hullW = (D, a) => { const t = a / D.L + 0.5; return t < 0 || t > 1 ? 0 : D.type === 'cat' ? (t > 0.04 && t < 0.78 ? D.B / 2 : 0) : st(D, t).w; };   // (catamarans: over both hulls)
+      const hull = (D, ofs, tier) => {   // one hull (catamarans: two, ofs across); returns the waterline outline (for the shadow)
+        const NS = tier === 2 ? 6 : tier === 1 ? 9 : D.L > 40 ? 18 : D.L > 20 ? 14 : 11, T = [];
+        for (let k = 0; k <= NS; k++) T.push(Math.pow(k / NS, 0.85));
+        const winA = [0.22, 0.72], Y = (H) => {   // the heights of the section's points, top down, and the colour of the band below each
+          const L = [[H.s, D.acc ? D.acc : D.hull]];
+          if (D.acc && tier < 2) L.push([H.s - 0.18, D.hull]);
+          if (D.hullWin && tier < 2) { const y1 = H.s * 0.62, y0 = H.s * 0.47; L.push([y1, 'win'], [y0, D.hull]); }
+          if (tier < 2) L.push([0.42, D.boot]);
+          L.push([0.02, sh(D.boot, 0.7)], [H.lo, null]);
+          for (const e of L) e[0] = clamp(e[0], H.lo, H.s);
+          return L; };
+        const P = (H, y, side) => W3(H.a, y, ofs + side * hb(D, H, y));
+        const nrm = (t, y, side) => {   // the surface normal (finite differences), outward
+          const d = 0.004, A = st(D, Math.max(0, t - d)), B = st(D, Math.min(1, t + d)), H = st(D, t);
+          const ta = [B.a - A.a, 0, side * (hb(D, B, y) - hb(D, A, y))], ty = [0, 0.04, side * (hb(D, H, y + 0.02) - hb(D, H, y - 0.02))];
+          let n = [ta[1] * ty[2] - ta[2] * ty[1], ta[2] * ty[0] - ta[0] * ty[2], ta[0] * ty[1] - ta[1] * ty[0]]; const l = Math.hypot(n[0], n[1], n[2]) || 1; n = n.map(v => v / l);
+          if (n[2] * side < 0 || (Math.abs(n[2]) < 0.05 && n[0] < 0)) n = n.map(v => -v);
+          return N3(n[0], n[1], n[2]); };
+        const H0 = T.map(t => st(D, t)), Ls = H0.map(H => Y(H));
+        for (let k = 0; k < NS; k++) {
+          const A = H0[k], B = H0[k + 1], LA = Ls[k], LB = Ls[k + 1], inn = W3((A.a + B.a) / 2, (A.s + A.lo) / 2, ofs), tm = (T[k] + T[k + 1]) / 2;
+          for (const side of [-1, 1]) for (let j = 0; j + 1 < LA.length; j++) {
+            let col = LA[j][1]; if (col === 'win') col = tm > winA[0] && tm < winA[1] ? D.glass : D.hull;
+            const ya0 = LA[j][0], ya1 = LA[j + 1][0], yb0 = LB[j][0], yb1 = LB[j + 1][0]; if (ya0 - ya1 < 0.005 && yb0 - yb1 < 0.005) continue;
+            g.quadON(P(A, ya0, side), P(A, ya1, side), P(B, yb1, side), P(B, yb0, side), nrm(T[k], ya0, side), nrm(T[k], ya1, side), nrm(T[k + 1], yb1, side), nrm(T[k + 1], yb0, side), inn, col, col, col, col);
+          }
+          const ds = W3(A.a, A.s + 0.01, ofs - A.w), dp = W3(A.a, A.s + 0.01, ofs + A.w), es = W3(B.a, B.s + 0.01, ofs - B.w), ep = W3(B.a, B.s + 0.01, ofs + B.w);
+          g.quadUp(ds, dp, ep, es, [D.deck, D.deck, D.deck, D.deck]);   // the deck
+        }
+        { const H = H0[0], L0 = Ls[0], inn = W3(H.a + 1, (H.s + H.lo) / 2, ofs);   // the transom
+          for (let j = 0; j + 1 < L0.length; j++) { let col = L0[j][1]; if (col === 'win') col = D.hull; const y0 = L0[j][0], y1 = L0[j + 1][0]; if (y0 - y1 < 0.005) continue;
+            g.quadO(P(H, y0, -1), P(H, y0, 1), P(H, y1, 1), P(H, y1, -1), col, inn); }
+          if (D.type === 'super' && D.L > 35 && tier === 0) { const hw = H.w * 0.42, a = H.a - 0.03; g.quadO(W3(a, 0.6, ofs - hw), W3(a, 0.6, ofs + hw), W3(a, H.s - 0.5, ofs + hw), W3(a, H.s - 0.5, ofs - hw), sh(D.glass, 1.2), inn); } }   // (the beach club's glass doors)
+        if (D.type === 'super' && tier === 0) for (const side of [-1, 1]) {   // a bulwark round the foredeck
+          for (let k = Math.floor(NS * 0.62); k < NS; k++) { const A = H0[k], B = H0[k + 1], a0 = W3(A.a, A.s, ofs + side * A.w), b0 = W3(B.a, B.s, ofs + side * B.w), a1 = W3(A.a, A.s + 0.85, ofs + side * A.w), b1 = W3(B.a, B.s + 0.85, ofs + side * B.w);
+            g.quadO(a0, b0, b1, a1, D.hull, W3((A.a + B.a) / 2, A.s, ofs)); g.quadO(a0, b0, b1, a1, D.roof, W3((A.a + B.a) / 2, A.s, ofs + side * (A.w + 3))); g.quadUp(a1, b1, W3(B.a, B.s + 0.85, ofs + side * (B.w - 0.12)), W3(A.a, A.s + 0.85, ofs + side * (A.w - 0.12)), [D.roof, D.roof, D.roof, D.roof]); } }
+        return H0.map(H => [H.a, Math.max(0, hb(D, H, 0.02))]);
+      };
+      const ring = (D, lv, tier) => {   // a level's outline (plan, starboard then port): along the sides (narrowing with the hull), round the nose
+        const out = [], r = Math.min(lv.nose, (lv.a1 - lv.a0) * 0.55), nn = tier ? 2 : 4, nsd = tier ? 1 : 3;
+        const hwAt = (a) => Math.max(0.6, lv.wide ? hullW(D, a) - 0.15 : Math.min(D.B / 2 - lv.side, hullW(D, a) - lv.side));
+        for (let k = 0; k <= nsd; k++) { const a = lv.a0 + (lv.a1 - r - lv.a0) * k / nsd; out.push([a, hwAt(a), 0]); }
+        const hn = hwAt(lv.a1 - r);
+        for (let k = 1; k <= nn; k++) { const th = k / nn * TP; out.push([lv.a1 - r + r * Math.sin(th), hn * Math.cos(th), Math.sin(th)]); }
+        for (let k = nn - 1; k >= 1; k--) { const th = k / nn * TP; out.push([lv.a1 - r + r * Math.sin(th), -hn * Math.cos(th), Math.sin(th)]); }
+        for (let k = nsd; k >= 0; k--) { const a = lv.a0 + (lv.a1 - r - lv.a0) * k / nsd; out.push([a, -hwAt(a), 0]); }
+        return out;   // [a, b, front-ness]
+      };
+      const level = (D, lv, yb, tier, spots, top) => {   // the walls (glass between gl0 and gl1), the roof (overhanging aft) with its fascia; returns the roof's top
+        const R0 = ring(D, lv, tier), n = R0.length, base = R0.map(p => yb != null ? yb : deckY(D, p[0]) + 0.01), yt = Math.max(...base) + lv.h;
+        const R1 = R0.map(p => [p[0] - lv.rake * lv.h * Math.pow(p[2], 0.7), p[1] * (1 - 0.05 * (1 - p[2] * 0.6))]);   // (the front raked back, the sides leaning in a little)
+        const cA = R0.reduce((s, p) => s + p[0], 0) / n, inn = W3(cA, yt - lv.h / 2, 0);
+        const at = (k, f) => { const p = R0[k], q = R1[k], y = base[k] + (yt - base[k]) * f; return W3(p[0] + (q[0] - p[0]) * f, y, p[1] + (q[1] - p[1]) * f); };
+        // the glass: on the sides a band narrowing towards the front (the sweep of a modern yacht's windows; taper 0: straight), round the nose the windscreen
+        const tp = D.taper || 0, fr = R0.map(p => Math.pow(clamp((p[0] - lv.a0) / Math.max(1, lv.a1 - lv.a0), 0, 1), 2) * tp);
+        const G = R0.map((p, k) => p[2] > 0 ? [0, lv.gl0, lv.gl1, 1] : [0, lv.gl0 + (0.5 - lv.gl0) * fr[k], lv.gl1 - (lv.gl1 - 0.64) * fr[k], 1]);
+        for (let k = 0; k < n; k++) { const j = (k + 1) % n; for (let q = 0; q < 3; q++) g.quadO(at(k, G[k][q]), at(j, G[j][q]), at(j, G[j][q + 1]), at(k, G[k][q + 1]), q === 1 ? D.glass : D.sup, inn); }
+        const th = tier === 2 ? 0 : 0.2, ev = 0.12, RF = R1.map((q, k) => { const p = R0[k], aft = p[0] < lv.a0 + 0.3; return [aft ? q[0] - lv.ov : q[0] + p[2] * (lv.visor || 0.12), q[1] + Math.sign(q[1]) * ev]; });   // (the roof: aft over the terrace, a visor over the windscreen)
+        const ctr = W3(cA - lv.ov / 2, yt + th, 0), ctl = W3(cA - lv.ov / 2, yt, 0), rt = top ? D.roof : D.deck;
+        for (let k = 0; k < n; k++) { const j = (k + 1) % n, a = W3(RF[k][0], yt + th, RF[k][1]), b = W3(RF[j][0], yt + th, RF[j][1]);
+          g.triO(ctr, a, b, rt, W3(cA, yt - 2, 0));
+          if (lv.ov > 0 && tier < 2) g.triO(ctl, W3(RF[k][0], yt, RF[k][1]), W3(RF[j][0], yt, RF[j][1]), D.roof, W3(cA, yt + 2, 0));   // (the soffit: the overhang seen from below)
+          if (th) g.quadO(W3(RF[k][0], yt, RF[k][1]), W3(RF[j][0], yt, RF[j][1]), b, a, D.fascia || D.roof, inn); }
+        if (lv.ov > 1.2 && tier === 0) for (const side of [-1, 1]) { const p = RF.find(q => q[1] * side > 0 && q[0] < lv.a0 - lv.ov * 0.5), y0 = Math.min(...base); if (p) cyl(g, ...W3(p[0] + 0.25, y0, p[1] - side * 0.25), 0.07, yt - y0, 4, D.roof); }   // (posts under the overhang)
+        if (spots) { const a = lv.a0 - lv.ov * 0.5, w = Math.min(...RF.map(q => Math.abs(q[1]))) * 0.7; if (lv.ov > 0.9) for (const b of [-w * 0.5, w * 0.5]) spots.push([a, yt + th, b]); }
+        return yt + th;
+      };
+      const mastFin = (D, a, y, h, col, domes) => {   // a swept-back mast (a thin fin) with radar domes and a radar bar
+        const sw = h * 0.55, w = 0.12 + h * 0.03, inn = W3(a - sw / 2, y + h / 2, 0), P = (da, dy, b) => W3(a + da, y + dy, b);
+        for (const s of [-1, 1]) g.quadO(P(0, 0, s * w), P(-h * 0.5, 0, s * w), P(-sw - h * 0.25, h, s * w), P(-sw, h, s * w), col, W3(a - sw / 2, y + h / 2, -s));
+        g.quadO(P(0, 0, -w), P(0, 0, w), P(-sw, h, w), P(-sw, h, -w), col, inn); g.quadO(P(-sw, h, -w), P(-sw, h, w), P(-sw - h * 0.25, h, w), P(-sw - h * 0.25, h, -w), col, inn);
+        g.quadO(P(-h * 0.5, 0, -w), P(-h * 0.5, 0, w), P(-sw - h * 0.25, h, w), P(-sw - h * 0.25, h, -w), col, inn);
+        box(g, ...P(-sw * 0.6, h * 0.62, 0), 0.25, 0.12, D.B * 0.45, Math.atan2(Sr, Cr), col);
+        for (let k = 0; k < domes; k++) ico(g, ...P(-sw - 0.1, h + 0.45 + k * 0.05, (k - (domes - 1) / 2) * 0.9), 0.38 + (k === 0 ? 0.12 : 0), 1, [0.96, 0.96, 0.96], RY, 0);
+      };
+      const tender = (D, a, b, y, Lt, col) => {   // a tender on deck (a small launch with a console), built like the yachts in a frame of its own
+        const sx = X0, sz = Z0, sy = YO, p = W3(a, 0, b), Dt = { type: 'tender', L: Lt, B: Lt * 0.38, fS: 0.5, fB: 0.62, sp: 1.6, tw: 0.92, tb: 0.42, bp: 1.5, fl: 0.9, rk: 0.1,
+          hull: col, boot: [0.2, 0.21, 0.23], acc: null, deck: [0.84, 0.84, 0.82], hullWin: false, levels: [] };
+        X0 = p[0]; Z0 = p[2]; YO = y + 0.18;
+        hull(Dt, 0, 1); box(g, ...W3(0.05 * Lt, 0.5, 0), 0.7, 0.55, 0.8, Math.atan2(Sr, Cr), [0.92, 0.92, 0.92], D.glass);
+        X0 = sx; Z0 = sz; YO = sy;
+      };
+      const ensign = (D) => {   // the flag on a staff at the stern: Monaco, a red or a blue ensign, Italy, France
+        const L = D.L, a = -L / 2 + 0.35, y0 = deckY(D, a), ph = 1.5 + L * 0.02, fw = 0.8 + L * 0.012, fh = fw * 0.62, k = Math.floor(RY() * 5);
+        const RED = [0.8, 0.1, 0.14], WT = [0.96, 0.96, 0.96], BL = [0.12, 0.2, 0.5], GN = [0.05, 0.5, 0.28];
+        cyl(g, ...W3(a, y0, 0), 0.03, ph + 0.1, 4, [0.85, 0.86, 0.88]);
+        const P = (u, v) => W3(a - u * fw, y0 + ph - v * fh, 0), q2 = (u0, u1, v0, v1, c) => { for (const sd of [-1, 1]) g.quadO(P(u0, v0), P(u1, v0), P(u1, v1), P(u0, v1), c, W3(a - fw / 2, y0 + ph - fh / 2, sd)); };
+        if (k === 0) { q2(0, 1, 0, 0.5, RED); q2(0, 1, 0.5, 1, WT); } else if (k < 3) q2(0, 1, 0, 1, k === 1 ? RED : BL);
+        else { const c3 = k === 3 ? [GN, WT, RED] : [BL, WT, RED]; for (let q = 0; q < 3; q++) q2(q / 3, (q + 1) / 3, 0, 1, c3[q]); }
+      };
+      const yBuild = (D, x, z, rot, tier, spots) => {
+        X0 = x; Z0 = z; Cr = Math.cos(rot); Sr = Math.sin(rot); g = yCh.get(x, z); const L = D.L, rotW = Math.atan2(Sr, Cr);
+        let wl;
+        if (D.type === 'cat') { const o = D.B / 2 - D.hb / 2; wl = hull(D, -o, tier); hull(D, o, tier);
+          const a0 = -0.42 * L, a1 = 0.26 * L, yd = D.fS + 0.04, net = [0.22, 0.22, 0.24];   // the bridge deck between the hulls, flush with their decks; a net between the bows
+          box(g, ...W3((a0 + a1) / 2, yd - 0.6, 0), a1 - a0, 0.6, D.B - D.hb, rotW, D.hull, D.deck);
+          if (tier < 2) { const an = 0.4 * L, yn = deckY(D, an) - 0.08; g.quadUp(W3(a1, yd - 0.05, -o + D.hb * 0.45), W3(a1, yd - 0.05, o - D.hb * 0.45), W3(an, yn, o - D.hb * 0.3), W3(an, yn, -o + D.hb * 0.3), [net, net, net, net]); }
+          wl = wl.map(([a, b]) => [a, b + o]);
+        } else wl = hull(D, 0, tier);
+        if (D.plat) box(g, ...W3(-L / 2 - D.plat / 2 + 0.1, 0.22, 0), D.plat, 0.24, hullW(D, -L / 2 + 0.05) * 1.7, rotW, D.roof, D.deck);   // the swim platform
+        if (tier === 0 && (D.type === 'classic' || D.type === 'explorer' || (D.type === 'super' && !D.hullWin))) {   // portholes along the hull
+          const ps = 0.15 + L * 0.0015, yP = st(D, 0.5).s * 0.56, dk = sh(D.glass, 0.8);
+          for (let a = -0.36 * L; a < 0.3 * L; a += 1.8 + L * 0.02) { const H = st(D, a / L + 0.5), y = Math.min(yP, H.s - 0.5); if (y < 0.75) continue;
+            for (const side of [-1, 1]) { const b = side * (hb(D, H, y) + 0.015); g.quadO(W3(a - ps, y - ps, b), W3(a + ps, y - ps, b), W3(a + ps, y + ps, b), W3(a - ps, y + ps, b), dk, W3(a, y, 0)); } } }
+        const aftDeck = (a) => spots && spots.push([a, deckY(D, a), 0]);
+        let yTop = null;
+        D.levels.forEach((lv, k) => { yTop = level(D, lv, k === 0 ? (D.type === 'cat' ? D.fS + 0.05 : null) : yTop, tier, spots, k === D.levels.length - 1); });
+        if (spots && D.levels.length && D.type !== 'sail') { const lv = D.levels[0], aA = (lv.a0 - L / 2) / 2;   // the aft deck, the swim platform, the foredeck
+          if (lv.a0 > -L / 2 + 1.4 && D.type !== 'explorer') { aftDeck(aA); spots.push([aA, deckY(D, aA), hullW(D, aA) * 0.5]); }
+          if (D.plat > 1.2) spots.push([-L / 2 - D.plat * 0.5, 0.46, 0]);
+          const aF = (lv.a1 + L / 2) / 2; if (L / 2 - lv.a1 > 3) spots.push([aF, deckY(D, aF), 0]); }
+        const top = D.levels[D.levels.length - 1];
+        if (D.type === 'super' || D.type === 'explorer') {
+          if (top && tier < 2) { const yt = yTop, a = (top.a0 + top.a1) / 2;
+            if (D.hardtop) { const ha0 = top.a0 + (top.a1 - top.a0) * 0.15, ha1 = top.a1 - 0.6, hw = Math.min(...ring(D, top, 1).map(p => Math.abs(p[1]))) * 0.92;
+              for (const s of [-1, 1]) for (const aa of [ha0 + 0.3, ha1 - 0.4]) cyl(g, ...W3(aa, yt, s * (hw - 0.2)), 0.06, 2.1, 4, D.roof);
+              box(g, ...W3((ha0 + ha1) / 2, yt + 2.1, 0), ha1 - ha0, 0.14, hw * 2, rotW, D.roof); if (D.mast) mastFin(D, (ha0 + ha1) / 2 + 0.8, yt + 2.24, 2.4 + L * 0.03, D.roof, tier === 0 ? 2 : 1); }
+            else if (D.mast) mastFin(D, a + 1, yt, 3 + L * 0.035, D.roof, tier === 0 ? 2 : 1);
+            if (D.spa && tier === 0) box(g, ...W3(top.a0 - top.ov * 0.4, yt, 0), 2.4, 0.4, 2.4, rotW, [0.92, 0.92, 0.9], [0.32, 0.72, 0.84]);
+            if (spots) spots.push([top.a0 + 1, yt, -1], [top.a0 + 1, yt, 1]);
+            if (D.funnel) cyl(g, ...W3(top.a0 + 1.2, yt, 0), 0.8, 2.2, 8, sh(D.hull, 1.1), BLACK); }
+          if (D.heli && tier === 0) { const a = D.levels[0].a1 + 3.5, y = deckY(D, a) + 0.05; cyl(g, ...W3(a, y, 0), Math.min(4.5, hullW(D, a) * 0.9), 0.06, 16, [0.5, 0.54, 0.5], [0.62, 0.66, 0.6]); }
+          if (tier === 0 && (D.type === 'explorer' || (L > 45 && !D.heli && D.tenderF))) {   // a tender: on the explorer's aft deck under a crane, on a superyacht's foredeck
+            const lv0 = D.levels[0], aft = D.type === 'explorer', a = aft ? (lv0.a0 - L / 2) / 2 + 0.5 : lv0.a1 + (L / 2 - lv0.a1) * 0.4, Lt = 4 + L * 0.05, tc = RY() < 0.5 ? [0.92, 0.92, 0.92] : sh(D.hull, 1.05);
+            tender(D, a, 0, deckY(D, a), Lt, tc);
+            if (aft) { const ca = lv0.a0 - 0.6, cy = deckY(D, ca); cyl(g, ...W3(ca, cy, 0), 0.22, 3.2, 6, D.sup); const p0 = W3(ca, cy + 3.1, 0), p1 = W3(a + Lt * 0.1, cy + 3.6, 0);
+              box(g, (p0[0] + p1[0]) / 2, cy + 3.1, (p0[2] + p1[2]) / 2, Math.hypot(p1[0] - p0[0], p1[2] - p0[2]) + 0.3, 0.3, 0.3, Math.atan2(Sr, Cr), D.sup); } }
+        } else if (D.fly && top && tier < 2) {   // the flybridge: helm console, windscreen, seats; a hardtop on posts or a radar arch over it
+          const yt = yTop, a0 = top.a0 + 0.3, a1 = top.a1 - top.nose * 0.6, hw = Math.min(...ring(D, top, 1).map(p => Math.abs(p[1]))) * 0.9;
+          box(g, ...W3(a1 - 1.2, yt, -hw * 0.4), 1.0, 0.95, 0.9, rotW, D.roof, sh(D.glass, 1.3));
+          g.quadO(W3(a1 - 0.6, yt + 0.9, -hw * 0.8), W3(a1 - 0.6, yt + 0.9, hw * 0.8), W3(a1 - 1.0, yt + 1.35, hw * 0.75), W3(a1 - 1.0, yt + 1.35, -hw * 0.75), D.glass, W3(a1 - 3, yt + 1, 0));
+          box(g, ...W3(a0 + 1.2, yt, 0), 1.6, 0.45, hw * 1.4, rotW, [0.92, 0.9, 0.86], [0.88, 0.85, 0.78]);
+          if (D.hardtop) { for (const s of [-1, 1]) for (const aa of [a0 + 0.4, a1 - 1.6]) cyl(g, ...W3(aa, yt, s * (hw - 0.15)), 0.05, 2.05, 4, [0.85, 0.86, 0.88]); box(g, ...W3((a0 + a1) / 2 - 0.5, yt + 2.05, 0), a1 - a0, 0.12, hw * 2.05, rotW, D.roof); }
+          if (D.arch) { const aa = a0 + (a1 - a0) * 0.35, ah = 2.3; for (const s of [-1, 1]) { box(g, ...W3(aa, yt, s * hw * 0.85), 0.25, ah, 0.2, rotW, D.roof); } box(g, ...W3(aa - 0.15, yt + ah, 0), 0.55, 0.22, hw * 1.9, rotW, D.roof); ico(g, ...W3(aa - 0.1, yt + ah + 0.45, 0), 0.32, 1, [0.96, 0.96, 0.96], RY, 0);
+            if (!D.hardtop) box(g, ...W3(aa - 1.2, yt + ah - 0.08, 0), 2.2, 0.08, hw * 1.8, rotW, RY() < 0.5 ? NAVY : [0.86, 0.82, 0.7]); }
+          if (spots) spots.push([a0 + 0.6, yt, -hw * 0.4], [a0 + 0.6, yt, hw * 0.4]);
+        }
+        if (D.type === 'sport') {   // a low cabin top forward, the windscreen, a hardtop over the cockpit or an open helm
+          const [c0, c1, ch] = D.cabin, hw = (a) => Math.max(0.5, hullW(D, a) - 0.45), yb = deckY(D, c0), lvC = { a0: c0, a1: c1, h: ch, rake: 1.6, gl0: 0.3, gl1: 0.75, ov: 0, side: 0.45, nose: 0.12 * L, wide: false };
+          const yt = level(D, lvC, null, tier, null, true), ws0 = c0, wsH = 0.9 + L * 0.01;
+          g.quadO(W3(ws0 + 0.2, yt, -hw(ws0) * 0.9), W3(ws0 + 0.2, yt, hw(ws0) * 0.9), W3(ws0 - 0.6, yt + wsH, hw(ws0) * 0.85), W3(ws0 - 0.6, yt + wsH, -hw(ws0) * 0.85), D.glass, W3(ws0 - 3, yt, 0));
+          if (D.hardtop && tier < 2) { const h0 = ws0 - 0.6, h1 = h0 - 0.22 * L; for (const s of [-1, 1]) cyl(g, ...W3(h1 + 0.3, yb, s * (hw(h1) - 0.2)), 0.05, yt + wsH - yb, 4, [0.85, 0.86, 0.88]); box(g, ...W3((h0 + h1) / 2, yt + wsH, 0), h0 - h1, 0.12, hw(h0) * 1.9, rotW, D.roof); }
+          box(g, ...W3(-L * 0.32, yb, 0), 1.2, 0.5, hw(-L * 0.32) * 1.6, rotW, [0.92, 0.9, 0.86]);
+          if (D.pad && tier < 2) { const pa = (c1 + L / 2) * 0.5 + c1 * 0.5 - 0.2; box(g, ...W3(Math.min(pa, L * 0.36), deckY(D, pa) + 0.02, 0), Math.min(2.4, L * 0.12), 0.18, hw(pa) * 1.1, rotW, D.pad); }   // (a sun pad on the foredeck)
+          if (spots) spots.push([-L * 0.25, yb, -0.6], [-L * 0.25, yb, 0.6], [L * 0.38, deckY(D, L * 0.38), 0]);
+        }
+        if (D.mastH) {   // sailing: the mast(s), spreaders, the boom with the sail furled in its cover, the stays
+          const masts = [[D.mastA, D.mastH]]; if (D.ketch) masts.push([-0.18 * L, D.mastH * 0.72]);
+          for (const [ma, mh] of masts) { const y0 = D.type === 'cat' ? yTop || deckY(D, ma) : deckY(D, ma), r0 = 0.12 + mh * 0.004, mc = [0.88, 0.89, 0.9];
+            cyl(g, ...W3(ma, y0, 0), r0, mh, tier ? 4 : 6, mc, null, r0 * 0.55);
+            if (tier < 2) for (const f of [0.35, 0.62, 0.84]) box(g, ...W3(ma, y0 + mh * f, 0), 0.08, 0.06, (1 - f * 0.6) * D.B * 0.75, rotW, mc);
+            const bl = Math.min(L * 0.42, ma + L * 0.5 - 1), by = y0 + 1.8 + L * 0.02;
+            box(g, ...W3(ma - bl / 2, by, 0), bl, 0.18, 0.16, rotW, mc);
+            const cv = W3(ma - bl * 0.48, 0, 0); box(g, cv[0], by + 0.16, cv[2], bl * 0.92, 0.55 + mh * 0.006, 0.42 + mh * 0.004, rotW, D.cover, sh(D.cover, 1.04));   // (the mainsail furled in its cover)
+            if (tier < 2) { const top = W3(ma, y0 + mh, 0), bow = W3(L / 2 - L * D.rk * 0.4, deckY(D, L / 2 - 0.5) + 0.2, 0), aft = W3(-L / 2 + 0.3, deckY(D, -L / 2) + 0.2, 0), w = 0.035;
+              for (const e of [bow, aft]) for (const sd of [-3, 3]) g.quadO([top[0] - Sr * w, top[1], top[2] + Cr * w], [top[0] + Sr * w, top[1], top[2] - Cr * w], [e[0] + Sr * w, e[1], e[2] - Cr * w], [e[0] - Sr * w, e[1], e[2] + Cr * w], [0.3, 0.3, 0.32], W3(ma, y0 + mh / 2, sd));   // (the forestay and the backstay, seen from both sides)
+              if (D.genoa && ma === D.mastA) { const f0 = 0.08, f1 = 0.86, P = (f) => [bow[0] + (top[0] - bow[0]) * f, bow[1] + (top[1] - bow[1]) * f, bow[2] + (top[2] - bow[2]) * f], r = 0.11, c = [0.94, 0.93, 0.9];   // the genoa furled round the forestay
+                for (const [u, v] of [[-1, 0], [0, 1], [1, 0], [0, -1]]) { const o0 = [-Sr * r * u, r * v * 0.2, Cr * r * u], a0 = P(f0), a1 = P(f1); g.quadO([a0[0] + o0[0] * 1.6, a0[1], a0[2] + o0[2] * 1.6], [a1[0] + o0[0], a1[1], a1[2] + o0[2]], [a1[0] - o0[0], a1[1], a1[2] - o0[2]], [a0[0] - o0[0] * 1.6, a0[1], a0[2] - o0[2] * 1.6], c, W3(ma, y0 + mh / 2, u * 3 + 0.01)); } } } }
+          if (D.hood && tier < 2) { const lv = D.levels[0], a = lv ? lv.a0 : -0.15 * L, y = deckY(D, a) + (lv ? lv.h : 0.6), hw = Math.max(0.6, hullW(D, a) - 0.6);   // the sprayhood over the companionway
+            box(g, ...W3(a + 0.6, y - 0.05, 0), 1.2, 0.7, hw * 1.6, rotW, D.hood, sh(D.hood, 1.1)); }
+          if (spots) spots.push([-L * 0.3, deckY(D, -L * 0.3), -0.5], [-L * 0.3, deckY(D, -L * 0.3), 0.5], [L * 0.3, deckY(D, L * 0.3), 0]);
+        }
+        if (D.type === 'classic' && tier < 2) {   // a buff funnel with a black top, varnished masts fore and aft
+          const top = D.levels[D.levels.length - 1]; cyl(g, ...W3((top.a0 + top.a1) / 2, yTop, 0), 0.55 + L * 0.006, 1.8 + L * 0.02, 8, [0.86, 0.66, 0.32], BLACK);
+          for (const [ma, mh] of [[0.3 * L, 6 + L * 0.2], [-0.32 * L, 5 + L * 0.15]]) cyl(g, ...W3(ma, deckY(D, ma), 0), 0.12, mh, 4, sh(WOOD, 1.2), null, 0.06);
+        }
+        if (tier === 0 && D.type !== 'cat') ensign(D);
+        if (tier === 0 && D.moor != null) {   // moored: fenders over the sides, the bigger yachts a passerelle from the aft deck to the quay
+          const fc = RY() < 0.6 ? [0.95, 0.95, 0.95] : RY() < 0.5 ? NAVY : sh(D.hull, 1.1), fr = 0.15 + L * 0.003, fh = 0.6 + L * 0.008;
+          for (const fa of [-0.3, -0.05, 0.2]) { const a = fa * L, H = st(D, clamp(a / L + 0.5, 0, 1)), y = H.s * 0.45;
+            for (const side of [-1, 1]) cyl(g, ...W3(a, y - fh / 2, side * (hb(D, H, y) + fr * 0.8) + (D.type === 'cat' ? side * (D.B / 2 - D.hb / 2) : 0)), fr, fh, 6, fc, fc); }
+          if ((D.type === 'super' || D.type === 'explorer' || D.type === 'fly' || D.type === 'classic') && L > 18) {
+            const a0 = -L / 2 + 0.4, y0 = deckY(D, a0) + 0.05, a1 = -L / 2 - D.plat - D.moor - 0.9, e = W3(a1, 0, 0), y1 = mcSD(e[0], e[2]) > 0.5 ? mcGround(e[0], e[2]) + 0.04 : 0.6, w = 0.36, P = (a, y, b) => W3(a, y, b);
+            for (const [yy, up] of [[0, 1], [-0.07, -1]]) g.quadO(P(a0, y0 + yy, -w), P(a0, y0 + yy, w), P(a1, y1 + yy, w), P(a1, y1 + yy, -w), [0.8, 0.8, 0.82], W3((a0 + a1) / 2, (y0 + y1) / 2 - up * 3, 0));
+            for (const sd of [-1, 1]) for (const k of [-1, 1]) g.quadO(P(a0, y0 + 0.85, sd * w), P(a1, y1 + 0.85, sd * w), P(a1, y1 + 0.8, sd * w), P(a0, y0 + 0.8, sd * w), [0.7, 0.72, 0.75], W3((a0 + a1) / 2, (y0 + y1) / 2 + 0.8, sd * w + k)); }
+        }
+        // a soft shadow on the water: the waterline outline, a little larger, pushed away from the sun
+        { const sg = ySh.get(x, z), sx = 0.75, sz = -0.66, off = 0.6 + D.fS * 0.35, dk = [0.72, 0.74, 0.78], O = (a, b) => { const p = W3(a, 0.03, b); return [p[0] + sx * off, 0.03, p[2] + sz * off]; };
+          for (let k = 0; k + 1 < wl.length; k++) { const [a0, w0] = wl[k], [a1, w1] = wl[k + 1]; sg.quadUp(O(a0 - 0.3, -w0 * 1.1 - 0.3), O(a1, -w1 * 1.1 - 0.3), O(a1, w1 * 1.1 + 0.3), O(a0 - 0.3, w0 * 1.1 + 0.3), [dk, dk, dk, dk]); } }
+      };
+      // the people on deck: up to six at the spots the build marked (aft deck, foredeck, terraces, flybridge, sun deck), facing the nearest road
+      const fans = (x, z, rot, spots, D) => {
+        let bi = -1, bd = 1e18; for (let i = 0; i < N; i += 2) { const d = (T.px[i] - x) ** 2 + (T.pz[i] - z) ** 2; if (d < bd) { bd = d; bi = i; } }
+        if (bi < 0) return; const fx = T.px[bi] - x, fz = T.pz[bi] - z, c = Math.cos(rot), s = Math.sin(rot), n = Math.min(spots.length * 2, 1 + Math.floor(RY() * 6)), used = [];
+        for (let k = 0, tries = 0; k < n && tries < 24; tries++) { const sp = spots[Math.floor(RY() * spots.length)], a = sp[0] + (RY() - 0.5) * 1.2, b = sp[2] + (RY() - 0.5) * 1.0;
+          if (Math.abs(b) > hullW(D, a) * 0.85 && D.type !== 'cat') continue; if (used.some(u => (u[0] - a) ** 2 + (u[1] - b) ** 2 < 0.5)) continue;
+          const px = x + c * a - s * b, pz = z + s * a + c * b; if (crowdPut(CR, px, sp[1], pz, fx, fz, { balcony: true, flag: 0.3 }, 0)) { used.push([a, b]); k++; nYachtFans++; } }   // (flag 0.3: most of them waving, a third with a flag)
+      };
+      const yacht = (x, z, D, rot, moor) => {   // moor: the gap from the stern to the pontoon or quay (none at anchor)
+        if (!clear(x, z, D.Lx, D.B, rot)) return false;
+        D.moor = moor;
+        yard.push([x, z, Math.hypot(D.Lx, D.B) / 2]); nYachts++;
+        const dTr = mcDist(x, z), tier = dTr < 90 ? 0 : dTr < 260 ? 1 : 2, spots = tier < 2 ? [] : null, hx = x + Math.cos(rot) * D.plat / 2, hz = z + Math.sin(rot) * D.plat / 2;   // (the hull's middle: the swim platform sticks out aft)
+        yBuild(D, hx, hz, rot, tier, spots);
+        if (spots && spots.length) fans(hx, hz, rot, spots, D);
         return true;
       };
       // along the pontoons (the narrow piers): both sides, stern to the pontoon
@@ -9646,8 +9911,8 @@ const World = (function () {
         if (p.w >= 9) continue;
         const rr = bldRect(p.r), c = Math.cos(rr.rot), s = Math.sin(rr.rot);
         for (const side of [-1, 1]) for (let t = -rr.L / 2 + 4; t < rr.L / 2 - 3; ) {
-          const L = 9 + R() * R() * 26, gap = L * (L > 30 ? 0.19 : 0.3) + 1.2, off = rr.D / 2 + 0.8 + L / 2, x = rr.x + c * t - s * side * off, z = rr.z + s * t + c * side * off;
-          yacht(x, z, L, rr.rot + side * Math.PI / 2); t += gap;
+          const D = yDesign(9 + R() * R() * 26), off = rr.D / 2 + 0.8 + D.Lx / 2, x = rr.x + c * t - s * side * off, z = rr.z + s * t + c * side * off;
+          yacht(x, z, D, rr.rot + side * Math.PI / 2, 0.8); t += D.B + 1.2;
         }
       }
       // along the harbour's quays (inside Port Hercule): stern-to, superyachts on the long stretches
@@ -9655,14 +9920,17 @@ const World = (function () {
       for (const [xa, za, xb, zb] of P.shore) {
         const L0 = Math.hypot(xb - xa, zb - za); if (L0 < 12 || !inPort((xa + xb) / 2, (za + zb) / 2)) continue;
         const ux = (xb - xa) / L0, uz = (zb - za) / L0; let nx = uz, nz = -ux; if (mcSD((xa + xb) / 2 + nx * 4, (za + zb) / 2 + nz * 4) > 0) { nx = -nx; nz = -nz; }   // (towards the water)
-        for (let t = 3; t < L0 - 3; ) { const L = 16 + R() * R() * 45, W = L * (L > 30 ? 0.19 : 0.3), x = xa + ux * t + nx * (L / 2 + 1.6), z = za + uz * t + nz * (L / 2 + 1.6);
-          yacht(x, z, L, Math.atan2(nz, nx)); t += W + 1.5 + R() * 3; }
+        for (let t = 3; t < L0 - 3; ) { const D = yDesign(16 + R() * R() * 45), x = xa + ux * t + nx * (D.Lx / 2 + 1.6), z = za + uz * t + nz * (D.Lx / 2 + 1.6);
+          yacht(x, z, D, Math.atan2(nz, nx), 1.6); t += D.B + 1.5 + R() * 3; }
       }
-      for (let k = 0; k < 40; k++) { const x = 700 + R() * 700, z = -250 + R() * 700; if (mcSD(x, z) > -40) continue; yacht(x, z, 25 + R() * 60, R() * TAU); }   // at anchor in the bay
+      for (let k = 0; k < 40; k++) { const x = 700 + R() * 700, z = -250 + R() * 700; if (mcSD(x, z) > -40) continue; yacht(x, z, yDesign(25 + R() * 60), R() * TAU); }   // at anchor in the bay
       { const x = 1180, z = 220, L = 240, rot = -0.35, g = scen.get(x, z), W = L * 0.13, c = Math.cos(rot), s = Math.sin(rot);   // a cruise ship off the harbour
         box(g, x, -3, z, L, 11, W, rot, [0.96, 0.96, 0.97], [0.66, 0.58, 0.48]);
         for (let d = 0; d < 6; d++) { const Ld = L * (0.8 - d * 0.07); box(g, x - c * L * 0.05, 8 + d * 2.8, z - s * L * 0.05, Ld, 2.8, W * 0.9, rot, [0.97, 0.97, 0.98], [0.95, 0.95, 0.96]); box(g, x - c * L * 0.05, 8.9 + d * 2.8, z - s * L * 0.05, Ld + 0.2, 0.9, W * 0.92, rot, [0.2, 0.26, 0.34]); }
         box(g, x - c * L * 0.25, 25, z - s * L * 0.25, W * 0.55, 8, W * 0.42, rot, [0.93, 0.93, 0.95], [0.12, 0.12, 0.15]); }
+      { const n0 = root.children.length; yCh.addTo(root, roofM, false, true); for (let k = n0; k < root.children.length; k++) root.children[k].name = 'yacht';
+        const n1 = root.children.length; ySh.addTo(root, new THREE.MeshBasicMaterial({ vertexColors: true, blending: THREE.MultiplyBlending, transparent: true, depthWrite: false, fog: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4 }), false, false);
+        for (let k = n1; k < root.children.length; k++) root.children[k].name = 'yachtShadow'; }
     }
     {   // lamp posts along the lap (the town's cast-iron candelabra, both sides every ~34 m) and OpenStreetMap's own
       const lamp = (x, z) => { if (!free(x, z) && MC.ocAt(x, z) !== 3) return; { const n = mcNear(x, z); if (n.i >= 0 && n.dd < 0.6) return; }   /* (never inside the barriers: the road is wider than the street the lamp stood by) */ const g = scen.get(x, z), y = mcGround(x, z); cyl(g, x, y, z, 0.12, 5.6, 6, [0.16, 0.2, 0.18]); box(g, x, y + 5.6, z, 0.9, 0.12, 0.2, 0, [0.16, 0.2, 0.18]); for (const o of [-0.42, 0.42]) box(g, x + o, y + 5.1, z, 0.34, 0.5, 0.34, 0, [0.96, 0.93, 0.78], [0.2, 0.22, 0.2]); CR.avoid(x, z, 0.8); };
@@ -9814,7 +10082,7 @@ const World = (function () {
     out.propFloor = propFloorTable(null, (i, side) => MC.verge(i, side));
     out.propStats = roadsideProps(out.props, { exits: 7, apexes: 0, wallEdge: [1.9, 2.5], atBarrier: true, stacks: [5, 8], rows2: 0.3, floor: out.propFloor, skip: (i, side, x, z) => inTun(i, 30) || excluded(x, z) });   // (the tyre walls against the barriers, as in Monaco: not out on the run-off)
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, buildings: nBld, streets: nStreets, junctions: nJunc, shops: nShops, trees: nTrees, yachts: nYachts, stands: nStands, fans: nFans };   // (read by the tests)
+    out.stats = { tiles: nTiles, buildings: nBld, streets: nStreets, junctions: nJunc, shops: nShops, trees: nTrees, yachts: nYachts, yachtFans: nYachtFans, stands: nStands, fans: nFans };   // (read by the tests)
     return out;
   }
 
