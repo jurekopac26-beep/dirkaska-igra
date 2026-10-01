@@ -741,13 +741,27 @@ const Render = (function () {
   const newWheelCache = new Map();
   function newWheelGeo(M) { const key = M.id + '|' + M.rw; if (!newWheelCache.has(key)) { const g = new GB(); NEW_BODY[M.body].wheel(g, M.rw); newWheelCache.set(key, g.geometry()); } return newWheelCache.get(key); }
 
+  // soft shading in the body's lower part (ambient occlusion, once per model and colour, in its vertex colours): lower down the body darker
+  // (the sills, under the bumpers: the ground and the body itself hide the sky there), the faces turned to the ground darker still
+  function carAO(geo) {
+    const P = geo.attributes.position, C = geo.attributes.color, N = geo.attributes.normal; if (!P || !C || !N) return geo;
+    const glass = (r, g, b) => (Math.abs(r - 0.1) < 0.025 && Math.abs(g - 0.13) < 0.025 && Math.abs(b - 0.19) < 0.025) || (Math.abs(r - 0.04) < 0.025 && Math.abs(g - 0.05) < 0.025 && Math.abs(b - 0.08) < 0.025);
+    for (let i = 0; i < P.count; i++) {
+      if (glass(C.getX(i), C.getY(i), C.getZ(i))) continue;   // (the panes keep their colour: findGlass knows them by it)
+      let k = 0.8 + 0.2 * Core.sstep(0.12, 0.62, P.getY(i));
+      if (N.getY(i) < -0.3) k *= 0.78;
+      C.setXYZ(i, C.getX(i) * k, C.getY(i) * k, C.getZ(i) * k);
+    }
+    C.needsUpdate = true; return geo;
+  }
   function carGeometry(bodyKey, M, color, stripe) {
     const key = bodyKey + '|' + M.id + '|' + color + '|' + stripe;
     if (geoCache.has(key)) return geoCache.get(key);
-    if (bodyKey === 'rally') { const geo = smoothNormals(rallyGeometry(M, color), 38); geoCache.set(key, geo); return geo; }
-    if (bodyKey === 'formula') { const geo = smoothNormals(formulaGeometry(M, color), 38); geoCache.set(key, geo); return geo; }
-    if (NEW_BODY[bodyKey]) { const geo = smoothNormals(NEW_BODY[bodyKey].shape(M, color, stripe), 38); geoCache.set(key, geo); return geo; }
-    if (bodyKey === 'lm') { const geo = smoothNormals(lmGeometry(M, color), 38); geoCache.set(key, geo); return geo; }
+    const done = (geo) => { carAO(geo); geoCache.set(key, geo); return geo; };
+    if (bodyKey === 'rally') return done(smoothNormals(rallyGeometry(M, color), 38));
+    if (bodyKey === 'formula') return done(smoothNormals(formulaGeometry(M, color), 38));
+    if (NEW_BODY[bodyKey]) return done(smoothNormals(NEW_BODY[bodyKey].shape(M, color, stripe), 38));
+    if (bodyKey === 'lm') return done(smoothNormals(lmGeometry(M, color), 38));
     const def = BODIES[bodyKey];
     const sx = M.len / def.len, sz = M.wid / def.wid;
     const body = colArr(color), skirt = body.map(v => v * 0.62), strp = stripe ? stripeFor(color) : body;
@@ -792,9 +806,7 @@ const Render = (function () {
     // rear wheels
     const r = M.rw, wx = -M.b * (M.len / 4.4) * 0.98;
     for (const sd of [-1, 1]) wheelInto(g, wx, r, sd * (M.wid * 0.5 - 0.1), r, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68]);
-    const geo = smoothNormals(g.geometry(), 38);
-    geoCache.set(key, geo);
-    return geo;
+    return done(smoothNormals(g.geometry(), 38));
   }
   let wheelGeo = null, tailGeoCache = new Map();
   let wheelGeoW = null;
@@ -1496,7 +1508,7 @@ const Render = (function () {
     world = World.build(scene, track, tex, { density });
     if (!world.farClip && camera.far !== 700) { camera.far = 700; camera.updateProjectionMatrix(); }
     applyTheme((track.def && track.def.theme) || 'lake'); wet = wetW = -1;   // (the weather again on the new world's road)
-    curTrack = track; seasonWorld(); floodlights(); litWindows();   // (the season and the time of day on the new world)
+    curTrack = track; seasonWorld(); floodlights(); litWindows(); asphaltWorld();   // (the season and the time of day on the new world; the asphalt's sheen)
     if (dryLn) { scene.remove(dryLn); dryLn.geometry.dispose(); dryLn.material.dispose(); dryLn = null; }
     if (pud) { scene.remove(pud); pud.geometry.dispose(); pud.material.dispose(); pud = null; } splash.clear();
     birds.reset(!!(track.def && (track.def.sea || track.def.theme === 'monaco')));   // (gulls by the sea)
@@ -1749,7 +1761,7 @@ const Render = (function () {
       g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 4)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setIndex(idx);
       g.computeVertexNormals();
       const base = world.asphaltMat, m = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
-      if (base) m.color.copy(base.userData.dry || base.color);
+      if (base) m.color.copy(base.userData.dry || base.color); asphaltLook(m);
       dryLn = new THREE.Mesh(g, m); dryLn.receiveShadow = true; dryLn.renderOrder = 1; dryLn.matrixAutoUpdate = false; scene.add(dryLn);
     }
     if (dryLn) { dryLn.visible = k > 0.01; dryLn.material.opacity = k; }
@@ -1799,7 +1811,20 @@ const Render = (function () {
     }
     if (!pudTex) pudTex = puddleTex();
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeBoundingSphere();
-    const m = new THREE.MeshBasicMaterial({ map: pudTex, transparent: true, opacity: 0, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -3 });
+    // the water: a dark mirror (looking down into it, the wet asphalt under a film of water; towards the horizon the sky, more of it the
+    // flatter the view: Fresnel), the drops' rings spreading on it while it rains (two layers of cells, a drop in each now and then)
+    const m = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -3, fog: true,
+      uniforms: Object.assign({ tMap: { value: pudTex }, uK: { value: 0 }, uHor: { value: new THREE.Color() }, uTop: { value: new THREE.Color() }, uDark: { value: new THREE.Color(0.055, 0.06, 0.068) }, uT: { value: 0 }, uRain: { value: 0 } }, THREE.UniformsLib.fog),
+      vertexShader: '#include <fog_pars_vertex>\nvarying vec2 vUv; varying vec3 vW;\nvoid main(){ vUv = uv; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vec4 mvPosition = viewMatrix * w; gl_Position = projectionMatrix * mvPosition;\n#include <fog_vertex>\n}',
+      fragmentShader: '#include <fog_pars_fragment>\nuniform sampler2D tMap; uniform float uK; uniform vec3 uHor; uniform vec3 uTop; uniform vec3 uDark; uniform float uT; uniform float uRain; varying vec2 vUv; varying vec3 vW;\n' +
+        'float pH(vec2 p) { p = fract(p * vec2(0.1031, 0.1030)); p += dot(p, p.yx + 33.33); return fract((p.x + p.y) * p.x); }\n' +
+        'float pRing(vec2 q, float t) { vec2 c = floor(q), f = fract(q) - 0.5 - (vec2(pH(c), pH(c + 7.3)) - 0.5) * 0.3; float h = pH(c + 3.1), ph = fract(t * (0.55 + 0.5 * h) + h), r = ph * 0.42;\n' +
+        '  return smoothstep(0.05, 0.0, abs(length(f) - r)) * (1.0 - ph) * step(0.35, pH(c + floor(t * (0.55 + 0.5 * h) + h) * 1.7)); }\n' +
+        'void main(){ vec4 t = texture2D(tMap, vUv); vec3 V = normalize(cameraPosition - vW); float cs = clamp(V.y, 0.0, 1.0), F = 0.04 + 0.96 * pow(1.0 - cs, 5.0);\n' +
+        '  vec3 refl = mix(uHor, uTop, smoothstep(0.0, 0.6, cs));\n' +
+        '  float rg = (pRing(vW.xz / 0.38, uT) + pRing(vW.xz / 0.3 + 11.7, uT * 1.13)) * uRain;\n' +
+        '  vec3 c = mix(uDark, refl, clamp(F + 0.3 + rg * 0.4, 0.0, 1.0)) * (0.92 + 0.12 * t.r);\n' +
+        '  gl_FragColor = vec4(c, t.a * uK);\n#include <fog_fragment>\n}' });
     const mesh = new THREE.Mesh(g, m); mesh.renderOrder = 1; mesh.matrixAutoUpdate = false; mesh.visible = false; scene.add(mesh); return mesh;
   }
   function puddles(R) {
@@ -1808,7 +1833,8 @@ const Render = (function () {
     if (!pud) return;
     const k = on ? clamp((wetW - 0.15) / 0.45, 0, 1) : 0, night = atmos.tod === 'night';
     pud.visible = k > 0.01; if (!pud.visible) return;
-    pud.material.opacity = 0.5 * k; pud.material.color.copy(scene.fog.color).lerp(_c2.setHex(0xe8eef4), night ? 0.03 : 0.18).multiplyScalar(night ? 0.8 : 1);   // (the sky in the water)
+    const U = pud.material.uniforms; U.uK.value = 0.88 * k; U.uT.value = time % 600; U.uRain.value = clamp(wet * 1.5, 0, 1);
+    U.uHor.value.copy(scene.fog.color).multiplyScalar(night ? 0.8 : 1); skyTop(U.uTop.value);   // (the sky in the water)
   }
 
   /* ---------------- Pikes Peak's light (theme 'pikes'): softer shadows (the same shadow box and casters as elsewhere: no extra draw calls;
@@ -1965,6 +1991,42 @@ const Render = (function () {
     M.visible = true;
   }
 
+  /* ---------------- the sun on every other world (Pikes Peak has its own, pkLight): its rays slanting down between the trees of a wood
+     (quality 'high', by day and stronger in the evening, dry; Pikes Peak's shafts: pkRays, where sunWood finds the trees thick) and its
+     lens flare in the cockpit, the TV cameras and the shots with the sky (pkFlare) ---------------- */
+  // the woods of a world: a 10 m grid of how many trees stand there, from the world's trees (the swaying ones of the default builder, the
+  // instanced trees of the others: an instanced shape at least 4 m tall and no wider than 14 m, of 20 or more), found once per world;
+  // as Pikes Peak's pkWood: -1 on and by the road, else how thick the wood is (0..1)
+  function sunWood() {
+    const T = curTrack; if (!T || !world || !world.root) return null;
+    const C = 10, cnt = new Map(), add = (x, z) => { const k = Math.floor(x / C) * 65536 + Math.floor(z / C); cnt.set(k, (cnt.get(k) || 0) + 1); }, v = new THREE.Vector3(), M4 = new THREE.Matrix4();
+    world.root.traverse(o => {
+      if (!o.isMesh || !o.geometry || !o.geometry.attributes.position) return;
+      const g = o.geometry, P = g.attributes.position;
+      if (o.isInstancedMesh) {
+        if (o.count < 20) return; if (!g.boundingBox) g.computeBoundingBox(); const b = g.boundingBox;
+        if (b.max.y - b.min.y < 4 || b.max.x - b.min.x > 14 || b.max.z - b.min.z > 14) return;
+        for (let k = 0; k < o.count; k++) { o.getMatrixAt(k, M4); v.setFromMatrixPosition(M4).applyMatrix4(o.matrixWorld); add(v.x, v.z); }
+      } else if (g.attributes.aSway) {   // (one tree's vertices in a run: a vertex that sways a lot, its crown, counted once in ~40)
+        const S = g.attributes.aSway; for (let i = 0; i < P.count; i += 40) if (S.getX(i) > 0.3) { v.fromBufferAttribute(P, i).applyMatrix4(o.matrixWorld); add(v.x, v.z); }
+      }
+    });
+    if (!cnt.size) return null;
+    const q = {};
+    return (x, z, road) => { const qq = T.query(x, z, sunHint, q); if (Math.abs(qq.d) < T.w + 3) return -1; if (road) return 0;   // (the followed car's place on the road: the search starts there)
+      return clamp((cnt.get(Math.floor(x / C) * 65536 + Math.floor(z / C)) || 0) / 5, 0, 1); };
+  }
+  let sunT = 0, sunHint = -1;
+  function sunFx(target) {
+    if (themeId === 'pikes' || !world) return;
+    const dt = clamp(time - sunT, 0, 0.25), r = Math.max(0, wet); sunT = time; sunHint = target && target.q && target.q.a >= 0 ? target.q.a : -1;
+    let rays = settings.quality === 'high' && r <= 0 && !['city', 'monaco', 'ljubljana'].includes(themeId) ? (0.75 + 0.45 * sstep(0, 0.5, todK)) * (1 - sstep(0.5, 0.7, todK)) : 0;   // (by todK: the low sun's the strongest)
+    if (rays > 0 && world.pkWood === undefined) world.pkWood = sunWood();
+    if (!world.pkWood) rays = 0;
+    pkRays(rays, dt);
+    pkFlare(r < 0.5 && (lastMode === 'cockpit' || (lastMode === 'tv' && !cam.shot) || !!(cam.shot && cam.shot.sky)) ? (1 - 2 * r) * 0.8 * (1 - sstep(0.55, 0.75, todK)) : 0, dt);
+  }
+
   /* ---------------- the season and the time of day (setAtmos({ season: 'summer' | 'autumn' | 'winter', tod: 'day' | 'dusk' | 'night' })):
      autumn turns the leaves and the grass yellow, orange and red; winter puts snow on the ground and the trees (the tarmac cleared, a gravel
      road packed with snow) and makes the rain fall as snow; dusk a low orange sun; night a dark sky, floodlights along the track (pools of
@@ -2014,6 +2076,34 @@ const Render = (function () {
   // a colour of the world in the season: plants (greens) and soil (browns) change, the rest stays. ground: a surface facing up (grass,
   // fields: straw in autumn, deep snow in winter), else leaves (autumn colours, some still green; in winter a little snow on them); seed: to vary the leaves
   let seaW = 'summer';   // (the season the world is painted in: seasonWorld)
+  /* ---------------- the asphalt's sheen: a dry road catches a little of the sun towards it (a broad lobe about the sun's mirror
+     direction: brightest where the camera looks into the sun, warm and stronger in the low evening sun; none in the shade, at night or
+     under the rain's cloud). Every material with the shared asphalt texture and the road's wear decals; own programs ---------------- */
+  const asU = { uAsS: { value: new THREE.Vector3(0, 1, 0) }, uAsC: { value: new THREE.Color(0, 0, 0) } };
+  function asphaltLook(m) {
+    if (!m || m.userData.asLook || !m.isMeshLambertMaterial) return;
+    m.userData.asLook = true;
+    const prev = m.onBeforeCompile, key = 'asph|' + m.customProgramCacheKey();
+    m.onBeforeCompile = (sh, r) => {
+      prev.call(m, sh, r);
+      sh.uniforms.uAsS = asU.uAsS; sh.uniforms.uAsC = asU.uAsC;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vAsW;')
+        .replace('#include <project_vertex>', '#include <project_vertex>\nvAsW = ( modelMatrix * vec4( transformed, 1.0 ) ).xyz;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uAsS; uniform vec3 uAsC; varying vec3 vAsW;')
+        .replace('reflectedLight.directDiffuse *= BRDF_Diffuse_Lambert( diffuseColor.rgb ) * getShadowMask();', 'float asSm = getShadowMask();\nreflectedLight.directDiffuse *= BRDF_Diffuse_Lambert( diffuseColor.rgb ) * asSm;')
+        .replace('#include <envmap_fragment>', '{ vec3 asV = normalize( cameraPosition - vAsW ); float asL = max( dot( vec3( -asV.x, asV.y, -asV.z ), uAsS ), 0.0 ), asQ = asL * asL;\n' +
+          '  outgoingLight += uAsC * ( asQ * asQ * asL * asSm ); }\n#include <envmap_fragment>');
+    };
+    m.customProgramCacheKey = () => key; m.needsUpdate = true;
+  }
+  function asphaltWorld() {
+    if (!world || !world.root) return;
+    world.root.traverse(o => { if (!o.isMesh || !o.material) return; for (const m of Array.isArray(o.material) ? o.material : [o.material]) if (m.map === tex.asphalt || m.userData.wear) asphaltLook(m); });
+  }
+  function asStep() {   // (every frame: the sun, the time of day, the rain)
+    const r = Math.max(0, wet), k = (0.065 + 0.085 * sstep(0, 0.5, todK)) * (1 - sstep(0.5, 0.8, todK)) * (1 - r);   // (by todK: stronger in the low sun, gone into the night)
+    asU.uAsS.value.set(sunOff[0], sunOff[1], sunOff[2]).normalize(); asU.uAsC.value.copy(sun.color).multiplyScalar(k);
+  }
   function seasonCol(c, seed, out, ground) {
     out.copy(c); if (seaW === 'summer') return out;
     c.getHSL(_hsl); const { h, s, l } = _hsl, plant = h > 0.14 && h < 0.47 && s > 0.1 && l > 0.04, soil = h > 0.04 && h <= 0.14 && s > 0.12 && l > 0.08 && l < 0.7;
@@ -2171,15 +2261,18 @@ const Render = (function () {
     if (rt.isWebGLMultisampleRenderTarget) rt.samples = 4;
     rt.texture.generateMipmaps = false;
     const mat = new THREE.ShaderMaterial({
-      uniforms: { tD: { value: rt.texture }, uRes: { value: new THREE.Vector2(4, 4) }, uFocus: { value: 0.45 }, uBand: { value: 0.22 }, uBlur: { value: 0.8 }, uGam: { value: 0.88 },
+      uniforms: { tD: { value: rt.texture }, uRes: { value: new THREE.Vector2(4, 4) }, uMB: { value: 0 }, uMF: { value: new THREE.Vector2(0.5, 1) }, uMC: { value: new THREE.Vector2(0.5, 0.3) }, uHeat: { value: 0 }, uHorY: { value: 2 }, uTm: { value: 0 }, uFocus: { value: 0.45 }, uBand: { value: 0.22 }, uBlur: { value: 0.8 }, uGam: { value: 0.88 },
         uTint: { value: new THREE.Vector3(1, 1, 1) }, uSat: { value: 1.1 }, uCon: { value: 1.04 }, uVig: { value: 0.17 },
         uSun: { value: new THREE.Vector2(0, 1.2) }, uHaze: { value: 0 }, uHazeCol: { value: new THREE.Vector3(1, 0.8, 0.6) }, tB: { value: null }, uBloom: { value: 0 }, uShT: { value: new THREE.Vector3(1, 1, 1) }, uHiT: { value: new THREE.Vector3(1, 1, 1) } },
       vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
       fragmentShader: [
         'uniform sampler2D tD; uniform vec2 uRes; uniform float uFocus; uniform float uBand; uniform float uBlur; uniform float uGam; uniform vec3 uTint; uniform float uSat; uniform float uCon; uniform float uVig; uniform vec2 uSun; uniform float uHaze; uniform vec3 uHazeCol; uniform sampler2D tB; uniform float uBloom; uniform vec3 uShT; uniform vec3 uHiT; varying vec2 vUv;',
         'float lum(vec3 c){ return dot(c, vec3(0.299, 0.587, 0.114)); }',
+        'uniform float uMB; uniform vec2 uMF; uniform vec2 uMC; uniform float uHeat; uniform float uHorY; uniform float uTm;',
         'void main(){',
-        '  vec2 px = 1.0 / uRes; vec3 c = texture2D(tD, vUv).rgb;',
+        // the summer's heat over the far asphalt: the picture just under the horizon trembles (a low camera: the cockpit, the TV cameras)
+        '  vec2 uv = vUv; if (uHeat > 0.0) { float hb = uHeat * smoothstep(0.12, 0.0, uHorY - vUv.y) * step(vUv.y, uHorY); uv.x += sin(vUv.y * 310.0 + uTm * 8.0 + sin(vUv.x * 37.0 + uTm * 2.3) * 2.0) * 0.0011 * hb; }',
+        '  vec2 px = 1.0 / uRes; vec3 c = texture2D(tD, uv).rgb;',
         '  float b = uBlur * smoothstep(uBand, uBand + 0.4, abs(vUv.y - uFocus));',
         '  if (b > 0.02) {',
         '    vec2 o = px * (1.0 + 5.5 * b); vec3 s = c * 0.18;',
@@ -2192,6 +2285,9 @@ const Render = (function () {
         '    float mx = max(max(max(lN, lS), max(lE, lW)), lC), mn = min(min(min(lN, lS), min(lE, lW)), lC);',
         '    if (mx - mn > 0.08) { vec2 dir = vec2(lS - lN, lE - lW); dir = dir / (length(dir) + 1e-4) * px * 0.9; c = mix(c, 0.5 * (texture2D(tD, vUv + dir).rgb + texture2D(tD, vUv - dir).rgb), 0.55); }',
         '  }',
+        // speed: away from the followed car the picture streaks out from the point it drives towards (the edges the most)
+        '  if (uMB > 0.0) { vec2 as = vec2(uRes.x / uRes.y, 1.0); float m = uMB * smoothstep(0.1, 0.5, length((vUv - uMF) * as) * 0.6) * smoothstep(0.07, 0.24, length((vUv - uMC) * as));',
+        '    if (m > 0.01) { vec2 st = (vUv - uMF) * 0.022 * m; vec3 s = c + texture2D(tD, vUv - st).rgb + texture2D(tD, vUv - st * 2.0).rgb + texture2D(tD, vUv - st * 3.0).rgb + texture2D(tD, vUv + st).rgb; c = s * 0.2; } }',
         '  c *= uTint; c *= mix(uShT, uHiT, smoothstep(0.12, 0.72, lum(c))); float l = lum(c); c = mix(vec3(l), c, uSat); c = (c - 0.5) * uCon + 0.5; c = pow(max(c, vec3(0.0)), vec3(uGam));',
         '  if (uHaze > 0.0) { vec2 sd = (vUv - uSun) * vec2(uRes.x / uRes.y, 1.0); float hg = exp(-dot(sd, sd) * 2.2); c = 1.0 - (1.0 - c) * (1.0 - uHazeCol * (uHaze * hg)); }',   // warm glow of the low sun just off screen (as in the reference)
         '  if (uBloom > 0.0) { vec3 bl = min(texture2D(tB, vUv).rgb * uBloom, vec3(1.0)); c = 1.0 - (1.0 - c) * (1.0 - bl); }',   // the lights' glow (dusk and night: bloomPass)
@@ -3336,6 +3432,7 @@ const Render = (function () {
       if (v.blob) v.blob.position.y = (c.roadY - c.y) + 0.05 - (jk ? crew.lift : 0); // shadow stays on the ground during jumps (and on the jacks)
       v.landed = !!(v.wasAir && !c.air);   // landing this frame (dust ring is emitted in emitFx)
       if (v.landed && c.isPlayer && c.speed > 3) shake(0.15 + clamp(-(c.impactVY || 0) / 8, 0, 1) * 0.45);
+      if (c.isPlayer && c.speed > 8 && !c.air && c.ws && (c.ws[0] === 1 || c.ws[1] === 1 || c.ws[2] === 1 || c.ws[3] === 1)) shake(0.1 + clamp(c.speed / 60, 0, 1) * 0.14);   // (the kerbs' ridges: the view trembles while a wheel runs on them)
       v.spin += c.vl * dt / M.rw;
       for (const w of v.wf) { w.rotation.set(0, -c.delta, -v.spin); }
       for (const w of v.wr) { w.rotation.set(0, 0, -v.spin); }
@@ -3605,11 +3702,13 @@ const Render = (function () {
       if (front) continue;
       if (rainy && onHard) {   // a wet road: a mist of spray off the rear tyres at speed, thicker in a slide (no tyre smoke)
         if (spd > 7 && near) {
-          v.acc[k] += (clamp(spd / 36, 0, 1.4) + intens * 0.7) * 26 * wetW * dt;
+          const fast = clamp((spd - 18) / 25, 0, 1);   // (at speed: a long, thicker tail of mist hanging behind the car, and the tyres throw water up)
+          v.acc[k] += (clamp(spd / 36, 0, 1.4) + intens * 0.7) * 26 * (1 + 0.7 * fast) * wetW * dt;
           while (v.acc[k] >= 1) {
             v.acc[k] -= 1;
             const sh = 0.9 + Math.random() * 0.1, sp = 0.35 + Math.random() * 0.15;
-            particles.emit(px, 0.3 + yb, pz, c.vx * sp + (Math.random() - 0.5) * 2.4, 0.6 + Math.random() * 1.0, c.vz * sp + (Math.random() - 0.5) * 2.4, 0.55 + Math.random() * 0.4, 0.8, 3.4 + Math.random() * 2.0, 0.9 * sh, 0.93 * sh, 0.96 * sh, 0.24, -0.12, 1.7, yb);
+            particles.emit(px, 0.3 + yb, pz, c.vx * sp + (Math.random() - 0.5) * 2.4, 0.6 + Math.random() * 1.0, c.vz * sp + (Math.random() - 0.5) * 2.4, (0.55 + Math.random() * 0.4) * (1 + 0.8 * fast), 0.8, (3.4 + Math.random() * 2.0) * (1 + 0.45 * fast), 0.9 * sh, 0.93 * sh, 0.96 * sh, 0.22 + 0.04 * fast, -0.12, 1.7, yb);
+            if (fast > 0.2 && Math.random() < 0.25) particles.emit(px, 0.25 + yb, pz, c.vx * 0.55 + (Math.random() - 0.5) * 1.2, 1.6 + Math.random() * 1.6, c.vz * 0.55 + (Math.random() - 0.5) * 1.2, 0.35 + Math.random() * 0.2, 0.3, 1.1, 0.86, 0.9, 0.95, 0.3, 6, 2.2, yb);   // (the tyre's plume)
           }
         } else v.acc[k] = 0;
       } else if (surf === 6 && spd > 4) {   // into a puddle (in the rain): a burst of muddy water and clods
@@ -3706,7 +3805,8 @@ const Render = (function () {
       qc = _ckQ.setFromRotationMatrix(v.grp.matrixWorld).multiply(_ckQ2.setFromEuler(_ckEu.set(-E.tilt, -Math.PI / 2 - ck.look, 0, 'YXZ')));
       _ckF.set(0, 0, -1).applyQuaternion(qc); tx = px + _ckF.x * 70; ty = py + _ckF.y * 70; tz = pz + _ckF.z * 70;   // (70 m ahead: the fog, the sun's shadows, the rain round there)
       near = E.near; ck.car = c;
-      if (camera.fov !== 58) { camera.fov = 58; camera.updateProjectionMatrix(); updatePointScale(); }
+      { const fv = 58 + 7 * clamp(((c.speed || 0) - 25) / 45, 0, 1);   // (at speed the view widens a little: the world rushes past at the edges)
+        if (Math.abs(camera.fov - fv) > 0.05) { camera.fov = fv; camera.updateProjectionMatrix(); updatePointScale(); } }
     } else if (mode === 'chase') {
       // in a drift, look along the direction of travel, with a lazy swing (Circuit Superstars: the view reads the drift along the
       // travel, so a sliding car shows its angle)
@@ -3965,18 +4065,34 @@ const Render = (function () {
   function skyStep(on) {
     if (!sky) {
       if (!on) return;
-      const u = { uBot: { value: new THREE.Color() }, uTop: { value: new THREE.Color() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uSunC: { value: new THREE.Color() }, uSunA: { value: 0 }, uStar: { value: 0 } };
+      const u = { uBot: { value: new THREE.Color() }, uTop: { value: new THREE.Color() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uSunC: { value: new THREE.Color() }, uSunA: { value: 0 }, uStar: { value: 0 },
+        uCl: { value: 0 }, uCO: { value: new THREE.Vector2() }, uCL: { value: new THREE.Color() }, uCD: { value: new THREE.Color() }, uOv: { value: 0 } };
       const mat = new THREE.ShaderMaterial({ uniforms: u, depthWrite: false, depthTest: false, fog: false, side: THREE.BackSide,
         vertexShader: 'varying vec3 vD; void main(){ vD = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
         fragmentShader: 'uniform vec3 uBot; uniform vec3 uTop; uniform vec3 uSun; uniform vec3 uSunC; uniform float uSunA; uniform float uStar; varying vec3 vD;' +
+          'uniform float uCl; uniform vec2 uCO; uniform vec3 uCL; uniform vec3 uCD; uniform float uOv;' +
+          // the clouds (quality 'high'): a layer 450 m up, the same noise as the cloud shadows on the ground (World's CLOUD_VB, the same drift):
+          // a cloud seen in the sky casts the shadow the ground shows, along the sun's rays. Puffy edges from a finer noise; lit on the side
+          // towards the sun, in their own shade on the far side, their edges shining round the sun; into the haze far away
+          'float clHash(vec2 i, float n) { i = mod(i, n); return fract(sin(dot(i, vec2(12.9898, 78.233))) * 43758.5453); }' +
+          'float clVN(vec2 p, float n) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(clHash(i, n), clHash(i + vec2(1.0, 0.0), n), f.x), mix(clHash(i + vec2(0.0, 1.0), n), clHash(i + 1.0, n), f.x), f.y); }' +
+          'float clF(vec2 q) { return 0.65 * clVN(q, 64.0) + 0.35 * clVN(q * 2.0 + vec2(17.0, 5.0), 128.0); }' +
           'void main(){ vec3 d = normalize(vD); vec3 c = mix(uBot, uTop, pow(smoothstep(0.0, 0.85, d.y), 0.75)); float s = max(dot(d, uSun), 0.0);' +
           ' c += uSunC * uSunA * (pow(s, 90.0) * 0.8 + pow(s, 8.0) * 0.15);' +
+          ' float D = 0.0;' +
+          ' if (uCl > 0.0 && d.y > 0.008) {' +
+          '  vec2 q = (cameraPosition.xz + (d.xz / d.y - uSun.xz / max(uSun.y, 0.1)) * 450.0) / 110.0 - uCO;' +
+          '  float n = clF(q), e = clVN(q * 4.7 + vec2(3.1, 7.9), 300.8) - 0.5;' +
+          '  D = max(smoothstep(0.52, 0.72, n + e * 0.08), uOv * (0.8 + 0.4 * e)) * smoothstep(0.01, 0.16 - 0.12 * uOv, d.y) * uCl;' +
+          '  float lit = clamp(0.6 + (n - clF(q + uSun.xz * 0.3)) * 2.6 + e * 0.5, 0.0, 1.0);' +
+          '  vec3 cc = mix(uCD, uCL, lit) + uSunC * uSunA * pow(s, 6.0) * 0.5 * (1.0 - smoothstep(0.3, 1.0, D));' +
+          '  c = mix(c, mix(cc, uBot, smoothstep(0.3, 0.02, d.y) * 0.6), D); }' +
           // the night's stars: one in a few hundred cells of the sky a star (a hash of the cell), of its own brightness and tint, fewer and
-          // fainter down in the haze towards the horizon
+          // fainter down in the haze towards the horizon; none behind a cloud
           ' if (uStar > 0.0) { vec3 p = d * 150.0, cl = floor(p); float h = fract(sin(dot(cl, vec3(127.1, 311.7, 74.7))) * 43758.5453);' +
           '  if (h > 0.972) { vec3 o = vec3(fract(h * 17.13), fract(h * 71.71), fract(h * 37.37)); float b = (h - 0.972) / 0.028;' +
           '   float k = smoothstep(0.34, 0.06, length(p - cl - 0.2 - 0.6 * o)) * (0.35 + 0.65 * b * b) * smoothstep(0.03, 0.3, d.y);' +
-          '   c += mix(vec3(1.0, 0.86, 0.7), vec3(0.78, 0.88, 1.0), o.x) * k * uStar; } }' +
+          '   c += mix(vec3(1.0, 0.86, 0.7), vec3(0.78, 0.88, 1.0), o.x) * k * uStar * (1.0 - D); } }' +
           ' gl_FragColor = vec4(c, 1.0); }' });
       const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 16), mat); mesh.frustumCulled = false; mesh.renderOrder = -100;   // (drawn first, under everything)
       scene.add(mesh); sky = { mesh, u };
@@ -3987,6 +4103,14 @@ const Render = (function () {
     U.uBot.value.copy(scene.fog.color); skyTop(U.uTop.value);
     const sl = Math.hypot(sunOff[0], sunOff[1], sunOff[2]); U.uSun.value.set(sunOff[0] / sl, sunOff[1] / sl, sunOff[2] / sl);
     U.uSunC.value.copy(sun.color); U.uSunA.value = (todK <= 0.5 ? 1 + 0.6 * todK : 1.3 - 1.9 * (todK - 0.5)) * (1 - 0.85 * r); U.uStar.value = 0.9 * sstep(0.7, 1, todK) * (1 - 0.95 * r);   // (the rain's clouds hide them)
+    // the clouds (quality 'high'): white by day (a touch of the sun's colour), pink and orange at dusk and at dawn, dark at night, grey and
+    // closed under the rain; by todK, as the time of day moves on in an endurance race
+    const cw = world && world.dyn.clouds; if (cw) U.uCO.value.copy(cw.O.value);
+    U.uCl.value = settings.quality === 'high' ? 1 : 0; U.uOv.value = clamp(r * 1.3, 0, 1);
+    const kD = todK <= 0.5 ? todK / 0.5 : 1, kN = todK > 0.5 ? (todK - 0.5) / 0.5 : 0, nk = 1 - 0.7 * sstep(0.5, 1, todK);
+    U.uCL.value.setRGB(1, 1, 1).lerp(sun.color, 0.22).lerp(_c1.setRGB(1.0, 0.7, 0.56).lerp(sun.color, 0.35), kD).lerp(_c1.setRGB(0.19, 0.21, 0.27), kN);
+    U.uCD.value.copy(U.uTop.value).lerp(_c2.setRGB(0.66, 0.68, 0.72), 0.7).lerp(_c1.setRGB(0.44, 0.37, 0.5), kD).lerp(_c1.setRGB(0.05, 0.06, 0.09), kN);
+    if (r > 0) { U.uCL.value.lerp(_c2.setRGB(0.7, 0.72, 0.75).multiplyScalar(nk), r); U.uCD.value.lerp(_c2.setRGB(0.42, 0.44, 0.47).multiplyScalar(nk), r); }
     sky.mesh.position.copy(camera.position); sky.mesh.scale.setScalar(camera.far * 0.8);
   }
 
@@ -4288,9 +4412,40 @@ const Render = (function () {
       const mir = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.055, 0.018), dark); mir.position.set(0, 0.215, -0.52); mir.lookAt(0, 0, 0); g.add(mir);
       const glass = new THREE.Mesh(new THREE.PlaneGeometry(0.195, 0.042), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(mcv), color: 0xb0b0b0 })); glass.position.z = 0.0095; mir.add(glass);
       g.add(ckBar([0, 0.265, -0.5], [0, 0.23, -0.515], 0.02, 0.02, dark));
+      { const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute([-0.76, -0.3, -0.99, 0.76, -0.3, -0.99, 0.6, 0.3, -0.49, -0.6, 0.3, -0.49], 3));
+        geo.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 1], 2)); geo.setIndex([0, 1, 2, 0, 2, 3]);
+        const sm = new THREE.ShaderMaterial({ uniforms: { uT: { value: 0 }, uRain: { value: 0 }, uSpd: { value: 0 }, uSky: { value: new THREE.Color() } }, transparent: true, depthWrite: false, side: THREE.DoubleSide,
+          vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }', fragmentShader: CK_RAIN_FS });
+        const scr = P.rain = new THREE.Mesh(geo, sm); scr.renderOrder = 5; scr.visible = false; g.add(scr); }
     }
     P.formula = E.formula || E.race; P.open = E.formula;
   }
+  // the rain on a closed car's windscreen (the cockpit camera): drops gather on the glass and creep up it at speed; two wipers sweep
+  // them off in turn (the time since a blade last passed each point of the glass, from the blades' swing: the drops come back after
+  // it), the blades and their arms dark across the view. The glass between the pillars, 1.5 x 0.85 m, one quad of the cockpit
+  const CK_RAIN_FS = [
+    'uniform float uT; uniform float uRain; uniform float uSpd; uniform vec3 uSky; varying vec2 vUv;',
+    'float cH(vec2 p) { p = fract(p * vec2(0.1031, 0.1030)); p += dot(p, p.yx + 33.33); return fract((p.x + p.y) * p.x); }',
+    'const float A0 = 0.08, A1 = 1.86, PW = 1.25, LB = 0.62;',
+    'float wiped(vec2 p, vec2 pv, float ph, out float blade) {',   // seconds since this blade last passed p (99: out of its reach); blade: on the blade now
+    '  vec2 d = p - pv; float r = length(d), th = atan(d.y, d.x), w = A0 + (A1 - A0) * (0.5 - 0.5 * cos(ph));',
+    '  vec2 bd = vec2(cos(w), sin(w)); float along = clamp(dot(d, bd), 0.0, LB); blade = smoothstep(0.012, 0.004, length(d - bd * along)) * step(0.02, along);',
+    '  if (r > LB || th < A0 || th > A1) return 99.0;',
+    '  float pt = acos(clamp(1.0 - 2.0 * (th - A0) / (A1 - A0), -1.0, 1.0)), m = mod(ph, 6.2831853);',
+    '  return min(mod(m - pt, 6.2831853), mod(m - (6.2831853 - pt), 6.2831853)) * PW / 6.2831853; }',
+    'void main() {',
+    '  vec2 p = vec2(vUv.x * 1.5, vUv.y * 0.85); float ph = uT / PW * 6.2831853, b1, b2;',
+    '  float age = min(wiped(p, vec2(0.4, -0.05), ph, b1), wiped(p, vec2(0.98, -0.05), ph - 0.35, b2));',
+    '  vec2 q = p / vec2(0.03, 0.05), c = floor(q), f = fract(q);',   // a drop in each cell now and then: when it landed after the wipe, where, how big
+    '  float h = cH(c), arr = h * 2.6 / max(uRain, 0.15), on = step(arr, age) * step(0.25, cH(c + 5.3));',
+    '  float cr = 0.2 + 0.16 * cH(c + 9.1), up = clamp((age - arr) * uSpd * 0.2, 0.0, 0.45);',   // (at speed the air pushes it up the glass)
+    '  vec2 dc = vec2(0.5 + (cH(c + 2.7) - 0.5) * 0.3, 0.3 + 0.15 * cH(c + 4.4) + up);',
+    '  vec2 e = (f - dc) * vec2(1.0, 0.6 / (1.0 + uSpd * 0.05)); float dd = length(e) / cr;',
+    '  float drop = on * smoothstep(1.0, 0.8, dd) * step(dc.y + cr * 0.6, 1.0);',
+    '  vec3 col = mix(uSky * 1.25, vec3(0.05, 0.06, 0.07), smoothstep(-0.7, 0.7, e.y / cr)) + smoothstep(0.32, 0.1, length(e / cr - vec2(-0.3, 0.35))) * 0.6;',   // (a little lens: the sky low in it, dark on top, a bright fleck)
+    '  float a = drop * 0.72 * uRain + 0.05 * uRain;',
+    '  col = mix(mix(uSky * 0.8, col, drop), vec3(0.02), max(b1, b2)); a = max(a, max(b1, b2) * 0.95);',
+    '  gl_FragColor = vec4(col, a); }'].join('\n');
   // the cockpit as the car is now: the wheel turned with the front wheels, the needles, the gear, the shift lights; lit as the world is
   function ckStep(c, v) {
     ckBuild(c);
@@ -4311,10 +4466,29 @@ const Render = (function () {
     ck.hemi.color.copy(hemi.color); ck.hemi.groundColor.copy(hemi.groundColor); ck.hemi.intensity = hemi.intensity;
     ck.dir.color.copy(sun.color); ck.dir.intensity = sun.intensity * (P.open ? 1 : 0.45);
     _ckF.set(sunOff[0], sunOff[1], sunOff[2]).normalize().applyQuaternion(_ckQ2.copy(camera.quaternion).invert()); ck.dir.position.copy(_ckF).multiplyScalar(3);   // (the sun as the camera sees it)
+    if (P.rain) { const r = Math.max(0, wet), U = P.rain.material.uniforms; P.rain.visible = r > 0.03;   // (the rain on the windscreen)
+      if (P.rain.visible) { U.uT.value = time % 600; U.uRain.value = clamp(r * 1.4, 0, 1); U.uSpd.value = c.speed || 0; U.uSky.value.copy(scene.fog.color).multiplyScalar(1 - 0.5 * sstep(0.5, 1, todK)); } }
     ck.cam.fov = camera.fov; ck.cam.aspect = camera.aspect; ck.cam.updateProjectionMatrix();
     ck.cam.position.set(ck.sway, 0, 0); ck.cam.rotation.set(-eyeOf(c.m).tilt - (v ? v.pitch : 0), -ck.look, v ? v.roll : 0, 'YXZ');
   }
 
+  // the feel of speed (quality 'high', the post pass): from about 110 km/h the picture streaks out from the point the followed car drives
+  // towards, the more the faster and the farther from the car (it stays sharp); not in the photo mode, a TV shot or the cockpit. And the summer's
+  // heat: by day, dry, the air over the far asphalt trembles just under the horizon (seen from a low camera)
+  const _mf = new THREE.Vector3();
+  function speedLook(target, alpha, U) {
+    let mb = 0;
+    if (target && !cam.shot && !cam.ck && (lastMode === 'chase' || lastMode === 'kino')) {   // (not from the cockpit: the car's inside, at the edges of the picture, goes with the driver)
+      const sp = target.speed || 0; mb = clamp((sp - 30) / 45, 0, 1) * 0.75;
+      if (mb > 0) { const x = lerp(target.px, target.x, alpha), z = lerp(target.pz, target.z, alpha), y = target.y || 0, v = Math.hypot(target.vx || 0, target.vz || 0) || 1;
+        _mf.set(x + (target.vx || 0) / v * 150, y, z + (target.vz || 0) / v * 150).project(camera); U.uMF.value.set(clamp(_mf.x * 0.5 + 0.5, -0.5, 1.5), clamp(_mf.y * 0.5 + 0.5, -0.5, 1.5));
+        _mf.set(x, y + 0.6, z).project(camera); U.uMC.value.set(_mf.x * 0.5 + 0.5, _mf.y * 0.5 + 0.5); }
+    }
+    U.uMB.value = mb;
+    const heat = atmos.season === 'summer' && todK < 0.2 && !dawn && wet <= 0 && themeId !== 'pikes' ? 1 : 0;   // (a summer's day: not in the morning)
+    U.uHeat.value = 0; if (heat) { camera.getWorldDirection(_mf); const h = Math.hypot(_mf.x, _mf.z) || 1; _mf.set(camera.position.x + _mf.x / h * 900, camera.position.y, camera.position.z + _mf.z / h * 900).project(camera);
+      const hy = _mf.y * 0.5 + 0.5; if (hy > 0.05 && hy < 1.1) { U.uHeat.value = heat; U.uHorY.value = hy; U.uTm.value = time % 600; } }
+  }
   function frame(dt, alpha, target, mode, opt) {
     time += dt;
     updateCrew(dt);   // (first: it sets how far the player's car is up on the jacks)
@@ -4336,6 +4510,7 @@ const Render = (function () {
       const r = R ? q(R.rain || 0) : 0, w = R ? q(R.water != null ? R.water : R.rain || 0) : 0;
       if (r !== wet) applyWeather(r); if (w !== wetW) applyRoad(w); dryLine(R); puddles(R); }
     pkLight(target);   // (Pikes Peak: its shadows and the light of the altitude, on top of the theme's)
+    sunFx(target);   // (every other world: the sun's rays in the woods, its lens flare)
     stormStep(dt); bowStep(dt); winU.value = sstep(0.3, 0.85, todK);
     if (vfog) { vfog.U.uT.value = time; vfog.U.uC.value.copy(scene.fog.color).lerp(_c2.setRGB(1, 0.97, 0.96), 0.55); }
     if (birds.mesh.visible && target && world) birds.update(Math.min(dt, 0.1), cam.vcx || 0, cam.vcz || 0, world.groundH || (() => 0));
@@ -4357,6 +4532,7 @@ const Render = (function () {
     { const on = !!(cam.ck || (lastMode === 'tv' && !cam.shot) || (cam.shot && cam.shot.sky) || ((todK >= 0.3 || dawn) && lastMode !== 'iso' && !cam.shot && horizonSeen()));   // (dusk, night, the morning: the sky over the horizon)
       skyStep(on); nightSky(on); } cgSet(false);
     { const W = World.waterSky; W.hor.value.copy(scene.fog.color); skyTop(W.top.value); }   // (the sky the water mirrors)
+    asStep();
     const ckOn = cam.ck && ck.car; if (ckOn) ckStep(ck.car, viewOf(ck.car));
     { const cv = ckOn ? viewOf(ck.car) : null;   // (the Peugeot's own model has its inside, seats and all: from the seat, the plain body round the driver)
       if (ck.glbV && ck.glbV !== cv) { ck.glbV.glb.bodyH.visible = true; ck.glbV.body.visible = false; ck.glbV = null; }
@@ -4380,6 +4556,7 @@ const Render = (function () {
         post.hk += ((front > 0.02 ? 1 : 0) - post.hk) * Math.min(1, dt * 3); post.mat.uniforms.uHaze.value = post.hk > 0.005 ? post.haze * post.hk : 0; }   // (fades in and out as a turning view brings the sun round: no pop)
       const U = post.mat.uniforms; U.uFocus.value = post.focus; U.uBand.value = (lastMode === 'kino' ? 0.3 : camera.aspect < 1 ? 0.2 : 0.24) + (post.span || 0); U.uBlur.value = lastMode === 'kino' ? 0.7 : 0.8;   // kino: a soft depth of field only towards the edges, as in the reference
       if (cam.ck) U.uBlur.value = 0; else if (cam.shot && cam.shot.blur != null) { U.uBlur.value = cam.shot.blur; if (cam.shot.blur > 0) U.uBand.value = 0.06; }   // (no miniature look from the driver's seat; the photo mode's own: a narrow sharp band on the car)
+      speedLook(target, alpha, U);
       renderer.setRenderTarget(post.rt); renderer.render(scene, camera); if (ckOn) ckDraw();
       if (post.bloom > 0) bloomPass(); U.uBloom.value = post.bloom;
       renderer.setRenderTarget(null); renderer.render(post.sc, post.cam);
@@ -4464,8 +4641,16 @@ const Render = (function () {
     let win = 0; if (world && world.root) world.root.traverse(o => { const m = o.material; if (m && !Array.isArray(m) && m.userData && m.userData.win) win++; });
     return { tod: atmos.tod, bloom: post ? post.bloom : 0, bloomOn: postOn() && post.bloom > 0, halos: flood ? flood.halo.geometry.attributes.position.count : 0, windows: win, winK: winU.value, stars: sky ? sky.u.uStar.value : 0, hype: +hype.v.toFixed(3) };
   }
-  function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.opacity.toFixed(3) : 0, water: wetW }; }   // (tests)
+  function look2Info() {   // (tests) round two: the asphalt's sheen, the sky's clouds, the contact shading, the worn grass, the grass's tone, the sun's rays and flare, the rain on the glass, the speed's streaks
+    let ao = 0, worn = 0, nat = 0, asph = 0; if (world && world.root) world.root.traverse(o => { if (o.name === 'ao') ao += o.geometry.attributes.position.count; if (o.name === 'worn') worn += o.geometry.attributes.position.count;
+      const m = o.material; if (m && !Array.isArray(m) && m.userData) { if (m.userData.grassLook && /N$/.test(m.customProgramCacheKey())) nat++; if (m.userData.asLook) asph++; } });
+    const sc = asU.uAsC.value, U = post && post.mat.uniforms;
+    return { sheen: +Math.max(sc.r, sc.g, sc.b).toFixed(3), asphalt: asph, clouds: sky ? sky.u.uCl.value : 0, overcast: sky ? +sky.u.uOv.value.toFixed(2) : 0, moon: nsky.moon && nsky.moon.visible ? +nsky.moon.material.opacity.toFixed(2) : 0, skyOn: !!(sky && sky.mesh.visible),
+      ao, worn, natGrass: nat, rays: !!(pkR.mesh && pkR.mesh.visible), flare: +pkF.vis.toFixed(3), wipers: !!(cam.ck && ck.parts && ck.parts.rain && ck.parts.rain.visible),
+      speedBlur: U && postOn() ? +U.uMB.value.toFixed(3) : 0, heat: U && postOn() ? U.uHeat.value : 0, puddleK: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0 };
+  }
+  function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0, water: wetW }; }   // (tests)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { setDebug, fxStats, wetFx, lookInfo, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, open: !!ck.parts.open, gear: ck.parts.scr && ck.parts.scr.txt ? ck.parts.scr.txt.split('|')[0] : null, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, open: !!ck.parts.open, gear: ck.parts.scr && ck.parts.scr.txt ? ck.parts.scr.txt.split('|')[0] : null, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 
