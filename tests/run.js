@@ -10,7 +10,7 @@ const path = require('path');
 
 const SUITES = {
   node: ['stamp.test.js', 'golden.test.js', 'races.test.js', 'cs-handling.test.js', 'net-core.test.js', 'crossover.test.js', 'champ.test.js', 'rally.test.js', 'quali.test.js', 'weather.test.js', 'compounds.test.js', 'flags.test.js', 'vrsic.test.js', 'katu.test.js', 'traffic.test.js', 'police.test.js'],
-  browser: ['browser/smoke.test.mjs', 'browser/app.test.mjs', 'browser/world.test.mjs', 'browser/pits.test.mjs', 'browser/champ.test.mjs', 'browser/quali.test.mjs', 'browser/weather.test.mjs', 'browser/flags.test.mjs', 'browser/career.test.mjs', 'browser/replay.test.mjs', 'browser/atmos.test.mjs', 'browser/sound.test.mjs', 'browser/cockpit.test.mjs', 'browser/gfx.test.mjs', 'browser/pad.test.mjs', 'browser/memory.test.mjs', 'browser/perf.test.mjs', 'browser/online.test.mjs'],
+  browser: ['browser/smoke.test.mjs', 'browser/app.test.mjs', 'browser/world.test.mjs', 'browser/pits.test.mjs', 'browser/champ.test.mjs', 'browser/quali.test.mjs', 'browser/weather.test.mjs', 'browser/flags.test.mjs', 'browser/career.test.mjs', 'browser/replay.test.mjs', 'browser/atmos.test.mjs', 'browser/sound.test.mjs', 'browser/cockpit.test.mjs', 'browser/gfx.test.mjs', 'browser/look.test.mjs', 'browser/pad.test.mjs', 'browser/memory.test.mjs', 'browser/perf.test.mjs', 'browser/online.test.mjs'],
 };
 const which = process.argv[2];
 const list = which ? SUITES[which] : [...SUITES.node, ...SUITES.browser];
