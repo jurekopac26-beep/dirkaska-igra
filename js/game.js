@@ -1128,6 +1128,7 @@
     if (!on) return;
     pk.cls = pkClsOf(Core.MODELS[S.car].id);
     const b = pkBoards(rec(track.def.id))[pk.cls.id][0]; pk.best = b ? { time: b.time, splits: b.splits.slice() } : null;
+    { const mv = Render.world && Render.world.dyn.pkMov; if (mv) mv.best = pk.best ? pk.best.splits.slice() : null; }   // (the world's LED split boards: the class best run's splits)
     while (H.children.length < track.cpS.length) H.appendChild(document.createElement('i'));
     [...H.children].forEach((el, j) => { el.innerHTML = '<small>CP' + (j + 1) + '</small>\u2013'; el.className = ''; });
     const el = $('h-pkcls'); el.textContent = pk.cls.name.toUpperCase(); el.className = 'h-lbl pk-' + pk.cls.id;

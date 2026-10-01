@@ -7167,8 +7167,230 @@ const World = (function () {
   /* ---- round 9: moving race-day machines: drones over the road and LED split boards (asphalt), the water truck and a grader, dust over the
      switchbacks (gravel). pkMovingUpdate runs every frame when out.dyn.pkMov is set ---- */
   function pkMoving(K) {
+    const { excl, sStart, sFin, out, root, mk } = K, gy = pkGround, PI = Math.PI;
+    // the scenery chunks are meshes already (this runs last): the ones these parts go into get their geometry again at the end (the same meshes, so the
+    // shadow casters' list stays right); tc: chunk -> its vertex count before
+    const tc = new Map(), scen = { get: (x, z) => { const g = K.scen.get(x, z); if (!tc.has(g)) tc.set(g, g.P.length / 3); return g; } };
+    const reChunk = () => { const sg = root.children.find(o => o.isGroup && o.children.length && o.children[0].material === K.matV), used = new Set();
+      for (const [g, n0] of tc) { if (g.P.length / 3 === n0) continue; const ng = g.geometry();
+        let m = sg && n0 ? sg.children.find(o => !used.has(o) && o.geometry.attributes.position.count === n0 && o.geometry.attributes.position.array[0] === g.P[0] && o.geometry.attributes.position.array[2] === g.P[2]) : null;
+        if (!m && sg) { m = new THREE.Mesh(new THREE.BufferGeometry(), K.matV); m.castShadow = m.receiveShadow = true; m.matrixAutoUpdate = false; sg.add(m); const C = out.dyn.pkOps && out.dyn.pkOps.cast; if (C) C.list.push([m, m.geometry.boundingSphere = new THREE.Sphere()]); }
+        if (!m) continue; used.add(m);
+        for (const a of ['position', 'normal', 'color', 'uv']) if (ng.attributes[a]) m.geometry.setAttribute(a, ng.attributes[a]);
+        if (!m.geometry.boundingSphere) m.geometry.boundingSphere = new THREE.Sphere(); m.geometry.boundingSphere.copy(ng.boundingSphere); } };
+    const mv = { mk, t: null, wx: out.dyn.pkWx || null, info: { boards: [], parked: [] } };
+    // a local model (+x forward, y up from the ground) stamped into a GB turned by rot about y
+    const stamp = (src, dst, x, y, z, rot) => { const c = Math.cos(rot), s = Math.sin(rot), P = src.P, N = src.N;
+      for (let k = 0; k < P.length; k += 3) { dst.P.push(x + P[k] * c - P[k + 2] * s, y + P[k + 1], z + P[k] * s + P[k + 2] * c); dst.N.push(N[k] * c - N[k + 2] * s, N[k + 1], N[k] * s + N[k + 2] * c);
+        if (dst.U) dst.U.push(0, 0); }
+      if (dst.A) for (let k = 0; k < src.C.length; k += 3) dst.C.push(src.C[k], src.C[k + 1], src.C[k + 2], 1); else for (const v of src.C) dst.C.push(v); };
+    const wheel = (g, x, y, z, r, w, col, hub) => {   // a wheel on an axle across the model (along z), 8 sides
+      const inn = [x, y, z]; for (let k = 0; k < 8; k++) { const a0 = k / 8 * TAU, a1 = (k + 1) / 8 * TAU, p = (a, o) => [x + Math.cos(a) * r, y + Math.sin(a) * r, z + o];
+        g.quadO(p(a0, -w / 2), p(a1, -w / 2), p(a1, w / 2), p(a0, w / 2), col, inn); for (const o of [-w / 2, w / 2]) g.triO([x, y, z + o], p(a0, o), p(a1, o), hub, [x, y, z - o]); } };
+    const tank = (g, x0, x1, y, r, col, colE) => {   // a lying tank along x, 8 sides
+      const inn = [(x0 + x1) / 2, y, 0]; for (let k = 0; k < 8; k++) { const a0 = (k + 0.5) / 8 * TAU, a1 = (k + 1.5) / 8 * TAU, p = (a, x) => [x, y + Math.sin(a) * r, Math.cos(a) * r];
+        g.quadO(p(a0, x0), p(a1, x0), p(a1, x1), p(a0, x1), col, inn); g.triO([x0 - 0.12, y, 0], p(a0, x0), p(a1, x0), colE, inn); g.triO([x1 + 0.12, y, 0], p(a0, x1), p(a1, x1), colE, inn); } };
+    const ptsMat = (vs, fs, U) => { const u = THREE.UniformsUtils.merge([THREE.UniformsLib.fog, U]); return new THREE.ShaderMaterial({ uniforms: u, fog: true, transparent: true, depthWrite: false, vertexShader: vs, fragmentShader: fs }); };
+
+    if (!mk) {
+      /* ---- the asphalt: two camera drones taking turns over the famous sections, LED split boards past the checkpoints ---- */
+      // the drone (~1.5 m across): a white body, four arms, rotor discs, the camera gimbal under the nose; one instanced mesh, two instances
+      const dg = new GB(), DK = [0.13, 0.13, 0.15], WH = [0.9, 0.9, 0.92], RO = [0.32, 0.33, 0.36];
+      box(dg, 0, -0.12, 0, 0.6, 0.22, 0.42, 0, WH, [0.95, 0.95, 0.97]); box(dg, 0.2, -0.13, 0, 0.22, 0.12, 0.44, 0, [0.85, 0.2, 0.12]);
+      for (const a of [PI / 4, -PI / 4]) box(dg, 0, -0.02, 0, 1.5, 0.06, 0.08, a, DK);
+      for (const [x, z] of [[0.53, 0.53], [0.53, -0.53], [-0.53, 0.53], [-0.53, -0.53]]) { cyl(dg, x, -0.04, z, 0.06, 0.12, 6, DK, DK); cyl(dg, x, 0.08, z, 0.36, 0.02, 10, RO, RO); }
+      box(dg, 0.24, -0.4, 0, 0.2, 0.26, 0.2, 0, DK); box(dg, 0.35, -0.34, 0, 0.04, 0.1, 0.1, 0, [0.05, 0.08, 0.14]);
+      for (const z of [-0.2, 0.2]) { box(dg, 0, -0.5, z, 0.05, 0.4, 0.05, 0, DK); box(dg, 0, -0.52, z, 0.62, 0.04, 0.05, 0, DK); }
+      const dm = new THREE.InstancedMesh(dg.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true }), 2);
+      dm.frustumCulled = false; dm.name = 'pkDrones'; root.add(dm);
+      // their lights (a white strobe on top, a red one under the tail): one Points
+      const lp = new Float32Array(12), lg = new THREE.BufferGeometry();
+      lg.setAttribute('position', new THREE.BufferAttribute(lp, 3)); lg.setAttribute('aK', new THREE.BufferAttribute(new Float32Array([1, 0, 0, 0.13, 1, 0.5, 0, 0.63]), 2));
+      const lm = new THREE.Points(lg, ptsMat('uniform float uT, uS; attribute vec2 aK; varying vec4 vC; varying float vFd;\n' +
+        'void main() { float b = aK.x > 0.5 ? step(0.86, fract(uT * 1.1 + aK.y)) : 0.45 + 0.55 * step(0.5, fract(uT * 0.8 + aK.y)); vC = aK.x > 0.5 ? vec4(1.0, 1.0, 0.96, b) : vec4(1.0, 0.12, 0.08, b);\n' +
+        '  vec4 mv = modelViewMatrix * vec4(position, 1.0); vFd = -mv.z; gl_PointSize = b > 0.01 ? clamp((aK.x > 0.5 ? 0.9 : 0.5) * uS / max(1.0, vFd), 2.5, 22.0) : 0.0; gl_Position = projectionMatrix * mv; }',
+        'uniform vec3 fogColor; uniform float fogNear, fogFar; varying vec4 vC; varying float vFd;\n' +
+        'void main() { vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0; if (r > 1.0) discard; float a = vC.a * (smoothstep(1.0, 0.0, r) * 0.6 + smoothstep(0.25, 0.0, r) * 0.6);\n' +
+        '  gl_FragColor = vec4(mix(vC.rgb, fogColor, smoothstep(fogNear, fogFar, vFd) * 0.7), min(1.0, a)); }', { uT: { value: 0 }, uS: { value: 400 } }));
+      lg.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5); lm.frustumCulled = false; lm.renderOrder = 6; lm.name = 'pkDroneLights'; root.add(lm);
+      lm.onBeforeRender = (r, sc, cam) => { lm.material.uniforms.uS.value = r.domElement.height * cam.projectionMatrix.elements[5] / 2; };
+      // the famous sections (from the start line): Engineer's Corner, Halfway, Brown Bush, Glen Cove, the W's, Cove Creek, Devil's Playground, Bottomless Pit, Boulder Park, Olympic;
+      // a drone follows the car through every other one, the other waits hovering beside the road at the next boundary
+      const B = [0, 578, 1000, 1720, 2688, 2918, 3564, 4050, 4466, 5360, 5854].map(d => sStart + d);
+      const st = (k, j) => { const s = k < B.length ? B[k] : sFin + 40, q = crAt(Math.min(s, sFin + 40)), sd = j ? 1 : -1, o = sd * ((sd > 0 ? q.br : q.bl) - 3), x = q.px + q.nx * o, z = q.pz + q.nz * o;
+        return [x, Math.max(q.hy + 14, gy(x, z) + 10), z, Math.atan2(-q.tz, -q.tx)]; };   // (station k: over the road's edge at boundary k, the nose down the road)
+      mv.dr = [0, 1].map(j => ({ p: st(j + 1, j).slice(0, 3), v: [0, 0, 0], yaw: st(j + 1, j)[3], pit: 0, rol: 0 }));
+      Object.assign(mv, { dm, lm, lp, B, st, m4: new THREE.Matrix4(), q4: new THREE.Quaternion(), eu: new THREE.Euler(0, 0, 0, 'YXZ'), v3: new THREE.Vector3(), s3: new THREE.Vector3(1.3, 1.3, 1.3) });
+
+      // the LED split boards ~55 m past each checkpoint, just beyond the barrier, turned to the oncoming car: a dark housing on two posts (in the scenery),
+      // the screen (one 256 x 512 canvas: a 256 x 128 row per board, redrawn only when its text changes; unlit, so it glows at night)
+      const cv = document.createElement('canvas'); cv.width = 256; cv.height = 512; const cx = cv.getContext('2d'), tex = new THREE.CanvasTexture(cv); tex.anisotropy = 4; out.ownTex.push(tex);
+      const sm = new THREE.MeshBasicMaterial({ map: tex, fog: true }), alts = T.cpS.map(s => String(Math.round(T.altAt ? T.altAt(T.hy[T.idx(s)]) : 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' m');
+      mv.cv = cx; mv.tex = tex; mv.alts = alts; mv.bd = [];
+      const fitB = (x, z, ux, uz, hw) => { let lo = 1e9, hi = -1e9; for (const o of [-hw, 0, hw]) { const px = x + ux * o, pz = z + uz * o; if (pkNear(px, pz).dd < 1.5 || K.excluded(px, pz)) return null; const h = gy(px, pz); lo = Math.min(lo, h); hi = Math.max(hi, h); } return [lo, hi]; };
+      T.cpS.forEach((s0, k) => {
+        let best = null;
+        for (let d = 0; d <= 40 && !best; d += 4) for (const sg of d ? [1, -1] : [1]) { const s = s0 + 55 + d * sg, q = crAt(s); if (!q) continue;
+          for (const side of (q.br < q.bl ? [1, -1] : [-1, 1])) { if (best) break; for (const e of [2.6, 3.8, 5.2]) {
+            const o = side * ((side > 0 ? q.br : q.bl) + e), x = q.px + q.nx * o, z = q.pz + q.nz * o; let fx = -q.tx * 0.55 - q.nx * side * 0.83, fz = -q.tz * 0.55 - q.nz * side * 0.83; const l = Math.hypot(fx, fz); fx /= l; fz /= l;
+            const f = fitB(x, z, fz, -fx, 2.6); if (!f || f[1] - f[0] > 2.2 || Math.abs(f[1] - q.hy) > 4) continue; best = { x, z, fx, fz, lo: f[0], hy: Math.max(q.hy, f[1]), s }; break; } } }
+        if (!best) return;
+        const { x, z, fx, fz, lo } = best, ux = fz, uz = -fx, y0 = best.hy + 1.7, W = 4.8, Hh = 2.4, g = scen.get(x, z), rot = Math.atan2(fz, fx);
+        for (const o of [-1.7, 1.7]) box(g, x + ux * o - fx * 0.12, lo - 0.3, z + uz * o - fz * 0.12, 0.16, y0 - lo + 0.4, 0.16, rot, [0.3, 0.31, 0.33], null, true);
+        box(g, x, y0 - 0.14, z, 0.3, Hh + 0.3, W + 0.3, rot, [0.08, 0.08, 0.09], [0.12, 0.12, 0.13]);
+        box(g, x - fx * 0.05, y0 + Hh + 0.16, z - fz * 0.05, 0.42, 0.1, W + 0.5, rot, [0.86, 0.12, 0.1], null);   // (a red cap)
+        excl.push({ x, z, r: 3 });
+        const v0 = 1 - (k + 1) / 4, v1 = 1 - k / 4, cX = x + fx * 0.16, cZ = z + fz * 0.16, hw = W / 2;
+        const sg = new THREE.BufferGeometry();
+        sg.setAttribute('position', new THREE.Float32BufferAttribute([cX - ux * hw, y0, cZ - uz * hw, cX + ux * hw, y0, cZ + uz * hw, cX + ux * hw, y0 + Hh, cZ + uz * hw, cX - ux * hw, y0 + Hh, cZ - uz * hw], 3));
+        sg.setAttribute('uv', new THREE.Float32BufferAttribute([0, v0, 1, v0, 1, v1, 0, v1], 2)); sg.setIndex([0, 1, 2, 0, 2, 3]); sg.computeBoundingSphere();
+        const m = new THREE.Mesh(sg, sm); m.name = 'pkSplitBoard'; m.matrixAutoUpdate = false; root.add(m);
+        mv.bd[k] = { key: '', t0: -1 }; mv.info.boards.push({ k, s: Math.round(best.s), x: +x.toFixed(1), z: +z.toFixed(1) });
+      });
+      mv.draw = (k, a, b, bc) => {   // board k's row: line a (white or amber), line b in colour bc, then the LED dot grid over it
+        const c = mv.cv, y = k * 128; c.fillStyle = '#050607'; c.fillRect(0, y, 256, 128);
+        c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = '900 50px Arial, sans-serif'; c.fillStyle = bc ? '#f4f4ee' : '#ffb21e'; c.fillText(a, 128, y + 38, 236);
+        c.font = '900 44px Arial, sans-serif'; c.fillStyle = bc || '#ffb21e'; c.fillText(b, 128, y + 92, 236);
+        c.fillStyle = 'rgba(0,0,0,0.5)'; for (let q = 0; q < 256; q += 4) c.fillRect(q, y, 1, 128); for (let q = 0; q < 128; q += 4) c.fillRect(0, y + q, 256, 1);
+        c.fillStyle = '#1b1c1f'; c.fillRect(0, y, 256, 3); c.fillRect(0, y + 125, 256, 3); mv.tex.needsUpdate = true; };
+      mv.bd.forEach((b, k) => { if (b) { b.key = 'i'; mv.draw(k, 'CP' + (k + 1), alts[k], null); } });
+    } else {
+      /* ---- the gravel road (the historic race): a water truck and road graders parked at pull-offs, the truck spraying the verge; another truck
+         driving slowly down the road while the course is closed before the start (the flyover: 160-460 m past the start line); the dust hanging over the switchbacks ---- */
+      // the period tanker lorry (~8.4 m): a yellow cab, a grey tank, the spray bar at the back
+      const wt = new GB(), YC = [0.92, 0.66, 0.1], TY = [0.07, 0.07, 0.08], HUB = [0.5, 0.5, 0.52], DK = [0.16, 0.16, 0.17], TK = [0.68, 0.7, 0.72], GL = [0.14, 0.18, 0.24];
+      for (const x of [2.7, -1.5, -2.8]) for (const z of [-0.95, 0.95]) wheel(wt, x, 0.5, z, 0.5, 0.36, TY, HUB);
+      box(wt, -0.3, 0.62, 0, 7.6, 0.32, 1.0, 0, DK);
+      box(wt, 3.1, 0.82, 0, 1.7, 1.1, 2.3, 0, YC); box(wt, 2.95, 1.92, 0, 1.4, 0.82, 2.2, 0, GL, YC); box(wt, 2.95, 2.74, 0, 1.45, 0.12, 2.25, 0, YC);
+      box(wt, 4.02, 0.72, 0, 0.12, 0.72, 2.0, 0, [0.62, 0.62, 0.6]); box(wt, 4.0, 0.5, 0, 0.2, 0.2, 2.35, 0, [0.3, 0.3, 0.3]);
+      tank(wt, -3.7, 1.95, 1.95, 1.0, TK, [0.58, 0.6, 0.62]); for (const x of [-2.6, -0.6, 1.4]) box(wt, x, 0.88, 0, 0.14, 2.12, 2.06, 0, [0.3, 0.31, 0.32]);
+      box(wt, -0.85, 2.9, 0, 0.7, 0.18, 0.7, 0, [0.5, 0.52, 0.54]);   // (the filler hatch)
+      for (const x of [-2.15, 2.7]) box(wt, x, 1.0, 0, 1.5, 0.12, 2.3, 0, DK);   // (mudguards)
+      box(wt, -3.95, 0.55, 0, 0.14, 0.14, 2.5, 0, [0.25, 0.25, 0.26]);   // (the spray bar)
+      // the motor grader (~8.6 m): a long yellow frame from the cab over the tandem to the front axle, the blade under its middle
+      const gr = new GB(), GY = [0.93, 0.7, 0.08];
+      for (const x of [-3.1, -1.8]) for (const z of [-1.0, 1.0]) wheel(gr, x, 0.62, z, 0.62, 0.42, TY, HUB);
+      for (const z of [-0.95, 0.95]) wheel(gr, 3.6, 0.62, z, 0.62, 0.4, TY, HUB);
+      box(gr, -2.75, 0.9, 0, 1.9, 1.15, 1.6, 0, GY); box(gr, -1.25, 1.1, 0, 1.3, 0.9, 1.7, 0, GY); box(gr, -1.25, 2.0, 0, 1.2, 1.15, 1.6, 0, GL, GY); box(gr, -1.25, 3.15, 0, 1.6, 0.12, 1.9, 0, GY);
+      box(gr, 1.2, 1.55, 0, 4.9, 0.45, 0.5, 0, GY); box(gr, 3.6, 1.0, 0, 0.5, 0.75, 1.6, 0, GY); box(gr, -3.65, 0.9, 0, 0.3, 0.6, 1.4, 0, DK);
+      box(gr, 0.5, 0.08, 0, 0.3, 0.62, 3.7, 0.38, [0.36, 0.36, 0.38]); box(gr, 0.5, 0.65, 0, 0.8, 0.9, 0.2, 0, DK);   // (the blade on its ring)
+      // pull-offs: a level spot a little beyond the barrier, above the treeline (no tree stands there), off the crowded places (the hairpins, the W's, the ridge, the checkpoints)
+      const busy = (s) => s < sStart + 150 || s > sFin - 120 || T.cpS.some(c => Math.abs(s - c) < 60) || (s > sStart + 2600 && s < sStart + 3460) || (s > sStart + 3680 && s < sStart + 4480) || T.corners.some(c => c.sev >= 3 && Math.abs(s - (c.i0 + c.i1) / 2 * T.ds) < 40);
+      const fit = (x, z, rot, L, W, hy) => { const c = Math.cos(rot), s = Math.sin(rot); let lo = 1e9, hi = -1e9;
+        for (const a of [-0.5, -0.25, 0, 0.25, 0.5]) for (const b of [-0.5, 0, 0.5]) { const px = x + c * a * L - s * b * W, pz = z + s * a * L + c * b * W;
+          if (pkNear(px, pz).dd < 1.5 || K.excluded(px, pz)) return null; const h = gy(px, pz); if (h < pkTreeline(px, pz) + 8) return null; lo = Math.min(lo, h); hi = Math.max(hi, h); }
+        return hi - lo < 0.8 && Math.abs(hi - hy) < 3.5 ? [lo, hi] : null; };
+      const pull = (s0, s1, L, W) => { let b = null, bo = 1e9;   // (the one nearest the road: in view)
+        for (let s = s0; s < s1; s += 4) { if (busy(s)) continue; const q = crAt(s); if (!q) continue;
+          for (const side of [1, -1]) for (const e of [0.4, 1.4, 2.6]) { const ob = (side > 0 ? q.br : q.bl) + 1.5 + e + W / 2; if (ob >= bo) continue;
+            const o = side * ob, x = q.px + q.nx * o, z = q.pz + q.nz * o, rot = Math.atan2(q.tz, q.tx), f = fit(x, z, rot, L, W, q.hy);
+            if (f) { bo = ob; b = { x, z, rot, y: (f[0] + f[1]) / 2 - 0.12, s, side, nx: q.nx * side, nz: q.nz * side }; } } }
+        return b; };
+      const park = (src, p, flip, L) => { if (!p) return; const rot = p.rot + (flip ? PI : 0), c = Math.cos(rot), s = Math.sin(rot); stamp(src, scen.get(p.x, p.z), p.x, p.y, p.z, rot); excl.push({ x: p.x, z: p.z, r: L / 2 + 1 }); mv.info.parked.push({ s: Math.round(p.s), x: +p.x.toFixed(1), z: +p.z.toFixed(1) }); return [c, s]; };
+      const pw = pull(sStart + 1900, sStart + 2600, 9, 3) || pull(sStart + 4480, sStart + 5300, 9, 3), g1 = pull(sStart + 3460, sStart + 3680, 9, 3.8) || pull(sStart + 4480, sStart + 5000, 9, 3.8), g2 = pull(sStart + 5000, sFin - 150, 9, 3.8);
+      const wd = park(wt, pw, false, 9); park(gr, g1, true, 9); park(gr, g2, false, 9);
+      // the moving truck (its own mesh; shown only while the car waits on the grid): down the road from 460 m to 160 m past the start, 2.5 m/s
+      const tm = new THREE.Mesh(wt.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })); tm.name = 'pkWaterTruck'; tm.visible = false; tm.castShadow = true; tm.matrixAutoUpdate = false; root.add(tm);
+      // spray (two emitters: the parked truck's bar onto the verge, the moving one's across the road behind it) and the dust over the switchbacks: one Points
+      const NS = 80, ND = 160, np = NS * 2 + ND, pp = new Float32Array(np * 3), pk = new Float32Array(np * 4), R = rng(9661);
+      for (let k = 0; k < NS * 2; k++) { pk[k * 4] = k < NS ? 0 : 1; pk[k * 4 + 1] = R(); pk[k * 4 + 2] = R() * 2 - 1; pk[k * 4 + 3] = R(); }
+      for (let k = NS * 2; k < np; k++) { pk[k * 4] = 2; pk[k * 4 + 1] = -1e6; pk[k * 4 + 2] = R(); pk[k * 4 + 3] = R(); }
+      const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(pp, 3)); pg.setAttribute('aK', new THREE.BufferAttribute(pk, 4)); pg.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
+      const pU = { uT: { value: 0 }, uS: { value: 400 }, uL: { value: 1 }, uE: { value: new THREE.Vector2() }, uN0: { value: new THREE.Vector4() }, uD0: { value: new THREE.Vector4() }, uN1: { value: new THREE.Vector4() }, uD1: { value: new THREE.Vector4() }, uW: { value: new THREE.Vector2(Math.cos(2.2), Math.sin(2.2)) } };
+      const pm = ptsMat('uniform float uT, uS, uL; uniform vec2 uE, uW; uniform vec4 uN0, uD0, uN1, uD1; attribute vec4 aK; varying vec4 vC; varying float vFd, vK;\n' +
+        'void main() { vec3 p; float sz, a; vec3 col; vK = aK.x;\n' +
+        '  if (aK.x < 1.5) { bool e1 = aK.x > 0.5; vec4 N = e1 ? uN1 : uN0, D = e1 ? uD1 : uD0;\n' +   // spray: N the bar's middle (w: on), D.xz out of the bar, D.w its half length; the bar runs across D
+        '    float life = 1.0, u = fract(uT / life + aK.y), age = u * life; vec2 ac = vec2(-D.z, D.x);\n' +
+        '    p = N.xyz + vec3(ac.x, 0.0, ac.y) * aK.z * D.w + vec3(D.x, 0.0, D.z) * age * (3.4 + 2.6 * aK.w) + vec3(0.0, age * (1.2 + 0.8 * aK.w) - 4.9 * age * age * 0.55, 0.0);\n' +
+        '    sz = 0.16 + 0.75 * u; a = N.w * 0.6 * smoothstep(0.0, 0.08, u) * (1.0 - u) * step(N.y - 0.7, p.y); col = vec3(0.86, 0.9, 0.95) * uL;\n' +
+        '  } else {\n' +   // the dust: a puff left where the car went by (aK.y: when), growing, rising a little and drifting for ~22 s
+        '    float age = uT - aK.y, u = clamp(age / 22.0, 0.0, 1.0);\n' +
+        '    p = position + vec3(uW.x, 0.0, uW.y) * age * (0.45 + 0.3 * aK.z) + vec3(sin(age * 0.21 + aK.z * 6.3), 0.0, cos(age * 0.17 + aK.w * 6.3)) * 1.5 * u; p.y += 2.6 * sqrt(u);\n' +
+        '    sz = (4.5 + 3.0 * aK.w) * (0.55 + 1.3 * sqrt(u)); a = (age > 0.0 && age < 22.0 ? 1.0 : 0.0) * 0.2 * smoothstep(0.0, 1.5, age) * (1.0 - smoothstep(10.0, 22.0, age)); col = vec3(0.86, 0.77, 0.63) * uL;\n' +
+        '  }\n' +
+        '  vec4 mv = modelViewMatrix * vec4(p, 1.0); vFd = -mv.z; a *= smoothstep(3.0, 9.0, vFd); vC = vec4(col, a);\n' +
+        '  gl_PointSize = a > 0.003 ? clamp(sz * uS / max(1.0, vFd), 1.5, 220.0) : 0.0; gl_Position = projectionMatrix * mv; }',
+        'uniform vec3 fogColor; uniform float fogNear, fogFar; varying vec4 vC; varying float vFd, vK;\n' +
+        'void main() { vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0; if (r > 1.0) discard; float a = vK > 1.5 ? (1.0 - r) * (1.0 - r) * (1.0 - r) : smoothstep(1.0, 0.3, r);\n' +
+        '  gl_FragColor = vec4(mix(vC.rgb, fogColor, smoothstep(fogNear, fogFar, vFd)), vC.a * a); }', pU);
+      const pts = new THREE.Points(pg, pm); pts.frustumCulled = false; pts.renderOrder = 7; pts.matrixAutoUpdate = false; pts.name = 'pkSpray'; root.add(pts);
+      const U = pm.uniforms;
+      pts.onBeforeRender = (r, sc, cam) => { U.uS.value = r.domElement.height * cam.projectionMatrix.elements[5] / 2; const f = sc.fog ? sc.fog.color : null; U.uL.value = f ? clamp((f.r * 0.3 + f.g * 0.55 + f.b * 0.15) * 1.35, 0.14, 1) : 1; };
+      if (pw && wd) { const bx = pw.x - wd[0] * 3.95, bz = pw.z - wd[1] * 3.95; U.uN0.value.set(bx + pw.nx * 0.6, pw.y + 0.6, bz + pw.nz * 0.6, 1); U.uD0.value.set(pw.nx * 0.8 - wd[0] * 0.6, 0, pw.nz * 0.8 - wd[1] * 0.6, 1.2); }   // (out to the verge and back)
+      // the switchbacks: the W's and every hairpin (+- 45 m)
+      const zs = [[sStart + 2880, sStart + 3440]]; for (const c of T.corners) if (c.sev >= 3) { const sm = (c.i0 + c.i1) / 2 * T.ds; zs.push([sm - 45, sm + 45]); }
+      Object.assign(mv, { tm, pts, U, pg, pp, pk, NS, ND, dk: 0, zs, lx: null, lz: 0, tw: new THREE.Matrix4(), tq: new THREE.Quaternion(), te: new THREE.Euler(0, 0, 0, 'YXZ'), tv: new THREE.Vector3(), t1: new THREE.Vector3(1, 1, 1) });
+    }
+    reChunk();
+    out.pkMovInfo = mv.info;   // (where things went: the screenshot tools)
+    out.dyn.pkMov = mv;
   }
   function pkMovingUpdate(mv, t, car) {
+    const cj = !!car && mv.cx != null && (car.x - mv.cx) ** 2 + (car.z - mv.cz) ** 2 > 1600; if (car) { mv.cx = car.x; mv.cz = car.z; }   // (the car jumped: a rescue, a restart, the replay's seek)
+    const dt = mv.t == null ? 0 : clamp(t - mv.t, 0, 0.25), jump = cj || mv.t == null || t < mv.t || t - mv.t > 1.5; mv.t = t;
+    const s = car && car.q ? car.q.s : -1e9, gy = pkGround;
+    if (!mv.mk) {
+      mv.lm.material.uniforms.uT.value = t % 1000;
+      // the drones: section k of the car -> drone k % 2 follows it (~10 m back, 7 m off to its side, 13 m up), the other one waits at the next boundary
+      const B = mv.B; let k = -1; for (let j = 0; j < B.length; j++) if (s >= B[j]) k = j;
+      const hx = car ? Math.cos(car.h) : 1, hz = car ? Math.sin(car.h) : 0, y = car ? car.roadY || car.y || 0 : 0;
+      for (let j = 0; j < 2; j++) {
+        const D = mv.dr[j], act = car && k >= 0 && k % 2 === j && s < mv.B[B.length - 1] + 700; let tx, ty, tz, yaw;
+        if (act) { const sd = j ? 1 : -1, bx = car.x - hx * 10 - hz * sd * 7 + (car.vx || 0) * 0.35, bz = car.z - hz * 10 + hx * sd * 7 + (car.vz || 0) * 0.35;
+          tx = bx; tz = bz; ty = Math.max(y + 13 + 0.6 * Math.sin(t * 0.7 + j), gy(bx, bz) + 7); yaw = Math.atan2(car.z - D.p[2], car.x - D.p[0]); }
+        else { const n = car && k >= 0 ? k + 1 : j, q = mv.st(n, j), dc = car ? Math.hypot(car.x - D.p[0], car.z - D.p[2]) : 1e9, far = Math.hypot(D.p[0] - q[0], D.p[2] - q[2]) > 30;
+          if (car && dc < 170 && far) { tx = D.p[0]; tz = D.p[2]; ty = Math.max(D.p[1], y + 22); }   // (relieved: it stays and climbs while the car goes on)
+          else { tx = q[0]; ty = q[1] + 0.4 * Math.sin(t * 0.9 + j * 2); tz = q[2]; }
+          yaw = dc < 260 ? Math.atan2(car.z - D.p[2], car.x - D.p[0]) : q[3];
+          if (car && dc > 170 && far && Math.hypot(car.x - q[0], car.z - q[2]) > 170) { D.p[0] = q[0]; D.p[1] = q[1]; D.p[2] = q[2]; D.v[0] = D.v[1] = D.v[2] = 0; } }   // (out of sight: straight to its station)
+        if (act && !jump && Math.hypot(tx - D.p[0], tz - D.p[2]) > 150) { const l = Math.hypot(tx - D.p[0], tz - D.p[2]); D.p[0] = tx + (D.p[0] - tx) / l * 130; D.p[2] = tz + (D.p[2] - tz) / l * 130; D.p[1] = Math.max(ty + 10, gy(D.p[0], D.p[2]) + 10); }   // (far behind: it comes in from the edge of sight)
+        if (jump || !car) { D.p[0] = tx; D.p[1] = ty; D.p[2] = tz; D.v[0] = D.v[1] = D.v[2] = 0; D.yaw = yaw; }
+        else {   // a spring towards the spot (quick when following), its speed capped; the nose turns smoothly
+          const kp = act ? 3.2 : 1.1, kd = act ? 3.4 : 2.0, vm = act ? 75 : 32;
+          for (let a = 0; a < 3; a++) D.v[a] += ((([tx, ty, tz][a]) - D.p[a]) * kp * kp - D.v[a] * kd) * dt;
+          const sp = Math.hypot(D.v[0], D.v[1], D.v[2]); if (sp > vm) for (let a = 0; a < 3; a++) D.v[a] *= vm / sp;
+          for (let a = 0; a < 3; a++) D.p[a] += D.v[a] * dt;
+          D.p[1] = Math.max(D.p[1], gy(D.p[0], D.p[2]) + 5);
+          const dy = yaw - D.yaw; D.yaw += (dy - TAU * Math.round(dy / TAU)) * Math.min(1, dt * 3); }
+        // the tilt: into its speed (nose down as it flies forward, banked as it slides)
+        const c = Math.cos(D.yaw), sn = Math.sin(D.yaw), fw = D.v[0] * c + D.v[2] * sn, sd = -D.v[0] * sn + D.v[2] * c;
+        D.pit += (clamp(-fw * 0.012, -0.4, 0.4) - D.pit) * Math.min(1, dt * 4); D.rol += (clamp(sd * 0.012, -0.4, 0.4) - D.rol) * Math.min(1, dt * 4);
+        mv.eu.set(D.rol, -D.yaw, D.pit); mv.q4.setFromEuler(mv.eu); mv.m4.compose(mv.v3.set(D.p[0], D.p[1], D.p[2]), mv.q4, mv.s3); mv.dm.setMatrixAt(j, mv.m4);
+        const L = mv.lp; L[j * 6] = D.p[0]; L[j * 6 + 1] = D.p[1] + 0.06; L[j * 6 + 2] = D.p[2]; L[j * 6 + 3] = D.p[0] - c * 0.3; L[j * 6 + 4] = D.p[1] - 0.26; L[j * 6 + 5] = D.p[2] - sn * 0.3;
+      }
+      mv.dm.instanceMatrix.needsUpdate = true; mv.lm.geometry.attributes.position.needsUpdate = true;
+      // the split boards: for ~8 s after the car passed its checkpoint (and while it is not 450 m on), its time there and the difference to the class best (game.js: mv.best)
+      for (let k = 0; k < mv.bd.length; k++) { const b = mv.bd[k]; if (!b) continue;
+        const sp = car && car.splits ? car.splits[k] : NaN, on = car && sp >= 0 && s >= T.cpS[k] && s < T.cpS[k] + 450;
+        if (!on) b.t0 = -1; else if (b.t0 < 0 || b.t0 > t) b.t0 = t;
+        const show = on && t - b.t0 < 8, bs = mv.best && mv.best[k] > 0 ? mv.best[k] : NaN, d = sp - bs, key = show ? 's' + sp + '|' + bs : 'i';
+        if (key === b.key) continue; b.key = key;
+        if (!show) { mv.draw(k, 'CP' + (k + 1), mv.alts[k], null); continue; }
+        const m = Math.floor(sp / 60), tt = m + ':' + (sp - m * 60).toFixed(2).padStart(5, '0');
+        mv.draw(k, 'CP' + (k + 1) + ' ' + tt, isFinite(d) ? (d < 0 ? '−' : '+') + Math.abs(d).toFixed(2) : '–', isFinite(d) ? (d < 0 ? '#3cf36c' : '#ff4a3a') : '#f4f4ee');
+      }
+      return;
+    }
+    // gravel: the parked truck sprays (a few seconds on, a few off), the moving one only before the start
+    const U = mv.U; U.uT.value = t;
+    U.uN0.value.w = U.uD0.value.w > 0 && Math.sin(t * 0.35) > -0.55 ? 1 : 0;
+    const pre = !!car && s < T.startS + 2 && car.locked !== false && Math.hypot(car.vx || 0, car.vz || 0) < 1 && !(car.cp > 0);   // (on the grid before the green light: the flyover, the intro)
+    if (pre) { const sm = T.startS + 160 + (300 - (t * 2.5) % 300), q = crAt(sm); if (q) {
+      const fx = -q.tx, fz = -q.tz, o = 2.6, x = q.px + q.nx * o, z = q.pz + q.nz * o, ya = Math.atan2(fz, fx), qa = crAt(sm + 3), qb = crAt(sm - 3), pit = qa && qb ? Math.atan2(qa.hy - qb.hy, 6) : 0;
+      mv.te.set(0, -ya, -pit); mv.tq.setFromEuler(mv.te); mv.tw.compose(mv.tv.set(x, q.hy + 0.02, z), mv.tq, mv.t1); mv.tm.matrix.copy(mv.tw); mv.tm.matrixWorldNeedsUpdate = true;
+      U.uN1.value.set(x - fx * 4.0, q.hy + 0.55, z - fz * 4.0, 1); U.uD1.value.set(-fx * 0.7, 0, -fz * 0.7, 1.5); } }
+    mv.tm.visible = pre; if (!pre) U.uN1.value.w = 0;
+    // the dust over the switchbacks: a puff every 5 m the car drives through one fast on the dry road (not in the rain, not in winter, not in a flurry)
+    if (!car) return;
+    const dx = car.x - mv.lx, dz = car.z - mv.lz, d2 = mv.lx == null ? 1e9 : dx * dx + dz * dz;
+    if (d2 > 900) { mv.lx = car.x; mv.lz = car.z; return; }
+    if (d2 < 25) return;
+    mv.lx = car.x; mv.lz = car.z;
+    const E = mv.wx && mv.wx.env || {}, dry = !(E.r > 0.02) && !E.win && !(mv.wx && mv.wx.fl > 0.1), spd = Math.hypot(car.vx || 0, car.vz || 0);
+    if (!dry || spd < 7 || !mv.zs.some(z => s > z[0] && s < z[1])) return;
+    const k = mv.NS * 2 + (mv.dk++ % mv.ND), j = (k * 0.618) % 1;
+    mv.pp[k * 3] = car.x + (j - 0.5) * 3; mv.pp[k * 3 + 1] = (car.roadY || car.y || 0) + 0.6; mv.pp[k * 3 + 2] = car.z + (((k * 0.414) % 1) - 0.5) * 3; mv.pk[k * 4 + 1] = t;
+    mv.pg.attributes.position.needsUpdate = true; mv.pg.attributes.aK.needsUpdate = true;
   }
 
   function buildPikes(scene, tex, opts) {
