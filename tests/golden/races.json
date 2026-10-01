@@ -707,17 +707,17 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "62a821bf0d7a083b9e5f6d4b"
+  "digest": "a80b0918c97c5b944e3b38eb"
  },
  "suzuka/cs/rain": {
   "finished": 13,
   "cars": 13,
-  "winner": 290.57,
+  "winner": 290.39,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "85f92cf67f390d54e5c6c334"
+  "digest": "859ab5f30d4c1de846522aac"
  },
  "suzuka/cs/formula": {
   "finished": 13,
@@ -727,7 +727,7 @@
   "walls": 8,
   "rescues": 0,
   "nan": false,
-  "digest": "e9f3f320c8cd47bf43c0f0b0"
+  "digest": "466adbfc74fcfcb84d31150a"
  },
  "suzuka/cs/lm": {
   "finished": 13,
@@ -737,7 +737,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "9749f0fd87412c996f440217"
+  "digest": "b3b0890a4e6b5e319233bd6e"
  },
  "suzuka/cs/car": {
   "finished": 13,
@@ -747,7 +747,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "94c2f8bb12b4204ef74ec98b"
+  "digest": "9d0e828d36d242a69c4a45ef"
  },
  "pikesg/cs": {
   "finished": 1,
