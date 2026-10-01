@@ -114,6 +114,8 @@
   const TT_LINES = { intro: ['introTT', 'introStage', 'introPassTT'], go: ['goTT', 'goStage', 'goPassTT'], cpFirst: ['cpFirst', 'cpFirstStage'], record: ['summitRecord', 'stageRecord'], even: ['summitEven', 'stageEven'], end: ['summit', 'stageEnd'] };
   const ttLine = (d, k) => k === 'intro' && d && d.theme === 'pikes' && d.roadSurface === 'makadam' ? 'introTTg' : TT_LINES[k][isRally(d) ? 1 : d && d.modes ? 2 : 0] || TT_LINES[k][0];   // (a hill climb, a rally stage, a mountain pass)
   // (Pikes Peak on its historic gravel road: its own welcome)
+  // a road's own commentator lines for a key (def.comm: Los Caracoles' instead of Vršič's): the key of its pool, registered with Comm when first said
+  const ownLine = (d, key) => { const L = d && d.comm && d.comm[key]; if (!L) return key; const k = key + '@' + d.id; Comm.addLines(k, L); return k; };
   const numDot = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');   // 3048 -> 3.048
   const kmTxt = (m, dec) => (m / 1000).toFixed(dec).replace('.', ',');
   const cpWord = (n) => n + (n === 1 ? ' kontrolna točka' : n === 2 ? ' kontrolni točki' : n <= 4 ? ' kontrolne točke' : ' kontrolnih točk');
@@ -282,9 +284,9 @@
   }
   // driving physics: Circuit Superstars' kinematic drift ('cs', the only one)
   const physOf = () => 'cs';
-  // the weather: dry, rain, or at random for every race (rain more often in the Ardennes, the Eifel and the Julian Alps in the autumn);
+  // the weather: dry, rain, or at random for every race (rain more often in the Ardennes, the Eifel and the Julian Alps in the autumn, less in the Andes);
   // the title demo rains only with 'rain'
-  const RAIN_P = { spa: 0.5, nring: 0.45, vrsic: 0.45 };
+  const RAIN_P = { spa: 0.5, nring: 0.45, vrsic: 0.45, caracoles: 0.2 };   // (the Andes in summer: mostly dry)
   const rainOf = () => S.weather === 'rain' ? 1 : (S.weather === 'random' || S.weather === 'change') && Math.random() < (RAIN_P[track && track.def.id] || 0.35) ? 1 : 0;
   // 'change': the weather changes during a race (on a circuit, or up the Vršič; Race opts weather): it starts dry and rains later on, or it starts wet,
   // the rain stops and the road dries (the racing line first). Somewhere between a fifth and a half of the race (by its usual length); a time trial: as 'random'
@@ -937,7 +939,7 @@
     $('hud').classList.toggle('sec', !!race.secBest);   // (a circuit with TV sectors)
     $('hud').classList.toggle('tt', race.timeTrial); $('hud').classList.toggle('up', track.open && !race.timeTrial); $('pause-restart').textContent = race.timeTrial ? 'Ponovi ' + ttRun(track.def) : quali ? 'Ponovi krog' : race.pol ? 'Ponovi beg' : 'Ponovi dirko';
     $('hud').classList.toggle('pol', !!race.pol); $('hud').classList.toggle('duel', !!race.tf && !race.pol);   // (the open road: the police's panel, the rival's gap)
-    tfSeen = race.tf ? race.tf.ev : 0; polSeen = race.pol ? race.pol.ev : 0; tfHits = { ped: 0, bike: 0 }; Sfx.siren(0, 0); radioReset(); polRun = { why: '', docs: false, park: false };
+    tfSeen = race.tf ? race.tf.ev : 0; polSeen = race.pol ? race.pol.ev : 0; tfHits = { ped: 0, bike: 0 }; Sfx.siren(0, 0); rdOn = !!race.pol && rdKnows(track.def); radioReset(); polRun = { why: '', docs: false, park: false };
     if (mm.img && mm.open && mm.pol !== !!race.pol) mm.img = null;   // (the open road's map: the building at the top in the run from the police, else the finish)
     $('pause-skip').classList.toggle('off', !quali);
     $('pause-restart').classList.toggle('off', !!on);   // (online: no restart for one)
@@ -947,16 +949,17 @@
     Input.reset();
     showScreen('none');
     Sfx.resume(); Sfx.setRunning(true);
-    Comm.stop(); commReset(); Comm.setRadioMode(!!race.pol);   // (the run from the police: only the police radio speaks)
+    Comm.stop(); commReset(); Comm.setRadioMode(rdOn);   // (the run from the police on Vršič: only the police radio speaks)
     const wetTxt = race.rain ? ' · DEŽ' : '';
-    if (race.timeTrial) { Comm.say(ttLine(track.def, 'intro'), { track: EN_NAME[track.def.id] || track.def.name, cps: track.cpS.length }, 2); showMsg((isRally(track.def) ? 'POLNI PLIN!' : 'VZPON NA VRH!') + wetTxt, 'gold', race.rain ? 1.8 : 1.2); }
+    if (race.timeTrial) { Comm.say(ownLine(track.def, ttLine(track.def, 'intro')), { track: EN_NAME[track.def.id] || track.def.name, cps: track.cpS.length }, 2); showMsg((isRally(track.def) ? 'POLNI PLIN!' : 'VZPON NA VRH!') + wetTxt, 'gold', race.rain ? 1.8 : 1.2); }
     else if (quali) { Comm.say('qualiIntro', { track: EN_NAME[track.def.id] || track.def.name }, 2); showMsg((race.champ ? 'DIRKA ' + (race.champ.round + 1) + '/' + race.champ.n + ' · ' : '') + 'KVALIFIKACIJE' + wetTxt, 'gold', 1.8); }
     else {
-      if (race.pol) { showMsg('KRANJSKA GORA' + wetTxt, 'gold', 1.8); toast('Misija: pripelji avto do garaže na vrhu Vršiča (desno ob cesti, takoj za prelazom).', 4200); }   // (the run from the police: a calm start, nobody after the player yet)
-      else if (race.tf) { const o = race.cars.find(c => !c.isPlayer); Comm.say('introTraffic', { track: EN_NAME[track.def.id] || track.def.name, rival: o ? o.name : 'your rival' }, 2); showMsg('DVOBOJ V PROMETU!' + wetTxt, 'gold', 1.8); }   // (the duel in the traffic)
+      if (race.pol && race.pol.chk) { showMsg('KRANJSKA GORA' + wetTxt, 'gold', 1.8); if (race.pol.goal) toast('Misija: pripelji avto do garaže na vrhu Vršiča (desno ob cesti, takoj za prelazom).', 4200); }   // (the run from the police up to its checkpoint: a calm start, nobody after the player yet)
+      else if (race.pol) { Comm.say(ownLine(track.def, 'introPolice'), { track: EN_NAME[track.def.id] || track.def.name }, 2); showMsg('POLICIJA TE LOVI!' + wetTxt, 'slow', 1.8); }   // (a road without the checkpoint, Los Caracoles: the chase from the start)
+      else if (race.tf) { const o = race.cars.find(c => !c.isPlayer); Comm.say(ownLine(track.def, 'introTraffic'), { track: EN_NAME[track.def.id] || track.def.name, rival: o ? o.name : 'your rival' }, 2); showMsg('DVOBOJ V PROMETU!' + wetTxt, 'gold', 1.8); }   // (the duel in the traffic)
       else {
         if (on) Comm.say('introNet', { track: EN_NAME[track.def.id] || track.def.name, laps: track.open ? 'one run to the top' : race.laps === 1 ? 'one lap' : race.laps + ' laps', name: race.remote.name }, 2);
-        else Comm.say(track.open ? 'introPass' : race.laps === 1 ? 'introOne' : 'intro', { track: EN_NAME[track.def.id] || track.def.name, laps: race.laps, grid: Comm.ordinal(race.player.grid) }, 2);
+        else Comm.say(track.open ? ownLine(track.def, 'introPass') : race.laps === 1 ? 'introOne' : 'intro', { track: EN_NAME[track.def.id] || track.def.name, laps: race.laps, grid: Comm.ordinal(race.player.grid) }, 2);
         showMsg((race.champ ? 'DIRKA ' + (race.champ.round + 1) + '/' + race.champ.n + ' · ' : '') + (track.open ? 'DIRKA NA VRH!' : lapWord(race.laps)) + wetTxt, 'gold', race.rain || race.champ ? 1.8 : 1.2);
       }
     }
@@ -995,7 +998,7 @@
   function endPodium() { const pod = Render.world && Render.world.podium; if (pod) pod.hide(); $('podium-cap').className = ''; shotOff(); pkFlyEnd(); }   // (and Pikes Peak's flyover, left for the title)
   function toTitle() {
     endPodium(); champRecord(); champRun = false; replay = null; recd = null; $('replay-ui').classList.add('off');
-    paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); Comm.setRadioMode(false); radioReset(); ghRec = ghPlay = ghLap = null; qual = null; Render.setGhost(null, true);
+    paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); Comm.setRadioMode(false); rdOn = false; radioReset(); ghRec = ghPlay = ghLap = null; qual = null; Render.setGhost(null, true);
     Sfx.setRunning(false); Sfx.silence();
     Render.attachRace(demo); Render.resetCam();
     setLights(0, false);
@@ -1410,13 +1413,14 @@
     let newRec = false; if (esc && t > 0 && (!R0.bestRace || t < R0.bestRace)) { R0.bestRace = t; newRec = true; }
     if (esc) R0.escapes = (R0.escapes || 0) + 1; else R0.busts = (R0.busts || 0) + 1; saveRecords();
     $('res-head').classList.remove('tt'); $('res-tt').classList.add('off'); $('res-restart').textContent = 'Ponovi beg';
-    $('res-pos').textContent = esc ? '\u2713' : '\u2715'; $('res-title').textContent = esc ? 'Misija opravljena!' : chk ? 'Aretiran na kontroli' : 'Ulovljen!';
-    $('res-sub').textContent = esc ? 'Skril si se v garažo na vrhu Vršiča v ' + fmt(t, true) + (newRec ? ' (najhitrejši pobeg).' : '.') : chk ? 'Brez dokumentov si parkiral ob cesti in s policistom odšel na postajo (' + fmt(t, true) + ').' : 'Policija te je ujela po ' + kmTxt(done, 1) + ' km, v ' + fmt(t, true) + '.';
+    $('res-pos').textContent = esc ? '\u2713' : '\u2715'; $('res-title').textContent = esc ? (pol.goal ? 'Misija opravljena!' : 'Pobegnil si!') : chk ? 'Aretiran na kontroli' : 'Ulovljen!';
+    $('res-sub').textContent = esc ? (pol.goal ? 'Skril si se v garažo na vrhu Vršiča' : track.def.escTo || 'Čez prelaz') + ' v ' + fmt(t, true) + (newRec ? ' (najhitrejši pobeg).' : '.') : chk ? 'Brez dokumentov si parkiral ob cesti in s policistom odšel na postajo (' + fmt(t, true) + ').' : 'Policija te je ujela po ' + kmTxt(done, 1) + ' km, v ' + fmt(t, true) + '.';
     const st = (h) => '\u2605'.repeat(Math.round(h)) + '\u2606'.repeat(5 - Math.round(h)), O = pol.off, T2 = pol.st, sec = (v) => Math.round(v) + ' s';
     const offs = [O.speed >= 1 && 'prehitra vožnja v naselju ' + sec(O.speed), O.walk >= 0.5 && 'vožnja po pločniku ' + sec(O.walk), O.crash && 'trki s prometom ' + O.crash + '\u00d7',
       pol.hitPeople && 'povoženi pešci in kolesarji ' + pol.hitPeople + '\u00d7', O.moto && 'zbiti policisti na motorju ' + O.moto + '\u00d7'].filter(Boolean);
     const W = polRun.why, ctl = chk ? 'brez dokumentov, aretiran' : W === 'hit' ? 'zbil si policista in pobegnil' : W === 'skip' ? 'nisi ustavil, pobegnil' : polRun.docs ? 'brez dokumentov, pobegnil' : W ? 'ustavil, nato pobegnil' : '\u2013';   // (how the checkpoint went)
-    const rows = [['Čas', fmt(t, true)], ['Prevožena pot', kmTxt(done, 1) + ' / ' + kmTxt(L, 1) + ' km'], ['Kontrola prometa', ctl]];
+    const rows = [['Čas', fmt(t, true)], ['Prevožena pot', kmTxt(done, 1) + ' / ' + kmTxt(L, 1) + ' km']];
+    if (pol.chk) rows.push(['Kontrola prometa', ctl]);   // (a road without the checkpoint, Los Caracoles: none)
     if (chk) rows.push(['Prekrški', offs.length ? offs.join('<br>') : 'brez']);   // (arrested at the checkpoint: no chase to tell of)
     else {
       rows.push(['Najvišja stopnja pregona', st(pol.heatMax || pol.heat)], ['Prekrški', offs.length ? offs.join('<br>') : 'brez'], ['Izločene patrulje', pol.wrecked], ['Zapore / trakovi za tabo', T2.blocks + ' / ' + T2.strips],
@@ -1569,18 +1573,19 @@
       if (k === 'ped') { tfHits.ped++; showMsg('POVOZIL SI PEŠCA!' + pen, 'slow', 2); Sfx.thud(0.8); vibrate(70); Comm.say('pedHit', null, 3); }
       else if (k === 'bike') { tfHits.bike++; showMsg('POVOZIL SI KOLESARJA!' + pen, 'slow', 2); Sfx.thud(0.9); vibrate(70); Comm.say('bikeHit', null, 3); }
       else if (k === 'crash' && Math.random() < 0.5) Comm.say('trafficCrash', null, 2);
-      if (race.pol) rdRoad(k, P);   // (the run from the police: the radio hears of it)
+      if (rdOn) rdRoad(k, P);   // (the run from the police on Vršič: the radio hears of it)
     } else if (c && !c.police && (k === 'ped' || k === 'bike')) showMsg('TEKMEC JE POVOZIL ' + (k === 'ped' ? 'PEŠCA' : 'KOLESARJA') + pen, 'gold', 1.6);
   }
   function policeEvent(k, P, e) {
     e = e || { s: P.q.s, u: 0, kind: '' };
-    polRadio(k, e, P);
+    if (rdOn) polRadio(k, e, P);
     if (k === 'fled') polRun.why = e.why || 'drive';
     else if (k === 'chkDocs') polRun.docs = true;
     else if (k === 'chkPark') polRun.park = true;
     else if (k === 'chkParked') chkShot();   // (the driver gets out: the walk to the patrol car, filmed up the road)
     else if (k === 'hideout' && Render.goalShot) { Render.goalShot(race.pol.goal); $('hud').classList.add('shot'); }   // (into the building at the top: the camera outside its door)
     if (phase !== 'racing' || P.finished) return;
+    if (!rdOn && POL_COMM[k]) Comm.say(POL_COMM[k], null, k === 'join' || k === 'wreck' ? 2 : 3);   // (a road the radio does not know: the commentator)
     if (k === 'fled') { showMsg(e.why === 'hit' ? 'ZBIL SI POLICISTA!' : 'POLICIJA TE LOVI!', 'slow', 2.2); if (e.why === 'hit') { Sfx.thud(0.9); vibrate(70); } }
     else if (k === 'spikes') showMsg('BODIČASTI TRAK!', 'slow', 2.2);
     else if (k === 'block') showMsg(e.heavy ? 'TEŽKA ZAPORA NAPREJ!' : 'ZAPORA NAPREJ!', 'slow', 2.2);
@@ -1744,6 +1749,11 @@
   const rdSpeech = (t) => t.replace(/(\d+)\. in (\d+)\. serpentin([aeio])/g, (_, a, b, e) => rdOrd(+a, e) + ' in ' + rdOrd(+b, e) + ' serpentin' + e).replace(/(\d+)\. serpentin([aeio])/g, (_, a, e) => rdOrd(+a, e) + ' serpentin' + e)
     .replace(/(\d+) km\/h/g, '$1 na uro').replace(/(\d+) m\b/g, '$1 metrov').replace(/\bdr\. /g, 'doktorja ');
   let rd = null, rdGeoT = null, rdGeoV = null;
+  // the roads the radio knows (its places, call signs and chatter are Vršič's): there it speaks instead of the commentator (rdOn: this run's);
+  // elsewhere (Los Caracoles) the commentator calls the run from the police (POL_COMM: its lines for the events)
+  const rdKnows = (d) => !!d && d.id === 'vrsic';
+  let rdOn = false;
+  const POL_COMM = { join: 'policeJoin', spikes: 'spikes', block: 'roadblock', flat: 'flat', wreck: 'policeWreck' };
   // the places up the road (def.names, the bus stops, a few more) and the named streets' junctions, in metres after the start line
   function rdGeo() {
     if (rdGeoT === track) return rdGeoV;
@@ -2425,7 +2435,7 @@
       setText('h-time', fmt(P.finished ? P.lapTimes[0] || 0 : P.lap >= 1 && phase === 'racing' ? race.time - P.lapStart : 0, true));
       setText('h-bestv', fmt(rec(track.def.id).bestLap || NaN, true));
       if (P.lap >= 1 && !P.finished && !qual.lapShown) { qual.lapShown = true; showMsg('LETEČI KROG!', 'gold', 1.4); Sfx.beep(990, 0.12, 0.12); Comm.say('qualiLap', null, 3); }
-    } else if (track.open) { updateHUDUp(P); if (race.pol) radioStep(P); }
+    } else if (track.open) { updateHUDUp(P); if (rdOn) radioStep(P); }
     else {
       setText('h-pos', String(P.pos || race.cars.length));
       const lapShown = clamp(P.lap, 1, race.laps);
@@ -2492,7 +2502,7 @@
   // top near the end (where to hide)
   let chkKey = '';
   function chkHUD(P, pol) {
-    const K = pol.chk, g = K.s - P.q.s, G = pol.goal; let t = '', s = '';
+    const K = pol.chk, g = K ? K.s - P.q.s : -1e9, G = pol.goal; let t = '', s = '';   // (a road without the checkpoint: K null, the chase from the start)
     if (!P.finished && phase === 'racing') {
       if (pol.stage === 'free' && g > 0 && g < 650) t = 'KONTROLA PROMETA · ' + Math.round(g / 10) * 10 + ' m';
       else if (pol.stage === 'check') switch (K.st) {
@@ -2538,7 +2548,7 @@
   const PART_EN = { bumperF: 'front bumper', bumperR: 'rear bumper', hood: 'bonnet', trunk: 'boot lid', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'front wing', fenderR: 'front wing' };
   const PART_EN_F = { bumperF: 'front wing', bumperR: 'rear wing', hood: 'nose cone', trunk: 'engine cover', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'bargeboard', fenderR: 'bargeboard' };   // (the formula's parts)
   const PART_EN_LM = { bumperF: 'splitter', bumperR: 'rear wing', hood: 'nose', trunk: 'engine cover', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'louvre panel', fenderR: 'louvre panel' };   // (the prototype's)
-  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', pikesg: 'Pikes Peak', ouninpohja: 'Ouninpohja', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka', vrsic: 'the Vrshich pass' };
+  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', pikesg: 'Pikes Peak', ouninpohja: 'Ouninpohja', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka', vrsic: 'the Vrshich pass', caracoles: 'Los Caracoles' };
   const cev = { wall: 0, car: 0 };          // impacts collected per physics step
   let cs = null;
   function commReset() {
@@ -2616,7 +2626,7 @@
     if (on && (phase === 'intro' || phase === 'lights')) phaseT = (Net.now() - on.at) / 1000 - (phase === 'lights' ? 1.3 : 0);   // online: both phones follow the host's clock
     if (phase === 'intro' && phaseT > 1.3 && race.quali) {   // qualifying: no lights, the clock starts at the line
       phase = 'racing'; phaseT = 0; race.start(); showMsg('ČAS SE ZAČNE NA ČRTI', 'gold', 1.6); Comm.say('qualiGo', null, 3);
-    } else if (phase === 'intro' && phaseT > 1.3 && race.pol) {   // the run from the police: no lights, the player just drives off (nobody after them yet)
+    } else if (phase === 'intro' && phaseT > 1.3 && race.pol && race.pol.chk) {   // the run from the police up to its checkpoint: no lights, the player just drives off (nobody after them yet)
       phase = 'racing'; phaseT = 0; race.start(); showMsg('VOZI PROTI VRŠIČU', 'gold', 1.6);
       if (S.control === 'tilt' && Input.tiltAlive()) Input.calibrate();
     } else if (phase === 'intro' && phaseT > introLen) {
@@ -2632,7 +2642,7 @@
         phase = 'racing'; phaseT = 0; race.start(); if (on) on.startT = Net.now();
         setLights(0, true); Sfx.beep(1040, 0.42, 0.16);
         showMsg('START!', 'gold', 0.9);
-        Comm.say(race.timeTrial ? ttLine(track.def, 'go') : on ? 'goNet' : race.pol ? 'goPolice' : race.tf ? 'goTraffic' : track.open ? 'goPass' : 'go', null, 4);
+        Comm.say(race.timeTrial ? ownLine(track.def, ttLine(track.def, 'go')) : on ? 'goNet' : race.pol ? 'goPolice' : race.tf ? 'goTraffic' : track.open ? ownLine(track.def, 'goPass') : 'go', null, 4);
         setTimeout(() => { if (phase === 'racing') { $('h-lights').classList.remove('show'); setLights(0, false); } }, 1100);
       }
     } else if (phase === 'racing') {
@@ -2654,12 +2664,13 @@
           el.textContent = 'CILJ  ' + fmt(r.time, true) + (r.prev ? '  ' + sgn(d) : ''); el.className = 'show ' + (r.prev ? dCls(d) : 'even'); splitT = 5;
           const sp = $('h-ttsp'); sp.innerHTML = '<table><thead><tr><th></th><th>Čas</th><th>Rekord</th><th>\u00b1</th></tr></thead><tbody>' + splitRows(r, false) + '</tbody></table>'; sp.className = 'show';   // the splits under it until the results
           showMsg(r.newPB ? 'NOV REKORD!' : 'CILJ! ' + sgn(d), r.newPB ? 'fast' : 'gold', 4);
-          Comm.say(ttLine(track.def, r.newPB ? 'record' : isFinite(d) && Math.abs(d) < 0.005 ? 'even' : 'end'), { time: spkTime(r.time), delta: isFinite(d) ? spkDelta(d) : '', track: EN_NAME[track.def.id] || track.def.name }, 5);
+          Comm.say(ownLine(track.def, ttLine(track.def, r.newPB ? 'record' : isFinite(d) && Math.abs(d) < 0.005 ? 'even' : 'end')), { time: spkTime(r.time), delta: isFinite(d) ? spkDelta(d) : '', track: EN_NAME[track.def.id] || track.def.name }, 5);
           { const k = medalOf(track.def, r.time); if (k >= 0) Comm.say('medal', { medal: MEDAL_EN[k] }, 3, { ttl: 9000 }); }   // (waits for the finish call)
           if (pk.on) pkCeremony(r);   // (Pikes Peak: the summit ceremony)
-        } else if (race.pol) {   // the run from the police: the mission done (into the building at the top), arrested at the checkpoint, caught in the chase
+        } else if (race.pol) {   // the run from the police: the mission done (into the building at the top; a road without it: over the finish), arrested at the checkpoint, caught in the chase
           const pol = race.pol, b = pol.busted, chk = pol.arrestK === 'chk';
-          showMsg(!b ? 'MISIJA OPRAVLJENA!' : chk ? 'ARETIRAN!' : 'ULOVLJEN!', b ? 'slow' : 'fast', 4); Sfx.siren(0, 0); if (b && !chk) bustShot();   // (the checkpoint: its own shot since the driver got out, chkShot)
+          showMsg(!b ? (pol.goal ? 'MISIJA OPRAVLJENA!' : 'POBEGNIL SI!') : chk ? 'ARETIRAN!' : 'ULOVLJEN!', b ? 'slow' : 'fast', 4); Sfx.siren(0, 0); if (b && !chk) bustShot();   // (the checkpoint: its own shot since the driver got out, chkShot)
+          if (!rdOn) Comm.say(b ? 'busted' : ownLine(track.def, 'escaped'), null, 5);   // (a road the police radio does not know: the commentator)
         } else {
           showMsg(pos === 1 ? 'ZMAGA!' : 'CILJ! ' + pos + '. MESTO', 'gold', 4);
           Comm.say(pos === 1 ? 'win' : pos <= 3 ? 'podium' : 'finish', { pos: Comm.ordinal(pos) }, 5);

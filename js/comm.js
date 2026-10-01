@@ -19,9 +19,18 @@ const Comm = (() => {
   const LINES = {
     intro: ['Welcome to {track}! {laps} laps, thirteen cars, and you line up {grid} on the grid.', 'Good day and welcome to {track}. {laps} laps ahead, and you start from {grid}.', 'Here we are at {track}! Thirteen cars, {laps} laps, and you start {grid}.'],
     introNet: ['Welcome to {track}! Just two cars today, {laps}: you and {name}, side by side on the front row.', 'Here we are at {track} for a duel with {name} over {laps}. May the better driver win!', 'Good day and welcome to {track}! You against {name}, {laps}. Let\'s see who takes it.'],
-    // the open road (Vršič with its traffic): the duel with one rival (the run from the police has the police radio instead, game.js)
+    // the open road (Vršič, Los Caracoles: traffic both ways): the duel with one rival, the run from the police (on Vršič the police radio instead, game.js)
     introTraffic: ['Welcome to {track}, and the road is open today: traffic both ways, cyclists and people on foot. Just you and {rival}, first to the pass wins!', 'Here we are in Kranjska Gora, at the foot of {track}. A duel with {rival} through the everyday traffic. Mind the walkers in the village!', 'Welcome to {track}! No closed road this time: cars, buses and bikes coming both ways. Beat {rival} to the top!'],
     goTraffic: ["And they're off! Watch the traffic!", 'Go! Two cars racing up an open road, what could possibly go wrong?', 'Away they go! Keep your eyes on the oncoming cars!'],
+    introPolice: ['Welcome to {track}! The police want a word with you, and they are right behind. Get over the pass without getting caught!', 'Here we are in Kranjska Gora, and the blue lights are already flashing. Twelve kilometres to the pass. Do not stop!', 'Welcome to {track}! A patrol car on your tail, spike strips and roadblocks up the mountain. Run for the top!'],
+    goPolice: ['Go, go, go! The police are coming!', 'Foot down! Here come the blue lights!', 'Away you go! Do not let them box you in!'],
+    policeJoin: ['Another patrol car has joined the chase!', 'More police coming up behind you!', 'They are calling in reinforcements!'],
+    spikes: ['Spike strip ahead! Find the gap!', 'The police have laid a stinger across the road! Look for the gap at the edge!', 'Spikes on the road! Aim for the gap!'],
+    roadblock: ['Roadblock ahead! Two patrol cars across the road!', 'They have blocked the road up ahead! There is a gap at one edge!', 'Roadblock coming up! Squeeze through or go round on the verge!'],
+    flat: ['A tyre has gone! That will cost you grip.', 'Puncture! The car is going to be a handful now.', 'The spikes got you! Careful in the bends now.'],
+    policeWreck: ['That patrol car is out of the chase!', 'One police car down!', 'The police car is finished, but they will send another!'],
+    busted: ['Busted! That is the end of the road.', 'The police have got you! Game over.', 'Caught! No escape this time.'],
+    escaped: ['You made it over the pass! The police will have to wait for another day!', 'Escaped! Over the top and away!', 'What a getaway! Right over the Vrshich pass!'],
     pedHit: ['Watch out for the people!', 'Oh no, mind the pedestrians!', 'Careful! There are people on the road!'],
     bikeHit: ['A cyclist down! Careful out there!', 'Oh, that cyclist did not see you coming!', 'Mind the cyclists on the edge of the road!'],
     trafficCrash: ['Contact with the traffic!', 'Ouch, that car will need a garage.', 'Straight into the traffic! That hurt.'],
@@ -227,11 +236,12 @@ const Comm = (() => {
   // prio: 0 = ambient (named places: anything from prio 2 cuts in, it only waits in an empty queue), 1 = chatter ... 5 = finish.
   // opt.ttl = how long (ms) the line may wait in the queue. Returns the logged item (item.spoken / item.cut are set later), or null.
   function say(key, vars, prio, opt) {
-    if (!on || !speech || !synth || radioMode) return null;   // audio-only commentary: silent when sound is off (and in the run from the police: the radio)
-    if (key === 'summitRecord' || key === 'summitEven' || key === 'summit') {   // Pikes Peak's finish: its announcer (minutes read out as minutes and seconds)
+    if (!on || !speech || !synth || radioMode) return null;   // audio-only commentary: silent when sound is off (and in the run from the police on Vršič: the radio)
+    const kb = key.split('@')[0];   // (a road's own pool: key@track, see game.js ownLine)
+    if (kb === 'summitRecord' || kb === 'summitEven' || kb === 'summit') {   // Pikes Peak's finish: its announcer (minutes read out as minutes and seconds); a road's own lines keep theirs
       const t = vars && String(vars.time || ''), m = /^(\d+) minutes? ([\d.]+)$/.exec(t);
       vars = Object.assign({}, vars, { time: m ? m[1] + (m[1] === '1' ? ' minute and ' : ' minutes and ') + m[2] + ' seconds' : t });
-      key = key === 'summitEven' ? 'pkFinEven' : key === 'summit' ? 'pkFinOff' : vars.delta ? 'pkFinRec' : 'pkFinFirst';
+      if (kb === key) key = key === 'summitEven' ? 'pkFinEven' : key === 'summit' ? 'pkFinOff' : vars.delta ? 'pkFinRec' : 'pkFinFirst';
     }
     const pool = LINES[key]; if (!pool) return null;
     let k = Math.floor(Math.random() * pool.length);

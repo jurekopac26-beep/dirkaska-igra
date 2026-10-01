@@ -5,7 +5,8 @@
 // patrol cars join, knock the player's car, lay strips and block the road, some are wrecked; the autopilot mostly gets through to the
 // building at the top (the mission). Stopped with a patrol car close by: busted. A tyre over a strip goes flat (the wheels over it, not the
 // ones in the gap); flat tyres: less grip, more drag. The contacts as in GTA V (no bounce, the PIT spins a car). Down a side road: the police
-// come in after the player and pin them at its dead end.
+// come in after the player and pin them at its dead end. A road without a checkpoint or a building (Los Caracoles): the chase from the start,
+// the escape over the finish.
 //   node tests/police.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -342,6 +343,33 @@ const toCheck = (r) => { const P = r.player, K = r.pol.chk; drive(r, 120, () => 
   check('a side road: the player down it, the police after them: they hear of it (stubIn), come in after them (one that went past the junction backs up to it), one stops in its mouth at its side; at its dead end they pin the player: busted',
     ins.length === 1 && ins[0].stub === S.name && since(r, n0, 'stubEnd').length === 1 && inMax >= 2 && back && mouth && pol.busted && tEnd > 0 && r.time - tEnd < 40,
     `${S.name || 'a forest road'} at ${(S.s0 - T.startS).toFixed(0)} m (${S.L.toFixed(0)} m to its rail): ${ins.length} stubIn, ${inMax} after them in it, backed up to it: ${back}; in its mouth: ${blk ? `${(blk.q.st - S.tb).toFixed(1)} m in, ${blk.q.u.toFixed(1)} m to the side, ${blk.speed.toFixed(1)} m/s` : '-'}; at the end at ${tEnd.toFixed(1)} s, busted ${pol.busted} at ${r.time.toFixed(1)} s`);
+}
+
+// 20. a road without a checkpoint or a building (Los Caracoles: no def.polCheck, no def.hideout): the chase from the start (a patrol car on the
+//     grid behind the player, off after 2 s), over the finish at Portillo is the escape; whole runs on autopilot at the easy level: the patrol
+//     cars after it up the ladder of hairpins through the trucks, the autopilot gets away now and then (one of three runs at least)
+{
+  const CT = new C.Track(C.TRACKS.find(d => d.id === 'caracoles'));
+  const runs = [11, 12, 13].map(seed => {
+    Math.random = seeded(3);
+    const r = new C.Race(CT, opts({ seed, difficulty: 0 })), P = r.player, pol = r.pol, pc = pol.cars[0];
+    const st = { stage: pol.stage, chk: pol.chk, goal: pol.goal, n: pol.cars.length, chase: pc && pc.pol.mode === 'chase', back: pc ? P.q.s - pc.q.s : 0, locked: pc && pc.locked };
+    r.start();
+    let t = 0, k = 0, ev = 0, nan = false, off2 = null; const evs = {};
+    while (t < 900 && !P.finished) {
+      Math.random = seeded(5000 + (++k));
+      C.aiControl(P, r, DT); r.step(DT); t += DT;
+      if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P);
+      if (off2 == null && pc && !pc.locked) off2 = t;
+      if (pol.ev !== ev) { for (const e of pol.log) if (e.n > ev) evs[e.k] = (evs[e.k] || 0) + 1; ev = pol.ev; }
+      if (k % 60 === 0 && !finite(r)) nan = true;
+    }
+    Math.random = orig;
+    return { seed, st, off2, evs, nan, t, escaped: pol.escaped && !pol.busted && P.finished && evs.escaped === 1 && !evs.hideout, busted: pol.busted && pol.arrestK === 'chase', at: P.q.s - CT.startS };
+  });
+  check('a road without a checkpoint (Los Caracoles): the chase from the start (a patrol car on the grid behind the player, off after 2 s), the escape over the finish (no building); on autopilot at the easy level it gets away now and then',
+    runs.every(r => r.st.stage === 'chase' && !r.st.chk && !r.st.goal && r.st.n === 1 && r.st.chase && r.st.back > 10 && r.st.back < 45 && r.st.locked && r.off2 > 1.9 && r.off2 < 2.2 && !r.nan && (r.evs.join || 0) >= 1 && (r.escaped || r.busted)) && runs.some(r => r.escaped),
+    runs.map(r => `seed ${r.seed}: ${r.escaped ? 'escaped' : r.busted ? 'busted' : '-'} in ${r.t.toFixed(0)} s at ${r.at.toFixed(0)} m (a patrol car ${r.st.back.toFixed(0)} m behind at the start, off at ${r.off2 != null ? r.off2.toFixed(1) : '-'} s)`).join('; '));
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
