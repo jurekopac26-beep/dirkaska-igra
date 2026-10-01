@@ -7,15 +7,17 @@
 //  - the showroom: the vehicle over a whole turn stays on the screen and off the car panel, in landscape (844x390) and portrait (390x844)
 //  - the caches: after the car menu has been through every car, one colour-neutral body per model and at most two showroom copies
 //  - no seeing through the car (each vehicle with a look, on a flat background): each wheel arch from low at its side shows its tub over the
-//    tyre, the front right rim from three quarters its barrel (never the background); the car's own colours: every vehicle in every player's
-//    and rival's colour, stripe on and off, no vertex but the glass within 0.06 of a glass colour (Render.kitGlassNear)
+//    tyre, the front right rim from three quarters its barrel (never the background); an open top (Render.kitInfo(id).openings: a
+//    cockpit, a bed) from above and from behind, the front and the side at 55 degrees shows its lining, floor, bulkheads, never the
+//    background; the car's own colours: every vehicle in every player's and rival's colour, stripe on and off, no vertex but the glass
+//    within 0.06 of a glass colour (Render.kitGlassNear)
 //  - in a race (Bakreni gozd: a pit track, the pit crew knows the car), each vehicle as the player and as a rival: the draw calls of its
 //    meshes alone (the rest of the scene hidden, frustum culling off, one frame, every pass counted as perf.test.mjs does): the player
 //    <= 14, a rival <= 9; the four wheels exactly on the physics' hubs (the front ones at M.a, the rear at -M.b, at rw, at +-hw; the left
 //    ones mirrored), the player's casting shadows, a rival's not; the pit crew's hubs (crDims) on the wheel meshes (1 cm); the intact car
 //    drawn with its outer shell only; the cockpit's style (open / kart / formula: Render.cockpit.open); the materials the graphics test
 //    expects ('dirtyCarCg' bodies, 'carCg' paint); no colour that is not glass within 0.06 of a glass colour (the glass glints and breaks by
-//    its colour); the start number lit on every K.number panel; a part lost: the whole buffer in the chase view, the outer shell only from
+//    its colour); the start number lit on every K.number panel; the driver sees out (no pane of glass ahead of the eyes turned to them); a part lost: the whole buffer in the chase view, the outer shell only from
 //    the cockpit; a crushed roof (roofDmg 1) only inside body.crush, its noCrush ranges moved whole, the lining with its shell (the twins),
 //    the cabin unmoved; dents never move a noDent range
 //  - the field's cost: each one-make field (fieldN may cap it) on Jezero and the Nordschleife, within tests/golden/perf.json's phone budget
@@ -134,7 +136,31 @@ try {
   }), looks);
   T.check(`no seeing through the car: each wheel arch from low at its side (the tub over the tyre), the front right rim from three quarters (its barrel), on a flat background`,
     SEE.length === looks.length && SEE.every(r => !r.bad.length), (SEE.some(r => r.bad.length) ? SEE.filter(r => r.bad.length) : SEE).slice(0, 4).map(r => r.id + ': ' + (r.bad.length ? r.bad.join(', ') : r.arches + ' arches, the rim: clear')).join(' | '));
-  // ---- 3c. the car's own colours off the glass: every vehicle in every player's and rival's colour, stripe on and off (a shade of a dark paint
+  // ---- 3c. no seeing through an open top (a loft panel null: a roadster's cockpit, a pickup's bed; Render.kitInfo(id).openings): the
+  //          showroom car alone on a flat magenta background, each opening from above and from behind, the front and the side at 55
+  //          degrees: inside it (6 cm in from its edges, at its rim's height) no pixel of the background: its lining, floor, bulkheads,
+  //          rims and the wheels' housings (the outer shell, drawn while the car is whole) close it ----
+  const OPEN = await page.evaluate((ids) => ids.map(id => {
+    const I = Render.kitInfo(id), W = 480, H = 270, bad = [], c = Math.cos(55 * Math.PI / 180), s = Math.sin(55 * Math.PI / 180);
+    for (const [k, op] of (I.openings || []).entries()) for (const [what, D] of [['above', [0, -1, 0]], ['behind', [c, -s, 0]], ['the front', [-c, -s, 0]], ['the side', [0, -s, c]]]) {
+      const x0 = op.x[0] + 0.06, x1 = op.x[1] - 0.06, z = op.z - 0.06, T = [(op.x[0] + op.x[1]) / 2, op.y, 0], d = Math.max(op.x[1] - op.x[0], 2 * op.z) * 1.25 / Math.tan(17 * Math.PI / 180);
+      if (!(x1 > x0 && z > 0)) continue;
+      const cv = Render.carShot({ id, color: 0x2f6fd6, bg: 0xff00ff, blob: false, floor: false, grid: false, w: W, h: H, cam: { p: [T[0] - D[0] * d + (D[1] === -1 ? 0.001 : 0), T[1] - D[1] * d, T[2] - D[2] * d], t: T, fov: 34 },
+        mark: [[x0, op.y, -z], [x1, op.y, -z], [x1, op.y, z], [x0, op.y, z]] });
+      const px = cv.getContext('2d').getImageData(0, 0, W, H).data, Q = cv.marks, sgn = (a, b, p) => (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0]);
+      let inside = 0, mag = 0;
+      for (let py = Math.max(0, Math.floor(Math.min(...Q.map(q => q[1])))); py <= Math.min(H - 1, Math.ceil(Math.max(...Q.map(q => q[1])))); py++)
+        for (let pxx = Math.max(0, Math.floor(Math.min(...Q.map(q => q[0])))); pxx <= Math.min(W - 1, Math.ceil(Math.max(...Q.map(q => q[0])))); pxx++) {
+          const p = [pxx + 0.5, py + 0.5], sd = [0, 1, 2, 3].map(i => sgn(Q[i], Q[(i + 1) % 4], p)); if (!(sd.every(v => v >= 0) || sd.every(v => v <= 0))) continue;
+          inside++; const o = (py * W + pxx) * 4; if (px[o] > 190 && px[o + 1] < 80 && px[o + 2] > 190) mag++; }
+      if (mag || inside < 50) bad.push(`opening ${k} from ${what}: ${mag} of ${inside} pixels the background`);
+    }
+    return { id, n: (I.openings || []).length, bad };
+  }), looks);
+  const opened = OPEN.filter(r => r.n);
+  T.check(`no seeing through an open top: each opening of a look (Render.kitInfo(id).openings) from above, behind, the front and the side (55 degrees) on a flat background, nothing of it inside (${opened.length} of ${OPEN.length} looks open)`,
+    OPEN.length === looks.length && OPEN.every(r => !r.bad.length), (OPEN.some(r => r.bad.length) ? OPEN.filter(r => r.bad.length).map(r => r.id + ': ' + r.bad.slice(0, 3).join(', ')) : opened.map(r => r.id + ' ' + r.n)).slice(0, 4).join(' | ') || 'no open top among the looks yet');
+  // ---- 3d. the car's own colours off the glass: every vehicle in every player's and rival's colour, stripe on and off (a shade of a dark paint
   //          near a glass colour would glint and break as glass): no vertex but the glass within 0.06 of a glass colour ----
   const COL = await page.evaluate(() => {
     const hex = (s) => { const m = /rgb\((\d+), (\d+), (\d+)\)/.exec(s); return m ? (+m[1] << 16) | (+m[2] << 8) | +m[3] : null; };
@@ -176,6 +202,14 @@ try {
       // the start number: on each K.number panel as many lit bars as the number has
       let num = null; if (U.nums) { const n = P.num, seg = [6, 2, 5, 5, 4, 5, 6, 3, 7, 6], want2 = n >= 10 ? seg[Math.floor(n / 10)] + seg[n % 10] : seg[n];
         num = U.nums.map(Q => { let lit = 0; for (const sl of Q.slots) for (const q of sl) if (q && Math.abs(col[q[0] * 3] - Q.on[0]) < 1e-4 && Math.abs(col[q[0] * 3 + 1] - Q.on[1]) < 1e-4 && Math.abs(col[q[0] * 3 + 2] - Q.on[2]) < 1e-4) lit++; return lit === want2; }).every(Boolean); }
+      // the driver sees out: no pane of glass of the outer shell ahead of the eyes (within 70 degrees of straight ahead) faces them (the
+      // glass is an opaque colour: a pane turned to the driver, a K.plate or K.box of glass, is a dark wall from the seat)
+      const eye = [E.body.eye.x * M.len / E.body.len, E.body.eye.y, 0], pa0 = geo.attributes.position.array; let wall = 0;
+      for (let t = 0; t < U.outerN / 3; t++) { const o = t * 9; if (!FL.GL.some(G => Math.abs(col[o] - G[0]) < 1e-6 && Math.abs(col[o + 1] - G[1]) < 1e-6 && Math.abs(col[o + 2] - G[2]) < 1e-6)) continue;
+        const A = [pa0[o], pa0[o + 1], pa0[o + 2]], B = [pa0[o + 3], pa0[o + 4], pa0[o + 5]], Cc = [pa0[o + 6], pa0[o + 7], pa0[o + 8]], c = [0, 1, 2].map(i => (A[i] + B[i] + Cc[i]) / 3), d = [c[0] - eye[0], c[1] - eye[1], c[2] - eye[2]], dl = Math.hypot(...d);
+        if (!(d[0] > 0.05 && d[0] / dl > Math.cos(70 * Math.PI / 180))) continue;
+        const u = [B[0] - A[0], B[1] - A[1], B[2] - A[2]], w = [Cc[0] - A[0], Cc[1] - A[1], Cc[2] - A[2]], nn = [u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0]];
+        if (nn[0] * d[0] + nn[1] * d[1] + nn[2] * d[2] < 0) wall++; }   // (its face turned to the eyes: drawn from the seat)
       // a rival of this vehicle (its own field), else one of the field put into it for the count
       let A = R.cars.find(c => !c.isPlayer && c.m === M), swapped = null;
       if (!A) { A = R.cars.find(c => !c.isPlayer); swapped = A.m; A.m = M; Render.attachRace(R); Render.frame(0, 1, P, 'chase', { noFx: true }); }
@@ -208,7 +242,7 @@ try {
       let ndMoved = 0, dMoved = 0; for (const [s0, s1] of UP.noDent || []) for (let i = s0; i < s1; i++) if (mv(i, P1) > 1e-6) ndMoved++;
       for (let i = 0; i < UP.N; i++) if (mv(i, P1) > 1e-6) dMoved++;
       const crushOk = cr.outside === 0 && cr.spread < 1e-4 && cr.lining === 0 && cr.stray === 0 && ndMoved === 0 && dMoved > 0;
-      return { id, pc, ac, why, crew, outer, keys: [...new Set(keys)], near, nearC, num, aiW, st, ck: ck && { open: ck.open, formula: ck.formula }, ckOk, lod, cr, ndMoved, crushOk, swapped: !!swapped, fieldN: R.cars.length - 1 };
+      return { id, pc, ac, why, crew, outer, keys: [...new Set(keys)], near, nearC, num, wall, aiW, st, ck: ck && { open: ck.open, formula: ck.formula }, ckOk, lod, cr, ndMoved, crushOk, swapped: !!swapped, fieldN: R.cars.length - 1 };
     }, m.id);
     R4.push(r);
   }
@@ -225,6 +259,7 @@ try {
     R4.every(r => r.lod.ok), R4.filter(r => !r.lod.ok).concat(R4).slice(0, 4).map(r => `${r.id} (${r.lod.lose} off): chase / cockpit / chase / back ${r.lod.got.join(' / ')} of ${r.lod.want.join(' / ')}`).join(' | '));
   T.check('a crushed roof: nothing moves outside the roof\'s footprint (body.crush), a noCrush range only whole, the lining with its shell (each point by its twin), the cabin and floor stay; dents never move a noDent range',
     R4.every(r => r.crushOk), R4.filter(r => !r.crushOk).concat(R4.filter(r => r.cr.nc || r.cr.moved)).slice(0, 4).map(r => `${r.id}: ${r.cr.moved} moved, ${r.cr.outside} outside, noCrush ${r.cr.nc} (spread ${r.cr.spread.toFixed(4)}), lining off ${r.cr.lining}, stray ${r.cr.stray}, noDent moved ${r.ndMoved}`).join(' | '));
+  T.check('the driver sees out: no pane of glass ahead of the eyes faces them (an opaque two-sided pane would be a wall from the seat)', R4.every(r => r.wall === 0), R4.filter(r => r.wall).slice(0, 4).map(r => `${r.id}: ${r.wall} glass triangles facing the eyes`).join(' | '));
   T.check('the cockpit by the look\'s eye style (closed: the roof and pillars; open / kart / formula: Render.cockpit.open; kart / formula: the formula\'s wheel)', R4.every(r => r.ckOk),
     R4.filter(r => !r.ckOk).concat(R4.filter(r => r.st !== 'closed')).slice(0, 5).map(r => `${r.id} ${r.st} ${JSON.stringify(r.ck)}`).join(', '));
   T.check('the materials the graphics test expects: the bodies \'dirtyCarCg\', any paint \'carCg\' (player and rival)', R4.every(r => r.keys.length && r.keys.every(k => k === 'body:dirtyCarCg' || k === 'paint:carCg')),

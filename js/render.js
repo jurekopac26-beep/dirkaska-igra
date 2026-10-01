@@ -761,26 +761,31 @@ const Render = (function () {
                       open sports racers, buggies), 'formula' (the formula car's wheel with its display), 'kart' (a round kart wheel on three
                       spokes, a small display in its hub). wheel: { r, tilt } a closed / open cockpit's steering wheel (its radius, metres; its
                       lean from the horizontal, rad; its rim's top under the instruments); default a car's (r 0.18, tilt 0.78), a truck's
-                      (category tovornjaki) { r: 0.27, tilt: 0.61 } (big and flat, the dashboard a little further forward)
+                      (category tovornjaki) { r: 0.27, tilt: 0.61 } (big and flat, the dashboard a little further forward). An open top (see
+                      AN OPEN TOP) must give eye { x, y, style }: the build fails without its y and style (the default's y is under a roof)
        decalX, decalY, decalRz, decalS   the start number: its middle (x look units, y metres: it lies 12 mm over that), its tilt along x
                       (rad), its size (S 1: a disc 0.82 m across). Default, from the first K.loft: on its roof, between its first 'r' section
                       and the windscreen's top, 5 cm inside those ends, as big as lies flat (S <= 1): a plane touching the roof's highest point
                       under it, tilted along it, at most 6 mm over the roof anywhere under it (the crown's sides falling away included); of
-                      the biggest, the flattest place, then the one nearest the roof's middle. No roof there (an open top: col null): give
-                      them (on the bonnet, the engine cover, a deck)
+                      the biggest, the flattest place, then the one nearest the roof's middle; never over (or within 2 cm of) a segment
+                      whose top has a panel null (e 3..5). No roof left there (an open top): give them (on the bonnet, the engine cover, a
+                      deck): the build fails asking for them
        decalPart      the part it lies on (it goes with that part, stage B2; default: the body's roof). More numbers: K.number
        lamps          [[x, y, z] head, [x, y, z] tail]: the right-hand glow points (the left mirrored). Default: the middle of the right-hand
                       K.headLamp / K.tailLamp calls (no K.headLamp / K.tailLamp at all: no glow there, no night beam)
        engine         [x, y] where a burning engine's fire and smoke come from (default: K.engine's top; else 60 % of the way to the nose,
                       to the tail with engRear); engRear: the engine behind the driver (true / false)
        wz             the wheels' centres this far in from the half width (default wheels.w / 2 + 0.01: the tyre's face 1 cm inside the side)
-       door           [x0, x1] the doors' front and rear edges (default: the windscreen's base, or just behind the front arch, and 1.15 back)
+       door           [x0, x1] the doors' front and rear edges, either order (default: the windscreen's base, or just behind the front arch,
+                      and 1.15 back)
        bumpF, bumpR   the bumper regions' depth from the nose / tail (default 30 % of the overhang past the arch, 0.06..0.2)
        bumpY          [front, rear] the bumpers' tops (default 45 % of the way from yb to ybelt at the nose / tail): the loft's end caps split
                       there (below: the bumper; above: the body at the nose, a hatchback's tailgate (trunk) or the body at the tail)
-       crush          { x0, x1, z } (metres) the roof's footprint a crushed roof sinks in (default: the rear glass to the windscreen's top
-                      + 0.25, the roof's widest half width; it fades out over 15 cm in x, 10 cm in z; x1 <= x0 or z 0: nothing crushes, a
-                      kart; no loft: none); cage: true (a roll cage in the closed cockpit)
+       crush          { x0, x1, z } (metres; x0 its rear end <= x1 its front end, z >= 0: else the build fails) the roof's footprint a
+                      crushed roof sinks in (default: the rear glass to the windscreen's top + 0.25, the roof's widest half width; it fades
+                      out over 15 cm in x, 10 cm in z; { x0: 0, x1: 0, z: 0 } (x0 = x1, or z 0): nothing crushes, a kart; no loft: none). An
+                      open top must give it (a hoop's or a windscreen frame's footprint, or nothing); cage: true (a roll cage in the closed
+                      cockpit)
        Derived by the build (do not set): nose, tail (the outer shell's ends, metres), hw (the hubs' z, metres), height; the decal's four
                       when neither decalX nor decalY is given
      look.wheels: { style, w, wR, rim, tyre, cap, spokes, dual, rimK, gap, arch }
@@ -838,9 +843,24 @@ const Render = (function () {
        panel; the cockpit looks out through the glass). A panel whose colour is K.GLASS is glass; mark the others that are (a painted panel
        under a GLASS decal) with the loft's glass(k, e, kind, at). The lining and the cabin are a fixed dark colour. A crushed roof takes
        the lining with its shell (each lining point follows the shell's point it is inset from); the cabin, the floor and the engine stay.
-       The car the cockpit camera sits in draws its outer shell only (no lining, cabin or engine bay from the driver's seat).
+       The car the cockpit camera sits in draws its outer shell only (no lining, cabin or engine bay from the driver's seat). The glass is
+       an opaque colour, seen from outside only: the loft's panels are one-sided (from inside they are not drawn: the driver sees out). A
+       pane of its own (a roadster's windscreen, a buggy's screen) must be one-sided too: K.face / K.rect facing out (forward); a K.plate
+       or K.box of K.GLASS is a dark wall in the cockpit's view
+     AN OPEN TOP: col null for a panel (e 1..7) opens the loft there (a roadster's or an open racer's cockpit, a pickup's bed, a cut-out in
+       a side). Such a segment, with the glazed ones next to it (closed, glass in their top: the windscreen the driver looks out through),
+       is lined in the OUTER shell (drawn while the car is whole, counted in the outer budget): the lining of its panels, its floor (at the
+       sill's height; over a wheel only inside the tub's wall), a rim on every free edge (a door's top: the shell's edge to its lining's),
+       a bulkhead where it meets a closed segment (the section's ring in the lining's colour, down to the floor: the firewall, the
+       bulkhead behind the seats, a bed's headboard), the end cap's lining at the loft's end, the wheel tubs under it from inside too
+       (the wheel's housing in a bed). The defaults assume a roof: an open top (the main loft's roof, kind 'r', open on top) must give
+       body.eye { x, y, style } and body.crush, and the default start number never lies over a hole (no roof left: give decalX /
+       decalY); the build fails asking for them. Render.kitInfo(id).openings: the openings seen from above (the fleet test looks into
+       them on a flat background: nothing but the car there). A sunroof in a closed roof is a glass panel, not a null one (null would
+       wall the cabin off at its ends)
      BUDGETS (triangles, the body's outer shell / inner block): a car 1400 / 800; a truck, the limousine, the monster truck 2400 / 1200.
-       Render.kitInfo(id).tris; the fleet test checks them. The loft is the bulk: each segment costs 18 (+ 18 lining); prefer K.face /
+       Render.kitInfo(id).tris; the fleet test checks them. The loft is the bulk: each segment costs 18 (+ 18 lining: the inner block's,
+       an open top's the outer's); prefer K.face /
        K.rect (2 triangles) for flat stripes, plates and badges, 6- to 10-sided discs and tubes.
 
      K (inside build(K)):
@@ -864,8 +884,8 @@ const Render = (function () {
                                regions); tk: the bottom tuck's height (default 0.14; the ring: (yb, 0.93 w) -> (yb + tk, w) -> (ybelt, w) ->
                                (yt, wt) -> (yt + cr, 0.38 wt), mirrored). A segment's panels e = 0..8: 0 the right tuck, 1 the right side,
                                2 the right window band, 3 the right top edge, 4 the crown, 5..8 the left ones (5 edge, 6 window, 7 side, 8 tuck)
-       K.loft(secs, col, o)    the shell through the sections (rows or K.secs). col(k, e, kind, at) -> a colour (null: no panel there: an
-                               open top) for panel e of the author's segment k (its kind), at: { x (metres), xa, xb (the cut segment), arch (in
+       K.loft(secs, col, o)    the shell through the sections (rows or K.secs). col(k, e, kind, at) -> a colour (null: no panel there: see AN
+                               OPEN TOP) for panel e of the author's segment k (its kind), at: { x (metres), xa, xb (the cut segment), arch (in
                                a wheel arch: e 0 / 8 are then the arch's ledge) }. o: { glass(k, e, kind, at): a glass panel (no lining), lining:
                                false, floor: false, arches: false | [{ x, r?, y? }] (default: both axles: the lower edge follows the arch, a
                                ledge at its rim, a dark tub over the tyre), tubs: false, tubCol, caps: false | { front, rear: false | { col,
@@ -890,8 +910,10 @@ const Render = (function () {
                                (dir 1) or -x (-1)
        K.wingPlank(x0, y0, x1, y1, th, z0, z1, col, o)   a wing element from its leading (x0, y0) to its trailing edge (x1, y1), th thick
        K.endplate(pts [[x, y] ...], z, th, col, o)      a plate in the x-y plane at z (endplates, fins)
-       K.skin(rings, col(k, e) | colour, capA, capB, o) a loft through rings of points (all the same count): noses, pods, tubs, boat tails
-       K.sweep(profile [[u, v] ...], path [[x, y, z] ...], col, o)   a profile along a path (u across, v up); o: { capA, capB, scale(i) }
+       K.skin(rings, col(k, e) | colour, capA, capB, o) a loft through rings of points (all the same count; each ring convex and closed:
+                               its last point joins its first): noses, pods, tubs, boat tails, stacks, snorkels; along any axis (each end cap
+                               faces away from its neighbour ring)
+       K.sweep(profile [[u, v] ...], path [[x, y, z] ...], col, o)   a profile (convex) along a path (u across, v up); o: { capA, capB, scale(i) }
        K.flare(x, r0, r1, z0, z1, col, o)   a wheel-arch extension over the wheel at x: radius r0..r1 (metres: round whatever the look's
                                scale), from z0 (in) to z1 (out); o: { n, a0, a1, y }
        K.tyre(x, y, z, o)      a wheel with its tyre in the body (a spare: on a tailgate, in a bed, on a deck): the look's own wheel (a
@@ -921,8 +943,8 @@ const Render = (function () {
                                off; an exposed cage or frame on a closed body (a buggy's, an exo-cage): o.inner false; outer for an open one)
        K.driver(x, y, z, o)    an open vehicle's driver, (x, y, z) the helmet's centre: helmet, torso, arms (and legs) in 'body', noCrush and
                                noDent; o { r, helmet, band, suit, glove, boot, neck (the collar's colour), lean (the torso's lean back, rad),
-                               hands ([x, y, z] the right hand), feet ([x, y, z] the right foot: the legs drawn too), knee }. About 340
-                               triangles with the legs
+                               hands ([x, y, z] the right hand), feet ([x, y, z] the right foot: the legs drawn too), knee }. About 240
+                               triangles, 356 with the legs
        K.lookOf(id)            another vehicle's look (draw it and add to it: look.build(K), then the differences)
        K.rgb, K.shade, K.mix, the colours: see COLOURS
 
@@ -946,15 +968,17 @@ const Render = (function () {
        The regions do the rest: the bonnet, the tailgate with its glass, the fenders, the doors (their glass too), the quarters.
      CHECKING A LOOK: node tools/carshots.mjs <id> (test-results/carshots/<id>/sheet.png: the views with the grid and the target box, the
        cut-away (the inside), the chase camera, the wreck, the cockpit); --cat <category> (the category side by side). Render.kitStatus(id),
-       Render.kitInfo(id) (ranges with their centroids, budgets, regions, wheels, tubs (the wheel tubs, metres); no id: the caches'
-       sizes). A part's range should lie where the core throws it from (its debris spawns at the part table's lx, lz, y): move the table's
+       Render.kitInfo(id) (ranges with their centroids, budgets, regions, wheels, tubs (the wheel tubs, metres), openings (an open top's,
+       seen from above: { x: [x0, x1], z (half width), y (the rim) }, metres); no id: the caches' sizes); Render.kitTry(id, look) (a look
+       built on vehicle id's model, not cached: { status, geo (the caller disposes it), body, tris, openings, tubs }: try one out). A part's range should lie where the core throws it from (its debris spawns at the part table's lx, lz, y): move the table's
        entry (parts.over / extra) to the range's centroid when the look puts the part elsewhere (a cab-over's doors, a hatch's tailgate).
        Render.carShot(o) a picture of the showroom car (a canvas): o { id, color, num, view (side front rear top: near-orthographic, with
        the grid, o.box [L, W, H] and the hubs; 34f 34r), w, h, span, at, cut (part ids off: the inside), grid, floor (false: no turntable),
        bg (a flat background colour), blob (false: no shadow blob), cam ({ p, t, fov }: a camera of its own, car frame), mark (points, car
        frame: the canvas's .marks are their pixels) }; Render.kitGlassNear(id, color, stripe) (a car's copy: how many vertices are near a
        glass colour without being glass). node tests/browser/fleet.test.mjs (FLEET_ONLY=<id>): the budgets, the showroom's framing, the
-       wheels, no seeing through the arches or the rims, the colours, the cockpit, a lost part's and a crushed roof's ranges, the field's cost.
+       wheels, no seeing through the arches, the rims or an open top, the colours, the cockpit (and the driver seeing out of it), a lost
+       part's and a crushed roof's ranges, the field's cost. node tests/kit.test.js: the kit's own rules on test looks (no browser)
      ===================================================================================================================================== */
   // ---- the kit's fixed colours and tables ----
   const KIT_LINE = [0.16, 0.15, 0.14], KIT_SEAT = [0.21, 0.2, 0.19], KIT_GL2 = [0.04, 0.05, 0.08], KIT_LENS_OUT = [0.22, 0.23, 0.25];   // lining / cabin, seats, the rally's glass, a smashed lens
@@ -1052,6 +1076,7 @@ const Render = (function () {
     const out = { kit: true, len, wid, roofY, secs, spoiler: false, eye, wz: b.wz != null ? b.wz : W.wz, engRear: !!b.engRear, noHead: !!b.noHead,
       crush: b.crush || (b.secs == null ? { x0: 0, x1: 0, z: 0 } : { x0: (gr.length ? gr[0].x : rS[0].x) * (M.len / len), x1: gfx * (M.len / len) + 0.25, z: Math.max(...S.map(q => q.wt)) * (M.wid / wid) }) };   // (metres: the roof's footprint, between the rear glass and the windscreen; no loft: none)
     if (!(out.crush && [out.crush.x0, out.crush.x1, out.crush.z].every(Number.isFinite))) kitFail('body.crush: { x0, x1, z } (metres)');
+    if (b.crush && (b.crush.x0 > b.crush.x1 || b.crush.z < 0)) kitFail('body.crush: { x0 (its rear end) <= x1 (its front end), z >= 0 } (metres; { x0: 0, x1: 0, z: 0 }: nothing crushes)');
     for (const k of ['decalX', 'decalY', 'decalRz', 'decalS', 'decalPart', 'lamps', 'engine', 'cage', 'door', 'bumpF', 'bumpR', 'bumpY']) if (b[k] != null) out[k] = b[k];
     if (out.lamps && !(Array.isArray(out.lamps) && out.lamps.length === 2 && out.lamps.every(p => Array.isArray(p) && p.length === 3 && p.every(Number.isFinite)))) kitFail('body.lamps: [[x, y, z] head, [x, y, z] tail] (the right-hand ones)');
     if (out.engine && !(Array.isArray(out.engine) && out.engine.length === 2 && out.engine.every(Number.isFinite))) kitFail('body.engine: [x, y]');
@@ -1071,7 +1096,7 @@ const Render = (function () {
     const ra = M.rw + W.gap, fx = M.a, rx = -M.b;
     const bF = B.bumpF != null ? B.bumpF * kx.sx : clamp(0.3 * (xN - fx - ra), 0.06, 0.2), bR = B.bumpR != null ? B.bumpR * kx.sx : clamp(0.3 * (rx - ra - xT), 0.06, 0.2);
     const yBF = B.bumpY ? B.bumpY[0] : P(xN, 'yb') + 0.45 * (P(xN, 'ybelt') - P(xN, 'yb')), yBR = B.bumpY ? B.bumpY[1] : P(xT, 'yb') + 0.45 * (P(xT, 'ybelt') - P(xT, 'yb'));
-    const xD0 = B.door ? B.door[0] * kx.sx : Math.min(xWs - 0.02, fx - ra - 0.03), xD1 = B.door ? B.door[1] * kx.sx : Math.max(xD0 - 1.15, rx + ra + 0.12);
+    const xD0 = B.door ? Math.max(B.door[0], B.door[1]) * kx.sx : Math.min(xWs - 0.02, fx - ra - 0.03), xD1 = B.door ? Math.min(B.door[0], B.door[1]) * kx.sx : Math.max(xD0 - 1.15, rx + ra + 0.12);   // (body.door: its two edges, either order)
     const hatch = xRgBot - xT < 0.35;   // (the rear glass down to the tail: a hatchback's tailgate takes it with it; else a boot lid behind it)
     let ybMin = 9, ytMax = -9; for (let x = xD1; x <= xD0 + 1e-9; x += Math.max(0.01, (xD0 - xD1) / 8)) { ybMin = Math.min(ybMin, P(x, 'yb')); ytMax = Math.max(ytMax, P(x, 'yt')); }
     const R = [], add = (part, o) => { if (part in PT) R.push(Object.assign({ part }, o)); };
@@ -1103,7 +1128,7 @@ const Render = (function () {
   // ---- one vehicle's build: the context (K is its face) ----
   function kitCtx(M, look, body, fb) {
     const sx = M.len / body.len, sz = M.wid / body.wid, PT = Core.partsOf(M);
-    const kx = { M, look, body, fb, sx, sz, PT, B: new Map(), order: [], ex: null, pr: null, inner: 0, hinges: {}, heads: [], tails: { L: new GB(), R: new GB() }, tailAt: [], engineAt: null, nums: [], twins: new Map(), tubs: [],
+    const kx = { M, look, body, fb, sx, sz, PT, B: new Map(), order: [], ex: null, pr: null, inner: 0, hinges: {}, heads: [], tails: { L: new GB(), R: new GB() }, tailAt: [], engineAt: null, nums: [], twins: new Map(), tubs: [], openings: [],
       S: body.secs.map(kitRow).map(q => Object.assign(q, { x: q.x * sx, w: q.w * sz, wt: q.wt * sz })), wheels: kitWheelSpec(M, look), regions: null, lofts: 0 };
     kx.g = new KitGB(kx);
     kx.partOk = (n) => { if (n === 'body') return; if (typeof n !== 'string' || !(n in PT) || PT[n].wh != null) kitFail('part "' + n + '" is not in this vehicle\'s part table (body, ' + Object.keys(PT).filter(k => PT[k].wh == null).join(', ') + ')'); };
@@ -1206,14 +1231,32 @@ const Render = (function () {
       for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[(i + 1) % pts.length], kp = keep(p), kq = keep(q); if (kp) out.push(p); if (kp !== kq) { const t = (cut - p[1]) / (q[1] - p[1]); out.push([p[0] + (q[0] - p[0]) * t, cut, p[2] + (q[2] - p[2]) * t]); } }
       return out; };
     if (lining) for (const q of S) { const R = ring(q), Ri = ringIn(q); for (let i = 0; i < 10; i++) twin(Ri[i], R[i]); }
-    for (let j = 0; j < S.length - 1; j++) {
-      const a = S[j], b = S[j + 1], A = ring(a), Bv = ring(b), Ai = ringIn(a), Bi = ringIn(b), kind = a.k, ko = a.ko, xm = (a.x + b.x) / 2;
-      const info = { x: xm * sx, xa: a.x, xb: b.x, arch: !!(a.arch && b.arch) || (archAt(a.x) && archAt(b.x)) };
+    // the panels' colours (col asked once a panel, segment by segment) and which of them are glass. A segment is OPEN with a panel null in
+    // e 1..7 (its inside seen from outside: an open top, a pickup's bed, a cut-out in a side), GLAZED when closed with glass in its top (a
+    // windscreen: the view out of an open top goes through it). A run of open and glazed segments with an open one in it is lined in the
+    // OUTER shell (drawn while the car is whole, counted in the outer budget): its lining and floor, a bulkhead where it meets a closed
+    // segment, the end cap's lining at the loft's end, a rim on every free edge (a door's top), the wheel tubs under it from inside too
+    const NS = S.length - 1, CL = [], GL = [];
+    for (let j = 0; j < NS; j++) {
+      const a = S[j], b = S[j + 1], xm = (a.x + b.x) / 2, info = { x: xm * sx, xa: a.x, xb: b.x, arch: !!(a.arch && b.arch) || (archAt(a.x) && archAt(b.x)) }, row = [], gl = [];
+      for (let e = 0; e < 9; e++) { const c = col(a.ko, e, a.k, info); row.push(c == null ? null : c); gl.push(c != null && (kitIsGlass(c) || !!(o.glass && o.glass(a.ko, e, a.k, info)))); }   // (null: no panel there: an open top, a cut-out)
+      CL.push(row); GL.push(gl);
+    }
+    const open = CL.map(r => r.some((c, e) => e >= 1 && e <= 7 && c == null)), glazed = CL.map((r, j) => !open[j] && [3, 4, 5].some(e => r[e] != null && GL[j][e]));
+    const vol = new Array(NS).fill(false);
+    if (lining) for (let j = 0; j < NS;) { if (!open[j] && !glazed[j]) { j++; continue; } let k = j, any = false; while (k < NS && (open[k] || glazed[k])) any = open[k++] || any; if (any) for (let i = j; i < k; i++) vol[i] = true; j = k; }
+    const anyVol = vol.some(Boolean), PP = [];   // (PP[j][e]: panel e's parts at its lower / upper edge: { lo, hi } (two for a side panel cut at a bumper's top))
+    const yF = (x) => kitProp(secs, x, 'yb') + 0.03;   // (the floor's height at x: the sill's)
+    for (const A of arches) if (A.half > 0.02) { const s0 = at(A.c); A.zo = s0.w * 0.93 - 0.004; A.zi = Math.max(0.12, Math.min(A.zo - 0.08, (M.wid / 2 - kx.body.wz - Math.max(W.w, W.wR) / 2 - 0.05) / kx.sz));
+      A.vol = anyVol && vol.some((v, j) => v && S[j + 1].x > A.c - A.half + 1e-6 && S[j].x < A.c + A.half - 1e-6); }   // (the wheel tub's outer and inner walls (look units); A.vol: an open run over this wheel)
+    for (let j = 0; j < NS; j++) {
+      const a = S[j], b = S[j + 1], A = ring(a), Bv = ring(b), Ai = ringIn(a), Bi = ringIn(b), xm = (a.x + b.x) / 2, inn = !vol[j], pp = []; PP.push(pp);
       const inside = [xm, (Math.min(a.yb, b.yb) + Math.min(a.yt, b.yt)) * 0.5, 0];
       for (let e = 0; e < 9; e++) {
-        const c = col(ko, e, kind, info); if (c == null) continue;   // (null: no panel there: an open top, a cut-out)
-        const glass = kitIsGlass(c) || !!(o.glass && o.glass(ko, e, kind, info)), side = e < 4 ? 'R' : e > 4 ? 'L' : '';
+        const c = CL[j][e]; if (c == null) continue;
+        const glass = GL[j][e], side = e < 4 ? 'R' : e > 4 ? 'L' : '';
         const sp = explicit ? null : kx.panelCut(xm * sx, KIT_BAND[e], side, Math.min(A[e][1], Bv[e][1], A[e + 1][1], Bv[e + 1][1]), Math.max(A[e][1], Bv[e][1], A[e + 1][1], Bv[e + 1][1])), part = sp ? sp.part : null;
+        pp[e] = sp ? (sp.cut != null ? { lo: sp.lo, hi: sp.hi } : { lo: part, hi: part }) : null;
         if (sp && sp.cut != null) {   // (a side panel cut at a bumper's top: the corner below it leaves with the bumper, the rest with the next region)
           for (const [below, prt] of [[true, sp.lo], [false, sp.hi]]) {
             const Po = clipY([A[e], Bv[e], Bv[e + 1], A[e + 1]], sp.cut, below), Pi = clipY([Ai[e], Bi[e], Bi[e + 1], Ai[e + 1]], sp.cut, below); if (Po.length < 3) continue;
@@ -1221,24 +1264,49 @@ const Render = (function () {
               for (let i = 1; i < Po.length - 1; i++) g.triO(Po[0], Po[i], Po[i + 1], c, inside);
               if (lining && !glass && Pi.length >= 3) { if (Pi.length === Po.length) Pi.forEach((p, i) => twin(p, Po[i]));
                 const m = mean(Pi), ins = [2 * m[0] - inside[0], 2 * m[1] - inside[1], 2 * m[2] - inside[2]];
-                kx.scope('pr', { part: prt, sub: '', inner: true }, () => { for (let i = 1; i < Pi.length - 1; i++) g.triO(Pi[0], Pi[i], Pi[i + 1], KIT_LINE, ins); }); }
+                kx.scope('pr', { part: prt, sub: '', inner: inn }, () => { for (let i = 1; i < Pi.length - 1; i++) g.triO(Pi[0], Pi[i], Pi[i + 1], KIT_LINE, ins); }); }
             });
           }
           continue;
         }
         const emit = () => {
           g.quadO(A[e], Bv[e], Bv[e + 1], A[e + 1], c, inside);
-          if (lining && !glass) kx.scope('pr', Object.assign({}, kx.pr || { part: part || 'body', sub: '' }, { inner: true }), () => flip(Ai[e], Bi[e], Bi[e + 1], Ai[e + 1], KIT_LINE, inside));
+          if (lining && !glass) kx.scope('pr', Object.assign({}, kx.pr || { part: part || 'body', sub: '' }, { inner: inn }), () => flip(Ai[e], Bi[e], Bi[e + 1], Ai[e + 1], KIT_LINE, inside));
         };
         if (explicit) emit(); else kx.scope('pr', { part, sub: '' }, emit);
       }
     }
+    // the open runs' own pieces (the outer shell): a rim on each free edge along a segment (the shell's edge to its lining's: a door's top),
+    // across a section where the next segment lacks the panel; a bulkhead (the section's whole ring, the lining's colour) where a run meets
+    // a closed segment (the firewall, the bulkhead behind the seats, a bed's headboard): no looking into the closed part's hollow shell
+    const scoped = (part, fn) => { if (explicit) fn(); else kx.scope('pr', { part: part || 'body', sub: '' }, fn); };
+    const mid2 = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2, (p[2] + q[2]) / 2];
+    const lined = (j, e) => CL[j][e] != null && !GL[j][e];
+    const endRims = (j, s, dir) => { const Rg = ring(s), Ri = ringIn(s);   // (segment j's lined panels ending at section s with nothing past them: their ends, facing dir along x)
+      return (e) => scoped(PP[j][e] ? PP[j][e].hi : null, () => g.quadO(Rg[e], Rg[e + 1], Ri[e + 1], Ri[e], CL[j][e], [s.x - dir, (Rg[e][1] + Rg[e + 1][1]) / 2, (Rg[e][2] + Rg[e + 1][2]) / 2])); };
+    if (anyVol) for (let j = 0; j < NS; j++) {
+      if (!vol[j]) continue;
+      const a = S[j], b = S[j + 1], A = ring(a), Bv = ring(b), Ai = ringIn(a), Bi = ringIn(b);
+      for (let p = 1; p <= 8; p++) {   // (ring point p: between panels p - 1 and p; a rim where one is lined and the other null)
+        const lo = lined(j, p - 1) && CL[j][p] == null, hi = lined(j, p) && CL[j][p - 1] == null; if (!lo && !hi) continue;
+        const e = lo ? p - 1 : p, q = lo ? p - 1 : p + 1, Q = mid2(A[q], Bv[q]), up = (A[p][1] + Bv[p][1]) / 2 >= Q[1], pp = PP[j][e];
+        scoped(pp ? (up ? pp.hi : pp.lo) : null, () => g.quadO(A[p], Bv[p], Bi[p], Ai[p], CL[j][e], Q));   // (facing away from its panel's far edge)
+      }
+      if (j + 1 < NS && vol[j + 1]) { const f = endRims(j, b, 1), r = endRims(j + 1, b, -1);
+        for (let e = 0; e < 9; e++) { if (lined(j, e) && CL[j + 1][e] == null) f(e); if (lined(j + 1, e) && CL[j][e] == null) r(e); } }
+      const bulk = (s, dir) => scoped(null, () => { const Rg = ring(s), m = mean(Rg), ins = [s.x - dir, m[1], 0]; for (let i = 0; i < 10; i++) g.triO(m, Rg[i], Rg[(i + 1) % 10], KIT_LINE, ins);
+        const Aw = s.arch ? arches.find(q => q.half > 0.02 && Math.abs(s.x - q.c) <= q.half + 1e-6) : null;   // (a section over a wheel: its ring stops at the arch; on down to the floor inside the tub's wall)
+        if (Aw) { const yf = yF(s.x) - 0.02; if (yf < s.yb) g.quadO([s.x, yf, -Aw.zi], [s.x, yf, Aw.zi], [s.x, s.yb, Aw.zi], [s.x, s.yb, -Aw.zi], KIT_LINE, ins); } });
+      if (j > 0 && !vol[j - 1]) bulk(a, 1);   // (facing into the run)
+      if (j + 1 < NS && !vol[j + 1]) bulk(b, -1);
+    }
     // the ends: the nose and the tail, cut at the bumper's top (below: the bumper; above: the body, or a hatchback's tailgate)
     const std = kx.std || {}, PT = kx.PT, cap = (s, front) => {
-      const C = o.caps === false ? false : (o.caps && o.caps[front ? 'front' : 'rear']);
-      if (C === false) return;
+      const C = o.caps === false ? false : (o.caps && o.caps[front ? 'front' : 'rear']), jE = front ? NS - 1 : 0, ev = vol[jE];   // (ev: the end segment in an open run: its cap lined in the outer shell)
+      const bare = () => { if (ev) { const f = endRims(jE, s, front ? 1 : -1); for (let e = 0; e < 9; e++) if (lined(jE, e)) f(e); } };   // (an open run's end without a cap: its walls' ends)
+      if (C === false) return bare();
       const cc = C && C.col ? C.col : col(front ? S[S.length - 2].ko : S[0].ko, 1, front ? S[S.length - 2].k : S[0].k, { x: s.x * sx, end: true });
-      if (cc == null) return;
+      if (cc == null) return bare();
       const cut = C && C.cut != null ? C.cut : front ? std.yBF : std.yBR, low = C && C.low || (front ? (PT.bumperF ? 'bumperF' : 'body') : (PT.bumperR ? 'bumperR' : 'body'));
       const high = C && C.high || (!front && std.hatch && PT.trunk ? 'trunk' : 'body');
       for (const p of [low, high]) kx.partOk(p);
@@ -1254,7 +1322,7 @@ const Render = (function () {
       for (const below of [true, false]) {
         const part = below ? low : high, ccol = below && C && C.colLow ? C.colLow : cc, pts = half(rg, below), pin = half(ri.map(p => [p[0] - dir * d, p[1], p[2]]), below);
         if (lining && pts.length >= 3 && pin.length === pts.length) { pin.forEach((p, i) => twin(p, pts[i])); twin(mean(pin), mean(pts)); }
-        const go = () => { fan(pts, ccol, [s.x - dir * 0.4, s.yb + 0.3, 0]); if (lining && !kitIsGlass(ccol)) kx.scope('pr', Object.assign({}, kx.pr || { part, sub: '' }, { inner: true }), () => fan(pin, KIT_LINE, [s.x - dir * 0.4, s.yb + 0.3, 0], true)); };
+        const go = () => { fan(pts, ccol, [s.x - dir * 0.4, s.yb + 0.3, 0]); if (lining && !kitIsGlass(ccol)) kx.scope('pr', Object.assign({}, kx.pr || { part, sub: '' }, { inner: !ev }), () => fan(pin, KIT_LINE, [s.x - dir * 0.4, s.yb + 0.3, 0], true)); };
         if (explicit) go(); else kx.scope('pr', { part, sub: '' }, go);
       }
     };
@@ -1262,7 +1330,7 @@ const Render = (function () {
     // the wheel tubs: under each arch's rim a dark liner over the tyre and the tub's inner wall (no seeing into the shell through the arch)
     const tub = o.tubs !== false ? (o.tubCol || [0.02, 0.02, 0.022]) : null;
     if (tub) for (const A of arches) if (A.half > 0.02) {
-      const s0 = at(A.c), zo = s0.w * 0.93 - 0.004, zi = Math.max(0.12, Math.min(zo - 0.08, (M.wid / 2 - kx.body.wz - Math.max(W.w, W.wR) / 2 - 0.05) / kx.sz)), n = 8, th0 = Math.acos(clamp(A.half * sx / A.r, -1, 1));
+      const zo = A.zo, zi = A.zi, n = 8, th0 = Math.acos(clamp(A.half * sx / A.r, -1, 1));
       kx.tubs.push({ x: A.c * sx, y: A.y, r: A.r, zo: zo * kx.sz, zi: zi * kx.sz, bot: A.bot });   // (metres: Render.kitInfo(id).tubs)
       const pt = (i, z) => { const t = th0 + (Math.PI - 2 * th0) * i / n, dx = A.r * Math.cos(t); return [A.c + dx / sx, A.y + A.r * Math.sin(t) - 0.005, z]; };
       for (const sd of [-1, 1]) kx.prim(A.c, A.y + A.r * 0.6, sd * (zo + zi) / 2, () => {
@@ -1271,16 +1339,45 @@ const Render = (function () {
         const wall = []; for (let i = 0; i <= n; i++) wall.push(pt(i, sd * zi));
         const m = [A.c, (A.bot + A.y + A.r) / 2, sd * zi]; for (let i = 0; i < n; i++) g.triO(m, wall[i], wall[i + 1], tub, [A.c, A.y, sd * (zi - 1)]);
         g.triO(m, wall[n], wall[0], tub, [A.c, A.y, sd * (zi - 1)]);
+        if (A.vol) {   // (under an open run (a pickup's bed over the wheel): the same from inside, the wheel's housing in the lining's colour: its top, its
+          // wall down past the floor, its two ends (the floor there is narrowed to the wall))
+          for (let i = 0; i < n; i++) g.quadO(pt(i, sd * zo), pt(i + 1, sd * zo), pt(i + 1, sd * zi), pt(i, sd * zi), KIT_LINE, [A.c, A.y, sd * (zo + zi) / 2]);
+          for (let i = 0; i < n; i++) g.triO(m, wall[i], wall[i + 1], KIT_LINE, [A.c, A.y, sd * (zi + 1)]);
+          g.triO(m, wall[n], wall[0], KIT_LINE, [A.c, A.y, sd * (zi + 1)]);
+          const f0 = yF(wall[0][0]) - 0.02, f1 = yF(wall[n][0]) - 0.02;
+          if (f0 < wall[0][1] && f1 < wall[n][1]) {
+            g.quadO(wall[0], wall[n], [wall[n][0], f1, sd * zi], [wall[0][0], f0, sd * zi], KIT_LINE, [A.c, A.y, sd * (zi + 1)]);
+            for (const [q, f] of [[wall[0], f0], [wall[n], f1]]) g.quadO([q[0], f, sd * zi], [q[0], f, sd * zo], [q[0], q[1], sd * zo], [q[0], q[1], sd * zi], KIT_LINE, [A.c, A.y, sd * (zo + zi) / 2]);
+          }
+        }
       }, { part: kx.ex ? null : 'body' });
     }
-    // the floor at the sill's height, under the cabin and the engine bay (the inner block: seen only through a hole)
+    // the floor at the sill's height, under the cabin and the engine bay (the inner block: seen only through a hole); under an open run the
+    // outer shell's, narrowed to the tubs' inner walls over a wheel (never through the tyre)
     if (lining && o.floor !== false) {
-      const run = () => { for (let j = 0; j < secs.length - 1; j++) { const a = secs[j], b = secs[j + 1], ya = a.yb + 0.03, yb = b.yb + 0.03, wa = a.w * 0.93 - 0.02, wb = b.w * 0.93 - 0.02;
-        g.quadO([a.x, ya, -wa], [b.x, yb, -wb], [b.x, yb, wb], [a.x, ya, wa], KIT_LINE, [(a.x + b.x) / 2, Math.min(ya, yb) - 1, 0]); } };
-      kx.scope('pr', Object.assign({}, kx.pr || { part: 'body', sub: '' }, { inner: true }), run);
+      if (!anyVol) {
+        const run = () => { for (let j = 0; j < secs.length - 1; j++) { const a = secs[j], b = secs[j + 1], ya = a.yb + 0.03, yb = b.yb + 0.03, wa = a.w * 0.93 - 0.02, wb = b.w * 0.93 - 0.02;
+          g.quadO([a.x, ya, -wa], [b.x, yb, -wb], [b.x, yb, wb], [a.x, ya, wa], KIT_LINE, [(a.x + b.x) / 2, Math.min(ya, yb) - 1, 0]); } };
+        kx.scope('pr', Object.assign({}, kx.pr || { part: 'body', sub: '' }, { inner: true }), run);
+      } else {
+        const fw = (x) => kitProp(secs, x, 'w') * 0.93 - 0.02, pcs = [];   // (pieces [x0, x1, in an open run, the arch's zi]: one a run of the author's segment, one a segment over a wheel)
+        for (let j = 0; j < NS; j++) { const A0 = vol[j] ? arches.find(A => A.half > 0.02 && S[j].x >= A.c - A.half - 1e-6 && S[j + 1].x <= A.c + A.half + 1e-6) : null, L = pcs[pcs.length - 1];
+          if (L && L.ko === S[j].ko && L[2] === vol[j] && L[3] == null && !A0) L[1] = S[j + 1].x; else { const p = [S[j].x, S[j + 1].x, vol[j], A0 ? A0.zi : null]; p.ko = S[j].ko; pcs.push(p); } }
+        for (const v of [false, true]) kx.scope('pr', Object.assign({}, kx.pr || { part: 'body', sub: '' }, { inner: !v }), () => { for (const p of pcs) if (p[2] === v) {
+          const wa = p[3] != null ? Math.min(fw(p[0]), p[3]) : fw(p[0]), wb = p[3] != null ? Math.min(fw(p[1]), p[3]) : fw(p[1]), ya = yF(p[0]), yb = yF(p[1]);
+          g.quadO([p[0], ya, -wa], [p[1], yb, -wb], [p[1], yb, wb], [p[0], ya, wa], KIT_LINE, [(p[0] + p[1]) / 2, Math.min(ya, yb) - 1, 0]); } });
+      }
     }
     kx.lofts++;
-    if (!kx.mainS) kx.mainS = S;
+    // the segments with a top panel null (look units: the default start number never lies over one; the main loft's roof open: an open top)
+    // and the openings seen from above (Render.kitInfo(id).openings, metres: runs of segments with a panel null in e 2..6, the opening's
+    // half width and its rim's height there: the fleet test looks into them)
+    const holes = []; for (let j = 0; j < NS; j++) if (CL[j][3] == null || CL[j][4] == null || CL[j][5] == null) holes.push([S[j].x, S[j + 1].x, S[j].k]);
+    if (!kx.mainS) { kx.mainS = S; kx.mainHoles = holes; }
+    const nul = (j) => [2, 3, 4, 5, 6].filter(e => CL[j][e] == null);
+    for (let j = 0; j < NS;) { if (!nul(j).length) { j++; continue; } let k = j, zw = 9, yr = 9;
+      for (; k < NS && nul(k).length; k++) { const N = nul(k), e0 = N[0], e1 = N[N.length - 1] + 1; for (const s of [S[k], S[k + 1]]) { const Rg = ring(s); zw = Math.min(zw, Math.abs(Rg[e0][2]), Math.abs(Rg[e1][2])); yr = Math.min(yr, Rg[e0][1], Rg[e1][1]); } }
+      kx.openings.push({ x: [S[j].x * sx, S[k].x * sx], z: zw * kx.sz, y: yr }); j = k; }
     const prop = (x, key) => kitProp(S, x, key), topY = (x, z) => { const wt = prop(x, 'wt'); return prop(x, 'yt') + prop(x, 'cr') * clamp((wt - Math.abs(z)) / (wt * 0.62), 0, 1); };
     return { secs: S, prop, topY, decal: kitDecal(kx, S, kx.regions) };
   }
@@ -1331,6 +1428,21 @@ const Render = (function () {
     const P = (o, t, rr) => { const c = Math.cos(t), sn = Math.sin(t); return [o[0] + (p[0] * c + q[0] * sn) * rr, o[1] + (p[1] * c + q[1] * sn) * rr, o[2] + (p[2] * c + q[2] * sn) * rr]; };
     for (let i = 0; i < n; i++) { const t0 = (i + 0.5) / n * Math.PI * 2, t1 = (i + 1.5) / n * Math.PI * 2; g.quadO(P(a, t0, r), P(b, t0, rb), P(b, t1, rb), P(a, t1, r), col, m); }
     for (const [o, cc, rr, sg] of [[a, capA, r, -1], [b, capB, rb, 1]]) if (cc) for (let i = 0; i < n; i++) { const t0 = (i + 0.5) / n * Math.PI * 2, t1 = (i + 1.5) / n * Math.PI * 2; g.triO(o, P(o, t0, rr), P(o, t1, rr), cc, [o[0] - u[0] * sg, o[1] - u[1] * sg, o[2] - u[2] * sg]); }
+  }
+  // a skin through rings of points (K.skin, K.sweep, K.driver's torso): fLoft's sides; each end cap (a fan from the ring's middle) faces away
+  // from its neighbour ring's middle, whatever the axis the skin runs along (fLoft's caps assume x: a skin up y or across z would face in)
+  function kitSkin(g, R, col, capA, capB) {
+    const n = R[0].length, mid = (ring) => { const m = [0, 0, 0]; for (const p of ring) { m[0] += p[0] / n; m[1] += p[1] / n; m[2] += p[2] / n; } return m; };
+    for (let k = 0; k < R.length - 1; k++) {
+      const A = R[k], B = R[k + 1], c = [0, 0, 0];
+      for (const p of A.concat(B)) { c[0] += p[0] / (2 * n); c[1] += p[1] / (2 * n); c[2] += p[2] / (2 * n); }
+      for (let e = 0; e < n; e++) { const e1 = (e + 1) % n; g.quadO(A[e], B[e], B[e1], A[e1], col(k, e), c); }
+    }
+    for (const [ring, cc, nb] of [[R[0], capA, R[1]], [R[R.length - 1], capB, R[R.length - 2]]]) {
+      if (!cc) continue;
+      const m = mid(ring), q = mid(nb), inn = [m[0] + (q[0] - m[0]) * 0.5, m[1] + (q[1] - m[1]) * 0.5, m[2] + (q[2] - m[2]) * 0.5];   // (toward the next ring: inside)
+      for (let e = 0; e < n; e++) g.triO(m, ring[e], ring[(e + 1) % n], cc, inn);
+    }
   }
   function kitPlate(g, pts, th, col) {   // a flat convex plate through pts (3D, in one plane), th thick along its normal
     const n = pts.length; if (n < 3) kitFail('plate: 3 or more points');
@@ -1485,7 +1597,7 @@ const Render = (function () {
     K.endplate = (pts, z, th, col, o) => { const n = pts.length, cx = pts.reduce((s, p) => s + p[0], 0) / n, cy = pts.reduce((s, p) => s + p[1], 0) / n; kx.prim(cx, cy, z, () => fPlate(g, pts, z, th || 0.012, col), o); };
     K.skin = (rings, col, capA, capB, o) => { if (!Array.isArray(rings) || rings.length < 2 || rings.some(R => !Array.isArray(R) || R.length !== rings[0].length || R.length < 3)) kitFail('skin: 2+ rings of the same 3+ points');
       const m = [0, 0, 0], n = rings.length * rings[0].length; for (const R of rings) for (const p of R) for (let i = 0; i < 3; i++) m[i] += p[i] / n;
-      kx.prim(m[0], m[1], m[2], () => fLoft(g, rings, typeof col === 'function' ? col : () => col, capA || null, capB || null), o); };
+      kx.prim(m[0], m[1], m[2], () => kitSkin(g, rings, typeof col === 'function' ? col : () => col, capA || null, capB || null), o); };
     K.sweep = (profile, path, col, o) => { o = o || {}; K.skin(kitSweepRings(profile, path, o.scale), col, o.capA, o.capB, o); };
     K.flare = (x, r0, r1, z0, z1, col, o) => { o = o || {}; kx.prim(x, K.rw + (r0 + r1) / 2 * 0.7, (z0 + z1) / 2, () => kitFlare(g, x, o.y != null ? o.y : K.rw, r0, r1, z0, z1, col, o.n || 7, o.a0 != null ? o.a0 : 0.16, o.a1 != null ? o.a1 : Math.PI - 0.16, sx), o); };
     // a wheel and its tyre in the body (a spare on a tailgate, in a bed, on a buggy's deck): the look's own wheel (a rival's detail; o.hi the
@@ -1558,10 +1670,11 @@ const Render = (function () {
       const panel = { on, slots: [[], [], []] }, pi = kx.nums.length; kx.nums.push(panel);
       // a segment: a bar between (u0, v0) and (u1, v1) in its digit's frame (the digit centred on cu), leaning by the slant
       const bar = (cu, u0, v0, u1, v1) => kitFace(g, [P(cu + u0 + v0 * sl, v0, lf), P(cu + u1 + v0 * sl, v0, lf), P(cu + u1 + v1 * sl, v1, lf), P(cu + u0 + v1 * sl, v1, lf)], bg);
-      // (a b c d e f g, side by side, never overlapping: the top bar owns the top left corner, the bottom bar the bottom left one, the right
-      // uprights the right corners and meet at the middle: a 1 is one full stroke, a 7 a full top bar on it, a 4 open at the top left)
-      const u0 = -dw / 2, u1 = dw / 2, S7 = [[u0, dh / 2 - t, u1 - t, dh / 2], [u1 - t, 0, u1, dh / 2], [u1 - t, -dh / 2, u1, 0], [u0, -dh / 2, u1 - t, -dh / 2 + t],
-        [u0, -dh / 2 + t, u0 + t, 0], [u0, 0, u0 + t, dh / 2 - t], [u0 + t, -t / 2, u1 - t, t / 2]];
+      // (a b c d e f g, each its full length: the bars across the digit's whole width, each upright from its end to the middle bar's far edge,
+      // so they overlap at the corners and the middle: every digit's turns square, never stepped. The overlaps never show: a car's lit bars
+      // share one colour, its unlit ones are taken out of its copy (kitRecolour), the colour-neutral cache's are all the panel's colour)
+      const u0 = -dw / 2, u1 = dw / 2, S7 = [[u0, dh / 2 - t, u1, dh / 2], [u1 - t, -t / 2, u1, dh / 2], [u1 - t, -dh / 2, u1, t / 2], [u0, -dh / 2, u1, -dh / 2 + t],
+        [u0, -dh / 2, u0 + t, t / 2], [u0, -t / 2, u0 + t, dh / 2], [u0, -t / 2, u1, t / 2]];
       kx.prim(x, y, z, () => {
         kitFace(g, [P(-w / 2, -h / 2, 0), P(w / 2, -h / 2, 0), P(w / 2, h / 2, 0), P(-w / 2, h / 2, 0)], bg);
         const T = kx.target(), n = () => T.g.P.length / 3;
@@ -1589,10 +1702,15 @@ const Render = (function () {
     K.driver = (x, y, z, o) => {   // the driver of an open vehicle: (x, y, z) the helmet's centre; the body and the helmet in 'body', never crushed or dented
       o = o || {}; const r = o.r || 0.13, suit = o.suit || [0.12, 0.2, 0.55], hc = o.helmet || [0.95, 0.95, 0.93], lean = o.lean == null ? 0.1 : o.lean, glove = o.glove || [0.14, 0.14, 0.16], boot = o.boot || [0.12, 0.12, 0.13];
       kx.prim(x, y, z, () => { fHelmet(g, x, y, z, r, hc, o.band || K.strp);
-        // the torso from just under the helmet down the spine (leaning back by lean: the hips ahead of the shoulders), wider at the shoulders
+        // the torso from just under the helmet down the spine (leaning back by lean: the hips ahead of the shoulders), wider at the shoulders:
+        // rings of 10 sides round an ellipse (dp deep, w wide), each side its tangent at normals 36 degrees apart (every face 36 degrees from
+        // the next, under the shell's 38 degree crease: it shades round all the way, no flat chest or flank catching the light)
         const N = [x - 0.03, y - r - 0.01], d = [Math.sin(lean), -Math.cos(lean)], f = [-d[1], d[0]], at = (t) => [N[0] + d[0] * t, N[1] + d[1] * t];
-        const ring = (t, w, dp) => { const c = at(t); return [[1, 0.7], [0, 1], [-1, 0.7], [-1, -0.7], [0, -1], [1, -0.7]].map(([a, b]) => [c[0] + f[0] * dp * a, c[1] + f[1] * dp * a, z + w * b]); };
-        fLoft(g, [ring(0.03, 0.21, 0.11), ring(0.5, 0.17, 0.1)], () => suit, suit, suit);
+        const ring = (t, w, dp) => { const c = at(t), R = [], h = (q) => Math.hypot(dp * Math.cos(q), w * Math.sin(q)), s = Math.sin(Math.PI / 5);
+          for (let i = 0; i < 10; i++) { const q0 = i * Math.PI / 5, q1 = q0 + Math.PI / 5, a = (h(q0) * Math.sin(q1) - h(q1) * Math.sin(q0)) / s, b = (Math.cos(q0) * h(q1) - Math.cos(q1) * h(q0)) / s;   // (where the tangents at q0 and q1 meet)
+            R.push([c[0] + f[0] * a, c[1] + f[1] * a, z + b]); }
+          return R; };
+        kitSkin(g, [ring(0.03, 0.21, 0.11), ring(0.5, 0.17, 0.1)], () => suit, suit, suit);
         kitTube(g, [N[0], N[1] - 0.01, z], [N[0] + 0.004, N[1] + 0.025, z], 0.075, 8, o.neck || [0.1, 0.1, 0.11], null, null);   // (a collar between the shoulders and the helmet)
         // the arms to the hands (o.hands: the right hand; else ahead of the chest), elbows out and down; the gloves (round tubes: smooth)
         const S0 = at(0.07), Hd = o.hands || [x + 0.32, y - r - 0.2, 0.17];
@@ -1683,6 +1801,11 @@ const Render = (function () {
     if (!kx.std) kitStdRegions(kx);   // (the bumper heights and the like, for the loft's ends)
     if (typeof look.build !== 'function') kitFail('look.build(K) missing');
     look.build(K);
+    if ((kx.mainHoles || []).some(h => h[2] === 'r')) {   // (an open top: the main loft's roof, kind 'r', with a top panel null: the defaults assume a roof over the driver)
+      const b = look.body || {};
+      if (!(b.eye && Number.isFinite(b.eye.y) && KIT_EYES.indexOf(b.eye.style) >= 0)) kitFail('an open top (the main loft\'s roof has a top panel null): give body.eye { x, y, style } (the default eye, roofY - 0.22, is under a roof)');
+      if (!b.crush) kitFail('an open top: give body.crush { x0, x1, z } (metres: what a crushed roof sinks, a hoop\'s or a windscreen frame\'s footprint; { x0: 0, x1: 0, z: 0 }: nothing)');
+    }
     const out = kitFinish(kx), geo = out.geo, bb = geo.boundingBox;
     // the BODIES entry's derived fields (metres): the nose, the tail and the hubs (the pit crew), the lamps (look units), the engine
     const sxB = M.len / body.len, szB = M.wid / body.wid, hw = M.wid / 2 - body.wz;
@@ -1697,7 +1820,7 @@ const Render = (function () {
     if (!body.engine) body.engine = kx.engineAt || [(body.engRear ? tail * 0.7 : nose * 0.6) / sxB, kitProp(kx.S, body.engRear ? tail * 0.7 : nose * 0.6, 'ybelt')];   // (look units, as the lamps)
     if (body.decalX == null && body.decalY == null && kx.mainS) kitDecalDefault(kx, body);
     const W = kx.wheels;
-    return { body, geo, tail: out.tail, wheels: W, tris: out.tris, regions: kitRegionsOut(kx, kx.regions), std: kx.std, tubs: kx.tubs };
+    return { body, geo, tail: out.tail, wheels: W, tris: out.tris, regions: kitRegionsOut(kx, kx.regions), std: kx.std, tubs: kx.tubs, openings: kx.openings };
   }
   // the start number's default place: on the roof (the main loft's first 'r' section to the windscreen's top), as big as fits (decalS <= 1:
   // its disc 0.82 m across at 1), 5 cm inside the roof's ends, lying on the roof: a flat plane over its top, touching the highest point under
@@ -1705,16 +1828,17 @@ const Render = (function () {
   // lie so, the one with the smallest gaps (to the millimetre), then the one nearest the roof's middle. A roof flat nowhere: the place with
   // the smallest gaps of the smallest size (look units, as the body's fields; makeCarMesh lifts it 12 mm over that)
   function kitDecalDefault(kx, body) {
-    const S = kx.mainS, sx = kx.sx, sz = kx.sz, i0 = S.findIndex(q => q.k === 'r'); if (i0 < 0) return;
+    const S = kx.mainS, sx = kx.sx, sz = kx.sz, i0 = S.findIndex(q => q.k === 'r'), H = kx.mainHoles || []; if (i0 < 0) return;
     let i1 = S.findIndex((q, i) => i > i0 && q.k === 'gf'); if (i1 < 0) { i1 = i0; while (i1 + 1 < S.length && S[i1].k === 'r') i1++; }
     const xa = S[i0].x, xb = S[i1].x; if (!(xb - xa > 0.1)) return;
     const top = (x) => kitProp(S, x, 'yt') + kitProp(S, x, 'cr'), mid = (xa + xb) / 2;
-    let best = null, low = null;
+    let best = null, low = null, holed = 0;
     for (let j = 0; xa + j * 0.02 <= xb + 1e-9; j++) {
       const x = xa + j * 0.02, wt = kitProp(S, x, 'wt') * sz, cr = kitProp(S, x, 'cr'), rx = Math.min(x - xa, xb - x) * sx - 0.05;   // (metres)
       for (let q = 20; q >= 6; q--) {
         const k = q / 20, r = 0.41 * k; if (r > rx) continue;
-        const u = r / sx, ya = top(x - u), yb = top(x + u), side = cr * clamp((r - 0.38 * wt) / (0.62 * wt), 0, 1);   // (the crown's drop at the disc's sides)
+        const u = r / sx; if (H.some(h => h[1] > x - u - 0.02 && h[0] < x + u + 0.02)) { holed++; continue; }   // (over an open top's hole, or by it: never there)
+        const ya = top(x - u), yb = top(x + u), side = cr * clamp((r - 0.38 * wt) / (0.62 * wt), 0, 1);   // (the crown's drop at the disc's sides)
         let hi = 0, lo = 0; for (let i = 1; i < 10; i++) { const d = top(x - u + 2 * u * i / 10) - (ya + (yb - ya) * i / 10); hi = Math.max(hi, d); lo = Math.min(lo, d); }
         const c = { x, k, gap: hi - lo + side, y: (ya + yb) / 2 + hi, rz: Math.atan2(yb - ya, 2 * r) }, g = Math.round(c.gap * 1000);
         if (q === 6 && (!low || c.gap < low.gap)) low = c;
@@ -1723,7 +1847,7 @@ const Render = (function () {
         break;
       }
     }
-    const b = best || low; if (!b) return;
+    const b = best || low; if (!b) { if (holed) kitFail('give body.decalX / decalY: no roof to lay the start number on (an open top)'); return; }
     body.decalX = b.x; body.decalY = b.y; body.decalRz = b.rz; body.decalS = b.k;
   }
   function kitEntry(M) {
@@ -1732,7 +1856,7 @@ const Render = (function () {
     try { if (!M.def || !M.def.look) kitFail('look null (a place-holder)'); res = kitBuild(M, M.def.look, false); }
     catch (e) { status = 'fallback:' + (e && e.message ? e.message : String(e)); if (typeof console !== 'undefined') console.warn('vehicle ' + M.id + ' drawn as the generic kit hatch: ' + status); res = kitBuild(M, kitFallbackLook(M), true); }
     BODIES[M.id] = res.body;
-    E = { M, status, geo: res.geo, tail: res.tail, W: res.wheels, body: res.body, tris: res.tris, regions: res.regions, std: res.std, tubs: res.tubs, wheels: {} };
+    E = { M, status, geo: res.geo, tail: res.tail, W: res.wheels, body: res.body, tris: res.tris, regions: res.regions, std: res.std, tubs: res.tubs, openings: res.openings, wheels: {} };
     kitCache.set(M.id, E); return E;
   }
   // the four wheels' geometry (hi: the player's / the showroom's detail, else a rival's), front and rear (the rear may be twins)
@@ -1750,8 +1874,8 @@ const Render = (function () {
     for (const [L, b] of [[U.paint, c], [U.strp, s]]) { const T = new Map();   // (each shade k of the colour once: k * colour, kept off the glass colours)
       for (let j = 0; j < L.i.length; j++) { const i = L.i[j] * 3, k = L.k[j]; let q = T.get(k); if (!q) { q = kitOffGlass([Math.min(1, b[0] * k), Math.min(1, b[1] * k), Math.min(1, b[2] * k)], k < 1 ? -1 : k > 1 ? 1 : 0); T.set(k, q); }
         a[i] = q[0]; a[i + 1] = q[1]; a[i + 2] = q[2]; } }
-    // the number: its lit segments in the digits' colour; the unlit ones taken out of this copy (each to a point: the middle place overlaps
-    // the two others, so an unlit bar there would fight a lit one at the same height)
+    // the number: its lit segments in the digits' colour; the unlit ones taken out of this copy (each to a point: the bars overlap, at a
+    // digit's corners and middle, and the middle place over the two others: an unlit bar would fight a lit one at the same height)
     const n = Math.round(num || 0), dig = n >= 10 && n <= 99 ? [Math.floor(n / 10), n % 10, -1] : n >= 1 && n <= 9 ? [-1, -1, n] : [-1, -1, -1], pa = geo.attributes.position.array;
     if (U.nums) for (const P of U.nums) for (let sl = 0; sl < 3; sl++) for (let k = 0; k < 7; k++) {
       const q = P.slots[sl][k]; if (!q) continue;
@@ -1797,6 +1921,13 @@ const Render = (function () {
     g.dispose(); return { n, e };
   }
   function kitStatus(id) { const M = Core.MODELS.find(m => m.id === id); if (!M || !M.kit) return null; return kitEntry(M).status; }
+  // (tests, trying a look out) a look built on vehicle id's model as the build would (not cached, not registered: its status, the colour-
+  // neutral geometry (the caller disposes it), the completed body, the triangles, the openings, the tubs)
+  function kitTry(id, look) {
+    const M = Core.MODELS.find(m => m.id === id); if (!M || !M.kit) return null;
+    try { const r = kitBuild(M, look, false); return { status: 'ok', geo: r.geo, tail: r.tail, body: r.body, tris: r.tris, openings: r.openings, tubs: r.tubs, regions: r.regions, std: r.std }; }
+    catch (e) { return { status: 'fallback:' + (e && e.message ? e.message : String(e)) }; }
+  }
   function kitInfo(id) {
     if (id == null) return { models: kitCache.size, wheels: kitWheelCache.size, show: kitShowLRU.length, legacy: geoCache.size };   // (the caches: one body per model built, its wheels, the showroom's two; the 11's per-colour bodies)
     const M = Core.MODELS.find(m => m.id === id); if (!M || !M.kit) return null;
@@ -1805,7 +1936,7 @@ const Render = (function () {
     for (const n in U.ranges) { const R = U.ranges[n], c = [0, 0, 0]; let k = 0; for (const [a, b] of [R.o, R.i]) for (let i = a; i < b; i++, k++) for (let j = 0; j < 3; j++) c[j] += pa[i * 3 + j];
       rg[n] = { o: R.o.slice(), i: R.i.slice(), subs: R.subs.map(s => Object.assign({}, s)), hinge: R.hinge || null, c: k ? c.map(v => v / k) : null }; }   // (c: the range's centroid, metres)
     return { id, status: E.status, tris: Object.assign({}, U.tris), budget: Object.assign({}, U.budget), outerN: U.outerN, N: U.N, ranges: rg, paint: U.paint.i.length, strp: U.strp.i.length, lamps: U.lamps,
-      wheels: { style: E.W.style, hi: [wh.f.userData.tris, wh.r.userData.tris], lo: [wl.f.userData.tris, wl.r.userData.tris], hw: E.body.hw }, body: JSON.parse(JSON.stringify(E.body)), regions: E.regions, std: E.std, tail: E.tail.userData.tail, tubs: E.tubs,
+      wheels: { style: E.W.style, hi: [wh.f.userData.tris, wh.r.userData.tris], lo: [wl.f.userData.tris, wl.r.userData.tris], hw: E.body.hw }, body: JSON.parse(JSON.stringify(E.body)), regions: E.regions, std: E.std, tail: E.tail.userData.tail, tubs: E.tubs, openings: E.openings,
       bbox: { min: E.geo.boundingBox.min.toArray(), max: E.geo.boundingBox.max.toArray() } };
   }
 
@@ -5077,6 +5208,6 @@ const Render = (function () {
   function setDebug(o) { Object.assign(dbg, o); }
   function fxStats() { let n = 0; for (let i = 0; i < particles.max; i++) if (particles.life[i] > 0) n++; return { alive: n, emitted: particles.cur }; }
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { setDebug, fxStats, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, open: !!ck.parts.open, gear: ck.parts.scr && ck.parts.scr.txt ? ck.parts.scr.txt.split('|')[0] : null, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, setGhost, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, pkFly, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitGlassNear, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setDebug, fxStats, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, open: !!ck.parts.open, gear: ck.parts.scr && ck.parts.scr.txt ? ck.parts.scr.txt.split('|')[0] : null, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, setGhost, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, pkFly, setShowCar, renderShowroom, showBox, viewOf, debugShot, carShot, kitStatus, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 
