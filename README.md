@@ -310,6 +310,14 @@ Na **Lestvici** je pri vsaki progi okvirček **Duh**. Svojega najboljšega duha 
 
 V **Nastavitvah** je vrstica **Profil**: **Izvozi v datoteko** shrani vse, kar igra hrani (nastavitve, rekorde, lestvice, kariero, prvenstvo, dosežke in duhove), v eno datoteko (npr. `apex-racing-profil-20260930.json`), **Uvozi iz datoteke** pa jo naloži na drugem telefonu ali računalniku: igra najprej vpraša, nato se znova zažene s tem profilom (dosedanji se zamenja).
 
+## Izziv s povezavo
+
+Prijatelja lahko izzoveš, naj premaga tvoj najboljši čas proge. Gumb **Izzovi prijatelja** je na rezultatih kronometra, kvalifikacij in dirke, ko imaš na progi svojega duha. Gumb **Pošlji izziv** je tudi na **Lestvici** v okvirčku **Duh**. Na telefonu se odpre meni za deljenje, na računalniku se povezava kopira.
+
+Povezava prenese tvoj čas in to, kako je bil odpeljan: progo, način (leteči krog ali kronometer), avto z barvo, nadgradnjami in nastavitvijo, vreme, letni čas in čas dneva. Priloži tudi tvojega duha, če gre v povezavo. Dolga vožnja v kronometru vanjo ne gre, zato izziv potuje brez duha.
+
+Ko prijatelj odpre povezavo, igra pokaže zaslon **Izziv**: kdo ga izziva, čas, ki ga mora premagati, in vse pogoje. Izziv počaka tudi na naslovnem zaslonu (gumb **Izziv: ime · čas**). **Sprejmi izziv** začne isto vožnjo: sam na progi, z avtom in v pogojih izzivalca, njegov duh pa vozi zraven. Pri letečem krogu se čas meri od črte, kot v kvalifikacijah. Na cilju se oba časa pokažeta drug ob drugem (**Izziv premagan!** ali **Izziv ni premagan**). Tvoji rekordi, duh in kariera ostanejo nespremenjeni. **Poskusi znova** požene isto vožnjo, **Pošlji odgovor** pa pošlje tvojo vožnjo z istimi pogoji nazaj izzivalcu. Kdor premaga izziv, dobi dosežek **Izziv sprejet**.
+
 ## Igralni plošček
 
 Igro lahko igraš z igralnim ploščkom (Xbox, PlayStation ali drug plošček s standardno razporeditvijo), ki ga povežeš s telefonom ali računalnikom (Bluetooth ali kabel). Ob prvem pritisku se pokaže kratko navodilo, gumbi na zaslonu pa se skrijejo (ko se dotakneš zaslona, se vrnejo).

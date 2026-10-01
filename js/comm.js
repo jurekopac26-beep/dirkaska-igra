@@ -91,6 +91,10 @@ const Comm = (() => {
     fuelLow: ['Running low on fuel! Box for fuel this lap.', 'The fuel light is on! Time to come in and fill up.', 'Not much fuel left in that tank, pit now!'],
     fuelOut: ['Oh no, out of fuel! Spluttering along on the last drops!', 'Dry tank! That car is limping back to the pits now.'],
     puncture: ['Puncture! That tyre is going down!', 'That knock has cut a tyre! A puncture!', 'A slow puncture, the car is pulling to one side now!'],
+    // a friend's challenge (the challenge link): the run, beaten or not
+    chalIntro: ["A challenge from {name}! The time to beat: {time}.", "{name} has set the bar at {time}. Let us see if you can beat it!"],
+    chalWon: ["You beat {name}'s time! Challenge done!", "Faster than {name}, by {delta}! Send that one back!"],
+    chalLost: ["Not quite, {name} is still faster, by {delta}.", "{name}'s time stands, {delta} quicker. Try again!"],
     // the team's engineer on the radio (radio(): the co-driver's voice)
     radioBox: ['Box, box, box this lap!', 'Box this lap, box this lap.', 'Box this lap, we are ready for you.'],
     radioBoxWet: ['It is wet out there, box this lap for wets!', 'Box this lap for rain tyres!'],

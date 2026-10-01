@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
-<link rel="stylesheet" href="css/style.css?v=2a15409e">
+<link rel="stylesheet" href="css/style.css?v=618e22a2">
 </head>
 <body>
 <div id="app">
@@ -110,6 +110,7 @@
       <p class="sub" id="title-sub">Jezero Ring &middot; 3 krogi &middot; 12 nasprotnikov</p>
       <div class="btns">
         <button class="btn primary" data-act="to-car">Dirkaj</button>
+        <button class="btn chalbtn off" data-act="to-chal" id="btn-chal">Izziv</button>
         <button class="btn champbtn" data-act="to-champ" id="btn-champ">Prvenstvo</button>
         <button class="btn careerbtn" data-act="to-career" id="btn-career">Kariera</button>
         <button class="btn netbtn" data-act="to-online">Dirka s prijateljem</button>
@@ -309,7 +310,22 @@
         <button class="btn" data-act="replay" id="res-replay">Posnetek</button>
         <button class="btn off" data-act="to-school" id="res-school">Šola vožnje</button>
         <button class="btn off" data-act="replay-hl" id="res-hl">Najboljši trenutki</button>
+        <button class="btn off" data-act="chal-send" id="res-chal">Izzovi prijatelja</button>
+        <button class="btn off" data-act="chal-reply" id="res-reply">Pošlji odgovor</button>
         <button class="btn primary" data-act="restart" id="res-restart">Ponovi dirko</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="s-chal" class="screen">
+    <div class="panel small-panel chal-panel">
+      <h2>Izziv</h2>
+      <p id="chal-who" class="desc"></p>
+      <div id="chal-card" class="chal-card"></div>
+      <div class="btns horiz">
+        <button class="btn ghost" data-act="chal-drop">Zavrni</button>
+        <button class="btn ghost" data-act="chal-later">Kasneje</button>
+        <button class="btn primary" data-act="chal-go">Sprejmi izziv</button>
       </div>
     </div>
   </section>
@@ -382,7 +398,7 @@
 <script src="js/tracks/suzuka.js?v=8aebe76c"></script>
 <script src="js/tracks/pikesg.js?v=9d05a281"></script>
 <script src="js/tracks/caracoles.js?v=84009a26"></script>
-<script src="js/lang.js?v=4bfa5b6c"></script>
+<script src="js/lang.js?v=6c09031c"></script>
 <script src="js/core.js?v=a6dd2667"></script>
 <script src="js/tex.js?v=cd783b5d"></script>
 <script src="js/world.js?v=43e47004"></script>
@@ -390,9 +406,9 @@
 <script src="js/render.js?v=7ebb5854"></script>
 <script src="js/sfx.js?v=cc97e5e8"></script>
 <script src="js/input.js?v=f440bacb"></script>
-<script src="js/comm.js?v=142f02b5"></script>
+<script src="js/comm.js?v=a5473d60"></script>
 <script src="js/vendor/peerjs.min.js?v=76b403e4"></script>
 <script src="js/net.js?v=ba863f32"></script>
-<script src="js/game.js?v=f451b71c"></script>
+<script src="js/game.js?v=4454439d"></script>
 </body>
 </html>

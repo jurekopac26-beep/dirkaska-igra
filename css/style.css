@@ -671,6 +671,12 @@ p.pk-medl { margin: -2px 0 6px; font: 700 12px/1.3 var(--f-ui); opacity: .9; }
 
 /* the slicks for the next pit stop (the pause, a race with tyres); rows of choices too wide for their panel get smaller (game.js fitSegs) */
 .pit-row { margin-top: 12px; }
+/* a friend's challenge: the time to beat, the track, the way, the car and the conditions; its button on the title */
+.chal-card { margin: 10px 0 14px; padding: 12px 14px; border-radius: 10px; background: rgba(255,255,255,.06); border: 1px solid var(--panel-edge); }
+.chal-card .chal-time { font: 400 italic clamp(30px, 8vh, 46px)/1 var(--f-display); color: var(--lcd); text-align: center; margin-bottom: 10px; }
+.chal-card dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 0; font: 600 14px/1.35 var(--f-ui); }
+.chal-card dt { opacity: .7; } .chal-card dd { margin: 0; } .chal-card .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+.btn.chalbtn { border-color: var(--lcd); color: var(--lcd); }
 .pause-strat { margin: 12px 2px 0; font: 600 13px/1.4 var(--f-ui); color: var(--chalk); opacity: .9; }   /* the strategy as it stands (fuel, tyres, a stop now) */
 .wx-row .seg button, .pit-row .seg button { white-space: nowrap; }
 .seg.tight button { padding-left: 5px; padding-right: 5px; font-size: 12px; }

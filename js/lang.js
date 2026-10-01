@@ -215,6 +215,14 @@
     'Vroče zavore slabše zavirajo: zaviraj prej in nežneje, na ravnini se ohladijo.': 'Hot brakes stop the car less well: brake earlier and more gently, they cool down on the straights.',
     'Vroč motor ima manj moči: popusti plin, v hitri vožnji se ohladi.': 'A hot engine has less power: ease off the throttle, it cools down at speed.',
     'Okvare': 'Failures', 'Okvare (predrta guma, vroče zavore in motor)': 'Failures (punctures, hot brakes and engine)',
+    // a challenge from a friend (the challenge link)
+    'Izziv': 'Challenge', 'Zavrni': 'Decline', 'Kasneje': 'Later', 'Sprejmi izziv': 'Accept the challenge', 'Izzovi prijatelja': 'Challenge a friend', 'Pošlji odgovor': 'Send your reply', 'Pošlji izziv': 'Send a challenge',
+    'Leteči krog': 'Flying lap', 'Način': 'Mode', 'Poskusi znova': 'Try again', 'ti: {0}': 'you: {0}', 'Izziv: {0} · {1}': 'Challenge: {0} · {1}', 'Izziv · {0} · {1}': 'Challenge · {0} · {1}',
+    'IZZIV: {0} · {1}': 'CHALLENGE: {0} · {1}', 'IZZIV {0}  {1}': 'CHALLENGE {0}  {1}', 'IZZIV PREMAGAN!': 'CHALLENGE BEATEN!', 'Izziv premagan!': 'Challenge beaten!', 'Izziv ni premagan': 'Challenge not beaten',
+    '{0} te izziva: premagaj čas na progi {1}.': '{0} challenges you: beat the time on {1}.', 'Premagaj moj čas {0} na progi {1}!': 'Beat my time of {0} on {1}!',
+    'Povezava do izziva je kopirana: pošlji jo prijatelju.': 'The challenge link is copied: send it to a friend.', 'Povezave ni bilo mogoče kopirati.': 'The link could not be copied.',
+    'Izziva ni bilo mogoče pripraviti.': 'The challenge could not be made.', 'priložen': 'included', 'ni priložen (vožnja je predolga za povezavo)': 'not included (the run is too long for a link)', 'Povezava do izziva ni veljavna.': 'The challenge link is not valid.', 'Izziva ni bilo mogoče shraniti (premalo prostora).': 'The challenge could not be saved (not enough space).',
+    'Izziv sprejet': 'Challenge accepted', 'Premagaj prijateljev čas v izzivu.': 'Beat the time of a friend in a challenge.',
     // the team radio and the strategy
     'Radio ekipe (razlike, postanki, vreme)': 'Team radio (gaps, pit stops, weather)', 'Gume za postanek': 'Tyres for the stop', 'Gume za postanek: {0}': 'Tyres for the stop: {0}',
     'Gorivo ne bo zdržalo do cilja.': 'The fuel will not last to the finish.', 'Gume ne bodo zdržale do cilja.': 'The tyres will not last to the finish.',
