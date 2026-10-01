@@ -6,12 +6,13 @@
 // - one display order everywhere (CATS, then the career price, then the id): the arrows (every car in turn), the strip, the career's
 //   garage (by category), the championship's and the online picker
 // - the saved car: carId and carV 3; an index from a newer build or an unknown id: the rally car; a new car saved as an index older builds
-//   know (car <= 10)
+//   know (car <= 10); a car an older build picked since (it keeps carId as it was): that car
 // - the career: the upgrade prices by the car's class; the title demo: one category's field
 // - a championship started with the TITAN: its rivals TITANs in the race, in the standings, in the qualifying and the race of the next
-//   round after "Izberi avto" took the player to the PICO TURBO and back
-// - a destroyed car: VOZILO UNIČENO with Odstopi (two taps), the results with Odstop (no record), Ogled vozila; the lost wheels on the
-//   damage picture
+//   round after "Izberi avto" took the player to the PICO TURBO and back; one started in the FORMULA ORKAN (a one-make class): formulas
+//   still when the player drives the PICO TURBO
+// - a destroyed car: VOZILO UNIČENO with Odstopi (two taps), not seen through the pause (its buttons there are the pause's); the results
+//   with Odstop (no record), Ogled vozila (close, from over the road, upright too); the lost wheels on the damage picture
 // - the commentator's destruction lines: the player's lost part (its own name), wheel, three wheels, the wreck, fire; a rival's wheel,
 //   fire and retirement nearby; the counts afresh after a repair
 //   node tests/browser/cars-ui.test.mjs
@@ -167,8 +168,8 @@ try {
       car.kids.join('|') === wantKids.join('|') && car.kids.length === 52 && heads.length === 10 && heads[0] === '#Mali avti' && heads[9] === '#Posebni', JSON.stringify(car.kids.slice(0, 8)));
     T.check('the career\'s strip: a price on the cars to buy (TIGER GT 85.000 €), a tick on the one in the garage',
       car.chips.some(t => /^TIGER GTFR85\.000/.test(t)) && car.chips.every(t => /€|✓/.test(t)), JSON.stringify(car.chips));
-    T.check('the career\'s upgrade prices by class: the PICO TURBO as before (4.000 €), the TITAN ×1.2 (4.800 €), the MRAVLJA ×0.3 (1.200 €), ŠKORPIJON H ×2 (8.000 €; all three levels 46.000 €)',
-      /4\.000/.test(car.pico[1]) && /23\.000/.test(car.pico[3]) && /4\.800/.test(car.titan[1]) && /1\.200/.test(car.mravlja[1]) && /8\.000/.test(car.skorpijon[1]) && /46\.000/.test(car.skorpijon[3]),
+    T.check('the career\'s upgrade prices by class: the PICO TURBO as before (4.000 €, all three levels 23.000 €), the MRAVLJA (5.000 €) no cheaper than it (×1), the TITAN ×1.2 (4.800 €), ŠKORPIJON H ×2 (8.000 €; all three levels 46.000 €)',
+      /4\.000/.test(car.pico[1]) && /23\.000/.test(car.pico[3]) && /4\.800/.test(car.titan[1]) && /4\.000/.test(car.mravlja[1]) && /23\.000/.test(car.mravlja[3]) && /8\.000/.test(car.skorpijon[1]) && /46\.000/.test(car.skorpijon[3]),
       JSON.stringify({ pico: car.pico, titan: car.titan, mravlja: car.mravlja, skorpijon: car.skorpijon }));
     T.check('no page errors (390×844)', !errors.length, errors.slice(0, 5).join(' | '));
     await ctx.close();
@@ -185,6 +186,12 @@ try {
     const m4 = await load(JSON.stringify({ carV: 2, car: 7, sound: 0, comm: 0 }));
     T.check('loading: {carV 2, car 35} (a newer build\'s index) → the rally car; {carV 3, carId "xx", car 12} → the rally car; carId "titan" → the TITAN; {carV 2, car 7} → index 7 kept (TAIFUN LM), saved as carV 3 with its id',
       m1.car === 'rally' && m2.car === 'rally' && m3.car === 'titan' && m4.car === 'lm' && m4.stored.carV === 3 && m4.stored.carId === 'lm' && m4.stored.car === 7, JSON.stringify({ m1: m1.car, m2: m2.car, m3: m3.car, m4 }));
+    // an older build on the same address (it keeps carId as it found it and saves its own index): the car picked there wins
+    const m6 = await load(JSON.stringify({ carV: 3, carId: 'titan', car: 0, sound: 0, comm: 0 }));
+    const m7 = await load(JSON.stringify({ carV: 3, carId: 'kaze', car: 4, sound: 0, comm: 0 }));
+    const m8 = await load(JSON.stringify({ carV: 3, carId: 'kaze', car: 0, sound: 0, comm: 0 }));
+    T.check('loading after an older build changed the car: {carId "titan", car 0} (the TITAN saved as the rally car\'s 4, then KAZE RS picked there) → KAZE RS; {carId "kaze", car 4} → the rally car; {carId "kaze", car 0} → KAZE RS',
+      m6.car === 'kaze' && m7.car === 'rally' && m8.car === 'kaze', JSON.stringify({ m6: m6.car, m7: m7.car, m8: m8.car }));
     const sv = await page.evaluate(async () => { const g = window.__game; g.onAction('to-car'); await new Promise(r => setTimeout(r, 150)); document.querySelector('#car-cats [data-cat="posebni"]').click(); await new Promise(r => setTimeout(r, 100));
       return { car: Core.MODELS[g.S.car].id, stored: JSON.parse(localStorage.getItem('tdgp-settings')), rally: Core.MODELS.findIndex(m => m.id === 'rally') }; });
     await page.reload(); await page.waitForFunction(() => window.__game, null, { timeout: 60000 });
@@ -244,6 +251,18 @@ try {
     const r2 = await rivals();
     T.check('round 2 in the PICO TURBO: qualifying with the nine TITANs (sized and driven by the championship\'s car), the race after it the same nine',
       q0 === 9 && qr.length === 10 && qr.filter(c => c === 'TITAN').length === 9 && qr.includes('PICO TURBO') && r2.n === 10 && r2.cars === 'titan' && r2.me === 'pico', JSON.stringify({ q0, qr, r2 }));
+    // a championship started in the FORMULA ORKAN (a one-make class, no field of its own; kept after round 1) and the next round in the
+    // PICO TURBO: still twelve formulas (the standings, "tekmeci: 12× FORMULA ORKAN", the race)
+    await page.evaluate(() => localStorage.setItem('tdgp-champ', JSON.stringify({ v: 1, id: 'domaci', diff: 1, car: 'formula', rounds: [{ track: 'jezero', order: Core.champKeys(12), rain: 0 }] })));
+    await page.reload(); await page.waitForFunction(() => window.__game, null, { timeout: 60000 });
+    await page.evaluate(() => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === 'pico'); }); await act('to-champ'); await wait(250);
+    const s3 = await st();
+    await act('champ-go');
+    await page.waitForFunction(() => { const g = window.__game; return !!(g.race && g.race.champ && g.race.track.def.id === 'ljubljana'); }, null, { timeout: 90000 });
+    const r3 = await rivals();
+    T.check('a championship started in the FORMULA ORKAN, round 2 in the PICO TURBO: its rivals still formulas (the standings: twelve, "tekmeci: 12× FORMULA ORKAN"; the race: twelve)',
+      s3.mycar === 'PICO TURBO' && /tekmeci: 12× FORMULA ORKAN/.test(s3.diff) && s3.rows.filter(c => c === 'FORMULA ORKAN').length === 12 && r3.n === 13 && r3.cars === 'formula' && r3.me === 'pico',
+      JSON.stringify({ s3: { rows: s3.rows, mycar: s3.mycar, diff: s3.diff }, r3 }));
     T.check('no page errors (championship)', !errors.length, errors.slice(0, 5).join(' | '));
     await ctx.close();
   }
@@ -285,6 +304,19 @@ try {
     T.check('destroyed: "VOZILO UNIČENO" under the minimap with "Odstopi"; the damage picture with the wheels, the lost ones marked; the wreck and the fire said',
       w.show && w.title === 'VOZILO UNIČENO' && w.btn === 'Odstopi' && w.whl && w.lost === w.nL && w.nL > 0 && w.said.includes('wreck') && w.said.includes('fireMe'), JSON.stringify(w));
     const p0 = await page.evaluate(() => { window.__game.pause(); const b = document.getElementById('pause-retire'); const v = !b.classList.contains('off'); window.__game.resume(); return v; });
+    // the pause over it (a phone 667×375 on its side: the banner's Odstopi sat right under the pause's "Ponovi dirko", which took the tap):
+    // no banner seen through the pause; back in the race it is there again
+    await page.setViewportSize({ width: 667, height: 375 }); await wait(300);
+    const pz = await page.evaluate(async () => { const g = window.__game, raf = () => new Promise(q => requestAnimationFrame(q)), el = document.getElementById('h-wreck'), b = document.getElementById('btn-retire');
+      for (let i = 0; i < 3; i++) await raf();
+      const r = b.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2, on = { show: el.classList.contains('show'), w: Math.round(r.width) };
+      g.pause(); await raf(); await raf();
+      const hit = document.elementFromPoint(x, y), p = { screen: g.screen, disp: getComputedStyle(el).display, bw: Math.round(b.getBoundingClientRect().width), hit: hit && (hit.id || hit.className), under: !!(hit && hit.closest('#s-pause')) };
+      g.resume(); for (let i = 0; i < 4; i++) await raf();
+      return { on, p, back: el.classList.contains('show') && getComputedStyle(el).display !== 'none' && b.textContent === 'Odstopi' }; });
+    await page.setViewportSize({ width: 844, height: 390 }); await wait(300);
+    T.check('667×375: the pause hides the banner (no Odstopi seen through it where the pause\'s own button takes the tap); back in the race it is there again',
+      pz.on.show && pz.on.w > 0 && pz.p.screen === 'pause' && pz.p.disp === 'none' && pz.p.bw === 0 && pz.p.under && pz.back, JSON.stringify(pz));
     const tap1 = await page.evaluate(() => { document.getElementById('btn-retire').click(); return { btn: document.getElementById('btn-retire').textContent, screen: window.__game.screen }; });
     const tap2 = await page.evaluate(async () => { document.getElementById('btn-retire').click(); await new Promise(r => setTimeout(r, 300)); const g = window.__game, r = g.race;
       const me = document.querySelector('#res-table tr.me'); return { screen: g.screen, phase: g.phase, title: document.getElementById('res-title').textContent, pos: document.getElementById('res-pos').textContent, sub: document.getElementById('res-sub').textContent,
@@ -296,11 +328,21 @@ try {
     T.check('the second tap: retired, the results ("Odstop", no place), the player among the retired at the end with "Odstop" instead of a time; no race time or place in the records; the commentator says so',
       tap2.screen === 'results' && tap2.title === 'Odstop' && tap2.pos === '✕' && /^Odstop v 1\. krogu/.test(tap2.sub) && tap2.row && tap2.row[0] === '–' && tap2.row[3] === 'Odstop' && tap2.dnfRow && tap2.last && tap2.out && !(rec && (rec.bestRace || rec.bestPos)) && tap2.said.includes('retired'),
       JSON.stringify({ tap2: Object.assign({}, tap2, { rec }) }));
-    // Ogled vozila: the photo mode on the player's car, up close; back to the results
-    const v = await page.evaluate(async () => { const g = window.__game; document.getElementById('res-view').click(); await new Promise(r => setTimeout(r, 200));
-      const s = Render.cam.shot, P = g.race.player, d = s ? Math.hypot(s.px - P.x, s.pz - P.z) : -1; const scr = g.screen;
-      g.onAction('ph-exit'); await new Promise(r => setTimeout(r, 150)); return { scr, d, back: g.screen }; });
-    T.check('"Ogled vozila" on the results: the photo mode on the player\'s car (up close), back to the results', v.scr === 'photo' && v.d > 4 && v.d < 18 && v.back === 'results', JSON.stringify(v));
+    // Ogled vozila: the photo mode on the player's car, up close, from over the road (the retired car stands on the run-off: not from the
+    // far side of it); held upright the same, close (the 24 mm lens); back to the results
+    const view = () => page.evaluate(async () => { const g = window.__game, r = g.race, P = r.player, T = r.track, W = P.wreck;
+      for (let i = 0; i < 40 && !W.stop; i++) g.sim(1, true);
+      document.getElementById('res-view').click(); await new Promise(q => setTimeout(q, 200));
+      const s = Render.cam.shot, d = s ? Math.hypot(s.px - P.x, s.pz - P.z) : -1, q = s ? T.query(s.px, s.pz, P.q.i, {}) : { d: NaN }, scr = g.screen, lens = document.getElementById('ph-lens').textContent;
+      g.onAction('ph-exit'); await new Promise(q => setTimeout(q, 150));
+      return { scr, d: +d.toFixed(1), stop: W.stop, carD: +P.q.d.toFixed(1), camD: +q.d.toFixed(1), halfW: T.w, lens, back: g.screen }; });
+    const v = await view();
+    await page.setViewportSize({ width: 390, height: 844 }); await wait(400);
+    const vu = await view();
+    T.check('"Ogled vozila" on the results: the photo mode on the player\'s car up close (the retired car off the road: the camera over the road, within its half-width + 3 m), back to the results; upright too, closer than 12 m with the 24 mm lens',
+      v.scr === 'photo' && v.d > 4 && v.d < 18 && v.stop && Math.abs(v.carD) > v.halfW && Math.abs(v.camD) <= v.halfW + 3 && v.back === 'results' &&
+      vu.scr === 'photo' && vu.d > 4 && vu.d < 12 && /24 mm/.test(vu.lens) && Math.abs(vu.camD) <= vu.halfW + 3 && vu.back === 'results', JSON.stringify({ v, vu }));
+    await page.setViewportSize({ width: 844, height: 390 }); await wait(300);
     // every new pool of the commentator has its lines, the names filled in
     const pools = await page.evaluate(() => { Comm.setEnabled(true); Comm.setSpeech(true); const out = {};
       for (const k of ['wheelLost', 'threeWheels', 'wreck', 'fireMe', 'retired', 'rivalWheel', 'rivalWreck', 'fire']) { const it = Comm.say(k, { a: 'M. Kovač', wheel: 'front left wheel' }, 9); out[k] = it ? it.text : null; }

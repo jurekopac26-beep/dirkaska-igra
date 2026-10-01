@@ -26,9 +26,9 @@
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
   const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.2, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 1, cmp: 'auto', pitCmp: 'auto', name: 'Igralec' };
-  let S = Object.assign({}, DEF);
+  let S = Object.assign({}, DEF), carIn = false;   // (carIn: the stored settings have a car index of their own; the car's migration below)
   let records = {};
-  try { const j = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (j) S = Object.assign(S, j); } catch (_) { }
+  try { const j = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (j) { S = Object.assign(S, j); carIn = Number.isInteger(j.car); } } catch (_) { }
   if (S.pkFly == null) S.pkFly = 1;   // (Pikes Peak: the course flyover before a fresh start, on unless switched off in Nastavitve)
   // one-time move to the new recommended defaults (chase camera, far view, high drift assist) for existing players
   try { if (!localStorage.getItem('tdgp-defaults-v2')) { S.camera = 'chase'; S.zoom = 1.2; S.assist = 2; localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
@@ -125,19 +125,21 @@
   const getTrack = (id) => { if (!trackCache.has(id)) trackCache.set(id, new Core.Track(Core.TRACKS.find(d => d.id === id) || Core.TRACKS[0])); return trackCache.get(id); };
   // The car: S.car (an index into Core.MODELS) is what the game uses while it runs (the tests set it too). Stored as carId, the
   // vehicle's id, and as car, an index an older build of the game (the first 11 vehicles) understands: the index itself up to 10, else
-  // the rally car's (an older copy on the same address lands on the rally car instead of failing). carV 3, read back: a known id wins;
-  // an id this build does not know: the rally car (never whatever another vehicle has at that index); an index without an id only below
-  // 11 (the indices every build agrees on); before carV 2: the one-time switch to the player's own rally car (number 7, blue livery)
-  const LEGACY_N = 11, RALLY = Core.MODELS.findIndex(m => m.id === 'rally');
+  // the rally car's (an older copy on the same address lands on the rally car instead of failing). carV 3, read back: a known id wins,
+  // unless car is no longer the index this build wrote with it (an older build, which keeps carId as it found it, picked another of its
+  // 11 since: that car); an id this build does not know: the rally car (never whatever another vehicle has at that index); an index
+  // without an id only below 11 (the indices every build agrees on); before carV 2: the one-time switch to the player's own rally car
+  // (number 7, blue livery)
+  const LEGACY_N = 11, RALLY = Core.MODELS.findIndex(m => m.id === 'rally'), legacy = (k) => k >= 0 && k < LEGACY_N ? k : RALLY;
   function save() {
-    const M = Core.MODELS[S.car] || Core.MODELS[RALLY], o = Object.assign({}, S, { carId: M.id, car: S.car >= 0 && S.car < LEGACY_N ? S.car : RALLY, carV: 3 });
+    const M = Core.MODELS[S.car] || Core.MODELS[RALLY], o = Object.assign({}, S, { carId: M.id, car: legacy(S.car), carV: 3 });
     try { localStorage.setItem('tdgp-settings', JSON.stringify(o)); } catch (_) { }
   }
   {
-    const k = typeof S.carId === 'string' ? Core.MODELS.findIndex(m => m.id === S.carId) : -2, mig = S.carV !== 3;
+    const k = typeof S.carId === 'string' ? Core.MODELS.findIndex(m => m.id === S.carId) : -2, mig = S.carV !== 3, ok = Number.isInteger(S.car) && S.car >= 0 && S.car < LEGACY_N;
     if (!(S.carV >= 2)) { S.car = RALLY; S.color = 2; }
-    else if (k !== -2) S.car = k >= 0 ? k : RALLY;
-    else if (!(Number.isInteger(S.car) && S.car >= 0 && S.car < LEGACY_N)) S.car = RALLY;
+    else if (k >= 0) { if (!(carIn && ok && S.car !== legacy(k))) S.car = k; }   // (the id; or the car an older build picked since)
+    else if (k === -1 || !ok) S.car = RALLY;
     delete S.carId; S.carV = 3; if (mig) save();
   }
   const carNum = () => Core.MODELS[S.car].num || 1;
@@ -188,8 +190,11 @@
         rounds: j.rounds.map(r => Object.assign({ track: r.track, order: r.order.slice(), rain: r.rain ? 1 : 0 }, r.dnf && r.dnf.length ? { dnf: r.dnf.slice() } : null)) };
   } catch (_) { champ = null; }
   // the championship's rivals: the field of the car it was started with, in every round, its qualifying and its standings (the player may
-  // change cars between the rounds); a one-make class the player drives (the formula, the prototype) races its own cars, as every race does
+  // change cars between the rounds). A one-make class (the formula, the prototype) has no field of its own and Core.Race takes one only
+  // from the player's car, so a championship started in one hands the race a field of that class alone (champField): its rivals stay in
+  // it whatever the player drives. A one-make class the player drives races its own cars, as every race does
   const champCar = () => champ && champ.car ? Core.MODELS.find(m => m.id === champ.car) || null : null;
+  const champField = () => { const M = champCar(); return M && M.oneMake && !(M.field && M.field.length) ? { id: M.id, name: M.name, field: [M.id] } : M; };
   const fieldFor = (pm, fm) => pm.oneMake ? null : fm || pm;   // (the vehicle whose field a race's rivals drive: Core.Race's rule)
   function champSave() { try { if (champ) localStorage.setItem('tdgp-champ', JSON.stringify(champ)); else localStorage.removeItem('tdgp-champ'); } catch (_) { } }
   if (!isObj(records.champ)) records.champ = {};   // per series: best = the best final place, titles = championships won
@@ -259,7 +264,9 @@
     $('touch').classList.toggle('off', !(bg === 'race' && name === 'none' && phase !== 'finish' && phase !== 'done'));
     $('btn-pause').classList.toggle('off', !(bg === 'race' && inRace));
     $('btn-cam').classList.toggle('off', !(bg === 'race' && inRace)); if (inRace) camLabel();
-    if (!inRace) $('btn-rescue').classList.add('off');
+    // (a screen over the race, the pause too: no rescue button and no VOZILO UNIČENO banner with its Odstopi / Ponovi seen through it,
+    // where the menu's own buttons take the tap; the first HUD frame after it puts the banner back)
+    if (!inRace) { $('btn-rescue').classList.add('off'); $('h-wreck').classList.remove('show'); wreckKey = ''; }
     if (inRace) requestAnimationFrame(() => Input.layout());
     updateOrientation();
   }
@@ -463,10 +470,10 @@
     zavore: 'Močnejše zaviranje, krajša zavorna pot.',
     aero: 'Pritisk na cesto: več oprijema v hitrih ovinkih, a malo več zračnega upora.'
   };
-  // the career's price of an upgrade, from level `from` to `to` (the levels in between too): Core.careerUpgPrice by the car's class (its
-  // price / 50 000: x0.3 for the cheapest .. x2 for the dearest; the free first car, the PICO TURBO, the standard prices), each level
-  // rounded to 100 EUR
-  const upgK = (id) => { const p = priceOf(id); return p > 0 ? clamp(p / 50000, 0.3, 2) : 1; };
+  // the career's price of an upgrade, from level `from` to `to` (the levels in between too): Core.careerUpgPrice by the car's class, its
+  // price / 50 000 between x1 and x2: the standard prices up to a 50 000 EUR car (the free first car, the PICO TURBO, among them: no
+  // cheaper car's parts cost less than its), up to twice them for the dearest; each level rounded to 100 EUR
+  const upgK = (id) => clamp(priceOf(id) / 50000, 1, 2);
   const upgPrice = (id, from, to) => { let s = 0; for (let l = from + 1; l <= to; l++) s += Math.round(Core.careerUpgPrice(l - 1, l) * upgK(id) / 100) * 100; return s; };
   function upgEffect(id, lv) {
     if (!lv) return 'serijsko';
@@ -643,8 +650,21 @@
     ['brez', '', []], ['živo', 'saturate(1.45) contrast(1.08)', [['sat', 1.45], ['con', 1.08]]], ['črno-belo', 'grayscale(1) contrast(1.15)', [['sat', 0], ['con', 1.15]]],
     ['sepija', 'sepia(0.85) contrast(1.05)', [['sep', 0.85], ['con', 1.05]]], ['film', 'contrast(1.12) saturate(0.85) sepia(0.18)', [['con', 1.12], ['sat', 0.85], ['sep', 0.18]], true]];
   let photo = null;
+  // Ogled vozila's distance: how far from the look-at point (0.7 m up) a camera `a` round from the nose and `p` above the horizon stands for
+  // the vehicle's box (len × wid, ht tall, on the ground) to fill at most fx of the picture's half-width and fy of its half-height (tv: the
+  // lens's tan of half the vertical view; asp: width / height). Each corner where the camera sees it (the near ones larger), so a close
+  // camera still has the whole car in the picture
+  function viewFit(len, wid, ht, a, p, tv, asp, fx, fy) {
+    const cp = Math.cos(p), fX = -Math.cos(a) * cp, fY = -Math.sin(p), fZ = -Math.sin(a) * cp, rX = Math.sin(a), rZ = -Math.cos(a);   // (looking at the car; to the right)
+    const uX = -rZ * fY, uY = rZ * fX - rX * fZ, uZ = rX * fY, th = tv * asp; let d = 0;   // (up in the picture)
+    for (const X of [-len / 2, len / 2]) for (const Y of [-0.7, ht - 0.7]) for (const Z of [-wid / 2, wid / 2]) {
+      const cf = X * fX + Y * fY + Z * fZ;   // (a corner's depth is d + cf: across and up it may reach fx·th and fy·tv of that)
+      d = Math.max(d, Math.abs(X * rX + Z * rZ) / (fx * th) - cf, Math.abs(X * uX + Y * uY + Z * uZ) / (fy * tv) - cf);
+    }
+    return d;
+  }
   // from: 'pause', 'replay' or 'results' (the race stands still meanwhile); view (Ogled vozila on the pause and the results): the player's
-  // car up close, from its front three-quarters with a 50 mm lens (the wreck seen as it is), else the camera starts where the game's was
+  // car up close (the wreck seen as it is), else the camera starts where the game's was
   function photoStart(from, view) {
     const car = from === 'replay' && replay ? recd.cars[replay.k] : race && race.player; if (!car) return;
     if (from === 'replay') { replay.play = false; replayUI(); $('replay-ui').classList.add('off'); }
@@ -652,10 +672,24 @@
     const inCar = d < 3;   // (from the cockpit: behind the car, a little above it)
     photo = { from, car, yaw: inCar ? car.h + Math.PI + 0.5 : Math.atan2(dz, dx), pitch: inCar ? 0.22 : Core.clamp(Math.asin(dy / Math.max(1, d)), 0.03, 1.4), dist: inCar ? 8 : Core.clamp(d, 4, 40),
       lens: 1, filt: 0, blur: false, hide: false, ptrs: new Map(), pinch: 0, moved: 0, prev: Render.cam.shot || null, shot: { sky: true, floor: true, near: 0.3, blur: 0 }, wasPaused: paused, view: !!view };
-    if (view) {   // (far enough for the whole car across ~60 % of the picture's width and height, as it is held: a phone upright looks narrower)
-      const M = car.m, a = 0.62, tv = Math.tan(PH_LENS[2][1] * Math.PI / 360), th = tv * Math.max(0.3, window.innerWidth / Math.max(1, window.innerHeight));
-      const w = M.len * Math.sin(a) + M.wid * Math.cos(a), h = (M.def && M.def.parts && M.def.parts.ht) || 1.4;
-      photo.yaw = car.h + a; photo.pitch = 0.3; photo.lens = 2; photo.dist = Core.clamp(Math.max(w * 0.5 / (0.56 * th), 0.5 * (h + 0.3 * M.len) / (0.52 * tv)), 4, 40);
+    if (view) {   // (from the front three-quarters, close: the whole car on ~2/3 of the picture with a 50 mm lens on a phone on its side; held
+      // upright the 24 mm one and the car across ~90 % of the width (a 50 mm would stand ~22 m off, behind whatever is in between). The
+      // side of the car nearer the middle of the road (a car stopped on the run-off: from over the road, not from the trees beyond it),
+      // where no other car stands in between (in a pack, the side with fewer); from behind when the car stands across the road and its
+      // front is no better)
+      const M = car.m, a = 0.62, pitch = 0.3, up = window.innerWidth < window.innerHeight, lens = up ? 0 : 2, tv = Math.tan(PH_LENS[lens][1] * Math.PI / 360);
+      const ht = (M.def && M.def.parts && M.def.parts.ht) || 1.4, asp = Math.max(0.3, window.innerWidth / Math.max(1, window.innerHeight));
+      photo.pitch = pitch; photo.lens = lens; photo.dist = Core.clamp(viewFit(M.len, M.wid, ht, a, pitch, tv, asp, up ? 0.92 : 0.66, up ? 0.8 : 0.66), 4, 40);
+      const T = race.track, q = {}, r = Math.cos(pitch) * photo.dist; let best = Infinity;
+      const inWay = (cx, cz) => {   // (how many other cars stand with their middle in the line of sight, between the camera and the car's nose)
+        const ex = car.x - cx, ez = car.z - cz, e2 = ex * ex + ez * ez, t1 = 1 - M.len * 0.5 / r; let n = 0;
+        for (const o of race.cars) { if (o === car) continue; const t = ((o.x - cx) * ex + (o.z - cz) * ez) / e2;
+          if (t > 0 && t < t1 && Math.hypot(o.x - cx - t * ex, o.z - cz - t * ez) < o.m.wid * 0.5 + 0.5) n++; }
+        return n; };
+      for (const [y, pen] of [[car.h + a, 0], [car.h - a, 0], [car.h + Math.PI - a, 3], [car.h + Math.PI + a, 3]]) {
+        const cx = car.x + Math.cos(y) * r, cz = car.z + Math.sin(y) * r; T.query(cx, cz, car.q ? car.q.i : -1, q);
+        const k = Math.abs(q.d) + pen + 5 * inWay(cx, cz); if (k < best) { best = k; photo.yaw = y; }
+      }
     }
     if (from === 'results') paused = true;   // (the results: the race behind them stands while the car is looked at)
     showScreen('photo'); photoUI(); photoPose(); Render.setShot(photo.shot); Render.clearSparks();
@@ -1007,7 +1041,7 @@
     const duel = md === 'traffic', chase = md === 'police';   // (Vršič's open road: the duel with one rival in the traffic, the run from the police)
     const cd = !on && champRun ? champDef() : null, cr = cd && !champDone() && cd.tracks[champ.rounds.length] === track.def.id ? champ.rounds.length : -1;   // a championship round (its index), or -1
     if (cr < 0) champRun = false;
-    const FM = cr >= 0 ? champCar() : null;   // (a championship round: the rivals in the field of the car it was started with)
+    const FM = cr >= 0 ? champField() : null;   // (a championship round: the rivals in the field of the car it was started with)
     const quali = mode === 'quali' && qualiOn(track.def), nAI = tt || chase ? 0 : duel ? 1 : cr >= 0 ? NUM_AI : track.def.rivals || NUM_AI;   // (a championship round: its own twelve in every round)
     if (quali && !(qual && qual.id === track.def.id && qual.cr === cr && !qual.res)) { const W = weatherOf(track.def); qual = { id: track.def.id, cr, seed: (Math.random() * 1e6) | 0, rain: W.rain, wx: W.wx, nAI: Core.fieldSize(fieldFor(M, FM), nAI), pm: M, fm: FM, back: track.qualiBack(), diff: cr >= 0 ? champ.diff : S.difficulty, phys: physOf(), sims: null, lap: 0, res: null }; }   // (as many rivals as the race will have: a big vehicle's field is smaller)
     const Q = !quali && !on && !tt && qual && qual.res && qual.id === track.def.id && qual.cr === cr ? qual : null;   // the race after qualifying
@@ -1542,9 +1576,9 @@
   // a driver of the standings: the rivals' cars as in the next round (the field of the championship's car; a one-make class the player
   // drives: its own cars)
   const champDriver = (key) => { const M = Core.MODELS[S.car]; if (key === Core.PLAYER_KEY) return { name: S.name, car: M.name, color: PLAYER_COLORS[S.color] };
-    const a = Core.aiDriver(Math.max(0, CH_KEYS.indexOf(key) - 1), fieldFor(M, champCar())); return { name: a.name, car: (M.oneMake ? M : a.model).name, color: a.color }; };
+    const a = Core.aiDriver(Math.max(0, CH_KEYS.indexOf(key) - 1), fieldFor(M, champField())); return { name: a.name, car: (M.oneMake ? M : a.model).name, color: a.color }; };
   // how many rivals the next round has (a big vehicle's field fewer than twelve), and what they drive (one kind: its name and how many)
-  const champRivals = () => { const M = Core.MODELS[S.car], F = fieldFor(M, champ ? champCar() : M), n = Core.fieldSize(F, NUM_AI);
+  const champRivals = () => { const M = Core.MODELS[S.car], F = fieldFor(M, champ ? champField() : M), n = Core.fieldSize(F, NUM_AI);
     const names = new Set(); for (let k = 0; k < n; k++) names.add((M.oneMake ? M : Core.aiModel(k, F)).name);
     return { n, txt: names.size === 1 ? n + '\u00d7 ' + [...names][0] : 'različni avti' }; };
   // the championship round just driven: its finishing order into the standings (once); after the last round the final place into the records
@@ -1608,8 +1642,7 @@
     if ((phase === 'finish' || phase === 'done') && race.timeTrial) { P.inThr = 0; P.inBrk = 1; P.inSteer = 0; P.inHand = 0; P.digitalSteer = false; }   // time trial: brake to a stop past the finish (the road ends)
     else if (phase === 'finish' || phase === 'done' || autoDrive) { P.pitWant = !!P.inPit; Core.aiControl(P, race, dt); P.digitalSteer = false; }   // (autoDrive: automated tests of online races drive in real time)
     else { P.inSteer = inp.steer; P.inThr = inp.thr; P.inBrk = inp.brk; P.inHand = inp.hand; P.digitalSteer = inp.digital; }
-    race.step(dt);
-    if (race.pol) for (const pc of race.pol.cars) if (pc.detach.length) { for (const n of pc.detach) race.spawnDebris(pc, n); pc.detach.length = 0; }   // (the run from the police: a patrol car's lost panels onto the road as well; the race drains only its own cars')
+    race.step(dt);   // (the run from the police: the race throws the patrol cars' lost panels onto the road itself, with the police's own random numbers)
     recHits();
     if (ghRec) ghSample(P);
     if (ghLap) ghLapSample(P);
