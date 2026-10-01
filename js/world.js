@@ -13113,14 +13113,14 @@ const World = (function () {
     };
     const VP = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vrg(i, side)); return a; });
     {
-      const CH = 64, offs = [-w, -w * 2 / 3, -w / 3, 0, w / 3, w * 2 / 3, w], tileL = 8, K = 2.4, wl = [0.95, 0.95, 0.92];
+      const CH = 128, offs = [-w, -w * 2 / 3, -w / 3, 0, w / 3, w * 2 / 3, w], tileL = 8, K = 2.4, wl = [0.95, 0.95, 0.92];
       const brk = new Float32Array(N); for (const c of T.corners) if (c.sev >= 2) for (let k = -60; k <= 6; k++) { const i = (c.i0 + k + N) % N, f = k < -10 ? sstep(-60, -12, k) : sstep(6, -10, k); if (f > brk[i]) brk[i] = f; }
       const shA = (i, o) => { const rl = T.rl[i]; let k = 0.84 - (0.12 + 0.1 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5); if (Math.abs(o) > w * 0.9) k -= 0.04; return [k, k, k * 1.02]; };
       const shK = (i, o) => { const rl = T.rl[i], t = Math.exp(-((Math.abs(o - rl) - 0.8) ** 2) / 0.6); let k = (0.95 + 0.06 * rpHash(i, 13)) * (1 - 0.08 * t) * (Math.abs(o) > w - 0.5 ? 0.86 : 1); return [k, k * 0.99, k * 0.97]; };   // (the wheel tracks polished darker, the gutters too)
       const shT = (i, o) => { const k = 0.98 + 0.04 * rpHash(i, 17) - (Math.abs(o) > w - 0.5 ? 0.06 : 0); return [k, k * 0.98, k * 0.95]; };
       const gc = (p) => { const c = nrGCol(p[0], p[2]); return c; };
       for (let c0 = 0; c0 < N; c0 += CH) {
-        const ga = new GB(true), gk = new GB(true), gt = new GB(true), gl = new GB(), gp = new GB(true), gv = new GB(true), gc2 = new GB();
+        const ga = new GB(true), gk = new GB(true), gt = new GB(true), gl = new GB(), gp = gt, gv = new GB(true), gc2 = gl;   // (the tiles and the pavers one mesh, the lines and the kerbs one)
         for (let ii = c0; ii < Math.min(c0 + CH, N); ii++) {
           const i = ii, j = (ii + 1) % N, kd = kindR[i], v0 = ii * ds, v1 = (ii + 1) * ds;
           for (let c = 0; c < offs.length - 1; c++) { const o0 = offs[c], o1 = offs[c + 1], A = Pt(i, o0, 0.02), B = Pt(i, o1, 0.02), C = Pt(j, o1, 0.02), D = Pt(j, o0, 0.02);
@@ -13145,7 +13145,7 @@ const World = (function () {
             }
           }
         }
-        addM(ga, aMat); addM(gk, kMat); addM(gt, pMat); addM(gl, lMat); addM(gp, pMat); addM(gv, gMat); addM(gc2, lMat);
+        addM(ga, aMat); addM(gk, kMat); addM(gt, pMat); addM(gl, lMat); addM(gv, gMat);
       }
       // the start / finish line across the Markt and the grid boxes
       const gq = new GB(true), gw = new GB(), uM = Math.round(w * 2 / 0.8) / 16, W1 = [1, 1, 1], wh = [0.93, 0.93, 0.9], HYp = (p) => T.hy[p[3]], nBox = Math.max(14, (def.rivals || 0) + 1);
@@ -13172,7 +13172,7 @@ const World = (function () {
     const posts = new IChunks(postGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), 256);
     const spC = new Chunks(256, true), W1 = [1, 1, 1];
     {
-      const steel = [0.8, 0.82, 0.85], steelD = [0.5, 0.52, 0.56], CHB = 128;
+      const steel = [0.8, 0.82, 0.85], steelD = [0.5, 0.52, 0.56], CHB = 256;
       for (let c0 = 0; c0 < N; c0 += CHB) {
         const gn = new RB(true), gr = new RB();
         for (const side of [-1, 1]) {
@@ -13200,7 +13200,7 @@ const World = (function () {
         addM(gn, nMat, true); addM(gr, rMat, true);
       }
     }
-    const nPosts = posts.addTo(root, true);
+    const nPosts = posts.addTo(root, false);
 
     /* ---- scenery helpers (vertex coloured, 128 m chunks) ---- */
     const scen = new Chunks(128), fac = new Chunks(128, true), ban = new GB(true), flg = new Chunks(256, true);
@@ -13467,9 +13467,9 @@ const World = (function () {
       const run = (d0, d1, side, o) => { const n = crowdRun(CR, sStart + d0, sStart + d1, side, Object.assign({}, M, o)); nFans += n; return n; };
       const dK = nameD('Kapelmuur') || 600, dC = nameD('Kapel Oudenberg') || 880, dD = nameD('Driepikkel') || 1080, dH = nameD('Grupellopark') || 2970, dR = nameD('Het Rot') || 3115;
       for (const sd of [-1, 1]) {
-        run(-190, 110, sd, { rows: 3, dens: 0.72, label: 'MU Markt' });
-        run(110, dK - 20, sd, { rows: 3, dens: 0.82, label: 'MU Vesten' });
-        run(dK - 20, dD + 30, sd, { rows: 6, dens: 0.86, gap: 0.9, first: 1.2, maxSlope: 1.2, label: 'MU Kapelmuur' });
+        run(-190, 110, sd, { rows: 3, dens: 0.6, label: 'MU Markt' });
+        run(110, dK - 20, sd, { rows: 3, dens: 0.66, label: 'MU Vesten' });
+        run(dK - 20, dD + 30, sd, { rows: 5, dens: 0.8, gap: 0.9, first: 1.2, maxSlope: 1.2, label: 'MU Kapelmuur' });
         run(dD + 30, dD + 170, sd, { rows: 2, dens: 0.45, label: 'MU Driepikkel' });
         run(dD + 170, dH - 80, sd, { rows: 2, dens: 0.07, clump: 0.95, strip: false, label: 'MU groups' });
         run(dH - 80, dH + 70, sd, { rows: 3, dens: 0.55, label: 'MU hairpin' });
@@ -13489,14 +13489,14 @@ const World = (function () {
         'float wK = position.y * position.y * 0.018;\ntransformed.x += wK * sin( uWind * 1.1 + wPh );\ntransformed.z += wK * 0.6 * sin( uWind * 0.83 + wPh * 1.7 );');
     };
     tMat.customProgramCacheKey = () => 'nrTreeWind';
-    const tk = [new IChunks(muTreeGeo(0), tMat, 128), new IChunks(spaTreeGeo(2), tMat, 128), new IChunks(nrTreeGeo(0), tMat, 128)];   // near: broadleaf, birch, spruce
+    const tk = [new IChunks(muTreeGeo(0), tMat, 128)];   // near: broadleaf (the birches and the odd spruce drawn as it too, a lighter green: one draw per chunk for phones)
     const tf = [new IChunks(muTreeGeo(1), tMat, 192)];
     let nTrees = 0;
     {
       const Lt = NRC * NRT, maxT = Math.round(60000 * dens), CRW = [0.33, 0.2, 0.14];
       const spring = (x, z) => { const v = 0.88 + crH(x, z, 85) * 0.24, t = crH(x, z, 86); return t < 0.55 ? [v * 1.02, v * 1.08, v * 0.92] : t < 0.85 ? [v * 0.84, v * 0.92, v * 0.88] : t < 0.96 ? [v * 1.06, v * 1.08, v * 0.84] : [v * 1.1, v * 0.66, v * 0.72]; };   // (fresh beech, darker oak and lime, a lighter chestnut, now and then a copper beech)   // (fresh beech green, darker oak, a copper beech now and then)
       const plant = (sp, far, x, z, hgt, wid, c) => { if (excluded(x, z) || inWater(x, z, 2)) return false; const y = nrGround(x, z) - 0.1, rot = crH(x, z, 88) * TAU;
-        if (far) tf[0].add(x, y, z, rot, wid, hgt, c); else tk[sp].add(x, y, z, rot, wid, hgt, c); nrShade(x, z, wid * CRW[sp], 0.8); nTrees++; return true; };
+        if (far) tf[0].add(x, y, z, rot, wid, hgt, c); else tk[0].add(x, y, z, rot, wid, hgt, sp ? [0.92, 1.0, 0.86] : c); nrShade(x, z, wid * CRW[sp], 0.8); nTrees++; return true; };
       const nearOk = (x, z, rd, k) => { if (rd >= 48) return true; const nn = nrNear(x, z); return !(nn.i >= 0 && (nn.dd < 2.6 || (nn.dd < 6 && k < 0.5))); };
       // the avenue of the Kapelmuur: big beeches and limes either side, just behind the crowd
       { const d0 = (nameD('Kapelmuur') || 600) - 10, d1 = (nameD('Kapel Oudenberg') || 880) + 60;
@@ -13507,7 +13507,7 @@ const World = (function () {
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
         for (let zz = za + 1.55; zz < za + Lt; zz += 3.1) for (let xx = xa + 1.55; xx < xa + Lt; xx += 3.1) {
           const rd = nrDist(xx, zz); if (rd > 250) continue;
-          const cl = nrLC(xx, zz), far = rd > 70, h1 = crH(xx, zz, 81), x = xx + (crH(xx, zz, 92) - 0.5) * 2.6, z = zz + (crH(xx, zz, 93) - 0.5) * 2.6;
+          const cl = nrLC(xx, zz), far = rd > 50, h1 = crH(xx, zz, 81), x = xx + (crH(xx, zz, 92) - 0.5) * 2.6, z = zz + (crH(xx, zz, 93) - 0.5) * 2.6;
           if (cl === 1) { if (h1 < (far ? 0.12 : 0.2) && nearOk(x, z, rd, h1 * 5)) { const hgt = 16 + crH(xx, zz, 90) * 10, sp = crH(xx, zz, 94) < 0.08 ? 1 : crH(xx, zz, 94) < 0.12 ? 2 : 0; plant(sp, far, x, z, hgt, hgt * (sp === 2 ? 0.7 : 0.95), sp === 0 ? spring(x, z) : [1, 1, 1]); } continue; }
           if (far) { if (cl === 2 && h1 < 0.02) plant(0, true, x, z, 18, 18, spring(x, z)); continue; }
           if (cl === 2) { if (h1 < 0.035 && nearOk(x, z, rd, 1)) { const hgt = 15 + crH(xx, zz, 90) * 9; plant(0, false, x, z, hgt, hgt * 1.05, spring(x, z)); } continue; }
@@ -13581,11 +13581,11 @@ const World = (function () {
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     fac.addTo(sceneryGroup, new THREE.MeshLambertMaterial({ map: ownTex(muFacadeTex()), vertexColors: true }), true, true);
-    roofSl.addTo(sceneryGroup, new THREE.MeshLambertMaterial({ map: ownTex(muRoofTex(false)), vertexColors: true }), true, true);
-    roofCl.addTo(sceneryGroup, new THREE.MeshLambertMaterial({ map: ownTex(muRoofTex(true)), vertexColors: true }), true, true);
+    roofSl.addTo(sceneryGroup, new THREE.MeshLambertMaterial({ map: ownTex(muRoofTex(false)), vertexColors: true }), false, true);   // (the roofs cast no shadow of their own: the walls under them do; two draws fewer per chunk for phones)
+    roofCl.addTo(sceneryGroup, new THREE.MeshLambertMaterial({ map: ownTex(muRoofTex(true)), vertexColors: true }), false, true);
     stn.addTo(sceneryGroup, new THREE.MeshLambertMaterial({ map: ownTex(muStoneTex(false)), vertexColors: true }), true, true);
     brk.addTo(sceneryGroup, new THREE.MeshLambertMaterial({ map: ownTex(muStoneTex(true)), vertexColors: true }), true, true);
-    flg.addTo(root, new THREE.MeshLambertMaterial({ map: ownTex(muFlagTex()) }), true, false);
+    flg.addTo(root, new THREE.MeshLambertMaterial({ map: ownTex(muFlagTex()) }), false, false);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
     spC.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true);
     pkSky({ root, tex, out, sStart, gH: nrGround, far: true });   // the TV helicopter over the race
