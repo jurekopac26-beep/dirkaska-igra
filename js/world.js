@@ -75,6 +75,29 @@ const World = (function () {
     addTo(group, mat, cast, recv) { for (const g of this.map.values()) { if (g.empty) continue; const m = new THREE.Mesh(g.geometry(), mat); m.castShadow = cast; m.receiveShadow = recv; m.matrixAutoUpdate = false; m.updateMatrix(); group.add(m); } }
   }
 
+  /* ---------------- swaying trees (the default builder's woods): their own chunks, each vertex with its share of the sway (aSway: 0 at the
+     foot of its tree, 1 at the top, squared), bent by the wind in the vertex shader (World.update drives the uniform: out.dyn.wind) ---------------- */
+  function swayMat(W) {
+    const m = new THREE.MeshLambertMaterial({ vertexColors: true });
+    m.onBeforeCompile = (sh) => {
+      sh.uniforms.uWind = W;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uWind; attribute float aSway;').replace('#include <begin_vertex>', '#include <begin_vertex>\n' +
+        'float wPh = position.x * 0.045 + position.z * 0.061;\ntransformed.x += aSway * 0.34 * sin(uWind * 1.15 + wPh);\ntransformed.z += aSway * 0.22 * sin(uWind * 0.87 + wPh * 1.6);');
+    };
+    m.customProgramCacheKey = () => 'treeSway';
+    return m;
+  }
+  function treeMark(g, n0, y0, h) { (g.sw || (g.sw = [])).push(n0, g.P.length / 3, y0, h); }   // (after a tree is added to g: its vertices from n0 sway by their height)
+  function treesTo(ch, group, mat) {
+    for (const g of ch.map.values()) {
+      if (g.empty) continue;
+      const geo = g.geometry(), n = g.P.length / 3, A = new Float32Array(n), L = g.sw || [];
+      for (let k = 0; k < L.length; k += 4) { const y0 = L[k + 2], h = L[k + 3]; for (let v = L[k]; v < L[k + 1]; v++) { const f = Math.max(0, Math.min(1, (g.P[v * 3 + 1] - y0) / h - 0.15)); A[v] = f * f; } }
+      geo.setAttribute('aSway', new THREE.BufferAttribute(A, 1));
+      const m = new THREE.Mesh(geo, mat); m.castShadow = true; m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); group.add(m);
+    }
+  }
+
   /* ---------------- primitives ---------------- */
   const vary = (c, r, amt) => { const k = 1 + (r() - 0.5) * amt; return [c[0] * k, c[1] * k, c[2] * k]; };
   const hex = (h) => [((h >> 16) & 255) / 255, ((h >> 8) & 255) / 255, (h & 255) / 255];
@@ -904,7 +927,7 @@ const World = (function () {
       g.setIndex(idx); g.computeVertexNormals();
       const mat = new THREE.MeshLambertMaterial({ map: THEME === 'city' || THEME === 'ljubljana' || THEME === 'monaco' ? tex.paving : tex.grass, vertexColors: true });
       const m = new THREE.Mesh(g, mat); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m);
-      out.ground = m; GM = { pos, nx, nz, cell, x0: B.minX, z0: B.minZ };
+      out.ground = m; GM = { pos, nx, nz, cell, x0: B.minX, z0: B.minZ }; out.gGrid = GM;
     }
     const gmLine = (y) => waterline((i, j) => GM.pos[(clamp(j, 0, GM.nz) * (GM.nx + 1) + clamp(i, 0, GM.nx)) * 3 + 1], GM.x0, GM.z0, GM.cell, 0, GM.nx, 0, GM.nz, y);
     const gmBox = (x0, z0, x1, z1) => [Math.max(x0, GM.x0), Math.max(z0, GM.z0), Math.min(x1, GM.x0 + GM.nx * GM.cell), Math.min(z1, GM.z0 + GM.nz * GM.cell)];   // (a box within the ground mesh)
@@ -1098,6 +1121,7 @@ const World = (function () {
     }
     /* ================= BARRIERS ================= */
     const scen = new Chunks(110);        // vertex-colored static scenery
+    const treeCh = new Chunks(110);      // the woods that sway in the wind (lake, mountain: see swayMat)
     const texTires = new GB(true), texSpons = new GB(true), texFence = new GB(true), texCrowd = new GB(true);
     const tyreCh = new Chunks(110, true), FO_TR = THEME === 'italia' ? [0.27, 0.6, 0.35] : THEME === 'kamp' ? [0.2, 0.2, 0.22] : [0.88, 0.33, 0.24], FO_TW = THEME === 'kamp' ? [0.13, 0.13, 0.15] : THEME === 'italia' ? [0.92, 0.89, 0.74] : [0.95, 0.95, 0.94];   // painted tyres (textured, in chunks so the unseen ones are culled): red / white, Toskana green / white, Gromski rt plain black
     if (THEME !== 'mountain') {
@@ -1577,7 +1601,7 @@ const World = (function () {
 
     /* ================= TREES ================= */
     if (THEME === 'lake') {
-      const step = 6.2 / Math.sqrt(dens);
+      const step = 6.2 / Math.sqrt(dens), rs = ROCK_SMOOTH; ROCK_SMOOTH = true;   // (the crowns and tiers softly shaded, as in the forest)
       const pineC = [0.17, 0.34, 0.18], decC = [0.3, 0.52, 0.2], birchC = [0.46, 0.64, 0.28];
       const autumn = [[0.86, 0.52, 0.12], [0.93, 0.72, 0.16], [0.72, 0.3, 0.12]];
       for (let z = B.minZ; z < B.maxZ; z += step) {
@@ -1592,7 +1616,7 @@ const World = (function () {
           if (c < 10) p *= 0.35;
           if (c > 110) p = Math.max(p, 0.5);
           if (R() > p) continue;
-          const g = scen.get(px, pz);
+          const g = treeCh.get(px, pz), n0 = g.P.length / 3;
           const y0 = groundH(px, pz) - 0.2;
           const tn = typeN(px, pz);
           const hgt = 8 + R() * 7;
@@ -1601,9 +1625,10 @@ const World = (function () {
             const col = vary(pineC, R, 0.22);
             const rr = hgt * (0.26 + R() * 0.06);
             const rot = R() * TAU;
-            cone(g, px, y0 + hgt * 0.16, pz, rr, hgt * 0.44, 7, col, [col[0] * 1.2, col[1] * 1.2, col[2] * 1.2], rot);
-            cone(g, px, y0 + hgt * 0.4, pz, rr * 0.76, hgt * 0.38, 7, vary(col, R, 0.08), [col[0] * 1.25, col[1] * 1.25, col[2] * 1.25], rot + 0.4);
-            cone(g, px, y0 + hgt * 0.62, pz, rr * 0.5, hgt * 0.38, 6, vary(col, R, 0.08), [col[0] * 1.3, col[1] * 1.3, col[2] * 1.3], rot + 0.8);
+            const lt = (k) => [col[0] * k, col[1] * k, col[2] * k];   // (jagged, drooping tiers as the forest's firs, the top one to the tip; sunlit tips)
+            starCone(g, px, y0 + hgt * 0.16, pz, rr, hgt * 0.4, 5, col, lt(1.28), rot, hgt * 0.05);
+            starCone(g, px, y0 + hgt * 0.38, pz, rr * 0.76, hgt * 0.34, 4, vary(col, R, 0.08), lt(1.34), rot + 0.4, hgt * 0.04);
+            starCone(g, px, y0 + hgt * 0.58, pz, rr * 0.5, hgt * 0.42, 4, vary(col, R, 0.08), lt(1.44), rot + 1.2, hgt * 0.03);
           } else if (tn < 0.8 || R() < 0.5) { // deciduous
             const au = R() < 0.07;
             const col = au ? autumn[Math.floor(R() * 3)] : vary(decC, R, 0.25);
@@ -1611,12 +1636,16 @@ const World = (function () {
             const r0 = hgt * (0.22 + R() * 0.06);
             ico(g, px, y0 + hgt * 0.62, pz, r0, 0.85, col, R, 0.3);
             ico(g, px + (R() - 0.5) * r0, y0 + hgt * 0.78, pz + (R() - 0.5) * r0, r0 * 0.72, 0.9, vary(col, R, 0.1), R, 0.3);
+            { const a = crH(px, pz, 21) * TAU, k = 0.55 + 0.2 * crH(px, pz, 22), c3 = [col[0] * 1.08, col[1] * 1.08, col[2] * 1.02];   // a third, sunlit lobe to the side (a hash, no RNG draw)
+              let q = 0; ico(g, px + Math.cos(a) * r0 * 0.75, y0 + hgt * 0.7, pz + Math.sin(a) * r0 * 0.75, r0 * k, 0.85, c3, () => crH(px, pz, 30 + q++), 0.3); }
           } else { // birch
             box(g, px, y0, pz, 0.28, hgt * 0.6, 0.28, R(), [0.9, 0.9, 0.86]);
             ico(g, px, y0 + hgt * 0.7, pz, hgt * 0.16, 1.2, vary(birchC, R, 0.2), R, 0.3);
           }
+          treeMark(g, n0, y0, hgt);
         }
       }
+      ROCK_SMOOTH = rs;
     }
 
     /* ================= COASTAL CITY (Riviera) ================= */
@@ -1816,7 +1845,7 @@ const World = (function () {
         crRun(496, 542, 1, Object.assign({ rows: 3, dens: 0.6, label: '500 out' }, M)); crRun(574, 640, 1, Object.assign({ rows: 3, dens: 0.62, label: '578 out' }, M));
         crRun(780, 834, 1, Object.assign({ rows: 2, dens: 0.55, label: '788 in' }, M)); crRun(1382, 1436, -1, Object.assign({ rows: 2, dens: 0.55, label: '1389 in' }, M)); }
       // --- dense alpine forest on the slopes ---
-      const step = 5.0 / Math.sqrt(dens);
+      const step = 5.0 / Math.sqrt(dens), rs = ROCK_SMOOTH; ROCK_SMOOTH = true;
       for (let z = B.minZ; z < B.maxZ; z += step) {
         for (let x = B.minX; x < B.maxX; x += step) {
           const px = x + (R() - 0.5) * step * 0.9, pz = z + (R() - 0.5) * step * 0.9;
@@ -1829,25 +1858,28 @@ const World = (function () {
           const y0 = groundH(px, pz);
           if (y0 > 96) p *= sstep(120, 96, y0); // treeline: fewer trees near the peaks
           if (R() > p) continue;
-          const g = scen.get(px, pz);
+          const g = treeCh.get(px, pz), n0 = g.P.length / 3;
           const tn = typeN(px, pz);
           const hgt = 9 + R() * 9;
           if (tn < 0.72) { // spruce/fir (tall narrow conifer)
-            box(g, px, y0 - 0.2, pz, 0.4, hgt * 0.28, 0.4, R(), [0.34, 0.24, 0.15]);
+            box(g, px, y0 - 0.2, pz, 0.4, hgt * 0.28, 0.4, R(), [0.34, 0.24, 0.15], null, true);
             const col = vary(tn < 0.4 ? pineC : firC, R, 0.2);
             const rr = hgt * (0.2 + R() * 0.05), rot = R() * TAU;
-            cone(g, px, y0 + hgt * 0.12, pz, rr, hgt * 0.4, 7, col, [col[0] * 1.2, col[1] * 1.2, col[2] * 1.2], rot);
-            cone(g, px, y0 + hgt * 0.36, pz, rr * 0.78, hgt * 0.38, 7, vary(col, R, 0.08), [col[0] * 1.25, col[1] * 1.25, col[2] * 1.25], rot + 0.5);
-            cone(g, px, y0 + hgt * 0.6, pz, rr * 0.5, hgt * 0.4, 6, vary(col, R, 0.08), [col[0] * 1.3, col[1] * 1.3, col[2] * 1.3], rot + 1.0);
+            const lt = (k) => [col[0] * k, col[1] * k, col[2] * k];   // (jagged, drooping tiers, the top one to the tip; sunlit tips)
+            starCone(g, px, y0 + hgt * 0.12, pz, rr, hgt * 0.36, 5, col, lt(1.28), rot, hgt * 0.05);
+            starCone(g, px, y0 + hgt * 0.33, pz, rr * 0.78, hgt * 0.33, 4, vary(col, R, 0.08), lt(1.34), rot + 0.5, hgt * 0.04);
+            starCone(g, px, y0 + hgt * 0.53, pz, rr * 0.54, hgt * 0.47, 4, vary(col, R, 0.08), lt(1.44), rot + 1.4, hgt * 0.035);
           } else { // larch (rounder, lighter)
-            box(g, px, y0 - 0.2, pz, 0.4, hgt * 0.4, 0.4, R(), [0.4, 0.3, 0.18]);
+            box(g, px, y0 - 0.2, pz, 0.4, hgt * 0.4, 0.4, R(), [0.4, 0.3, 0.18], null, true);
             const col = vary(larchC, R, 0.22), r0 = hgt * (0.22 + R() * 0.06);
             ico(g, px, y0 + hgt * 0.6, pz, r0, 0.95, col, R, 0.32);
             ico(g, px + (R() - 0.5) * r0, y0 + hgt * 0.8, pz + (R() - 0.5) * r0, r0 * 0.7, 1.0, vary(col, R, 0.1), R, 0.3);
           }
+          treeMark(g, n0, y0, hgt);
           if (R() < 0.4) excl.push({ x: px, z: pz, r: 2 });
         }
       }
+      ROCK_SMOOTH = rs;
       // --- roadside understory: bushes, ferns, small rocks right behind the fence (always in camera view) ---
       {
         const bushC = [[0.2, 0.36, 0.14], [0.26, 0.42, 0.16], [0.3, 0.4, 0.12]], fernC = [0.34, 0.52, 0.18], rockC = [0.52, 0.5, 0.47];
@@ -3099,6 +3131,7 @@ const World = (function () {
     /* ---- finalize meshes ---- */
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
+    if (treeCh.map.size) treesTo(treeCh, sceneryGroup, swayMat(out.dyn.wind || (out.dyn.wind = { value: 0 })));
     const addTex = (g, mat, cast) => { if (g.empty) return; const m = new THREE.Mesh(g.geometry(), mat); m.castShadow = !!cast; m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); return m; };
     addTex(texTires, new THREE.MeshLambertMaterial({ map: THEME === 'forest' ? tex.tiresRW : tex.tires, vertexColors: true }), true);
     tyreCh.addTo(root, new THREE.MeshLambertMaterial({ map: tex.tyreTex, vertexColors: true }), true, true);
@@ -3106,7 +3139,7 @@ const World = (function () {
     addTex(texFence, THEME === 'italia' ? new THREE.MeshBasicMaterial({ map: tex.fenceFO, color: 0xb4ab96, vertexColors: true, transparent: true, depthWrite: false, alphaTest: 0.02, side: THREE.DoubleSide })   // (Toskana: the light warm-grey chain-link of the reference)
       : CSX ? new THREE.MeshLambertMaterial({ map: tex.fenceFO, vertexColors: true, transparent: true, depthWrite: false, alphaTest: 0.02, side: THREE.DoubleSide })
       : new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide, transparent: false }), false);
-    addTex(texCrowd, new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), false);
+    addTex(texCrowd, THEME === 'monaco' ? crowdUV(new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), 0.5, 0.25, 0.25) : crowdUV(new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), CSX ? 10 / 12 : 1, 0.14, 0.13), false);   // (Monaco's stands: a tile a 6 m, a tier a quarter; the CS circuits' a 10 m)
     crowdFinish(CR, root, out);   // the instanced spectators and their ground strips
     return finish(out, tex);
   }
@@ -4276,7 +4309,148 @@ const World = (function () {
       const m = new THREE.Mesh(g, mat); m.name = 'roadwear'; m.receiveShadow = true; m.renderOrder = 2; m.matrixAutoUpdate = false; o.root.add(m);   // (after the tyre marks and the drying line: the rubber shows on a drying line too)
     }
   }
-  function finish(o, tex) { if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); return clouds(o.root, o, tex); }
+  /* ---- the grass of every world (at the end of its build): the meadow's own colour varies over tens of metres (lighter, darker, drier
+     patches: world-space noise in the grass materials' shader, no extra draw calls), on the circuits' lawns the mower's stripes along the
+     start straight (fading out far away, where they would shimmer), and along the verges of the circuits tufts of longer grass and
+     flowers that sway in the wind (instanced chunks: only the ones in sight are drawn) ---- */
+  const GRASS_GLSL = [
+    'varying vec2 vGw; varying float vGd; uniform float uStr; uniform vec2 uSd;',
+    'float gHash(vec2 p) { p = fract(p * vec2(0.1031, 0.1030)); p += dot(p, p.yx + 33.33); return fract((p.x + p.y) * p.x); }',   // (no sine: steady on phones' GPUs)
+    'float gNoise(vec2 p) { vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f); return mix(mix(gHash(i), gHash(i + vec2(1.0, 0.0)), u.x), mix(gHash(i + vec2(0.0, 1.0)), gHash(i + vec2(1.0, 1.0)), u.x), u.y); }'].join('\n');
+  function grassLook(m, sd) {
+    if (!m || m.userData.grassLook) return; m.userData.grassLook = true;
+    m.onBeforeCompile = (sh) => {
+      sh.uniforms.uStr = { value: sd ? 1 : 0 }; sh.uniforms.uSd = { value: new THREE.Vector2(sd ? sd[0] : 1, sd ? sd[1] : 0) };
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vGw; varying float vGd;')
+        .replace('#include <project_vertex>', '#include <project_vertex>\nvGw = (modelMatrix * vec4(transformed, 1.0)).xz; vGd = -mvPosition.z;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + GRASS_GLSL).replace('#include <color_fragment>', '#include <color_fragment>\n' + [
+        '{ vec3 gc = diffuseColor.rgb; float gg = clamp((gc.g - max(gc.r, gc.b)) * 8.0, 0.0, 1.0);',   // (only where it is green: not the soil, the sand, the snow)
+        '  if (gg > 0.0) {',
+        '    float n1 = gNoise(vGw * 0.025) * 0.65 + gNoise(vGw * 0.07 + 13.1) * 0.35, n2 = gNoise(vGw * 0.045 + 57.3);',
+        '    gc *= mix(1.0, 0.84 + 0.3 * n1, gg);',   // lighter and darker patches
+        '    gc = mix(gc, gc * vec3(1.12, 1.04, 0.7), gg * smoothstep(0.62, 0.95, n2) * 0.6);',   // drier, yellower ones
+        '    if (uStr > 0.0) { float f = fract(dot(vGw, uSd) * 0.0909), b = smoothstep(0.03, 0.1, f) - smoothstep(0.53, 0.6, f);',   // the mower's stripes, 5.5 m wide
+        '      gc *= 1.0 + gg * uStr * (b - 0.5) * 0.18 * (1.0 - smoothstep(110.0, 240.0, vGd)); }',
+        '    diffuseColor.rgb = gc; } }'].join('\n'));
+    };
+    m.customProgramCacheKey = () => 'grassLook' + (sd ? 'S' : '');
+    m.needsUpdate = true;
+  }
+  function grassWorld(o, tex) {
+    const lawn = !T.open && ['lake', 'forest', 'kamp', 'italia', 'rbring'].includes(THEME);   // (the circuits whose lawns are mown in stripes; Spa and Suzuka lay their own)
+    let sd = null; if (lawn) { const i = T.idx(T.startS); sd = [-T.tz[i], T.tx[i]]; }   // (the stripes run along the start straight)
+    o.root.traverse(m => { if (!m.isMesh || !m.material || Array.isArray(m.material)) return; const t = m.material.map; if (t && (t === tex.grass || t.grassPic)) grassLook(m.material, sd); });
+  }
+  let tuftGeoC = null;
+  function tuftGeo(flower) {   // (1 m wide, 1 m tall, scaled per instance) a clump of longer grass: a low mound with broad blades leaning out round it
+    // (from above a rosette, not a few lines), its colours shades of the lawn under it (the instance colour: the lawn's own); or a few
+    // wild flowers: green stems with white, yellow and violet heads (their own colours)
+    if (!tuftGeoC) tuftGeoC = [];
+    if (tuftGeoC[+flower]) return tuftGeoC[+flower];
+    const P = [], C = [], N = [], put = (c, n) => { for (let q = 0; q < n; q++) C.push(c[0], c[1], c[2]); };
+    if (!flower) {
+      const D = [0.64, 0.66, 0.6], M = [0.8, 0.82, 0.76], TIP = [1.16, 1.12, 0.9];
+      for (let k = 0; k < 7; k++) {   // the mound
+        const a0 = k / 7 * TAU, a1 = (k + 1) / 7 * TAU;
+        P.push(0, 0.3, 0, Math.cos(a0) * 0.36, 0.02, Math.sin(a0) * 0.36, Math.cos(a1) * 0.36, 0.02, Math.sin(a1) * 0.36); put(M, 1); put(D, 2);
+      }
+      for (let k = 0; k < 8; k++) {   // the blades
+        const a = k / 8 * TAU + (k % 2) * 0.35, lean = 0.36 + 0.07 * (k % 3), h = 0.72 + 0.14 * ((k * 5) % 3), w = 0.09;
+        const bx = Math.cos(a) * 0.12, bz = Math.sin(a) * 0.12, px = -Math.sin(a) * w, pz = Math.cos(a) * w, tx = Math.cos(a) * (0.12 + lean), tz = Math.sin(a) * (0.12 + lean);
+        P.push(bx - px, 0.05, bz - pz, bx + px, 0.05, bz + pz, tx, h, tz); put(D, 2); put(TIP, 1);
+      }
+    } else {
+      const FL = [[0.97, 0.96, 0.92], [0.99, 0.85, 0.16], [0.66, 0.44, 0.9]], ST = [0.26, 0.42, 0.13];
+      for (let k = 0; k < 3; k++) {
+        const a = k / 3 * TAU + 0.4, r = 0.18 + 0.1 * k, x = Math.cos(a) * r, z = Math.sin(a) * r, h = 0.62 + 0.18 * k, c = FL[k], sz = 0.17;
+        P.push(x - 0.03, 0, z, x + 0.03, 0, z, x, h, z); put(ST, 3);   // the stem
+        P.push(x - sz, h, z, x + sz, h, z, x, h + sz * 1.3, z, x, h, z - sz, x, h, z + sz, x, h + sz * 1.3, z); put(c, 6);   // the head: two crossed petals
+      }
+    }
+    for (let q = 0; q < P.length / 3; q++) N.push(0, 1, 0);   // (lit like the ground under them; the seasons paint them as ground, not leaves)
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
+    g.computeBoundingSphere();
+    return (tuftGeoC[+flower] = g);
+  }
+  function texAvg(t) {   // the average colour of a grass picture, 0..1: as its maker measured it (t.avgCol; reading a canvas back would stall the build)
+    return (t && t.avgCol) || [0.35, 0.53, 0.23];
+  }
+  function pixAvg(d) { const s = [0, 0, 0]; for (let o = 0; o < d.length; o += 4) { s[0] += d[o]; s[1] += d[o + 1]; s[2] += d[o + 2]; } const n = d.length / 4 * 255; return [s[0] / n, s[1] / n, s[2] / n]; }   // (of an ImageData's pixels)
+  const LAWN = { nring: [0.92, 0.95, 0.82], spa: [0.95, 1.0, 0.95], rbring: [0.96, 1.0, 0.9], suzuka: [0.95, 1.0, 0.92] };   // (the corridor builders' lawns: their vertex colours, roughly)
+  function verge(o) {
+    if (T.open || ['city', 'ljubljana', 'monaco'].includes(THEME)) return;
+    const W = o.dyn.wind || (o.dyn.wind = { value: 0 });
+    const mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
+    mat.onBeforeCompile = (sh) => {
+      sh.uniforms.uWind = W;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uWind;').replace('#include <begin_vertex>', '#include <begin_vertex>\n' +
+        '#ifdef USE_INSTANCING\nfloat wPh = instanceMatrix[3].x * 0.31 + instanceMatrix[3].z * 0.23;\n#else\nfloat wPh = 0.0;\n#endif\n' +
+        'float wK = position.y * position.y * 0.16;\ntransformed.x += wK * sin(uWind * 2.1 + wPh);\ntransformed.z += wK * 0.7 * sin(uWind * 1.63 + wPh * 1.3);');
+      // (both faces lit as the front one: the normals point up, the blades are thin, seen from above half of them are back faces)
+      sh.fragmentShader = sh.fragmentShader.replace('( gl_FrontFacing ) ? vIndirectFront : vIndirectBack', 'vIndirectFront').replace('( gl_FrontFacing ) ? vLightFront : vLightBack', 'vLightFront');
+    };
+    mat.customProgramCacheKey = () => 'tuftWind';
+    const tu = new IChunks(tuftGeo(false), mat, 160), fl = new IChunks(tuftGeo(true), mat, 160), q = {}, gH = o.groundH;
+    // the lawn's colour under a clump: the ground mesh's vertex colour there (the default builder's grid) or the corridor builder's, times the grass picture's
+    let gm = null; o.root.traverse(m => { if (!gm && m.isMesh && m.material && !Array.isArray(m.material) && m.material.userData.grassLook) gm = m.material; });
+    const avg = texAvg(gm && gm.map), mc = gm ? gm.color : { r: 1, g: 1, b: 1 }, G = o.gGrid, gc = o.ground && o.ground.geometry && o.ground.geometry.attributes.color, TL = LAWN[THEME] || [1, 1, 1];   // (a corridor builder's ground is a group: its lawn TL)
+    const lawn = (x, z) => {
+      let r = TL[0], g = TL[1], b = TL[2];
+      if (G && gc) { const i = clamp(Math.round((x - G.x0) / G.cell), 0, G.nx), j = clamp(Math.round((z - G.z0) / G.cell), 0, G.nz), k = (j * (G.nx + 1) + i) * 3; r = gc.array[k]; g = gc.array[k + 1]; b = gc.array[k + 2]; }
+      return [r * avg[0] * mc.r, g * avg[1] * mc.g, b * avg[2] * mc.b];
+    };
+    const L = T.len;
+    for (let s = 0; s < L; s += 2.2) for (const side of [-1, 1]) {
+      const i = T.idx(s), h0 = crH(s, side, 5);
+      if (h0 < 0.14) continue;   // (gaps)
+      const bar = T.br ? (side > 0 ? T.br[i] : (T.bl ? T.bl[i] : T.w + 8)) : T.w + 8, d0 = T.w + 2.0, d1 = Math.min(bar - 0.7, T.w + 13);
+      if (d1 < d0 + 0.3) continue;
+      const d = d0 + (d1 - d0) * Math.pow(crH(s, side, 6), 1.6), x = T.px[i] + T.nx[i] * d * side, z = T.pz[i] + T.nz[i] * d * side;
+      if (T.surface(T.query(x, z, i, q)) !== 2) continue;   // (on the grass only: not on the gravel, the run-off, the paths)
+      const y = (gH ? gH(x, z) : (T.hasElev && T.hy ? T.hy[i] : 0)) - 0.02, u = crH(x, z, 7), g = 0.9 + 0.2 * crH(x, z, 8), lc = lawn(x, z);
+      tu.add(x, y, z, u * 26, 0.9 + 0.8 * crH(x, z, 9), 0.34 + 0.3 * crH(x, z, 10), [lc[0] * g, lc[1] * g, lc[2] * g]);
+      if (u < 0.2) { const f = 0.85 + 0.15 * crH(x, z, 11); fl.add(x + 0.2, y, z - 0.1, u * 41, 0.8 + 0.3 * crH(x, z, 12), 0.5 + 0.2 * crH(x, z, 13), [f, f, f]); }
+    }
+    const grp = new THREE.Group(); grp.name = 'verge'; o.root.add(grp);
+    const n1 = tu.addTo(grp, false); grp.traverse(m => { if (m.isInstancedMesh && m.instanceColor) m.instanceColor.ground = true; });   // (the seasons paint the clumps as grass: straw in the autumn, not red leaves)
+    o.nTufts = n1 + fl.addTo(grp, false);
+  }
+  /* the grandstands' seated crowd (the crowd picture, Tex.crowdPic: 8 rows of 32 people): every tier of a stand shows one row of people, 32
+     of them to 12 m (uCV: how the stand's uvs lie, crowdUV), each bobbing a little in their seat; near the followed car, and all round it
+     after an overtake and at the finish (uHype, set by Render), they jump and flags go up, waving. The stands' own material, patched: the
+     picture sampled per tier, a little up or down for each person (a hash of the person) */
+  const STAND_FS = ['#ifdef USE_MAP',
+    'float crT = floor(vUv.y / uCV.y + 1e-4), crL = clamp((vUv.y - crT * uCV.y) / uCV.z, 0.0, 1.0), crX = vUv.x * uCV.x * 32.0;',   // the tier, where across it (1: the back), the seat along it
+    'vec2 crI = vec2(floor(crX), crT), crF = vec2(fract(crX), crL);',
+    'float crH = fract(sin(dot(crI, vec2(12.9898, 78.233))) * 43758.5453), crH2 = fract(crH * 41.37 + 0.13), crD = length(vCrW.xz - uCar.xz);',
+    'float crEx = max((1.0 - smoothstep(16.0, 60.0, crD)) * 0.7, uHype * (1.0 - smoothstep(60.0, 200.0, crD)));',
+    'float crJ = max(0.0, sin(uTime * (6.0 + 3.0 * crH) + crH * 6.283)) * (0.5 + 2.6 * crEx * step(0.3, crH));',   // (a jump, in pixels of the picture)
+    'float crR = mod(crT, 8.0) / 8.0;',
+    'vec4 texelColor = texture2D( map, vec2(vUv.x * uCV.x, max(crR + crL / 8.0 - crJ / 256.0, crR + 0.002)) );',
+    'if (crH2 < 0.015 + 0.3 * crEx) {',   // a flag held up in front of the face, waving (red, blue, yellow or green, a white stripe)
+    '  float crW = 0.07 * sin(crF.x * 6.0 - uTime * 9.0 + crH * 20.0);',
+    '  if (crF.y > 0.46 + crW && crF.y < 0.98 && crF.x > 0.04 && crF.x < 0.98) { float fk = floor(fract(crH * 7.3) * 4.0);',
+    '    vec3 fa = fk < 0.5 ? vec3(0.9, 0.12, 0.12) : fk < 1.5 ? vec3(0.1, 0.3, 0.8) : fk < 2.5 ? vec3(0.98, 0.8, 0.1) : vec3(0.1, 0.55, 0.25);',
+    '    texelColor = vec4(abs(crF.y - 0.72 - crW * 0.5) < 0.08 ? vec3(0.95) : fa * (0.85 + 0.3 * crW / 0.07 * 0.5), 1.0); }',
+    '}',
+    'texelColor = mapTexelToLinear( texelColor );', 'diffuseColor *= texelColor;', '#endif'].join('\n');
+  function crowdUV(m, u, pitch, slice) { m.userData.crowdUV = [u, pitch, slice]; return m; }   // (a stand material: how its uvs lay the crowd picture on the tiers)
+  function crowdStands(o) {
+    let U = o.dyn.crowd;
+    o.root.traverse(m => {
+      const M = m.isMesh && !m.isInstancedMesh && m.material; if (!M || Array.isArray(M) || !M.map || !M.map.crowdPic || !M.isMeshLambertMaterial || M.userData.stand) return;
+      if (!U) U = o.dyn.crowd = { uTime: { value: 0 }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) }, uHype: { value: 0 } };
+      if (!U.uHype) U.uHype = { value: 0 };
+      M.userData.stand = true; const cv = M.userData.crowdUV || [1, 1 / 16, 1 / 16], uCV = { value: new THREE.Vector3(cv[0], cv[1], cv[2]) };   // (how the stand maps the picture: see crowdUV)
+      M.onBeforeCompile = (sh) => {
+        sh.uniforms.uTime = U.uTime; sh.uniforms.uCar = U.uCar; sh.uniforms.uHype = U.uHype; sh.uniforms.uCV = uCV;
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vCrW;').replace('#include <project_vertex>', '#include <project_vertex>\nvCrW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uTime;\nuniform vec3 uCar;\nuniform float uHype;\nuniform vec3 uCV;\nvarying vec3 vCrW;').replace('#include <map_fragment>', STAND_FS);
+      };
+      M.customProgramCacheKey = () => 'standCrowd';
+    });
+  }
+  function finish(o, tex) { if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); return clouds(o.root, o, tex); }
   // where the crowds are, for their sound (Sfx: x, z, how many 0..1), on a circuit whose builder has not given them (the Red Bull Ring's
   // does): the spectators of every crowd of this build in 24 m cells, and the packed grandstands (the crowd picture) as full ones
   function crowdPoints(o, tex) {
@@ -9319,7 +9493,7 @@ const World = (function () {
     return (crGeoC = g);
   }
   const CR_VS_HEAD = [
-    'attribute float aPart;', 'attribute vec2 aCrowd;', 'uniform float uTime;', 'uniform vec3 uCar;',
+    'attribute float aPart;', 'attribute vec2 aCrowd;', 'uniform float uTime;', 'uniform vec3 uCar;', 'uniform float uHype;',
     'mat3 crRx(float a) { float c = cos(a), s = sin(a); return mat3(1.0, 0.0, 0.0, 0.0, c, s, 0.0, -s, c); }',
     'mat3 crRz(float a) { float c = cos(a), s = sin(a); return mat3(c, s, 0.0, -s, c, 0.0, 0.0, 0.0, 1.0); }',
     'vec3 crP4(float i, vec3 a, vec3 b, vec3 c, vec3 d) { return i < 0.5 ? a : i < 1.5 ? b : i < 2.5 ? c : d; }'].join('\n');
@@ -9343,7 +9517,9 @@ const World = (function () {
     'vec3 crFw = (modelMatrix * (instanceMatrix * vec4(0.0, 0.0, 1.0, 0.0))).xyz;',
     'float crMir = dot(cameraPosition - crW, crFw) < 0.0 ? 1.0 : 0.0;',   // seen from behind: mirror the flag so its one-sided quads face the camera
     'float crSit = abs(crPose - 6.0) < 0.5 ? 1.0 : 0.0;',
-    'float crEx = (1.0 - smoothstep(14.0, 52.0, length(crW.xz - uCar.xz))) * step(0.28, fract(crPh * 2.713 + crV * 0.0171));',
+    'float crDc = length(crW.xz - uCar.xz), crHy = uHype * (1.0 - smoothstep(50.0, 170.0, crDc));',   // (uHype: an overtake, the finish)
+    'float crEx = max(1.0 - smoothstep(14.0, 52.0, crDc), crHy) * step(0.28, fract(crPh * 2.713 + crV * 0.0171));',
+    'float crFlag = (abs(crPose - 5.0) < 0.5 || crHy * 0.45 > fract(crPh * 5.13 + crV * 0.0093)) ? 1.0 : 0.0;',   // (a flag: the flag pose, and then many more)
     'float crT = uTime * (0.85 + 0.3 * fract(crPh * 3.7)) + crPh;',
     'float rL = 0.07, rR = 0.07, fL = 0.05, fR = 0.05;',   // r: raised sideways (0 down, pi up), f: raised forwards
     'if (crPose < 0.5) { rL = 0.07 + 0.05 * sin(crT * 0.9); rR = 0.07 + 0.05 * sin(crT * 0.8 + 1.3); }',
@@ -9354,6 +9530,7 @@ const World = (function () {
     'else if (crPose < 5.5) { rR = 2.8 + 0.14 * sin(crT * 2.4); fR = -0.12; rL = 0.1; }',
     'else { rL = 0.15; rR = 0.15; fL = 0.6; fR = 0.6; }',
     'if (crPose < 4.5 || crSit > 0.5) { float up = 2.55 + 0.35 * sin(uTime * 9.0 + crPh); rL = mix(rL, up, crEx); rR = mix(rR, up + 0.1, crEx); fL = mix(fL, -0.25, crEx); fR = mix(fR, -0.25, crEx); }',
+    'if (crFlag > 0.5 && abs(crPose - 5.0) > 0.5) { rR = 2.7 + 0.35 * sin(crT * 6.5); fR = -0.12; }',   // (waving the flag)
     'mat3 crM = mat3(1.0); vec3 crPv = vec3(0.0);',
     'if (crBone > 0.5 && crBone < 1.5) { crM = crRx(-fL) * crRz(-rL); crPv = vec3(-0.27, 1.37, 0.0); }',
     'else if ((crBone > 1.5 && crBone < 2.5) || crBone > 3.5) { crM = crRx(-fR) * crRz(rR); crPv = vec3(0.27, 1.37, 0.0); }',
@@ -9372,17 +9549,17 @@ const World = (function () {
     '  if (crBone > 3.5 && crMir > 0.5) transformed.x = 0.56 - transformed.x;',
     '  transformed = crPv + crM * (transformed - crPv);',
     '}',
-    'if (crBone > 3.5 && abs(crPose - 5.0) > 0.5) transformed = crPv;',   // no flag: fold it into the hand (degenerate, draws nothing)
+    'if (crBone > 3.5 && crFlag < 0.5) transformed = crPv;',   // no flag: fold it into the hand (degenerate, draws nothing)
     'if (crSit > 0.5) transformed += vec3(0.0, -0.71, -0.55);',   // sitting: down on the grass, moved back so the feet stay behind the fence
     'else transformed.y += crEx * max(0.0, sin(uTime * 8.0 + crPh)) * 0.16;'].join('\n');
   function crowdMat(U) {
     const m = new THREE.MeshLambertMaterial({ vertexColors: true });
     m.onBeforeCompile = (sh) => {
-      sh.uniforms.uTime = U.uTime; sh.uniforms.uCar = U.uCar;
+      sh.uniforms.uTime = U.uTime; sh.uniforms.uCar = U.uCar; sh.uniforms.uHype = U.uHype;
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\n' + CR_VS_HEAD).replace('#include <color_vertex>', CR_VS_COLOR)
         .replace('#include <beginnormal_vertex>', CR_VS_NORMAL).replace('#include <begin_vertex>', CR_VS_POS);
     };
-    m.customProgramCacheKey = () => 'crowd1';
+    m.customProgramCacheKey = () => 'crowd2';
     return m;
   }
   class CrowdChunks extends IChunks {   // IChunks plus a per-instance (pose + phase, variant) attribute
@@ -9407,7 +9584,7 @@ const World = (function () {
   // A placement context per world build. o: gH(x, z) ground height (or grid: the generic ground mesh), near(x, z) distance beyond the nearest
   // barrier (negative on the road), excluded(x, z), water(x, z), maxSlope, shirts. Runs keep their own tree-exclusion circles (exclTest).
   function crowdCtx(o) {
-    const U = { uTime: { value: 0 }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) } };
+    const U = { uTime: { value: 0 }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) }, uHype: { value: 0 } };
     const C = Object.assign({ U, ppl: new CrowdChunks(U), strip: new Chunks(384), runs: 0, n: 0, busy: false, sp: new Map(), eh: new Map(), circ: [], blocks: [], avoidL: [], shirts: CR_SHIRTS, maxSlope: 0.6, log: [] }, o);
     CROWDS.push(C);
     if (C.grid && !C.gH) { const G = C.grid; C.gH = (x, z) => {   // height of the ground mesh surface (the same two triangles per cell)
@@ -9615,7 +9792,7 @@ const World = (function () {
       const u = i / S, v = j / S, n = n1(u, v) * 0.3 + n2(u, v) * 0.4 + n3(u, v) * 0.3, k = 0.84 + n * 0.3 + (r() - 0.5) * 0.14, y = n2(u + 0.37, v + 0.61) - 0.5, o = (j * S + i) * 4;
       d[o] = clamp((88 + y * 14) * k, 0, 255); d[o + 1] = clamp((124 + y * 4) * k, 0, 255); d[o + 2] = clamp(56 * k, 0, 255); d[o + 3] = 255;
     }
-    x.putImageData(img, 0, 0);
+    x.putImageData(img, 0, 0); const avg = pixAvg(d);
     x.lineWidth = 1;
     for (const [st, n] of [['rgba(44,66,28,0.5)', 900], ['rgba(150,158,96,0.4)', 560], ['rgba(172,160,100,0.35)', 260]]) {   // blades (drawn across the edges too: tileable)
       x.strokeStyle = st; x.beginPath();
@@ -9623,7 +9800,7 @@ const World = (function () {
         for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const qx = px + a * S, qy = py + b * S; if (qx > -6 && qx < S + 6 && qy > -6 && qy < S + 6) { x.moveTo(qx, qy); x.lineTo(qx + dx, qy + dy); } } }
       x.stroke(); }
     for (const [st, n, sz] of [['#e6cd46', 110, 1], ['#ebebdc', 150, 1], ['#9a70a8', 40, 1], ['rgba(98,80,56,0.7)', 70, 2]]) { x.fillStyle = st; for (let k = 0; k < n; k++) x.fillRect(Math.floor(r() * (S - 1)), Math.floor(r() * (S - 1)), sz, sz); }   // flowers, soil
-    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = aniso || 4; return t;
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = aniso || 4; t.grassPic = true; t.avgCol = avg; return t;
   }
   function nrDecalTex() {   // paint and marks on the asphalt: a 1024 px atlas of 4 x 8 cells, 256 px across the road by 128 px along it (a cell's top points up the road):
     // 0-15 the fans' graffiti, 16-19 painted signs, 20-23 painted flags, 24-25 tar snakes, 26-27 tyre marks, 28-31 repair patches; transparent around them
@@ -10163,7 +10340,7 @@ const World = (function () {
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
-    addM(crowdG, new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }));
+    addM(crowdG, crowdUV(new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), 1, 0.11, 0.1));
     fenceC.addTo(root, fMat, false, true); spC.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true);
     crowdFinish(CR, root, out);
     out.stats = { tiles: nTiles, trees: nTrees, edgeTrees: nEdge, posts: nPosts, buildings: nBld, fans: nFans, decals: nDecals };   // (read by the tests)
@@ -10298,7 +10475,7 @@ const World = (function () {
       const u = i / S, v = j / S, n = n1(u, v) * 0.3 + n2(u, v) * 0.4 + n3(u, v) * 0.3, k = 0.86 + n * 0.26 + (r() - 0.5) * 0.12, y = n2(u + 0.31, v + 0.57) - 0.5, o = (j * S + i) * 4;
       d[o] = clamp((64 + y * 10) * k, 0, 255); d[o + 1] = clamp((126 + y * 6) * k, 0, 255); d[o + 2] = clamp((62 + y * 4) * k, 0, 255); d[o + 3] = 255;
     }
-    x.putImageData(img, 0, 0);
+    x.putImageData(img, 0, 0); const avg = pixAvg(d);
     x.lineWidth = 1;
     for (const [st, n] of [['rgba(38,74,34,0.45)', 800], ['rgba(138,178,112,0.35)', 480]]) {   // blades (drawn across the edges too: tileable)
       x.strokeStyle = st; x.beginPath();
@@ -10306,7 +10483,7 @@ const World = (function () {
         for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const qx = px + a * S, qy = py + b * S; if (qx > -6 && qx < S + 6 && qy > -6 && qy < S + 6) { x.moveTo(qx, qy); x.lineTo(qx + dx, qy + dy); } } }
       x.stroke(); }
     for (const [st, n, sz] of [['rgba(46,92,42,0.55)', 90, 3], ['#f2f2ea', 70, 1], ['#e6d24a', 24, 1]]) { x.fillStyle = st; for (let k = 0; k < n; k++) x.fillRect(Math.floor(r() * (S - sz)), Math.floor(r() * (S - sz)), sz, sz); }   // clover, daisies, buttercups
-    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = aniso || 4; return t;
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = aniso || 4; t.grassPic = true; t.avgCol = avg; return t;
   }
   function spaTreeGeo(kind) {   // unit trees (height 1, instances scale them): 0 a plantation spruce (tall and narrow, four drooping tiers, dark blue-green), 1 the same far out (two tiers), 2 a birch (a white trunk, a small light crown)
     const g = new GB(), R = rng(640 + kind), rs = ROCK_SMOOTH; ROCK_SMOOTH = true;   // (smooth normals, as nrTreeGeo; the flag restored below)
@@ -11013,7 +11190,7 @@ const World = (function () {
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
-    addM(crowdG, new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }));
+    addM(crowdG, crowdUV(new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), 1, 0.11, 0.1));
     numC.addTo(root, new THREE.MeshLambertMaterial({ map: numTex }), false, true);
     fenceC.addTo(root, fMat, false, true); spC.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true);
     crowdFinish(CR, root, out);
@@ -11047,16 +11224,8 @@ const World = (function () {
     ['DRS', '#101114', '#fff', '#39c84a'], ['STEIERMARK', '#1c2856', '#fff', '#39c84a'], ['ENERGY STATION', '#1c2856', '#fff', '#e2202c']];   // (the DRS boards; the painted run-offs; the Energy Station)
   const RB_AT = { num: 0, brake: 10, ban: 13, rbr: 13, spielberg: 14 };   // atlas cells: the turn numbers, the braking boards, the banners (RB_BAN, the grandstands' names by their text)
   function rbCrowdTex(orange) {   // seated crowd for the grandstand tiers (as Tex.crowd; the orange one for the stands full of Dutch fans)
-    const c = document.createElement('canvas'); c.width = 256; c.height = 128; const x = c.getContext('2d'), r = rng(orange ? 77 : 78);
-    x.fillStyle = '#3b3f48'; x.fillRect(0, 0, 256, 128);
-    const cols = orange ? ['#ff7a12', '#ff8a1c', '#f26a0c', '#ff9d3a', '#ff7a12', '#f4f4f0', '#1c2856', '#e2202c', '#ff8a1c', '#ffcc00']
-      : ['#e63b2e', '#f5d33a', '#2f7fe0', '#f2f2f2', '#39b54a', '#ff8a1c', '#1c2856', '#e2202c', '#111', '#1bbfd6'];
-    for (let row = 0; row < 16; row++) {
-      x.fillStyle = 'rgba(0,0,0,0.25)'; x.fillRect(0, row * 8 + 6, 256, 2);
-      for (let k = 0; k < 64; k++) { if (r() < 0.1) continue; const px = k * 4 + (r() - 0.5) * 1.2, py = row * 8 + 1;
-        x.fillStyle = cols[Math.floor(r() * cols.length)]; x.fillRect(px, py + 2, 3, 4); x.fillStyle = r() < 0.5 ? '#f1c7a1' : '#a86f45'; x.fillRect(px + 0.5, py, 2, 2); }
-    }
-    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t;
+    return Tex.crowdPic(orange ? ['#ff7a12', '#ff8a1c', '#f26a0c', '#ff9d3a', '#ff7a12', '#f4f4f0', '#1c2856', '#e2202c', '#ff8a1c', '#ffcc00']
+      : ['#e63b2e', '#f5d33a', '#2f7fe0', '#f2f2f2', '#39b54a', '#ff8a1c', '#1c2856', '#e2202c', '#1a1b1f', '#1bbfd6'], orange ? 77 : 78);
   }
   function rbGravelTex() {   // the grey gravel of the 2024 strips at Turns 9 and 10: pebbles with a shadow and a highlight each
     const c = document.createElement('canvas'); c.width = 128; c.height = 128; const x = c.getContext('2d'), r = rng(2024);
@@ -11937,7 +12106,7 @@ const World = (function () {
         out.dyn.fade = { list: fl, poly: cn, yTop: hyS(sAt(wd)) + 30, op: 1, t: null };   // (the footprint, a little wider, up to 30 m)
       }
     }
-    addM(crowdG[0], new THREE.MeshLambertMaterial({ map: crowdMats[0], vertexColors: true })); addM(crowdG[1], new THREE.MeshLambertMaterial({ map: crowdMats[1], vertexColors: true }));
+    addM(crowdG[0], crowdUV(new THREE.MeshLambertMaterial({ map: crowdMats[0], vertexColors: true }), 1, 0.11, 0.1)); addM(crowdG[1], crowdUV(new THREE.MeshLambertMaterial({ map: crowdMats[1], vertexColors: true }), 1, 0.11, 0.1));
 
     /* ---- the steel bull (Clemens Neugebauer and Martin Kölldorfer, 2012): 14.6 m of welded Corten plates on its cast aluminium arch
        (17.2 m in all), charging: head down, the gilded horns (7 m from tip to tip) forward, the hump over the shoulders, the tail up; built
@@ -12426,27 +12595,27 @@ const World = (function () {
       D[k] = Math.round(255 * pk * 0.92 * (dd < 5 ? 1 - sstep(5, 0.5, dd) : 1)); }
     const t = new THREE.DataTexture(D, G.nx, G.nz, THREE.LuminanceFormat); t.magFilter = t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; t.needsUpdate = true;
     const PARK = [0.34, 0.352, 0.339], SNOW = PARK.map((v, k) => lerp(v, [0.92, 0.95, 0.99][k], 0.5));   // (the tarmac's grey: the grass map's mean, 0.287 / 0.46 / 0.198, turned grey as szCol once did it; under snow)
-    const nz = szNoiseTex();   // (graphics 5: the lawns' patches, a wet lawn darker)
-    const U = { uPk: { value: t }, uPkT: { value: new THREE.Vector4(G.x0 - SZC / 2, G.z0 - SZC / 2, 1 / (SZC * G.nx), 1 / (SZC * G.nz)) }, uPark: { value: new THREE.Color(...PARK) }, uSnow: { value: 0 }, uNz: { value: nz }, uWetG: { value: 0 } }, map0 = mat.map;
+    const U = { uPk: { value: t }, uPkT: { value: new THREE.Vector4(G.x0 - SZC / 2, G.z0 - SZC / 2, 1 / (SZC * G.nx), 1 / (SZC * G.nz)) }, uPark: { value: new THREE.Color(...PARK) }, uSnow: { value: 0 }, uWetG: { value: 0 }, uStr: { value: 0 }, uSd: { value: new THREE.Vector2(1, 0) } }, map0 = mat.map;
     mat.onBeforeCompile = (sh) => { Object.assign(sh.uniforms, U);
-      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform vec4 uPkT;\nvarying vec2 vPkUv;\nvarying vec2 vGW;')
-        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvec4 pkW = modelMatrix * vec4( transformed, 1.0 ); vPkUv = ( pkW.xz - uPkT.xy ) * uPkT.zw; vGW = pkW.xz / 61.0;');
-      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uPk; uniform vec3 uPark; uniform float uSnow; uniform sampler2D uNz; uniform float uWetG;\nvarying vec2 vPkUv;\nvarying vec2 vGW;')
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform vec4 uPkT;\nvarying vec2 vPkUv;\nvarying vec2 vGw; varying float vGd;')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvec4 pkW = modelMatrix * vec4( transformed, 1.0 ); vPkUv = ( pkW.xz - uPkT.xy ) * uPkT.zw; vGw = pkW.xz;')
+        .replace('#include <project_vertex>', '#include <project_vertex>\nvGd = -mvPosition.z;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uPk; uniform vec3 uPark; uniform float uSnow; uniform float uWetG;\nvarying vec2 vPkUv;\n' + GRASS_GLSL)
         .replace('#include <color_fragment>', 'diffuseColor.rgb *= mix( vColor, vec3( dot( vColor, vec3( 0.3, 0.59, 0.11 ) ) ), uSnow );\n' +   // (under snow no tint of the lawns' colours: the dry patches' straw would stay yellow)
           '{ float pk = texture2D( uPk, vPkUv ).r;\n' +
-          // the lawns (a green vertex colour: not the woods' floor, the scrub, the banks of earth, the car parks, the snow): lighter and darker
-          // patches of 60 m, drier patches of 20 m, clover in 5 m clumps (one noise picture at three scales)
-          '  float gg = smoothstep( 0.05, 0.1, vColor.g - max( vColor.r, vColor.b ) * 0.92 ) * ( 1.0 - uSnow ) * ( 1.0 - pk );\n' +
-          '  if ( gg > 0.0 ) { float n1 = texture2D( uNz, vGW ).r, n2 = texture2D( uNz, vGW * 3.6 + 0.37 ).r, n3 = texture2D( uNz, vGW * 14.0 + 0.71 ).r;\n' +
-          '    vec3 c = diffuseColor.rgb * ( 0.88 + 0.24 * n1 ); float dry = smoothstep( 0.6, 0.78, n2 * 0.7 + n1 * 0.3 ), clov = smoothstep( 0.68, 0.84, n3 ) * ( 1.0 - dry );\n' +
-          '    c = mix( c, c * vec3( 1.22, 1.08, 0.7 ), dry * 0.55 ); c = mix( c, c * vec3( 0.82, 0.95, 0.86 ), clov * 0.55 ); diffuseColor.rgb = mix( diffuseColor.rgb, c, gg ); }\n' +
+          // the lawns' patches as on every track (World's grass look, GRASS_GLSL: lighter and darker over tens of metres, drier ones; no mower's
+          // stripes, the vertex colours mow them), and clover in clumps of a few metres
+          '  vec3 gc = diffuseColor.rgb; float gg = clamp( ( gc.g - max( gc.r, gc.b ) ) * 8.0, 0.0, 1.0 );\n' +
+          '  if ( gg > 0.0 ) { float n1 = gNoise( vGw * 0.025 ) * 0.65 + gNoise( vGw * 0.07 + 13.1 ) * 0.35, dry = smoothstep( 0.62, 0.95, gNoise( vGw * 0.045 + 57.3 ) );\n' +
+          '    gc *= mix( 1.0, 0.84 + 0.3 * n1, gg ); gc = mix( gc, gc * vec3( 1.12, 1.04, 0.7 ), gg * dry * 0.6 );\n' +
+          '    gc = mix( gc, gc * vec3( 0.82, 0.95, 0.86 ), gg * smoothstep( 0.68, 0.84, gNoise( vGw * 0.2 + 31.7 ) ) * ( 1.0 - dry ) * 0.55 ); diffuseColor.rgb = gc; }\n' +
           '  diffuseColor.rgb *= 1.0 - uWetG * ( 0.07 + 0.1 * gg ) * ( 1.0 - uSnow );\n' +   // (wet ground: darker)
           '  if ( pk > 0.0 ) { vec3 lw = vec3( 0.3, 0.59, 0.11 ); float ml = max( 0.05, dot( texture2D( map, vUv, 16.0 ).rgb, lw ) );\n' +   // (the map's mean: its smallest mip level)
           '  diffuseColor.rgb = mix( diffuseColor.rgb, uPark * clamp( dot( texelColor.rgb, lw ) / ml, 0.6, 1.4 ), pk ); } }'); };
-    mat.customProgramCacheKey = () => 'szGround';
+    mat.customProgramCacheKey = () => 'szGround'; mat.userData.grassLook = true;   // (it has the grass look: World's grassWorld leaves it, verge takes the lawn's colour from it)
     let cur = map0;   // (the map the uniforms are for: the grass, or Render.seasonWorld's snow on it in winter)
     const hook = () => { const mp = mat.map; if (mp === cur || !mp) return; cur = mp; const snow = mp !== map0; U.uSnow.value = snow ? 0.9 : 0; U.uPark.value.setRGB(...(snow ? SNOW : PARK)); };
-    return { tex: t, nz, hook, U };
+    return { tex: t, hook, U };
   }
   function szGCol(x, z) {   // the terrain mesh's vertex colour at (x, z) (bilinear over the grid vertices, each coloured as in szTileGeo)
     const G = SZ.G, gx = clamp((x - G.x0) / SZC, 1, G.nx - 2.001), gz = clamp((z - G.z0) / SZC, 1, G.nz - 2.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, o = [0, 0, 0];
@@ -12542,7 +12711,9 @@ const World = (function () {
         for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const qx = px + a * S, qy = py + b * S; if (qx > -6 && qx < S + 6 && qy > -6 && qy < S + 6) { x.moveTo(qx, qy); x.lineTo(qx + dx, qy + dy); } } }
       x.stroke(); }
     for (const [st, n, sz] of [['rgba(44,90,36,0.5)', 80, 3], ['#f0f0e6', 40, 1]]) { x.fillStyle = st; for (let k = 0; k < n; k++) x.fillRect(Math.floor(r() * (S - sz)), Math.floor(r() * (S - sz)), sz, sz); }   // tufts, clover flowers
-    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = aniso || 4; return t;
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = aniso || 4;
+    t.avgCol = [0.287, 0.46, 0.198];   // (its mean colour, as measured: the clumps of grass along the verges take it, verge)
+    return t;
   }
   function szGravelTex(aniso) {   // the gravel traps (256 px = 6 m, tileable): light warm-grey pebbles, each with its shadow and a highlight, over a darker bed
     const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), r = rng(4621), n1 = nrPN(8, 4622);
@@ -12912,11 +13083,10 @@ const World = (function () {
       vertexShader: 'uniform float uR; varying vec3 vD; void main() { vD = position; gl_Position = projectionMatrix * viewMatrix * vec4( cameraPosition + position * uR, 1.0 ); }',
       fragmentShader: [
         'uniform vec2 clO; uniform float uCov; uniform vec3 uSun; uniform vec3 uLit; uniform vec3 uShade; uniform vec3 uFogC; uniform float uNight; uniform float uRain; uniform float uT;',
-        'uniform vec3 uSunC; uniform float uSunA;',
+        'uniform vec3 uSunC; uniform float uSunA; uniform float uStar;',
         'varying vec3 vD;',
         'float clHash( vec2 i, float n ) { i = mod( i, n ); return fract( sin( dot( i, vec2( 12.9898, 78.233 ) ) ) * 43758.5453 ); }',
         'float clVN( vec2 p, float n ) { vec2 i = floor( p ), f = fract( p ); f = f * f * ( 3.0 - 2.0 * f ); return mix( mix( clHash( i, n ), clHash( i + vec2( 1.0, 0.0 ), n ), f.x ), mix( clHash( i + vec2( 0.0, 1.0 ), n ), clHash( i + 1.0, n ), f.x ), f.y ); }',
-        'float h3( vec3 p ) { return fract( sin( dot( p, vec3( 12.9898, 78.233, 37.719 ) ) ) * 43758.5453 ); }',
         'float cl( vec2 P ) { vec2 q = P / 110.0 - clO; float n = 0.65 * clVN( q, 64.0 ) + 0.35 * clVN( q * 2.0 + vec2( 17.0, 5.0 ), 128.0 );',   // (the shadows' noise, clouds())
         '  return n + 0.06 * ( clVN( q * 5.0 + vec2( 3.1, 7.7 ), 320.0 ) - 0.5 ) + 0.035 * ( clVN( q * 11.0 + vec2( 9.3, 1.9 ), 704.0 ) - 0.5 ); }',
         'void main() {',
@@ -12924,10 +13094,13 @@ const World = (function () {
         '  if ( up < -0.03 ) { gl_FragColor = vec4( 0.0 ); return; }',
         '  float hz = smoothstep( -0.02, 0.16, up );',
         '  vec4 back = vec4( 0.0 );',
-        '  if ( uNight > 0.01 ) {',   // the night: stars, twinkling a little, and the moon (the night's light: Render's sun after dark)
-        '    vec3 q = d * 140.0, c = floor( q ); float s = h3( c ), st = step( 0.994, s ) * smoothstep( 0.45, 0.1, length( fract( q ) - 0.5 ) ) * ( 0.6 + 0.4 * sin( uT * ( 1.3 + 2.5 * h3( c + 7.0 ) ) + s * 80.0 ) );',
+        '  if ( uNight > 0.01 ) {',   // the night: the moon (the night's light: Render's sun after dark) and its glow
         '    float md = dot( d, uSun ), disc = smoothstep( 0.99991, 0.99995, md ), glow = pow( max( md, 0.0 ), 400.0 ) * 0.5 + pow( max( md, 0.0 ), 40.0 ) * 0.06, k = uNight * hz * ( 1.0 - uRain );',
-        '    back = vec4( ( vec3( 0.9, 0.93, 1.0 ) * st * 1.4 + vec3( 0.55, 0.6, 0.72 ) * glow ) * k + vec3( 0.96, 0.95, 0.88 ) * disc * k, disc * k ); }',
+        '    back = vec4( vec3( 0.55, 0.6, 0.72 ) * glow * k + vec3( 0.96, 0.95, 0.88 ) * disc * k, disc * k ); }',
+        '  if ( uStar > 0.0 ) {',   // the stars as Render's sky dome draws them (its uStar), in the views without the dome (szG5Update): a star in one of a few hundred cells
+        '    vec3 sp = d * 150.0, sc = floor( sp ); float sh = fract( sin( dot( sc, vec3( 127.1, 311.7, 74.7 ) ) ) * 43758.5453 );',
+        '    if ( sh > 0.972 ) { vec3 so = vec3( fract( sh * 17.13 ), fract( sh * 71.71 ), fract( sh * 37.37 ) ); float sb = ( sh - 0.972 ) / 0.028;',
+        '      back.rgb += mix( vec3( 1.0, 0.86, 0.7 ), vec3( 0.78, 0.88, 1.0 ), so.x ) * smoothstep( 0.34, 0.06, length( sp - sc - 0.2 - 0.6 * so ) ) * ( 0.35 + 0.65 * sb * sb ) * smoothstep( 0.03, 0.3, d.y ) * uStar; } }',
         '  float t = ( ' + H + ' - cameraPosition.y ) / max( up, 0.035 );',   // the view's ray to the layer, then back along the sun's rays: where the cloud's shadow falls
         '  vec2 P = cameraPosition.xz + d.xz * t - uSun.xz / max( uSun.y, 0.25 ) * ' + H + ';',
         '  float n = cl( P ), dens = smoothstep( uCov, uCov + 0.17, n ), thick = smoothstep( uCov + 0.04, uCov + 0.3, n );',
@@ -13003,13 +13176,6 @@ const World = (function () {
         gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.65, 'rgba(255,255,255,0.9)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.beginPath(); x.ellipse(px, py, rx, ry, ang, 0, TAU); x.fill(); } }
     return new THREE.CanvasTexture(c);
   }
-  // a tileable value noise (64 x 64, smooth): the lawns' patches at three scales in the ground's shader (three texture reads, no maths)
-  function szNoiseTex() {
-    const S = 64, n = nrPN(8, 4741), m = nrPN(16, 4742), d = new Uint8Array(S * S);
-    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) d[j * S + i] = Math.round(255 * clamp(n(i / S, j / S) * 0.65 + m(i / S, j / S) * 0.35, 0, 1));
-    const t = new THREE.DataTexture(d, S, S, THREE.LuminanceFormat); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true; t.needsUpdate = true;
-    return t;
-  }
   // the pit building's walls of precast concrete (szPanelMat): joints every 3 m along the light walls and every 1.5 m up them, each panel a
   // shade of its own; along the wall's own way in world metres (computed per vertex: the faces are flat, the joints in the fragments), the
   // joints fading out with distance (no shimmer far off). camU: the camera's position (G5.camU)
@@ -13038,6 +13204,7 @@ const World = (function () {
       const r = Math.min(1, rain * 1.4), L = night ? [0.075, 0.07, 0.08] : dusk ? [1, 0.7, 0.55] : [1, 1, 0.98], S0 = night ? [0.03, 0.03, 0.04] : dusk ? [0.42, 0.37, 0.5] : [0.62, 0.68, 0.78];
       const RL = night ? [0.05, 0.05, 0.06] : dusk ? [0.42, 0.4, 0.44] : [0.66, 0.68, 0.71], RS = night ? [0.03, 0.03, 0.04] : dusk ? [0.26, 0.26, 0.3] : [0.42, 0.44, 0.48];
       U.uLit.value.setRGB(lerp(L[0], RL[0], r), lerp(L[1], RL[1], r), lerp(L[2], RL[2], r)); U.uShade.value.setRGB(lerp(S0[0], RS[0], r), lerp(S0[1], RS[1], r), lerp(S0[2], RS[2], r));
+      U.uStar.value = night && !(R && R.skyOn) ? 0.9 * (1 - 0.95 * rain) : 0;   // (the dome's stars: where it is drawn, its own)
       U.uCov.value = lerp(0.53, 0.16, r); U.uSunA.value = night ? 0 : (dusk ? 1.25 : 1) * (1 - r); if (dusk) U.uSunC.value.setRGB(1, 0.62, 0.34); else U.uSunC.value.setRGB(1, 0.96, 0.86);
       if (camP && sc) U.uR.value = Math.min(sc.fog && sc.fog.far > 0 ? sc.fog.far * 3 : 1e9, cam.far * 0.97); }
     // the hills' sea and lights
@@ -13068,35 +13235,12 @@ const World = (function () {
     // the lamps of the pit lane, the paddock, the car parks and the concourses (dusk and night: their heads are G4's glows), the boards lit
     { if (G.pools) { G.pools.visible = dark > 0; G.pools.material.opacity = (night ? 0.7 : 0.35) * (1 + 0.3 * wetR); }
       if (G.boardU) G.boardU.uLit.value = night ? 0.45 : dusk ? 0.2 : 0; }
-    // the crowd on the stands: cheering where the followed car passes, all of them after its finish
-    if (G.crowdU) { const U = G.crowdU; U.uT.value = t % 3600; if (car) U.uCar.value.set(car.x, car.roadY || 0, car.z); else U.uCar.value.set(1e6, 0, 1e6); U.uAll.value = car && car.finished ? 1 : 0; }
     // the gravel the cars carried onto the road: fading out over a minute or two
     if (G.drop) G.drop.U.uT.value = t;
     // the confetti over the podium, by day (in the dark the fireworks)
     if (G.conf) { const C = G.conf, pod = R && R.podiumOn && R.podium && R.podium.F;
       if (!pod) C.t0 = null; else if (C.t0 == null && tod === 'day') { C.t0 = t; const F = R.podium.F; C.U.uO.value.set(0, F.H + 0.6, F.o + 6.6).applyMatrix4(F.m); C.U.uX.value.set(1, 0, 0).transformDirection(F.m); C.U.uZ.value.set(0, 0, 1).transformDirection(F.m); }
       const u = C.t0 == null ? -1 : t - C.t0; C.U.uT.value = u; C.pts.visible = u >= 0 && u < 14; }
-  }
-  // the crowd on the grandstands (graphics 5): the crowd map's people (64 to a 12 m stretch, 16 rows up the rake) jump and wave their arms
-  // where the followed car passes (within ~90 m of it) and all of them after its finish (uAll); each in a rhythm of its own (a hash of its
-  // seat); fading out far off (no shimmer)
-  function szCrowdMat(map, U) {
-    const m = new THREE.MeshLambertMaterial({ map, vertexColors: true });
-    m.onBeforeCompile = (sh) => { Object.assign(sh.uniforms, U);
-      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform vec3 uCar; uniform float uAll; uniform vec3 uCamP;\nvarying float vCh;')
-        .replace('#include <begin_vertex>', '#include <begin_vertex>\n{ vec4 cw = modelMatrix * vec4( transformed, 1.0 );\n' +
-          '  vCh = max( uAll, 1.0 - smoothstep( 30.0, 90.0, distance( cw.xz, uCar.xz ) ) ) * ( 1.0 - smoothstep( 90.0, 160.0, distance( cw.xyz, uCamP ) ) ); }');
-      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uT;\nvarying float vCh;')
-        .replace('#include <map_fragment>', '#ifdef USE_MAP\n{ vec2 cs = vec2( 64.0, 16.0 ), cell = floor( vUv * cs ), lc = fract( vUv * cs ); float h = fract( sin( dot( cell, vec2( 12.9898, 78.233 ) ) ) * 43758.5453 );\n' +
-          '  float jmp = vCh * step( 0.35, h ) * max( 0.0, sin( uT * ( 6.0 + 4.0 * h ) + h * 40.0 ) ) * 0.2;\n' +   // (two in three jump, up to a fifth of their row)
-          '  vec4 texelColor = texture2D( map, ( cell + vec2( lc.x, max( lc.y - jmp, 0.0 ) ) ) / cs );\n' +
-          '  vec4 body = texture2D( map, ( cell + vec2( 0.4, 0.4 ) ) / cs ); float who = step( 0.06, distance( body.rgb, vec3( 0.231, 0.247, 0.282 ) ) );\n' +   // (someone in this seat: not the seats' grey)
-          '  float arms = vCh * who * step( h, 0.75 ) * step( -0.3, sin( uT * ( 3.0 + 2.0 * h ) + h * 25.0 ) ) * step( 0.6 + jmp, lc.y ) * step( lc.y, 0.98 ) * min( 1.0, step( lc.x, 0.13 ) + step( 0.62, lc.x ) * step( lc.x, 0.75 ) );\n' +
-          '  texelColor = mix( texelColor, body, arms );\n' +
-          '  texelColor = mapTexelToLinear( texelColor ); diffuseColor *= texelColor; }\n#endif');
-    };
-    m.customProgramCacheKey = () => 'szCrowd';
-    return m;
   }
   // the boards of the atlas (graphics 5): lit after sunset (uLit: their own colours glow, szG5Update)
   function szBoardMat(map, U) {
@@ -13148,7 +13292,7 @@ const World = (function () {
       }
       for (const p of P.pat) { const m = new THREE.Mesh(szPatchGeo(p), gMat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m); }
     }
-    const pkM = szParkMat(gMat); ownTex(pkM.tex); ownTex(pkM.nz);   // (the car parks in the ground's shader; its hook on every mesh of gMat below)
+    const pkM = szParkMat(gMat); ownTex(pkM.tex);   // (the car parks in the ground's shader; its hook on every mesh of gMat below)
 
     /* ---- road: asphalt, white edge lines, red / white kerbs, grass verges out past the barriers, gravel traps (256 m chunks); the road on
        the bridge in its own meshes with their own materials (they fade while the followed car drives underneath) ---- */
@@ -13577,7 +13721,6 @@ const World = (function () {
 
     /* ---- grandstands: their real outlines cut along the track, a raked bank of seats packed with fans (the crowd map), a roof over the main grandstand ---- */
     let nStands = 0; const standRows = [];   // (every row of every stand, for szG4)
-    const crowdU5 = { uT: { value: 0 }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) }, uAll: { value: 0 }, uCamP: camU5 };   // (graphics 5: the crowd cheering, szCrowdMat)
     {
       const gs = new GB(), gc = new RB(true), gr = new GB(), stC = [0.62, 0.63, 0.66], stD = [0.5, 0.51, 0.55], stT = [0.74, 0.75, 0.78], roofC = [0.92, 0.93, 0.95], roofU = [0.7, 0.71, 0.74];
       for (const [name, side, roof, rows] of def.stands || []) {
@@ -13614,7 +13757,7 @@ const World = (function () {
         if (prev) cap(prev.cs, prev.s, -1);
         nStands++;
       }
-      addM(gs, matV, true); addM(gc, szCrowdMat(tex.crowd, crowdU5)); addM(gr, matV, true);
+      addM(gs, matV, true); addM(gc, crowdUV(new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), 1, 0.06, 0.06)); addM(gr, matV, true);   // (one slope: a row of people every 0.9 m)
     }
 
     /* ---- buildings (OpenStreetMap footprints near the track): houses, halls, the circuit's own buildings, the theme park's rides in bright colours ---- */
@@ -14265,11 +14408,11 @@ const World = (function () {
        worn grass and tyre ruts where the cars cut the exits; gravel on the road at the traps' ends and the gravel the cars carry out of them
        (dyn.gravelDrop); puddles and a glossy road in the rain (the glare off it towards a low sun); the lamps of the pit lane, the paddock, the
        car parks and the concourses after sunset and their pools of light, the boards lit, the phones held up in the stands; the garages'
-       numbers in their teams' colours, the monitors aglow; the crowd in the stands cheering; confetti over the podium. szG5Update ---- */
-    const G5 = { t: 0, gU: pkM.U, crowdU: crowdU5, camU: camU5 };
+       numbers in their teams' colours, the monitors aglow; confetti over the podium (the stands' crowd: World's crowdStands, as on every circuit). szG5Update ---- */
+    const G5 = { t: 0, gU: pkM.U, camU: camU5 };
     let nTuft = 0, nRut = 0, nPeb = 0, nPud = 0, nLamp = 0, nPhone = 0, nGarNo = 0, nMon = 0;
     { const U = G5.skyU = { uR: { value: 3000 }, clO: CLOUD_O, uCov: { value: 0.53 }, uSun: { value: new THREE.Vector3(-0.52, 0.51, 0.46) }, uLit: { value: new THREE.Color(1, 1, 0.98) }, uShade: { value: new THREE.Color(0.62, 0.68, 0.78) },
-        uFogC: { value: new THREE.Color() }, uNight: { value: 0 }, uRain: { value: 0 }, uT: { value: 0 }, uSunC: { value: new THREE.Color(1, 0.96, 0.86) }, uSunA: { value: 1 } };
+        uFogC: { value: new THREE.Color() }, uNight: { value: 0 }, uRain: { value: 0 }, uT: { value: 0 }, uSunC: { value: new THREE.Color(1, 0.96, 0.86) }, uSunA: { value: 1 }, uStar: { value: 0 } };
       root.add(szSky(U)); out.dyn.podSky = true;
       out.dyn.rays = true; out.dyn.rayAt = (x, z) => szLCf(x, z, 1) > 0.6 && szDist(x, z) > 6; }   // (Render: the shafts of sun in the woods, the flare)
     // long grass (szTuftGeo, instanced): at the barriers' feet on both faces of the rail (where the mower doesn't reach), in unmown patches of
@@ -14396,8 +14539,8 @@ const World = (function () {
         const jl = (crH(x, z, 178) - 0.5) * 0.9; D.q.setFromAxisAngle(D.up, -hd + (crH(x, z, 177) - 0.5) * 1.2); D.p.set(x - Math.sin(hd) * jl, y + 0.045, z + Math.cos(hd) * jl);   // (a little either side of the car's way) D.s.set(sz * 1.3, 1, sz); D.m4.compose(D.p, D.q, D.s); M.setMatrixAt(j, D.m4);
         born.array[j] = G5.t; born.needsUpdate = true; M.count = D.n; M.visible = true; M.instanceMatrix.needsUpdate = true; };
     }
-    // puddles (shown on a wet road): along the road's edges where the water stands (every 30-80 m on either side, within 2.4 m of the edge),
-    // in the gravel traps and on the asphalt run-offs; strips over the surface along the road's samples, a blot of the puddle picture each
+    // puddles (shown on a wet track) in the gravel traps and on the asphalt run-offs (every 30-80 m on either side, where there is one; those on
+    // the road are Render's, as on every circuit): strips over the surface along the road's samples, a blot of the puddle picture each
     {
       const PS = [], UV = [], AL = [], W = G5.wetU = { uMap: { value: ownTex(szPuddleTex()) }, uWet: { value: 0 }, uRain: { value: 0 }, uT: { value: 0 }, uSkyC: { value: new THREE.Color(0.7, 0.72, 0.76) },
         uDeep: { value: new THREE.Color(0.12, 0.13, 0.14) }, uFogC: { value: new THREE.Color() }, uFog: { value: new THREE.Vector2(1e5, 2e5) } };
@@ -14410,15 +14553,14 @@ const World = (function () {
         for (let k = 0; k < n; k++) { const a = rows[k], b = rows[k + 1];
           tri(a[0], a[1], b[1], a[2], a[3], b[3], a[4], a[5], b[5]); tri(a[0], b[1], b[0], a[2], b[3], b[2], a[4], b[5], b[4]); }
         nPud++; };
-      const roadY = (s) => hyS(s) + 0.056, vrgY = (side, lift) => (s, o, j) => T.hy[j] + vY(SZ.verge(j, side), o) + lift;
+      const vrgY = (side, lift) => (s, o, j) => T.hy[j] + vY(SZ.verge(j, side), o) + lift;
       for (const side of [-1, 1]) {
         const si = side > 0 ? 1 : 0;
         for (let d = 40 * crH(side, 1, 178); d < T.len - 20;) {
           const s = d, j = T.idx(s), h = (q) => crH(Math.floor(d), side, 179 + q); d += 30 + h(0) * 50;
           if (onDeck(j) || nearX(j, 25)) continue;
-          const wi = WAt(j), w = 0.9 + h(1) * 1.1, ob = wi - 0.1 - h(2) * 0.35, len = 2.5 + h(3) * 4.5;
-          pud(s, len, ob - w, ob, side, (ss) => roadY(ss), (h(4) * 4) | 0);
-          if (gravW(j, side) > 0.9 && h(5) < 0.6) {   // a puddle in the trap here too
+          const wi = WAt(j);
+          if (gravW(j, side) > 0.9 && h(5) < 0.6) {   // a puddle in the trap (or on the run-off) here
             const bar = side > 0 ? T.br[j] : T.bl[j], tar = !!(T.roT && T.roT[si][j]), o0 = wi + (tar ? 1 : 3.6), o1 = bar - (tar ? 1 : 2.2); if (o1 - o0 < 3) continue;
             const pw = 1.4 + h(6) * 2, oc = o0 + (o1 - o0 - pw) * h(7);
             pud(s + 3, 2 + h(8) * 3, oc, oc + pw, side, vrgY(side, tar ? 0.058 : 0.062), (h(9) * 4) | 0);
@@ -14561,7 +14703,7 @@ const World = (function () {
     if (d.wheel) szWheel(d.wheel, t);   // Suzuka: the Ferris wheel turns
     if (d.rides) szRides(d.rides, t);   // Suzuka: Motopia's rides go round
     if (d.g4) szG4Update(d.g4, t, car, cam, d);   // Mie: the glows after sunset, the fireworks and the helicopter at the finish
-    if (d.g5) szG5Update(d.g5, t, car, cam);   // Mie: the clouds, the long grass round the view, the wet track, the lamps, the cheering crowd, the confetti
+    if (d.g5) szG5Update(d.g5, t, car, cam);   // Mie: the clouds, the long grass round the view, the wet track, the lamps, the confetti
     if (d.pkLife) pkWildlifeUpdate(d.pkLife, t, car);   // Pikes Peak: marmots and bighorn sheep
     if (d.pkAmb) pkAmbientUpdate(d.pkAmb, t, car);   // Pikes Peak: flags, dust and leaves, grill smoke
     if (d.boats) {
