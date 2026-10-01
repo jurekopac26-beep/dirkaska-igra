@@ -594,6 +594,39 @@ select.txt:disabled { opacity: .75; }
 @keyframes pkcPulse { from { transform: scale(1); } to { transform: scale(1.1); } }
 @media (orientation: landscape) { #pk-cer { top: 12%; padding: 8px 14px; } .pkc-flag { transform: scale(.8); margin: -6px auto -2px; } .pkc-time { font-size: clamp(30px, 11vh, 44px); } }
 @media (prefers-reduced-motion: reduce) { #pk-cer.show, .pkc-flag i, .pkc-rec { animation: none; } }
+/* Pikes Peak: the corner warnings (a pace-note pill under the clock and the CP splits: a hairpin big and red, a medium bend orange, a fast
+   one faint; it replaces the generic arrow #h-note there), the medal times and medals per class, the legend ghost's mark on the difference */
+#pk-note { display: none; position: absolute; left: 50%; top: calc(var(--st) + clamp(88px, 24vh, 108px)); align-items: center; gap: .4em; padding: .2em .8em .2em .22em; border-radius: 99px; background: rgba(10, 13, 18, .5); border: 2px solid rgba(255, 255, 255, .22); color: rgba(246, 246, 241, .86); font: 800 italic clamp(11px, 3.1vh, 14px)/1 var(--f-ui); letter-spacing: .05em; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,.6); box-shadow: 0 2px 6px rgba(0,0,0,.3); pointer-events: none; opacity: 0; transform: translateX(-50%) scale(.85); transition: opacity .16s, transform .16s; }
+#hud.pkn #pk-note { display: flex; }
+#hud.pkn #h-note { display: none; }
+#pk-note.show { opacity: 1; transform: translateX(-50%) scale(1); }
+#pk-note i { display: block; width: 1.9em; height: 1.9em; border-radius: 50%; background: rgba(255, 255, 255, .16); }
+#pk-note svg { display: block; width: 100%; height: 100%; }
+#pk-note small { min-width: 3.2em; font-size: .78em; font-weight: 700; opacity: .85; text-align: right; font-variant-numeric: tabular-nums; }
+#pk-note.s1 { opacity: 0; }
+#pk-note.s1.show { opacity: .78; }
+#pk-note.s2 { background: rgba(10, 13, 18, .72); border-color: #f0921a; color: #fff; }
+#pk-note.s2 i { background: #e8840f; }
+#pk-note.s3 { background: rgba(10, 13, 18, .75); border-color: #ff4d3d; color: #fff; }
+#pk-note.s3 i { background: #d8342a; }
+#pk-note.hp { font-size: clamp(14px, 4vh, 19px); background: #c92a22; border-color: #fff; box-shadow: 0 3px 10px rgba(0,0,0,.45), 0 0 0 3px rgba(201, 42, 34, .35); }
+#pk-note.hp i { background: rgba(0, 0, 0, .28); }
+#pk-note.hp.show { animation: pkNp .32s ease-in-out 2 alternate; }
+@keyframes pkNp { from { transform: translateX(-50%) scale(1); } to { transform: translateX(-50%) scale(1.1); } }
+@media (orientation: portrait) { #pk-note { top: calc(var(--st) + 84px + clamp(64px, 20vw, 100px) + clamp(34px, 11vw, 50px)); font-size: clamp(11px, 3.4vw, 14px); } #pk-note.hp { font-size: clamp(14px, 4.6vw, 19px); } }
+@media (prefers-reduced-motion: reduce) { #pk-note, #pk-note.hp.show { transition: none; animation: none; } }
+#hud.pkleg #h-delta::before { content: 'LEG '; font-size: .62em; letter-spacing: .06em; color: #e8c04a; }   /* (the difference is to the legend) */
+.pk-medl { color: var(--chalk); }
+p.pk-medl { margin: -2px 0 6px; font: 700 12px/1.3 var(--f-ui); opacity: .9; }
+.pk-sub { font-size: .72em; opacity: .7; font-weight: 600; }
+.pkc-med { display: inline-flex; align-items: center; gap: 6px; margin: 6px 0 0; padding: 3px 12px 3px 6px; border-radius: 16px; font: 800 italic clamp(13px, 3.8vw, 16px)/1.2 var(--f-ui); letter-spacing: .05em; color: #1a1406; background: linear-gradient(180deg, #ffe07a, #e0a91e); box-shadow: 0 2px 6px rgba(0,0,0,.4); animation: pkcPulse .7s ease-in-out .6s 2 alternate; }
+.pkc-med i { font-style: normal; font-size: 1.35em; line-height: 1; }
+.pkc-med span { white-space: nowrap; text-align: left; }
+.pkc-med small { display: block; font-size: .7em; font-weight: 700; opacity: .8; letter-spacing: .02em; }
+.pkc-med.m1 { background: linear-gradient(180deg, #f2f4f7, #aab2bd); }
+.pkc-med.m2 { background: linear-gradient(180deg, #f0b27a, #b86b2c); }
+.pkc-med.none { padding: 2px 10px; background: rgba(255,255,255,.1); color: #c9ced6; font-weight: 700; animation: none; }
+@media (prefers-reduced-motion: reduce) { .pkc-med { animation: none; } }
 
 
 /* the slicks for the next pit stop (the pause, a race with tyres); rows of choices too wide for their panel get smaller (game.js fitSegs) */
@@ -610,3 +643,11 @@ select.txt:disabled { opacity: .75; }
   #replay-ui .rp-prog { bottom: calc(114px + var(--sb)); }
   #rp-hl-cap { bottom: calc(128px + var(--sb)); }
 }
+/* Pikes Peak: the course flyover before the start (TV captions at the famous places; the touch controls out of the picture while it runs) */
+#pk-fly { display: none; position: absolute; left: calc(14px + var(--sl)); top: calc(14px + var(--st)); max-width: calc(100% - 90px); padding: 8px 14px 9px; border-left: 4px solid var(--lcd); border-radius: 0 8px 8px 0; background: linear-gradient(90deg, rgba(10, 14, 22, .82), rgba(10, 14, 22, .55)); color: var(--chalk); pointer-events: none; opacity: 0; }
+#pk-fly.show { display: block; }
+#pk-fly small { display: block; font: 700 clamp(9px, 1.9vh, 11px)/1.2 var(--f-ui); letter-spacing: .18em; color: var(--lcd); }
+#pk-fly b { display: block; font: 400 italic clamp(22px, min(6.4vh, 8vw), 34px)/1.05 var(--f-display); text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,.45); }
+#pk-fly span { display: block; font: 700 clamp(13px, 3.2vh, 17px)/1.2 var(--f-ui); color: var(--lcd); }
+#pk-fly em { display: block; margin-top: 4px; font: 400 clamp(9px, 1.8vh, 11px)/1.2 var(--f-ui); font-style: normal; color: rgba(246, 246, 241, .6); }
+body.pkfly #touch { visibility: hidden; }

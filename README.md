@@ -153,7 +153,7 @@ Na naslovnem zaslonu tapni **Prvenstvo** in izberi serijo dirk: **Domači pokal*
 Gumb **Kariera** na naslovnem zaslonu odpre kariero: z dirkami služiš denar, z njim kupuješ avte in nadgradnje. **Začni kariero** ti da 10.000 € in avto PICO TURBO. Dokler je kariera vklopljena, gumb na naslovnem zaslonu kaže, koliko denarja imaš (npr. »Kariera · 12.300 €«).
 
 - **Nagrade:** po vsaki dirki (tudi v prvenstvu) dobiš denar glede na mesto (zmagovalec 6.000 €, zadnji 300 €). Daljša dirka prinese več (dirka na 2 km 0,6-krat toliko, na 8 km enkrat, največ 2,5-krat), težja težavnost tudi (lahka 0,7-krat, težka 1,4-krat). Za najhitrejši krog dirke dobiš še 500 €, za prvo štartno mesto v kvalifikacijah 1.000 €. Naslov prvaka prinese 20.000 €, 2. mesto v prvenstvu 10.000 € in 3. mesto 6.000 € (pomnoženo s težavnostjo). Na kronometrih dobiš 5.000 €, 3.000 € ali 1.500 € za zlato, srebrno ali bronasto medaljo, 2.000 € za osebni rekord, sicer 500 €. Nagrada piše na zaslonu z rezultati.
-- **Avti:** v izbiri avta imajo avti, ki jih še nimaš, ceno (PEUGEOT 206 20.000 €, KAZE RS 30.000 €, STREGA MR 45.000 €, VORTEX 4WD 50.000 €, BURJA R7 60.000 €), gumb Naprej pa postane **Kupi**. Z avtom, ki ga nimaš, ne moreš dirkati.
+- **Avti:** v izbiri avta imajo avti, ki jih še nimaš, ceno (PEUGEOT 206 20.000 €, KAZE RS 30.000 €, VIHAR V8 40.000 €, STREGA MR 45.000 €, VORTEX 4WD 50.000 €, SAMUM 4x4 55.000 €, BURJA R7 60.000 €, STRELA EV 75.000 €, FORMULA ORKAN 90.000 €, TAIFUN LM 110.000 €), gumb Naprej pa postane **Kupi**. Z avtom, ki ga nimaš, ne moreš dirkati.
 - **Nadgradnje:** vsaka stopnja stane 4.000 €, 7.000 € ali 12.000 € (cena je napisana na gumbu; preskočene stopnje se plačajo zraven). Kupljenih delov ne moreš prodati.
 - **Izklopi kariero** te vrne v prosto igro z vsemi avti in brezplačnimi nadgradnjami (te so ločene od kariere). Kariera ostane shranjena in jo kasneje nadaljuješ. **Nova kariera** (dvakrat tapni) začne znova.
 
@@ -238,10 +238,16 @@ Na vseh progah čez pokrajino počasi drsijo sence oblakov (v dežju jih ni, ker
 - **Blesk na avtih:** lak in stekla vseh avtov (na vseh progah in v garaži) se svetijo kot pravi prozorni lak: pod ostrim kotom odsevajo več neba, v barvi neba dirke (zvečer toplo, ponoči temno, v dežju sivo), na njih se zablešči sonce z mehkim sijajem okoli in svetlim robom na sončni strani. Na steklih je blesk ostrejši, umazanija ga zmanjša. Na Pikes Peaku ostane svoj jutranji blesk s prahom.
 - **Voda:** jezera, morje, reka in ribniki (Jezero, Riviera, Ljubljanica, Monako, Bakreni gozd, Toskana, Suzuka, Ouninpohja, jezero pod Pikes Peakom) odsevajo nebo (bolj proti obzorju; jezera med gozdovi bolj temen breg), po njih tečejo valovi, na katerih se lesketa sonce (v senci ne; zvečer zlata pot proti soncu). Ob obali je voda svetlejša, ob vodni črti se peni, na plaži v Rivieri se na obalo valijo valovi s peno. Pena sledi pravi vodni črti terena, tudi ob pomolih v Monaku in okoli otoka na Jezeru.
 - **Obrabljen asfalt:** na asfaltnih progah so zaplate novejšega (temnejšega) in starejšega (sivejšega) asfalta z zalitimi robovi, zalite razpoke (prečne, vzdolžne in mreže razpok) ter na dirkališčih guma na idealni liniji v dveh sledeh, najtemnejša pri zaviranju in v zavojih. V dežju se potemnijo skupaj s cesto. Makadamske proge in Pikes Peak (ta ima svoje razpoke in zaplate) jih nimajo.
+- **Dim, prah in pršec:** dim gum, prah in pršec so puhasti oblački, ki se vrtijo, rastejo in razblinijo; podnevi so zgoraj svetlejši, zvečer topli, ponoči temni. Na makadamu in pesku je prah rjav, na travi letijo zelenkasti drobci. Na štartu je gostega dima manj.
+- **Trava:** travniki imajo naravne lise (svetlejše, temnejše, rumenkaste), na krožnih progah so pokošeni pasovi (ne le na Spa in Suzuki), ob robu proge so šopi daljše trave in rožice (jeseni slamnati, pozimi pod snegom).
+- **Drevesa:** na Jezeru in Gorskem reliju so listavci z več krošnjami v različnih odtenkih, bori in smreke pa iz nazobčanih povešenih nadstropij vej; vsa se rahlo zibljejo v vetru.
+- **Avti:** platišča so kovinska (v njih se odseva nebo dirke, na njih se zablešči sonce), kraki se proti robu razcepijo. Ob menjavi prestave in ob odvzemu plina pri visokih vrtljajih iz izpuha švigne ogenj, zavorni diski po močnem zaviranju zažarijo (najbolj ponoči), ob drgnjenju ob ogrado letijo iskre, formule in prototip TAIFUN LM pri veliki hitrosti kresajo iskre izpod dna (več čez robnike, ob pristanku cel snop). Vse to je bilo prej samo na Pikes Peaku. Električni STRELA EV nima izpuha, zato tudi ognja ne.
+- **Svetloba in barve:** vsaka proga ima pri kakovosti »Visoka« svoje barvne tone (senca in svetloba rahlo različno obarvani: turkizne sence in zlata svetloba na Rivieri in v Monaku, zlata Toskana, sivkasta Spa). Na strehah avtov se ob pravem kotu zasveti sij sonca. Ko so sence izklopljene (šibkejši telefoni), ima avto pod sabo mehko senco svoje oblike, rahlo odmaknjeno od sonca.
+- **Gledalci:** na tribunah sedijo vrste posameznih ljudi (32 na 12 m: glava z lasmi ali kapo, majica, roke v naročju, ponekod prazen sedež, dvignjene roke ali šal) in se rahlo zibljejo na sedežih; ob avtu vstajajo. Ko ugasnejo luči na štartu, ko koga prehitiš, in v cilju množica skače in maha z zastavami, na tribunah in ob progi.
 
 ## Vreme
 
-Na zaslonu **Izberi progo** izbereš vreme: **Suho**, **Dež**, **Menljivo** (glej zgoraj) ali **Naključno** (vsaka dirka posebej: dež približno v vsaki tretji dirki, na Spa v vsaki drugi, na Nordschleife in na Vršiču (jesen v Julijskih Alpah) skoraj v vsaki drugi). V dežju imajo vsi avti manj oprijema (v ovinkih in pri speljevanju za petino, zavore za desetino), zato drsijo bolj in dlje; tekmeci z AI zato vozijo ovinke počasneje in prej zavirajo, krog je 6–9 % počasnejši. Cesta je temna in mokra, nebo oblačno, vidljivost manjša, dež pada v curkih, izpod koles se dviga pršec (namesto dima iz gum), s trave in gramoza pa leti blato. Slišati je dež in šumenje gum po vodi, komentator pa ob štartu omeni dež. Kadar je izbran Dež, dežuje tudi na naslovnem zaslonu. Kronometri (Pikes Peak, Ouninpohja in Vršič v načinu Kronometer) imajo v dežju svoje rekorde, lestvico in duha. Kadar je izbran Dež, kartica proge in lestvica pokažeta te.
+Na zaslonu **Izberi progo** izbereš vreme: **Suho**, **Dež**, **Menljivo** (glej zgoraj) ali **Naključno** (vsaka dirka posebej: dež približno v vsaki tretji dirki, na Spa v vsaki drugi, na Nordschleife in na Vršiču (jesen v Julijskih Alpah) skoraj v vsaki drugi). V dežju imajo vsi avti manj oprijema (v ovinkih in pri speljevanju za petino, zavore za desetino), zato drsijo bolj in dlje; tekmeci z AI zato vozijo ovinke počasneje in prej zavirajo, krog je 6–9 % počasnejši. Cesta je temna in mokra, nebo oblačno, vidljivost manjša, dež pada v curkih, izpod koles se dviga pršec (namesto dima iz gum), s trave in gramoza pa leti blato. Na mokri cesti se odsevajo luči (zadnje luči rišejo po cesti rdeče proge, zavorne še daljše, žarometi, ponoči reflektorji) in avti sami, kaplje pljuskajo po cesti (kolobarji, ki se razširijo), na asfaltu krožnih prog so luže, ki odsevajo nebo in se ob sušenju umaknejo. Slišati je dež in šumenje gum po vodi, komentator pa ob štartu omeni dež. Kadar je izbran Dež, dežuje tudi na naslovnem zaslonu. Kronometri (Pikes Peak, Ouninpohja in Vršič v načinu Kronometer) imajo v dežju svoje rekorde, lestvico in duha. Kadar je izbran Dež, kartica proge in lestvica pokažeta te.
 
 ## Letni čas in čas dneva
 
@@ -250,8 +256,8 @@ Na zaslonu **Izberi progo** izbereš še **letni čas** (Poletje, Jesen, Zima) i
 - **Jesen:** listje na drevesih porumeni, pordeči in porjavi (nekaj ga ostane zelenega), travniki postanejo slamnati in olivni, sonce je toplejše. Npr. jesenska Nordschleife.
 - **Zima:** trava in polja so pod snegom, drevesa zasnežena, asfalt je splužen, makadamske ceste (Ouninpohja, Gorski reli) pa so pokrite s steptanim snegom. Izpod koles se dviga snežni prah. Namesto dežja sneži. Oprijem je manjši: na asfaltu za 6 %, na zasneženem makadamu za četrtino (tekmeci vozijo temu primerno).
 - **Vršič** je poleti zelen (travniki, bukve in macesni), jeseni zlat (zlati macesni, prvi sneg na vrhu), Zima ga vsega zasneži.
-- **Večer:** nizko oranžno sonce, dolge sence, topla meglica. Avti imajo prižgane žaromete.
-- **Noč:** temno modro nebo in šibka luna. Ob progi so vsakih 30 m reflektorji na drogovih, ki osvetlijo asfalt, avti pa na cesto pred sabo svetijo z žarometi. Npr. nočna dirka v Monaku.
+- **Večer:** nizko oranžno sonce, dolge sence v hladnejšem, rožnatem odtenku, topla meglica. Avti imajo prižgane žaromete.
+- **Noč:** temno modro nebo, šibka luna in zvezde (vidne iz kokpita, s TV kamer in v foto načinu). Ob progi so vsakih 30 m reflektorji na drogovih, ki na asfaltu delajo mehke kroge svetlobe, okoli luči pa je sij. Avti na cesto pred sabo svetijo s toplim snopom obeh žarometov; okoli žarometov, zadnjih in zavornih luči je sij. V stavbah so prižgana okna (topla luč, ponekod modra luč televizorja). Pri kakovosti »Visoka« luči še žarijo (bloom). Npr. nočna dirka v Monaku.
 
 ## Zvok navijačev in predori
 
@@ -267,6 +273,40 @@ V izbiri avta je **FORMULA ORKAN**, dirkalnik formule z odprtimi kolesi, sprednj
 - Ob trkih odletijo sprednje krilo, nos, zadnje krilo, pokrov motorja (pod njim se vidi motor), ogledali in stranski deflektorji. Brez sprednjega krila izgubi pol pritiska na cesto, brez zadnjega še 40 %; mehaniki v boksih avto popravijo.
 - Tekmeci v formulah vozijo kot formule: hitreje skozi hitre ovinke in pozneje zavirajo, sledijo z večjo razdaljo, prehitevajo širše in se bolj držijo stran od roba proge; brez krila zapeljejo v hitre ovinke počasneje.
 - V conah DRS na Red Bull Ringu se loputa zadnjega krila res odpre. Zadaj ima rdečo luč kot v formuli 1: v dežju sveti, med zaviranjem utripa. V dežju vozi na gumah za moker asfalt (zelen pas na boku gume), sicer na mehkih (rdeč pas).
+
+## Prototip TAIFUN LM
+
+V izbiri avta je **TAIFUN LM**, prototip za vzdržljivostne dirke, kot jih vozijo na 24 urah Le Mansa: nizek, širok in dolg, z zaprto kabino pod steklenim pokrovom, blatniki z izboklinami nad kolesi (kolesa se vidijo pod njimi), plavutjo na pokrovu motorja in velikim zadnjim krilom na »labodjih vratovih«. Voziš ga lahko na vseh progah. Kot pri formuli vozijo tudi vsi tekmeci prototipe, vsak v svoji barvi in s svojo številko.
+
+- 762 KM, 960 kg, sedem prestav. Od 0 do 100 km/h pospeši v 2,7 s, doseže ~295 km/h: na ravninah je najhitrejši avto v igri (formula ~280 km/h), ker ima manj zračnega upora.
+- Krila ga pri hitrosti pritisnejo ob cesto, a manj kot formulo (pri 150 km/h ~3,1 g, formula ~3,2 g), zato je formula hitrejša v hitrih ovinkih. Zavore so iz ogljikovih vlaken: s 100 km/h se ustavi na ~20 m.
+- Gume so gladke (slik): na makadamu, travi in produ drsi še bolj kot formula.
+- Ob trkih odletijo sprednji spojler s kanardi (z njim pol pritiska na cesto), nos, zadnje krilo (še 40 %), pokrov motorja s plavutjo (pod njim se vidi motor), ogledali in rešetki nad sprednjima kolesoma. Mehaniki v boksih avto popravijo in zamenjajo vsa štiri kolesa.
+- V kokpitu sediš nizko pod steklenim pokrovom, pred tabo sta izboklini blatnikov z ogledali, volan pa je dirkalni, z zaslonom in lučkami za prestavljanje kot v formuli. V conah DRS se odpre loputa zadnjega krila.
+
+## Muscle car VIHAR V8
+
+**VIHAR V8** je ameriški »muscle car« iz leta 1970: dolg pokrov motorja z zajemalko zraka, streha, ki se v loku spusti do kratkega »račjega repa« (fastback), žaluzije na zadnjem steklu, dvojni dirkalni trakovi od nosu do repa (črni na svetli barvi, beli na temni), okrogli žarometi v črni maski, trodelne zadnje luči, dvojni izpušni cevi, kromirani odbijači in kromirana platišča (zadaj širša).
+
+- Zadnji pogon, 517 KM, 1540 kg. Na ravnini ga je težko ujeti (~239 km/h, od 0 do 200 km/h je 1,5 s hitrejši od KAZE RS), a ima najmanj oprijema med cestnimi avti.
+- V ovinkih drsi bolj kot drugi avti, pri polnem plinu se mu kolesa vrtijo v prazno do ~120 km/h in mu zanašajo zadek: kralj drifta.
+- Zvok: globok V8, ki v prostem teku neenakomerno »brbota«.
+
+## Električni avto STRELA EV
+
+**STRELA EV** je električni hiperšportnik: nizek in širok, s steklenim pokrovom kabine, svetlobnim trakom čez ves nos in ves rep, karbonskim spodnjim delom s cian črto, zračniki za vrati in na pokrovu, spojlerjem in difuzorjem; platišča imajo cian lopatice.
+
+- Štirje elektromotorji (pogon na vsa kolesa) in ena prestava (namesto prestave piše D), 598 KM, 1720 kg (težke baterije).
+- Najhitrejši pospešek med cestnimi avti (od 0 do 100 km/h v 2,5 s), ~252 km/h in največ oprijema med cestnimi avti; kolesa se mu skoraj ne vrtijo v prazno. Na makadamu ima manj oprijema kot relijski avto.
+- Zvok: namesto motorja tiho cviljenje elektromotorjev, ki je tem višje, čim hitreje voziš; na štartu ne tuli. V kokpitu ima namesto merilnika vrtljajev merilnik moči (kW).
+
+## Terenski tovornjak SAMUM 4x4
+
+**SAMUM 4x4** je dirkalni tovornjak za puščavske relije (»trophy truck«): visoka kabina, dolg pokrov motorja, velika kolesa z grobim profilom pod črnimi blatniki, rezervna guma v kesonu pod varnostno kletko, luči na strehi, dihalnik (snorkel) ob vetrobranskem steklu, vzmetenje z dolgim hodom.
+
+- Pogon na vsa kolesa, 571 KM, 1850 kg. Na asfaltu je počasen: ~203 km/h in malo oprijema (gume za teren).
+- Na makadamu, travi in produ ima več oprijema kot kateri koli cestni avto, podlaga pa ga zavira manj: na makadamu pospeši od 0 do 100 km/h v 3,0 s (relijski avto v 4,1 s), po travi pelje ~170 km/h (relijski avto ~143 km/h). Najbolj pride do izraza na Ouninpohji in Gorskem reliju.
+- Po skokih mehko pristane: poškoduje ga šele trši pristanek kot druge avte in pri tem izgubi manj hitrosti. Karoserija se v ovinkih in pri zaviranju bolj nagne. V kokpitu ima varnostno kletko kot relijski avto.
 
 ## Dirka s prijateljem
 

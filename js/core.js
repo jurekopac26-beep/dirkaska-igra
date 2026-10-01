@@ -872,6 +872,41 @@ const Core = (function () {
     gripF: 1.22, gripR: 1.28, cDrag: 0.95, down: 1.2, brake: 16, steerMax: 0.46,
     driftLoss: 0.2, len: 5.2, wid: 1.96, body: 'formula', aero: 0.00014, brakeK: 1.3, tracK: 1.4, loose: 0.7, engHz: 1.6, spinK: 0.08, oneMake: true, aiGap: 5, aiPass: 3.8, aiEdge: 1.6,
     stats: { power: 10, grip: 10, weight: 10, drift: 2 } });
+  // Le Mans prototype (closed cockpit, every track): long, low and wide, a big rear wing. Like the formula it races its own class (oneMake:
+  // every rival in one too) on wings (aero), carbon brakes and slicks, with less downforce but far less drag: quicker down the straights,
+  // slower through the fast bends. Its front splitter and rear wing are the parts that take the downforce with them when knocked off
+  MODELS.push({ id: 'lm', name: 'TAIFUN LM', drive: 'MR', desc: 'Prototip za vzdržljivostne dirke z zaprto kabino',
+    mass: 960, a: 1.55, b: 1.45, hcg: 0.34, kI: 1.3, kw: 560, redline: 9500, idle: 2200,
+    gears: [3.3, 2.5, 2.0, 1.66, 1.42, 1.24, 1.1], final: 3.9, rw: 0.36,
+    gripF: 1.18, gripR: 1.24, cDrag: 0.52, down: 1.0, brake: 15, steerMax: 0.5,
+    driftLoss: 0.22, len: 4.95, wid: 2.0, body: 'lm', aero: 0.00012, brakeK: 1.22, tracK: 1.3, loose: 0.66, engHz: 1.3, spinK: 0.12, oneMake: true, aiGap: 5, aiPass: 3.9, aiEdge: 1.6,
+    stats: { power: 10, grip: 10, weight: 9, drift: 3 } });
+  // 1970 fastback muscle car: a big V8 (engHz lower, snd 'v8': the burble), heavy and long, the least grip of the road cars. spinK > 1:
+  // its wheelspin shows (and swings the tail: the power rotation) to a higher speed than the others': the drift car of the lot
+  MODELS.push({ id: 'muscle', name: 'VIHAR V8', drive: 'FR', desc: 'Ameriški muscle car z velikim V8',
+    mass: 1540, a: 1.30, b: 1.33, hcg: 0.52, kI: 1.3, kw: 380, redline: 6400, idle: 750,
+    gears: [2.78, 1.93, 1.36, 1.0, 0.84], final: 3.7, rw: 0.34,
+    gripF: 0.96, gripR: 1.02, cDrag: 0.41, down: 0.12, brake: 10.8, steerMax: 0.6,
+    driftLoss: 0.34, len: 4.72, wid: 1.88, body: 'muscle', engHz: 0.78, snd: 'v8', spinK: 1.35, chrome: true,
+    stats: { power: 9, grip: 5, weight: 3, drift: 10 } });
+  // electric hypercar: a motor at every wheel (AWD), one gear, a heavy battery down in the floor. Instant torque with traction control:
+  // the best launch of the road cars (tracK) and hardly any wheelspin (spinK); ev: no engine note but the motors' whine (Sfx), no revving
+  // on the grid, D on the gear display
+  MODELS.push({ id: 'ev', name: 'STRELA EV', drive: 'AWD', desc: 'Električni hiperšportnik s štirimi motorji',
+    mass: 1720, a: 1.42, b: 1.38, hcg: 0.4, kI: 1.28, kw: 440, redline: 16000, idle: 0,
+    gears: [1.0], final: 7.4, rw: 0.35,
+    gripF: 1.06, gripR: 1.12, cDrag: 0.36, down: 0.3, brake: 12.6, steerMax: 0.6,
+    driftLoss: 0.3, len: 4.62, wid: 2.0, body: 'ev', ev: true, tracK: 1.14, spinK: 0.35, loose: 0.92,
+    stats: { power: 10, grip: 9, weight: 3, drift: 4 } });
+  // off-road trophy truck: long-travel suspension and big knobbly tyres, four-wheel drive. Slow on tarmac (little grip, a brick in the wind),
+  // at home off it: more grip on makadam, grass and gravel than the road cars have there (loose > 1), the loose ground holds it back far less
+  // (looseDrag), and it lands jumps softly (landV: damage only from a harder landing, landK: less speed lost). sway: its body rolls more
+  MODELS.push({ id: 'truck', name: 'SAMUM 4x4', drive: 'AWD', desc: 'Terenski dirkalni tovornjak za makadam in puščavo',
+    mass: 1850, a: 1.6, b: 1.5, hcg: 0.72, kI: 1.3, kw: 420, redline: 6200, idle: 800,
+    gears: [3.1, 2.1, 1.55, 1.22, 1.0, 0.86], final: 5.6, rw: 0.46,
+    gripF: 0.94, gripR: 1.0, cDrag: 0.62, down: 0.1, brake: 10.5, steerMax: 0.62,
+    driftLoss: 0.36, len: 5.2, wid: 2.15, body: 'truck', loose: 1.25, looseDrag: 0.35, landV: 17, landK: 0.4, engHz: 0.72, snd: 'v8', sway: 1.8,
+    stats: { power: 8, grip: 4, weight: 1, drift: 8 } });
   const tqShape = (u) => Math.max(0.3, 1 - 0.85 * (u - 0.7) * (u - 0.7)); // flat, strong mid-range (SWGP2 pulls hard to ~130 km/h)
   for (const M of MODELS) {
     const wr = M.redline * TAU / 60;
@@ -913,6 +948,10 @@ const Core = (function () {
     rally: { amax: 1.82, kv: 2.05, bscale: 1.1, rmin: 4.1 },
     p206: { amax: 1.8, kv: 2.1, bscale: 0.9, rmin: 4.1 },
     formula: { amax: 1.98, kv: 3.3, bscale: 0.78, rmin: 5.0 },   // slicks: grip, the travel follows the nose quickly (small slides); a wide turning circle
+    lm: { amax: 1.94, kv: 3.0, bscale: 0.82, rmin: 5.2 },        // the prototype: nearly the formula's grip and bite, a longer car
+    muscle: { amax: 1.63, kv: 1.9, bscale: 1.2, rmin: 4.6 },     // heavy on narrow period tyres: the least grip, big lazy slides
+    ev: { amax: 1.86, kv: 2.15, bscale: 0.86, rmin: 4.4 },       // wide tyres, the battery low down: the most grip of the road cars
+    truck: { amax: 1.58, kv: 1.85, bscale: 1.15, rmin: 5.0 },    // knobbly tyres on tarmac: little grip, wide slides, a wide turning circle
   };
   const TRAC_G = 1.8, BRAKE_G = 2.6; // high-class SWGP2 cars brake at ~2.8-3.0 g peak (incl. slide), weak cars ~2.2 g
 
@@ -1009,6 +1048,12 @@ const Core = (function () {
     p206:   { bx: 0.15, coast: -0.099, thr: -0.03, liftP: 0, pwr: 0, out: 1.0, turn: 1.0, w: 1.02 },       // FF
     formula: { bx: 0.09, coast: -0.03, thr: -0.01, liftP: 0.08, pwr: 0.05, out: 0.85, turn: 1.25, w: 0.96, tv: 0.5 },   // on rails: sharp turn-in,
              // a smaller drift attitude for the same turn (tv: tau_v factor) that settles quickly; a little slower in the hairpins
+    lm:     { bx: 0.1, coast: -0.035, thr: -0.012, liftP: 0.1, pwr: 0.06, out: 0.9, turn: 1.18, w: 0.96, tv: 0.62 },   // the prototype: nearly as tidy
+    muscle: { bx: 0.15, coast: -0.035, thr: 0, liftP: 0.16, pwr: 0.14, out: 1.4, turn: 0.92, w: 0.97, tv: 1.12 },      // FR, lots of power: big slides,
+             // swung wide by the throttle and lazy to straighten; a heavy nose, slower to turn in
+    ev:     { bx: 0.11, coast: -0.08, thr: -0.02, liftP: 0, pwr: 0.02, out: 0.9, turn: 1.05, w: 1.0 },            // AWD with torque vectoring: steady, sharp
+    truck:  { bx: 0.14, coast: -0.066, thr: -0.01, liftP: 0.04, pwr: 0.05, out: 1.15, turn: 0.85, w: 0.95, tv: 1.15 },   // tall and soft: a slow turn-in,
+             // wide slides that take their time to settle
   };
   // cs assists (index = ASSISTS level). visoka (2, the default) = the measured CS car; lower levels = more slide, lazier recovery
   // lock: full steer as a share of the path-rate cap (>1: can overdrive the grip), bx / layer / kick: pedal, drive-type and
@@ -1042,7 +1087,8 @@ const Core = (function () {
       const arc0 = ARC[model.id] || ARC.kaze;
       this.arc = U ? Object.assign({}, arc0, { amax: arc0.amax * U.grip, kv: arc0.kv * U.kv }) : arc0;   // per-car grip and turn (ARC)
       this.tracG = U ? TRAC_G * U.trac : TRAC_G; this.brakeG = U ? BRAKE_G * U.brake : BRAKE_G; this.aeroK = (U ? U.aeroK : 0) + (SU ? SETUP_AEROK[sw] : 0);
-      if (model.aero) { this.tracG *= model.tracK; this.brakeG *= model.brakeK; this.aeroK += model.aero; this.aeroK0 = this.aeroK; }   // the formula (aeroK0: with both wings)
+      if (model.tracK) this.tracG *= model.tracK; if (model.brakeK) this.brakeG *= model.brakeK;   // (the formula, the prototype, the electric car's launch)
+      if (model.aero) { this.aeroK += model.aero; this.aeroK0 = this.aeroK; }   // the formula, the prototype (aeroK0: with both wings)
       this.upg = U ? { motor: upgLv(opts.upg, 'motor'), gume: upgLv(opts.upg, 'gume'), zavore: upgLv(opts.upg, 'zavore'), aero: upgLv(opts.upg, 'aero') } : null;
       this.upgGrip = U ? U.grip : 0;   // autopilot / AI corner-speed scale (0 = stock car)
       this.m = model;
@@ -1129,9 +1175,10 @@ const Core = (function () {
       for (let k = 0; k < 4; k++) {
         const wx = this.x + wpos[k][0] * ch - wpos[k][1] * sh, wz = this.z + wpos[k][0] * sh + wpos[k][1] * ch;
         const q = trk.query(wx, wz, this.wq[k].i >= 0 ? this.wq[k].i : this.q.i, this.wq[k]);
-        const sf = trk.surface(q), fl = this.flat & (1 << k); this.ws[k] = sf; const S = CSSURF[sf], lk = (M.loose && LOOSE[sf] ? M.loose : 1) * (fl ? FLAT.tr : 1), tr = S.tr * lk, lt = S.lat * lk;   // (slicks on loose ground; a flat tyre)
+        const sf = trk.surface(q), off = LOOSE[sf] && !(this.inPit && M.loose > 1), fl = this.flat & (1 << k); this.ws[k] = sf; const S = CSSURF[sf], lk = (M.loose && off ? M.loose : 1) * (fl ? FLAT.tr : 1), tr = S.tr * lk, lt = S.lat * lk;   // (slicks on loose ground; a flat tyre)
         muSum += tr; if (k < 2) muF += tr * 0.5; else muR += tr * 0.5; if (sf === 1) curb++;
-        const c0 = fl ? S.c0 + FLAT.c0 : S.c0, c1 = fl ? S.c1 + FLAT.c1 : S.c1;
+        const ld = M.looseDrag && off ? M.looseDrag : 1;   // (the truck: the loose ground holds it back less. Its pit lane is paved, not loose ground: there it is as every car)
+        const c0 = fl ? S.c0 * ld + FLAT.c0 : S.c0 * ld, c1 = fl ? S.c1 * ld + FLAT.c1 : S.c1 * ld;   // (a flat tyre's drag: the tyre's, not the ground's)
         const dk = (c0 * Math.min(1, spd / 3) + c1 * spd) * 0.25, lw = 0.5 * (1 + ldK * sgO * (k & 1 ? -1 : 1));   // (k odd: +lateral side = inner in a + turn)
         dragC0 += c0 * 0.25; dragC1 += c1 * 0.25;
         if (k < 2) { latF += lt * 0.5; latFw += lt * lw; } else { latB += lt * 0.5; latBw += lt * lw; }
@@ -1177,7 +1224,7 @@ const Core = (function () {
         }
         const gr2 = M.gears[this.gear - 1] * M.final;
         const wr2 = Math.max(0, vl) / M.rw * gr2 * 9.5493;
-        this.rpmTarget = Math.max(wr2, M.idle + (M.redline * 0.62 - M.idle) * thr);
+        this.rpmTarget = M.ev ? wr2 : Math.max(wr2, M.idle + (M.redline * 0.62 - M.idle) * thr);   // (an electric motor turns with the wheels only)
         const Kp = PWR_MULT * M.kw * 1000 * 0.88 / m * (1 - 0.22 * (this.dmgMode === 2 ? this.dmg : 0));
         let Fsw = m * Kp / Math.max(Math.abs(vl), 4) * thr;
         if (this.shiftT > 0) Fsw *= 0.7;
@@ -1186,11 +1233,11 @@ const Core = (function () {
       } else {
         const gr = 3.3 * M.final;
         const wr = Math.max(0, -vl) / M.rw * gr * 9.5493;
-        this.rpmTarget = Math.max(wr, M.idle + 2500 * thr);
+        this.rpmTarget = M.ev ? wr : Math.max(wr, M.idle + 2500 * thr);
         F = -M.Tmax * 0.8 * gr * eff / M.rw * thr * (vl < -8 ? 0 : 1);
       }
       if (this.shiftT > 0) this.shiftT -= dt;
-      if (this.locked) this.rpmTarget = M.idle + (M.redline * 0.88 - M.idle) * this.inThr;
+      if (this.locked) this.rpmTarget = M.ev ? 0 : M.idle + (M.redline * 0.88 - M.idle) * this.inThr;   // (on the grid: revving, but not an electric motor)
       if (!grounded) F = 0;
       const share = M.drive === 'AWD' ? 0.68 : M.drive === 'FF' ? 0.6 : 0.55;
       const Fdmax = this.tracG * G * m * share * muDrv * (0.42 + 0.58 * sstep(0.5, 9, Math.abs(vl))) * (M.aero ? 1 + this.aeroK * spd * spd : 1);   // (the formula's wings press the driven wheels down too)
@@ -1300,7 +1347,8 @@ const Core = (function () {
       if (trk.hasElev) {
         if (this.air) {
           this.airT += dt; this.vy -= JUMP_G * dt; this.y += this.vy * dt;
-          if (this.y <= this.roadY) { this.impactVY = this.vy; if (this.vy < -11) applyDamage(this, (-this.vy - 11) * 0.01); this.y = this.roadY; this.vy = 0; this.air = 0; this.landT = clamp(-this.impactVY * 0.02 + 0.05, 0.05, 0.2); this.airT = 0; const sc = clamp(-this.impactVY * 0.016, 0, 0.13); this.vx *= (1 - sc); this.vz *= (1 - sc); }
+          if (this.y <= this.roadY) { const lv = M.landV || 11, lk = M.landK || 1;   // (the truck: a harder landing before it breaks, less speed lost)
+            this.impactVY = this.vy; if (this.vy < -lv) applyDamage(this, (-this.vy - lv) * 0.01); this.y = this.roadY; this.vy = 0; this.air = 0; this.landT = clamp(-this.impactVY * 0.02 + 0.05, 0.05, 0.2); this.airT = 0; const sc = clamp(-this.impactVY * 0.016 * lk, 0, 0.13 * lk); this.vx *= (1 - sc); this.vz *= (1 - sc); }
         } else { this.y = this.roadY; this.vy = this.gradeNow * vl; if (this.landT > 0) this.landT -= dt; }
       } else { this.y = 0; }
       this.axF += (((Fx - Fgrav) / m) - this.axF) * Math.min(1, dt * 7);
@@ -2478,7 +2526,7 @@ const Core = (function () {
     _runOver(p, vx, vz, f) {
       const R = this.R; this._leaveZebra(p); if (p.grp) this._ungroup(p);
       p.st = 'hit'; p.t = 0; p.vx = vx * f + (R() - 0.5) * 0.6; p.vz = vz * f + (R() - 0.5) * 0.6; p.vy = 0; p.roll = 0; p.spin = 0; p.fear = 0; p.dive = 0;
-      p.h = Math.atan2(vz, vx) + (R() - 0.5) * 1.2; p.y = this.T.hy ? (p.q ? this.T.yAt(p.q) : this.T.elevAt(p.s).y) : 0; p.bl = 0.1; p.bt = 0; p.blM = 0.9 + 0.5 * R(); p.wid = 1.2; p.len = 1.8;
+      p.h = Math.atan2(vz, vx) + (R() - 0.5) * 1.2; p.y = this.T.hy ? this.T.yAt(this._track(p)) : 0; p.bl = 0.1; p.bt = 0; p.blM = 0.9 + 0.5 * R(); p.wid = 1.2; p.len = 1.8;
     }
     _nudge(p, ch, sh, lx, lz, hl, hw) {   // pushed out of the outline of something slow, the short way
       const ox = hl - Math.abs(lx), oz = hw - Math.abs(lz);
@@ -4004,7 +4052,7 @@ const Core = (function () {
      --------------------------------------------------------------------- */
   const CAREER = {
     start: 10000, car0: 'pico',
-    car: { pico: 0, p206: 20000, kaze: 30000, strega: 45000, vortex: 50000, rally: 60000, formula: 90000 },
+    car: { pico: 0, p206: 20000, kaze: 30000, muscle: 40000, strega: 45000, vortex: 50000, truck: 55000, rally: 60000, ev: 75000, formula: 90000, lm: 110000 },
     upg: [0, 4000, 7000, 12000],
     place: [6000, 4500, 3500, 2800, 2300, 1900, 1600, 1300, 1100, 900, 700, 500, 300],
     diff: [0.7, 1, 1.4, 1.8], champ: [20000, 10000, 6000], medal: { gold: 5000, silver: 3000, bronze: 1500 }, pb: 2000, finishTT: 500, fastest: 500, pole: 1000,
