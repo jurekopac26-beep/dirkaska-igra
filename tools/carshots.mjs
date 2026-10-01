@@ -105,7 +105,7 @@ try {
           for (const c of R.cars) { c.vx = 0; c.vz = 0; c.w = 0; } P.inThr = 0; P.inBrk = 1; P.inSteer = 0; R.step(1 / 120); } };
         // a close look from a corner (o: the corner, front / back and left / right): the other cars hidden
         const look = (fs, rs) => { const ch = Math.cos(P.h), sh = Math.sin(P.h), at = (f, r, y) => [P.x + ch * f - sh * r, (P.y || 0) + y, P.z + sh * f + ch * r];
-          const cp = at(fs * (hl + 3.2), rs * (hw + 3.2), 1.9 + P.m.len * 0.12), ct = at(fs * 0.2, 0, 0.55), hid = R.cars.filter(c => c !== P).map(c => Render.viewOf(c)).filter(v => v && v.grp.visible);
+          const k = Math.max(0.55, Math.min(1, P.m.len / 4)), cp = at(fs * (hl + 3.2 * k), rs * (hw + 3.2 * k), (1.9 + P.m.len * 0.12) * k), ct = at(fs * 0.2, 0, 0.55 * k), hid = R.cars.filter(c => c !== P).map(c => Render.viewOf(c)).filter(v => v && v.grp.visible);   // (a small vehicle from closer)
           for (const v of hid) v.grp.visible = false;
           Render.setShot({ px: cp[0], py: cp[1], pz: cp[2], tx: ct[0], ty: ct[1], tz: ct[2], fov: 38 + 4 * (P.m.len > 5 ? 1 : 0), fogD: 90, near: 0.3 });
           const u = Render.snapshot(P, 'chase', 960).toDataURL('image/png'); Render.setShot(null); for (const v of hid) v.grp.visible = true; return u; };

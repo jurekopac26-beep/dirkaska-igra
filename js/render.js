@@ -1811,7 +1811,8 @@ const Render = (function () {
     return { body: { len: H.len, wid: H.wid, secs, roofY: my(H.roofY), wz: 0.07 }, wheels: { style: 'std', arch: false }, build(K) {
       K.regions('none');
       const P = K.paint, D = [0.13, 0.13, 0.14];
-      K.loft(secs, (k, e, kind) => e === 0 || e === 8 ? K.shade(P, 0.62) : (kind !== 'b' && (e === 2 || e === 6)) || ((kind === 'gf' || kind === 'gr') && e >= 3 && e <= 5) ? K.GLASS : P, { arches: false });
+      K.loft(secs, (k, e, kind) => e === 0 || e === 8 ? K.shade(P, 0.62) : (kind !== 'b' && (e === 2 || e === 6)) || ((kind === 'gf' || kind === 'gr') && e >= 3 && e <= 5) ? K.GLASS : P,
+        { arches: false, caps: { front: { low: 'body', high: 'body' }, rear: { low: 'body', high: 'body' } } });   // (the shell all body: each part is its box alone, its middle where the core throws its piece from)
       const S = K.secs(secs), F = S[S.length - 1], R = S[0], hl = K.M.len / 2 / K.sx, hw = K.M.wid / 2 / K.sz;
       for (const sd of [-1, 1]) { K.headLamp(F.x + 0.01, (F.yb + F.ybelt) / 2 + 0.05, sd * F.w * 0.6, 0.07, { ring: null }); K.tailLamp(R.x - 0.01, R.ybelt - 0.12, sd * R.w * 0.6, 0.3, 0.12); }
       const PT = Core.partsOf(K.M);
