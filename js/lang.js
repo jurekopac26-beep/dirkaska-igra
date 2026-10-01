@@ -215,6 +215,20 @@
     'Vroče zavore slabše zavirajo: zaviraj prej in nežneje, na ravnini se ohladijo.': 'Hot brakes stop the car less well: brake earlier and more gently, they cool down on the straights.',
     'Vroč motor ima manj moči: popusti plin, v hitri vožnji se ohladi.': 'A hot engine has less power: ease off the throttle, it cools down at speed.',
     'Okvare': 'Failures', 'Okvare (predrta guma, vroče zavore in motor)': 'Failures (punctures, hot brakes and engine)',
+    // the team radio and the strategy
+    'Radio ekipe (razlike, postanki, vreme)': 'Team radio (gaps, pit stops, weather)', 'Gume za postanek': 'Tyres for the stop', 'Gume za postanek: {0}': 'Tyres for the stop: {0}',
+    'Gorivo ne bo zdržalo do cilja.': 'The fuel will not last to the finish.', 'Gume ne bodo zdržale do cilja.': 'The tyres will not last to the finish.',
+    'Proga je mokra, potrebuješ dežne gume.': 'The track is wet, you need rain tyres.', 'Idealna linija je suha, potrebuješ suhe gume.': 'The racing line is dry, you need slicks.',
+    'Imaš predrto gumo.': 'You have a puncture.', 'Avto je močno poškodovan.': 'The car is badly damaged.', 'Boksi v tem krogu!': 'Box this lap!', 'BOKSI V TEM KROGU': 'BOX THIS LAP',
+    'Po postanku boš {0}., {1} bo {2} s pred tabo.': 'After the stop you will be P{0}, {1} {2} s ahead of you.', 'Po postanku boš še vedno prvi.': 'After the stop you will still be leading.',
+    'Dobiš {0} gume.': 'You get {0} tyres.', 'mehke': 'soft', 'srednje': 'medium', 'trde': 'hard',
+    'Vodiš, {0} je {1} s za tabo.': 'You are leading, {0} is {1} s behind you.', 'Vodiš.': 'You are leading.',
+    '{0} je {1} s pred tabo, {2} {3} s za tabo.': '{0} is {1} s ahead of you, {2} {3} s behind you.', '{0} je {1} s pred tabo.': '{0} is {1} s ahead of you.',
+    'Na radarju je dež: začel bo čez približno minuto.': 'Rain on the radar: it will start in about a minute.', 'Na radarju se dež umika: kmalu bo ponehal.': 'The rain is moving away on the radar: it will stop soon.',
+    'Varnostni avto! Pridi zdaj v bokse, postanek stane le okoli {0} s.': 'Safety car! Box now, the stop costs only about {0} s.',
+    'Dober postanek.': 'Good stop.', 'Si {0}., {1} je {2} s pred tabo.': 'You are P{0}, {1} is {2} s ahead of you.', 'Si {0}.': 'You are P{0}.',
+    'Postanek bo v {0}. krogu.': 'The stop will be on lap {0}.', 'Okno za postanek: od {0}. do {1}. kroga.': 'Pit window: laps {0} to {1}.', 'Zadnji krog!': 'Last lap!',
+    'Gorivo za {0} kroga.': 'Fuel for {0} laps.', 'Gume: {0} %.': 'Tyres: {0} %.', 'Postanek zdaj stane okoli {0} s, po njem bi bil {1}.': 'A stop now costs about {0} s, after it you would be P{1}.',
     ' · POPRAVLJENO': ' · REPAIRED', 'POPRAVLJENO!': 'REPAIRED!', 'še {0} km': '{0} km to go', 'OVINEK {0}/{1}': 'TURN {0}/{1}', 'LETEČI KROG': 'FLYING LAP', 'LETEČI KROG!': 'FLYING LAP!',
     'KROG {0}/{1}': 'LAP {0}/{1}', 'KROG {0}: {1}': 'LAP {0}: {1}', '  NAJHITREJŠI': '  FASTEST', 'ZADNJI KROG!': 'FINAL LAP!', 'NAPAČNA SMER!': 'WRONG WAY!', 'POPRAVILO {0} %': 'REPAIR {0} %',
     'PREBITE GUME: {0}': 'FLAT TYRES: {0}', 'TEKMEC {0} s PRED TABO': 'RIVAL {0} s AHEAD', 'TEKMEC {0} s ZA TABO': 'RIVAL {0} s BEHIND',
@@ -259,7 +273,7 @@
     'Prvi ovinek': 'First Curve', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under the Bridge', 'Lasnica': 'Hairpin', 'Zadnja ravnina': 'Back Straight', 'Zadnji ovinek': 'Final Corner',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
-  const SAME = new Set(['APEX', 'RACING', 'APEX RACING', 'TV', 'DRS', 'KM/H', 'Circuit Superstars', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English']);
+  const SAME = new Set(['APEX', 'RACING', 'APEX RACING', 'TV', 'DRS', 'KM/H', 'Circuit Superstars', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO']);
 
   const has = Object.prototype.hasOwnProperty;
   let cur = 'sl', REV = null;   // (REV: English -> Slovenian, for the page: a text the game wrote in English goes back)

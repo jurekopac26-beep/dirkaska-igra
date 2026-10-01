@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
-<link rel="stylesheet" href="css/style.css?v=18a8cd9c">
+<link rel="stylesheet" href="css/style.css?v=2a15409e">
 </head>
 <body>
 <div id="app">
@@ -71,6 +71,7 @@
     <div id="pk-note" aria-hidden="true"><i><svg viewBox="0 0 64 64"><path id="pk-note-path" d="" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></i><b></b><small></small></div><!-- Pikes Peak: the corner warnings -->
     <div id="h-lights"><i></i><i></i><i></i><i></i><i></i></div>
     <div id="h-msg"></div>
+    <div id="h-radio" aria-live="polite"><b>RADIO</b><span></span></div><!-- the team radio: the engineer -->
     <div id="h-school"></div><!-- the driving school: the lesson under way -->
     <div id="podium-cap"></div>
     <div id="h-ttsp"></div>
@@ -98,6 +99,7 @@
     <div id="tilt-ind"><div class="ti-bar"></div><span>NAGIB</span></div>
   </div>
   <button id="btn-cam" class="off" aria-label="Kamera"><svg viewBox="0 0 24 24"><path d="M4 8.5h3l1.6-2.2h6.8L17 8.5h3a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.4" r="3.4" class="lens"/></svg></button>
+  <button id="btn-tyre" class="off" aria-label="Gume za postanek"><i></i><span></span></button>
   <button id="btn-pause" class="off" aria-label="Pavza"><svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
   <button id="btn-rescue" class="off">&#8634; Na progo</button>
 
@@ -220,6 +222,7 @@
         <div class="row"><span class="rlbl">Sovoznik na reliju (angleščina)</span><div class="seg" data-set="codrv"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Poškodbe avtov</span><div class="seg" data-set="damage"><button data-v="0">Izklop</button><button data-v="1">Samo videz</button><button data-v="2">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Okvare (predrta guma, vroče zavore in motor)</span><div class="seg" data-set="faults"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row"><span class="rlbl">Radio ekipe (razlike, postanki, vreme)</span><div class="seg" data-set="radio"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Grafika</span><div class="seg" data-set="quality"><button data-v="retro">Retro</button><button data-v="normal">Normalno</button><button data-v="high">Visoko</button></div></div>
         <div class="row"><span class="rlbl">Sence</span><div class="seg" data-set="shadows"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Varčevanje z baterijo</span><div class="seg" data-set="saver"><button data-v="off">Izklop</button><button data-v="auto">Samodejno</button><button data-v="on">Vklop</button></div></div>
@@ -261,6 +264,7 @@
         <button class="btn" data-act="to-settings">Nastavitve</button>
         <button class="btn ghost" data-act="to-title">Glavni meni</button>
       </div>
+      <p id="pause-strat" class="pause-strat off"></p>
       <div class="row pit-row off" id="pit-row" title="Gume za suho pri naslednjem postanku (za dež jih mehaniki dajo sami)"><span class="rlbl">Gume v boksih</span><div class="seg" data-set="pitCmp"><button data-v="auto">Samodejno</button><button data-v="S">Mehke</button><button data-v="M">Srednje</button><button data-v="H">Trde</button></div></div>
     </div>
   </section>
@@ -378,17 +382,17 @@
 <script src="js/tracks/suzuka.js?v=8aebe76c"></script>
 <script src="js/tracks/pikesg.js?v=9d05a281"></script>
 <script src="js/tracks/caracoles.js?v=84009a26"></script>
-<script src="js/lang.js?v=6af77c22"></script>
-<script src="js/core.js?v=9f287378"></script>
+<script src="js/lang.js?v=4bfa5b6c"></script>
+<script src="js/core.js?v=a6dd2667"></script>
 <script src="js/tex.js?v=cd783b5d"></script>
 <script src="js/world.js?v=43e47004"></script>
 <script src="js/data/p206.js?v=0016824f"></script>
 <script src="js/render.js?v=7ebb5854"></script>
-<script src="js/sfx.js?v=8bfda9e9"></script>
-<script src="js/input.js?v=d322f5e4"></script>
-<script src="js/comm.js?v=40a97f6a"></script>
+<script src="js/sfx.js?v=cc97e5e8"></script>
+<script src="js/input.js?v=f440bacb"></script>
+<script src="js/comm.js?v=142f02b5"></script>
 <script src="js/vendor/peerjs.min.js?v=76b403e4"></script>
 <script src="js/net.js?v=ba863f32"></script>
-<script src="js/game.js?v=3b106026"></script>
+<script src="js/game.js?v=f451b71c"></script>
 </body>
 </html>

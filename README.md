@@ -157,6 +157,21 @@ Na dirki s tekmeci (ne v kronometru in ne v kvalifikacijah) se avto lahko pokvar
 
 Ob vsaki okvari se prikaže sporočilo (**PREDRTA GUMA!**, **ZAVORE SE PREGREVAJO**, **MOTOR SE PREGREVA**), komentator jo omeni, spodaj pa piše, kaj storiti. Tekmeci s predrto gumo vozijo previdneje in zapeljejo v bokse po novo (kjer boksov ni, previdno pripeljejo do cilja). V dirki s prijatelji velja nastavitev gostitelja.
 
+## Radio ekipe in strategija
+
+Na dirki s tekmeci (ne v kronometru, kvalifikacijah, šoli vožnje in dirki s prijatelji) se oglaša inženir ekipe. Njegova sporočila se za nekaj sekund prikažejo v okvirčku **RADIO** na vrhu zaslona, z zvokom radijske zveze; ko je vklopljen komentator, jih tudi izgovori (v angleščini). Radio izklopiš v **Nastavitvah** (**Radio ekipe**).
+
+- **Razlike:** vsak krog na ciljni črti pove, koliko sekund je pred tabo avto spredaj in koliko za tabo avto zadaj. V zadnjem krogu doda **Zadnji krog!**
+- **Okno za postanek:** ko gorivo ali gume ne bodo zdržale do cilja, pove, v katerih krogih lahko zapelješ v bokse, da en postanek zadostuje.
+- **Boksi v tem krogu:** ko je postanek nujen, na sredini zaslona piše **BOKSI V TEM KROGU**. Nujen je, ko gorivo ne bi zdržalo do naslednjega uvoza v bokse, ko bi se gume obrabile, ko so gume napačne za mokroto proge, ob predrti gumi in ko je avto močno poškodovan. Inženir pove, na katero mesto te bo postavil postanek in katere gume dobiš. Pri tem upošteva, da morajo tudi tekmeci še na postanek.
+- **Vreme:** opozori minuto preden začne deževati in ko bo dež ponehal.
+- **Varnostni avto:** če te postanek tako ali tako čaka, svetuje, naj ga narediš zdaj, ko stane manj.
+- Po postanku pove, na katerem mestu si.
+
+V premoru je pod gumbi **strategija**: za koliko krogov imaš še goriva, koliko gum je še ostalo, koliko časa bi zdaj stal postanek in na katero mesto bi te postavil.
+
+**Gume za postanek med vožnjo:** na progah z boksi je pod gumbom za kamero okrogel gumb z gumo. Ko ga tapneš (ali pritisneš tipko **T**), izbereš gume za naslednji postanek: **A** (samodejno), **S** (mehke), **M** (srednje) ali **H** (trde). Rob gumba je v barvi zmesi. Izbira je ista kot **Gume v boksih** v premoru.
+
 ## Prvenstvo
 
 Na naslovnem zaslonu tapni **Prvenstvo** in izberi serijo dirk: **Domači pokal** (Jezero Ring, Ljubljana, Gorski reli, Riviera), **Superstars** (Bakreni gozd, Toskana, Gromski rt, Monako), **Legende** (Monako, Spa-Francorchamps, Red Bull Ring, Suzuka, Nordschleife) ali **Veliko prvenstvo** (vseh dvanajst krožnih prog). Dirke so enake kot sicer (12 tekmecev, tudi na Nordschleife, kjer jih je sicer 20; pred vsako dirko kvalifikacije, brez njih štart z 12. mesta; število krogov proge, vreme po nastavitvi), le da za mesto v cilju dobiš točke kot v formuli 1: 25, 18, 15, 12, 10, 8, 6, 4, 2 in 1 za prvih deset. Tekmeci so v vseh dirkah isti vozniki z istimi avti, zato med dirkami vodiš lestvico proti njim; pri enakem številu točk je pred tistim, ki ima več zmag (nato več drugih mest …).

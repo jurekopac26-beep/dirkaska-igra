@@ -91,6 +91,18 @@ const Comm = (() => {
     fuelLow: ['Running low on fuel! Box for fuel this lap.', 'The fuel light is on! Time to come in and fill up.', 'Not much fuel left in that tank, pit now!'],
     fuelOut: ['Oh no, out of fuel! Spluttering along on the last drops!', 'Dry tank! That car is limping back to the pits now.'],
     puncture: ['Puncture! That tyre is going down!', 'That knock has cut a tyre! A puncture!', 'A slow puncture, the car is pulling to one side now!'],
+    // the team's engineer on the radio (radio(): the co-driver's voice)
+    radioBox: ['Box, box, box this lap!', 'Box this lap, box this lap.', 'Box this lap, we are ready for you.'],
+    radioBoxWet: ['It is wet out there, box this lap for wets!', 'Box this lap for rain tyres!'],
+    radioBoxDry: ['The line is dry, box this lap for slicks.', 'Box this lap, slicks are ready.'],
+    radioBoxFix: ['Box this lap, we will fix the car.', 'Box this lap, box this lap, we have new parts ready.'],
+    radioBoxTyre: ['Puncture! Box this lap, we have a new tyre ready.', 'Box this lap for a new tyre!'],
+    radioWindow: ['Pit window opens on lap {from}.', 'We are planning the stop between laps {from} and {to}.'],
+    radioRain: ['Rain on the radar, about a minute away.', 'We expect rain in about a minute.'],
+    radioRainStop: ['The rain should stop soon.', 'The radar says the rain is moving away.'],
+    radioSC: ['Safety car! Box now, it is a cheap stop.', 'Safety car, safety car. Box this lap, the stop is cheap.'],
+    radioGood: ['Good stop. You are P{pos}.', 'Nice stop, P{pos} now.'],
+    radioLast: ['Last lap, bring it home!', 'Final lap, keep it clean.', 'Last lap, push now!'],
     brakesHot: ['The brakes are overheating! They will not stop the car as well now.', 'Smoking hot brakes! Brake a little earlier for a while.'],
     engineHot: ['The engine is running hot! Losing power now.', 'Temperature warning, that engine is overheating!'],
     fuelIn: ['Fuel in, and back out onto the track!', 'Tank full again, off it goes!'],
@@ -269,6 +281,23 @@ const Comm = (() => {
     return item;
   }
 
+  // the team's engineer on the radio (game.js radioHUD): a line of LINES in the co-driver's voice, said at once (the commentator's line is
+  // cut off), else next in line for a few seconds
+  function radio(key, vars) {
+    if (!on || !speech || !synth) return null;
+    const pool = LINES[key]; if (!pool) return null;
+    let k = Math.floor(Math.random() * pool.length);
+    if (pool.length > 1 && k === lastPick[key]) k = (k + 1) % pool.length;
+    lastPick[key] = k;
+    const text = pool[k].replace(/\{(\w+)\}/g, (_, n) => (vars && vars[n] != null ? String(vars[n]) : ''));
+    const item = { key, text, prio: 3, t: now(), note: true, ttl: 4000 };
+    log.push(item); if (log.length > 200) log.shift();
+    if (!busy()) { speakNow(item); return item; }
+    if (cur && !cur.item.note) { cancelSpeech(); speakNow(item); return item; }
+    queue = item;
+    return item;
+  }
+
   // news from the world: the Pikes Peak TV helicopter shows up (World's dyn.pk.news: { key, n }, each said once)
   let heliSeen = null;
   function heliNews() {
@@ -307,7 +336,7 @@ const Comm = (() => {
   // what the commentator is doing: busy (speaking or in the pause after a line), the priority speaking now and waiting (-1 = none)
   function state() { const b = busy(); return { busy: b, prio: speaking && cur ? cur.prio : -1, queued: queue ? queue.prio : -1 }; }
 
-  return { say, note, update, stop, unlock, setEnabled, setSpeech, setNotes, ordinal, available, log, test, voiceInfo, setOnVoice, addLines, state };
+  return { say, note, radio, update, stop, unlock, setEnabled, setSpeech, setNotes, ordinal, available, log, test, voiceInfo, setOnVoice, addLines, state };
 })();
 if (typeof module !== 'undefined') module.exports = Comm;
 

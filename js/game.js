@@ -26,7 +26,7 @@
 
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
-  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.2, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 1, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, line: 0 };
+  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.2, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 1, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, line: 0 };
   let S = Object.assign({}, DEF);
   let records = {};
   try { const j = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (j) S = Object.assign(S, j); } catch (_) { }
@@ -341,6 +341,7 @@
     $('touch').classList.toggle('off', !(bg === 'race' && name === 'none' && phase !== 'finish' && phase !== 'done'));
     $('btn-pause').classList.toggle('off', !(bg === 'race' && inRace));
     $('btn-cam').classList.toggle('off', !(bg === 'race' && inRace)); if (inRace) camLabel();
+    tyreBtn();   // (the tyres for the next stop: in a race with compounds and pits)
     if (!inRace) $('btn-rescue').classList.add('off');
     if (inRace) requestAnimationFrame(() => Input.layout());
     updateOrientation();
@@ -412,7 +413,7 @@
       const d = Core.TRACKS.find(x => x.id === S.track), W = ['malo krila', 'srednje krilo', 'veliko krila'], G = ['kratke prestave', 'srednje prestave', 'dolge prestave'], U = setupOf(S.track);
       if (d) toast(tr('Nastavitev za {0}: {1}, {2}.', Lang.of(d, 'name'), tr(W[U.wing]), tr(G[U.gear])), 2400);
       return; }
-    const num = ['zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'codrv', 'damage', 'ghost', 'quali', 'tower', 'fuel', 'line', 'faults'];
+    const num = ['zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'codrv', 'damage', 'ghost', 'quali', 'tower', 'fuel', 'line', 'faults', 'radio'];
     S[key] = num.includes(key) ? +v : v;
     if (key === 'lang') Lang.set(S.lang);   // (before the settings apply: what they write is in the new language)
     if (key === 'shadows') { autoNoShadows = false; perf.pending = perf.restore = false; perf.keep = true; }   // the player's own choice wins for the rest of the visit
@@ -421,7 +422,7 @@
     if (key === 'line') Render.setLine(!!race && lineWant());
     save(); applySettings();
     if (key === 'lang') relang();
-    if (key === 'pitCmp' && race && race.player) race.player.pitCmp = S.pitCmp;   // (the slicks for the next pit stop)
+    if (key === 'pitCmp' && race && race.player) { race.player.pitCmp = S.pitCmp; tyreBtn(); }   // (the slicks for the next pit stop)
     if (key === 'weather' && demo) { demo.setRain(demoRain()); if (!race) Render.setStorm(S.weather === 'storm'); }   // (a race keeps its weather; the next one gets the new setting)
     if (key === 'season' || key === 'tod') Render.setAtmos({ season: S.season, tod: S.tod });   // (the season and the time of day: at once, also on the title demo)
     if ((key === 'weather' || key === 'mode' || key === 'length' || key === 'pkGhost' || key === 'pkRoad') && screen === 'track') buildTrackScreen();   // (a time trial's records in the rain are its own, and a race's: the cards show them)
@@ -1149,7 +1150,7 @@
     } else race = new Core.Race(track, Object.assign(mine, {   // time trial: alone on the start line, one run to the finish; qualifying: alone, one flying lap
       numAI: tt || quali ? 0 : nAI, playerGrid: tt || quali || chase ? 1 : duel ? 2 : Q ? Q.res.grid : PLAYER_GRID, aiOrder: Q ? Q.res.order : undefined, qualiBack: quali ? qual.back : 0,
       laps: tt || quali ? 1 : lapsOf(track.def), fuel: !tt && !quali && !!S.fuel, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali ? null : W.wx, tyres: !tt && !!track.def.pit, compounds: true, playerCmp: S.cmp, flags: !tt && !quali, winter: S.season === 'winter', champ: cr >= 0, tt,
-      traffic: duel, police: chase, chars: !tt && !quali, slip: !tt && !quali, faults: !tt && !quali && !!S.faults, rival: !tt && !quali && inCareer() && career.rival ? career.rival.k : undefined
+      traffic: duel, police: chase, chars: !tt && !quali, slip: !tt && !quali, faults: !tt && !quali && !!S.faults, radio: !tt && !quali && !school && !!S.radio, rival: !tt && !quali && inCareer() && career.rival ? career.rival.k : undefined
     }));
     if (race.player) race.player.pitCmp = S.pitCmp;
     $('pit-row').classList.toggle('off', !(race.player && race.player.ty && race.player.ty.c));   // (the slicks for a stop: a race with tyres)
@@ -1162,7 +1163,7 @@
     Input.setOptions({ autoGas: !!S.autoGas && !(school && school.L.id === 'start') });   // (the start lesson: the throttle is the player's own, the reaction counts)
     $('hud').classList.toggle('school', !!school); $('res-school').classList.add('off'); $('res-replay').classList.remove('off');
     if (race.endu) { Render.setTodK(0); enduK = 0; } else Render.setAtmos({ season: S.season, tod: S.tod }, true);
-    fuelTold = { low: false, out: false }; fltKey = ''; $('h-flt').className = ''; $('h-flt').innerHTML = '';
+    fuelTold = { low: false, out: false }; fltKey = ''; $('h-flt').className = ''; $('h-flt').innerHTML = ''; radioReset(); tyreBtn();
     Render.attachRace(race);
     Render.resetCam();
     adaptBreak();
@@ -1214,6 +1215,7 @@
     if (bg !== 'race' || paused || phase === 'done') return;
     paused = true; Sfx.setRunning(false); Input.reset(); Comm.stop();
     camLabel(); $('pause-photo').classList.toggle('off', !!(mp && mp.race));   // (online the race goes on: no photos)
+    stratInfo();
     showScreen('pause');
     adaptBreak();
   }
@@ -2055,6 +2057,101 @@
     else if (e === 'brakes') { showMsg(tr('ZAVORE SE PREGREVAJO'), 'warn', 2.2); toast(tr('Vroče zavore slabše zavirajo: zaviraj prej in nežneje, na ravnini se ohladijo.'), 4200); Comm.say('brakesHot', null, 3); }
     else if (e === 'engine') { showMsg(tr('MOTOR SE PREGREVA'), 'warn', 2.2); toast(tr('Vroč motor ima manj moči: popusti plin, v hitri vožnji se ohladi.'), 4200); Comm.say('engineHot', null, 3); }
   }
+  /* ---------------- the team radio (Nastavitve · Radio ekipe; race.mk: Core's Race.gap, pitLoss, plan) ---------------- */
+  // the engineer: each lap the gaps to the cars ahead and behind; when a stop is needed (fuel, worn tyres, the wrong ones for the weather,
+  // a cut one, heavy damage) the window for it, and on the lap it must be made "box this lap" with where the stop puts the player; rain on
+  // the radar a minute before it comes, and its end; behind the safety car a cheap stop; after the stop the place. A box at the top of the
+  // HUD with a radio's click, one message at a time (an urgent one first); the calls also in the engineer's voice (with the commentary on)
+  let rd = null;
+  const fmtS = (g) => Lang.dec(Math.abs(g).toFixed(1));
+  const BOX_V = { fuel: 'radioBox', tyres: 'radioBox', wet: 'radioBoxWet', dry: 'radioBoxDry', tyre: 'radioBoxTyre', damage: 'radioBoxFix' };
+  const NEED_TXT = { fuel: 'Gorivo ne bo zdržalo do cilja.', tyres: 'Gume ne bodo zdržale do cilja.', wet: 'Proga je mokra, potrebuješ dežne gume.', dry: 'Idealna linija je suha, potrebuješ suhe gume.', tyre: 'Imaš predrto gumo.', damage: 'Avto je močno poškodovan.' };
+  const CMP_WORD = { S: 'mehke', M: 'srednje', H: 'trde' };
+  function radioReset() { rd = { lap: 0, q: [], cur: null, t: 0, win: '', box: -1, urg: {}, rain: false, sc: false, pit: false, log: [] }; $('h-radio').classList.remove('on'); }
+  function radioSay(text, prio, voice, vars) {
+    if (!rd || !text) return;
+    const m = { text, prio, voice, vars };
+    rd.log.push(text); if (rd.log.length > 40) rd.log.shift();   // (the tests read what was said)
+    if (rd.cur && prio >= 3 && rd.cur.prio < 3) { rd.q.unshift(m); rd.t = 0; return; }   // (urgent: now)
+    rd.q.push(m); if (rd.q.length > 2) { rd.q.sort((a, b) => b.prio - a.prio); rd.q.length = 2; }
+  }
+  function radioShow(dt) {
+    const el = $('h-radio');
+    if (rd.cur && (rd.t -= dt) > 0) return;
+    if (rd.cur) { rd.cur = null; el.classList.remove('on'); }
+    const m = rd.q.shift(); if (!m) return;
+    rd.cur = m; rd.t = Math.max(4, 1.5 + m.text.length * 0.055);
+    el.lastElementChild.textContent = m.text; el.classList.add('on');
+    Sfx.radio(); if (m.voice) Comm.radio(m.voice, m.vars);
+  }
+  function afterText(pl) { return pl.ahead ? tr('Po postanku boš {0}., {1} bo {2} s pred tabo.', pl.pos, pl.ahead.name, fmtS(pl.gapA)) : tr('Po postanku boš še vedno prvi.'); }
+  function boxText(pl, why) {
+    const P = race.player, c = why !== 'wet' && P.ty && P.ty.c && (P.ty.k === 'dry' || why === 'dry') ? (Core.TYRE_CMP[S.pitCmp] ? S.pitCmp : Core.cmpFor(race.laps * track.len - P.dist)) : null;
+    return tr(NEED_TXT[why]) + ' ' + tr('Boksi v tem krogu!') + ' ' + afterText(pl) + (c ? ' ' + tr('Dobiš {0} gume.', tr(CMP_WORD[c])) : '');
+  }
+  function gapsText(P) {
+    const O = race.order, i = O.indexOf(P), A = i > 0 ? O[i - 1] : null, B = i >= 0 && i < O.length - 1 ? O[i + 1] : null;
+    const ga = A && !A.finished ? race.gap(A, P) : null, gb = B && !B.finished ? race.gap(P, B) : null;
+    if (!A) return gb != null ? tr('Vodiš, {0} je {1} s za tabo.', B.name, fmtS(gb)) : tr('Vodiš.');
+    if (ga == null) return '';
+    return gb != null ? tr('{0} je {1} s pred tabo, {2} {3} s za tabo.', A.name, fmtS(ga), B.name, fmtS(gb)) : tr('{0} je {1} s pred tabo.', A.name, fmtS(ga));
+  }
+  function radioHUD(dt, P) {
+    if (!rd || !race.mk || !S.radio) return;
+    radioShow(dt);
+    if (phase !== 'racing' || P.finished) return;
+    const pl = race.plan(P), W = race.wst, wx = W && W.wx;
+    // the weather on the radar: the rain a minute before it comes, or its end
+    if (wx && !rd.rain && Math.abs(wx.r1 - wx.r0) > 0.2 && race.time > wx.at - 60 && race.time < wx.at) {
+      rd.rain = true; const wet = wx.r1 > wx.r0;
+      radioSay(tr(wet ? 'Na radarju je dež: začel bo čez približno minuto.' : 'Na radarju se dež umika: kmalu bo ponehal.'), 2, wet ? 'radioRain' : 'radioRainStop');
+    }
+    // the safety car out with a stop due anyway: a cheap one now
+    const SC = race.fl && race.fl.sc;
+    if (pl && SC && SC.state === 'out' && !rd.sc && pl.from != null && pl.from <= pl.cur + 1 && !P.inPit) { rd.sc = true; radioSay(tr('Varnostni avto! Pridi zdaj v bokse, postanek stane le okoli {0} s.', Math.round(pl.loss)), 3, 'radioSC'); }
+    // an urgent stop (the wrong tyres, a cut one, heavy damage): at once, not at the line
+    if (pl && pl.box && !P.inPit && rd.box !== P.lap) { const now = pl.need.find(k => k !== 'fuel' && k !== 'tyres');   // (each told twice at most: once, and once more a lap on)
+      if (now && (rd.urg[now] || 0) < 2) { rd.urg[now] = (rd.urg[now] || 0) + 1; rd.box = P.lap; showMsg(tr('BOKSI V TEM KROGU'), 'gold', 2); radioSay(boxText(pl, now), 3, BOX_V[now]); } }
+    // out of the pit lane: the place now
+    if (P.inPit) rd.pit = true;
+    else if (rd.pit) { rd.pit = false; const O = race.order, i = O.indexOf(P), A = i > 0 ? O[i - 1] : null, ga = A ? race.gap(A, P) : null;
+      radioSay(tr('Dober postanek.') + ' ' + (A ? (ga != null ? tr('Si {0}., {1} je {2} s pred tabo.', P.pos, A.name, fmtS(ga)) : tr('Si {0}.', P.pos)) : tr('Vodiš.')), 2, 'radioGood', { pos: P.pos }); }
+    // at the line: once a lap (from the second)
+    if (P.lap !== rd.lap) { const first = !rd.lap; rd.lap = P.lap; if (!first && P.lap >= 2 && P.lap <= race.laps) radioLap(P, pl); }
+  }
+  function radioLap(P, pl) {
+    if (P.inPit) return;   // (over the line in the pit lane: on the way out)
+    if (pl && pl.box && rd.box !== P.lap && !P.inPit && (pl.need[0] === 'fuel' || pl.need[0] === 'tyres' || (rd.urg[pl.need[0]] || 0) < 2)) { rd.box = P.lap; rd.urg[pl.need[0]] = (rd.urg[pl.need[0]] || 0) + 1; showMsg(tr('BOKSI V TEM KROGU'), 'gold', 2); radioSay(boxText(pl, pl.need[0]), 3, BOX_V[pl.need[0]]); return; }
+    if (pl && pl.from != null) { const key = pl.need.join() + ':' + pl.from + '-' + pl.to; if (key !== rd.win) { rd.win = key;
+      radioSay(tr(NEED_TXT[pl.need[0]]) + ' ' + (pl.from === pl.to ? tr('Postanek bo v {0}. krogu.', pl.from) : tr('Okno za postanek: od {0}. do {1}. kroga.', pl.from, pl.to)), 2, 'radioWindow', { from: pl.from, to: pl.to }); return; } }
+    const last = P.lap === race.laps, g = gapsText(P);
+    if (last) radioSay(tr('Zadnji krog!') + (g ? ' ' + g : ''), 2, 'radioLast'); else radioSay(g, 1);
+  }
+  // the tyres for the next stop, chosen while driving (the tyre button under the camera's, or the T key): Samodejno, Mehke, Srednje, Trde
+  // in turn (the same as the pause menu's Gume v boksih)
+  const PIT_CMPS = ['auto', 'S', 'M', 'H'], PIT_CMP_NAME = { auto: 'Samodejno', S: 'Mehke', M: 'Srednje', H: 'Trde' };
+  const tyreBtnOn = () => !!(race && race.player && race.player.ty && race.player.ty.c && track && track.def.pit && !race.player.net);
+  function tyreBtn() {
+    const b = $('btn-tyre'), on = tyreBtnOn() && bg === 'race' && screen === 'none';
+    b.classList.toggle('off', !on); b.dataset.c = S.pitCmp; b.lastElementChild.textContent = S.pitCmp === 'auto' ? 'A' : S.pitCmp;
+    b.setAttribute('aria-label', tr('Gume za postanek: {0}', tr(PIT_CMP_NAME[S.pitCmp] || 'Samodejno')));
+  }
+  function pitCmpNext() {
+    if (!tyreBtnOn() || screen !== 'none') return;
+    S.pitCmp = PIT_CMPS[(PIT_CMPS.indexOf(S.pitCmp) + 1) % PIT_CMPS.length]; save(); race.player.pitCmp = S.pitCmp; refreshSegs(); tyreBtn();
+    Sfx.click(); toast(tr('Gume za postanek: {0}', tr(PIT_CMP_NAME[S.pitCmp])), 1400);
+  }
+  // the pause menu: the strategy as it stands (fuel, tyres, what a stop now costs and where it would put the player, the window)
+  function stratInfo() {
+    const el = $('pause-strat'), P = race && race.player, pl = P && race.mk && phase === 'racing' && !P.finished ? race.plan(P) : null;
+    if (!pl) { el.classList.add('off'); el.textContent = ''; return; }
+    const t = [];
+    if (pl.fuelLaps != null) t.push(tr('Gorivo za {0} kroga.', Lang.dec(pl.fuelLaps.toFixed(1))));
+    if (P.ty && P.ty.c && P.ty.k === 'dry') t.push(tr('Gume: {0} %.', Math.round((1 - P.ty.wear) * 100)));
+    t.push(tr('Postanek zdaj stane okoli {0} s, po njem bi bil {1}.', Math.round(pl.loss), pl.pos));
+    if (pl.from != null) t.push(pl.from === pl.to ? tr('Postanek bo v {0}. krogu.', pl.from) : tr('Okno za postanek: od {0}. do {1}. kroga.', pl.from, pl.to));
+    el.textContent = t.join(' '); el.classList.remove('off');
+  }
   // an endurance race: the time of day with the leader's progress, from the afternoon (0) to the night (1, at about nine tenths of the race):
   // the light blended, the lamps coming on; the evening and the night told
   let enduK = 0;
@@ -2467,7 +2564,7 @@
       const best = P.lapTimes.length ? Math.min(...P.lapTimes) : NaN;
       setText('h-bestv', fmt(best, true));
     }
-    updateDamageHUD(P); tyreHUD(P); flagHUD(P); twHUD(dt); fuelHUD(P); fltHUD(P); enduStep(); if (school) schoolHUD();
+    updateDamageHUD(P); tyreHUD(P); flagHUD(P); twHUD(dt); fuelHUD(P); fltHUD(P); radioHUD(dt, P); enduStep(); if (school) schoolHUD();
     if (!race.timeTrial) secHUD(P);
     if (race.drsLast) { const st = P.drs ? 'open' : P.drsA ? 'arm' : ''; if ($('h-drs').className !== st) $('h-drs').className = st; }
     if (race.slip) { const tw = P.tow || 0, on = phase === 'racing' && !P.finished && (towOn ? tw > 0.12 : tw > 0.3); if (on !== towOn) { towOn = on; $('h-tow').classList.toggle('on', on); } }   // the slipstream: lit in the wake of a car ahead
@@ -3334,6 +3431,7 @@
     }
     $('btn-pause').addEventListener('click', (e) => { e.preventDefault(); pause(); });
     $('btn-cam').addEventListener('click', (e) => { e.preventDefault(); Sfx.click(); cycleCam(); });
+    $('btn-tyre').addEventListener('click', (e) => { e.preventDefault(); pitCmpNext(); });
     { const pd = $('ph-pad'), o = { passive: false };   // the photo mode: a drag round the car, two fingers or the wheel for the distance
       for (const t of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) pd.addEventListener(t, (e) => { e.preventDefault(); photoPtr(e); }, o);
       pd.addEventListener('wheel', (e) => { e.preventDefault(); if (photo) { photo.dist = Core.clamp(photo.dist * Math.exp(e.deltaY * 0.0012), 2.5, 60); photoPose(); } }, o);
@@ -3372,6 +3470,7 @@
       Render.buildWorld(track, S.quality === 'retro' ? 0.8 : 1);
       Input.init($('touch'), () => { if (screen === 'pause') resume(); else if (screen === 'none') pause(); });
       Input.onCam = () => { if (bg === 'race' && !replay && (screen === 'none' || screen === 'pause')) cycleCam(); };   // (C on the keyboard)
+      Input.onTyre = () => { if (bg === 'race' && !replay) pitCmpNext(); };   // (T on the keyboard: the tyres for the next stop)
       Render.onThunder = (delay, vol) => Sfx.thunder(delay, vol);   // (a thunderstorm: the thunder after each lightning)
       Render.setStorm(S.weather === 'storm');
       Input.onPad = () => toast(tr('Igralni plošček je povezan: leva palica krmili, RT plin, LT zavora, B drift, Start pavza. V menijih izbiraš s palico in A, B je nazaj.'), 5200);
@@ -3394,7 +3493,7 @@
         get net() { if (!mp) return null; const R = mp.race, F = R && [...R.cars.values()][0];   // (theirs, left, got: the first of the others)
           return { role: mp.role, code: mp.code, open: Net.open, synced: Net.synced, peer: mp.peer, me: mp.me, players: mp.players.map(p => ({ id: p.id, name: p.name, car: p.car, in: p.in !== false })), track: mp.track, laps: mp.laps,
             race: R && { at: R.at, goAt: R.goAt, mine: R.mine, theirs: F ? F.fin : null, left: F ? F.left : false, got: F ? F.buf.length : 0, fins: Object.fromEntries([...R.cars].map(([k, C]) => [k, C.fin])), grid: R.grid, frameT: R.frameT, startT: R.startT } }; },
-        now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get replay() { return replay && { t: replay.t, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; },
+        now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, get radio() { return rd && { log: rd.log.slice(), cur: rd.cur && rd.cur.text }; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get replay() { return replay && { t: replay.t, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; },
         sim(sec, auto, steer) { pkFlySkip(); /* (a simulated race starts without Pikes Peak's flyover) */ const inp = { steer: steer || 0, thr: 1, brk: 0, hand: 0, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; } if (phase !== 'done') updatePhase(STEP, inp); stepRace(STEP, inp); } },
         drive(sec, f) { pkFlySkip(); const inp = { steer: 0, thr: 0, brk: 0, hand: 0, digital: true }; for (let t = 0; t < sec && race && phase !== 'done'; t += STEP) { Core.aiControl(race.player, race, STEP); const o = f(race.player, school && school.live, phase) || {}; inp.steer = race.player.inSteer; inp.thr = o.thr || 0; inp.brk = o.brk || 0; updatePhase(STEP, inp); stepRace(STEP, inp); } },   // (tests: the autopilot's steering, the throttle and the brake given)
         get school() { return school && { id: school.L.id, live: school.live, done: !!school.done }; }, schoolMedals: (id) => { const L = SCHOOL.find(x => x.id === id); return L && { m: schoolMedals(L), ref: schoolRef(L), rec: schoolRec(L) }; } };

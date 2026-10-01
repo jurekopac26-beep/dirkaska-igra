@@ -765,6 +765,15 @@ const Sfx = (function () {
     o.connect(f); f.connect(g); g.connect(master); o.start(now); o.stop(now + dur + 0.02);
   }
   function click() { beep(1400, 0.04, 0.06); }
+  // the team radio: the squelch of the radio opening (a short burst of band-passed noise) and its beep
+  function radio() {
+    if (!ctx || ctx.state !== 'running') return;
+    const now = ctx.currentTime, src = ctx.createBufferSource(); src.buffer = noiseBuf;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 1.2;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.1, now + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+    src.connect(bp); bp.connect(g); g.connect(master); src.start(now, Math.random()); src.stop(now + 0.18);
+    beep(1250, 0.07, 0.05);
+  }
   function shiftPop() { shift(true); }
   // a gear change of the player's car: the gearbox's clack (a racing sequential's bang for the formula and the rally car), the turbo's
   // flutter on the way up, a blip of the throttle with a pop on the way down
@@ -827,7 +836,7 @@ const Sfx = (function () {
   // (tests: the engines as they sound now)
   const engines = () => ctx && eng ? { player: { kind: eng.kind, f: +eng.o.frequency.value.toFixed(1), boost: +eng.boost.toFixed(2), pops: eng.pops, bov: eng.bov || 0 }, shifts,
     ai: ai.map(v => ({ kind: v.kind, car: v.car ? v.car.name : null, dop: +v.dop.toFixed(3), gain: +v.out.gain.value.toFixed(4) })) } : null;
-  const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, shiftPop, shift, engines, thunder, get thunders() { return thunders; }, knock, wrench, silence, levels, siren, carHorn, thud, pop, get ready() { return !!ctx && ctx.state === 'running'; } };
+  const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, radio, shiftPop, shift, engines, thunder, get thunders() { return thunders; }, knock, wrench, silence, levels, siren, carHorn, thud, pop, get ready() { return !!ctx && ctx.state === 'running'; } };
   window.Sfx = api;
   return api;
 })();

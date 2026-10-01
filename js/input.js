@@ -41,6 +41,7 @@ const Input = (function () {
       keys[e.code] = true;
       if ((e.code === 'Escape' || e.code === 'KeyP') && onPause) onPause();
       if (e.code === 'KeyC' && onCam && !(e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName))) onCam();   // (the camera; not while typing a name)
+      if (e.code === 'KeyT' && onTyre && !(e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName))) onTyre();   // (the tyres for the next stop)
     });
     window.addEventListener('keyup', e => { keys[e.code] = false; });
     window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; ptrs.clear(); wheel.pid = null; });
@@ -159,7 +160,7 @@ const Input = (function () {
      From its first press the pad is the controller (the on-screen controls hide) until the screen is touched again. */
   const PAD_DZ = 0.15, PAD_B = { a: 0, b: 1, x: 2, y: 3, lb: 4, rb: 5, back: 8, start: 9 };
   const pad = { on: false, name: '', steer: 0, dsteer: 0, thr: 0, brk: 0, hand: 0, rx: 0, ry: 0, rt: 0, lt: 0, prev: {}, hold: {}, pressed: [] };
-  let onPad = null, onCam = null;
+  let onPad = null, onCam = null, onTyre = null;
   function padAxis(v) { const a = Math.abs(v || 0); if (!(a > PAD_DZ)) return 0; return Math.sign(v) * Math.pow(Math.min(1, (a - PAD_DZ) / (1 - PAD_DZ)), 1.5); }   // (a dead zone, finer near the middle)
   function padShow() { const t = $('touch'); if (t) t.classList.toggle('pad', pad.on); }
   function padRead(dt) {
@@ -236,6 +237,6 @@ const Input = (function () {
   function reset() { ptrs.clear(); wheel.pid = null; wheel.ang = 0; for (const k in keys) keys[k] = false; }
   function vibrate(ms) { if (vib && navigator.vibrate) { try { navigator.vibrate(ms); } catch (_) { } } }
 
-  return { init, layout, setMode, setOptions, update, requestTilt, tiltAlive, calibrate, reset, vibrate, padRead, set onPad(fn) { onPad = fn; }, set onCam(fn) { onCam = fn; }, pad, state: S, tilt, get mode() { return mode; } };
+  return { init, layout, setMode, setOptions, update, requestTilt, tiltAlive, calibrate, reset, vibrate, padRead, set onPad(fn) { onPad = fn; }, set onCam(fn) { onCam = fn; }, set onTyre(fn) { onTyre = fn; }, pad, state: S, tilt, get mode() { return mode; } };
 })();
 

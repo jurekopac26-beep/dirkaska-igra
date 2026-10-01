@@ -101,6 +101,12 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-lights.go i { background: #29e05a; box-shadow: 0 0 14px #2cff66; }
 #h-msg { position: absolute; left: 0; right: 0; top: 40%; text-align: center; font: 400 italic clamp(28px, 10vh, 56px)/1 var(--f-display); color: var(--chalk); text-shadow: 3px 4px 0 rgba(0,0,0,.55); opacity: 0; transform: scale(.9); transition: opacity .2s, transform .2s; }
 #h-msg.show { opacity: 1; transform: scale(1); }
+/* the team radio: the engineer's message at the top, left of the corner arrow (upright: on the right under the map and the buttons, the
+   arrow moved down below it while it shows) */
+#h-radio { position: absolute; right: calc(50% + 36px); top: calc(84px + var(--st)); transform: translateY(-6px); max-width: min(28vw, 320px); display: flex; gap: 8px; align-items: flex-start; padding: 6px 10px 7px 8px; border-radius: 8px; background: rgba(10, 14, 20, .82); border-left: 4px solid var(--lcd); color: #fff; font: 600 clamp(11px, 3.2vh, 14px)/1.3 var(--f-ui); opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; }
+#h-radio.on { opacity: 1; transform: none; }
+#h-radio b { flex: none; margin-top: 1px; padding: 1px 5px; border-radius: 4px; background: var(--lcd); color: #111; font: 800 italic 10px/1.4 var(--f-ui); letter-spacing: .04em; }
+@media (orientation: portrait) { #h-radio { right: calc(10px + var(--sr)); top: calc(var(--st) + clamp(150px, 18vh, 170px)); max-width: 62vw; } #hud:has(#h-radio.on) #h-note { top: calc(24% + 64px); } }
 #hud.shot > *:not(#podium-cap) { visibility: hidden; }   /* a TV shot (the jets before the start, the podium): no HUD */
 #podium-cap { position: absolute; left: 50%; bottom: calc(10px + var(--sb, 0px)); transform: translateX(-50%); display: flex; gap: 14px; padding: 6px 14px; border-radius: 6px; background: rgba(12,16,40,.72); font: 700 italic clamp(12px, 3.4vh, 18px)/1.2 var(--f-ui); color: var(--chalk); white-space: nowrap; opacity: 0; transition: opacity .4s; pointer-events: none; }
 #podium-cap.show { opacity: 1; }
@@ -170,6 +176,12 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 /* the camera during a race (under the pause button; a phone held upright has only the one behind the car) */
 #btn-cam { position: absolute; z-index: 6; right: calc(10px + var(--sr)); top: calc(60px + var(--st)); width: 44px; height: 44px; border-radius: 12px; border: 2px solid rgba(255,255,255,.5); background: rgba(14,18,25,.55); display: flex; align-items: center; justify-content: center; padding: 0; }
 #btn-cam svg { width: 24px; height: 24px; fill: var(--chalk); }
+/* the tyres for the next stop (a race with compounds and pits): a tyre with its band in the compound's colour, A for Samodejno */
+#btn-tyre { position: absolute; z-index: 6; right: calc(10px + var(--sr)); top: calc(112px + var(--st)); width: 44px; height: 44px; border-radius: 50%; border: 2px solid rgba(255,255,255,.5); background: rgba(14,18,25,.55); display: flex; align-items: center; justify-content: center; padding: 0; }
+#btn-tyre i { position: absolute; inset: 5px; border-radius: 50%; border: 4px solid #8a8f98; }
+#btn-tyre[data-c="S"] i { border-color: #e03027; } #btn-tyre[data-c="M"] i { border-color: #f2c616; } #btn-tyre[data-c="H"] i { border-color: #eeeeee; }
+#btn-tyre span { position: relative; font: 800 italic 14px/1 var(--f-ui); color: var(--chalk); }
+@media (orientation: portrait) and (pointer: coarse) { #btn-tyre { top: calc(60px + var(--st)); } }   /* (in the camera button's place) */
 #btn-cam svg .lens { fill: rgba(14,18,25,.85); stroke: var(--chalk); stroke-width: 1.4; }
 #btn-cam.dis { display: none; }
 @media (orientation: portrait) and (pointer: coarse) { #btn-cam { display: none; } }
@@ -659,6 +671,7 @@ p.pk-medl { margin: -2px 0 6px; font: 700 12px/1.3 var(--f-ui); opacity: .9; }
 
 /* the slicks for the next pit stop (the pause, a race with tyres); rows of choices too wide for their panel get smaller (game.js fitSegs) */
 .pit-row { margin-top: 12px; }
+.pause-strat { margin: 12px 2px 0; font: 600 13px/1.4 var(--f-ui); color: var(--chalk); opacity: .9; }   /* the strategy as it stands (fuel, tyres, a stop now) */
 .wx-row .seg button, .pit-row .seg button { white-space: nowrap; }
 .seg.tight button { padding-left: 5px; padding-right: 5px; font-size: 12px; }
 .seg.tighter button { padding-left: 4px; padding-right: 4px; font-size: 10.5px; }
