@@ -178,7 +178,7 @@
   "instances": 2598,
   "props": 352,
   "crowd": 2552,
-  "world": "89f321d5",
+  "world": "ab59f2f",
   "propsHash": "fed9419e",
   "floor": "67c951b5/12544",
   "groups": {
@@ -199,7 +199,7 @@
    "pkAir:ShaderMaterial": "385c43",
    "pkCloudSea:ShaderMaterial": "714d7305",
    "pkSmoke:ShaderMaterial": "186acc3",
-   "pkWaterTruck:MeshLambertMaterial": "50e3db5c",
+   "pkWaterTruck:MeshLambertMaterial": "6dcf2416",
    "pkSpray:ShaderMaterial": "63b596e6"
   }
  },
