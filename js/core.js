@@ -2470,7 +2470,7 @@ const Core = (function () {
       if (run && this.stage === 'chase') {
         let seen = false, by = null;
         for (const c of this.cars) { const m = c.pol.mode;
-          if (m === 'civil') { const g = c.q.s - P.q.s; if (g < 42 && g > -6 && Math.abs(P.q.d - c.q.d) < 9) this._wake(c); continue; }
+          if (m === 'civil') { const g = c.q.s - P.q.s; if (g < 42 && g > -6 && Math.abs(P.q.d - c.q.d) < T.w * 1.4) this._wake(c); continue; }   // (anywhere across the road behind it: they see the player in the mirror)
           if (!((m === 'chase' && !c.locked) || m === 'search' || m === 'park' || m === 'wait') || !this._sees(c)) continue;
           if (m === 'wait') { if (Math.hypot(P.x - c.x, P.z - c.z) < 110) this._ambush(c); else continue; }
           seen = true; by = by || c; }

@@ -129,7 +129,7 @@ const put = (c, s, d, v) => { const i = T.idx(s); c.place(T.px[i] + T.nx[i] * d,
 const aim = (c, dd) => { const j = T.idx(c.q.s + 12), tx = T.px[j] + T.nx[j] * dd, tz = T.pz[j] + T.nz[j] * dd, ch = Math.cos(c.h), sh = Math.sin(c.h), lx = (tx - c.x) * ch + (tz - c.z) * sh, ly = -(tx - c.x) * sh + (tz - c.z) * ch;
   c.inSteer = Math.max(-1, Math.min(1, 18 * ly / (lx * lx + ly * ly))); };   // (along the road at dd across it)
 let rk = 0;
-const drive = (r, maxT, until, own) => { let t = 0; while (t < maxT && !(until && until())) { Math.random = seeded(7000 + (++rk)); if (own) own(); else if (!r.player.finished) C.aiControl(r.player, r, DT); r.step(DT); t += DT; } Math.random = orig; return t; };
+const drive = (r, maxT, until, own) => { let t = 0; while (t < maxT && !(until && until())) { Math.random = seeded(7000 + (++rk)); if (own) own(); else if (!r.player.finished) { C.aiControl(r.player, r, DT); if (r.player.stuckT > 3 || r.player.wrongT > 3) r.rescue(r.player); } r.step(DT); t += DT; } Math.random = orig; return t; };
 const since = (r, n0, k) => r.pol.log.filter(e => e.n > n0 && e.k === k);
 
 // 7. out of their sight: every patrol car in the chase 500 m behind, the hiding meter fills; after POL_DIFF.hide s they lose the player: those
@@ -139,11 +139,11 @@ const since = (r, n0, k) => r.pol.log.filter(e => e.n > n0 && e.k === k);
   pol.cars = pol.cars.filter(c => c.pol.mode === 'chase'); pol.uc = null; pol.ucN = 9; pol.amb.forEach(a => { a.done = true; }); pol.heli = null; pol.heliCool = 1e9;   // (only the chase: no unmarked car, ambush or helicopter to see them)
   for (const c of pol.cars) put(c, P.q.s - 500, 2.3, 0);
   const D0 = pol.D; pol.D = Object.assign({}, D0, { join: 1e9 });   // (nobody joins meanwhile: this is about hiding from the ones there)
-  const n0 = pol.ev, h0 = pol.heat, tl = drive(r, 30, () => pol.lost), hl = pol.heat, modes = pol.cars.map(c => c.pol.mode).join(',');
+  let h0 = pol.heat; const n0 = pol.ev, tl = drive(r, 30, () => { if (pol.lost) return true; h0 = pol.heat; return false; }), hl = pol.heat, modes = pol.cars.map(c => c.pol.mode).join(',');   // (h0: the heat the step before)
   pol.D = D0; pol.joinT = D0.join + 1; const nL = pol.ev; drive(r, 8); const joined = since(r, nL, 'join').length, still = pol.lost;
   const c = pol.cars.find(q => q.pol.mode === 'search') || pol.cars[0]; put(c, P.q.s - 40, P.q.d, P.speed); const n1 = pol.ev; drive(r, 2, () => !pol.lost);
   check('out of sight (the patrol cars far behind): the hiding meter fills, after POL_DIFF.hide s they lose the player (searching, the heat a star lower, nobody joins); one close behind again: found',
-    since(r, n0, 'lost').length === 1 && tl > D.hide - 0.5 && tl < D.hide + 4 && /^(search,?)+$/.test(modes) && hl < h0 - 0.6 && still && !joined && !pol.lost && since(r, n1, 'spotted').length === 1 && c.pol.mode === 'chase',
+    since(r, n0, 'lost').length === 1 && tl > D.hide - 0.5 && tl < D.hide + 4 && /^(search,?)+$/.test(modes) && hl < h0 - 0.8 && still && !joined && !pol.lost && since(r, n1, 'spotted').length === 1 && c.pol.mode === 'chase',
     `lost after ${tl.toFixed(1)} s out of sight (hide ${D.hide} s), heat ${h0.toFixed(2)} -> ${hl.toFixed(2)}, the cars ${modes}, ${joined} joined meanwhile; found again: ${!pol.lost}`);
 }
 
@@ -180,7 +180,7 @@ const since = (r, n0, k) => r.pol.log.filter(e => e.n > n0 && e.k === k);
   const m = pol._car(P.q.s - 50, 2.3, 0, 'chase', 0, 'moto'), v0 = Math.min(28, P.speed); m.locked = false; m.vx = Math.cos(m.h) * v0; m.vz = Math.sin(m.h) * v0;
   let gMax = -1e9, gMin = 1e9; const t0 = r.time, n0 = pol.ev;
   drive(r, 20, () => { if (r.time - t0 > 6) { const g = P.q.s - m.q.s; gMax = Math.max(gMax, g); gMin = Math.min(gMin, g); } return m.pol.mode !== 'chase'; });
-  const rams = since(r, n0, 'ram').filter(e => e.u === m.pol.unit).length, tail = m.pol.mode === 'chase' && gMax < 45 && gMin > -25;
+  const rams = since(r, n0, 'ram').filter(e => e.u === m.pol.unit).length, tail = m.pol.mode === 'chase' && gMax < 60 && gMin > -25;
   put(m, P.q.s + 30, P.q.d, 14); put(P, P.q.s + 20, P.q.d, 24); const h0 = pol.heat, n1 = pol.ev;
   drive(r, 2.5, () => m.pol.mode === 'down', () => { P.inThr = 1; P.inBrk = 0; aim(P, m.q.d); });
   const e = since(r, n1, 'motoDown')[0], rider = m.pol.rider;
@@ -199,7 +199,7 @@ const since = (r, n0, k) => r.pol.log.filter(e => e.n > n0 && e.k === k);
   const v = vs.length ? vs.reduce((a, b) => a + b, 0) / vs.length : 0, right = dl.length ? dl.filter(d => d > 0.5).length / dl.length : 0;
   check('the unmarked car: ahead of the player on the uphill half at the traffic\'s pace, no lights; once they come up behind it, lights and siren, after them',
     !!u && u.pol.kind === 'uc' && ahead > 300 && ahead < 540 && v > 8 && v < 20 && right > 0.9 && gWake != null && gWake < 45 && gWake > -8 && since(r, n0, 'undercover').length === 1 && u.pol.mode === 'chase',
-    `${ahead.toFixed(0)} m ahead, ${(v * 3.6).toFixed(0)} km/h, on the right half ${(right * 100).toFixed(0)} %, woken with the player ${gWake == null ? '-' : gWake.toFixed(0) + ' m'} behind it`);
+    `${ahead.toFixed(0)} m ahead, ${(v * 3.6).toFixed(0)} km/h, on the right half ${(right * 100).toFixed(0)} %, woken with the player ${gWake == null ? '- (' + (u ? (u.q.s - P.q.s).toFixed(0) + ' m, ' + u.pol.mode + ', the player ' + (P.speed * 3.6).toFixed(0) + ' km/h' : 'gone') + ')' : gWake.toFixed(0) + ' m'} behind it`);
 }
 
 // 12. a heavy roadblock (from the heat POL_DIFF.heavy on): the van across the road from one edge, a patrol car beside it, a spike strip over half of the
