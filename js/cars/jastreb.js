@@ -126,7 +126,13 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const [x0, x1] of [[-0.158, -0.118], [0.318, 0.358]]) { const w = (x) => L.prop(x, 'wt') - 0.012, c = (x) => 0.38 * L.prop(x, 'wt');
           for (const [f0, f1] of [[(x) => -w(x), (x) => -c(x)], [(x) => -c(x), c], [c, w]]) DC.top([[x0, f0(x0)], [x1, f0(x1)], [x1, f1(x1)], [x0, f1(x0)]], CH, 0.006); }   // (three flat pieces: the top's two edges and its crown)
         for (const z of [-0.42, -0.08, 0.26]) K.bar([0.4, 0.86, z - 0.13], [0.37, 0.87, z + 0.13], 0.008, B, { n: 4, part: 'body' });
+        // ---- the tailgate: its glass in a chrome frame (on the glass's edges and foot, with it) ----
+        for (const sd of [-1, 1]) { const X = run(-1.49, -0.73); for (let i = 0; i + 1 < X.length; i++) { const p = X[i] + 1e-4, r = X[i + 1] - 1e-4, wt = (x) => L.prop(x, 'wt');
+          DC.top([[p, sd * (wt(p) - 0.035)], [r, sd * (wt(r) - 0.035)], [r, sd * (wt(r) - 0.008)], [p, sd * (wt(p) - 0.008)]], CH, 0.006); } }
+        { const x0 = -1.488, x1 = -1.455, w = (x) => L.prop(x, 'wt') - 0.01, c = (x) => 0.38 * L.prop(x, 'wt');
+          for (const [f0, f1] of [[(x) => -w(x), (x) => -c(x)], [(x) => -c(x), c], [c, w]]) DC.top([[x0, f0(x0)], [x1, f0(x1)], [x1, f1(x1)], [x0, f1(x0)]], CH, 0.006); }
         K.hinge('trunk', [-1.49, 0.895, 0.42], [-0.73, 1.168, 0.52]);
+        K.rect(0.3, 0.835, 0, 1.2, 0.09, D, { dir: '-x', part: 'body' });   // (the scuttle's inside under the windscreen, facing the driver: from the seat no looking into the bonnet past the dashboard)
         // ---- inside (seen once a part is off): the bucket seats, the dashboard, the long six under the bonnet ----
         for (const sd of [-1, 1]) K.seat(-0.58, 0.33, sd * 0.33, { w: 0.46, l: 0.48, back: 0.56, tilt: 0.32 });
         K.box(0.22, 0.52, 0, 0.24, 0.24, 1.3, 0, D, null, false, { inner: true, part: 'body' });                       // the dashboard,
