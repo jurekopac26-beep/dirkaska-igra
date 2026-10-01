@@ -14,10 +14,10 @@
   "jsMs": 0.52
  },
  "gora": {
-  "calls": 227,
-  "maxCalls": 261,
-  "kverts": 957,
-  "maxKverts": 1053,
+  "calls": 236,
+  "maxCalls": 284,
+  "kverts": 978,
+  "maxKverts": 1122,
   "jsMs": 0.7
  },
  "ljubljana": {
@@ -98,10 +98,10 @@
   "jsMs": 0.67
  },
  "holjes": {
-  "calls": 229,
-  "maxCalls": 278,
-  "kverts": 760,
-  "maxKverts": 1016,
+  "calls": 233,
+  "maxCalls": 280,
+  "kverts": 775,
+  "maxKverts": 1036,
   "jsMs": 0.53
  }
 }

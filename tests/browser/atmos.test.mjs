@@ -18,7 +18,7 @@ try {
     const W = Render.world; W.root.traverse(o => {
       const a = o.geometry && o.geometry.attributes && o.geometry.attributes.color; if (a && n < 400000) { const d = a.array, is = a.itemSize; for (let i = 0; i < d.length && n < 400000; i += is * 7) { g += d[i + 1] - Math.max(d[i], d[i + 2]); lum += (d[i] + d[i + 1] + d[i + 2]) / 3; n++; } }
       for (const m of o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []) if (m.userData && m.map && m.map === m.userData.snowMap) snowMaps++; });
-    Render.scene.traverse(o => { if (o.isInstancedMesh && o.material && o.material.blending === THREE.AdditiveBlending) pools = o.count; if (o.isMesh && o.material && o.material.map && o.material.blending === THREE.AdditiveBlending && !o.isInstancedMesh && o.parent && o.parent.type === 'Group') { beams++; if (o.visible) beamOn++; } });
+    Render.scene.traverse(o => { if (o.name === 'floodPools') pools = o.userData.n; if (o.isMesh && o.material && o.material.map && o.material.blending === THREE.AdditiveBlending && !o.isInstancedMesh && o.parent && o.parent.type === 'Group') { beams++; if (o.visible) beamOn++; } });
     return { green: +(g / Math.max(1, n)).toFixed(4), lum: +(lum / Math.max(1, n)).toFixed(4), snowMaps, pools, beams, beamOn, fog: Render.scene.fog.color.getHexString(), atmos: Render.atmos, emissive: Render.scene && (() => { let e = 0; Render.scene.traverse(o => { if (o.isMesh && o.material && o.material.emissive && o.material.vertexColors && o.material.envMap) e = Math.max(e, o.material.emissive.r); }); return e; })() };
   });
 

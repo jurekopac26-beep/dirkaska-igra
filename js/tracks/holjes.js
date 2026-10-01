@@ -23,6 +23,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     elev: HJ_H.map((h, i) => [i / HJ_H.length, h / 10]),
     // asphalt, but gravel from the tight right before the Velodrome to the exit of Turn 9 (42 % of the lap)
     surf: [[470, 985, 'makadam']],
+    rain: { seed: 47, puddles: 9 },   // (in the rain, puddles on the gravel: Core Track._buildPuddles)
     // the Velodrome: the hairpin at the top leans in; the crests after Turn 1 and before the Velodrome; the jump between Turn 9 and the
     // last corner
     bank: [[545, 600, 0.14]],

@@ -170,11 +170,11 @@ const Core = (function () {
       // the joker lap (def.joker; rallycross, closed circuits), see _buildJoker
       this.jk = null; this.jshare = null; this.jkOther = null;
       if (def.joker && !open) this._buildJoker(def.joker);
-      // a gravel stage with puddles in the rain (def.rain = { seed, puddles }; open roads): [s, d (m across, + right), half length,
-      // half width]; pudAt: per sample, the puddle there (-1: none). inRain: the race driving on it has rain (Race.step); only then are the
-      // puddles a surface (6)
+      // a gravel stage with puddles in the rain (def.rain = { seed, puddles }; open roads, or a circuit's gravel sections: rallycross): [s, d
+      // (m across, + right), half length, half width]; pudAt: per sample, the puddle there (-1: none). inRain: the race driving on it has rain
+      // (Race.step); only then are the puddles a surface (6)
       this.puddles = []; this.pudAt = null; this.inRain = false;
-      if (def.rain && open) this._buildPuddles(def.rain);
+      if (def.rain && (open || this.srf)) this._buildPuddles(def.rain);
     }
 
     // mixed surfaces: the road is asphalt but on the gravel sections (def.surf [from, to, 'makadam'], metres after the start line; an open
@@ -288,11 +288,13 @@ const Core = (function () {
       div(this, jk); div(jk, this);
     }
     // the puddles: in the dips of the profile first (the water runs down into them), then spread along the rest of the run, some on the
-    // racing line, 30 m apart at least, and none from a jump's approach to its landing (the jumps fly as tuned)
+    // racing line, 30 m apart at least, and none from a jump's approach to its landing (the jumps fly as tuned). A circuit: only on its
+    // gravel (the whole puddle and 6 m round it)
     _buildPuddles(rain) {
-      const N = this.N, ds = this.ds, hy = this.hy, R = rng(rain.seed || 31), P = this.puddles, n = rain.puddles || 40, s0 = this.startS + 40, s1 = this.finishS - 40;
+      const N = this.N, ds = this.ds, hy = this.hy, R = rng(rain.seed || 31), P = this.puddles, n = rain.puddles || 40, loop = !this.open, s0 = loop ? 0 : this.startS + 40, s1 = loop ? this.len - 1 : this.finishS - 40;
       const jumps = (this.def.bumps || []).map(b => [clamp(b.at, 0, 1) * this.len, b.w || 8]);
-      const free = (s) => jumps.every(([c, w]) => s < c - 2.2 * w - 25 || s > c + 1.6 * w + 10) && P.every(p => Math.abs(p[0] - s) > 30);
+      const grav = (s) => !loop || [-10, -5, 0, 5, 10].every(k => this.srf[this.idx(s + k)] === 5);
+      const free = (s) => grav(s) && jumps.every(([c, w]) => s < c - 2.2 * w - 25 || s > c + 1.6 * w + 10) && P.every(p => Math.abs(p[0] - s) > 30);
       const put = (s, onLine) => {
         if (s < s0 || s > s1 || !free(s)) return;
         const i = this.idx(s), hl = 1.6 + R() * 2.6, hw = Math.min(this.w - 1, 0.8 + R() * 1.4), lim = this.w - hw - 0.3;
@@ -2054,11 +2056,15 @@ const Core = (function () {
     let off = clamp(rlv + c.aiOff, -lim, lim);
     if (jkPass) off = T.jkSide < 0 ? Math.max(off, -T.w + 3) : Math.min(off, T.w - 3);   // (not taking the joker this lap: clear of its way in)
     if (c.pitWant && T.def.pit) {   // (autopilot into the pits: follow the lane)
-      const pz = T.pitAt(sT); if (pz) off = pz.o;
-      if (pz && c.ty && !c.isPlayer && !pz.gap) {   // (an AI car in for tyres: the fast lane beside the boxes, over to its own box to stop)
-        const L = T.len; let db = T.startS + race._aiBox(c) - sT; db = ((db % L) + L) % L; if (db > L / 2) db -= L;
-        off += !c.pitDone && db > -8 && db < 16 ? -2 : 1.5;
-      } else if (!c.isPlayer) { const P = T.def.pit, L = T.len; let d = sT - T.startS; d = ((d % L) + L) % L; if (d > L / 2) d -= L; if (d > P[1] - 220 && d < P[1]) off = lim; }   // (an AI car in for tyres: over to the lane's side of the road first)
+      // the player's autopilot with tyres (every race of the game on a track with pits) comes in like an AI car, among the AI cars coming
+      // in for tyres: over to the lane's side of the road first, the fast lane beside the boxes, over to its own box where its crew waits;
+      // and when it missed the way in (beside the lane, on the track's side of the pit wall), round again, not through the pit wall
+      const ap = c.isPlayer && !!c.ty, pz = T.pitAt(sT), pn = ap && !c.inPit && T.pitAt(q.s), missed = pn && !pn.gap;
+      if (pz && !missed) off = pz.o;
+      if (pz && c.ty && !pz.gap && (!c.isPlayer || c.inPit)) {   // (in for tyres: the fast lane beside the boxes, over to its own box to stop)
+        const L = T.len; let db = T.startS + (c.isPlayer ? T.def.pit[3] : race._aiBox(c)) - sT; db = ((db % L) + L) % L; if (db > L / 2) db -= L;
+        off += !c.pitDone && db > -8 && db < 16 ? (c.isPlayer ? 0 : -2) : 1.5;
+      } else if (!c.isPlayer || ap) { const P = T.def.pit, L = T.len; let d = sT - T.startS; d = ((d % L) + L) % L; if (d > L / 2) d -= L; if (d > P[1] - 220 && d < P[1]) off = lim; }   // (in for tyres: over to the lane's side of the road first)
     }
     const tx = lerp(Rt.px[i0], Rt.px[i1], ft) + lerp(Rt.nx[i0], Rt.nx[i1], ft) * off;
     const tz = lerp(Rt.pz[i0], Rt.pz[i1], ft) + lerp(Rt.nz[i0], Rt.nz[i1], ft) * off;
@@ -2123,7 +2129,7 @@ const Core = (function () {
         }
       }
     }
-    if (c.ty && !c.isPlayer && (c.inPit || c.pitWant)) { const o = c.aiThreat; if (o && Math.abs(o.q.d - q.d) < 2.4) vT = Math.min(vT, Math.sqrt(Math.max(0, o.vl) ** 2 + 10 * Math.max(0, c.aiGap - 6))); }   // (the pit lane: wait behind a car stopping at its box or pulling out)
+    if (c.ty && (c.inPit || c.pitWant)) { const o = c.aiThreat; if (o && Math.abs(o.q.d - q.d) < 2.4) vT = Math.min(vT, Math.sqrt(Math.max(0, o.vl) ** 2 + 10 * Math.max(0, c.aiGap - 6))); }   // (the pit lane, the player's autopilot too: wait behind a car stopping at its box or pulling out; right behind it at walking pace, a nudge swung the car into the pit wall, and at walking pace it cannot steer out)
     let thr = 0, brk = 0;
     if (v < vT - 0.8) thr = 1;
     else if (v < vT + 0.6) thr = 0.45;

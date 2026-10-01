@@ -30,6 +30,13 @@ check('gravel on 35-45 % of the lap, one stretch from ~470 m to ~985 m', gv / N 
   const k1 = T.gripK[T.idx(T.startS + 990)], k2 = T.gripK[T.idx(T.startS + 1015)], k3 = T.gripK[T.idx(T.startS + 1060)];
   check('the asphalt after the gravel is dirty (less grip), clean again 45 m on', k1 < 0.93 && k2 > k1 && k2 < 1 && k3 === 1, `grip x${k1.toFixed(3)} at 990 m, x${k2.toFixed(3)} at 1015 m, x${k3} at 1060 m`); }
 
+// 2b. the puddles of a race in the rain (def.rain): on the gravel only, the whole puddle and round it; a surface (6) only while it rains
+{ const P = T.puddles, onG = (s) => T.srf[T.idx(s)] === 5, bad = P.filter(([s, d, hl, hw]) => !onG(s - hl - 5) || !onG(s) || !onG(s + hl + 5) || Math.abs(d) + hw > T.w);
+  check('puddles in the rain: 9, all on the gravel (none on the asphalt), on the road', P.length === 9 && !bad.length, `${P.length} puddles, ${bad.length} off the gravel: ` + P.map(p => dA(p[0]).toFixed(0)).join(' '));
+  const [s, d] = P[0], i = T.idx(s), q = {}; T.query(T.px[i] + T.nx[i] * d, T.pz[i] + T.nz[i] * d, i, q);
+  T.inRain = false; const dry = T.surface(q); T.inRain = true; const wet = T.surface(q); T.inRain = false;
+  check('a puddle is gravel in the dry, water (6) in the rain', dry === 5 && wet === 6, `dry ${dry}, wet ${wet}`); }
+
 // 3. the joker: where it leaves and joins, its length and cost, the two roads' heights where they run together, the barriers in the gore
 check('the joker leaves after Turn 1 on the left and joins before Turn 3', !!J && T.jkSide === -1 && dA(T.jkA) > 100 && dA(T.jkA) < 150 && dA(T.jkB) > 380 && dA(T.jkB) < 440 && J.len > 250 && J.len < 350,
   J ? `split ${dA(T.jkA).toFixed(0)} m, join ${dA(T.jkB).toFixed(0)} m, ${J.len.toFixed(0)} m long` : 'none');
@@ -63,7 +70,7 @@ for (const [phys, rain] of [['cs', 0], ['arcade', 0], ['cs', 1], ['arcade', 1]])
   Math.random = seeded(101 + (phys === 'cs' ? 0 : 7) + rain * 3);
   const r = new C.Race(T, { numAI: 5, laps: 6, phys, seed: 21 + rain, difficulty: 1, playerModel: C.MODELS.find(m => m.id === 'rally'), flags: true, rain });
   r.start(); let t = 0;
-  while (t < 500 && !r.cars.every(c => c.finished)) { C.aiControl(r.player, r, DT); r.step(DT); t += DT; }
+  while (t < 500 && !r.cars.every(c => c.finished)) { C.aiControl(r.player, r, DT); r.step(DT); if (r.player.stuckT > 3 || r.player.wrongT > 3) r.rescue(r.player); t += DT; }   // (the player's car on autopilot: rescued as the button would)
   const jk = r.cars.map(c => c.jkN);
   check(`${phys}${rain ? ' in the rain' : ''}: every car finishes having driven the joker once`, r.cars.every(c => c.finished) && jk.every(k => k === 1), `${t.toFixed(0)} s, jokers ${jk.join('')}`);
 }
