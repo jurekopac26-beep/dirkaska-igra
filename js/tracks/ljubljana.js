@@ -7,6 +7,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     id: 'ljubljana', name: 'Ljubljana, Slovenija', theme: 'ljubljana', laps: 3, halfWidth: 6.5,
     desc: 'Mestna proga po starem središču Ljubljane: ob reki in čez mostove, po trgih in ozkih ulicah, nad mestom grad. 1,9 km in sedem zavojev.',
+    en: { name: 'Ljubljana, Slovenia', desc: 'A street circuit through the old centre of Ljubljana: along the river and over the bridges, through squares and narrow streets, with the castle above the town. 1.9 km and seven turns.' },   // (the English page: Jezik · Language)
     points: [[40, -40], [150, -68], [250, -98], [300, -116], [324, -100], [330, -75], [316, -57], [240, -35], [150, -10], [62, 12], [22, 40], [14, 85], [10, 135], [4, 200], [-6, 262], [-26, 298], [-85, 304], [-150, 300], [-190, 280], [-197, 212], [-202, 165], [-250, 150], [-292, 126], [-286, 40], [-268, -50], [-254, -108], [-218, -118], [-165, -97], [-92, -72], [-30, -55]],
     start: [150, -68], runoff: 0.45, inner: 3.2, side: 3.4, offSurface: 'paving',
     // named places: the seven corners by their numbers ([HUD label, x, z, what the commentator may say there]); on the straights
