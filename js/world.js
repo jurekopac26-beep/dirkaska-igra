@@ -7248,10 +7248,16 @@ const World = (function () {
   }
   // the crowd barriers (a 2.5 m panel of the steel 'bike rack' kind: a tube frame with vertical bars, clear between them) and, on the right half, the
   // orange plastic mesh fence of the park (alphaTest cuts out the holes)
+  // the barriers' texture (256 x 128): the upper half (v 0.5-1) the steel barrier (u 0-0.5) and the orange mesh fence (u 0.5-1), the lower half (v 0-0.5)
+  // straw for the bales (fibres along the bale, two darker twine bands; white where the vertex colour tints it)
   function hjBarTex() {
     if (hjBTex) return hjBTex;
-    const c = document.createElement('canvas'); c.width = 256; c.height = 64; const x = c.getContext('2d');
-    x.clearRect(0, 0, 256, 64); x.fillStyle = '#b9bcc0'; x.fillRect(0, 4, 128, 5); x.fillRect(0, 44, 128, 4); x.fillRect(0, 4, 5, 58); x.fillRect(123, 4, 5, 58);
+    const c = document.createElement('canvas'); c.width = 256; c.height = 128; const x = c.getContext('2d'), r = rng(8205);
+    x.clearRect(0, 0, 256, 128);
+    x.fillStyle = '#e4e4e2'; x.fillRect(0, 64, 256, 64);
+    for (let q = 0; q < 900; q++) { const yy = 64 + r() * 64, xx = r() * 256, l = 6 + r() * 26; x.fillStyle = r() < 0.5 ? 'rgba(255,255,255,' + (0.25 + r() * 0.35).toFixed(2) + ')' : 'rgba(90,80,60,' + (0.12 + r() * 0.2).toFixed(2) + ')'; x.fillRect(xx, yy, l, 0.8 + r() * 0.8); }
+    x.fillStyle = 'rgba(70,60,45,0.45)'; for (const u of [0.28, 0.72]) x.fillRect(u * 256 - 2, 64, 3, 64);
+    x.fillStyle = 'rgba(0,0,0,0.12)'; x.fillRect(0, 64, 256, 2); x.fillRect(0, 126, 256, 2); x.fillStyle = '#b9bcc0'; x.fillRect(0, 4, 128, 5); x.fillRect(0, 44, 128, 4); x.fillRect(0, 4, 5, 58); x.fillRect(123, 4, 5, 58);
     for (let k = 1; k < 11; k++) x.fillRect(k * 11.6, 8, 2.4, 37); x.fillStyle = '#8a8d91'; x.fillRect(2, 56, 16, 6); x.fillRect(110, 56, 16, 6);
     x.fillStyle = '#f07a18'; for (let yy = 6; yy < 60; yy += 6) x.fillRect(128, yy, 128, 2.4); for (let xx = 128; xx < 256; xx += 9) x.fillRect(xx, 6, 2.4, 54); x.fillRect(128, 4, 128, 3); x.fillRect(128, 58, 128, 3);
     const t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; t.anisotropy = 4; return (hjBTex = t);
@@ -7645,10 +7651,16 @@ const World = (function () {
 
     /* ---- the stage's edges on race day: straw bales where the barrier stands on the street itself (the chicanes, the lane change), the steel crowd
        barriers along the town's streets, the orange mesh fence in the park; a KIELLETTY ALUE board and a marshal where a side street is closed ---- */
-    const fGB = new Chunks(220, true), spG = new Chunks(200, true), bales = [], STRAW = [0.84, 0.7, 0.4], STRAWT = [0.9, 0.78, 0.48];
+    const fGB = new Chunks(220, true), spG = new Chunks(200, true), bales = [];
     const barType = (i, side) => { const si = side > 0 ? 1 : 0, bar = side > 0 ? T.br[i] : T.bl[i]; if (bar - WA[i] < 0.45) return 4; if (bar - WA[i] < 1.3) return 1; const t = VT[si][i]; return t === 4 || t === 0 ? 2 : 3; };   // 1 bales, 2 steel barriers, 3 mesh fence, 4 concrete blocks
     const hard = (x, z) => onBld(x, z) || excluded(x, z), blk = new Map(), blkNear = (x, z) => { const cx = Math.floor(x), cz = Math.floor(z); for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const L = blk.get((cx + a) + ',' + (cz + b)); if (L) for (let q = 0; q < L.length; q += 2) if ((L[q] - x) ** 2 + (L[q + 1] - z) ** 2 < 0.8) return true; } return false; };
     const CONC = [0.62, 0.62, 0.6], CONCT = [0.7, 0.7, 0.68];
+    const bale = (g, cx, cy, cz, rot, col) => {   // a small square bale (1.15 x 0.45 x 0.55 m) in the barriers' straw: fibres along it, the twine round it; the cut ends lighter
+      const c = Math.cos(rot), s = Math.sin(rot), hl = 0.575, hd = 0.275, H = 0.45, P = (a, yy, b) => [cx + a * c - b * s, cy + yy, cz + a * s + b * c], inn = [cx, cy + H / 2, cz], end = [col[0] * 1.08, col[1] * 1.08, col[2] * 1.06];
+      const S = (a0, a1) => [[0, 0.02], [1, 0.02], [1, a1], [0, a1]].map(([u, v]) => [u, v === 0.02 ? a0 : v]);
+      g.quadO(P(-hl, 0, -hd), P(hl, 0, -hd), P(hl, H, -hd), P(-hl, H, -hd), col, inn, S(0.02, 0.47)); g.quadO(P(-hl, 0, hd), P(hl, 0, hd), P(hl, H, hd), P(-hl, H, hd), col, inn, S(0.02, 0.47));
+      g.quadO(P(-hl, H, -hd), P(hl, H, -hd), P(hl, H, hd), P(-hl, H, hd), [col[0] * 1.06, col[1] * 1.06, col[2] * 1.04], inn, S(0.03, 0.4));
+      for (const a of [-hl, hl]) g.quadO(P(a, 0, -hd), P(a, 0, hd), P(a, H, hd), P(a, H, -hd), end, inn, [[0.4, 0.05], [0.62, 0.05], [0.62, 0.3], [0.4, 0.3]]); };
     for (const side of [-1, 1]) {
       let prev = null, pk = 0;
       for (let s = Math.max(2, sStart - 30); s < T.len - 6; s += 2.5) {
@@ -7657,12 +7669,14 @@ const World = (function () {
         if ((other && bt !== 4 && bt !== 1) || onBld(x, z) || (bt !== 1 && bt !== 4 && mouth[side > 0 ? 1 : 0][i] && pk !== 1)) { prev = null; pk = bt; continue; }
         const y = hjGround(x, z);
         if (bt === 1 || bt === 4) { if (blkNear(x, z)) { prev = null; pk = bt; continue; } const g = scen.get(x, z), k = Math.floor(x) + ',' + Math.floor(z); let L = blk.get(k); if (!L) blk.set(k, L = []); L.push(x, z);
-          if (bt === 1) for (let q = 0; q < 2; q++) box(g, x, y + q * 0.45, z, 1.2, 0.46, 0.55, T.hd[i] + (q ? 0.06 : -0.03), STRAW, STRAWT, true);
+          if (bt === 1) { const gb = fGB.get(x, z), h = T.hd[i], w = crH(x, z, 43), col = [lerp(0.88, 0.72, w), lerp(0.74, 0.66, w), lerp(0.44, 0.52, w)];   // (golden to weathered grey)
+            bale(gb, x - Math.cos(h) * 0.58, y, z - Math.sin(h) * 0.58, h + (crH(x, z, 44) - 0.5) * 0.08, col); bale(gb, x + Math.cos(h) * 0.58, y, z + Math.sin(h) * 0.58, h + (crH(x, z, 45) - 0.5) * 0.08, col);
+            bale(gb, x, y + 0.44, z, h + (crH(x, z, 46) - 0.5) * 0.2, [col[0] * 1.04, col[1] * 1.04, col[2] * 1.02]); }
           else { box(g, x, y - 0.05, z, 2.3, 0.35, 0.6, T.hd[i], CONC, CONCT, true); box(g, x, y + 0.3, z, 2.3, 0.5, 0.32, T.hd[i], CONC, CONCT, true); }   // (a concrete block: a wide foot, a narrower top)
           bales.push([x, z]); exclPush(x, z, 1); prev = null; pk = bt; continue; }
         const P0 = [x, y, z];
         if (prev && pk === bt && Math.hypot(x - prev[0], z - prev[2]) < 3.6) { const g = fGB.get(x, z), hgt = bt === 2 ? 1.12 : 1.2, u0 = bt === 2 ? 0 : 0.5, u1 = u0 + 0.5;
-          g.quadO([prev[0], prev[1] - 0.05, prev[2]], [x, y - 0.05, z], [x, y + hgt, z], [prev[0], prev[1] + hgt, prev[2]], W1, [(x + prev[0]) / 2 - T.nx[i] * side, y + 0.5, (z + prev[2]) / 2 - T.nz[i] * side], [[u0, 0.02], [u1, 0.02], [u1, 0.98], [u0, 0.98]]);
+          g.quadO([prev[0], prev[1] - 0.05, prev[2]], [x, y - 0.05, z], [x, y + hgt, z], [prev[0], prev[1] + hgt, prev[2]], W1, [(x + prev[0]) / 2 - T.nx[i] * side, y + 0.5, (z + prev[2]) / 2 - T.nz[i] * side], [[u0, 0.51], [u1, 0.51], [u1, 0.99], [u0, 0.99]]);
           const hs = crH(x, z, 41); if (hs < 0.34 && s > sStart - 20 && s < sFin + 20) {   // a sponsor's banner tied to the barrier (the game's own brands), readable from the road
             const k = Math.floor(crH(x, z, 42) * 8), bu = (k % 2) * 0.5, bv = 1 - Math.floor(k / 2) * 0.25, L = Math.hypot(x - prev[0], z - prev[2]);
             bannerQ((x + prev[0]) / 2, Math.min(y, prev[1]) + (bt === 2 ? 0.22 : 0.3), (z + prev[2]) / 2, T.nx[i], T.nz[i], L - 0.15, bt === 2 ? 0.62 : 0.7, bv - 0.25, bv, bu, bu + 0.5, spG.get(x, z)); } }
@@ -7697,6 +7711,22 @@ const World = (function () {
     if (out.vesilinna) { const V = out.vesilinna; for (let k = 0; k < 40; k++) { const a = k / 40 * TAU, px = V.x + Math.cos(a) * 7.6, pz = V.z + Math.sin(a) * 6.1; if (crH(px, pz, 33) < 0.35) continue; crowdPut(CR, px, V.top, pz, Math.cos(a), Math.sin(a), { flag: 0.08 }, 1); } }
     for (const [bx, bz, ii, sd] of closedAt) { const mx = bx + T.tx[ii] * 1.9, mz = bz + T.tz[ii] * 1.9; crowdPut(CR, mx, hjGround(mx, mz), mz, -T.nx[ii] * sd, -T.nz[ii] * sd, { col: [1, 0.5, 0.06], flag: 0 }, 1); }   // (the marshals, hi-vis orange)
     for (const e of CR.circ) exclPush(e.x, e.z, e.r);   // (the trees keep clear of the crowds)
+    let nCars = 0;
+    { // the car parks full of the spectators' cars (one instanced car, its colour per instance): perpendicular bays along each car park's long side, two rows to an aisle
+      const g = new GB(), BODY = [1, 1, 1], GLASS = [0.2, 0.23, 0.26], DARK = [0.16, 0.16, 0.17];
+      box(g, 0, 0.18, 0, 4.3, 0.72, 1.76, 0, BODY, BODY, true); box(g, -0.25, 0.9, 0, 2.3, 0.58, 1.5, 0, GLASS, BODY, true); box(g, 0, 0.12, 0, 4.36, 0.16, 1.8, 0, DARK, DARK, true);
+      const cg = g.geometry(); cg.computeBoundingSphere(); const CARS = new IChunks(cg, new THREE.MeshLambertMaterial({ vertexColors: true }), 160);
+      const PAL = [[0.92, 0.92, 0.9], [0.92, 0.92, 0.9], [0.12, 0.12, 0.13], [0.12, 0.12, 0.13], [0.62, 0.63, 0.65], [0.62, 0.63, 0.65], [0.36, 0.37, 0.4], [0.14, 0.2, 0.42], [0.55, 0.1, 0.09], [0.16, 0.3, 0.22], [0.75, 0.68, 0.55]];
+      for (const A of P.areas) { if (A.t !== 5) continue; const poly = A.poly, n = poly.length; let bl = 0, dx = 1, dz = 0, cx = 0, cz = 0;
+        for (let k = 0; k < n; k++) { const [ax, az] = poly[k], [bx, bz] = poly[(k + 1) % n], l = Math.hypot(bx - ax, bz - az); cx += ax / n; cz += az / n; if (l > bl) { bl = l; dx = (bx - ax) / l; dz = (bz - az) / l; } }
+        let u0 = 1e9, u1 = -1e9, v0 = 1e9, v1 = -1e9; for (const [x, z] of poly) { const a2 = (x - cx) * dx + (z - cz) * dz, b2 = -(x - cx) * dz + (z - cz) * dx; u0 = Math.min(u0, a2); u1 = Math.max(u1, a2); v0 = Math.min(v0, b2); v1 = Math.max(v1, b2); }
+        for (let v = v0 + 2.8, row = 0; v < v1 - 2.4; v += row % 2 ? 11.2 : 5.2, row++) for (let u = u0 + 1.6; u < u1 - 1.2; u += 2.6) {   // (a bay 2.6 m wide, 5.2 m deep; a 6 m aisle after every second row)
+          const x = cx + dx * u - dz * v, z = cz + dz * u + dx * v; if (crH(x, z, 71) > 0.68 || !inPoly(poly, x, z) || polyDist(poly, x, z) < 2.3 || onBld(x, z) || excluded(x, z)) continue;
+          const nn = hjNear(x, z); if (nn.i >= 0 && nn.dd < 4) continue;
+          CARS.add(x, hjGround(x, z), z, -Math.atan2(dx, -dz) + (crH(x, z, 72) - 0.5) * 0.08 + (crH(x, z, 73) < 0.5 ? Math.PI : 0), 1, 1, PAL[Math.floor(crH(x, z, 74) * PAL.length)]); nCars++; }
+      }
+      CARS.addTo(root, true);
+    }
     // YLEISÖALUE boards where the big crowds begin
     for (const [a, b, rows] of C1) if (rows >= 4) for (const sd of [-1, 1]) { const [px, pz, ii] = onSide(sAt(a) - 3, sd, 0.6); if (hard(px, pz) || nearDD(px, pz) < 0.2) continue; const py = hjGround(px, pz), g = scen.get(px, pz);
       for (const u of [-1.05, 1.05]) box(g, px + T.tx[ii] * u, py - 0.2, pz + T.tz[ii] * u, 0.08, 2.0, 0.08, T.hd[ii], [0.35, 0.3, 0.24]);
@@ -7867,7 +7897,7 @@ const World = (function () {
     }
     crowdFinish(CR, root, out);
     pkSky({ root, tex, out, sStart, gH: hjGround, far: true });
-    out.stats = { trees: nTrees, tiles: G.ntx * G.ntz, buildings: nBld, bales: bales.length };   // (read by the tests)
+    out.stats = { trees: nTrees, tiles: G.ntx * G.ntz, buildings: nBld, bales: bales.length, cars: nCars };   // (read by the tests)
     return out;
   }
 
