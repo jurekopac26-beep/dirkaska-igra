@@ -186,6 +186,13 @@ const Core = (function () {
         }
         for (let i = 0; i < N; i++) { this.bl[i] = Math.max(this.bl[i], this.w + W[0][i] + 1.8); this.br[i] = Math.max(this.br[i], this.w + W[1][i] + 1.8); }
       }
+      // avalanche galleries over the road (def.galleries = [[from, to, side], ...], metres after the start line; open roads: Los Caracoles): the
+      // barriers close in to the gallery's wall and pillars 1.6 m past the road's edges, eased in and out over 25 m at its portals
+      if (def.galleries && open) for (const [a, b] of def.galleries) for (let d = a - 25; d <= b + 25; d += ds / 2) {
+        const i = Math.floor((this.startS + d) / ds); if (i < 0 || i >= N) continue;
+        const f = Math.min(sstep(a - 25, a, d), sstep(b + 25, b, d)), t = this.w + 1.6;
+        if (this.bl[i] > t) this.bl[i] = lerp(this.bl[i], t, f); if (this.br[i] > t) this.br[i] = lerp(this.br[i], t, f);
+      }
     }
 
     // the puddles: in the dips of the profile first (the water runs down into them), then spread along the rest of the run, some on the
@@ -1677,6 +1684,7 @@ const Core = (function () {
     { len: 11.8, wid: 2.5, mass: 12500, v0: [11, 13], lat: 1.7, acc: 0.8, dec: 2.2, lane: 0.52, dl: 0.7 },  // 2 bus
     { len: 2.1, wid: 0.8, mass: 290, v0: [17, 22], lat: 3.4, acc: 3.2, dec: 4.5, lane: 0.42, dl: 1.6 },      // 3 motorbike
     { len: 1.8, wid: 0.6, mass: 90, v0: [4.2, 6.2], lat: 2.6, acc: 0.6, dec: 3.0, lane: 0, dl: 0.8 },        // 4 bicycle (uphill; downhill 2.1 x as fast; at the road's edge)
+    { len: 16.5, wid: 2.55, mass: 32000, v0: [8.5, 11.5], lat: 1.5, acc: 0.45, dec: 2.0, lane: 0.53, dl: 0.55 },   // 5 a truck and its semi-trailer (Los Caracoles: def.traffic; a big vehicle as the bus, kind 2, on these figures)
   ];
   const TF_PED = 75;   // kg: a person
   const TF_HIT_PEN = 5;   // s: the time penalty in the duel for knocking down someone on foot or on a bicycle
@@ -1705,16 +1713,19 @@ const Core = (function () {
       for (let i = 1; i < N; i++) dn[i] = Math.min(dn[i], Math.sqrt(dn[i - 1] * dn[i - 1] + 4 * ds));
       this.vp = [dn, up];
     }
-    _vpAt(v) { return this.vp[v.dir > 0 ? 1 : 0][this.T.idx(v.s)] * Math.sqrt(TFK[v.kind].lat / 2.6) * (v.kind === 4 && v.dir < 0 ? 0.8 : 1); }
-    _lane(v) { const w = this.T.w; return v.kind === 4 ? v.dir * (w - 0.7) : v.dir * w * TFK[v.kind].lane; }
+    _vpAt(v) { return this.vp[v.dir > 0 ? 1 : 0][this.T.idx(v.s)] * Math.sqrt(TFK[v.p].lat / 2.6) * (v.kind === 4 && v.dir < 0 ? 0.8 : 1); }
+    _lane(v) { const w = this.T.w; return v.kind === 4 ? v.dir * (w - 0.7) : v.dir * w * TFK[v.p].lane; }
 
-    // the vehicles (uphill one every ~290 m, downhill one every ~250 m; one in 14 a bus, one in 6 a van, one in 12 a motorbike; a cyclist every
-    // ~650 m each way; the first 180 m past the start line clear of uphill traffic) and the people
+    // the vehicles (uphill one every ~290 m, downhill one every ~250 m; one in 14 a bus, one in 6 a van, one in 12 a motorbike, or the road's own
+    // mix, def.traffic: Los Caracoles' trucks; a cyclist every ~650 m each way, or def.traffic.bike; the first 180 m past the start line clear of
+    // uphill traffic) and the people
     _populate(dens) {
-      const T = this.T, R = this.R;
+      const T = this.T, R = this.R, M = T.def.traffic, PK = [0, 1, 2, 3, 5];
       for (const dir of [1, -1]) {
-        const a = dir > 0 ? T.startS + 180 : this.s0 + 60, L = this.s1 - 30 - a, n = Math.max(1, Math.round(L / (dir > 0 ? 290 : 250) * dens)), nb = Math.max(1, Math.round(L / 650 * dens));
-        for (let k = 0; k < n; k++) { const u = R(); this._veh(dir, u < 0.07 ? 2 : u < 0.24 ? 1 : u < 0.32 ? 3 : 0, a + (k + 0.15 + 0.7 * R()) * L / n); }
+        const a = dir > 0 ? T.startS + 180 : this.s0 + 60, L = this.s1 - 30 - a, n = Math.max(1, Math.round(L / (dir > 0 ? 290 : 250) * dens)), nb = Math.max(1, Math.round(L / ((M && M.bike) || 650) * dens));
+        for (let k = 0; k < n; k++) { const u = R();
+          if (M) { let q = 0, c = M.mix[0]; while (q < M.mix.length - 1 && u >= c) c += M.mix[++q]; const p = PK[q]; this._veh(dir, p === 5 ? 2 : p, a + (k + 0.15 + 0.7 * R()) * L / n, p); }   // (a truck: kind 2 on its own figures)
+          else this._veh(dir, u < 0.07 ? 2 : u < 0.24 ? 1 : u < 0.32 ? 3 : 0, a + (k + 0.15 + 0.7 * R()) * L / n); }
         for (let k = 0; k < nb; k++) this._veh(dir, 4, a + (k + 0.1 + 0.8 * R()) * L / nb);
       }
       // walkers on the sidewalks (one every ~30 m of each side), walking their stretch up and down
@@ -1725,13 +1736,14 @@ const Core = (function () {
       // people waiting at the bus stops
       for (const st of this.stops) { const n = 1 + Math.floor(R() * 2.6); for (let k = 0; k < n; k++) { const p = this._ped(R() < 0.45 ? 1 : 0, st.s + (R() - 0.5) * 5, st.side, 'stop'); p.a0 = p.a1 = p.s; } }
       // hikers at the road's edge by the huts and the chapel (their stretch 250 m around it; they cross now and then), a few on the long stretches
-      const huts = T.names.filter(q => /dom|koča|kapelica|Vršič|Jasna|deklica/i.test(q.n)).map(q => T.startS + q.d);
+      const huts = T.names.filter(q => /dom|koča|kapelica|Vršič|Jasna|deklica|Mirador|Portillo/i.test(q.n)).map(q => T.startS + q.d);   // (Los Caracoles: the viewpoint, Portillo)
       for (const s0 of huts) for (let k = 0; k < 4; k++) { const s = s0 + (R() - 0.5) * 220, p = this._ped(1, s, R() < 0.5 ? 1 : -1, 'walk'); p.a0 = s0 - 125; p.a1 = s0 + 125; p.hike = 1; }
       for (let s = T.startS + 2300; s < T.finishS - 200; s += 700 + R() * 700) { const p = this._ped(1, s, R() < 0.6 ? 1 : -1, 'walk'); p.a0 = s - 400; p.a1 = s + 400; p.hike = 1; }
     }
-    _veh(dir, kind, s) {
-      const K = TFK[kind], R = this.R;
-      const v = { id: ++this.nid, kind, dir, s, d: 0, dT: 0, v: 0, v0: lerp(K.v0[0], K.v0[1], R()) * (kind === 4 && dir < 0 ? 2.1 : 1), len: K.len, wid: K.wid, mass: K.mass,
+    _veh(dir, kind, s, p) {   // p: the figures of the vehicle (TFK; its kind's own unless a truck)
+      if (p == null) p = kind;
+      const K = TFK[p], R = this.R;
+      const v = { id: ++this.nid, kind, p, dir, s, d: 0, dT: 0, v: 0, v0: lerp(K.v0[0], K.v0[1], R()) * (kind === 4 && dir < 0 ? 2.1 : 1), len: K.len, wid: K.wid, mass: K.mass,
         col: R(), st: 0, t: 0, x: 0, y: 0, z: 0, h: 0, vx: 0, vz: 0, w: 0, i: 0, k: 0, brake: false, horn: 0, off: false, q: { i: -1 }, stopT: 0, stopS: -1, wait: 0, pass: null, rider: null, lean: 0 };
       v.d = v.dT = this._lane(v); v.v = Math.min(v.v0, this._vpAt(v)) * 0.85; this._pose(v, 0);
       this.veh.push(v); return v;
@@ -1783,7 +1795,7 @@ const Core = (function () {
 
     // one vehicle on its lane: what is ahead of it, its speed (IDM), its place across the road (lane, pulling over, dodging, going round)
     _drive(a, dt) {
-      const T = this.T, K = TFK[a.kind], dir = a.dir, L = dir > 0 ? this.up : this.dn, k = L[a.k] === a ? a.k : L.indexOf(a), hw = a.wid / 2;
+      const T = this.T, K = TFK[a.p], dir = a.dir, L = dir > 0 ? this.up : this.dn, k = L[a.k] === a ? a.k : L.indexOf(a), hw = a.wid / 2;
       let gap = 1e9, lv = 0, lead = null, still = false;
       const cand = (g, vs, o, st) => { if (g < gap) { gap = g; lv = vs; lead = o; still = st; } };
       const over = (d, w) => Math.abs(d - a.d) < (w + a.wid) / 2 + 0.25;

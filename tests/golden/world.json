@@ -305,20 +305,22 @@
    "roadwear:MeshLambertMaterial": "446ce30d"
   }
  },
- "katu": {
-  "meshes": 1636,
-  "verts": 1050515,
-  "instances": 18786,
-  "props": 106,
-  "crowd": 1243,
-  "world": "529d3e14",
-  "propsHash": "8a1adf4f",
-  "floor": "8e064716/10304",
+ "caracoles": {
+  "meshes": 2705,
+  "verts": 1346444,
+  "instances": 35631,
+  "props": 266,
+  "crowd": 1964,
+  "world": "e061b4ba",
+  "propsHash": "5a55708e",
+  "floor": "cd97797d/22736",
   "groups": {
-   "-:MeshLambertMaterial": "a5eba6cf",
-   "-:MeshPhongMaterial": "99982557",
-   "-:MeshBasicMaterial": "5d3d7fc9",
-   "crowd:MeshLambertMaterial": "a63278dc"
+   "-:MeshLambertMaterial": "2880b752",
+   "-:MeshPhongMaterial": "5e5b862d",
+   "-:MeshBasicMaterial": "84d4fb70",
+   "crowd:MeshLambertMaterial": "938890c6",
+   "tyremarks:MeshBasicMaterial": "95b8835b",
+   "roadwear:MeshLambertMaterial": "5c2c4ad"
   }
  }
 }
