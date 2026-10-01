@@ -17,7 +17,11 @@
   };
   const CTRL_HELP_CS = 'Levi palec: levo in desno, desni: plin in zavora. Drži smer – avto sam zadrsa z nosom v ovinek in se na izhodu sam poravna; zavora v ovinku ga zavrti.';
   const CTRL_NAME = { buttons: 'Tipke', wheel: 'Volan', tilt: 'Nagib' };
-  const CAR_DESC = { kaze: 'Rad obrne rep, rojen za drift.', vortex: 'Veliko oprijema, stabilen tudi na robu.', pico: 'Lahek in okreten, rad podvija.', strega: 'Oster in živahen, hitro zavrti.', rally: 'Relijski dirkač iz 80-ih, ogromno moči, rojen za drift.', p206: 'Pravi 3D model, lahek in natančen v ovinkih.', formula: 'Odprta kolesa in krila, ki ga pri hitrosti pritisnejo ob cesto. Zavira izjemno, na travi in makadamu pa drsi. Z njim dirkaš proti samim formulam.' };
+  const CAR_DESC = { kaze: 'Rad obrne rep, rojen za drift.', vortex: 'Veliko oprijema, stabilen tudi na robu.', pico: 'Lahek in okreten, rad podvija.', strega: 'Oster in živahen, hitro zavrti.', rally: 'Relijski dirkač iz 80-ih, ogromno moči, rojen za drift.', p206: 'Pravi 3D model, lahek in natančen v ovinkih.', formula: 'Odprta kolesa in krila, ki ga pri hitrosti pritisnejo ob cesto. Zavira izjemno, na travi in makadamu pa drsi. Z njim dirkaš proti samim formulam.',
+    lm: 'Prototip za 24 ur Le Mansa: zaprta kabina, veliko zadnje krilo. Na ravninah najhitrejši avto v igri, v hitrih ovinkih ga krila držijo ob cesti. Z njim dirkaš proti samim prototipom.',
+    muscle: 'Ameriški »muscle car« iz 70-ih z velikim V8. Na ravnini ga je težko ujeti, v ovinkih pa rad obrne rep: kralj drifta.',
+    ev: 'Električni hiperšportnik s štirimi motorji: najhitrejši pospešek med cestnimi avti in skoraj brez zvoka, a težek.',
+    truck: 'Terenski dirkalni tovornjak z velikimi kolesi. Na asfaltu počasen, na makadamu in travi pa ima največ oprijema in najhitreje pospeši; po skokih mehko pristane.' };
 
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
@@ -1077,14 +1081,15 @@
     $('board-body').innerHTML = h; $('board-body').scrollTop = 0;
   }
   /* ---------------- PIKES PEAK: race classes, the summit ceremony, TV splits ---------------- */
-  // Classes as at the real race, from the car's performance (Core.MODELS): the formula (735 kW, wings) Unlimited; the purpose-built AWD
-  // cars (BURJA R7, VORTEX) Open; the quick road-based coupes (STREGA, KAZE) Pikes Peak Open; the light hatchbacks (PICO, 206) Time Attack 1.
+  // Classes as at the real race, from the car's performance (Core.MODELS): the formula (735 kW, wings) and the TAIFUN LM prototype Unlimited;
+  // the AWD cars (BURJA R7, VORTEX, STRELA EV, SAMUM 4x4) Open; the quick rear-driven road cars (STREGA, KAZE, VIHAR V8) Pikes Peak Open;
+  // the light hatchbacks (PICO, 206) Time Attack 1.
   // Each class keeps its own top 5 in the track's records (R0.pkCls[class], per physics and weather like the rest of the record). Times set
   // before the classes (R0.board) go, once, into the class of the car they were set with. The overall board, best time and ghost are as they were.
   // At each checkpoint: the TV pill (split time, the difference to the class best run's split) and the CP1-CP4 bar (#h-sec); at the summit
   // the ceremony (#pk-cer) for the 4.2 s before the results. Only a Pikes Peak time trial alone (never online).
   const PK_CLS = [{ id: 'unl', name: 'Unlimited' }, { id: 'open', name: 'Open' }, { id: 'ppo', name: 'Pikes Peak Open' }, { id: 'ta1', name: 'Time Attack 1' }];
-  const PK_CAR = { formula: 'unl', rally: 'open', vortex: 'open', strega: 'ppo', kaze: 'ppo', pico: 'ta1', p206: 'ta1' };
+  const PK_CAR = { formula: 'unl', lm: 'unl', rally: 'open', vortex: 'open', ev: 'open', truck: 'open', strega: 'ppo', kaze: 'ppo', muscle: 'ppo', pico: 'ta1', p206: 'ta1' };
   const pk = { on: false, cls: null, best: null };
   const pkIs = (d) => !!d && d.id === 'pikes';
   function pkClsOf(carId, carName) {   // (an unknown car: by its power and drive; an entry with no known car: Open, the class of the game's own car)
@@ -1822,7 +1827,7 @@
     if (race.drsLast) { const st = P.drs ? 'open' : P.drsA ? 'arm' : ''; if ($('h-drs').className !== st) $('h-drs').className = st; }
     if (P.drsEv) { P.drsEv = null; if (phase === 'racing') { Sfx.beep(1320, 0.07, 0.08); if (drsN++ % 2 === 0) Comm.say('drs', null, 1); } }   // the flap opens (the commentator: every other time)
     setText('h-speed', String(Math.round(P.speed * 3.6)));
-    setText('h-gear', P.gear === -1 ? 'R' : String(P.gear));
+    setText('h-gear', P.gear === -1 ? 'R' : P.m.ev ? 'D' : String(P.gear));   // (the electric car: one gear, D)
     drawSpeedo(P);
     drawMinimap();
     updateNote(P);
@@ -1867,6 +1872,7 @@
   /* ---------------- commentator (English) ---------------- */
   const PART_EN = { bumperF: 'front bumper', bumperR: 'rear bumper', hood: 'bonnet', trunk: 'boot lid', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'front wing', fenderR: 'front wing' };
   const PART_EN_F = { bumperF: 'front wing', bumperR: 'rear wing', hood: 'nose cone', trunk: 'engine cover', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'bargeboard', fenderR: 'bargeboard' };   // (the formula's parts)
+  const PART_EN_LM = { bumperF: 'splitter', bumperR: 'rear wing', hood: 'nose', trunk: 'engine cover', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'louvre panel', fenderR: 'louvre panel' };   // (the prototype's)
   const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', ouninpohja: 'Ouninpohja', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka', vrsic: 'the Vrshich pass' };
   const cev = { wall: 0, car: 0 };          // impacts collected per physics step
   let cs = null;
@@ -1907,7 +1913,7 @@
     if (P.air && cs.jumpRoll && !cs.jumpSaid && P.airT > 0.45 && cool('jump', 9)) { cs.jumpSaid = true; Comm.say('jump', null, 1); }
     if (!P.air && cs.wasAir) { if (!cs.jumpSaid && (P.impactVY || 0) < -10 && cool('land', 12)) Comm.say('land', null, 1); cs.jumpSaid = false; }
     cs.wasAir = !!P.air;
-    { const n = Object.keys(P.lost).length; if (n > (cs.lostN || 0)) { const last = Object.keys(P.lost)[n - 1]; cs.lostN = n; if (cool('part', 6)) Comm.say('partLost', { part: (P.m.body === 'formula' ? PART_EN_F : PART_EN)[last] || 'a panel' }, 2); } }
+    { const n = Object.keys(P.lost).length; if (n > (cs.lostN || 0)) { const last = Object.keys(P.lost)[n - 1]; cs.lostN = n; if (cool('part', 6)) Comm.say('partLost', { part: (P.m.body === 'formula' ? PART_EN_F : P.m.body === 'lm' ? PART_EN_LM : PART_EN)[last] || 'a panel' }, 2); } }
     if (dmgOn() && P.dmg > 0.5 && !cs.dmg1) { cs.dmg1 = true; if (!pitHint) Comm.say('damage', null, 2); }   // (on a track with pits the pit advice said it already)
     if (dmgOn() && P.dmg > 0.8 && !cs.dmg2) { cs.dmg2 = true; Comm.say('heavyDamage', null, 3); }
     // knocked-over trackside props
