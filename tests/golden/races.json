@@ -748,5 +748,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "94c2f8bb12b4204ef74ec98b"
+ },
+ "montvernier/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 153.66,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "a6e8504ca778ef85e4f16e1b"
+ },
+ "montvernier/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 163.78,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "ceb0873741354f5c536cbea1"
+ },
+ "montvernier/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 143.72,
+  "spins": 6,
+  "walls": 19,
+  "rescues": 1,
+  "nan": false,
+  "digest": "cbcd0d16dfbd36322e88e26a"
+ },
+ "montvernier/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 145.3,
+  "spins": 0,
+  "walls": 7,
+  "rescues": 0,
+  "nan": false,
+  "digest": "b7010934c7640c2bec7615d1"
+ },
+ "montvernier/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 153.72,
+  "spins": 1,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "6a17e13527181a0dc019ae46"
  }
 }

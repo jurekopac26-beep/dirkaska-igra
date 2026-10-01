@@ -1468,5 +1468,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "montvernier/race/cs": {
+  "digest": "4fa05695ccd210c6ed862059",
+  "lead": 1518.4,
+  "car0": [
+   -258.28,
+   -588.2
+  ],
+  "cover": {
+   "dmg": 0.37,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "montvernier/demo/cs": {
+  "digest": "35b48bcc03b98b444395882b",
+  "lead": 1591.3,
+  "car0": [
+   -190.82,
+   -605.76
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "montvernier/upg/cs": {
+  "digest": "e728e720d9dd842ac6e64635",
+  "lead": 1582.6,
+  "car0": [
+   -161.24,
+   -574.34
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "montvernier/crash/cs": {
+  "digest": "213d6f692f5e37f6991fbef6",
+  "lead": 1525.4,
+  "car0": [
+   -183.66,
+   -576.82
+  ],
+  "cover": {
+   "dmg": 0.78,
+   "loose": 7,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "montvernier/formula/cs": {
+  "digest": "11dc11ef99d55c7fddd7b316",
+  "lead": 1624.1,
+  "car0": [
+   -269.84,
+   -580.51
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 8,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "montvernier/lm/cs": {
+  "digest": "77d3d1b22bd107aaebc92167",
+  "lead": 1601.6,
+  "car0": [
+   -211.78,
+   -585.83
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "montvernier/car/cs": {
+  "digest": "38ceba0d64ae58372bfced22",
+  "lead": 1524.3,
+  "car0": [
+   -253.14,
+   -586.41
+  ],
+  "cover": {
+   "dmg": 0.6,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
  }
 }

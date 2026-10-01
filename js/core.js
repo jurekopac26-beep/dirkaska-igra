@@ -398,12 +398,17 @@ const Core = (function () {
         const fu = sstep(c.upZ + 30, c.upZ, cdist(i, c.up)), fl = sstep(c.loZ + 24, c.loZ, cdist(i, c.lo));
         for (const [f, t] of [[fu, w + 3], [fl, w + 3.4]]) if (f > 0) { if (BL[i] > t) BL[i] = lerp(BL[i], t, f); if (BR[i] > t) BR[i] = lerp(BR[i], t, f); }
       }
-      // walls the track sets itself (def.walls = [[from, to, side (-1 left, 1 right), metres past the road edge], ...], metres after the start
-      // line, closed circuits): a pit wall right by the road, eased in and out over 20 m
-      if (this.def.walls && !open) {
+      // walls the track sets itself (def.walls = [[from, to, side (-1 left, 1 right; open roads also 0: both), metres past the road edge], ...],
+      // metres after the start line): a pit wall right by the road (closed circuits), the stone parapets of the Lacets de Montvernier's ladder (an
+      // open road: never farther out than the road's own barriers), eased in and out over 20 m
+      if (this.def.walls) {
         const i0 = this.def.start ? this.nearestIdx(this.def.start[0], this.def.start[1]) : 0;
-        for (const [a, b, side, off] of this.def.walls) { const arr = side > 0 ? BR : BL;
-          for (let d = a - 20; d <= b + 20; d += ds) { const i = ((i0 + Math.round(d / ds)) % N + N) % N, f = Math.min(sstep(a - 20, a, d), sstep(b + 20, b, d)); arr[i] = lerp(arr[i], w + off, f); } }
+        for (const [a, b, side, off] of this.def.walls) for (const arr of side > 0 ? [BR] : side < 0 || !open ? [BL] : [BL, BR])
+          for (let d = a - 20; d <= b + 20; d += ds) {
+            const f = Math.min(sstep(a - 20, a, d), sstep(b + 20, b, d));
+            if (!open) { const i = ((i0 + Math.round(d / ds)) % N + N) % N; arr[i] = lerp(arr[i], w + off, f); continue; }
+            const i = i0 + Math.round(d / ds); if (i >= 0 && i < N) arr[i] = Math.min(arr[i], lerp(arr[i], w + off, f));
+          }
       }
       this.bl = BL; this.br = BR;
       // curbs where curvature is meaningful (both sides), dilated — but not on makadam (rally) roads

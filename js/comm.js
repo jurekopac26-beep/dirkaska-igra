@@ -34,6 +34,9 @@ const Comm = (() => {
     // a race up an open road (Vršič, the north side: 24 cobbled hairpins up to the pass)
     introPass: ['Welcome to {track}! Thirteen cars, twelve kilometres and twenty-four hairpins up to the top, and you start {grid}.', 'Here we are in Kranjska Gora, at the foot of {track}. A race all the way up the mountain, and you line up {grid}.', 'Welcome to {track}, the Russian Road! Thirteen cars heading for the pass, and you start {grid}.'],
     goPass: ['Lights out, and away they go, up the mountain!', "And they're off! Thirteen cars heading for the pass!", 'Green light! The pack charges up the valley!', 'Go, go, go! Next stop, the top of the pass!'],
+    // a race up the Lacets de Montvernier (18 hairpins stacked on the cliff above the Maurienne, from Pontamafrey to Montvernier)
+    introMv: ['Welcome to {track}! Thirteen cars and eighteen hairpins stacked up the cliff, and you start {grid}.', 'Here we are in Pontamafrey, at the foot of the lacets. Eighteen hairpins to Montvernier, and you line up {grid}.', 'Welcome to {track}, where the Tour de France climbs! Thirteen cars up the ladder, and you start {grid}.'],
+    goMv: ['Lights out, and up the lacets they go!', "And they're off! Eighteen hairpins to the top!", 'Green light! The pack charges towards the first lacet!'],
     introOne: ['Welcome to {track}, the Green Hell! One lap of more than twenty kilometres, and you start {grid}.', 'Here we are at {track}. One lap, a full field, and you line up {grid} on the grid.', 'Welcome to {track}! Twenty kilometres of forest, crests and jumps. One lap, and you start {grid}.'],
     // the Nordschleife's famous places
     nrFlug: ['Over the Flugplatz, and the car goes light!', 'Flugplatz! Airborne over the crest!'],
@@ -112,6 +115,8 @@ const Comm = (() => {
     // the time trial up a mountain pass (Vršič: the hairpins, the clock)
     introPassTT: ['Welcome to {track}! Twenty-four hairpins, most of them cobbled, and just you and the clock.', 'Here we are in Kranjska Gora, at the foot of {track}. {cps} checkpoints between you and the top of the pass.', 'Welcome to {track}! No rivals this time, only the clock. Get to the pass as fast as you can.'],
     goPassTT: ['Green light! The clock is running!', 'Go! Attack the pass!', "And you're away! Up the hairpins!"],
+    introMvTT: ['Welcome to {track}! Eighteen hairpins, and just you and the clock.', 'Here we are in Pontamafrey. {cps} checkpoints between you and the village of Montvernier.', 'Welcome to {track}! No rivals this time, only the clock and the hairpins.'],
+    goMvTT: ['Green light! The clock is running!', 'Go! Attack the lacets!', "And you're away! Up the ladder!"],
     cpFirst: ['Checkpoint {cp}, {time}.', 'Through checkpoint {cp}. Keep climbing!', 'Checkpoint {cp}. Up we go!'],
     cpFast: ['Checkpoint {cp}, {delta} seconds up on your best!', 'Green split at checkpoint {cp}! {delta} seconds faster!', 'Checkpoint {cp}. You are {delta} seconds ahead of your record pace!'],
     cpEven: ['Checkpoint {cp}, dead level with your best split!', 'Checkpoint {cp}. Right on your record pace, not a hair in it!'],

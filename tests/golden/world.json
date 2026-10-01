@@ -275,5 +275,23 @@
    "tyremarks:MeshBasicMaterial": "b6a15a32",
    "roadwear:MeshLambertMaterial": "446ce30d"
   }
+ },
+ "montvernier": {
+  "meshes": 1233,
+  "verts": 840710,
+  "instances": 11484,
+  "props": 61,
+  "crowd": 2092,
+  "world": "b92f8176",
+  "propsHash": "339b4640",
+  "floor": "bd92f252/8316",
+  "groups": {
+   "-:MeshLambertMaterial": "4d37d009",
+   "-:MeshPhongMaterial": "85856f0d",
+   "-:MeshBasicMaterial": "c7da0e5a",
+   "crowd:MeshLambertMaterial": "2e213b90",
+   "tyremarks:MeshBasicMaterial": "c05334a6",
+   "roadwear:MeshLambertMaterial": "2f033c26"
+  }
  }
 }
