@@ -8,7 +8,7 @@ import { serve, launch, openGame, startTrack, trackIds, checker } from './lib.mj
 
 const T = checker('graphics: car glint, water, worn tarmac');
 const WATER = ['jezero', 'riviera', 'ljubljana', 'monaco', 'gozd', 'toskana', 'suzuka', 'ouninpohja', 'ouninpohja-r'];   // (with a shore band; Pikes Peak: its reservoir only)
-const NO_WEAR = ['gora', 'ouninpohja', 'ouninpohja-r', 'pikes'];
+const NO_WEAR = ['gora', 'ouninpohja', 'ouninpohja-r', 'pikes', 'pikesg'];   // (pikesg: Pikes Peak on its historic gravel road)
 const srv = await serve();
 const browser = await launch();
 try {
@@ -33,7 +33,7 @@ try {
   for (const id of ids) {
     await startTrack(page, id);
     await frames(3);
-    const L = await look(), pk = id === 'pikes', why = [];
+    const L = await look(), pk = id === 'pikes' || id === 'pikesg', why = [];
     const bodies = Object.keys(L.cars.body), paints = Object.keys(L.cars.paint);
     if (!bodies.length || bodies.some(k => k !== (pk ? 'pkCarB' : 'dirtyCarCg'))) why.push('bodies ' + JSON.stringify(L.cars.body));
     if (paints.some(k => k !== (pk ? 'pkCarP' : 'carCg'))) why.push('paint ' + JSON.stringify(L.cars.paint));
