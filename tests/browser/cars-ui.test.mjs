@@ -141,6 +141,13 @@ try {
       !L.overflow && !overlap(L.cats, L.panel) && !overlap(L.strip, L.panel) && L.arrows.every(a => a.t >= L.strip.b && !overlap(a, L.cats)) && L.panelIds && L.next.b <= L.vh && L.catSel === 'dirkalni' && L.catIn && L.carIn &&
       L.stripIds.join() === 'mravlja,kozorog,tornado,strelica,tiger,bizon,formula,lm' && /^Dirkalni · 5\/8$/.test(L.cat),
       JSON.stringify({ panel: L.panel, arrows: L.arrows, catSel: L.catSel, catIn: L.catIn, carIn: L.carIn, strip: L.stripIds, cat: L.cat }));
+    // a short phone (360×640): the same rows, the arrows still below the strip, Naprej on the screen
+    await page.setViewportSize({ width: 360, height: 640 }); await wait(400);
+    const S6 = await page.evaluate(layout);
+    T.check('360×640: the rows across the top, the arrows below the strip, the rows clear of the panel, nothing off the screen',
+      S6.cats.t === 8 && S6.strip.b === 92 && S6.cats.r === S6.vw - 10 && S6.arrows.every(a => a.t >= S6.strip.b) && !overlap(S6.strip, S6.panel) && !S6.overflow && S6.next.b <= S6.vh && S6.catIn && S6.carIn,
+      JSON.stringify({ cats: S6.cats, strip: S6.strip, arrows: S6.arrows, panel: S6.panel, next: S6.next }));
+    await page.setViewportSize({ width: 390, height: 844 }); await wait(300);
     // the career: ✓ for the cars in the garage, the price for the others; the garage by category in the display order; upgrade prices by class
     const car = await page.evaluate(async () => {
       const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms));
