@@ -201,9 +201,9 @@ try {
       P.mode === 'police' && P.cars === 1 && P.tf && P.pol >= 1 && P.polHud && !P.duel && P.lbl === 'POLICIJA' && +P.pos >= 1 && /^\u2605+\u2606*$/.test(P.heat) && P.heat.length === 5 && P.road && P.road.pol >= 1 && P.road.lampOn && P.dist > 300,
       `${P.pol} patrol cars, HUD "${P.lbl} ${P.pos}" "${P.heat}", drawn ${JSON.stringify(P.road)}, ${Math.round(P.dist)} m, ${P.phase}`);
   }
-  // 6e. Katu-Jaryk, the descent: the card shows the drop; the run down to the flying finish on the autopilot: the altitude falling on the HUD (from
-  //     1.242 m) with the height profile, the co-driver's calls ready, the record under 'katu@cs', the descent's words on the results (Ponovi spust,
-  //     the splits with the altitudes), a medal line
+  // 6e. Katu-Jaryk, the descent: the card shows the drop; first the course flyover (def.fly: the captions in order, the camera down into the valley,
+  //     a key skips it); the run down to the flying finish on the autopilot: the altitude falling on the HUD (from 1.242 m) with the height profile,
+  //     the co-driver's calls ready, the record under 'katu@cs', the descent's words on the results (Ponovi spust, the splits with the altitudes), a medal line
   {
     const r = await page.evaluate(async () => {
       const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)), frame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -212,14 +212,22 @@ try {
       document.querySelector('[data-track="katu"]').click(); await wait(150); g.onAction('start');
       for (let k = 0; k < 1200 && !(g.race && g.race.track.def.id === 'katu'); k++) await wait(100);
       await frame();
+      const F = Render.pkFly, el = document.getElementById('pk-fly'), fly = { on: !!g.pkFly, show: el.className, cap: [el.children[1].textContent, el.children[2].textContent], names: [] };
+      for (let t = 0, k = -1; t <= F.DUR; t += 0.05) { const o = F.at(t); if (o && o.k >= 0 && o.k !== k) { k = o.k; fly.names.push(F.caps[k].n); } }
+      fly.y0 = F.at(0).shot.py; fly.y1 = F.at(F.DUR - 0.05).shot.py;   // (the camera: over the start, over the finish)
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'x' })); await frame(); fly.after = { on: !!g.pkFly, show: el.className };
       const alt0 = document.getElementById('h-alt').textContent, prof = document.getElementById('hud').classList.contains('ttp'), calls = g.codrv.calls;
       g.sim(60, true); await frame(); const alt1 = document.getElementById('h-alt').textContent;
       for (let i = 0; i < 300 && g.phase !== 'done'; i++) { g.sim(1, true); if (i % 10 === 0) await wait(0); }
       await wait(800);
       const rec = JSON.parse(localStorage.getItem('tdgp-records') || '{}').tracks || {}, head = [...document.querySelectorAll('#res-tt th')].map(e => e.textContent);
-      return { meta, alt0, alt1, prof, calls, phase: g.phase, t: g.race.player.finishTime, again: document.getElementById('res-restart').textContent, head: head.join('|'), sub: document.getElementById('res-sub').textContent, rec: rec['katu@cs'] };
+      return { meta, fly, alt0, alt1, prof, calls, phase: g.phase, t: g.race.player.finishTime, again: document.getElementById('res-restart').textContent, head: head.join('|'), sub: document.getElementById('res-sub').textContent, rec: rec['katu@cs'] };
     });
-    const a1 = +r.alt1.replace(/\D/g, '');
+    const a1 = +r.alt1.replace(/\D/g, ''), f = r.fly;
+    T.check('Katu-Jaryk: the course flyover first (START at 1.242 m, the captions in order down to the finish, the camera ~500 m lower over the finish), a key skips it',
+      f.on && f.show === 'show' && f.cap[0] === 'START' && f.cap[1] === '1.242 m' && f.names.join('|') === 'START|Prelaz Katu-Jaryk|Sedem serpentin|Prečka nad Čulišmanom|CILJ' &&
+      f.y0 - f.y1 > 400 && !f.after.on && f.after.show === '',
+      `${f.on ? 'on' : 'off'} "${f.cap.join(' ')}", captions ${f.names.join(' > ')}, camera ${Math.round(f.y0)} -> ${Math.round(f.y1)} m, after a key: ${JSON.stringify(f.after)}`);
     T.check('Katu-Jaryk: the card shows the drop, the altitude falling on the HUD with the profile, the co-driver\'s calls ready',
       /spust 559 m/.test(r.meta) && / kronometer/.test(r.meta) && r.alt0 === '1.242 m' && a1 > 683 && a1 < 1150 && r.prof && r.calls > 10,
       `card "${r.meta}", HUD "${r.alt0}" -> "${r.alt1}" after 60 s, profile ${r.prof}, ${r.calls} co-driver calls`);

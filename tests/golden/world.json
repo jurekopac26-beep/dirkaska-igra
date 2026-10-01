@@ -322,5 +322,23 @@
    "tyremarks:MeshBasicMaterial": "95b8835b",
    "roadwear:MeshLambertMaterial": "5c2c4ad"
   }
+ },
+ "katu": {
+  "meshes": 1763,
+  "verts": 1108001,
+  "instances": 21991,
+  "props": 105,
+  "crowd": 1271,
+  "world": "ae2d50f8",
+  "propsHash": "320edc2a",
+  "floor": "2299cbde/10304",
+  "groups": {
+   "-:MeshLambertMaterial": "321351fb",
+   "roadStrip:MeshLambertMaterial": "e16f3f94",
+   "-:MeshPhongMaterial": "99982557",
+   "-:MeshBasicMaterial": "43314877",
+   "rapids:MeshLambertMaterial": "a65a0a4d",
+   "crowd:MeshLambertMaterial": "1e1b3735"
+  }
  }
 }
