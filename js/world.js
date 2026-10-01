@@ -9986,11 +9986,11 @@ const World = (function () {
     P.cx0 = Math.floor(x0 / KTHC); P.cz0 = Math.floor(z0 / KTHC); P.ncx = Math.floor(x1 / KTHC) - P.cx0 + 1; P.ncz = Math.floor(z1 / KTHC) - P.cz0 + 1; P.cells = new Array(P.ncx * P.ncz);
     const add = (i) => { const k = (Math.floor(T.pz[i] / KTHC) - P.cz0) * P.ncx + Math.floor(T.px[i] / KTHC) - P.cx0; (P.cells[k] || (P.cells[k] = [])).push(i); };
     for (let i = 0; i < N; i += 2) add(i); if ((N - 1) % 2) add(N - 1);
-    // the samples with another leg of the road within 100 m (more than KTLA along it): the hairpin ladder (only there ktGap looks for that other leg)
+    // the samples with another leg of the road within 140 m (more than KTLA along it): the hairpin ladder (only there ktGap looks for that other leg)
     P.lad = new Uint8Array(N);
     for (let i = 0; i < N; i++) { const cx = Math.floor(T.px[i] / KTHC) - P.cx0, cz = Math.floor(T.pz[i] / KTHC) - P.cz0;
-      scan: for (let b = Math.max(0, cz - 4); b <= Math.min(P.ncz - 1, cz + 4); b++) for (let a = Math.max(0, cx - 4); a <= Math.min(P.ncx - 1, cx + 4); a++) { const L = P.cells[b * P.ncx + a]; if (!L) continue;
-        for (let q = 0; q < L.length; q++) { const j = L[q]; if (Math.abs(j - i) * T.ds >= KTLA && Math.hypot(T.px[j] - T.px[i], T.pz[j] - T.pz[i]) < 100) { P.lad[i] = 1; break scan; } } } }
+      scan: for (let b = Math.max(0, cz - 5); b <= Math.min(P.ncz - 1, cz + 5); b++) for (let a = Math.max(0, cx - 5); a <= Math.min(P.ncx - 1, cx + 5); a++) { const L = P.cells[b * P.ncx + a]; if (!L) continue;
+        for (let q = 0; q < L.length; q++) { const j = L[q]; if (Math.abs(j - i) * T.ds >= KTLA && Math.hypot(T.px[j] - T.px[i], T.pz[j] - T.pz[i]) < 140) { P.lad[i] = 1; break scan; } } } }
     // the terrain (def.dem, coded as Vršič's: see vrPrep), heights above the start line
     const D = def.dem, TR = D.tr, tb = atob(TR.b64), tr = new Float32Array(TR.nx * TR.nz);
     for (let k = 0; k < tr.length; k++) tr[k] = TR.lo + (tb.charCodeAt(2 * k) * 256 + tb.charCodeAt(2 * k + 1)) * TR.step;
@@ -10021,7 +10021,7 @@ const World = (function () {
     const RC = 8; P.rw = { c: RC, nx: Math.ceil((x1 - x0) / RC) + 2, nz: Math.ceil((z1 - z0) / RC) + 2 }; P.rw.e = new Float32Array(P.rw.nx * P.rw.nz).fill(NaN);
     // terrain height grid (filled lazily, NaN = not computed yet) and the distance beyond the nearest barrier at each vertex
     const G = P.G = { x0, z0 }; G.ntx = Math.ceil((x1 - x0) / (KTC * KTT)); G.ntz = Math.ceil((z1 - z0) / (KTC * KTT)); G.nx = G.ntx * KTT + 1; G.nz = G.ntz * KTT + 1;
-    G.h = new Float32Array(G.nx * G.nz).fill(NaN); G.dd = new Float32Array(G.nx * G.nz); G.sm = new Uint8Array(G.nx * G.nz); G.on = new Uint8Array(G.ntx * G.ntz);   // (G.sm: the vertex lies under a strip along the road: pushed down)
+    G.h = new Float32Array(G.nx * G.nz).fill(NaN); G.dd = new Float32Array(G.nx * G.nz); G.sm = new Uint8Array(G.nx * G.nz); G.on = new Uint8Array(G.ntx * G.ntz);   // (G.sm: the vertex lies under a strip along the road: pushed down, 2: deeper)
   }
   function ktDist(x, z) {   // distance to the road centre line (bilinear on the chamfer grid)
     const P = KT, gx = clamp((x - P.x0) / P.dc, 0, P.dnx - 1.001), gz = clamp((z - P.z0) / P.dc, 0, P.dnz - 1.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, W = P.dnx, a = P.dist;
@@ -10062,11 +10062,11 @@ const World = (function () {
     const f = clamp(bi + ba / ds, 0, T.N - 1), i0 = Math.min(T.N - 2, Math.floor(f)); KTN.hn = T.hy[i0] + (T.hy[i0 + 1] - T.hy[i0]) * (f - i0);   // road height across from the point
     return KTN;
   }
-  function ktGap(i, side) {   // the hairpin ladder: from this barrier line to another leg's across, on this side of sample i (more than KTLA along the road; 1e9: none within 90 m)
+  function ktGap(i, side) {   // the hairpin ladder: from this barrier line to another leg's across, on this side of sample i (more than KTLA along the road; 1e9: none within 130 m)
     const P = KT; if (!P.lad[i]) return 1e9;
     const ds = T.ds, bar = side > 0 ? T.br[i] : T.bl[i], x = T.px[i] + T.nx[i] * side * (bar + 2.2), z = T.pz[i] + T.nz[i] * side * (bar + 2.2), cx = Math.floor(x / KTHC) - P.cx0, cz = Math.floor(z / KTHC) - P.cz0;
     let bj = -1, bjd = 1e9, bjl = 0;
-    for (let b = Math.max(0, cz - 3); b <= Math.min(P.ncz - 1, cz + 3); b++) for (let a = Math.max(0, cx - 3); a <= Math.min(P.ncx - 1, cx + 3); a++) {
+    for (let b = Math.max(0, cz - 5); b <= Math.min(P.ncz - 1, cz + 5); b++) for (let a = Math.max(0, cx - 5); a <= Math.min(P.ncx - 1, cx + 5); a++) {
       const L = P.cells[b * P.ncx + a]; if (!L) continue;
       for (let q = 0; q < L.length; q++) {
         const j = L[q]; if (Math.abs(j - i) * ds < KTLA || ((T.px[j] - T.px[i]) * T.nx[i] + (T.pz[j] - T.pz[i]) * T.nz[i]) * side <= 0) continue;   // (on this side)
@@ -10076,7 +10076,7 @@ const World = (function () {
       }
     }
     KTGAP.h = bj >= 0 ? T.hy[bj] : 0;   // (that leg's road height)
-    return bj < 0 || bjd > 90 ? 1e9 : 2.2 + Math.max(0, bjd - (bjl > 0 ? T.br[bj] : T.bl[bj]));
+    return bj < 0 || bjd > 130 ? 1e9 : 2.2 + Math.max(0, bjd - (bjl > 0 ? T.br[bj] : T.bl[bj]));
   }
   const KTGAP = { h: 0 };
   // the new look on Katu-Jaryk's own materials: the crowns sway in the wind (instanced unit trees, height 1: the higher up the more, each tree in its own
@@ -10137,14 +10137,21 @@ const World = (function () {
   }
   // the terrain beside the road (every cut and fill, the steep faces between the legs of the hairpin ladder: 45-75 deg, 10-55 m high) has creases
   // the 5 m grid could only follow in a row of teeth: along both sides of the road it is drawn as strips of its own instead (buildKatu: out to KTSW
-  // past the verge's edge, exact: ktHx), the grid under them KTPD lower (G.sm: hidden), and things stand on them as on the strips (ktGround)
-  const KTPD = 3.5, KTLA = 24, KTSW = 10;   // (KTLA: how far along the road another leg of the ladder starts: past the hairpin's own bend)
-  function ktStripW(i, side, g) {   // how far the strip on this side of sample i reaches past the verge's edge: KTSW, less on the inside of a tight bend (its
-    // cross-sections would cross) and between two legs of the ladder (g: between their barrier lines) across to the other's verge (its strip covers the same)
-    let W = KTSW; const k = T.k[i];
+  // past the verge's edge, on the ladder across the whole face to the other leg; exact: ktHx), the grid under them lower (G.sm: hidden; KTPD at the
+  // edge of the strips, KTPI farther in: a 5 m cell from the flat verge up a steep face cuts the corner by more than KTPD), and things stand on them
+  // as on the strips (ktGround)
+  const KTPD = 3.5, KTPI = 15, KTLA = 24, KTSW = 10, KTMW = 120;   // (KTLA: how far along the road another leg of the ladder starts: past the hairpin's own bend;
+  // KTMW: the widest face between two legs that the strips span, farther apart the grid between them)
+  function ktStripW(i, side, g) {   // how far the strip on this side of sample i reaches past the verge's edge: between two legs of the ladder (g: between
+    // their barrier lines, up to KTMW) across to the other's verge (its strip covers the same), else KTSW; less on the inside of a tight bend (its cross-sections would cross)
+    let W = g - 3.5 <= KTMW ? Math.max(0.4, g - 3.5) : KTSW; const k = T.k[i];
     if (k * side > 0) W = Math.min(W, Math.max(0, 0.85 * (1 / Math.abs(k) - (side > 0 ? T.br[i] : T.bl[i]) - 1.9)));
-    if (g - 3.5 < W) W = Math.max(0.4, g - 3.5);
     return W;
+  }
+  function ktStripD(Y, d) {   // the point of cross-section Y d metres past the verge's edge (Y[k][3] - 1.9), linearly between its points (at most its outer end)
+    let j = 0; while (j < Y.length - 2 && Y[j + 1][3] - 1.9 < d) j++;
+    const a = Y[j], b = Y[j + 1], f = clamp((d - (a[3] - 1.9)) / Math.max(1e-6, b[3] - a[3]), 0, 1);
+    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
   }
   function ktHx(x, z) {   // terrain height (exact: as the strips along the road draw it; the grid: ktGH)
     const n = ktNear(x, z), i = n.i, dd = n.dd; let h;
@@ -10157,7 +10164,7 @@ const World = (function () {
   }
   function ktGH(i, j) {   // terrain height at grid vertex (i, j), computed once
     const G = KT.G; i = clamp(i, 0, G.nx - 1); j = clamp(j, 0, G.nz - 1); const k = j * G.nx + i; let h = G.h[k];
-    if (h !== h) { h = G.h[k] = ktHx(G.x0 + i * KTC, G.z0 + j * KTC) - (G.sm[k] ? KTPD : 0); G.dd[k] = KTN.dd; }
+    if (h !== h) { h = G.h[k] = ktHx(G.x0 + i * KTC, G.z0 + j * KTC) - (G.sm[k] === 2 ? KTPI : G.sm[k] ? KTPD : 0); G.dd[k] = KTN.dd; }
     return h;
   }
   function ktGround(x, z) {   // height of the terrain mesh surface (the same two triangles per cell as the tiles; in a cell under a strip along the road the strip's)
@@ -10355,36 +10362,49 @@ const World = (function () {
     for (const p of parks) exclPush(p.x, p.z, p.r + 3);
     out.marks = {};   // (where the landmarks stand: the tests look for them)
 
-    /* ---- the strips of terrain along both sides of the road (KTSW): their cross-sections from the verge's edge out (exact: ktHx), each point's normal
-       (from its neighbours across and along) and colour; the grid's vertices under them marked (G.sm: pushed down) before the tiles are made ---- */
-    const SK = 9, sX = [[], []];
+    /* ---- the strips of terrain along both sides of the road (KTSW; on the ladder across to the other leg): their cross-sections from the verge's edge
+       out (exact: ktHx), each point's normal (from its neighbours across and along) and colour; the grid's vertices under them marked (G.sm: pushed
+       down) before the tiles are made ---- */
+    const SK = 9, sX = [[], []];   // (SK: the points over the first KTSW of a cross-section; a wider one, across the ladder, one more every 3 m or less)
     {
       const G = P.G;
       for (let si = 0; si < 2; si++) { const side = si ? 1 : -1;
+        const Wa = new Float32Array(N), ga = new Float32Array(N), ha = new Float32Array(N);
+        for (let i = 0; i < N; i++) { ga[i] = ktGap(i, side); ha[i] = KTGAP.h; Wa[i] = ktStripW(i, side, ga[i]); }
+        for (let i = 1; i < N; i++) Wa[i] = Math.min(Wa[i], Wa[i - 1] + 3);   // (the width changes by 3 m a sample at most: two cross-sections far apart in width
+        for (let i = N - 2; i >= 0; i--) Wa[i] = Math.min(Wa[i], Wa[i + 1] + 3);   // would be joined by long thin triangles across the face)
         for (let i = 0; i < N; i++) {
-          const bar = side > 0 ? T.br[i] : T.bl[i], o = bar + 1.9, ax = T.px[i] + T.nx[i] * side * o, az = T.pz[i] + T.nz[i] * side * o;
-          const gp = ktGap(i, side), gh = KTGAP.h, W = ktStripW(i, side, gp); if (W < 0.3) continue;   // (across to the other leg of the ladder: its strip covers the same, drawn behind this one if it is the upper leg)
-          const X = []; for (let k = 0; k < SK; k++) { const q = o + W * k / (SK - 1), x = T.px[i] + T.nx[i] * side * q, z = T.pz[i] + T.nz[i] * side * q; X.push([x, k ? ktHx(x, z) : T.hy[i] + ktVergeEnd(i, side), z, 1.9 + W * k / (SK - 1), 0, 1, 0, 0, 0, 0]); }   // (from the verge's edge, as high as the verge ends)
-          X.meet = gp - 3.5 <= KTSW; X.up = X.meet && gh < T.hy[i];   // (meet: it reaches the other leg; else its outer edge tucked 0.6 m under the grid, which lies over it there)
-          if (!X.meet) X[SK - 1][1] -= 0.6;
+          const bar = side > 0 ? T.br[i] : T.bl[i], o = bar + 1.9;
+          const gp = ga[i], gh = ha[i], W = Wa[i]; if (W < 0.3) continue;   // (across to the other leg of the ladder: its strip covers the same, drawn behind this one if it is the upper leg)
+          const W1 = Math.min(W, KTSW), nk = SK + (W > KTSW + 0.01 ? Math.ceil((W - KTSW) / 3) : 0), X = []; X.u = [];
+          for (let k = 0; k < nk; k++) { const d = k < SK ? W1 * k / (SK - 1) : KTSW + (W - KTSW) * (k - SK + 1) / (nk - SK), q = o + d, x = T.px[i] + T.nx[i] * side * q, z = T.pz[i] + T.nz[i] * side * q;
+            const y = k ? ktHx(x, z) : T.hy[i] + ktVergeEnd(i, side); X.push([x, y, z, 1.9 + d, 0, 1, 0, 0, 0, k ? KTN.dd : 1.9]); X.u.push(d / W); }   // (from the verge's edge, as high as the verge ends;
+          // [9]: beyond the nearest barrier, for its colour: the same where the other leg's strip covers it too)
+          X.meet = gp - 3.5 <= KTMW && W >= gp - 3.5 - 0.01; X.up = X.meet && gh < T.hy[i];   // (meet: it reaches the other leg; else its outer edge tucked 0.6 m under the grid, which lies over it there)
+          if (!X.meet) X[nk - 1][1] -= 0.6;
           sX[si][i] = X;
         }
         for (let i = 0; i < N; i++) { const X = sX[si][i]; if (!X) continue;   // normals (up) and colours
-          for (let k = 0; k < SK; k++) {
-            const p = X[k], pa = X[Math.max(0, k - 1)], pb = X[Math.min(SK - 1, k + 1)], ra = (sX[si][i - 1] || X)[k], rb = (sX[si][i + 1] || X)[k];
+          for (let k = 0; k < X.length; k++) {
+            const p = X[k], d = p[3] - 1.9, pa = X[Math.max(0, k - 1)], pb = X[Math.min(X.length - 1, k + 1)], ra = sX[si][i - 1] ? ktStripD(sX[si][i - 1], d) : p, rb = sX[si][i + 1] ? ktStripD(sX[si][i + 1], d) : p;   // (along: as far out)
             const ux = pb[0] - pa[0], uy = pb[1] - pa[1], uz = pb[2] - pa[2], vx = rb[0] - ra[0], vy = rb[1] - ra[1], vz = rb[2] - ra[2];
             let cx = uy * vz - uz * vy, cy = uz * vx - ux * vz, cz = ux * vy - uy * vx; if (cy < 0) { cx = -cx; cy = -cy; cz = -cz; } const cl = Math.hypot(cx, cy, cz) || 1;
-            p[4] = cx / cl; p[5] = cy / cl; p[6] = cz / cl; const c = ktCol(p[0], p[2], p[1], p[5], p[3]); p[7] = c[0]; p[8] = c[1]; p[9] = c[2];
+            p[4] = cx / cl; p[5] = cy / cl; p[6] = cz / cl; const c = ktCol(p[0], p[2], p[1], p[5], p[9]); p[7] = c[0]; p[8] = c[1]; p[9] = c[2];
           }
         }
-        for (let i = 0; i + 1 < N; i++) { const A = sX[si][i], B = sX[si][i + 1]; if (!A || !B) continue;   // the grid's vertices under the strip
-          const ka = A.meet ? SK - 1 : SK - 2, kb = B.meet ? SK - 1 : SK - 2;   // (not under the tucked outer edge: the grid, as it is, covers that)
-          const poly = [[A[0][0], A[0][2]], [A[ka][0], A[ka][2]], [B[kb][0], B[kb][2]], [B[0][0], B[0][2]]];
+        for (let i = 0; i + 1 < N; i++) { const A = sX[si][i], B = sX[si][i + 1]; if (!A || !B) continue;   // the grid's vertices under the strip, the verge and this half of the road
+          const ka = A.length - (A.meet ? 1 : 2), kb = B.length - (B.meet ? 1 : 2);   // (not under the tucked outer edge: the grid, as it is, covers that)
+          const poly = [[T.px[i], T.pz[i]], [A[ka][0], A[ka][2]], [B[kb][0], B[kb][2]], [T.px[i + 1], T.pz[i + 1]]];   // (from the centre line: none of the grid's triangles reaching from the verge up a face over the strip)
           let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of poly) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
           for (let b = Math.max(0, Math.ceil((z0 - G.z0) / KTC)); b <= Math.min(G.nz - 1, Math.floor((z1 - G.z0) / KTC)); b++) for (let a = Math.max(0, Math.ceil((x0 - G.x0) / KTC)); a <= Math.min(G.nx - 1, Math.floor((x1 - G.x0) / KTC)); a++)
             if (inPoly(poly, G.x0 + a * KTC, G.z0 + b * KTC)) G.sm[b * G.nx + a] = 1;
         }
       }
+      for (let k = 0; k < G.sm.length; k++) if (G.sm[k]) {   // (2: all its neighbours under the strips too: deeper)
+        const i = k % G.nx, j = (k - i) / G.nx; let all = i > 0 && j > 0 && i < G.nx - 1 && j < G.nz - 1;
+        for (let b = -1; b <= 1 && all; b++) for (let a = -1; a <= 1; a++) if (!G.sm[k + b * G.nx + a]) { all = false; break; }
+        if (all) G.sm[k] = 3; }
+      for (let k = 0; k < G.sm.length; k++) if (G.sm[k] === 3) G.sm[k] = 2;
       G.h.fill(NaN);   // (any height asked for before: again, under the strips pushed down)
     }
 
@@ -10404,13 +10424,15 @@ const World = (function () {
       for (let c0 = 0; c0 < N - 1; c0 += 80) for (const up of [false, true]) {
         const pos = [], nor = [], col = [], uvs = [], stp = [], idx = [];
         for (let si = 0; si < 2; si++) {
-          const vi = new Map(), put = (i, k) => { const key = i * 16 + k; let q = vi.get(key); if (q != null) return q; const p = sX[si][i][k]; q = pos.length / 3;
+          const vi = new Map(), put = (i, k) => { const key = i * 64 + k; let q = vi.get(key); if (q != null) return q; const p = sX[si][i][k]; q = pos.length / 3;
             pos.push(p[0], p[1], p[2]); nor.push(p[4], p[5], p[6]); col.push(p[7], p[8], p[9]); uvs.push(p[0] / 10, -p[2] / 10); stp.push(sstep(0.78, 0.5, p[5])); vi.set(key, q); return q; };
           for (let i = c0; i < Math.min(c0 + 80, N - 1); i++) {
             const A = sX[si][i], B = sX[si][i + 1]; if (!A || !B || A.up !== up) continue;
-            for (let k = 0; k < SK - 1; k++) {
-              const a = put(i, k), b = put(i, k + 1), c = put(i + 1, k + 1), d = put(i + 1, k), ex = A[k + 1][0] - A[k][0], ez = A[k + 1][2] - A[k][2], fx = B[k][0] - A[k][0], fz = B[k][2] - A[k][2];
-              if (ez * fx - ex * fz > 0) idx.push(a, b, c, a, c, d); else idx.push(a, c, b, a, d, c);   // (its front up)
+            const ex = A[1][0] - A[0][0], ez = A[1][2] - A[0][2], fx = B[0][0] - A[0][0], fz = B[0][2] - A[0][2], fr = ez * fx - ex * fz > 0;   // (its front up)
+            const tri = (p, q, r) => { if (fr) idx.push(p, q, r); else idx.push(p, r, q); };
+            for (let a = 0, b = 0; a < A.length - 1 || b < B.length - 1;) {   // (the two cross-sections zipped by their u: the same number of points or not)
+              if (b === B.length - 1 || (a < A.length - 1 && A.u[a + 1] <= B.u[b + 1])) { tri(put(i, a), put(i, a + 1), put(i + 1, b)); a++; }
+              else { tri(put(i, a), put(i + 1, b + 1), put(i + 1, b)); b++; }
             }
           }
         }

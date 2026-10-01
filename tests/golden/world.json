@@ -324,19 +324,19 @@
   }
  },
  "katu": {
-  "meshes": 1763,
-  "verts": 1108001,
-  "instances": 21991,
-  "props": 105,
+  "meshes": 1768,
+  "verts": 1120261,
+  "instances": 22026,
+  "props": 104,
   "crowd": 1271,
-  "world": "ae2d50f8",
-  "propsHash": "320edc2a",
+  "world": "b3bd26d9",
+  "propsHash": "65a0e341",
   "floor": "2299cbde/10304",
   "groups": {
-   "-:MeshLambertMaterial": "321351fb",
-   "roadStrip:MeshLambertMaterial": "e16f3f94",
+   "-:MeshLambertMaterial": "d46aae2d",
+   "roadStrip:MeshLambertMaterial": "12ad7f5d",
    "-:MeshPhongMaterial": "99982557",
-   "-:MeshBasicMaterial": "43314877",
+   "-:MeshBasicMaterial": "cfecd454",
    "rapids:MeshLambertMaterial": "a65a0a4d",
    "crowd:MeshLambertMaterial": "1e1b3735"
   }

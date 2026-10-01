@@ -119,10 +119,10 @@
   "jsMs": 2.04
  },
  "katu": {
-  "calls": 194,
-  "maxCalls": 216,
-  "kverts": 958,
-  "maxKverts": 1274,
-  "jsMs": 0.38
+  "calls": 195,
+  "maxCalls": 221,
+  "kverts": 981,
+  "maxKverts": 1307,
+  "jsMs": 0.36
  }
 }
