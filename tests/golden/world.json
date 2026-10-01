@@ -67,24 +67,25 @@
   }
  },
  "monaco": {
-  "meshes": 424,
-  "verts": 1730841,
+  "meshes": 479,
+  "verts": 1850574,
   "instances": 2883,
   "props": 37,
   "crowd": 2883,
-  "world": "59c24e6a",
+  "world": "2911908d",
   "propsHash": "c499adad",
   "floor": "62d14c53/6636",
   "groups": {
-   "-:MeshLambertMaterial": "319f3166",
+   "-:MeshLambertMaterial": "9ed5b7f3",
    "-:MeshPhongMaterial": "7b0beb73",
+   "puddles:MeshBasicMaterial": "e978ae5",
+   "-:MeshBasicMaterial": "9941efe2",
    "boat:MeshLambertMaterial": "edc8955d",
    "wake:MeshBasicMaterial": "9fa8f2ed",
    "foam:MeshBasicMaterial": "740df83",
    "yacht:MeshLambertMaterial": "d2e2deb9",
    "yachtShadow:MeshBasicMaterial": "ed8b3008",
    "flags:MeshLambertMaterial": "42d1c775",
-   "-:MeshBasicMaterial": "1b5a23ab",
    "crowd:MeshLambertMaterial": "e6161e00",
    "tyremarks:MeshBasicMaterial": "72e0c8ff"
   }

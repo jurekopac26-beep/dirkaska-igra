@@ -40,31 +40,51 @@ const Render = (function () {
     return l > 0.6 ? [0.12, 0.24, 0.75] : [0.96, 0.96, 0.94];
   }
 
-  function wheelInto(g, cx, cy, cz, r, wd, tire, rim) {
-    const S = 12, inn = [cx, cy, cz];
-    const dark = [rim[0] * 0.38, rim[1] * 0.38, rim[2] * 0.4], hub = [0.15, 0.15, 0.17];
+  // a wheel: the tyre (its tread in blocks), on its outer face (side: +1 or -1 along z) the rim (its lip, five twin spokes, the centre nut)
+  // and behind the spokes the brake disc; the inner face plain (tyre, a dark dish)
+  function wheelInto(g, cx, cy, cz, r, wd, tire, rim, side) {
+    const S = 14, inn = [cx, cy, cz], TAU = Math.PI * 2; side = side < 0 ? -1 : 1;
+    const dark = [rim[0] * 0.3, rim[1] * 0.3, rim[2] * 0.32], hub = [0.15, 0.15, 0.17], tread = [tire[0] * 0.62, tire[1] * 0.62, tire[2] * 0.62], disc = [0.42, 0.42, 0.44];
     const p = (a, z, rr) => [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr, cz + z];
     for (let i = 0; i < S; i++) {
-      const a0 = i / S * Math.PI * 2, a1 = (i + 1) / S * Math.PI * 2;
-      g.quadO(p(a0, -wd / 2, r), p(a0, wd / 2, r), p(a1, wd / 2, r), p(a1, -wd / 2, r), tire, inn);
+      const a0 = i / S * TAU, a1 = (i + 1) / S * TAU;
+      g.quadO(p(a0, -wd / 2, r), p(a0, wd / 2, r), p(a1, wd / 2, r), p(a1, -wd / 2, r), i % 2 ? tire : tread, inn);   // (the tread)
       for (const sd of [-1, 1]) {
-        const zf = sd * wd / 2, zr = sd * (wd / 2 + 0.006), out = [cx, cy, cz - sd];
+        const zf = sd * wd / 2, out = [cx, cy, cz - sd];
+        if (sd !== side) { g.quadO(p(a0, zf, r * 0.5), p(a0, zf, r), p(a1, zf, r), p(a1, zf, r * 0.5), tire, out); g.triO([cx, cy, cz + zf], p(a0, zf, r * 0.5), p(a1, zf, r * 0.5), dark, out); continue; }
+        const zr = sd * (wd / 2 + 0.006), zd = sd * (wd / 2 - 0.05);
         g.quadO(p(a0, zf, r * 0.68), p(a0, zf, r), p(a1, zf, r), p(a1, zf, r * 0.68), tire, out);          // sidewall
-        g.quadO(p(a0, zr, r * 0.54), p(a0, zr, r * 0.68), p(a1, zr, r * 0.68), p(a1, zr, r * 0.54), rim, out); // rim lip
-        g.triO([cx, cy, cz + zf], p(a0, zf, r * 0.54), p(a1, zf, r * 0.54), dark, out);                       // recessed dish
+        g.quadO(p(a0, zr, r * 0.56), p(a0, zr, r * 0.68), p(a1, zr, r * 0.68), p(a1, zr, r * 0.56), rim, out);       // rim lip
+        g.quadO(p(a0, zd, r * 0.16), p(a0, zd, r * 0.56), p(a1, zd, r * 0.56), p(a1, zd, r * 0.16), disc, out, null, [disc, dark, dark, disc]);   // brake disc, set in, dark towards the barrel
+        g.triO([cx, cy, cz + zd], p(a0, zd, r * 0.16), p(a1, zd, r * 0.16), dark, out);
       }
     }
-    for (const sd of [-1, 1]) {
-      const zs = sd * (wd / 2 + 0.012), out = [cx, cy, cz - sd];
-      for (let k = 0; k < 5; k++) {                       // spokes
-        const a = k / 5 * Math.PI * 2, ca = Math.cos(a), sa = Math.sin(a), ox = -sa * r * 0.075, oy = ca * r * 0.075, r0 = r * 0.12, r1 = r * 0.56;
-        g.quadO([cx + ca * r0 + ox, cy + sa * r0 + oy, cz + zs], [cx + ca * r1 + ox, cy + sa * r1 + oy, cz + zs], [cx + ca * r1 - ox, cy + sa * r1 - oy, cz + zs], [cx + ca * r0 - ox, cy + sa * r0 - oy, cz + zs], rim, out);
-      }
-      for (let i = 0; i < 6; i++) {                       // hub cap
-        const a0 = i / 6 * Math.PI * 2, a1 = (i + 1) / 6 * Math.PI * 2;
-        g.triO([cx, cy, cz + zs * 1.1], [cx + Math.cos(a0) * r * 0.15, cy + Math.sin(a0) * r * 0.15, cz + zs * 1.04], [cx + Math.cos(a1) * r * 0.15, cy + Math.sin(a1) * r * 0.15, cz + zs * 1.04], hub, out);
-      }
+    const zs = side * (wd / 2 + 0.012), out = [cx, cy, cz - side];
+    for (let k = 0; k < 10; k++) {                        // five twin spokes
+      const a = (Math.floor(k / 2) + (k % 2 ? 0.09 : -0.09)) / 5 * TAU, ca = Math.cos(a), sa = Math.sin(a), ox = -sa * r * 0.04, oy = ca * r * 0.04, r0 = r * 0.14, r1 = r * 0.58;
+      g.quadO([cx + ca * r0 + ox, cy + sa * r0 + oy, cz + zs], [cx + ca * r1 + ox, cy + sa * r1 + oy, cz + zs], [cx + ca * r1 - ox, cy + sa * r1 - oy, cz + zs], [cx + ca * r0 - ox, cy + sa * r0 - oy, cz + zs], rim, out);
     }
+    for (let i = 0; i < 6; i++) {                         // hub, the centre nut
+      const a0 = i / 6 * TAU, a1 = (i + 1) / 6 * TAU;
+      g.triO([cx, cy, cz + zs * 1.1], [cx + Math.cos(a0) * r * 0.17, cy + Math.sin(a0) * r * 0.17, cz + zs * 1.04], [cx + Math.cos(a1) * r * 0.17, cy + Math.sin(a1) * r * 0.17, cz + zs * 1.04], rim, out);
+      g.triO([cx, cy, cz + zs * 1.16], [cx + Math.cos(a0) * r * 0.07, cy + Math.sin(a0) * r * 0.07, cz + zs * 1.12], [cx + Math.cos(a1) * r * 0.07, cy + Math.sin(a1) * r * 0.07, cz + zs * 1.12], hub, out);
+    }
+  }
+  // a rear wing across the car: an aerofoil (cambered, a gurney flap along its trailing edge), x its middle, y its foot, between end plates
+  function wingInto(g, x, y, half, col, under, plate) {
+    const prof = [[0.2, 0.02], [0.12, 0.055], [0, 0.066], [-0.12, 0.062], [-0.2, 0.078], [-0.2, 0.042], [-0.06, 0.014], [0.1, 0.002]];   // (round the section from its leading edge, over the top)
+    const P = (k, sd) => [x + prof[k][0], y + prof[k][1], sd * half], inn = [x, y + 0.035, 0];
+    for (let k = 0; k < prof.length; k++) { const m = (k + 1) % prof.length; g.quadO(P(k, -1), P(m, -1), P(m, 1), P(k, 1), k < 4 ? col : under, inn); }
+    for (const sd of [-1, 1]) World.box(g, x - 0.03, y - 0.09, sd * (half + 0.014), 0.44, 0.21, 0.025, 0, plate);
+  }
+  // the race kit round the bottom of a body: a splitter under the nose, skirts along the sills between the wheels (sill: a section in the
+  // middle; wx, fx: the wheels' x, r their radius), a diffuser with fins under the tail, two exhaust tips
+  const KIT_D = [0.09, 0.09, 0.1], KIT_F = [0.15, 0.15, 0.16];   // (no colour of the glass: the panes are found by it)
+  function kitInto(g, front, rear, sill, wx, fx, r, skirts, diffuser) {
+    World.box(g, front.x - 0.1, front.yb - 0.05, 0, 0.32, 0.035, front.w * 2.04, 0, KIT_D);
+    if (skirts) for (const sd of [-1, 1]) World.box(g, (wx + fx) / 2, sill.yb - 0.03, sd * sill.w * 0.97, Math.max(0.4, fx - wx - 2 * r - 0.12), 0.09, 0.07, 0, KIT_D);
+    if (diffuser) { World.box(g, rear.x + 0.16, rear.yb - 0.06, 0, 0.36, 0.06, rear.w * 1.5, 0, KIT_D); for (const z of [-0.42, -0.16, 0.16, 0.42]) World.box(g, rear.x + 0.12, rear.yb - 0.06, z * rear.w / 0.84, 0.26, 0.13, 0.02, 0, KIT_F); }
+    for (const sd of [-1, 1]) { World.box(g, rear.x - 0.01, rear.yb + 0.02, sd * rear.w * 0.62, 0.14, 0.09, 0.11, 0, [0.74, 0.75, 0.78]); World.box(g, rear.x - 0.017, rear.yb + 0.035, sd * rear.w * 0.62, 0.14, 0.06, 0.075, 0, [0.12, 0.11, 0.1]); }
   }
 
   // smooth shading for car bodies: average normals of coincident vertices whose faces differ
@@ -183,8 +203,7 @@ const Render = (function () {
     // big rear wing over the hatch, on endplates from the roof edge
     const wx0 = -1.62 * sx, wy = 1.56;
     for (const sd of [-1, 1]) World.box(g, wx0 + 0.12, 1.36, sd * 0.62 * sz, 0.14, 0.2, 0.05, 0, K);
-    World.box(g, wx0, wy, 0, 0.5, 0.07, 1.84 * sz, 0, B, B);
-    for (const sd of [-1, 1]) World.box(g, wx0 + 0.02, wy - 0.08, sd * 0.93 * sz, 0.56, 0.24, 0.04, 0, B, B);
+    wingInto(g, wx0, wy - 0.02, 0.92 * sz, B, [B[0] * 0.5, B[1] * 0.5, B[2] * 0.5], B);
     // roof scoop, antenna, mirrors
     World.box(g, -0.62 * sx, 1.40, 0, 0.4, 0.1, 0.42, 0, B, B);
     World.box(g, -0.44 * sx, 1.43, 0, 0.03, 0.06, 0.34, 0, K);
@@ -193,9 +212,10 @@ const Render = (function () {
     // rear wheels (fronts are separate meshes) + mud flaps
     const r = M.rw, fx = M.a * (M.len / 4.4) * 0.98 + 0.05, rx = -M.b * (M.len / 4.4) * 0.98;
     for (const sd of [-1, 1]) {
-      wheelInto(g, rx, r, sd * (M.wid * 0.5 - 0.1), r, 0.26, [0.07, 0.07, 0.08], [0.93, 0.93, 0.9]);
+      wheelInto(g, rx, r, sd * (M.wid * 0.5 - 0.1), r, 0.26, [0.07, 0.07, 0.08], [0.93, 0.93, 0.9], sd);
       for (const wxp of [fx, rx]) World.box(g, wxp - 0.44, 0.17, sd * (M.wid * 0.5 - 0.08), 0.03, 0.26, 0.2, 0, K);
     }
+    kitInto(g, front, rear, secs[5], rx, fx, r, false, false);   // (a splitter, the exhaust tips)
     return g.geometry();
   }
   function carGeometry(bodyKey, M, color, stripe) {
@@ -228,34 +248,40 @@ const Render = (function () {
       for (let e = 0; e < rg.length; e++) g.triO(cen, rg[e], rg[(e + 1) % rg.length], body, inn);
     }
     const front = secs[secs.length - 1], rear = secs[0];
-    // headlights & grille
+    // headlights: a pale housing, two lamps in it, a light strip along its foot; the grille between them (its frame, the mesh)
     const hly = (front.yb + front.ybelt) / 2 + 0.03;
-    for (const sd of [-1, 1]) World.box(g, front.x - 0.03, hly - 0.07, sd * front.w * 0.6, 0.1, 0.15, 0.34, 0, [1, 0.97, 0.82]);
-    World.box(g, front.x - 0.02, hly - 0.12, 0, 0.08, 0.14, front.w * 0.7, 0, [0.08, 0.08, 0.09]);
-    // rear bumper dark band
+    for (const sd of [-1, 1]) {
+      World.box(g, front.x - 0.04, hly - 0.085, sd * front.w * 0.6, 0.1, 0.17, 0.38, 0, [0.6, 0.62, 0.66]);
+      for (const f of [0.51, 0.69]) World.box(g, front.x - 0.025, hly - 0.06, sd * front.w * f, 0.08, 0.11, 0.13, 0, [1, 0.97, 0.86]);
+      World.box(g, front.x - 0.03, hly - 0.098, sd * front.w * 0.6, 0.085, 0.024, 0.36, 0, [1, 1, 1]);
+    }
+    World.box(g, front.x - 0.035, hly - 0.13, 0, 0.08, 0.16, front.w * 0.74, 0, [0.3, 0.31, 0.33]);
+    World.box(g, front.x - 0.03, hly - 0.115, 0, 0.08, 0.13, front.w * 0.68, 0, KIT_D);
+    // rear bumper dark band; the tail lights' dark housings (the lenses: tailGeo)
     World.box(g, rear.x + 0.02, rear.yb + 0.02, 0, 0.1, 0.14, rear.w * 1.6, 0, [0.1, 0.1, 0.11]);
+    for (const sd of [-1, 1]) World.box(g, rear.x + 0.005, rear.ybelt - 0.185, sd * rear.w * 0.6, 0.1, 0.2, 0.48, 0, KIT_D);
     // mirrors
     const ws = secs.find(s => s.k === 'gf');
     for (const sd of [-1, 1]) World.box(g, ws.x + 0.45, ws.ybelt, sd * (ws.w + 0.07), 0.14, 0.1, 0.12, 0, body);
-    // spoiler
+    // a rear wing (an aerofoil on two pylons), on the hatch a lip over the rear window
     if (def.spoiler) {
-      const sxp = rear.x + 0.28, top = secs[1].yt + 0.28;
-      for (const sd of [-1, 1]) World.box(g, sxp, secs[1].yt - 0.02, sd * rear.w * 0.62, 0.12, 0.3, 0.06, 0, [0.12, 0.12, 0.13]);
-      World.box(g, sxp, top, 0, 0.36, 0.06, rear.w * 1.9, 0, stripe ? strp : body);
-    }
-    // rear wheels
-    const r = M.rw, wx = -M.b * (M.len / 4.4) * 0.98;
-    for (const sd of [-1, 1]) wheelInto(g, wx, r, sd * (M.wid * 0.5 - 0.1), r, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68]);
+      const sxp = rear.x + 0.3, base = secs[1].yt - 0.02, top = secs[1].yt + 0.3, wc = stripe ? strp : body;
+      for (const sd of [-1, 1]) World.box(g, sxp + 0.04, base, sd * rear.w * 0.5, 0.11, top - base + 0.02, 0.035, 0, [0.12, 0.12, 0.13]);
+      wingInto(g, sxp, top, rear.w * 0.98, wc, [wc[0] * 0.5, wc[1] * 0.5, wc[2] * 0.5], [0.12, 0.12, 0.13]);
+    } else { const rf = secs.find(s => s.k === 'r'); World.box(g, rf.x - 0.12, rf.yt + rf.cr - 0.01, 0, 0.34, 0.04, rf.wt * 1.96, 0, stripe ? strp : body); }
+    // rear wheels; the kit under the body
+    const r = M.rw, wx = -M.b * (M.len / 4.4) * 0.98, fx = M.a * (M.len / 4.4) * 0.98 + 0.05;
+    for (const sd of [-1, 1]) wheelInto(g, wx, r, sd * (M.wid * 0.5 - 0.1), r, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68], sd);
+    kitInto(g, front, rear, secs[Math.floor(secs.length / 2)], wx, fx, r, true, true);
     const geo = smoothNormals(g.geometry(), 38);
     geoCache.set(key, geo);
     return geo;
   }
-  let wheelGeo = null, tailGeoCache = new Map();
-  let wheelGeoW = null;
-  function getWheelGeo(white) {
-    if (white) { if (!wheelGeoW) { const g = new GB(); wheelInto(g, 0, 0, 0, 0.31, 0.26, [0.07, 0.07, 0.08], [0.93, 0.93, 0.9]); wheelGeoW = g.geometry(); } return wheelGeoW; }
-    if (wheelGeo) return wheelGeo;
-    const g = new GB(); wheelInto(g, 0, 0, 0, 0.31, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68]); wheelGeo = g.geometry(); return wheelGeo;
+  const wheelGeos = new Map(), tailGeoCache = new Map();
+  function getWheelGeo(white, side) {   // (the front wheels: a geometry for each side, the rim on its outer face)
+    const key = (white ? 'w' : 's') + side; let geo = wheelGeos.get(key); if (geo) return geo;
+    const g = new GB(); if (white) wheelInto(g, 0, 0, 0, 0.31, 0.26, [0.07, 0.07, 0.08], [0.93, 0.93, 0.9], side); else wheelInto(g, 0, 0, 0, 0.31, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68], side);
+    geo = g.geometry(); wheelGeos.set(key, geo); return geo;
   }
   function tailGeo(bodyKey, M) {
     const key = bodyKey + M.id; if (tailGeoCache.has(key)) return tailGeoCache.get(key);
@@ -264,6 +290,8 @@ const Render = (function () {
     const x = rear[0] * sx, w = rear[1] * sz, y = rear[3] - 0.16;
     const g = new GB();
     for (const sd of [-1, 1]) World.box(g, x - 0.01, y, sd * w * 0.6, 0.1, 0.15, 0.42, 0, [1, 1, 1]);
+    const ri = def.secs.findIndex(q => q[7] === 'r'), gr = def.secs[ri - 1], rf = def.secs[ri], xb = rf[0] * sx - 0.07, yb = lerp(gr[5], rf[5], clamp((xb - gr[0] * sx) / Math.max(0.05, (rf[0] - gr[0]) * sx), 0, 1));   // (on the glass, under the roof's edge)
+    World.box(g, xb, yb - 0.012, 0, 0.06, 0.045, 0.46 * sz, 0, [1, 1, 1]);   // the third brake light
     const geo = g.geometry(); tailGeoCache.set(key, geo); return geo;
   }
 
@@ -282,6 +310,8 @@ const Render = (function () {
     '  float L = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114));',
     '  vec3 sc = mix(vec3(0.82, 0.82, 0.85), vec3(0.28, 0.28, 0.3), step(0.55, L));',   // dark grime on light paint, bare metal on dark paint
     '  diffuseColor.rgb = mix(diffuseColor.rgb, sc, s * 0.85); }'].join('\n');
+  // the paint's clear coat: the sky mirrored more towards the outline (Fresnel), little where the panel faces the camera
+  const PAINT_FS = '{ float cF = 1.0 - clamp(dot(normalize(vViewPosition), normal), 0.0, 1.0); specularStrength *= 0.45 + 2.6 * cF * cF * cF; }\n#include <envmap_fragment>';
   // sky/horizon/ground cube map for glossy paint and glass reflections (generated, no image files)
   function makeEnv() {
     const S = 64, mkFace = (fn) => { const c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), img = g.createImageData(S, S);
@@ -367,9 +397,9 @@ const Render = (function () {
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vLp;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvLp = position;');
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vLp;\nuniform float uDirt;\nuniform float uScr;').replace('#include <color_fragment>',
         '#include <color_fragment>\n{ float n = fract(sin(dot(floor(vLp * 7.0), vec3(12.9898, 78.233, 37.719))) * 43758.5453);\n  float low = 1.0 - smoothstep(0.2, 1.0, vLp.y + (n - 0.5) * 0.35);\n  float d = clamp(uDirt * (0.22 + 0.95 * low) * (0.7 + 0.6 * n), 0.0, 0.8);\n  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.5, 0.4, 0.29), d); }');
-      sh.fragmentShader = sh.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\n' + SCRATCH_GLSL);
+      sh.fragmentShader = sh.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\n' + SCRATCH_GLSL).replace('#include <envmap_fragment>', PAINT_FS);
     };
-    m.customProgramCacheKey = () => 'dirtyCar2';
+    m.customProgramCacheKey = () => 'dirtyCar3';
     return m;
   }
   const numTexCache = new Map();
@@ -407,6 +437,7 @@ const Render = (function () {
   // builds the model into a car view: body into bodyG (rolls/pitches), wheels into grp (steer/spin like the stock wheels)
   function addP206(car, bodyG, grp, wf, wr) {
     const paint = new THREE.MeshPhongMaterial({ color: car.color, shininess: 80, specular: 0x505050, envMap: envTex, combine: THREE.MixOperation, reflectivity: 0.2 });
+    paint.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <envmap_fragment>', PAINT_FS); }; paint.customProgramCacheKey = () => 'carPaint1';
     const tail = new THREE.MeshLambertMaterial({ color: 0x8a0d08, emissive: 0x3a0000 });
     for (const n of p206Parts()) {
       const holder = new THREE.Group(); holder.position.set(n.t[0], n.t[1], n.t[2]);
@@ -449,7 +480,7 @@ const Render = (function () {
     if (M.glb === 'p206') {   // real model: the stock body stays as an invisible stand-in (dents, glass) and the model is drawn instead
       body.visible = false; tail.visible = false; dec.visible = false;
       glb = addP206(car, bodyG, grp, wf, wr);
-    } else for (const sd of [-1, 1]) { const w = new THREE.Mesh(getWheelGeo(M.body === 'rally'), matWheel); w.position.set(fx, M.rw, sd * (M.wid * 0.5 - 0.1)); grp.add(w); wf.push(w); }
+    } else for (const sd of [-1, 1]) { const w = new THREE.Mesh(getWheelGeo(M.body === 'rally', sd), matWheel); w.position.set(fx, M.rw, sd * (M.wid * 0.5 - 0.1)); grp.add(w); wf.push(w); }
     let blob = null;
     if (!opts || !opts.noBlob) {
       blob = new THREE.Mesh(new THREE.PlaneGeometry(M.len * 1.25, M.wid * 1.45), matBlob);
@@ -726,6 +757,7 @@ const Render = (function () {
     tex = Tex.all(renderer.capabilities.getMaxAnisotropy());
     matCar = new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 80, specular: 0x505050 });
     envTex = makeEnv(); matCar.envMap = envTex; matCar.combine = THREE.MixOperation; matCar.reflectivity = 0.2;   // glossy paint: sky + bright horizon band
+    matCar.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <envmap_fragment>', PAINT_FS); }; matCar.customProgramCacheKey = () => 'carPaint1';
     matWheel = new THREE.MeshLambertMaterial({ vertexColors: true });
     matTailOff = new THREE.MeshLambertMaterial({ color: 0x6a1212 });
     matTailOn = new THREE.MeshBasicMaterial({ color: 0xff2a1a });
@@ -919,6 +951,8 @@ const Render = (function () {
       m.color.copy(m.userData.dry).multiplyScalar(1 - (m.map === tex.curb ? 0.22 : 0.36) * r); } });
     const W = world.dyn.wet;   // (a gravel stage with a road of its own, Ouninpohja: its puddles show, the gravel darkens and glistens, the verges darken)
     if (W) { W.puddles.visible = r > 0; W.road.color.setScalar(1 - 0.36 * r); W.road.shininess = r > 0 ? 28 : W.base.sh; W.road.specular.setHex(r > 0 ? 0x3c3e40 : W.base.sp); W.ground.color.setScalar(1 - 0.2 * r); }
+    const WS = world.dyn.wetSheen;   // (Monaco: the wet streets mirror the sky, the puddles show)
+    if (WS) { WS.u.value = r; for (const m of WS.show) m.visible = r > 0; }
   }
 
   /* ---------------- post-processing (high quality): tilt-shift miniature look, edge smoothing, colour grade, vignette ---------------- */
@@ -977,7 +1011,7 @@ const Render = (function () {
   /* ---------------- race attach ---------------- */
   // the pieces every car shares (cached body / tail / wheel / Peugeot geometry, the common materials): never freed with a car
   function sharedCarRes() {
-    const g = new Set([wheelGeo, wheelGeoW, ...geoCache.values(), ...tailGeoCache.values()]);
+    const g = new Set([...wheelGeos.values(), ...geoCache.values(), ...tailGeoCache.values()]);
     if (p206Geo) for (const n of p206Geo) for (const p of n.prims) g.add(p.g);
     const m = new Set([matCar, matWheel, matTailOff, matTailOn, matBlob, matMarker, matUnder, matEngine, matLens, matLensBroken]);
     if (p206Mats) for (const k in p206Mats) m.add(p206Mats[k]);
