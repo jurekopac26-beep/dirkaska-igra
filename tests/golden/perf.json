@@ -104,6 +104,13 @@
   "maxKverts": 822,
   "jsMs": 0.78
  },
+ "pikesg": {
+  "calls": 81,
+  "maxCalls": 97,
+  "kverts": 257,
+  "maxKverts": 297,
+  "jsMs": 0.22
+ },
  "montvernier": {
   "calls": 332,
   "maxCalls": 412,

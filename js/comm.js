@@ -111,6 +111,8 @@ const Comm = (() => {
     // time trial (hill climb against the clock, no opponents): the hill climb is Pikes Peak, so the commentator speaks as its race announcer on the
     // start line (short lines: the welcome, said as the countdown begins, ends before the green flag; the green flag call leaves room for the first place line)
     introTT: ['Welcome to the Pikes Peak International Hill Climb, the Race to the Clouds!', 'Twelve point four miles and a hundred and fifty-six turns to the summit!', "Welcome to America's Mountain! Fourteen thousand one hundred and fifteen feet, here we come!"],
+    // the same hill climb on its historic gravel road (Pikes Peak (makadam): the Highway as it was until 2011)
+    introTTg: ['Welcome to Pikes Peak, the old way! Gravel all the way to the summit, as it was before the road was paved!', 'The Race to the Clouds on the historic gravel road! Loose granite, ruts and dust, a hundred and fifty-six turns of it!', "Back to the gravel days on America's Mountain! No tarmac up here, just dirt, stones and the clock!"],
     goTT: ['Green flag at the start line... the car is away!', 'The green flag drops, and the car is away!', 'Green flag! The car is away, next stop, the clouds!'],
     // the time trial up a mountain pass (Vršič: the hairpins, the clock)
     introPassTT: ['Welcome to {track}! Twenty-four hairpins, most of them cobbled, and just you and the clock.', 'Here we are in Kranjska Gora, at the foot of {track}. {cps} checkpoints between you and the top of the pass.', 'Welcome to {track}! No rivals this time, only the clock. Get to the pass as fast as you can.'],
