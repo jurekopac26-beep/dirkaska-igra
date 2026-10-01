@@ -79,8 +79,8 @@ const dAt = (s) => Math.round(s - T.startS);   // (metres after the start line)
   check('Harju: the barriers down and back up the boulevard: the blocks between the carriageways at the edge, the fences on the sidewalks further out',
     H.bl[i1] - H.wa[i1] < 0.4 && H.bl[i2] - H.wa[i2] < 0.4 && H.br[i1] - H.wa[i1] > 2.5 && H.br[i2] - H.wa[i2] > 2.5, `left ${(H.bl[i1] - H.wa[i1]).toFixed(2)}/${(H.bl[i2] - H.wa[i2]).toFixed(2)}, right ${(H.br[i1] - H.wa[i1]).toFixed(2)}/${(H.br[i2] - H.wa[i2]).toFixed(2)} m past the edge`);
   const M = hd.medals, asc = (a) => Array.isArray(a) && a.length === 3 && a[0] < a[1] && a[1] < a[2];
-  check('Harju: medals gold < silver < bronze for both physics, dry and wet; the rain slower', asc(M.cs) && asc(M.arcade) && asc(M.wet.cs) && asc(M.wet.arcade) && M.wet.cs[0] > M.cs[0] && M.wet.arcade[0] > M.arcade[0],
-    `cs ${M.cs}, arcade ${M.arcade}, wet cs ${M.wet.cs}, wet arcade ${M.wet.arcade}`);
+  check('Harju: medals gold < silver < bronze, dry and wet; the rain slower', asc(M.cs) && asc(M.wet.cs) && M.wet.cs[0] > M.cs[0],
+    `cs ${M.cs}, wet cs ${M.wet.cs}`);
 }
 
 console.log(bad ? `FAIL: ${bad} check(s)` : 'OK: all rally checks');

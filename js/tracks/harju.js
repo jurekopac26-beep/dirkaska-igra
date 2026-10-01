@@ -29,7 +29,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // the dust off the dry esker gravel (sand and fine gravel, yellower than a forest road's), only where the road is gravel
     dust: { rate: 1.2, life: 2.0, size: 1.3, s0: 2.2, rise: 1.5, alpha: 1.0, drag: 0.6, col: [0.84, 0.76, 0.6] },
     rain: { seed: 41, puddles: 5 },
-    medals: {"cs":[74,78,84],"arcade":[76,80,86],"wet":{"cs":[80,84,90],"arcade":[82,86,92]}},
+    // medal times (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze), rounded up (cs: Circuit Superstars physics)
+    medals: { cs: [74, 78, 84], wet: { cs: [80, 84, 90] } },
     widths: [[-60,3.4],[109.8,3.4],[121.8,4.8],[141.7,4.8],[155.7,3.4],[473.6,3.4],[483.6,4.3],[501.6,4.1],[519.0,3.7],[544.0,3.2],[552.0,3.1],[586.0,3.1],[594.0,3.1],[708.8,3.7],[722.8,3.5],[928.5,3.5],[942.5,3.7],[1086.2,3.7],[1112.2,4.4],[1187.0,3.1],[1195.0,3.0],[1231.0,3.0],[1239.0,3.0],[1437.0,3.0],[1445.0,3.0],[1481.0,3.0],[1489.0,3.1],[1673.1,4.4],[1695.1,3.0],[1742.0,3.0],[1750.0,3.0],[1784.0,3.0],[1792.0,3.0],[1968.6,3.0],[1996.6,4.8],[2300,4.8]],
     surf: [[489.6,716.8,"makadam"],[1844.7,1974.6,"paving"]],
     verge: [[-60,115.8,"asphalt","paving"],[115.8,143.7,"asphalt","asphalt"],[143.7,479.6,"asphalt","paving"],[479.6,515.0,"paving","paving"],[515.0,1092.2,"grass","grass"],[1092.2,1681.1,"paving","paving"],[1681.1,1972.6,"grass","grass"],[1972.6,2300,"asphalt","paving"],[552.0,586.0,"makadam","makadam"],[1195.0,1231.0,"asphalt","asphalt"],[1445.0,1481.0,"asphalt","asphalt"],[1750.0,1784.0,"asphalt","asphalt"]],
