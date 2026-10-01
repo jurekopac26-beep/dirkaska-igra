@@ -9,7 +9,7 @@ const Sfx = (function () {
   let eng = null, ai = [], squeal = null, rumble = null, wind = null, curbV = null, rainV = null, hiss = null, heli = null, echo = null;
   let gravel = null, spray = null, crowd = null, lastT = 0, pudPrev = false;
   let stands = null, jet = null, tun = null;   // the grandstands' crowd (every circuit), the Red Bull Ring's jets before the start, a tunnel's ring
-  let sirenV = null;   // the open road: the police siren (the nearest patrol car chasing)
+  let sirenV = null, radioV = null;   // the open road: the police siren (the nearest patrol car chasing), the police radio's static
   let lastCrash = 0, running = false;
 
   function create() {
@@ -35,7 +35,7 @@ const Sfx = (function () {
     hiss = noiseVoice('bandpass', 1400, 0.8);
     heli = heliVoice(); echo = echoFx();
     gravel = noiseVoice('bandpass', 2600, 0.7); spray = noiseVoice('highpass', 1500, 0.5); crowd = crowdVoice();
-    stands = standsVoice(); jet = noiseVoice('lowpass', 500, 0.7); tun = tunnelFx(); sirenV = sirenVoice();
+    stands = standsVoice(); jet = noiseVoice('lowpass', 500, 0.7); tun = tunnelFx(); sirenV = sirenVoice(); radioV = radioBedVoice();
     return true;
   }
   function shaperCurve(k) {
@@ -146,17 +146,34 @@ const Sfx = (function () {
     const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.35 * vol, now); g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
     src.connect(lp); lp.connect(g2); g2.connect(bus); src.start(now, Math.random()); src.stop(now + 0.14);
   }
-  // the police radio: a burst of squelch (band-passed noise), then the short beep of the channel coming free
-  function radio() {
+  // the police radio (the run from the police; the speech itself cannot go through Web Audio's filters, so these carry the radio's sound):
+  // the squelch opening (a burst of band-passed noise and the click of the key), the roger beep and a short tail as it closes, and a bed of
+  // thin static (radioV, fluttering) while a line plays
+  function radioOpen() {
     if (!ctx || ctx.state !== 'running' || !running) return;
     const now = ctx.currentTime, src = ctx.createBufferSource(); src.buffer = noiseBuf;
-    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1700; bp.Q.value = 1.6;
-    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.12, now + 0.01); g.gain.setValueAtTime(0.12, now + 0.16); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
-    src.connect(bp); bp.connect(g); g.connect(bus); src.start(now, Math.random()); src.stop(now + 0.24);
-    const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = 1250;
-    const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.0001, now + 0.24); g2.gain.exponentialRampToValueAtTime(0.05, now + 0.25); g2.gain.setValueAtTime(0.05, now + 0.31); g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.33);
-    o.connect(g2); g2.connect(bus); o.start(now + 0.23); o.stop(now + 0.35);
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 1.3;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.12, now + 0.008); g.gain.setValueAtTime(0.1, now + 0.1); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+    src.connect(bp); bp.connect(g); g.connect(bus); src.start(now, Math.random()); src.stop(now + 0.18);
+    const o = ctx.createOscillator(); o.type = 'square'; o.frequency.value = 2300;
+    const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.0001, now); g2.gain.exponentialRampToValueAtTime(0.025, now + 0.002); g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.018);
+    o.connect(g2); g2.connect(bus); o.start(now); o.stop(now + 0.03);
   }
+  function radioClose() {
+    if (!ctx || ctx.state !== 'running' || !running) return;
+    const now = ctx.currentTime, o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = 1250;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.05, now + 0.008); g.gain.setValueAtTime(0.05, now + 0.07); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.085);
+    o.connect(g); g.connect(bus); o.start(now); o.stop(now + 0.1);
+    const src = ctx.createBufferSource(), bp = ctx.createBiquadFilter(); src.buffer = noiseBuf; bp.type = 'bandpass'; bp.frequency.value = 1600; bp.Q.value = 1.1;
+    const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.0001, now + 0.09); g2.gain.exponentialRampToValueAtTime(0.09, now + 0.1); g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
+    src.connect(bp); bp.connect(g2); g2.connect(bus); src.start(now + 0.09, Math.random()); src.stop(now + 0.26);
+  }
+  function radioBedVoice() {
+    const v = noiseVoice('bandpass', 1900, 0.8), lfo = ctx.createOscillator(), lg = ctx.createGain();
+    lfo.type = 'triangle'; lfo.frequency.value = 5.3; lg.gain.value = 260; lfo.connect(lg); lg.connect(v.flt.frequency); lfo.start();   // (the static fluttering)
+    return v;
+  }
+  function radioBed(on) { if (ctx && radioV) set(radioV.out.gain, on && running ? 0.024 : 0, on ? 0.04 : 0.07); }
   // a tyre over the spikes: a sharp pop, then the air hissing out
   function pop() {
     if (!ctx || ctx.state !== 'running' || !running) return;
@@ -651,13 +668,13 @@ const Sfx = (function () {
   function silence() {
     if (!ctx) return;
     for (const v of [eng, ...ai]) set(v.out.gain, 0, 0.02);
-    for (const v of [squeal, rumble, wind, curbV, rainV, hiss, heli, gravel, spray, crowd, stands, jet, sirenV]) set(v.out.gain, 0, 0.02);
+    for (const v of [squeal, rumble, wind, curbV, rainV, hiss, heli, gravel, spray, crowd, stands, jet, sirenV, radioV]) set(v.out.gain, 0, 0.02);
     set(echo.send.gain, 0, 0.02); set(tun.send.gain, 0, 0.02);
     if (atmo) atmoOff(0.02);
   }
 
-  const levels = () => ctx ? { stands: stands.lev, standsGain: stands.out.gain.value, tunnel: tun.send.gain.value, pk: atmo && atmo.x ? { ready: !atmo.gen && !atmo.x.gen, crunch: atmo.x.cr.map(c => +c.g.gain.value.toFixed(4)), slap: atmo.x.sG.gain.value, far: atmo.x.fG.gain.value, gust: atmo.x.wo.gain.value, wind: atmo.wo.gain.value } : null } : null;   // (tests: the crowd's and the tunnel's levels now)
-  const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, shiftPop, knock, wrench, silence, levels, siren, carHorn, thud, pop, radio, get ready() { return !!ctx && ctx.state === 'running'; } };
+  const levels = () => ctx ? { stands: stands.lev, standsGain: stands.out.gain.value, tunnel: tun.send.gain.value, radio: radioV.out.gain.value, pk: atmo && atmo.x ? { ready: !atmo.gen && !atmo.x.gen, crunch: atmo.x.cr.map(c => +c.g.gain.value.toFixed(4)), slap: atmo.x.sG.gain.value, far: atmo.x.fG.gain.value, gust: atmo.x.wo.gain.value, wind: atmo.wo.gain.value } : null } : null;   // (tests: the crowd's, the tunnel's and the police radio's static levels now)
+  const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, shiftPop, knock, wrench, silence, levels, siren, carHorn, thud, pop, radioOpen, radioClose, radioBed, get ready() { return !!ctx && ctx.state === 'running'; } };
   window.Sfx = api;
   return api;
 })();
