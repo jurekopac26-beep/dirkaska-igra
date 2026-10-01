@@ -86,7 +86,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const p of [[[x0, zi], [x1, zi], [x1, zi + t], [x0, zi + t]], [[x0, zo(x0) - t], [x1, zo(x1) - t], [x1, zo(x1)], [x0, zo(x0)]],
             [[x0, zi], [x0 + t, zi], [x0 + t, zo(x0 + t)], [x0, zo(x0)]], [[x1 - t, zi], [x1, zi], [x1, zo(x1)], [x1 - t, zo(x1 - t)]]]) D2.top(Z(p), D, 0.005);
         }
-        // the ducktail's lip: it kicks up off the deck and curls over the tail's face, fading into the corners (the 'wing', with the deck under it)
+        // the ducktail's lip: it kicks up off the deck and curls over the tail's face, fading into the corners (the 'wing', with the deck before it)
         K.part('wing', () => {
           const ring = ([z, k]) => { const t = (x) => L.topY(x, z); return [[-2.02, t(-2.02) - 0.006, z], [-2.115, t(-2.115) + 0.046 * k, z], [-2.165, t(-2.145) + 0.068 * k, z], [-2.158, t(-2.145) + 0.02 * k, z], [-2.147, t(-2.145) - 0.012, z]]; };
           K.skin([[-0.67, 0.3], [-0.45, 0.85], [0, 1], [0.45, 0.85], [0.67, 0.3]].map(ring), P, P, P);
@@ -96,6 +96,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         D2.side([[1.93, 0.43], [2.01, 0.43], [2.01, 0.46], [1.93, 0.46]], [0.95, 0.55, 0.1], null, 0.006);     // the side markers: amber in front,
         D2.side([[-2.06, 0.5], [-1.99, 0.5], [-1.99, 0.53], [-2.06, 0.53]], [0.6, 0.06, 0.05], null, 0.006);  // red behind
         D2.top([[-1.845, -0.64], [-1.8, -0.64], [-1.8, 0.64], [-1.845, 0.64]], B, 0.006);                      // (the glass hatch's black foot)
+        for (const x of [0.62, -0.5]) D2.side([[x - 0.006, 0.3], [x + 0.006, 0.3], [x + 0.006, 0.9], [x - 0.006, 0.9]], D, null, 0.004);   // (the doors' shut lines,
+        D2.top([[0.618, -0.66], [0.632, -0.66], [0.632, 0.66], [0.618, 0.66]], D, 0.004);                                             //  the bonnet's at the cowl)
         for (const sd of [-1, 1]) K.rect(-0.36, 0.785, sd * 0.864, 0.13, 0.024, B, { dir: sd < 0 ? '-z' : 'z', host: sd < 0 ? 'doorL' : 'doorR' });
         // ---- the nose: the wide mouth (the intercooler behind it), a lamp slot at each corner (the parking lamps over the brake ducts),
         //      the chin ----
@@ -108,7 +110,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const y of [0.3, 0.35]) K.rect(fx + 0.002, y, 0, 0.6, 0.012, [0.22, 0.22, 0.23]);   // (the intercooler's bars in it)
           for (const sd of [-1, 1]) K.face(oval(sd * 0.52, 0.338, 0.085, 0.052, 2), B);
           K.box(2.04, 0.15, 0, 0.16, 0.035, 1.0, 0, B);                                              // the chin
-        }, { hinge: [[1.9, 0.3, -0.7], [1.9, 0.3, 0.7]] });
+        });
         for (const sd of [-1, 1]) K.headLamp(fx, 0.358, sd * 0.52, 0.03, { shape: 'rect', w: 0.13, h: 0.032, ring: null });
         // ---- the tail: the dark panel right across with two round lamps a side and the reversing lamps; the plate, the diffuser, the twin
         //      tail pipes (right) ----
@@ -134,11 +136,12 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.bar([0.45, 0.9, sd * 0.905], [0.46, 0.885, sd * 0.85], 0.016, B, { n: 4 });
         });
         for (const z of [-0.5, 0.05]) K.bar([0.6, L.topY(0.6, z) + 0.012, z], [0.5, L.topY(0.5, z + 0.5) + 0.012, z + 0.5], 0.009, B, { n: 4, part: 'body' });
-        // ---- the hinges: the bonnet at the cowl, the hatch at the roof, the doors at their front edges, the ducktail at its front ----
+        // ---- the hinges: the bonnet at the cowl, the hatch at the roof, the doors at their front edges; the ducktail at the lip (a loose one
+        //      sinks at the glass's foot: no lip dropping into the tail) ----
         K.hinge('hood', [0.63, 0.83, -0.5], [0.63, 0.83, 0.5]);
         K.hinge('trunk', [-0.84, 1.2, -0.45], [-0.84, 1.2, 0.45]);
         K.hinge('doorL', [0.62, 0.35, -0.86], [0.62, 0.8, -0.86]); K.hinge('doorR', [0.62, 0.35, 0.86], [0.62, 0.8, 0.86]);
-        K.hinge('wing', [-1.83, 0.96, -0.6], [-1.83, 0.96, 0.6]);
+        K.hinge('wing', [-2.16, 1.0, -0.6], [-2.16, 1.0, 0.6]);
         // ---- inside (seen once a part is off): two bucket seats low down, the dashboard with the wheel (left), the console; the rotary
         //      behind the front axle with its turbo and the intercooler behind the mouth ----
         for (const sd of [-1, 1]) K.seat(-0.5, 0.33, sd * 0.36, { w: 0.48, l: 0.5, back: 0.6, tilt: 0.3 });
