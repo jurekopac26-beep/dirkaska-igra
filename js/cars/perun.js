@@ -27,13 +27,13 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         //       x      w      yb    ybelt  wt     yt     cr      kind tuck
         secs: [[-2.07, 0.86, 0.26, 0.78, 0.82, 0.83, 0.01, 'b', 0.08],     // the tail's face (the black lamp panel on it)
           [-1.99, 0.925, 0.21, 0.82, 0.87, 0.865, 0.012, 'b', 0.1],        // the deck's back edge
-          [-1.6, 0.965, 0.18, 0.86, 0.8, 0.895, 0.02, 'b', 0.12],          // the engine cover between the hips, low under the wing
-          [-1.28, 0.955, 0.17, 0.88, 0.58, 0.95, 0.02, 'gr', 0.12],        // the rear glass's foot (the buttresses beside it)
-          [-0.92, 0.925, 0.16, 0.84, 0.6, 1.02, 0.045, 'r', 0.12],         // the roof's back edge
-          [-0.22, 0.91, 0.16, 0.79, 0.63, 1.03, 0.04, 'gf', 0.11],         // the windscreen's top
-          [0.4, 0.92, 0.16, 0.75, 0.79, 0.785, 0.006, 'b', 0.11],          // its base (the cowl)
-          [1.29, 0.94, 0.17, 0.69, 0.87, 0.715, -0.012, 'b', 0.11],        // the front lid over the axle (sunk a little between the wings)
-          [1.86, 0.9, 0.19, 0.58, 0.83, 0.6, -0.006, 'b', 0.1],            // the wedge falls to the nose
+          [-1.6, 0.968, 0.18, 0.86, 0.8, 0.895, 0.02, 'b', 0.12],          // the engine cover between the hips, low under the wing
+          [-1.28, 0.95, 0.17, 0.88, 0.58, 0.95, 0.02, 'gr', 0.12],        // the rear glass's foot (the buttresses beside it)
+          [-0.92, 0.915, 0.16, 0.84, 0.6, 1.02, 0.045, 'r', 0.12],         // the roof's back edge
+          [-0.22, 0.9, 0.16, 0.79, 0.63, 1.03, 0.04, 'gf', 0.11],         // the windscreen's top
+          [0.4, 0.905, 0.16, 0.75, 0.79, 0.785, 0.006, 'b', 0.11],          // its base (the cowl)
+          [1.29, 0.92, 0.17, 0.69, 0.86, 0.715, -0.012, 'b', 0.11],        // the front lid over the axle (sunk a little between the wings)
+          [1.86, 0.885, 0.19, 0.58, 0.82, 0.6, -0.006, 'b', 0.1],            // the wedge falls to the nose
           [2.07, 0.79, 0.21, 0.49, 0.73, 0.52, 0, 'b', 0.08]],             // the nose's face
         eye: { x: -0.55, y: 0.97 },                                         // (over the front lid's plane: the lid in sight from the seat)
         door: [0.62, -0.62], bumpF: 0.2, bumpR: 0.16, bumpY: [0.34, 0.45],
@@ -64,6 +64,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         D2.side([[0.2, 0.647], [-0.2, 0.62], [-0.2, 0.675]], K.shade(P, 0.3), null, 0.006);                    // the duct's narrow front
         D2.side([[-0.2, 0.62], [-0.56, 0.55], [-0.56, 0.72], [-0.2, 0.675]], K.shade(P, 0.3), null, 0.006);    // flaring to its mouth
         D2.side([[-0.6, 0.55], [-0.56, 0.55], [-0.56, 0.72], [-0.6, 0.72]], B, null, 0.007);                    // the mouth
+        // ---- behind the doors: the intake the ducts blow into (on the quarters, before the rear wheels: black, its slats) ----
+        D2.side([[-0.65, 0.53], [-0.8, 0.5], [-0.8, 0.72], [-0.65, 0.73]], B, null, 0.006);
+        for (const y of [0.585, 0.65]) D2.side([[-0.66, y], [-0.79, y - 0.01], [-0.79, y + 0.012], [-0.66, y + 0.022]], [0.22, 0.22, 0.24], null, 0.009);
         // ---- the side: black skirts from arch to arch (down to the sills), a stripe over them ----
         D2.side([[XA + 0.03, 0.2], [XB - 0.03, 0.2], [XB - 0.03, 0.37], [XA + 0.03, 0.37]], B, null, 0.006);
         D2.side([[XA + 0.03, 0.38], [XB - 0.03, 0.38], [XB - 0.03, 0.4], [XA + 0.03, 0.4]], S, null, 0.006);
@@ -76,8 +79,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         }
         // ---- the wheel arches: flares, the rear ones very wide ----
         for (const sd of [-1, 1]) {
-          K.flare(K.fx, 0.365, 0.405, sd * 0.915, sd * 0.97, P, { a0: 0.06, a1: Math.PI - 0.06 });
-          K.flare(K.rx, 0.365, 0.52, sd * 0.935, sd * 1.0, P, { a0: 0.02, a1: Math.PI - 0.02 });
+          K.flare(K.fx, 0.365, 0.405, sd * 0.895, sd * 0.955, K.shade(P, 0.86), { a0: 0.06, a1: Math.PI - 0.06 });
+          K.flare(K.rx, 0.365, 0.52, sd * 0.925, sd * 1.0, K.shade(P, 0.86), { a0: 0.02, a1: Math.PI - 0.02 });
         }
         // ---- the nose: the black strip with the lamps (the pop-up lamps are shut in the lid), the painted valance with its intakes, the
         //      black chin spoiler (the bumper) ----
@@ -131,9 +134,15 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- inside (seen once a part is off): two buckets low down, the dashboard, the tunnel (the gearbox ahead of the engine), the V12 ----
         for (const sd of [-1, 1]) K.seat(-0.5, 0.3, sd * 0.36, { w: 0.46, l: 0.48, back: 0.55, tilt: 0.42 });
         K.box(0.22, 0.42, 0, 0.32, 0.2, 1.5, 0, D, null, false, { inner: true, part: 'body' });
-        K.face([[-0.05, 0.745, -0.8], [-0.05, 0.745, 0.8], [0.385, 0.772, 0.8], [0.385, 0.772, -0.8]], D, { part: 'body' });   // (the dashboard's top under the windscreen, in the outer shell: from the seat it closes the view under the cowl)
+        // (the dashboard's top under the windscreen, in the outer shell: from the seat it meets the cowl's edge and closes the view into
+        // the nose under it; sloping to the driver, it shows him its dark face, not the sky's glint)
+        K.face([[-0.02, 0.62, -0.8], [-0.02, 0.62, 0.8], [0.398, 0.7835, 0.785], [0.398, 0.7835, -0.785]], D, { part: 'body' });
+        for (const sd of [-1, 1]) { const q = [[0.398, 0.7835, sd * 0.785], [0.398, 0.752, sd * 0.89], [-0.02, 0.62, sd * 0.87], [-0.02, 0.62, sd * 0.8]]; K.face(sd > 0 ? q.reverse() : q, D, { part: 'body' }); }
         K.box(-0.1, 0.18, 0, 1.0, 0.22, 0.26, 0, D, null, false, { inner: true, part: 'body' });
+        K.cyl([0.12, 0.66, -0.36], [0.15, 0.68, -0.36], 0.17, B, { n: 8, inner: true, part: 'body' });   // (the wheel, left)
         K.engine(-1.42, 0.24, 0, { l: 0.95, w: 0.66, h: 0.44 });
+        // the wheels' housings, seen from the front boot and the engine bay (the tubs face the wheels: from inside, a wall)
+        for (const sd of [-1, 1]) for (const x of [K.fx, K.rx]) K.box(x, 0.22, sd * 0.56, 0.74, x > 0 ? 0.44 : 0.6, 0.04, 0, D, null, true, { inner: true, part: 'body' });
       },
     },
   });
