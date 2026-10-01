@@ -98,11 +98,11 @@
   "jsMs": 0.9
  },
  "suzuka": {
-  "calls": 252,
-  "maxCalls": 300,
-  "kverts": 633,
-  "maxKverts": 822,
-  "jsMs": 0.78
+  "calls": 272,
+  "maxCalls": 340,
+  "kverts": 610,
+  "maxKverts": 709,
+  "jsMs": 0.81
  },
  "pikesg": {
   "calls": 81,
