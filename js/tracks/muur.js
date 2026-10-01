@@ -31,7 +31,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     tiles: [[3585, 3722]],   // the Brugstraat's smooth stone tiles (a pedestrian street in the town centre): drawn as tiles, they drive as asphalt
     // where the verge is grass, not the town's paving ([from, to], metres after the start line)
     grass: [[672,1200],[1328,1452],[2096,2140],[2548,2752],[2768,2848],[2884,3208]],
-    marks: { mannekenPis: [-26.7, -18.8], marbol: [-10.4, -11.6] },   // Manneken Pis on the town hall's corner, the Marbol fountain before it (OpenStreetMap)
+    marks: { mannekenPis: [-26.7, -18.8], marbol: [-10.4, -11.6], hartbeeld: [268.9, 7.9], bridge: [-221.1, 3.5] },   // Manneken Pis on the town hall's corner, the Marbol fountain before it, the Sacred Heart statue, the Brugstraat's bridge over the Dender (OpenStreetMap)
     sectors: [915,3030],   // the TV sectors: the Muur (to past the chapel), the descent (to past the hairpin), the old town
     // named places ([HUD label, x, z, the commentator's lines]; spoken in English: Moor for Muur, Gerardsbergen)
     names: [

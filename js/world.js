@@ -12872,6 +12872,8 @@ const World = (function () {
     cell(B + 4, '#123f86', '#fff', 'VLAANDEREN', 40); cell(B + 5, '#f5d10f', '#111', 'MUUR VAN GERAARDSBERGEN', 22); cell(B + 6, '#111', '#f5d10f', 'OUDENBERG 110 m', 32); cell(B + 7, '#fff', '#d4201c', 'MATTENTAART', 34);
     const SP = (typeof Tex !== 'undefined' && Tex.SPONSORS) || [['HITROLET', '#101418', '#ffd23f']];
     for (let k = 0; k < 8; k++) { const [txt, bg, fg] = SP[k % SP.length]; cell(B + 8 + k, bg, fg, txt, 40, 'rgba(255,255,255,.14)'); }
+    [['CAFÉ DE MUUR', '#3b2a1e', '#f3e2b8'], ['FRITUUR', '#c8261f', '#fff'], ['BAKKERIJ', '#f3ead6', '#5a3a22'], ['APOTHEEK', '#1f7a3a', '#fff'], ['BRASSERIE', '#16306e', '#f5d10f'],
+      ['STAMINEE', '#5a1e22', '#f3e2b8'], ['FIETSEN', '#111', '#f5d10f'], ['FRIETKOT', '#f5d10f', '#c8261f'], ['VIP', '#fff', '#16181c'], ['BIER', '#f5d10f', '#111']].forEach(([t, bg, fg], k) => cell(B + 20 + k, bg, fg, t, t.length > 9 ? 30 : 40, null));
     for (const [k, t] of [[B + 16, 'MUUR'], [B + 17, 'ALLEZ!'], [B + 18, 'KOERS'], [B + 19, 'VLAANDEREN']]) { x.clearRect((k % 4) * 256, Math.floor(k / 4) * 64, 256, 64); cell(k, null, 'rgba(250,250,245,0.92)', t, 50); }   // painted on the cobbles
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (muATex = t);
   }
@@ -12924,6 +12926,34 @@ const World = (function () {
     cyl(g, 0.62, 4.05, 0, 0.13, 0.32, 6, [1, 0.94, 0.78], null, 0.17); cone(g, 0.62, 4.37, 0, 0.22, 0.2, 6, dk, dk, 0);
     return g.geometry();
   }
+  function muStoneTex(brick) {   // the landmarks' walls (256 px = 2 m, tileable, the vertex colour tints them): sandstone ashlar in courses of 25 cm, or red brick
+    const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), r = rng(brick ? 8151 : 8152);
+    x.fillStyle = brick ? '#c8c0b4' : '#a8a296'; x.fillRect(0, 0, S, S);
+    const bh = brick ? 8 : 32, bw = brick ? 24 : 64, base = brick ? [150, 70, 52] : [214, 200, 172];
+    for (let j = 0; j < S / bh; j++) for (let i = -1; i <= S / bw; i++) {
+      const X = i * bw + (j % 2) * bw / 2 + (brick ? 0 : (r() - 0.5) * 10), Y = j * bh, k = 0.84 + r() * 0.28;
+      x.fillStyle = `rgb(${Math.round(base[0] * k)},${Math.round(base[1] * k)},${Math.round(base[2] * k)})`; x.fillRect(X + 1, Y + 1, bw - 2, bh - 2);
+      if (!brick) for (let q = 0; q < 10; q++) { x.fillStyle = r() < 0.5 ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.07)'; x.fillRect(X + r() * bw, Y + r() * bh, 2 + r() * 6, 1 + r() * 3); }
+    }
+    if (!brick) { const g = x.createLinearGradient(0, 0, 0, S); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(40,36,30,0.12)'); x.fillStyle = g; x.fillRect(0, 0, S, S); }   // (weathered lower down)
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t;
+  }
+  // a box whose four walls carry a tiling texture (uv in metres / us, the courses level), its top plain; on the GB t (with uvs)
+  function muBoxT(t, cx, cy, cz, sx, sy, sz, rot, col, us) {
+    const c = Math.cos(rot), s = Math.sin(rot), hx = sx / 2, hz = sz / 2, P = (lx, ly, lz) => [cx + lx * c - lz * s, cy + ly, cz + lx * s + lz * c], inn = [cx, cy + sy / 2, cz], u = us || 2;
+    const cs = [[hx, hz], [-hx, hz], [-hx, -hz], [hx, -hz]];
+    for (let e = 0; e < 4; e++) { const [a0, b0] = cs[e], [a1, b1] = cs[(e + 1) % 4], len = Math.hypot(a1 - a0, b1 - b0) / u, h = sy / u, v0 = cy / u;
+      t.quadO(P(a0, 0, b0), P(a1, 0, b1), P(a1, sy, b1), P(a0, sy, b0), col, inn, [[0, v0], [len, v0], [len, v0 + h], [0, v0 + h]]); }
+    t.quadO(P(-hx, sy, -hz), P(hx, sy, -hz), P(hx, sy, hz), P(-hx, sy, hz), col, inn, [[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01]]);
+  }
+  // a clock face on a wall (centre x, y, z, facing nx, nz; radius r): a dark ring, a white dial, gilded hands at ten past ten
+  function muClock(g, x, y, z, nx, nz, r) {
+    const ux = -nz, uz = nx, n = 12, P = (a, rr, o) => [x + nx * o + ux * Math.cos(a) * rr, y + Math.sin(a) * rr, z + nz * o + uz * Math.cos(a) * rr], ins = [x - nx, y, z - nz];
+    for (let k = 0; k < n; k++) { const a0 = k / n * TAU, a1 = (k + 1) / n * TAU; g.triO(P(0, 0, 0.06), P(a0, r, 0.06), P(a1, r, 0.06), [0.95, 0.94, 0.9], ins); g.quadO(P(a0, r, 0.05), P(a1, r, 0.05), P(a1, r * 1.15, 0.05), P(a0, r * 1.15, 0.05), [0.12, 0.12, 0.14], ins); }
+    const gold = [0.82, 0.66, 0.28], hand = (a, l, w) => { const e = [Math.cos(a), Math.sin(a)], o = 0.09; g.quadO([x + nx * o - ux * e[1] * w, y + e[0] * w, z + nz * o - uz * e[1] * w], [x + nx * o + ux * e[1] * w, y - e[0] * w, z + nz * o + uz * e[1] * w],
+      [x + nx * o + ux * (e[0] * l + e[1] * w), y + e[1] * l - e[0] * w, z + nz * o + uz * (e[0] * l + e[1] * w)], [x + nx * o + ux * (e[0] * l - e[1] * w), y + e[1] * l + e[0] * w, z + nz * o + uz * (e[0] * l - e[1] * w)], gold, ins); };
+    hand(Math.PI / 2 - TAU * 10 / 12 + TAU, r * 0.55, r * 0.06); hand(Math.PI / 2 - TAU * 2 / 12, r * 0.85, r * 0.04);
+  }
   // a Flemish town house (on the scenery GB g, its street front on the facade GB f): a blue-stone plinth, walls in the house's colour, the front in bays
   // and storeys of the facade atlas (column wt; ground floor row gr: 2 shop, 3 door; upper floors row up), a roof of slate or red tiles: its ridge along
   // the street, or (ridgeX) across it with a stepped gable on the front. b: { x, z, L, W, ang } (L along ang), front: 0 +W/2 side, 1 -W/2, 2 +L/2, 3 -L/2
@@ -12958,31 +12988,46 @@ const World = (function () {
         box(g, px, yt + k * rh / n, pz, wk, rh / n + 0.02, 0.45, rotF, [wc[0] * o.tint[0] * 0.95, wc[1] * o.tint[1] * 0.95, wc[2] * o.tint[2] * 0.95]); }
     }
     if (o.chim) { const [px, , pz] = Pp(b.L * 0.25, 0, 0); box(g, px, yt + rh * 0.4, pz, 0.6, rh * 0.75, 0.6, b.ang, [0.45, 0.24, 0.18], [0.2, 0.2, 0.2]); }
+    if (f && fk >= 0) {
+      const nl = [[0, 1], [-1, 0], [0, -1], [1, 0]][fk], ex = -nl[1], ez = nl[0], wcol = [wc[0] * o.tint[0], wc[1] * o.tint[1], wc[2] * o.tint[2]];   // (the front's outward normal and its direction along, local)
+      if (!o.ridgeX && fl >= 2 && Lr > 5 && o.dorm) {   // dormers on the front slope: a box with a window, a small gable over it
+        const dd = Dr * 0.2, n = Lr > 9 ? 2 : 1, yd = yt + rh * (1 - (dd + 0.8) / (Dr / 2 + 0.25)) - 0.15;
+        for (let k = 0; k < n; k++) { const a = n === 1 ? 0 : (k ? 0.25 : -0.25) * Lr, lu = nl[0] * (dd + 0.1) + ex * a, lv = nl[1] * (dd + 0.1) + ez * a, [px, , pz] = Pp(lu, lv, 0), rd = Math.atan2(s * nl[0] + c * nl[1], c * nl[0] - s * nl[1]);
+          box(g, px, yd, pz, 1.6, 1.5, 1.4, rd, wcol, null, true);
+          const [wx, , wz] = Pp(lu + nl[0] * 0.81, lv + nl[1] * 0.81, 0); box(g, wx, yd + 0.25, wz, 0.06, 1.0, 0.9, rd, [0.2, 0.25, 0.32], [0.95, 0.95, 0.92], true);
+          gable(g, px, yd + 1.5, pz, 1.7, 1.8, 0.7, rd, roofC.map(v => v * 0.3), wcol); }
+      }
+      if (o.gr === 2 && o.sign) { const [u0, v0] = cs[fk], [u1, v1] = cs[(fk + 1) % 4], [px, , pz] = Pp(lerp(u0, u1, 0.82), lerp(v0, v1, 0.82), 0);
+        o.sign(px, yb + 3.5, pz, c * nl[0] - s * nl[1], s * nl[0] + c * nl[1]); }   // a shop's sign out over the sidewalk
+    }
     return yt + rh;
   }
   // the town hall of Geraardsbergen: a grey sandstone hall of two tall storeys, pointed windows, a steep slate roof with dormers, slender turrets with
   // spires at the corners and a small belfry on the ridge (b: its footprint; front: the side to the Markt)
-  function muTownHall(g, b, y0, y1) {
+  function muTownHall(g, st, b, y0, y1) {
     const c = Math.cos(b.ang), s = Math.sin(b.ang), stone = [0.66, 0.6, 0.5], dk = [0.42, 0.38, 0.32], slate = [0.22, 0.23, 0.27], H = 11.5, P2 = (u, v) => [b.x + c * u - s * v, b.z + s * u + c * v];
-    box(g, b.x, y0 - 0.5, b.z, b.L, y1 - y0 + 0.5 + H, b.W, b.ang, stone, null, true);
+    muBoxT(st, b.x, y0 - 0.5, b.z, b.L, y1 - y0 + 0.5 + H, b.W, b.ang, [0.95, 0.9, 0.82], 2);
     for (const v of [-b.W / 2 - 0.06, b.W / 2 + 0.06]) for (let k = 0; k < Math.floor(b.L / 3.4); k++) { const u = -b.L / 2 + 1.7 + k * 3.4, [px, pz] = P2(u, v);
       for (const yy of [1.6, 6.8]) { box(g, px, y1 + yy, pz, 1.3, 3.4, 0.14, b.ang, [0.16, 0.18, 0.22], null, true); cone(g, px, y1 + yy + 3.4, pz, 0.68, 0.7, 4, dk, dk, b.ang + Math.PI / 4); } }
     box(g, b.x, y1 + H - 0.6, b.z, b.L + 0.5, 0.6, b.W + 0.5, b.ang, dk, null, true);   // the cornice
     gable(g, b.x, y1 + H, b.z, b.L + 0.3, b.W + 0.3, Math.min(9, b.W * 0.6), b.ang, slate, stone);
     for (const [u, v] of [[-b.L / 2, -b.W / 2], [b.L / 2, -b.W / 2], [b.L / 2, b.W / 2], [-b.L / 2, b.W / 2]]) { const [px, pz] = P2(u, v);   // the corner turrets
-      cyl(g, px, y1 + 4, pz, 1.0, H - 3, 8, stone); cone(g, px, y1 + H + 1, pz, 1.25, 6.5, 8, slate, slate, 0); }
+      cyl(g, px, y1 + 4, pz, 1.0, H - 3, 8, stone); cone(g, px, y1 + H + 1, pz, 1.25, 6.5, 8, slate, slate, 0); box(g, px, y1 + H + 7.4, pz, 0.06, 1.0, 0.06, 0, [0.82, 0.68, 0.3]); }
     const [bx, bz] = P2(0, 0), rt = Math.min(9, b.W * 0.6); box(g, bx, y1 + H + rt * 0.7, bz, 2.4, 3.2, 2.4, b.ang, [0.3, 0.32, 0.34]); cone(g, bx, y1 + H + rt * 0.7 + 3.2, bz, 1.9, 6, 8, slate, slate, 0);   // the belfry
     return y1 + H;
   }
   // the church of Sint-Bartholomeus: a Gothic hall church of sandstone, the nave and choir under a steep slate roof, the square west tower with its spire
-  function muChurch(g, b, y0, y1, towerEnd) {
+  function muChurch(g, st, b, y0, y1, towerEnd) {
     const c = Math.cos(b.ang), s = Math.sin(b.ang), stone = [0.62, 0.56, 0.46], slate = [0.24, 0.25, 0.29], H = 15, P2 = (u, v) => [b.x + c * u - s * v, b.z + s * u + c * v];
     const L = b.L - 9, cu = towerEnd * 4.5;   // (the nave leaves room for the tower at one end)
-    { const [nx, nz] = P2(-cu, 0); box(g, nx, y0 - 0.5, nz, L, y1 - y0 + 0.5 + H, b.W * 0.82, b.ang, stone, null, true); gable(g, nx, y1 + H, nz, L + 0.4, b.W * 0.82 + 0.6, b.W * 0.5, b.ang, slate, stone);
+    { const [nx, nz] = P2(-cu, 0); muBoxT(st, nx, y0 - 0.5, nz, L, y1 - y0 + 0.5 + H, b.W * 0.82, b.ang, [0.92, 0.86, 0.76], 2);
+      for (const v of [-b.W * 0.41 - 0.5, b.W * 0.41 + 0.5]) for (let k = 0; k <= Math.floor(L / 5); k++) { const [px, pz] = P2(-cu - L / 2 + k * 5, v); box(g, px, y0 - 0.5, pz, 1.0, y1 - y0 + H - 2, 1.1, b.ang, stone, [0.5, 0.45, 0.37], true); }   // the buttresses
+      gable(g, nx, y1 + H, nz, L + 0.4, b.W * 0.82 + 0.6, b.W * 0.5, b.ang, slate, stone);
       for (const v of [-b.W * 0.41 - 0.06, b.W * 0.41 + 0.06]) for (let k = 0; k < Math.floor(L / 5); k++) { const [px, pz] = P2(-cu - L / 2 + 2.5 + k * 5, v); box(g, px, y1 + 3, pz, 2.0, 8.5, 0.14, b.ang, [0.18, 0.22, 0.3], null, true); cone(g, px, y1 + 11.5, pz, 1.05, 1.2, 4, stone, stone, b.ang + Math.PI / 4); }
-      const [tx, tz] = P2(-cu + L * 0.1, 0); box(g, tx, y1 + 2, tz, 6, H - 2, b.W, b.ang, stone, null, true); gable(g, tx, y1 + H, tz, 6.4, b.W + 0.5, b.W * 0.45, b.ang + Math.PI / 2, slate, stone); }   // the transept
+      const [tx, tz] = P2(-cu + L * 0.1, 0); muBoxT(st, tx, y1 + 2, tz, 6, H - 2, b.W, b.ang, [0.92, 0.86, 0.76], 2); gable(g, tx, y1 + H, tz, 6.4, b.W + 0.5, b.W * 0.45, b.ang + Math.PI / 2, slate, stone); }   // the transept
     const [tx, tz] = P2(towerEnd * (b.L / 2 - 4.5), 0);   // the tower: four stages and a spire
-    box(g, tx, y0 - 0.5, tz, 9, y1 - y0 + 0.5 + 34, 9, b.ang, stone, null, true);
+    muBoxT(st, tx, y0 - 0.5, tz, 9, y1 - y0 + 0.5 + 34, 9, b.ang, [0.92, 0.86, 0.76], 2);
+    for (let k = 0; k < 4; k++) { const a = b.ang + k * Math.PI / 2, ex = Math.cos(a), ez = Math.sin(a); muClock(g, tx + ex * 4.52, y1 + 18.5, tz + ez * 4.52, ex, ez, 1.5); }   // the clock on every side
     for (const yy of [12, 22, 29]) box(g, tx, y1 + yy, tz, 9.5, 0.5, 9.5, b.ang, [0.5, 0.45, 0.37]);
     for (let k = 0; k < 4; k++) { const a = b.ang + k * Math.PI / 2, ex = Math.cos(a), ez = Math.sin(a); box(g, tx + ex * 4.56, y1 + 25, tz + ez * 4.56, 0.12, 3.6, 2.2, a, [0.1, 0.1, 0.12], null, true); }   // the louvres
     cone(g, tx, y1 + 34, tz, 6.2, 18, 8, slate, [0.3, 0.32, 0.34], b.ang + Math.PI / 8);
@@ -12990,10 +13035,10 @@ const World = (function () {
   }
   // the chapel of Onze-Lieve-Vrouw van de Oudenberg on the top of the Muur: a small brick chapel with white stone dressings, a steep slate roof, a curved
   // gable front and a slender octagonal bell turret with an onion cap, round-arched windows
-  function muChapel(g, b, y0, y1, R) {
+  function muChapel(g, br, b, y0, y1, R) {
     const c = Math.cos(b.ang), s = Math.sin(b.ang), brick = [0.6, 0.3, 0.22], wht = [0.92, 0.9, 0.84], slate = [0.22, 0.23, 0.27], L = Math.min(16, b.L), W = Math.min(9, b.W), H = 7, P2 = (u, v) => [b.x + c * u - s * v, b.z + s * u + c * v];
     box(g, b.x, y0 - 0.5, b.z, L + 0.6, y1 - y0 + 0.9, W + 0.6, b.ang, [0.55, 0.53, 0.5], null, true);   // its stone base
-    box(g, b.x, y1 + 0.4, b.z, L, H, W, b.ang, brick, null, true);
+    muBoxT(br, b.x, y1 + 0.4, b.z, L, H, W, b.ang, [1, 1, 1], 1.4);
     for (const v of [-W / 2 - 0.05, W / 2 + 0.05]) for (let k = 0; k < 3; k++) { const [px, pz] = P2(-L / 2 + 3.5 + k * 4.2, v); box(g, px, y1 + 2.2, pz, 1.2, 3.0, 0.12, b.ang, [0.14, 0.18, 0.26], wht, true); ico(g, px, y1 + 5.2, pz, 0.6, 0.6, wht, R, 0); }
     for (const [u, v] of [[L / 2, W / 2], [L / 2, -W / 2], [-L / 2, W / 2], [-L / 2, -W / 2]]) { const [px, pz] = P2(u, v); box(g, px, y1 + 0.4, pz, 0.5, H, 0.5, b.ang, wht); }   // white quoins
     gable(g, b.x, y1 + H + 0.4, b.z, L + 0.4, W + 0.6, W * 0.7, b.ang, slate, brick);
@@ -13156,6 +13201,7 @@ const World = (function () {
     /* ---- scenery helpers (vertex coloured, 128 m chunks) ---- */
     const scen = new Chunks(128), fac = new Chunks(128, true), ban = new GB(true), flg = new Chunks(256, true);
     const roofSl = new Chunks(256, true), roofCl = new Chunks(256, true);   // (the slate and the pantile roofs)
+    const stn = new Chunks(256, true), brk = new Chunks(256, true);   // (the landmarks' sandstone and brick walls)
     const onSide = (s, side, extra) => { const i = T.idx(s), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + extra); return [T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, i]; };
     const nm = T.names.map(q => q.n), atlas = muAtlas(nm), B0 = 20;
     const board = (cx, cy, cz, tx, tz, Wd, H, cellK, gb) => {   // text board (bottom centre cx, cy, cz) facing -t, a dark back behind it
@@ -13203,9 +13249,9 @@ const World = (function () {
         if (inWater(x, z, 0)) continue;
         if (name) {   // the landmarks: as they stand (the road keeps clear of them)
           const [lo, hi] = lowHigh(b), g = scen.get(x, z); out.marks[name] = [x, z];
-          if (kind === 4 && name.startsWith('Stadhuis')) muTownHall(g, b, lo, hi);
-          else if (kind === 2) { const c = Math.cos(ang), s = Math.sin(ang), e = (x + c * Lb / 2) ** 2 + (z + s * Lb / 2) ** 2 < (x - c * Lb / 2) ** 2 + (z - s * Lb / 2) ** 2 ? 1 : -1; muChurch(g, b, lo, hi, e); }
-          else if (kind === 5) muChapel(g, b, lo, hi, RB2);
+          if (kind === 4 && name.startsWith('Stadhuis')) muTownHall(g, stn.get(x, z), b, lo, hi);
+          else if (kind === 2) { const c = Math.cos(ang), s = Math.sin(ang), e = (x + c * Lb / 2) ** 2 + (z + s * Lb / 2) ** 2 < (x - c * Lb / 2) ** 2 + (z - s * Lb / 2) ** 2 ? 1 : -1; muChurch(g, stn.get(x, z), b, lo, hi, e); }
+          else if (kind === 5) muChapel(g, brk.get(x, z), b, lo, hi, RB2);
           else if (kind === 7) { cyl(g, x, lo - 0.5, z, Math.min(Lb, Wb) * 0.48, hi - lo + 14.5, 10, [0.6, 0.55, 0.46]); cone(g, x, hi + 14, z, Math.min(Lb, Wb) * 0.56, 6, 10, [0.24, 0.25, 0.29], [0.24, 0.25, 0.29], 0); }
           else {   // the castle on the Oudenberg (white, slate roofs, a round tower), the tourist office (a stepped-gabled house)
             const fr = ddAt(x - Math.sin(ang) * Wb / 2, z + Math.cos(ang) * Wb / 2) < ddAt(x + Math.sin(ang) * Wb / 2, z - Math.cos(ang) * Wb / 2) ? 0 : 1;
@@ -13228,7 +13274,11 @@ const World = (function () {
           if (b.L * b.W < 36) fl = Math.min(fl, 1 + (h < 0.5 ? 1 : 0));
           const wt = h2 < 0.42 ? 0 : h2 < 0.66 ? 1 : h2 < 0.8 ? 2 : 3, frontW = front < 2 ? b.L : b.W;
           const o = { gr: old && fd[front] < 12 && h3 < 0.6 ? 2 : 3, up: h3 < 0.5 ? 0 : 1, tint: [0.94 + 0.12 * crH(b.x, b.z, 74), 0.94 + 0.12 * crH(b.x, b.z, 74), 0.94 + 0.12 * crH(b.x, b.z, 75)],
-            flat: kind === 1 && b.L * b.W > 300, ridgeX: old && near && frontW < (front < 2 ? b.W : b.L) * 0.9 && h3 > 0.55, chim: h < 0.5 };
+            flat: kind === 1 && b.L * b.W > 300, ridgeX: old && near && frontW < (front < 2 ? b.W : b.L) * 0.9 && h3 > 0.55, chim: h < 0.5, dorm: crH(b.x, b.z, 80) < 0.55,
+            sign: (px, py, pz, nx, nz) => {   // a shop's sign on a bracket out over the sidewalk, read up and down the street (both faces)
+              const ex = -nz, ez = nx, cx = px + nx * 0.95, cz = pz + nz * 0.95, k = B0 + 20 + Math.floor(crH(b.x, b.z, 81) * 8), g2 = scen.get(px, pz);
+              box(g2, px + nx * 0.5, py + 0.62, pz + nz * 0.5, 1.1, 0.06, 0.06, Math.atan2(nz, nx), [0.12, 0.12, 0.13]);
+              board(cx, py, cz, ex, ez, 1.3, 0.55, k); board(cx, py, cz, -ex, -ez, 1.3, 0.55, k); } };
           const rk = Math.floor(crH(b.x, b.z, 76) * 4), clay = rk === 1 || rk === 2, roofC = clay ? (rk === 2 ? [0.7, 0.62, 0.6] : [1, 1, 1]).map(v => v * (0.9 + 0.2 * crH(b.x, b.z, 79))) : [1.05, 1.05, 1.08].map(v => v * (0.88 + 0.22 * crH(b.x, b.z, 79)));
           o.rg = (clay ? roofCl : roofSl).get(b.x, b.z);
           if (far) {   // far from the road: walls and a roof, no fronts
@@ -13258,6 +13308,98 @@ const World = (function () {
         cyl(g, x, y - 0.2, z, 2.0, 0.9, 8, st, [0.34, 0.42, 0.46]); cyl(g, x, y, z, 0.5, 3.4, 8, st); for (let k = 0; k < 4; k++) { const a = k / 4 * TAU + 0.4; cone(g, x + Math.cos(a) * 0.55, y + 2.6, z + Math.sin(a) * 0.55, 0.16, 1.4, 4, st, st, 0); }
         cone(g, x, y + 3.4, z, 0.55, 2.4, 8, st, st, 0); ico(g, x, y + 5.9, z, 0.2, 1, [0.82, 0.68, 0.3], R, 0);
         exclPush(x, z, 3); CR.avoid(x, z, 2.4); out.marks['Marbol'] = [x, z]; }
+    }
+
+    /* ---- the Markt paved all over between its houses (pavers, the sidewalks' pattern); café terraces under parasols, benches and bins along the town's
+       sidewalks; on the Oudenberg the chapel's ring of limes (planted with the trees) inside a low wall, the Sacred Heart on its pedestal; a race day:
+       VIP marquees and beer stands in the park by the Muur, the big screen on the Markt, the Flemish lion on poles all the way up, the TV motorbikes ---- */
+    const MK = [-22, -8], MKR = 80, chap = (def.bld || []).find(r => r[6] === 5);
+    {
+      const gq = new GB(true), cs = 2.5, uv = (p) => [p[0] / 1.1, -p[2] / 1.1];
+      const ok = (x, z) => Math.hypot(x - MK[0], z - MK[1]) < MKR && nrLCf(x, z, 3) > 0.3 && nrNear(x, z).dd > 3.3 && !excluded(x, z) && !inWater(x, z, 2);
+      const P3 = (a, b) => [a, nrGround(a, b) + 0.06, b], cc = (p) => { const v = 0.78 + 0.06 * crH(Math.floor(p[0] / 5), Math.floor(p[2] / 5), 44); return [v, v * 0.98, v * 0.95]; };
+      for (let z = MK[1] - MKR; z < MK[1] + MKR; z += cs) for (let x = MK[0] - MKR; x < MK[0] + MKR; x += cs) {
+        if (!ok(x + cs / 2, z + cs / 2)) continue;
+        const A = P3(x, z), B = P3(x + cs, z), C = P3(x + cs, z + cs), D = P3(x, z + cs);
+        gq.quadUp(A, B, C, D, [cc(A), cc(B), cc(C), cc(D)], [uv(A), uv(B), uv(C), uv(D)]);
+      }
+      addM(gq, new THREE.MeshLambertMaterial({ map: tex.paving, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }));
+      // the terraces: tables and chairs under square parasols (the brewers' colours) behind the crowd, wherever the Markt and the Vesten leave room
+      const PAR = [[0.85, 0.12, 0.1], [0.96, 0.96, 0.92], [0.12, 0.2, 0.42], [0.96, 0.78, 0.1], [0.2, 0.45, 0.25]];
+      for (let d = -170; d <= 300; d += 9) for (const sd of [-1, 1]) {
+        if (crH(d, sd, 31) > (d < 120 ? 0.55 : 0.25)) continue;
+        const s = sAt(d), i = T.idx(s); if (!town[i]) continue;
+        const [x, z, ii] = onSide(s, sd, 5.6 + crH(d, sd, 32) * 2); if (excluded(x, z) || nrNear(x, z).dd < 4.5 || inWater(x, z, 2)) continue;
+        const y = nrGround(x, z), g = scen.get(x, z), pc = PAR[Math.floor(crH(d, sd, 33) * PAR.length)], hd = T.hd[ii];
+        cyl(g, x, y, z, 0.045, 2.5, 4, [0.85, 0.85, 0.86]);
+        cone(g, x, y + 2.05, z, 1.75, 0.55, 4, pc, pc, hd + PI / 4);
+        box(g, x, y + 1.98, z, 2.4, 0.1, 2.4, hd, pc, pc, true);
+        cyl(g, x, y, z, 0.38, 0.75, 6, [0.25, 0.22, 0.2], [0.9, 0.88, 0.84]);
+        for (let k = 0; k < 4; k++) { const a = hd + k * PI / 2 + 0.3, cx = x + Math.cos(a) * 0.8, cz = z + Math.sin(a) * 0.8;
+          box(g, cx, y, cz, 0.42, 0.45, 0.42, a, [0.32, 0.3, 0.3]); box(g, cx + Math.cos(a) * 0.2, y + 0.45, cz + Math.sin(a) * 0.2, 0.06, 0.45, 0.42, a, [0.32, 0.3, 0.3]); }
+        exclPush(x, z, 1.8); CR.avoid(x, z, 1.9);
+      }
+      // benches (wood on cast iron) and bins along the sidewalks, every ~45 m
+      for (let d = 30; d < L; d += 45) { const s = sAt(d), i = T.idx(s); if (!town[i]) continue;
+        const sd = crH(d, 0, 34) < 0.5 ? -1 : 1, [x, z, ii] = onSide(s, sd, 2.55); if (excluded(x, z) || nrNear(x, z).dd < 2.2) continue;
+        const y = nrGround(x, z), g = scen.get(x, z), hd = T.hd[ii], nx = T.nx[ii] * sd, nz = T.nz[ii] * sd;
+        box(g, x, y + 0.42, z, 1.8, 0.07, 0.45, hd, [0.5, 0.34, 0.2]); box(g, x + nx * 0.22, y + 0.5, z + nz * 0.22, 1.8, 0.4, 0.06, hd, [0.5, 0.34, 0.2]);
+        for (const e of [-0.75, 0.75]) box(g, x + T.tx[ii] * e, y, z + T.tz[ii] * e, 0.08, 0.45, 0.45, hd, [0.14, 0.18, 0.15]);
+        const bx = x + T.tx[ii] * 1.6, bz = z + T.tz[ii] * 1.6; cyl(g, bx, y, bz, 0.25, 0.85, 8, [0.18, 0.28, 0.2], [0.06, 0.06, 0.06]);
+        exclPush(x, z, 1.4); CR.avoid(x, z, 1.2); CR.avoid(bx, bz, 0.5); }
+    }
+    // the chapel's low wall of blue stone round its plateau (where the road leaves room), the Sacred Heart: a white figure, arms open, on a tall pedestal
+    if (chap) { const [cx0, cz0] = chap, Rw = 21.5;
+      for (let k = 0; k < 48; k++) { const a0 = k / 48 * TAU, a1 = (k + 1) / 48 * TAU, x0 = cx0 + Math.cos(a0) * Rw, z0 = cz0 + Math.sin(a0) * Rw, x1 = cx0 + Math.cos(a1) * Rw, z1 = cz0 + Math.sin(a1) * Rw, mx = (x0 + x1) / 2, mz = (z0 + z1) / 2;
+        if (nrNear(mx, mz).dd < 1.2) continue; const y = Math.min(nrGround(x0, z0), nrGround(x1, z1));
+        box(scen.get(mx, mz), mx, y - 0.4, mz, Math.hypot(x1 - x0, z1 - z0) + 0.1, 1.1 + Math.abs(nrGround(x0, z0) - nrGround(x1, z1)), 0.45, Math.atan2(z1 - z0, x1 - x0), [0.48, 0.48, 0.5], [0.6, 0.6, 0.6]); CR.avoid(mx, mz, 0.7); } }
+    if (marks.hartbeeld) { const [x, z] = marks.hartbeeld, y = nrGround(x, z), g = scen.get(x, z), wh = [0.93, 0.92, 0.88], st = [0.58, 0.56, 0.52];
+      box(g, x, y - 0.4, z, 3.2, 1.0, 3.2, 0, st); box(g, x, y + 0.6, z, 1.6, 3.4, 1.6, 0, st, wh);
+      cyl(g, x, y + 4.0, z, 0.42, 2.0, 8, wh, wh, 0.3); box(g, x, y + 5.45, z, 2.0, 0.28, 0.3, 0.6, wh); ico(g, x, y + 6.35, z, 0.3, 1.1, wh, R, 0);
+      exclPush(x, z, 4); CR.avoid(x, z, 2.6); out.marks['Heilig Hartbeeld'] = [x, z]; }
+    { // race day in the park by the Muur: white marquees (VIP), beer stands with their boards, on level ground behind the crowd
+      const d0 = (nameD('Kapelmuur') || 600) - 20, d1 = (nameD('Driepikkel') || 1080) + 120; let nt = 0;
+      for (let d = d0; d < d1 && nt < 7; d += 23) for (const sd of [-1, 1]) {
+        if (crH(d, sd, 35) > 0.5) continue;
+        const [x, z, ii] = onSide(sAt(d), sd, 11 + crH(d, sd, 36) * 6); if (excluded(x, z) || nrSlope(x, z) > 0.22 || nrNear(x, z).dd < 9 || inWater(x, z, 3)) continue;
+        const y = nrGround(x, z), g = scen.get(x, z), hd = T.hd[ii], vip = nt % 3 !== 2, Wt = vip ? 8 : 4, Dt = vip ? 5 : 3, wh = [0.97, 0.97, 0.96];
+        box(g, x, y - 0.3, z, Wt, 2.8, Dt, hd, wh, wh, true); gable(g, x, y + 2.5, z, Wt + 0.3, Dt + 0.3, vip ? 1.6 : 1.0, hd, vip ? wh : [0.96, 0.78, 0.1], wh);
+        const fx = x - T.nx[ii] * sd * (Dt / 2 + 0.02), fz = z - T.nz[ii] * sd * (Dt / 2 + 0.02);
+        board(fx, y + 1.85, fz, T.nx[ii] * sd, T.nz[ii] * sd, Math.min(3.2, Wt - 1), 0.75, B0 + (vip ? 28 : 29));
+        if (!vip) box(g, fx - T.nx[ii] * sd * 0.5, y, fz - T.nz[ii] * sd * 0.5, Wt - 0.4, 1.05, 0.6, hd, [0.5, 0.34, 0.2], [0.85, 0.8, 0.7]);   // the bar
+        exclPush(x, z, Math.hypot(Wt, Dt) / 2 + 1.5); CR.block(x, z, Wt + 1, Dt + 1, hd); nt++; nBld++;
+      }
+    }
+    { // the big screen on the Markt (the race live), on a black trailer frame facing the square
+      let best = null;
+      for (let d = -120; d <= 60; d += 15) for (const sd of [-1, 1]) { const [x, z, ii] = onSide(sAt(d), sd, 9); if (excluded(x, z) || nrNear(x, z).dd < 7) continue;
+        const f = Math.hypot(x - MK[0], z - MK[1]); if (!best || f < best.f) best = { x, z, ii, sd, f }; }
+      if (best) { const { x, z, ii, sd } = best, y = nrGround(x, z), g = scen.get(x, z), hd = T.hd[ii], tx = T.tx[ii], tz = T.tz[ii], nx = T.nx[ii] * sd, nz = T.nz[ii] * sd, K = [0.08, 0.08, 0.09];
+        box(g, x, y - 0.2, z, 4, 1.2, 2, hd, K); box(g, x, y + 0.9, z, 0.4, 3.6, 0.4, hd, K); box(g, x, y + 4.2, z, 6.4, 3.8, 0.35, hd, K);
+        const c = document.createElement('canvas'); c.width = 256; c.height = 144; const q = c.getContext('2d'), gr = q.createLinearGradient(0, 0, 0, 144);
+        gr.addColorStop(0, '#7fb0e0'); gr.addColorStop(0.55, '#cfe3f0'); gr.addColorStop(0.56, '#4d7d3a'); gr.addColorStop(1, '#2d5424'); q.fillStyle = gr; q.fillRect(0, 0, 256, 144);
+        q.fillStyle = '#7a7268'; q.beginPath(); q.moveTo(70, 144); q.lineTo(118, 80); q.lineTo(138, 80); q.lineTo(190, 144); q.fill();   // the cobbled climb up to the chapel
+        q.fillStyle = '#8a3a28'; q.fillRect(116, 58, 24, 22); q.fillStyle = '#2b2d33'; q.beginPath(); q.moveTo(112, 60); q.lineTo(128, 46); q.lineTo(144, 60); q.fill();
+        for (let k = 0; k < 40; k++) { q.fillStyle = ['#d33', '#fd2', '#fff', '#239', '#111'][k % 5]; q.fillRect(64 + (k % 20) * 3.2 + (k < 20 ? 0 : 66), 100 + (k % 7) * 6, 3, 5); }
+        q.fillStyle = '#e8261c'; q.fillRect(118, 112, 18, 10); q.fillStyle = '#111'; q.fillRect(119, 121, 5, 3); q.fillRect(130, 121, 5, 3);   // a car on the Muur
+        q.fillStyle = 'rgba(0,0,0,.65)'; q.fillRect(0, 118, 256, 26); q.fillStyle = '#f5d10f'; q.font = '900 15px Arial'; q.fillText('LIVE · DE MUUR', 8, 136); q.fillStyle = '#e8261c'; q.beginPath(); q.arc(240, 14, 6, 0, TAU); q.fill();
+        const st = ownTex(new THREE.CanvasTexture(c)), sg = new GB(true), ox = x - nx * 0.19, oz = z - nz * 0.19, yb = y + 4.45, W2 = 2.95, H2 = 3.3;
+        const A = [ox - tx * W2, yb, oz - tz * W2], B = [ox + tx * W2, yb, oz + tz * W2], ru = (p) => 0.5 + ((p[0] - ox) * -nz + (p[2] - oz) * nx) / (2 * W2);   // (seen from the road: u to the viewer's right)
+        sg.quadO(A, B, [B[0], yb + H2, B[2]], [A[0], yb + H2, A[2]], W1, [x, yb + 1, z], [[ru(A), 0], [ru(B), 0], [ru(B), 1], [ru(A), 1]]);
+        addM(sg, new THREE.MeshBasicMaterial({ map: st }));
+        exclPush(x, z, 4); CR.block(x, z, 6.6, 2.4, hd); }
+    }
+    { // the Flemish lion on tall poles up the Muur and along the Markt (every ~22 m, alternate sides, just behind the fence); the TV motorbikes parked by the top
+      const d0 = (nameD('Kapelmuur') || 600) - 40, d1 = (nameD('Kapel Oudenberg') || 880) + 40; let side = 1;
+      for (let d = d0; d < d1; d += 22) { side = -side; const [px, pz, ii] = onSide(sAt(d), side, 1.6); if (excluded(px, pz) || CR.exclTest(px, pz) || nrNear(px, pz).dd < 1.2) continue; flagPole(px, pz, T.hd[ii] + PI, false); CR.avoid(px, pz, 0.5); }
+      const dC = nameD('Kapel Oudenberg') || 880, K = [0.08, 0.08, 0.09];
+      for (const [dd, sd] of [[dC + 25, 1], [dC + 32, 1], [dC + 60, -1]]) { const [x, z, ii] = onSide(sAt(dd), sd, 2.4); if (excluded(x, z) || nrNear(x, z).dd < 1.8) continue;
+        const y = nrGround(x, z), g = scen.get(x, z), hd = T.hd[ii], tx = T.tx[ii], tz = T.tz[ii], bc = [0.9, 0.9, 0.92];
+        for (const e of [-0.7, 0.7]) box(g, x + tx * e, y, z + tz * e, 0.62, 0.62, 0.14, hd, K);
+        box(g, x, y + 0.35, z, 1.5, 0.5, 0.42, hd, bc, bc); box(g, x - tx * 0.35, y + 0.75, z - tz * 0.35, 0.7, 0.3, 0.5, hd, K);
+        box(g, x - tx * 0.3, y + 0.85, z - tz * 0.3, 0.42, 0.75, 0.4, hd, [0.95, 0.75, 0.1]); ico(g, x - tx * 0.3, y + 1.85, z - tz * 0.3, 0.17, 1.1, [0.95, 0.95, 0.95], R, 0);   // the cameraman, his helmet
+        box(g, x - tx * 0.45, y + 1.4, z - tz * 0.45 + 0.2, 0.5, 0.28, 0.24, hd, K);   // the camera on his shoulder
+        exclPush(x, z, 1.4); CR.avoid(x, z, 1.4); }
     }
 
     /* ---- street lamps along the town's sidewalks (dark green cast iron, a lantern over the road), every ~26 m on alternate sides, behind the fence ---- */
@@ -13348,6 +13490,7 @@ const World = (function () {
       // the avenue of the Kapelmuur: big beeches and limes either side, just behind the crowd
       { const d0 = (nameD('Kapelmuur') || 600) - 10, d1 = (nameD('Kapel Oudenberg') || 880) + 60;
         for (let d = d0; d < d1; d += 9) for (const sd of [-1, 1]) { const [x, z] = onSide(sAt(d + crH(d, sd, 1) * 4), sd, 6.6 + crH(d, sd, 2) * 3); const hgt = 18 + crH(d, sd, 3) * 8; if (nrSlope(x, z) < 1.4) plant(0, false, x, z, hgt, hgt * 0.72, spring(x, z)); } }
+      if (chap) for (let k = 0; k < 16; k++) { const a = k / 16 * TAU, x = chap[0] + Math.cos(a) * 18.5, z = chap[1] + Math.sin(a) * 18.5; if (nrNear(x, z).dd > 1.8) plant(0, false, x, z, 17 + crH(k, 0, 37) * 4, 12, [0.84, 0.94, 0.84]); }   // the chapel's ring of limes
       for (let tj = 0; tj < G.ntz && nTrees < maxT; tj++) for (let ti = 0; ti < G.ntx && nTrees < maxT; ti++) {
         if (!G.on[tj * G.ntx + ti]) continue;
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
@@ -13365,24 +13508,57 @@ const World = (function () {
     for (const t of tk) t.addTo(root, true);
     for (const t of tf) t.addTo(root, false);
 
-    /* ---- the water: the Dender (a slow, dark green river) and the ponds (the castle's on the Oudenberg), a 4 m grid at the water's level wherever the
-       ground lies below it ---- */
+    /* ---- the water: the Dender (a slow, dark green river: the sky and the banks mirrored in it, the ripples, the shallows along its waterline) and the
+       ponds (the castle's on the Oudenberg), a 4 m grid at the water's level wherever the ground lies below it; through the town the river runs between
+       quay walls of blue stone; the Brugstraat's bridge crosses it on three brick arches ---- */
     if (WAT.length) {
-      const wMat = new THREE.MeshPhongMaterial({ map: tex.water, vertexColors: true, shininess: 50, specular: 0x26343a }), deep = [0.16, 0.26, 0.22], shal = [0.3, 0.4, 0.32];
+      const WO = { len: 0.8, amp: 0.5, refl: 0.5, land: 0.75, shal: 0.35, lap: 0.3, surf: 0 }, wMat = waterMat(tex, Object.assign({ color: 0xa4b48c, vc: true }, WO));
+      const deep = [0.24, 0.33, 0.27], shal = [0.4, 0.48, 0.38], bands = [], wg = new GB(true), uv = (q) => [q[0] / 30, -q[2] / 30];
       for (const Wt of WAT) {
         const cs = 4, x0 = Wt.x0 - 8, z0 = Wt.z0 - 8, nx = Math.ceil((Wt.x1 - Wt.x0 + 16) / cs) + 1, nz = Math.ceil((Wt.z1 - Wt.z0 + 16) / cs) + 1;
         if (nx * nz > 400000) continue;
-        const g = new GB(true), uv = (q) => [q[0] / 14, -q[2] / 14], wet = new Uint8Array(nx * nz);
-        for (let bb = 0; bb < nz; bb++) for (let a = 0; a < nx; a++) { const x = x0 + a * cs, z = z0 + bb * cs; wet[bb * nx + a] = nrDist(x, z) < 520 && nrGround(x, z) < Wt.lev + 0.2 ? 1 : 0; }
+        const wet = new Uint8Array(nx * nz); let any = false;
+        for (let bb = 0; bb < nz; bb++) for (let a = 0; a < nx; a++) { const x = x0 + a * cs, z = z0 + bb * cs; if ((wet[bb * nx + a] = nrDist(x, z) < 520 && nrGround(x, z) < Wt.lev + 0.2 ? 1 : 0)) any = true; }
+        if (!any) continue;
+        const col = (x, z) => { const e = inPoly(Wt.poly, x, z) ? polyDist(Wt.poly, x, z) : 0, t = sstep(0, 8, e); return [lerp(shal[0], deep[0], t), lerp(shal[1], deep[1], t), lerp(shal[2], deep[2], t)]; };
         for (let bb = 0; bb < nz - 1; bb++) for (let a = 0; a < nx - 1; a++) {
           if (!(wet[bb * nx + a] | wet[bb * nx + a + 1] | wet[(bb + 1) * nx + a] | wet[(bb + 1) * nx + a + 1])) continue;
           const A = [x0 + a * cs, Wt.lev, z0 + bb * cs], B = [A[0] + cs, Wt.lev, A[2]], C = [A[0] + cs, Wt.lev, A[2] + cs], D = [A[0], Wt.lev, A[2] + cs];
-          const col = (p) => { const e = inPoly(Wt.poly, p[0], p[2]) ? polyDist(Wt.poly, p[0], p[2]) : 0; const t = sstep(0, 8, e); return [lerp(shal[0], deep[0], t), lerp(shal[1], deep[1], t), lerp(shal[2], deep[2], t)]; };
-          g.quadUp(A, B, C, D, [col(A), col(B), col(C), col(D)], [uv(A), uv(B), uv(C), uv(D)]);
+          wg.quadUp(A, B, C, D, [col(A[0], A[2]), col(B[0], B[2]), col(C[0], C[2]), col(D[0], D[2])], [uv(A), uv(B), uv(C), uv(D)]);
         }
-        if (!g.empty) { const m = new THREE.Mesh(g.geometry(), wMat); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); }
+        const i0 = Math.max(0, Math.floor((x0 - 16 - G.x0) / NRC)), j0 = Math.max(0, Math.floor((z0 - 16 - G.z0) / NRC)), i1 = Math.min(G.nx - 1, Math.ceil((x0 + nx * cs + 16 - G.x0) / NRC)), j1 = Math.min(G.nz - 1, Math.ceil((z0 + nz * cs + 16 - G.z0) / NRC));
+        bands.push(shoreBand(x0, z0, x0 + (nx - 1) * cs, z0 + (nz - 1) * cs, Wt.lev + 0.015, waterline(nrGH, G.x0, G.z0, NRC, i0, i1, j0, j1, Wt.lev), 30, { col: (x, z) => col(x, z) }));
+        // the quay walls: along the river's edge where it runs through the town (not where the road or the bridge meets it)
+        const n = Wt.poly.length, cx = (Wt.x0 + Wt.x1) / 2, cz = (Wt.z0 + Wt.z1) / 2;
+        if (Math.hypot(cx, cz) < 700) for (let k = 0; k < n; k++) {
+          const [ax, az] = Wt.poly[k], [bx, bz] = Wt.poly[(k + 1) % n], len = Math.hypot(bx - ax, bz - az), m = Math.ceil(len / 4);
+          for (let q = 0; q < m; q++) { const t0 = q / m, t1 = (q + 1) / m, px = lerp(ax, bx, (t0 + t1) / 2), pz = lerp(az, bz, (t0 + t1) / 2);
+            if (nrLCf(px, pz, 3) < 0.3 || nrNear(px, pz).dd < 1 || inWater(px, pz, -0.5)) continue;   // (open country; the road; between two pieces of the river)
+            if (marks.bridge && Math.hypot(px - marks.bridge[0], pz - marks.bridge[1]) < 14) continue;
+            const top = Math.max(Wt.lev + 1.1, nrGround(px, pz) + 0.55), y0 = Wt.lev - 1.4, sl = len / m + 0.25, rot = Math.atan2(bz - az, bx - ax);
+            muBoxT(stn.get(px, pz), px, y0, pz, sl, top - y0, 0.6, rot, [0.6, 0.63, 0.68], 1.6);
+            box(scen.get(px, pz), px, top, pz, sl, 0.14, 0.75, rot, [0.55, 0.56, 0.58], [0.68, 0.69, 0.7], true); }
+        }
       }
-      out.dyn.water = tex.water;
+      const wm = addM(wg, wMat); if (wm) wm.castShadow = false;
+      out.dyn.water = tex.water; addShore(root, mergeBands(bands), wMat, WO);
+      if (marks.bridge) {   // the bridge: from the bank by the road across the river (its axis from the nearest point of the road through the mark)
+        const [mx, mz] = marks.bridge; let ux = 1, uz = 0;
+        const end = (sg) => { let t = 0, dry = 0; while (t < 80 && dry < 4) { t += 1; dry = inWater(mx + ux * t * sg, mz + uz * t * sg, 0) ? 0 : dry + 1; } return t - 4; };
+        { let bl = 1e9, ba = 0; for (let a = 0; a < 180; a += 5) { ux = Math.cos(a * PI / 180); uz = Math.sin(a * PI / 180); const l = end(-1) + end(1); if (l < bl) { bl = l; ba = a; } } ux = Math.cos(ba * PI / 180); uz = Math.sin(ba * PI / 180); }   // (straight across: the shortest way)
+        const e0 = end(-1) + 3, e1 = end(1) + 3, span = e0 + e1, cxB = mx + ux * (e1 - e0) / 2, czB = mz + uz * (e1 - e0) / 2, rot = Math.atan2(uz, ux), wB = 9;
+        const lev = (inWater(mx, mz, 0) || { W: WAT[0] }).W.lev, yA = nrGround(mx - ux * e0, mz - uz * e0), yB = nrGround(mx + ux * e1, mz + uz * e1), yd = Math.max(lev + 3.6, (yA + yB) / 2);
+        const bg = brk.get(cxB, czB), g = scen.get(cxB, czB), stone = [0.62, 0.62, 0.64], bc = [1, 1, 1];
+        muBoxT(bg, cxB, yd - 1.1, czB, span, 1.1, wB, rot, bc, 1.4);   // the deck's edge
+        box(g, cxB, yd, czB, span, 0.08, wB - 1.0, rot, [0.5, 0.5, 0.52], null, true);   // the roadway
+        for (const sd of [-1, 1]) { const ox = -uz * sd * (wB / 2 - 0.25), oz = ux * sd * (wB / 2 - 0.25);
+          muBoxT(bg, cxB + ox, yd, czB + oz, span, 1.0, 0.5, rot, bc, 1.4); box(g, cxB + ox, yd + 1.0, czB + oz, span + 0.1, 0.14, 0.62, rot, stone, [0.72, 0.72, 0.74], true); }   // the parapets, their copings
+        for (const f of [-1 / 6, 1 / 6]) { const px = cxB + ux * f * span, pz = czB + uz * f * span; muBoxT(bg, px, lev - 1.5, pz, 1.6, yd - 1.1 - lev + 1.5, wB, rot, bc, 1.4); }   // the piers
+        for (let a = 0; a < 3; a++) { const c0 = (a - 1) / 3 * span, r = span / 6 - 0.8, hA = Math.min(yd - 1.6 - lev, r * 0.85), nS = 8;   // the arches: the spandrels over each span down to its arch
+          for (let k = 0; k < nS; k++) { const xk = -r + (k + 0.5) * 2 * r / nS, py = lev + 0.2 + hA * Math.sqrt(Math.max(0, 1 - (xk / r) ** 2)), px = cxB + ux * (c0 + xk), pz = czB + uz * (c0 + xk);
+            muBoxT(bg, px, py, pz, 2 * r / nS + 0.06, yd - 1.1 - py, wB, rot, bc, 1.4); box(g, px, py - 0.12, pz, 2 * r / nS + 0.08, 0.14, wB + 0.1, rot, stone); } }
+        exclPush(cxB, czB, span / 2 + 2); nBld++;
+      }
     }
 
     /* ---- the terrain tiles (coloured now: the trees have darkened the ground under them) ---- */
@@ -13396,9 +13572,12 @@ const World = (function () {
     fac.addTo(sceneryGroup, new THREE.MeshLambertMaterial({ map: ownTex(muFacadeTex()), vertexColors: true }), true, true);
     roofSl.addTo(sceneryGroup, new THREE.MeshLambertMaterial({ map: ownTex(muRoofTex(false)), vertexColors: true }), true, true);
     roofCl.addTo(sceneryGroup, new THREE.MeshLambertMaterial({ map: ownTex(muRoofTex(true)), vertexColors: true }), true, true);
+    stn.addTo(sceneryGroup, new THREE.MeshLambertMaterial({ map: ownTex(muStoneTex(false)), vertexColors: true }), true, true);
+    brk.addTo(sceneryGroup, new THREE.MeshLambertMaterial({ map: ownTex(muStoneTex(true)), vertexColors: true }), true, true);
     flg.addTo(root, new THREE.MeshLambertMaterial({ map: ownTex(muFlagTex()) }), true, false);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
     spC.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true);
+    pkSky({ root, tex, out, sStart, gH: nrGround, far: true });   // the TV helicopter over the race
     crowdFinish(CR, root, out);
     out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, buildings: nBld, cut: nCut, gone: nGone, fans: nFans };   // (read by the tests)
     return out;
