@@ -995,7 +995,10 @@ const Render = (function () {
          } }
        The regions do the rest: the bonnet, the tailgate with its glass, the fenders, the doors (their glass too), the quarters.
      CHECKING A LOOK: node tools/carshots.mjs <id> (test-results/carshots/<id>/sheet.png: the views with the grid and the target box, the
-       cut-away (the inside), the chase camera, the wreck, the cockpit); --cat <category> (the category side by side). Render.kitStatus(id),
+       cut-away (the inside), the chase camera, the wreck: chase-wreck / wreck-34 / wreck-34r a staged one (the front off, the left side torn
+       off, the right side and the rear hanging loose, the front left wheel off, lamps and panes broken: check each part comes off whole,
+       hangs the right way from its hinge, the inside behind it), chase-total after Core.wreckCar, the cockpit); --cat <category> (the
+       category side by side). Render.kitStatus(id),
        Render.kitInfo(id) (ranges with their centroids, budgets, regions, wheels, tubs (the wheel tubs, metres), openings (an open top's,
        seen from above: { x: [x0, x1], z (half width), y (the rim) }, metres); no id: the caches' sizes); Render.kitTry(id, look) (a look
        built on vehicle id's model, not cached: { status, geo (the caller disposes it), body, tris, openings, tubs }: try one out). A part's range should lie where the core throws it from (its debris spawns at the part table's lx, lz, y): move the table's
