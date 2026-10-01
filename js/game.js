@@ -29,7 +29,8 @@
   let S = Object.assign({}, DEF);
   let records = {};
   try { const j = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (j) S = Object.assign(S, j); } catch (_) { }
-  if (S.pkFly == null) S.pkFly = 1;   // (Pikes Peak: the course flyover before a fresh start, on unless switched off in Nastavitve)
+  if (S.pkFly == null) S.pkFly = 1;
+  if (S.track === 'pikesg') S.pkRoad = 'pikesg'; else if (S.pkRoad !== 'pikesg') S.pkRoad = 'pikes';   // (Pikes Peak: the road chosen on its card, asphalt or the historic gravel)   // (Pikes Peak: the course flyover before a fresh start, on unless switched off in Nastavitve)
   // one-time move to the new recommended defaults (chase camera, far view, high drift assist) for existing players
   try { if (!localStorage.getItem('tdgp-defaults-v2')) { S.camera = 'chase'; S.zoom = 1.2; S.assist = 2; localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
   try { records = JSON.parse(localStorage.getItem('tdgp-records') || '{}') || {}; } catch (_) { records = {}; }
@@ -110,7 +111,8 @@
     return (k >= 0 ? MEDAL_ICON[k] + ' ' + MEDAL[k].charAt(0).toUpperCase() + MEDAL[k].slice(1) + ' medalja' : 'Brez medalje') + (n >= 0 ? ' · do ' + (k < 0 ? 'brona' : n === 0 ? 'zlata' : 'srebra') + ' ' + fmt(M[n], true) + ' (' + sgn(t - M[n]) + ')' : '') + '.'; };
   const ttRun = (d) => isRally(d) ? 'preizkušnjo' : 'vzpon';   // (Ponovi vzpon / Ponovi preizkušnjo)
   const TT_LINES = { intro: ['introTT', 'introStage', 'introPassTT'], go: ['goTT', 'goStage', 'goPassTT'], cpFirst: ['cpFirst', 'cpFirstStage'], record: ['summitRecord', 'stageRecord'], even: ['summitEven', 'stageEven'], end: ['summit', 'stageEnd'] };
-  const ttLine = (d, k) => TT_LINES[k][isRally(d) ? 1 : d && d.modes ? 2 : 0] || TT_LINES[k][0];   // (a hill climb, a rally stage, a mountain pass)
+  const ttLine = (d, k) => k === 'intro' && d && d.theme === 'pikes' && d.roadSurface === 'makadam' ? 'introTTg' : TT_LINES[k][isRally(d) ? 1 : d && d.modes ? 2 : 0] || TT_LINES[k][0];   // (a hill climb, a rally stage, a mountain pass)
+  // (Pikes Peak on its historic gravel road: its own welcome)
   // a road's own commentator lines for a key (def.comm: Los Caracoles' instead of Vršič's): the key of its pool, registered with Comm when first said
   const ownLine = (d, key) => { const L = d && d.comm && d.comm[key]; if (!L) return key; const k = key + '@' + d.id; Comm.addLines(k, L); return k; };
   const numDot = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');   // 3048 -> 3.048
@@ -305,7 +307,7 @@
     if (key === 'pitCmp' && race && race.player) race.player.pitCmp = S.pitCmp;   // (the slicks for the next pit stop)
     if (key === 'weather' && demo) demo.setRain(demoRain());   // (a race keeps its weather; the next one gets the new setting)
     if (key === 'season' || key === 'tod') Render.setAtmos({ season: S.season, tod: S.tod });   // (the season and the time of day: at once, also on the title demo)
-    if ((key === 'weather' || key === 'mode' || key === 'pkGhost') && screen === 'track') buildTrackScreen();   // (a time trial's records in the rain are its own, and a race's: the cards show them)
+    if ((key === 'weather' || key === 'mode' || key === 'pkGhost' || key === 'pkRoad') && screen === 'track') buildTrackScreen();   // (a time trial's records in the rain are its own, and a race's: the cards show them)
     if (key === 'control' && v === 'tilt') enableTilt(false);
     if (key === 'camera') { lockOrientation(); updateOrientation(); }
   }
@@ -714,7 +716,7 @@
   function buildTrackScreen() {
     const list = $('track-list'), sd = Core.TRACKS.find(d => d.id === S.track);
     $('cmp-row').classList.toggle('off', !(sd && sd.pit && !isTT(sd)));   // (tyres: the circuits with pits)
-    list.innerHTML = Core.TRACKS.map(d => { const T = getTrack(d.id), r = rec(d.id), sel = d.id === S.track ? ' sel' : '';
+    list.innerHTML = Core.TRACKS.filter(d => !d.variantOf).map(d0 => { const d = pkRoadDef(d0), T = getTrack(d.id), r = rec(d.id), sel = d.id === S.track ? ' sel' : '';
       const climb = (d.realKm ? ' (pravih ' + String(d.realKm).replace('.', ',') + ' km)' : '') + (d.alt ? ' · vzpon ' + numDot(d.alt[1] - d.alt[0]) + ' m' : '');
       const md = modeOf(d);
       let meta = md === 'traffic' ? kmTxt(T.raceLen, 1) + ' km' + climb + ' · dvoboj z enim tekmecem v prometu' + (r.bestRace ? ' · rekord ' + fmt(r.bestRace, true) : '') :
@@ -723,7 +725,8 @@
         : kmTxt(T.len, 2) + ' km · ' + T.corners.length + ' ovinkov · ' + lapWord(d.laps || 3).toLowerCase() + (r.bestLap ? ' · rekord ' + fmt(r.bestLap, true) : '');
       if (wetRec(d)) meta = meta.replace(' · kronometer', ' · kronometer v dežju');
       if (isTT(d) && medalOf(d, r.bestTime) >= 0) meta += ' ' + MEDAL_ICON[medalOf(d, r.bestTime)];
-      const desc = '<div class="tmeta">' + meta + '</div>' + (pkIs(d) ? pkTrackTag(r) : '') + '<div class="tdesc">' + (d.desc || '').replace(/\b(\d{1,3})(\d{3}) m\b/g, '$1.$2\u00a0m') + '</div>';   // 2862 m -> 2.862 m (as on the HUD)
+      const desc = '<div class="tmeta">' + meta + '</div>' + (pkIs(d) ? pkTrackTag(r, d) : '') + '<div class="tdesc">' + (d.desc || '').replace(/\b(\d{1,3})(\d{3}) m\b/g, '$1.$2\u00a0m') + '</div>';   // 2862 m -> 2.862 m (as on the HUD)
+      if (pkRoads(d0).length) return pkRoadCard(d0, d, sel, desc);   // (Pikes Peak: the road, asphalt or the historic gravel)
       if (d.modes) return '<div class="track-card modes' + sel + '" data-track="' + d.id + '" role="button" tabindex="0"><canvas></canvas><div class="tc-head"><h3>' + d.name + '</h3>' +
         '<div class="seg tc-mode" data-set="mode" role="group" aria-label="Način vožnje">' + d.modes.map(k => '<button data-v="' + k + '" class="' + (md === k ? 'sel' : '') + '">' + MODE_NAME[k] + '</button>').join('') + '</div></div>' + desc + '</div>';
       return '<button class="track-card' + sel + '" data-track="' + d.id + '"><canvas></canvas><h3>' + d.name + '</h3>' + desc + '</button>'; }).join('');
@@ -1071,7 +1074,7 @@
           h += '<p class="ltab-h">Osebni rekord ' + fmt(r.bestTime, true) + ' · vmesni časi</p><table class="ltab"><thead><tr><th>Točka</th><th>' + ttWhereHead(d) + '</th><th>Čas</th></tr></thead><tbody>' +
             pts.map((p, k) => '<tr><td>' + p[0] + '</td><td>' + ttWhere(T, p[1]) + '</td><td>' + fmt(r.bestSplits[k], true) + '</td></tr>').join('') + '</tbody></table>';
         }
-        if (pkIs(d)) h += pkBoardHTML(r);   // (Pikes Peak: the top 5 of each class)
+        if (pkIs(d)) h += pkBoardHTML(r, d);   // (Pikes Peak: the top 5 of each class)
       }
     } else {
       const v = (x) => x ? x : '\u2013';
@@ -1095,7 +1098,16 @@
   const PK_CLS = [{ id: 'unl', name: 'Unlimited' }, { id: 'open', name: 'Open' }, { id: 'ppo', name: 'Pikes Peak Open' }, { id: 'ta1', name: 'Time Attack 1' }];
   const PK_CAR = { formula: 'unl', lm: 'unl', rally: 'open', vortex: 'open', ev: 'open', truck: 'open', strega: 'ppo', kaze: 'ppo', muscle: 'ppo', pico: 'ta1', p206: 'ta1' };
   const pk = { on: false, cls: null, best: null };
-  const pkIs = (d) => !!d && d.id === 'pikes';
+  const pkIs = (d) => !!d && d.theme === 'pikes';   // (Pikes Peak on asphalt, 'pikes', and on its historic gravel road, 'pikesg': each with its own records, boards, medals and legend)
+  // Pikes Peak's road on the track menu: one card, the road a choice on it (Cesta: asfalt / makadam, S.pkRoad); the variants (def.variantOf) have no card of their own
+  const pkRoads = (d0) => Core.TRACKS.filter(x => x.variantOf === d0.id);
+  const pkRoadDef = (d0) => { const V = pkRoads(d0); return V.length ? V.find(x => x.id === S.pkRoad) || d0 : d0; };
+  const pkGrav = (d) => !!d && d.roadSurface === 'makadam';
+  function pkRoadCard(d0, d, sel, desc) {
+    return '<div class="track-card modes' + sel + '" data-track="' + d.id + '" role="button" tabindex="0"><canvas></canvas><div class="tc-head"><h3>' + d0.name + '</h3>' +
+      '<div class="seg tc-mode" data-set="pkRoad" role="group" aria-label="Cesta">' + [d0].concat(pkRoads(d0)).map(x => '<button data-v="' + x.id + '" data-track="' + x.id + '" class="' + (x === d ? 'sel' : '') + '"' +
+      (pkGrav(x) ? ' title="Zgodovinska makadamska cesta (do 2011)">Makadam' : ' title="Današnja asfaltna cesta">Asfalt') + '</button>').join('') + '</div></div>' + desc + '</div>';
+  }
   function pkClsOf(carId, carName) {   // (an unknown car: by its power and drive; an entry with no known car: Open, the class of the game's own car)
     const M = Core.MODELS.find(m => m.id === carId) || Core.MODELS.find(m => m.name === carName);
     const id = !M ? 'open' : PK_CAR[M.id] || (M.kw >= 500 ? 'unl' : M.drive === 'AWD' ? 'open' : M.kw >= 260 ? 'ppo' : 'ta1');
@@ -1107,9 +1119,9 @@
     return R0.pkCls;
   }
   const pkTag = (c) => '<span class="pk-cls pk-' + c.id + '">' + esc(c.name) + '</span>';
-  function pkTrackTag(r) {   // the track card: the class of the chosen car and its best time
+  function pkTrackTag(r, d) {   // the track card: the class of the chosen car and its best time
     const M = Core.MODELS[S.car], c = pkClsOf(M.id), b = pkBoards(r)[c.id][0];
-    return '<div class="tmeta pk-meta">Razred ' + pkTag(c) + ' ' + esc(M.name) + (b ? ' · rekord razreda ' + fmt(b.time, true) : ' · v razredu še ni časa') + '</div>' + pkCardMed(r, c);   // (+ the class's medal times)
+    return (pkGrav(d) ? '<div class="tmeta pk-meta">Cesta: makadam (zgodovinska, do 2011)</div>' : '') + '<div class="tmeta pk-meta">Razred ' + pkTag(c) + ' ' + esc(M.name) + (b ? ' · rekord razreda ' + fmt(b.time, true) : ' · v razredu še ni časa') + '</div>' + pkCardMed(r, c, d);   // (+ the class's medal times)
   }
   function pkStart() {   // newRace (after hxStart)
     const on = pk.on = !!race.timeTrial && pkIs(track.def) && !(mp && mp.race), H = $('h-sec');
@@ -1189,9 +1201,9 @@
     const hs = $('res-tt').querySelectorAll('.ltab-h'), h = hs[hs.length - 1], b = pkBoards(rec(track.def.id))[p.cls.id];
     if (h) h.insertAdjacentHTML('beforebegin', '<p class="ltab-h">Razred ' + esc(p.cls.name) + ' · najboljših 5</p><table class="ltab b"><thead>' + TT_HEAD + '</thead><tbody>' + boardRows(b, r.entry) + '</tbody></table>');
   }
-  function pkBoardHTML(r) {   // Lestvica: the top 5 of each class
+  function pkBoardHTML(r, d) {   // Lestvica: the top 5 of each class
     const B = pkBoards(r);
-    const Md = pkMeds(r, Core.TRACKS.find(pkIs)), A = pkMedSet(Core.TRACKS.find(pkIs));
+    const Md = pkMeds(r, d), A = pkMedSet(d);
     return PK_CLS.map(c => '<p class="ltab-h">' + pkTag(c) + ' najboljših 5</p><p class="pk-medl">' + pkMedTxt(A[c.id]) + ' · ' + (Md[c.id] != null ? 'tvoja najboljša ' + MEDAL_ICON[Md[c.id]] : 'še brez medalje') + '</p>' + (B[c.id].length ? '<table class="ltab b"><thead>' + TT_HEAD + '</thead><tbody>' + boardRows(B[c.id], null) + '</tbody></table>' : '<p class="board-empty">V tem razredu še ni časov (' + Core.MODELS.filter(m => pkClsOf(m.id) === c).map(m => esc(m.name)).join(', ') + ').</p>')).join('');
   }
   /* ---------------- PIKES PEAK: corner warnings, medals per class, the legend ghost ---------------- */
@@ -1201,9 +1213,16 @@
   // The class's best medal is kept with its board (R0.pkMed[class] 0 gold .. 2 bronze; the board's best time counts too).
   const PK_MED = { unl: [161, 168, 177], open: [176, 183, 193], ppo: [183, 191, 201], ta1: [181, 189, 199] }, PK_MED_WET = { unl: [177, 185, 195], open: [189, 197, 208], ppo: [201, 209, 220], ta1: [197, 205, 216] };
   const PK_LEG = { unl: 'formula', open: 'ev', ppo: 'strega', ta1: 'p206' };   // the legend's car: the class's fastest on the autopilot
+  // The historic gravel road ('pikesg', the same way measured): dry FORMULA ORKAN 211.86 (TAIFUN LM 221.97), SAMUM 4x4 192.18 (STRELA EV 198.32, BURJA R7
+  // 198.98, VORTEX 200.95), STREGA MR 210.10 (KAZE 212.49, VIHAR V8 221.37), PEUGEOT 206 203.70 (PICO 204.66); wet 248.21, 208.69, 238.59, 229.21. On the
+  // loose gravel the 4x4 truck is the fastest car of all and the slicks of the Unlimited cars hold them back
+  const PK_MED_G = { unl: [208, 217, 228], open: [189, 196, 207], ppo: [206, 215, 226], ta1: [200, 208, 219] }, PK_MED_G_WET = { unl: [244, 254, 268], open: [205, 213, 225], ppo: [235, 244, 257], ta1: [225, 234, 247] };
+  const PK_LEG_G = { unl: 'formula', open: 'truck', ppo: 'strega', ta1: 'p206' };
+  const pkMedW = (d, wet) => pkGrav(d) ? (wet ? PK_MED_G_WET : PK_MED_G) : wet ? PK_MED_WET : PK_MED;   // (the medal times of a road, dry or wet)
+  const pkLegCar = (d, c) => (pkGrav(d) ? PK_LEG_G : PK_LEG)[c];
   if (!['best', 'legend', 'off'].includes(S.pkGhost)) S.pkGhost = S.ghost ? 'best' : 'off';   // Duh: moj najboljši / legenda / brez (first time: as the ghost setting)
   S.pkNotes = +S.pkNotes === 0 ? 0 : 1;   // Opozorila na ovinke (on unless turned off)
-  const pkMedSet = (d) => wetRec(d) ? PK_MED_WET : PK_MED;
+  const pkMedSet = (d) => pkMedW(d, wetRec(d));
   const pkMedOf = (A, t) => t > 0 ? A.findIndex(x => t <= x) : -1;
   const pkMs = (t) => Math.floor(t / 60) + ':' + String(Math.round(t % 60)).padStart(2, '0');
   const pkMedTxt = (A) => A.map((t, k) => MEDAL_ICON[k] + ' ' + pkMs(t)).join(' · ');
@@ -1212,10 +1231,10 @@
     for (const c of PK_CLS) { let k = [0, 1, 2].includes(o[c.id]) ? o[c.id] : -1; const b = B[c.id][0], kb = b ? pkMedOf(A[c.id], b.time) : -1; if (kb >= 0 && (k < 0 || kb < k)) k = kb; if (k >= 0) m[c.id] = k; }
     return (R0.pkMed = m);
   }
-  function pkCardMed(r, c) {   // the track card: the medal times of the chosen car's class, the one already won; the ghost's row, the legend made ready
-    const d = Core.TRACKS.find(pkIs), k = pkMeds(r, d)[c.id], sel = S.track === d.id, row = $('pk-gh-row');
+  function pkCardMed(r, c, d) {   // the track card: the medal times of the chosen car's class, the one already won; the ghost's row, the legend made ready
+    const k = pkMeds(r, d)[c.id], sel = S.track === d.id, row = $('pk-gh-row');
     if (row) row.classList.toggle('off', !sel);
-    if (sel && S.pkGhost === 'legend') pkLegWarm(c.id, wetRec(d));
+    if (sel && S.pkGhost === 'legend') pkLegWarm(c.id, wetRec(d), d);
     return '<div class="tmeta pk-meta pk-medl">' + pkMedTxt(pkMedSet(d)[c.id]) + (k != null ? ' · tvoja ' + MEDAL_ICON[k] : '') + '</div>';
   }
   const pkMedName = (k) => MEDAL[k].charAt(0).toUpperCase() + MEDAL[k].slice(1) + ' medalja';
@@ -1235,10 +1254,10 @@
   // while the menus are up (the rest at the start, if it is not ready), with its own seeded random numbers (the same run every time; the
   // game's untouched), on a race of its own (the race driven is never touched); kept in localStorage (tdgp-pklegend-*). Not a record.
   const PK_LEG_V = 1, pkLeg = { mem: {}, job: null };
-  const pkLegKey = (c, wet) => 'tdgp-pklegend-' + c + '-' + PK_LEG[c] + (wet ? '-wet' : '');   // (the car in the key: a new legend car makes a new run)
+  const pkLegKey = (c, wet, d) => 'tdgp-pklegend-' + (d.id !== 'pikes' ? d.id + '-' : '') + c + '-' + pkLegCar(d, c) + (wet ? '-wet' : '');   // (the car in the key: a new legend car makes a new run; the road: the gravel's runs apart, the asphalt's keep their old keys)
   const pkLegTrk = (T) => Math.round(T.len * 10) + '/' + T.N;   // (the road it was driven on)
-  function pkLegGet(c, wet) {   // the legend's run, or null when it is not made yet
-    const key = pkLegKey(c, wet), T = getTrack('pikes'), gold = (wet ? PK_MED_WET : PK_MED)[c][0];
+  function pkLegGet(c, wet, d) {   // the legend's run on road d, or null when it is not made yet
+    const key = pkLegKey(c, wet, d), T = getTrack(d.id), gold = pkMedW(d, wet)[c][0];
     if (pkLeg.mem[key]) return pkLeg.mem[key];
     let o = null; try { o = JSON.parse(localStorage.getItem(key) || 'null'); } catch (_) { return null; }
     if (!isObj(o) || o.v !== PK_LEG_V || o.trk !== pkLegTrk(T) || o.t !== gold || !(o.n >= 2 && o.n <= GH_MAX) || typeof o.d !== 'string' || !Array.isArray(o.q0) || o.q0.length !== 3) return null;
@@ -1247,7 +1266,7 @@
     const u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
     const a = new Int16Array(u.buffer), f = new Float32Array(o.n * GH_CH), q = o.q0.map(v => +v || 0);
     for (let k = 0; k < o.n; k++) { const i = k * GH_CH; for (let ch = 0; ch < 3; ch++) { q[ch] += a[i + ch]; f[i + ch] = q[ch] / 100; } for (let ch = 3; ch < 7; ch++) f[i + ch] = a[i + ch] / 1e4; }
-    return (pkLeg.mem[key] = { n: o.n, t: gold, M: modelById(PK_LEG[c]), color: 0xe0b22a, stripe: true, f, lap: false, leg: true });
+    return (pkLeg.mem[key] = { n: o.n, t: gold, M: modelById(pkLegCar(d, c)), color: 0xe0b22a, stripe: true, f, lap: false, leg: true });
   }
   function pkLegRun(J, ms) {   // the legend's run for about ms milliseconds; true when it is over (made and kept, or given up)
     const r = J.r, P = r.player, t0 = performance.now(), orig = Math.random, cap = 420;
@@ -1267,29 +1286,30 @@
     if (pkLeg.job === J) pkLeg.job = null;
     if (!P.finished || J.n < 2) return true;   // (never got there: no legend)
     if (J.n < GH_MAX) { ghPose(P, J.f, J.n, 1); J.n++; }
-    const gold = (J.wet ? PK_MED_WET : PK_MED)[J.c][0], q = P.finishTime / gold, n = Math.min(GH_MAX, Math.floor(gold / GH_DT) + 2), F = J.f, L = J.n - 1, f = new Float32Array(n * GH_CH);
+    const gold = pkMedW(J.d, J.wet)[J.c][0], q = P.finishTime / gold, n = Math.min(GH_MAX, Math.floor(gold / GH_DT) + 2), F = J.f, L = J.n - 1, f = new Float32Array(n * GH_CH);
     for (let j = 0; j < n; j++) { const u = Math.min(L, j * q), k = Math.min(L - 1, Math.floor(u)), a = u - k, o = k * GH_CH, p = o + GH_CH, w = j * GH_CH;
       for (let ch = 0; ch < GH_CH; ch++) f[w + ch] = ch === 3 ? F[o + 3] + Core.wrapPi(F[p + 3] - F[o + 3]) * a : F[o + ch] + (F[p + ch] - F[o + ch]) * a; }
-    const key = pkLegKey(J.c, J.wet), e = ghEncode({ n, f });
-    pkLeg.mem[key] = { n, t: gold, M: modelById(PK_LEG[J.c]), color: 0xe0b22a, stripe: true, f, lap: false, leg: true };
-    if (e) try { localStorage.setItem(key, JSON.stringify({ v: PK_LEG_V, trk: pkLegTrk(r.track), t: gold, car: PK_LEG[J.c], n, q0: e.q0, d: e.d })); } catch (_) { }
+    const key = pkLegKey(J.c, J.wet, J.d), e = ghEncode({ n, f });
+    pkLeg.mem[key] = { n, t: gold, M: modelById(pkLegCar(J.d, J.c)), color: 0xe0b22a, stripe: true, f, lap: false, leg: true };
+    if (e) try { localStorage.setItem(key, JSON.stringify({ v: PK_LEG_V, trk: pkLegTrk(r.track), t: gold, car: pkLegCar(J.d, J.c), n, q0: e.q0, d: e.d })); } catch (_) { }
     return true;
   }
-  function pkLegJob(c, wet) {   // a new run of the legend (its own race on the Pikes Peak road; the one driven is never touched)
+  function pkLegJob(c, wet, d) {   // a new run of the legend (its own race on the Pikes Peak road d; the one driven is never touched)
     let s = 97; const rnd = () => { s = (s * 16807) % 2147483647; return s / 2147483647; }, orig = Math.random; let r;
-    Math.random = rnd; try { r = new Core.Race(getTrack('pikes'), { numAI: 0, playerGrid: 1, laps: 1, playerModel: modelById(PK_LEG[c]), assist: 2, phys: physOf(), seed: 7, difficulty: 1, rain: wet ? 1 : 0, damage: 0, tt: true }); r.start(); } finally { Math.random = orig; }
-    return (pkLeg.job = { c, wet, r, f: new Float32Array(GH_MAX * GH_CH), n: 0, rnd });
+    Math.random = rnd; try { r = new Core.Race(getTrack(d.id), { numAI: 0, playerGrid: 1, laps: 1, playerModel: modelById(pkLegCar(d, c)), assist: 2, phys: physOf(), seed: 7, difficulty: 1, rain: wet ? 1 : 0, damage: 0, tt: true }); r.start(); } finally { Math.random = orig; }
+    return (pkLeg.job = { c, wet, d, r, f: new Float32Array(GH_MAX * GH_CH), n: 0, rnd });
   }
-  function pkLegWarm(c, wet) {   // the menus: make the legend in the background (8 ms slices), unless it is there or on the way
-    if (pkLegGet(c, wet) || (pkLeg.job && pkLeg.job.c === c && pkLeg.job.wet === wet)) return;
-    const J = pkLegJob(c, wet);
+  const pkLegIs = (J, c, wet, d) => !!J && J.c === c && J.wet === wet && J.d === d;
+  function pkLegWarm(c, wet, d) {   // the menus: make the legend in the background (8 ms slices), unless it is there or on the way
+    if (pkLegGet(c, wet, d) || pkLegIs(pkLeg.job, c, wet, d)) return;
+    const J = pkLegJob(c, wet, d);
     const go = () => { if (pkLeg.job !== J) return; if (bg === 'race' && phase !== 'done') { setTimeout(go, 500); return; } if (!pkLegRun(J, 8)) setTimeout(go, 24); };   // (never during a race)
     setTimeout(go, 60);
   }
-  function pkLegNow(c, wet) {   // the start: the legend, made right now if it is not ready (once; about a third of a second)
-    const G = pkLegGet(c, wet); if (G) return G;
-    const J = pkLeg.job && pkLeg.job.c === c && pkLeg.job.wet === wet ? pkLeg.job : pkLegJob(c, wet);
-    pkLegRun(J, 1e9); return pkLegGet(c, wet);
+  function pkLegNow(c, wet, d) {   // the start: the legend, made right now if it is not ready (once; about a third of a second)
+    const G = pkLegGet(c, wet, d); if (G) return G;
+    const J = pkLegIs(pkLeg.job, c, wet, d) ? pkLeg.job : pkLegJob(c, wet, d);
+    pkLegRun(J, 1e9); return pkLegGet(c, wet, d);
   }
   // The corner warnings (Opozorila na ovinke, S.pkNotes): a pace-note pill under the clock for the next corner, from 2.6 s before it
   // at the current speed (40-230 m) until the car is in it: a hairpin big and red, a medium bend orange, a fast one faint; the arrow
@@ -1300,7 +1320,7 @@
   function pk7Start() {   // pkStart: the ghost chosen for Pikes Peak (the live difference and the profile follow it), the corners ahead
     const wet = !!race.rain;
     if (S.pkGhost === 'off') ghPlay = null;
-    else if (S.pkGhost === 'legend') ghPlay = pkLegNow(pk.cls.id, wet);
+    else if (S.pkGhost === 'legend') ghPlay = pkLegNow(pk.cls.id, wet, track.def);
     hxStart();   // (again: the difference and the profile against this ghost)
     $('hud').classList.toggle('pkleg', !!(ghPlay && ghPlay.leg));
     const T = track, nos = T.def.turnNos(T);
@@ -2043,7 +2063,7 @@
   const PART_EN = { bumperF: 'front bumper', bumperR: 'rear bumper', hood: 'bonnet', trunk: 'boot lid', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'front wing', fenderR: 'front wing' };
   const PART_EN_F = { bumperF: 'front wing', bumperR: 'rear wing', hood: 'nose cone', trunk: 'engine cover', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'bargeboard', fenderR: 'bargeboard' };   // (the formula's parts)
   const PART_EN_LM = { bumperF: 'splitter', bumperR: 'rear wing', hood: 'nose', trunk: 'engine cover', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'louvre panel', fenderR: 'louvre panel' };   // (the prototype's)
-  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', ouninpohja: 'Ouninpohja', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka', vrsic: 'the Vrshich pass', caracoles: 'Los Caracoles' };
+  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', pikesg: 'Pikes Peak', ouninpohja: 'Ouninpohja', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka', vrsic: 'the Vrshich pass', caracoles: 'Los Caracoles' };
   const cev = { wall: 0, car: 0 };          // impacts collected per physics step
   let cs = null;
   function commReset() {
