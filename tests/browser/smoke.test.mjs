@@ -178,9 +178,9 @@ try {
         g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(300);
         document.querySelector('[data-track="vrsic"] .tc-mode button[data-v="' + md + '"]').click(); await wait(200);
         g.onAction('start'); for (let k = 0; k < 1200 && !(g.race && g.race.track.def.id === 'vrsic' && (md === 'police' ? g.race.pol : g.race.tf && !g.race.pol)); k++) await wait(100);
-        for (let i = 0; i < 30; i++) { g.sim(1, true); await frame(); }
+        let peds = 0; for (let i = 0; i < 30; i++) { g.sim(1, true); await frame(); peds = Math.max(peds, (Render.roadInfo() || {}).ped || 0); }   // (people drawn on the way: between the villages there may be nobody about)
         let lamp = false; for (let i = 0; i < 16; i++) { await frame(); if ((Render.roadInfo() || {}).lampOn) lamp = true; }   // (the lights flash: on in some of the frames)
-        const hud = document.getElementById('hud'), road = Object.assign({}, Render.roadInfo(), { lampOn: lamp });
+        const hud = document.getElementById('hud'), road = Object.assign({}, Render.roadInfo(), { lampOn: lamp, ped: Math.max(peds, (Render.roadInfo() || {}).ped || 0) });
         out[md] = { mode: g.S.mode, cars: g.race.cars.length, tf: !!g.race.tf, pol: g.race.pol ? g.race.pol.cars.length : 0, duel: hud.classList.contains('duel'), polHud: hud.classList.contains('pol'), gap: document.getElementById('h-gap').textContent,
           lbl: document.querySelector('#h-rank .h-lbl').textContent, pos: document.getElementById('h-pos').textContent, heat: document.getElementById('h-heat').textContent, road, dist: g.race.player.dist, phase: g.phase };
         if (md === 'police') {   // the heat up (as if the player had wrecked half the police's cars): the helicopter comes, the radio says so

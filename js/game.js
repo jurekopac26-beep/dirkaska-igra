@@ -1177,7 +1177,7 @@
     $('res-pos').textContent = pos + '.';
     $('res-title').textContent = pos === 1 ? 'Zmaga!' : pos <= 3 ? 'Na stopničkah!' : 'Cilj';
     $('res-sub').textContent = 'Čas dirke ' + fmt(tot, true) + (res[myIdx].pen ? ' (s ' + res[myIdx].pen + ' s kazni)' : '') + (up ? '' : ', najboljši krog ' + fmt(best, true)) + (newRec ? ' (nov rekord proge)' : '') + '. Štartal si z ' + P.grid + '. mesta.';
-    if (race.tf) $('res-sub').textContent += ' Zbiti pešci: ' + tfHits.ped + ', kolesarji: ' + tfHits.bike + (tfHits.ped + tfHits.bike ? ' (5 s kazni za vsakega)' : '') + '.';
+    if (race.tf) $('res-sub').textContent += ' Povoženi pešci: ' + tfHits.ped + ', kolesarji: ' + tfHits.bike + (tfHits.ped + tfHits.bike ? ' (5 s kazni za vsakega)' : '') + '.';
     if (inCareer()) {   // the career: prize money (the place, the distance, the difficulty), the fastest lap of the race (a race up the road: no laps)
       const diff = race.champ ? champ.diff : S.difficulty, fl = !up && best > 0 && race.cars.every(c => c === P || !c.lapTimes.length || Math.min(...c.lapTimes) >= best);
       career.races++; if (pos === 1) career.wins++;
@@ -1216,7 +1216,7 @@
     $('res-sub').textContent = esc ? 'Čez prelaz v ' + fmt(t, true) + (newRec ? ' (najhitrejši pobeg).' : '.') : 'Policija te je ujela po ' + kmTxt(done, 1) + ' km, v ' + fmt(t, true) + '.';
     const st = (h) => '\u2605'.repeat(Math.round(h)) + '\u2606'.repeat(5 - Math.round(h)), O = pol.off, T2 = pol.st, sec = (v) => Math.round(v) + ' s';
     const offs = [O.speed >= 1 && 'prehitra vožnja v naselju ' + sec(O.speed), O.walk >= 0.5 && 'vožnja po pločniku ' + sec(O.walk), O.crash && 'trki s prometom ' + O.crash + '\u00d7',
-      pol.hitPeople && 'zbiti pešci in kolesarji ' + pol.hitPeople + '\u00d7', O.moto && 'zbiti policisti na motorju ' + O.moto + '\u00d7'].filter(Boolean);
+      pol.hitPeople && 'povoženi pešci in kolesarji ' + pol.hitPeople + '\u00d7', O.moto && 'zbiti policisti na motorju ' + O.moto + '\u00d7'].filter(Boolean);
     const rows = [['Čas', fmt(t, true)], ['Prevožena pot', kmTxt(done, 1) + ' / ' + kmTxt(L, 1) + ' km'], ['Najvišja stopnja pregona', st(pol.heatMax || pol.heat)],
       ['Prekrški', offs.length ? offs.join('<br>') : 'brez'], ['Izločene patrulje', pol.wrecked], ['Zapore / trakovi za tabo', T2.blocks + ' / ' + T2.strips],
       ['Skrivanje', T2.evaded ? T2.evaded + '\u00d7 so izgubili sled<br>najdlje ' + sec(T2.hideMax) + ' izven pogleda' : 'nikoli jim nisi ušel izpred oči']];
@@ -1342,7 +1342,7 @@
     if (P.pitEv) { const e = P.pitEv; P.pitEv = null; pitEvent(e); }
     if (race.wst && race.wst.ev !== wxSeen) { wxSeen = race.wst.ev; wxEvent(race.wst.evK, P); }
     if (race.fl) { const F = race.fl; if (F.ev !== flSeen) { flSeen = F.ev; flagEvent(F.evK, P); } if (F.pev !== flPSeen) { flPSeen = F.pev; flagPlayer(F.pevK); } }
-    if (race.tf) { if (race.tf.ev !== tfSeen) { tfSeen = race.tf.ev; roadEvent(race.tf.evK, race.tf.evCar, P); } roadSound(P); }
+    if (race.tf) { const L = race.tf; if (L.ev !== tfSeen) { for (const e of L.log) if (e.n > tfSeen) roadEvent(e.k, e.c, P); tfSeen = L.ev; } roadSound(P); }   // (the traffic's events in order: two in one step both heard)
     if (race.pol && race.pol.ev !== polSeen) for (const e of race.pol.log) if (e.n > polSeen) { polSeen = e.n; policeEvent(e.k, P, e); }
     if (race.wst && race.wst.tyres && P.ty && !dryHint && P.ty.k === 'wet' && race.wst.wx && race.wst.line < 0.12 && race.rain === 0 && phase === 'racing' && !P.finished) {   // (the line is dry: time for slicks)
       dryHint = true; toast('Idealna linija je suha: dežne gume se na suhem hitro obrabijo. Zapelji v bokse po suhe gume.', 4600); Comm.say('dryLine', null, 2); }
@@ -1353,7 +1353,7 @@
   }
 
   /* ---------------- the open road (Vršič: the duel in the traffic, the run from the police) ---------------- */
-  // what happened on the road (race.tf.ev: someone on foot or on a bicycle knocked down, a crash with the traffic) and with the police
+  // what happened on the road (race.tf.log: someone on foot or on a bicycle run over, a crash with the traffic) and with the police
   // (race.pol.ev: one more patrol car, a spike strip laid, a roadblock ahead, a flat tyre, a patrol car out of it); the siren of the nearest
   // chasing patrol car, the horns of the traffic
   let tfSeen = 0, polSeen = 0, tfHits = { ped: 0, bike: 0 };
@@ -1361,10 +1361,10 @@
     if (phase !== 'racing' || P.finished) return;
     const pen = race.pol ? '' : ' +5 s';
     if (c === P) {
-      if (k === 'ped') { tfHits.ped++; showMsg('ZBIL SI PEŠCA!' + pen, 'slow', 2); Sfx.thud(0.8); vibrate(70); Comm.say('pedHit', null, 3); }
-      else if (k === 'bike') { tfHits.bike++; showMsg('ZBIL SI KOLESARJA!' + pen, 'slow', 2); Sfx.thud(0.9); vibrate(70); Comm.say('bikeHit', null, 3); }
+      if (k === 'ped') { tfHits.ped++; showMsg('POVOZIL SI PEŠCA!' + pen, 'slow', 2); Sfx.thud(0.8); vibrate(70); Comm.say('pedHit', null, 3); }
+      else if (k === 'bike') { tfHits.bike++; showMsg('POVOZIL SI KOLESARJA!' + pen, 'slow', 2); Sfx.thud(0.9); vibrate(70); Comm.say('bikeHit', null, 3); }
       else if (k === 'crash' && Math.random() < 0.5) Comm.say('trafficCrash', null, 2);
-    } else if (c && !c.police && (k === 'ped' || k === 'bike')) showMsg('TEKMEC JE ZBIL ' + (k === 'ped' ? 'PEŠCA' : 'KOLESARJA') + pen, 'gold', 1.6);
+    } else if (c && !c.police && (k === 'ped' || k === 'bike')) showMsg('TEKMEC JE POVOZIL ' + (k === 'ped' ? 'PEŠCA' : 'KOLESARJA') + pen, 'gold', 1.6);
   }
   function policeEvent(k, P, e) {
     polRadio(k, e || { s: P.q.s, u: 0, kind: '' });
