@@ -17,7 +17,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     expect: { t100: [3.32, 3.9], vmax: [202, 214], latG: [2.04, 2.14], d100: [25, 27.6] },
     parts: { set: 'car', ht: 1.22, y0: 0.2,   // (the debris thrown from where the look has the parts: the tailgate is the fastback's glass, the wings run to the nose)
       over: { trunk: { lx: -0.5, y: 1.07 }, fenderL: { lx: 0.71, lz: -0.77, y: 0.57 }, fenderR: { lx: 0.71, lz: 0.77, y: 0.57 }, doorL: { lx: -0.085, lz: -0.94, y: 0.67 }, doorR: { lx: -0.085, lz: 0.94, y: 0.67 },
-        mirrorL: { lx: 0.09, lz: -0.89, y: 0.94 }, mirrorR: { lx: 0.09, lz: 0.89, y: 0.94 } } },
+        mirrorL: { lx: 0.09, lz: -0.89, y: 0.94 }, mirrorR: { lx: 0.09, lz: 0.89, y: 0.94 }, quarterL: { lx: -0.575, lz: -0.84, y: 0.68 }, quarterR: { lx: -0.575, lz: 0.84, y: 0.68 } } },
     look: {
       body: { len: 4.45, wid: 1.66, roofY: 1.22,
         // (the sections at 0.95 .. 1.71 and -1.49 .. -0.73 sit exactly where the wheel arches cut the shell: they shape the bonnet's wings and
@@ -112,6 +112,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           DC.band([[1.84, 0.5], [1.95, 0.14], [2.06, 0.1], [2.1, 0.5], [2.06, 0.9], [1.95, 0.86]], COV, [sd], 0.008);   // the lamp's cover: a dark glass teardrop on the wing's tip,
           K.cyl([1.99, 0.57, sd * 0.5], [2.11, 0.57, sd * 0.5], 0.068, COV, { n: 10, capA: null, capB: null });            // its round front proud of the tip (the lamp's pod)
           K.headLamp(2.112, 0.57, sd * 0.5, 0.058, { host: 'fender' + s });
+          K.discX(2.138, 0.455, sd * 0.51, 0.026, 6, K.rgb(0xff9a1e), 1, { host: 'fender' + s });                         // the indicator under it
         }
         // ---- the centre stripe (the stripe colour; the paint when the car has none) on along the roof and the tail's deck ----
         for (const [x0, x1] of [[-0.72, -0.17], [-2.2, -1.5]]) DC.top([[x0, -0.11], [x1, -0.11], [x1, 0.11], [x0, 0.11]], S, 0.007);
@@ -142,7 +143,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (let i = 0; i < 6; i++) K.bar(pt(i * Math.PI / 3), pt((i + 1) * Math.PI / 3), 0.014, [0.42, 0.26, 0.13], { n: 3 });
           K.bar([C[0] + 0.32, C[1] - 0.14, C[2]], C, 0.018, [0.55, 0.56, 0.58], { n: 4 });
         }));
-        K.engine(0.85, 0.28, 0, { l: 0.85, w: 0.46, h: 0.44, cover: [0.72, 0.73, 0.76] });
+        K.engine(0.85, 0.28, 0, { l: 0.85, w: 0.46, h: 0.44, cover: [0.72, 0.73, 0.76] });                               // (its polished cam covers)
+        K.box(1.96, 0.3, 0, 0.06, 0.28, 0.62, 0, [0.12, 0.12, 0.13], null, false, { inner: true, part: 'body' });       // the radiator behind the mouth
       },
     },
   });
