@@ -7248,39 +7248,34 @@ const World = (function () {
     const lt = [col[0] * 1.14, col[1] * 1.12, col[2] * 1.08], dk = [col[0] * 0.74, col[1] * 0.76, col[2] * 0.78];
     for (let k = 0; k < n; k++) { const p = ring[k], q = ring[(k + 1) % n]; g.triON(p, q, top, nn(p), nn(q), [0, 1, 0], inn, col, col, lt); g.triON(q, p, bot, nn(q), nn(p), [0, -1, 0], inn, col, col, dk); }
   }
-  // a rounder lump for the trees near the road: two rings (the upper one smaller, its vertices between the lower one's) between the top and the bottom,
-  // 4n triangles, smooth shaded as an ellipsoid (a crown, not a diamond, from the car)
-  function hjLump2(g, cx, cy, cz, r, sy, col, R, n, lo) {
-    const top = [cx + (R() - 0.5) * r * 0.2, cy + r * sy, cz + (R() - 0.5) * r * 0.2], bot = [cx, cy - r * sy * (lo || 0.55), cz], inn = [cx, cy, cz], a0 = R() * TAU, L = [], U = [];
-    for (let k = 0; k < n; k++) { const a = a0 + (k + (R() - 0.5) * 0.4) / n * TAU, b = a0 + (k + 0.5) / n * TAU, rl = r * (0.84 + R() * 0.32), ru = r * (0.6 + R() * 0.16);
-      L.push([cx + Math.cos(a) * rl, cy + (R() - 0.5) * r * sy * 0.3, cz + Math.sin(a) * rl]); U.push([cx + Math.cos(b) * ru, cy + r * sy * (0.62 + (R() - 0.5) * 0.14), cz + Math.sin(b) * ru]); }
-    const nn = (p) => { const x = (p[0] - cx) / r, y = (p[1] - cy) / (r * sy * sy), z = (p[2] - cz) / r, l = Math.hypot(x, y, z) || 1; return [x / l, y / l, z / l]; };
-    const lt = [col[0] * 1.14, col[1] * 1.12, col[2] * 1.08], md = [col[0] * 1.07, col[1] * 1.06, col[2] * 1.04], dk = [col[0] * 0.74, col[1] * 0.76, col[2] * 0.78], up = [0, 1, 0], dn = [0, -1, 0];
-    for (let k = 0; k < n; k++) { const l0 = L[k], l1 = L[(k + 1) % n], u0 = U[k], u1 = U[(k + 1) % n];
-      g.triON(l0, l1, u0, nn(l0), nn(l1), nn(u0), inn, col, col, md); g.triON(u0, l1, u1, nn(u0), nn(l1), nn(u1), inn, md, col, md);   // the band
-      g.triON(u0, u1, top, nn(u0), nn(u1), up, inn, md, md, lt); g.triON(l1, l0, bot, nn(l1), nn(l0), dn, inn, col, col, dk); }
-  }
   function hjTrunk(g, h0, h1, r0, r1, c0, c1) {   // a three-sided trunk from h0 to h1, its colour from c0 at the foot to c1 at the top
     const inn = [0, (h0 + h1) / 2, 0], P = (a, r, y) => [Math.cos(a) * r, y, Math.sin(a) * r];
     for (let k = 0; k < 3; k++) { const a = k / 3 * TAU + 0.3, b = (k + 1) / 3 * TAU + 0.3; g.quadO(P(a, r0, h0), P(b, r0, h0), P(b, r1, h1), P(a, r1, h1), c0, inn, null, [c0, c0, c1, c1]); }
   }
-  // unit trees (height 1, instances scale them): 0 Norway spruce, 1 Scots pine (the ridge's old pines: a long bare trunk, grey below and orange up high, a crown
-  // of two clumps in its top third), 2 silver birch, 4 a linden or maple of the streets and yards; far: the plainer ones far from the road (one lump)
+  // unit trees (height 1, instances scale them): 0 Norway spruce, 1 Scots pine (the ridge's old pines: a long bare trunk, grey below and orange up high, a deep
+  // uneven crown of needle cushions in its top 40 %), 2 silver birch, 4 a linden or maple of the streets and yards; far: the plainer ones far from the road (one lump)
   function hjTreeGeo(kind, far) {
     const g = new GB(), R = rng(8230 + kind * 7 + (far ? 1 : 0));
     if (kind === 0) { const col = [0.085, 0.175, 0.11], tip = [0.17, 0.3, 0.19], rs = ROCK_SMOOTH; ROCK_SMOOTH = false;
       if (far) { starCone(g, 0, 0.02, 0, 0.3, 0.5, 4, col, tip, 0.2, 0.05); cone(g, 0, 0.45, 0, 0.16, 0.55, 3, col, tip, 0.9); }
       else { [[0.02, 0.31, 0.36, 0.06], [0.3, 0.23, 0.33, 0.05], [0.55, 0.15, 0.28, 0.04]].forEach(([y, r, h, dr], k) => starCone(g, 0, y, 0, r, h, 4, col, tip, k * 0.7, dr)); cone(g, 0, 0.78, 0, 0.06, 0.22, 3, col, tip, 0.4); }
       ROCK_SMOOTH = rs; }
-    else if (kind === 1) { hjTrunk(g, -0.02, 0.8, 0.017, 0.009, [0.38, 0.32, 0.27], [0.7, 0.42, 0.22]);
-      if (far) hjLump(g, 0.02, 0.84, 0, 0.19, 0.42, [0.14, 0.26, 0.12], R, 5);
-      else { hjLump2(g, 0.03, 0.845, 0.02, 0.18, 0.5, [0.14, 0.26, 0.12], R, 5, 0.6); hjLump(g, -0.1, 0.72, 0.06, 0.13, 0.55, [0.12, 0.23, 0.11], R, 5, 0.6); } }
-    else if (kind === 2) { hjTrunk(g, -0.02, 0.62, 0.018, 0.01, [0.3, 0.28, 0.26], [0.9, 0.9, 0.86]);
-      if (far) hjLump(g, 0, 0.68, 0, 0.17, 1.4, [0.27, 0.42, 0.13], R, 5, 0.7);
-      else { hjLump2(g, 0, 0.68, 0, 0.17, 1.3, [0.27, 0.42, 0.13], R, 5, 0.75); hjLump(g, 0.07, 0.54, -0.05, 0.11, 1.1, [0.31, 0.46, 0.15], R, 5, 0.7); } }
-    else { hjTrunk(g, -0.02, 0.45, 0.03, 0.02, [0.28, 0.24, 0.2], [0.34, 0.29, 0.24]);
-      if (far) hjLump(g, 0, 0.64, 0, 0.3, 0.95, [0.2, 0.36, 0.12], R, 6, 0.7);
-      else { hjLump2(g, -0.03, 0.65, -0.02, 0.29, 0.82, [0.2, 0.36, 0.12], R, 6, 0.8); hjLump(g, 0.13, 0.74, 0.1, 0.19, 0.8, [0.24, 0.41, 0.15], R, 5, 0.75); } }
+    else if (far) {   // (the plain ones, over 50 m from the road)
+      if (kind === 1) { hjTrunk(g, -0.02, 0.8, 0.017, 0.009, [0.38, 0.32, 0.27], [0.7, 0.42, 0.22]); hjLump(g, 0.02, 0.84, 0, 0.19, 0.42, [0.14, 0.26, 0.12], R, 5); }
+      else if (kind === 2) { hjTrunk(g, -0.02, 0.62, 0.018, 0.01, [0.3, 0.28, 0.26], [0.9, 0.9, 0.86]); hjLump(g, 0, 0.68, 0, 0.17, 1.4, [0.27, 0.42, 0.13], R, 5, 0.7); }
+      else { hjTrunk(g, -0.02, 0.45, 0.03, 0.02, [0.28, 0.24, 0.2], [0.34, 0.29, 0.24]); hjLump(g, 0, 0.64, 0, 0.3, 0.95, [0.2, 0.36, 0.12], R, 6, 0.7); } }
+    else { const rs = ROCK_SMOOTH; ROCK_SMOOTH = true;   // (soft, rounded crowns, as Ouninpohja's)
+      if (kind === 1) {   // an old Scots pine: a long trunk, grey-brown below and orange up high, a deep uneven crown of three clumps of dark blue-green needles
+        cyl(g, 0, -0.02, 0, 0.018, 0.42, 3, [0.37, 0.31, 0.26], null, 0.015); cyl(g, 0, 0.4, 0, 0.015, 0.46, 3, [0.7, 0.42, 0.22], null, 0.008);
+        ico(g, 0.02, 0.84, 0, 0.17, 0.55, [0.13, 0.24, 0.13], R, 0.35); ico(g, -0.09, 0.73, 0.06, 0.13, 0.6, [0.11, 0.21, 0.12], R, 0.4); hjLump(g, 0.08, 0.69, -0.06, 0.11, 0.6, [0.12, 0.22, 0.12], R, 5, 0.6); }
+      else if (kind === 2) {   // a silver birch: a slim white trunk, dark rough bark at the foot and a black band, a light, airy crown of two clumps (as Ouninpohja's)
+        cyl(g, 0, -0.02, 0, 0.019, 0.16, 3, [0.3, 0.28, 0.26], null, 0.016); cyl(g, 0, 0.14, 0, 0.016, 0.24, 3, [0.9, 0.9, 0.86], null, 0.014);
+        cyl(g, 0, 0.38, 0, 0.014, 0.04, 3, [0.16, 0.16, 0.16], null, 0.013); cyl(g, 0, 0.42, 0, 0.013, 0.24, 3, [0.88, 0.88, 0.84], null, 0.008);
+        ico(g, 0, 0.7, 0, 0.15, 1.5, [0.27, 0.42, 0.13], R, 0.3); ico(g, 0.07, 0.56, -0.05, 0.1, 1.2, [0.31, 0.46, 0.15], R, 0.35); }
+      else {   // a linden or a maple of the streets and yards: a round crown of three soft clumps in a deep summer green
+        hjTrunk(g, -0.02, 0.45, 0.03, 0.02, [0.28, 0.24, 0.2], [0.34, 0.29, 0.24]);
+        ico(g, -0.03, 0.62, -0.02, 0.22, 0.8, [0.17, 0.3, 0.11], R, 0.3); ico(g, 0.12, 0.72, 0.08, 0.16, 0.8, [0.2, 0.34, 0.13], R, 0.35); ico(g, -0.1, 0.76, 0.1, 0.14, 0.85, [0.19, 0.32, 0.12], R, 0.35); }
+      ROCK_SMOOTH = rs; }
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
   // a building from its footprint (poly: [x, z], either winding), kind (0 flats, 1 a house, 2 a shed or garage, 3 a stand or a roof, 4 a school or public
@@ -7724,13 +7719,14 @@ const World = (function () {
     /* ---- the trees: every crown the canopy height model found (def.scen.trees: the ridge's Scots pines, spruces, birches, the lindens and maples of the
        streets and yards) at its measured height, and where the canopy is closed a fill of the same kind (instanced per 128 m chunk) ---- */
     const tMat = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
-    const TK = {}, TKF = {}; for (const k of [0, 1, 2, 4]) TK[k] = new IChunks(hjTreeGeo(k), tMat, 160);
-    TKF[1] = TKF[0] = new IChunks(hjTreeGeo(1, true), tMat, 128); TKF[4] = TKF[2] = new IChunks(hjTreeGeo(4, true), tMat, 128);   // (over 60 m from the road: the plain pine and the plain broadleaf, casting no shadow)
+    const TK = {}, TKF = {}; for (const k of [0, 1, 2, 4]) TK[k] = new IChunks(hjTreeGeo(k), tMat, k === 1 ? 128 : 192);   // (the pines, most of the trees, in 128 m chunks: the view and the sun's shadow box draw fewer of them outside)
+    TKF[1] = TKF[0] = new IChunks(hjTreeGeo(1, true), tMat, 128); TKF[4] = TKF[2] = new IChunks(hjTreeGeo(4, true), tMat, 128);   // (over 50 m from the road: the plain pine and the plain broadleaf, casting no shadow)
     let nTrees = 0; const tHash = new Map(), THC = 4;   // (the planted trees in 4 m cells: the fill keeps 3.4 m from them)
     const treeOK = (x, z) => { if (onBld(x, z) || onPaved(x, z) || excluded(x, z)) return false; const n = hjNear(x, z); return !(n.i >= 0 && n.dd < 1.2); };
     const plant = (x, z, h, sp, r1, r2) => {
-      const y = hjGround(x, z), wid = h * (sp === 0 ? 0.5 + r2 * 0.14 : sp === 1 ? 0.62 + r2 * 0.22 : sp === 2 ? 0.75 + r2 * 0.25 : 0.8 + r2 * 0.25), cv = 0.86 + r1 * 0.24;
-      const n = hjNear(x, z); (n.i >= 0 && n.dd < 60 ? TK : TKF)[sp].add(x, y - 0.15, z, r1 * 70, wid, h, [cv * (0.95 + r2 * 0.08), cv, cv * (0.95 + r1 * 0.08)]); nTrees++;
+      const y = hjGround(x, z), wid = h * (sp === 0 ? 0.5 + r2 * 0.14 : sp === 1 ? 0.62 + r2 * 0.22 : sp === 2 ? 0.6 + r2 * 0.2 : 0.8 + r2 * 0.25), cv = 0.86 + r1 * 0.24;
+      const old = sp === 1 && crH(x, z, 51) < 0.3 ? [1.07, 0.97, 0.86] : [1, 1, 1];   // (some old pines' crowns bronze-tinted, from the position: the seeded draws stay)
+      const n = hjNear(x, z); (n.i >= 0 && n.dd < 50 ? TK : TKF)[sp].add(x, y - 0.15, z, r1 * 70, wid, h, [cv * (0.95 + r2 * 0.08) * old[0], cv * old[1], cv * (0.95 + r1 * 0.08) * old[2]]); nTrees++;
       const k = Math.floor(x / THC) + ',' + Math.floor(z / THC); let L = tHash.get(k); if (!L) tHash.set(k, L = []); L.push(x, z); };
     const nearTree = (x, z) => { const cx = Math.floor(x / THC), cz = Math.floor(z / THC); for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const L = tHash.get((cx + a) + ',' + (cz + b)); if (L) for (let q = 0; q < L.length; q += 2) if ((L[q] - x) ** 2 + (L[q + 1] - z) ** 2 < 11.6) return true; } return false; };
     {
@@ -7738,7 +7734,7 @@ const World = (function () {
       for (let k = 0; k < TR.length; k += 3) { const x = TR[k] / 2, z = TR[k + 1] / 2, v = TR[k + 2], h = Math.max(4, (v & 255) / 4), sp = v >> 8, r1 = RT(), r2 = RT();
         if (!treeOK(x, z) || !TK[sp]) continue; plant(x, z, sp === 1 ? h * 1.08 : h, sp, r1, r2); }
       // the closed canopy's fill: a tree in a share of its 4 m cells where none was found (taller classes: denser, bigger), the ridge's own mix of kinds
-      const C = P.C, PK = [0, 0.16, 0.32, 0.46, 0.54, 0.6], HK = [0, 6.5, 11.5, 16.5, 21.5, 25.5];
+      const C = P.C, PK = [0, 0.26, 0.46, 0.62, 0.7, 0.75], HK = [0, 6.5, 11.5, 16.5, 21.5, 25.5];   // (PK: enough crowns that the canopy's cells are covered)
       for (let j = 0; j < C.nz; j++) for (let i = 0; i < C.nx; i++) { const c = P.can[j * C.nx + i]; if (!c) continue; const r0 = RT(), r1 = RT(), r2 = RT(), r3 = RT();
         if (r0 > PK[c] * dens) continue;
         const x = C.x0 + (i + 0.2 + r1 * 0.6) * C.cell, z = C.z0 + (j + 0.2 + r2 * 0.6) * C.cell; if (nearTree(x, z) || !treeOK(x, z)) continue;
