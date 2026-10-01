@@ -114,7 +114,8 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-msg { position: absolute; left: 0; right: 0; top: 40%; text-align: center; font: 400 italic clamp(28px, 10vh, 56px)/1 var(--f-display); color: var(--chalk); text-shadow: 3px 4px 0 rgba(0,0,0,.55); opacity: 0; transform: scale(.9); transition: opacity .2s, transform .2s; }
 #h-msg.show { opacity: 1; transform: scale(1); }
 #hud.shot > *:not(#podium-cap) { visibility: hidden; }   /* a TV shot (the jets before the start, the podium): no HUD */
-#podium-cap { position: absolute; left: 50%; bottom: calc(10px + var(--sb, 0px)); transform: translateX(-50%); display: flex; gap: 14px; padding: 6px 14px; border-radius: 6px; background: rgba(12,16,40,.72); font: 700 italic clamp(12px, 3.4vh, 18px)/1.2 var(--f-ui); color: var(--chalk); white-space: nowrap; opacity: 0; transition: opacity .4s; pointer-events: none; }
+#podium-cap { position: absolute; left: 50%; bottom: calc(10px + var(--sb, 0px)); transform: translateX(-50%); display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; width: max-content; max-width: calc(100vw - 16px); box-sizing: border-box; padding: 6px 14px; border-radius: 6px; background: rgba(12,16,40,.72); font: 700 italic clamp(12px, 3.4vh, 18px)/1.2 var(--f-ui); color: var(--chalk); opacity: 0; transition: opacity .4s; pointer-events: none; }
+#podium-cap span { white-space: nowrap; }   /* (a narrow phone: a name to a line rather than cut off at the edges) */
 #podium-cap.show { opacity: 1; }
 #podium-cap b { color: #ffcf2e; }
 #podium-cap i { display: inline-block; width: .7em; height: .7em; margin: 0 .3em 0 .15em; border-radius: 2px; vertical-align: -.05em; }

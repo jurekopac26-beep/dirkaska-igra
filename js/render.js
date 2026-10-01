@@ -1633,6 +1633,17 @@ const Render = (function () {
     pkFlare(A.tod !== 'night' && r < 0.5 && (lastMode === 'cockpit' || (lastMode === 'tv' && !cam.shot)) ? 1 - 2 * r : 0, dt);
   }
 
+  // Mie (world.dyn.rays): Pikes Peak's shafts of sun, in its woods only (dyn.rayAt), and its flare when the sun is in the picture of a TV
+  // camera, the replay's cockpit or the podium's
+  const szL = { on: false, t: 0 };
+  function szLight() {
+    const on = !!(world && world.dyn && world.dyn.rays) && themeId !== 'pikes';
+    if (!on) { if (szL.on) { szL.on = false; pkRays(0); pkFlare(0); } return; }
+    szL.on = true; const dt = clamp(time - szL.t, 0, 0.25), r = Math.max(0, wet); szL.t = time;
+    pkRays(settings.quality === 'high' && atmos.tod === 'day' && r <= 0 ? 0.8 : 0, dt);
+    pkFlare(atmos.tod !== 'night' && r < 0.5 && (lastMode === 'cockpit' || ((lastMode === 'tv' || lastMode === 'tvlive') && !cam.shot) || !!podC) ? 1 - 2 * r : 0, dt);
+  }
+
   /* ---------------- Pikes Peak's shafts of sun through the forest (the 'high' quality only, by day, below the tree line): a dozen long soft
      quads leaning along the sun's rays, anchored on the ground on a hashed 9 m grid round the view (they stay put as the view moves), each
      turned about its own axis to face the camera, fading in along its length, at the view's edge and close to the camera, breathing gently.
@@ -1668,6 +1679,7 @@ const Render = (function () {
           for (let t = 3; t <= 15 && ok; t += 3) for (const sd of [-2, 2]) if (Wd(x + dx / hl * t + qx * sd, z + dz / hl * t + qz * sd, 1) < 0) ok = false;
           ok = ok && h < 0.5 * Core.sstep(0.2, 0.5, wd); V.set(key, ok); }
         if (!ok) continue; }
+      if (world.dyn.rayAt && (h > 0.2 || !world.dyn.rayAt(x, z))) continue;   // (Mie: only in its woods, a fifth of the cells as before)
       L.push([d, x, z, h * 5]); }
     L.sort((p, q) => p[0] - q[0]);
     const P = M.geometry.attributes.position.array, AW = M.geometry.attributes.aw.array; let n = 0;
@@ -3255,6 +3267,11 @@ const Render = (function () {
     const slide = Math.max(0, c.latR - 1.0) / 3.5 + c.spin * 0.9 + (c.lock ? 0.55 : 0) + (c.inHand > 0.5 && spd > 5 ? 0.45 : 0);
     const rainy = wetW > 0.1, near = !rainy || Math.hypot(x - (cam.vcx || 0), z - (cam.vcz || 0)) < 140;   // (rain: spray only where it can be seen, the particles are shared)
     const wheels = [[-M.b, -tw, 2], [-M.b, tw, 3], [M.a, -tw, 0], [M.a, tw, 1]];
+    if (world && world.dyn.gravelDrop && !c.air) {   // (gravel carried out of a trap: shed on the road over the next ~30 m, where the world keeps it: Mie)
+      let g = 0, hard = 0; for (let k = 0; k < 4; k++) { if (c.ws[k] === 3) g++; else if (c.ws[k] <= 1) hard++; }
+      if (g >= 2) v.grav = 30; else if (v.grav > 0 && hard >= 3 && spd > 3) { const l = spd * dt; v.grav -= l; v.gravAcc = (v.gravAcc || 0) + l;
+        if (v.gravAcc > 1.7) { v.gravAcc = 0; world.dyn.gravelDrop(x - Math.cos(h) * M.b, z - Math.sin(h) * M.b, c.roadY != null ? c.roadY : c.y || 0, h, clamp(v.grav / 30, 0, 1)); } }
+    }
     for (let k = 0; k < 4; k++) {
       const [lx, lz, wi] = wheels[k];
       if (c.air) { v.sk[k] = null; v.acc[k] = 0; continue; }
@@ -4095,6 +4112,7 @@ const Render = (function () {
       const r = R ? q(R.rain || 0) : 0, w = R ? q(R.water != null ? R.water : R.rain || 0) : 0;
       if (r !== wet) applyWeather(r); if (w !== wetW) applyRoad(w); dryLine(R); }
     pkLight(target);   // (Pikes Peak: its shadows and the light of the altitude, on top of the theme's)
+    szLight();   // (Mie: the sun's shafts through its woods, a low sun's flare)
     if (birds.mesh.visible && target && world) birds.update(Math.min(dt, 0.1), cam.vcx || 0, cam.vcz || 0, world.groundH || (() => 0));
     if (snow.mesh.visible) { const U = snow.mat.uniforms, B = lastMode === 'cockpit' ? [28, 12, 28] : lastMode === 'chase' ? [62, 30, 62] : [80, 36, 80]; U.uBox.value.set(B[0], B[1], B[2]); U.uC.value.set(cam.vcx || 0, (cam.gy || 0) + B[1] * 0.42, cam.vcz || 0); U.uT.value = time % 600; U.uA.value = 0.9 * Math.min(1, wet * 1.5); U.uScale.value = particles.mat.uniforms.uScale.value; }
     if (rain.mesh.visible) {   // the box of streaks around the view centre (the iso camera sees the most ground, the chase camera the least)
@@ -4110,7 +4128,7 @@ const Render = (function () {
       const tr = tn.mat.opacity < 0.985; if (tn.mat.transparent !== tr) { tn.mat.transparent = tr; tn.mat.needsUpdate = true; } tn.mat.depthWrite = !tr;
       if (tn.mats) for (const m of tn.mats) if (m !== tn.mat) { m.opacity = tn.mat.opacity; if (m.transparent !== tr) { m.transparent = tr; m.needsUpdate = true; } m.depthWrite = !tr; }   // (Suzuka: everything on the bridge)
     }
-    skyStep(cam.ck || ((lastMode === 'tv' || lastMode === 'tvlive') && !cam.shot) || !!(cam.shot && cam.shot.sky)); cgSet(false);
+    skyStep(cam.ck || ((lastMode === 'tv' || lastMode === 'tvlive') && !cam.shot) || !!(cam.shot && cam.shot.sky) || !!(podC && world && world.dyn.podSky)); cgSet(false);
     { const W = World.waterSky; W.hor.value.copy(scene.fog.color); skyTop(W.top.value); }   // (the sky the water mirrors)
     const ckOn = cam.ck && ck.car; if (ckOn) ckStep(ck.car, viewOf(ck.car));
     { const cv = ckOn ? viewOf(ck.car) : null;   // (the Peugeot's own model has its inside, seats and all: from the seat, the plain body round the driver)
@@ -4215,6 +4233,7 @@ const Render = (function () {
   function setDebug(o) { Object.assign(dbg, o); }
   function fxStats() { let n = 0; for (let i = 0; i < particles.max; i++) if (particles.life[i] > 0) n++; return { alive: n, emitted: particles.cur }; }
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { setDebug, fxStats, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, open: !!ck.parts.open, gear: ck.parts.scr && ck.parts.scr.txt ? ck.parts.scr.txt.split('|')[0] : null, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, setGhost, init, buildWorld, applySettings, resize, attachRace, frame, setPodium, get lod() { return views.map(v => !!v.lod); }, get tv() { return tvC ? { n: tvC.cams.length, cur: tvC.cur, cams: tvC.cams, fov: tvC.fov, ms: tvC.ms, cuts: tvC.cuts, gridMs: tvC.gridMs } : null; }, get podium() { return podB ? { root: podB.root, F: podB.F, on: !!podC, t: podC ? podC.t : 0 } : null; }, setStartLights, shake, resetCam, setShot, pkFly, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setDebug, fxStats, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, open: !!ck.parts.open, gear: ck.parts.scr && ck.parts.scr.txt ? ck.parts.scr.txt.split('|')[0] : null, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, setGhost, init, buildWorld, applySettings, resize, attachRace, frame, setPodium, get lod() { return views.map(v => !!v.lod); }, get tv() { return tvC ? { n: tvC.cams.length, cur: tvC.cur, cams: tvC.cams, fov: tvC.fov, ms: tvC.ms, cuts: tvC.cuts, gridMs: tvC.gridMs } : null; }, get podium() { return podB ? { root: podB.root, F: podB.F, on: !!podC, t: podC ? podC.t : 0 } : null; }, setStartLights, shake, resetCam, setShot, pkFly, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get rainK() { return Math.max(0, wet); }, get wetRoad() { return Math.max(0, wetW); },
+    get sunDir() { const l = Math.hypot(sunOff[0], sunOff[1], sunOff[2]); return [sunOff[0] / l, sunOff[1] / l, sunOff[2] / l]; }, get podiumOn() { return !!podC; }, get birds() { return birds; } };
 })();
 

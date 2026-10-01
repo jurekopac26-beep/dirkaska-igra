@@ -12426,18 +12426,27 @@ const World = (function () {
       D[k] = Math.round(255 * pk * 0.92 * (dd < 5 ? 1 - sstep(5, 0.5, dd) : 1)); }
     const t = new THREE.DataTexture(D, G.nx, G.nz, THREE.LuminanceFormat); t.magFilter = t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; t.needsUpdate = true;
     const PARK = [0.34, 0.352, 0.339], SNOW = PARK.map((v, k) => lerp(v, [0.92, 0.95, 0.99][k], 0.5));   // (the tarmac's grey: the grass map's mean, 0.287 / 0.46 / 0.198, turned grey as szCol once did it; under snow)
-    const U = { uPk: { value: t }, uPkT: { value: new THREE.Vector4(G.x0 - SZC / 2, G.z0 - SZC / 2, 1 / (SZC * G.nx), 1 / (SZC * G.nz)) }, uPark: { value: new THREE.Color(...PARK) }, uSnow: { value: 0 } }, map0 = mat.map;
+    const nz = szNoiseTex();   // (graphics 5: the lawns' patches, a wet lawn darker)
+    const U = { uPk: { value: t }, uPkT: { value: new THREE.Vector4(G.x0 - SZC / 2, G.z0 - SZC / 2, 1 / (SZC * G.nx), 1 / (SZC * G.nz)) }, uPark: { value: new THREE.Color(...PARK) }, uSnow: { value: 0 }, uNz: { value: nz }, uWetG: { value: 0 } }, map0 = mat.map;
     mat.onBeforeCompile = (sh) => { Object.assign(sh.uniforms, U);
-      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform vec4 uPkT;\nvarying vec2 vPkUv;')
-        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvec4 pkW = modelMatrix * vec4( transformed, 1.0 ); vPkUv = ( pkW.xz - uPkT.xy ) * uPkT.zw;');
-      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uPk; uniform vec3 uPark; uniform float uSnow;\nvarying vec2 vPkUv;')
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform vec4 uPkT;\nvarying vec2 vPkUv;\nvarying vec2 vGW;')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvec4 pkW = modelMatrix * vec4( transformed, 1.0 ); vPkUv = ( pkW.xz - uPkT.xy ) * uPkT.zw; vGW = pkW.xz / 61.0;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uPk; uniform vec3 uPark; uniform float uSnow; uniform sampler2D uNz; uniform float uWetG;\nvarying vec2 vPkUv;\nvarying vec2 vGW;')
         .replace('#include <color_fragment>', 'diffuseColor.rgb *= mix( vColor, vec3( dot( vColor, vec3( 0.3, 0.59, 0.11 ) ) ), uSnow );\n' +   // (under snow no tint of the lawns' colours: the dry patches' straw would stay yellow)
-          '{ float pk = texture2D( uPk, vPkUv ).r; if ( pk > 0.0 ) { vec3 lw = vec3( 0.3, 0.59, 0.11 ); float ml = max( 0.05, dot( texture2D( map, vUv, 16.0 ).rgb, lw ) );\n' +   // (the map's mean: its smallest mip level)
+          '{ float pk = texture2D( uPk, vPkUv ).r;\n' +
+          // the lawns (a green vertex colour: not the woods' floor, the scrub, the banks of earth, the car parks, the snow): lighter and darker
+          // patches of 60 m, drier patches of 20 m, clover in 5 m clumps (one noise picture at three scales)
+          '  float gg = smoothstep( 0.05, 0.1, vColor.g - max( vColor.r, vColor.b ) * 0.92 ) * ( 1.0 - uSnow ) * ( 1.0 - pk );\n' +
+          '  if ( gg > 0.0 ) { float n1 = texture2D( uNz, vGW ).r, n2 = texture2D( uNz, vGW * 3.6 + 0.37 ).r, n3 = texture2D( uNz, vGW * 14.0 + 0.71 ).r;\n' +
+          '    vec3 c = diffuseColor.rgb * ( 0.88 + 0.24 * n1 ); float dry = smoothstep( 0.6, 0.78, n2 * 0.7 + n1 * 0.3 ), clov = smoothstep( 0.68, 0.84, n3 ) * ( 1.0 - dry );\n' +
+          '    c = mix( c, c * vec3( 1.22, 1.08, 0.7 ), dry * 0.55 ); c = mix( c, c * vec3( 0.82, 0.95, 0.86 ), clov * 0.55 ); diffuseColor.rgb = mix( diffuseColor.rgb, c, gg ); }\n' +
+          '  diffuseColor.rgb *= 1.0 - uWetG * ( 0.07 + 0.1 * gg ) * ( 1.0 - uSnow );\n' +   // (wet ground: darker)
+          '  if ( pk > 0.0 ) { vec3 lw = vec3( 0.3, 0.59, 0.11 ); float ml = max( 0.05, dot( texture2D( map, vUv, 16.0 ).rgb, lw ) );\n' +   // (the map's mean: its smallest mip level)
           '  diffuseColor.rgb = mix( diffuseColor.rgb, uPark * clamp( dot( texelColor.rgb, lw ) / ml, 0.6, 1.4 ), pk ); } }'); };
     mat.customProgramCacheKey = () => 'szGround';
     let cur = map0;   // (the map the uniforms are for: the grass, or Render.seasonWorld's snow on it in winter)
     const hook = () => { const mp = mat.map; if (mp === cur || !mp) return; cur = mp; const snow = mp !== map0; U.uSnow.value = snow ? 0.9 : 0; U.uPark.value.setRGB(...(snow ? SNOW : PARK)); };
-    return { tex: t, hook };
+    return { tex: t, nz, hook, U };
   }
   function szGCol(x, z) {   // the terrain mesh's vertex colour at (x, z) (bilinear over the grid vertices, each coloured as in szTileGeo)
     const G = SZ.G, gx = clamp((x - G.x0) / SZC, 1, G.nx - 2.001), gz = clamp((z - G.z0) / SZC, 1, G.nz - 2.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, o = [0, 0, 0];
@@ -12724,18 +12733,23 @@ const World = (function () {
     'vec3 objectNormal = normalize( vec3( aDir.x, 0.0, aDir.y ) - vec3( aDir.z, 0.0, aDir.w ) * clG );';
   // soft glowing points: aG = (phase, mode, size m); mode 0 a bulb (a wave of brightness along the ride), 1 an LED whose colour runs round
   // the wheel, 2 a camera's flash (one every ~17 s a spectator, six times as often within ~70 m of the followed car), 3 a flashing beacon
-  // (the helicopter's). uOn: how dark it is
+  // (the helicopter's), 4 a steady lamp (graphics 5: the lamps' heads, the monitors), 5 a phone held up in the stands (waved, its screen
+  // brighter and dimmer). uOn: how dark it is
   // (0: hidden by day); faded by the fog as the world is; uScale (px per m at 1 m) set by the renderer drawing them (onBeforeRender)
   function szGlowMat(U) {
     return new THREE.ShaderMaterial({ uniforms: U, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
       vertexShader: 'attribute vec3 aCol; attribute vec3 aG; uniform float uT; uniform float uOn; uniform float uScale; uniform vec2 uFog; uniform vec3 uCar; varying vec3 vC; varying float vA;\n' +
         'vec3 hue( float h ) { return clamp( abs( mod( h * 6.0 + vec3( 0.0, 4.0, 2.0 ), 6.0 ) - 3.0 ) - 1.0, 0.0, 1.0 ); }\n' +
-        'void main() { vec4 w = modelMatrix * vec4( position, 1.0 ), mv = viewMatrix * w; float a = uOn, sz = aG.z;\n' +
+        'void main() { vec4 w = modelMatrix * vec4( position, 1.0 ); float a = uOn, sz = aG.z;\n' +
+        '  if ( aG.y > 4.5 ) { w.x += sin( uT * 1.3 + aG.x * 21.0 ) * 0.2; w.z += cos( uT * 1.1 + aG.x * 17.0 ) * 0.2; w.y += abs( sin( uT * 2.0 + aG.x * 13.0 ) ) * 0.08; }\n' +   // (a phone held up, waved a little)
+        '  vec4 mv = viewMatrix * w;\n' +
         '  if ( aG.y < 0.5 ) { vC = aCol; a *= 0.72 + 0.28 * sin( uT * 3.0 - aG.x ); }\n' +
         '  else if ( aG.y < 1.5 ) { vC = mix( vec3( 1.0 ), hue( fract( aG.x + uT * 0.07 ) ), 0.85 ); a *= 0.9 + 0.1 * sin( uT * 5.0 + aG.x * 40.0 ); }\n' +
         '  else if ( aG.y < 2.5 ) { float r = 0.06 * ( 1.0 + 5.0 * ( 1.0 - smoothstep( 35.0, 110.0, distance( w.xz, uCar.xz ) ) ) ), f = fract( uT * r + aG.x ), du = 0.08 * r;\n' +
         '    a *= f < du ? 1.0 - f / du : 0.0; vC = vec3( 1.0, 0.97, 0.92 ); }\n' +
-        '  else { vC = aCol; a *= fract( uT * 1.1 + aG.x ) < 0.1 ? 1.0 : 0.0; }\n' +
+        '  else if ( aG.y < 3.5 ) { vC = aCol; a *= fract( uT * 1.1 + aG.x ) < 0.1 ? 1.0 : 0.0; }\n' +
+        '  else if ( aG.y < 4.5 ) vC = aCol;\n' +
+        '  else { vC = aCol; a *= 0.6 + 0.4 * sin( uT * 0.7 + aG.x * 30.0 ); }\n' +
         '  a *= 1.0 - smoothstep( uFog.x, uFog.y, -mv.z ); vA = a;\n' +
         '  if ( a < 0.004 ) { gl_Position = vec4( 2.0, 2.0, 2.0, 1.0 ); gl_PointSize = 0.0; return; }\n' +
         '  gl_PointSize = clamp( sz * uScale / max( 1.0, -mv.z ), 1.5, 48.0 ); gl_Position = projectionMatrix * mv; }',
@@ -12775,35 +12789,64 @@ const World = (function () {
     return new THREE.CanvasTexture(c);
   }
   // the hills on the horizon: a band round the camera where the fog is complete (just past fog.far, inside the far plane), drawn after the
-  // world with its depth: over the sky and the fully fogged far ground, behind all that still shows. The mountains to the west, lower hills to
-  // the north and south, the bay to the east (none). Two ranges, the nearer darker; their colour the fog's (the horizon's) deepened by the
-  // time of day, faint under the rain's overcast
+  // world with its depth: over the sky and the fully fogged far ground, behind all that still shows. Three ranges to the west (the nearest
+  // the darkest and lowest, the farthest the palest and highest), lower hills to the north and south, the bay to the east: a strip of sea at
+  // the horizon there, glinting by day, the moon's path on it at night. After dark the lights of the towns on the nearer slopes and along the
+  // coast. Their colour the fog's (the horizon's) deepened by the time of day, faint under the rain's overcast (the lights too). aH: (up the
+  // band, its range (0 near, 1 middle, 2 far, 3 the sea), the sea's share at the ends of its sector); G5 sets the time and the sun (hillU)
   function szHills() {
-    const P = [], A = [], n = 180, DEG = Math.PI / 180;
-    const prof = (az, far) => { const w = Math.max(0, -Math.cos(az)), s = Math.abs(Math.sin(az)), e = Math.max(0, Math.cos(az));
-      const nz = far ? 0.5 * Math.sin(az * 7 + 1.3) + 0.3 * Math.sin(az * 17 + 0.4) + 0.2 * Math.sin(az * 31 + 2.1) + 0.12 * Math.sin(az * 59 + 0.7)
-        : 0.5 * Math.sin(az * 9 + 2.2) + 0.35 * Math.sin(az * 23 + 1.1) + 0.15 * Math.sin(az * 47 + 0.3);
-      const h = far ? (0.3 + 3.1 * Math.pow(w, 1.6) + 0.9 * s * (1 - w)) * (1 + 0.3 * nz) : (0.25 + 1.2 * w + 0.55 * s) * (0.72 + 0.45 * nz);
-      return Math.max(0.05, h * (1 - sstep(far ? 0.35 : 0.2, far ? 0.8 : 0.6, e))) * DEG; };
-    for (const far of [1, 0]) for (let k = 0; k < n; k++) {
-      const a0 = k / n * TAU, a1 = (k + 1) / n * TAU, e0 = prof(a0, far), e1 = prof(a1, far), b = -2.5 * DEG;
-      const V = (a, e) => [Math.cos(a) * Math.cos(e), Math.sin(e), Math.sin(a) * Math.cos(e)];
-      const q = [V(a0, b), V(a1, b), V(a1, e1), V(a0, e0)], t = [0, 0, 1, 1];
-      for (const j of [0, 2, 1, 0, 3, 2]) { P.push(...q[j]); A.push(t[j], far ? 0 : 1); }
+    const P = [], A = [], n = 240, DEG = Math.PI / 180;
+    const prof = (az, L) => { const w = Math.max(0, -Math.cos(az)), s = Math.abs(Math.sin(az)), e = Math.max(0, Math.cos(az));
+      let h;
+      if (L === 2) h = (0.35 + 3.3 * Math.pow(w, 1.6) + 1.0 * s * (1 - w)) * (1 + 0.3 * (0.5 * Math.sin(az * 7 + 1.3) + 0.3 * Math.sin(az * 17 + 0.4) + 0.2 * Math.sin(az * 31 + 2.1) + 0.12 * Math.abs(Math.sin(az * 59 + 0.7))));
+      else if (L === 1) h = (0.3 + 2.0 * Math.pow(w, 1.3) + 0.75 * s * (1 - w)) * (0.8 + 0.35 * (0.5 * Math.sin(az * 11 + 0.6) + 0.3 * Math.sin(az * 19 + 2.8) + 0.2 * Math.sin(az * 37 + 1.7) + 0.1 * Math.sin(az * 71 + 0.2)));
+      else h = (0.25 + 1.1 * w + 0.5 * s) * (0.72 + 0.45 * (0.5 * Math.sin(az * 9 + 2.2) + 0.35 * Math.sin(az * 23 + 1.1) + 0.15 * Math.sin(az * 47 + 0.3)));
+      const f = L === 2 ? sstep(0.35, 0.8, e) : L === 1 ? sstep(0.25, 0.7, e) : sstep(0.2, 0.6, e);
+      return Math.max(0.05, h * (1 - f)) * DEG; };
+    const V = (a, e) => [Math.cos(a) * Math.cos(e), Math.sin(e), Math.sin(a) * Math.cos(e)];
+    for (let k = 0; k < n; k++) {   // the sea first (the hills over it): -1.6 to +0.05 degrees in the east, fading out at the ends of its sector
+      const a0 = k / n * TAU, a1 = (k + 1) / n * TAU, c0 = Math.cos(a0), c1 = Math.cos(a1); if (Math.max(c0, c1) < 0.3) continue;
+      const q = [V(a0, -1.6 * DEG), V(a1, -1.6 * DEG), V(a1, 0.05 * DEG), V(a0, 0.05 * DEG)], t = [0, 0, 1, 1], f0 = sstep(0.3, 0.55, c0), f1 = sstep(0.3, 0.55, c1), fa = [f0, f1, f1, f0];
+      for (const j of [0, 2, 1, 0, 3, 2]) { P.push(...q[j]); A.push(t[j], 3, fa[j]); }
     }
-    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('aH', new THREE.Float32BufferAttribute(A, 2));
+    for (const L of [2, 1, 0]) for (let k = 0; k < n; k++) {
+      const a0 = k / n * TAU, a1 = (k + 1) / n * TAU, e0 = prof(a0, L), e1 = prof(a1, L), b = -2.5 * DEG;
+      const q = [V(a0, b), V(a1, b), V(a1, e1), V(a0, e0)], t = [0, 0, 1, 1];
+      for (const j of [0, 2, 1, 0, 3, 2]) { P.push(...q[j]); A.push(t[j], L, 1); }
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('aH', new THREE.Float32BufferAttribute(A, 3));
     g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e6);
-    const U = { uR: { value: 500 }, uFogC: { value: new THREE.Color() }, uHill: { value: new THREE.Color() }, uK: { value: 0.4 } };
+    const U = { uR: { value: 500 }, uFogC: { value: new THREE.Color() }, uHill: { value: new THREE.Color() }, uK: { value: 0.4 }, uSea: { value: new THREE.Color() }, uLit: { value: 0 }, uGlint: { value: 0 },
+      uT: { value: 0 }, uSun: { value: new THREE.Vector3(-0.52, 0.51, 0.46) } };
     const mat = new THREE.ShaderMaterial({ uniforms: U, depthWrite: false, side: THREE.DoubleSide,
-      vertexShader: 'attribute vec2 aH; uniform float uR; varying vec2 vH; void main() { vH = aH; gl_Position = projectionMatrix * viewMatrix * vec4( cameraPosition + position * uR, 1.0 ); }',
-      fragmentShader: 'uniform vec3 uFogC; uniform vec3 uHill; uniform float uK; varying vec2 vH; void main() { float k = uK * ( vH.y > 0.5 ? 1.0 : 0.62 ) * ( 0.3 + 0.7 * smoothstep( 0.0, 1.0, vH.x ) ); gl_FragColor = vec4( mix( uFogC, uHill, k ), 1.0 ); }' });
-    const m = new THREE.Mesh(g, mat); m.frustumCulled = false; m.renderOrder = 50; m.name = 'szHills';
-    const HILL = { day: [0.3, 0.38, 0.46], dusk: [0.2, 0.17, 0.25], night: [0.015, 0.02, 0.035] };
+      vertexShader: 'attribute vec3 aH; uniform float uR; varying vec3 vH; varying vec3 vD; void main() { vH = aH; vD = position; gl_Position = projectionMatrix * viewMatrix * vec4( cameraPosition + position * uR, 1.0 ); }',
+      fragmentShader: ['uniform vec3 uFogC; uniform vec3 uHill; uniform float uK; uniform vec3 uSea; uniform float uLit; uniform float uGlint; uniform float uT; uniform vec3 uSun; varying vec3 vH; varying vec3 vD;',
+        'float h2( vec2 p ) { return fract( sin( dot( p, vec2( 12.9898, 78.233 ) ) ) * 43758.5453 ); }',
+        'float dots( vec2 g, float dens, float sz ) { vec2 c = floor( g ); float h = h2( c ); if ( h > dens ) return 0.0; vec2 o = vec2( h2( c + 3.7 ), h2( c + 9.1 ) ) * 0.5 + 0.25;',   // (a light in some cells of a grid over the band, ~0.19 degrees)
+        '  return smoothstep( sz, sz * 0.3, length( fract( g ) - o ) ) * ( 0.75 + 0.25 * sin( uT * ( 2.0 + 3.0 * h ) + h * 40.0 ) ); }',
+        'void main() { vec3 d = normalize( vD ); float az = atan( d.z, d.x ), el = asin( clamp( d.y, -1.0, 1.0 ) ) * 57.2958; vec3 c;',
+        '  if ( vH.y > 2.5 ) {',   // the sea: deepening towards the horizon's haze, glints by day, the moon's path at night; the coast's lights along it
+        '    c = mix( uFogC, uSea, uK * 0.85 * vH.z * ( 0.55 + 0.45 * smoothstep( -1.6, -0.2, el ) ) );',
+        '    vec2 gc = floor( vec2( az * 900.0, el * 30.0 ) ); float gl = step( 0.965, h2( gc ) ) * pow( max( 0.0, sin( uT * 3.0 + h2( gc + 1.3 ) * 60.0 ) ), 6.0 ) * smoothstep( -1.2, -0.3, el );',
+        '    float mz = atan( uSun.z, uSun.x ), da = abs( mod( az - mz + 3.14159, 6.28318 ) - 3.14159 ), path = exp( -da * da * 300.0 ) * smoothstep( 0.0, 0.12, uSun.y ) * ( 0.4 + 0.6 * step( 0.5, h2( floor( vec2( az * 1500.0, el * 90.0 + uT * 0.6 ) ) ) ) );',
+        '    c += vec3( 0.9, 0.92, 0.95 ) * gl * 0.35 * uGlint * vH.z + vec3( 0.75, 0.8, 0.9 ) * path * uLit * 0.5 * vH.z;',
+        '    c += vec3( 1.0, 0.82, 0.55 ) * dots( vec2( az * 300.0, el * 5.2 ), 0.4, 0.38 ) * smoothstep( -0.4, -0.1, el ) * smoothstep( 0.1, -0.02, el ) * uLit * vH.z;',
+        '  } else {',
+        '    float k = uK * ( vH.y < 0.5 ? 1.0 : vH.y < 1.5 ? 0.72 : 0.48 ) * ( 0.3 + 0.7 * smoothstep( 0.0, 1.0, vH.x ) );',
+        '    c = mix( uFogC, uHill, k );',
+        '    if ( vH.y < 1.5 && uLit > 0.0 ) { vec2 g = vec2( az * 300.0, el * 5.2 ); float town = smoothstep( 0.4, 0.75, h2( vec2( floor( az * 12.0 ), vH.y ) ) );',   // (the towns: clusters on the lower slopes, above the plain)
+        '      float l = dots( g, ( vH.y < 0.5 ? 0.04 : 0.025 ) + 0.16 * town, 0.38 ) * smoothstep( 0.9, 0.3, vH.x ) * smoothstep( -0.35, 0.05, el );',
+        '      c += mix( vec3( 1.0, 0.78, 0.5 ), vec3( 0.85, 0.9, 1.0 ), step( 0.7, h2( floor( g ) + 5.3 ) ) ) * l * uLit * ( vH.y < 0.5 ? 0.9 : 0.6 ); }',
+        '  }',
+        '  gl_FragColor = vec4( c, 1.0 ); }'].join('\n') });
+    const m = new THREE.Mesh(g, mat); m.frustumCulled = false; m.renderOrder = 50; m.name = 'szHills'; m.userData.U = U;
+    const HILL = { day: [0.3, 0.38, 0.46], dusk: [0.2, 0.17, 0.25], night: [0.015, 0.02, 0.035] }, SEA = { day: [0.2, 0.33, 0.43], dusk: [0.26, 0.22, 0.32], night: [0.008, 0.012, 0.026] };
     m.onBeforeRender = (renderer, scene, camera) => {   // (its radius: inside the far plane; the colours for the time of day)
-      const R = typeof Render !== 'undefined' ? Render : null, at = R && R.atmos ? R.atmos : null, tod = at && HILL[at.tod] ? at.tod : 'day';
+      const R = typeof Render !== 'undefined' ? Render : null, at = R && R.atmos ? R.atmos : null, tod = at && HILL[at.tod] ? at.tod : 'day', rk = R ? Math.min(1, (R.rainK || 0) * 1.5) : 0;
       U.uR.value = Math.min(scene.fog ? scene.fog.far + 10 : 1e9, camera.far * 0.95); if (scene.fog) U.uFogC.value.copy(scene.fog.color);
-      const c = HILL[tod], sn = at && at.season === 'winter' && tod === 'day'; U.uHill.value.setRGB(...(sn ? [0.62, 0.66, 0.72] : c));
-      U.uK.value = (tod === 'night' ? 0.55 : tod === 'dusk' ? 0.5 : 0.42) * (R && R.raining ? 0.35 : 1); };
+      const c = HILL[tod], sn = at && at.season === 'winter' && tod === 'day'; U.uHill.value.setRGB(...(sn ? [0.62, 0.66, 0.72] : c)); U.uSea.value.setRGB(...SEA[tod]);
+      U.uK.value = (tod === 'night' ? 0.55 : tod === 'dusk' ? 0.5 : 0.42) * (R && R.raining ? 0.35 : 1);
+      U.uLit.value = (tod === 'night' ? 1 : tod === 'dusk' ? 0.45 : 0) * (1 - 0.7 * rk); U.uGlint.value = tod === 'night' ? 0 : (1 - rk); };
     return m;
   }
   // the TV helicopter after the finish: in from up the straight, then over the finish area where the camera in use shows it best (a spot among
@@ -12852,6 +12895,218 @@ const World = (function () {
     if (G.heli) szHeliStep(G.heli, t, car, cam);
   }
 
+  /* ---- Mie, graphics 5 (built at the end of buildSuzuka; szG5Update every frame from World.update, out.dyn.g5) ---- */
+  // the sky over Mie (szSky): drawn after the world and only where nothing else is (the views that see the sky: the TV cameras, the podium's,
+  // the replay's cockpit, the photo mode, the kino camera now and then). The cumulus whose shadows drift over the ground: the same noise as
+  // the cloud shadows (clouds()) on a layer 650 m up, followed back along the sun's rays from the shadow, two finer octaves for the fleecy
+  // edges; the side towards the sun lit, the bases greyer; at dusk their sunny sides orange and pink; at night dark against the stars and the
+  // moon (which they hide); under the rain a low grey overcast. The sun's disc and its bloom. Premultiplied alpha over whatever sky is behind
+  // (Render's dome, else the fog's colour); in the opaque pass just before the hills (szHills, which cover it)
+  const SZ_CLOUD_H = 650;
+  function szSky(U) {
+    const g = new THREE.SphereGeometry(1, 48, 20, 0, TAU, 0, Math.PI * 0.53);
+    g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e6);
+    const H = SZ_CLOUD_H.toFixed(1);
+    const m = new THREE.ShaderMaterial({ uniforms: U, depthWrite: false, side: THREE.BackSide,
+      blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
+      vertexShader: 'uniform float uR; varying vec3 vD; void main() { vD = position; gl_Position = projectionMatrix * viewMatrix * vec4( cameraPosition + position * uR, 1.0 ); }',
+      fragmentShader: [
+        'uniform vec2 clO; uniform float uCov; uniform vec3 uSun; uniform vec3 uLit; uniform vec3 uShade; uniform vec3 uFogC; uniform float uNight; uniform float uRain; uniform float uT;',
+        'uniform vec3 uSunC; uniform float uSunA;',
+        'varying vec3 vD;',
+        'float clHash( vec2 i, float n ) { i = mod( i, n ); return fract( sin( dot( i, vec2( 12.9898, 78.233 ) ) ) * 43758.5453 ); }',
+        'float clVN( vec2 p, float n ) { vec2 i = floor( p ), f = fract( p ); f = f * f * ( 3.0 - 2.0 * f ); return mix( mix( clHash( i, n ), clHash( i + vec2( 1.0, 0.0 ), n ), f.x ), mix( clHash( i + vec2( 0.0, 1.0 ), n ), clHash( i + 1.0, n ), f.x ), f.y ); }',
+        'float h3( vec3 p ) { return fract( sin( dot( p, vec3( 12.9898, 78.233, 37.719 ) ) ) * 43758.5453 ); }',
+        'float cl( vec2 P ) { vec2 q = P / 110.0 - clO; float n = 0.65 * clVN( q, 64.0 ) + 0.35 * clVN( q * 2.0 + vec2( 17.0, 5.0 ), 128.0 );',   // (the shadows' noise, clouds())
+        '  return n + 0.06 * ( clVN( q * 5.0 + vec2( 3.1, 7.7 ), 320.0 ) - 0.5 ) + 0.035 * ( clVN( q * 11.0 + vec2( 9.3, 1.9 ), 704.0 ) - 0.5 ); }',
+        'void main() {',
+        '  vec3 d = normalize( vD ); float up = d.y;',
+        '  if ( up < -0.03 ) { gl_FragColor = vec4( 0.0 ); return; }',
+        '  float hz = smoothstep( -0.02, 0.16, up );',
+        '  vec4 back = vec4( 0.0 );',
+        '  if ( uNight > 0.01 ) {',   // the night: stars, twinkling a little, and the moon (the night's light: Render's sun after dark)
+        '    vec3 q = d * 140.0, c = floor( q ); float s = h3( c ), st = step( 0.994, s ) * smoothstep( 0.45, 0.1, length( fract( q ) - 0.5 ) ) * ( 0.6 + 0.4 * sin( uT * ( 1.3 + 2.5 * h3( c + 7.0 ) ) + s * 80.0 ) );',
+        '    float md = dot( d, uSun ), disc = smoothstep( 0.99991, 0.99995, md ), glow = pow( max( md, 0.0 ), 400.0 ) * 0.5 + pow( max( md, 0.0 ), 40.0 ) * 0.06, k = uNight * hz * ( 1.0 - uRain );',
+        '    back = vec4( ( vec3( 0.9, 0.93, 1.0 ) * st * 1.4 + vec3( 0.55, 0.6, 0.72 ) * glow ) * k + vec3( 0.96, 0.95, 0.88 ) * disc * k, disc * k ); }',
+        '  float t = ( ' + H + ' - cameraPosition.y ) / max( up, 0.035 );',   // the view's ray to the layer, then back along the sun's rays: where the cloud's shadow falls
+        '  vec2 P = cameraPosition.xz + d.xz * t - uSun.xz / max( uSun.y, 0.25 ) * ' + H + ';',
+        '  float n = cl( P ), dens = smoothstep( uCov, uCov + 0.17, n ), thick = smoothstep( uCov + 0.04, uCov + 0.3, n );',
+        '  float lit = clamp( 0.55 + ( n - cl( P + uSun.xz * 45.0 ) ) * 5.0, 0.0, 1.0 );',   // (thinning towards the sun: the sunny side)
+        '  vec3 cc = mix( uShade, uLit, mix( clamp( lit * ( 1.0 - 0.45 * thick ) + 0.25 * ( 1.0 - thick ), 0.0, 1.0 ), 0.45 + 0.1 * n, uRain * 0.75 ) );',   // (under the rain: an even grey)
+        '  float far = smoothstep( 0.04, 0.35, up ); cc = mix( uFogC, cc, 0.25 + 0.75 * far );',   // (low over the horizon: into the haze)
+        '  float ca = dens * smoothstep( 0.0, 0.1, up ) * ( 0.8 + 0.2 * far );',
+        '  vec4 o = vec4( cc * ca, ca ) + ( 1.0 - ca ) * back;',
+        '  if ( uSunA > 0.0 ) { float sd = max( dot( d, uSun ), 0.0 ), sb = ( smoothstep( 0.99993, 0.99997, sd ) * 1.6 + pow( sd, 900.0 ) * 0.9 + pow( sd, 60.0 ) * 0.22 ) * uSunA;',   // the sun
+        '    o.rgb += uSunC * sb * ( 1.0 - 0.75 * ca ) * hz; }',
+        '  gl_FragColor = o; }',
+      ].join('\n') });
+    const sky = new THREE.Mesh(g, m); sky.frustumCulled = false; sky.renderOrder = 49; sky.name = 'szSky';
+    return sky;
+  }
+  // a tuft of long grass (6 blades, a triangle each way round, leaning out; darker at the base), 1 m high and wide before its instance's scale
+  function szTuftGeo() {
+    const P = [], C = [], Nn = [], base = [0.13, 0.26, 0.07], tip = [0.4, 0.58, 0.18];
+    for (let b = 0; b < 6; b++) {
+      const a = b * TAU / 6 + (b & 1 ? 0.35 : 0), h = b & 1 ? 0.7 : 1, lean = b & 1 ? 0.42 : 0.3, ca = Math.cos(a), sa = Math.sin(a), w = 0.07;
+      const p0 = [-sa * w + ca * 0.05, 0, ca * w + sa * 0.05], p1 = [sa * w + ca * 0.05, 0, -ca * w + sa * 0.05], p2 = [ca * lean, h, sa * lean];
+      for (const [p, c] of [[p0, base], [p1, base], [p2, tip], [p0, base], [p2, tip], [p1, base]]) { P.push(...p); C.push(...c); Nn.push(ca * 0.35, 0.94, sa * 0.35); }   // (both faces, lit alike)
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(Nn, 3));
+    return g;
+  }
+  // the puddles of a wet track (szPuddleMat): the sky's light off still water (more at a grazing view), rings of the rain falling on them
+  // (aL: the puddle's own metres), as much of them as the road is wet (uWet); the view's way computed per vertex (a phone's fragments may
+  // not hold world coordinates)
+  function szPuddleMat(U) {
+    return new THREE.ShaderMaterial({ uniforms: U, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -6,
+      vertexShader: 'attribute vec2 aL; varying vec2 vUv; varying vec2 vL; varying vec3 vV; void main() { vUv = uv; vL = aL; vec4 w = modelMatrix * vec4( position, 1.0 ); vV = cameraPosition - w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }',
+      fragmentShader: ['uniform sampler2D uMap; uniform float uWet; uniform float uRain; uniform float uT; uniform vec3 uSkyC; uniform vec3 uDeep; uniform vec3 uFogC; uniform vec2 uFog; varying vec2 vUv; varying vec2 vL; varying vec3 vV;',
+        'float h2( vec2 p ) { return fract( sin( dot( p, vec2( 12.9898, 78.233 ) ) ) * 43758.5453 ); }',
+        'void main() { float a = texture2D( uMap, vUv ).a * smoothstep( 0.05, 0.6, uWet ); if ( a < 0.01 ) discard;',
+        '  float dist = length( vV ); vec3 v = vV / max( dist, 0.01 ); float fr = 0.2 + 0.8 * pow( 1.0 - max( v.y, 0.0 ), 4.0 );',
+        '  vec3 c = mix( uDeep, uSkyC, fr );',
+        '  vec2 g = vL * 2.2, ci = floor( g ); float ph = fract( uT * 0.8 + h2( ci ) ), dd = length( g - ci - 0.5 - ( vec2( h2( ci + 3.1 ), h2( ci + 7.7 ) ) - 0.5 ) * 0.16 );',   // the rain's rings: one in a 45 cm cell, spreading
+        '  c += vec3( 0.22 ) * smoothstep( 0.06, 0.0, abs( dd - ph * 0.42 ) ) * ( 1.0 - ph ) * uRain;',
+        '  c = mix( c, uFogC, smoothstep( uFog.x, uFog.y, dist ) );',
+        '  gl_FragColor = vec4( c, a * 0.82 ); }'].join('\n') });
+  }
+  // confetti over the podium (by day; at night the fireworks): fired up from two cannons either side of it when the ceremony begins (and again
+  // as the champagne flies), then fluttering down over the first three, each a little square catching the light as it turns (uT: s since the
+  // ceremony began; the podium's frame: uO its middle, uX along it, uZ across it towards the garages)
+  function szConfettiMat(U) {
+    return new THREE.ShaderMaterial({ uniforms: U, transparent: true, depthWrite: false,
+      vertexShader: 'attribute vec3 aV; attribute vec4 aF; attribute vec3 aCol; uniform float uT; uniform float uScale; uniform vec3 uO; uniform vec3 uX; uniform vec3 uZ; varying vec3 vC; varying float vA;\n' +
+        'void main() { float t = uT - aF.x; vA = 0.0; vC = aCol;\n' +
+        '  if ( t <= 0.0 || t > aF.w ) { gl_Position = vec4( 2.0, 2.0, 2.0, 1.0 ); gl_PointSize = 0.0; return; }\n' +
+        '  float up = min( t, 0.7 ), fall = max( t - 0.7, 0.0 ), fl = min( fall, 1.0 );\n' +   // (0.7 s up with the blast, then the drag lets it flutter down at ~1 m/s)
+        '  vec3 V = uX * aV.x + vec3( 0.0, aV.y, 0.0 ) + uZ * aV.z;\n' +
+        '  vec3 p = uO + uX * position.x + vec3( 0.0, position.y, 0.0 ) + uZ * position.z + V * ( up - up * up * 0.65 ) + vec3( 0.0, -fall * ( 0.9 + aF.y * 0.5 ), 0.0 );\n' +
+        '  p += ( uX * sin( fall * 2.3 + aF.y * 9.0 ) + uZ * cos( fall * 1.9 + aF.y * 7.0 ) ) * 0.5 * fl;\n' +
+        '  vec4 mv = viewMatrix * vec4( p, 1.0 ); float flip = abs( sin( t * ( 6.0 + aF.y * 6.0 ) + aF.y * 20.0 ) );\n' +
+        '  vA = ( 1.0 - smoothstep( aF.w - 1.0, aF.w, t ) ) * ( 0.45 + 0.55 * flip ); vC = aCol * ( 0.6 + 0.6 * flip );\n' +
+        '  gl_PointSize = clamp( aF.z * uScale / max( 1.0, -mv.z ), 1.0, 14.0 ); gl_Position = projectionMatrix * mv; }',
+      fragmentShader: 'varying vec3 vC; varying float vA; void main() { if ( vA < 0.01 ) discard; gl_FragColor = vec4( vC, vA ); }' });
+  }
+  // a small soft pebble scatter (szPebbleTex): the gravel carried onto the road, white-grey stones with their shadows on a clear ground
+  function szPebbleTex() {
+    const S = 128, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), r = rng(4721);
+    for (let k = 0; k < 260; k++) { const px = 8 + r() * (S - 16), py = 8 + r() * (S - 16), rr = 0.8 + r() * 2.2, gx = (px - S / 2) / (S / 2), gy = (py - S / 2) / (S / 2), lim = 0.9 * (0.6 + 0.4 * r()), ang = r() * 3; if (gx * gx + gy * gy > lim) continue;
+      const v = 150 + r() * 70; x.fillStyle = 'rgba(30,28,24,0.5)'; x.beginPath(); x.ellipse(px + 0.8, py + 0.8, rr, rr * 0.8, 0, 0, TAU); x.fill();
+      x.fillStyle = 'rgb(' + (v + 8 | 0) + ',' + (v + 4 | 0) + ',' + (v - 6 | 0) + ')'; x.beginPath(); x.ellipse(px, py, rr, rr * 0.8, ang, 0, TAU); x.fill(); }
+    return new THREE.CanvasTexture(c);
+  }
+  // a puddle's outline (szPuddleTex): irregular soft-edged blots in the four quarters of the picture (a puddle picks one)
+  function szPuddleTex() {
+    const S = 128, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), r = rng(4731);
+    for (let q = 0; q < 4; q++) { const ox = (q % 2) * 64, oy = (q >> 1) * 64;
+      for (let k = 0; k < 7; k++) { const px = ox + 20 + r() * 24, py = oy + 22 + r() * 20, rx = 9 + r() * 9, ry = 6 + r() * 7, ang = r() * 3, gr = x.createRadialGradient(px, py, 0, px, py, Math.max(rx, ry));
+        gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.65, 'rgba(255,255,255,0.9)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.beginPath(); x.ellipse(px, py, rx, ry, ang, 0, TAU); x.fill(); } }
+    return new THREE.CanvasTexture(c);
+  }
+  // a tileable value noise (64 x 64, smooth): the lawns' patches at three scales in the ground's shader (three texture reads, no maths)
+  function szNoiseTex() {
+    const S = 64, n = nrPN(8, 4741), m = nrPN(16, 4742), d = new Uint8Array(S * S);
+    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) d[j * S + i] = Math.round(255 * clamp(n(i / S, j / S) * 0.65 + m(i / S, j / S) * 0.35, 0, 1));
+    const t = new THREE.DataTexture(d, S, S, THREE.LuminanceFormat); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true; t.needsUpdate = true;
+    return t;
+  }
+  // the pit building's walls of precast concrete (szPanelMat): joints every 3 m along the light walls and every 1.5 m up them, each panel a
+  // shade of its own; along the wall's own way in world metres (computed per vertex: the faces are flat, the joints in the fragments), the
+  // joints fading out with distance (no shimmer far off). camU: the camera's position (G5.camU)
+  function szPanelMat(camU) {
+    const m = new THREE.MeshLambertMaterial({ vertexColors: true });
+    m.onBeforeCompile = (sh) => { sh.uniforms.uCamP = camU;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform vec3 uCamP;\nvarying vec4 vPan;')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\n{ vec4 pw = modelMatrix * vec4( transformed, 1.0 ); vec3 pn = normalize( mat3( modelMatrix ) * objectNormal ); vec2 tn = normalize( vec2( -pn.z, pn.x ) + 1e-5 );\n' +
+          '  vPan = vec4( dot( pw.xz, tn ) / 3.0, pw.y / 1.5, abs( pn.y ), distance( pw.xyz, uCamP ) ); }');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec4 vPan;')
+        .replace('#include <color_fragment>', '#include <color_fragment>\n{ float lt = smoothstep( 0.78, 0.86, min( vColor.r, min( vColor.g, vColor.b ) ) ) * ( 1.0 - smoothstep( 0.25, 0.4, vPan.z ) );\n' +
+          '  vec2 f = abs( fract( vPan.xy ) - 0.5 ); float j = max( smoothstep( 0.482, 0.495, f.x ), smoothstep( 0.465, 0.488, f.y ) ) * ( 1.0 - smoothstep( 45.0, 90.0, vPan.w ) );\n' +
+          '  float ph = fract( sin( dot( floor( vPan.xy ), vec2( 12.9898, 78.233 ) ) ) * 43758.5453 );\n' +
+          '  diffuseColor.rgb *= 1.0 - lt * ( j * 0.28 + ( ph - 0.5 ) * 0.07 ); }');
+    };
+    m.customProgramCacheKey = () => 'szPanel';
+    return m;
+  }
+  function szG5Update(G, t, car, cam) {
+    const R = typeof Render !== 'undefined' ? Render : null, at = R && R.atmos ? R.atmos : { tod: 'day', season: 'summer' }, tod = at.tod, rain = R ? R.rainK || 0 : 0, wetR = R ? R.wetRoad || 0 : 0;
+    const night = tod === 'night', dusk = tod === 'dusk', dark = night ? 1 : dusk ? 0.75 : 0, sd = R && R.sunDir ? R.sunDir : [-0.52, 0.51, 0.46];
+    const sc = R && R.scene, fogC = sc && sc.fog ? sc.fog.color : null, camP = cam && cam.isCamera ? cam.position : null;
+    G.t = t;
+    // the sky
+    { const U = G.skyU; U.uT.value = t % 3600; U.uSun.value.set(sd[0], sd[1], sd[2]); if (fogC) U.uFogC.value.copy(fogC); U.uNight.value = night ? 1 : 0; U.uRain.value = rain;
+      const r = Math.min(1, rain * 1.4), L = night ? [0.075, 0.07, 0.08] : dusk ? [1, 0.7, 0.55] : [1, 1, 0.98], S0 = night ? [0.03, 0.03, 0.04] : dusk ? [0.42, 0.37, 0.5] : [0.62, 0.68, 0.78];
+      const RL = night ? [0.05, 0.05, 0.06] : dusk ? [0.42, 0.4, 0.44] : [0.66, 0.68, 0.71], RS = night ? [0.03, 0.03, 0.04] : dusk ? [0.26, 0.26, 0.3] : [0.42, 0.44, 0.48];
+      U.uLit.value.setRGB(lerp(L[0], RL[0], r), lerp(L[1], RL[1], r), lerp(L[2], RL[2], r)); U.uShade.value.setRGB(lerp(S0[0], RS[0], r), lerp(S0[1], RS[1], r), lerp(S0[2], RS[2], r));
+      U.uCov.value = lerp(0.53, 0.16, r); U.uSunA.value = night ? 0 : (dusk ? 1.25 : 1) * (1 - r); if (dusk) U.uSunC.value.setRGB(1, 0.62, 0.34); else U.uSunC.value.setRGB(1, 0.96, 0.86);
+      if (camP && sc) U.uR.value = Math.min(sc.fog && sc.fog.far > 0 ? sc.fog.far * 3 : 1e9, cam.far * 0.97); }
+    // the hills' sea and lights
+    if (G.hillU) { const U = G.hillU; U.uT.value = t % 3600; U.uSun.value.set(sd[0], sd[1], sd[2]); }
+    // the long grass round the view (the cells within reach of the camera; rewritten when it has moved 4 m); none under the winter's snow. Without
+    // a camera (the world test's fixed pose): none
+    if (G.tuft) { const T5 = G.tuft, M = T5.mesh, on = !!camP && at.season !== 'winter';
+      M.visible = on && M.count > 0;
+      if (!camP) { if (M.count) { M.count = 0; T5.tint.array.fill(0); T5.tint.needsUpdate = true; } T5.px = 1e9; }
+      else if (on && (Math.abs(camP.x - T5.px) + Math.abs(camP.z - T5.pz) + Math.abs(camP.y - T5.py) > 4)) {
+        T5.px = camP.x; T5.py = camP.y; T5.pz = camP.z; const Rr = T5.r, c0 = Math.floor((camP.x - Rr) / T5.C), c1 = Math.floor((camP.x + Rr) / T5.C), d0 = Math.floor((camP.z - Rr) / T5.C), d1 = Math.floor((camP.z + Rr) / T5.C), A = M.instanceMatrix.array, tA = T5.tint.array;
+        let n = 0; const R2 = Rr * Rr;
+        for (let a = c0; a <= c1 && n < T5.cap; a++) for (let b = d0; b <= d1 && n < T5.cap; b++) { const L = T5.cells.get(a * 4096 + b); if (!L) continue;
+          for (let k = 0; k < L.length && n < T5.cap; k += 6) { const x = L[k], y = L[k + 1], z = L[k + 2], dx = x - camP.x, dy = y - camP.y, dz = z - camP.z; if (dx * dx + dy * dy + dz * dz > R2) continue;
+            const s = L[k + 4], r = L[k + 3], c = Math.cos(r) * s, si = Math.sin(r) * s, h = s * (0.9 + 0.25 * L[k + 5]), o = n * 16;
+            A[o] = c; A[o + 1] = 0; A[o + 2] = -si; A[o + 3] = 0; A[o + 4] = 0; A[o + 5] = h; A[o + 6] = 0; A[o + 7] = 0; A[o + 8] = si; A[o + 9] = 0; A[o + 10] = c; A[o + 11] = 0; A[o + 12] = x; A[o + 13] = y; A[o + 14] = z; A[o + 15] = 1;
+            tA[n] = L[k + 5]; n++; } }
+        M.count = n; M.visible = n > 0; M.instanceMatrix.needsUpdate = true; T5.tint.needsUpdate = true; } }
+    // the wet track: the puddles, the road's sheen (and its glare towards a low sun, dry or wet); the lawns a little darker
+    { const w = wetR, U = G.wetU; U.uWet.value = w; U.uRain.value = rain; U.uT.value = t % 3600; if (fogC) U.uFogC.value.copy(fogC);
+      if (sc && sc.fog) U.uFog.value.set(sc.fog.near, sc.fog.far);
+      if (fogC) U.uSkyC.value.copy(fogC).multiplyScalar(night ? 1.25 : 1.06); if (night) U.uDeep.value.setRGB(0.02, 0.025, 0.035); else U.uDeep.value.setRGB(0.12, 0.13, 0.14);
+      if (G.puddles) G.puddles.visible = w > 0.05;
+      const RU = G.roadU, rk = Math.min(1, rain * 1.5); RU.uWetR.value = w; RU.uWetS.value = w * (1 - rk); RU.uSunR.value.set(sd[0], sd[1], sd[2]); RU.uGlare.value = night ? 0 : (dusk ? 0.16 : 0.1) * (1 - rk);
+      if (dusk) RU.uSunCR.value.setRGB(1, 0.6, 0.34); else if (night) RU.uSunCR.value.setRGB(0.45, 0.5, 0.65); else RU.uSunCR.value.setRGB(1, 0.95, 0.85);
+      RU.uSkyCR.value.copy(U.uSkyC.value);
+      G.gU.uWetG.value = w; }
+    // the lamps of the pit lane, the paddock, the car parks and the concourses (dusk and night: their heads are G4's glows), the boards lit
+    { if (G.pools) { G.pools.visible = dark > 0; G.pools.material.opacity = (night ? 0.7 : 0.35) * (1 + 0.3 * wetR); }
+      if (G.boardU) G.boardU.uLit.value = night ? 0.45 : dusk ? 0.2 : 0; }
+    // the crowd on the stands: cheering where the followed car passes, all of them after its finish
+    if (G.crowdU) { const U = G.crowdU; U.uT.value = t % 3600; if (car) U.uCar.value.set(car.x, car.roadY || 0, car.z); else U.uCar.value.set(1e6, 0, 1e6); U.uAll.value = car && car.finished ? 1 : 0; }
+    // the gravel the cars carried onto the road: fading out over a minute or two
+    if (G.drop) G.drop.U.uT.value = t;
+    // the confetti over the podium, by day (in the dark the fireworks)
+    if (G.conf) { const C = G.conf, pod = R && R.podiumOn && R.podium && R.podium.F;
+      if (!pod) C.t0 = null; else if (C.t0 == null && tod === 'day') { C.t0 = t; const F = R.podium.F; C.U.uO.value.set(0, F.H + 0.6, F.o + 6.6).applyMatrix4(F.m); C.U.uX.value.set(1, 0, 0).transformDirection(F.m); C.U.uZ.value.set(0, 0, 1).transformDirection(F.m); }
+      const u = C.t0 == null ? -1 : t - C.t0; C.U.uT.value = u; C.pts.visible = u >= 0 && u < 14; }
+  }
+  // the crowd on the grandstands (graphics 5): the crowd map's people (64 to a 12 m stretch, 16 rows up the rake) jump and wave their arms
+  // where the followed car passes (within ~90 m of it) and all of them after its finish (uAll); each in a rhythm of its own (a hash of its
+  // seat); fading out far off (no shimmer)
+  function szCrowdMat(map, U) {
+    const m = new THREE.MeshLambertMaterial({ map, vertexColors: true });
+    m.onBeforeCompile = (sh) => { Object.assign(sh.uniforms, U);
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform vec3 uCar; uniform float uAll; uniform vec3 uCamP;\nvarying float vCh;')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\n{ vec4 cw = modelMatrix * vec4( transformed, 1.0 );\n' +
+          '  vCh = max( uAll, 1.0 - smoothstep( 30.0, 90.0, distance( cw.xz, uCar.xz ) ) ) * ( 1.0 - smoothstep( 90.0, 160.0, distance( cw.xyz, uCamP ) ) ); }');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uT;\nvarying float vCh;')
+        .replace('#include <map_fragment>', '#ifdef USE_MAP\n{ vec2 cs = vec2( 64.0, 16.0 ), cell = floor( vUv * cs ), lc = fract( vUv * cs ); float h = fract( sin( dot( cell, vec2( 12.9898, 78.233 ) ) ) * 43758.5453 );\n' +
+          '  float jmp = vCh * step( 0.35, h ) * max( 0.0, sin( uT * ( 6.0 + 4.0 * h ) + h * 40.0 ) ) * 0.2;\n' +   // (two in three jump, up to a fifth of their row)
+          '  vec4 texelColor = texture2D( map, ( cell + vec2( lc.x, max( lc.y - jmp, 0.0 ) ) ) / cs );\n' +
+          '  vec4 body = texture2D( map, ( cell + vec2( 0.4, 0.4 ) ) / cs ); float who = step( 0.06, distance( body.rgb, vec3( 0.231, 0.247, 0.282 ) ) );\n' +   // (someone in this seat: not the seats' grey)
+          '  float arms = vCh * who * step( h, 0.75 ) * step( -0.3, sin( uT * ( 3.0 + 2.0 * h ) + h * 25.0 ) ) * step( 0.6 + jmp, lc.y ) * step( lc.y, 0.98 ) * min( 1.0, step( lc.x, 0.13 ) + step( 0.62, lc.x ) * step( lc.x, 0.75 ) );\n' +
+          '  texelColor = mix( texelColor, body, arms );\n' +
+          '  texelColor = mapTexelToLinear( texelColor ); diffuseColor *= texelColor; }\n#endif');
+    };
+    m.customProgramCacheKey = () => 'szCrowd';
+    return m;
+  }
+  // the boards of the atlas (graphics 5): lit after sunset (uLit: their own colours glow, szG5Update)
+  function szBoardMat(map, U) {
+    const m = new THREE.MeshLambertMaterial({ map });
+    m.onBeforeCompile = (sh) => { sh.uniforms.uLit = U.uLit;
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uLit;').replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * uLit;'); };
+    m.customProgramCacheKey = () => 'szBoard';
+    return m;
+  }
+
   function buildSuzuka(scene, tex, opts) {
     const R = rng(5117), N = T.N, w = T.w, ds = T.ds, dens = opts.density || 1, sStart = T.startS, def = T.def;
     const PD = def.pit, dSs = (s) => { const L = T.len; let d = s - sStart; d = ((d % L) + L) % L; return d > L / 2 ? d - L : d; }, hyS = (s) => T.elevAt(wrapS(s)).y;
@@ -12862,6 +13117,7 @@ const World = (function () {
     szPrep();
     const P = SZ, G = P.G;
     out.bounds = { minX: P.x0, maxX: P.x1, minZ: P.z0, maxZ: P.z1 };
+    const camU5 = { value: new THREE.Vector3(1e6, 0, 1e6) }, boardU5 = { uLit: { value: 0 } };   // (and the boards' light after sunset, szBoardMat)   // (graphics 5: the camera's position for the lit materials' own shaders, World.view: three.js sets cameraPosition only for a few kinds of material)
     const matV = new THREE.MeshLambertMaterial({ vertexColors: true }); out.matV = matV;
     const excl = [], eh = new Map(), EHC = 64;   // tree exclusion circles (buildings, stands, crowds), hashed
     const exclPush = (x, z, r) => { const e = { x, z, r }; excl.push(e); for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let L = eh.get(k); if (!L) eh.set(k, L = []); L.push(e); } };
@@ -12892,7 +13148,7 @@ const World = (function () {
       }
       for (const p of P.pat) { const m = new THREE.Mesh(szPatchGeo(p), gMat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m); }
     }
-    const pkM = szParkMat(gMat); ownTex(pkM.tex);   // (the car parks in the ground's shader; its hook on every mesh of gMat below)
+    const pkM = szParkMat(gMat); ownTex(pkM.tex); ownTex(pkM.nz);   // (the car parks in the ground's shader; its hook on every mesh of gMat below)
 
     /* ---- road: asphalt, white edge lines, red / white kerbs, grass verges out past the barriers, gravel traps (256 m chunks); the road on
        the bridge in its own meshes with their own materials (they fade while the followed car drives underneath) ---- */
@@ -13149,7 +13405,7 @@ const World = (function () {
         const k = (n++ * 3 + (side > 0 ? 1 : 0)) % 8, u0 = (k % 2) * 0.5, v1 = 1 - Math.floor(k / 2) * 0.25, bar = side > 0 ? T.br : T.bl, o = (ii) => side * (bar[ii] + 0.1);
         const A = Pt(i, o(i), 0.14), B = Pt(j, o(j), 0.14), C = Pt(j, o(j), 0.96), D = Pt(i, o(i), 0.96), uL = side < 0 ? u0 : u0 + 0.5, uR = side < 0 ? u0 + 0.5 : u0;
         sb.get(A[0], A[2]).quadO(A, B, C, D, W1, Pt(i, side * (bar[i] + 2), 0.5), [[uL, v1 - 0.25], [uR, v1 - 0.25], [uR, v1], [uL, v1]]); }
-      sb.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true); }
+      sb.addTo(root, szBoardMat(tex.sponsors, boardU5), false, true); }
     // the tyre walls: most in runs of 20 m under a belt of conveyor rubber over their face and top, the sponsors' boards on most of those belts
     // (the sponsors' cells of the text boards' atlas: no draw call of their own), the others bare. Into the scenery's chunks and the atlas's
     // mesh once they exist (beltQ, beltB)
@@ -13309,7 +13565,7 @@ const World = (function () {
         if (k === 0 || k === rows.length - 1) { const inn = P2(front + 8, 6), q2 = crAt(s + (k === 0 ? 3 : -3)), inn2 = q2 ? [q2.px + q2.nx * (front + 8), y + 6, q2.pz + q2.nz * (front + 8)] : inn;   // the gable ends
           gb.quadO(cs[0], cs[1], cs[8], cs[9], wallC, inn2); gb.quadO(cs[4], cs[7], cs[8], cs[1], wallC, inn2); }
       }
-      addM(gb, matV, true);
+      addM(gb, szPanelMat(camU5), true);   // (graphics 5: precast concrete panels)
       // the control tower by the finish line: a glass box on the building
       { const q = crAt(sAt(18)), i = q.i, y = T.hy[i], front = front0(i, 26), cx = q.px + q.nx * (front + 8), cz = q.pz + q.nz * (front + 8), g = scen.get(cx, cz), rot = Math.atan2(q.tz, q.tx);
         box(g, cx, y + 12.6, cz, 22, 7.5, 13, rot, [0.9, 0.9, 0.88], [0.6, 0.61, 0.64]); box(g, cx - q.nx * 6.55, y + 13.4, cz - q.nz * 6.55, 21, 5.2, 0.1, rot, glass, null, true);
@@ -13321,6 +13577,7 @@ const World = (function () {
 
     /* ---- grandstands: their real outlines cut along the track, a raked bank of seats packed with fans (the crowd map), a roof over the main grandstand ---- */
     let nStands = 0; const standRows = [];   // (every row of every stand, for szG4)
+    const crowdU5 = { uT: { value: 0 }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) }, uAll: { value: 0 }, uCamP: camU5 };   // (graphics 5: the crowd cheering, szCrowdMat)
     {
       const gs = new GB(), gc = new RB(true), gr = new GB(), stC = [0.62, 0.63, 0.66], stD = [0.5, 0.51, 0.55], stT = [0.74, 0.75, 0.78], roofC = [0.92, 0.93, 0.95], roofU = [0.7, 0.71, 0.74];
       for (const [name, side, roof, rows] of def.stands || []) {
@@ -13357,11 +13614,12 @@ const World = (function () {
         if (prev) cap(prev.cs, prev.s, -1);
         nStands++;
       }
-      addM(gs, matV, true); addM(gc, new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true })); addM(gr, matV, true);
+      addM(gs, matV, true); addM(gc, szCrowdMat(tex.crowd, crowdU5)); addM(gr, matV, true);
     }
 
     /* ---- buildings (OpenStreetMap footprints near the track): houses, halls, the circuit's own buildings, the theme park's rides in bright colours ---- */
     const bTop = [], aoRects = [];   // (the theme park's roofs, for its rides over them; the buildings' footprints: their contact shadows, szG4)
+    let nVent = 0;
     const moto = def.motopia || null, RIDE = [[0.95, 0.35, 0.3], [0.2, 0.55, 0.9], [0.98, 0.8, 0.2], [0.2, 0.72, 0.7], [0.95, 0.55, 0.75], [0.6, 0.4, 0.85], [0.98, 0.6, 0.2]].map(c => c.map(v => lerp(v, 0.95, 0.3)));   // (pastel; teal, not a leaf green: Render.seasonWorld would turn that to autumn leaves)
     for (const [bx, bz, L, W, ang, H, k] of def.bld || []) {
       const ca = Math.cos(ang), sa = Math.sin(ang), corners = [[L / 2, W / 2], [L / 2, -W / 2], [-L / 2, W / 2], [-L / 2, -W / 2]].map(([a, b]) => [bx + ca * a - sa * b, bz + sa * a + ca * b]);
@@ -13379,6 +13637,11 @@ const World = (function () {
         box(g, bx, y0 - 0.4, bz, L, hh + 0.4, W, ang, wc, inMoto ? [0.95, 0.95, 0.95] : [0.52, 0.55, 0.6]);
         bldWin(bx, bz, ca, sa, L, W, y0, 1, 0, 4.2, 3, 1.0, hh - 2.2, 216, inMoto ? 0.66 : 0.3);   // (a band of high windows)
         if (!inMoto) { const sk = [0.6, 0.7, 0.78]; for (let a = -L / 2 + 6; a < L / 2 - 4; a += 9) box(g, bx + ca * a, y0 + hh - 0.02, bz + sa * a, 1.4, 0.2, W - 4, ang, sk, [0.7, 0.8, 0.88]); roofKit(g, bx, bz, ang, L, W, y0 + hh, 217, false); }   // (skylights, plant)
+        if (!inMoto && L > 14 && W > 10) {   // (graphics 5: a ridge vent along the roof, extractor fans along one side; their own hashes)
+          box(g, bx, y0 + hh - 0.02, bz, L - 3, 0.45, 1.1, ang, [0.6, 0.62, 0.66], [0.5, 0.52, 0.56]);
+          const nf = 2 + Math.floor(crH(bx, bz, 231) * 3), b = (crH(bx, bz, 232) < 0.5 ? 1 : -1) * (W / 2 - 1.2);
+          for (let k = 0; k < nf; k++) { const a = -L / 2 + (k + 0.5) * L / nf; cyl(g, bx + ca * a - sa * b, y0 + hh - 0.02, bz + sa * a + ca * b, 0.42, 0.75, 8, [0.78, 0.79, 0.82], [0.32, 0.33, 0.36]); nVent++; }
+        }
       } else {   // house or small pavilion: light walls, a dark tiled roof (Japanese kawara), bright ones in the theme park
         const hh = H || 5.4 + R() * 1.8, walls = [[0.94, 0.92, 0.88], [0.9, 0.88, 0.84], [0.84, 0.8, 0.74], [0.95, 0.95, 0.93]], roofs = [[0.22, 0.24, 0.28], [0.3, 0.3, 0.34], [0.38, 0.28, 0.24], [0.2, 0.3, 0.42]];
         const wc = inMoto ? RIDE[Math.floor(R() * RIDE.length)] : vary(walls[Math.floor(R() * walls.length)], R, 0.06);
@@ -13998,19 +14261,276 @@ const World = (function () {
       G4.heli = out.dyn.heli = Object.assign(H, { spots, on: false, t: 0, tgt: null, next: 0, v3: new THREE.Vector3(), tx: T.tx[i0], tz: T.tz[i0], nx: T.nx[i0], nz: T.nz[i0], lx: T.px[i0], lz: T.pz[i0],
         vx: 0, vy: 0, vz: 0, svx: 0, svz: 0, yaw: 0, ac: 0, al: 0 });
     }
-    root.add(szHills());
+    /* ---- graphics 5: the clouds, the stars and the moon in the sky (szSky), the sun's shafts in the woods (Render); long grass round the view;
+       worn grass and tyre ruts where the cars cut the exits; gravel on the road at the traps' ends and the gravel the cars carry out of them
+       (dyn.gravelDrop); puddles and a glossy road in the rain (the glare off it towards a low sun); the lamps of the pit lane, the paddock, the
+       car parks and the concourses after sunset and their pools of light, the boards lit, the phones held up in the stands; the garages'
+       numbers in their teams' colours, the monitors aglow; the crowd in the stands cheering; confetti over the podium. szG5Update ---- */
+    const G5 = { t: 0, gU: pkM.U, crowdU: crowdU5, camU: camU5 };
+    let nTuft = 0, nRut = 0, nPeb = 0, nPud = 0, nLamp = 0, nPhone = 0, nGarNo = 0, nMon = 0;
+    { const U = G5.skyU = { uR: { value: 3000 }, clO: CLOUD_O, uCov: { value: 0.53 }, uSun: { value: new THREE.Vector3(-0.52, 0.51, 0.46) }, uLit: { value: new THREE.Color(1, 1, 0.98) }, uShade: { value: new THREE.Color(0.62, 0.68, 0.78) },
+        uFogC: { value: new THREE.Color() }, uNight: { value: 0 }, uRain: { value: 0 }, uT: { value: 0 }, uSunC: { value: new THREE.Color(1, 0.96, 0.86) }, uSunA: { value: 1 } };
+      root.add(szSky(U)); out.dyn.podSky = true;
+      out.dyn.rays = true; out.dyn.rayAt = (x, z) => szLCf(x, z, 1) > 0.6 && szDist(x, z) > 6; }   // (Render: the shafts of sun in the woods, the flare)
+    // long grass (szTuftGeo, instanced): at the barriers' feet on both faces of the rail (where the mower doesn't reach), in unmown patches of
+    // the lawns past the mown stripes, along the woods' edges and in the scrub; kept in 16 m cells, those within 58 m of the camera drawn
+    // (szG5Update writes them as it moves), shrinking away from 40 m; swaying in the wind; their own hashes
+    {
+      const C = 16, cells = new Map(), cap = 2600;
+      const put = (x, y, z, s, tint) => { const k = Math.floor(x / C) * 4096 + Math.floor(z / C); let L = cells.get(k); if (!L) cells.set(k, L = []); L.push(x, y, z, crH(x, z, 161) * TAU, s, tint); nTuft++; };
+      for (let i = 0; i < N; i++) {   // the barriers' feet: armco and tyre walls (not on the bridge, between the underpass's walls or by the pit lane)
+        if (onDeck(i) || loWall(i) || upWall(i)) continue;
+        for (const side of [-1, 1]) {
+          const k = kind(i, side); if (k !== 0 && k !== 4) continue;
+          const bar = side > 0 ? T.br[i] : T.bl[i], vr = SZ.verge(i, side);
+          for (let m = 0; m < 6; m++) {   // (three on the road's face of the rail, three behind it: about one and a half a metre each)
+            const h = (q) => crH(i * 6 + m, side, 162 + q); if (h(0) > 0.88) continue;
+            const back = m >= 3, o = back ? bar + (k === 4 ? 1.45 : 0.5) + h(1) * 0.6 : bar - 0.34 + h(1) * 0.32, s = (i + (m % 3) / 3 + h(2) * 0.3) * ds, p = atSf(s, side * o);
+            if (back && (excluded(p[0], p[1]) || inRects(p[0], p[1]))) continue;
+            put(p[0], hyS(s) + vY(vr, o) - 0.03, p[1], 0.38 + h(3) * 0.3, h(4)); } } }
+      const TL = SZC * SZT, nv = (x, z, sc, sd) => { const fx = x / sc, fz = z / sc, i = Math.floor(fx), j = Math.floor(fz), u = sstep(0, 1, fx - i), v = sstep(0, 1, fz - j), h = (a, b) => crH(i + a, j + b, sd);
+        return (h(0, 0) * (1 - u) + h(1, 0) * u) * (1 - v) + (h(0, 1) * (1 - u) + h(1, 1) * u) * v; };
+      for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {   // the lawns, the scrub and the woods' edges (the full terrain tiles, within 75 m of the road)
+        if (G.on[tj * G.ntx + ti] !== 1) continue;
+        const xa = G.x0 + ti * TL, za = G.z0 + tj * TL;
+        for (let zb = za; zb < za + TL; zb += 13) for (let xb = xa; xb < xa + TL; xb += 13) {   // (in 13 m blocks: those far from the road skipped whole)
+          const rb = szDist(xb + 6.5, zb + 6.5); if (rb > 85) continue;
+          for (let zz = zb; zz < Math.min(zb + 13, za + TL) - 1e-6; zz += 2.6) for (let xx = xb; xx < Math.min(xb + 13, xa + TL) - 1e-6; xx += 2.6) {
+            const x = xx + (crH(xx, zz, 163) - 0.5) * 2.4, z = zz + (crH(xx, zz, 164) - 0.5) * 2.4, rd = szDist(x, z); if (rd > 75 || rd < 8) continue;
+            const fo = szLCf(x, z, 1), sb = szLCf(x, z, 2), edge = fo > 0.12 && fo < 0.75, wild = nv(x, z, 38, 165), p = edge ? 0.7 : sb > 0.4 ? 0.45 : wild > 0.62 ? (wild - 0.62) * 2.2 : 0;
+            if (crH(x, z, 166) > p || szLCf(x, z, 3) > 0.2) continue;
+            const dd = szNear(x, z).dd; if (dd < 6 || (!edge && sb <= 0.4 && dd <= 34)) continue;   // (not on the mown verges; the unmown patches past the mown stripes)
+            if (excluded(x, z) || inRects(x, z) || szPond(x, z)) continue;
+            put(x, szGround(x, z) - 0.03, z, edge ? 0.45 + crH(x, z, 167) * 0.3 : 0.3 + crH(x, z, 167) * 0.25, crH(x, z, 168));
+          } } }
+      const geo = szTuftGeo(), tint = new THREE.InstancedBufferAttribute(new Float32Array(cap), 1); geo.setAttribute('aTint', tint);
+      const tm = new THREE.MeshLambertMaterial({ vertexColors: true }), TR = { value: 54 };
+      tm.onBeforeCompile = (sh) => { sh.uniforms.uWind = WIND; sh.uniforms.uTR = TR; sh.uniforms.uCamP = camU5;
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uWind; uniform float uTR; uniform vec3 uCamP; attribute float aTint;')
+          .replace('#include <color_vertex>', '#include <color_vertex>\nvColor.rgb *= mix( vec3( 0.85, 1.0, 0.85 ), vec3( 1.3, 1.12, 0.72 ), aTint * aTint );')
+          .replace('#include <begin_vertex>', '#include <begin_vertex>\n#ifdef USE_INSTANCING\n{ vec3 ip = instanceMatrix[3].xyz; float ph = ip.x * 0.31 + ip.z * 0.23, k = position.y * position.y;\n' +
+            '  transformed.x += k * 0.16 * sin( uWind * 2.3 + ph ); transformed.z += k * 0.11 * sin( uWind * 1.7 + ph * 1.3 );\n' +
+            '  transformed *= 1.0 - smoothstep( uTR * 0.72, uTR, distance( ip, uCamP ) ); }\n#endif'); };
+      tm.customProgramCacheKey = () => 'szTuft';
+      const M = new THREE.InstancedMesh(geo, tm, cap); M.count = 0; M.frustumCulled = false; M.receiveShadow = true; M.name = 'szTufts'; root.add(M);
+      G5.tuft = { mesh: M, cells, C, cap, r: 58, tint, px: 1e9, py: 0, pz: 0 };
+    }
+    // worn grass and tyre ruts where the cars put a wheel off: past the kerb on the outside of the bends' exits where there is grass (no gravel
+    // trap, no asphalt run-off), a pair or two of ruts curving out onto the lawn there; past the inside kerb at the apexes, where the cars
+    // cut them. Decals 4-5 cm over the verge, lit as it is (their own hashes)
+    {
+      const gw = new GB(false, true), W0 = [0.5, 0.41, 0.28], R0 = [0.25, 0.2, 0.14], hold = (i, side, si) => gravW(i, side) > 0.05 || (T.roT && T.roT[si][i]) || onDeck(i) || loWall(i) || upWall(i) || nearX(i, 30) || (side > 0 && pitR(i));
+      const edge = (i, side, si) => WAt(i) + (kerb[si][i] ? T.curbW : 0.05);
+      const worn = (k0, k1, side, si, wd, a0, seed) => {   // a worn strip from sample k0 to k1 (unwrapped), wd m wide past the kerb, fading in and out
+        let prev = null;
+        for (let kk = k0; kk <= k1; kk++) {
+          const i = ((kk % N) + N) % N, vr = SZ.verge(i, side), o0 = edge(i, side, si), o1 = o0 + wd * (0.8 + 0.4 * crH(kk, seed, 171)), f = (kk - k0) / (k1 - k0), a = Math.min(1, f / 0.25, (1 - f) / 0.35) * a0;
+          const cur = { A: Pt(i, side * o0, vY(vr, o0) + 0.042), B: Pt(i, side * o1, vY(vr, o1) + 0.042), ca: [...W0, a], cb: [...W0, 0] };
+          if (prev) gw.quadUp(prev.A, prev.B, cur.B, cur.A, [prev.ca, prev.cb, cur.cb, cur.ca]);
+          prev = cur;
+        } };
+      for (const c of T.corners) {
+        if (c.sev < 1) continue;
+        const i0 = c.i0, i1 = c.i1 < c.i0 ? c.i1 + N : c.i1, ia = Math.round((i0 + i1) / 2);
+        for (const [side, k0, k1, apex] of [[-c.dir, i1 - 2, i1 + 14, false], [c.dir, ia - 5, ia + 5, true]]) {
+          const si = side > 0 ? 1 : 0; let ok = true;
+          for (let kk = k0; kk <= k1 && ok; kk++) if (hold(((kk % N) + N) % N, side, si)) ok = false;
+          if (!ok) continue;
+          worn(k0, k1, side, si, apex ? 1.0 : 1.6, apex ? 0.36 : 0.42, c.i0 + (apex ? 7 : 0));
+          if (!apex) for (const [st, dr, ln] of [[k0 + Math.floor(crH(i0, 1, 172) * 4), 2.5 + crH(i0, 2, 172) * 2.5, 8 + Math.floor(crH(i0, 3, 172) * 4)], [k0 + 6 + Math.floor(crH(i0, 4, 172) * 4), 1.5 + crH(i0, 5, 172) * 2, 6 + Math.floor(crH(i0, 6, 172) * 3)]]) {
+            if (st + ln > k1 + 4) continue;
+            for (const tr of [-0.75, 0.75]) {   // a pair of ruts: from the kerb out onto the lawn and back towards the road
+              let pa = null;
+              for (let k = 0; k <= ln; k++) {
+                const i = ((st + k) % N + N) % N, t = k / ln, vr = SZ.verge(i, side), o = edge(i, side, si) + 0.9 + Math.sin(t * Math.PI) * dr + tr, hw = 0.13, a = Math.sin(t * Math.PI) * 0.5;
+                const cur = { A: Pt(i, side * (o - hw), vY(vr, o - hw) + 0.046), B: Pt(i, side * (o + hw), vY(vr, o + hw) + 0.046), c: [...R0, a] };
+                if (pa) gw.quadUp(pa.A, pa.B, cur.B, cur.A, [pa.c, pa.c, cur.c, cur.c]);
+                pa = cur;
+              }
+            }
+          }
+          nRut++;
+        }
+      }
+      if (!gw.empty) { const m = new THREE.Mesh(gw.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }));
+        m.matrixAutoUpdate = false; m.receiveShadow = true; m.renderOrder = 1; m.name = 'szRuts'; root.add(m); }
+    }
+    // gravel on the road at the traps' ends on the outside of the bends (where the cars that ran wide come back): blots of scattered stones on
+    // the asphalt by the edge (szPebbleTex); and the gravel the cars carry out of a trap (Render calls dyn.gravelDrop: a blot every 1.7 m for
+    // 30 m after a car is back on the road with gravel in its tyres; the last 256, fading out over a minute or two)
+    {
+      const pTex = ownTex(szPebbleTex()); pTex.anisotropy = tex.asphalt.anisotropy || 4;
+      const pm = new THREE.MeshLambertMaterial({ map: pTex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -5 });
+      const gp = new GB(true), W1 = [1, 1, 1];
+      for (const side of [-1, 1]) {
+        const si = side > 0 ? 1 : 0; let run0 = -1;
+        for (let i = 0; i <= N; i++) {
+          const ii = i % N, on = i < N && gravW(ii, side) > 0.9 && !onDeck(ii) && !(T.roT && T.roT[si][ii]);
+          if (on && run0 < 0) run0 = i;
+          if (on || run0 < 0) continue;
+          const n = i - run0; let ks = 0; for (let k = run0; k < i; k++) ks += T.k[k % N];
+          if (n * ds >= 30 && side * ks < 0) {
+            const cnt = 3 + Math.floor(crH(run0, side, 175) * 3);
+            for (let c = 0; c < cnt; c++) {
+              const h = (q) => crH(run0 + c * 7, side, 176 + q), s = (i - 10 + h(0) * 16) * ds, j = T.idx(s), wi = WAt(j), sz = 1.1 + h(1) * 1.1, o = wi - 0.25 - sz / 2 - h(2) * 2.2, y = hyS(s) + 0.052;
+              if (onDeck(j)) continue;
+              const r = h(3) * TAU, cr = Math.cos(r) * 0.5, sr = Math.sin(r) * 0.5, uv = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([a, b]) => [0.5 + a * cr - b * sr, 0.5 + a * sr + b * cr]);
+              const Q = (da, dl) => { const q = atSf(s + da, side * (o + dl)); return [q[0], hyS(s + da) + 0.052, q[1]]; }, hs = sz / 2, cen = Q(0, 0);
+              gp.quadO(Q(-hs, -hs), Q(hs, -hs), Q(hs, hs), Q(-hs, hs), W1, [cen[0], y - 5, cen[2]], uv); nPeb++;
+            }
+          }
+          run0 = -1;
+        }
+      }
+      if (!gp.empty) { const m = new THREE.Mesh(gp.geometry(), pm); m.matrixAutoUpdate = false; m.receiveShadow = true; m.renderOrder = 1; m.name = 'szPebbles'; root.add(m); }
+      const n = 256, g = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), born = new THREE.InstancedBufferAttribute(new Float32Array(n).fill(-1e4), 1); g.setAttribute('aBorn', born);
+      const U = { uT: { value: 0 } }, dm = pm.clone();
+      dm.onBeforeCompile = (sh) => { sh.uniforms.uT = U.uT;
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aBorn; uniform float uT; varying float vGA;').replace('#include <begin_vertex>', '#include <begin_vertex>\n{ float ga = uT - aBorn; vGA = ( 1.0 - smoothstep( 60.0, 110.0, ga ) ) * step( 0.0, ga ); }');
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vGA;').replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.a *= vGA;'); };
+      dm.customProgramCacheKey = () => 'szGravelDrop';
+      const M = new THREE.InstancedMesh(g, dm, n); M.count = 0; M.visible = false; M.frustumCulled = false; M.receiveShadow = true; M.renderOrder = 1; M.name = 'szGravelDrop'; root.add(M);   // (hidden until the first: no draw call)
+      const D = G5.drop = { M, U, born, k: 0, n: 0, m4: new THREE.Matrix4(), q: new THREE.Quaternion(), p: new THREE.Vector3(), s: new THREE.Vector3(), up: new THREE.Vector3(0, 1, 0) };
+      out.dyn.gravelDrop = (x, z, y, hd, k) => {   // (x, z: behind the car; hd its heading; k: how much gravel is left in its tyres, 0-1)
+        const j = D.k, sz = 0.7 + 0.8 * k; D.k = (D.k + 1) % n; D.n = Math.min(n, D.n + 1);
+        const jl = (crH(x, z, 178) - 0.5) * 0.9; D.q.setFromAxisAngle(D.up, -hd + (crH(x, z, 177) - 0.5) * 1.2); D.p.set(x - Math.sin(hd) * jl, y + 0.045, z + Math.cos(hd) * jl);   // (a little either side of the car's way) D.s.set(sz * 1.3, 1, sz); D.m4.compose(D.p, D.q, D.s); M.setMatrixAt(j, D.m4);
+        born.array[j] = G5.t; born.needsUpdate = true; M.count = D.n; M.visible = true; M.instanceMatrix.needsUpdate = true; };
+    }
+    // puddles (shown on a wet road): along the road's edges where the water stands (every 30-80 m on either side, within 2.4 m of the edge),
+    // in the gravel traps and on the asphalt run-offs; strips over the surface along the road's samples, a blot of the puddle picture each
+    {
+      const PS = [], UV = [], AL = [], W = G5.wetU = { uMap: { value: ownTex(szPuddleTex()) }, uWet: { value: 0 }, uRain: { value: 0 }, uT: { value: 0 }, uSkyC: { value: new THREE.Color(0.7, 0.72, 0.76) },
+        uDeep: { value: new THREE.Color(0.12, 0.13, 0.14) }, uFogC: { value: new THREE.Color() }, uFog: { value: new THREE.Vector2(1e5, 2e5) } };
+      const tri = (a, b, c, ua, ub, uc, la, lb, lc) => { const ny = (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]); if (ny < 0) { [b, c] = [c, b]; [ub, uc] = [uc, ub]; [lb, lc] = [lc, lb]; }
+        PS.push(...a, ...b, ...c); UV.push(...ua, ...ub, ...uc); AL.push(...la, ...lb, ...lc); };
+      const pud = (s0, len, oa, ob, side, yf, q) => {   // a puddle from s0 len m along, across from oa to ob (offsets from the centre line, oa < ob), at the height yf(s, o)
+        const u0 = (q % 2) * 0.5, v0 = (q >> 1) * 0.5, n = Math.max(1, Math.round(len / 2)), rows = [];
+        for (let k = 0; k <= n; k++) { const s = s0 + len * k / n, v = v0 + 0.5 * k / n, A = atSf(s, side * oa), B = atSf(s, side * ob);
+          rows.push([[A[0], yf(s, oa, A[3]), A[1]], [B[0], yf(s, ob, B[3]), B[1]], [u0, v], [u0 + 0.5, v], [len * k / n, 0], [len * k / n, ob - oa]]); }
+        for (let k = 0; k < n; k++) { const a = rows[k], b = rows[k + 1];
+          tri(a[0], a[1], b[1], a[2], a[3], b[3], a[4], a[5], b[5]); tri(a[0], b[1], b[0], a[2], b[3], b[2], a[4], b[5], b[4]); }
+        nPud++; };
+      const roadY = (s) => hyS(s) + 0.056, vrgY = (side, lift) => (s, o, j) => T.hy[j] + vY(SZ.verge(j, side), o) + lift;
+      for (const side of [-1, 1]) {
+        const si = side > 0 ? 1 : 0;
+        for (let d = 40 * crH(side, 1, 178); d < T.len - 20;) {
+          const s = d, j = T.idx(s), h = (q) => crH(Math.floor(d), side, 179 + q); d += 30 + h(0) * 50;
+          if (onDeck(j) || nearX(j, 25)) continue;
+          const wi = WAt(j), w = 0.9 + h(1) * 1.1, ob = wi - 0.1 - h(2) * 0.35, len = 2.5 + h(3) * 4.5;
+          pud(s, len, ob - w, ob, side, (ss) => roadY(ss), (h(4) * 4) | 0);
+          if (gravW(j, side) > 0.9 && h(5) < 0.6) {   // a puddle in the trap here too
+            const bar = side > 0 ? T.br[j] : T.bl[j], tar = !!(T.roT && T.roT[si][j]), o0 = wi + (tar ? 1 : 3.6), o1 = bar - (tar ? 1 : 2.2); if (o1 - o0 < 3) continue;
+            const pw = 1.4 + h(6) * 2, oc = o0 + (o1 - o0 - pw) * h(7);
+            pud(s + 3, 2 + h(8) * 3, oc, oc + pw, side, vrgY(side, tar ? 0.058 : 0.062), (h(9) * 4) | 0);
+          }
+        }
+      }
+      if (PS.length) {
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(PS, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(UV, 2)); g.setAttribute('aL', new THREE.Float32BufferAttribute(AL, 2)); g.computeBoundingSphere();
+        const m = new THREE.Mesh(g, szPuddleMat(W)); m.matrixAutoUpdate = false; m.visible = false; m.renderOrder = 2; m.name = 'szPuddles'; root.add(m); G5.puddles = m;
+      }
+    }
+    // the road's sheen (asphalt, the run-offs, the road on the bridge): the sun's glare off the asphalt when you look towards a low sun, its
+    // sharp reflection off a wet road once the rain has stopped, the grey sky's light off it at a grazing view while it is wet (szG5Update)
+    {
+      const RU = G5.roadU = { uCamP: camU5, uWetR: { value: 0 }, uWetS: { value: 0 }, uSunR: { value: new THREE.Vector3(-0.52, 0.51, 0.46) }, uGlare: { value: 0.1 }, uSunCR: { value: new THREE.Color(1, 0.95, 0.85) }, uSkyCR: { value: new THREE.Color() } };
+      for (const m of [aMat, roMat, aMatB]) {
+        m.onBeforeCompile = (sh) => { Object.assign(sh.uniforms, RU);
+          sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform vec3 uCamP;\nvarying vec3 vShV;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvShV = uCamP - ( modelMatrix * vec4( transformed, 1.0 ) ).xyz;');
+          sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uWetR; uniform float uWetS; uniform vec3 uSunR; uniform float uGlare; uniform vec3 uSunCR; uniform vec3 uSkyCR; varying vec3 vShV;')
+            .replace('#include <fog_fragment>', '{ vec3 v = normalize( vShV ); float s = max( dot( vec3( -v.x, v.y, -v.z ), uSunR ), 0.0 );\n' +   // (the view reflected off the flat road, towards the sun)
+              '  gl_FragColor.rgb += uSunCR * ( pow( s, 18.0 ) * uGlare + pow( s, 160.0 ) * uWetS * 1.2 ) * getShadowMask() + uSkyCR * pow( 1.0 - max( v.y, 0.0 ), 4.0 ) * uWetR * 0.4; }\n#include <fog_fragment>'); };
+        m.customProgramCacheKey = () => 'szRoad'; m.needsUpdate = true;
+      }
+    }
+    // after sunset the lamps (their heads: G4's glows, 4 a steady lamp; their light on the ground: G5.pools, additive): under the pit
+    // building's canopy every 12 m, on 12 m poles in the paddock every 30 m, on 10 m poles over the car parks (a 40 m grid), on 8 m poles
+    // along the concourses behind the grandstands; the phones held up in the stands (5); the monitors on the pit-wall stands and the crews'
+    // carts (4, bluish). The poles stand by day too (the scenery's chunks)
+    {
+      const P = [], C = [], A = [], pl = new GB(true, true), pole = [0.42, 0.43, 0.47], headC = [0.24, 0.25, 0.28];
+      const glow = (x, y, z, c, mode, sz, ph) => { P.push(x, y, z); C.push(...c); A.push(ph != null ? ph : crH(x, z, 185), mode, sz); };
+      const pool = (x, z, R, col, y0) => {   // a pool of light: a 3 x 3 grid over the ground (y0: a flat floor's height)
+        const Gp = []; for (let v = 0; v <= 2; v++) for (let u = 0; u <= 2; u++) { const px = x + (u - 1) * R, pz = z + (v - 1) * R; Gp.push([px, (y0 != null ? y0 : szGround(px, pz)) + 0.1, pz]); }
+        const c = [...col, 1];
+        for (let v = 0; v < 2; v++) for (let u = 0; u < 2; u++) { const k = v * 3 + u; pl.quadUp(Gp[k], Gp[k + 1], Gp[k + 4], Gp[k + 3], [c, c, c, c], [[u / 2, v / 2], [(u + 1) / 2, v / 2], [(u + 1) / 2, (v + 1) / 2], [u / 2, (v + 1) / 2]]); } };
+      const lampPole = (x, z, h, c, R) => { const y = szGround(x, z), g = scen.get(x, z); cyl(g, x, y - 0.2, z, 0.11, h + 0.2, 6, pole); box(g, x, y + h - 0.1, z, 0.9, 0.24, 0.5, crH(x, z, 186) * TAU, headC, [0.3, 0.31, 0.34]);
+        glow(x, y + h - 0.16, z, c, 4, 1.7); pool(x, z, R, c); exclPush(x, z, 1.5); CR.avoid(x, z, 1); nLamp++; };
+      let lastD = -1e9;
+      for (const r of pitEdge) {   // the canopy over the apron (its underside 4.9 m up): a lamp every 12 m, a pool on the apron in front of the garage
+        if (r.d - lastD < 12) continue; lastD = r.d; const q = r.q, at = (o, h) => [q.px + q.nx * o, r.y + h, q.pz + q.nz * o];
+        const L = at(r.front - 1.4, 4.64); glow(L[0], L[1], L[2], [0.95, 0.97, 1], 4, 1.1); const F = at(r.front - 4.5, 0); pool(F[0], F[2], 5.5, [0.85, 0.88, 0.95], r.y + 0.03); nLamp++; }
+      if (PD && pitEdge.length > 8) for (let d = pitEdge[0].d + 18; d < pitEdge[pitEdge.length - 1].d - 12; d += 30) {   // the paddock: between the trucks and the motorhomes
+        let r = null; for (const e of pitEdge) if (!r || Math.abs(e.d - d) < Math.abs(r.d - d)) r = e;
+        let bk = 0; for (const e of pitEdge) if (Math.abs(e.d - d) <= 12) bk = Math.max(bk, e.back);
+        for (const sh of [0, 3, -3]) { const q = r.q, x = q.px + q.nx * (bk + 12.9) + q.tx * sh, z = q.pz + q.nz * (bk + 12.9) + q.tz * sh; if (excluded(x, z) || inRects(x, z) || szPond(x, z)) continue; lampPole(x, z, 12, [0.92, 0.95, 1], 11); break; } }
+      { const L = SZ.L, TL = SZC * SZT, onTile = (x, z) => { const ti = Math.floor((x - G.x0) / TL), tj = Math.floor((z - G.z0) / TL); return ti >= 0 && tj >= 0 && ti < G.ntx && tj < G.ntz && G.on[tj * G.ntx + ti] === 1; };
+        for (let z0 = Math.ceil(L.z0 / 40) * 40 + 20; z0 < L.z0 + L.nz * L.cell; z0 += 40) for (let x0 = Math.ceil(L.x0 / 40) * 40 + 20; x0 < L.x0 + L.nx * L.cell; x0 += 40) {   // the car parks
+          if (szLCf(x0, z0, 3) < 0.75 || !onTile(x0, z0) || szDist(x0, z0) > 400 || szDist(x0, z0) < 18) continue;
+          for (const [a, b] of [[0, 0], [3.5, 0], [-3.5, 0], [0, 3.5], [0, -3.5]]) { const x = x0 + a, z = z0 + b; if (excluded(x, z) || inRects(x, z) || szPond(x, z) || szLC(x, z) !== 3) continue; lampPole(x, z, 10, [1, 0.78, 0.46], 13); break; } } }
+      { const last = new Map();   // the concourses behind the grandstands
+        for (const R of standRows) { const q = R.q, o = R.front + R.depth + 4.5, x = q.px + q.nx * R.side * o, z = q.pz + q.nz * R.side * o, l = last.get(R.sid);
+          if (l && Math.hypot(x - l[0], z - l[1]) < 26) continue; last.set(R.sid, [x, z]); if (inRects(x, z) || szPond(x, z) || szDist(x, z) < o - 3) continue; lampPole(x, z, 8, [1, 0.9, 0.72], 9); } }
+      for (const R of standRows) {   // the phones in the stands
+        const n = (crH(R.i, R.k, 181) * 3.2) | 0, a = R.cp[0], b = R.cp[1];
+        for (let m = 0; m < n; m++) { const f = 0.1 + crH(R.i, m, 182) * 0.85, o = (crH(R.i, m, 183) - 0.5) * 2.4;
+          glow(a[0] + (b[0] - a[0]) * f + R.q.tx * o, a[1] + (b[1] - a[1]) * f + 1.25, a[2] + (b[2] - a[2]) * f + R.q.tz * o, [0.72, 0.84, 1], 5, 0.24, crH(R.i, m, 184)); nPhone++; } }
+      for (const pb of out.pitBoxes || []) {   // the monitors: three on the stand behind the pit wall (facing the lane), two on the crew's cart on the apron
+        for (const ma of [-0.7, 0, 0.7]) { const q = atSf(pb.s + ma, pb.wall + 0.4); glow(q[0], hyS(pb.s + ma) + 1.22, q[1], [0.5, 0.72, 1], 4, 0.55); nMon++; }
+        const a0 = pb.s - 5 + (pb.mine ? 9.35 : 3.4);
+        for (const ma of [-0.3, 0.3]) { const q = atSf(a0 + ma, pb.base + 8.2); glow(q[0], hyS(a0 + ma) + 1.53, q[1], [0.5, 0.72, 1], 4, 0.45); nMon++; } }
+      if (P.length) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('aCol', new THREE.Float32BufferAttribute(C, 3)); g.setAttribute('aG', new THREE.Float32BufferAttribute(A, 3)); g.computeBoundingSphere();
+        const p = new THREE.Points(g, G4.glowMat); p.frustumCulled = false; p.visible = false; p.onBeforeRender = G4.glowHook; root.add(p); G4.glows.push(p); }
+      if (!pl.empty) { const m = new THREE.Mesh(pl.geometry(), new THREE.MeshBasicMaterial({ map: ownTex(szPoolTex()), vertexColors: true, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }));
+        m.matrixAutoUpdate = false; m.visible = false; m.renderOrder = 1; m.name = 'szLampPools'; root.add(m); G5.pools = m; }
+    }
+    // the garages' numbers: a board in the team's colours over each crew's garage (above the canopy, under the offices' glass), its number
+    // in seven-segment digits; none by the podium
+    {
+      const SEG = [0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f], pq0 = def.pitRow ? def.pitRow[0] : -152, pd = def.podium && def.podium.d != null ? def.podium.d : pq0 + 5 + 10 * Math.round((-pq0 - 5) / 10);
+      for (const pb of out.pitBoxes || []) {
+        const db = dSs(pb.s); if (Math.abs(db - pd) < 9) continue;
+        let r = null; for (const e of pitEdge) if (!r || Math.abs(e.d - db) < Math.abs(r.d - db)) r = e; if (!r || Math.abs(r.d - db) > 4) continue;
+        const q = r.q, ux = -q.tx, uz = -q.tz, y0 = r.y + 5.65, at = (u, v, off) => { const o = r.front - off, a = db - r.d; return [q.px + q.nx * o + q.tx * a + ux * u, y0 + v, q.pz + q.nz * o + q.tz * a + uz * u]; };
+        const g = scen.get(q.px + q.nx * r.front, q.pz + q.nz * r.front), inn = at(0, 0.6, -2), bg = pb.team, light = bg[0] * 0.3 + bg[1] * 0.59 + bg[2] * 0.11 > 0.6, fg = light ? [0.1, 0.1, 0.12] : [0.97, 0.97, 0.95];
+        const rect = (u0, v0, u1, v1, off, c) => g.quadO(at(u0, v0, off), at(u1, v0, off), at(u1, v1, off), at(u0, v1, off), c, inn);
+        rect(-1.7, 0, 1.7, 1.2, 0.05, bg); rect(-1.7, 0, 1.7, 0.08, 0.06, fg);
+        const num = String(pb.k + 1), w = 0.48, h = 0.82, th = 0.1, gap = 0.14, tw = num.length * w + (num.length - 1) * gap;
+        for (let k = 0; k < num.length; k++) { const u0 = -tw / 2 + k * (w + gap), v0 = 0.22, bits = SEG[+num[k]];
+          [[th, h - th, w - th, h], [w - th, h / 2, w, h - th], [w - th, th, w, h / 2], [th, 0, w - th, th], [0, th, th, h / 2], [0, h / 2, th, h - th], [th, h / 2 - th / 2, w - th, h / 2 + th / 2]].forEach(([a, b, c, d], m) => {
+            if (bits & (1 << m)) rect(u0 + a, v0 + b, u0 + c, v0 + d, 0.07, fg); }); }
+        nGarNo++;
+      }
+    }
+    // the confetti over the podium (szG5Update starts it with the ceremony, by day): two cannons either side of the first three, a blast as it
+    // begins and another as the champagne flies, 520 pieces in the colours of a party
+    {
+      const P = [], V = [], Fa = [], Cc = [], COL = [[1, 0.25, 0.3], [1, 0.85, 0.2], [0.3, 0.6, 1], [1, 1, 1], [0.35, 0.9, 0.45], [1, 0.5, 0.85], [1, 0.62, 0.2], [0.75, 0.75, 0.8]];
+      for (let k = 0; k < 520; k++) { const h = (q) => crH(k, q, 191), side = k % 2 ? 1 : -1, t0 = k < 300 ? 0.5 : 3.0;
+        P.push(side * 4.6, 0, (h(1) - 0.5) * 0.8); V.push(-side * (0.6 + h(2) * 2.4), 8 + h(3) * 5, -(0.3 + h(4) * 2.2) + (h(5) - 0.5) * 1.2);
+        Fa.push(t0 + h(6) * 0.25, h(7), 0.06 + h(8) * 0.04, 7 + h(9) * 2.5); Cc.push(...COL[(h(10) * COL.length) | 0]); }
+      const g = new THREE.BufferGeometry(), F = (a, n) => new THREE.Float32BufferAttribute(a, n);
+      g.setAttribute('position', F(P, 3)); g.setAttribute('aV', F(V, 3)); g.setAttribute('aF', F(Fa, 4)); g.setAttribute('aCol', F(Cc, 3)); g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e6);
+      const U = { uT: { value: -1 }, uScale: { value: 400 }, uFog: { value: new THREE.Vector2(1e5, 2e5) }, uO: { value: new THREE.Vector3() }, uX: { value: new THREE.Vector3(1, 0, 0) }, uZ: { value: new THREE.Vector3(0, 0, 1) } };
+      const p = new THREE.Points(g, szConfettiMat(U)); p.frustumCulled = false; p.visible = false; p.renderOrder = 8; p.onBeforeRender = szGlowHook(U); p.name = 'szConfetti'; root.add(p);
+      G5.conf = { pts: p, U, t0: null };
+    }
+    G5.boardU = boardU5;
+    out.dyn.g5 = G5;
+    { const hl = szHills(); root.add(hl); G5.hillU = hl.userData.U; }
     out.dyn.g4 = G4;
 
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
-    const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
+    const bm = addM(ban, szBoardMat(atlas, G5.boardU)); if (bm) bm.castShadow = false;
     addM(fenceG, fMat);
     if (!scrG.empty) { const st = ownTex(rbScreenTex({ name: ['MIE', 'JAPONSKA'], info: ['5,807 km', '18 zavojev'] })); addM(scrG, new THREE.MeshBasicMaterial({ map: st })); out.dyn.screens = { tex: st, f: -1 }; }
     crowdFinish(CR, root, out);
     root.traverse(o => { if (o.isMesh && o.material === gMat) { const f = o.onBeforeRender; o.onBeforeRender = function (...a) { pkM.hook(); f.apply(this, a); }; } });   // (the car parks' tarmac for the map on the ground now: grass, or snow)
     out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, buildings: nBld, stands: nStands, fans: nFans, banners: nBanners, tv: nTV, boxes: nBoxes,
       screens: nScr, photographers: nPh, stalls: nStall, loos: nLoo, rides: out.dyn.rides ? out.dyn.rides.length : 0, decals: nDecals, painted: nPaint, mown: nMow, petals: nPetal, windows: nWin, furrows: nFurrow,
-      parked: nParked, paddock: nPaddock, cloth: nCloth, girders: nGird, shadows: nAO, marbles: nMarb, glows: nGlow, fireworks: nFw };   // (read by the tests)
+      parked: nParked, paddock: nPaddock, cloth: nCloth, girders: nGird, shadows: nAO, marbles: nMarb, glows: nGlow, fireworks: nFw,
+      tufts: nTuft, ruts: nRut, pebbles: nPeb, puddles: nPud, lamps: nLamp, phones: nPhone, garages: nGarNo, monitors: nMon, vents: nVent };   // (read by the tests)
     return out;
   }
 
@@ -14041,6 +14561,7 @@ const World = (function () {
     if (d.wheel) szWheel(d.wheel, t);   // Suzuka: the Ferris wheel turns
     if (d.rides) szRides(d.rides, t);   // Suzuka: Motopia's rides go round
     if (d.g4) szG4Update(d.g4, t, car, cam, d);   // Mie: the glows after sunset, the fireworks and the helicopter at the finish
+    if (d.g5) szG5Update(d.g5, t, car, cam);   // Mie: the clouds, the long grass round the view, the wet track, the lamps, the cheering crowd, the confetti
     if (d.pkLife) pkWildlifeUpdate(d.pkLife, t, car);   // Pikes Peak: marmots and bighorn sheep
     if (d.pkAmb) pkAmbientUpdate(d.pkAmb, t, car);   // Pikes Peak: flags, dust and leaves, grill smoke
     if (d.boats) {
@@ -14056,8 +14577,9 @@ const World = (function () {
   }
 
   // after the camera has moved (Render.frame): what depends on where it looks from. Ouninpohja: the trees and buildings between the camera and
-  // the followed car fade out (the car where it is drawn this frame: interpolated by alpha)
+  // the followed car fade out (the car where it is drawn this frame: interpolated by alpha); Mie's shaders get the camera's position
   function view(out, cam, car, alpha) {
+    if (out && out.dyn.g5 && cam) out.dyn.g5.camU.value.copy(cam.position);   // (Mie: the camera's position for its lit materials' own shaders)
     const U = out && out.dyn.ouCut; if (!U) return;
     if (!car || !cam) { U.uCar.value.set(1e6, 0, 1e6); return; }
     const a = alpha == null ? 1 : alpha;
