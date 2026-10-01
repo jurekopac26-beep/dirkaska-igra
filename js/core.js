@@ -427,7 +427,7 @@ const Core = (function () {
     _buildRacingLine() {
       const N = this.N, px = this.px, pz = this.pz, nx = this.nx, nz = this.nz;
       const off = new Float32Array(N);
-      const lim = this.w - 1.7, open = this.open;
+      const lim = (this.def.barW ? Math.min(this.w, this.def.barW + 0.9) : this.w) - 1.7, open = this.open;   // (a road widened between its barriers: the line keeps as far from them as before)
       const passes = [[14, 300], [7, 300], [3, 300]];
       for (const [K, iters] of passes) {
         for (let it = 0; it < iters; it++) {
@@ -2191,7 +2191,7 @@ const Core = (function () {
         }
       }
       if (this.race.pol) for (const sp of this.race.pol.spikes) { const g = sp.s - s - cl2; if (!sp.on || g < -cl2 * 2 || g > 20 + v * 3) continue;   // (a spike strip ahead: through its gap, whatever else is there)
-        if (sp.side > 0) sHi = Math.min(sHi, sp.d0 - hw - 0.35); else sLo = Math.max(sLo, sp.d1 + hw + 0.35); }
+        const mg = T.def.barW ? 0.8 : 0.35; if (sp.side > 0) sHi = Math.min(sHi, sp.d0 - hw - mg); else sLo = Math.max(sLo, sp.d1 + hw + mg); }   // (mg: room to spare where the gap is wide enough: a car swinging across into it does not clip the strip)
       const E = Math.max(edge, vE);
       if (sLo > lo || sHi < hi) {   // the gap: a hard limit; with no room in it beside the rest, behind the nearest thing, in the gap
         const a = Math.max(lo, sLo), b = Math.min(hi, sHi);
@@ -2389,7 +2389,10 @@ const Core = (function () {
       if (this.heli) this._heli(dt);
       // the two nearest patrol cars (not the motorcyclists) go for the player, the others keep their distance behind them
       const near = this.cars.filter(c => c.pol.mode === 'chase' && !c.locked && c.pol.kind !== 'moto' && P.q.s - c.q.s < 55 && P.q.s - c.q.s > -20).sort((a, b) => Math.hypot(a.x - P.x, a.z - P.z) - Math.hypot(b.x - P.x, b.z - P.z));
-      for (const c of this.cars) c.pol.atk = near.indexOf(c) >= 0 && near.indexOf(c) < D.atk;
+      for (const c of this.cars) { c.pol.atk = near.indexOf(c) >= 0 && near.indexOf(c) < D.atk; c.pol.boxF = false; }
+      // boxing in (GTA's police): the player crawling (under 16 km/h: after a spin, a crash, not round a hairpin) with two of them close: the second
+      // gets round in front of them
+      if (P.speed < 4.5 && near.length >= 2 && !(this.slowT > 1)) near[1].pol.boxF = true;
       for (const c of this.cars) {
         const pc = c.pol; pc.t += dt; if (pc.cool > 0) pc.cool -= dt;
         if (c.locked && pc.mode === 'chase' && race.state === 'racing' && race.time >= pc.delay) c.locked = false;
@@ -2639,11 +2642,11 @@ const Core = (function () {
       if (byP) { this.off.moto++; this.st.eur += POL_EUR.moto; }
       this._event('motoDown', c.x, c.z, c, null, { byP, why });
     }
-    // a spike strip across the road at s: from the edge on its side over all but the last 2.8 m at the other edge; the patrol car that brought it
+    // a spike strip across the road at s: from the edge on its side over all but the last 2.8 m (3.6 m on Vršič's wide road) at the other edge; the patrol car that brought it
     // parked just off the road before it, on the strip's side
     _spike(s) {
       const T = this.T, w = T.w, side = this.R() < 0.5 ? -1 : 1, i = T.idx(s), wk = T.walk ? T.walk[side > 0 ? 1 : 0][i] : 0;
-      const d0 = side > 0 ? -w + 2.8 : -w - 0.6 - wk, d1 = side > 0 ? w + 0.6 + wk : w - 2.8;
+      const gp = T.def.barW ? 3.6 : 2.8, d0 = side > 0 ? -w + gp : -w - 0.6 - wk, d1 = side > 0 ? w + 0.6 + wk : w - gp;   // (gp: the asphalt left at the other edge; more where the barrier is close)
       const sp = { s, d0, d1, side, on: false, gone: false, t: 0, x: T.px[i], z: T.pz[i], car: null };
       sp.car = this._car(s - 7, side * Math.min(w + wk + 1.6, (side > 0 ? T.br[i] : T.bl[i]) - 1.2), 0, 'park', 0);   // (as far off the asphalt as the barrier lets it)
       this.spikes.push(sp);
@@ -2728,6 +2731,11 @@ const Core = (function () {
     const gap = P.q.s - c.q.s, moto = pc.kind === 'moto';
     c.skCap = pc.mode === 'search' ? 0.8 : moto ? 1.16 : race.pol.D.pace;
     if (pc.mode === 'search') { c.rubber = 1; aiControl(c, race, dt); return; }
+    if (pc.boxF && gap > -18 && gap < 30 && !P.finished && pc.kind !== 'moto') {   // (boxing them in: round them to a spot 6 m ahead of them, a little to the side, at their speed)
+      const T = race.track, ch = Math.cos(P.h), sh = Math.sin(P.h), sd = pc.side; aiControl(c, race, dt);
+      const tx = P.x + ch * 7 - sh * sd * 1.6, tz = P.z + sh * 7 + ch * sd * 1.6, ahead = (c.x - P.x) * ch + (c.z - P.z) * sh; steerAt(c, tx, tz);
+      const vT = P.speed + clamp((7 - ahead) * 0.6, -3, 6); c.inThr = c.speed < vT ? 0.8 : 0; c.inBrk = c.speed > vT + 1 ? clamp((c.speed - vT) / 4, 0.2, 1) : 0; c.inHand = 0; return;
+    }
     if (gap < -25 && !P.finished) { aiControl(c, race, dt); c.inThr = 0; c.inBrk = 1; return; }   // (got ahead of them: stops and waits for them to come by)
     c.rubber = 1 + clamp((gap - 50) / 350, 0, race.pol.D.rub);
     aiControl(c, race, dt);
