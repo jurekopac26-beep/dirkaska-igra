@@ -1493,7 +1493,7 @@ const Render = (function () {
     spa:      { fog: 0xc3ced7, sun: 0xfff1de, sunI: 0.98, sky: 0xd0dde9, gnd: 0x43522f, hemiI: 0.64, tint: [0.99, 1.0, 1.01], sat: 1.1 },   // the Ardennes: a little greyer, softer daylight (Spa's changeable weather)
     rbring:   { fog: 0xc6daea, sun: 0xfff1d8, sunI: 1.12, sky: 0xcfe3fb, gnd: 0x46602c, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.06, sunOff: [-86, 78, 52] },   // Styria in early summer, an afternoon sun (longer shadows): clear alpine air, fresh meadows, dark spruce woods
     suzuka:   { fog: 0xc8d9e6, sun: 0xfff1dc, sunI: 1.06, sky: 0xd5e7fa, gnd: 0x4f5c34, hemiI: 0.62, tint: [1.01, 1.0, 0.99], sat: 1.12 },   // Suzuka: a clear spring day in Mie
-    muur:     { fog: 0xc9d3dc, sun: 0xfff0dc, sunI: 1.04, sky: 0xd2dfec, gnd: 0x4c5a34, hemiI: 0.64, tint: [1.0, 1.0, 1.0], sat: 1.08, sunOff: [-70, 82, 64] },   // Flanders on an April afternoon (the Ronde's day): a soft, slightly hazy sun over the Dender valley
+    muur:     { fog: 0xc9d3dc, sun: 0xffe9cc, sunI: 1.1, sky: 0xd2dfec, gnd: 0x4c5a34, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-74, 64, 66] },   // Flanders on an April afternoon, the Ronde's hour on the Muur: a warm, lower sun over the Dender valley (longer shadows across the cobbles, the avenue's dappled shade)
   };
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   function applyTheme(id) {
@@ -1544,6 +1544,7 @@ const Render = (function () {
     }
     for (const m of world.wetMats) m.color.copy(m.userData.dry).multiplyScalar(1 - (m.map === tex.curb ? 0.22 : 0.36) * w);
     const W = world.dyn.wet;   // (a gravel stage with a road of its own, Ouninpohja: its puddles show, the gravel darkens and glistens, the verges darken)
+    if (world.dyn.wetShine) world.dyn.wetShine(w);   // (a world's own wet road: the Kapelmuur's kasseien glisten)
     if (W) { W.puddles.visible = w > 0; W.road.color.setScalar((1 - 0.36 * w) * (atmos.season === 'winter' ? 0.86 : 1)); W.road.shininess = w > 0 ? 28 : W.base.sh; W.road.specular.setHex(w > 0 ? 0x3c3e40 : W.base.sp); W.ground.color.setScalar(1 - 0.2 * w); }
   }
   // the dry line (a changing weather, Race opts weather: after the rain the racing line dries first): a band of dry road along it, as light as

@@ -12877,7 +12877,7 @@ const World = (function () {
     const SP = (typeof Tex !== 'undefined' && Tex.SPONSORS) || [['HITROLET', '#101418', '#ffd23f']];
     for (let k = 0; k < 8; k++) { const [txt, bg, fg] = SP[k % SP.length]; cell(B + 8 + k, bg, fg, txt, 40, 'rgba(255,255,255,.14)'); }
     [['CAFÉ DE MUUR', '#3b2a1e', '#f3e2b8'], ['FRITUUR', '#c8261f', '#fff'], ['BAKKERIJ', '#f3ead6', '#5a3a22'], ['APOTHEEK', '#1f7a3a', '#fff'], ['BRASSERIE', '#16306e', '#f5d10f'],
-      ['STAMINEE', '#5a1e22', '#f3e2b8'], ['FIETSEN', '#111', '#f5d10f'], ['FRIETKOT', '#f5d10f', '#c8261f'], ['VIP', '#fff', '#16181c'], ['BIER', '#f5d10f', '#111'], ['START', '#111', '#fff'], ['AANKOMST', '#d4201c', '#fff']].forEach(([t, bg, fg], k) => cell(B + 20 + k, bg, fg, t, t.length > 9 ? 30 : 40, null));
+      ['STAMINEE', '#5a1e22', '#f3e2b8'], ['FIETSEN', '#111', '#f5d10f'], ['FRIETKOT', '#f5d10f', '#c8261f'], ['VIP', '#fff', '#16181c'], ['BIER', '#f5d10f', '#111'], ['START', '#111', '#fff'], ['AANKOMST', '#d4201c', '#fff'], ['ALLEZ!', '#f5d10f', '#111'], ['HUP HUP HUP!', '#111', '#f5d10f'], ['DE MUUR LEEFT', '#d4201c', '#fff'], ['FLANDRIEN', '#fff', '#16181c']].forEach(([t, bg, fg], k) => cell(B + 20 + k, bg, fg, t, t.length > 9 ? 30 : 40, null));
     for (const [k, t] of [[B + 16, 'MUUR'], [B + 17, 'ALLEZ!'], [B + 18, 'KOERS'], [B + 19, 'VLAANDEREN']]) { x.clearRect((k % 4) * 256, Math.floor(k / 4) * 64, 256, 64); cell(k, null, 'rgba(250,250,245,0.92)', t, 50); }   // painted on the cobbles
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (muATex = t);
   }
@@ -12922,6 +12922,36 @@ const World = (function () {
     }
     ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
+  // a town bike, upright (local x along it; the instance colour paints the frame; the tyres a dark ring of quads, both faces)
+  function muBikeGeo() {
+    const g = new GB(), K = [0.1, 0.1, 0.11], W = [1, 1, 1], ring = (cx, cy, r0, r1) => { const n = 12; for (let k = 0; k < n; k++) { const a0 = k / n * TAU, a1 = (k + 1) / n * TAU;
+      const A = [cx + Math.cos(a0) * r1, cy + Math.sin(a0) * r1, 0], B = [cx + Math.cos(a1) * r1, cy + Math.sin(a1) * r1, 0], C = [cx + Math.cos(a1) * r0, cy + Math.sin(a1) * r0, 0], D = [cx + Math.cos(a0) * r0, cy + Math.sin(a0) * r0, 0];
+      g.quadO(A, B, C, D, K, [cx, cy, -1]); g.quadO(A, B, C, D, K, [cx, cy, 1]); } };
+    ring(-0.52, 0.34, 0.29, 0.34); ring(0.52, 0.34, 0.29, 0.34);
+    const P = { rh: [-0.52, 0.34, 0], bb: [-0.05, 0.3, 0], st: [-0.17, 0.8, 0], hd: [0.38, 0.82, 0], fh: [0.52, 0.34, 0] };
+    for (const [a, b] of [['rh', 'bb'], ['bb', 'st'], ['st', 'hd'], ['bb', 'hd'], ['st', 'rh'], ['hd', 'fh']]) ouRod(g, P[a], P[b], 0.022, W, 4);
+    ouRod(g, [0.38, 0.82, 0], [0.34, 0.98, 0], 0.02, W, 4); box(g, 0.33, 0.97, 0, 0.06, 0.04, 0.5, 0, K);   // the stem, the handlebar
+    box(g, -0.2, 0.82, 0, 0.26, 0.06, 0.12, 0, K); box(g, -0.48, 0.52, 0, 0.36, 0.03, 0.16, 0, K);   // the saddle, the carrier
+    return g.geometry();
+  }
+  // a parked car of the town (local x along it; the instance colour paints it): body, cabin with dark glass, wheels
+  function muCarGeo() {
+    const g = new GB(), W = [1, 1, 1], gl = [0.12, 0.14, 0.17], K = [0.06, 0.06, 0.07];
+    box(g, 0, 0.22, 0, 4.1, 0.62, 1.74, 0, W); box(g, -0.15, 0.84, 0, 2.2, 0.56, 1.6, 0, gl, W);
+    for (const [x, z] of [[1.3, 0.8], [1.3, -0.8], [-1.35, 0.8], [-1.35, -0.8]]) box(g, x, 0, z, 0.62, 0.44, 0.24, 0, K);
+    box(g, 2.06, 0.42, 0.55, 0.04, 0.14, 0.3, 0, [1, 1, 0.9]); box(g, 2.06, 0.42, -0.55, 0.04, 0.14, 0.3, 0, [1, 1, 0.9]);
+    return g.geometry();
+  }
+  // a weeping willow by the Dender: a short leaning trunk, a crown and its curtain of hanging twigs to the ground (unit height)
+  function muWillowGeo() {
+    const g = new GB(), R = rng(8161), rs = ROCK_SMOOTH, col = [0.56, 0.68, 0.3], bark = [0.36, 0.33, 0.28];
+    ROCK_SMOOTH = true;
+    cyl(g, 0, -0.02, 0, 0.05, 0.42, 6, bark, null, 0.035);
+    puff(g, 0, 0.72, 0, 0.36, 0.55, col, R, 0.12, 0.55, 1.15, false);
+    ROCK_SMOOTH = rs;
+    const cu = col.map(v => v * 0.86); cyl(g, 0, 0.12, 0, 0.5, 0.6, 12, cu, null, 0.34);   // the curtain (open, hanging from the crown's rim)
+    return g.geometry();
   }
   function muLampGeo() {   // a street lamp of the old town: a dark green cast-iron post (4.6 m), a short arm and a lantern
     const g = new GB(), dk = [0.12, 0.2, 0.16];
@@ -12970,7 +13000,7 @@ const World = (function () {
     const fk = front === 0 ? 0 : front === 1 ? 2 : front === 2 ? 3 : front === 3 ? 1 : -1;
     for (let e = 0; e < 4; e++) {
       const [u0, v0] = cs[e], [u1, v1] = cs[(e + 1) % 4], len = Math.hypot(u1 - u0, v1 - v0), inside = [b.x, yb + H / 2, b.z];
-      if (f) {   // a house near the road: every wall in bays and storeys of the facade atlas (the shop or the door on the street front only)
+      if (f && (!o.frontOnly || e === fk)) {   // a house near the road: every wall in bays and storeys of the facade atlas (the shop or the door on the street front only); farther back the street front only
         const bays = Math.max(1, Math.round(len / 3.2)), U0 = wt / 4, U1 = U0 + 0.25;
         for (let k = 0; k < bays; k++) for (let l = 0; l < fl; l++) {
           const a = k / bays, a1 = (k + 1) / bays, row = l === 0 ? (e === fk ? o.gr : o.up) : o.up, V1 = 1 - row / 4, V0 = V1 - 0.25;
@@ -12992,6 +13022,10 @@ const World = (function () {
         box(g, px, yt + k * rh / n, pz, wk, rh / n + 0.02, 0.45, rotF, [wc[0] * o.tint[0] * 0.95, wc[1] * o.tint[1] * 0.95, wc[2] * o.tint[2] * 0.95]); }
     }
     if (o.chim) { const [px, , pz] = Pp(b.L * 0.25, 0, 0); box(g, px, yt + rh * 0.4, pz, 0.6, rh * 0.75, 0.6, b.ang, [0.45, 0.24, 0.18], [0.2, 0.2, 0.2]); }
+    if (f && fk >= 0 && !o.frontOnly && !o.ridgeX && (front < 2) === along) {   // the zinc gutter along the eaves of the street front, its downpipe at one end
+      const [u0, v0] = cs[fk], [u1, v1] = cs[(fk + 1) % 4], mx = (u0 + u1) / 2, mz = (v0 + v1) / 2, ml = Math.hypot(mx, mz) || 1, len = Math.hypot(u1 - u0, v1 - v0), zc = [0.55, 0.57, 0.6];
+      const [gx, , gz] = Pp(mx + mx / ml * 0.3, mz + mz / ml * 0.3, 0), [dx, , dz] = Pp(u1 + mx / ml * 0.3 - (u1 - u0) / len * 0.3, v1 + mz / ml * 0.3 - (v1 - v0) / len * 0.3, 0);
+      box(g, gx, yt - 0.12, gz, (u1 - u0 === 0 ? 0.16 : len + 0.3), 0.16, (u1 - u0 === 0 ? len + 0.3 : 0.16), b.ang, zc); cyl(g, dx, y0, dz, 0.05, yt - y0 - 0.1, 5, zc); }
     if (f && fk >= 0) {
       const nl = [[0, 1], [-1, 0], [0, -1], [1, 0]][fk], ex = -nl[1], ez = nl[0], wcol = [wc[0] * o.tint[0], wc[1] * o.tint[1], wc[2] * o.tint[2]];   // (the front's outward normal and its direction along, local)
       if (!o.ridgeX && fl >= 2 && Lr > 5 && o.dorm) {   // dormers on the front slope: a box with a window, a small gable over it
@@ -13098,7 +13132,8 @@ const World = (function () {
        a sidewalk of grey pavers out past the barrier, on the hill and by the fields a grass verge onto the ground (128 m chunks, culled) ---- */
     const Pt = (i, o, y) => [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o];
     const aMat = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true }); out.asphaltMat = aMat;
-    const kTex = ownTex(muCobbleTex(tex.asphalt.anisotropy)), kMat = new THREE.MeshLambertMaterial({ map: kTex, vertexColors: true }); kMat.userData.wear = true;   // (the rain darkens it as the asphalt, see Render.applyRoad)
+    const kTex = ownTex(muCobbleTex(tex.asphalt.anisotropy)), kMat = new THREE.MeshPhongMaterial({ map: kTex, vertexColors: true, shininess: 6, specular: 0x000000 }); kMat.userData.wear = true;   // (the rain darkens it as the asphalt, see Render.applyRoad)
+    out.dyn.wetShine = (w) => { kMat.shininess = 6 + 54 * w; kMat.specular.setScalar(0.3 * w); };   // (and wet, the worn stones glisten: Render.applyRoad)
     const pMat = new THREE.MeshLambertMaterial({ map: tex.paving, vertexColors: true }), lMat = new THREE.MeshLambertMaterial({ vertexColors: true });
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     const kindR = new Uint8Array(N);   // 0 asphalt, 1 cobbles, 2 tiles
@@ -13116,7 +13151,9 @@ const World = (function () {
       const CH = 128, offs = [-w, -w * 2 / 3, -w / 3, 0, w / 3, w * 2 / 3, w], tileL = 8, K = 2.4, wl = [0.95, 0.95, 0.92];
       const brk = new Float32Array(N); for (const c of T.corners) if (c.sev >= 2) for (let k = -60; k <= 6; k++) { const i = (c.i0 + k + N) % N, f = k < -10 ? sstep(-60, -12, k) : sstep(6, -10, k); if (f > brk[i]) brk[i] = f; }
       const shA = (i, o) => { const rl = T.rl[i]; let k = 0.84 - (0.12 + 0.1 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5); if (Math.abs(o) > w * 0.9) k -= 0.04; return [k, k, k * 1.02]; };
-      const shK = (i, o) => { const rl = T.rl[i], t = Math.exp(-((Math.abs(o - rl) - 0.8) ** 2) / 0.6); let k = (0.95 + 0.06 * rpHash(i, 13)) * (1 - 0.08 * t) * (Math.abs(o) > w - 0.5 ? 0.86 : 1); return [k, k * 0.99, k * 0.97]; };   // (the wheel tracks polished darker, the gutters too)
+      const shK = (i, o) => { const rl = T.rl[i], t = Math.exp(-((Math.abs(o - rl) - 0.8) ** 2) / 0.6); let k = (0.95 + 0.06 * rpHash(i, 13)) * (1 - 0.08 * t) * (Math.abs(o) > w - 0.5 ? 0.86 : 1);
+        const ms = town[i] ? 0 : sstep(w - 2.4, w - 0.3, Math.abs(o)) * (0.5 + 0.5 * rpHash(i, 19));   // (moss and grass between the stones at the edges, where no wheel goes: in the park)
+        return [k * (1 - 0.16 * ms), k * (0.99 - 0.04 * ms), k * (0.97 - 0.2 * ms)]; };   // (the wheel tracks polished darker, the gutters too)
       const shT = (i, o) => { const k = 0.98 + 0.04 * rpHash(i, 17) - (Math.abs(o) > w - 0.5 ? 0.06 : 0); return [k, k * 0.98, k * 0.95]; };
       const gc = (p) => { const c = nrGCol(p[0], p[2]); return c; };
       for (let c0 = 0; c0 < N; c0 += CH) {
@@ -13290,7 +13327,14 @@ const World = (function () {
             if (o.flat) box(g, b.x, hi + 0.25 + fl * 3, b.z, b.L + 0.3, 0.45, b.W + 0.3, b.ang, [0.42, 0.42, 0.44]);
             else { const along = front < 2; muRoof(o.rg, g, b.x, hi + 0.25 + fl * 3, b.z, (along ? b.L : b.W) + 0.3, (along ? b.W : b.L) + 0.5, Math.min((along ? b.W : b.L) * 0.62, 7.5), along ? b.ang : b.ang + PI / 2, roofC, wc); }
           } else {
-            muHouse(g, near ? fac.get(b.x, b.z) : null, b, lo, hi, fl, wt, front, roofC, o);
+            o.frontOnly = !near; muHouse(g, fac.get(b.x, b.z), b, lo, hi, fl, wt, front, roofC, o);
+            if (near && fd[front] < 12 && fl >= 3 && crH(b.x, b.z, 86) < 0.18) {   // a balcony on the second floor, people out on it to watch the race
+              const [u, v] = [[0, b.W / 2], [0, -b.W / 2], [b.L / 2, 0], [-b.L / 2, 0]][front], nn = [[0, 1], [0, -1], [1, 0], [-1, 0]][front];
+              const ox = c * nn[0] - s * nn[1], oz = s * nn[0] + c * nn[1], ex = -oz, ez = ox, px = b.x + c * u - s * v + ox * 0.45, pz = b.z + s * u + c * v + oz * 0.45, yb = hi + 0.25 + 6, rot = Math.atan2(ez, ex), g2 = scen.get(px, pz);
+              box(g2, px, yb - 0.12, pz, 2.6, 0.12, 0.9, rot, [0.6, 0.6, 0.62]); box(g2, px + ox * 0.43, yb, pz + oz * 0.43, 2.6, 0.95, 0.04, rot, [0.12, 0.13, 0.14]);
+              for (let k = 0; k < 2; k++) { if (crH(b.x, b.z, 87 + k) < 0.3) continue; const e = k ? 0.55 : -0.55, qx = px + ex * e - ox * 0.1, qz = pz + ez * e - oz * 0.1, sh = MU_SHIRTS[Math.floor(crH(b.x + k, b.z, 89) * MU_SHIRTS.length)];
+                box(g2, qx, yb, qz, 0.42, 0.85, 0.28, rot, [0.2, 0.22, 0.3]); box(g2, qx, yb + 0.85, qz, 0.46, 0.62, 0.3, rot, sh); ico(g2, qx, yb + 1.62, qz, 0.13, 1.1, [0.92, 0.74, 0.6], R, 0); }
+            }
             if (near && fd[front] < 14 && fl >= 2 && crH(b.x, b.z, 82) < 0.45) {   // window boxes of geraniums under the first-floor windows (red, pink or white)
               const [u, v] = [[0, b.W / 2], [0, -b.W / 2], [b.L / 2, 0], [-b.L / 2, 0]][front], nn = [[0, 1], [0, -1], [1, 0], [-1, 0]][front];
               const ox = c * nn[0] - s * nn[1], oz = s * nn[0] + c * nn[1], ex = -oz, ez = ox, len = front < 2 ? b.L : b.W, bays = Math.max(1, Math.round(len / 3.2));
@@ -13421,6 +13465,70 @@ const World = (function () {
         exclPush(x, z, 1.4); CR.avoid(x, z, 1.4); }
     }
 
+    /* ---- the town's street furniture on the forecourts behind the crowd: bike racks (Flanders rides), the red bpost boxes, bottle banks, road signs,
+       cars parked out of the way of the race; on the Muur banners held up by the fans; the little wayside chapel at the foot of the Kapelmuur; round
+       the chapel a gravel path and benches under the limes ---- */
+    const bikes = new IChunks(muBikeGeo(), new THREE.MeshLambertMaterial({ vertexColors: true }), 512), cars = new IChunks(muCarGeo(), new THREE.MeshLambertMaterial({ vertexColors: true }), 512);
+    let nStreet = 0;
+    {
+      const BC = [[0.1, 0.1, 0.12], [0.16, 0.3, 0.6], [0.7, 0.12, 0.1], [0.85, 0.85, 0.82], [0.2, 0.42, 0.28], [0.55, 0.4, 0.25]], CC = [[0.75, 0.76, 0.78], [0.12, 0.13, 0.15], [0.6, 0.1, 0.1], [0.2, 0.28, 0.48], [0.88, 0.88, 0.86], [0.35, 0.37, 0.4]];
+      const dC = nameD('Kapel Oudenberg') || 880;
+      for (let d = 6; d < L; d += 7) for (const sd of [-1, 1]) {
+        const s = sAt(d), i = T.idx(s); if (!town[i]) continue;
+        const h = crH(d, sd, 90); if (h > 0.62) continue;
+        const [x, z, ii] = onSide(s, sd, 4.4 + crH(d, sd, 91) * 2.6); if (excluded(x, z) || inWater(x, z, 2)) continue;
+        const nn = nrNear(x, z); if (nn.dd < 3.9) continue;
+        const y = nrGround(x, z), g = scen.get(x, z), tx = T.tx[ii], tz = T.tz[ii], nx = T.nx[ii] * sd, nz = T.nz[ii] * sd;
+        if (h < 0.26) {   // a bike rack: a steel hoop bar, two to five bikes across it
+          const n = 2 + Math.floor(crH(d, sd, 92) * 4); box(g, x, y + 0.55, z, 0.05, 0.05, n * 0.62 + 0.3, Math.atan2(nz, nx), [0.55, 0.56, 0.58]);
+          for (let k = 0; k < n; k++) { const o = (k - (n - 1) / 2) * 0.62, bx = x + tx * o, bz = z + tz * o; bikes.add(bx, y, bz, Math.atan2(-nz, nx) + (crH(d + k, sd, 93) - 0.5) * 0.2, 1, 1, BC[Math.floor(crH(d + k, sd, 94) * BC.length)]); }
+          exclPush(x, z, n * 0.35 + 0.8); CR.avoid(x, z, n * 0.32 + 0.6);
+        } else if (h < 0.32) {   // the red post box (bpost)
+          box(g, x, y, z, 0.42, 1.05, 0.34, Math.atan2(tz, tx), [0.78, 0.1, 0.08]); cyl(g, x, y + 1.05, z, 0.21, 0.08, 8, [0.78, 0.1, 0.08], [0.7, 0.08, 0.06]);
+          box(g, x - nx * 0.18, y + 0.82, z - nz * 0.18, 0.2, 0.03, 0.04, Math.atan2(tz, tx), [0.15, 0.15, 0.15]); exclPush(x, z, 0.8); CR.avoid(x, z, 0.6);
+        } else if (h < 0.38) {   // a pair of bottle banks (dark green, white glass / coloured glass)
+          for (const o of [-0.8, 0.8]) { const bx = x + tx * o, bz = z + tz * o; box(g, bx, y, bz, 1.4, 1.55, 1.4, Math.atan2(tz, tx), [0.16, 0.32, 0.2], [0.13, 0.26, 0.17]); cyl(g, bx, y + 1.55, bz, 0.18, 0.08, 8, [0.2, 0.2, 0.2]); }
+          exclPush(x, z, 2.2); CR.avoid(x, z, 2);
+        } else if (h < 0.46) {   // a road sign on its pole: no entry, no parking, or the blue one-way
+          const k = Math.floor(crH(d, sd, 95) * 3), py = y + 2.2, px = x - nx * 0.02, pz = z - nz * 0.02; cyl(g, x, y - 0.2, z, 0.04, 2.75, 5, [0.62, 0.63, 0.66]);
+          if (k === 0) { box(g, px - nx * 0.05, py - 0.3, pz - nz * 0.05, 0.03, 0.6, 0.6, Math.atan2(nz, nx), [0.82, 0.12, 0.1]); box(g, px - nx * 0.07, py - 0.06, pz - nz * 0.07, 0.03, 0.12, 0.42, Math.atan2(nz, nx), [0.95, 0.95, 0.95]); }
+          else if (k === 1) { box(g, px - nx * 0.05, py - 0.3, pz - nz * 0.05, 0.03, 0.6, 0.6, Math.atan2(nz, nx), [0.8, 0.12, 0.1]); box(g, px - nx * 0.07, py - 0.24, pz - nz * 0.07, 0.03, 0.48, 0.48, Math.atan2(nz, nx), [0.16, 0.3, 0.7]); }
+          else { box(g, px - nx * 0.05, py - 0.3, pz - nz * 0.05, 0.03, 0.6, 0.6, Math.atan2(nz, nx), [0.16, 0.3, 0.7]); box(g, px - nx * 0.07, py - 0.06, pz - nz * 0.07, 0.03, 0.12, 0.4, Math.atan2(nz, nx), [0.95, 0.95, 0.95]); }
+          exclPush(x, z, 0.6); CR.avoid(x, z, 0.5);
+        } else if (nn.dd > 6.5 && Math.hypot(x - MK[0], z - MK[1]) > MKR) {   // a car parked out of the race's way, along the street
+          const ok2 = [-2.2, 2.2].every(o => !excluded(x + tx * o, z + tz * o) && nrNear(x + tx * o, z + tz * o).dd > 5.5); if (!ok2 || nrSlope(x, z) > 0.2) continue;
+          cars.add(x, y, z, Math.atan2(-tz, tx) + (crH(d, sd, 96) < 0.5 ? PI : 0), 1, 1, CC[Math.floor(crH(d, sd, 97) * CC.length)]); exclPush(x, z, 2.6); CR.block(x, z, 4.6, 2.2, Math.atan2(tz, tx));
+        } else continue;
+        nStreet++;
+      }
+      // the fans' banners on two poles behind the crowd up the Muur, read from the road
+      const d0 = (nameD('Kapelmuur') || 600) - 10; let side = 1, k = 0;
+      for (let d = d0; d < dC + 20; d += 34, k++) { side = -side;
+        const [x, z, ii] = onSide(sAt(d), side, 6.4); if (excluded(x, z) || nrSlope(x, z) > 1.1) continue;
+        const nx = T.nx[ii] * side, nz = T.nz[ii] * side, y = nrGround(x, z), g = scen.get(x, z);
+        for (const o of [-1.5, 1.5]) cyl(g, x + T.tx[ii] * o, y - 0.2, z + T.tz[ii] * o, 0.035, 3.0, 5, [0.75, 0.7, 0.6]);
+        board(x - nx * 0.04, y + 1.9, z - nz * 0.04, nx, nz, 3.0, 0.75, B0 + 32 + (k % 4)); exclPush(x, z, 1.8); CR.avoid(x, z, 1.2);
+      }
+      // the wayside chapel (kapelleke) at the foot of the Kapelmuur: a little brick shrine, a white niche with the Virgin in blue
+      { const dK = nameD('Kapelmuur') || 600; let best = null;
+        for (const sd of [-1, 1]) for (const dd of [-14, -22, -30]) { const [x, z, ii] = onSide(sAt(dK + dd), sd, 3.6); if (!excluded(x, z) && nrSlope(x, z) < 0.5 && !best) best = { x, z, ii, sd }; }
+        if (best) { const { x, z, ii, sd } = best, y = nrGround(x, z), g = scen.get(x, z), nx = T.nx[ii] * sd, nz = T.nz[ii] * sd, rot = Math.atan2(T.tz[ii], T.tx[ii]);
+          muBoxT(brk.get(x, z), x, y - 0.3, z, 1.5, 2.4, 1.2, rot, [1, 1, 1], 1.4); gable(g, x, y + 2.1, z, 1.7, 1.45, 0.8, rot + PI / 2, [0.22, 0.23, 0.27], [0.6, 0.3, 0.22]);
+          box(g, x - nx * 0.6, y + 0.9, z - nz * 0.6, 0.62, 0.9, 0.06, rot, [0.95, 0.94, 0.9]); cyl(g, x - nx * 0.66, y + 0.95, z - nz * 0.66, 0.11, 0.55, 6, [0.3, 0.45, 0.8], null, 0.07); ico(g, x - nx * 0.66, y + 1.58, z - nz * 0.66, 0.08, 1.1, [0.95, 0.9, 0.84], R, 0);
+          cone(g, x, y + 2.9, z, 0.06, 0.3, 4, [0.85, 0.75, 0.4], [0.85, 0.75, 0.4], 0); exclPush(x, z, 2); CR.avoid(x, z, 1.6); out.marks['Kapelleke'] = [x, z]; nBld++; }
+      }
+      // round the chapel: the gravel path inside the wall, benches under the limes
+      if (chap) { const [cx0, cz0] = chap, gp = new GB(), gr = [0.78, 0.7, 0.56];
+        for (let k = 0; k < 64; k++) { const a0 = k / 64 * TAU, a1 = (k + 1) / 64 * TAU, P2 = (a, r) => { const x = cx0 + Math.cos(a) * r, z = cz0 + Math.sin(a) * r; return [x, nrGround(x, z) + 0.05, z]; };
+          const mx = cx0 + Math.cos((a0 + a1) / 2) * 20.3, mz = cz0 + Math.sin((a0 + a1) / 2) * 20.3; if (nrNear(mx, mz).dd < 1.5) continue;
+          gp.quadUp(P2(a0, 19.6), P2(a0, 21.0), P2(a1, 21.0), P2(a1, 19.6), [gr, gr, gr, gr]); }
+        const pm = addM(gp, new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 })); if (pm) pm.receiveShadow = true;
+        for (let k = 0; k < 6; k++) { const a = k / 6 * TAU + 0.3, x = cx0 + Math.cos(a) * 16.8, z = cz0 + Math.sin(a) * 16.8; if (nrNear(x, z).dd < 1.5 || excluded(x, z)) continue;
+          const y = nrGround(x, z), g = scen.get(x, z), rt = a + PI / 2; box(g, x, y + 0.42, z, 1.8, 0.07, 0.45, rt, [0.5, 0.34, 0.2]); box(g, x + Math.cos(a) * 0.22, y + 0.5, z + Math.sin(a) * 0.22, 1.8, 0.4, 0.06, rt, [0.5, 0.34, 0.2]);
+          for (const e of [-0.75, 0.75]) box(g, x + Math.cos(rt) * e, y, z + Math.sin(rt) * e, 0.08, 0.45, 0.45, rt, [0.14, 0.18, 0.15]); CR.avoid(x, z, 1.2); } }
+    }
+    const nBikes = bikes.addTo(root, true), nCars = cars.addTo(root, true);
+
     /* ---- street lamps along the town's sidewalks (dark green cast iron, a lantern over the road), every ~26 m on alternate sides, behind the fence ---- */
     { const lamps = new IChunks(muLampGeo(), new THREE.MeshLambertMaterial({ vertexColors: true }), 512); let side = 1;
       for (let d = 13; d < L; d += 26) { const s = sAt(d), i = T.idx(s); side = -side; if (!town[i]) continue;
@@ -13517,6 +13625,7 @@ const World = (function () {
       tMat.customProgramCacheKey = () => 'muTreeLeaf'; }
     const tk = [new IChunks(muTreeGeo(0), tMat, 128)];   // near: broadleaf (the birches and the odd spruce drawn as it too, a lighter green: one draw per chunk for phones)
     const tf = [new IChunks(muTreeGeo(1), tMat, 192)];
+    const willow = new IChunks(muWillowGeo(), tMat, 512);
     let nTrees = 0;
     {
       const Lt = NRC * NRT, maxT = Math.round(60000 * dens), CRW = [0.33, 0.2, 0.14];
@@ -13527,6 +13636,14 @@ const World = (function () {
       // the avenue of the Kapelmuur: big beeches and limes either side, just behind the crowd
       { const d0 = (nameD('Kapelmuur') || 600) - 10, d1 = (nameD('Kapel Oudenberg') || 880) + 60;
         for (let d = d0; d < d1; d += 9) for (const sd of [-1, 1]) { const [x, z] = onSide(sAt(d + crH(d, sd, 1) * 4), sd, 6.6 + crH(d, sd, 2) * 3); const hgt = 18 + crH(d, sd, 3) * 8; if (nrSlope(x, z) < 1.4) plant(0, false, x, z, hgt, hgt * 0.72, spring(x, z)); } }
+      for (const Wt of WAT) {   // weeping willows on the Dender's green banks (not along the town's quays)
+        const n = Wt.poly.length; if (Math.hypot((Wt.x0 + Wt.x1) / 2, (Wt.z0 + Wt.z1) / 2) > 900) continue;
+        for (let q = 0; q < n; q++) { const [ax, az] = Wt.poly[q], [bx, bz] = Wt.poly[(q + 1) % n], len = Math.hypot(bx - ax, bz - az);
+          for (let t = 6; t < len; t += 17) { const ux = (bx - ax) / len, uz = (bz - az) / len, px = ax + ux * t, pz = az + uz * t; let nx = -uz, nz = ux; if (inPoly(Wt.poly, px + nx * 2, pz + nz * 2)) { nx = -nx; nz = -nz; }
+            const x = px + nx * (4 + crH(px, pz, 98) * 3), z = pz + nz * (4 + crH(px, pz, 98) * 3); if (crH(px, pz, 99) < 0.35 || nrLCf(x, z, 3) > 0.4 || inWater(x, z, 2.5) || excluded(x, z)) continue;
+            const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 4) continue;
+            const hgt = 11 + crH(px, pz, 100) * 5; willow.add(x, nrGround(x, z) - 0.1, z, crH(x, z, 88) * TAU, hgt * 1.05, hgt, [0.95 + crH(x, z, 101) * 0.1, 1, 0.9]); nrShade(x, z, hgt * 0.5, 0.8); nTrees++; } }
+      }
       if (chap) for (let k = 0; k < 16; k++) { const a = k / 16 * TAU, x = chap[0] + Math.cos(a) * 18.5, z = chap[1] + Math.sin(a) * 18.5; if (nrNear(x, z).dd > 1.8) plant(0, false, x, z, 17 + crH(k, 0, 37) * 4, 12, [0.84, 0.94, 0.84]); }   // the chapel's ring of limes
       for (let tj = 0; tj < G.ntz && nTrees < maxT; tj++) for (let ti = 0; ti < G.ntx && nTrees < maxT; ti++) {
         if (!G.on[tj * G.ntx + ti]) continue;
@@ -13543,6 +13660,7 @@ const World = (function () {
       }
     }
     for (const t of tk) t.addTo(root, true);
+    willow.addTo(root, true);
     for (const t of tf) t.addTo(root, false);
 
     /* ---- the water: the Dender (a slow, dark green river: the sky and the banks mirrored in it, the ripples, the shallows along its waterline) and the
@@ -13574,7 +13692,26 @@ const World = (function () {
             if (marks.bridge && Math.hypot(px - marks.bridge[0], pz - marks.bridge[1]) < 14) continue;
             const top = Math.max(Wt.lev + 1.1, nrGround(px, pz) + 0.55), y0 = Wt.lev - 1.4, sl = len / m + 0.25, rot = Math.atan2(bz - az, bx - ax);
             muBoxT(stn.get(px, pz), px, y0, pz, sl, top - y0, 0.6, rot, [0.6, 0.63, 0.68], 1.6);
-            box(scen.get(px, pz), px, top, pz, sl, 0.14, 0.75, rot, [0.55, 0.56, 0.58], [0.68, 0.69, 0.7], true); }
+            box(scen.get(px, pz), px, top, pz, sl, 0.14, 0.75, rot, [0.55, 0.56, 0.58], [0.68, 0.69, 0.7], true);
+            const ir = [0.1, 0.12, 0.11], g = scen.get(px, pz); cyl(g, px, top + 0.1, pz, 0.035, 1.0, 4, ir); box(g, px, top + 1.02, pz, sl, 0.06, 0.06, rot, ir); box(g, px, top + 0.55, pz, sl, 0.04, 0.04, rot, ir); }   // the iron railing
+        }
+      }
+      // swans and ducks on the Dender in the town, boats moored along the quays
+      { const RW = rng(9631);
+        for (const Wt of WAT) { const cx = (Wt.x0 + Wt.x1) / 2, cz = (Wt.z0 + Wt.z1) / 2; if (Math.hypot(cx, cz) > 700) continue;
+          const area = (Wt.x1 - Wt.x0) * (Wt.z1 - Wt.z0), nB = Math.min(10, Math.round(area / 2500));
+          for (let k = 0, tries = 0; k < nB && tries < 200; tries++) { const x = Wt.x0 + RW() * (Wt.x1 - Wt.x0), z = Wt.z0 + RW() * (Wt.z1 - Wt.z0);
+            if (!inPoly(Wt.poly, x, z) || polyDist(Wt.poly, x, z) < 2.5) continue; k++;
+            const g = scen.get(x, z), a = RW() * TAU, swan = RW() < 0.4, c = swan ? [0.96, 0.96, 0.94] : [0.45, 0.36, 0.26], sc = swan ? 1 : 0.55, hx = Math.cos(a), hz = Math.sin(a);
+            ico(g, x, Wt.lev + 0.08 * sc, z, 0.32 * sc, 0.55, c, RW, 0.05); ouRod(g, [x + hx * 0.2 * sc, Wt.lev + 0.12 * sc, z + hz * 0.2 * sc], [x + hx * 0.32 * sc, Wt.lev + (swan ? 0.62 : 0.3) * sc, z + hz * 0.32 * sc], 0.04 * sc, swan ? c : [0.12, 0.35, 0.18], 4);
+            ico(g, x + hx * 0.36 * sc, Wt.lev + (swan ? 0.64 : 0.33) * sc, z + hz * 0.36 * sc, 0.07 * sc, 1, swan ? c : [0.12, 0.35, 0.18], RW, 0); }
+          for (let k = 0, q = Math.floor(RW() * Wt.poly.length); k < 3; k++, q = (q + 7 + Math.floor(RW() * 9)) % Wt.poly.length) {   // the boats: hulls along a stretch of the bank
+            const [ax, az] = Wt.poly[q], [bx, bz] = Wt.poly[(q + 1) % Wt.poly.length], len = Math.hypot(bx - ax, bz - az); if (len < 7) continue;
+            const ux = (bx - ax) / len, uz = (bz - az) / len; let nx = -uz, nz = ux; if (!inPoly(Wt.poly, (ax + bx) / 2 + nx * 2, (az + bz) / 2 + nz * 2)) { nx = -nx; nz = -nz; }
+            const x = (ax + bx) / 2 + nx * 1.6, z = (az + bz) / 2 + nz * 1.6; if (!inPoly(Wt.poly, x, z) || nrNear(x, z).dd < 2) continue;
+            const g = scen.get(x, z), rot = Math.atan2(uz, ux), hc = [[0.9, 0.9, 0.88], [0.2, 0.3, 0.5], [0.55, 0.15, 0.12]][Math.floor(RW() * 3)], L5 = 4.5 + RW() * 2;
+            box(g, x, Wt.lev - 0.3, z, L5, 0.62, 1.7, rot, hc, [0.5, 0.36, 0.22]); cone(g, x + ux * L5 / 2, Wt.lev - 0.3, z + uz * L5 / 2, 0.85, 0.62, 4, hc, hc, rot + PI / 4);
+            if (RW() < 0.6) box(g, x - ux * 0.6, Wt.lev + 0.32, z - uz * 0.6, 1.6, 0.7, 1.3, rot, [0.92, 0.92, 0.9], [0.3, 0.32, 0.36]); }
         }
       }
       const wm = addM(wg, wMat); if (wm) wm.castShadow = false;
@@ -13615,6 +13752,14 @@ const World = (function () {
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
     spC.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true);
     pkSky({ root, tex, out, sStart, gH: nrGround, far: true });   // the TV helicopter over the race
+    { // confetti over the finish line (the circuit's on the Markt, the climb's at the chapel) when the player's car crosses it: yellow, black, red, white
+      const n = 600, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), vel = new Float32Array(n * 3), CL = [[0.98, 0.84, 0.1], [0.1, 0.1, 0.1], [0.86, 0.14, 0.12], [0.96, 0.96, 0.94]];
+      for (let k = 0; k < n; k++) { const c = CL[k % 4]; col.set(c, k * 3); pos[k * 3 + 1] = -1e4; }
+      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      const pts = new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.16, vertexColors: true, sizeAttenuation: true })); pts.frustumCulled = false; pts.visible = false; root.add(pts);
+      const [fx, fz, , fi] = atS(climb ? sOf(climb, climb.finishS) : sStart, 0);
+      out.dyn.confetti = { pts, pos, vel, n, x: fx, z: fz, y: T.hy[fi] + 7, t0: -1, tp: 0, done: false };
+    }
     /* ---- the sky over Flanders: a dome round the camera (inside its far plane) with fair-weather cumulus drifting from the west; its colours from the
        fog's (the horizon's): a deeper blue overhead, the clouds lit by the day; greyer fog (rain, dusk, night) closes the sky over and darkens it ---- */
     {
@@ -13640,7 +13785,9 @@ const World = (function () {
       root.add(m); out.dyn.skyT = u.uT;
     }
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, buildings: nBld, cut: nCut, gone: nGone, fans: nFans };   // (read by the tests)
+    { out.crowdPts = crowdPoints(out, tex); const P3 = out.crowdPts, d0 = (nameD('Kapelmuur') || 600) - 30, d1 = (nameD('Kapel Oudenberg') || 880) + 30;   // (Sfx: the Muur's crowd the loudest of the lap)
+      for (let k = 0; k < P3.length; k += 3) { const q = nrNear(P3[k], P3[k + 1]); if (q.i >= 0 && inR(dS(q.i * ds), [[d0, d1]])) P3[k + 2] = Math.min(1.5, P3[k + 2] * 1.45); } }
+    out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, buildings: nBld, cut: nCut, gone: nGone, fans: nFans, street: nStreet, bikes: nBikes, cars: nCars };   // (read by the tests)
     return out;
   }
 
@@ -13662,7 +13809,19 @@ const World = (function () {
     if (d.screens) { const f = Math.floor(t / 6) % 4; if (f !== d.screens.f) { d.screens.f = f; d.screens.tex.offset.x = f * 0.25; } }   // Red Bull Ring: the video walls' next picture every 6 s
     if (d.water) { d.water.offset.x = (t * 0.012) % 1; d.water.offset.y = (t * 0.007) % 1; }
     if (d.wind) d.wind.value = t % 1000;
-    if (d.skyT) d.skyT.value = t % 4000;   // (the Kapelmuur's clouds drift)   // the trees sway (Nordschleife, Spa)
+    if (d.skyT) d.skyT.value = t % 4000;   // (the Kapelmuur's clouds drift)
+    if (d.confetti) {   // (the Kapelmuur's finish: a burst as the player's car crosses the line, drifting down for ten seconds)
+      const C = d.confetti, fin = !!(car && car.isPlayer && car.finished);
+      if (fin && !C.done) { C.done = true; C.t0 = t; C.tp = t; for (let k = 0; k < C.n; k++) { const a = Math.random() * TAU, r = Math.random() * 7;
+        C.pos[k * 3] = C.x + Math.cos(a) * r * 0.4; C.pos[k * 3 + 1] = C.y + Math.random() * 1.5; C.pos[k * 3 + 2] = C.z + Math.sin(a) * r * 0.4;
+        C.vel[k * 3] = Math.cos(a) * (1 + Math.random() * 4); C.vel[k * 3 + 1] = 2 + Math.random() * 5; C.vel[k * 3 + 2] = Math.sin(a) * (1 + Math.random() * 4); } C.pts.visible = true; }
+      if (!fin && C.done) { C.done = false; C.pts.visible = false; }
+      if (C.pts.visible) { const dt = Math.min(0.1, Math.max(0, t - C.tp)); C.tp = t;
+        if (t - C.t0 > 12) C.pts.visible = false;
+        else { const P = C.pos, V = C.vel; for (let k = 0; k < C.n; k++) { const j = k * 3; V[j + 1] = Math.max(-0.9 - (k % 5) * 0.12, V[j + 1] - 9.8 * dt); V[j] *= 1 - 0.8 * dt; V[j + 2] *= 1 - 0.8 * dt;
+          P[j] += (V[j] + Math.sin(t * 3 + k) * 0.6) * dt; P[j + 1] += V[j + 1] * dt; P[j + 2] += (V[j + 2] + Math.cos(t * 2.6 + k) * 0.6) * dt; }
+          C.pts.geometry.attributes.position.needsUpdate = true; } }
+    }   // the trees sway (Nordschleife, Spa)
     if (d.clouds) { const n = CLOUD_NP; d.clouds.O.value.set(((t * 3.2 / CLOUD_S) % n + n) % n, ((-t * 2.5 / CLOUD_S) % n + n) % n); }   // the cloud shadows drift with the wind
     if (d.pk) pkUpdate(d.pk, t, car);   // Pikes Peak, Ouninpohja: the TV helicopter
     if (d.pkWx) pkWeatherUpdate(d.pkWx, t, car);   // Pikes Peak: cloud banks, snowfall

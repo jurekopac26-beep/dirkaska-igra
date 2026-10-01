@@ -712,7 +712,7 @@
     const list = $('track-list'), sd = Core.TRACKS.find(d => d.id === S.track);
     $('cmp-row').classList.toggle('off', !(sd && sd.pit && !isTT(sd)));   // (tyres: the circuits with pits)
     list.innerHTML = Core.TRACKS.map(d => { const T = getTrack(d.id), r = rec(d.id), sel = d.id === S.track ? ' sel' : '';
-      const climb = (d.realKm ? ' (pravih ' + String(d.realKm).replace('.', ',') + ' km)' : '') + (d.alt ? ' · vzpon ' + numDot(d.alt[1] - d.alt[0]) + ' m' : '');
+      const climb = (d.realKm ? ' (pravih ' + String(d.realKm).replace('.', ',') + ' km)' : '') + (d.alt ? ' · vzpon ' + numDot(d.alt[1] - d.alt[0]) + ' m' : '') + (d.maxGrade ? ' · do ' + d.maxGrade + ' %' : '');
       const md = modeOf(d);
       let meta = md === 'traffic' ? kmTxt(T.raceLen, 1) + ' km' + climb + ' · dvoboj z enim tekmecem v prometu' + (r.bestRace ? ' · rekord ' + fmt(r.bestRace, true) : '') :
         md === 'police' ? kmTxt(T.raceLen, 1) + ' km' + climb + ' · beg pred policijo' + (r.bestRace ? ' · najhitrejši pobeg ' + fmt(r.bestRace, true) : '') :
@@ -1640,7 +1640,8 @@
     // altitude of the road under the car (not the body, as in the splits table), between start and summit; frozen at the summit after the finish.
     // A stage without altitudes (a rally stage): the distance still to go to the finish, to the nearest 0.1 km (at least 0.1 until the line)
     const al = track.def.alt, alt = track.altAt(P.finished ? track.hy[track.finishIdx] : P.roadY || 0);
-    setText('h-alt', alt != null ? numDot(al ? clamp(alt, al[0], al[1]) : alt) + ' m' : P.finished ? '' : 'še ' + kmTxt(Math.max(100, Math.round(clamp(track.raceLen - Math.max(0, P.dist), 0, track.raceLen) / 100) * 100), 1) + ' km');
+    const gr = track.def.gradeHud && !P.finished && Math.abs(P.gradeNow || 0) >= 0.03 ? ' · ' + Math.round((P.gradeNow || 0) * 100) + ' %' : '';   // (the Kapelmuur's climb: the gradient under the car)
+    setText('h-alt', alt != null ? numDot(al ? clamp(alt, al[0], al[1]) : alt) + ' m' + gr : P.finished ? '' : 'še ' + kmTxt(Math.max(100, Math.round(clamp(track.raceLen - Math.max(0, P.dist), 0, track.raceLen) / 100) * 100), 1) + ' km');
     const cur = P.finished ? P.finishTime : phase === 'racing' ? race.time : 0;
     setText('h-time', fmt(cur, true));
     setText('h-bestv', fmt(R0.bestTime || NaN, true));   // personal best (a new one shows as soon as the run ends)
@@ -1757,6 +1758,7 @@
     if (key <= cornerSeen) return;   // each place once a lap, never again after reversing or a rescue behind it
     if (L[k].hud && splitT > 0.5 && !cornerShow) return;   // a lap time or CP split is up: the name waits (pending) until it clears
     cornerSeen = key;
+    if (L[k].n === 'Kapel Oudenberg' && typeof Sfx !== 'undefined' && Sfx.bell) Sfx.bell(3);   // (the Kapelmuur: the chapel's bell rings as the car comes up to it)
     if (L[k].hud) { const el = $('h-split'); el.textContent = L[k].n.toUpperCase(); el.className = 'show even'; splitT = 2.6; cornerShow = true; }   // (hud false: only said)
     placeSpeak(k, lapN + 1, P);
   }

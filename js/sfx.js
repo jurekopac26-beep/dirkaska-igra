@@ -605,6 +605,19 @@ const Sfx = (function () {
     src.connect(lp); lp.connect(g); g.connect(bus); src.start(now, Math.random()); src.stop(now + 0.5);
   }
   // one of the fans: a whoop (a voice through a vowel-like band, gliding up and back) or, now and then, an air horn
+  // a church bell (the chapel on the Oudenberg as the car comes up the Muur): n strokes of inharmonic partials (hum, prime, tierce, quint,
+  // nominal) dying slowly, the higher ones faster; far off and a little to one side
+  function bell(n, vol) {
+    if (!running || !ctx) return;
+    n = n || 3; vol = vol == null ? 0.08 : vol;
+    const f0 = 392, P = [[0.5, 1, 4.2], [1, 0.8, 3.2], [1.2, 0.5, 2.6], [1.5, 0.35, 2.2], [2, 0.45, 1.6], [2.74, 0.18, 1.0]];
+    const out = ctx.createGain(); out.gain.value = vol; const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3000; out.connect(lp);
+    if (ctx.createStereoPanner) { const pn = ctx.createStereoPanner(); pn.pan.value = 0.25; lp.connect(pn); pn.connect(bus); } else lp.connect(bus);
+    for (let k = 0; k < n; k++) { const t = ctx.currentTime + 0.05 + k * 1.15;
+      for (const [m, a, d] of P) { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.value = f0 * m * (1 + (Math.random() - 0.5) * 0.002);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(a, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+        o.connect(g); g.connect(out); o.start(t); o.stop(t + d + 0.05); } }
+  }
   function cheer(v) {
     if (!running) return;
     const now = ctx.currentTime;
@@ -674,7 +687,7 @@ const Sfx = (function () {
 
   const levels = () => ctx ? { stands: stands.lev, standsGain: stands.out.gain.value, tunnel: tun.send.gain.value, pk: atmo && atmo.x ? { ready: !atmo.gen && !atmo.x.gen, crunch: atmo.x.cr.map(c => +c.g.gain.value.toFixed(4)), slap: atmo.x.sG.gain.value, far: atmo.x.fG.gain.value, gust: atmo.x.wo.gain.value, wind: atmo.wo.gain.value } : null,   // (tests: the crowd's and the tunnel's levels now,
     engine: { kind: eng.kind, wave: eng.o1.type, f: eng.o1.frequency.value, gain: eng.out.gain.value, lope: eng.lopeG.gain.value } } : null;   // Pikes Peak's sounds, the player's engine note)
-  const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, shiftPop, knock, wrench, silence, levels, siren, carHorn, thud, pop, get ready() { return !!ctx && ctx.state === 'running'; } };
+  const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, shiftPop, knock, wrench, silence, levels, siren, carHorn, thud, pop, bell, get ready() { return !!ctx && ctx.state === 'running'; } };
   window.Sfx = api;
   return api;
 })();
