@@ -33,10 +33,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [-1.97, 0.84, 0.25, 0.69, 0.75, 0.905, 0.025, 'b', 0.12],        // the deck behind the glass
           [-1.82, 0.865, 0.24, 0.74, 0.665, 0.925, 0.035, 'gr', 0.12],     // the glass hatch's foot, the hips' tops beside it
           [-1.33, 0.88, 0.22, 0.82, 0.65, 1.07, 0.05, 'gr', 0.13],         // its middle (it bulges); the hips
-          [-0.82, 0.866, 0.2, 0.865, 0.6, 1.155, 0.065, 'r', 0.13],        // the roof's back edge
-          [-0.4, 0.855, 0.19, 0.86, 0.6, 1.165, 0.065, 'r', 0.13],         // the roof's top
-          [-0.05, 0.855, 0.19, 0.855, 0.585, 1.15, 0.06, 'gf', 0.13],      // the windscreen's top
-          [0.62, 0.865, 0.19, 0.815, 0.67, 0.85, -0.02, 'b', 0.13],        // its base (the cowl)
+          [-0.82, 0.866, 0.2, 0.85, 0.6, 1.13, 0.065, 'r', 0.13],          // the roof's back edge
+          [-0.4, 0.855, 0.19, 0.845, 0.6, 1.14, 0.065, 'r', 0.13],         // the roof's top (the two bubbles over it: 1.24)
+          [-0.05, 0.855, 0.19, 0.84, 0.585, 1.125, 0.06, 'gf', 0.13],      // the windscreen's top
+          [0.62, 0.865, 0.19, 0.81, 0.67, 0.85, -0.02, 'b', 0.13],         // its base (the cowl)
           [1.0, 0.88, 0.2, 0.7, 0.81, 0.8, -0.03, 'b', 0.13],              // the bonnet sunk between the wings' crests (cr < 0; shallow over
           [1.4, 0.878, 0.2, 0.69, 0.805, 0.775, -0.04, 'b', 0.13],         //  the wheel, where the arch lifts the loft's middle)
           [1.62, 0.87, 0.2, 0.64, 0.785, 0.755, -0.06, 'b', 0.13],         // the crests at the lamp lids
@@ -49,7 +49,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         crush: { x0: -1.5, x1: 0.18, z: 0.62 },                          // (the roof and the hatch's top: the bubble canopy)
         decalX: 1.2, decalY: 0.752, decalRz: -0.087, decalS: 0.68, decalPart: 'hood' },   // (the start number on the bonnet's sunk middle: the roof's
                                                                          //  double bubble stays in sight from the chase camera)
-      wheels: { style: 'std', spokes: 5, w: 0.225, wR: 0.245, rim: [0.74, 0.75, 0.78], cap: [0.16, 0.16, 0.18], gap: 0.055 },
+      wheels: { style: 'std', spokes: 5, w: 0.225, wR: 0.245, rimK: 0.68, rim: [0.74, 0.75, 0.78], cap: [0.16, 0.16, 0.18], gap: 0.055 },
       // the standard regions; the ducktail (the tail's top behind the glass, and anything over it there) is the 'wing', the glass hatch the trunk
       regions: (std) => std.filter(r => r.part !== 'wing').flatMap(r => r.part !== 'trunk' ? [r]
         : [{ part: 'wing', x: [-2.8, -1.82], bands: ['window', 'edge', 'crown'], y: [0.88, 3] }, Object.assign({}, r, { x: [-1.82, -0.82] })]),
@@ -76,7 +76,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // the double bubble: two low humps over the seats, a channel between them down the middle of the roof
         for (const sd of [-1, 1]) {
           const ring = (x, lift) => [[0.05, -0.004], [0.13, lift], [0.34, lift], [0.48, lift * 0.45], [0.56, -0.004]].map(([z, dy]) => [x, L.topY(x, z) + dy, sd * z]);
-          K.skin([ring(-0.07, 0.008), ring(-0.24, 0.04), ring(-0.6, 0.04), ring(-0.8, 0.01)], P, null, null, { part: 'body' });
+          K.skin([ring(-0.07, 0.008), ring(-0.24, 0.036), ring(-0.6, 0.036), ring(-0.8, 0.01)], P, null, null, { part: 'body' });
         }
         D2.top([[-0.08, -0.06], [-0.79, -0.06], [-0.79, 0.06], [-0.08, 0.06]], K.shade(P, 0.82), 0.003);   // (the channel's floor, in the bubbles' shade)
         // the pop-up lamps, shut: each lid at the front of its wing's crest (its outer edge along the crest), a shade darker, its shut lines
