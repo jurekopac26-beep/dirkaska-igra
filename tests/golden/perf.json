@@ -103,5 +103,12 @@
   "kverts": 589,
   "maxKverts": 766,
   "jsMs": 0.79
+ },
+ "katu": {
+  "calls": 177,
+  "maxCalls": 188,
+  "kverts": 886,
+  "maxKverts": 1191,
+  "jsMs": 0.42
  }
 }
