@@ -9320,12 +9320,23 @@ const World = (function () {
     x.fillStyle = '#efebe2'; x.fillRect(0, 0, S, S);
     for (let k = 0; k < 380; k++) { x.fillStyle = `rgba(${r() < 0.5 ? '60,56,50' : '255,252,244'},${(0.04 + r() * 0.07).toFixed(2)})`; x.fillRect(r() * S, r() * S, 2, 2); }
     x.fillStyle = '#d9d2c4'; x.fillRect(21, 14, 22, 32);   // the frame
-    x.fillStyle = '#3a4250'; x.fillRect(24, 17, 16, 26); x.fillStyle = '#6f7f92'; x.fillRect(25, 18, 6, 10);
+    x.fillStyle = '#323f58'; x.fillRect(24, 17, 16, 26); x.fillStyle = '#6a7d98'; x.fillRect(25, 18, 6, 10);
     x.fillStyle = 'rgba(255,255,255,0.5)'; x.fillRect(31, 17, 1, 26);
     x.fillStyle = '#6b4a2c'; x.fillRect(11, 15, 9, 30); x.fillRect(44, 15, 9, 30);   // the shutters, their boards
     x.fillStyle = 'rgba(0,0,0,0.22)'; for (const q of [12, 45]) for (let y = 17; y < 44; y += 4) x.fillRect(q, y, 7, 1);
     x.fillStyle = '#cfc6b6'; x.fillRect(19, 46, 26, 3);
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return (mvFTex = t);
+  }
+  // the wind in the trees (on top of the cut-out's shader): the crowns sway, the higher the more, each tree in its own rhythm; the unit trees' bend
+  // scaled to metres by the instance's height and width (a 20 m poplar ~0.5 m at the top, a hazel hardly at all; World.update drives uWind)
+  function mvSway(m, W) {
+    const prev = m.onBeforeCompile, key = m.customProgramCacheKey();
+    m.onBeforeCompile = (sh, r) => { prev.call(m, sh, r); sh.uniforms.uWind = W;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uWind;').replace('#include <begin_vertex>', '#include <begin_vertex>\n' +
+        '#ifdef USE_INSTANCING\nfloat wPh = instanceMatrix[3].x * 0.07 + instanceMatrix[3].z * 0.05, wS = length( instanceMatrix[1].xyz ) / max( length( instanceMatrix[0].xyz ), 0.5 );\n#else\nfloat wPh = 0.0, wS = 0.0;\n#endif\n' +
+        'float wK = max( position.y, 0.0 ) * max( position.y, 0.0 ) * 0.024 * wS;\ntransformed.x += wK * sin( uWind * 1.1 + wPh );\ntransformed.z += wK * 0.6 * sin( uWind * 0.83 + wPh * 1.7 );'); };
+    m.customProgramCacheKey = () => key + '|mvSway';
+    return m;
   }
   function mvTreeGeo(kind) {   // unit trees (height 1; the instances scale and tint them): 0 downy oak, 1 Scots pine, 2 ash (lighter, taller), 3 hazel or box (a low
     // mound), 4 walnut (round, by the houses and in the meadows), 5 Norway spruce, 6 poplar (by the river)
@@ -9851,7 +9862,7 @@ const World = (function () {
     /* ---- the trees (instanced per 96 m chunk): downy oaks and Scots pines on the dry slopes, ash in the hollows, hazel and box in the scrub, walnuts round
        the villages and in the meadows, spruces higher up on the shaded side, poplars by the Arc; small and low on the ladder between the legs (the road
        stays in view), right up to the ditch, thinner and bigger farther out ---- */
-    const tMatT = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
+    const tMatT = mvSway(ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut), out.dyn.wind || (out.dyn.wind = { value: 0 }));
     const tk = [0, 1, 2, 3, 4, 5, 6].map(k => new IChunks(mvTreeGeo(k), tMatT, 96));
     let nTrees = 0;
     {
@@ -9929,6 +9940,7 @@ const World = (function () {
     fac.addTo(sceneryGroup, ouCutMat(new THREE.MeshLambertMaterial({ map: mvFacadeTex(), vertexColors: true }), cut), true, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: mvAtlas(cpAlt), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: mvAtlas2(hp), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
+    out.winMaps = [mvFacadeTex()];   // (the houses' windows lit at dusk and night: Render's litWindows)
     crowdFinish(CR, root, out);
     out.crowdPts = crowdPoints(out, tex);   // (the crowds' sound: the Tour's fans on the lacets)
     out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, walls: +(nWall / (2 * N)).toFixed(3), banks: +(nBank / (2 * N)).toFixed(3), rails: +(nRail / (2 * N)).toFixed(3), decals: nDecals, vroads: nVr };   // (read by the tests)

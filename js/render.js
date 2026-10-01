@@ -1742,7 +1742,8 @@ const Render = (function () {
   }
   // puddles on a circuit's tarmac in the rain: along the edges (the water runs off the camber) and now and then in a dip, a sheet of water
   // mirroring the sky (light by day, dark at night: the lights' reflections do the rest), growing in as the road gets wetter and gone when
-  // it dries. One mesh along the whole lap, built the first time the road is wet enough; not on a gravel road (Ouninpohja: its own)
+  // it dries. One mesh along the whole lap, built the first time the road is wet enough; not on a gravel road (Ouninpohja: its own); an open
+  // road only with def.puddles (Montvernier)
   let pudTex = null;
   function puddleTex() {   // four puddle shapes (a 2 x 2 atlas): a ragged edge, a little lighter towards it
     const S = 128, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), img = g.createImageData(S, S), d = img.data;
@@ -1769,7 +1770,7 @@ const Render = (function () {
     const mesh = new THREE.Mesh(g, m); mesh.renderOrder = 1; mesh.matrixAutoUpdate = false; mesh.visible = false; scene.add(mesh); return mesh;
   }
   function puddles(R) {
-    const T = R && R.track, on = !!T && !T.open && T.def.roadSurface !== 'makadam' && !!world && wetW > 0.15;
+    const T = R && R.track, on = !!T && (!T.open || !!T.def.puddles) && T.def.roadSurface !== 'makadam' && !!world && wetW > 0.15;
     if (on && !pud) pud = buildPuddles(T);
     if (!pud) return;
     const k = on ? clamp((wetW - 0.15) / 0.45, 0, 1) : 0, night = atmos.tod === 'night';
@@ -1957,7 +1958,7 @@ const Render = (function () {
     winU.value = atmos.tod === 'night' ? 1 : atmos.tod === 'dusk' ? 0.4 : 0;
     if (!winU.value || !world || !world.root || world.winLit) return;
     world.winLit = true;
-    const maps = [tex.facade, tex.facadeBal].filter(Boolean);
+    const maps = [tex.facade, tex.facadeBal, ...(world.winMaps || [])].filter(Boolean);   // (a world's own facades: Montvernier's houses)
     world.root.traverse(o => { for (const m of o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []) {
       if (!m.map || !maps.includes(m.map) || m.userData.win) continue;
       const prev = m.onBeforeCompile, key = m.customProgramCacheKey(); m.userData.win = true;   // (on top of what the material's shader has already: Ouninpohja's cut-out)

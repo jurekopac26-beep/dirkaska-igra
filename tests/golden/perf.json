@@ -103,5 +103,12 @@
   "kverts": 633,
   "maxKverts": 822,
   "jsMs": 0.78
+ },
+ "montvernier": {
+  "calls": 332,
+  "maxCalls": 412,
+  "kverts": 843,
+  "maxKverts": 1107,
+  "jsMs": 1.99
  }
 }

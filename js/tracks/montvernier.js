@@ -23,7 +23,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     desc: 'Lacets de Montvernier v Savoji: 18 serpentin, naloženih ena nad drugo na skalnem pobočju nad dolino Maurienne, od Pontamafreyja do vasi Montvernier na 787 m. Kot prava, le cesta je širša (12 m), zato so kraki razmaknjeni in lasnice odprte. Dirka s tekmeci ali vzpon proti uri.',
     realKm: 3.4, alt: [501, 787],
     start: [0, 0], finish: [434.9,-1037.8], cps: [[-270.5,-532.1],[-193.4,-684.4],[-101.9,-837.0],[129.1,-981.5]],
-    runoff: 0.27, inner: 2.2, side: 2.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 14,
+    runoff: 0.27, inner: 2.2, side: 2.4, noCurbs: true, noGravel: true, puddles: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 14,
     elev: MV_H.map((h, i) => [i / (MV_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
     medals: { cs: [148,156,167], wet: { cs: [159,167,180] } },

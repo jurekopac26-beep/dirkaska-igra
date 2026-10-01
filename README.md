@@ -77,6 +77,7 @@ Okolica:
 - **Kraji**: hiše Pontamafreyja in Montvernierja stojijo po obrisih iz OpenStreetMap (kamen in omet, rjava lesena polkna, nekatere z lesenim balkonom, sive skrilaste strehe, v dolini tudi opečnate). Tu so še cerkev Saint-Michel v Pontamafreyju, cerkev v Montvernierju s koničastim zvonikom, kapela Notre-Dame de la Balme na robu pečine in bronasti kolesar »Chrono man« ob cesti za startom. Vaški tabli (PONTAMAFREY, MONTVERNIER) sta bele s tankim rdečim robom, turistična tabla lacets pa je rjava.
 - **Dolina**: reka Arc (motna, sivozelena ledeniška voda) z ribniki, železniška proga Maurienne z drogovi vozne mreže, cesta D1006 in avtocesta A43 z varnostnimi ograjami.
 - **Cesta**: asfalt s prekinjeno sredinsko črto. Start z lučmi DÉPART je v Pontamafreyju, modri loki kontrolnih točk so na poti, cilj ARRIVÉE pa v Montvernierju. Pred vsakim lacetom je modra tabla z njegovo številko in višino.
+- **Nova grafika**: drevesa se zibljejo v vetru (višja bolj), ob mraku in ponoči v hišah Pontamafreyja in Montvernierja svetijo okna, v dežju pa so na asfaltu luže ob robovih in v kotanjah.
 
 ## Nürburgring Nordschleife
 
