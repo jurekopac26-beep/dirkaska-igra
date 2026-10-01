@@ -1,4 +1,4 @@
-// The race's extras in the browser: the timing tower, the live TV camera on every track, the simplified distant cars (LOD) and the
+// The race's extras in the browser: DRS on the timing tower, the live TV camera on every track, the simplified distant cars (LOD) and the
 // podium ceremony after the finish.
 //   node tests/browser/extras.test.mjs
 //   ONLY=tower|tv|lod|podium node tests/browser/extras.test.mjs   (one part)
@@ -10,30 +10,28 @@ const browser = await launch();
 const only = process.env.ONLY, part = (k) => !only || only === k;
 const hold = () => { window.__game.pause(); const e = document.querySelector('.screen.show'); if (e) e.style.display = 'none'; };
 try {
-  // ---- the timing tower: every car in a race with rivals, the player's row marked, BOKSI for a car in the pit lane, DRS while open;
-  //      none with the setting off
+  // ---- the timing tower (main's Časovna tabela, tests/browser/tower.test.mjs) with this branch's DRS: a car with its flap open has a green
+  //      DRS in its row; BOKSI for a car in the pit lane
   if (part('tower')) {
     const { page, errors, ctx } = await openGame(browser, srv.base + '/index.html', { quality: 'low', shadows: 0, camera: 'iso' }, { width: 960, height: 900 });
     await startTrack(page, 'suzuka');
     const r = await page.evaluate(async () => {
-      // the race in real time on autopilot (the tower times every car at its loops as it goes); from 10 s one rival held in the pit lane
-      // and one with its DRS flap open (set again after every step: the race would clear them)
-      const g = window.__game, R = g.race, ai = R.cars.filter(c => !c.isPlayer), step = R.step.bind(R);
-      g.autoDrive = true; R.step = (dt) => { step(dt); if (R.time > 10) { ai[2].inPit = true; ai[5].drs = 1; } };
+      // the race in real time on autopilot; from 10 s the second car in the order held in the pit lane and the third with its DRS flap
+      // open (set again after every step: the race would clear them; the first three rows are always on the tower)
+      const g = window.__game, R = g.race, step = R.step.bind(R); let pc = null, dc = null;
+      g.autoDrive = true; R.step = (dt) => { step(dt); if (R.time > 10) { const O = R.order; if (!pc) { pc = O[1].isPlayer ? O[3] : O[1]; dc = O[2].isPlayer ? O[3] : O[2]; } pc.inPit = true; dc.drs = 1; } };
       for (let k = 0; k < 900 && !(g.phase === 'racing' && R.time > 13); k++) await new Promise(r => setTimeout(r, 100));
       g.pause(); R.step = step;
-      const el = document.getElementById('h-tower'), rows = [...el.querySelectorAll('.tr:not(.sep)')];
-      const out = { on: el.className, rows: rows.length, me: rows.filter(x => x.classList.contains('me')).map(x => x.textContent), pit: el.textContent.includes('BOKSI'), drs: !!el.querySelector('.drs'),
-        lead: rows[0] && rows[0].textContent, gaps: rows.slice(1).filter(x => !x.classList.contains('pit')).slice(0, 3).map(x => x.querySelector('.tg').textContent) };
-      ai[2].inPit = false; ai[5].drs = 0;
-      document.querySelector('[data-set="tower"] [data-v="0"]').click(); await new Promise(r => setTimeout(r, 50));
-      out.off = el.className;
-      document.querySelector('[data-set="tower"] [data-v="1"]').click();
+      const el = document.getElementById('h-tower'), rows = [...el.querySelectorAll('.tw-r')];
+      const code = (c) => (String(c.name).split(/[\s.]+/).filter(Boolean).pop() || '?').slice(0, 3).toUpperCase();
+      const row = (c) => rows.find(x => x.querySelector('span') && x.querySelector('span').textContent === code(c));
+      const out = { on: document.getElementById('hud').classList.contains('tw'), rows: rows.length, drs: rows.filter(x => x.querySelector('u')).map(x => x.textContent),
+        drsCar: !!(row(dc) && row(dc).querySelector('u')), pit: !!(row(pc) && /BOKSI/.test(row(pc).textContent)) };
+      pc.inPit = false; dc.drs = 0;
       return out;
     });
-    T.check('timing tower: all 13 cars, the player marked, BOKSI in the pit lane, DRS open, the leader and the gaps behind him',
-      r.on === 'on' && r.rows === 13 && r.me.length === 1 && /TI/.test(r.me[0]) && r.pit && r.drs && /VODI/.test(r.lead) && r.gaps.every(x => /^\+\d/.test(x)), JSON.stringify(r));
-    T.check('timing tower: hidden with the setting off', r.off === '', `class "${r.off}"`);
+    T.check('timing tower: DRS in the row of a car with its flap open (only there), BOKSI for a car in the pit lane',
+      r.on && r.rows >= 3 && r.drsCar && r.drs.length === 1 && r.pit, JSON.stringify(r));
     T.check('no page errors (tower)', errors.length === 0, errors.slice(0, 3).join(' | '));
     await ctx.close();
   }

@@ -1040,7 +1040,7 @@ const Core = (function () {
       if (trk.bank) { trk.bankAt(this.q.s, this.q.d, _bk); this.roadY += _bk.dy; this.bankSl = _bk.sl; }   // a banked corner (the Karussell)
       const ch = Math.cos(this.h), sh = Math.sin(this.h);
       const vl = this.vx * ch + this.vz * sh, vt = -this.vx * sh + this.vz * ch;
-      const spd = Math.hypot(vl, vt), m = M.mass, a = M.a, b = M.b;
+      const spd = Math.hypot(vl, vt), m = M.mass + (this.fuelKg || 0), a = M.a, b = M.b;
       if (trk.hasElev && !this.air) {
         const accSurf = vl * vl * this.curvNow;
         if (spd > 6 && accSurf < -JUMP_G * 0.85) { this.air = 1; this.vy = this.gradeNow * vl; this.airT = 0; }
@@ -1607,6 +1607,28 @@ const Core = (function () {
     return -PIT_FAST * sstep(0.7, 1, pz.t) * (1 - f);
   }
 
+  // the characters (opts.chars): how aggressive the driver is now (in a duel with the player, or the player's standing rival: more); a
+  // careful one waits behind for room to pass (no corner soon) unless much quicker; an aggressive one, with a car close
+  // behind it before a braking zone, covers the inside of the corner (once, held through the braking, not again for a few seconds)
+  const aiAgg = (c) => { const ch = c.chr; return Math.min(1, ch.agg + (ch.duelOn ? 0.2 : 0) + (ch.rival ? 0.15 : 0)); };
+  function aiWaits(c, o, race, v) {
+    const a = aiAgg(c); if (a >= 0.6) return false;
+    const T = race.track, vp = c.vprof || race.vprof, room = vp[T.idx(c.q.s + 50)] >= v - 3 && vp[T.idx(c.q.s + 100)] >= v - 3;
+    return !room && v - Math.max(0, o.vl) < 4 + 8 * (0.6 - a);
+  }
+  function aiDefend(c, race, v) {
+    const ch = c.chr, T = race.track, dt = 0.15; ch.defCool = Math.max(0, ch.defCool - dt);
+    if (ch.defT > 0) { ch.defT -= dt; return ch.defSide; }
+    if (ch.agg + (ch.rival ? 0.15 : 0) < 0.5 || ch.defCool > 0 || v < 15 || c.inPit || c.pitWant || race.state !== 'racing' || (race.fl && race._noPass(c))) return null;   // (a careful one never; nobody under a flag)
+    let chaser = null; for (const o of race.cars) { if (o === c || o.finished || o.inPit) continue; const g = c.dist - o.dist; if (g > 2 && g < 14 && o.vl > v - 1 && Math.abs(o.q.d - c.q.d) < 1.6) { chaser = o; break; } }   // (right behind, not yet alongside)
+    if (!chaser) return null;
+    const vp = c.vprof || race.vprof; let ai = -1, lo = 1e9;
+    for (let d = 30; d <= 110; d += 10) { const i = T.idx(c.q.s + d), w = vp[i]; if (w < lo) { lo = w; ai = i; } }
+    if (!(lo < v - 6) || ai < 0) return null;   // (no braking zone ahead)
+    const inside = Math.sign(T.rl[ai]) * (T.w - 1.6); if (!inside) return null;
+    ch.defSide = clamp(inside - T.rl[c.q.i], -2 * T.w, 2 * T.w); ch.defT = 2.4; ch.defCool = 6;
+    return ch.defSide;
+  }
   const _tfv = {};
   function aiControl(c, race, dt) {
     const T = race.track, M = c.m, A = c.assist;
@@ -1630,16 +1652,17 @@ const Core = (function () {
       c.aiThreat = threat; c.aiGap = tgap;
       if (race.tf) { const P = race.tf.aiPlan(c, v, _tfv); c.tfLo = P.lo; c.tfHi = P.hi; c.tfFol = P.fol; c.tfEdge = P.edge; }   // the open road: the corridor between the traffic, or behind it
       if (threat && race.fl && !(threat.fl && threat.fl.stopT > 0) && (c.sc || race._noPass(c))) { target = c.laneBias; c.passing = 0; }   // (a yellow flag or the safety car: no overtaking, stay in line; a stopped car is passed)
-      else if (threat) {
+      else if (threat && !(c.chr && aiWaits(c, threat, race, v))) {
         const rlHere = T.rl[q.i];
         const oPos = threat.q.d;
         // choose side with more room
         const wq = T.wv && q.i >= 0 ? T.wv[q.i] : T.w, roomL = oPos - (-wq + 1.2), roomR = (wq - 1.2) - oPos;   // (wq: the road's half-width here)
         const side = roomR > roomL ? 1 : -1;
-        const want = oPos + side * (M.aiPass || 3.3);   // (aiPass: the formula passes wider)
+        const want = oPos + side * (M.aiPass || 3.3) * (c.chr ? 1.08 - 0.16 * aiAgg(c) : 1);   // (aiPass: the formula passes wider; an aggressive driver a little closer)
         target = clamp(want - rlHere, -2 * wq, 2 * wq);
         c.passing = 1;
       } else c.passing = 0;
+      if (c.chr && !c.passing) { const d = aiDefend(c, race, v); if (d != null) target = d; }   // (a car close behind before a braking zone: an aggressive one covers the inside)
       c.aiOffT = target;
     }
     c.aiOff += clamp(c.aiOffT - c.aiOff, -3.2 * dt, 3.2 * dt);
@@ -1684,6 +1707,7 @@ const Core = (function () {
     // if displaced from line, be a little more careful
     if (offErr > 2.5) vT *= 0.94;
     if (c.passing) vT *= 1.01;
+    if (c.chr && c.chr.mist > 0) { c.chr.mist -= dt; vT *= c.chr.mk; }   // (a mistake under pressure: in too fast, wide)
     if (c.pitWant && T.def.pit) { const pz = T.pitAt(q.s + v * 0.8 + 6), pn = T.pitAt(q.s);
       if (c.isPlayer && !c.inPit && !pn) { const L = T.len; let dE = T.startS + T.def.pit[1] - q.s; dE = ((dE % L) + L) % L; if (dE < 250) vT = Math.min(vT, Math.sqrt(225 + 14 * dE)); }   // (the autopilot: down to the way in's 15 m/s in good time, braking at 7 m/s^2, no sudden stop for a car behind)
       else if (pz || c.inPit) vT = Math.min(vT, (pz && pz.t < 0.98) || (pn && pn.t < 0.98) ? (c.isPlayer || c.inPit ? 15 : 12) : PIT_V * 0.97); }   // (easy through the S of the way in and out; an AI car slower on the way in)
@@ -1736,6 +1760,13 @@ const Core = (function () {
     if (v < vT - 0.8) thr = 1;
     else if (v < vT + 0.6) thr = 0.45;
     else { thr = 0; brk = clamp((v - vT) / 4.5, 0.15, 1); }
+    if (c.chr && !c.isPlayer) {   // a braking zone begins (once: until back on the throttle): a car under pressure (someone right behind for 4 s) may get it wrong, the more nervous the likelier
+      const ch = c.chr;
+      if (brk > 0.3 && !ch.brk) {
+        ch.brk = true;
+        if (v > 20 && ch.press > 4 && race.chr && race.state === 'racing' && !c.inPit && !c.pitWant && !(race.fl && race._noPass(c)) && Math.random() < ch.err * 0.06) { ch.mist = 1.3; ch.mk = 1.1 + 0.06 * ch.err; ch.press = 0; race._chrEv('mistake', c); }
+      } else if (thr > 0.4) ch.brk = false;
+    }
     // don't stamp on the brakes while turning hard (trail-braking is stable: the slide is the design; an AI car slowly on its way into the pits brakes fully: it drops in behind)
     const pitIn = c.pitWant && !c.inPit && !c.isPlayer && v < 18 && T.pitAt(q.s + 30);
     if (!pitIn) brk *= 1 - 0.3 * Math.min(1, Math.abs(c.inSteer));
@@ -2416,6 +2447,10 @@ const Core = (function () {
      RACE
      --------------------------------------------------------------------- */
   const DRIVER_NAMES = ['M. Kovač', 'T. Hayashi', 'L. Rossi', 'J. Novak', 'K. Weber', 'A. Silva', 'R. Horvat', 'S. Tanaka', 'P. Dubois', 'N. Petek', 'E. Lindqvist', 'G. Moretti', 'D. Zupan', 'H. Kimura', 'F. Keller', 'O. Nieminen', 'B. Kranjc', 'C. Duarte', 'I. Kowalski', 'V. Andersen'];
+  // each driver's character (opts.chars), the same in every race: [agg 0 careful .. 1 aggressive, err 0 cool .. 1 cracks under pressure]
+  const DRIVER_CHAR = [[0.8, 0.2], [0.3, 0.1], [0.9, 0.65], [0.2, 0.3], [0.5, 0.2], [0.85, 0.35], [0.6, 0.55], [0.25, 0.15], [0.55, 0.75], [0.7, 0.4],
+    [0.35, 0.2], [0.75, 0.6], [0.4, 0.45], [0.3, 0.25], [0.65, 0.3], [0.5, 0.65], [0.8, 0.5], [0.45, 0.35], [0.6, 0.25], [0.2, 0.55]];
+  const driverChar = (k) => { const d = DRIVER_CHAR[((k % DRIVER_CHAR.length) + DRIVER_CHAR.length) % DRIVER_CHAR.length]; return { agg: d[0], err: d[1] }; };
   const AI_COLORS = [0xe8e8ee, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xf07a1a, 0x9a2bd8, 0x19b7c7, 0xd81f45, 0xc9c3b0, 0x6b8e23, 0xff5fa2, 0x3b3fa8, 0x8a1c2b, 0x0f5e4e, 0x8ec9e8, 0xb87333, 0x6b737c, 0xb4dc2c, 0xc2187a];
   const CAR_NUMS = [7, 3, 11, 21, 5, 44, 9, 16, 27, 8, 12, 33, 2, 55, 14, 23, 31, 46, 63, 77, 88];   // by grid slot (the player's own number replaces the one of its slot)
   // the AI drivers in grid order (the fastest first): name, car and colour are the same in every race (a championship's standings follow them)
@@ -2443,14 +2478,15 @@ const Core = (function () {
       this.timeTrial = !!((track.def.timeTrial || (opts.tt && !opts.remote && (track.def.modes || []).indexOf('tt') >= 0)) && !opts.noPlayer);
       this._rq = [];   // open road + noPlayer (menu demo): cars that reached the top, waiting for a free spot at the start
       const nAI = this.timeTrial ? 0 : opts.numAI == null ? 12 : opts.numAI;
-      const RM = opts.remote || null;   // online race: the friend's car { model, color, num, name, grid }, driven by the friend's phone
+      const RMS = Array.isArray(opts.remote) ? opts.remote : opts.remote ? [opts.remote] : [];   // online race: the friends' cars { model, color, num, name, grid, id }, each driven by its phone
       // opts.aiOrder: which AI drivers (their roster indices, 0 the fastest) stand on the grid and in what order (after qualifying; one
       // of them alone for its qualifying lap), each with its own skill as in the full roster; default: all of them, the fastest first
       const order = Array.isArray(opts.aiOrder) ? opts.aiOrder.filter((k, j, a) => k >= 0 && k < nAI && a.indexOf(k) === j) : null;
-      const total = (order ? order.length : nAI) + (opts.noPlayer ? 0 : 1) + (RM ? 1 : 0);
+      const total = (order ? order.length : nAI) + (opts.noPlayer ? 0 : 1) + RMS.length;
       this._gridN = total;
       const playerGrid = opts.noPlayer ? -1 : Math.min(total, opts.playerGrid || 12);
-      const remoteGrid = RM ? Math.min(total, RM.grid || total) : -1;
+      const remoteAt = new Map(); for (const r of RMS) remoteAt.set(Math.min(total, r.grid || total), r);
+      Object.defineProperty(this, 'remotes', { value: [], enumerable: false });   // (not in the golden references' digest of the race's plain fields)
       const R = rng(opts.seed || 7);
       // AI roster
       const diff = DIFF[opts.difficulty == null ? 1 : opts.difficulty]; this.diff = diff;
@@ -2459,7 +2495,7 @@ const Core = (function () {
       const aiSpecs = [];
       for (let k = 0; k < nAI; k++) {
         const skill = lerp(diff[1], diff[0], k / Math.max(1, nAI - 1)) + (R() - 0.5) * 0.012;
-        aiSpecs.push(Object.assign({ skill }, aiDriver(k), oneMake ? { model: oneMake } : null));   // (a formula race: the same drivers, in formulas)
+        aiSpecs.push(Object.assign({ skill, rk: k }, aiDriver(k), oneMake ? { model: oneMake } : null));   // (a formula race: the same drivers, in formulas)
       }
       // grid: fastest first
       let ai = 0;
@@ -2468,13 +2504,19 @@ const Core = (function () {
         if (g === playerGrid) {
           c = new Car(opts.playerModel || MODELS[0], { id: g, isPlayer: true, phys: opts.phys, name: 'TI', color: opts.playerColor, assist: opts.assist, upg: opts.playerUpg, setup: opts.playerSetup });
           this.player = c;
-        } else if (g === remoteGrid) {
+        } else if (remoteAt.has(g)) {
+          const RM = remoteAt.get(g);
           c = new Car(RM.model || MODELS[0], { id: g, net: true, phys: opts.phys, name: RM.name || 'Prijatelj', color: RM.color });
-          this.remote = c;
+          c.netOf = { id: RM.id || 'h', num: RM.num || 2 }; this.remotes.push(c);   // (in an object: the golden references digest only the plain fields)
         } else {
           const s = aiSpecs[order ? order[ai++] : ai++];
           c = new Car(s.model, { id: g, name: s.name, color: s.color, skill: s.skill, assist: CSK.aiAssist, phys: opts.phys, laneBias: (R() - 0.5) * 1.6 });
           c.skCap = s.model.id === 'pico' ? 1.0 : CSK.aiSkCap;   // no point pushing a car past what it can hold (the light pico understeers into the walls beyond the line's own pace)
+          if (opts.chars) {   // a character (in an object: the golden references digest only the plain fields); the player's standing rival (opts.rival: its roster index) a touch quicker
+            const d = driverChar(s.rk), rv = opts.rival === s.rk;
+            c.chr = { k: s.rk, agg: d.agg, err: d.err, rival: rv, press: 0, mist: 0, mk: 1, brk: false, defT: 0, defCool: 0, duel: 0, duelOn: false };
+            if (rv) c.skill += 0.012;
+          }
         }
         c.grid = g; c.num = CAR_NUMS[(g - 1) % CAR_NUMS.length]; if (playerGrid > 0 && !c.isPlayer && c.num === opts.playerNum) c.num = CAR_NUMS[(playerGrid - 1) % CAR_NUMS.length];   // (not the player's own number: that car takes the one of the player's slot)
         c.rubber = 1;
@@ -2483,7 +2525,9 @@ const Core = (function () {
         this._placeOnGrid(c, g);
       }
       if (this.player) this.player.num = opts.playerNum || 1;
-      if (this.remote) this.remote.num = RM.num || 2;
+      if (this.remotes.length) this.remote = this.remotes[0];   // (the friend: the first of them)
+      for (const c of this.remotes) c.num = c.netOf.num;
+      if (opts.chars) this.chr = { q: [] };   // the characters' events for the game ({ k, c }, taken by it): 'mistake' (under pressure), 'duel' and 'duelEnd' (with the player)
       // winter (opts.winter): cold tarmac grips a little less (x0.94), a gravel road packed with snow much less (x0.74): on every car's grip and the AI's profile.
       // A newly resurfaced track (def.green = { k, laps }: Mie since 2026): its fresh asphalt grips a little less (x k) until rubber is laid on
       // it, all of it once the cars have driven `laps` laps each on average (see _green); as the winter's, on every car's grip and the AI's profile
@@ -2504,6 +2548,16 @@ const Core = (function () {
       // the race's length), the AI's by the race's length and the grid slot (no random draw); new ones at a stop as the car asks (c.pitCmp) or
       // for what is left of the race
       if (opts.tyres && opts.compounds) { const D = this.laps * track.len; for (const c of this.cars) if (c.ty) c.ty.c = c.isPlayer ? (TYRE_CMP[opts.playerCmp] ? opts.playerCmp : cmpFor(D)) : cmpAI(D, c.grid); }
+      // fuel (opts.fuel, a circuit with pits): every car starts full (c.fuel 1, a share of the tank); a full tank lasts about 1.3 times the track's
+      // usual race at an average throttle (a long race stops for it once, an endurance race more), more on the throttle, less off it; its weight
+      // on the car (c.fuelKg of c.tankKg); refilled at a pit stop (0.9 s a tenth of the tank, with the repair and the tyres); empty: the last
+      // drops, a crawl to the pits. c.fuelPm: what the car burns a metre (its own since it was filled up); c.fuelK: how many laps before the
+      // last one it could make a rival comes in when that costs it no extra stop (0 to 1.5: the stops spread over the laps)
+      if (opts.fuel && track.def.pit && !track.open && !this.timeTrial) {
+        this.fuelRate = 1 / (1.3 * track.len * (track.def.laps || 3) / 38);
+        const tank = (M) => M.ev ? 0 : M.body === 'formula' ? 105 : M.body === 'lm' ? 75 : M.body === 'truck' ? 90 : M.id === 'rally' ? 60 : 45;   // (the electric car: its battery, the same weight full or empty)
+        this.cars.forEach((c, i) => { c.fuel = 1; c.tankKg = tank(c.m); c.fuelKg = c.tankKg; c.fuelD = 0; c.fuelPm = this.fuelRate / 38; c.fuelK = (i % 4) * 0.5; });
+      }
       if (track.drs) this.drsLast = track.drs.map(() => null);   // (per DRS zone: who crossed its detection line last, and when)
       this.sec = { best: [Infinity, Infinity, Infinity] };   // sector times on a circuit without TV sectors (thirds of the lap, see _thirds): the fastest of anyone in this race
       // flags (opts.flags, a closed circuit with rivals): a yellow flag where a car has stopped on the track, the safety car after a heavy
@@ -2520,15 +2574,19 @@ const Core = (function () {
 
     // the pit boxes (def.pitRow: the first and the last one; a box every 10 m where the lane runs full width, at most 13, as the world
     // builds the garages): the player's at def.pit[3], the others go to the other cars in grid order (the renderer paints each garage in
-    // its car's colour). c.pitBox: the box's centre, metres from the start line
+    // its car's colour); with fuel (this.fuelRate: most of the field comes in on the same lap) every other box first, so that cars close
+    // on the road seldom have the boxes side by side (a car whose box behind is taken stops in the fast lane). c.pitBox: the box's centre,
+    // metres from the start line
     _pitBoxes() {
-      const T = this.track, P = T.def.pit, [q0, q1] = T.def.pitRow || [-152, 44], others = this.cars.filter(c => c !== this.player);
-      let n = 0, k = 0;
+      const T = this.track, P = T.def.pit, [q0, q1] = T.def.pitRow || [-152, 44], others = this.cars.filter(c => c !== this.player), B = [];
+      let n = 0;
       for (let q = q0; q <= q1 && n < 13; q += 10) {
         const p = T.pitAt(T.startS + q); if (!p || p.t < 0.999) continue; n++;
         if (this.player && P[3] != null && Math.abs(q + 5 - P[3]) < 1) continue;
-        if (k < others.length) others[k++].pitBox = q + 5;
+        B.push(q + 5);
       }
+      const ord = this.fuelRate ? [...B.filter((b, i) => i % 2 === 0), ...B.filter((b, i) => i % 2)] : B;
+      others.forEach((c, i) => { if (i < ord.length) c.pitBox = ord[i]; });
     }
 
     // online race: a finish time on the clock both phones share, and the order by it. The friend's comes from its phone (once);
@@ -2593,7 +2651,7 @@ const Core = (function () {
       const T = this.track;
       if (this.timeTrial) return 0;
       if (this.opts.qualiBack > 0 && !T.open) return this.opts.qualiBack;   // qualifying: one car, its run-up to a flying lap
-      if (this.opts.remote) return 9;   // online: the two of them side by side on the front row (the same distance to the line)
+      if (this.opts.remote) return 9 + Math.floor((g - 1) / 2) * 7.5;   // online: two of them side by side on the front row (the same distance to the line), two more behind
       if (!T.open) return 9 + (g - 1) * 7.5;
       // a race up an open road (Vršič): the circuits' grid, where the road below the start line leaves room for it
       if (!this.opts.noPlayer && T.startS >= 13 + (this._gridN - 1) * 7.5) return 9 + (g - 1) * 7.5;
@@ -2702,6 +2760,11 @@ const Core = (function () {
       }
       for (const c of cars) {
         if (c.net) continue;   // (the friend's car: placed from the network, see game.js)
+        if (c.fuel != null && this.fuelRate) {   // the fuel burnt (a share of the tank a second), the car lighter; empty: the last drops (a crawl, 40 km/h at most)
+          if (this.state === 'racing' && !c.finished && !c.inPit) c.fuel = Math.max(0, c.fuel - this.fuelRate * (0.3 + 0.9 * clamp(c.inThr, 0, 1)) / 0.975 * dt);
+          c.fuelKg = c.tankKg * c.fuel; if (c.fuel <= 0) c.inThr = c.speed > 11 ? 0 : Math.min(c.inThr, 0.4);
+          const used = c.dist - c.fuelD; if (used > 300) c.fuelPm = (1 - c.fuel) / used;
+        }
         if (c.pitState === 'repair') { c.inThr = 0; c.inBrk = 0; c.inSteer = 0; c.inHand = 0; }   // on the jacks: the mechanics are working (held in place below; no brake, so the gearbox stays in first)
         // steering smoothing
         const target = c.inSteer;
@@ -2772,12 +2835,25 @@ const Core = (function () {
             if (n < 3) c.pitWant = true;
           }
         }
+        if (c.fuel != null && this.fuelRate && !c.isPlayer && !c.net && !c.finished && !c.pitWant && !c.inPit && this.state === 'racing') {   // fuel: a rival that cannot reach the line on what is left
+          const left = this.laps * T.len - c.dist, dE = (((T.startS + T.def.pit[1] - q.s) % T.len) + T.len) % T.len, need = left * c.fuelPm, lap = T.len * c.fuelPm * 1.1;   // comes in at the pit lane's way in on the last lap it
+          if (left > 150 && c.fuel < need * 1.03 && dE > 30 && dE < 90 + c.speed * 4) {   // can still make it round to it again, or up to c.fuelK laps before when the lane is not full and it costs no extra stop
+            const next = c.fuel - (dE + T.len) * c.fuelPm * 1.1;   // (what would be left there a lap on)
+            let n = 0; for (const o of cars) if (!o.isPlayer && o.pitWant && !o.inPit) n++;
+            if (next < 0.12 * lap || (next < c.fuelK * lap && n < 3 && Math.ceil(need * 1.12) <= Math.ceil((need - c.fuel) * 1.12))) c.pitWant = true;
+          }
+        }
         // wrong way
         const fwd = Math.cos(c.h) * q.tx + Math.sin(c.h) * q.tz;
         if (fwd < -0.2 && c.speed > 3) c.wrongT += dt; else c.wrongT = Math.max(0, c.wrongT - dt * 2);
+        // a crowded pit lane (the lap the field comes in for fuel): a car knocked across it in the queue (its nose in a wall or a car, too slow
+        // to steer out: the AI and the autopilot have no reverse gear) is pushed straight by the marshals where it stands, its stop still to come
+        // (a rescue would cost it the stop; the player's car too, spared backing out of the jam)
+        if (c.inPit && !c.net && c.pitState !== 'repair' && c.speed < 1.2 && fwd < 0.85 && (this.state === 'racing' || this.state === 'done')) c.wedgeT = (c.wedgeT || 0) + dt; else if (c.wedgeT) c.wedgeT = 0;   // (the timer only on a car that got knocked across)
+        if (c.wedgeT > 2) { const y = c.y, i = q.i; c.place(c.x, c.z, Math.atan2(q.tz, q.tx)); c.y = c.py = y; c.q.i = i; c.wedgeT = 0; }   // (where it stands: its height and its road sample kept, the autopilot steers from it before the next step)
         // stuck detection (AI auto-rescue)
-        if (!c.locked && (!c.pitState || (c.pitState !== 'repair' && !c.isPlayer)) && c.speed < 1.2 && (this.state === 'racing' || this.state === 'done') && !(T.open && c.finished)) c.stuckT += !c.isPlayer && c.inPit ? dt * 0.2 : dt; else c.stuckT = Math.max(0, c.stuckT - dt);   // (an AI car queuing in the pit lane waits; pulled up past the finish of an open road: not stuck)
-        if (!c.isPlayer && (c.stuckT > 3.5 || c.wrongT > 3) && !(T.open && c.finished)) this.rescue(c);   // (not a car pulled up past the finish of an open road)
+        if (!c.locked && (!c.pitState || (c.pitState !== 'repair' && !c.isPlayer)) && c.speed < 1.2 && (this.state === 'racing' || this.state === 'done') && !(T.open && c.finished)) c.stuckT += !c.isPlayer && (c.inPit || (this.fuelRate && c.pitWant && T.pitAt(q.s))) ? dt * 0.2 : dt; else c.stuckT = Math.max(0, c.stuckT - dt);   // (an AI car queuing in the pit lane waits, with fuel also in its way in behind the queue; pulled up past the finish of an open road: not stuck)
+        if (!c.isPlayer && (c.stuckT > ((c.inPit || c.pitWant) && c.fuel != null ? 12 : 3.5) || c.wrongT > 3) && !(T.open && c.finished)) this.rescue(c);   // (with fuel, in the queue for the pits: a minute, the count slowed above; not a car pulled up past the finish of an open road)
       }
       if (this.grn) this._green(cars.length);
       if (this._rq.length) this._serveRespawn();
@@ -2791,6 +2867,24 @@ const Core = (function () {
       });
       for (let i = 0; i < this.order.length; i++) this.order[i].pos = i + 1;
       if (this.fl) { this._flags(dt); this._limits(dt); }
+      if (this.chr && this.state === 'racing') this._duels(dt);
+    }
+
+    // ---- the characters (opts.chars): a duel with the player (a rival within 25 m for 15 s, not in the start's crowd; over when 80 m
+    // apart or at the line); the pressure on a car with another right behind it, a mistake from it at a braking zone (see aiControl) ----
+    _chrEv(k, c) { const q = this.chr.q; q.push({ k, c }); if (q.length > 24) q.shift(); }
+    _duels(dt) {
+      const P = this.player;
+      for (const c of this.cars) {
+        const ch = c.chr; if (!ch) continue;
+        let near = false; for (const o of this.cars) { if (o === c || o.finished || o.inPit) continue; const g = c.dist - o.dist; if (g > 1 && g < 10 && o.speed > 12) { near = true; break; } }   // (someone right behind)
+        ch.press = near && !c.inPit && !(this.fl && this._noPass(c)) ? ch.press + dt : Math.max(0, ch.press - dt * 0.5);   // (no pressure in the queue behind the safety car or under a yellow flag)
+        if (!P) continue;
+        const gp = Math.abs(c.dist - P.dist), on = !c.finished && !P.finished && !c.inPit && !P.inPit && this.time > 25 && Math.abs(c.pos - P.pos) === 1;   // (the car just ahead of the player or just behind)
+        ch.duel = on && gp < 25 ? ch.duel + dt : Math.max(0, ch.duel - dt * 2);
+        if (!ch.duelOn && ch.duel > 15 && !this.cars.some(o => o.chr && o.chr.duelOn)) { ch.duelOn = true; this._chrEv('duel', c); }   // (one duel at a time)
+        else if (ch.duelOn && (gp > 80 || c.finished || P.finished)) { ch.duelOn = false; ch.duel = 0; this._chrEv('duelEnd', c); }
+      }
     }
 
     // ---- pit lane: 60 km/h limit, the car pulls up at its box, the crew repairs it (time depends on the damage), then off you go ----
@@ -2808,13 +2902,14 @@ const Core = (function () {
         if (c.pitT >= c.pitDur && (c.isPlayer || c.pitFast || !this._pitTraffic(c, pz, c.pitT > c.pitDur + 12))) {   // (tyres: a new set, the ones for the water on the line; slicks of the compound asked for, or for what is left; an AI car is held while the lane is busy, after 12 s only for a car right behind it)
           this.repairCar(c);
           if (c.ty) { c.ty.k = tyreFor(this.wst.line); c.ty.wear = 0; if (c.ty.c) c.ty.c = c.isPlayer && TYRE_CMP[c.pitCmp] ? c.pitCmp : cmpFor(this.laps * T.len - c.dist); }
+          if (c.fuel != null && this.fuelRate) { c.fuel = 1; c.fuelKg = c.tankKg; c.fuelD = c.dist; }   // (fuel: a full tank)
           c.pitState = 'done'; c.pitDone = true; c.pitEv = 'done';
         }
         return;
       }
       let vmax = lim;
       const box = c.isPlayer ? P[3] : c.pitBox;
-      if (!c.pitDone && box != null) {   // pull up at the box: a braking curve that ends right at it
+      if (!c.pitDone && box != null && !c.finished) {   // pull up at the box: a braking curve that ends right at it (a car past the flag drives through: its race is over)
         const L = T.len; let ds = (T.startS + box) - q.s; ds = ((ds % L) + L) % L; if (ds > L / 2) ds -= L;
         if (ds < 40 && ds > -5) {
           const ai = !c.isPlayer, over = q.d - pz.o > 0.3, inLane = !ai || over || c.pitFast || ds < -2.5;   // (an AI car stops once it is over in the working lane, or 2.5 m on at the latest)
@@ -2822,7 +2917,7 @@ const Core = (function () {
           if (!c.pitState) { c.pitState = 'stop'; c.pitEv = 'box'; }
           if (sp < 1.5 + (ai ? 0.3 : 0) && ((Math.abs(ds) < 4 && inLane) || (ai && over && sp < 0.3 && Math.abs(ds) < 7))) {   // (its drive holds ~0.9 m/s against the stop curve at part throttle; an AI car standing in the working lane short of its box is served there)
             let lost = 0; for (const k in c.lost) lost++;
-            c.pitState = 'repair'; c.pitT = 0; c.pitDur = Math.min(5, 1.2 + 3.3 * c.dmg + lost * 0.15); if (c.ty) c.pitDur = Math.max(c.pitDur, 2.6); c.vx = c.vz = 0; c.w = 0; c.pitEv = 'repair';   // (tyres: 2.6 s at least)
+            c.pitState = 'repair'; c.pitT = 0; c.pitDur = Math.min(5, 1.2 + 3.3 * c.dmg + lost * 0.15); if (c.ty) c.pitDur = Math.max(c.pitDur, 2.6); if (c.fuel != null && this.fuelRate) c.pitDur = Math.max(c.pitDur, 1.6 + (1 - c.fuel) * 9); c.vx = c.vz = 0; c.w = 0; c.pitEv = 'repair';   // (tyres: 2.6 s at least)
           }
         }
       }
@@ -2836,7 +2931,7 @@ const Core = (function () {
       const T = this.track;
       for (const o of this.cars) { if (o === c || !o.inPit) continue;
         const po = T.pitAt(o.q.s); if (!po) continue; const g = pz.d - po.d, ob = o.isPlayer ? T.def.pit[3] : o.pitBox;
-        if (g > 0 && g < 12 + (late ? 1.5 : 3) * o.speed && o.pitState !== 'repair' && (o.speed >= 2 || o.pitDone || ob == null || ob > c.pitBox)) return true;
+        if (g > 0 && g < 12 + (late ? 1.5 : 3) * o.speed && o.pitState !== 'repair' && (o.speed >= 2 || o.pitDone || ob == null || ob > c.pitBox) && (!this.fuelRate || o.speed >= 0.4 || g < 8)) return true;   // (with fuel, the field in on the same lap: a car standing still in the queue further back is no reason to wait, it pulls out ahead of it)
         if (!late && g < 0 && g > -14 && (o.speed < 2 || (o.pitState === 'stop' && !o.pitDone))) return true; }
       return false;
     }
@@ -3106,10 +3201,14 @@ const Core = (function () {
      --------------------------------------------------------------------- */
   const CHAMP_PTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1], PLAYER_KEY = 'TI';
   const CHAMPS = [
-    { id: 'domaci', name: 'Domači pokal', desc: 'Štiri kratke proge za začetek: jezero, mesto in makadam.', tracks: ['jezero', 'ljubljana', 'gora', 'riviera'] },
-    { id: 'superstars', name: 'Superstars', desc: 'Proge v slogu Circuit Superstars z boksi in Monako.', tracks: ['gozd', 'toskana', 'grom', 'monaco'] },
-    { id: 'legende', name: 'Legende', desc: 'Pet slavnih prog v pravem merilu: Monako, Spa, Red Bull Ring, Mie in Zeleni pekel.', tracks: ['monaco', 'spa', 'rbring', 'suzuka', 'nring'] },
-    { id: 'veliko', name: 'Veliko prvenstvo', desc: 'Vse krožne proge igre, ena za drugo.', tracks: TRACKS.filter(d => !d.timeTrial && !d.open).map(d => d.id) },
+    { id: 'domaci', name: 'Domači pokal', desc: 'Štiri kratke proge za začetek: jezero, mesto in makadam.', tracks: ['jezero', 'ljubljana', 'gora', 'riviera'],
+      en: { name: 'Home Cup', desc: 'Four short tracks to begin with: a lake, a town and gravel.' } },
+    { id: 'superstars', name: 'Superstars', desc: 'Proge v slogu Circuit Superstars z boksi in Monako.', tracks: ['gozd', 'toskana', 'grom', 'monaco'],
+      en: { desc: 'Tracks in the style of Circuit Superstars with pits, and Monaco.' } },
+    { id: 'legende', name: 'Legende', desc: 'Pet slavnih prog v pravem merilu: Monako, Spa, Red Bull Ring, Mie in Zeleni pekel.', tracks: ['monaco', 'spa', 'rbring', 'suzuka', 'nring'],
+      en: { name: 'Legends', desc: 'Five famous tracks at full scale: Monaco, Spa, the Red Bull Ring, Mie and the Green Hell.' } },
+    { id: 'veliko', name: 'Veliko prvenstvo', desc: 'Vse krožne proge igre, ena za drugo.', tracks: TRACKS.filter(d => !d.timeTrial && !d.open).map(d => d.id),
+      en: { name: 'Grand Championship', desc: 'All the circuits of the game, one after another.' } },
   ];
   const champPoints = (pos) => CHAMP_PTS[pos - 1] || 0;   // (pos 1 = the winner)
   // the standings after the given rounds: [{ key, pts, wins, places: [firsts, seconds, ...], last: the place in the latest round }], leader first
@@ -3146,7 +3245,7 @@ const Core = (function () {
   // the price of an upgrade from level `from` to level `to` (the levels in between too)
   const careerUpgPrice = (from, to) => { let p = 0; for (let l = from + 1; l <= to; l++) p += CAREER.upg[l] || 0; return p; };
 
-  return { G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, DRIVER_NAMES, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF, PIT_FAST, PIT_WORK,
+  return { G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF, PIT_FAST, PIT_WORK,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, CAREER, careerPrize, careerUpgPrice };
 })();
 

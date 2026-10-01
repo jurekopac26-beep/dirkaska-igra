@@ -509,6 +509,28 @@ const World = (function () {
      waterline and on a beach the surf rolling in. The texture's scrolling offset (out.dyn.water) is the clock: every wave turns a whole number
      of times per wrap, so nothing jumps ---------------- */
   const WSKY = { top: { value: new THREE.Color(0.45, 0.62, 0.86) }, hor: { value: new THREE.Color(0.8, 0.86, 0.9) } };
+  // the Eau Rouge brook's water (Spa): iron-red, flowing downstream (faster where the stream is steep), ripples, the sky mirrored in it (a
+  // Fresnel term), white water on the steep runs and by the culverts, a line of ripples along the banks. The uv of its quads: x the place
+  // across (0 .. 1) plus twice ten times the stream's steepness there (whole), y the metres along it
+  function brookMat(U) {
+    const m = new THREE.MeshLambertMaterial({ vertexColors: true });
+    m.onBeforeCompile = (sh) => {
+      sh.uniforms.uT = U.uT; sh.uniforms.uWTop = WSKY.top; sh.uniforms.uWHor = WSKY.hor;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vBr; varying vec3 vBw;')
+        .replace('#include <project_vertex>', '#include <project_vertex>\nvBr = uv; vBw = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uT; uniform vec3 uWTop; uniform vec3 uWHor; varying vec2 vBr; varying vec3 vBw;\n' +
+          'float bh(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); } float bn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(bh(i), bh(i + vec2(1.0, 0.0)), f.x), mix(bh(i + vec2(0.0, 1.0)), bh(i + vec2(1.0, 1.0)), f.x), f.y); }')
+        .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n{ float st = floor(vBr.x * 0.5) / 10.0, u = fract(vBr.x * 0.5) * 2.0, fl = vBr.y - uT * (0.7 + 2.4 * st);' +
+          ' float n1 = bn(vec2(u * 2.2, fl * 0.75)), n2 = bn(vec2(u * 5.0 + 4.0, fl * 2.1 - uT * 0.4)), n = 0.6 * n1 + 0.4 * n2;' +
+          ' vec3 V = normalize(cameraPosition - vBw); float ct = clamp(V.y, 0.0, 1.0), fr = 0.03 + 0.97 * pow(1.0 - ct, 5.0); vec3 sky = mix(uWHor, uWTop, 0.35 + 0.65 * ct);' +
+          ' float edge = smoothstep(0.6, 0.97, abs(u * 2.0 - 1.0)), rip = smoothstep(0.56, 0.86, n) * (0.35 + 0.65 * st + 0.4 * edge);' +
+          ' float foam = clamp(smoothstep(0.3, 0.8, st) * smoothstep(0.42, 0.7, n2) + edge * smoothstep(0.7, 0.92, n1) * 0.5, 0.0, 1.0);' +
+          ' diffuseColor.rgb = mix(diffuseColor.rgb * (1.0 - 0.45 * fr), vec3(0.92, 0.9, 0.84), foam * 0.85);' +
+          ' totalEmissiveRadiance += sky * fr * 0.6 * (1.0 - foam) + vec3(0.9, 0.85, 0.75) * rip * 0.12; }');
+    };
+    m.customProgramCacheKey = () => 'brook1';
+    return m;
+  }
   const W_WAV = [[0.8, 0.6, 3.1, 14, 0.028], [-0.5, 0.87, 1.9, 19, 0.018], [0.97, -0.26, 1.2, 29, 0.01], [-0.9, -0.44, 0.75, 41, 0.006]];   // [direction x, z, length (m), turns per wrap, height (m)]
   // o: color, vc (vertex colours), len (the waves' length: 1 a lake, 2.4 the sea), amp (their steepness), refl (the most of the sky mirrored), land (how much of
   // the view low over the water mirrors the land round it, dark, instead of the sky's horizon: a lake among trees, 0..1), shal (the shallows' paler tint, 0..1),
@@ -11655,10 +11677,12 @@ const World = (function () {
       for (let k = 0; k < def.brook.length - 1; k++) { const [ax, az] = def.brook[k], [bx, bz] = def.brook[k + 1], l = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.ceil(l / 3));
         for (let m = 0; m < n; m++) pts.push([ax + (bx - ax) * m / n, az + (bz - az) * m / n]); }
       pts.push(def.brook[def.brook.length - 1]);
-      const wg = new Chunks(256), bg = new Chunks(256), HW = 1.1, BW = 1.9, mud = [0.36, 0.3, 0.24], mud2 = [0.44, 0.4, 0.3], rust = [0.55, 0.32, 0.18], deep = [0.33, 0.19, 0.12];
+      const wg = new Chunks(256, true), bg = new Chunks(256), HW = 1.1, BW = 1.9, mud = [0.36, 0.3, 0.24], mud2 = [0.44, 0.4, 0.3], rust = [0.55, 0.32, 0.18], deep = [0.33, 0.19, 0.12];
       const under = (x, z) => { const n = nrNear(x, z); return n.i >= 0 && n.dd < 2.5; }, far = (x, z) => nrDist(x, z) > 240;
+      const cul = []; for (let k = 0; k < pts.length - 1; k++) if (under(pts[k][0], pts[k][1]) !== under(pts[k + 1][0], pts[k + 1][1])) cul.push(pts[k]);   // (the culverts' mouths: white water by them)
+      let dist = 0;
       for (let k = 0; k < pts.length - 1; k++) {
-        const [ax, az] = pts[k], [bx, bz] = pts[k + 1], ua = under(ax, az), ub = under(bx, bz);
+        const [ax, az] = pts[k], [bx, bz] = pts[k + 1], ua = under(ax, az), ub = under(bx, bz), d0 = dist; dist += Math.hypot(bx - ax, bz - az);
         if (far(ax, az) || far(bx, bz)) continue;
         if (ua !== ub) {   // a culvert mouth: a concrete headwall across the water where the brook goes under the road
           const [cx, cz] = ua ? [bx, bz] : [ax, az], hd = Math.atan2(bz - az, bx - ax), y = nrGround(cx, cz);
@@ -11667,13 +11691,14 @@ const World = (function () {
         const dx = bx - ax, dz = bz - az, l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l;
         const Pb = (x, z, o, dy) => { const X = x + nx * o, Z = z + nz * o; return [X, nrGround(X, Z) + dy, Z]; };
         const g = wg.get(ax, az), w0 = Pb(ax, az, -HW, 0.07), m0 = Pb(ax, az, 0, 0.07), w1 = Pb(ax, az, HW, 0.07), w2 = Pb(bx, bz, HW, 0.07), m1 = Pb(bx, bz, 0, 0.07), w3 = Pb(bx, bz, -HW, 0.07);
-        g.quadUp(w0, m0, m1, w3, [rust, deep, deep, rust]); g.quadUp(m0, w1, w2, m1, [deep, rust, rust, deep]);   // (the iron-red shallows at the sides, darker in the middle)
+        const st = Math.max(clamp((nrGround(ax, az) - nrGround(bx, bz)) / l / 0.1, 0, 1), cul.some(c => (c[0] - ax) ** 2 + (c[1] - az) ** 2 < 49) ? 0.8 : 0), S2 = 2 * Math.round(st * 10), d1 = d0 + l;   // (steep, or by a culvert: white water)
+        g.quadUp(w0, m0, m1, w3, [rust, deep, deep, rust], [[S2, d0], [S2 + 0.5, d0], [S2 + 0.5, d1], [S2, d1]]); g.quadUp(m0, w1, w2, m1, [deep, rust, rust, deep], [[S2 + 0.5, d0], [S2 + 1, d0], [S2 + 1, d1], [S2 + 0.5, d1]]);   // (the iron-red shallows at the sides, darker in the middle)
         const b = bg.get(ax, az);
         for (const sd of [-1, 1]) b.quadUp(Pb(ax, az, sd * HW, 0.06), Pb(ax, az, sd * BW, 0.05), Pb(bx, bz, sd * BW, 0.05), Pb(bx, bz, sd * HW, 0.06), [mud, mud2, mud2, mud]);
         if (k % 2 === 0) exclPush(ax, az, BW + 0.8);   // (no tree in the water)
         CR.block((ax + bx) / 2, (az + bz) / 2, l + 0.4, BW * 2 + 0.6, Math.atan2(dz, dx));   // (nobody standing in it)
       }
-      wg.addTo(root, new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 80, specular: 0x3c3c3c }), false, true);
+      out.dyn.brook = { uT: { value: 0 } }; wg.addTo(root, brookMat(out.dyn.brook), false, true);
       bg.addTo(root, matV, false, true);
       const bh = new Map(); for (const [x, z] of pts) { const k = Math.floor(x / 16) + ',' + Math.floor(z / 16); let Lc = bh.get(k); if (!Lc) bh.set(k, Lc = []); Lc.push(x, z); }
       inBrook = (x, z, r) => { for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const Lc = bh.get((Math.floor(x / 16) + a) + ',' + (Math.floor(z / 16) + b)); if (Lc) for (let q = 0; q < Lc.length; q += 2) if ((x - Lc[q]) ** 2 + (z - Lc[q + 1]) ** 2 < (r + BW) ** 2) return true; } return false; };
@@ -13763,7 +13788,7 @@ const World = (function () {
     const m = new THREE.Mesh(g, mat); m.frustumCulled = false; m.renderOrder = 50; m.name = 'szHills'; m.userData.U = U;
     const HILL = { day: [0.3, 0.38, 0.46], dusk: [0.2, 0.17, 0.25], night: [0.015, 0.02, 0.035] }, SEA = { day: [0.2, 0.33, 0.43], dusk: [0.26, 0.22, 0.32], night: [0.008, 0.012, 0.026] };
     m.onBeforeRender = (renderer, scene, camera) => {   // (its radius: inside the far plane; the colours for the time of day)
-      const R = typeof Render !== 'undefined' ? Render : null, at = R && R.atmos ? R.atmos : null, tod = at && HILL[at.tod] ? at.tod : 'day', rk = R ? Math.min(1, (R.rainK || 0) * 1.5) : 0;
+      const R = typeof Render !== 'undefined' ? Render : null, at = R && R.atmos ? R.atmos : null, t0 = szTod(), tod = HILL[t0] ? t0 : 'day', rk = R ? Math.min(1, (R.rainK || 0) * 1.5) : 0;
       U.uR.value = Math.min(scene.fog ? scene.fog.far + 10 : 1e9, camera.far * 0.95); if (scene.fog) U.uFogC.value.copy(scene.fog.color);
       const c = HILL[tod], sn = at && at.season === 'winter' && tod === 'day'; U.uHill.value.setRGB(...(sn ? [0.62, 0.66, 0.72] : c)); U.uSea.value.setRGB(...SEA[tod]);
       U.uK.value = (tod === 'night' ? 0.55 : tod === 'dusk' ? 0.5 : 0.42) * (R && R.raining ? 0.35 : 1);
@@ -13801,8 +13826,10 @@ const World = (function () {
     m.rotation.set(clamp(H.al * 0.035, -0.35, 0.35), -H.yaw, -clamp(0.004 * hs + 0.02 * H.ac, -0.12, 0.25));
     H.rotor.rotation.y = (t * 41) % TAU; H.tail.rotation.z = (t * 73) % TAU;
   }
+  // Mie's own colours and lights for the time of day: the morning (Render's 'dawn') as the dusk, a low sun with the lights still on
+  function szTod() { const R = typeof Render !== 'undefined' ? Render : null, t = R && R.atmos ? R.atmos.tod : 'day'; return t === 'dawn' ? 'dusk' : t; }
   function szG4Update(G, t, car, cam, d) {
-    const R = typeof Render !== 'undefined' ? Render : null, tod = R && R.atmos ? R.atmos.tod : 'day', dark = tod === 'night' ? 1 : tod === 'dusk' ? 0.75 : 0, U = G.gU;
+    const R = typeof Render !== 'undefined' ? Render : null, tod = szTod(), dark = tod === 'night' ? 1 : tod === 'dusk' ? 0.75 : 0, U = G.gU;
     const dt = clamp(t - (G.tu == null ? t : G.tu), 0, 0.25); G.tu = t;
     if (d) { const f = car && car.finished; d.podUp = f ? Math.min(5, (d.podUp || 0) + dt * 2.5) : 0; d.podBack = f ? 14 : 0; }   // (after the finish the podium's camera stands 14 m further back and looks up: the sky over the pit building's tower, the helicopter and the fireworks in it)
     U.uT.value = t % 3600; U.uOn.value = dark; if (car) U.uCar.value.set(car.x, car.roadY || 0, car.z); else U.uCar.value.set(1e6, 0, 1e6);
@@ -13945,7 +13972,7 @@ const World = (function () {
     return m;
   }
   function szG5Update(G, t, car, cam) {
-    const R = typeof Render !== 'undefined' ? Render : null, at = R && R.atmos ? R.atmos : { tod: 'day', season: 'summer' }, tod = at.tod, rain = R ? R.rainK || 0 : 0, wetR = R ? R.wetRoad || 0 : 0;
+    const R = typeof Render !== 'undefined' ? Render : null, at = R && R.atmos ? R.atmos : { tod: 'day', season: 'summer' }, tod = szTod(), rain = R ? R.rainK || 0 : 0, wetR = R ? R.wetRoad || 0 : 0;
     const night = tod === 'night', dusk = tod === 'dusk', dark = night ? 1 : dusk ? 0.75 : 0, sd = R && R.sunDir ? R.sunDir : [-0.52, 0.51, 0.46];
     const sc = R && R.scene, fogC = sc && sc.fog ? sc.fog.color : null, camP = cam && cam.isCamera ? cam.position : null;
     G.t = t;
@@ -14641,7 +14668,7 @@ const World = (function () {
           .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += vColor * uGlow;'); };
       wm.customProgramCacheKey = () => 'szWin';
       const m = new THREE.Mesh(winG.geometry(), wm); m.matrixAutoUpdate = false; m.updateMatrix(); m.receiveShadow = true; m.name = 'szWindows';
-      m.onBeforeRender = () => { const R = typeof Render !== 'undefined' ? Render : null, tod = R && R.atmos ? R.atmos.tod : 'day'; U.uGlow.value = tod === 'night' ? 0.78 : tod === 'dusk' ? 0.5 : R && R.raining ? 0.16 : 0; };
+      m.onBeforeRender = () => { const R = typeof Render !== 'undefined' ? Render : null, tod = szTod(); U.uGlow.value = tod === 'night' ? 0.78 : tod === 'dusk' ? 0.5 : R && R.raining ? 0.16 : 0; };
       root.add(m); nWin = m.geometry.attributes.position.count / 6;
     }
 
@@ -15451,6 +15478,7 @@ const World = (function () {
     if (d.screens) { const f = Math.floor(t / 6) % 4; if (f !== d.screens.f) { d.screens.f = f; d.screens.tex.offset.x = f * 0.25; } }   // Red Bull Ring: the video walls' next picture every 6 s
     if (d.water) { d.water.offset.x = (t * 0.012) % 1; d.water.offset.y = (t * 0.007) % 1; }
     if (d.wind) d.wind.value = t % 1000;   // the trees sway (Nordschleife, Spa)
+    if (d.brook) d.brook.uT.value = t % 1000;   // Spa: the Eau Rouge brook flows
     if (d.clouds) { const n = CLOUD_NP; d.clouds.O.value.set(((t * 3.2 / CLOUD_S) % n + n) % n, ((-t * 2.5 / CLOUD_S) % n + n) % n); }   // the cloud shadows drift with the wind
     if (d.pk) pkUpdate(d.pk, t, car);   // Pikes Peak, Ouninpohja: the TV helicopter
     if (d.pkWx) pkWeatherUpdate(d.pkWx, t, car);   // Pikes Peak: cloud banks, snowfall

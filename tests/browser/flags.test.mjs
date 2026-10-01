@@ -18,6 +18,7 @@ try {
     requestAnimationFrame(() => requestAnimationFrame(() => { g.pause(); res(); })); }), t);
 
   await startTrack(page, 'rbring');
+  await page.evaluate(() => { window.__game.autoDrive = true; });   // (the autopilot also in the frames drawn between the steps: a slow machine draws longer ones)
   await sim(30);
 
   // 1. the safety car out (brought out here for the leader), the field behind it, in again, green at the line. (Out when the player has
@@ -68,9 +69,11 @@ try {
   await sim(0.1);
   const p1 = await hud();
   T.check('overtaking under the yellow flag: the countdown on the HUD, the rule told', /^on owe:VRNI MESTO · (9|10)$/.test(p1.flag) && /Spusti ga nazaj pred sabo v 10 sekundah/.test(p1.toast), JSON.stringify(p1));
-  let p2 = null; for (let k = 0; k < 12; k++) { await sim(1); p2 = await hud(); if (p2.pen) break; }
+  // (the place not given back: the car passed is held where it is, as the stopped car above, so that it cannot get past the autopilot
+  // again by itself and so take its place back)
+  let p2 = null; for (let k = 0; k < 12; k++) { await page.evaluate(() => { const A = window.__A; A.vx = A.vz = 0; A.locked = true; }); await sim(1); p2 = await hud(); if (p2.pen) break; }
   T.check('... not given back: "KAZEN +5 s"', p2.pen === 5 && /KAZEN \+5 s/.test(p2.msg), JSON.stringify(p2));
-  await page.evaluate(() => { const g = window.__game, F = g.race.fl; F.yel = F.yel.filter(y => y !== window.__zone); g.pause(); for (let k = 0; k < 150 && g.phase === 'racing'; k++) g.sim(2, true); g.resume(); });   // (the made-up zone gone)
+  await page.evaluate(() => { const g = window.__game, F = g.race.fl; F.yel = F.yel.filter(y => y !== window.__zone); window.__A.locked = false; g.pause(); for (let k = 0; k < 150 && g.phase === 'racing'; k++) g.sim(2, true); g.resume(); });   // (the made-up zone gone)
   await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 120000 });
   const res = await page.evaluate(() => ({ me: document.querySelector('#res-table tr.me').textContent, sub: document.getElementById('res-sub').textContent, pen: window.__game.race.player.fl.pen }));
   T.check('the results: the race time with the penalty (5 s, or more if the autopilot passed under another yellow flag later on)', res.pen >= 5 && res.me.includes('(+' + res.pen + ' s)') && res.sub.includes('s ' + res.pen + ' s kazni'), JSON.stringify(res));
