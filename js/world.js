@@ -6979,6 +6979,9 @@ const World = (function () {
   // 8 school yard, 9 woods, 10 park, 11 stadium, 12 ski slope, 13 wetland; the higher priority wins where they overlap (none: 255, the town's yards;
   // the stadium's running track is mapped as the whole oval: the pitch inside it wins)
   const HJ_PRI = [4, 5, 10, 9, 6, 8, 8, 5, 3, 2, 1, 2, 2, 4];
+  // the town's streets and paths (def.scen.roads, class in the code's top bits): 0 main street, 1 residential, 2 living street, 3 service road, 4 track,
+  // 5 footway, 6 path, 7 cycleway, 8 steps, 9 pedestrian street; their half widths (m)
+  const HJ_RHW = [4.4, 3.2, 2.8, 2.1, 1.5, 1.05, 0.75, 1.2, 1.3, 2.6];
   function hjPrep() {
     const def = T.def, S = def.scen, N = T.N;
     let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
@@ -7006,6 +7009,14 @@ const World = (function () {
     const B = hjI16(S.bld); P.blds = [];
     for (let k = 0; k < B.length;) { const n = B[k], kr = B[k + 1], h = B[k + 2] / 10, poly = []; for (let q = 0; q < n; q++) poly.push([B[k + 3 + q * 2] / 4, B[k + 4 + q * 2] / 4]); k += 3 + n * 2;
       P.blds.push({ kind: kr >> 4, roof: kr & 15, h, poly }); hjFill(poly, (v) => { G.bm[v] = 1; }, 1.2); if (kr >> 4 === 1) hjFill(poly, (v) => { G.gd[v] = 1; }, 12); }   // (gd: the gardens round the houses)
+    // the tarmac streets (sw): the ground under them and just beside them is tarmac (2: no yard shows where the ribbons leave gaps at the junctions),
+    // a strip of verge beyond (1: a mown lawn rather than the yards' gravel and worn grass)
+    G.sw = new Uint8Array(NV);
+    { const RD = hjI16(S.roads);
+      for (let k = 0; k < RD.length;) { const n = RD[k], cls = RD[k + 1] >> 3, surf = RD[k + 1] & 7, a = k + 2; k += 2 + n * 2;
+        if (surf !== 0 || (cls > 3 && cls !== 5 && cls !== 7 && cls !== 9)) continue; const hw = HJ_RHW[cls];
+        for (let q = 0; q < n - 1; q++) { const ax = RD[a + q * 2] / 4, az = RD[a + q * 2 + 1] / 4, bx = RD[a + q * 2 + 2] / 4, bz = RD[a + q * 2 + 3] / 4;
+          hjMarkSeg(ax, az, bx, bz, hw + (cls <= 3 ? 0.8 : 0.3), 2, G.sw); if (cls <= 3) hjMarkSeg(ax, az, bx, bz, hw + 3.5, 1, G.sw); } } }
     // the canopy cover (4 m cells, canopy height classes 0-5: none, 4-9 m ... 24 m and more), runs of (value * 32 + length - 1)
     const C = S.canopy, cr = hjB64(C.rle), cv = P.can = new Uint8Array(C.nx * C.nz); P.C = C;
     for (let p = 0, k = 0; p < cr.length && k < cv.length; p++) { const v = cr[p] >> 5, n = (cr[p] & 31) + 1; cv.fill(v, k, Math.min(cv.length, k + n)); k += n; }
@@ -7017,11 +7028,11 @@ const World = (function () {
     const g = grow || 0, i0 = Math.max(0, Math.ceil((x0 - g - G.x0) / HJC)), i1 = Math.min(G.nx - 1, Math.floor((x1 + g - G.x0) / HJC)), j0 = Math.max(0, Math.ceil((z0 - g - G.z0) / HJC)), j1 = Math.min(G.nz - 1, Math.floor((z1 + g - G.z0) / HJC));
     for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const x = G.x0 + i * HJC, z = G.z0 + j * HJC; if (inPoly(poly, x, z) || (g > 0 && polyDist(poly, x, z) < g)) fn(j * G.nx + i); }
   }
-  // grid vertices within r of the segment a-b -> G.pv (the paved mask: no trees, no crowd there)
-  function hjMarkSeg(ax, az, bx, bz, r, val) {
-    const G = HJ.G, i0 = Math.max(0, Math.ceil((Math.min(ax, bx) - r - G.x0) / HJC)), i1 = Math.min(G.nx - 1, Math.floor((Math.max(ax, bx) + r - G.x0) / HJC)), j0 = Math.max(0, Math.ceil((Math.min(az, bz) - r - G.z0) / HJC)), j1 = Math.min(G.nz - 1, Math.floor((Math.max(az, bz) + r - G.z0) / HJC));
+  // grid vertices within r of the segment a-b -> G.pv (the paved mask: no trees, no crowd there), or the raster M
+  function hjMarkSeg(ax, az, bx, bz, r, val, M) {
+    const G = HJ.G, A = M || G.pv, i0 = Math.max(0, Math.ceil((Math.min(ax, bx) - r - G.x0) / HJC)), i1 = Math.min(G.nx - 1, Math.floor((Math.max(ax, bx) + r - G.x0) / HJC)), j0 = Math.max(0, Math.ceil((Math.min(az, bz) - r - G.z0) / HJC)), j1 = Math.min(G.nz - 1, Math.floor((Math.max(az, bz) + r - G.z0) / HJC));
     const vx = bx - ax, vz = bz - az, l2 = vx * vx + vz * vz || 1;
-    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const x = G.x0 + i * HJC, z = G.z0 + j * HJC, t = clamp(((x - ax) * vx + (z - az) * vz) / l2, 0, 1), dx = x - ax - vx * t, dz = z - az - vz * t; if (dx * dx + dz * dz < r * r) G.pv[j * G.nx + i] = Math.max(G.pv[j * G.nx + i], val); }
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const x = G.x0 + i * HJC, z = G.z0 + j * HJC, t = clamp(((x - ax) * vx + (z - az) * vz) / l2, 0, 1), dx = x - ax - vx * t, dz = z - az - vz * t; if (dx * dx + dz * dz < r * r) A[j * G.nx + i] = Math.max(A[j * G.nx + i], val); }
   }
   function hjFarH(x, z) {   // the far ring (bilinear)
     const P = HJ, F = P.F, gx = clamp((x - F.x0) / F.cell, 0, F.nx - 1.001), gz = clamp((z - F.z0) / F.cell, 0, F.nz - 1.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, W = F.nx, a = P.far;
@@ -7114,7 +7125,9 @@ const World = (function () {
   }
   function hjCol(x, z, ny, k) {   // ground colour at grid vertex k (multiplies the mottled ground map): the town's yards, lawns, the pine forest's floor of needles,
     // moss and sand on the ridge, the gardens, the stadium's pitch and red track, sand pits, bare sand on the steep esker slopes, a trodden verge by the road
-    const P = HJ, G = P.G, t = G.gt[k], m = P.n2(x, z), q = P.n3(x, z), cv = hjCanopy(x, z), dd = G.dd[k];
+    const P = HJ, G = P.G, t = G.gt[k], m = P.n2(x, z), q = P.n3(x, z), cv = hjCanopy(x, z), dd = G.dd[k], sw = G.sw[k];
+    if (sw === 2 && t !== 2 && t !== 3 && t !== 11 && t !== 12 && t !== 13 && !G.bm[k]) {   // under a street and just beside it: its tarmac (as the ribbons over the ground's map)
+      HJCOL[0] = 0.41 + q * 0.03; HJCOL[1] = 0.423 + q * 0.03; HJCOL[2] = 0.443 + q * 0.03; return HJCOL; }
     let r, g, b;
     const lawn = () => { r = 0.33 + m * 0.07 + q * 0.03; g = 0.46 + m * 0.06 + q * 0.03; b = 0.17 + m * 0.03; };
     const floor = () => { r = 0.34 + m * 0.08 + q * 0.04; g = 0.33 + m * 0.06 + q * 0.03; b = 0.2 + m * 0.03;   // needles and sand
@@ -7133,6 +7146,7 @@ const World = (function () {
     else if (t === 10) { lawn(); const f = 0.35 + 0.3 * P.n1(x * 0.8, z * 0.8); r = lerp(r, 0.4, f); g = lerp(g, 0.43, f); b = lerp(b, 0.2, f); }   // (the park's open slopes: a dry esker meadow)
     else if (t === 8) { r = 0.46 + q * 0.05; g = 0.45 + q * 0.04; b = 0.39; const gr = sstep(0.55, 0.75, m) * 0.6; r = lerp(r, 0.34, gr); g = lerp(g, 0.44, gr); b = lerp(b, 0.2, gr); }
     else if (G.gd[k]) { lawn(); const bu = sstep(0.6, 0.75, P.n1(x * 2.3 - 60, z * 2.3)) * 0.7; r = lerp(r, 0.17, bu); g = lerp(g, 0.29, bu); b = lerp(b, 0.1, bu); }   // (the gardens round the wooden houses: lawns, currant and lilac bushes)
+    else if (sw === 1) { lawn(); const f = 0.3 * sstep(0.55, 0.8, P.n1(x * 1.6 + 20, z * 1.6)); r = lerp(r, 0.45, f); g = lerp(g, 0.44, f); b = lerp(b, 0.31, f); }   // (the streets' verges: mown grass, worn in places)
     else { r = 0.47 + q * 0.05; g = 0.45 + q * 0.05; b = 0.4 + q * 0.04;   // the town's yards: gravel, asphalt patches and worn grass
       const gr = sstep(0.5, 0.72, P.n1(x, z)) * 0.75; r = lerp(r, 0.36, gr); g = lerp(g, 0.46, gr); b = lerp(b, 0.2, gr);
       if (cv >= 2) { r *= 0.86; g *= 0.9; b *= 0.84; } }
@@ -7411,7 +7425,7 @@ const World = (function () {
     /* ---- the town's streets and paths (def.scen.roads): where they meet the stage (its verge there is the side street's tarmac, no kerb: 'mouth') ---- */
     const RD = hjI16(S.roads), roads = [];
     for (let k = 0; k < RD.length;) { const n = RD[k], code = RD[k + 1], pts = []; for (let q = 0; q < n; q++) pts.push([RD[k + 2 + q * 2] / 4, RD[k + 3 + q * 2] / 4]); k += 2 + n * 2; roads.push({ cls: code >> 3, surf: code & 7, pts }); }
-    const RHW = [4.4, 3.2, 2.8, 2.1, 1.5, 1.05, 0.75, 1.2, 1.3, 2.6], RLIFT = [0.07, 0.065, 0.06, 0.055, 0.045, 0.04, 0.04, 0.042, 0.04, 0.05];   // (half widths per class; lifts: the bigger street covers the smaller at a junction)
+    const RHW = HJ_RHW, RLIFT = [0.07, 0.065, 0.06, 0.055, 0.045, 0.04, 0.04, 0.042, 0.04, 0.05];   // (half widths per class; lifts: the bigger street covers the smaller at a junction)
     const mouth = [new Uint8Array(N), new Uint8Array(N)];
     const dense = (pts, st) => { const o = []; for (let q = 0; q < pts.length - 1; q++) { const [ax, az] = pts[q], [bx, bz] = pts[q + 1], m = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / st)); for (let t = 0; t < m; t++) o.push([lerp(ax, bx, t / m), lerp(az, bz, t / m)]); } o.push(pts[pts.length - 1]); return o; };
     for (const r of roads) {
@@ -7481,6 +7495,12 @@ const World = (function () {
           const j = i + 1, v0 = i * ds / tileL, v1 = j * ds / tileL, oi = cols(i), oj = cols(j), s = SF[i], gr = s === 5 ? gK : s === 4 ? gP : gA, us = s === 4 ? 2 : tileL;
           for (let c = 0; c < oi.length - 1; c++) { const a0 = oi[c], a1 = oi[c + 1], b0 = oj[c], b1 = oj[c + 1];
             gr.quadUp(Pt(i, a0, 0.02), Pt(i, a1, 0.02), Pt(j, b1, 0.02), Pt(j, b0, 0.02), [shade(i, a0), shade(i, a1), shade(j, b1), shade(j, b0)], [[(a0 + WA[i]) / us, v0 * tileL / us], [(a1 + WA[i]) / us, v0 * tileL / us], [(b1 + WA[j]) / us, v1 * tileL / us], [(b0 + WA[j]) / us, v1 * tileL / us]]); }
+          if (s === 0 && !inChic(i * ds) && crH(T.px[i], T.pz[i], 81) < 0.05) {   // a repair in the tarmac: a trench filled across a lane or the street, or a patch in a lane (fresher, darker asphalt with a grain of its own; now and then an old, paler one)
+            const h2 = crH(T.px[i], T.pz[i], 82), h3 = crH(T.px[i], T.pz[i], 83), wi = WA[i], k = h3 < 0.75 ? 0.8 + 0.07 * h2 : 1.07, C = [k, k, k * 1.01], s0 = i * ds;
+            let o0, o1, l; if (h2 < 0.4) { o0 = -wi + 0.25; o1 = h3 < 0.4 ? wi - 0.25 : 0.1; l = 0.9 + 0.5 * h3; } else { const c = (h3 < 0.5 ? -0.5 : 0.5) * wi + (h2 - 0.7) * 1.2, hw = 0.7 + 0.7 * h2; o0 = c - hw; o1 = c + hw; l = 2 + 4 * h3; }
+            o0 = Math.max(o0, -wi + 0.2); o1 = Math.min(o1, wi - 0.2);
+            const P4 = (sv, o) => { const p = atSf(sv, o), f = Math.min(N - 1.001, sv / ds), i0 = Math.floor(f); return [p[0], lerp(T.hy[i0], T.hy[i0 + 1], f - i0) + 0.028, p[1]]; }, U = (sv, o) => [(o + wi) / tileL + 0.31, sv / tileL + 0.47];
+            for (let sa = s0; sa < s0 + l - 0.01; sa += ds) { const sb = Math.min(s0 + l, sa + ds); gA.quadUp(P4(sa, o0), P4(sa, o1), P4(sb, o1), P4(sb, o0), [C, C, C, C], [U(sa, o0), U(sa, o1), U(sb, o1), U(sb, o0)]); } }
           for (const side of [-1, 1]) {
             const si = side > 0 ? 1 : 0, qi = VP[si][i], qj = VP[si][j], kinds = VK[VT[si][i]] || VK[2];
             for (let k = 0; k < 5; k++) { const a = Pt(i, side * qi[k][0], qi[k][1]), b = Pt(i, side * qi[k + 1][0], qi[k + 1][1]), c = Pt(j, side * qj[k + 1][0], qj[k + 1][1]), d = Pt(j, side * qj[k][0], qj[k][1]), kind = kinds[k];
@@ -7506,6 +7526,30 @@ const World = (function () {
       for (let k = 0; k < PT.length; k += 3) { if (PT[k] !== 4) continue; const x = PT[k + 1] / 2, z = PT[k + 2] / 2, n = hjNear(x, z); if (n.i < 0 || Math.abs(n.lat) > WA[n.i] + 1 || SF[n.i] !== 0) continue;
         const s = n.i * ds; for (let o = -WA[n.i] + 0.6; o < WA[n.i] - 0.5; o += 1.0) { const a = atSf(s - 1.6, o), b = atSf(s - 1.6, o + 0.5), c = atSf(s + 1.6, o + 0.5), d = atSf(s + 1.6, o), y = T.hy[n.i] + 0.045; gm.quadUp([a[0], y, a[1]], [b[0], y, b[1]], [c[0], y, c[1]], [d[0], y, d[1]], [WHT, WHT, WHT, WHT]); }
         out.zebras++; }
+      // manhole covers (in a lane every 30-60 m, down the side streets every 35-55 m), gully grates in the gutters by the kerbs (every 22-34 m), and
+      // give-way teeth across the lane where a street comes up to the stage
+      const IRIM = [0.16, 0.16, 0.17], IRON = [0.26, 0.26, 0.27], GFR = [0.5, 0.5, 0.49], GRT = [0.08, 0.08, 0.09];
+      const disc = (x, y, z, r, col) => { for (let q = 0; q < 10; q++) { const a0 = q * PI / 5, a1 = a0 + PI / 5; gm.triO([x, y, z], [x + Math.cos(a0) * r, y, z + Math.sin(a0) * r], [x + Math.cos(a1) * r, y, z + Math.sin(a1) * r], col, [x, y - 5, z]); } };
+      const manhole = (x, y, z) => { disc(x, y, z, 0.37, IRIM); disc(x, y + 0.004, z, 0.3, IRON); out.manholes++; };
+      const hyS = (sv) => { const f = clamp(sv / ds, 0, N - 1.001), i0 = Math.floor(f); return lerp(T.hy[i0], T.hy[i0 + 1], f - i0); };   // (the road's height between the samples)
+      const rect = (s0, s1, o0, o1, dy, col) => { const a = atSf(s0, o0), b = atSf(s0, o1), c = atSf(s1, o1), d = atSf(s1, o0), y0 = hyS(s0) + dy, y1 = hyS(s1) + dy; gm.quadUp([a[0], y0, a[1]], [b[0], y0, b[1]], [c[0], y1, c[1]], [d[0], y1, d[1]], [col, col, col, col]); };
+      out.manholes = 0; out.grates = 0; out.giveWay = 0;
+      for (let s = Math.max(2, sStart - 30); s < T.len - 6; s += 30 + 30 * crH(s, 1, 85)) { const i = T.idx(s); if (SF[i] !== 0 || inChic(s)) continue;
+        const p = atSf(s, (crH(s, 2, 86) - 0.5) * 2 * (WA[i] - 1.3)); manhole(p[0], hyS(s) + 0.045, p[1]); }
+      for (const side of [-1, 1]) { const si = side > 0 ? 1 : 0;
+        for (let s = Math.max(2, sStart - 30); s < T.len - 6; s += 22 + 12 * crH(s, side, 87)) { const i = T.idx(s); if (SF[i] !== 0 || VT[si][i] !== 4 || inChic(s)) continue;
+          const o = side * (WA[i] - 0.3); rect(s - 0.32, s + 0.32, o - 0.22, o + 0.22, 0.045, GFR); rect(s - 0.25, s + 0.25, o - 0.15, o + 0.15, 0.049, GRT); out.grates++; } }
+      for (const r of roads) { if (r.cls > 2 || r.surf !== 0) continue;
+        const D = r.d, M = D.length, hw = RHW[r.cls], lift = RLIFT[r.cls] + 0.012, near = D.map(([x, z]) => { const n = hjNear(x, z); return n.i >= 0 && Math.abs(n.lat) < WA[n.i] + 0.3; });
+        let run = 0;
+        for (let q = 0; q < M - 1; q++) {
+          if (!near[q] && !near[q + 1] && (run += Math.hypot(D[q + 1][0] - D[q][0], D[q + 1][1] - D[q][1])) > 35 + 20 * crH(D[q][0], D[q][1], 88)) { run = 0; const [x, z] = D[q]; if (!onBld(x, z)) manhole(x, hjGround(x, z) + lift, z); }
+          if (near[q] === near[q + 1] || r.cls > 1) continue;
+          const a = near[q] ? D[q + 1] : D[q], b = near[q] ? D[q] : D[q + 1], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, fx = (b[0] - a[0]) / l, fz = (b[1] - a[1]) / l;   // (coming up to the stage from a to b: the lane on the right, x east and z south)
+          const P = (u, v) => { const x = a[0] - fz * u + fx * v, z = a[1] + fx * u + fz * v; return [x, hjGround(x, z) + lift, z]; };
+          for (let o = 0.2; o + 0.5 < hw - 0.3; o += 0.8) gm.triO(P(o, 0), P(o + 0.5, 0), P(o + 0.25, -0.6), WHT, [a[0], -999, a[1]]);
+          out.giveWay++; }
+      }
       addM(gm, new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }));
     }
 
@@ -7524,7 +7568,7 @@ const World = (function () {
             for (const sd of [-1, 1]) ouRod(g, [ax + nx * sd * hw, ya + 0.95, az + nz * sd * hw], [bx + nx * sd * hw, yb + 0.95, bz + nz * sd * hw], 0.03, [0.2, 0.22, 0.24], 4); }
           continue;
         }
-        const col = kind === 2 ? SC[r.surf] || SC[0] : kind === 1 ? [0.92, 0.9, 0.87] : [0.9, 0.9, 0.92];
+        const col = kind === 2 ? SC[r.surf] || SC[0] : kind === 1 ? [0.92, 0.9, 0.87] : [0.95, 0.95, 0.97];   // (the tarmac as the stage's)
         for (let q = 0; q < M - 1; q++) { if (!keep[q] || !keep[q + 1]) continue;
           const pt = (p, n, o) => { const x = p[0] + n[0] * o, z = p[1] + n[1] * o; return [x, hjGround(x, z) + lift, z]; };
           const a = pt(D[q], L[q], -hw), b = pt(D[q], L[q], hw), c = pt(D[q + 1], L[q + 1], hw), d = pt(D[q + 1], L[q + 1], -hw), us = kind === 1 ? 2 : 7, uv = (p) => [p[0] / us, -p[2] / us];
@@ -7542,7 +7586,7 @@ const World = (function () {
         const P3 = (p) => [p[0], hjGround(p[0], p[1]) + 0.05, p[1]], A = P3(a), B = P3(b), C = P3(c);
         ch.get(mx, mz).triO(A, B, C, col, [mx, Math.min(A[1], B[1], C[1]) - 5, mz], col, col, [A[0] / us, -A[2] / us], [B[0] / us, -B[2] / us], [C[0] / us, -C[2] / us]); };
       for (const ar of P.areas) { if (ar.t !== 5 && ar.t !== 6) continue;
-        const tris = THREE.ShapeUtils.triangulateShape(ar.poly.map(([x, z]) => new THREE.Vector2(x, z)), []), park = ar.t === 5, col = park ? [0.88, 0.88, 0.9] : [0.9, 0.88, 0.84];
+        const tris = THREE.ShapeUtils.triangulateShape(ar.poly.map(([x, z]) => new THREE.Vector2(x, z)), []), park = ar.t === 5, col = park ? [0.93, 0.93, 0.95] : [0.9, 0.88, 0.84];
         for (const [a, b, c] of tris) lay(park ? cA : cP, ar.poly[a], ar.poly[b], ar.poly[c], park ? 7 : 2, col, 0);
         for (let q = 0; q < ar.poly.length; q++) { const a = ar.poly[q], b = ar.poly[(q + 1) % ar.poly.length]; hjMarkSeg(a[0], a[1], b[0], b[1], 1.0, 1); }
         hjFill(ar.poly, (v) => { G.pv[v] = Math.max(G.pv[v], 1); }); }
