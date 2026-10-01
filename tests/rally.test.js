@@ -60,19 +60,26 @@ const dAt = (s) => Math.round(s - T.startS);   // (metres after the start line)
     `dry ${M.cs}, wet ${M.wet.cs}`);
 }
 
-// Harju, the city stage: the road's width and surface by section (tarmac down Yliopistonkatu and back up it, the esker's gravel up the ridge, the
-// school yard's paving stones), the puddles of the rain only on its gravel, the co-driver's calls (the first hairpin, onto the gravel, onto the
-// cobbles, back onto tarmac at Norssi), the barriers on the open road (the concrete blocks between the two carriageways), the medals
+// Harju, the city stage (its 2025/2026 layout): the road's width and surface by section (tarmac down Yliopistonkatu and back up it, the esker's gravel
+// up the ridge, the gravel kink at the stadium's corner and the park's gravel cycleways, the school yard's paving stones), the hairpin by the
+// Keski-Suomen talo at the north end, the puddles of the rain only on its gravel, the co-driver's calls (the first hairpin, onto the gravel, the kink,
+// the two hairpins of the new part, onto the cobbles, back onto tarmac at Norssi), the barriers on the open road (the concrete blocks between the two
+// carriageways), the medals
 {
   const hd = C.TRACKS.find(d => d.id === 'harju'), H = new C.Track(hd), at = (d) => H.idx(H.startS + d), K = (s) => H.sf[at(s)];
-  const wmin = Math.min(...H.wa), wmax = Math.max(...H.wa);
-  check('Harju: the road half width by section (3-5 m), the surfaces: tarmac on the boulevard, gravel up the ridge, paving stones by the school',
-    !!H.wa && wmin >= 2.9 && wmin <= 3.1 && wmax >= 4.7 && K(50) === 0 && K(300) === 0 && K(600) === 5 && K(900) === 0 && K(1900) === 4 && K(2010) === 0,
-    `half width ${wmin.toFixed(2)}-${wmax.toFixed(2)} m, surfaces at 50/300/600/900/1900/2010 m: ${[50, 300, 600, 900, 1900, 2010].map(K).join(',')}`);
+  const wmin = Math.min(...H.wa), wmax = Math.max(...H.wa), D = [50, 300, 600, 900, 1100, 1450, 2050, 2400, 2490];
+  check('Harju: the road half width by section (2.9-4.8 m), the surfaces: tarmac on the boulevard, gravel up the ridge, at the stadium and in the park, paving stones by the school',
+    !!H.wa && wmin >= 2.85 && wmin <= 3.1 && wmax >= 4.7 && D.map(K).join(',') === '0,0,5,0,5,0,5,4,0',
+    `half width ${wmin.toFixed(2)}-${wmax.toFixed(2)} m, surfaces at ${D.join('/')} m: ${D.map(K).join(',')}`);
+  let iN = 0; for (let i = 0; i < H.N; i++) if (H.pz[i] < H.pz[iN]) iN = i;
+  const dN = iN * H.ds - H.startS;
+  check('Harju: 2025/2026: ~2.5 km from the start to the flying finish, the turnaround by the Keski-Suomen talo after ~1.4 km',
+    H.raceLen > 2400 && H.raceLen < 2600 && H.pz[iN] < -520 && dN > 1350 && dN < 1550, `${H.raceLen.toFixed(0)} m, furthest north z ${H.pz[iN].toFixed(0)} at ${dN.toFixed(0)} m`);
   const P = H.puddles, onGravel = P.every(([s]) => H.sf[H.idx(s)] === 5);
   check('Harju: the puddles as many as def.rain asks, only on the gravel', P.length === hd.rain.puddles && onGravel, `${P.length} puddles, on the gravel: ${onGravel}`);
   const N = H.paceNotes(), txt = N.map(n => n.text);
-  check('Harju: the co-driver: the first hairpin left, onto the gravel, onto the cobbles, back onto tarmac, the chicanes', /^hairpin left/.test(txt[0]) && txt.some(x => /hairpin right onto gravel/.test(x)) &&
+  check('Harju: the co-driver: the first hairpin left, onto the gravel, the kink, the new part\'s hairpins, onto the cobbles, back onto tarmac, the chicanes', /^hairpin left/.test(txt[0]) && txt.some(x => /hairpin right onto gravel/.test(x)) &&
+    txt.some(x => /right \w+ onto gravel into left \w+ into right \w+ onto tarmac/.test(x)) && txt.filter(x => /hairpin/.test(x)).length >= 4 &&
     txt.some(x => /onto cobbles/.test(x)) && /onto tarmac/.test(txt[txt.length - 1]) && txt.filter(x => /chicane/.test(x)).length === hd.chicanes.length,
     `${N.length} calls: "${txt[0]}" ... "${txt[txt.length - 1]}"`);
   const i1 = at(60), i2 = at(250);   // (the sprint down and the climb back up: the concrete blocks right at the left edge, the sidewalk's crowd fence on the right)

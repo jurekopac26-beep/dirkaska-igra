@@ -9307,9 +9307,10 @@ const World = (function () {
     }
 
     /* ---- the spectators: the start, the boulevard past the Nero steps, the lane change and the corner onto the gravel, both sides of the climb, round the water
-       tower, down past the stadium, Lasse Lampi's corner, Pitkäkatu, the hairpin at the school and Norssi corner; people on the Nero steps and on the tower's terrace ---- */
-    // nobody behind the concrete blocks between the two carriageways (a car passes on either side), nor on the island round which the hairpin turns (def.hairpin [x, z, r])
-    const HP = def.hairpin, crowdOut = (x, z) => { if (hard(x, z)) return true; if (HP && Math.hypot(x - HP[0], z - HP[1]) < HP[2] + 1.5) return true;
+       tower, down past the stadium, the gravel kink at its corner, the hairpins by the Lyseo school, Pitkäkatu's chicanes, Lasse Lampi's pine, the park, the corner at
+       the school and Norssi corner (def.crowds); people on the Nero steps and on the tower's terrace ---- */
+    // nobody behind the concrete blocks between the two carriageways (a car passes on either side), nor on the islands the hairpins turn round (def.hairpin [[x, z, r], ...])
+    const HP = def.hairpin ? (Array.isArray(def.hairpin[0]) ? def.hairpin : [def.hairpin]) : [], crowdOut = (x, z) => { if (hard(x, z)) return true; for (const h of HP) if (Math.hypot(x - h[0], z - h[1]) < h[2] + 1.5) return true;
       const n = hjNear(x, z); return n.i >= 0 && barType(n.i, n.lat > 0 ? 1 : -1) === 4; };
     // a Finnish summer evening's crowd: blue and white, black rally merchandise, light summer clothes, a few in orange and red
     const SHIRTS = [[0.94, 0.94, 0.92], [0.9, 0.91, 0.92], [0.16, 0.36, 0.78], [0.2, 0.42, 0.86], [0.1, 0.11, 0.13], [0.14, 0.15, 0.17], [0.55, 0.6, 0.66], [0.4, 0.62, 0.85], [0.82, 0.16, 0.13], [0.95, 0.8, 0.2], [0.2, 0.5, 0.3], [0.96, 0.52, 0.12], [0.35, 0.36, 0.38], [0.74, 0.72, 0.62]];
@@ -9429,7 +9430,7 @@ const World = (function () {
       }
     }
 
-    /* ---- knockable straw bale stacks on the outside of the tight corners (the first hairpin, the corner onto the gravel, Lasse Lampi's, Norssi) ---- */
+    /* ---- knockable straw bale stacks on the outside of the tight corners (the first hairpin, the corner onto the gravel, the kink at the stadium, the hairpins by the Lyseo school, the school's corner, Norssi) ---- */
     out.propR = 150;
     out.propFloor = propFloorTable(null, (i, side) => VP[side > 0 ? 1 : 0][i]);
     for (const c of T.corners) { if (c.sev < 3 || c.angle < 1.2) continue; const side = -c.dir, sm = (c.i0 + c.i1) / 2 * ds; if (sm < sStart + 30 || sm > sFin + 20) continue;

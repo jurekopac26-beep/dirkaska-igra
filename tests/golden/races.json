@@ -802,51 +802,51 @@
  "harju/cs": {
   "finished": 1,
   "cars": 1,
-  "winner": 72.84,
-  "spins": 0,
-  "walls": 1,
-  "rescues": 0,
-  "nan": false,
-  "digest": "f6e613c7c9f30e4e3c68cfa4"
- },
- "harju/cs/rain": {
-  "finished": 1,
-  "cars": 1,
-  "winner": 78.79,
-  "spins": 0,
-  "walls": 1,
-  "rescues": 0,
-  "nan": false,
-  "digest": "924015ad748353cf0dae0597"
- },
- "harju/cs/formula": {
-  "finished": 1,
-  "cars": 1,
-  "winner": 68.49,
+  "winner": 90.19,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "5d197c291881cb38b847fa7c"
+  "digest": "e226d7dead5c8913d9308c62"
  },
- "harju/cs/lm": {
+ "harju/cs/rain": {
   "finished": 1,
   "cars": 1,
-  "winner": 69.65,
+  "winner": 97.78,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "6274e02dbedde8551953df67"
+ },
+ "harju/cs/formula": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 85.83,
   "spins": 0,
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "ee01455409a2c91895ea2a96"
+  "digest": "f48d4ea03275e87cb31e6c94"
+ },
+ "harju/cs/lm": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 86.84,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "672114ca9a687df8ec272f77"
  },
  "harju/cs/car": {
   "finished": 1,
   "cars": 1,
-  "winner": 71.33,
+  "winner": 88.51,
   "spins": 0,
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "6c57b52e63bb11c56da4b7a7"
+  "digest": "42eef7fff194ff23448f17ca"
  }
 }

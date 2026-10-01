@@ -217,7 +217,7 @@ try {
     });
     const surf = ['onto gravel', 'onto cobbles', 'onto tarmac'].filter(w => r.notes.some(n => n.includes(w)));
     T.check('Harju stage finishes, record saved for cs, the distance to go on the HUD, a medal on the results, the co-driver\'s calls of the surfaces',
-      r.phase === 'done' && r.rec && r.rec.bestTime > 0 && r.left === 'še 2,0 km' && r.again === 'Ponovi preizkušnjo' && /Harju/.test(r.sub) && /medalja/.test(r.sub) && r.calls >= 8 && surf.length === 3,
+      r.phase === 'done' && r.rec && r.rec.bestTime > 0 && r.left === 'še 2,5 km' && r.again === 'Ponovi preizkušnjo' && /Harju/.test(r.sub) && /medalja/.test(r.sub) && r.calls >= 8 && surf.length === 3,
       `time ${r.t && r.t.toFixed(2)} s, record ${r.rec && r.rec.bestTime}, HUD "${r.left}", button "${r.again}", "${r.sub}", ${r.calls} co-driver calls, surfaces: ${surf.join(', ')}`);
   }
   T.check('no page errors during the whole run', !errors.length, errors.slice(0, 5).join(' | '));
