@@ -70,11 +70,11 @@
   "jsMs": 0.58
  },
  "harju": {
-  "calls": 158,
-  "maxCalls": 179,
-  "kverts": 629,
-  "maxKverts": 733,
-  "jsMs": 0.28
+  "calls": 161,
+  "maxCalls": 178,
+  "kverts": 659,
+  "maxKverts": 755,
+  "jsMs": 0.3
  },
  "nring": {
   "calls": 191,

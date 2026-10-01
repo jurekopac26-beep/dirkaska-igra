@@ -6997,7 +6997,7 @@ const World = (function () {
     // the terrain mesh's grid: 2.5 m over the inner grid's box, in 160 m tiles, on the far ring's grid lines (its edge meets the ring without a crack)
     const D = P.D, G = P.G = { x0: D.x0, z0: D.z0 }; G.ntx = Math.ceil((D.nx - 1) * D.cell / (HJC * HJT)); G.ntz = Math.ceil((D.nz - 1) * D.cell / (HJC * HJT)); G.nx = G.ntx * HJT + 1; G.nz = G.ntz * HJT + 1;
     G.x1 = G.x0 + (G.nx - 1) * HJC; G.z1 = G.z0 + (G.nz - 1) * HJC;
-    const NV = G.nx * G.nz; G.h = new Float32Array(NV).fill(NaN); G.dd = new Float32Array(NV); G.gt = new Uint8Array(NV).fill(255); G.bm = new Uint8Array(NV); G.pv = new Uint8Array(NV);
+    const NV = G.nx * G.nz; G.h = new Float32Array(NV).fill(NaN); G.dd = new Float32Array(NV); G.gt = new Uint8Array(NV).fill(255); G.bm = new Uint8Array(NV); G.pv = new Uint8Array(NV); G.gd = new Uint8Array(NV);
     // rasters on the grid's vertices: the ground type (areas), under a building (bm), under a street, path or car park (pv: set by the builder)
     const pri = new Uint8Array(NV);
     const A = hjI16(S.areas); P.areas = [];
@@ -7005,7 +7005,7 @@ const World = (function () {
       P.areas.push({ t, poly }); hjFill(poly, (v) => { if (HJ_PRI[t] > pri[v]) { pri[v] = HJ_PRI[t]; G.gt[v] = t; } }); }
     const B = hjI16(S.bld); P.blds = [];
     for (let k = 0; k < B.length;) { const n = B[k], kr = B[k + 1], h = B[k + 2] / 10, poly = []; for (let q = 0; q < n; q++) poly.push([B[k + 3 + q * 2] / 4, B[k + 4 + q * 2] / 4]); k += 3 + n * 2;
-      P.blds.push({ kind: kr >> 4, roof: kr & 15, h, poly }); hjFill(poly, (v) => { G.bm[v] = 1; }, 1.2); }
+      P.blds.push({ kind: kr >> 4, roof: kr & 15, h, poly }); hjFill(poly, (v) => { G.bm[v] = 1; }, 1.2); if (kr >> 4 === 1) hjFill(poly, (v) => { G.gd[v] = 1; }, 12); }   // (gd: the gardens round the houses)
     // the canopy cover (4 m cells, canopy height classes 0-5: none, 4-9 m ... 24 m and more), runs of (value * 32 + length - 1)
     const C = S.canopy, cr = hjB64(C.rle), cv = P.can = new Uint8Array(C.nx * C.nz); P.C = C;
     for (let p = 0, k = 0; p < cr.length && k < cv.length; p++) { const v = cr[p] >> 5, n = (cr[p] & 31) + 1; cv.fill(v, k, Math.min(cv.length, k + n)); k += n; }
@@ -7108,13 +7108,18 @@ const World = (function () {
     const d = H[(j + s) * W + i + s]; return d + (1 - u) * (H[(j + s) * W + i] - d) + (1 - v) * (H[j * W + i + s] - d);
   }
   function hjCanopy(x, z) { const C = HJ.C, i = Math.floor((x - C.x0) / C.cell), j = Math.floor((z - C.z0) / C.cell); return i < 0 || j < 0 || i >= C.nx || j >= C.nz ? 0 : HJ.can[j * C.nx + i]; }
+  function hjCanopyS(x, z) {   // the canopy class smoothed (bilinear over the 4 m cells' centres): how much crown is overhead, for the shade on the ground
+    const C = HJ.C, gx = (x - C.x0) / C.cell - 0.5, gz = (z - C.z0) / C.cell - 0.5, i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, at = (a, b) => (a < 0 || b < 0 || a >= C.nx || b >= C.nz ? 0 : HJ.can[b * C.nx + a]);
+    return lerp(lerp(at(i, j), at(i + 1, j), u), lerp(at(i, j + 1), at(i + 1, j + 1), u), v);
+  }
   function hjCol(x, z, ny, k) {   // ground colour at grid vertex k (multiplies the mottled ground map): the town's yards, lawns, the pine forest's floor of needles,
     // moss and sand on the ridge, the gardens, the stadium's pitch and red track, sand pits, bare sand on the steep esker slopes, a trodden verge by the road
     const P = HJ, G = P.G, t = G.gt[k], m = P.n2(x, z), q = P.n3(x, z), cv = hjCanopy(x, z), dd = G.dd[k];
     let r, g, b;
     const lawn = () => { r = 0.33 + m * 0.07 + q * 0.03; g = 0.46 + m * 0.06 + q * 0.03; b = 0.17 + m * 0.03; };
     const floor = () => { r = 0.34 + m * 0.08 + q * 0.04; g = 0.33 + m * 0.06 + q * 0.03; b = 0.2 + m * 0.03;   // needles and sand
-      const mo = sstep(0.45, 0.7, P.n1(x * 1.7 + 30, z * 1.7)) * 0.7; r = lerp(r, 0.25, mo); g = lerp(g, 0.34, mo); b = lerp(b, 0.14, mo); };   // lingonberry and moss
+      const mo = sstep(0.45, 0.7, P.n1(x * 1.7 + 30, z * 1.7)) * 0.7; r = lerp(r, 0.25, mo); g = lerp(g, 0.34, mo); b = lerp(b, 0.14, mo);   // lingonberry and moss
+      const sa = sstep(0.62, 0.8, P.n1(x * 1.3 + 80, z * 1.3 - 40)) * 0.6; r = lerp(r, 0.6, sa); g = lerp(g, 0.53, sa); b = lerp(b, 0.38, sa); };   // bare esker sand
     if (t === 2 || t === 11 || t === 12) { lawn(); const st = 0.5 + 0.5 * Math.sin((x * 0.64 + z * 0.77) * 0.6); r = 0.27 + st * 0.05; g = 0.5 + st * 0.06; b = 0.18; }   // (the pitch: mowing stripes)
     else if (t === 3) { r = 0.62 + q * 0.04; g = 0.3 + q * 0.02; b = 0.23; }
     else if (t === 4) { r = 0.72 + q * 0.05; g = 0.64 + q * 0.04; b = 0.48 + q * 0.03; }
@@ -7124,13 +7129,15 @@ const World = (function () {
     else if (t === 9 || (t === 10 && cv >= 1)) { floor(); if (cv === 1) { r = lerp(r, 0.33, 0.35); g = lerp(g, 0.41, 0.35); b = lerp(b, 0.17, 0.35); } }
     else if (t === 13) { r = 0.26 + m * 0.05; g = 0.3 + m * 0.05; b = 0.16; }
     else if (t === 1) { r = 0.29 + m * 0.07; g = 0.37 + m * 0.06; b = 0.15; }
-    else if (t === 0) { lawn(); if (cv >= 2) { const f = 0.45; r = lerp(r, 0.3, f); g = lerp(g, 0.36, f); b = lerp(b, 0.17, f); } }   // (a lawn under trees: shadier, thinner)
+    else if (t === 0) { lawn(); if (cv >= 1) { const r0 = r, g0 = g, b0 = b, f = cv >= 2 ? 0.75 : 0.5; floor(); r = lerp(r0, r, f); g = lerp(g0, g, f); b = lerp(b0, b, f); } }   // (a lawn under the pines: thin grass, needles, moss)
     else if (t === 10) { lawn(); const f = 0.35 + 0.3 * P.n1(x * 0.8, z * 0.8); r = lerp(r, 0.4, f); g = lerp(g, 0.43, f); b = lerp(b, 0.2, f); }   // (the park's open slopes: a dry esker meadow)
     else if (t === 8) { r = 0.46 + q * 0.05; g = 0.45 + q * 0.04; b = 0.39; const gr = sstep(0.55, 0.75, m) * 0.6; r = lerp(r, 0.34, gr); g = lerp(g, 0.44, gr); b = lerp(b, 0.2, gr); }
+    else if (G.gd[k]) { lawn(); const bu = sstep(0.6, 0.75, P.n1(x * 2.3 - 60, z * 2.3)) * 0.7; r = lerp(r, 0.17, bu); g = lerp(g, 0.29, bu); b = lerp(b, 0.1, bu); }   // (the gardens round the wooden houses: lawns, currant and lilac bushes)
     else { r = 0.47 + q * 0.05; g = 0.45 + q * 0.05; b = 0.4 + q * 0.04;   // the town's yards: gravel, asphalt patches and worn grass
       const gr = sstep(0.5, 0.72, P.n1(x, z)) * 0.75; r = lerp(r, 0.36, gr); g = lerp(g, 0.46, gr); b = lerp(b, 0.2, gr);
       if (cv >= 2) { r *= 0.86; g *= 0.9; b *= 0.84; } }
     if (G.bm[k]) { r = lerp(r, 0.38, 0.7); g = lerp(g, 0.37, 0.7); b = lerp(b, 0.35, 0.7); }   // (round the buildings: their paved edges)
+    if (t !== 2 && t !== 3 && t !== 5 && t !== 6 && t !== 11) { const sh = 1 - 0.16 * Math.min(1, hjCanopyS(x, z) / 2.5); r *= sh; g *= sh; b *= sh * 0.98; }   // (the shade under the crowns)
     const st = sstep(0.8, 0.6, ny) * (t === 5 || t === 6 ? 0 : 0.75); r = lerp(r, 0.63 + m * 0.05, st); g = lerp(g, 0.55 + m * 0.04, st); b = lerp(b, 0.4, st);   // the esker's sand where it is steep
     if (dd < 4) { const f = sstep(4, 0.5, dd) * 0.35; r = lerp(r, 0.44, f); g = lerp(g, 0.42, f); b = lerp(b, 0.33, f); }   // trodden by the crowds right behind the barriers
     HJCOL[0] = r; HJCOL[1] = g; HJCOL[2] = b; return HJCOL;
@@ -7425,7 +7432,12 @@ const World = (function () {
         const k = (1.0 - 0.08 * trk - 0.05 * sstep(wi - 0.8, wi, ao)) * (0.95 + 0.08 * P.n2(T.px[i] * 0.5, T.pz[i] * 0.5)); return [k, k, k * 1.01]; };
       const KC = [0.64, 0.64, 0.62], KT = [0.72, 0.72, 0.7], WH = [1, 1, 1];
       const vCol = (i, side, k, kind) => { if (k === 5) { const q = side * VP[side > 0 ? 1 : 0][i][5][0]; return hjGCol(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q); }
-        if (kind === 1) return k === 1 ? KT : KC; if (kind === 2) { const m = P.n3(T.px[i] * 2, T.pz[i] * 2); return [0.33 + m * 0.06, 0.45 + m * 0.05, 0.18]; } if (kind === 5) return [grav[0] * 0.98, grav[1] * 0.98, grav[2] * 0.98];
+        if (kind === 1) return k === 1 ? KT : KC;
+        if (kind === 2) {   // the grass verge: the ground's own colour (the park's needles and sand, a town lawn), worn bare along the road's edge and behind the barrier
+          const si = side > 0 ? 1 : 0, o = VP[si][i][k][0], q = side * o, c = hjGCol(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q), bar = side > 0 ? T.br[i] : T.bl[i];
+          const wear = 0.42 * sstep(WA[i] + 1.2, WA[i] + 0.2, o) + 0.25 * sstep(1.4, 0.2, Math.abs(o - bar)), m = P.n3(T.px[i] * 2 + o, T.pz[i] * 2);
+          return [lerp(c[0], 0.47 + m * 0.05, wear), lerp(c[1], 0.43 + m * 0.04, wear), lerp(c[2], 0.31, wear)]; }
+        if (kind === 5) return [grav[0] * 0.98, grav[1] * 0.98, grav[2] * 0.98];
         if (kind === 4) return [0.9, 0.88, 0.85]; return [0.96, 0.96, 0.97]; };
       const vuv = (p) => [p[0] / 2, -p[2] / 2], vuvA = (p) => [p[0] / tileL, -p[2] / tileL];
       for (let c0 = 0; c0 < N - 1; c0 += 100) {
@@ -7604,7 +7616,7 @@ const World = (function () {
 
     /* ---- the stage's edges on race day: straw bales where the barrier stands on the street itself (the chicanes, the lane change), the steel crowd
        barriers along the town's streets, the orange mesh fence in the park; a KIELLETTY ALUE board and a marshal where a side street is closed ---- */
-    const fGB = new Chunks(110, true), spG = new Chunks(200, true), bales = [], STRAW = [0.84, 0.7, 0.4], STRAWT = [0.9, 0.78, 0.48];
+    const fGB = new Chunks(220, true), spG = new Chunks(200, true), bales = [], STRAW = [0.84, 0.7, 0.4], STRAWT = [0.9, 0.78, 0.48];
     const barType = (i, side) => { const si = side > 0 ? 1 : 0, bar = side > 0 ? T.br[i] : T.bl[i]; if (bar - WA[i] < 0.45) return 4; if (bar - WA[i] < 1.3) return 1; const t = VT[si][i]; return t === 4 || t === 0 ? 2 : 3; };   // 1 bales, 2 steel barriers, 3 mesh fence, 4 concrete blocks
     const hard = (x, z) => onBld(x, z) || excluded(x, z), blk = new Map(), blkNear = (x, z) => { const cx = Math.floor(x), cz = Math.floor(z); for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const L = blk.get((cx + a) + ',' + (cz + b)); if (L) for (let q = 0; q < L.length; q += 2) if ((L[q] - x) ** 2 + (L[q + 1] - z) ** 2 < 0.8) return true; } return false; };
     const CONC = [0.62, 0.62, 0.6], CONCT = [0.7, 0.7, 0.68];
@@ -7720,7 +7732,7 @@ const World = (function () {
        streets and yards) at its measured height, and where the canopy is closed a fill of the same kind (instanced per 128 m chunk) ---- */
     const tMat = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
     const TK = {}, TKF = {}; for (const k of [0, 1, 2, 4]) TK[k] = new IChunks(hjTreeGeo(k), tMat, k === 1 ? 128 : 192);   // (the pines, most of the trees, in 128 m chunks: the view and the sun's shadow box draw fewer of them outside)
-    TKF[1] = TKF[0] = new IChunks(hjTreeGeo(1, true), tMat, 128); TKF[4] = TKF[2] = new IChunks(hjTreeGeo(4, true), tMat, 128);   // (over 50 m from the road: the plain pine and the plain broadleaf, casting no shadow)
+    TKF[1] = TKF[0] = new IChunks(hjTreeGeo(1, true), tMat, 256); TKF[4] = TKF[2] = new IChunks(hjTreeGeo(4, true), tMat, 256);   // (over 50 m from the road: the plain pine and the plain broadleaf, casting no shadow)
     let nTrees = 0; const tHash = new Map(), THC = 4;   // (the planted trees in 4 m cells: the fill keeps 3.4 m from them)
     const treeOK = (x, z) => { if (onBld(x, z) || onPaved(x, z) || excluded(x, z)) return false; const n = hjNear(x, z); return !(n.i >= 0 && n.dd < 1.2); };
     const plant = (x, z, h, sp, r1, r2) => {
@@ -7742,6 +7754,50 @@ const World = (function () {
         plant(x, z, HK[c] * (0.85 + r1 * 0.3), sp, r2, r3); }
     }
     for (const t of Object.values(TK)) t.addTo(root, true); TKF[1].addTo(root, false); TKF[4].addTo(root, false);
+
+    /* ---- low plants (their own chunks, casting no shadow; as Ouninpohja's): grass tufts on the verges and the banks, the esker's late-July flowers (pink
+       fireweed along the forest edge, cream yarrow, blue harebells), bilberry, lingonberry and heather on the floor of the pine forest ---- */
+    {
+      const RV = rng(8161), grassC = [[0.3, 0.37, 0.14], [0.36, 0.4, 0.16], [0.43, 0.43, 0.2], [0.5, 0.47, 0.25]], tipC = [0.62, 0.6, 0.36];
+      const tri = (g, a, b, c, ca, cb, cc) => g.triN(a, b, c, UPN, UPN, UPN, ca, cb || ca, cc || ca);
+      const blade = (g, x, y, z, h, a, lean, bw, c0, c1) => { const ca = Math.cos(a), sa = Math.sin(a); tri(g, [x - sa * bw, y, z + ca * bw], [x + sa * bw, y, z - ca * bw], [x + ca * h * lean, y + h, z + sa * h * lean], c0, c0, c1); };
+      const tuft = (g, x, y, z, h) => { const c0 = grassC[Math.floor(RV() * grassC.length)]; for (let k = 0; k < 3; k++) blade(g, x, y, z, h * (0.7 + RV() * 0.5), RV() * TAU, 0.2 + RV() * 0.3, 0.05 + RV() * 0.04, c0, tipC); };
+      const spike = (g, x, y, z, h, wd, col, top) => { const a = RV() * Math.PI, ca = Math.cos(a) * wd, sa = Math.sin(a) * wd, mL = [x - ca, y + h * 0.5, z - sa], mR = [x + ca, y + h * 0.5, z + sa];   // fireweed: a flat spindle
+        tri(g, [x, y, z], mR, mL, [0.24, 0.36, 0.13], col, col); tri(g, mL, mR, [x, y + h, z], col, col, top); };
+      const umbel = (g, x, y, z, h, col) => { blade(g, x, y, z, h, RV() * TAU, 0.05, 0.04, [0.24, 0.36, 0.13], [0.3, 0.42, 0.16]);   // a stem with a flat head of small flowers
+        const r = 0.1 + RV() * 0.06, a0 = RV() * TAU, cy = y + h; for (let k = 0; k < 3; k++) { const a = a0 + k / 3 * TAU, b = a0 + (k + 1) / 3 * TAU; tri(g, [x, cy + 0.03, z], [x + Math.cos(a) * r, cy, z + Math.sin(a) * r], [x + Math.cos(b) * r, cy, z + Math.sin(b) * r], col); } };
+      const dome = (g, x, y, z, r, h, c, n) => { const a0 = RV() * TAU, top = [x, y + h, z], cT = [c[0] * 1.25, c[1] * 1.2, c[2] * 1.2];   // a low dome of dwarf shrubs
+        for (let k = 0; k < n; k++) { const a = a0 + k / n * TAU, b = a0 + (k + 1) / n * TAU; tri(g, [x + Math.cos(a) * r, y, z + Math.sin(a) * r], [x + Math.cos(b) * r, y, z + Math.sin(b) * r], top, c, c, cT); } };
+      const FIRE = [0.82, 0.3, 0.58], FIRET = [0.92, 0.5, 0.7], YARROW = [0.9, 0.88, 0.8], BELL = [0.45, 0.5, 0.86];
+      const BIL = [[0.13, 0.26, 0.1], [0.16, 0.3, 0.11], [0.19, 0.31, 0.12]], LING = [0.12, 0.22, 0.09], HEATH = [0.36, 0.26, 0.3], FERN = [0.24, 0.42, 0.14], FERNT = [0.34, 0.5, 0.2];
+      const vY = (i, side, o) => { const pr = VP[side > 0 ? 1 : 0][i]; if (o <= pr[0][0]) return T.hy[i];   // the verge ribbon's surface at offset o; beyond it the ground
+        for (let k = 0; k < pr.length - 1; k++) if (o <= pr[k + 1][0]) return T.hy[i] + lerp(pr[k][1], pr[k + 1][1], (o - pr[k][0]) / (pr[k + 1][0] - pr[k][0]));
+        return hjGround(T.px[i] + T.nx[i] * side * o, T.pz[i] + T.nz[i] * side * o); };
+      const ok = (x, z, i) => { if (excluded(x, z) || onPaved(x, z) || onBld(x, z)) return false; const nn = hjNear(x, z); return !(nn.i >= 0 && Math.abs(nn.i - i) * ds > 24 && nn.dd < 0.5); };   // (not on another part of the stage)
+      const soft = (x, z) => { const t = G.gt[Math.max(0, gIdx(x, z))]; return t === 0 || t === 9 || t === 10 || t === 13 || t === 255; };   // (lawns, the woods and the park, the yards: not the pitch, the car parks, the squares)
+      const sA = Math.max(4, sStart - 30), sB = Math.min(T.len - 6, sFin + 30);
+      for (let s = sA; s < sB; s += 0.8) for (const side of [-1, 1]) {
+        const i = T.idx(s + (RV() - 0.5) * 0.8), si = side > 0 ? 1 : 0, vt = VT[si][i], bar = side > 0 ? T.br[i] : T.bl[i], at = (o) => [T.px[i] + T.nx[i] * side * o, T.pz[i] + T.nz[i] * side * o];
+        const o = WA[i] + 0.5 + RV() * (bar + 1.8 - WA[i] - 0.5), [x, z] = at(o), r1 = RV(), r2 = RV(), r3 = RV();
+        if ((vt !== 2 && vt !== 3 && vt !== 5) || !ok(x, z, i) || !soft(x, z)) continue;
+        const g = veg.get(x, z), y = vY(i, side, o);
+        tuft(g, x, y, z, 0.35 + r1 * 0.45);
+        if (r2 < 0.12) { const n = 2 + Math.floor(RV() * 3); for (let q = 0; q < n; q++) umbel(g, x + (RV() - 0.5) * 0.7, y - 0.04, z + (RV() - 0.5) * 0.7, 0.3 + RV() * 0.25, r3 < 0.6 ? YARROW : BELL); }
+        const band = P.n4(s * 0.3 + side * 211 + 40, 23);   // fireweed in bands along the forest's edge, just behind the barrier
+        if (band > 0.55) { const oq = bar + 1.2 + RV() * 2.8, [fx, fz] = at(oq); if (ok(fx, fz, i) && soft(fx, fz)) { const fy = vY(i, side, oq), n = 2 + Math.floor(RV() * 4 * sstep(0.55, 0.72, band));
+          for (let q = 0; q < n; q++) spike(g, fx + (RV() - 0.5) * 1.3, fy - 0.05, fz + (RV() - 0.5) * 1.3, 1.0 + RV() * 0.5, 0.1, FIRE, FIRET); } }
+      }
+      for (let s = sA; s < sB; s += 0.9) for (const side of [-1, 1]) {   // the forest floor beside the stage: mats of bilberry and lingonberry, heather on the sandy slopes, a fern here and there
+        const i = T.idx(s), bar = side > 0 ? T.br[i] : T.bl[i], o = bar + 2.2 + Math.pow(RV(), 1.4) * 16, x = T.px[i] + T.nx[i] * side * o + (RV() - 0.5) * 2, z = T.pz[i] + T.nz[i] * side * o + (RV() - 0.5) * 2, r1 = RV();
+        const k = gIdx(x, z), t = k >= 0 ? G.gt[k] : 255; if (k < 0 || !(t === 9 || t === 10 || (t === 0 && hjCanopy(x, z) >= 1)) || !ok(x, z, i) || hjNear(x, z).dd < 1.8) continue;
+        const y = hjGround(x, z) - 0.03, g = veg.get(x, z), sandy = G.dd[k] > 0 && P.n1(x * 1.3 + 80, z * 1.3 - 40) > 0.62;
+        if (sandy || r1 < 0.18) dome(g, x, y, z, 0.45 + RV() * 0.45, 0.2 + RV() * 0.14, vary(HEATH, RV, 0.12), 6);
+        else if (r1 < 0.62) dome(g, x, y, z, 0.5 + RV() * 0.55, 0.25 + RV() * 0.2, BIL[Math.floor(RV() * 3)], 7);
+        else if (r1 < 0.9) dome(g, x, y, z, 0.4 + RV() * 0.35, 0.15 + RV() * 0.1, LING, 6);
+        else { const a0 = RV() * TAU, L = 0.45 + RV() * 0.35;   // a fern: five fronds arching out
+          for (let q = 0; q < 5; q++) { const a = a0 + q / 5 * TAU + (RV() - 0.5) * 0.4, ca = Math.cos(a), sa = Math.sin(a); tri(g, [x - sa * 0.07, y + 0.05, z + ca * 0.07], [x + sa * 0.07, y + 0.05, z - ca * 0.07], [x + ca * L, y + L * 0.45, z + sa * L], FERN, FERN, FERNT); } }
+      }
+    }
 
     /* ---- the puddles of a stage in the rain (T.puddles: only on the gravel), as Ouninpohja's ---- */
     if (T.puddles.length) {
