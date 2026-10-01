@@ -1576,6 +1576,10 @@
     const g = img.getContext('2d'), X = (i) => track.px[i] * sc + mm.ox, Y = (i) => track.pz[i] * sc + mm.oz;
     const path = () => { g.beginPath(); g.moveTo(X(0), Y(0)); for (let i = 1; i < track.N; i++) g.lineTo(X(i), Y(i)); };
     g.lineJoin = 'round'; g.lineCap = 'round';
+    if (track.stubs) {   // the side roads: thin grey lines to their ends (under the road)
+      g.beginPath(); for (const S of track.stubs) { g.moveTo(S.x[0] * sc + mm.ox, S.z[0] * sc + mm.oz); for (let j = 1; j < S.n && j * 2 <= S.L; j++) g.lineTo(S.x[j] * sc + mm.ox, S.z[j] * sc + mm.oz); }
+      g.strokeStyle = 'rgba(0,0,0,.4)'; g.lineWidth = 3.2 * dpr; g.stroke(); g.strokeStyle = 'rgba(190,194,200,.85)'; g.lineWidth = 1.4 * dpr; g.stroke();
+    }
     path(); g.strokeStyle = 'rgba(0,0,0,.55)'; g.lineWidth = 7 * dpr; g.stroke();
     path(); g.strokeStyle = '#ffffff'; g.lineWidth = 3.4 * dpr; g.stroke();
     const tick = (i, col, len) => { g.strokeStyle = col; g.beginPath(); g.moveTo(X(i) - track.nx[i] * len, Y(i) - track.nz[i] * len); g.lineTo(X(i) + track.nx[i] * len, Y(i) + track.nz[i] * len); g.stroke(); };

@@ -1051,7 +1051,7 @@ const Render = (function () {
   }
   const _pm4 = new THREE.Matrix4(), _pq4 = new THREE.Quaternion(), _pv3 = new THREE.Vector3(), _ps3 = new THREE.Vector3(1, 1, 1), _pc = new THREE.Color(), _zero = new THREE.Matrix4().makeScale(0, 0, 0);
   const _fq = {};
-  function floorAt(x, z, hint) { const T = curRace && curRace.track, f = curRace && curRace.propFloor; if (!T || (!T.hasElev && !f)) return 0; const q = T.query(x, z, T.cross.length && hint >= 0 ? hint : -1, _fq); return (T.hasElev ? T.elevAt(q.s).y : 0) + (f ? f(q) : 0); }   // particle floor: the road height there (0 on the flat circuits; the verge's where it lies lower)
+  function floorAt(x, z, hint) { const T = curRace && curRace.track, f = curRace && curRace.propFloor; if (!T || (!T.hasElev && !f)) return 0; const q = T.query(x, z, (T.cross.length || T.stubs) && hint >= 0 ? hint : -1, _fq); return q.k >= 0 && q.fb > 0 ? q.y : (T.hasElev ? T.elevAt(q.s).y : 0) + (f ? f(q) : 0); }   // particle floor: the road height there (0 on the flat circuits; the verge's where it lies lower; a side road's own)
   function syncProps() {
     if (!curRace || !curRace.props) return;
     const E = curRace.propEvents;
@@ -1719,7 +1719,8 @@ const Render = (function () {
       const gy = c.roadY != null ? c.roadY : c.y || 0, sn = atmos.season === 'winter' || (!!snow && snow.mesh.visible) ? 1 : Core.sstep(322, 350, gy) * 0.5;   // (snow: winter, falling, the snow zone's slush off the banks)
       const wt = Math.max(wetW > 0.1 ? wetW : 0, fw / 4);   // a wet road: the rain's water or the melt water under the wheels
       if (!c.air && c.speed > 0.5) {
-        const off = c.q && Math.abs(c.q.d || 0) > ((curTrack && curTrack.def.halfWidth) || 7), k = Math.abs(c.speed) * dt * (off ? 4 : 1);   // (on the gravel verge: 4x as fast)
+        const sr = c.q && c.q.k >= 0 && curTrack && curTrack.stubs ? curTrack.stubs[c.q.k] : null;   // (a side road: a gravel one, or its verge, is the verge)
+        const off = c.q && (sr ? sr.grav || Math.abs(c.q.u) > curTrack.stubHw(sr, c.q.st) : Math.abs(c.q.d || 0) > ((curTrack && curTrack.def.halfWidth) || 7)), k = Math.abs(c.speed) * dt * (off ? 4 : 1);   // (on the gravel verge: 4x as fast)
         u.d.value = Math.min(1, u.d.value + k / 7000 * (1 - wt) * (1 - sn)); X.x = Math.min(1, X.x + k / 2600 * wt); X.y = Math.min(1, X.y + k / 2400 * sn);
         pkCarDust.set(c, [u.d.value, X.x, X.y]);
       }
@@ -1850,8 +1851,8 @@ const Render = (function () {
       }
     }
     // the rail: a stream of sparks from the corner that rubs along it (and a burst for a light knock the stock sparks leave out)
-    const q = c.q;
-    if (q && q.br != null && spd > 3) {
+    const q = c.q, T = curRace && curRace.track;
+    if (q && q.br != null && spd > 3 && !(q.k >= 0 && (q.deep || T.gap[q.d > 0 ? 1 : 0][q.a]))) {   // (in a side road, or in its mouth: no rail beside the car)
       const nx = q.nx, nz = q.nz, fn = fx * nx + fz * nz, ln = lx * nx + lz * nz, L = M.len * 0.5, H = M.wid * 0.5, e = L * Math.abs(fn) + H * Math.abs(ln);
       const gR = q.br - (q.d + e), gL = q.bl - (-q.d + e), side = gR < gL ? 1 : -1, gap = Math.min(gR, gL);
       if (gap < 0.12 || (c.fxWall > 0 && c.fxWall <= 2.5)) {
