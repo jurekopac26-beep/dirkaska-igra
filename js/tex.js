@@ -61,12 +61,15 @@ const Tex = (function () {
       return [cl(104 * k), cl(107 * k), cl(112 * k)];
     });
     const x = c.getContext('2d');
-    // a few seams / cracks
-    x.strokeStyle = 'rgba(40,40,44,0.35)'; x.lineWidth = 1;
-    for (let k = 0; k < 6; k++) {
-      let px = R() * 256, py = R() * 256; x.beginPath(); x.moveTo(px, py);
-      for (let s = 0; s < 8; s++) { px += (R() - 0.5) * 18; py += (R() - 0.3) * 14; x.lineTo(px, py); }
-      x.stroke();
+    // (the six faint seams it once had, drawn again in every 8 m tile: their draws only, so the textures after it stay the same)
+    for (let k = 0; k < 6; k++) { R(); R(); for (let s = 0; s < 8; s++) { R(); R(); } }
+    // the grain a phone shows from the chase camera (a pixel of the texture is 3 cm, the screen's 4-8 cm): the stones of the aggregate in
+    // little clusters, lighter, and darker spots where the binder is rich; its own random stream
+    const g = Core.rng(1311);
+    for (let k = 0; k < 1500; k++) {
+      const px = g() * 256, py = g() * 256, s = 1.5 + g() * 2.5, lite = g() < 0.62, a = (lite ? 0.1 + g() * 0.14 : 0.08 + g() * 0.1).toFixed(3);
+      x.fillStyle = lite ? `rgba(196,196,192,${a})` : `rgba(36,36,40,${a})`;
+      for (const [ox, oy] of [[0, 0], [-256, 0], [0, -256], [-256, -256]]) x.fillRect(px + ox, py + oy, s, s * (0.7 + g() * 0.6));   // (wrapped: the tile stays seamless)
     }
     return mk(c, true);
   }
@@ -533,14 +536,15 @@ const Tex = (function () {
     for (let j = 256; j < W; j++) for (let i = 0; i < W; i++) {
       const o = (j * W + i) * 4;
       if (i >= 256) { const k = col[i - 256] * 255; d[o] = d[o + 1] = d[o + 2] = k; d[o + 3] = 255; continue; }
-      const u = i / 256, v = (j - 256) / 256, inR = i > 12 + edge[0] && i < 244 - edge[1] && j - 256 > 12 + edge[2] && j - 256 < 244 - edge[3];
-      if (!inR) { d[o + 3] = 0; continue; }
+      const u = i / 256, v = (j - 256) / 256;
       const k = (0.9 + (n1(u * 8, v * 8) * 0.6 + n2(u * 32, v * 32) * 0.4) * 0.14 + (r() - 0.5) * 0.16 + (r() < 0.02 ? 0.22 : 0)) * 0.97;   // (the road's own grain, finer)
       d[o] = cl(104 * k); d[o + 1] = cl(107 * k); d[o + 2] = cl(112 * k); d[o + 3] = 255;
     }
     x.putImageData(img, 0, 0);
     x.lineCap = x.lineJoin = 'round';
-    const band = (pts, wd) => { for (const [lw, a] of [[wd * 1.9, 0.28], [wd, 0.92]]) { x.strokeStyle = 'rgba(13,13,15,' + a + ')'; x.lineWidth = lw; x.beginPath(); x.moveTo(pts[0][0], pts[0][1]); for (const p of pts) x.lineTo(p[0], p[1]); x.stroke(); } };
+    // a sealed crack: the tar over it in a band, dusty dark grey rather than black, a faint overband round it and the crack's darker line down
+    // its middle
+    const band = (pts, wd) => { for (const [lw, a, k] of [[wd * 2.8, 0.1, 42], [wd * 1.5, 0.42, 37], [wd * 0.6, 0.5, 25]]) { x.strokeStyle = `rgba(${k},${k},${k + 2},${a})`; x.lineWidth = lw; x.beginPath(); x.moveTo(pts[0][0], pts[0][1]); for (const p of pts) x.lineTo(p[0], p[1]); x.stroke(); } };
     const clamp = (v, lo, hi) => v < lo ? lo : v > hi ? hi : v;
     // a crack across a box (x0, y0, x1, y1) from its left end to its right: a walk that keeps its heading, wandering a little
     const across = (x0, y0, x1, y1) => { const P = [], m = (y0 + y1) / 2, hh = (y1 - y0) / 2 - 8; let px = x0 + 6, py = m + (r() - 0.5) * hh, a = 0;
@@ -555,8 +559,20 @@ const Tex = (function () {
       for (let b = 0; b < 3; b++) { const q = P[2 + Math.floor(r() * (P.length - 4))], Q = [q]; let a = (r() < 0.5 ? 1 : -1) * (0.8 + r() * 0.8), px = q[0], py = q[1];
         for (let s = 0; s < 8; s++) { a += (r() - 0.5) * 0.6; px += Math.cos(a) * 7; py += Math.sin(a) * 7; if (py < 134 || py > 250 || px < 262 || px > 506) break; Q.push([px, py]); }
         if (Q.length > 1) band(Q, 2.6); } }
-    x.strokeStyle = 'rgba(16,16,18,0.85)'; x.lineWidth = 5;   // the patch's seam
-    x.strokeRect(12 + edge[0], 268 + edge[2], 232 - edge[0] - edge[1], 232 - edge[2] - edge[3]);
+    // the patch's outline: a rounded box, its sides a little wavy (no ruler-straight edges), clear outside it; its seam sealed, a faint
+    // darker band over the joint
+    const pl = [], q0 = [12 + edge[0], 268 + edge[2], 244 - edge[1], 500 - edge[3]], cr = 18 + r() * 14;
+    for (let k = 0; k < 48; k++) {
+      const t = k / 48 * 4, e = Math.floor(t), f = t - e, cx = (q0[0] + q0[2]) / 2, cy = (q0[1] + q0[3]) / 2, hx = (q0[2] - q0[0]) / 2, hy = (q0[3] - q0[1]) / 2;
+      const a = [[-1, -1], [1, -1], [1, 1], [-1, 1]][e], b = [[1, -1], [1, 1], [-1, 1], [-1, -1]][e];
+      let px = cx + (a[0] + (b[0] - a[0]) * f) * hx, py = cy + (a[1] + (b[1] - a[1]) * f) * hy;
+      const ix = clamp(px, q0[0] + cr, q0[2] - cr), iy = clamp(py, q0[1] + cr, q0[3] - cr), dx = px - ix, dy = py - iy, dl = Math.hypot(dx, dy);   // (round the corners off)
+      if (dl > cr) { px = ix + dx / dl * cr; py = iy + dy / dl * cr; }
+      pl.push([px + (r() - 0.5) * 5, py + (r() - 0.5) * 5]);
+    }
+    const path = () => { x.beginPath(); pl.forEach((p, k) => (k ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]))); x.closePath(); };
+    x.save(); x.beginPath(); x.rect(0, 256, 256, 256); x.clip(); x.globalCompositeOperation = 'destination-in'; path(); x.fill(); x.restore();
+    path(); x.strokeStyle = 'rgba(34,34,37,0.16)'; x.lineWidth = 9; x.stroke(); x.strokeStyle = 'rgba(30,30,33,0.34)'; x.lineWidth = 3; x.stroke();
     return mk(c, false);
   }
 

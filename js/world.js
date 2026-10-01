@@ -206,11 +206,46 @@ const World = (function () {
     const b0 = P(-L / 2, 0, -D / 2), b1 = P(L / 2, 0, -D / 2), b2 = P(L / 2, 0, D / 2), b3 = P(-L / 2, 0, D / 2), r0 = P(-L / 2, h, 0), r1 = P(L / 2, h, 0);
     const inn = [cx, cy + h * 0.3, cz];
     // the far slope a shade lighter or darker: the same every time the track is built (hashed from where the roof stands)
-    const hr = rng((Math.round(cx * 10) * 73856093) ^ (Math.round(cz * 10) * 19349663) ^ (Math.round(cy * 10) * 83492791));
-    g.quadO(b0, r0, r1, b1, col, inn); g.quadO(b3, b2, r1, r0, vary(col, hr, 0.08), inn);
+    const hr = rng((Math.round(cx * 10) * 73856093) ^ (Math.round(cz * 10) * 19349663) ^ (Math.round(cy * 10) * 83492791)), col2 = vary(col, hr, 0.08);
+    // each slope in courses of tiles from the eave to the ridge, a shade lighter and darker in turn (seen from above: the rows), the eave's
+    // course darker (the gutter's shadow), the ridge's too
+    const n = Math.max(2, Math.min(5, Math.round(Math.hypot(D / 2, h) / 1.1)));
+    for (const [sd, cc] of [[-1, col], [1, col2]]) for (let k = 0; k < n; k++) {
+      const t0 = k / n, t1 = (k + 1) / n, f = k === 0 ? 0.84 : k === n - 1 ? 0.9 : k % 2 ? 0.94 : 1.03, cb = [cc[0] * f, cc[1] * f, cc[2] * f];
+      g.quadO(P(-L / 2, h * t0, sd * D / 2 * (1 - t0)), P(-L / 2, h * t1, sd * D / 2 * (1 - t1)), P(L / 2, h * t1, sd * D / 2 * (1 - t1)), P(L / 2, h * t0, sd * D / 2 * (1 - t0)), cb, inn);
+    }
     g.triO(b0, b3, r0, colEnd || col, inn); g.triO(b1, r1, b2, colEnd || col, inn);
+    // a house's chimney, on one slope near the ridge (sunk into the roof), its top black with soot
+    if (L * D > 70 && L > 5 && hr() < 0.6) {
+      const lx = (hr() - 0.5) * L * 0.6, sd = hr() < 0.5 ? -1 : 1, t = 0.72, lz = sd * D / 2 * (1 - t), w = 0.55 + hr() * 0.3, br = hr() < 0.5 ? [0.56, 0.31, 0.24] : (colEnd || col).map(v => v * 0.86), q = P(lx, 0, lz);
+      box(g, q[0], cy + h * t - 0.5, q[2], w, 1.5 + h * (1 - t), w, rot, br, [0.17, 0.16, 0.16]);
+    }
     // underside (overhang visible from low angles is rare) skipped
   }
+  // what stands on a flat roof (seen from above, the chase camera's view): a low parapet round its edge, air conditioners, now and then
+  // a water tank, a field of solar panels or a terrace with a deck, planters and a parasol. Hashed from where the roof stands (the same
+  // every build; the world's random stream untouched). y: the roof's top
+  function roofKit(g, cx, y, cz, W, D, rot, col) {
+    const c = Math.cos(rot), s = Math.sin(rot), P = (lx, lz, ly) => [cx + lx * c - lz * s, y + (ly || 0), cz + lx * s + lz * c], below = [cx, y - 2, cz];
+    const flat = (lx, lz, w, d, ly, cl) => g.quadO(P(lx - w / 2, lz - d / 2, ly), P(lx + w / 2, lz - d / 2, ly), P(lx + w / 2, lz + d / 2, ly), P(lx - w / 2, lz + d / 2, ly), cl, below);   // (a flat face up: seen from above only)
+    const hr = rng((Math.round(cx * 10) * 92837111) ^ (Math.round(cz * 10) * 689287499) ^ 7331), pc = col.map(v => v * 0.8), pt = col.map(v => v * 0.95), h = 0.42, inn = [cx, y, cz];
+    // the parapet: its top and its outer face (the inner one hardly shows from above)
+    const C4 = [[-W / 2, -D / 2], [W / 2, -D / 2], [W / 2, D / 2], [-W / 2, D / 2]], C4i = C4.map(([u, v]) => [u - Math.sign(u) * 0.24, v - Math.sign(v) * 0.24]);
+    for (let e = 0; e < 4; e++) { const [u0, v0] = C4[e], [u1, v1] = C4[(e + 1) % 4], [i0, j0] = C4i[e], [i1, j1] = C4i[(e + 1) % 4];
+      g.quadO(P(u0, v0, 0), P(u1, v1, 0), P(u1, v1, h), P(u0, v0, h), pc, inn); g.quadO(P(u0, v0, h), P(u1, v1, h), P(i1, j1, h), P(i0, j0, h), pt, below); }
+    const kind = hr(), ac = 1 + Math.floor(hr() * 2);
+    for (let k = 0; k < ac; k++) { const p = P((hr() - 0.5) * (W - 3), (hr() - 0.5) * (D - 3)); box(g, p[0], y, p[2], 0.9, 0.62, 0.7, rot + (hr() < 0.5 ? 0 : Math.PI / 2), [0.74, 0.75, 0.76], [0.6, 0.62, 0.64], true); }
+    if (kind < 0.3) {   // solar panels in rows, dark blue in a light frame (flat on their frames)
+      const rows = Math.max(1, Math.floor((D - 3) / 2.2)), cols = Math.max(1, Math.floor((W - 3) / 1.25));
+      for (let a = 0; a < rows; a++) { const lz = -((rows - 1) * 2.2) / 2 + a * 2.2; flat(0, lz, cols * 1.25 + 0.1, 1.85, 0.22, [0.72, 0.73, 0.75]);
+        for (let b = 0; b < cols; b++) flat(-((cols - 1) * 1.25) / 2 + b * 1.25, lz, 1.1, 1.7, 0.25, vary([0.1, 0.15, 0.3], hr, 0.12)); }
+    } else if (kind < 0.55) {   // a roof terrace: a wooden deck, planters along it, a parasol
+      const dw = W * 0.55, dd = D * 0.5; flat(W * 0.18, -D * 0.18, dw, dd, 0.06, [0.66, 0.47, 0.3]);
+      for (let k = 0; k < 3; k++) { const q = P(W * 0.18 - dw / 2 + 0.6 + k * (dw - 1.2) / 2, -D * 0.18 - dd / 2 + 0.4); box(g, q[0], y + 0.06, q[2], 0.7, 0.5, 0.6, rot, [0.6, 0.4, 0.3], vary([0.3, 0.5, 0.2], hr, 0.3), true); }
+      const u = P(W * 0.18, -D * 0.12); cone(g, u[0], y + 2.1, u[2], 1.4, 0.5, 6, hr() < 0.5 ? [0.92, 0.9, 0.86] : [0.75, 0.2, 0.18], null, 0);
+    } else if (kind < 0.7) { const p = P((hr() - 0.5) * (W - 4), (hr() - 0.5) * (D - 4)); cyl(g, p[0], y, p[2], 0.8, 1.5, 7, [0.62, 0.64, 0.66]); }   // a water tank
+  }
+
 
   /* ---------------- helpers on track ---------------- */
   let T = null;
@@ -1719,6 +1754,7 @@ const World = (function () {
           box(g, x, H, z, W, 0.5, D, rot, col.map(v => v * 0.86), col.map(v => v * 0.9));
           box(g, x + (R() - 0.5) * W * 0.5, H + 0.5, z + (R() - 0.5) * D * 0.5, 2.4, 1.6, 2.4, rot, [0.86, 0.84, 0.8]);
           if (R() < 0.5) box(g, x + (R() - 0.5) * W * 0.6, H + 0.5, z + (R() - 0.5) * D * 0.6, 1.2, 0.9, 1.8, rot, [0.7, 0.72, 0.74]);
+          roofKit(g, x, H + 0.5, z, W, D, rot, col);
         }
         placed.push([x, z, rad]); CR.block(x, z, W, D, rot);
         excl.push({ x, z, r: rad + 2 });
@@ -2964,7 +3000,7 @@ const World = (function () {
           for (const [u, v] of [[-W / 2, -D / 2], [W / 2, -D / 2], [W / 2, D / 2], [-W / 2, D / 2]]) { const px = x + u * cr0 - v * sr0, pz = z + u * sr0 + v * cr0; if (clearance(px, pz) < 2.5 || gH(px, pz) < 0.8 || excluded(px, pz)) { bad = true; break; } }
           if (bad || placed.some(p => Math.hypot(p[0] - x, p[1] - z) < (p[2] + rad) * 0.8)) continue;
           const monte = z < -60 || x > 400, pal = monte ? PAL.mc : PAL.condamine, col = pal[Math.floor(R() * pal.length)], H = 10 + R() * 12, y0 = facadeBox(x, z, W, D, H, rot, col, null, monte && R() < 0.7), g = scen.get(x, z);
-          if (!monte || R() < 0.4) gable(g, x, y0 + H, z, W + 0.6, D + 0.6, 2.4 + R(), rot, tile, col); else box(g, x, y0 + H, z, W, 0.6, D, rot, col.map(v => v * 0.86), [0.72, 0.72, 0.7]);
+          if (!monte || R() < 0.4) gable(g, x, y0 + H, z, W + 0.6, D + 0.6, 2.4 + R(), rot, tile, col); else { box(g, x, y0 + H, z, W, 0.6, D, rot, col.map(v => v * 0.86), [0.72, 0.72, 0.7]); roofKit(g, x, y0 + H + 0.6, z, W, D, rot, col); }
           const fx = x - side * T.nx[i] * (D / 2 + 0.6), fz = z - side * T.nz[i] * (D / 2 + 0.6);
           if (R() < 0.7) { const ac = awn[Math.floor(R() * awn.length)]; for (let b2 = -W / 2 + 2.5; b2 < W / 2 - 1.5; b2 += 4.2) box(g, fx + cr0 * b2, y0 + 3.1, fz + sr0 * b2, 3.4, 0.25, 1.4, rot, ac, ac); }
           placed.push([x, z, rad]); excl.push({ x, z, r: rad + 1 }); CR.block(x, z, W, D, rot);
@@ -2983,7 +3019,7 @@ const World = (function () {
           const H = Math.max(8, Math.min(maxH, (Z.pal === 'mc' ? 14 + R() * R() * 60 : 10 + R() * 16)));
           const col = PAL[Z.pal][Math.floor(R() * PAL[Z.pal].length)], y0 = facadeBox(x, z, W, D, H, rot, col, null, Z.pal === 'mc' && R() < 0.75), g = scen.get(x, z);
           if (Z.pal !== 'mc' || H < 22) gable(g, x, y0 + H, z, W + 0.6, D + 0.6, 2.4 + R(), rot, tile, col);
-          else { box(g, x, y0 + H, z, W, 0.6, D, rot, col.map(v => v * 0.86), [0.72, 0.72, 0.7]); if (R() < 0.5) box(g, x + (R() - 0.5) * W * 0.4, y0 + H + 0.6, z + (R() - 0.5) * D * 0.4, W * 0.35, 2.6, D * 0.35, rot, [0.9, 0.9, 0.88], [0.4, 0.62, 0.78]); }
+          else { box(g, x, y0 + H, z, W, 0.6, D, rot, col.map(v => v * 0.86), [0.72, 0.72, 0.7]); if (R() < 0.5) box(g, x + (R() - 0.5) * W * 0.4, y0 + H + 0.6, z + (R() - 0.5) * D * 0.4, W * 0.35, 2.6, D * 0.35, rot, [0.9, 0.9, 0.88], [0.4, 0.62, 0.78]); roofKit(g, x, y0 + H + 0.6, z, W, D, rot, col); }
           placed.push([x, z, rad]); excl.push({ x, z, r: rad + 1.5 }); CR.block(x, z, W, D, rot); made++;
         }
       }
@@ -4235,12 +4271,15 @@ const World = (function () {
     for (const g of cells.values()) { if (g.empty) continue; const m = new THREE.Mesh(g.geometry(), mat); m.name = 'tyremarks'; m.renderOrder = 1; m.matrixAutoUpdate = false; root.add(m); }
   }
   /* ---- the wear of a tarmac road (every world but the gravel ones and Pikes Peak, at the end of the build as the tyre marks): patches of newer (darker) or older
-     (greyer) asphalt with their sealed seams, sealed cracks (black tar bands: a long one with branches, or a network), and on a circuit the rubber
+     (greyer) asphalt with their sealed seams, sealed cracks (dark tar bands: a long one with branches, or a network; many on the Nordschleife and
+     the mountain road, fewer in the streets, a few on a modern circuit), and on a circuit the rubber
      laid down along the racing line in the two tyre tracks, darkest where the cars brake and turn. Decals just over the road in the road's own
      colour (lit, its shadows on them; the rain darkens them with it: userData.wear), indexed, in 256 m chunks (culled) ---- */
+  const ROAD_WEAR = { nring: 1, vrsic: 1, monaco: 0.75, city: 0.75, ljubljana: 0.85 };   // per theme (else a modern circuit's: 0.3)
   function roadWear(o, tex) {
     if (T.def.roadSurface === 'makadam' || THEME === 'pikes' || !T.rl || !tex.wear) return;   // (Pikes Peak's road has its own cracks and patches)
     const N = T.N, ds = T.ds, w = T.w, len = T.len, open = T.open, R = rng(4242), bk = { dy: 0, sl: 0 }, cells = new Map(), lim = w - 0.6;
+    const kw = ROAD_WEAR[THEME] != null ? ROAD_WEAR[THEME] : 0.3;   // (how worn: the gaps between the patches and cracks grow as it falls)
     const at = (k) => (open ? clamp(k, 0, N - 1) : ((k % N) + N) % N), HYi = (i) => (T.hasElev ? T.hy[i] : 0);
     const deck = (i) => { for (const c of T.cross || []) { const d = Math.abs(i - c.up); if (Math.min(d, N - d) * ds < c.upZ + 30) return true; } return false; };   // (Suzuka's bridge fades out while the car drives under it)
     const chunk = (p) => { const k = Math.floor(p[0] / 256) + ',' + Math.floor(p[2] / 256); let c = cells.get(k); if (!c) cells.set(k, c = { P: [], C: [], U: [], I: [] }); return c; };
@@ -4256,24 +4295,24 @@ const World = (function () {
       const cs = Math.cos(rot), sn = Math.sin(rot), Q = [[-hl, -hw, u0, v0], [hl, -hw, u1, v0], [hl, hw, u1, v1], [-hl, hw, u0, v1]].map(([a, b, u, v]) => [pt(s + a * cs - b * sn, lo + a * sn + b * cs), [u, v]]);
       const c = chunk(Q[0][0]), k = Q.map(q => vtx(c, q[0], col, q[1])); face(c, k[0], k[1], k[2]); face(c, k[0], k[2], k[3]); };
     // patches, every 40-100 m, more often in a wheel track than not
-    for (let s = R() * 50; s < len - 6; s += 40 + R() * 60) {
+    for (let s = R() * 50; s < len - 6; s += (40 + R() * 60) / Math.sqrt(kw)) {
       const i = at(Math.round(s / ds)); if (deck(i)) continue;
-      const hl = 0.8 + R() * 1.8, hw = 0.5 + R() * 1.1, lo = clamp((R() < 0.6 ? T.rl[i] + (R() < 0.5 ? -0.78 : 0.78) : (R() * 2 - 1) * w) + (R() - 0.5) * 0.6, -lim + hw, lim - hw), k = R() < 0.55 ? 0.78 + R() * 0.1 : 1.06 + R() * 0.1;
+      const hl = 0.8 + R() * 1.8, hw = 0.5 + R() * 1.1, lo = clamp((R() < 0.6 ? T.rl[i] + (R() < 0.5 ? -0.78 : 0.78) : (R() * 2 - 1) * w) + (R() - 0.5) * 0.6, -lim + hw, lim - hw), k = R() < 0.55 ? 0.84 + R() * 0.08 : 1.04 + R() * 0.06;
       decal(s, lo, hl, hw, (R() - 0.5) * 0.08, 0.02, 0.02, 0.48, 0.48, [k, k, k * 1.01, 1]);
     }
     // sealed cracks (the texture's long strips are 8:1): across the road every 25-60 m, along it every 50-110 m, a network of them or one
     // with its branches every 120-260 m
     const strip = (s, lo, L, rot) => { const b = R() < 0.5; decal(s, lo, L / 2, L / 16, rot, 0.004, b ? 0.752 : 0.877, 0.996, b ? 0.873 : 0.998, [1, 1, 1, 0.8 + R() * 0.2]); };
-    for (let s = R() * 40; s < len - 4; s += 25 + R() * 35) {
+    for (let s = R() * 40; s < len - 4; s += (25 + R() * 35) / kw) {
       const i = at(Math.round(s / ds)); if (deck(i)) continue;
       const L = Math.min(2 * lim, 3 + R() * (2 * lim - 2)), lo = (R() * 2 - 1) * Math.max(0, lim - L / 2);
       strip(s, lo, L, Math.PI / 2 + (R() - 0.5) * 0.3);
     }
-    for (let s = R() * 60; s < len - 8; s += 50 + R() * 60) {
+    for (let s = R() * 60; s < len - 8; s += (50 + R() * 60) / kw) {
       const i = at(Math.round(s / ds)); if (deck(i)) continue;
       strip(s, (R() * 2 - 1) * (lim - 0.5), 4 + R() * 5, (R() - 0.5) * 0.08);
     }
-    for (let s = R() * 100; s < len - 4; s += 120 + R() * 140) {
+    for (let s = R() * 100; s < len - 4; s += (120 + R() * 140) / kw) {
       const i = at(Math.round(s / ds)); if (deck(i)) continue;
       const h = 1.4 + R() * 0.8, lo = (R() * 2 - 1) * Math.max(0, lim - h * 1.12), net = R() < 0.5;
       decal(s, lo, h, h / 2, R() * TAU, net ? 0.002 : 0.502, 0.502, net ? 0.498 : 0.998, 0.748, [1, 1, 1, 0.8 + R() * 0.2]);
@@ -4313,13 +4352,13 @@ const World = (function () {
      start straight (fading out far away, where they would shimmer), and along the verges of the circuits tufts of longer grass and
      flowers that sway in the wind (instanced chunks: only the ones in sight are drawn) ---- */
   const GRASS_GLSL = [
-    'varying vec2 vGw; varying float vGd; uniform float uStr; uniform vec2 uSd;',
+    'varying vec2 vGw; varying float vGd; uniform float uStr; uniform vec2 uSd; uniform float uNat;',
     'float gHash(vec2 p) { p = fract(p * vec2(0.1031, 0.1030)); p += dot(p, p.yx + 33.33); return fract((p.x + p.y) * p.x); }',   // (no sine: steady on phones' GPUs)
     'float gNoise(vec2 p) { vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f); return mix(mix(gHash(i), gHash(i + vec2(1.0, 0.0)), u.x), mix(gHash(i + vec2(0.0, 1.0)), gHash(i + vec2(1.0, 1.0)), u.x), u.y); }'].join('\n');
-  function grassLook(m, sd) {
+  function grassLook(m, sd, nat) {
     if (!m || m.userData.grassLook) return; m.userData.grassLook = true;
     m.onBeforeCompile = (sh) => {
-      sh.uniforms.uStr = { value: sd ? 1 : 0 }; sh.uniforms.uSd = { value: new THREE.Vector2(sd ? sd[0] : 1, sd ? sd[1] : 0) };
+      sh.uniforms.uStr = { value: sd ? 1 : 0 }; sh.uniforms.uSd = { value: new THREE.Vector2(sd ? sd[0] : 1, sd ? sd[1] : 0) }; sh.uniforms.uNat = { value: nat || 0 };
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vGw; varying float vGd;')
         .replace('#include <project_vertex>', '#include <project_vertex>\nvGw = (modelMatrix * vec4(transformed, 1.0)).xz; vGd = -mvPosition.z;');
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + GRASS_GLSL).replace('#include <color_fragment>', '#include <color_fragment>\n' + [
@@ -4328,17 +4367,83 @@ const World = (function () {
         '    float n1 = gNoise(vGw * 0.025) * 0.65 + gNoise(vGw * 0.07 + 13.1) * 0.35, n2 = gNoise(vGw * 0.045 + 57.3);',
         '    gc *= mix(1.0, 0.84 + 0.3 * n1, gg);',   // lighter and darker patches
         '    gc = mix(gc, gc * vec3(1.12, 1.04, 0.7), gg * smoothstep(0.62, 0.95, n2) * 0.6);',   // drier, yellower ones
+        // clumps a metre or two across, lighter and darker (near the camera: far away they would shimmer)
+        '    float cl = gNoise(vGw * 0.55 + 3.7) * 0.6 + gNoise(vGw * 1.7 + 9.1) * 0.4;',
+        '    gc *= 1.0 + gg * (cl - 0.5) * 0.22 * (1.0 - smoothstep(70.0, 160.0, vGd));',
         '    if (uStr > 0.0) { float f = fract(dot(vGw, uSd) * 0.0909), b = smoothstep(0.03, 0.1, f) - smoothstep(0.53, 0.6, f);',   // the mower's stripes, 5.5 m wide
-        '      gc *= 1.0 + gg * uStr * (b - 0.5) * 0.18 * (1.0 - smoothstep(110.0, 240.0, vGd)); }',
+        '      gc *= 1.0 + gg * uStr * (b - 0.5) * 0.25 * (1.0 - smoothstep(140.0, 300.0, vGd)); }',
+        // a natural green where the lawn's is loud (Spa, Suzuka, Jezero, the Nordschleife): less saturated, a touch of olive
+        '    if (uNat > 0.0) { float L = dot(gc, vec3(0.3, 0.59, 0.11)); gc = mix(gc, mix(vec3(L), gc, 0.72) * vec3(1.04, 0.96, 0.86), gg * uNat); }',
         '    diffuseColor.rgb = gc; } }'].join('\n'));
     };
-    m.customProgramCacheKey = () => 'grassLook' + (sd ? 'S' : '');
+    m.customProgramCacheKey = () => 'grassLook' + (sd ? 'S' : '') + (nat ? 'N' : '');
     m.needsUpdate = true;
   }
+  const GRASS_NAT = { spa: 0.85, suzuka: 0.9, lake: 0.75, nring: 0.6, rbring: 0.45 };   // how much of the loud green to tone down, per theme
   function grassWorld(o, tex) {
     const lawn = !T.open && ['lake', 'forest', 'kamp', 'italia', 'rbring'].includes(THEME);   // (the circuits whose lawns are mown in stripes; Spa and Suzuka lay their own)
     let sd = null; if (lawn) { const i = T.idx(T.startS); sd = [-T.tz[i], T.tx[i]]; }   // (the stripes run along the start straight)
-    o.root.traverse(m => { if (!m.isMesh || !m.material || Array.isArray(m.material)) return; const t = m.material.map; if (t && (t === tex.grass || t.grassPic)) grassLook(m.material, sd); });
+    const nat = GRASS_NAT[THEME] || 0;
+    o.root.traverse(m => { if (!m.isMesh || !m.material || Array.isArray(m.material)) return; const t = m.material.map; if (t && (t === tex.grass || t.grassPic)) grassLook(m.material, sd, nat); });
+  }
+  /* ---- worn grass where the cars run wide (the circuits): on the outside of a corner's exit, past the kerb, the lawn driven down to the
+     soil in a long patch with the tracks of the tyres in it, and now and then on the inside of a slow corner's apex where they cut it;
+     on the grass only (not the gravel, the run-off or the paths), clear of the barriers. One decal mesh, lit (its own atlas: 4 patches) ---- */
+  let wornTexC = null;
+  function wornTex() {   // 2 x 2 cells of 128 px (across the patch x along it): soil and flattened grass in a ragged blot, two with tyre tracks
+    if (wornTexC) return wornTexC;
+    const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), img = x.createImageData(S, S), d = img.data, r = rng(7713);
+    const n1 = valueNoise2(7714, 9), n2 = valueNoise2(7715, 3), n3 = valueNoise2(7716, 1.4);
+    for (let cell = 0; cell < 4; cell++) {
+      const ox = (cell % 2) * 128, oy = Math.floor(cell / 2) * 128, tracks = cell >= 2, ph = r() * 50;
+      for (let j = 0; j < 128; j++) for (let i = 0; i < 128; i++) {
+        const u = (i - 64) / 56, v = (j - 64) / 60, R = Math.sqrt(u * u * (1 + 0.6 * v * v) + v * v * v * v * 0.9), e = 0.78 + 0.32 * n1(i + ph, j * 0.4 + ph) + 0.14 * n2(i + ph, j + ph);   // (a long blot, ragged)
+        let a = sstep(e + 0.06, e - 0.22, R) * (0.55 + 0.45 * n2(i * 0.7 + ph, j * 0.7));
+        const soil = sstep(0.42, 0.7, n2(i + 17 + ph, j * 0.6) * 0.6 + n3(i + ph, j + ph) * 0.4 + (1 - R) * 0.25);
+        let cr = lerp(0.38, 0.45, soil), cg = lerp(0.47, 0.35, soil), cb = lerp(0.2, 0.23, soil);   // flattened yellowed grass .. soil
+        if (tracks) { const t = Math.min(Math.abs(i - 44 - 6 * Math.sin(j / 30 + ph)), Math.abs(i - 84 - 6 * Math.sin(j / 30 + ph))); const k = sstep(7, 2, t); cr = lerp(cr, 0.3, k); cg = lerp(cg, 0.26, k); cb = lerp(cb, 0.18, k); a = Math.max(a, k * sstep(e + 0.3, e - 0.1, R) * 0.9); }
+        const sp = r(), q = sp < 0.04 ? 1.25 : sp < 0.08 ? 0.75 : 1;   // (clods and green blades)
+        const o = ((oy + j) * S + ox + i) * 4; d[o] = Math.round(cr * q * 255); d[o + 1] = Math.round(cg * q * 255); d[o + 2] = Math.round(cb * q * 255); d[o + 3] = Math.round(clamp(a, 0, 1) * 235);
+      }
+    }
+    x.putImageData(img, 0, 0); wornTexC = new THREE.CanvasTexture(c); wornTexC.anisotropy = 4; return wornTexC;
+  }
+  function wornGrass(o) {
+    if (T.open || !T.corners || !T.rl || ['city', 'ljubljana', 'monaco', 'forest', 'kamp', 'italia'].includes(THEME) || T.def.offSurface) return;   // (the stylised circuits: their orange strips past the kerbs are not grass)
+    const N = T.N, ds = T.ds, R = rng(7720), q = {}, gh = o.groundH, P = [], C = [], U = [], I = [];
+    const at = (k) => ((k % N) + N) % N;
+    const patch = (i0, len, side, d, hw, cell) => {   // from sample i0 along the road for len m, centred d m out on that side, hw m half wide
+      const n = Math.max(2, Math.round(len / 2)), ic = at(i0 + Math.round(len / 2 / ds)), xc = T.px[ic] + T.nx[ic] * d * side, zc = T.pz[ic] + T.nz[ic] * d * side;
+      if (T.surface(T.query(xc, zc, ic, q)) !== 2) return;   // (on the grass only)
+      for (const f of [0, 0.5, 1]) { const i = at(i0 + Math.round(f * len / ds)), bar = side > 0 ? T.br[i] : T.bl[i]; if (bar < d + hw + 0.6) return; }   // (clear of the barrier)
+      const u0 = (cell % 2) * 0.5 + 0.01, v0 = 1 - Math.floor(cell / 2) * 0.5 - 0.01, a = 0.75 + 0.25 * R();
+      for (let k = 0; k <= n; k++) {
+        const i = at(i0 + Math.round(k / n * len / ds)), v = v0 - 0.48 * k / n;
+        for (const e of [-1, 1]) {
+          const dd = (d + e * hw) * side, x = T.px[i] + T.nx[i] * dd, z = T.pz[i] + T.nz[i] * dd, y = (gh ? gh(x, z) : (T.hasElev ? T.hy[i] : 0)) + 0.04;
+          P.push(x, y, z); C.push(1, 1, 1, a); U.push(u0 + (e > 0 ? 0.48 : 0), v);
+        }
+        if (k) { const b = P.length / 3 - 4; I.push(b, b + 1, b + 3, b, b + 3, b + 2); }
+      }
+    };
+    for (const c of T.corners) {
+      const ia = at(Math.round((c.i0 + (c.i1 >= c.i0 ? c.i1 : c.i1 + N)) / 2)), m = Math.max(2, Math.round(12 / ds)), A = at(ia - m), B = at(ia + m);
+      const inS = Math.sign(((T.px[A] + T.px[B]) / 2 - T.px[ia]) * T.nx[ia] + ((T.pz[A] + T.pz[B]) / 2 - T.pz[ia]) * T.nz[ia]) || 1, out = -inS;   // (the inside: towards the chord's middle)
+      const kerb = (i) => (T.curb[i] ? T.curbW : 0.4);
+      for (let n = c.sev >= 2 ? 2 : 1; n > 0; n--) {   // the exit, past the kerb on the outside, where they run wide
+        if (R() > 0.85) continue;
+        const i0 = at(c.i1 + Math.round((-4 + R() * 22) / ds)), hw = 0.7 + R() * 0.9;
+        patch(i0, 6 + R() * 12, out, T.w + kerb(i0) + 0.2 + hw + R() * 1.2, hw, Math.floor(R() * 4));
+      }
+      if (c.sev >= 2 && R() < 0.4) { const i0 = at(ia - Math.round(4 / ds)), hw = 0.5 + R() * 0.5; patch(i0, 5 + R() * 5, inS, T.w + kerb(ia) + 0.1 + hw, hw, Math.floor(R() * 2)); }   // the apex cut
+    }
+    if (!I.length) return;
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 4)); g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2));
+    // (facing up, whichever way the road runs: each quad's winding checked)
+    for (let t = 0; t < I.length; t += 3) { const a = I[t] * 3, b = I[t + 1] * 3, e = I[t + 2] * 3; if ((P[b] - P[a]) * (P[e + 2] - P[a + 2]) - (P[b + 2] - P[a + 2]) * (P[e] - P[a]) > 0) { const k = I[t + 1]; I[t + 1] = I[t + 2]; I[t + 2] = k; } }
+    g.setIndex(I); g.computeVertexNormals();
+    const mat = new THREE.MeshLambertMaterial({ map: wornTex(), vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -3 });
+    const m = new THREE.Mesh(g, mat); m.name = 'worn'; m.receiveShadow = true; m.renderOrder = 1; m.matrixAutoUpdate = false; o.root.add(m);
   }
   let tuftGeoC = null;
   function tuftGeo(flower) {   // (1 m wide, 1 m tall, scaled per instance) a clump of longer grass: a low mound with broad blades leaning out round it
@@ -4396,7 +4501,10 @@ const World = (function () {
     const lawn = (x, z) => {
       let r = TL[0], g = TL[1], b = TL[2];
       if (G && gc) { const i = clamp(Math.round((x - G.x0) / G.cell), 0, G.nx), j = clamp(Math.round((z - G.z0) / G.cell), 0, G.nz), k = (j * (G.nx + 1) + i) * 3; r = gc.array[k]; g = gc.array[k + 1]; b = gc.array[k + 2]; }
-      return [r * avg[0] * mc.r, g * avg[1] * mc.g, b * avg[2] * mc.b];
+      const c = [r * avg[0] * mc.r, g * avg[1] * mc.g, b * avg[2] * mc.b], nat = GRASS_NAT[THEME] || 0;
+      if (nat) { const gg = clamp((c[1] - Math.max(c[0], c[2])) * 8, 0, 1) * nat, Lm = c[0] * 0.3 + c[1] * 0.59 + c[2] * 0.11, f = [1.04, 0.96, 0.86];   // (as the lawn's shader tones it down: grassLook)
+        for (let k = 0; k < 3; k++) c[k] = lerp(c[k], (Lm + (c[k] - Lm) * 0.72) * f[k], gg); }
+      return c;
     };
     const L = T.len;
     for (let s = 0; s < L; s += 2.2) for (const side of [-1, 1]) {
@@ -4449,7 +4557,66 @@ const World = (function () {
       M.customProgramCacheKey = () => 'standCrowd';
     });
   }
-  function finish(o, tex) { if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); return clouds(o.root, o, tex); }
+  /* ---- soft contact shading (ambient occlusion), every world at the end of its build: at the foot of a wall, a barrier, a building, a
+     stand, a tyre stack or a trunk, the ground darker, fading out over a metre or so (less by a low one): a decal strip along the foot of
+     every upright face of the world's meshes that stands on the ground (found from their triangles, once), on the ground's own height,
+     in 256 m chunks (culled). Drawn black over the ground, fading into the fog with it ---- */
+  let aoTexC = null;
+  function aoTex() {   // across the strip: dark at the foot, fading out (the strip's far side clear)
+    if (aoTexC) return aoTexC;
+    const c = document.createElement('canvas'); c.width = 4; c.height = 64; const x = c.getContext('2d'), img = x.createImageData(4, 64);
+    for (let j = 0; j < 64; j++) { const t = j / 63, a = Math.round(255 * Math.pow(1 - t, 1.5)); for (let i = 0; i < 4; i++) { const o = (j * 4 + i) * 4; img.data[o + 3] = a; } }
+    x.putImageData(img, 0, 0); aoTexC = new THREE.CanvasTexture(c); aoTexC.wrapS = aoTexC.wrapT = THREE.ClampToEdgeWrapping; return aoTexC;
+  }
+  function aoWorld(o, tex) {
+    const gh0 = o.groundH; if (!gh0) return;
+    const ghC = new Map(), gh = (x, z) => { const k = Math.round(x * 8) * 1048576 + Math.round(z * 8); let h = ghC.get(k); if (h === undefined) ghC.set(k, h = gh0(x, z)); return h; };   // (neighbouring strips share their corners)
+    o.root.updateMatrixWorld(true);
+    const cells = new Map(), chunk = (x, z) => { const k = Math.floor(x / 256) + ',' + Math.floor(z / 256); let c = cells.get(k); if (!c) cells.set(k, c = { P: [], C: [], U: [], I: [] }); return c; };
+    const V = new Float64Array(9);
+    const strip = (x0, y0, z0, x1, y1, z1, ox, oz, h) => {   // the foot (x0..x1), the face's outward level normal, its height
+      const g0 = gh(x0, z0); if (y0 - g0 > 0.25 || y0 - g0 < -0.45) return;   // (not standing on the ground: a bridge, a roof, a balcony)
+      const g1 = gh(x1, z1); if (y1 - g1 > 0.25 || y1 - g1 < -0.45) return;
+      const d = clamp(h * 0.8, 0.35, 1.8), a = 0.46 * clamp(h / 1.2, 0.4, 1), x2 = x1 + ox * d, z2 = z1 + oz * d, x3 = x0 + ox * d, z3 = z0 + oz * d;
+      const dg = gh((x0 + x1) / 2 + ox * d, (z0 + z1) / 2 + oz * d) - (g0 + g1) / 2;   // (the ground's fall across the strip, at its middle)
+      const b0 = Math.max(y0, g0) + 0.03, b1 = Math.max(y1, g1) + 0.03, b2 = b1 + dg, b3 = b0 + dg;
+      const c = chunk(x0, z0), n = c.P.length / 3, L = Math.hypot(x1 - x0, z1 - z0);
+      c.P.push(x0, b0, z0, x1, b1, z1, x2, b2, z2, x3, b3, z3); c.C.push(0, 0, 0, a, 0, 0, 0, a, 0, 0, 0, a, 0, 0, 0, a); c.U.push(0, 0, L, 0, L, 1, 0, 1);
+      if ((x1 - x0) * (z3 - z0) - (z1 - z0) * (x3 - x0) < 0) c.I.push(n, n + 1, n + 2, n, n + 2, n + 3); else c.I.push(n, n + 2, n + 1, n, n + 3, n + 2);   // (facing up)
+    };
+    o.root.traverse(m => {
+      if (!m.isMesh || m.isInstancedMesh || !m.visible || m.name === 'roadwear' || m.name === 'crowds' || (m.geometry && m.geometry.attributes.aSway)) return;   // (not the woods: under the crowns it hardly shows)
+      const mat = m.material, P = m.geometry && m.geometry.attributes.position;
+      if (!mat || Array.isArray(mat) || mat.transparent || mat.alphaTest > 0 || !mat.depthWrite || mat.isShaderMaterial || mat.map === tex.water || !P || P.itemSize !== 3) return;
+      const A = P.array, I = m.geometry.index ? m.geometry.index.array : null, nt = I ? I.length / 3 : P.count / 3, M = m.matrixWorld.elements;
+      const id = M[0] === 1 && M[5] === 1 && M[10] === 1 && M[1] === 0 && M[2] === 0 && M[4] === 0 && M[6] === 0 && M[8] === 0 && M[9] === 0 && M[12] === 0 && M[13] === 0 && M[14] === 0;
+      for (let t = 0; t < nt; t++) {
+        for (let k = 0; k < 3; k++) { const j = (I ? I[t * 3 + k] : t * 3 + k) * 3, x = A[j], y = A[j + 1], z = A[j + 2];
+          if (id) { V[k * 3] = x; V[k * 3 + 1] = y; V[k * 3 + 2] = z; }
+          else { V[k * 3] = M[0] * x + M[4] * y + M[8] * z + M[12]; V[k * 3 + 1] = M[1] * x + M[5] * y + M[9] * z + M[13]; V[k * 3 + 2] = M[2] * x + M[6] * y + M[10] * z + M[14]; } }
+        const ux = V[3] - V[0], uy = V[4] - V[1], uz = V[5] - V[2], vx = V[6] - V[0], vy = V[7] - V[1], vz = V[8] - V[2];
+        const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx, h2 = nx * nx + nz * nz;
+        if (h2 < 1e-18 || ny * ny > 0.0625 * h2) continue;   // (upright faces only)
+        // the foot: the two lowest corners, the third well above them
+        let lo = 0, mid = 1, hi = 2; if (V[mid * 3 + 1] < V[lo * 3 + 1]) { lo = 1; mid = 0; } if (V[hi * 3 + 1] < V[mid * 3 + 1]) { const q = hi; hi = mid; mid = q; if (V[mid * 3 + 1] < V[lo * 3 + 1]) { const r = mid; mid = lo; lo = r; } }
+        const ya = V[lo * 3 + 1], yb = V[mid * 3 + 1], h = V[hi * 3 + 1] - Math.max(ya, yb);
+        if (h < 0.3) continue;
+        const ax = V[lo * 3], az = V[lo * 3 + 2], bx = V[mid * 3], bz = V[mid * 3 + 2], L = Math.sqrt((bx - ax) * (bx - ax) + (bz - az) * (bz - az)), hl = Math.sqrt(h2);
+        if (L < 0.25 || Math.abs(yb - ya) > 0.35 * L) continue;   // (not the thin ones: posts, poles, trunks)
+        strip(ax, ya, az, bx, yb, bz, nx / hl, nz / hl, h);
+      }
+    });
+    if (!cells.size) return;
+    const mat = new THREE.MeshBasicMaterial({ color: 0x000000, map: aoTex(), vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -3 });
+    mat.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <fog_fragment>', '#include <fog_fragment>\n#ifdef USE_FOG\ngl_FragColor = vec4( vec3( 0.0 ), gl_FragColor.a * ( 1.0 - fogFactor ) );\n#endif'); };
+    mat.customProgramCacheKey = () => 'aoFoot';
+    for (const c of cells.values()) {
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(c.P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(c.C, 4)); g.setAttribute('uv', new THREE.Float32BufferAttribute(c.U, 2));
+      g.setIndex(c.P.length / 3 > 65535 ? new THREE.Uint32BufferAttribute(c.I, 1) : new THREE.Uint16BufferAttribute(c.I, 1)); g.computeBoundingSphere();
+      const mm = new THREE.Mesh(g, mat); mm.name = 'ao'; mm.renderOrder = 1; mm.matrixAutoUpdate = false; o.root.add(mm);
+    }
+  }
+  function finish(o, tex) { aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); return clouds(o.root, o, tex); }
   // where the crowds are, for their sound (Sfx: x, z, how many 0..1), on a circuit whose builder has not given them (the Red Bull Ring's
   // does): the spectators of every crowd of this build in 24 m cells, and the packed grandstands (the crowd picture) as full ones
   function crowdPoints(o, tex) {
@@ -9824,18 +9991,19 @@ const World = (function () {
     cell(20, () => { x.translate(W / 2, H / 2); x.rotate((r() - 0.5) * 0.08); for (let a = 0; a < 8; a++) for (let b = 0; b < 4; b++) { x.fillStyle = (a + b) % 2 ? '#151515' : WH; x.fillRect(-96 + a * 24, -48 + b * 24, 24, 24); } }, 1.2);   // chequered flag
     flag(21, ['#141414', '#d2232a', '#f2c200']); flag(22, ['#c7222a', WH, '#1f4c99']); flag(23, ['#141414', '#f5d000', '#df2530'], true);
     for (const k of [24, 25]) cell(k, () => {   // tar snakes (crack sealant): wiggly black lines, mostly along the road (the cell is stretched about 4 x along it)
-      x.strokeStyle = 'rgba(16,16,18,0.92)'; x.lineJoin = x.lineCap = 'round';
-      for (let n = 0; n < 5 + k - 24; n++) { x.lineWidth = 4 + r() * 4; x.beginPath(); let px = 20 + r() * (W - 40), dx = (r() - 0.5) * 3; x.moveTo(px, -8);
-        for (let py = -8; py < H + 8; py += 5) { dx = clamp(dx + (r() - 0.5) * 3, -4, 4); px = clamp(px + dx + (r() - 0.5) * 9, 10, W - 10); x.lineTo(px, py); } x.stroke(); } });
+      x.lineJoin = x.lineCap = 'round';
+      for (let n = 0; n < 5 + k - 24; n++) { const lw = 4 + r() * 4; x.beginPath(); let px = 20 + r() * (W - 40), dx = (r() - 0.5) * 3; x.moveTo(px, -8);
+        for (let py = -8; py < H + 8; py += 5) { dx = clamp(dx + (r() - 0.5) * 3, -4, 4); px = clamp(px + dx + (r() - 0.5) * 9, 10, W - 10); x.lineTo(px, py); }
+        x.strokeStyle = 'rgba(38,38,41,0.2)'; x.lineWidth = lw * 1.9; x.stroke(); x.strokeStyle = 'rgba(28,28,31,0.66)'; x.lineWidth = lw; x.stroke(); } });   // (a glossy dark grey band, a faint overband)
     for (const k of [26, 27]) cell(k, () => {   // tyre marks: a pair of dark bands (a car's track) that fade in and out; the second one slides
       for (let py = 0; py < H; py += 2) { const t = py / H, a = Math.min(sstep(0, 0.25, t), sstep(1, 0.6, t)) * 0.8, sw = k === 27 ? Math.sin(t * 5.2) * 16 : t * 10;
         x.fillStyle = `rgba(12,12,14,${a.toFixed(3)})`; for (const s of [-1, 1]) x.fillRect(W / 2 + s * (74 + (k === 27 ? t * 10 : 0)) + sw - 11, py, 22, 2); } });
     for (const k of [28, 29, 30, 31]) cell(k, () => {   // repair patches: fresh dark asphalt with sealed edges, an older pale one, a patched trench, sealed cracks
-      if (k === 31) { x.strokeStyle = 'rgba(18,18,20,0.85)'; x.lineWidth = 4; x.lineJoin = 'round'; for (let n = 0; n < 9; n++) { x.beginPath(); let px = r() * W, py = r() * H; x.moveTo(px, py); for (let q = 0; q < 9; q++) { px += (r() - 0.5) * 70; py += (r() - 0.5) * 34; x.lineTo(px, py); } x.stroke(); } return; }
+      if (k === 31) { x.strokeStyle = 'rgba(30,30,33,0.62)'; x.lineWidth = 4; x.lineJoin = 'round'; for (let n = 0; n < 9; n++) { x.beginPath(); let px = r() * W, py = r() * H; x.moveTo(px, py); for (let q = 0; q < 9; q++) { px += (r() - 0.5) * 70; py += (r() - 0.5) * 34; x.lineTo(px, py); } x.stroke(); } return; }
       const m = k === 30 ? [70, 8, W - 70, H - 8] : [12 + r() * 20, 10 + r() * 10, W - 12 - r() * 20, H - 10 - r() * 10];
       x.beginPath(); for (let q = 0; q < 16; q++) { const t = q / 16 * 4, e = Math.floor(t), f = t - e, px = [m[0], m[2], m[2], m[0]][e] + ([m[2], m[2], m[0], m[0]][e] - [m[0], m[2], m[2], m[0]][e]) * f, py = [m[1], m[1], m[3], m[3]][e] + ([m[1], m[3], m[3], m[1]][e] - [m[1], m[1], m[3], m[3]][e]) * f;
         const qx = px + (r() - 0.5) * 7, qy = py + (r() - 0.5) * 5; q ? x.lineTo(qx, qy) : x.moveTo(qx, qy); } x.closePath();
-      x.fillStyle = k === 29 ? 'rgba(150,150,144,0.34)' : 'rgba(22,23,25,0.62)'; x.fill(); x.strokeStyle = 'rgba(10,10,12,0.8)'; x.lineWidth = 3; x.stroke();
+      x.fillStyle = k === 29 ? 'rgba(150,150,144,0.3)' : 'rgba(30,31,34,0.5)'; x.fill(); x.strokeStyle = 'rgba(30,30,33,0.36)'; x.lineWidth = 3; x.stroke();
       for (let q = 0; q < 240; q++) { x.fillStyle = k === 29 ? 'rgba(60,60,58,0.25)' : 'rgba(170,170,165,0.16)'; x.fillRect(m[0] + r() * (m[2] - m[0]), m[1] + r() * (m[3] - m[1]), 2, 2); } });
     const t = new THREE.CanvasTexture(c); return t;
   }
@@ -11291,7 +11459,7 @@ const World = (function () {
       return { m, col, s: [], P, C };
     });
     return { heli, rotor, tail, X, J, jets, trails, on: false, fly: null, flyDone: false, t: 0, news: null, nNews: 0, v3: new THREE.Vector3(),
-      go: false, t0: -1, shot: { px: 0, py: 0, pz: 0, tx: 0, ty: 0, tz: 0, fov: 55, fogD: 95 } };
+      go: false, t0: -1, shot: { px: 0, py: 0, pz: 0, tx: 0, ty: 0, tz: 0, fov: 55, fogD: 95, sky: true } };   // (filmed from the grid, looking up: the sky and its clouds)
   }
   function rbAirStep(A, t, car) {
     const raw = t - A.t, dt = clamp(raw, 0, 0.25); A.t = t;
