@@ -344,5 +344,25 @@
    "tyremarks:MeshBasicMaterial": "95b8835b",
    "roadwear:MeshLambertMaterial": "e5109e86"
   }
+ },
+ "bathurst": {
+  "meshes": 973,
+  "verts": 592185,
+  "instances": 16406,
+  "props": 94,
+  "crowd": 4220,
+  "world": "6cae4cb5",
+  "propsHash": "9e34cc63",
+  "floor": "88b8b5f7/12404",
+  "groups": {
+   "-:MeshLambertMaterial": "d56448cf",
+   "-:MeshBasicMaterial": "8d213485",
+   "crowd:MeshLambertMaterial": "5b9dbb6e",
+   "flags:MeshLambertMaterial": "8a648a11",
+   "jet smoke:MeshBasicMaterial": "684b759b",
+   "ao:MeshBasicMaterial": "b7cbc948",
+   "roadwear:MeshLambertMaterial": "74d19b29",
+   "worn:MeshLambertMaterial": "b38c2a31"
+  }
  }
 }

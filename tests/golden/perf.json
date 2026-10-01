@@ -117,5 +117,12 @@
   "kverts": 305,
   "maxKverts": 393,
   "jsMs": 2.08
+ },
+ "bathurst": {
+  "calls": 245,
+  "maxCalls": 385,
+  "kverts": 461,
+  "maxKverts": 798,
+  "jsMs": 0.79
  }
 }

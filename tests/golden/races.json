@@ -848,5 +848,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "23a49c43f0de0338644e78ff"
+ },
+ "bathurst/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 286.78,
+  "spins": 0,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "6265fe88b78d830c56ce95bb"
+ },
+ "bathurst/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 299.79,
+  "spins": 0,
+  "walls": 6,
+  "rescues": 0,
+  "nan": false,
+  "digest": "2ae0f0d80f5efe53e5cf9aee"
+ },
+ "bathurst/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 239.15,
+  "spins": 0,
+  "walls": 20,
+  "rescues": 0,
+  "nan": false,
+  "digest": "00ce31126391989592555ac0"
+ },
+ "bathurst/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 241.91,
+  "spins": 0,
+  "walls": 24,
+  "rescues": 0,
+  "nan": false,
+  "digest": "00afbd29e73981b55ea6ed9d"
+ },
+ "bathurst/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 287.17,
+  "spins": 0,
+  "walls": 15,
+  "rescues": 0,
+  "nan": false,
+  "digest": "02bb787277ebf5599c53759e"
  }
 }

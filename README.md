@@ -120,6 +120,14 @@ Prava proga Suzuka na Japonskem v pravem merilu (5,807 km, 2 kroga proti 12 tekm
 - Na Suzuki ni boksov za popravilo (stavba boksov je le okolica).
 - **Pokošena trava:** trava ob progi in zelenice za ogrado so pokošene v svetle in temnejše pasove vzdolž proge (ne v gozdu, grmovju, na parkiriščih, v ribnikih, ob ciljni ravnini in ob križanju).
 
+## Bathurst, Avstralija
+
+Proga po javnih cestah okoli hriba nad mestom Bathurst v Novem Južnem Walesu, v pravem merilu: krog meri 6,2 km (uradno 6,213 km), dva kroga proti 12 tekmecem, vožnja v nasprotni smeri urinega kazalca, start in cilj na sredini ciljne ravnine. Oblika proge je iz OpenStreetMap, višine pa iz satelitskega višinskega modela Copernicus (ob cesti najnižja točka čez njeno širino, da drevesa niso v višinah): ostri levi 1. zavoj na koncu ciljne ravnine, dolg vzpon z naklonom do 16 % do 2. zavoja, strmi 4. zavoj, nato po grebenu med betonskimi zidovi (1,5 m od roba ceste) do vrha hriba (165 m nad ciljno ravnino), strm spust skozi esse (11. zavoj) do 15. zavoja in dolga ravnina navzdol čez grbino do šikane (16. in 17. zavoj) ter zadnji, 18. zavoj na ciljno ravnino; skupaj 172 m višinske razlike. Zavoji imajo samo številke (brez imen oseb, krajev ali sponzorjev), pod uro se izpiše deset glavnih, komentator pa jih občasno omeni.
+
+- **Okolica:** teren iz višinskega modela (krošnje in strehe odstranjene), gozd po rabi tal (ESA WorldCover). Evkalipti z visokimi svetlimi debli in redkimi sivo-zelenimi krošnjami v odprtem gozdu, osamljeni evkalipti na pašnikih, akacije na grmišču; pašniki so suhi in zlatkasti, v kotanjah bolj zeleni. Avstralske domačije (bele lesene hiše pod rdečo pločevinasto streho, pločevinaste lope), kampi navijačev s šotori in avtodomi, parkirišča z avtomobili navijačev.
+- **Dirka:** pokrita tribuna ob ciljni ravnini (nasproti boksarske steze, ki je ni), navijači na travi pri 1. zavoju, ob vzponu, na vrhu hriba, ob dolgi ravnini in pri šikani, zastave v zeleni in zlati ter modri in beli barvi, video zasloni, napisi BATHURST in NEW SOUTH WALES (izmišljeni sponzorji na zidovih, kot na drugih progah), table s številkami zavojev, kamere na stolpih, redarji, reševalno vozilo. Na koncu 1. zavoja, šikane in zadnjega zavoja je asfaltni izletni pas, drugod so zidovi z lovilnimi ograjami blizu ceste. Pred štartom preletijo ravnino letala z belim dimom.
+- Na Bathurstu ni boksov za popravilo.
+
 ## Toskana in Gromski rt
 
 Progi v slogu dveh prog iz igre Circuit Superstars (posnetek dirke `parta.mp4`), z drugače oblikovanimi ovinki, tako da nista enaki originaloma:
@@ -133,7 +141,7 @@ Na obeh lahko zapelješ v bokse (desno takoj za zadnjim ovinkom pred ciljno ravn
 
 ## Kje na progi si (proge po resničnih krajih)
 
-Na progah Ljubljana, Monako, Pikes Peak, Ouninpohja, Vršič, Los Caracoles, Nordschleife, Spa, Red Bull Ring in Suzuka se ~70 m pred vsakim znanim krajem pod uro izpiše njegovo ime (npr. Zmajski most, Prešernov trg, Casino, predor, Glen Cove, Devil's Playground, Keltainen talo, Kakaristo, Serpentina 8 · Ruska kapelica, Karussell, Eau Rouge, Zavoj 1 · Niki Lauda), in to v vsakem krogu. Komentator (v angleščini) občasno pove, kje si („Over the Dragon Bridge now!“, „Up into Casino Square!“), vsak kraj praviloma enkrat na dirko, z razmikom med takimi stavki, in samo takrat, ko ne govori o nečem pomembnejšem (prehitevanja, vmesni časi, nesreče in boksi imajo prednost in ga prekinejo). Kraj, ki ga v enem krogu ni utegnil omeniti, lahko pove v naslednjem. Čas kroga ali vmesni čas ostane na zaslonu, ime kraja pa se pokaže takoj za njim.
+Na progah Ljubljana, Monako, Pikes Peak, Ouninpohja, Vršič, Los Caracoles, Nordschleife, Spa, Red Bull Ring, Suzuka in Bathurst se ~70 m pred vsakim znanim krajem pod uro izpiše njegovo ime (npr. Zmajski most, Prešernov trg, Casino, predor, Glen Cove, Devil's Playground, Keltainen talo, Kakaristo, Serpentina 8 · Ruska kapelica, Karussell, Eau Rouge, Zavoj 1 · Niki Lauda), in to v vsakem krogu. Komentator (v angleščini) občasno pove, kje si („Over the Dragon Bridge now!“, „Up into Casino Square!“), vsak kraj praviloma enkrat na dirko, z razmikom med takimi stavki, in samo takrat, ko ne govori o nečem pomembnejšem (prehitevanja, vmesni časi, nesreče in boksi imajo prednost in ga prekinejo). Kraj, ki ga v enem krogu ni utegnil omeniti, lahko pove v naslednjem. Čas kroga ali vmesni čas ostane na zaslonu, ime kraja pa se pokaže takoj za njim.
 
 ## Fizika vožnje
 
@@ -465,3 +473,6 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 - Višine in teren Los Caracoles: Copernicus DEM GLO-30: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
 - Raba tal Los Caracoles: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Višine Suzuke: Copernicus DEM GLO-30: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
+- Proga Bathurst (sredinska črta): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/), prek [Overture Maps Foundation](https://overturemaps.org). Iz njih izpeljani podatki v `js/tracks/bathurst.js` so na voljo pod ODbL 1.0.
+- Višine in teren Bathursta: Copernicus DEM GLO-30: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
+- Raba tal Bathursta: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
