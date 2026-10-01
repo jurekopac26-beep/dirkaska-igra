@@ -1652,15 +1652,15 @@
   }
  },
  "caracoles/car/cs": {
-  "digest": "ea60347d1d6d7e9b78160a25",
-  "lead": 2099.8,
+  "digest": "6d956de7603835120d26afe4",
+  "lead": 2101.3,
   "car0": [
-   819.4,
-   -516.37
+   846.21,
+   -535.07
   ],
   "cover": {
-   "dmg": 0.7,
-   "loose": 5,
+   "dmg": 1,
+   "loose": 14,
    "rescues": 0,
    "repairs": 0
   }

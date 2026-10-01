@@ -842,11 +842,11 @@
  "caracoles/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 308.26,
+  "winner": 308.16,
   "spins": 0,
-  "walls": 2,
+  "walls": 3,
   "rescues": 0,
   "nan": false,
-  "digest": "0170bc4e1559cd4e038b04b2"
+  "digest": "23a49c43f0de0338644e78ff"
  }
 }
