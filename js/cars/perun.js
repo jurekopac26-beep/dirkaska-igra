@@ -74,6 +74,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- the side: black skirts from arch to arch (down to the sills), a stripe over them ----
         D2.side([[XA + 0.03, 0.2], [XB - 0.03, 0.2], [XB - 0.03, 0.37], [XA + 0.03, 0.37]], B, null, 0.006);
         D2.side([[XA + 0.03, 0.38], [XB - 0.03, 0.38], [XB - 0.03, 0.4], [XA + 0.03, 0.4]], S, null, 0.006);
+        D2.side([[1.74, 0.47], [1.82, 0.47], [1.82, 0.5], [1.74, 0.5]], AMB, null, 0.006);                       // the side markers: amber in front,
+        D2.side([[-1.93, 0.6], [-1.86, 0.6], [-1.86, 0.63], [-1.93, 0.63]], [0.62, 0.06, 0.05], null, 0.006);     //  red behind
         // ---- the airboxes: a scoop on each buttress behind the door's glass, its mouth forward (black, its slats) ----
         const band = (x, z) => { const w = L.prop(x, 'w'), wt = L.prop(x, 'wt'), yb = L.prop(x, 'ybelt'), yt = L.prop(x, 'yt'); return yb + (yt - yb) * Math.max(0, Math.min(1, (w - Math.abs(z)) / (w - wt))); };
         for (const sd of [-1, 1]) {
@@ -112,7 +114,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           }
         }, { noCrush: true, noDent: true });
         // ---- the engine cover: a black louvred panel under the wing ----
-        D2.top([[-1.36, -0.5], [-1.94, -0.5], [-1.94, 0.5], [-1.36, 0.5]], B, 0.004);
+        D2.top([[-1.3, -0.52], [-1.94, -0.52], [-1.94, 0.52], [-1.3, 0.52]], B, 0.004);   // (from the rear glass's foot: one dark band to the wing)
         for (let i = 0; i < 5; i++) { const x = -1.42 - i * 0.11; D2.top([[x, -0.47], [x - 0.035, -0.47], [x - 0.035, 0.47], [x, 0.47]], [0.24, 0.24, 0.26], 0.008); }
         // ---- the tail: the black panel with the lamps, the grille between them, the dark valance (the bumper), the four pipes ----
         const tx = -2.07;
