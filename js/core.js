@@ -168,10 +168,18 @@ const Core = (function () {
       if (def.rain && open) this._buildPuddles(def.rain);
       // cobbled stretches (def.setts = [[from, to], ...], metres after the start line; open roads: the granite setts in the hairpins of
       // Vršič): a surface of their own (7, 8 in the rain), less grip than asphalt and much less when wet. settAt: per sample, 1 on the setts
+      // (closed circuits too: the kasseien of the Kapelmuur; there the stretches wrap round the start line)
       this.settAt = null;
-      if (def.setts && open) {
+      if (def.setts) {
         const a = this.settAt = new Uint8Array(N);
-        for (const [s0, s1] of def.setts) for (let d = s0; d <= s1; d += ds / 2) { const i = Math.floor((this.startS + d) / ds); if (i >= 0 && i < N) a[i] = 1; }
+        for (const [s0, s1] of def.setts) for (let d = s0; d <= s1; d += ds / 2) { const i = open ? Math.floor((this.startS + d) / ds) : this.idx(this.startS + d); if (i >= 0 && i < N) a[i] = 1; }
+      }
+      // grass verges on a circuit with paved ones (def.grass = [[from, to], ...], metres after the start line, with def.offSurface 'paving': the
+      // Kapelmuur's town streets have sidewalks, its park and fields grass): grassAt, per sample, 1 where the verge is grass
+      this.grassAt = null;
+      if (def.grass && !open) {
+        const a = this.grassAt = new Uint8Array(N);
+        for (const [s0, s1] of def.grass) for (let d = s0; d <= s1; d += ds / 2) a[this.idx(this.startS + d)] = 1;
       }
       // sidewalks (def.walks = [[from, to, side (-1 left, 1 right, 0 both), width], ...], metres after the start line; open roads: Kranjska
       // Gora and Jasna on Vršič): part of the road, drivable with the grip of asphalt (surface 0), eased in and out over 10 m; the barriers
@@ -641,7 +649,7 @@ const Core = (function () {
       if (this.curb[i] && ad <= w + this.curbW) return 1;
       if (this.gstrip) { const g = this.gstrip[d > 0 ? 1 : 0][i]; if (g > 0 && ad <= w + this.curbW + g) return 3; }
       const grav = d > 0 ? this.gravR[i] : this.gravL[i];
-      return grav ? (this.def.runoffTarmac ? 4 : 3) : this.def.offSurface === 'paving' ? 4 : this.def.offSurface === 'gravel' ? 3 : 2;
+      return grav ? (this.def.runoffTarmac ? 4 : 3) : this.def.offSurface === 'paving' ? (this.grassAt && this.grassAt[i] ? 2 : 4) : this.def.offSurface === 'gravel' ? 3 : 2;
     }
   }
 
