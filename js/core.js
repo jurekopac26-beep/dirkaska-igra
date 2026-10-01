@@ -177,6 +177,13 @@ const Core = (function () {
         const a = this.settAt = new Uint8Array(N);
         for (const [s0, s1] of def.setts) for (let d = s0; d <= s1; d += ds / 2) { const i = Math.floor((this.startS + d) / ds); if (i >= 0 && i < N) a[i] = 1; }
       }
+      // asphalt stretches of a gravel road (def.paved = [[from, to], ...], metres after the start line; open roads: the paved ends of the Moki
+      // Dugway): the asphalt's surface (0) there, the makadam (5) elsewhere. pavedAt: per sample, 1 on the asphalt
+      this.pavedAt = null;
+      if (def.paved && open) {
+        const a = this.pavedAt = new Uint8Array(N);
+        for (const [s0, s1] of def.paved) for (let d = s0; d <= s1; d += ds / 2) { const i = Math.floor((this.startS + d) / ds); if (i >= 0 && i < N) a[i] = 1; }
+      }
       // sidewalks (def.walks = [[from, to, side (-1 left, 1 right, 0 both), width], ...], metres after the start line; open roads: Kranjska
       // Gora and Jasna on Vršič): part of the road, drivable with the grip of asphalt (surface 0), eased in and out over 10 m; the barriers
       // stand 1.8 m past them (1 m on a road widened between its barriers, def.barW). walk: per side ([0] left, [1] right) the sidewalk's width at every sample (0: none)
@@ -814,7 +821,7 @@ const Core = (function () {
       const d = q.d, ad = Math.abs(d), w = this.w;
       if (ad <= w || (this.walk && ad <= w + this.walk[d > 0 ? 1 : 0][q.a])) {   // (a sidewalk: part of the road)
         if (this.settAt && this.settAt[q.a]) return this.inRain ? 8 : 7;
-        if (this.def.roadSurface !== 'makadam') return 0;
+        if (this.def.roadSurface !== 'makadam' || (this.pavedAt && this.pavedAt[q.a])) return 0;
         const p = this.inRain && this.pudAt ? this.pudAt[q.a] : -1;
         if (p >= 0) { const u = this.puddles[p], a = (q.s - u[0]) / u[2], b = (d - u[1]) / u[3]; if (a * a + b * b < 1) return 6; }
         return 5;
@@ -2061,7 +2068,7 @@ const Core = (function () {
       // people waiting at the bus stops
       for (const st of this.stops) { const n = 1 + Math.floor(R() * 2.6); for (let k = 0; k < n; k++) { const p = this._ped(R() < 0.45 ? 1 : 0, st.s + (R() - 0.5) * 5, st.side, 'stop'); p.a0 = p.a1 = p.s; } }
       // hikers at the road's edge by the huts and the chapel (their stretch 250 m around it; they cross now and then), a few on the long stretches
-      const huts = T.names.filter(q => /dom|koča|kapelica|Vršič|Jasna|deklica|Mirador|Portillo/i.test(q.n)).map(q => T.startS + q.d);   // (Los Caracoles: the viewpoint, Portillo)
+      const huts = T.names.filter(q => /dom|koča|kapelica|Vršič|Jasna|deklica|Mirador|Portillo|Razgled/i.test(q.n)).map(q => T.startS + q.d);   // (Los Caracoles: the viewpoint, Portillo; Moki Dugway: the viewpoint)
       for (const s0 of huts) for (let k = 0; k < 2; k++) this._crowd(1, s0 + (R() - 0.5) * 220, R() < 0.5 ? 1 : -1, s0 - 125, s0 + 125, 1, 6);
       for (let s = T.startS + 2300; s < T.finishS - 200; s += 700 + R() * 700) this._crowd(1, s, R() < 0.6 ? 1 : -1, s - 400, s + 400, 1, 4);
     }
