@@ -119,6 +119,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const sd of [-1, 1]) {
           K.tailLamp(tx, 0.822, sd * 0.555, 0.15, 0.15, { round: true });
           K.tailLamp(tx, 0.822, sd * 0.365, 0.13, 0.13, { round: true });
+          for (const [z, r] of [[0.555, 0.088], [0.365, 0.078]]) K.discX(tx - 0.001, 0.822, sd * z, r, 10, [0.36, 0.05, 0.05], -1, { part: 'body' });   // (their red rims)
           K.discX(tx - 0.002, 0.822, sd * 0.215, 0.045, 8, [0.86, 0.86, 0.84], -1, { part: 'body' });
         }
         K.part('bumperR', () => {
