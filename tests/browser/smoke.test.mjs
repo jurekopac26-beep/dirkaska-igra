@@ -61,7 +61,7 @@ try {
   // 3. every track: race 20 s on autopilot with full graphics
   const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.2 });
   const ids = await trackIds(page), all = await page.evaluate(() => Core.TRACKS.map(d => d.id));
-  T.check('track menu lists every track of the game', ids.join(',') === all.join(',') && ids.length >= 8, ids.join(','));
+  T.check('track menu lists every track of the game', [...ids].sort().join(',') === [...all].sort().join(',') && ids.length >= 8, ids.join(','));   // (in the menu's order: a road variant, def.variantOf, is a choice on its track's card)
   for (const id of ids) {
     const e0 = errors.length;
     await startTrack(page, id);

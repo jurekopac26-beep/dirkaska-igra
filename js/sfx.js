@@ -448,10 +448,11 @@ const Sfx = (function () {
   }
   function pkxUpdate(race, player, cam, dt, now) {
     const X = atmo.x, { sstep } = Core, T = race.track, spd = player.speed || 0, y = player.roadY || 0, wet = race.rain || 0;
-    // crunch: the wheels on the verge (surface 3) on each side of the car, louder and denser with the speed (nothing in the air or at a standstill)
+    // crunch: the wheels on the verge (surface 3), and on the historic gravel road on the road itself (5, 6), on each side of the car, louder and denser
+    // with the speed (nothing in the air or at a standstill)
     let dot = 1; if (cam) { const e = cam.matrixWorld.elements, h = player.h || 0; dot = clamp(-Math.sin(h) * e[0] + Math.cos(h) * e[2], -1, 1); }   // (the car's +side on the screen)
     const v = player.air ? 0 : PX_CRUNCH * (0.12 + 0.88 * sstep(2, 38, spd)) * Math.min(1, spd / 2.5) * (1 - 0.4 * wet), W = player.ws || [];
-    for (let k = 0; k < 2; k++) { const c = X.cr[k], nw = (W[k] === 3 ? 1 : 0) + (W[k + 2] === 3 ? 1 : 0);   // (k 0: the -side wheels 0 and 2, k 1: the +side ones)
+    for (let k = 0; k < 2; k++) { const c = X.cr[k], lz = (w) => w === 3 || w === 5 || w === 6 ? 1 : 0, nw = lz(W[k]) + lz(W[k + 2]);   // (k 0: the -side wheels 0 and 2, k 1: the +side ones)
       set(c.g.gain, c.src ? v * nw / 2 : 0, 0.04); if (c.src) set(c.src.playbackRate, 0.7 + 0.55 * sstep(3, 40, spd), 0.1); if (c.pn.pan) set(c.pn.pan, (k ? 0.55 : -0.55) * dot, 0.1); }
     set(X.cf.frequency, 900 + 2600 * sstep(3, 35, spd), 0.1);
     // the rock echo: fades in and out along the road; the slap's delay changes only while it is silent (no pitch glide)
@@ -640,7 +641,7 @@ const Sfx = (function () {
     if (ex > 0.25 && Math.random() < dt * ex * 3) cheer(Math.min(1, ex));
     // Pikes Peak: the engine echoes among the rocks above the treeline; the TV helicopter (World's dyn.pk: Pikes Peak's, and Ouninpohja's
     // that follows the car the whole run) by its distance to the camera
-    const pikes = !!(race && race.track && race.track.def && race.track.def.id === 'pikes');
+    const pikes = !!(race && race.track && race.track.def && race.track.def.theme === 'pikes');   // (on asphalt and on the historic gravel road)
     set(echo.send.gain, pikes ? Core.sstep(186, 198, player.roadY || 0) * 0.32 : 0, 0.6);
     { const tn = Wd && Wd.dyn && Wd.dyn.tunnel, sq = player.q ? player.q.s : -1e9;   // (in a tunnel: the ring of its walls)
       set(tun.send.gain, tn && sq > tn.s0 - 3 && sq < tn.s1 + 3 ? 0.85 : 0, 0.08); }
