@@ -14,7 +14,8 @@ try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'toskana', fuel: 0, length: 'normal', weather: 'dry', tod: 'day' }, { width: 390, height: 844 });
   const click = (set, v) => page.evaluate(([set, v]) => document.querySelector(`[data-set="${set}"] button[data-v="${v}"]`).click(), [set, v]);
   const sub = () => page.evaluate(() => { window.__game.onAction('to-title'); return document.getElementById('title-sub').textContent; });
-  await page.evaluate(() => { window.__msgs = []; const log = (id) => new MutationObserver(() => { const t = document.getElementById(id).textContent; if (t) window.__msgs.push(t); }).observe(document.getElementById(id), { childList: true, characterData: true, subtree: true }); log('h-msg'); log('toast'); });
+  // (every text set, from the records: a stretch simulated in one go gives a single callback, by then a later message may have replaced it)
+  await page.evaluate(() => { window.__msgs = []; const log = (id) => new MutationObserver((recs) => { for (const r of recs) for (const n of r.addedNodes) { const t = n.textContent; if (t) window.__msgs.push(t); } }).observe(document.getElementById(id), { childList: true, subtree: true }); log('h-msg'); log('toast'); });
   const frames = (n) => page.evaluate((n) => new Promise(res => { let k = 0; const f = () => (++k >= n ? res() : requestAnimationFrame(f)); requestAnimationFrame(f); }), n);
 
   // 1. the settings on the title's line
