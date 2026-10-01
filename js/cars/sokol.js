@@ -47,7 +47,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         eye: { x: -0.5, y: 1.02 },
         door: [0.62, -0.5], bumpF: 0.3, bumpR: 0.175, bumpY: [0.62, 0.62],
         crush: { x0: -1.5, x1: 0.18, z: 0.62 },                          // (the roof and the hatch's top: the bubble canopy)
-        decalX: -0.44, decalY: 1.254, decalRz: 0, decalS: 0.6 },        // (the start number on the two bubbles)
+        decalX: 1.2, decalY: 0.752, decalRz: -0.087, decalS: 0.68, decalPart: 'hood' },   // (the start number on the bonnet's sunk middle: the roof's
+                                                                         //  double bubble stays in sight from the chase camera)
       wheels: { style: 'std', spokes: 5, w: 0.225, wR: 0.245, rim: [0.74, 0.75, 0.78], cap: [0.16, 0.16, 0.18], gap: 0.055 },
       // the standard regions; the ducktail (the tail's top behind the glass, and anything over it there) is the 'wing', the glass hatch the trunk
       regions: (std) => std.filter(r => r.part !== 'wing').flatMap(r => r.part !== 'trunk' ? [r]
@@ -75,9 +76,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // the double bubble: two low humps over the seats, a channel between them down the middle of the roof
         for (const sd of [-1, 1]) {
           const ring = (x, lift) => [[0.05, -0.004], [0.13, lift], [0.34, lift], [0.48, lift * 0.45], [0.56, -0.004]].map(([z, dy]) => [x, L.topY(x, z) + dy, sd * z]);
-          K.skin([ring(-0.08, 0.008), ring(-0.25, 0.034), ring(-0.6, 0.034), ring(-0.78, 0.01)], P, null, null, { part: 'body' });
+          K.skin([ring(-0.07, 0.008), ring(-0.24, 0.04), ring(-0.6, 0.04), ring(-0.8, 0.01)], P, null, null, { part: 'body' });
         }
-        D2.top([[-0.09, -0.06], [-0.77, -0.06], [-0.77, 0.06], [-0.09, 0.06]], K.shade(P, 0.86), 0.003);   // (the channel's floor, in the bubbles' shade)
+        D2.top([[-0.08, -0.06], [-0.79, -0.06], [-0.79, 0.06], [-0.08, 0.06]], K.shade(P, 0.82), 0.003);   // (the channel's floor, in the bubbles' shade)
         // the pop-up lamps, shut: each lid at the front of its wing's crest (its outer edge along the crest), a shade darker, its shut lines
         for (const sd of [-1, 1]) {
           const x0 = 1.6, x1 = 1.9, zi = 0.475, t = 0.018, zo = (x) => L.prop(x, 'wt') - 0.004, Z = (p) => p.map(([x, z]) => [x, sd * z]);
@@ -85,13 +86,16 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const p of [[[x0, zi], [x1, zi], [x1, zi + t], [x0, zi + t]], [[x0, zo(x0) - t], [x1, zo(x1) - t], [x1, zo(x1)], [x0, zo(x0)]],
             [[x0, zi], [x0 + t, zi], [x0 + t, zo(x0 + t)], [x0, zo(x0)]], [[x1 - t, zi], [x1, zi], [x1, zo(x1)], [x1 - t, zo(x1 - t)]]]) D2.top(Z(p), D, 0.005);
         }
-        // the ducktail's lip: it kicks up off the deck and overhangs the tail (the 'wing', with the deck under it)
+        // the ducktail's lip: it kicks up off the deck and curls over the tail's face, fading into the corners (the 'wing', with the deck under it)
         K.part('wing', () => {
-          const ring = (z) => { const t = (x) => L.topY(x, z); return [[-2.02, t(-2.02) - 0.006, z], [-2.12, t(-2.12) + 0.04, z], [-2.19, t(-2.145) + 0.068, z], [-2.186, t(-2.145) + 0.036, z], [-2.138, t(-2.145) - 0.006, z]]; };
-          K.skin([-0.66, -0.36, 0, 0.36, 0.66].map(ring), P, P, P);
+          const ring = ([z, k]) => { const t = (x) => L.topY(x, z); return [[-2.02, t(-2.02) - 0.006, z], [-2.115, t(-2.115) + 0.046 * k, z], [-2.165, t(-2.145) + 0.068 * k, z], [-2.158, t(-2.145) + 0.02 * k, z], [-2.147, t(-2.145) - 0.012, z]]; };
+          K.skin([[-0.67, 0.3], [-0.45, 0.85], [0, 1], [0.45, 0.85], [0.67, 0.3]].map(ring), P, P, P);
         }, { noCrush: true });
         // the side: a pinstripe in the stripe colour over the sills from arch to arch; the door handles
         D2.side([[XA + 0.04, 0.395], [XB - 0.04, 0.395], [XB - 0.04, 0.418], [XA + 0.04, 0.418]], K.strp, null, 0.006);
+        D2.side([[1.93, 0.43], [2.01, 0.43], [2.01, 0.46], [1.93, 0.46]], [0.95, 0.55, 0.1], null, 0.006);     // the side markers: amber in front,
+        D2.side([[-2.06, 0.5], [-1.99, 0.5], [-1.99, 0.53], [-2.06, 0.53]], [0.6, 0.06, 0.05], null, 0.006);  // red behind
+        D2.top([[-1.845, -0.64], [-1.8, -0.64], [-1.8, 0.64], [-1.845, 0.64]], B, 0.006);                      // (the glass hatch's black foot)
         for (const sd of [-1, 1]) K.rect(-0.36, 0.785, sd * 0.864, 0.13, 0.024, B, { dir: sd < 0 ? '-z' : 'z', host: sd < 0 ? 'doorL' : 'doorR' });
         // ---- the nose: the wide mouth (the intercooler behind it), a lamp slot at each corner (the parking lamps over the brake ducts),
         //      the chin ----
@@ -109,11 +113,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- the tail: the dark panel right across with two round lamps a side and the reversing lamps; the plate, the diffuser, the twin
         //      tail pipes (right) ----
         const tx = -2.147;
-        K.face([[tx, 0.72, -0.7], [tx, 0.72, 0.7], [tx, 0.885, 0.662], [tx, 0.885, -0.662]], SMK, { part: 'body' });
+        K.face([[tx, 0.74, -0.7], [tx, 0.74, 0.7], [tx, 0.905, 0.664], [tx, 0.905, -0.664]], SMK, { part: 'body' });
         for (const sd of [-1, 1]) {
-          K.tailLamp(tx, 0.8, sd * 0.555, 0.15, 0.15, { round: true });
-          K.tailLamp(tx, 0.8, sd * 0.365, 0.13, 0.13, { round: true });
-          K.discX(tx - 0.002, 0.8, sd * 0.215, 0.045, 8, [0.86, 0.86, 0.84], -1, { part: 'body' });
+          K.tailLamp(tx, 0.822, sd * 0.555, 0.15, 0.15, { round: true });
+          K.tailLamp(tx, 0.822, sd * 0.365, 0.13, 0.13, { round: true });
+          K.discX(tx - 0.002, 0.822, sd * 0.215, 0.045, 8, [0.86, 0.86, 0.84], -1, { part: 'body' });
         }
         K.part('bumperR', () => {
           K.rect(tx - 0.001, 0.46, 0, 0.5, 0.11, [0.93, 0.93, 0.9], { dir: '-x' });
