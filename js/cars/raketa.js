@@ -16,7 +16,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     price: 14000, pk: 'ta1', field: ['raketa'],
     snd: { kind: 'i4', hz: 1.1, loud: 1 },
     expect: { t100: [3.09, 3.63], vmax: [205, 217], latG: [2.19, 2.29], d100: [22.8, 25.2] },
-    parts: { set: 'car', ht: 1.4, y0: 0.2 },
+    parts: { set: 'car', ht: 1.4, y0: 0.2, over: { trunk: { lx: -0.95, y: 0.94 } } },   // (the hatch's tailgate: at the tail, where the look has it)
     // the look: a loft through the sections below (look units = metres: body.len / wid are the vehicle's), the standard regions split it into
     // the parts (bumpers, bonnet, tailgate with its glass, fenders, quarters, doors with their glass), the details on top (KIT API v1, render.js)
     look: {
