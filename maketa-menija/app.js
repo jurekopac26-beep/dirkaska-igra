@@ -662,7 +662,7 @@
       const c = D.cars[carIdx]; Car3D.show(c.model, colorIdx, { dark: !!c.soon }); Car3D.setVisible(true);
     } else if (car3dReady) Car3D.setVisible(false);
     if (screen === 'track') wx.attach($('#track-stage', app), wxMode(), shown !== 'track'); else wx.detach();
-    if (screen === 'track' && shown !== 'track' && window.Journey && P.lastTrack) Journey.preload([P.lastTrack]);   // (the globe before a race starts there)
+    if (screen === 'track' && shown !== 'track' && window.Journey) Journey.preload(P.lastTrack ? [P.lastTrack] : []);   // (the globe before a race: the Earth, and where it starts)
     flyLabels(); fitMaps();
     shown = screen;
     if (sheet) { app.insertAdjacentHTML('beforeend', typeof sheet === 'function' ? sheet() : sheet); if (sheetOn) $('.sheet-bg', app).classList.add('still'); }

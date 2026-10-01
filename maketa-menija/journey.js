@@ -379,15 +379,14 @@ window.Journey = (function () {
     // ---------------- the frame ----------------
     let t0 = -1; const tWait = performance.now();
     canvas.style.opacity = '0'; labels.style.opacity = '0';
-    function ready() {   // the globe's picture, and the first place's lands (the last race's, or none from space)
-      if (!earthMat.uniforms.tE.value) return false;
-      const T = FROM || null; if (!T) return true;
-      return patches.filter(p => p.T === T && p.ready).length >= 2;
+    function ready(waited) {   // the globe's picture (up to 4 s: without it the Earth is black), then the last race's lands (up to 1.2 s)
+      if (!earthMat.uniforms.tE.value) return waited > 4000;
+      return !FROM || waited > 1200 || patches.filter(p => p.T === FROM && p.ready).length >= 2;
     }
     function frame(now) {
       if (!alive) return;
       raf = requestAnimationFrame(frame);
-      if (t0 < 0) { if (!ready() && now - tWait < 1200) return; t0 = now; }
+      if (t0 < 0) { if (!ready(now - tWait)) return; t0 = now; }
       const W = host.clientWidth || W0, H = host.clientHeight || H0;
       if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) { renderer.setSize(W, H, false); camera.aspect = W / H; res.set(W * dpr / 2, H * dpr / 2); veil.width = Math.round(W * dpr / 2); veil.height = Math.round(H * dpr / 2); }
       const t = (now - t0) / 1000;
