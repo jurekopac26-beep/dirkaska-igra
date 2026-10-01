@@ -6979,7 +6979,7 @@ const World = (function () {
     /* ---- 1. safety: foam block walls (blue and white) along the rail on the outside of the hairpins and of the fast bends, just in front of it ---- */
     const foamC = [[0.12, 0.3, 0.76], [0.92, 0.92, 0.9]], foamT = [[0.2, 0.42, 0.88], [0.98, 0.98, 0.96]];
     const foam = (s0, s1, side) => { const pts = [];   // (no shadow: in the terrain tiles; only the faces that show: the front, the top, the row's two ends; 12-18 vertices a block)
-      for (let s = s0; s <= s1; s += 0.25) { const q = crAt(s); if (!q) continue; const o = side * ((side > 0 ? q.br : q.bl) - 0.27); pts.push([q.px + q.nx * o, q.hy, q.pz + q.nz * o, q.nx * side * 0.23, q.nz * side * 0.23]); }
+      for (let s = s0; s <= s1; s += 0.25) { const q = crAt(s); if (!q) continue; const o = side * ((side > 0 ? q.br : q.bl) + 0.05); pts.push([q.px + q.nx * o, q.hy, q.pz + q.nz * o, q.nx * side * 0.23, q.nz * side * 0.23]); }
       const F = (p, e, y) => [p[0] - p[3] * e, y, p[2] - p[4] * e];   // e: +1 the front (towards the road), -1 the back
       let a = 0, k = 0;
       for (let b = 1; b < pts.length; b++) { const A = pts[a], B = pts[b], L = Math.hypot(B[0] - A[0], B[2] - A[2]); if (L < 1.5 && b < pts.length - 1) continue; if (L < 0.8) break;
