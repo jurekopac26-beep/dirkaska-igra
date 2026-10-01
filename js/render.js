@@ -2522,8 +2522,8 @@ const Render = (function () {
       while (f.acc[k] >= 1) {
         f.acc[k] -= 1; at(wx - 0.2, 0.22, sd * wz);
         if (kind === 1) {   // chips of pink granite (in winter: clumps of snow), thrown back and out, falling fast
-          const t = R(), s = 0.68 + R() * 0.55, o = 1 + R() * 2.5, snowy = winter && R() < 0.6;
-          const cr = snowy ? 0.9 : (0.64 + t * 0.06) * s, cg = snowy ? 0.92 : (0.46 + t * 0.03) * s, cb = snowy ? 0.96 : (0.37 + t * 0.03) * s;
+          const t = R(), s = 0.68 + R() * 0.55, o = 1 + R() * 2.5, snowy = winter && R() < 0.6, mud = !snowy && surf >= 5 && wetW > 0.1;   // (the historic gravel road in the rain: mud)
+          const cr = snowy ? 0.9 : mud ? (0.3 + t * 0.06) * s : (0.64 + t * 0.06) * s, cg = snowy ? 0.92 : mud ? (0.24 + t * 0.03) * s : (0.46 + t * 0.03) * s, cb = snowy ? 0.96 : mud ? (0.19 + t * 0.02) * s : (0.37 + t * 0.03) * s;
           particles.emit(_pkE.x, _pkE.y, _pkE.z, c.vx * 0.3 - fx * (1 + R() * 2) + lx * sd * o, 2.2 + R() * 3.2, c.vz * 0.3 - fz * (1 + R() * 2) + lz * sd * o, 0.45 + R() * 0.35, 0.42 + R() * 0.25, 0.3, cr, cg, cb, 1, 15, 0.35, gy);
           if (R() < 0.35) particles.emit(_pkE.x, _pkE.y, _pkE.z, c.vx * 0.2 + lx * sd * o, 0.8 + R() * 0.8, c.vz * 0.2 + lz * sd * o, 0.8 + R() * 0.5, 0.6, 2.2 + R(), cr * 1.1, cg * 1.1, cb * 1.1, 0.35, -0.05, 1.6, gy);   // (a low fan of fine grit)
         } else if (kind === 2) {   // tyre smoke: pale, a little blue in the thin air
