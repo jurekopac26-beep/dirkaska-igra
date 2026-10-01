@@ -7783,6 +7783,37 @@ const World = (function () {
       for (const u of [-1.05, 1.05]) box(g, px + T.tx[ii] * u, py - 0.2, pz + T.tz[ii] * u, 0.08, 2.0, 0.08, T.hd[ii], [0.35, 0.3, 0.24]);
       const [v0, v1] = row(6); bannerQ(px, py + 1.2, pz, T.nx[ii], T.nz[ii], 2.6, 0.66, v0, v1, 0, 0.5); CR.block(px, pz, 2.6, 0.4, T.hd[ii]); }
 
+    /* ---- race day behind the big crowds: a sausage grill under a red and white pop-up tent (its queue, a beer table), a row of portable toilets ---- */
+    let nStalls = 0, nLoos = 0;
+    {
+      const free = (x, z, y) => { const k = gIdx(x, z); return k >= 0 && G.sw[k] !== 2 && !hard(x, z) && !excluded(x, z) && nearDD(x, z) > 6 && Math.abs(hjGround(x, z) - y) < 0.6; };   // (on the park's paths too, not on a street)
+      const spot = (x, z, r) => { const y = hjGround(x, z); if (!free(x, z, y)) return null; for (let k = 0; k < 8; k++) { const a = k * PI / 4; if (!free(x + Math.cos(a) * r, z + Math.sin(a) * r, y)) return null; } return y; };
+      const stall = (x, y, z, rot, sd) => {   // (local u along the stage, v away from it: the counter on the far side, where the people come along the paths)
+        const g = scen.get(x, z), c = Math.cos(rot), s = Math.sin(rot), at = (u, v) => [x + c * u - s * v * sd, z + s * u + c * v * sd], RED = [0.84, 0.14, 0.12], WH = [0.95, 0.95, 0.93];
+        for (const [u, v] of [[-1.45, -1.45], [1.45, -1.45], [1.45, 1.45], [-1.45, 1.45]]) { const [px, pz] = at(u, v); box(g, px, y - 0.1, pz, 0.05, 2.25, 0.05, rot, [0.82, 0.83, 0.85]); }
+        const cn = [[-1.5, -1.5], [1.5, -1.5], [1.5, 1.5], [-1.5, 1.5]].map(([u, v]) => { const [px, pz] = at(u, v); return [px, y + 2.15, pz]; }), top = [x, y + 2.95, z];
+        for (let k = 0; k < 4; k++) { const a = cn[k], b = cn[(k + 1) % 4]; g.triO(a, b, top, k % 2 ? WH : RED, [x, y, z]); g.quadO([a[0], a[1] - 0.25, a[2]], [b[0], b[1] - 0.25, b[2]], b, a, k % 2 ? RED : WH, [x, y + 2, z]); }   // (the canopy and its valance)
+        const [fx, fz] = at(0, 1.2); box(g, fx, y, fz, 2.6, 0.95, 0.6, rot, [0.86, 0.86, 0.84], [0.62, 0.48, 0.32]);   // (the counter)
+        const [gx, gz] = at(0.5, -0.5); box(g, gx, y, gz, 0.9, 0.62, 0.5, rot, [0.3, 0.3, 0.32]); box(g, gx, y + 0.62, gz, 1.0, 0.28, 0.6, rot, [0.12, 0.12, 0.13], [0.2, 0.18, 0.17]);   // (the grill on its stand)
+        const [tx, tz] = at(3.6, 2.2), ty = hjGround(tx, tz); box(g, tx, ty + 0.72, tz, 2.2, 0.05, 0.6, rot, [0.6, 0.45, 0.3]); for (const e of [-0.95, 0.95]) { const [lx, lz] = at(3.6 + e, 2.2); box(g, lx, ty, lz, 0.05, 0.72, 0.5, rot, [0.25, 0.25, 0.27]); }
+        for (const e of [-0.6, 0.6]) { const [bx, bz] = at(3.6, 2.2 + e); box(g, bx, ty + 0.42, bz, 2.2, 0.04, 0.25, rot, [0.6, 0.45, 0.3]); }   // (a beer table and its benches)
+        for (let q = 0; q < 2 + Math.floor(crH(x, z, 92) * 4); q++) { const [qx, qz] = at((crH(x, z, 93 + q) - 0.5) * 0.5, 2.3 + q * 0.75); crowdPut(CR, qx, hjGround(qx, qz), qz, x - qx, z - qz, { flag: 0 }, 1); }   // (the queue)
+        exclPush(x, z, 3.4); exclPush(tx, tz, 1.8); nStalls++; };
+      const loos = (x, z, rot, sd, n) => { const g = scen.get(x, z), c = Math.cos(rot), s = Math.sin(rot);
+        for (let k = 0; k < n; k++) { const u = (k - (n - 1) / 2) * 1.25, px = x + c * u, pz = z + s * u, y0 = hjGround(px, pz), col = crH(px, pz, 91) < 0.7 ? [0.16, 0.36, 0.62] : [0.2, 0.5, 0.3];
+          box(g, px, y0 - 0.1, pz, 1.15, 2.35, 1.15, rot, col, [0.9, 0.9, 0.88]); box(g, px, y0 + 2.25, pz, 1.25, 0.1, 1.25, rot, [0.88, 0.88, 0.86]);   // (a cabin, blue or green, its white roof)
+          box(g, px + s * sd * 0.585, y0, pz - c * sd * 0.585, 0.72, 1.95, 0.03, rot, [col[0] * 0.72, col[1] * 0.72, col[2] * 0.72]); }   // (the door, towards the stage)
+        exclPush(x, z, n * 0.7 + 1); nLoos += n; };
+      for (const [a, b, rows] of C1) { if (rows < 5) continue;
+        let done = false; const sd0 = crH(a, b, 94) < 0.5 ? -1 : 1;
+        for (const sd of [sd0, -sd0]) { if (done) break;
+          for (let t = 0; t < 7 && !done; t++) { const d = (a + b) / 2 + (t % 2 ? 1 : -1) * Math.ceil(t / 2) * 6, s0 = sAt(d), i = T.idx(s0), bar = sd > 0 ? T.br[i] : T.bl[i];
+            for (let off = 10; off <= 22 && !done; off += 3) { const o = sd * (bar + off), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, y = spot(x, z, 3.6); if (y == null) continue;
+              stall(x, y, z, T.hd[i], sd); done = true;
+              for (const e of [14, -14, 20, -20]) { const j = T.idx(sAt(d + e)), bj = sd > 0 ? T.br[j] : T.bl[j], oj = sd * (bj + off), lx = T.px[j] + T.nx[j] * oj, lz = T.pz[j] + T.nz[j] * oj;
+                if (spot(lx, lz, 2.6) != null) { loos(lx, lz, T.hd[j], sd, 3 + Math.floor(crH(lx, lz, 95) * 3)); break; } } } } } }
+    }
+
     /* ---- the TV: a scaffold camera tower on the summit and one at the start; the helicopter with the car the whole way (pkSky) ---- */
     const tower = (x, z, rot, h) => { const y = hjGround(x, z), g = scen.get(x, z), c = Math.cos(rot), s = Math.sin(rot), sc = [0.7, 0.71, 0.73], at = (u, v, yy) => [x + c * u - s * v, y + yy, z + s * u + c * v], sq = [[-1, -1], [1, -1], [1, 1], [-1, 1]];
       for (const [u, v] of sq) ouRod(g, at(u, v, -0.2), at(u, v, h + 1.1), 0.045, sc);
@@ -7948,7 +7979,7 @@ const World = (function () {
     }
     crowdFinish(CR, root, out);
     pkSky({ root, tex, out, sStart, gH: hjGround, far: true });
-    out.stats = { trees: nTrees, tiles: G.ntx * G.ntz, buildings: nBld, bales: bales.length, cars: nCars };   // (read by the tests)
+    out.stats = { trees: nTrees, tiles: G.ntx * G.ntz, buildings: nBld, bales: bales.length, cars: nCars, stalls: nStalls, loos: nLoos };   // (read by the tests)
     return out;
   }
 
