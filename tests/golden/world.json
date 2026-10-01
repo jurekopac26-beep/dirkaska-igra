@@ -320,5 +320,23 @@
    "tyremarks:MeshBasicMaterial": "ec8940b4",
    "roadwear:MeshLambertMaterial": "3607c51"
   }
+ },
+ "caracoles": {
+  "meshes": 2705,
+  "verts": 1346444,
+  "instances": 35631,
+  "props": 266,
+  "crowd": 1964,
+  "world": "e061b4ba",
+  "propsHash": "5a55708e",
+  "floor": "cd97797d/22736",
+  "groups": {
+   "-:MeshLambertMaterial": "2880b752",
+   "-:MeshPhongMaterial": "5e5b862d",
+   "-:MeshBasicMaterial": "84d4fb70",
+   "crowd:MeshLambertMaterial": "938890c6",
+   "tyremarks:MeshBasicMaterial": "95b8835b",
+   "roadwear:MeshLambertMaterial": "5c2c4ad"
+  }
  }
 }
