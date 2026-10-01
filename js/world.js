@@ -6327,6 +6327,25 @@ const World = (function () {
     m.customProgramCacheKey = () => 'ouCut';
     return m;
   }
+  // Harju's buildings: a block of flats by the road would hide the car and the road ahead from the chase view under its roof. On the screen, round the
+  // line from the car to the road 20 m ahead (U.uA: the car's NDC x, y, its depth, the aspect; U.uB: the same for the point ahead), what is nearer the
+  // camera than the road there and higher than the car fades (the same dither as ouCutMat); the walls' feet stay
+  function hjCutMat(m, U) {
+    m.onBeforeCompile = (sh) => {
+      sh.uniforms.ouCar = U.uCar; sh.uniforms.hjA = U.uA; sh.uniforms.hjB = U.uB;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vOuW;\nvarying vec4 vHjC;')
+        .replace('#include <project_vertex>', '#include <project_vertex>\nvec4 ouW = vec4( transformed, 1.0 );\nvOuW = ( modelMatrix * ouW ).xyz;\nvHjC = gl_Position;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 ouCar;\nuniform vec4 hjA;\nuniform vec4 hjB;\nvarying vec3 vOuW;\nvarying vec4 vHjC;')
+        .replace('void main() {', 'void main() {\n' +
+          '  vec2 hjP = vec2( vHjC.x / vHjC.w * hjA.w, vHjC.y / vHjC.w ), hjCa = vec2( hjA.x * hjA.w, hjA.y ), hjAB = vec2( hjB.x * hjA.w, hjB.y ) - hjCa;\n' +
+          '  float hjT = clamp( dot( hjP - hjCa, hjAB ) / max( dot( hjAB, hjAB ), 1e-6 ), 0.0, 1.0 ), hjW = mix( hjA.z, hjB.z, hjT );\n' +
+          '  float ouF = smoothstep( 0.42, 0.24, length( hjP - hjCa - hjAB * hjT ) ) * smoothstep( hjW - 1.5, hjW - 5.0, vHjC.w ) * smoothstep( 0.2, 1.4, vOuW.y - ouCar.y );\n' +
+          '  vec2 ouQ = mod( floor( gl_FragCoord.xy ), 4.0 ), ouA = mod( ouQ, 2.0 ), ouB = floor( ouQ * 0.5 );\n' +
+          '  if ( ouF * 0.9 > ( 4.0 * ( 2.0 * mod( ouA.x + ouA.y, 2.0 ) + ouA.y ) + 2.0 * mod( ouB.x + ouB.y, 2.0 ) + ouB.y + 0.5 ) / 16.0 ) discard;');
+    };
+    m.customProgramCacheKey = () => 'hjCut';
+    return m;
+  }
   function buildOuni(scene, tex, opts) {
     const R = rng(7411), N = T.N, w = T.w, dens = opts.density || 1, def = T.def;
     const root = new THREE.Group(); scene.add(root);
@@ -7396,7 +7415,7 @@ const World = (function () {
     const P = HJ, G = P.G, sStart = T.startS, sFin = T.finishS, iE = N - 1, w = T.w;
     const WA = T.wa || new Float64Array(N).fill(w), SF = T.sf || new Uint8Array(N), VG = T.vg || [new Uint8Array(N).fill(4), new Uint8Array(N).fill(4)];
     out.bounds = { minX: P.bx0 - 170, maxX: P.bx1 + 170, minZ: P.bz0 - 170, maxZ: P.bz1 + 170 };
-    const cut = out.dyn.ouCut = { uCam: { value: new THREE.Vector3() }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) } };   // (ouCutMat: the trees and houses between the camera and the car fade)
+    const cut = out.dyn.ouCut = { uCam: { value: new THREE.Vector3() }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) }, uA: { value: new THREE.Vector4(0, 0, -1e6, 1) }, uB: { value: new THREE.Vector4(0, 0, -1e6, 1) } };   // (ouCutMat: the trees and the small things between the camera and the car fade; hjCutMat: the buildings over the car and the road ahead)
     const matV = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut); out.matV = matV;
     const addM = (g, mat, cast, grp) => { if (!g || g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; (grp || root).add(m); return m; };
     const excl = [], eh = new Map(), EHC = 32;   // tree exclusion circles (the crowds, the rally's things), hashed
@@ -7595,7 +7614,7 @@ const World = (function () {
 
     /* ---- the buildings (def.scen.bld): the blocks of flats and the shops of the centre, the wooden houses, sheds, schools, the church, the stadium's stand,
        the Vesilinna water tower (1953) on the summit (its own model); vertex coloured facades from the atlas, 140 m chunks ---- */
-    const fMat = ouCutMat(new THREE.MeshLambertMaterial({ map: hjFacadeTex(), vertexColors: true }), cut);
+    const fMat = hjCutMat(new THREE.MeshLambertMaterial({ map: hjFacadeTex(), vertexColors: true }), cut);   // (what of a building hides the car or the road just ahead of it on the screen fades)
     const bch = new Chunks(140, true), UV7 = [0.5, hjFV(7, 0.5)], scen = new Chunks(110), veg = new Chunks(110), UPN = [0, 1, 0];
     const RB = rng(8121); let nBld = 0, vesi = null, stand = null;
     for (const b of P.blds) {
@@ -11866,10 +11885,17 @@ const World = (function () {
   // the followed car fade out (the car where it is drawn this frame: interpolated by alpha)
   function view(out, cam, car, alpha) {
     const U = out && out.dyn.ouCut; if (!U) return;
-    if (!car || !cam) { U.uCar.value.set(1e6, 0, 1e6); return; }
+    if (!car || !cam) { U.uCar.value.set(1e6, 0, 1e6); if (U.uA) { U.uA.value.z = U.uB.value.z = -1e6; } return; }
     const a = alpha == null ? 1 : alpha;
     U.uCam.value.copy(cam.position); U.uCar.value.set(lerp(car.px, car.x, a), lerp(car.py == null ? car.y || 0 : car.py, car.y || 0, a) + 1, lerp(car.pz, car.z, a));
+    if (U.uA) {   // (the car and the road 20 m ahead of it on the screen: their NDC and their depth)
+      cam.updateMatrixWorld(); const C = U.uCar.value, q = car.q, i = q && q.i >= 0 ? T.idx(clamp(q.s + 20, 0, T.len - 0.01)) : -1;
+      const put = (V, x, y, z) => { _hjV.set(x, y, z).applyMatrix4(cam.matrixWorldInverse); const w = -_hjV.z; _hjV.applyMatrix4(cam.projectionMatrix); V.set(_hjV.x, _hjV.y, w > 0.5 ? w : -1e6, cam.aspect || 1); };
+      put(U.uA.value, C.x, C.y, C.z); if (i >= 0) put(U.uB.value, T.px[i], (T.hy ? T.hy[i] : C.y - 1) + 1, T.pz[i]); else U.uB.value.copy(U.uA.value);
+      if (cam.position.distanceTo(C) < 8) U.uA.value.z = U.uB.value.z = -1e6;   // (from the cockpit or the bonnet: nothing to cut)
+    }
   }
+  const _hjV = new THREE.Vector3();
 
   return { build, update, view, GB, box, cyl, cone, ico, gable, hex, vary };
 })();
