@@ -14,6 +14,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     id: 'suzuka', name: 'Suzuka', theme: 'suzuka', laps: 2, halfWidth: 6.5,
     desc: 'Suzuka na Japonskem, proga v obliki osmice, v pravem merilu (5,8 km): ciljna ravnina navzdol do prvega ovinka, S-zavoji navkreber, Dunlop, Degner, pod mostom do lasnice, 200R, dvojni levi Spoon, zadnja ravnina \u010dez most, hitri 130R, \u0161ikana Casio Triangle in zadnji ovinek. Za tribunami zabavi\u0161\u010de z velikim kolesom. Podatki: \u00a9 OpenStreetMap (ODbL), Copernicus DEM.',
+    en: { desc: 'Suzuka in Japan, the figure-of-eight circuit at full scale (5.8 km): the finish straight down to the first corner, the S curves uphill, Dunlop, Degner, under the bridge to the hairpin, 200R, the double left of Spoon, the back straight over the bridge, the fast 130R, the Casio Triangle chicane and the final corner. Behind the grandstands, an amusement park with a big wheel. Data: © OpenStreetMap (ODbL), Copernicus DEM.' },   // (the English page: Jezik · Language)
     start: [0, 0], runoff: 1.0, inner: 4.5, side: 6, gradeForce: true, elevSmooth: 6, realKm: 5.807,
     elev: SUZ_H.map((h, i) => [i / SUZ_H.length, h / 10]),
     // corner names ([HUD label, x, z, the commentator's lines]; the generic words in Slovenian, the proper names as at the circuit)

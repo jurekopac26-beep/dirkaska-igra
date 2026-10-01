@@ -20,6 +20,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     id: 'vrsic', name: 'Vršič', theme: 'vrsic', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 8.45, barW: 6.5,   // (the asphalt 16.9 m wide, the barriers where a 13 m road has them)
     desc: 'Cesta čez prelaz Vršič od Kranjske Gore do vrha na 1611 m: mimo jezera Jasna, skozi bukov in smrekov gozd in po 24 tlakovanih serpentinah, mimo Ruske kapelice pod prelaz. Dirka s tekmeci, vzpon proti uri, dvoboj v prometu ali beg pred policijo.',
+    en: { desc: 'The road over the Vršič pass from Kranjska Gora to the top at 1611 m: past Lake Jasna, through beech and spruce woods and up 24 cobbled hairpins, past the Russian Chapel to the pass. A race against rivals, a climb against the clock, a duel in the traffic or an escape from the police.' },   // (the English page: Jezik · Language)
     realKm: 12.35, alt: [800,1611],
     start: [0, 0], finish: [-3526.1,5791.4], cps: [[-620.3,2851.7],[-1624.1,4963.2],[-2366.5,5336.6],[-3097.7,5254.0]],
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 20,

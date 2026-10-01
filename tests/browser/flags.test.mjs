@@ -18,6 +18,7 @@ try {
     requestAnimationFrame(() => requestAnimationFrame(() => { g.pause(); res(); })); }), t);
 
   await startTrack(page, 'rbring');
+  await page.evaluate(() => { window.__game.autoDrive = true; });   // (the autopilot also in the frames drawn between the steps: a slow machine draws longer ones)
   await sim(30);
 
   // 1. the safety car out (brought out here for the leader), the field behind it, in again, green at the line. (Out when the player has
@@ -56,7 +57,6 @@ try {
   // 3. overtaking under a yellow flag: the warning with a countdown, then +5 s, and the penalty in the results
   await page.evaluate(() => { const r = window.__game.race, P = r.player, T = r.track, A = r.order.find(c => !c.isPlayer && !c.finished && c.dist > P.dist) || r.order.find(c => !c.isPlayer && !c.finished);
     if (P.fl) { P.fl.owe = null; P.fl.pen = 0; }   // (a clean slate: nothing left over from the yellow flag above)
-    window.__sk0 = A.skCap; A.skCap = 0.8;   // (the car the place is owed to held at 80 % of its pace: it cannot take the place back by itself, whichever rival it is)
     window.__A = A; window.__zone = { s: A.q.s + 150, t: 99, car: { fl: { stopT: 99 } } }; r.fl.yel.push(window.__zone);
     window.__put = (d) => { const i = T.idx(A.q.s + d), off = T.rl[i] + 1.5; P.place(T.px[i] + T.nx[i] * off, T.pz[i] + T.nz[i] * off, T.hd[i]); if (T.hasElev) P.y = P.py = T.hy[i];
       P.q = T.query(P.x, P.z, i, P.q); P.sPrev = P.q.s; P.dist = A.dist + d; P.vx = A.vx; P.vz = A.vz; P.locked = false; };
@@ -64,9 +64,11 @@ try {
   await sim(0.1);
   const p1 = await hud();
   T.check('overtaking under the yellow flag: the countdown on the HUD, the rule told', /^on owe:VRNI MESTO · (9|10)$/.test(p1.flag) && /Spusti ga nazaj pred sabo v 10 sekundah/.test(p1.toast), JSON.stringify(p1));
-  let p2 = null; for (let k = 0; k < 12; k++) { await sim(1); p2 = await hud(); if (p2.pen) break; }
+  // (the place not given back: the car passed is held where it is, as the stopped car above, so that it cannot get past the autopilot
+  // again by itself and so take its place back)
+  let p2 = null; for (let k = 0; k < 12; k++) { await page.evaluate(() => { const A = window.__A; A.vx = A.vz = 0; A.locked = true; }); await sim(1); p2 = await hud(); if (p2.pen) break; }
   T.check('... not given back: "KAZEN +5 s"', p2.pen === 5 && /KAZEN \+5 s/.test(p2.msg), JSON.stringify(p2));
-  await page.evaluate(() => { const g = window.__game, F = g.race.fl; F.yel = F.yel.filter(y => y !== window.__zone); window.__A.skCap = window.__sk0; g.pause(); for (let k = 0; k < 150 && g.phase === 'racing'; k++) g.sim(2, true); g.resume(); });   // (the made-up zone gone, the rival at its own pace again)
+  await page.evaluate(() => { const g = window.__game, F = g.race.fl; F.yel = F.yel.filter(y => y !== window.__zone); window.__A.locked = false; g.pause(); for (let k = 0; k < 150 && g.phase === 'racing'; k++) g.sim(2, true); g.resume(); });   // (the made-up zone gone)
   await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 120000 });
   const res = await page.evaluate(() => ({ me: document.querySelector('#res-table tr.me').textContent, sub: document.getElementById('res-sub').textContent, pen: window.__game.race.player.fl.pen }));
   T.check('the results: the race time with the penalty (5 s, or more if the autopilot passed under another yellow flag later on)', res.pen >= 5 && res.me.includes('(+' + res.pen + ' s)') && res.sub.includes('s ' + res.pen + ' s kazni'), JSON.stringify(res));
