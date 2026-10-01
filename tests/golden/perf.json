@@ -103,5 +103,12 @@
   "kverts": 589,
   "maxKverts": 766,
   "jsMs": 0.79
+ },
+ "muur": {
+  "calls": 281,
+  "maxCalls": 392,
+  "kverts": 530,
+  "maxKverts": 827,
+  "jsMs": 0.7
  }
 }
