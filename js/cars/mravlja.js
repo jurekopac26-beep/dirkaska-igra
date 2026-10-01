@@ -29,8 +29,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     // side pods ('podL' / 'podR'), the plastic rear bumper on its tubes ('bumperR'). Look units = metres (body.len / wid: the vehicle's)
     look: {
       body: { len: 1.85, wid: 1.35, roofY: 1.0, wz: 0.1,
-        eye: { x: -0.34, y: 0.87, near: 0.1, tilt: 0.12, style: 'kart' },                 // (in the helmet: the formula's wheel in the cockpit)
-        decalX: 0.79, decalY: 0.205, decalRz: -0.3, decalS: 0.32, decalPart: 'nose',     // (the start number on the nose)
+        eye: { x: -0.34, y: 0.87, near: 0.1, tilt: 0.12, style: 'kart' },                 // (in the helmet: a round kart wheel in the cockpit)
+        decalX: 0.72, decalY: 0.212, decalRz: -0.32, decalS: 0.3, decalPart: 'nose',     // (the start number on the nose's flat slope, 0.61..0.83)
         engine: [-0.16, 0.36], engRear: true,                                           // (the two-stroke beside the seat)
         crush: { x0: 0, x1: 0, z: 0 } },                                                // (no roof to crush: the driver stays as he is)
       wheels: { style: 'kart', w: 0.13, wR: 0.2, rimK: 0.5, rim: [0.8, 0.68, 0.3], gap: 0.03, arch: false },
@@ -38,7 +38,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       build(K) {
         const P = K.paint, S = K.strp, B = K.black, FR = [0.6, 0.62, 0.66], DK = [0.14, 0.14, 0.15], AL = [0.7, 0.71, 0.74], SEAT = [0.11, 0.11, 0.11];
         const Y = 0.056, R = 0.016;                                                       // the frame tubes' centre height and radius
-        const bar = (a, b, r, col, n) => K.bar(a, b, r || R, col || FR, { n: n || 4 });
+        const bar = (a, b, r, col, n) => K.bar(a, b, r || R, col || FR, { n: n || 3 });
         // ---- the frame (chrome-moly tubes on the ground), the axles, the floor tray: 'body' ----
         K.part('body', () => {
           for (const s of [-1, 1]) {
@@ -48,9 +48,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
             bar([0.53, 0.14, s * 0.44], [0.53, 0.14, s * 0.5], 0.012, DK);                 // the stub axle (to the hub)
             bar([-0.52, Y, s * 0.42], [-0.52, 0.14, s * 0.4], 0.022, AL);                 // the rear bearing's hanger
             bar([0.26, Y, s * 0.3], [0.22, 0.075, s * 0.62]); bar([0.22, 0.075, s * 0.62], [-0.26, 0.075, s * 0.62]); bar([-0.26, 0.075, s * 0.62], [-0.33, Y, s * 0.3]);   // the side bumper (under the pod)
-            bar([0.72, Y, s * 0.2], [0.89, 0.07, s * 0.14]); bar([0.64, 0.08, s * 0.32], [0.85, 0.16, s * 0.2]);   // the front bumper's bars (under the fairing)
+            bar([0.72, Y, s * 0.2], [0.89, 0.07, s * 0.14]); bar([0.64, 0.08, s * 0.32], [0.85, 0.13, s * 0.2]);   // the front bumper's bars (under the fairing's skin)
           }
-          bar([0.72, Y, -0.2], [0.72, Y, 0.2]); bar([0.89, 0.07, -0.14], [0.89, 0.07, 0.14]); bar([0.85, 0.16, -0.2], [0.85, 0.16, 0.2]);
+          bar([0.72, Y, -0.2], [0.72, Y, 0.2]); bar([0.89, 0.07, -0.14], [0.89, 0.07, 0.14]); bar([0.85, 0.13, -0.2], [0.85, 0.13, 0.2]);
           bar([0.2, Y, -0.3], [0.2, Y, 0.3]); bar([-0.4, Y, -0.3], [-0.4, Y, 0.3]);
           bar([-0.52, 0.14, -0.49], [-0.52, 0.14, 0.49], 0.02, [0.5, 0.5, 0.53], 6);   // the rear axle
           K.cyl([-0.52, 0.14, -0.21], [-0.52, 0.14, -0.2], 0.085, [0.45, 0.46, 0.48], { n: 8 });   // its brake disc, the caliper over it
@@ -66,8 +66,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.part('body', () => {
           const C = [0.12, 0.5, 0], ax = [0.573, -0.819, 0], ub = [-0.819, -0.573, 0], rr = 0.15, pt = (a) => [C[0] + rr * (Math.sin(a) * ub[0]), C[1] + rr * Math.sin(a) * ub[1], rr * Math.cos(a)];
           bar([0.41, 0.09, 0], C, 0.012, DK);                                              // the steering column
-          for (let i = 0; i < 10; i++) bar(pt(i / 10 * Math.PI * 2), pt((i + 1) / 10 * Math.PI * 2), 0.013, B, 3);   // the wheel's rim
-          for (const a of [Math.PI / 2, -Math.PI / 2, Math.PI]) bar(C, pt(a), 0.009, DK);  // its spokes
+          for (let i = 0; i < 8; i++) bar(pt(i / 8 * Math.PI * 2), pt((i + 1) / 8 * Math.PI * 2), 0.013, B, 3);   // the wheel's rim
+          for (const a of [0, Math.PI, Math.PI / 2]) bar(C, pt(a), 0.009, DK);              // its spokes (right, left, down)
           K.cyl([C[0] - ax[0] * 0.02, C[1] - ax[1] * 0.02, 0], [C[0] + ax[0] * 0.03, C[1] + ax[1] * 0.03, 0], 0.035, DK, { n: 6 });   // the hub
         });
         // ---- the two-stroke beside the seat (right), the chain to the axle, the exhaust along the side; the radiator (left) ----
@@ -90,12 +90,12 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.driver(-0.42, 0.86, 0, { r: 0.13, lean: 0.38, suit: K.shade(P, 0.45), band: S, hands: [0.1, 0.5, 0.155], knee: [0.1, 0.36, 0.17], feet: [0.55, 0.12, 0.12] });   // (the suit a darker shade of the kart's colour: he stands out from it)
         // ---- the front fairing (the nose cone over the front bumper) and its front panel: 'nose' ----
         K.part('nose', () => {
-          const rings = [[0.6, 0.36, 0.065, 0.26], [0.72, 0.46, 0.05, 0.24], [0.84, 0.5, 0.045, 0.18], [0.91, 0.48, 0.05, 0.12], [0.935, 0.42, 0.07, 0.09]]
+          const rings = [[0.6, 0.36, 0.065, 0.26], [0.72, 0.46, 0.05, 0.22], [0.84, 0.5, 0.045, 0.18], [0.91, 0.48, 0.05, 0.12], [0.935, 0.42, 0.07, 0.09]]   // (0.6..0.84: one slope, the number on it)
             .map(([x, W, lo, hi]) => [[x, lo, -W], [x, lo + (hi - lo) * 0.6, -W], [x, hi - 0.012, -W * 0.6], [x, hi, 0], [x, hi - 0.012, W * 0.6], [x, lo + (hi - lo) * 0.6, W], [x, lo, W], [x, lo, 0]]);
           K.skin(rings, (k, e) => e === 2 || e === 3 ? P : e === 6 || e === 7 ? DK : K.shade(P, 0.78), DK, K.shade(P, 0.78));
-          K.face([[0.785, 0.21, -0.36], [0.785, 0.21, 0.36], [0.8, 0.198, 0.36], [0.8, 0.198, -0.36]].reverse(), S);   // (a stripe across it)
-          K.plate([[0.47, 0.14, -0.15], [0.47, 0.14, 0.15], [0.43, 0.4, 0.13], [0.43, 0.4, -0.13]], 0.012, P);   // the front panel (on the column)
-          K.number(0.488, 0.28, 0, 0.16, { dir: 'x', bg: [0.96, 0.84, 0.12] });             // (its number: yellow, as karts have)
+          for (const sd of [-1, 1]) { const q = [[0.86, 0.167, 0], [0.86, 0.159, sd * 0.2], [0.875, 0.146, sd * 0.2], [0.875, 0.154, 0]]; K.face(sd > 0 ? q : q.reverse(), S); }   // (a stripe across the slope in front of the number, 4 mm over it: two halves on the crown, facing up)
+          K.plate([[0.47, 0.14, -0.15], [0.47, 0.14, 0.15], [0.47, 0.4, 0.13], [0.47, 0.4, -0.13]], 0.012, P);   // the front panel (upright, on the column)
+          K.number(0.481, 0.27, 0, 0.2, { dir: 'x', bg: [0.96, 0.84, 0.12] });              // (its number: yellow, as karts have, filling it)
           bar([0.45, 0.14, -0.12], [0.62, 0.1, -0.2], 0.008, DK); bar([0.45, 0.14, 0.12], [0.62, 0.1, 0.2], 0.008, DK);   // its brackets
         }, { hinge: [[0.62, 0.08, -0.4], [0.62, 0.08, 0.4]] });
         // ---- the side pods between the wheels: 'podL' / 'podR' ----

@@ -25,7 +25,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         skirtR: { z: 3, th: 0.58, m: 7, r: 0.8, h: 0.06, lx: -0.12, lz: 1, f: 0.08 },
       },
       // (where the look has them: the cab's doors and mirrors are far forward on a cab-over; a lost one flies off from there)
-      over: { doorL: { lx: 0.69, y: 1.85 }, doorR: { lx: 0.69, y: 1.85 }, mirrorL: { lx: 0.87, y: 2.17 }, mirrorR: { lx: 0.87, y: 2.17 } },
+      over: { doorL: { lx: 0.64, y: 1.84 }, doorR: { lx: 0.64, y: 1.84 }, mirrorL: { lx: 0.87, y: 2.17 }, mirrorR: { lx: 0.87, y: 2.17 } },
     },
     // the look (KIT API v1, render.js; look units = metres): two lofts, the cab (doors with their glass, the windscreen; its front face the
     // grille) and the low front module under it (the bumper with four lamps, the steps, the front wheel's arch); the roof deflector, the side
@@ -56,16 +56,17 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           if (e === 2 || e === 6) return door ? G : P;
           return P;
         }, { caps: { front: { col: P, low: 'grille', high: 'grille' }, rear: { col: P, low: 'body', high: 'body' } }, arches: false,
-          regions: [{ part: 'doorL', x: [1.55, 2.5], bands: ['side', 'window'], side: 'L' }, { part: 'doorR', x: [1.55, 2.5], bands: ['side', 'window'], side: 'R' }] });
+          regions: ['L', 'R'].flatMap(sd => [[1.0, 1.55], [1.55, 2.5]].map(x => ({ part: 'door' + sd, x, bands: ['side', 'window'], side: sd }))) });   // (the door back to the steps behind the wheel, its glass forward of 1.55: the loft cut there)
         const CD = C.decal;
         CD.band([[1.55, 0], [2.5, 0], [2.5, 0.06], [1.55, 0.06]], B, null, 0.008);            // the door window's frame: under it, over it, the edges
         CD.band([[1.55, 0.92], [2.5, 0.92], [2.5, 1], [1.55, 1]], B, null, 0.008);
         CD.band([[1.55, 0], [1.62, 0], [1.62, 1], [1.55, 1]], B, null, 0.009); CD.band([[2.43, 0], [2.5, 0], [2.5, 1], [2.43, 1]], B, null, 0.009);
         CD.side([[2.78, 1.23], [2.78, 1.36], [0.68, 1.78], [0.68, 1.56]], S, null, 0.008);    // the livery: a band rising to the rear, a paint line in it
         CD.side([[2.78, 1.285], [2.78, 1.305], [0.68, 1.68], [0.68, 1.65]], K.shade(P, 0.75), null, 0.01);
-        CD.top([[2.6, -1.15], [2.665, -1.15], [2.665, 1.15], [2.6, 1.15]], S, 0.006);         // the visor strip over the windscreen
+        CD.top([[2.5, -1.12], [2.6, -1.12], [2.6, 1.12], [2.5, 1.12]], S, 0.006);             // a strip along the roof's front edge, before the deflector
+        CD.side([[0.99, 1.2], [1.012, 1.2], [1.012, 1.97], [0.99, 1.97]], D, null, 0.009); CD.band([[0.99, 0], [1.012, 0], [1.012, 0.97], [0.99, 0.97]], D, null, 0.009);   // the door's rear shut line (up to the roof's edge)
         for (const sd of [-1, 1]) {
-          K.rect(1.68, 1.72, sd * 1.256, 0.16, 0.035, B, { dir: sd < 0 ? '-z' : 'z', host: sd < 0 ? 'doorL' : 'doorR' });   // the handle
+          K.rect(1.12, 1.72, sd * 1.256, 0.16, 0.035, B, { dir: sd < 0 ? '-z' : 'z', host: sd < 0 ? 'doorL' : 'doorR' });   // the handle (at the door's rear edge)
           K.number(2.07, 1.7, sd * 1.262, 0.4, { dir: sd < 0 ? '-z' : 'z', w: 0.52, host: sd < 0 ? 'doorL' : 'doorR' });   // the number on the door (over the band)
           K.hinge(sd < 0 ? 'doorL' : 'doorR', [2.5, 1.25, sd * 1.24], [2.5, 2.55, sd * 1.24]);
         }
@@ -90,7 +91,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           }
           K.box(2.95, 0.5, 0, 0.06, 0.08, 0.12, 0, K.rgb(0xd8261c));                         // the towing eye
         }, { hinge: [[2.9, 0.4, -1.1], [2.9, 0.4, 1.1]] });
-        K.part('body', () => { for (const sd of [-1, 1]) for (const yy of [0.58, 0.86]) K.box(0.86, yy, sd * 1.18, 0.26, 0.04, 0.12, 0, [0.42, 0.43, 0.45]); });   // the steps
+        K.part('body', () => { for (const sd of [-1, 1]) for (const yy of [0.58, 0.86]) K.box(0.9, yy, sd * 1.18, 0.26, 0.04, 0.12, 0, [0.42, 0.43, 0.45]); });   // the steps (under the door, behind the arch)
         // ---- the roof deflector (never crushed with the roof) ----
         K.part('deflector', () => {
           const rings = [[2.5, 2.69, 0.98], [2.3, 2.78, 1.07], [0.74, 3.0, 1.12]].map(([x, yt, w]) => [[x, 2.632, -w], [x, yt - 0.05, -w], [x, yt, -w * 0.72], [x, yt, w * 0.72], [x, yt - 0.05, w], [x, 2.632, w]]);
@@ -102,13 +103,15 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- the side skirts between the axles (a stripe along them) ----
         for (const sd of [-1, 1]) K.part(sd < 0 ? 'skirtL' : 'skirtR', () => {
           K.box(-0.36, 0.38, sd * 1.2, 2.12, 0.74, 0.05, 0, P);
+          for (const x of [-1.1, 0.25]) K.box(x, 0.8, sd * 0.83, 0.06, 0.06, 0.74, 0, FRM);   // (its brackets to the frame rail)
           K.rect(-0.36, 0.86, sd * 1.226, 2.08, 0.12, S, { dir: sd < 0 ? '-z' : 'z' });
           K.rect(-0.36, 0.43, sd * 1.226, 2.08, 0.06, D, { dir: sd < 0 ? '-z' : 'z' });
         });
         // ---- the stacks behind the cab, their heat shields ----
         K.part('body', () => {
           for (const sd of [-1, 1]) {
-            K.cyl([0.5, 0.95, sd * 0.98], [0.5, 3.0, sd * 0.98], 0.075, CH, { n: 10, capA: null, capB: [0.04, 0.04, 0.04] });
+            K.cyl([0.5, 0.75, sd * 0.98], [0.5, 3.0, sd * 0.98], 0.075, CH, { n: 10, capA: null, capB: [0.04, 0.04, 0.04] });
+            K.bar([0.5, 0.75, sd * 0.98], [0.5, 0.75, sd * 0.5], 0.06, CH);                 // (its elbow into the frame)
             K.cyl([0.5, 1.7, sd * 0.98], [0.5, 2.45, sd * 0.98], 0.087, [0.25, 0.25, 0.27], { n: 10, capA: null, capB: null });
             K.box(0.58, 2.2, sd * 0.98, 0.16, 0.05, 0.05, 0, FRM);
           }
@@ -118,20 +121,20 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const sd of [-1, 1]) K.box(-0.2, 0.62, sd * 0.45, 5.5, 0.28, 0.09, 0, FRM);
           for (const x of [-2.75, -1.55, -0.45, 0.5]) K.box(x, 0.66, 0, 0.1, 0.2, 0.82, 0, FRM);
           K.cyl([-1.8, 0.9, 0], [-1.8, 0.96, 0], 0.62, [0.3, 0.31, 0.33], { n: 10 });            // the coupling plate (fifth wheel)
-          K.rect(-1.5, 0.965, 0, 0.62, 0.22, [0.08, 0.08, 0.09], { dir: 'y' });                  // (its slot)
+          K.rect(-2.11, 0.965, 0, 0.62, 0.22, [0.08, 0.08, 0.09], { dir: 'y' });                 // (its slot: from the middle to the rear edge, for the kingpin)
           K.box(-0.62, 0.9, 0, 0.62, 0.38, 0.62, 0, [0.12, 0.12, 0.13]);                          // the fuel cell
           for (const sd of [-1, 1]) K.cyl([0.3, 0.72, sd * 0.75], [-0.9, 0.72, sd * 0.75], 0.11, [0.55, 0.56, 0.58], { n: 8 });   // the air tanks (behind the skirts)
           K.cyl([-2.05, 0.55, -0.85], [-2.05, 0.55, 0.85], 0.1, D, { n: 8 }); K.box(-2.05, 0.38, 0, 0.42, 0.34, 0.42, 0, D);   // the rear axle, its differential
           K.cyl([0.4, 0.62, 0], [-1.85, 0.52, 0], 0.06, D, { n: 6, capA: null, capB: null });     // the drive shaft
           for (const sd of [-1, 1]) K.flare(K.rx, 0.6, 0.65, sd * 0.84, sd * 1.24, B, { a0: 0.25, a1: Math.PI - 0.6 });   // the rear mudguards
-          K.box(-2.88, 0.92, 0, 0.08, 0.16, 1.9, 0, FRM);                                        // the lamp bar at the frame's end
+          K.box(-2.88, 0.9, 0, 0.08, 0.16, 1.9, 0, FRM);                                         // the lamp bar at the frame's end (on the rails)
           for (const sd of [-1, 1]) { K.rect(-2.922, 1.0, sd * 0.72, 0.36, 0.13, B, { dir: '-x' }); K.tailLamp(-2.924, 1.0, sd * 0.72, 0.32, 0.1); }
         });
         // ---- the rear bumper bar (a tube across on two brackets, its reflectors) ----
         K.part('bumperR', () => {
-          K.cyl([-2.93, 0.72, -1.18], [-2.93, 0.72, 1.18], 0.075, [0.85, 0.12, 0.1], { n: 8 });
-          for (const sd of [-1, 1]) { K.box(-2.84, 0.66, sd * 0.45, 0.16, 0.14, 0.1, 0, FRM); K.rect(-3.006, 0.72, sd * 0.95, 0.12, 0.06, [0.75, 0.05, 0.04], { dir: '-x' }); }
-        }, { hinge: [[-2.84, 0.72, -0.45], [-2.84, 0.72, 0.45]] });
+          K.cyl([-2.875, 0.72, -1.18], [-2.875, 0.72, 1.18], 0.075, [0.85, 0.12, 0.1], { n: 8 });   // (its back at the frame's end)
+          for (const sd of [-1, 1]) { K.box(-2.84, 0.66, sd * 0.45, 0.16, 0.14, 0.1, 0, FRM); K.rect(-2.951, 0.72, sd * 0.95, 0.12, 0.06, [0.75, 0.05, 0.04], { dir: '-x' }); }
+        }, { hinge: [[-2.8, 0.72, -0.45], [-2.8, 0.72, 0.45]] });
         // ---- inside (seen once a part is off): the seats, the dashboard, the wheel; the engine under the cab, the radiator behind the grille ----
         K.seat(2.0, 1.62, -0.55, { w: 0.55, back: 0.75 }); K.seat(2.0, 1.62, 0.55, { w: 0.55, back: 0.75 });
         K.box(2.55, 1.6, 0, 0.35, 0.35, 2.2, 0, D, null, false, { inner: true, part: 'body' });

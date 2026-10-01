@@ -1,13 +1,13 @@
 /* Vehicle 'raketa' — RAKETA 16V: a late-1970s / 1980s square hot hatch, 16-valve four. Signature features: 1) a square three-door hatch
-   with a flat bonnet and a steep tailgate, 2) twin round headlamps per side in a black grille, 3) a thin red stripe across the grille and
-   round the bumpers, 4) black wheel-arch extensions and side skirts, 5) four-spoke alloy wheels. L 3.80 W 1.63 H 1.40, wheelbase 2.40,
-   overhangs F 0.78 R 0.62 (m). */
+   with a flat bonnet and a steep tailgate, 2) four round headlamps of one size in a plain black grille, 3) a thin red line along the
+   bumpers and over the skirts, 4) black wheel-arch extensions and side skirts down to the sills, 5) four-spoke alloy wheels. L 3.80
+   W 1.63 H 1.40, wheelbase 2.40, overhangs F 0.78 R 0.62 (m). */
 var VEHICLE_DEFS = VEHICLE_DEFS || [];
 (function () {
   'use strict';
   VEHICLE_DEFS.push({
     id: 'raketa', name: 'RAKETA 16V', cat: 'mali', ord: 3, drive: 'FF',
-    desc: 'Oglat hot hatch iz poznih 70-ih in 80-ih: okrogla žarometa in rdeča črta na maski.',
+    desc: 'Oglat hot hatch iz 80-ih: štirje okrogli žarometi, rdeča črta na odbijačih in pragovih.',
     phys: { mass: 880, a: 1.12, b: 1.28, kI: 1.05, kw: 140, redline: 7600, idle: 950, gears: [3.3, 2.1, 1.48, 1.12, 0.9], final: 4.12, rw: 0.29, cDrag: 0.38, len: 3.8, wid: 1.63, steerMax: 0.64,
       spinK: 0.4 },
     arc: { amax: 1.72, kv: 2.1, rmin: 4 },
@@ -36,9 +36,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       wheels: { style: 'std', spokes: 4, w: 0.185, rim: [0.58, 0.59, 0.62], cap: [0.2, 0.2, 0.22], gap: 0.06 },
       build(K) {
         const P = K.paint, B = K.black, R = K.rgb(0xc8141c), G = K.GLASS, D = [0.09, 0.09, 0.1];
-        // the shell: the paint; the glass (windscreen, side windows, the tailgate's window); black sills; the C-pillars in paint
+        // the shell: the paint; the glass (windscreen, side windows, the tailgate's window); the sills black from arch to arch (the skirts
+        // run down to them: a side decal stops at the flat side's foot, the tuck under it is the loft's), dark under the bumpers' corners
+        const XA = K.arches[1].x + K.arches[1].half, XB = K.arches[0].x - K.arches[0].half;
         const L = K.loft(K.secs(K.body.secs), (k, e, kind, at) => {
-          if (e === 0 || e === 8) return at.arch ? B : K.shade(P, 0.55);
+          if (e === 0 || e === 8) return at.arch || (at.x > XA && at.x < XB) ? B : K.shade(P, 0.55);
           if (kind === 'gf' && e >= 2 && e <= 6) return G;
           if (kind === 'r' && (e === 2 || e === 6)) return G;
           if (kind === 'gr' && e >= 3 && e <= 5) return G;
@@ -59,16 +61,16 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.face([0, 1, 2, 3, 4, 5, 6, 7].map(i => [-1.38 + Math.cos(i * Math.PI / 4) * 0.05, 0.74 + Math.sin(i * Math.PI / 4) * 0.05, 0.806]), D, { part: 'quarterR' });
         // the black wheel-arch extensions
         for (const A of K.arches) for (const sd of [-1, 1]) K.flare(A.x, 0.355, 0.4, sd * 0.785, sd * 0.825, B);
-        // the nose: a black grille right across with a thin red stripe over and under it, two round lamps a side (a big one outside)
-        K.grille(1.862, 0.63, 0, 1.5, 0.24, { slats: 3, frame: R });
-        for (const sd of [-1, 1]) { K.headLamp(1.874, 0.635, sd * 0.6, 0.083); K.headLamp(1.872, 0.63, sd * 0.41, 0.064); }
+        // the nose: a plain black grille right across, two round lamps a side, all four of one size
+        K.grille(1.862, 0.63, 0, 1.5, 0.24, { slats: 3 });
+        for (const sd of [-1, 1]) for (const z of [0.62, 0.43]) K.headLamp(1.874, 0.632, sd * z, 0.075);
         // the bumpers: black, wrapped round the corners, a red line along their tops; the front one with a small spoiler under it, the
         // indicators in its ends, the number plate
         K.part('bumperF', () => {
           K.box(1.86, 0.27, 0, 0.09, 0.18, 1.58, 0, B); K.rect(1.908, 0.437, 0, 1.58, 0.012, R);
           for (const sd of [-1, 1]) { const z = sd * 0.79, f = sd < 0 ? '-z' : 'z';
             K.box(1.72, 0.28, z, 0.22, 0.17, 0.05, 0, B); K.rect(1.72, 0.43, z + sd * 0.028, 0.22, 0.011, R, { dir: f }); K.rect(1.908, 0.36, sd * 0.68, 0.16, 0.06, K.rgb(0xff9a1e)); }
-          K.box(1.79, 0.205, 0, 0.16, 0.05, 1.42, 0, B);
+          K.box(1.79, 0.205, 0, 0.16, 0.065, 1.42, 0, B);   // (the chin spoiler, up to the bumper's foot)
           K.rect(1.909, 0.355, 0, 0.5, 0.11, [0.93, 0.93, 0.9]);
         }, { hinge: [[1.86, 0.3, -0.7], [1.86, 0.3, 0.7]] });
         K.part('bumperR', () => {
