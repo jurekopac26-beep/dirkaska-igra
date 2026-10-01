@@ -1617,7 +1617,17 @@ const Render = (function () {
     for (const v of old) disposeView(v);   // (after the new cars exist: their shaders are reused, not compiled again)
     setupRoad(race);   // (the open road: its traffic, people and patrol cars)
     setupCrew(race);
+    { const D = world && world.dyn; if (D && D.vrFin) D.vrFin.visible = !race.pol; if (D && D.vrHide) { D.vrHide.grp.visible = !!race.pol; hideDoor(D.vrHide, 0); D.vrHide.t = 0; } }   // (Vršič: the race's finish, or the building the run from the police ends in, its door up)
     particles.clear(); sparkP.clear(); skids.clear(); cam.init = false;
+  }
+  // the run from the police over: the player has driven into the building at the top (pol.goal, the event 'hideout'): a TV camera outside, down
+  // the road from its door and over to the road's side, looks at it as the car disappears inside and the roller door comes down (rdDoor); the
+  // scenery is not cut away round the car for it (World.view). The game's camera again: setShot(null)
+  function goalShot(G) {
+    if (!G) return;
+    const ch = Math.cos(G.h), sh = Math.sin(G.h), sd = G.side || 1, at = (lx, lz) => [G.x + ch * lx - sh * lz, G.z + sh * lx + ch * lz];
+    const [px, pz] = at(-G.len / 2 - 15.5, -sd * 4.6), [tx, tz] = at(-G.len / 2 + 1.2, -sd * 0.5);
+    setShot({ px, py: G.y + 2.4, pz, tx, ty: G.y + 1.6, tz, fov: 40, fogD: 70, floor: true, near: 0.3, sky: true, noCut: true });
   }
 
   /* ---------------- Pikes Peak: the car gathers dust on the climb, the low morning sun glints on the paint ----------------
@@ -2418,6 +2428,51 @@ const Render = (function () {
     if (bands) World.box(g, 0, 1.08, 0, 0.13, 0.1, 0.13, 0, [1, 0.72, 0.15]);
     return g.geometry();
   }
+  // the traffic checkpoint's things (Race.pol.chk): the officer's STOP paddle (from his grip along +y: the black handle, a round sign facing
+  // +-z: a red ring, white inside, a red bar across), a traffic cone (from its foot: orange, a white band), the folding board on the road's
+  // edge before it (STOP over POLICIJA on a canvas of its own, on two legs; uv: the board's picture, the legs on its dark corner) and the box
+  // the officer sends the driver to park in (a yellow line round it, painted on the road: its height there along it)
+  function rdPaddleGeo() {
+    const g = new GB(), RED = [0.86, 0.08, 0.07], WH = [0.97, 0.97, 0.95], n = 14, R = 0.14, r = 0.1, c0 = 0.46, t = 0.008;
+    World.box(g, 0, 0, 0, 0.03, 0.33, 0.03, 0, [0.08, 0.08, 0.09]);
+    const p = (rr, a, z) => [Math.cos(a) * rr, c0 + Math.sin(a) * rr, z];
+    for (let k = 0; k < n; k++) { const a0 = k / n * Math.PI * 2, a1 = (k + 1) / n * Math.PI * 2;
+      g.quadO(p(R, a0, -t), p(R, a1, -t), p(R, a1, t), p(R, a0, t), RED, [0, c0, 0]);
+      for (const z of [-t, t]) { g.quadO(p(R, a0, z), p(R, a1, z), p(r, a1, z), p(r, a0, z), RED, [0, c0, -z * 9]); g.triO(p(r, a0, z), p(r, a1, z), [0, c0, z], WH, [0, c0, -z * 9]); } }
+    for (const z of [-t - 0.002, t + 0.002]) g.quadO([-0.075, c0 - 0.02, z], [0.075, c0 - 0.02, z], [0.075, c0 + 0.02, z], [-0.075, c0 + 0.02, z], RED, [0, c0, -z * 9]);
+    return g.geometry();
+  }
+  function rdConeGeo() {
+    const g = new GB(), OR = [1, 0.4, 0.07];
+    World.box(g, 0, 0, 0, 0.4, 0.04, 0.4, 0, [0.12, 0.12, 0.13]);
+    World.cyl(g, 0, 0.04, 0, 0.15, 0.2, 10, OR, null, 0.105); World.cyl(g, 0, 0.24, 0, 0.105, 0.12, 10, [0.96, 0.96, 0.94], null, 0.08); World.cone(g, 0, 0.36, 0, 0.08, 0.2, 10, OR, OR, 0);
+    return g.geometry();
+  }
+  function rdSignMesh() {
+    const cv = document.createElement('canvas'); cv.width = 128; cv.height = 192; const x = cv.getContext('2d');
+    x.fillStyle = '#202224'; x.fillRect(0, 0, 128, 192); x.fillStyle = '#f4f4f0'; x.fillRect(4, 4, 120, 168); x.strokeStyle = '#c8170f'; x.lineWidth = 7; x.strokeRect(8, 8, 112, 160);
+    x.fillStyle = '#c8170f'; x.beginPath(); for (let k = 0; k < 8; k++) { const a = (k + 0.5) / 8 * Math.PI * 2; x.lineTo(64 + Math.cos(a) * 46, 66 + Math.sin(a) * 46); } x.closePath(); x.fill();
+    x.fillStyle = '#fff'; x.font = '900 30px Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('STOP', 64, 68, 84);
+    x.fillStyle = '#1b3f95'; x.fillRect(12, 124, 104, 40); x.fillStyle = '#fff'; x.font = '900 19px Arial, sans-serif'; x.fillText('POLICIJA', 64, 145, 98);
+    const map = new THREE.CanvasTexture(cv); map.anisotropy = 4;
+    const g = new GB(true), W1 = [1, 1, 1], K0 = [[0.02, 0.02], [0.05, 0.02], [0.05, 0.05], [0.02, 0.05]], hw = 0.36, y0 = 0.36, y1 = 1.4, uvB = [[0.03, 0.12], [0.97, 0.12], [0.97, 0.98], [0.03, 0.98]];
+    for (const f of [-1, 1]) g.quadO([f * 0.025, y0, f * hw], [f * 0.025, y0, -f * hw], [f * 0.025, y1, -f * hw], [f * 0.025, y1, f * hw], W1, [-f, 0.9, 0], uvB);   // (both faces read from the front)
+    for (const sz of [-1, 1]) for (const sx of [-1, 1]) { const a = [sx * 0.03, 1.32, sz * (hw - 0.05)], b = [sx * 0.42, 0, sz * (hw - 0.02)], q = [sx * 0.03, 1.32, sz * (hw - 0.09)], d = [sx * 0.42, 0, sz * (hw - 0.06)];
+      for (const f of [-1, 1]) g.quadO(a, b, d, q, W1, [0, 0.6, sz * (hw - 0.06) + f * 0.5], K0); }
+    const m = new THREE.Mesh(g.geometry(), new THREE.MeshLambertMaterial({ map, vertexColors: true })); m.castShadow = true; m.receiveShadow = true; m.matrixAutoUpdate = false;
+    return m;
+  }
+  function rdBoxMesh(T, B) {
+    const g = new GB(), Y = [1, 1, 1], q = {}, lw = 0.16, ch = Math.cos(B.h), sh = Math.sin(B.h), hl = B.len / 2, hw = B.wid / 2;
+    const at = (lx, lz) => { const x = B.x + ch * lx - sh * lz, z = B.z + sh * lx + ch * lz; return [x, T.yAt(T.query(x, z, T.idx(B.s), q)) + 0.045, z]; };
+    const strip = (a, e, b, n) => { for (let k = 0; k < n; k++) { const u0 = k / n, u1 = (k + 1) / n, L = (u, o) => at(a[0] + (b[0] - a[0]) * u + o * e[0], a[1] + (b[1] - a[1]) * u + o * e[1]);   // (from a to b, e wide)
+      g.quadUp(L(u0, 0), L(u1, 0), L(u1, 1), L(u0, 1), [Y, Y, Y, Y]); } };
+    strip([-hl, -hw], [0, lw], [hl, -hw], 6); strip([-hl, hw], [0, -lw], [hl, hw], 6);
+    strip([-hl, -hw + lw], [lw, 0], [-hl, hw - lw], 3); strip([hl - lw, -hw + lw], [lw, 0], [hl - lw, hw - lw], 3);
+    const m = new THREE.Mesh(g.geometry(), new THREE.MeshLambertMaterial({ color: 0xffc81e, transparent: true, opacity: 0, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }));
+    m.visible = false; m.renderOrder = 2; m.receiveShadow = true; m.matrixAutoUpdate = false;
+    return m;
+  }
   // the people: the crew's rig, other clothes (see crewGeos; the trunk carries the trousers in the skin channel: crewSkin is the trousers' colour there)
   function pedGeos() {
     const G = () => new GB(), out = {}, TM = CR_TM, SK = CR_SK, K = CR_K;
@@ -2469,8 +2524,19 @@ const Render = (function () {
       heli.pool = new THREE.Mesh(new THREE.CircleGeometry(1, 28).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial(Object.assign({ map: rdPoolTex(), opacity: 0.8 }, add)));
       for (const o of [heli.cone, heli.pool]) { o.visible = false; o.frustumCulled = false; o.renderOrder = 6; grp.add(o); extra.push(o); }
     }
+    // the traffic checkpoint (the run from the police: pol.chk): the officer's paddle, the cones by the road's edge before him (a taper towards
+    // him) and behind his car, the board STOP POLICIJA 45 m before him, the box he sends the driver to park in
+    let ck = null;
+    if (race.pol && race.pol.chk) {
+      const K = race.pol.chk, T = race.track, w = T.w, sign = rdSignMesh(), box = rdBoxMesh(T, K.box);
+      grp.add(sign); grp.add(box); extra.push(sign, box);
+      const put = (s, d) => { const a = atS2(T, s, K.side * d), i = T.idx(s); return { x: a[0], z: a[1], s, h: T.hd[i], tp: 0, a: 0, vx: 0, vz: 0 }; };
+      const c0 = atS2(T, K.s, K.side * (w - 2.2));
+      ck = { PD: mk(rdPaddleGeo(), 1, mat, true), CN: mk(rdConeGeo(), 8, mat, true), sign, box, op: 0, pa: Math.PI, cw: null, dw: null, on: true, cx: c0[0], cz: c0[1],
+        cones: [[-32, 0.45], [-26, 0.75], [-20, 1.05], [-14, 1.35], [-8, 1.6], [8.4, 0.55], [8.4, 1.75]].map(([o, e]) => put(K.s + o, w - e)), board: put(K.s - 45, w - 0.42) };
+    }
     scene.add(grp);
-    road = { grp, meshes, mats: [matP, mat, matS, matL, matLs, matB], V, P, NP, S, LG, SK, SKB, DG, DL, LS, BL, heli, extra, men: new Map(), pol: new Map(), n: { veh: 0, ped: 0, off: 0, grp: 0, cgrp: 0, yld: 0, ind: 0, dead: 0 }, arrest: null };
+    road = { grp, meshes, mats: [matP, mat, matS, matL, matLs, matB], V, P, NP, S, LG, SK, SKB, DG, DL, LS, BL, heli, extra, ck, men: new Map(), pol: new Map(), n: { veh: 0, ped: 0, off: 0, grp: 0, cgrp: 0, yld: 0, ind: 0, dead: 0, cop: 0, drv: 0 }, arrest: null };
   }
   function rdPoolTex() {   // the searchlight's pool of light: a soft disc
     const cv = document.createElement('canvas'); cv.width = cv.height = 64; const g = cv.getContext('2d'), gr = g.createRadialGradient(32, 32, 2, 32, 32, 31);
@@ -2485,7 +2551,7 @@ const Render = (function () {
     _rm.makeTranslation(m.x, m.y + py, m.z).multiply(_rm2).multiply(_rm3.makeTranslation(-m.x, -(m.y + py), -m.z));
     for (const k of RD_JOINTS) CRM[k].premultiply(_rm);
   }
-  // one person on the road: where they are, what they do (st: the Core's state, or 'ride' / 'moto' / 'signal' / 'stand'), how fast
+  // one person on the road: where they are, what they do (st: the Core's state, or 'ride' / 'moto' / 'signal' / 'talk' / 'stand'), how fast
   function rdMan(key, look, kind) {
     let m = road.men.get(key);
     if (!m) { const h1 = crHash(look * 91.7 + 3.1), h2 = crHash(look * 37.3 + 9.7), h3 = crHash(look * 11.9 + 1.3);
@@ -2496,7 +2562,7 @@ const Render = (function () {
   }
   function rdPose(m, x, y, z, yaw, st, spd, dt, t, roll, lean) {
     m.x = x; m.y = y; m.z = z; m.yaw += wrapPi(yaw - m.yaw) * Math.min(1, dt * 9); m.spd = spd; m.ph += spd * dt / (spd > 2.2 ? 2.4 : 1.4) * CR_TAU;
-    m.act = st === 'signal' ? 'signal' : st === 'zwait' || st === 'xwait' || st === 'stop' || st === 'stand2' ? (m.h1 > 0.55 ? 'cross' : m.h1 > 0.3 ? 'hips' : 'stand') : 'stand';
+    m.act = st === 'signal' || st === 'talk' ? st : st === 'zwait' || st === 'xwait' || st === 'stop' || st === 'stand2' ? (m.h1 > 0.55 ? 'cross' : m.h1 > 0.3 ? 'hips' : 'stand') : 'stand';
     crPose(m, time, _cO, _cH);
     const walk = clamp(spd / 0.8, 0, 1), run = clamp((spd - 2) / 1.6, 0, 1);
     if (walk > 0 && st !== 'ride' && st !== 'moto') { crGait(m, run, _cO2, _cH2); for (let k = 0; k < 12; k++) { _cO[k] += (_cO2[k] - _cO[k]) * walk; _cH[k] += (_cH2[k] - _cH[k]) * walk; } }
@@ -2628,13 +2694,14 @@ const Render = (function () {
       rdPose(m, v.x, v.y, v.z, v.h, v.kind === 3 ? 'moto' : 'ride', v.v, dt, 0, 0, v.lean); rdPut(m, np++, 1);
     }
     const PC = R.pol ? R.pol.cars : [], Pl = R.player;
-    for (const c of PC) {   // an officer in a yellow vest beside each parked patrol car, waving when the player comes (not by the van, not at an ambush)
-      if (np >= NP || c.pol.mode !== 'park' || c.pol.kind === 'van') continue; const dx = c.x - cx, dz = c.z - cz; if (dx * dx + dz * dz > near2) continue;
+    for (const c of PC) {   // an officer in a yellow vest beside each parked patrol car, waving when the player comes (not by the van, not at an ambush; the checkpoint's: its own, below)
+      if (np >= NP || c.pol.mode !== 'park' || c.pol.kind === 'van' || c.pol.chk) continue; const dx = c.x - cx, dz = c.z - cz; if (dx * dx + dz * dz > near2) continue;
       const q = c.q, sd = q.d > 0 ? -1 : 1, x = c.x + T.nx[q.i] * sd * 1.6 + T.tx[q.i] * 2.2, z = c.z + T.nz[q.i] * sd * 1.6 + T.tz[q.i] * 2.2;
       const m = rdMan('o' + c.id, (c.id * 0.37) % 1, 0); m.shirt.setHex(0xd8e43a); m.trou.setHex(0x1c2842); m.hair.setHex(0x1c2842);
       const wave = Pl && Math.hypot(Pl.x - x, Pl.z - z) < 110;
       rdPose(m, x, gy(x, z, c.y), z, Math.atan2(-T.tz[q.i], -T.tx[q.i]), wave ? 'signal' : 'stand', 0, dt, 0, 0, 0); rdPut(m, np++, 0);
     }
+    if (Q.ck && R.pol) np = rdCheck(Q, R, T, Pl, np, dt, cx, cz);   // (the traffic checkpoint)
     // the police motorbikes (one instance each, white; leaning into the bends; on their side once down) and their riders (a yellow jacket, a
     // white helmet), the blue lamps flashing
     let nvn = 0, nmo = 0;
@@ -2663,9 +2730,10 @@ const Render = (function () {
         if (flash(c.id, 0) || flash(c.id, 1)) lamp(c.x - ch * 0.86, c.y + 0.9 * up, c.z - sh * 0.86, 0.6); }
     }
     V.pvan.count = nvn; V.pmoto.count = nmo; for (const im of [V.pvan, V.pmoto]) if (im.count) { im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; }
-    // busted: two officers get out of the nearest patrol car and walk to the player's car (one to the driver's door, one in front of it)
+    // busted: two officers get out of the nearest patrol car and walk to the player's car (one to the driver's door, one in front of it); not
+    // after the arrest at the checkpoint (arrestK 'chk': its officer and the driver, rdCheck)
     let noff = 0;
-    if (R.pol && R.pol.busted && Pl) {
+    if (R.pol && R.pol.busted && R.pol.arrestK !== 'chk' && Pl) {
       if (!Q.arrest) { let best = null, bd = 60; for (const c of PC) { if (c.pol.kind === 'van' || c.pol.kind === 'moto' || c.pol.mode === 'down') continue; const d = Math.hypot(c.x - Pl.x, c.z - Pl.z); if (d < bd) { bd = d; best = c; } } Q.arrest = { c: best, t: 0 }; }
       const A = Q.arrest; A.t += dt;
       if (A.c) for (let k = 0; k < 2 && np < NP; k++) {
@@ -2735,9 +2803,69 @@ const Render = (function () {
           }
         }
       }
+      const VH = world && world.dyn.vrHide;
+      if (VH && R.pol.goal) { rdDoor(VH, R.pol, Pl, dt);   // (the building at the top: its door; at dusk and at night the lamp over it and the light inside)
+        if (dusk && VH.grp.visible && Math.hypot(VH.x - cx, VH.z - cz) < 300) { glows.add(VH.lamp[0], VH.lamp[1], VH.lamp[2], 1.3, 1, 0.84, 0.56, 0.95); if (VH.k < 1) glows.add(VH.lit[0], VH.lit[1], VH.lit[2], 3.2, 1, 0.82, 0.5, 0.45); } }
     }
     glows.end();
   }
+  // the traffic checkpoint (pol.chk, Q.ck: setupRoad): its officer in the yellow vest with the STOP paddle in his left hand (up while he stops
+  // the traffic, else hanging from it; lying on the road by him once he is knocked down), walking round to the driver's window, talking there,
+  // running back to his car once the player is off; the driver out of the car (in his own clothes) walking to the patrol car. After the arrest
+  // the core is done with them: here they walk on to where they were going. While the checkpoint stands (after the player fled: until it is
+  // out of sight, no popping): the cones and the board (knocked over by the player's car: tipped, pushed the way it went, sliding to a
+  // stop); the box to park in, painted (pulsing) while the officer sends the driver there and once parked. Returns the people's count
+  const _ckq = {};
+  function rdCheck(Q, R, T, Pl, np, dt, cx, cz) {
+    const C = Q.ck, K = R.pol.chk, done = K.st === 'done', hint = T.idx(K.s);
+    if (done && !C.cw) { const c = K.cop, d = K.drv; C.cw = { x: c.x, z: c.z, h: c.h, wp: c.wp, act: c.act, v: 1.4 }; C.dw = d && { x: d.x, z: d.z, h: d.h, wp: d.wp, act: d.act, v: 1.3 }; }
+    if (!done) C.cw = C.dw = null;
+    else for (const o of [C.cw, C.dw]) if (o && o.wp) { const dx = o.wp[0] - o.x, dz = o.wp[1] - o.z, d = Math.hypot(dx, dz);
+      if (d < o.v * dt + 0.05) { o.x = o.wp[0]; o.z = o.wp[1]; o.wp = null; o.act = 'stand'; } else { o.x += dx / d * o.v * dt; o.z += dz / d * o.v * dt; o.h = Math.atan2(dz, dx); o.act = 'walk'; } }
+    const cop = C.cw || K.cop, drv = done ? C.dw : K.drv, yAt = (x, z) => { const q = T.query(x, z, hint, _ckq); return rdGroundY(T, q.s, q.d, x, z, T.yAt(q)); }, far = (x, z) => (x - cx) * (x - cx) + (z - cz) * (z - cz) > 150 * 150;
+    let nP = 0; Q.n.cop = Q.n.drv = 0;
+    if (cop.act !== 'gone' && np < Q.NP && !far(cop.x, cop.z)) {
+      const m = rdMan('chk', 0.62, 0), a = cop.act, y = yAt(cop.x, cop.z); m.shirt.setHex(0xd8e43a); m.trou.setHex(0x1c2842); m.hair.setHex(0x1c2842);
+      rdPose(m, cop.x, y, cop.z, cop.h, a === 'signal' || a === 'talk' || a === 'down' ? a : 'stand', a === 'walk' ? 1.4 : a === 'run' ? 4.2 : 0, dt, 9, 0, 0);
+      const fx = Math.cos(m.yaw), fz = Math.sin(m.yaw);
+      if (a === 'down') { _cM.set(-fz, fx, 0, cop.x + fz * 0.75, 0, 0, 1, y + 0.03, fx, fz, 0, cop.z - fx * 0.75, 0, 0, 0, 1); }   // (the paddle on the road beside him, face up)
+      else {   // in his hand: tilted from straight up (0) to hanging down (pi) about his right-hand axis; its face the way he looks
+        C.pa += ((a === 'signal' ? 0 : Math.PI) - C.pa) * Math.min(1, dt * 7); const c = Math.cos(C.pa), s = Math.sin(C.pa);
+        _cv.setFromMatrixPosition(CRM.hdL); _cM.set(fz, fx * s, fx * c, _cv.x, 0, c, -s, _cv.y, -fx, fz * s, fz * c, _cv.z, 0, 0, 0, 1); }
+      C.PD.setMatrixAt(0, _cM); nP = 1; rdPut(m, np++, 0); Q.n.cop = 1;
+    }
+    C.PD.count = nP; if (nP) C.PD.instanceMatrix.needsUpdate = true;
+    if (drv && np < Q.NP && !far(drv.x, drv.z)) { const m = rdMan('chkD', 0.83, 0); rdPose(m, drv.x, yAt(drv.x, drv.z), drv.z, drv.h, 'stand', drv.act === 'walk' ? 1.3 : 0, dt, 0, 0, 0); rdPut(m, np++, 0); Q.n.drv = 1; }
+    // the cones and the board (once the player has fled: gone as soon as they are out of sight; after the arrest the scene stays as it is)
+    if (K.st === 'fled' && C.on && (C.cx - cx) * (C.cx - cx) + (C.cz - cz) * (C.cz - cz) > 200 * 200) C.on = false;
+    const on = C.on && !far(C.cx, C.cz);
+    let nc = 0;
+    const put = (o) => {
+      if (!o.tp && Pl) { const ch = Math.cos(Pl.h), sh = Math.sin(Pl.h), dx = o.x - Pl.x, dz = o.z - Pl.z;
+        if (Pl.speed > 1 && Math.abs(dx * ch + dz * sh) < Pl.m.len / 2 + 0.2 && Math.abs(-dx * sh + dz * ch) < Pl.m.wid / 2 + 0.2) { o.tp = 0.01; o.vx = Pl.vx * 0.75; o.vz = Pl.vz * 0.75; o.a = Math.atan2(Pl.vz, Pl.vx); } }
+      if (o.tp) { o.tp = Math.min(1, o.tp + dt * 5); o.x += o.vx * dt; o.z += o.vz * dt; const v = Math.hypot(o.vx, o.vz), k = v > 0 ? Math.max(0, v - 7 * dt) / v : 0; o.vx *= k; o.vz *= k; }
+      _re.set(0, -(o.tp ? o.a : o.h), -o.tp * Math.PI / 2, 'YZX'); _rq.setFromEuler(_re); _rv.set(o.x, yAt(o.x, o.z) - 0.02 + o.tp * 0.12, o.z); _rm.compose(_rv, _rq, _rs);
+      if (o === C.board) { C.sign.matrix.copy(_rm); C.sign.matrixWorldNeedsUpdate = true; } else C.CN.setMatrixAt(nc++, _rm);
+    };
+    if (on) { for (const o of C.cones) put(o); put(C.board); }
+    C.CN.count = nc; if (nc) C.CN.instanceMatrix.needsUpdate = true; C.sign.visible = on;
+    // the box (fading in; pulsing while the driver is to park in it)
+    const want = K.st === 'park' || K.st === 'parked' ? 1 : 0; C.op += (want - C.op) * Math.min(1, dt * 3); if (Math.abs(want - C.op) < 0.01) C.op = want;
+    C.box.material.opacity = C.op * (K.st === 'park' ? 0.72 + 0.28 * Math.sin(time * 5) : 0.9); C.box.visible = C.op > 0.01;
+    return np;
+  }
+  // the roller door of the building at the top (world.dyn.vrHide): down once the player is in (pol.escaped), from 0.9 s on, over 2.4 s; it
+  // waits while anything is in the doorway (the player's car not quite in, a patrol car)
+  function rdDoor(H, pol, Pl, dt) {
+    if (!pol.escaped) { if (H.k || H.t) hideDoor(H, 0); H.t = 0; return; }
+    H.t = (H.t || 0) + dt; if (H.t < 0.9 || H.k >= 1) return;
+    const G = pol.goal, ch = Math.cos(G.h), sh = Math.sin(G.h), x0 = -G.len / 2;
+    for (let n = -1; n < pol.cars.length; n++) { const c = n < 0 ? Pl : pol.cars[n]; if (!c) continue;
+      const dx = c.x - G.x, dz = c.z - G.z, lx = dx * ch + dz * sh, lz = -dx * sh + dz * ch, a = c.h - G.h, ex = Math.abs(Math.cos(a)) * c.m.len / 2 + Math.abs(Math.sin(a)) * c.m.wid / 2;
+      if (lx - ex < x0 + 0.4 && lx + ex > x0 - 0.4 && Math.abs(lz) < G.door / 2 + 1.2) return; }
+    hideDoor(H, Math.min(1, H.k + dt / 2.4));
+  }
+  function hideDoor(H, k) { H.k = k; H.door.scale.y = Math.max(0.02, k); H.door.updateMatrix(); }
   // the ground someone stands on at (x, z), s and d along and across the road, y the road's height there (the Core's): inside the barriers
   // (the asphalt, its sidewalks, the shoulders) the road's own surface, unless the bank is higher; beyond them the terrain (world.groundH
   // under the road lies below its surface: the people would sink into it)
@@ -2748,7 +2876,9 @@ const Render = (function () {
   function atS2(T, s, d) { const f = clamp(s / T.ds, 0, T.N - 1.001), i = Math.floor(f), t = f - i, j = i + 1; return [T.px[i] + (T.px[j] - T.px[i]) * t + (T.nx[i] + (T.nx[j] - T.nx[i]) * t) * d, T.pz[i] + (T.pz[j] - T.pz[i]) * t + (T.nz[i] + (T.nz[j] - T.nz[i]) * t) * d]; }
   function roadInfo() { return road ? { veh: road.n.veh, ped: road.n.ped, pol: road.pol.size, spikes: road.S.count, lampOn: [...road.pol.values()].some(v => v.polLamps && v.polLamps.some(l => l.material === matPolOn)),
     heli: !!road.heli && road.heli.heli.visible, beam: !!road.heli && road.heli.cone.visible, vans: road.V.pvan.count, motos: road.V.pmoto.count, logs: road.LG.count, officers: road.n.off,
-    bikes: road.V.bike.count, blood: road.BL.count, dead: road.n.dead, dogs: road.DG.count, leashes: road.LS.count / 2, groups: road.n.grp, cycGroups: road.n.cgrp, yielding: road.n.yld, indicators: road.n.ind } : null; }   // (tests)
+    bikes: road.V.bike.count, blood: road.BL.count, dead: road.n.dead, dogs: road.DG.count, leashes: road.LS.count / 2, groups: road.n.grp, cycGroups: road.n.cgrp, yielding: road.n.yld, indicators: road.n.ind,
+    chk: road.ck ? { cop: road.n.cop, drv: road.n.drv, paddle: road.ck.PD.count, cones: road.ck.CN.count, board: road.ck.sign.visible, box: road.ck.box.visible ? +road.ck.box.material.opacity.toFixed(2) : 0 } : null,
+    door: world && world.dyn.vrHide ? +(world.dyn.vrHide.k || 0).toFixed(2) : null } : null; }   // (tests)
 
   /* ---------------- per-frame ---------------- */
   const tmp = { x: 0, z: 0 };
@@ -3471,7 +3601,7 @@ const Render = (function () {
     World.update(world, time, target, camera);
     if (target) updateCamera(dt, target, mode, alpha);
     if (world && world.dyn.afterCam) world.dyn.afterCam(camera, target);   // (what depends on the camera of this very frame: Pikes Peak, which scenery chunks cast shadows)
-    World.view(world, camera, target, alpha);   // (Ouninpohja: the forest between the camera and the car fades out)
+    World.view(world, camera, cam.shot && cam.shot.noCut ? null : target, alpha);   // (Ouninpohja: the forest between the camera and the car fades out; not for a shot that looks at a building as it is)
     { const R = curRace, q = (v) => v > 0 ? Math.max(0.05, Math.round(v * 20) / 20) : 0;   // (a changing weather: in steps of 5 %)
       const r = R ? q(R.rain || 0) : 0, w = R ? q(R.water != null ? R.water : R.rain || 0) : 0;
       if (r !== wet) applyWeather(r); if (w !== wetW) applyRoad(w); dryLine(R); }
@@ -3595,6 +3725,6 @@ const Render = (function () {
   function setDebug(o) { Object.assign(dbg, o); }
   function fxStats() { let n = 0; for (let i = 0; i < particles.max; i++) if (particles.life[i] > 0) n++; return { alive: n, emitted: particles.cur }; }
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { setDebug, fxStats, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setDebug, fxStats, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, goalShot, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 
