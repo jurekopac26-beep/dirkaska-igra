@@ -1,13 +1,14 @@
-// Local check of the menu mockup (the folder above): serves index.html, maps the CDN three.js and Google Fonts to local copies,
-// opens every screen in every state and saves phone-size screenshots.
-// Usage: node check.mjs [01-,veteran-]  (only the shots whose name contains one of these; env W, H = screen size, OUTDIR = folder)
+// Local check of the journey on the globe in the menu (the race intro), in real time: a Race tap, then the intro every second.
+// and a multiplayer duel. After Race it skips the intro (the drone's shots), waits for the start lights, picks a result, then saves the
+// results screen and the screens that follow.
+// Usage: node check3.mjs [01-,free-]  (a step whose name contains one of these; a step can need the one before it; env W, H, OUTDIR)
 import { createRequire } from 'node:module';
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 const require = createRequire(import.meta.url);
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
-const HERE = path.dirname(new URL(import.meta.url).pathname), SITE = path.join(HERE, '..'), OUT = path.join(HERE, process.env.OUTDIR || 'shots');
+const HERE = path.dirname(new URL(import.meta.url).pathname), SITE = path.join(HERE, '..'), OUT = path.join(HERE, process.env.OUTDIR || 'shots_jm');
 const FONTS = path.join(HERE, 'fonts'), THREE = path.join(HERE, '..', 'game_main', 'js', 'vendor', 'three.r128.min.js');
 fs.mkdirSync(OUT, { recursive: true });
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.webm': 'video/webm', '.woff2': 'font/woff2' };
@@ -57,33 +58,18 @@ const shot = async (name) => {
   console.log(name, o.length ? JSON.stringify(o) : 'ok');
 };
 const open = async (st, scr, o, ms) => { await page.evaluate(([st, scr, o]) => window.MENU_DEBUG.open(st, scr, o), [st, scr, o || {}]); await wait(ms || 700); };
-const ONLY = process.argv[2] ? process.argv[2].split(',') : null;
-const plan = [
-  ['free', 'title', {}, 2600], ['free', 'title', { sub: 'single' }, 1200], ['free', 'title', { sub: 'career' }, 1200], ['free', 'car', { carIdx: 0 }, 2200], ['free', 'car', { carIdx: 3, tab: 'paint' }, 1800],
-  ['free', 'track', { daily: true }], ['free', 'track', { mode: 'race', trackId: 'suzuka' }], ['free', 'cup', {}], ['free', 'cchase', {}], ['free', 'ctrial', {}], ['free', 'crally', {}], ['free', 'title', { offer: true }],
-  ['full', 'title', {}, 1200], ['full', 'title', { sub: 'single', mode: 'chase' }, 1200], ['full', 'car', { carIdx: 2, tab: 'upg' }, 2000], ['full', 'track', { mode: 'race', trackId: 'gora' }],
-  ['full', 'track', { mode: 'chase', trackId: 'monaco' }], ['full', 'title', { sub: 'career' }, 1200], ['full', 'cup', {}],
-  ['veteran', 'title', {}, 1200], ['veteran', 'title', { sub: 'career' }, 1200], ['veteran', 'car', { carIdx: 2, colorIdx: 0 }, 2000], ['veteran', 'car', { carIdx: 5 }, 1800], ['veteran', 'car', { carIdx: 6, colorIdx: 3 }, 2000],
-  ['veteran', 'track', { mode: 'race', trackId: 'spa' }], ['veteran', 'track', { mode: 'race', trackId: 'nring' }], ['veteran', 'track', { mode: 'race', trackId: 'gora', weatherSheet: true }],
-  ['veteran', 'track', { mode: 'trial', trackId: 'suzuka' }], ['veteran', 'track', { mode: 'chase', trackId: 'ljubljana', weatherSheet: true }],
-  ['veteran', 'track', { mode: 'trial', trackId: 'vrsic', mapV: 1 }, 2600], ['veteran', 'track', { mode: 'trial', trackId: 'vrsic', mapV: 2 }], ['veteran', 'track', { mode: 'trial', trackId: 'vrsic', mapV: 2, weather: 1 }, 1600],
-  ['veteran', 'track', { mode: 'trial', trackId: 'pikes', mapV: 1 }, 2600], ['veteran', 'track', { mode: 'trial', trackId: 'ouninpohja', mapV: 1, weather: 1 }, 2600], ['veteran', 'track', { mode: 'trial', trackId: 'ouninpohja', mapV: 2 }],
-  ['veteran', 'track', { mode: 'race', trackId: 'gora', mapV: 2 }], ['veteran', 'track', { mode: 'chase', trackId: 'vrsic', mapV: 2, weatherSheet: true }],
-  ['veteran', 'track', { mode: 'race', trackId: 'spa', mapV: 2 }], ['veteran', 'track', { mode: 'race', trackId: 'monaco', mapV: 2, weather: 1 }, 1600],
-  ['veteran', 'track', { mode: 'race', trackId: 'nring', mapV: 1 }, 2600], ['veteran', 'cup', {}], ['veteran', 'cchase', {}], ['veteran', 'ctrial', {}], ['veteran', 'crally', {}],
-  ['veteran', 'multi', { mpMode: 'create' }], ['veteran', 'multi', { mpMode: 'join' }], ['veteran', 'board', { lbTrack: -1 }], ['veteran', 'board', { lbTrack: 3 }], ['veteran', 'settings', {}],
-];
-let n = 0;
-for (const [st, scr, o, ms] of plan) {
-  n++;
-  const name = String(n).padStart(2, '0') + '-' + st + '-' + scr + (o.carIdx != null ? '-c' + o.carIdx : '') + (o.mode ? '-' + o.mode : '') + (o.trackId ? '-' + o.trackId : '') + (o.mapV ? '-m' + o.mapV : '') + (o.daily ? '-daily' : '') + (o.sub ? '-' + o.sub : '') + (o.weather != null ? '-w' + o.weather : '') + (o.tab ? '-' + o.tab : '') + (o.mpMode ? '-' + o.mpMode : '') + (o.lbTrack != null ? '-lb' + o.lbTrack : '') + (o.offer ? '-offer' : '') + (o.weatherSheet ? '-weather' : '');
-  if (ONLY && !ONLY.some(x => name.includes(x))) continue;
-  await open(st, scr, o, ms);
-  await shot(name);
+const [st, trackId, modeId] = (process.argv[2] || 'veteran,vrsic,trial').split(',');
+const every = +(process.env.EVERY || 1000), count = +(process.env.COUNT || 14);
+await open(st, 'title', { fresh: true }, 1500);
+await open(st, 'track', { mode: modeId, trackId }, 1200);
+await shot('00-track');
+await page.click('[data-act="race-single"]');
+const t0 = Date.now(); const names = [];
+for (let k = 1; k <= count; k++) {
+  const due = t0 + k * every; const now = Date.now(); if (due > now) await wait(due - now);
+  const info = await page.evaluate(() => { const h = document.querySelector('.ix-v .hud'); return h ? h.querySelector('b').textContent + ' | ' + h.querySelector('small').textContent : '-'; });
+  const nm = String(k).padStart(2, '0') + '-intro-' + ((Date.now() - t0) / 1000).toFixed(1) + 's'; console.log(nm, 'HUD:', info); await shot(nm); names.push(nm);
 }
-if (!ONLY) {   // a race: the intro (the drone's shots, the commentator), the start lights, the picker
-  await open('veteran', 'track', { mode: 'race', trackId: 'riviera' }, 900); await click('[data-act="race-single"]'); await wait(2600); await shot('99-intro');
-  await click('.ix-skip'); await wait(1300); await shot('99-lights'); await wait(2300); await shot('99-picker');
-}
+await page.click('.ix-skip'); await wait(1600); await shot('99-lights');
 console.log(errors.length ? 'ERRORS:\n' + [...new Set(errors)].join('\n') : 'no console errors');
 await browser.close(); server.close();

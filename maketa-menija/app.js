@@ -79,11 +79,12 @@
 
   /* ---------------- progress: it changes as you "race" in the mockup, kept per state in this browser ---------------- */
   let ST, P;
-  const fresh = (st) => { const s = D.states[st]; return { owned: !!s.owned, money: s.money, car: s.car, color: s.color, career: clone(s.career || {}), upgrades: clone(s.upgrades || {}), myRecords: clone(s.myRecords || {}), chase: {}, daily: null, last: '' }; };
+  const fresh = (st) => { const s = D.states[st]; return { owned: !!s.owned, money: s.money, car: s.car, color: s.color, career: clone(s.career || {}), upgrades: clone(s.upgrades || {}), myRecords: clone(s.myRecords || {}), chase: {}, daily: null, lastTrack: s.lastTrack || '' }; };
   const loadP = (st) => {
     const p = store.get('p-' + st, null); if (!p || !p.myRecords) return fresh(st);
     if (p.car == null) { p.car = D.states[st].car; p.color = D.states[st].color; } if (!p.chase) p.chase = {};
     if (!p.career) { p.career = clone(D.states[st].career || {}); delete p.trophies; }   // (saved before the career had its four ways: its starting point)
+    if (p.lastTrack == null) p.lastTrack = D.states[st].lastTrack || '';   // (saved before the journey on the globe: where the state's last race was)
     return p;
   };
   const saveP = () => store.set('p-' + ST, P);
@@ -661,6 +662,7 @@
       const c = D.cars[carIdx]; Car3D.show(c.model, colorIdx, { dark: !!c.soon }); Car3D.setVisible(true);
     } else if (car3dReady) Car3D.setVisible(false);
     if (screen === 'track') wx.attach($('#track-stage', app), wxMode(), shown !== 'track'); else wx.detach();
+    if (screen === 'track' && shown !== 'track' && window.Journey && P.lastTrack) Journey.preload([P.lastTrack]);   // (the globe before a race starts there)
     flyLabels(); fitMaps();
     shown = screen;
     if (sheet) { app.insertAdjacentHTML('beforeend', typeof sheet === 'function' ? sheet() : sheet); if (sheetOn) $('.sheet-bg', app).classList.add('still'); }
@@ -715,35 +717,59 @@
     const el = document.createElement('div'); el.className = 'intro'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Before the race');
     app.appendChild(el);
     if (!Dr) { lights(el); return; }
-    // the drone's shots, one after another; on each, its place and height in the corner and the commentator's line about it
+    // first the journey on the 3D globe: from where the last race ended (or from space) to this track, down to the drone's first view;
+    // then the drone's shots, one after another, on each its place and height in the corner and the commentator's line about it.
+    // (Not when this track was the last one too, nor without WebGL, nor for someone who asked for less motion.)
+    const calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const globe = !calm && P.lastTrack !== t.id && window.Journey && window.GEO && GEO.tracks[t.id] && Journey.supported();
     el.innerHTML = '<div class="ix-bg" style="background-image:url(assets/maps/drone-' + t.id + '.webp)" aria-hidden="true"></div>' +
       '<div class="ix-top"><span class="ix-live"><i></i>LIVE</span><button class="ix-skip" data-ix="skip">Skip intro' + I.chev + '</button></div>' +
       '<div class="ix-head"><h2>' + esc(fullName(t)) + '</h2><small>' + esc(R.label) + '</small></div>' +
-      '<div class="ix-v"><div class="dio fly"><video muted playsinline autoplay preload="auto" poster="assets/maps/drone-' + t.id + '.webp" src="assets/maps/drone-' + t.id + '.webm"></video>' + hudBox() + '</div></div>' +
+      '<div class="ix-v' + (globe ? ' jon' : '') + '"><div class="dio fly"><video muted playsinline' + (globe ? '' : ' autoplay') + ' preload="auto" poster="assets/maps/drone-' + t.id + '.webp" src="assets/maps/drone-' + t.id + '.webm"></video>' + hudBox() + '</div></div>' +
       '<div class="ix-sub" aria-live="polite"><span class="ix-who">' + I.mic + 'COMMENTATOR' + (speaks() ? '' : ' · VOICE OFF') + '</span><p></p></div>' +
       '<div class="ix-bar" aria-hidden="true"><b></b></div>';
-    const v = $('video', el), hud = $('.hud', el), hb = $('b', hud), hs = $('small', hud), sub = $('.ix-sub', el), sp = $('p', sub), bar = $('.ix-bar b', el);
-    if (R.wet) wx.attach($('.ix-v', el), 'rain', true);   // (a wet race: the rain over the shots too)
-    let shot = -1, done = false;
+    const v = $('video', el), box = $('.ix-v', el), hud = $('.hud', el), hb = $('b', hud), hs = $('small', hud), sub = $('.ix-sub', el), sp = $('p', sub), bar = $('.ix-bar b', el);
+    const setHud = (name, sm) => {   // (a new place comes in; the same place with a new number, as the distance left on the globe, just changes it)
+      if (hb.textContent === name) { if (hs.textContent !== sm) hs.textContent = sm; return; }
+      hb.textContent = name; hs.textContent = sm; hud.classList.remove('in'); void hud.offsetWidth; hud.classList.add('in');
+    };
+    const line = (txt, spoken) => { sp.textContent = txt; sub.classList.remove('in'); void sub.offsetWidth; sub.classList.add('in'); say(spoken || txt); };
+    let shot = -1, done = false, J = null, jOff = 0, shots = false;
+    const vDur = () => isFinite(v.duration) && v.duration > 0 ? v.duration : Dr.dur;
     const end = (skip) => {   // (at the end of the shots the commentator finishes the line, 2.4 s at most; a skip cuts it off)
-      if (done) return; done = true; cancelAnimationFrame(ixRaf); v.pause();
+      if (done) return; done = true; cancelAnimationFrame(ixRaf); v.pause(); if (J) J.skip();
       let n = 0; const next = () => { if (!document.contains(el)) return; if (!skip && n++ < 12 && speaks() && speechSynthesis.speaking) { setTimeout(next, 200); return; } hush(); wx.detach(); lights(el); };
       next();
     };
     const step = () => {
       if (done || !document.contains(el)) return;
-      const tm = v.currentTime || 0, dur = isFinite(v.duration) && v.duration > 0 ? v.duration : Dr.dur;
+      if (!shots) { if (J) bar.style.width = Math.min(100, J.elapsed / (jOff + vDur()) * 100).toFixed(1) + '%'; ixRaf = requestAnimationFrame(step); return; }   // (the globe's own part of the bar)
+      const tm = v.currentTime || 0, dur = vDur();
       let k = 0; Dr.shots.forEach((q, i) => { if (q[0] + 0.3 <= tm || i === 0) k = i; });
       if (k !== shot) {
         shot = k; const q = Dr.shots[k], ln = lines[k], txt = Array.isArray(ln) ? ln[0] : ln, a = altAt(Rt, M, q[2]);
-        hb.textContent = q[1]; hs.textContent = a != null ? num(Math.round(a)) + ' m' : ''; hud.classList.remove('in'); void hud.offsetWidth; hud.classList.add('in');
-        if (txt) { sp.textContent = txt; sub.classList.remove('in'); void sub.offsetWidth; sub.classList.add('in'); say(Array.isArray(ln) ? ln[1] : ln); }
+        setHud(q[1], a != null ? num(Math.round(a)) + ' m' : '');
+        if (txt) line(txt, Array.isArray(ln) ? ln[1] : ln);
       }
-      bar.style.width = Math.min(100, tm / dur * 100).toFixed(1) + '%';
+      bar.style.width = Math.min(100, (jOff + tm) / (jOff + dur) * 100).toFixed(1) + '%';
       ixRaf = requestAnimationFrame(step);
+    };
+    const startShots = () => {   // the drone's video from its first frame (the globe hands over to it), the rain on it on a wet day
+      if (done || shots) return; shots = true; box.classList.remove('jon');
+      if (R.wet) wx.attach(box, 'rain', true);
+      try { v.currentTime = 0; } catch (_) { /* not loaded yet: it starts at 0 anyway */ }
+      const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
     };
     v.addEventListener('ended', () => end(false)); v.addEventListener('error', () => end(true));
     el.addEventListener('click', (e) => { if (e.target.closest('[data-ix="skip"]')) end(true); });
+    if (globe) {
+      const from = P.lastTrack && GEO.tracks[P.lastTrack] ? P.lastTrack : null, title = (id) => { const x = id && trackById(id); return x ? x.name : undefined; };
+      const a0 = altAt(Rt, M, Dr.shots[0][2]);
+      J = Journey.play(box, { from, to: t.id, arrive: Dr.arrive, video: v, fromTitle: title(from), toTitle: t.name, endHud: [Dr.shots[0][1], a0 != null ? num(Math.round(a0)) + ' m' : ''],
+        onHud: setHud, onLine: (txt) => line(txt), onHandover: startShots });
+      jOff = Math.max(0, J.total - 1.15);   // (the video starts at the hand-over)
+      J.done.then((why) => { if (why === 'nogl') startShots(); });
+    } else startShots();
     ixRaf = requestAnimationFrame(step);
     $('.ix-skip', el).focus({ preventScroll: true });
   }
@@ -774,7 +800,7 @@
       const out = { R, res, stars, escaped: stars > 0, time: [112, 161, 108, 65][stars], reward: D.chase.reward[3 - stars], pb: stars > prev };
       if (career) { if (stars > prev) cm().chase.stars[R.idx] = stars; if (stars > 0 && !prev && R.idx + 1 < C.chase.missions.length) out.unlocked = C.chase.missions[R.idx + 1].title; }
       else if (stars > prev) P.chase[t.id] = stars;
-      P.money += out.reward; saveP();
+      P.money += out.reward; P.lastTrack = t.id; saveP();
       result = out; history.push(screen); screen = 'results'; render(); return;
     }
     const R = race, t = R.track, trial = !!R.trial;
@@ -813,7 +839,7 @@
       out.reward = Math.round(D.daily.reward * share);
     } else if (R.kind === 'multi') { out.rival = R.rival; out.reward = D.multiReward[place === 1 ? 0 : 1]; }
     else out.reward = Math.round(D.singleReward * share);
-    P.money += out.reward; saveP();
+    P.money += out.reward; P.lastTrack = t.id; saveP();
     result = out; history.push(screen); screen = 'results'; render();
   }
 

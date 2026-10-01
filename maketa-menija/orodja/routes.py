@@ -114,6 +114,7 @@ for t in TRACKS:
         if not os.path.exists(dst) or os.path.getmtime(dst) < os.path.getmtime(src): shutil.copyfile(src, dst)
         Image.open(os.path.join(RAW, 'drone-%s-poster.jpg' % t)).convert('RGB').save(os.path.join(OUT, 'drone-%s.webp' % t), 'WEBP', quality=72, method=6)
         R['drone'] = { 'fps': Dn['fps'], 'W': Dn['W'], 'H': Dn['H'], 'dur': Dn['dur'], 'shots': Dn['shots'] }
+        if Dn.get('arrive'): R['drone']['arrive'] = Dn['arrive']   # (its first seconds: the camera every frame, for the globe's hand-over)
     data[t] = R
     print(t, 'len', L, 'places', len(R['places']), 'hud', len(H), 'fly', 'fly' in R, 'drone', 'drone' in R)
 

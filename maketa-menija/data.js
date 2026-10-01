@@ -246,6 +246,7 @@ window.MENU = {
     veteran: {
       label: 'Veteran', player: 'Luka', money: 58400, owned: true, titles: 2,
       car: 2, color: 0, track: 1,
+      lastTrack: 'pikes',   // the last race raced (the journey on the globe before the next one starts there: Colorado)
       // the career so far: World Cup round 1 done (through to round 2, two races of it raced), four chase missions, nine medals, two rally stages
       career: { cup: { round: 1, res: [2, 4], rounds: [2] }, chase: { stars: [3, 2, 3, 1] }, trial: { medals: { jezero: 'gold', riviera: 'gold', gora: 'silver', ljubljana: 'silver', monaco: 'bronze', rbring: 'gold', ouninpohja: 'silver', suzuka: 'bronze', spa: 'bronze' } }, rally: { res: [2, 1] } },
       upgrades: { rally: [2, 3, 2, 1], kaze: [1, 1, 1, 0] },
