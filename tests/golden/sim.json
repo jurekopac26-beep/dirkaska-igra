@@ -1468,5 +1468,201 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "pikesg/race/cs": {
+  "digest": "b4a3e12f83a6a2d2c9b92e7f",
+  "lead": 1935.5,
+  "car0": [
+   -362.23,
+   -1375.55
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "pikesg/demo/cs": {
+  "digest": "17b5a9ed767dbed18d288408",
+  "lead": 1940.2,
+  "car0": [
+   -365.2,
+   -1376.44
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "pikesg/upg/cs": {
+  "digest": "3e555a0fd0d6dd5d156c2929",
+  "lead": 1932.7,
+  "car0": [
+   -359.7,
+   -1374.96
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "pikesg/crash/cs": {
+  "digest": "71f97f131db590849e5d5413",
+  "lead": 1798.4,
+  "car0": [
+   -228.24,
+   -1346.59
+  ],
+  "cover": {
+   "dmg": 0.67,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "pikesg/formula/cs": {
+  "digest": "977488324b2b743219ee3216",
+  "lead": 1777.2,
+  "car0": [
+   -207.4,
+   -1341.91
+  ],
+  "cover": {
+   "dmg": 0.35,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "pikesg/lm/cs": {
+  "digest": "712b1444a63280001d901e5f",
+  "lead": 1727.1,
+  "car0": [
+   -169.39,
+   -1326.62
+  ],
+  "cover": {
+   "dmg": 0.55,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "pikesg/car/cs": {
+  "digest": "4fe16498597138548db53497",
+  "lead": 1707.1,
+  "car0": [
+   -177.54,
+   -1317.06
+  ],
+  "cover": {
+   "dmg": 0.32,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "caracoles/race/cs": {
+  "digest": "42f61bc74cff5a183caeec09",
+  "lead": 2107.4,
+  "car0": [
+   887.03,
+   -467.72
+  ],
+  "cover": {
+   "dmg": 0.51,
+   "loose": 5,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "caracoles/demo/cs": {
+  "digest": "5e637c68744bbd2fd1eb9b7b",
+  "lead": 2214.8,
+  "car0": [
+   896.05,
+   -549.95
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "caracoles/upg/cs": {
+  "digest": "c199c538920481c837894ccc",
+  "lead": 2204.1,
+  "car0": [
+   917.06,
+   -506.94
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "caracoles/crash/cs": {
+  "digest": "5cf8d7b9a1ade5c9b4702ef2",
+  "lead": 2100.3,
+  "car0": [
+   838.55,
+   -533.39
+  ],
+  "cover": {
+   "dmg": 0.7,
+   "loose": 8,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
+ "caracoles/formula/cs": {
+  "digest": "03c1bc93beec2e6782e05081",
+  "lead": 2324.5,
+  "car0": [
+   933.58,
+   -442.24
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 14,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "caracoles/lm/cs": {
+  "digest": "8e48a376e7991c8ae412e4e1",
+  "lead": 2300.9,
+  "car0": [
+   933.89,
+   -441.7
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 8,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
+ "caracoles/car/cs": {
+  "digest": "6d956de7603835120d26afe4",
+  "lead": 2101.3,
+  "car0": [
+   846.21,
+   -535.07
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 14,
+   "rescues": 0,
+   "repairs": 0
+  }
  }
 }

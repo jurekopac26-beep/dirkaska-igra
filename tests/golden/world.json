@@ -180,6 +180,35 @@
    "tyremarks:MeshBasicMaterial": "64ffa4d2"
   }
  },
+ "pikesg": {
+  "meshes": 775,
+  "verts": 1508177,
+  "instances": 2633,
+  "props": 352,
+  "crowd": 2587,
+  "world": "c66440d0",
+  "propsHash": "fed9419e",
+  "floor": "67c951b5/12544",
+  "groups": {
+   "-:MeshLambertMaterial": "6de4b20",
+   "-:MeshPhongMaterial": "f336158f",
+   "-:MeshBasicMaterial": "a3c06f9",
+   "pkFlags:MeshLambertMaterial": "94ce39c",
+   "pkLamps:MeshBasicMaterial": "92e149e5",
+   "pkMarmots:MeshLambertMaterial": "cbaf6673",
+   "pkSheep:MeshLambertMaterial": "43f7b78c",
+   "pkGlow:MeshLambertMaterial": "81146913",
+   "pkVeg:MeshLambertMaterial": "20f772fe",
+   "crowd:MeshLambertMaterial": "dca18c33",
+   "pkFlash:ShaderMaterial": "3250bef6",
+   "-:ShaderMaterial": "a26bf768",
+   "pkHaze:ShaderMaterial": "7fb271d2",
+   "pkAir:ShaderMaterial": "385c43",
+   "pkCloudSea:ShaderMaterial": "714d7305",
+   "pkSmoke:ShaderMaterial": "186acc3",
+   "ao:MeshBasicMaterial": "f2d6f3c"
+  }
+ },
  "ouninpohja": {
   "meshes": 4239,
   "verts": 2097019,
@@ -296,6 +325,25 @@
    "tyremarks:MeshBasicMaterial": "b6a15a32",
    "roadwear:MeshLambertMaterial": "ebafee10",
    "worn:MeshLambertMaterial": "a609397d"
+  }
+ },
+ "caracoles": {
+  "meshes": 2764,
+  "verts": 1367240,
+  "instances": 35631,
+  "props": 266,
+  "crowd": 1964,
+  "world": "af95cfb9",
+  "propsHash": "5a55708e",
+  "floor": "cd97797d/22736",
+  "groups": {
+   "-:MeshLambertMaterial": "49c7bfbc",
+   "-:MeshPhongMaterial": "5e5b862d",
+   "-:MeshBasicMaterial": "84d4fb70",
+   "crowd:MeshLambertMaterial": "938890c6",
+   "ao:MeshBasicMaterial": "4d6ac890",
+   "tyremarks:MeshBasicMaterial": "95b8835b",
+   "roadwear:MeshLambertMaterial": "e5109e86"
   }
  }
 }
