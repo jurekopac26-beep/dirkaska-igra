@@ -82,7 +82,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 /* the police radio: a line at a time at the bottom, between the steering and the pedals, over the arrows (the speaker's call sign first; in person:
    the officer, the driver, in yellow) */
 #h-radio { display: none; }
-#hud.pol #h-radio { display: block; position: absolute; left: 50%; bottom: calc(50px + var(--sb)); transform: translateX(-50%); width: max-content; max-width: min(44vw, 430px); padding: 4px 9px;
+#hud.pol #h-radio { display: block; position: absolute; left: 50%; bottom: calc(50px + var(--sb)); transform: translateX(-50%); width: max-content; max-width: min(44vw, 430px, calc(100vw - 2 * (40px + 2 * clamp(64px, 23vh, 104px)) - 2 * max(var(--sl), var(--sr)))); padding: 4px 9px;
   border-left: 3px solid #3a78ff; border-radius: 4px; background: rgba(8, 16, 36, 0.78); font: 600 clamp(9px, 2.4vh, 12px)/1.3 var(--f-ui); color: #e3ebff; text-align: left; opacity: 0; transition: opacity 0.25s; }
 #hud.pol #h-radio.show { opacity: 1; }
 #hud.pol #h-radio.person { border-left-color: #ffd23c; background: rgba(28, 24, 10, 0.8); color: #fff6dc; font-style: italic; }
@@ -91,7 +91,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 @media (orientation: landscape) { #hud.pol.shot #h-radio { bottom: calc(12px + var(--sb)); } }   /* (a TV shot: no arrows under it) */
 /* the patrol cars behind the player: an arrow for each (where it is from the car's heading, across the bar by that), the metres back along the road */
 #h-tail { display: none; }
-#hud.pol #h-tail { display: block; position: absolute; left: 50%; bottom: calc(6px + var(--sb)); width: min(46vw, 440px); height: 40px; transform: translateX(-50%); }
+#hud.pol #h-tail { display: block; position: absolute; left: 50%; bottom: calc(6px + var(--sb)); width: min(46vw, 440px, calc(100vw - 2 * (40px + 2 * clamp(64px, 23vh, 104px)) - 2 * max(var(--sl), var(--sr)))); height: 40px; transform: translateX(-50%); }   /* (between the steering and the pedals) */
 #h-tail i { display: none; position: absolute; bottom: 0; width: 52px; margin-left: -26px; flex-direction: column; align-items: center; gap: 1px; font-style: normal; transition: left 0.25s; }
 #h-tail i.on { display: flex; }
 #h-tail svg { width: clamp(16px, 4.6vh, 22px); height: clamp(16px, 4.6vh, 22px); transform-origin: 50% 50%; filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.9)); }
@@ -103,8 +103,8 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-tail i.n svg { width: clamp(20px, 5.8vh, 28px); height: clamp(20px, 5.8vh, 28px); }   /* (the nearest one) */
 #h-tail i.n span { color: #fff; }
 @media (orientation: portrait) {   /* (a phone upright: above the steering and the pedals) */
-  #hud.pol #h-tail { bottom: calc(clamp(64px, 23vh, 104px) + 22px + var(--sb)); width: 84vw; }
-  #hud.pol #h-radio { bottom: calc(clamp(64px, 23vh, 104px) + 66px + var(--sb)); max-width: 86vw; }
+  #hud.pol #h-tail { bottom: calc(26px + clamp(100px, 32vw, 150px) + var(--sb)); width: 84vw; }   /* (above the gas pedal, the tallest control) */
+  #hud.pol #h-radio { bottom: calc(70px + clamp(100px, 32vw, 150px) + var(--sb)); max-width: 86vw; }
   #h-chk.on { max-width: 42vw; padding: 2px 6px 3px; }   /* (between the place and the map) */
   #h-chk b { font-size: clamp(10px, 3.1vw, 13px); }
   #h-chk span { font-size: clamp(9px, 2.7vw, 11px); }

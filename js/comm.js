@@ -303,7 +303,8 @@ const Comm = (() => {
   function cancelSpeech() { if (speaking && cur && cur.item) cur.item.cut = true; if (synth) { try { synth.cancel(); } catch (_) { } } speaking = false; lastEnd = 0; cur = null; }
   function stop() { cancelSpeech(); queue = null; }
   // call from a tap handler: some browsers only allow speech after a user gesture
-  function unlock() { if (!synth || !speech || !on) return; try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); } catch (_) { } }
+  function unlock() { if (!synth || !speech) return; try {   // (also with the commentator off: the police radio speaks then, and iOS wants the first line from a tap)
+    const u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); } catch (_) { } }
   function test() { cancelSpeech(); queue = null; speakNow({ key: 'test', text: "Hello and welcome! I'm your commentator for today's race.", prio: 9, t: now() }); }
   function setOnVoice(fn) { onVoice = fn; fn(voiceInfo()); }
   function setEnabled(v) { on = !!v; if (!on) stop(); }

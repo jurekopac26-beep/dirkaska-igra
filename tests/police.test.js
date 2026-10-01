@@ -205,18 +205,19 @@ const since = (r, n0, k) => r.pol.log.filter(e => e.n > n0 && e.k === k);
     `${ahead.toFixed(0)} m ahead, ${(v * 3.6).toFixed(0)} km/h, on the right half ${(right * 100).toFixed(0)} %, woken with the player ${gWake == null ? '- (' + (u ? (u.q.s - P.q.s).toFixed(0) + ' m, ' + u.pol.mode + ', the player ' + (P.speed * 3.6).toFixed(0) + ' km/h' : 'gone') + ')' : gWake.toFixed(0) + ' m'} behind it`);
 }
 
-// 12. a heavy roadblock (from the heat POL_DIFF.heavy on): the van across the road from one edge, a patrol car beside it, a spike strip over half of the
-//     gap left at the other edge; the autopilot squeezes through the rest of the gap (the asphalt at the edge, the verge) without a flat
+// 12. a heavy roadblock (from the heat POL_DIFF.heavy on): the van across the road from one edge, patrol cars beside it, a spike strip from them
+//     (no hole between) over half of the gap left at the other edge; the autopilot squeezes through the rest of the gap (the asphalt at the
+//     edge, the verge) without a flat
 {
   const r = mk(), P = r.player, pol = r.pol; drive(r, 5); pol.cool = -3;
   const e = pol.plan.find(q => q.kind === 'block'); put(P, e.s - 520, 1.5, 22); const n0 = pol.ev; drive(r, 2, () => e.done);
   const van = pol.cars.find(c => c.pol.kind === 'van'), car = pol.cars.find(c => c.pol.block && c.pol.kind === 'car'), sp = pol.spikes.find(q => q.heavy), ev = since(r, n0, 'block')[0];
   const across = (c) => { const rel = c.h - Math.atan2(T.tz[c.q.i], T.tx[c.q.i]), W = c.m.len * Math.abs(Math.sin(rel)) + c.m.wid * Math.abs(Math.cos(rel)); return [c.q.d - W / 2, c.q.d + W / 2]; };
   let u0 = 0, u1 = 0, clean = 0, inGap = false;
-  if (van && car && sp) { const a = across(van), b = across(car); u0 = Math.min(a[0], b[0]); u1 = Math.max(a[1], b[1]);
-    inGap = sp.side < 0 ? sp.d0 >= u1 - 0.3 && sp.d1 < T.w : sp.d1 <= u0 + 0.3 && sp.d0 > -T.w; clean = sp.side < 0 ? T.w - sp.d1 : sp.d0 + T.w; }
+  if (van && car && sp) { const ab = pol.cars.filter(c => c.pol.block).map(across); u0 = Math.min(...ab.map(a => a[0])); u1 = Math.max(...ab.map(a => a[1]));   // (no hole between the block and the strip: the strip from the cars' edge (or under it) on)
+    inGap = sp.side < 0 ? sp.d0 <= u1 + 0.3 && sp.d1 > u1 + 0.5 && sp.d1 < T.w : sp.d1 >= u0 - 0.3 && sp.d0 < u0 - 0.5 && sp.d0 > -T.w; clean = sp.side < 0 ? T.w - sp.d1 : sp.d0 + T.w; }
   const t = drive(r, 60, () => P.q.s > e.s + 30 || pol.busted);
-  check('a heavy roadblock: the van across the road, a patrol car beside it, a strip over half of the gap at the edge; the autopilot gets through the rest of it without a flat',
+  check('a heavy roadblock: the van across the road, patrol cars beside it, a strip from them (no hole) over half of the gap at the edge; the autopilot gets through the rest of it without a flat',
     !!ev && ev.heavy && !!van && !!car && !!sp && van.m.len > 5 && inGap && clean > 1.4 && clean < 2.4 && u1 - u0 > 8 && P.q.s > e.s + 30 && !P.flat,
     `the block ${u0.toFixed(1)}..${u1.toFixed(1)} m across, the strip ${sp ? sp.d0.toFixed(1) + '..' + sp.d1.toFixed(1) : '-'}, ${clean.toFixed(1)} m of asphalt left; through in ${t.toFixed(1)} s, flats ${P.flat || 0}`);
 }

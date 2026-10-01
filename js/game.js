@@ -1320,7 +1320,7 @@
   function stepRace(dt, inp) {
     recStep();
     const P = race.player;
-    const pol = race.pol, hold = pol && (pol.hold || (pol.stage === 'check' && /^(stopped|walk|docs)$/.test(pol.chk.st) && !(inp.thr > 0.05) && !autoDrive));   // (the police: parked, arrested, in the building; stopped at the officer: the foot on the brake unless on the gas)
+    const pol = race.pol, hold = pol && (pol.hold || (pol.stage === 'check' && /^(stopped|walk|docs)$/.test(pol.chk.st) && !(inp.gas > 0) && !autoDrive));   // (the police: parked, arrested, in the building; stopped at the officer: the foot on the brake unless on the gas itself (Samodejni plin: the gas pressed to drive off))
     if (((phase === 'finish' || phase === 'done') && (race.timeTrial || P.busted)) || hold) { P.inThr = 0; P.inBrk = 1; P.inSteer = 0; P.inHand = 0; P.digitalSteer = false; }   // time trial: brake to a stop past the finish (the road ends); busted by the police: stays where they stopped it
     else if (phase === 'finish' || phase === 'done' || autoDrive) { P.pitWant = !!P.inPit; Core.aiControl(P, race, dt); P.digitalSteer = false; }   // (autoDrive: automated tests of online races drive in real time)
     else { P.inSteer = inp.steer; P.inThr = inp.thr; P.inBrk = inp.brk; P.inHand = inp.hand; P.digitalSteer = inp.digital; }
@@ -1439,12 +1439,12 @@
   const RD_WHO = { okc: ['OKC KRANJ', '', ''], heli: ['BOBER', 'Bober', 'Bober'], bov: ['PP BOVEC', 'Postaja Bovec', 'Bovets station'], cop: ['POLICIST', '', ''], drv: ['TI', '', ''] };
   const rdCall = (u, kind) => kind === 'moto' ? ['MOTORIST ' + u, 'Motorist ' + u, 'Bike ' + u] : kind === 'uc' ? ['CIVILNA ' + u, 'Civilna ' + u, 'Unmarked ' + u] : kind === 'van' || !u ? ['KOMBI', 'Kombi', 'Van'] : ['KG-' + u, 'Kranjska Gora ' + u, 'Kranyska Gora ' + u];
   // the player's car as the police describe it: the colour (the formula is feminine), the model ([Slovenian, English])
-  const RD_COL = [['rdeč', 'rdeča', 'red'], ['bel', 'bela', 'white'], ['moder', 'modra', 'blue'], ['rumen', 'rumena', 'yellow'], ['črn', 'črna', 'black'], ['zelen', 'zelena', 'green'], ['oranžen', 'oranžna', 'orange'], ['vijoličen', 'vijolična', 'purple']];
+  const RD_COL = [['rdeč', 'rdeča', 'red'], ['bel', 'bela', 'white'], ['moder', 'modra', 'blue'], ['rumen', 'rumena', 'yellow'], ['črn', 'črna', 'black'], ['zelen', 'zelena', 'green'], ['oranžen', 'oranžna', 'bright orange'], ['vijoličen', 'vijolična', 'purple']];
   // the lines: key -> its variants [Slovenian, English] ({at} where, {to} which way, {dir} heading for, {v} km/h, {car} the player's car, {U} the
   // unit spoken to, {sacc} / {sgen} / {sloc} into / out of / in a side road, {dead} its dead end)
   const RL = {
-    chkSeen: [['Proti kontroli prihaja {car}. Ustavljam ga.', 'A {car} coming up to the checkpoint. Pulling it over.'], ['Prihaja {car}, smer Vršič. Ga bom ustavil.', 'A {car} heading for the pass. I will stop it.'], ['Na kontroli ustavljam {car}.', 'Stopping a {car} at the checkpoint.']],
-    chkSeenFast: [['Proti kontroli zelo hitro prihaja {car}! Ga bom ustavil.', 'A {car} coming up to the checkpoint very fast! I will stop it.']],
+    chkSeen: [['Proti kontroli prihaja {car}. Ustavljam {ga}.', 'A {car} coming up to the checkpoint. Pulling it over.'], ['Prihaja {car}, smer Vršič. Ustavil {ga} bom.', 'A {car} heading for the pass. I will stop it.'], ['Na kontroli ustavljam {carA}.', 'Stopping a {car} at the checkpoint.']],
+    chkSeenFast: [['Proti kontroli zelo hitro prihaja {car}! Ustavil {ga} bom.', 'A {car} coming up to the checkpoint very fast! I will stop it.']],
     chkStop: [['Voznik je ustavil, grem k njemu.', 'He has stopped, going over to him.'], ['Ustavil je, preverjam dokumente.', 'He has stopped, checking his papers.']],
     chkDocs: [['Dober dan, prometna kontrola. Vozniško in prometno dovoljenje, prosim.', 'Good afternoon, traffic control. Driving licence and registration, please.'], ['Dober dan, policija. Vozniško in prometno dovoljenje, prosim.', 'Good afternoon, police. Licence and registration, please.']],
     chkNoDocs: [['Ehm... nimam jih pri sebi.', 'Erm... I don\'t have them on me.'], ['Ehm... nimam jih pri sebi. Doma so ostali.', 'Erm... I don\'t have them on me. I left them at home.']],
@@ -1453,10 +1453,10 @@
     chkTake: [['Voznik nima dokumentov, peljemo ga na postajo.', 'The driver has no papers, we are taking him to the station.'], ['Voznik brez dokumentov, pridržan. Peljemo ga na postajo.', 'A driver without papers, detained. Taking him to the station.']],
     arrested: [['Razumem, {U}. Vozilo ostane ob Vršiški cesti, pošiljam pajka.', 'Copy, {U}. The car stays on the Vrshich road, sending a tow truck.'], ['Razumem, {U}. Pripeljite ga na postajo.', 'Copy, {U}. Bring him to the station.']],
     fledShout: [['Stojte! Policija!', 'Stop! Police!'], ['Hej! Ustavite!', 'Hey! Stop!'], ['Stoj! Stoj!', 'Stop! Stop!']],
-    fledSkip: [['Voznik ni ustavil, zapeljal je skozi kontrolo! Gre za {car}, smer Jasna. Gremo za njim!', 'The driver did not stop, he drove straight through the checkpoint! A {car}, heading for Lake Yasna. In pursuit!'], ['Ni ustavil na kontroli na Vršiški cesti! Gre za {car}, gremo za njim!', 'He did not stop at the checkpoint on the Vrshich road! A {car}, in pursuit!']],
-    fledDrive: [['Voznik je pobegnil s kontrole na Vršiški cesti! Gre za {car}, smer Vršič. Gremo za njim!', 'The driver has fled the checkpoint on the Vrshich road! A {car}, heading for the pass. In pursuit!'], ['Ustavil je, potem pa speljal s kontrole! Gre za {car}. Gremo za njim!', 'He stopped, then drove off from the checkpoint! A {car}. In pursuit!']],
-    fledDocs: [['Pobegnil je s kontrole, ko sem hotel dokumente! Gre za {car}, smer Vršič. Gremo za njim!', 'He drove off when I asked for his papers! A {car}, heading for the pass. In pursuit!']],
-    fledPark: [['Namesto da bi parkiral, je pobegnil s kontrole! Gre za {car}, smer Vršič. Gremo za njim!', 'Instead of pulling over he has fled the checkpoint! A {car}, heading for the pass. In pursuit!']],
+    fledSkip: [['Voznik ni ustavil, zapeljal je skozi kontrolo! Gre za {carA}, smer Jasna. Gremo za njim!', 'The driver did not stop, he drove straight through the checkpoint! A {car}, heading for Lake Yasna. In pursuit!'], ['Ni ustavil na kontroli na Vršiški cesti! Gre za {carA}, gremo za njim!', 'He did not stop at the checkpoint on the Vrshich road! A {car}, in pursuit!']],
+    fledDrive: [['Voznik je pobegnil s kontrole na Vršiški cesti! Gre za {carA}, smer Vršič. Gremo za njim!', 'The driver has fled the checkpoint on the Vrshich road! A {car}, heading for the pass. In pursuit!'], ['Ustavil je, potem pa speljal s kontrole! Gre za {carA}. Gremo za njim!', 'He stopped, then drove off from the checkpoint! A {car}. In pursuit!']],
+    fledDocs: [['Pobegnil je s kontrole, ko sem hotel dokumente! Gre za {carA}, smer Vršič. Gremo za njim!', 'He drove off when I asked for his papers! A {car}, heading for the pass. In pursuit!']],
+    fledPark: [['Namesto da bi parkiral, je pobegnil s kontrole! Gre za {carA}, smer Vršič. Gremo za njim!', 'Instead of pulling over he has fled the checkpoint! A {car}, heading for the pass. In pursuit!']],
     fledHit: [['Voznik je zbil policista na kontroli in pobegnil! Pošljite reševalce na Vršiško cesto!', 'The driver has knocked down an officer at the checkpoint and fled! Send an ambulance to the Vrshich road!']],
     fledAll: [['Razumem. Vsem enotam: pobegli voznik na Vršiški cesti, vozilo je {car}, smer Jasna in Vršič. Previdno.', 'Copy. All units: a driver fleeing on the Vrshich road, a {car}, heading for Lake Yasna and the pass. Careful.'], ['Razumem, {U}. Vsem enotam: pobeg s kontrole v Kranjski Gori, vozilo je {car}, smer Vršič.', 'Copy, {U}. All units: a driver has fled the checkpoint in Kranyska Gora, a {car}, heading for the pass.']],
     join: [['Priključujem se zasledovanju {at}.', 'Joining the pursuit {at}.'], ['Za vami sem {at}.', 'Right behind you {at}.'], ['Na poti sem, za vami {at}.', 'On my way, behind you {at}.']],
@@ -1591,13 +1591,19 @@
   const rdUp = (P) => !(P.speed > 4 && P.q.i >= 0 && P.vx * track.tx[P.q.i] + P.vz * track.tz[P.q.i] < 0);
   function rdToward(s, up) {
     if (!up) return ['proti Kranjski Gori', 'back down to Kranyska Gora'];
-    const nx = rdGeo().pl.find(p => p.d > s - track.startS + 150 && p.d < track.raceLen + 100);
+    const nx = rdGeo().pl.find(p => p.d > s - track.startS + 230 && p.d < track.raceLen + 100);   // (past the one they are at: rdWhere names one up to 220 m off)
     return nx ? ['proti ' + nx.f[1], 'towards ' + nx.f[3]] : ['proti prelazu', 'towards the pass'];
   }
   function rdCar() {
     const P = race.player, C = RD_COL[Math.max(0, PLAYER_COLORS.indexOf(P.color))] || RD_COL[0], f = P.m.id === 'formula';
     const nm = P.m.name.split(' ').map(w => /\d/.test(w) || w.length <= 2 ? w : w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
     return [C[f ? 1 : 0] + ' ' + (f ? nm.charAt(0).toLowerCase() + nm.slice(1) : nm), C[2] + ' ' + nm];
+  }
+  // the player's car for the radio's lines: car (who, what: the nominative), carA (whom, what: the accusative, "gre za ..."), ga (it: ga / jo; the
+  // formula is feminine: "rdeča formula Orkan", "rdečo formulo Orkan", "jo")
+  function rdCarV() {
+    const c = rdCar(), f = race.player.m.id === 'formula', acc = f ? c[0].replace(/a(?= )/g, 'o') : c[0];
+    return { car: c, carA: [acc, c[1]], ga: [f ? 'jo' : 'ga', 'it'] };
   }
   // the patrol car in the chase nearest to the player (within r m along the road; in a side road in a straight line): it speaks for the units
   function rdNear(P, r) {
@@ -1631,11 +1637,10 @@
   function polRadio(k, e, P) {
     const pol = race.pol, up = rdUp(P), at = rdWhere(e.s, -1), dir = up ? ['Vršič', 'the pass'] : ['Kranjska Gora', 'Kranyska Gora'], V = { at, dir, to: rdToward(P.q.s, up) };
     const U = { u: e.u, kind: e.kind || 'car' }, ucs = rdCall(e.u, e.kind), near = rdNear(P), N = rdUnit(near), t = performance.now() / 1000;
-    const sp = (o) => N ? ['u', Object.assign({}, N, o)] : ['okc', o || {}];   // (the nearest unit says it, else the dispatcher)
-    const say = (key, vars, o) => { const w = sp(o); rsay(key, w[0], vars, w[1]); };
+    const N2 = N || rdUnit(rdNear(P, 1500)), say = (key, vars, o) => { if (N2) rsay(key, 'u', vars, Object.assign({}, N2, o)); };   // (the nearest unit says it (a unit's own words); none within 1.5 km: not said)
     V.U = [ucs[1], ucs[2]];
     switch (k) {
-      case 'chkSeen': rsay(P.speed > 19 ? 'chkSeenFast' : 'chkSeen', 'u', { car: rdCar() }, U); break;
+      case 'chkSeen': rsay(P.speed > 19 ? 'chkSeenFast' : 'chkSeen', 'u', rdCarV(), U); break;
       case 'chkStop': rsay('chkStop', 'u', null, Object.assign({ prio: 0 }, U)); break;
       case 'chkDocs': rsay('chkDocs', 'cop'); break;
       case 'chkNoDocs': rsay('chkNoDocs', 'drv'); break;
@@ -1644,8 +1649,8 @@
       case 'arrested': rsay('arrested', 'okc', V, { prio: 2 }); break;
       case 'fled':
         if (e.why !== 'hit') rsay('fledShout', 'cop');
-        rsay(e.why === 'hit' ? 'fledHit' : e.why === 'skip' ? 'fledSkip' : polRun.park ? 'fledPark' : polRun.docs ? 'fledDocs' : 'fledDrive', 'u', { car: rdCar() }, Object.assign({ prio: 2 }, U));   // (polRun: how far the checkpoint had come)
-        rsay('fledAll', 'okc', { car: rdCar(), U: V.U }, { prio: 2 }); break;
+        rsay(e.why === 'hit' ? 'fledHit' : e.why === 'skip' ? 'fledSkip' : polRun.park ? 'fledPark' : polRun.docs ? 'fledDocs' : 'fledDrive', 'u', rdCarV(), Object.assign({ prio: 2 }, U));   // (polRun: how far the checkpoint had come)
+        rsay('fledAll', 'okc', Object.assign(rdCarV(), { U: V.U }), { prio: 2 }); break;
       case 'join': if (e.stub != null || e.sKind != null) { const S = rdStubOf(e); rsay('joinStub', 'u', { sgen: rdStub(S, 2), sloc: rdStub(S, 0) }, U); }
         else rsay(e.kind === 'moto' ? 'joinMoto' : 'join', 'u', V, U);
         if (!rd.said.backup && pol.heat >= 1.8 && Math.random() < 0.4) { rd.said.backup = 1; rsay('backupOk', 'okc', null, { prio: 0 }); }
@@ -1678,7 +1683,7 @@
     const pol = race.pol, at = rdWhere(P.q.s, P.q.k), N = rdUnit(rdNear(P)), t = performance.now() / 1000;
     if (k === 'crash') { if (pol.stage === 'chase' && t - rd.crashT > 20 && Math.random() < 0.5) { rd.crashT = t; rsay('crash', N ? 'u' : 'okc', { at }, Object.assign({ prio: 0 }, N)); } return; }
     if (k !== 'ped' && k !== 'bike') return;
-    if (pol.stage !== 'chase') { rsay(k === 'ped' ? 'pedFree' : 'bikeFree', 'okc', { at, car: rdCar() }); return; }
+    if (pol.stage !== 'chase' || !N) { rsay(k === 'ped' ? 'pedFree' : 'bikeFree', 'okc', Object.assign(rdCarV(), { at })); return; }   // (no unit near to see it: the dispatcher calls it out)
     rsay(k, N ? 'u' : 'okc', { at }, N); rsay('medic', 'okc');
   }
   // the radio's chatter: before the checkpoint the routine of the day, in the chase where the player is and the requests, lost: the search
@@ -2325,7 +2330,7 @@
     if (ord.length) { let d = (X0.reduce((a, b) => a + b, 0) - X.reduce((a, b) => a + b, 0)) / X.length; const lo = X[ord[0]] + d, hi = X[ord[ord.length - 1]] + d;
       if (lo < 6) d += 6 - lo; else if (hi > 94) d -= hi - 94; for (let i = 0; i < X.length; i++) X[i] += d; }
     tail.el.forEach((el, i) => {
-      const e = L[i], key = e ? [X[i].toFixed(1), Math.round(180 - e.a * 180 / Math.PI), e.m === 'search' ? 's' : bl ^ (e.c.id & 1) ? 'b' : 'r', Math.abs(e.g) < 5 ? 'ob tebi' : (e.g < 50 ? Math.round(e.g) : Math.round(e.g / 5) * 5) + ' m', (e.g > 300 ? clamp(1 - (e.g - 300) / 500, 0.4, 1) : 1).toFixed(2)].join('|') : '';
+      const e = L[i], key = e ? [X[i].toFixed(1), Math.round(180 - e.a * 180 / Math.PI), e.m === 'search' ? 's' : bl ^ (e.c.id & 1) ? 'b' : 'r', e.g < 5 ? 'ob tebi' : (e.g < 50 ? Math.round(e.g) : Math.round(e.g / 5) * 5) + ' m', (e.g > 300 ? clamp(1 - (e.g - 300) / 500, 0.4, 1) : 1).toFixed(2)].join('|') : '';
       if (key === tail.k[i]) return;
       tail.k[i] = key; if (!e) { el.className = ''; return; }
       const [x, r, cl, txt, op] = key.split('|');
