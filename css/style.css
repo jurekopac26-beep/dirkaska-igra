@@ -58,7 +58,17 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-sec i.ob { border-color: #b45cff; color: #e3c4ff; }   /* the fastest of anyone */
 #h-sec i.pb { border-color: var(--meter); color: #d6ffb8; }   /* the player's best */
 #h-sec i.sl { border-color: var(--lcd); }   /* slower */
-#hud.tt #h-sec { display: none; }
+#hud.tt #h-sec, #hud.up #h-sec { display: none; }   /* (a time trial, a race up an open road: no sectors) */
+/* the open road (Vršič): the run from the police (the heat in stars, the busted meter, flat tyres), the duel's gap to the rival */
+#h-pol, #h-gap { display: none; }
+#hud.pol #h-pol { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-top: 3px; }
+#h-heat { font: 700 clamp(13px, 3.4vh, 18px)/1 var(--f-ui); color: #ffd23c; letter-spacing: 2px; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); }
+#h-bust { width: clamp(90px, 22vw, 150px); height: 6px; border-radius: 3px; background: rgba(10, 13, 18, 0.55); overflow: hidden; opacity: 0; transition: opacity 0.3s; }
+#h-pol.warn #h-bust { opacity: 1; }
+#h-bustbar { display: block; width: 0; height: 100%; background: linear-gradient(90deg, #3a78ff, #ff3b3b); }
+#h-flat { font: 700 clamp(9px, 2.4vh, 12px)/1.2 var(--f-ui); color: #ff6a4d; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); }
+#hud.duel #h-gap { display: block; margin-top: 3px; font: 700 clamp(9px, 2.5vh, 12px)/1.2 var(--f-ui); color: #ffb86a; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); }
+#hud.duel #h-gap.behind { color: #9fe07a; }
 #h-split { height: 1.2em; margin-top: 2px; font: 700 italic clamp(11px, 3vh, 15px)/1.2 var(--f-ui); color: var(--meter); text-shadow: 0 1px 2px #000; opacity: 0; transition: opacity .3s; }
 #h-split.show { opacity: 1; }
 #h-split.fast, #h-msg.fast { color: var(--meter); }
@@ -75,7 +85,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 /* time trial (kronometer): no position, CP counter + altitude instead of laps */
 #h-alt { display: none; margin-top: 2px; color: var(--chalk); font-variant-numeric: tabular-nums; }
 #hud.tt #h-rank > .h-lbl:first-child, #hud.tt .h-rankrow { display: none; }
-#hud.tt #h-alt { display: block; }
+#hud.tt #h-alt, #hud.up #h-alt { display: block; }   /* (a race up an open road: the altitude under the km) */
 #hud.tt #h-lap { margin-top: 0; font-size: clamp(13px, 3.8vh, 19px); }
 #h-map { position: absolute; right: calc(62px + var(--sr)); top: calc(8px + var(--st)); width: clamp(96px, 30vh, 150px); height: clamp(72px, 22vh, 112px); background: rgba(10, 14, 20, .45); border-radius: 8px; }
 #minimap { width: 100%; height: 100%; display: block; }
@@ -342,6 +352,8 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 .track-panel { width: min(760px, 96vw); max-height: 100%; display: flex; flex-direction: column; }
 .wx-row { margin: 2px 0 0; } .wx-row .rlbl { min-width: 0; }
 @media (orientation: landscape) { .trk-opts { display: grid; grid-template-columns: auto auto; column-gap: 16px; justify-content: start; } }   /* the weather, qualifying and the set-up in two columns (the track cards keep their height) */
+.trk-btns { align-items: center; } .trk-btns #cmp-row { margin: 0 auto 0 0; min-width: 0; flex-wrap: nowrap; }   /* the slicks for the start (the circuits with pits) beside Nazaj and Start, where the buttons leave room (narrower: smaller letters, fitSegs) */
+@media (orientation: portrait) { .trk-btns { flex-wrap: wrap; } .trk-btns #cmp-row { flex: 1 0 100%; flex-wrap: wrap; } }   /* (upright: above the buttons) */
 .track-list { display: flex; gap: 12px; overflow-x: auto; padding: 4px 2px 8px; touch-action: pan-x pan-y; }
 .track-card { flex: 1 0 220px; max-width: 340px; border: 2px solid rgba(255,255,255,.2); border-radius: 12px; padding: 10px; background: rgba(255,255,255,.04); cursor: pointer; text-align: left; color: inherit; font: inherit; }
 .track-card.sel { border-color: var(--curb); background: rgba(230,59,46,.14); box-shadow: 0 0 0 2px rgba(230,59,46,.35); }
@@ -349,8 +361,15 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 .track-card h3 { margin: 8px 0 2px; font: 400 italic clamp(18px, 5.5vh, 24px)/1 var(--f-display); }
 .track-card .tmeta { font: 700 italic clamp(11px, 3vh, 13px)/1.3 var(--f-ui); color: var(--lcd); }
 .track-card .tdesc { font: 500 clamp(11px, 3vh, 12.5px)/1.35 var(--f-ui); color: var(--muted); margin-top: 4px; }
-@media (orientation: portrait) { .track-list { flex-direction: column; overflow-y: auto; } .track-card { flex: 0 0 auto; max-width: none; padding: 8px 10px; } .track-card canvas { height: clamp(52px, 10vh, 90px); } .track-card .tdesc { display: none; } .track-card h3 { margin-top: 6px; } }
-@media (orientation: landscape) and (max-height: 520px) { .track-card { padding: 7px 9px; } .track-card canvas { height: clamp(44px, 15vh, 90px); } .track-card .tdesc { display: none; } .track-card h3 { margin-top: 5px; } .wx-row { margin: 1px 0 0; } }   /* a phone on its side: smaller cards, so their names stay in sight above the options */
+/* a track with more ways to drive it (Vršič): the switch (Dirka / Kronometer / Promet / Policija) next to its name */
+.track-card .tc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin: 8px 0 2px; }
+.track-card .tc-head h3 { margin: 0; }
+.track-card .tc-mode { max-width: 100%; }
+.track-card .tc-mode button { flex: 1 1 auto; min-height: 30px; padding: 4px 7px; font-size: clamp(11px, 3.1vh, 13px); white-space: nowrap; }
+@media (orientation: landscape) { .track-card.modes { flex-basis: 390px; max-width: 440px; } }   /* (on its side: wide enough for the name and the switch in one row) */
+@media (max-width: 370px) { .track-card .tc-mode { display: grid; grid-template-columns: 1fr 1fr; width: 100%; } .track-card .tc-mode button:nth-child(odd) { border-left: 0; } .track-card .tc-mode button:nth-child(n+3) { border-top: 2px solid rgba(255,255,255,.14); } }   /* a narrow phone: the four ways to drive Vršič in two rows */
+@media (orientation: portrait) { .track-list { flex-direction: column; overflow-y: auto; } .track-card { flex: 0 0 auto; max-width: none; padding: 8px 10px; } .track-card canvas { height: clamp(52px, 10vh, 90px); } .track-card .tdesc { display: none; } .track-card h3 { margin-top: 6px; } .track-card .tc-head { margin-top: 6px; } .track-card .tc-head h3 { margin-top: 0; } }
+@media (orientation: landscape) and (max-height: 520px) { .track-card { padding: 7px 9px; } .track-card canvas { height: clamp(44px, 15vh, 90px); } .track-card .tdesc { display: none; } .track-card h3 { margin-top: 5px; } .track-card .tc-head { margin-top: 5px; } .track-card .tc-head h3 { margin-top: 0; } .wx-row { margin: 1px 0 0; } }   /* a phone on its side: smaller cards, so their names stay in sight above the options */
 
 /* ================= UPGRADES (Nadgradnje, over the showroom) ================= */
 #s-upg { justify-content: flex-end; }
@@ -483,6 +502,7 @@ select.txt:disabled { opacity: .75; }
 #h-tyre { display: none; margin-top: 3px; padding: 1px 6px; border-radius: 9px; border: 2px solid #ffd23f; background: rgba(10, 13, 18, .62); color: #fff; font: 700 italic clamp(9px, 2.5vh, 12px)/1.25 var(--f-ui); text-shadow: 0 1px 2px #000; white-space: nowrap; pointer-events: none; font-variant-numeric: tabular-nums; }
 #h-tyre.on { display: inline-block; }
 #h-tyre.wet { border-color: #4fa8ff; }
+#h-tyre.cS { border-color: #e8352b; } #h-tyre.cM { border-color: #f2c616; } #h-tyre.cH { border-color: #f4f4f0; }   /* (the slicks' compound, as the band on a formula's tyres) */
 #h-tyre.worn { color: #ffb347; }
 #h-tyre.bad { background: rgba(190, 30, 30, .78); }
 /* flags: a yellow flag, the safety car board, the countdown to give a place back */
@@ -496,3 +516,95 @@ select.txt:disabled { opacity: .75; }
 @keyframes flagWave { from { transform: skewX(-6deg); } to { transform: skewX(6deg); } }
 #res-table small.pen { color: #ff8a7a; font-size: .8em; }
 
+/* ================= PIKES PEAK (js/game.js pk*): the class pill, the TV splits, the summit ceremony ================= */
+.pk-cls { display: inline-block; padding: 0 6px; border-radius: 9px; font: 800 italic .92em/1.35 var(--f-ui); letter-spacing: .03em; color: #fff; background: #3a4252; text-shadow: none; white-space: nowrap; vertical-align: .05em; }
+.pk-unl { background: #d4302a; } .pk-open { background: #2f7de0; } .pk-ppo { background: #e08a12; } .pk-ta1 { background: #2f9e52; }
+.track-card .pk-meta { margin-top: 2px; color: var(--chalk); }
+#h-pkcls { display: none; margin-top: 3px; padding: 1px 7px; border-radius: 9px; align-self: flex-start; color: #fff; text-shadow: 0 1px 1px rgba(0,0,0,.5); box-shadow: 0 1px 3px rgba(0,0,0,.45); white-space: nowrap; font-size: clamp(9px, 2.4vh, 12px); }
+#hud.tt.pkc #h-pkcls { display: block; }
+#hud.tt.pkc #h-sec { display: flex; }   /* CP1-CP4: the difference to the class best run's split, as each is passed */
+#hud.pkc #h-sec i { min-width: 0; width: 3.5em; padding: 1px 1px 0; font-size: clamp(9px, 2.6vh, 11px); line-height: 1.12; }
+#hud.pkc #h-sec small { display: block; font-size: .82em; opacity: .7; letter-spacing: .04em; }
+#h-sec i.pkf { border-color: var(--meter); color: #d6ffb8; }
+#h-sec i.pks { border-color: #ff5a47; color: #ffc9c0; }
+#h-sec i.pkn { border-color: var(--chalk); }
+#h-split.pk { display: inline-flex; align-items: stretch; height: auto; margin-top: 4px; border-radius: 4px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,.45); text-shadow: none; font-variant-numeric: tabular-nums; }
+#h-split.pk b, #h-split.pk span, #h-split.pk em { padding: 2px 5px 1px; font-style: italic; }
+#h-split.pk b { background: var(--lcd); color: #14161b; }
+#h-split.pk span { background: rgba(10, 13, 18, .82); color: var(--chalk); }
+#h-split.pk em { color: #fff; background: #3a4252; }
+#h-split.pk em.fast { background: #2a9d3c; } #h-split.pk em.slow { background: #d3362b; }
+#pk-cer { display: none; position: absolute; left: 50%; top: 21%; transform: translateX(-50%); width: min(88vw, 340px); padding: 12px 14px; border-radius: 12px; text-align: center; background: linear-gradient(180deg, rgba(12, 16, 24, .9), rgba(12, 16, 24, .74)); border-top: 3px solid var(--lcd); box-shadow: 0 6px 22px rgba(0,0,0,.5); color: var(--chalk); pointer-events: none; }
+#pk-cer.show { display: block; animation: pkcIn .45s cubic-bezier(.2, 1.4, .4, 1) both; }
+#pk-cer.rec { border-top-color: var(--meter); }
+.pkc-flag { position: relative; width: 74px; height: 46px; margin: -2px auto 6px; perspective: 120px; }
+.pkc-flag::before { content: ''; position: absolute; left: 4px; top: 0; width: 3px; height: 46px; border-radius: 2px; background: #cfd4dc; }
+.pkc-flag i { position: absolute; left: 7px; top: 2px; width: 62px; height: 36px; transform-origin: left center; background: repeating-conic-gradient(#111 0 25%, #f4f4f4 0 50%) 0 0 / 15.5px 12px; box-shadow: 0 2px 4px rgba(0,0,0,.4); animation: pkcWave .5s ease-in-out infinite alternate; }
+.pkc-top { font: 700 italic clamp(11px, 3.2vw, 13px)/1.2 var(--f-ui); letter-spacing: .14em; color: #aeb6c4; }
+.pkc-time { margin: 2px 0 4px; font: 400 italic clamp(34px, 11vw, 48px)/1 var(--f-display); color: var(--lcd); letter-spacing: .02em; font-variant-numeric: tabular-nums; text-shadow: 0 2px 0 rgba(0,0,0,.6); }
+.pkc-pos { font: 700 italic clamp(14px, 4.2vw, 18px)/1.3 var(--f-ui); }
+.pkc-rec { display: inline-block; margin: 6px 0 2px; padding: 2px 10px; border-radius: 4px; background: var(--meter); color: #10200a; font: 800 italic clamp(12px, 3.6vw, 15px)/1.3 var(--f-ui); letter-spacing: .06em; animation: pkcPulse .7s ease-in-out .45s 4 alternate; }
+.pkc-d { margin-top: 4px; font: 600 clamp(11px, 3.3vw, 13px)/1.3 var(--f-ui); color: #d5d9e0; font-variant-numeric: tabular-nums; }
+.pkc-d .fast { color: var(--meter); font-weight: 800; } .pkc-d .slow { color: #ff6a57; font-weight: 800; }
+@keyframes pkcIn { from { opacity: 0; transform: translateX(-50%) scale(.7); } to { opacity: 1; transform: translateX(-50%) scale(1); } }
+@keyframes pkcWave { from { transform: rotateY(-14deg) skewY(-5deg); } to { transform: rotateY(12deg) skewY(4deg); } }
+@keyframes pkcPulse { from { transform: scale(1); } to { transform: scale(1.1); } }
+@media (orientation: landscape) { #pk-cer { top: 12%; padding: 8px 14px; } .pkc-flag { transform: scale(.8); margin: -6px auto -2px; } .pkc-time { font-size: clamp(30px, 11vh, 44px); } }
+@media (prefers-reduced-motion: reduce) { #pk-cer.show, .pkc-flag i, .pkc-rec { animation: none; } }
+/* Pikes Peak: the corner warnings (a pace-note pill under the clock and the CP splits: a hairpin big and red, a medium bend orange, a fast
+   one faint; it replaces the generic arrow #h-note there), the medal times and medals per class, the legend ghost's mark on the difference */
+#pk-note { display: none; position: absolute; left: 50%; top: calc(var(--st) + clamp(88px, 24vh, 108px)); align-items: center; gap: .4em; padding: .2em .8em .2em .22em; border-radius: 99px; background: rgba(10, 13, 18, .5); border: 2px solid rgba(255, 255, 255, .22); color: rgba(246, 246, 241, .86); font: 800 italic clamp(11px, 3.1vh, 14px)/1 var(--f-ui); letter-spacing: .05em; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,.6); box-shadow: 0 2px 6px rgba(0,0,0,.3); pointer-events: none; opacity: 0; transform: translateX(-50%) scale(.85); transition: opacity .16s, transform .16s; }
+#hud.pkn #pk-note { display: flex; }
+#hud.pkn #h-note { display: none; }
+#pk-note.show { opacity: 1; transform: translateX(-50%) scale(1); }
+#pk-note i { display: block; width: 1.9em; height: 1.9em; border-radius: 50%; background: rgba(255, 255, 255, .16); }
+#pk-note svg { display: block; width: 100%; height: 100%; }
+#pk-note small { min-width: 3.2em; font-size: .78em; font-weight: 700; opacity: .85; text-align: right; font-variant-numeric: tabular-nums; }
+#pk-note.s1 { opacity: 0; }
+#pk-note.s1.show { opacity: .78; }
+#pk-note.s2 { background: rgba(10, 13, 18, .72); border-color: #f0921a; color: #fff; }
+#pk-note.s2 i { background: #e8840f; }
+#pk-note.s3 { background: rgba(10, 13, 18, .75); border-color: #ff4d3d; color: #fff; }
+#pk-note.s3 i { background: #d8342a; }
+#pk-note.hp { font-size: clamp(14px, 4vh, 19px); background: #c92a22; border-color: #fff; box-shadow: 0 3px 10px rgba(0,0,0,.45), 0 0 0 3px rgba(201, 42, 34, .35); }
+#pk-note.hp i { background: rgba(0, 0, 0, .28); }
+#pk-note.hp.show { animation: pkNp .32s ease-in-out 2 alternate; }
+@keyframes pkNp { from { transform: translateX(-50%) scale(1); } to { transform: translateX(-50%) scale(1.1); } }
+@media (orientation: portrait) { #pk-note { top: calc(var(--st) + 84px + clamp(64px, 20vw, 100px) + clamp(34px, 11vw, 50px)); font-size: clamp(11px, 3.4vw, 14px); } #pk-note.hp { font-size: clamp(14px, 4.6vw, 19px); } }
+@media (prefers-reduced-motion: reduce) { #pk-note, #pk-note.hp.show { transition: none; animation: none; } }
+#hud.pkleg #h-delta::before { content: 'LEG '; font-size: .62em; letter-spacing: .06em; color: #e8c04a; }   /* (the difference is to the legend) */
+.pk-medl { color: var(--chalk); }
+p.pk-medl { margin: -2px 0 6px; font: 700 12px/1.3 var(--f-ui); opacity: .9; }
+.pk-sub { font-size: .72em; opacity: .7; font-weight: 600; }
+.pkc-med { display: inline-flex; align-items: center; gap: 6px; margin: 6px 0 0; padding: 3px 12px 3px 6px; border-radius: 16px; font: 800 italic clamp(13px, 3.8vw, 16px)/1.2 var(--f-ui); letter-spacing: .05em; color: #1a1406; background: linear-gradient(180deg, #ffe07a, #e0a91e); box-shadow: 0 2px 6px rgba(0,0,0,.4); animation: pkcPulse .7s ease-in-out .6s 2 alternate; }
+.pkc-med i { font-style: normal; font-size: 1.35em; line-height: 1; }
+.pkc-med span { white-space: nowrap; text-align: left; }
+.pkc-med small { display: block; font-size: .7em; font-weight: 700; opacity: .8; letter-spacing: .02em; }
+.pkc-med.m1 { background: linear-gradient(180deg, #f2f4f7, #aab2bd); }
+.pkc-med.m2 { background: linear-gradient(180deg, #f0b27a, #b86b2c); }
+.pkc-med.none { padding: 2px 10px; background: rgba(255,255,255,.1); color: #c9ced6; font-weight: 700; animation: none; }
+@media (prefers-reduced-motion: reduce) { .pkc-med { animation: none; } }
+
+
+/* the slicks for the next pit stop (the pause, a race with tyres); rows of choices too wide for their panel get smaller (game.js fitSegs) */
+.pit-row { margin-top: 12px; }
+.wx-row .seg button, .pit-row .seg button { white-space: nowrap; }
+.seg.tight button { padding-left: 5px; padding-right: 5px; font-size: 12px; }
+.seg.tighter button { padding-left: 4px; padding-right: 4px; font-size: 10.5px; }
+/* the replay's highlights (Najboljši trenutki): the moment's caption above the bar, the button lit while they play */
+#rp-hl-cap { position: absolute; left: 50%; bottom: calc(80px + var(--sb)); transform: translateX(-50%); max-width: calc(100% - 24px); padding: 7px 14px; border-radius: 6px; background: rgba(12,16,40,.78); font: 700 italic clamp(13px, 3.4vh, 19px)/1.25 var(--f-ui); color: var(--chalk); text-align: center; pointer-events: none; }
+#rp-hl-cap small { display: block; font-size: .7em; letter-spacing: .1em; color: #ffcf2e; }
+#replay-ui .rp-bar #rp-hl.on { background: rgba(255,207,46,.85); color: #14181f; border-color: #fff; }
+@media (max-width: 600px) {   /* a phone upright: the replay's buttons in two rows, the progress and the caption above them */
+  #replay-ui .rp-bar { flex-wrap: wrap; justify-content: center; width: calc(100% - 24px); }
+  #replay-ui .rp-prog { bottom: calc(114px + var(--sb)); }
+  #rp-hl-cap { bottom: calc(128px + var(--sb)); }
+}
+/* Pikes Peak: the course flyover before the start (TV captions at the famous places; the touch controls out of the picture while it runs) */
+#pk-fly { display: none; position: absolute; left: calc(14px + var(--sl)); top: calc(14px + var(--st)); max-width: calc(100% - 90px); padding: 8px 14px 9px; border-left: 4px solid var(--lcd); border-radius: 0 8px 8px 0; background: linear-gradient(90deg, rgba(10, 14, 22, .82), rgba(10, 14, 22, .55)); color: var(--chalk); pointer-events: none; opacity: 0; }
+#pk-fly.show { display: block; }
+#pk-fly small { display: block; font: 700 clamp(9px, 1.9vh, 11px)/1.2 var(--f-ui); letter-spacing: .18em; color: var(--lcd); }
+#pk-fly b { display: block; font: 400 italic clamp(22px, min(6.4vh, 8vw), 34px)/1.05 var(--f-display); text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,.45); }
+#pk-fly span { display: block; font: 700 clamp(13px, 3.2vh, 17px)/1.2 var(--f-ui); color: var(--lcd); }
+#pk-fly em { display: block; margin-top: 4px; font: 400 clamp(9px, 1.8vh, 11px)/1.2 var(--f-ui); font-style: normal; color: rgba(246, 246, 241, .6); }
+body.pkfly #touch { visibility: hidden; }

@@ -5,7 +5,7 @@ const crypto = require('crypto');
 
 const DT = 1 / 120;
 const trackIds = (C) => C.TRACKS.map(d => d.id);   // every track the game has (a new track file is tested automatically)
-const PHYSICS = ['cs', 'arcade'];
+const PHYSICS = ['cs'];   // (one driving physics: Circuit Superstars)
 
 // Park-Miller generator (the same one the physics comparisons used during development)
 const seeded = (s) => () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
@@ -15,16 +15,21 @@ function withRandom(seed, fn) {
   try { return fn(); } finally { Math.random = orig; }
 }
 
-// five set-ups per track: a normal 13-car race, the title-screen demo, an upgraded player with damage off, a crash (the normal
+// seven set-ups per track: a normal 13-car race, the title-screen demo, an upgraded player with damage off, a crash (the normal
 // race, but the player is driven by crashDrive below; on a track with pits 80 s, or on a long lap the lap at ~30 m/s plus 20 s,
-// so the repair is included), and the same crash in the formula car (its wings come off, the repair gives their downforce back)
+// so the repair is included), the same crash in the formula car (its wings come off, the repair gives their downforce back) and in the
+// prototype (a field of prototypes: the splitter and the rear wing come off), and the crash in one of the newer road cars (the V8, the
+// electric car and the truck in turn, by the track's place in the list)
 const raceOpts = (C, tt, phys) => ({ numAI: tt ? 0 : 12, playerGrid: tt ? 1 : 12, laps: 2, playerModel: C.MODELS[4], assist: 2, seed: 9, difficulty: 1, damage: 2, phys });
+const NEW_CARS = ['muscle', 'ev', 'truck'];
 const SETUPS = {
   race: { opts: raceOpts },
   demo: { opts: (C, tt, phys) => ({ numAI: 10, noPlayer: true, difficulty: 2, laps: 9999, seed: 11, phys }) },
   upg: { opts: (C, tt, phys) => ({ numAI: tt ? 0 : 12, playerGrid: tt ? 1 : 3, laps: 2, playerModel: C.MODELS[0], playerUpg: { motor: 3, gume: 2, zavore: 3, aero: 3 }, assist: 0, seed: 5, difficulty: 2, damage: 0, phys }) },
   crash: { opts: raceOpts, drive: crashDrive, seconds: (T) => T.def.pit ? Math.max(80, Math.ceil(T.len / 30) + 20) : 60 },
   formula: { opts: (C, tt, phys) => Object.assign(raceOpts(C, tt, phys), { playerModel: C.MODELS.find(m => m.id === 'formula') }), drive: crashDrive, seconds: (T) => T.def.pit ? Math.max(100, Math.ceil(T.len / 30) + 30) : 60 },   // (a field of formulas: 20 s more to reach the pit repair)
+  lm: { opts: (C, tt, phys) => Object.assign(raceOpts(C, tt, phys), { playerModel: C.MODELS.find(m => m.id === 'lm') }), drive: crashDrive, seconds: (T) => T.def.pit ? Math.max(100, Math.ceil(T.len / 30) + 30) : 60 },   // (a field of prototypes)
+  car: { opts: (C, tt, phys, tid) => Object.assign(raceOpts(C, tt, phys), { playerModel: C.MODELS.find(m => m.id === NEW_CARS[C.TRACKS.findIndex(d => d.id === tid) % NEW_CARS.length]) }), drive: crashDrive, seconds: (T) => T.def.pit ? Math.max(100, Math.ceil(T.len / 30) + 30) : 60 },   // (the truck is slow on tarmac: 20 s more to the pit repair)
 };
 
 // the player in the crash set-up: autopilot, but from 6 s to 8.5 s full throttle and full left lock (into the barrier or
@@ -40,7 +45,7 @@ function crashDrive(C, race, k) {
 
 function makeRace(C, tid, opts) {
   const T = new C.Track(C.TRACKS.find(d => d.id === tid));
-  const race = new C.Race(T, opts(C, !!T.def.timeTrial));
+  const race = new C.Race(T, opts(C, !!T.def.timeTrial, tid));
   race.start();
   return race;
 }
@@ -75,7 +80,7 @@ function runScenario(C, tid, setupName, phys, every = 10) {
   const orig = Math.random;
   try {
     Math.random = seeded(7);
-    const S = SETUPS[setupName], race = makeRace(C, tid, (C2, tt) => S.opts(C2, tt, phys));
+    const S = SETUPS[setupName], race = makeRace(C, tid, (C2, tt, t) => S.opts(C2, tt, phys, t));
     const seconds = S.seconds ? S.seconds(race.track) : 60;
     const h = crypto.createHash('sha256'), P = race.player || race.cars[0];
     const n = Math.round(seconds / DT), m = Math.round(every / DT);
@@ -90,4 +95,4 @@ function runScenario(C, tid, setupName, phys, every = 10) {
   } finally { Math.random = orig; }
 }
 
-module.exports = { DT, trackIds, PHYSICS, SETUPS, seeded, withRandom, makeRace, stepRace, stateLine, raceState, runScenario };
+module.exports = { DT, trackIds, PHYSICS, SETUPS, NEW_CARS, seeded, withRandom, makeRace, stepRace, stateLine, raceState, runScenario };

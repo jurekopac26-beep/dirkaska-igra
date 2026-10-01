@@ -1,6 +1,6 @@
 // Browser smoke test: the page loads (over http like GitHub Pages, and from a local file), every track can be
-// raced for 20 s on autopilot, settings migrate, the physics can be switched mid-race, the title demo runs,
-// a Pikes Peak run, an Ouninpohja run and a Harju run finish and their records are saved per physics (Ouninpohja also in the rain, apart).
+// raced for 20 s on autopilot, settings migrate (one driving physics: Circuit Superstars), the title demo runs,
+// a Pikes Peak run, an Ouninpohja run and a Harju run finish and their records are saved (Ouninpohja also in the rain, apart).
 // Zero page errors allowed.
 //   node tests/browser/smoke.test.mjs
 import path from 'node:path';
@@ -11,14 +11,14 @@ const T = checker('smoke');
 const srv = await serve();
 const browser = await launch();
 try {
-  // 1. settings: the physics row and the migration of old saves ('rally' was removed)
-  for (const [seed, want] of [[null, 'cs'], ['{"phys":"rally"}', 'cs'], ['{"phys":"arcade"}', 'arcade'], ['{"sound":0}', 'cs']]) {
+  // 1. settings: one driving physics (no row for it) and the migration of old saves (the 'rally' and 'arcade' physics were removed)
+  for (const [seed, want] of [[null, 'cs'], ['{"phys":"rally"}', 'cs'], ['{"phys":"arcade"}', 'cs'], ['{"sound":0}', 'cs']]) {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', seed);
     const got = await page.evaluate(() => window.__game.S.phys);
     T.check(`saved settings ${seed || '(none)'} -> physics '${want}'`, got === want && !errors.length, `got '${got}'${errors.length ? ', errors: ' + errors.join(' | ') : ''}`);
     if (seed === null) {
-      const row = await page.evaluate(() => [...document.querySelectorAll('[data-set="phys"] button')].map(b => b.textContent + (b.classList.contains('sel') ? '*' : '')).join(' | '));
-      T.check('settings row: Circuit Superstars (selected) | Arkadna', row === 'Circuit Superstars* | Arkadna', row);
+      const row = await page.evaluate(() => document.querySelectorAll('[data-set="phys"]').length);
+      T.check('settings: no driving-physics row (Circuit Superstars only)', row === 0, row + ' rows');
     }
     await ctx.close();
   }
@@ -53,18 +53,6 @@ try {
       `dist ${r.dist} m, phys ${r.phys}, pit crew ${r.crew}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
   }
 
-  // 4. switch the physics in the middle of a race: cs -> arcade -> cs
-  {
-    await startTrack(page, 'monaco');
-    await simulate(page, 5);
-    const click = (v) => page.evaluate((v) => document.querySelector(`[data-set="phys"] button[data-v="${v}"]`).click(), v);
-    await click('arcade'); const n1 = await simulate(page, 10);
-    const a = await page.evaluate(() => window.__game.race.cars.every(c => c.phys === 'arcade'));
-    await click('cs'); const n2 = await simulate(page, 10);
-    const b = await page.evaluate(() => ({ all: window.__game.race.cars.every(c => c.phys === 'cs'), dist: window.__game.race.player.dist }));
-    T.check('physics switch mid-race (cs -> arcade -> cs)', a && b.all && !n1 && !n2 && b.dist > 300, `dist ${Math.round(b.dist)} m`);
-  }
-
   // 5. the title-screen demo drives behind the menu (two screenshots 1.5 s apart must differ)
   {
     await page.evaluate(() => window.__game.onAction('to-title'));
@@ -95,8 +83,10 @@ try {
     const d2 = await page.evaluate(() => ({ demo: window.__game.demo ? window.__game.demo.rain : null, drawn: Render.raining }));
     await startTrack(page, 'spa'); await simulate(page, 3);
     const r2 = await page.evaluate(() => { let marks = 0; Render.world.root.traverse(o => { if (o.name === 'tyremarks') marks++; });
-      return { rain: window.__game.race.rain, wet: window.__game.race.cars.every(c => c.wet === 1), drawn: Render.raining, birds: Render.birds.mesh.visible, clouds: Render.world.dyn.clouds.K.value, marks }; });
-    T.check('title demo in the rain with the setting, dry again without it; the next race dry (birds, cloud shadows, tyre marks)', d.demo === 1 && d.drawn && d2.demo === 0 && !d2.drawn && r2.rain === 0 && r2.wet && !r2.drawn && r2.birds && r2.clouds > 0.1 && r2.marks > 5 && errors.length === e0, JSON.stringify({ d, d2, r2 }));
+      // (every car on slicks with the dry grip of its compound, Core.TYRE_CMP: the soft's a little more than 1, the medium's 1, the hard's less)
+      const dryGrip = (c) => { const K = c.ty && c.ty.k === 'dry' ? Core.TYRE_CMP[c.ty.c] : null; return !!K && Math.abs(c.wet - K.g * (1 - K.loss * c.ty.wear)) < 1e-9; };
+      return { rain: window.__game.race.rain, wet: window.__game.race.cars.every(dryGrip), drawn: Render.raining, birds: Render.birds.mesh.visible, clouds: Render.world.dyn.clouds.K.value, marks }; });
+    T.check('title demo in the rain with the setting, dry again without it; the next race dry (slicks with their dry grip, birds, cloud shadows, tyre marks)', d.demo === 1 && d.drawn && d2.demo === 0 && !d2.drawn && r2.rain === 0 && r2.wet && !r2.drawn && r2.birds && r2.clouds > 0.1 && r2.marks > 5 && errors.length === e0, JSON.stringify({ d, d2, r2 }));
   }
 
   // 6. a Pikes Peak time trial to the finish: the record is stored under 'pikes@cs'
@@ -158,8 +148,61 @@ try {
       r.drawn && r.onRoad && r.phase === 'done' && r.rec && r.rec.bestTime > 0 && / v dežju/.test(r.sub) && r.dry,
       `puddles drawn ${r.drawn}, on the road ${r.onRoad}, time ${r.t && r.t.toFixed(2)} s, record ${r.rec && r.rec.bestTime}, "${r.sub}", dry again ${r.dry}`);
   }
+  // 6d. Vršič: one card, four ways to drive it (the switch Dirka / Kronometer / Promet / Policija on the card). Kronometer: the time trial alone
+  //     to the pass, its record and board under 'vrsic-tt@cs' (the race's records stay apart), a medal; Dirka: 12 rivals on the grid, the HUD
+  //     shows the place, the km climbed and the altitude; Promet: the duel with one rival up the open road, the traffic and the people drawn,
+  //     the HUD with the rival's gap; Policija: alone with the police after the player, the patrol cars drawn with their lights flashing, the
+  //     HUD with the patrol cars after the player and the heat (stars)
+  {
+    const r = await page.evaluate(async () => {
+      const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)), frame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(300);
+      const card = document.querySelector('[data-track="vrsic"]'), btns = [...card.querySelectorAll('.tc-mode button')].map(b => b.textContent);
+      card.querySelector('.tc-mode button[data-v="tt"]').click(); await wait(200);
+      const out = { btns: btns.join('|'), picked: g.S.track + '/' + g.S.mode, meta: document.querySelector('[data-track="vrsic"] .tmeta').textContent };
+      g.onAction('start'); for (let k = 0; k < 1200 && !(g.race && g.race.track.def.id === 'vrsic'); k++) await wait(100);
+      await frame();
+      out.tt = g.race.timeTrial && g.race.cars.length === 1 && document.getElementById('hud').classList.contains('tt');
+      for (let i = 0; i < 600 && g.phase !== 'done'; i++) { g.sim(1, true); if (i % 10 === 0) await wait(0); }
+      await wait(800);
+      const rec = JSON.parse(localStorage.getItem('tdgp-records') || '{}').tracks || {};
+      Object.assign(out, { phase: g.phase, t: g.race.player.finishTime, rec: rec['vrsic-tt@cs'], race: rec['vrsic@cs'], sub: document.getElementById('res-sub').textContent });
+      g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(300);
+      document.querySelector('[data-track="vrsic"] .tc-mode button[data-v="race"]').click(); await wait(200);
+      out.back = g.S.mode;
+      g.onAction('start'); for (let k = 0; k < 1200 && !(g.race && g.race.track.def.id === 'vrsic' && !g.race.timeTrial); k++) await wait(100);
+      g.sim(30, true); await frame(); await frame();
+      Object.assign(out, { cars: g.race.cars.length, up: document.getElementById('hud').classList.contains('up'), lap: document.getElementById('h-lap').textContent, alt: document.getElementById('h-alt').textContent, pos: document.getElementById('h-pos').textContent, racing: g.phase });
+      for (const md of ['traffic', 'police']) {   // the open road: the duel in the traffic, the run from the police (30 s of each)
+        g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(300);
+        document.querySelector('[data-track="vrsic"] .tc-mode button[data-v="' + md + '"]').click(); await wait(200);
+        g.onAction('start'); for (let k = 0; k < 1200 && !(g.race && g.race.track.def.id === 'vrsic' && (md === 'police' ? g.race.pol : g.race.tf && !g.race.pol)); k++) await wait(100);
+        for (let i = 0; i < 30; i++) { g.sim(1, true); await frame(); }
+        let lamp = false; for (let i = 0; i < 16; i++) { await frame(); if ((Render.roadInfo() || {}).lampOn) lamp = true; }   // (the lights flash: on in some of the frames)
+        const hud = document.getElementById('hud'), road = Object.assign({}, Render.roadInfo(), { lampOn: lamp });
+        out[md] = { mode: g.S.mode, cars: g.race.cars.length, tf: !!g.race.tf, pol: g.race.pol ? g.race.pol.cars.length : 0, duel: hud.classList.contains('duel'), polHud: hud.classList.contains('pol'), gap: document.getElementById('h-gap').textContent,
+          lbl: document.querySelector('#h-rank .h-lbl').textContent, pos: document.getElementById('h-pos').textContent, heat: document.getElementById('h-heat').textContent, road, dist: g.race.player.dist, phase: g.phase };
+      }
+      return out;
+    });
+    T.check('Vršič: one card with the switch Dirka / Kronometer / Promet / Policija, a tap on Kronometer picks the track and the time trial',
+      r.btns === 'Dirka|Kronometer|Promet|Policija' && r.picked === 'vrsic/tt' && / kronometer/.test(r.meta), `buttons "${r.btns}", picked ${r.picked}, "${r.meta}"`);
+    T.check('Vršič time trial: alone, to the pass, its own record and board (vrsic-tt@cs), a medal line',
+      r.tt && r.phase === 'done' && r.rec && r.rec.bestTime > 0 && r.rec.board && r.rec.board.length === 1 && !(r.race && r.race.bestTime) && /medalj/.test(r.sub),
+      `time ${r.t && r.t.toFixed(2)} s, record ${r.rec && r.rec.bestTime}, "${r.sub}"`);
+    T.check('Vršič race: 13 cars, the HUD with the place, the km climbed and the altitude',
+      r.back === 'race' && r.cars === 13 && r.up && /^\d+,\d\/12,3 KM$/.test(r.lap) && /^\d+(\.\d{3})? m$/.test(r.alt) && +r.pos >= 1 && r.racing === 'racing',
+      `${r.cars} cars, HUD "${r.lap}" "${r.alt}", place ${r.pos}, ${r.racing}`);
+    const D = r.traffic, P = r.police;
+    T.check('Vršič Promet: the duel with one rival in the traffic, vehicles and people drawn, the HUD with the rival\'s gap',
+      D.mode === 'traffic' && D.cars === 2 && D.tf && !D.pol && D.duel && !D.polHud && /^TEKMEC \d+,\d s (PRED|ZA) TABO$/.test(D.gap) && D.road && D.road.veh > 0 && D.road.ped > 0 && D.dist > 300 && D.phase === 'racing',
+      `${D.cars} cars, gap "${D.gap}", drawn ${JSON.stringify(D.road)}, ${Math.round(D.dist)} m`);
+    T.check('Vršič Policija: alone with the police after the player, patrol cars drawn with their lights flashing, the HUD with the patrol cars and the heat',
+      P.mode === 'police' && P.cars === 1 && P.tf && P.pol >= 1 && P.polHud && !P.duel && P.lbl === 'POLICIJA' && +P.pos >= 1 && /^\u2605+\u2606*$/.test(P.heat) && P.heat.length === 5 && P.road && P.road.pol >= 1 && P.road.lampOn && P.dist > 300,
+      `${P.pol} patrol cars, HUD "${P.lbl} ${P.pos}" "${P.heat}", drawn ${JSON.stringify(P.road)}, ${Math.round(P.dist)} m, ${P.phase}`);
+  }
 
-  // 6d. Harju, the city stage in Jyväskylä, to the flying finish: the record under 'harju@cs', the distance to go on the HUD, the stage's
+  // 6e. Harju, the city stage in Jyväskylä, to the flying finish: the record under 'harju@cs', the distance to go on the HUD, the stage's
   //     words and the medal on the results, the co-driver's calls ready (the changes of surface among them: onto the gravel, the cobbles, the tarmac)
   {
     await startTrack(page, 'harju');
