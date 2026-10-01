@@ -575,12 +575,26 @@ const Sfx = (function () {
     hybrid: { deg: 720, F: kitFire(720, X8, even, 0.74, 5, KV), Fo: lumpy(kitFire(720, X8, even, 0.64, 7, KV), 0.3), w: 0.045, wo: 0.06, ri: 0.12, drive: 2.9, q: 1.9, l0: 340, l1: 5.4, lL: 0.8, pk: [1800, 4, 1.1], nz: 0.03, nF: 2600, nQ: 1, nAm: 0.5, lope: [1, 0.1], motor: 0.25, pop: 0.3, sp: 0.3, vol: 0.52 },
     ev: { ev: true },
   };
+  // work made ahead in slices (prep, below: in the menus' idle time, a little in each race frame): a generator that yields every few
+  // thousand samples and returns what it made. slice(key, make, until) runs it until it is done (true) or performance.now() passes until;
+  // made(key, make) finishes it now (it is wanted before its turn); a maker that throws leaves null (its sound is then skipped)
+  const jobs = {}, done = {};
+  function slice(key, make, until) {
+    if (key in done) return true;
+    try {
+      const g = jobs[key] || (jobs[key] = make());
+      for (;;) { const r = g.next(); if (r.done) { done[key] = r.value || null; delete jobs[key]; return true; } if (until != null && performance.now() >= until) return false; }
+    } catch (e) { done[key] = null; delete jobs[key]; return true; }
+  }
+  const made = (key, make) => { slice(key, make, null); return done[key]; };
+  const runAll = (g) => { let r; do r = g.next(); while (!r.done); return r.value; };
   // the cycle's harmonics 1..H (a PeriodicWave's real / imag) from its firings: a sum of pulses, each a sharp rise (time constant ri x w)
-  // and a decay (w), wrapping round the cycle; its mean taken away (the harmonics by an FFT of KN samples)
+  // and a decay (w), wrapping round the cycle; its mean taken away (the harmonics by an FFT of KN samples); a slice per firing
   const KN = 2048;
-  function kitSpec(F, deg, w, ri, H) {
-    const re = new Float64Array(KN), im = new Float64Array(KN), wr = w * ri;
-    for (const [a, s] of F) { const ph = a / deg; for (let n = 0; n < KN; n++) { let u = n / KN - ph; u -= Math.floor(u); re[n] += s * (1 - Math.exp(-u / wr)) * Math.exp(-u / w); } }
+  function* kitSpecGen(kind, off) {
+    const K = KITS[kind], F = off ? K.Fo : K.F, deg = K.deg, w = off ? K.wo : K.w, H = Math.min(320, 64 + 24 * F.length);
+    const re = new Float64Array(KN), im = new Float64Array(KN), wr = w * K.ri;
+    for (const [a, s] of F) { const ph = a / deg; for (let n = 0; n < KN; n++) { let u = n / KN - ph; u -= Math.floor(u); re[n] += s * (1 - Math.exp(-u / wr)) * Math.exp(-u / w); } yield; }
     for (let i = 1, j = 0; i < KN; i++) { let b = KN >> 1; for (; j & b; b >>= 1) j ^= b; j ^= b; if (i < j) { const t = re[i]; re[i] = re[j]; re[j] = t; } }   // (bit reversal; im all 0)
     for (let len = 2; len <= KN; len <<= 1) {
       const a = -2 * Math.PI / len, wr0 = Math.cos(a), wi0 = Math.sin(a), h = len >> 1;
@@ -593,19 +607,24 @@ const Sfx = (function () {
     for (let k = 1; k <= H; k++) { R[k] = re[k] * 2 / KN; I[k] = -im[k] * 2 / KN; }   // (x = sum of R cos + I sin; the mean, k = 0, left out)
     return { re: R, im: I };
   }
-  const kitSpecs = {}, kitWaves = new WeakMap(), kitCurves = {}, kitNoises = new WeakMap();
-  function kitWave(ac, kind, off) {   // the kind's wave (on / off the throttle) for this context (made once)
-    const K = KITS[kind], key = kind + (off ? 'o' : '');
-    if (!kitSpecs[key]) { const n = (off ? K.Fo : K.F).length; kitSpecs[key] = kitSpec(off ? K.Fo : K.F, K.deg, off ? K.wo : K.w, K.ri, Math.min(320, 64 + 24 * n)); }
+  const wkey = (kind, off) => kind + (off ? '|1' : '|0'), specJob = (kind, off) => () => kitSpecGen(kind, off);
+  const kitWaves = new WeakMap(), kitCurves = {}, kitNoises = new WeakMap();
+  function kitWave(ac, kind, off) {   // the kind's wave (on / off the throttle) for this context (made once; its harmonics made ahead: prep)
+    const key = wkey(kind, off), S = made('spec:' + key, specJob(kind, off));
     let W = kitWaves.get(ac); if (!W) kitWaves.set(ac, W = {});
-    return W[key] || (W[key] = ac.createPeriodicWave(kitSpecs[key].re, kitSpecs[key].im));
+    return W[key] || (W[key] = ac.createPeriodicWave(S.re, S.im));
   }
   const kitCurve = (k) => kitCurves[k] || (kitCurves[k] = shaperCurve(k));
-  function kitNoise(ac) {   // 2 s of white noise from KR (not Math.random)
-    let b = kitNoises.get(ac); if (b) return b;
-    b = ac.createBuffer(1, Math.round(ac.sampleRate * 2), ac.sampleRate); const d = b.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = KR() * 2 - 1;
-    kitNoises.set(ac, b); return b;
+  function* kitNoiseGen(ac) {   // 2 s of white noise (its own random numbers, not Math.random)
+    const R = Core.rng(0x2c1b3), b = ac.createBuffer(1, Math.round(ac.sampleRate * 2), ac.sampleRate), d = b.getChannelData(0);
+    yield* dRun({ d, R }, kWhite, 0, d.length, 0.25);
+    return b;
+  }
+  function kWhite(S, p, e) { const d = S.d, R = S.R; for (let i = p; i < e; i++) d[i] = R() * 2 - 1; }
+  function kitNoise(ac) {   // the game's context: made ahead (prep), null until it is; a probe's: now
+    if (ac === ctx) return done.noise || null;
+    let b = kitNoises.get(ac); if (!b) kitNoises.set(ac, b = runAll(kitNoiseGen(ac)));
+    return b;
   }
   // a voice: the two waves (gA on, gB off the throttle) -> clipper -> low-pass -> resonance -> out; oC (gC) the turbo whistle (the
   // electric motor's third partial on 'ev'), the clatter (noise -> band-pass -> nG, its gain pulsed by wave A through nm), wA (wG) a
@@ -617,17 +636,21 @@ const Sfx = (function () {
     const sh = ac.createWaveShaper(); sh.curve = kitCurve(2.2);
     const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900; lp.Q.value = 1;
     const pk = ac.createBiquadFilter(); pk.type = 'peaking'; pk.frequency.value = 1000; pk.Q.value = 1; pk.gain.value = 0;
-    const ns = ac.createBufferSource(); ns.buffer = kitNoise(ac); ns.loop = true;
     const nf = ac.createBiquadFilter(); nf.type = 'bandpass'; nf.frequency.value = 2500; nf.Q.value = 1;
     oA.connect(gA); oB.connect(gB); gA.connect(sh); gB.connect(sh); sh.connect(lp); lp.connect(pk); pk.connect(out);
-    oC.connect(gC); gC.connect(out); ns.connect(nf); nf.connect(nG); nG.connect(out); oA.connect(nm); nm.connect(nG.gain);
+    oC.connect(gC); gC.connect(out); nf.connect(nG); nG.connect(out); oA.connect(nm); nm.connect(nG.gain);
     wA.connect(wG); wG.connect(out); lope.connect(lopeG); lopeG.connect(out.gain);
     let pn = null;
     if (pan && ac.createStereoPanner) { pn = ac.createStereoPanner(); out.connect(pn); pn.connect(dest); } else out.connect(dest);
     for (const t of taps || []) if (t) out.connect(t);
-    const t0 = ac.currentTime; for (const o of [oA, oB, oC, wA, lope]) o.start(t0); ns.start(t0, KR() * 1.9);
-    return { ac, oA, oB, oC, gA, gB, gC, sh, lp, pk, ns, nf, nG, nm, wA, wG, lope, lopeG, out, pn, dst: pn || dest, level, kind: '', car: null, on: false, tg: null,
-      b: 0, lm: 0, al: 0, hb: 0, mv: 0, stopped: true, tShot: 0 };
+    const t0 = ac.currentTime; for (const o of [oA, oB, oC, wA, lope]) o.start(t0);
+    const V = { ac, oA, oB, oC, gA, gB, gC, sh, lp, pk, ns: null, nf, nG, nm, wA, wG, lope, lopeG, out, pn, dst: pn || dest, level, kind: '', car: null, on: false, tg: null,
+      b: 0, lm: 0, al: 0, hb: 0, mv: 0, stopped: true, tShot: 0, tBov: 0, n: { bov: 0, pop: 0, air: 0 } };
+    kitNoiseOn(V); return V;
+  }
+  function kitNoiseOn(V) {   // the clatter's noise into the voice (the game's: once prep has made it; until then the clatter is silent)
+    const b = kitNoise(V.ac); if (!b) return;
+    const ns = V.ac.createBufferSource(); ns.buffer = b; ns.loop = true; ns.connect(V.nf); ns.start(V.ac.currentTime, KR() * 1.9); V.ns = ns;
   }
   const vset = (V, p, v, tc) => { if (Number.isFinite(v)) p.setTargetAtTime(v, V.t == null ? V.ac.currentTime : V.t, tc || 0.03); };   // (set(), on the voice's own context; V.t: a probe's sweep)
   function kitKind(V, kind) {   // the voice takes a kind: its waves, clipper, resonance, clatter's band
@@ -646,7 +669,7 @@ const Sfx = (function () {
   // no one-shots) }. Leaves the targets in V.tg (Sfx.levels)
   function kitStep(V, M, s) {
     const P = M.sndP, kind = KITS[P.kind] ? P.kind : 'i4', K = KITS[kind], hz = clamp(num(P.hz, 1), 0.3, 3), loud = clamp(num(P.loud, 1), 0.1, 3), tb = clamp(num(P.turbo, 0), 0, 1);
-    kitKind(V, kind); V.on = true;
+    kitKind(V, kind); V.on = true; if (!V.ns) kitNoiseOn(V);
     const load = clamp(num(s.load, 0), 0, 1), sp = Math.max(0, num(s.speed, 0)), dt = clamp(num(s.dt, 0.016), 0, 0.1), tc = s.tc, sstep = Core.sstep;
     if (K.ev) {   // the electric motors (as evWhine), at the preset's pitch and loudness
       const f = (110 + sp * 21) * hz, g = (s.pl ? V.level : num(s.att, 0) ** 2 * V.level * 2.4) * loud * (0.02 + 0.06 * clamp(sp / 40, 0, 1) + 0.05 * load);
@@ -682,8 +705,9 @@ const Sfx = (function () {
     else if (K.motor) { wf = (260 + sp * 38) * hz; wg = K.motor * (0.3 + 0.7 * load) * clamp(sp / 20, 0.12, 1); }
     if (wf) vset(V, V.wA.frequency, clamp(wf, 40, sr * 0.45), tc);
     vset(V, V.wG.gain, wg, 0.06);
-    // the turbo: boost builds with the revs under load (lag), falls on a lift; its whistle; the blow-off when the throttle snaps shut on boost,
-    // and from 0.9 (a rally car's anti-lag) bangs for a second after it
+    // the turbo: boost builds with the revs under load (lag), falls on a lift; its whistle; the blow-off when the throttle snaps shut on boost
+    // (shut: under 0.2, from over half open a moment ago; not a driver easing off to hold a speed), at most one in 0.3 s (a gear change's
+    // chuff, kitShift, dumps the boost as well); from 0.9 (a rally car's anti-lag) bangs for a second after it, until the throttle opens
     let tf = 0;
     if (tb > 0) {
       const goal = load * sstep(0.18, 0.7, r);
@@ -694,12 +718,13 @@ const Sfx = (function () {
     V.lm = Math.max(load, V.lm - dt * 2.5);
     if (!s.probe && !s.locked) {
       const att = s.pl ? 1 : num(s.att, 0) ** 2, lev = (s.pl ? 1 : V.level * 3) * loud * att;
-      if (V.lm - load > 0.5) {   // the throttle snapped shut
-        if (tb > 0 && V.b > 0.4) { kitShot(V, 'bov', lev * tb * (0.25 + 0.3 * V.b), 0.92 + 0.16 * KR(), 0); V.b *= 0.3; }
+      if (V.lm - load > 0.5 && load < 0.2) {   // the throttle snapped shut
+        const now = V.ac.currentTime;
+        if (tb > 0 && V.b > 0.4 && now >= V.tBov) { kitShot(V, 'bov', lev * tb * (0.25 + 0.3 * V.b), 0.92 + 0.16 * KR(), 0); V.b *= 0.3; V.tBov = now + 0.3; }
         if (tb >= 0.9 && r > 0.45) V.al = 0.7 + 0.8 * KR();
         V.lm = load;
       }
-      V.al = Math.max(0, V.al - dt);
+      V.al = load > 0.3 ? 0 : Math.max(0, V.al - dt);   // (back on the throttle: the anti-lag's bangs stop)
       const over = load < 0.08 && r > 0.38 ? (K.pop || 0) * (r - 0.3) * 2.5 : 0, rate = over + (V.al > 0 ? 11 : 0);
       if (rate > 0 && KR() < rate * dt) kitShot(V, 'pop' + Math.floor(KR() * 3), lev * (V.al > 0 ? 0.3 + 0.25 * KR() : 0.12 + 0.12 * KR()), 0.85 + 0.3 * KR(), 0);
       if (K.air) {   // air brakes: a short hiss as hard braking lets off, the long one when the truck comes to a stop
@@ -712,19 +737,22 @@ const Sfx = (function () {
     V.tg = { ff, fc, lp: lpf, gain: gq, lope: lg, whine: wf, turbo: tf, boost: V.b, fs: [fc, ff, lpf, wf, tf, fc * (K.lope ? K.lope[0] : 1)] };
   }
   // a one-shot on a voice's side (its panner; the player's: the bus): a buffer of the destruction / exhaust set (dBuf)
-  function kitShot(V, name, vol, rate, t) {
+  function kitShot(V, name, vol, rate, t, also) {   // (also: one more right after the last, not held off by it: a gear change's bang after its chuff)
     if (!enabled || !running || !(vol > 1e-3) || V.ac !== ctx) return;
-    const now = ctx.currentTime; if (now < V.tShot) return; V.tShot = now + 0.03;
-    const s = ctx.createBufferSource(), g = ctx.createGain(); s.buffer = dBuf(name); s.playbackRate.value = rate; g.gain.value = Math.min(1, vol);
+    const now = ctx.currentTime; if (now < V.tShot && !also) return;
+    const b = dBuf(name); if (!b) return; V.tShot = now + 0.03;
+    const s = ctx.createBufferSource(), g = ctx.createGain(); s.buffer = b; s.playbackRate.value = rate; g.gain.value = Math.min(1, vol);
     s.connect(g); g.connect(V.dst); s.start(now + (t || 0));
+    const k = name.slice(0, 3); if (k in V.n) V.n[k]++;   // (Sfx.levels: the player's blow-offs, bangs, air brakes)
   }
-  // the gear change of a vehicle with a preset (game.js calls shiftPop on every upshift): a turbo's chuff, an anti-lag's bang, an exhaust's pop
+  // the gear change of a vehicle with a preset (game.js calls shiftPop on every upshift): a turbo's chuff (the boost dumped, as a lift's:
+  // no second blow-off right after it), an anti-lag's bang, an exhaust's pop
   function kitShift() {
     const V = kitPl; if (!V || !V.on) return;
     const K = KITS[V.kind], P = plM && plM.sndP; if (!K || K.ev || !P) return;
-    const tb = clamp(num(P.turbo, 0), 0, 1), loud = clamp(num(P.loud, 1), 0.1, 3);
-    if (tb > 0 && V.b > 0.35) { kitShot(V, 'bov', loud * tb * 0.2 * V.b, 1.25 + 0.15 * KR(), 0); V.b *= 0.55; }
-    if (tb >= 0.9) kitShot(V, 'pop' + Math.floor(KR() * 3), loud * (0.35 + 0.2 * KR()), 0.9 + 0.2 * KR(), 0.02);
+    const tb = clamp(num(P.turbo, 0), 0, 1), loud = clamp(num(P.loud, 1), 0.1, 3), now = ctx.currentTime;
+    if (tb > 0 && V.b > 0.35 && now >= V.tBov) { kitShot(V, 'bov', loud * tb * 0.2 * V.b, 1.25 + 0.15 * KR(), 0); V.b *= 0.3; V.tBov = now + 0.3; }
+    if (tb >= 0.9) kitShot(V, 'pop' + Math.floor(KR() * 3), loud * (0.35 + 0.2 * KR()), 0.9 + 0.2 * KR(), 0.02, true);
     else if (K.sp) kitShot(V, 'pop' + Math.floor(KR() * 3), loud * K.sp * 0.35, 0.75 + 0.3 * KR(), 0.01);
   }
   let kitPl = null, plM = null;   // the player's voice with a preset (and its model while it plays)
@@ -764,7 +792,7 @@ const Sfx = (function () {
   // once; or sweep: [[t, rpm, load, speed], ...], each step a frame at its time (the turbo spooling as it would) -> Promise of the samples
   // (Float32Array, .tg: the voice's last targets). shot: a one-shot's buffer instead (its samples; the sound running)
   function probe(o) {
-    if (o.shot) return Promise.resolve(ctx ? dBuf(o.shot).getChannelData(0).slice() : null);
+    if (o.shot) { const b = ctx && dBuf(o.shot); return Promise.resolve(b ? b.getChannelData(0).slice() : null); }
     const sr = o.sr || 44100, n = Math.round((o.dur || 0.5) * sr), OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
     if (!OAC) return Promise.resolve(null);
     const ac = new OAC(1, n, sr), V = kitVoice(ac, ac.destination, 1, false, null);
@@ -784,134 +812,172 @@ const Sfx = (function () {
      moves on (louder on asphalt, beating with the hub's turn), a fire's crackle while it burns (render's rule: dmg >= 0.9, or the bonnet /
      engine cover off and dmg >= 0.75; 20 s from when it starts), a wreck's crunch at dmg 0.98. Nothing in game.js: update compares every
      car's state with what it was last frame (c.lost, winOut, wreck.wl, dmg); a repair (repairN) or the marshals' refit (wreck.fix) resets
-     what it remembers. The one-shots are buffers made once (their own random numbers, KR), at most DS_MAX playing at a time (the loudest
-     first; a pile-up's rest dropped), the loops a small pool (the nearest cars). Nothing is made with the sound off ---- */
+     what it remembers. The one-shots and the loops are buffers made ahead (prep, below), each with its own random numbers (never
+     Math.random). At most DS_MAX one-shots play at a time; in one frame a buffer plays at most twice (a pile-up's: the loudest, then the
+     rest as one, a little later), every kind's first before any second (dPlays); the loops a small pool (the nearest cars). Nothing is
+     made or played with the sound off ---- */
   const DS_SR = 22050, DS_MAX = 8, D_R = 120, D_RL = 70, D_FIRE = 20;
-  const dBufs = {}, dMem = new WeakMap(), dLive = [], dEv = [], dFireC = [], dScrC = [], dFireV = [null, null, null], dScrV = [null, null], dLast = [];
-  const dN = { clang: 0, glass: 0, wheel: 0, crunch: 0, seen: 0, dropped: 0 };
+  const dMem = new WeakMap(), dLive = [], dEv = [], dQ = [], dFireC = [], dScrC = [], dFireV = [null, null, null], dScrV = [null, null], dLast = [];
+  const dN = { clang: 0, glass: 0, wheel: 0, crunch: 0, seen: 0, merged: 0, dropped: 0, frame: null };
   // a part's material: plastic (mirrors, bumpers, skirts, a deflector...), carbon (a wing, a nose, scoops, covers, pods), else metal
   const D_MAT = { mirrorL: 'p', mirrorR: 'p', bumperF: 'p', bumperR: 'p', skirtL: 'p', skirtR: 'p', deflector: 'p', lightbar: 'p', grille: 'p', spare: 'p', wing: 'c', nose: 'c', scoop: 'c', cover: 'c', podL: 'c', podR: 'c' };
-  const R2 = () => KR() * 2 - 1;
-  function dOut(d) {   // -> an AudioBuffer (DS_SR), its peak at 0.9
-    let pk = 0; for (let i = 0; i < d.length; i++) pk = Math.max(pk, Math.abs(d[i]));
-    const b = ctx.createBuffer(1, d.length, DS_SR), e = b.getChannelData(0), k = pk > 0 ? 0.9 / pk : 0; for (let i = 0; i < d.length; i++) e[i] = d[i] * k;
+  // (the makers are generators, so prep can stop between two slices of a buffer: dRun drives a kernel, a plain function over the samples
+  // p..e of a sound (S: its state between two calls), CH samples a call, and yields after each DY samples' work. The sample loops are in
+  // the kernels, not in the generators: V8 optimises a hot loop in a plain function at once, a generator's hardly. R: the buffer's own
+  // random numbers)
+  const CH = 1024, DY = 4096; let dW = 0;
+  function* dRun(S, k, p, n, w) {   // kernel k over the samples p..n (w: a sample's work, 1 = a filtered noise's); false from k: done early
+    while (p < n) { const e = Math.min(n, p + CH); if (k(S, p, e) === false) return; dW += (e - p) * w; p = e; if (dW >= DY) { dW = 0; yield; } }
+  }
+  function kPeak(S, p, e) { const d = S.d; let pk = S.pk; for (let i = p; i < e; i++) { const a = Math.abs(d[i]); if (a > pk) pk = a; } S.pk = pk; }
+  function kScale(S, p, e) { const d = S.d, o = S.o, k = S.k; for (let i = p; i < e; i++) o[i] = d[i] * k; }
+  function* dOut(d) {   // -> an AudioBuffer (DS_SR), its peak at 0.9
+    const S = { d, pk: 0, o: null, k: 0 }; yield* dRun(S, kPeak, 0, d.length, 0.25);
+    const b = ctx.createBuffer(1, d.length, DS_SR); S.o = b.getChannelData(0); S.k = S.pk > 0 ? 0.9 / S.pk : 0;
+    yield* dRun(S, kScale, 0, d.length, 0.25);
     return b;
   }
   // a struck partial (a sine by recursion, as the cowbells'): f Hz from sample i0, amplitude a, dying with time constant tau
-  function dPart(d, i0, f, a, tau) {
+  function kPart(S, p, e) {
+    const d = S.d, c2 = S.c2, k = S.k; let s1 = S.s1, s2 = S.s2, g = S.g, j = S.j;
+    for (let i = p; i < e && g > 1e-4; i++, j++) { const s = c2 * s1 - s2; s2 = s1; s1 = s; d[i] += s * g * (j < 10 ? j / 10 : 1); g *= k; }
+    S.s1 = s1; S.s2 = s2; S.g = g; S.j = j; return g > 1e-4;
+  }
+  function* dPart(d, i0, f, a, tau) {
     const w = 2 * Math.PI * f / DS_SR; if (!(w > 0 && w < 2.9)) return;
-    const c2 = 2 * Math.cos(w), k = Math.exp(-1 / (tau * DS_SR)); let s1 = Math.sin(-w), s2 = Math.sin(-2 * w), g = a;
-    for (let i = Math.max(0, i0), j = 0; i < d.length && g > 1e-4; i++, j++) { const s = c2 * s1 - s2; s2 = s1; s1 = s; d[i] += s * g * (j < 10 ? j / 10 : 1); g *= k; }
+    yield* dRun({ d, c2: 2 * Math.cos(w), k: Math.exp(-1 / (tau * DS_SR)), s1: Math.sin(-w), s2: Math.sin(-2 * w), g: a, j: 0 }, kPart, Math.max(0, i0), d.length, 1);
   }
   // a burst of band-passed noise from i0 (len samples, decay tau, attack att samples)
-  function dNoise(d, i0, f, q, a, tau, len, att) {
-    const [b0, a1, a2] = bpf(Math.min(f, DS_SR * 0.45), q, DS_SR), k = Math.exp(-1 / (tau * DS_SR)), A = att || 3;
-    let x1 = 0, x2 = 0, y1 = 0, y2 = 0, g = a;
-    for (let i = Math.max(0, i0), j = 0, n = Math.min(d.length, i0 + len); i < n; i++, j++) { const x = R2(), y = b0 * (x - x2) - a1 * y1 - a2 * y2; x2 = x1; x1 = x; y2 = y1; y1 = y; d[i] += y * g * (j < A ? j / A : 1); g *= k; }
+  function kNoise(S, p, e) {
+    const d = S.d, R = S.R, b0 = S.b0, a1 = S.a1, a2 = S.a2, k = S.k, A = S.A; let x1 = S.x1, x2 = S.x2, y1 = S.y1, y2 = S.y2, g = S.g, j = S.j;
+    for (let i = p; i < e; i++, j++) { const x = R() * 2 - 1, y = b0 * (x - x2) - a1 * y1 - a2 * y2; x2 = x1; x1 = x; y2 = y1; y1 = y; d[i] += y * g * (j < A ? j / A : 1); g *= k; }
+    S.x1 = x1; S.x2 = x2; S.y1 = y1; S.y2 = y2; S.g = g; S.j = j;
+  }
+  function* dNoise(R, d, i0, f, q, a, tau, len, att) {
+    const [b0, a1, a2] = bpf(Math.min(f, DS_SR * 0.45), q, DS_SR);
+    yield* dRun({ d, R, b0, a1, a2, k: Math.exp(-1 / (tau * DS_SR)), A: att || 3, x1: 0, x2: 0, y1: 0, y2: 0, g: a, j: 0 }, kNoise, Math.max(0, i0), Math.min(d.length, i0 + len), 1);
   }
   // a thump: a sine falling from f0 to f1, dying (tau)
-  function dThump(d, i0, f0, f1, a, tau, len) {
-    let ph = 0;
-    for (let i = Math.max(0, i0), j = 0, n = Math.min(d.length, i0 + len); i < n; i++, j++) { const u = j / DS_SR, f = f1 + (f0 - f1) * Math.exp(-u / 0.05); ph += 2 * Math.PI * f / DS_SR; d[i] += Math.sin(ph) * a * Math.exp(-u / tau) * Math.min(1, j / 24); }
+  function kThump(S, p, e) {
+    const d = S.d, f0 = S.f0, f1 = S.f1, a = S.a, tau = S.tau; let ph = S.ph, j = S.j;
+    for (let i = p; i < e; i++, j++) { const u = j / DS_SR, f = f1 + (f0 - f1) * Math.exp(-u / 0.05); ph += 2 * Math.PI * f / DS_SR; d[i] += Math.sin(ph) * a * Math.exp(-u / tau) * Math.min(1, j / 24); }
+    S.ph = ph; S.j = j;
   }
+  function* dThump(d, i0, f0, f1, a, tau, len) { yield* dRun({ d, f0, f1, a, tau, ph: 0, j: 0 }, kThump, Math.max(0, i0), Math.min(d.length, i0 + len), 2); }
   // a struck panel: inharmonic modes (paired on metal, so it shimmers), the upper ones dying sooner; plastic and carbon dull and short, cracking
-  function dPanel(d, i0, f0, a, mat, size) {
-    const R = [1, 1.52, 2.11, 2.73, 3.37, 4.18, 5.4], A = [1, 0.75, 0.6, 0.45, 0.32, 0.22, 0.14], T = [0.42, 0.3, 0.22, 0.16, 0.12, 0.09, 0.06];
+  function* dPanel(R, d, i0, f0, a, mat, size) {
+    const RT = [1, 1.52, 2.11, 2.73, 3.37, 4.18, 5.4], A = [1, 0.75, 0.6, 0.45, 0.32, 0.22, 0.14], T = [0.42, 0.3, 0.22, 0.16, 0.12, 0.09, 0.06];
     const td = mat === 'm' ? 0.5 + 0.5 * size : mat === 'p' ? 0.16 : 0.12, nP = mat === 'm' ? 7 : mat === 'p' ? 4 : 5;
-    for (let p = 0; p < nP; p++) for (const dt of mat === 'm' ? [-0.004, 0.004] : [0]) dPart(d, i0, f0 * R[p] * (1 + dt + (KR() - 0.5) * 0.01), a * A[p] * (mat === 'm' ? 0.5 : 1), T[p] * td * (0.8 + 0.4 * KR()));
-    dNoise(d, i0, mat === 'c' ? 3800 : mat === 'p' ? 1600 : f0 * 3, mat === 'm' ? 1.5 : 0.7, a * (mat === 'm' ? 0.5 : 1.1), mat === 'c' ? 0.006 : 0.012, Math.round(0.06 * DS_SR));
+    for (let p = 0; p < nP; p++) for (const dt of mat === 'm' ? [-0.004, 0.004] : [0]) yield* dPart(d, i0, f0 * RT[p] * (1 + dt + (R() - 0.5) * 0.01), a * A[p] * (mat === 'm' ? 0.5 : 1), T[p] * td * (0.8 + 0.4 * R()));
+    yield* dNoise(R, d, i0, mat === 'c' ? 3800 : mat === 'p' ? 1600 : f0 * 3, mat === 'm' ? 1.5 : 0.7, a * (mat === 'm' ? 0.5 : 1.1), mat === 'c' ? 0.006 : 0.012, Math.round(0.06 * DS_SR));
   }
-  function dClang(mat, size) {   // a panel off: struck as it tears away, struck again as it lands, then scraping along the road, tumbling
+  function* dClang(R, mat, size) {   // a panel off: struck as it tears away, struck again as it lands, then scraping along the road, tumbling
     const d = new Float32Array(Math.round((0.65 + 0.35 * size) * DS_SR)), f0 = (mat === 'm' ? [1150, 440, 240] : mat === 'p' ? [760, 330, 210] : [900, 520, 380])[size];
-    dPanel(d, 0, f0, 1, mat, size);
-    dPanel(d, Math.round((0.07 + 0.06 * KR()) * DS_SR), f0 * (1.1 + 0.2 * KR()), 0.45, mat, size);
-    const i0 = Math.round(0.05 * DS_SR), L = d.length - i0, fl = 9 + 8 * KR(), [b0, a1, a2] = bpf(mat === 'm' ? 2600 : 1900, 1.6, DS_SR);
-    let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
-    for (let j = 0; j < L; j++) { const u = j / L, x = R2(), y = b0 * (x - x2) - a1 * y1 - a2 * y2; x2 = x1; x1 = x; y2 = y1; y1 = y; d[i0 + j] += y * (0.28 + 0.1 * size) * Math.sin(Math.PI * Math.min(1, u * 6)) * (1 - u) * (0.6 + 0.4 * Math.sin(2 * Math.PI * fl * j / DS_SR + 3 * u)); }
-    return dOut(d);
+    yield* dPanel(R, d, 0, f0, 1, mat, size);
+    yield* dPanel(R, d, Math.round((0.07 + 0.06 * R()) * DS_SR), f0 * (1.1 + 0.2 * R()), 0.45, mat, size);
+    const i0 = Math.round(0.05 * DS_SR), L = d.length - i0, fl = 9 + 8 * R(), [b0, a1, a2] = bpf(mat === 'm' ? 2600 : 1900, 1.6, DS_SR);
+    yield* dRun({ d, R, b0, a1, a2, L, i0, amp: 0.28 + 0.1 * size, fl, x1: 0, x2: 0, y1: 0, y2: 0 }, kTumble, 0, L, 2);
+    return yield* dOut(d);
   }
-  function dGlass() {   // the crack, then the shards: a crowd of short high pings, dense at first, a few still falling
-    const d = new Float32Array(Math.round(0.95 * DS_SR));
-    dNoise(d, 0, 4200, 0.6, 1, 0.012, Math.round(0.05 * DS_SR), 2); dNoise(d, 0, 1500, 0.9, 0.5, 0.02, Math.round(0.06 * DS_SR), 2);
-    for (let k = 0; k < 42; k++) {
-      const t = Math.min(0.85, 0.008 - Math.log(1 - KR() * 0.98) * 0.13), a = 0.55 * Math.exp(-t / 0.35) * (0.3 + 0.7 * KR()), f = 2600 + KR() * 6200, i = Math.round(t * DS_SR);
-      dPart(d, i, f, a, 0.008 + 0.03 * KR()); if (KR() < 0.4) dPart(d, i, f * (1.4 + 0.3 * KR()), a * 0.5, 0.006);
+  function kTumble(S, p, e) {   // (dClang's: the panel scraping along the road, tumbling; the samples p..e after i0)
+    const d = S.d, R = S.R, b0 = S.b0, a1 = S.a1, a2 = S.a2, L = S.L, i0 = S.i0, amp = S.amp, fl = S.fl; let x1 = S.x1, x2 = S.x2, y1 = S.y1, y2 = S.y2;
+    for (let j = p; j < e; j++) {
+      const u = j / L, x = R() * 2 - 1, y = b0 * (x - x2) - a1 * y1 - a2 * y2; x2 = x1; x1 = x; y2 = y1; y1 = y;
+      d[i0 + j] += y * amp * Math.sin(Math.PI * Math.min(1, u * 6)) * (1 - u) * (0.6 + 0.4 * Math.sin(2 * Math.PI * fl * j / DS_SR + 3 * u));
     }
-    return dOut(d);
+    S.x1 = x1; S.x2 = x2; S.y1 = y1; S.y2 = y2;
   }
-  function dWheel() {   // the hub letting go (a clunk), the wheel bouncing away (each bounce lower and sooner), rolling off
+  function* dGlass(R) {   // the crack, then the shards: a crowd of short high pings, dense at first, a few still falling
+    const d = new Float32Array(Math.round(0.95 * DS_SR));
+    yield* dNoise(R, d, 0, 4200, 0.6, 1, 0.012, Math.round(0.05 * DS_SR), 2); yield* dNoise(R, d, 0, 1500, 0.9, 0.5, 0.02, Math.round(0.06 * DS_SR), 2);
+    for (let k = 0; k < 42; k++) {
+      const t = Math.min(0.85, 0.008 - Math.log(1 - R() * 0.98) * 0.13), a = 0.55 * Math.exp(-t / 0.35) * (0.3 + 0.7 * R()), f = 2600 + R() * 6200, i = Math.round(t * DS_SR);
+      yield* dPart(d, i, f, a, 0.008 + 0.03 * R()); if (R() < 0.4) yield* dPart(d, i, f * (1.4 + 0.3 * R()), a * 0.5, 0.006);
+    }
+    return yield* dOut(d);
+  }
+  function* dWheel(R) {   // the hub letting go (a clunk), the wheel bouncing away (each bounce lower and sooner), rolling off
     const d = new Float32Array(Math.round(1.9 * DS_SR));
-    dPanel(d, 0, 170, 0.8, 'p', 1); dPart(d, 0, 340, 0.25, 0.12); dThump(d, 0, 95, 48, 1, 0.12, Math.round(0.4 * DS_SR)); dNoise(d, 0, 500, 1, 0.7, 0.03, Math.round(0.1 * DS_SR));
+    yield* dPanel(R, d, 0, 170, 0.8, 'p', 1); yield* dPart(d, 0, 340, 0.25, 0.12); yield* dThump(d, 0, 95, 48, 1, 0.12, Math.round(0.4 * DS_SR)); yield* dNoise(R, d, 0, 500, 1, 0.7, 0.03, Math.round(0.1 * DS_SR));
     let t = 0.16;
     for (let k = 0, iv = 0.3; k < 7; k++, iv *= 0.78) {
       t += iv; const a = 0.85 * Math.pow(0.72, k), i = Math.round(t * DS_SR);
-      dThump(d, i, 120 + 15 * KR(), 62, a, 0.07, Math.round(0.2 * DS_SR)); dNoise(d, i, 420, 1, a * 0.35, 0.025, Math.round(0.06 * DS_SR));
+      yield* dThump(d, i, 120 + 15 * R(), 62, a, 0.07, Math.round(0.2 * DS_SR)); yield* dNoise(R, d, i, 420, 1, a * 0.35, 0.025, Math.round(0.06 * DS_SR));
     }
-    const i1 = Math.round((t + 0.05) * DS_SR); dNoise(d, i1, 260, 0.8, 0.25, 0.28, d.length - i1, Math.round(0.08 * DS_SR));
-    return dOut(d);
+    const i1 = Math.round((t + 0.05) * DS_SR); yield* dNoise(R, d, i1, 260, 0.8, 0.25, 0.28, d.length - i1, Math.round(0.08 * DS_SR));
+    return yield* dOut(d);
   }
-  function dCrunch() {   // a wreck: a deep boom and a crash, panels struck and glass, the shell settling with a creak
+  function* dCrunch(R) {   // a wreck: a deep boom and a crash, panels struck and glass, the shell settling with a creak
     const d = new Float32Array(Math.round(1.6 * DS_SR));
-    dThump(d, 0, 75, 36, 1, 0.3, d.length); dNoise(d, 0, 1800, 0.5, 0.9, 0.16, Math.round(0.6 * DS_SR), 2); dNoise(d, 0, 450, 0.7, 0.9, 0.25, Math.round(0.8 * DS_SR), 2);
-    for (let k = 0; k < 5; k++) dPanel(d, Math.round(KR() * 0.45 * DS_SR), 280 + KR() * 800, 0.35 + 0.3 * KR(), k < 2 ? 'm' : 'p', 0);
-    for (let k = 0; k < 14; k++) dPart(d, Math.round((0.03 + KR() * 0.6) * DS_SR), 2800 + KR() * 5500, 0.18 * (0.4 + 0.6 * KR()), 0.01 + 0.02 * KR());
-    dNoise(d, Math.round(0.55 * DS_SR), 700, 6, 0.2, 0.3, Math.round(0.9 * DS_SR), Math.round(0.1 * DS_SR));
-    return dOut(d);
+    yield* dThump(d, 0, 75, 36, 1, 0.3, d.length); yield* dNoise(R, d, 0, 1800, 0.5, 0.9, 0.16, Math.round(0.6 * DS_SR), 2); yield* dNoise(R, d, 0, 450, 0.7, 0.9, 0.25, Math.round(0.8 * DS_SR), 2);
+    for (let k = 0; k < 5; k++) yield* dPanel(R, d, Math.round(R() * 0.45 * DS_SR), 280 + R() * 800, 0.35 + 0.3 * R(), k < 2 ? 'm' : 'p', 0);
+    for (let k = 0; k < 14; k++) yield* dPart(d, Math.round((0.03 + R() * 0.6) * DS_SR), 2800 + R() * 5500, 0.18 * (0.4 + 0.6 * R()), 0.01 + 0.02 * R());
+    yield* dNoise(R, d, Math.round(0.55 * DS_SR), 700, 6, 0.2, 0.3, Math.round(0.9 * DS_SR), Math.round(0.1 * DS_SR));
+    return yield* dOut(d);
   }
-  // a loop without a seam: dur s of fill's sound, its start blended (equal power) with what follows its end
-  function dLoop(dur, fill) {
-    const n = Math.round(dur * DS_SR), m = Math.round(0.12 * DS_SR), d = new Float32Array(n + m); fill(d);
+  // a loop without a seam: dur s of fill's sound (a generator), its start blended (equal power) with what follows its end
+  function* dLoop(dur, fill) {
+    const n = Math.round(dur * DS_SR), m = Math.round(0.12 * DS_SR), d = new Float32Array(n + m); yield* fill(d);
     for (let i = 0; i < m; i++) { const u = i / m; d[i] = d[i] * Math.sqrt(u) + d[n + i] * Math.sqrt(1 - u); }
-    return dOut(d.subarray(0, n));
+    return yield* dOut(d.subarray(0, n));
   }
-  function dScrapeBuf() {   // a hub on the road: grinding metal in three bands, a squeal wandering in pitch, grit
-    return dLoop(1.6, (d) => {
+  function dScrapeBuf(R) {   // a hub on the road: grinding metal in three bands, a squeal wandering in pitch, grit
+    return dLoop(1.6, function* (d) {
       const n = d.length;
-      for (const [f, q, a] of [[1900, 4, 0.9], [3700, 6, 0.6], [900, 2, 0.4]]) {
-        const [b0, a1, a2] = bpf(f, q, DS_SR); let x1 = 0, x2 = 0, y1 = 0, y2 = 0, e = 0.8, eg = 0.8;
-        for (let i = 0; i < n; i++) { if ((i & 255) === 0) eg = 0.55 + 0.45 * KR(); e += (eg - e) * 0.004; const x = R2(), y = b0 * (x - x2) - a1 * y1 - a2 * y2; x2 = x1; x1 = x; y2 = y1; y1 = y; d[i] += y * a * e; }
-      }
-      let f = 2500, fg = 2500, ph = 0;
-      for (let i = 0; i < n; i++) { if ((i & 127) === 0) fg = clamp(fg + (KR() - 0.5) * 90, 2200, 2900); f += (fg - f) * 0.01; ph += 2 * Math.PI * f / DS_SR; d[i] += Math.sin(ph) * 0.05; }
-      for (let k = 0; k < 70; k++) dNoise(d, Math.floor(KR() * n), 3000 + KR() * 3000, 2, 0.3 + 0.4 * KR(), 0.004, 200);
+      for (const [f, q, a] of [[1900, 4, 0.9], [3700, 6, 0.6], [900, 2, 0.4]]) { const [b0, a1, a2] = bpf(f, q, DS_SR); yield* dRun({ d, R, b0, a1, a2, a, x1: 0, x2: 0, y1: 0, y2: 0, en: 0.8, eg: 0.8 }, kBand, 0, n, 1.2); }
+      yield* dRun({ d, R, f: 2500, fg: 2500, ph: 0 }, kSqueal, 0, n, 1);
+      for (let k = 0; k < 70; k++) yield* dNoise(R, d, Math.floor(R() * n), 3000 + R() * 3000, 2, 0.3 + 0.4 * R(), 0.004, 200);
     });
   }
-  function dFireBuf() {   // a car on fire: the roar (dark noise swelling and ebbing) and the crackle (many small snaps, a few louder pops)
-    return dLoop(3.2, (d) => {
-      const n = d.length, k1 = 1 - Math.exp(-2 * Math.PI * 260 / DS_SR);
-      let l1 = 0, l2 = 0, e = 0.5, eg = 0.5;
-      for (let i = 0; i < n; i++) { if ((i & 511) === 0) eg = 0.25 + 0.75 * KR(); e += (eg - e) * 0.002; l1 += (R2() - l1) * k1; l2 += (l1 - l2) * k1; d[i] += l2 * 2.2 * e; }
-      for (let k = 0, nT = Math.round(38 * n / DS_SR); k < nT; k++) dNoise(d, Math.floor(KR() * n), 1500 + KR() * 4500, 1.2, 0.08 + 0.5 * Math.pow(KR(), 3), 0.002 + 0.004 * KR(), 160, 1);
-      for (let k = 0, nP = Math.round(3 * n / DS_SR); k < nP; k++) { const i = Math.floor(KR() * n); dNoise(d, i, 500 + KR() * 500, 1, 0.5 + 0.4 * KR(), 0.012, 600, 2); dThump(d, i, 150, 80, 0.25, 0.03, 900); }
+  function kBand(S, p, e) {   // (dScrapeBuf's grinding: a band of noise, its loudness wandering)
+    const d = S.d, R = S.R, b0 = S.b0, a1 = S.a1, a2 = S.a2, a = S.a; let x1 = S.x1, x2 = S.x2, y1 = S.y1, y2 = S.y2, en = S.en, eg = S.eg;
+    for (let i = p; i < e; i++) { if ((i & 255) === 0) eg = 0.55 + 0.45 * R(); en += (eg - en) * 0.004; const x = R() * 2 - 1, y = b0 * (x - x2) - a1 * y1 - a2 * y2; x2 = x1; x1 = x; y2 = y1; y1 = y; d[i] += y * a * en; }
+    S.x1 = x1; S.x2 = x2; S.y1 = y1; S.y2 = y2; S.en = en; S.eg = eg;
+  }
+  function kSqueal(S, p, e) {   // (and its squeal, wandering in pitch)
+    const d = S.d, R = S.R; let f = S.f, fg = S.fg, ph = S.ph;
+    for (let i = p; i < e; i++) { if ((i & 127) === 0) fg = clamp(fg + (R() - 0.5) * 90, 2200, 2900); f += (fg - f) * 0.01; ph += 2 * Math.PI * f / DS_SR; d[i] += Math.sin(ph) * 0.05; }
+    S.f = f; S.fg = fg; S.ph = ph;
+  }
+  function dFireBuf(R) {   // a car on fire: the roar (dark noise swelling and ebbing) and the crackle (many small snaps, a few louder pops)
+    return dLoop(3.2, function* (d) {
+      const n = d.length;
+      yield* dRun({ d, R, k1: 1 - Math.exp(-2 * Math.PI * 260 / DS_SR), l1: 0, l2: 0, en: 0.5, eg: 0.5 }, kRoar, 0, n, 0.5);
+      for (let k = 0, nT = Math.round(38 * n / DS_SR); k < nT; k++) yield* dNoise(R, d, Math.floor(R() * n), 1500 + R() * 4500, 1.2, 0.08 + 0.5 * Math.pow(R(), 3), 0.002 + 0.004 * R(), 160, 1);
+      for (let k = 0, nP = Math.round(3 * n / DS_SR); k < nP; k++) { const i = Math.floor(R() * n); yield* dNoise(R, d, i, 500 + R() * 500, 1, 0.5 + 0.4 * R(), 0.012, 600, 2); yield* dThump(d, i, 150, 80, 0.25, 0.03, 900); }
     });
   }
-  function dPop(k) {   // an exhaust's bang (overrun, anti-lag, a gear change)
+  function kRoar(S, p, e) {   // (dFireBuf's roar: dark noise, swelling and ebbing)
+    const d = S.d, R = S.R, k1 = S.k1; let l1 = S.l1, l2 = S.l2, en = S.en, eg = S.eg;
+    for (let i = p; i < e; i++) { if ((i & 511) === 0) eg = 0.25 + 0.75 * R(); en += (eg - en) * 0.002; l1 += (R() * 2 - 1 - l1) * k1; l2 += (l1 - l2) * k1; d[i] += l2 * 2.2 * en; }
+    S.l1 = l1; S.l2 = l2; S.en = en; S.eg = eg;
+  }
+  function* dPop(R, k) {   // an exhaust's bang (overrun, anti-lag, a gear change)
     const d = new Float32Array(Math.round(0.14 * DS_SR));
-    dThump(d, 0, 140 - 20 * k, 60, 0.9, 0.035, d.length); dNoise(d, 0, 2300 + 700 * k, 0.6, 1, 0.009 + 0.003 * k, d.length, 1); dNoise(d, 0, 700, 0.9, 0.5, 0.02, d.length, 2);
-    return dOut(d);
+    yield* dThump(d, 0, 140 - 20 * k, 60, 0.9, 0.035, d.length); yield* dNoise(R, d, 0, 2300 + 700 * k, 0.6, 1, 0.009 + 0.003 * k, d.length, 1); yield* dNoise(R, d, 0, 700, 0.9, 0.5, 0.02, d.length, 2);
+    return yield* dOut(d);
   }
-  function dBov() {   // a turbo's blow-off valve: a hiss of air, fluttering as it opens
+  function* dBov(R) {   // a turbo's blow-off valve: a hiss of air, fluttering as it opens
     const d = new Float32Array(Math.round(0.5 * DS_SR));
-    dNoise(d, 0, 3300, 0.6, 1, 0.13, d.length, Math.round(0.012 * DS_SR)); dNoise(d, 0, 1300, 0.8, 0.45, 0.09, d.length, Math.round(0.01 * DS_SR));
-    for (let i = 0; i < d.length; i++) { const u = i / DS_SR; d[i] *= 1 - 0.35 * Math.max(0, 1 - u / 0.25) * (0.5 + 0.5 * Math.sin(2 * Math.PI * 23 * u)); }
-    return dOut(d);
+    yield* dNoise(R, d, 0, 3300, 0.6, 1, 0.13, d.length, Math.round(0.012 * DS_SR)); yield* dNoise(R, d, 0, 1300, 0.8, 0.45, 0.09, d.length, Math.round(0.01 * DS_SR));
+    yield* dRun({ d }, kFlutter, 0, d.length, 1);
+    return yield* dOut(d);
   }
-  function dAir(long) {   // a truck's air brakes: the short hiss as they let off, the long one at a stop
+  function kFlutter(S, p, e) { const d = S.d; for (let i = p; i < e; i++) { const u = i / DS_SR; d[i] *= 1 - 0.35 * Math.max(0, 1 - u / 0.25) * (0.5 + 0.5 * Math.sin(2 * Math.PI * 23 * u)); } }   // (dBov's flutter)
+  function* dAir(R, long) {   // a truck's air brakes: the short hiss as they let off, the long one at a stop
     const d = new Float32Array(Math.round((long ? 1.2 : 0.45) * DS_SR));
-    dNoise(d, 0, 4800, 0.7, 1, long ? 0.42 : 0.12, d.length, 40); dNoise(d, 0, 2600, 1, 0.45, long ? 0.3 : 0.1, d.length, 40); dPart(d, 0, 5200, 0.05, long ? 0.35 : 0.1);
-    return dOut(d);
+    yield* dNoise(R, d, 0, 4800, 0.7, 1, long ? 0.42 : 0.12, d.length, 40); yield* dNoise(R, d, 0, 2600, 1, 0.45, long ? 0.3 : 0.1, d.length, 40); yield* dPart(d, 0, 5200, 0.05, long ? 0.35 : 0.1);
+    return yield* dOut(d);
   }
-  const D_MAKE = { glass: dGlass, wheel: dWheel, crunch: dCrunch, scrape: dScrapeBuf, fire: dFireBuf, bov: dBov, air0: () => dAir(false), air1: () => dAir(true), pop0: () => dPop(0), pop1: () => dPop(1), pop2: () => dPop(2) };
-  // the buffers are made in the race's first frames, a few milliseconds a frame (the exhaust's small ones first: a lift can come at once;
-  // then what breaks most often); one wanted before its turn is made at once
+  const D_MAKE = { glass: dGlass, wheel: dWheel, crunch: dCrunch, scrape: dScrapeBuf, fire: dFireBuf, bov: dBov, air0: (R) => dAir(R, false), air1: (R) => dAir(R, true), pop0: (R) => dPop(R, 0), pop1: (R) => dPop(R, 1), pop2: (R) => dPop(R, 2) };
+  // the order prep makes them in (the exhaust's small ones first: a lift can come at once; then what breaks most often)
   const D_ORDER = ['pop0', 'pop1', 'pop2', 'bov', 'air0', 'air1', 'clangp1', 'clangm1', 'glass', 'clangm2', 'clangp0', 'wheel', 'crunch', 'fire', 'scrape', 'clangm0', 'clangp2', 'clangc0', 'clangc1', 'clangc2'];
-  let dPre = 0;
-  function dPrep(ms) { const t0 = performance.now(); while (dPre < D_ORDER.length && performance.now() - t0 < ms) dBuf(D_ORDER[dPre++]); }
-  function dBuf(name) {   // a one-shot's or a loop's buffer, made the first time it plays (clang<m|p|c><0..2>: a panel's, by material and size)
-    if (dBufs[name]) return dBufs[name];
-    const m = /^clang([mpc])([0-2])$/.exec(name);
-    return (dBufs[name] = m ? dClang(m[1], +m[2]) : D_MAKE[name]());
+  function dMake(name) {   // name's maker (clang<m|p|c><0..2>: a panel's, by material and size), its random numbers seeded by the name
+    let h = 0x5fd1e7; for (let i = 0; i < name.length; i++) h = Math.imul(h ^ name.charCodeAt(i), 0x9e3779b1);
+    const R = Core.rng(h >>> 0), m = /^clang([mpc])([0-2])$/.exec(name);
+    return m ? dClang(R, m[1], +m[2]) : D_MAKE[name](R);
   }
+  const dBuf = (name) => made('d:' + name, () => dMake(name));   // a one-shot's or a loop's buffer (made now if prep has not made it yet)
   const dBurning = (c) => c.dmg >= 0.9 || (!!c.lost && (c.lost.hood || c.lost.cover) && c.dmg >= 0.75);
   function dSnap(c, t) {   // what a car is like now (its first frame, or after a repair: nothing to tell)
     const L = {}, W = c.wreck; let n = 0; if (c.lost) for (const k in c.lost) { L[k] = 1; n++; }
@@ -958,50 +1024,77 @@ const Sfx = (function () {
     const now = ctx.currentTime;
     for (let i = dLive.length - 1; i >= 0; i--) if (dLive[i] <= now) dLive.splice(i, 1);
     if (dLive.length >= DS_MAX) { dN.dropped++; return false; }
-    const b = dBuf(name), s = ctx.createBufferSource(), g = ctx.createGain(), pn = mkPan(clamp(num(pan, 0), -1, 1)), t = now + (delay || 0);
+    const b = dBuf(name); if (!b) return false;
+    const s = ctx.createBufferSource(), g = ctx.createGain(), pn = mkPan(clamp(num(pan, 0), -1, 1)), t = now + (delay || 0);
     s.buffer = b; s.playbackRate.value = rate; g.gain.value = Math.min(1, vol); s.connect(g); g.connect(pn); pn.connect(bus); s.start(t);
     dLive.push(t + b.duration / rate);
     return true;
   }
   const D_VOL = { clang: 0.42, glass: 0.36, wheel: 0.55, crunch: 0.75 };
+  // one frame's one-shots (Q: [buffer, gain, pan, rate, delay, kind, events, label]): a buffer at most twice, the loudest and then the
+  // rest as one, 10-40 ms later (not one smeared, doubled copy: the gains summed as unrelated noises sum, the root of the squares, and no
+  // louder than the first); every kind's first play before the other first plays, those before the seconds, the loudest first within
+  // each (a pile-up's glass and panels heard, not eight crunches); DS_MAX drops the rest
+  function dPlays(Q) {
+    const G = new Map(), L = [], first = {};
+    for (const q of Q) { const g = G.get(q[0]); if (g) g.push(q); else G.set(q[0], [q]); }
+    for (const g of G.values()) {
+      g.sort((a, b) => b[1] - a[1]); L.push({ q: g[0], r: 0 });
+      if (g.length < 2) continue;
+      let e2 = 0, ev = 0; for (let i = 1; i < g.length; i++) { e2 += g[i][1] * g[i][1]; ev += g[i][6]; }
+      const A = g[0], B = g[1];
+      L.push({ q: [B[0], Math.min(A[1], Math.sqrt(e2)), B[2], B[3], Math.max(B[4], A[4] + 0.01 + 0.03 * KR()), B[5], ev, B[7]], r: 2 });
+      dN.merged += g.length - 2;
+    }
+    L.sort((a, b) => b.q[1] - a.q[1]);
+    for (const x of L) if (!x.r) { if (first[x.q[5]]) x.r = 1; else first[x.q[5]] = 1; }
+    L.sort((a, b) => a.r - b.r || b.q[1] - a.q[1]);
+    const F = dN.frame = { events: 0, plays: {} };
+    for (const { q } of L) {
+      F.events += q[6];
+      if (!dPlay(q[0], q[1], q[2], q[3], q[4])) continue;
+      F.plays[q[0]] = (F.plays[q[0]] || 0) + 1; dN[q[5]] += q[6];
+      if (q[7]) { dLast.push(q[7]); if (dLast.length > 12) dLast.shift(); }
+    }
+  }
   // a loop's voice (fire: the crackle; scrape: a hub's grinding, beating with the hub's turn through am)
   function dLoopVoice(name) {
-    const s = ctx.createBufferSource(), g = ctx.createGain(), pn = mkPan(0); s.buffer = dBuf(name); s.loop = true; s.playbackRate.value = 0.9 + 0.2 * KR(); g.gain.value = 0;
+    const b = dBuf(name); if (!b) return null;
+    const s = ctx.createBufferSource(), g = ctx.createGain(), pn = mkPan(0); s.buffer = b; s.loop = true; s.playbackRate.value = 0.9 + 0.2 * KR(); g.gain.value = 0;
     s.connect(g); g.connect(pn); pn.connect(bus);
     let am = null, amg = null;
     if (name === 'scrape') { am = ctx.createOscillator(); am.type = 'sine'; am.frequency.value = 8; amg = ctx.createGain(); amg.gain.value = 0; am.connect(amg); amg.connect(g.gain); am.start(); }
-    s.start(ctx.currentTime, KR() * s.buffer.duration * 0.9); return { s, g, pn, am, amg, car: null, keep: false };
+    s.start(ctx.currentTime, KR() * b.duration * 0.9); return { s, g, pn, am, amg, car: null, keep: false };
   }
   // the loops' pool: the loudest cars (C: [car, gain, pan, extra]) each keep their voice while they stay among them; the rest fall silent
   function dPool(V, C, name, apply) {
     C.sort((a, b) => b[1] - a[1]); if (C.length > V.length) C.length = V.length;
     for (const v of V) if (v) v.keep = false;
     for (const e of C) { const v = V.find(v => v && v.car === e[0] && !v.keep); if (v) { v.keep = true; e[4] = v; } }
-    for (const e of C) if (!e[4]) { let j = V.findIndex(v => v && !v.keep); if (j < 0) j = V.indexOf(null); if (j < 0) continue; if (!V[j]) V[j] = dLoopVoice(name); V[j].keep = true; V[j].car = e[0]; e[4] = V[j]; }
+    for (const e of C) if (!e[4]) { let j = V.findIndex(v => v && !v.keep); if (j < 0) j = V.indexOf(null); if (j < 0) continue; if (!V[j]) V[j] = dLoopVoice(name); if (!V[j]) continue; V[j].keep = true; V[j].car = e[0]; e[4] = V[j]; }
     for (const v of V) if (v && !v.keep && v.car) { set(v.g.gain, 0, 0.12); if (v.amg) set(v.amg.gain, 0, 0.1); v.car = null; }
     for (const e of C) if (e[4]) { set(e[4].g.gain, e[1], 0.1); if (e[4].pn.pan) set(e[4].pn.pan, e[2], 0.1); apply(e[4], e); }
   }
   function dStep(race, P) {
     const t = Number.isFinite(race.time) ? race.time : ctx.currentTime, cam = typeof Render !== 'undefined' ? Render.camera : null;
-    if (enabled && dPre < D_ORDER.length) dPrep(2);
     dEv.length = 0; dFireC.length = 0; dScrC.length = 0;
     dScan(race.cars, t); if (race.pol && race.pol.cars) dScan(race.pol.cars, t);
-    // the one-shots, the loudest first
-    for (const e of dEv) { const w = dWhere(e[0], P, cam, D_R); e[5] = w; e[6] = w ? w[0] * D_VOL[e[1]] : 0; }
-    if (dEv.length > 1) dEv.sort((a, b) => b[6] - a[6]);
-    for (const [c, k, part, m, cnt, w, v] of dEv) {
+    // the one-shots: each event's play (and a second for several panels or wheels at once), by its distance and side; dPlays
+    const Q = dQ; Q.length = 0;
+    for (const [c, k, part, m, cnt] of dEv) {
+      const w = dWhere(c, P, cam, D_R), v = w ? w[0] * D_VOL[k] : 0;
       if (!w || v < 0.002) continue;
       dN.seen++; if (!enabled || !running) continue;
-      let ok;
+      const lab = k + ':' + (c.isPlayer ? 'player' : c.name || c.id) + (part ? ':' + part : '');
       if (k === 'clang') {
         const mat = /^bumper/.test(part) && (c.m.cat === 'klasika' || c.m.chrome) ? 'm' : D_MAT[part] || 'm', size = m < 3 ? 0 : m < 10 ? 1 : 2;   // (a classic's bumpers: chrome)
-        ok = dPlay('clang' + mat + size, v * (0.75 + 0.03 * Math.min(14, m)), w[1], 0.9 + 0.2 * KR(), 0);
-        if (ok && cnt >= 3) dPlay('clang' + (KR() < 0.6 ? 'm' : 'p') + 1, v * 0.6, clamp(w[1] + (KR() - 0.5) * 0.3, -0.9, 0.9), 0.95 + 0.25 * KR(), 0.08 + 0.1 * KR());   // (several at once)
-      } else if (k === 'glass') ok = dPlay('glass', v * Math.min(1.3, 0.85 + 0.15 * cnt), w[1], 0.9 + 0.25 * KR(), 0.01);
-      else if (k === 'wheel') { ok = dPlay('wheel', v, w[1], 0.92 + 0.16 * KR(), 0); if (ok && cnt >= 2) dPlay('wheel', v * 0.8, clamp(w[1] + 0.2, -0.9, 0.9), 1.05 + 0.15 * KR(), 0.12); }
-      else ok = dPlay('crunch', v, w[1], 0.95 + 0.1 * KR(), 0);
-      if (ok) { dN[k]++; dLast.push(k + ':' + (c.isPlayer ? 'player' : c.name || c.id) + (part ? ':' + part : '')); if (dLast.length > 12) dLast.shift(); }
+        Q.push(['clang' + mat + size, v * (0.75 + 0.03 * Math.min(14, m)), w[1], 0.9 + 0.2 * KR(), 0, k, 1, lab]);
+        if (cnt >= 3) Q.push(['clang' + (KR() < 0.6 ? 'm' : 'p') + 1, v * 0.6, clamp(w[1] + (KR() - 0.5) * 0.3, -0.9, 0.9), 0.95 + 0.25 * KR(), 0.08 + 0.1 * KR(), k, 0, '']);   // (several at once)
+      } else if (k === 'glass') Q.push(['glass', v * Math.min(1.3, 0.85 + 0.15 * cnt), w[1], 0.9 + 0.25 * KR(), 0.01, k, 1, lab]);
+      else if (k === 'wheel') { Q.push(['wheel', v, w[1], 0.92 + 0.16 * KR(), 0, k, 1, lab]); if (cnt >= 2) Q.push(['wheel', v * 0.8, clamp(w[1] + 0.2, -0.9, 0.9), 1.05 + 0.15 * KR(), 0.12, k, 0, '']); }
+      else Q.push(['crunch', v, w[1], 0.95 + 0.1 * KR(), 0, k, 1, lab]);
     }
+    if (Q.length) dPlays(Q);
     if (!enabled) return;
     // the loops: fire (fading in, and out at the end of its 20 s), the hubs (louder with the speed, on a hard surface, two wheels gone)
     const F = [];
@@ -1016,14 +1109,58 @@ const Sfx = (function () {
     if (G.length || dScrV.some(v => v && v.car)) dPool(dScrV, G, 'scrape', (v, e) => { const c = e[0], f = c.speed / (2 * Math.PI * (c.m.rw || 0.32)); set(v.am.frequency, clamp(f, 0.5, 60), 0.1); set(v.amg.gain, e[1] * 0.5, 0.1); set(v.s.playbackRate, 0.75 + 0.5 * clamp(c.speed / 35, 0, 1), 0.1); });
   }
 
+  /* ---- FLEET: prep, what is made ahead so that no frame waits for it: the kit voices' noise, every preset's two waves' harmonics, the
+     one-shots and the loops (jobs, slice). In the menus a slice each time the browser is idle (requestIdleCallback, else a timer; up to
+     PREP_IDLE ms); in a race what the frame's sound has left of PREP_FRAME ms (update; at most PREP_RACE, none after a frame that made
+     voices and waves, none while the Pikes Peak atmosphere is being made), the waves of the race's presets first (the player's own and the
+     nearest rivals' are made when first heard), and the waves of presets no longer in the race and on no voice let go (each is ~0.6 MB in
+     the browser). Nothing with the sound off ---- */
+  const PREP_IDLE = 3, PREP_RACE = 1.5, PREP_FRAME = 2.5;
+  let prepQ = null, waveQ = [], idleT = 0;
+  const prepRaces = new WeakSet();   // (the races already seen: raceKinds once each; not kept alive by it)
+  const prepS = { slices: 0, ms: 0, max: 0 };   // (Sfx.levels: how it went)
+  function prepInit() {
+    prepQ = [['noise', () => kitNoiseGen(ctx)]];
+    for (const kind in KITS) if (!KITS[kind].ev) for (const off of [false, true]) prepQ.push(['spec:' + wkey(kind, off), specJob(kind, off)]);
+    for (const n of D_ORDER) prepQ.push(['d:' + n, () => dMake(n)]);
+  }
+  const prepLeft = () => !prepQ || prepQ.length > 0 || waveQ.length > 0;
+  function prepRun(ms) {   // the next slices of what is left, for about ms; true when all of it is made
+    if (!prepQ) prepInit();
+    const t0 = performance.now(), until = t0 + ms;
+    while (waveQ.length || prepQ.length) {
+      if (waveQ.length) { const [kind, off] = waveQ[0]; if (!slice('spec:' + wkey(kind, off), specJob(kind, off), until) || performance.now() >= until) break; kitWave(ctx, kind, off); waveQ.shift(); }
+      else { if (!slice(prepQ[0][0], prepQ[0][1], until)) break; prepQ.shift(); }
+      if (performance.now() >= until) break;
+    }
+    const t = performance.now() - t0; prepS.slices++; prepS.ms += t; if (t > prepS.max) prepS.max = t;
+    return !prepLeft();
+  }
+  function idleKick() {   // the menus (no race sounds running): the next slice when the browser is idle
+    if (idleT || !ctx || !enabled || running || !prepLeft()) return;
+    const tick = (dl) => { idleT = 0; if (!ctx || !enabled || running) return;
+      if (!prepRun(dl && dl.timeRemaining ? clamp(dl.timeRemaining() - 1.5, 1, PREP_IDLE) : PREP_IDLE)) idleKick(); };
+    if (typeof window.requestIdleCallback === 'function') idleT = window.requestIdleCallback(tick, { timeout: 400 });
+    else if (typeof window.setTimeout === 'function') idleT = window.setTimeout(tick, 30);
+  }
+  function raceKinds(race, P) {   // a new race: its presets' waves to be made first (the player's first); the other presets' waves let go
+    const want = [], add = (M) => { const k = M && M.sndP && M.sndP.kind; if (k && KITS[k] && !KITS[k].ev && !want.includes(k)) want.push(k); };
+    add(P && P.m); for (const c of race.cars || []) add(c && c.m);
+    const W = kitWaves.get(ctx);
+    if (W) for (const key of Object.keys(W)) { const k = key.split('|')[0]; if (!want.includes(k) && ![kitPl, ...kitAI].some(V => V && V.kind === k)) delete W[key]; }
+    waveQ = []; for (const k of want) for (const off of [false, true]) waveQ.push([k, off]);
+  }
+
   function resume() {
     if (!ctx && !create()) return;
     if (ctx.state !== 'running') { try { ctx.resume(); } catch (_) { } }
+    idleKick();
   }
-  function setEnabled(v) { enabled = !!v; if (master) master.gain.setTargetAtTime(enabled ? volume : 0, ctx.currentTime, 0.05); }
+  function setEnabled(v) { enabled = !!v; if (master) master.gain.setTargetAtTime(enabled ? volume : 0, ctx.currentTime, 0.05); idleKick(); }
   function setRunning(v) { // race sounds audible?
     running = !!v;
     if (bus) bus.gain.setTargetAtTime(running ? 1 : 0, ctx.currentTime, running ? 0.08 : 0.03);
+    idleKick();
   }
   function suspend() { if (ctx && ctx.state === 'running') { try { ctx.suspend(); } catch (_) { } } }
 
@@ -1033,8 +1170,9 @@ const Sfx = (function () {
   // per-frame update
   function update(race, player, view, revInput) {
     if (!ctx || ctx.state !== 'running' || !player) return;
-    const tNow = ctx.currentTime, dt = clamp(tNow - lastT, 0, 0.1); lastT = tNow;
+    const tNow = ctx.currentTime, dt = clamp(tNow - lastT, 0, 0.1), tU = performance.now(); lastT = tNow;
     const M = player.m;
+    if (race && !prepRaces.has(race)) { prepRaces.add(race); raceKinds(race, player); }   // (a new race: its presets' waves made first, prep)
     // player engine (a registered vehicle, model.sndP: its preset's own voice, kitPlayer; the 11 others as always)
     if (M.sndP) kitPlayer(player, M, revInput, dt);
     else {
@@ -1080,6 +1218,8 @@ const Sfx = (function () {
       }
       if (kw.length || kitAI[0] || kitAI[1]) kitRivals(kw, dt);
       dStep(race, player);
+      const left = PREP_FRAME - (performance.now() - tU);   // (prep: what is still to be made ahead, in what is left of the frame's budget)
+      if (enabled && running && left > 0.3 && prepLeft() && !(atmo && (atmo.gen || (atmo.x && atmo.x.gen)))) prepRun(Math.min(PREP_RACE, left));
     }
     // tyres
     const spd = player.speed;
@@ -1249,9 +1389,10 @@ const Sfx = (function () {
   }
 
   const levels = () => ctx ? { stands: stands.lev, standsGain: stands.out.gain.value, tunnel: tun.send.gain.value, pk: atmo && atmo.x ? { ready: !atmo.gen && !atmo.x.gen, crunch: atmo.x.cr.map(c => +c.g.gain.value.toFixed(4)), slap: atmo.x.sG.gain.value, far: atmo.x.fG.gain.value, gust: atmo.x.wo.gain.value, wind: atmo.wo.gain.value, crowd: [atmo.cL.gain.value, atmo.cR.gain.value], cheer: atmo.p7.L.map(l => l.g.gain.value), cheerEv: [atmo.p7.nH, atmo.p7.nW] } : null,   // (tests: the crowd's and the tunnel's levels now,
-    engine: plM && kitPl && kitPl.tg ? { kind: 'kit', preset: kitPl.kind, wave: 'custom', f: kitPl.tg.ff, gain: kitPl.tg.gain, lope: kitPl.tg.lope, lp: kitPl.tg.lp, fs: kitPl.tg.fs.slice(), boost: kitPl.tg.boost || 0 }
+    engine: plM && kitPl && kitPl.tg ? { kind: 'kit', preset: kitPl.kind, wave: 'custom', f: kitPl.tg.ff, gain: kitPl.tg.gain, lope: kitPl.tg.lope, lp: kitPl.tg.lp, fs: kitPl.tg.fs.slice(), boost: kitPl.tg.boost || 0, shots: Object.assign({}, kitPl.n) }
       : { kind: eng.kind, preset: eng.kind, wave: eng.o1.type, f: eng.o1.frequency.value, gain: eng.out.gain.value, lope: eng.lopeG.gain.value, fs: [eng.o1, eng.o2, eng.o3, eng.lope].map(o => o.frequency.value) },   // Pikes Peak's sounds, the player's engine note: preset its
-    ai: aiSeen.map(a => a && { id: a[0], preset: a[1] }), dest: Object.assign({ live: dLive.length, fire: dFireV.filter(v => v && v.car).length, scrape: dScrV.filter(v => v && v.car).length, last: dLast.slice() }, dN) } : null;   // kind / model.sndP.kind; ai: the two nearest rivals'; dest: what broke, heard)
+    ai: aiSeen.map(a => a && { id: a[0], preset: a[1] }), dest: Object.assign({ live: dLive.filter(t => t > ctx.currentTime).length, fire: dFireV.filter(v => v && v.car).length, scrape: dScrV.filter(v => v && v.car).length, last: dLast.slice() }, dN),   // kind / model.sndP.kind, a kit
+    prep: { left: prepQ ? prepQ.length + waveQ.length : -1, slices: prepS.slices, ms: +prepS.ms.toFixed(1), max: +prepS.max.toFixed(2) } } : null;   // player's one-shots; ai: the two nearest rivals'; dest: what broke, heard; prep: what is still to be made ahead)
   const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, shiftPop, knock, wrench, silence, levels, siren, carHorn, thud, pop, probe, KINDS: Object.keys(KITS), get ready() { return !!ctx && ctx.state === 'running'; } };
   window.Sfx = api;
   return api;

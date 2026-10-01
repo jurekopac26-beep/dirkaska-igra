@@ -1,7 +1,8 @@
 // The crowd's sound and a tunnel's ring (Monaco, the player on autopilot, the sound on): every circuit's world knows where its crowds are
 // (World.build: crowdPts, from the spectators and the grandstands); the crowd louder near them; in the tunnel under the hotel the engine
 // rings off its walls (a short reverb), outside it not. The fleet's sounds: every vehicle's engine preset (Core.SND_KINDS, Sfx.probe
-// rendered offline: plausible and every two apart) and what breaks (a rival wrecked: clang, glass, a wheel, the crunch, the fire).
+// rendered offline: plausible and every two apart), what breaks (a rival wrecked: clang, glass, a wheel, the crunch, the fire; a pile-up),
+// a turbo's blow-off and anti-lag (only when the throttle shuts), and what is made ahead in slices (prep).
 //   node tests/browser/sound.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -99,6 +100,37 @@ try {
     const dd = (k) => R2.d1[k] - R2.d0[k];
     T.check('the nearest rival wrecked: its panels\' clang, the glass, a wheel off and the crunch heard, its fire crackling', dd('clang') >= 1 && dd('glass') >= 1 && dd('wheel') >= 1 && dd('crunch') >= 1 && R2.d1.fire >= 1,
       `at ${R2.dist.toFixed(1)} m, ${R2.parts} parts off, wheels ${R2.wl}: ` + JSON.stringify(R2.d1));
+
+    // 6. (paused, the sound's own frames on the audio clock) ZMAJ's turbo (1: anti-lag): easing off to hold a speed (1 -> 0.45, as the AI
+    //    does) blows nothing off and bangs nothing; the throttle shut: one blow-off and the anti-lag's bangs, which stop when it opens
+    //    again; a gear change: its chuff and its bang, a lift right after it no second blow-off. A pile-up (six rivals wrecked in one
+    //    frame): a sound at most twice in that frame, every kind heard (not eight crunches), at most 8 playing. What is made ahead (prep):
+    //    all of it made, in slices
+    const R3 = await page.evaluate(async () => {
+      const g = window.__game, P = g.race.player, M = P.m, keep = { rpm: P.rpm, inThr: P.inThr, shiftT: P.shiftT, locked: P.locked };   // (P.speed: a getter)
+      Sfx.setRunning(true);
+      const sh = () => Object.assign({}, Sfx.levels().engine.shots);
+      const hold = async (thr, secs) => { const t0 = performance.now(); do { Object.assign(P, { inThr: thr, rpm: M.redline * 0.8, shiftT: 0, locked: false }); Sfx.update(g.race, P, null, thr); await new Promise(r => setTimeout(r, 16)); } while (performance.now() - t0 < secs * 1000); return sh(); };
+      const r = { a: await hold(1, 1.5) }; r.half = await hold(0.45, 0.6); r.b = await hold(1, 1.2); r.shut = await hold(0, 0.6); r.open0 = await hold(1, 0.06); r.open = await hold(1, 0.5);
+      r.c = await hold(1, 1.5); Sfx.shiftPop(); r.shift = sh(); r.after = await hold(0, 0.15);
+      Object.assign(P, keep);
+      // the pile-up: once what was playing has ended
+      for (let i = 0; i < 80 && Sfx.levels().dest.live > 0; i++) await new Promise(res => setTimeout(res, 50));
+      const near = g.race.cars.filter(c => c !== P && !(c.dmg >= 0.98)).sort((a, b) => Math.hypot(a.x - P.x, a.z - P.z) - Math.hypot(b.x - P.x, b.z - P.z)).slice(0, 6);
+      const d0 = Sfx.levels().dest; for (const c of near) { c.dmgMode = 2; Core.wreckCar(c); }
+      Sfx.update(g.race, P, null, 0); const d1 = Sfx.levels().dest;
+      Sfx.setRunning(false);
+      for (let i = 0; i < 200 && Sfx.levels().prep.left !== 0; i++) await new Promise(res => setTimeout(res, 50));   // (paused: the idle time's slices)
+      return { r, d0, d1, dist: near.map(c => Math.round(Math.hypot(c.x - P.x, c.z - P.z))), prep: Sfx.levels().prep };
+    });
+    const z = R3.r, dz = (a, b, k) => z[b][k] - z[a][k];
+    T.check('ZMAJ\'s turbo: easing off to 0.45 no blow-off, no bang; shut: one blow-off and bangs, which stop once it opens; a gear change: chuff and bang, then no second blow-off',
+      dz('a', 'half', 'bov') === 0 && dz('a', 'half', 'pop') === 0 && dz('b', 'shut', 'bov') === 1 && dz('b', 'shut', 'pop') >= 1 && dz('open0', 'open', 'pop') === 0 && dz('open0', 'open', 'bov') === 0 &&
+      dz('c', 'shift', 'bov') === 1 && dz('c', 'shift', 'pop') === 1 && dz('shift', 'after', 'bov') === 0, JSON.stringify(z));
+    const F = R3.d1.frame || { plays: {} }, most = Math.max(0, ...Object.values(F.plays)), heard = (k) => R3.d1[k] > R3.d0[k];
+    T.check('a pile-up (six rivals wrecked at once): a sound at most twice in that frame, panels, glass, wheels and crunch all heard, at most 8 playing',
+      most <= 2 && ['clang', 'glass', 'wheel', 'crunch'].every(heard) && R3.d1.live <= 8, `at ${R3.dist.join(', ')} m: ` + JSON.stringify(F) + ` live ${R3.d1.live}, merged +${R3.d1.merged - R3.d0.merged}, dropped +${R3.d1.dropped - R3.d0.dropped}`);
+    T.check('the sounds made ahead (prep): all of it, in slices', R3.prep.left === 0 && R3.prep.slices >= 10, JSON.stringify(R3.prep));
   }
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {
