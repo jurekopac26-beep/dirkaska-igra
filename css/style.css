@@ -630,6 +630,7 @@ body.pkfly #touch { visibility: hidden; }
   .car-cats, .car-strip { left: calc(10px + var(--sl)); right: calc(10px + var(--sr)); }
   .car-cats { top: calc(8px + var(--st)); }
   .car-strip { top: calc(48px + var(--st)); bottom: auto; }
+  #s-car .car-nav { top: max(16%, calc(126px + var(--st))); }   /* (the arrows below the strip on a short phone too) */
 }
 /* the career's garage by category */
 .garage .gcat { grid-column: 1 / -1; margin: 6px 2px 0; font: 700 italic 12px/1.2 var(--f-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--lcd); }
