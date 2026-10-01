@@ -8221,7 +8221,38 @@ const World = (function () {
       if (al < b.half + 14 && lat < 60) h = Math.min(h, lerp(h, b.y, sstep(60, 22, lat)) + Math.max(0, al - b.bw / 2) * 1.2);
     }
     if (i >= 0 && dd < 6) h = Math.min(h, hn - 0.3 + 0.12 * dd * dd);   // never above the road inside the barriers, only a gentle rise right behind them
+    if (VR.sg) h = vrStubH(x, z, h, i >= 0 ? dd : 999);   // the side roads: the ground levelled under them
     VRN.dd = i >= 0 ? dd : 999;
+    return h;
+  }
+  // the side roads (Track.stubs, def.sideRoads): VR.sg hashes them in 64 m cells. vrStubAt: the one whose corridor (its limit, and m metres
+  // more) holds (x, z), t from the junction to its end (the rail; a building at the end stays), else null. vrStubH: the ground levelled
+  // under one: its surface 0.15 m down across its width and 2.5 m more, back to the land 11 m out, along the whole part drawn and fading out
+  // 10 m past its end; only beyond the road's barrier line (the road's own levelling inside it)
+  const VRSP = { S: null, j: -1, f: 0, t: 0, u: 0, kx: 1, kz: 0 }, VRSQ = {}, VRSA = { S: null, t: 0, u: 0, hw: 0 };
+  function vrStubs() {
+    const g = VR.sg = new Map();
+    for (const S of T.stubs || []) { const b = S.bb;
+      for (let a = Math.floor((b[0] - 14) / 64); a <= Math.floor((b[2] + 14) / 64); a++) for (let c = Math.floor((b[1] - 14) / 64); c <= Math.floor((b[3] + 14) / 64); c++) { const k = a * 65536 + c; let L = g.get(k); if (!L) g.set(k, L = []); L.push(S); } }
+  }
+  function vrStubAt(x, z, m) {
+    const L = VR.sg && VR.sg.get(Math.floor(x / 64) * 65536 + Math.floor(z / 64)); if (!L) return null;
+    for (const S of L) { const b = S.bb; if (x < b[0] - m || x > b[2] + m || z < b[1] - m || z > b[3] + m) continue;
+      VRSP.S = null; if (!T._stubProj(S, x, z, VRSP)) continue;
+      const t = VRSP.t, hw = T.stubHw(S, t); if (t < 0 || t > (S.end === 2 ? S.L - 0.5 : S.Lend + 2) || Math.abs(VRSP.u) > hw + S.lim + m) continue;
+      VRSA.S = S; VRSA.t = t; VRSA.u = VRSP.u; VRSA.hw = hw; return VRSA; }
+    return null;
+  }
+  function vrStubH(x, z, h, dd) {
+    const L = VR.sg.get(Math.floor(x / 64) * 65536 + Math.floor(z / 64)); if (!L || dd < 0.5) return h;
+    for (const S of L) { const b = S.bb; if (x < b[0] - 8 || x > b[2] + 8 || z < b[1] - 8 || z > b[3] + 8) continue;
+      VRSP.S = null; if (!T._stubProj(S, x, z, VRSP)) continue;
+      const t = VRSP.t, au = Math.abs(VRSP.u), hw = T.stubHw(S, t), end = S.end === 2 ? S.L + 1 : S.Lend;
+      if (t < 0 || t > end + 10 || au > hw + 11) continue;
+      const f = sstep(hw + 11, hw + 2.5, au) * sstep(end + 10, end, t) * sstep(0.5, 3, dd); if (f <= 0) continue;
+      const q = au < hw + S.lim + 3 ? T.query(x, z, T.stubHint(S.k, t), VRSQ) : null, ys = q && q.k === S.k ? q.y : T.stubPt(S.k, t, VRSQ).y;   // (its surface; the profile out where the query gives the road's)
+      h = lerp(h, ys - 0.15, f);
+    }
     return h;
   }
   function vrGH(i, j) {   // terrain height at grid vertex (i, j), computed once
@@ -8432,12 +8463,95 @@ const World = (function () {
     x.putImageData(img, 0, 0); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4;
     return (vrGTex = t);
   }
+  // the side roads' boards (one canvas, 8 rows of 128 px): row 0 the closure board (CESTA ZAPRTA, red rim), the round no-entry sign and red and
+  // white stripes; row 1 the gate's plate (ZAPRTO) and the first street name; then two street names a row (white on blue, as in Kranjska Gora)
+  let vrA3Tex = null, vrA3Key = '';
+  function vrAtlas3(names) {
+    if (vrA3Tex && vrA3Key === names.join('|')) return vrA3Tex;
+    if (vrA3Tex) vrA3Tex.dispose(); vrA3Key = names.join('|');
+    const c = document.createElement('canvas'); c.width = 1024; c.height = 1024; const x = c.getContext('2d');
+    const txt = (s, cx, cy, px, col, w, wt) => { x.fillStyle = col; x.font = (wt || 900) + ' ' + px + 'px Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(s, cx, cy, w || 470); };
+    x.fillStyle = '#f4f3ee'; x.fillRect(0, 0, 512, 128); x.strokeStyle = '#c81e14'; x.lineWidth = 12; x.strokeRect(8, 8, 496, 112); txt('CESTA ZAPRTA', 256, 68, 62, '#141414', 450);
+    x.fillStyle = '#f4f3ee'; x.beginPath(); x.arc(576, 64, 60, 0, TAU); x.fill(); x.strokeStyle = '#c81e14'; x.lineWidth = 15; x.beginPath(); x.arc(576, 64, 52, 0, TAU); x.stroke();   // (prepovedan promet: no vehicles either way)
+    x.save(); x.beginPath(); x.rect(640, 0, 384, 128); x.clip(); x.fillStyle = '#f4f3ee'; x.fillRect(640, 0, 384, 128); x.fillStyle = '#d0201a';
+    for (let q = -2; q < 14; q++) { x.beginPath(); x.moveTo(640 + q * 64, 128); x.lineTo(640 + q * 64 + 64, 0); x.lineTo(640 + q * 64 + 96, 0); x.lineTo(640 + q * 64 + 32, 128); x.fill(); } x.restore();
+    x.fillStyle = '#c81e14'; x.fillRect(0, 128, 512, 128); x.strokeStyle = '#f4f3ee'; x.lineWidth = 8; x.strokeRect(10, 138, 492, 108); txt('ZAPRTO', 256, 194, 72, '#f4f3ee', 450);
+    names.forEach((n, k) => { const cell = k + 3, x0 = (cell % 2) * 512, y0 = Math.floor(cell / 2) * 128;
+      x.fillStyle = '#1d4f9a'; x.fillRect(x0, y0, 512, 128); x.strokeStyle = '#f4f3ee'; x.lineWidth = 7; x.strokeRect(x0 + 9, y0 + 9, 494, 110); txt(n, x0 + 256, y0 + 66, n.length > 18 ? 46 : 56, '#f4f3ee', 470, 800); });
+    const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (vrA3Tex = t);
+  }
+  // the side roads (Track.stubs; the streets, service roads and forest roads that meet Vršič): each drawn as a road that goes on (asphalt, or
+  // gravel on the forest roads) from a mouth flared out to the road's edge, a give-way line across it, white delineator posts along both its
+  // edges and at the corners of the open barrier, a row of cones across it just past the barrier line (the course goes straight on: the posts
+  // and the cones are knockable props), and at its end a guard rail across it with the closure board and the no-entry sign (a gate on the
+  // driveways and forest roads, nothing before a building it leads into), the road going on 30-40 m past the rail and fading into the ground;
+  // a street's name on a pole at its mouth. Ribbons in 110 m chunks (two materials), the rest in the scenery chunks. Returns the count
+  function vrStubBuild(K) {
+    const { scen, out, w, aMat, sMat, lMat, root, bannerQ, ban3, names } = K, Q = {}, F = {}, RS = rng(7671);
+    const SA = new Chunks(110, true), SG = new Chunks(110, true), SL = new Chunks(110);
+    const yAt = (x, z, S, t) => T.yAt(T.query(x, z, T.stubHint(S.k, t), Q));   // (the surface there, as the cars drive on it)
+    const white = [0.95, 0.95, 0.92], steel = [0.78, 0.8, 0.82], steelB = [0.56, 0.58, 0.6], postC = [0.48, 0.49, 0.52], yel = [0.93, 0.74, 0.1], red = [0.84, 0.13, 0.1], blk = [0.12, 0.12, 0.13];
+    let nPost = 0, nCone = 0;
+    for (const S of T.stubs || []) {
+      const k = S.k, side = S.side, paved = !S.grav, tEnd = S.end === 2 ? S.L + 0.5 : S.Lend, alt = T.hy[S.i0] + VR.D.base;
+      const P0 = T.stubPt(k, S.tb, {}), m0 = T.query(P0.x, P0.z, S.i0, {}), sinA = Math.max(0.3, Math.abs(P0.tx * m0.nx + P0.tz * m0.nz));   // (the angle it leaves the road at)
+      const t0 = Math.max(0, S.te - 2 - (T.stubHw(S, 0) + 0.7) * Math.sqrt(1 - sinA * sinA) / sinA);   // (from inside the road: the flared corners reach its edge)
+      // the surface: sections every 2 m, seven points across (the shoulders, the road in four), the mouth's points slid out along it onto the road's edge
+      const secs = [];
+      for (let t = t0; ; t += 2) { const tt = Math.min(t, tEnd), p = T.stubPt(k, tt, F), nx = -p.tz, nz = p.tx, hw = T.stubHw(S, tt), us = [-hw - 0.7, -hw, -hw / 2, 0, hw / 2, hw, hw + 0.7];
+        const fade = tEnd > S.L + 10 ? sstep(S.L + 6, tEnd, tt) : 0, sink = tEnd > S.L + 10 ? sstep(tEnd - 6, tEnd, tt) * 0.12 : 0;   // (the road on past the rail fades into the ground; one ending at a building does not)
+        secs.push({ t: tt, us, pts: us.map((u, j) => { let x = p.x + nx * u, z = p.z + nz * u;
+          for (let it = 0; it < 3; it++) { const q = T.query(x, z, S.i0, Q); if (q.deep) break; const e = w + 0.02 - Math.abs(q.d); if (e <= 0) break; x += p.tx * e / sinA; z += p.tz * e / sinA; }   // (onto the road's edge)
+          const edge = j === 0 || j === 6, y = yAt(x, z, S, tt) + (edge ? 0.03 : 0.055) - sink, gc = vrGCol(x, z), sh = 0.88 + 0.08 * RS();   // (over the road's sidewalk and kerb at the mouth: no flicker)
+          const c = edge ? gc : paved ? [0.86 * sh, 0.86 * sh, 0.88 * sh] : [0.66 * sh, 0.58 * sh, 0.48 * sh];
+          return [x, y, z, edge ? gc : [lerp(c[0], gc[0], fade), lerp(c[1], gc[1], fade), lerp(c[2], gc[2], fade)], (u + 4) / 8, tt / 8]; }) });
+        if (tt >= tEnd) break; }
+      for (let a = 0; a + 1 < secs.length; a++) { const A = secs[a].pts, B = secs[a + 1].pts, C = paved ? SA : SG;
+        for (let j = 0; j < 6; j++) { const p = A[j], q = A[j + 1], r = B[j + 1], s = B[j]; if (Math.hypot(p[0] - q[0], p[2] - q[2]) + Math.hypot(s[0] - r[0], s[2] - r[2]) < 0.05) continue;
+          C.get(p[0], p[2]).quadUp([p[0], p[1], p[2]], [q[0], q[1], q[2]], [r[0], r[1], r[2]], [s[0], s[1], s[2]], [p[3], q[3], r[3], s[3]], [[p[4], p[5]], [q[4], q[5]], [r[4], r[5]], [s[4], s[5]]]); } }
+      // the give-way line where it meets the road (paved ones): 50 cm dashes across it
+      if (paved) { const t = S.te + 1.2, p = T.stubPt(k, t, F), nx = -p.tz, nz = p.tx, hw = T.stubHw(S, t) - 0.3;
+        for (let u = -hw; u + 0.5 <= hw; u += 1) { const at = (uu, dt) => { const x = p.x + nx * uu + p.tx * dt, z = p.z + nz * uu + p.tz * dt; return [x, yAt(x, z, S, t) + 0.07, z]; };
+          SL.get(p.x, p.z).quadUp(at(u, -0.15), at(u + 0.5, -0.15), at(u + 0.5, 0.15), at(u, 0.15), [white, white, white, white]); } }
+      // delineator posts along both edges (fewer in the village) and at the corners of the open barrier; the cones across it
+      const pm = clamp(S.lim - 0.3, 0.2, 0.6), step = S.s < 1250 ? 15 : 11, pc = alt > 1450 ? 1 : 0;
+      const post = (x, z, yaw, h) => { const q = T.query(x, z, h, Q); if (!q.deep && Math.abs(q.d) < w + 0.6) return; out.props.push({ kind: 'post', x, z, yaw, col: pc, i: q.i }); nPost++; };   // (none on the road's asphalt; i: its hint)
+      for (let t = S.tb + 1; t <= S.L - 2; t += step) { const p = T.stubPt(k, t, F), hw = T.stubHw(S, t) + pm; for (const sd of [-1, 1]) post(p.x - p.tz * hw * sd, p.z + p.tx * hw * sd, p.h, T.stubHint(k, t)); }
+      { let a = -1, b = -1; for (let i = Math.max(0, S.i0 - 80); i <= Math.min(T.N - 1, S.i0 + 80); i++) { const bar = side > 0 ? T.br[i] : T.bl[i], x = T.px[i] + T.nx[i] * side * bar, z = T.pz[i] + T.nz[i] * side * bar;   // (its own stretch of open barrier)
+          VRSP.S = null; if (T._stubProj(S, x, z, VRSP) && VRSP.t > 0 && VRSP.t < S.L && Math.abs(VRSP.u) <= T.stubHw(S, VRSP.t) + S.lim) { if (a < 0) a = i; b = i; } }
+        for (const i of a >= 0 ? [a - 1, b + 1] : []) { const bar = (side > 0 ? T.br[i] : T.bl[i]) - 0.35, x = T.px[i] + T.nx[i] * side * bar, z = T.pz[i] + T.nz[i] * side * bar; post(x, z, T.hd[i], i); } }
+      for (const c of T.stubCones(k)) { out.props.push(c); nCone++; }
+      // the end: a guard rail across it with the closure board and the no-entry sign; a gate (a red and white boom) on the driveways and forest roads
+      if (S.end !== 2) { const p = T.stubPt(k, S.L, {}), nx = -p.tz, nz = p.tx, hc = S.hw + S.lim, g = scen.get(p.x, p.z), rot = p.h + Math.PI / 2;
+        const at = (u, dt, dy) => { const x = p.x + nx * u + p.tx * dt, z = p.z + nz * u + p.tz * dt; return [x, yAt(x, z, S, S.L) + dy, z]; };
+        if (S.end === 0) {
+          const n = Math.max(2, Math.ceil(hc * 2 / 2)); for (let c = 0; c < n; c++) { const u0 = -hc + c * 2 * hc / n, u1 = u0 + 2 * hc / n, a = at(u0, -0.25, 0.45), b = at(u1, -0.25, 0.45), cc = at(u1, -0.25, 0.8), d = at(u0, -0.25, 0.8), ins = at((u0 + u1) / 2, 2.5, 0.6), ino = at((u0 + u1) / 2, -3, 0.6);
+            g.quadO(a, b, cc, d, steel, ins); g.quadO(a, b, cc, d, steelB, ino); }   // (the bright face towards the car coming)
+          for (let u = -hc; u <= hc + 0.01; u += hc / Math.max(1, Math.round(hc / 1.6))) { const q = at(u, 0.05, -0.35); box(g, q[0], q[1], q[2], 0.13, 1.13, 0.13, p.h, postC, null, true); }
+          for (const u of [-hc * 0.55, hc * 0.55]) { const q = at(u, -0.32, 0.47); bannerQ(q[0], q[1], q[2], p.tx, p.tz, 1.5, 0.3, 7 / 8, 1, 0.625, 1, ban3); }   // (red and white stripes on the beam)
+          const q = at(0, 0.5, -0.2); cyl(g, q[0], q[1], q[2], 0.04, 2.45, 5, [0.62, 0.63, 0.66]);
+          bannerQ(q[0] - p.tx * 0.06, q[1] + 1.12, q[2] - p.tz * 0.06, p.tx, p.tz, 1.6, 0.4, 7 / 8, 1, 0, 0.5, ban3);   // CESTA ZAPRTA, the round sign above it
+          bannerQ(q[0] - p.tx * 0.06, q[1] + 1.6, q[2] - p.tz * 0.06, p.tx, p.tz, 0.62, 0.62, 7 / 8, 1, 0.5, 0.625, ban3);
+        } else {
+          for (const u of [-(S.hw + 0.25), S.hw + 0.25]) { const q = at(u, 0, -0.2); box(g, q[0], q[1], q[2], 0.16, 1.25, 0.16, rot, yel, blk); }
+          const m = Math.max(4, Math.round(S.hw * 2 / 0.6)); for (let c = 0; c < m; c++) { const u = -S.hw + (c + 0.5) * 2 * S.hw / m, q = at(u, 0, 0.88); box(g, q[0], q[1], q[2], 2 * S.hw / m + 0.005, 0.1, 0.1, rot, c % 2 ? white : red); }
+          const q = at(0, -0.08, 0.72); bannerQ(q[0], q[1], q[2], p.tx, p.tz, 0.9, 0.22, 6 / 8, 7 / 8, 0, 0.5, ban3);
+        }
+      }
+      // its name at its mouth (the streets): a blue plate on a pole at the right-hand corner going in
+      const ni = S.name ? names.indexOf(S.name.replace(/ c$/, ' cesta')) : -1;
+      if (ni >= 0) { const t = S.tb + 1.5, p = T.stubPt(k, t, F), u = T.stubHw(S, t) + S.lim + 0.5, x = p.x - p.tz * u, z = p.z + p.tx * u, y = vrGround(x, z), g = scen.get(x, z), cell = ni + 3;
+        cyl(g, x, y - 0.2, z, 0.04, 2.9, 5, [0.62, 0.63, 0.66]); bannerQ(x, y + 2.15, z, p.tx, p.tz, 1.4, 0.35, 1 - (Math.floor(cell / 2) + 1) / 8, 1 - Math.floor(cell / 2) / 8, (cell % 2) * 0.5, (cell % 2) * 0.5 + 0.5, ban3); }
+    }
+    SA.addTo(root, aMat, false, true); SG.addTo(root, sMat, false, true); SL.addTo(root, lMat, false, true);
+    return { n: (T.stubs || []).length, posts: nPost, cones: nCone };
+  }
   function buildVrsic(scene, tex, opts) {
     const R = rng(7611), N = T.N, w = T.w, dens = opts.density || 1, def = T.def, PI = Math.PI;
     const root = new THREE.Group(); scene.add(root);
     VRS = opts.season === 'autumn' || opts.season === 'winter' ? 'autumn' : 'summer';   // (summer: green meadows and leaves; autumn and winter: the autumn look, which winter's season code snows over)
     const out = { root, dyn: {}, groundH: vrGround, camFloor: vrGround, props: [], farClip: true, ownTex: [], season: VRS, paintFor: (s) => (s === 'autumn' || s === 'winter' ? 'autumn' : 'summer') };
-    vrPrep();
+    vrPrep(); vrStubs();
     const P = VR, iE = N - 1, sStart = T.startS, sFin = T.finishS, base = P.D.base;
     // the buildings (def.bld [x, z, length, width, angle, height (0: unknown), kind, name]; kind 0 house, 1 hotel, 2 chapel or church, 3 shed or garage,
     // 4 mountain hut): the ones clear of the road (the hairpins were widened) and of the lakes; the big hotel blocks cut down to a size that reads as one
@@ -8448,7 +8562,9 @@ const World = (function () {
       if (kind !== 4 && !name) { L = Math.min(L, 42); W = Math.min(W, 24); }
       if (L < 2.5 || W < 2.5) continue;
       const c = Math.cos(ang), s = Math.sin(ang), clear = () => { for (const [u, v] of [[0, 0], [-L / 2, -W / 2], [L / 2, -W / 2], [L / 2, W / 2], [-L / 2, W / 2]]) { const px = x + c * u - s * v, pz = z + s * u + c * v, n = vrNear(px, pz);
-        if ((n.i >= 0 && n.dd < 1.5) || vrWater(px, pz).e > -2) return false; } return true; };
+        if ((n.i >= 0 && n.dd < 1.5) || vrWater(px, pz).e > -2) return false; }
+        for (let a = -2; a <= 2; a++) for (let e = -2; e <= 2; e++) { const u = a * L / 4, v = e * W / 4; if (vrStubAt(x + c * u - s * v, z + s * u + c * v, 0.8)) return false; }   // (nor on a side road)
+        return true; };
       if (name && !clear()) { const i = T.nearestIdx(x, z), sd = (x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i] > 0 ? 1 : -1; for (let k = 0; k < 12 && !clear(); k++) { x += T.nx[i] * sd * 2; z += T.nz[i] * sd * 2; } }   // (a named one moves out, away from the road)
       if (clear()) blds.push({ x, z, L, W, ang, hgt, kind, name });
     }
@@ -8467,6 +8583,7 @@ const World = (function () {
     out.marks = {};   // (where the landmarks stand: the tests look for them)
     for (const b of blds) if (b.name) out.marks[b.name] = [b.x, b.z];
     exclPush(padP.x, padP.z, padP.r + 4);
+    for (const S of T.stubs || []) for (let t = 0, e = S.end === 2 ? S.L : S.Lend + 3; t <= e; t += 3) { const p = T.stubPt(S.k, t, {}); exclPush(p.x, p.z, T.stubHw(S, t) + S.lim + 1.2); }   // (nothing grows or stands on the side roads)
 
     /* ---- terrain tiles, the lakes ---- */
     let nFar = 0;
@@ -8516,8 +8633,14 @@ const World = (function () {
     const vProf = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i], e = wE(side > 0 ? 1 : 0, i);
       if (onBr[i]) return [[e + sw, -0.02], [bar - 0.45, -0.02], [bar + 0.58, -0.02], [bar + 0.62, -1.3], [bar + 0.68, -1.4]];
       const y = T.hy[i], gAt = (o) => { const q = side * o; return vrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - y; }, lift = (o, h) => [o, Math.max(h, gAt(o) + 0.05)];
+      if (T.gap && T.gap[side > 0 ? 1 : 0][i]) { const sf = (o) => { const q = side * o; return [o, T.yAt(T.query(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q, i, VRSQ)) - y - 0.03]; };   // a side road's mouth: no ditch, the verge at its surface
+        return [[e + sw, -0.02], sf(Math.max(e + sw + 0.6, bar - 0.7)), sf(bar + 0.45), sf(bar + 1.15), sf(bar + 1.9)]; }
       return [[e + sw, -0.02], lift(Math.max(e + sw + 0.6, bar - 0.7), -0.12), [bar + 0.45, Math.min(-0.42, gAt(bar + 0.45) - 0.25)], lift(bar + 1.15, -0.3), [bar + 1.9, gAt(bar + 1.9) + 0.03]]; };
     const vp = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vProf(i, side)); return a; });
+    // where a side road's mouth crosses the asphalt's edge (the edge line broken there: 2 m dashes)
+    const mouthE = [new Uint8Array(N), new Uint8Array(N)];
+    for (const S of T.stubs || []) for (let i = Math.max(0, S.i0 - 70); i <= Math.min(N - 1, S.i0 + 70); i++) { const o = S.side * (w - 0.4), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
+      VRSP.S = null; if (T._stubProj(S, x, z, VRSP) && VRSP.t >= 0 && Math.abs(VRSP.u) <= T.stubHw(S, VRSP.t) + 0.3) mouthE[S.side > 0 ? 1 : 0][i] = 1; }
     {
       const offs = [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8;
       const shade = (i, o) => { const rl = T.rl[i]; let k = 0.86 - 0.13 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; return [k, k, k * 1.02]; };
@@ -8538,7 +8661,8 @@ const World = (function () {
           else {
             for (let c = 0; c < offs.length - 1; c++) { const o0 = offs[c], o1 = offs[c + 1];
               gr.quadUp(Pt(i, o0, 0.02), Pt(i, o1, 0.02), Pt(j, o1, 0.02), Pt(j, o0, 0.02), [shade(i, o0), shade(i, o1), shade(j, o1), shade(j, o0)], [[(o0 + w) / tileL, v0], [(o1 + w) / tileL, v0], [(o1 + w) / tileL, v1], [(o0 + w) / tileL, v1]]); }
-            const ln = [[-(w - 0.3), -(w - 0.45)], [w - 0.45, w - 0.3]]; if (Math.floor(i / 2) % 3 === 0) ln.push([-0.07, 0.07]);   // (the centre line: 4 m dashes, 8 m gaps)
+            const ln = []; for (const si of [0, 1]) if (!(mouthE[si][i] || mouthE[si][j]) || i % 2 === 0) ln.push(si ? [w - 0.45, w - 0.3] : [-(w - 0.3), -(w - 0.45)]);   // (broken across a side road's mouth)
+            if (Math.floor(i / 2) % 3 === 0) ln.push([-0.07, 0.07]);   // (the centre line: 4 m dashes, 8 m gaps)
             for (const [o0, o1] of ln) gl.quadUp(Pt(i, o0, 0.036), Pt(i, o1, 0.036), Pt(j, o1, 0.036), Pt(j, o0, 0.036), [wht, wht, wht, wht]);
           }
           for (const side of [-1, 1]) {
@@ -8649,7 +8773,7 @@ const World = (function () {
       const [hx, hz] = onSide(sStart - 5, -1, 3.2), hy = vrGround(hx, hz), gh = scen.get(hx, hz);   // timing hut
       box(gh, hx, hy, hz, 4.0, 2.7, 2.8, T.hd[i], [0.92, 0.9, 0.84], [0.5, 0.3, 0.2], true); box(gh, hx, hy + 1.3, hz, 4.05, 0.9, 2.85, T.hd[i], [0.2, 0.3, 0.42], null, true); gable(gh, hx, hy + 2.7, hz, 4.4, 3.2, 1.1, T.hd[i], [0.42, 0.2, 0.14], [0.92, 0.9, 0.84]);
       exclPush(hx, hz, 5); CR.block(hx, hz, 4.2, 3, T.hd[i]);
-      for (let s = 8; s < sStart + 50; s += 12) for (const side of [-1, 1]) { const [px, pz, ii] = onSide(s, side, 1.3); if (excluded(px, pz) && s > sStart - 8) continue; flagSI(scen.get(px, pz), px, vrGround(px, pz), pz, T.hd[ii], 6); }
+      for (let s = 8; s < sStart + 50; s += 12) for (const side of [-1, 1]) { const [px, pz, ii] = onSide(s, side, 1.3); if ((excluded(px, pz) && s > sStart - 8) || vrStubAt(px, pz, 1)) continue; flagSI(scen.get(px, pz), px, vrGround(px, pz), pz, T.hd[ii], 6); }   // (none in a side road's mouth)
       const e0 = [T.px[0] - T.tx[0] * 0.9, T.pz[0] - T.tz[0] * 0.9];   // the end of the road: concrete blocks across it
       for (let o = -T.bl[0]; o < T.br[0]; o += 2.05) { const bx = e0[0] + T.nx[0] * (o + 1), bz = e0[1] + T.nz[0] * (o + 1); box(scen.get(bx, bz), bx, T.hy[0] - 0.1, bz, 0.7, 0.9, 1.95, T.hd[0], [0.76, 0.75, 0.72], [0.84, 0.83, 0.8]); }
       { const [bx, bz, bi] = onSide(sStart + 16, 1, 1.6), by = vrGround(bx, bz), gb = scen.get(bx, bz), [v0, v1] = row(7);   // the race's banner beside the road after the line
@@ -8719,8 +8843,15 @@ const World = (function () {
         for (let i = 0; i < N; i++) if (i < iS0 || i > iS1 || onBr[i] || vrLCf(T.px[i], T.pz[i], 3) > 0.5) nd[i] = 0;   // (the start and the pass, the bridges and the village stay open)
         for (let i = 1, last = -1; i < N; i++) { if (nd[i]) { if (last >= 0 && i - last > 1 && i - last < 12) for (let k = last; k < i; k++) nd[k] = 1; last = i; } }   // close short gaps
         for (let i = 0; i < N;) { if (!nd[i]) { i++; continue; } let j = i; while (j < N && nd[j]) j++; if (j - i < 6) for (let k = i; k < j; k++) nd[k] = 0; i = j; }   // drop tiny bits
+        const gp = T.gap ? T.gap[side > 0 ? 1 : 0] : null; if (gp) for (let i = 0; i < N; i++) if (gp[i]) nd[i] = 0;   // a side road's mouth: open (only now, or the gap closing above would shut it again)
         nRail += nd.reduce((a, b) => a + b, 0);
         const Q = (i, y, e) => { const o = side * (bar[i] + 0.12 + (e || 0)); return [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o]; };
+        if (gp) for (let i = 1; i < N - 1; i++) if (nd[i] && !sett[i] && !onBr[i] && ((gp[i + 1] && !nd[i + 1]) || (gp[i - 1] && !nd[i - 1]))) {   // the rail's end at a mouth: a terminal bent back away from the road, its post
+          const dir = gp[i + 1] && !nd[i + 1] ? 1 : -1, g = scen.get(T.px[i], T.pz[i]), tx = T.tx[i] * dir, tz = T.tz[i] * dir, ox = T.nx[i] * side, oz = T.nz[i] * side;
+          const A = Q(i, 0.45), D = Q(i, 0.8), at = (p, a, b, dy) => [p[0] + tx * a + ox * b, p[1] + dy, p[2] + tz * a + oz * b], B = at(A, 1.3, 0.55, -0.05), C = at(D, 1.3, 0.55, -0.12);
+          g.quadO(A, B, C, D, steel, at(A, -0.5, 3, 0.15)); g.quadO(A, B, C, D, steelB, at(A, 0.3, -3, 0.15));
+          const p = at(Q(i, -0.35, 0.14), 1.1, 0.5, 0); box(g, p[0], p[1], p[2], 0.13, 1.05, 0.13, T.hd[i], postC, null, true);
+        }
         for (let i = 0; i < N - 1; i++) {
           const g = scen.get(T.px[i], T.pz[i]), both = (a) => a[i] && a[i + 1];
           if (both(onBr)) {   // a bridge: a concrete parapet with a stone coping
@@ -8733,7 +8864,7 @@ const World = (function () {
             const a = Q(i, 0.45), b = Q(i + 1, 0.45), c = Q(i + 1, 0.8), d = Q(i, 0.8), ins = Q(i, 0.6, 3), ino = Q(i, 0.6, -3);
             g.quadO(a, b, c, d, steel, ins); g.quadO(a, b, c, d, steelB, ino);
             if (i % 2 === 0) { const p = Q(i, -0.35, 0.14); box(g, p[0], p[1], p[2], 0.13, 1.13, 0.13, T.hd[i], postC, null, true); }
-          } else if (!nd[i] && !onBr[i] && i % 25 === 0 && i > 2 && i < iE - 2) mkPosts.push([i, side]);
+          } else if (!nd[i] && !onBr[i] && !(gp && gp[i]) && i % 25 === 0 && i > 2 && i < iE - 2) mkPosts.push([i, side]);
         }
       }
       const kp = vrsicProps(out, mkPosts, (i, side) => vp[side > 0 ? 1 : 0][i]).spots;   // knockable where they fit on the verge; the rest stay fixed beside the barrier line
@@ -8743,6 +8874,11 @@ const World = (function () {
         box(g, p[0], p[1] + 0.72 * tall, p[2], 0.14, 0.2, 0.14, T.hd[i], [0.1, 0.1, 0.1], null, true);
       }
     }
+
+    /* ---- the side roads (vrStubBuild) ---- */
+    const ban3 = new GB(true), stubNames = [];
+    for (const S of T.stubs || []) { const n = S.name.replace(/ c$/, ' cesta'); if (n && !stubNames.includes(n) && stubNames.length < 13) stubNames.push(n); }
+    out.stubStats = vrStubBuild({ scen, out, w, aMat, sMat, lMat, root, bannerQ, ban3, names: stubNames });
 
     /* ---- the hairpins' signs (number and altitude, as on the real road) 25 m before each, on the right, facing the cars coming up ---- */
     (def.hairpins || []).forEach(([d, , turn], k) => {
@@ -8863,8 +8999,9 @@ const World = (function () {
     fac.addTo(sceneryGroup, ouCutMat(new THREE.MeshLambertMaterial({ map: tex.facade, vertexColors: true }), cut), true, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: vrAtlas(cpAlt), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: vrAtlas2(def.hairpins || []), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
+    const bm3 = addM(ban3, new THREE.MeshLambertMaterial({ map: vrAtlas3(stubNames), side: THREE.FrontSide }), true); if (bm3) bm3.castShadow = false;   // (the side roads' boards)
     crowdFinish(CR, root, out);
-    out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3) };   // (read by the tests)
+    out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), sideRoads: out.stubStats.n };   // (read by the tests)
     return out;
   }
 
