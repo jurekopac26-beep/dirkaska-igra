@@ -1,6 +1,6 @@
 // The new look (Posodobi grafiko): the night's lights, the rain on the road, the crowd and the cars' sparks.
 // 1. Monaco at night (quality 'high'): the facades' windows lit, glows round the floodlights' lamps, the lights' glow (bloom) in the post
-//    pass; by day none of it (and no stars).
+//    pass; by day none of it but a weak glow round the brightest (and no stars).
 // 2. Suzuka in the rain: the lights' reflections on the wet road, the drops' splashes, puddles on the circuit's tarmac; dry: none.
 // 3. Jezero: the crowd excited when the lights go out (the stands and the spectators: uHype), calm again a few seconds later.
 // 4. A formula at speed: sparks from its plank.
@@ -26,7 +26,7 @@ try {
   T.check('Monaco at night: lit windows, glows round the floodlights, the lights\' glow in the post pass', n1.tod === 'night' && n1.windows > 0 && n1.winK === 1 && n1.halos > 50 && n1.bloomOn, JSON.stringify(n1));
   await page.evaluate(() => Render.setAtmos({ season: 'summer', tod: 'day' })); await frames(3);
   const d1 = await look();
-  T.check('by day: no lit windows, no glow, no floodlights, no stars', d1.tod === 'day' && d1.winK === 0 && !d1.bloomOn && d1.halos === 0 && d1.stars === 0, JSON.stringify(d1));
+  T.check('by day: no lit windows, no floodlights, no stars, only a weak glow', d1.tod === 'day' && d1.winK === 0 && d1.bloom < n1.bloom * 0.6 && d1.halos === 0 && d1.stars === 0, JSON.stringify(d1));
 
   // 2. rain on Suzuka, then a dry race
   await act('to-track'); await page.waitForTimeout(200); await pick('tod', 'day'); await pick('weather', 'rain');

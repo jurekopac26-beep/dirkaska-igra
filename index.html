@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
-<link rel="stylesheet" href="css/style.css?v=c3ca373d">
+<link rel="stylesheet" href="css/style.css?v=95c06eb6">
 </head>
 <body>
 <div id="app">
@@ -59,6 +59,7 @@
       <div id="h-best"><span class="h-lbl">NAJ</span> <span id="h-bestv">--:--.---</span><span id="h-delta"></span></div>
       <div id="h-sec" aria-hidden="true"><i></i><i></i><i></i></div>
       <div id="h-split"></div>
+      <div id="h-gold"></div>
       <div id="h-pol" aria-label="Policija"><span id="h-heat"></span><div id="h-bust"><i id="h-bustbar"></i></div><span id="h-flat"></span></div>
       <div id="h-gap"></div>
     </div>
@@ -171,7 +172,7 @@
       <h2>Izberi progo</h2>
       <div id="track-list" class="track-list"></div>
       <div class="trk-opts">
-        <div class="row wx-row"><span class="rlbl">Vreme</span><div class="seg" data-set="weather"><button data-v="dry">Suho</button><button data-v="rain">Dež</button><button data-v="random">Naključno</button><button data-v="change">Menljivo</button></div></div>
+        <div class="row wx-row"><span class="rlbl">Vreme</span><div class="seg" data-set="weather"><button data-v="dry">Suho</button><button data-v="rain">Dež</button><button data-v="mist">Megla</button><button data-v="random">Naključno</button><button data-v="change">Menljivo</button></div></div>
         <div class="row wx-row"><span class="rlbl">Kvalifikacije</span><div class="seg" data-set="quali"><button data-v="1">Vklop</button><button data-v="0">Izklop</button></div></div>
         <div class="row wx-row"><span class="rlbl">Letni čas</span><div class="seg" data-set="season"><button data-v="summer">Poletje</button><button data-v="autumn">Jesen</button><button data-v="winter">Zima</button></div></div>
         <div class="row wx-row"><span class="rlbl">Čas dneva</span><div class="seg" data-set="tod"><button data-v="day">Dan</button><button data-v="dusk">Večer</button><button data-v="night">Noč</button></div></div>
@@ -203,12 +204,14 @@
         <div class="row"><span class="rlbl">Opozorila za ovinke</span><div class="seg" data-set="notes"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Opozorila na ovinke <small class="pk-sub">Pikes Peak</small></span><div class="seg" data-set="pkNotes"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Duh najboljše vožnje</span><div class="seg" data-set="ghost"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row"><span class="rlbl">Zlati duh (čas zlate medalje)</span><div class="seg" data-set="gold"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Prelet proge pred startom (Pikes Peak)</span><div class="seg" data-set="pkFly"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Komentator (angleščina)</span><div class="seg" data-set="comm"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div><button class="mini" data-act="comm-test">&#9654; Preizkusi glas</button><span id="comm-voice" class="vinfo"></span></div>
         <div class="row"><span class="rlbl">Sovoznik na reliju (angleščina)</span><div class="seg" data-set="codrv"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Poškodbe avtov</span><div class="seg" data-set="damage"><button data-v="0">Izklop</button><button data-v="1">Samo videz</button><button data-v="2">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Grafika</span><div class="seg" data-set="quality"><button data-v="retro">Retro</button><button data-v="normal">Normalno</button><button data-v="high">Visoko</button></div></div>
         <div class="row"><span class="rlbl">Sence</span><div class="seg" data-set="shadows"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row" title="Samo pri grafiki Visoko"><span class="rlbl">Zameglitev ob hitrosti</span><div class="seg" data-set="speedBlur"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Zvok</span><div class="seg" data-set="sound"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Vibracija</span><div class="seg" data-set="vibrate"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
       </div>
@@ -334,6 +337,7 @@
 <script src="js/tracks/grom.js?v=6e327f0f"></script>
 <script src="js/tracks/pikes.js?v=59b27e83"></script>
 <script src="js/tracks/ouninpohja.js?v=cbd4a12a"></script>
+<script src="js/tracks/ouninpohja-r.js?v=057df776"></script>
 <script src="js/tracks/vrsic.js?v=bfdd3e02"></script>
 <script src="js/tracks/nring.js?v=4c9b798c"></script>
 <script src="js/tracks/spa.js?v=33cb3477"></script>
@@ -343,14 +347,14 @@
 <script src="js/tracks/caracoles.js?v=e07d6f60"></script>
 <script src="js/core.js?v=6b2eea03"></script>
 <script src="js/tex.js?v=cd783b5d"></script>
-<script src="js/world.js?v=ec54140c"></script>
+<script src="js/world.js?v=97ce2912"></script>
 <script src="js/data/p206.js?v=0016824f"></script>
-<script src="js/render.js?v=64291f94"></script>
+<script src="js/render.js?v=ae909231"></script>
 <script src="js/sfx.js?v=e4244b35"></script>
 <script src="js/input.js?v=d322f5e4"></script>
-<script src="js/comm.js?v=d04489f1"></script>
+<script src="js/comm.js?v=ffb27a0d"></script>
 <script src="js/vendor/peerjs.min.js?v=76b403e4"></script>
 <script src="js/net.js?v=1f45dfb1"></script>
-<script src="js/game.js?v=46e12c69"></script>
+<script src="js/game.js?v=9118d4f3"></script>
 </body>
 </html>

@@ -48,6 +48,7 @@ const Comm = (() => {
     champEnd: ['That is the end of the championship. You finish {pos} overall.', 'The season is over, and you are {pos} in the final standings.'],
     // the weather (after the welcome, in a wet race)
     rain: ["And it's raining! A wet track today, so brake early and go easy on the throttle.", 'Rain is falling, and the track is wet. Watch out for the spray!', 'The heavens have opened! Grip will be hard to find today.'],
+    mist: ['Thick morning mist this morning! It will lift as the day goes on.', 'Mist in the hollows and over the lakes, the visibility is poor early on!', 'A misty start today, trust the notes and your memory!'],
     rainSpa: ["Typical Spa weather, it's raining in the Ardennes! Brake early today.", "It's wet at Spa! Eau Rouge in the rain, that takes courage.", 'Rain at Spa, of course! Spray everywhere, and grip will be hard to find.'],
     goNet: ['Lights out, and away they go!', "And they're off!", 'Green light! Side by side into turn one!', 'Go, go, go! The duel is on!'],
     go: ['Lights out, and away we go!', "And they're off!", 'Green light! The pack charges into turn one!', 'Go, go, go! The race is on!'],
@@ -118,6 +119,8 @@ const Comm = (() => {
     cpFast: ['Checkpoint {cp}, {delta} seconds up on your best!', 'Green split at checkpoint {cp}! {delta} seconds faster!', 'Checkpoint {cp}. You are {delta} seconds ahead of your record pace!'],
     cpEven: ['Checkpoint {cp}, dead level with your best split!', 'Checkpoint {cp}. Right on your record pace, not a hair in it!'],
     cpSlow: ['Checkpoint {cp}, {delta} seconds down on your best.', 'Split {cp}: {delta} seconds slower. Push on!', 'Checkpoint {cp}. Down by {delta}, find that time!'],
+    goldAhead: ['Checkpoint {cp}, {delta} seconds inside gold medal pace!', 'You are beating the gold ghost by {delta} at checkpoint {cp}!', 'Checkpoint {cp}. Ahead of the gold time by {delta}, keep it flat!'],
+    goldBehind: ['Checkpoint {cp}, {delta} seconds off gold medal pace.', 'The gold ghost is {delta} seconds up the road at checkpoint {cp}. Chase it!', 'Checkpoint {cp}. Gold is {delta} ahead, you need more!'],
     summitRecord: ['At the summit! A new personal best, {time}!', 'Record run! {time} to the top of {track}!', 'What a climb! New personal best, {time}!'],
     summitEven: ['At the summit in {time}. That is your record to the thousandth!', '{time} at the top, dead level with your best!'],
     // Pikes Peak: the TV helicopter (its fly-over after Glen Cove, and the escort to the finish)
@@ -141,6 +144,7 @@ const Comm = (() => {
     // the famous jump (def.jumpRec: Ouninpohja's Yellow House, Markko Märtin's 57 m)
     jumpRec: ['{m} metres at {place}! The record there is {rec}, by {by}.', 'Over {place}, {m} metres! {by} flew {rec} here.', '{m} metres through the air at {place}!'],
     jumpPB: ['{m} metres at {place}, your longest jump there!', 'A new personal best at {place}, {m} metres!'],
+    jumpAt: ['{m} metres at {place}!', 'Over {place}, {m} metres through the air!'],
     jumpBeat: ['{m} metres at {place}! Longer than {by}!', "Unbelievable! {m} metres, beyond {by}'s {rec}!"],
     medal: ['That is a {medal} medal time!', 'And that is worth a {medal} medal!', 'A {medal} medal on this stage!'],
     goStage: ['Go! Flat out into the forest!', "And you're away! Keep it flat over the crests!", 'Green light! The clock is running!'],

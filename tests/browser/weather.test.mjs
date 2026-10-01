@@ -9,7 +9,7 @@ const T = checker('sectors, set-up, tyres and a changing weather');
 const srv = await serve();
 const browser = await launch();
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'rbring', weather: 'dry' }, { width: 390, height: 844 });
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'rbring', weather: 'dry' }, { width: 390, height: 844 }, { seed: 7 });   // (seeded: the rivals race the same way every run, no random knock on the way to the pits)
   const act = (a) => page.evaluate((a) => window.__game.onAction(a), a);
   const hud = () => page.evaluate(() => { const r = window.__game.race, P = r.player, el = (id) => document.getElementById(id);
     return { rain: r.rain, water: r.water, line: r.lineWater, ty: P.ty && { k: P.ty.k, wear: P.ty.wear }, pit: P.pitState, inPit: P.inPit, lap: P.lap,

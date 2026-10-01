@@ -2,7 +2,8 @@
 // on-screen controls hidden, the replay's own controls shown); the cars where the recording has them; TV cameras beside the track (the
 // camera on a post far from the car, zoomed in); pause, speed, the camera (TV, behind the car, from above, the cockpit), the car followed; "Končaj"
 // back to the results. "Najboljši trenutki" (the results, or the replay's Trenutki): the start, the best moments of the race and the finish in
-// the order they happened, each on the TV cameras with the car of the moment followed and a caption; then back to the results.
+// the order they happened, each on the TV cameras with the car of the moment followed and a caption; then back to the results. A time
+// trial (Ouninpohja): its full recording and the TV director.
 //   node tests/browser/replay.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -73,6 +74,31 @@ try {
     seen.join(' > '));
 
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
+
+  // a time trial (Ouninpohja): the replay poses the car from the time trial's full recording (the dust follows it) and its TV camera is the
+  // director (the start, the helicopter, the tower across from the Yellow House with the jump in slow motion); the car's own state after it
+  {
+    const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'ouninpohja', gold: 0, ghost: 0 }, { width: 844, height: 390 });
+    await page.evaluate(() => { window.__rf = 0; const o = Render.frame; Render.frame = function () { window.__rf++; return o.apply(this, arguments); }; });
+    const frames = (n) => page.evaluate((n) => new Promise(res => { const f0 = window.__rf, chk = () => window.__rf - f0 >= n ? res(window.__rf - f0) : setTimeout(chk, 20); chk(); }), n);
+    const st = () => page.evaluate(() => { const g = window.__game, el = (id) => document.getElementById(id); return { tt: g.rpTT, info: el('rp-info').textContent, cam: el('rp-cam').textContent, screen: g.screen, fx: Render.fxStats().alive }; });
+    await startTrack(page, 'ouninpohja');
+    await page.evaluate(() => { const g = window.__game; g.pause(); for (let k = 0; k < 400 && g.phase !== 'done'; k++) g.sim(2, true); });
+    await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 120000 });
+    const before = await page.evaluate(() => { const P = window.__game.race.player; return { ok: window.__game.rpOk, x: P.x, z: P.z }; });
+    await page.evaluate(() => window.__game.onAction('replay')); await frames(3); const a = await st();
+    T.check('time trial: the full recording, the TV director from the start shot', before.ok && a.tt && a.tt.shot === 'start' && a.cam === 'TV' && /^Ti · Start · /.test(a.info), JSON.stringify({ ok: before.ok, a }));
+    await page.evaluate(() => window.__game.rpSeek(20)); await frames(6); const b = await st();
+    T.check('time trial: on through the stage (the helicopter), the dust behind the car', b.tt && b.tt.shot === 'heli' && b.fx > 10, JSON.stringify(b));
+    const jt = await page.evaluate(() => { const g = window.__game, T = g.race.track, b = T.def.bumps[T.def.jumpRec.bump]; return b.at * T.len; });
+    await page.evaluate((s) => { const g = window.__game; g.rpSeek(g.rpTimeAt(s - 160)); }, jt);   // (160 m before the jump)
+    let c = null; for (let k = 0; k < 40 && !(c && c.tt && c.tt.rate < 0.8); k++) { await frames(2); c = await st(); }
+    T.check('time trial: the Yellow House from the TV tower, the jump in slow motion', c && c.tt && c.tt.shot === 'tower' && c.tt.rate < 0.8 && /TV stolp \(počasi\)/.test(c.info), JSON.stringify(c));
+    await page.evaluate(() => window.__game.onAction('rp-exit')); await page.waitForTimeout(300);
+    const e = await page.evaluate(() => { const P = window.__game.race.player; return { screen: window.__game.screen, x: P.x, z: P.z }; });
+    T.check('time trial: "Končaj" back to the results, the car where the run left it', e.screen === 'results' && e.x === before.x && e.z === before.z, JSON.stringify({ e, before }));
+    T.check('time trial: no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
+  }
 } catch (e) {
   T.check('test ran through', false, e.stack || String(e));
 } finally {

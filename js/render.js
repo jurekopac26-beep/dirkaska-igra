@@ -79,9 +79,14 @@ const Render = (function () {
     return l > 0.6 ? [0.12, 0.24, 0.75] : [0.96, 0.96, 0.94];
   }
 
-  function wheelInto(g, cx, cy, cz, r, wd, tire, rim) {
+  // a wheel (x forward, y up, the axle along z): the tyre, its sidewalls, the rim's lip; behind the spokes the brake disc (a dark hub, the
+  // disc's bright ring, dark into the barrel); five twin spokes, the wheel nuts between them, the hub cap. cal: the calliper's colour (CAL_R,
+  // CAL_G): a curved block over the top of the disc, between the disc and the spokes (on a front wheel it stays at the top while the wheel
+  // spins: matWheel turns its vertices back)
+  const CAL_R = [0.8, 0.09, 0.07], CAL_G = [0.96, 0.66, 0.1];
+  function wheelInto(g, cx, cy, cz, r, wd, tire, rim, cal) {
     const S = 12, inn = [cx, cy, cz];
-    const dark = [rim[0] * 0.38, rim[1] * 0.38, rim[2] * 0.4], hub = [0.15, 0.15, 0.17], lip = rim.map(v => Math.min(1, v * 1.15));
+    const dark = [rim[0] * 0.3, rim[1] * 0.3, rim[2] * 0.32], hub = [0.15, 0.15, 0.17], disc = [0.52, 0.52, 0.54], discI = [0.3, 0.3, 0.32], nut = [0.32, 0.32, 0.34], lip = rim.map(v => Math.min(1, v * 1.15));
     const p = (a, z, rr) => [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr, cz + z];
     for (let i = 0; i < S; i++) {
       const a0 = i / S * Math.PI * 2, a1 = (i + 1) / S * Math.PI * 2;
@@ -90,14 +95,29 @@ const Render = (function () {
         const zf = sd * wd / 2, zr = sd * (wd / 2 + 0.006), out = [cx, cy, cz - sd];
         g.quadO(p(a0, zf, r * 0.68), p(a0, zf, r), p(a1, zf, r), p(a1, zf, r * 0.68), tire, out);          // sidewall
         g.quadO(p(a0, zr, r * 0.54), p(a0, zr, r * 0.68), p(a1, zr, r * 0.68), p(a1, zr, r * 0.54), lip, out); // rim lip (polished)
-        g.triO([cx, cy, cz + zf], p(a0, zf, r * 0.54), p(a1, zf, r * 0.54), dark, out);                       // recessed dish
+        g.triO([cx, cy, cz + zf], p(a0, zf, r * 0.2), p(a1, zf, r * 0.2), hub, out);                          // the hub
+        g.quadO(p(a0, zf, r * 0.2), p(a0, zf, r * 0.44), p(a1, zf, r * 0.44), p(a1, zf, r * 0.2), disc, out, null, [discI, disc, disc, discI]);   // the disc
+        g.quadO(p(a0, zf, r * 0.44), p(a0, zf, r * 0.54), p(a1, zf, r * 0.54), p(a1, zf, r * 0.44), dark, out, null, [disc, dark, dark, disc]);   // (into the barrel)
       }
     }
     for (const sd of [-1, 1]) {
       const zs = sd * (wd / 2 + 0.012), out = [cx, cy, cz - sd];
-      for (let k = 0; k < 5; k++) for (const e of [-1, 1]) {   // spokes: five, each split in two towards the rim
-        const a = k / 5 * Math.PI * 2, a1 = a + e * 0.13, ca = Math.cos(a), sa = Math.sin(a), cb = Math.cos(a1), sb = Math.sin(a1), w0 = r * 0.045, w1 = r * 0.035, r0 = r * 0.12, r1 = r * 0.56;
-        g.quadO([cx + ca * r0 - sa * w0, cy + sa * r0 + ca * w0, cz + zs], [cx + cb * r1 - sb * w1, cy + sb * r1 + cb * w1, cz + zs], [cx + cb * r1 + sb * w1, cy + sb * r1 - cb * w1, cz + zs], [cx + ca * r0 + sa * w0, cy + sa * r0 - ca * w0, cz + zs], rim, out);
+      for (let k = 0; k < 5; k++) {                       // twin spokes: from the hub out to the rim, apart towards it
+        const a = k / 5 * Math.PI * 2;
+        for (const e of [-1, 1]) {
+          const ah = a + e * 0.05, ar = a + e * 0.17, r0 = r * 0.13, r1 = r * 0.56, h0 = r * 0.04, h1 = r * 0.032, c0 = Math.cos(ah), s0 = Math.sin(ah), c1 = Math.cos(ar), s1 = Math.sin(ar);
+          g.quadO([cx + c0 * r0 - s0 * h0, cy + s0 * r0 + c0 * h0, cz + zs], [cx + c1 * r1 - s1 * h1, cy + s1 * r1 + c1 * h1, cz + zs], [cx + c1 * r1 + s1 * h1, cy + s1 * r1 - c1 * h1, cz + zs], [cx + c0 * r0 + s0 * h0, cy + s0 * r0 - c0 * h0, cz + zs], rim, out);
+        }
+        const an = a + Math.PI / 5, cn = Math.cos(an) * r * 0.19, sn = Math.sin(an) * r * 0.19, q = r * 0.028, zn = zs + sd * 0.004;   // a wheel nut
+        g.quadO([cx + cn - q, cy + sn - q, cz + zn], [cx + cn + q, cy + sn - q, cz + zn], [cx + cn + q, cy + sn + q, cz + zn], [cx + cn - q, cy + sn + q, cz + zn], nut, out);
+      }
+      if (cal) {   // the calliper over the top of the disc: its face and its rounded outer edge
+        const zc = sd * (wd / 2 + 0.005), zi = sd * (wd / 2 - 0.02);
+        for (let k = 0; k < 3; k++) {
+          const b0 = Math.PI / 2 - 0.42 + k * 0.28, b1 = b0 + 0.28;
+          g.quadO(p(b0, zc, r * 0.3), p(b0, zc, r * 0.5), p(b1, zc, r * 0.5), p(b1, zc, r * 0.3), cal, out);
+          g.quadO(p(b0, zi, r * 0.5), p(b0, zc, r * 0.5), p(b1, zc, r * 0.5), p(b1, zi, r * 0.5), cal, inn);
+        }
       }
       for (let i = 0; i < 6; i++) {                       // hub cap
         const a0 = i / 6 * Math.PI * 2, a1 = (i + 1) / 6 * Math.PI * 2;
@@ -212,13 +232,16 @@ const Render = (function () {
     // ---- details ----
     const front = secs[secs.length - 1], rear = secs[0];
     for (const sd of [-1, 1]) {
-      World.box(g, front.x - 0.02, 0.5, sd * 0.5, 0.08, 0.15, 0.32, 0, [1, 0.97, 0.84]);
+      World.box(g, front.x - 0.02, 0.5, sd * 0.5, 0.08, 0.15, 0.32, 0, [0.12, 0.12, 0.13]);   // the lamps' dark housing (the glass: the lens mesh)
       World.box(g, front.x - 0.02, 0.5, sd * 0.74, 0.08, 0.13, 0.12, 0, [1, 0.55, 0.12]);
     }
     World.box(g, front.x - 0.02, 0.5, 0, 0.07, 0.12, 0.6, 0, K);
     World.box(g, front.x - 0.03, 0.37, 0, 0.07, 0.1, 1.0, 0, K);
     World.box(g, rear.x + 0.02, 0.62, 0, 0.08, 0.2, 0.95, 0, K);
-    for (const sd of [-1, 1]) World.box(g, rear.x - 0.02, 0.36, sd * 0.36, 0.1, 0.08, 0.12, 0, [0.2, 0.2, 0.22]);
+    pipeInto(g, rear.x + 0.16, rear.x - 0.16, 0.345, 0.38 * sz, 0.055);   // one big tailpipe (under the rear bumper, out past it)
+    // the gaps: the doors, the bonnet's edge by the windscreen and its sides
+    gapDoor(g, secs, 0.72 * sx, false); gapDoor(g, secs, -0.18 * sx, true);
+    gapAcross(g, secs, 0.76 * sx); gapAlong(g, secs, 0.76 * sx, front.x - 0.14);
     // big rear wing over the hatch, on endplates from the roof edge
     const wx0 = -1.62 * sx, wy = 1.56;
     for (const sd of [-1, 1]) World.box(g, wx0 + 0.12, 1.36, sd * 0.62 * sz, 0.14, 0.2, 0.05, 0, K);
@@ -228,12 +251,17 @@ const Render = (function () {
     World.box(g, -0.62 * sx, 1.40, 0, 0.4, 0.1, 0.42, 0, B, B);
     World.box(g, -0.44 * sx, 1.43, 0, 0.03, 0.06, 0.34, 0, K);
     World.box(g, 0.05 * sx, 1.40, 0.3, 0.025, 0.55, 0.025, 0, K);
-    for (const sd of [-1, 1]) World.box(g, 0.66 * sx, 0.86, sd * (0.9 * sz + 0.07), 0.12, 0.1, 0.12, 0, K);
+    for (const sd of [-1, 1]) { const mx = 0.66 * sx, mz = sd * (0.9 * sz + 0.07); World.box(g, mx, 0.86, mz, 0.12, 0.1, 0.12, 0, K);
+      g.quadO([mx - 0.062, 0.876, mz - 0.048], [mx - 0.062, 0.876, mz + 0.048], [mx - 0.062, 0.944, mz + 0.048], [mx - 0.062, 0.944, mz - 0.048], [0.7, 0.76, 0.84], [mx, 0.9, mz]); }
     // rear wheels (fronts are separate meshes) + mud flaps
     const r = M.rw, fx = M.a * (M.len / 4.4) * 0.98 + 0.05, rx = -M.b * (M.len / 4.4) * 0.98;
     for (const sd of [-1, 1]) {
-      wheelInto(g, rx, r, sd * (M.wid * 0.5 - 0.1), r, 0.26, [0.07, 0.07, 0.08], [0.93, 0.93, 0.9]);
-      for (const wxp of [fx, rx]) World.box(g, wxp - 0.44, 0.17, sd * (M.wid * 0.5 - 0.08), 0.03, 0.26, 0.2, 0, K);
+      wheelInto(g, rx, r, sd * (M.wid * 0.5 - 0.1), r, 0.26, [0.07, 0.07, 0.08], [0.93, 0.93, 0.9], CAL_G);
+      for (const wxp of [fx, rx]) {   // mud flaps: rubber in the livery's colour, a white band across
+        const fxp = wxp - 0.44, fz = sd * (M.wid * 0.5 - 0.08);
+        World.box(g, fxp, 0.1, fz, 0.03, 0.33, 0.24, 0, B.map(v => v * 0.8));
+        for (const e of [-1, 1]) g.quadO([fxp + e * 0.017, 0.24, fz - 0.12], [fxp + e * 0.017, 0.24, fz + 0.12], [fxp + e * 0.017, 0.3, fz + 0.12], [fxp + e * 0.017, 0.3, fz - 0.12], W, [fxp, 0.27, fz]);
+      }
     }
     return g.geometry();
   }
@@ -407,6 +435,114 @@ const Render = (function () {
     }
     for (const sd of [-1, 1]) for (let i = 0; i < 6; i++) { const a0 = i / 6 * Math.PI * 2, a1 = (i + 1) / 6 * Math.PI * 2; g.triO([0, 0, sd * (h - 0.004)], p(a0, sd * (h - 0.016), 0.05), p(a1, sd * (h - 0.016), 0.05), NUT, [0, 0, -sd * 5]); }
     const geo = g.geometry(); fWheelCache.set(key, geo); return geo;
+  }
+  /* ---------------- the small parts of a car (its shape stays as it is): headlamps with a reflector behind the lens, the gaps round the
+     doors, the bonnet and the boot, the mirrors' glass, tailpipes, number plates (a Slovenian plate: the blue band, the town, the crest,
+     letters and digits in a 3 x 5 pixel font). All in the body's own geometry: no draw calls of their own ---------------- */
+  const PLATE_FONT = { 0: '111101101101111', 1: '010110010010111', 2: '111001111100111', 3: '111001111001111', 4: '101101111001001', 5: '111100111001111', 6: '111100111101111',
+    7: '111001001010010', 8: '111101111101111', 9: '111101111001111', A: '010101111101101', B: '110101110101110', C: '111100100100111', E: '111100110100111', J: '001001001101111', K: '101101110101101',
+    L: '100100100100111', M: '101111111101101', N: '110101101101101', O: '010101101101010', P: '111101111100100', R: '110101110101101', S: '111100111001111', T: '111010010010010', U: '101101101101111', '-': '000000111000000' };
+  const glyphCache = new Map();
+  function glyphRects(ch) {   // a glyph as rectangles [x0, y0, x1, y1] (pixels, y down): the runs along each row, stacked where the next rows repeat them
+    if (glyphCache.has(ch)) return glyphCache.get(ch);
+    const b = PLATE_FONT[ch] || '000000000000000', out = [], open = [];
+    for (let y = 0; y <= 5; y++) {
+      const runs = [];
+      if (y < 5) for (let x = 0; x < 3;) { if (b[y * 3 + x] !== '1') { x++; continue; } let e = x; while (e < 3 && b[y * 3 + e] === '1') e++; runs.push([x, e]); x = e; }
+      for (let k = open.length - 1; k >= 0; k--) { const o = open[k], m = runs.findIndex(r => r[0] === o[0] && r[1] === o[2]); if (m >= 0) runs.splice(m, 1); else { out.push([o[0], o[1], o[2], y]); open.splice(k, 1); } }
+      for (const r of runs) open.push([r[0], y, r[1]]);
+    }
+    glyphCache.set(ch, out); return out;
+  }
+  function plateText(key) {   // a plate for this car's look (the same every time): the town, then two letters and three digits
+    let h = 2166136261; for (let i = 0; i < key.length; i++) { h ^= key.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    const pick = (s) => { const c = s[h % s.length]; h = Math.imul(h ^ (h >>> 13), 2654435761) >>> 0; return c; };
+    const town = ['LJ', 'MB', 'KR', 'CE', 'NM', 'KP', 'PO', 'MS'][h % 8]; h = Math.imul(h ^ (h >>> 11), 2246822519) >>> 0;
+    return [town, pick('ACEJKLMNPRSTU') + pick('ACEJKLMNPRSTU') + '-' + pick('123456789') + pick('0123456789') + pick('0123456789')];
+  }
+  const PL_W = [0.97, 0.97, 0.95], PL_K = [0.07, 0.07, 0.09], PL_B = [0.12, 0.26, 0.66], PL_R = [0.8, 0.12, 0.12];
+  function plateInto(g, x, y, z, dir, txt, sc) {   // a number plate facing dir (+1: forwards, -1: backwards) round (x, y, z): 0.46 x 0.1 m (times sc)
+    const zd = -dir, W = 0.46, H = 0.1, ins = [x - dir, y, z], k = sc || 1;
+    const P = (u, v, d) => [x + dir * d, y + v * k, z + zd * u * k];   // u along the plate (its left end -W/2 as the viewer sees it), v up
+    const rect = (u0, v0, u1, v1, d, col) => g.quadO(P(u0, v0, d), P(u1, v0, d), P(u1, v1, d), P(u0, v1, d), col, ins);
+    rect(-W / 2 - 0.006, -H / 2 - 0.006, W / 2 + 0.006, H / 2 + 0.006, 0, PL_K);   // the black edge
+    rect(-W / 2, -H / 2, W / 2, H / 2, 0.002, PL_W);
+    rect(-W / 2, -H / 2, -W / 2 + 0.045, H / 2, 0.003, PL_B);                        // the blue band
+    const px = 0.0104, py = 0.0136, top = 0.034; let u = -W / 2 + 0.062;
+    const glyphs = (s) => { for (const ch of s) { for (const [a, b, c, d] of glyphRects(ch)) rect(u + a * px, top - d * py, u + c * px, top - b * py, 0.004, PL_K); u += 4 * px; } };
+    glyphs(txt[0]); u += px * 0.5;
+    rect(u, -0.026, u + 2.4 * px, 0.03, 0.004, PL_B); rect(u, -0.026, u + 2.4 * px, -0.004, 0.005, PL_R); u += 3.6 * px;   // the crest
+    glyphs(txt[1]);
+  }
+  let lensGeoC = null;
+  function lensGeo() {   // a headlamp's glass (the lens mesh: bright, dark when smashed): two round reflectors behind it, the bulb bright in each, chrome round it
+    if (lensGeoC) return lensGeoC;
+    const g = new GB(), glass = [0.9, 0.92, 0.94], hot = [1, 1, 0.96], chrome = [0.8, 0.82, 0.86], rim = [0.55, 0.57, 0.6];
+    World.box(g, 0, -0.055, 0, 0.045, 0.11, 0.28, 0, glass);
+    for (const zc of [-0.07, 0.07]) { const x = 0.0235, n = 8, R = 0.05, ins = [-1, 0, zc], p = (a, r) => [x, Math.sin(a) * r, zc + Math.cos(a) * r];
+      for (let i = 0; i < n; i++) { const a0 = i / n * Math.PI * 2, a1 = (i + 1) / n * Math.PI * 2;
+        g.triO([x, 0, zc], p(a0, R * 0.42), p(a1, R * 0.42), hot, ins, chrome, chrome);
+        g.quadO(p(a0, R * 0.42), p(a0, R), p(a1, R), p(a1, R * 0.42), chrome, ins, null, [chrome, rim, rim, chrome]); } }
+    return (lensGeoC = g.geometry());
+  }
+  function newLensGeo(dB) {   // a new body's head lamp glass (BODIES: a round one of radius lensR, or lens: h x w), all one warm white
+    const geo = dB.lensR ? new THREE.CylinderGeometry(dB.lensR, dB.lensR, 0.02, 12).rotateZ(Math.PI / 2) : new THREE.BoxGeometry(0.045, dB.lens[0], dB.lens[1]);
+    const n = geo.attributes.position.count, col = new Float32Array(n * 3); for (let i = 0; i < n; i++) col.set([1, 0.945, 0.784], i * 3);
+    geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); return geo;
+  }
+  function bumperGeo(D, H, W, dir, txt) {   // a bumper (a detachable part: dark trim) with its number plate on the outer face (the plate smaller on a slim bumper)
+    const g = new GB(); World.box(g, 0, -H / 2, 0, D, H, W, 0, [0.17, 0.18, 0.2]);
+    plateInto(g, dir * (D / 2 + 0.001), 0, 0, dir, txt, Math.min(1, (H - 0.012) / 0.112));
+    const geo = g.geometry(); geo.parameters = { width: D, height: H, depth: W }; return geo;
+  }
+  function chromeBumperGeo(D, H, W, dir) {   // a chrome bumper (model.chrome): its face rounded from top to bottom, so it mirrors the sky, the horizon and the ground in bands
+    const g = new GB(), C = [0.77, 0.78, 0.81], n = 6, xb = -dir * D / 2, prof = [];
+    for (let i = 0; i <= n; i++) { const a = Math.PI / 2 - i / n * Math.PI; prof.push([xb + dir * D * Math.cos(a), H / 2 * Math.sin(a)]); }   // (from the top at the back round the front to the bottom)
+    for (let i = 0; i < n; i++) { const [x0, y0] = prof[i], [x1, y1] = prof[i + 1]; g.quadO([x0, y0, -W / 2], [x1, y1, -W / 2], [x1, y1, W / 2], [x0, y0, W / 2], C, [xb - dir, 0, 0]); }
+    for (const sz of [-1, 1]) for (let i = 0; i < n; i++) g.triO([xb, 0, sz * W / 2], [prof[i][0], prof[i][1], sz * W / 2], [prof[i + 1][0], prof[i + 1][1], sz * W / 2], C, [xb, 0, -sz]);   // (the ends)
+    g.quadO([xb, H / 2, -W / 2], [xb, -H / 2, -W / 2], [xb, -H / 2, W / 2], [xb, H / 2, W / 2], C, [xb + dir, 0, 0]);
+    const geo = smoothNormals(g.geometry(), 50); geo.parameters = { width: D, height: H, depth: W }; return geo;
+  }
+  function pipeInto(g, x0, x1, y, z, r) {   // a tailpipe along x from x0 (under the body) to its tip x1: a steel tube, dark inside
+    const n = 8, st = [0.62, 0.62, 0.65], dk = [0.04, 0.04, 0.05], d = Math.sign(x1 - x0), p = (xx, a, rr) => [xx, y + Math.sin(a) * rr, z + Math.cos(a) * rr];
+    for (let i = 0; i < n; i++) { const a0 = i / n * Math.PI * 2, a1 = (i + 1) / n * Math.PI * 2;
+      g.quadO(p(x0, a0, r), p(x1, a0, r), p(x1, a1, r), p(x0, a1, r), st, [(x0 + x1) / 2, y, z]);
+      g.quadO(p(x1, a0, r * 0.72), p(x1, a0, r), p(x1, a1, r), p(x1, a1, r * 0.72), st, [x1 - d, y, z]);
+      g.triO([x1 - d * 0.02, y, z], p(x1, a0, r * 0.72), p(x1, a1, r * 0.72), dk, [x1 - d, y, z]); }
+  }
+  // the gaps: thin dark lines just off the paint. S: the body's sections (scaled); secAt(S, x): the section at x (linear between them)
+  function secAt(S, x) { if (x <= S[0].x) return S[0]; for (let k = 0; k < S.length - 1; k++) if (x <= S[k + 1].x) { const a = S[k], b = S[k + 1], t = (x - a.x) / (b.x - a.x), o = {}; for (const f of ['x', 'w', 'yb', 'ybelt', 'wt', 'yt', 'cr']) o[f] = a[f] + (b[f] - a[f]) * t; return o; } return S[S.length - 1]; }
+  const GAP = [0.05, 0.05, 0.06];
+  function topY(q, z) { const a = Math.abs(z); return a <= q.wt * 0.38 ? q.yt + q.cr : q.yt + q.cr * (q.wt - a) / (q.wt * 0.62); }
+  function gapDoor(g, S, x, handle) {   // a door's edge down its side (and its handle, just ahead of a rear edge)
+    for (const sd of [-1, 1]) { const q = secAt(S, x), zz = sd * (q.w + 0.003), y0 = q.yb + 0.17, y1 = q.ybelt - 0.012;
+      g.quadO([x - 0.006, y0, zz], [x + 0.006, y0, zz], [x + 0.006, y1, zz], [x - 0.006, y1, zz], GAP, [x, (y0 + y1) / 2, 0]);
+      if (handle) { const hx = x + 0.1, qh = secAt(S, hx), zh = sd * (qh.w + 0.004), yh = qh.ybelt - 0.075; g.quadO([hx - 0.06, yh, zh], [hx + 0.06, yh, zh], [hx + 0.06, yh + 0.022, zh], [hx - 0.06, yh + 0.022, zh], GAP, [hx, yh, 0]); } }
+  }
+  function gapAcross(g, S, x) {   // across the top at x (the bonnet's or the boot's edge by the glass)
+    const q = secAt(S, x), zs = [-q.wt, -q.wt * 0.38, q.wt * 0.38, q.wt];
+    for (let k = 0; k < 3; k++) { const za = zs[k], zb = zs[k + 1], ya = topY(q, za) + 0.005, yb = topY(q, zb) + 0.005;
+      g.quadO([x - 0.006, ya, za], [x + 0.006, ya, za], [x + 0.006, yb, zb], [x - 0.006, yb, zb], GAP, [x, q.yt - 0.5, 0]); }
+  }
+  function gapAlong(g, S, xa, xb) {   // along the top from xa to xb, both sides (the bonnet's or the boot lid's edges)
+    for (const sd of [-1, 1]) for (let k = 0; k < 4; k++) { const x0 = xa + (xb - xa) * k / 4, x1 = xa + (xb - xa) * (k + 1) / 4, q0 = secAt(S, x0), q1 = secAt(S, x1);
+      const z0 = sd * q0.wt * 0.93, z1 = sd * q1.wt * 0.93, y0 = topY(q0, z0) + 0.005, y1 = topY(q1, z1) + 0.005;
+      g.quadO([x0, y0, z0 - 0.006], [x1, y1, z1 - 0.006], [x1, y1, z1 + 0.006], [x0, y0, z0 + 0.006], GAP, [(x0 + x1) / 2, q0.yt - 0.5, (z0 + z1) / 2]); }
+  }
+  // per body (its own units, times its scale): the doors' edges, the bonnet's edge by the windscreen, the boot's by the rear window (null:
+  // a tailgate), the tailpipes (z of each)
+  const BITS = { coupe: { doors: [0.95, -0.42], bonnet: 1.02, boot: -1.06, pipes: [-0.5, 0.5] }, sedan: { doors: [1.05, 0.02, -0.98], bonnet: 1.14, boot: -1.22, pipes: [0.55] },
+    hatch: { doors: [0.82, -0.4], bonnet: 0.89, boot: null, pipes: [0.55] }, wedge: { doors: [1.0, -0.3], bonnet: 1.09, boot: -0.99, pipes: [-0.5, 0.5] } };
+  function exhaustTips(M) {   // the tailpipes' tips in the car's frame (Render: the flames on a lift; the electric car has none)
+    if (M.ev) return null;
+    if (M.glb === 'p206') return [[-M.len * 0.5 - 0.12, 0.3, 0.38]];
+    if (M.body === 'formula') return [[-2.7, 0.55, 0]];
+    if (M.body === 'lm') return [[-2.47, 0.42, 0]];   // (out under the tail lamp, over the diffuser)
+    if (M.body === 'muscle') { const x = BODIES.muscle.secs[0][0] * (M.len / BODIES.muscle.len) - 0.07; return [-0.62, -0.5, 0.5, 0.62].map(z => [x, 0.31, z]); }   // (muscleGeometry's twin pipes)
+    if (M.body === 'truck') return [[-M.b * (M.len / 4.4) * 0.98 + 0.62, 0.66, M.wid * 0.5 - 0.1]];   // (truckGeometry's: out of the side, ahead of the rear wheel)
+    if (M.body === 'rally') { const d = BODIES.rally, sx = M.len / d.len, sz = M.wid / d.wid; return [[d.secs[0][0] * sx - 0.16, 0.345, 0.38 * sz]]; }
+    const d = BODIES[M.body] || BODIES.coupe, sx = M.len / d.len, sz = M.wid / d.wid, r = d.secs[0], B = BITS[M.body] || BITS.coupe;
+    return B.pipes.map(pz => [r[0] * sx - 0.15, r[2] - 0.005, pz * r[1] * sz]);
   }
 
   /* ---------------- the new cars: VIHAR V8 (a muscle car), STRELA EV (electric) and SAMUM 4x4 (a trophy truck) are section lofts like the
@@ -776,13 +912,20 @@ const Render = (function () {
     const front = secs[secs.length - 1], rear = secs[0];
     // headlights & grille
     const hly = (front.yb + front.ybelt) / 2 + 0.03;
-    for (const sd of [-1, 1]) World.box(g, front.x - 0.03, hly - 0.07, sd * front.w * 0.6, 0.1, 0.15, 0.34, 0, [1, 0.97, 0.82]);
+    for (const sd of [-1, 1]) World.box(g, front.x - 0.03, hly - 0.07, sd * front.w * 0.6, 0.1, 0.15, 0.34, 0, [0.12, 0.12, 0.13]);   // the lamp's dark housing (the glass: the lens mesh, lensGeo)
     World.box(g, front.x - 0.02, hly - 0.12, 0, 0.08, 0.14, front.w * 0.7, 0, [0.08, 0.08, 0.09]);
     // rear bumper dark band
     World.box(g, rear.x + 0.02, rear.yb + 0.02, 0, 0.1, 0.14, rear.w * 1.6, 0, [0.1, 0.1, 0.11]);
-    // mirrors
+    // mirrors (their glass facing back)
     const ws = secs.find(s => s.k === 'gf');
-    for (const sd of [-1, 1]) World.box(g, ws.x + 0.45, ws.ybelt, sd * (ws.w + 0.07), 0.14, 0.1, 0.12, 0, body);
+    for (const sd of [-1, 1]) { const mx = ws.x + 0.45, mz = sd * (ws.w + 0.07); World.box(g, mx, ws.ybelt, mz, 0.14, 0.1, 0.12, 0, body);
+      g.quadO([mx - 0.072, ws.ybelt + 0.016, mz - 0.048], [mx - 0.072, ws.ybelt + 0.016, mz + 0.048], [mx - 0.072, ws.ybelt + 0.084, mz + 0.048], [mx - 0.072, ws.ybelt + 0.084, mz - 0.048], [0.7, 0.76, 0.84], [mx, ws.ybelt + 0.05, mz]); }
+    // the gaps round the doors, the bonnet and the boot; the tailpipes; the number plates
+    const BT = BITS[bodyKey] || BITS.coupe;
+    BT.doors.forEach((dx, k) => gapDoor(g, secs, dx * sx, k > 0));
+    gapAcross(g, secs, BT.bonnet * sx); gapAlong(g, secs, BT.bonnet * sx, front.x - 0.14);
+    if (BT.boot != null) { gapAcross(g, secs, BT.boot * sx); gapAlong(g, secs, BT.boot * sx, rear.x + 0.14); }
+    for (const pz of BT.pipes) pipeInto(g, rear.x + 0.12, rear.x - 0.15, rear.yb - 0.005, pz * rear.w, BT.pipes.length > 1 ? 0.04 : 0.048);   // (under the rear bumper, out past it)
     // spoiler
     if (def.spoiler) {
       const sxp = rear.x + 0.28, top = secs[1].yt + 0.28;
@@ -791,7 +934,7 @@ const Render = (function () {
     }
     // rear wheels
     const r = M.rw, wx = -M.b * (M.len / 4.4) * 0.98;
-    for (const sd of [-1, 1]) wheelInto(g, wx, r, sd * (M.wid * 0.5 - 0.1), r, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68]);
+    for (const sd of [-1, 1]) wheelInto(g, wx, r, sd * (M.wid * 0.5 - 0.1), r, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68], CAL_R);
     const geo = smoothNormals(g.geometry(), 38);
     geoCache.set(key, geo);
     return geo;
@@ -799,9 +942,9 @@ const Render = (function () {
   let wheelGeo = null, tailGeoCache = new Map();
   let wheelGeoW = null;
   function getWheelGeo(white) {
-    if (white) { if (!wheelGeoW) { const g = new GB(); wheelInto(g, 0, 0, 0, 0.31, 0.26, [0.07, 0.07, 0.08], [0.93, 0.93, 0.9]); wheelGeoW = g.geometry(); } return wheelGeoW; }
+    if (white) { if (!wheelGeoW) { const g = new GB(); wheelInto(g, 0, 0, 0, 0.31, 0.26, [0.07, 0.07, 0.08], [0.93, 0.93, 0.9], CAL_G); wheelGeoW = g.geometry(); } return wheelGeoW; }
     if (wheelGeo) return wheelGeo;
-    const g = new GB(); wheelInto(g, 0, 0, 0, 0.31, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68]); wheelGeo = g.geometry(); return wheelGeo;
+    const g = new GB(); wheelInto(g, 0, 0, 0, 0.31, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68], CAL_R); wheelGeo = g.geometry(); return wheelGeo;
   }
   function tailGeo(bodyKey, M) {
     const key = bodyKey + M.id; if (tailGeoCache.has(key)) return tailGeoCache.get(key);
@@ -831,25 +974,33 @@ const Render = (function () {
     '  float L = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114));',
     '  vec3 sc = mix(vec3(0.82, 0.82, 0.85), vec3(0.28, 0.28, 0.3), step(0.55, L));',   // dark grime on light paint, bare metal on dark paint
     '  diffuseColor.rgb = mix(diffuseColor.rgb, sc, s * 0.85); }'].join('\n');
+  // wet paint (every car material): in the rain the cars are wet, deeper in colour (and glossier: the clear coat's uCgWet). CAR_U is shared by
+  // all of them (uWet: Render.applyWeather)
+  const CAR_U = { uWet: { value: 0 } };
+  function carShader(sh) {
+    sh.uniforms.uWet = CAR_U.uWet;
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uWet;')
+      .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb *= 1.0 - 0.16 * uWet;');   // (wet paint: deeper)
+  }
   /* the sun on the paint and the glass (every car on every track, the garage too): a clear coat that mirrors more of the sky at a glancing
-     angle (fresnel), its sky in the colour of the race's sky (a warm dusk, a dark night, a grey rain: the fog's colour), and a sharp glint of
-     the sun with a broad sheen round it and a rim on the sun side, sharper and brighter on the glass (the body's panes by their colour, the
-     Peugeot's glass by its material). One patch after what a material already does (the dirt, which dulls it, and the scratches); the sun
-     and the sky are shared uniforms set every frame (cgSet) */
-  const CGU = { sun: { value: new THREE.Vector3(0, 1, 0) }, sunC: { value: new THREE.Color(0, 0, 0) }, env: { value: new THREE.Color(1, 1, 1) } }, cgOb = new WeakMap();
-  const CG_COMMON = '#include <common>\nuniform vec3 uCgSun;\nuniform vec3 uCgSunC;\nuniform vec3 uCgEnv;\nuniform float uCgG;\n#ifndef CG_D\n#define CG_D\nfloat cgD = 0.0;\n#endif';
+     angle (fresnel), its sky the race's (the cube map painted for the track, the time of day and the weather: envPaint), glossier when wet,
+     and a sharp glint of the sun with a broad sheen round it and a rim on the sun side, sharper and brighter on the glass (the body's panes
+     by their colour, the Peugeot's glass by its material). One patch after what a material already does (the dirt, which dulls it, and the
+     scratches); the sun and the sky are shared uniforms set every frame (cgSet) */
+  const CGU = { sun: { value: new THREE.Vector3(0, 1, 0) }, sunC: { value: new THREE.Color(0, 0, 0) }, env: { value: new THREE.Color(1, 1, 1) }, max: { value: 100 } }, cgOb = new WeakMap();
+  const CG_COMMON = '#include <common>\nuniform vec3 uCgSun;\nuniform vec3 uCgSunC;\nuniform vec3 uCgEnv;\nuniform float uCgG;\nuniform float uCgWet;\nuniform float uCgMax;\n#ifndef CG_D\n#define CG_D\nfloat cgD = 0.0;\n#endif';
   const CG_ENV = (() => { const c = THREE.ShaderChunk.envmap_fragment, e = c.replace('#ifdef ENVMAP_BLENDING_MULTIPLY', 'envColor.rgb *= uCgEnv;\n#ifdef ENVMAP_BLENDING_MULTIPLY').replace(/specularStrength \* reflectivity/g, 'specularStrength * cgR');
     return ['float cgG = uCgG;', '#ifdef USE_COLOR', 'cgG = max(cgG, 1.0 - step(0.05, min(distance(vColor.rgb, vec3(0.1, 0.13, 0.19)), distance(vColor.rgb, vec3(0.04, 0.05, 0.08)))));', '#endif',
       'vec3 cgN = normalize(normal), cgV = normalize(vViewPosition);', 'float cgFr = pow(1.0 - clamp(dot(cgN, cgV), 0.0, 1.0), 5.0);',
-      '#ifdef USE_ENVMAP', 'float cgR = min(1.0, reflectivity + cgG * 0.2 + cgFr * mix(0.3, 0.5, cgG)) * (1.0 - cgD * 0.8);', '#endif',
+      '#ifdef USE_ENVMAP', 'float cgR = min(1.0, reflectivity * (1.0 + 0.8 * uCgWet) + cgG * 0.2 + cgFr * (mix(0.3, 0.5, cgG) + 0.2 * uCgWet)) * (1.0 - cgD * 0.8);', '#endif',
       e.includes('cgR') && e.includes('uCgEnv') ? e : c].join('\n'); })();
   const CG_GLINT = ['{ vec3 cgL = normalize((viewMatrix * vec4(uCgSun, 0.0)).xyz), cgH = normalize(cgL + cgV);',
     '  float cgNl = max(dot(cgN, cgL), 0.0), cgNh = max(dot(cgN, cgH), 0.0);',
     '  float cg = (pow(cgNh, mix(40.0, 140.0, cgG)) * mix(2.6, 4.0, cgG) + pow(cgNh, 8.0) * 0.4) * smoothstep(0.0, 0.25, cgNl) + cgFr * 0.6 * cgNl;',
-    '  outgoingLight += uCgSunC * cg * (1.0 - cgD); }',
+    '  outgoingLight += uCgSunC * min(cg, uCgMax) * (1.0 - cgD); }',
     'gl_FragColor = vec4( outgoingLight, diffuseColor.a );'].join('\n');
   function cgPatch(sh, ug, glint) {
-    Object.assign(sh.uniforms, { uCgSun: CGU.sun, uCgSunC: CGU.sunC, uCgEnv: CGU.env, uCgG: ug });
+    Object.assign(sh.uniforms, { uCgSun: CGU.sun, uCgSunC: CGU.sunC, uCgEnv: CGU.env, uCgG: ug, uCgWet: CAR_U.uWet, uCgMax: CGU.max });
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', CG_COMMON).replace('#include <envmap_fragment>', CG_ENV);
     if (glint) sh.fragmentShader = sh.fragmentShader.replace('gl_FragColor = vec4( outgoingLight, diffuseColor.a );', CG_GLINT);
   }
@@ -860,22 +1011,192 @@ const Render = (function () {
     m.customProgramCacheKey = () => key;
     return m;
   }
-  // the sun and the sky of the view: the race's (its sun's direction, colour and strength, the fog's colour against the clear day the
-  // paint's sky picture was made for) or the garage's key light
+  // the sun of the view: the race's (its sun's direction, colour and strength) or the garage's key light; the sky's tint: none (the cube map
+  // is painted in the race's own sky, envPaint); with the bloom (Grafika: Visoko) the glint is held lower (a whole flat panel catching the
+  // sun would flare into a glare round the car)
   function cgSet(show) {
-    if (show) { CGU.sun.value.set(-6, 10, 7).normalize(); CGU.sunC.value.setHex(0xfff2dd).multiplyScalar(0.55); CGU.env.value.setRGB(1, 1, 1); return; }
+    CGU.env.value.setRGB(1, 1, 1); CGU.max.value = !show && postOn() ? 0.9 : 100;
+    if (show) { CGU.sun.value.set(-6, 10, 7).normalize(); CGU.sunC.value.setHex(0xfff2dd).multiplyScalar(0.55); return; }
     CGU.sun.value.set(sunOff[0], sunOff[1], sunOff[2]).normalize(); CGU.sunC.value.copy(sun.color).multiplyScalar(Math.min(1.2, sun.intensity * 0.6));
-    const f = scene.fog.color; CGU.env.value.setRGB(Math.min(1.1, f.r / 0.74), Math.min(1.1, f.g / 0.83), Math.min(1.1, f.b / 0.89));
   }
-  // sky/horizon/ground cube map for glossy paint and glass reflections (generated, no image files)
+  /* ---------------- contact shadows (ambient occlusion), baked once when a track is built: the ground darkens where walls, rails, fences,
+     buildings, grandstands and tyre stacks stand on it. The scenery is drawn from above into height maps (256 m tiles, ~26 cm texels); for
+     every 64 m block within AO_NEAR m of the road, each 50 cm cell's occlusion (how far the heights in rings round it, out to 3 m, rise
+     above it: the dip between opposite points, so a plain slope gives none) goes into an atlas (four blocks per texel, one per colour
+     channel). The lit materials of the world read it through a table of the blocks: it takes some of the sky's light off the ground there,
+     and a little of the sun's, on surfaces facing up. The trees, the crowds, the water and what is see-through are left out (a canopy is
+     no wall). Nothing is drawn for it in a frame: two texture reads where the world is drawn ---------------- */
+  const AO_BS = 64, AO_TS = 256, AO_M = 4, AO_HPX = 1024, AO_PX = 128, AO_NEAR = 40;
+  const AO_U = { uAOi: { value: null }, uAOa: { value: null }, uAOg: { value: new THREE.Vector4(0, 0, AO_BS, 0) }, uAOn: { value: new THREE.Vector3(1, 1, 1) } };
+  let aoRes = null, aoTrack = null;   // this track's atlas and table (freed with the next track); the track they are for (baked when Visoko is chosen later)
+  const AO_VS = ['#include <common>', 'varying vec3 vAOw; varying float vAOy;'].join('\n');
+  const AO_FS = ['#include <common>', 'uniform sampler2D uAOi; uniform sampler2D uAOa; uniform vec4 uAOg; uniform vec3 uAOn; varying vec3 vAOw; varying float vAOy;',
+    'float aoAt() {',
+    '  if (uAOg.w < 0.5) return 1.0;',
+    '  vec2 g = (vAOw.xz - uAOg.xy) / uAOg.z, c = floor(g);',
+    '  if (c.x < 0.0 || c.y < 0.0 || c.x >= uAOn.x || c.y >= uAOn.y) return 1.0;',
+    '  vec4 ix = texture2D(uAOi, (c + 0.5) / uAOn.xy);',
+    '  if (ix.a < 0.5) return 1.0;',
+    '  vec2 f = clamp(g - c, 0.004, 0.996), sl = floor(ix.xy * 255.0 + 0.5);',
+    '  vec4 a = texture2D(uAOa, (sl + vec2(f.x, 1.0 - f.y)) / uAOn.z);',
+    '  float ch = floor(ix.z * 255.0 + 0.5);',
+    '  return 1.0 - (ch < 0.5 ? a.r : ch < 1.5 ? a.g : ch < 2.5 ? a.b : a.a);',
+    '}'].join('\n');
+  function patchAO(root) {   // buildWorld: every lit, solid, non-instanced material of the new world (their own patches kept)
+    root.traverse(o => { if (!o.isMesh || o.isInstancedMesh || !o.receiveShadow) return;
+      for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
+        if (!m || m.userData.aoP || m.transparent || m.map === tex.water || !(m.isMeshLambertMaterial || m.isMeshPhongMaterial || m.isMeshStandardMaterial)) continue;   // (not the water)
+        m.userData.aoP = true;
+        const prev = m.onBeforeCompile, pk = m.customProgramCacheKey();
+        m.onBeforeCompile = (sh, r) => {
+          if (prev) prev.call(m, sh, r);
+          if (sh.fragmentShader.indexOf('#include <aomap_fragment>') < 0 || sh.vertexShader.indexOf('#include <project_vertex>') < 0 || sh.vertexShader.indexOf('#include <defaultnormal_vertex>') < 0) return;
+          for (const k in AO_U) sh.uniforms[k] = AO_U[k];
+          sh.vertexShader = sh.vertexShader.replace('#include <common>', AO_VS).replace('#include <defaultnormal_vertex>', '#include <defaultnormal_vertex>\nvAOy = normalize(mat3(modelMatrix) * objectNormal).y;')
+            .replace('#include <project_vertex>', '#include <project_vertex>\nvAOw = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+          sh.fragmentShader = sh.fragmentShader.replace('#include <common>', AO_FS).replace('#include <aomap_fragment>', '#include <aomap_fragment>\n' +
+            '{ float wN = smoothstep(0.5, 0.85, vAOy); if (wN > 0.0) { float ao = aoAt(); reflectedLight.indirectDiffuse *= mix(1.0, ao, wN); reflectedLight.directDiffuse *= mix(1.0, ao, wN * 0.5); }' +
+            ' if (uAOg.w > 1.5) { reflectedLight.directDiffuse = vec3(0.0); reflectedLight.indirectDiffuse = vec3(aoAt(), wN, uAOg.w > 2.5 ? 1.0 : 0.0); } }');
+        };
+        m.customProgramCacheKey = () => 'ao|' + pk; m.needsUpdate = true;
+      } });
+  }
+  function bakeAO(T) {
+    if (aoRes) { aoRes.rt.dispose(); aoRes.idx.dispose(); aoRes = null; }
+    AO_U.uAOg.value.w = 0; AO_U.uAOi.value = AO_U.uAOa.value = null;
+    if (!world || !world.root || !T || !T.N) return;
+    const t0 = performance.now();
+    // the blocks within AO_NEAR m of the road, and the height tiles they lie in
+    let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (let i = 0; i < T.N; i++) { const x = T.px[i], z = T.pz[i], y = T.hy ? T.hy[i] : 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (z < z0) z0 = z; if (z > z1) z1 = z; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    const gx0 = Math.floor((x0 - AO_NEAR - AO_BS) / AO_TS) * AO_TS, gz0 = Math.floor((z0 - AO_NEAR - AO_BS) / AO_TS) * AO_TS;
+    const nx = Math.ceil((x1 + AO_NEAR + AO_BS - gx0) / AO_TS) * (AO_TS / AO_BS), nz = Math.ceil((z1 + AO_NEAR + AO_BS - gz0) / AO_TS) * (AO_TS / AO_BS);
+    const need = new Uint8Array(nx * nz), R2 = AO_NEAR * AO_NEAR;
+    for (let i = 0; i < T.N; i += 2) { const x = T.px[i], z = T.pz[i], ia = Math.floor((x - AO_NEAR - gx0) / AO_BS), ib = Math.floor((x + AO_NEAR - gx0) / AO_BS), ja = Math.floor((z - AO_NEAR - gz0) / AO_BS), jb = Math.floor((z + AO_NEAR - gz0) / AO_BS);
+      for (let j = ja; j <= jb; j++) for (let k = ia; k <= ib; k++) { if (k < 0 || j < 0 || k >= nx || j >= nz) continue;   // (the block's nearest point within AO_NEAR of the road)
+        const bx = gx0 + k * AO_BS, bz = gz0 + j * AO_BS, dx = Math.max(bx - x, 0, x - bx - AO_BS), dz = Math.max(bz - z, 0, z - bz - AO_BS); if (dx * dx + dz * dz < R2) need[j * nx + k] = 1; } }
+    const blocks = []; for (let j = 0; j < nz; j++) for (let k = 0; k < nx; k++) if (need[j * nx + k]) blocks.push(k, j);
+    const nb = blocks.length / 2; if (!nb) return;
+    const spr = Math.ceil(Math.sqrt(Math.ceil(nb / 4))), aw = spr * AO_PX;
+    if (aw > Math.min(4096, renderer.capabilities.maxTextureSize)) return;   // (a world too long for the atlas: no contact shadows)
+    const rt = new THREE.WebGLRenderTarget(aw, aw, { depthBuffer: false, stencilBuffer: false, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: false });
+    const hrt = new THREE.WebGLRenderTarget(AO_HPX, AO_HPX, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, generateMipmaps: false, stencilBuffer: false });
+    const dMat = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, side: THREE.DoubleSide });
+    const span = AO_TS + 2 * AO_M, yTop = y1 + 160, yBot = y0 - 60;
+    const oc = new THREE.OrthographicCamera(-span / 2, span / 2, span / 2, -span / 2, 0, yTop - yBot); oc.up.set(0, 0, -1);
+    const aoMat = new THREE.ShaderMaterial({ uniforms: { uH: { value: hrt.texture }, uB: { value: new THREE.Vector4() }, uY: { value: new THREE.Vector2(yTop, yTop - yBot) }, uS: { value: span }, uCh: { value: new THREE.Vector4() } },
+      vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+      fragmentShader: ['#include <packing>', 'uniform sampler2D uH; uniform vec4 uB; uniform vec2 uY; uniform float uS; uniform vec4 uCh; varying vec2 vUv;',
+        'float H(vec2 p) { return uY.x - unpackRGBAToDepth(texture2D(uH, p)) * uY.y; }',
+        'void main() {',
+        '  vec2 p = uB.xy + vUv * uB.zw; float h0 = H(p), occ = 0.0;',
+        '  for (int r = 0; r < 4; r++) { float rr = r == 0 ? 0.35 : r == 1 ? 0.8 : r == 2 ? 1.6 : 3.0, w = r == 0 ? 0.3 : r == 1 ? 0.3 : r == 2 ? 0.25 : 0.15, s = 0.0;',
+        '    for (int k = 0; k < 4; k++) { float a = float(k) * 0.7854 + float(r) * 0.39; vec2 d = vec2(cos(a), sin(a)) * rr / uS;',
+        '      float e = 0.5 * (H(p + d) + H(p - d)) - h0 - 0.06; s += clamp(e / (rr * 0.9), 0.0, 1.0); }',   // (painted lines, low kerbs: none)
+        '    occ += w * s * 0.25; }',
+        '  gl_FragColor = uCh * clamp(occ * 1.5, 0.0, 0.7);',
+        '}'].join('\n'),
+      depthTest: false, depthWrite: false, blending: THREE.CustomBlending, blendEquation: THREE.AddEquation, blendSrc: THREE.OneFactor, blendDst: THREE.OneFactor });
+    const qs = new THREE.Scene(), quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), aoMat); quad.frustumCulled = false; qs.add(quad);
+    // draw: only the world's solid scenery (the rest of the scene and the left-out parts hidden for the while), no shadow maps
+    const hidden = [];
+    for (const o of scene.children) if (o !== world.root && o.visible) { o.visible = false; hidden.push(o); }
+    world.root.traverse(o => { if (!o.visible) return; if (o.isPoints || o.isLine || o.isSprite || o.isInstancedMesh) { o.visible = false; hidden.push(o); return; }
+      if (!o.isMesh) return; const ms = Array.isArray(o.material) ? o.material : [o.material];
+      if ((o.userData && o.userData.noAO) || (o.geometry && o.geometry.attributes.sway) || ms.some(m => !m || m.transparent || m.depthWrite === false || m.map === tex.water || (m.userData && m.userData.noAO))) { o.visible = false; hidden.push(o); } });
+    const pOver = scene.overrideMaterial, pAuto = renderer.autoClear, pSh = renderer.shadowMap.autoUpdate, pCol = renderer.getClearColor(new THREE.Color()), pA = renderer.getClearAlpha(), pFog = scene.fog, pBg = scene.background;
+    scene.overrideMaterial = dMat; scene.fog = null; scene.background = null; renderer.shadowMap.autoUpdate = false;
+    renderer.setRenderTarget(rt); renderer.setClearColor(0x000000, 0); renderer.clear(true, false, false);
+    const tiles = new Map(); for (let b = 0; b < nb; b++) { const k = Math.floor(blocks[b * 2] / 4) + ',' + Math.floor(blocks[b * 2 + 1] / 4); if (!tiles.has(k)) tiles.set(k, []); tiles.get(k).push(b); }
+    const idx = new Uint8Array(nx * nz * 4);
+    try {
+      for (const [k, list] of tiles) {
+        const [ti, tj] = k.split(',').map(Number), tx = gx0 + ti * AO_TS, tz = gz0 + tj * AO_TS;
+        oc.position.set(tx + AO_TS / 2, yTop, tz + AO_TS / 2); oc.lookAt(tx + AO_TS / 2, yTop - 1, tz + AO_TS / 2); oc.updateMatrixWorld(); oc.updateProjectionMatrix();
+        renderer.autoClear = true; renderer.setClearColor(0x000000, 1); renderer.setRenderTarget(hrt); renderer.render(scene, oc);
+        renderer.autoClear = false; renderer.setRenderTarget(rt);
+        for (const b of list) {
+          const bi = blocks[b * 2], bj = blocks[b * 2 + 1], bx = gx0 + bi * AO_BS, bz = gz0 + bj * AO_BS, slot = b >> 2, ch = b & 3, sx = slot % spr, sy = Math.floor(slot / spr);
+          aoMat.uniforms.uB.value.set((bx - tx + AO_M) / span, 1 - (bz + AO_BS - tz + AO_M) / span, AO_BS / span, AO_BS / span);   // (the height map's v runs from the tile's far z down)
+          aoMat.uniforms.uCh.value.set(ch === 0 ? 1 : 0, ch === 1 ? 1 : 0, ch === 2 ? 1 : 0, ch === 3 ? 1 : 0);
+          rt.viewport.set(sx * AO_PX, sy * AO_PX, AO_PX, AO_PX); renderer.setRenderTarget(rt); renderer.render(qs, oc);
+          const q = (bj * nx + bi) * 4; idx[q] = sx; idx[q + 1] = sy; idx[q + 2] = ch; idx[q + 3] = 255;
+        }
+      }
+    } finally {
+      rt.viewport.set(0, 0, aw, aw);
+      for (const o of hidden) o.visible = true;
+      scene.overrideMaterial = pOver; scene.fog = pFog; scene.background = pBg; renderer.shadowMap.autoUpdate = pSh; renderer.autoClear = pAuto; renderer.setClearColor(pCol, pA); renderer.setRenderTarget(null);
+      hrt.dispose(); dMat.dispose(); aoMat.dispose(); quad.geometry.dispose();
+    }
+    const it = new THREE.DataTexture(idx, nx, nz, THREE.RGBAFormat); it.magFilter = it.minFilter = THREE.NearestFilter; it.generateMipmaps = false; it.needsUpdate = true;
+    aoRes = { rt, idx: it, blocks: nb, tiles: tiles.size, size: aw, ms: Math.round(performance.now() - t0) };
+    AO_U.uAOi.value = it; AO_U.uAOa.value = rt.texture; AO_U.uAOg.value.set(gx0, gz0, AO_BS, settings.quality === 'high' ? 1 : 0); AO_U.uAOn.value.set(nx, nz, spr);
+  }
+  function carPaint(color, refl) {   // a painted part's own material (the Peugeot's body, the formula's, a part knocked off)
+    const m = new THREE.MeshPhongMaterial({ color, shininess: 80, specular: 0x505050, envMap: envTex, combine: THREE.MixOperation, reflectivity: refl == null ? 0.2 : refl });
+    m.onBeforeCompile = (sh) => carShader(sh);
+    return cgMat(m, false, 'carCg');   // (and the clear coat, the sun's glint)
+  }
+  // the world round the cars, painted into the cube map their paint and glass reflect (no image files): the sky as the sky dome paints
+  // it (the fog's colour at the horizon, deeper overhead), a bright haze just above the horizon, the scenery of the track (a jagged band:
+  // forest, facades, mountains), the ground, the sun's disc; at dusk a warm horizon, at night a dark sky with the floodlights along the
+  // horizon, in winter snow on the ground and the trees, rain and mist greyer. Painted again only when one of those changes (envKey);
+  // the showroom has its own (studio lights)
+  const ENV_S = 64, ENV_BAND = { lake: 0x44603a, city: 0xcdbb9c, ljubljana: 0xd4c4a6, forest: 0x2f5550, italia: 0x5f6f45, kamp: 0x40603a, monaco: 0xd9d2c2,
+    mountain: 0x7d8aa2, ouni: 0x2c422a, pikes: 0x8c7c6a, nring: 0x2f4628, spa: 0x34492e, rbring: 0x3c5a2e, suzuka: 0x3f5b38, vrsic: 0x5f5a42, caracoles: 0x7e6e58 };
+  let envKey = '', envCv = null;
   function makeEnv() {
-    const S = 64, mkFace = (fn) => { const c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), img = g.createImageData(S, S);
-      for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) { const col = fn(i / (S - 1), j / (S - 1)), o = (j * S + i) * 4; img.data[o] = col[0]; img.data[o + 1] = col[1]; img.data[o + 2] = col[2]; img.data[o + 3] = 255; }
-      g.putImageData(img, 0, 0); return c; };
-    const sky = (t) => [lerp(105, 200, t), lerp(155, 224, t), lerp(222, 246, t)];
-    const side = (u, v) => v < 0.5 ? sky(v / 0.5) : v < 0.57 ? [238, 240, 242] : [lerp(96, 58, (v - 0.57) / 0.43), lerp(100, 62, (v - 0.57) / 0.43), lerp(90, 56, (v - 0.57) / 0.43)];
-    const t = new THREE.CubeTexture([mkFace(side), mkFace(side), mkFace(() => sky(0)), mkFace(() => [58, 60, 56]), mkFace(side), mkFace(side)]);
-    t.needsUpdate = true; return t;
+    const cv = []; for (let f = 0; f < 6; f++) { const c = document.createElement('canvas'); c.width = c.height = ENV_S; cv.push(c); }
+    envCv = cv; envKey = ''; return new THREE.CubeTexture(cv);
+  }
+  const envHash = (x) => { const v = Math.sin(x * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
+  function envJag(az) { const u = (az / (2 * Math.PI) + 1) * 40, i = Math.floor(u), f = u - i, a = envHash(i % 40), b = envHash((i + 1) % 40); return a + (b - a) * f * f * (3 - 2 * f); }
+  function envPaint(studio) {
+    if (!envTex) return;
+    const r = Math.max(0, wet), A = atmos, key = studio ? 'studio' : [themeId, A.tod, A.season, Math.round(r * 8), Math.round(mist * 8), sunOff.join(',')].join('|');
+    if (key === envKey) return; envKey = key;
+    const C = (hex) => { _c1.setHex(hex); return [_c1.r, _c1.g, _c1.b]; }, mixC = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k], mul = (a, k) => [a[0] * k, a[1] * k, a[2] * k];
+    const night = !studio && A.tod === 'night', dusk = !studio && A.tod === 'dusk', winter = !studio && A.season === 'winter';
+    let H, top, band, gnd, sunC = [0, 0, 0], sd = [0, 1, 0], lamps = 0;
+    if (studio) { H = [0.16, 0.18, 0.22]; top = [0.07, 0.08, 0.1]; band = [0.1, 0.11, 0.14]; gnd = [0.12, 0.13, 0.16]; }
+    else {
+      H = [scene.fog.color.r, scene.fog.color.g, scene.fog.color.b];
+      top = mixC(H, C(night ? 0x010207 : dusk ? 0x34497f : winter ? 0x86a6d0 : 0x3f7cd0), (night ? 0.8 : 0.55) * (1 - 0.8 * r));
+      band = C(ENV_BAND[themeId] || ENV_BAND.lake);
+      if (A.season === 'autumn') band = mixC(band, C(0x9a6a2a), 0.35); if (winter) band = mixC(band, C(0xe6ebf0), 0.5);
+      if (dusk) band = mixC(mul(band, 0.62), C(0x5a3a3a), 0.25); if (night) band = mul(band, 0.1);
+      band = mixC(band, C(0x6d7378), 0.35 * r); band = mixC(band, H, 0.7 * mist);
+      gnd = winter ? mul(C(0xdfe5ea), night ? 0.12 : 1) : mixC(mul(band, 0.7), C(night ? 0x0c0d0f : 0x505254), 0.45);
+      const sl = Math.hypot(sunOff[0], sunOff[1], sunOff[2]); sd = [sunOff[0] / sl, sunOff[1] / sl, sunOff[2] / sl];
+      sunC = mul([sun.color.r, sun.color.g, sun.color.b], (night ? 0.3 : dusk ? 1.25 : 1) * (1 - 0.9 * r) * (1 - 0.8 * mist)); lamps = night ? 1 : 0;
+    }
+    const glow = mul(H, studio ? 1.6 : night ? 1.4 : 1.1), S = ENV_S, cv = envCv;
+    for (let f = 0; f < 6; f++) {
+      const g = cv[f].getContext('2d'), img = g.createImageData(S, S), D = img.data;
+      for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) {
+        const u = (i + 0.5) / S * 2 - 1, v = (j + 0.5) / S * 2 - 1;
+        let x, y, z;   // (the cube face's direction, as WebGL reads a cube map; x mirrored: three.js reads cube textures with flipEnvMap)
+        if (f === 0) { x = 1; y = -v; z = -u; } else if (f === 1) { x = -1; y = -v; z = u; } else if (f === 2) { x = u; y = 1; z = v; } else if (f === 3) { x = u; y = -1; z = -v; } else if (f === 4) { x = u; y = -v; z = 1; } else { x = -u; y = -v; z = -1; }
+        const l = Math.hypot(x, y, z); x = -x / l; y /= l; z /= l;
+        const az = Math.atan2(z, x), edge = 0.035 + 0.075 * envJag(az) * (studio ? 0 : 1);
+        let c;
+        if (studio) {   // a dark studio: two long soft light boxes overhead and a bright strip round the walls
+          const box = Math.max(Math.exp(-Math.pow((y - 0.75) * 9, 2)) * Math.exp(-Math.pow(Math.sin(az) * 2.2, 2)), Math.exp(-Math.pow((y - 0.35) * 14, 2)) * 0.55);
+          c = mixC(y > 0 ? mixC(H, top, Math.min(1, y * 1.6)) : mixC(H, gnd, Math.min(1, -y * 3)), [1.6, 1.58, 1.52], Math.min(1, box));
+        } else if (y > edge) c = mixC(y < 0.12 ? mixC(glow, H, y / 0.12) : H, top, Math.pow(Math.min(1, (y - 0.02) / 0.8), 0.75));   // the sky
+        else if (y > -0.03) c = mixC(band, mul(band, 0.72), (edge - y) / (edge + 0.03));   // the scenery along the horizon
+        else c = mixC(mul(band, 0.8), gnd, Math.min(1, (-0.03 - y) * 4));   // the ground
+        if (!studio) {
+          const s = x * sd[0] + y * sd[1] + z * sd[2];
+          if (s > 0) { const k = (s > 0.9975 ? 2.4 : 0) + Math.pow(s, 60) * 0.7 + Math.pow(s, 8) * 0.12; c = [c[0] + sunC[0] * k, c[1] + sunC[1] * k, c[2] + sunC[2] * k]; }
+          if (lamps && y > 0.02 && y < 0.065) { const q = az / 0.26, fq = q - Math.floor(q); if (fq < 0.12) c = mixC(c, [1.4, 1.34, 1.2], 0.9); }   // (the floodlights along the track)
+        }
+        const o = (j * S + i) * 4; D[o] = Math.min(255, c[0] * 255); D[o + 1] = Math.min(255, c[1] * 255); D[o + 2] = Math.min(255, c[2] * 255); D[o + 3] = 255;
+      }
+      g.putImageData(img, 0, 0);
+    }
+    envTex.needsUpdate = true;
   }
   // after a deformation: flat normals on the touched triangles so the crumpled metal catches the light
   function refacet(geo, tris) {
@@ -948,6 +1269,7 @@ const Render = (function () {
     const m = matCar.clone(), u = { value: 0 }, us = { value: 0 };
     m.userData.dirt = u; m.userData.scr = us;
     m.onBeforeCompile = (sh) => {
+      carShader(sh);
       sh.uniforms.uDirt = u; sh.uniforms.uScr = us;
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vLp;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvLp = position;');
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vLp;\nuniform float uDirt;\nuniform float uScr;\n#ifndef CG_D\n#define CG_D\nfloat cgD = 0.0;\n#endif').replace('#include <color_fragment>',
@@ -981,7 +1303,8 @@ const Render = (function () {
       for (const n of p206Geo) if (n.g) { const src = p206Geo.find(o => o.name === n.g); n.prims = src.prims; n.mirror = Math.sign(n.t[2]) !== Math.sign(src.t[2]); }
     }
     if (!p206Mats) {
-      const chrome = cgMat(new THREE.MeshPhongMaterial({ color: 0x2c2e33, shininess: 90, specular: 0x777777, envMap: envTex, combine: THREE.MixOperation, reflectivity: 0.45 }), true, 'carCg');   // (the glass: its sharper glint)
+      const chrome = new THREE.MeshPhongMaterial({ color: 0x2c2e33, shininess: 90, specular: 0x777777, envMap: envTex, combine: THREE.MixOperation, reflectivity: 0.45 });
+      chrome.onBeforeCompile = (sh) => carShader(sh); cgMat(chrome, true, 'carCg');   // (wet; the glass: its sharper glint)
       p206Mats = { black: new THREE.MeshLambertMaterial({ color: 0x1b1c20 }), chrome, grey: new THREE.MeshLambertMaterial({ color: 0x55575c }),
         light: new THREE.MeshLambertMaterial({ color: 0xd9d9d6 }), darkred: new THREE.MeshLambertMaterial({ color: 0x7a1510 }),
         lamp: new THREE.MeshBasicMaterial({ color: 0xfff4dc }) };
@@ -991,7 +1314,7 @@ const Render = (function () {
   // builds the model into a car view: body into bodyG (rolls/pitches), wheels into grp (steer/spin like the stock wheels)
   function addP206(car, bodyG, grp, wf, wr) {
     let bodyH = null;
-    const paint = cgMat(new THREE.MeshPhongMaterial({ color: car.color, shininess: 80, specular: 0x505050, envMap: envTex, combine: THREE.MixOperation, reflectivity: 0.2 }), false, 'carCg');
+    const paint = carPaint(car.color);
     const tail = new THREE.MeshLambertMaterial({ color: 0x8a0d08, emissive: 0x3a0000 });
     for (const n of p206Parts()) {
       const holder = new THREE.Group(); holder.position.set(n.t[0], n.t[1], n.t[2]);
@@ -1070,33 +1393,36 @@ const Render = (function () {
     if (dB.lamps) dB.lamps.forEach(([x, y, z], k) => { lights[k * 2].set(x * sxB, y, -z * szB); lights[k * 2 + 1].set(x * sxB, y, z * szB); });   // (the new bodies: where their lamps are)
     const noHead = M.body === 'formula';   // the formula: no headlamps, one rain light at the tip of the crash structure
     if (noHead) { lights[0].set(2.62, 0.26, -0.05); lights[1].set(2.62, 0.26, 0.05); lights[2].set(-2.49, 0.34, -0.02); lights[3].set(-2.49, 0.34, 0.02); }
-    return { grp, bodyG, body, tail, dec, wf, wr, glb, fp, blob, marker, lights, noHead, dirtU: bodyMat.userData && bodyMat.userData.dirt || null, scrU: bodyMat.userData && bodyMat.userData.scr || null };
+    return { grp, bodyG, body, tail, dec, wf, wr, glb, fp, blob, marker, lights, noHead, exh: exhaustTips(M), dirtU: bodyMat.userData && bodyMat.userData.dirt || null, scrU: bodyMat.userData && bodyMat.userData.scr || null };
   }
 
-  /* ---------------- ghost of the best run (time trials) ---------------- */
-  // A see-through copy of the player's car, posed by the game (js/game.js replays the stored best run). Only drawn: not a car of the
-  // race (no physics, no collisions, no sound, no shadow, no glows or dust). One material for all its parts, kept for the whole visit.
-  let ghostV = null, ghostMat = null;
-  function ghostDrop() { if (!ghostV) return; scene.remove(ghostV.grp); freeOwn(ghostV.grp, new Set([ghostMat])); ghostV = null; }
-  // g: null hides it (drop: also frees the mesh); else { M, color, stripe, x, y, z, h, d (steer), p (pitch), r (roll), op (opacity 0..1) }
-  function setGhost(g, drop) {
-    if (!g) { if (drop) ghostDrop(); else if (ghostV) ghostV.grp.visible = false; return; }
+  /* ---------------- ghosts of the time trials: the best run (slot 0) and the gold medal pace (slot 1) ---------------- */
+  // A see-through copy of the player's car, posed by the game (js/game.js replays the stored best run, and the autopilot's run stretched
+  // to the gold time). Only drawn: not a car of the race (no physics, no collisions, no sound, no shadow, no glows or dust). One material
+  // per ghost for all its parts (pale blue, gold), kept for the whole visit.
+  const GHOST_LOOK = [{ color: 0xcfe4ff, emissive: 0x2b4a72, op: 0.42 }, { color: 0xffd95e, emissive: 0x9a6a0c, op: 0.56 }];
+  const ghosts = [{ v: null, mat: null }, { v: null, mat: null }];
+  function ghostDrop(k) { const G = ghosts[k]; if (!G.v) return; scene.remove(G.v.grp); freeOwn(G.v.grp, new Set([G.mat])); G.v = null; }
+  // g: null hides it (drop: also frees the mesh); else { M, color, stripe, x, y, z, h, d (steer), p (pitch), r (roll), op (opacity 0..1) }; slot: 0 best run, 1 gold
+  function setGhost(g, drop, slot) {
+    const k = slot || 0, G = ghosts[k];
+    if (!g) { if (drop) ghostDrop(k); else if (G.v) G.v.grp.visible = false; return; }
     if (!scene) return;
-    if (!ghostMat) ghostMat = new THREE.MeshLambertMaterial({ color: 0xcfe4ff, emissive: 0x2b4a72, transparent: true, opacity: 0.4 });
-    if (ghostV && (ghostV.M !== g.M || ghostV.color !== g.color)) ghostDrop();
-    if (!ghostV) {
+    if (!G.mat) { const L = GHOST_LOOK[k]; G.mat = new THREE.MeshLambertMaterial({ color: L.color, emissive: L.emissive, transparent: true, opacity: L.op }); }
+    if (G.v && (G.v.M !== g.M || G.v.color !== g.color)) ghostDrop(k);
+    if (!G.v) {
       const v = makeCarMesh({ m: g.M, color: g.color, stripe: g.stripe !== false, num: 0 }, { noDirt: true, noBlob: true, noMarker: true });
       const sh = sharedCarRes();
       v.bodyG.remove(v.dec); freeOwn(v.dec);   // no start number (also the rally's side decals: they share its material)
       v.grp.traverse(o => { if (!o.isMesh) return; if (o.material === v.dec.material) o.visible = false;
-        for (const m of Array.isArray(o.material) ? o.material : [o.material]) if (m && !sh.m.has(m) && m !== ghostMat && m !== v.dec.material) m.dispose();
-        o.material = ghostMat; o.castShadow = false; o.receiveShadow = false; o.renderOrder = 2; });
+        for (const m of Array.isArray(o.material) ? o.material : [o.material]) if (m && !sh.m.has(m) && m !== G.mat && m !== v.dec.material) m.dispose();
+        o.material = G.mat; o.castShadow = false; o.receiveShadow = false; o.renderOrder = 2; });
       if (v.body.visible) v.body.renderOrder = 3;   // (the body over the wheels it hides)
       v.M = g.M; v.color = g.color; v.spin = 0; v.lx = g.x; v.lz = g.z;
-      scene.add(v.grp); ghostV = v;
+      scene.add(v.grp); G.v = v;
     }
-    const v = ghostV, M = g.M;
-    v.grp.visible = g.op > 0.01; ghostMat.opacity = 0.42 * clamp(g.op, 0, 1);
+    const v = G.v, M = g.M;
+    v.grp.visible = g.op > 0.01; G.mat.opacity = GHOST_LOOK[k].op * clamp(g.op, 0, 1);
     v.grp.position.set(g.x, g.y, g.z);
     v.grp.rotation.set(0, -g.h, g.p || 0, 'YZX');
     v.bodyG.rotation.set(g.r || 0, 0, 0); v.bodyG.position.y = Math.abs(g.r || 0) * 0.4;
@@ -1145,7 +1471,7 @@ const Render = (function () {
       if (additive) this.mat = new THREE.ShaderMaterial({   // sparks and flames: glowing dots
         uniforms: { uScale: { value: 400 } },
         vertexShader: 'attribute float psize; attribute vec4 pcolor; uniform float uScale; varying vec4 vC; void main(){ vC = pcolor; vec4 mv = modelViewMatrix * vec4(position,1.0); gl_PointSize = psize * uScale / max(1.0, -mv.z); gl_Position = projectionMatrix * mv; }',
-        fragmentShader: 'varying vec4 vC; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d,d)*4.0; if (r > 1.0) discard; float a = vC.a * (1.0 - r) * (1.0 - r * 0.3); gl_FragColor = vec4(vC.rgb, a); }',
+        fragmentShader: 'varying vec4 vC; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d,d)*4.0; if (r > 1.0) discard; float a = vC.a * (1.0 - r) * (1.0 - r * 0.3); gl_FragColor = vec4(mix(vC.rgb, vec3(1.0, 0.97, 0.85), (1.0 - r) * (1.0 - r) * 0.6), a); }',   // (a hot white core)
         transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
       });
       else {   // smoke, dust, spray: puffs from the atlas, each turned its own way and slowly turning as it grows; lit from above (a darker
@@ -1227,18 +1553,26 @@ const Render = (function () {
   }
 
   /* ---------------- skid marks ---------------- */
+  // skid marks, wheel tracks in the grass and the gravel, dirt dropped on the road: quads on the ground, kept for the whole race (a ring of
+  // max; only the ones laid so far are drawn) and fading slowly with their age (to about half in four minutes: uSkT, each quad's aT)
   class Skids {
     constructor(max) {
-      this.max = max; this.cur = 0;
-      this.pos = new Float32Array(max * 12); this.col = new Float32Array(max * 16);
+      this.max = max; this.cur = 0; this.n = 0; this.t = 0;
+      this.pos = new Float32Array(max * 12); this.col = new Float32Array(max * 16); this.bt = new Float32Array(max * 4);
       const idx = [];
       for (let i = 0; i < max; i++) { const b = i * 4; idx.push(b, b + 2, b + 1, b + 1, b + 2, b + 3); }
       const g = new THREE.BufferGeometry();
       this.aPos = new THREE.BufferAttribute(this.pos, 3); this.aPos.setUsage(THREE.DynamicDrawUsage);
       this.aCol = new THREE.BufferAttribute(this.col, 4); this.aCol.setUsage(THREE.DynamicDrawUsage);
-      g.setAttribute('position', this.aPos); g.setAttribute('color', this.aCol); g.setIndex(idx);
+      this.aT = new THREE.BufferAttribute(this.bt, 1); this.aT.setUsage(THREE.DynamicDrawUsage);
+      g.setAttribute('position', this.aPos); g.setAttribute('color', this.aCol); g.setAttribute('aT', this.aT); g.setIndex(idx); g.setDrawRange(0, 0);
       g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
       const m = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
+      this.uT = { value: 0 };
+      m.onBeforeCompile = (sh) => { sh.uniforms.uSkT = this.uT;
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aT; uniform float uSkT; varying float vSkF;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvSkF = mix(1.0, 0.45, smoothstep(15.0, 240.0, uSkT - aT));');
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vSkF;').replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.a *= vSkF;'); };
+      m.customProgramCacheKey = () => 'skidAge';
       this.mesh = new THREE.Mesh(g, m); this.mesh.frustumCulled = false; this.mesh.renderOrder = 2;
       this.dirty = false; this.lo = 1e9; this.hi = -1;
     }
@@ -1246,8 +1580,9 @@ const Render = (function () {
       if (!this.pkIn && curTrack && curTrack.def.theme === 'pikes') return;   // (Pikes Peak lays its own marks: pkMarks)
       const dx = x1 - x0, dz = z1 - z0, l = Math.hypot(dx, dz) || 1;
       const nx = -dz / l * wd, nz = dx / l * wd;
-      const i = this.cur; this.cur = (this.cur + 1) % this.max;
+      const i = this.cur; this.cur = (this.cur + 1) % this.max; if (this.n < this.max) this.n++;
       if (i < this.lo) this.lo = i; if (i > this.hi) this.hi = i;
+      this.bt[i * 4] = this.bt[i * 4 + 1] = this.bt[i * 4 + 2] = this.bt[i * 4 + 3] = this.t;
       const p = this.pos, o = i * 12, ya = 0.03 + (y0 || 0), yc = 0.03 + (y1 == null ? (y0 || 0) : y1);
       p[o] = x0 - nx; p[o + 1] = ya; p[o + 2] = z0 - nz; p[o + 3] = x0 + nx; p[o + 4] = ya; p[o + 5] = z0 + nz;
       p[o + 6] = x1 - nx; p[o + 7] = yc; p[o + 8] = z1 - nz; p[o + 9] = x1 + nx; p[o + 10] = yc; p[o + 11] = z1 + nz;
@@ -1256,14 +1591,18 @@ const Render = (function () {
       this.dirty = true;
     }
     flush() {
+      this.uT.value = this.t;
       if (!this.dirty) return;
       if (this.hi >= this.lo) {
         this.aPos.updateRange.offset = this.lo * 12; this.aPos.updateRange.count = (this.hi - this.lo + 1) * 12;
         this.aCol.updateRange.offset = this.lo * 16; this.aCol.updateRange.count = (this.hi - this.lo + 1) * 16;
+        this.aT.updateRange.offset = this.lo * 4; this.aT.updateRange.count = (this.hi - this.lo + 1) * 4;
       }
-      this.aPos.needsUpdate = true; this.aCol.needsUpdate = true; this.dirty = false; this.lo = 1e9; this.hi = -1;
+      this.aPos.needsUpdate = true; this.aCol.needsUpdate = true; this.aT.needsUpdate = true; this.dirty = false; this.lo = 1e9; this.hi = -1;
+      this.mesh.geometry.setDrawRange(0, this.n * 6);
     }
-    clear() { this.pos.fill(0); this.col.fill(0); this.dirty = true; this.lo = 1e9; this.hi = -1; this.aPos.updateRange.count = -1; this.aCol.updateRange.count = -1; this.aPos.needsUpdate = true; this.aCol.needsUpdate = true; this.dirty = false; }
+    clear() { this.pos.fill(0); this.col.fill(0); this.bt.fill(0); this.n = 0; this.cur = 0; this.mesh.geometry.setDrawRange(0, 0); this.dirty = true; this.lo = 1e9; this.hi = -1;
+      for (const a of [this.aPos, this.aCol, this.aT]) { a.updateRange.count = -1; a.needsUpdate = true; } this.dirty = false; }
   }
 
   /* ---------------- rain: streaks falling in a box around the view centre. The shader wraps each drop into the box (its place
@@ -1427,8 +1766,30 @@ const Render = (function () {
   let settings = { quality: 'high', shadows: true, camera: 'iso' };
   const cam = { x: 0, z: 0, lx: 0, lz: 0, zoom: 1, hs: 0, shake: 0, init: false, userZoom: 1 };
   let time = 0;
-  let showScene = null, showCam = null, showCar = null, showAngle = 0.6;
+  let showScene = null, showCam = null, showCar = null, showAngle = 0.6, showRefl = null, showShadow = null;
 
+  /* ---------------- sharper shadows by the car (Grafika: Visoko): a second directional light with no light of its own casts a small shadow
+     map (NEAR_R m round the car, ~2.3 cm texels); the sun's shadow takes it where it covers the ground, fading into the wide one towards
+     its edge. The shader chunks of every lit material learn it once (Lambert: getShadowMask; Phong, Standard: the lights' loop); with a
+     single shadow map (the other qualities) they are as before ---------------- */
+  const NEAR_R = 12;
+  let sunN = null;
+  function nearShadows() {
+    const C = THREE.ShaderChunk;
+    if (C.shadowmap_pars_fragment.indexOf('sunShadow2') >= 0) return;
+    C.shadowmap_pars_fragment += ['', '#if defined( USE_SHADOWMAP ) && NUM_DIR_LIGHT_SHADOWS == 2',
+      'float sunShadow2() {',
+      '  vec3 c = vDirectionalShadowCoord[ 1 ].xyz / vDirectionalShadowCoord[ 1 ].w; vec2 e = min(c.xy, 1.0 - c.xy);',
+      '  float w = smoothstep(0.0, 0.14, min(e.x, e.y)) * step(c.z, 1.0);',
+      '  float f = w < 0.999 ? getShadow( directionalShadowMap[ 0 ], directionalLightShadows[ 0 ].shadowMapSize, directionalLightShadows[ 0 ].shadowBias, directionalLightShadows[ 0 ].shadowRadius, vDirectionalShadowCoord[ 0 ] ) : 1.0;',
+      '  float n = w > 0.001 ? getShadow( directionalShadowMap[ 1 ], directionalLightShadows[ 1 ].shadowMapSize, directionalLightShadows[ 1 ].shadowBias, directionalLightShadows[ 1 ].shadowRadius, vDirectionalShadowCoord[ 1 ] ) : 1.0;',
+      '  return mix(f, n, w);', '}', '#endif', ''].join('\n');
+    const m0 = '#if NUM_DIR_LIGHT_SHADOWS > 0\n\tDirectionalLightShadow directionalLight;';
+    const L0 = 'directLight.color *= all( bvec2( directLight.visible, receiveShadow ) ) ? getShadow( directionalShadowMap[ i ], directionalLightShadow.shadowMapSize, directionalLightShadow.shadowBias, directionalLightShadow.shadowRadius, vDirectionalShadowCoord[ i ] ) : 1.0;';
+    if (C.shadowmask_pars_fragment.indexOf(m0) < 0 || C.lights_fragment_begin.indexOf(L0) < 0) { console.warn('near shadows: three.js chunks not as expected'); return; }
+    C.shadowmask_pars_fragment = C.shadowmask_pars_fragment.replace(m0, '#if NUM_DIR_LIGHT_SHADOWS == 2\n\tshadow *= receiveShadow ? sunShadow2() : 1.0;\n\t#elif NUM_DIR_LIGHT_SHADOWS > 0\n\tDirectionalLightShadow directionalLight;');
+    C.lights_fragment_begin = C.lights_fragment_begin.replace(L0, '#if NUM_DIR_LIGHT_SHADOWS == 2\n\t\tdirectLight.color *= all( bvec2( directLight.visible, receiveShadow ) ) ? ( UNROLLED_LOOP_INDEX == 0 ? sunShadow2() : 1.0 ) : 1.0;\n\t\t#else\n\t\t' + L0 + '\n\t\t#endif');
+  }
   function init(canvas) {
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', alpha: false, stencil: false });
     renderer.setClearColor(0x263f1f, 1);
@@ -1443,19 +1804,28 @@ const Render = (function () {
     const sc = sun.shadow.camera; sc.left = -80; sc.right = 80; sc.top = 80; sc.bottom = -80; sc.near = 10; sc.far = 320;
     sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.03;
     scene.add(sun); scene.add(sun.target);
+    sunN = new THREE.DirectionalLight(0xffffff, 0); sunN.castShadow = true; sunN.shadow.mapSize.set(1024, 1024);   // (Grafika: Visoko) the near cascade: no light of its own, a sharp shadow map round the car (nearShadows)
+    { const c = sunN.shadow.camera; c.left = -NEAR_R; c.right = NEAR_R; c.top = NEAR_R; c.bottom = -NEAR_R; c.near = 10; c.far = 320; }
+    sunN.shadow.bias = -0.00015; sunN.shadow.normalBias = 0.02;
+    nearShadows();
     tex = Tex.all(renderer.capabilities.getMaxAnisotropy());
     matCar = new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 80, specular: 0x505050 });
-    envTex = makeEnv(); matCar.envMap = envTex; matCar.combine = THREE.MixOperation; matCar.reflectivity = 0.2;   // glossy paint: sky + bright horizon band
-    cgMat(matCar, false, 'carCg');   // (and the sun's glint)
+    envTex = makeEnv(); matCar.envMap = envTex; matCar.combine = THREE.MixOperation; matCar.reflectivity = 0.2;   // glossy paint: the sky, the horizon and the track round it (envPaint)
+    matCar.onBeforeCompile = (sh) => carShader(sh); cgMat(matCar, false, 'carCg');   // (wet paint; and the sun's glint)
     // the wheels: matte rubber, metal rims (grey and light: the sky in them, in the colour of the race's sky, and a glint of the sun)
     matWheel = new THREE.MeshPhongMaterial({ vertexColors: true, envMap: envTex, combine: THREE.MixOperation, reflectivity: 0.4, specular: 0x8c8c8c, shininess: 60 });
     matWheel.onBeforeCompile = (sh) => {
+      // the calliper (its colour: CAL_R, CAL_G) stays at the top of a spinning wheel: its vertices turned back by the spin (the wheel's own up, the world's up seen in the wheel's plane)
+      sh.vertexShader = sh.vertexShader.replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\n' +
+        'float wCal = step(distance(color.rgb, vec3(' + CAL_R.join(', ') + ')), 0.01) + step(distance(color.rgb, vec3(' + CAL_G.join(', ') + ')), 0.01);\n' +
+        'vec2 wUp = normalize(vec2(modelMatrix[0].y, modelMatrix[1].y) + vec2(0.0, 1e-5)); mat2 wR = mat2(wUp.y, -wUp.x, wUp.x, wUp.y);\n' +
+        'if (wCal > 0.5) objectNormal.xy = wR * objectNormal.xy;').replace('#include <begin_vertex>', '#include <begin_vertex>\nif (wCal > 0.5) transformed.xy = wR * transformed.xy;');
       sh.uniforms.uCgEnv = CGU.env;
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uCgEnv;')
         .replace('#include <specularmap_fragment>', '#include <specularmap_fragment>\nspecularStrength = smoothstep(0.22, 0.5, dot(vColor.rgb, vec3(0.3333))) * (1.0 - smoothstep(0.08, 0.2, max(vColor.r, max(vColor.g, vColor.b)) - min(vColor.r, min(vColor.g, vColor.b))));')
         .replace('#include <envmap_fragment>', THREE.ShaderChunk.envmap_fragment.replace('#ifdef ENVMAP_BLENDING_MULTIPLY', 'envColor.rgb *= uCgEnv;\n#ifdef ENVMAP_BLENDING_MULTIPLY'));
     };
-    matWheel.customProgramCacheKey = () => 'wheelRim';
+    matWheel.customProgramCacheKey = () => 'wheelRimCal';
     matTailOff = new THREE.MeshLambertMaterial({ color: 0x6a1212 });
     matTailOn = new THREE.MeshBasicMaterial({ color: 0xff2a1a });
     matBlob = new THREE.MeshBasicMaterial({ map: tex.blob, transparent: true, depthWrite: false, opacity: 0.8 });
@@ -1464,8 +1834,8 @@ const Render = (function () {
     matScOn = new THREE.MeshBasicMaterial({ color: 0xffa21a }); matScOff = new THREE.MeshLambertMaterial({ color: 0x4a3312 });   // (the safety car's lamps)
     particles = new Particles(2400); scene.add(particles.points);
     sparkP = new Particles(700, true); scene.add(sparkP.points);
-    glows = new Glows(10 * 16 + 240); scene.add(glows.points);   // (the race's cars, up to three points a lamp at night; the open road's traffic and patrol cars)
-    skids = new Skids(8000); scene.add(skids.mesh);
+    glows = new Glows(10 * 16 + 96 + 240); scene.add(glows.points);   // (the race's cars, up to three points a lamp at night, their hot brakes and backfires; the open road's traffic and patrol cars)
+    skids = new Skids(16000); scene.add(skids.mesh);
     rain = new Rain(3200); scene.add(rain.mesh);
     streaks = new Streaks(420); scene.add(streaks.mesh); splash = new Splashes(360); scene.add(splash.mesh);   // (the wet road: the lights' reflections, the drops' splashes)
     snow = new Snow(2600); scene.add(snow.mesh);
@@ -1479,16 +1849,20 @@ const Render = (function () {
     camYaw = (track && track.def && track.def.camYaw) || 0;   // fixed heading of the 'kino' camera for this circuit (clockwise from north)
     if (world && world.root) {   // switching tracks: drop and free the previous scenery
       scene.remove(world.root);
-      world.root.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.dispose()); if (o.isInstancedMesh) o.dispose(); });   // (instanced: its instance buffers)
+      world.root.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.userData.geoRain) { o.userData.geoRain.dispose(); o.userData.geoDry.dispose(); } if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.dispose()); if (o.isInstancedMesh) o.dispose(); });   // (instanced: its instance buffers; the crowd's other figure)
       if (world.ownTex) world.ownTex.forEach(t => t.dispose());   // textures made for that track only (the shared ones stay cached)
       if (skids) skids.clear();
     }
     clearPropMeshes();
-    world = World.build(scene, track, tex, { density });
+    const th = THEMES[(track.def && track.def.theme) || 'lake'] || THEMES.lake;
+    world = World.build(scene, track, tex, { density, sunOff: th.sunOff || [-80, 96, 70] });   // (sunOff: Ouninpohja's shafts of light fall along the sun)
     if (!world.farClip && camera.far !== 700) { camera.far = 700; camera.updateProjectionMatrix(); }
     applyTheme((track.def && track.def.theme) || 'lake'); wet = wetW = -1;   // (the weather again on the new world's road)
     curTrack = track; seasonWorld(); floodlights(); litWindows();   // (the season and the time of day on the new world)
     if (dryLn) { scene.remove(dryLn); dryLn.geometry.dispose(); dryLn.material.dispose(); dryLn = null; }
+    { const d = world.dyn; if (d.mist) d.mist.set(mist); if (d.rays) d.rays.material.uniforms.uA.value = 0.18 * (1 + 1.5 * mist); }   // (and the mist on its own banks)
+    aoTrack = track; bakeAO(settings.quality === 'high' ? track : null); if (aoRes) patchAO(world.root);   // (the contact shadows, Grafika Visoko: baked once, read by the world's materials; else no trace in their shaders)
+    if (atmos.tod !== 'day') patchNight(world.root); nightBoards();   // (the boards and the glass of the pits and towers lit at night: their shader only once it is dark; the facades' windows: litWindows)
     if (pud) { scene.remove(pud); pud.geometry.dispose(); pud.material.dispose(); pud = null; } splash.clear();
     birds.reset(!!(track.def && (track.def.sea || track.def.theme === 'monaco')));   // (gulls by the sea)
     return world;
@@ -1597,6 +1971,11 @@ const Render = (function () {
     const ms = settings.quality === 'high' ? 2048 : 1024;
     if (sun.shadow.mapSize.x !== ms) { sun.shadow.mapSize.set(ms, ms); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
     if (!settings.shadows && sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }   // shadows off: free the shadow map
+    if (settings.quality === 'high' && !aoRes && aoTrack && world) { bakeAO(aoTrack); if (aoRes) patchAO(world.root); }   // (the contact shadows: Grafika Visoko only; the materials are rebuilt below)
+    AO_U.uAOg.value.w = aoRes && settings.quality === 'high' ? 1 : 0;
+    const nOn = settings.quality === 'high' && !!settings.shadows;   // the sharp near cascade: Grafika Visoko only
+    if (nOn && !sunN.parent) { scene.add(sunN); scene.add(sunN.target); }
+    else if (!nOn && sunN.parent) { scene.remove(sunN); scene.remove(sunN.target); if (sunN.shadow.map) { sunN.shadow.map.dispose(); sunN.shadow.map = null; } }
     // every material is rebuilt, so shadow receiving goes in or out of its shader (three.js r128 has no getter for needsUpdate:
     // it has to be set on each material; the shaders are compiled again at the next frame)
     const upd = (o) => { if (o.material) for (const m of Array.isArray(o.material) ? o.material : [o.material]) m.needsUpdate = true; };
@@ -1622,7 +2001,7 @@ const Render = (function () {
     kamp:     { fog: 0xa4a8d0, sun: 0xff9468, sunI: 1.33, sky: 0xc6ceff, gnd: 0x7a7338, hemiI: 1.0, tint: [1.0, 0.96, 1.03], sat: 1.06, sunOff: [-100, 80, 30] },   // Gromski rt: sun in the west-south-west, a warm bright ambient: softer shadows, as in the reference
     monaco:   { fog: 0xcfe2f1, sun: 0xfff0d6, sunI: 1.08, sky: 0xd8ebff, gnd: 0x8a7c62, hemiI: 0.6, tint: [1.03, 1.0, 0.95], sat: 1.14 },
     mountain: { fog: 0xb4cadf, sun: 0xfff2e0, sunI: 1.0, sky: 0xc8dcff, gnd: 0x4d5c33, hemiI: 0.6, tint: [0.98, 1.0, 1.03], sat: 1.12 },
-    ouni:     { fog: 0xc4d3dc, sun: 0xffe9c6, sunI: 1.18, sky: 0xcfe1f5, gnd: 0x4a5a2e, hemiI: 0.56, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-88, 72, 58] },   // Ouninpohja: a clear Finnish August afternoon, a warm sun lower in the west (the forest's long shadows across the road), soft haze over the lakes
+    ouni:     { fog: 0xc9d5da, sun: 0xffddae, sunI: 1.2, sky: 0xc9dcf2, gnd: 0x4f5a30, hemiI: 0.64, tint: [1.04, 1.0, 0.95], sat: 1.1, sunOff: [-88, 72, 58], haze: 0.2, hazeCol: [1, 0.82, 0.56], shadowR: 2.2 },   // Ouninpohja: a clear Finnish August afternoon, a warm golden sun lower in the west (the forest's long shadows across the road, soft-edged and lit by the sky), soft haze over the lakes
     vrsic:    { fog: 0xc6d4e0, sun: 0xffe4b8, sunI: 1.16, sky: 0xcfe0f4, gnd: 0x6a5a3a, hemiI: 0.58, tint: [1.03, 1.0, 0.95], sat: 1.12, sunOff: [-84, 70, 56], season: 'autumn' },   // Vršič: a clear October afternoon in the Julian Alps, a warm, lower sun (long shadows across the hairpins), a crisp blue haze
     pikes:    { fog: 0xdfd0cc, sun: 0xffcc8f, sunI: 1.58, sky: 0x9fbbf1, gnd: 0x70604e, hemiI: 0.75, tint: [1.05, 1.0, 0.925], sat: 1.13, haze: 0.25, hazeCol: [1, 0.77, 0.48], sunOff: [104, 48, -60] },   // early morning on race day: a low golden sun from the east-north-east (long shadows down the slopes, its warm glow at the edge of the view when it is ahead), cool blue shade from the clear sky, a light warm haze over the valleys
     nring:    { fog: 0xb7c7cc, sun: 0xfff0d8, sunI: 1.1, sky: 0xcadcf0, gnd: 0x3e4a2a, hemiI: 0.6, tint: [1.03, 1.0, 0.95], sat: 1.04, sunOff: [-80, 76, 70] },   // the Eifel: a summer afternoon over the 'green hell' (a lower sun: longer shadows)
@@ -1642,6 +2021,7 @@ const Render = (function () {
   function applyTheme(id) {
     const t = THEMES[id] || THEMES.lake, r = Math.max(0, wet); themeId = id;
     sunOff = t.sunOff || [-80, 96, 70];   // low evening sun where the theme asks for it (long shadows)
+    sun.shadow.radius = t.shadowR || 1;   // (softer shadow edges where the theme asks for them: the PCF filter of 'normal' quality)
     // rain: an overcast sky (grey haze, a weak sun, more light from the whole sky), a cooler, paler grade
     const mix = (hex, to, k) => _c1.setHex(hex).lerp(_c2.setHex(to), k * r);
     scene.fog.color.copy(mix(t.fog, 0x949ea7, 0.75)); renderer.setClearColor(scene.fog.color, 1);
@@ -1665,13 +2045,28 @@ const Render = (function () {
     }
     if (A.season === 'winter' && A.tod !== 'night') { to(scene.fog.color, 0xdfe6ee, 0.4); renderer.setClearColor(scene.fog.color, 1); to(sun.color, 0xeef3ff, 0.5); hemi.intensity *= 1.12; if (post) post.mat.uniforms.uSat.value *= 0.88; }
     if (A.season === 'autumn' && A.tod === 'day' && !t.season) { to(sun.color, 0xffd9a8, 0.3); if (post) post.mat.uniforms.uTint.value.set(1.04, 0.99, 0.93); }
-    if (post) { const B = post.bl.bright.uniforms; post.bloom = A.tod === 'night' ? 1.05 + 0.25 * r : A.tod === 'dusk' ? 0.5 : 0; B.uThr.value = A.tod === 'night' ? 0.62 : 0.8; }   // (the lights' glow: at dusk only what is brighter than the sky)
+    if (mist > 0) {   // morning mist: a pale haze (grey-white by day, warm at dusk, dark blue at night), the sun weak through it, the light soft from all round
+      scene.fog.color.lerp(_c2.setHex(A.tod === 'night' ? 0x1b2130 : A.tod === 'dusk' ? 0xd6ad92 : 0xd4dadd), 0.8 * mist); renderer.setClearColor(scene.fog.color, 1);
+      sun.intensity *= 1 - 0.42 * mist; hemi.intensity *= 1 + 0.2 * mist; if (post) { post.haze *= 1 - mist; post.mat.uniforms.uHaze.value *= 1 - mist; } }   // (the sun's glow, Render.frame: fainter in the mist)
+    if (post) { const B = post.bl.bright.uniforms; post.bloom = A.tod === 'night' ? 1.05 + 0.25 * r : A.tod === 'dusk' ? 0.5 : A.season === 'winter' ? 0.3 : 0.5 + 0.1 * r; B.uThr.value = A.tod === 'night' ? 0.62 : A.tod === 'dusk' ? 0.8 : A.season === 'winter' ? 0.95 : 0.88; }   // (the lights' glow: at dusk only what is brighter than the sky; by day a little, round the brightest: the sun on the water, the sparks)
     // the smoke and dust in that light: warm at dusk, dark and blue at night (only the lit parts glow: the floodlights, the headlights' beams)
     if (particles && particles.mat.uniforms.uLit) { const L = particles.mat.uniforms.uLit.value; if (A.tod === 'night') L.set(0.36, 0.4, 0.5); else if (A.tod === 'dusk') L.set(0.97, 0.85, 0.74); else L.set(1, 1, 1); }
+    const dm = world && world.dyn && world.dyn.mist; if (dm && dm.col) dm.col(A.tod === 'day' ? _c1.setHex(0xe8edf0) : _c1.copy(scene.fog.color).lerp(_c2.setHex(0xe8edf0), A.tod === 'dusk' ? 0.35 : 0.06));   // (Ouninpohja's banks of mist: pale by day, in the colour of the haze at dusk and at night)
+    if (world && world.dyn && world.dyn.rays) world.dyn.rays.visible = !(r > 0) && A.tod === 'day';   // (Ouninpohja's shafts of sunlight: none under the overcast, nor from a low or no sun)
+  }
+  // morning mist (0..1, the game lifts it through a race): the theme again, a shorter view (updateCamera), the world's banks of mist and
+  // stronger shafts of sunlight (Ouninpohja)
+  let mist = 0;
+  function setMist(m) {
+    m = clamp(m || 0, 0, 1); if (Math.abs(m - mist) < 0.004 && (m > 0) === (mist > 0)) return;
+    mist = m; applyTheme(themeId);
+    const d = world && world.dyn; if (!d) return;
+    if (d.mist) d.mist.set(m);
+    if (d.rays) d.rays.material.uniforms.uA.value = 0.18 * (1 + 1.5 * m);
   }
   // the weather of the race on screen (race.rain 0..1): the sky and the streaks
   function applyWeather(r) {
-    wet = r; applyTheme(themeId); rain.mesh.visible = r > 0 && atmos.season !== 'winter'; rain.mat.uniforms.uA.value = 0.5 * Math.min(1, r * 1.5);
+    wet = r; CAR_U.uWet.value = Math.max(0, r); applyTheme(themeId); rain.mesh.visible = r > 0 && atmos.season !== 'winter'; rain.mat.uniforms.uA.value = 0.5 * Math.min(1, r * 1.5);
     snow.mesh.visible = r > 0 && atmos.season === 'winter';
     birds.mesh.visible = !(r > 0); if (r > 0) birds.reset(birds.gull);   // (no birds in the rain)
     if (!world || !world.root) return;
@@ -2002,6 +2397,7 @@ const Render = (function () {
     const t = snowTex.clone(); t.needsUpdate = true; if (src) { t.repeat.copy(src.repeat); t.offset.copy(src.offset); t.anisotropy = src.anisotropy; } return t;
   }
   function seasonWorld() {
+    if (world && world.dyn && world.dyn.flowers) world.dyn.flowers.visible = atmos.season === 'summer';   // (Ouninpohja's lupins and fireweed: summer only)
     const sea = (THEMES[themeId] || {}).season && atmos.season !== 'winter' ? 'summer' : atmos.season;   // (a world built in a season of its own, theme.season: Vršič's autumn, as built in summer and in autumn, the winter snows it over)
     if (!world || !world.root || world.seasonKey === sea) return;
     if (!world.seasonKey && sea === 'summer') { world.seasonKey = 'summer'; return; }   // (a new world in summer: as built)
@@ -2010,7 +2406,7 @@ const Render = (function () {
     world.root.traverse(o => { for (const m of o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []) mats.add(m); const g = o.geometry; if (g && g.attributes && g.attributes.color && !cols.has(g.attributes.color)) cols.set(g.attributes.color, g.attributes.normal || null); if (o.isInstancedMesh && o.instanceColor) inst.add(o.instanceColor); });
     let n = 0;
     for (const m of mats) {
-      if (!m.color || roads.has(m.map)) continue;
+      if (!m.color || roads.has(m.map) || m.userData.noSeason) continue;
       const U = m.userData; if (!U.c0) { U.c0 = m.color.clone(); U.map0 = m.map || null; if (U.dry) U.dry0 = U.dry.clone(); }
       const tone = texTone(U.map0), grassy = tone && tone[1] > tone[0] * 1.08 && tone[1] > tone[2] * 1.2, gravel = U.map0 && (U.map0 === tex.makadam || (world.dyn.wet && m === world.dyn.wet.road));
       if (sea === 'winter' && (grassy || gravel)) {   // (grass under snow; a gravel road packed with snow)
@@ -2043,9 +2439,45 @@ const Render = (function () {
     for (const [r, a] of stops) gr.addColorStop(r, 'rgba(255,255,255,' + a + ')'); g.fillStyle = gr; g.fillRect(0, 0, S, S);
     return new THREE.CanvasTexture(c);
   }
+  /* ---------------- lit glass and boards at night (at dusk a little): the glass of the pit buildings, the towers and the commentators' boxes
+     (their glass colours: WIN_C), the advertising boards and the text boards glowing from behind (their own picture as the glow); the
+     facades' windows: litWindows. NIGHT_U: shared; patched at buildWorld ---------------- */
+  const NIGHT_U = { uNightW: { value: 0 } }, WIN_C = [[0.16, 0.24, 0.34], [0.14, 0.22, 0.32], [0.15, 0.23, 0.33]];
+  const WIN_HASH = 'float nwH(vec3 p) { return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }';
+  function patchNight(root) {
+    const boards = new Set(['sponsors', 'sponsorsLJ', 'sponsorsFO', 'sponsorsMC', 'sponsorsIT', 'sponsorsKP', 'boardsFO', 'boardsIT', 'boardsKP', 'bannerLJ'].map(k => tex[k]).filter(Boolean));
+    const matV = world && world.matV;
+    root.traverse(o => { if (!o.isMesh) return; for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
+      if (!m || m.userData.nightP || !(m.isMeshLambertMaterial || m.isMeshPhongMaterial)) continue;
+      const board = boards.has(m.map) || m.userData.board, glass = m === matV;
+      if (!board && !glass) continue;
+      m.userData.nightP = true;
+      if (board) { m.userData.nightBoard = true; continue; }   // (the boards: an emissive map at night, floodlights())
+      const prev = m.onBeforeCompile, pk = m.customProgramCacheKey();
+      m.onBeforeCompile = (sh, r) => {
+        if (prev) prev.call(m, sh, r);
+        sh.uniforms.uNightW = NIGHT_U.uNightW;
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vNwP;').replace('#include <project_vertex>', '#include <project_vertex>\nvNwP = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+        const lit = '{ float g = 0.0; ' + WIN_C.map(c => 'g += step(distance(vColor.rgb, vec3(' + c.join(', ') + ')), 0.012);').join(' ') + '\n' +
+          '  float on = step(0.4, nwH(floor(vNwP * vec3(0.42, 0.45, 0.42)))); totalEmissiveRadiance += vec3(1.0, 0.82, 0.55) * min(g, 1.0) * on * uNightW * 0.9; }';
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uNightW;\nvarying vec3 vNwP;\n' + WIN_HASH)
+          .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\nif (uNightW > 0.0) ' + lit);   // (by day skipped)
+      };
+      m.customProgramCacheKey = () => 'nightWG|' + pk; m.needsUpdate = true;
+    } });
+  }
+  function nightBoards() {   // floodlights(): the boards glow from behind at night (their picture as an emissive map), not by day
+    if (!world || !world.root) return; const on = atmos.tod === 'night' ? 0.62 : atmos.tod === 'dusk' ? 0.25 : 0;
+    world.root.traverse(o => { if (!o.isMesh) return; for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
+      if (!m || !m.userData.nightBoard || !m.emissive) continue;
+      const want = on > 0 ? m.map : null; if (m.emissiveMap !== want) { m.emissiveMap = want; m.needsUpdate = true; }
+      m.emissive.setScalar(on);
+    } });
+  }
   // night: floodlights on poles along the track (every 30 m, alternating sides), each a pool of warm light on the road (brightest under the
   // lamp, fading out softly) and a glow round the lamp (the glows' points: one draw call for all of them)
   function floodlights() {
+    NIGHT_U.uNightW.value = atmos.tod === 'night' ? 1 : atmos.tod === 'dusk' ? 0.4 : 0; if (atmos.tod !== 'day' && world && world.root) patchNight(world.root); nightBoards();
     if (flood) { for (const o of [flood.pools, flood.poles, flood.heads, flood.halo]) { scene.remove(o); o.geometry.dispose(); } flood = null; }
     const T = curTrack; if (atmos.tod !== 'night' || !T || !world) return;
     if (!lampTex) lampTex = radialTex([[0, 1], [0.18, 0.86], [0.42, 0.46], [0.68, 0.16], [1, 0]]);
@@ -2121,7 +2553,7 @@ const Render = (function () {
   let post = null;
   const _lv = new THREE.Vector3(), _pv = new THREE.Vector3(), _v2 = new THREE.Vector2(), _sunV = new THREE.Vector3();
   function initPost() {
-    const rtOpt = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, depthBuffer: true, stencilBuffer: false };
+    const rtOpt = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, depthBuffer: true, stencilBuffer: true };   // (stencil: r128 then gives it a 24-bit depth, not 16: thin layers far off do not flicker)
     // WebGL2: 4x multisampled target, so the edges are really anti-aliased (the shader's edge blur only softens them)
     const rt = renderer.capabilities.isWebGL2 && THREE.WebGLMultisampleRenderTarget ? new THREE.WebGLMultisampleRenderTarget(4, 4, rtOpt) : new THREE.WebGLRenderTarget(4, 4, rtOpt);
     if (rt.isWebGLMultisampleRenderTarget) rt.samples = 4;
@@ -2129,10 +2561,10 @@ const Render = (function () {
     const mat = new THREE.ShaderMaterial({
       uniforms: { tD: { value: rt.texture }, uRes: { value: new THREE.Vector2(4, 4) }, uFocus: { value: 0.45 }, uBand: { value: 0.22 }, uBlur: { value: 0.8 }, uGam: { value: 0.88 },
         uTint: { value: new THREE.Vector3(1, 1, 1) }, uSat: { value: 1.1 }, uCon: { value: 1.04 }, uVig: { value: 0.17 },
-        uSun: { value: new THREE.Vector2(0, 1.2) }, uHaze: { value: 0 }, uHazeCol: { value: new THREE.Vector3(1, 0.8, 0.6) }, tB: { value: null }, uBloom: { value: 0 }, uShT: { value: new THREE.Vector3(1, 1, 1) }, uHiT: { value: new THREE.Vector3(1, 1, 1) } },
+        uSun: { value: new THREE.Vector2(0, 1.2) }, uHaze: { value: 0 }, uHazeCol: { value: new THREE.Vector3(1, 0.8, 0.6) }, uFl: { value: new THREE.Vector3(0.5, 0.5, 0) }, tB: { value: null }, uBloom: { value: 0 }, uShT: { value: new THREE.Vector3(1, 1, 1) }, uHiT: { value: new THREE.Vector3(1, 1, 1) }, uSb: { value: new THREE.Vector3(0.5, 0.6, 0) }, uSc: { value: new THREE.Vector2(0.5, 0.4) } },
       vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
       fragmentShader: [
-        'uniform sampler2D tD; uniform vec2 uRes; uniform float uFocus; uniform float uBand; uniform float uBlur; uniform float uGam; uniform vec3 uTint; uniform float uSat; uniform float uCon; uniform float uVig; uniform vec2 uSun; uniform float uHaze; uniform vec3 uHazeCol; uniform sampler2D tB; uniform float uBloom; uniform vec3 uShT; uniform vec3 uHiT; varying vec2 vUv;',
+        'uniform sampler2D tD; uniform vec2 uRes; uniform float uFocus; uniform float uBand; uniform float uBlur; uniform float uGam; uniform vec3 uTint; uniform float uSat; uniform float uCon; uniform float uVig; uniform vec2 uSun; uniform float uHaze; uniform vec3 uHazeCol; uniform vec3 uFl; uniform sampler2D tB; uniform float uBloom; uniform vec3 uShT; uniform vec3 uHiT; uniform vec3 uSb; uniform vec2 uSc; varying vec2 vUv;',
         'float lum(vec3 c){ return dot(c, vec3(0.299, 0.587, 0.114)); }',
         'void main(){',
         '  vec2 px = 1.0 / uRes; vec3 c = texture2D(tD, vUv).rgb;',
@@ -2148,9 +2580,23 @@ const Render = (function () {
         '    float mx = max(max(max(lN, lS), max(lE, lW)), lC), mn = min(min(min(lN, lS), min(lE, lW)), lC);',
         '    if (mx - mn > 0.08) { vec2 dir = vec2(lS - lN, lE - lW); dir = dir / (length(dir) + 1e-4) * px * 0.9; c = mix(c, 0.5 * (texture2D(tD, vUv + dir).rgb + texture2D(tD, vUv - dir).rgb), 0.55); }',
         '  }',
+        // speed: at high speed the edges of the picture blur away from a point just ahead of the car (6 taps along the ray from it); the car itself
+        // and the road round it stay sharp
+        '  if (uSb.z > 0.0) { vec2 A = vec2(uRes.x / uRes.y, 1.0), dv = vUv - uSb.xy; float k = uSb.z * smoothstep(0.24, 0.62, length((vUv - uSc) * A)) * smoothstep(0.12, 0.4, length(dv * A));',
+        '    if (k > 0.01) { vec3 acc = c; for (int i = 1; i <= 5; i++) acc += texture2D(tD, vUv - dv * (float(i) * 0.011 * k)).rgb; c = acc / 6.0; } }',
         '  c *= uTint; c *= mix(uShT, uHiT, smoothstep(0.12, 0.72, lum(c))); float l = lum(c); c = mix(vec3(l), c, uSat); c = (c - 0.5) * uCon + 0.5; c = pow(max(c, vec3(0.0)), vec3(uGam));',
         '  if (uHaze > 0.0) { vec2 sd = (vUv - uSun) * vec2(uRes.x / uRes.y, 1.0); float hg = exp(-dot(sd, sd) * 2.2); c = 1.0 - (1.0 - c) * (1.0 - uHazeCol * (uHaze * hg)); }',   // warm glow of the low sun just off screen (as in the reference)
         '  if (uBloom > 0.0) { vec3 bl = min(texture2D(tB, vUv).rgb * uBloom, vec3(1.0)); c = 1.0 - (1.0 - c) * (1.0 - bl); }',   // the lights' glow (dusk and night: bloomPass)
+        // a lens flare when the camera looks into the sun (the sky's views: the replay's TV cameras, the cockpit, the photo mode): a glare round
+        // it and ghosts along the line through the middle of the picture; hidden behind anything darker than the sky round the sun
+        '  if (uFl.z > 0.0) { vec2 asp = vec2(uRes.x / uRes.y, 1.0), ax = vec2(0.5) - uFl.xy, o = 3.0 / uRes;',
+        '    float vis = uFl.z * smoothstep(0.62, 0.92, 0.2 * (lum(texture2D(tD, uFl.xy).rgb) + lum(texture2D(tD, uFl.xy + vec2(o.x, 0.0)).rgb) + lum(texture2D(tD, uFl.xy - vec2(o.x, 0.0)).rgb) + lum(texture2D(tD, uFl.xy + vec2(0.0, o.y)).rgb) + lum(texture2D(tD, uFl.xy - vec2(0.0, o.y)).rgb)));',
+        '    vec3 fl = vec3(1.0, 0.86, 0.62) * exp(-pow(length((vUv - uFl.xy) * asp) * 16.0, 2.0)) * 0.16;',
+        '    fl += vec3(0.45, 0.7, 1.0) * smoothstep(0.045, 0.03, length((vUv - uFl.xy - ax * 0.6) * asp)) * 0.09;',
+        '    fl += vec3(1.0, 0.75, 0.4) * smoothstep(0.02, 0.011, length((vUv - uFl.xy - ax * 1.1) * asp)) * 0.1;',
+        '    fl += vec3(0.6, 1.0, 0.7) * smoothstep(0.075, 0.058, length((vUv - uFl.xy - ax * 1.45) * asp)) * 0.07;',
+        '    fl += vec3(0.8, 0.62, 1.0) * smoothstep(0.012, 0.0, abs(length((vUv - uFl.xy - ax * 1.9) * asp) - 0.09)) * 0.07;',
+        '    c += fl * vis; }',
         '  vec2 q = vUv - 0.5; c *= 1.0 - uVig * dot(q, q) * 1.8;',
         '  gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);',
         '}'].join('\n'),
@@ -2158,8 +2604,9 @@ const Render = (function () {
     });
     const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat); quad.frustumCulled = false;
     const sc = new THREE.Scene(); sc.add(quad);
-    // the glow of the lights at dusk and at night (bloomPass): what is bright in the picture, at a quarter of its size, blurred twice
-    // (a wide, soft halo), screened over it in the grade. Two small targets; drawn only when post.bloom > 0 (by day nothing of it runs)
+    // the glow of the lights (bloomPass): what is bright in the picture, at a quarter of its size, blurred twice (a wide, soft halo),
+    // screened over it in the grade. Two small targets; drawn only when post.bloom > 0 (strong at night; by day a weak one round only the
+    // brightest: applyTheme's threshold)
     const bOpt = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, depthBuffer: false, stencilBuffer: false };
     const bA = new THREE.WebGLRenderTarget(4, 4, bOpt), bB = new THREE.WebGLRenderTarget(4, 4, bOpt); bA.texture.generateMipmaps = bB.texture.generateMipmaps = false;
     const vs = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }', opt = { depthTest: false, depthWrite: false };
@@ -2196,7 +2643,7 @@ const Render = (function () {
   /* ---------------- race attach ---------------- */
   // the pieces every car shares (cached body / tail / wheel / Peugeot geometry, the common materials): never freed with a car
   function sharedCarRes() {
-    const g = new Set([wheelGeo, wheelGeoW, ...geoCache.values(), ...tailGeoCache.values(), ...fWheelCache.values(), ...newWheelCache.values(), ...lmWheelCache.values()]);
+    const g = new Set([wheelGeo, wheelGeoW, lensGeoC, ...geoCache.values(), ...tailGeoCache.values(), ...fWheelCache.values(), ...newWheelCache.values(), ...lmWheelCache.values()]);
     if (p206Geo) for (const n of p206Geo) for (const p of n.prims) g.add(p.g);
     const m = new Set([matCar, matWheel, matTailOff, matTailOn, matBlob, matBlobS, matMarker, matUnder, matEngine, matLens, matLensBroken, matScOn, matScOff]);
     if (p206Mats) for (const k in p206Mats) m.add(p206Mats[k]);
@@ -2463,6 +2910,7 @@ const Render = (function () {
      (the fronts locking, lighter wisps in a slide) and powder snow thrown up in the snow zone (above ~330 m of road height), in winter and
      while it snows. (The sparks along the rail, the exhaust's flames and the glowing brake discs: carFx, every car's.) */
   const _pkE = new THREE.Vector3();
+  const fxR = Core.rng(5309);   // (the cars' effects' own random numbers, carFx: the race's Math.random sequence, which the AI draws from, is as it was)
   function pkFx(v, c, dt, live) {   // live: emit particles (not in a paused frame, the replay or the photo)
     const f = v.pkFx || (v.pkFx = { acc: [0, 0, 0, 0] });
     const M = c.m, W = v.pk.w.value, me = v.grp.matrixWorld.elements, spd = c.speed, yb = c.y || 0, gy = c.roadY != null ? c.roadY : yb, R = Math.random;
@@ -2502,7 +2950,7 @@ const Render = (function () {
      at speed, sparks from its plank touching the road (in bursts, more over a kerb, a shower on landing). The particles only for the cars
      round the view ---------------- */
   function carFx(v, c, dt, live) {
-    const f = v.cfx || (v.cfx = { heat: [0, 0], thr: 0, pop: 0, pt: 0, sh: false, sc: 0, pl: 0 }), M = c.m, R = Math.random;
+    const f = v.cfx || (v.cfx = { heat: [0, 0], thr: 0, pop: 0, pt: 0, sh: false, sc: 0, pl: 0 }), M = c.m, R = fxR;   // (its own random numbers: the race's Math.random is left to the race)
     if (!v.axW) { const sc = M.len / 4.4; v.axW = v.pk ? v.pk.w.value : v.wf.length && v.wr.length ? { x: v.wf[0].position.x, y: v.wr[0].position.x, z: v.wf[0].position.y } : { x: M.a * sc * 0.98 + 0.05, y: -M.b * sc * 0.98, z: M.rw }; }
     const W = v.axW, me = v.grp.matrixWorld.elements, spd = c.speed, gy = c.roadY != null ? c.roadY : c.y || 0;
     const fx = me[0], fz = me[2], lx = me[8], lz = me[10], X = me[12], Z = me[14];   // forward, right (local z) and the car's origin
@@ -2527,11 +2975,14 @@ const Render = (function () {
       f.pop -= dt; f.pt -= dt;
       if (f.pt <= 0) {
         f.pt = 0.05 + R() * 0.09;
-        const big = 0.7 + R() * 0.6; if (v.noHead) at(-M.len * 0.5 - 0.1, 0.55, 0); else at(-M.len * 0.5 - 0.3, 0.34, 0.35);   // (just out behind the bumper: under it the body hides the flame)
-        const bx = _pkE.x - c.vx * dt, bz = _pkE.z - c.vz * dt;   // (the pool moves them on this frame still: start them a frame back, level with the car)
-        for (let k = 0; k < 5; k++) { const d = k * 0.25 * big, sp = 3 + R() * 3, t = k / 4; sparkP.emit(bx - fx * d, _pkE.y + t * 0.08, bz - fz * d, c.vx * 0.96 - fx * sp + (R() - 0.5), 0.3 + R() * 0.4, c.vz * 0.96 - fz * sp + (R() - 0.5), 0.07 + R() * 0.07, (0.75 - t * 0.35) * big, (1.1 - t * 0.3) * big, 1, 0.78 - t * 0.4, 0.3 - t * 0.22, 1, -1, 2, gy); }   // a tongue of flame: yellow at the pipe, orange at the tip
-        sparkP.emit(bx, _pkE.y, bz, c.vx * 0.95 - fx * 2, 0.1, c.vz * 0.95 - fz * 2, 0.05, 0.3 * big, 0.45, 0.65, 0.75, 1, 0.9, 0, 2, gy);   // the blue-white core
-        glows.add(_pkE.x - fx * 0.3, _pkE.y, _pkE.z - fz * 0.3, 1.6 * big, 1, 0.5, 0.15, 0.45 * night + 0.2);
+        const tips = v.exh || [v.noHead ? [-M.len * 0.5 - 0.1, 0.55, 0] : [-M.len * 0.5 - 0.3, 0.34, 0.35]], big = (0.7 + R() * 0.6) * (tips.length > 1 ? 0.62 + 0.38 / tips.length : 1);   // (out of the car's own tailpipes, exhaustTips; with more of them a smaller flame from each)
+        for (const e of tips) {
+          at(e[0] - 0.05, e[1], e[2]);
+          const bx = _pkE.x - c.vx * dt, bz = _pkE.z - c.vz * dt;   // (the pool moves them on this frame still: start them a frame back, level with the car)
+          for (let k = 0; k < 5; k++) { const d = k * 0.25 * big, sp = 3 + R() * 3, t = k / 4; sparkP.emit(bx - fx * d, _pkE.y + t * 0.08, bz - fz * d, c.vx * 0.96 - fx * sp + (R() - 0.5), 0.3 + R() * 0.4, c.vz * 0.96 - fz * sp + (R() - 0.5), 0.07 + R() * 0.07, (0.75 - t * 0.35) * big, (1.1 - t * 0.3) * big, 1, 0.78 - t * 0.4, 0.3 - t * 0.22, 1, -1, 2, gy); }   // a tongue of flame: yellow at the pipe, orange at the tip
+          sparkP.emit(bx, _pkE.y, bz, c.vx * 0.95 - fx * 2, 0.1, c.vz * 0.95 - fz * 2, 0.05, 0.3 * big, 0.45, 0.65, 0.75, 1, 0.9, 0, 2, gy);   // the blue-white core
+          glows.add(_pkE.x - fx * 0.3, _pkE.y, _pkE.z - fz * 0.3, 1.6 * big, 1, 0.5, 0.15, 0.45 * night + 0.2);
+        }
       }
     } else if (f.pop > 0) f.pop -= dt;
     if (c.air || spd < 2 || !near) { f.sc = f.pl = 0; return; }
@@ -2998,10 +3449,12 @@ const Render = (function () {
     const c = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2], P = (e, f, s, r) => [e[0] + f * px + s * qx, e[1] + f * py + s * qy, e[2] + f * pz + s * qz];
     for (const [f0, s0, f1, s1] of [[1, 1, 1, -1], [1, -1, -1, -1], [-1, -1, -1, 1], [-1, 1, 1, 1]]) g.quadO(P(a, f0, s0), P(b, f0, s0), P(b, f1, s1), P(a, f1, s1), col, c);
   }
-  function rdCarGeo(body, id) {   // a car of the traffic: the game's body (the colour code for its paint, no stripe) and its front wheels
+  function rdCarGeo(body, id) {   // a car of the traffic: the game's body (the colour code for its paint, no stripe), its front wheels and the glass of its headlamps (the body has dark housings: lensGeo, where a race car's lens meshes sit)
     const M = Core.MODELS.find(m => m.id === id), g = new GB(), fx = M.a * (M.len / 4.4) * 0.98 + 0.05;
     for (const sd of [-1, 1]) wheelInto(g, fx, M.rw, sd * (M.wid * 0.5 - 0.1), M.rw, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68]);
-    return rdMerge([carGeometry(body, M, 0xff00ff, false), g.geometry()]);
+    const dB = BODIES[body] || BODIES.coupe, fs = dB.secs[dB.secs.length - 1], lx = fs[0] * M.len / dB.len + 0.03, ly = fs[3] - 0.12;
+    const lens = [-1, 1].map(sd => lensGeo().clone().translate(lx, ly, sd * fs[1] * (M.wid / dB.wid) * 0.62));
+    return rdMerge([carGeometry(body, M, 0xff00ff, false), g.geometry(), ...lens]);
   }
   function rdVanGeo() {   // a van: the box, the bonnet, the windscreen, side windows by the cab, lights, bumpers, wheels (5.3 x 2.0 m)
     const g = new GB(), B = RD_MG, W = 2.0, hw = W / 2, K = [0.08, 0.08, 0.09], GL = GLASS;
@@ -3351,7 +3804,7 @@ const Render = (function () {
       for (let k = 0; k < F.length; k += 3) { const dx = F[k] - cx, dz = F[k + 2] - cz; if (dx * dx + dz * dz < 160 * 160) streaks.add(F[k], F[k + 1], F[k + 2], 1.0, 0.8, 0.52, 0.38 * wk, 1.8, 12, k * 0.13); }
     }
     streaks.end(); if (streaks.n) { const U = streaks.mat.uniforms; U.uT.value = time % 1000; U.uFog.value.set(scene.fog.near, scene.fog.far); }
-    skids.flush();
+    skids.t = time; skids.flush();
   }
 
   /* ---------------- detachable parts, broken lamps, debris ---------------- */
@@ -3360,14 +3813,15 @@ const Render = (function () {
   let matUnder = null, matEngine = null, matLens = null, matLensBroken = null;
   function buildParts(v) {
     const c = v.car, M = c.m, dB = BODIES[M.body] || BODIES.coupe, S = dB.secs, sx = M.len / dB.len, sz = M.wid / dB.wid;
-    if (!matUnder) { matUnder = new THREE.MeshLambertMaterial({ color: 0x1b1d22 }); matEngine = new THREE.MeshLambertMaterial({ color: 0x5b5f66 }); matLens = new THREE.MeshBasicMaterial({ color: 0xfff1c8 }); matLensBroken = new THREE.MeshLambertMaterial({ color: 0x24272c }); }
+    if (!matUnder) { matUnder = new THREE.MeshLambertMaterial({ color: 0x1b1d22 }); matEngine = new THREE.MeshLambertMaterial({ color: 0x5b5f66 }); matLens = new THREE.MeshBasicMaterial({ vertexColors: true }); matLensBroken = new THREE.MeshLambertMaterial({ color: 0x24272c }); }
     const at = (x) => { const L = S[S.length - 1]; if (x <= S[0][0]) return S[0]; if (x >= L[0]) return L; for (let k = 0; k < S.length - 1; k++) if (x <= S[k + 1][0]) { const t = (x - S[k][0]) / (S[k + 1][0] - S[k][0]); return S[k].map((q, i) => typeof q === 'number' ? q + (S[k + 1][i] - q) * t : q); } return L; };
     const parts = {}, under = {};
     if (v.fp) (v.fp.lm ? lmParts : fParts)(v, parts, under);   // the formula, the prototype: their own parts (built with the mesh)
     else {
-      const paint = cgMat(new THREE.MeshPhongMaterial({ color: c.color, shininess: 80, specular: 0x505050, envMap: envTex, combine: THREE.MixOperation, reflectivity: 0.2 }), false, 'carCg');
-      const trim = M.chrome ? cgMat(new THREE.MeshPhongMaterial({ color: 0xc4c8ce, shininess: 110, specular: 0xffffff, envMap: envTex, combine: THREE.MixOperation, reflectivity: 0.55 }), true, 'carCg')   // (the V8's chrome bumpers: the glass's sharper glint)
+      const paint = carPaint(c.color);
+      const trim = M.chrome ? new THREE.MeshPhongMaterial({ color: 0xc4c8ce, shininess: 110, specular: 0xffffff, envMap: envTex, combine: THREE.MixOperation, reflectivity: 0.55 })   // (the V8's chrome bumpers)
         : new THREE.MeshLambertMaterial({ color: 0x2b2e34 });
+      if (M.chrome) { trim.onBeforeCompile = (sh) => carShader(sh); cgMat(trim, true, 'carCg'); }   // (wet as the paint; the glass's sharper glint)
       v.partMats = [paint, trim];
       const add = (name, geo, mat, x, y, z, rz, uGeo, uMat, extra) => {
         const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.z = rz || 0; m.castShadow = true; v.bodyG.add(m); parts[name] = m;
@@ -3387,9 +3841,10 @@ const Render = (function () {
         else { const a = at(tail), H = (a[5] - a[3]) * 0.9 + 0.12, W = 2 * a[4] * sz * 0.86;
           add('trunk', new THREE.BoxGeometry(0.05, H, W), paint, tail * sx - 0.03, a[3] + H / 2 - 0.06, 0, 0, new THREE.BoxGeometry(0.03, H * 0.92, W * 0.9)); } }
       // bumpers
-      for (const [name, xs] of [['bumperF', nose], ['bumperR', tail]]) {
+      const ptx = plateText(M.id + '|' + c.color), trimV = new THREE.MeshLambertMaterial({ vertexColors: true }); v.partMats.push(trimV);
+      for (const [name, xs] of [['bumperF', nose], ['bumperR', tail]]) {   // (the number plates on them)
         const a = at(xs), H = (a[3] - a[2]) * 0.55, W = 2 * a[1] * sz * 0.97, sg = Math.sign(xs);
-        add(name, new THREE.BoxGeometry(0.13, H, W), trim, xs * sx + sg * 0.05, a[2] + H * 0.5 + 0.02, 0, 0, new THREE.BoxGeometry(0.06, 0.09, W * 0.8), matEngine);
+        add(name, M.chrome ? chromeBumperGeo(0.13, H, W, sg) : bumperGeo(0.13, H, W, sg, ptx), M.chrome ? trim : trimV, xs * sx + sg * 0.05, a[2] + H * 0.5 + 0.02, 0, 0, new THREE.BoxGeometry(0.06, 0.09, W * 0.8), matEngine);   // (chrome ones: no plates)
       }
       // front wings (fenders) above the front wheels
       { const fx = M.a * (M.len / 4.4) * 0.98 + 0.05, a = at(fx / sx), y0 = M.rw * 1.75, y1 = a[3] - 0.03;
@@ -3405,15 +3860,14 @@ const Render = (function () {
     }
     // head lamp lenses (they go dark when smashed); tail lamps get a dark cover when smashed
     v.lens = []; v.lightBroken = [0, 0, 0, 0];
-    const lz = dB.lens || [0.11, 0.28];   // (the new bodies: their own lens, or a round one)
-    for (let k = 0; k < 2; k++) { const L = v.lights[k], m = new THREE.Mesh(dB.lensR ? new THREE.CylinderGeometry(dB.lensR, dB.lensR, 0.02, 12).rotateZ(Math.PI / 2) : new THREE.BoxGeometry(0.045, lz[0], lz[1]), matLens); m.position.set(L.x - 0.02, L.y, L.z); m.visible = !v.glb && !v.noHead && !dB.noLens; v.bodyG.add(m); v.lens.push(m); }
+    for (let k = 0; k < 2; k++) { const L = v.lights[k], m = new THREE.Mesh(dB.lensR || dB.lens ? newLensGeo(dB) : lensGeo(), matLens); m.position.set(L.x - 0.02, L.y, L.z); m.visible = !v.glb && !v.noHead && !dB.noLens; v.bodyG.add(m); v.lens.push(m); }
   }
   // the formula's parts, built with the car's mesh (the garage and the ghost show them too): front wing (bumperF), nose (hood), rear wing with the
   // DRS flap (bumperR), engine cover (trunk), mirrors, bargeboards (fenderL/R). Each is centred on its own origin (a loose one tumbles about
   // its middle; its geometry's .parameters say how it lies on the track)
   function fPartMeshes(car, bodyG) {
     const P = colArr(car.color), S = stripeFor(car.color), parts = {};
-    const paint = cgMat(new THREE.MeshPhongMaterial({ color: car.color, shininess: 80, specular: 0x505050, envMap: envTex, combine: THREE.MixOperation, reflectivity: 0.2 }), false, 'carCg');
+    const paint = carPaint(car.color);
     const add = (name, geo, mat, x, y, z, noShadow) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = !noShadow; bodyG.add(m); parts[name] = m; return m; };
     add('bumperF', fWingFGeo(P, S), matCar, 2.44, 0.1, 0);
     add('hood', fNoseGeo(P, S), matCar, 2.17, 0.35, 0);
@@ -3533,20 +3987,34 @@ const Render = (function () {
       // skid marks
       const onHard = surf <= 1 || (rainy && surf === 4) || surf >= 7;   // (rain: the paving sprays like the asphalt; the cobbles are a road)
       const skidOn = intens > 0.14 && spd > 2.5 && !(rainy && onHard);   // (no rubber laid on a wet road)
-      if (skidOn) {
+      const rollOn = (surf === 2 || surf === 3) && spd > 3;   // off the road: the wheels leave their tracks in the grass and the gravel, sliding or not
+      if (skidOn || rollOn) {
         const last = v.sk[k];
         if (last) {
           const d = Math.hypot(px - last[0], pz - last[1]);
           if (d > 0.45 && d < 4) {
-            const a = clamp(0.4 + intens * 0.4, 0.4, 0.86);
+            const a = skidOn ? clamp(0.4 + intens * 0.4, 0.4, 0.86) : wetW > 0.1 ? 0.5 : 0.36;
             if (onHard) skids.add(last[0], last[1], px, pz, 0.2, 0.035, 0.035, 0.04, a * 0.92, a, last[2], yb);
-            else if (surf === 6 || (rainy && surf === 5)) skids.add(last[0], last[1], px, pz, 0.22, 0.17, 0.14, 0.1, a * 0.9, a, last[2], yb);   // (wet gravel, a puddle: dark, muddy)
-            else if (surf === 3 || surf === 5) skids.add(last[0], last[1], px, pz, 0.22, 0.42, 0.27, 0.14, a * 0.85, a * 0.95, last[2], yb);
+            else if (surf === 6 || (rainy && surf >= 3)) skids.add(last[0], last[1], px, pz, 0.22, 0.17, 0.14, 0.1, a * 0.9, a, last[2], yb);   // (wet gravel, a puddle: dark, muddy)
+            else if (surf === 3 || surf === 5) skids.add(last[0], last[1], px, pz, 0.22, skidOn ? 0.42 : 0.33, skidOn ? 0.27 : 0.27, skidOn ? 0.14 : 0.2, a * 0.85, a * 0.95, last[2], yb);   // (rolled: dark furrows)
+            else if (rainy) skids.add(last[0], last[1], px, pz, 0.22, 0.2, 0.15, 0.08, a * 0.85, a * 0.95, last[2], yb);   // (wet grass: churned mud)
             else skids.add(last[0], last[1], px, pz, 0.22, 0.14, 0.2, 0.07, a * 0.75, a * 0.85, last[2], yb);
             v.sk[k] = [px, pz, yb];
           } else if (d >= 4) v.sk[k] = [px, pz, yb];
         } else v.sk[k] = [px, pz, yb];
       } else v.sk[k] = null;
+      // back on the road from the grass or the gravel: the tyres drop earth and stones for a few metres (clumps along the wheel's line)
+      const dl = v.dl || (v.dl = [null, null, null, null]);
+      if (surf === 2 || surf === 3) { if (!dl[k] || dl[k].m < 9) dl[k] = { m: 9 + fxR() * 7, x: px, z: pz, g: surf === 3 }; else { dl[k].x = px; dl[k].z = pz; dl[k].g = surf === 3; } }
+      else if (dl[k] && (surf <= 1 || surf === 4) && spd > 2) {
+        const D = dl[k], d = Math.hypot(px - D.x, pz - D.z);
+        if (d > 0.55 + fxR() * 0.6) {
+          const f = clamp(D.m / 9, 0, 1), ux = (px - D.x) / d, uz = (pz - D.z) / d, j = (fxR() - 0.5) * 0.18, cx = px - uz * j, cz = pz + ux * j, L = 0.12 + fxR() * 0.2;
+          if (D.g) skids.add(cx - ux * L, cz - uz * L, cx, cz, 0.07 + fxR() * 0.06, 0.5, 0.45, 0.38, 0.55 * f, 0.4 * f, yb, yb);   // (grey-beige gravel)
+          else skids.add(cx - ux * L, cz - uz * L, cx, cz, 0.08 + fxR() * 0.07, 0.3, 0.23, 0.13, 0.62 * f, 0.45 * f, yb, yb);   // (earth, a bit of grass)
+          D.m -= d; D.x = px; D.z = pz; if (D.m <= 0) dl[k] = null;
+        }
+      } else if (surf === 5 || surf === 6) dl[k] = null;
       // smoke / dust (rain: spray, mud)
       if (front) continue;
       if (rainy && onHard) {   // a wet road: a mist of spray off the rear tyres at speed, thicker in a slide (no tyre smoke)
@@ -3608,7 +4076,7 @@ const Render = (function () {
     if (c.fxWall > 2.5) { sparks(c.wallX, c.wallZ, c.fxWall, yb); }
     if (c.fxCar > 3) { sparks(c.contactX, c.contactZ, c.fxCar * 0.7, yb); }
     c.fxWall = 0; c.fxCar = 0;
-    // backfire on upshift / lift at high rpm
+    // a puff from the exhaust on an upshift (the player's car; the flames on a lift: carFx)
     if (c.shiftT > 0.1 && c.isPlayer && Math.random() < 0.5) {
       const p = wheelWorld(c, -M.len * 0.5 - 0.1, 0.35, x, z, h);
       for (let k = 0; k < 3; k++) particles.emit(p.x, 0.35 + yb, p.z, -Math.cos(h) * 3 + (Math.random() - 0.5), 0.3, -Math.sin(h) * 3 + (Math.random() - 0.5), 0.14, 0.35, 0.8, 1, 0.55 + Math.random() * 0.3, 0.1, 0.95, 0, 3, yb);
@@ -3667,6 +4135,10 @@ const Render = (function () {
       tx = x + fx * ahead; tz = z + fz * ahead; ty = baseY;
       px = tx - fx * D * Math.cos(pitch); pz = tz - fz * D * Math.cos(pitch); py = baseY + D * Math.sin(pitch);
       if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); updatePointScale(); }
+    } else if (mode === 'tv' && tv) {
+      // a TV shot the game directs (the rally stages' replay, js/game.js): where the camera is, what it looks at, its lens and near plane
+      px = tv.x; py = tv.y; pz = tv.z; tx = tv.tx; ty = tv.ty; tz = tv.tz; near = tv.near || 4;   // (near: close only for a camera on the car itself)
+      if (camera.fov !== tv.fov) { camera.fov = tv.fov; camera.updateProjectionMatrix(); updatePointScale(); }
     } else if (mode === 'tv' && curTrack.def.theme === 'pikes' && world && world.groundH && curTrack.hy) {
       // Pikes Peak's own TV cameras (pkTv): the helicopter over the open road, fixed cameras at the famous places, the summit's view
       const o = pkTv(c, dt, x, z); px = o.px; py = o.py; pz = o.pz; tx = x; ty = (c.y || 0) + 0.7; tz = z;
@@ -3710,23 +4182,26 @@ const Render = (function () {
       px = tx; py = baseY + D * Math.sin(pitch); pz = tz + D * Math.cos(pitch);
       if (camera.fov !== 30) { camera.fov = 30; camera.updateProjectionMatrix(); updatePointScale(); }
     }
-    if (world && world.camFloor && !shot && !qc) { const gf = world.camFloor(px, pz) + 4; if (py < gf) py = gf; }   // mountain worlds: never under the slope behind the car
+    if (world && world.camFloor && !shot && !qc) { const gf = world.camFloor(px, pz) + (mode === 'tv' && tv ? 0.8 : 4); if (py < gf) py = gf; }   // mountain worlds: never under the slope behind the car (a directed TV camera: above the ground)
     if (cam.shake > 0) { const k = qc ? 0.15 : 1; px += (Math.random() - 0.5) * cam.shake * k; py += (Math.random() - 0.5) * cam.shake * k; pz += (Math.random() - 0.5) * cam.shake * k; cam.shake = Math.max(0, cam.shake - dt * 3); }   // (in the cockpit: a jolt, not a leap)
     if (camera.near !== near) { camera.near = near; camera.updateProjectionMatrix(); }
     camera.position.set(px, py, pz); if (qc) camera.quaternion.copy(qc); else camera.lookAt(tx, ty, tz); cam.vcx = qc ? px + (tx - px) * 0.25 : tx; cam.vcz = qc ? pz + (tz - pz) * 0.25 : tz; cam.vd = Math.hypot(px - tx, py - ty, pz - tz);   // (the cockpit's view centre, for the rain round it: 18 m ahead)
     cam.ck = !!qc; if (!qc) ck.car = null;
-    { const dC = shot ? shot.fogD : Math.hypot(px - tx, py - ty, pz - tz), r = Math.max(0, wet); scene.fog.near = dC * (1.35 - 0.4 * r); scene.fog.far = dC * (5.5 - 1.6 * r); }   // (rain: a closer haze)
+    { const dC = shot ? shot.fogD : mode === 'tv' && tv ? 62 : Math.hypot(px - tx, py - ty, pz - tz), r = Math.max(0, wet); scene.fog.near = dC * (1.35 - 0.4 * r) * (1 - 0.72 * mist); scene.fog.far = dC * (5.5 - 1.6 * r) * (1 - 0.5 * mist); }   // (rain: a closer haze; mist: a much shorter view; a directed TV shot: the haze of the chase camera, not of its own distance)
     if (world && world.farClip) { const f = Math.min(700, scene.fog.far + 40); if (Math.abs(camera.far - f) > 6) { camera.far = f; camera.updateProjectionMatrix(); } }   // long corridor worlds: nothing past the fog is drawn
     // sun/shadow follows view center
     lastMode = qc ? 'cockpit' : mode;
-    const sx = qc ? px + (tx - px) * 0.65 : mode === 'kino' ? tx + Math.sin(camYaw) * 8 : tx, sz = qc ? pz + (tz - pz) * 0.65 : mode === 'chase' ? tz : mode === 'kino' ? tz - Math.cos(camYaw) * 8 : tz - 8;   // (the cockpit: the shadows round 45 m ahead)
+    const sx = qc ? px + (tx - px) * 0.65 : mode === 'kino' ? tx + Math.sin(camYaw) * 8 : tx, sz = qc ? pz + (tz - pz) * 0.65 : mode === 'chase' || (mode === 'tv' && tv) ? tz : mode === 'kino' ? tz - Math.cos(camYaw) * 8 : tz - 8;   // (the cockpit: the shadows round 45 m ahead)
     const texel = 160 / sun.shadow.mapSize.x;
     const cx = Math.round(sx / texel) * texel, cz = Math.round(sz / texel) * texel;
     sun.target.position.set(cx, baseY, cz);
     sun.position.set(cx + sunOff[0], baseY + sunOff[1], cz + sunOff[2]);
     sun.target.updateMatrixWorld();
+    if (sunN.parent) { const tn = 2 * NEAR_R / sunN.shadow.mapSize.x, nx = Math.round(x / tn) * tn, nz = Math.round(z / tn) * tn, ny = c.roadY || baseY;   // (texel steps: no crawling edges)
+      sunN.target.position.set(nx, ny, nz); sunN.position.set(nx + sunOff[0], ny + sunOff[1], nz + sunOff[2]); sunN.target.updateMatrixWorld(); }
   }
-  let sunOff = [-80, 96, 70], camYaw = 0, lastMode = 'iso';
+  let sunOff = [-80, 96, 70], camYaw = 0, lastMode = 'iso', tv = null;
+  function setTv(c) { tv = c; }   // a directed TV shot (the rally replay): { x, y, z, tx, ty, tz, fov, near } with Render.frame's mode 'tv'; null: main's posts
   // TV camera posts (the replay): every 170 m, 40 m past the start of its stretch, on the outside of the bend there (else alternating
   // sides), 14 m beyond the road's edge and 9 m above it (over the fences; higher where the ground beside the road is)
   function tvCams(T) {
@@ -3901,15 +4376,82 @@ const Render = (function () {
      the photo mode): the fog's colour at the horizon (the far world fades into it), a deeper colour overhead, a soft glow round the sun
      (by day and at dusk; the moon's at night) ---------------- */
   let sky = null;
+  /* ---------------- the distant horizon (the views with the sky: the cockpit, the TV cameras, the photo mode): a band of silhouettes all round
+     the view, far past the scenery, per track: mountains with snow on the peaks, rolling hills (cypress rows in Toskana, forest in Finland),
+     a town's roofs and towers (lit windows at night), open sea where the coast is (a far coast, a ship). Three layers, far to near, coloured
+     each frame from the haze, the time of day and the season (their shapes are the texture's channels: the band's top half; snow and
+     lights in its bottom half), fading into the haze at their foot ---------------- */
+  const HZ = { lake: ['hills', 0x3e5a36], city: ['town', 0x6f6a66, 1], ljubljana: ['alps', 0x5d6b7c, 1], forest: ['hills', 0x2c4a40], italia: ['tuscany', 0x55623c], kamp: ['hills', 0x4f5a3a, 1],
+    monaco: ['coast', 0x6a6f64, 1], mountain: ['alps', 0x5c6a82], ouni: ['forest', 0x24372a], pikes: ['alps', 0x6b6f7c], nring: ['hills', 0x33472c], spa: ['forest', 0x2f4430], rbring: ['alps', 0x4c5d6e], suzuka: ['hills', 0x3b5236, 1], vrsic: ['alps', 0x5c6a82], caracoles: ['alps', 0x6b6f7c] };
+  let hz = null;
+  function hzTex(kind, seaA, town) {   // 2048 x 512: top half the three layers (r far, g middle, b near), bottom half r snow, g lit windows; u all round (from +x towards +z)
+    const W = 2048, H = 256, c = document.createElement('canvas'); c.width = W; c.height = H * 2; const x = c.getContext('2d'), img = x.createImageData(W, H * 2), D = img.data, r = Core.rng(kind.length * 977 + (seaA || 0) * 31);
+    const wave = (n, rough) => { const K = []; for (let k = 1; k <= n; k++) K.push([k * (1 + Math.floor(r() * 3)), r() * 6.2832, Math.pow(1 / k, rough)]); return (u) => { let s = 0, t = 0; for (const [f, p, a] of K) { s += a * Math.sin(u * 6.2832 * f + p); t += a; } return 0.5 + 0.5 * s / t; }; };
+    const ridge = (n) => { const K = []; for (let k = 1; k <= n; k++) K.push([k * 2 + Math.floor(r() * 3), r() * 6.2832, 1 / k]); return (u) => { let s = 0, t = 0; for (const [f, p, a] of K) { s += a * (1 - Math.abs(Math.sin(u * 6.2832 * f + p))); t += a; } return s / t; }; };
+    const sea = (u) => { if (seaA == null) return 1; let d = (((u * 6.2832 + 1.5708 - seaA) % 6.2832) + 6.2832) % 6.2832; d = Math.min(d, 6.2832 - d); return Core.sstep(0.9, 1.35, d); };   // 0 over the open sea (a column u looks towards the angle 2 pi u + pi / 2, from +x towards +z)
+    const L = kind === 'alps' ? [[ridge(9), 0.3, 0.72, 0.5], [ridge(7), 0.22, 0.5, 0.35], [wave(5, 1.2), 0.12, 0.2, 0.2]] : kind === 'coast' ? [[ridge(6), 0.26, 0.58, 0.4], [wave(6, 1), 0.16, 0.34, 0.26], [wave(4, 1.3), 0.1, 0.16, 0.18]]
+      : kind === 'town' ? [[wave(6, 1), 0.14, 0.2, 0.2], [wave(5, 1.2), 0.12, 0.14, 0.17], [wave(3, 1), 0.1, 0.08, 0.14]] : [[wave(7, 1), 0.16, 0.3, 0.22], [wave(6, 1.1), 0.13, 0.22, 0.19], [wave(5, 1.2), 0.1, 0.16, 0.16]];
+    const hAt = new Float32Array(W * 3);
+    for (let l = 0; l < 3; l++) { const [f, base, amp] = L[l]; for (let i = 0; i < W; i++) { const u = i / W; hAt[l * W + i] = (base + amp * f(u)) * sea(u) * (l === 2 && kind === 'town' ? 1 : 1); } }
+    if (kind === 'town' || town) for (let i = 0; i < W;) { const w = 3 + Math.floor(r() * 10), h = 0.08 + r() * 0.18 + (r() < 0.06 ? 0.25 : 0); for (let k = 0; k < w && i + k < W; k++) hAt[2 * W + i + k] = Math.max(hAt[2 * W + i + k], (0.16 + h * (kind === 'town' ? 1 : 0.6)) * sea((i + k) / W)); i += w; }   // (roofs and towers in the near layer)
+    const trees = kind === 'tuscany' || kind === 'forest' ? 1 : 0;
+    for (let i = 0; i < W; i++) for (let l = 0; l < 3; l++) {
+      let h = hAt[l * W + i]; if (trees && l > 0 && r() < (kind === 'forest' ? 0.5 : 0.08)) h += (kind === 'forest' ? 0.012 : 0.03) * (1 + r());   // (a ragged edge of treetops; cypresses)
+      const top = Math.max(0, Math.floor(H * (1 - h)));
+      for (let y = top; y < H; y++) { const o = (y * W + i) * 4; D[o + l] = 255; D[o + 3] = 255; }
+      if (l === 0 && kind === 'alps') { const sy = Math.floor(H * (1 - h + 0.06 + 0.05 * Math.sin(i * 0.05))); for (let y = top; y < Math.min(H, sy); y++) { const o = ((H + y) * W + i) * 4; D[o] = 255; } }   // snow on the far peaks
+      if (l === 2 && (kind === 'town' || town)) for (let y = top + 2; y < H - 4; y += 3) if (r() < 0.14) { const o = ((H + y) * W + i) * 4; D[o + 1] = 255; }   // lit windows
+    }
+    for (let o = 3; o < D.length; o += 4) D[o] = 255;
+    x.putImageData(img, 0, 0);
+    const t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; return t;
+  }
+  function horizonStep(on) {
+    const th = themeId && HZ[themeId];
+    if (!hz) { if (!on || !th) return;
+      const u = { uMap: { value: null }, uFog: { value: new THREE.Color() }, uC0: { value: new THREE.Color() }, uC1: { value: new THREE.Color() }, uSnow: { value: new THREE.Color() }, uA: { value: 1 }, uNight: { value: 0 } };
+      const mat = new THREE.ShaderMaterial({ uniforms: u, side: THREE.BackSide, depthWrite: false, depthTest: false, fog: false,   // (drawn with the opaque things, right after the sky: the world then covers it)
+        blending: THREE.CustomBlending, blendEquation: THREE.AddEquation, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
+        vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+        fragmentShader: ['uniform sampler2D uMap; uniform vec3 uFog; uniform vec3 uC0; uniform vec3 uC1; uniform vec3 uSnow; uniform float uA; uniform float uNight; varying vec2 vUv;',
+          'void main() { vec2 p = vec2(1.0 - vUv.x, 0.5 + 0.5 * vUv.y); vec3 t = texture2D(uMap, p).rgb, e = texture2D(uMap, p - vec2(0.0, 0.5)).rgb;',
+          '  vec3 c = uFog; float a = max(t.r, max(t.g, t.b));',
+          '  c = mix(c, mix(uFog, uC0, 0.45), t.r); c = mix(c, mix(uFog, uSnow, 0.7), e.r * t.r * (1.0 - step(0.5, t.g))); c = mix(c, mix(uFog, uC0, 0.64), t.g); c = mix(c, mix(uFog, uC1, 0.8), t.b);',
+          '  c += vec3(1.0, 0.8, 0.5) * e.g * t.b * uNight * 0.9;',
+          '  gl_FragColor = vec4(c, a * uA * smoothstep(0.0, 0.2, vUv.y)); }'].join('\n') });
+      const mesh = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 96, 1, true), mat); mesh.frustumCulled = false; mesh.renderOrder = -99;
+      scene.add(mesh); hz = { mesh, u, key: '' };
+    }
+    const vis = !!on && !!th && !!world; hz.mesh.visible = vis; if (!vis) return;
+    const sea = curTrack && curTrack.def && (curTrack.def.sea || themeId === 'monaco') ? 1 : 0;
+    const key = themeId + '|' + (curTrack && curTrack.def ? curTrack.def.id : '');
+    if (hz.key !== key) { hz.key = key;
+      const seaA = sea ? Math.PI / 2 : null;   // (Riviera's and Monaco's sea: to the south, +z)
+      if (hz.u.uMap.value) hz.u.uMap.value.dispose(); hz.u.uMap.value = hzTex(th[0], seaA, th[2]); }
+    const night = atmos.tod === 'night', dusk = atmos.tod === 'dusk', winter = atmos.season === 'winter', U = hz.u;
+    U.uFog.value.copy(scene.fog.color); U.uNight.value = night ? 1 : dusk ? 0.35 : 0;
+    U.uC0.value.setHex(th[1]).lerp(_c2.setRGB(0.55, 0.62, 0.74), 0.35); U.uC1.value.setHex(th[1]);
+    if (winter) { U.uC0.value.lerp(_c2.setRGB(0.86, 0.88, 0.92), 0.55); U.uC1.value.lerp(_c2.setRGB(0.8, 0.82, 0.86), 0.45); }
+    if (night) { U.uC0.value.multiplyScalar(0.18); U.uC1.value.multiplyScalar(0.12); } else if (dusk) { U.uC0.value.lerp(_c2.setRGB(0.42, 0.3, 0.38), 0.45); U.uC1.value.multiplyScalar(0.6); }
+    U.uSnow.value.setRGB(0.95, 0.96, 1.0).multiplyScalar(night ? 0.2 : dusk ? 0.75 : 1);
+    U.uA.value = clamp(1 - 0.75 * Math.max(0, wet) - 0.9 * mist, 0, 1);
+    const R = camera.far * 0.7, h = R * 0.23; hz.mesh.scale.set(R, h, R); hz.mesh.position.set(camera.position.x, camera.position.y - R * 0.035 + h / 2, camera.position.z);
+  }
   // the sky overhead: the fog's colour (the horizon's) deepened towards the time of day's blue (less under the rain's overcast)
   function skyTop(out) { const r = Math.max(0, wet), night = atmos.tod === 'night', dusk = atmos.tod === 'dusk'; return out.copy(scene.fog.color).lerp(_c2.setHex(night ? 0x010207 : dusk ? 0x34497f : atmos.season === 'winter' ? 0x86a6d0 : 0x3f7cd0), (night ? 0.8 : 0.55) * (1 - 0.8 * r)); }
   function skyStep(on) {
     if (!sky) {
       if (!on) return;
-      const u = { uBot: { value: new THREE.Color() }, uTop: { value: new THREE.Color() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uSunC: { value: new THREE.Color() }, uSunA: { value: 0 }, uStar: { value: 0 } };
+      const u = { uBot: { value: new THREE.Color() }, uTop: { value: new THREE.Color() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uSunC: { value: new THREE.Color() }, uSunA: { value: 0 }, uStar: { value: 0 },
+        uClO: { value: new THREE.Vector2() }, uCam: { value: new THREE.Vector2() }, uClSun: { value: new THREE.Vector2() }, uClC: { value: new THREE.Color() }, uClS: { value: new THREE.Color() },
+        uCov: { value: 0 }, uClA: { value: 0 }, uClN: { value: new THREE.Vector2(110, 64) } };
       const mat = new THREE.ShaderMaterial({ uniforms: u, depthWrite: false, depthTest: false, fog: false, side: THREE.BackSide,
         vertexShader: 'varying vec3 vD; void main(){ vD = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
         fragmentShader: 'uniform vec3 uBot; uniform vec3 uTop; uniform vec3 uSun; uniform vec3 uSunC; uniform float uSunA; uniform float uStar; varying vec3 vD;' +
+          'uniform vec2 uClO; uniform vec2 uCam; uniform vec2 uClSun; uniform vec3 uClC; uniform vec3 uClS; uniform float uCov; uniform float uClA; uniform vec2 uClN;' +
+          'float clHash(vec2 i, float n) { i = mod(i, n); return fract(sin(dot(i, vec2(12.9898, 78.233))) * 43758.5453); }' +
+          'float clVN(vec2 p, float n) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(clHash(i, n), clHash(i + vec2(1.0, 0.0), n), f.x), mix(clHash(i + vec2(0.0, 1.0), n), clHash(i + 1.0, n), f.x), f.y); }' +
+          'float clN(vec2 q) { return 0.65 * clVN(q, uClN.y) + 0.35 * clVN(q * 2.0 + vec2(17.0, 5.0), uClN.y * 2.0); }' +
           'void main(){ vec3 d = normalize(vD); vec3 c = mix(uBot, uTop, pow(smoothstep(0.0, 0.85, d.y), 0.75)); float s = max(dot(d, uSun), 0.0);' +
           ' c += uSunC * uSunA * (pow(s, 90.0) * 0.8 + pow(s, 8.0) * 0.15);' +
           // the night's stars: one in a few hundred cells of the sky a star (a hash of the cell), of its own brightness and tint, fewer and
@@ -3918,6 +4460,12 @@ const Render = (function () {
           '  if (h > 0.972) { vec3 o = vec3(fract(h * 17.13), fract(h * 71.71), fract(h * 37.37)); float b = (h - 0.972) / 0.028;' +
           '   float k = smoothstep(0.34, 0.06, length(p - cl - 0.2 - 0.6 * o)) * (0.35 + 0.65 * b * b) * smoothstep(0.03, 0.3, d.y);' +
           '   c += mix(vec3(1.0, 0.86, 0.7), vec3(0.78, 0.88, 1.0), o.x) * k * uStar; } }' +
+          // the clouds: a layer 620 m up; each one where the world's noise has its shadow on the ground (away from the sun), fluffy at the edges,
+          // lit on the side towards the sun, grey underneath; far off they melt into the haze
+          ' if (uClA > 0.0 && d.y > 0.015) { vec2 p = uCam + d.xz * (620.0 / d.y), q = (p - uClSun) / uClN.x - uClO;' +
+          '  float n = clN(q) + (clVN(q * 5.0 + vec2(3.0, 11.0), uClN.y * 5.0) - 0.5) * 0.14, dn = smoothstep(0.53 - uCov, 0.64 - 0.7 * uCov, n);' +
+          '  float lit = clamp(0.62 + (n - clN(q + normalize(uSun.xz + vec2(1e-4)) * 0.22)) * 3.2, 0.0, 1.0);' +
+          '  c = mix(c, mix(uClS, uClC, lit) + uSunC * uSunA * pow(s, 12.0) * 0.25 * (1.0 - lit), dn * smoothstep(0.015, 0.22, d.y) * uClA); }' +
           ' gl_FragColor = vec4(c, 1.0); }' });
       const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 16), mat); mesh.frustumCulled = false; mesh.renderOrder = -100;   // (drawn first, under everything)
       scene.add(mesh); sky = { mesh, u };
@@ -3928,6 +4476,13 @@ const Render = (function () {
     U.uBot.value.copy(scene.fog.color); skyTop(U.uTop.value);
     const sl = Math.hypot(sunOff[0], sunOff[1], sunOff[2]); U.uSun.value.set(sunOff[0] / sl, sunOff[1] / sl, sunOff[2] / sl);
     U.uSunC.value.copy(sun.color); U.uSunA.value = (night ? 0.35 : dusk ? 1.3 : 1) * (1 - 0.85 * r); U.uStar.value = night ? 0.9 * (1 - 0.95 * r) : 0;   // (the rain's clouds hide them)
+    const cl = world && world.dyn && world.dyn.clouds;   // (the clouds: the world's cloud shadows' noise and drift)
+    U.uClA.value = cl ? (night ? 0.35 : 0.95) * (1 - 0.85 * mist) : 0;
+    if (cl) { U.uClO.value.copy(cl.O.value); if (cl.S) U.uClN.value.set(cl.S, cl.NP); U.uClSun.value.set(sunOff[0] / Math.max(0.2, sunOff[1]) * 620, sunOff[2] / Math.max(0.2, sunOff[1]) * 620); }
+    U.uCam.value.set(camera.position.x, camera.position.z); U.uCov.value = 0.42 * r;   // (the rain: overcast)
+    if (night) { U.uClC.value.setRGB(0.12, 0.13, 0.17); U.uClS.value.setRGB(0.05, 0.06, 0.08); }
+    else if (dusk) { U.uClC.value.setRGB(1.0, 0.74, 0.55); U.uClS.value.setRGB(0.46, 0.42, 0.52); }
+    else { U.uClC.value.setRGB(1.0, 0.99, 0.96).lerp(_c2.setRGB(0.74, 0.76, 0.79), r); U.uClS.value.copy(scene.fog.color).multiplyScalar(0.78).lerp(_c2.setRGB(0.46, 0.48, 0.52), r); }
     sky.mesh.position.copy(camera.position); sky.mesh.scale.setScalar(camera.far * 0.8);
   }
 
@@ -4067,7 +4622,7 @@ const Render = (function () {
   }
 
   function frame(dt, alpha, target, mode, opt) {
-    time += dt;
+    time += dt; envPaint(false);
     updateCrew(dt);   // (first: it sets how far the player's car is up on the jacks)
     updateFlags();
     updateCars(dt, alpha, opt);
@@ -4081,6 +4636,7 @@ const Render = (function () {
     World.update(world, time, target, camera);
     if (target) updateCamera(dt, target, mode, alpha);
     if (world && world.dyn.afterCam) world.dyn.afterCam(camera, target);   // (what depends on the camera of this very frame: Pikes Peak, which scenery chunks cast shadows)
+    { const pod = world && world.podium && world.podium.on, rn = atmos.season === 'winter' ? 0 : Math.max(0, wet); World.crowdEnv(rn, pod ? 2 : atmos.tod === 'night' ? 1 : atmos.tod === 'dusk' ? 0.6 : 0); World.crowdRain(world, rn > 0.05); }   // (the fans: umbrellas in the rain, photos at night and at a podium)
     World.view(world, camera, target, alpha);   // (Ouninpohja: the forest between the camera and the car fades out)
     { const R = curRace, q = (v) => v > 0 ? Math.max(0.05, Math.round(v * 20) / 20) : 0;   // (a changing weather: in steps of 5 %)
       const r = R ? q(R.rain || 0) : 0, w = R ? q(R.water != null ? R.water : R.rain || 0) : 0;
@@ -4102,7 +4658,7 @@ const Render = (function () {
       const tr = tn.mat.opacity < 0.985; if (tn.mat.transparent !== tr) { tn.mat.transparent = tr; tn.mat.needsUpdate = true; } tn.mat.depthWrite = !tr;
       if (tn.mats) for (const m of tn.mats) if (m !== tn.mat) { m.opacity = tn.mat.opacity; if (m.transparent !== tr) { m.transparent = tr; m.needsUpdate = true; } m.depthWrite = !tr; }   // (Suzuka: everything on the bridge)
     }
-    skyStep(cam.ck || (lastMode === 'tv' && !cam.shot) || !!(cam.shot && cam.shot.sky)); cgSet(false);
+    const skyOn = cam.ck || (lastMode === 'tv' && !cam.shot) || !!(cam.shot && cam.shot.sky); skyStep(skyOn); horizonStep(skyOn); cgSet(false);
     { const W = World.waterSky; W.hor.value.copy(scene.fog.color); skyTop(W.top.value); }   // (the sky the water mirrors)
     const ckOn = cam.ck && ck.car; if (ckOn) ckStep(ck.car, viewOf(ck.car));
     { const cv = ckOn ? viewOf(ck.car) : null;   // (the Peugeot's own model has its inside, seats and all: from the seat, the plain body round the driver)
@@ -4125,7 +4681,17 @@ const Render = (function () {
           const ex = far ? px / pl * 1.15 : px, ey = far ? py / pl * 1.15 : py;
           post.mat.uniforms.uSun.value.set((ex / asp) * 0.5 + 0.5, ey * 0.5 + 0.5); }
         post.hk += ((front > 0.02 ? 1 : 0) - post.hk) * Math.min(1, dt * 3); post.mat.uniforms.uHaze.value = post.hk > 0.005 ? post.haze * post.hk : 0; }   // (fades in and out as a turning view brings the sun round: no pop)
-      const U = post.mat.uniforms; U.uFocus.value = post.focus; U.uBand.value = (lastMode === 'kino' ? 0.3 : camera.aspect < 1 ? 0.2 : 0.24) + (post.span || 0); U.uBlur.value = lastMode === 'kino' ? 0.7 : 0.8;   // kino: a soft depth of field only towards the edges, as in the reference
+      { const F = post.mat.uniforms.uFl.value; F.z = 0;   // the lens flare: the sun on the screen, in a view with the sky
+        if (skyOn && atmos.tod !== 'night') { camera.getWorldDirection(_sunV); const sl = Math.hypot(sunOff[0], sunOff[1], sunOff[2]);
+          if ((_sunV.x * sunOff[0] + _sunV.y * sunOff[1] + _sunV.z * sunOff[2]) / sl > 0.3) {
+            _pv.set(camera.position.x + sunOff[0] / sl * 50, camera.position.y + sunOff[1] / sl * 50, camera.position.z + sunOff[2] / sl * 50).project(camera);
+            const e = Math.max(Math.abs(_pv.x), Math.abs(_pv.y)); if (e < 1) F.set(_pv.x * 0.5 + 0.5, _pv.y * 0.5 + 0.5, Core.sstep(1, 0.8, e) * (1 - 0.95 * Math.max(0, wet)) * (1 - 0.8 * mist)); } } }
+      { const Sb = post.mat.uniforms.uSb.value, v = target, sp = v ? Math.hypot(v.vx || 0, v.vz || 0) : 0;   // the speed blur: in the player's views, not a TV shot or a photo
+        Sb.z = settings.speedBlur !== 0 && v && !cam.shot && mode !== 'tv' ? Core.sstep(24, 58, sp) * 0.75 : 0;
+        if (Sb.z > 0) { const Sc = post.mat.uniforms.uSc.value, ahead = cam.ck ? 1.2 : 0.35; _pv.set(v.x, (v.y || 0) + 0.5, v.z).project(camera);
+          if (cam.ck) Sc.set(-9, -9); else Sc.set(clamp(_pv.x * 0.5 + 0.5, 0, 1), clamp(_pv.y * 0.5 + 0.5, 0, 1));   // (the cockpit: the car is round the camera; the point ahead, the road's vanishing point)
+          _pv.set(v.x + v.vx * ahead, (v.y || 0) + (cam.ck ? 1 : 0.5), v.z + v.vz * ahead).project(camera); Sb.x = clamp(_pv.x * 0.5 + 0.5, 0.1, 0.9); Sb.y = clamp(_pv.y * 0.5 + 0.5, 0.1, 0.95); } }
+      const U = post.mat.uniforms; U.uFocus.value = post.focus; U.uBand.value = (lastMode === 'kino' ? 0.3 : camera.aspect < 1 ? 0.2 : 0.24) + (post.span || 0); U.uBlur.value = lastMode === 'kino' ? 0.7 : lastMode === 'tv' && tv ? 0.3 : 0.8;   // kino: a soft depth of field only towards the edges, as in the reference
       if (cam.ck) U.uBlur.value = 0; else if (cam.shot && cam.shot.blur != null) { U.uBlur.value = cam.shot.blur; if (cam.shot.blur > 0) U.uBand.value = 0.06; }   // (no miniature look from the driver's seat; the photo mode's own: a narrow sharp band on the car)
       renderer.setRenderTarget(post.rt); renderer.render(scene, camera); if (ckOn) ckDraw();
       if (post.bloom > 0) bloomPass(); U.uBloom.value = post.bloom;
@@ -4171,7 +4737,17 @@ const Render = (function () {
       const oc = [0.09, 0.11, 0.14];
       g.quadUp([Math.cos(a0) * 4.8, 0, Math.sin(a0) * 4.8], [Math.cos(a0) * 40, 0, Math.sin(a0) * 40], [Math.cos(a1) * 40, 0, Math.sin(a1) * 40], [Math.cos(a1) * 4.8, 0, Math.sin(a1) * 4.8], [oc, oc, oc, oc]);
     }
-    showScene.add(new THREE.Mesh(g.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })));
+    // the floor is glossy: drawn over the car's mirror image (setShowCar) a little see-through
+    const fl = new THREE.Mesh(g.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, opacity: 0.8, depthWrite: false })); fl.renderOrder = 1; showScene.add(fl);
+    // a soft shadow under the car (it turns with the car)
+    showShadow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: radialTex([[0, 1], [0.35, 0.7], [1, 0]]), color: 0x000000, transparent: true, opacity: 0.62, depthWrite: false }));
+    showShadow.rotation.x = -Math.PI / 2; showShadow.position.y = 0.015; showShadow.renderOrder = 2; showScene.add(showShadow);
+    // the studio's curved backdrop: dark overhead, lighter at the floor, tall soft light panels round it (they are what the paint mirrors: envPaint's studio)
+    const bd = new THREE.Mesh(new THREE.CylinderGeometry(46, 46, 40, 64, 1, true), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false,
+      vertexShader: 'varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: 'varying vec3 vP; void main(){ float h = vP.y / 40.0 + 0.5, a = atan(vP.z, vP.x); vec3 c = mix(vec3(0.1, 0.12, 0.15), vec3(0.025, 0.03, 0.045), smoothstep(0.02, 0.8, h));' +
+        ' float band = pow(max(0.0, cos(a * 5.0 + 0.6)), 14.0) * smoothstep(0.035, 0.09, h) * smoothstep(0.34, 0.2, h); c += vec3(0.62, 0.66, 0.74) * band * 0.3; gl_FragColor = vec4(c, 1.0); }' }));
+    bd.position.y = 19.9; bd.renderOrder = -1; showScene.add(bd);
   }
   function setShowCar(model, color, num) {
     if (!showScene) initShowroom();
@@ -4180,12 +4756,18 @@ const Render = (function () {
     showCar = makeCarMesh(fake, { noMarker: true });
     showCar.grp.position.set(0, 0, 0);
     showScene.add(showCar.grp);
+    if (showRefl) { showScene.remove(showRefl); showRefl = null; }
+    showRefl = showCar.grp.clone(); showRefl.scale.y = -1;   // (the car mirrored in the glossy floor: the same meshes and materials, upside down under it)
+    showRefl.traverse(o => { if (o.isMesh && o.material === matBlob) o.visible = false; }); showScene.add(showRefl);
+    { const b = new THREE.Box3().setFromObject(showCar.grp), sx = b.max.x - b.min.x, sz = b.max.z - b.min.z; showShadow.scale.set(sx * 1.35 + 0.6, sz * 1.5 + 0.6, 1); }
     if (prev) { showScene.remove(prev.grp); disposeCarMesh(prev); }   // (after the new car exists: its shaders are reused, not compiled again)
   }
   function renderShowroom(dt) {
     if (!showScene) return;
+    envPaint(true);   // (the studio in the paint)
     showAngle += dt * 0.35;
     if (showCar) showCar.grp.rotation.y = showAngle;
+    if (showRefl) showRefl.rotation.y = showAngle; if (showShadow) showShadow.rotation.z = showAngle;
     const aspect = window.innerWidth / window.innerHeight;
     const portraitS = aspect < 1;
     const d = portraitS ? 19 : aspect < 1.2 ? 13 : 10.5;
@@ -4203,6 +4785,8 @@ const Render = (function () {
     if (fov) { showCam.fov = f; showCam.updateProjectionMatrix(); }
   }
   function info() { return renderer ? renderer.info : null; }
+  function aoDebug(v) { AO_U.uAOg.value.w = v; }   // (tools) 2: show the occlusion (red) and the surface's weight (green)
+  function aoInfo() { return aoRes ? { blocks: aoRes.blocks, tiles: aoRes.tiles, size: aoRes.size, ms: aoRes.ms } : null; }   // (tests, tools)
   const dbg = { noSmoke: false };
   function setDebug(o) { Object.assign(dbg, o); }
   function fxStats() { let n = 0, sp = 0; for (let i = 0; i < particles.max; i++) if (particles.life[i] > 0) n++; for (let i = 0; i < sparkP.max; i++) if (sparkP.life[i] > 0) sp++; return { alive: n, emitted: particles.cur, sparks: sp }; }
@@ -4212,6 +4796,6 @@ const Render = (function () {
   }
   function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.opacity.toFixed(3) : 0, water: wetW }; }   // (tests)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { setDebug, fxStats, wetFx, lookInfo, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, open: !!ck.parts.open, gear: ck.parts.scr && ck.parts.scr.txt ? ck.parts.scr.txt.split('|')[0] : null, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, setGhost, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, pkFly, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setDebug, fxStats, wetFx, lookInfo, flagInfo, roadInfo, aoInfo, aoDebug, setTv, setMist, get mist() { return mist; }, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, open: !!ck.parts.open, gear: ck.parts.scr && ck.parts.scr.txt ? ck.parts.scr.txt.split('|')[0] : null, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, setGhost, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, pkFly, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 

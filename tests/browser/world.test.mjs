@@ -1,7 +1,8 @@
 // World fingerprint: for every track the built 3D world is hashed and compared with tests/golden/world.json: every mesh's
 // vertex data (positions, colours, UVs, normals and any other attribute), indices, placement, instances and material
 // (type, colours, texture size and tiling, transparency), the knockable props and the prop floor. Textures' pixels are not
-// included (canvas drawing may differ between systems). Proves that a code reorganisation left every track as it was.
+// included (canvas drawing may differ between systems). Proves that a code reorganisation left every track as it was. Also checks
+// that every track's contact shadows were baked.
 //   node tests/browser/world.test.mjs            check
 //   node tests/browser/world.test.mjs --update   write new reference values (only after an intended change!)
 import fs from 'node:fs';
@@ -58,6 +59,8 @@ try {
     out[id] = fp;
     const g = golden[id];
     if (update) { console.log(`${id.padEnd(10)} meshes ${fp.meshes} verts ${fp.verts} instances ${fp.instances} props ${fp.props} crowd ${fp.crowd} world ${fp.world}`); continue; }
+    const ao = await page.evaluate(() => Render.aoInfo());   // the contact shadows: baked for every track (blocks of the atlas near the road)
+    if (!update) T.check(`${id}: contact shadows baked`, !!ao && ao.blocks > 0, ao ? `${ao.blocks} blocks, atlas ${ao.size} px` : 'none');
     if (!g) { T.check(`${id}: world as in the reference`, false, 'no reference'); continue; }
     const diffGroups = Object.keys(Object.assign({}, g.groups, fp.groups)).filter(k => g.groups[k] !== fp.groups[k]);
     T.check(`${id}: world as in the reference`, g.world === fp.world && g.propsHash === fp.propsHash && g.floor === fp.floor,

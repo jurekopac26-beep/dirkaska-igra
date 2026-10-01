@@ -11,8 +11,8 @@ npm run test:browser # samo testi v brskalniku (~23 min s programskim WebGL)
 ```
 
 Na GitHubu se ob vsakem pull requestu in vsaki spremembi veje `main` samodejno poženejo vsi testi
-(`.github/workflows/tests.yml`). Test, ki teče dlje od 15 minut, se ustavi in šteje kot neuspešen
-(drugače: `TEST_TIMEOUT_MIN=30 npm test`).
+(`.github/workflows/tests.yml`; testi v brskalniku tam trajajo okoli 45 minut, posel ima omejitev 60 minut). Test, ki
+teče dlje od 15 minut, se ustavi in šteje kot neuspešen (drugače: `TEST_TIMEOUT_MIN=30 npm test`).
 
 ## Kaj preverjajo
 

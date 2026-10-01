@@ -7,8 +7,8 @@
 import { serve, launch, openGame, startTrack, trackIds, checker } from './lib.mjs';
 
 const T = checker('graphics: car glint, water, worn tarmac');
-const WATER = ['jezero', 'riviera', 'ljubljana', 'monaco', 'gozd', 'toskana', 'suzuka', 'ouninpohja'];   // (with a shore band; Pikes Peak: its reservoir only)
-const NO_WEAR = ['gora', 'ouninpohja', 'pikes', 'pikesg'];   // (pikesg: Pikes Peak on its historic gravel road)
+const WATER = ['jezero', 'riviera', 'ljubljana', 'monaco', 'gozd', 'toskana', 'suzuka', 'ouninpohja', 'ouninpohja-r'];   // (with a shore band; Pikes Peak: its reservoir only)
+const NO_WEAR = ['gora', 'ouninpohja', 'ouninpohja-r', 'pikes', 'pikesg'];   // (pikesg: Pikes Peak on its historic gravel road)
 const srv = await serve();
 const browser = await launch();
 try {

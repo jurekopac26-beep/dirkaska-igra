@@ -74,6 +74,10 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-split.fast, #h-msg.fast { color: var(--meter); }
 #h-split.slow { color: var(--curb); }
 #h-split.even { color: var(--chalk); }
+/* the gap to the gold ghost at a checkpoint (time trials with medal times) */
+#h-gold { height: 1.1em; font: 700 italic clamp(10px, 2.7vh, 13px)/1.1 var(--f-ui); color: #ffd35a; text-shadow: 0 1px 2px #000; opacity: 0; transition: opacity .3s; font-variant-numeric: tabular-nums; }
+#h-gold.show { opacity: 1; }
+#h-gold.behind { color: #e8b25a; }
 #h-split.sp { color: #c77dff; } #h-split.sg { color: #5ee36a; } #h-split.sy { color: #ffd23a; }   /* a TV sector: purple, green, yellow */
 /* time trial finish: compact splits table under the finish time (this run, the previous record, the difference) */
 #h-ttsp { display: none; position: absolute; left: 50%; top: calc(40% + clamp(28px, 10vh, 56px) + 10px); transform: translateX(-50%); padding: 4px 8px; background: rgba(10, 14, 20, .6); border-radius: 6px; font: 700 clamp(10px, 2.9vh, 13px)/1.25 var(--f-ui); font-variant-numeric: tabular-nums; color: var(--chalk); text-shadow: 0 1px 2px #000; }
