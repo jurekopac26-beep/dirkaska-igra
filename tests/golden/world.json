@@ -277,19 +277,19 @@
   }
  },
  "muur": {
-  "meshes": 545,
-  "verts": 818375,
-  "instances": 10267,
+  "meshes": 550,
+  "verts": 820441,
+  "instances": 10308,
   "props": 0,
   "crowd": 5894,
-  "world": "1a885c80",
+  "world": "c28d66b",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
    "-:MeshPhongMaterial": "13a79275",
-   "-:MeshLambertMaterial": "305570af",
-   "-:MeshBasicMaterial": "8409f694",
-   "-:PointsMaterial": "52889234",
+   "-:MeshLambertMaterial": "76472d6",
+   "-:MeshBasicMaterial": "4752cbb0",
+   "-:PointsMaterial": "b77f469c",
    "-:ShaderMaterial": "882db931",
    "crowd:MeshLambertMaterial": "ee3c8bf5",
    "tyremarks:MeshBasicMaterial": "f84717a8",
@@ -297,23 +297,63 @@
   }
  },
  "muurtt": {
-  "meshes": 550,
-  "verts": 818939,
-  "instances": 10264,
+  "meshes": 555,
+  "verts": 821005,
+  "instances": 10305,
   "props": 0,
   "crowd": 5891,
-  "world": "94f80c63",
+  "world": "cebbc246",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
    "-:MeshPhongMaterial": "13a79275",
-   "-:MeshLambertMaterial": "e86e82b7",
-   "-:MeshBasicMaterial": "6db076c8",
-   "-:PointsMaterial": "52889234",
+   "-:MeshLambertMaterial": "1d5723f6",
+   "-:MeshBasicMaterial": "2632ea4",
+   "-:PointsMaterial": "b77f469c",
    "-:ShaderMaterial": "882db931",
    "crowd:MeshLambertMaterial": "d7926b73",
    "tyremarks:MeshBasicMaterial": "f84717a8",
    "roadwear:MeshLambertMaterial": "67030610"
+  }
+ },
+ "muur8": {
+  "meshes": 550,
+  "verts": 856350,
+  "instances": 10870,
+  "props": 0,
+  "crowd": 6242,
+  "world": "e30bfe7a",
+  "propsHash": "811c9dc5",
+  "floor": null,
+  "groups": {
+   "-:MeshPhongMaterial": "2b65c8c3",
+   "-:MeshLambertMaterial": "8345d72e",
+   "-:MeshBasicMaterial": "11870118",
+   "-:PointsMaterial": "56c08330",
+   "-:ShaderMaterial": "882db931",
+   "crowd:MeshLambertMaterial": "c103aea9",
+   "tyremarks:MeshBasicMaterial": "8ae993d8",
+   "roadwear:MeshLambertMaterial": "8cc7e1e3"
+  }
+ },
+ "ronde": {
+  "meshes": 925,
+  "verts": 1027753,
+  "instances": 15818,
+  "props": 0,
+  "crowd": 9221,
+  "world": "7f41b145",
+  "propsHash": "811c9dc5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "c0df8e17",
+   "-:MeshPhongMaterial": "7589937b",
+   "-:MeshBasicMaterial": "1cec211a",
+   "-:PointsMaterial": "cfd8daef",
+   "-:ShaderMaterial": "882db931",
+   "crowd:MeshLambertMaterial": "ab274db6",
+   "tyremarks:MeshBasicMaterial": "1d5c2224",
+   "roadwear:MeshLambertMaterial": "7549a920"
   }
  }
 }
