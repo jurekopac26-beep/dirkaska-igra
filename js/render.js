@@ -2348,6 +2348,31 @@ const Render = (function () {
     World.box(g, -0.15, 0.88, 0, 0.26, 0.05, 0.12, 0, K); rdRod(g, ht, [0.4, 0.98, 0], 0.03, S); World.box(g, 0.44, 0.97, 0, 0.1, 0.04, 0.44, 0, K);
     return g.geometry();
   }
+  // a dog (x forward, y up, z right; from its feet, its legs ~0.3 m): the body, the chest, the neck and the head with its snout, nose, eyes and
+  // ears, the tail up, a red collar; the coat the instance's colour (the code), the ears darker. Its legs on their own (rdDogLegGeo: from the
+  // hip down, swinging as it trots, folded when it sits)
+  function rdDogGeo() {
+    const g = new GB(), C = RD_MG, D = [0.55, 0, 0.55], K = [0.05, 0.04, 0.04];
+    World.box(g, -0.03, 0.27, 0, 0.48, 0.19, 0.2, 0, C); World.box(g, 0.18, 0.25, 0, 0.16, 0.23, 0.21, 0, C);
+    World.box(g, 0.3, 0.38, 0, 0.12, 0.14, 0.13, 0, C); World.box(g, 0.37, 0.45, 0, 0.17, 0.15, 0.15, 0, C); World.box(g, 0.49, 0.45, 0, 0.1, 0.08, 0.09, 0, C);
+    World.box(g, 0.54, 0.49, 0, 0.025, 0.035, 0.045, 0, K);
+    for (const sd of [-1, 1]) { World.box(g, 0.335, 0.59, sd * 0.05, 0.05, 0.08, 0.03, 0, D); World.box(g, 0.45, 0.51, sd * 0.065, 0.025, 0.025, 0.025, 0, K); }
+    rdRod(g, [-0.26, 0.42, 0], [-0.43, 0.57, 0], 0.035, C);
+    World.box(g, 0.285, 0.38, 0, 0.04, 0.16, 0.16, 0, [0.75, 0.1, 0.08]);
+    return g.geometry();
+  }
+  function rdDogLegGeo() { const g = new GB(); World.box(g, 0, -0.29, 0, 0.065, 0.29, 0.065, 0, RD_MG); World.box(g, 0.015, -0.3, 0, 0.085, 0.035, 0.07, 0, [0.55, 0, 0.55]); return g.geometry(); }
+  // a pool of blood (on the ground under someone run over, growing): an irregular dark red blob, soft lobes round a full middle, a few drops
+  // round its edge (its own random numbers: always the same)
+  function rdBloodTex() {
+    const cv = document.createElement('canvas'); cv.width = cv.height = 128; const g = cv.getContext('2d'); let s = 7;
+    const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+    const blob = (x, y, r, a) => { const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, `rgba(104,7,9,${a})`); gr.addColorStop(0.72, `rgba(88,5,7,${a * 0.9})`); gr.addColorStop(1, 'rgba(70,3,5,0)'); g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, 6.2832); g.fill(); };
+    blob(64, 64, 42, 0.96);
+    for (let k = 0; k < 16; k++) { const a = rnd() * 6.2832, d = 12 + rnd() * 28, r = 9 + rnd() * 17; blob(64 + Math.cos(a) * d, 64 + Math.sin(a) * d, Math.min(r, 62 - d), 0.92); }
+    for (let k = 0; k < 12; k++) { const a = rnd() * 6.2832, d = 46 + rnd() * 12; blob(64 + Math.cos(a) * d, 64 + Math.sin(a) * d, 1.5 + rnd() * 3.5, 0.9); }
+    return new THREE.CanvasTexture(cv);
+  }
   function rdSpikeGeo() {   // a metre of a spike strip (laid across the road, z along it): steel scissor links, yellow reflectors at the joints, spikes up
     const g = new GB(), K = [0.12, 0.12, 0.13], S = [0.9, 0.92, 0.96], Y = [1.0, 0.8, 0.08], hw = 0.28, y = 0.05;
     for (const z of [0, 0.5]) for (const sg of [1, -1]) rdRod(g, [hw * sg, y, z], [-hw * sg, y, z + 0.5], 0.07, K);
@@ -2413,7 +2438,7 @@ const Render = (function () {
     return out;
   }
   function setupRoad(race) {
-    if (road) { scene.remove(road.grp); for (const m of road.meshes) { m.geometry.dispose(); if (m.dispose) m.dispose(); } road.mats.forEach(m => m.dispose());
+    if (road) { scene.remove(road.grp); for (const m of road.meshes) { m.geometry.dispose(); if (m.dispose) m.dispose(); } road.mats.forEach(m => { if (m.map) m.map.dispose(); m.dispose(); });
       if (road.heli) road.heli.heli.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
       for (const o of road.extra) { o.geometry.dispose(); if (o.material.map) o.material.map.dispose(); o.material.dispose(); }
       road = null; }
@@ -2422,14 +2447,19 @@ const Render = (function () {
     const mk = (geo, n, mt, cast) => { const im = new THREE.InstancedMesh(geo, mt, n); im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); im.frustumCulled = false; im.castShadow = !!cast; im.receiveShadow = true;
       for (let i = 0; i < n; i++) { im.setMatrixAt(i, _zero); im.setColorAt(i, _pc.setRGB(1, 1, 1)); } im.instanceColor.setUsage(THREE.DynamicDrawUsage); im.count = 0; grp.add(im); meshes.push(im); return im; };   // (the colours before the count goes to 0: three sizes them by it)
     const V = { car: [mk(rdCarGeo('hatch', 'pico'), 40, matP, true), mk(rdCarGeo('sedan', 'vortex'), 40, matP, true), mk(rdCarGeo('coupe', 'kaze'), 24, matP, true)],
-      van: mk(rdVanGeo(), 24, matP, true), bus: mk(rdBusGeo(), 8, matP, true), moto: mk(rdMotoGeo(), 12, matP, true), bike: mk(rdBikeGeo(), 24, matP, false),
+      van: mk(rdVanGeo(), 24, matP, true), bus: mk(rdBusGeo(), 8, matP, true), moto: mk(rdMotoGeo(), 12, matP, true), bike: mk(rdBikeGeo(), 64, matP, false),
       pvan: mk(rdPolVanGeo(), 4, matP, true), pmoto: mk(rdPolMotoGeo(), 6, matP, true) };   // (the police's van and motorbikes)
-    const NP = 90, PG = pedGeos();
+    const NP = 140, PG = pedGeos();
     PG.trunk.setAttribute('crewSkin', new THREE.InstancedBufferAttribute(new Float32Array(NP * 3), 3)); PG.head.setAttribute('crewSkin', new THREE.InstancedBufferAttribute(new Float32Array(NP * 3), 3));
     PG.farm.setAttribute('crewSkin', new THREE.InstancedBufferAttribute(new Float32Array(NP * 6), 3));
     const P = { trunk: mk(PG.trunk, NP, matS, true), head: mk(PG.head, NP, matS, true), uarm: mk(PG.uarm, NP * 2, mat, true), farm: mk(PG.farm, NP * 2, matS, false), thigh: mk(PG.thigh, NP * 2, mat, true), shin: mk(PG.shin, NP * 2, mat, true),
       helmet: mk(PG.helmet, NP, mat, false), pack: mk(PG.pack, NP, mat, false) };
     const S = mk(rdSpikeGeo(), 64, mat, false), LG = mk(rdLogGeo(), 48, matL, true), SK = mk(rdStakeGeo(false), 16, matL, true), SKB = mk(rdStakeGeo(true), 8, matL, true);
+    // the dogs (32 at most), their legs, the leashes (two lengths each, sagging), the pools of blood under the dead (32 at most: on the
+    // ground, drawn over the asphalt without fighting it)
+    const matLs = new THREE.MeshLambertMaterial({ color: 0x8c1d14 }), matB = new THREE.MeshPhongMaterial({ color: 0xb8b8b8, map: rdBloodTex(), transparent: true, depthWrite: false, shininess: 70, specular: 0x2a0a0a, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 });
+    const DG = mk(rdDogGeo(), 32, mat, true), DL = mk(rdDogLegGeo(), 128, mat, true), LS = mk(new THREE.BoxGeometry(1, 1, 1).translate(0, 0, 0.5), 64, matLs, false), BL = mk(new THREE.CircleGeometry(1, 24).rotateX(-Math.PI / 2), 32, matB, false);
+    BL.renderOrder = 2;
     let heli = null; const extra = [];
     if (race.pol && World.heli) {   // the police helicopter (the TV helicopter's model), hidden until it comes; its searchlight
       heli = World.heli(grp); heli.heli.visible = false; heli.pit = 0; heli.rol = 0;
@@ -2439,7 +2469,7 @@ const Render = (function () {
       for (const o of [heli.cone, heli.pool]) { o.visible = false; o.frustumCulled = false; o.renderOrder = 6; grp.add(o); extra.push(o); }
     }
     scene.add(grp);
-    road = { grp, meshes, mats: [matP, mat, matS, matL], V, P, NP, S, LG, SK, SKB, heli, extra, men: new Map(), pol: new Map(), n: { veh: 0, ped: 0, off: 0 }, arrest: null };
+    road = { grp, meshes, mats: [matP, mat, matS, matL, matLs, matB], V, P, NP, S, LG, SK, SKB, DG, DL, LS, BL, heli, extra, men: new Map(), pol: new Map(), n: { veh: 0, ped: 0, off: 0, grp: 0, cgrp: 0, yld: 0, ind: 0, dead: 0 }, arrest: null };
   }
   function rdPoolTex() {   // the searchlight's pool of light: a soft disc
     const cv = document.createElement('canvas'); cv.width = cv.height = 64; const g = cv.getContext('2d'), gr = g.createRadialGradient(32, 32, 2, 32, 32, 31);
@@ -2482,12 +2512,33 @@ const Render = (function () {
       const k = st === 'down' ? 1 : 1 - crSS(0.15, 1.2, t); tilt = m.lie * 1.52 * k; py = 0.12;
       _cH[0] = 0.55; _cH[1] = 1.3; _cH[2] = 0.1; _cH[3] = -0.55; _cH[4] = 1.25; _cH[5] = 0.05;
       if (st === 'up' && k < 0.8 && k > 0.1) for (let n = 0; n < 12; n++) _cO[n] += (CR_KNEEL[n] - _cO[n]) * 0.6;
+    } else if (st === 'hit' || st === 'dead') {   // run over: down onto the road (over the first 0.3 s), then lying flat for good, the limbs splayed, the head turned
+      const k = st === 'dead' ? 1 : crSS(0, 0.3, t), sd = m.h1 > 0.5 ? 1 : -1; tilt = m.lie * 1.53 * k; py = 0.1;
+      _cH[0] = 0.62; _cH[1] = 1.5; _cH[2] = 0.22; _cH[3] = -0.72; _cH[4] = 1.08; _cH[5] = -0.12;   // (one arm flung up past the head, the other out to the side)
+      _cO[0] = 0.92; _cO[1] = 0; _cO[2] = 0.1 * sd; _cO[3] = 0.1 * sd; _cO[4] = 0; _cO[5] = 0.85 * sd; _cO[6] = 0.12; _cO[7] = 0.34; _cO[8] = 0.08; _cO[9] = -0.18; _cO[10] = -0.3; _cO[11] = 0.3;
+    } else if (m.leash) {   // the leash in one hand (1 left, 2 right), a little forward
+      const k = m.leash === 1 ? 0 : 3; _cH[k] = m.leash === 1 ? 0.24 : -0.24; _cH[k + 1] = 0.98; _cH[k + 2] = 0.2;
     }
-    const ko = 1 - Math.exp(-dt * (st === 'fly' || st === 'down' ? 30 : walk > 0.3 ? 24 : 12)), kh = 1 - Math.exp(-dt * 14);
+    const ko = 1 - Math.exp(-dt * (st === 'fly' || st === 'down' || st === 'hit' || st === 'dead' ? 30 : walk > 0.3 ? 24 : 12)), kh = 1 - Math.exp(-dt * 14);
     for (let k = 0; k < 12; k++) { m.O[k] += (_cO[k] - m.O[k]) * ko; m.H[k] += (_cH[k] - m.H[k]) * kh; }
     crRig(m);
     if (tilt) rdTilt(m, Math.sin(m.yaw), -Math.cos(m.yaw), tilt, py);
     if (lean) rdTilt(m, Math.cos(m.yaw), Math.sin(m.yaw), lean, 0);
+  }
+  // a dog at slot i (road.DG, its legs road.DL): where the Core has it, its gait phase kept in its owner's man (m.dph); trotting (the legs two by
+  // two, diagonally; quicker and wider as it runs), sitting (sit 0..1: the body up at the front about its hind hips, the front legs straight
+  // down, the hind ones folded under it) -> the body's matrix
+  const _dgM = new THREE.Matrix4(), _dgL = new THREE.Matrix4(), _dgT = new THREE.Matrix4();
+  function rdDog(i, m, D, y, dt) {
+    const Q = road, sz = D.sz, k = D.sit || 0;
+    m.dph = (m.dph || 0) + D.v * dt / (0.42 * sz) * Math.PI;   // (a stride every ~0.8 m)
+    _re.set(0, -D.h, 0, 'YXZ'); _rq.setFromEuler(_re); _rv.set(D.x, y, D.z); _rs.set(sz, sz, sz); _dgM.compose(_rv, _rq, _rs); _rs.set(1, 1, 1);
+    if (k > 0) { _dgT.makeTranslation(-0.2, 0.3 - 0.18 * k, 0).multiply(_dgL.makeRotationZ(0.55 * k)).multiply(_rm3.makeTranslation(0.2, -0.3, 0)); _dgM.multiply(_dgT); }
+    Q.DG.setMatrixAt(i, _dgM); Q.DG.setColorAt(i, _pc.setHex(D.col));
+    const A = Math.min(0.7, 0.15 + 0.22 * D.v) * (1 - k), ph = m.dph;
+    for (let j = 0; j < 4; j++) { const fr = j < 2, sd = j % 2 ? 1 : -1, sw = D.v > 0.1 ? A * Math.sin(ph + (fr === (sd > 0) ? 0 : Math.PI)) : 0, rot = fr ? sw - 0.55 * k : sw + 1.1 * k;
+      _dgL.makeRotationZ(rot).setPosition(fr ? 0.19 : -0.2, 0.3, sd * 0.07); _dgT.multiplyMatrices(_dgM, _dgL); Q.DL.setMatrixAt(i * 4 + j, _dgT); Q.DL.setColorAt(i * 4 + j, _pc.setHex(D.col)); }
+    return _dgM;
   }
   function rdPut(m, i, gear) {   // the rig's parts into the instanced meshes at slot i; gear: 1 a helmet, 2 a backpack
     const P = road.P, rel = (im, k, src) => im.setMatrixAt(k, src);
@@ -2518,7 +2569,7 @@ const Render = (function () {
     const Q = road, R = curRace; if (!Q || !R || !R.tf) return;
     const tf = R.tf, T = R.track, cx = cam.vcx || 0, cz = cam.vcz || 0, far = 250 * 250, near2 = 150 * 150, dusk = atmos.tod !== 'day', rl = atmos.tod === 'night' ? 1.5 : 1.25;
     // the vehicles
-    const V = Q.V, cnt = new Map(); let nv = 0;
+    const V = Q.V, cnt = new Map(); let nv = 0, nyl = 0, nind = 0; const cg = new Map();
     const put = (im, v, col, roll, lift) => { const i = cnt.get(im) || 0; if (i >= im.instanceMatrix.count) return false; cnt.set(im, i + 1);
       const pitch = v.st === 0 ? Math.atan((T.grade ? T.grade[v.i] || 0 : 0) * v.dir) : 0, y = (world && world.groundH && v.st > 0 ? Math.max(v.y, world.groundH(v.x, v.z)) : v.y) + (lift || 0);
       _re.set(roll || 0, -v.h, pitch, 'YZX'); _rq.setFromEuler(_re); _rv.set(v.x, y, v.z); _rm.compose(_rv, _rq, _rs); im.setMatrixAt(i, _rm); im.setColorAt(i, _pc.setHex(col)); return true; };
@@ -2528,26 +2579,48 @@ const Render = (function () {
       const ok = K === 0 ? put(V.car[Math.floor(u * 7.3) % 3], v, rdPick(RD_CAR, (u * 13.7) % 1)) : K === 1 ? put(V.van, v, rdPick(RD_VAN, u)) : K === 2 ? put(V.bus, v, rdPick(RD_BUS, u)) :
         put(K === 3 ? V.moto : V.bike, v, rdPick(K === 3 ? RD_MOTO : RD_BIKE, u), lay ? 1.45 * (u > 0.5 ? 1 : -1) : v.lean, lay ? 0.05 : 0);
       if (!ok) continue; nv++;
-      // the lights: headlights and tail lights at dusk and at night (the brake lights always), the hazard lights of a wreck
+      if (v.grp) cg.set(v.grp, (cg.get(v.grp) || 0) + 1); if (v.yl === 1) nyl++;
+      // the lights: headlights and tail lights at dusk and at night (the brake lights always), the hazard lights of a wreck, the indicators
+      // (amber, blinking on the side it moves over to: pulling over for the police, back into its lane, round something)
       if (d2 < 120 * 120 && K < 4) { const ch = Math.cos(v.h), sh = Math.sin(v.h), hl = v.len / 2 - 0.05, hw = K === 3 ? 0 : v.wid * 0.36, hy = v.y + (K === 2 ? 0.75 : 0.62);
         const at = (lx, lz) => [v.x + ch * lx - sh * lz, v.z + sh * lx + ch * lz], haz = v.st > 0 && K < 3 && time % 0.9 < 0.45;
         for (const sd of K === 3 ? [0] : [-1, 1]) {
           if (dusk && v.st === 0) { const [x, z] = at(hl, sd * hw); glows.add(x, hy, z, 0.95, 1.0, 0.88, 0.62, 0.17 * rl); }
           if (v.brake || dusk || haz) { const [x, z] = at(-hl, sd * hw); glows.add(x, hy + 0.1, z, v.brake ? 1.6 : 0.9, 1.0, 0.15, 0.08, v.brake ? 0.85 : 0.28 * rl); }
           if (haz) for (const e of [hl, -hl]) { const [x, z] = at(e, sd * (hw + 0.1)); glows.add(x, hy, z, 1.3, 1.0, 0.55, 0.08, 0.9); }
-        } }
+        }
+        if (v.ind && v.st === 0) { nind++; if ((time + v.id * 0.137) % 0.7 < 0.38) { const sd = v.ind * v.dir, lw = K === 3 ? 0.14 : v.wid / 2 + 0.04; for (const e of [hl + 0.03, -hl - 0.03]) { const [x, z] = at(e, sd * lw); glows.add(x, hy + 0.06, z, 1.1, 1.0, 0.6, 0.0, 1.0); } } } }
     }
     for (const im of [...V.car, V.van, V.bus, V.moto, V.bike]) { im.count = cnt.get(im) || 0; if (im.count) { im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; } }
     // the people: the Core's (on foot; a rider thrown off), the riders on their bicycles and motorbikes, an officer by each parked patrol car
-    const P = Q.P, NP = Q.NP; let np = 0;
+    const P = Q.P, NP = Q.NP; let np = 0, nd = 0, nl = 0, nb = 0, ndead = 0; const pg = new Map();
     const gy = (x, z, y) => world && world.groundH ? Math.max(y - 0.5, world.groundH(x, z)) : y;
+    const pedY = (p, x, z) => rdGroundY(T, p.s, p.d, x, z, p.y);
     for (const p of tf.ped) {
       if (np >= NP) break; if (p.off) continue; const dx = p.x - cx, dz = p.z - cz; if (dx * dx + dz * dz > near2) continue;
-      const m = rdMan(p.id, p.look, p.kind), fly = p.st === 'fly', y = fly ? p.y : gy(p.x, p.z, p.y);
+      const m = rdMan(p.id, p.look, p.kind), fly = p.st === 'fly', y = fly ? p.y : pedY(p, p.x, p.z), D = p.dog, dead = p.st === 'dead' || p.st === 'hit';
       if (p.pol) { m.shirt.setHex(0xd8e43a); m.trou.setHex(0x1c2842); m.helm = m.helm || new THREE.Color(0xf4f5f7); }   // (a police motorcyclist)
       if (p.kind === 3) m.helm = m.helm || new THREE.Color(rdPick(RD_BIKE, m.h2));
-      rdPose(m, p.x, y, p.z, p.h, p.st, p.v2 || 0, dt, p.t, p.roll, 0); rdPut(m, np++, p.kind === 3 ? 1 : p.kind === 1 ? 2 : 0);
+      m.leash = D ? ((D.x - p.x) * Math.sin(m.yaw) - (D.z - p.z) * Math.cos(m.yaw) > 0 ? 1 : 2) : 0;   // (the hand on the dog's side)
+      rdPose(m, p.x, y, p.z, p.h, p.st, p.v2 || 0, dt, p.t, p.roll, 0);
+      if (p.grp) pg.set(p.grp, (pg.get(p.grp) || 0) + 1);
+      if (dead && nb < 32) {   // the pool of blood: under the body (between the hips and the neck), on the ground, as large as the Core has it grown
+        ndead++; _cv.setFromMatrixPosition(CRM.pel); _cv2.setFromMatrixPosition(CRM.neck); const bx = (_cv.x + _cv2.x) / 2, bz = (_cv.z + _cv2.z) / 2, r = Math.max(0.05, p.bl || 0.1);
+        _re.set(0, (p.id * 2.39) % 6.283, 0, 'YXZ'); _rq.setFromEuler(_re); _rv.set(bx, pedY(p, bx, bz) + 0.04, bz); _rs.set(r, 1, r * (0.85 + 0.15 * Math.sin(p.id))); _rm.compose(_rv, _rq, _rs); _rs.set(1, 1, 1);
+        Q.BL.setMatrixAt(nb, _rm); Q.BL.setColorAt(nb++, _pc.setRGB(0.78 + 0.22 * Math.abs(Math.sin(p.id * 1.7)), 0.85, 0.85));
+      }
+      if (D && nd < 32) {   // the dog: trotting (its legs in a trot, two by two), sitting (the front up, the hind legs folded); its leash from the hand to its collar, sagging
+        const dg = rdDog(nd++, m, D, pedY(p, D.x, D.z), dt);
+        if (m.leash && nl < 63) { _cv.set(0, 0, 0.03).applyMatrix4(m.leash === 1 ? CRM.hdL : CRM.hdR); _cv2.set(0.3, 0.46, 0).applyMatrix4(dg);
+          const L = Math.hypot(_cv2.x - _cv.x, _cv2.y - _cv.y, _cv2.z - _cv.z), sag = Math.sqrt(Math.max(0, 0.81 - L * L / 4)) * 0.75, mx = (_cv.x + _cv2.x) / 2, my = Math.max((_cv.y + _cv2.y) / 2 - sag, y + 0.04), mz = (_cv.z + _cv2.z) / 2;
+          crSetRod(Q.LS, nl++, _cv.x, _cv.y, _cv.z, mx, my, mz, 0.014); crSetRod(Q.LS, nl++, mx, my, mz, _cv2.x, _cv2.y, _cv2.z, 0.014); }
+      }
+      rdPut(m, np++, p.kind === 3 ? 1 : p.kind === 1 ? 2 : 0);
     }
+    Q.DG.count = nd; Q.DL.count = nd * 4; Q.LS.count = nl; Q.BL.count = nb;
+    for (const im of [Q.DG, Q.DL, Q.LS, Q.BL]) if (im.count) { im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; }
+    let ngp = 0, ncg = 0; for (const n of pg.values()) if (n > 1) ngp++; for (const n of cg.values()) if (n > 1) ncg++;
+    Q.n.grp = ngp; Q.n.cgrp = ncg; Q.n.yld = nyl; Q.n.ind = nind; Q.n.dead = ndead;
     for (const v of tf.veh) {
       if (np >= NP) break; if (v.off || v.kind < 3 || v.st > 0 || v.rider) continue; const dx = v.x - cx, dz = v.z - cz; if (dx * dx + dz * dz > near2) continue;
       const m = rdMan('r' + v.id, v.col, 0); m.helm = m.helm || new THREE.Color(rdPick(v.kind === 3 ? RD_MOTO : RD_BIKE, (v.col * 7.1) % 1));
@@ -2664,9 +2737,17 @@ const Render = (function () {
     }
     glows.end();
   }
+  // the ground someone stands on at (x, z), s and d along and across the road, y the road's height there (the Core's): inside the barriers
+  // (the asphalt, its sidewalks, the shoulders) the road's own surface, unless the bank is higher; beyond them the terrain (world.groundH
+  // under the road lies below its surface: the people would sink into it)
+  function rdGroundY(T, s, d, x, z, y) {
+    const i = T.idx(s), G = world && world.groundH;
+    return Math.abs(d) < (d > 0 ? T.br[i] : T.bl[i]) ? Math.max(y + 0.02, G ? G(x, z) : -1e9) : G ? Math.max(y - 0.5, G(x, z)) : y;
+  }
   function atS2(T, s, d) { const f = clamp(s / T.ds, 0, T.N - 1.001), i = Math.floor(f), t = f - i, j = i + 1; return [T.px[i] + (T.px[j] - T.px[i]) * t + (T.nx[i] + (T.nx[j] - T.nx[i]) * t) * d, T.pz[i] + (T.pz[j] - T.pz[i]) * t + (T.nz[i] + (T.nz[j] - T.nz[i]) * t) * d]; }
   function roadInfo() { return road ? { veh: road.n.veh, ped: road.n.ped, pol: road.pol.size, spikes: road.S.count, lampOn: [...road.pol.values()].some(v => v.polLamps && v.polLamps.some(l => l.material === matPolOn)),
-    heli: !!road.heli && road.heli.heli.visible, beam: !!road.heli && road.heli.cone.visible, vans: road.V.pvan.count, motos: road.V.pmoto.count, logs: road.LG.count, officers: road.n.off } : null; }   // (tests)
+    heli: !!road.heli && road.heli.heli.visible, beam: !!road.heli && road.heli.cone.visible, vans: road.V.pvan.count, motos: road.V.pmoto.count, logs: road.LG.count, officers: road.n.off,
+    bikes: road.V.bike.count, blood: road.BL.count, dead: road.n.dead, dogs: road.DG.count, leashes: road.LS.count / 2, groups: road.n.grp, cycGroups: road.n.cgrp, yielding: road.n.yld, indicators: road.n.ind } : null; }   // (tests)
 
   /* ---------------- per-frame ---------------- */
   const tmp = { x: 0, z: 0 };
