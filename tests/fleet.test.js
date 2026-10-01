@@ -115,8 +115,8 @@ check('Core: the 11 first, in their places, then all 31 in the roster order; no 
     if (d.name.length > 18 || d.desc.length > 90 || /\d\s*(kW|KM|kg)\b/.test(d.desc)) p('name / desc');
     if (!C.SND_KINDS.includes(M.sndP && M.sndP.kind) || M.snd !== undefined) p('sound preset (sndP from def.snd; snd untouched)');
     if (!d.expect || !['t100', 'vmax', 'latG', 'd100'].every(k => Array.isArray(d.expect[k]))) p('expect');
-    if (d.look !== null) p('look (null until the render kit)');
-    if (M.body !== 'hatch') p('body (interim: hatch)');
+    if (d.look !== null && !(d.look && typeof d.look === 'object' && typeof d.look.build === 'function' && (d.look.body == null || typeof d.look.body === 'object'))) p('look (null, or { body, wheels, build(K) })');
+    if (M.body !== M.id) p('body (its own: the id)');
     for (const k of WHEELS) { const e = PT[k], i = WHEELS.indexOf(k); if (!e || e.wh !== i || Math.abs(e.lx - (i < 2 ? M.a : -M.b) / (M.len / 2)) > 1e-9 || Math.abs(Math.abs(e.lz) - 0.86) > 1e-9 || e.y !== M.rw) p('wheel ' + k); }
     for (const k in PT) if (!STD.includes(k) && !(d.partNames && d.partNames[k])) p('no English name for part ' + k);
     for (const k in d.partNames || {}) if (!PT[k]) p('a name for no part: ' + k);
@@ -548,7 +548,7 @@ if (!only.length) {
         { id: 'muscle', patch: true, parts: { set: 'race', ht: 1.3, y0: 0.2, over: { wing: { df: 0.8 }, bumperF: { df: 0.5 } } } });
       VEHICLE_DEFS.push(${clone({ id: 'zzbad', phys: Object.assign({}, good.phys, { warp: 9 }) })}, ${clone({ id: 'zzfield', field: ['nowhere'] })}, ${clone({ id: 'titan' })}, ${clone({ id: 'hatch' })},
         ${clone({ id: 'zzsnd', snd: { kind: 'v16', hz: 1, loud: 1 } })}, ${clone({ id: 'zzdesc', desc: 'Ima 300 kW moči.' })}, ${clone({ id: 'zzok', name: 'ZZ OK', field: ['zzok', 'p206'] })},
-        ${clone({ id: 'zzglb', name: 'ZZ GLB', glb: 'zz', field: ['zzglb'] })}, ${clone({ id: 'zzx1', parts: pc({ extra: { spoilerx: true } }) })}, ${clone({ id: 'zzx2', parts: pc({ over: { wheelFL: { r: 0.9 } } }) })},
+        ${clone({ id: 'zzglb', name: 'ZZ GLB', glb: 'zz', field: ['zzglb'], look: null })}, ${clone({ id: 'zzx1', parts: pc({ extra: { spoilerx: true } }) })}, ${clone({ id: 'zzx2', parts: pc({ over: { wheelFL: { r: 0.9 } } }) })},
         ${clone({ id: 'zzx3', parts: pc({ extra: { skirt: { z: 2, th: 0.6, cth: 0.5, m: 2, r: 0.5, h: 0.05, lx: 0, lz: -1, f: 0.2 } } }) })}, ${clone({ id: 'zzx4', arc: { amax: 1.7, kv: 2, rmin: 4.2, bscale: 9 } })},
         ${clone({ id: 'zzbs', name: 'ZZ BS', arc: { amax: 1.7, kv: 2, rmin: 4.2, bscale: 1.3 }, parts: pc({ over: { doorL: { rW: 0.3 } } }) })});`);
   } finally { console.warn = warn; }

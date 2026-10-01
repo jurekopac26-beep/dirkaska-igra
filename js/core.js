@@ -3413,7 +3413,7 @@ const Core = (function () {
     for (const d of ok) {
       const P = d.phys, M = Object.assign({}, P, {
         id: d.id, name: d.name, drive: d.drive, cat: d.cat, ord: d.ord != null ? d.ord : 0, kit: true, def: d, sndP: d.snd, stats: Object.assign({}, d.stats),
-        body: 'hatch',   // INTERIM (stage A, no render kit yet): every registered vehicle drawn as the generic hatch; the kit flips this to d.id
+        body: d.id,   // (the renderer's body: its own, from its look (the render kit; a generic kit hatch while its look is null))
         parts: expandParts(d.parts, P), field: d.field ? d.field.slice() : null,
       });
       for (const k of ['fieldN', 'num', 'glb', 'credit', 'retired']) if (d[k] != null) M[k] = d[k];
