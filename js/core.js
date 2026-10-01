@@ -1496,7 +1496,7 @@ const Core = (function () {
      behind the middle against what the rear tyres hold), slide (the scrub, g), yawT / yawC (a free spin dying away), dv0 / dmg (damage),
      pl (the player's share of a grip loss) */
   const CRASH = { e: 0.05, eV: 1.5, mu: 0.5, slop: 0.03, push: 0.35, glDv: 1.5, glK: 0.16, glW: 0.25, glT0: 0.5, glT1: 0.07, glTmax: 1.6, lat0: 0.35, latK: 1.5,
-    slide: 0.9, yawT: 0.8, yawC: 1.2, dv0: 2.5, dmg: 0.022, pl: 0.6 };
+    slide: 0.9, yawT: 0.8, yawC: 1.2, dv0: 2.5, dmg: 0.012, pl: 0.35 };
   const _ob = { pen: 0, nx: 0, nz: 0, px: 0, pz: 0 };
   // two boxes (centre, heading, length, width) by their separating axes: null apart, else _ob = the overlap along the face normal of least
   // overlap (pointing from b to a) and the contact point (the deepest corner of the other box; the middle of two when a face lies flat on a face)
@@ -1557,6 +1557,22 @@ const Core = (function () {
     const fx = Math.max(imp, Math.abs(vt) * 0.5); a.fxCar = Math.max(a.fxCar || 0, fx); b.fxCar = Math.max(b.fxCar || 0, fx);   // (grinding throws sparks too)
     a.contactX = b.contactX = bpx; a.contactZ = b.contactZ = bpz;
     return imp;
+  }
+
+  // a car against a fixed box (a wall of the building at the top of the run from the police: x, z, heading, length, width): pushed out, no
+  // bounce, a little friction along it, the turn from the contact point; returns the speed into it (m/s)
+  function boxCollide(c, bx, bz, bh, bl, bw) {
+    const o = obbHit(c.x, c.z, c.h, c.m.len, c.m.wid, bx, bz, bh, bl, bw); if (!o) return 0;
+    c.x += o.nx * o.pen; c.z += o.nz * o.pen;
+    const rx = o.px - c.x, rz = o.pz - c.z, vx = c.vx - c.w * rz, vz = c.vz + c.w * rx, vn = vx * o.nx + vz * o.nz;
+    if (vn >= 0) return 0;
+    const m = crashMass(c), I = c.I * m / c.m.mass, rn = rx * o.nz - rz * o.nx, J = -vn / (1 / m + rn * rn / I);
+    const tx = -o.nz, tz = o.nx, vt = vx * tx + vz * tz, rt = rx * tz - rz * tx, Jt = clamp(-vt / (1 / m + rt * rt / I), -0.2 * J, 0.2 * J);
+    const Px = J * o.nx + Jt * tx, Pz = J * o.nz + Jt * tz;
+    c.vx += Px / m; c.vz += Pz / m; c.w += (rn * J + rt * Jt) / I;
+    c.hitWall = Math.max(c.hitWall, -vn); c.fxWall = Math.max(c.fxWall || 0, -vn); c.contactX = o.px; c.contactZ = o.pz;
+    if (-vn > 2.5) { const ch = Math.cos(c.h), sh = Math.sin(c.h); applyDamage(c, (-vn - 2.5) * 0.028, rx * ch + rz * sh, -rx * sh + rz * ch); }
+    return -vn;
   }
 
   /* ---------------------------------------------------------------------
@@ -2203,7 +2219,10 @@ const Core = (function () {
   /* ---------------------------------------------------------------------
      THE RUN FROM THE POLICE (Race opts.police; an open road, Vršič): race.pol, the player alone up the road open to traffic (race.tf)
      --------------------------------------------------------------------- */
-  // The police are after the player: one patrol car behind them at the start with its lights on (it sets off 2 s after them), more joining
+  // The run begins calmly: the player drives up through Kranjska Gora with nobody after them, to a traffic checkpoint (def.polCheck; see
+  // _check): a patrol car at the roadside, an officer on the road stopping the traffic. Stopping for him is the end of it (no documents: told to
+  // park at the roadside and come to the police station: arrested); driving off (or through) starts the chase: the checkpoint's patrol car after
+  // them, more joining
   // from behind, out of sight, as the heat rises (the distance, people knocked down, patrol cars wrecked, the offences: speeding through the
   // village, driving on its sidewalks, crashing into the traffic, knocking a police motorcyclist off), up to four at once; from the heat
   // POL_DIFF.moto on, now and then a motorcyclist instead (light and quick through the hairpins: it rides on the player's tail rather than
@@ -2216,7 +2235,8 @@ const Core = (function () {
   // gap at one edge; they join the chase once the player is through); from the heat POL_DIFF.heavy on, a heavy roadblock: a van across most
   // of the road and a patrol car, a strip over half of the gap. A tyre over a strip goes flat (Car.flat; less grip, more drag). A patrol
   // car badly damaged, stuck or on flat tyres is out. Busted: nearly stopped (under 10 km/h) with a patrol car within 9 m for 3 s (a meter
-  // that fills and drains). Escaped: over the pass.
+  // that fills and drains). The mission is done in the building at the top (def.hideout: a garage on the right just past the pass, its door
+  // facing down the road): driving into it (see _goal).
   // Out of sight: a patrol car (or the helicopter) sees the player close by, or along the road where it runs straight between them (not
   // round a bend or a hairpin: there the road is much longer than the line of sight), up to 170 m. Unseen by all of them for POL_DIFF.hide s
   // in the chase (none of the cars in it within 150 m along the road), they lose the player: the cars in the chase search (no siren,
@@ -2236,21 +2256,25 @@ const Core = (function () {
   for (const M of [POL_MOTO, POL_VAN]) M.Tmax = M.kw * 1000 / (M.redline * TAU / 60 * tqShape(1.0));
   ARC.polmoto = { amax: 1.9, kv: 2.4, bscale: 0.8, rmin: 3.2 }; ARC.polvan = { amax: 1.5, kv: 1.8, bscale: 0.8, rmin: 6 };
   CSP.polmoto = { bx: 0.1, coast: -0.08, thr: -0.02, liftP: 0, pwr: 0.02, out: 0.9, turn: 1.2, w: 1.12 };
-  // by the game's difficulty (easy, normal, hard): how many go for the player at once, the pause after a knock (s, + a random share), how much
-  // faster a patrol car far behind drives, how many patrol cars at most, every how many seconds one more joins, the seconds stopped by one to
-  // be busted; the seconds out of sight to be lost; the heat from which the helicopter comes (for heliT s, back after heliCool s), from which
-  // motorcyclists join, the unmarked car drives ahead, a roadblock is a heavy one; how many ambushes wait by the huts
+  // by the game's difficulty (lahka, srednja, težka, super težka; the old 'normal' is now the easy one, the old hard the medium one): how many
+  // go for the player at once, the pause after a knock (s, + a random share), how much faster a patrol car far behind drives, how many patrol
+  // cars at most, every how many seconds one more joins, the seconds stopped by one to be busted; the seconds out of sight to be lost; the heat
+  // from which the helicopter comes (for heliT s, back after heliCool s), from which motorcyclists join, the unmarked car drives ahead, a
+  // roadblock is a heavy one; how many ambushes wait by the huts; gap: the plan's strips and roadblocks at least this far apart (m); pace: a
+  // patrol car's skill cap; jump: the s the checkpoint's car needs to set off after the player fled; pDmg: the player's damage factor;
+  // pit: the s a patrol car keeps pushing into the rear quarter (the PIT) before it backs off
   const POL_DIFF = [
-    { atk: 1, cool: 2.8, coolR: 1.6, rub: 0.2, max: 3, join: 34, bust: 4, hide: 10, heli: 4.8, heliT: 45, heliCool: 90, moto: 2.6, uc: 3.6, heavy: 4.4, amb: 2 },
-    { atk: 2, cool: 1.8, coolR: 1.2, rub: 0.3, max: 4, join: 26, bust: 3, hide: 14, heli: 4, heliT: 60, heliCool: 70, moto: 2, uc: 3, heavy: 3.6, amb: 3 },
-    { atk: 2, cool: 1.1, coolR: 0.8, rub: 0.4, max: 4, join: 20, bust: 2.5, hide: 18, heli: 3.4, heliT: 75, heliCool: 50, moto: 1.6, uc: 2.5, heavy: 3, amb: 4 }];
-  const POL_AMB = ['Mihov dom', 'Erjavčeva koča', 'Koča na Gozdu', 'Ruski križ'];   // the ambushes, in this order by the difficulty: by the huts' bus stops
+    { atk: 2, cool: 1.8, coolR: 1.2, rub: 0.3, max: 4, join: 26, bust: 3, hide: 14, heli: 4, heliT: 60, heliCool: 70, moto: 2, uc: 3, heavy: 3.6, amb: 3, gap: 1400, pace: 1.14, jump: 3, pDmg: 0.35, pit: 0.35 },
+    { atk: 2, cool: 1.1, coolR: 0.8, rub: 0.4, max: 4, join: 20, bust: 2.5, hide: 18, heli: 3.4, heliT: 75, heliCool: 50, moto: 1.6, uc: 2.5, heavy: 3, amb: 4, gap: 1400, pace: 1.14, jump: 2.5, pDmg: 0.45, pit: 0.5 },
+    { atk: 3, cool: 0.8, coolR: 0.6, rub: 0.5, max: 5, join: 16, bust: 2, hide: 22, heli: 2.8, heliT: 90, heliCool: 40, moto: 1.4, uc: 2.2, heavy: 2.6, amb: 5, gap: 1100, pace: 1.17, jump: 2, pDmg: 0.6, pit: 0.65 },
+    { atk: 3, cool: 0.5, coolR: 0.4, rub: 0.6, max: 6, join: 12, bust: 1.6, hide: 26, heli: 2.2, heliT: 120, heliCool: 30, moto: 1.2, uc: 1.8, heavy: 2.2, amb: 6, gap: 900, pace: 1.2, jump: 1.5, pDmg: 0.8, pit: 0.8 }];
+  const POL_AMB = ['Mihov dom', 'Erjavčeva koča', 'Koča na Gozdu', 'Ruski križ', 'Šumica', 'Jasna'];   // the ambushes, in this order by the difficulty: by the huts' (and places') bus stops
   const POL_EUR = { wreck: 26000, moto: 8000, crash: 4500, flat: 350, ram: 900, log: 1200, block: 2500 };   // the rap sheet's damage (EUR): a patrol car wrecked, a motorbike down, a crash into the traffic, a patrol car's burst tyre, a knock, a log hit, a patrol car of a roadblock hit
   class Police {
     constructor(race) {
       const T = race.track;
       this.race = race; this.T = T; this.R = rng(((race.opts.seed || 7) * 104729 + 7) >>> 0);
-      this.D = POL_DIFF[clamp(race.opts.difficulty == null ? 1 : race.opts.difficulty, 0, 2)];
+      this.D = POL_DIFF[clamp(race.opts.difficulty == null ? 1 : race.opts.difficulty, 0, 3)];
       this.cars = []; this.spikes = []; this.blocks = []; this.nid = 0; this.unit = 0;
       this.heat = 1; this.bust = 0; this.busted = false; this.escaped = false; this.joinT = 0; this.slowT = 0;
       this.wrecked = 0; this.flats = 0; this.hitPeople = 0; this.rams = 0; this._tfEv = 0;
@@ -2268,15 +2292,37 @@ const Core = (function () {
       // among the hairpins a gentle bend will do, 110 m within 40 m), 1.4 km apart at least: two strips, then a roadblock and a strip in turn
       const straight = (s, r, w) => { for (let d = -w; d <= w; d += 4) if (Math.abs(T.k[T.idx(s + d)]) > 1 / r) return false; return true; };
       this.plan = []; let last = -1e9;
-      for (let s = T.startS + 3300; s < T.finishS - 600; s += 20) if (s - last > 1400 && (straight(s, 200, 60) || (s > T.startS + 8500 && straight(s, 110, 40)))) { const n = this.plan.length; this.plan.push({ s, kind: n < 2 || n % 2 ? 'spike' : 'block', done: false }); last = s; }
+      for (let s = T.startS + 3300; s < T.finishS - 600; s += 20) if (s - last > this.D.gap && (straight(s, 200, 60) || (s > T.startS + 8500 && straight(s, 110, 40)))) { const n = this.plan.length; this.plan.push({ s, kind: n < 2 || n % 2 ? 'spike' : 'block', done: false }); last = s; }
       // the ambushes: by the huts, 40 m up the road from their bus stop, off the asphalt on the side with more room
       this.amb = [];
       for (const n of POL_AMB.slice(0, this.D.amb)) { const e = (T.def.stops || []).find(q => q[2] === n); if (!e) continue; const s = T.startS + e[0] + 40, i = T.idx(s); this.amb.push({ s, side: T.br[i] >= T.bl[i] ? 1 : -1, name: n, done: false, car: null }); }
       // the log piles (def.logs): st 0 stacked, 1 let go (the logs rolling, then lying on the road)
       this.traps = (T.def.logs || []).map(([d, side]) => ({ s: T.startS + d, side, st: 0, t: 0, logs: [] }));
       this.mprof = null;
-      this._car(T.startS - 38, 2.3, 0, 'chase', 2);   // (the first one, on the grid behind the player)
-      if (race.player) { race.player.dmgK = 0.6; race.player.ck = { m: race.player.m.mass + 90, gl: 0, glT: 1 }; }   // (ck: the contacts as in GTA, CRASH; the mass with the driver)
+      // the stage of the run: 'free' (nobody after the player yet), 'check' (at the traffic checkpoint), 'chase', 'over' (arrested or the mission
+      // done); hold: the game holds the player's brakes; arrestK: 'chk' (arrested at the checkpoint) or 'chase' (busted in the chase)
+      this.stage = 'free'; this.hold = false; this.arrestK = ''; this.chkHeat = 0;
+      // the traffic checkpoint (def.polCheck = [metres after the start line, side]; see _check): its patrol car parked at the roadside 12 m on,
+      // its lights flashing; the officer at the lane's outer edge with a STOP paddle; the box to park in 30 m on at the edge, past the patrol car
+      const PC = T.def.polCheck || [830, 1], cs = T.startS + PC[0], csd = PC[1], ci = T.idx(cs), bi = T.idx(cs + 30), bd = csd * (T.w - 1.4);
+      this.chk = { s: cs, side: csd, st: 'wait', t: 0, still: 0, stopS: 0, cop: { x: T.px[ci] + T.nx[ci] * csd * (T.w - 2.2), z: T.pz[ci] + T.nz[ci] * csd * (T.w - 2.2), y: T.hy[ci], h: T.hd[ci] + Math.PI, act: 'stand', wp: null },
+        drv: null, box: { s: cs + 30, d: bd, len: 6.2, wid: 2.7, x: T.px[bi] + T.nx[bi] * bd, z: T.pz[bi] + T.nz[bi] * bd, h: T.hd[bi] }, car: null, held: 0 };
+      this.chk.car = this._car(cs + 12, csd * (T.w - 1.25), 0, 'park', 0); this.chk.car.pol.chk = true;
+      // the building at the top (def.hideout { s: metres after the start line of its middle, side, len, wid, door }): along the road beyond the
+      // asphalt's edge, its open door at the end facing down the road; walls the cars bump into (collide), the mission done inside (_goal)
+      const HO = T.def.hideout;
+      if (HO) { const gs = T.startS + HO.s, gi = T.idx(gs), gd = HO.side * (T.w + 0.3 + HO.wid / 2), gh = T.hd[gi], gx = T.px[gi] + T.nx[gi] * gd, gz = T.pz[gi] + T.nz[gi] * gd, ch = Math.cos(gh), sh = Math.sin(gh);
+        this.goal = { s: gs, side: HO.side, d: gd, x: gx, z: gz, y: T.hy[gi], h: gh, len: HO.len, wid: HO.wid, door: HO.door,
+          doorX0: gx - ch * HO.len / 2 - sh * HO.door / 2, doorZ0: gz - sh * HO.len / 2 + ch * HO.door / 2, doorX1: gx - ch * HO.len / 2 + sh * HO.door / 2, doorZ1: gz - sh * HO.len / 2 - ch * HO.door / 2 };
+        // its walls as thin boxes [x, z, heading, length, thickness]: the back, the two sides, the door wall's two pieces beside the opening
+        const t = 0.3, L = HO.len, W = HO.wid, dw = (W - HO.door) / 2, at = (lx, lz) => [gx + ch * lx - sh * lz, gz + sh * lx + ch * lz];
+        this.goal.walls = [[...at(L / 2, 0), gh, t, W + t], [...at(0, W / 2), gh, L + t, t], [...at(0, -W / 2), gh, L + t, t], [...at(-L / 2, W / 2 - dw / 2), gh, t, dw], [...at(-L / 2, -W / 2 + dw / 2), gh, t, dw]];
+      } else this.goal = null;
+      const P = race.player;
+      if (P) {
+        P.dmgK = this.D.pDmg; P.ck = { m: P.m.mass + 90, gl: 0, glT: 1 };   // (ck: the contacts as in GTA, CRASH; the mass with the driver)
+        const i = T.idx(P.q.s), d = T.w * 0.42; P.place(T.px[i] + T.nx[i] * d, T.pz[i] + T.nz[i] * d, T.hd[i]); P.q = T.query(P.x, P.z, i, P.q); P.sPrev = P.q.s;   // (on the right lane, as the traffic drives)
+      }
     }
     // a patrol car at s (m along the road), d across it, turned by rot from the road's direction; mode 'chase', 'park', 'wait' (an ambush) or
     // 'civil' (the unmarked car); off `delay` s after the start; kind 'car' (a VORTEX), 'moto', 'van' or 'uc' (the unmarked car, dark)
@@ -2286,7 +2332,7 @@ const Core = (function () {
       const c = new Car(M, { id: 100 + (++this.nid), name: 'POLICIJA', color: K === 'uc' ? 0x22262d : 0xf2f4f6, skill: moto ? 1.08 : 1.05, assist: CSK.aiAssist, phys: o.phys, upg: van ? null : POL_UPG });
       c.place(T.px[i] + T.nx[i] * d, T.pz[i] + T.nz[i] * d, T.hd[i] + rot); if (T.hasElev) { c.y = c.py = T.hy[i]; c.roadY = c.y; }
       c.police = true; c.pol = { mode, kind: K, t: 0, delay: delay || 0, spike: null, unit: van ? 0 : ++this.unit, side: this.R() < 0.5 ? -1 : 1, v0: 0, hitP: -1 };
-      c.skCap = moto ? 1.16 : 1.14; c.rubber = 1; c.dmgMode = o.damage == null ? 2 : o.damage; c.dmgK = moto ? 0.5 : 0.3; c.wet = race.cars[0] ? race.cars[0].wet : 1;
+      c.skCap = moto ? 1.16 : this.D.pace; c.rubber = 1; c.dmgMode = o.damage == null ? 2 : o.damage; c.dmgK = moto ? 0.5 : 0.3; c.wet = race.cars[0] ? race.cars[0].wet : 1;
       if (moto) c.vprof = this._motoProf();
       c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s; c.dist = c.q.s - T.startS; c.locked = mode !== 'chase' || race.state !== 'racing' || delay > 0;
       c.ck = { m: moto ? 430 : van ? 2900 : K === 'uc' ? 1650 : 1750, gl: 0, glT: 1 };   // (the real masses with the crew: a patrol saloon, the unmarked car, the van, a motorbike with its rider)
@@ -2313,7 +2359,9 @@ const Core = (function () {
       if (!P) return;
       const run = race.state === 'racing' && !P.finished;
       for (const c of this.cars) { c.hitCar = 0; c.hitWall = 0; }   // (this step's knocks: a motorcyclist knocked hard comes off, see post)
-      if (run) {
+      if (run && this.chk.st !== 'done') this._check(dt);
+      if (run && this.goal && P.q.s > this.goal.s - 160) { P.parkS = this.goal.s + 2; P.parkD = this.goal.d; }   // (the autopilot (tests, the demo) drives into the building: aiControl's slot)
+      if (run && this.stage === 'chase') {
         for (const e of this.plan) if (!e.done && P.q.s > e.s - 500) { e.done = true; if (e.kind === 'spike') this._spike(e.s); else this._block(e.s); }
         for (const a of this.amb) if (!a.done && P.q.s > a.s - 600) { a.done = true; const i = T.idx(a.s), bar = a.side > 0 ? T.br[i] : T.bl[i]; a.car = this._car(a.s, a.side * Math.min(bar - 1.4, T.w + 2.2), -a.side * 0.5, 'wait', 0); }
         // one more from behind, out of sight (not while they have lost the player); from the heat D.moto on, now and then a motorcyclist
@@ -2358,31 +2406,37 @@ const Core = (function () {
       let tx, ty, tz;
       if (H.st !== 'out') {
         const gy = P.roadY != null && P.q.i >= 0 ? P.roadY : T.hy[Math.max(0, P.q.i)];
-        tx = P.x - ch * 30 - sh * H.side * 16 + P.vx * 1.2; tz = P.z - sh * 30 + ch * H.side * 16 + P.vz * 1.2; ty = gy + 44;
+        tx = P.x - ch * 30 - sh * H.side * 16 + P.vx * 0.4; tz = P.z - sh * 30 + ch * H.side * 16 + P.vz * 0.4; ty = gy + 44;
         if (H.st === 'in' && Math.hypot(tx - H.x, tz - H.z) < 140) H.st = 'track';
         if (H.st === 'track') { H.fuel -= dt; this.st.heliT += dt; if (H.fuel <= 0 || P.finished) { H.st = 'out'; H.t = 0; this._event('heliOut', H.x, H.z, null, P.q.s); } }
       } else {
         tx = H.x + Math.cos(H.h) * 400; tz = H.z + Math.sin(H.h) * 400; ty = H.y + 60;
         if (H.t > 25) { this.heli = null; this.heliCool = this.D.heliCool; return; }
       }
-      const dx = tx - H.x, dz = tz - H.z, dist = Math.hypot(dx, dz), want = Math.min(72, dist * 0.8 + (H.st === 'out' ? 30 : 0));
-      const wx = dist > 0.1 ? dx / dist * want : 0, wz = dist > 0.1 ? dz / dist * want : 0;
-      H.ax = clamp((wx - H.vx) * 1.6, -12, 12); H.az = clamp((wz - H.vz) * 1.6, -12, 12);
-      H.vx += H.ax * dt; H.vz += H.az * dt; H.vy += (clamp((ty - H.y) * 0.8, -8, 10) - H.vy) * Math.min(1, dt * 1.5);
+      const dx = tx - H.x, dz = tz - H.z, dist = Math.hypot(dx, dz);
+      if (H.st !== 'out') { H.ax = clamp(dx * 0.5 + (P.vx - H.vx) * 1.4, -14, 14); H.az = clamp(dz * 0.5 + (P.vz - H.vz) * 1.4, -14, 14); }   // (over the player: a spring to its spot, damped by the speed against theirs: no overshoot)
+      else { const want = Math.min(72, dist * 0.8 + 30), wx = dist > 0.1 ? dx / dist * want : 0, wz = dist > 0.1 ? dz / dist * want : 0; H.ax = clamp((wx - H.vx) * 1.6, -12, 12); H.az = clamp((wz - H.vz) * 1.6, -12, 12); }
+      H.vx += H.ax * dt; H.vz += H.az * dt; { const v = Math.hypot(H.vx, H.vz); if (v > 72) { H.vx *= 72 / v; H.vz *= 72 / v; } }
+      H.vy += (clamp((ty - H.y) * 0.8, -8, 10) - H.vy) * Math.min(1, dt * 1.5);
       H.x += H.vx * dt; H.y += H.vy * dt; H.z += H.vz * dt;
       const sp = Math.hypot(H.vx, H.vz), hT = sp > 4 ? Math.atan2(H.vz, H.vx) : Math.atan2(P.z - H.z, P.x - H.x);
       H.h += wrapPi(hT - H.h) * Math.min(1, dt * 1.2);
     }
     // the patrol cars against the race's car(s), each other and the barriers
+    // (a patrol car touching the player keeps pushing for D.pit s (the PIT: the push into the rear quarter has to last to turn them), then
+    // keeps its distance for a moment; a hard ram (closing faster than 6 m/s) at once); the building's walls at the top
     collide() {
-      const T = this.T, cars = this.race.cars, pc = this.cars;
+      const T = this.T, cars = this.race.cars, pc = this.cars, G = this.goal, now = this.race.time;
       for (let i = 0; i < pc.length; i++) {
-        for (const c of cars) { const imp = crashCollide(pc[i], c); if (imp > 2 && c.isPlayer) { pc[i].pol.hitP = this.race.time;
-          if (pc[i].pol.mode === 'chase' && pc[i].pol.kind !== 'moto') { this.rams++; if (!(pc[i].pol.cool > 0) && imp > 4) { this._event('ram', c.contactX, c.contactZ, pc[i]); this.st.eur += POL_EUR.ram; } pc[i].pol.cool = this.D.cool + this.R() * this.D.coolR; }
-          else if (pc[i].pol.block && imp > 4) this.st.eur += POL_EUR.block; } }   // (after a knock it keeps its distance for a moment)
+        const p = pc[i].pol;
+        for (const c of cars) { const imp = crashCollide(pc[i], c); if (imp > 0.3 && c.isPlayer) { if (now - p.hitP > 0.25) p.pushT = now; p.hitP = now;
+          if (p.mode === 'chase' && p.kind !== 'moto') { if (imp > 2) { this.rams++; if (!(p.cool > 0) && imp > 4) { this._event('ram', c.contactX, c.contactZ, pc[i]); this.st.eur += POL_EUR.ram; } }
+            if (!(p.cool > 0) && (imp > 6 || now - p.pushT > this.D.pit)) p.cool = this.D.cool + this.R() * this.D.coolR; }
+          else if (p.block && imp > 4) this.st.eur += POL_EUR.block; } }
         for (let j = i + 1; j < pc.length; j++) crashCollide(pc[i], pc[j]);
         wallCollide(pc[i], T);
       }
+      if (G) for (const W of G.walls) { if (this.race.player) boxCollide(this.race.player, W[0], W[1], W[2], W[3], W[4]); for (const c of pc) if (Math.abs(c.q.s - G.s) < 30) boxCollide(c, W[0], W[1], W[2], W[3], W[4]); }
     }
     // does patrol car c see the player? close by (35 m), or with the road running straight between them up to 170 m (round a bend or a
     // hairpin the road is much longer than the line of sight: out of it)
@@ -2413,7 +2467,7 @@ const Core = (function () {
         if (P.q.s - c.q.s > 1100 || m === 'gone' || ((m === 'out' || m === 'down' || m === 'wait' || c.pol.kind === 'van') && P.q.s - c.q.s > 400)) { this.cars.splice(k, 1); if (c === this.uc) this.uc = null; } }
       // who sees the player: an ambush that does is after them, the unmarked car shows itself when they come up behind it; out of everyone's
       // sight (the helicopter's too) in the chase, the hiding meter fills: full, they lost the player; seen again, found
-      if (run) {
+      if (run && this.stage === 'chase') {
         let seen = false, by = null;
         for (const c of this.cars) { const m = c.pol.mode;
           if (m === 'civil') { const g = c.q.s - P.q.s; if (g < 42 && g > -6 && Math.abs(P.q.d - c.q.d) < 9) this._wake(c); continue; }
@@ -2454,16 +2508,104 @@ const Core = (function () {
         const i = P.q.i; if ((T.walk[0][i] > 0.5 || T.walk[1][i] > 0.5) && P.speed > 22.2) this.off.speed += dt;
         if (P.speed > 3) for (let k = 0; k < 4; k++) { const q = P.wq[k]; if (q.i >= 0 && Math.abs(q.d) > T.w && Math.abs(q.d) < T.w + T.walk[q.d > 0 ? 1 : 0][q.a]) { this.off.walk += dt; break; } }
       }
-      // the heat: the distance, people knocked down, patrol cars wrecked, the offences; a star less for every time they lost the player
-      this.heat = clamp(1 + (P.q.s - T.startS) / 3500 + this.hitPeople * 0.4 + Math.min(1, this.wrecked * 0.1) + this.off.moto * 0.35 + this.off.crash * 0.12 + Math.min(0.6, this.off.speed * 0.02) + Math.min(0.6, this.off.walk * 0.04) - this.cool, 1, 5);
+      // the heat: the distance, people knocked down, patrol cars wrecked, the offences, fleeing the checkpoint; a star less for every time they lost the player
+      this.heat = clamp(1 + (P.q.s - T.startS) / 3500 + this.chkHeat + this.hitPeople * 0.4 + Math.min(1, this.wrecked * 0.1) + this.off.moto * 0.35 + this.off.crash * 0.12 + Math.min(0.6, this.off.speed * 0.02) + Math.min(0.6, this.off.walk * 0.04) - this.cool, 1, 5);
       this.heatMax = Math.max(this.heatMax || 1, this.heat);
       // busted: nearly stopped with a patrol car close by for 3 s (the meter drains at half that pace)
-      if (race.state === 'racing' && !P.finished) {
+      if (run && this.stage === 'chase') {
         let near = 1e9; for (const c of this.cars) if (c.pol.mode !== 'out' && c.pol.mode !== 'down' && c.pol.mode !== 'civil') near = Math.min(near, Math.hypot(c.x - P.x, c.z - P.z));
         if (P.speed < 2.8 && near < 9) this.bust = Math.min(1, this.bust + dt / D.bust); else this.bust = Math.max(0, this.bust - dt / (2 * D.bust));
         this.slowT = P.speed < 2.8 ? this.slowT + dt : 0;
-        if (this.bust >= 1) { this.busted = true; P.finished = true; P.busted = true; P.finishTime = race.time; P.finishPos = 0; P.noReverse = true; this._event('busted', P.x, P.z); }
-      } else if (P.finished && !this.busted && !this.escaped) { this.escaped = true; this._event('escaped', P.x, P.z); }
+        if (this.bust >= 1) { this.busted = true; this.arrestK = 'chase'; this.stage = 'over'; this.hold = true; P.finished = true; P.busted = true; P.finishTime = race.time; P.finishPos = 0; P.noReverse = true; this._event('busted', P.x, P.z); }
+      }
+      if (run && this.goal) this._goal();
+    }
+    // the building at the top: the player's middle 3 m inside past the door, between its walls: the mission is done
+    _goal() {
+      const G = this.goal, P = this.race.player, ch = Math.cos(G.h), sh = Math.sin(G.h), dx = P.x - G.x, dz = P.z - G.z, lx = dx * ch + dz * sh, lz = -dx * sh + dz * ch;
+      if (lx > -G.len / 2 + 3 && lx < G.len / 2 && Math.abs(lz) < G.wid / 2) {
+        this.escaped = true; this.stage = 'over'; this.hold = true; P.finished = true; P.finishTime = this.race.time; P.finishPos = 1; P.noReverse = true;
+        for (const c of this.cars) if (c.pol.mode === 'chase' || c.pol.mode === 'search') c.pol.mode = 'park';   // (they pull up outside)
+        this._event('hideout', P.x, P.z, null, P.q.s);
+      }
+    }
+    // the traffic checkpoint (this.chk, see the constructor): 'wait' until the player is 220 m away, then 'approach' (the officer signals STOP);
+    // stopped by the officer (within 18 m before him, nearly still for a second): 'stopped', he walks round the front to the driver's window
+    // ('walk'), asks for the documents ('docs': there are none), tells the driver to park in the box at the roadside and come to the station
+    // ('park'); parked there (still, lined up, for 1.5 s): 'parked', the brakes held, the driver gets out and both walk to the patrol car:
+    // arrested ('done', the run over). Driving off at any point (faster than 3 m/s from a stop, past the officer without stopping, out of the
+    // box's reach) or knocking the officer down: 'fled', the chase begins (the checkpoint's car after the player in D.jump s)
+    _check(dt) {
+      const race = this.race, P = race.player, T = this.T, K = this.chk, cop = K.cop, w = T.w;
+      K.t += dt;
+      const g = K.s - P.q.s, ch = Math.cos(P.h), sh = Math.sin(P.h), set = (st) => { K.st = st; K.t = 0; };
+      K.still = P.speed < 0.5 ? K.still + dt : 0;
+      // the officer: walking to his next waypoint (wp), knocked down by a car
+      if (cop.act !== 'down') {
+        if (cop.wp) { const dx = cop.wp[0] - cop.x, dz = cop.wp[1] - cop.z, d = Math.hypot(dx, dz), v = cop.act === 'run' ? 4.2 : 1.4;
+          if (d < v * dt + 0.05) { cop.x = cop.wp[0]; cop.z = cop.wp[1]; cop.wp = cop.wps && cop.wps.length ? cop.wps.shift() : null; if (!cop.wp && cop.act === 'walk') cop.act = 'stand'; }
+          else { cop.x += dx / d * v * dt; cop.z += dz / d * v * dt; cop.h = Math.atan2(dz, dx); } }
+        const lx = (cop.x - P.x) * ch + (cop.z - P.z) * sh, lz = -(cop.x - P.x) * sh + (cop.z - P.z) * ch;
+        if (K.st !== 'fled' && P.speed > 2 && Math.abs(lx) < P.m.len / 2 + 0.25 && Math.abs(lz) < P.m.wid / 2 + 0.25) {   // knocked down by the player: the chase, the offence
+          cop.act = 'down'; cop.wp = null; this.hitPeople++; this._flee('hit'); return;
+        }
+        const ci = T.idx(K.s); cop.y = T.hy[ci];
+      }
+      const winX = P.x + ch * 0.25 + sh * (P.m.wid / 2 + 0.55), winZ = P.z + sh * 0.25 - ch * (P.m.wid / 2 + 0.55);   // (the driver's window: the car's left side)
+      switch (K.st) {
+        case 'wait': if (g < 220) { set('approach'); this.stage = 'check'; cop.act = 'signal'; this._event('chkSeen', cop.x, cop.z, K.car, K.s); } break;
+        case 'approach':
+          if (g < -4) { this._flee('skip'); break; }   // (drove past him)
+          if (K.still > 1 && g < 18 && g > 2.6 && Math.abs(P.q.d - this._copD()) < 7) { set('stopped'); K.stopS = P.q.s; cop.act = 'stand'; P.noReverse = true; this._event('chkStop', cop.x, cop.z, K.car, K.s); }   // (holding the brake must not back the car away from him)
+          break;
+        case 'stopped': case 'walk': case 'docs':
+          if (P.speed > 3 || Math.abs(P.q.s - K.stopS) > 6) { this._flee('drive'); break; }
+          if (K.st === 'stopped' && K.t > 1) {   // round the car's front to the driver's window
+            const fx = P.x + ch * (P.m.len / 2 + 1.0) + sh * (P.m.wid / 2 + 0.8), fz = P.z + sh * (P.m.len / 2 + 1.0) - ch * (P.m.wid / 2 + 0.8);
+            cop.wp = [fx, fz]; cop.wps = [[winX, winZ]]; cop.act = 'walk'; set('walk');
+          } else if (K.st === 'walk' && !cop.wp) { cop.h = Math.atan2(P.z - cop.z, P.x - cop.x); cop.act = 'talk'; set('docs'); this._event('chkDocs', cop.x, cop.z, K.car, K.s); }
+          else if (K.st === 'docs') {
+            if (K.t > 4.5 && !K.said) { K.said = 1; this._event('chkNoDocs', cop.x, cop.z, K.car, K.s); }
+            if (K.t > 8) { set('park'); K.said = 0; P.noReverse = false; cop.act = 'walk'; cop.wp = [K.box.x - Math.cos(K.box.h) * (K.box.len / 2 + 2) - Math.sin(K.box.h) * K.side * -1.6, K.box.z - Math.sin(K.box.h) * (K.box.len / 2 + 2) + Math.cos(K.box.h) * K.side * -1.6]; cop.wps = null; this._event('chkPark', cop.x, cop.z, K.car, K.s); }
+          }
+          break;
+        case 'park': {
+          const B = K.box, dx = P.x - B.x, dz = P.z - B.z, cb = Math.cos(B.h), sb = Math.sin(B.h), lx = dx * cb + dz * sb, lz = -dx * sb + dz * cb, al = Math.abs(wrapPi(P.h - B.h));
+          if (P.q.s > B.s + 30 || P.q.s < K.s - 40 || P.speed > 9) { this._flee('drive'); break; }
+          K.inBox = Math.abs(lx) < B.len / 2 + 0.4 && Math.abs(lz) < B.wid / 2 + 0.4 && al < 0.45;
+          K.parkT = K.inBox && P.speed < 0.3 ? (K.parkT || 0) + dt : 0;
+          if (K.parkT > 1.5) { set('parked'); this.hold = true; P.noReverse = true;
+            K.drv = { x: winX, z: winZ, y: P.y, h: P.h + Math.PI / 2, act: 'stand' };
+            const ci = T.idx(K.car.q.s), dS = K.side * -1;   // (both walk to the patrol car's kerb-side rear door)
+            K.drv.wp = [K.car.x - Math.cos(K.car.h) * 1.2 + Math.sin(K.car.h) * dS * -1.6, K.car.z - Math.sin(K.car.h) * 1.2 - Math.cos(K.car.h) * dS * -1.6];
+            cop.wp = [K.drv.wp[0] - Math.cos(K.car.h) * 1.3, K.drv.wp[1] - Math.sin(K.car.h) * 1.3]; cop.wps = null; cop.act = 'walk';
+            this._event('chkParked', P.x, P.z, K.car, K.s); }
+          break;
+        }
+        case 'parked': {
+          const D2 = K.drv; if (D2 && D2.wp) { const dx = D2.wp[0] - D2.x, dz = D2.wp[1] - D2.z, d = Math.hypot(dx, dz); if (d < 0.07) D2.wp = null; else { D2.x += dx / d * 1.3 * dt; D2.z += dz / d * 1.3 * dt; D2.h = Math.atan2(dz, dx); D2.act = 'walk'; } } else if (D2) D2.act = 'stand';
+          if (K.t > 6) { set('done'); this.busted = true; this.arrestK = 'chk'; this.stage = 'over'; P.finished = true; P.busted = true; P.finishTime = race.time; P.finishPos = 0; this._event('arrested', P.x, P.z, K.car, K.s); }
+          break;
+        }
+        case 'fled': if (!cop.wp && cop.act === 'run') cop.act = 'gone'; break;   // (the officer back in his car: off the road)
+      }
+    }
+    _copD() { return this.chk.side * (this.T.w - 2.2); }   // (the officer stands at the lane's outer edge: the traffic he waves on passes beside him)
+    // the player fled the checkpoint ('drive' off, 'skip' it, 'hit' the officer): the chase is on: the checkpoint's patrol car after them (its
+    // officer runs back to it), the next one joining soon, the heat half a star up
+    _flee(why) {
+      const K = this.chk, c = K.car, P = this.race.player;
+      K.st = 'fled'; K.t = 0; K.drv = null; this.stage = 'chase'; this.hold = false; this.chkHeat = 0.5; this.joinT = this.D.join - 6; P.noReverse = false;
+      if (c && c.pol.mode === 'park') { c.pol.mode = 'chase'; c.pol.delay = this.race.time + this.D.jump; c.locked = true; }
+      if (K.cop.act !== 'down') { K.cop.act = 'run'; K.cop.wp = c ? [c.x - Math.sin(c.h) * 1.4 * K.side * -1, c.z + Math.cos(c.h) * 1.4 * K.side * -1] : null; K.cop.wps = null; }
+      this._event('fled', P.x, P.z, c, P.q.s, { why });
+    }
+    // the traffic at the checkpoint (for Traffic._drive): an uphill vehicle stops at the officer and waits its turn (4 s each), until the
+    // player comes within 140 m (then they are waved on: the player is the one stopped); -1: no stop for it
+    holdAt(v) {
+      const K = this.chk;
+      if (!K || v.dir < 0 || (K.st !== 'wait' && K.st !== 'approach') || v.s > K.s - 2 || K.s - this.race.player.q.s < 140) return -1;
+      return K.s - 3;
     }
     // they lost the player: the chase is a search (no sirens, easy), the heat a star lower, nobody joins; found again: all after them
     _lose() {
@@ -2503,21 +2645,23 @@ const Core = (function () {
       const T = this.T, w = T.w, side = this.R() < 0.5 ? -1 : 1, i = T.idx(s), wk = T.walk ? T.walk[side > 0 ? 1 : 0][i] : 0;
       const d0 = side > 0 ? -w + 2.8 : -w - 0.6 - wk, d1 = side > 0 ? w + 0.6 + wk : w - 2.8;
       const sp = { s, d0, d1, side, on: false, gone: false, t: 0, x: T.px[i], z: T.pz[i], car: null };
-      sp.car = this._car(s - 7, side * (w + wk + 1.6), 0, 'park', 0);
+      sp.car = this._car(s - 7, side * Math.min(w + wk + 1.6, (side > 0 ? T.br[i] : T.bl[i]) - 1.2), 0, 'park', 0);   // (as far off the asphalt as the barrier lets it)
       this.spikes.push(sp);
     }
-    // a roadblock at s: two patrol cars across the road in a V (each ~4.7 m across it), from one edge to a 3 m gap at the other, on any width.
-    // A heavy one (from the heat D.heavy on): the van across the road from one edge (~5.6 m), a patrol car beside it, a gap of ~3.5 m at the
-    // other edge with a spike strip over the half of it next to the car (the way through: ~1.8 m of asphalt and the verge)
+    // a roadblock at s: patrol cars across the road in a zigzag (each ~4.4 m across it), from one edge to a gap of ~3.5 m at the other (three
+    // on the 16.9 m road of Vršič, two on a 13 m one). A heavy one (from the heat D.heavy on): the van across the road from one edge (~5.6 m),
+    // patrol cars beside it, a gap of ~3.5 m at the other edge with a spike strip over the half of it next to them (the way through: ~1.8 m
+    // of asphalt and the verge)
     _block(s) {
-      const T = this.T, w = T.w, g = this.R() < 0.5 ? -1 : 1, heavy = this.heat >= this.D.heavy;
-      let a, b;
-      if (heavy) {
-        a = this._car(s, -g * (w - 2.6), -g * 1.4, 'park', 0, 'van'); b = this._car(s + 3.2, g * (w - 6.0), g * 1.25, 'park', 0);
-        const i = T.idx(s - 4), e0 = w - 3.5, e1 = w - 1.75;
-        this.spikes.push({ s: s - 4, d0: g > 0 ? e0 : -e1, d1: g > 0 ? e1 : -e0, side: -g, on: true, gone: false, t: 0, x: T.px[i], z: T.pz[i], car: null, heavy: true });
-      } else { a = this._car(s, -g * (w - 2.3), -g * 1.2, 'park', 0); b = this._car(s + 3.5, g * (w - 5.5), g * 1.25, 'park', 0); }
-      a.pol.block = b.pol.block = true;
+      const T = this.T, w = T.w, g = this.R() < 0.5 ? -1 : 1, heavy = this.heat >= this.D.heavy, cars = [];
+      let a, d = -g * w;
+      if (heavy) { a = this._car(s, -g * (w - 2.6), -g * 1.4, 'park', 0, 'van'); cars.push(a); d += g * 5.6; }
+      else { a = this._car(s, -g * (w - 2.3), -g * 1.2, 'park', 0); cars.push(a); d += g * 4.4; }
+      for (let k = 1; g * (d + g * 2.2) < w - 3.5 - 2.2; k++) { const c = this._car(s + 3.4 * k, d + g * 2.2, (k % 2 ? g : -g) * 1.25, 'park', 0); cars.push(c); d += g * 4.4; }
+      if (heavy) { const i = T.idx(s - 4), e0 = w - 3.5, e1 = w - 1.75;
+        this.spikes.push({ s: s - 4, d0: g > 0 ? e0 : -e1, d1: g > 0 ? e1 : -e0, side: -g, on: true, gone: false, t: 0, x: T.px[i], z: T.pz[i], car: null, heavy: true }); }
+      const b = cars[cars.length - 1];
+      for (const c of cars) c.pol.block = true;
       this.blocks.push({ s, heavy, passed: false });
       const tf = this.race.tf; if (tf) for (const v of tf.veh) if (!v.off && Math.abs(v.s - s) < 150) tf._recycle(v);   // (the road closed there: the traffic by it gone, out of the player's sight 500 m below)
       this._event('block', a.x, a.z, b, s, { heavy });
@@ -2560,7 +2704,8 @@ const Core = (function () {
     _drop(L) {
       const T = this.T, w = T.w, R = this.R, P = this.race.player;
       L.st = 1; L.t = 0; this.st.logs++;
-      for (let k = 0; k < 6; k++) L.logs.push({ s: L.s + (k - 2.5) * 1.5 + (R() - 0.5) * 0.8, d: L.side * (w + 2.3 + (k % 3) * 0.5), v: -L.side * (5 + R() * 3.5), a: (R() - 0.5) * 0.5, spin: (R() < 0.5 ? -1 : 1) * (0.35 + R() * 0.55), rl: 0, len: 5 + R() * 1.4, r: 0.2 + R() * 0.07, x: 0, z: 0, ux: 1, uz: 0 });
+      const i = T.idx(L.s), bar = L.side > 0 ? T.br[i] : T.bl[i];   // (from the bank just inside the barrier: the road may be wide and the barrier close)
+      for (let k = 0; k < 6; k++) L.logs.push({ s: L.s + (k - 2.5) * 1.5 + (R() - 0.5) * 0.8, d: L.side * Math.min(w + 2.3 + (k % 3) * 0.5, bar - 0.6 - (k % 3) * 0.3), v: -L.side * (5 + R() * 3.5), a: (R() - 0.5) * 0.5, spin: (R() < 0.5 ? -1 : 1) * (0.35 + R() * 0.55), rl: 0, len: 5 + R() * 1.4, r: 0.2 + R() * 0.07, x: 0, z: 0, ux: 1, uz: 0 });
       this._event('logs', P.x, P.z, null, L.s);
     }
     // the logs lying on the road (and rolling onto it) as things standing in the way, for the traffic and the AI: { s, d, wid, len } (across and
@@ -2579,9 +2724,9 @@ const Core = (function () {
   function polControl(c, race, dt) {
     const P = race.player, pc = c.pol;
     if (pc.mode === 'civil' && !c.locked) { civilDrive(c, race); return; }
-    if ((pc.mode !== 'chase' && pc.mode !== 'search') || c.locked || !P) { c.inThr = 0; c.inBrk = 1; c.inSteer = 0; c.inHand = 0; return; }
+    if ((pc.mode !== 'chase' && pc.mode !== 'search') || c.locked || !P || race.pol.stage === 'over') { c.inThr = 0; c.inBrk = 1; c.inSteer = 0; c.inHand = 0; return; }
     const gap = P.q.s - c.q.s, moto = pc.kind === 'moto';
-    c.skCap = pc.mode === 'search' ? 0.8 : moto ? 1.16 : 1.14;
+    c.skCap = pc.mode === 'search' ? 0.8 : moto ? 1.16 : race.pol.D.pace;
     if (pc.mode === 'search') { c.rubber = 1; aiControl(c, race, dt); return; }
     if (gap < -25 && !P.finished) { aiControl(c, race, dt); c.inThr = 0; c.inBrk = 1; return; }   // (got ahead of them: stops and waits for them to come by)
     c.rubber = 1 + clamp((gap - 50) / 350, 0, race.pol.D.rub);
@@ -2604,18 +2749,20 @@ const Core = (function () {
     }
     if (pc.kind === 'uc' && gap < 0) {   // the unmarked car woken ahead of them: in front of them on their line, slower than them (a brake test), until they are past
       const i = T.idx(c.q.s + 12); tx = T.px[i] + T.nx[i] * P.q.d; tz = T.pz[i] + T.nz[i] * P.q.d; steerAt(c, tx, tz);
-      c.inThr = sp < P.speed - 3 ? 0.4 : 0; c.inBrk = sp > P.speed - 1 ? 0.35 : 0; c.inHand = 0; return;
+      c.inThr = sp < P.speed - 3 ? 0.4 : 0; c.inBrk = sp > P.speed - 1 ? 0.2 : 0; c.inHand = 0; return;
     }
     const t = clamp((gap - 1) / Math.max(6, sp - P.speed + 5), 0.05, 0.6);
     tx = P.x + P.vx * t; tz = P.z + P.vz * t;
+    // (inside ~50 m no faster than the player plus a closing speed that shrinks with the gap: a push of 2-4 m/s at the contact, the ram of GTA's
+    // police (3-8 m/s), not a missile into the bumper: with the contacts as they are (no bounce) a car run into at 30 m/s is wrecked, not stopped)
+    const cap = (g) => { const vC = P.speed + clamp(1.5 + g * 0.22, 1.5, 9); if (sp > vC) { c.inThr = 0; c.inBrk = Math.max(c.inBrk, sp > vC + 1.5 ? clamp((sp - vC) / 5, 0.15, 1) : 0); } };
     if (!pc.atk || pc.cool > 0) {   // (not its turn, or just knocked them: on their tail, 12 m back)
       const back = pc.atk ? 9 : 14; tx = P.x - ch * back + P.vx * 0.3; tz = P.z - sh * back + P.vz * 0.3;
-      steerAt(c, tx, tz); const g2 = gap - back; c.inThr = g2 > 4 ? 1 : g2 > 0 ? 0.4 : 0; c.inBrk = g2 < -2 ? 0.5 : 0; c.inHand = 0; return;
+      steerAt(c, tx, tz); const g2 = gap - back; c.inThr = g2 > 4 ? 1 : g2 > 0 ? 0.4 : 0; c.inBrk = g2 < -2 ? 0.5 : 0; c.inHand = 0; cap(Math.max(0, g2)); return;
     }
     if (Math.abs(gap) < 4.5) { tx = P.x - ch * 1.4 - sh * sd * 0.2; tz = P.z - sh * 1.4 + ch * sd * 0.2; }   // alongside: into the rear quarter
     steerAt(c, tx, tz);
-    const close = sp - P.speed;
-    c.inThr = gap > 10 || close < 7 ? 1 : 0.35; c.inBrk = gap < 3 && close > 12 ? 0.4 : 0; c.inHand = 0;
+    c.inThr = 1; c.inBrk = 0; c.inHand = 0; cap(Math.max(0, gap - 4));
   }
   // the unmarked car before it shows itself: up the road on its right half at the traffic's pace (its own a little brisker), braking for
   // whatever is ahead (the traffic's own last resort, aeb)
@@ -2676,7 +2823,7 @@ const Core = (function () {
       const remoteGrid = RM ? Math.min(total, RM.grid || total) : -1;
       const R = rng(opts.seed || 7);
       // AI roster
-      const diff = DIFF[opts.difficulty == null ? 1 : opts.difficulty]; this.diff = diff;
+      const diff = DIFF[clamp(opts.difficulty == null ? 1 : opts.difficulty, 0, 2)]; this.diff = diff;   // (the fourth level, super težka, is the police's: a race takes it as težka)
       const oneMake = opts.playerModel && opts.playerModel.oneMake ? opts.playerModel : null;   // the player in the formula: every rival in one too
       if (oneMake) this.oneMake = oneMake;
       const aiSpecs = [];
@@ -3190,7 +3337,7 @@ const Core = (function () {
       if (c.lap === 0 && c.dist >= 0) { c.lap = 1; if (c.dist - ds < 0) c.lapStart = tAt(0); }
       // (the projected position must agree - within 30 m - so a lookup snapped to another leg of the road can not trigger anything)
       while (c.cp < T.cpS.length && c.dist >= T.cpDist[c.cp] && q.s >= T.cpS[c.cp] - 30) { c.splits.push(tAt(T.cpDist[c.cp])); c.cp++; c.cpEv++; }
-      const atFinish = c.cp >= T.cpS.length && c.dist >= T.raceLen && q.s >= T.finishS - 30;
+      const atFinish = c.cp >= T.cpS.length && c.dist >= T.raceLen && q.s >= T.finishS - 30 && !(this.pol && c === this.player && this.pol.goal);   // (the run from the police ends in the building at the top, not at the line)
       if (this.opts.noPlayer) { if (atFinish || q.s >= T.finishS + 5) this._queueRespawn(c); return; }
       if (atFinish) {
         const ft = tAt(T.raceLen);
@@ -3199,7 +3346,7 @@ const Core = (function () {
         c.noReverse = true;   // (the UI holds the brake after the finish: the car must stop, not back down the hill)
         // a race up the road: past the line every car pulls up in a slot of its own at the side of the road (by its place, both sides
         // in turn, 9 m apart), clear of the ones still coming up the middle (aiControl drives it there: c.parkS, c.parkD)
-        if (!this.timeTrial) { const k = c.finishPos - 1; c.parkS = Math.min(T.len - 20, T.finishS + 70 + 9 * k); c.parkD = (k % 2 ? -1 : 1) * (this.tf ? T.w + 1.4 : T.w - 1.5); }   // (the open road: off the asphalt, clear of the traffic)
+        if (!this.timeTrial) { const k = c.finishPos - 1, sd = k % 2 ? -1 : 1, pi = T.idx(c.parkS = Math.min(T.len - 20, T.finishS + 70 + 9 * k)); c.parkD = sd * (this.tf ? Math.min(T.w + 1.4, (sd > 0 ? T.br[pi] : T.bl[pi]) - 1.2) : T.w - 1.5); }   // (the open road: off the asphalt as far as the barrier lets it, clear of the traffic)
       }
     }
     _queueRespawn(c) { c.parkQ = true; c.locked = true; c.inThr = 0; c.inBrk = 1; c.inSteer = 0; this._rq.push(c); }
