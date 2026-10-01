@@ -793,7 +793,11 @@ const World = (function () {
     if (THEME === 'spa') return finish(buildSpa(scene, tex, opts), tex);     // Spa-Francorchamps: the same corridor terrain, its own look (below)
     if (THEME === 'rbring') return finish(buildRbring(scene, tex, opts), tex); // the Red Bull Ring: the same corridor terrain, its own scenery (below)
     if (THEME === 'suzuka') return finish(buildSuzuka(scene, tex, opts), tex); // Suzuka, the figure of eight on its real ground (below)
-    if (THEME === 'muur') return finish(buildMuur(scene, tex, opts), tex);     // the Kapelmuur's circuit through Geraardsbergen: the corridor terrain, its own town (below)
+    if (THEME === 'muur') {   // (a road on the circuit's streets, def.circuitOf: the climb against the clock; the circuit's world, built round the circuit)
+      const cd = track.def.circuitOf && Core.TRACKS.find(d => d.id === track.def.circuitOf);
+      if (cd) { T = new Core.Track(cd); buildHash(); opts = Object.assign({}, opts, { climb: track }); }
+      return finish(buildMuur(scene, tex, opts), tex);
+    }     // the Kapelmuur's circuit through Geraardsbergen: the corridor terrain, its own town (below)
     const R = rng(4242);
     hillN = valueNoise2(77, 60);
     mtnN = valueNoise2(83, 130); mtnN2 = valueNoise2(91, 55); mtnPeak = valueNoise2(97, 220);
@@ -12873,7 +12877,7 @@ const World = (function () {
     const SP = (typeof Tex !== 'undefined' && Tex.SPONSORS) || [['HITROLET', '#101418', '#ffd23f']];
     for (let k = 0; k < 8; k++) { const [txt, bg, fg] = SP[k % SP.length]; cell(B + 8 + k, bg, fg, txt, 40, 'rgba(255,255,255,.14)'); }
     [['CAFÉ DE MUUR', '#3b2a1e', '#f3e2b8'], ['FRITUUR', '#c8261f', '#fff'], ['BAKKERIJ', '#f3ead6', '#5a3a22'], ['APOTHEEK', '#1f7a3a', '#fff'], ['BRASSERIE', '#16306e', '#f5d10f'],
-      ['STAMINEE', '#5a1e22', '#f3e2b8'], ['FIETSEN', '#111', '#f5d10f'], ['FRIETKOT', '#f5d10f', '#c8261f'], ['VIP', '#fff', '#16181c'], ['BIER', '#f5d10f', '#111']].forEach(([t, bg, fg], k) => cell(B + 20 + k, bg, fg, t, t.length > 9 ? 30 : 40, null));
+      ['STAMINEE', '#5a1e22', '#f3e2b8'], ['FIETSEN', '#111', '#f5d10f'], ['FRIETKOT', '#f5d10f', '#c8261f'], ['VIP', '#fff', '#16181c'], ['BIER', '#f5d10f', '#111'], ['START', '#111', '#fff'], ['AANKOMST', '#d4201c', '#fff']].forEach(([t, bg, fg], k) => cell(B + 20 + k, bg, fg, t, t.length > 9 ? 30 : 40, null));
     for (const [k, t] of [[B + 16, 'MUUR'], [B + 17, 'ALLEZ!'], [B + 18, 'KOERS'], [B + 19, 'VLAANDEREN']]) { x.clearRect((k % 4) * 256, Math.floor(k / 4) * 64, 256, 64); cell(k, null, 'rgba(250,250,245,0.92)', t, 50); }   // painted on the cobbles
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (muATex = t);
   }
@@ -13409,17 +13413,23 @@ const World = (function () {
         lamps.add(x, nrGround(x, z) - 0.05, z, Math.atan2(T.nz[ii] * side, -T.nx[ii] * side), 1, 1); CR.avoid(x, z, 0.6); }
       lamps.addTo(root, true); }
     /* ---- START / FINISH on the Markt: the gantry with the start lights and the banner; Flemish and Belgian flags on poles round the square ---- */
-    {
-      const [x, z, h, i] = atS(sStart, 0), gy = T.hy[i], g = scen.get(x, z), span = Math.max(T.bl[i], T.br[i]) + 0.9, nx = T.nx[i], nz = T.nz[i], gray = [0.18, 0.19, 0.22];
+    // (the climb against the clock, opts.climb: its start by the Dender has the lights, its finish by the chapel an arch; the circuit's line stays)
+    const climb = opts.climb || null, sOf = (C, s) => { const i = C.idx(s), q = T.query(C.px[i], C.pz[i], -1, {}); return q.s; };
+    const gantry = (sG, lit, cF, cB) => {
+      const [x, z, h, i] = atS(sG, 0), gy = T.hy[i], g = scen.get(x, z), span = Math.max(T.bl[i], T.br[i]) + 0.9, nx = T.nx[i], nz = T.nz[i], gray = [0.18, 0.19, 0.22];
       for (const sd of [-1, 1]) box(g, x + nx * span * sd, gy - 0.3, z + nz * span * sd, 0.7, 7.6, 0.7, h, gray);
       box(g, x, gy + 6.1, z, 1.0, 1.2, span * 2 + 0.7, h, [0.12, 0.13, 0.15], [0.2, 0.21, 0.24]);
       box(g, x, gy + 4.95, z, 0.45, 1.2, 5.2, h, [0.08, 0.08, 0.09]);
       const lights = [], lg = new THREE.BoxGeometry(0.6, 0.6, 0.6);
       for (let k = 0; k < 5; k++) { const o = (k - 2) * 1.0, m = new THREE.Mesh(lg, new THREE.MeshBasicMaterial({ color: 0x2a0606 })); m.position.set(x + nx * o, gy + 7.6, z + nz * o); m.rotation.y = -h; root.add(m); lights.push(m); }
-      out.dyn.lights = lights;
-      board(x - T.tx[i] * 0.55, gy + 6.15, z - T.tz[i] * 0.55, T.tx[i], T.tz[i], Math.min(16, span * 2 - 2), 1.1, B0 + 2);
-      board(x + T.tx[i] * 0.55, gy + 6.15, z + T.tz[i] * 0.55, -T.tx[i], -T.tz[i], Math.min(16, span * 2 - 2), 1.1, B0 + 1);
+      if (lit) out.dyn.lights = lights;
+      board(x - T.tx[i] * 0.55, gy + 6.15, z - T.tz[i] * 0.55, T.tx[i], T.tz[i], Math.min(16, span * 2 - 2), 1.1, cF);
+      board(x + T.tx[i] * 0.55, gy + 6.15, z + T.tz[i] * 0.55, -T.tx[i], -T.tz[i], Math.min(16, span * 2 - 2), 1.1, cB);
       exclPush(x, z, span + 4); CR.avoid(x + nx * span, z + nz * span, 1.2); CR.avoid(x - nx * span, z - nz * span, 1.2);
+    };
+    {
+      gantry(sStart, !climb, B0 + 2, B0 + 1);
+      if (climb) gantry(sOf(climb, climb.startS), true, B0 + 30, B0 + 1);
       for (let d = -150; d <= 120; d += 18) for (const side of [-1, 1]) { const [px, pz, ii] = onSide(sAt(d), side, 2.0); if (excluded(px, pz) || CR.exclTest(px, pz)) continue; flagPole(px, pz, T.hd[ii] + PI, crH(d, side, 5) < 0.3); CR.avoid(px, pz, 0.5); }
     }
     /* ---- the race's arches: DE MUUR where the climb leaves the Oudenbergstraat for the park, KAPELMUUR before the chapel (inflatable, yellow and black) ---- */
@@ -13431,7 +13441,8 @@ const World = (function () {
       board(x + T.tx[i] * 0.78, y + 6.6, z + T.tz[i] * 0.78, -T.tx[i], -T.tz[i], Math.min(13, L1 + L2 - 1.5), 1.3, B0 + 1);
       exclPush(x - nx * L1, z - nz * L1, 2); exclPush(x + nx * L2, z + nz * L2, 2); CR.avoid(x - nx * L1, z - nz * L1, 1.3); CR.avoid(x + nx * L2, z + nz * L2, 1.3);
     };
-    { const d1 = nameD('Kapelmuur'), d2 = nameD('Kapel Oudenberg'); if (d1 != null) arch(d1 + 8, B0); if (d2 != null) arch(d2 - 38, B0 + 3); }
+    { const d1 = nameD('Kapelmuur'), d2 = nameD('Kapel Oudenberg'); if (d1 != null) arch(d1 + 8, B0); if (d2 != null) arch(d2 - 38, B0 + 3);
+      if (climb) arch(dS(sOf(climb, climb.finishS)), B0 + 31); }
     /* ---- the street names on their poles (blue on white, the Belgian street plates) before each named place; painted words on the Muur's cobbles ---- */
     T.names.forEach((q, k) => { const s = sAt(q.d - 30), i = T.idx(s); let side = 0, best = -1;
       for (const sd of [-1, 1]) { const [px, pz] = onSide(s, sd, 1.1); const f = excluded(px, pz) ? 0 : 1 + crH(k, sd, 3); if (f > best) { best = f; side = sd; } }

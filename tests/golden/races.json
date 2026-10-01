@@ -798,5 +798,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "880394837a531da3ac7fcf3e"
+ },
+ "muurtt/cs": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 45.98,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "8e09c9810f7be1559d43bff8"
+ },
+ "muurtt/cs/rain": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 54.54,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c761becfeb609e5d8f00a116"
+ },
+ "muurtt/cs/formula": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 42.89,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "ef85d786aa8b4a5e0f974dd0"
+ },
+ "muurtt/cs/lm": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 43.49,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "5d22a1c3c706fb223a6ef902"
+ },
+ "muurtt/cs/car": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 44.63,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "da7bf0ec5d717968b809be4d"
  }
 }

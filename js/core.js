@@ -52,6 +52,7 @@ const Core = (function () {
     return out;
   }
 
+  const TRK_OF = new Map();   // (the circuits whose heights another road borrows, def.elevOf)
   class Track {
     constructor(def) {
       this.def = def;
@@ -177,9 +178,9 @@ const Core = (function () {
       // grass verges on a circuit with paved ones (def.grass = [[from, to], ...], metres after the start line, with def.offSurface 'paving': the
       // Kapelmuur's town streets have sidewalks, its park and fields grass): grassAt, per sample, 1 where the verge is grass
       this.grassAt = null;
-      if (def.grass && !open) {
+      if (def.grass) {   // (an open road too: the Kapelmuur's climb)
         const a = this.grassAt = new Uint8Array(N);
-        for (const [s0, s1] of def.grass) for (let d = s0; d <= s1; d += ds / 2) a[this.idx(this.startS + d)] = 1;
+        for (const [s0, s1] of def.grass) for (let d = s0; d <= s1; d += ds / 2) { const i = open ? Math.floor((this.startS + d) / ds) : this.idx(this.startS + d); if (i >= 0 && i < N) a[i] = 1; }
       }
       // sidewalks (def.walks = [[from, to, side (-1 left, 1 right, 0 both), width], ...], metres after the start line; open roads: Kranjska
       // Gora and Jasna on Vršič): part of the road, drivable with the grip of asphalt (surface 0), eased in and out over 10 m; the barriers
@@ -246,8 +247,9 @@ const Core = (function () {
       const hy = this.hy = new Float32Array(N);
       const grade = this.grade = new Float32Array(N);
       const curv = this.curv = new Float32Array(N);
-      this.hasElev = !!(def.elev || def.bumps);
+      this.hasElev = !!(def.elev || def.bumps || def.elevOf);
       if (!this.hasElev) return;
+      if (def.elevOf) return this._buildElevationOf(def);
       if (this.open) return this._buildElevationOpen(def);
       // piecewise-linear base from keyframes (cyclic), then heavily smoothed into rolling hills
       const kf = (def.elev || [[0, 0], [1, 0]]).slice().map(p => [((p[0] % 1) + 1) % 1 * len, p[1]]);
@@ -276,6 +278,19 @@ const Core = (function () {
       for (let i = 0; i < N; i++) { const a = (i - 1 + N) % N, b = (i + 1) % N; grade[i] = (hy[b] - hy[a]) / (2 * ds); }
       for (let i = 0; i < N; i++) { const a = (i - 1 + N) % N, b = (i + 1) % N; curv[i] = (grade[b] - grade[a]) / (2 * ds); }
       let mx = 0; for (let i = 0; i < N; i++) mx = Math.max(mx, hy[i]); this.maxElev = mx;
+    }
+
+    // a road on a circuit's own streets (def.elevOf: the circuit's id; the Kapelmuur's climb): the heights of the circuit where it runs, so the
+    // two share one world (the circuit built once, cached)
+    _buildElevationOf(def) {
+      const N = this.N, ds = this.ds, hy = this.hy, grade = this.grade, curv = this.curv, open = this.open;
+      let P = TRK_OF.get(def.elevOf); if (!P) { P = new Track(TRACKS.find(d => d.id === def.elevOf)); TRK_OF.set(def.elevOf, P); }
+      const q = {}; let h = -1;
+      for (let i = 0; i < N; i++) { P.query(this.px[i], this.pz[i], h, q); h = q.i != null ? q.i : -1; hy[i] = P.elevAt(q.s).y; }
+      const ix = (i) => (open ? clamp(i, 0, N - 1) : (i + N) % N);
+      for (let i = 0; i < N; i++) { const a = ix(i - 1), b = ix(i + 1); grade[i] = (hy[b] - hy[a]) / (((b - a + N) % N || N) * ds); }
+      for (let i = 0; i < N; i++) { const a = ix(i - 1), b = ix(i + 1); curv[i] = (grade[b] - grade[a]) / (((b - a + N) % N || N) * ds); }
+      let mx = -1e9; for (let i = 0; i < N; i++) mx = Math.max(mx, hy[i]); this.maxElev = mx;
     }
 
     // open road: def.elev = [[x, z, h], ...] (snapped to the nearest sample) or [[frac, h], ...]; linear in s between keyframes,
