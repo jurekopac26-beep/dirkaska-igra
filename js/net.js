@@ -141,7 +141,7 @@ const Net = (function () {
       if (peer !== p) return;
       for (const [k, L] of links) if (L.c.peer === c.peer) unlink(k);   // (a newer try of the same phone wins over one still connecting)
       if (quick) for (const [k, L] of links) if (!L.opened) unlink(k);   // (quick match: a newer try wins over one still connecting)
-      if (links.size >= cap()) { c.on('open', () => { try { c.send({ t: 'full' }); } catch (_) { } setTimeout(() => c.close(), 400); }); return; }   // (the room is full)
+      if (links.size >= cap()) { c.on('open', () => { try { c.send({ t: 'full' }); } catch (_) { } setTimeout(() => c.close(), 4000); }); return; }   // (the room is full: told, then let go; it closes itself on the word, a slow phone has seconds to get it)
       let n = 1; while (links.has('g' + n)) n++;
       attach(c, 'g' + n);
     });

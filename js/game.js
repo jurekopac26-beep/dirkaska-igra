@@ -3066,7 +3066,7 @@
     let dt = (now - last) / 1000; last = now;
     if (!(dt > 0)) dt = 0.001;
     padFrame(Math.min(dt, 0.1));
-    const dtNet = Math.min(dt, 0.25); if (dt > 0.1) dt = 0.1;
+    const dtNet = Math.min(dt, 0.5); if (dt > 0.1) dt = 0.1;
     if (race && race.quali && qual && !qual.res && bg === 'race' && qsimStep(qual, qual.wait ? 30 : paused || screen !== 'none' ? 12 : 2.5) && qual.wait) qualiShow();   // (qualifying: the rivals' laps; the grid once they are in)
     if (bg === 'show') { Render.renderShowroom(dt); if (screen === 'settings') updateTiltLive(); return; }
     if (bg === 'demo') {
@@ -3087,9 +3087,9 @@
     const inp = Input.update(dt);
     if (!paused && screen === 'none' || (!paused && (phase === 'finish' || phase === 'done'))) {
       if (phase !== 'done') updatePhase(dt, inp);
-      // alone, a slow device plays in slow motion rather than in big jumps; online, the race keeps up with the clock both
-      // phones share (slow frames and hitches up to 0.25 s are caught up), so a slower phone does not lose time
-      const on = mp && mp.race, lim = on ? 32 : 10;
+      // alone, a slow device plays in slow motion rather than in big jumps; online, the race keeps up with the clock the
+      // phones share (slow frames and hitches up to 0.5 s are caught up), so a slower phone does not lose time
+      const on = mp && mp.race, lim = on ? 64 : 10;
       if (on && on.late != null) { acc = on.late; on.late = null; } else acc += on ? dtNet : dt;   // (online: the lights went out this frame)
       let n = 0;
       while (acc >= STEP && n < lim) { stepRace(STEP, inp); acc -= STEP; n++; }
