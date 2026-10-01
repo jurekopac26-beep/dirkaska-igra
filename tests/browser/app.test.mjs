@@ -3,7 +3,8 @@
 // - "Namesti igro" shows only when the browser offers to install the game, and asks for it; an offer during full screen
 //   does not take the full-screen buttons away
 // - the screen turns the camera's way (portrait for the chase camera, landscape for iso and kino): in full screen and in
-//   the installed app, not in a plain browser tab
+//   the installed app, not in a plain browser tab; a phone held the other way in a race: the notice to turn it says why, and
+//   its button plays on the way it is held (upright: the camera behind the car)
 // - offline, on a copy of the game in a folder as on GitHub Pages: once opened, the game starts without internet; a new
 //   version is used at once and saved complete; a save that breaks off leaves the previous version complete (never a mix);
 //   a server error or a network that does not answer brings the saved game (within seconds); a game left open loads a
@@ -13,7 +14,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { REPO, ROOT, serve, launch, openGame, checker } from './lib.mjs';
+import { REPO, ROOT, serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
 const T = checker('app');
 const srv = await serve();
@@ -99,6 +100,23 @@ try {
     T.check('installed app: no full-screen buttons, no install button', ui.fullscreenHidden.length >= 2 && ui.fullscreenHidden.every(Boolean) && ui.installHidden, JSON.stringify(ui));
     T.check('installed app: the camera setting turns it (chase: portrait)', after.join() === 'landscape,portrait', JSON.stringify(after));
     T.check('no page errors (installed app)', !errors.length, errors.slice(0, 5).join(' | '));
+    await ctx.close();
+  }
+
+  // 4b. a phone held upright in a race while the camera chosen is a landscape one (iso): the notice to turn the phone says why, and its
+  //     button plays on upright instead (the camera behind the car, kept as the setting)
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }), page = await ctx.newPage(), errors = [];
+    page.on('pageerror', e => errors.push('pageerror: ' + e.message));
+    await page.addInitScript((raw) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-noadapt', '1'); localStorage.setItem('tdgp-settings', raw); }, JSON.stringify({ sound: 0, comm: 0, quali: 0, camera: 'iso' }));
+    await page.goto(srv.base + '/index.html'); await page.waitForFunction(() => window.__game, null, { timeout: 180000 });
+    await startTrack(page, 'jezero'); await wait(800);
+    const st = () => page.evaluate(() => ({ show: document.getElementById('rotate').classList.contains('show'), txt: document.getElementById('rotate-txt').textContent, why: document.getElementById('rotate-why').textContent, btn: document.getElementById('rotate-cam').textContent, cam: window.__game.S.camera }));
+    const before = await st(); await page.tap('#rotate-cam'); await wait(500); const after = await st();
+    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('tdgp-settings')).camera);
+    T.check('a phone held upright in a race, the camera a landscape one: the notice says why, its button plays on upright (the camera behind the car, kept)',
+      before.show && /ležeči/.test(before.txt) && /izometrična/.test(before.why) && before.btn === 'Igraj pokončno' && !after.show && after.cam === 'chase' && saved === 'chase', JSON.stringify({ before, after, saved }));
+    T.check('no page errors (a phone held upright)', !errors.length, errors.slice(0, 5).join(' | '));
     await ctx.close();
   }
 
