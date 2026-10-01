@@ -7155,20 +7155,30 @@ const World = (function () {
     g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
     g.computeBoundingSphere(); return g;
   }
-  function hjFarGeo() {   // the far ring: one mesh of 20 m cells round the terrain grid (a hole where the grid is), the woods and the town round Jyväskylä in the haze
-    const P = HJ, F = P.F, G = P.G, n = F.nx * F.nz, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), uv = new Float32Array(n * 2), idx = [];
-    for (let j = 0, k = 0; j < F.nz; j++) for (let i = 0; i < F.nx; i++, k++) {
-      const x = F.x0 + i * F.cell, z = F.z0 + j * F.cell, h = P.far[k], m = P.n4(x, z), q = P.n1(x * 0.5, z * 0.5);
-      pos[k * 3] = x; pos[k * 3 + 1] = h; pos[k * 3 + 2] = z; uv[k * 2] = x / 7; uv[k * 2 + 1] = -z / 7;
-      const town = sstep(0.55, 0.7, m) * 0.8, c = [lerp(0.2 + q * 0.06, 0.46, town), lerp(0.27 + q * 0.05, 0.45, town), lerp(0.15 + q * 0.03, 0.42, town)];   // spruce and pine woods, patches of town
-      col[k * 3] = c[0]; col[k * 3 + 1] = c[1]; col[k * 3 + 2] = c[2];
+  // the far ring: 20 m cells round the terrain grid (a hole where the grid is), the woods and the town round Jyväskylä in the haze; in chunks of 12 x 12
+  // cells (240 m), each its own mesh, so the chase camera's short far plane culls them (seen only in the wide views); normals from the whole grid (no seams)
+  function hjFarGeo() {
+    const P = HJ, F = P.F, G = P.G, W = F.nx, CH = 12, out = [], H = (i, j) => P.far[clamp(j, 0, F.nz - 1) * W + clamp(i, 0, W - 1)];
+    for (let cj = 0; cj < F.nz - 1; cj += CH) for (let ci = 0; ci < W - 1; ci += CH) {
+      const i1 = Math.min(ci + CH, W - 1), j1 = Math.min(cj + CH, F.nz - 1), nx = i1 - ci + 1, nz = j1 - cj + 1, idx = [];
+      for (let j = cj; j < j1; j++) for (let i = ci; i < i1; i++) {
+        const x = F.x0 + (i + 0.5) * F.cell, z = F.z0 + (j + 0.5) * F.cell; if (x > G.x0 && x < G.x1 && z > G.z0 && z < G.z1) continue;   // (the grid's own tiles there)
+        const p = (j - cj) * nx + i - ci, q = p + 1, c = p + nx, d = c + 1; idx.push(p, c, q, q, c, d); }
+      if (!idx.length) continue;
+      const n = nx * nz, pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), col = new Float32Array(n * 3), uv = new Float32Array(n * 2);
+      for (let j = cj, k = 0; j <= j1; j++) for (let i = ci; i <= i1; i++, k++) {
+        const x = F.x0 + i * F.cell, z = F.z0 + j * F.cell, h = P.far[j * W + i], m = P.n4(x, z), q = P.n1(x * 0.5, z * 0.5);
+        pos[k * 3] = x; pos[k * 3 + 1] = h; pos[k * 3 + 2] = z; uv[k * 2] = x / 7; uv[k * 2 + 1] = -z / 7;
+        const ex = (H(i - 1, j) - H(i + 1, j)) / (2 * F.cell), ez = (H(i, j - 1) - H(i, j + 1)) / (2 * F.cell), l = Math.hypot(ex, 1, ez);
+        nor[k * 3] = ex / l; nor[k * 3 + 1] = 1 / l; nor[k * 3 + 2] = ez / l;
+        const town = sstep(0.55, 0.7, m) * 0.8;   // spruce and pine woods, patches of town
+        col[k * 3] = lerp(0.2 + q * 0.06, 0.46, town); col[k * 3 + 1] = lerp(0.27 + q * 0.05, 0.45, town); col[k * 3 + 2] = lerp(0.15 + q * 0.03, 0.42, town);
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+      g.setIndex(idx); g.computeBoundingSphere(); out.push(g);
     }
-    for (let j = 0; j < F.nz - 1; j++) for (let i = 0; i < F.nx - 1; i++) {
-      const x = F.x0 + (i + 0.5) * F.cell, z = F.z0 + (j + 0.5) * F.cell; if (x > G.x0 && x < G.x1 && z > G.z0 && z < G.z1) continue;   // (the grid's own tiles there)
-      const p = j * F.nx + i, q = p + 1, c = p + F.nx, d = c + 1; idx.push(p, c, q, q, c, d); }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
-    g.setIndex(idx); g.computeVertexNormals(); g.computeBoundingSphere(); return g;
+    return out;
   }
   let hjFTex = null, hjATex = null, hjAKey = '', hjBTex = null;   // (made once, reused by every Harju build: the teardown frees materials, not maps)
   // the facades: rows of one window bay (3.2 m) by one floor (128 x 128 px each, 16 rows), white where the vertex colour tints the wall: 0 a plastered
@@ -7353,7 +7363,7 @@ const World = (function () {
     {
       const grp = new THREE.Group(); root.add(grp); out.ground = grp;
       for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) { const m = new THREE.Mesh(hjTileGeo(ti, tj), gMat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m); }
-      const fm = new THREE.Mesh(hjFarGeo(), gMat); fm.receiveShadow = true; fm.matrixAutoUpdate = false; grp.add(fm);
+      for (const fg of hjFarGeo()) { const fm = new THREE.Mesh(fg, gMat); fm.receiveShadow = true; fm.matrixAutoUpdate = false; grp.add(fm); }
       if (P.lakes.length) {   // the lakes: flat water at their levels over the shelving beds (a still evening: the pale sky mirrored, darker near the shore)
         const wMat = new THREE.MeshPhongMaterial({ map: tex.water, vertexColors: true, shininess: 90, specular: 0x7fa6c8 }), g = new GB(true);
         for (const L of P.lakes) { const tris = THREE.ShapeUtils.triangulateShape(L.poly.map(([x, z]) => new THREE.Vector2(x, z)), []), y = L.h, c = [0.3, 0.42, 0.55], uv = (p) => [p[0] / 14, -p[1] / 14];
@@ -7636,7 +7646,7 @@ const World = (function () {
     // nobody behind the concrete blocks between the two carriageways (a car passes on either side), nor on the island round which the hairpin turns (def.hairpin [x, z, r])
     const HP = def.hairpin, crowdOut = (x, z) => { if (hard(x, z)) return true; if (HP && Math.hypot(x - HP[0], z - HP[1]) < HP[2] + 1.5) return true;
       const n = hjNear(x, z); return n.i >= 0 && barType(n.i, n.lat > 0 ? 1 : -1) === 4; };
-    const CR = crowdCtx({ gH: hjGround, near: nearDD, excluded: crowdOut, maxSlope: 0.95 }), crSoft = new Set();
+    const CR = crowdCtx({ gH: hjGround, near: nearDD, excluded: crowdOut, maxSlope: 0.95, chunk: 64 }), crSoft = new Set();   // (64 m chunks: the chase view draws ~1/3 of the people a 128 m chunk would)
     const M = { first: 0.8, gap: 0.95, below: 3.5, above: 9, maxSlope: 0.95, sit: 0.12, flag: 0.1, keepBar: 0.6 };
     const run = (d0, d1, side, o) => { const a = Math.max(sAt(d0), 2), b = Math.min(sAt(d1), T.len - 4); if (b <= a) return 0; return crowdRun(CR, a, b, side, Object.assign({}, M, o)); };
     const C1 = def.crowds || [];   // (def.crowds [d0, d1, rows, share])
@@ -8112,7 +8122,7 @@ const World = (function () {
     return m;
   }
   class CrowdChunks extends IChunks {   // IChunks plus a per-instance (pose + phase, variant) attribute
-    constructor(U) { super(crowdGeo(), crowdMat(U), 128); this.aux = new Map(); }
+    constructor(U, size) { super(crowdGeo(), crowdMat(U), size || 128); this.aux = new Map(); }   // (size: the chunk, 128 m unless a world asks for finer culling)
     put(x, y, z, rot, sxz, sy, col, pose, variant) {
       this.add(x, y, z, rot, sxz, sy, col);
       const k = Math.floor(x / this.size) + ',' + Math.floor(z / this.size); let A = this.aux.get(k); if (!A) this.aux.set(k, A = []); A.push(pose, variant);
@@ -8131,10 +8141,11 @@ const World = (function () {
     }
   }
   // A placement context per world build. o: gH(x, z) ground height (or grid: the generic ground mesh), near(x, z) distance beyond the nearest
-  // barrier (negative on the road), excluded(x, z), water(x, z), maxSlope, shirts. Runs keep their own tree-exclusion circles (exclTest).
+  // barrier (negative on the road), excluded(x, z), water(x, z), maxSlope, shirts, chunk (the instancing chunk, default 128 m). Runs keep their own
+  // tree-exclusion circles (exclTest).
   function crowdCtx(o) {
     const U = { uTime: { value: 0 }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) } };
-    const C = Object.assign({ U, ppl: new CrowdChunks(U), strip: new Chunks(384), runs: 0, n: 0, busy: false, sp: new Map(), eh: new Map(), circ: [], blocks: [], avoidL: [], shirts: CR_SHIRTS, maxSlope: 0.6, log: [] }, o);
+    const C = Object.assign({ U, ppl: new CrowdChunks(U, o && o.chunk), strip: new Chunks(384), runs: 0, n: 0, busy: false, sp: new Map(), eh: new Map(), circ: [], blocks: [], avoidL: [], shirts: CR_SHIRTS, maxSlope: 0.6, log: [] }, o);
     CROWDS.push(C);
     if (C.grid && !C.gH) { const G = C.grid; C.gH = (x, z) => {   // height of the ground mesh surface (the same two triangles per cell)
       const gx = clamp((x - G.x0) / G.cell, 0, G.nx - 1.001), gz = clamp((z - G.z0) / G.cell, 0, G.nz - 1.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, A = G.arr, Y = (a, b) => A[((j + b) * G.nx + i + a) * 3 + 1];

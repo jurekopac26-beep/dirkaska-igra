@@ -174,20 +174,20 @@
   }
  },
  "harju": {
-  "meshes": 613,
-  "verts": 1245412,
+  "meshes": 724,
+  "verts": 1248103,
   "instances": 6324,
   "props": 21,
   "crowd": 3650,
-  "world": "8812d9b2",
+  "world": "44b9f00f",
   "propsHash": "f70a7360",
   "floor": "3202d0cb/4480",
   "groups": {
-   "-:MeshLambertMaterial": "86c0ea05",
+   "-:MeshLambertMaterial": "6449eb8f",
    "-:MeshPhongMaterial": "5369271a",
    "-:MeshBasicMaterial": "3338e055",
    "puddles:MeshBasicMaterial": "219cf0ec",
-   "crowd:MeshLambertMaterial": "3d07b676",
+   "crowd:MeshLambertMaterial": "344e5b5f",
    "tyremarks:MeshBasicMaterial": "f03bef5d"
   }
  },
