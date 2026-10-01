@@ -598,9 +598,9 @@ const Sfx = (function () {
     set(spray.out.gain, air ? 0 : loose / 4 * spf * 0.14 * wet, 0.05);
     if (pud && !pudPrev && !air && spd > 5) splash(clamp(spd / 30, 0.3, 1));
     pudPrev = pud;
-    // the fans (a rally stage: World's crowdCells, the fans per 24 m square round the car): a roar that swells as the car comes by (more
-    // over a jump), with whoops and air horns
-    const Wd = typeof Render !== 'undefined' ? Render.world : null, cc = race && race.track.def.rally && Wd ? Wd.crowdCells : null;
+    // the fans (a rally stage, a descent: World's crowdCells, the fans per 24 m square round the car): a roar that swells as the car comes by
+    // (more over a jump), with whoops and air horns
+    const Wd = typeof Render !== 'undefined' ? Render.world : null, cc = race && (race.track.def.rally || race.track.def.descent) && Wd ? Wd.crowdCells : null;
     let cl = 0;
     if (cc) {
       const cx = Math.floor(player.x / 24), cz = Math.floor(player.z / 24); let n = 0;

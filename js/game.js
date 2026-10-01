@@ -100,17 +100,20 @@
   const isTT = (d) => !!(d && (d.timeTrial || (hasTT(d) && modeOf(d) === 'tt')));
   const MODE_NAME = { race: 'Dirka', tt: 'Kronometer', traffic: 'Promet', police: 'Policija' };
   const upRace = (d) => !!(d && d.open && !isTT(d));   // a race against the rivals up an open road (Vršič)
-  // a time trial is a hill climb (Pikes Peak) or a rally special stage (def.rally: Ouninpohja): each with its own words and commentator lines
+  // a time trial is a hill climb (Pikes Peak), a rally special stage (def.rally: Ouninpohja) or a descent (def.descent: Katu-Jaryk, down a gravel
+  // road into a canyon): each with its own words and commentator lines
   const isRally = (d) => !!(d && d.rally);
+  const isDesc = (d) => !!(d && d.descent);
   // medal times of a time trial (def.medals.cs: [gold, silver, bronze] in s, .wet.cs in the rain): the medal of a time (0 gold .. 2 bronze, -1 none)
   const MEDAL = ['zlata', 'srebrna', 'bronasta'], MEDAL_EN = ['gold', 'silver', 'bronze'], MEDAL_ICON = ['\u{1F947}', '\u{1F948}', '\u{1F949}'];
   const medalSet = (d) => { const M = d && d.medals && (wetRec(d) ? d.medals.wet : d.medals); return (M && M[physOf()]) || null; };
   const medalOf = (d, t) => { const M = medalSet(d); if (!M || !(t > 0)) return -1; for (let k = 0; k < 3; k++) if (t <= M[k]) return k; return -1; };
   const medalLine = (d, t) => { const M = medalSet(d); if (!M) return ''; const k = medalOf(d, t), n = k < 0 ? 2 : k - 1;   // (won, and how far the next one is)
     return (k >= 0 ? MEDAL_ICON[k] + ' ' + MEDAL[k].charAt(0).toUpperCase() + MEDAL[k].slice(1) + ' medalja' : 'Brez medalje') + (n >= 0 ? ' · do ' + (k < 0 ? 'brona' : n === 0 ? 'zlata' : 'srebra') + ' ' + fmt(M[n], true) + ' (' + sgn(t - M[n]) + ')' : '') + '.'; };
-  const ttRun = (d) => isRally(d) ? 'preizkušnjo' : 'vzpon';   // (Ponovi vzpon / Ponovi preizkušnjo)
-  const TT_LINES = { intro: ['introTT', 'introStage', 'introPassTT'], go: ['goTT', 'goStage', 'goPassTT'], cpFirst: ['cpFirst', 'cpFirstStage'], record: ['summitRecord', 'stageRecord'], even: ['summitEven', 'stageEven'], end: ['summit', 'stageEnd'] };
-  const ttLine = (d, k) => TT_LINES[k][isRally(d) ? 1 : d && d.modes ? 2 : 0] || TT_LINES[k][0];   // (a hill climb, a rally stage, a mountain pass)
+  const ttRun = (d) => isRally(d) ? 'preizkušnjo' : isDesc(d) ? 'spust' : 'vzpon';   // (Ponovi vzpon / Ponovi preizkušnjo / Ponovi spust)
+  const TT_LINES = { intro: ['introTT', 'introStage', 'introPassTT', 'introDescTT'], go: ['goTT', 'goStage', 'goPassTT', 'goDescTT'], cpFirst: ['cpFirst', 'cpFirstStage', null, 'cpFirstDesc'],
+    record: ['summitRecord', 'stageRecord', null, 'descRecord'], even: ['summitEven', 'stageEven', null, 'descEven'], end: ['summit', 'stageEnd', null, 'descEnd'] };
+  const ttLine = (d, k) => TT_LINES[k][isRally(d) ? 1 : isDesc(d) ? 3 : d && d.modes ? 2 : 0] || TT_LINES[k][0];   // (a hill climb, a rally stage, a mountain pass, a descent)
   const numDot = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');   // 3048 -> 3.048
   const kmTxt = (m, dec) => (m / 1000).toFixed(dec).replace('.', ',');
   const cpWord = (n) => n + (n === 1 ? ' kontrolna točka' : n === 2 ? ' kontrolni točki' : n <= 4 ? ' kontrolne točke' : ' kontrolnih točk');
@@ -713,7 +716,7 @@
     const list = $('track-list'), sd = Core.TRACKS.find(d => d.id === S.track);
     $('cmp-row').classList.toggle('off', !(sd && sd.pit && !isTT(sd)));   // (tyres: the circuits with pits)
     list.innerHTML = Core.TRACKS.map(d => { const T = getTrack(d.id), r = rec(d.id), sel = d.id === S.track ? ' sel' : '';
-      const climb = (d.realKm ? ' (pravih ' + String(d.realKm).replace('.', ',') + ' km)' : '') + (d.alt ? ' · vzpon ' + numDot(d.alt[1] - d.alt[0]) + ' m' : '');
+      const climb = (d.realKm ? ' (pravih ' + String(d.realKm).replace('.', ',') + ' km)' : '') + (d.alt ? (d.alt[1] < d.alt[0] ? ' · spust ' + numDot(d.alt[0] - d.alt[1]) : ' · vzpon ' + numDot(d.alt[1] - d.alt[0])) + ' m' : '');
       const md = modeOf(d);
       let meta = md === 'traffic' ? kmTxt(T.raceLen, 1) + ' km' + climb + ' · dvoboj z enim tekmecem v prometu' + (r.bestRace ? ' · rekord ' + fmt(r.bestRace, true) : '') :
         md === 'police' ? kmTxt(T.raceLen, 1) + ' km' + climb + ' · beg pred policijo' + (r.bestRace ? ' · najhitrejši pobeg ' + fmt(r.bestRace, true) : '') :
@@ -940,7 +943,7 @@
     Sfx.resume(); Sfx.setRunning(true);
     Comm.stop(); commReset();
     const wetTxt = race.rain ? ' · DEŽ' : '';
-    if (race.timeTrial) { Comm.say(ttLine(track.def, 'intro'), { track: EN_NAME[track.def.id] || track.def.name, cps: track.cpS.length }, 2); showMsg((isRally(track.def) ? 'POLNI PLIN!' : 'VZPON NA VRH!') + wetTxt, 'gold', race.rain ? 1.8 : 1.2); }
+    if (race.timeTrial) { Comm.say(ttLine(track.def, 'intro'), { track: EN_NAME[track.def.id] || track.def.name, cps: track.cpS.length }, 2); showMsg((isRally(track.def) ? 'POLNI PLIN!' : isDesc(track.def) ? 'SPUST V DOLINO!' : 'VZPON NA VRH!') + wetTxt, 'gold', race.rain ? 1.8 : 1.2); }
     else if (quali) { Comm.say('qualiIntro', { track: EN_NAME[track.def.id] || track.def.name }, 2); showMsg((race.champ ? 'DIRKA ' + (race.champ.round + 1) + '/' + race.champ.n + ' · ' : '') + 'KVALIFIKACIJE' + wetTxt, 'gold', 1.8); }
     else {
       if (race.pol) { Comm.say('introPolice', { track: EN_NAME[track.def.id] || track.def.name }, 2); showMsg('POLICIJA TE LOVI!' + wetTxt, 'slow', 1.8); }   // (the run from the police)
@@ -1805,10 +1808,10 @@
     if (pk.on) pkNoteFrame(P);   // (Pikes Peak: the corner warnings)
     const nCP = track.cpS.length, R0 = rec(track.def.id);
     setText('h-lap', P.finished ? 'CILJ' : 'CP ' + P.cp + '/' + nCP);
-    // altitude of the road under the car (not the body, as in the splits table), between start and summit; frozen at the summit after the finish.
-    // A stage without altitudes (a rally stage): the distance still to go to the finish, to the nearest 0.1 km (at least 0.1 until the line)
+    // altitude of the road under the car (not the body, as in the splits table), between start and summit (or the foot of a descent); frozen at the
+    // finish. A stage without altitudes (a rally stage): the distance still to go to the finish, to the nearest 0.1 km (at least 0.1 until the line)
     const al = track.def.alt, alt = track.altAt(P.finished ? track.hy[track.finishIdx] : P.roadY || 0);
-    setText('h-alt', alt != null ? numDot(al ? clamp(alt, al[0], al[1]) : alt) + ' m' : P.finished ? '' : 'še ' + kmTxt(Math.max(100, Math.round(clamp(track.raceLen - Math.max(0, P.dist), 0, track.raceLen) / 100) * 100), 1) + ' km');
+    setText('h-alt', alt != null ? numDot(al ? clamp(alt, Math.min(al[0], al[1]), Math.max(al[0], al[1])) : alt) + ' m' : P.finished ? '' : 'še ' + kmTxt(Math.max(100, Math.round(clamp(track.raceLen - Math.max(0, P.dist), 0, track.raceLen) / 100) * 100), 1) + ' km');
     const cur = P.finished ? P.finishTime : phase === 'racing' ? race.time : 0;
     setText('h-time', fmt(cur, true));
     setText('h-bestv', fmt(R0.bestTime || NaN, true));   // personal best (a new one shows as soon as the run ends)
@@ -1949,7 +1952,7 @@
      A call is said when the car is ~2.4 s (55 to 170 m) before its first note; one already driven past (a rescue, a spin) is skipped. */
   let cdN = null, cdK = 0, cdLog = [];
   function codrvInit() {
-    cdN = race.timeTrial && isRally(track.def) && +S.codrv ? track.paceNotes() : null; cdK = 0; cdLog = [];
+    cdN = race.timeTrial && (isRally(track.def) || isDesc(track.def)) && +S.codrv ? track.paceNotes() : null; cdK = 0; cdLog = [];   // (a rally stage, a gravel descent)
     const g = window.__game; if (g && !Object.getOwnPropertyDescriptor(g, 'codrv')) Object.defineProperty(g, 'codrv', { configurable: true, get: () => ({ calls: cdN ? cdN.length : 0, k: cdK, log: cdLog.slice() }) });   // (tests)
   }
   const cdLead = (P) => clamp(P.speed * 2.4 + 30, 55, 170);
@@ -2041,7 +2044,7 @@
   const PART_EN = { bumperF: 'front bumper', bumperR: 'rear bumper', hood: 'bonnet', trunk: 'boot lid', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'front wing', fenderR: 'front wing' };
   const PART_EN_F = { bumperF: 'front wing', bumperR: 'rear wing', hood: 'nose cone', trunk: 'engine cover', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'bargeboard', fenderR: 'bargeboard' };   // (the formula's parts)
   const PART_EN_LM = { bumperF: 'splitter', bumperR: 'rear wing', hood: 'nose', trunk: 'engine cover', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'louvre panel', fenderR: 'louvre panel' };   // (the prototype's)
-  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', ouninpohja: 'Ouninpohja', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka', vrsic: 'the Vrshich pass' };
+  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', ouninpohja: 'Ouninpohja', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka', vrsic: 'the Vrshich pass', katu: 'the Katu-Yaryk pass' };
   const cev = { wall: 0, car: 0 };          // impacts collected per physics step
   let cs = null;
   function commReset() {
