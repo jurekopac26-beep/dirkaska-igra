@@ -2993,7 +2993,12 @@ const Core = (function () {
           } else if (K.st === 'walk' && !cop.wp) { cop.h = Math.atan2(P.z - cop.z, P.x - cop.x); cop.act = 'talk'; set('docs'); this._event('chkDocs', cop.x, cop.z, K.car, K.s); }
           else if (K.st === 'docs') {
             if (K.t > 4.5 && !K.said) { K.said = 1; this._event('chkNoDocs', cop.x, cop.z, K.car, K.s); }
-            if (K.t > 8) { set('park'); K.said = 0; P.noReverse = false; cop.act = 'walk'; cop.wp = [K.box.x - Math.cos(K.box.h) * (K.box.len / 2 + 2) - Math.sin(K.box.h) * K.side * -1.6, K.box.z - Math.sin(K.box.h) * (K.box.len / 2 + 2) + Math.cos(K.box.h) * K.side * -1.6]; cop.wps = null; this._event('chkPark', cop.x, cop.z, K.car, K.s); }
+            if (K.t > 8) {   // (he goes round the back of the car to the kerb, then along the pavement to beside the box: never in the car's way into it)
+              set('park'); K.said = 0; P.noReverse = false; cop.act = 'walk';
+              const bx = P.x - ch * (P.m.len / 2 + 1.1), bz = P.z - sh * (P.m.len / 2 + 1.1), lo = P.m.wid / 2 + 0.8, kd = K.side * (w + 0.9), at = (s) => { const i = T.idx(s); return [T.px[i] + T.nx[i] * kd, T.pz[i] + T.nz[i] * kd]; };
+              cop.wp = [bx + sh * lo, bz - ch * lo]; cop.wps = [[bx - sh * lo, bz + ch * lo], at(P.q.s - P.m.len / 2 - 1.1), at(K.box.s + K.box.len / 2 - 1)];
+              this._event('chkPark', cop.x, cop.z, K.car, K.s);
+            }
           }
           break;
         case 'park': {
@@ -3029,11 +3034,14 @@ const Core = (function () {
     }
     // the traffic at the checkpoint (for Traffic._drive): an uphill vehicle stops at the officer (its front at the stop line 3 m before him)
     // and is waved on after 4 s, the next one behind it then; none held once the player is within 140 m (the player is the one he stops) or
-    // the checkpoint is over; -1e9: no stop for it
+    // the checkpoint is over; the player stopped by him (until they flee or are taken away): the ones behind the car wait 9 m behind it;
+    // -1e9: no stop for it
     holdAt(v, dt) {
-      const K = this.chk;
+      const K = this.chk, P = this.race.player;
       if (v.chkOk && v.s < K.s - 300) v.chkOk = false;   // (round again from the bottom)
-      if (!K || v.dir < 0 || v.chkOk || (K.st !== 'wait' && K.st !== 'approach') || v.s > K.s || K.s - this.race.player.q.s < 140) return -1e9;
+      if (!K || v.dir < 0) return -1e9;
+      if (K.st === 'stopped' || K.st === 'walk' || K.st === 'docs' || K.st === 'park' || K.st === 'parked') return v.s < P.q.s - 5 ? P.q.s - P.m.len / 2 - 9 : -1e9;   // (the player stopped by him: the ones behind wait 9 m behind the car, none round it past him at its window)
+      if (v.chkOk || (K.st !== 'wait' && K.st !== 'approach') || v.s > K.s || K.s - P.q.s < 140) return -1e9;
       const stop = K.s - 3;
       if (stop - v.s - v.len / 2 < 1.5 && v.v < 0.3) { v.chkT = (v.chkT || 0) + dt; if (v.chkT > 4) { v.chkOk = true; v.chkT = 0; return -1e9; } }
       return stop;
