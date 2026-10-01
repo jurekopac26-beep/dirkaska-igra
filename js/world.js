@@ -12925,12 +12925,12 @@ const World = (function () {
   }
   // a town bike, upright (local x along it; the instance colour paints the frame; the tyres a dark ring of quads, both faces)
   function muBikeGeo() {
-    const g = new GB(), K = [0.1, 0.1, 0.11], W = [1, 1, 1], ring = (cx, cy, r0, r1) => { const n = 12; for (let k = 0; k < n; k++) { const a0 = k / n * TAU, a1 = (k + 1) / n * TAU;
+    const g = new GB(), K = [0.1, 0.1, 0.11], W = [1, 1, 1], ring = (cx, cy, r0, r1) => { const n = 8; for (let k = 0; k < n; k++) { const a0 = k / n * TAU, a1 = (k + 1) / n * TAU;
       const A = [cx + Math.cos(a0) * r1, cy + Math.sin(a0) * r1, 0], B = [cx + Math.cos(a1) * r1, cy + Math.sin(a1) * r1, 0], C = [cx + Math.cos(a1) * r0, cy + Math.sin(a1) * r0, 0], D = [cx + Math.cos(a0) * r0, cy + Math.sin(a0) * r0, 0];
       g.quadO(A, B, C, D, K, [cx, cy, -1]); g.quadO(A, B, C, D, K, [cx, cy, 1]); } };
     ring(-0.52, 0.34, 0.29, 0.34); ring(0.52, 0.34, 0.29, 0.34);
     const P = { rh: [-0.52, 0.34, 0], bb: [-0.05, 0.3, 0], st: [-0.17, 0.8, 0], hd: [0.38, 0.82, 0], fh: [0.52, 0.34, 0] };
-    for (const [a, b] of [['rh', 'bb'], ['bb', 'st'], ['st', 'hd'], ['bb', 'hd'], ['st', 'rh'], ['hd', 'fh']]) ouRod(g, P[a], P[b], 0.022, W, 4);
+    for (const [a, b] of [['rh', 'bb'], ['bb', 'st'], ['st', 'hd'], ['bb', 'hd'], ['st', 'rh'], ['hd', 'fh']]) ouRod(g, P[a], P[b], 0.024, W, 3);
     ouRod(g, [0.38, 0.82, 0], [0.34, 0.98, 0], 0.02, W, 4); box(g, 0.33, 0.97, 0, 0.06, 0.04, 0.5, 0, K);   // the stem, the handlebar
     box(g, -0.2, 0.82, 0, 0.26, 0.06, 0.12, 0, K); box(g, -0.48, 0.52, 0, 0.36, 0.03, 0.16, 0, K);   // the saddle, the carrier
     return g.geometry();
@@ -13327,7 +13327,7 @@ const World = (function () {
             if (o.flat) box(g, b.x, hi + 0.25 + fl * 3, b.z, b.L + 0.3, 0.45, b.W + 0.3, b.ang, [0.42, 0.42, 0.44]);
             else { const along = front < 2; muRoof(o.rg, g, b.x, hi + 0.25 + fl * 3, b.z, (along ? b.L : b.W) + 0.3, (along ? b.W : b.L) + 0.5, Math.min((along ? b.W : b.L) * 0.62, 7.5), along ? b.ang : b.ang + PI / 2, roofC, wc); }
           } else {
-            o.frontOnly = !near; muHouse(g, fac.get(b.x, b.z), b, lo, hi, fl, wt, front, roofC, o);
+            o.frontOnly = !near; muHouse(g, near || fd[front] < 45 ? fac.get(b.x, b.z) : null, b, lo, hi, fl, wt, front, roofC, o);
             if (near && fd[front] < 12 && fl >= 3 && crH(b.x, b.z, 86) < 0.18) {   // a balcony on the second floor, people out on it to watch the race
               const [u, v] = [[0, b.W / 2], [0, -b.W / 2], [b.L / 2, 0], [-b.L / 2, 0]][front], nn = [[0, 1], [0, -1], [1, 0], [-1, 0]][front];
               const ox = c * nn[0] - s * nn[1], oz = s * nn[0] + c * nn[1], ex = -oz, ez = ox, px = b.x + c * u - s * v + ox * 0.45, pz = b.z + s * u + c * v + oz * 0.45, yb = hi + 0.25 + 6, rot = Math.atan2(ez, ex), g2 = scen.get(px, pz);
@@ -13527,7 +13527,7 @@ const World = (function () {
           const y = nrGround(x, z), g = scen.get(x, z), rt = a + PI / 2; box(g, x, y + 0.42, z, 1.8, 0.07, 0.45, rt, [0.5, 0.34, 0.2]); box(g, x + Math.cos(a) * 0.22, y + 0.5, z + Math.sin(a) * 0.22, 1.8, 0.4, 0.06, rt, [0.5, 0.34, 0.2]);
           for (const e of [-0.75, 0.75]) box(g, x + Math.cos(rt) * e, y, z + Math.sin(rt) * e, 0.08, 0.45, 0.45, rt, [0.14, 0.18, 0.15]); CR.avoid(x, z, 1.2); } }
     }
-    const nBikes = bikes.addTo(root, true), nCars = cars.addTo(root, true);
+    const nBikes = bikes.addTo(root, false), nCars = cars.addTo(root, true);   // (the bikes' thin shadows would cost more than they show)
 
     /* ---- street lamps along the town's sidewalks (dark green cast iron, a lantern over the road), every ~26 m on alternate sides, behind the fence ---- */
     { const lamps = new IChunks(muLampGeo(), new THREE.MeshLambertMaterial({ vertexColors: true }), 512); let side = 1;
