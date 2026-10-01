@@ -256,7 +256,7 @@ const World = (function () {
         for (let k = 0, s = s0; k < n; k++) {
           if ((T.open && (s < 2 || s > L - 2)) || onGrid(s)) break;
           const i = T.idx(s), [lo, hi] = band(i, side, 0.43); if (hi - lo < 0.4) break;
-          const lat = clamp(w + e, lo, hi), [x, z, hd, ii] = atSf(s, side * lat);
+          const lat = o.atBarrier ? hi : clamp(w + e, lo, hi), [x, z, hd, ii] = atSf(s, side * lat);   // (atBarrier: right in front of the barrier, not out on the run-off)
           if (!fits(ii, side, x, z, 0.43) || !free(x, z, 0.35)) break;
           P.push({ x, z, hd, ii, k, lat, s }); s += step(s, lat, gap);
         }
@@ -8745,6 +8745,17 @@ const World = (function () {
 
     /* ---- terrain tiles ---- */
     const gMat = new THREE.MeshLambertMaterial({ map: ownTex(mcGroundTex()), vertexColors: true });
+    // the ground is not drawn where it would come up through the circuit (the road and its verges out to just behind the barriers; from 0.16 m
+    // in from their edge, less than half a metre under them): with 8 m cells, the ground that rises right beside them (a road cut into the
+    // hillside, the hairpin's two levels) would otherwise reach over the road in big triangles. A texture (set below: sdU, sdB, sdH): the signed
+    // distance to their edge, their height
+    const sdU = { value: null }, sdB = { value: new THREE.Vector4(0, 0, 0, 0) }, sdH = { value: new THREE.Vector2(0, 1) };
+    gMat.onBeforeCompile = (sh) => {
+      sh.uniforms.uSd = sdU; sh.uniforms.uSdB = sdB; sh.uniforms.uSdH = sdH;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vSdW;').replace('#include <project_vertex>', '#include <project_vertex>\nvSdW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uSd;\nuniform vec4 uSdB;\nuniform vec2 uSdH;\nvarying vec3 vSdW;')
+        .replace('void main() {', 'void main() {\n  { vec2 q = (vSdW.xz - uSdB.xy) * uSdB.zw; if (q.x > 0.0 && q.y > 0.0 && q.x < 1.0 && q.y < 1.0) { vec4 t = texture2D(uSd, q); if (t.r < 0.48 && vSdW.y > uSdH.x + t.a * uSdH.y - 0.5) discard; } }');
+    };
     let nTiles = 0;
     {
       const grp = new THREE.Group(); root.add(grp); out.ground = grp;
@@ -8898,7 +8909,7 @@ const World = (function () {
       const a = atSf(sStart - 0.8, -w), b = atSf(sStart - 0.8, w), c = atSf(sStart + 0.8, w), d = atSf(sStart + 0.8, -w);
       gq.quadUp([a[0], HYp(a) + 0.04, a[1]], [b[0], HYp(b) + 0.04, b[1]], [c[0], HYp(c) + 0.04, c[1]], [d[0], HYp(d) + 0.04, d[1]], [W1, W1, W1, W1], [[0, 0], [uM, 0], [uM, 0.5], [0, 0.5]]);
       for (let k = 1; k <= 14; k++) { const sb = sStart - 9 - (k - 1) * 7.5 + 2.6, lat = (k % 2 === 1 ? -1 : 1) * 3.4; flat(gw, sb, sb + 0.35, lat - 1.5, lat + 1.5, 0.037, HI); flat(gw, sb - 1.6, sb + 0.35, lat - 1.5, lat - 1.25, 0.037, HI); }
-      const zc = [0.68, 0.68, 0.67], done = [];
+      const zc = [0.29, 0.275, 0.265], done = [];   // (painted over for the race: a faint trace a shade off the asphalt)
       for (const [zx, zz] of Dd.zebra) {
         const n = mcNear(zx, zz); if (n.i < 0 || Math.abs(n.lat) > w + 1 || n.d > w + 1.5 || inTun(n.i, 10)) continue;
         const s = n.i * ds + (zx - T.px[n.i]) * T.tx[n.i] + (zz - T.pz[n.i]) * T.tz[n.i]; if (Math.abs(dS(s)) < 30 || done.some(q => Math.abs(q - s) < 12)) continue; done.push(s);
@@ -8944,9 +8955,10 @@ const World = (function () {
           fenceG.quadO(Q(i, 0.4, 0.8), Q(j, 0.4, 0.8), Q(j, 0.4, 4.0), Q(i, 0.4, 4.0), [1, 1, 1], ins, [[u0, 0], [u1, 0], [u1, 1.28], [u0, 1.28]]);
           sp += ds; acc += ds;
           if (sp > 12 && !inTun(i + 3, 1)) {   // a sponsor board on the rails, readable from the track
-            sp = 0; const k = Math.floor(R() * 8), uu0 = (k % 2) * 0.5, uu1 = uu0 + 0.5, vT = 1 - Math.floor(k / 2) * 0.25, vB = vT - 0.25, i2 = (i + 3) % N;
-            const A = Q(i, 0.06, 0.1), Bp = Q(i2, 0.06, 0.1), Cp = Q(i2, 0.06, 0.78), Dp = Q(i, 0.06, 0.78);
-            texSpons.quadO(A, Bp, Cp, Dp, [1, 1, 1], Q(i, 3, 0.5), side > 0 ? [[uu1, vB], [uu0, vB], [uu0, vT], [uu1, vT]] : [[uu0, vB], [uu1, vB], [uu1, vT], [uu0, vT]]);
+            sp = 0; const k = Math.floor(R() * 8), uu0 = (k % 2) * 0.5, uu1 = uu0 + 0.5, vT = 1 - Math.floor(k / 2) * 0.25, vB = vT - 0.25;
+            for (let q = 0; q < 3; q++) {   // (6 m long, bent with the rails from sample to sample: in a tight bend one flat board would stand off them)
+              const a = (i + q) % N, b = (i + q + 1) % N, ua = side > 0 ? uu1 - q / 6 : uu0 + q / 6, ub = side > 0 ? uu1 - (q + 1) / 6 : uu0 + (q + 1) / 6;
+              texSpons.quadO(Q(a, 0.06, 0.1), Q(b, 0.06, 0.1), Q(b, 0.06, 0.78), Q(a, 0.06, 0.78), [1, 1, 1], Q(a, 3, 0.5), [[ua, vB], [ub, vB], [ub, vT], [ua, vT]]); }
           }
         }
       }
@@ -9019,18 +9031,35 @@ const World = (function () {
       g.quadO(A, B, F, E, col, inn, [[-l8, 0], [l8, 0], [r4, d8], [-r4, d8]]); g.quadO(C, D2, E, F, c2, inn, [[-l8, 0], [l8, 0], [r4, d8], [-r4, d8]]);
       g.triO(B, C, F, c3, inn, c3, c3, [-d8, 0], [d8, 0], [0, e4]); g.triO(D2, A, E, c2, inn, c2, c2, [-d8, 0], [d8, 0], [0, e4]);
     };
+    const roofFit = (rr, pad) => {   // a pitched roof's box (the footprint's box, pad m bigger all round) with each side pulled in while it reaches over the circuit
+      // (the box round a footprint that is no box, or one cut back behind the barriers); cut: pulled in (the rest of the footprint under a flat roof);
+      // null: no room for it at all
+      const c = Math.cos(rr.rot), s = Math.sin(rr.rot), e = [-rr.L / 2 - pad, rr.L / 2 + pad, -rr.D / 2 - pad, rr.D / 2 + pad];
+      const hit = (a, b) => { const n = mcNear(rr.x + a * c - b * s, rr.z + a * s + b * c); return n.i >= 0 && n.dd < 0.3 && !inTun(n.i, 4); };
+      let cut = false;
+      for (;;) { let moved = false;
+        for (let k = 0; k < 4; k++) { const ends = k < 2, n = Math.max(2, Math.ceil((ends ? e[3] - e[2] : e[1] - e[0]) / 1.5)); let bad = false;
+          for (let q = 0; q <= n && !bad; q++) { const t = q / n; bad = ends ? hit(e[k], e[2] + (e[3] - e[2]) * t) : hit(e[0] + (e[1] - e[0]) * t, e[k]); }
+          if (bad) { e[k] += k % 2 ? -0.3 : 0.3; moved = cut = true; } }
+        if (!moved) break; if (e[1] - e[0] < 3 || e[3] - e[2] < 3) return null; }
+      if (cut) for (let a = e[0] + 1; a < e[1]; a += 2) for (let b = e[2] + 1; b < e[3]; b += 2) if (hit(a, b)) return null;
+      const am = (e[0] + e[1]) / 2, bm = (e[2] + e[3]) / 2; return { x: rr.x + am * c - bm * s, z: rr.z + am * s + bm * c, L: e[1] - e[0], D: e[3] - e[2], rot: rr.rot, cut };
+    };
     const gableRoof = (g, gw, x, y, z, L, D, h, rot, col, wallCol) => {   // a gabled roof on an L x D box (the ridge along L); the gable ends (gw) in the walls' colour
       const c = Math.cos(rot), s = Math.sin(rot), Q = (a, yy, b) => [x + a * c - b * s, yy, z + a * s + b * c], inn = [x, y - 1, z];
       const A = Q(-L / 2, y, -D / 2), B = Q(L / 2, y, -D / 2), C = Q(L / 2, y, D / 2), D2 = Q(-L / 2, y, D / 2), E = Q(-L / 2, y + h, 0), F = Q(L / 2, y + h, 0), l8 = L / 8, d8 = D / 8;
       g.quadO(A, B, F, E, col, inn, [[-l8, 0], [l8, 0], [l8, d8], [-l8, d8]]); g.quadO(C, D2, E, F, [col[0] * 0.88, col[1] * 0.88, col[2] * 0.88], inn, [[-l8, 0], [l8, 0], [l8, d8], [-l8, d8]]);
       gw.triO(B, C, F, wallCol, inn); gw.triO(D2, A, E, wallCol, inn);
     };
-    const walls = (g, r, y0, yt, col, bay, fh) => {   // the facade on every wall of a ring (whole bays of 3.3 m, floors of fh m counted down from the top)
-      let cx = 0, cz = 0; for (const [x, z] of r) { cx += x; cz += z; } cx /= r.length; cz /= r.length; const inn = [cx, (y0 + yt) / 2, cz], fl = (yt - y0) / (fh || 3.1);
+    const walls = (g, r, y0, yt, col, bay, fh, base) => {   // the facade on every wall of a ring (whole bays of 3.3 m, floors of fh m counted down from the top);
+      // base(x, z): where a wall must start higher up (the buildings over the tunnel: not down through its road)
+      let cx = 0, cz = 0; for (const [x, z] of r) { cx += x; cz += z; } cx /= r.length; cz /= r.length; const inn = [cx, (y0 + yt) / 2, cz];
       const cb = [col[0] * 0.78, col[1] * 0.78, col[2] * 0.8], cs = [cb, cb, col, col];   // (darker towards the street: less sky down there)
       for (let k = 0; k < r.length; k++) { const [xa, za] = r[k], [xb, zb] = r[(k + 1) % r.length], L = Math.hypot(xb - xa, zb - za); if (L < 0.05) continue;
-        const u1 = Math.max(1, Math.round(L / (bay || 3.3))); g.quadO([xa, y0, za], [xb, y0, zb], [xb, yt, zb], [xa, yt, za], col, inn, [[0, -fl], [u1, -fl], [u1, 0], [0, 0]], cs); }
+        const yb = base ? Math.max(y0, base((xa + xb) / 2, (za + zb) / 2)) : y0; if (yb >= yt - 0.5) continue; const fl = (yt - yb) / (fh || 3.1);
+        const u1 = Math.max(1, Math.round(L / (bay || 3.3))); g.quadO([xa, yb, za], [xb, yb, zb], [xb, yt, zb], [xa, yt, za], col, inn, [[0, -fl], [u1, -fl], [u1, 0], [0, 0]], cs); }
     };
+    const overTun = (x, z) => { const n = mcNear(x, z); return n.i >= 0 && n.dd < 1.2 && inTun(n.i, 1) ? T.hy[n.i] + 7.4 : -1e9; };   // (in the tunnel's corridor: its roof's top)
     const flatRoof = (g, r, yt, rc, pc, par, rot) => {   // a roof on the ring at yt; par: a parapet this high round its edge; rot: the courses' direction
       const tri = THREE.ShapeUtils.triangulateShape(r.map(([x, z]) => new THREE.Vector2(x, z)), []);
       const fu = (p) => { const q = rUV(p, rot); return [q[0] / 3, q[1] / 3]; };   // (flat: 12 m a tile, the seams of the membrane or big slabs)
@@ -9043,14 +9072,18 @@ const World = (function () {
         g.quadUp([xa, top, za], [xb, top, zb], [xb + nx, top, zb + nz], [xa + nx, top, za + nz], [HI, HI, HI, HI], [[0, 0.33], [L / 4, 0.33], [L / 4, 0.37], [0, 0.37]]);
       }
     };
-    const mansard = (g, r, yt, h, inset, col, topCol) => {   // a mansard: a steep band of slate or tiles round the edge, a flat roof inside it (r counter-clockwise)
-      const n = r.length, ins = []; let cx = 0, cz = 0; for (const [x, z] of r) { cx += x; cz += z; } cx /= n; cz /= n;
+    const insetRing = (r, inset) => {   // the ring (counter-clockwise) moved inwards by inset m (mitred corners, never more than 45 % of the walls beside them)
+      const n = r.length, ins = [];
       for (let k = 0; k < n; k++) {
         const [xp, zp] = r[(k - 1 + n) % n], [x, z] = r[k], [xn, zn] = r[(k + 1) % n];
         let ax = x - xp, az = z - zp, bx = xn - x, bz = zn - z; const la = Math.hypot(ax, az) || 1, lb = Math.hypot(bx, bz) || 1; ax /= la; az /= la; bx /= lb; bz /= lb;
         let mx = -az - bz, mz = ax + bx; const ml = Math.hypot(mx, mz) || 1; mx /= ml; mz /= ml;   // (the mitre, inwards)
         const d = Math.min(inset / Math.max(0.35, mx * -az + mz * ax), inset * 2.5, Math.min(la, lb) * 0.45); ins.push([x + mx * d, z + mz * d]);
       }
+      return ins;
+    };
+    const mansard = (g, r, yt, h, inset, col, topCol) => {   // a mansard: a steep band of slate or tiles round the edge, a flat roof inside it (r counter-clockwise)
+      const n = r.length, ins = insetRing(r, inset); let cx = 0, cz = 0; for (const [x, z] of r) { cx += x; cz += z; } cx /= n; cz /= n;
       for (let k = 0; k < n; k++) { const a = r[k], b = r[(k + 1) % n], c = ins[(k + 1) % n], d = ins[k], L = Math.hypot(b[0] - a[0], b[1] - a[1]) / 4, sl = Math.hypot(h, inset) / 4;
         g.quadO([a[0], yt, a[1]], [b[0], yt, b[1]], [c[0], yt + h, c[1]], [d[0], yt + h, d[1]], col, [cx, yt - 8, cz], [[0, 0], [L, 0], [L, sl], [0, sl]]); }
       const tri = THREE.ShapeUtils.triangulateShape(ins.map(([x, z]) => new THREE.Vector2(x, z)), []);
@@ -9116,8 +9149,9 @@ const World = (function () {
           const pr = ccw(q.r); if (pr.length < 3) continue; const pt = ref + q.h, pb = over ? yt : q.mh > 0 ? ref + q.mh : y0; if (pt < pb + 2) continue;
           const pfh = q.fl > 0 ? clamp((pt - (over ? ref : pb)) / q.fl, 2.7, 4.6) : fh, st2 = pt - ref > 48 ? 2 : style, prr = bldRect(pr);
           walls(facCh[st2].get(cx, cz), pr, pb, pt, col, 3.3, pfh);
-          if (q.roof === 2 || q.roof === 4) hipRoof(roofCh.get(cx, cz), prr.x, pt, prr.z, prr.L + 0.5, prr.D + 0.5, Math.min(3.2, prr.D * 0.32), prr.rot, vary(TILE[0], R, 0.05));
-          else flatRoof(roofCh.get(cx, cz), pr, pt, vary(ROOF[Math.floor(R() * ROOF.length)], R, 0.06), [col[0] * 0.92, col[1] * 0.92, col[2] * 0.92], 0.9, prr.rot);
+          const pf = q.roof === 2 || q.roof === 4 ? roofFit(prr, 0.25) : null;
+          if (pf) hipRoof(roofCh.get(cx, cz), pf.x, pt, pf.z, pf.L, pf.D, Math.min(3.2, pf.D * 0.32), pf.rot, vary(TILE[0], R, 0.05));
+          if (!pf || pf.cut) flatRoof(roofCh.get(cx, cz), pr, pt, vary(ROOF[Math.floor(R() * ROOF.length)], R, 0.06), [col[0] * 0.92, col[1] * 0.92, col[2] * 0.92], pf ? 0.5 : 0.9, prr.rot);
           top = Math.max(top, pt);
         }
         nBld++; exclPush(cx, cz, Math.min(Math.sqrt(area) * 0.6 + 2, 40)); MC.bldR.push({ r, x: cx, z: cz, top: over ? yt : top, bot: gmin, flat: !!over }); continue;
@@ -9127,9 +9161,10 @@ const World = (function () {
       const pool = Dd.pools.some(pl => { let px = 0, pz = 0; for (const [x, z] of pl.r) { px += x; pz += z; } px /= pl.r.length; pz /= pl.r.length; return Math.abs(px - cx) < 60 && Math.abs(pz - cz) < 60 && inRing(r, px, pz); });
       const roofK = pool ? 1 : b.roof || (rr.fill > 0.86 && area < 600 && H < 17 && b.k !== 4 && b.k !== 5 ? 2 : 1);   // (OpenStreetMap's roof shape; not known: tiles on the small, low, compact houses, flat on the rest)
       const gr = roofCh.get(cx, cz), hip = roofK === 2 || roofK === 4 || roofK === 3;
-      if (hip) { const tc = vary(TILE[Math.floor(R() * TILE.length)], R, 0.06);
-        if (roofK === 3) gableRoof(gr, scen.get(cx, cz), rr.x, yt, rr.z, rr.L + 0.5, rr.D + 0.5, Math.min(3.4, rr.D * 0.36), rr.rot, tc, col);
-        else hipRoof(gr, rr.x, yt, rr.z, rr.L + 0.5, rr.D + 0.5, Math.min(3.2, rr.D * 0.32), rr.rot, tc); }
+      if (hip) { const tc = vary(TILE[Math.floor(R() * TILE.length)], R, 0.06), f = roofFit(rr, 0.25);
+        if (!f || f.cut) flatRoof(gr, r, yt, vary(ROOF[Math.floor(R() * ROOF.length)], R, 0.06), [col[0] * 0.92, col[1] * 0.92, col[2] * 0.92], 0.5, rr.rot);   // (under the part of the footprint the tiles don't cover)
+        if (f && roofK === 3) gableRoof(gr, scen.get(cx, cz), f.x, yt, f.z, f.L, f.D, Math.min(3.4, f.D * 0.36), f.rot, tc, col);
+        else if (f) hipRoof(gr, f.x, yt, f.z, f.L, f.D, Math.min(3.2, f.D * 0.32), f.rot, tc); }
       else {
         const rc = vary(ROOF[Math.floor(R() * ROOF.length)], R, 0.06);
         flatRoof(gr, r, yt, rc, [col[0] * 0.92, col[1] * 0.92, col[2] * 0.92], 0.75, rr.rot);
@@ -9172,7 +9207,8 @@ const World = (function () {
         walls(facCh[0].get(cx, cz), r, y0, yt, [0.97, 0.93, 0.84]); flatRoof(gr, r, yt, [0.72, 0.7, 0.66], [0.92, 0.88, 0.8], 0.9);
         for (let k = 0; k < r.length; k++) { const [xa, za] = r[k], [xb, zb] = r[(k + 1) % r.length], mx = (xa + xb) / 2, mz = (za + zb) / 2, Lw = Math.hypot(xb - xa, zb - za); if (Lw < 8 || Math.hypot(mx - px, mz - pz) > Math.hypot(cx - px, cz - pz)) continue;
           const ux = (xb - xa) / Lw, uz = (zb - za) / Lw, nx = uz, nz = -ux;   // (outwards: counter-clockwise ring)
-          for (let t = 2; t < Lw - 2; t += 4.5) { const ax = xa + ux * t + nx * 1.6, az = za + uz * t + nz * 1.6, y = mcGround(ax, az); box(g, ax, y + 3.2, az, 4, 0.18, 3.2, Math.atan2(uz, ux), [0.8, 0.1, 0.12], [0.86, 0.14, 0.14]);
+          for (let t = 2; t < Lw - 2; t += 4.5) { const ax = xa + ux * t + nx * 1.6, az = za + uz * t + nz * 1.6, y = mcGround(ax, az); if (mcNear(ax + nx * 2.4, az + nz * 2.4).dd < 0.3) continue;   // (not out over the circuit)
+            box(g, ax, y + 3.2, az, 4, 0.18, 3.2, Math.atan2(uz, ux), [0.8, 0.1, 0.12], [0.86, 0.14, 0.14]);
             cyl(g, ax + nx * 2, y, az + nz * 2, 0.5, 0.75, 6, [0.95, 0.95, 0.93], [0.95, 0.95, 0.93]); } }
       } else if (L.id === 4) {   // the Hôtel Hermitage: pale pink, six floors, Eiffel's glass dome over the winter garden
         const y0 = gmin - 0.5, yt = gmax + 20;
@@ -9181,12 +9217,19 @@ const World = (function () {
       } else if (L.id === 5 || L.id === 11 || L.id === 12) {   // over the tunnel: the Fairmont (seven floors above the hairpin, a pool on its roof), the Auditorium Rainier III, the Monte Carlo Star
         let tr = -1e9; for (const [x, z] of r) { const n = mcNear(x, z); if (n.i >= 0 && n.d < 20) tr = Math.max(tr, T.hy[n.i]); }
         const y0 = Math.min(gmin, tr > -1e8 ? tr : gmin) - 0.5, yt = L.id === 5 ? 46 : L.id === 11 ? Math.max(gmax, tr + 8) + 6 : Math.max(gmax, tr + 8) + 10;
-        walls(tunFac, r, y0, yt, L.id === 11 ? [0.9, 0.9, 0.9] : [0.96, 0.95, 0.9]);
+        walls(tunFac, r, y0, yt, L.id === 11 ? [0.9, 0.9, 0.9] : [0.96, 0.95, 0.9], 3.3, 3.1, overTun);
         flatRoof(tunRf, r, yt, L.id === 11 ? [0.58, 0.6, 0.62] : [0.8, 0.79, 0.76], [0.9, 0.9, 0.88], 1, rr.rot);
         if (L.id === 5) { box(tun, cx, yt, cz, 24, 0.1, 10, rr.rot, [0.3, 0.72, 0.86], [0.36, 0.8, 0.92]); for (let k = -2; k <= 2; k++) box(tun, cx + Math.cos(rr.rot) * k * 12 + 8, yt, cz + Math.sin(rr.rot) * k * 12 - 6, 4, 2.6, 4, rr.rot, [0.9, 0.9, 0.88], [0.7, 0.7, 0.72]); }
-      } else if (L.id === 6) {   // the Yacht Club de Monaco: an ocean liner of white decks and dark glass on the quay
-        const y0 = gmin - 0.3; let yy = y0;
-        for (let d = 0; d < 4; d++) { const k = 1 - d * 0.1, h = d ? 3.4 : 4.2; box(g, cx, yy, cz, rr.L * k, h, rr.D * k * (d ? 0.9 : 1), rr.rot, [0.97, 0.97, 0.98], [0.93, 0.93, 0.94]); box(g, cx, yy + h * 0.35, cz, rr.L * k + 0.2, h * 0.45, rr.D * k * (d ? 0.9 : 1) + 0.2, rr.rot, [0.16, 0.22, 0.3]); yy += h; }
+      } else if (L.id === 6) {   // the Yacht Club de Monaco: an ocean liner of white decks and dark glass on the quay (on its own footprint, not the box round it:
+        // its long side follows the barriers after the tunnel; each deck set back 1.3 m)
+        const y0 = gmin - 0.3, WH = [0.97, 0.97, 0.98], WT = [0.93, 0.93, 0.94], GL = [0.16, 0.22, 0.3]; let yy = y0;
+        for (let d = 0; d < 4; d++) { const h = d ? 3.4 : 4.2, rk = d ? insetRing(r, d * 1.3) : r;
+          for (let k = 0; k < rk.length; k++) { const a = rk[k], b = rk[(k + 1) % rk.length], Lw = Math.hypot(b[0] - a[0], b[1] - a[1]); if (Lw < 0.05) continue;
+            const ox = (b[1] - a[1]) / Lw, oz = -(b[0] - a[0]) / Lw, inn = [(a[0] + b[0]) / 2 - ox * 5, yy + h / 2, (a[1] + b[1]) / 2 - oz * 5];   // (outwards: counter-clockwise)
+            g.quadO([a[0], yy, a[1]], [b[0], yy, b[1]], [b[0], yy + h, b[1]], [a[0], yy + h, a[1]], WH, inn);
+            g.quadO([a[0] + ox * 0.1, yy + h * 0.35, a[1] + oz * 0.1], [b[0] + ox * 0.1, yy + h * 0.35, b[1] + oz * 0.1], [b[0] + ox * 0.1, yy + h * 0.8, b[1] + oz * 0.1], [a[0] + ox * 0.1, yy + h * 0.8, a[1] + oz * 0.1], GL, inn); }
+          for (const [a, b, c] of THREE.ShapeUtils.triangulateShape(rk.map(([x, z]) => new THREE.Vector2(x, z)), [])) triUp(g, [rk[a][0], yy + h, rk[a][1]], [rk[b][0], yy + h, rk[b][1]], [rk[c][0], yy + h, rk[c][1]], [WT, WT, WT]);
+          yy += h; }
         for (const o of [-6, 6]) cyl(g, cx + Math.cos(rr.rot) * o, yy, cz + Math.sin(rr.rot) * o, 0.2, 14, 5, [0.95, 0.95, 0.95]);
       } else if (L.id === 7) {   // the Prince's Palace: ochre walls, crenellated towers, the red-and-white flag
         const y0 = gmin - 0.5, yt = gmax + 14, oc = [0.93, 0.8, 0.6];
@@ -9208,6 +9251,7 @@ const World = (function () {
         const y0 = gmin - 0.4, yt = gmin + 7.5;
         walls(facCh[0].get(cx, cz), r, y0, yt, [0.96, 0.9, 0.8]); flatRoof(gr, r, yt, [0.7, 0.68, 0.64], [0.92, 0.86, 0.78], 0.9);
         for (let k = 0; k < r.length; k++) { const [xa, za] = r[k], [xb, zb] = r[(k + 1) % r.length], Lw = Math.hypot(xb - xa, zb - za); if (Lw < 5) continue; const ux = (xb - xa) / Lw, uz = (zb - za) / Lw;
+          if ([0.5, Lw - 0.5, Lw / 2].some(t => mcNear(xa + ux * t + uz * 2.4, za + uz * t - ux * 2.4).dd < 0.3)) continue;   // (not out over the circuit)
           box(g, (xa + xb) / 2 + uz * 1.2, gmin + 2.9, (za + zb) / 2 - ux * 1.2, Lw - 1, 0.2, 2.4, Math.atan2(uz, ux), [0.78, 0.1, 0.12], [0.84, 0.14, 0.14]); }
       } else if (L.id === 14) {   // the diving tower of the Stade Nautique Rainier III: a white concrete tower with three boards
         const y0 = gmin - 0.3; box(g, cx, y0, cz, 2.2, 10.5, 2.2, rr.rot, [0.95, 0.95, 0.94]);
@@ -9621,7 +9665,7 @@ const World = (function () {
         box(g, x - c * L * 0.25, 25, z - s * L * 0.25, W * 0.55, 8, W * 0.42, rot, [0.93, 0.93, 0.95], [0.12, 0.12, 0.15]); }
     }
     {   // lamp posts along the lap (the town's cast-iron candelabra, both sides every ~34 m) and OpenStreetMap's own
-      const lamp = (x, z) => { if (!free(x, z) && MC.ocAt(x, z) !== 3) return; const g = scen.get(x, z), y = mcGround(x, z); cyl(g, x, y, z, 0.12, 5.6, 6, [0.16, 0.2, 0.18]); box(g, x, y + 5.6, z, 0.9, 0.12, 0.2, 0, [0.16, 0.2, 0.18]); for (const o of [-0.42, 0.42]) box(g, x + o, y + 5.1, z, 0.34, 0.5, 0.34, 0, [0.96, 0.93, 0.78], [0.2, 0.22, 0.2]); CR.avoid(x, z, 0.8); };
+      const lamp = (x, z) => { if (!free(x, z) && MC.ocAt(x, z) !== 3) return; { const n = mcNear(x, z); if (n.i >= 0 && n.dd < 0.6) return; }   /* (never inside the barriers: the road is wider than the street the lamp stood by) */ const g = scen.get(x, z), y = mcGround(x, z); cyl(g, x, y, z, 0.12, 5.6, 6, [0.16, 0.2, 0.18]); box(g, x, y + 5.6, z, 0.9, 0.12, 0.2, 0, [0.16, 0.2, 0.18]); for (const o of [-0.42, 0.42]) box(g, x + o, y + 5.1, z, 0.34, 0.5, 0.34, 0, [0.96, 0.93, 0.78], [0.2, 0.22, 0.2]); CR.avoid(x, z, 0.8); };
       for (const side of [-1, 1]) for (let d = 17 * (side + 2); d < T.len; d += 34) { const q = crAt(sAt(d)); if (!q || inTun(q.i, 25) || mouth[side > 0 ? 1 : 0][q.i] > 0.1) continue; const o = (side > 0 ? q.br : q.bl) + 1.6; lamp(q.px + q.nx * side * o, q.pz + q.nz * side * o); }
       for (const [x, z] of Dd.lamps) lamp(x, z);
     }
@@ -9631,6 +9675,7 @@ const World = (function () {
         for (const sg of [1, -1]) { const fx = x + ux * sg * 2.5, fz = z + uz * sg * 2.5; if (mcSD(fx, fz) > 1.5 && mcSD(fx, fz) < 5 && free(fx, fz) && mcDist(fx, fz) < 300) { flag(fx, fz, 7); nf++; break; } } } }
       for (const c of T.corners) { if (c.sev < 3) continue; const side = -c.dir;
         for (let k = 0; k < 2; k++) { const q = crAt(c.s0 + k * 5); if (!q || inTun(q.i, 10)) continue; const o = (side > 0 ? q.br : q.bl) + 1.3 + k * 0.4, x = q.px + q.nx * side * o, z = q.pz + q.nz * side * o; if (!free(x, z) && MC.ocAt(x, z) !== 3) continue;
+          if (mcNear(x, z).dd < 0.9) continue;   // (never on another part of the lap: at Mirabeau Bas the road down to the hairpin passes just above)
           const g = scen.get(x, z), y = mcGround(x, z); box(g, x, y, z, 0.5, 1.25, 0.35, Math.atan2(q.tz, q.tx), [0.98, 0.45, 0.1]); box(g, x, y + 1.25, z, 0.32, 0.32, 0.32, 0, [0.95, 0.95, 0.95]); CR.avoid(x, z, 0.7); } }
     }
     {   // TV cranes on trucks: over the hairpin, the swimming pool, Casino Square and Sainte Dévote (a red telescopic boom, the camera hanging from its tip)
@@ -9679,6 +9724,84 @@ const World = (function () {
       }
       exclPush(x, z, span + 4);
     }
+    {   // a stone wall along the pavement's outer edge where the ground beyond is higher (a retaining wall) or lower (the edge of an embankment)
+      // than the pavement; where another part of the lap runs close by, higher or lower, one wall between them. The circuit's cover (the road and
+      // its verges out to just behind the barriers): a signed distance field (1 m texels, +-4 m) and the cover's height, that take the ground mesh
+      // away where it would come up through it
+      const RES = 1, edge = [new Float32Array(N), new Float32Array(N)];
+      const pit = (i) => { const d = dS(i * ds); return d >= T.len - 300 || d <= 40; };   // (the pit lane on the right of the straight)
+      for (let i = 0; i < N; i++) for (const si of [0, 1]) { const vr = MC.verge(i, si ? 1 : -1); edge[si][i] = si && pit(i) ? T.br[i] + 9.3 : vr[vr.length - 1][0]; }
+      const ter = (x, z) => { const G = MC.G, gx = clamp((x - G.x0) / MCC, 0, G.nx - 1.001), gz = clamp((z - G.z0) / MCC, 0, G.nz - 1.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j;   // (the ground mesh's own surface)
+        if (u + v <= 1) { const a = mcGH(i, j); return a + u * (mcGH(i + 1, j) - a) + v * (mcGH(i, j + 1) - a); } const d = mcGH(i + 1, j + 1); return d + (1 - u) * (mcGH(i, j + 1) - d) + (1 - v) * (mcGH(i + 1, j) - d); };
+      const WS = [0.78, 0.74, 0.66];
+      const other = (x, z, i) => {   // another part of the lap (not within 50 m of sample i) close by: its sample best square to (x, z), and the offset from it
+        const P = MC, cx = Math.floor(x / MCHC) - P.cx0, cz = Math.floor(z / MCHC) - P.cz0; let bd = 1e9, bj = -1;
+        for (let b = Math.max(0, cz - 1); b <= Math.min(P.ncz - 1, cz + 1); b++) for (let a = Math.max(0, cx - 1); a <= Math.min(P.ncx - 1, cx + 1); a++) for (const j of P.cells[b * P.ncx + a] || []) {
+          if (cyc(j, i) <= 25) continue; for (const jj of [j - 1, j, j + 1]) { const k = (jj + N) % N, al = (x - T.px[k]) * T.tx[k] + (z - T.pz[k]) * T.tz[k], la = (x - T.px[k]) * T.nx[k] + (z - T.pz[k]) * T.nz[k], d = al * al * 4 + la * la; if (d < bd) { bd = d; bj = k; } } }
+        if (bj < 0) return null; return { j: bj, lat: (x - T.px[bj]) * T.nx[bj] + (z - T.pz[bj]) * T.nz[bj] }; };
+      // the walls; where another part of the lap's pavement is less than GAP m beyond this one's and a metre or more higher, the wall from this
+      // pavement up to that one, its top across the gap (in their own meshes, never cut away round the followed car: the ground behind them is)
+      const GAP = 3, wallCh = new Chunks(256);
+      const gapTo = (i, side, e, o, oe) => {   // how far out from sample i the other part's pavement begins (0: not within GAP + 1 m)
+        for (let g = e + 0.05; g < e + GAP + 1; g += 0.05) { const qx = T.px[i] + T.nx[i] * side * g, qz = T.pz[i] + T.nz[i] * side * g; if (Math.abs((qx - T.px[o.j]) * T.nx[o.j] + (qz - T.pz[o.j]) * T.nz[o.j]) <= oe) return g; }
+        return 0; };
+      for (const si of [0, 1]) { const side = si ? 1 : -1; let prev = null;
+        for (let n = 0; n <= N; n++) {
+          const i = n % N, e = edge[si][i], x = T.px[i] + T.nx[i] * side * (e + 0.05), z = T.pz[i] + T.nz[i] * side * (e + 0.05);
+          if (inTun(i, 3) || (si && pit(i)) || mcSD(x, z) < 20) { prev = null; continue; }
+          const vr = MC.verge(i, side), yp = T.hy[i] + vr[vr.length - 1][1];
+          const o = other(x, z, i), oe = o ? edge[o.lat < 0 ? 0 : 1][o.j] : 0, low = o && Math.abs(o.lat) < oe + GAP && T.hy[o.j] - T.hy[i] > 1; let cur;
+          if (o && Math.abs(o.lat) < oe - 0.5 && T.hy[i] >= T.hy[o.j] + 0.5) {   // the edge lies over another, lower part of the lap's own cover (the hairpin's two levels)
+            const bar = side > 0 ? T.br[i] : T.bl[i], bj = o.lat < 0 ? T.bl[o.j] : T.br[o.j]; let oo = bar;   // one wall halfway between the two barriers, from the lower road up to this pavement
+            for (; oo < e; oo += 0.05) { const qx = T.px[i] + T.nx[i] * side * oo, qz = T.pz[i] + T.nz[i] * side * oo; if (Math.abs((qx - T.px[o.j]) * T.nx[o.j] + (qz - T.pz[o.j]) * T.nz[o.j]) <= bj) break; }
+            const om = (bar + oo) / 2; cur = { x: T.px[i] + T.nx[i] * side * om, z: T.pz[i] + T.nz[i] * side * om, lo: T.hy[o.j] - 0.1, hi: yp + 0.03, big: true };
+          } else if (low) {   // another, higher part of the lap just beyond (or over the edge): the wall up to its pavement, the top across the gap
+            const ov = MC.verge(o.j, o.lat < 0 ? -1 : 1), yu = T.hy[o.j] + ov[ov.length - 1][1] + 0.02, gp = gapTo(i, side, e, o, oe) || e;
+            cur = { x, z, lo: yp - 0.05, hi: yu + 0.01, big: true, yu, cx: T.px[i] + T.nx[i] * side * (gp + 0.05), cz: T.pz[i] + T.nz[i] * side * (gp + 0.05) };
+          } else { if (mouth[si][i] > 0.01) { prev = null; continue; }   // (a side street's mouth: its asphalt goes on)
+            const yg = ter(x, z); cur = { x, z, lo: Math.min(yp, yg) - 0.05, hi: Math.max(yp, yg) + 0.03, big: Math.abs(yg - yp) > 0.3 }; }
+          if (prev && (prev.big || cur.big)) { const g = wallCh.get(x, z), A = [prev.x, prev.lo, prev.z], B = [cur.x, cur.lo, cur.z], C = [cur.x, cur.hi, cur.z], D = [prev.x, prev.hi, prev.z];
+            g.quadO(A, B, C, D, WS, [T.px[i] + T.nx[i] * side * (e + 3), yp, T.pz[i] + T.nz[i] * side * (e + 3)]); g.quadO(A, B, C, D, [WS[0] * 0.9, WS[1] * 0.9, WS[2] * 0.9], [T.px[i], yp, T.pz[i]]); }
+          if (prev && prev.yu != null && cur.yu != null) {   // the wall's top across the gap
+            const g = wallCh.get(x, z), CT = [WS[0] * 1.05, WS[1] * 1.05, WS[2] * 1.05];
+            g.quadUp([prev.x, prev.yu + 0.01, prev.z], [cur.x, cur.yu + 0.01, cur.z], [cur.cx, cur.yu + 0.01, cur.cz], [prev.cx, prev.yu + 0.01, prev.cz], [CT, CT, CT, CT]); }
+          prev = cur;
+        }
+      }
+      wallCh.addTo(root, new THREE.MeshLambertMaterial({ vertexColors: true }), true, true);
+      // the distance field: inside (negative) where the road's and the verges' meshes are drawn (their triangles from sample to sample, as built
+      // above); the distance: to the verges' outer edges (not those over or under another part of the lap's road)
+      let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (let i = 0; i < N; i++) { x0 = Math.min(x0, T.px[i]); x1 = Math.max(x1, T.px[i]); z0 = Math.min(z0, T.pz[i]); z1 = Math.max(z1, T.pz[i]); }
+      x0 -= 40; z0 -= 40; x1 += 40; z1 += 40; const NX = Math.ceil((x1 - x0) / RES) + 1, NZ = Math.ceil((z1 - z0) / RES) + 1, sd = new Float32Array(NX * NZ).fill(4), hc = new Float32Array(NX * NZ).fill(1e9);
+      const gx0 = (x) => Math.max(0, Math.ceil((x - x0) / RES)), gx1 = (x) => Math.min(NX - 1, Math.floor((x - x0) / RES)), gz0 = (z) => Math.max(0, Math.ceil((z - z0) / RES)), gz1 = (z) => Math.min(NZ - 1, Math.floor((z - z0) / RES));
+      const fill = (a, b, c) => {   // points [x, z, y]: the cover's lowest height at the texels inside the triangle
+        const dt = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]); if (Math.abs(dt) < 1e-9) return;
+        for (let gz = gz0(Math.min(a[1], b[1], c[1])); gz <= gz1(Math.max(a[1], b[1], c[1])); gz++) for (let gx = gx0(Math.min(a[0], b[0], c[0])); gx <= gx1(Math.max(a[0], b[0], c[0])); gx++) {
+          const x = x0 + gx * RES, z = z0 + gz * RES, u = ((b[0] - x) * (c[1] - z) - (b[1] - z) * (c[0] - x)) / dt, v = ((c[0] - x) * (a[1] - z) - (c[1] - z) * (a[0] - x)) / dt;
+          if (u >= 0 && v >= 0 && u + v <= 1) { const k = gz * NX + gx; hc[k] = Math.min(hc[k], a[2] * u + b[2] * v + c[2] * (1 - u - v)); } } };
+      const P2 = (i, o, h) => [T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, T.hy[i] + h + 0.02], up = (a, b, c) => { if ((b[1] - a[1]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[1] - a[1]) > 0) fill(a, b, c); };
+      const strip = (i, j, oi, oj) => { for (let k = 0; k + 1 < oi.length; k++) { const a = P2(i, ...oi[k]), b = P2(i, ...oi[k + 1]), c = P2(j, ...oj[k + 1]), d = P2(j, ...oj[k]); up(a, b, d); up(b, c, d); } };   // (RB.link's triangles; those turned over where a strip folds on the inside of a tight bend are not drawn)
+      const vedge = [new Float32Array(N), new Float32Array(N)], vh = [new Float32Array(N), new Float32Array(N)];   // (the verge's outer edge, just behind the barrier: offset, height)
+      for (let i = 0; i < N; i++) for (const si of [0, 1]) { const v = MC.verge(i, si ? 1 : -1)[3]; vedge[si][i] = v[0]; vh[si][i] = v[1]; }
+      const Ept = (i, si) => P2(i, (si ? 1 : -1) * vedge[si][i], vh[si][i]), hn = new Float32Array(NX * NZ);   // (hn: the height at the nearest point of an edge)
+      for (let i = 0; i < N; i++) { const j = (i + 1) % N; strip(i, j, [[-w, 0], [w, 0]], [[-w, 0], [w, 0]]);
+        for (const side of [-1, 1]) { const vi = MC.verge(i, side).slice(0, 4).map(v => [side * v[0], v[1]]), vj = MC.verge(j, side).slice(0, 4).map(v => [side * v[0], v[1]]);
+          strip(i, j, side > 0 ? vi : vi.reverse(), side > 0 ? vj : vj.reverse()); } }
+      for (let i = 0; i < N; i++) { const j = (i + 1) % N;
+        for (const si of [0, 1]) { const A = Ept(i, si), B = Ept(j, si), abx = B[0] - A[0], abz = B[1] - A[1], l2 = Math.max(1e-9, abx * abx + abz * abz);
+          const inner = [0, 1, 2, 3, 4].map(q => { const o = other(A[0] + abx * q / 4, A[1] + abz * q / 4, i); return !!o && Math.abs(o.lat) < vedge[o.lat < 0 ? 0 : 1][o.j] - 0.1; });   // (where the edge lies over or under another part of the lap's road, it is no edge of the cover)
+          if (inner.every(Boolean)) continue;
+          for (let gz = gz0(Math.min(A[1], B[1]) - 4); gz <= gz1(Math.max(A[1], B[1]) + 4); gz++) for (let gx = gx0(Math.min(A[0], B[0]) - 4); gx <= gx1(Math.max(A[0], B[0]) + 4); gx++) {
+            const x = x0 + gx * RES, z = z0 + gz * RES, t = clamp(((x - A[0]) * abx + (z - A[1]) * abz) / l2, 0, 1), d = Math.hypot(x - A[0] - abx * t, z - A[1] - abz * t), k = gz * NX + gx;
+            if (d < sd[k] && !inner[Math.round(t * 4)]) { sd[k] = d; hn[k] = A[2] + (B[2] - A[2]) * t; } } } }
+      let h0 = 1e9, h1 = -1e9;
+      for (let k = 0; k < sd.length; k++) { if (hc[k] < 1e8) sd[k] = -sd[k]; else if (sd[k] < 4) hc[k] = hn[k]; else continue;   // (beyond the edge: the nearest edge's height, smooth where the texture is interpolated, and not another part of the lap's)
+        h0 = Math.min(h0, hc[k]); h1 = Math.max(h1, hc[k]); }
+      h0 -= 1; const hr = h1 + 1 - h0, px = new Uint8Array(NX * NZ * 2);
+      for (let k = 0; k < sd.length; k++) { px[k * 2] = Math.round((clamp(sd[k], -4, 4) + 4) / 8 * 255); px[k * 2 + 1] = hc[k] < 1e8 ? clamp(Math.round((hc[k] - h0) / hr * 255), 0, 255) : 255; }
+      const st = ownTex(new THREE.DataTexture(px, NX, NZ, THREE.LuminanceAlphaFormat, THREE.UnsignedByteType)); st.magFilter = st.minFilter = THREE.LinearFilter; st.generateMipmaps = false; st.needsUpdate = true;
+      sdU.value = st; sdB.value.set(x0 - RES / 2, z0 - RES / 2, 1 / (NX * RES), 1 / (NZ * RES)); sdH.value.set(h0, hr);
+    }
     scen.addTo(root, roofM, true, true); roofCh.addTo(root, rfM, true, true);
     addM(texSpons, new THREE.MeshLambertMaterial({ map: tex.sponsorsMC, vertexColors: true }));
     addM(fenceG, new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide }));
@@ -9689,7 +9812,7 @@ const World = (function () {
     // knockable tyre walls at the exits of the slow corners (not in the tunnel), standing on the verge
     out.propR = 110;
     out.propFloor = propFloorTable(null, (i, side) => MC.verge(i, side));
-    out.propStats = roadsideProps(out.props, { exits: 7, apexes: 1, wallEdge: [1.9, 2.5], stacks: [5, 8], rows2: 0.3, floor: out.propFloor, skip: (i, side, x, z) => inTun(i, 30) || excluded(x, z) });
+    out.propStats = roadsideProps(out.props, { exits: 7, apexes: 0, wallEdge: [1.9, 2.5], atBarrier: true, stacks: [5, 8], rows2: 0.3, floor: out.propFloor, skip: (i, side, x, z) => inTun(i, 30) || excluded(x, z) });   // (the tyre walls against the barriers, as in Monaco: not out on the run-off)
     crowdFinish(CR, root, out);
     out.stats = { tiles: nTiles, buildings: nBld, streets: nStreets, junctions: nJunc, shops: nShops, trees: nTrees, yachts: nYachts, stands: nStands, fans: nFans };   // (read by the tests)
     return out;

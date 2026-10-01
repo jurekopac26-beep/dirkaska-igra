@@ -162,42 +162,42 @@
  "monaco/cs": {
   "finished": 13,
   "cars": 13,
-  "winner": 205.66,
+  "winner": 205.02,
   "spins": 0,
-  "walls": 5,
+  "walls": 4,
   "rescues": 0,
   "nan": false,
-  "digest": "385af9801c7a08e47bc50ac7"
+  "digest": "b80fd6b8a84560d3409c5263"
  },
  "monaco/cs/rain": {
   "finished": 13,
   "cars": 13,
-  "winner": 219.63,
+  "winner": 219.37,
   "spins": 0,
-  "walls": 2,
+  "walls": 4,
   "rescues": 0,
   "nan": false,
-  "digest": "3582827ec050f90379c8f175"
+  "digest": "236fba8f392722fc6b80b739"
  },
  "monaco/arcade": {
   "finished": 13,
   "cars": 13,
-  "winner": 215.21,
+  "winner": 215.28,
   "spins": 0,
-  "walls": 9,
+  "walls": 5,
   "rescues": 0,
   "nan": false,
-  "digest": "04229e0902c6fb26bc68b475"
+  "digest": "7112b9813d39293adf71bd9a"
  },
  "monaco/arcade/rain": {
   "finished": 13,
   "cars": 13,
-  "winner": 228.18,
+  "winner": 229.53,
   "spins": 0,
-  "walls": 0,
+  "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "d6025efd674ae5e4b84348a4"
+  "digest": "452848f5a34e28a90c33f634"
  },
  "gozd/cs": {
   "finished": 13,

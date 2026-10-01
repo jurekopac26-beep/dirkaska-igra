@@ -448,35 +448,35 @@
   }
  },
  "monaco/race/cs": {
-  "digest": "45fb186fa6cac1f83bcffd91",
+  "digest": "4ef88d7a4b71e7a9da375349",
   "lead": 1913.3,
   "car0": [
-   623.87,
-   -274.06
+   607.49,
+   -263.41
   ],
   "cover": {
-   "dmg": 0.16,
+   "dmg": 0.18,
    "loose": 2,
    "rescues": 0,
    "repairs": 0
   }
  },
  "monaco/race/arcade": {
-  "digest": "31a45e07ff399bc2a1792d3e",
-  "lead": 1739.3,
+  "digest": "8913dd5c4afaeecec8abb812",
+  "lead": 1739.5,
   "car0": [
-   702.11,
-   -377.14
+   685.66,
+   -351.41
   ],
   "cover": {
-   "dmg": 0.14,
-   "loose": 1,
+   "dmg": 0.1,
+   "loose": 0,
    "rescues": 0,
    "repairs": 0
   }
  },
  "monaco/demo/cs": {
-  "digest": "d2239655ec79cdfb470805b2",
+  "digest": "fdaceaae986eca59db5fdb52",
   "lead": 2014,
   "car0": [
    337.99,
@@ -490,11 +490,11 @@
   }
  },
  "monaco/demo/arcade": {
-  "digest": "556888b201c48465e645f8ec",
-  "lead": 1866.9,
+  "digest": "d33c34a81cf49a5ec5af14db",
+  "lead": 1866.8,
   "car0": [
-   474.63,
-   -189.24
+   474.75,
+   -189.28
   ],
   "cover": {
    "dmg": 0,
@@ -504,7 +504,7 @@
   }
  },
  "monaco/upg/cs": {
-  "digest": "3d1adbf652373c14f364f111",
+  "digest": "04a78ec57cfe448e3b732f53",
   "lead": 2014.3,
   "car0": [
    456.41,
@@ -518,11 +518,11 @@
   }
  },
  "monaco/upg/arcade": {
-  "digest": "43da9c6dca8d5c0684f3cba7",
-  "lead": 1866.8,
+  "digest": "ad827838b4c32f3c66abbfc6",
+  "lead": 1866.5,
   "car0": [
-   557.28,
-   -224.3
+   555.65,
+   -224.62
   ],
   "cover": {
    "dmg": 0,
@@ -532,29 +532,29 @@
   }
  },
  "monaco/crash/cs": {
-  "digest": "6fb44e0f0db32d9c97f13932",
+  "digest": "74a56fc321026e7fe1aa36fd",
   "lead": 1933.4,
   "car0": [
-   580.5,
-   -243.96
+   580.43,
+   -243.91
   ],
   "cover": {
    "dmg": 1,
-   "loose": 12,
+   "loose": 11,
    "rescues": 0,
    "repairs": 0
   }
  },
  "monaco/crash/arcade": {
-  "digest": "286d9bb381302d6393011d2b",
+  "digest": "3e0b40afb68a90cebccfca90",
   "lead": 1742.6,
   "car0": [
-   699.98,
-   -378.8
+   694.09,
+   -366.86
   ],
   "cover": {
    "dmg": 1,
-   "loose": 3,
+   "loose": 2,
    "rescues": 0,
    "repairs": 0
   }

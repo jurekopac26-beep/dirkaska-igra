@@ -67,19 +67,19 @@
   }
  },
  "monaco": {
-  "meshes": 293,
-  "verts": 1376352,
-  "instances": 2065,
-  "props": 71,
-  "crowd": 2065,
-  "world": "7c33e1de",
-  "propsHash": "746ca96b",
-  "floor": "8c5832cb/6636",
+  "meshes": 303,
+  "verts": 1399431,
+  "instances": 1987,
+  "props": 37,
+  "crowd": 1987,
+  "world": "4c436cb5",
+  "propsHash": "c499adad",
+  "floor": "62d14c53/6636",
   "groups": {
-   "-:MeshLambertMaterial": "8a1cefc3",
-   "-:MeshPhongMaterial": "ce6b9ca4",
-   "-:MeshBasicMaterial": "21507875",
-   "crowd:MeshLambertMaterial": "ff88f2c6",
+   "-:MeshLambertMaterial": "d54c25a2",
+   "-:MeshPhongMaterial": "1e3ace46",
+   "-:MeshBasicMaterial": "1b5a23ab",
+   "crowd:MeshLambertMaterial": "36d0757d",
    "tyremarks:MeshBasicMaterial": "72e0c8ff"
   }
  },
