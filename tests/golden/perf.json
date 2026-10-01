@@ -56,11 +56,11 @@
   "jsMs": 0.81
  },
  "pikes": {
-  "calls": 84,
-  "maxCalls": 92,
-  "kverts": 261,
-  "maxKverts": 343,
-  "jsMs": 0.27
+  "calls": 86,
+  "maxCalls": 95,
+  "kverts": 271,
+  "maxKverts": 357,
+  "jsMs": 0.34
  },
  "ouninpohja": {
   "calls": 164,
@@ -105,11 +105,11 @@
   "jsMs": 0.78
  },
  "pikesg": {
-  "calls": 81,
-  "maxCalls": 97,
-  "kverts": 257,
-  "maxKverts": 297,
-  "jsMs": 0.22
+  "calls": 84,
+  "maxCalls": 101,
+  "kverts": 270,
+  "maxKverts": 310,
+  "jsMs": 0.32
  },
  "caracoles": {
   "calls": 216,
