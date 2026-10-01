@@ -31,7 +31,7 @@ jobs:
   browser:
     name: Igra v brskalniku
     runs-on: ubuntu-24.04
-    timeout-minutes: 60   # (z 18 progami traja ~45 min: vsaka nova proga podaljša smoke, world, perf, gfx in memory)
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5

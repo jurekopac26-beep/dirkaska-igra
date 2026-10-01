@@ -84,7 +84,7 @@ try {
   }
   const moved = await A.page.evaluate(() => window.__game.race.remote.dist);
   // the race keeps up with the shared clock also when frames are slow (here 100-300 ms: without catching up it would run at
-  // 40-80 % of the real time); only a frame over 0.25 s loses time (here a few per cent)
+  // 40-80 % of the real time); only a frame over 0.5 s loses time
   const lag = (p) => p.evaluate(() => { const g = window.__game, n = g.net.race; return { lag: (n.frameT - n.goAt) / 1000 - g.race.time, t: g.race.time }; });
   const lA = await lag(A.page), lB = await lag(B.page);
   T.check('race: on both phones the race keeps up with the shared clock', [lA, lB].every(l => l.lag < Math.max(1, l.t * 0.15)), `behind by ${lA.lag.toFixed(2)} s after ${lA.t.toFixed(0)} s (host), ${lB.lag.toFixed(2)} s after ${lB.t.toFixed(0)} s (friend)`);
