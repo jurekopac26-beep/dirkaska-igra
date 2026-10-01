@@ -31,20 +31,6 @@ try {
     const inside = samples.filter(x => x.inT), outside = samples.filter(x => x.s < x.s0 - 10 || x.s > x.s1 + 10);   // (its mouths: a few metres either way)
     T.check('the tunnel rings while the car is in it, and only then', inside.length >= 2 && inside.every(x => x.lv.tunnel > 0.5) && outside.every(x => x.lv.tunnel < 0.2), JSON.stringify(samples.map(x => [Math.round(x.s), +x.lv.tunnel.toFixed(2)])));
     T.check('the crowd heard near the spectators', samples.some(x => x.lv.stands > 0.2 && x.lv.standsGain > 0.02), JSON.stringify(samples.map(x => +x.lv.stands.toFixed(2))));
-    // 3. the run from the police (Vršič): the police radio's static under each line it says (the squelch opens, a bed of static, the roger
-    //    beep), quiet between the lines
-    await page.evaluate(() => { window.__game.S.mode = 'police'; });
-    await startTrack(page, 'vrsic');
-    const rad = await page.evaluate(async () => {
-      const g = window.__game, out = { on: [], off: [], caps: [] };
-      for (let k = 0; k < 150 && (out.on.length < 3 || out.off.length < 3); k++) {   // (real time: the radio speaks at its own pace)
-        await new Promise(r => setTimeout(r, 100)); const c = g.radio.cur, lv = Sfx.levels().radio;
-        if (c && /^(OKC|KG)/.test(c)) { out.on.push(+lv.toFixed(3)); out.caps.push(c); } else if (!c && !g.radio.cap) out.off.push(+lv.toFixed(3));
-      }
-      return out;
-    });
-    T.check('the police radio: static under a line it says, none between the lines', rad.on.length >= 3 && rad.on.filter(v => v > 0.012).length >= 2 && rad.off.length >= 1 && rad.off.some(v => v < 0.004),
-      JSON.stringify({ on: rad.on.slice(0, 8), off: rad.off.slice(0, 8), said: [...new Set(rad.caps)].slice(0, 2) }));
   }
   // 3. the engines (the race at Monaco on autopilot, the rally car BURJA R7): its own type (a turbo four with anti-lag), the gears changed with
   // a clack, pops on the overrun and the blow-off; the nearest rivals' engines by their cars, with the Doppler shift as they pass
@@ -68,6 +54,20 @@ try {
     await startTrack(page, 'jezero');
     const f = await page.evaluate(() => new Promise(res => { const g = window.__game; g.sim(4, true); requestAnimationFrame(() => requestAnimationFrame(() => { g.pause(); const P = g.race.player; res({ e: Sfx.engines().player, r: P.rpm / P.m.redline }); })); }));
     T.check('the formula: a V10 (ten firings a cycle: several hundred Hz)', f.e.kind === 'v10' && f.e.f * 10 > 300, JSON.stringify(f));
+    // 4. the run from the police (Vršič, last: the race it starts is the police's, no rivals): the police radio's static under each line it says (the squelch opens, a bed of static, the roger
+    //    beep), quiet between the lines
+    await page.evaluate(() => { window.__game.S.mode = 'police'; });
+    await startTrack(page, 'vrsic');
+    const rad = await page.evaluate(async () => {
+      const g = window.__game, out = { on: [], off: [], caps: [] };
+      for (let k = 0; k < 150 && (out.on.length < 3 || out.off.length < 3); k++) {   // (real time: the radio speaks at its own pace)
+        await new Promise(r => setTimeout(r, 100)); const c = g.radio.cur, lv = Sfx.levels().radio;
+        if (c && /^(OKC|KG)/.test(c)) { out.on.push(+lv.toFixed(3)); out.caps.push(c); } else if (!c && !g.radio.cap) out.off.push(+lv.toFixed(3));
+      }
+      return out;
+    });
+    T.check('the police radio: static under a line it says, none between the lines', rad.on.length >= 3 && rad.on.filter(v => v > 0.012).length >= 2 && rad.off.length >= 1 && rad.off.some(v => v < 0.004),
+      JSON.stringify({ on: rad.on.slice(0, 8), off: rad.off.slice(0, 8), said: [...new Set(rad.caps)].slice(0, 2) }));
   }
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {
