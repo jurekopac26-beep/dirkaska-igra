@@ -21,6 +21,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     id: 'montvernier', name: 'Lacets de Montvernier', theme: 'montvernier', open: true, modes: ['race', 'tt'], laps: 1, halfWidth: 6,
     desc: 'Lacets de Montvernier v Savoji: 18 serpentin, naloženih ena nad drugo na skalnem pobočju nad dolino Maurienne, od Pontamafreyja do vasi Montvernier na 787 m. Kot prava, le cesta je širša (12 m), zato so kraki razmaknjeni in lasnice odprte. Dirka s tekmeci ali vzpon proti uri.',
+    en: { name: 'Lacets de Montvernier', desc: 'The Lacets de Montvernier in Savoie: 18 hairpins stacked one above the other on a rocky cliff above the Maurienne valley, from Pontamafrey up to the village of Montvernier at 787 m. As the real road, only wider (12 m), so the legs are spread apart and the hairpins opened. A race against the rivals or a climb against the clock.' },
     realKm: 3.4, alt: [501, 787],
     start: [0, 0], finish: [434.9,-1037.8], cps: [[-270.5,-532.1],[-193.4,-684.4],[-101.9,-837.0],[129.1,-981.5]],
     runoff: 0.27, inner: 2.2, side: 2.4, noCurbs: true, noGravel: true, puddles: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 14,

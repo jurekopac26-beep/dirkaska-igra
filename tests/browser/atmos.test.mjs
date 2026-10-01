@@ -18,7 +18,7 @@ try {
     const W = Render.world; W.root.traverse(o => {
       const a = o.geometry && o.geometry.attributes && o.geometry.attributes.color; if (a && n < 400000) { const d = a.array, is = a.itemSize; for (let i = 0; i < d.length && n < 400000; i += is * 7) { g += d[i + 1] - Math.max(d[i], d[i + 2]); lum += (d[i] + d[i + 1] + d[i + 2]) / 3; n++; } }
       for (const m of o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []) if (m.userData && m.map && m.map === m.userData.snowMap) snowMaps++; });
-    Render.scene.traverse(o => { if (o.isInstancedMesh && o.material && o.material.blending === THREE.AdditiveBlending) pools = o.count; if (o.isMesh && o.material && o.material.map && o.material.blending === THREE.AdditiveBlending && !o.isInstancedMesh && o.parent && o.parent.type === 'Group') { beams++; if (o.visible) beamOn++; } });
+    Render.scene.traverse(o => { if (o.isInstancedMesh && o.name !== 'streaks' && o.material && o.material.blending === THREE.AdditiveBlending) pools = o.count; if (o.isMesh && o.material && o.material.map && o.material.blending === THREE.AdditiveBlending && !o.isInstancedMesh && o.parent && o.parent.type === 'Group') { beams++; if (o.visible) beamOn++; } });
     return { green: +(g / Math.max(1, n)).toFixed(4), lum: +(lum / Math.max(1, n)).toFixed(4), snowMaps, pools, beams, beamOn, fog: Render.scene.fog.color.getHexString(), atmos: Render.atmos, emissive: Render.scene && (() => { let e = 0; Render.scene.traverse(o => { if (o.isMesh && o.material && o.material.emissive && o.material.vertexColors && o.material.envMap) e = Math.max(e, o.material.emissive.r); }); return e; })() };
   });
 
@@ -28,7 +28,7 @@ try {
   const s0 = await look();
   await pick('season', 'autumn'); await page.waitForTimeout(300);
   const s1 = await look();
-  T.check('the rows: Letni čas (Poletje, Jesen, Zima) and Čas dneva (Dan, Večer, Noč); autumn at once: the plants less green', rows[0] === 'Poletje*,Jesen,Zima' && rows[1] === 'Dan*,Večer,Noč' && s1.atmos.season === 'autumn' && s1.green < s0.green - 0.01,
+  T.check('the rows: Letni čas (Poletje, Jesen, Zima) and Čas dneva (Jutro, Dan, Večer, Noč); autumn at once: the plants less green', rows[0] === 'Poletje*,Jesen,Zima' && rows[1] === 'Jutro,Dan*,Večer,Noč' && s1.atmos.season === 'autumn' && s1.green < s0.green - 0.01,
     JSON.stringify({ rows, green: [s0.green, s1.green] }));
   await pick('season', 'winter'); await page.waitForTimeout(300);
   const s2 = await look();
