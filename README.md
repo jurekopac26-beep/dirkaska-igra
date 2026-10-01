@@ -139,7 +139,7 @@ Na naslovnem zaslonu tapni **Prvenstvo** in izberi serijo dirk: **Domači pokal*
 Gumb **Kariera** na naslovnem zaslonu odpre kariero: z dirkami služiš denar, z njim kupuješ avte in nadgradnje. **Začni kariero** ti da 10.000 € in avto PICO TURBO. Dokler je kariera vklopljena, gumb na naslovnem zaslonu kaže, koliko denarja imaš (npr. »Kariera · 12.300 €«).
 
 - **Nagrade:** po vsaki dirki (tudi v prvenstvu) dobiš denar glede na mesto (zmagovalec 6.000 €, zadnji 300 €). Daljša dirka prinese več (dirka na 2 km 0,6-krat toliko, na 8 km enkrat, največ 2,5-krat), težja težavnost tudi (lahka 0,7-krat, težka 1,4-krat). Za najhitrejši krog dirke dobiš še 500 €, za prvo štartno mesto v kvalifikacijah 1.000 €. Naslov prvaka prinese 20.000 €, 2. mesto v prvenstvu 10.000 € in 3. mesto 6.000 € (pomnoženo s težavnostjo). Na kronometrih dobiš 5.000 €, 3.000 € ali 1.500 € za zlato, srebrno ali bronasto medaljo, 2.000 € za osebni rekord, sicer 500 €. Nagrada piše na zaslonu z rezultati.
-- **Avti:** v izbiri avta imajo avti, ki jih še nimaš, ceno (PEUGEOT 206 20.000 €, KAZE RS 30.000 €, STREGA MR 45.000 €, VORTEX 4WD 50.000 €, BURJA R7 60.000 €), gumb Naprej pa postane **Kupi**. Z avtom, ki ga nimaš, ne moreš dirkati.
+- **Avti:** v izbiri avta imajo avti, ki jih še nimaš, ceno (PEUGEOT 206 20.000 €, KAZE RS 30.000 €, VIHAR V8 40.000 €, STREGA MR 45.000 €, VORTEX 4WD 50.000 €, SAMUM 4x4 55.000 €, BURJA R7 60.000 €, STRELA EV 75.000 €, FORMULA ORKAN 90.000 €, TAIFUN LM 110.000 €), gumb Naprej pa postane **Kupi**. Z avtom, ki ga nimaš, ne moreš dirkati.
 - **Nadgradnje:** vsaka stopnja stane 4.000 €, 7.000 € ali 12.000 € (cena je napisana na gumbu; preskočene stopnje se plačajo zraven). Kupljenih delov ne moreš prodati.
 - **Izklopi kariero** te vrne v prosto igro z vsemi avti in brezplačnimi nadgradnjami (te so ločene od kariere). Kariera ostane shranjena in jo kasneje nadaljuješ. **Nova kariera** (dvakrat tapni) začne znova.
 
@@ -236,8 +236,8 @@ Na vseh progah čez pokrajino počasi drsijo sence oblakov (v dežju jih ni, ker
 - **Boksi in izletne cone:** v boksih so med mesti ekip narisane bele črte, zunaj ovinkov so na travi in asfaltnih izletnih conah narisani napisi sponzorjev (ne na Nordschleife, v Ljubljani in Monaku). V dežju je temnejša tudi zglajena sled po idealni liniji.
 - **Trava in pesek:** ob robu ceste in ob ograjah rastejo šopi trave in marjetice, ki se zibljejo v vetru (grafika Visoko, samo blizu kamere); jeseni so rumenkasti in brez marjetic, pozimi jih ni. Za robniki na izhodih iz ovinkov (in na notranji strani ob vrhu ovinka) je trava zlizana do rjave zemlje. V peščenih conah so kamenčki in brazde avtov, ki so zapeljali s proge, kjer se cona začne, je pesek raztresen po robu ceste.
 - **Sledi koles:** sledi zaviranja in drsenja ostanejo na asfaltu do konca dirke in počasi bledijo. Na travi in v pesku kolesa puščajo sledi tudi, kadar avto ne drsi (v dežju blatne). Ko zapelješ s trave ali peska nazaj na cesto, kolesa še nekaj metrov trosijo zemljo ali kamenčke.
-- **Podrobnosti avtov** (oblika ostane ista): platišča s petimi dvojnimi prečkami in maticami, za njimi zavorni diski in rdeče čeljusti (na belih in reli avtih rumene), žarometi s stekli in odsevniki, reže med vrati in pokrovi, stekla ogledal, izpušne cevi, na reli avtih blatniki v barvi avta, registrske tablice (LJ, MB, KR, CE, NM, KP, PO, MS).
-- **Plameni in žareče zavore:** ko pri visokih obratih popustiš plin (in včasih ob prestavljanju), iz izpuha pokajo plameni. Zvečer in ponoči zavorni diski po močnem zaviranju žarijo oranžno in se počasi ohladijo. Pikes Peak ima svoje (glej zgoraj).
+- **Podrobnosti avtov** (oblika ostane ista): platišča s petimi dvojnimi prečkami in maticami, za njimi zavorni diski in rdeče čeljusti (na belih in reli avtih rumene), žarometi s stekli in odsevniki, reže med vrati in pokrovi, stekla ogledal, izpušne cevi, na reli avtih blatniki v barvi avta, registrske tablice (LJ, MB, KR, CE, NM, KP, PO, MS; kromirani odbijači VIHARja V8 so brez njih).
+- **Plameni in žareče zavore:** ko pri visokih obratih popustiš plin (in včasih ob prestavljanju), iz izpuha pokajo plameni (električna STRELA EV jih nima). Zvečer in ponoči zavorni diski po močnem zaviranju žarijo oranžno in se počasi ohladijo. Pikes Peak ima svoje (glej zgoraj).
 - **Dirkališča na dan dirke:** sedeži na tribunah so po sektorjih v barvah, ob počasnejših ovinkih stojijo odri s TV kamerami in snemalci, ob ciljni črti je steklena kabina komentatorjev (na strehi glavne tribune ali na nogah), ob štartu vihrajo zastave na drogovih, velik zaslon kaže dirko. Zvečer in ponoči svetijo okna hiš in kabin ter reklamni panoji.
 - **Navijači:** nekateri nosijo kape, v dežju jih veliko odpre dežnike, ponoči pa jih nekaj fotografira s telefoni (bliskavice), prav tako ob podelitvi pokalov.
 - **Obzorje** (kokpit, TV kamere posnetka, foto način): v daljavi vsake proge so hribi, gore, gozd, toskanski griči, mesto ali morje (Riviera, Monako), v plasteh, ki so dlje bolj modrikaste; pozimi so zasneženi, ponoči svetijo luči naselij. V dežju in megli se skrije.
@@ -275,6 +275,40 @@ V izbiri avta je **FORMULA ORKAN**, dirkalnik formule z odprtimi kolesi, sprednj
 - Ob trkih odletijo sprednje krilo, nos, zadnje krilo, pokrov motorja (pod njim se vidi motor), ogledali in stranski deflektorji. Brez sprednjega krila izgubi pol pritiska na cesto, brez zadnjega še 40 %; mehaniki v boksih avto popravijo.
 - Tekmeci v formulah vozijo kot formule: hitreje skozi hitre ovinke in pozneje zavirajo, sledijo z večjo razdaljo, prehitevajo širše in se bolj držijo stran od roba proge; brez krila zapeljejo v hitre ovinke počasneje.
 - V conah DRS na Red Bull Ringu se loputa zadnjega krila res odpre. Zadaj ima rdečo luč kot v formuli 1: v dežju sveti, med zaviranjem utripa. V dežju vozi na gumah za moker asfalt (zelen pas na boku gume), sicer na mehkih (rdeč pas).
+
+## Prototip TAIFUN LM
+
+V izbiri avta je **TAIFUN LM**, prototip za vzdržljivostne dirke, kot jih vozijo na 24 urah Le Mansa: nizek, širok in dolg, z zaprto kabino pod steklenim pokrovom, blatniki z izboklinami nad kolesi (kolesa se vidijo pod njimi), plavutjo na pokrovu motorja in velikim zadnjim krilom na »labodjih vratovih«. Voziš ga lahko na vseh progah. Kot pri formuli vozijo tudi vsi tekmeci prototipe, vsak v svoji barvi in s svojo številko.
+
+- 762 KM, 960 kg, sedem prestav. Od 0 do 100 km/h pospeši v 2,7 s, doseže ~295 km/h: na ravninah je najhitrejši avto v igri (formula ~280 km/h), ker ima manj zračnega upora.
+- Krila ga pri hitrosti pritisnejo ob cesto, a manj kot formulo (pri 150 km/h ~3,1 g, formula ~3,2 g), zato je formula hitrejša v hitrih ovinkih. Zavore so iz ogljikovih vlaken: s 100 km/h se ustavi na ~20 m.
+- Gume so gladke (slik): na makadamu, travi in produ drsi še bolj kot formula.
+- Ob trkih odletijo sprednji spojler s kanardi (z njim pol pritiska na cesto), nos, zadnje krilo (še 40 %), pokrov motorja s plavutjo (pod njim se vidi motor), ogledali in rešetki nad sprednjima kolesoma. Mehaniki v boksih avto popravijo in zamenjajo vsa štiri kolesa.
+- V kokpitu sediš nizko pod steklenim pokrovom, pred tabo sta izboklini blatnikov z ogledali, volan pa je dirkalni, z zaslonom in lučkami za prestavljanje kot v formuli. V conah DRS se odpre loputa zadnjega krila.
+
+## Muscle car VIHAR V8
+
+**VIHAR V8** je ameriški »muscle car« iz leta 1970: dolg pokrov motorja z zajemalko zraka, streha, ki se v loku spusti do kratkega »račjega repa« (fastback), žaluzije na zadnjem steklu, dvojni dirkalni trakovi od nosu do repa (črni na svetli barvi, beli na temni), okrogli žarometi v črni maski, trodelne zadnje luči, dvojni izpušni cevi, kromirani odbijači in kromirana platišča (zadaj širša).
+
+- Zadnji pogon, 517 KM, 1540 kg. Na ravnini ga je težko ujeti (~239 km/h, od 0 do 200 km/h je 1,5 s hitrejši od KAZE RS), a ima najmanj oprijema med cestnimi avti.
+- V ovinkih drsi bolj kot drugi avti, pri polnem plinu se mu kolesa vrtijo v prazno do ~120 km/h in mu zanašajo zadek: kralj drifta.
+- Zvok: globok V8, ki v prostem teku neenakomerno »brbota«.
+
+## Električni avto STRELA EV
+
+**STRELA EV** je električni hiperšportnik: nizek in širok, s steklenim pokrovom kabine, svetlobnim trakom čez ves nos in ves rep, karbonskim spodnjim delom s cian črto, zračniki za vrati in na pokrovu, spojlerjem in difuzorjem; platišča imajo cian lopatice.
+
+- Štirje elektromotorji (pogon na vsa kolesa) in ena prestava (namesto prestave piše D), 598 KM, 1720 kg (težke baterije).
+- Najhitrejši pospešek med cestnimi avti (od 0 do 100 km/h v 2,5 s), ~252 km/h in največ oprijema med cestnimi avti; kolesa se mu skoraj ne vrtijo v prazno. Na makadamu ima manj oprijema kot relijski avto.
+- Zvok: namesto motorja tiho cviljenje elektromotorjev, ki je tem višje, čim hitreje voziš; na štartu ne tuli. V kokpitu ima namesto merilnika vrtljajev merilnik moči (kW).
+
+## Terenski tovornjak SAMUM 4x4
+
+**SAMUM 4x4** je dirkalni tovornjak za puščavske relije (»trophy truck«): visoka kabina, dolg pokrov motorja, velika kolesa z grobim profilom pod črnimi blatniki, rezervna guma v kesonu pod varnostno kletko, luči na strehi, dihalnik (snorkel) ob vetrobranskem steklu, vzmetenje z dolgim hodom.
+
+- Pogon na vsa kolesa, 571 KM, 1850 kg. Na asfaltu je počasen: ~203 km/h in malo oprijema (gume za teren).
+- Na makadamu, travi in produ ima več oprijema kot kateri koli cestni avto, podlaga pa ga zavira manj: na makadamu pospeši od 0 do 100 km/h v 3,0 s (relijski avto v 4,1 s), po travi pelje ~170 km/h (relijski avto ~143 km/h). Najbolj pride do izraza na Ouninpohji in Gorskem reliju.
+- Po skokih mehko pristane: poškoduje ga šele trši pristanek kot druge avte in pri tem izgubi manj hitrosti. Karoserija se v ovinkih in pri zaviranju bolj nagne. V kokpitu ima varnostno kletko kot relijski avto.
 
 ## Dirka s prijateljem
 
