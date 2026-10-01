@@ -128,19 +128,38 @@ const Tex = (function () {
   }
 
   function crowd() {
-    const c = cv(256, 128), x = c.getContext('2d');
-    x.fillStyle = '#3b3f48'; x.fillRect(0, 0, 256, 128);
-    const cols = ['#e63b2e', '#f5d33a', '#2f7fe0', '#f2f2f2', '#39b54a', '#ff8a1c', '#e85aa8', '#7d4bd6', '#111', '#1bbfd6'];
-    for (let row = 0; row < 16; row++) {
-      x.fillStyle = 'rgba(0,0,0,0.25)'; x.fillRect(0, row * 8 + 6, 256, 2);
-      for (let k = 0; k < 64; k++) {
-        if (R() < 0.12) continue;
-        const px = k * 4 + (R() - 0.5) * 1.2, py = row * 8 + 1;
-        x.fillStyle = cols[Math.floor(R() * cols.length)]; x.fillRect(px, py + 2, 3, 4);
-        x.fillStyle = R() < 0.5 ? '#f1c7a1' : '#a86f45'; x.fillRect(px + 0.5, py, 2, 2);
+    for (let row = 0; row < 16; row++) for (let k = 0; k < 64; k++) { if (R() < 0.12) continue; R(); R(); R(); }   // (the draws of the picture this one replaced: the textures made after it stay as they were)
+    return crowdPic(['#e63b2e', '#f5d33a', '#2f7fe0', '#f2f2f2', '#39b54a', '#ff8a1c', '#e85aa8', '#7d4bd6', '#1a1b1f', '#1bbfd6'], 311);
+  }
+  // a seated crowd for the grandstand tiers, seen from the front and above: 8 rows of 32 people, 16 x 32 px each (a row for a tier of the
+  // stands, 32 people across 12 m: the stands' shader maps each tier on a row, see crowdStands in World). A head with its hair, long hair
+  // or a cap, a neck, a shirt catching the light on the shoulders, the arms along it with the hands on the lap, the legs; now and then an
+  // empty seat, a pair of arms in the air, a scarf held up. cols: the shirts
+  function crowdPic(cols, seed) {
+    const W = 512, H = 256, c = cv(W, H), x = c.getContext('2d'), r = Core.rng(seed), pick = (L) => L[Math.floor(r() * L.length)], f = (col, X, Y, w, h) => { x.fillStyle = col; x.fillRect(X, Y, w, h); };
+    const SKIN = ['#f1c7a1', '#e6b48e', '#c99169', '#9a6443', '#5e3b26'], HAIR = ['#1c1410', '#3b2518', '#6b4524', '#b58a4c', '#dccaa6', '#8a8580'], LEG = ['#2b3346', '#1c1d22', '#4a5570', '#6e604c', '#39414f'], SEAT = ['#2f5fb0', '#b8322c', '#d9d5cb', '#2a8a4c'];
+    f('#3a3e47', 0, 0, W, H);
+    for (let row = 0; row < 8; row++) {
+      const y0 = row * 32;
+      f('#23262d', 0, y0, W, 3); f('#4a4f59', 0, y0 + 27, W, 5);   // the step behind, the seat's front edge
+      for (let k = 0; k < 32; k++) {
+        const X = k * 16 + Math.round((r() - 0.5) * 2), t = r();
+        if (t < 0.07) { const sc = pick(SEAT); f(sc, X + 2, y0 + 10, 12, 12); f(sc, X + 2, y0 + 22, 12, 5); f('rgba(0,0,0,0.3)', X + 2, y0 + 21, 12, 1); continue; }   // an empty seat
+        const shirt = pick(cols), skin = SKIN[Math.floor(r() * r() * SKIN.length)], leg = pick(LEG), dy = Math.round(r() * 2), hr = r(), a = r(), sleeve = r() < 0.5 ? shirt : skin;   // (dy: some sit up taller)
+        f(leg, X + 3, y0 + 23, 4, 7); f(leg, X + 9, y0 + 23, 4, 7); f('#1a1a1e', X + 3, y0 + 29, 4, 2); f('#1a1a1e', X + 9, y0 + 29, 4, 2);   // the legs, the shoes
+        f(shirt, X + 3, y0 + 13 - dy, 10, 11 + dy); f(shirt, X + 2, y0 + 14 - dy, 12, 9 + dy);   // the shirt (rounded shoulders)
+        f('rgba(255,255,255,0.22)', X + 3, y0 + 13 - dy, 10, 1); f('rgba(0,0,0,0.25)', X + 3, y0 + 22, 10, 2);
+        if (a < 0.07) { f(skin, X + 1, y0 + 1 - dy, 2, 14); f(skin, X + 13, y0 + 1 - dy, 2, 14); }   // arms up
+        else if (a < 0.1) { const sf = pick(cols); f(sf, X - 2, y0 + 1 - dy, 20, 3); f('rgba(255,255,255,0.35)', X - 2, y0 + 2 - dy, 20, 1); f(skin, X + 1, y0 + 4 - dy, 2, 11); f(skin, X + 13, y0 + 4 - dy, 2, 11); }   // a scarf held up
+        else { f(sleeve, X + 1, y0 + 15 - dy, 2, 7 + dy); f(sleeve, X + 13, y0 + 15 - dy, 2, 7 + dy); f(skin, X + 4, y0 + 22, 3, 2); f(skin, X + 9, y0 + 22, 3, 2); }   // the arms down, the hands on the lap
+        f(skin, X + 6, y0 + 11 - dy, 4, 3);   // the neck
+        f(skin, X + 4, y0 + 4 - dy, 8, 8); f(skin, X + 5, y0 + 3 - dy, 6, 10);   // the head
+        if (hr < 0.2) { const cc = pick(cols); f(cc, X + 4, y0 + 2 - dy, 8, 3); f(cc, X + 3, y0 + 5 - dy, 10, 1); }   // a cap
+        else if (hr < 0.93) { const hc = pick(HAIR); f(hc, X + 4, y0 + 3 - dy, 8, 3); f(hc, X + 5, y0 + 2 - dy, 6, 1); if (hr > 0.72) { f(hc, X + 3, y0 + 5 - dy, 2, 8); f(hc, X + 11, y0 + 5 - dy, 2, 8); } }   // hair (some long)
+        f('rgba(0,0,0,0.18)', X + 5, y0 + 11 - dy, 6, 1);   // (the chin's shadow)
       }
     }
-    return mk(c, true);
+    const t = mk(c, true); t.crowdPic = true; return t;
   }
 
   // the sponsors on the boards: all invented (no real brand, no name of a real person or place: check a new one before adding it)
@@ -553,6 +572,6 @@ const Tex = (function () {
     cache.wear = wear();
     return cache;
   }
-  return { all, number, SPONSORS };
+  return { all, number, crowdPic, SPONSORS };
 })();
 

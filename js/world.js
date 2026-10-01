@@ -3097,7 +3097,7 @@ const World = (function () {
     addTex(texFence, THEME === 'italia' ? new THREE.MeshBasicMaterial({ map: tex.fenceFO, color: 0xb4ab96, vertexColors: true, transparent: true, depthWrite: false, alphaTest: 0.02, side: THREE.DoubleSide })   // (Toskana: the light warm-grey chain-link of the reference)
       : CSX ? new THREE.MeshLambertMaterial({ map: tex.fenceFO, vertexColors: true, transparent: true, depthWrite: false, alphaTest: 0.02, side: THREE.DoubleSide })
       : new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide, transparent: false }), false);
-    addTex(texCrowd, new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), false);
+    addTex(texCrowd, THEME === 'monaco' ? crowdUV(new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), 0.5, 0.25, 0.25) : crowdUV(new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), CSX ? 10 / 12 : 1, 0.14, 0.13), false);   // (Monaco's stands: a tile a 6 m, a tier a quarter; the CS circuits' a 10 m)
     crowdFinish(CR, root, out);   // the instanced spectators and their ground strips
     return finish(out, tex);
   }
@@ -4373,7 +4373,42 @@ const World = (function () {
     const n1 = tu.addTo(grp, false); grp.traverse(m => { if (m.isInstancedMesh && m.instanceColor) m.instanceColor.ground = true; });   // (the seasons paint the clumps as grass: straw in the autumn, not red leaves)
     o.nTufts = n1 + fl.addTo(grp, false);
   }
-  function finish(o, tex) { if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); return clouds(o.root, o, tex); }
+  /* the grandstands' seated crowd (the crowd picture, Tex.crowdPic: 8 rows of 32 people): every tier of a stand shows one row of people, 32
+     of them to 12 m (uCV: how the stand's uvs lie, crowdUV), each bobbing a little in their seat; near the followed car, and all round it
+     after an overtake and at the finish (uHype, set by Render), they jump and flags go up, waving. The stands' own material, patched: the
+     picture sampled per tier, a little up or down for each person (a hash of the person) */
+  const STAND_FS = ['#ifdef USE_MAP',
+    'float crT = floor(vUv.y / uCV.y + 1e-4), crL = clamp((vUv.y - crT * uCV.y) / uCV.z, 0.0, 1.0), crX = vUv.x * uCV.x * 32.0;',   // the tier, where across it (1: the back), the seat along it
+    'vec2 crI = vec2(floor(crX), crT), crF = vec2(fract(crX), crL);',
+    'float crH = fract(sin(dot(crI, vec2(12.9898, 78.233))) * 43758.5453), crH2 = fract(crH * 41.37 + 0.13), crD = length(vCrW.xz - uCar.xz);',
+    'float crEx = max((1.0 - smoothstep(16.0, 60.0, crD)) * 0.7, uHype * (1.0 - smoothstep(60.0, 200.0, crD)));',
+    'float crJ = max(0.0, sin(uTime * (6.0 + 3.0 * crH) + crH * 6.283)) * (0.5 + 2.6 * crEx * step(0.3, crH));',   // (a jump, in pixels of the picture)
+    'float crR = mod(crT, 8.0) / 8.0;',
+    'vec4 texelColor = texture2D( map, vec2(vUv.x * uCV.x, max(crR + crL / 8.0 - crJ / 256.0, crR + 0.002)) );',
+    'if (crH2 < 0.015 + 0.3 * crEx) {',   // a flag held up in front of the face, waving (red, blue, yellow or green, a white stripe)
+    '  float crW = 0.07 * sin(crF.x * 6.0 - uTime * 9.0 + crH * 20.0);',
+    '  if (crF.y > 0.46 + crW && crF.y < 0.98 && crF.x > 0.04 && crF.x < 0.98) { float fk = floor(fract(crH * 7.3) * 4.0);',
+    '    vec3 fa = fk < 0.5 ? vec3(0.9, 0.12, 0.12) : fk < 1.5 ? vec3(0.1, 0.3, 0.8) : fk < 2.5 ? vec3(0.98, 0.8, 0.1) : vec3(0.1, 0.55, 0.25);',
+    '    texelColor = vec4(abs(crF.y - 0.72 - crW * 0.5) < 0.08 ? vec3(0.95) : fa * (0.85 + 0.3 * crW / 0.07 * 0.5), 1.0); }',
+    '}',
+    'texelColor = mapTexelToLinear( texelColor );', 'diffuseColor *= texelColor;', '#endif'].join('\n');
+  function crowdUV(m, u, pitch, slice) { m.userData.crowdUV = [u, pitch, slice]; return m; }   // (a stand material: how its uvs lay the crowd picture on the tiers)
+  function crowdStands(o) {
+    let U = o.dyn.crowd;
+    o.root.traverse(m => {
+      const M = m.isMesh && !m.isInstancedMesh && m.material; if (!M || Array.isArray(M) || !M.map || !M.map.crowdPic || !M.isMeshLambertMaterial || M.userData.stand) return;
+      if (!U) U = o.dyn.crowd = { uTime: { value: 0 }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) }, uHype: { value: 0 } };
+      if (!U.uHype) U.uHype = { value: 0 };
+      M.userData.stand = true; const cv = M.userData.crowdUV || [1, 1 / 16, 1 / 16], uCV = { value: new THREE.Vector3(cv[0], cv[1], cv[2]) };   // (how the stand maps the picture: see crowdUV)
+      M.onBeforeCompile = (sh) => {
+        sh.uniforms.uTime = U.uTime; sh.uniforms.uCar = U.uCar; sh.uniforms.uHype = U.uHype; sh.uniforms.uCV = uCV;
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vCrW;').replace('#include <project_vertex>', '#include <project_vertex>\nvCrW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uTime;\nuniform vec3 uCar;\nuniform float uHype;\nuniform vec3 uCV;\nvarying vec3 vCrW;').replace('#include <map_fragment>', STAND_FS);
+      };
+      M.customProgramCacheKey = () => 'standCrowd';
+    });
+  }
+  function finish(o, tex) { if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); return clouds(o.root, o, tex); }
   // where the crowds are, for their sound (Sfx: x, z, how many 0..1), on a circuit whose builder has not given them (the Red Bull Ring's
   // does): the spectators of every crowd of this build in 24 m cells, and the packed grandstands (the crowd picture) as full ones
   function crowdPoints(o, tex) {
@@ -8674,7 +8709,7 @@ const World = (function () {
     return (crGeoC = g);
   }
   const CR_VS_HEAD = [
-    'attribute float aPart;', 'attribute vec2 aCrowd;', 'uniform float uTime;', 'uniform vec3 uCar;',
+    'attribute float aPart;', 'attribute vec2 aCrowd;', 'uniform float uTime;', 'uniform vec3 uCar;', 'uniform float uHype;',
     'mat3 crRx(float a) { float c = cos(a), s = sin(a); return mat3(1.0, 0.0, 0.0, 0.0, c, s, 0.0, -s, c); }',
     'mat3 crRz(float a) { float c = cos(a), s = sin(a); return mat3(c, s, 0.0, -s, c, 0.0, 0.0, 0.0, 1.0); }',
     'vec3 crP4(float i, vec3 a, vec3 b, vec3 c, vec3 d) { return i < 0.5 ? a : i < 1.5 ? b : i < 2.5 ? c : d; }'].join('\n');
@@ -8698,7 +8733,9 @@ const World = (function () {
     'vec3 crFw = (modelMatrix * (instanceMatrix * vec4(0.0, 0.0, 1.0, 0.0))).xyz;',
     'float crMir = dot(cameraPosition - crW, crFw) < 0.0 ? 1.0 : 0.0;',   // seen from behind: mirror the flag so its one-sided quads face the camera
     'float crSit = abs(crPose - 6.0) < 0.5 ? 1.0 : 0.0;',
-    'float crEx = (1.0 - smoothstep(14.0, 52.0, length(crW.xz - uCar.xz))) * step(0.28, fract(crPh * 2.713 + crV * 0.0171));',
+    'float crDc = length(crW.xz - uCar.xz), crHy = uHype * (1.0 - smoothstep(50.0, 170.0, crDc));',   // (uHype: an overtake, the finish)
+    'float crEx = max(1.0 - smoothstep(14.0, 52.0, crDc), crHy) * step(0.28, fract(crPh * 2.713 + crV * 0.0171));',
+    'float crFlag = (abs(crPose - 5.0) < 0.5 || crHy * 0.45 > fract(crPh * 5.13 + crV * 0.0093)) ? 1.0 : 0.0;',   // (a flag: the flag pose, and then many more)
     'float crT = uTime * (0.85 + 0.3 * fract(crPh * 3.7)) + crPh;',
     'float rL = 0.07, rR = 0.07, fL = 0.05, fR = 0.05;',   // r: raised sideways (0 down, pi up), f: raised forwards
     'if (crPose < 0.5) { rL = 0.07 + 0.05 * sin(crT * 0.9); rR = 0.07 + 0.05 * sin(crT * 0.8 + 1.3); }',
@@ -8709,6 +8746,7 @@ const World = (function () {
     'else if (crPose < 5.5) { rR = 2.8 + 0.14 * sin(crT * 2.4); fR = -0.12; rL = 0.1; }',
     'else { rL = 0.15; rR = 0.15; fL = 0.6; fR = 0.6; }',
     'if (crPose < 4.5 || crSit > 0.5) { float up = 2.55 + 0.35 * sin(uTime * 9.0 + crPh); rL = mix(rL, up, crEx); rR = mix(rR, up + 0.1, crEx); fL = mix(fL, -0.25, crEx); fR = mix(fR, -0.25, crEx); }',
+    'if (crFlag > 0.5 && abs(crPose - 5.0) > 0.5) { rR = 2.7 + 0.35 * sin(crT * 6.5); fR = -0.12; }',   // (waving the flag)
     'mat3 crM = mat3(1.0); vec3 crPv = vec3(0.0);',
     'if (crBone > 0.5 && crBone < 1.5) { crM = crRx(-fL) * crRz(-rL); crPv = vec3(-0.27, 1.37, 0.0); }',
     'else if ((crBone > 1.5 && crBone < 2.5) || crBone > 3.5) { crM = crRx(-fR) * crRz(rR); crPv = vec3(0.27, 1.37, 0.0); }',
@@ -8727,17 +8765,17 @@ const World = (function () {
     '  if (crBone > 3.5 && crMir > 0.5) transformed.x = 0.56 - transformed.x;',
     '  transformed = crPv + crM * (transformed - crPv);',
     '}',
-    'if (crBone > 3.5 && abs(crPose - 5.0) > 0.5) transformed = crPv;',   // no flag: fold it into the hand (degenerate, draws nothing)
+    'if (crBone > 3.5 && crFlag < 0.5) transformed = crPv;',   // no flag: fold it into the hand (degenerate, draws nothing)
     'if (crSit > 0.5) transformed += vec3(0.0, -0.71, -0.55);',   // sitting: down on the grass, moved back so the feet stay behind the fence
     'else transformed.y += crEx * max(0.0, sin(uTime * 8.0 + crPh)) * 0.16;'].join('\n');
   function crowdMat(U) {
     const m = new THREE.MeshLambertMaterial({ vertexColors: true });
     m.onBeforeCompile = (sh) => {
-      sh.uniforms.uTime = U.uTime; sh.uniforms.uCar = U.uCar;
+      sh.uniforms.uTime = U.uTime; sh.uniforms.uCar = U.uCar; sh.uniforms.uHype = U.uHype;
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\n' + CR_VS_HEAD).replace('#include <color_vertex>', CR_VS_COLOR)
         .replace('#include <beginnormal_vertex>', CR_VS_NORMAL).replace('#include <begin_vertex>', CR_VS_POS);
     };
-    m.customProgramCacheKey = () => 'crowd1';
+    m.customProgramCacheKey = () => 'crowd2';
     return m;
   }
   class CrowdChunks extends IChunks {   // IChunks plus a per-instance (pose + phase, variant) attribute
@@ -8762,7 +8800,7 @@ const World = (function () {
   // A placement context per world build. o: gH(x, z) ground height (or grid: the generic ground mesh), near(x, z) distance beyond the nearest
   // barrier (negative on the road), excluded(x, z), water(x, z), maxSlope, shirts. Runs keep their own tree-exclusion circles (exclTest).
   function crowdCtx(o) {
-    const U = { uTime: { value: 0 }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) } };
+    const U = { uTime: { value: 0 }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) }, uHype: { value: 0 } };
     const C = Object.assign({ U, ppl: new CrowdChunks(U), strip: new Chunks(384), runs: 0, n: 0, busy: false, sp: new Map(), eh: new Map(), circ: [], blocks: [], avoidL: [], shirts: CR_SHIRTS, maxSlope: 0.6, log: [] }, o);
     CROWDS.push(C);
     if (C.grid && !C.gH) { const G = C.grid; C.gH = (x, z) => {   // height of the ground mesh surface (the same two triangles per cell)
@@ -9518,7 +9556,7 @@ const World = (function () {
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
-    addM(crowdG, new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }));
+    addM(crowdG, crowdUV(new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), 1, 0.11, 0.1));
     fenceC.addTo(root, fMat, false, true); spC.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true);
     crowdFinish(CR, root, out);
     out.stats = { tiles: nTiles, trees: nTrees, edgeTrees: nEdge, posts: nPosts, buildings: nBld, fans: nFans, decals: nDecals };   // (read by the tests)
@@ -10254,7 +10292,7 @@ const World = (function () {
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
-    addM(crowdG, new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }));
+    addM(crowdG, crowdUV(new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), 1, 0.11, 0.1));
     numC.addTo(root, new THREE.MeshLambertMaterial({ map: numTex }), false, true);
     fenceC.addTo(root, fMat, false, true); spC.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true);
     crowdFinish(CR, root, out);
@@ -10288,16 +10326,8 @@ const World = (function () {
     ['DRS', '#101114', '#fff', '#39c84a'], ['STEIERMARK', '#1c2856', '#fff', '#39c84a'], ['ENERGY STATION', '#1c2856', '#fff', '#e2202c']];   // (the DRS boards; the painted run-offs; the Energy Station)
   const RB_AT = { num: 0, brake: 10, ban: 13, rbr: 13, spielberg: 14 };   // atlas cells: the turn numbers, the braking boards, the banners (RB_BAN, the grandstands' names by their text)
   function rbCrowdTex(orange) {   // seated crowd for the grandstand tiers (as Tex.crowd; the orange one for the stands full of Dutch fans)
-    const c = document.createElement('canvas'); c.width = 256; c.height = 128; const x = c.getContext('2d'), r = rng(orange ? 77 : 78);
-    x.fillStyle = '#3b3f48'; x.fillRect(0, 0, 256, 128);
-    const cols = orange ? ['#ff7a12', '#ff8a1c', '#f26a0c', '#ff9d3a', '#ff7a12', '#f4f4f0', '#1c2856', '#e2202c', '#ff8a1c', '#ffcc00']
-      : ['#e63b2e', '#f5d33a', '#2f7fe0', '#f2f2f2', '#39b54a', '#ff8a1c', '#1c2856', '#e2202c', '#111', '#1bbfd6'];
-    for (let row = 0; row < 16; row++) {
-      x.fillStyle = 'rgba(0,0,0,0.25)'; x.fillRect(0, row * 8 + 6, 256, 2);
-      for (let k = 0; k < 64; k++) { if (r() < 0.1) continue; const px = k * 4 + (r() - 0.5) * 1.2, py = row * 8 + 1;
-        x.fillStyle = cols[Math.floor(r() * cols.length)]; x.fillRect(px, py + 2, 3, 4); x.fillStyle = r() < 0.5 ? '#f1c7a1' : '#a86f45'; x.fillRect(px + 0.5, py, 2, 2); }
-    }
-    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t;
+    return Tex.crowdPic(orange ? ['#ff7a12', '#ff8a1c', '#f26a0c', '#ff9d3a', '#ff7a12', '#f4f4f0', '#1c2856', '#e2202c', '#ff8a1c', '#ffcc00']
+      : ['#e63b2e', '#f5d33a', '#2f7fe0', '#f2f2f2', '#39b54a', '#ff8a1c', '#1c2856', '#e2202c', '#1a1b1f', '#1bbfd6'], orange ? 77 : 78);
   }
   function rbGravelTex() {   // the grey gravel of the 2024 strips at Turns 9 and 10: pebbles with a shadow and a highlight each
     const c = document.createElement('canvas'); c.width = 128; c.height = 128; const x = c.getContext('2d'), r = rng(2024);
@@ -11231,7 +11261,7 @@ const World = (function () {
         out.dyn.fade = { list: fl, poly: cn, yTop: hyS(sAt(wd)) + 30, op: 1, t: null };   // (the footprint, a little wider, up to 30 m)
       }
     }
-    addM(crowdG[0], new THREE.MeshLambertMaterial({ map: crowdMats[0], vertexColors: true })); addM(crowdG[1], new THREE.MeshLambertMaterial({ map: crowdMats[1], vertexColors: true }));
+    addM(crowdG[0], crowdUV(new THREE.MeshLambertMaterial({ map: crowdMats[0], vertexColors: true }), 1, 0.11, 0.1)); addM(crowdG[1], crowdUV(new THREE.MeshLambertMaterial({ map: crowdMats[1], vertexColors: true }), 1, 0.11, 0.1));
 
     /* ---- the steel bull (Clemens Neugebauer and Martin Kölldorfer, 2012): 14.6 m of welded Corten plates on its cast aluminium arch
        (17.2 m in all), charging: head down, the gilded horns (7 m from tip to tip) forward, the hump over the shoulders, the tail up; built
@@ -12116,7 +12146,7 @@ const World = (function () {
         if (prev) cap(prev.cs, prev.s, -1);
         nStands++;
       }
-      addM(gs, matV, true); addM(gc, new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true })); addM(gr, matV, true);
+      addM(gs, matV, true); addM(gc, crowdUV(new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), 1, 0.06, 0.06)); addM(gr, matV, true);   // (one slope: a row of people every 0.9 m)
     }
 
     /* ---- buildings (OpenStreetMap footprints near the track): houses, halls, the circuit's own buildings, the theme park's rides in bright colours ---- */
