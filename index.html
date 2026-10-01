@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
-<link rel="stylesheet" href="css/style.css?v=0a951949">
+<link rel="stylesheet" href="css/style.css?v=39b58a37">
 </head>
 <body>
 <div id="app">
@@ -209,6 +209,7 @@
         <div class="row"><span class="rlbl">Upravljanje</span><div class="seg" data-set="control"><button data-v="buttons">Tipke</button><button data-v="wheel">Volan</button><button data-v="tilt">Nagib</button></div></div>
         <div class="row tiltrow"><span class="rlbl">Občutljivost nagiba</span><input type="range" id="tilt-sens" min="10" max="40" step="1"><span id="tilt-sens-v" class="val"></span></div>
         <div class="row tiltrow"><span class="rlbl">Nagib</span><div class="tilt-live"><div id="tilt-live-bar"></div></div><button class="btn mini" data-act="calibrate">Nastavi sredino</button><button class="btn mini" data-act="tilt-invert" id="tilt-inv-btn">Obrni smer</button></div>
+        <div class="row"><span class="rlbl">Kontrole</span><button class="btn mini" data-act="to-ctrl">Tipke, plošček in volan</button></div>
         <div class="row"><span class="rlbl">Kamera</span><div class="seg" data-set="camera"><button data-v="iso">Izometrična · ležeče</button><button data-v="chase">Za avtom · pokončno</button><button data-v="kino">Kino · ležeče</button><button data-v="cockpit">Kokpit · ležeče</button></div></div>
         <div class="row"><span class="rlbl">Oddaljenost</span><div class="seg" data-set="zoom"><button data-v="0.85">Blizu</button><button data-v="1">Srednje</button><button data-v="1.2">Daleč</button></div></div>
         <div class="row"><span class="rlbl">Pomoč pri driftu</span><div class="seg" data-set="assist"><button data-v="0">Nizka</button><button data-v="1">Srednja</button><button data-v="2">Visoka</button></div></div>
@@ -234,6 +235,17 @@
         <div class="row"><span class="rlbl">Profil</span><button class="btn mini" data-act="prof-export">Izvozi v datoteko</button><button class="btn mini" data-act="prof-import">Uvozi iz datoteke</button></div>
       </div>
       <div class="btns horiz"><button class="btn primary" data-act="settings-done">Končano</button></div>
+    </div>
+  </section>
+
+  <!-- Kontrole (from Nastavitve): the keys, the pad's or the wheel's buttons and axes -->
+  <section id="s-ctrl" class="screen">
+    <div class="panel set-panel ctrl-panel">
+      <h2>Kontrole</h2>
+      <div class="seg ctrl-tabs" id="ctrl-tabs"><button data-act="ctrl-tab" data-v="keys">Tipkovnica</button><button data-act="ctrl-tab" data-v="pad">Plošček in volan</button></div>
+      <div id="ctrl-body" class="set-list"></div>
+      <p id="ctrl-note" class="desc small"></p>
+      <div class="btns horiz"><button class="btn" data-act="ctrl-reset">Ponastavi</button><button class="btn primary" data-act="ctrl-done">Končano</button></div>
     </div>
   </section>
 
@@ -403,17 +415,17 @@
 <script src="js/tracks/suzuka.js?v=8aebe76c"></script>
 <script src="js/tracks/pikesg.js?v=9d05a281"></script>
 <script src="js/tracks/caracoles.js?v=84009a26"></script>
-<script src="js/lang.js?v=d1bd747c"></script>
+<script src="js/lang.js?v=714b5a00"></script>
 <script src="js/core.js?v=a6dd2667"></script>
 <script src="js/tex.js?v=cd783b5d"></script>
 <script src="js/world.js?v=43e47004"></script>
 <script src="js/data/p206.js?v=0016824f"></script>
 <script src="js/render.js?v=7ebb5854"></script>
 <script src="js/sfx.js?v=cc97e5e8"></script>
-<script src="js/input.js?v=f440bacb"></script>
+<script src="js/input.js?v=6659ae08"></script>
 <script src="js/comm.js?v=a5473d60"></script>
 <script src="js/vendor/peerjs.min.js?v=76b403e4"></script>
 <script src="js/net.js?v=ba863f32"></script>
-<script src="js/game.js?v=53a2aa92"></script>
+<script src="js/game.js?v=9cafd422"></script>
 </body>
 </html>

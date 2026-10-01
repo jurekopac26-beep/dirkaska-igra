@@ -327,6 +327,15 @@ Igro lahko igraš z igralnim ploščkom (Xbox, PlayStation ali drug plošček s 
 - **Vožnja:** leva palica krmili sorazmerno z nagibom (smerne tipke: do konca), RT / R2 je plin in LT / L2 zavora (oba sorazmerno s pritiskom), A / ✕ je tudi plin, X / ▢ tudi zavora, B / ○ ali RB / R1 je drift. **Start** ustavi dirko, **Y** / △ postavi obtičal avto nazaj na progo, **View** / Select zamenja kamero.
 - **Meniji:** palica ali smerne tipke premikajo izbiro do najbližjega gumba v tisti smeri, A ga pritisne, B gre nazaj (Nazaj, Glavni meni, iz pavze v dirko), Start pritisne glavni gumb zaslona (Dirkaj, Naprej, Start, Nadaljuj …), LB / RB listata med avti.
 
+## Kontrole po meri in volan s pedali
+
+V **Nastavitvah** gumb **Kontrole** (Tipke, plošček in volan) odpre zaslon z dvema stranema:
+
+- **Tipkovnica:** vsako dejanje (levo, desno, plin, zavora, drift, pavza, kamera, gume za postanek) ima dve tipki. Tapni polje in pritisni tipko. **Esc** pusti polje, kot je bilo, **Backspace** ga izprazni. Če je tipka že pri drugem dejanju, se tam odstrani. Privzeto: puščice ali WASD, preslednica za drift, Esc ali P za pavzo, C za kamero, T za gume.
+- **Plošček in volan:** za povezan plošček ali volan (z več napravami: **Zamenjaj**) so pokazani os za krmiljenje ter gumbi in pedali za plin, zavoro, drift, pavzo, kamero in vrnitev na progo. Tapni polje in pritisni gumb na napravi. Pedal pritisni do konca in ga spusti: igra izmeri, kje pedal miruje in kje je pritisnjen. To deluje tudi pri pedalih, ki jih brskalnik do prvega premika bere kot 0. Za krmiljenje tapni **Krmiljenje** in zavrti volan (ali palico) v desno; če naprava desno bere kot minus, se smer sama obrne (⇄). **Mrtvo območje** je del osi na sredini, ki ne krmili. **Poln zavoj pri** pove, pri katerem delu osi je zavoj do konca (pri volanu z 900° je 25 % okoli 112° v vsako smer). **Odziv** je enakomeren (za volan) ali nežen v sredini (za palico). **Obrni smer** zamenja levo in desno. Vrstice za krmiljenje, plin in zavoro sproti kažejo, koliko je pritisnjeno.
+
+Nastavitve se shranijo v brskalniku za vsako napravo posebej, zato imata plošček in volan vsak svoje. **Ponastavi** vrne privzete vrednosti strani, ki je odprta. Volan (naprava, ki se ne predstavi kot standardni plošček, npr. Logitech G29/G920, Thrustmaster, Fanatec) privzeto krmili z osjo 0, enakomerno in z majhnim mrtvim območjem, pedale pa nastaviš sam. Ob prvem pritisku igra opozori, naj jih nastaviš.
+
 ## Grafika
 
 Na vseh progah čez pokrajino počasi drsijo sence oblakov (v dežju jih ni, ker je nebo oblačno). Pred zavoji, kjer tekmeci močno zavirajo, so na asfaltu sledi gum, lažje sledi pa tudi na izhodih iz ovinkov (na makadamu jih ni; na Nordschleife in Red Bull Ringu so narisane skupaj z drugimi oznakami na asfaltu, na mostu Suzuke jih ni). Nad progo občasno preleti jata ptic, ob morju galebi, njihove sence pa drsijo po tleh; v dežju jih ni. Na Nordschleife in Spa se krošnje dreves rahlo zibljejo v vetru.

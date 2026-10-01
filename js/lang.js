@@ -215,6 +215,17 @@
     'Vroče zavore slabše zavirajo: zaviraj prej in nežneje, na ravnini se ohladijo.': 'Hot brakes stop the car less well: brake earlier and more gently, they cool down on the straights.',
     'Vroč motor ima manj moči: popusti plin, v hitri vožnji se ohladi.': 'A hot engine has less power: ease off the throttle, it cools down at speed.',
     'Okvare': 'Failures', 'Okvare (predrta guma, vroče zavore in motor)': 'Failures (punctures, hot brakes and engine)',
+    // Kontrole: the keys, the gamepad and the wheel
+    'Kontrole': 'Controls', 'Tipke, plošček in volan': 'Keys, gamepad and wheel', 'Tipkovnica': 'Keyboard', 'Plošček in volan': 'Gamepad and wheel', 'Ponastavi': 'Reset',
+    'Levo': 'Left', 'Desno': 'Right', 'Plin': 'Throttle', 'Zavora': 'Brake', 'Drift': 'Drift', 'Nazaj na progo': 'Back on the track', 'Plošček': 'Gamepad', 'Zamenjaj': 'Switch',
+    'Pritisni tipko …': 'Press a key …', 'Tapni polje in pritisni tipko. Esc prekliče, Backspace izbriše.': 'Tap a box and press a key. Esc cancels, Backspace clears it.',
+    'Ni povezanega ploščka ali volana. Poveži ga in pritisni gumb na njem.': 'No gamepad or wheel connected. Connect one and press a button on it.',
+    'Krmiljenje': 'Steering', 'Zavrti v desno …': 'Turn right …', 'Os {0}': 'Axis {0}', 'Gumb {0}': 'Button {0}', 'Mrtvo območje': 'Dead zone', 'Poln zavoj pri': 'Full lock at', '{0} % osi': '{0} % of the axis',
+    'Odziv': 'Response', 'Enakomeren': 'Linear', 'Nežen v sredini': 'Gentle in the middle', 'Pritisni gumb ali pedal …': 'Press a button or pedal …', 'Pritisni gumb …': 'Press a button …',
+    'Volan: tapni Krmiljenje in zavrti volan v desno; nato tapni Plin (ali Zavora), pritisni pedal do konca in ga spusti.': 'Wheel: tap Steering and turn the wheel right; then tap Throttle (or Brake), press the pedal all the way down and let it go.',
+    'Tapni polje in pritisni gumb (ali premakni os).': 'Tap a box and press a button (or move an axis).', 'Nič ni bilo pritisnjeno.': 'Nothing was pressed.', 'Krmiljenje: os {0}.': 'Steering: axis {0}.', '{0}: {1}.': '{0}: {1}.',
+    'Preslednica': 'Space', 'Desni Shift': 'Right Shift', 'Desni Ctrl': 'Right Ctrl', 'Privzete tipke.': 'Default keys.', 'Privzeta nastavitev: {0}.': 'Default settings: {0}.',
+    'Volan je povezan.': 'Wheel connected.', 'Volan je povezan. Pedale nastaviš v Nastavitvah: Kontrole.': 'Wheel connected. Set up its pedals in Settings: Controls.',
     // the best moment as a video after a race
     'Video najboljšega trenutka po dirki': 'Video of the best moment after a race', 'Najboljši trenutek': 'Best moment', 'NAJBOLJŠI TRENUTEK': 'BEST MOMENT', 'ZMAGA': 'WIN',
     'Ti · {0} mesto': 'You · {0} place', 'Preskoči': 'Skip', 'Deli': 'Share', 'Moj najboljši trenutek · {0}': 'My best moment · {0}', 'Video shranjen: {0}': 'Video saved: {0}',

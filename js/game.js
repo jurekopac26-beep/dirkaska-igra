@@ -3416,8 +3416,8 @@
 
   /* ---------------- gamepad on the menus (Input.padRead: this frame's presses) ---------------- */
   // The stick or the d-pad moves a highlight to the nearest button that way, A presses it, B goes back (Nazaj, Glavni meni; from the
-  // pause back to the race), Start presses the screen's main button, LB / RB page through the cars. In a race Start pauses and Y puts a
-  // stuck car back on the track.
+  // pause back to the race), Start presses the screen's main button, LB / RB page through the cars. In a race the buttons bound in
+  // Kontrole (by default Start pauses, View / Select changes the camera and Y puts a stuck car back on the track).
   let padSel = null, padScreen = '';
   const PAD_SEL = 'button, select, input[type="range"]';
   const padVisible = (el) => !!el && el.isConnected && el.offsetParent !== null && !el.disabled && !el.closest('.off');
@@ -3453,20 +3453,132 @@
     const P = Input.padRead(dt);
     if (photo) photoPad(dt);
     if (pkF.on && P.pressed.length && screen === 'none' && !paused) { pkFlySkip(); return; }   // (any button: the flyover skipped)
+    if (screen === 'ctrl') { ctlFrame(dt); if (ctlWait) return; }   // (Kontrole: a button or an axis being found: not the menus')
     if (P.on && (screen !== padScreen || (padSel && !padSel.isConnected))) { padScreen = screen; padFocus(screen === 'none' ? null : padHome()); }   // (a new screen, or its list drawn again: the highlight on the main button or the chosen item)
+    const sc0 = screen;
     for (const k of P.pressed) {
-      if (screen === 'none') {   // racing
-        if (k === 'start' && bg === 'race') pause();
-        else if (k === 'y' && !$('btn-rescue').classList.contains('off')) $('btn-rescue').click();
-        else if (k === 'back' && bg === 'race' && !replay) cycleCam();
+      if (k[0] === '@') {   // racing: the buttons bound to the pause, the camera, the rescue (not when the same press works a menu)
+        if (sc0 !== 'none' || screen !== 'none') continue;
+        if (k === '@pause' && bg === 'race') { pause(); break; }
+        if (k === '@rescue' && !$('btn-rescue').classList.contains('off')) $('btn-rescue').click();
+        else if (k === '@cam' && bg === 'race' && !replay) cycleCam();
         continue;
       }
+      if (screen === 'none') continue;
       if (k === 'start') { const m = padFind('.btn.primary'); if (m) m.click(); }
       else if (k === 'a') { if (padItems().includes(padSel)) { if (padSel.tagName === 'BUTTON') padSel.click(); else padSel.focus(); } else padFocus(padHome()); }
-      else if (k === 'b') { const bk = padFind('[data-act="resume"], .btn.ghost[data-act], [data-act="settings-done"], [data-act="upg-done"]'); if (bk) bk.click(); }
+      else if (k === 'b') { const bk = padFind('[data-act="resume"], .btn.ghost[data-act], [data-act="settings-done"], [data-act="upg-done"], [data-act="ctrl-done"]'); if (bk) bk.click(); }
       else if (k === 'lb' || k === 'rb') { const el = padFind(k === 'lb' ? '[data-act$="car-prev"]' : '[data-act$="car-next"]'); if (el) el.click(); }
       else if (k === 'up' || k === 'down' || k === 'left' || k === 'right') padMove(k);
     }
+  }
+
+  /* ---------------- Kontrole (from Nastavitve): the keys for each action (two each); for the pad or the wheel connected its steering axis
+     (found by turning it right, with its dead zone, the share of the axis for full lock, the curve, turned the other way) and its pedals
+     and buttons (found by pressing them: a button, or an axis measured where it is pressed down and where it rests once let go). Kept in
+     the browser (tdgp-ctrl: { keys: { act: [code, code] }, lbl: { code: the key's name }, pads: { device: binding }, dev }); Ponastavi:
+     the defaults of the page shown. ---------------- */
+  const CTL_KEY = 'tdgp-ctrl';
+  const CTL_KEYS = [['left', 'Levo'], ['right', 'Desno'], ['gas', 'Plin'], ['brake', 'Zavora'], ['drift', 'Drift'], ['pause', 'Pavza'], ['cam', 'Kamera'], ['tyre', 'Gume za postanek']];
+  const CTL_PAD = [['gas', 'Plin'], ['brake', 'Zavora'], ['drift', 'Drift'], ['pause', 'Pavza'], ['cam', 'Kamera'], ['rescue', 'Nazaj na progo']];
+  let ctl = { keys: null, lbl: {}, pads: {}, dev: '' }, ctlTab = 'keys', ctlWait = null;
+  const ctlInOk = (q) => isObj(q) && Number.isInteger(q.i) && q.i >= 0 && q.i < 64 && (q.t === 'b' || (q.t === 'a' && isFinite(q.lo) && isFinite(q.hi) && q.lo !== q.hi));
+  const ctlPadOk = (b) => isObj(b) && isObj(b.steer) && Number.isInteger(b.steer.i) && b.steer.i >= 0 && b.steer.i < 64 && ['dz', 'rng', 'cur'].every(k => isFinite(b.steer[k])) &&
+    CTL_PAD.every(([a]) => Array.isArray(b[a]) && b[a].length <= 2 && b[a].every(ctlInOk));
+  function ctlLoad() {
+    try { const o = JSON.parse(localStorage.getItem(CTL_KEY) || 'null');
+      if (isObj(o)) { const K = {}; if (isObj(o.keys)) for (const [a] of CTL_KEYS) if (Array.isArray(o.keys[a])) K[a] = o.keys[a].slice(0, 2).map(c => (typeof c === 'string' && /^[\w]{0,24}$/.test(c) ? c : ''));
+        const P = {}; if (isObj(o.pads)) for (const id of Object.keys(o.pads).slice(0, 16)) if (ctlPadOk(o.pads[id])) P[id] = o.pads[id];
+        const L = {}; if (isObj(o.lbl)) for (const c of Object.keys(o.lbl).slice(0, 64)) if (typeof o.lbl[c] === 'string' && o.lbl[c].length <= 4) L[c] = o.lbl[c];
+        ctl = { keys: Object.keys(K).length ? K : null, lbl: L, pads: P, dev: typeof o.dev === 'string' ? o.dev : '' }; } } catch (_) { }
+    Input.setKeys(ctl.keys); Input.setPads(ctl.pads, ctl.dev);
+  }
+  function ctlSave() { try { localStorage.setItem(CTL_KEY, JSON.stringify(ctl)); } catch (_) { } Input.setKeys(ctl.keys); Input.setPads(ctl.pads, ctl.dev); }
+  function keyName(code) {
+    if (!code) return '\u2014';
+    if (ctl.lbl[code]) return ctl.lbl[code];
+    const m = /^(?:Key|Digit)(\w)$/.exec(code); if (m) return m[1];
+    const N = { ArrowLeft: '\u2190', ArrowRight: '\u2192', ArrowUp: '\u2191', ArrowDown: '\u2193', Space: tr('Preslednica'), Escape: 'Esc', Enter: 'Enter', Tab: 'Tab', ShiftLeft: 'Shift', ShiftRight: tr('Desni Shift'), ControlLeft: 'Ctrl', ControlRight: tr('Desni Ctrl'), AltLeft: 'Alt', AltRight: 'AltGr' };
+    return N[code] || code.replace(/^Numpad/, 'Num ');
+  }
+  function ctlSetKey(a, i, code, key) {   // a key for an action (taken from any other it was on); '' none
+    const K = {}; for (const [b] of CTL_KEYS) K[b] = Input.keyMap[b].slice();
+    if (code) for (const b in K) K[b] = K[b].map(c => (c === code ? '' : c));
+    K[a][i] = code; ctl.keys = K;
+    if (code && key && key.length === 1 && key !== ' ') ctl.lbl[code] = key.toUpperCase(); 
+    ctlSave();
+  }
+  const devName = (id) => String(id || '').replace(/\s*\((?:STANDARD GAMEPAD|Vendor)[^)]*\)/gi, '').trim().slice(0, 40) || '?';
+  const inName = (q) => (!q ? '\u2014' : q.t === 'a' ? tr('Os {0}', q.i) + (q.hi > q.lo ? ' +' : ' \u2212') : tr('Gumb {0}', q.i));
+  const ctlPadOf = (r) => JSON.parse(JSON.stringify(ctl.pads[r.id] || r.def));
+  function ctlPadSet(r, B) { ctl.pads[r.id] = B; ctlSave(); }
+  function ctlBuild() {
+    for (const b of $('ctrl-tabs').children) b.classList.toggle('sel', b.dataset.v === ctlTab);
+    const W = ctlWait, waitOn = (k, a, i) => !!W && W.kind === k && W.a === a && W.i === i;
+    let h = '', note = '';
+    if (ctlTab === 'keys') {
+      const K = Input.keyMap;
+      h = CTL_KEYS.map(([a, nm]) => '<div class="row ctl-row"><span class="rlbl">' + esc(tr(nm)) + '</span>' + [0, 1].map(i =>
+        '<button class="btn mini ctl-in' + (waitOn('key', a, i) ? ' wait' : '') + '" data-act="ctl-key" data-a="' + a + '" data-i="' + i + '">' + esc(waitOn('key', a, i) ? tr('Pritisni tipko …') : keyName(K[a][i])) + '</button>').join('') + '</div>').join('');
+      note = tr('Tapni polje in pritisni tipko. Esc prekliče, Backspace izbriše.');
+    } else {
+      const r = Input.padRaw();
+      if (!r) { h = '<p class="desc">' + esc(tr('Ni povezanega ploščka ali volana. Poveži ga in pritisni gumb na njem.')) + '</p>'; }
+      else {
+        const B = ctlPadOf(r), St = B.steer, n = Input.padList().length, wS = waitOn('pad', 'steer', 0);
+        h += '<div class="row ctl-row"><span class="rlbl">' + esc(tr(r.wheel ? 'Volan' : 'Plošček')) + '</span><span class="ctl-dev">' + esc(devName(r.id)) + '</span>' + (n > 1 ? '<button class="btn mini" data-act="ctl-dev">' + esc(tr('Zamenjaj')) + '</button>' : '') + '</div>';
+        h += '<div class="row ctl-row"><span class="rlbl">' + esc(tr('Krmiljenje')) + '</span><button class="btn mini ctl-in' + (wS ? ' wait' : '') + '" data-act="ctl-pad" data-a="steer" data-i="0">' + esc(wS ? tr('Zavrti v desno …') : tr('Os {0}', St.i) + (St.inv ? ' \u21c4' : '')) + '</button><div class="ctl-bar st"><i id="ctl-v-steer"></i></div></div>';
+        h += '<div class="row ctl-row"><span class="rlbl">' + esc(tr('Mrtvo območje')) + '</span><input type="range" id="ctl-dz" min="0" max="30" step="1" value="' + Math.round(St.dz * 100) + '"><span class="val" id="ctl-dz-v">' + Math.round(St.dz * 100) + ' %</span></div>';
+        h += '<div class="row ctl-row"><span class="rlbl">' + esc(tr('Poln zavoj pri')) + '</span><input type="range" id="ctl-rng" min="10" max="100" step="5" value="' + Math.round(St.rng * 100) + '"><span class="val" id="ctl-rng-v">' + esc(tr('{0} % osi', Math.round(St.rng * 100))) + '</span></div>';
+        h += '<div class="row ctl-row"><span class="rlbl">' + esc(tr('Odziv')) + '</span><div class="seg"><button data-act="ctl-cur" data-v="1" class="' + (St.cur < 1.25 ? 'sel' : '') + '">' + esc(tr('Enakomeren')) + '</button><button data-act="ctl-cur" data-v="1.5" class="' + (St.cur >= 1.25 ? 'sel' : '') + '">' + esc(tr('Nežen v sredini')) + '</button></div>' +
+          '<button class="btn mini' + (St.inv ? ' primary' : '') + '" data-act="ctl-inv">' + esc(tr('Obrni smer')) + '</button></div>';
+        for (const [a, nm] of CTL_PAD) h += '<div class="row ctl-row"><span class="rlbl">' + esc(tr(nm)) + '</span>' + [0, 1].map(i =>
+          '<button class="btn mini ctl-in' + (waitOn('pad', a, i) ? ' wait' : '') + '" data-act="ctl-pad" data-a="' + a + '" data-i="' + i + '">' + esc(waitOn('pad', a, i) ? tr(a === 'gas' || a === 'brake' ? 'Pritisni gumb ali pedal …' : 'Pritisni gumb …') : inName(B[a][i])) + '</button>').join('') +
+          (a === 'gas' || a === 'brake' ? '<div class="ctl-bar"><i id="ctl-v-' + a + '"></i></div>' : '') + '</div>';
+        note = tr(r.wheel ? 'Volan: tapni Krmiljenje in zavrti volan v desno; nato tapni Plin (ali Zavora), pritisni pedal do konca in ga spusti.' : 'Tapni polje in pritisni gumb (ali premakni os).');
+      }
+    }
+    $('ctrl-body').innerHTML = h; $('ctrl-note').textContent = note;
+  }
+  function ctlFrame(dt) {   // the Kontrole screen, each frame: the live bars; a button or an axis being found
+    if (ctlTab === 'pad') {
+      const P = Input.pad, st = $('ctl-v-steer'), g = $('ctl-v-gas'), b = $('ctl-v-brake');
+      if (st) { const v = Core.clamp(P.steer, -1, 1); st.style.left = (50 + Math.min(0, v) * 50).toFixed(1) + '%'; st.style.width = (Math.abs(v) * 50).toFixed(1) + '%'; }
+      if (g) g.style.width = (P.thr * 100).toFixed(1) + '%'; if (b) b.style.width = (P.brk * 100).toFixed(1) + '%';
+      if (!ctlWait && !!Input.padRaw() !== !!$('ctl-v-steer')) ctlBuild();   // (a pad connected or gone)
+    }
+    const W = ctlWait; if (!W || W.kind !== 'pad') return;
+    const r = Input.padRaw(); if (!r || r.id !== W.id) { ctlWait = null; ctlBuild(); return; }
+    W.t += dt; if (W.t > 15) { ctlWait = null; toast(tr('Nič ni bilo pritisnjeno.'), 2000); ctlBuild(); return; }
+    const A = r.axes, B0 = W.base, far = () => { let j = -1, d = 0; A.forEach((v, k) => { const x = Math.abs(v - (B0.axes[k] || 0)); if (x > d) { d = x; j = k; } }); return [j, d]; };
+    r.buttons.forEach((v, k) => { if (B0.buttons[k] > 0.3 && v < 0.2) B0.buttons[k] = 0; });   // (a button held when it began - the one that started it - counts once let go)
+    const done = (B, msg) => { ctlPadSet(r, B); ctlWait = null; toast(msg, 2200); ctlBuild(); };
+    if (W.a === 'steer') {   // the axis turned the most (right: + or, turned the other way, -)
+      const [j, d] = far(); if (d > 0.35) { const B = ctlPadOf(r); B.steer.i = j; B.steer.inv = A[j] < (B0.axes[j] || 0) ? 1 : 0; done(B, tr('Krmiljenje: os {0}.', j)); }
+      return;
+    }
+    const put = (q) => {   // the input on the slot; taken from wherever else it was (an axis: the same way; one axis can carry two pedals)
+      const B = ctlPadOf(r), same = (x) => !!x && x !== q && x.t === q.t && x.i === q.i && (q.t === 'b' || Math.sign(x.hi - x.lo) === Math.sign(q.hi - q.lo));
+      const L = B[W.a].slice(0, 2); if (W.i < L.length) L[W.i] = q; else L.push(q);
+      for (const [b] of CTL_PAD) B[b] = (b === W.a ? L : B[b]).filter(x => !same(x));
+      done(B, tr('{0}: {1}.', tr(CTL_PAD.find(x => x[0] === W.a)[1]), inName(q)));
+    };
+    if (!W.cand) {   // the first button pressed, or an axis moved far
+      const bj = r.buttons.findIndex((v, k) => v > 0.6 && !(B0.buttons[k] > 0.3));
+      if (bj >= 0) { put({ t: 'b', i: bj }); return; }
+      if (W.a === 'gas' || W.a === 'brake') { const [j, d] = far(); if (d > 0.5) W.cand = { j, lo: B0.axes[j] || 0, hi: A[j], t: 0, rel: -1 }; }
+      return;
+    }
+    const C = W.cand, v = A[C.j]; C.t += dt;
+    if (C.rel < 0) {   // pressed: its end (the farthest from where it was); let go (most of the way back): where it rests
+      if (Math.abs(v - C.lo) > Math.abs(C.hi - C.lo)) C.hi = v;
+      if (Math.abs(v - C.hi) > 0.6 * Math.abs(C.hi - C.lo)) C.rel = 0; else if (C.t > 8) C.rel = 0.5;
+      return;
+    }
+    C.rel += dt; if (C.rel < 0.3) return;   // (a moment to settle)
+    const snap = (x) => (Math.abs(x) > 0.93 ? Math.sign(x) : x), lo = snap(C.rel >= 0.5 && C.t > 8 ? C.lo : v), hi = snap(C.hi);
+    if (Math.abs(hi - lo) < 0.3) { W.cand = null; return; }
+    put({ t: 'a', i: C.j, lo, hi });
   }
 
   /* ---------------- main loop ---------------- */
@@ -3573,6 +3685,24 @@
       case 'net-ch-new': chNew(); break;
       case 'to-settings': settingsReturn = screen; showScreen('settings'); refreshSegs(); break;
       case 'settings-done': showScreen(settingsReturn === 'settings' ? 'title' : settingsReturn); if (settingsReturn === 'car') buildCarScreen(); break;
+      case 'to-ctrl': ctlTab = Input.padList().length ? 'pad' : 'keys'; ctlWait = null; showScreen('ctrl'); ctlBuild(); break;
+      case 'ctrl-tab': ctlTab = el.dataset.v === 'pad' ? 'pad' : 'keys'; ctlWait = null; Input.captureKey(null); ctlBuild(); break;
+      case 'ctrl-done': ctlWait = null; Input.captureKey(null); showScreen('settings'); refreshSegs(); break;
+      case 'ctrl-reset': {   // the defaults of the page shown
+        ctlWait = null; Input.captureKey(null);
+        if (ctlTab === 'keys') { ctl.keys = null; ctl.lbl = {}; toast(tr('Privzete tipke.'), 1800); }
+        else { const r = Input.padRaw(); if (r) { delete ctl.pads[r.id]; toast(tr('Privzeta nastavitev: {0}.', devName(r.id)), 2000); } }
+        ctlSave(); ctlBuild(); break; }
+      case 'ctl-key': {   // the next key pressed for this action (Esc: no change, Backspace: none)
+        const a = el.dataset.a, i = +el.dataset.i; ctlWait = { kind: 'key', a, i }; ctlBuild();
+        Input.captureKey((code, key) => { ctlWait = null; if (code != null) ctlSetKey(a, i, code, key); ctlBuild(); }); break; }
+      case 'ctl-pad': {   // the next button pressed or axis moved for this action (tapped again: none)
+        const r = Input.padRaw(), a = el.dataset.a, i = +el.dataset.i; if (!r) break;
+        Input.captureKey(null);
+        if (ctlWait && ctlWait.kind === 'pad' && ctlWait.a === a && ctlWait.i === i) { if (a !== 'steer') { const B = ctlPadOf(r); B[a].splice(i, 1); ctlPadSet(r, B); } ctlWait = null; ctlBuild(); break; }
+        ctlWait = { kind: 'pad', a, i, id: r.id, base: { axes: r.axes.slice(), buttons: r.buttons.slice() }, t: 0, cand: null }; ctlBuild(); break; }
+      case 'ctl-dev': { const L = Input.padList(), r = Input.padRaw(); if (L.length > 1 && r) { ctl.dev = L[(L.findIndex(g => g.id === r.id) + 1) % L.length].id; ctlSave(); ctlWait = null; ctlBuild(); } break; }
+      case 'ctl-cur': case 'ctl-inv': { const r = Input.padRaw(); if (!r) break; const B = ctlPadOf(r); if (act === 'ctl-inv') B.steer.inv = B.steer.inv ? 0 : 1; else B.steer.cur = +el.dataset.v === 1 ? 1 : 1.5; ctlPadSet(r, B); ctlBuild(); break; }
       case 'car-prev': S.car = (S.car + Core.MODELS.length - 1) % Core.MODELS.length; save(); buildCarScreen(); break;
       case 'car-next': S.car = (S.car + 1) % Core.MODELS.length; save(); buildCarScreen(); break;
       case 'to-track': buildTrackScreen(); showScreen('track'); break;
@@ -3709,6 +3839,12 @@
     });
     $('track-list').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('div.track-card')) { e.preventDefault(); e.target.click(); } });   // (a card with a switch is a div)
     $('tilt-sens').addEventListener('input', (e) => { S.tiltSens = +e.target.value; save(); applySettings(); });
+    $('ctrl-body').addEventListener('input', (e) => {   // Kontrole: the steering's dead zone, the share of the axis for full lock
+      const t = e.target, r = Input.padRaw(); if (!r || (t.id !== 'ctl-dz' && t.id !== 'ctl-rng')) return;
+      const B = ctlPadOf(r), v = +t.value;
+      if (t.id === 'ctl-dz') { B.steer.dz = v / 100; $('ctl-dz-v').textContent = v + ' %'; } else { B.steer.rng = v / 100; $('ctl-rng-v').textContent = tr('{0} % osi', v); }
+      ctlPadSet(r, B);
+    });
     // player name: typing must not reach the game keys (Space = handbrake/preventDefault, P / Escape = pause)
     for (const nm of [$('set-name'), $('on-name')]) {
       let nmOld = S.name;
@@ -3759,11 +3895,12 @@
       Render.setAtmos({ season: S.season, tod: S.tod });   // (before the first world: it is built in the season)
       Render.buildWorld(track, S.quality === 'retro' ? 0.8 : 1);
       Input.init($('touch'), () => { if (screen === 'pause') resume(); else if (screen === 'none') pause(); });
+      ctlLoad();   // (the keys and the pads' buttons as the player set them)
       Input.onCam = () => { if (bg === 'race' && !replay && (screen === 'none' || screen === 'pause')) cycleCam(); };   // (C on the keyboard)
       Input.onTyre = () => { if (bg === 'race' && !replay) pitCmpNext(); };   // (T on the keyboard: the tyres for the next stop)
       Render.onThunder = (delay, vol) => Sfx.thunder(delay, vol);   // (a thunderstorm: the thunder after each lightning)
       Render.setStorm(S.weather === 'storm');
-      Input.onPad = () => toast(tr('Igralni plošček je povezan: leva palica krmili, RT plin, LT zavora, B drift, Start pavza. V menijih izbiraš s palico in A, B je nazaj.'), 5200);
+      Input.onPad = (id, wheel) => toast(tr(!wheel ? 'Igralni plošček je povezan: leva palica krmili, RT plin, LT zavora, B drift, Start pavza. V menijih izbiraš s palico in A, B je nazaj.' : ctl.pads[id] ? 'Volan je povezan.' : 'Volan je povezan. Pedale nastaviš v Nastavitvah: Kontrole.'), 5200);
       applySettings();
       demoMake(6); demoAt = demo;
       Render.attachRace(demo);
