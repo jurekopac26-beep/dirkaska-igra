@@ -77,18 +77,18 @@
   "jsMs": 1.09
  },
  "harju": {
-  "calls": 166,
-  "maxCalls": 212,
-  "kverts": 662,
-  "maxKverts": 1050,
-  "jsMs": 0.36
+  "calls": 165,
+  "maxCalls": 210,
+  "kverts": 653,
+  "maxKverts": 1040,
+  "jsMs": 0.39
  },
  "nring": {
-  "calls": 198,
-  "maxCalls": 243,
-  "kverts": 550,
-  "maxKverts": 733,
-  "jsMs": 1.77
+  "calls": 185,
+  "maxCalls": 352,
+  "kverts": 530,
+  "maxKverts": 690,
+  "jsMs": 2.42
  },
  "spa": {
   "calls": 224,

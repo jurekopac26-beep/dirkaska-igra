@@ -22,6 +22,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     id: 'caracoles', name: 'Los Caracoles', theme: 'caracoles', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 6.5,
     desc: 'Cesta Ruta 60 v čilskih Andih proti meji z Argentino: od reke Juncalillo na 2.200 m po 29 oštevilčenih ovinkih (dvajset jih je naloženih eden nad drugim kot lestev), mimo galerij proti plazovom, do Portilla in jezera Laguna del Inca na 2.866 m. Dirka s tekmeci, vzpon proti uri, dvoboj med tovornjaki ali beg pred policijo.',
+    en: { name: 'Los Caracoles', desc: 'Route 60 in the Chilean Andes towards the border with Argentina: from the Juncalillo river at 2,200 m up 29 numbered curves (twenty of them stacked one above the other like a ladder), past the avalanche galleries, to Portillo and the Laguna del Inca at 2,866 m. A race against rivals, a climb against the clock, a duel among the trucks or an escape from the police.', escTo: 'To Portillo' },   // (the English page: Jezik · Language)
     realKm: 10.8, alt: [2200,2866],
     start: [0, 0], finish: [2399.3,-3116.1], cps: [[953.1,-526.8],[1127.3,-943.3],[1874.7,-1858.1],[1787.5,-2124.9]],
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 20,
