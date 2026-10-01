@@ -83,6 +83,27 @@ Okolica:
 - **Kraji**: hiše in hoteli Kranjske Gore po obrisih iz OpenStreetMap, jezero Jasna s kipom Zlatoroga na skali ob vodi, Mihov dom, Ruska kapelica (lesena, z dvema čebulastima kupolama), Koča na Gozdu, Erjavčeva koča, Tičarjev dom in Poštarski dom na prelazu; ob cesti pri kočah so table z imeni, pred vsako serpentino tabla z njeno številko in višino.
 - **Cesta**: asfalt s prekinjeno sredinsko črto, tlakovane serpentine s kamnitim zidom na zunanji strani, jeklene varnostne ograje, kjer teren pada, betonske ograje na mostovih (pod daljšimi je struga potoka), ob cesti smerniki. Start z lučmi v Kranjski Gori, zeleni loki kontrolnih točk, cilj na prelazu s tablo PRELAZ VRŠIČ 1.611 m, parkiriščem in gledalci.
 
+## Los Caracoles (dirka, kronometer, promet, policija)
+
+Najslavnejši odsek čilske ceste Ruta 60 (iz Los Andesa čez prelaz Los Libertadores proti Mendozi v Argentini), »polži«: 29 oštevilčenih ovinkov tik pod mejnim prehodom, v pravem merilu. Proga se začne na cesti ob reki Juncalillo (~2.200 m), čez most se dvigne do 1. ovinka (2.276 m), nato po »lestvi« dvajsetih ovinkov, naloženih drug nad drugim na pobočju, do ~2.560 m, po dolgih prečnicah mimo dveh betonskih galerij proti plazovom in po zadnjih devetih ovinkih do 29. ovinka (~2.795 m) na planoti Llano La Calavera, od tam pa do cilja v Portillu ob jezeru Laguna del Inca (2.866 m): 10,8 km in 666 m vzpona. Kartica proge je ena, s stikalom **Dirka / Kronometer / Promet / Policija**, kot na Vršiču:
+
+- **Dirka**: 12 tekmecev, start ob reki (štartna mreža za črto), en vzpon do Portilla. Pod mestom so prevoženi kilometri in nadmorska višina, po cilju vsak avto zapelje na svoje mesto ob cesti. Kvalifikacij ni (odprta cesta), v karieri je nagrada kot za dirko na 10,8 km.
+- **Kronometer**: sam proti uri, štiri kontrolne točke z vmesnimi časi in višino (CP1 za 5. ovinkom, CP2 za 15., CP3 za 21., CP4 za 26.), lestvica najboljših 10, duh in medalje (zlata 4:53, srebrna 5:08, bronasta 5:31, v dežju 5:18 / 5:34 / 5:59; zlato je čas relijskega avta na avtopilotu, kot na Vršiču).
+- **Promet**: dvoboj z enim tekmecem po odprti cesti, po kateri vozijo predvsem tovornjaki s polpriklopniki (16,5 m, v ovinkih počasni) in avtobusi na poti čez Ande, pa tudi avtomobili, kombiji, motoristi in kolesarji; ob razgledišču pri 17. ovinku in v Portillu hodijo izletniki.
+- **Policija**: beg pred policijo do Portilla po pravilih Vršiča; patrulje imajo ob bokih zelen pas z napisom CARABINEROS, v rezultatih pobega piše »Do Portilla v …«.
+- **Ovinki**: oštevilčeni so od spodaj (Juncal je ovinek 0, vstop na Llano La Calavera ovinek 29), pred vsakim stoji bela tabla CURVA s številko, na zunanji strani serpentin rumene table s puščicami. Pod uro se izpišejo z višino (npr. Curva 12 · 2.432 m, Curva 17 · Mirador, Curva 29 · Llano La Calavera), komentator jih občasno omeni (med 18. in 19. ovinkom se po njegovih besedah najpogosteje prevrnejo tovornjaki). Komentator ima na tej progi svoje stavke ob startu, ob cilju in ob pobegu.
+- **Galeriji proti plazovom**: na prečnicah okoli 22. ovinka cesta dvakrat pelje skozi betonsko galerijo (276 m in 267 m): zid na strani gore, streha na stebrih z ograjo na strani doline. Ograje so v galeriji ob zidu in stebrih (1,6 m od roba ceste), streha postane prosojna, ko je avto v galeriji, motor pa v njej odmeva.
+- **Oblika in višine**: sredinska črta je iz OpenStreetMap; ovinki so dovolj široki (polmer vsaj 12 m, kraki lestve vsaj 24 m narazen), zato je črta le zglajena. Višine so iz satelitskega višinskega modela Copernicus, očiščene, z naklonom največ 12 %; kot na pravih cestah je vzpon na krakih med serpentinami (do ~10 %), serpentine so položnejše (~4 %). Kjer zgornji krak lestve leži tik nad spodnjim, ga drži betonski podporni zid z ograjo.
+
+Okolica:
+
+- **Andsko poletje**: jasno popoldne, močno sonce s severozahoda (južna polobla), modrikasta izmaglica. Gola pobočja iz sivega, rjastega in okrastega melišča in skal, plasti kamnine na strmih stenah, šopi rumene trave (coirón), nizko grmičevje, višje gor zelene blazine (llareta), balvani in skalne čeri. Raba tal je iz satelitske karte ESA WorldCover. Stari sneg leži na senčnih južnih pobočjih od ~2.750 m, na prisojnih šele nad ~3.400 m; pozimi (letni čas Zima) je vse pod snegom kot v smučarski sezoni v Portillu.
+- **Portillo**: rumeni Hotel Portillo ob jezeru Laguna del Inca (smaragdna voda), Oktogon, koče in hiše smučišča, ustavljene žičnice s stebri, vrvmi in sedeži (sedežnica Juncalillo pelje čez cesto).
+- **Stara železnica Transandino** (zaprta od leta 1984): nasip z zarjavelimi tiri v dolini in pri Portillu, betonske galerije proti plazovom nad njo, mostovi.
+- **Cesta**: dvojna rumena sredinska črta (prehitevanje prepovedano), bele robne črte, jeklene ograje, kjer teren pada, in na zunanji strani ovinkov, oranžni snežni količki pri Portillu, most čez Juncalillo s potokom, ribnik ob startu.
+- **Dirka**: start z lučmi pod portalom LARGADA, modri portali kontrolnih točk z višino, cilj META v Portillu s tablo PORTILLO in modrima tablama proti meji, transparent SUBIDA LOS CARACOLES, čilske zastave ob štartni vrsti, gledalci ob startu, cilju, kontrolnih točkah, vsakem tretjem ovinku in pri razgledišču. Na zaprti cesti čakajo tovornjaki: ob startu v odstavnem pasu, v Portillu na parkirišču in na koncu ceste pred zaporo proti meji.
+- **Kondorji**: trije andski kondorji krožijo na vzgornikih nad cesto, blizu avta.
+
 ## Nürburgring Nordschleife
 
 Pravi „Zeleni pekel“ v Nemčiji v pravem merilu: en krog (20,7 km) proti 20 tekmecem (na drugih progah jih je 12), ki so tu hitrejši kot drugod, start in cilj pri tribuni T13, vožnja v smeri urinega kazalca. Oblika proge je iz OpenStreetMap, višine pa iz satelitskih višinskih modelov (SRTM in Copernicus), zato so klanci in spusti pravi: od T13 (~620 m) po Fuchsröhre navzdol do Breidscheida (~335 m, najnižja točka), nato dolg vzpon do Hohe Acht (~617 m). Ovinka Karussell in Kleines Karussell sta nagnjena (betonska skleda na notranji strani, avto ju lahko odpelje hitreje), na Flugplatzu, v Pflanzgartnu in na Sprunghüglu avto poskoči. Med vožnjo se pod uro izpišejo imena ovinkov (Hatzenbach, Flugplatz, Fuchsröhre, Adenauer Forst, Wehrseifen, Breidscheid, Bergwerk, Kesselchen, Karussell, Hohe Acht, Brünnchen, Pflanzgarten, Schwalbenschwanz, Döttinger Höhe …), pri KROG pa, koliko kilometrov kroga je že za tabo. Gozd, travniki, vasi in mostovi so postavljeni po pravi rabi tal in stavbah iz OpenStreetMap; gozd ima smreke, bukve, macesne in suhe smreke, ob robu grmovje in mlado drevje, tla pod krošnjami so temna. Na asfaltu so grafiti in zastave navijačev (največ pri znanih ovinkih in na Döttinger Höhe), katranske razpoke, zaplate in sledi gum pred počasnimi ovinki. Ob progi so kampi navijačev (šotori, prikolice, paviljoni, zastave, odri), reklame na ograjah, maršalske hišice s številkami na vsakih 250 m, table 300/200/100 pred zaviranjem in puščice v najostrejših ovinkih; pod mostovi proge tečejo ceste, na Döttinger Höhe so drevored in ograje ob poljih.
@@ -136,7 +157,7 @@ Na obeh lahko zapelješ v bokse (desno takoj za zadnjim ovinkom pred ciljno ravn
 
 ## Kje na progi si (proge po resničnih krajih)
 
-Na progah Ljubljana, Monako, Pikes Peak, Ouninpohja, Harju, Vršič, Nordschleife, Spa, Red Bull Ring in Suzuka se ~70 m pred vsakim znanim krajem pod uro izpiše njegovo ime (npr. Zmajski most, Prešernov trg, Casino, predor, Glen Cove, Devil's Playground, Keltainen talo, Kakaristo, Serpentina 8 · Ruska kapelica, Karussell, Eau Rouge, Zavoj 1 · Niki Lauda), in to v vsakem krogu. Komentator (v angleščini) občasno pove, kje si („Over the Dragon Bridge now!“, „Up into Casino Square!“), vsak kraj praviloma enkrat na dirko, z razmikom med takimi stavki, in samo takrat, ko ne govori o nečem pomembnejšem (prehitevanja, vmesni časi, nesreče in boksi imajo prednost in ga prekinejo). Kraj, ki ga v enem krogu ni utegnil omeniti, lahko pove v naslednjem. Čas kroga ali vmesni čas ostane na zaslonu, ime kraja pa se pokaže takoj za njim.
+Na progah Ljubljana, Monako, Pikes Peak, Ouninpohja, Harju, Vršič, Los Caracoles, Nordschleife, Spa, Red Bull Ring in Suzuka se ~70 m pred vsakim znanim krajem pod uro izpiše njegovo ime (npr. Zmajski most, Prešernov trg, Casino, predor, Glen Cove, Devil's Playground, Keltainen talo, Kakaristo, Serpentina 8 · Ruska kapelica, Karussell, Eau Rouge, Zavoj 1 · Niki Lauda), in to v vsakem krogu. Komentator (v angleščini) občasno pove, kje si („Over the Dragon Bridge now!“, „Up into Casino Square!“), vsak kraj praviloma enkrat na dirko, z razmikom med takimi stavki, in samo takrat, ko ne govori o nečem pomembnejšem (prehitevanja, vmesni časi, nesreče in boksi imajo prednost in ga prekinejo). Kraj, ki ga v enem krogu ni utegnil omeniti, lahko pove v naslednjem. Čas kroga ali vmesni čas ostane na zaslonu, ime kraja pa se pokaže takoj za njim.
 
 ## Fizika vožnje
 
@@ -166,7 +187,7 @@ Pred dirko na krožni progi odpelješ en leteči krog sam na progi (zaslon **Izb
 
 - Po krogu so na zaslonu časi vseh voznikov in zaostanki za najhitrejšim. Štartna vrsta je po časih: najhitrejši na prvem mestu, ti tam, kamor te je postavil tvoj krog, tekmeci v vrstnem redu svojih časov. **Na štart** začne dirko; **Ponovi dirko** jo kasneje ponovi z isto štartno vrsto.
 - V Pavzi **Ponovi krog** krog ponovi (časi tekmecev ostanejo), **Preskoči kvalifikacije** pa gre naravnost na dirko z 12. mesta.
-- Kvalifikacije so tudi pred vsako dirko prvenstva. V dirki s prijateljem, na kronometrih (Pikes Peak, Ouninpohja, Harju, Vršič) in na dirki na Vršič (odprta cesta, brez letečega kroga) jih ni.
+- Kvalifikacije so tudi pred vsako dirko prvenstva. V dirki s prijateljem, na kronometrih (Pikes Peak, Ouninpohja, Harju, Vršič, Los Caracoles) in na dirkah na Vršič in Los Caracoles (odprti cesti, brez letečega kroga) jih ni.
 - Krog iz kvalifikacij šteje tudi za rekord kroga proge.
 
 ## Sektorski časi
@@ -198,8 +219,8 @@ Vreme **Menljivo** (zaslon Izberi progo) pomeni, da se vreme med dirko na krožn
 
 - Ko začne deževati, je proga v približno minuti mokra. Ko dež poneha, se proga suši približno štiri minute. **Idealna linija se posuši prva**, približno dvakrat hitreje, in na cesti se pokaže svetlejši pas suhega asfalta. Na njej je oprijem boljši kot drugje na cesti.
 - Na progah z boksi je menjava gum ob pravem času taktika: prezgodnji postanek na dežne gume ali prepozen na suhe stane čas. Igra pove, ko je idealna linija suha.
-- Tudi na dirki na Vršič se vreme lahko spremeni: dež začne padati med vzponom ali pa poneha.
-- Na kronometrih (Pikes Peak, Ouninpohja, Harju, Vršič v načinu Kronometer) Menljivo pomeni isto kot Naključno. V dirki s prijateljem se vreme med dirko ne spreminja.
+- Tudi na dirkah na Vršič in Los Caracoles se vreme lahko spremeni: dež začne padati med vzponom ali pa poneha.
+- Na kronometrih (Pikes Peak, Ouninpohja, Harju, Vršič in Los Caracoles v načinu Kronometer) Menljivo pomeni isto kot Naključno. V dirki s prijateljem se vreme med dirko ne spreminja.
 
 ## Zastave in varnostni avto
 
@@ -250,7 +271,7 @@ Na vseh progah čez pokrajino počasi drsijo sence oblakov (v dežju jih ni, ker
 
 ## Vreme
 
-Na zaslonu **Izberi progo** izbereš vreme: **Suho**, **Dež**, **Menljivo** (glej zgoraj) ali **Naključno** (vsaka dirka posebej: dež približno v vsaki tretji dirki, na Spa v vsaki drugi, na Nordschleife in na Vršiču (jesen v Julijskih Alpah) skoraj v vsaki drugi). V dežju imajo vsi avti manj oprijema (v ovinkih in pri speljevanju za petino, zavore za desetino), zato drsijo bolj in dlje; tekmeci z AI zato vozijo ovinke počasneje in prej zavirajo, krog je 6–9 % počasnejši. Cesta je temna in mokra, nebo oblačno, vidljivost manjša, dež pada v curkih, izpod koles se dviga pršec (namesto dima iz gum), s trave in gramoza pa leti blato. Na mokri cesti se odsevajo luči (zadnje luči rišejo po cesti rdeče proge, zavorne še daljše, žarometi, ponoči reflektorji) in avti sami, kaplje pljuskajo po cesti (kolobarji, ki se razširijo), na asfaltu krožnih prog so luže, ki odsevajo nebo in se ob sušenju umaknejo. Slišati je dež in šumenje gum po vodi, komentator pa ob štartu omeni dež. Kadar je izbran Dež, dežuje tudi na naslovnem zaslonu. Kronometri (Pikes Peak, Ouninpohja, Harju in Vršič v načinu Kronometer) imajo v dežju svoje rekorde, lestvico in duha. Kadar je izbran Dež, kartica proge in lestvica pokažeta te.
+Na zaslonu **Izberi progo** izbereš vreme: **Suho**, **Dež**, **Menljivo** (glej zgoraj) ali **Naključno** (vsaka dirka posebej: dež približno v vsaki tretji dirki, na Spa v vsaki drugi, na Nordschleife in na Vršiču (jesen v Julijskih Alpah) skoraj v vsaki drugi, na Los Caracoles (suho andsko poletje) le v vsaki peti). V dežju imajo vsi avti manj oprijema (v ovinkih in pri speljevanju za petino, zavore za desetino), zato drsijo bolj in dlje; tekmeci z AI zato vozijo ovinke počasneje in prej zavirajo, krog je 6–9 % počasnejši. Cesta je temna in mokra, nebo oblačno, vidljivost manjša, dež pada v curkih, izpod koles se dviga pršec (namesto dima iz gum), s trave in gramoza pa leti blato. Na mokri cesti se odsevajo luči (zadnje luči rišejo po cesti rdeče proge, zavorne še daljše, žarometi, ponoči reflektorji) in avti sami, kaplje pljuskajo po cesti (kolobarji, ki se razširijo), na asfaltu krožnih prog so luže, ki odsevajo nebo in se ob sušenju umaknejo. Slišati je dež in šumenje gum po vodi, komentator pa ob štartu omeni dež. Kadar je izbran Dež, dežuje tudi na naslovnem zaslonu. Kronometri (Pikes Peak, Ouninpohja, Harju ter Vršič in Los Caracoles v načinu Kronometer) imajo v dežju svoje rekorde, lestvico in duha. Kadar je izbran Dež, kartica proge in lestvica pokažeta te.
 
 ## Letni čas in čas dneva
 
@@ -259,6 +280,7 @@ Na zaslonu **Izberi progo** izbereš še **letni čas** (Poletje, Jesen, Zima) i
 - **Jesen:** listje na drevesih porumeni, pordeči in porjavi (nekaj ga ostane zelenega), travniki postanejo slamnati in olivni, sonce je toplejše. Npr. jesenska Nordschleife.
 - **Zima:** trava in polja so pod snegom, drevesa zasnežena, asfalt je splužen, makadamske ceste (Ouninpohja, makadam na Harjuju, Gorski reli) pa so pokrite s steptanim snegom. Izpod koles se dviga snežni prah. Namesto dežja sneži. Oprijem je manjši: na asfaltu za 6 %, na zasneženem makadamu za četrtino (tekmeci vozijo temu primerno).
 - **Vršič** je vedno jeseni (zlati macesni, prvi sneg na vrhu): Poletje in Jesen ga pustita takega, Zima ga vsega zasneži.
+- **Los Caracoles** je poleti suha andska pokrajina s snežišči visoko gor; jeseni trava porumeni, pozimi je vse pod snegom (zid lestve in asfalt ostaneta siva).
 - **Večer:** nizko oranžno sonce, dolge sence v hladnejšem, rožnatem odtenku, topla meglica. Avti imajo prižgane žaromete.
 - **Noč:** temno modro nebo, šibka luna in zvezde (vidne iz kokpita, s TV kamer in v foto načinu). Ob progi so vsakih 30 m reflektorji na drogovih, ki na asfaltu delajo mehke kroge svetlobe, okoli luči pa je sij. Avti na cesto pred sabo svetijo s toplim snopom obeh žarometov; okoli žarometov, zadnjih in zavornih luči je sij. V stavbah so prižgana okna (topla luč, ponekod modra luč televizorja). Pri kakovosti »Visoka« luči še žarijo (bloom). Npr. nočna dirka v Monaku.
 
@@ -320,7 +342,7 @@ Dirka dveh igralcev, vsak na svojem telefonu (ali računalniku), preko interneta
 3. Za zasebno sobo tapni manjši gumb **Zasebna soba s kodo**: eden tapne **Ustvari sobo** in drugemu pošlje kodo (4 znaki), drugi kodo vpiše in tapne **Pridruži se**.
 4. V sobi vsak izbere svoj avto (◀ ▶). Gostitelj (kdor je čakal oziroma ustvaril sobo) izbere progo in število krogov ter tapne **Začni dirko**.
 
-- Na progi sta samo vidva, brez tekmecev z AI, drug ob drugem v prvi vrsti; kdo začne na levi, se menja od dirke do dirke. Vožnje proti uri (Pikes Peak, Ouninpohja in Harju) niso na voljo, Vršič pa je na voljo kot dirka na vrh (en vzpon, brez izbire krogov).
+- Na progi sta samo vidva, brez tekmecev z AI, drug ob drugem v prvi vrsti; kdo začne na levi, se menja od dirke do dirke. Vožnje proti uri (Pikes Peak, Ouninpohja in Harju) niso na voljo, Vršič in Los Caracoles pa sta na voljo kot dirka na vrh (en vzpon, brez izbire krogov).
 - Semafor ugasne na obeh telefonih hkrati. Časi se merijo od skupnega starta, zato sta rezultata na obeh telefonih enaka.
 - Poškodbe in vreme so po nastavitvah gostitelja (sprememba med dirko velja od naslednje dirke). Vsak vozi svoj avto z nadgradnjami.
 - Avta se lahko zadeneta. Vsak telefon premika le svoj avto, zato se ob trku odmakne vsak svoj.
@@ -347,11 +369,11 @@ Igra ne potrebuje namestitve ali prevajanja: `index.html` naloži datoteke po vr
 | `css/style.css` | slogi |
 | `js/vendor/three.r128.min.js` | knjižnica three.js (MIT) |
 | `js/tracks/<id>.js` | ena datoteka na progo: oblika, višine, sidrišča okolice, imena krajev (vrstni red v `index.html` = vrstni red v meniju) |
-| `js/core.js` | proge, fizika (Circuit Superstars, oprijem v dežju), AI, pravila dirke in prvenstva, promet in pešci na odprti cesti, policija (brez DOM in three.js) |
+| `js/core.js` | proge, fizika (Circuit Superstars, oprijem v dežju), AI, pravila dirke in prvenstva, promet (tudi tovornjaki) in pešci na odprti cesti, galerije proti plazovom, policija (brez DOM in three.js) |
 | `js/tex.js` | proceduralne teksture |
-| `js/world.js` | 3D svet prog (teren, drevesa, gledalci, rekviziti, boksi); Nordschleife in Red Bull Ring si delita gradnjo terena iz višinskih podatkov, Vršič ima svojega graditelja (teren iz višinskega modela, raba tal, stavbe, jesenski gozd in sneg) |
+| `js/world.js` | 3D svet prog (teren, drevesa, gledalci, rekviziti, boksi); Nordschleife in Red Bull Ring si delita gradnjo terena iz višinskih podatkov, Vršič ima svojega graditelja (teren iz višinskega modela, raba tal, stavbe, jesenski gozd in sneg), Los Caracoles si deli njegove pomožne funkcije za teren, okolico pa gradi svoj graditelj (andska pokrajina, podporni zidovi lestve, galeriji, železnica, Portillo, kondorji), Harju ima svojega (mesto in park na pravem terenu, dan relija) |
 | `js/data/p206.js` | 3D model Peugeota 206 |
-| `js/render.js` | izris, avti, delci, kamere, mehaniki v boksih, dež (curki, pršec, mokra cesta, oblačno nebo), promet, pešci, patrulje in bodičasti trakovi |
+| `js/render.js` | izris, avti, delci, kamere, mehaniki v boksih, dež (curki, pršec, mokra cesta, oblačno nebo), promet (tudi tovornjaki), pešci, patrulje in bodičasti trakovi |
 | `js/sfx.js`, `js/input.js`, `js/comm.js` | zvok, upravljanje, komentator |
 | `js/net.js`, `js/vendor/peerjs.min.js` | povezava dveh telefonov za dirko s prijateljem (soba s kodo, usklajena ura); knjižnica PeerJS (MIT) |
 | `js/game.js` | meniji, nastavitve, HUD, rekordi, prvenstvo, dirka s prijateljem, glavna zanka |
@@ -388,4 +410,7 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 - Raba tal Suzuke: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium (licenca CC BY 4.0), prek Overture Maps.
 - Proga Vršič (sredinska črta, tlakovani odseki, mostovi, raba tal, stavbe, jezeri pri Jasni): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/), prek [Overture Maps Foundation](https://overturemaps.org). Iz njih izpeljani podatki v `js/tracks/vrsic.js` so na voljo pod ODbL 1.0.
 - Višine in teren Vršiča: Copernicus DEM GLO-30: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
+- Proga Los Caracoles (sredinska črta, galeriji proti plazovom, most, jezera, stavbe, železnica Transandino, žičnice Portilla): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/), prek [Overture Maps Foundation](https://overturemaps.org). Iz njih izpeljani podatki v `js/tracks/caracoles.js` so na voljo pod ODbL 1.0.
+- Višine in teren Los Caracoles: Copernicus DEM GLO-30: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
+- Raba tal Los Caracoles: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Višine Suzuke: Copernicus DEM GLO-30: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.

@@ -81,7 +81,7 @@
   "maxCalls": 212,
   "kverts": 662,
   "maxKverts": 1050,
-  "jsMs": 0.35
+  "jsMs": 0.36
  },
  "nring": {
   "calls": 198,
@@ -117,5 +117,12 @@
   "kverts": 257,
   "maxKverts": 297,
   "jsMs": 0.22
+ },
+ "caracoles": {
+  "calls": 216,
+  "maxCalls": 287,
+  "kverts": 231,
+  "maxKverts": 308,
+  "jsMs": 2.04
  }
 }
