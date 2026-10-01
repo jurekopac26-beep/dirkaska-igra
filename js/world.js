@@ -12914,7 +12914,7 @@ const World = (function () {
     if (kind === 0) {
       cyl(g, 0, -0.02, 0, 0.026, 0.4, 5, bark, null, 0.018);
       for (const [a, l] of [[0.4, 0.18], [2.5, 0.16], [4.4, 0.17]]) ouRod(g, [0, 0.34, 0], [Math.cos(a) * l, 0.52, Math.sin(a) * l], 0.012, bark, 3);
-      puff(g, 0, 0.66, 0, 0.26, 0.9, col, R, 0.14, 0.48, 1.15, true);   // (the crown's top subdivided: rounder against the sky)
+      puff(g, 0, 0.66, 0, 0.26, 0.9, col, R, 0.14, 0.48, 1.15, false);
       for (let k = 0; k < 3; k++) { const a = k / 3 * TAU + 0.4 + R() * 0.4, d = 0.19; puff(g, Math.cos(a) * d, 0.52 + R() * 0.12, Math.sin(a) * d, 0.16 + R() * 0.03, 0.85, col.map(v => v * (0.88 + R() * 0.16)), R, 0.14, 0.44, 1.12, false); }
     } else {
       cyl(g, 0, -0.02, 0, 0.03, 0.35, 4, bark, null, 0.02);

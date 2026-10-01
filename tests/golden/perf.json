@@ -105,17 +105,17 @@
   "jsMs": 0.79
  },
  "muur": {
-  "calls": 279,
-  "maxCalls": 412,
-  "kverts": 721,
-  "maxKverts": 1048,
-  "jsMs": 0.84
+  "calls": 281,
+  "maxCalls": 414,
+  "kverts": 765,
+  "maxKverts": 1090,
+  "jsMs": 1.29
  },
  "muurtt": {
-  "calls": 126,
-  "maxCalls": 141,
-  "kverts": 683,
-  "maxKverts": 859,
-  "jsMs": 0.32
+  "calls": 128,
+  "maxCalls": 143,
+  "kverts": 730,
+  "maxKverts": 907,
+  "jsMs": 0.38
  }
 }
