@@ -108,14 +108,28 @@
   "calls": 295,
   "maxCalls": 423,
   "kverts": 882,
-  "maxKverts": 1256,
-  "jsMs": 1.1
+  "maxKverts": 1258,
+  "jsMs": 1.23
  },
  "muurtt": {
-  "calls": 138,
-  "maxCalls": 162,
-  "kverts": 853,
-  "maxKverts": 1060,
+  "calls": 139,
+  "maxCalls": 167,
+  "kverts": 842,
+  "maxKverts": 1062,
   "jsMs": 0.29
+ },
+ "muur8": {
+  "calls": 248,
+  "maxCalls": 296,
+  "kverts": 882,
+  "maxKverts": 1195,
+  "jsMs": 0.78
+ },
+ "ronde": {
+  "calls": 191,
+  "maxCalls": 283,
+  "kverts": 557,
+  "maxKverts": 1035,
+  "jsMs": 1.21
  }
 }
