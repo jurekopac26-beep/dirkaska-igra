@@ -941,7 +941,7 @@ const Render = (function () {
     world = World.build(scene, track, tex, { density });
     if (!world.farClip && camera.far !== 700) { camera.far = 700; camera.updateProjectionMatrix(); }
     applyTheme((track.def && track.def.theme) || 'lake'); wet = wetW = -1;   // (the weather again on the new world's road)
-    curTrack = track; seasonWorld(); floodlights();   // (the season and the time of day on the new world)
+    curTrack = track; seasonWorld(); floodlights(); worldAtmos();   // (the season and the time of day on the new world)
     if (dryLn) { scene.remove(dryLn); dryLn.geometry.dispose(); dryLn.material.dispose(); dryLn = null; }
     birds.reset(!!(track.def && (track.def.sea || track.def.theme === 'monaco')));   // (gulls by the sea)
     return world;
@@ -1081,7 +1081,7 @@ const Render = (function () {
     spa:      { fog: 0xc3ced7, sun: 0xfff1de, sunI: 0.98, sky: 0xd0dde9, gnd: 0x43522f, hemiI: 0.64, tint: [0.99, 1.0, 1.01], sat: 1.1 },   // the Ardennes: a little greyer, softer daylight (Spa's changeable weather)
     rbring:   { fog: 0xc6daea, sun: 0xfff1d8, sunI: 1.12, sky: 0xcfe3fb, gnd: 0x46602c, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.06, sunOff: [-86, 78, 52] },   // Styria in early summer, an afternoon sun (longer shadows): clear alpine air, fresh meadows, dark spruce woods
     suzuka:   { fog: 0xc8d9e6, sun: 0xfff1dc, sunI: 1.06, sky: 0xd5e7fa, gnd: 0x4f5c34, hemiI: 0.62, tint: [1.01, 1.0, 0.99], sat: 1.12 },   // Suzuka: a clear spring day in Mie
-    stelvio:  { fog: 0xb8cde4, sun: 0xffeccf, sunI: 1.2, sky: 0xc6dcfb, gnd: 0x565a44, hemiI: 0.58, tint: [1.02, 1.0, 0.99], sat: 1.12, con: 1.1, sunOff: [-70, 94, 62] },   // the Stelvio: a clear summer afternoon high in the Alps, crisp air (a deeper blue haze, and less of it: World fogK), a warm bright sun from the south-west
+    stelvio:  { fog: 0xb8cde4, sun: 0xffe8c6, sunI: 1.22, sky: 0xc6dcfb, gnd: 0x565a44, hemiI: 0.58, tint: [1.02, 1.0, 0.99], sat: 1.12, con: 1.1, haze: 0.2, hazeCol: [1, 0.9, 0.74], sunOff: [-74, 62, 66] },   // the Stelvio: a clear summer afternoon high in the Alps, crisp air (a deeper blue haze, and less of it: World fogK), a warm bright sun from the south-west (its glare where the road turns into it: haze)
   };
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   function applyTheme(id) {
@@ -1171,7 +1171,18 @@ const Render = (function () {
   function setAtmos(a) {
     const n = { season: ['autumn', 'winter'].includes(a && a.season) ? a.season : 'summer', tod: ['dusk', 'night'].includes(a && a.tod) ? a.tod : 'day' };
     if (n.season === atmos.season && n.tod === atmos.tod) return;
-    atmos = n; applyTheme(themeId); seasonWorld(); floodlights(); for (const v of views) { beams(v); carGlow(v); }
+    atmos = n; applyTheme(themeId); seasonWorld(); floodlights(); worldAtmos(); for (const v of views) { beams(v); carGlow(v); }
+  }
+  // the world's own answer to the time of day and the season (World.build: out.glow, [material, strength]: lit windows, the lamps' glass;
+  // out.night: what only shows in the dark, the street lamps' pools of light, the reflectors; out.dyn.skyTint: the clouds' colour; out.summer:
+  // what is not out in the winter, the grazing herds): the lights half on at dusk, full at night
+  function worldAtmos() {
+    if (!world) return;
+    for (const o of world.summer || []) o.visible = atmos.season !== 'winter';
+    const k = atmos.tod === 'night' ? 1 : atmos.tod === 'dusk' ? 0.5 : 0;
+    for (const [m, s] of world.glow || []) m.emissive.setScalar(k * s);
+    for (const o of world.night || []) { o.visible = k > 0; const m = o.material; if (m.userData.op0 == null) m.userData.op0 = m.opacity; m.opacity = m.userData.op0 * (0.5 + 0.5 * k); }
+    const tint = world.dyn && world.dyn.skyTint; if (tint) tint.value.setRGB(...(atmos.tod === 'night' ? [0.17, 0.2, 0.3] : atmos.tod === 'dusk' ? [1, 0.74, 0.58] : [1, 1, 1]));
   }
   function carGlow(v) { const m = v.body && v.body.material; if (m && m.emissive) m.emissive.setScalar(atmos.tod === 'night' ? 0.16 : 0); }   // (at night the cars stay in sight under the floodlights)
   const _hsl = { h: 0, s: 0, l: 0 }, _sc = new THREE.Color();
