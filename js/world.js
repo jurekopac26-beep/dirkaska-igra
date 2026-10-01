@@ -2972,6 +2972,11 @@ const World = (function () {
       : new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide, transparent: false }), false);
     addTex(texCrowd, new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), false);
     crowdFinish(CR, root, out);   // the instanced spectators and their ground strips
+    if (THEME === 'mountain' || THEME === 'lake') {   // wildflowers on the meadows behind the barriers (not in the water, the crowds, the buildings)
+      const wet = (x, z) => lakeSD(x, z) < 3 || (RIVER && distRiver(x, z) < RW / 2 + 2) || (CSX && shoreFO(x, z) < 2.5) || groundH(x, z) < -0.3;
+      const nFl = meadowFlowers(out, root, null, dens, { lc: (x, z) => excluded(x, z) ? 3 : 0, dist: (x, z) => { const n = nearest(x, z); return n.i < 0 ? 999 : Math.abs(n.lat); }, ground: groundH, wet });
+      out.stats = Object.assign(out.stats || {}, { flowers: nFl });
+    }
     return finish(out, tex);
   }
 
@@ -6392,8 +6397,46 @@ const World = (function () {
           '  vec2 ouQ = mod( floor( gl_FragCoord.xy ), 4.0 ), ouA = mod( ouQ, 2.0 ), ouB = floor( ouQ * 0.5 );\n' +
           '  if ( ouF * 0.9 > ( 4.0 * ( 2.0 * mod( ouA.x + ouA.y, 2.0 ) + ouA.y ) + 2.0 * mod( ouB.x + ouB.y, 2.0 ) + ouB.y + 0.5 ) / 16.0 ) discard;');
     };
-    m.customProgramCacheKey = () => 'ouCut';
+    m.customProgramCacheKey = () => 'ouCut'; m.userData.cut = true;
     return m;
+  }
+  // the see-through view on every track (the same as Ouninpohja's forest above): what stands between the camera and the followed car
+  // fades out in the screen-door dither, in the cone from the camera (1.5 m) to the car (5.5 m), but only higher than the car's roof (the
+  // road, the kerbs and the barriers round the car stay; the buildings of Monaco and Ljubljana, the trees, the grandstands go). Every
+  // opaque material of the world (seeThrough after the build): its own shader changes are kept, the dither is added after them (the
+  // program cache key extended). World.view moves the cone every frame; without a car (the cockpit, the intro's and the podium's shots)
+  // the point is parked far away: nothing fades
+  const CUT_V = ['#include <common>\nvarying vec3 vOuW;', '#include <project_vertex>\nvec4 ouW = vec4( transformed, 1.0 );\n#ifdef USE_INSTANCING\nouW = instanceMatrix * ouW;\n#endif\nvOuW = ( modelMatrix * ouW ).xyz;'];
+  const CUT_F = 'void main() {\n' +
+    '  vec3 ouD = ouCar - ouCam; float ouU = clamp( dot( vOuW - ouCam, ouD ) / max( dot( ouD, ouD ), 1.0 ), 0.0, 1.0 );\n' +
+    '  float ouR = mix( 1.5, 5.5, ouU ), ouF = smoothstep( ouR, ouR * 0.55, length( vOuW - ouCam - ouD * ouU ) ) * step( ouU, 0.96 ) * smoothstep( ouCar.y + 0.1, ouCar.y + 0.6, vOuW.y );\n' +
+    '  vec2 ouQ = mod( floor( gl_FragCoord.xy ), 4.0 ), ouA = mod( ouQ, 2.0 ), ouB = floor( ouQ * 0.5 );\n' +
+    '  if ( ouF * 0.9 > ( 4.0 * ( 2.0 * mod( ouA.x + ouA.y, 2.0 ) + ouA.y ) + 2.0 * mod( ouB.x + ouB.y, 2.0 ) + ouB.y + 0.5 ) / 16.0 ) discard;';
+  function cutWrap(m, U) {
+    const k0 = m.customProgramCacheKey(), ob = m.onBeforeCompile;
+    m.onBeforeCompile = function (sh, r) {
+      ob.call(this, sh, r);
+      if (!sh.vertexShader.includes('#include <project_vertex>') || !sh.fragmentShader.includes('void main() {')) return;
+      sh.uniforms.ouCam = U.uCam; sh.uniforms.ouCar = U.uCar;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', CUT_V[0]).replace('#include <project_vertex>', CUT_V[1]);
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 ouCam;\nuniform vec3 ouCar;\nvarying vec3 vOuW;').replace('void main() {', CUT_F);
+    };
+    m.customProgramCacheKey = () => k0 + '|cut';
+    m.userData.cut = true; m.needsUpdate = true;
+  }
+  function seeThrough(out) {
+    if (!out || !out.root) return 0;
+    const U = out.dyn.ouCut || (out.dyn.cut = { uCam: { value: new THREE.Vector3() }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) } }), seen = new Set();
+    let n = 0;
+    out.root.traverse(o => {
+      if (!o.isMesh || o.userData.noCut) return;
+      for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
+        if (!m || seen.has(m)) continue; seen.add(m);
+        if (m.transparent || m.isShaderMaterial || m.userData.cut || !(m.isMeshLambertMaterial || m.isMeshPhongMaterial || m.isMeshStandardMaterial || m.isMeshBasicMaterial)) continue;
+        cutWrap(m, U); n++;
+      }
+    });
+    return n;
   }
   function buildOuni(scene, tex, opts) {
     const R = rng(7411), N = T.N, w = T.w, dens = opts.density || 1, def = T.def;
@@ -7782,6 +7825,7 @@ const World = (function () {
     }
     const nPosts = posts.addTo(root, true);
     barShade(root, Pt, vergeRow, null); const nTus = nrTussocks(root, t13, dens);   // (Höljes' details: the ground darker at the barriers' foot, long grass behind them)
+    const nFl = meadowFlowers(out, root, t13, dens, NRH);   // (and wildflowers among it)
     nringProps(out, t13, onBridge, inKar);   // knockable tyre walls and roadside posts
 
     /* ---- the banked bowls (Karussell, Kleines Karussell): the inner half of the road in concrete slabs, laid on the road's own quads (the same
@@ -8156,7 +8200,7 @@ const World = (function () {
     addM(crowdG, new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }));
     fenceC.addTo(root, fMat, false, true); spC.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, edgeTrees: nEdge, posts: nPosts, buildings: nBld, fans: nFans, decals: nDecals, tussocks: nTus };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, edgeTrees: nEdge, posts: nPosts, buildings: nBld, fans: nFans, decals: nDecals, tussocks: nTus, flowers: nFl };   // (read by the tests)
     return out;
   }
 
@@ -8443,6 +8487,7 @@ const World = (function () {
     }
     const nPosts = posts.addTo(root, true);
     barShade(root, Pt, spaVerge, (i, side) => kindAt(i, side) < 0); const nTus = nrTussocks(root, t13, dens);   // (Höljes' details: the ground darker at the barriers' foot, long grass behind them)
+    const nFl = meadowFlowers(out, root, t13, dens, NRH);   // (and wildflowers among it)
     spaProps(out, (i) => t13(i));   // knockable tyre stacks at the exits and apexes
     // advertising on the concrete walls (the game's own brands, tex.sponsors: 4 m boards, the text read from the road)
     { const sb = new Chunks(128, true);
@@ -8869,7 +8914,7 @@ const World = (function () {
     numC.addTo(root, new THREE.MeshLambertMaterial({ map: numTex }), false, true);
     fenceC.addTo(root, fMat, false, true); spC.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, rows: nRows, posts: nPosts, buildings: nBld, stands: nStands, fans: nFans, tussocks: nTus };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, rows: nRows, posts: nPosts, buildings: nBld, stands: nStands, fans: nFans, tussocks: nTus, flowers: nFl };   // (read by the tests)
     return out;
   }
 
@@ -9427,6 +9472,33 @@ const World = (function () {
           const s = 0.55 + R() * 0.6, g = 0.9 + R() * 0.2; I.add(x, nrGround(x, z) - 0.04, z, R() * TAU, s * 1.2, s * (0.75 + R() * 0.5), [0.72 * g, 1.0 * g, 0.62 * g]); n++; } } }
     I.addTo(root, false); return n;
   }
+  // wildflowers on the meadows behind the barriers, where the mower does not reach: white daisies, yellow buttercups, mauve clover, pink
+  // campion, in flat patches (a quad each, the picture's alpha cut out; instanced in 256 m chunks: few draws, 4 vertices each; no shadows), 1-18 m beyond the barrier on
+  // the open land (H.lc: not the woods (1), not the built-up ground (3); H.wet: not in a pond), larger than life so the chase camera sees
+  // them; summer only (out.dyn.season). H: the world's land cover, distance from the road and ground height; skip(i): none at sample i
+  let flowerTex = null;
+  function meadowFlowers(out, root, skip, dens, H) {
+    if (!flowerTex) {
+      const S = 128, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), r = rng(6241);
+      for (let k = 0; k < 14; k++) { const fx = 16 + r() * 96, fy = 16 + r() * 96, fr = 7 + r() * 6, np = 5 + (r() * 2 | 0);
+        x.fillStyle = '#f4f2ea'; for (let p = 0; p < np; p++) { const a = p / np * Math.PI * 2 + r(); x.beginPath(); x.ellipse(fx + Math.cos(a) * fr * 0.62, fy + Math.sin(a) * fr * 0.62, fr * 0.55, fr * 0.32, a, 0, Math.PI * 2); x.fill(); }
+        x.fillStyle = '#e8b62a'; x.beginPath(); x.arc(fx, fy, fr * 0.32, 0, Math.PI * 2); x.fill(); }
+      flowerTex = new THREE.CanvasTexture(c);
+    }
+    const geo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2); geo.setAttribute('color', new THREE.Float32BufferAttribute(new Array(12).fill(1), 3));   // (white: the instance colour tints it)
+    const mat = new THREE.MeshLambertMaterial({ map: flowerTex, vertexColors: true, alphaTest: 0.5, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+    const I = new IChunks(geo, mat, 256), R = rng(6243), N = T.N, C = [[1, 1, 1], [1, 0.95, 0.42], [0.86, 0.66, 1], [1, 0.66, 0.8]]; let n = 0;
+    for (let i = 0; i < N; i += 2) { if (skip && skip(i)) continue;
+      for (const side of [-1, 1]) { const bar = side > 0 ? T.br[i] : T.bl[i];
+        for (let k = 0; k < 4; k++) { if (R() > 0.7 * dens) continue;
+          const o = side * (bar + 1 + R() * 17), a = (R() - 0.5) * T.ds * 2, x = T.px[i] + T.nx[i] * o + T.tx[i] * a, z = T.pz[i] + T.nz[i] * o + T.tz[i] * a, cl = H.lc(x, z);
+          if (cl === 1 || cl === 3 || H.dist(x, z) < bar + 0.8 || (H.wet && H.wet(x, z))) continue;
+          const q = R(), s = 1.2 + R() * 1.2; I.add(x, H.ground(x, z) + 0.03, z, R() * TAU, s, 1, C[q < 0.45 ? 0 : q < 0.72 ? 1 : q < 0.88 ? 2 : 3]); n++; } } }
+    const grp = new THREE.Group(); grp.name = 'flowers'; root.add(grp); I.addTo(grp, false);
+    const prev = out.dyn.season; out.dyn.season = (season) => { grp.visible = season === 'summer'; if (prev) prev(season); };
+    return n;
+  }
+  const NRH = { lc: (x, z) => nrLC(x, z), dist: (x, z) => nrDist(x, z), ground: (x, z) => nrGround(x, z) };
   // knockable props: posts every 95-130 m and tyre walls at the corner exits, on level verge only; not on the grid and the pit straight, not
   // on the run-offs (their tarmac is drawn above the verge), nor where the pit lane leaves and joins
   function rbringProps(out, skip) {
@@ -10354,7 +10426,8 @@ const World = (function () {
     out.crowdPts = Float32Array.from(crowdPts);
     out.dyn.air = out.air = rbAir(root, ownTex, nrGround);   // the helicopter's pass, the jets before the start (game.js: air.go, air.shot)
     if (!scrG.empty) { const st = ownTex(rbScreenTex()); addM(scrG, new THREE.MeshBasicMaterial({ map: st })); out.dyn.screens = { tex: st, f: -1 }; }
-    out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, stands: nStands, boxes: nBoxes, camp: nCamp, farms: nFarm, cars: nCars, tv: nTV, decals: nDecals, smoke: smokeL.length, flags: flagL.length, screens: nScr, photographers: nPh };   // (read by the tests)
+    const nFl = meadowFlowers(out, root, (i) => { const d = dS(i * ds); return d > -440 && d < 280; }, dens, NRH);   // (wildflowers on the meadows behind the barriers; not along the pit straight)
+    out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, stands: nStands, boxes: nBoxes, camp: nCamp, farms: nFarm, cars: nCars, tv: nTV, decals: nDecals, smoke: smokeL.length, flags: flagL.length, screens: nScr, photographers: nPh, flowers: nFl };   // (read by the tests)
     return out;
   }
 
@@ -12394,7 +12467,8 @@ const World = (function () {
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
     addM(fenceG, fMat);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, buildings: nBld, stands: nStands, fans: nFans };   // (read by the tests)
+    const nFl = meadowFlowers(out, root, (i) => nearX(i, 60), dens, { lc: szLC, dist: szDist, ground: szGround, wet: (x, z) => !!szPond(x, z) });   // (wildflowers on the meadows behind the barriers)
+    out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, buildings: nBld, stands: nStands, fans: nFans, flowers: nFl };   // (read by the tests)
     return out;
   }
 
@@ -12443,12 +12517,12 @@ const World = (function () {
   // after the camera has moved (Render.frame): what depends on where it looks from. Ouninpohja: the trees and buildings between the camera and
   // the followed car fade out (the car where it is drawn this frame: interpolated by alpha)
   function view(out, cam, car, alpha) {
-    const U = out && out.dyn.ouCut; if (!U) return;
+    const U = out && (out.dyn.ouCut || out.dyn.cut); if (!U) return;
     if (!car || !cam) { U.uCar.value.set(1e6, 0, 1e6); return; }
     const a = alpha == null ? 1 : alpha;
     U.uCam.value.copy(cam.position); U.uCar.value.set(lerp(car.px, car.x, a), lerp(car.py == null ? car.y || 0 : car.py, car.y || 0, a) + 1, lerp(car.pz, car.z, a));
   }
 
-  return { build, update, view, GB, box, cyl, cone, ico, gable, hex, vary, glowQuads, crowdRain, smokeLit: SMOKE_LIT };
+  return { build, update, view, seeThrough, GB, box, cyl, cone, ico, gable, hex, vary, glowQuads, crowdRain, smokeLit: SMOKE_LIT };
 })();
 
