@@ -4,7 +4,8 @@
 // straight stretches past the village; how hard by the game's difficulty (four levels). Whole runs on autopilot: through the checkpoint, the
 // patrol cars join, knock the player's car, lay strips and block the road, some are wrecked; the autopilot mostly gets through to the
 // building at the top (the mission). Stopped with a patrol car close by: busted. A tyre over a strip goes flat (the wheels over it, not the
-// ones in the gap); flat tyres: less grip, more drag. The contacts as in GTA V (no bounce, the PIT spins a car).
+// ones in the gap); flat tyres: less grip, more drag. The contacts as in GTA V (no bounce, the PIT spins a car). Down a side road: the police
+// come in after the player and pin them at its dead end.
 //   node tests/police.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -316,6 +317,30 @@ const toCheck = (r) => { const P = r.player, K = r.pol.chk; drive(r, 120, () => 
   check('the contacts as in GTA V: a push from behind does not bounce, a nudge on the rear quarter (the PIT) spins the car round, an offset head-on stops both; only in the run from the police',
     sep != null && Math.abs(sep) < 1 && pit.yaw > 90 && a3.speed < 9 && b3.speed < 9 && !rc.cars.some(c => c.ck),
     `separating at ${sep == null ? '-' : sep.toFixed(2)} m/s after the push; the PIT turned the car ${pit.yaw.toFixed(0)} deg in 1.5 s; head-on: ${a3.speed.toFixed(1)} and ${b3.speed.toFixed(1)} m/s after 0.6 s`);
+}
+
+// 19. the player down a side road with the police after them (Track.stubs; here a forest road past Šumica): the radio hears of it (stubIn);
+//     the patrol cars in the chase come in after them (one that went past its junction backs up to it), one stops in its mouth at its side;
+//     at its dead end (stubEnd) they pin the player: busted
+{
+  Math.random = seeded(3);
+  const r = new C.Race(T, opts({})), P = r.player, pol = r.pol; r.start(); pol._flee('skip'); Math.random = orig;
+  const K = T.stubs.findIndex(S => S.s0 - T.startS > 3400 && S.L > 120), S = T.stubs[K];
+  pol.D = Object.assign({}, pol.D, { side: 0 }); pol.plan = pol.plan.filter(e => Math.abs(e.s - S.s0) > 900);   // (nobody out of the side roads ahead, no strip at its junction)
+  let k = 0, tEnd = -1, back = false, inMax = 0, blk = null; const n0 = pol.ev;
+  for (; P.q.s < S.s0 - 30 && !P.finished; ) { Math.random = seeded(9000 + (++k)); C.aiControl(P, r, DT); r.step(DT); }
+  for (let t = 0; t < 90 && !P.finished; t += DT) {
+    Math.random = seeded(9000 + (++k));
+    if (C.stubDrive(P, r, K, 1) && tEnd < 0) tEnd = r.time;
+    r.step(DT);
+    for (const c of pol.cars) { const st = c.pol.stub; if (st && st.k === K && st.back) back = true; if (st && st.k === K && st.block) blk = c; }
+    inMax = Math.max(inMax, pol.cars.filter(c => c.q.k === K && c.pol.mode === 'chase' && !(c.pol.stub && c.pol.stub.block)).length);
+  }
+  Math.random = orig;
+  const ins = since(r, n0, 'stubIn'), mouth = blk && blk.q.k === K && blk.q.st > S.tb && blk.q.st < S.tb + 12 && blk.speed < 0.5 && Math.abs(blk.q.u) > 1.5;
+  check('a side road: the player down it, the police after them: they hear of it (stubIn), come in after them (one that went past the junction backs up to it), one stops in its mouth at its side; at its dead end they pin the player: busted',
+    ins.length === 1 && ins[0].stub === S.name && since(r, n0, 'stubEnd').length === 1 && inMax >= 2 && back && mouth && pol.busted && tEnd > 0 && r.time - tEnd < 40,
+    `${S.name || 'a forest road'} at ${(S.s0 - T.startS).toFixed(0)} m (${S.L.toFixed(0)} m to its rail): ${ins.length} stubIn, ${inMax} after them in it, backed up to it: ${back}; in its mouth: ${blk ? `${(blk.q.st - S.tb).toFixed(1)} m in, ${blk.q.u.toFixed(1)} m to the side, ${blk.speed.toFixed(1)} m/s` : '-'}; at the end at ${tEnd.toFixed(1)} s, busted ${pol.busted} at ${r.time.toFixed(1)} s`);
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
