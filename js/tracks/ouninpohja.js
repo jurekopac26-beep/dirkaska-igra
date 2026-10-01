@@ -13,6 +13,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     id: 'ouninpohja', name: 'Ouninpohja', theme: 'ouni', open: true, timeTrial: true, rally: true, laps: 1, halfWidth: 6,
     desc: 'Najslavnejša hitrostna preizkušnja Relija Finska: kronometer po makadamu od Hämepohje do Hassintieja. Skok za skokom skozi gozd, dolg desni ob jezeru Naarajärvi, dvorišče kmetije Ouni, skok pri Rumeni hiši (Keltainen talo), stopnice do križišča Mutanen, hitra Okskulmantie, vrhovi v smrekovem gozdu, ribnik in vas, skok Amazon in lasnica Kakaristo med polji. Ni nasprotnikov, dirkaš proti uri, na suhem ali v dežju.',
+    en: { desc: 'The most famous special stage of Rally Finland: a time trial on gravel from Hämepohja to Hassintie. Jump after jump through the forest, a long right by Lake Naarajärvi, the Ouni farmyard, the jump at the Yellow House (Keltainen talo), the steps down to the Mutanen junction, the fast Okskulmantie, crests in the spruce forest, a pond and a village, the Amazon jump and the Kakaristo hairpin between the fields. No rivals, you race against the clock, in the dry or in the rain.' },   // (the English page: Jezik · Language)
     realKm: 33,
     recId: 'ouninpohja2',   // (the 9.7 km stage: its records and ghost apart from the old 5.9 km stage's)
     start: [0,-70], finish: [-2032.2,-5893.3], cps: [[408.7,-1202.3],[1106.7,-2575.9],[171.5,-4896.5],[-1862.4,-5333.7]],
@@ -22,7 +23,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // rain, a choice on the track menu (records apart): the wet gravel grips less and the puddles (seed: where they lie) drag at the wheels
     rain: { seed: 31, puddles: 46 },
     // the famous jump (game.js: each run's length there against the record, the player's own longest kept with the records)
-    jumpRec: { bump: 5, name: 'Rumena hiša', say: 'the Yellow House', m: 57, by: 'Markko Märtin', beat: 'Dlje od Märtina!' },
+    jumpRec: { bump: 5, name: 'Rumena hiša', say: 'the Yellow House', m: 57, by: 'Markko Märtin', beat: 'Dlje od Märtina!', en: { name: 'Yellow House', beat: 'Further than Märtin!' } },
     // medal times (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
     medals: { cs: [235, 246, 265], wet: { cs: [258, 271, 291] } },
     // heights: [x, z, h] keyframes (m above the start line), snapped to samples, interpolated along s (not periodic); rolling lake-district hills

@@ -13,6 +13,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     id: 'nring', name: 'Nordschleife', theme: 'nring', laps: 1, halfWidth: 5.5,
     desc: 'Nürburgring Nordschleife v Nemčiji, \u201eZeleni pekel\u201c: prava proga v pravem merilu skozi gozdove Eifla. Spust skozi Fuchsröhre do Breidscheida (335 m), vzpon do Hohe Acht (617 m), nagnjena ovinka Karussell in Kleines Karussell z betonsko skledo, skoki na Flugplatzu, v Pflanzgartnu in na Sprunghüglu, grafiti navijačev na asfaltu in dolga ravnina Döttinger Höhe. En krog proti 20 hitrim tekmecem. Podatki: \u00a9 OpenStreetMap (ODbL), SRTM, Copernicus DEM.',
+    en: { desc: 'The Nürburgring Nordschleife in Germany, the “Green Hell”: the real track at full scale through the forests of the Eifel. Down through the Fuchsröhre to Breidscheid (335 m), up to Hohe Acht (617 m), the banked Karussell and Kleines Karussell with their concrete bowls, the jumps at Flugplatz, Pflanzgarten and Sprunghügel, the graffiti of the fans on the tarmac and the long Döttinger Höhe straight. One lap against 20 fast rivals. Data: © OpenStreetMap (ODbL), SRTM, Copernicus DEM.' },   // (the English page: Jezik · Language)
     start: [0, 0], runoff: 0.42, inner: 3.0, side: 3.4, gradeForce: true, elevSmooth: 16, realKm: 20.832,
     rivals: 20, aiPace: { cs: 1.1 },   // a full field (20 rivals, not the usual 12) and quicker ones: the long fast bends leave the AI more room than its usual skill cap (skill and cap x aiPace)
     elev: NRING_H.map((h, i) => [i / NRING_H.length, h / 10]),

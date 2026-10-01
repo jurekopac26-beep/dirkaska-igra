@@ -18,6 +18,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     id: 'rbring', name: 'Štajerska, Avstrija', theme: 'rbring', laps: 2, halfWidth: 6.5,
     desc: 'Hitra proga v štajerskih hribih: 4,3 km, 10 zavojev in 64 m višinske razlike. Strm vzpon (12 %) od 1. zavoja do lasnice na vrhu hriba, spust do 4. zavoja, hitra leva zavoja 6 in 7 ter zavoja 9 in 10 nazaj na ciljno ravnino. Tribune, boksi (zapelji vanje in mehaniki ti popravijo avto) in štajerski gozdovi. Podatki: © OpenStreetMap (ODbL), DGM Avstrija, ESA WorldCover.',
+    en: { name: 'Styria, Austria', desc: 'A fast circuit in the Styrian hills: 4.3 km, 10 turns and 64 m of height difference. A steep climb (12 %) from Turn 1 to the hairpin at the top of the hill, down to Turn 4, the fast left-handers 6 and 7 and turns 9 and 10 back onto the finish straight. Grandstands, pits (drive in and the mechanics repair your car) and Styrian forests. Data: © OpenStreetMap (ODbL), DGM Austria, ESA WorldCover.' },   // (the English page: Jezik · Language)
     start: [0, 0], runoff: 1, inner: 4.2, side: 5, gradeForce: true, elevSmooth: 12, realKm: 4.318, runoffTarmac: true,
     elev: RBR_H.map((h, i) => [i / RBR_H.length, h / 10]),
     // named places ([HUD label, x, z, the commentator's lines]): the turns by their numbers only (no names of people, places or sponsors)

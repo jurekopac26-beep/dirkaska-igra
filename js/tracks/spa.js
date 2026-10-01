@@ -13,6 +13,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     id: 'spa', name: 'Spa-Francorchamps', theme: 'spa', laps: 2, halfWidth: 6.5,
     desc: 'Prava proga v Belgiji v pravem merilu (7 km) skozi gozdove Arden: lasnica La Source, spust do Eau Rouge in strm vzpon Raidillon (do 16 %), dolga ravnina Kemmel, Les Combes in Malmedy na vrhu (469 m), dvojni levi ovinek Pouhon, hitri Blanchimont in šikana Bus Stop pred ciljem, za njo pa boksi (zapelji vanje in mehaniki ti popravijo avto). 102 m višinske razlike, dva kroga proti 12 tekmecem. Podatki: \u00a9 OpenStreetMap (ODbL), relief Valonije (SPW, CC BY 4.0).',
+    en: { desc: 'The real circuit in Belgium at full scale (7 km) through the forests of the Ardennes: the La Source hairpin, down to Eau Rouge and the steep climb of Raidillon (up to 16 %), the long Kemmel straight, Les Combes and Malmedy at the top (469 m), the double left of Pouhon, the fast Blanchimont and the Bus Stop chicane before the line, with the pits behind it (drive in and the mechanics repair your car). 102 m of height difference, two laps against 12 rivals. Data: © OpenStreetMap (ODbL), relief of Wallonia (SPW, CC BY 4.0).' },   // (the English page: Jezik · Language)
     start: [0, 0], runoff: 0.8, inner: 4.2, side: 3.8, gradeForce: true, elevSmooth: 6, realKm: 7.004,
     elev: SPA_H.map((h, i) => [i / SPA_H.length, h / 10]),
     pit: [15.5, -245, 195, -95, 100],   // pit lane right of the pit straight: [centre offset to the right, from, to, the player's box, a long way in] (metres from the start line)
