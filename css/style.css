@@ -118,6 +118,8 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #hud.drs #h-drs { display: block; }
 #h-drs.arm { color: var(--chalk); border-color: var(--chalk); }
 #h-drs.open { color: #0c1a08; background: #62e04c; border-color: #62e04c; text-shadow: none; }
+#h-tow { display: none; position: absolute; left: 8%; bottom: 25%; font: 700 italic clamp(8px, 2.2vh, 11px)/1 var(--f-ui); letter-spacing: .05em; color: #7fdcff; text-shadow: 0 1px 2px #000; }   /* the slipstream: in the wake of a car ahead */
+#h-tow.on { display: block; }
 /* time trial (js/game.js hx*): the turn counter under the altitude (def.turnNos), the live difference to the best run on the NAJ
    line under the clock (with a stored best run; the negative margins keep the line as high as before, so nothing below moves), the
    height profile under the minimap (def.alt) */

@@ -118,6 +118,7 @@ Prava proga Suzuka na Japonskem v pravem merilu (5,807 km, 2 kroga proti 12 tekm
 - **Most:** avto na mostu in avto pod njim se ne dotakneta (trki in odpadli deli veljajo le na isti višini), na mostu so betonske ograje, spodnja cesta pelje med opornimi zidovi. Ko voziš pod mostom, most postane prosojen, da vidiš avto.
 - **Okolica:** teren iz višinskega modela, gozdovi po rabi tal (ESA WorldCover), prave tribune (V1, V2, A1, B1, B2, C, D, E, G, Q, S) z gledalci in stavba boksov s kontrolnim stolpom po obrisih iz OpenStreetMap, stavbe v okolici, ribniki, zabavišče Motopia z velikim kolesom, ki se vrti, in češnje v cvetu (dirka za veliko nagrado Japonske je aprila). Rdeče-beli robniki, gramozni izleti s stenami iz gum, lovilne ograje in table za zaviranje (300, 200, 100 m) pred prvim ovinkom, lasnico, Spoonom in šikano.
 - Na Suzuki ni boksov za popravilo (stavba boksov je le okolica).
+- **DRS** kot na VN Japonske (od 2. kroga naprej): ena cona po ciljni ravnini. Črta zaznave je 50 m pred šikano Casio Triangle, loputa se odpre 126 m za zadnjim ovinkom in ostane odprta do zaviranja pred prvim ovinkom. Čez progo sta beli črti (polna na črti zaznave, črtkana tam, kjer se cona odpre).
 - **Pokošena trava:** trava ob progi in zelenice za ogrado so pokošene v svetle in temnejše pasove vzdolž proge (ne v gozdu, grmovju, na parkiriščih, v ribnikih, ob ciljni ravnini in ob križanju).
 
 ## Toskana in Gromski rt
@@ -139,6 +140,12 @@ Na progah Ljubljana, Monako, Pikes Peak, Ouninpohja, Vršič, Los Caracoles, Nor
 
 Igra ima eno fiziko, **Circuit Superstars**: avto drsi z nosom v ovinek toliko, kolikor hitro zavijaš; zaviranje v ovinku ga zavrti, na izhodu se sam poravna; brez vrtenja. Gumb za drift (preslednica) ga zavrti še malo bolj. Pomoč pri driftu (nizka/srednja/visoka) določa, kako daleč lahko zadrsa. Prejšnja arkadna fizika je odstranjena (kdor jo je imel izbrano, vozi zdaj Circuit Superstars; njeni stari rekordi se ne prikazujejo več).
 
+
+## Zavetrje
+
+Na dirki s tekmeci (ne v kronometru in ne v kvalifikacijah) ima avto v vrtincu za avtom pred sabo manj zračnega upora: do 40 m za njim in največ 2,4 m vstran od njegove linije, oba v hitrosti in ne v boksarski stezi. Bližje in bolj natanko za njim je, manj je upora (največ za četrtino). Na ravnini zato hitreje pridobiva hitrost in doseže večjo končno hitrost, v polnem zavetrju približno 10 % večjo. Na merilniku hitrosti se takrat prižge modra oznaka **ZAVETRJE**.
+
+Tekmeci z AI zavetrje izkoristijo: na ravnini ostanejo za avtom in se mu približujejo, vstran zapeljejo šele, ko so blizu ali ko se bliža zaviranje, in prehitijo. Pred zaviranjem za avtom pred sabo pustijo nekaj več prostora, ker jih zavetrje pripelje hitreje. Zavetrje velja tudi v dirki s prijatelji.
 ## Prvenstvo
 
 Na naslovnem zaslonu tapni **Prvenstvo** in izberi serijo dirk: **Domači pokal** (Jezero Ring, Ljubljana, Gorski reli, Riviera), **Superstars** (Bakreni gozd, Toskana, Gromski rt, Monako), **Legende** (Monako, Spa-Francorchamps, Red Bull Ring, Suzuka, Nordschleife) ali **Veliko prvenstvo** (vseh dvanajst krožnih prog). Dirke so enake kot sicer (12 tekmecev, tudi na Nordschleife, kjer jih je sicer 20; pred vsako dirko kvalifikacije, brez njih štart z 12. mesta; število krogov proge, vreme po nastavitvi), le da za mesto v cilju dobiš točke kot v formuli 1: 25, 18, 15, 12, 10, 8, 6, 4, 2 in 1 za prvih deset. Tekmeci so v vseh dirkah isti vozniki z istimi avti, zato med dirkami vodiš lestvico proti njim; pri enakem številu točk je pred tistim, ki ima več zmag (nato več drugih mest …).

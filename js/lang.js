@@ -208,7 +208,7 @@
     'MESTO VRNJENO': 'PLACE GIVEN BACK', 'KAZEN +5 s': 'PENALTY +5 s', 'VRNI MESTO · {0}': 'GIVE IT BACK · {0}', 'SC GRE S PROGE': 'SC LEAVING', 'NE PREHITEVAJ': 'NO OVERTAKING',
     'DEŽ': 'RAIN', 'Začelo je deževati: proga bo kmalu mokra. Zapelji v bokse po dežne gume (desno takoj za zadnjim ovinkom pred ciljno ravnino).': 'It has started to rain: the track will soon be wet. Pit for wet tyres (on the right just after the last corner before the finish straight).',
     'DEŽ JE PONEHAL': 'THE RAIN HAS STOPPED', 'Dež je ponehal: proga se suši, najprej na idealni liniji.': 'The rain has stopped: the track is drying, the racing line first.',
-    'SEKTOR {0}  {1}': 'SECTOR {0}  {1}', 'BOKSI · 80 km/h': 'PITS · 80 km/h',
+    'SEKTOR {0}  {1}': 'SECTOR {0}  {1}', 'BOKSI · 80 km/h': 'PITS · 80 km/h', 'ZAVETRJE': 'SLIPSTREAM',
     ' · POPRAVLJENO': ' · REPAIRED', 'POPRAVLJENO!': 'REPAIRED!', 'še {0} km': '{0} km to go', 'OVINEK {0}/{1}': 'TURN {0}/{1}', 'LETEČI KROG': 'FLYING LAP', 'LETEČI KROG!': 'FLYING LAP!',
     'KROG {0}/{1}': 'LAP {0}/{1}', 'KROG {0}: {1}': 'LAP {0}: {1}', '  NAJHITREJŠI': '  FASTEST', 'ZADNJI KROG!': 'FINAL LAP!', 'NAPAČNA SMER!': 'WRONG WAY!', 'POPRAVILO {0} %': 'REPAIR {0} %',
     'PREBITE GUME: {0}': 'FLAT TYRES: {0}', 'TEKMEC {0} s PRED TABO': 'RIVAL {0} s AHEAD', 'TEKMEC {0} s ZA TABO': 'RIVAL {0} s BEHIND',

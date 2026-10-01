@@ -287,16 +287,16 @@
   }
  },
  "suzuka": {
-  "meshes": 851,
-  "verts": 421410,
+  "meshes": 852,
+  "verts": 421518,
   "instances": 19293,
   "props": 147,
   "crowd": 1522,
-  "world": "475e51e8",
+  "world": "bff4a18a",
   "propsHash": "1cdfec55",
   "floor": "72b445dd/11620",
   "groups": {
-   "-:MeshLambertMaterial": "db37717a",
+   "-:MeshLambertMaterial": "d4ba83c3",
    "-:MeshBasicMaterial": "b674325b",
    "-:MeshPhongMaterial": "6b7256d",
    "crowd:MeshLambertMaterial": "23a36833",
