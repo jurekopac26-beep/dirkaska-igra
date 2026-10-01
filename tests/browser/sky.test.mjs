@@ -1,5 +1,5 @@
-// The sky's show: at night the stars and the moon over the horizon (the cockpit), the windows of the buildings lit (Riviera's facades, the
-// built houses' glass) and dark by day; the morning (Jutro) with its mist in the valleys (Spa: layers over the low land) and none on a flat
+// The sky's show: at night the stars and the moon over the horizon (the cockpit), the windows of the buildings lit (Riviera's facades) and
+// dark by day; the morning (Jutro) with its mist in the valleys (Spa: layers over the low land) and none on a flat
 // world; a rainbow after the rain by day (none at night); a thunderstorm (Nevihta): rain, lightning (a flash, the thunder after it) and at
 // night the lamps' streaks on the wet road; an endurance race's time of day moved on smoothly (the light between day and night, the
 // floodlights coming on); the Eau Rouge brook's flowing water. No shader errors anywhere.
