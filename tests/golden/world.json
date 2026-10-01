@@ -356,5 +356,23 @@
    "verge:MeshLambertMaterial": "53b46d61",
    "stones:MeshLambertMaterial": "a3ddf37f"
   }
+ },
+ "caracoles": {
+  "meshes": 2705,
+  "verts": 1346748,
+  "instances": 35631,
+  "props": 266,
+  "crowd": 1964,
+  "world": "a25b7e96",
+  "propsHash": "5a55708e",
+  "floor": "cd97797d/22736",
+  "groups": {
+   "-:MeshLambertMaterial": "2880b752",
+   "-:MeshPhongMaterial": "5e5b862d",
+   "-:MeshBasicMaterial": "84d4fb70",
+   "crowd:MeshLambertMaterial": "25efd496",
+   "tyremarks:MeshBasicMaterial": "95b8835b",
+   "roadwear:MeshLambertMaterial": "5c2c4ad"
+  }
  }
 }

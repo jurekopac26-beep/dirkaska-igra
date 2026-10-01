@@ -1144,7 +1144,7 @@ const Render = (function () {
   // horizon, in winter snow on the ground and the trees, rain and mist greyer. Painted again only when one of those changes (envKey);
   // the showroom has its own (studio lights)
   const ENV_S = 64, ENV_BAND = { lake: 0x44603a, city: 0xcdbb9c, ljubljana: 0xd4c4a6, forest: 0x2f5550, italia: 0x5f6f45, kamp: 0x40603a, monaco: 0xd9d2c2,
-    mountain: 0x7d8aa2, ouni: 0x2c422a, pikes: 0x8c7c6a, nring: 0x2f4628, spa: 0x34492e, rbring: 0x3c5a2e, suzuka: 0x3f5b38, vrsic: 0x5f5a42 };
+    mountain: 0x7d8aa2, ouni: 0x2c422a, pikes: 0x8c7c6a, nring: 0x2f4628, spa: 0x34492e, rbring: 0x3c5a2e, suzuka: 0x3f5b38, vrsic: 0x5f5a42, caracoles: 0x7e6e58 };
   let envKey = '', envCv = null;
   function makeEnv() {
     const cv = []; for (let f = 0; f < 6; f++) { const c = document.createElement('canvas'); c.width = c.height = ENV_S; cv.push(c); }
@@ -2008,6 +2008,7 @@ const Render = (function () {
     spa:      { fog: 0xc3ced7, sun: 0xfff1de, sunI: 0.98, sky: 0xd0dde9, gnd: 0x43522f, hemiI: 0.64, tint: [0.99, 1.0, 1.01], sat: 1.1 },   // the Ardennes: a little greyer, softer daylight (Spa's changeable weather)
     rbring:   { fog: 0xc6daea, sun: 0xfff1d8, sunI: 1.12, sky: 0xcfe3fb, gnd: 0x46602c, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.06, sunOff: [-86, 78, 52] },   // Styria in early summer, an afternoon sun (longer shadows): clear alpine air, fresh meadows, dark spruce woods
     suzuka:   { fog: 0xc8d9e6, sun: 0xfff1dc, sunI: 1.06, sky: 0xd5e7fa, gnd: 0x4f5c34, hemiI: 0.62, tint: [1.01, 1.0, 0.99], sat: 1.12 },   // Suzuka: a clear spring day in Mie
+    caracoles: { fog: 0xc2d3e8, sun: 0xfff3de, sunI: 1.32, sky: 0xb4cdf2, gnd: 0x6e5e4c, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.07, sunOff: [-72, 98, -62] },   // Los Caracoles: a clear afternoon of the Andean summer, the thin air's strong sun from the north-west (the southern hemisphere), a cool blue haze
   };
   // each track's own grade on top (high quality, the post pass): its shadows and its highlights tinted apart, a little (split toning:
   // [shadows], [highlights]); cool shade and a warm sun mostly, the Riviera's teal and gold, Toskana's golden light, Spa's greyer air
@@ -2015,7 +2016,7 @@ const Render = (function () {
     lake: [[0.97, 1.0, 1.05], [1.03, 1.0, 0.96]], city: [[0.95, 1.0, 1.05], [1.05, 1.0, 0.93]], ljubljana: [[0.98, 0.99, 1.04], [1.04, 1.0, 0.95]], forest: [[0.98, 1.0, 1.03], [1.02, 1.0, 0.98]],
     italia: [[1.0, 0.98, 1.02], [1.05, 1.01, 0.92]], kamp: [[0.98, 1.0, 1.03], [1.03, 1.0, 0.96]], monaco: [[0.95, 1.0, 1.05], [1.05, 1.0, 0.93]], mountain: [[0.95, 0.99, 1.06], [1.02, 1.0, 0.97]],
     ouni: [[0.97, 1.01, 1.03], [1.03, 1.0, 0.96]], vrsic: [[0.96, 0.99, 1.06], [1.04, 1.0, 0.94]], pikes: [[0.96, 0.99, 1.06], [1.03, 1.0, 0.95]], nring: [[0.97, 1.01, 1.02], [1.02, 1.0, 0.97]],
-    spa: [[0.97, 1.0, 1.04], [1.01, 1.0, 0.99]], rbring: [[0.96, 1.0, 1.05], [1.03, 1.0, 0.96]], suzuka: [[0.98, 1.0, 1.03], [1.03, 1.0, 0.97]] };
+    spa: [[0.97, 1.0, 1.04], [1.01, 1.0, 0.99]], rbring: [[0.96, 1.0, 1.05], [1.03, 1.0, 0.96]], suzuka: [[0.98, 1.0, 1.03], [1.03, 1.0, 0.97]], caracoles: [[0.95, 0.99, 1.07], [1.04, 1.0, 0.95]] };
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   function applyTheme(id) {
     const t = THEMES[id] || THEMES.lake, r = Math.max(0, wet); themeId = id;
@@ -3423,6 +3424,7 @@ const Render = (function () {
   let road = null;
   const RD_CAR = [0xf4f4f2, 0xc9ccd0, 0x9aa0a6, 0x2b2e33, 0x121417, 0x1f3f7a, 0x8c1c1c, 0xb52a1f, 0x2e5a3a, 0x6b4a2b, 0x9fb6c9, 0xd9c7a0, 0x3a4b63, 0x7a1f3d, 0xe8e8e4, 0x5a5f66];
   const RD_VAN = [0xf2f2f0, 0xf2f2f0, 0xdcdcd6, 0x2f5fa8, 0xc9ccd0, 0xd8b020, 0x8c1c1c];
+  const RD_TRUCK = [0xf2f2f0, 0xc0281c, 0x1f4f9a, 0xe0a020, 0x2a2c30, 0x2d6a3a, 0xd8d8d4, 0x8a1c1c];   // (the trucks' cabs)
   const RD_BUS = [0x19a7a4, 0xf2f2ee, 0x19a7a4], RD_MOTO = [0xd8261c, 0x151515, 0x1b5fb8, 0xf2f2f2, 0xe86a10], RD_BIKE = [0xd8261c, 0x1b5fb8, 0x151515, 0xf2f2f2, 0x2aa05a, 0xe8b400];
   const RD_SHIRT = [0xc0392b, 0x2e6fb5, 0xf2f2ee, 0x3c7a3e, 0xe0a526, 0x5b3a82, 0x1f2a36, 0xd46a8f, 0x7a8b99, 0x9b2d20, 0x4aa3a0, 0xecd9b0], RD_TROU = [0x2b3a55, 0x1c1c20, 0x4a4f57, 0x6e5a42, 0x33415c, 0x8a7d66];
   const RD_HAIR = [0x2a1d14, 0x4a3222, 0x6b4a2e, 0xb8925a, 0x1a1a1a, 0x8c8c8c, 0xd9c29a], RD_PACK = [0xc0392b, 0x2e6fb5, 0xe0a526, 0x3c7a3e, 0x303438];
@@ -3479,6 +3481,19 @@ const Render = (function () {
     World.box(g, 5.9, 0.34, 0, 0.12, 0.3, W, 0, K); World.box(g, -5.92, 0.34, 0, 0.12, 0.3, W, 0, K);
     return g.geometry();
   }
+  function rdTruckGeo() {   // a truck and its semi-trailer (16.5 x 2.55 m: Los Caracoles' traffic): the cab in its colour with the sleeper on top, the windscreen, the
+    // grille and bumper, lights, the trailer's box (white-grey), the wheels of the tractor's three axles and the trailer's three
+    const g = new GB(), B = RD_MG, W = 2.55, hw = W / 2, K = [0.08, 0.08, 0.09], GL = [0.12, 0.16, 0.21], TR = [0.86, 0.86, 0.84];
+    World.box(g, 7.05, 0.62, 0, 2.3, 2.3, W - 0.06, 0, B, [0.92, 0, 0.92]); World.box(g, 6.75, 2.92, 0, 1.7, 0.6, W - 0.2, 0, B);
+    g.quadO([8.205, 1.75, -hw * 0.88], [8.205, 1.75, hw * 0.88], [8.205, 2.75, hw * 0.88], [8.205, 2.75, -hw * 0.88], GL, [7, 2.2, 0]);
+    World.box(g, 8.2, 0.62, 0, 0.08, 1.0, W * 0.78, 0, [0.7, 0.72, 0.75]); World.box(g, 8.2, 0.3, 0, 0.14, 0.3, W, 0, K);
+    for (const sd of [-1, 1]) { World.box(g, 8.24, 0.7, sd * 1.0, 0.04, 0.18, 0.3, 0, [1, 0.97, 0.82]); World.box(g, -8.24, 0.85, sd * 1.1, 0.04, 0.3, 0.16, 0, [0.72, 0.06, 0.05]);
+      g.quadO([6.0, 1.75, sd * (hw - 0.025)], [7.6, 1.75, sd * (hw - 0.025)], [7.6, 2.6, sd * (hw - 0.025)], [6.0, 2.6, sd * (hw - 0.025)], GL, [7, 2.2, 0]);
+      for (const x of [7.3, 5.0, 3.85, -4.7, -5.95, -7.2]) wheelInto(g, x, 0.52, sd * (hw - 0.2), 0.52, 0.34, K, [0.6, 0.62, 0.65]); }
+    World.box(g, 4.6, 0.75, 0, 2.6, 0.35, W - 0.5, 0, K);   // (the chassis under the coupling)
+    World.box(g, -1.1, 1.08, 0, 14.2, 2.9, W, 0, TR, [0.8, 0.8, 0.78]); World.box(g, -1.1, 0.86, 0, 14.2, 0.22, W - 0.1, 0, [0.22, 0.22, 0.24]);
+    return g.geometry();
+  }
   function rdMotoGeo() {   // a motorbike: two wheels, the tank in its colour, the seat, the engine, the fork and bars, the lights
     const g = new GB(), B = RD_MG, K = [0.08, 0.08, 0.09], S = [0.62, 0.64, 0.68];
     wheelInto(g, 0.72, 0.31, 0, 0.31, 0.12, K, S); wheelInto(g, -0.72, 0.31, 0, 0.31, 0.15, K, S);
@@ -3529,7 +3544,7 @@ const Render = (function () {
     const mk = (geo, n, mt, cast) => { const im = new THREE.InstancedMesh(geo, mt, n); im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); im.frustumCulled = false; im.castShadow = !!cast; im.receiveShadow = true;
       for (let i = 0; i < n; i++) { im.setMatrixAt(i, _zero); im.setColorAt(i, _pc.setRGB(1, 1, 1)); } im.instanceColor.setUsage(THREE.DynamicDrawUsage); im.count = 0; grp.add(im); meshes.push(im); return im; };   // (the colours before the count goes to 0: three sizes them by it)
     const V = { car: [mk(rdCarGeo('hatch', 'pico'), 40, matP, true), mk(rdCarGeo('sedan', 'vortex'), 40, matP, true), mk(rdCarGeo('coupe', 'kaze'), 24, matP, true)],
-      van: mk(rdVanGeo(), 24, matP, true), bus: mk(rdBusGeo(), 8, matP, true), moto: mk(rdMotoGeo(), 12, matP, true), bike: mk(rdBikeGeo(), 24, matP, false) };
+      van: mk(rdVanGeo(), 24, matP, true), bus: mk(rdBusGeo(), 8, matP, true), truck: mk(rdTruckGeo(), 20, matP, true), moto: mk(rdMotoGeo(), 12, matP, true), bike: mk(rdBikeGeo(), 24, matP, false) };
     const NP = 90, PG = pedGeos();
     PG.trunk.setAttribute('crewSkin', new THREE.InstancedBufferAttribute(new Float32Array(NP * 3), 3)); PG.head.setAttribute('crewSkin', new THREE.InstancedBufferAttribute(new Float32Array(NP * 3), 3));
     PG.farm.setAttribute('crewSkin', new THREE.InstancedBufferAttribute(new Float32Array(NP * 6), 3));
@@ -3594,12 +3609,14 @@ const Render = (function () {
     const fs = P.farm.geometry.attributes.crewSkin; fs.setXYZ(i * 2, m.skin[0], m.skin[1], m.skin[2]); fs.setXYZ(i * 2 + 1, m.skin[0], m.skin[1], m.skin[2]);
   }
   // the patrol cars' look (on the views of Race.pol's cars): the number off, a blue band on both sides reading POLICIJA, the light bar
-  let polTex = null, matPolBand = null, matPolOn = null, matPolOff = null, matPolBar = null;
+  let polTex = null, polKey = '', matPolBand = null, matPolOn = null, matPolOff = null, matPolBar = null;
   function polGear(v) {
     const c = v.car, M = c.m, def = BODIES[M.body];
-    if (!polTex) { const cv = document.createElement('canvas'); cv.width = 512; cv.height = 64; const g = cv.getContext('2d'); g.fillStyle = '#1b3f95'; g.fillRect(0, 0, 512, 64); g.fillStyle = '#f4f6fa';
-      g.font = 'bold 44px Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('POLICIJA', 256, 34); g.fillStyle = '#d8e43a'; g.fillRect(0, 0, 512, 5); g.fillRect(0, 59, 512, 5);
-      polTex = new THREE.CanvasTexture(cv); matPolBand = new THREE.MeshLambertMaterial({ map: polTex }); matPolOn = new THREE.MeshBasicMaterial({ color: 0x3a78ff }); matPolOff = new THREE.MeshLambertMaterial({ color: 0x0e1c3c }); matPolBar = new THREE.MeshLambertMaterial({ color: 0x1a1a1a }); }
+    const PL = (curTrack && curTrack.def.police) || {}, pk = (PL.label || '') + (PL.band || '');   // (a road's own police: def.police, the label and the colour of the band)
+    if (polTex && polKey !== pk) { polTex.dispose(); [matPolBand, matPolOn, matPolOff, matPolBar].forEach(m => m && m.dispose()); polTex = null; }
+    if (!polTex) { const cv = document.createElement('canvas'); cv.width = 512; cv.height = 64; const g = cv.getContext('2d'); g.fillStyle = PL.band || '#1b3f95'; g.fillRect(0, 0, 512, 64); g.fillStyle = PL.text || '#f4f6fa';
+      g.font = 'bold 44px Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(PL.label || 'POLICIJA', 256, 34, 480); g.fillStyle = '#d8e43a'; g.fillRect(0, 0, 512, 5); g.fillRect(0, 59, 512, 5);
+      polTex = new THREE.CanvasTexture(cv); polKey = pk; matPolBand = new THREE.MeshLambertMaterial({ map: polTex }); matPolOn = new THREE.MeshBasicMaterial({ color: 0x3a78ff }); matPolOff = new THREE.MeshLambertMaterial({ color: 0x0e1c3c }); matPolBar = new THREE.MeshLambertMaterial({ color: 0x1a1a1a }); }
     v.dec.visible = false;
     const L = M.len * 0.62, hb = new THREE.PlaneGeometry(L, L / 8), y = def.secs ? (def.secs[Math.floor(def.secs.length / 2)][2] + def.secs[Math.floor(def.secs.length / 2)][3]) * 0.5 + 0.06 : 0.62;
     for (const sd of [-1, 1]) { const b = new THREE.Mesh(hb, matPolBand); b.position.set(-0.05, y, sd * (M.wid * 0.5 + 0.015)); b.rotation.y = sd > 0 ? 0 : Math.PI; v.bodyG.add(b); }
@@ -3618,7 +3635,7 @@ const Render = (function () {
     for (const v of tf.veh) {
       if (v.off) continue; const dx = v.x - cx, dz = v.z - cz, d2 = dx * dx + dz * dz; if (d2 > far) continue;
       const K = v.kind, u = v.col, lay = v.st > 0 && K >= 3;
-      const ok = K === 0 ? put(V.car[Math.floor(u * 7.3) % 3], v, rdPick(RD_CAR, (u * 13.7) % 1)) : K === 1 ? put(V.van, v, rdPick(RD_VAN, u)) : K === 2 ? put(V.bus, v, rdPick(RD_BUS, u)) :
+      const ok = K === 0 ? put(V.car[Math.floor(u * 7.3) % 3], v, rdPick(RD_CAR, (u * 13.7) % 1)) : K === 1 ? put(V.van, v, rdPick(RD_VAN, u)) : K === 2 ? (v.p === 5 ? put(V.truck, v, rdPick(RD_TRUCK, u)) : put(V.bus, v, rdPick(RD_BUS, u))) :
         put(K === 3 ? V.moto : V.bike, v, rdPick(K === 3 ? RD_MOTO : RD_BIKE, u), lay ? 1.45 * (u > 0.5 ? 1 : -1) : v.lean, lay ? 0.05 : 0);
       if (!ok) continue; nv++;
       // the lights: headlights and tail lights at dusk and at night (the brake lights always), the hazard lights of a wreck
@@ -3630,7 +3647,7 @@ const Render = (function () {
           if (haz) for (const e of [hl, -hl]) { const [x, z] = at(e, sd * (hw + 0.1)); glows.add(x, hy, z, 1.3, 1.0, 0.55, 0.08, 0.9); }
         } }
     }
-    for (const im of [...V.car, V.van, V.bus, V.moto, V.bike]) { im.count = cnt.get(im) || 0; if (im.count) { im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; } }
+    for (const im of [...V.car, V.van, V.bus, V.truck, V.moto, V.bike]) { im.count = cnt.get(im) || 0; if (im.count) { im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; } }
     // the people: the Core's (on foot; a rider thrown off), the riders on their bicycles and motorbikes, an officer by each parked patrol car
     const P = Q.P, NP = Q.NP; let np = 0;
     const gy = (x, z, y) => world && world.groundH ? Math.max(y - 0.5, world.groundH(x, z)) : y;
@@ -4365,7 +4382,7 @@ const Render = (function () {
      each frame from the haze, the time of day and the season (their shapes are the texture's channels: the band's top half; snow and
      lights in its bottom half), fading into the haze at their foot ---------------- */
   const HZ = { lake: ['hills', 0x3e5a36], city: ['town', 0x6f6a66, 1], ljubljana: ['alps', 0x5d6b7c, 1], forest: ['hills', 0x2c4a40], italia: ['tuscany', 0x55623c], kamp: ['hills', 0x4f5a3a, 1],
-    monaco: ['coast', 0x6a6f64, 1], mountain: ['alps', 0x5c6a82], ouni: ['forest', 0x24372a], pikes: ['alps', 0x6b6f7c], nring: ['hills', 0x33472c], spa: ['forest', 0x2f4430], rbring: ['alps', 0x4c5d6e], suzuka: ['hills', 0x3b5236, 1], vrsic: ['alps', 0x5c6a82] };
+    monaco: ['coast', 0x6a6f64, 1], mountain: ['alps', 0x5c6a82], ouni: ['forest', 0x24372a], pikes: ['alps', 0x6b6f7c], nring: ['hills', 0x33472c], spa: ['forest', 0x2f4430], rbring: ['alps', 0x4c5d6e], suzuka: ['hills', 0x3b5236, 1], vrsic: ['alps', 0x5c6a82], caracoles: ['alps', 0x6b6f7c] };
   let hz = null;
   function hzTex(kind, seaA, town) {   // 2048 x 512: top half the three layers (r far, g middle, b near), bottom half r snow, g lit windows; u all round (from +x towards +z)
     const W = 2048, H = 256, c = document.createElement('canvas'); c.width = W; c.height = H * 2; const x = c.getContext('2d'), img = x.createImageData(W, H * 2), D = img.data, r = Core.rng(kind.length * 977 + (seaA || 0) * 31);
@@ -4636,7 +4653,7 @@ const Render = (function () {
     rainFx(Math.min(dt, 0.1), target);
     // tunnel roof (and the hotel above it) fades out while the followed car is inside, so you can see it (Suzuka: the bridge, while it drives underneath)
     if (world && world.dyn.tunnel && target && target.q) {   // (not from the cockpit: from inside the car the tunnel is a tunnel)
-      const tn = world.dyn.tunnel, sq = target.q.s, inside = sq > tn.s0 - 30 && sq < tn.s1 + 12 && !cam.ck, goal = inside ? 0.14 : 1;
+      const tn = world.dyn.tunnel, sq = target.q.s, inside = !cam.ck && (tn.ranges ? tn.ranges.some(r => sq > r[0] - 30 && sq < r[1] + 12) : sq > tn.s0 - 30 && sq < tn.s1 + 12), goal = inside ? 0.14 : 1;   // (ranges: more than one, Los Caracoles' galleries)
       tn.mat.opacity += (goal - tn.mat.opacity) * Math.min(1, dt * 5 + 0.02);
       const tr = tn.mat.opacity < 0.985; if (tn.mat.transparent !== tr) { tn.mat.transparent = tr; tn.mat.needsUpdate = true; } tn.mat.depthWrite = !tr;
       if (tn.mats) for (const m of tn.mats) if (m !== tn.mat) { m.opacity = tn.mat.opacity; if (m.transparent !== tr) { m.transparent = tr; m.needsUpdate = true; } m.depthWrite = !tr; }   // (Suzuka: everything on the bridge)

@@ -117,5 +117,12 @@
   "kverts": 598,
   "maxKverts": 753,
   "jsMs": 0.79
+ },
+ "caracoles": {
+  "calls": 204,
+  "maxCalls": 232,
+  "kverts": 208,
+  "maxKverts": 268,
+  "jsMs": 1.13
  }
 }

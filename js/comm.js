@@ -224,10 +224,11 @@ const Comm = (() => {
   // opt.ttl = how long (ms) the line may wait in the queue. Returns the logged item (item.spoken / item.cut are set later), or null.
   function say(key, vars, prio, opt) {
     if (!on || !speech || !synth) return null;   // audio-only commentary: silent when sound is off
-    if (key === 'summitRecord' || key === 'summitEven' || key === 'summit') {   // Pikes Peak's finish: its announcer (minutes read out as minutes and seconds)
+    const kb = key.split('@')[0];   // (a road's own pool: key@track, see game.js ownLine)
+    if (kb === 'summitRecord' || kb === 'summitEven' || kb === 'summit') {   // Pikes Peak's finish: its announcer (minutes read out as minutes and seconds); a road's own lines keep theirs
       const t = vars && String(vars.time || ''), m = /^(\d+) minutes? ([\d.]+)$/.exec(t);
       vars = Object.assign({}, vars, { time: m ? m[1] + (m[1] === '1' ? ' minute and ' : ' minutes and ') + m[2] + ' seconds' : t });
-      key = key === 'summitEven' ? 'pkFinEven' : key === 'summit' ? 'pkFinOff' : vars.delta ? 'pkFinRec' : 'pkFinFirst';
+      if (kb === key) key = key === 'summitEven' ? 'pkFinEven' : key === 'summit' ? 'pkFinOff' : vars.delta ? 'pkFinRec' : 'pkFinFirst';
     }
     const pool = LINES[key]; if (!pool) return null;
     let k = Math.floor(Math.random() * pool.length);
