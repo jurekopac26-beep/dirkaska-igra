@@ -8,6 +8,8 @@
 //    targa's default number lies on its roof, clear of the hole
 //  - body.door in either order (the same doors); body.crush with its ends swapped or a negative z fails, { 0, 0, 0 } builds
 //  - K.number: every digit's seven bars full length (the bars across the whole digit, the uprights to the middle bar's far edge)
+//  - every registered vehicle (its look, or a place-holder's generic hatch): each part's range centroid within 0.35 m of where the core
+//    throws its piece from (a lost part's copy lies where the part was: stage B2)
 //   node tests/kit.test.js
 'use strict';
 const fs = require('fs');
@@ -176,6 +178,24 @@ function raysThrough(res) {
     res.geo.dispose();
   }
   check('K.number: every digit\'s bars full length (a, d, g the whole digit wide; b, c, e, f from their end to the middle bar\'s far edge), 3 places x 7 bars', !rows.length, rows.slice(0, 4).join(' | '));
+}
+
+// ---- 5. every registered vehicle (its look, or the generic hatch of a place-holder): each part's range has its centroid within 0.35 m of
+//         where the core throws the part's piece from (the part table's lx, lz of the half length / width, y): a lost part's copy (stage B2)
+//         lies where the part was. A look that puts a part elsewhere moves its table entry (parts.over / extra) ----
+{
+  const rows = [], w0 = console.warn; let worst = ['', 0], n0 = 0;
+  console.warn = () => { };   // (the place-holders' fallback warnings as their bodies are built)
+  for (const M of Core.MODELS.filter(m => m.kit && !m.retired)) {
+    const I = R.kitInfo(M.id), PT = Core.partsOf(M);
+    for (const k in PT) { const p = PT[k], c = I.ranges[k] && I.ranges[k].c; if (p.wh != null) continue; n0++;
+      if (!c) { rows.push(`${M.id} ${k}: no range`); continue; }
+      const d = Math.hypot(c[0] - p.lx * M.len / 2, c[1] - p.y, c[2] - p.lz * M.wid / 2); if (d > worst[1]) worst = [M.id + ' ' + k, d];
+      if (d > 0.35) rows.push(`${M.id} ${k}: ${d.toFixed(2)} m (range at ${c.map(v => v.toFixed(2)).join(', ')})`); }
+  }
+  console.warn = w0;
+  check(`every registered vehicle's parts lie where the core throws their pieces from (each range's centroid within 0.35 m of its spawn point; ${n0} parts)`, !rows.length && n0 > 0,
+    rows.slice(0, 6).join(' | ') || `the farthest: ${worst[0]} ${worst[1].toFixed(3)} m`);
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} kit checks (${((Date.now() - t0) / 1000).toFixed(0)} s)`);
