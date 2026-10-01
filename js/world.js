@@ -4241,6 +4241,7 @@ const World = (function () {
      colour (lit, its shadows on them; the rain darkens them with it: userData.wear), indexed, in 256 m chunks (culled) ---- */
   function roadWear(o, tex) {
     if (T.def.roadSurface === 'makadam' || THEME === 'pikes' || !T.rl || !tex.wear) return;   // (Pikes Peak's road has its own cracks and patches)
+    const fresh = !!o.roadNew;   // (a newly resurfaced road, the builder's o.roadNew: Mie's since 2026, no patches, no sealed cracks; the rubber on its line as much as is laid down, o.rubberU)
     const N = T.N, ds = T.ds, w = T.w, len = T.len, open = T.open, R = rng(4242), bk = { dy: 0, sl: 0 }, cells = new Map(), lim = w - 0.6;
     const at = (k) => (open ? clamp(k, 0, N - 1) : ((k % N) + N) % N), HYi = (i) => (T.hasElev ? T.hy[i] : 0);
     const deck = (i) => { for (const c of T.cross || []) { const d = Math.abs(i - c.up); if (Math.min(d, N - d) * ds < c.upZ + 30) return true; } return false; };   // (Suzuka's bridge fades out while the car drives under it)
@@ -4257,7 +4258,7 @@ const World = (function () {
       const cs = Math.cos(rot), sn = Math.sin(rot), Q = [[-hl, -hw, u0, v0], [hl, -hw, u1, v0], [hl, hw, u1, v1], [-hl, hw, u0, v1]].map(([a, b, u, v]) => [pt(s + a * cs - b * sn, lo + a * sn + b * cs), [u, v]]);
       const c = chunk(Q[0][0]), k = Q.map(q => vtx(c, q[0], col, q[1])); face(c, k[0], k[1], k[2]); face(c, k[0], k[2], k[3]); };
     // patches, every 40-100 m, more often in a wheel track than not
-    for (let s = R() * 50; s < len - 6; s += 40 + R() * 60) {
+    if (!fresh) for (let s = R() * 50; s < len - 6; s += 40 + R() * 60) {
       const i = at(Math.round(s / ds)); if (deck(i)) continue;
       const hl = 0.8 + R() * 1.8, hw = 0.5 + R() * 1.1, lo = clamp((R() < 0.6 ? T.rl[i] + (R() < 0.5 ? -0.78 : 0.78) : (R() * 2 - 1) * w) + (R() - 0.5) * 0.6, -lim + hw, lim - hw), k = R() < 0.55 ? 0.78 + R() * 0.1 : 1.06 + R() * 0.1;
       decal(s, lo, hl, hw, (R() - 0.5) * 0.08, 0.02, 0.02, 0.48, 0.48, [k, k, k * 1.01, 1]);
@@ -4265,16 +4266,16 @@ const World = (function () {
     // sealed cracks (the texture's long strips are 8:1): across the road every 25-60 m, along it every 50-110 m, a network of them or one
     // with its branches every 120-260 m
     const strip = (s, lo, L, rot) => { const b = R() < 0.5; decal(s, lo, L / 2, L / 16, rot, 0.004, b ? 0.752 : 0.877, 0.996, b ? 0.873 : 0.998, [1, 1, 1, 0.8 + R() * 0.2]); };
-    for (let s = R() * 40; s < len - 4; s += 25 + R() * 35) {
+    if (!fresh) for (let s = R() * 40; s < len - 4; s += 25 + R() * 35) {
       const i = at(Math.round(s / ds)); if (deck(i)) continue;
       const L = Math.min(2 * lim, 3 + R() * (2 * lim - 2)), lo = (R() * 2 - 1) * Math.max(0, lim - L / 2);
       strip(s, lo, L, Math.PI / 2 + (R() - 0.5) * 0.3);
     }
-    for (let s = R() * 60; s < len - 8; s += 50 + R() * 60) {
+    if (!fresh) for (let s = R() * 60; s < len - 8; s += 50 + R() * 60) {
       const i = at(Math.round(s / ds)); if (deck(i)) continue;
       strip(s, (R() * 2 - 1) * (lim - 0.5), 4 + R() * 5, (R() - 0.5) * 0.08);
     }
-    for (let s = R() * 100; s < len - 4; s += 120 + R() * 140) {
+    if (!fresh) for (let s = R() * 100; s < len - 4; s += 120 + R() * 140) {
       const i = at(Math.round(s / ds)); if (deck(i)) continue;
       const h = 1.4 + R() * 0.8, lo = (R() * 2 - 1) * Math.max(0, lim - h * 1.12), net = R() < 0.5;
       decal(s, lo, h, h / 2, R() * TAU, net ? 0.002 : 0.502, 0.502, net ? 0.498 : 0.998, 0.748, [1, 1, 1, 0.8 + R() * 0.2]);
@@ -4302,6 +4303,11 @@ const World = (function () {
     const mat = new THREE.MeshLambertMaterial({ map: tex.wear, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
     if (o.asphaltMat && o.asphaltMat.color) mat.color.copy(o.asphaltMat.color);   // (the road's own tint)
     mat.userData.wear = true;
+    if (o.rubberU) {   // (the rubber laid down so far, 0..1: the decals' alpha)
+      mat.onBeforeCompile = (sh) => { sh.uniforms.uRub = o.rubberU;
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uRub;').replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.a *= uRub;'); };
+      mat.customProgramCacheKey = () => 'wearRub';
+    }
     for (const c of cells.values()) {
       if (!c.I.length) continue;
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(c.P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(c.C, 4)); g.setAttribute('uv', new THREE.Float32BufferAttribute(c.U, 2));
@@ -13269,6 +13275,8 @@ const World = (function () {
       if (G.boardU) G.boardU.uLit.value = night ? 0.45 : dusk ? 0.2 : 0; }
     // the gravel the cars carried onto the road: fading out over a minute or two
     if (G.drop) G.drop.U.uT.value = t;
+    // the rubber on the new asphalt's racing line (Race._green: T.rubber, 0..1; a trace of it from the start)
+    if (G.rubU) G.rubU.value = 0.2 + 0.8 * (T.rubber != null ? T.rubber : 1);
     // the confetti over the podium, by day (in the dark the fireworks)
     if (G.conf) { const C = G.conf, pod = R && R.podiumOn && R.podium && R.podium.F;
       if (!pod) C.t0 = null; else if (C.t0 == null && tod === 'day') { C.t0 = t; const F = R.podium.F; C.U.uO.value.set(0, F.H + 0.6, F.o + 6.6).applyMatrix4(F.m); C.U.uX.value.set(1, 0, 0).transformDirection(F.m); C.U.uZ.value.set(0, 0, 1).transformDirection(F.m); }
@@ -13335,8 +13343,9 @@ const World = (function () {
     const bridgeMat = (m) => { const b = m.clone(); fadeMats.push(b); return b; };
     const aMatB = bridgeMat(aMat), lMatB = bridgeMat(lMat), dMatB = bridgeMat(matV);
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
-    const kerb = [new Uint8Array(N), new Uint8Array(N)];   // kerbs: inside of every bend, outside only in the tighter ones
+    const kerb = [new Uint8Array(N), new Uint8Array(N)];   // kerbs: inside of every bend, outside only in the tighter ones; and where a dual kerb is (its flat part)
     for (let i = 0; i < N; i++) if (T.curb[i] && !loWall(i) && !upWall(i)) { const k = T.k[i]; for (const side of [-1, 1]) { const inside = side * k > 0, p = side > 0 && pitR(i); if ((inside || Math.abs(k) > 1 / 60) && !(p && p.o - 3.5 < WAt(i) + T.curbW + 0.3)) kerb[side > 0 ? 1 : 0][i] = 1; } }   // (none under the pit lane where it leaves the circuit)
+    if (T.hk) for (let i = 0; i < N; i++) for (const si of [0, 1]) if (T.hk[si][i] && !loWall(i) && !upWall(i)) kerb[si][i] = 1;
     // the verge's cross-section beyond the road edge: [offset, height above the road], lifted onto the ground where it rises; flat on the
     // bridge (out to its edge) and between the underpass walls
     SZ.verge = (i, side) => {
@@ -13350,19 +13359,24 @@ const World = (function () {
     const gravW = (i, side) => { const gv = side > 0 ? T.gravR : T.gravL; let k = 0; for (let d = -3; d <= 3; d++) k += gv[(i + d + N) % N]; return k / 7; };   // gravel trap width share (tapers in and out)
     const CH = 128, OFFS = [-1, -2 / 3, -1 / 3, 0, 1 / 3, 2 / 3, 1], tileL = 8;   // (the road's cross-section: shares of its half-width at each sample; its texture
     // runs from the widest edge, w, so it doesn't stretch where the road narrows)
-    // the asphalt's tone (as on the Red Bull Ring): resurfaced sections of 120-260 m (seams across the road), the rubbered racing line, darker
-    // still in the braking zones of the slower corners
-    const secT = new Float32Array(N), brk = new Float32Array(N);
-    for (let i0 = 0, k = 0; i0 < N; k++) { const n = 60 + Math.floor(crH(k, 3, 101) * 70), t = 0.94 + crH(k, 5, 101) * 0.09; for (let i = i0; i < Math.min(N, i0 + n); i++) secT[i] = t; i0 += n; }
+    // the asphalt's tone: the whole track resurfaced, in 2025 from the last chicane round to Turn 7, in 2026 the rest (Turn 7 to Turn 17: a
+    // shade darker, newer), a joint across the road where they meet (see the decals). On the fresh asphalt only a trace of a racing line of
+    // its own, a little more in the braking zones of the slower corners: the rubber is World's roadWear, laid down as the cars drive
+    // (T.rubber, Race._green; out.rubberU)
+    const secT = new Float32Array(N), brk = new Float32Array(N), NEW26 = [1580, 5240];   // (the 2026 part: metres after the start line)
+    for (let i = 0; i < N; i++) { const d = dS(i * ds); secT[i] = d >= NEW26[0] && d < NEW26[1] ? 0.88 : 0.97; }
     for (const c of T.corners) if (c.sev >= 2) for (let k = -70; k <= 6; k++) { const i = (c.i0 + k + N) % N, f = k < -10 ? sstep(-70, -12, k) : sstep(6, -10, k); if (f > brk[i]) brk[i] = f; }
-    const shade = (i, o) => { const rl = T.rl[i]; let k = (0.8 - (0.14 + 0.12 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > WAt(i) * 0.92) k -= 0.03; return [k, k, k * 1.02]; };
+    const shade = (i, o) => { const rl = T.rl[i]; let k = (0.8 - (0.03 + 0.04 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > WAt(i) * 0.92) k -= 0.02; return [k, k, k * 1.02]; };
+    out.roadNew = true; out.rubberU = { value: 0.2 };   // (roadWear: no patches or sealed cracks on the new asphalt; its rubber as much as is laid down, szG5Update)
     // the verge inside the barriers, mown in stripes along the track: MOW_W m bands from 1.2 m past the edge, light and dark in turn (the
     // dark ones a deeper green; as on the Red Bull Ring)
     const vg = [0.97, 1.05, 0.92], conc = [0.74, 0.74, 0.72], MOW_D = [0.2, 0.13, 0.16], vgD = vg.map((v, k) => v * (1 - MOW_D[k])), MOW_W = 3, MOW_N = 6;
     const RO_C = [1.04, 1.04, 1.06], roMat = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true });   // (the asphalt run-offs: the road's texture, paler)
+    const HK_R = [0.74, 0.12, 0.1], HK_W = [0.92, 0.92, 0.9]; let nHk = 0;   // (the dual kerbs' raised parts: their red and white, their pyramids)
     for (let c0 = 0; c0 < N; c0 += CH) {
-      const gr = new RB(true), gl = new RB(), gv = new RB(true), gk = new RB(true), gs = new RB(true), ga = new RB(true), grB = new RB(true), glB = new RB(), gvB = new RB();
+      const gr = new RB(true), gl = new RB(), gv = new RB(true), gk = new RB(true), gs = new RB(true), ga = new RB(true), grB = new RB(true), glB = new RB(), gvB = new RB(), ghk = new GB();
       let pr = -1, pl = -1, pv = [-1, -1], pk = [-1, -1], ps = [-1, -1], pa = [-1, -1], pg = [-1, -1], prB = -1, plB = -1, pvB = [-1, -1], pd = false;
+      const phk = [null, null];   // (the previous row's raised kerb: its inner and outer edge)
       const pw = [null, null], pwB = [null, null];   // (the previous verge rows' offsets: which quads have a width)
       for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++) {
         const i = ii % N, v = ii * ds / tileL, deck = !!onDeck(i), both = deck && pd, wi = WAt(i), offs = OFFS.map(f => f * wi); pd = deck;
@@ -13370,7 +13384,7 @@ const World = (function () {
         const rp = offs.map(o => Pt(i, o, 0.02)), rc = offs.map(o => shade(i, o)), ru = offs.map(o => [(o + w) / tileL, v]);
         const r = gr.row(rp, rc, ru); if (pr >= 0 && !both) gr.link(pr, r, 0, offs.length - 1); pr = r;
         const rB = deck ? grB.row(rp, rc, ru) : -1; if (rB >= 0 && prB >= 0) grB.link(prB, rB, 0, offs.length - 1); prB = rB;
-        const wl = [0.94, 0.94, 0.9], lp = [Pt(i, -wi + 0.2, 0.034), Pt(i, -wi + 0.5, 0.034), Pt(i, wi - 0.5, 0.034), Pt(i, wi - 0.2, 0.034)], l = gl.row(lp, [wl, wl, wl, wl]), lB = deck ? glB.row(lp, [wl, wl, wl, wl]) : -1;
+        const wl = [0.97, 0.97, 0.95], lp = [Pt(i, -wi + 0.2, 0.034), Pt(i, -wi + 0.5, 0.034), Pt(i, wi - 0.5, 0.034), Pt(i, wi - 0.2, 0.034)], l = gl.row(lp, [wl, wl, wl, wl]), lB = deck ? glB.row(lp, [wl, wl, wl, wl]) : -1;
         if (pl >= 0 && !both) { gl.link(pl, l, 0, 1); gl.link(pl, l, 2, 3); } pl = l;
         if (lB >= 0 && plB >= 0) { glB.link(plB, lB, 0, 1); glB.link(plB, lB, 2, 3); } plB = lB;
         for (const side of [-1, 1]) {
@@ -13391,25 +13405,40 @@ const World = (function () {
             const rk = gk.row(o.map(k => Pt(i, side * pf[k][0], pf[k][1])), o.map(k => sh[k]), o.map(k => [us[k], kv]));
             if (pk[si] >= 0) gk.link(pk[si], rk, 0, 3); pk[si] = rk;
           } else pk[si] = -1;
-          const gwv = gravW(i, side), bar = side > 0 ? T.br[i] : T.bl[i], tar = !!(T.roT && T.roT[si][i]);
-          if (gwv > 0 && !deck && !tar) {   // gravel trap on the verge: from 3 m past the edge to 1.5 m short of the barrier, pinched in at its ends
-            const o0 = wi + 3, o1 = lerp(o0, Math.max(o0 + 0.5, bar - 1.5), gwv), a = [o0, vY(vr, o0) + 0.03], b = [(o0 + o1) / 2, vY(vr, (o0 + o1) / 2) + 0.03], e = [o1, vY(vr, o1) + 0.03];
+          const kO = kerb[si][i] ? T.curbW : 0.02, hkO = T.hk && T.hk[si][i] && !deck ? T.hkW : 0;
+          if (hkO) {   // a dual kerb's raised part past the flat one (def.dualKerbs): ridges of pyramids, four to the 2 m between two rows, red and white in turn
+            const r0 = wi + kO + 0.02, r1 = r0 + hkO, cur = [Pt(i, side * r0, Math.max(vY(vr, r0), 0) + 0.03), Pt(i, side * r1, Math.max(vY(vr, r1), 0) + 0.03)], pv0 = phk[si];
+            if (pv0) for (let q = 0; q < 4; q++) {
+              const L = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)], A = L(pv0[0], cur[0], q / 4), B = L(pv0[1], cur[1], q / 4), Cq = L(pv0[1], cur[1], (q + 1) / 4), D = L(pv0[0], cur[0], (q + 1) / 4);
+              const cx = (A[0] + B[0] + Cq[0] + D[0]) / 4, cy = (A[1] + B[1] + Cq[1] + D[1]) / 4, cz = (A[2] + B[2] + Cq[2] + D[2]) / 4, top = [cx, cy + 0.075, cz], ins = [cx, cy - 1, cz], col = ((ii * 4 + q) >> 1) % 2 ? HK_W : HK_R;
+              ghk.triO(A, B, top, col, ins); ghk.triO(B, Cq, top, col, ins); ghk.triO(Cq, D, top, col, ins); ghk.triO(D, A, top, col, ins); nHk++;
+            }
+            phk[si] = cur;
+          } else phk[si] = null;
+          const gwv = gravW(i, side), bar = side > 0 ? T.br[i] : T.bl[i], tar = !!(T.roT && T.roT[si][i]), grun = !!(T.grun && T.grun[si][i]), aw = tar && T.roW ? T.roW[si][i] : 0;
+          // gravel: a trap on the verge, from 3 m past the edge (from the kerb where gravel has replaced the grass, def.gravelRuns) to 1.5 m
+          // short of the barrier, pinched in at its ends; or past an asphalt run-off's width of asphalt (def.tarmacRuns' 4th number: 130R)
+          let g0 = -1, g1 = 0;
+          if (gwv > 0 && !deck && !tar) { g0 = grun ? wi + kO + hkO : wi + 3; g1 = lerp(g0, Math.max(g0 + 0.5, bar - 1.5), gwv); }
+          else if (gwv > 0 && !deck && aw > 0 && bar - 1.5 > wi + T.curbW + aw + 0.4) { g0 = wi + T.curbW + aw; g1 = lerp(g0 + 0.2, bar - 1.5, gwv); }
+          if (g0 >= 0) {
+            const a = [g0, vY(vr, g0) + 0.03], b = [(g0 + g1) / 2, vY(vr, (g0 + g1) / 2) + 0.03], e = [g1, vY(vr, g1) + 0.03];
             const sp = [a, b, e].map(([o, h]) => Pt(i, side * o, h)), sc = [[0.88, 0.88, 0.9], [0.93, 0.93, 0.95], [0.9, 0.9, 0.92]], so = side > 0 ? sp : sp.slice().reverse(), sco = side > 0 ? sc : sc.slice().reverse();
             const rs = gs.row(so, sco, so.map(p => [p[0] / 6, -p[2] / 6])); if (ps[si] >= 0) gs.link(ps[si], rs, 0, 2); ps[si] = rs;
           } else ps[si] = -1;
-          if (gwv > 0 && !deck && tar) {   // an asphalt run-off (def.tarmacRuns): older, paler asphalt from the kerb to just short of the barrier, pinched in at its ends
-            const o0 = wi + (kerb[si][i] ? T.curbW : 0.05), o1 = lerp(o0 + 0.1, Math.max(o0 + 0.6, bar - 0.7), gwv), m = (o0 + o1) / 2;
+          if (gwv > 0 && !deck && tar) {   // an asphalt run-off (def.tarmacRuns): older, paler asphalt from the kerb to just short of the barrier (or its width of it), pinched in at its ends
+            const o0 = wi + (kerb[si][i] ? T.curbW : 0.05) + hkO, o1f = lerp(o0 + 0.1, Math.max(o0 + 0.6, bar - 0.7), gwv), o1 = aw > 0 ? Math.min(o1f, Math.max(o0 + 0.6, wi + T.curbW + aw)) : o1f, m = (o0 + o1) / 2;
             const sp = [[o0, vY(vr, o0) + 0.028], [m, vY(vr, m) + 0.028], [o1, vY(vr, o1) + 0.028]].map(([o, h]) => Pt(i, side * o, h)), so = side > 0 ? sp : sp.slice().reverse(), rc3 = [RO_C, RO_C, RO_C];
             const ra = ga.row(so, rc3, so.map(p => [p[0] / 8, -p[2] / 8])); if (pa[si] >= 0) ga.link(pa[si], ra, 0, 2); pa[si] = ra;
           } else pa[si] = -1;
           const gsw = T.gstrip ? T.gstrip[si][i] : 0;
           if (gsw > 0 && !deck) {   // a gravel strip just past the kerb (def.gravelStrips, the 2025 ones), over the verge and the start of a trap
-            const o0 = wi + (kerb[si][i] ? T.curbW : 0.02), o1 = o0 + gsw, sp = [[o0, vY(vr, o0) + 0.036], [o1, vY(vr, o1) + 0.036]].map(([o, h]) => Pt(i, side * o, h)), so = side > 0 ? sp : sp.slice().reverse(), sc = [[0.9, 0.9, 0.92], [0.9, 0.9, 0.92]];
+            const o0 = wi + kO + hkO, o1 = o0 + gsw, sp = [[o0, vY(vr, o0) + 0.036], [o1, vY(vr, o1) + 0.036]].map(([o, h]) => Pt(i, side * o, h)), so = side > 0 ? sp : sp.slice().reverse(), sc = [[0.9, 0.9, 0.92], [0.9, 0.9, 0.92]];
             const rg = gs.row(so, sc, so.map(p => [p[0] / 6, -p[2] / 6])); if (pg[si] >= 0) gs.link(pg[si], rg, 0, 1); pg[si] = rg;
           } else pg[si] = -1;
         }
       }
-      addM(gr, aMat); addM(gl, lMat); addM(gv, gMat); addM(gk, cMat); addM(gs, sMat); addM(ga, roMat);
+      addM(gr, aMat); addM(gl, lMat); addM(gv, gMat); addM(gk, cMat); addM(gs, sMat); addM(ga, roMat); addM(ghk, matV);
       addM(grB, aMatB); addM(glB, lMatB); addM(gvB, dMatB);
     }
     /* ---- tracks in the gravel traps: where cars ran wide out of a bend, a pair of furrows curving out from the trap's inner edge (darker,
@@ -13449,34 +13478,12 @@ const World = (function () {
       gf.addTo(root, fMat, false, false);
     }
 
-    /* ---- on the asphalt: a few repair patches and sealed cracks (the Nordschleife's decal atlas; the tyre marks are the common ones, World's
-       tyreMarks), not on the bridge (its road fades while the car drives underneath) nor on the grid; and the DRS lines across the road: a
-       solid one at the detection point, a dashed one where the zone opens (as on the Red Bull Ring). Strips 5 cm over the road, per road
-       chunk, drawn without writing depth ---- */
+    /* ---- on the asphalt: no repair patches or sealed cracks any more (the whole track resurfaced in 2025 and 2026; the tyre marks are the
+       common ones, World's tyreMarks), but the sealed joints across the road where the 2025 and the 2026 asphalt meet; and the DRS lines
+       across the road: a solid one at each detection point, a dashed one where the zone opens (as on the Red Bull Ring). Strips 5 cm over
+       the road, drawn without writing depth ---- */
     let nDecals = 0;
     {
-      const dTex = ownTex(nrDecalTex()); dTex.anisotropy = tex.asphalt.anisotropy || 4;
-      const dMat = new THREE.MeshLambertMaterial({ map: dTex, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4 });
-      const RD = rng(5320), dcs = [], put = (i0, n, c, hw, cell, a, lay) => { for (let k = 0; k <= n; k++) if (onDeck((i0 + k) % N)) return; dcs.push([i0, n, c, hw, cell, a, lay]); };   // (their own random stream: R() is not drawn from)
-      for (let d = 60; d < T.len - 130; d += 30) {   // (not on the grid)
-        const i = T.idx(sAt(d)), wi = WAt(i);
-        if (RD() < 0.05) put(i, 5 + Math.floor(RD() * 4), (RD() - 0.5) * 6, 1.2 + RD() * 0.6, 24 + Math.floor(RD() * 2), 0.75, 1);   // sealed cracks
-        if (RD() < 0.06) { const hw = 1.5 + RD() * 1.2; put(i, 2 + Math.floor(RD() * 6), (RD() < 0.5 ? -1 : 1) * Math.max(0, wi - 0.8 - hw) * RD(), hw, 28 + Math.floor(RD() * 4), 0.85, 0); }   // repair patches
-      }
-      dcs.sort((a, b) => a[6] - b[6]);   // (patches under cracks)
-      const rbs = new Map();
-      for (const [i0, n, c, hw, cell, a] of dcs) {
-        const key = Math.floor(i0 / CH); let rb = rbs.get(key); if (!rb) rbs.set(key, rb = new RB(true, true));
-        const cu = cell % 4, cv = Math.floor(cell / 4), u0 = cu / 4 + 1 / 512, u1 = (cu + 1) / 4 - 1 / 512, vt = 1 - cv / 8 - 1 / 1024, vb = 1 - (cv + 1) / 8 + 1 / 1024, col = [1, 1, 1, a];
-        let pr = -1;
-        for (let k = 0; k <= n; k++) {
-          const i = (i0 + k) % N, lim = Math.max(0, WAt(i) - 0.7 - hw), cc = clamp(c, -lim, lim), v = vb + (vt - vb) * k / n;
-          const r = rb.row([Pt(i, cc - hw, 0.05), Pt(i, cc + hw, 0.05)], [col, col], [[u0, v], [u1, v]]);
-          if (pr >= 0) rb.link(pr, r, 0, 1); pr = r;
-        }
-      }
-      for (const rb of rbs.values()) { const m = addM(rb, dMat); if (m) m.renderOrder = 1; }
-      nDecals = dcs.length;
       if (T.drs) {   // the DRS lines: 0.3 m across the whole road
         const gd = new GB(), wl = [0.95, 0.95, 0.92];
         for (const z of T.drs) for (const [at, dash] of [[z.det, false], [z.act, true]]) {
@@ -13485,6 +13492,12 @@ const World = (function () {
             gd.quadUp([A[0], hyS(s0) + 0.036, A[1]], [B[0], hyS(s0) + 0.036, B[1]], [C[0], hyS(s1) + 0.036, C[1]], [D[0], hyS(s1) + 0.036, D[1]], [wl, wl, wl, wl]); }
         }
         addM(gd, lMat);
+      }
+      {   // the joints between the 2025 and the 2026 asphalt (NEW26): a band of black sealant 20 cm wide, straight across the road
+        const gj = new GB(), JC = [0.05, 0.05, 0.055];
+        for (const at of NEW26) { const s0 = sAt(at), s1 = s0 + 0.2, wd = WAt(T.idx(s0)) + 0.02, A = atSf(s0, -wd), B = atSf(s0, wd), C = atSf(s1, wd), D = atSf(s1, -wd);
+          gj.quadUp([A[0], hyS(s0) + 0.033, A[1]], [B[0], hyS(s0) + 0.033, B[1]], [C[0], hyS(s1) + 0.033, C[1]], [D[0], hyS(s1) + 0.033, D[1]], [JC, JC, JC, JC]); }
+        addM(gj, lMat);
       }
     }
     // chequered start / finish line and the grid boxes (13 cars, staggered)
@@ -14441,7 +14454,7 @@ const World = (function () {
        (dyn.gravelDrop); puddles and a glossy road in the rain (the glare off it towards a low sun); the lamps of the pit lane, the paddock, the
        car parks and the concourses after sunset and their pools of light, the boards lit, the phones held up in the stands; the garages'
        numbers in their teams' colours, the monitors aglow; confetti over the podium (the stands' crowd: World's crowdStands, as on every circuit). szG5Update ---- */
-    const G5 = { t: 0, gU: pkM.U, camU: camU5 };
+    const G5 = { t: 0, gU: pkM.U, camU: camU5, rubU: out.rubberU };
     let nTuft = 0, nRut = 0, nPeb = 0, nPud = 0, nLamp = 0, nPhone = 0, nGarNo = 0, nMon = 0;
     { const U = G5.skyU = { uR: { value: 3000 }, clO: CLOUD_O, uCov: { value: 0.53 }, uSun: { value: new THREE.Vector3(-0.52, 0.51, 0.46) }, uLit: { value: new THREE.Color(1, 1, 0.98) }, uShade: { value: new THREE.Color(0.62, 0.68, 0.78) },
         uFogC: { value: new THREE.Color() }, uNight: { value: 0 }, uRain: { value: 0 }, uT: { value: 0 }, uSunC: { value: new THREE.Color(1, 0.96, 0.86) }, uSunA: { value: 1 }, uStar: { value: 0 } };
@@ -14704,7 +14717,7 @@ const World = (function () {
     out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, buildings: nBld, stands: nStands, fans: nFans, banners: nBanners, tv: nTV, boxes: nBoxes,
       screens: nScr, photographers: nPh, stalls: nStall, loos: nLoo, rides: out.dyn.rides ? out.dyn.rides.length : 0, decals: nDecals, painted: nPaint, mown: nMow, petals: nPetal, windows: nWin, furrows: nFurrow,
       parked: nParked, paddock: nPaddock, cloth: nCloth, girders: nGird, shadows: nAO, marbles: nMarb, glows: nGlow, fireworks: nFw,
-      tufts: nTuft, ruts: nRut, pebbles: nPeb, puddles: nPud, lamps: nLamp, phones: nPhone, garages: nGarNo, monitors: nMon, vents: nVent };   // (read by the tests)
+      tufts: nTuft, ruts: nRut, pebbles: nPeb, puddles: nPud, lamps: nLamp, phones: nPhone, garages: nGarNo, monitors: nMon, vents: nVent, hiKerb: nHk };   // (read by the tests)
     return out;
   }
 

@@ -62,6 +62,13 @@
   "maxKverts": 344,
   "jsMs": 0.32
  },
+ "pikesg": {
+  "calls": 81,
+  "maxCalls": 97,
+  "kverts": 257,
+  "maxKverts": 297,
+  "jsMs": 0.22
+ },
  "ouninpohja": {
   "calls": 166,
   "maxCalls": 177,
@@ -98,17 +105,10 @@
   "jsMs": 0.98
  },
  "suzuka": {
-  "calls": 183,
-  "maxCalls": 212,
-  "kverts": 813,
-  "maxKverts": 884,
-  "jsMs": 1.12
- },
- "pikesg": {
-  "calls": 81,
-  "maxCalls": 97,
-  "kverts": 257,
-  "maxKverts": 297,
-  "jsMs": 0.22
+  "calls": 185,
+  "maxCalls": 213,
+  "kverts": 843,
+  "maxKverts": 1063,
+  "jsMs": 1.04
  }
 }

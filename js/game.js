@@ -934,7 +934,7 @@
     { const air = Render.world && Render.world.air;   // the Red Bull Ring: first the jets over the grid, filmed from the grid (not online, not in a time trial or qualifying)
       if (air && !on && !tt && !quali) { air.go = true; introLen += JET_SHOT; Render.setShot(air.shot); $('hud').classList.add('shot'); } }
     pkFlyStart(!on && tt && !quali);   // (Pikes Peak: the course flyover first, at a fresh start only)
-    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; dmgKey = ''; pitHint = false; drsN = 0; secN = 0; wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
+    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; dmgKey = ''; pitHint = false; drsN = {}; secN = 0; wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
     $('h-msg').className = ''; $('h-split').className = ''; $('h-note').className = '';
     $('h-lights').className = ''; setLights(0, false);
     $('h-tot').textContent = quali || race.pol ? '' : '/' + race.cars.length; $('h-rank').firstElementChild.textContent = race.pol ? 'POLICIJA' : 'MESTO';   // (the run from the police: how many patrol cars are after the player)
@@ -1586,7 +1586,7 @@
   }
 
   /* ---------------- pit stops ---------------- */
-  let pitWrenchT = 0, pitHint = false, drsN = 0, secN = 0, pitFix = false;
+  let pitWrenchT = 0, pitHint = false, drsN = {}, secN = 0, pitFix = false;
   // a changing weather (Race opts weather) and tyres (opts tyres): the rain starts or stops (race.wst.ev), the tyres on the HUD
   let wxSeen = 0, dryHint = false, tyreKey = '';
   // flags (Race opts flags): a yellow flag where a car has stopped, the safety car after a heavy crash, the player overtaking under them
@@ -2104,7 +2104,7 @@
     updateDamageHUD(P); tyreHUD(P); flagHUD(P); towerTick(dt); setText('h-pen', P.fl && P.fl.pen > 0 ? '+' + P.fl.pen + ' s' : '');
     if (!race.timeTrial) secHUD(P);
     if (race.drsLast) { const st = P.drs ? 'open' : P.drsA ? 'arm' : ''; if ($('h-drs').className !== st) $('h-drs').className = st; }
-    if (P.drsEv) { P.drsEv = null; if (phase === 'racing') { Sfx.beep(1320, 0.07, 0.08); if (drsN++ % 2 === 0) sayT('drs', null, 1); } }   // the flap opens (the commentator: every other time)
+    if (P.drsEv) { P.drsEv = null; if (phase === 'racing') { Sfx.beep(1320, 0.07, 0.08); const z = P.drs || 1; drsN[z] = (drsN[z] || 0) + 1; if (drsN[z] % 2) sayT(z > 1 && trkComm['drs' + z] ? 'drs' + z : 'drs', null, 1); } }   // the flap opens (the commentator: every other time in each zone, with a zone's own lines, def.comm.drs2 ...)
     setText('h-speed', String(Math.round(P.speed * 3.6)));
     setText('h-gear', P.gear === -1 ? 'R' : P.m.ev ? 'D' : String(P.gear));   // (the electric car: one gear, D)
     drawSpeedo(P);

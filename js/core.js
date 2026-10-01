@@ -161,13 +161,29 @@ const Core = (function () {
         const g = this.gstrip = [new Float32Array(N), new Float32Array(N)];
         for (const [a, b, side, wd] of def.gravelStrips) for (let d = a; d <= b; d += ds / 2) g[side > 0 ? 1 : 0][this.idx(this.startS + d)] = wd;
       }
-      // asphalt run-offs at some corners of a circuit whose run-offs are otherwise gravel (def.tarmacRuns = [[from, to, side], ...], metres
-      // after the start line, side -1 left / 1 right; closed circuits): there the wide run-off drives like the asphalt run-offs of
-      // def.runoffTarmac (see surface)
-      this.roT = null;
+      // asphalt run-offs at some corners of a circuit whose run-offs are otherwise gravel (def.tarmacRuns = [[from, to, side, width], ...],
+      // metres after the start line, side -1 left / 1 right; closed circuits): there the wide run-off drives like the asphalt run-offs of
+      // def.runoffTarmac (see surface); with a width, that much asphalt past the kerb and gravel beyond it (this.roW; Mie's 130R since 2026)
+      this.roT = null; this.roW = null;
       if (def.tarmacRuns && !open) {
-        const t = this.roT = [new Uint8Array(N), new Uint8Array(N)];
-        for (const [a, b, side] of def.tarmacRuns) for (let d = a; d <= b; d += ds / 2) t[side > 0 ? 1 : 0][this.idx(this.startS + d)] = 1;
+        const t = this.roT = [new Uint8Array(N), new Uint8Array(N)], wd = def.tarmacRuns.some(r => r[3] > 0) ? (this.roW = [new Float32Array(N), new Float32Array(N)]) : null;
+        for (const [a, b, side, aw] of def.tarmacRuns) for (let d = a; d <= b; d += ds / 2) { const i = this.idx(this.startS + d); t[side > 0 ? 1 : 0][i] = 1; if (wd && aw > 0) wd[side > 0 ? 1 : 0][i] = aw; }
+      }
+      // run-offs where gravel has replaced the grass (def.gravelRuns = [[from, to, side], ...], metres after the start line; closed circuits;
+      // Mie's Degner Curves and 130R since 2026): gravel from the kerb to the barrier, also where the barrier is too near for a trap of its
+      // own (this.grun: the world lays the gravel from the kerb, no verge of grass)
+      this.grun = null;
+      if (def.gravelRuns && !open) {
+        const g = this.grun = [new Uint8Array(N), new Uint8Array(N)];
+        for (const [a, b, side] of def.gravelRuns) for (let d = a; d <= b; d += ds / 2) { const i = this.idx(this.startS + d); g[side > 0 ? 1 : 0][i] = 1; (side > 0 ? this.gravR : this.gravL)[i] = 1; }
+      }
+      // dual-profile kerbs (def.dualKerbs = [[from, to, side], ...], metres after the start line; closed circuits; Mie's Turn 9 since 2025,
+      // the Degner Curves and 130R since 2026): past the flat kerb a raised one with pyramid ridges, hkW m wide (surface 9: the wheel hops
+      // over the ridges and has less grip there)
+      this.hk = null; this.hkW = 0.7;
+      if (def.dualKerbs && !open) {
+        const h = this.hk = [new Uint8Array(N), new Uint8Array(N)];
+        for (const [a, b, side] of def.dualKerbs) for (let d = a; d <= b; d += ds / 2) h[side > 0 ? 1 : 0][this.idx(this.startS + d)] = 1;
       }
       // DRS zones (def.drs = [[turn, detection, activation, next turn], ...], metres relative to the turns of def.turns; closed circuits):
       // { det, act, end } in metres after the start line, the zone closing 60 m before the next turn (see Race._drs)
@@ -654,7 +670,7 @@ const Core = (function () {
 
     // surface at a query result: 0 asphalt, 1 curb, 2 grass, 3 gravel (def.runoffTarmac: the wide run-off areas are asphalt, 4 as paving,
     // def.tarmacRuns: only some of them; def.gravelStrips: gravel just past the kerb), 5 makadam; 6 a puddle on it (in the rain, inRain: def.rain's puddles); 7 cobbles
-    // (def.setts), 8 cobbles in the rain
+    // (def.setts), 8 cobbles in the rain, 9 a dual kerb's raised part (def.dualKerbs)
     surface(q) {
       const d = q.d, ad = Math.abs(d), w = this.wv ? this.wv[q.a] : this.w;
       if (ad <= w || (this.walk && ad <= w + this.walk[d > 0 ? 1 : 0][q.a])) {   // (a sidewalk: part of the road)
@@ -664,11 +680,15 @@ const Core = (function () {
         if (p >= 0) { const u = this.puddles[p], a = (q.s - u[0]) / u[2], b = (d - u[1]) / u[3]; if (a * a + b * b < 1) return 6; }
         return 5;
       }
-      const i = q.a;
-      if (this.curb[i] && ad <= w + this.curbW) return 1;
-      if (this.gstrip) { const g = this.gstrip[d > 0 ? 1 : 0][i]; if (g > 0 && ad <= w + this.curbW + g) return 3; }
-      const grav = d > 0 ? this.gravR[i] : this.gravL[i];
-      return grav ? (this.def.runoffTarmac || (this.roT && this.roT[d > 0 ? 1 : 0][i]) ? 4 : 3) : this.def.offSurface === 'paving' ? 4 : this.def.offSurface === 'gravel' ? 3 : 2;
+      const i = q.a, sd = d > 0 ? 1 : 0, hk = this.hk && this.hk[sd][i];   // (a dual kerb: its flat part wherever it is, also past the bends' own kerbs)
+      if ((this.curb[i] || hk) && ad <= w + this.curbW) return 1;
+      if (hk && ad <= w + this.curbW + this.hkW) return 9;
+      if (this.gstrip) { const g = this.gstrip[sd][i]; if (g > 0 && ad <= w + this.curbW + g) return 3; }
+      const grav = sd ? this.gravR[i] : this.gravL[i];
+      if (!grav) return this.def.offSurface === 'paving' ? 4 : this.def.offSurface === 'gravel' ? 3 : 2;
+      if (this.def.runoffTarmac) return 4;
+      if (this.roT && this.roT[sd][i]) { const aw = this.roW ? this.roW[sd][i] : 0; return aw > 0 && ad > w + this.curbW + aw ? 3 : 4; }
+      return 3;
     }
   }
 
@@ -887,6 +907,7 @@ const Core = (function () {
     { lat: 0.7, tr: 0.72, c0: 2.6, c1: 0.12 },      // a puddle (in the rain, on top of WET): the water drags at the wheel (one side in it: a tug towards it)
     { lat: 0.9, tr: 0.9, c0: 0.12, c1: 0.008 },     // cobbles (granite setts): a little less grip than asphalt, a little drag from the bumps
     { lat: 0.78, tr: 0.8, c0: 0.12, c1: 0.008 },    // cobbles in the rain (on top of WET)
+    { lat: 0.72, tr: 0.78, c0: 0.6, c1: 0.03 },     // a dual kerb's raised part (pyramid ridges): the wheel hops over them, less grip, a little drag
   ];
   // cs per model (drive-type layer, targets §5.4): bx brake excess at full brake + full demand, coast / thr steady attitude
   // change at full demand, liftP / pwr FR/MR rotation, out = unwind factor, turn = turn-in speed factor, w = path-rate cap factor
@@ -1026,7 +1047,7 @@ const Core = (function () {
         const wx = this.x + wpos[k][0] * ch - wpos[k][1] * sh, wz = this.z + wpos[k][0] * sh + wpos[k][1] * ch;
         const q = trk.query(wx, wz, this.wq[k].i >= 0 ? this.wq[k].i : this.q.i, this.wq[k]);
         const sf = trk.surface(q), off = LOOSE[sf] && !(this.inPit && M.loose > 1), fl = this.flat & (1 << k); this.ws[k] = sf; const S = CSSURF[sf], lk = (M.loose && off ? M.loose : 1) * (fl ? FLAT.tr : 1), tr = S.tr * lk, lt = S.lat * lk;   // (slicks on loose ground; a flat tyre)
-        muSum += tr; if (k < 2) muF += tr * 0.5; else muR += tr * 0.5; if (sf === 1) curb++;
+        muSum += tr; if (k < 2) muF += tr * 0.5; else muR += tr * 0.5; if (sf === 1 || sf === 9) curb++;
         const ld = M.looseDrag && off ? M.looseDrag : 1;   // (the truck: the loose ground holds it back less. Its pit lane is paved, not loose ground: there it is as every car)
         const c0 = fl ? S.c0 * ld + FLAT.c0 : S.c0 * ld, c1 = fl ? S.c1 * ld + FLAT.c1 : S.c1 * ld;   // (a flat tyre's drag: the tyre's, not the ground's)
         const dk = (c0 * Math.min(1, spd / 3) + c1 * spd) * 0.25, lw = 0.5 * (1 + ldK * sgO * (k & 1 ? -1 : 1));   // (k odd: +lateral side = inner in a + turn)
@@ -2451,8 +2472,13 @@ const Core = (function () {
       }
       if (this.player) this.player.num = opts.playerNum || 1;
       if (this.remote) this.remote.num = RM.num || 2;
-      // winter (opts.winter): cold tarmac grips a little less (x0.94), a gravel road packed with snow much less (x0.74): on every car's grip and the AI's profile
-      this.cold = { gk: opts.winter ? (track.def.roadSurface === 'makadam' ? 0.74 : 0.94) : 1 };   // (in an object: the golden references digest only the plain fields)
+      // winter (opts.winter): cold tarmac grips a little less (x0.94), a gravel road packed with snow much less (x0.74): on every car's grip and the AI's profile.
+      // A newly resurfaced track (def.green = { k, laps }: Mie since 2026): its fresh asphalt grips a little less (x k) until rubber is laid on
+      // it, all of it once the cars have driven `laps` laps each on average (see _green); as the winter's, on every car's grip and the AI's profile
+      const GR = track.def.green && !track.open ? track.def.green : null, gk0 = opts.winter ? (track.def.roadSurface === 'makadam' ? 0.74 : 0.94) : 1;
+      this.grn = GR ? { k0: GR.k, n: Math.max(0.1, GR.laps) * track.len, d: 0, k: GR.k } : null;
+      this.cold = { gk: gk0 * (GR ? GR.k : 1), base: gk0 };   // (in an object: the golden references digest only the plain fields)
+      track.rubber = GR ? 0 : 1;   // (the rubber on the line, 0..1: World darkens the racing line as it is laid down)
       this.rain = 0; this._wet(opts.rain);
       // tyres and a changing weather (opts.tyres; opts.weather = { at, dur, to }: the rain goes from opts.rain to `to` over dur s from race time
       // at). The water on the road follows the rain (wet in about a minute, dry in about four, the racing line twice as fast); a car's grip
@@ -2503,6 +2529,16 @@ const Core = (function () {
       this.finishOrder.forEach((f, i) => { f.finishPos = i + 1; });
     }
 
+    // the rubber on a newly resurfaced track (this.grn, def.green): laid down by the cars' distance (on average per car), the grip coming back
+    // to full; every car's grip and the AI's profile follow, as the winter's (cold.gk), in steps of a quarter per cent (the profile is redone
+    // at each; with the weather on, _weather takes cold.gk every step)
+    _green(n) {
+      const G = this.grn, r = Math.min(1, G.d / (G.n * Math.max(1, n))), k = G.k0 + (1 - G.k0) * r;
+      this.track.rubber = r;
+      if (k === G.k || (k - G.k < 0.0025 && r < 1)) return;
+      G.k = k; this.cold.gk = this.cold.base * k;
+      if (!this.wst.on) { this._wet(this.rain); this._prof(); }
+    }
     // rain (0 dry .. 1 wet, opts.rain): the grip of every car; the renderer follows race.rain (streaks, spray, a wet road)
     _wet(r) { r = clamp(+r || 0, 0, 1); this.rain = r; const w = (1 - (1 - WET) * r) * this.cold.gk; for (const c of this.cars) c.wet = w; }
     setRain(r) { this._wet(r); const W = this.wst; if (W) { W.water = W.line = this.rain; W.profW = (1 - (1 - WET) * this.rain) * this.cold.gk; } this._prof(); }   // (title demo: the weather setting at once)
@@ -2701,6 +2737,7 @@ const Core = (function () {
           }
         }
         if (this.drsLast) this._drs(c, ds, dt);
+        if (this.grn && ds > 0 && !c.inPit) this.grn.d += ds;   // (the rubber: every car's distance on the track)
         if (this.secBest) this._sectors(c, ds, dt);   // (TV sectors: the Red Bull Ring's)
         else if (!T.open && this.state !== 'grid') this._thirds(c);   // (elsewhere: the thirds of the lap)
         if (c.ty && ds > 0 && this.state === 'racing') {   // tyre wear: 0.8 % a km, up to 4 % more a km in a full slide; rain tyres on a drying road 2.5 times as fast
@@ -2730,6 +2767,7 @@ const Core = (function () {
         if (!c.locked && (!c.pitState || (c.pitState !== 'repair' && !c.isPlayer)) && c.speed < 1.2 && (this.state === 'racing' || this.state === 'done') && !(T.open && c.finished)) c.stuckT += !c.isPlayer && c.inPit ? dt * 0.2 : dt; else c.stuckT = Math.max(0, c.stuckT - dt);   // (an AI car queuing in the pit lane waits; pulled up past the finish of an open road: not stuck)
         if (!c.isPlayer && (c.stuckT > 3.5 || c.wrongT > 3) && !(T.open && c.finished)) this.rescue(c);   // (not a car pulled up past the finish of an open road)
       }
+      if (this.grn) this._green(cars.length);
       if (this._rq.length) this._serveRespawn();
       if (this.pol) this.pol.post(dt);
       this.stepProps(dt);

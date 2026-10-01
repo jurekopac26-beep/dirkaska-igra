@@ -2466,7 +2466,7 @@ const Render = (function () {
     const am = world && world.dyn.pkAmb, wv = am ? am.pU.uW.value : null, ws = 1.1 + 1.4 * Core.sstep(190, 420, gy), dc = (world && world.dust) || [0.86, 0.76, 0.62];   // (the wind of pkAmbient)
     skids.pkIn = true;
     for (let k = 0; k < 4; k++) {
-      const front = k < 2, surf = c.ws[k], px = S.x[k], pz = S.z[k], verge = surf >= 2, wetK = rainy || S.fw[k] > 0, snowy = verge && winter, sz = snowy ? 1 : zone * 0.5;   // (the snow zone's verge: gravel, slushy)
+      const front = k < 2, surf = c.ws[k], px = S.x[k], pz = S.z[k], verge = surf >= 2 && surf !== 9, wetK = rainy || S.fw[k] > 0, snowy = verge && winter, sz = snowy ? 1 : zone * 0.5;   // (the snow zone's verge: gravel, slushy)
       const it = front ? (c.lock ? 0.5 : 0) + Math.max(0, c.slipF - 0.3) * 1.4 : slide;
       let a = 0, wd = 0.2, cr = 0.035, cg = 0.035, cb = 0.04;
       if (!verge) { if (!wetK) a = it > 0.14 ? clamp(0.4 + it * 0.4, 0.4, 0.86) : hb * (front ? 0.26 : 0.16); }
@@ -3360,7 +3360,8 @@ const Render = (function () {
       v.broll = (v.broll || 0) + (bankT - (v.broll || 0)) * Math.min(1, dt * 10);
       v.grp.rotation.set(v.broll, -h, v.gpitch + (jk ? jk.liftP : 0), 'YZX');   // whole car (incl. separate front wheels) follows the slope (and the bank)
       v.bodyG.rotation.set(v.roll, 0, v.pitch);
-      v.bodyG.position.y = Math.abs(v.roll) * 0.4 + (c.onCurb ? Math.sin(time * 60) * 0.015 : 0);
+      const hiK = c.ws[0] === 9 || c.ws[1] === 9 || c.ws[2] === 9 || c.ws[3] === 9;   // (a wheel on a dual kerb's raised part, surface 9: the car hops over its ridges)
+      v.bodyG.position.y = Math.abs(v.roll) * 0.4 + (c.onCurb ? Math.sin(time * (hiK ? 38 : 60)) * (hiK ? 0.04 : 0.015) : 0);
       if (v.blob) v.blob.position.y = (c.roadY - c.y) + 0.05 - (jk ? jk.lift : 0); // shadow stays on the ground during jumps (and on the jacks)
       v.landed = !!(v.wasAir && !c.air);   // landing this frame (dust ring is emitted in emitFx)
       if (v.landed && c.isPlayer && c.speed > 3) shake(0.15 + clamp(-(c.impactVY || 0) / 8, 0, 1) * 0.45);

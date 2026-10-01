@@ -1372,39 +1372,39 @@
   }
  },
  "suzuka/race/cs": {
-  "digest": "d90df643737d92b278f20b7a",
-  "lead": 2252.3,
+  "digest": "c28517f0f94dba6449e0dd19",
+  "lead": 2240.5,
   "car0": [
-   -804.01,
-   18.89
+   -806.81,
+   17.82
   ],
   "cover": {
-   "dmg": 0.37,
-   "loose": 0,
+   "dmg": 0.27,
+   "loose": 4,
    "rescues": 0,
    "repairs": 0
   }
  },
  "suzuka/demo/cs": {
-  "digest": "807f3733e332e67243edf80c",
-  "lead": 2435.1,
+  "digest": "26eb65e2a3ddc3256b2455fd",
+  "lead": 2408.1,
   "car0": [
-   -902.34,
-   -188.43
+   -897.21,
+   -162.01
   ],
   "cover": {
    "dmg": 0,
-   "loose": 3,
+   "loose": 6,
    "rescues": 0,
    "repairs": 0
   }
  },
  "suzuka/upg/cs": {
-  "digest": "644f58d581c2ecba294fcc84",
-  "lead": 2438.4,
+  "digest": "fdfca7a5c6045fc81e0d529d",
+  "lead": 2413.5,
   "car0": [
-   -895.45,
-   -153.5
+   -889.58,
+   -123.04
   ],
   "cover": {
    "dmg": 0,
@@ -1414,57 +1414,57 @@
   }
  },
  "suzuka/crash/cs": {
-  "digest": "40efc8731c5c51dc2029766c",
-  "lead": 8672.5,
+  "digest": "73a58386f46746c03c68e3a9",
+  "lead": 8611.9,
   "car0": [
-   -71.13,
-   246.24
+   -65.89,
+   257.59
   ],
   "cover": {
    "dmg": 1,
-   "loose": 13,
+   "loose": 4,
    "rescues": 2,
    "repairs": 1
   }
  },
  "suzuka/formula/cs": {
-  "digest": "45e14aa54b3ec2966b3a2b33",
-  "lead": 11029.5,
+  "digest": "7cf1076bdcde760da658cbf5",
+  "lead": 10979.3,
   "car0": [
-   -902.12,
-   -423.85
+   -997.9,
+   -301.02
   ],
   "cover": {
    "dmg": 1,
-   "loose": 17,
+   "loose": 9,
    "rescues": 0,
    "repairs": 1
   }
  },
  "suzuka/lm/cs": {
-  "digest": "4a5754a175f344352003a242",
-  "lead": 10951.7,
+  "digest": "7955e9522a684edbec58f5ff",
+  "lead": 10895.1,
   "car0": [
-   -898.91,
-   -170.94
+   -742.12,
+   13.77
   ],
   "cover": {
    "dmg": 1,
-   "loose": 19,
-   "rescues": 0,
+   "loose": 38,
+   "rescues": 1,
    "repairs": 1
   }
  },
  "suzuka/car/cs": {
-  "digest": "f391222e6ebbb96002e37d47",
-  "lead": 9156.2,
+  "digest": "d5879a1e3d3730bd6f44d2c3",
+  "lead": 9084.3,
   "car0": [
-   -215.06,
-   112.48
+   -185.06,
+   118.08
   ],
   "cover": {
    "dmg": 1,
-   "loose": 9,
+   "loose": 7,
    "rescues": 2,
    "repairs": 1
   }

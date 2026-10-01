@@ -288,21 +288,21 @@
   }
  },
  "suzuka": {
-  "meshes": 963,
-  "verts": 731656,
-  "instances": 23522,
-  "props": 145,
-  "crowd": 3526,
-  "world": "7554ef8c",
-  "propsHash": "1341661a",
+  "meshes": 956,
+  "verts": 737500,
+  "instances": 23468,
+  "props": 142,
+  "crowd": 3525,
+  "world": "84394276",
+  "propsHash": "14589b9a",
   "floor": "9bfcb202/11620",
   "groups": {
-   "-:MeshLambertMaterial": "46501ff5",
-   "-:MeshBasicMaterial": "77fa045c",
+   "-:MeshLambertMaterial": "c0cc0b69",
+   "-:MeshBasicMaterial": "f5fb881a",
    "szWindows:MeshLambertMaterial": "b9fa8047",
    "-:ShaderMaterial": "5b9baf32",
    "-:MeshPhongMaterial": "52111492",
-   "szCloth:MeshLambertMaterial": "7e71aacf",
+   "szCloth:MeshLambertMaterial": "847c3859",
    "szPool:MeshBasicMaterial": "79c2ac19",
    "szAO:MeshBasicMaterial": "af67bf54",
    "szMarbles:MeshLambertMaterial": "a1b9b6be",
@@ -310,15 +310,15 @@
    "szSky:ShaderMaterial": "904a07cb",
    "szTufts:MeshLambertMaterial": "2b2ce2d7",
    "szRuts:MeshLambertMaterial": "f7b1e45",
-   "szPebbles:MeshLambertMaterial": "f390cc23",
+   "szPebbles:MeshLambertMaterial": "9cda67f7",
    "szGravelDrop:MeshLambertMaterial": "d8b16a22",
-   "szPuddles:ShaderMaterial": "2326b28d",
+   "szPuddles:ShaderMaterial": "90bb86fa",
    "szLampPools:MeshBasicMaterial": "b1790a4f",
    "szConfetti:ShaderMaterial": "1db346f0",
    "szHills:ShaderMaterial": "d265b9c9",
-   "crowd:MeshLambertMaterial": "1b2fd395",
+   "crowd:MeshLambertMaterial": "3a0a7544",
    "tyremarks:MeshBasicMaterial": "ec8940b4",
-   "roadwear:MeshLambertMaterial": "d60ee76f"
+   "roadwear:MeshLambertMaterial": "3607c51"
   }
  }
 }

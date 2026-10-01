@@ -29,17 +29,29 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // under the bridge, 11 the Hairpin, 12 200R, 13-14 Spoon, 15 130R, 16-17 the Casio Triangle, 18 the Final Curve
     turns: [[288.4, 376.1], [258.3, 469.9], [61.6, 310.6], [-30.7, 290.7], [-129, 130.9], [-230.1, 113.8], [-265.3, -71.2], [-705.2, 10.6], [-861.1, 16.8], [-918.2, -252.4],
       [-888.2, -426.6], [-1087.3, -229.6], [-1508.9, -533.2], [-1657.5, -536.2], [-832.2, -57.6], [-493.5, -282.6], [-446.3, -255.1], [-346.9, -304.8]],
-    // DRS as at the Japanese Grand Prix: one zone, on the start / finish straight: detection 50 m before Turn 16 (the Casio Triangle),
-    // the flap opens where the Final Curve ends (its second apex: the cars are flat out from there) and closes 60 m before Turn 1
-    // ([turn, detection, activation, next turn], metres from the turn's apex)
-    drs: [[18, -220, 100, 1]],
+    // DRS as at the Japanese Grand Prix: on the start / finish straight, detection 50 m before Turn 16 (the Casio Triangle), the flap opens
+    // where the Final Curve ends (its second apex: the cars are flat out from there) and closes 60 m before Turn 1; and since 2026 (the
+    // straight mode of the new cars, the first wing opening on that stretch since 2012) the back straight from Spoon to 130R, over the
+    // bridge: detection 100 m before Turn 14, open 110 m past it, closing 60 m before Turn 15 ([turn, detection, activation, next turn],
+    // metres from the turn's apex)
+    drs: [[18, -220, 100, 1], [14, -100, 110, 15]],
     // run-offs: gravel traps, but asphalt on the outside of the First Curve (Turns 1-2) and of 130R (so since at least 2009, when
     // Formula 1 came back; the Sentinel-2 images show it too: dark bare ground there, bright gravel at the other corners);
     // [from, to, side (-1 left, 1 right)], metres from the start line
-    tarmacRuns: [[390, 720, -1], [-1070, -905, 1]],
+    // (130R since 2026: 8 m of the asphalt past the kerb, gravel beyond it where the grass was: the 4th number)
+    tarmacRuns: [[390, 720, -1], [-1070, -905, 1, 8]],
     // the gravel strips laid in 2025 just past the kerbs on the outside of Turns 2, 7, 9, 14 and 17 (in place of artificial grass):
     // [from, to, side, width]
     gravelStrips: [[560, 650, -1, 3], [1480, 1560, 1, 3], [2215, 2285, -1, 3], [-2090, -2010, 1, 3], [-595, -550, 1, 3]],
+    // the run-offs widened in 2026 with gravel where the grass was, from the kerb to the barrier: outside the Degner Curves (Turns 8 and 9)
+    // and outside 130R from the end of the bridge to the end of its run-off ([from, to, side])
+    gravelRuns: [[2000, 2290, -1], [-1044, -874, 1]],
+    // dual-profile kerbs, a raised kerb with pyramid ridges past the flat one: outside Turn 9 since 2025, Turn 8 and 130R since 2026
+    // ([from, to, side], the exits where the cars run wide)
+    dualKerbs: [[2030, 2110, -1], [2190, 2290, -1], [-1044, -964, 1]],
+    // the whole track resurfaced (2025: from the last chicane to Turn 7; 2026: the rest): the new asphalt grips 3 % less until the cars
+    // have laid rubber on it, all of it after two laps each on average (Race._green)
+    green: { k: 0.97, laps: 2 },
     elev: SUZ_H.map((h, i) => [i / SUZ_H.length, h / 10]),
     // named places: the turns by their official numbers ([HUD label, x, z, the commentator's lines]); under the bridge and on the back
     // straight ({ hud: false }) only the commentator speaks. No names of people, places or sponsors, on the HUD or spoken
@@ -49,6 +61,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
       pitIn: ['Off the line after the chicane, and into the pit lane!', 'Into the pits! A long pit lane here.', 'Coming in for repairs, right after the chicane!'],
       pitOut: ['Back out, and down the hill towards Turn One!', 'Repaired, and out onto the run down to Turn One!', 'Great work from the crew, back in the race!'],
       drs: ['DRS open down the main straight!', 'The wing is open, all the way down to Turn One!', 'DRS! Now the slipstream down the hill!'],
+      drs2: ['DRS open on the back straight, over the bridge!', 'The wing is open, all the way to Turn Fifteen!', 'A second chance with DRS, down the back straight!'],
       rain: ["It's raining! Typhoon season, and the esses will be treacherous today.", 'A wet day in Mie! Watch the white lines, and the spray down the back straight.', 'Rain in Mie today, so the big fast left will not be flat out in the wet!'],
       battle: ['Here we go, a fight into the chicane!', '{name} right there with you into the chicane!', 'The last chance to overtake is the chicane, and {name} is close!', 'Side by side with {name} for the chicane!'],
     },
