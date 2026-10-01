@@ -702,6 +702,7 @@ const Render = (function () {
   const debrisMeshes = [];
   let particles, skids, views = [];
   let rain = null, wet = -1, themeId = 'lake', birds = null;   // rain streaks; the weather drawn now (race.rain; -1: not applied yet), the world's theme
+  const expo = { k: 1, sun: 1, hemi: 0.6 };   // the eye's adaptation in a covered tunnel (Monaco): k multiplies the theme's light (sun, hemi: as the theme set them)
   let basePR = 1, dynScale = 1;
   let settings = { quality: 'high', shadows: true, camera: 'iso' };
   const cam = { x: 0, z: 0, lx: 0, lz: 0, zoom: 1, hs: 0, shake: 0, init: false, userZoom: 1 };
@@ -752,7 +753,7 @@ const Render = (function () {
     clearPropMeshes();
     world = World.build(scene, track, tex, { density });
     if (!world.farClip && camera.far !== 700) { camera.far = 700; camera.updateProjectionMatrix(); }
-    applyTheme((track.def && track.def.theme) || 'lake'); wet = -1;   // (the weather again on the new world's road)
+    expo.k = 1; applyTheme((track.def && track.def.theme) || 'lake'); wet = -1;   // (the weather again on the new world's road; the eyes set for the day)
     birds.reset(!!(track.def && (track.def.sea || track.def.theme === 'monaco')));   // (gulls by the sea)
     return world;
   }
@@ -901,6 +902,7 @@ const Render = (function () {
     scene.fog.color.copy(mix(t.fog, 0x949ea7, 0.75)); renderer.setClearColor(scene.fog.color, 1);
     hemi.color.copy(mix(t.sky, 0xaab4bd, 0.7)); hemi.groundColor.copy(mix(t.gnd, 0x3a4032, 0.5)); hemi.intensity = t.hemiI * (1 + 0.3 * r);
     sun.color.copy(mix(t.sun, 0xe8eef4, 0.8)); sun.intensity = t.sunI * (1 - 0.62 * r);
+    expo.sun = sun.intensity; expo.hemi = hemi.intensity; sun.intensity *= expo.k; hemi.intensity *= expo.k;
     if (post) { post.mat.uniforms.uTint.value.set(t.tint[0] - 0.03 * r, t.tint[1], t.tint[2] + 0.03 * r); post.mat.uniforms.uSat.value = t.sat * (1 - 0.2 * r); post.mat.uniforms.uHaze.value = (t.haze || 0) * (1 - r); if (t.hazeCol) post.mat.uniforms.uHazeCol.value.set(t.hazeCol[0], t.hazeCol[1], t.hazeCol[2]); }
   }
   // the weather of the race on screen (race.rain 0..1): the sky, the streaks, and a darker road (asphalt, paving, kerbs, makadam: every
@@ -1815,6 +1817,12 @@ const Render = (function () {
       if (tn.mats) for (const m of tn.mats) if (m !== tn.mat) { m.opacity = tn.mat.opacity; if (m.transparent !== tr) { m.transparent = tr; m.needsUpdate = true; } m.depthWrite = !tr; }   // (Suzuka: everything on the bridge)
       if (tn.hide) { const v = tn.mat.opacity > 0.03; for (const o of tn.hide) o.visible = v; }   // (Monaco: the roof and the hotel over it gone altogether)
       if (tn.show) for (const o of tn.show) o.visible = tn.mat.opacity < 0.6;   // (Monaco: the dark mass round the tunnel in their place)
+      if (tn.covered) {   // the eye's adaptation: in the dark of the tunnel the picture slowly brightens; out in the sun again it is dazzling
+        // for a moment (the outside seen with the eyes still set for the tunnel), then settles quickly
+        const inT = sq > tn.s0 + 8 && sq < tn.s1, goalK = inT ? 1.45 : 1, rate = goalK > expo.k ? 0.9 : 1.6;
+        expo.k += (goalK - expo.k) * (1 - Math.exp(-dt * rate)); if (Math.abs(expo.k - goalK) < 0.002) expo.k = goalK;
+        sun.intensity = expo.sun * expo.k; hemi.intensity = expo.hemi * expo.k;
+      }
     }
     if (postOn()) {
       if (target) {   // keep the sharp band of the tilt-shift on the followed car

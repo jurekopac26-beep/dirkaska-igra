@@ -5637,6 +5637,7 @@ const World = (function () {
     'else if (crCg > 3.5 && crCg < 4.5) crTint = crHa < 3.5 ? crP4(crHa, vec3(0.1, 0.08, 0.06), vec3(0.3, 0.19, 0.11), vec3(0.68, 0.52, 0.28), vec3(0.56, 0.55, 0.53)) : crHa < 4.5 ? vec3(0.05) : crHa < 5.5 ? crShirt : crHa < 6.5 ? vec3(0.94) : vec3(0.08, 0.1, 0.18);',
     'else if (crCg > 4.5 && crCg < 5.5) crTint = mod(floor(crV / 128.0), 2.0) > 0.5 ? crShirt : crSkin;',
     'else if (crCg > 5.5) crTint = crCg < 6.5 ? crP4(crFl, vec3(0.95), vec3(0.84, 0.1, 0.12), vec3(0.1, 0.33, 0.78), vec3(0.1, 0.5, 0.22)) : crP4(crFl, vec3(0.84, 0.1, 0.12), vec3(0.95), vec3(0.98, 0.8, 0.1), vec3(0.95));',
+    'if (crV > 1023.5) { if (crCg > 2.5 && crCg < 5.5) crTint = crShirt; else if (crCg > 5.5) crTint = crFl < 0.5 ? vec3(0.98, 0.82, 0.08) : vec3(0.2, 0.44, 0.92); }',   // a marshal: the overalls and the cap all in the shirt's orange, a yellow (or a blue) flag
     'vColor = color * crTint;'].join('\n');
   const CR_VS_NORMAL = [   // after <beginnormal_vertex>: pose -> arm (or leg) rotation about its joint; the same matrix moves the vertex below
     '#include <beginnormal_vertex>',
@@ -5655,6 +5656,7 @@ const World = (function () {
     'else if (crPose < 5.5) { rR = 2.8 + 0.14 * sin(crT * 2.4); fR = -0.12; rL = 0.1; }',
     'else { rL = 0.15; rR = 0.15; fL = 0.6; fR = 0.6; }',
     'if (crPose < 4.5 || crSit > 0.5) { float up = 2.55 + 0.35 * sin(uTime * 9.0 + crPh); rL = mix(rL, up, crEx); rR = mix(rR, up + 0.1, crEx); fL = mix(fL, -0.25, crEx); fR = mix(fR, -0.25, crEx); }',
+    'if (crV > 1023.5 && crPose > 4.5 && crPose < 5.5) { float crNr = 1.0 - smoothstep(16.0, 60.0, length(crW.xz - uCar.xz)), crWv = sin(uTime * 7.5 + crPh); rR = mix(2.7 + 0.08 * sin(uTime * 1.3 + crPh), 2.2 + 0.65 * crWv, crNr); fR = mix(-0.1, -0.3 + 0.35 * crWv, crNr); }',   // (a marshal: the flag waved as the car comes by)
     'mat3 crM = mat3(1.0); vec3 crPv = vec3(0.0);',
     'if (crBone > 0.5 && crBone < 1.5) { crM = crRx(-fL) * crRz(-rL); crPv = vec3(-0.27, 1.37, 0.0); }',
     'else if ((crBone > 1.5 && crBone < 2.5) || crBone > 3.5) { crM = crRx(-fR) * crRz(rR); crPv = vec3(0.27, 1.37, 0.0); }',
@@ -5733,7 +5735,8 @@ const World = (function () {
     const pose = o && o.sit && row === 0 && h(1) < o.sit ? 6 : p < fl ? 5 : p < fl + 0.1 ? 1 : p < fl + 0.2 ? 2 : p < fl + 0.3 ? 3 : p < fl + 0.43 ? 4 : 0;
     const kid = h(3) < 0.04, sxz = kid ? 0.8 : 0.92 + 0.16 * h(4), sy = kid ? 0.7 : 0.9 + 0.2 * h(5);
     const pal = (o && o.shirts) || C.shirts, sc = (o && o.col) || pal[Math.floor(h(6) * pal.length)], k = 0.88 + 0.22 * h(7), sk = h(11);
-    const variant = (sk < 0.42 ? 0 : sk < 0.72 ? 1 : sk < 0.9 ? 2 : 3) + 4 * Math.floor(h(10) * 256);
+    let variant = (sk < 0.42 ? 0 : sk < 0.72 ? 1 : sk < 0.9 ? 2 : 3) + 4 * Math.floor(h(10) * 256);
+    if (o && o.marshal) variant = 1024 + (variant & 3) + 256 * (h(13) < 0.7 ? 0 : 1);   // (a marshal: see the shader; a yellow flag, or a blue one)
     C.ppl.put(x, y, z, Math.atan2(fx, fz) + (h(8) - 0.5) * 0.5, sxz, sy, [sc[0] * k, sc[1] * k, sc[2] * k], pose + h(9) * 0.998, variant);
     if (!up) { const key = Math.floor(x / 0.8) + ',' + Math.floor(z / 0.8); let L = C.sp.get(key); if (!L) C.sp.set(key, L = []); L.push(x, z); }
     C.n++; return true;
@@ -8551,7 +8554,7 @@ const World = (function () {
   function mcCol(x, z, ny, dd) {   // the bare ground's colour (multiplies the ground map; the terrain's shader shows it on the steep, lawns, gardens and paving
     // elsewhere): limestone, scrub in patches
     const P = MC, m = P.n3(x, z), f = P.n4(x, z);
-    let r = 0.8 + m * 0.1, g = 0.73 + m * 0.08, b = 0.62 + m * 0.06;
+    let r = 0.74 + m * 0.1, g = 0.71 + m * 0.09, b = 0.66 + m * 0.07;
     const gd = sstep(0.42, 0.62, P.n5(x * 2.3 + 100, z * 2.3)) * 0.85 * sstep(5, 12, dd);   // (scrub)
     r = lerp(r, 0.5 + f * 0.1, gd); g = lerp(g, 0.62 + f * 0.1, gd); b = lerp(b, 0.38 + f * 0.06, gd);
     MCCOL[0] = r; MCCOL[1] = g; MCCOL[2] = b; return MCCOL;
@@ -8602,6 +8605,23 @@ const World = (function () {
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t;
   }
 
+  function mcWakeTex() {   // a boat's wake seen from above, 64 x 256 (u across, v from the stern back): churned white water behind the stern, the two arms
+    // of the V spreading out, everything fading towards the far end (transparent)
+    const W = 64, H = 256, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'), R = rng(8185);
+    for (let k = 0; k < 900; k++) {   // the churned water: dots, dense and white at the stern, thinning out
+      const v = Math.pow(R(), 1.6), u = 0.5 + (R() - 0.5) * (0.12 + 0.3 * v), a = (1 - v) * (0.35 + R() * 0.4);
+      g.fillStyle = 'rgba(255,255,255,' + a.toFixed(3) + ')'; g.beginPath(); g.arc(u * W, v * H, 1 + R() * 2.2, 0, TAU); g.fill(); }
+    for (const sd of [-1, 1]) for (let k = 0; k < 500; k++) {   // the V's arms, a little ragged
+      const v = R(), u = 0.5 + sd * (0.06 + 0.42 * v) + (R() - 0.5) * 0.03, a = Math.pow(1 - v, 1.3) * (0.25 + R() * 0.35);
+      g.fillStyle = 'rgba(255,255,255,' + a.toFixed(3) + ')'; g.beginPath(); g.arc(u * W, v * H, 0.8 + R() * 1.4, 0, TAU); g.fill(); }
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return t;
+  }
+  function mcFoamTex() {   // the foam lapping at a quay wall, 256 x 32 (u along the wall, v out from it): white flecks thick at the wall, thinning out
+    const W = 256, H = 32, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'), R = rng(8186);
+    for (let k = 0; k < 1400; k++) { const v = Math.pow(R(), 1.8), x = R() * W, a = (1 - v) * (0.3 + R() * 0.5);
+      for (const ox of [-W, 0, W]) { g.fillStyle = 'rgba(255,255,255,' + a.toFixed(3) + ')'; g.beginPath(); g.arc(x + ox, v * H, 0.8 + R() * 1.8, 0, TAU); g.fill(); } }
+    const t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; t.wrapT = THREE.ClampToEdgeWrapping; return t;
+  }
   function mcCrowdTex() {   // the grandstands' crowd map: 12 m along a stand by 15 m up its rake (sixteen rows of 24 seats, half a metre each), 512 px square:
     // the people seen from above (the chase camera looks along the stand: their heads a little forward, along it), each with the shoulders round the
     // head, the lap towards the track, in what people wear to the Grand Prix (white, black, navy, a lot of Ferrari red, some team colours), now and then
@@ -8751,6 +8771,26 @@ const World = (function () {
     for (let k = 0; k < 6; k++) {   // where the water stands after rain
       const x = R() * S, y = R() * S, rr = 30 + R() * 50; for (const ox of [-S, 0, S]) for (const oy of [-S, 0, S]) { const gr = g.createRadialGradient(x + ox, y + oy, 0, x + ox, y + oy, rr); gr.addColorStop(0, 'rgba(70,66,60,0.14)'); gr.addColorStop(0.7, 'rgba(70,66,60,0.06)'); gr.addColorStop(1, 'rgba(70,66,60,0)'); g.fillStyle = gr; g.fillRect(x + ox - rr, y + oy - rr, rr * 2, rr * 2); } }
     for (let k = 0; k < 2; k++) { const x = 40 + R() * (S - 80), y = 40 + R() * (S - 80); g.fillStyle = 'rgba(40,40,42,0.9)'; g.beginPath(); g.arc(x, y, 5, 0, TAU); g.fill(); g.strokeStyle = 'rgba(150,150,150,0.8)'; g.lineWidth = 2; g.stroke(); }   // drains
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t;
+  }
+  function mcConcreteTex() {   // 8 m a tile, 256 px: cast concrete, as cut through the hotel's mass over the tunnel: the boards of the formwork in panels (2 m by
+    // 1 m), their joints and tie holes, the lines of the beams every 4 m, stains and grain; neutral grey (the vertex colours shade it)
+    const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), img = g.createImageData(S, S), d = img.data, R = rng(8177);
+    const P = 8, q = rng(8178), gr = new Float32Array(P * P); for (let k = 0; k < gr.length; k++) gr[k] = q();
+    const n1 = (i, j) => { const u = i * P / S, v = j * P / S, a = Math.floor(u), b = Math.floor(v), fu = u - a, fv = v - b, I = (m, n) => gr[(n % P) * P + (m % P)], su = fu * fu * (3 - 2 * fu), sv = fv * fv * (3 - 2 * fv);
+      return (I(a, b) * (1 - su) + I(a + 1, b) * su) * (1 - sv) + (I(a, b + 1) * (1 - su) + I(a + 1, b + 1) * su) * sv; };
+    const tone = []; for (let k = 0; k < 32; k++) tone.push((R() - 0.5) * 10);
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+      const pan = (Math.floor(y / 32) * 4 + Math.floor(((x + (Math.floor(y / 32) % 2) * 32) % S) / 64)) % 32;   // (panels 2 m x 1 m, staggered)
+      let v = 176 + tone[pan] + (n1(x, y) - 0.5) * 30 + (R() - 0.5) * 16;
+      if ((y & 7) === 0) v -= 6;   // (the boards' marks)
+      if (y % 32 === 0 || (x + (Math.floor(y / 32) % 2) * 32) % 64 === 0) v -= 24;   // (the panels' joints)
+      if (x % 128 < 3 || y % 128 < 3) v -= 34;   // (the beams)
+      const o = (y * S + x) * 4; d[o] = clamp(v, 0, 255); d[o + 1] = clamp(v, 0, 255); d[o + 2] = clamp(v + 3, 0, 255); d[o + 3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+    g.fillStyle = 'rgba(40,40,42,0.6)'; for (let y = 16; y < S; y += 32) for (let x = 16; x < S; x += 32) { g.beginPath(); g.arc(x + ((y >> 5) % 2) * 16, y, 1.6, 0, TAU); g.fill(); }   // (tie holes)
+    for (let k = 0; k < 8; k++) { const x = R() * S, y = R() * S, rr = 10 + R() * 30; for (const ox of [-S, 0, S]) for (const oy of [-S, 0, S]) { const gd = g.createRadialGradient(x + ox, y + oy, 0, x + ox, y + oy, rr); gd.addColorStop(0, 'rgba(30,28,26,0.18)'); gd.addColorStop(1, 'rgba(30,28,26,0)'); g.fillStyle = gd; g.fillRect(x + ox - rr, y + oy - rr, rr * 2, rr * 2); } }
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t;
   }
   function mcWaterTex() {   // 24 m a tile: soft interfering ripples (integer wave numbers: it repeats), the crests a little lighter, rare glints; neutral grey (the
@@ -8914,6 +8954,8 @@ const World = (function () {
           'gGar *= mix(vec3(1.06, 1.0, 0.86), vec3(0.94, 1.03, 1.0), gC.a) * mix(vec3(1.0), vec3(0.8, 0.86, 0.72), gSc);',   // (the lawn's tone; scrub darker)
           'float gEd = smoothstep(0.43, 0.46, gC.r) * (1.0 - smoothstep(0.46, 0.48, gC.r)) * (1.0 - gSc);',   // (a stone edging round the paving)
           'vec3 gCol = mix(mix(gGar, gPav, gPv), vec3(0.8, 0.79, 0.76), gEd * 0.85);',
+          'vec3 gScr = texture2D(uGar, vSdW.xz * 0.0625).rgb; float gSh = 1.0 - smoothstep(0.24, 0.34, dot(gScr, vec3(0.3, 0.59, 0.11)));',   // (the garden's shrubs: its darker clumps)
+          'gRock = mix(gRock, gScr * vec3(0.72, 0.8, 0.66), max(gSh, smoothstep(0.35, 0.7, gC.a)));',   // (on the steep: the rock between clumps of scrub, in places all scrub)
           'diffuseColor.rgb *= mix(gCol, gRock, gRk);'].join('\n'))
         .replace('#include <color_fragment>', '');
     };
@@ -8947,7 +8989,7 @@ const World = (function () {
       fq(gx0 - E, gz0 - E, gx1 + E, gz0); fq(gx0 - E, gz1, gx1 + E, gz1 + E); fq(gx0 - E, gz0, gx0, gz1); fq(gx1, gz0, gx1 + E, gz1);   // (the far sea round the grid)
       const gw = new THREE.BufferGeometry(); gw.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); gw.setAttribute('color', new THREE.Float32BufferAttribute(clr, 3)); gw.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
       gw.setAttribute('normal', new THREE.Float32BufferAttribute(new Float32Array(pos.length).map((_, k) => (k % 3 === 1 ? 1 : 0)), 3)); gw.setIndex(idx); gw.computeBoundingSphere();
-      const wT = ownTex(mcWaterTex()), sea = new THREE.Mesh(gw, new THREE.MeshPhongMaterial({ map: wT, vertexColors: true, shininess: 70, specular: 0x8fb2c8 }));
+      const wT = ownTex(mcWaterTex()), sea = new THREE.Mesh(gw, new THREE.MeshPhongMaterial({ map: wT, vertexColors: true, shininess: 60, specular: 0x0a0c0e }));   // (a soft sheen towards the sun: a strong highlight washed the sea white; the ripples' own glints in the map)
       sea.receiveShadow = true; sea.matrixAutoUpdate = false; sea.updateMatrix(); root.add(sea); out.dyn.water = wT;
     }
     const bandCh = new Chunks(256, true);
@@ -9080,7 +9122,7 @@ const World = (function () {
     }
 
     /* ---- barriers: double armco on posts with a tall catch fence the whole lap round (sponsor boards on the rails), the tunnel's walls ---- */
-    const texSpons = new GB(true), fenceG = new GB(true), tun = new GB(), tunIn = new GB();
+    const texSpons = new GB(true), fenceG = new GB(true), tun = new GB(), tunIn = new GB(true);   // (tunIn: the mass round the tunnel, in concrete)
     {
       const steel = [0.8, 0.82, 0.85], steelD = [0.52, 0.54, 0.58], rMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
       for (let c0 = 0; c0 < N; c0 += 256) {
@@ -9143,15 +9185,16 @@ const World = (function () {
         // seen from inside (the roof and the hotel gone): the walls' tops cut, the hotel's concrete a dark mass on either side, its outer face down to the
         // ground (all of it only while the roof is gone: the town round it is hidden under the tunnel's own mass)
         for (const [o, oj, sg] of [[oL, oLj, -1], [oR, oRj, 1]]) {
-          const rimC = [0.6, 0.59, 0.56], capC = [0.2, 0.2, 0.21], a = o + sg * 0.5, aj = oj + sg * 0.5, e = o + sg * 22, ej = oj + sg * 22;
-          tunIn.quadUp(W(i, o, y + 6.4), W(j, oj, yj + 6.4), W(j, aj, yj + 6.4), W(i, a, y + 6.4), [rimC, rimC, rimC, rimC]);
-          tunIn.quadUp(W(i, a, y + 6.4), W(j, aj, yj + 6.4), W(j, ej, yj + 6.4), W(i, e, y + 6.4), [capC, capC, capC, capC]);
-          tunIn.quadO(W(i, e, y + 6.4), W(j, ej, yj + 6.4), W(j, ej, yj - 14), W(i, e, y - 14), [0.16, 0.16, 0.17], W(i, 0, y));
+          const rimC = [0.86, 0.85, 0.82], capC = [0.4, 0.4, 0.41], capF = [0.27, 0.27, 0.28], a = o + sg * 0.5, aj = oj + sg * 0.5, e = o + sg * 22, ej = oj + sg * 22;
+          const pu = (p) => [p[0] / 8, -p[2] / 8], P4 = (A) => A.map(pu);   // (the concrete planar from above, 8 m a tile; darker away from the walls: the cut in shadow)
+          let q4 = [W(i, o, y + 6.4), W(j, oj, yj + 6.4), W(j, aj, yj + 6.4), W(i, a, y + 6.4)]; tunIn.quadUp(...q4, [rimC, rimC, rimC, rimC], P4(q4));
+          q4 = [W(i, a, y + 6.4), W(j, aj, yj + 6.4), W(j, ej, yj + 6.4), W(i, e, y + 6.4)]; tunIn.quadUp(...q4, [capC, capC, capF, capF], P4(q4));
+          tunIn.quadO(W(i, e, y + 6.4), W(j, ej, yj + 6.4), W(j, ej, yj - 14), W(i, e, y - 14), [0.16, 0.16, 0.17], W(i, 0, y), [[0, 0], [1, 0], [1, 2.5], [0, 2.5]]);
         }
       }
       for (const [ie, dir] of [[i0, 1], [i1, -1]]) for (const sg of [-1, 1]) {   // the mass's ends at the portals
         const y = T.hy[ie], o = sg < 0 ? -(T.bl[ie] + 0.12) : T.br[ie] + 0.12, W = (oo, yy) => [T.px[ie] + T.nx[ie] * oo, yy, T.pz[ie] + T.nz[ie] * oo];
-        tunIn.quadO(W(o, y + 6.4), W(o + sg * 22, y + 6.4), W(o + sg * 22, y - 14), W(o, y - 14), [0.72, 0.71, 0.68], [T.px[ie] + T.tx[ie] * dir * 5, y, T.pz[ie] + T.tz[ie] * dir * 5]);
+        tunIn.quadO(W(o, y + 6.4), W(o + sg * 22, y + 6.4), W(o + sg * 22, y - 14), W(o, y - 14), [0.72, 0.71, 0.68], [T.px[ie] + T.tx[ie] * dir * 5, y, T.pz[ie] + T.tz[ie] * dir * 5], [[0, 0], [2.75, 0], [2.75, 2.55], [0, 2.55]]);
       }
       for (const [ie, dir] of [[i0, 1], [i1, -1]]) {   // the portals: a heavy lintel over the mouth
         const y = T.hy[ie], L = -(T.bl[ie] + 1.5), Rr = T.br[ie] + 1.5, W = (o, yy, a) => [T.px[ie] + T.nx[ie] * o - T.tx[ie] * a * dir, yy, T.pz[ie] + T.nz[ie] * o - T.tz[ie] * a * dir];
@@ -9842,8 +9885,8 @@ const World = (function () {
         return true;
       };
       // ---- the design: type, hull, colours, decks of superstructure (levels), fittings ----
-      const yDesign = (L) => {
-        const type = pickW(L < 12 ? [['sport', 45], ['sail', 35], ['fly', 20]] : L < 20 ? [['sport', 25], ['fly', 35], ['sail', 25], ['cat', 15]]
+      const yDesign = (L, want) => {   // (want: the type, for the boats under way)
+        const type = want || pickW(L < 12 ? [['sport', 45], ['sail', 35], ['fly', 20]] : L < 20 ? [['sport', 25], ['fly', 35], ['sail', 25], ['cat', 15]]
           : L < 32 ? [['fly', 30], ['super', 30], ['sail', 18], ['cat', 10], ['classic', 6], ['explorer', 6]] : [['super', 60], ['explorer', 14], ['sail', 14], ['classic', 6], ['cat', 6]]);
         const D = { type, L, sp: 1.8, tw: 0.86 + RY() * 0.1, tb: 0.48 + RY() * 0.12, bp: 1.9 + RY() * 0.4, fl: 0.88 + RY() * 0.08, rk: 0.08 + RY() * 0.06, plat: 0, levels: [] };
         let hull = pickW(HULLS);
@@ -10101,7 +10144,9 @@ const World = (function () {
         D.moor = moor;
         yard.push([x, z, Math.hypot(D.Lx, D.B) / 2]); nYachts++;
         const dTr = mcDist(x, z), tier = dTr < 90 ? 0 : dTr < 260 ? 1 : 2, spots = tier < 2 ? [] : null, hx = x + Math.cos(rot) * D.plat / 2, hz = z + Math.sin(rot) * D.plat / 2;   // (the hull's middle: the swim platform sticks out aft)
+        const gq = yCh.get(hx, hz), v0 = gq.P.length / 3;
         yBuild(D, hx, hz, rot, tier, spots);
+        (gq.anc || (gq.anc = [])).push([v0, gq.P.length / 3, hx, hz, crH(hx, hz, 77) * TAU]);   // (its vertices rock about its middle: see yMat)
         if (spots && spots.length) fans(hx, hz, rot, spots, D);
         return true;
       };
@@ -10127,7 +10172,40 @@ const World = (function () {
         box(g, x, -3, z, L, 11, W, rot, [0.96, 0.96, 0.97], [0.66, 0.58, 0.48]);
         for (let d = 0; d < 6; d++) { const Ld = L * (0.8 - d * 0.07); box(g, x - c * L * 0.05, 8 + d * 2.8, z - s * L * 0.05, Ld, 2.8, W * 0.9, rot, [0.97, 0.97, 0.98], [0.95, 0.95, 0.96]); box(g, x - c * L * 0.05, 8.9 + d * 2.8, z - s * L * 0.05, Ld + 0.2, 0.9, W * 0.92, rot, [0.2, 0.26, 0.34]); }
         box(g, x - c * L * 0.25, 25, z - s * L * 0.25, W * 0.55, 8, W * 0.42, rot, [0.93, 0.93, 0.95], [0.12, 0.12, 0.15]); }
-      { const n0 = root.children.length; yCh.addTo(root, roofM, false, true); for (let k = n0; k < root.children.length; k++) root.children[k].name = 'yacht';
+      // the yachts' material: the town's cut-away, and every yacht rocking a little about its middle on the swell (aAnc: its middle, a phase; -1: still)
+      const uW = out.dyn.wind = out.dyn.wind || { value: 0 }, yMat = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut, 2, 9, true), yCut = yMat.onBeforeCompile;
+      yMat.onBeforeCompile = (sh) => { yCut(sh); sh.uniforms.uTime = uW;
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec3 aAnc;\nuniform float uTime;')
+          .replace('#include <begin_vertex>', 'vec3 transformed = vec3(position);\nif (aAnc.z >= 0.0) { vec2 d = position.xz - aAnc.xy; float ph = aAnc.z; transformed.y += d.x * 0.005 * sin(uTime * 0.9 + ph) + d.y * 0.004 * sin(uTime * 0.7 + ph * 1.7) + 0.03 * sin(uTime * 0.8 + ph * 2.3); }'); };
+      yMat.customProgramCacheKey = () => 'ouCut2.0/9.0h/rock';
+      // boats under way: tenders and water taxis on loops of open water in the harbour near the circuit, a wake behind each (moved in update: dyn.mcBoats)
+      { const RB2 = rng(9171), wakeM = new THREE.MeshBasicMaterial({ map: ownTex(mcWakeTex()), transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4 }), list = out.dyn.mcBoats = [];
+        const solo = (D) => { const gB = new GB(); yCh.get = () => gB; ySh.get = () => new GB(); yBuild(D, 0, 0, 0, 1, null); delete yCh.get; delete ySh.get; return gB; };   // (built in a frame of its own)
+        for (let tries = 0; tries < 600 && list.length < 4; tries++) {
+          const cx = 90 + RB2() * 810, cz = -200 + RB2() * 580; if (!inPort(cx, cz) || mcSD(cx, cz) > -18 || mcDist(cx, cz) > 220) continue;
+          const a = 18 + RB2() * 34, b = a * (0.35 + RB2() * 0.4), rot = RB2() * Math.PI, c = Math.cos(rot), sn = Math.sin(rot); let ok = true;
+          for (let k = 0; k < 64 && ok; k++) { const th = k / 64 * TAU, ex = Math.cos(th) * a, ez = Math.sin(th) * b, x = cx + ex * c - ez * sn, z = cz + ex * sn + ez * c;
+            if (mcSD(x, z) > -6 || yard.some(([yx, yz, yr]) => (x - yx) ** 2 + (z - yz) ** 2 < (yr + 4) ** 2) || list.some(B => Math.hypot(x - B.cx, z - B.cz) < B.a + B.b + 8)) ok = false; }   // (in open water, clear of the yachts and the other loops)
+          if (!ok) continue;
+          const D = yDesign(6 + RB2() * 4, RB2() < 0.7 ? 'sport' : 'fly'), gB = solo(D), m = new THREE.Mesh(gB.geometry(), yMat), n = gB.P.length / 3, A = new Float32Array(n * 3), ph = RB2() * TAU;
+          for (let v = 0; v < n; v++) A[v * 3 + 2] = ph; m.geometry.setAttribute('aAnc', new THREE.BufferAttribute(A, 3)); m.name = 'boat'; m.receiveShadow = true;
+          const x0 = -D.L / 2 + 0.2, x1 = x0 - 30, wg = new THREE.BufferGeometry();   // the wake: a trapezoid from the stern back, the texture's V on it
+          wg.setAttribute('position', new THREE.Float32BufferAttribute([x0, 0.05, -2.2, x0, 0.05, 2.2, x1, 0.05, 13, x1, 0.05, -13], 3)); wg.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 1], 2)); wg.setIndex([0, 2, 1, 0, 3, 2]); wg.computeBoundingSphere();
+          const wk = new THREE.Mesh(wg, wakeM); wk.name = 'wake'; m.add(wk); root.add(m);
+          list.push({ m, cx, cz, a, b, rot, w: (RB2() < 0.5 ? 1 : -1) * (3.5 + RB2() * 2.5) / ((a + b) / 2), th0: RB2() * TAU });   // (3.5-6 m/s round its loop, either way)
+        }
+      }
+      { const fg = new GB(true);   // the foam lapping at the quay walls and the shore near the circuit (its texture drifts: dyn.foam)
+        let u = 0; for (const [xa, za, xb, zb] of P.shore) { const L0 = Math.hypot(xb - xa, zb - za), mx = (xa + xb) / 2, mz = (za + zb) / 2; if (L0 < 1 || mcDist(mx, mz) > 260) continue;
+          const ux = (xb - xa) / L0, uz = (zb - za) / L0; let nx = uz, nz = -ux; if (mcSD(mx + nx * 3, mz + nz * 3) > 0) { nx = -nx; nz = -nz; }   // (out over the water)
+          const w = 1.6, u1 = u + L0 / 8; fg.quadUp([xa, 0.03, za], [xb, 0.03, zb], [xb + nx * w, 0.03, zb + nz * w], [xa + nx * w, 0.03, za + nz * w], [[1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1]], [[u, 0], [u1, 0], [u1, 1], [u, 1]]); u = u1 % 64; }
+        if (!fg.empty) { const ft = ownTex(mcFoamTex()), fm = new THREE.Mesh(fg.geometry(), new THREE.MeshBasicMaterial({ map: ft, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4 }));
+          fm.name = 'foam'; fm.matrixAutoUpdate = false; root.add(fm); out.dyn.foam = ft; } }
+      { const n0 = root.children.length; yCh.addTo(root, yMat, false, true); let k = n0;
+        for (const gq of yCh.map.values()) { if (gq.empty) continue; const m = root.children[k++], n = gq.P.length / 3, A = new Float32Array(n * 3); m.name = 'yacht';   // (the anchors: see yMat)
+          for (let v = 0; v < n; v++) { A[v * 3] = gq.P[v * 3]; A[v * 3 + 1] = gq.P[v * 3 + 2]; A[v * 3 + 2] = -1; }
+          for (const [v0, v1, cx, cz, ph] of gq.anc || []) for (let v = v0; v < v1; v++) { A[v * 3] = cx; A[v * 3 + 1] = cz; A[v * 3 + 2] = ph; }
+          m.geometry.setAttribute('aAnc', new THREE.BufferAttribute(A, 3)); }
         const n1 = root.children.length; ySh.addTo(root, new THREE.MeshBasicMaterial({ vertexColors: true, blending: THREE.MultiplyBlending, transparent: true, depthWrite: false, fog: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4 }), false, false);
         for (let k = n1; k < root.children.length; k++) root.children[k].name = 'yachtShadow'; }
     }
@@ -10137,13 +10215,26 @@ const World = (function () {
       for (const [x, z] of Dd.lamps) lamp(x, z);
     }
     {   // Monaco's flags (red over white) on the quays and round the grandstands; marshals in orange behind the fences at the big corners
-      const flag = (x, z, h) => { const g = scen.get(x, z), y = mcGround(x, z); cyl(g, x, y, z, 0.07, h, 5, [0.9, 0.9, 0.92]); box(g, x + 1.1, y + h - 0.75, z, 2.2, 0.7, 0.04, 0, [0.82, 0.08, 0.14], null, true); box(g, x + 1.1, y + h - 1.45, z, 2.2, 0.7, 0.04, 0, [0.96, 0.96, 0.96], null, true); CR.avoid(x, z, 0.6); };
+      // the cloth flies in the wind (all of them the same way, along +x): one mesh, the waves along it in the shader (uv: how far out from the pole, a phase)
+      const clothG = new GB(true), RED = [0.82, 0.08, 0.14], WHT = [0.96, 0.96, 0.96];
+      const flag = (x, z, h) => { const g = scen.get(x, z), y = mcGround(x, z), ph = crH(x, z, 31) * TAU; cyl(g, x, y, z, 0.07, h, 5, [0.9, 0.9, 0.92]); ico(g, x, y + h + 0.06, z, 0.09, 1, [0.86, 0.72, 0.3], () => 0.5, 0);   // (a gilt knob on top)
+        for (let k = 0; k < 6; k++) { const u0 = k / 6, u1 = (k + 1) / 6, X0 = x + 0.05 + u0 * 2.2, X1 = x + 0.05 + u1 * 2.2;
+          for (const [y0, y1, c] of [[h - 0.7, h, RED], [h - 1.4, h - 0.7, WHT]]) clothG.quadO([X0, y + y0, z], [X1, y + y0, z], [X1, y + y1, z], [X0, y + y1, z], c, [x + 1, y + h, z - 1], [[u0, ph], [u1, ph], [u1, ph], [u0, ph]]); }
+        CR.avoid(x, z, 0.6); };
       let nf = 0; for (const [xa, za, xb, zb] of P.shore) { const L = Math.hypot(xb - xa, zb - za); for (let t = 5; t < L && nf < 60; t += 45) { const x = xa + (xb - xa) * t / L, z = za + (zb - za) * t / L, ux = (zb - za) / L, uz = -(xb - xa) / L;
         for (const sg of [1, -1]) { const fx = x + ux * sg * 2.5, fz = z + uz * sg * 2.5; if (mcSD(fx, fz) > 1.5 && mcSD(fx, fz) < 5 && free(fx, fz) && mcDist(fx, fz) < 300) { flag(fx, fz, 7); nf++; break; } } } }
+      if (!clothG.empty) { const cm = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), uT = out.dyn.wind = out.dyn.wind || { value: 0 };
+        cm.onBeforeCompile = (sh) => { sh.uniforms.uTime = uT;
+          const wave = 'float fu = uv.x, fph = uv.y, fa = uTime * 5.5 - fu * 8.0 + fph, fb = uTime * 9.3 - fu * 15.0 + fph * 1.7, fA = 0.16 * sin(fa) + 0.05 * sin(fb);';
+          sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uTime;')
+            .replace('#include <beginnormal_vertex>', 'vec3 objectNormal = vec3(normal); { ' + wave + ' float dz = fA + fu * (-1.28 * cos(fa) - 0.75 * cos(fb)); objectNormal = normalize(vec3(-dz, 0.0, 1.0)) * (normal.z >= 0.0 ? 1.0 : -1.0); }')   // (the slope of the wave tilts the normal)
+            .replace('#include <begin_vertex>', 'vec3 transformed = vec3(position); { ' + wave + ' transformed.z += fA * fu * 2.2; transformed.y -= 0.12 * fu * fu; }'); };
+        cm.customProgramCacheKey = () => 'mcflag1';
+        const m = new THREE.Mesh(clothG.geometry(), cm); m.castShadow = true; m.receiveShadow = true; m.matrixAutoUpdate = false; m.name = 'flags'; root.add(m); }
       for (const c of T.corners) { if (c.sev < 3) continue; const side = -c.dir;
         for (let k = 0; k < 2; k++) { const q = crAt(c.s0 + k * 5); if (!q || inTun(q.i, 10)) continue; const o = (side > 0 ? q.br : q.bl) + 1.3 + k * 0.4, x = q.px + q.nx * side * o, z = q.pz + q.nz * side * o; if (!free(x, z) && MC.ocAt(x, z) !== 3) continue;
           if (mcNear(x, z).dd < 0.9) continue;   // (never on another part of the lap: at Mirabeau Bas the road down to the hairpin passes just above)
-          const g = scen.get(x, z), y = mcGround(x, z); box(g, x, y, z, 0.5, 1.25, 0.35, Math.atan2(q.tz, q.tx), [0.98, 0.45, 0.1]); box(g, x, y + 1.25, z, 0.32, 0.32, 0.32, 0, [0.95, 0.95, 0.95]); CR.avoid(x, z, 0.7); } }
+          if (crowdPut(CR, x, mcGround(x, z), z, -side * q.nx, -side * q.nz, { marshal: true, flag: 1, col: [0.98, 0.45, 0.1] }, 1)) CR.avoid(x, z, 0.7); } }   // (in orange overalls, a flag: waved as the cars come by)
     }
     {   // TV cranes on trucks: over the hairpin, the swimming pool, Casino Square and Sainte Dévote (a red telescopic boom, the camera hanging from its tip)
       const crane = (d, side, boom) => { const q = crAt(sAt(d)); if (!q) return; const off = (side > 0 ? q.br : q.bl) + 9, x = q.px + q.nx * side * off, z = q.pz + q.nz * side * off; if (!free(x, z)) return;
@@ -10274,7 +10365,7 @@ const World = (function () {
     addM(fenceG, new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide }));
     { const tm = new THREE.Mesh(tun.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })); tm.castShadow = true; tm.receiveShadow = true; tm.matrixAutoUpdate = false; root.add(tm);
       const tunRfM = new THREE.MeshLambertMaterial({ map: rfM.map, vertexColors: true }), tunFlM = new THREE.MeshLambertMaterial({ map: flM.map, vertexColors: true }), fm = addM(tunFac, tunFacM, true), rm = addM(tunRf, tunRfM, true), lm = addM(tunFl, tunFlM, true);
-      const im = addM(tunIn, new THREE.MeshLambertMaterial({ vertexColors: true }), true); if (im) im.visible = false;
+      const im = addM(tunIn, new THREE.MeshLambertMaterial({ map: ownTex(mcConcreteTex()), vertexColors: true }), true); if (im) im.visible = false;
       out.dyn.tunnel = { mat: tm.material, mats: [tm.material, tunFacM, tunRfM, tunFlM], s0: tS0, s1: tS1, min: 0, hide: [tm, fm, rm, lm].filter(Boolean), show: im ? [im] : null, covered: true }; }   // (gone while the followed car is inside, the mass round it shown instead; no rain in it)
     // knockable tyre walls at the exits of the slow corners (not in the tunnel), standing on the verge
     out.propR = 110;
@@ -10300,6 +10391,10 @@ const World = (function () {
     if (d.crowd) { d.crowd.uTime.value = t % 1000; if (car) d.crowd.uCar.value.set(car.x, car.roadY || 0, car.z); }   // spectators: arm waving, cheering near the followed car
     if (d.screens) { const f = Math.floor(t / 6) % 4; if (f !== d.screens.f) { d.screens.f = f; d.screens.tex.offset.x = f * 0.25; } }   // Red Bull Ring: the video walls' next picture every 6 s
     if (d.water) { d.water.offset.x = (t * 0.012) % 1; d.water.offset.y = (t * 0.007) % 1; }
+    if (d.mcBoats) for (const b of d.mcBoats) {   // Monaco: the boats round their loops in the harbour, bow first
+      const th = b.th0 + t * b.w, c = Math.cos(b.rot), s = Math.sin(b.rot), ex = Math.cos(th) * b.a, ez = Math.sin(th) * b.b, sg = Math.sign(b.w), tx = -Math.sin(th) * b.a * sg, tz = Math.cos(th) * b.b * sg;
+      b.m.position.set(b.cx + ex * c - ez * s, 0, b.cz + ex * s + ez * c); b.m.rotation.y = Math.atan2(-(tx * s + tz * c), tx * c - tz * s); }
+    if (d.foam) { d.foam.offset.x = (t * 0.02) % 1; d.foam.offset.y = 0.05 * Math.sin(t * 0.9); }   // (Monaco: the foam drifts along the quays, lapping in and out)
     if (d.wind) d.wind.value = t % 1000;   // the trees sway (Nordschleife, Spa)
     if (d.clouds) { const n = CLOUD_NP; d.clouds.O.value.set(((t * 3.2 / CLOUD_S) % n + n) % n, ((-t * 2.5 / CLOUD_S) % n + n) % n); }   // the cloud shadows drift with the wind
     if (d.pk) pkUpdate(d.pk, t, car);   // Pikes Peak, Ouninpohja: the TV helicopter
