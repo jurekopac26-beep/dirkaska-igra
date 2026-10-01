@@ -8,7 +8,7 @@ const Sfx = (function () {
   let noiseBuf = null;
   let eng = null, ai = [], squeal = null, rumble = null, wind = null, curbV = null, rainV = null, hiss = null, heli = null, echo = null;
   let gravel = null, spray = null, crowd = null, lastT = 0, pudPrev = false;
-  let stands = null, jet = null, tun = null;   // the grandstands' crowd (every circuit), the Red Bull Ring's jets before the start, a tunnel's ring
+  let stands = null, jet = null, tun = null, gale = null;   // the grandstands' crowd (every circuit), the Red Bull Ring's jets before the start, a tunnel's ring, a storm's wind
   let lastCrash = 0, running = false;
 
   function create() {
@@ -34,7 +34,7 @@ const Sfx = (function () {
     hiss = noiseVoice('bandpass', 1400, 0.8);
     heli = heliVoice(); echo = echoFx();
     gravel = noiseVoice('bandpass', 2600, 0.7); spray = noiseVoice('highpass', 1500, 0.5); crowd = crowdVoice();
-    stands = standsVoice(); jet = noiseVoice('lowpass', 500, 0.7); tun = tunnelFx();
+    stands = standsVoice(); jet = noiseVoice('lowpass', 500, 0.7); tun = tunnelFx(); gale = noiseVoice('bandpass', 330, 0.9);
     return true;
   }
   function shaperCurve(k) {
@@ -367,20 +367,22 @@ const Sfx = (function () {
     const slide = (player.arcade ? Core.sstep(0.18, 0.55, Math.abs(player.beta || 0)) : Math.max(0, player.latR - 2.2) / 5) + player.spin * 0.8 + (player.lock ? 0.6 : 0) + (player.inHand > 0.5 && spd > 5 ? 0.5 : 0);
     const sq = onHard && spd > 3 ? clamp(slide, 0, 1.2) : 0, wet = race ? race.rain || 0 : 0;
     set(squeal.out.gain, sq * 0.09 * (1 - 0.7 * wet), 0.04);   // (a wet road hardly squeals)
-    set(rainV.out.gain, wet * 0.05, 0.4);
+    const storm = !!(race && race.sky && race.sky.storm) && wet > 0, wk = typeof Render !== 'undefined' ? Render.windK || 1 : 1;
+    set(rainV.out.gain, wet * (storm ? 0.075 : 0.05), 0.4);
+    set(gale.out.gain, storm ? clamp((wk - 1.2) / 1.7, 0, 1) * 0.11 : 0, 0.35); set(gale.flt.frequency, 240 + clamp(wk - 1, 0, 2) * 170, 0.35);   // (a storm: the gale howling in its gusts)
     set(hiss.out.gain, onHard ? wet * clamp(spd / 45, 0, 1) * 0.1 : 0, 0.08);
     set(squeal.bp.frequency, 980 + clamp(spd, 0, 50) * 6, 0.1);
     // offroad rumble
-    let off = 0; for (let k = 0; k < 4; k++) if (player.ws[k] >= 2) off++;
+    let off = 0; for (let k = 0; k < 4; k++) if (player.ws[k] >= 2 && player.ws[k] !== 7) off++;   // (7: standing water on the asphalt, the road)
     set(rumble.out.gain, off / 4 * clamp(spd / 18, 0, 1) * 0.5, 0.05);
-    set(rumble.flt.frequency, (player.ws.indexOf(3) >= 0 || player.ws.some(w => w >= 5)) ? 520 : 240, 0.1);
+    set(rumble.flt.frequency, (player.ws.indexOf(3) >= 0 || player.ws.some(w => w === 5 || w === 6)) ? 520 : 240, 0.1);
     set(curbV.out.gain, player.onCurb ? clamp(spd / 20, 0, 1) * 0.35 : 0, 0.02);
     set(curbV.flt.frequency, 40 + spd * 3.5, 0.05);
     set(wind.out.gain, clamp(spd / 70, 0, 1) ** 2 * 0.12, 0.1);
     // loose gravel (gravel traps, makadam): the crunch, louder in a slide, and stones pinging off the underbody; in the rain the crunch muffled by
     // a hiss of water off the tyres (the hard roads' is above), and a splash into each puddle
     let loose = 0, pud = false;
-    for (let k = 0; k < 4; k++) { const w = player.ws[k]; if (w === 3 || w === 5 || w === 6) loose++; if (w === 6) pud = true; }
+    for (let k = 0; k < 4; k++) { const w = player.ws[k]; if (w === 3 || w === 5 || w === 6) loose++; if (w === 6 || w === 7) pud = true; }   // (6 a puddle on the gravel, 7 standing water on the asphalt: a splash)
     const air = !!player.air, spf = clamp(spd / 25, 0, 1.3);
     set(gravel.out.gain, air ? 0 : loose / 4 * spf * (0.05 + 0.09 * clamp(slide, 0, 1)) * (1 - 0.6 * wet), 0.05);
     set(gravel.flt.frequency, 1900 + clamp(spd, 0, 50) * 30, 0.1);
@@ -473,6 +475,25 @@ const Sfx = (function () {
     const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.05 * v, now + 0.06); g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
     o.connect(bp); bp.connect(g); g.connect(bus); o.start(now); o.stop(now + dur + 0.02);
   }
+  // thunder after a storm's lightning (Render.onThunder): delay s later (3 s a km), k how near (1: a crack overhead, then the roll; far
+  // off only a low rumble, softer, coming on slowly), pan its side. A low noise swelling and fading in a few rolls for several seconds
+  function thunder(delay, k, pan) {
+    if (!ctx || ctx.state !== 'running') return;
+    const t0 = ctx.currentTime + Math.max(0, delay), near = k > 0.6, dur = 3.5 + 3.5 * (1 - k) + Math.random() * 2.5;
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf; src.loop = true; src.playbackRate.value = 0.3 + 0.25 * k;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.7; lp.frequency.setValueAtTime(near ? 1600 : 380, t0); lp.frequency.exponentialRampToValueAtTime(near ? 150 : 100, t0 + dur * 0.7);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t0);
+    let t = t0 + (near ? 0.015 : 0.35 + Math.random() * 0.5); g.gain.exponentialRampToValueAtTime(0.5 * k + 0.04, t);
+    for (let i = 0; i < 3; i++) { t += 0.25 + Math.random() * 0.7; g.gain.exponentialRampToValueAtTime(0.1 * k + 0.02, t); t += 0.2 + Math.random() * 0.45; g.gain.exponentialRampToValueAtTime((0.22 + Math.random() * 0.28) * k + 0.03, t); }   // (the rolls)
+    g.gain.exponentialRampToValueAtTime(0.0001, Math.max(t + 0.8, t0 + dur));
+    const pn = mkPan(clamp(pan || 0, -0.9, 0.9));
+    src.connect(lp); lp.connect(g); g.connect(pn); pn.connect(bus); src.start(t0, Math.random() * 1.5); src.stop(Math.max(t + 0.9, t0 + dur + 0.1));
+    if (near) {   // the crack: a sharp burst of bright noise first
+      const c = ctx.createBufferSource(); c.buffer = noiseBuf; const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 900;
+      const cg = ctx.createGain(); cg.gain.setValueAtTime(0.0001, t0); cg.gain.exponentialRampToValueAtTime(0.42 * k, t0 + 0.006); cg.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.32);
+      c.connect(hp); hp.connect(cg); cg.connect(pn); c.start(t0, Math.random()); c.stop(t0 + 0.35);
+    }
+  }
   function beep(freq, dur, vol) {
     if (!ctx || ctx.state !== 'running') return;
     const now = ctx.currentTime;
@@ -519,13 +540,13 @@ const Sfx = (function () {
   function silence() {
     if (!ctx) return;
     for (const v of [eng, ...ai]) set(v.out.gain, 0, 0.02);
-    for (const v of [squeal, rumble, wind, curbV, rainV, hiss, heli, gravel, spray, crowd, stands, jet]) set(v.out.gain, 0, 0.02);
+    for (const v of [squeal, rumble, wind, curbV, rainV, hiss, heli, gravel, spray, crowd, stands, jet, gale]) set(v.out.gain, 0, 0.02);
     set(echo.send.gain, 0, 0.02); set(tun.send.gain, 0, 0.02);
     if (atmo) atmoOff(0.02);
   }
 
   const levels = () => ctx ? { stands: stands.lev, standsGain: stands.out.gain.value, tunnel: tun.send.gain.value } : null;   // (tests: the crowd's and the tunnel's levels now)
-  const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, shiftPop, knock, wrench, silence, levels, get ready() { return !!ctx && ctx.state === 'running'; } };
+  const api = { resume, setEnabled, setRunning, suspend, update, crash, thunder, beep, click, shiftPop, knock, wrench, silence, levels, get ready() { return !!ctx && ctx.state === 'running'; } };
   window.Sfx = api;
   return api;
 })();

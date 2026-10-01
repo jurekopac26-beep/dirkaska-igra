@@ -70,9 +70,9 @@ for (const [phys, rain] of [['cs', 0], ['arcade', 0], ['cs', 1], ['arcade', 1]])
   Math.random = seeded(101 + (phys === 'cs' ? 0 : 7) + rain * 3);
   const r = new C.Race(T, { numAI: 5, laps: 6, phys, seed: 21 + rain, difficulty: 1, playerModel: C.MODELS.find(m => m.id === 'rally'), flags: true, rain });
   r.start(); let t = 0;
-  while (t < 500 && !r.cars.every(c => c.finished)) { C.aiControl(r.player, r, DT); r.step(DT); if (r.player.stuckT > 3 || r.player.wrongT > 3) r.rescue(r.player); t += DT; }   // (the player's car on autopilot: rescued as the button would)
-  const jk = r.cars.map(c => c.jkN);
-  check(`${phys}${rain ? ' in the rain' : ''}: every car finishes having driven the joker once`, r.cars.every(c => c.finished) && jk.every(k => k === 1), `${t.toFixed(0)} s, jokers ${jk.join('')}`);
+  while (t < 500 && !r.cars.every(c => c.finished || c.out)) { C.aiControl(r.player, r, DT); r.step(DT); if (r.player.stuckT > 3 || r.player.wrongT > 3) r.rescue(r.player); t += DT; }   // (the player's car on autopilot: rescued as the button would)
+  const jk = r.cars.map(c => c.out ? 'x' : c.jkN), out = r.cars.filter(c => c.out).length;   // (x: retired after a heavy crash, see Race._retire)
+  check(`${phys}${rain ? ' in the rain' : ''}: every car finishes having driven the joker once (or retires after a heavy crash)`, r.cars.every(c => c.finished || c.out) && r.cars.every(c => c.out || c.jkN === 1) && out <= 1, `${t.toFixed(0)} s, jokers ${jk.join('')}`);
 }
 
 // 7. the rule: without the joker, behind everyone who drove it (the finishing order and the results); not in qualifying

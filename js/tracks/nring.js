@@ -14,6 +14,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     id: 'nring', name: 'Nordschleife', theme: 'nring', laps: 1, halfWidth: 5.5,
     desc: 'Nürburgring Nordschleife v Nemčiji, \u201eZeleni pekel\u201c: prava proga v pravem merilu skozi gozdove Eifla. Spust skozi Fuchsröhre do Breidscheida (335 m), vzpon do Hohe Acht (617 m), nagnjena ovinka Karussell in Kleines Karussell z betonsko skledo, skoki na Flugplatzu, v Pflanzgartnu in na Sprunghüglu, grafiti navijačev na asfaltu in dolga ravnina Döttinger Höhe. En krog proti 20 hitrim tekmecem. Podatki: \u00a9 OpenStreetMap (ODbL), SRTM, Copernicus DEM.',
     start: [0, 0], runoff: 0.42, inner: 3.0, side: 3.4, gradeForce: true, elevSmooth: 16, realKm: 20.832,
+    saus: [5170, 20474],   // sausage kerbs behind the inner kerbs of the chicanes at Adenauer Forst and Hohenrain (m after the start line)
     rivals: 20, aiPace: { cs: 1.1, arcade: 1.06 },   // a full field (20 rivals, not the usual 12) and quicker ones: the long fast bends leave the AI more room than its usual skill cap (skill and cap x aiPace; the arcade cars are nearer their own limit here)
     elev: NRING_H.map((h, i) => [i / NRING_H.length, h / 10]),
     bumps: [{ at: 0.12405, h: 0.7, w: 9 }, { at: 0.73068, h: 0.9, w: 8 }, { at: 0.77099, h: 0.5, w: 8 }],   // the Flugplatz crest, the jump at Pflanzgarten and the smaller one over the Sprunghügel after it

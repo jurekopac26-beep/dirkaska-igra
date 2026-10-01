@@ -22,6 +22,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // corners (the outside of Raidillon, Les Combes, Bruxelles, Pouhon, Paul Frère and Blanchimont): [from, to, side (-1 left, 1 right), width]
     // (at Blanchimont the barrier on the outside moves back 12 m for its gravel: [from, to, side, metres])
     runoffTarmac: true,
+    saus: [6603],   // sausage kerbs behind the inner kerbs of the Bus Stop chicane (m after the start line where it begins)
     wide: [[5640, 5760, 1, 12]],
     gravelStrips: [[990, 1110, -1, 24], [2268, 2340, -1, 20], [2344, 2422, 1, 20], [2866, 3030, -1, 22], [3620, 3800, 1, 24], [5010, 5110, -1, 22], [5640, 5760, 1, 24]],
     // the apexes of the 19 numbered turns (as in Formula 1): 1 La Source, 2 Eau Rouge, 3-4 Raidillon, 5-7 Les Combes and Malmedy, 8 Bruxelles,

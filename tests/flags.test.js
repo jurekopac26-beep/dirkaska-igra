@@ -20,7 +20,7 @@ function run(tid, t0, hold, extra) {
   r.start(); const P = r.player, log = []; let t = 0, k = 0, ev = 0;
   const S = { log, r, P, T, scOrder: null, passes: 0, queue: null, drsFlag: 0 };
   let prevOrder = null;
-  while (t < 700 && r.cars.some(c => !c.finished)) {
+  while (t < 700 && r.cars.some(c => !c.finished && !c.out)) {
     Math.random = seeded(5000 + (++k));
     const stop = t > t0 && t < t0 + hold;
     if (stop) { P.inThr = 0; P.inBrk = P.speed > 2 ? 1 : 0; P.inHand = P.speed > 2 ? 0 : 1; P.inSteer = 0; P.digitalSteer = true; } else { P.digitalSteer = false; C.aiControl(P, r, DT); if (P.stuckT > 3) r.rescue(P); }
@@ -59,7 +59,7 @@ for (const tid of ['rbring', 'jezero']) {
     order && (ks.includes('green') || S.r.finishOrder.length) && S.r.fl.sc === null && S.r.fl.scUsed, ks.join(', '));
   check(`${tid}: the field queued behind the safety car (15-40 m apart) and nobody overtook under it, no DRS`, !!S.queue && S.queue[0] > 8 && S.queue[0] < 30 && S.queue.every((g, i) => i === 0 || g - S.queue[i - 1] < 45) && S.passes === 0 && S.drsFlag === 0,
     `gaps to the safety car ${S.queue && S.queue.join(', ')}; ${S.passes} overtakes`);
-  check(`${tid}: every car finishes`, S.r.cars.every(c => c.finished), `${S.r.cars.filter(c => c.finished).length}/13`);
+  check(`${tid}: every car finishes (or retires after a heavy crash)`, S.r.cars.every(c => c.finished || c.out), `${S.r.cars.filter(c => c.finished).length}/13 finished, ${S.r.cars.filter(c => c.out).length} retired`);
 }
 
 // 3. the player overtaking under a yellow flag: give the place back, else +5 s

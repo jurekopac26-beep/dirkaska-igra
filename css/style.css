@@ -98,6 +98,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #podium-cap i { display: inline-block; width: .7em; height: .7em; margin: 0 .3em 0 .15em; border-radius: 2px; vertical-align: -.05em; }
 #h-msg.warn { color: var(--curb); }
 #h-msg.gold { color: var(--lcd); }
+#h-msg.blue { color: #6fa0ff; }
 #speedo { position: relative; margin-top: 2px; margin-left: -6px; width: clamp(120px, 36vh, 168px); height: clamp(75px, 22.5vh, 105px); }
 #speedo-c { position: absolute; inset: 0; width: 100%; height: 100%; }
 #h-speed { position: absolute; right: 2%; bottom: -2%; font: 700 italic clamp(24px, 8vh, 36px)/1 var(--f-ui); color: var(--meter); text-shadow: 0 2px 0 rgba(0,0,0,.7), 0 0 8px rgba(140,240,70,.25); font-variant-numeric: tabular-nums; }
@@ -347,6 +348,7 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 #s-track { justify-content: center; }
 .track-panel { width: min(760px, 96vw); max-height: 100%; display: flex; flex-direction: column; }
 .wx-row { margin: 2px 0 0; } .wx-row .rlbl { min-width: 0; }
+@media (max-width: 440px) { .wx-row .seg button { padding: 6px 5px; font-size: 12.5px; } }   /* a phone upright: the five weathers in one row */
 @media (orientation: landscape) { .trk-opts { display: grid; grid-template-columns: auto auto; column-gap: 16px; justify-content: start; } }   /* the weather, qualifying and the set-up in two columns (the track cards keep their height) */
 .track-list { display: flex; gap: 12px; overflow-x: auto; padding: 4px 2px 8px; touch-action: pan-x pan-y; }
 .track-card { flex: 1 0 220px; max-width: 340px; border: 2px solid rgba(255,255,255,.2); border-radius: 12px; padding: 10px; background: rgba(255,255,255,.04); cursor: pointer; text-align: left; color: inherit; font: inherit; }
@@ -499,6 +501,8 @@ select.txt:disabled { opacity: .75; }
 #h-flag.scin { background: #ffe98a; }
 #h-flag.restart { background: rgba(10, 13, 18, .7); color: #ffd21f; border: 1.5px solid #ffd21f; }
 #h-flag.owe { background: rgba(200, 30, 30, .85); color: #fff; }
+#h-flag.blue { background: #1f5fe0; color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.5); animation: flagWave .5s ease-in-out infinite alternate; }
+#h-flag.oil { background: repeating-linear-gradient(90deg, #ffd21f 0 7px, #d8202a 7px 14px); color: #111; text-shadow: 0 0 3px #fff, 0 0 2px #fff; box-shadow: 0 1px 3px rgba(0,0,0,.5); }
 @keyframes flagWave { from { transform: skewX(-6deg); } to { transform: skewX(6deg); } }
 #res-table small.pen { color: #ff8a7a; font-size: .8em; }
 

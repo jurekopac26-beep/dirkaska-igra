@@ -33,9 +33,9 @@
   const esc = (v) => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   for (const k in DEF) if (S[k] == null || typeof S[k] === 'object') S[k] = DEF[k];   // hand-edited storage: a setting is always a plain value
   if (S.phys !== 'arcade') S.phys = 'cs';   // the 'rally' physics was removed: its players (it was the default) and old saves get cs
-  if (!['dry', 'rain', 'random', 'change'].includes(S.weather)) S.weather = 'dry';
+  if (!['dry', 'rain', 'storm', 'random', 'change'].includes(S.weather)) S.weather = 'dry';
   if (!['summer', 'autumn', 'winter'].includes(S.season)) S.season = 'summer';
-  if (!['day', 'dusk', 'night'].includes(S.tod)) S.tod = 'day';
+  if (!['dawn', 'day', 'dusk', 'night'].includes(S.tod)) S.tod = 'day';
   S.name = cleanName(S.name) || DEF.name;
   // upgrades per car: S.upg[modelId] = {motor, gume, zavore, aero} 0..3 (own objects, never shared; old saves have none)
   const UPG_IDS = Core.UPG.map(u => u.id);
@@ -48,7 +48,7 @@
   // records are kept per physics: arcade (and the old rally history) under the plain track id, Circuit Superstars under id@cs (it is 3-7 % faster)
   // (def.recId: a track re-made so that its old times no longer compare keeps new records apart.) A time trial in the rain keeps its own records
   // and ghost (id-wet): the weather of the race on it, before a race the weather setting (the wet ones only with 'rain')
-  const wetRec = (d) => !!(d && d.timeTrial) && (race && race.track.def.id === d.id ? !!race.rain : S.weather === 'rain');
+  const wetRec = (d) => !!(d && d.timeTrial) && (race && race.track.def.id === d.id ? !!race.rain : S.weather === 'rain' || S.weather === 'storm');
   const recKey = (id) => { const d = Core.TRACKS.find(x => x.id === id), r = ((d && d.recId) || id) + (wetRec(d) ? '-wet' : ''); return S.phys === 'arcade' ? r : r + '@cs'; };
   const rec = (id) => { const k = recKey(id); return records.tracks[k] || (records.tracks[k] = {}); };
   // time-trial records: bestTime, bestSplits [cp1..cpN, finish], board = top 10 [{name, car, carId, time, splits, date, upg}] (drop anything malformed, rebuild the rest from known fields)
@@ -227,7 +227,7 @@
     $('ctrl-help').textContent = (S.control === 'buttons' && S.phys !== 'arcade' ? CTRL_HELP_CS : CTRL_HELP[S.control]) || '';
     { const d = Core.TRACKS.find(x => x.id === S.track) || Core.TRACKS[0], r = rec(d.id);   // the selected track and its record first (short screens may cut the end of the hint)
       if (isTT(d)) { $('title-hint').textContent = 'Proga: ' + d.name + (r.bestTime ? ' (osebni rekord ' + fmt(r.bestTime, true) + ')' : ' (še brez časa)') + '.'; $('title-sub').textContent = d.name + ' · kronometer · brez nasprotnikov'; }
-      else { $('title-hint').textContent = 'Proga: ' + d.name + (r.bestLap ? ' (rekord kroga ' + fmt(r.bestLap, true) + ')' : '') + '.'; $('title-sub').textContent = d.name + ' · ' + lapWord(d.laps || 3).toLowerCase() + ' · ' + (d.rivals || 12) + ' nasprotnikov' + (S.weather === 'rain' ? ' · dež' : S.weather === 'random' ? ' · morda dež' : S.weather === 'change' ? ' · menljivo vreme' : '') + (S.season === 'autumn' ? ' · jesen' : S.season === 'winter' ? ' · zima' : '') + (S.tod === 'dusk' ? ' · večer' : S.tod === 'night' ? ' · noč' : ''); } }
+      else { $('title-hint').textContent = 'Proga: ' + d.name + (r.bestLap ? ' (rekord kroga ' + fmt(r.bestLap, true) + ')' : '') + '.'; $('title-sub').textContent = d.name + ' · ' + lapWord(d.laps || 3).toLowerCase() + ' · ' + (d.rivals || 12) + ' nasprotnikov' + (S.weather === 'rain' ? ' · dež' : S.weather === 'storm' ? ' · nevihta' : S.weather === 'random' ? ' · morda dež' : S.weather === 'change' ? ' · menljivo vreme' : '') + (S.season === 'autumn' ? ' · jesen' : S.season === 'winter' ? ' · zima' : '') + (S.tod === 'dawn' ? ' · jutro' : S.tod === 'dusk' ? ' · večer' : S.tod === 'night' ? ' · noč' : ''); } }
     $('title-hint').textContent += ' Upravljanje: ' + CTRL_NAME[S.control] + ', kamera: ' + (S.camera === 'chase' ? 'za avtom (telefon pokončno)' : S.camera === 'kino' ? 'kino (telefon ležeče)' : S.camera === 'cockpit' ? 'kokpit (telefon ležeče)' : 'izometrična (telefon ležeče)') + '. Spremeniš v nastavitvah.' + (records.bestLap ? ' Rekord kroga: ' + fmt(records.bestLap, true) + '.' : '');
     { const el = $('set-name'); if (el && document.activeElement !== el) el.value = S.name; }
     { const d = champDef(); $('btn-champ').textContent = 'Prvenstvo' + (d && !champDone() ? ' · ' + (champ.rounds.length + 1) + '/' + d.tracks.length : ''); }
@@ -247,19 +247,21 @@
   }
   // driving physics: 'cs' (Circuit Superstars kinematic drift, the default) or the old 'arcade' slide model; switching applies at once
   const physOf = () => S.phys === 'arcade' ? 'arcade' : 'cs';
-  // the weather: dry, rain, or at random for every race (rain more often in the Ardennes and the Eifel); the title demo rains only with 'rain'
+  // the weather: dry, rain, a thunderstorm (the rain's grip; lightning, thunder and a gale: Race opts storm), or at random for every race (rain more
+  // often in the Ardennes and the Eifel; a quarter of the rains a storm); the title demo rains only with 'rain' or 'storm'
   const RAIN_P = { spa: 0.5, nring: 0.45 };
-  const rainOf = () => S.weather === 'rain' ? 1 : (S.weather === 'random' || S.weather === 'change') && Math.random() < (RAIN_P[track && track.def.id] || 0.35) ? 1 : 0;
+  const rainOf = () => S.weather === 'rain' || S.weather === 'storm' ? 1 : (S.weather === 'random' || S.weather === 'change') && Math.random() < (RAIN_P[track && track.def.id] || 0.35) ? 1 : 0;
+  const stormOf = (rain) => S.weather === 'storm' || (S.weather === 'random' || S.weather === 'change') && rain > 0 && Math.random() < 0.25;
   // 'change': the weather changes during a race on a circuit (Race opts weather): it starts dry and rains later on, or it starts wet, the rain
   // stops and the road dries (the racing line first). Somewhere between a fifth and a half of the race (by its usual length); a time trial: as 'random'
   let wxNext = null;   // (tests: the weather of the next race)
   function weatherOf(d) {
     if (wxNext) { const W = wxNext; wxNext = null; return W; }
-    if (S.weather !== 'change' || isTT(d)) return { rain: rainOf(), wx: null };
+    if (S.weather !== 'change' || isTT(d)) { const rain = rainOf(); return { rain, wx: null, storm: stormOf(rain) }; }
     const wet = Math.random() < 0.5, est = track.len * (d.laps || LAPS) / 38;
-    return { rain: wet ? 1 : 0, wx: { at: +(est * (0.2 + Math.random() * 0.3)).toFixed(1), dur: wet ? 25 : Math.round(30 + Math.random() * 30), to: wet ? 0 : 1 } };
+    return { rain: wet ? 1 : 0, wx: { at: +(est * (0.2 + Math.random() * 0.3)).toFixed(1), dur: wet ? 25 : Math.round(30 + Math.random() * 30), to: wet ? 0 : 1 }, storm: stormOf(1) };   // (a storm: while it rains)
   }
-  const demoRain = () => S.weather === 'rain' ? 1 : 0;
+  const demoRain = () => S.weather === 'rain' || S.weather === 'storm' ? 1 : 0;
   function applyPhys(r) { if (r) r.setPhys(physOf()); }
   function setOption(key, v) {
     if (key === 'wing' || key === 'gear') {   // (the set-up of the chosen track)
@@ -272,7 +274,7 @@
     if (key === 'shadows') { autoNoShadows = false; perf.pending = perf.restore = false; perf.keep = true; }   // the player's own choice wins for the rest of the visit
     save(); applySettings();
     if (key === 'phys') { if (!(mp && mp.race)) { applyPhys(race); ghPhys(); } applyPhys(demo); }   // (an online race keeps the host's physics)
-    if (key === 'weather' && demo) demo.setRain(demoRain());   // (a race keeps its weather; the next one gets the new setting)
+    if (key === 'weather' && demo) { demo.setRain(demoRain()); demo.sky.storm = S.weather === 'storm'; }   // (a race keeps its weather; the next one gets the new setting)
     if (key === 'season' || key === 'tod') Render.setAtmos({ season: S.season, tod: S.tod });   // (the season and the time of day: at once, also on the title demo)
     if (key === 'weather' && screen === 'track') buildTrackScreen();   // (a time trial's records in the rain are its own: the cards show them)
     if (key === 'control' && v === 'tilt') enableTilt(false);
@@ -633,7 +635,7 @@
     setTimeout(() => {
       track = getTrack(id);
       Render.buildWorld(track, S.quality === 'retro' ? 0.8 : 1);
-      demo = new Core.Race(track, { numAI: 10, noPlayer: true, difficulty: 2, laps: 9999, seed: 11, phys: physOf(), rain: demoRain() });
+      demo = new Core.Race(track, { numAI: 10, noPlayer: true, difficulty: 2, laps: 9999, seed: 11, phys: physOf(), rain: demoRain(), storm: S.weather === 'storm' });
       demo.start(); for (let i = 0; i < 120 * 4; i++) demo.step(STEP);
       demoTarget = null; demoSwitch = 0;   // the title camera picks a car of the new demo right away (not one left over from the previous track)
       mm.img = null; mm.w = 0;
@@ -791,19 +793,19 @@
     const cd = !on && champRun ? champDef() : null, cr = cd && !champDone() && cd.tracks[champ.rounds.length] === track.def.id ? champ.rounds.length : -1;   // a championship round (its index), or -1
     if (cr < 0) champRun = false;
     const quali = mode === 'quali' && qualiOn(track.def), nAI = tt ? 0 : cr >= 0 ? NUM_AI : track.def.rivals || NUM_AI;   // (a championship round: its own twelve in every round)
-    if (quali && !(qual && qual.id === track.def.id && qual.cr === cr && !qual.res)) { const W = weatherOf(track.def); qual = { id: track.def.id, cr, seed: (Math.random() * 1e6) | 0, rain: W.rain, wx: W.wx, nAI, back: track.qualiBack(), diff: cr >= 0 ? champ.diff : S.difficulty, phys: physOf(), sims: null, lap: 0, res: null }; }
+    if (quali && !(qual && qual.id === track.def.id && qual.cr === cr && !qual.res)) { const W = weatherOf(track.def); qual = { id: track.def.id, cr, seed: (Math.random() * 1e6) | 0, rain: W.rain, wx: W.wx, storm: W.storm, nAI, back: track.qualiBack(), diff: cr >= 0 ? champ.diff : S.difficulty, phys: physOf(), sims: null, lap: 0, res: null }; }
     const Q = !quali && !on && !tt && qual && qual.res && qual.id === track.def.id && qual.cr === cr ? qual : null;   // the race after qualifying
     if (!quali && !Q) qual = null;
     if (quali) { qual.lapShown = false; qual.wait = false; }
-    const W = quali || Q ? { rain: qual.rain, wx: qual.wx } : weatherOf(track.def);   // (qualifying: the weather at the start of the race to come, no change during the lap)
+    const W = quali || Q ? { rain: qual.rain, wx: qual.wx, storm: qual.storm } : weatherOf(track.def);   // (qualifying: the weather at the start of the race to come, no change during the lap)
     const mine = { playerModel: M, playerUpg: Object.assign({}, upgOf(M.id)), playerSetup: Object.assign({}, setupOf(track.def.id)), playerColor: PLAYER_COLORS[S.color], playerNum: carNum(), seed: quali || Q ? qual.seed : (Math.random() * 1e6) | 0, difficulty: cr >= 0 ? champ.diff : S.difficulty, assist: S.assist };
     if (on) {   // online: the host on the first grid slot, the friend on the second; the host's physics and damage for both
       const host = mp.role === 'host', left = on.first === mp.role, F = mp.peer || { name: 'Prijatelj', car: M.id, color: 0, num: 2 }, same = F.num === carNum();
-      race = new Core.Race(track, Object.assign(mine, { numAI: 0, playerGrid: left ? 1 : 2, laps: on.laps, damage: on.damage, phys: on.phys, rain: on.rain, playerNum: same && !host ? carNum() + 1 : carNum(),
+      race = new Core.Race(track, Object.assign(mine, { numAI: 0, playerGrid: left ? 1 : 2, laps: on.laps, damage: on.damage, phys: on.phys, rain: on.rain, storm: on.storm, playerNum: same && !host ? carNum() + 1 : carNum(),
         remote: { model: modelById(F.car), color: PLAYER_COLORS[F.color] || PLAYER_COLORS[0], num: same && host ? F.num + 1 : F.num, name: F.name, grid: left ? 2 : 1 } }));
     } else race = new Core.Race(track, Object.assign(mine, {   // time trial: alone on the start line, one run to the finish; qualifying: alone, one flying lap
       numAI: tt || quali ? 0 : nAI, playerGrid: tt || quali ? 1 : Q ? Q.res.grid : PLAYER_GRID, aiOrder: Q ? Q.res.order : undefined, qualiBack: quali ? qual.back : 0,
-      laps: tt || quali ? 1 : track.def.laps || LAPS, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali ? null : W.wx, tyres: !tt && !!track.def.pit, flags: !tt && !quali, winter: S.season === 'winter', champ: cr >= 0
+      laps: tt || quali ? 1 : track.def.laps || LAPS, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali ? null : W.wx, storm: W.storm, tyres: !tt && !!track.def.pit, flags: !tt && !quali, winter: S.season === 'winter', champ: cr >= 0
     }));
     race.champ = cr >= 0 ? { round: cr, n: cd.tracks.length, done: false } : null;
     race.quali = quali;
@@ -838,7 +840,7 @@
       else Comm.say(race.laps === 1 ? 'introOne' : race.jkRule ? 'introRx' : 'intro', { track: EN_NAME[track.def.id] || track.def.name, laps: race.laps, grid: Comm.ordinal(race.player.grid) }, 2);
       showMsg((race.champ ? 'DIRKA ' + (race.champ.round + 1) + '/' + race.champ.n + ' · ' : '') + lapWord(race.laps) + wetTxt, 'gold', race.rain || race.champ ? 1.8 : 1.2);
     }
-    if (race.rain) Comm.say(track.def.id === 'spa' ? 'rainSpa' : 'rain', null, 2, { ttl: 12000 });   // (after the welcome)
+    if (race.rain) Comm.say(race.sky && race.sky.storm && S.season !== 'winter' ? 'storm' : track.def.id === 'spa' ? 'rainSpa' : 'rain', null, 2, { ttl: 12000 });   // (after the welcome)
   }
   function setLights(n, go) {
     const ls = $('h-lights').children;
@@ -1012,7 +1014,7 @@
     tb.innerHTML = res.map((r, i) => {
       const c = r.car; const b = c.lapTimes.length ? Math.min(...c.lapTimes) : NaN;
       const name = c.isPlayer ? 'Ti' : c.name, p = Core.champPoints(i + 1);
-      return '<tr class="' + (c.isPlayer ? 'me' : '') + '"><td>' + (i + 1) + '</td><td><span class="dot" style="background:' + hexCss(c.color) + '"></span>' + name + '</td><td>' + c.m.name + '</td><td>' + (r.est ? '+' + fmt(r.time - res[0].time, true) : fmt(r.time, true)) + (r.pen ? ' <small class="pen">(+' + r.pen + ' s)</small>' : '') + (race.jkRule && !c.jkN ? ' <small class="pen">(brez jokerja)</small>' : '') + '</td><td>' + fmt(b, true) + '</td>' +
+      return '<tr class="' + (c.isPlayer ? 'me' : '') + '"><td>' + (i + 1) + '</td><td><span class="dot" style="background:' + hexCss(c.color) + '"></span>' + name + '</td><td>' + c.m.name + '</td><td>' + (r.dnf ? 'Odstop' : r.est ? '+' + fmt(r.time - res[0].time, true) : fmt(r.time, true)) + (r.pen ? ' <small class="pen">(+' + r.pen + ' s)</small>' : '') + (race.jkRule && !c.jkN ? ' <small class="pen">(brez jokerja)</small>' : '') + '</td><td>' + fmt(b, true) + '</td>' +
         (ch ? '<td class="pts">' + (p ? '+' + p : '') + '</td>' : '') + '</tr>';
     }).join('');
     showScreen('results');
@@ -1155,11 +1157,17 @@
     else if (k === 'scIn') { showMsg(F.sc && F.sc.pit ? 'VARNOSTNI AVTO GRE V BOKSE' : 'VARNOSTNI AVTO GRE S PROGE', 'gold', 2.2); Comm.say('scIn', null, 2); }
     else if (k === 'scGone') { showMsg('NE PREHITEVAJ DO CILJNE ČRTE', 'gold', 2.2); }
     else if (k === 'green') { showMsg('ZELENA ZASTAVA!', 'fast', 1.8); Sfx.beep(990, 0.12, 0.12); setTimeout(() => Sfx.beep(1320, 0.16, 0.12), 140); Comm.say('green', null, 3); }
+    else if (k === 'oil') {   // (a car leaking oil ahead: the oil flag before it)
+      const o = F.oil[F.oil.length - 1]; if (!o) return;
+      let d = o.s - P.q.s; d = ((d % track.len) + track.len) % track.len;
+      if (d < 900) { showMsg('OLJE NA PROGI', 'gold', 2); Comm.say('oil', null, 2); if (!flTold.oil) { flTold.oil = true; toast('Olje na progi: rdeče-rumena zastava. Pazi na madež, tam avto drsi. Čez pol minute ga redarji posujejo s cementom.', 4800); } }
+    } else if (k === 'out') { const c = F.outCar; if (c && c !== P) { showMsg('ODSTOP: ' + c.name, 'gold', 2.2); Comm.say('retire', { name: c.name }, 2); } }
   }
   function flagPlayer(k) {
     if (k === 'passWarn') { showMsg('VRNI MESTO!', 'slow', 2.6); vibrate(60); toast('Prehitel si pod rumeno zastavo ali za varnostnim avtom. Spusti ga nazaj pred sabo v 10 sekundah, sicer dobiš 5 sekund kazni.', 5200); Comm.say('passWarn', null, 3); }
     else if (k === 'passOk') showMsg('MESTO VRNJENO', 'gold', 1.4);
     else if (k === 'pen') { showMsg('KAZEN +5 s', 'slow', 2.6); vibrate(80); Comm.say('penalty', null, 3); }
+    else if (k === 'blue') { showMsg('MODRA ZASTAVA', 'blue', 1.8); Comm.say('blue', null, 2); if (!flTold.blue) { flTold.blue = true; toast('Modra zastava: za tabo je avto, ki te prehiteva za krog. Umakni se mu z idealne linije.', 4400); } }
   }
   // the flag on the HUD: yellow (in or before a yellow zone), the safety car board, the countdown to give a place back
   function flagHUD(P) {
@@ -1170,6 +1178,8 @@
       else if (S && S.state !== 'gone') { key = S.state === 'in' ? 'scin' : 'sc'; txt = S.state === 'in' ? 'SC GRE S PROGE' : 'VARNOSTNI AVTO'; }
       else if (S) { key = 'restart'; txt = 'NE PREHITEVAJ'; }
       else if (F.yel.length && race._yelAt(P.q.s)) { key = 'yel'; txt = 'RUMENA ZASTAVA'; }
+      else if (P.fl && P.fl.blue) { key = 'blue'; txt = 'MODRA ZASTAVA'; }
+      else if (F.oil.some(o => { let d = o.s - P.q.s; d = ((d % track.len) + track.len) % track.len; return d < 250; })) { key = 'oil'; txt = 'OLJE NA PROGI'; }
     }
     if (key + txt === flKey) return; flKey = key + txt;
     const el = $('h-flag'); el.className = key ? 'on ' + key : ''; el.textContent = txt;
@@ -1922,8 +1932,9 @@
   function netGo() {
     if (!mp || mp.role !== 'host' || !Net.open || !mp.peer || !mp.peerIn || mp.setup) return;
     const no = ++mp.no, s = mp.setup = { no, track: mp.track, laps: mp.laps, phys: physOf(), damage: +S.damage, rain: 0, hold: +(0.5 + Math.random() * 0.9).toFixed(3), first: no % 2 ? 'host' : 'guest', hostReady: false, guestReady: false };
-    s.rain = S.weather === 'rain' ? 1 : (S.weather === 'random' || S.weather === 'change') && Math.random() < (RAIN_P[s.track] || 0.35) ? 1 : 0;   // (the host's weather for both)
-    Net.send({ t: 'setup', no, track: s.track, laps: s.laps, phys: s.phys, damage: s.damage, rain: s.rain, hold: s.hold, first: s.first });
+    s.rain = S.weather === 'rain' || S.weather === 'storm' ? 1 : (S.weather === 'random' || S.weather === 'change') && Math.random() < (RAIN_P[s.track] || 0.35) ? 1 : 0;   // (the host's weather for both)
+    s.storm = S.weather === 'storm' && s.rain > 0;
+    Net.send({ t: 'setup', no, track: s.track, laps: s.laps, phys: s.phys, damage: s.damage, rain: s.rain, storm: s.storm, hold: s.hold, first: s.first });
     Net.hold(30000); buildRoom();
     ensureTrack(s.track, () => { s.hostReady = true; netMaybeGo(); });
     setTimeout(() => { if (mp && mp.setup === s && !mp.race) { mp.setup = null; Net.send({ t: 'cancel', no }); buildRoom(); toast('Prijatelj se ne odziva. Poskusi znova.', 3600); } }, 45000);
@@ -1935,7 +1946,7 @@
   }
   // guest: the host starts. Load the track, then say ready (once the clocks are matched)
   function netPrepare(m) {
-    mp.setup = { no: m.no, track: m.track, laps: Core.clamp(m.laps | 0, 1, 5), phys: m.phys === 'arcade' ? 'arcade' : 'cs', damage: Core.clamp(m.damage | 0, 0, 2), rain: m.rain === 1 ? 1 : 0, hold: Core.clamp(+m.hold || 1, 0.5, 1.4), first: m.first === 'guest' ? 'guest' : 'host' };
+    mp.setup = { no: m.no, track: m.track, laps: Core.clamp(m.laps | 0, 1, 5), phys: m.phys === 'arcade' ? 'arcade' : 'cs', damage: Core.clamp(m.damage | 0, 0, 2), rain: m.rain === 1 ? 1 : 0, storm: m.storm === true, hold: Core.clamp(+m.hold || 1, 0.5, 1.4), first: m.first === 'guest' ? 'guest' : 'host' };
     mp.track = m.track; mp.laps = mp.setup.laps;
     Net.hold(30000); buildRoom();
     ensureTrack(m.track, () => {
@@ -1945,7 +1956,7 @@
   }
   function netRace(at) {
     const s = mp.setup; mp.setup = null; mp.peerIn = false;
-    mp.race = { no: s.no, at, hold: s.hold, goAt: at + 1300 + 4000 + s.hold * 1000, laps: s.laps, phys: s.phys, damage: s.damage, rain: s.rain, first: s.first, buf: [], sendT: -1e9, late: null, mine: null, theirs: null, left: false, off: false };
+    mp.race = { no: s.no, at, hold: s.hold, goAt: at + 1300 + 4000 + s.hold * 1000, laps: s.laps, phys: s.phys, damage: s.damage, rain: s.rain, storm: !!s.storm, first: s.first, buf: [], sendT: -1e9, late: null, mine: null, theirs: null, left: false, off: false };
     Net.fixClock(true);   // (the clock as it was at the start, until the race is over. The watchdog keeps its patience from the setup for a while: a phone that was frozen just before the start, e.g. switched away, still joins late)
     newRace();
   }
@@ -2323,13 +2334,14 @@
     try {
       track = getTrack(S.track);
       Render.init($('gl'));
+      Render.onThunder = (delay, k, pan) => Sfx.thunder(delay, k, pan);   // (a storm's lightning: its thunder after it)
       Render.setAtmos({ season: S.season, tod: S.tod });   // (before the first world: it is built in the season)
       Render.buildWorld(track, S.quality === 'retro' ? 0.8 : 1);
       Input.init($('touch'), () => { if (screen === 'pause') resume(); else if (screen === 'none') pause(); });
       Input.onCam = () => { if (bg === 'race' && !replay && (screen === 'none' || screen === 'pause')) cycleCam(); };   // (C on the keyboard)
       Input.onPad = () => toast('Igralni plošček je povezan: leva palica krmili, RT plin, LT zavora, B drift, Start pavza. V menijih izbiraš s palico in A, B je nazaj.', 5200);
       applySettings();
-      demo = new Core.Race(track, { numAI: 10, noPlayer: true, difficulty: 2, laps: 9999, seed: 11, phys: physOf(), rain: demoRain() });
+      demo = new Core.Race(track, { numAI: 10, noPlayer: true, difficulty: 2, laps: 9999, seed: 11, phys: physOf(), rain: demoRain(), storm: S.weather === 'storm' });
       demo.start();
       for (let i = 0; i < 120 * 6; i++) demo.step(STEP);
       Render.attachRace(demo);

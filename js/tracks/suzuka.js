@@ -15,6 +15,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     id: 'suzuka', name: 'Suzuka', theme: 'suzuka', laps: 2, halfWidth: 6.5,
     desc: 'Suzuka na Japonskem, proga v obliki osmice, v pravem merilu (5,8 km): ciljna ravnina navzdol do prvega ovinka, S-zavoji navkreber, Dunlop, Degner, pod mostom do lasnice, 200R, dvojni levi Spoon, zadnja ravnina \u010dez most, hitri 130R, \u0161ikana Casio Triangle in zadnji ovinek. Za tribunami zabavi\u0161\u010de z velikim kolesom. Podatki: \u00a9 OpenStreetMap (ODbL), Copernicus DEM.',
     start: [0, 0], runoff: 1.0, inner: 4.5, side: 6, gradeForce: true, elevSmooth: 6, realKm: 5.807,
+    saus: [5138],   // sausage kerbs behind the inner kerbs of the Casio Triangle (m after the start line where it begins)
     elev: SUZ_H.map((h, i) => [i / SUZ_H.length, h / 10]),
     // corner names ([HUD label, x, z, the commentator's lines]; the generic words in Slovenian, the proper names as at the circuit)
     names: [

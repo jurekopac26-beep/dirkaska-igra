@@ -30,6 +30,7 @@ const Comm = (() => {
     champEnd: ['That is the end of the championship. You finish {pos} overall.', 'The season is over, and you are {pos} in the final standings.'],
     // the weather (after the welcome, in a wet race)
     rain: ["And it's raining! A wet track today, so brake early and go easy on the throttle.", 'Rain is falling, and the track is wet. Watch out for the spray!', 'The heavens have opened! Grip will be hard to find today.'],
+    storm: ['A thunderstorm over the circuit! Lightning, a gale and standing water: careful out there.', 'Listen to that thunder! A storm has rolled in, and the wind is blowing the rain sideways.', 'What weather! Thunder, lightning and torrents of rain. Grip will be very hard to find.'],
     rainSpa: ["Typical Spa weather, it's raining in the Ardennes! Brake early today.", "It's wet at Spa! Eau Rouge in the rain, that takes courage.", 'Rain at Spa, of course! Spray everywhere, and grip will be hard to find.'],
     // rallycross (a circuit with a joker lap): the welcome, the joker
     introRx: ['Welcome to {track}! {laps} laps of rallycross on asphalt and gravel, and everyone has to take the joker lap once. You start {grid}.', 'Here we are at {track}! Six cars, {laps} laps, one joker lap each, and you line up {grid}.', "Welcome to {track}, rallycross in the forest! {laps} laps, and don't forget your joker. You start {grid}."],
@@ -72,6 +73,9 @@ const Comm = (() => {
     green: ['Green flag! We are racing again!', 'And we are green! Back to racing!', 'Green, green, green! Racing resumes!'],
     passWarn: ['Overtaking under the flag! Give that place back!', 'That was a pass under yellow! Let him back through!', 'No overtaking under the flag! Give the position back!'],
     penalty: ['A five second penalty!', 'That will cost you: five seconds added!', 'Penalty! Five seconds on your race time!'],
+    blue: ['Blue flags! The leaders are coming through to lap you.', 'Blue flag waving, let the faster car by!', 'Blue flags for you, the leader is right behind!'],
+    oil: ['Oil on the track! The marshals are showing the oil flag.', 'There is oil down on the racing line, careful!', 'The red and yellow stripes are out: oil on the track!'],
+    retire: ['{name} is out of the race!', 'That is the end of the race for {name}.', '{name} retires, the car is too badly damaged.'],
     // a changing weather (the rain starts or stops during the race) and the tyres
     rainStart: ['And here comes the rain! The track is getting wet!', 'Spots of rain on the visors! Slicks or rain tyres now?', 'It is starting to rain! The grip is going away!'],
     rainStop: ['The rain has stopped! The track will start to dry.', 'No more rain! Watch for a dry line appearing.', 'The rain has eased off. A drying track now!'],
