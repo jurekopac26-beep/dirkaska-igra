@@ -798,5 +798,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "7f41077f848a73960436ad01"
+ },
+ "harju/cs": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 72.84,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "f6e613c7c9f30e4e3c68cfa4"
+ },
+ "harju/cs/rain": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 78.79,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "924015ad748353cf0dae0597"
+ },
+ "harju/cs/formula": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 68.49,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "5d197c291881cb38b847fa7c"
+ },
+ "harju/cs/lm": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 69.65,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "ee01455409a2c91895ea2a96"
+ },
+ "harju/cs/car": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 71.33,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "6c57b52e63bb11c56da4b7a7"
  }
 }
