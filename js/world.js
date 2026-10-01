@@ -6875,6 +6875,23 @@ const World = (function () {
     K.root.add(pts);
   }
 
+  /* ---- round 9: the modern race on the asphalt (not on the gravel variant): safety foam blocks and catch fences, TV camera towers and cranes,
+     the modern paddock at the start (team trucks, EV chargers, inflatable arches, a big screen), rescue vehicles and the helipad (own random stream) ---- */
+  function pkModern(K) {
+  }
+
+  /* ---- round 9: the historic race on the gravel variant (1990s-2000s): hay bales, wooden fences and drums, period cars and camper vans,
+     wooden timing huts and a hand-written board, the old Summit House, a TV van, GRAVEL ROAD signs (own random stream) ---- */
+  function pkHistoric(K) {
+  }
+
+  /* ---- round 9: moving race-day machines: drones over the road and LED split boards (asphalt), the water truck and a grader, dust over the
+     switchbacks (gravel). pkMovingUpdate runs every frame when out.dyn.pkMov is set ---- */
+  function pkMoving(K) {
+  }
+  function pkMovingUpdate(mv, t, car) {
+  }
+
   function buildPikes(scene, tex, opts) {
     const R = rng(7311), N = T.N, w = T.w, dens = opts.density || 1;
     const root = new THREE.Group(); scene.add(root);
@@ -7242,7 +7259,7 @@ const World = (function () {
     }
 
     /* ---- the real course's landmarks and race-day details (each in its own function above, on its own random stream: R is not drawn from) ---- */
-    const K = { root, out, tex, dens, N, w, P, scen, noShadow, matV, txt, excl, crSoft, excluded, onSide, carPk, tent, fans, CR, sStart, sFin, iE, padE, padH,
+    const K = { root, out, tex, dens, N, w, P, scen, noShadow, matV, txt, excl, crSoft, excluded, onSide, carPk, tent, fans, CR, sStart, sFin, iE, padE, padH, mk,
       mats: { tMat, aMat, sMat, matV },
       putPerson: (x, z, ro, col) => crowdPut(CR, x, pkGround(x, z), z, -Math.sin(ro), Math.cos(ro), { col }, 1) };   // a spectator facing ro (no draws from R)
     pkLandmarks(K);
@@ -7256,6 +7273,7 @@ const World = (function () {
     pkFans5(K);
     pkJunctions(K);
     pkVeg(K);
+    if (K.mk) pkHistoric(K); else pkModern(K);
 
     /* ---- more spectators (instanced, hashed: no draws from R): both sides of every hairpin, the insides of the forest bends, the "W's" ladder,
        more rows at the checkpoints, the start and the finish, small groups on the high side along the ridge; only where the ground is not below the road ---- */
@@ -7477,6 +7495,8 @@ const World = (function () {
     pkAmbient(K);
 
     pkSummit6(K);
+
+    pkMoving(K);
 
     out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, rails: +(nRail / (2 * N)).toFixed(3) };   // (read by the tests)
     return out;
@@ -13171,6 +13191,7 @@ const World = (function () {
     if (d.pkWx) pkWeatherUpdate(d.pkWx, t, car);   // Pikes Peak: cloud banks, snowfall
     if (d.pkOps) pkOpsUpdate(d.pkOps, t, car);
     if (d.pkSum) pkSummitUpdate(d.pkSum, t, car);
+    if (d.pkMov) pkMovingUpdate(d.pkMov, t, car);   // Pikes Peak: drones, LED boards, the water truck
     if (d.pkVeg && !car) d.pkVeg();   // Pikes Peak: the plants' buffers in a fixed state (the world test)   // Pikes Peak: the summit's smoke and flags, the sea of clouds   // Pikes Peak: the marshals' flags
     if (d.wheel) szWheel(d.wheel, t);   // Suzuka: the Ferris wheel turns
     if (d.pkLife) pkWildlifeUpdate(d.pkLife, t, car);   // Pikes Peak: marmots and bighorn sheep
