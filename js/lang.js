@@ -63,6 +63,9 @@
     'tvoja najboljša {0}': 'your best {0}', 'še brez medalje': 'no medal yet', ' · tvoja {0}': ' · yours {0}', ' (nova najboljša)': ' (a new best)', 'Brez medalje v razredu {0}': 'No medal in the {0} class',
     'nova najboljša v razredu': 'a new best in the class', 'Do brona {0} še {1}': 'Bronze at {0}, {1} to go', 'DESNA LASNICA': 'RIGHT HAIRPIN', 'LEVA LASNICA': 'LEFT HAIRPIN', 'DESNI {0}': 'RIGHT {0}', 'LEVI {0}': 'LEFT {0}',
     'PRELET PROGE': 'COURSE FLYOVER', 'Tapni ali pritisni tipko za preskok': 'Tap or press a key to skip', 'Moj najboljši': 'My best', 'Brez': 'None', 'Opozorila na ovinke': 'Corner warnings', 'Pikes Peak': 'Pikes Peak',
+    /* ---- Pikes Peak on its historic gravel road (the road a choice on its card) ---- */
+    'Cesta': 'Road', 'Asfalt': 'Tarmac', 'Makadam': 'Gravel', 'Današnja asfaltna cesta': 'Today\u2019s paved road', 'Zgodovinska makadamska cesta (do 2011)': 'The historic gravel road (until 2011)',
+    'Cesta: makadam (zgodovinska, do 2011)': 'Road: gravel (historic, until 2011)',
     'Prelet proge pred startom (Pikes Peak)': 'Course flyover before the start (Pikes Peak)', 'Pikes Peak: proti komu voziš (legenda: avtopilot z najhitrejšim avtom razreda, na zlati čas)': 'Pikes Peak: who you race against (the legend: the autopilot in the fastest car of the class, on the gold time)',
     'GORIVO {0}%': 'FUEL {0}%', 'BATERIJA {0}%': 'BATTERY {0}%', 'Baterija je skoraj prazna: zapelji v bokse, mehaniki jo napolnijo.': 'The battery is nearly flat: come into the pits, the mechanics will charge it.', 'PRAZNA BATERIJA!': 'BATTERY FLAT!', 'Malo goriva: zapelji v bokse, mehaniki natočijo gorivo.': 'Low on fuel: come into the pits, the mechanics will fill the tank.', 'BREZ GORIVA!': 'OUT OF FUEL!', 'VEČER': 'EVENING', 'PADA NOČ': 'NIGHT FALLS',
     'POLNO': 'TANK FULL', ' · POLNO': ' · TANK FULL',
