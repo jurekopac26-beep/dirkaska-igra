@@ -354,6 +354,8 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 .track-panel { width: min(760px, 96vw); max-height: 100%; display: flex; flex-direction: column; }
 .wx-row { margin: 2px 0 0; } .wx-row .rlbl { min-width: 0; }
 @media (orientation: landscape) { .trk-opts { display: grid; grid-template-columns: auto auto; column-gap: 16px; justify-content: start; } }   /* the weather, qualifying and the set-up in two columns (the track cards keep their height) */
+.trk-btns { align-items: center; } .trk-btns #cmp-row { margin: 0 auto 0 0; min-width: 0; flex-wrap: nowrap; }   /* the slicks for the start (the circuits with pits) beside Nazaj and Start, where the buttons leave room (narrower: smaller letters, fitSegs) */
+@media (orientation: portrait) { .trk-btns { flex-wrap: wrap; } .trk-btns #cmp-row { flex: 1 0 100%; flex-wrap: wrap; } }   /* (upright: above the buttons) */
 .track-list { display: flex; gap: 12px; overflow-x: auto; padding: 4px 2px 8px; touch-action: pan-x pan-y; }
 .track-card { flex: 1 0 220px; max-width: 340px; border: 2px solid rgba(255,255,255,.2); border-radius: 12px; padding: 10px; background: rgba(255,255,255,.04); cursor: pointer; text-align: left; color: inherit; font: inherit; }
 .track-card.sel { border-color: var(--curb); background: rgba(230,59,46,.14); box-shadow: 0 0 0 2px rgba(230,59,46,.35); }
@@ -502,6 +504,7 @@ select.txt:disabled { opacity: .75; }
 #h-tyre { display: none; margin-top: 3px; padding: 1px 6px; border-radius: 9px; border: 2px solid #ffd23f; background: rgba(10, 13, 18, .62); color: #fff; font: 700 italic clamp(9px, 2.5vh, 12px)/1.25 var(--f-ui); text-shadow: 0 1px 2px #000; white-space: nowrap; pointer-events: none; font-variant-numeric: tabular-nums; }
 #h-tyre.on { display: inline-block; }
 #h-tyre.wet { border-color: #4fa8ff; }
+#h-tyre.cS { border-color: #e8352b; } #h-tyre.cM { border-color: #f2c616; } #h-tyre.cH { border-color: #f4f4f0; }   /* (the slicks' compound, as the band on a formula's tyres) */
 #h-tyre.worn { color: #ffb347; }
 #h-tyre.bad { background: rgba(190, 30, 30, .78); }
 /* flags: a yellow flag, the safety car board, the countdown to give a place back */
@@ -614,3 +617,18 @@ select.txt:disabled { opacity: .75; }
 #h-fuel b { position: absolute; bottom: 0; width: 2px; height: 5px; margin-left: -1px; background: #fff; box-shadow: 0 0 2px #000; }   /* what it takes to the line */
 @keyframes fuelBlink { 50% { opacity: .45; } }
 
+
+/* the slicks for the next pit stop (the pause, a race with tyres); rows of choices too wide for their panel get smaller (game.js fitSegs) */
+.pit-row { margin-top: 12px; }
+.wx-row .seg button, .pit-row .seg button { white-space: nowrap; }
+.seg.tight button { padding-left: 5px; padding-right: 5px; font-size: 12px; }
+.seg.tighter button { padding-left: 4px; padding-right: 4px; font-size: 10.5px; }
+/* the replay's highlights (Najboljši trenutki): the moment's caption above the bar, the button lit while they play */
+#rp-hl-cap { position: absolute; left: 50%; bottom: calc(80px + var(--sb)); transform: translateX(-50%); max-width: calc(100% - 24px); padding: 7px 14px; border-radius: 6px; background: rgba(12,16,40,.78); font: 700 italic clamp(13px, 3.4vh, 19px)/1.25 var(--f-ui); color: var(--chalk); text-align: center; pointer-events: none; }
+#rp-hl-cap small { display: block; font-size: .7em; letter-spacing: .1em; color: #ffcf2e; }
+#replay-ui .rp-bar #rp-hl.on { background: rgba(255,207,46,.85); color: #14181f; border-color: #fff; }
+@media (max-width: 600px) {   /* a phone upright: the replay's buttons in two rows, the progress and the caption above them */
+  #replay-ui .rp-bar { flex-wrap: wrap; justify-content: center; width: calc(100% - 24px); }
+  #replay-ui .rp-prog { bottom: calc(114px + var(--sb)); }
+  #rp-hl-cap { bottom: calc(128px + var(--sb)); }
+}

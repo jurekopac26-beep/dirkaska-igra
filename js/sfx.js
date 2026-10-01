@@ -49,8 +49,8 @@ const Sfx = (function () {
      of the cylinder count strong (the firing frequency: cylinders x rpm / 120), an uneven one (a boxer's, a cross-plane V8's) the half
      orders too, the burble. Over it a band of noise pulsed at the firing frequency (the exhaust's rasp), a turbo's whistle with its boost
      and its blow-off when the throttle shuts, pops and bangs on the overrun (the rally car's anti-lag whenever it is off the throttle), a
-     clack at every gear change and a blip on the way down. The other cars' engines (the three nearest) with the Doppler shift of their
-     speed towards or away from the camera. */
+     clack at every gear change and a blip on the way down. The electric car (ev) has no engine: only its motors' whine, rising with the
+     speed. The other cars' engines (the three nearest) with the Doppler shift of their speed towards or away from the camera. */
   const ENG = {
     i4: { cyl: 4, odd: 0.16, rasp: 0.55, lp: 1, turbo: 0, pops: 0.3 },                    // a four-cylinder (PEUGEOT 206): buzzy, rasping at the top
     i4t: { cyl: 4, odd: 0.14, rasp: 0.4, lp: 0.9, turbo: 0.9, pops: 0.35 },               // a small turbo four (PICO TURBO): the whistle, the blow-off
@@ -59,14 +59,18 @@ const Sfx = (function () {
     v6: { cyl: 6, odd: 0.28, rasp: 0.6, lp: 1.25, turbo: 0, pops: 0.2 },                  // a mid-engined V6 (STREGA MR): a howl
     al4: { cyl: 4, odd: 0.2, rasp: 0.65, lp: 0.95, turbo: 1.2, pops: 1, antiLag: 1 },     // the 80s rally car (BURJA R7): turbo and anti-lag bangs
     v10: { cyl: 10, odd: 0.06, rasp: 0.85, lp: 1.5, turbo: 0, pops: 0.15 },               // the formula (ORKAN): a V10's scream
-    v8: { cyl: 8, odd: 0.55, rasp: 0.45, lp: 0.7, turbo: 0, pops: 0.45, burble: 0.9 },    // a cross-plane V8 (the police): its burble
+    v8: { cyl: 8, odd: 0.55, rasp: 0.45, lp: 0.7, turbo: 0, pops: 0.45, burble: 0.9 },    // a cross-plane V8 (the police, VIHAR V8): its burble
+    v8t: { cyl: 8, odd: 0.5, rasp: 0.35, lp: 0.55, turbo: 0, pops: 0.3, burble: 0.8 },    // the trophy truck's big V8 (SAMUM 4x4): heavier, duller
+    v8r: { cyl: 8, odd: 0.08, rasp: 0.8, lp: 1.4, turbo: 0, pops: 0.2 },                  // a flat-plane racing V8 (TAIFUN LM): even firing, a hard scream
+    ev: { cyl: 1, ev: 1, odd: 0, rasp: 0, lp: 1, turbo: 0, pops: 0 },                     // the electric motors (STRELA EV): no engine, their whine
   };
-  const CAR_ENG = { p206: 'i4', pico: 'i4t', vortex: 'b4t', kaze: 'i6t', strega: 'v6', rally: 'al4', formula: 'v10' };
-  const engKind = (c) => c.police ? 'v8' : CAR_ENG[c.m.id] || 'i4';
+  const CAR_ENG = { p206: 'i4', pico: 'i4t', vortex: 'b4t', kaze: 'i6t', strega: 'v6', rally: 'al4', formula: 'v10', muscle: 'v8', truck: 'v8t', lm: 'v8r', ev: 'ev' };
+  const engKind = (c) => c.police ? 'v8' : CAR_ENG[c.m.id] || (c.m.ev ? 'ev' : c.m.snd === 'v8' ? 'v8' : 'i4');
   const waves = {};
   function engWave(k) {   // the wave of one engine cycle (cached per type)
     if (waves[k]) return waves[k];
     const E = ENG[k], H = 48, re = new Float32Array(H + 1), im = new Float32Array(H + 1), R = Core.rng(k.length * 131 + E.cyl * 7);
+    if (E.ev) { im[2] = 1; im[3] = 0.3; im[6] = 0.35; return (waves[k] = ctx.createPeriodicWave(re, im)); }   // (the whine: its note, a fifth over it and near its third harmonic; the oscillator runs at half the note)
     for (let h = 1; h <= H; h++) {
       const fire = h % E.cyl === 0, half = E.burble && h % (E.cyl / 2) === 0;
       const a = (fire ? 1 : half ? E.burble * 0.7 : E.odd * (0.25 + 0.5 * R())) * (h <= E.cyl ? 1 : Math.pow(h / E.cyl, -1.15)), ph = R() * Math.PI * 2;
@@ -88,17 +92,24 @@ const Sfx = (function () {
     ns.connect(nb); nb.connect(nv); nv.connect(rg); rg.connect(lp);
     // the turbo's whistle
     const tw = ctx.createOscillator(); tw.type = 'sine'; tw.frequency.value = 2600; const tg = ctx.createGain(); tg.gain.value = 0; tw.connect(tg); tg.connect(out);
-    o.connect(sh); sh.connect(lp); lp.connect(out);
+    const pre = ctx.createGain(); pre.gain.value = 1;   // (into the shaper: the electric motors' whine only lightly)
+    o.connect(pre); pre.connect(sh); sh.connect(lp); lp.connect(out);
     const fx = ctx.createGain(); fx.gain.value = 1;   // (the one-shots of this engine: pops, the blow-off, the gear clack)
     let pn = null;
     if (pan && ctx.createStereoPanner) { pn = ctx.createStereoPanner(); out.connect(pn); fx.connect(pn); pn.connect(bus); } else { out.connect(bus); fx.connect(bus); }
     o.start(); ns.start(0, Math.random()); pm.start(); tw.start();
-    return { o, lp, out, pn, fx, nb, pm, rg, tw, tg, level, kind: 'i4', car: null, boost: 0, thrHi: 9, thrP: 0, popT: 0, pops: 0, dop: 1 };
+    return { o, pre, lp, out, pn, fx, nb, pm, rg, tw, tg, level, kind: 'i4', car: null, boost: 0, thrHi: 9, thrP: 0, popT: 0, pops: 0, dop: 1 };
   }
-  function engKindSet(v, k) { if (v.kind !== k) { v.kind = k; v.o.setPeriodicWave(engWave(k)); } }
+  function engKindSet(v, k) { if (v.kind !== k) { v.kind = k; v.o.setPeriodicWave(engWave(k)); v.pre.gain.value = ENG[k].ev ? 0.3 : 1; } }   // (the motors' whine clean: hardly through the shaper)
   // one engine this frame: its revs, throttle, pitch (the Doppler factor), level; the turbo's boost, what the throttle shutting does
   function engSet(v, c, rpm, thr, dop, gain, dt, now) {
     const E = ENG[v.kind], R = c.m.redline || 7500, r = clamp(rpm / R, 0.05, 1.08);
+    if (E.ev) {   // the electric motors: they turn with the wheels, so the whine rises with the speed (no revving, no gear changes), louder under power
+      const sp = c.speed || 0;
+      set(v.o.frequency, (110 + sp * 21) * dop / 2, 0.015); set(v.lp.frequency, 5200, 0.05); set(v.rg.gain, 0, 0.04); set(v.tg.gain, 0, 0.05); v.boost = 0;
+      set(v.out.gain, gain * (0.3 + 0.6 * clamp(sp / 40, 0, 1) + (c.locked ? 0 : 0.5 * thr)), 0.03); v.thrP = thr;   // (on the grid nothing to rev)
+      return;
+    }
     const fc = Math.max(4, rpm / 120) * dop, fire = fc * E.cyl;
     set(v.o.frequency, fc, 0.012); set(v.pm.frequency, fire, 0.012);
     set(v.lp.frequency, clamp(fire * (2 + thr * 2.6) * E.lp + 220, 180, 9000), 0.03);
@@ -570,7 +581,7 @@ const Sfx = (function () {
     // tyres
     const spd = player.speed;
     const hardW = (w) => w <= 1 || w >= 7, onHard = hardW(player.ws[2]) && hardW(player.ws[3]);   // (asphalt, a kerb, the cobbles)
-    const slide = (player.arcade ? Core.sstep(0.18, 0.55, Math.abs(player.beta || 0)) : Math.max(0, player.latR - 2.2) / 5) + player.spin * 0.8 + (player.lock ? 0.6 : 0) + (player.inHand > 0.5 && spd > 5 ? 0.5 : 0);
+    const slide = Math.max(0, player.latR - 2.2) / 5 + player.spin * 0.8 + (player.lock ? 0.6 : 0) + (player.inHand > 0.5 && spd > 5 ? 0.5 : 0);
     const sq = onHard && spd > 3 ? clamp(slide, 0, 1.2) : 0, wet = race ? race.rain || 0 : 0;
     set(squeal.out.gain, sq * 0.09 * (1 - 0.7 * wet), 0.04);   // (a wet road hardly squeals)
     set(rainV.out.gain, wet * 0.05, 0.4);
@@ -746,7 +757,8 @@ const Sfx = (function () {
     if (atmo) atmoOff(0.02);
   }
 
-  const levels = () => ctx ? { stands: stands.lev, standsGain: stands.out.gain.value, tunnel: tun.send.gain.value, pk: atmo && atmo.x ? { ready: !atmo.gen && !atmo.x.gen, crunch: atmo.x.cr.map(c => +c.g.gain.value.toFixed(4)), slap: atmo.x.sG.gain.value, far: atmo.x.fG.gain.value, gust: atmo.x.wo.gain.value, wind: atmo.wo.gain.value } : null } : null;   // (tests: the crowd's and the tunnel's levels now)
+  const levels = () => ctx ? { stands: stands.lev, standsGain: stands.out.gain.value, tunnel: tun.send.gain.value, pk: atmo && atmo.x ? { ready: !atmo.gen && !atmo.x.gen, crunch: atmo.x.cr.map(c => +c.g.gain.value.toFixed(4)), slap: atmo.x.sG.gain.value, far: atmo.x.fG.gain.value, gust: atmo.x.wo.gain.value, wind: atmo.wo.gain.value } : null,
+    engine: eng ? { kind: eng.kind, f: eng.o.frequency.value, gain: eng.out.gain.value } : null } : null;   // (tests: the crowd's and the tunnel's levels now)
   // (tests: the engines as they sound now)
   const engines = () => ctx && eng ? { player: { kind: eng.kind, f: +eng.o.frequency.value.toFixed(1), boost: +eng.boost.toFixed(2), pops: eng.pops, bov: eng.bov || 0 }, shifts,
     ai: ai.map(v => ({ kind: v.kind, car: v.car ? v.car.name : null, dop: +v.dop.toFixed(3), gain: +v.out.gain.value.toFixed(4) })) } : null;

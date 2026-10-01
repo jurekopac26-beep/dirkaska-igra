@@ -46,9 +46,11 @@ function run(r, sec, drive) {
 // 2. a full tank: its weight by the car, a heavier car slower off the line
 {
   const r = mk({ tyres: true, fuel: true }), one = (id) => new C.Race(T, { numAI: 0, playerGrid: 1, laps: 3, playerModel: C.MODELS.find(m => m.id === id), phys: 'cs', seed: 5, fuel: true }).player;
-  const V = one('vortex'), R = one('rally'), F = one('formula');
-  check('fuel on: every car starts full (a sedan 45 kg of fuel, the rally car 60, the formula 105)', r.cars.every(c => c.fuel === 1 && c.fuelKg === c.tankKg && c.tankKg === (c.m.body === 'formula' ? 105 : c.m.id === 'rally' ? 60 : 45)) && V.tankKg === 45 && R.tankKg === 60 && F.tankKg === 105,
-    `sedan ${V.tankKg} kg, rally ${R.tankKg}, formula ${F.tankKg}`);
+  const V = one('vortex'), R = one('rally'), F = one('formula'), L = one('lm'), K = one('truck'), E = one('ev');
+  const tank = (M) => M.ev ? 0 : M.body === 'formula' ? 105 : M.body === 'lm' ? 75 : M.body === 'truck' ? 90 : M.id === 'rally' ? 60 : 45;
+  check('fuel on: every car starts full (a sedan 45 kg of fuel, the rally car 60, the prototype 75, the truck 90, the formula 105; the electric car\'s battery weighs the same full or empty)',
+    r.cars.every(c => c.fuel === 1 && c.fuelKg === c.tankKg && c.tankKg === tank(c.m)) && V.tankKg === 45 && R.tankKg === 60 && L.tankKg === 75 && K.tankKg === 90 && F.tankKg === 105 && E.fuel === 1 && E.tankKg === 0 && E.fuelKg === 0,
+    `sedan ${V.tankKg} kg, rally ${R.tankKg}, prototype ${L.tankKg}, truck ${K.tankKg}, formula ${F.tankKg}, electric ${E.tankKg}`);
   const d10 = (fuel) => { const x = mk({ numAI: 0, playerGrid: 1, fuel }); let t = 0; while (x.state !== 'racing') { x.step(DT); } while (t < 10) { C.aiControl(x.player, x, DT); x.step(DT); t += DT; } return x.player.dist; };
   const light = d10(false), heavy = d10(true);
   check('a full tank weighs: 10 s from the start the car with it is behind the one without', heavy < light - 0.3, `${f2(heavy)} m vs ${f2(light)} m`);

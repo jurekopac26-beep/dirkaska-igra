@@ -25,8 +25,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     start: [0, 0], finish: [-3526.1,5791.4], cps: [[-620.3,2851.7],[-1624.1,4963.2],[-2366.5,5336.6],[-3097.7,5254.0]],
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 20,
     elev: VRSIC_H.map((h, i) => [i / (VRSIC_H.length - 1), h / 10]),
-    // medal times of the time trial (s) per physics, dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze)
-    medals: { cs: [394, 414, 445], arcade: [414, 434, 467], wet: { cs: [433, 455, 489], arcade: [446, 469, 504] } },
+    // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
+    medals: { cs: [394, 414, 445], wet: { cs: [433, 455, 489] } },
     // the cobbled hairpins (granite setts, the 24 numbered ones on this side) and the bridges: [from, to] in metres after the start line
     setts: [[3656.4,3710.3],[3792.4,3852.8],[5990.8,6042.0],[6118.1,6159.7],[6658.0,6699.6],[6740.1,6766.2],[6837.7,6937.4],[6993.6,7061.9],[7326.3,7439.1],[8424.4,8520.6],[8702.3,8750.1],[8812.6,8847.9],[9002.1,9040.9],[9171.0,9242.8],[9357.7,9411.9],[9559.4,9596.2],[10377.2,10426.5],[10671.5,10743.2],[10789.9,10845.8],[10888.4,10942.4],[11036.8,11084.7],[11295.9,11358.5],[11578.1,11617.9],[11739.0,11796.8]],
     bridges: [[1628.9,1694.3],[2540.7,2549.7],[2983.5,3034.4],[7870.5,7882.1],[8182.4,8198.9],[10132.4,10142.3],[11556.8,11578.1],[11617.9,11643.6]],

@@ -46,7 +46,7 @@ try {
     P.pitWant = false; g.resume(); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r)))); g.pause();
     return { done, fuel: P.fuel, low, gauge: document.getElementById('h-fuel').textContent, msg: window.__msgs.filter(m => /POLNO/.test(m)) }; });
   T.check('a long race (6 laps): no tick at first; the warning on the lap it would not last another (Malo goriva)', f2.laps === 6 && !f2.tick && w.warned && w.fuel > 0.05 && w.fuel < 0.45, JSON.stringify({ f2, w }));
-  T.check('in the pits: filled up (SUHE GUME · POLNO), the gauge full again', pit.done && pit.fuel > 0.99 && /^GORIVO 100%/.test(pit.gauge) && pit.msg.some(m => /SUHE GUME( · POPRAVLJENO)? · POLNO/.test(m)), JSON.stringify(pit));
+  T.check('in the pits: filled up (new slicks · POLNO), the gauge full again', pit.done && pit.fuel > 0.99 && /^GORIVO 100%/.test(pit.gauge) && pit.msg.some(m => /(SUHE|MEHKE|SREDNJE|TRDE) GUME( · POPRAVLJENO)? · POLNO/.test(m)), JSON.stringify(pit));
   await page.evaluate(() => { const g = window.__game; g.resume(); g.onAction('to-title'); });
 
   // 4. the endurance race: from the afternoon into the night with the leader's progress; to the line
