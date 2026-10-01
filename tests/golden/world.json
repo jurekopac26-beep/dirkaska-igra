@@ -306,16 +306,16 @@
   }
  },
  "caracoles": {
-  "meshes": 2705,
-  "verts": 1346444,
-  "instances": 35631,
+  "meshes": 3058,
+  "verts": 1404149,
+  "instances": 57806,
   "props": 266,
   "crowd": 1964,
-  "world": "e061b4ba",
+  "world": "5cfe2c4",
   "propsHash": "5a55708e",
   "floor": "cd97797d/22736",
   "groups": {
-   "-:MeshLambertMaterial": "2880b752",
+   "-:MeshLambertMaterial": "4d119ab1",
    "-:MeshPhongMaterial": "5e5b862d",
    "-:MeshBasicMaterial": "84d4fb70",
    "crowd:MeshLambertMaterial": "938890c6",
