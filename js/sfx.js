@@ -9,6 +9,7 @@ const Sfx = (function () {
   let eng = null, ai = [], squeal = null, rumble = null, wind = null, curbV = null, rainV = null, hiss = null, heli = null, echo = null;
   let gravel = null, spray = null, crowd = null, lastT = 0, pudPrev = false;
   let stands = null, jet = null, tun = null;   // the grandstands' crowd (every circuit), the Red Bull Ring's jets before the start, a tunnel's ring
+  let gust = null, mtn = { gw: 0.5, bellT: 0, rc: null, heard: null };   // a high mountain road (World's alpS): the wind over the pass; the bells' and the marmots' state
   let lastCrash = 0, running = false;
 
   function create() {
@@ -35,6 +36,7 @@ const Sfx = (function () {
     heli = heliVoice(); echo = echoFx();
     gravel = noiseVoice('bandpass', 2600, 0.7); spray = noiseVoice('highpass', 1500, 0.5); crowd = crowdVoice();
     stands = standsVoice(); jet = noiseVoice('lowpass', 500, 0.7); tun = tunnelFx();
+    gust = noiseVoice('bandpass', 380, 0.5);
     return true;
   }
   function shaperCurve(k) {
@@ -229,9 +231,9 @@ const Sfx = (function () {
     }
     // tyres
     const spd = player.speed;
-    const onHard = player.ws[2] <= 1 && player.ws[3] <= 1;
+    const hard = (w) => w <= 1 || w === 7, onHard = hard(player.ws[2]) && hard(player.ws[3]);   // (the setts of a gutter: hard)
     const slide = (player.arcade ? Core.sstep(0.18, 0.55, Math.abs(player.beta || 0)) : Math.max(0, player.latR - 2.2) / 5) + player.spin * 0.8 + (player.lock ? 0.6 : 0) + (player.inHand > 0.5 && spd > 5 ? 0.5 : 0);
-    const sq = onHard && spd > 3 ? clamp(slide, 0, 1.2) : 0, wet = race ? race.rain || 0 : 0;
+    const sq = onHard && spd > 3 ? clamp(slide, 0, 1.2) : 0, wet = race ? (race.rain || 0) * (race.ralt ? Core.sstep(race.ralt.y0, race.ralt.y1, player.roadY || 0) : 1) : 0;   // (the rain only up the mountain: from where it falls)
     set(squeal.out.gain, sq * 0.09 * (1 - 0.7 * wet), 0.04);   // (a wet road hardly squeals)
     set(rainV.out.gain, wet * 0.05, 0.4);
     set(hiss.out.gain, onHard ? wet * clamp(spd / 45, 0, 1) * 0.1 : 0, 0.08);
@@ -240,13 +242,14 @@ const Sfx = (function () {
     let off = 0; for (let k = 0; k < 4; k++) if (player.ws[k] >= 2) off++;
     set(rumble.out.gain, off / 4 * clamp(spd / 18, 0, 1) * 0.5, 0.05);
     set(rumble.flt.frequency, (player.ws.indexOf(3) >= 0 || player.ws.some(w => w >= 5)) ? 520 : 240, 0.1);
-    set(curbV.out.gain, player.onCurb ? clamp(spd / 20, 0, 1) * 0.35 : 0, 0.02);
-    set(curbV.flt.frequency, 40 + spd * 3.5, 0.05);
+    let sett = 0; for (let k = 0; k < 4; k++) if (player.ws[k] === 7) sett++;   // the setts of a gutter: a buzz higher than a kerb's (the stones ~10 cm)
+    set(curbV.out.gain, (player.onCurb ? 0.35 : sett * 0.07) * clamp(spd / 20, 0, 1), 0.02);
+    set(curbV.flt.frequency, player.onCurb || !sett ? 40 + spd * 3.5 : 30 + spd * 7, 0.05);
     set(wind.out.gain, clamp(spd / 70, 0, 1) ** 2 * 0.12, 0.1);
     // loose gravel (gravel traps, makadam): the crunch, louder in a slide, and stones pinging off the underbody; in the rain the crunch muffled by
     // a hiss of water off the tyres (the hard roads' is above), and a splash into each puddle
     let loose = 0, pud = false;
-    for (let k = 0; k < 4; k++) { const w = player.ws[k]; if (w === 3 || w === 5 || w === 6) loose++; if (w === 6) pud = true; }
+    for (let k = 0; k < 4; k++) { const w = player.ws[k]; if (w === 3 || w === 5 || w === 6 || w === 8) loose++; if (w === 6) pud = true; }
     const air = !!player.air, spf = clamp(spd / 25, 0, 1.3);
     set(gravel.out.gain, air ? 0 : loose / 4 * spf * (0.05 + 0.09 * clamp(slide, 0, 1)) * (1 - 0.6 * wet), 0.05);
     set(gravel.flt.frequency, 1900 + clamp(spd, 0, 50) * 30, 0.1);
@@ -254,9 +257,11 @@ const Sfx = (function () {
     set(spray.out.gain, air ? 0 : loose / 4 * spf * 0.14 * wet, 0.05);
     if (pud && !pudPrev && !air && spd > 5) splash(clamp(spd / 30, 0.3, 1));
     pudPrev = pud;
+    const RG = player.rgh;   // an old road (Core's roadFeel): a thud for each patch or crack under the wheels
+    if (RG && RG.ev !== rgEv) { if (rgEv >= 0 && !air) thud(RG.j); rgEv = RG.ev; }
     // the fans (a rally stage: World's crowdCells, the fans per 24 m square round the car): a roar that swells as the car comes by (more
     // over a jump), with whoops and air horns
-    const Wd = typeof Render !== 'undefined' ? Render.world : null, cc = race && race.track.def.rally && Wd ? Wd.crowdCells : null;
+    const Wd = typeof Render !== 'undefined' ? Render.world : null, cc = race && (race.track.def.rally || race.track.def.cheer) && Wd ? Wd.crowdCells : null;   // (def.cheer: the Stelvio's fans along the road)
     let cl = 0;
     if (cc) {
       const cx = Math.floor(player.x / 24), cz = Math.floor(player.z / 24); let n = 0;
@@ -268,8 +273,9 @@ const Sfx = (function () {
     if (ex > 0.25 && Math.random() < dt * ex * 3) cheer(Math.min(1, ex));
     // Pikes Peak: the engine echoes among the rocks above the treeline; the TV helicopter (World's dyn.pk: Pikes Peak's, and Ouninpohja's
     // that follows the car the whole run) by its distance to the camera
-    const pikes = !!(race && race.track && race.track.def && race.track.def.id === 'pikes');
-    set(echo.send.gain, pikes ? Core.sstep(186, 198, player.roadY || 0) * 0.32 : 0, 0.6);
+    const pikes = !!(race && race.track && race.track.def && race.track.def.id === 'pikes'), AS = Wd && Wd.alpS, qi = player.q ? player.q.i : -1;
+    set(echo.send.gain, pikes ? Core.sstep(186, 198, player.roadY || 0) * 0.32 : AS && qi >= 0 && qi < AS.echo.length ? AS.echo[qi] * 0.3 : 0, AS ? 0.25 : 0.6);   // (the Stelvio: off the rock beside the road, World's alpS.echo)
+    mountain(race, player, AS, dt);
     { const tn = Wd && Wd.dyn && Wd.dyn.tunnel, sq = player.q ? player.q.s : -1e9;   // (in a tunnel: the ring of its walls)
       const inT = (a, b) => sq > a - 3 && sq < b + 3; set(tun.send.gain, tn && (tn.ranges ? tn.ranges.some(r => inT(r[0], r[1])) : inT(tn.s0, tn.s1)) ? 0.85 : 0, 0.08); }   // (ranges: the Stelvio's two tunnels)
     const W = Wd, pk = W && W.dyn ? W.dyn.pk || W.dyn.air : null, cam = typeof Render !== 'undefined' ? Render.camera : null;   // (the Red Bull Ring's: dyn.air)
@@ -289,6 +295,48 @@ const Sfx = (function () {
     set(jet.out.gain, jv * 0.55, 0.12); set(jet.flt.frequency, 300 + jv * 900, 0.12);
   }
 
+  // a high mountain road (World's alpS, the Stelvio's): the wind over the pass (gusting, from ~2150 m up, stronger in the rain), the bells of a
+  // herd near the road (by the distance to the camera, panned), a marmot's whistle (once, as the car comes within ~60 m of it). Herds and
+  // marmots are away in the winter, asleep at night
+  function mountain(race, player, AS, dt) {
+    const T = race && race.track, alt = AS && T && T.altAt ? T.altAt(player.roadY || 0) || 0 : 0;
+    mtn.gw = clamp(mtn.gw + (Math.random() - 0.5) * dt * 1.6, 0.15, 1);
+    set(gust.out.gain, AS ? Core.sstep(2150, 2700, alt) * (0.012 + 0.04 * mtn.gw * mtn.gw) * (1 + 0.8 * (race ? race.rain || 0 : 0)) : 0, 0.25);
+    set(gust.flt.frequency, 260 + 260 * mtn.gw, 0.3);
+    if (!AS || typeof Render === 'undefined' || !running) return;
+    const A = Render.atmos || {}, cam = Render.camera, lx = cam ? cam.position.x : player.x, lz = cam ? cam.position.z : player.z, e = cam ? cam.matrixWorld.elements : null;
+    if (A.season === 'winter' || A.tod === 'night') return;
+    const pan = (dx, dz) => e ? clamp((dx * e[0] + dz * e[2]) / Math.max(1, Math.hypot(dx, dz)), -0.8, 0.8) : 0;
+    let best = null, bd = 160;
+    for (const h of AS.herds) { const d = Math.hypot(h[0] - lx, h[1] - lz); if (d < bd) { bd = d; best = h; } }
+    if (best) { const k = (1 - bd / 160) ** 2; mtn.bellT -= dt * (0.5 + best[2] * 0.25) * (0.4 + k);
+      if (mtn.bellT <= 0) { mtn.bellT = 0.25 + Math.random() * 0.9; bell(0.05 + 0.35 * k, pan(best[0] - lx, best[1] - lz), best[3]); } }
+    if (mtn.rc !== race) { mtn.rc = race; mtn.heard = new Set(); }
+    for (let k = 0; k < AS.marmots.length; k++) { const m = AS.marmots[k], d = Math.hypot(m[0] - player.x, m[1] - player.z);
+      if (d < 60 && !mtn.heard.has(k)) { mtn.heard.add(k); if (Math.random() < 0.45) whistle(0.3 + 0.5 * (1 - d / 60), pan(m[0] - lx, m[1] - lz)); } }
+  }
+  // a bell of the herd: a cow's deep clank (big = 1) or a sheep's small tinkle, inharmonic partials dying away at their own rates
+  function bell(v, pn, big) {
+    const now = ctx.currentTime, f0 = big ? 300 + Math.random() * 220 : 700 + Math.random() * 400, out = ctx.createGain(); out.gain.value = v * 0.16;
+    if (ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = pn; out.connect(p); p.connect(bus); } else out.connect(bus);
+    for (const [m, a, d] of [[1, 1, 0.9], [2.41, 0.6, 0.5], [3.98, 0.35, 0.3], [5.43, 0.2, 0.18]]) {
+      const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f0 * m * (0.99 + Math.random() * 0.02);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(a, now + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, now + d * (big ? 1.4 : 0.7));
+      o.connect(g); g.connect(out); o.start(now); o.stop(now + d * 1.5 + 0.05);
+    }
+  }
+  // a marmot's alarm call: one to three sharp whistles, high and falling at the end
+  function whistle(v, pn) {
+    const now = ctx.currentTime, n = 1 + Math.floor(Math.random() * 3), f = 2500 + Math.random() * 700, out = ctx.createGain(); out.gain.value = v * 0.12;
+    if (ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = pn; out.connect(p); p.connect(bus); } else out.connect(bus);
+    for (let k = 0; k < n; k++) {
+      const t = now + 0.05 + k * (0.42 + Math.random() * 0.2), dur = 0.16 + Math.random() * 0.1;
+      const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(f, t); o.frequency.setValueAtTime(f * 1.04, t + dur * 0.4); o.frequency.exponentialRampToValueAtTime(f * 0.72, t + dur);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(1, t + 0.012); g.gain.setValueAtTime(1, t + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(out); o.start(t); o.stop(t + dur + 0.02);
+    }
+  }
+
   function crash(imp) {
     if (!ctx || ctx.state !== 'running' || !running) return;
     const now = ctx.currentTime;
@@ -301,6 +349,18 @@ const Sfx = (function () {
     const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.setValueAtTime(140, now); o.frequency.exponentialRampToValueAtTime(45, now + 0.2);
     const og = ctx.createGain(); og.gain.setValueAtTime(0.5 * vol, now); og.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
     o.connect(og); og.connect(bus); o.start(now); o.stop(now + 0.25);
+  }
+  // a wheel over a patch's edge or a crack: a short dull thud through the body
+  let rgEv = -1;
+  function thud(v) {
+    if (!running) return;
+    const now = ctx.currentTime, vol = clamp(v, 0.2, 1.3);
+    const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(95, now); o.frequency.exponentialRampToValueAtTime(48, now + 0.09);
+    const og = ctx.createGain(); og.gain.setValueAtTime(0.0001, now); og.gain.exponentialRampToValueAtTime(0.16 * vol, now + 0.006); og.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+    o.connect(og); og.connect(bus); o.start(now); o.stop(now + 0.14);
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf; const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 420;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.12 * vol, now); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
+    src.connect(lp); lp.connect(g); g.connect(bus); src.start(now, Math.random() * 1.5); src.stop(now + 0.07);
   }
   // a stone off the underbody: a short metallic tink and a click of grit
   function ping(v) {
@@ -384,11 +444,11 @@ const Sfx = (function () {
   function silence() {
     if (!ctx) return;
     for (const v of [eng, ...ai]) set(v.out.gain, 0, 0.02);
-    for (const v of [squeal, rumble, wind, curbV, rainV, hiss, heli, gravel, spray, crowd, stands, jet]) set(v.out.gain, 0, 0.02);
+    for (const v of [squeal, rumble, wind, curbV, rainV, hiss, heli, gravel, spray, crowd, stands, jet, gust]) set(v.out.gain, 0, 0.02);
     set(echo.send.gain, 0, 0.02); set(tun.send.gain, 0, 0.02);
   }
 
-  const levels = () => ctx ? { stands: stands.lev, standsGain: stands.out.gain.value, tunnel: tun.send.gain.value } : null;   // (tests: the crowd's and the tunnel's levels now)
+  const levels = () => ctx ? { stands: stands.lev, standsGain: stands.out.gain.value, tunnel: tun.send.gain.value, echo: echo.send.gain.value, gust: gust.out.gain.value, crowd: crowd.out.gain.value } : null;   // (tests: the crowd's, the tunnel's, the echo's and the mountain wind's levels now)
   const api = { resume, setEnabled, setRunning, suspend, update, crash, beep, click, shiftPop, knock, wrench, silence, levels, get ready() { return !!ctx && ctx.state === 'running'; } };
   window.Sfx = api;
   return api;

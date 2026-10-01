@@ -129,10 +129,19 @@ const Core = (function () {
       }).filter(q => !open || (q.d >= 0 && q.d <= this.raceLen)).sort((a, b) => a.d - b.d);
       // banked corners (def.bank = [[from, to, slope], ...], metres after the start line; closed circuits): the road surface tilts across
       // its width towards the inside of the bend (slope = height lost per metre towards the inside), eased in and out over ~20 m
+      // A climb's hairpins (def.hairpins = [[number, x, z, turn], ...], def.hairpinBank = slope; open roads): each one banked over its bend,
+      // where the centre line turns tighter than 25 m, as the real ones are built
       this.bank = null;
-      if (def.bank && !open) {
+      let bankL = open ? null : def.bank;
+      if (open && def.hairpins && def.hairpinBank) bankL = def.hairpins.map(([n, x, z]) => {
+        const i0 = this.nearestIdx(x, z); let a = i0, b = i0;
+        while (a > 0 && Math.abs(this.k[a - 1]) > 1 / 25) a--;
+        while (b < N - 1 && Math.abs(this.k[b + 1]) > 1 / 25) b++;
+        return [a * ds - this.startS, b * ds - this.startS, def.hairpinBank];
+      });
+      if (bankL) {
         const bk = this.bank = new Float32Array(N), bs = this.bankSide = new Int8Array(N);
-        for (const [a, b, sl] of def.bank) {
+        for (const [a, b, sl] of bankL) {
           let km = 0; for (let d = a; d <= b; d += ds) km += this.k[this.idx(this.startS + d)];
           const side = km > 0 ? 1 : -1;   // the inside of the bend
           for (let d = a - 22; d <= b + 22; d += ds / 2) { const i = this.idx(this.startS + d), f = Math.min(sstep(a - 22, a + 6, d), sstep(b + 22, b - 6, d)); if (sl * f > bk[i]) { bk[i] = sl * f; bs[i] = side; } }
@@ -166,6 +175,38 @@ const Core = (function () {
       // puddles a surface (6)
       this.puddles = []; this.pudAt = null; this.inRain = false;
       if (def.rain && open) this._buildPuddles(def.rain);
+      // a paved gutter of stone setts along the edge (def.gutter = [[side, from, to], ...], metres after the start line; the Stelvio's, where
+      // the slope rises behind the verge): its 0.8 m beside the asphalt are setts (surface 7), bumpy, a little less grip
+      this.gut = null;
+      if (def.gutter) { const g = this.gut = [new Uint8Array(N), new Uint8Array(N)]; for (const [sd, a, b] of def.gutter) for (let d = a; d <= b + ds / 2; d += ds / 2) g[sd > 0 ? 1 : 0][this.idx(this.startS + d)] = 1; }
+      // an old mountain road's asphalt (def.patches = { seed, n }; open roads): repair patches and frost cracks across the road, felt as a
+      // jolt where a wheel runs onto or off one (Car: roadFeel)
+      this.patches = null; this.patAt = null;
+      if (def.patches && open) this._buildPatches(def.patches);
+    }
+
+    // the patches: [s, d (m across, + right), half length, half width, kind (0 a repair patch, 1 a frost crack right across)], none in the
+    // tunnels, on the bridges or within 40 m of the start, the checkpoints and the finish; more of them higher up (the frost); patAt: per
+    // sample, the first patch reaching it (-1: none), the patches overlap nowhere
+    _buildPatches(o) {
+      const N = this.N, ds = this.ds, w = this.w, R = rng(o.seed || 77), P = this.patches = [], def = this.def, s0 = this.startS + 40, s1 = this.finishS - 40;
+      const away = (s, m) => { const d = s - this.startS; return ![...(def.tunnels || []), ...(def.bridges || [])].some(([a, b]) => d > a - m && d < b + m) && this.cpS.every(c => Math.abs(c - s) > 40); };
+      const alt = (s) => this.hasElev ? (this.hy[this.idx(s)] - this.hStart) / Math.max(1, this.hFinish - this.hStart) : 0;
+      for (let t = 0; t < 4000 && P.length < (o.n || 120); t++) {
+        const s = lerp(s0, s1, R()), crack = R() < 0.35;
+        if (R() > 0.35 + 0.65 * alt(s) || !away(s, 25)) continue;
+        const hl = crack ? 0.18 : 0.7 + R() * 1.5, hw = crack ? w - 0.2 : 0.9 + R() * 1.3, c = crack ? 0 : (R() - 0.5) * 2 * (w - 0.4 - hw);
+        if (P.some(p => Math.abs(p[0] - s) < p[2] + hl + 4)) continue;
+        P.push([s, c, hl, hw, crack ? 1 : 0]);
+      }
+      P.sort((a, b) => a[0] - b[0]);
+      const at = this.patAt = new Int16Array(N).fill(-1);
+      P.forEach((p, k) => { for (let s = p[0] - p[2] - ds; s <= p[0] + p[2] + ds; s += ds / 2) { const i = Math.floor(s / ds); if (i >= 0 && i < N && at[i] < 0) at[i] = k; } });
+    }
+    // the patch under a query result (its index), or -1
+    patchAt(q) {
+      const k = this.patAt ? this.patAt[q.a] : -1; if (k < 0) return -1;
+      const p = this.patches[k]; return Math.abs(q.s - p[0]) <= p[2] && Math.abs(q.d - p[1]) <= p[3] ? k : -1;
     }
 
     // the puddles: in the dips of the profile first (the water runs down into them), then spread along the rest of the run, some on the
@@ -189,7 +230,7 @@ const Core = (function () {
     // banked corners: the road surface's height offset at lateral offset d (m, + right) and its lateral slope there (dy/dd, 0 off the road)
     bankAt(s, d, out) {
       out.dy = 0; out.sl = 0; if (!this.bank) return out;
-      const N = this.N, f = s / this.ds, fi = Math.floor(f), i0 = ((fi % N) + N) % N, i1 = (i0 + 1) % N, t = f - fi;
+      const N = this.N, f = s / this.ds, fi = Math.floor(f), i0 = this.open ? clamp(fi, 0, N - 1) : ((fi % N) + N) % N, i1 = this.open ? Math.min(i0 + 1, N - 1) : (i0 + 1) % N, t = f - fi;
       const b = this.bank[i0] * (1 - t) + this.bank[i1] * t; if (!(b > 0)) return out;
       const side = this.bankSide[i0] || this.bankSide[i1], u = d * side;   // metres towards the inside of the bend
       out.dy = -b * clamp(u, -this.w, this.w + 6); out.sl = u > -this.w && u < this.w + 6 ? -b * side : 0;   // (the bowl runs on 6 m past the inner edge; the outer verge stays at the edge's height)
@@ -604,7 +645,8 @@ const Core = (function () {
     }
 
     // surface at a query result: 0 asphalt, 1 curb, 2 grass, 3 gravel (def.runoffTarmac: the wide run-off areas are asphalt, 4 as paving;
-    // def.gravelStrips: gravel just past the kerb), 5 makadam; 6 a puddle on it (in the rain, inRain: def.rain's puddles)
+    // def.gravelStrips: gravel just past the kerb), 5 makadam; 6 a puddle on it (in the rain, inRain: def.rain's puddles); 7 the setts of a
+    // gutter (def.gutter), 8 a gravel verge (def.offSurface 'verge': the Stelvio's, as gravel, rough under the wheels)
     surface(q) {
       const d = q.d, ad = Math.abs(d), w = this.w;
       if (ad <= w) {
@@ -616,8 +658,9 @@ const Core = (function () {
       const i = q.a;
       if (this.curb[i] && ad <= w + this.curbW) return 1;
       if (this.gstrip) { const g = this.gstrip[d > 0 ? 1 : 0][i]; if (g > 0 && ad <= w + this.curbW + g) return 3; }
-      const grav = d > 0 ? this.gravR[i] : this.gravL[i];
-      return grav ? (this.def.runoffTarmac ? 4 : 3) : this.def.offSurface === 'paving' ? 4 : this.def.offSurface === 'gravel' ? 3 : 2;
+      if (this.gut && ad <= w + GUT_W && this.gut[d > 0 ? 1 : 0][i]) return 7;
+      const grav = d > 0 ? this.gravR[i] : this.gravL[i], off = this.def.offSurface;
+      return grav ? (this.def.runoffTarmac ? 4 : 3) : off === 'paving' ? 4 : off === 'gravel' ? 3 : off === 'verge' ? 8 : 2;
     }
   }
 
@@ -694,8 +737,11 @@ const Core = (function () {
     { mu: 0.86, c0: 0.35, c1: 0.03 },   // paving (street circuits)
     { mu: 0.82, c0: 0.6, c1: 0.05 },    // makadam (dirt rally road): decent accel/brake but lively, slidey
     { mu: 0.7, c0: 2.6, c1: 0.12 },     // a puddle on the makadam (in the rain, on top of WET): the water drags at the wheel
+    { mu: 0.86, c0: 0.45, c1: 0.03 },   // the setts of a gutter: hard, but bumpy and smooth-worn
+    { mu: 0.55, c0: 2.4, c1: 0.16 },    // a gravel verge (= gravel: cutting a corner over it costs time)
   ];
-  const LOOSE = [0, 0, 1, 1, 0, 1];     // grass, gravel, makadam: where a car on slicks (model.loose) has only that share of its grip
+  const LOOSE = [0, 0, 1, 1, 0, 1, 0, 0, 1];   // grass, gravel, makadam, a verge: where a car on slicks (model.loose) has only that share of its grip
+  const GUT_W = 0.8;   // a gutter's width (m)
   // rain: the grip left on a wet track (x every surface's mu: cornering and traction; the brakes keep 0.55 + 0.45 x of theirs).
   // Less grip also means bigger, lazier slides in both slide models (as on the loose surfaces)
   const WET = 0.8;
@@ -799,6 +845,8 @@ const Core = (function () {
     { lat: 0.88, tr: 0.86, c0: 0.35, c1: 0.03 },    // paving (= SURF)
     { lat: 0.8, tr: 0.82, c0: 0.6, c1: 0.05 },      // makadam: side grip 0.8, tau_v +16 % (C11); drive and drag = SURF (gora's pace unchanged)
     { lat: 0.7, tr: 0.72, c0: 2.6, c1: 0.12 },      // a puddle (in the rain, on top of WET): the water drags at the wheel (one side in it: a tug towards it)
+    { lat: 0.86, tr: 0.9, c0: 0.45, c1: 0.03 },     // the setts of a gutter (= SURF)
+    { lat: 0.58, tr: 0.85, c0: 1.0, c1: 0.05 },     // a gravel verge (= gravel)
   ];
   // cs per model (drive-type layer, targets §5.4): bx brake excess at full brake + full demand, coast / thr steady attitude
   // change at full demand, liftP / pwr FR/MR rotation, out = unwind factor, turn = turn-in speed factor, w = path-rate cap factor
@@ -824,6 +872,18 @@ const Core = (function () {
   const DRS_DRAG = 0.8;   // the air drag with the rear wing's flap open (Car.drs, set by Race._drs)
   const JUMP_G = 14; // vertical gravity for jumps on hilly tracks (arcade-snappy, a bit above real g)
   const _bk = { dy: 0, sl: 0 };   // (Track.bankAt output)
+  // an old road under the wheels (Track.patches): a wheel running onto or off a patch, or over a frost crack, jolts the car. Returns the kick of
+  // the nose (+ right: the right-hand wheels hit, that side held back) for a hit on one side only, felt in the steering; and keeps the jolt for
+  // the view and the game in c.rgh (j: the last one's size, ev: a counter). (An object: the golden digests hash only the plain fields)
+  function roadFeel(c, trk, spd) {
+    const R = c.rgh || (c.rgh = { m: 0, ev: 0, j: 0 });
+    let m = 0; for (let k = 0; k < 4; k++) if (trk.patchAt(c.wq[k]) >= 0) m |= 1 << k;
+    const ch = m ^ R.m; R.m = m;
+    if (!ch || spd < 4 || c.air) return 0;
+    const L = (ch & 1 ? 1 : 0) + (ch & 4 ? 1 : 0), Rt = (ch & 2 ? 1 : 0) + (ch & 8 ? 1 : 0), f = clamp(spd / 25, 0.3, 1.3);
+    R.ev++; R.j = f * (L + Rt) / 2;
+    return (Rt - L) * f;
+  }
   const MU_BASE = 1.32;
   const STEER_VREF = 21;
   const DRIFT_GRIP = 0.42; // extra lateral 'momentum follows the nose' accel (g) at full drift
@@ -944,6 +1004,7 @@ const Core = (function () {
         dragC0 += SURF[sf].c0 * 0.25; dragC1 += SURF[sf].c1 * 0.25;
       }
       this.onCurb = curb;
+      const rk = trk.patches ? roadFeel(this, trk, spd) : 0;   // (an old road: a jolt)
       const muSurf = muSum / 4 * this.wet;   // (rain: less grip)
       const fwd = vl > 0.5;
       const beta = spd > 1.5 && fwd ? Math.atan2(vt, vl) : 0;
@@ -973,6 +1034,7 @@ const Core = (function () {
       }
       if (!grounded) wT = this.w; // no steering authority while airborne
       this.w += (wT - this.w) * Math.min(1, dt * 12);
+      if (rk) this.w += rk * 0.12;   // a patch under the wheels of one side: a twitch of the nose
       this.drift = sstep(0.1, 0.45, ab);
       // on a slope (gradeForce), a brake press that catches the car rolling backwards only stops it: reverse needs a fresh press
       if (trk.def.gradeForce) { if (this.inBrk <= 0.1) this.revNo = false; else if (vl < -0.3 && this.gear !== -1) this.revNo = true; }
@@ -1115,6 +1177,7 @@ const Core = (function () {
         if (k & 1) dragP += dk; else dragN += dk;
       }
       this.onCurb = curb;
+      if (trk.patches) { const rk = roadFeel(this, trk, spd); if (rk) this.csKc = clamp(this.csKc + rk * 0.012, -K.tapMax, K.tapMax); }   // an old road: a patch under one side's wheels twitches the nose
       const wg = this.wet, muSurf = muSum / 4 * wg, muLat = (latF + latB) * 0.5 * wg;   // (rain: less grip)
       const muDrv = M.drive === 'FF' ? muF * wg : M.drive === 'AWD' ? muSurf : muR * wg;   // one rear wheel on the grass costs a RWD car traction
       const fwd = vl > 0.5;
@@ -2048,6 +2111,9 @@ const Core = (function () {
       // winter (opts.winter): cold tarmac grips a little less (x0.94), a gravel road packed with snow much less (x0.74): on every car's grip and the AI's profile
       this.cold = { gk: opts.winter ? (track.def.roadSurface === 'makadam' ? 0.74 : 0.94) : 1 };   // (in an object: the golden references digest only the plain fields)
       this.rain = 0; this._wet(opts.rain);
+      // the rain only above a height (opts.rainAlt = [y0, y1], road heights; a high mountain road's changing weather, the Stelvio's): every car's
+      // grip by the road under it, dry below y0, the rain's from y1 up (see step). The AI's profile stays the rain's all the way
+      this.ralt = opts.rainAlt && track.hasElev ? { y0: +opts.rainAlt[0], y1: Math.max(+opts.rainAlt[0] + 1, +opts.rainAlt[1]) } : null;   // (in an object: not digested)
       // tyres and a changing weather (opts.tyres; opts.weather = { at, dur, to }: the rain goes from opts.rain to `to` over dur s from race time
       // at). The water on the road follows the rain (wet in about a minute, dry in about four, the racing line twice as fast); a car's grip
       // follows its tyres (c.ty = { k: 'dry' | 'wet', wear }), the water where it drives (on the line or off it) and the wear (see _weather).
@@ -2219,6 +2285,7 @@ const Core = (function () {
     step(dt) {
       const T = this.track, cars = this.cars;
       if (this.wst && this.wst.on) this._weather(dt);
+      if (this.ralt && this.rain > 0) { const A = this.ralt; for (const c of cars) if (!c.net) c.wet = (1 - (1 - WET) * this.rain * sstep(A.y0, A.y1, c.roadY || 0)) * this.cold.gk; }
       T.inRain = (this.wst && this.wst.on ? this.wst.water : this.rain) > 0;   // (the puddles; the track is shared with the title screen's race: the weather of the race being stepped)
       if (this.state === 'racing' || this.state === 'done') this.time += dt;
       for (const c of cars) if (!(c.q.i >= 0)) c.q = T.query(c.x, c.z, -1, c.q);   // a car placed without a track lookup finds itself first

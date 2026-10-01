@@ -1400,7 +1400,7 @@
   }
  },
  "stelvio/race/cs": {
-  "digest": "ea1a44eed4da8a72c0b3f196",
+  "digest": "24fc0cbab5a22d9c7c1ff731",
   "lead": 2665.1,
   "car0": [
    -2159.56,
@@ -1414,7 +1414,7 @@
   }
  },
  "stelvio/race/arcade": {
-  "digest": "839e1d112f47c12ffe165ed5",
+  "digest": "e6ebb07d108dcc7fd09dd4b3",
   "lead": 2586.6,
   "car0": [
    -2124.65,
@@ -1428,7 +1428,7 @@
   }
  },
  "stelvio/demo/cs": {
-  "digest": "c7537f26dafaa20d4923f9f7",
+  "digest": "b496d1be8a4516fab3561adc",
   "lead": 2663,
   "car0": [
    -2158.57,
@@ -1442,11 +1442,11 @@
   }
  },
  "stelvio/demo/arcade": {
-  "digest": "f6ce6db8956db6f72d4cf4c9",
+  "digest": "13386db09bc595e833cd7b49",
   "lead": 2640.1,
   "car0": [
-   -2149.92,
-   1383.01
+   -2149.91,
+   1382.99
   ],
   "cover": {
    "dmg": 0,
@@ -1456,7 +1456,7 @@
   }
  },
  "stelvio/upg/cs": {
-  "digest": "f796ee9d1173c17ecf49c6e6",
+  "digest": "21835c09c9a8695ac93d8812",
   "lead": 2729.5,
   "car0": [
    -2178.5,
@@ -1470,10 +1470,10 @@
   }
  },
  "stelvio/upg/arcade": {
-  "digest": "34791023742ff86c165725c9",
+  "digest": "bcf162575794e0ea67ac24c8",
   "lead": 2650.2,
   "car0": [
-   -2154.22,
+   -2154.23,
    1392.77
   ],
   "cover": {
@@ -1484,7 +1484,7 @@
   }
  },
  "stelvio/crash/cs": {
-  "digest": "4dea646f9ce9ec4a3f81b0b1",
+  "digest": "fef59411ca23df2864ab953f",
   "lead": 2583.3,
   "car0": [
    -2121.79,
@@ -1498,7 +1498,7 @@
   }
  },
  "stelvio/crash/arcade": {
-  "digest": "b3df1a1e750d7feebd8d83d0",
+  "digest": "cb4132718a176f7bcd62f338",
   "lead": 2502.9,
   "car0": [
    -2068.59,
@@ -1512,7 +1512,7 @@
   }
  },
  "stelvio/formula/cs": {
-  "digest": "7e14a51f11a514278ee930cb",
+  "digest": "94d3d82b2cb2dec9e57b9802",
   "lead": 3008.2,
   "car0": [
    -2283.25,
@@ -1526,11 +1526,11 @@
   }
  },
  "stelvio/formula/arcade": {
-  "digest": "e9d0e491122fc9614491840f",
-  "lead": 2836.4,
+  "digest": "1d8eca27c933a03bf319fa42",
+  "lead": 2836.9,
   "car0": [
-   -2230.44,
-   1556.89
+   -2230.66,
+   1557.32
   ],
   "cover": {
    "dmg": 0.38,

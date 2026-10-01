@@ -50,7 +50,7 @@ Passo dello Stelvio (Stilfser Joch) na Južnem Tirolskem v Italiji: vzpon proti 
 - nad gozdno mejo (~2130 m) slavna stena serpentin čez travnata pobočja, melišča in skale,
 - Tibet Hütte na skali nad zadnjimi serpentinami in cilj na prelazu med hoteli, trgovinami in parkirišči, polnimi avtomobilov in motorjev.
 
-Na poti je pet kontrolnih točk (Gomagoi, Trafoi, Weißer Knott, Franzenshöhe, serpentina 10) z vmesnimi časi, pod uro pa je nadmorska višina. Rekordi, lestvica najboljših 10 časov, duh najboljše vožnje in medalje (zlata, srebrna, bronasta za vsako fiziko ter za suho in dež) so kot na Ouninpohji. Ob štartu in ob znanih krajih govori komentator (v angleščini).
+Na poti je pet kontrolnih točk (Gomagoi, Trafoi, Weißer Knott, Franzenshöhe, serpentina 10) z vmesnimi časi, pod uro pa je nadmorska višina. Pred vsako serpentino se pod uro izpiše njena številka in katera po vrsti je (npr. »SERPENTINA 37 · 12/48«, pri zadnji »SERPENTINA 1 · ZADNJA«). Pod zemljevidom je profil vzpona: višinski profil ceste od starta do prelaza z že prevoženim delom, kontrolnimi točkami in serpentinami, trenutni naklon v odstotkih (bel do 4 %, rumen, oranžen, nad 10 % rdeč), število že prevoženih serpentin in razdalja do vrha. Rekordi, lestvica najboljših 10 časov, duh najboljše vožnje in medalje (zlata, srebrna, bronasta za vsako fiziko ter za suho in dež) so kot na Ouninpohji. Ob štartu in ob znanih krajih govori komentator (v angleščini).
 
 Cesta in okolica so narejeni iz pravih podatkov:
 
@@ -62,6 +62,11 @@ Cesta in okolica so narejeni iz pravih podatkov:
 - **Dan dirke**: na serpentinah stojijo in sedijo navijači, največ nad gozdno mejo, mnogi v rožnati barvi Gira in z zastavami; ob zgornji cesti so avtodomi in šotori, kolesarji, ki so se pripeljali gledat, s kolesi ob sebi, in motoristi. Na prelazu je cilj pod rožnatim napihljivim lokom (ARRIVO), zadnjih 150 m so ob cesti ograje s pasicami GIRO D'ITALIA in gneča za njimi, ob cesti stojnice s klobasami in pivom ter s spominki (mize s klopmi in senčniki), spomenik Faustu Coppiju, zastave (Italija, Švica, Južna Tirolska, EU, Giro, Lombardija), ki plapolajo v vetru, in vrste parkiranih motorjev.
 - **Večer in noč** (čas dneva na zaslonu Izberi progo): okna v hišah in hotelih so (približno polovica) osvetljena, okno kapelice in sveča pod razpelom tudi, ulične svetilke v vaseh mečejo na cesto toplo svetlobo, odsevniki ob cesti se zasvetijo v žarometih, oblaki so ponoči temni.
 - **Predora**: kratek pred Stilfser Brücke in 350 m dolg pod Trafoiem, oba z odmevom in lučmi. Iz kokpita je v predoru temen betonski strop (od zgoraj pa streha predora postane prosojna, ko je avto v njem).
+- **Vozna površina**: ob asfaltu je makadamska bankina, kjer ima avto manj oprijema in ga zavira (rezanje ovinkov se ne splača), ob strani pobočja pa 0,8 m širok jarek iz kamnitih kock, ki je malo bolj spolzek. Na obeh avto trese (karoserija, kamera, brnenje kock in hrustanje gramoza; na telefonu tudi kratki tresljaji). Vsaka serpentina je v ovinku rahlo nagnjena navznoter (do 6 %), kar avto čuti in kar je vidno na cesti in zidovih ob njej. Na starem asfaltu so krpe in s katranom zalite zmrzalne razpoke (višje jih je več): ko kolo zapelje nanje, avto sune (kamera, zvok, rahel trzaj avta, na telefonu tresljaj).
+- **Vreme po višini**: nekatere dni nad zgornjimi serpentinami visi plast oblakov (včasih je ni, včasih je gosta); ko avto zapelje vanjo, se vidljivost zmanjša in vse postane sivo. Pri vremenu **Menljivo** spodaj ne dežuje, dež se začne šele nad naključno višino med 1800 in 2300 m (napisano je ob startu, npr. »DEŽ NAD 2.217 m«); od tam naprej je cesta mokra in oprijem manjši, ko avto pripelje v dež, se izpiše DEŽ. Taka vožnja se šteje med vožnje v dežju (rekordi, duh in medalje za dež).
+- **Snežni zidovi**: v zgodnjem poletju (polovica poletnih dirk) in pozimi ob cesti nad ~2420 m stojijo snežni zidovi, ki jih ob odprtju prelaza izrežejo snežne freze, proti vrhu visoki do 4,5 m (nad prepadi nižji), s plastmi zime v steni in umazanim vznožjem; kjer navijači stojijo ob cesti, so zidovi za njimi. Ob njih je cesta mokra od taljenja, ponekod jo prečka curek vode, nad serpentinami pa visi hladna megla.
+- **Zvoki gora**: motor odmeva od skalnih brežin in opornih zidov ob cesti ter v serpentinah, ob čredah zvonijo kravji in ovčji zvonci, svizci zažvižgajo, ko pripelješ mimo, navijači ob cesti zavpijejo in zatrobijo, na prelazu piha sunkovit veter (v dežju močnejši).
+- **Posnetek**: v posnetku vožnje TV kamera nad stenami serpentin (serpentine 14–11, 8–5 in 4–1) preklopi na posnetek iz helikopterja visoko nad dolino, kot na Giru: vidi se cik-cak ceste in avto na njem.
 
 ## Nürburgring Nordschleife
 
@@ -174,7 +179,7 @@ Vreme **Menljivo** (zaslon Izberi progo) pomeni, da se vreme med dirko na krožn
 
 - Ko začne deževati, je proga v približno minuti mokra. Ko dež poneha, se proga suši približno štiri minute. **Idealna linija se posuši prva**, približno dvakrat hitreje, in na cesti se pokaže svetlejši pas suhega asfalta. Na njej je oprijem boljši kot drugje na cesti.
 - Na progah z boksi je menjava gum ob pravem času taktika: prezgodnji postanek na dežne gume ali prepozen na suhe stane čas. Igra pove, ko je idealna linija suha.
-- Na kronometrih (Pikes Peak, Ouninpohja, Stelvio) Menljivo pomeni isto kot Naključno. V dirki s prijateljem se vreme med dirko ne spreminja.
+- Na kronometrih Pikes Peak in Ouninpohja Menljivo pomeni isto kot Naključno, na Stelviu pa dežuje šele nad določeno višino (glej Stelvio). V dirki s prijateljem se vreme med dirko ne spreminja.
 
 ## Zastave in varnostni avto
 

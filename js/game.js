@@ -129,7 +129,7 @@
   let msgT = 0, splitT = 0, lastLapCount = 0, lastBeepLight = 0;
   let cpSeen = 0, ttRes = null, boardId = null;   // time trial: checkpoint events shown, the finished run's result, Lestvica tab
   let cornerSeen = -1, cornerShow = false;   // tracks with named places: the last name shown under the clock (lap * 1000 + index), and whether it is still up
-  let fbT = 0, prevGear = 1, prevAir = 0;
+  let fbT = 0, prevGear = 1, prevAir = 0, rgSeen = -1, rgT = 0, altRain = -1;   // (rgSeen, rgT: an old road's jolts, the patter of the setts and the verge; altRain: the rain only up the mountain, 0 not reached yet, 1 said)
   let tiltWarned = false;
   let orientBlock = false;
   // adaptive quality (see adaptive()): pending = shadows go off at the next pause or race start; slowAvg = frame time that decided it;
@@ -258,6 +258,20 @@
     if (S.weather !== 'change' || isTT(d)) return { rain: rainOf(), wx: null };
     const wet = Math.random() < 0.5, est = track.len * (d.laps || LAPS) / 38;
     return { rain: wet ? 1 : 0, wx: { at: +(est * (0.2 + Math.random() * 0.3)).toFixed(1), dur: wet ? 25 : Math.round(30 + Math.random() * 30), to: wet ? 0 : 1 } };
+  }
+  // a high mountain road (def.altWeather: the Stelvio): the weather by the height (Race opts alpine, drawn by Render and World; rainAlt, the grip).
+  // A layer of cloud over the upper hairpins (some days none, some thick: inside it the visibility drops); with the changing weather (Menljivo)
+  // the rain only above a height somewhere between 1800 and 2300 m, dry in the valley and wet towards the pass; in the rain the cloud down low.
+  // Snow walls along the last kilometres in early summer (half the summer days) and in winter, a cold mist with them. Heights as road heights
+  function alpineOf(d, W) {
+    if (!d.altWeather || !d.alt) return null;
+    const yOf = (alt) => track.hStart + (alt - d.alt[0]) / (d.alt[1] - d.alt[0]) * (track.hFinish - track.hStart);
+    const A = { mist: 0, mistY: 0, rainY: null, rainAlt: 0, snow: S.season === 'winter' || (S.season === 'summer' && Math.random() < 0.5) };
+    if (S.weather === 'change') { const a = Math.round(1800 + Math.random() * 500); W.rain = 1; A.rainAlt = a; A.rainY = [yOf(a - 40), yOf(a + 60)]; A.mist = 0.85 + Math.random() * 0.15; A.mistY = yOf(a + 30); }
+    else if (W.rain) { A.mist = 1; A.mistY = yOf(1600 + Math.random() * 400); }
+    else { const r = Math.random(); A.mist = r < 0.45 ? 0 : r < 0.8 ? 0.35 + Math.random() * 0.35 : 0.8 + Math.random() * 0.2; A.mistY = yOf(2150 + Math.random() * 350); }
+    if (A.snow && A.mist < 0.3) { A.mist = 0.3 + Math.random() * 0.3; A.mistY = yOf(2350 + Math.random() * 200); }   // (with the snow, a cold mist in the hairpins under the pass)
+    return A;
   }
   const demoRain = () => S.weather === 'rain' ? 1 : 0;
   function applyPhys(r) { if (r) r.setPhys(physOf()); }
@@ -796,6 +810,7 @@
     if (!quali && !Q) qual = null;
     if (quali) { qual.lapShown = false; qual.wait = false; }
     const W = quali || Q ? { rain: qual.rain, wx: qual.wx } : weatherOf(track.def);   // (qualifying: the weather at the start of the race to come, no change during the lap)
+    const AW = on || quali || Q ? null : alpineOf(track.def, W);   // (a high mountain road: the weather by the height)
     const mine = { playerModel: M, playerUpg: Object.assign({}, upgOf(M.id)), playerSetup: Object.assign({}, setupOf(track.def.id)), playerColor: PLAYER_COLORS[S.color], playerNum: carNum(), seed: quali || Q ? qual.seed : (Math.random() * 1e6) | 0, difficulty: cr >= 0 ? champ.diff : S.difficulty, assist: S.assist };
     if (on) {   // online: the host on the first grid slot, the friend on the second; the host's physics and damage for both
       const host = mp.role === 'host', left = on.first === mp.role, F = mp.peer || { name: 'Prijatelj', car: M.id, color: 0, num: 2 }, same = F.num === carNum();
@@ -803,7 +818,8 @@
         remote: { model: modelById(F.car), color: PLAYER_COLORS[F.color] || PLAYER_COLORS[0], num: same && host ? F.num + 1 : F.num, name: F.name, grid: left ? 2 : 1 } }));
     } else race = new Core.Race(track, Object.assign(mine, {   // time trial: alone on the start line, one run to the finish; qualifying: alone, one flying lap
       numAI: tt || quali ? 0 : nAI, playerGrid: tt || quali ? 1 : Q ? Q.res.grid : PLAYER_GRID, aiOrder: Q ? Q.res.order : undefined, qualiBack: quali ? qual.back : 0,
-      laps: tt || quali ? 1 : track.def.laps || LAPS, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali ? null : W.wx, tyres: !tt && !!track.def.pit, flags: !tt && !quali, winter: S.season === 'winter', champ: cr >= 0
+      laps: tt || quali ? 1 : track.def.laps || LAPS, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali ? null : W.wx, tyres: !tt && !!track.def.pit, flags: !tt && !quali, winter: S.season === 'winter', champ: cr >= 0,
+      alpine: AW, rainAlt: AW && AW.rainY
     }));
     race.champ = cr >= 0 ? { round: cr, n: cd.tracks.length, done: false } : null;
     race.quali = quali;
@@ -823,12 +839,13 @@
     $('hud').classList.toggle('tt', race.timeTrial); $('pause-restart').textContent = race.timeTrial ? 'Ponovi ' + ttRun(track.def) : quali ? 'Ponovi krog' : 'Ponovi dirko';
     $('pause-skip').classList.toggle('off', !quali);
     $('pause-restart').classList.toggle('off', !!on);   // (online: no restart for one)
-    cpSeen = race.player.cpEv; ttRes = null; cornerSeen = -1; cornerShow = false; placeInit(); codrvInit(); ghStart(); secReset(); recStart(); replay = null; $('replay-ui').classList.add('off'); $('h-ttsp').className = '';
+    cpSeen = race.player.cpEv; ttRes = null; cornerSeen = -1; cornerShow = false; placeInit(); profInit(); codrvInit(); ghStart(); secReset(); recStart(); replay = null; $('replay-ui').classList.add('off'); $('h-ttsp').className = '';
     Input.reset();
     showScreen('none');
     Sfx.resume(); Sfx.setRunning(true);
     Comm.stop(); commReset();
-    const wetTxt = race.rain ? ' · DEŽ' : '';
+    const wetTxt = race.rain ? (AW && AW.rainY ? ' · DEŽ NAD ' + numDot(AW.rainAlt) + ' m' : ' · DEŽ') : '';
+    altRain = AW && AW.rainY ? 0 : -1;   // (the rain up the mountain: said when the car gets there)
     if (race.timeTrial) { Comm.say(ttLine(track.def, 'intro'), { track: EN_NAME[track.def.id] || track.def.name, cps: track.cpS.length }, 2); showMsg((isRally(track.def) ? 'POLNI PLIN!' : 'VZPON NA VRH!') + wetTxt, 'gold', race.rain ? 1.8 : 1.2); }
     else if (quali) { Comm.say('qualiIntro', { track: EN_NAME[track.def.id] || track.def.name }, 2); showMsg((race.champ ? 'DIRKA ' + (race.champ.round + 1) + '/' + race.champ.n + ' · ' : '') + 'KVALIFIKACIJE' + wetTxt, 'gold', 1.8); }
     else {
@@ -836,7 +853,7 @@
       else Comm.say(race.laps === 1 ? 'introOne' : 'intro', { track: EN_NAME[track.def.id] || track.def.name, laps: race.laps, grid: Comm.ordinal(race.player.grid) }, 2);
       showMsg((race.champ ? 'DIRKA ' + (race.champ.round + 1) + '/' + race.champ.n + ' · ' : '') + lapWord(race.laps) + wetTxt, 'gold', race.rain || race.champ ? 1.8 : 1.2);
     }
-    if (race.rain) Comm.say(track.def.id === 'spa' ? 'rainSpa' : 'rain', null, 2, { ttl: 12000 });   // (after the welcome)
+    if (race.rain && altRain < 0) Comm.say(track.def.id === 'spa' ? 'rainSpa' : 'rain', null, 2, { ttl: 12000 });   // (after the welcome)
   }
   function setLights(n, go) {
     const ls = $('h-lights').children;
@@ -1120,11 +1137,17 @@
       if (hard > 5) vibrate(Math.min(60, 15 + hard * 4));
     }
     prevAir = P.air;
+    // an old road (Core's roadFeel, the Stelvio's): a short buzz for a hard jolt; the setts of a gutter or a gravel verge, a light patter
+    const RG = P.rgh;
+    if (RG && RG.ev !== rgSeen) { if (rgSeen >= 0 && RG.j > 0.5 && !P.air) vibrate(Math.round(8 + RG.j * 10)); rgSeen = RG.ev; }
+    let rough = 0; if (!P.air && P.speed > 6) for (let k = 0; k < 4; k++) if (P.ws[k] === 7 || P.ws[k] === 8) rough++;
+    if (rough) { rgT -= dt; if (rgT <= 0) { rgT = 0.11; vibrate(rough >= 2 ? 9 : 6); } } else rgT = 0;
     // a jump: from the take-off to the landing (jumpLanded: the length on the HUD; the famous jump of def.jumpRec against its record)
     if (P.air && !jmp.air) { jmp.air = true; jmp.x = P.x; jmp.z = P.z; jmp.s = P.q.s; }
     else if (!P.air && jmp.air) { jmp.air = false; if (phase === 'racing' && !P.finished) jumpLanded(Math.hypot(P.x - jmp.x, P.z - jmp.z), jmp.s); }
     if (P.pitEv) { const e = P.pitEv; P.pitEv = null; pitEvent(e); }
     if (race.wst && race.wst.ev !== wxSeen) { wxSeen = race.wst.ev; wxEvent(race.wst.evK, P); }
+    if (altRain === 0 && race.ralt && P.roadY > race.ralt.y0 && phase === 'racing' && !P.finished) { altRain = 1; showMsg('DEŽ', 'gold', 2.2); Comm.say('rainStart', null, 2); }   // (into the rain up the mountain)
     if (race.fl) { const F = race.fl; if (F.ev !== flSeen) { flSeen = F.ev; flagEvent(F.evK, P); } if (F.pev !== flPSeen) { flPSeen = F.pev; flagPlayer(F.pevK); } }
     if (race.wst && race.wst.tyres && P.ty && !dryHint && P.ty.k === 'wet' && race.wst.wx && race.wst.line < 0.12 && race.rain === 0 && phase === 'racing' && !P.finished) {   // (the line is dry: time for slicks)
       dryHint = true; toast('Idealna linija je suha: dežne gume se na suhem hitro obrabijo. Zapelji v bokse po suhe gume.', 4600); Comm.say('dryLine', null, 2); }
@@ -1247,16 +1270,31 @@
     g.moveTo(sx - track.nx[si] * 5 * dpr, sy - track.nz[si] * 5 * dpr); g.lineTo(sx + track.nx[si] * 5 * dpr, sy + track.nz[si] * 5 * dpr); g.stroke();
     mm.img = img;
   }
-  // open road (hill climb, ~4 km tall): the whole course at a fixed ~3.2 m/px, drawn scrolled so the player stays centred (north up)
+  // open road (hill climb, ~4 km tall): the course at a fixed ~3.2 m/px, drawn scrolled so the player stays centred (north up). The road is
+  // drawn into a window three views wide round the player (mm.img), drawn again when the player nears its edge: the whole course at this
+  // scale would be an image of up to 40 MP (the Stelvio's 10 x 10 km at 2x), more than a phone allows a canvas (~16.7 MP)
   const MM_MPP = 3.2;
   function buildMinimapOpen(dpr) {
     let minX = 1e9, maxX = -1e9, minZ = 1e9, maxZ = -1e9;
     for (let i = 0; i < track.N; i++) { minX = Math.min(minX, track.px[i]); maxX = Math.max(maxX, track.px[i]); minZ = Math.min(minZ, track.pz[i]); maxZ = Math.max(maxZ, track.pz[i]); }
     const sc = dpr / MM_MPP, pad = 12 * dpr;
     mm.sc = sc; mm.ox = pad - minX * sc; mm.oz = pad - minZ * sc;
-    const img = document.createElement('canvas'); img.width = Math.ceil((maxX - minX) * sc + pad * 2); img.height = Math.ceil((maxZ - minZ) * sc + pad * 2);
-    const g = img.getContext('2d'), X = (i) => track.px[i] * sc + mm.ox, Y = (i) => track.pz[i] * sc + mm.oz;
-    const path = () => { g.beginPath(); g.moveTo(X(0), Y(0)); for (let i = 1; i < track.N; i++) g.lineTo(X(i), Y(i)); };
+    const img = mm.img = document.createElement('canvas'); img.width = mm.w * 3; img.height = mm.h * 3; mm.wx = mm.wy = -1e9;   // (nothing in it yet)
+  }
+  // the points of the centre line from i0 to i1 that lie inside the box (a margin of m round it), as runs of a path
+  function mmPath(g, i0, i1, bx0, by0, bx1, by1, m) {
+    const sc = mm.sc; let pen = false;
+    for (let i = i0; i <= i1; i++) {
+      const x = track.px[i] * sc + mm.ox, y = track.pz[i] * sc + mm.oz;
+      if (x > bx0 - m && x < bx1 + m && y > by0 - m && y < by1 + m) { if (pen) g.lineTo(x, y); else { g.moveTo(x, y); pen = true; } } else pen = false;
+    }
+  }
+  function mmWindow(mx, my) {   // the window, centred on the map point mx, my
+    const img = mm.img, g = img.getContext('2d'), dpr = mm.dpr, W = img.width, H = img.height;
+    const wx = mm.wx = Math.round(mx - W / 2), wy = mm.wy = Math.round(my - H / 2);
+    g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H); g.translate(-wx, -wy);
+    const X = (i) => track.px[i] * mm.sc + mm.ox, Y = (i) => track.pz[i] * mm.sc + mm.oz;
+    const path = () => { g.beginPath(); mmPath(g, 0, track.N - 1, wx, wy, wx + W, wy + H, 20 * dpr); };
     g.lineJoin = 'round'; g.lineCap = 'round';
     path(); g.strokeStyle = 'rgba(0,0,0,.55)'; g.lineWidth = 7 * dpr; g.stroke();
     path(); g.strokeStyle = '#ffffff'; g.lineWidth = 3.4 * dpr; g.stroke();
@@ -1266,24 +1304,24 @@
     track.cpS.forEach((s, k) => { const i = track.idx(s); g.lineWidth = 3 * dpr; tick(i, '#ffc629', 7 * dpr);
       const lx = X(i) + track.nx[i] * 14 * dpr, ly = Y(i) + track.nz[i] * 14 * dpr; g.lineWidth = 3 * dpr; g.strokeStyle = 'rgba(0,0,0,.8)'; g.strokeText(String(k + 1), lx, ly); g.fillStyle = '#ffc629'; g.fillText(String(k + 1), lx, ly); });
     chequer(g, X(track.finishIdx), Y(track.finishIdx), 5 * dpr);
-    mm.img = img;
   }
   function drawMinimapOpen(g, d) {
-    const P = race.player, w = mm.w, h = mm.h, sc = mm.sc;
-    const cx = w * 0.5, cy = h * 0.56, tx = Math.round(cx - (P.x * sc + mm.ox)), ty = Math.round(cy - (P.z * sc + mm.oz));
-    g.clearRect(0, 0, w, h); g.drawImage(mm.img, tx, ty);
-    // the road already climbed, in yellow
+    const P = race.player, w = mm.w, h = mm.h, sc = mm.sc, I = mm.img;
+    const mx = P.x * sc + mm.ox, my = P.z * sc + mm.oz, cx = w * 0.5, cy = h * 0.56, tx = Math.round(cx - mx), ty = Math.round(cy - my);
+    if (Math.abs(mx - mm.wx - I.width / 2) > w * 0.9 || Math.abs(my - mm.wy - I.height / 2) > h * 0.9) mmWindow(mx, my);   // (the view stays inside the window)
+    g.clearRect(0, 0, w, h); g.drawImage(I, tx + mm.wx, ty + mm.wy);
+    // the road already climbed, in yellow (the part in view)
     const pi = Math.max(track.startIdx, track.idx(P.q ? P.q.s : track.startS));
     if (pi > track.startIdx) {
-      g.save(); g.translate(tx, ty); g.beginPath();
-      for (let i = track.startIdx; i <= pi; i++) { const x = track.px[i] * sc + mm.ox, y = track.pz[i] * sc + mm.oz; if (i === track.startIdx) g.moveTo(x, y); else g.lineTo(x, y); }
+      g.save(); g.translate(tx, ty); g.beginPath(); mmPath(g, track.startIdx, pi, -tx, -ty, w - tx, h - ty, 8 * d);
       g.lineJoin = 'round'; g.lineCap = 'round'; g.strokeStyle = '#ffc629'; g.lineWidth = 2.4 * d; g.stroke(); g.restore();
     }
     // player: arrow in the driving direction
     const ch = Math.cos(P.h), sh = Math.sin(P.h), r = 5.5 * d;
     g.fillStyle = '#ffd23f'; g.strokeStyle = '#111'; g.lineWidth = 1.5 * d; g.beginPath();
     g.moveTo(cx + ch * r * 1.3, cy + sh * r * 1.3); g.lineTo(cx - ch * r * 0.8 - sh * r * 0.8, cy - sh * r * 0.8 + ch * r * 0.8); g.lineTo(cx - ch * r * 0.8 + sh * r * 0.8, cy - sh * r * 0.8 - ch * r * 0.8); g.closePath(); g.fill(); g.stroke();
-    // course overview: a slim bar on the right edge, start at the bottom, CP ticks, the player
+    // course overview: a slim bar on the right edge, start at the bottom, CP ticks, the player (a climb with its profile panel: there instead)
+    if (pf.on) return;
     const bx = w - 6 * d, y0 = h - 7 * d, y1 = 7 * d, f = clamp((P.finished ? track.raceLen : P.dist) / track.raceLen, 0, 1);
     g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(bx - 2.5 * d, y1 - 1 * d, 5 * d, y0 - y1 + 2 * d);
     g.fillStyle = 'rgba(255,255,255,.85)'; g.fillRect(bx - 1 * d, y1, 2 * d, y0 - y1);
@@ -1310,6 +1348,79 @@
     const x = P.x * mm.sc + mm.ox, y = P.z * mm.sc + mm.oz;
     g.fillStyle = '#ffd23f'; g.strokeStyle = '#111'; g.lineWidth = 1.6 * d;
     g.beginPath(); g.arc(x, y, 4.2 * d, 0, 6.2832); g.fill(); g.stroke();
+  }
+  /* a climb with numbered hairpins (def.hairpins: the Stelvio): a panel under the map with the road's height profile from the start line to the
+     top (the part already climbed in yellow, the checkpoints, the hairpins as ticks under it, the player), the gradient here (its colour as on a
+     race profile), the hairpins done and the distance still to the top. Redrawn only when something on it changes. */
+  const pf = { on: false, cv: null, ctx: null, w: 0, h: 0, dpr: 1, img: null, key: '', g: 0, hp: [], lo: 0, hi: 1 };
+  function profInit() {   // newRace
+    const T = track, on = !!(T.open && T.def.hairpins && T.hasElev);
+    $('hud').classList.toggle('prof', on);
+    pf.on = on; pf.img = null; pf.key = ''; pf.g = 0;
+    pf.hp = on ? T.names.filter(q => HP_RE.test(q.n)).map(q => q.d) : [];
+    if (on) { let lo = 1e9, hi = -1e9; for (let i = T.startIdx; i <= T.finishIdx; i++) { lo = Math.min(lo, T.hy[i]); hi = Math.max(hi, T.hy[i]); } pf.lo = lo; pf.hi = Math.max(lo + 1, hi); }
+  }
+  const PF_FONT = '"Chakra Petch", "Segoe UI", Roboto, system-ui, sans-serif';
+  const gradeCol = (g) => g >= 10.5 ? '#ff5a3c' : g >= 7.5 ? '#ff9f2e' : g >= 4.5 ? '#ffd23f' : '#eef2f7';   // over 10 %: red, 7-10: orange, 4-7: yellow
+  function profGeom() {   // the plot inside the panel (device pixels): x by the distance from the start line, y by the height
+    const w = pf.w, h = pf.h, d = pf.dpr, top = Math.round(h * 0.34), x0 = 5 * d, x1 = w - 5 * d, y0 = top + 3 * d, y1 = h - 6 * d, T = track;
+    return { x0, x1, y0, y1, X: (dist) => x0 + (x1 - x0) * clamp(dist / T.raceLen, 0, 1), Y: (hy) => y1 - (y1 - y0) * (hy - pf.lo) / (pf.hi - pf.lo) };
+  }
+  function profPath(g, G, upto) {   // the profile line from the start line (to the distance upto)
+    const T = track, st = Math.max(1, Math.round(16 / T.ds)), iEnd = Math.min(T.finishIdx, T.idx(T.startS + upto));
+    g.moveTo(G.x0, G.Y(T.hy[T.startIdx]));
+    for (let i = T.startIdx; i < iEnd; i += st) g.lineTo(G.X(i * T.ds - T.startS), G.Y(T.hy[i]));
+    g.lineTo(G.X(iEnd * T.ds - T.startS), G.Y(T.hy[iEnd]));
+  }
+  function profBuild() {   // the background: the mountain under the line, the checkpoints, the hairpins
+    const img = pf.img = document.createElement('canvas'); img.width = pf.w; img.height = pf.h;
+    const g = img.getContext('2d'), G = profGeom(), d = pf.dpr, T = track;
+    g.beginPath(); profPath(g, G, T.raceLen); g.lineTo(G.x1, G.y1); g.lineTo(G.x0, G.y1); g.closePath();
+    const gr = g.createLinearGradient(0, G.y0, 0, G.y1); gr.addColorStop(0, 'rgba(176,196,214,.55)'); gr.addColorStop(1, 'rgba(96,116,136,.35)');
+    g.fillStyle = gr; g.fill();
+    g.beginPath(); profPath(g, G, T.raceLen); g.lineJoin = 'round'; g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 1.3 * d; g.stroke();
+    g.fillStyle = 'rgba(255,255,255,.55)';   // the hairpins: thin ticks along the foot
+    for (const hd of pf.hp) g.fillRect(Math.round(G.X(hd)) - 0.5 * d, G.y1 + 1.5 * d, 1 * d, 2.5 * d);
+    g.fillStyle = '#ffc629';   // the checkpoints
+    for (const cd of T.cpDist) { const x = G.X(cd), y = G.Y(T.hy[T.idx(T.startS + cd)]); g.fillRect(Math.round(x) - 0.75 * d, y, 1.5 * d, G.y1 - y); }
+  }
+  function drawProfile(dt, P) {
+    if (!pf.on) return;
+    if (!pf.ctx) { pf.cv = $('profile'); pf.ctx = pf.cv.getContext('2d'); }
+    const r = pf.cv.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = Math.round(r.width * dpr), h = Math.round(r.height * dpr); if (w < 40 || h < 20) return;   // (hidden)
+    if (w !== pf.w || h !== pf.h || dpr !== pf.dpr) { pf.cv.width = w; pf.cv.height = h; pf.w = w; pf.h = h; pf.dpr = dpr; pf.img = null; }
+    if (!pf.img) { profBuild(); pf.key = ''; }
+    const T = track, L = T.raceLen, dist = P.finished ? L : clamp(P.dist || 0, 0, L);
+    // the gradient over the 50 m round the car (a hairpin is flatter than the legs), eased; whole per cent
+    const i = clamp(T.idx(P.q ? P.q.s : T.startS), 0, T.N - 1), n = Math.max(1, Math.round(25 / T.ds)), i0 = Math.max(0, i - n), i1 = Math.min(T.N - 1, i + n);
+    pf.g += ((T.hy[i1] - T.hy[i0]) / ((i1 - i0) * T.ds) * 100 - pf.g) * Math.min(1, dt * 2.5);
+    const gr = P.finished ? 0 : Math.round(pf.g), hp = pf.hp.filter(hd => hd <= dist).length;
+    const left = P.finished ? 0 : Math.max(0, L - dist), km = left >= 9950 ? String(Math.round(left / 1000)) : kmTxt(left, 1);
+    const G = profGeom(), px = Math.round(G.X(dist));
+    const key = px + '|' + gr + '|' + hp + '|' + km; if (key === pf.key) return; pf.key = key;
+    const g = pf.ctx, d = dpr;
+    g.clearRect(0, 0, w, h); g.drawImage(pf.img, 0, 0);
+    // the road climbed so far
+    g.save(); g.beginPath(); g.rect(0, 0, px, h); g.clip();
+    g.beginPath(); profPath(g, G, dist); g.lineTo(px, G.y1); g.lineTo(G.x0, G.y1); g.closePath(); g.fillStyle = 'rgba(255,198,41,.38)'; g.fill();
+    g.beginPath(); profPath(g, G, dist); g.lineJoin = 'round'; g.strokeStyle = '#ffc629'; g.lineWidth = 2 * d; g.stroke();
+    g.restore();
+    const py = G.Y(T.elevAt(T.startS + dist).y);
+    g.fillStyle = '#ffd23f'; g.strokeStyle = '#111'; g.lineWidth = 1.2 * d; g.beginPath(); g.arc(px, py, 3 * d, 0, 6.2832); g.fill(); g.stroke();
+    // the numbers: the gradient (left), the hairpins done (in the open sky over the valley), the distance to the top (right)
+    const fs = Math.round(clamp(h * 0.27, 9 * d, 14 * d)), ty = Math.round(h * 0.17);
+    g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = 2.6 * d; g.strokeStyle = 'rgba(0,0,0,.75)';
+    const txt = (s, x, y, al, col, size) => { g.font = 'italic 700 ' + (size || fs) + 'px ' + PF_FONT; g.textAlign = al; g.strokeText(s, x, y); g.fillStyle = col; g.fillText(s, x, y); };
+    txt((gr > 0 ? '' : gr < 0 ? '−' : '') + Math.abs(gr) + ' %', G.x0, ty, 'left', gradeCol(gr));
+    txt(km + ' km', G.x1, ty, 'right', '#eef2f7');
+    // a hairpin sign (the road turning back on itself) and the count
+    const hs = Math.round(fs * 0.86), hx = G.x0 + 1 * d, hy0 = G.y0 + hs * 0.55, rr = hs * 0.26;
+    g.beginPath(); g.moveTo(hx + rr, hy0 + hs * 0.62); g.lineTo(hx + rr, hy0 + rr * 0.4); g.arc(hx + rr * 2, hy0 + rr * 0.4, rr, Math.PI, 0); g.lineTo(hx + rr * 3, hy0 + hs * 0.38);
+    g.lineCap = 'round'; g.strokeStyle = 'rgba(0,0,0,.75)'; g.lineWidth = 3.4 * d; g.stroke(); g.strokeStyle = '#eef2f7'; g.lineWidth = 1.5 * d; g.stroke(); g.lineCap = 'butt';
+    g.fillStyle = '#eef2f7'; g.beginPath(); g.moveTo(hx + rr * 3 - rr * 0.75, hy0 + hs * 0.32); g.lineTo(hx + rr * 3 + rr * 0.75, hy0 + hs * 0.32); g.lineTo(hx + rr * 3, hy0 + hs * 0.62); g.closePath(); g.fill();
+    g.lineWidth = 2.6 * d; g.strokeStyle = 'rgba(0,0,0,.75)';
+    txt(hp + '/' + pf.hp.length, hx + rr * 3 + 4 * d, hy0 + hs * 0.3, 'left', hp >= pf.hp.length ? '#ffc629' : '#eef2f7', Math.round(fs * 0.9));
   }
   const sp = { cv: null, ctx: null, w: 0, h: 0, dpr: 1, lastR: -1, lastG: null };
   function drawSpeedo(P) {
@@ -1422,8 +1533,15 @@
     if (key <= cornerSeen) return;   // each place once a lap, never again after reversing or a rescue behind it
     if (L[k].hud && splitT > 0.5 && !cornerShow) return;   // a lap time or CP split is up: the name waits (pending) until it clears
     cornerSeen = key;
-    if (L[k].hud) { const el = $('h-split'); el.textContent = L[k].n.toUpperCase(); el.className = 'show even'; splitT = 2.6; cornerShow = true; }   // (hud false: only said)
+    if (L[k].hud) { const el = $('h-split'); el.textContent = placeLabel(L[k]); el.className = 'show even'; splitT = 2.6; cornerShow = true; }   // (hud false: only said)
     placeSpeak(k, lapN + 1, P);
+  }
+  // a climb's numbered hairpins (def.hairpins, counted down to 1 at the top): the number, and which one of them it is ("SERPENTINA 37 · 12/48")
+  const HP_RE = /^Serpentina (\d+)$/;
+  function placeLabel(q) {
+    const H = track.def.hairpins, m = H && HP_RE.exec(q.n); if (!m) return q.n.toUpperCase();
+    const n = +m[1];
+    return 'SERPENTINA ' + n + ' · ' + (n === 1 ? 'ZADNJA' : (H.length - n + 1) + '/' + H.length);
   }
   // a place is said once a race (3+ laps: now and then once more, never on the next lap); one skipped (spacing, commentator busy)
   // or cut off by more important news gets another chance on a later lap. Said as ambient (prio 0): overtakes, splits, crashes and
@@ -1493,7 +1611,7 @@
     setText('h-speed', String(Math.round(P.speed * 3.6)));
     setText('h-gear', P.gear === -1 ? 'R' : String(P.gear));
     drawSpeedo(P);
-    drawMinimap();
+    drawMinimap(); drawProfile(dt, P);
     updateNote(P);
     // lap events (a time trial has its own checkpoint / finish popups)
     if (!race.timeTrial && !race.quali && P.lapTimes.length > lastLapCount) {
@@ -1570,7 +1688,7 @@
     else if (cev.car > 5 && cool('contact', 18)) Comm.say('contact', null, 1);
     cev.wall = 0; cev.car = 0;
     // off the road (grass, gravel, city paving)
-    let off = 0; for (let k = 0; k < 4; k++) { const sf = P.ws[k]; if (sf === 2 || sf === 3 || sf === 4) off++; }
+    let off = 0; for (let k = 0; k < 4; k++) { const sf = P.ws[k]; if (sf === 2 || sf === 3 || sf === 4 || sf === 8) off++; }   // (8: a gravel verge)
     if (off >= 3 && P.speed > 8 && !P.air) cs.offT += dt; else cs.offT = 0;
     if (cs.offT > 0.8 && cool('off', 22)) { Comm.say('offtrack', null, 1); cs.offT = 0; }
     if (P.wrongT > 1.1 && cool('wrong', 10)) Comm.say('wrong', null, 3);

@@ -5829,7 +5829,7 @@ const World = (function () {
     NRN.i = bi; NRN.d = bd; NRN.dd = bdd; NRN.lat = bl;
     if (bi < 0) return NRN;
     NRN.h = hs / ws;
-    if (T.open) { const f = clamp(bi + ba / ds, 0, N - 1.0001), i0 = Math.floor(f); NRN.hn = T.hy[i0] + (T.hy[i0 + 1] - T.hy[i0]) * (f - i0); return NRN; }   // (an open road: the ends do not wrap)
+    if (T.open) { const f = clamp(bi + ba / ds, 0, N - 1.0001), i0 = Math.floor(f); NRN.hn = T.hy[i0] + (T.hy[i0 + 1] - T.hy[i0]) * (f - i0) + nrBankY(i0, bl); return NRN; }   // (an open road: the ends do not wrap; a banked hairpin's edge)
     const f = bi + ba / ds, fi = Math.floor(f), i0 = ((fi % N) + N) % N, i1 = (i0 + 1) % N; NRN.hn = T.hy[i0] + (T.hy[i1] - T.hy[i0]) * (f - fi) + nrBankY(i0, bl);   // road height across from the point (the loop wraps; the banked edge)
     return NRN;
   }
@@ -9880,6 +9880,19 @@ const World = (function () {
       x.fillStyle = 'rgba(255,255,255,0.12)'; x.fillRect(cx + 1, y0 + 1, w0, 1.5); } }
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t;
   }
+  // a snow wall's face, cut by the blowers that open the pass in spring: 128 x 256 px for 3 x 4 m, the winter's layers (thin grey and
+  // bluish bands, a dusty one now and then), the blower's curved scoops, the foot grey with the road's grit
+  function stSnowWallTex() {
+    const c = document.createElement('canvas'); c.width = 128; c.height = 256; const x = c.getContext('2d'), r = rng(8851);
+    x.fillStyle = '#f2f5fa'; x.fillRect(0, 0, 128, 256);
+    for (let y = 8; y < 222;) { const h = 4 + r() * 14, v = r(); x.fillStyle = v < 0.14 ? 'rgba(140,122,104,0.4)' : v < 0.5 ? 'rgba(150,168,196,0.38)' : 'rgba(255,255,255,0.5)'; x.fillRect(0, y, 128, h * 0.3 + 1); y += h; }
+    for (let k = 0; k < 26; k++) { const cx = r() * 128, cy = r() * 230, rr = 14 + r() * 26; x.strokeStyle = 'rgba(120,135,160,' + (0.08 + r() * 0.1) + ')'; x.lineWidth = 1 + r() * 2;
+      for (const o of [0, 128, -128]) { x.beginPath(); x.arc(cx + o, cy, rr, Math.PI * (0.15 + r() * 0.2), Math.PI * (0.65 + r() * 0.2)); x.stroke(); } }
+    const g = x.createLinearGradient(0, 196, 0, 256); g.addColorStop(0, 'rgba(110,100,92,0)'); g.addColorStop(0.55, 'rgba(110,100,92,0.45)'); g.addColorStop(1, 'rgba(80,72,66,0.85)');
+    x.fillStyle = g; x.fillRect(0, 196, 128, 60);
+    for (let k = 0; k < 160; k++) { x.fillStyle = 'rgba(70,64,60,' + (0.2 + r() * 0.4) + ')'; x.fillRect(r() * 128, 200 + r() * 56, 1 + r() * 2, 1 + r() * 2); }
+    const t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; t.anisotropy = 4; return t;
+  }
   // the walls' stones (the parapets over the drops, the dry-stone retaining walls): courses of rough blocks, dark joints, 256 x 128 px for
   // 1.6 x 0.8 m; grey, the vertex colours tint it (the retaining walls browner)
   function stStoneTex() {
@@ -10389,6 +10402,7 @@ const World = (function () {
      wrapping round a 36 km square; out.dyn.skyTint: their colour for the time of day */
   function stClouds(root, out, R) {
     const U = out.dyn.far; if (!U) return 0;
+    U.mist = { value: 0 }; U.mistY = { value: 1e4 };   // (the day's cloud layer over the upper hairpins: World.view, from the race's alpine weather)
     const tex = stCloudTex(); out.ownTex.push(tex);
     const drift = { value: new THREE.Vector2() }, tint = { value: new THREE.Color(1, 1, 1) }, P = NR, cx = (P.x0 + P.x1) / 2, cz = (P.z0 + P.z1) / 2, pk = out.peak || [cx, 3000, cz];
     const make = (list, far) => {   // list: [x, y, z, width, height, cell, alpha]
@@ -10397,15 +10411,15 @@ const World = (function () {
         idx.set([k * 4, k * 4 + 1, k * 4 + 3, k * 4, k * 4 + 3, k * 4 + 2], k * 6); });
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('corner', new THREE.BufferAttribute(cor, 2)); g.setAttribute('csize', new THREE.BufferAttribute(siz, 2));
       g.setAttribute('ccell', new THREE.BufferAttribute(cel, 1)); g.setAttribute('calpha', new THREE.BufferAttribute(alp, 1)); g.setIndex(new THREE.BufferAttribute(idx, 1));
-      const u = THREE.UniformsUtils.merge([THREE.UniformsLib.fog]); Object.assign(u, { map: { value: tex }, stFar: U.far, stWet: U.wet, uDrift: drift, uTint: tint, uC: { value: new THREE.Vector2(cx, cz) } });
+      const u = THREE.UniformsUtils.merge([THREE.UniformsLib.fog]); Object.assign(u, { map: { value: tex }, stFar: U.far, stWet: U.wet, stMist: U.mist, stMistY: U.mistY, uDrift: drift, uTint: tint, uC: { value: new THREE.Vector2(cx, cz) } });
       const m = new THREE.ShaderMaterial({ uniforms: u, transparent: true, depthWrite: false, fog: true,
-        vertexShader: ['uniform float stFar; uniform float stWet; uniform vec2 uDrift; uniform vec2 uC;', 'attribute vec2 corner; attribute vec2 csize; attribute float ccell; attribute float calpha;',
+        vertexShader: ['uniform float stFar; uniform float stWet; uniform float stMist; uniform float stMistY; uniform vec2 uDrift; uniform vec2 uC;', 'attribute vec2 corner; attribute vec2 csize; attribute float ccell; attribute float calpha;',
           'varying vec2 vUv; varying float vA; varying float vD;', '#include <fog_pars_vertex>', 'void main() {',
           '  vec3 p = position; p.xz = uC + mod( p.xz + uDrift - uC + 18000.0, 36000.0 ) - 18000.0;',   // (the drift, wrapping round)
           '  vec4 mvPosition = modelViewMatrix * vec4( p, 1.0 ); mvPosition.xy += corner * csize * 0.5;',
           '  vD = length( mvPosition.xyz ); gl_Position = projectionMatrix * mvPosition;',
           far ? '  vec4 stC = projectionMatrix * vec4( 0.0, 0.0, -stFar * ( 0.86 + 0.13 * ( 1.0 - exp( -vD / 12000.0 ) ) ), 1.0 ); gl_Position.z = stC.z / stC.w * gl_Position.w;' : '',
-          far ? '  vA = calpha * ( 1.0 - stWet ) * smoothstep( 700.0, 1300.0, vD );' : '  vA = calpha * stWet;',   // (far: gone in the rain and when close; the low cloud: only in the rain)
+          far ? '  vA = calpha * ( 1.0 - stWet ) * smoothstep( 700.0, 1300.0, vD );' : '  vA = calpha * max( stWet, stMist * smoothstep( stMistY - 70.0, stMistY + 30.0, p.y ) ) * smoothstep( 25.0, 110.0, vD );',   // (far: gone in the rain and when close; the low cloud: in the rain, and the day's cloud layer above its height (alpine.mist); faded close by)
           '  float cx = mod( ccell, 2.0 ), cy = floor( ccell / 2.0 ); vUv = vec2( ( cx + corner.x * 0.5 + 0.5 ) * 0.5, 1.0 - ( cy + 0.5 - corner.y * 0.5 ) * 0.5 );',
           '  #include <fog_vertex>', '}'].join('\n'),
         fragmentShader: ['uniform sampler2D map; uniform vec3 uTint;', 'varying vec2 vUv; varying float vA; varying float vD;', '#include <fog_pars_fragment>', 'void main() {',
@@ -10432,6 +10446,10 @@ const World = (function () {
       const s = T.startS + R() * (T.finishS - T.startS + 200), i = T.idx(s), side = R() < 0.5 ? -1 : 1, o = side * (90 + R() * 320), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, wd = 160 + R() * 260;
       lo.push([x, Math.max(nrDem(x, z), T.hy[i]) + 25 + R() * 90, z, wd, wd * (R() < 0.6 ? 0.3 : 0.55), R() < 0.6 ? 3 : Math.floor(R() * 3), 0.5 + R() * 0.3]);
     }
+    for (let k = 0; k < 70; k++) {   // banks of cloud hanging in the upper hairpins (above ~1900 m): shown by the day's cloud layer, over its height
+      const s = T.startS + 15500 + R() * (T.finishS - T.startS - 15300), i = T.idx(s), side = R() < 0.5 ? -1 : 1, o = side * (30 + R() * 170), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, wd = 110 + R() * 190;
+      lo.push([x, Math.max(nrDem(x, z), T.hy[i]) + 6 + R() * 45, z, wd, wd * (0.25 + R() * 0.2), 3, 0.45 + R() * 0.35]);
+    }
     out.dyn.sky = drift; out.dyn.skyTint = tint;
     return make(hi, true) + make(lo, false);
   }
@@ -10453,7 +10471,8 @@ const World = (function () {
     const onBridge = (i, m) => { const d = dOf(i); for (const [a, b] of bridges) if (d >= a - (m || 0) && d <= b + (m || 0)) return true; return false; };
     const villages = [[-200, 250], [3690, 3990], [5830, 6170], [9540, 10330], [T.raceLen - 120, T.raceLen + 500]];   // (Prad, Stilfser Brücke, Gomagoi, Trafoi, the pass)
     const inVillage = (d) => villages.some(([a, b]) => d > a && d < b);
-    const Pt = (i, o, y) => [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o];
+    const Pt = (i, o, y) => [T.px[i] + T.nx[i] * o, T.hy[i] + y + nrBankY(i, o), T.pz[i] + T.nz[i] * o];   // (a hairpin banked over its bend: the road's edges)
+    const hyB = (i, side, e) => T.hy[i] + nrBankY(i, side * ((side > 0 ? T.br[i] : T.bl[i]) + e));   // the road's height at e beyond the barrier line
     const onSide = (s, side, extra) => { const i = T.idx(s), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + extra); return [T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, i]; };
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
 
@@ -10642,8 +10661,8 @@ const World = (function () {
       const gq = new GB(true), gw = new GB(), uM = Math.round(w * 2 / 0.8) / 16, W1 = [1, 1, 1];
       for (const s0 of [sStart, sFin]) { const a = atSf(s0 - 0.8, -w), b = atSf(s0 - 0.8, w), c = atSf(s0 + 0.8, w), d = atSf(s0 + 0.8, -w), y = (p) => T.hy[p[3]] + 0.04;
         gq.quadUp([a[0], y(a), a[1]], [b[0], y(b), b[1]], [c[0], y(c), c[1]], [d[0], y(d), d[1]], [W1, W1, W1, W1], [[0, 0], [uM, 0], [uM, 0.5], [0, 0.5]]); }
-      for (const s0 of T.cpS) { const a = atSf(s0 - 0.25, -w + 0.1), b = atSf(s0 - 0.25, w - 0.1), c = atSf(s0 + 0.25, w - 0.1), d = atSf(s0 + 0.25, -w + 0.1), y = (p) => T.hy[p[3]] + 0.038;
-        gw.quadUp([a[0], y(a), a[1]], [b[0], y(b), b[1]], [c[0], y(c), c[1]], [d[0], y(d), d[1]], W4); }
+      for (const s0 of T.cpS) { const a = atSf(s0 - 0.25, -w + 0.1), b = atSf(s0 - 0.25, w - 0.1), c = atSf(s0 + 0.25, w - 0.1), d = atSf(s0 + 0.25, -w + 0.1), y = (p, o) => T.hy[p[3]] + 0.038 + nrBankY(p[3], o);
+        gw.quadUp([a[0], y(a, 0.1 - w), a[1]], [b[0], y(b, w - 0.1), b[1]], [c[0], y(c, w - 0.1), c[1]], [d[0], y(d, 0.1 - w), d[1]], W4); }
       tex.checker.repeat.set(1, 1); addM(gq, new THREE.MeshLambertMaterial({ map: tex.checker })); addM(gw, lMat);
     }
 
@@ -10653,7 +10672,7 @@ const World = (function () {
     {
       const g = new GB(), RP = rng(7541), SKY = [0.56, 0.6, 0.64], MID = [0.37, 0.39, 0.41], RIM = [0.25, 0.25, 0.26], n = 14; nPud = 0;
       const PP = (s, o) => { const f = s / ds, i = clamp(Math.floor(f), 0, N - 2), t = f - i, j = i + 1, nx = lerp(T.nx[i], T.nx[j], t), nz = lerp(T.nz[i], T.nz[j], t);
-        return [lerp(T.px[i], T.px[j], t) + nx * o, lerp(T.hy[i], T.hy[j], t) + 0.042, lerp(T.pz[i], T.pz[j], t) + nz * o]; };
+        return [lerp(T.px[i], T.px[j], t) + nx * o, lerp(T.hy[i], T.hy[j], t) + 0.042 + nrBankY(i, o), lerp(T.pz[i], T.pz[j], t) + nz * o]; };
       for (let s = sStart + 40; s < sFin - 20; s += 16) {
         const i = T.idx(s); if (inTunnel(i, 6) || onBridge(i, 6)) continue;
         const dip = T.hy[i] < Math.min(T.hy[Math.max(0, i - 10)], T.hy[Math.min(N - 1, i + 10)]) - 0.08, flat = Math.abs(T.hy[Math.min(N - 1, i + 3)] - T.hy[Math.max(0, i - 3)]) < 0.25;
@@ -10685,13 +10704,25 @@ const World = (function () {
           if (t < 0.78) { const hw = (1.6 + RD() * 0.6) * big; put(i, Math.max(2, Math.round(hw * 1.2 / ds)), (RD() - 0.5) * 1.4 * sp, hw, Math.floor(RD() * 20), 0.62 + RD() * 0.33, 3); }
           else put(i, 1, (RD() - 0.5) * 2.4 * sp, (1.1 + RD() * 0.3) * big, 20 + Math.floor(RD() * 4), 0.7 + RD() * 0.25, 3); }
         if (RD() < 0.1) put(i, 5 + Math.floor(RD() * 4), (RD() - 0.5) * 3 * sp, 0.9 + RD() * 0.5, 24 + Math.floor(RD() * 2), 0.9, 1);
-        if (RD() < 0.06) { const hw = 1 + RD() * 0.8; put(i, 2 + Math.floor(RD() * 5), (RD() < 0.5 ? -1 : 1) * (w - 0.6 - hw) * RD(), hw, 28 + Math.floor(RD() * 4), 1, 0); }
       }
       dcs.sort((a, b) => a[6] - b[6]);
-      const rbs = new Map();
+      const rbs = new Map(), cellUV = (cell) => { const cu = cell % 4, cv = Math.floor(cell / 4); return [cu / 4 + 1 / 512, (cu + 1) / 4 - 1 / 512, 1 - cv / 8 - 1 / 1024, 1 - (cv + 1) / 8 + 1 / 1024]; };
+      // the old road's patches (T.patches: the physics' too, a jolt where a wheel runs onto one): repair patches, and the frost cracks right
+      // across the road sealed with a band of tar (a patch's texture, narrow); first in each mesh, under the paint
+      (T.patches || []).forEach(([ps, pc, hl, hw, kind], k) => {
+        const i = T.idx(ps); if (inTunnel(i, 2)) return;
+        const key = Math.floor(i / 128); let rb = rbs.get(key); if (!rb) rbs.set(key, rb = new RB(true, true));
+        const [u0, u1, vt, vb] = cellUV(28 + (k * 3) % 4), col = kind ? [0.42, 0.42, 0.44, 1] : [1, 1, 1, 1], L = kind ? 0.4 : hl, n = Math.max(1, Math.ceil(2 * L));
+        let pr = -1;
+        for (let q = 0; q <= n; q++) {
+          const sq = ps - L + 2 * L * q / n, y = T.elevAt(sq).y + 0.05, row = [pc - hw, pc + hw].map(o => { const p = atSf(sq, o); return [p[0], y + nrBankY(p[3], o), p[1]]; });
+          const r = rb.row(row, [col, col], [[u0, vb + (vt - vb) * q / n], [u1, vb + (vt - vb) * q / n]]);
+          if (pr >= 0) rb.link(pr, r, 0, 1); pr = r;
+        }
+      });
       for (const [i0, n, c, hw, cell, a] of dcs) {
         const key = Math.floor(i0 / 128); let rb = rbs.get(key); if (!rb) rbs.set(key, rb = new RB(true, true));
-        const cu = cell % 4, cv = Math.floor(cell / 4), u0 = cu / 4 + 1 / 512, u1 = (cu + 1) / 4 - 1 / 512, vt = 1 - cv / 8 - 1 / 1024, vb = 1 - (cv + 1) / 8 + 1 / 1024, col = [1, 1, 1, a];
+        const [u0, u1, vt, vb] = cellUV(cell), col = [1, 1, 1, a];
         let pr = -1;
         for (let k = 0; k <= n; k++) {
           const i = i0 + k, cc = clamp(c, -(w - 0.5 - hw), w - 0.5 - hw), v = vb + (vt - vb) * k / n;
@@ -10713,7 +10744,7 @@ const World = (function () {
       const gAt = (e) => { const o = side * (bar + e); return nrGround(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o) - y; };
       const g3 = gAt(3), g8 = gAt(8);
       if (onBridge(i, 4)) { kindA[si][i] = 2; continue; }
-      if (g3 > 0.35 && !inVillage(d) && bar - w < 3) gutA[si][i] = 1;   // (the uphill edge: a paved gutter takes the water off the slope)
+      if (T.gut) gutA[si][i] = T.gut[si][i];   // (the uphill edge: a paved gutter takes the water off the slope; the track's, its setts a surface)
       if (g3 < -1.2 || g8 < -2.6) kindA[si][i] = d < 9450 && !inVillage(d) ? 2 : inVillage(d) ? 0 : 1;
       else if (g3 > 0.9 && !inVillage(d)) { kindA[si][i] = 3; hA[si][i] = clamp(g3 + 0.25, 0.8, 3.2); }
     }
@@ -10735,7 +10766,7 @@ const World = (function () {
       const rbs = new Map(), rbAt = (i, kind) => { const k = Math.floor(i / (CH * 2)) * 2 + (kind === 2 ? 1 : 0); let r = rbs.get(k); if (!r) rbs.set(k, r = new RB(kind !== 2)); return r; };   // (stone: with UVs; steel: without; 120 samples a mesh)
       for (const side of [-1, 1]) {
         const si = side > 0 ? 1 : 0, K = kindA[si], H = hA[si], bar = side > 0 ? T.br : T.bl;
-        const Q = (i, e, y) => { const o = side * (bar[i] + e); return [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o]; };
+        const Q = (i, e, y) => { const o = side * (bar[i] + e); return [T.px[i] + T.nx[i] * o, T.hy[i] + y + nrBankY(i, o), T.pz[i] + T.nz[i] * o]; };
         const row = (rb, i, k) => {   // cross-section at sample i, road side first (so the faces look at the road): three faces, their edges doubled (sharp)
           const shd = 0.9 + 0.2 * crH(i >> 2, side, 17), sc = [stone[0] * shd, stone[1] * shd, stone[2] * shd], dc = [dry[0] * shd, dry[1] * shd, dry[2] * shd];
           let p, c, uv = null; const u = dOf(i) / 1.6;
@@ -10819,7 +10850,7 @@ const World = (function () {
           for (const side of [-1, 1]) {
             const si = side > 0 ? 1 : 0;
             if (tun) { pv[si] = -1; continue; }
-            const bar = side > 0 ? T.br[i] : T.bl[i], y = T.hy[i], lift = (o, h) => { const q = side * o, gg = nrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) + 0.05 - y; return [o, Math.max(h, gg)]; };
+            const bar = side > 0 ? T.br[i] : T.bl[i], y = T.hy[i], lift = (o, h) => { const q = side * o, gg = nrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) + 0.05 - y - nrBankY(i, q); return [o, Math.max(h, gg)]; };
             const vr = [[w, 0.012], [w + 0.5, -0.03], lift(Math.max(w + 0.9, bar - 0.05), -0.06), lift(bar + 1.2, -0.2), lift(bar + 3.4, -0.6)];
             const pts = vr.map(([o, h]) => Pt(i, side * o, h)), wide = bar - w > 3;   // (a wide verge, the village street: its own ground's colour)
             const cols = vr.map(([o], n) => { if (n === 2 && !wide && kindA[si][i]) return [sh[0] * 0.8, sh[1] * 0.8, sh[2] * 0.8];   // (the foot of a wall or a rail: a contact shadow)
@@ -10999,8 +11030,8 @@ const World = (function () {
       const posts = new IChunks(pg.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true }), 384);
       for (let i = 0; i < N; i += 12) for (const side of [-1, 1]) {
         if (kindA[side > 0 ? 1 : 0][i] || mouth[side > 0 ? 1 : 0][i] || inTunnel(i, 6) || inVillage(dOf(i)) || dOf(i) < 0 || dOf(i) > T.raceLen) continue;
-        const [x, z] = onSide(i * ds, side, 0.25); posts.add(x, T.hy[i] - 0.2, z, T.hd[i], 1, 1);
-        refl(x - T.tx[i] * 0.066, T.hy[i] - 0.2 + 0.95, z - T.tz[i] * 0.066, i, 0.026, 0.15, side > 0 ? [1, 0.56, 0.12] : [1, 1, 0.96]);
+        const [x, z] = onSide(i * ds, side, 0.25), yb = hyB(i, side, 0.25); posts.add(x, yb - 0.2, z, T.hd[i], 1, 1);
+        refl(x - T.tx[i] * 0.066, yb - 0.2 + 0.95, z - T.tz[i] * 0.066, i, 0.026, 0.15, side > 0 ? [1, 0.56, 0.12] : [1, 1, 0.96]);
       }
       posts.addTo(root, true); }
     // snow poles along the road above ~1950 m, every 20 m on the valley side (orange, black bands near the top: the snowploughs find the road's
@@ -11013,7 +11044,7 @@ const World = (function () {
         const si = side > 0 ? 1 : 0, k = kindA[si][i], d = dOf(i);
         if (T.hy[i] + 900 < 1950 || d < 0 || d > T.raceLen - 150 || mouth[si][i] || inTunnel(i, 6) || inVillage(d)) continue;
         if (!(k === 1 || k === 2 || (k === 0 && kindA[1 - si][i] === 3))) continue;   // (the side where the ground falls away)
-        const [x, z] = onSide(i * ds, side, k === 0 ? 0.55 : 0.75), y = Math.max(nrGround(x, z), T.hy[i] - 0.6);
+        const [x, z] = onSide(i * ds, side, k === 0 ? 0.55 : 0.75), y = Math.max(nrGround(x, z), hyB(i, side, k === 0 ? 0.55 : 0.75) - 0.6);
         poles.add(x, y - 0.25, z, T.hd[i], 1, 1); nPoles++; refl(x - T.tx[i] * 0.081, y - 0.25 + 2.41, z - T.tz[i] * 0.081, i, 0.06, 0.15, [1, 0.62, 0.32]);
       }
       poles.addTo(root, true); }
@@ -11031,7 +11062,7 @@ const World = (function () {
     { for (let km = 1; km * 1000 < T.raceLen; km++) {
         let best = -1; for (let e = 0; e <= 40 && best < 0; e += 2) for (const sg of [1, -1]) { const i = T.idx(sAt(km * 1000 + sg * e)); if (best < 0 && !kindA[1][i] && !mouth[1][i] && !inTunnel(i, 4) && !onBridge(i, 4)) best = i; }
         if (best < 0) continue;
-        const [x, z] = onSide(best * ds, 1, 0.3), y = T.hy[best] - 0.15, g = scen.get(x, z);
+        const [x, z] = onSide(best * ds, 1, 0.3), y = hyB(best, 1, 0.3) - 0.15, g = scen.get(x, z);
         box(g, x, y, z, 0.3, 0.62, 0.16, T.hd[best], [0.93, 0.93, 0.9], null, true); box(g, x, y + 0.62, z, 0.31, 0.17, 0.17, T.hd[best], [0.78, 0.12, 0.1], null, true);
       } }
     /* ---- the side roads drawn (see def.sideRoads above): the asphalt of the roads in its own shades (the roads to Stilfs and Sulden with edge
@@ -11122,7 +11153,7 @@ const World = (function () {
         const t = new THREE.CanvasTexture(c); t.anisotropy = 4; out.ownTex.push(t);
         const sb = new GB(true), rows = Math.ceil(SG.length / 2);
         for (const u of use) { if (!u) continue;
-          const s = u.i * ds - 32, [px, pz, i] = onSide(s, 1, 0.9), gy = nrGround(px, pz), y = Math.max(gy, T.hy[i] - 0.2), g = scen.get(px, pz), ux = T.tz[i], uz = -T.tx[i], Wd = 2.3, Hd = 0.58, cy = y + 1.55;   // (where the bank falls away: on longer posts, the board at the road's eye level)
+          const s = u.i * ds - 32, [px, pz, i] = onSide(s, 1, 0.9), gy = nrGround(px, pz), y = Math.max(gy, hyB(i, 1, 0.9) - 0.2), g = scen.get(px, pz), ux = T.tz[i], uz = -T.tx[i], Wd = 2.3, Hd = 0.58, cy = y + 1.55;   // (where the bank falls away: on longer posts, the board at the road's eye level)
           for (const e of [-0.95, 0.95]) box(g, px + T.nx[i] * e, gy - 0.3, pz + T.nz[i] * e, 0.08, y - gy + 2.5, 0.08, T.hd[i], [0.55, 0.56, 0.58]);
           const A = [px + ux * Wd / 2, cy, pz + uz * Wd / 2], B = [px - ux * Wd / 2, cy, pz - uz * Wd / 2], C = [B[0], cy + Hd, B[2]], D = [A[0], cy + Hd, A[2]];
           const u0 = (u.k % 2) / 2, v1 = 1 - Math.floor(u.k / 2) / rows, v0 = v1 - 1 / rows;
@@ -11579,6 +11610,9 @@ const World = (function () {
        (2000-2700 m), grazing (stHerdMat: their heads go down to the grass and up again), marmots sitting up on the boulders and their
        mounds by the upper road, a pair of golden eagles circling over the valley (out.dyn.eagle) ---- */
     let nCow = 0, nSheep = 0, nMarmot = 0;
+    // the mountain's sounds (Sfx): where the engine rings off rock beside the road (per sample 0..1: a blasted cut face, a retaining wall, the slope
+    // of a hairpin ladder rising behind), the herds (their bells) and the marmots (a whistle as the car comes by)
+    const ALS = out.alpS = { echo: new Float32Array(N), herds: [], marmots: [] };
     {
       const HT = out.dyn.herdT = { value: 0 };
       const COW = new IChunks(stAnimalGeo(0), stHerdMat({ uHerdT: HT, uPiv: { value: new THREE.Vector2(0.55, 1.2) }, uNeck: { value: new THREE.Vector2(0.55, 1.0) }, uAng: { value: new THREE.Vector2(0.12, -1.0) } }), 256);
@@ -11597,13 +11631,15 @@ const World = (function () {
         const i = T.idx(s), alt = T.hy[i] + 900; if (alt > 2200 || inVillage(dOf(i)) || inTunnel(i, 20) || crH(s, side, 121) > 0.55) continue;
         const e = (side > 0 ? T.br[i] : T.bl[i]) + 14 + crH(s, side, 122) * 55, x = T.px[i] + T.nx[i] * side * e, z = T.pz[i] + T.nz[i] * side * e;
         if (nrLC(x, z) !== 0 || !free(x, z, 10, 0.55)) continue;
-        nCow += herd(COW, x, z, 3 + Math.floor(crH(s, side, 123) * 8), 8 + crH(s, side, 124) * 12, CC, 1, RA, (px, pz) => nrLC(px, pz) === 0 && free(px, pz, 6, 0.65));
+        const nc = herd(COW, x, z, 3 + Math.floor(crH(s, side, 123) * 8), 8 + crH(s, side, 124) * 12, CC, 1, RA, (px, pz) => nrLC(px, pz) === 0 && free(px, pz, 6, 0.65));
+        nCow += nc; if (nc) ALS.herds.push([x, z, nc, 1]);   // (Sfx: their bells)
       }
       for (let s = sAt(14500); s < sFin - 300; s += 150) for (const side of [-1, 1]) {   // the sheep
         const i = T.idx(s), alt = T.hy[i] + 900; if (alt < 2000 || inTunnel(i, 20) || crH(s, side, 131) > 0.36) continue;
         const e = (side > 0 ? T.br[i] : T.bl[i]) + 12 + crH(s, side, 132) * 70, x = T.px[i] + T.nx[i] * side * e, z = T.pz[i] + T.nz[i] * side * e;
         if (nrLC(x, z) !== 0 || !free(x, z, 8, 0.7)) continue;
-        nSheep += herd(SHP, x, z, 6 + Math.floor(crH(s, side, 133) * 14), 10 + crH(s, side, 134) * 14, SC, 1, RA, (px, pz) => { const cl = nrLC(px, pz); return (cl === 0 || cl === 5) && free(px, pz, 5, 0.8); });
+        const ns = herd(SHP, x, z, 6 + Math.floor(crH(s, side, 133) * 14), 10 + crH(s, side, 134) * 14, SC, 1, RA, (px, pz) => { const cl = nrLC(px, pz); return (cl === 0 || cl === 5) && free(px, pz, 5, 0.8); });
+        nSheep += ns; if (ns) ALS.herds.push([x, z, ns, 0]);
       }
       for (let s = sAt(15500); s < sFin - 200; s += 47) for (const side of [-1, 1]) {   // the marmots: on a boulder or on the mound of their burrow, near the road, often two or three
         const i = T.idx(s); if (T.hy[i] + 900 < 2150 || inTunnel(i, 10) || crH(s, side, 141) > 0.33) continue;
@@ -11613,7 +11649,7 @@ const World = (function () {
           let y = gy - 0.02;
           if (crH(s, k, 147) < 0.55) { const rs = 0.7 + crH(s, k, 148) * 0.5, rs0 = ROCK_SMOOTH; ROCK_SMOOTH = true; rock(g, x, gy + 0.2 * rs, z, rs * 1.1, rs * 0.75, rs * 0.95, crH(s, k, 149) * TAU, vary([0.58, 0.56, 0.53], RA, 0.1), rng(9830 + nMarmot), 0.25); ROCK_SMOOTH = rs0; y = gy + 0.2 * rs + 0.66 * 0.75 * rs; }
           else { ico(g, x - fx * 0.5, gy - 0.15, z - fz * 0.5, 0.6, 0.45, [0.45, 0.38, 0.3], RA, 0.3); box(g, x - fx * 0.62, gy + 0.02, z - fz * 0.62, 0.34, 0.06, 0.3, ro, [0.08, 0.07, 0.06], [0.08, 0.07, 0.06], true); y = gy + 0.05; }   // (the mound, the burrow's mouth)
-          const k2 = 1.25 + crH(s, k, 150) * 0.2; MAR.add(x, y, z, ro, k2, k2, [1, 1, 1]); exclPush(x, z, 1.4); nMarmot++; }
+          const k2 = 1.25 + crH(s, k, 150) * 0.2; MAR.add(x, y, z, ro, k2, k2, [1, 1, 1]); exclPush(x, z, 1.4); nMarmot++; ALS.marmots.push([x, z]); }
       }
       const herds = new THREE.Group(); root.add(herds); COW.addTo(herds, true); SHP.addTo(herds, true); MAR.addTo(herds, true); (out.summer = out.summer || []).push(herds);   // (in the stable and asleep in the winter: Render hides them)
       // the eagles: two, each circling over its own spot, 70-120 m above the ground, wherever the car is (the nearest of a ring of thermals
@@ -11792,14 +11828,111 @@ const World = (function () {
     const pm = addM(passG, new THREE.MeshLambertMaterial({ map: passTex })); if (pm) pm.castShadow = false;
     out.dyn.flagT = { value: 0 }; if (flagL.length) root.add(stFlags(flagL, passTex, out.dyn.flagT));
     crowdFinish(CR, root, out);
-    out.stats = { cut: +(nCut / (2 * N)).toFixed(3), cliffs: RD.cliffs.length, scree: STD.scree.length, falls: out.falls.length, cows: nCow, sheep: nSheep, marmots: nMarmot, fences: nFence, bales: nBale, crosses: nCross, lamps: nLamp, chapels: RD.chapels.length, knott: RD.knott ? 1 : 0, fans: CR.n, campers: nCamp, bikes: nBike, motos: nMoto, stalls: nStall, flags: flagL.length, clouds: nCloud, puddles: nPud, gutter: +(nGut / (2 * N)).toFixed(3), low: nLow, poles: nPoles, tiles: nTiles, clipTris: nClip, trees: nTrees, rocks: nRocks, buildings: nBld, signs: nSigns, decals: nDecals, parked: nParked, far: nFar, side: nSide, closed: nClosed, walls: +(nWall / (2 * N)).toFixed(3), rails: +(nRail / (2 * N)).toFixed(3), retaining: +(nRet / (2 * N)).toFixed(3) };   // (read by the tests)
+
+    { const E = ALS.echo;   // (the engine off the rock: a cut face, by its size; a retaining wall; the slope over a hairpin of the ladders)
+      for (let i = 0; i < N; i++) { let e = 0; for (const si of [0, 1]) { const top = cutE[si * 2 + 1][i]; if (top > 0) e = Math.max(e, clamp(top / 12, 0.4, 1)); if (kindA[si][i] === 3) e = Math.max(e, 0.5); } E[i] = e; }
+      for (const [num, hx, hz] of def.hairpins || []) { const i0 = T.nearestIdx(hx, hz); if (T.hy[i0] + 900 > 1700) for (let k = Math.max(0, i0 - 18); k <= Math.min(N - 1, i0 + 18); k++) E[k] = Math.max(E[k], 0.45); }
+      for (let pass = 0; pass < 4; pass++) for (let i = 1; i < N - 1; i++) E[i] = Math.max(E[i] * 0.96, (E[i - 1] + E[i] + E[i + 1]) / 3);
+    }
+
+    /* ---- early summer (and winter): the snow walls the blowers cut when the pass opens, along the road above ~2420 m, higher towards the top
+       (to 4.5 m; lower over the drops), just beyond the barrier line, or behind the fans where they stand along it (as on the Giro's snowy
+       days), broken where the crowd stands deep, at the campers, the side roads and the stalls; melt water on the road beside them (dark wet
+       bands along the edges, a trickle across now and then). Hidden: World.view shows them for a race with snow (Race opts alpine.snow) ---- */
+    let nSnowW = 0;
+    {
+      const RS = rng(9851), wMat = new THREE.MeshLambertMaterial({ map: stSnowWallTex(), vertexColors: true }); out.ownTex.push(wMat.map);
+      const mMat = new THREE.MeshPhongMaterial({ color: 0x050607, vertexColors: true, transparent: true, depthWrite: false, shininess: 40, specular: 0x1c1f22, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -3 });
+      const yOfAlt = (a) => a - 900, a0 = 2420, iA = (() => { let i = T.startIdx; while (i < N - 1 && T.hy[i] < yOfAlt(a0)) i++; return i; })(), iB = T.idx(sFin - 45);
+      const fanD = [new Float32Array(N), new Float32Array(N)];   // how far beyond the barrier line the fans stand, per sample and side (0: none)
+      for (const L of CR.sp.values()) for (let q = 0; q < L.length; q += 2) { const n = nrNear(L[q], L[q + 1]); if (n.i < iA - 10 || n.i > iB + 10) continue;
+        const si = n.lat > 0 ? 1 : 0, d = Math.abs(n.lat) - (si ? T.br[n.i] : T.bl[n.i]) + 0.9; for (let k = Math.max(0, n.i - 4); k <= Math.min(N - 1, n.i + 4); k++) fanD[si][k] = Math.max(fanD[si][k], d); }
+      for (const F of fanD) for (let pass = 0; pass < 3; pass++) for (let i = iA; i < iB; i++) F[i] = Math.max(F[i], (F[i - 1] + F[i] + F[i + 1]) / 3);   // (eased in and out)
+      const lump = valueNoise2(9853, 7), wrb = new Map(), mrb = new Map(), sn = [], walls = out.snowWalls = [];
+      const wAt = (i) => { const k = Math.floor(i / (CH * 4)); let r = wrb.get(k); if (!r) wrb.set(k, r = new RB(true)); return r; };
+      const mAt = (i) => { const k = Math.floor(i / (CH * 4)); let r = mrb.get(k); if (!r) mrb.set(k, r = new RB(false, true)); return r; };
+      for (const side of [-1, 1]) {
+        const si = side > 0 ? 1 : 0, K = kindA[si], bar = side > 0 ? T.br : T.bl;
+        const ok = (i) => { if (inTunnel(i, 4) || onBridge(i, 3) || mouth[si][i] || fanD[si][i] > 6.5) return false;
+          const o = side * (bar[i] + fanD[si][i] + 1.2), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; return !excluded(x, z); };
+        let i = iA + Math.floor(RS() * 40);
+        while (i < iB) {
+          if (!ok(i)) { i++; continue; }
+          let j = i; while (j < iB && ok(j)) j++;
+          if (j - i >= 6) sn.push([side, i, j - 1]);
+          i = j + 1;
+        }
+      }
+      for (const [side, i0, i1] of sn) {
+        const si = side > 0 ? 1 : 0, K = kindA[si], bar = side > 0 ? T.br : T.bl, drop = (i) => K[i] === 1 || K[i] === 2;
+        const wRow = (rb, i) => {   // the wall's cross-section at sample i, the road side first
+          const alt = T.hy[i] + 900, end = Math.min(i - i0, i1 - i) * ds, env = 0.25 + 0.75 * sstep(0, 7, end);
+          const e0 = Math.max(K[i] === 1 ? 0.6 : K[i] === 2 ? 0.45 : K[i] === 3 ? 0.4 : 0.25, fanD[si][i]), H = lerp(1.1, 4.4, sstep(a0, 2720, alt)) * (drop(i) ? 0.55 : 1) * (0.82 + 0.36 * lump(dOf(i) / 9, side * 5)) * env;
+          const ob = side * (bar[i] + e0), yr = hyB(i, side, e0), y0 = yr + clamp(nrGround(T.px[i] + T.nx[i] * ob, T.pz[i] + T.nz[i] * ob) - 0.2 - yr, 0, 0.8), Q = (e, h) => { const o = side * (bar[i] + e), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; return [x, Math.max(h, Math.min(nrGround(x, z) - 0.3, h + 0.8)), z]; };   // (its foot: on the ground, but not up a steep slope; into a slope that rises behind it, not up it)
+          const back = e0 + 2.4 + H * 0.45, tk = 0.97 + 0.06 * lump(dOf(i) / 3, side * 11 + 7);   // (the face cut straight by the blower, a sharp edge to the top: its row doubled there)
+          const top = Q(e0 + 0.14, y0 + H);
+          let pts = [Q(e0, y0 - 0.15), Q(e0 + 0.03, y0 + 0.3), Q(e0 + 0.07, y0 + H * 0.55), top, top.slice(), Q(e0 + 0.5, y0 + H + 0.06), Q(e0 + 1.6, y0 + H * 0.9), Q(back, y0 - 1.2)];
+          const u = dOf(i) / 3, cv = [[0.78, 0.76, 0.75], [0.9, 0.91, 0.95], [0.95, 0.96, 1], [0.98, 0.99, 1.03], [1.02 * tk, 1.03 * tk, 1.06 * tk], [1.04 * tk, 1.05 * tk, 1.08 * tk], [0.97, 1, 1.05], [0.9, 0.93, 0.99]];
+          let uv = [[u, 0.02], [u, 0.08], [u, 0.08 + H * 0.55 / 4.4], [u, 0.08 + H / 4.4], [u, 0.985], [u, 0.99], [u + 0.2, 0.99], [u + 0.4, 0.985]];
+          for (const q of uv) q[1] = Math.min(0.995, q[1]);   // (v up the face: the grey foot at the image's bottom, white at its top)
+          let cols = cv;
+          if (side < 0) { pts = pts.reverse(); cols = cv.slice().reverse(); uv = uv.reverse(); }   // (the rows face up and towards the road)
+          return rb.row(pts, cols, uv);
+        };
+        let pr = -1, pk = -1, pc = null;
+        for (let i = i0; i <= i1; i++) {
+          const rb = wAt(i); if (rb !== pc) { pr = i > i0 ? wRow(rb, i - 1) : -1; pc = rb; }   // (a new mesh: the row before again, joined on)
+          const r = wRow(rb, i); if (pr >= 0) { rb.link(pr, r, 0, 3); rb.link(pr, r, 4, 7); } pr = r;
+          // melt water on the road beside it: a dark wet band along the edge, in pieces
+          const end = Math.min(i - i0, i1 - i) * ds, wetK = sstep(0.18, 0.38, lump(dOf(i) / 14, side * 9 + 3)) * sstep(0, 5, end), mr = mAt(i);
+          if (wetK > 0.02) {
+            let mp = [w + 0.3, w - 0.3, w - 1.2, w - 2.2].map(o => Pt(i, side * o, 0.045)), mc = [0.7, 0.75, 0.55, 0].map(a => [1, 1, 1, a * wetK]);
+            if (side > 0) { mp = mp.reverse(); mc = mc.reverse(); }   // (rows left -> right: facing up)
+            const m = mr.row(mp, mc); if (pk >= 0 && mr === mAt(i - 1)) mr.link(pk, m, 0, 3); pk = m;
+          } else pk = -1;
+          nSnowW++;
+        }
+        // a trickle across the road now and then, where the wall is high
+        for (let i = i0 + 6; i < i1 - 6; i += 9) {
+          if (RS() > 0.14) continue;
+          const mr = mAt(i), sa = i * ds + (RS() - 0.5) * 4, ph = RS() * TAU; let pq = -1;
+          for (let o = w - 0.2; o >= -w + 0.6; o -= 0.7) {
+            const t = (w - o) / (2 * w), sq = sa + Math.sin(o * 0.9 + ph) * 0.6 + t * 1.6, a = 0.6 * (1 - sstep(0.55, 1, t)), q = side * o;
+            const pa = atSf(sq - 0.12, q), pb = atSf(sq + 0.12, q), y = T.elevAt(sq).y + 0.046 + nrBankY(pa[3], q);
+            let row = [[pa[0], y, pa[1]], [pb[0], y, pb[1]]], col = [[1, 1, 1, a], [1, 1, 1, a]];
+            if (side < 0) row = row.reverse();   // (facing up: the rows cross the road from the wall's side)
+            const m = mr.row(row, col); if (pq >= 0) mr.link(pq, m, 0, 1); pq = m;
+          }
+        }
+      }
+      for (const rb of wrb.values()) { const m = addM(rb, wMat, true); if (m) { m.visible = false; walls.push(m); } }
+      for (const rb of mrb.values()) { const m = addM(rb, mMat); if (m) { m.visible = false; m.renderOrder = 1; walls.push(m); } }
+    }
+    /* ---- the replay's helicopter over the hairpin ladders (Render's TV camera, out.tvShots): high over the valley, the wall of hairpins as the
+       Giro films it, the car small on its zigzag. [first hairpin, last, direction from their middle (deg; 0: +x, 90: +z), distance (m), height
+       over them (m), the picture's half-width at the car (m)]; each shot from 140 m before the first apex to 90 m past the last ---- */
+    out.tvShots = [];
+    for (const [h0, h1, dir, dist, up, half] of [[14, 11, 20, 330, 150, 40], [8, 5, 10, 320, 160, 42], [4, 1, 15, 340, 190, 40]]) {
+      const L = (def.hairpins || []).filter(h => h[0] <= h0 && h[0] >= h1); if (L.length < 2) continue;
+      let cx = 0, cz = 0, cy = 0, sa = 1e9, sb = -1e9;
+      for (const h of L) { const i = T.nearestIdx(h[1], h[2]); cx += h[1] / L.length; cz += h[2] / L.length; cy += T.hy[i] / L.length; sa = Math.min(sa, i * ds); sb = Math.max(sb, i * ds); }
+      const a = dir * Math.PI / 180, x = cx + Math.cos(a) * dist, z = cz + Math.sin(a) * dist;
+      out.tvShots.push({ s0: sa - 140, s1: sb + 90, x, y: Math.max(nrGround(x, z) + 30, cy + up), z, half });
+    }
+    out.stats = { snowWall: +(nSnowW / (2 * N)).toFixed(3), cut: +(nCut / (2 * N)).toFixed(3), cliffs: RD.cliffs.length, scree: STD.scree.length, falls: out.falls.length, cows: nCow, sheep: nSheep, marmots: nMarmot, fences: nFence, bales: nBale, crosses: nCross, lamps: nLamp, chapels: RD.chapels.length, knott: RD.knott ? 1 : 0, fans: CR.n, campers: nCamp, bikes: nBike, motos: nMoto, stalls: nStall, flags: flagL.length, clouds: nCloud, puddles: nPud, gutter: +(nGut / (2 * N)).toFixed(3), low: nLow, poles: nPoles, tiles: nTiles, clipTris: nClip, trees: nTrees, rocks: nRocks, buildings: nBld, signs: nSigns, decals: nDecals, parked: nParked, far: nFar, side: nSide, closed: nClosed, walls: +(nWall / (2 * N)).toFixed(3), rails: +(nRail / (2 * N)).toFixed(3), retaining: +(nRet / (2 * N)).toFixed(3) };   // (read by the tests)
     return out;
   }
 
   // after the camera has moved (Render.frame): what depends on where it looks from. Ouninpohja: the trees and buildings between the camera and
   // the followed car fade out (the car where it is drawn this frame: interpolated by alpha)
-  function view(out, cam, car, alpha, wet) {
+  function view(out, cam, car, alpha, wet, alp) {
     const Fm = out && out.dyn.far; if (Fm && cam) { Fm.far.value = cam.far; Fm.wet.value = wet || 0; }   // (the Stelvio's distant mountains: behind the camera's range, the rain's cloud)
+    if (Fm && Fm.mist) {   // the Stelvio's weather by the height (Race opts alpine): the day's cloud layer over the upper hairpins, the snow walls
+      const lv = alp ? alp.mist : 0, y0 = alp ? alp.mistY : 1e4, y = car ? car.roadY || 0 : cam ? cam.position.y : 0;
+      Fm.mist.value = lv; Fm.mistY.value = y0;
+      out.mistK = (out.mistK || 0) + (lv * sstep(y0 - 90, y0 + 20, y) - (out.mistK || 0)) * 0.04;   // (inside the layer: Render closes the haze in)
+      const sw = !!(alp && alp.snow); if (out.snowWalls && out.snowOn !== sw) { out.snowOn = sw; for (const m of out.snowWalls) m.visible = sw; }
+    }
     const U = out && out.dyn.ouCut; if (!U) return;
     if (!car || !cam || Math.hypot(cam.position.x - car.x, cam.position.z - car.z) < 4) { U.uCar.value.set(1e6, 0, 1e6); return; }   // (from the cockpit nothing can come between: no fading)
     const a = alpha == null ? 1 : alpha;

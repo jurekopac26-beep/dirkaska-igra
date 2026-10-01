@@ -1109,6 +1109,17 @@ const Render = (function () {
     }
     if (A.season === 'winter' && A.tod !== 'night') { to(scene.fog.color, 0xdfe6ee, 0.4); renderer.setClearColor(scene.fog.color, 1); to(sun.color, 0xeef3ff, 0.5); hemi.intensity *= 1.12; if (post) post.mat.uniforms.uSat.value *= 0.88; }
     if (A.season === 'autumn' && A.tod === 'day') { to(sun.color, 0xffd9a8, 0.3); if (post) post.mat.uniforms.uTint.value.set(1.04, 0.99, 0.93); }
+    fogBase.copy(scene.fog.color); mistOn = -1;   // (the haze's own colour: a cloud layer the camera is in greys it, see mistFog)
+  }
+  // inside a mountain's cloud layer (World.view: world.mistK, the Stelvio's alpine weather): the haze closes in and goes cloud grey (as light as
+  // the haze was: dark at night)
+  const fogBase = new THREE.Color(), _mc = new THREE.Color(); let mistOn = 0;   // (-1: a theme applied since, its haze to restore)
+  function mistFog() {
+    const k = (world && world.mistK) || 0;
+    if (k < 0.004) { if (mistOn !== 0) { scene.fog.color.copy(fogBase); renderer.setClearColor(scene.fog.color, 1); mistOn = 0; } return 0; }
+    const L = Math.min(0.9, 0.3 * fogBase.r + 0.59 * fogBase.g + 0.11 * fogBase.b + 0.06);
+    scene.fog.color.copy(fogBase).lerp(_mc.setRGB(L, L * 1.01, L * 1.03), Math.min(1, k * 0.85)); renderer.setClearColor(scene.fog.color, 1); mistOn = 1;
+    return k;
   }
   // the weather of the race on screen (race.rain 0..1): the sky and the streaks
   function applyWeather(r) {
@@ -1876,8 +1887,9 @@ const Render = (function () {
       const bankT = c.bankSl && !c.air ? -Math.atan(c.bankSl * (-Math.sin(h) * c.q.nx + Math.cos(h) * c.q.nz)) : 0;   // a banked corner: tilt with the surface
       v.broll = (v.broll || 0) + (bankT - (v.broll || 0)) * Math.min(1, dt * 10);
       v.grp.rotation.set(v.broll, -h, v.gpitch + (jk ? crew.liftP : 0), 'YZX');   // whole car (incl. separate front wheels) follows the slope (and the bank)
-      v.bodyG.rotation.set(v.roll, 0, v.pitch);
-      v.bodyG.position.y = Math.abs(v.roll) * 0.4 + (c.onCurb ? Math.sin(time * 60) * 0.015 : 0);
+      const rg = roughAt(v, c, dt);   // (the setts of a gutter, a gravel verge, a patch's jolt)
+      v.bodyG.rotation.set(v.roll + rg.r, 0, v.pitch + rg.p);
+      v.bodyG.position.y = Math.abs(v.roll) * 0.4 + (c.onCurb ? Math.sin(time * 60) * 0.015 : 0) + rg.y;
       if (v.blob) v.blob.position.y = (c.roadY - c.y) + 0.05 - (jk ? crew.lift : 0); // shadow stays on the ground during jumps (and on the jacks)
       v.landed = !!(v.wasAir && !c.air);   // landing this frame (dust ring is emitted in emitFx)
       if (v.landed && c.isPlayer && c.speed > 3) shake(0.15 + clamp(-(c.impactVY || 0) / 8, 0, 1) * 0.45);
@@ -1902,7 +1914,7 @@ const Render = (function () {
       // dirt builds up while driving on grass/gravel/makadam, faster in the rain (mud; never washes off during a race)
       if (v.scrU) v.scrU.value = Core.sstep(0.3, 0.9, c.dmg || 0);
       if (v.dirtU && !(opt && opt.noFx) && !c.air && dt > 0) {
-        let loose = 0; for (let k = 0; k < 4; k++) { const sf = c.ws[k]; if (sf === 2 || sf === 3 || sf >= 5) loose++; }
+        let loose = 0; for (let k = 0; k < 4; k++) { const sf = c.ws[k]; if (sf === 2 || sf === 3 || (sf >= 5 && sf !== 7)) loose++; }
         if (loose) v.dirtU.value = Math.min(1, v.dirtU.value + dt * loose * (1 + 1.5 * Math.max(0, wetW)) * 0.012 * clamp(c.speed / 12, 0.2, 1.5));   // (rain: mud, two and a half times as fast)
       }
       if (v.marker) { v.marker.visible = !!markerOn; v.marker.position.y = 4 + Math.sin(time * 5) * 0.3; v.marker.rotation.y = time * 2; }
@@ -2070,6 +2082,25 @@ const Render = (function () {
     refacet(geo, dentTris);
   }
 
+  // the road under the wheels shakes the car (and the camera, the player's): the setts of a gutter (surface 7) a quick buzz, a gravel verge (8)
+  // a judder, and each jolt of an old road's patch or crack (Car.rgh from Core's roadFeel: a new one each time its counter moves) a bump that
+  // dies away in ~0.2 s. (A replay's cars do not move the counter: no jolts there)
+  const _rg = { y: 0, p: 0, r: 0 };
+  function roughAt(v, c, dt) {
+    _rg.y = _rg.p = _rg.r = 0;
+    const R = c.rgh;
+    if (R && R.ev !== v.rgEv) { if (v.rgEv != null && !c.air) { v.rgJ = Math.max(v.rgJ || 0, R.j); if (c.isPlayer) shake(0.05 + 0.12 * R.j); } v.rgEv = R.ev; }
+    if (v.rgJ > 0.01) { const j = v.rgJ; _rg.y += j * 0.028 * Math.sin(time * 45); _rg.p += j * 0.012 * Math.sin(time * 38 + 1); v.rgJ *= Math.exp(-dt / 0.09); } else v.rgJ = 0;
+    let st = 0, gv = 0; for (let k = 0; k < 4; k++) { const w = c.ws[k]; if (w === 7) st++; else if (w === 8) gv++; }
+    if ((st || gv) && !c.air && c.speed > 1) {
+      const f = clamp(c.speed / 20, 0, 1.4);
+      _rg.y += f * (st * 0.0045 * Math.sin(time * 85) + gv * 0.006 * (Math.random() - 0.5));
+      _rg.r += f * (st * 0.002 * Math.sin(time * 71) + gv * 0.003 * (Math.random() - 0.5));
+      if (c.isPlayer && c.speed > 4) shake(f * (st * 0.012 + gv * 0.02));
+    }
+    return _rg;
+  }
+  const sfFx = (s) => s === 8 ? 3 : s === 7 ? 0 : s;   // the effects: a gravel verge as gravel, the setts as the asphalt (smoke, rubber, spray)
   function emitFx(v, c, dt, x, z, h) {
     const M = c.m, spd = c.speed;
     const tw = M.wid * 0.43, yb = c.y || 0;
@@ -2077,7 +2108,7 @@ const Render = (function () {
     if (v.landed) {
       const hard = -(c.impactVY || 0), gy = c.roadY || 0;
       if (hard > 2.2) {
-        let loose = 0; for (let k = 0; k < 4; k++) { const sf = c.ws[k]; if (sf >= 2 && sf !== 4) loose++; }
+        let loose = 0; for (let k = 0; k < 4; k++) { const sf = c.ws[k]; if (sf >= 2 && sf !== 4 && sf !== 7) loose++; }
         const dirt = loose >= 2, n = Math.min(26, 8 + hard * 2.2), wetL = wetW > 0;   // (in the rain: a splash of muddy water)
         for (let k = 0; k < n; k++) {
           const a = k / n * Math.PI * 2 + Math.random() * 0.4, sp = (2.5 + Math.random() * 3) * Math.min(1.6, hard / 6);
@@ -2093,7 +2124,7 @@ const Render = (function () {
     for (let k = 0; k < 4; k++) {
       const [lx, lz, wi] = wheels[k];
       if (c.air) { v.sk[k] = null; v.acc[k] = 0; continue; }
-      const surf = c.ws[wi];
+      const surf = sfFx(c.ws[wi]);
       const front = k >= 2;
       const p = wheelWorld(c, lx, lz, x, z, h); const px = p.x, pz = p.z;
       let intens = front ? (c.lock ? 0.5 : 0) + Math.max(0, c.slipF - 0.3) * 1.4 : slide;
@@ -2238,12 +2269,16 @@ const Render = (function () {
     } else if (mode === 'tv') {
       // the replay's TV cameras: on posts every 170 m beside the track (on the outside of the bends), 9 m up; the one ahead of the car
       // until it has gone 60 m past it, then a cut to the next; zoomed so the car fills about the same part of the picture
-      const C = tvCams(curTrack), s = c.q && Number.isFinite(c.q.s) ? c.q.s : 0, L = curTrack.len, n = C.length;
+      // A world's aerial shots (world.tvShots = [{ s0, s1, x, y, z, half }]: the Stelvio's helicopter over its hairpin ladders): while the car is
+      // on that stretch, filmed from high up, zoomed out to show the bends round it (half: the half-width of the picture at the car, m)
+      const C = tvCams(curTrack), s = c.q && Number.isFinite(c.q.s) ? c.q.s : 0, L = curTrack.len, n = C.length, AS = world && world.tvShots;
       let k = Math.floor(s / 170) % n; if (curTrack.open) k = Core.clamp(k, 0, n - 1);
-      const P = C[k]; px = P.x; py = P.y; pz = P.z; tx = x; ty = (c.y || 0) + 0.7; tz = z;
+      let P = C[k], half = 6.5;
+      if (AS) for (let a = 0; a < AS.length; a++) if (s >= AS[a].s0 && s <= AS[a].s1) { P = AS[a]; k = 100000 + a; half = AS[a].half; break; }
+      px = P.x; py = P.y; pz = P.z; tx = x; ty = (c.y || 0) + 0.7; tz = z;
       if (cam.tvK !== k) { cam.tvK = k; cam.tx = tx; cam.tz = tz; }
       cam.tx += (tx - cam.tx) * (1 - Math.exp(-dt * 9)); cam.tz += (tz - cam.tz) * (1 - Math.exp(-dt * 9)); tx = cam.tx; tz = cam.tz;   // (a camera operator's smooth pan)
-      const d = Math.hypot(px - tx, py - ty, pz - tz), fov = Core.clamp(2 * Math.atan(6.5 / Math.max(1, d)) * 180 / Math.PI, 4, 55);
+      const d = Math.hypot(px - tx, py - ty, pz - tz), fov = Core.clamp(2 * Math.atan(half / Math.max(1, d)) * 180 / Math.PI, 4, 55);
       if (Math.abs(camera.fov - fov) > 0.05) { camera.fov = fov; camera.updateProjectionMatrix(); updatePointScale(); }
       cam.gy = (c.y || 0);
     } else if (mode === 'kino') {
@@ -2275,7 +2310,7 @@ const Render = (function () {
     if (camera.near !== near) { camera.near = near; camera.updateProjectionMatrix(); }
     camera.position.set(px, py, pz); if (qc) camera.quaternion.copy(qc); else camera.lookAt(tx, ty, tz); cam.vcx = qc ? px + (tx - px) * 0.25 : tx; cam.vcz = qc ? pz + (tz - pz) * 0.25 : tz; cam.vd = Math.hypot(px - tx, py - ty, pz - tz);   // (the cockpit's view centre, for the rain round it: 18 m ahead)
     cam.ck = !!qc; if (!qc) ck.car = null;
-    { const dC = shot ? shot.fogD : Math.hypot(px - tx, py - ty, pz - tz), r = Math.max(0, wet), fk = (world && world.fogK) || 1; scene.fog.near = dC * (1.35 - 0.4 * r) * fk; scene.fog.far = dC * (5.5 - 1.6 * r); }   // (rain: a closer haze; fogK: a world with clearer air, the haze beginning farther off)
+    { const dC = shot ? shot.fogD : Math.hypot(px - tx, py - ty, pz - tz), r = Math.max(0, wet), fk = (world && world.fogK) || 1, mk = mistFog(); scene.fog.near = dC * (1.35 - 0.4 * r) * fk * (1 - 0.8 * mk); scene.fog.far = dC * (5.5 - 1.6 * r) * (1 - 0.6 * mk); }   // (rain: a closer haze; fogK: a world with clearer air, the haze beginning farther off; mk: inside a cloud layer)
     if (world && world.farClip) { const f = Math.min(700, scene.fog.far + 40); if (Math.abs(camera.far - f) > 6) { camera.far = f; camera.updateProjectionMatrix(); } }   // long corridor worlds: nothing past the fog is drawn
     // sun/shadow follows view center
     lastMode = qc ? 'cockpit' : mode;
@@ -2474,9 +2509,10 @@ const Render = (function () {
     particles.update(dt); sparkP.update(dt);
     World.update(world, time, target, camera);
     if (target) updateCamera(dt, target, mode, alpha);
-    World.view(world, camera, target, alpha, Math.max(0, wet));   // (Ouninpohja: the forest between the camera and the car fades out; the Stelvio: its distant mountains)
+    World.view(world, camera, target, alpha, Math.max(0, wet), curRace && curRace.opts && curRace.opts.alpine);   // (Ouninpohja: the forest between the camera and the car fades out; the Stelvio: its distant mountains, its weather by the height)
     { const R = curRace, q = (v) => v > 0 ? Math.max(0.05, Math.round(v * 20) / 20) : 0;   // (a changing weather: in steps of 5 %)
-      const r = R ? q(R.rain || 0) : 0, w = R ? q(R.water != null ? R.water : R.rain || 0) : 0;
+      const ra = R && R.ralt, am = ra ? Core.sstep(ra.y0, ra.y1, cam.gy || 0) : 1;   // (the rain only up the mountain, Race.ralt: as wet as the road where the view is)
+      const r = R ? q((R.rain || 0) * am) : 0, w = R ? q((R.water != null ? R.water : R.rain || 0) * am) : 0;
       if (r !== wet) applyWeather(r); if (w !== wetW) applyRoad(w); dryLine(R); }
     if (birds.mesh.visible && target && world) birds.update(Math.min(dt, 0.1), cam.vcx || 0, cam.vcz || 0, world.groundH || (() => 0));
     if (snow.mesh.visible) { const U = snow.mat.uniforms, B = lastMode === 'cockpit' ? [28, 12, 28] : lastMode === 'chase' ? [62, 30, 62] : [80, 36, 80]; U.uBox.value.set(B[0], B[1], B[2]); U.uC.value.set(cam.vcx || 0, (cam.gy || 0) + B[1] * 0.42, cam.vcz || 0); U.uT.value = time % 600; U.uA.value = 0.9 * Math.min(1, wet * 1.5); U.uScale.value = particles.mat.uniforms.uScale.value; }
