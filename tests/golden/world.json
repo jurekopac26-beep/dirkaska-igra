@@ -179,11 +179,11 @@
   "instances": 8723,
   "props": 21,
   "crowd": 4722,
-  "world": "ef9b19a0",
+  "world": "b0f6ab96",
   "propsHash": "f70a7360",
   "floor": "3202d0cb/4480",
   "groups": {
-   "-:MeshLambertMaterial": "4a6c9311",
+   "-:MeshLambertMaterial": "74239997",
    "-:MeshPhongMaterial": "6ef6de83",
    "-:MeshBasicMaterial": "1edff4b2",
    "puddles:MeshBasicMaterial": "219cf0ec",

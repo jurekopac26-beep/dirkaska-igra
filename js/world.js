@@ -7581,9 +7581,9 @@ const World = (function () {
         const keep = D.map(([x, z]) => { const n = hjNear(x, z); return !(n.i >= 0 && Math.abs(n.lat) < WA[n.i] + (path ? 0.6 : 0.3)); });
         const L = D.map((p, q) => { const a = D[Math.max(0, q - 1)], b = D[Math.min(M - 1, q + 1)], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1; return [-dz / l, dx / l]; });
         if (r.cls === 8) {   // steps: a concrete flight (treads every ~0.35 m of height where it climbs), railings
-          for (let q = 0; q < M - 1; q++) { if (!keep[q] || !keep[q + 1]) continue; const [ax, az] = D[q], [bx, bz] = D[q + 1], ya = hjGround(ax, az), yb = hjGround(bx, bz), nx = L[q][0], nz = L[q][1], rise = yb - ya, m = Math.max(1, Math.round(Math.abs(rise) / 0.17)), g = gS.get(ax, az), C = [0.66, 0.65, 0.62];
+          for (let q = 0; q < M - 1; q++) { if (!keep[q] || !keep[q + 1]) continue; const [ax, az] = D[q], [bx, bz] = D[q + 1], ya = hjGround(ax, az), yb = hjGround(bx, bz), nx = L[q][0], nz = L[q][1], rise = yb - ya, m = Math.max(1, Math.round(Math.abs(rise) / 0.17)), g = gS.get(ax, az), C = [0.5, 0.48, 0.47];   // (stone steps: the risers in shadow-dark granite, the treads worn pale)
             for (let t = 0; t < m; t++) { const f0 = t / m, f1 = (t + 1) / m, x0 = lerp(ax, bx, f0), z0 = lerp(az, bz, f0), x1 = lerp(ax, bx, f1), z1 = lerp(az, bz, f1), y = ya + rise * (rise > 0 ? f1 : f0) + 0.02;
-              box(g, (x0 + x1) / 2, Math.min(ya, yb) - 0.4, (z0 + z1) / 2, Math.hypot(x1 - x0, z1 - z0) + 0.02, y - Math.min(ya, yb) + 0.4, hw * 2, Math.atan2(bz - az, bx - ax), vary(C, R, 0.04), [0.72, 0.71, 0.68], true); }
+              const k = 0.95 + 0.1 * crH(x0, z0, 61); box(g, (x0 + x1) / 2, Math.min(ya, yb) - 0.4, (z0 + z1) / 2, Math.hypot(x1 - x0, z1 - z0) + 0.02, y - Math.min(ya, yb) + 0.4, hw * 2, Math.atan2(bz - az, bx - ax), vary(C, R, 0.04), [0.71 * k, 0.69 * k, 0.66 * k], true); }
             for (const sd of [-1, 1]) ouRod(g, [ax + nx * sd * hw, ya + 0.95, az + nz * sd * hw], [bx + nx * sd * hw, yb + 0.95, bz + nz * sd * hw], 0.03, [0.2, 0.22, 0.24], 4); }
           continue;
         }
