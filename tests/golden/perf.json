@@ -112,10 +112,10 @@
   "jsMs": 1.14
  },
  "caracoles": {
-  "calls": 142,
-  "maxCalls": 177,
-  "kverts": 278,
-  "maxKverts": 348,
-  "jsMs": 1.08
+  "calls": 154,
+  "maxCalls": 194,
+  "kverts": 407,
+  "maxKverts": 562,
+  "jsMs": 1.19
  }
 }
