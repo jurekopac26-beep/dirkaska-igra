@@ -12909,16 +12909,16 @@ const World = (function () {
   // the broadleaf trees (unit height; the instances scale and tint them): 0 a beech, lime or chestnut near the road: a slender grey trunk forking into
   // limbs, a crown of soft rounded clumps in the fresh green of April; 1 the same far out (three clumps, no trunk detail)
   function muTreeGeo(kind) {
-    const g = new GB(), R = rng(8141 + kind), rs = ROCK_SMOOTH, col = [0.4, 0.6, 0.22], bark = [0.46, 0.44, 0.4];
+    const g = new GB(), R = rng(8141 + kind), rs = ROCK_SMOOTH, col = [0.36, 0.54, 0.22], bark = [0.42, 0.4, 0.37];
     ROCK_SMOOTH = true;
     if (kind === 0) {
       cyl(g, 0, -0.02, 0, 0.026, 0.4, 5, bark, null, 0.018);
       for (const [a, l] of [[0.4, 0.18], [2.5, 0.16], [4.4, 0.17]]) ouRod(g, [0, 0.34, 0], [Math.cos(a) * l, 0.52, Math.sin(a) * l], 0.012, bark, 3);
-      puff(g, 0, 0.66, 0, 0.26, 0.9, col, R, 0.14, 0.5, 1.25, false);
-      for (let k = 0; k < 3; k++) { const a = k / 3 * TAU + 0.4 + R() * 0.4, d = 0.19; puff(g, Math.cos(a) * d, 0.52 + R() * 0.12, Math.sin(a) * d, 0.16 + R() * 0.03, 0.85, col.map(v => v * (0.9 + R() * 0.16)), R, 0.14, 0.46, 1.22, false); }
+      puff(g, 0, 0.66, 0, 0.26, 0.9, col, R, 0.14, 0.48, 1.15, true);   // (the crown's top subdivided: rounder against the sky)
+      for (let k = 0; k < 3; k++) { const a = k / 3 * TAU + 0.4 + R() * 0.4, d = 0.19; puff(g, Math.cos(a) * d, 0.52 + R() * 0.12, Math.sin(a) * d, 0.16 + R() * 0.03, 0.85, col.map(v => v * (0.88 + R() * 0.16)), R, 0.14, 0.44, 1.12, false); }
     } else {
       cyl(g, 0, -0.02, 0, 0.03, 0.35, 4, bark, null, 0.02);
-      puff(g, 0, 0.6, 0, 0.32, 0.95, col, R, 0.18, 0.5, 1.2, false);
+      puff(g, 0, 0.6, 0, 0.32, 0.95, col, R, 0.18, 0.48, 1.1, false);
     }
     ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
@@ -13078,13 +13078,13 @@ const World = (function () {
       let r = 0.98 + (m - 0.5) * 0.14 + (q - 0.5) * 0.1, g = 0.98 + (m - 0.5) * 0.12 + (q - 0.5) * 0.08, b = 0.94 + (m - 0.5) * 0.1;
       const op = (1 - fo) * (1 - pk) * (1 - tw) * sstep(6, 20, dd); if (op > 0) { const f = nrField(x, z, NRFO); r += f[0] * op; g += f[1] * op; b += f[2] * op;
         const pl = sstep(0.7, 0.78, P.n5(x, z)) * op; r = lerp(r, 1.25, pl); g = lerp(g, 0.9, pl); b = lerp(b, 0.7, pl); }   // a ploughed field
-      r = lerp(r, 0.9, pk * 0.5); g = lerp(g, 1.12, pk * 0.5); b = lerp(b, 0.88, pk * 0.5);   // mown lawns
+      r = lerp(r, 0.88, pk * 0.5); g = lerp(g, 1.02, pk * 0.5); b = lerp(b, 0.84, pk * 0.5);   // mown lawns (a deeper, calmer green than the meadows' fresh one)
       const fl = Math.max(clamp(cov, 0, 1), fo * lerp(0.35, 1, sstep(225, 250, nrDist(x, z))));
       r = lerp(r, 0.78 + m * 0.12, fl); g = lerp(g, 0.7 + m * 0.1, fl); b = lerp(b, 0.56, fl);   // leaf litter
       const pv = tw * Math.max(sstep(30, 8, dd), 0.25 + 0.5 * sstep(0.45, 0.7, P.n2(x, z))); r = lerp(r, 1.75, pv); g = lerp(g, 0.92, pv); b = lerp(b, 1.75, pv);   // paving, yards, drives, car parks (grey on the grass map)
       const st = sstep(0.86, 0.62, ny) * 0.8; r = lerp(r, 1.1, st); g = lerp(g, 0.86, st); b = lerp(b, 0.78, st);   // bare banks
       if (dd < 5) { const t = sstep(5, 0.5, dd); r = lerp(r, 0.94, t); g = lerp(g, 1.08, t); b = lerp(b, 0.92, t); }
-      o[0] = r; o[1] = g; o[2] = b; return o;
+      o[0] = r * 0.97; o[1] = g * 0.88; o[2] = b * 0.9; return o;   // (Flemish grass: a deep, slightly blue green, not the grass map's bright one)
     };
     out.bounds = { minX: P.x0, maxX: P.x1, minZ: P.z0, maxZ: P.z1 };
     const matV = new THREE.MeshLambertMaterial({ vertexColors: true }); out.matV = matV;
@@ -13139,7 +13139,7 @@ const World = (function () {
               const uv = (p) => [p[0] / 1.1, -p[2] / 1.1], pc = (k) => { const v = 0.74 + 0.06 * rpHash(i, 41 + k); return [v, v * 0.99, v * 0.97]; };
               for (let k = 2; k < 4; k++) { const A = Q(k, qi, i), B = Q(k + 1, qi, i), C = Q(k + 1, qj, j), D = Q(k, qj, j); gp.quadUp(A, B, C, D, [pc(k), pc(k + 1), pc(k + 1), pc(k)], [uv(A), uv(B), uv(C), uv(D)]); }
             } else {   // the grass verge, the outer points in the ground's own colour (no seam)
-              const gut = [0.86, 0.84, 0.78], vg = [0.9, 0.98, 0.86], vc = (k, p) => (k === 0 ? gut : k <= 2 ? vg : gc(p)), uv = (p) => [p[0] / 14, -p[2] / 14];
+              const gut = [0.86, 0.84, 0.78], vg = [0.76, 0.75, 0.67], vc = (k, p) => (k === 0 ? gut : k <= 2 ? vg : gc(p)), uv = (p) => [p[0] / 14, -p[2] / 14];
               for (let k = 0; k < 4; k++) { const A = Q(k, qi, i), B = Q(k + 1, qi, i), C = Q(k + 1, qj, j), D = Q(k, qj, j);
                 gv.quadUp(A, B, C, D, [vc(k, A), vc(k + 1, B), vc(k + 1, C), vc(k, D)], [uv(A), uv(B), uv(C), uv(D)]); }
             }
@@ -13291,6 +13291,14 @@ const World = (function () {
             else { const along = front < 2; muRoof(o.rg, g, b.x, hi + 0.25 + fl * 3, b.z, (along ? b.L : b.W) + 0.3, (along ? b.W : b.L) + 0.5, Math.min((along ? b.W : b.L) * 0.62, 7.5), along ? b.ang : b.ang + PI / 2, roofC, wc); }
           } else {
             muHouse(g, near ? fac.get(b.x, b.z) : null, b, lo, hi, fl, wt, front, roofC, o);
+            if (near && fd[front] < 14 && fl >= 2 && crH(b.x, b.z, 82) < 0.45) {   // window boxes of geraniums under the first-floor windows (red, pink or white)
+              const [u, v] = [[0, b.W / 2], [0, -b.W / 2], [b.L / 2, 0], [-b.L / 2, 0]][front], nn = [[0, 1], [0, -1], [1, 0], [-1, 0]][front];
+              const ox = c * nn[0] - s * nn[1], oz = s * nn[0] + c * nn[1], ex = -oz, ez = ox, len = front < 2 ? b.L : b.W, bays = Math.max(1, Math.round(len / 3.2));
+              const px0 = b.x + c * u - s * v, pz0 = b.z + s * u + c * v, yb = hi + 0.25 + 3 + 0.62, rot = Math.atan2(ez, ex), g2 = scen.get(px0, pz0);
+              const FL = [[0.86, 0.14, 0.12], [0.92, 0.42, 0.6], [0.95, 0.94, 0.9], [0.9, 0.3, 0.14]], fc = FL[Math.floor(crH(b.x, b.z, 83) * FL.length)];
+              for (let k = 0; k < bays; k++) { if (crH(b.x + k, b.z, 84) < 0.25) continue; const a = (k + 0.5) / bays - 0.5, px = px0 + ex * a * len + ox * 0.2, pz = pz0 + ez * a * len + oz * 0.2;
+                box(g2, px, yb, pz, 1.05, 0.24, 0.3, rot, [0.3, 0.2, 0.14]); box(g2, px + ox * 0.02, yb + 0.24, pz + oz * 0.02, 1.0, 0.13, 0.32, rot, [0.22, 0.4, 0.17], fc); }
+            }
             if (near && fd[front] < 9 && crH(b.x, b.z, 77) < 0.4 && fl >= 2) {   // a flag out of a first-floor window (race day): the Flemish lion, now and then the tricolour
               const [u, v] = [[0, b.W / 2], [0, -b.W / 2], [b.L / 2, 0], [-b.L / 2, 0]][front], nx = [[0, 1], [0, -1], [1, 0], [-1, 0]][front], px = b.x + c * u - s * v, pz = b.z + s * u + c * v;
               const ox = c * nx[0] - s * nx[1], oz = s * nx[0] + c * nx[1], ex = c * nx[1] + s * nx[0], ez = s * nx[1] - c * nx[0];   // (out of the wall; along it)
@@ -13319,10 +13327,17 @@ const World = (function () {
        VIP marquees and beer stands in the park by the Muur, the big screen on the Markt, the Flemish lion on poles all the way up, the TV motorbikes ---- */
     const MK = [-22, -8], MKR = 80, chap = (def.bld || []).find(r => r[6] === 5);
     {
+      // (and in the whole town: the forecourts between the sidewalk and the houses, paved up to the walls as Flemish streets are)
       const gq = new GB(true), cs = 2.5, uv = (p) => [p[0] / 1.1, -p[2] / 1.1];
-      const ok = (x, z) => Math.hypot(x - MK[0], z - MK[1]) < MKR && nrLCf(x, z, 3) > 0.3 && nrNear(x, z).dd > 3.3 && !excluded(x, z) && !inWater(x, z, 2);
+      const ok = (x, z) => { if (nrDist(x, z) > 34) return false; const n = nrNear(x, z), mk = Math.hypot(x - MK[0], z - MK[1]) < MKR;
+        if (n.dd <= 3.3 || inWater(x, z, 2)) return false;
+        if (mk) return nrLCf(x, z, 3) > 0.3 && !excluded(x, z);
+        return n.i >= 0 && town[n.i] && n.dd < 24 && nrLCf(x, z, 3) > 0.55 && nrLCf(x, z, 2) < 0.3 && nrSlope(x, z) < 0.35; };
       const P3 = (a, b) => [a, nrGround(a, b) + 0.06, b], cc = (p) => { const v = 0.78 + 0.06 * crH(Math.floor(p[0] / 5), Math.floor(p[2] / 5), 44); return [v, v * 0.98, v * 0.95]; };
-      for (let z = MK[1] - MKR; z < MK[1] + MKR; z += cs) for (let x = MK[0] - MKR; x < MK[0] + MKR; x += cs) {
+      const cand = new Set(), ck = (x, z) => { const a = Math.floor(x / cs), b = Math.floor(z / cs); cand.add((a + 32768) * 65536 + b + 32768); };   // (only the cells near the town's streets and round the Markt)
+      for (let i = 0; i < N; i += 3) if (town[i]) for (let o = -26; o <= 26; o += cs) for (let q = -3; q <= 3; q += cs) ck(T.px[i] + T.nx[i] * o + T.tx[i] * q, T.pz[i] + T.nz[i] * o + T.tz[i] * q);
+      for (let z = MK[1] - MKR; z < MK[1] + MKR; z += cs) for (let x = MK[0] - MKR; x < MK[0] + MKR; x += cs) ck(x, z);
+      for (const key of [...cand].sort((p, q) => p - q)) { const x = (Math.floor(key / 65536) - 32768) * cs, z = (key % 65536 - 32768) * cs;
         if (!ok(x + cs / 2, z + cs / 2)) continue;
         const A = P3(x, z), B = P3(x + cs, z), C = P3(x + cs, z + cs), D = P3(x, z + cs);
         gq.quadUp(A, B, C, D, [cc(A), cc(B), cc(C), cc(D)], [uv(A), uv(B), uv(C), uv(D)]);
@@ -13489,6 +13504,17 @@ const World = (function () {
         'float wK = position.y * position.y * 0.018;\ntransformed.x += wK * sin( uWind * 1.1 + wPh );\ntransformed.z += wK * 0.6 * sin( uWind * 0.83 + wPh * 1.7 );');
     };
     tMat.customProgramCacheKey = () => 'nrTreeWind';
+    { const ob = tMat.onBeforeCompile;   // the leaves: a dappled pattern in world space over the crowns (clumps of leaves lit and in shade), not the smooth puffs
+      tMat.onBeforeCompile = (sh) => { ob(sh);
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vLw;\nvarying float vLh;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvLh = position.y;\n' +
+          '#ifdef USE_INSTANCING\nvLw = ( modelMatrix * instanceMatrix * vec4( position, 1.0 ) ).xyz;\n#else\nvLw = ( modelMatrix * vec4( position, 1.0 ) ).xyz;\n#endif');
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vLw;\nvarying float vLh;\n' +
+          'float lH( vec3 p ) { return fract( sin( dot( p, vec3( 127.1, 311.7, 74.7 ) ) ) * 43758.5453 ); }\n' +
+          'float lN( vec3 p ) { vec3 i = floor( p ), f = fract( p ); f = f * f * ( 3.0 - 2.0 * f ); return mix( mix( mix( lH( i ), lH( i + vec3( 1, 0, 0 ) ), f.x ), mix( lH( i + vec3( 0, 1, 0 ) ), lH( i + vec3( 1, 1, 0 ) ), f.x ), f.y ),' +
+          ' mix( mix( lH( i + vec3( 0, 0, 1 ) ), lH( i + vec3( 1, 0, 1 ) ), f.x ), mix( lH( i + vec3( 0, 1, 1 ) ), lH( i + vec3( 1, 1, 1 ) ), f.x ), f.y ), f.z ); }')
+          .replace('#include <color_fragment>', '#include <color_fragment>\nif ( vLh > 0.3 ) { float lf = lN( vLw * 1.1 ) * 0.6 + lN( vLw * 2.9 ) * 0.4; diffuseColor.rgb *= 0.7 + 0.55 * lf; diffuseColor.r *= 0.96 + 0.1 * lN( vLw * 0.31 ); }');
+      };
+      tMat.customProgramCacheKey = () => 'muTreeLeaf'; }
     const tk = [new IChunks(muTreeGeo(0), tMat, 128)];   // near: broadleaf (the birches and the odd spruce drawn as it too, a lighter green: one draw per chunk for phones)
     const tf = [new IChunks(muTreeGeo(1), tMat, 192)];
     let nTrees = 0;
@@ -13589,6 +13615,30 @@ const World = (function () {
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
     spC.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true);
     pkSky({ root, tex, out, sStart, gH: nrGround, far: true });   // the TV helicopter over the race
+    /* ---- the sky over Flanders: a dome round the camera (inside its far plane) with fair-weather cumulus drifting from the west; its colours from the
+       fog's (the horizon's): a deeper blue overhead, the clouds lit by the day; greyer fog (rain, dusk, night) closes the sky over and darkens it ---- */
+    {
+      const u = { uFog: { value: scene.fog ? scene.fog.color : new THREE.Color(0xc9d3dc) }, uT: { value: 0 } };
+      const mat = new THREE.ShaderMaterial({ uniforms: u, depthWrite: false, depthTest: false, fog: false, side: THREE.BackSide,
+        vertexShader: 'varying vec3 vD; void main(){ vD = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+        fragmentShader: ['uniform vec3 uFog; uniform float uT; varying vec3 vD;',
+          'float h2(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }',
+          'float n2(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h2(i), h2(i + vec2(1.0, 0.0)), f.x), mix(h2(i + vec2(0.0, 1.0)), h2(i + vec2(1.0, 1.0)), f.x), f.y); }',
+          'float fb(vec2 p){ return n2(p) * 0.55 + n2(p * 2.07 + 3.1) * 0.28 + n2(p * 4.3 + 7.7) * 0.17; }',
+          'void main(){',
+          '  vec3 d = normalize(vD); float y = max(d.y, 0.0), L = dot(uFog, vec3(0.3, 0.55, 0.15)), blue = clamp((uFog.b - uFog.r) * 7.0, 0.0, 1.0);',
+          '  vec3 top = mix(uFog * vec3(0.95, 0.97, 1.0), uFog * vec3(0.55, 0.74, 1.12), blue);',
+          '  vec3 c = mix(uFog, top, pow(smoothstep(0.0, 0.7, y), 0.8));',
+          '  vec2 q = d.xz / (y + 0.09) * 1.4 + vec2(uT * 0.004, uT * 0.0015);',   // (the clouds on a plane high overhead)
+          '  float cov = mix(0.72, 0.38, blue), f = fb(q), cl = smoothstep(cov, cov + 0.22, f) * smoothstep(0.02, 0.16, y);',
+          '  float sh = smoothstep(cov, cov + 0.45, fb(q + vec2(0.06, 0.09)));',   // (thicker towards the sun: grey bellies)
+          '  vec3 cc = mix(vec3(1.0, 0.99, 0.97) * min(1.12, L * 1.35), uFog * 0.78, sh * 0.55);',
+          '  c = mix(c, cc, cl * 0.92);',
+          '  gl_FragColor = vec4(c, 1.0); }'].join('\n') });
+      const m = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 10, 0, TAU, 0, PI * 0.55), mat); m.frustumCulled = false; m.renderOrder = -90; m.matrixAutoUpdate = false; m.castShadow = m.receiveShadow = false;
+      m.onBeforeRender = (r, sc, cam) => { const k = cam.far * 0.9; m.matrixWorld.makeScale(k, k, k).setPosition(cam.position); };
+      root.add(m); out.dyn.skyT = u.uT;
+    }
     crowdFinish(CR, root, out);
     out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, buildings: nBld, cut: nCut, gone: nGone, fans: nFans };   // (read by the tests)
     return out;
@@ -13611,7 +13661,8 @@ const World = (function () {
     if (d.podium) d.podium.step(t);   // Red Bull Ring: the podium after the race
     if (d.screens) { const f = Math.floor(t / 6) % 4; if (f !== d.screens.f) { d.screens.f = f; d.screens.tex.offset.x = f * 0.25; } }   // Red Bull Ring: the video walls' next picture every 6 s
     if (d.water) { d.water.offset.x = (t * 0.012) % 1; d.water.offset.y = (t * 0.007) % 1; }
-    if (d.wind) d.wind.value = t % 1000;   // the trees sway (Nordschleife, Spa)
+    if (d.wind) d.wind.value = t % 1000;
+    if (d.skyT) d.skyT.value = t % 4000;   // (the Kapelmuur's clouds drift)   // the trees sway (Nordschleife, Spa)
     if (d.clouds) { const n = CLOUD_NP; d.clouds.O.value.set(((t * 3.2 / CLOUD_S) % n + n) % n, ((-t * 2.5 / CLOUD_S) % n + n) % n); }   // the cloud shadows drift with the wind
     if (d.pk) pkUpdate(d.pk, t, car);   // Pikes Peak, Ouninpohja: the TV helicopter
     if (d.pkWx) pkWeatherUpdate(d.pkWx, t, car);   // Pikes Peak: cloud banks, snowfall
