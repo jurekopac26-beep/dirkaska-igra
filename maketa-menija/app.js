@@ -26,13 +26,11 @@
 
   /* ---------------- icons ---------------- */
   const cupPath = (f, s) => '<path d="M9.5 4.5h13v7.5a6.5 6.5 0 0 1-13 0z" fill="' + f + '" stroke="' + s + '" stroke-width="1.4"/><path d="M9.6 7H5.8a4.2 4.2 0 0 0 4.6 5.8M22.4 7h3.8a4.2 4.2 0 0 1-4.6 5.8" fill="none" stroke="' + s + '" stroke-width="2.2" stroke-linecap="round"/><path d="M14.3 18h3.4v5h-3.4z" fill="' + s + '"/><path d="M10.5 23.5h11v3.8h-11z" fill="' + f + '" stroke="' + s + '" stroke-width="1.2"/>';
-  const CUP = { 3: ['#ffd24a', '#b88700'], 2: ['#e7ecf3', '#8390a3'], 1: ['#e8a066', '#8a4f22'], 0: ['rgba(255,255,255,.06)', 'rgba(255,255,255,.28)'] };
   const I = {
     left: '<svg viewBox="0 0 20 20"><path d="M14 3.5v13L4 10z" fill="#fff"/></svg>',
     right: '<svg viewBox="0 0 20 20"><path d="M6 3.5v13L16 10z" fill="#fff"/></svg>',
     back: '<svg viewBox="0 0 22 22"><path d="M14 4 7 11l7 7" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     chev: '<svg class="chev" viewBox="0 0 18 18"><path d="m7 3 6 6-6 6" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    cup: (t) => '<svg viewBox="0 0 32 32">' + cupPath(CUP[t][0], CUP[t][1]) + '</svg>',
     bigcup: '<svg class="bigcup" viewBox="0 0 32 32" aria-hidden="true"><path d="M9.5 4.5h13v7.5a6.5 6.5 0 0 1-13 0z" fill="#ffc629" stroke="#8a6200" stroke-width=".8"/><path d="M9.6 7H5.8a4.2 4.2 0 0 0 4.6 5.8M22.4 7h3.8a4.2 4.2 0 0 1-4.6 5.8" fill="none" stroke="#ffc629" stroke-width="2" stroke-linecap="round"/><path d="M14.3 18h3.4v5h-3.4z" fill="#e0a40a"/><path d="M10.5 23.5h11v3.8h-11z" fill="#ffc629" stroke="#8a6200" stroke-width=".8"/><path d="M12 6.5h2.2v6.2a2 2 0 0 1-2.2-2z" fill="rgba(255,255,255,.55)"/></svg>',
     lock: (c) => '<svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.2" fill="' + c + '"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="' + c + '" stroke-width="2.4"/></svg>',
     coin: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffc629"/><circle cx="12" cy="12" r="7" fill="none" stroke="#b07d00" stroke-width="1.6"/><text x="12" y="15.4" text-anchor="middle" font-family="Roboto, Arial" font-weight="900" font-size="8.4" fill="#7a5600">CR</text></svg>',
@@ -62,22 +60,15 @@
     siren: '<svg width="22" height="24" viewBox="0 0 24 24"><path d="M6.5 19v-5.5a5.5 5.5 0 0 1 11 0V19z" fill="#ff4a4a"/><path d="M12 8a5.5 5.5 0 0 1 5.5 5.5V19H12z" fill="#3a78ff"/><rect x="4.5" y="19" width="15" height="3" rx="1" fill="#fff"/><path d="M12 1.8v2.6M4.4 4.8l1.8 1.8M19.6 4.8l-1.8 1.8M1.6 11.5h2.3M20.1 11.5h2.3" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>',
     watch: '<svg width="22" height="24" viewBox="0 0 24 24"><circle cx="12" cy="14" r="8" fill="none" stroke="#fff" stroke-width="2"/><path d="M12 14V9.4" stroke="#3fd0ff" stroke-width="2.2" stroke-linecap="round"/><path d="M9.4 2.6h5.2M12 2.6v3.2M18.6 6.4l1.6-1.6" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
     dice: '<svg width="22" height="24" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="17" rx="4" fill="#fff"/><g fill="#0b192b"><circle cx="8.6" cy="9.4" r="1.7"/><circle cx="12" cy="13" r="1.7"/><circle cx="15.4" cy="16.6" r="1.7"/><circle cx="15.4" cy="9.4" r="1.7"/><circle cx="8.6" cy="16.6" r="1.7"/></g></svg>',
-    reset: '<svg viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M4 3.5v4.2h4.2" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    mic: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8.5" y="2.5" width="7" height="12" rx="3.5" fill="currentColor"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5M8.5 21.5h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
   };
   const minimap = (id) => { const t = OUT[id]; if (!t) return ''; return '<svg viewBox="' + t.vb + '" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><path class="o" vector-effect="non-scaling-stroke" d="' + t.d + '"/><path class="i" vector-effect="non-scaling-stroke" d="' + t.d + '"/></svg>'; };
-  const ring = (pct, lockCol) => {
-    const r = 21, c = 2 * Math.PI * r, col = pct >= 100 ? '#ffc629' : pct > 0 ? '#3fd0ff' : 'rgba(255,255,255,.2)';
-    return '<div class="ring"><svg viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="' + r + '" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.12)" stroke-width="5"/>' +
-      (pct > 0 ? '<circle cx="26" cy="26" r="' + r + '" fill="none" stroke="' + col + '" stroke-width="5" stroke-linecap="round" stroke-dasharray="' + (c * pct / 100).toFixed(1) + ' ' + c.toFixed(1) + '"/>' : '') + '</svg>' +
-      (lockCol ? '<span class="lock">' + I.lock(lockCol) + '</span>' : '<b>' + pct + '<small>%</small></b>') + '</div>';
-  };
   const segCol = (i) => 'hsl(' + (128 - i * 6.6) + ', 88%, ' + (i < 8 ? 48 : 52) + '%)';
   const segBar = (n, up) => '<div class="segb" aria-hidden="true">' + Array.from({ length: 16 }, (_, i) => i < n ? '<i class="on" style="background:' + segCol(i) + '"></i>' : i < n + (up || 0) ? '<i class="up"></i>' : '<i></i>').join('') + '</div>';
 
   /* ---------------- data helpers ---------------- */
   const trackById = (id) => D.tracks.find(t => t.id === id);
   const carById = (id) => D.cars.find(c => c.id === id);
-  const seriesById = (id) => D.series.find(s => s.id === id);
   const fullName = (t) => t.country ? t.name + ', ' + t.country : t.name;
   const WEATHER = ['Dry', 'Rain', 'Random'];
   const wIcon = (w) => [I.sun, I.rain, I.dice][Math.max(0, WEATHER.indexOf(w))];
@@ -88,35 +79,73 @@
 
   /* ---------------- progress: it changes as you "race" in the mockup, kept per state in this browser ---------------- */
   let ST, P;
-  const fresh = (st) => { const s = D.states[st]; return { owned: !!s.owned, money: s.money, car: s.car, color: s.color, trophies: clone(s.trophies || {}), upgrades: clone(s.upgrades || {}), myRecords: clone(s.myRecords || {}), chase: {}, daily: null, last: '' }; };
-  const loadP = (st) => { const p = store.get('p-' + st, null); if (!p || !p.trophies) return fresh(st); if (p.car == null) { p.car = D.states[st].car; p.color = D.states[st].color; } if (!p.chase) p.chase = {}; return p; };
+  const fresh = (st) => { const s = D.states[st]; return { owned: !!s.owned, money: s.money, car: s.car, color: s.color, career: clone(s.career || {}), upgrades: clone(s.upgrades || {}), myRecords: clone(s.myRecords || {}), chase: {}, daily: null, last: '' }; };
+  const loadP = (st) => {
+    const p = store.get('p-' + st, null); if (!p || !p.myRecords) return fresh(st);
+    if (p.car == null) { p.car = D.states[st].car; p.color = D.states[st].color; } if (!p.chase) p.chase = {};
+    if (!p.career) { p.career = clone(D.states[st].career || {}); delete p.trophies; }   // (saved before the career had its four ways: its starting point)
+    return p;
+  };
   const saveP = () => store.set('p-' + ST, P);
   const S = () => D.states[ST];
   const owned = () => !!P.owned;
   const carLocked = (c) => !owned() && !c.free;
   const trackLocked = (t) => !owned() && !t.free;
-  const troOf = (s) => (P.trophies[s.id] || []).concat(Array(s.races.length).fill(0)).slice(0, s.races.length);
-  const pctOf = (s) => Math.round(sum(troOf(s)) / (3 * s.races.length) * 100);
-  const totalTro = () => D.series.reduce((a, s) => a + sum(troOf(s)), 0);
-  const maxTro = () => D.series.reduce((a, s) => a + 3 * s.races.length, 0);
-  const careerPct = () => Math.round(totalTro() / maxTro() * 100);
-  const level = () => 1 + Math.floor(totalTro() / 3);
-  function seriesState(i) {   // 'pay' (in the full game), 'lock' (the previous series under the unlock %), 'open'
-    const s = D.series[i];
-    if (!owned() && !s.free) return 'pay';
-    if (i > 0 && pctOf(D.series[i - 1]) < D.unlockAt && sum(troOf(s)) === 0) return 'lock';
-    return 'open';
+  /* ---------------- the career: four ways to play it, each with its own progress (P.career) ----------------
+     cup: the World Cup, rounds of circuits whose points add up (the top of a round's standings go through to the next round); chase: the
+     chase missions one after another (one done opens the next); trial: a medal on each track (bronze opens the next); rally: stage after
+     stage, the times add up */
+  const C = D.career, MEDAL = { gold: 3, silver: 2, bronze: 1, none: 0 };
+  const cm = () => { const c = P.career || (P.career = {}); c.cup = c.cup || { round: 0, res: [], rounds: [] }; c.chase = c.chase || { stars: [] }; c.trial = c.trial || { medals: {} }; c.rally = c.rally || { res: [] }; return c; };
+  const rng = (seed) => () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  // a World Cup race: the places of the rivals round the player's (the stronger a rival, the more often in front; the same every time)
+  function cupPlaces(round, k, place) {
+    const r = rng(round * 997 + k * 131 + 7), order = C.cup.rivals.map((n, i) => [n, i * 0.9 + r() * 7]).sort((a, b) => a[1] - b[1]).map(x => x[0]), out = {};
+    let q = 1; for (const n of order) { if (q === place) q++; out[n] = q++; }
+    return out;
   }
-  // the next career race: the first race without a trophy in an open series, else the first without gold
-  function nextRace() {
-    for (const pass of [0, 1]) for (let i = 0; i < D.series.length; i++) {
-      if (seriesState(i) !== 'open') continue;
-      const tro = troOf(D.series[i]), k = tro.findIndex(t => pass ? t < 3 : t === 0);
-      if (k >= 0) return [D.series[i].id, k];
-    }
-    return null;
+  // the standings of a round after the races raced so far: [{ name, pts, me }], the best first
+  function cupTable(round, res) {
+    const pts = (q) => C.cup.points[q - 1] || 0, T = { You: 0 };
+    C.cup.rivals.forEach(n => { T[n] = 0; });
+    res.forEach((place, k) => { T.You += pts(place); const pl = cupPlaces(round, k, place); for (const n in pl) T[n] += pts(pl[n]); });
+    return Object.keys(T).map(n => ({ name: n, pts: T[n], me: n === 'You' })).sort((a, b) => b.pts - a.pts || (a.me ? -1 : b.me ? 1 : 0));
   }
-  const raceReward = (s) => s.trial ? 4000 : [0, 1500, 3000, 6000, 10000][s.lv];
+  const cupPos = (round, res) => cupTable(round, res).findIndex(x => x.me) + 1;
+  // a rally stage: the player's time from the finishing place, the rivals' from their own pace (the same every time)
+  const stageTime = (k, place) => { const t = trackById(C.rally.stages[k].track); return secs(t.rec[1]) + 1.5 + (place - 1) * 2.8; };
+  function rallyTable(res) {
+    const T = [{ name: 'You', t: 0, me: true }].concat(C.rally.rivals.map((n, i) => ({ name: n, t: 0 })));
+    res.forEach((place, k) => { const base = secs(trackById(C.rally.stages[k].track).rec[1]), r = rng(k * 211 + 13); T[0].t += stageTime(k, place); T.slice(1).forEach((x, i) => { x.t += base + 1.2 + i * 1.9 + r() * 4.5; }); });
+    return T.sort((a, b) => a.t - b.t);
+  }
+  // how far each way is (0..1), and the whole career in %
+  function cmProgress() {
+    const c = cm(), R = C.cup.rounds;
+    const cup = Math.min(1, (c.cup.round + (c.cup.round < R.length ? c.cup.res.length / R[c.cup.round].races.length : 0)) / R.length);
+    const chase = sum(c.chase.stars) / (3 * C.chase.missions.length);
+    const trial = C.trial.tracks.reduce((a, id) => a + MEDAL[c.trial.medals[id] || 'none'], 0) / (3 * C.trial.tracks.length);
+    const rally = Math.min(1, c.rally.res.length / C.rally.stages.length);
+    return { cup, chase, trial, rally };
+  }
+  const careerPct = () => { const p = cmProgress(); return Math.round((p.cup + p.chase + p.trial + p.rally) / 4 * 100); };
+  const level = () => 1 + Math.floor(careerPct() / 6);
+  const careerStarted = () => careerPct() > 0;
+  // the next chase mission (the first not escaped / caught yet), the next time trial (the first without gold that is open)
+  const nextMission = () => { const st = cm().chase.stars, k = C.chase.missions.findIndex((m, i) => !st[i]); return k < 0 ? C.chase.missions.length - 1 : k; };
+  const missionOpen = (k) => k === 0 || !!cm().chase.stars[k - 1];
+  const trialOpen = (k) => k === 0 || MEDAL[cm().trial.medals[C.trial.tracks[k - 1]] || 'none'] > 0;
+  const nextTrial = () => { const M = cm().trial.medals, k = C.trial.tracks.findIndex((id, i) => trialOpen(i) && M[id] !== 'gold'); return k < 0 ? 0 : k; };
+  const cupReward = (place) => Math.round(3000 * D.prizes[Math.min(D.prizes.length, place) - 1]);
+  // the next race of a way of the career ('cup' | 'chase' | 'trial' | 'rally')
+  function cmRace(k) {
+    const c = cm();
+    if (k === 'cup') { const ri = Math.min(c.cup.round, C.cup.rounds.length - 1), rd = C.cup.rounds[ri], i = Math.min(c.cup.res.length, rd.races.length - 1); return { kind: 'career', cm: 'cup', track: trackById(rd.races[i]), round: ri, idx: i, label: 'World Cup · ' + rd.name + ' · race ' + (i + 1) + ' of ' + rd.races.length }; }
+    if (k === 'chase') { const i = nextMission(), m = C.chase.missions[i]; return { kind: 'career', cm: 'chase', chase: true, role: m.role, foe: m.foe, track: trackById(m.track), idx: i, label: 'Mission ' + (i + 1) + ' · ' + m.title }; }
+    if (k === 'trial') { const i = nextTrial(); return { kind: 'career', cm: 'trial', trial: true, track: trackById(C.trial.tracks[i]), idx: i, label: 'Time trial · track ' + (i + 1) + ' of ' + C.trial.tracks.length }; }
+    const i = Math.min(c.rally.res.length, C.rally.stages.length - 1), sg = C.rally.stages[i];
+    return { kind: 'career', cm: 'rally', track: trackById(sg.track), idx: i, label: C.rally.name + ' · ' + sg.name };
+  }
   const upgOf = (car) => (P.upgrades[car.id] || [0, 0, 0, 0]);
 
   /* ---------------- today's race ---------------- */
@@ -134,7 +163,7 @@
   }
 
   /* ---------------- view state ---------------- */
-  let screen, shown = '', mode = 'race', group = 'circuit', mapV = 1, carIdx, colorIdx, trackIdx, tab, seriesId, raceSel, lapsSel, weather, lbTrack, mpMode, history, sheet = null, sheetOn = false, settings, result = null;
+  let screen, shown = '', titleSub = null, panelH = 0, mode = 'race', group = 'circuit', mapV = 1, carIdx, colorIdx, trackIdx, tab, lapsSel, weather, lbTrack, mpMode, history, sheet = null, sheetOn = false, settings, result = null;
   const modeOf = (id) => D.modes.find(m => m.id === id) || D.modes[0];
   const dailyMode = () => daily().track.trial ? 'trial' : 'race';   // today's race is a circuit race, or a time trial on a hill climb or a rally stage
   // the tracks of a group in the chosen mode (null: today's race, first in its own mode and group); a circuit race needs a track that races
@@ -143,7 +172,7 @@
   const TRACKS = () => groupList(group);
   function resetView() {
     const s = S();
-    carIdx = P.car; colorIdx = P.color; mode = 'race'; group = 'circuit'; trackIdx = 0; tab = 'stats'; seriesId = null; raceSel = null; lapsSel = null; weather = 0; lbTrack = -1; mpMode = null; result = null;
+    carIdx = P.car; colorIdx = P.color; titleSub = null; mode = 'race'; group = 'circuit'; trackIdx = 0; tab = 'stats'; lapsSel = null; weather = 0; lbTrack = -1; mpMode = null; result = null;
   }
 
   /* ---------------- persistent parts: video background, 3D car ---------------- */
@@ -181,18 +210,19 @@
       const r = cv.getBoundingClientRect(); dpr = Math.min(2, window.devicePixelRatio || 1);
       if (!r.width || (r.width === W && r.height === H)) return;
       W = r.width; H = r.height; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-      drops = Array.from({ length: Math.round(W * H / 1400) }, () => ({ x: Math.random() * (W + 60) - 60, y: Math.random() * H, l: 11 + Math.random() * 15, v: 620 + Math.random() * 380, o: 0.2 + Math.random() * 0.4 }));
+      drops = Array.from({ length: Math.round(W * H / 1000) }, () => ({ x: Math.random() * (W + 60) - 60, y: Math.random() * H, l: 14 + Math.random() * 18, v: 640 + Math.random() * 400, o: 0.35 + Math.random() * 0.45 }));
     }
     function frame(t) {
       raf = 0; const el = last ? (t - last) / 1000 : 0.016, dt = Math.min(0.05, el); last = t;   // (the fade follows the clock, the drops a capped step)
       a = want > a ? Math.min(want, a + el / 0.5) : Math.max(want, a - el / 0.5);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
       if (a > 0) {
-        ctx.lineWidth = 1.2; ctx.lineCap = 'round';
+        ctx.fillStyle = 'rgba(14, 22, 34, ' + (0.26 * a).toFixed(3) + ')'; ctx.fillRect(0, 0, W, H);   // (the overcast: the streaks show on a light map too)
+        ctx.lineWidth = 1.5; ctx.lineCap = 'round';
         for (const d of drops) {
           d.y += d.v * dt; d.x += d.v * dt * 0.22;
           if (d.y - d.l > H) { d.y = -Math.random() * 30; d.x = Math.random() * (W + 60) - 60; }
-          ctx.strokeStyle = 'rgba(214, 228, 255, ' + (d.o * a).toFixed(3) + ')';
+          ctx.strokeStyle = 'rgba(232, 240, 255, ' + (d.o * a).toFixed(3) + ')';
           ctx.beginPath(); ctx.moveTo(d.x, d.y); ctx.lineTo(d.x - d.l * 0.22, d.y - d.l); ctx.stroke();
         }
       }
@@ -231,38 +261,50 @@
 
   /* ---------------- main menu ---------------- */
   function vTitle() {
-    const M = D.menu, d = daily(), nx = nextRace(), cp = careerPct();
+    const M = D.menu, d = daily(), cp = careerPct();
     let singleChip;
     if (!owned()) singleChip = d.runsLeft > 0 ? '<em class="chip gold">1 FREE RUN TODAY</em>' : '<em class="chip">PLAYED TODAY · ' + ord(d.mine.rank) + '</em>';
     else singleChip = d.mine ? '<em class="chip">TODAY: ' + ord(d.mine.rank) + ' OF ' + num(d.players) + '</em>' : '<em class="chip gold">NEW TODAY</em>';
-    const nb = (x) => String(x).replace(/ /g, '\u00a0');
-    const careerSub = nx ? nb(cp + ' %') + '\u00a0· ' + nb(seriesById(nx[0]).name) + '\u00a0· ' + nb('race ' + (nx[1] + 1) + ' of ' + seriesById(nx[0]).races.length) : nb(cp + ' %') + '\u00a0· career complete';
+    const nb = (x) => String(x).replace(/ /g, ' ');
     let h = '<section class="scr" id="s-title" aria-label="Main menu"><div id="bg-slot"></div>';
     h += '<div class="t-top"><h1 class="logo small"><span class="l1">' + esc(D.game.l1) + '</span><span class="l2">' + esc(D.game.l2) + '</span></h1><div class="t-me">' + moneyPill() +
-      (ST === 'veteran' || totalTro() ? '<small>' + esc(S().player) + ' · Level ' + level() + '</small>' : '') + '</div></div>';
-    h += '<div class="t-menu title-panel">';
-    h += '<button class="tile t-single" data-act="single"><span class="tx"><b>' + M.single.title + '</b><small>' + esc(M.single.sub.replace('{track}', d.track.name).replace('{weather}', d.weather.toLowerCase())) + '</small>' + singleChip + '</span>' +
-      '<span class="im"><img src="' + trackImg(d.track, d.weather === 'Rain') + '" alt=""></span></button>';
-    h += '<button class="tile t-multi" data-act="go:multi"><span class="tx"><b>' + M.multi.title + '</b><small>' + esc(M.multi.sub) + '</small>' + (owned() ? '' : '<em class="chip">3 TRACKS IN FREE</em>') + '</span>' +
-      '<span class="im"><img src="' + M.multi.img + '" alt=""></span></button>';
-    h += '<button class="tile t-career" data-act="go:career"><span class="tx"><b>' + M.career.title + '</b><small>' + esc(careerSub) + '</small><i class="pbar"><b style="width:' + cp + '%"></b></i></span>' +
-      '<span class="im">' + I.bigcup + '<img src="' + M.career.img + '" alt=""></span></button>';
-    h += '<div class="t-row"><button class="tsmall" data-act="go:settings">' + I.cog + '<span>' + esc(M.settings) + '</span></button><button class="tsmall" data-act="go:board">' + I.podium + '<span>' + esc(M.board) + '</span></button></div>';
-    if (!owned()) h += '<button class="mbtn gold buy" data-act="offer"><span>' + esc(M.buy) + ' · ' + esc(D.game.price) + '</span><small>' + esc(M.buySub) + '</small></button>';
-    else h += '<div class="owned">' + I.check + '<span>' + esc(M.owned) + '</span></div>';
+      (ST === 'veteran' || careerStarted() ? '<small>' + esc(S().player) + ' · Level ' + level() + '</small>' : '') + '</div></div>';
+    h += '<div class="t-menu title-panel' + (titleSub ? ' sub' : '') + '">';
+    // Single race and Career open in this same frame (the race goes on behind it); a mode or a way of the career then opens its own screen
+    const subHead = (title, sub) => '<div class="t-subhead"><button class="sq" data-act="tsub:" aria-label="Back to the main menu">' + I.back + '</button><div><b>' + esc(title) + '</b><small>' + esc(sub) + '</small></div></div>';
+    const card = (cls, act, cur, name, sub, chip, img) => '<button class="mode ' + cls + '" aria-current="' + cur + '" data-act="' + act + '"><span class="tx"><b>' + esc(name) + '</b><small>' + esc(sub) + '</small>' + (chip ? '<em class="chip">' + esc(chip) + '</em>' : '') + '</span><span class="im"><img src="' + img + '" alt=""></span><i class="tick" aria-hidden="true">' + I.check + '</i></button>';
+    if (titleSub === 'single') {
+      h += subHead('Single race', 'Choose a mode') + '<div class="t-sub">' + D.modes.map(m => card('m-' + m.id, 'mode:' + m.id, mode === m.id, m.name, m.sub, m.chip, m.img)).join('') + '</div>';
+    } else if (titleSub === 'career') {
+      const c = cm(), R = C.cup.rounds, cupDone = c.cup.round >= R.length;
+      const chips = {
+        cup: cupDone ? 'WORLD CHAMPION' : R[c.cup.round].name.toUpperCase() + ' · RACE ' + Math.min(R[c.cup.round].races.length, c.cup.res.length + 1) + ' OF ' + R[c.cup.round].races.length,
+        chase: 'MISSION ' + (nextMission() + 1) + ' OF ' + C.chase.missions.length + ' · ' + sum(c.chase.stars) + ' ★',
+        trial: C.trial.tracks.filter(id => c.trial.medals[id] && c.trial.medals[id] !== 'none').length + ' OF ' + C.trial.tracks.length + ' MEDALS',
+        rally: c.rally.res.length >= C.rally.stages.length ? 'RALLY DONE · ' + ord(rallyTable(c.rally.res).findIndex(x => x.me) + 1).toUpperCase() : 'STAGE ' + (c.rally.res.length + 1) + ' OF ' + C.rally.stages.length,
+      };
+      h += subHead('Career', cp + ' % done · four ways to play') + '<div class="t-sub four">' + ['cup', 'chase', 'trial', 'rally'].map(k => card('cm-' + k, 'cm:' + k, false, C[k].name, C[k].sub, chips[k], C[k].img)).join('') + '</div>';
+    } else {
+      h += '<button class="tile t-single" data-act="single"><span class="tx"><b>' + M.single.title + '</b><small>' + esc(M.single.sub.replace('{track}', d.track.name).replace('{weather}', d.weather.toLowerCase())) + '</small>' + singleChip + '</span>' +
+        '<span class="im"><img src="' + trackImg(d.track, d.weather === 'Rain') + '" alt=""></span></button>';
+      h += '<button class="tile t-multi" data-act="go:multi"><span class="tx"><b>' + M.multi.title + '</b><small>' + esc(M.multi.sub) + '</small>' + (owned() ? '' : '<em class="chip">3 TRACKS IN FREE</em>') + '</span>' +
+        '<span class="im"><img src="' + M.multi.img + '" alt=""></span></button>';
+      h += '<button class="tile t-career" data-act="career"><span class="tx"><b>' + M.career.title + '</b><small>' + nb(cp + ' %') + ' · ' + nb('World Cup, chases, time trials, rally') + '</small><i class="pbar"><b style="width:' + cp + '%"></b></i></span>' +
+        '<span class="im">' + I.bigcup + '<img src="' + M.career.img + '" alt=""></span></button>';
+      h += '<div class="t-row"><button class="tsmall" data-act="go:settings">' + I.cog + '<span>' + esc(M.settings) + '</span></button><button class="tsmall" data-act="go:board">' + I.podium + '<span>' + esc(M.board) + '</span></button></div>';
+      if (!owned()) h += '<button class="mbtn gold buy" data-act="offer"><span>' + esc(M.buy) + ' · ' + esc(D.game.price) + '</span><small>' + esc(M.buySub) + '</small></button>';
+      else h += '<div class="owned">' + I.check + '<span>' + esc(M.owned) + '</span></div>';
+    }
     h += '</div></section>';
     return h;
   }
 
-  /* ---------------- the maps of the tracks (routes.js), in four versions to choose from ----------------
+  /* ---------------- the maps of the tracks (routes.js), in two versions to choose from ----------------
      1 a flyover video: the route drawn in the game's world behind the point running along it (green on the flat, red where it climbs
-       steeply), the names over it, in the corner the place the point has reached and its height; 2 a map from above to the stage's edges
-       (an open road: its height profile; a rally stage or a circuit: its corners); 3 a floating block of the land with the route on it;
-       4 a drone's shots of the track drawn by the game itself (the open road with its traffic and people, elsewhere the AI cars racing),
-       the place and its height in the corner */
+       steeply), the names over it, in the corner the place the point has reached and its height; 2 a map from above to the stage's edges,
+       nothing over the route but its flags. (The drone's shots of the track are the intro before the race: startRace) */
   const RT = window.ROUTES || {};
   const isRoute = (t) => !!t && !!RT[t.id];
-  const loadImg = (t, wet) => isRoute(t) && RT[t.id].block ? 'assets/maps/block-' + t.id + (wet ? '-rain' : '') + '.webp' : trackImg(t, wet);
   const pathD = (pts) => 'M' + pts.map(p => p[0] + ' ' + p[1]).join('L');
   // a height of the world as a real one: scaled between the real start and finish where they are known (routeMaps alt), else the height
   // at the start (routeMaps base) and the world's rise and fall from there
@@ -271,7 +313,6 @@
   // the places along the run ([metres, name]) and the one reached at d metres
   const hudOf = (R, M) => M.hud || R.hud || [[0, 'Start']];
   function placeAt(H, d) { let p = H[0][1]; for (const q of H) if (q[0] <= d) p = q[1]; return p; }
-  const km = (m) => (m / 1000).toFixed(1) + ' km';
   const flagSvg = (fin) => fin ? '<g class="fl fin"><path d="M0 0V-26" /><rect x="0" y="-26" width="16" height="11"/><path class="ck" d="M0-26h4v3.7h-4zM8-26h4v3.7h-4zM4-22.3h4v3.6h-4zM12-22.3h4v3.6h-4zM0-18.7h4v3.7h-4zM8-18.7h4v3.7h-4z"/></g>'
     : '<g class="fl"><path d="M0 0V-26"/><path class="fg" d="M0-26h16l-4 5.5 4 5.5H0z"/></g>';
   function mark(x, y, name, sub, fin, cls) {   // a flag on the map and its name (with a dark edge round the letters: readable on any land)
@@ -293,64 +334,33 @@
   }
   const hudBox = () => '<div class="hud" aria-hidden="true"><b></b><small></small></div>';
   function flyView(t, lockd) {
-    return '<div class="dio fly' + (lockd ? ' lock' : '') + '" data-route="' + t.id + '" data-kind="fly"><video muted loop playsinline autoplay preload="auto" poster="assets/maps/fly-' + t.id + '.webp" src="assets/maps/fly-' + t.id + '.webm"></video><div class="flab" aria-hidden="true"></div>' + hudBox() + '</div>';
+    return '<div class="dio fly' + (lockd ? ' lock' : '') + '" data-route="' + t.id + '"><video muted loop playsinline autoplay preload="auto" poster="assets/maps/fly-' + t.id + '.webp" src="assets/maps/fly-' + t.id + '.webm"></video><div class="flab" aria-hidden="true"></div>' + hudBox() + '</div>';
   }
-  function droneView(t, lockd) {
-    return '<div class="dio fly drone' + (lockd ? ' lock' : '') + '" data-route="' + t.id + '" data-kind="drone"><video muted loop playsinline autoplay preload="auto" poster="assets/maps/drone-' + t.id + '.webp" src="assets/maps/drone-' + t.id + '.webm"></video>' + hudBox() + '</div>';
-  }
-  function topView(t, R, M, notes, lockd) {   // the whole map to the stage's edges (fitMaps: the route above the notes)
+  function topView(t, R, M, lockd) {   // the whole map to the stage's edges (fitMaps: the route as big as fits)
     const T = R.top, pts = T.route, rally = t.group === 'rally';
-    let h = '<div class="dio topmap' + (rally ? ' rally' : '') + (lockd ? ' lock' : '') + '" data-map="' + t.id + '"><svg class="mapsvg" viewBox="0 0 ' + T.W + ' ' + T.H + '" preserveAspectRatio="xMidYMid slice" aria-label="Map of ' + esc(t.name) + '">' +
+    return '<div class="dio topmap' + (rally ? ' rally' : '') + (lockd ? ' lock' : '') + '" data-map="' + t.id + '"><svg class="mapsvg" viewBox="0 0 ' + T.W + ' ' + T.H + '" preserveAspectRatio="xMidYMid slice" aria-label="Map of ' + esc(t.name) + '">' +
       '<image href="assets/maps/top-' + t.id + '.webp" width="' + T.W + '" height="' + T.H + '"/><image class="wet" href="assets/maps/top-' + t.id + '-rain.webp" width="' + T.W + '" height="' + T.H + '"/>' +
-      routeLines(t.id, pts, rally) + (notes ? splitMarks(pts) : '') + marks(R, M, pts, rally);
-    return h + '</svg>' + (notes ? paceNotes(t, R, M) : profile(t, R, M)) + '</div>';
-  }
-  function profile(t, R, M) {   // the heights along the run (as a stage presentation): the real heights where known; a low strip under the map
-    const P = R.prof, n = P.length, L = R.len, alts = P.map(h => altOf(R, M, h) != null ? altOf(R, M, h) : h);
-    const lo = Math.min(...alts), hi = Math.max(...alts), span = Math.max(40, hi - lo), X = (k) => 18 + k / (n - 1) * 364, Y = (v) => 50 - (v - lo) / span * 36;
-    let pd = 'M18 52', gain = 0; alts.forEach((v, k) => { pd += 'L' + X(k).toFixed(1) + ' ' + Y(v).toFixed(1); if (k && v > alts[k - 1]) gain += v - alts[k - 1]; }); pd += 'L382 52Z';
-    let h = '<svg class="prof" viewBox="0 0 400 66" aria-label="Height profile"><defs><linearGradient id="pg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd23a"/><stop offset="1" stop-color="#ffd23a" stop-opacity=".12"/></linearGradient></defs>';
-    h += '<path class="pa" d="' + pd + '"/><line class="ax" x1="18" y1="52" x2="382" y2="52"/>';
-    let px = -1e9;   // (the places of the flyover along it, each far enough from the one before to read)
-    ((R.fly && R.fly.places) || []).forEach(nm => { const q = R.places.find(x => x[0] === nm || x[0].indexOf(nm) >= 0); if (!q) return; const k = Math.round(q[1] / L * (n - 1)), x = X(k), y = Y(alts[Math.min(n - 1, k)]); if (x - px < 78 || x > 350) return; px = x; h += '<line class="pl" x1="' + x + '" y1="' + y + '" x2="' + x + '" y2="' + (y - 8) + '"/><text class="pn" x="' + x + '" y="' + (y - 11) + '" text-anchor="middle">' + esc(nm) + '</text>'; });
-    h += '<text class="pt" x="18" y="64">0</text><text class="pt" x="382" y="64" text-anchor="end">' + km(L) + '</text><text class="pg" x="200" y="64" text-anchor="middle">' + (M.alt ? 'Climb +' + num(Math.round(gain)) + ' m' : 'Height ±' + Math.round(span) + ' m') + '</text></svg>';
-    return '<div class="profw">' + h + '</div>';
-  }
-  function paceNotes(t, R, M) {   // a rally stage or a circuit: its corners along it, left ones above the line, right ones below, the tighter the taller
-    const N = R.notes || [], L = R.len, X = (d) => 18 + d / L * 364, col = (g) => g <= 2 ? '#ff4b4b' : g <= 4 ? '#ff9a3a' : '#ffe07a', rally = t.group === 'rally';
-    let h = '<svg class="prof pace" viewBox="0 0 400 66" aria-label="Corners"><line class="ax" x1="18" y1="29" x2="382" y2="29"/>';
-    [1, 2].forEach(k => { const x = X(L * k / 3); h += '<line class="spl" x1="' + x + '" y1="4" x2="' + x + '" y2="54"/><text class="pt sm" x="' + (x + 3) + '" y="8">' + (rally ? 'SPLIT ' : 'SECTOR ') + k + '</text>'; });
-    N.forEach(([d, side, g]) => { const x = X(d), hgt = 3 + (7 - g) * 3.3, y = side < 0 ? 27 - hgt : 31; h += '<rect x="' + (x - 2).toFixed(1) + '" y="' + y.toFixed(1) + '" width="4" height="' + hgt.toFixed(1) + '" rx="1.8" fill="' + col(g) + '"/>'; });
-    h += '<text class="pt" x="18" y="64">' + esc(rally ? (M.stage || 'SS') + ' START' : 'START') + '</text><text class="pt" x="382" y="64" text-anchor="end">' + (R.open ? 'STOP · ' : 'LAP · ') + km(L) + '</text>';
-    h += '<text class="pg" x="200" y="64" text-anchor="middle">' + N.length + ' corners · ' + esc(M.surface || (rally ? 'Gravel' : 'Asphalt')).toUpperCase() + '</text><text class="lr" x="392" y="20" text-anchor="end">L</text><text class="lr" x="392" y="46" text-anchor="end">R</text></svg>';
-    return '<div class="profw">' + h + '</div>';
-  }
-  function blockView(t, R, M, lockd) {
-    const B = R.block, pts = B.route, rally = t.group === 'rally';
-    let h = '<div class="dio blockv' + (lockd ? ' lock' : '') + (rally ? ' rally' : '') + '"><div class="isl" style="animation-delay:-' + Math.round(performance.now() % 5000) + 'ms"><svg viewBox="0 0 ' + B.W + ' ' + B.H + '" aria-label="3D model of ' + esc(t.name) + '">' +
-      '<image href="assets/maps/block-' + t.id + '.webp" width="' + B.W + '" height="' + B.H + '"/><image class="wet" href="assets/maps/block-' + t.id + '-rain.webp" width="' + B.W + '" height="' + B.H + '"/>' +
-      routeLines(t.id + '-b', pts, rally) + (t.group !== 'road' ? splitMarks(pts) : '') + marks(R, M, pts, rally);
-    return h + '</svg></div></div>';
+      routeLines(t.id, pts, rally) + (t.group !== 'road' ? splitMarks(pts) : '') + marks(R, M, pts, rally) + '</svg></div>';
   }
   function routeView(t, lockd) {
-    const R = RT[t.id], M = D.routeMaps[t.id] || {}, notes = t.group !== 'road';
-    // the version chosen; where a track has no such video (yet), its map
-    const v = mapV === 4 && R.drone ? 4 : mapV === 1 && R.fly ? 1 : mapV === 3 && R.block ? 3 : 2;
+    const R = RT[t.id], M = D.routeMaps[t.id] || {};
+    // the version chosen; where a track has no flyover (yet), its map
+    const v = mapV === 1 && R.fly ? 1 : 2;
     let h = '<div class="sky" aria-hidden="true"><i class="sun"></i><i class="cloud"></i></div>';
-    h += v === 1 ? flyView(t, lockd) : v === 4 ? droneView(t, lockd) : v === 3 ? blockView(t, R, M, lockd) : topView(t, R, M, notes, lockd);
+    h += v === 1 ? flyView(t, lockd) : topView(t, R, M, lockd);
     const V = D.mapVersions.find(x => x.n === mapV) || D.mapVersions[0];
     h += '<div class="mapv" role="group" aria-label="Map version (mockup)"><span>MAP</span>' + D.mapVersions.map(x => '<button aria-pressed="' + (mapV === x.n) + '" data-act="mapv:' + x.n + '" title="' + esc(x.name) + '">' + x.n + '</button>').join('') + '<em>' + esc(V.name) + '</em></div>';
     return h;
   }
   const stageView = (t, lockd) => isRoute(t) ? routeView(t, lockd) : dio(t, lockd);
-  // the map from above: the route in the part of the stage above the notes (as big as fits, not blurred), the map to every edge of the stage
-  // (as big as the videos); the route's line, flags and point the same size on the screen however far the map is zoomed
+  // the map from above: the route as big as fits between the switch at the top and the arrows at the bottom (not blurred), the map to every
+  // edge of the stage (as big as the flyover); the route's line, flags and point the same size on the screen however far the map is zoomed
   function fitMaps() {
     for (const box of app.querySelectorAll('.topmap[data-map]')) {
-      const T = RT[box.dataset.map].top, svg = $('svg', box), W = box.clientWidth, H = box.clientHeight, ov = $('.profw', box), oh = ov ? ov.offsetHeight + 46 : 40;
+      const T = RT[box.dataset.map].top, svg = $('svg', box), W = box.clientWidth, H = box.clientHeight, oh = 40;
       if (!W || !H) continue;
       if (!T.bb) { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (const p of T.route) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); } T.bb = [x0, y0, x1, y1]; }
-      const [x0, y0, x1, y1] = T.bb, top = 44, free = Math.max(40, H - oh - top);   // (room at the top for the switch and the ribbon, at the bottom for the notes)
+      const [x0, y0, x1, y1] = T.bb, top = 44, free = Math.max(40, H - oh - top);   // (room at the top for the switch and the ribbon, at the bottom for the arrows)
       const cover = Math.max(W / T.W, H / T.H), fit = Math.min((W - 32) / (x1 - x0), (free - 40) / (y1 - y0));
       const s = Math.max(cover, Math.min(fit, 0.72)), k = 0.5 / s;
       const vw = W / s, vh = H / s, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2 - 20 / s;
@@ -362,39 +372,32 @@
     }
   }
   window.addEventListener('resize', fitMaps);
-  // the videos: the names over the flyover (each of its frames says where the start, the finish and the places are), the place reached and
-  // its height in the corner (the drone: its shot's), a short dip at the loop
+  // the flyover: the names over it (each of its frames says where the start, the finish and the places are), the place reached and its height
+  // in the corner, a short dip at the loop
   let flyRaf = 0;
   function flyLabels() {
     cancelAnimationFrame(flyRaf); flyRaf = 0;
-    const box = $('.dio.fly', app); if (!box) return;
-    const id = box.dataset.route, R = RT[id], drone = box.dataset.kind === 'drone', F = drone ? R.drone : R.fly, M = D.routeMaps[id] || {}, v = $('video', box), lab = $('.flab', box), L = R.len, H0 = hudOf(R, M);
+    const box = $('#track-stage .dio.fly', app); if (!box) return;
+    const id = box.dataset.route, R = RT[id], F = R.fly, M = D.routeMaps[id] || {}, v = $('video', box), lab = $('.flab', box), L = R.len, H0 = hudOf(R, M);
     const hud = $('.hud', box), hb = $('b', hud), hs = $('small', hud);
-    let els = [], pd = [];
-    if (!drone) {
-      const alt = M.alt ? M.alt.map(a => num(a) + ' m') : ['', ''];
-      const tag = (cls, name, sub, icon) => '<div class="fl-' + cls + '">' + (icon || '') + '<b>' + esc(name) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</div>';
-      const loop = !R.open, sub0 = alt[0] || (M.stage ? M.stage + ' start' : ''), sub1 = alt[1] || '';
-      lab.innerHTML = tag('s start', loop ? 'Start · finish' : M.start || 'Start', sub0, flagSvg(false).replace('<g', '<svg viewBox="-2 -28 20 30" width="18" height="26"><g') + '</svg>') + tag('s finish', loop ? 'Finish' : M.finish || 'Finish', sub1, '<svg viewBox="-2 -28 20 30" width="18" height="26">' + flagSvg(true) + '</svg>') +
-        F.places.map(n => tag('q', n, '')).join('');
-      els = [...lab.children]; pd = F.places.map(n => { const q = R.places.find(x => x[0] === n || x[0].indexOf(n) >= 0); return q ? q[1] : (n === 'Split 1' ? L / 3 : n === 'Split 2' ? 2 * L / 3 : -1e9); });
-    }
+    const alt = M.alt ? M.alt.map(a => num(a) + ' m') : ['', ''];
+    const tag = (cls, name, sub, icon) => '<div class="fl-' + cls + '">' + (icon || '') + '<b>' + esc(name) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</div>';
+    const loop = !R.open, sub0 = alt[0] || (M.stage ? M.stage + ' start' : ''), sub1 = alt[1] || '';
+    lab.innerHTML = tag('s start', loop ? 'Start · finish' : M.start || 'Start', sub0, flagSvg(false).replace('<g', '<svg viewBox="-2 -28 20 30" width="18" height="26"><g') + '</svg>') + tag('s finish', loop ? 'Finish' : M.finish || 'Finish', sub1, '<svg viewBox="-2 -28 20 30" width="18" height="26">' + flagSvg(true) + '</svg>') +
+      F.places.map(n => tag('q', n, '')).join('');
+    const els = [...lab.children], pd = F.places.map(n => { const q = R.places.find(x => x[0] === n || x[0].indexOf(n) >= 0); return q ? q[1] : (n === 'Split 1' ? L / 3 : n === 'Split 2' ? 2 * L / 3 : -1e9); });
     let last = 0, looped = false, pl = null, al = null;
     const step = () => {
       if (!document.contains(v)) return;
       // a short dip at the loop: the end fades out, the start fades back in (not the very first start: the poster shows there)
       const t = v.currentTime || 0, dur = v.duration; if (t < last - 1) looped = true; last = t;
       const op = isFinite(dur) && dur > 3 && !v.paused ? Math.max(0, Math.min(1, (dur - t) / 0.45, looped ? t / 0.45 : 1)) : 1;
-      v.style.opacity = hud.style.opacity = op < 1 ? op.toFixed(2) : ''; if (lab) lab.style.opacity = v.style.opacity;
-      let d, name;
-      if (drone) { let s = F.shots[0]; for (const q of F.shots) if (q[0] + 0.3 <= t) s = q; name = s[1]; d = s[2]; }
-      else {
-        const f = F.frames[Math.min(F.frames.length - 1, Math.floor(t * F.fps))], W = box.clientWidth, H = box.clientHeight, k = Math.max(W / F.W, H / F.H), ox = (W - F.W * k) / 2, oy = (H - F.H * k) / 2;
-        const put = (el, P, on) => { const y = P ? oy + P[1] * k : 0, vis = on && P && P[2] && P[0] > -40 && P[0] < F.W + 40 && P[1] > 0 && y < H - 60; el.style.opacity = vis ? 1 : 0; if (vis) el.style.transform = 'translate(' + (ox + P[0] * k).toFixed(1) + 'px,' + y.toFixed(1) + 'px)'; };
-        d = f[0]; name = placeAt(H0, d);
-        put(els[0], f[1], d < L * 0.12); put(els[1], f[2], d > L * 0.8);
-        pd.forEach((q, i) => put(els[2 + i], f[4][i], Math.abs(d - q) < L * 0.07));
-      }
+      v.style.opacity = hud.style.opacity = lab.style.opacity = op < 1 ? op.toFixed(2) : '';
+      const f = F.frames[Math.min(F.frames.length - 1, Math.floor(t * F.fps))], W = box.clientWidth, H = box.clientHeight, k = Math.max(W / F.W, H / F.H), ox = (W - F.W * k) / 2, oy = (H - F.H * k) / 2;
+      const put = (el, P, on) => { const y = P ? oy + P[1] * k : 0, vis = on && P && P[2] && P[0] > -40 && P[0] < F.W + 40 && P[1] > 0 && y < H - 60; el.style.opacity = vis ? 1 : 0; if (vis) el.style.transform = 'translate(' + (ox + P[0] * k).toFixed(1) + 'px,' + y.toFixed(1) + 'px)'; };
+      const d = f[0], name = placeAt(H0, d);
+      put(els[0], f[1], d < L * 0.12); put(els[1], f[2], d > L * 0.8);
+      pd.forEach((q, i) => put(els[2 + i], f[4][i], Math.abs(d - q) < L * 0.07));
       if (name !== pl) { hb.textContent = name; pl = name; hud.classList.remove('in'); void hud.offsetWidth; hud.classList.add('in'); }
       const a = altAt(R, M, d); if (a != null && Math.round(a) !== al) { al = Math.round(a); hs.textContent = num(al) + ' m'; }
       flyRaf = requestAnimationFrame(step);
@@ -405,14 +408,6 @@
   // what the race is, under the weather: the laps of a circuit race, else the mode
   const modeWhat = (t) => mode === 'race' && !t.trial ? laps(lapsSel || t.laps).toUpperCase() : modeOf(mode).name.toUpperCase();
   const goldTime = (t) => secs(t.rec[1]) + 1.2 * Math.max(1, t.km / 3);
-
-  /* ---------------- single race, step 1: the mode ---------------- */
-  function vMode() {
-    let h = '<section class="scr" id="s-mode" aria-label="Single race: choose a mode">' + topbar('Single race', true, [1, 2, 'Mode']);
-    h += '<div class="modes" aria-label="Mode">' + D.modes.map(m => '<button class="mode m-' + m.id + '" aria-current="' + (mode === m.id) + '" data-act="mode:' + m.id + '">' +
-      '<span class="tx"><b>' + esc(m.name) + '</b><small>' + esc(m.sub) + '</small><em class="chip">' + esc(m.chip) + '</em></span><span class="im"><img src="' + m.img + '" alt=""></span><i class="tick" aria-hidden="true">' + I.check + '</i></button>').join('') + '</div>';
-    return h + '</section>';
-  }
 
   /* ---------------- single race, step 2: the tracks of the mode (today's race first in its own mode) ---------------- */
   function vTrack() {
@@ -488,54 +483,61 @@
   }
 
   /* ---------------- career ---------------- */
-  function seriesCard(s, i) {
-    const st = seriesState(i), tro = troOf(s), p = pctOf(s), nx = nextRace();
-    const isCur = nx && nx[0] === s.id && st === 'open';
-    let cls = 'serie', stl;
-    if (st === 'pay') { cls += ' lk pay'; stl = '<div class="stl gold">In the full game · 100 %: ' + esc(s.reward) + '</div>'; }
-    else if (st === 'lock') { cls += ' lk'; stl = '<div class="stl">Reach ' + D.unlockAt + ' % in ' + esc(D.series[i - 1].name) + ' to unlock</div>'; }
-    else if (p >= 100) { cls += ' done'; stl = '<div class="stl win">Complete · ' + esc(s.reward) + ' collected</div>'; }
-    else if (isCur) { cls += ' cur'; stl = '<div class="stl cur">Next: ' + esc(trackById(s.races[nx[1]]).name) + ' · race ' + (nx[1] + 1) + ' of ' + s.races.length + '</div>'; }
-    else stl = '<div class="stl">' + sum(tro) + ' of ' + (3 * s.races.length) + ' trophies · 100 %: ' + esc(s.reward) + '</div>';
-    const lockCol = st === 'pay' ? '#ffc629' : st === 'lock' ? '#8b98ad' : null;
-    return '<button class="' + cls + '" data-act="series:' + s.id + '">' + ring(p, lockCol) + '<h3><span class="nm">' + esc(s.name) + '</span><span class="lvl lv' + s.lv + '">' + s.level + '</span></h3>' + I.chev +
-      '<div class="cups">' + tro.map(t => '<i>' + I.cup(t) + '</i>').join('') + '<em>' + s.races.length + ' ' + (s.trial ? 'runs' : 'races') + '</em></div>' + stl + '</button>';
-  }
-  function nextCard() {
-    const nx = nextRace();
-    if (!nx) return '<div class="next done"><div class="im">' + I.bigcup + '</div><div><small>CAREER COMPLETE</small><b>Every trophy won</b><span>Replay any race to beat your times.</span></div></div>';
-    const s = seriesById(nx[0]), t = trackById(s.races[nx[1]]);
-    return '<button class="next" data-act="series:' + s.id + '"><div class="im"><img src="assets/tracks/' + t.id + '.webp" alt=""></div><div><small>NEXT RACE · ' + esc(s.name.toUpperCase()) + ' ' + (nx[1] + 1) + '/' + s.races.length + '</small><b>' + esc(t.name) + '</b><span>' +
-      t.km.toFixed(2) + ' km · ' + (t.trial ? 'time trial' : laps(t.laps) + ' · 12 rivals') + '<br>Win: <em>' + num(raceReward(s)) + ' CR</em> · gold trophy</span></div></button>';
-  }
-  function vCareer() {
-    const cp = careerPct(), all = D.series.flatMap(x => troOf(x));
-    const g = all.filter(t => t >= 3).length, sv = all.filter(t => t >= 2).length, br = all.filter(t => t >= 1).length;
-    let h = '<section class="scr" id="s-career" aria-label="Career">' + topbar('Career', true) + '<div class="scroll">';
-    h += '<div class="overall"><div class="big">' + cp + '<small>%</small></div><h3>CAREER<span>' + totalTro() + ' of ' + maxTro() + ' trophies</span></h3><div class="bar"><b style="width:' + cp + '%"></b></div>' +
-      '<div class="tro-sum"><span>' + I.cup(3) + g + '</span><span>' + I.cup(2) + sv + '</span><span>' + I.cup(1) + br + '</span><span>Level ' + level() + '</span></div></div>';
-    h += D.series.map(seriesCard).join('');
-    if (!owned()) h += '<button class="gbanner" data-act="offer"><div>Unlock the whole career<small>Home Cup, Time Attack, Legends and the Grand Championship</small></div><span class="p">' + esc(D.game.price) + '</span></button>';
-    h += '</div>' + nextCard();
-    const nx = nextRace();
-    return h + foot(nx ? '<button class="go" data-act="race-next">' + (totalTro() ? 'Continue' : 'Start') + '</button>' : '') + '</section>';
-  }
-  function vSeries() {
-    const i = D.series.findIndex(x => x.id === seriesId), s = D.series[i], st = seriesState(i), tro = troOf(s), p = pctOf(s), nx = nextRace();
-    if (raceSel == null) raceSel = nx && nx[0] === s.id ? nx[1] : Math.max(0, tro.findIndex(t => t < 3));
-    let h = '<section class="scr" id="s-series" aria-label="' + esc(s.name) + '">' + topbar(s.name, true);
-    h += '<div class="shead">' + ring(p, st === 'pay' ? '#ffc629' : st === 'lock' ? '#8b98ad' : null) + '<div><p><b>' + sum(tro) + ' of ' + (3 * s.races.length) + ' trophies</b> · ' + s.races.length + ' ' + (s.trial ? 'runs' : 'races') + ' · ' + s.level + '</p><p class="rw">100 %: ' + esc(s.reward) + '</p>' +
-      (st === 'lock' ? '<p>Reach ' + D.unlockAt + ' % in ' + esc(D.series[i - 1].name) + ' to unlock.</p>' : st === 'pay' ? '<p>This series is in the full game.</p>' : '') + '</div></div>';
-    const rules = s.trial ? D.trophyRules.trial : D.trophyRules.race;
-    h += '<div class="scroll"><div class="legend">' + rules.map((r, k) => '<span>' + I.cup(k + 1) + esc(r) + '</span>').join('') + '</div>';
-    h += s.races.map((id, k) => {
-      const t = trackById(id), done = tro[k];
-      return '<button class="race' + (k === raceSel ? ' nx' : '') + '" data-act="srace:' + k + '"><span class="n">' + (k + 1) + '</span><span class="mm">' + minimap(id) + '</span><span><b>' + esc(t.name) + '</b><small>' +
-        (s.trial ? 'Time trial' : laps(t.laps)) + ' · win ' + num(raceReward(s)) + ' CR</small></span><span class="r3">' + [1, 2, 3].map(q => I.cup(done >= q ? q : 0)).join('') + '</span></button>';
-    }).join('');
+  /* ---------------- the career's four ways (opened from the Career choices in the main menu) ---------------- */
+  const soloFoot = (goHtml) => '<div class="foot solo">' + goHtml + '</div>';   // (back is at the top)
+  const cmGo = (t, label) => trackLocked(t) ? '<button class="go gold" data-act="offer">Unlock · ' + esc(D.game.price) + '</button>' : '<button class="go" data-act="cm-race">' + esc(label) + '</button>';
+  const raceRow = (k, t, cls, line, right, act) => '<button class="race' + (cls ? ' ' + cls : '') + '"' + (act ? ' data-act="' + act + '"' : ' tabindex="-1"') + '><span class="n">' + k + '</span><span class="mm">' + minimap(t.id) + '</span><span><b>' + esc(t.name) +
+    (trackLocked(t) ? ' <i class="lk">' + I.lock('#ffc629') + '</i>' : '') + '</b><small>' + line + '</small></span><span class="rt">' + right + '</span></button>';
+  function vCup() {   // the World Cup: the rounds, the races of this one, its standings
+    const c = cm().cup, R = C.cup.rounds, done = c.round >= R.length, ri = Math.min(c.round, R.length - 1), rd = R[ri], res = done ? [] : c.res, pts = (q) => C.cup.points[q - 1] || 0;
+    let h = '<section class="scr" id="s-cup" aria-label="World Cup">' + topbar('World Cup', true) + '<div class="scroll">';
+    h += '<div class="overall cmh">' + I.bigcup + '<h3>' + (done ? 'WORLD CHAMPION' : esc(rd.name.toUpperCase())) + '<span>' + (done ? 'all three rounds won through' : rd.races.length + ' circuits · the points add up · top ' + C.cup.through + ' go through') + '</span></h3>' +
+      '<div class="bar"><b style="width:' + Math.round(cmProgress().cup * 100) + '%"></b></div><p class="rw">' + (done ? 'Trophy won' : 'Round win: ' + esc(rd.reward)) + '</p></div>';
+    h += '<div class="rtabs">' + R.map((r, i) => '<span class="' + (i < c.round ? 'ok' : i === c.round ? 'on' : '') + '">' + esc(r.name) + (i < c.round ? ' · ' + ord(c.rounds[i] || 1) : i > c.round ? ' ' + I.lock('#8b98ad') : '') + '</span>').join('') + '</div>';
+    if (!done) {
+      h += rd.races.map((id, k) => { const t = trackById(id), q = res[k];
+        return raceRow(k + 1, t, k === res.length ? 'nx' : '', q ? ord(q) + ' · +' + pts(q) + ' pts' : k === res.length ? 'Next race · ' + laps(t.laps) : laps(t.laps), q ? '<em class="pt">' + pts(q) + '</em>' : ''); }).join('');
+      const T = cupTable(c.round, res), me = T.findIndex(x => x.me), top = T.slice(0, 6), rows = me >= 6 ? top.concat([T[me]]) : top;
+      h += '<div class="table"><div class="th"><span>' + (res.length ? 'Standings after ' + res.length + ' of ' + rd.races.length : 'Standings') + '</span><span>PTS</span></div>' + rows.map(x => { const i = T.indexOf(x);
+        return '<div class="tr' + (x.me ? ' me' : '') + (i < C.cup.through ? ' thru' : '') + '"><span class="ps">' + (i + 1) + '</span><span class="nm">' + esc(x.me ? S().player : x.name) + '</span><b>' + x.pts + '</b></div>'; }).join('') + '</div>';
+    }
     h += '</div>';
-    const go = st === 'pay' ? '<button class="go gold" data-act="offer">Unlock · ' + esc(D.game.price) + '</button>' : st === 'lock' ? '<button class="go off" data-act="locked">Locked</button>' : '<button class="go" data-act="race-series">Race</button>';
-    return h + foot(go) + '</section>';
+    return h + soloFoot(done ? '<button class="go off" tabindex="-1">World Cup won</button>' : cmGo(trackById(rd.races[res.length]), 'Race ' + trackById(rd.races[res.length]).name)) + '</section>';
+  }
+  const FOE = { police: 'the police', robber: 'the robber', mafia: 'the mafia', smugglers: 'the smugglers', army: 'the army', thief: 'the car thief', all: 'everyone' };
+  function vCChase() {   // the chase missions one after another: get away from them, or (in the police car) catch them
+    const st = cm().chase.stars, nx = nextMission(), M = C.chase.missions[nx], t = trackById(M.track);
+    let h = '<section class="scr" id="s-cchase" aria-label="Police chase">' + topbar('Police chase', true) + '<div class="scroll">';
+    h += '<div class="brief ' + M.role + '"><span class="role">' + (M.role === 'run' ? 'ESCAPE' : 'CATCH') + '</span><small>Mission ' + (nx + 1) + ' of ' + C.chase.missions.length + ' · ' + esc(t.name) + '</small><b>' + esc(M.title) + '</b><p>' + esc(M.brief) + '</p>' +
+      '<p class="rw">' + (M.role === 'run' ? 'Get away from ' + FOE[M.foe] + ' in ' + D.chase.limit + '. Escape to open the next mission.' : 'Catch ' + FOE[M.foe] + ' before ' + D.chase.limit + '.') + '</p></div>';
+    h += C.chase.missions.map((m, k) => { const tk = trackById(m.track), open = missionOpen(k);
+      return raceRow(k + 1, tk, (k === nx ? 'nx' : '') + (open ? '' : ' off'), '<i class="rp ' + m.role + '">' + (m.role === 'run' ? 'ESCAPE' : 'CATCH') + '</i>' + esc(m.title), open ? '<span class="stars">' + [1, 2, 3].map(q => '<i class="' + ((st[k] || 0) >= q ? 'on' : '') + '">★</i>').join('') + '</span>' : I.lock('#8b98ad')); }).join('');
+    h += '</div>';
+    return h + soloFoot(cmGo(t, 'Start mission')) + '</section>';
+  }
+  function vCTrial() {   // a medal on every track; bronze opens the next one
+    const md = cm().trial.medals, nx = nextTrial(), cnt = (m) => C.trial.tracks.filter(id => md[id] === m).length;
+    let h = '<section class="scr" id="s-ctrial" aria-label="Time trial">' + topbar('Time trial', true) + '<div class="scroll">';
+    h += '<div class="overall cmh">' + I.medal + '<h3>TIME TRIAL<span>take your time, then make it count</span></h3><div class="bar"><b style="width:' + Math.round(cmProgress().trial * 100) + '%"></b></div>' +
+      '<div class="tro-sum"><span class="g">● ' + cnt('gold') + ' gold</span><span class="s">● ' + cnt('silver') + ' silver</span><span class="b">● ' + cnt('bronze') + ' bronze</span></div></div>';
+    h += C.trial.tracks.map((id, k) => { const t = trackById(id), m = md[id], open = trialOpen(k);
+      return raceRow(k + 1, t, (k === nx ? 'nx' : '') + (open ? '' : ' off'), 'Gold ' + clock(goldTime(t)) + ' · silver ' + clock(goldTime(t) + 2 * Math.max(1, t.km / 3)), open ? (m && m !== 'none' ? '<i class="md ' + m + '">' + m.toUpperCase() + '</i>' : '') : I.lock('#8b98ad')); }).join('');
+    h += '</div>';
+    const t = trackById(C.trial.tracks[nx]);
+    return h + soloFoot(cmGo(t, 'Run ' + t.name)) + '</section>';
+  }
+  function vCRally() {   // stage after stage; the stage times add up against the other crews'
+    const res = cm().rally.res, n = C.rally.stages.length, done = res.length >= n, T = rallyTable(res), me = T.findIndex(x => x.me);
+    let h = '<section class="scr" id="s-crally" aria-label="' + esc(C.rally.name) + '">' + topbar('Rally', true) + '<div class="scroll">';
+    h += '<div class="overall cmh">' + I.bigcup + '<h3>' + (done ? 'RALLY DONE · ' + ord(me + 1).toUpperCase() : 'STAGE ' + (res.length + 1) + ' OF ' + n) + '<span>' + esc(C.rally.name.toLowerCase()) + ' · the stage times add up</span></h3><div class="bar"><b style="width:' + Math.round(cmProgress().rally * 100) + '%"></b></div></div>';
+    h += C.rally.stages.map((sg, k) => { const t = trackById(sg.track), q = res[k];
+      return raceRow(k + 1, t, k === res.length ? 'nx' : '', esc(sg.name) + (q ? ' · ' + mmss(stageTime(k, q)) + ' · ' + ord(q) + ' on the stage' : k === res.length ? ' · next' : ''), q ? '<em class="pt">' + ord(q) + '</em>' : ''); }).join('');
+    if (res.length) {
+      const lead = T[0].t;
+      h += '<div class="table"><div class="th"><span>Overall after ' + res.length + ' of ' + n + '</span><span>TIME</span></div>' + T.map((x, i) => '<div class="tr' + (x.me ? ' me' : '') + '"><span class="ps">' + (i + 1) + '</span><span class="nm">' + esc(x.me ? S().player : x.name) + '</span><b>' + (i ? '+' + (x.t - lead).toFixed(1) + ' s' : mmss(x.t)) + '</b></div>').join('') + '</div>';
+    }
+    h += '</div>';
+    return h + soloFoot(done ? '<button class="go off" tabindex="-1">Rally done</button>' : cmGo(trackById(C.rally.stages[res.length].track), 'Start ' + C.rally.stages[res.length].name)) + '</section>';
   }
 
   /* ---------------- multiplayer ---------------- */
@@ -595,7 +597,7 @@
   function vResults() {
     if (result.R.chase) return vChaseResults();
     const r = result, R = r.R, t = R.track, cls = r.place === 1 ? 'p1' : r.place === 2 ? 'p2' : r.place === 3 ? 'p3' : '';
-    const mode = R.kind === 'single' ? modeOf(R.mode).name : R.kind === 'career' ? 'Career · ' + seriesById(R.seriesId).name + ' · race ' + (R.raceIdx + 1) + ' of ' + seriesById(R.seriesId).races.length : R.kind === 'daily' ? 'Today\'s race' : R.kind === 'multi' ? 'Multiplayer · vs ' + r.rival : 'Single race';
+    const mode = R.kind === 'single' ? modeOf(R.mode).name : R.kind === 'career' ? 'Career · ' + R.label : R.kind === 'daily' ? 'Today\'s race' : R.kind === 'multi' ? 'Multiplayer · vs ' + r.rival : 'Single race';
     const head = R.trial ? { gold: 'GOLD', silver: 'SILVER', bronze: 'BRONZE', none: 'NO MEDAL' }[r.res] : ord(r.place).toUpperCase();
     let h = '<section class="scr" id="s-results" aria-label="Results"><div class="res-head ' + cls + (R.trial ? ' trial ' + r.res : '') + '"><div class="pos">' + head + '</div><div class="rt"><b>' + esc(fullName(t)) + '</b><small>' + esc(mode) + '</small></div></div><div class="scroll">';
     const row = (ic, label, val, extra) => '<div class="rrow">' + ic + '<span>' + esc(label) + '</span><b>' + val + '</b>' + (extra || '') + '</div>';
@@ -608,39 +610,52 @@
     }
     body += row(I.coin.replace('<svg', '<svg width="22" height="22"'), 'Reward', '+' + num(r.reward) + ' CR');
     if (R.kind === 'career') {
-      const s = seriesById(R.seriesId);
-      body += '<div class="rrow cups3"><span>Trophies</span><div class="r3">' + [1, 2, 3].map(q => '<i class="' + (r.tro >= q ? 'on' : '') + '">' + I.cup(r.tro >= q ? q : 0) + '</i>').join('') + '</div><b>' + (r.newTro ? '+' + r.newTro : 'no new') + '</b></div>';
-      body += '<div class="rbar"><div><span>' + esc(s.name) + '</span><b>' + r.series[0] + ' % → ' + r.series[1] + ' %</b></div><div class="bar"><b style="width:' + r.series[1] + '%"></b></div></div>';
+      if (R.cm === 'cup') {
+        body += row(I.trophy('gold'), 'World Cup points', '+' + r.pts);
+        body += row(I.podium, r.roundDone ? r.round + ' standings' : 'Standings after ' + r.raced + ' of ' + r.races, ord(r.pos) + ' of 13');
+        if (r.through) body += '<div class="unlock gold">' + I.bigcup + '<span><b>Through to ' + esc(r.through) + '!</b> ' + esc(r.round) + ' prize: ' + esc(r.prize) + '</span></div>';
+        else if (r.roundDone && !r.out) body += '<div class="unlock gold">' + I.bigcup + '<span><b>World Cup won!</b> ' + esc(r.prize) + '</span></div>';
+        if (r.out) body += '<div class="unlock">' + I.check + '<span><b>Not in the top ' + C.cup.through + '.</b> ' + esc(r.round) + ' starts again.</span></div>';
+      } else if (R.cm === 'trial' && r.unlocked) body += '<div class="unlock">' + I.check + '<span><b>' + esc(r.unlocked) + '</b> is open now</span></div>';
+      else if (R.cm === 'rally') {
+        body += row(I.watch, 'Stage time · ' + ord(r.place) + ' on the stage', esc(mmss(r.stage)));
+        body += row(I.podium, r.done ? 'Final standing' : 'Overall so far', ord(r.pos) + ' of ' + (C.rally.rivals.length + 1), r.pos > 1 ? '<em class="chip">+' + r.gap.toFixed(1) + ' s</em>' : '');
+        if (r.done) body += '<div class="unlock gold">' + I.bigcup + '<span><b>Rally done!</b> ' + ord(r.pos) + ' overall</span></div>';
+      }
       body += '<div class="rbar"><div><span>Career</span><b>' + r.career[0] + ' % → ' + r.career[1] + ' %</b></div><div class="bar"><b style="width:' + r.career[1] + '%"></b></div></div>';
-      r.unlocked.forEach(n => { body += '<div class="unlock">' + I.check + '<span><b>' + esc(n) + '</b> unlocked</span></div>'; });
-      if (r.seriesDone) body += '<div class="unlock gold">' + I.bigcup + '<span><b>' + esc(s.name) + ' complete!</b> ' + esc(s.reward) + '</span></div>';
     }
     if (R.kind === 'daily' && !owned()) body += '<button class="gbanner" data-act="offer"><div>Your free run for today is used<small>Come back tomorrow, or race today\'s race as often as you like in the full game</small></div><span class="p">' + esc(D.game.price) + '</span></button>';
     h += body + '</div>';
-    const again = (R.kind === 'single' || R.kind === 'career') ? '<button class="back wide" data-act="again">Race again</button>' : '<span></span>';
+    const again = R.kind === 'single' || (R.kind === 'career' && R.cm === 'trial') ? '<button class="back wide" data-act="again">' + (R.cm === 'trial' ? 'Run again' : 'Race again') + '</button>' : '<span></span>';
     h += '<div class="foot">' + again + '<button class="go" data-act="res-continue">Continue</button></div>';
     return h + '</section>';
   }
 
   function vChaseResults() {
     const r = result, R = r.R, t = R.track, cls = ['busted', 'bronze', 'silver', 'gold'][r.stars];
-    let h = '<section class="scr" id="s-results" aria-label="Results"><div class="res-head word ' + cls + '"><div class="pos">' + (r.escaped ? 'ESCAPED' : 'BUSTED') + '</div><div class="rt"><b>' + esc(fullName(t)) + '</b><small>Police chase' + (r.escaped ? ' · ' + '★'.repeat(r.stars) : '') + '</small></div></div><div class="scroll">';
+    const catching = R.role === 'catch', word = catching ? (r.escaped ? 'CAUGHT' : 'GOT AWAY') : (r.escaped ? 'ESCAPED' : 'BUSTED');
+    let h = '<section class="scr" id="s-results" aria-label="Results"><div class="res-head word ' + cls + '"><div class="pos">' + word + '</div><div class="rt"><b>' + esc(fullName(t)) + '</b><small>' + esc(R.cm === 'chase' ? R.label : 'Police chase') + (r.escaped ? ' · ' + '★'.repeat(r.stars) : '') + '</small></div></div><div class="scroll">';
     const row = (ic, label, val, extra) => '<div class="rrow">' + ic + '<span>' + esc(label) + '</span><b>' + val + '</b>' + (extra || '') + '</div>';
-    h += row(I.siren, r.escaped ? 'You got away in' : 'The police caught you after', esc(mmss(r.time)), r.pb && r.escaped ? '<em class="chip gold">NEW BEST</em>' : '');
-    h += row(I.watch, 'Time to get away', esc(D.chase.limit) + ' · ' + D.chase.police + ' police cars');
+    const foe = R.cm === 'chase' ? FOE[R.foe] : 'the police', Foe = foe.charAt(0).toUpperCase() + foe.slice(1);
+    h += row(I.siren, catching ? (r.escaped ? 'You caught ' + foe + ' in' : Foe + ' got away after') : (r.escaped ? 'You got away in' : Foe + ' caught you after'), esc(mmss(r.time)), r.pb && r.escaped ? '<em class="chip gold">NEW BEST</em>' : '');
+    h += row(I.watch, catching ? 'Time to catch them' : 'Time to get away', esc(D.chase.limit) + (R.cm === 'chase' ? '' : ' · ' + D.chase.police + ' police cars'));
     h += row(I.coin.replace('<svg', '<svg width="22" height="22"'), 'Reward', '+' + num(r.reward) + ' CR');
-    h += '</div><div class="foot"><button class="back wide" data-act="again">Race again</button><button class="go" data-act="res-continue">Continue</button></div>';
+    if (r.unlocked) h += '<div class="unlock">' + I.check + '<span><b>Next mission:</b> ' + esc(r.unlocked) + '</span></div>';
+    h += '</div><div class="foot"><button class="back wide" data-act="again">' + (R.cm === 'chase' ? 'Try again' : 'Race again') + '</button><button class="go" data-act="res-continue">Continue</button></div>';
     return h + '</section>';
   }
 
-  const VIEWS = { title: vTitle, mode: vMode, track: vTrack, car: vCar, career: vCareer, series: vSeries, multi: vMulti, board: vBoard, settings: vSettings, results: vResults };
+  const VIEWS = { title: vTitle, track: vTrack, car: vCar, cup: vCup, cchase: vCChase, ctrial: vCTrial, crally: vCRally, multi: vMulti, board: vBoard, settings: vSettings, results: vResults };
   function render(keepScroll) {
     const sc = $('.scroll', app), top = keepScroll && sc ? sc.scrollTop : 0;
     if (screen === 'results' && !result) screen = 'title';
     app.innerHTML = VIEWS[screen]();
     if (keepScroll && shown === screen) $('.scr', app).classList.add('still');   // an update in place (a choice, a sheet): no slide-in again
     if (keepScroll) { const n = $('.scroll', app); if (n) n.scrollTop = top; }
-    if (screen === 'title') { $('#bg-slot', app).replaceWith(bg.el); bg.setOn(true); } else bg.setOn(false);
+    if (screen === 'title') {
+      $('#bg-slot', app).replaceWith(bg.el); bg.setOn(true);
+      const pn = $('.title-panel', app); if (!titleSub) panelH = pn.offsetHeight; else if (panelH) pn.style.minHeight = panelH + 'px';   // (Single race and Career open in the same frame, as tall)
+    } else bg.setOn(false);
     if (screen === 'car' && ensureCar3D()) {
       const stage = $('#car-stage', app); stage.insertBefore(carHost, stage.firstChild);
       const c = D.cars[carIdx]; Car3D.show(c.model, colorIdx, { dark: !!c.soon }); Car3D.setVisible(true);
@@ -676,47 +691,119 @@
     return h + '<div class="row"><button class="go" data-act="close-sheet">Done</button></div></div></div>';
   }
 
-  /* ---------------- a race: loading, then "where did you finish?" (mockup), then the results ---------------- */
-  let race = null;
+  /* ---------------- a race: the intro (the drone's shots of the track, the commentator), the start lights, then "where did you finish?"
+     (mockup), then the results ---------------- */
+  let race = null, ixRaf = 0;
   const wxLabel = (w, wet) => (w === 'Random' ? 'random weather: ' : '') + (wet ? 'rain' : 'dry');
+  // the commentator's voice: the phone's own English voice (off with the Sound or the Commentary setting); the words are always on the screen
+  const speaks = () => 'speechSynthesis' in window && settings[0] === 0 && settings[1] === 0;
+  function say(text) {
+    if (!text || !speaks()) return;
+    try {
+      const vs = speechSynthesis.getVoices(), v = vs.find(x => /^en[-_]GB/i.test(x.lang)) || vs.find(x => /^en/i.test(x.lang));
+      const u = new SpeechSynthesisUtterance(text); u.lang = v ? v.lang : 'en-GB'; if (v) u.voice = v; u.rate = 1.04;
+      speechSynthesis.speak(u);
+    } catch (_) { /* no voice here: the words on the screen only */ }
+  }
+  const hush = () => { try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (_) { /* nothing to stop */ } };
+  if ('speechSynthesis' in window) try { speechSynthesis.getVoices(); } catch (_) { /* (the voices load in the background) */ }
   function startRace(R) {
-    race = R;
-    const t = R.track, el = document.createElement('div'); el.className = 'loading'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Race');
-    el.innerHTML = '<img src="' + loadImg(t, R.wet) + '" alt=""><h2>' + esc(fullName(t)) + '</h2><div class="bar"><b style="width:4%"></b></div><p>' + esc(R.label) + '</p>';
+    race = R; hush(); cancelAnimationFrame(ixRaf);
+    if (speaks()) try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } catch (_) { /* (a silent word in the tap itself: some phones only let a page speak after that) */ }
+    const t = R.track, Rt = RT[t.id], Dr = Rt && Rt.drone, M = D.routeMaps[t.id] || {}, lines = (D.intro && D.intro[t.id]) || [];
+    const under = $('#track-stage .dio.fly video', app); if (under) under.pause(); cancelAnimationFrame(flyRaf); wx.detach();   // (the map under the intro stops)
+    const el = document.createElement('div'); el.className = 'intro'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Before the race');
     app.appendChild(el);
-    requestAnimationFrame(() => requestAnimationFrame(() => { const b = $('.bar b', el); if (b) b.style.width = '100%'; }));   // (a slow device: the picker may already be there)
-    setTimeout(() => {
-      const opts = R.kind === 'multi' ? [['1', '1st', 'p1'], ['2', '2nd', '']] : R.chase ? [['3', 'Escaped ★★★', 'p1'], ['2', 'Escaped ★★', 'p2'], ['1', 'Escaped ★', 'p3'], ['0', 'Busted', 'busted']] :
-        R.trial ? [['gold', 'Gold time', 'p1'], ['silver', 'Silver time', 'p2'], ['bronze', 'Bronze time', 'p3'], ['none', 'No medal', '']] :
-        Array.from({ length: 13 }, (_, i) => [String(i + 1), ord(i + 1), i === 0 ? 'p1' : i === 1 ? 'p2' : i === 2 ? 'p3' : '']);
-      el.innerHTML = '<div class="pick"><small>MOCKUP · THE RACE IS NOT DRIVEN HERE</small><h2>' + (R.chase ? 'How did the chase end?' : R.trial ? 'What time did you set?' : 'Where did you finish?') + '</h2><p>Pick a result to see how the menu goes on.</p><div class="places' + (opts.length < 5 ? ' few' : '') + '">' +
-        opts.map(o => '<button class="' + o[2] + '" data-finish="' + o[0] + '">' + esc(o[1]) + '</button>').join('') + '</div><button class="cancel" data-finish="cancel">Leave the race</button></div>';
-      el.addEventListener('click', (e) => { const b = e.target.closest('[data-finish]'); if (!b) return; el.remove(); if (b.dataset.finish !== 'cancel') finish(b.dataset.finish); });
-      const first = $('[data-finish]', el); if (first) first.focus();
-    }, 1300);
+    if (!Dr) { lights(el); return; }
+    // the drone's shots, one after another; on each, its place and height in the corner and the commentator's line about it
+    el.innerHTML = '<div class="ix-bg" style="background-image:url(assets/maps/drone-' + t.id + '.webp)" aria-hidden="true"></div>' +
+      '<div class="ix-top"><span class="ix-live"><i></i>LIVE</span><button class="ix-skip" data-ix="skip">Skip intro' + I.chev + '</button></div>' +
+      '<div class="ix-head"><h2>' + esc(fullName(t)) + '</h2><small>' + esc(R.label) + '</small></div>' +
+      '<div class="ix-v"><div class="dio fly"><video muted playsinline autoplay preload="auto" poster="assets/maps/drone-' + t.id + '.webp" src="assets/maps/drone-' + t.id + '.webm"></video>' + hudBox() + '</div></div>' +
+      '<div class="ix-sub" aria-live="polite"><span class="ix-who">' + I.mic + 'COMMENTATOR' + (speaks() ? '' : ' · VOICE OFF') + '</span><p></p></div>' +
+      '<div class="ix-bar" aria-hidden="true"><b></b></div>';
+    const v = $('video', el), hud = $('.hud', el), hb = $('b', hud), hs = $('small', hud), sub = $('.ix-sub', el), sp = $('p', sub), bar = $('.ix-bar b', el);
+    if (R.wet) wx.attach($('.ix-v', el), 'rain', true);   // (a wet race: the rain over the shots too)
+    let shot = -1, done = false;
+    const end = (skip) => {   // (at the end of the shots the commentator finishes the line, 2.4 s at most; a skip cuts it off)
+      if (done) return; done = true; cancelAnimationFrame(ixRaf); v.pause();
+      let n = 0; const next = () => { if (!document.contains(el)) return; if (!skip && n++ < 12 && speaks() && speechSynthesis.speaking) { setTimeout(next, 200); return; } hush(); wx.detach(); lights(el); };
+      next();
+    };
+    const step = () => {
+      if (done || !document.contains(el)) return;
+      const tm = v.currentTime || 0, dur = isFinite(v.duration) && v.duration > 0 ? v.duration : Dr.dur;
+      let k = 0; Dr.shots.forEach((q, i) => { if (q[0] + 0.3 <= tm || i === 0) k = i; });
+      if (k !== shot) {
+        shot = k; const q = Dr.shots[k], ln = lines[k], txt = Array.isArray(ln) ? ln[0] : ln, a = altAt(Rt, M, q[2]);
+        hb.textContent = q[1]; hs.textContent = a != null ? num(Math.round(a)) + ' m' : ''; hud.classList.remove('in'); void hud.offsetWidth; hud.classList.add('in');
+        if (txt) { sp.textContent = txt; sub.classList.remove('in'); void sub.offsetWidth; sub.classList.add('in'); say(Array.isArray(ln) ? ln[1] : ln); }
+      }
+      bar.style.width = Math.min(100, tm / dur * 100).toFixed(1) + '%';
+      ixRaf = requestAnimationFrame(step);
+    };
+    v.addEventListener('ended', () => end(false)); v.addEventListener('error', () => end(true));
+    el.addEventListener('click', (e) => { if (e.target.closest('[data-ix="skip"]')) end(true); });
+    ixRaf = requestAnimationFrame(step);
+    $('.ix-skip', el).focus({ preventScroll: true });
+  }
+  // the start: five red lights one by one, then all out and away (in the mockup: then where you finished)
+  function lights(el) {
+    const R = race;
+    el.className = 'intro ix-start';
+    el.innerHTML = '<p class="ready">' + esc(fullName(R.track)) + '<small>' + (R.chase ? (R.role === 'catch' ? 'CATCH THEM' : 'GET AWAY') : R.trial ? 'AGAINST THE CLOCK' : 'GET READY') + '</small></p><div class="lights" aria-hidden="true">' + '<i></i>'.repeat(5) + '</div><p class="gotx" aria-live="polite">GO!</p>';
+    const L = [...el.querySelectorAll('.lights i')], at = (ms, f) => setTimeout(() => { if (document.contains(el)) f(); }, ms);
+    L.forEach((x, i) => at(350 + i * 380, () => x.classList.add('on')));
+    at(2550, () => { L.forEach(x => x.classList.remove('on')); $('.gotx', el).classList.add('on'); });
+    at(3250, () => pick(el));
+  }
+  function pick(el) {
+    const R = race, catching = R.role === 'catch', run = catching ? 'Caught' : 'Escaped';
+    const opts = R.kind === 'multi' ? [['1', '1st', 'p1'], ['2', '2nd', '']] : R.chase ? [['3', run + ' ★★★', 'p1'], ['2', run + ' ★★', 'p2'], ['1', run + ' ★', 'p3'], ['0', catching ? 'Got away' : 'Busted', 'busted']] :
+      R.trial ? [['gold', 'Gold time', 'p1'], ['silver', 'Silver time', 'p2'], ['bronze', 'Bronze time', 'p3'], ['none', 'No medal', '']] :
+      Array.from({ length: R.cm === 'rally' ? C.rally.rivals.length + 1 : 13 }, (_, i) => [String(i + 1), ord(i + 1), i === 0 ? 'p1' : i === 1 ? 'p2' : i === 2 ? 'p3' : '']);
+    el.className = 'loading';
+    el.innerHTML = '<div class="pick"><small>MOCKUP · THE RACE IS NOT DRIVEN HERE</small><h2>' + (R.chase ? 'How did the chase end?' : R.trial ? 'What time did you set?' : R.cm === 'rally' ? 'Where were you on the stage?' : 'Where did you finish?') + '</h2><p>Pick a result to see how the menu goes on.</p><div class="places' + (opts.length < 5 ? ' few' : opts.length === 6 ? ' six' : '') + '">' +
+      opts.map(o => '<button class="' + o[2] + '" data-finish="' + o[0] + '">' + esc(o[1]) + '</button>').join('') + '</div><button class="cancel" data-finish="cancel">Leave the race</button></div>';
+    el.addEventListener('click', (e) => { const b = e.target.closest('[data-finish]'); if (!b) return; el.remove(); if (b.dataset.finish !== 'cancel') finish(b.dataset.finish); else render(true); });
+    const first = $('[data-finish]', el); if (first) first.focus();
   }
   function finish(res) {
-    if (race.chase) {   // a police chase: stars for how fast you got away, or busted
-      const R = race, t = R.track, stars = +res, prev = P.chase[t.id] || 0;
+    if (race.chase) {   // a police chase: stars for how fast you got away (a career mission in the police car: how fast you caught them), or not
+      const R = race, t = R.track, stars = +res, career = R.cm === 'chase', prev = career ? (cm().chase.stars[R.idx] || 0) : (P.chase[t.id] || 0);
       const out = { R, res, stars, escaped: stars > 0, time: [112, 161, 108, 65][stars], reward: D.chase.reward[3 - stars], pb: stars > prev };
-      if (stars > prev) P.chase[t.id] = stars;
+      if (career) { if (stars > prev) cm().chase.stars[R.idx] = stars; if (stars > 0 && !prev && R.idx + 1 < C.chase.missions.length) out.unlocked = C.chase.missions[R.idx + 1].title; }
+      else if (stars > prev) P.chase[t.id] = stars;
       P.money += out.reward; saveP();
       result = out; history.push(screen); screen = 'results'; render(); return;
     }
     const R = race, t = R.track, trial = !!R.trial;
     const place = trial ? { gold: 1, silver: 2, bronze: 4, none: 8 }[res] : +res;
-    const T = D.trophyPlaces, tro = trial ? { gold: 3, silver: 2, bronze: 1, none: 0 }[res] : place <= T.gold ? 3 : place <= T.silver ? 2 : place <= T.bronze ? 1 : 0;
     const base = secs(t.rec[1]), time = trial ? base + { gold: 0.3, silver: 2.2, bronze: 4.6, none: 8.4 }[res] * Math.max(1, t.km / 3) : base + (place - 1) * 0.45 + 0.3 + t.km * 0.05;
-    const out = { R, res, place, tro, time, reward: 0 };
+    const out = { R, res, place, time, reward: 0 };
     if (R.kind !== 'multi') { const prev = P.myRecords[t.id] ? secs(P.myRecords[t.id]) : Infinity; if (time < prev) { P.myRecords[t.id] = clock(time); out.pb = true; } }
     const share = D.prizes[Math.min(D.prizes.length, place) - 1];
     if (R.kind === 'career') {
-      const s = seriesById(R.seriesId), before = pctOf(s), cBefore = careerPct(), open0 = D.series.map((_, i) => seriesState(i)), arr = troOf(s).slice(), old = arr[R.raceIdx];
-      arr[R.raceIdx] = Math.max(old, tro); P.trophies[s.id] = arr;
-      out.newTro = arr[R.raceIdx] - old; out.series = [before, pctOf(s)]; out.career = [cBefore, careerPct()];
-      out.unlocked = D.series.filter((x, i) => open0[i] === 'lock' && seriesState(i) === 'open').map(x => x.name);
-      out.seriesDone = before < 100 && pctOf(s) >= 100;
-      out.reward = Math.round(raceReward(s) * share);
+      const c = cm(), cBefore = careerPct();
+      if (R.cm === 'cup') {   // the points of the place; after the round's last race: through to the next round (top 3), else the round again
+        const rd = C.cup.rounds[R.round]; c.cup.res.push(place);
+        Object.assign(out, { pts: C.cup.points[place - 1] || 0, pos: cupPos(R.round, c.cup.res), round: rd.name, raced: c.cup.res.length, races: rd.races.length });
+        if (c.cup.res.length >= rd.races.length) {
+          out.roundDone = true;
+          if (out.pos <= C.cup.through) { c.cup.rounds[R.round] = out.pos; c.cup.round++; out.through = C.cup.rounds[c.cup.round] ? C.cup.rounds[c.cup.round].name : null; out.prize = rd.reward; } else out.out = true;
+          c.cup.res = [];
+        }
+        out.reward = cupReward(place);
+      } else if (R.cm === 'trial') {   // the best medal on the track; the first one opens the next track
+        const old = c.trial.medals[t.id] || 'none'; if (MEDAL[res] > MEDAL[old]) c.trial.medals[t.id] = res;
+        if (MEDAL[res] > 0 && !MEDAL[old] && R.idx + 1 < C.trial.tracks.length) out.unlocked = trackById(C.trial.tracks[R.idx + 1]).name;
+        out.reward = [0, 1000, 2000, 4000][MEDAL[res]];
+      } else if (R.cm === 'rally') {   // the stage time from the place on the stage; the overall standing so far
+        c.rally.res[R.idx] = place; out.stage = stageTime(R.idx, place);
+        const T = rallyTable(c.rally.res); out.pos = T.findIndex(x => x.me) + 1; out.total = T[out.pos - 1].t; out.gap = out.total - T[0].t; out.done = c.rally.res.length >= C.rally.stages.length;
+        out.reward = Math.round(2500 * D.prizes[place - 1]);
+      }
+      out.career = [cBefore, careerPct()];
     } else if (R.kind === 'daily') {
       const d = daily(); P.daily = d.mine ? P.daily : { day: DAY, runs: 0 };
       P.daily.runs++;
@@ -736,7 +823,10 @@
     switch (k) {
       case 'go': go(v); break;
       case 'back': back(); break;
-      case 'single': go('mode'); break;
+      case 'single': titleSub = 'single'; render(true); break;   // (the modes open in the main menu's own frame)
+      case 'career': titleSub = 'career'; render(true); break;
+      case 'tsub': titleSub = v || null; render(true); break;
+      case 'cm': go(v === 'cup' ? 'cup' : 'c' + v); break;
       case 'mode': mode = v; trackIdx = 0; lapsSel = null; if (!groupList(group).length) group = 'circuit'; go('track'); break;   // (a tap on a mode goes straight to its tracks)
       case 'group': group = v; trackIdx = 0; lapsSel = null; render(true); break;
       case 'mapv': mapV = +v; store.set('mapv', mapV); render(true); break;
@@ -764,15 +854,14 @@
       case 'pick-car': carIdx = P.car; colorIdx = P.color; tab = 'stats'; go('car'); break;
       case 'pick-weather': sheet = weatherSheet; render(true); break;
       case 'car-select': { const c = D.cars[carIdx]; if (c.soon || carLocked(c)) break; P.car = carIdx; P.color = colorIdx; saveP(); back(); break; }
-      case 'race-series': { const s = seriesById(seriesId), t = trackById(s.races[raceSel]); startRace({ kind: 'career', track: t, trial: !!s.trial, seriesId: s.id, raceIdx: raceSel, label: s.name + ' · race ' + (raceSel + 1) + ' of ' + s.races.length }); break; }
-      case 'race-next': { const nx = nextRace(); if (!nx) break; const s = seriesById(nx[0]); seriesId = s.id; raceSel = nx[1]; startRace({ kind: 'career', track: trackById(s.races[nx[1]]), trial: !!s.trial, seriesId: s.id, raceIdx: nx[1], label: s.name + ' · race ' + (nx[1] + 1) + ' of ' + s.races.length }); break; }
+      case 'cm-race': startRace(cmRace({ cup: 'cup', cchase: 'chase', ctrial: 'trial', crally: 'rally' }[screen])); break;   // the next race of the career screen shown
       case 'race-multi': { const rival = mpMode === 'quick' ? 'T. Hayashi' : D.friendName; startRace({ kind: 'multi', track: D.tracks[0], rival, label: 'Duel with ' + rival }); break; }
       case 'again': if (result) startRace(result.R); break;
       case 'res-continue': {   // back to where the race was started from
         const R = result.R; result = null;
-        if (R.kind === 'career') { seriesId = R.seriesId; raceSel = null; history = ['title', 'career']; screen = 'series'; }
+        if (R.kind === 'career') { titleSub = 'career'; history = ['title']; screen = R.cm === 'cup' ? 'cup' : 'c' + R.cm; }
         else if (R.kind === 'multi') { history = ['title']; screen = 'multi'; }
-        else { if (R.kind === 'daily') { mode = dailyMode(); group = R.track.group; trackIdx = 0; } else mode = R.mode; history = ['title', 'mode']; screen = 'track'; }
+        else { if (R.kind === 'daily') { mode = dailyMode(); group = R.track.group; trackIdx = 0; } else mode = R.mode; titleSub = 'single'; history = ['title']; screen = 'track'; }
         render(); break;
       }
       case 'offer': offer(); break;
@@ -782,9 +871,6 @@
         if (ST === 'free') { P.owned = true; ST = 'full'; store.set('state', ST); store.set('p-full', P); drawStates(); }
         render(true); toast('Mockup: bought. Everything is unlocked, your progress stays.'); break;
       }
-      case 'series': seriesId = v; raceSel = null; go('series'); break;
-      case 'srace': raceSel = +v; render(true); break;
-      case 'locked': toast('Win more trophies in the previous series first.'); break;
       case 'lb': lbTrack = +v; render(); break;
       case 'set': settings[+v] = +w; render(true); break;
       case 'mp': mpMode = v; render(true); break;
@@ -798,8 +884,9 @@
     act(el.dataset.act, el);
   });
   document.addEventListener('keydown', (e) => {
-    if ($('.loading', app)) return;
-    if (e.key === 'Escape' && (screen !== 'title' || sheet)) back();
+    if ($('.loading, .intro', app)) return;
+    if (e.key === 'Escape' && screen === 'title' && titleSub && !sheet) act('tsub:');
+    else if (e.key === 'Escape' && (screen !== 'title' || sheet)) back();
     if (screen === 'car' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) act('car:' + (e.key === 'ArrowLeft' ? -1 : 1));
     if (screen === 'track' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) act('track:' + (e.key === 'ArrowLeft' ? -1 : 1));
   });
@@ -828,14 +915,21 @@
       if (D.states[st] && st !== ST) { ST = st; P = loadP(ST); resetView(); drawStates(); }
       if (o.fresh) { P = fresh(ST); saveP(); resetView(); }
       if (o.carIdx != null) carIdx = o.carIdx; if (o.colorIdx != null) colorIdx = o.colorIdx; if (o.mode) mode = o.mode; if (o.trackIdx != null) trackIdx = o.trackIdx;
-      if (o.group) group = o.group; if (o.mapV) mapV = o.mapV;
+      if (o.group) group = o.group; if (o.mapV) mapV = o.mapV; if (o.weather != null) weather = o.weather;
       if (o.daily) { mode = dailyMode(); group = daily().track.group; trackIdx = 0; }
       if (o.trackId) { const tt = D.tracks.find(x => x.id === o.trackId); if (tt) group = tt.group; const i = TRACKS().findIndex(t => t && t.id === o.trackId); if (i >= 0) trackIdx = i; }
       if (o.tab) tab = o.tab; if (o.lbTrack != null) lbTrack = o.lbTrack; if (o.mpMode) mpMode = o.mpMode;
-      if (o.seriesId) { seriesId = o.seriesId; raceSel = null; }
-      sheet = null; history = scr === 'title' ? [] : scr === 'track' ? ['title', 'mode'] : ['title']; screen = scr; render(); if (o.offer) offer(); if (o.weatherSheet) act('pick-weather');
+      // the main menu's frame: as it is when coming back from the screen opened (Single race or Career), or as asked (o.sub)
+      titleSub = o.sub !== undefined ? o.sub : scr === 'mode' || scr === 'track' ? 'single' : /^(cup|cchase|ctrial|crally)$/.test(scr) ? 'career' : null;
+      if (scr === 'mode') scr = 'title';
+      sheet = null; history = scr === 'title' ? [] : ['title']; screen = scr; render(); if (o.offer) offer(); if (o.weatherSheet) act('pick-weather');
     },
-    finish(kind, res) { const d = daily(); const R = kind === 'daily' ? { kind, track: d.track, trial: !!d.track.trial, label: '' } : kind === 'chase' ? { kind: 'single', mode: 'chase', chase: true, track: D.tracks[0], label: '' } : kind === 'career' ? (() => { const nx = nextRace(), s = seriesById(nx[0]); return { kind, track: trackById(s.races[nx[1]]), trial: !!s.trial, seriesId: s.id, raceIdx: nx[1], label: '' }; })() : kind === 'multi' ? { kind, track: D.tracks[0], rival: D.friendName, label: '' } : { kind: 'single', mode: 'race', track: D.tracks[0], label: '' }; race = R; finish(res); },
+    finish(kind, res) {   // kind: daily | chase | multi | single, or a way of the career: cup | cchase | ctrial | crally
+      const d = daily(), cmk = { cup: 'cup', cchase: 'chase', ctrial: 'trial', crally: 'rally' }[kind];
+      race = cmk ? cmRace(cmk) : kind === 'daily' ? { kind, track: d.track, trial: !!d.track.trial, label: '' } : kind === 'chase' ? { kind: 'single', mode: 'chase', chase: true, track: D.tracks[0], label: '' } :
+        kind === 'multi' ? { kind, track: D.tracks[0], rival: D.friendName, label: '' } : { kind: 'single', mode: 'race', track: D.tracks[0], label: '' };
+      finish(res);
+    },
   };
 
   /* ---------------- start (keeps the place across a republish) ---------------- */
@@ -843,16 +937,16 @@
     data = data || {};
     ST = D.states[data.st] ? data.st : D.states[store.get('state', '')] ? store.get('state', '') : 'free';
     P = loadP(ST); resetView();
-    settings = D.settings.map(s => s.sel); mapV = +store.get('mapv', 1) || 1;
+    settings = D.settings.map(s => s.sel); mapV = +store.get('mapv', 1) || 1; if (!D.mapVersions.some(x => x.n === mapV)) mapV = 1;
     history = [];
     screen = VIEWS[data.screen] && data.screen !== 'results' ? data.screen : 'title';
-    if (data.screen && data.carIdx != null) { carIdx = data.carIdx; colorIdx = data.colorIdx; mode = modeOf(data.mode).id; group = D.groups.some(g => g.id === data.group) ? data.group : 'circuit'; trackIdx = Math.max(0, Math.min(data.trackIdx || 0, TRACKS().length - 1)); tab = data.tab || 'stats'; seriesId = data.seriesId || null; }
-    if (screen === 'series' && !seriesId) screen = 'career';
-    if (screen !== 'title') history = screen === 'track' ? ['title', 'mode'] : ['title'];
+    if (data.screen && data.carIdx != null) { carIdx = data.carIdx; colorIdx = data.colorIdx; mode = modeOf(data.mode).id; group = D.groups.some(g => g.id === data.group) ? data.group : 'circuit'; trackIdx = Math.max(0, Math.min(data.trackIdx || 0, TRACKS().length - 1)); tab = data.tab || 'stats'; titleSub = data.titleSub || null; }
+    if (screen === 'track') titleSub = 'single';
+    if (screen !== 'title') history = ['title'];
     if (store.get('bar', true) === false) { $('#mockbar').hidden = true; $('#mockdot').hidden = false; }
     drawStates(); render();
   }
   const hot = window.claude && window.claude.hot;
-  if (hot && hot.snapshot) hot.snapshot(() => ({ st: ST, screen, mode, group, carIdx, colorIdx, trackIdx, tab, seriesId }));
+  if (hot && hot.snapshot) hot.snapshot(() => ({ st: ST, screen, titleSub, mode, group, carIdx, colorIdx, trackIdx, tab }));
   if (hot && hot.ready) hot.ready(start); else start((hot && hot.data) || {});
 })();

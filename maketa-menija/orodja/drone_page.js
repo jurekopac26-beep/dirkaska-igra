@@ -33,10 +33,22 @@ window.DR = (function () {
     }
   }
   // the road at d metres from the start (a closed track: round and round): its middle, height, heading (smoothed over ~60 m)
+  // (between the game's road points, not snapped to them: a camera that follows the road glides instead of stepping a few metres at a time)
+  function posAt(s) {
+    const N = T.N; s = T.open ? Math.min(Math.max(s, 0), T.len - 0.001) : (s % T.len + T.len) % T.len;
+    const f = s / T.ds; let i = Math.floor(f), j; const t = f - i;
+    if (T.open) { i = Math.min(i, N - 2); j = i + 1; } else { i %= N; j = (i + 1) % N; }
+    return { x: T.px[i] + (T.px[j] - T.px[i]) * t, y: T.hy[i] + (T.hy[j] - T.hy[i]) * t, z: T.pz[i] + (T.pz[j] - T.pz[i]) * t };
+  }
   function road(d) {
-    const s = ((T.startS + d) % T.len + T.len) % T.len, i = T.idx(s), j = T.idx((s + 30) % T.len), k = T.idx((s - 30 + T.len) % T.len);
-    const hx = T.px[j] - T.px[k], hz = T.pz[j] - T.pz[k], l = Math.hypot(hx, hz) || 1;
-    return { x: T.px[i], y: T.hy[i], z: T.pz[i], hx: hx / l, hz: hz / l };
+    const s = T.startS + d, p = posAt(s), a = posAt(s + 30), b = posAt(s - 30), hx = a.x - b.x, hz = a.z - b.z, l = Math.hypot(hx, hz) || 1;
+    return { x: p.x, y: p.y, z: p.z, hx: hx / l, hz: hz / l };
+  }
+  // how smooth a shot is: the largest jump in the camera's and the aim's motion from one frame to the next (m per frame per frame)
+  function jerk(S, n) {
+    let mc = 0, mt = 0, P0 = pose(S, 0), P1 = pose(S, 1 / (n - 1));
+    for (let k = 2; k < n; k++) { const P2 = pose(S, k / (n - 1)); mc = Math.max(mc, Math.hypot(P2.px - 2 * P1.px + P0.px, P2.py - 2 * P1.py + P0.py, P2.pz - 2 * P1.pz + P0.pz)); mt = Math.max(mt, Math.hypot(P2.tx - 2 * P1.tx + P0.tx, P2.ty - 2 * P1.ty + P0.ty, P2.tz - 2 * P1.tz + P0.tz)); P0 = P1; P1 = P2; }
+    return [+mc.toFixed(3), +mt.toFixed(3)];
   }
   // the road smoothed over +-r metres (the path a drone flies along a winding road)
   function roadS(d, r) { let x = 0, y = 0, z = 0, n = 0; for (let e = -r; e <= r; e += 10) { const p = road(d + e); x += p.x; y += p.y; z += p.z; n++; } const p = road(d); return { x: x / n, y: y / n, z: z / n, hx: p.hx, hz: p.hz }; }
@@ -47,7 +59,7 @@ window.DR = (function () {
     if (S.kind === 'push') {   // along the road, from d0 to d1, rising from h0 to h1, a little to the side, looking `look` m ahead
       const d = lerp(S.d0, S.d1, S.lin ? t : u), c = roadS(d, S.smooth || 60), a = roadS(d + (S.look || 120), S.smooth || 60), h = lerp(S.h0, S.h1 == null ? S.h0 : S.h1, u), sd = S.side || 0;
       const px = c.x - c.hz * sd, pz = c.z + c.hx * sd;
-      return { px, py: Math.max(c.y, ground(px, pz, c.y)) + h, pz, tx: a.x, ty: a.y + (S.lookUp || 0), tz: a.z, fov };
+      return { px, py: c.y + h, pz, tx: a.x, ty: a.y + (S.lookUp || 0), tz: a.z, fov };
     }
     if (S.kind === 'orbit') {   // round a place on the road (or beside it), at radius r and height h, from angle a0 to a1 (0: behind it)
       const c = road(S.d), ang = (lerp(S.a0, S.a1, S.lin ? t : u)) * Math.PI / 180, b = Math.atan2(c.hz, c.hx) + Math.PI + ang, r = lerp(S.r, S.r1 == null ? S.r : S.r1, u);
@@ -61,7 +73,7 @@ window.DR = (function () {
     }
     if (S.kind === 'rise') {   // behind a place, rising from h0 to h1 while the look lifts from the road near it to the far land
       const c = roadS(S.d, S.smooth || 40), back = lerp(S.back, S.back1 == null ? S.back : S.back1, u), px = c.x - c.hx * back - c.hz * (S.side || 0), pz = c.z - c.hz * back + c.hx * (S.side || 0);
-      const a = road(S.d + lerp(S.look0 || 40, S.look1 || 400, u)), py = Math.max(c.y, ground(px, pz, c.y)) + lerp(S.h0, S.h1, u);
+      const a = roadS(S.d + lerp(S.look0 || 40, S.look1 || 400, u), 30), py = c.y + lerp(S.h0, S.h1, u);
       return { px, py, pz, tx: a.x, ty: a.y + lerp(S.up0 || 0, S.up1 || 0, u), tz: a.z, fov };
     }
     throw new Error('shot kind ' + S.kind);
@@ -77,7 +89,8 @@ window.DR = (function () {
     const f = (t) => { const x = Math.min(1, Math.max(0, t)) * (n - 1), i = Math.min(n - 2, Math.floor(x)); return sm[i] + (sm[i + 1] - sm[i]) * (x - i); };
     floors.set(S, f); return f;
   }
-  function pose(S, t) { const P = pose0(S, t); if (S.kind !== 'top') P.py = Math.max(P.py, floorOf(S)(t)); return P; }
+  // (a smooth maximum: the camera eases up onto the clearance instead of meeting it with a jolt)
+  function pose(S, t) { const P = pose0(S, t); if (S.kind !== 'top') { const f = floorOf(S)(t), a = P.py; P.py = (a + f + Math.sqrt((a - f) * (a - f) + 144)) / 2; } return P; }
   // the race goes on for sec seconds (nothing drawn): the traffic race with the player's car driving itself, or the demo's AI cars
   function run(sec) {
     if (mode === 'traffic') window.__game.sim(sec, true);
@@ -102,5 +115,5 @@ window.DR = (function () {
   }
   // where the race cars are (for timing the shots)
   function cars() { return R.cars.map(c => c.q ? Math.round(((c.q.s - T.startS) % T.len + T.len) % T.len) : null); }
-  return { setup, pose, run, waitCar, frame, cars, road };
+  return { setup, pose, run, waitCar, frame, cars, road, jerk };
 })();

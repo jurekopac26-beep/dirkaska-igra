@@ -1,5 +1,6 @@
-// Local check of the menu mockup (the folder above), like check.mjs, but it plays the flows: today's race, career races and a multiplayer
-// duel. After Race it picks a finishing place, then saves the results screen and the screens that follow.
+// Local check of the menu mockup (the folder above), like check.mjs, but it plays the flows: today's race, single races, the career's four ways
+// and a multiplayer duel. After Race it skips the intro (the drone's shots), waits for the start lights, picks a result, then saves the
+// results screen and the screens that follow.
 // Usage: node flow.mjs [01-,free-]  (a step whose name contains one of these; a step can need the one before it; env W, H, OUTDIR)
 import { createRequire } from 'node:module';
 import http from 'node:http';
@@ -46,7 +47,7 @@ const shot = async (name) => {
     const app = document.getElementById('app').getBoundingClientRect();
     for (const el of document.querySelectorAll('#app *')) {
       const r = el.getBoundingClientRect(); if (!r.width || getComputedStyle(el).visibility === 'hidden') continue;
-      if (el.closest('.scroll, .chips, .dio, .stage, .bgv, .tile .im, .mode .im')) continue;
+      if (el.closest('.scroll, .chips, .dio, .stage, .bgv, .tile .im, .mode .im, .ix-bg')) continue;
       if (r.right > app.right + 1 || r.left < app.left - 1) out.push('outside x: ' + el.tagName + '.' + el.className + ' ' + Math.round(r.left) + '..' + Math.round(r.right));
       if (r.bottom > app.bottom + 1) out.push('below: ' + el.tagName + '.' + el.className + ' ' + Math.round(r.bottom));
     }
@@ -61,50 +62,72 @@ const fin = async (kind, res) => { await page.evaluate(([k, r]) => window.MENU_D
 const ONLY = process.argv[2] ? process.argv[2].split(',') : null;
 let n = 0;
 const step = async (name, fn) => { n++; const nm = String(n).padStart(2, '0') + '-' + name; if (ONLY && !ONLY.some(x => nm.includes(x))) return; await fn(); await shot(nm); };
+const skip = async () => { await page.click('.ix-skip'); await wait(3800); };   // the intro skipped: the start lights, then the picker
+const race = async (sel) => { await page.click(sel); await wait(900); await skip(); };
+const pickRes = async (r) => { await page.click('[data-finish="' + r + '"]'); await wait(650); };
 await step('free-title', () => open('free', 'title', { fresh: true }, 2600));
 await step('free-daily', () => open('free', 'track', { daily: true }, 900));
-await step('free-picker', async () => { await open('free', 'track', { daily: true }); await page.click('[data-act="race-daily"]'); await wait(1700); });
-await step('free-daily-result', async () => { await page.click('[data-finish="3"]'); await wait(600); });
+await step('free-intro', async () => { await page.click('[data-act="race-daily"]'); await wait(2600); });
+await step('free-lights', async () => { await page.click('.ix-skip'); await wait(1500); });
+await step('free-picker', async () => { await wait(2300); });
+await step('free-daily-result', () => pickRes('3'));
 await step('free-daily-after', async () => { await page.click('[data-act="res-continue"]'); await wait(700); });
 await step('free-title-after', () => open('free', 'title', {}, 900));
-await step('free-mode', async () => { await page.click('[data-act="single"]'); await wait(700); });
+await step('free-single-sub', async () => { await page.click('[data-act="single"]'); await wait(700); });
 await step('free-chase-track', async () => { await page.click('[data-act="mode:chase"]'); await wait(900); });   // (a tap on a mode goes straight to its tracks)
-await step('free-chase-picker', async () => { await page.click('[data-act="race-single"]'); await wait(1700); });
-await step('free-chase-escaped', async () => { await page.click('[data-finish="2"]'); await wait(600); });
-await step('free-chase-busted', async () => { await page.click('[data-act="again"]'); await wait(1700); await page.click('[data-finish="0"]'); await wait(600); });
+await step('free-chase-picker', () => race('[data-act="race-single"]'));
+await step('free-chase-escaped', () => pickRes('2'));
+await step('free-chase-busted', async () => { await page.click('[data-act="again"]'); await wait(900); await skip(); await pickRes('0'); });
 await step('free-chase-after', async () => { await page.click('[data-act="res-continue"]'); await wait(900); });
-await step('free-trial-track', async () => { await page.click('[data-act="back"]'); await wait(500); await page.click('[data-act="mode:trial"]'); await wait(900); });
-await step('free-trial-result', async () => { await page.click('[data-act="race-single"]'); await wait(1700); await page.click('[data-finish="gold"]'); await wait(600); });
+await step('free-back-to-sub', async () => { await page.click('[data-act="back"]'); await wait(700); });
+await step('free-trial-track', async () => { await page.click('[data-act="mode:trial"]'); await wait(900); });
+await step('free-trial-result', async () => { await race('[data-act="race-single"]'); await pickRes('gold'); });
 await step('free-group-road', async () => { await page.click('[data-act="res-continue"]'); await wait(700); await page.click('[data-act="group:road"]'); await wait(1400); });
 await step('free-group-rally', async () => { await page.click('[data-act="group:rally"]'); await wait(1400); });
 await step('free-mapv-2', async () => { await page.click('[data-act="mapv:2"]'); await wait(1600); });
-await step('free-mapv-3', async () => { await page.click('[data-act="mapv:3"]'); await wait(1600); });
-await step('free-rally-result', async () => { await page.click('[data-act="race-single"]'); await wait(1700); await page.click('[data-finish="silver"]'); await wait(700); });
+await step('free-rally-result', async () => { await race('[data-act="race-single"]'); await pickRes('silver'); });
 await step('free-track-jezero', () => open('free', 'track', { mode: 'race', trackId: 'jezero', mapV: 1 }, 900));
 await step('free-pick-car', async () => { await page.click('[data-act="pick-car"]'); await wait(2000); });
 await step('free-car-paint', async () => { await page.click('[data-act="car:1"]'); await wait(300); await page.click('[data-act="tab:paint"]'); await wait(300); await page.click('[data-act="color:0"]'); await wait(1500); });
 await step('free-car-selected', async () => { await page.click('[data-act="car-select"]'); await wait(700); });
 await step('free-weather-sheet', async () => { await page.click('[data-act="pick-weather"]'); await wait(500); await page.click('[data-act="weather:1"]'); await wait(200); await page.click('[data-act="laps:1"]'); await wait(400); });
 await step('free-weather-done', async () => { await page.click('.sheet [data-act="close-sheet"]'); await wait(900); });
-await step('free-weather-random-a', async () => { await page.click('[data-act="pick-weather"]'); await wait(400); await page.click('[data-act="weather:2"]'); await wait(1200); });
+await step('free-weather-rain-map', async () => { await page.click('[data-act="mapv:2"]'); await wait(1500); });
+await step('free-weather-random-a', async () => { await page.click('[data-act="mapv:1"]'); await wait(600); await page.click('[data-act="pick-weather"]'); await wait(400); await page.click('[data-act="weather:2"]'); await wait(1200); });
 await step('free-weather-random-b', async () => { await wait(2600); });
-await step('free-weather-dry', async () => { await page.click('[data-act="weather:0"]'); await wait(1200); await page.click('.sheet [data-act="close-sheet"]'); await wait(400); await page.click('[data-act="pick-weather"]'); await wait(300); await page.click('[data-act="weather:1"]'); await wait(300); await page.click('.sheet [data-act="close-sheet"]'); await wait(900); });
-await step('free-single-result', async () => { await page.click('[data-act="race-single"]'); await wait(1700); await page.click('[data-finish="2"]'); await wait(600); });
-await step('free-career', () => open('free', 'career', {}, 800));
-await step('free-career-result', () => fin('career', '1'));
-await step('free-series-after', async () => { await page.click('[data-act="res-continue"]'); await wait(700); });
+await step('free-weather-rain', async () => { await page.click('[data-act="weather:1"]'); await wait(300); await page.click('.sheet [data-act="close-sheet"]'); await wait(900); });
+await step('free-intro-rain', async () => { await page.click('[data-act="race-single"]'); await wait(2600); });
+await step('free-single-result', async () => { await skip(); await pickRes('2'); });
+await step('free-career-sub', () => open('free', 'title', { sub: 'career' }, 900));
+await step('free-cup', async () => { await page.click('[data-act="cm:cup"]'); await wait(800); });
+await step('free-cup-result', async () => { await race('[data-act="cm-race"]'); await pickRes('1'); });
+await step('free-cup-after', async () => { await page.click('[data-act="res-continue"]'); await wait(800); });
+await step('free-career-sub-after', async () => { await page.click('[data-act="back"]'); await wait(800); });
+await step('free-cchase', async () => { await page.click('[data-act="cm:chase"]'); await wait(800); });
+await step('free-cchase-result', async () => { await race('[data-act="cm-race"]'); await pickRes('3'); });
+await step('free-cchase-after', async () => { await page.click('[data-act="res-continue"]'); await wait(800); });
+await step('free-ctrial-result', async () => { await open('free', 'ctrial', {}, 700); await race('[data-act="cm-race"]'); await pickRes('bronze'); });
+await step('free-crally-picker', async () => { await open('free', 'crally', {}, 700); await race('[data-act="cm-race"]'); });
+await step('free-crally-result', () => pickRes('2'));
 await step('free-offer', () => open('free', 'title', { offer: true }, 900));
 await step('full-title', () => open('full', 'title', { fresh: true }, 1200));
-await step('full-career-r2', async () => { await fin('career', '1'); await page.click('[data-act="res-continue"]'); await wait(300); await fin('career', '2'); });
-await step('full-career-r3', async () => { await page.click('[data-act="res-continue"]'); await wait(300); await fin('career', '1'); });
-await step('full-career', () => open('full', 'career', {}, 800));
+await step('full-cup-round1', async () => { for (const r of ['1', '2', '1']) { await fin('cup', r); await page.click('[data-act="res-continue"]'); await wait(300); } await fin('cup', '1'); });
+await step('full-cup-round2', async () => { await page.click('[data-act="res-continue"]'); await wait(800); });
+await step('full-cup-out', async () => { for (const r of ['13', '13', '12', '13', '13']) { await fin('cup', r); await page.click('[data-act="res-continue"]'); await wait(300); } await fin('cup', '13'); });
+await step('full-crally-done', async () => { for (const r of ['1', '2', '1']) { await fin('crally', r); await page.click('[data-act="res-continue"]'); await wait(300); } await fin('crally', '1'); });
+await step('full-crally-after', async () => { await page.click('[data-act="res-continue"]'); await wait(800); });
 await step('full-multi', () => open('full', 'multi', { mpMode: 'create' }, 800));
 await step('full-multi-result', () => fin('multi', '2'));
 await step('veteran-title', () => open('veteran', 'title', { fresh: true }, 1200));
+await step('veteran-career-sub', () => open('veteran', 'title', { sub: 'career' }, 900));
+await step('veteran-cchase-catch', async () => { await page.click('[data-act="cm:chase"]'); await wait(800); });
+await step('veteran-catch-picker', () => race('[data-act="cm-race"]'));
+await step('veteran-catch-result', () => pickRes('3'));
 await step('veteran-daily', () => open('veteran', 'track', { daily: true }, 900));
-await step('veteran-career-result', () => fin('career', '1'));
+await step('veteran-cup-result', () => fin('cup', '1'));
 await step('veteran-board-today', () => open('veteran', 'board', { lbTrack: -1 }, 800));
 await step('veteran-trial-track', () => open('veteran', 'track', { mode: 'trial', trackId: 'pikes' }, 900));
-await step('veteran-trial-picker', async () => { await page.click('[data-act="race-single"]'); await wait(1700); });
+await step('veteran-intro-pikes', async () => { await page.click('[data-act="race-single"]'); await wait(8000); });
+await step('veteran-leave', async () => { await skip(); await page.click('[data-finish="cancel"]'); await wait(900); });
 console.log(errors.length ? 'ERRORS:\n' + [...new Set(errors)].join('\n') : 'no console errors');
 await browser.close(); server.close();

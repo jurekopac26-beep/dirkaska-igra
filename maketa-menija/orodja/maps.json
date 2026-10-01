@@ -1,26 +1,14 @@
 [
   ["vrsic", "top", "top-vrsic", {"W": 824, "H": 620, "wet": true}],
-  ["vrsic", "block", "block-vrsic", {"W": 824, "H": 600, "wet": true}],
   ["pikes", "top", "top-pikes", {"W": 824, "H": 620, "wet": true}],
-  ["pikes", "block", "block-pikes", {"W": 824, "H": 600, "wet": true}],
   ["ouninpohja", "top", "top-ouninpohja", {"W": 824, "H": 620, "wet": true}],
-  ["ouninpohja", "block", "block-ouninpohja", {"W": 824, "H": 600, "wet": true}],
   ["gora", "top", "top-gora", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
-  ["gora", "block", "block-gora", {"W": 824, "H": 600, "wet": true, "margin": 0.25}],
   ["jezero", "top", "top-jezero", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
-  ["jezero", "block", "block-jezero", {"W": 824, "H": 600, "wet": true, "margin": 0.25}],
   ["riviera", "top", "top-riviera", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
-  ["riviera", "block", "block-riviera", {"W": 824, "H": 600, "wet": true, "margin": 0.25}],
   ["ljubljana", "top", "top-ljubljana", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
-  ["ljubljana", "block", "block-ljubljana", {"W": 824, "H": 600, "wet": true, "margin": 0.25}],
   ["monaco", "top", "top-monaco", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
-  ["monaco", "block", "block-monaco", {"W": 824, "H": 600, "wet": true, "margin": 0.25}],
   ["rbring", "top", "top-rbring", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
-  ["rbring", "block", "block-rbring", {"W": 824, "H": 600, "wet": true, "margin": 0.25}],
   ["suzuka", "top", "top-suzuka", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
-  ["suzuka", "block", "block-suzuka", {"W": 824, "H": 600, "wet": true, "margin": 0.25}],
   ["spa", "top", "top-spa", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
-  ["spa", "block", "block-spa", {"W": 824, "H": 600, "wet": true, "margin": 0.25}],
-  ["nring", "top", "top-nring", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
-  ["nring", "block", "block-nring", {"W": 824, "H": 600, "wet": true, "margin": 0.25}]
+  ["nring", "top", "top-nring", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}]
 ]

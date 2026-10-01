@@ -61,7 +61,7 @@ for (const [track, J] of JOBS) {
       if (S.wait) console.log(track, 'shot', i, 'waited', await page.evaluate((w) => window.DR.waitCar(w[0], w[1], w[2]), S.wait), 's for a car');
       if (process.env.PREVIEW) {   // a quick look: the start, the middle and the end of each shot
         for (const j of [0, 1, 2]) { const url = await page.evaluate(([S, j, n]) => window.DR.frame(S, j, 3), [S, j, n]); fs.writeFileSync(path.join(dir, 'p' + i + '_' + j + '.jpg'), Buffer.from(url.split(',')[1], 'base64')); if (j < 2) await page.evaluate((s) => window.DR.run(s), S.dur / 2); }
-        console.log(track, 'preview', i, S.name, 'cars', JSON.stringify(await page.evaluate(() => window.DR.cars().slice(0, 3)))); continue;
+        console.log(track, 'preview', i, S.name, 'cars', JSON.stringify(await page.evaluate(() => window.DR.cars().slice(0, 3))), 'jerk', JSON.stringify(await page.evaluate(([S, n]) => window.DR.jerk(S, n), [S, n]))); continue;
       }
       if (!todo.includes(i)) { await page.evaluate((s) => window.DR.run(s), S.dur); continue; }   // (drawn before: the race still goes on as long)
       const t1 = Date.now();
