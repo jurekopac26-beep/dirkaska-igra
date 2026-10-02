@@ -68,11 +68,11 @@ try {
     wr === 'out' && note.shown && note.txt === 'Patrulja je izločena!' && note.font <= 12 && note.b <= map2.t + 1 && note.t >= 0 && Math.abs(note.r - map2.r) <= 2 && !(msg.shown && /izločena/i.test(msg.txt)),
     JSON.stringify({ wr, note, msg: msg.shown ? msg.txt : '' }));
 
-  // a spike strip on a steep bit of the road, between two of its samples (from the sample before it the road is 20 cm higher there)
+  // a spike strip on a steep bit of the road (over 10 %), between two of its samples (from the sample before it the road is ~20 cm higher there)
   const sp = await page.evaluate(async () => {
     const g = window.__game, R = g.race, Tk = R.track, P = R.player, pol = R.pol, frame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     for (const q of pol.spikes) { q.on = false; q.gone = true; }
-    let s = 0; for (let x = P.q.s + 300; x < Tk.finishS - 800 && !s; x += 0.25) { const e = Tk.elevAt(x), f = x / Tk.ds - Math.floor(x / Tk.ds); if (e.grade > 0.085 && f > 0.85 && f < 0.95) s = x; }
+    let s = 0; for (let x = P.q.s + 300; x < Tk.finishS - 800 && !s; x += 0.25) { const e = Tk.elevAt(x), f = x / Tk.ds - Math.floor(x / Tk.ds); if (e.grade > 0.1 && f > 0.85 && f < 0.95) s = x; }
     pol._spike(s); pol.spikes[pol.spikes.length - 1].on = true;
     const i = Tk.idx(s - 14); P.place(Tk.px[i], Tk.pz[i], Tk.hd[i]); P.y = P.py = P.roadY = Tk.hy[i]; P.vx = P.vz = 0; P.q = Tk.query(P.x, P.z, i, P.q); P.sPrev = P.q.s;
     for (let k = 0; k < 4; k++) await frame();
@@ -90,11 +90,13 @@ try {
     const s = pol.plan.find(q => q.s > P.q.s + 100).s - 60, v = 64;   // (a straight bit: where a strip or a roadblock would go)
     const put = (c, s1, d) => { const j = Tk.idx(s1); c.place(Tk.px[j] + Tk.nx[j] * d, Tk.pz[j] + Tk.nz[j] * d, Tk.hd[j]); c.y = c.py = c.roadY = Tk.hy[j]; c.vx = Math.cos(Tk.hd[j]) * v; c.vz = Math.sin(Tk.hd[j]) * v; c.speed = v; c.q = Tk.query(c.x, c.z, j, c.q); c.sPrev = c.q.s; };
     put(P, s, 1.5);
-    const cs = pol.cars.filter(c => !c.locked && c.pol.mode !== 'out').slice(0, 2); cs.forEach((c, k) => put(c, s - 6 - k * 5, k ? -2.6 : 3.4));
+    const cs = pol.cars.filter(c => !c.locked && c.pol.mode !== 'out').slice(0, 2);
+    while (cs.length < 2) cs.push(pol._car(s - 20, 0, 0, 'chase', 0));   // (the ones out of the chase so far: two more join)
+    cs.forEach((c, k) => put(c, s - 6 - k * 5, k ? -2.6 : 3.4));
     for (let i = 0; i < 3; i++) Render.frame(1 / 60, 1, P, 'chase', {});
     const L = Render.look2Info(); return { cars: cs.length, speedBlur: L.speedBlur, sharp: L.sharpCars };
   });
-  T.check('at 230 km/h (the chase camera): the picture streaks, the patrol cars on the player\'s tail stay sharp', blur.speedBlur > 0.2 && blur.cars >= 1 && blur.sharp >= blur.cars, JSON.stringify(blur));
+  T.check('at 230 km/h (the chase camera): the picture streaks, the patrol cars on the player\'s tail stay sharp', blur.speedBlur > 0.2 && blur.cars === 2 && blur.sharp >= 2, JSON.stringify(blur));
   await page.evaluate(() => window.__game.resume && window.__game.resume());
 
   // held upright: the radio under the clock and the stars, the map under the radio
