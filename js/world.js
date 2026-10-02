@@ -16705,7 +16705,7 @@ const World = (function () {
         gl.quadUp(at(s0, w, 0.02), at(s0, pi.o - 3.5, 0.022), at(s1, pj.o - 3.5, 0.022), at(s1, w, 0.02), [[0.8, 0.78, 0.76], [0.8, 0.78, 0.76], [0.8, 0.78, 0.76], [0.8, 0.78, 0.76]],
           [[0, 0], [0.3, 0], [0.3, 0.3], [0, 0.3]].map(([u, v]) => [u + s0 / 8, v]));   // (the tar between the road and the lane)
         gp.quadUp(at(s0, pi.o - 3.62, 0.034), at(s0, pi.o - 3.38, 0.034), at(s1, pj.o - 3.38, 0.034), at(s1, pj.o - 3.62, 0.034), [wl, wl, wl, wl]);   // the white line
-        if (pi.t > 0.999 && pj.t > 0.999) gp.quadUp(at(s0, pi.o + 3.5, 0.02), at(s0, pi.o + 11, 0.02), at(s1, pj.o + 11, 0.02), at(s1, pj.o + 3.5, 0.02), [apC, apC, apC, apC]);
+        if (pi.t > 0.999 && pj.t > 0.999) gp.quadUp(at(s0, pi.o + 3.5, 0.02), at(s0, pi.o + 19, 0.02), at(s1, pj.o + 19, 0.02), at(s1, pj.o + 3.5, 0.02), [apC, apC, apC, apC]);   // (the gravel apron and the shed's floor)
       }
       const TEAM = [[0.12, 0.32, 0.2], [0.85, 0.12, 0.14], [0.16, 0.3, 0.62], [0.94, 0.94, 0.9], [0.82, 0.62, 0.12], [0.14, 0.14, 0.16], [0.5, 0.52, 0.56], [0.2, 0.5, 0.68], [0.6, 0.18, 0.12], [0.86, 0.84, 0.7], [0.3, 0.42, 0.3], [0.7, 0.1, 0.1], [0.2, 0.3, 0.55]];
       const kbox = (g, s0, a, wo, y, sx, sy, sz, col, top, nb) => { const [x, z, hd] = atSf(s0 + a, wo); box(g, x, hyS(s0 + a) + y, z, sx, sy, sz, hd, col, top, nb); };
@@ -16731,12 +16731,12 @@ const World = (function () {
         cyl(scen.get(x, z), x, hyS(sE) - 0.3, z, 0.08, 2.9, 5, TIMd); board(x, hyS(sE) + 2.1, z, T.tx[i], T.tz[i], 2.6, 0.75, LF_AT.ban + 2); exclPush(x, z, 3); } }
       addM(gl, aMat); addM(gp, new THREE.MeshLambertMaterial({ vertexColors: true }));
       // the pit shed: an open timber shed with a corrugated iron roof behind the crews, the length of the boxes
-      { const f0 = (s) => { const p = T.pitAt(s); return p ? p.o + 3.5 + 11 : null; }, IR = [0.62, 0.63, 0.64];
+      { const f0 = (s) => { const p = T.pitAt(s); return p ? p.o + 3.5 + 9.0 : null; }, IR = [0.62, 0.63, 0.64];   // (its eave over the garages' line: the renderer hangs each crew's coloured board there, 3.7 m up)
         for (let q = pq0 - 10; q < pq1 + 20; q += 10) { const s0 = sStart + q, f = f0(s0 + 5); if (f == null) continue; const [x, z] = atSf(s0 + 5, f + 3), g = scen.get(x, z);
-          for (const a of [0.3, 9.7]) for (const o of [f + 0.3, f + 5.7]) kbox(g, s0, a, o, -0.2, 0.22, 3.4, 0.22, TIM, null, true);
+          for (const a of [0.3, 9.7]) for (const o of [f + 0.3, f + 5.7]) kbox(g, s0, a, o, -0.2, 0.22, 4.0, 0.22, TIM, null, true);
           kbox(g, s0, 5, f + 5.9, -0.2, 10, 3.0, 0.12, TIM, null, true);
-          const A = at(s0, f - 0.4, 3.4), B = at(s0 + 10, f - 0.4, 3.4), C = at(s0 + 10, f + 6.2, 2.9), D = at(s0, f + 6.2, 2.9); g.quadO(A, B, C, D, IR, at(s0 + 5, f + 3, -3));
-          g.quadO(at(s0, f - 0.4, 3.3), at(s0 + 10, f - 0.4, 3.3), at(s0 + 10, f + 6.2, 2.8), at(s0, f + 6.2, 2.8), [0.4, 0.38, 0.34], at(s0 + 5, f + 3, 8));
+          const A = at(s0, f - 0.5, 3.95), B = at(s0 + 10, f - 0.5, 3.95), C = at(s0 + 10, f + 6.2, 3.3), D = at(s0, f + 6.2, 3.3); g.quadO(A, B, C, D, IR, at(s0 + 5, f + 3, -3));
+          g.quadO(at(s0, f - 0.5, 3.85), at(s0 + 10, f - 0.5, 3.85), at(s0 + 10, f + 6.2, 3.2), at(s0, f + 6.2, 3.2), [0.4, 0.38, 0.34], at(s0 + 5, f + 3, 8));
           exclPush(x, z, 8); CR.exclAdd(x, z, 7); }
         // the control tower (1959) at the start line behind the shed: a timber tower, the officials' glazed room on top; the scoreboard beside it
         const s0 = sStart - 4, f = (f0(s0) || 30) + 9, [x, z] = atSf(s0, f), g = scen.get(x, z), i = T.idx(s0), hd = T.hd[i], y = hyS(s0);
@@ -16855,7 +16855,7 @@ const World = (function () {
     for (const H of HK) H.addTo(root, true);
 
     /* ---- the grandstand across the road from the pits: open timber tiers, a corrugated roof on posts, the crowd on the benches ---- */
-    const crowdMat = ownTex(rbCrowdTex(false)), crowdG = new GB(true);
+    const crowdMat = ownTex(Tex.crowdPic(['#ece9e0', '#cfc7b2', '#8c8472', '#5f6268', '#2f3649', '#bda97c', '#7e2b25', '#4b5f7a', '#dcd5c2', '#3f4b3b'], 79)), crowdG = new GB(true);   // (the 1960s crowd: white shirts, khaki, grey, navy, hats)
     let nStands = 0;
     { const sa = -70, sb = 50, side = -1, rows = 8, dep = 0.9, rise = 0.5, prof = (s) => { const i = T.idx(s), f0 = (side > 0 ? T.br[i] : T.bl[i]) + 3; return { i, f0 }; };
       for (let d = sa; d < sb; d += 5) {
@@ -16868,9 +16868,10 @@ const World = (function () {
           crowdG.quadUp(Q(s0, o0 + 0.05, y + 0.02), Q(s1, o0 + 0.05, y + 0.02), Q(s1, o1 - 0.05, y + 0.02), Q(s0, o1 - 0.05, y + 0.02), [W1, W1, W1, W1], [[u0, v], [u0 + len / 12, v], [u0 + len / 12, v + 0.1], [u0, v + 0.1]]); }
         const ob = A.f0 + rows * dep, yt = gy + 0.5 + rows * rise;
         g.quadO(Q(s0, ob, gy - 0.6), Q(s1, ob, gy - 0.6), Q(s1, ob, yt + 1), Q(s0, ob, yt + 1), [0.5, 0.45, 0.38], Q(s0, ob - 2, yt / 2));
-        g.quadO(Q(s0, A.f0 - 0.4, yt + 3.2), Q(s1, A.f0 - 0.4, yt + 3.2), Q(s1, ob + 0.4, yt + 2.4), Q(s0, ob + 0.4, yt + 2.4), [0.6, 0.6, 0.6], Q(s0, ob / 2 + A.f0 / 2, yt - 3));
-        g.quadO(Q(s0, A.f0 - 0.4, yt + 3.1), Q(s1, A.f0 - 0.4, yt + 3.1), Q(s1, ob + 0.4, yt + 2.3), Q(s0, ob + 0.4, yt + 2.3), [0.36, 0.34, 0.3], Q(s0, ob / 2 + A.f0 / 2, yt + 8));
-        for (const o of [A.f0 - 0.2, ob + 0.2]) { const [x, z] = atSf(s0, side * o); box(g, x, gy - 0.5, z, 0.2, yt + 3.2 - gy + 0.5, 0.2, T.hd[A.i], TIMd, null, true); }
+        const oR = A.f0 + rows * dep * 0.45;   // (the roof over the back rows only: the cameras above still see the crowd in front)
+        g.quadO(Q(s0, oR, yt + 3.4), Q(s1, oR, yt + 3.4), Q(s1, ob + 0.4, yt + 2.6), Q(s0, ob + 0.4, yt + 2.6), [0.46, 0.42, 0.38], Q(s0, (oR + ob) / 2, yt - 3));
+        g.quadO(Q(s0, oR, yt + 3.3), Q(s1, oR, yt + 3.3), Q(s1, ob + 0.4, yt + 2.5), Q(s0, ob + 0.4, yt + 2.5), [0.36, 0.34, 0.3], Q(s0, (oR + ob) / 2, yt + 8));
+        for (const o of [oR + 0.2, ob + 0.2]) { const [x, z] = atSf(s0, side * o); box(g, x, gy - 0.5, z, 0.2, yt + 3.2 - gy + 0.5, 0.2, T.hd[A.i], TIMd, null, true); }
         const [cx, cz] = atSf(s0, side * (A.f0 + rows * dep / 2)); exclPush(cx, cz, rows * dep / 2 + 6); CR.exclAdd(cx, cz, rows * dep / 2 + 3); crowdPts.push(cx, cz, 1);
       }
       nStands = 1; }

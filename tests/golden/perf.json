@@ -138,5 +138,12 @@
   "kverts": 461,
   "maxKverts": 798,
   "jsMs": 0.85
+ },
+ "longford": {
+  "calls": 198,
+  "maxCalls": 263,
+  "kverts": 363,
+  "maxKverts": 564,
+  "jsMs": 1.23
  }
 }
