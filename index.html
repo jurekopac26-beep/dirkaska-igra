@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
-<link rel="stylesheet" href="css/style.css?v=d97015d3">
+<link rel="stylesheet" href="css/style.css?v=55a7ec40">
 </head>
 <body>
 <div id="app">
@@ -61,7 +61,7 @@
       <div id="h-best"><span class="h-lbl">NAJ</span> <span id="h-bestv">--:--.---</span><span id="h-delta"></span></div>
       <div id="h-sec" aria-hidden="true"><i></i><i></i><i></i></div>
       <div id="h-split"></div>
-      <div id="h-pol" aria-label="Policija"><span id="h-heat"></span><div id="h-bust"><i id="h-bustbar"></i></div><span id="h-flat"></span></div>
+      <div id="h-pol" aria-label="Policija"><span id="h-heat"></span><div id="h-bust"><i id="h-bustbar"></i></div><div id="h-hide"><i id="h-hidebar"></i></div><span id="h-hidel"></span><span id="h-flat"></span><div id="h-chk"></div></div>
       <div id="h-gap"></div>
     </div>
     <div id="h-map"><canvas id="minimap"></canvas></div>
@@ -70,6 +70,8 @@
     <div id="pk-note" aria-hidden="true"><i><svg viewBox="0 0 64 64"><path id="pk-note-path" d="" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></i><b></b><small></small></div><!-- Pikes Peak: the corner warnings -->
     <div id="h-lights"><i></i><i></i><i></i><i></i><i></i></div>
     <div id="h-msg"></div>
+    <div id="h-radio" aria-live="polite"></div><!-- the run from the police: the police radio -->
+    <div id="h-tail" aria-hidden="true"><i><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 L18 17.5 L10 13.2 L2 17.5 Z"/></svg><span></span></i><i><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 L18 17.5 L10 13.2 L2 17.5 Z"/></svg><span></span></i><i><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 L18 17.5 L10 13.2 L2 17.5 Z"/></svg><span></span></i><i><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 L18 17.5 L10 13.2 L2 17.5 Z"/></svg><span></span></i></div><!-- the run from the police: arrows for the patrol cars behind, how far back -->
     <div id="h-school"></div><!-- the driving school: the lesson under way -->
     <div id="podium-cap"></div>
     <div id="h-ttsp"></div>
@@ -207,7 +209,7 @@
         <div class="row"><span class="rlbl">Kamera</span><div class="seg" data-set="camera"><button data-v="iso">Izometrična · ležeče</button><button data-v="chase">Za avtom · pokončno</button><button data-v="kino">Kino · ležeče</button><button data-v="cockpit">Kokpit · ležeče</button></div></div>
         <div class="row"><span class="rlbl">Oddaljenost</span><div class="seg" data-set="zoom"><button data-v="0.85">Blizu</button><button data-v="1">Srednje</button><button data-v="1.2">Daleč</button></div></div>
         <div class="row"><span class="rlbl">Pomoč pri driftu</span><div class="seg" data-set="assist"><button data-v="0">Nizka</button><button data-v="1">Srednja</button><button data-v="2">Visoka</button></div></div>
-        <div class="row"><span class="rlbl">Težavnost</span><div class="seg" data-set="difficulty"><button data-v="0">Lahka</button><button data-v="1">Srednja</button><button data-v="2">Težka</button></div></div>
+        <div class="row"><span class="rlbl">Težavnost</span><div class="seg" data-set="difficulty"><button data-v="0">Lahka</button><button data-v="1">Srednja</button><button data-v="2">Težka</button><button data-v="3" title="Beg pred policijo: najhujši pregon; dirke kot Težka">Super težka</button></div></div>
         <div class="row"><span class="rlbl">Samodejni plin</span><div class="seg" data-set="autoGas"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Opozorila za ovinke</span><div class="seg" data-set="notes"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Časovna tabela</span><div class="seg" data-set="tower"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
@@ -353,7 +355,7 @@
     </div>
   </section>
 
-  <div id="rotate"><div class="phone"></div><p id="rotate-txt">Obrni telefon v ležeči položaj</p></div>
+  <div id="rotate"><div class="phone"></div><p id="rotate-txt">Obrni telefon v ležeči položaj</p><p id="rotate-why"></p><button class="btn primary" data-act="rot-cam" id="rotate-cam">Igraj pokončno</button></div>
   <div id="toast"></div>
   <div id="loading"><div class="ld-logo">APEX RACING</div><div class="ld-bar"><i></i></div><p id="ld-msg">Nalagam progo…</p></div>
 </div>
@@ -369,7 +371,7 @@
 <script src="js/tracks/grom.js?v=fefe46e7"></script>
 <script src="js/tracks/pikes.js?v=a4570445"></script>
 <script src="js/tracks/ouninpohja.js?v=dd47c565"></script>
-<script src="js/tracks/vrsic.js?v=10709185"></script>
+<script src="js/tracks/vrsic.js?v=e8319d69"></script>
 <script src="js/tracks/nring.js?v=d00cc693"></script>
 <script src="js/tracks/spa.js?v=19166d8e"></script>
 <script src="js/tracks/rbring.js?v=d48ab134"></script>
@@ -377,17 +379,19 @@
 <script src="js/tracks/pikesg.js?v=366f354f"></script>
 <script src="js/tracks/caracoles.js?v=84009a26"></script>
 <script src="js/tracks/katu.js?v=65efe253"></script>
-<script src="js/lang.js?v=99787c74"></script>
-<script src="js/core.js?v=fdab3659"></script>
+<script src="js/tracks/harju.js?v=f11ca0b5"></script>
+<script src="js/tracks/bathurst.js?v=6387e681"></script>
+<script src="js/lang.js?v=cba5db40"></script>
+<script src="js/core.js?v=857cfcc7"></script>
 <script src="js/tex.js?v=c8d887ce"></script>
-<script src="js/world.js?v=9accd2f8"></script>
+<script src="js/world.js?v=0c833ee1"></script>
 <script src="js/data/p206.js?v=0016824f"></script>
-<script src="js/render.js?v=5247a338"></script>
-<script src="js/sfx.js?v=4b751d9c"></script>
-<script src="js/input.js?v=d322f5e4"></script>
-<script src="js/comm.js?v=27a6b912"></script>
+<script src="js/render.js?v=b052bae1"></script>
+<script src="js/sfx.js?v=4275d2ee"></script>
+<script src="js/input.js?v=d3dda4cf"></script>
+<script src="js/comm.js?v=86b3df24"></script>
 <script src="js/vendor/peerjs.min.js?v=76b403e4"></script>
 <script src="js/net.js?v=ba863f32"></script>
-<script src="js/game.js?v=411cb121"></script>
+<script src="js/game.js?v=66f4e8b5"></script>
 </body>
 </html>
