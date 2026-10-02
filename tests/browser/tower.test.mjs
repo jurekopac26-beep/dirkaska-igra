@@ -25,20 +25,21 @@ try {
   T.check('upright: the tower at the right under the map, the leader (VODI), the first three, the player (TI, lit) with two ahead and behind', t1.visible && t1.left >= t1.mapLeft - 2 && t1.top >= t1.mapBottom && t1.right <= t1.w && r.length >= 7 && r.length <= want && r[0].pos === 1 && r[0].gap === 'VODI' && r[1].pos === 2 && r[2].pos === 3 && me && me.code === 'TI' && me.pos === t1.pos &&
     r.some(x => x.pos === Math.min(t1.n, t1.pos + 2)) && (t1.pos - 2 <= 4 || t1.sep === 1), JSON.stringify(t1));
   T.check('the gaps to the leader grow down the order (+s.s), other drivers by three letters', gaps.length >= 4 && gaps.every((v, i) => i === 0 || v >= gaps[i - 1] - 0.3) && r.filter(x => !x.me).every(x => /^[A-ZČŠŽ]{3}$/.test(x.code)), JSON.stringify(r));
-  // the race's notes under the tower (upright and on its side): a yellow one small, a toast under it (the camera key makes one), a red one big in the middle
+  // the race's notes under the tower (upright and on its side): a yellow one small, a toast under it (the camera key makes one), a red one big in the middle.
+  // A note is set and measured in the same step (no frame in between, in which the game could clear it for the timer of an earlier note; no animation, so
+  // the box is where the layout puts it)
   const notes = async () => {
-    const settled = () => page.evaluate(() => Promise.all(['h-msg', 'toast'].flatMap(id => document.getElementById(id).getAnimations().map(a => a.finished.catch(() => 0)))));   // (the 0.2 s the note fades in: measured once it is done)
-    await page.evaluate(() => { const m = document.getElementById('h-msg'); m.textContent = 'ZADNJI KROG!'; m.className = 'show gold'; });
-    await page.keyboard.press('KeyC'); await page.waitForTimeout(250); await settled();
+    await page.keyboard.press('KeyC'); await page.waitForTimeout(250);
     const gold = await page.evaluate(() => {
       const $ = (id) => document.getElementById(id), rc = (e) => { const r = e.getBoundingClientRect(); return { l: r.left, r: r.right, t: r.top, b: r.bottom }; }, fs = (e) => parseFloat(getComputedStyle(e).fontSize);
       const m = $('h-msg'), t = $('toast');
-      return { msg: Object.assign(rc(m), { fs: fs(m), pos: getComputedStyle(m).position }), toast: Object.assign(rc(t), { fs: fs(t), parent: t.parentNode.id, on: t.classList.contains('show'), text: t.textContent }), tower: rc($('h-tower')), side: rc($('h-side')) };
+      m.textContent = 'ZADNJI KROG!'; m.className = 'show gold'; m.style.animation = 'none';
+      const o = { msg: Object.assign(rc(m), { fs: fs(m), pos: getComputedStyle(m).position }), toast: Object.assign(rc(t), { fs: fs(t), parent: t.parentNode.id, text: t.textContent }), tower: rc($('h-tower')), side: rc($('h-side')) };
+      m.className = ''; m.style.animation = ''; return o;
     });
     for (let k = 0; k < 3; k++) { await page.keyboard.press('KeyC'); await page.waitForTimeout(100); }   // (round the four cameras: the setting as it was)
-    await page.evaluate(() => { const m = document.getElementById('h-msg'); m.textContent = 'NAPAČNA SMER!'; m.className = 'show warn'; }); await settled();
-    const warn = await page.evaluate(() => { const m = document.getElementById('h-msg');
-      const cs = getComputedStyle(m), r = m.getBoundingClientRect(), o = { fs: parseFloat(cs.fontSize), pos: cs.position, al: cs.textAlign, l: r.left, r: r.right, w: innerWidth }; m.className = ''; return o; });
+    const warn = await page.evaluate(() => { const m = document.getElementById('h-msg'); m.textContent = 'NAPAČNA SMER!'; m.className = 'show warn'; m.style.animation = 'none';
+      const cs = getComputedStyle(m), r = m.getBoundingClientRect(), o = { fs: parseFloat(cs.fontSize), pos: cs.position, al: cs.textAlign, l: r.left, r: r.right, w: innerWidth }; m.className = ''; m.style.animation = ''; return o; });
     return { gold, warn };
   };
   const noteChecks = (where, n) => {
