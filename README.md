@@ -101,7 +101,7 @@ Okolica:
 - **Dirka**: start z lučmi pod portalom LARGADA, modri portali kontrolnih točk z višino, cilj META v Portillu s tablo PORTILLO in modrima tablama proti meji, transparent SUBIDA LOS CARACOLES, čilske zastave ob štartni vrsti, gledalci ob startu, cilju, kontrolnih točkah, vsakem tretjem ovinku in pri razgledišču. Na zaprti cesti čakajo tovornjaki: ob startu v odstavnem pasu, v Portillu na parkirišču in na koncu ceste pred zaporo proti meji.
 - **Kondorji**: trije andski kondorji krožijo na vzgornikih nad cesto, blizu avta.
 
-## Tianmen (dirka, kronometer, promet, policija)
+## Tianmen, Kitajska (dirka, kronometer, promet, policija)
 
 Cesta na goro Tianmen nad mestom Zhangjiajie v provinci Hunan na Kitajskem, imenovana tudi cesta 99 ovinkov (Tongtian Avenue), njen zgornji del v pravem merilu: od 54. ovinka (~729 m) po ovinkih, naloženih drug nad drugim po strmih apnenčastih stenah, skozi gost subtropski gozd in čez zanko, kjer cesta po mostu prečka samo sebe, do ploščadi pod Tianmensko jamo (~1.218 m), velikanskim naravnim lokom v steni gore, do katerega vodi 999 stopnic. Proga je dolga 4,83 km (cela cesta ~10,8 km, v OpenStreetMap 11,37 km) in se dvigne za ~490 m; začne se ~120 m pred 54. ovinkom, takoj za kratkim predorom, konča pa ~200 m pred koncem ceste pod stopnicami (99. ovinek je že za ciljem, na poti do parkirišča). Cesta je dvopasovna in asfaltna (rumena sredinska črta, bele robne črte), široka 9 m (prava ~7 m), vozi se po desni. Kartica proge je ena, s stikalom **Dirka / Kronometer / Promet / Policija**, kot na Vršiču in Los Caracoles:
 
