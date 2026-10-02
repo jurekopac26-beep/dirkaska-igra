@@ -848,5 +848,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "23a49c43f0de0338644e78ff"
+ },
+ "uncompahgre/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 113.12,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "8a6f1d0495b5470acdd1b27a"
+ },
+ "uncompahgre/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 120.84,
+  "spins": 0,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "28ab4631a51e837975aa18c7"
+ },
+ "uncompahgre/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 91.5,
+  "spins": 0,
+  "walls": 8,
+  "rescues": 0,
+  "nan": false,
+  "digest": "97bb8a35961dbb2f17bf55d6"
+ },
+ "uncompahgre/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 93.06,
+  "spins": 0,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "db25c2f0c5375fc180d8b5a1"
+ },
+ "uncompahgre/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 113.13,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "69ec32717d5fc7988ce4ef92"
  }
 }
