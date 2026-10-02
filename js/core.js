@@ -2814,7 +2814,10 @@ const Core = (function () {
       // among the hairpins a gentle bend will do, 110 m within 40 m), 1.4 km apart at least: two strips, then a roadblock and a strip in turn
       const straight = (s, r, w) => { for (let d = -w; d <= w; d += 4) if (Math.abs(T.k[T.idx(s + d)]) > 1 / r) return false; return true; };
       this.plan = []; let last = -1e9;
-      for (let s = T.startS + 3300; s < T.finishS - 600; s += 20) if (s - last > this.D.gap && (straight(s, 200, 60) || (s > T.startS + 8500 && straight(s, 110, 40)))) { const n = this.plan.length; this.plan.push({ s, kind: n < 2 || n % 2 ? 'spike' : 'block', done: false }); last = s; }
+      const fits = (s) => straight(s, 200, 60) || (s > T.startS + 8500 && straight(s, 110, 40)), room = (s) => { const i = T.idx(s); return Math.min(T.bl[i], T.br[i]); };   // (room: how far the barrier stands on the nearer side)
+      for (let s = T.startS + 3300; s < T.finishS - 600; s += 20) if (s - last > this.D.gap && fits(s)) {   // (the first straight that fits, then the one with the most room between the barriers within 300 m of it: a strip is easier to get round there)
+        let b = s; for (let t = s + 20; t < s + 300 && t < T.finishS - 600; t += 20) if (fits(t) && room(t) > room(b) + 0.3) b = t;
+        const n = this.plan.length; this.plan.push({ s: b, kind: n < 2 || n % 2 ? 'spike' : 'block', done: false }); last = b; s = b; }
       // the ambushes: by the huts, 40 m up the road from their bus stop, off the asphalt on the side with more room
       this.amb = [];
       for (const n of POL_AMB.slice(0, this.D.amb)) { const e = (T.def.stops || []).find(q => q[2] === n); if (!e) continue; const s = T.startS + e[0] + 40, i = T.idx(s); this.amb.push({ s, side: T.br[i] >= T.bl[i] ? 1 : -1, name: n, done: false, car: null }); }
@@ -3238,7 +3241,7 @@ const Core = (function () {
     // parked just off the road before it, on the strip's side
     _spike(s) {
       const T = this.T, w = T.w, side = this.R() < 0.5 ? -1 : 1, i = T.idx(s), wk = T.walk ? T.walk[side > 0 ? 1 : 0][i] : 0;
-      const gp = T.def.barW ? 3.6 : 2.8, d0 = side > 0 ? -w + gp : -w - 0.6 - wk, d1 = side > 0 ? w + 0.6 + wk : w - gp;   // (gp: the asphalt left at the other edge; more where the barrier is close)
+      const gp = T.def.barW ? 3.6 : 2.8, e0 = side > 0 ? -w + gp : -w - 0.6 - wk, e1 = side > 0 ? w + 0.6 + wk : w - gp, SL = 0.4 * (e1 - e0), d0 = side > 0 ? e1 - SL : e0, d1 = side > 0 ? e1 : e0 + SL;   // (the strip: 40 % of what it was, from the edge on its side; the rest of the road is the way round)
       const sp = { s, d0, d1, side, on: false, gone: false, t: 0, x: T.px[i], z: T.pz[i], car: null };
       sp.car = this._car(s - 7, side * Math.min(w + wk + 1.6, (side > 0 ? T.br[i] : T.bl[i]) - 1.2), 0, 'park', 0);   // (as far off the asphalt as the barrier lets it)
       this.spikes.push(sp);

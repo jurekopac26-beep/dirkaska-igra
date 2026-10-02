@@ -107,7 +107,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-tail i.n span, #h-head i.n span { color: #fff; }
 @media (orientation: landscape) { #hud.pol #h-head { width: min(46vw, 320px); } }
 @media (orientation: portrait) {   /* (a phone upright: above the steering and the pedals) */
-  #hud.pol #h-tail { bottom: calc(26px + clamp(100px, 32vw, 150px) + var(--sb)); width: 84vw; }   /* (above the gas pedal, the tallest control) */
+  #hud.pol #h-tail { bottom: calc(1px + var(--sb)); width: 90vw; }   /* (right at the bottom edge, under the steering and the pedals) */
   #h-chk.on { max-width: 42vw; padding: 2px 6px 3px; }   /* (between the place and the map) */
   #h-chk b { font-size: clamp(10px, 3.1vw, 13px); }
   #h-chk span { font-size: clamp(9px, 2.7vw, 11px); }
