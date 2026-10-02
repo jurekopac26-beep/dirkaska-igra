@@ -10534,19 +10534,32 @@ const World = (function () {
       txt(n, x0 + 256, y0 + 66, 54, warn ? '#16181c' : '#f2f2ee', 470); });
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (rrA2Tex = t);
   }
-  function rrTreeGeo(kind) {   // unit plants (height 1; the instances scale and tint them): 0 a broadleaf of the rainforest (a lumpy crown of three clumps on a pale trunk),
+  function rrTreeFarGeo(kind) {   // the same plants farther from the road (over ~38 m past the barriers: seen small from either camera, no shadows):
+    // one crown each, no trunk (it is hidden under the canopy): 0 a broadleaf's lumpy crown, 1 an emergent tree's flat one, 2 a palm's star of fronds,
+    // 4 an araucaria's candelabra (five flat tufts round a top one), 5 a bamboo clump
+    const g = new GB(), R = rng(880 + kind), rs = ROCK_SMOOTH;
+    ROCK_SMOOTH = true;
+    if (kind === 0) ico(g, 0, 0.62, 0, 0.36, 0.7, [0.19, 0.31, 0.12], R, 0.34);
+    else if (kind === 1) ico(g, 0, 0.84, 0, 0.44, 0.34, [0.25, 0.38, 0.14], R, 0.3);
+    else if (kind === 2) { ROCK_SMOOTH = false; for (let k = 0; k < 6; k++) { const a = k / 6 * TAU, ux = Math.cos(a), uz = Math.sin(a), c = k % 2 ? [0.2, 0.36, 0.12] : [0.25, 0.41, 0.15];
+      g.triO([0, 0.9, 0], [ux * 0.45 - uz * 0.07, 0.72, uz * 0.45 + ux * 0.07], [ux * 0.45 + uz * 0.07, 0.72, uz * 0.45 - ux * 0.07], c, [0, 0, 0]); } }
+    else if (kind === 4) { ROCK_SMOOTH = false; const nd = [0.13, 0.24, 0.1], ndt = [0.2, 0.32, 0.13]; cyl(g, 0, 0.5, 0, 0.025, 0.4, 3, [0.4, 0.3, 0.22]);
+      for (let k = 0; k < 5; k++) { const a = k / 5 * TAU; cone(g, Math.cos(a) * 0.3, 0.74, Math.sin(a) * 0.3, 0.14, 0.1, 5, k % 2 ? nd : ndt, ndt, a); } cone(g, 0, 0.88, 0, 0.11, 0.1, 5, ndt, ndt, 0); }
+    else ico(g, 0, 0.45, 0, 0.45, 1.0, [0.3, 0.44, 0.15], R, 0.35);
+    ROCK_SMOOTH = rs;
+    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
+  function rrTreeGeo(kind) {   // unit plants (height 1; the instances scale and tint them): 0 a broadleaf of the rainforest (a lumpy crown of two clumps on a pale trunk),
     // 1 an emergent tree (a tall bare trunk, a wide flat umbrella crown), 2 a palm (palmito juçara: a slim ringed trunk, a crown of arching fronds),
     // 3 a tree fern (xaxim: a dark fibrous trunk, a rosette of long fronds), 4 an araucaria (a straight trunk, the branches turned up at their ends
     // into a flat-topped candelabra), 5 a clump of bamboo and shrubs
     const g = new GB(), R = rng(860 + kind), rs = ROCK_SMOOTH, frond = (cx, cy, cz, a, L, lift, droop, w, col, tip) => {   // a long leaf, both faces: out along a, rising then drooping
       const ux = Math.cos(a), uz = Math.sin(a), px = -uz * w, pz = ux * w, m = [cx + ux * L * 0.55, cy + lift, cz + uz * L * 0.55], e = [cx + ux * L, cy + lift - droop, cz + uz * L];
       const b = [cx, cy, cz], l1 = [m[0] + px, m[1], m[2] + pz], r1 = [m[0] - px, m[1], m[2] - pz], up = [cx, cy + 1, cz], dn = [cx, cy - 1, cz];
-      g.triO(b, l1, m, col, dn, col, col); g.triO(b, m, l1, col, up, col, col); g.triO(b, m, r1, col, dn, col, col); g.triO(b, r1, m, col, up, col, col);
-      g.triO(l1, e, m, col, dn, tip, col); g.triO(l1, m, e, col, up, col, tip); g.triO(m, e, r1, col, dn, tip, col); g.triO(m, r1, e, col, up, col, tip); };
+      g.triO(b, l1, e, col, dn, col, tip); g.triO(b, e, l1, col, up, tip, col); g.triO(b, e, r1, col, dn, tip, col); g.triO(b, r1, e, col, up, col, tip); };   // (a diamond, both faces: 4 triangles)
     if (kind === 0) {
-      ROCK_SMOOTH = true; cyl(g, 0, -0.02, 0, 0.035, 0.5, 4, [0.6, 0.57, 0.5], null, 0.025);
-      const cs = [[0.19, 0.31, 0.12], [0.15, 0.27, 0.1], [0.24, 0.36, 0.14], [0.17, 0.3, 0.13]];
-      ico(g, 0, 0.66, 0, 0.3, 0.62, cs[0], R, 0.32); ico(g, 0.2, 0.55, 0.1, 0.22, 0.7, cs[1], R, 0.35); ico(g, -0.16, 0.56, -0.16, 0.23, 0.7, cs[2], R, 0.35);
+      ROCK_SMOOTH = true; cyl(g, 0, -0.02, 0, 0.035, 0.5, 3, [0.6, 0.57, 0.5], null, 0.025);
+      ico(g, -0.05, 0.66, -0.04, 0.32, 0.62, [0.19, 0.31, 0.12], R, 0.32); ico(g, 0.2, 0.55, 0.12, 0.24, 0.7, [0.15, 0.27, 0.1], R, 0.35);
     } else if (kind === 1) {
       ROCK_SMOOTH = true; cyl(g, 0, -0.02, 0, 0.025, 0.74, 4, [0.66, 0.62, 0.55], null, 0.016);
       ico(g, 0, 0.84, 0, 0.42, 0.32, [0.27, 0.4, 0.15], R, 0.3); ico(g, 0.25, 0.8, 0.12, 0.24, 0.42, [0.22, 0.35, 0.13], R, 0.35); ico(g, -0.24, 0.81, -0.1, 0.24, 0.42, [0.31, 0.43, 0.17], R, 0.35);
@@ -10566,7 +10579,7 @@ const World = (function () {
       cone(g, 0, 0.9, 0, 0.1, 0.1, 5, ndt, ndt, 0);
     } else {
       ROCK_SMOOTH = true; const cs = [[0.3, 0.44, 0.15], [0.36, 0.5, 0.18], [0.26, 0.38, 0.14]];
-      for (let k = 0; k < 3; k++) { const a = k / 3 * TAU + R() * 0.5, d = k ? 0.3 : 0; ico(g, Math.cos(a) * d, 0.45 - d * 0.3, Math.sin(a) * d, 0.36, 1.1, cs[k % 3], R, 0.35); }
+      for (let k = 0; k < 2; k++) ico(g, k ? 0.22 : -0.1, k ? 0.38 : 0.47, k ? 0.12 : -0.05, k ? 0.32 : 0.38, 1.1, cs[k], R, 0.35);
     }
     ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
@@ -10679,7 +10692,9 @@ const World = (function () {
           if (onBr[i]) return k < 3 ? deck : [0.52, 0.51, 0.49];
           const wl = vp[si][i][2][1] < -2.6; if (wl && (k === 1 || k === 2)) { const q = 0.92 + 0.12 * rpHash(i >> 2, 51 + si); return k === 1 ? [0.72 * q, 0.71 * q, 0.67 * q] : [0.5 * q, 0.5 * q, 0.46 * q]; }   // (the retaining wall's coping, its weathered, damp foot)
           if (k === 4) return rrGCol(x, z);
-          const sl = k === 2 ? caSlope(x, z) : 0, l = Math.sqrt(1 + sl * sl); return rrCol(x, z, T.hy[i] + y, 1 / l, Math.max(0, o - bar)).slice(); })); } return a; });
+          const f = P.n4(x * 1.7, z * 1.7), hiA = sstep(1360, 1400, T.hy[i] + base), mown = k === 0 ? 0.3 : 0;   // (the verge: mown grass, the ditch a little darker and lusher; tawny up on the plateau; the shoulder's edge worn)
+          const g0 = [lerp(0.3, 0.42, hiA) + (f - 0.5) * 0.08, lerp(0.45, 0.5, hiA) + (f - 0.5) * 0.08, lerp(0.17, 0.24, hiA) + (f - 0.5) * 0.04], dk = k === 2 ? 0.86 : 1;
+          return [lerp(g0[0] * dk, 0.46, mown), lerp(g0[1] * dk, 0.42, mown), lerp(g0[2] * dk, 0.3, mown)]; })); } return a; });
       const wuv = (p) => [p[0] / 10, -p[2] / 10];
       for (let c0 = 0; c0 < N - 1; c0 += 60) {
         const gr = new GB(true), gl = new GB(), gs = new GB(true), gv = new GB(true);
@@ -10898,7 +10913,7 @@ const World = (function () {
        trees over them, palms, tree ferns in the gullies, bamboo at the edges); on the plateau's grassland the araucarias, alone and in groves, and
        shrubs. Right up to the ditch, thinner and bigger farther out, none on the cliffs ---- */
     const tMatT = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
-    const tk = [0, 1, 2, 3, 4, 5].map(k => new IChunks(rrTreeGeo(k), tMatT, 96));
+    const tk = [0, 1, 2, 3, 4, 5].map(k => k === 1 || k === 5 ? null : new IChunks(rrTreeGeo(k), tMatT, 128)), tn = [0, 1, 2, 3, 4, 5].map(k => k === 1 || k === 5 ? null : new IChunks(rrTreeGeo(k), tMatT, 160)), tf = [0, 1, 2, 3, 4, 5].map(k => k === 0 || k === 4 ? new IChunks(rrTreeFarGeo(k), tMatT, 224) : null);   // (tk: by the road, casting shadows across it; tn: a little farther, without; tf: farther still, plainer)
     let nTrees = 0, nArauc = 0;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(100000 * dens), RT = rng(3341), SP = 4.5 / Math.sqrt(dens);
@@ -10933,12 +10948,17 @@ const World = (function () {
           else if (sp === 3) { hgt = 3 + r4 * 3.2; wid = hgt * 1.1; col = [0.92 + r2 * 0.16, 1, 0.92]; }
           else if (sp === 4) { hgt = 14 + r4 * 12; wid = hgt * (0.85 + r2 * 0.2); col = [0.95 + r2 * 0.1, 0.97 + r4 * 0.06, 0.95]; nArauc++; }
           else { hgt = 2.2 + r4 * 2.6; wid = 2.4 + r2 * 2.4; col = [0.92 + r3 * 0.18, 0.98 + r4 * 0.1, 0.9]; }
-          tk[sp].add(x, y - 0.15, z, r1 * 70, wid * far, hgt * far, col);
+          const gk = sp === 1 || sp === 5 ? 0 : sp;   // (the geometry: the emergent trees and the bamboo clumps are broadleaf crowns, scaled and tinted: fewer kinds, fewer draws)
+          if (sp === 5) col = [col[0] * 1.25, col[1] * 1.2, col[2] * 1.1];
+          const away = !(nn.i >= 0 && nn.dd < 38); if (away && (sp === 3 || r4 > 0.6)) continue;   // (farther out: fewer, wider crowns; the tree ferns hidden under them)
+          if (away) tf[gk === 4 ? 4 : 0].add(x, y - 0.15, z, r1 * 70, wid * far * 1.3, hgt * far, col); else (nn.dd < 14 || gk === 3 ? tk : tn)[gk].add(x, y - 0.15, z, r1 * 70, wid * far, hgt * far, col);   // (fewer kinds, fewer draws: far out the palms and the bamboo are crowns like any other; the small ones near the road all in one set)
           if (++nTrees >= maxT) break grid;
         }
       }
     }
-    for (const t of tk) t.addTo(root, true);
+    for (const t of tk) if (t) t.addTo(root, true);
+    for (const t of tn) if (t) t.addTo(root, false);
+    for (const t of tf) if (t) t.addTo(root, false);
 
     /* ---- the verges and the cliffs: ferns and shrubs right behind the barrier, the red earth and rocks at the foot of the cuts, crags of dark basalt
        (pink sandstone lower down) where the slope rises steep beside the road and out on the escarpment ---- */
