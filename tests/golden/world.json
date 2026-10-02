@@ -346,20 +346,21 @@
   }
  },
  "uncompahgre": {
-  "meshes": 1837,
-  "verts": 837166,
-  "instances": 51620,
+  "meshes": 1767,
+  "verts": 1433537,
+  "instances": 55109,
   "props": 127,
-  "crowd": 1417,
-  "world": "752f1835",
+  "crowd": 1388,
+  "world": "b817acaa",
   "propsHash": "2fda5eec",
-  "floor": "46791ccf/10612",
+  "floor": "1c6f95b9/10612",
   "groups": {
-   "-:MeshLambertMaterial": "4932661b",
-   "-:MeshPhongMaterial": "365c29fd",
-   "-:MeshBasicMaterial": "ede2d97f",
-   "crowd:MeshLambertMaterial": "e729df50",
-   "ao:MeshBasicMaterial": "60464f5d",
+   "-:MeshLambertMaterial": "72d2b6b5",
+   "-:MeshPhongMaterial": "40bf4704",
+   "-:MeshBasicMaterial": "33a9b248",
+   "-:PointsMaterial": "f996ff5a",
+   "crowd:MeshLambertMaterial": "40ee7f61",
+   "ao:MeshBasicMaterial": "88231789",
    "tyremarks:MeshBasicMaterial": "27d1b418",
    "roadwear:MeshLambertMaterial": "ca85d537"
   }
