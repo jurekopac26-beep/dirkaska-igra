@@ -47,7 +47,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
       {"n":"Serpentina 1 · 1.702 m","d":1381.7,"say":["Switchback one, and the cliff goes straight up beside you!","The first hairpin! The Dugway starts here!"]},
       {"n":"Serpentina 2 · 1.792 m","d":2545.2,"say":["Switchback two, look at the drop!","Hairpin two, no guardrail out there!"]},
       {"n":"Serpentina 3 · 1.814 m","d":2917.9,"say":["Switchback three, right on top of the last one!","Hairpin three, the road folds back on itself!"]},
-      {"n":"Serpentina 4 · 1.872 m","d":3643.9,"say":["Switchback four, past the viewpoint!","Hairpin four, the whole valley below you!"]},
+      {"n":"Serpentina 4 · 1.872 m","d":3643.9,"say":["Switchback four, the viewpoint is just ahead!","Hairpin four, the whole valley below you!"]},
       {"n":"Razgledišče","d":3714.0,"say":["The viewpoint! The buttes of the Valley of the Gods down below!","Past the overlook, what a view over the valley!"]},
       {"n":"Serpentina 5 · 1.922 m","d":4287.4,"say":["Switchback five, the last one! Nearly at the top!","The final hairpin! Onto the mesa now!"]},
       {"n":"Konec makadama","d":4705.3,"say":["Back on the asphalt, flat out across the mesa!","Pavement again! The climb is almost done!"]},
