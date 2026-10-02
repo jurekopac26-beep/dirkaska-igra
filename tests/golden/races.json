@@ -848,5 +848,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "23a49c43f0de0338644e78ff"
+ },
+ "mulholland/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 133.47,
+  "spins": 0,
+  "walls": 6,
+  "rescues": 0,
+  "nan": false,
+  "digest": "b81b949fc4600f3cdebc6864"
+ },
+ "mulholland/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 145.71,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e71d6b19b46d6d04609868e8"
+ },
+ "mulholland/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 119.64,
+  "spins": 0,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "44995e2d70ced3270802ad23"
+ },
+ "mulholland/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 120.58,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "3f04c647a11472764f718325"
+ },
+ "mulholland/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 134.03,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "39f316a97324ee0c501e2283"
  }
 }
