@@ -2,9 +2,10 @@
 // 1. the police radio small, top right above the map (the map pushed down for it, the radio never over the clock), in plain letters; its
 //    speakers by their call signs: the patrol cars by their numbers (Enota 1, Enota 2 ..., said so too), never by a place; what is said in
 //    person at the checkpoint (the officer) at the bottom;
-// 2. a patrol car out: a small note top right over the radio (not the big message over the road);
+// 2. a patrol car out, and every other message of the run (a spike strip ahead, the helicopter ...): a small note top right over the radio,
+//    in plain letters (not the big message over the road; only the end of the run is big);
 // 3. a spike strip on a steep bit of the road, laid between two of the road's samples: on the asphalt (not under it), tilted with the
-//    grade, 1 m wide along the road;
+//    grade, 1 m wide along the road, its links red and white;
 // 4. at speed (the chase camera, quality 'high'): the picture streaks, the patrol cars on the player's tail stay sharp;
 // 5. held upright: the radio under the clock and the stars, the map under it.
 //   node tests/browser/police2.test.mjs
@@ -28,15 +29,17 @@ try {
     document.querySelector('[data-track="vrsic"] .tc-mode button[data-v="police"]').click(); await wait(200);
     g.onAction('start'); for (let k = 0; k < 1200 && !(g.race && g.race.pol); k++) await wait(100);
     const pol = g.race.pol, rect = (id) => { const r = document.getElementById(id).getBoundingClientRect(); return { t: Math.round(r.top), b: Math.round(r.bottom), l: Math.round(r.left), r: Math.round(r.right) }; };
-    let talk = null;
+    let talk = null, lastS = -1e9;
     for (let i = 0; i < 90 && (pol.stage !== 'chase' || !talk) && !(i > 75); i++) {
+      const P = g.race.player, Tk = g.race.track;
+      if (i % 6 === 5) { if (pol.stage !== 'chase' && P.q.s - lastS < 10) { const j = Tk.idx(P.q.s + 30); P.place(Tk.px[j], Tk.pz[j], Tk.hd[j]); P.y = P.py = P.roadY = Tk.hy[j]; P.vx = P.vz = 0; P.q = Tk.query(P.x, P.z, j, P.q); P.sPrev = P.q.s; } lastS = P.q.s; }   // (the autopilot held up in the traffic, or in the queue at the checkpoint: on past it)
       g.sim(1, true); await frame();
       const el = document.getElementById('h-talk'); if (!talk && el.className.includes('show')) talk = Object.assign(rect('h-talk'), { txt: el.textContent });
     }
     pol.D = Object.assign({}, pol.D, { bust: 1e9 });   // (this run is about what is drawn and said: not caught)
-    return { stage: pol.stage, talk, map: rect('h-map'), H: innerHeight };
+    return { stage: pol.stage, talk, map: rect('h-map'), H: innerHeight, s: Math.round(g.race.player.q.s - g.race.track.startS), chk: pol.chk && pol.chk.st, phase: g.phase };
   });
-  T.check('the chase is on (the autopilot drove through the checkpoint)', pre.stage === 'chase', pre.stage);
+  T.check('the chase is on (the autopilot drove through the checkpoint)', pre.stage === 'chase', JSON.stringify({ stage: pre.stage, s: pre.s, chk: pre.chk, phase: pre.phase }));
   let talk = pre.talk;
   if (!talk) {   // (the shout came and went between two looks: the officer asks for the papers, in person)
     await page.evaluate(() => { const g = window.__game, P = g.race.player; g.race.pol._event('chkDocs', P.x, P.z, null, P.q.s); g.sim(0.05, true); });
@@ -62,11 +65,25 @@ try {
     JSON.stringify(log.slice(0, 6).map(e => e.who + ': ' + e.txt)));
 
   // a patrol car out: the small note top right over the radio, not the big message over the road
-  const wr = await page.evaluate(() => { const g = window.__game, pol = g.race.pol, c = pol.cars.find(c => c.pol.mode === 'chase'); if (!c) return null; c.dmg = 1; g.sim(0.2, true); return c.pol.mode; });
+  const wr = await page.evaluate(() => { const g = window.__game, pol = g.race.pol, P = g.race.player, c = pol.cars.find(c => c.pol.mode === 'chase' && !c.locked) || pol._car(P.q.s - 40, 0, 0, 'chase', 0); c.dmg = 1; g.sim(0.2, true); return c.pol.mode; });   // (none in the chase just now: one joins)
   const note = await waitShown('#h-pnote', 2000), msg = await box('#h-msg'), map2 = await box('#h-map');
   T.check('a patrol car out: "Patrulja je izločena!" small, top right above the map; nothing over the road',
     wr === 'out' && note.shown && note.txt === 'Patrulja je izločena!' && note.font <= 12 && note.b <= map2.t + 1 && note.t >= 0 && Math.abs(note.r - map2.r) <= 2 && !(msg.shown && /izločena/i.test(msg.txt)),
     JSON.stringify({ wr, note, msg: msg.shown ? msg.txt : '' }));
+
+  // the other messages of the run as well: small, top right in plain letters, nothing over the road (only the end of the run is big)
+  const msgs = await page.evaluate(() => {
+    const g = window.__game, pol = g.race.pol, P = g.race.player, out = [], map = document.getElementById('h-map').getBoundingClientRect();
+    g.pause();
+    for (const k of ['spikes', 'heli', 'ambush', 'lost']) {
+      pol._event(k, P.x, P.z, null, P.q.s + 150); g.sim(0.05, true);
+      const n = document.getElementById('h-pnote'), r = n.getBoundingClientRect(), m = document.getElementById('h-msg');
+      out.push({ k, txt: n.className.includes('show') ? n.textContent : '', font: parseFloat(getComputedStyle(n).fontSize), top: r.bottom <= map.top + 1 && r.top >= 0 && Math.abs(r.right - map.right) <= 2, big: m.className.includes('show') ? m.textContent : '' });
+    }
+    g.resume(); return out;
+  });
+  T.check('the other messages of the run (a spike strip, the helicopter, an ambush, lost) small top right in plain letters, nothing over the road',
+    msgs.map(m => m.txt).join('|') === 'Bodičasti trak!|Helikopter!|Zaseda!|Izgubili so sled!' && msgs.every(m => m.font <= 12 && m.top && !m.big), JSON.stringify(msgs));
 
   // a spike strip on a steep bit of the road (over 10 %), between two of its samples (from the sample before it the road is ~20 cm higher there)
   const sp = await page.evaluate(async () => {
@@ -79,8 +96,8 @@ try {
     return { s: Math.round(s), under: +(Tk.elevAt(s).y - Tk.hy[Tk.idx(s)]).toFixed(3), strip: Render.roadInfo().strip };
   });
   const st = sp.strip || {};
-  T.check('a spike strip on a steep bit: on the asphalt where it lies (not under it), tilted with the grade, 1 m wide along the road, its spikes up',
-    sp.under > 0.15 && st.lift > 0.005 && st.lift < 0.03 && Math.abs(st.tilt - st.grade) < 0.01 && st.wide >= 0.95 && st.high >= 0.2, JSON.stringify(sp));
+  T.check('a spike strip on a steep bit: on the asphalt where it lies (not under it), tilted with the grade, 1 m wide along the road, its spikes up, red and white links',
+    sp.under > 0.15 && st.lift > 0.005 && st.lift < 0.03 && Math.abs(st.tilt - st.grade) < 0.01 && st.wide >= 0.95 && st.high >= 0.2 && st.red > 0.05 && st.white > 0.05, JSON.stringify(sp));
 
   // at speed: the picture streaks, the patrol cars on the player's tail stay sharp
   const blur = await page.evaluate(() => {

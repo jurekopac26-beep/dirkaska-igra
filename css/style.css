@@ -80,7 +80,8 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-chk b { font: 700 italic clamp(10px, 2.9vh, 14px)/1.2 var(--f-ui); color: #ffd23c; letter-spacing: 0.04em; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); }
 #h-chk span { font: 600 clamp(9px, 2.4vh, 12px)/1.25 var(--f-ui); color: #e3ebff; }
 /* the run from the police, top right above the map (pushed down for them, --pf): small, in plain letters, the police radio (a line at a time,
-   the speaker's call sign first) and over it a note of the run (a patrol car out); the feed grows up from the map's top edge, right-aligned,
+   the speaker's call sign first) and over it the messages of the run (a patrol car out, a spike strip ahead, the helicopter ...; only its end
+   is big over the road); the feed grows up from the map's top edge, right-aligned,
    never wider than the room right of the clock */
 #h-feed, #h-talk { display: none; }
 #hud.pol { --pf: clamp(24px, 8vh, 30px); }   /* (a road the radio does not know, Los Caracoles: room for the note only) */
@@ -93,8 +94,10 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 @keyframes pf-in { from { opacity: 0; } }
 #h-radio { border-right: 2px solid #3a78ff; background: rgba(8, 16, 36, 0.72); color: #e3ebff; }
 #h-radio b { margin-right: 5px; color: #8fb3ff; font-weight: 700; }
-#h-pnote { border-right: 2px solid var(--meter); background: rgba(10, 22, 12, 0.72); color: #d6ffb8; font-weight: 700; }
+#h-pnote { border-right: 2px solid #d8dde6; background: rgba(10, 14, 20, 0.72); color: #f6f6f1; font-weight: 700; }   /* (the messages of the run: by their kind) */
+#h-pnote.fast { border-right-color: var(--meter); background: rgba(10, 22, 12, 0.72); color: #d6ffb8; }
 #h-pnote.slow { border-right-color: #ff5a47; background: rgba(32, 10, 8, 0.72); color: #ffd2c8; }
+#h-pnote.gold, #h-pnote.warn { border-right-color: var(--lcd); background: rgba(30, 22, 6, 0.72); color: #ffe7a8; }
 /* in person (the officer at the checkpoint, the driver): at the bottom, between the steering and the pedals, over the arrows, in yellow */
 #hud.pol #h-talk { display: block; position: absolute; left: 50%; bottom: calc(50px + var(--sb)); transform: translateX(-50%); width: max-content; max-width: min(44vw, 430px, calc(100vw - 2 * (40px + 2 * clamp(64px, 23vh, 104px)) - 2 * max(var(--sl), var(--sr)))); padding: 4px 9px;
   border-left: 3px solid #ffd23c; border-radius: 4px; background: rgba(28, 24, 10, 0.8); font: italic 600 clamp(9px, 2.4vh, 12px)/1.3 var(--f-ui); color: #fff6dc; text-align: left; opacity: 0; transition: opacity 0.25s; }

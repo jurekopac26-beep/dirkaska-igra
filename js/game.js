@@ -296,12 +296,22 @@
     const el = $('toast'); el.textContent = txt; el.classList.add('show');
     clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('show'), ms || 2600);
   }
-  function showMsg(txt, cls, dur) {
+  // a message over the road; in the run from the police every one of them (but its end: big) a small note top right instead, in plain letters
+  function showMsg(txt, cls, dur, big) {
+    if (race && race.pol && !big) { polNote(plainCase(txt), cls, (dur || 1.6) + 0.6); return; }
     const el = $('h-msg'); el.textContent = txt; el.className = 'show ' + (cls || ''); msgT = dur || 1.6;
   }
-  // the run from the police: a small note top right, over the radio above the map (a patrol car out)
+  // the run from the police: a small note top right, over the radio above the map (a patrol car out, a spike strip ahead ...)
   function polNote(txt, cls, dur) {
     const el = $('h-pnote'); el.textContent = txt; el.className = 'show ' + (cls || ''); pnT = dur || 2.5;
+  }
+  // a message in capitals as a sentence ("BODIČASTI TRAK!" -> "Bodičasti trak!"), the names of the places as they are written
+  const PLAIN_NAMES = ['Kranjska Gora', 'Vršič'];
+  function plainCase(t) {
+    if (/\p{Ll}/u.test(t)) return t;
+    let s = t.toLocaleLowerCase(Lang.cur === 'en' ? 'en' : 'sl'); s = s.charAt(0).toLocaleUpperCase() + s.slice(1);
+    for (const n of PLAIN_NAMES) s = s.replace(new RegExp(n.toLocaleLowerCase('sl'), 'g'), n);
+    return s;
   }
   function vibrate(ms) { if (S.vibrate) Input.vibrate(ms); }
 
@@ -3190,7 +3200,7 @@
           if (pk.on) pkCeremony(r);   // (Pikes Peak: the summit ceremony)
         } else if (race.pol) {   // the run from the police: the mission done (into the building at the top; a road without it: over the finish), arrested at the checkpoint, caught in the chase
           const pol = race.pol, b = pol.busted, chk = pol.arrestK === 'chk';
-          showMsg(tr(!b ? (pol.goal ? 'MISIJA OPRAVLJENA!' : 'POBEGNIL SI!') : chk ? 'ARETIRAN!' : 'ULOVLJEN!'), b ? 'slow' : 'fast', 4); Sfx.siren(0, 0); if (b && !chk) bustShot();   // (the checkpoint: its own shot since the driver got out, chkShot)
+          showMsg(tr(!b ? (pol.goal ? 'MISIJA OPRAVLJENA!' : 'POBEGNIL SI!') : chk ? 'ARETIRAN!' : 'ULOVLJEN!'), b ? 'slow' : 'fast', 4, true);   // (the end of the run: big) Sfx.siren(0, 0); if (b && !chk) bustShot();   // (the checkpoint: its own shot since the driver got out, chkShot)
           if (!rdOn) Comm.say(b ? 'busted' : ownLine(track.def, 'escaped'), null, 5);   // (a road the police radio does not know: the commentator)
         } else {
           showMsg(pos === 1 ? tr('ZMAGA!') : tr('CILJ! {0} MESTO', Lang.ord(pos).toUpperCase()), 'gold', 4);

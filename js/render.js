@@ -3248,12 +3248,20 @@ const Render = (function () {
     for (let k = 0; k < 12; k++) { const a = rnd() * 6.2832, d = 46 + rnd() * 12; blob(64 + Math.cos(a) * d, 64 + Math.sin(a) * d, 1.5 + rnd() * 3.5, 0.9); }
     return new THREE.CanvasTexture(cv);
   }
-  function rdSpikeGeo() {   // a metre of a spike strip (laid across the road, z along it; 1 m wide along the road, as wide as the wheels feel it): steel
-    // scissor links, big yellow reflectors at the joints and where the links cross, spikes up (seen from far off: a yellow and black band across the road)
-    const g = new GB(), K = [0.1, 0.1, 0.11], S = [0.9, 0.92, 0.96], Y = [1.0, 0.8, 0.08], hw = 0.5, y = 0.055;
-    for (const z of [0, 0.5]) for (const sg of [1, -1]) rdRod(g, [hw * sg, y, z], [-hw * sg, y, z + 0.5], 0.09, K);
-    for (const z of [0, 0.5]) { for (const sg of [1, -1]) World.box(g, hw * sg, 0.005, z + 0.03, 0.22, 0.12, 0.2, 0, Y); World.box(g, 0, 0.01, z + 0.25, 0.17, 0.11, 0.15, 0, Y); }
-    for (const z of [0.125, 0.375, 0.625, 0.875]) for (const x of [-hw / 2, hw / 2]) World.cyl(g, x, 0.08, z, 0.035, 0.16, 4, S, S, 0.003);   // (on the links)
+  function rdBar(g, a, b, w, h, col) {   // a flat bar lying from a to b (their y: its underside), w wide, h high (a scissor link)
+    let dx = b[0] - a[0], dz = b[2] - a[2]; const L = Math.hypot(dx, dz) || 1; dx /= L; dz /= L;
+    const nx = -dz * w / 2, nz = dx * w / 2, c = [(a[0] + b[0]) / 2, a[1] + h / 2, (a[2] + b[2]) / 2];
+    const P = (e, s, y) => [e[0] + s * nx, e[1] + y, e[2] + s * nz];
+    g.quadO(P(a, 1, h), P(b, 1, h), P(b, -1, h), P(a, -1, h), col, c);   // (the top)
+    g.quadO(P(a, 1, 0), P(b, 1, 0), P(b, 1, h), P(a, 1, h), col, c); g.quadO(P(a, -1, 0), P(b, -1, 0), P(b, -1, h), P(a, -1, h), col, c);
+    g.quadO(P(a, 1, 0), P(a, -1, 0), P(a, -1, h), P(a, 1, h), col, c); g.quadO(P(b, 1, 0), P(b, -1, 0), P(b, -1, h), P(b, 1, h), col, c);
+  }
+  function rdSpikeGeo() {   // a metre of a spike strip (laid across the road, z along it; 1 m wide along the road, as wide as the wheels feel it): flat
+    // scissor links, red and white by turns (a red X, a white X, as the real ones: seen from far off a red and white band across the road),
+    // steel spikes up on them
+    const g = new GB(), S = [0.78, 0.8, 0.84], RW = [[0.86, 0.09, 0.09], [0.96, 0.96, 0.94]], hw = 0.5, w = 0.15, h = 0.045;
+    [0, 0.5].forEach((z, k) => { rdBar(g, [hw, 0.004, z], [-hw, 0.004, z + 0.5], w, h, RW[k]); rdBar(g, [-hw, 0.046, z], [hw, 0.046, z + 0.5], w, h, RW[k]);   // (the second link over the first where they cross)
+      for (const f of [0.15, 0.38, 0.62, 0.85]) { World.cyl(g, hw - 2 * hw * f, 0.004 + h, z + 0.5 * f, 0.022, 0.13, 4, S, S, 0.002); World.cyl(g, -hw + 2 * hw * f, 0.046 + h, z + 0.5 * f, 0.022, 0.13, 4, S, S, 0.002); } });
     return g.geometry();
   }
   // the police's van: white, a blue band with yellow edges along both sides and across the back, the light bar on the roof (its two lamps
@@ -3752,7 +3760,8 @@ const Render = (function () {
     const R = curRace, sp = R && R.pol && R.pol.spikes.find(q => q.on); if (!sp || !road.S.count) return null;
     const G = road.S.geometry; if (!G.boundingBox) G.computeBoundingBox(); const bb = G.boundingBox, e = R.track.elevAt(sp.s), m = new THREE.Matrix4(); road.S.getMatrixAt(0, m);
     const c = new THREE.Vector3().setFromMatrixPosition(m), f = new THREE.Vector3(bb.max.x, 0, 0).applyMatrix4(m), b = new THREE.Vector3(bb.min.x, 0, 0).applyMatrix4(m);
-    return { lift: +(c.y - e.y).toFixed(3), tilt: +((f.y - b.y) / Math.max(0.01, Math.hypot(f.x - b.x, f.z - b.z))).toFixed(3), grade: +e.grade.toFixed(3), wide: +(bb.max.x - bb.min.x).toFixed(2), high: +bb.max.y.toFixed(2) };
+    const C = G.attributes.color, n = C ? C.count : 0; let red = 0, white = 0; for (let k = 0; k < n; k++) { const r = C.getX(k), gg = C.getY(k), bl = C.getZ(k); if (r > 0.7 && gg < 0.25 && bl < 0.25) red++; else if (r > 0.9 && gg > 0.9 && bl > 0.88) white++; }
+    return { lift: +(c.y - e.y).toFixed(3), tilt: +((f.y - b.y) / Math.max(0.01, Math.hypot(f.x - b.x, f.z - b.z))).toFixed(3), grade: +e.grade.toFixed(3), wide: +(bb.max.x - bb.min.x).toFixed(2), high: +bb.max.y.toFixed(2), red: n ? +(red / n).toFixed(2) : 0, white: n ? +(white / n).toFixed(2) : 0 };
   }
 
   // the crowd's excitement (World's spectators and grandstands: they cheer, jump and put flags up): the lights going out, an overtake by the
