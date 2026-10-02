@@ -10560,6 +10560,12 @@ const World = (function () {
     else { ROCK_SMOOTH = true; ico(g, 0, 0.12, 0, 0.42, 0.45, [0.92, 0.78, 0.22], R, 0.25); ico(g, 0.3, 0.1, 0.12, 0.25, 0.45, [0.96, 0.86, 0.3], R, 0.25); ROCK_SMOOTH = false; }
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
+  function saPebbleGeo() {   // one flat stone (a unit across, 15 faces): the stones bedded in the road
+    const g = new GB(), R = rng(3331), col = [0.64, 0.6, 0.55], lo = col.map(v => v * 0.7), hi = col.map(v => v * 1.12), B = [], M = [], top = [0.05, 0.32, -0.04], inn = [0, 0.08, 0];
+    for (let q = 0; q < 5; q++) { const a = (q + (R() - 0.5) * 0.5) / 5 * TAU, f = 0.85 + R() * 0.3; B.push([Math.cos(a) * 0.5 * f, -0.1, Math.sin(a) * 0.5 * f]); M.push([Math.cos(a) * 0.42 * f, 0.18, Math.sin(a) * 0.42 * f]); }
+    for (let q = 0; q < 5; q++) { const j = (q + 1) % 5; g.quadO(B[q], B[j], M[j], M[q], col, inn, null, [lo, lo, col, col]); g.triO(M[q], M[j], top, col, inn, col, hi); }
+    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
   function saBeastGeo(kind) {   // x forward; the coat white (the instance colour tints it): 0 a pony, 1 a pony with its rider in a blanket and a conical hat, 2 a cow
     const g = new GB(), W = [0.95, 0.95, 0.95], D = [0.18, 0.15, 0.12], cow = kind === 2;
     const L = cow ? 1.9 : 1.6, Hb = cow ? 0.75 : 0.6, y = cow ? 0.75 : 0.85;
@@ -10584,7 +10590,7 @@ const World = (function () {
     const out = { root, dyn: {}, groundH: caGround, camFloor: caGround, props: [], farClip: true, ownTex: [], dust: [0.78, 0.69, 0.56], season: SAS, ownSeason: true, paintFor: (s) => (s === 'autumn' || s === 'winter' ? s : 'summer') };
     vrPrep();
     const P = VR, iE = N - 1, sStart = T.startS, sFin = T.finishS, base = P.D.base;
-    P.c1 = valueNoise2(731, 120); P.c2 = valueNoise2(732, 60); P.c3 = valueNoise2(733, 190); P.c4 = valueNoise2(734, 110); P.c5 = valueNoise2(735, 24); P.c6 = valueNoise2(736, 22); P.c7 = valueNoise2(737, 150);
+    P.c1 = valueNoise2(731, 120); P.c2 = valueNoise2(732, 60); P.c3 = valueNoise2(733, 190); P.c4 = valueNoise2(734, 110); P.c5 = valueNoise2(735, 24); P.c6 = valueNoise2(736, 22); P.c7 = valueNoise2(737, 150); P.c8 = valueNoise2(738, 26);
     P.str = new Map();   // the streams every 4 m, hashed (saStream: the greener ground and the shrubs along them)
     for (const st of def.streams || []) { const p = st.p; for (let q = 0; q + 3 < p.length; q += 2) { const L = Math.hypot(p[q + 2] - p[q], p[q + 3] - p[q + 1]), n = Math.max(1, Math.ceil(L / 4));
       for (let t = 0; t < n; t++) { const x = lerp(p[q], p[q + 2], t / n), z = lerp(p[q + 1], p[q + 3], t / n), k = Math.floor(x / 24) * 65536 + Math.floor(z / 24); let A = P.str.get(k); if (!A) P.str.set(k, A = []); A.push(x, z); } } }
@@ -10647,10 +10653,13 @@ const World = (function () {
         const outer = Math.sign(o) === -Math.sign(T.k[i]) ? sstep(1 / 300, 1 / 40, Math.abs(T.k[i])) : 0;
         k += (0.06 + 0.08 * outer) * sstep(w - 1.1 - 1.2 * outer, w - 0.3, ao) * (1 - trk);
         k *= 0.92 + 0.14 * P.n2(T.px[i] * 0.7 + 50, T.pz[i] * 0.7);
-        return [grav[0] * k, grav[1] * k, grav[2] * k]; };
+        const x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, rk = sstep(0.58, 0.8, P.c8(x, z)) * (1 - 0.6 * trk);   // (the bedrock coming through the gravel in patches: grey basalt, worn smooth)
+        return [lerp(grav[0], 0.84, rk * 0.75) * k, lerp(grav[1], 0.82, rk * 0.75) * k, lerp(grav[2], 0.8, rk * 0.75) * k]; };
       const vc = [-1, 1].map((side, si) => { const a = []; for (let i = 0; i < N; i++) a.push(vp[si][i].map(([o, y], k) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
         const wl = vp[si][i][4][0] - vp[si][i][3][0] < 0.1; if (wl && k >= 3) { const q = 0.9 + 0.16 * rpHash(i >> 1, 61 + si); return k === 3 ? [0.66 * q, 0.62 * q, 0.55 * q] : [0.5 * q, 0.47 * q, 0.42 * q]; }   // (the wall: weathered stone, its foot darker)
-        if (k === 4) return saGCol(x, z); if (k <= 1) return [0.62, 0.57, 0.5]; const sl = caSlope(x, z), l = Math.sqrt(1 + sl * sl); return saCol(x, z, T.hy[i] + y, 1 / l, 0, k === 2 ? 1 : 3).slice(); })); return a; });
+        if (k === 4) return saGCol(x, z); const sl = caSlope(x, z), l = Math.sqrt(1 + sl * sl), c = saCol(x, z, T.hy[i] + y, 1 / l, 0, k === 2 ? 3.2 : 4).slice();
+        if (k <= 1) { const f = k === 0 ? 0.78 : 0.4; return [lerp(c[0], 0.66, f), lerp(c[1], 0.6, f), lerp(c[2], 0.5, f)]; }   // (the gravel spilling into the grass)
+        return c; })); return a; });
       const wuv = (p) => [p[0] / 9, -p[2] / 9];
       for (let c0 = 0; c0 < N - 1; c0 += 60) {
         const gr = new GB(true), ga = new GB(true), gv = new GB(true);
@@ -10773,7 +10782,7 @@ const World = (function () {
        stony ford where one crosses the road (def.fords) ---- */
     let nFall = 0;
     {
-      const gw = new GB(true), gc = new GB(), wc = SAS === 'winter' ? [0.62, 0.7, 0.76] : [0.13, 0.19, 0.19], foam = SAS === 'winter' ? [0.86, 0.92, 0.97] : [0.9, 0.93, 0.95];
+      const gw = new GB(true), gc = new GB(), wc = SAS === 'winter' ? [0.5, 0.57, 0.62] : [0.13, 0.19, 0.19], foam = SAS === 'winter' ? [0.78, 0.85, 0.9] : [0.9, 0.93, 0.95];   // (the winter: grey-blue ice, the cascades frozen white)
       for (const st of def.streams || []) {
         const p = st.p, n = p.length / 2;
         for (let q = 0; q < n - 1; q++) {
@@ -10781,7 +10790,7 @@ const World = (function () {
           for (let t = 0; t < steps; t++) {
             const xa = lerp(x0, x1, t / steps), za = lerp(z0, z1, t / steps), xb = lerp(x0, x1, (t + 1) / steps), zb = lerp(z0, z1, (t + 1) / steps);
             if (vrDist((xa + xb) / 2, (za + zb) / 2) > 430) continue; const na = vrNear(xa, za), nb = vrNear(xb, zb); if ((na.i >= 0 && na.dd < 0.5) || (nb.i >= 0 && nb.dd < 0.5)) continue;
-            const ya = caGround(xa, za) + 0.12, yb = caGround(xb, zb) + 0.12, dl = Math.hypot(xb - xa, zb - za) || 1, ux = -(zb - za) / dl, uz = (xb - xa) / dl, steep = Math.abs(yb - ya) / dl, hw = 0.35 + 0.35 * sstep(0.4, 0.05, steep);
+            const ya = caGround(xa, za) + 0.12, yb = caGround(xb, zb) + 0.12, dl = Math.hypot(xb - xa, zb - za) || 1, ux = -(zb - za) / dl, uz = (xb - xa) / dl, steep = Math.abs(yb - ya) / dl, hw = (SAS === 'winter' ? 0.25 : 0.32) + 0.3 * sstep(0.4, 0.05, steep);
             const c = steep > 0.45 ? foam : wc;
             gw.quadUp([xa - ux * hw, ya, za - uz * hw], [xa + ux * hw, ya, za + uz * hw], [xb + ux * hw, yb, zb + uz * hw], [xb - ux * hw, yb, zb - uz * hw], [c, c, c, c], [[0, ya / 6], [0.3, ya / 6], [0.3, yb / 6], [0, yb / 6]]);
             if (steep > 0.8) { nFall++; const g = scen.get(xa, za); rock(g, xa + ux * 2.2, ya + 0.4, za + uz * 2.2, 1.4, 1.1, 1.2, R() * TAU, [0.34, 0.32, 0.3], R, 0.3); rock(g, xa - ux * 2.2, ya + 0.4, za - uz * 2.2, 1.3, 1.0, 1.2, R() * TAU, [0.36, 0.33, 0.31], R, 0.3); }   // (the black rock either side of a cascade)
@@ -10791,7 +10800,8 @@ const World = (function () {
       for (const [d] of def.fords || []) { const s = sStart + d; if (s < 4 || s > T.len - 4) continue;   // the ford: a darker wet band of stones across the road
         for (let o = -w; o < w; o += 1.0) { const a = atSf(s - 1.0, o), b = atSf(s - 1.0, o + 1), c = atSf(s + 1.0, o + 1), dd = atSf(s + 1.0, o), y = (q) => T.hy[q[3]] + 0.035, col = [0.34, 0.31, 0.27];
           gc.quadUp([a[0], y(a), a[1]], [b[0], y(b), b[1]], [c[0], y(c), c[1]], [dd[0], y(dd), dd[1]], [col, col, col, col]); } }
-      if (!gw.empty) { const m = new THREE.Mesh(gw.geometry(), new THREE.MeshPhongMaterial({ map: tex.water, vertexColors: true, shininess: 50, specular: 0x2a3a44 })); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); out.dyn.water = tex.water; }
+      if (!gw.empty) { const ice = SAS === 'winter', m = new THREE.Mesh(gw.geometry(), ice ? new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 70, specular: 0x9aa4b0 }) : new THREE.MeshPhongMaterial({ map: tex.water, vertexColors: true, shininess: 50, specular: 0x2a3a44 }));   // (the winter: frozen, white-blue ice)
+        m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); if (!ice) out.dyn.water = tex.water; }
       addM(gc, new THREE.MeshLambertMaterial({ vertexColors: true }));
     }
 
@@ -10838,8 +10848,8 @@ const World = (function () {
     const pMat = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
     const wMat = tuftWindMat(out.dyn.wind || (out.dyn.wind = { value: 0 })), wB = wMat.onBeforeCompile; ouCutMat(wMat, cut);
     { const cB = wMat.onBeforeCompile; wMat.onBeforeCompile = (sh) => { wB(sh); cB(sh); }; wMat.customProgramCacheKey = () => 'tuftWindCut'; wMat.side = THREE.FrontSide; }
-    const pk = [0, 1, 3, 4].map(k => new IChunks(caPlantGeo(k), k === 0 ? wMat : pMat, k === 4 ? 64 : 96)).concat([0, 1].map(k => new IChunks(saFlowerGeo(k), pMat, 64)));   // (4, 5: the red-hot pokers, the yellow everlastings)
-    const tuftC = SAS === 'summer' ? [0.5, 0.82, 0.4] : SAS === 'autumn' ? [1.0, 0.96, 0.78] : [0.86, 0.76, 0.62];
+    const pk = [0, 1, 3, 4].map(k => new IChunks(caPlantGeo(k), k === 0 ? wMat : pMat, k === 4 ? 64 : 96)).concat([0, 1].map(k => new IChunks(saFlowerGeo(k), pMat, 64)), [new IChunks(saPebbleGeo(), pMat, 64)]);   // (4, 5: the red-hot pokers, the yellow everlastings; 6: the stones in the road)
+    const tuftC = SAS === 'summer' ? [0.58, 0.88, 0.46] : SAS === 'autumn' ? [1.0, 0.96, 0.78] : [0.86, 0.76, 0.62];
     let nPlants = 0;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(60000 * dens), RT = rng(3241), SP = 3.4 / Math.sqrt(dens);
@@ -10864,7 +10874,7 @@ const World = (function () {
           const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < 1.6) continue;
           if (excluded(x, z)) continue;
           const ny = 1 / Math.sqrt(1 + sl * sl); if (saSnow(x, z, A, ny, 0) > 0.35) continue;
-          if (kind === 0) pk[0].add(x, y0 - 0.05, z, r2 * TAU, 0.5 + r3 * 0.5, 0.4 + r4 * 0.35, [tuftC[0] * (0.92 + r2 * 0.16), tuftC[1] * (0.92 + r3 * 0.12), tuftC[2] * (0.88 + r4 * 0.16)]);
+          if (kind === 0) pk[0].add(x, y0 - 0.05, z, r2 * TAU, 0.8 + r3 * 0.8, 0.5 + r4 * 0.45, [tuftC[0] * (0.92 + r2 * 0.16), tuftC[1] * (0.92 + r3 * 0.12), tuftC[2] * (0.88 + r4 * 0.16)]);
           else if (kind === 1) pk[1].add(x, y0 - 0.1, z, r2 * TAU, 0.6 + r3 * 0.9, 0.5 + r4 * 0.6, [0.82 + r2 * 0.2, 0.95 + r3 * 0.12, 0.8]);
           else if (kind === 6) pk[1].add(x, y0 - 0.2, z, r2 * TAU, 1.6 + r3 * 1.6, 1.3 + r4 * 1.4, SAS === 'winter' ? [0.75, 0.7, 0.6] : [0.62 + r2 * 0.1, 0.86 + r3 * 0.1, 0.58]);
           else if (kind === 3) { const k = 0.7 + r3 * 0.25; pk[3].add(x, y0 - 0.05, z, r2 * TAU, 0.9 + r4 * 1.3, 0.8 + r3 * 0.6, [k, k * 0.95, k * 0.88]); }
@@ -10873,6 +10883,12 @@ const World = (function () {
           if (++nPlants >= maxT) break grid;
         }
       }
+      { const RE = rng(3249), maxE = Math.round(4000 * dens); let nE = 0;   // stones bedded in the gravel on the crown and the edges (not in the wheel tracks): flat, barely proud of the road
+        road: for (let s = sStart - 100; s < sFin + 20; s += 0.9 / dens) { const i = T.idx(s); if (i < 0 || i >= N || (T.pavedAt && T.pavedAt[i])) continue;
+          const o = (RE() * 2 - 1) * (w - 0.35), a = Math.abs(o - T.rl[i]), r2 = RE(), r3 = RE(); if (a > 0.45 && a < 1.45 && r2 < 0.9) continue;
+          const f = s / T.ds, i0 = clamp(Math.floor(f), 0, N - 2), t = f - i0, x = lerp(T.px[i0], T.px[i0 + 1], t) + lerp(T.nx[i0], T.nx[i0 + 1], t) * o, z = lerp(T.pz[i0], T.pz[i0 + 1], t) + lerp(T.nz[i0], T.nz[i0 + 1], t) * o, y = lerp(T.hy[i0], T.hy[i0 + 1], t);
+          const k = 0.95 + r3 * 0.3, sc = 0.22 + r2 * 0.3; pk[6].add(x, y, z, r3 * TAU, sc, sc * 0.35, [k, k * 0.97, k * 0.93]);
+          if (++nE >= maxE) break road; } }
       const RS = rng(3247), maxS = Math.round(20000 * dens); let nS = 0;   // the stones strewn beside the road
       edge: for (let s = 12; s < T.len - 12; s += 1.0 / dens) for (const side of [-1, 1]) {
         const o = 1.5 + Math.pow(RS(), 2) * 36, [x, z] = onSide(s, side, o), r2 = RS(), r3 = RS();
