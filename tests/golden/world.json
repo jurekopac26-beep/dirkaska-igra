@@ -344,5 +344,24 @@
    "tyremarks:MeshBasicMaterial": "95b8835b",
    "roadwear:MeshLambertMaterial": "e5109e86"
   }
+ },
+ "tianmen": {
+  "meshes": 891,
+  "verts": 712918,
+  "instances": 13758,
+  "props": 43,
+  "crowd": 357,
+  "world": "2e411c08",
+  "propsHash": "ac014ea9",
+  "floor": "690d6505/10332",
+  "groups": {
+   "-:MeshLambertMaterial": "ca720edf",
+   "-:MeshPhongMaterial": "b702964d",
+   "-:MeshBasicMaterial": "22007d0f",
+   "crowd:MeshLambertMaterial": "b3e0f5ad",
+   "ao:MeshBasicMaterial": "4f26df40",
+   "tyremarks:MeshBasicMaterial": "bcc0bc51",
+   "roadwear:MeshLambertMaterial": "506cfbe8"
+  }
  }
 }

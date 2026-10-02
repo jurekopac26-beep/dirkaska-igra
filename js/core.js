@@ -482,18 +482,19 @@ const Core = (function () {
     // where the centre line crosses itself on two levels (a figure of eight: one leg on a bridge over the other). A crossing counts only
     // where the two legs are at least 4 m apart in height. cross = [{ lo, up, x, z, sin, dy, loZ, upZ }]: the sample positions (fractional
     // indices) of the lower and the upper leg at the crossing point, the point, the sine of the angle between the legs, the height gap,
-    // and how far along each leg (m) the underpass walls / the bridge parapets reach (_buildEdges narrows the barriers there)
+    // and how far along each leg (m) the underpass walls / the bridge parapets reach (_buildEdges narrows the barriers there). An open road
+    // too (Tianmen's loop over its own road at bend 90; nothing wraps: the last sample starts no segment)
     _findCrossings() {
-      const N = this.N, px = this.px, pz = this.pz, hy = this.hy, cross = this.cross = [];
-      if (this.open || !this.hasElev) return;
+      const N = this.N, px = this.px, pz = this.pz, hy = this.hy, cross = this.cross = [], open = this.open;
+      if (!this.hasElev) return;
       const C = 16, hash = new Map(), key = (a, b) => a * 65536 + b, cell = (i) => { const j = (i + 1) % N; return [Math.floor((px[i] + px[j]) / 2 / C), Math.floor((pz[i] + pz[j]) / 2 / C)]; };
       for (let i = 0; i < N; i++) { const [a, b] = cell(i), k = key(a, b); let L = hash.get(k); if (!L) hash.set(k, L = []); L.push(i); }
-      for (let i = 0; i < N; i++) {
+      for (let i = 0; i < N - (open ? 1 : 0); i++) {
         const [ca, cb] = cell(i), i1 = (i + 1) % N;
         for (let a = ca - 1; a <= ca + 1; a++) for (let b = cb - 1; b <= cb + 1; b++) {
           const L = hash.get(key(a, b)); if (!L) continue;
           for (const m of L) {
-            if (m <= i || Math.min(m - i, N - m + i) < 40) continue;
+            if (m <= i || Math.min(m - i, N - m + i) < 40 || (open && m === N - 1)) continue;
             const m1 = (m + 1) % N, ax = px[i1] - px[i], az = pz[i1] - pz[i], bx = px[m1] - px[m], bz = pz[m1] - pz[m], den = ax * bz - az * bx;
             if (Math.abs(den) < 1e-9) continue;
             const ex = px[m] - px[i], ez = pz[m] - pz[i], t = (ex * bz - ez * bx) / den, u = (ex * az - ez * ax) / den;

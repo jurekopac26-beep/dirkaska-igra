@@ -117,5 +117,12 @@
   "kverts": 305,
   "maxKverts": 393,
   "jsMs": 2.08
+ },
+ "tianmen": {
+  "calls": 336,
+  "maxCalls": 369,
+  "kverts": 1153,
+  "maxKverts": 1292,
+  "jsMs": 0.63
  }
 }
