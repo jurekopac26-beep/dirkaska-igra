@@ -101,7 +101,7 @@ Okolica:
 - **Dirka**: start z lučmi pod portalom LARGADA, modri portali kontrolnih točk z višino, cilj META v Portillu s tablo PORTILLO in modrima tablama proti meji, transparent SUBIDA LOS CARACOLES, čilske zastave ob štartni vrsti, gledalci ob startu, cilju, kontrolnih točkah, vsakem tretjem ovinku in pri razgledišču. Na zaprti cesti čakajo tovornjaki: ob startu v odstavnem pasu, v Portillu na parkirišču in na koncu ceste pred zaporo proti meji.
 - **Kondorji**: trije andski kondorji krožijo na vzgornikih nad cesto, blizu avta.
 
-## Uncompahgre (dirka, kronometer, promet, policija)
+## Uncompahgre, ZDA (dirka, kronometer, promet, policija)
 
 Soteska Uncompahgre v gorovju San Juan v Koloradu (ZDA): cesta U.S. Route 550 južno od mesta Ouray, odsek, ki mu pravijo »Million Dollar Highway«, v pravem merilu. Proga se začne nad Ourayem, 1,5 km za zadnjo serpentino nad mestom (~2.543 m), in gre po polici, vklesani v pečine nad sotesko reke Uncompahgre: skozi kratek skalni predor, čez most pri slapu Bear Creek, mimo odcepa Alpine Loop in plazu Mother Cline do galerije proti plazovom Riverside; cilj je 30 m za njo (~2.860 m). Start je pri 38,0080° S, 107,6631° Z, cilj pri 37,9708° S, 107,6575° Z. Dirka je dolga 4,9 km (4.945 m) in ima 317 m vzpona, nikjer več kot 10 %. Kartica proge je ena, s stikalom **Dirka / Kronometer / Promet / Policija**, kot na Vršiču:
 
