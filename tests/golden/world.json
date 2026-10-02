@@ -430,6 +430,26 @@
    "ao:MeshBasicMaterial": "cc27d058"
   }
  },
+ "iroha": {
+  "meshes": 1610,
+  "verts": 973594,
+  "instances": 31731,
+  "props": 82,
+  "crowd": 1202,
+  "world": "6203eb59",
+  "propsHash": "f04f2d54",
+  "floor": "7058067d/11088",
+  "groups": {
+   "-:MeshLambertMaterial": "77bfff89",
+   "crowd:MeshLambertMaterial": "a5824a48",
+   "-:MeshBasicMaterial": "697d28ce",
+   "-:MeshPhongMaterial": "28801892",
+   "irFar:MeshLambertMaterial": "563df77",
+   "ao:MeshBasicMaterial": "728c0a16",
+   "tyremarks:MeshBasicMaterial": "eb1ae63e",
+   "roadwear:MeshLambertMaterial": "66a17331"
+  }
+ },
  "jezero": {
   "meshes": 154,
   "verts": 591648,
