@@ -117,5 +117,12 @@
   "kverts": 305,
   "maxKverts": 393,
   "jsMs": 2.08
+ },
+ "bigsur": {
+  "calls": 232,
+  "maxCalls": 282,
+  "kverts": 586,
+  "maxKverts": 785,
+  "jsMs": 1.01
  }
 }
