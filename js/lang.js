@@ -249,6 +249,7 @@
     'Napaka pri zagonu: {0}': 'Error at start-up: {0}',
 
     /* ---- the championships (Core.CHAMPS keep their own English in .en) and place names on the HUD ---- */
+    'Razgledišče Kurokamidaira': 'Kurokamidaira lookout', 'Ovinek は (3)': 'Curve は (3)', 'Ovinek に (4)': 'Curve に (4)', 'Ovinek ほ (5)': 'Curve ほ (5)', 'Ovinek へ (6)': 'Curve へ (6)', 'Ovinek と (7)': 'Curve と (7)', 'Ovinek ち (8)': 'Curve ち (8)', 'Ovinek り (9)': 'Curve り (9)', 'Ovinek ぬ (10)': 'Curve ぬ (10)', 'Ovinek る (11)': 'Curve る (11)', 'Ovinek を (12)': 'Curve を (12)', 'Ovinek わ (13)': 'Curve わ (13)', 'Ovinek か (14)': 'Curve か (14)', 'Ovinek よ (15)': 'Curve よ (15)', 'Ovinek た (16)': 'Curve た (16)', 'Ovinek れ (17)': 'Curve れ (17)', 'Ovinek そ (18)': 'Curve そ (18)', 'Ovinek つ (19)': 'Curve つ (19)', 'Ovinek ね (20)': 'Curve ね (20)',   // (Irohazaka: the lookout, the curves by their signs)
     'Ruski križ': 'Russian Cross', 'Ruska kapelica': 'Russian Chapel', 'Ajdovska deklica': 'Heathen Maiden', 'Lasnica Fairmont': 'Fairmont Hairpin', 'Predor': 'Tunnel',
     'Prvi ovinek': 'First Curve', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under the Bridge', 'Lasnica': 'Hairpin', 'Zadnja ravnina': 'Back Straight', 'Zadnji ovinek': 'Final Corner',
     /* ---- the run from the police (Vršič): the checkpoint, the hideout, the HUD, the rap sheet, the call signs on the radio; the screen to turn the phone ---- */
