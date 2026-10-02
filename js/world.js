@@ -16935,6 +16935,30 @@ const World = (function () {
       for (const sd of [-1, 1]) crowdRun(CR, sStart + 300, sStart + L - 420, sd, Object.assign({}, M, { rows: 2, dens: 0.04, clump: 0.95, strip: false, label: 'RS groups' }));
       for (const e of CR.circ) exclPush(e.x, e.z, e.r);
     }
+    // the fans' camps behind the crowds on the hillsides: travel trailers of the 1950s (white below, a pastel colour above, a rounded roof),
+    // striped canopies over a picnic table, a cooler; their own random stream
+    let nCamp = 0;
+    { const RC = rng(5295), TRC = [[0.62, 0.78, 0.8], [0.9, 0.78, 0.5], [0.86, 0.6, 0.58], [0.68, 0.82, 0.64], [0.8, 0.8, 0.84]], AWN = [[0.86, 0.24, 0.2], [0.22, 0.42, 0.7], [0.3, 0.6, 0.36], [0.92, 0.7, 0.18]];
+      for (const [a, b, sd] of def.ga || []) for (let d = a + 12; d < b - 8; d += 22 + RC() * 14) {
+        const [x, z, i] = onSide(sAt(d), sd, 37 + RC() * 12); if (excluded(x, z) || nrSlope(x, z) > 0.2 || nrNear(x, z).dd < 8) continue;
+        const y = nrGround(x, z), hd = T.hd[i] + (RC() - 0.5) * 0.9, g = scen.get(x, z), ca = Math.cos(hd), sa = Math.sin(hd), wh = [0.93, 0.93, 0.9];
+        if (RC() < 0.6) {   // a trailer: two-tone body, the roof's rounded step, the hitch, a little awning on the door side
+          const c = TRC[Math.floor(RC() * TRC.length)];
+          box(g, x, y + 0.3, z, 4.6, 1.0, 2.1, hd, wh, null, true); box(g, x, y + 1.3, z, 4.6, 0.85, 2.1, hd, c, c, true);
+          box(g, x, y + 2.15, z, 3.9, 0.28, 1.9, hd, c, [0.96, 0.96, 0.94], true); box(g, x, y + 1.35, z, 4.62, 0.3, 2.12, hd, [0.3, 0.38, 0.46], null, true);   // (the window band)
+          box(g, x + ca * 2.75, y + 0.35, z + sa * 2.75, 1.0, 0.14, 0.2, hd, [0.28, 0.28, 0.3]);
+          const ax = x - sa * 1.9, az = z + ca * 1.9; box(g, ax, y + 2.0, az, 2.6, 0.08, 1.6, hd, AWN[Math.floor(RC() * 4)], null, true);
+          for (const o of [-1.2, 1.2]) box(g, ax + ca * o - sa * 0.7, y - 0.2, az + sa * o + ca * 0.7, 0.06, 2.2, 0.06, hd, [0.7, 0.7, 0.72]);
+        } else {   // a canopy on four poles, striped, over a table with two benches and a cooler
+          const c = AWN[Math.floor(RC() * 4)];
+          for (const [p, q] of [[-1.4, -1.4], [1.4, -1.4], [-1.4, 1.4], [1.4, 1.4]]) box(g, x + ca * p - sa * q, y - 0.2, z + sa * p + ca * q, 0.07, 2.5, 0.07, hd, [0.7, 0.7, 0.72]);
+          for (let k = 0; k < 4; k++) box(g, x + ca * (-1.125 + k * 0.75), y + 2.3, z + sa * (-1.125 + k * 0.75), 0.75, 0.08, 3.0, hd, k % 2 ? wh : c, null, true);
+          box(g, x, y + 0.7, z, 1.8, 0.08, 0.8, hd, [0.6, 0.46, 0.3]); for (const q of [-0.7, 0.7]) box(g, x - sa * q, y + 0.42, z + ca * q, 1.8, 0.06, 0.28, hd, [0.55, 0.42, 0.28]);
+          box(g, x + ca * 1.0 + sa * 0.9, y, z + sa * 1.0 - ca * 0.9, 0.6, 0.42, 0.4, hd, [0.2, 0.42, 0.7], [0.92, 0.92, 0.9]);
+        }
+        exclPush(x, z, 5.5); nCamp++;
+      }
+    }
     cars.addTo(root, true);
 
     /* ---- trees: lone eucalypts and rows of them along the roads (windbreaks), the sage scrub and chaparral on the hillsides, a few
@@ -17084,7 +17108,7 @@ const World = (function () {
       const dust = rbSmoke(DL, CR.U.uTime, ownTex(rbSmokeTex()), [1.6, -0.6]); dust.name = 'rsDust'; root.add(dust); out.dyn.rsDust = dust;
       if (out.dyn.far) { const f0 = out.dyn.far.onBeforeRender; out.dyn.far.onBeforeRender = (rd, sc, cam, ...a) => { f0(rd, sc, cam, ...a); dust.visible = !(typeof Render !== 'undefined' && Render.raining); }; }
     }
-    out.stats = { tiles: nTiles, trees: nTrees, rocks: nRocks, bushes: nBush, tufts: nTufts, poles: nPoles, bales: nBales, rails: nRail, apexTyres: nApex, stalls: nStalls, stands: nStands, cars: nCars, houses: nHouses, billboards: nBill, decals: nDecals, flags: flagL.length };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, camp: nCamp, rocks: nRocks, bushes: nBush, tufts: nTufts, poles: nPoles, bales: nBales, rails: nRail, apexTyres: nApex, stalls: nStalls, stands: nStands, cars: nCars, houses: nHouses, billboards: nBill, decals: nDecals, flags: flagL.length };   // (read by the tests)
     return out;
   }
 
