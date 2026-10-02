@@ -16,14 +16,16 @@ const which = process.argv[2];
 const list = which ? SUITES[which] : [...SUITES.node, ...SUITES.browser];
 if (!list) { console.error('unknown suite: ' + which + ' (node | browser)'); process.exit(2); }
 const LIMIT = (+process.env.TEST_TIMEOUT_MIN || 15) * 60000;
+// (the memory test goes three times through every track: it grows with each new track, so it gets twice the time)
+const LIMIT_OF = (f) => (/memory\.test/.test(f) ? 2 : 1) * LIMIT;
 
 const results = [];
 for (const f of list) {
   const t0 = Date.now();
   console.log(`\n### ${f}`);
-  const r = spawnSync(process.execPath, [path.join(__dirname, f)], { stdio: 'inherit', timeout: LIMIT, killSignal: 'SIGKILL' });
+  const r = spawnSync(process.execPath, [path.join(__dirname, f)], { stdio: 'inherit', timeout: LIMIT_OF(f), killSignal: 'SIGKILL' });
   const timedOut = !!(r.error && r.error.code === 'ETIMEDOUT');
-  if (timedOut) console.log(`FAIL ${f}: stopped after ${LIMIT / 60000} min (TEST_TIMEOUT_MIN)`);
+  if (timedOut) console.log(`FAIL ${f}: stopped after ${LIMIT_OF(f) / 60000} min (TEST_TIMEOUT_MIN)`);
   results.push({ f, ok: r.status === 0, s: ((Date.now() - t0) / 1000).toFixed(0), timedOut });
 }
 console.log('\n=== summary');
