@@ -336,20 +336,20 @@
   }
  },
  "chapman": {
-  "meshes": 2170,
-  "verts": 1479904,
-  "instances": 74123,
+  "meshes": 2240,
+  "verts": 1063194,
+  "instances": 79040,
   "props": 167,
-  "crowd": 338,
-  "world": "f416a0a8",
+  "crowd": 344,
+  "world": "b7f7bce2",
   "propsHash": "c90e2cb2",
   "floor": "be606eaf/10808",
   "groups": {
-   "-:MeshLambertMaterial": "c1d56917",
-   "-:MeshPhongMaterial": "37fa38c5",
+   "-:MeshLambertMaterial": "be256792",
+   "-:MeshPhongMaterial": "cdfea6a",
    "-:MeshBasicMaterial": "4b3929b5",
-   "crowd:MeshLambertMaterial": "66eec7d0",
-   "ao:MeshBasicMaterial": "c3985328",
+   "crowd:MeshLambertMaterial": "79dc5cf1",
+   "ao:MeshBasicMaterial": "8098de3c",
    "tyremarks:MeshBasicMaterial": "bc39543",
    "roadwear:MeshLambertMaterial": "33826799"
   }
