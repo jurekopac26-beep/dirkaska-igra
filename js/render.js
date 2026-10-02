@@ -1657,6 +1657,7 @@ const Render = (function () {
     bathurst: { fog: 0xcfdbe6, sun: 0xfff0d2, sunI: 1.22, sky: 0xc6dcf6, gnd: 0x6b6a3c, hemiI: 0.6, tint: [1.03, 1.0, 0.95], sat: 1.05, sunOff: [-74, 86, -56] },   // Bathurst: a clear spring afternoon in New South Wales, the sun from the north-west (the southern hemisphere), the dry pastures' golden light
     chapman:  { fog: 0xc9dbe8, sun: 0xfff0d6, sunI: 1.24, sky: 0xbcd6f4, gnd: 0x5e5a40, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-92, 74, -40] },   // Chapman's Peak: a clear late-summer afternoon at the Cape, the sun low over the Atlantic in the west-north-west, a soft sea haze
     bigsur:   { fog: 0xc8d6e2, sun: 0xfff0d8, sunI: 1.14, sky: 0xc6dcf2, gnd: 0x5c6040, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-86, 74, 58] },   // Big Sur: a clear afternoon on the coast, the sun over the Pacific in the south-west, a soft sea haze
+    tianmen:  { fog: 0xc9d2d4, sun: 0xfff0dc, sunI: 1.02, sky: 0xd4dfe6, gnd: 0x4a5636, hemiI: 0.68, tint: [1.0, 1.0, 0.99], sat: 1.04, haze: 0.12, hazeCol: [0.92, 0.95, 1.0], sunOff: [-70, 92, 60] },   // Tianmen: a humid subtropical day, the sun veiled by the mist, a pale grey-green haze over the cliffs
   };
   // each track's own grade on top (high quality, the post pass): its shadows and its highlights tinted apart, a little (split toning:
   // [shadows], [highlights]); cool shade and a warm sun mostly, the Riviera's teal and gold, Toskana's golden light, Spa's greyer air
@@ -1665,7 +1666,8 @@ const Render = (function () {
     italia: [[1.0, 0.98, 1.02], [1.05, 1.01, 0.92]], kamp: [[0.98, 1.0, 1.03], [1.03, 1.0, 0.96]], monaco: [[0.95, 1.0, 1.05], [1.05, 1.0, 0.93]], mountain: [[0.95, 0.99, 1.06], [1.02, 1.0, 0.97]],
     ouni: [[0.97, 1.01, 1.03], [1.03, 1.0, 0.96]], vrsic: [[0.96, 0.99, 1.06], [1.04, 1.0, 0.94]], pikes: [[0.96, 0.99, 1.06], [1.03, 1.0, 0.95]], nring: [[0.97, 1.01, 1.02], [1.02, 1.0, 0.97]],
     spa: [[0.97, 1.0, 1.04], [1.01, 1.0, 0.99]], rbring: [[0.96, 1.0, 1.05], [1.03, 1.0, 0.96]], suzuka: [[0.98, 1.0, 1.03], [1.03, 1.0, 0.97]], caracoles: [[0.95, 0.99, 1.07], [1.04, 1.0, 0.95]], bathurst: [[0.96, 1.0, 1.05], [1.05, 1.01, 0.93]],
-    chapman: [[0.96, 1.0, 1.06], [1.04, 1.0, 0.95]] };
+    chapman: [[0.96, 1.0, 1.06], [1.04, 1.0, 0.95]],
+    tianmen: [[0.97, 1.0, 1.03], [1.02, 1.0, 0.98]] };
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   // The time of day as one number, todK: 0 day, 0.5 dusk, 1 night (setAtmos sets it from the setting; an endurance race moves it with its
   // clock: setTodK). The light, the fog and the grade are blended between the day's (the theme's), the dusk's and the night's; dawn (the

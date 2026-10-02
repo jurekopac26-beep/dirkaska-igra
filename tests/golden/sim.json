@@ -2154,5 +2154,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "tianmen/race/cs": {
+  "digest": "caeb22ca9d3e0fdc1a917d89",
+  "lead": 1255.2,
+  "car0": [
+   231.42,
+   405.13
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "tianmen/demo/cs": {
+  "digest": "fb774b26a91c22f55247a0c7",
+  "lead": 1312.1,
+  "car0": [
+   150.67,
+   432.07
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "tianmen/upg/cs": {
+  "digest": "f087351eeb242b27ba4936b1",
+  "lead": 1305,
+  "car0": [
+   209.91,
+   424.89
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "tianmen/crash/cs": {
+  "digest": "2d2e4a9109ccb5e46b7a8a97",
+  "lead": 1252.3,
+  "car0": [
+   221.57,
+   408.17
+  ],
+  "cover": {
+   "dmg": 0.67,
+   "loose": 7,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "tianmen/formula/cs": {
+  "digest": "90f7e05b3bc68ee1f7e96611",
+  "lead": 1291.8,
+  "car0": [
+   240.74,
+   374.9
+  ],
+  "cover": {
+   "dmg": 0.61,
+   "loose": 6,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
+ "tianmen/lm/cs": {
+  "digest": "019c1b4e1c9a77e0594c9308",
+  "lead": 1279.6,
+  "car0": [
+   248.76,
+   370.49
+  ],
+  "cover": {
+   "dmg": 0.62,
+   "loose": 4,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
+ "tianmen/car/cs": {
+  "digest": "0efe18c37e2335618a5c47a1",
+  "lead": 1252.4,
+  "car0": [
+   225.5,
+   401.9
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 11,
+   "rescues": 1,
+   "repairs": 0
+  }
  }
 }
