@@ -16575,7 +16575,7 @@ const World = (function () {
     P.colMod = (x, z, c) => {   // late summer (the race was in late February or early March): the pastures pale green-gold, greener by the rivers, the crops' stubble golden, ploughed fields brown
       const n = P.n5(x * 0.55 + 700, z * 0.55), m = P.n3(x * 1.6 + 300, z * 1.6), k = 0.95 + (n - 0.5) * 0.16 + (m - 0.5) * 0.1, fm = nrLCf(x, z, 0), cr = nrLCf(x, z, 2);
       c[0] *= k * 1.04; c[1] *= k; c[2] *= k * 0.84;
-      const dry = sstep(0.45, 0.72, P.n3(x * 0.8 + 90, z * 0.8 - 40)) * 0.65 * fm; c[0] = lerp(c[0], c[0] * 1.26 + 0.08, dry); c[1] = lerp(c[1], c[1] * 1.08 + 0.03, dry); c[2] = lerp(c[2], c[2] * 0.66, dry);
+      const dry = sstep(0.5, 0.78, P.n3(x * 0.8 + 90, z * 0.8 - 40)) * 0.45 * fm; c[0] = lerp(c[0], c[0] * 1.16 + 0.05, dry); c[1] = lerp(c[1], c[1] * 1.06 + 0.02, dry); c[2] = lerp(c[2], c[2] * 0.76, dry);
       if (cr > 0) { const t = P.n1(x * 0.3 + 1200, z * 0.3), col = t < 0.3 ? [1.0, 0.84, 0.66] : t < 0.75 ? [1.26, 1.08, 0.62] : [0.86, 1.0, 0.6];   // ploughed, stubble, a green crop
         c[0] = lerp(c[0], col[0], cr * 0.7); c[1] = lerp(c[1], col[1], cr * 0.7); c[2] = lerp(c[2], col[2], cr * 0.7); }
       const rv = lfNear(LFQ.riv, x, z); if (rv.e && rv.d < 45) { const t = sstep(45, 8, rv.d) * 0.5; c[0] = lerp(c[0], c[0] * 0.82, t); c[1] = lerp(c[1], c[1] * 1.04, t); c[2] = lerp(c[2], c[2] * 0.9, t); }   // the river flats lusher
@@ -16608,6 +16608,14 @@ const World = (function () {
         const r = gr.row(offs.map(o => Pt(i, o, 0.02)), offs.map(o => shade(i, o)), offs.map(o => [(o + w) / tileL, v])); if (pr >= 0) gr.link(pr, r, 0, offs.length - 1); pr = r; }
       addM(gr, aMat);
     }
+    // in the town: a footpath on either side between the kerb and the garden walls (kind 3, set below: drawn after it)
+    const footpaths = () => { const gf = new RB(true), FPc = [1.2, 1.17, 1.1], KB = [1.0, 0.98, 0.94];
+      for (const side of [-1, 1]) { let pr = -1;
+        for (let i = 0; i <= N; i++) { const ii = i % N; if (kindAt(ii, side) !== 3) { pr = -1; continue; }
+          const bar = side > 0 ? T.br[ii] : T.bl[ii], o = [w + 0.1, w + 0.12, bar - 0.05], pts = [Pt(ii, side * o[0], 0.0), Pt(ii, side * o[1], 0.13), Pt(ii, side * o[2], 0.13)], cols = [KB, FPc, FPc], uvs = pts.map(p => [p[0] / 6, -p[2] / 6]);
+          if (side < 0) { pts.reverse(); cols.reverse(); uvs.reverse(); }
+          const r = gf.row(pts, cols, uvs); if (pr >= 0) gf.link(pr, r, 0, 2); pr = r; } }
+      addM(gf, aMat); };
     // the start / finish line (white), the grid's lines
     { const gw = new GB(), wh = [0.93, 0.93, 0.9], HYp = (p) => T.hy[p[3]];
       const q = (s0, s1, l0, l1) => { const a = atSf(s0, l0), b = atSf(s0, l1), c = atSf(s1, l1), d = atSf(s1, l0); gw.quadUp([a[0], HYp(a) + 0.04, a[1]], [b[0], HYp(b) + 0.04, b[1]], [c[0], HYp(c) + 0.04, c[1]], [d[0], HYp(d) + 0.04, d[1]], [wh, wh, wh, wh]); };
@@ -16628,12 +16636,13 @@ const World = (function () {
     for (const [a, b] of brS) setK(a - 4, b + 4, 0, 2);
     for (let i = 0; i < N; i++) { const p = PD && T.pitAt(i * ds); if (p) kind[1][i] = p.gap ? -1 : 4; }
     const kindAt = (i, side) => kind[side2(side)][i];
+    footpaths();
     const postGeo = (() => { const g = new GB(); box(g, 0, 0, 0, 0.16, 1, 0.16, 0, [0.5, 0.46, 0.4], [0.42, 0.38, 0.33], true); return g.geometry(); })();
     const posts = new IChunks(postGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), 256);
     const baleGeo = (() => { const g = new GB(), st = [0.86, 0.72, 0.38], sd = [0.74, 0.6, 0.3]; box(g, 0, 0, 0, 1.1, 0.42, 0.5, 0, sd, st, true); return g.geometry(); })();
     const bales = new IChunks(baleGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), 256);
     const rMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
-    const TIM = [0.56, 0.52, 0.45], TIMd = [0.4, 0.37, 0.32], WHT = [0.9, 0.9, 0.86], BRK = [0.68, 0.4, 0.3], BRKt = [0.78, 0.75, 0.68];
+    const TIM = [0.56, 0.52, 0.45], TIMd = [0.4, 0.37, 0.32], WHT = [0.9, 0.9, 0.86], BRK = [0.8, 0.5, 0.38], BRKt = [0.84, 0.8, 0.72];
     let nPosts = 0, nBales = 0;
     for (let c0 = 0; c0 < N; c0 += CH) {
       const gr = new RB();
@@ -16650,7 +16659,7 @@ const World = (function () {
             if (prev >= 0 && pk === k) for (let m = 0; m < hs.length; m++) gr.link(prev, row, m * 2, m * 2 + 1);
             if (ii % (k === 2 ? 1 : 2) === 0 && ii < c0 + CH) { const p = Pt(i, side * (bar + 0.22), 0); posts.add(p[0], p[1] - 0.4, p[2], T.hd[i], 1, k === 4 ? 0.95 : 1.75, k === 4 ? [1.7, 1.7, 1.66] : W1); nPosts++; }   // (a post every 4 m, on a bridge every 2 m)
           } else if (k === 3) {   // a brick wall: the face to the road, the coping on top
-            const hh = Math.abs(dS(i * ds) - LF.viaduct) < 40 ? 2.4 : 1.15, pts = [Pt(i, o, -0.3), Pt(i, o, hh), Pt(i, side * (bar + 0.5), hh), Pt(i, side * (bar + 0.5), -0.3)], cols = [BRK, BRK, BRKt, BRK];
+            const hh = 0.95, pts = [Pt(i, o, -0.3), Pt(i, o, hh), Pt(i, side * (bar + 0.5), hh), Pt(i, side * (bar + 0.5), -0.3)], cols = [BRK, BRK, BRKt, BRK];
             if (side < 0) { pts.reverse(); cols.reverse(); }
             row = gr.row(pts, cols); if (prev >= 0 && pk === k) gr.link(prev, row, 0, 3);
           }
@@ -16998,12 +17007,12 @@ const World = (function () {
     let nTiles = 0;
     { const grp = new THREE.Group(); root.add(grp); out.ground = grp;
       for (let k = 0; k < tiles.length; k += 3) { const m = new THREE.Mesh(nrTileGeo(tiles[k], tiles[k + 1], tiles[k + 2] === 1 ? 1 : 4), gMat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m); nTiles++; }
-      const SH = [0.98, 0.9, 0.74];
+      const SH = [0.98, 0.9, 0.74], FP = [1.06, 1.02, 1.0];   // (the gravel shoulder; in the town a footpath)
       for (let c0 = 0; c0 < N; c0 += CH) {
         const gv = new RB(true), pv = [-1, -1];
         for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++) { const i = ii % N;
           for (const side of [-1, 1]) { const si = side > 0 ? 1 : 0; if (bridgeAt[i]) { pv[si] = -1; continue; }
-            const vr = rbVerge(i, side), pr = [vr[0], [w + 0.9, -0.05], vr[2], vr[3], vr[4]], pts = pr.map(([o, h]) => Pt(i, side * o, h)), cols = pts.map((p, k) => k < 2 ? SH : nrGCol(p[0], p[2]));
+            const tw = kindAt(i, side) === 3, vr = rbVerge(i, side), pr = [vr[0], [w + 0.9, -0.05], vr[2], vr[3], vr[4]], pts = pr.map(([o, h]) => Pt(i, side * o, h)), cols = pts.map((p, k) => k < 2 || (tw && k < 3) ? (tw ? FP : SH) : nrGCol(p[0], p[2]));
             const ordered = side > 0 ? { p: pts, c: cols } : { p: pts.slice().reverse(), c: cols.slice().reverse() };
             const rv = gv.row(ordered.p, ordered.c, ordered.p.map(p => [p[0] / 14, -p[2] / 14])); if (pv[si] >= 0) gv.link(pv[si], rv, 0, pr.length - 1); pv[si] = rv; } }
         addM(gv, gMat); }
