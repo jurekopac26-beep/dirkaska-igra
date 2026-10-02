@@ -2,8 +2,9 @@
 // 1. the police radio small, top right above the map (the map pushed down for it, the radio never over the clock), in plain letters; its
 //    speakers by their call signs: the patrol cars by their numbers (Enota 1, Enota 2 ..., said so too), never by a place; what is said in
 //    person at the checkpoint (the officer) at the bottom;
-// 2. a patrol car out, and every other message of the run (a spike strip ahead, the helicopter ...): a small note top right over the radio,
-//    in plain letters (not the big message over the road; only the end of the run is big);
+// 2. the start (the mission, "Vozi proti Vršiču"), a patrol car out, and every other message of the run (a spike strip ahead, the
+//    helicopter ...): small notes top right over the radio, in plain letters (not the big message over the road, not the box at the
+//    bottom; only the end of the run is big);
 // 3. a spike strip on a steep bit of the road, laid between two of the road's samples: on the asphalt (not under it), tilted with the
 //    grade, 1 m wide along the road, its links red and white;
 // 4. at speed (the chase camera, quality 'high'): the picture streaks, the patrol cars on the player's tail stay sharp;
@@ -27,7 +28,10 @@ try {
     const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)), frame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(300);
     document.querySelector('[data-track="vrsic"] .tc-mode button[data-v="police"]').click(); await wait(200);
-    g.onAction('start'); for (let k = 0; k < 1200 && !(g.race && g.race.pol); k++) await wait(100);
+    g.onAction('start'); for (let k = 0; k < 1200 && !(g.race && g.race.pol && g.phase === 'racing'); k++) await wait(50);
+    // the start: the mission and "Vozi proti Vršiču" top right above the map (not over the road, not in the middle at the bottom)
+    const at = (id) => { const e = document.getElementById(id), r = e.getBoundingClientRect(); return { on: /show/.test(e.className) && getComputedStyle(e).display !== 'none' && getComputedStyle(e).opacity !== '0', txt: e.textContent, t: Math.round(r.top), b: Math.round(r.bottom), r: Math.round(r.right) }; };
+    const start = { info: at('h-pinfo'), note: at('h-pnote'), map: at('h-map'), big: at('h-msg'), toast: at('toast') };
     const pol = g.race.pol, rect = (id) => { const r = document.getElementById(id).getBoundingClientRect(); return { t: Math.round(r.top), b: Math.round(r.bottom), l: Math.round(r.left), r: Math.round(r.right) }; };
     let talk = null, lastS = -1e9;
     for (let i = 0; i < 90 && (pol.stage !== 'chase' || !talk) && !(i > 75); i++) {
@@ -37,8 +41,12 @@ try {
       const el = document.getElementById('h-talk'); if (!talk && el.className.includes('show')) talk = Object.assign(rect('h-talk'), { txt: el.textContent });
     }
     pol.D = Object.assign({}, pol.D, { bust: 1e9 });   // (this run is about what is drawn and said: not caught)
-    return { stage: pol.stage, talk, map: rect('h-map'), H: innerHeight, s: Math.round(g.race.player.q.s - g.race.track.startS), chk: pol.chk && pol.chk.st, phase: g.phase };
+    return { start, stage: pol.stage, talk, map: rect('h-map'), H: innerHeight, s: Math.round(g.race.player.q.s - g.race.track.startS), chk: pol.chk && pol.chk.st, phase: g.phase };
   });
+  { const S = pre.start;
+    T.check('the start: the mission and "Vozi proti Vršiču" small top right above the map, nothing over the road or at the bottom',
+      S.info.on && /^Misija: pripelji avto do garaže/.test(S.info.txt) && S.note.on && S.note.txt === 'Vozi proti Vršiču' && S.note.b <= S.map.t + 1 && S.info.b <= S.note.t && S.info.t >= 0 &&
+      Math.abs(S.note.r - S.map.r) <= 2 && !S.big.on && !S.toast.on, JSON.stringify(S)); }
   T.check('the chase is on (the autopilot drove through the checkpoint)', pre.stage === 'chase', JSON.stringify({ stage: pre.stage, s: pre.s, chk: pre.chk, phase: pre.phase }));
   let talk = pre.talk;
   if (!talk) {   // (the shout came and went between two looks: the officer asks for the papers, in person)
