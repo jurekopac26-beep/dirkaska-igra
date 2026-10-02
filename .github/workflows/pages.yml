@@ -34,7 +34,7 @@ jobs:
       - name: Pripravi vsebino
         run: |
           mkdir -p _site
-          cp -r index.html manifest.webmanifest sw.js peugeot_206.glb css js icons _site/
+          cp -r index.html manifest.webmanifest sw.js css js icons _site/
 
       - uses: actions/upload-pages-artifact@v3
         with:
