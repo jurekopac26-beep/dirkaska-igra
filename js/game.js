@@ -401,7 +401,7 @@
   const physOf = () => 'cs';
   // the weather: dry, rain, or at random for every race (rain more often in the Ardennes, the Eifel and the Julian Alps in the autumn, less in the Andes);
   // the title demo rains only with 'rain'
-  const RAIN_P = { spa: 0.5, nring: 0.45, vrsic: 0.45, caracoles: 0.2 };   // (the Andes in summer: mostly dry)
+  const RAIN_P = { spa: 0.5, nring: 0.45, vrsic: 0.45, caracoles: 0.2, bigsur: 0.2 };   // (the Andes in summer, the Californian coast: mostly dry)
   const rainOf = () => S.weather === 'rain' || S.weather === 'storm' ? 1 : (S.weather === 'random' || S.weather === 'change') && Math.random() < (RAIN_P[track && track.def.id] || 0.35) ? 1 : 0;
   // 'change': the weather changes during a race (on a circuit, or up the Vršič; Race opts weather): it starts dry and rains later on, or it starts wet,
   // the rain stops and the road dries (the racing line first). Somewhere between a fifth and a half of the race (by its usual length); a time trial: as 'random'
@@ -1163,6 +1163,7 @@
       traffic: duel, police: chase, chars: !tt && !quali, rival: !tt && !quali && inCareer() && career.rival ? career.rival.k : undefined
     }));
     if (race.player) race.player.pitCmp = S.pitCmp;
+    if (track.def.mist) race.opts.mist = !race.rain && !W.wx && !quali && (S.tod === 'dawn' || ((S.weather === 'random' || S.weather === 'change') && Math.random() < track.def.mist));   // Big Sur: the marine layer (Render: dyn.bsMist), every morning and on some dry runs
     $('pit-row').classList.toggle('off', !(race.player && race.player.ty && race.player.ty.c));   // (the slicks for a stop: a race with tyres)
     race.champ = cr >= 0 ? { round: cr, n: cd.tracks.length, done: false } : null;
     race.quali = quali; race.storm = !on && !school && !!W.storm;   // (the driving school: always dry)
@@ -3052,7 +3053,7 @@
   const PART_EN = { bumperF: 'front bumper', bumperR: 'rear bumper', hood: 'bonnet', trunk: 'boot lid', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'front wing', fenderR: 'front wing' };
   const PART_EN_F = { bumperF: 'front wing', bumperR: 'rear wing', hood: 'nose cone', trunk: 'engine cover', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'bargeboard', fenderR: 'bargeboard' };   // (the formula's parts)
   const PART_EN_LM = { bumperF: 'splitter', bumperR: 'rear wing', hood: 'nose', trunk: 'engine cover', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'louvre panel', fenderR: 'louvre panel' };   // (the prototype's)
-  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', pikesg: 'Pikes Peak', ouninpohja: 'Ouninpohja', harju: 'Harju', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka', vrsic: 'the Vrshich pass', caracoles: 'Los Caracoles', katu: 'the Katu-Yaryk pass', bathurst: 'Bathurst', chapman: "Chapman's Peak" };
+  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', pikesg: 'Pikes Peak', ouninpohja: 'Ouninpohja', harju: 'Harju', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka', vrsic: 'the Vrshich pass', caracoles: 'Los Caracoles', katu: 'the Katu-Yaryk pass', bathurst: 'Bathurst', chapman: "Chapman's Peak", bigsur: 'Big Sur' };
   const cev = { wall: 0, car: 0 };          // impacts collected per physics step
   let cs = null;
   function commReset() {

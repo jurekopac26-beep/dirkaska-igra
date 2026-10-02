@@ -118,6 +118,13 @@
   "maxKverts": 1271,
   "jsMs": 0.94
  },
+ "bigsur": {
+  "calls": 232,
+  "maxCalls": 282,
+  "kverts": 586,
+  "maxKverts": 785,
+  "jsMs": 1.01
+ },
  "jezero": {
   "calls": 278,
   "maxCalls": 330,

@@ -250,6 +250,7 @@
 
     /* ---- the championships (Core.CHAMPS keep their own English in .en) and place names on the HUD ---- */
     'Ruski križ': 'Russian Cross', 'Ruska kapelica': 'Russian Chapel', 'Ajdovska deklica': 'Heathen Maiden', 'Lasnica Fairmont': 'Fairmont Hairpin', 'Predor': 'Tunnel',
+    'Most Rocky Creek': 'Rocky Creek Bridge', 'Razgledišče Castle Rock': 'Castle Rock Viewpoint', 'Most Bixby Creek': 'Bixby Creek Bridge',   // (Big Sur)
     'Prvi ovinek': 'First Curve', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under the Bridge', 'Lasnica': 'Hairpin', 'Zadnja ravnina': 'Back Straight', 'Zadnji ovinek': 'Final Corner',
     'Prelaz Katu-Jaryk': 'Katu-Yaryk Pass', 'Sedem serpentin': 'Seven Hairpins', 'Prečka nad Čulišmanom': 'Traverse above the Chulyshman', 'Dolina Čulišmana': 'Chulyshman Valley',   // (Katu-Jaryk: the HUD, the flyover)
     'Razgledišče': 'Lookout', 'Cestninska postaja': 'Toll Plaza',   // (the lookouts and the toll plaza above Hout Bay)

@@ -354,6 +354,26 @@
    "roadwear:MeshLambertMaterial": "33826799"
   }
  },
+ "bigsur": {
+  "meshes": 1847,
+  "verts": 837627,
+  "instances": 47431,
+  "props": 98,
+  "crowd": 1021,
+  "world": "e28ec1a0",
+  "propsHash": "4aad3ee3",
+  "floor": "84fcde9b/8876",
+  "groups": {
+   "-:MeshLambertMaterial": "82827ded",
+   "-:MeshPhongMaterial": "8c184b5c",
+   "-:MeshBasicMaterial": "dff4a508",
+   "-:ShaderMaterial": "d75dbfbd",
+   "crowd:MeshLambertMaterial": "40223e14",
+   "ao:MeshBasicMaterial": "b680777e",
+   "tyremarks:MeshBasicMaterial": "48f7fcbc",
+   "roadwear:MeshLambertMaterial": "858643f4"
+  }
+ },
  "jezero": {
   "meshes": 154,
   "verts": 591648,
