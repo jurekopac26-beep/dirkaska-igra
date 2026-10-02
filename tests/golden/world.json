@@ -337,11 +337,11 @@
  },
  "rio": {
   "meshes": 590,
-  "verts": 507747,
+  "verts": 506558,
   "instances": 10111,
   "props": 151,
   "crowd": 1853,
-  "world": "ad8410a6",
+  "world": "ffab65d1",
   "propsHash": "940ce7ae",
   "floor": "8352b82e/9800",
   "groups": {
@@ -352,7 +352,7 @@
    "smoke:ShaderMaterial": "5a97f7c",
    "flags:MeshLambertMaterial": "d0d3d77d",
    "jet smoke:MeshBasicMaterial": "684b759b",
-   "-:MeshPhongMaterial": "61e44cf0",
+   "-:MeshPhongMaterial": "d2ec366f",
    "ao:MeshBasicMaterial": "119402b1",
    "roadwear:MeshLambertMaterial": "619aacf1",
    "worn:MeshLambertMaterial": "418a694"

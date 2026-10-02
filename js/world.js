@@ -15275,9 +15275,13 @@ const World = (function () {
       const shape = L.poly.map(([x, z]) => new THREE.Vector2(x, z)), tri = THREE.ShapeUtils.triangulateShape(shape, []), g = new GB(true), W1 = [1, 1, 1];
       for (const [a, b, c] of tri) { const A = L.poly[a], B = L.poly[b], C = L.poly[c], P3 = (q) => [q[0], L.y, q[1]], U = (q) => [q[0] / 30, -q[1] / 30]; g.quadUp(P3(A), P3(B), P3(C), P3(C), [W1, W1, W1, W1], [U(A), U(B), U(C), U(C)]); }
       const m = new THREE.Mesh(g.geometry(), wMat); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m);
-      const G = NR.G, x0 = Math.max(G.x0, RIO_W ? RIO_W.x0 : G.x0), z0 = Math.max(G.z0, RIO_W ? RIO_W.z0 : G.z0);
-      const i0 = Math.max(0, Math.floor((x0 - G.x0) / NRC) - 2), j0 = Math.max(0, Math.floor((z0 - G.z0) / NRC) - 2), i1 = G.nx - 2, j1 = G.nz - 2;
-      const band = shoreBand(G.x0 + i0 * NRC, G.z0 + j0 * NRC, G.x0 + i1 * NRC, G.z0 + j1 * NRC, L.y + 0.015, waterline(nrGH, G.x0, G.z0, NRC, i0, i1, j0, j1, L.y), 30);
+      // the shore band only where the terrain is drawn (the tiles near the track) and the shore runs through: the box round those tiles
+      const G = NR.G, TL = NRC * NRT; let i0 = 1e9, j0 = 1e9, i1 = -1, j1 = -1;
+      for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) { if (!nrTileOn(ti, tj)) continue;
+        const cx = G.x0 + (ti + 0.5) * TL, cz = G.z0 + (tj + 0.5) * TL; if (polyDist(L.poly, cx, cz) > TL * 0.72 + 24) continue;
+        i0 = Math.min(i0, ti * NRT); j0 = Math.min(j0, tj * NRT); i1 = Math.max(i1, (ti + 1) * NRT); j1 = Math.max(j1, (tj + 1) * NRT); }
+      i1 = Math.min(i1, G.nx - 2); j1 = Math.min(j1, G.nz - 2);
+      const band = i1 < 0 ? null : shoreBand(G.x0 + i0 * NRC, G.z0 + j0 * NRC, G.x0 + i1 * NRC, G.z0 + j1 * NRC, L.y + 0.015, waterline(nrGH, G.x0, G.z0, NRC, i0, i1, j0, j1, L.y), 30);
       addShore(root, band, wMat, WO); out.dyn.water = tex.water; st.water = tri.length;
     }
     /* palms in rows: along the paddock behind the pit building and behind the barrier on the infield side of the back straight */
