@@ -4,132 +4,132 @@
   "maxCalls": 296,
   "kverts": 642,
   "maxKverts": 782,
-  "jsMs": 1
+  "jsMs": 0.88
  },
  "riviera": {
   "calls": 288,
   "maxCalls": 336,
   "kverts": 509,
   "maxKverts": 607,
-  "jsMs": 0.92
+  "jsMs": 0.63
  },
  "gora": {
   "calls": 254,
   "maxCalls": 295,
   "kverts": 997,
   "maxKverts": 1054,
-  "jsMs": 2.33
+  "jsMs": 0.8
  },
  "ljubljana": {
   "calls": 281,
   "maxCalls": 343,
   "kverts": 583,
   "maxKverts": 653,
-  "jsMs": 0.77
+  "jsMs": 0.66
  },
  "monaco": {
   "calls": 226,
   "maxCalls": 300,
   "kverts": 676,
   "maxKverts": 757,
-  "jsMs": 1.02
+  "jsMs": 0.74
  },
  "gozd": {
   "calls": 322,
   "maxCalls": 343,
   "kverts": 1558,
   "maxKverts": 1890,
-  "jsMs": 1.46
+  "jsMs": 1.07
  },
  "toskana": {
   "calls": 313,
   "maxCalls": 387,
   "kverts": 1336,
   "maxKverts": 1403,
-  "jsMs": 1.13
+  "jsMs": 0.91
  },
  "grom": {
   "calls": 330,
   "maxCalls": 384,
   "kverts": 1530,
   "maxKverts": 1670,
-  "jsMs": 1.09
+  "jsMs": 0.96
  },
  "pikes": {
-  "calls": 87,
-  "maxCalls": 97,
-  "kverts": 269,
-  "maxKverts": 359,
-  "jsMs": 0.39
+  "calls": 90,
+  "maxCalls": 101,
+  "kverts": 281,
+  "maxKverts": 377,
+  "jsMs": 0.46
  },
  "pikesg": {
-  "calls": 85,
-  "maxCalls": 100,
-  "kverts": 266,
-  "maxKverts": 308,
-  "jsMs": 0.37
+  "calls": 88,
+  "maxCalls": 104,
+  "kverts": 280,
+  "maxKverts": 323,
+  "jsMs": 0.26
  },
  "ouninpohja": {
   "calls": 167,
   "maxCalls": 181,
   "kverts": 618,
   "maxKverts": 820,
-  "jsMs": 1.16
+  "jsMs": 0.95
  },
  "vrsic": {
   "calls": 277,
   "maxCalls": 320,
   "kverts": 672,
   "maxKverts": 961,
-  "jsMs": 1.58
+  "jsMs": 1.63
  },
  "nring": {
   "calls": 187,
   "maxCalls": 354,
   "kverts": 533,
   "maxKverts": 692,
-  "jsMs": 2.29
+  "jsMs": 1.84
  },
  "spa": {
   "calls": 237,
   "maxCalls": 299,
   "kverts": 659,
   "maxKverts": 811,
-  "jsMs": 1.06
+  "jsMs": 1.25
  },
  "rbring": {
   "calls": 282,
   "maxCalls": 324,
   "kverts": 573,
   "maxKverts": 741,
-  "jsMs": 1.04
+  "jsMs": 1.02
  },
  "suzuka": {
   "calls": 262,
   "maxCalls": 330,
   "kverts": 622,
   "maxKverts": 781,
-  "jsMs": 0.98
+  "jsMs": 0.85
  },
  "caracoles": {
   "calls": 217,
   "maxCalls": 271,
   "kverts": 305,
   "maxKverts": 393,
-  "jsMs": 1.08
+  "jsMs": 1.55
  },
  "harju": {
   "calls": 170,
   "maxCalls": 217,
   "kverts": 664,
   "maxKverts": 1058,
-  "jsMs": 0.44
+  "jsMs": 0.53
  },
  "bathurst": {
   "calls": 245,
   "maxCalls": 385,
   "kverts": 461,
   "maxKverts": 798,
-  "jsMs": 1.02
+  "jsMs": 0.97
  }
 }

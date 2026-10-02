@@ -82,6 +82,8 @@ try {
   // 6. a race: the HUD, the pause, the results
   await startTrack(page, 'jezero');
   await page.evaluate(() => window.__game.sim(8, true));
+  // sim() advances the race but does not redraw the HUD (that happens on the next frame); drive a frame so h-lap reflects the running race, not its initial markup
+  await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
   await page.waitForTimeout(300);
   const h6 = await page.evaluate(() => ({ lap: document.getElementById('h-lap').textContent, rank: document.querySelector('#h-rank .h-lbl').textContent, best: document.querySelector('#h-best .h-lbl').textContent }));
   const sH = await slovene(['hud', 'touch']);
