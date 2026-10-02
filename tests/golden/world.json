@@ -1,24 +1,4 @@
 {
- "jezero": {
-  "meshes": 154,
-  "verts": 591648,
-  "instances": 3759,
-  "props": 102,
-  "crowd": 2936,
-  "world": "cfc2d32f",
-  "propsHash": "8c07ccb7",
-  "floor": null,
-  "groups": {
-   "-:MeshLambertMaterial": "3d0df60f",
-   "-:MeshBasicMaterial": "e705d937",
-   "-:MeshPhongMaterial": "7230733b",
-   "crowd:MeshLambertMaterial": "f662c1b4",
-   "ao:MeshBasicMaterial": "9e7fbae5",
-   "tyremarks:MeshBasicMaterial": "54a86f3b",
-   "roadwear:MeshLambertMaterial": "eff68c5",
-   "worn:MeshLambertMaterial": "aa822a3"
-  }
- },
  "riviera": {
   "meshes": 108,
   "verts": 245974,
@@ -36,24 +16,6 @@
    "ao:MeshBasicMaterial": "cdd137a",
    "tyremarks:MeshBasicMaterial": "b914c22",
    "roadwear:MeshLambertMaterial": "c64a615c"
-  }
- },
- "gora": {
-  "meshes": 204,
-  "verts": 2312197,
-  "instances": 3075,
-  "props": 76,
-  "crowd": 1530,
-  "world": "9080c060",
-  "propsHash": "e4a0fab6",
-  "floor": "49bbc346/3276",
-  "groups": {
-   "-:MeshLambertMaterial": "8f12026d",
-   "-:MeshPhongMaterial": "77ad02bd",
-   "-:MeshBasicMaterial": "deb30354",
-   "crowd:MeshLambertMaterial": "c2995c14",
-   "ao:MeshBasicMaterial": "764b5284",
-   "worn:MeshLambertMaterial": "c2c70664"
   }
  },
  "ljubljana": {
@@ -94,25 +56,6 @@
    "roadwear:MeshLambertMaterial": "a15246d6"
   }
  },
- "gozd": {
-  "meshes": 155,
-  "verts": 1764239,
-  "instances": 2981,
-  "props": 167,
-  "crowd": 1545,
-  "world": "de60f153",
-  "propsHash": "4eaefa60",
-  "floor": null,
-  "groups": {
-   "-:MeshLambertMaterial": "cf6be63e",
-   "-:MeshPhongMaterial": "ffa9a019",
-   "crowd:MeshLambertMaterial": "403bbda4",
-   "-:MeshBasicMaterial": "dc40622",
-   "ao:MeshBasicMaterial": "287d0774",
-   "tyremarks:MeshBasicMaterial": "759e1425",
-   "roadwear:MeshLambertMaterial": "eb940e36"
-  }
- },
  "toskana": {
   "meshes": 165,
   "verts": 1928028,
@@ -132,81 +75,69 @@
    "roadwear:MeshLambertMaterial": "60032dab"
   }
  },
- "grom": {
-  "meshes": 141,
-  "verts": 1853064,
-  "instances": 1978,
-  "props": 110,
-  "crowd": 963,
-  "world": "c221e79d",
-  "propsHash": "df79a887",
-  "floor": null,
-  "groups": {
-   "-:MeshLambertMaterial": "619b890c",
-   "crowd:MeshLambertMaterial": "59af5e3",
-   "-:MeshBasicMaterial": "3672561a",
-   "ao:MeshBasicMaterial": "84a12bf7",
-   "tyremarks:MeshBasicMaterial": "20e8e311",
-   "roadwear:MeshLambertMaterial": "18e7be7b"
-  }
- },
  "pikes": {
-  "meshes": 798,
-  "verts": 1633340,
-  "instances": 2633,
+  "meshes": 819,
+  "verts": 1713566,
+  "instances": 2624,
   "props": 352,
-  "crowd": 2587,
-  "world": "8408002f",
+  "crowd": 2576,
+  "world": "71d232ce",
   "propsHash": "fed9419e",
   "floor": "67c951b5/12544",
   "groups": {
-   "-:MeshLambertMaterial": "f29e60e4",
+   "-:MeshLambertMaterial": "71fa0876",
    "-:MeshPhongMaterial": "4ac314c4",
-   "-:MeshBasicMaterial": "a3c06f9",
+   "-:MeshBasicMaterial": "4e3190b9",
    "pkFlags:MeshLambertMaterial": "94ce39c",
    "pkLamps:MeshBasicMaterial": "92e149e5",
    "pkMarmots:MeshLambertMaterial": "cbaf6673",
    "pkSheep:MeshLambertMaterial": "43f7b78c",
    "pkGlow:MeshLambertMaterial": "81146913",
    "pkVeg:MeshLambertMaterial": "20f772fe",
-   "crowd:MeshLambertMaterial": "dca18c33",
-   "pkFlash:ShaderMaterial": "3250bef6",
+   "crowd:MeshLambertMaterial": "c8831845",
+   "pkFlash:ShaderMaterial": "b868a34c",
    "-:ShaderMaterial": "a26bf768",
    "pkHaze:ShaderMaterial": "7fb271d2",
    "pkAir:ShaderMaterial": "385c43",
    "pkCloudSea:ShaderMaterial": "714d7305",
    "pkSmoke:ShaderMaterial": "186acc3",
-   "ao:MeshBasicMaterial": "f2d6f3c",
+   "pkDrones:MeshLambertMaterial": "f3558c25",
+   "pkDroneLights:ShaderMaterial": "64489b1f",
+   "pkSplitBoard:MeshBasicMaterial": "7e05cac9",
+   "ao:MeshBasicMaterial": "a4b1f3f5",
    "tyremarks:MeshBasicMaterial": "64ffa4d2"
   }
  },
  "pikesg": {
-  "meshes": 775,
-  "verts": 1508177,
-  "instances": 2633,
+  "meshes": 779,
+  "verts": 1581033,
+  "instances": 2598,
   "props": 352,
-  "crowd": 2587,
-  "world": "c66440d0",
+  "crowd": 2552,
+  "world": "b8e8d5ca",
   "propsHash": "fed9419e",
   "floor": "67c951b5/12544",
   "groups": {
-   "-:MeshLambertMaterial": "6de4b20",
+   "-:MeshLambertMaterial": "912ccda6",
    "-:MeshPhongMaterial": "f336158f",
-   "-:MeshBasicMaterial": "a3c06f9",
+   "-:MeshBasicMaterial": "5f87d516",
    "pkFlags:MeshLambertMaterial": "94ce39c",
    "pkLamps:MeshBasicMaterial": "92e149e5",
    "pkMarmots:MeshLambertMaterial": "cbaf6673",
    "pkSheep:MeshLambertMaterial": "43f7b78c",
-   "pkGlow:MeshLambertMaterial": "81146913",
+   "pkGlow:MeshLambertMaterial": "ec4c917e",
    "pkVeg:MeshLambertMaterial": "20f772fe",
-   "crowd:MeshLambertMaterial": "dca18c33",
-   "pkFlash:ShaderMaterial": "3250bef6",
+   "pkHistText:MeshLambertMaterial": "7c01cfed",
+   "crowd:MeshLambertMaterial": "32fe8002",
+   "pkFlash:ShaderMaterial": "cca349ef",
    "-:ShaderMaterial": "a26bf768",
    "pkHaze:ShaderMaterial": "7fb271d2",
    "pkAir:ShaderMaterial": "385c43",
    "pkCloudSea:ShaderMaterial": "714d7305",
    "pkSmoke:ShaderMaterial": "186acc3",
-   "ao:MeshBasicMaterial": "f2d6f3c"
+   "pkWaterTruck:MeshLambertMaterial": "6dcf2416",
+   "pkSpray:ShaderMaterial": "63b596e6",
+   "ao:MeshBasicMaterial": "911f328b"
   }
  },
  "ouninpohja": {
@@ -345,6 +276,142 @@
    "roadwear:MeshLambertMaterial": "e5109e86"
   }
  },
+ "katu": {
+  "meshes": 1803,
+  "verts": 1134509,
+  "instances": 22026,
+  "props": 104,
+  "crowd": 1271,
+  "world": "9ad0aea6",
+  "propsHash": "65a0e341",
+  "floor": "2299cbde/10304",
+  "groups": {
+   "-:MeshLambertMaterial": "1d6fd182",
+   "roadStrip:MeshLambertMaterial": "12ad7f5d",
+   "-:MeshPhongMaterial": "99982557",
+   "-:MeshBasicMaterial": "cfecd454",
+   "rapids:MeshLambertMaterial": "a65a0a4d",
+   "crowd:MeshLambertMaterial": "1e1b3735",
+   "ao:MeshBasicMaterial": "8d958d50"
+  }
+ },
+ "harju": {
+  "meshes": 909,
+  "verts": 1669339,
+  "instances": 10358,
+  "props": 33,
+  "crowd": 5931,
+  "world": "ec12f0",
+  "propsHash": "d16c96de",
+  "floor": "c8a71170/5488",
+  "groups": {
+   "-:MeshLambertMaterial": "4ab952f",
+   "-:MeshPhongMaterial": "1f58ec5c",
+   "-:MeshBasicMaterial": "cb960f93",
+   "puddles:MeshBasicMaterial": "c916858d",
+   "crowd:MeshLambertMaterial": "f0bf19ac",
+   "ao:MeshBasicMaterial": "39196fc",
+   "tyremarks:MeshBasicMaterial": "762d32d",
+   "roadwear:MeshLambertMaterial": "72bad0be"
+  }
+ },
+ "bathurst": {
+  "meshes": 973,
+  "verts": 592185,
+  "instances": 16406,
+  "props": 94,
+  "crowd": 4220,
+  "world": "6cae4cb5",
+  "propsHash": "9e34cc63",
+  "floor": "88b8b5f7/12404",
+  "groups": {
+   "-:MeshLambertMaterial": "d56448cf",
+   "-:MeshBasicMaterial": "8d213485",
+   "crowd:MeshLambertMaterial": "5b9dbb6e",
+   "flags:MeshLambertMaterial": "8a648a11",
+   "jet smoke:MeshBasicMaterial": "684b759b",
+   "ao:MeshBasicMaterial": "b7cbc948",
+   "roadwear:MeshLambertMaterial": "74d19b29",
+   "worn:MeshLambertMaterial": "b38c2a31"
+  }
+ },
+ "chapman": {
+  "meshes": 2170,
+  "verts": 1479904,
+  "instances": 74123,
+  "props": 167,
+  "crowd": 338,
+  "world": "f416a0a8",
+  "propsHash": "c90e2cb2",
+  "floor": "be606eaf/10808",
+  "groups": {
+   "-:MeshLambertMaterial": "c1d56917",
+   "-:MeshPhongMaterial": "37fa38c5",
+   "-:MeshBasicMaterial": "4b3929b5",
+   "crowd:MeshLambertMaterial": "66eec7d0",
+   "ao:MeshBasicMaterial": "c3985328",
+   "tyremarks:MeshBasicMaterial": "bc39543",
+   "roadwear:MeshLambertMaterial": "33826799"
+  }
+ },
+ "bigsur": {
+  "meshes": 1847,
+  "verts": 837627,
+  "instances": 47431,
+  "props": 98,
+  "crowd": 1021,
+  "world": "e28ec1a0",
+  "propsHash": "4aad3ee3",
+  "floor": "84fcde9b/8876",
+  "groups": {
+   "-:MeshLambertMaterial": "82827ded",
+   "-:MeshPhongMaterial": "8c184b5c",
+   "-:MeshBasicMaterial": "dff4a508",
+   "-:ShaderMaterial": "d75dbfbd",
+   "crowd:MeshLambertMaterial": "40223e14",
+   "ao:MeshBasicMaterial": "b680777e",
+   "tyremarks:MeshBasicMaterial": "48f7fcbc",
+   "roadwear:MeshLambertMaterial": "858643f4"
+  }
+ },
+ "tianmen": {
+  "meshes": 891,
+  "verts": 713426,
+  "instances": 13758,
+  "props": 43,
+  "crowd": 357,
+  "world": "3aec69b2",
+  "propsHash": "ac014ea9",
+  "floor": "690d6505/10332",
+  "groups": {
+   "-:MeshLambertMaterial": "ca720edf",
+   "-:MeshPhongMaterial": "b702964d",
+   "-:MeshBasicMaterial": "22007d0f",
+   "crowd:MeshLambertMaterial": "b3e0f5ad",
+   "ao:MeshBasicMaterial": "4f26df40",
+   "tyremarks:MeshBasicMaterial": "bcc0bc51",
+   "roadwear:MeshLambertMaterial": "fc4e0e1a"
+  }
+ },
+ "uncompahgre": {
+  "meshes": 1838,
+  "verts": 837714,
+  "instances": 51620,
+  "props": 127,
+  "crowd": 1417,
+  "world": "7f6701c0",
+  "propsHash": "2fda5eec",
+  "floor": "46791ccf/10612",
+  "groups": {
+   "-:MeshLambertMaterial": "4932661b",
+   "-:MeshPhongMaterial": "365c29fd",
+   "-:MeshBasicMaterial": "ede2d97f",
+   "crowd:MeshLambertMaterial": "e729df50",
+   "ao:MeshBasicMaterial": "60464f5d",
+   "tyremarks:MeshBasicMaterial": "27d1b418",
+   "roadwear:MeshLambertMaterial": "a40a696b"
+  }
+ },
  "sani": {
   "meshes": 1508,
   "verts": 716805,
@@ -361,6 +428,81 @@
    "puddles:MeshBasicMaterial": "6f281577",
    "crowd:MeshLambertMaterial": "fea21dab",
    "ao:MeshBasicMaterial": "cc27d058"
+  }
+ },
+ "jezero": {
+  "meshes": 154,
+  "verts": 591648,
+  "instances": 3759,
+  "props": 102,
+  "crowd": 2936,
+  "world": "cfc2d32f",
+  "propsHash": "8c07ccb7",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "3d0df60f",
+   "-:MeshBasicMaterial": "e705d937",
+   "-:MeshPhongMaterial": "7230733b",
+   "crowd:MeshLambertMaterial": "f662c1b4",
+   "ao:MeshBasicMaterial": "9e7fbae5",
+   "tyremarks:MeshBasicMaterial": "54a86f3b",
+   "roadwear:MeshLambertMaterial": "eff68c5",
+   "worn:MeshLambertMaterial": "aa822a3"
+  }
+ },
+ "gora": {
+  "meshes": 204,
+  "verts": 2312197,
+  "instances": 3075,
+  "props": 76,
+  "crowd": 1530,
+  "world": "9080c060",
+  "propsHash": "e4a0fab6",
+  "floor": "49bbc346/3276",
+  "groups": {
+   "-:MeshLambertMaterial": "8f12026d",
+   "-:MeshPhongMaterial": "77ad02bd",
+   "-:MeshBasicMaterial": "deb30354",
+   "crowd:MeshLambertMaterial": "c2995c14",
+   "ao:MeshBasicMaterial": "764b5284",
+   "worn:MeshLambertMaterial": "c2c70664"
+  }
+ },
+ "gozd": {
+  "meshes": 155,
+  "verts": 1764239,
+  "instances": 2981,
+  "props": 167,
+  "crowd": 1545,
+  "world": "de60f153",
+  "propsHash": "4eaefa60",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "cf6be63e",
+   "-:MeshPhongMaterial": "ffa9a019",
+   "crowd:MeshLambertMaterial": "403bbda4",
+   "-:MeshBasicMaterial": "dc40622",
+   "ao:MeshBasicMaterial": "287d0774",
+   "tyremarks:MeshBasicMaterial": "759e1425",
+   "roadwear:MeshLambertMaterial": "eb940e36"
+  }
+ },
+ "grom": {
+  "meshes": 141,
+  "verts": 1853064,
+  "instances": 1978,
+  "props": 110,
+  "crowd": 963,
+  "world": "c221e79d",
+  "propsHash": "df79a887",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "619b890c",
+   "crowd:MeshLambertMaterial": "59af5e3",
+   "-:MeshBasicMaterial": "3672561a",
+   "ao:MeshBasicMaterial": "84a12bf7",
+   "tyremarks:MeshBasicMaterial": "20e8e311",
+   "roadwear:MeshLambertMaterial": "18e7be7b"
   }
  }
 }

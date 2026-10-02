@@ -49,7 +49,7 @@ try {
   const k3 = await page.evaluate(() => ({ names: [...document.querySelectorAll('.track-card h3')].map(h => h.textContent), meta: document.querySelector('[data-track="jezero"] .tmeta').textContent,
     pikes: document.querySelector('[data-track="pikes"] .tdesc').textContent, vrsic: [...document.querySelectorAll('[data-track="vrsic"] .tc-mode button')].map(b => b.textContent).join('/') }));
   const s3 = await slovene();
-  T.check('tracks in English: Mountain Rally, Monaco, Copper Forest, Tuscany, Thunder Cape, Styria, Austria; "N corners · 3 laps"; 2,862 m; the ways to drive Vršič', ['Mountain Rally', 'Monaco', 'Copper Forest', 'Tuscany', 'Thunder Cape', 'Styria, Austria', 'Ljubljana, Slovenia'].every(n => k3.names.includes(n)) &&
+  T.check('tracks in English: Mountain Rally, Monaco, Copper Forest, Tuscany, Thunder Cape, Styria, Austria; "N corners · 3 laps"; 2,862 m; the ways to drive Vršič', ['Mountain Rally', 'Monte Carlo, Monaco', 'Copper Forest', 'Tuscany, Italy', 'Thunder Cape', 'Styria, Austria', 'Ljubljana, Slovenia'].every(n => k3.names.includes(n)) &&
     /^\d\.\d\d km · \d+ corners · 3 laps/.test(k3.meta) && /2,862 m/.test(k3.pikes) && k3.vrsic === 'Race/Time trial/Traffic/Police' && !s3.length, JSON.stringify({ k3, s3 }));
 
   // 4. the settings (the language switch on English)
@@ -82,6 +82,8 @@ try {
   // 6. a race: the HUD, the pause, the results
   await startTrack(page, 'jezero');
   await page.evaluate(() => window.__game.sim(8, true));
+  // sim() advances the race but does not redraw the HUD (that happens on the next frame); drive a frame so h-lap reflects the running race, not its initial markup
+  await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
   await page.waitForTimeout(300);
   const h6 = await page.evaluate(() => ({ lap: document.getElementById('h-lap').textContent, rank: document.querySelector('#h-rank .h-lbl').textContent, best: document.querySelector('#h-best .h-lbl').textContent }));
   const sH = await slovene(['hud', 'touch']);
