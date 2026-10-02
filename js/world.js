@@ -10452,26 +10452,33 @@ const World = (function () {
      with its paved ends (def.paved), no guardrails on most of it (a low berm of gravel along the edge where the ground falls away, steel only
      round the outside of the switchbacks), the viewpoint over the valley (def.vista), the buttes (def.buttes), generic road signs. */
   const MKCOL = [0, 0, 0];
-  function mkCol(x, z, h, ny, sz, dd, sx) {   // ground colour (times the grey grit map): the red-brown silt and sand of the valley floor, the cliff's layers
-    // on the steep faces (by height: dark red shale, red and orange sandstone with cream bands, the pale rim), talus fans on the slopes, the pale sandy
-    // soil of the mesa top with darker crusts, a dusty verge
+  function mkCol(x, z, h, ny, sz, dd, sx) {   // ground colour (times the grey grit map): the red-brown silt and sand of the valley floor with paler dry washes
+    // and darker patches of crust and scrub, the cliff's layers on the steep faces (by height: dark red shale, red and orange sandstone with cream bands,
+    // the pale rim) streaked with dark desert varnish down the fall line, talus fans on the slopes, the mesa top's pale sand with bare slickrock and darker
+    // soil under the woodland, a dusty verge
     const P = VR, A = h + P.D.base, m = P.c1(x, z), q = P.c2(x, z), r = P.c3(x, z), f = P.n4(x, z);
-    let R = 0.74 + (m - 0.5) * 0.08, G = 0.55 + (m - 0.5) * 0.06, B = 0.43 + (q - 0.5) * 0.05;   // the valley floor: red-brown silt and sand
-    const pale = sstep(0.55, 0.82, q) * 0.6; R = lerp(R, 0.8, pale); G = lerp(G, 0.66, pale); B = lerp(B, 0.52, pale);   // paler sandy washes
-    const top = sstep(1915, 1945, A); R = lerp(R, 0.79 + (m - 0.5) * 0.06, top); G = lerp(G, 0.68, top); B = lerp(B, 0.54, top);   // the mesa top: pale sand
-    const crust = sstep(0.58, 0.8, r) * (0.35 + 0.4 * top); R = lerp(R, 0.55, crust); G = lerp(G, 0.47, crust); B = lerp(B, 0.38, crust);   // dark soil crusts, under the shrubs
+    let R = 0.72 + (m - 0.5) * 0.1, G = 0.47 + (m - 0.5) * 0.07, B = 0.35 + (q - 0.5) * 0.05;   // the valley floor: red-brown silt and sand
+    const dk = sstep(0.55, 0.8, P.n2(x * 1.3 + 40, z * 1.3)) * 0.55; R = lerp(R, 0.58, dk); G = lerp(G, 0.39, dk); B = lerp(B, 0.3, dk);   // darker, scrubby patches
+    const wv = Math.abs(Math.sin((x * 0.6 + z * 0.8) * 0.018 + P.c4(x * 0.5, z * 0.5) * 9)), wash = sstep(0.12, 0.03, wv) * sstep(0.35, 0.6, q) * 0.85;   // dry washes: pale sandy bands
+    R = lerp(R, 0.86, wash); G = lerp(G, 0.72, wash); B = lerp(B, 0.56, wash);
+    const pale = sstep(0.6, 0.85, q) * 0.4; R = lerp(R, 0.82, pale); G = lerp(G, 0.66, pale); B = lerp(B, 0.5, pale);
+    const top = sstep(1915, 1945, A); R = lerp(R, 0.8 + (m - 0.5) * 0.06, top); G = lerp(G, 0.67, top); B = lerp(B, 0.52, top);   // the mesa top: pale sand
+    const slick = top * sstep(0.6, 0.74, P.c5(x * 0.35, z * 0.35)) * sstep(0.5, 0.75, m); R = lerp(R, 0.9, slick); G = lerp(G, 0.82, slick); B = lerp(B, 0.68, slick);   // bare slickrock
+    const crust = sstep(0.58, 0.8, r) * (0.35 + 0.45 * top); R = lerp(R, 0.5, crust); G = lerp(G, 0.42, crust); B = lerp(B, 0.33, crust);   // dark soil crusts, under the woodland
     R += (f - 0.5) * 0.08; G += (f - 0.5) * 0.07; B += (f - 0.5) * 0.06;
     const st = sstep(0.84, 0.5, ny);   // the steep faces: the cliff's layers along the height
     if (st > 0) {
       const w = A + (P.c5(x, z) - 0.5) * 3 + (P.c2(x * 0.3, z * 0.3) - 0.5) * 6, band = 0.5 + 0.5 * Math.sin(w / 3.1), band2 = 0.5 + 0.5 * Math.sin(w / 7.7 + 1.3), up = sstep(1700, 1880, A);
-      let cr = lerp(0.62, 0.8, band2), cg = lerp(0.34, 0.47, band2), cb = lerp(0.24, 0.32, band2);   // red and orange sandstone
-      const cream = sstep(0.62, 0.9, band) * lerp(0.35, 0.95, up); cr = lerp(cr, 0.88, cream); cg = lerp(cg, 0.78, cream); cb = lerp(cb, 0.62, cream);   // the cream bands, most up on the rim
-      const shale = sstep(1720, 1660, A) * 0.7; cr = lerp(cr, 0.56, shale); cg = lerp(cg, 0.33, shale); cb = lerp(cb, 0.27, shale);   // the dark red shale low down
-      const k = 0.88 + 0.16 * P.c4(x * 0.8, z * 0.8); R = lerp(R, cr * k, st); G = lerp(G, cg * k, st); B = lerp(B, cb * k, st);
+      let cr = lerp(0.64, 0.82, band2), cg = lerp(0.33, 0.47, band2), cb = lerp(0.22, 0.3, band2);   // red and orange sandstone
+      const cream = sstep(0.62, 0.9, band) * lerp(0.35, 0.95, up); cr = lerp(cr, 0.9, cream); cg = lerp(cg, 0.79, cream); cb = lerp(cb, 0.62, cream);   // the cream bands, most up on the rim
+      const shale = sstep(1720, 1660, A) * 0.7; cr = lerp(cr, 0.56, shale); cg = lerp(cg, 0.31, shale); cb = lerp(cb, 0.25, shale);   // the dark red shale low down
+      const hz = Math.hypot(sx || 0, sz) || 1, u = (z * (sx || 0) - x * sz) / hz, vn = sstep(0.55, 0.9, 0.5 + 0.5 * Math.sin(u * 0.45 + P.c3(x * 2, z * 2) * 8)) * 0.55;   // desert varnish: dark streaks down the face
+      cr = lerp(cr, 0.34, vn); cg = lerp(cg, 0.22, vn); cb = lerp(cb, 0.17, vn);
+      const k = 0.86 + 0.18 * P.c4(x * 0.8, z * 0.8); R = lerp(R, cr * k, st); G = lerp(G, cg * k, st); B = lerp(B, cb * k, st);
     }
     const hz = Math.hypot(sx || 0, sz), fan = sstep(0.14, 0.4, hz) * (1 - st);   // the talus slopes: fans of fallen rock and darker runnels down the fall line
-    if (fan > 0) { const u = (z * (sx || 0) - x * sz) / hz, wv = Math.sin(u * 0.21 + P.c5(x, z) * 6 + P.n2(x, z) * 4), k = wv * fan * (0.05 + 0.08 * P.n3(x, z)); R += k; G += k * 0.9; B += k * 0.8; }
-    if (dd < 4) { const t = sstep(4, 0.5, dd) * 0.45; R = lerp(R, 0.8, t); G = lerp(G, 0.66, t); B = lerp(B, 0.54, t); }   // the dusty verge
+    if (fan > 0) { const u = (z * (sx || 0) - x * sz) / hz, wv2 = Math.sin(u * 0.21 + P.c5(x, z) * 6 + P.n2(x, z) * 4), k = wv2 * fan * (0.06 + 0.09 * P.n3(x, z)); R += k; G += k * 0.85; B += k * 0.75; }
+    if (dd < 4) { const t = sstep(4, 0.5, dd) * 0.4; R = lerp(R, 0.7, t); G = lerp(G, 0.54, t); B = lerp(B, 0.42, t); }   // the verge, darker than the gravel
     MKCOL[0] = R; MKCOL[1] = G; MKCOL[2] = B; return MKCOL;
   }
   let mkATex = null, mkAKey = '', mkA2Tex = null;   // (the board atlases, made once and reused by every build of the road)
@@ -10535,6 +10542,53 @@ const World = (function () {
         g.quadO(a, b, c, d, ca, inn, null, [ca, ca, cb, cb]); } }
     const tp = [x, y + hh, z]; for (let k = 0; k < n; k++) g.triO(pt(k, 0.97, hh), pt(k + 1, 0.97, hh), tp, cap, [x, y, z]);
   }
+  function mkPlantGeo2(kind) {   // more unit plants: 0 a yucca (a rosette of stiff blades, a dry flower stalk), 1 a rabbitbrush (a rounded yellow-green bush), 2 a dead
+    // juniper (a grey, twisted snag)
+    const g = new GB(), R = rng(780 + kind), rs = ROCK_SMOOTH;
+    if (kind === 0) {
+      const base = [0.36, 0.44, 0.3], tip = [0.62, 0.66, 0.46];
+      for (let k = 0; k < 11; k++) { const a = k / 11 * TAU + R() * 0.4, lean = 0.3 + R() * 0.25, hh = 0.55 + R() * 0.3, tx = Math.cos(a) * lean, tz = Math.sin(a) * lean, ox = -Math.sin(a) * 0.045, oz = Math.cos(a) * 0.045;
+        g.triO([-ox, 0.02, -oz], [ox, 0.02, oz], [tx, hh, tz], base, [tx * 0.5, -1, tz * 0.5], base, tip); g.triO([-ox, 0.02, -oz], [tx, hh, tz], [ox, 0.02, oz], base, [tx * 0.5, 3, tz * 0.5], tip, base); }
+      cyl(g, 0.02, 0.4, 0, 0.012, 0.75, 3, [0.5, 0.42, 0.3], null, 0.008);
+    } else if (kind === 1) {
+      ROCK_SMOOTH = true; const col = [0.62, 0.62, 0.36];
+      ico(g, 0, 0.42, 0, 0.42, 0.9, col, R, 0.3); ico(g, 0.24, 0.32, 0.12, 0.28, 0.85, [0.68, 0.64, 0.32], R, 0.35); ico(g, -0.2, 0.3, -0.14, 0.28, 0.85, [0.58, 0.6, 0.38], R, 0.35);
+    } else {
+      const c = [0.62, 0.6, 0.56];
+      ouRod(g, [0, 0, 0], [0.08, 0.45, 0.04], 0.05, c, 4); ouRod(g, [0.08, 0.45, 0.04], [0.3, 0.8, -0.05], 0.03, c, 3); ouRod(g, [0.08, 0.45, 0.04], [-0.18, 0.95, 0.12], 0.03, c, 3); ouRod(g, [0.05, 0.3, 0.02], [-0.25, 0.5, -0.2], 0.022, c, 3);
+    }
+    ROCK_SMOOTH = rs;
+    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
+  function mkCowGeo() {   // a range cow (x forward, ~2.2 m long; the instance tints it): the body, the head (lowered, grazing), four legs, a pale face
+    const g = new GB(), c = [1, 1, 1], d = [0.85, 0.85, 0.85];
+    box(g, 0, 0.62, 0, 1.6, 0.7, 0.62, 0, c, c); box(g, 0.95, 0.4, 0, 0.45, 0.32, 0.34, 0.5, c); box(g, 1.18, 0.3, 0, 0.18, 0.2, 0.26, 0, [1.6, 1.55, 1.5]);
+    for (const [u, v] of [[0.62, 0.2], [0.62, -0.2], [-0.62, 0.2], [-0.62, -0.2]]) box(g, u, 0, v, 0.13, 0.64, 0.13, 0, d);
+    box(g, -0.85, 0.55, 0, 0.06, 0.45, 0.06, 0, d);
+    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
+  function mkRavenGeo() {   // a common raven (x forward, wingspan ~1.2 m): all black, a wedge tail, the wings held out
+    const g = new GB(), K = [0.05, 0.05, 0.06], R = rng(2991);
+    ROCK_SMOOTH = true; ico(g, 0, 0, 0, 0.13, 0.55, K, R, 0.1); ROCK_SMOOTH = false; box(g, 0.17, -0.02, 0, 0.12, 0.08, 0.08, 0, K);
+    for (const sd of [-1, 1]) { const A = [0.08, 0, 0.05 * sd], B = [-0.1, 0, 0.05 * sd], C = [-0.12, 0.05, 0.6 * sd], D = [0.04, 0.05, 0.56 * sd]; g.quadO(A, B, C, D, K, [0, -1, sd * 0.9]); g.quadO(A, B, C, D, K, [0, 1, sd * 0.9]); }
+    g.triO([-0.1, 0, -0.06], [-0.1, 0, 0.06], [-0.32, 0, 0], K, [-0.2, -1, 0]); g.triO([-0.1, 0, -0.06], [-0.32, 0, 0], [-0.1, 0, 0.06], K, [-0.2, 1, 0]);
+    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
+  // dust devils on the valley floor: a column of thin, spinning dust (three tapered rings of vertex-alpha quads), drifting slowly round its home and
+  // fading in and out (World.update: mkDevils)
+  function mkDevilGeo() {
+    const g = new GB(false, true), n = 12, rings = [[0, 1.2, 0.5], [3, 2.0, 0.38], [7, 3.0, 0.26], [12, 4.2, 0.12], [17, 5.4, 0]];
+    for (let q = 0; q < rings.length - 1; q++) { const [y0, r0, a0] = rings[q], [y1, r1, a1] = rings[q + 1];
+      for (let k = 0; k < n; k++) { const t0 = k / n * TAU, t1 = (k + 1) / n * TAU, c0 = [0.82, 0.68, 0.55, a0], c1 = [0.82, 0.68, 0.55, a1];
+        const A = [Math.cos(t0) * r0, y0, Math.sin(t0) * r0], B = [Math.cos(t1) * r0, y0, Math.sin(t1) * r0], C = [Math.cos(t1 + 0.5) * r1, y1, Math.sin(t1 + 0.5) * r1], D = [Math.cos(t0 + 0.5) * r1, y1, Math.sin(t0 + 0.5) * r1];
+        g.tri(A, B, C, c0, c0, c1); g.tri(A, C, D, c0, c1, c1); } }
+    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
+  function mkDevils(D, t) {
+    for (const v of D.L) { const a = v.ph + t * v.sp, m = v.m, life = 0.5 + 0.5 * Math.sin(t * v.lf + v.ph);
+      const x = v.x + Math.cos(a) * v.r, z = v.z + Math.sin(a * 0.7) * v.r;
+      m.position.set(x, v.gH(x, z) - 0.3, z); m.rotation.y = -t * 2.6 + v.ph; m.scale.set(0.6 + life * 0.6, 0.4 + life * 0.9, 0.6 + life * 0.6); m.visible = life > 0.12; }
+  }
   function buildMoki(scene, tex, opts) {
     const R = rng(3911), N = T.N, w = T.w, dens = opts.density || 1, def = T.def, PI = Math.PI;
     const root = new THREE.Group(); scene.add(root);
@@ -10547,6 +10601,9 @@ const World = (function () {
     // the viewpoint (def.vista [metres after the start line, side]): a level gravel plot beside the road
     const vs = def.vista || [0, 1], vi = T.idx(sStart + vs[0]), vsd = vs[1], vo = (vsd > 0 ? T.br[vi] : T.bl[vi]) + 9;
     const padV = { x: T.px[vi] + T.nx[vi] * vsd * vo, z: T.pz[vi] + T.nz[vi] * vsd * vo, r: 10, b: 10, h: T.hy[vi] - 0.2, i: vi, sd: vsd }; P.pads.push(padV);
+    // the gravel pull-out on the mesa past the finish (parked cars), on the side where the ground lies nearer the road's height
+    const padP = (() => { const i = T.idx(sFin + 35), gd = (sd) => Math.abs(vrFar(T.px[i] + T.nx[i] * sd * 24, T.pz[i] + T.nz[i] * sd * 24) - T.hy[i]), sd = gd(1) < gd(-1) ? 1 : -1, o = (sd > 0 ? T.br[i] : T.bl[i]) + 10;
+      return { x: T.px[i] + T.nx[i] * sd * o, z: T.pz[i] + T.nz[i] * sd * o, r: 13, b: 10, h: T.hy[i] - 0.2, i, sd }; })(); P.pads.push(padP);
     out.bounds = { minX: P.bx0 - 170, maxX: P.bx1 + 170, minZ: P.bz0 - 170, maxZ: P.bz1 + 170 };
     const cut = out.dyn.ouCut = { uCam: { value: new THREE.Vector3() }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) } };   // (the boulders and trees between the camera and the car fade out)
     const matV = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut); out.matV = matV;
@@ -10584,7 +10641,7 @@ const World = (function () {
     {
       const offsA = [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8, tileG = 7;
       const shadeA = (i, o) => { const rl = T.rl[i]; let k = 0.86 - 0.13 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; return [k, k, k * 1.02]; };
-      const grav = [1.08, 0.93, 0.8];   // (the makadam's grey-beige tinted to the cliff's red-brown sand)
+      const grav = [1.2, 1.07, 0.95];   // (the makadam's grey-beige, a little pink from the cliff's sand: paler than the ground round it)
       const colsG = (i) => { const rl = clamp(T.rl[i], -w + 1.9, w - 1.9); return [-w, -w + 0.45, rl - 1.6, rl - 1.15, rl - 0.65, rl - 0.2, rl + 0.2, rl + 0.65, rl + 1.15, rl + 1.6, w - 0.45, w]; };
       const shadeG = (i, o) => { const a = Math.abs(o - T.rl[i]), trk = sstep(0.42, 0.68, a) * sstep(1.4, 1.12, a), ao = Math.abs(o);
         let k = 1.0 - 0.2 * trk + 0.05 * sstep(0.45, 0.18, a);
@@ -10592,7 +10649,7 @@ const World = (function () {
         k += (0.06 + 0.08 * outer) * sstep(w - 1.2 - 1.2 * outer, w - 0.3, ao) * (1 - trk);
         k *= 0.94 + 0.12 * P.n2(T.px[i] * 0.7 + 50, T.pz[i] * 0.7);
         return [grav[0] * k, grav[1] * k, grav[2] * k]; };
-      const wht = [0.95, 0.95, 0.92], ylw = [0.96, 0.76, 0.16], gc = [0.84, 0.7, 0.58];
+      const wht = [0.95, 0.95, 0.92], ylw = [0.96, 0.76, 0.16], gc = [0.92, 0.8, 0.68];
       const vc = [-1, 1].map((side, si) => { const a = []; for (let i = 0; i < N; i++) { const bar = side > 0 ? T.br[i] : T.bl[i];
         a.push(vp[si][i].map(([o, y], k) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
           if (k === 4) return caGCol(x, z);
@@ -10752,6 +10809,13 @@ const World = (function () {
     {
       const RB = rng(3921);
       for (const [x, z, r, hh] of def.buttes || []) { mkButte(scen.get(x, z), x, caGround(x, z) - 1.5, z, r, hh, RB); exclPush(x, z, r * 2.3); }
+      // nearer the road, small spires and knobs of the same sandstone on the flat valley floor (the camera sees them; the buttes stand farther out)
+      let nSp = 0;
+      for (let s = sStart + 40; s < sStart + 1300 && nSp < 14; s += 38 + RB() * 40) {
+        const sd = RB() < 0.5 ? -1 : 1, [x, z] = onSide(s, sd, 22 + RB() * 90); if (excluded(x, z) || caSlope(x, z) > 0.22 || vrNear(x, z).dd < 14 || (def.roads || []).some(rd => { for (let k = 0; k < rd.p.length; k += 2) if (Math.hypot(x - rd.p[k], z - rd.p[k + 1]) < 16) return true; return false; })) continue;
+        const r = 2.2 + RB() * 3.4, hh = r * (1.6 + RB() * 1.8); mkButte(scen.get(x, z), x, caGround(x, z) - 0.6, z, r, hh, RB); exclPush(x, z, r * 2.5); nSp++;
+      }
+      out.marks.spires = nSp;
     }
 
     /* ---- spectators: at the start and the finish, the checkpoints, the switchbacks (inside, where there is room), the viewpoint ---- */
@@ -10765,15 +10829,83 @@ const World = (function () {
     }
     for (const e of CR.circ) exclPush(e.x, e.z, e.r);
 
+    /* ---- the side roads (def.roads, OpenStreetMap: the Valley of the Gods Road at the start, the Muley Point Road on the mesa, the ranch tracks): gravel
+       ribbons on the ground with two darker wheel tracks, from the road's edge out (not drivable: past the barrier line) ---- */
+    const srPts = [];
+    {
+      const g = new GB(true), gc = [1.1, 0.96, 0.84], rt = [0.86, 0.74, 0.64];
+      for (const rd of def.roads || []) {
+        const p = rd.p, n = p.length / 2, hw = rd.w / 2;
+        for (let k = 0; k < n - 1; k++) {
+          const x0 = p[2 * k], z0 = p[2 * k + 1], x1 = p[2 * k + 2], z1 = p[2 * k + 3], dx = x1 - x0, dz = z1 - z0, L = Math.hypot(dx, dz) || 1, ux = -dz / L, uz = dx / L;
+          const a = vrNear(x0, z0), b = vrNear(x1, z1); if ((a.i >= 0 && a.d < w + 0.4) || (b.i >= 0 && b.d < w + 0.4)) continue;
+          srPts.push(x0, z0); exclPush(x0, z0, hw + 1.5);
+          const cols = [-hw, -hw * 0.55, -hw * 0.3, hw * 0.3, hw * 0.55, hw], cc = [gc, rt, gc, gc, rt, gc];
+          for (let c = 0; c < cols.length - 1; c++) {
+            const A = [x0 + ux * cols[c], 0, z0 + uz * cols[c]], B = [x0 + ux * cols[c + 1], 0, z0 + uz * cols[c + 1]], C = [x1 + ux * cols[c + 1], 0, z1 + uz * cols[c + 1]], D = [x1 + ux * cols[c], 0, z1 + uz * cols[c]];
+            for (const q of [A, B, C, D]) q[1] = caGround(q[0], q[2]) + 0.06;
+            g.quadUp(A, B, C, D, [cc[c], cc[c + 1], cc[c + 1], cc[c]], [[A[0] / 7, A[2] / 7], [B[0] / 7, B[2] / 7], [C[0] / 7, C[2] / 7], [D[0] / 7, D[2] / 7]]);
+          }
+        }
+      }
+      addM(g, sMat);
+    }
+    const nearSide = (x, z, r) => { for (let k = 0; k < srPts.length; k += 2) { const dx = x - srPts[k], dz = z - srPts[k + 1]; if (dx * dx + dz * dz < r * r) return true; } return false; };
+
+    /* ---- the open range on the valley floor: a barbed-wire fence on its posts along both sides of the road (a gap where a side road goes through), cattle
+       grazing in small groups ---- */
+    let nCows = 0;
+    {
+      const post = [0.42, 0.33, 0.24], wire = [0.3, 0.3, 0.32];
+      for (const side of [-1, 1]) { let prev = null;
+        for (let s = sStart + 10; s < sStart + 1300; s += 4) {
+          const i = T.idx(s); if (T.hy[i] + base > 1690) { prev = null; continue; }
+          const o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 9), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
+          if (nearSide(x, z, 6) || excluded(x, z)) { prev = null; continue; }
+          const y = caGround(x, z), g = scen.get(x, z); box(g, x, y - 0.1, z, 0.09, 1.25, 0.09, T.hd[i], post);
+          if (prev) for (const h of [0.55, 0.95]) { const A = [prev[0], prev[1] + h, prev[2]], B = [x, y + h, z], C = [x, y + h + 0.025, z], D = [prev[0], prev[1] + h + 0.025, prev[2]]; g.quadO(A, B, C, D, wire, [x + T.nx[i], y, z + T.nz[i]]); g.quadO(A, B, C, D, wire, [x - T.nx[i], y, z - T.nz[i]]); }
+          prev = [x, y, z];
+        }
+      }
+      const cows = new IChunks(mkCowGeo(), matV, 128), RC = rng(3981), coat = [[0.42, 0.26, 0.17], [0.13, 0.11, 0.1], [0.55, 0.27, 0.16], [0.36, 0.22, 0.15]];
+      for (let gi = 0; gi < 7; gi++) {
+        const s = sStart + 60 + RC() * 1250, side = RC() < 0.5 ? -1 : 1, [cx, cz] = onSide(s, side, 18 + RC() * 70), n = 3 + Math.floor(RC() * 5);
+        for (let k = 0; k < n; k++) { const x = cx + (RC() - 0.5) * 22, z = cz + (RC() - 0.5) * 22;
+          if (caSlope(x, z) > 0.25 || excluded(x, z) || nearSide(x, z, 3) || vrNear(x, z).dd < 8) continue;
+          const c = coat[Math.floor(RC() * coat.length)], k2 = 0.9 + RC() * 0.2; cows.add(x, caGround(x, z), z, RC() * TAU, 0.95 + RC() * 0.15, 0.95 + RC() * 0.15, [c[0] * k2, c[1] * k2, c[2] * k2]); exclPush(x, z, 1.8); nCows++; }
+      }
+      cows.addTo(root, true);
+    }
+
+    /* ---- parked cars: a gravel pull-out on the mesa by the finish (cars, pickups, a camper), cars along the Valley of the Gods Road by the start ---- */
+    {
+      const RP = rng(3991), cols = [[0.85, 0.85, 0.83], [0.72, 0.12, 0.1], [0.14, 0.24, 0.5], [0.18, 0.18, 0.2], [0.55, 0.57, 0.6], [0.6, 0.48, 0.3], [0.2, 0.36, 0.24], [0.92, 0.92, 0.9]];
+      const pickup = (g, x, y, z, rot, col) => { const c = Math.cos(rot), s2 = Math.sin(rot);
+        box(g, x, y + 0.35, z, 5.3, 0.75, 2.0, rot, col, null, true); box(g, x + c * 0.7, y + 1.1, z + s2 * 0.7, 2.1, 0.75, 1.8, rot, [0.16, 0.2, 0.26], col, true); box(g, x - c * 1.5, y + 1.05, z - s2 * 1.5, 2.1, 0.12, 1.9, rot, [0.14, 0.14, 0.15], null, true);
+        for (const [a, b] of [[1.6, 0.85], [1.6, -0.85], [-1.6, 0.85], [-1.6, -0.85]]) box(g, x + c * a - s2 * b, y, z + s2 * a + c * b, 0.78, 0.78, 0.28, rot, [0.08, 0.08, 0.09], null, true); };
+      const camper = (g, x, y, z, rot) => { box(g, x, y + 0.4, z, 6.6, 2.6, 2.3, rot, [0.93, 0.92, 0.88], [0.86, 0.85, 0.82], true); box(g, x, y + 1.6, z, 6.62, 0.3, 2.32, rot, [0.55, 0.32, 0.2]);
+        const c = Math.cos(rot), s2 = Math.sin(rot); for (const [a, b] of [[2.2, 1.0], [2.2, -1.0], [-2.0, 1.0], [-2.0, -1.0]]) box(g, x + c * a - s2 * b, y, z + s2 * a + c * b, 0.8, 0.8, 0.3, rot, [0.08, 0.08, 0.09], null, true); };
+      const pad = padP, i = pad.i, sd = pad.sd;
+      const hh = T.hd[i], c = Math.cos(hh), sn = Math.sin(hh), g = scen.get(pad.x, pad.z);
+      for (let k = 0; k < 7; k++) { const a = -12 + k * 4, b = -3 * sd, x = pad.x + c * a - sn * b, z = pad.z + sn * a + c * b, col = cols[Math.floor(RP() * cols.length)];
+        if (k === 3) camper(g, x - sn * sd * 1.2, pad.h, z + c * sd * 1.2, hh + PI / 2 + 0.05); else if (k % 2) pickup(g, x, pad.h, z, hh + PI / 2 + (RP() - 0.5) * 0.1, col); else caCar(g, x, pad.h, z, hh + PI / 2 + (RP() - 0.5) * 0.1, col); }
+      exclPush(pad.x, pad.z, pad.r + 3); out.marks.parking = [pad.x, pad.z];
+      for (let k = 0; k < 6; k++) { const px = pad.x + (RP() - 0.5) * 20, pz = pad.z + (RP() - 0.5) * 12; if (vrNear(px, pz).dd < 1) continue; person(px, pz, RP() * TAU); }
+      const vg = (def.roads || [])[0];   // (the Valley of the Gods Road: cars parked along it near the junction, spectators of the start)
+      if (vg) for (let k = 4, m = 0; k < vg.p.length / 2 - 1 && m < 6; k += 2) { const x0 = vg.p[2 * k], z0 = vg.p[2 * k + 1], x1 = vg.p[2 * k + 2], z1 = vg.p[2 * k + 3], L = Math.hypot(x1 - x0, z1 - z0) || 1, ux = -(z1 - z0) / L, uz = (x1 - x0) / L;
+        const x = x0 + ux * 4.2, z = z0 + uz * 4.2; if (vrNear(x, z).dd < 3 || excluded(x, z) || vrDist(x, z) > 120) continue;
+        const rot = Math.atan2(z1 - z0, x1 - x0), y = caGround(x, z), gg = scen.get(x, z); if (m % 3 === 1) pickup(gg, x, y, z, rot, cols[(m * 3) % cols.length]); else caCar(gg, x, y, z, rot, cols[(m * 5 + 1) % cols.length]); exclPush(x, z, 3.5); m++; }
+    }
+
     /* ---- the plants (instanced per 96 m chunk): on the valley floor sagebrush and bunch grass, a juniper here and there; on the talus slopes fallen
        blocks of sandstone, junipers in the gullies; on the mesa top the pinyon and juniper woodland over sagebrush; the scree's stones beside the road ---- */
     const pMat = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
     const wMat = tuftWindMat(out.dyn.wind || (out.dyn.wind = { value: 0 })), wB = wMat.onBeforeCompile; ouCutMat(wMat, cut);
     { const cB = wMat.onBeforeCompile; wMat.onBeforeCompile = (sh) => { wB(sh); cB(sh); }; wMat.customProgramCacheKey = () => 'tuftWindCut'; wMat.side = THREE.FrontSide; }
-    const pk = [mkPlantGeo(0), mkPlantGeo(1), mkPlantGeo(2), caPlantGeo(0), caPlantGeo(3), caPlantGeo(4)].map((geo, k) => new IChunks(geo, k === 3 ? wMat : pMat, k === 5 ? 64 : 96));
+    const pk = [mkPlantGeo(0), mkPlantGeo(1), mkPlantGeo(2), caPlantGeo(0), caPlantGeo(3), caPlantGeo(4), mkPlantGeo2(0), mkPlantGeo2(1), mkPlantGeo2(2)].map((geo, k) => new IChunks(geo, k === 3 ? wMat : pMat, k === 5 ? 64 : 96));
     let nPlants = 0;
     {
-      const G = P.G, Lt = VRC * VRT, maxT = Math.round(60000 * dens), RT = rng(3961), SP = 3.6 / Math.sqrt(dens);
+      const G = P.G, Lt = VRC * VRT, maxT = Math.round(85000 * dens), RT = rng(3961), SP = 3.2 / Math.sqrt(dens);
       grid: for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
         if (!G.on[tj * G.ntx + ti]) continue;
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
@@ -10783,15 +10915,19 @@ const World = (function () {
           if (hd > 70 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // (farther out every other spot)
           const y0 = caGround(x, z), A = y0 + base, sl = caSlope(x, z), top = A > 1925, slope = sl > 0.32;
           let kind = -1;
-          if (top && !slope) kind = r1 < 0.05 ? 0 : r1 < 0.075 ? 1 : r1 < 0.2 ? 2 : r1 < 0.24 ? 3 : -1;
-          else if (slope) kind = r1 < 0.05 ? 4 : r1 < 0.068 ? 0 : r1 < 0.1 ? 2 : -1;
-          else kind = r1 < 0.11 ? 2 : r1 < 0.17 ? 3 : r1 < 0.176 ? 0 : r1 < 0.19 ? 4 : -1;
+          const grove = sstep(0.42, 0.7, P.c3(x * 1.6, z * 1.6));   // (the woodland and the scrub in clumps)
+          if (top && !slope) kind = r1 < 0.03 + 0.09 * grove ? 0 : r1 < 0.13 ? 1 : r1 < 0.27 ? 2 : r1 < 0.31 ? 3 : r1 < 0.325 ? 6 : r1 < 0.33 ? 8 : -1;
+          else if (slope) kind = r1 < 0.06 ? 4 : r1 < 0.08 + 0.03 * grove ? 0 : r1 < 0.12 ? 2 : r1 < 0.13 ? 6 : r1 < 0.134 ? 8 : -1;
+          else kind = r1 < 0.12 + 0.08 * grove ? 2 : r1 < 0.22 ? 3 : r1 < 0.245 ? 7 : r1 < 0.26 ? 6 : r1 < 0.268 + 0.01 * grove ? 0 : r1 < 0.284 ? 4 : r1 < 0.287 ? 8 : -1;
           if (kind < 0 || sl > (kind === 4 ? 1.2 : 0.9)) continue;
           const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < 1.6) continue;
           if (excluded(x, z)) continue;
           if (kind === 0) pk[0].add(x, y0 - 0.1, z, r2 * TAU, 2.6 + r3 * 2.6, 2.4 + r4 * 2.8, [0.9 + r2 * 0.2, 0.92 + r3 * 0.14, 0.92 + r4 * 0.12]);
           else if (kind === 1) pk[1].add(x, y0 - 0.1, z, r2 * TAU, 2.8 + r3 * 2.2, 3.0 + r4 * 2.6, [0.9 + r2 * 0.18, 0.94 + r3 * 0.12, 0.9]);
           else if (kind === 2) pk[2].add(x, y0 - 0.08, z, r2 * TAU, 0.6 + r3 * 0.8, 0.5 + r4 * 0.5, [0.92 + r2 * 0.14, 0.95 + r3 * 0.1, 0.95 + r4 * 0.1]);
+          else if (kind === 6) pk[6].add(x, y0 - 0.05, z, r2 * TAU, 0.8 + r3 * 0.6, 0.8 + r4 * 0.7, [0.95 + r2 * 0.1, 0.95 + r3 * 0.1, 0.9]);
+          else if (kind === 7) pk[7].add(x, y0 - 0.08, z, r2 * TAU, 0.7 + r3 * 0.7, 0.6 + r4 * 0.5, [0.95 + r2 * 0.12, 0.95 + r3 * 0.1, 0.9]);
+          else if (kind === 8) pk[8].add(x, y0 - 0.05, z, r2 * TAU, 1.8 + r3 * 1.6, 1.8 + r4 * 1.8, [0.95 + r2 * 0.1, 0.95, 0.95]);
           else if (kind === 3) pk[3].add(x, y0 - 0.05, z, r2 * TAU, 0.5 + r3 * 0.5, 0.4 + r4 * 0.4, [1.0 + r2 * 0.12, 0.92 + r3 * 0.1, 0.82 + r4 * 0.1]);
           else { const k = 0.85 + r3 * 0.3, rc = r2 < 0.5 ? [1.2, 0.86, 0.68] : r2 < 0.8 ? [1.18, 0.96, 0.78] : [1.25, 1.12, 0.95]; pk[4].add(x, y0 - 0.2, z, r4 * TAU, 0.8 + r3 * 2.2, 0.6 + r4 * 1.6, [rc[0] * k, rc[1] * k, rc[2] * k]); }
           if (++nPlants >= maxT) break grid;
@@ -10829,13 +10965,36 @@ const World = (function () {
       }
     }
 
+    /* ---- the talus at the foot of the cliff: big flat blocks of sandstone fallen from the rim, half buried, on the slopes beside the road ---- */
+    {
+      const RV = rng(3975), cc = [[0.84, 0.6, 0.42], [0.88, 0.76, 0.6], [0.72, 0.44, 0.32], [0.8, 0.52, 0.36]];
+      for (let s = 20; s < T.len - 20; s += 7) for (const side of [-1, 1]) {
+        if (RV() > 0.3) continue;
+        const [x, z] = onSide(s, side, 4 + Math.pow(RV(), 1.3) * 80); if (excluded(x, z) || vrNear(x, z).dd < 3) continue;
+        const sl = caSlope(x, z), A = caGround(x, z) + base; if (sl < 0.28 || sl > 1.1 || A > 1935) continue;
+        const r0 = 1.4 + RV() * 3.2, y = caGround(x, z);
+        rock(scen.get(x, z), x, y + r0 * 0.15, z, r0 * 1.3, r0 * (0.45 + RV() * 0.3), r0, RV() * TAU, vary(cc[Math.floor(RV() * cc.length)], RV, 0.1), RV, 0.28, true); exclPush(x, z, r0 + 0.5);
+      }
+    }
+
+    /* ---- ravens circling over the road ahead of the car; dust devils wandering over the valley floor ---- */
+    { const geo = mkRavenGeo(), mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), i0 = T.idx(sStart), L = [];
+      for (const [r, sp, h, ox, oz, ph] of [[24, 0.42, 22, 10, -8, 0], [30, -0.36, 30, -14, 12, 2.1], [18, 0.5, 26, 4, 20, 4.2]]) {
+        const m = new THREE.Mesh(geo, mat); m.castShadow = true; root.add(m); L.push({ m, r, sp, h, ox, oz, ph, bank: 0.38 }); }
+      out.dyn.condors = { L, x0: T.px[i0], z0: T.pz[i0], y0: T.hy[i0], ax: T.px[i0], az: T.pz[i0], ay: T.hy[i0], t: null };
+      caCondors(out.dyn.condors, 0, null); }
+    if (opts.season !== 'winter') { const geo = mkDevilGeo(), mat = new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide }), L = [], RD = rng(3999);   // (lit: dark at night; none on the winter's snow)
+      for (const [s, sd, o] of [[150, 1, 70], [700, -1, 90], [1150, 1, 60]]) { const [x, z] = onSide(sStart + s, sd, o); if (caSlope(x, z) > 0.3) continue;
+        const m = new THREE.Mesh(geo, mat); m.renderOrder = 2; root.add(m); L.push({ m, x, z, r: 14 + RD() * 10, sp: 0.05 + RD() * 0.04, ph: RD() * 6, lf: 0.11 + RD() * 0.06, gH: caGround }); }
+      out.dyn.devils = { L }; mkDevils(out.dyn.devils, 0); }
+
     /* ---- finish the meshes ---- */
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: mkAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: mkAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);
-    out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, rails: +(nRail / (2 * N)).toFixed(3), berm: +(nBerm / (2 * N)).toFixed(3), buttes: (def.buttes || []).length };   // (read by the tests)
+    out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, rails: +(nRail / (2 * N)).toFixed(3), berm: +(nBerm / (2 * N)).toFixed(3), buttes: (def.buttes || []).length, cows: nCows, roads: srPts.length / 2 };   // (read by the tests)
     return out;
   }
 
@@ -14786,6 +14945,7 @@ const World = (function () {
     if (d.pkVeg && !car) d.pkVeg();   // Pikes Peak: the plants' buffers in a fixed state (the world test)   // Pikes Peak: the summit's smoke and flags, the sea of clouds   // Pikes Peak: the marshals' flags
     if (d.wheel) szWheel(d.wheel, t);   // Suzuka: the Ferris wheel turns
     if (d.condors) caCondors(d.condors, t, car);   // Los Caracoles: the condors circle over the road
+    if (d.devils) mkDevils(d.devils, t);   // the Moki Dugway: the dust devils on the valley floor
     if (d.pkLife) pkWildlifeUpdate(d.pkLife, t, car);   // Pikes Peak: marmots and bighorn sheep
     if (d.pkAmb) pkAmbientUpdate(d.pkAmb, t, car);   // Pikes Peak: flags, dust and leaves, grill smoke
     if (d.boats) {
