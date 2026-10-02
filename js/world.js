@@ -10534,7 +10534,7 @@ const World = (function () {
       txt(n, x0 + 256, y0 + 66, 54, warn ? '#16181c' : '#f2f2ee', 470); });
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (rrA2Tex = t);
   }
-  function rrTreeGeo(kind) {   // unit plants (height 1; the instances scale and tint them): 0 a broadleaf of the rainforest (a lumpy crown of four clumps on a pale trunk),
+  function rrTreeGeo(kind) {   // unit plants (height 1; the instances scale and tint them): 0 a broadleaf of the rainforest (a lumpy crown of three clumps on a pale trunk),
     // 1 an emergent tree (a tall bare trunk, a wide flat umbrella crown), 2 a palm (palmito juçara: a slim ringed trunk, a crown of arching fronds),
     // 3 a tree fern (xaxim: a dark fibrous trunk, a rosette of long fronds), 4 an araucaria (a straight trunk, the branches turned up at their ends
     // into a flat-topped candelabra), 5 a clump of bamboo and shrubs
@@ -10546,7 +10546,7 @@ const World = (function () {
     if (kind === 0) {
       ROCK_SMOOTH = true; cyl(g, 0, -0.02, 0, 0.035, 0.5, 4, [0.6, 0.57, 0.5], null, 0.025);
       const cs = [[0.19, 0.31, 0.12], [0.15, 0.27, 0.1], [0.24, 0.36, 0.14], [0.17, 0.3, 0.13]];
-      ico(g, 0, 0.66, 0, 0.3, 0.62, cs[0], R, 0.32); ico(g, 0.2, 0.56, 0.1, 0.22, 0.7, cs[1], R, 0.35); ico(g, -0.18, 0.58, -0.12, 0.22, 0.7, cs[2], R, 0.35); ico(g, 0.02, 0.52, -0.22, 0.2, 0.7, cs[3], R, 0.35);
+      ico(g, 0, 0.66, 0, 0.3, 0.62, cs[0], R, 0.32); ico(g, 0.2, 0.55, 0.1, 0.22, 0.7, cs[1], R, 0.35); ico(g, -0.16, 0.56, -0.16, 0.23, 0.7, cs[2], R, 0.35);
     } else if (kind === 1) {
       ROCK_SMOOTH = true; cyl(g, 0, -0.02, 0, 0.025, 0.74, 4, [0.66, 0.62, 0.55], null, 0.016);
       ico(g, 0, 0.84, 0, 0.42, 0.32, [0.27, 0.4, 0.15], R, 0.3); ico(g, 0.25, 0.8, 0.12, 0.24, 0.42, [0.22, 0.35, 0.13], R, 0.35); ico(g, -0.24, 0.81, -0.1, 0.24, 0.42, [0.31, 0.43, 0.17], R, 0.35);
@@ -10560,13 +10560,13 @@ const World = (function () {
     } else if (kind === 4) {
       ROCK_SMOOTH = false; const bark = [0.4, 0.3, 0.22], nd = [0.13, 0.24, 0.1], ndt = [0.2, 0.32, 0.13];
       cyl(g, 0, -0.02, 0, 0.03, 0.9, 5, bark, null, 0.018);
-      for (let w = 0; w < 3; w++) { const y = 0.66 + w * 0.08, n = 6 - w; for (let k = 0; k < n; k++) { const a = (k + w * 0.5) / n * TAU + R() * 0.3, L = 0.36 - w * 0.08, ex = Math.cos(a) * L, ez = Math.sin(a) * L;
-        ouRod(g, [0, y, 0], [ex, y + 0.05 + w * 0.02, ez], 0.008, bark, 3);
-        ico(g, ex, y + 0.11 + w * 0.02, ez, 0.12 - w * 0.015, 0.55, k % 2 ? nd : ndt, R, 0.3); } }
-      ico(g, 0, 0.94, 0, 0.1, 0.6, ndt, R, 0.3);
+      for (let w = 0; w < 2; w++) { const y = 0.7 + w * 0.1, n = 5 - w; for (let k = 0; k < n; k++) { const a = (k + w * 0.5) / n * TAU + R() * 0.3, L = 0.34 - w * 0.1, ex = Math.cos(a) * L, ez = Math.sin(a) * L;
+        ouRod(g, [0, y, 0], [ex, y + 0.06, ez], 0.008, bark, 3);
+        cone(g, ex, y + 0.04, ez, 0.14 - w * 0.02, 0.1, 5, k % 2 ? nd : ndt, ndt, a); } }   // (each branch ends in a flat tuft of needles, turned up)
+      cone(g, 0, 0.9, 0, 0.1, 0.1, 5, ndt, ndt, 0);
     } else {
       ROCK_SMOOTH = true; const cs = [[0.3, 0.44, 0.15], [0.36, 0.5, 0.18], [0.26, 0.38, 0.14]];
-      for (let k = 0; k < 5; k++) { const a = k / 5 * TAU + R() * 0.5, d = k ? 0.32 : 0; ico(g, Math.cos(a) * d, 0.45 - d * 0.3, Math.sin(a) * d, 0.32, 1.1, cs[k % 3], R, 0.35); }
+      for (let k = 0; k < 3; k++) { const a = k / 3 * TAU + R() * 0.5, d = k ? 0.3 : 0; ico(g, Math.cos(a) * d, 0.45 - d * 0.3, Math.sin(a) * d, 0.36, 1.1, cs[k % 3], R, 0.35); }
     }
     ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
