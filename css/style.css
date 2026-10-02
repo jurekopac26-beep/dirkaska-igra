@@ -411,7 +411,9 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 #s-track { justify-content: center; }
 .track-panel { width: min(760px, 96vw); max-height: 100%; display: flex; flex-direction: column; }
 .wx-row { margin: 2px 0 0; } .wx-row .rlbl { min-width: 0; }
-@media (orientation: landscape) { .trk-opts { display: grid; grid-template-columns: auto auto; column-gap: 16px; justify-content: start; } }   /* the weather, qualifying and the set-up in two columns (the track cards keep their height) */
+@media (orientation: landscape) { #s-track.opts .trk-opts { display: grid; grid-template-columns: auto auto; column-gap: 16px; justify-content: start; } }   /* the weather, qualifying and the set-up in two columns (the track cards keep their height) */
+.trk-opts { display: none; }   /* the race's options are folded away at the bottom (Nastavitve dirke), so the tracks have the room */
+#s-track.opts .trk-opts { display: block; }
 .trk-btns { align-items: center; } .trk-btns #cmp-row { margin: 0 auto 0 0; min-width: 0; flex-wrap: nowrap; }   /* the slicks for the start (the circuits with pits) beside Nazaj and Start, where the buttons leave room (narrower: smaller letters, fitSegs) */
 @media (orientation: portrait) { .trk-btns { flex-wrap: wrap; } .trk-btns #cmp-row { flex: 1 0 100%; flex-wrap: wrap; } }   /* (upright: above the buttons) */
 .track-list { display: flex; gap: 12px; overflow-x: auto; padding: 4px 2px 8px; touch-action: pan-x pan-y; }

@@ -50,7 +50,7 @@
     'Deli povezavo': 'Share a link', 'Shrani v datoteko': 'Save to a file', 'Duh prijatelja: {0} · {1}': 'Friend\u2019s ghost: {0} · {1}', 'Izbriši prijateljevega': 'Delete the friend\u2019s', 'Uvozi duha': 'Import a ghost',
     'Nevihta': 'Storm', 'Jutro': 'Morning', ' · nevihta': ' · storm', ' · jutro': ' · morning',
     'Dolžina dirke': 'Race length', 'Kratka': 'Short', 'Običajna': 'Normal', 'Dolga': 'Long', 'Vzdržljivostna': 'Endurance', 'Gorivo': 'Fuel', ' · vzdržljivostna': ' · endurance', ' · gorivo': ' · fuel',
-    'Pred dirko': 'Before the race', 'Takoj na tekmo': 'Straight to the race', 'Tekmovalci': 'Competitors', 'Koliko avtov je na štartu, tvoj je vštet': 'Cars on the grid, yours included',
+    'Nastavitve dirke': 'Race options', 'Nastavitve dirke ▲': 'Race options ▲', 'Pred dirko': 'Before the race', 'Takoj na tekmo': 'Straight to the race', 'Tekmovalci': 'Competitors', 'Koliko avtov je na štartu, tvoj je vštet': 'Cars on the grid, yours included',
     /* ---- slick compounds, the highlights of a race, the newer cars ---- */
     'Mehke': 'Soft', 'Trde': 'Hard', 'Gume v boksih': 'Pit tyres', 'Gume za suho na progah z boksi (za dež jih mehaniki dajo sami)': 'Dry tyres on the tracks with pits (the mechanics fit the rain tyres themselves)',
     'Gume za suho pri naslednjem postanku (za dež jih mehaniki dajo sami)': 'Dry tyres at the next pit stop (the mechanics fit the rain tyres themselves)', 'MEHKE': 'SOFT', 'SREDNJE': 'MEDIUM', 'TRDE': 'HARD', 'DEŽNE': 'WET', 'SUHE': 'DRY', '{0} GUME': '{0} TYRES',

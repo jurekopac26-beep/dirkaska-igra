@@ -3691,6 +3691,7 @@
   function onAction(act, el) {
     Sfx.resume(); Sfx.click();
     switch (act) {
+      case 'trk-opts': { const o = $('s-track').classList.toggle('opts'); $('btn-trk-opts').setAttribute('aria-expanded', o); $('btn-trk-opts').innerHTML = tr('Nastavitve dirke') + (o ? ' &#9660;' : ' &#9650;'); if (o) fitSegs(); break; }
       case 'to-car': bg = 'show'; buildCarScreen(); showScreen('car'); break;
       case 'to-title': if (mp) { Net.close(true); mp = null; } toTitle(); break;
       case 'to-online': openOnline(); break;
