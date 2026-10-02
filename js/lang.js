@@ -11,7 +11,7 @@
     '↺ Na progo': '↺ Back on track', 'Dirkaj': 'Race', 'Prvenstvo': 'Championship', 'Kariera': 'Career', 'Dirka s prijateljem': 'Race a friend',
     'Lestvica': 'Leaderboard', 'Nastavitve': 'Settings', 'Celoten zaslon': 'Full screen', 'Namesti igro': 'Install the game', 'Nadgradnje': 'Upgrades',
     'Barva': 'Colour', 'Upravljanje': 'Controls', 'Tipke': 'Buttons', 'Volan': 'Wheel', 'Nagib': 'Tilt', 'Nazaj': 'Back', 'Naprej': 'Next',
-    'Nova kariera': 'New career', 'Začni kariero': 'Start career', 'Serijsko': 'Stock', 'Izberi progo': 'Choose a track', 'Vreme': 'Weather',
+    'Nova kariera': 'New career', 'Začni kariero': 'Start career', 'Serijsko': 'Stock', 'Izberi progo': 'Choose a track', 'Za izbris · samo za testiranje': 'For deletion · testing only', 'Vreme': 'Weather',
     'Suho': 'Dry', 'Dež': 'Rain', 'Naključno': 'Random', 'Menljivo': 'Changing', 'Kvalifikacije': 'Qualifying', 'Vklop': 'On', 'Izklop': 'Off',
     'Letni čas': 'Season', 'Poletje': 'Summer', 'Jesen': 'Autumn', 'Zima': 'Winter', 'Čas dneva': 'Time of day', 'Dan': 'Day', 'Večer': 'Evening', 'Noč': 'Night',
     'Krilo': 'Wing', 'Malo': 'Low', 'Srednje': 'Medium', 'Veliko': 'High', 'Prestave': 'Gears', 'Kratke': 'Short', 'Dolge': 'Long',

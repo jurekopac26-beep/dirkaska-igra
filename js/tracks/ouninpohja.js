@@ -11,9 +11,9 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // Game axes: x east, z south (north = up on the minimap). The road is OPEN: points[0] is the south end, the last point the north end.
   //   start / finish / cps : [x, z] positions, snapped to the nearest centre-line sample (cps = the split points CP1..CP4)
   TRACK_DEFS.push({
-    id: 'ouninpohja', name: 'Ouninpohja', theme: 'ouni', open: true, timeTrial: true, rally: true, laps: 1, halfWidth: 6,
+    id: 'ouninpohja', name: 'Ouninpohja, Finska', theme: 'ouni', open: true, timeTrial: true, rally: true, laps: 1, halfWidth: 6,
     desc: 'Najslavnejša hitrostna preizkušnja Relija Finska: kronometer po makadamu od Hämepohje do Hassintieja. Skok za skokom skozi gozd, dolg desni ob jezeru Naarajärvi, dvorišče kmetije Ouni, skok pri Rumeni hiši (Keltainen talo), stopnice do križišča Mutanen, hitra Okskulmantie, vrhovi v smrekovem gozdu, ribnik in vas, skok Amazon in lasnica Kakaristo med polji. Ni nasprotnikov, dirkaš proti uri, na suhem ali v dežju.',
-    en: { desc: 'The most famous special stage of Rally Finland: a time trial on gravel from Hämepohja to Hassintie. Jump after jump through the forest, a long right by Lake Naarajärvi, the Ouni farmyard, the jump at the Yellow House (Keltainen talo), the steps down to the Mutanen junction, the fast Okskulmantie, crests in the spruce forest, a pond and a village, the Amazon jump and the Kakaristo hairpin between the fields. No rivals, you race against the clock, in the dry or in the rain.' },   // (the English page: Jezik · Language)
+    en: { name: 'Ouninpohja, Finland', desc: 'The most famous special stage of Rally Finland: a time trial on gravel from Hämepohja to Hassintie. Jump after jump through the forest, a long right by Lake Naarajärvi, the Ouni farmyard, the jump at the Yellow House (Keltainen talo), the steps down to the Mutanen junction, the fast Okskulmantie, crests in the spruce forest, a pond and a village, the Amazon jump and the Kakaristo hairpin between the fields. No rivals, you race against the clock, in the dry or in the rain.' },   // (the English page: Jezik · Language)
     realKm: 33,
     recId: 'ouninpohja2',   // (the 9.7 km stage: its records and ghost apart from the old 5.9 km stage's)
     start: [0,-70], finish: [-2032.2,-5893.3], cps: [[408.7,-1202.3],[1106.7,-2575.9],[171.5,-4896.5],[-1862.4,-5333.7]],
