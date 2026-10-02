@@ -4305,11 +4305,11 @@ const World = (function () {
      the mountain road, fewer in the streets, a few on a modern circuit), and on a circuit the rubber
      laid down along the racing line in the two tyre tracks, darkest where the cars brake and turn. Decals just over the road in the road's own
      colour (lit, its shadows on them; the rain darkens them with it: userData.wear), indexed, in 256 m chunks (culled) ---- */
-  const ROAD_WEAR = { nring: 1, vrsic: 1, caracoles: 0.8, monaco: 0.75, city: 0.75, ljubljana: 0.85, harju: 1 };   // per theme (else a modern circuit's: 0.3; Harju's old town streets as worn as the Nordschleife, and twice as often again: roadWear's sp)
+  const ROAD_WEAR = { nring: 1, vrsic: 1, caracoles: 0.8, monaco: 0.75, city: 0.75, ljubljana: 0.85, harju: 1 };   // per theme (else a modern circuit's: 0.3, an open road's: 0.8, as Los Caracoles; Harju's old town streets as worn as the Nordschleife, and twice as often again: roadWear's sp)
   function roadWear(o, tex) {
     if (T.def.roadSurface === 'makadam' || THEME === 'pikes' || !T.rl || !tex.wear) return;   // (Pikes Peak's road has its own cracks and patches)
     const N = T.N, ds = T.ds, w = T.w, len = T.len, open = T.open, R = rng(4242), bk = { dy: 0, sl: 0 }, cells = new Map(), lim = w - 0.6;
-    const kw = ROAD_WEAR[THEME] != null ? ROAD_WEAR[THEME] : 0.3;   // (how worn: the gaps between the patches and cracks grow as it falls)
+    const kw = ROAD_WEAR[THEME] != null ? ROAD_WEAR[THEME] : open ? 0.8 : 0.3;   // (how worn: the gaps between the patches and cracks grow as it falls)
     const at = (k) => (open ? clamp(k, 0, N - 1) : ((k % N) + N) % N), HYi = (i) => (T.hasElev ? T.hy[i] : 0);
     // (a stage of several widths and surfaces, Track.wa / sf (Harju): its own width at each sample, and only its tarmac worn, not the gravel or the cobbles)
     const wAt = (i) => (T.wa ? T.wa[i] : w), limAt = (i) => (T.wa ? T.wa[i] - 0.6 : lim), bare = (s) => !!T.sf && T.sf[at(Math.round(s / ds))] !== 0;
