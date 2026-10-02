@@ -101,7 +101,7 @@ Okolica:
 - **Dirka**: start z lučmi pod portalom LARGADA, modri portali kontrolnih točk z višino, cilj META v Portillu s tablo PORTILLO in modrima tablama proti meji, transparent SUBIDA LOS CARACOLES, čilske zastave ob štartni vrsti, gledalci ob startu, cilju, kontrolnih točkah, vsakem tretjem ovinku in pri razgledišču. Na zaprti cesti čakajo tovornjaki: ob startu v odstavnem pasu, v Portillu na parkirišču in na koncu ceste pred zaporo proti meji.
 - **Kondorji**: trije andski kondorji krožijo na vzgornikih nad cesto, blizu avta.
 
-## Big Sur (dirka, kronometer, promet, policija)
+## Big Sur, ZDA (dirka, kronometer, promet, policija)
 
 Kalifornijska obalna cesta State Route 1 (Highway 1) ob pečinah nad Tihim oceanom, južno od Carmela, v pravem merilu. Proga se začne na cesti ~1 km severno od mostu Rocky Creek (~71 m nad morjem), pelje čez most Rocky Creek (najnižja točka, ~44 m), ob pečinah mimo razgledišča Castle Rock, čez slavni most Bixby Creek (betonski ločni most iz leta 1932, ~80 m nad potokom; na njegovem severnem koncu se odcepi makadamska Old Coast Road) in po vzponu do cilja na Hurricane Pointu (~171 m): 4,0 km in 100 m višinske razlike, z zaletom pred startom in cesto za ciljem je cesta dolga 4,4 km. Najbolj zaprt ovinek ima polmer ~44 m, cesta je široka 9,2 m (dva pasova z ozkima bankinama), najstrmejši odsek ima 8,5 %. Kartica proge je ena, s stikalom **Dirka / Kronometer / Promet / Policija**, kot na Vršiču in v Los Caracoles:
 
