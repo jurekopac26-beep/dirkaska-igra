@@ -336,17 +336,17 @@
   }
  },
  "cpalace": {
-  "meshes": 299,
-  "verts": 379675,
+  "meshes": 300,
+  "verts": 382518,
   "instances": 6876,
   "props": 29,
   "crowd": 2457,
-  "world": "c86c25b2",
+  "world": "e0e31673",
   "propsHash": "3744002c",
   "floor": "5a965253/6440",
   "groups": {
    "-:MeshLambertMaterial": "e2922c1d",
-   "-:MeshPhongMaterial": "d990795f",
+   "-:MeshPhongMaterial": "ac8feb3b",
    "crowd:MeshLambertMaterial": "4a2d10fc",
    "-:MeshBasicMaterial": "b41923f5",
    "flags:MeshLambertMaterial": "859872c7",
