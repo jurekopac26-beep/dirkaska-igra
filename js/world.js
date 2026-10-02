@@ -16502,6 +16502,15 @@ const World = (function () {
     for (const [x, z] of [[0.25, 0.14], [0.25, -0.14], [-0.25, 0.14], [-0.25, -0.14]]) box(g, x, 0, z, 0.08, 0.42, 0.08, 0, dk, null, true);
     ROCK_SMOOTH = rs; const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
+  function lfEagleGeo() {   // a wedge-tailed eagle gliding (2.2 m across, facing +x): dark brown, the wings' tips spread, the long wedge of the tail
+    const g = new GB(), K = [0.2, 0.14, 0.1], Kl = [0.32, 0.24, 0.16], R = rng(1962);
+    ROCK_SMOOTH = true; ico(g, 0, 0, 0, 0.17, 0.55, K, R, 0.1); ROCK_SMOOTH = false; box(g, 0.2, -0.04, 0, 0.18, 0.1, 0.12, 0, Kl);
+    for (const sd of [-1, 1]) { const r0 = 0.1 * sd, r1 = 1.1 * sd, y1 = 0.14, A = [0.14, 0, r0], B = [-0.18, 0, r0], C = [-0.12, y1, r1], D = [0.12, y1, r1 * 0.97];
+      g.quadO(A, B, C, D, K, [0, -1, sd * 0.9]); g.quadO(A, B, C, D, K, [0, 1, sd * 0.9]);
+      for (let k = 0; k < 4; k++) { const x = 0.1 - k * 0.07; g.triO([x, y1, r1 * 0.96], [x - 0.06, y1, r1 * 0.96], [x - 0.01, y1 + 0.03, r1 + 0.16 * sd], K, [x, y1 - 1, r1]); } }
+    for (const n of [-1, 1]) g.triO([-0.16, 0, -0.07], [-0.55, 0.01, -0.13 * n], [-0.55, 0.01, 0.13 * n], Kl, [-0.4, -n, 0]);
+    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
   function lfHouseGeo(kind) {   // unit buildings (instances scale them): 0 a brick cottage (11 x 7 m, one storey, a hipped iron roof, chimneys),
     // 1 a two-storey Georgian house (12 x 9 m, a hipped slate roof, a fanlit door, sash windows), 2 a shed (16 x 9 m, corrugated iron),
     // 3 a church (a nave and a square tower), 4 a weatherboard farm cottage under red iron
@@ -16572,12 +16581,20 @@ const World = (function () {
     nrPrep();
     const P = NR, G = P.G;
     P.seC = [1.12, 1.0, 0.84];   // the town's gardens and yards: dry, trampled
+    // the paddocks (made up): a grid of fields 150 x 105 m turned to the district's roads, each row shifted, each field grazed, cut or watered its own way
+    const PDA = 0.42, PDc = Math.cos(PDA), PDs = Math.sin(PDA), PDU = 150, PDV = 105, PDK = { c: 0, r: 0, du: 0, dv: 0 };
+    const pdOff = (r) => crH(r, 11, 71) * PDU, pdXZ = (u, v) => [u * PDc - v * PDs, u * PDs + v * PDc];
+    const paddock = (x, z) => { const u = x * PDc + z * PDs, v = -x * PDs + z * PDc, r = Math.floor(v / PDV), uo = u + pdOff(r), c = Math.floor(uo / PDU);
+      PDK.c = c; PDK.r = r; PDK.du = Math.min(uo - c * PDU, (c + 1) * PDU - uo); PDK.dv = Math.min(v - r * PDV, (r + 1) * PDV - v); return PDK; };
+    const PDT = [[0.9, 1.06, 0.86], [1.12, 1.04, 0.8], [1.05, 1.04, 0.95], [0.96, 1.0, 0.92], [1, 1, 1], [1.06, 1.0, 0.86]];   // (watered, dry gold, grazed short, darker, as it is, ripe)
     P.colMod = (x, z, c) => {   // late summer (the race was in late February or early March): the pastures pale green-gold, greener by the rivers, the crops' stubble golden, ploughed fields brown
-      const n = P.n5(x * 0.55 + 700, z * 0.55), m = P.n3(x * 1.6 + 300, z * 1.6), k = 0.95 + (n - 0.5) * 0.16 + (m - 0.5) * 0.1, fm = nrLCf(x, z, 0), cr = nrLCf(x, z, 2);
+      const n = P.n5(x * 0.55 + 700, z * 0.55), m = P.n3(x * 1.6 + 300, z * 1.6), k = 0.95 + (n - 0.5) * 0.24 + (m - 0.5) * 0.16, fm = nrLCf(x, z, 0), cr = nrLCf(x, z, 2);
       c[0] *= k * 1.04; c[1] *= k; c[2] *= k * 0.84;
       const dry = sstep(0.5, 0.78, P.n3(x * 0.8 + 90, z * 0.8 - 40)) * 0.45 * fm; c[0] = lerp(c[0], c[0] * 1.16 + 0.05, dry); c[1] = lerp(c[1], c[1] * 1.06 + 0.02, dry); c[2] = lerp(c[2], c[2] * 0.76, dry);
       if (cr > 0) { const t = P.n1(x * 0.3 + 1200, z * 0.3), col = t < 0.3 ? [1.0, 0.84, 0.66] : t < 0.75 ? [1.26, 1.08, 0.62] : [0.86, 1.0, 0.6];   // ploughed, stubble, a green crop
         c[0] = lerp(c[0], col[0], cr * 0.7); c[1] = lerp(c[1], col[1], cr * 0.7); c[2] = lerp(c[2], col[2], cr * 0.7); }
+      if (fm > 0.2) { const q = paddock(x, z), t = PDT[Math.floor(crH(q.c, q.r, 77) * PDT.length)], e = fm * sstep(0, 6, Math.min(q.du, q.dv)) * 0.9;
+        c[0] *= 1 + (t[0] - 1) * e; c[1] *= 1 + (t[1] - 1) * e; c[2] *= 1 + (t[2] - 1) * e; }
       const rv = lfNear(LFQ.riv, x, z); if (rv.e && rv.d < 45) { const t = sstep(45, 8, rv.d) * 0.5; c[0] = lerp(c[0], c[0] * 0.82, t); c[1] = lerp(c[1], c[1] * 1.04, t); c[2] = lerp(c[2], c[2] * 0.9, t); }   // the river flats lusher
     };
     P.pad = lfPad;
@@ -16753,14 +16770,15 @@ const World = (function () {
     }
 
     /* ---- the rivers: the water's surface along each centre line (its own width and level), a slow sheen ---- */
-    { const gw = new GB(), wc = [0.27, 0.35, 0.42];
+    { const gw = new GB(true), wc = [1, 1, 1], uv = (q) => [q[0] / 16, -q[2] / 16];
       for (const [, pts] of def.rivers) for (let k = 0; k + 1 < pts.length; k++) {
         const a = pts[k], b = pts[k + 1], n0 = k > 0 ? pts[k - 1] : a, n1 = k + 2 < pts.length ? pts[k + 2] : b;
         const ta = [b[0] - n0[0], b[1] - n0[1]], tb = [n1[0] - a[0], n1[1] - a[1]], la = Math.hypot(...ta) || 1, lb = Math.hypot(...tb) || 1;
         const pa = [-ta[1] / la, ta[0] / la], pb = [-tb[1] / lb, tb[0] / lb], ha = a[2] + 1.2, hb = b[2] + 1.2;
-        gw.quadUp([a[0] - pa[0] * ha, a[3], a[1] - pa[1] * ha], [a[0] + pa[0] * ha, a[3], a[1] + pa[1] * ha], [b[0] + pb[0] * hb, b[3], b[1] + pb[1] * hb], [b[0] - pb[0] * hb, b[3], b[1] - pb[1] * hb], [wc, wc, wc, wc]);
+        const q = [[a[0] - pa[0] * ha, a[3], a[1] - pa[1] * ha], [a[0] + pa[0] * ha, a[3], a[1] + pa[1] * ha], [b[0] + pb[0] * hb, b[3], b[1] + pb[1] * hb], [b[0] - pb[0] * hb, b[3], b[1] - pb[1] * hb]];
+        gw.quadUp(q[0], q[1], q[2], q[3], [wc, wc, wc, wc], q.map(uv));
       }
-      const m = addM(gw, new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 70, specular: 0x667788 })); if (m) m.receiveShadow = true; }
+      const m = addM(gw, waterMat(tex, { color: 0x7c6c48, len: 0.7, amp: 0.35, refl: 0.2, land: 0.85, shal: 0, lap: 0.4, surf: 0 })); if (m) { m.receiveShadow = true; out.dyn.water = tex.water; } }
 
     /* ---- the railway: the ballast and the rails on its embankment, the brick viaduct over the old road, the iron bridges over the rivers,
        the level crossing's signs ---- */
@@ -16852,6 +16870,29 @@ const World = (function () {
       }
     }
     function segD(p, q, x, z) { const vx = q[0] - p[0], vz = q[1] - p[1], t = clamp(((x - p[0]) * vx + (z - p[1]) * vz) / (vx * vx + vz * vz || 1), 0, 1); return Math.hypot(x - p[0] - vx * t, z - p[1] - vz * t); }
+    // farmsteads in the paddocks (made up): a weatherboard or brick house, a shed, a round iron water tank, a windpump; elms round them (below)
+    const farms = [];
+    for (let f = 0, tries = 0; f < 18 && tries < 1500; tries++) {
+      const x = P.x0 + 200 + R() * (P.x1 - P.x0 - 400), z = P.z0 + 200 + R() * (P.z1 - P.z0 - 400), rd = nrDist(x, z); if (rd < 60 || rd > 170) continue;
+      if (nrLC(x, z) === 3 || nrLC(x, z) === 1 || excluded(x, z) || wet(x, z, 25) || railNear(x, z, 30) || nrSlope(x, z) > 0.12 || nearBld(x, z, 70) || farms.some(q => Math.hypot(q[0] - x, q[1] - z) < 260)) continue;
+      f++; const yaw = PDA + (R() < 0.5 ? 0 : Math.PI / 2) + (R() - 0.5) * 0.1, c = Math.cos(yaw), sn = Math.sin(yaw), at = (a, b) => [x + c * a - sn * b, z + sn * a + c * b];
+      houseAt(R() < 0.6 ? 4 : 1, x, z, yaw, 0.9 + R() * 0.2);
+      const [sx, sz] = at(6, 24); if (!excluded(sx, sz) && !wet(sx, sz, 6)) houseAt(2, sx, sz, yaw + Math.PI / 2, 0.7 + R() * 0.3);
+      const [tx, tz] = at(-9, 3), ty = nrGround(tx, tz), gt = scen.get(tx, tz), TK = [0.68, 0.7, 0.7];   // the tank on a timber stand
+      for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) box(gt, tx + a * 1.1, ty - 0.2, tz + b * 1.1, 0.2, 2.2, 0.2, 0, TIMd, null, true);
+      box(gt, tx, ty + 1.95, tz, 2.8, 0.15, 2.8, 0, TIMd, null, true); cyl(gt, tx, ty + 2.1, tz, 1.5, 2.2, 10, TK, [0.6, 0.62, 0.62]); cone(gt, tx, ty + 4.3, tz, 1.55, 0.35, 10, [0.62, 0.64, 0.64], null, 0);
+      const [wx, wz] = at(-22, -14), wy = nrGround(wx, wz), gw = scen.get(wx, wz), ST = [0.5, 0.5, 0.52];   // the windpump: a steel tower, its wheel and tail vane, a trough
+      if (!excluded(wx, wz) && !wet(wx, wz, 4)) { for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) cyl(gw, wx + a * 0.75, wy - 0.2, wz + b * 0.75, 0.07, 9.8, 4, ST, null, 0.05);
+        for (let k = 0; k < 4; k++) { const y0 = wy + 1 + k * 2.2; box(gw, wx, y0, wz + 0.75, 1.5, 0.06, 0.06, 0, ST, null, true); box(gw, wx, y0, wz - 0.75, 1.5, 0.06, 0.06, 0, ST, null, true); box(gw, wx + 0.75, y0, wz, 0.06, 0.06, 1.5, 0, ST, null, true); box(gw, wx - 0.75, y0, wz, 0.06, 0.06, 1.5, 0, ST, null, true); }
+        const ha = R() * TAU, hc = Math.cos(ha), hs = Math.sin(ha), WV = [0.78, 0.78, 0.76];
+        for (let k = 0; k < 12; k++) { const a0 = k / 12 * TAU, a1 = a0 + TAU / 24, P0 = (a, r) => [wx + hs * Math.cos(a) * r, wy + 10 + Math.sin(a) * r, wz - hc * Math.cos(a) * r];
+          const A = P0(a0, 0.4), B = P0(a1, 0.4), C = P0(a1, 1.6), D = P0(a0, 1.6); gw.quadO(A, B, C, D, WV, [wx + hc, wy + 10, wz + hs]); gw.quadO(A, D, C, B, WV, [wx - hc, wy + 10, wz - hs]); }
+        box(gw, wx - hc * 1.3, wy + 9.9, wz - hs * 1.3, 2.4, 0.06, 0.06, Math.atan2(hs, hc), ST, null, true);
+        gw.quadO([wx - hc * 2.4, wy + 9.6, wz - hs * 2.4], [wx - hc * 3.4, wy + 9.6, wz - hs * 3.4], [wx - hc * 3.4, wy + 10.5, wz - hs * 3.4], [wx - hc * 2.4, wy + 10.3, wz - hs * 2.4], WV, [wx + hs, wy + 10, wz - hc]);
+        gw.quadO([wx - hc * 2.4, wy + 9.6, wz - hs * 2.4], [wx - hc * 2.4, wy + 10.3, wz - hs * 2.4], [wx - hc * 3.4, wy + 10.5, wz - hs * 3.4], [wx - hc * 3.4, wy + 9.6, wz - hs * 3.4], WV, [wx - hs, wy + 10, wz + hc]);
+        box(gw, wx + 3, wy - 0.1, wz, 3, 0.55, 0.8, yaw, [0.56, 0.58, 0.6], [0.38, 0.46, 0.5]); exclPush(wx, wz, 4); }
+      exclPush(tx, tz, 3); farms.push([x, z, yaw]);
+    }
     for (const H of HK) H.addTo(root, true);
 
     /* ---- the grandstand across the road from the pits: open timber tiers, a corrugated roof on posts, the crowd on the benches ---- */
@@ -16900,10 +16941,10 @@ const World = (function () {
     const openAt = (x, z, m) => nrLC(x, z) === 0 && !excluded(x, z) && !wet(x, z, 6) && !railNear(x, z, 8) && nrSlope(x, z) < 0.18 && nrDist(x, z) > (m || 40);
     const sheep = new IChunks(lfSheepGeo(), new THREE.MeshLambertMaterial({ vertexColors: true }), 256);
     let nSheep = 0;
-    for (let f = 0, tries = 0; f < 34 && tries < 900; tries++) {
-      const x = P.x0 + 150 + R() * (P.x1 - P.x0 - 300), z = P.z0 + 150 + R() * (P.z1 - P.z0 - 300), rd = nrDist(x, z); if (rd < 45 || rd > 380 || !openAt(x, z, 45)) continue;
+    for (let f = 0, tries = 0; f < 44 && tries < 1200; tries++) {
+      const x = P.x0 + 150 + R() * (P.x1 - P.x0 - 300), z = P.z0 + 150 + R() * (P.z1 - P.z0 - 300), rd = nrDist(x, z); if (rd < (f < 14 ? 34 : 45) || rd > (f < 14 ? 90 : 380) || !openAt(x, z, 34)) continue;
       f++; const n = 6 + Math.floor(R() * 14), a0 = R() * TAU;
-      for (let k = 0; k < n; k++) { const r = 3 + R() * 16, a = R() * TAU, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r; if (!openAt(px, pz, 35)) continue;
+      for (let k = 0; k < n; k++) { const r = 3 + R() * 16, a = R() * TAU, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r; if (!openAt(px, pz, 28)) continue;
         sheep.add(px, nrGround(px, pz) - 0.05, pz, a0 + (R() - 0.5) * 1.6, 0.9 + R() * 0.25, 0.9 + R() * 0.2, [0.92 + R() * 0.12, 0.9 + R() * 0.1, 0.84 + R() * 0.1]); nSheep++; }
     }
     sheep.addTo(root, false);
@@ -16966,12 +17007,59 @@ const World = (function () {
         const pts = []; for (let d = d0; d < d1; d += 6) { const [x, z] = onSide(sAt(d), sd, 3.0); pts.push([x, z]); } hedge(pts); }
       gh.addTo(root, matV, true, true); }
 
+    /* ---- the paddocks' fences (post and wire, along the fields' edges near the road; gaps for the gates) and the cattle grazing in them ---- */
+    let nFence = 0, nCattle = 0; const wbreak = [], fen = new Chunks(512);   // (the fences and the cattle in big chunks of their own: few draw calls)
+    { const WR = [0.66, 0.66, 0.64];
+      const ok = (x, z) => { const rd = nrDist(x, z); return rd > 30 && rd < 130 && nrLC(x, z) !== 3 && !excluded(x, z) && !wet(x, z, 3) && !railNear(x, z, 6); };
+      const edge = (u0, v0, u1, v1, key) => {   // a fence from (u0, v0) to (u1, v1) in the paddocks' frame
+        const len = Math.hypot(u1 - u0, v1 - v0), n = Math.round(len / 5), gate = crH(key, 3, 72) * n; let prev = null;
+        for (let k = 0; k <= n; k++) { const [x, z] = pdXZ(u0 + (u1 - u0) * k / n, v0 + (v1 - v0) * k / n);
+          if (!ok(x, z) || Math.abs(k - gate) < 1) { prev = null; continue; }
+          const y = nrGround(x, z), g = fen.get(x, z), pc = vary([0.5, 0.44, 0.36], () => crH(x, z, 73), 0.2); box(g, x, y - 0.25, z, 0.12, 1.25, 0.12, PDA, pc, [pc[0] * 0.8, pc[1] * 0.8, pc[2] * 0.8], true); nFence++;
+          if (prev) { for (const h of [0.62, 0.95]) { const a = [prev[0], prev[1] + h, prev[2]], b = [x, y + h, z], dx = b[0] - a[0], dz = b[2] - a[2], l = Math.hypot(dx, dz) || 1, ox = -dz / l * 0.025, oz = dx / l * 0.025;
+            g.quadUp([a[0] - ox, a[1], a[2] - oz], [a[0] + ox, a[1], a[2] + oz], [b[0] + ox, b[1], b[2] + oz], [b[0] - ox, b[1], b[2] - oz], [WR, WR, WR, WR]); } }
+          prev = [x, y, z]; } };
+      const us = [], vs = []; for (const [x, z] of [[P.x0, P.z0], [P.x1, P.z0], [P.x0, P.z1], [P.x1, P.z1]]) { us.push(x * PDc + z * PDs); vs.push(-x * PDs + z * PDc); }
+      const r0 = Math.floor(Math.min(...vs) / PDV), r1 = Math.ceil(Math.max(...vs) / PDV), c0 = Math.floor(Math.min(...us) / PDU) - 2, c1 = Math.ceil(Math.max(...us) / PDU) + 1;
+      for (let r = r0; r < r1; r++) for (let c = c0; c < c1; c++) { const ua = c * PDU - pdOff(r), ub = ua + PDU, va = r * PDV, vb = va + PDV, [mx, mz] = pdXZ((ua + ub) / 2, (va + vb) / 2), rd = nrDist(mx, mz);
+        if (rd > 230) continue;
+        const kb = crH(c, r, 74), kl = crH(c, r, 75);
+        if (kb < 0.8) edge(ua, va, ub, va, c * 1000 + r); else if (rd > 50 && rd < 200) wbreak.push([ua, va, ub, va]);   // (the bottom edge: a fence, or a row of pines)
+        if (kl < 0.8) edge(ua, va, ua, vb, c * 1000 + r + 0.5); else if (rd > 50 && rd < 200) wbreak.push([ua, va, ua, vb]); } }
+    { const CC = [[0.1, 0.09, 0.09], [0.1, 0.09, 0.09], [0.42, 0.2, 0.12], [0.5, 0.3, 0.18], [0.78, 0.7, 0.58]];
+      const beast = (x, y, z, rot, sc, col) => {   // a beast (2.3 m, facing rot): the body, the head down to the grass, four legs
+        const g = fen.get(x, z), c = Math.cos(rot), sn = Math.sin(rot), at = (a, b) => [x + (c * a - sn * b) * sc, z + (sn * a + c * b) * sc], lg = col.map(v => v * 0.7);
+        let [px, pz] = at(0, 0); box(g, px, y + 0.62 * sc, pz, 1.75 * sc, 0.72 * sc, 0.72 * sc, rot, col); [px, pz] = at(1.0, 0); box(g, px, y + 0.5 * sc, pz, 0.42 * sc, 0.4 * sc, 0.36 * sc, rot, col);
+        for (const [a, b] of [[0.68, 0.24], [0.68, -0.24], [-0.68, 0.24], [-0.68, -0.24]]) { [px, pz] = at(a, b); box(g, px, y, pz, 0.15 * sc, 0.66 * sc, 0.15 * sc, rot, lg, null, true); } };
+      for (let f = 0, tries = 0; f < 16 && tries < 900; tries++) {
+        const x = P.x0 + 150 + R() * (P.x1 - P.x0 - 300), z = P.z0 + 150 + R() * (P.z1 - P.z0 - 300), rd = nrDist(x, z); if (rd < 45 || rd > 150 || !openAt(x, z, 45)) continue;
+        const q = paddock(x, z); if (q.du < 12 || q.dv < 12) continue;
+        f++; const n = 5 + Math.floor(R() * 10), a0 = R() * TAU, herd = R() < 0.6 ? 0 : 2 + Math.floor(R() * 2);
+        for (let k = 0; k < n; k++) { const r = 2 + R() * 18, a = R() * TAU, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r; if (!openAt(px, pz, 40)) continue;
+          const qq = paddock(px, pz); if (qq.c !== q.c || qq.r !== q.r || Math.min(qq.du, qq.dv) < 2) continue;
+          beast(px, nrGround(px, pz) - 0.05, pz, a0 + (R() - 0.5) * 2, 0.95 + R() * 0.15, vary(CC[R() < 0.85 ? herd : Math.floor(R() * CC.length)], R, 0.12)); nCattle++; } }
+      fen.addTo(root, matV, true, true); }
+
+    /* ---- the marshals' posts: a small timber shelter under an iron roof on the outside of the bends, a flag pole with the yellow flag furled ---- */
+    let nMarsh = 0;
+    for (let d = 260; d < L - 120; d += 520) {
+      let best = null; for (let e = -120; e <= 120; e += 20) { const i = T.idx(sAt(d + e)); const c = T.corners.find(q => i >= q.i0 && i <= (q.i1 < q.i0 ? q.i1 + N : q.i1)); if (c) { best = { e, side: -c.dir }; break; } }
+      const e = best ? best.e : 0, side = best ? best.side : (crH(d, 1, 88) < 0.5 ? -1 : 1), s0 = sAt(d + e), i = T.idx(s0);
+      if (bridgeAt[i] || inR(d + e, LF.town[0] - 20, LF.town[1] + 20) || (side > 0 && PD && T.pitAt(s0))) continue;
+      const [x, z] = onSide(s0, side, 3.2); if (excluded(x, z) || wet(x, z, 3) || railNear(x, z, 5)) continue;
+      const y = nrGround(x, z), g = scen.get(x, z), hd = T.hd[i], rot = hd, c = Math.cos(hd), sn = Math.sin(hd), nx = T.nx[i] * side, nz = T.nz[i] * side;
+      box(g, x, y - 0.2, z, 1.8, 2.5, 1.5, rot, [0.62, 0.56, 0.46], null, true); box(g, x - nx * 0.1, y + 2.25, z - nz * 0.1, 2.2, 0.08, 2.0, rot, [0.66, 0.66, 0.68], [0.7, 0.7, 0.72]);
+      box(g, x - nx * 0.78, y + 0.9, z - nz * 0.78, 1.4, 0.7, 0.05, rot, [0.16, 0.16, 0.16], null, true);   // (the open front, dark)
+      const px = x + c * 1.4, pz = z + sn * 1.4; cyl(g, px, y - 0.2, pz, 0.04, 3.6, 4, [0.85, 0.85, 0.82]); box(g, px, y + 2.6, pz, 0.08, 0.8, 0.08, 0, [0.95, 0.82, 0.12], null, true);
+      exclPush(x, z, 3); CR.avoid(x, z, 2); nMarsh++;
+    }
+
     /* ---- the trees: poplars in rows, elms and oaks round the homesteads and on the land cover's trees, willows along the rivers, a few gums ---- */
     const tMat = new THREE.MeshLambertMaterial({ vertexColors: true });
     const tk = [0, 1, 2, 3].map(k => new IChunks(lfTreeGeo(k), tMat, 128)), tf = [new IChunks(lfTreeGeo(4), tMat, 192), new IChunks(lfTreeGeo(5), tMat, 192)];
     let nTrees = 0;
-    const tree = (kd, x, z, h, wdt) => { if (excluded(x, z) || wet(x, z, 1)) return; const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 4) return;
-      const far = nrDist(x, z) > 90, y = nrGround(x, z), cv = 0.86 + R() * 0.28, col = [cv * (0.95 + R() * 0.1), cv, cv * (0.95 + R() * 0.1)];
+    const tree = (kd, x, z, h, wdt, tint) => { if (excluded(x, z) || wet(x, z, 1)) return; const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 4) return;
+      const far = nrDist(x, z) > 90, y = nrGround(x, z), cv = 0.86 + R() * 0.28, t = tint || W1, col = [cv * (0.95 + R() * 0.1) * t[0], cv * t[1], cv * (0.95 + R() * 0.1) * t[2]];
       if (far && (kd === 1 || kd === 0)) tf[kd === 0 ? 1 : 0].add(x, y - 0.1, z, R() * TAU, wdt, h, col); else tk[kd].add(x, y - 0.1, z, R() * TAU, wdt, h, col);
       nrShade(x, z, wdt * 0.32, 1); nTrees++; };
     for (const r of def.rows) for (let k = 0; k + 1 < r.length; k++) { const a = r[k], b = r[k + 1], len = Math.hypot(b[0] - a[0], b[1] - a[1]); for (let d = 0; d < len; d += 6) tree(0, a[0] + (b[0] - a[0]) * d / len, a[1] + (b[1] - a[1]) * d / len, 22 + R() * 6, 4.5); }
@@ -16981,6 +17069,10 @@ const World = (function () {
       const [x, z] = onSide(s, side, 4 + R() * 6); if (nrLC(x, z) === 2 && R() < 0.6) continue; const pop = R() < 0.25; tree(pop ? 0 : 1, x, z, pop ? 20 + R() * 8 : 12 + R() * 8, pop ? 4.5 : 11 + R() * 5); }
     for (const [, pts] of def.rivers) for (let k = 0; k < pts.length; k++) { const p = pts[k], q = pts[Math.min(pts.length - 1, k + 1)], tx = q[0] - p[0], tz = q[1] - p[1], l = Math.hypot(tx, tz) || 1;   // willows on both banks
       if (nrDist(p[0], p[1]) > 300) continue; for (const sd of [-1, 1]) { if (R() < 0.45) continue; const o = p[2] + 2 + R() * 4; tree(2, p[0] - tz / l * sd * o, p[1] + tx / l * sd * o, 9 + R() * 5, 11 + R() * 4); } }
+    for (const [ua, va, ub, vb] of wbreak) { const len = Math.hypot(ub - ua, vb - va);   // windbreaks: dark pines and cypresses along some of the paddocks' edges
+      for (let d = 2; d < len - 2; d += 5.5) { const [x, z] = pdXZ(ua + (ub - ua) * d / len, va + (vb - va) * d / len); if (nrLC(x, z) === 3 || railNear(x, z, 8) || nrDist(x, z) < 92) continue;
+        tree(R() < 0.7 ? 1 : 0, x, z, 13 + R() * 6, R() < 0.7 ? 8 + R() * 3 : 5, [0.62, 0.74, 0.7]); } }
+    for (const [fx, fz] of farms) for (let k = 0; k < 7; k++) { const a = R() * TAU, r = 16 + R() * 18; tree(R() < 0.25 ? 0 : 1, fx + Math.cos(a) * r, fz + Math.sin(a) * r, 15 + R() * 7, 12 + R() * 5); }   // the homesteads' elms
     { const Lt = NRC * NRT, maxT = Math.round(9000 * dens);
       for (let tj = 0; tj < G.ntz && nTrees < maxT; tj++) for (let ti = 0; ti < G.ntx && nTrees < maxT; ti++) {
         if (!G.on[tj * G.ntx + ti]) continue; const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
@@ -17017,6 +17109,32 @@ const World = (function () {
             const ordered = side > 0 ? { p: pts, c: cols } : { p: pts.slice().reverse(), c: cols.slice().reverse() };
             const rv = gv.row(ordered.p, ordered.c, ordered.p.map(p => [p[0] / 14, -p[2] / 14])); if (pv[si] >= 0) gv.link(pv[si], rv, 0, pr.length - 1); pv[si] = rv; } }
         addM(gv, gMat); }
+      // the rivers' banks: from the water's edge (a muddy lip) up over the ground's 8 m cells, so that the shore runs smooth, not in steps
+      { const gk = new GB(true), OF = [-2.2, -0.5, 1.1, 2.6], MUD = [1.0, 0.66, 0.46], SILT = [1.02, 0.84, 0.56], uv = (q) => [q[0] / 14, -q[2] / 14];
+        for (const [, pts] of def.rivers) {
+          const rs = []; for (let k = 0; k + 1 < pts.length; k++) { const a = pts[k], b = pts[k + 1], n = Math.max(1, Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]) / 6));
+            for (let j = 0; j < n; j++) { const t = j / n; rs.push([lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t), lerp(a[3], b[3], t)]); } }
+          rs.push([...pts[pts.length - 1].slice(0, 2), pts[pts.length - 1][2], pts[pts.length - 1][3]]);
+          const nrm = (k) => { const p = rs[Math.max(0, k - 1)], q = rs[Math.min(rs.length - 1, k + 1)], tx = q[0] - p[0], tz = q[1] - p[1], l = Math.hypot(tx, tz) || 1; return [-tz / l, tx / l]; };
+          for (const sd of [-1, 1]) { let prev = null;
+            for (let k = 0; k < rs.length; k++) { const [x, z, hw, wy] = rs[k], n = nrm(k);
+              const row = OF.map((o, j) => { const px = x + n[0] * sd * (hw + o), pz = z + n[1] * sd * (hw + o), gx = (px - G.x0) / NRC, gz = (pz - G.z0) / NRC;
+                if (gx < 1 || gz < 1 || gx > G.nx - 2 || gz > G.nz - 2) return null;
+                const gc = nrGCol(px, pz), c = j === 0 ? MUD : j === 1 ? SILT : j === 2 ? [gc[0] * 0.86, gc[1] * 0.95, gc[2] * 0.8] : gc;
+                return { p: [px, j === 0 ? wy + 0.05 : Math.max(wy + 0.06, nrGround(px, pz) + 0.07), pz], c }; });
+              if (row.some(r => !r) || !G.on[Math.floor((x - G.x0) / NRC / NRT) + Math.floor((z - G.z0) / NRC / NRT) * G.ntx]) { prev = null; continue; }
+              if (prev) for (let j = 0; j + 1 < OF.length; j++) { const a = prev[j], b = prev[j + 1], c = row[j + 1], d = row[j]; gk.quadUp(a.p, b.p, c.p, d.p, [a.c, b.c, c.c, d.c], [uv(a.p), uv(b.p), uv(c.p), uv(d.p)]); }
+              prev = row; } } }
+        addM(gk, gMat); }
+      // the paddocks by the road: tussocks of longer grass out past the fences, swaying in the wind
+      { const mat = tuftWindMat(out.dyn.wind || (out.dyn.wind = { value: 0 })), tu = new IChunks(tuftGeo(false), mat, 256), av = texAvg(gMat.map);
+        for (let d = 0; d < L; d += 2.2) for (const side of [-1, 1]) for (let q = 0; q < 1; q++) {
+          const u = crH(d, side * 7 + q, 81), o = 7 + Math.pow(crH(d, side * 7 + q, 82), 1.4) * 48, [x, z] = onSide(sAt(d + u * 2.6), side, o);
+          if (excluded(x, z) || wet(x, z, 2) || railNear(x, z, 4) || nrLC(x, z) === 3) continue; const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 3) continue;
+          const y = nrGround(x, z), gc = nrGCol(x, z), g = 0.85 + 0.2 * crH(x, z, 83);
+          tu.add(x, y - 0.03, z, u * 26, 1.0 + 1.1 * crH(x, z, 84), 0.32 + 0.38 * crH(x, z, 85), [gc[0] * av[0] * g * 1.05, gc[1] * av[1] * g * 1.05, gc[2] * av[2] * g * 1.05]);
+        }
+        const gt = new THREE.Group(); root.add(gt); tu.addTo(gt, false); gt.traverse(m => { if (m.isInstancedMesh && m.instanceColor) m.instanceColor.ground = true; }); }
       G.col = G.cov = P.edge = null; }
 
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
@@ -17024,7 +17142,10 @@ const World = (function () {
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
     crowdFinish(CR, root, out);
     out.crowdPts = Float32Array.from(crowdPts);
-    out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, bales: nBales, boxes: nBoxes, houses: nHouses, stands: nStands, arches: nArch, sheep: nSheep, hay: nHay, cars: nCars, poles: nPoles, hedges: nHedge, roads: nRoads };   // (read by the tests)
+    { const geo = lfEagleGeo(), mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), i0 = T.idx(sStart), Lb = [];   // a wedge-tailed eagle circling over the paddocks (caCondors moves them)
+      for (const [r, sp, h, ox, oz, ph] of [[46, 0.17, 48, 30, -25, 0]]) { const m = new THREE.Mesh(geo, mat); root.add(m); Lb.push({ m, r, sp, h, ox, oz, ph, bank: 0.28 }); }
+      out.dyn.condors = { L: Lb, x0: T.px[i0], z0: T.pz[i0], y0: T.hy[i0], ax: T.px[i0], az: T.pz[i0], ay: T.hy[i0], t: null }; caCondors(out.dyn.condors, 0, null); }
+    out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, bales: nBales, boxes: nBoxes, houses: nHouses, stands: nStands, arches: nArch, sheep: nSheep, hay: nHay, cars: nCars, poles: nPoles, hedges: nHedge, roads: nRoads, fence: nFence, cattle: nCattle, farms: farms.length, marshals: nMarsh };   // (read by the tests)
     return out;
   }
 
