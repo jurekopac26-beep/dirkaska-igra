@@ -250,6 +250,7 @@
 
     /* ---- the championships (Core.CHAMPS keep their own English in .en) and place names on the HUD ---- */
     'Ruski križ': 'Russian Cross', 'Ruska kapelica': 'Russian Chapel', 'Ajdovska deklica': 'Heathen Maiden', 'Lasnica Fairmont': 'Fairmont Hairpin', 'Predor': 'Tunnel',
+    'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
     'Prvi ovinek': 'First Curve', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under the Bridge', 'Lasnica': 'Hairpin', 'Zadnja ravnina': 'Back Straight', 'Zadnji ovinek': 'Final Corner',
     /* ---- the run from the police (Vršič): the checkpoint, the hideout, the HUD, the rap sheet, the call signs on the radio; the screen to turn the phone ---- */
     'Kamera »{0}« je za pokončni položaj.': 'The camera “{0}” is for holding the phone upright.', 'Kamera »{0}« je za ležeči položaj.': 'The camera “{0}” is for holding the phone sideways.',
