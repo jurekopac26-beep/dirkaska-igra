@@ -513,6 +513,7 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 
 ### Nova proga
 
+0. Ime proge je v obliki »Kraj, Država« (npr. `Vršič, Slovenija`), glej `CLAUDE.md`.
 1. Nova datoteka `js/tracks/<id>.js` z definicijo proge (po vzoru obstoječih).
 2. V `index.html` dodaj `<script src="js/tracks/<id>.js"></script>` pred `js/core.js`, na mesto, kjer naj bo proga v meniju, nato zaženi `node tools/stamp.js`.
 3. Okolica: vsaka tema (`theme`) v `js/world.js` gradi okolico svoje proge (jezero, stavbe, gozd …), zato nova proga potrebuje svojo temo ali prilagojeno obstoječo. Proge v slogu Circuit Superstars (teme `forest`, `italia`, `kamp`) si delijo tribune, boks z mehaniki, gume, bale in robove; Toskana in Gromski rt svojo okolico (tribune, table, hiše, ciprese, kamp, zastavice, gledalce, jezero) naštejeta kar v datoteki proge. Pravi progi Nordschleife in Spa (temi `nring`, `spa`) si delita teren pasu ob progi (višinski model in raba tal iz datoteke proge), okolico pa gradi vsaka svoj graditelj (`buildNring`, `buildSpa`): Nordschleife gozd z mešanimi drevesi, kampe navijačev in grafite na asfaltu, Spa smreke v vrstah, pašnike, tribune in zaletišča formule 1.
