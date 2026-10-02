@@ -355,21 +355,21 @@
   }
  },
  "bigsur": {
-  "meshes": 1847,
-  "verts": 837627,
-  "instances": 47431,
+  "meshes": 1611,
+  "verts": 720733,
+  "instances": 55887,
   "props": 98,
   "crowd": 1021,
-  "world": "e28ec1a0",
+  "world": "a9d7c5ed",
   "propsHash": "4aad3ee3",
   "floor": "84fcde9b/8876",
   "groups": {
-   "-:MeshLambertMaterial": "82827ded",
-   "-:MeshPhongMaterial": "8c184b5c",
+   "-:MeshLambertMaterial": "c19b2eb3",
+   "-:MeshPhongMaterial": "f441a851",
    "-:MeshBasicMaterial": "dff4a508",
    "-:ShaderMaterial": "d75dbfbd",
    "crowd:MeshLambertMaterial": "40223e14",
-   "ao:MeshBasicMaterial": "b680777e",
+   "ao:MeshBasicMaterial": "90c5cc",
    "tyremarks:MeshBasicMaterial": "48f7fcbc",
    "roadwear:MeshLambertMaterial": "858643f4"
   }
