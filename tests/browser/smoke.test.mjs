@@ -1,8 +1,8 @@
 // Browser smoke test: the page loads (over http like GitHub Pages, and from a local file), every track can be
 // raced for 20 s on autopilot, settings migrate (one driving physics: Circuit Superstars; four difficulty levels), the
-// title demo runs, a Pikes Peak run and an Ouninpohja run finish and their records are saved (Ouninpohja also in the
-// rain, apart), Vršič's four ways to drive it (the run from the police: the checkpoint, the chase, the police radio,
-// the arrows, the mission in the building at the top). Zero page errors allowed.
+// title demo runs, a Pikes Peak run, an Ouninpohja run and a Harju run finish and their records are saved (Ouninpohja
+// also in the rain, apart), Vršič's four ways to drive it (the run from the police: the checkpoint, the chase, the police
+// radio, the arrows, the mission in the building at the top). Zero page errors allowed.
 //   node tests/browser/smoke.test.mjs
 import path from 'node:path';
 import url from 'node:url';
@@ -281,6 +281,35 @@ try {
       M.escaped && !M.busted && /^SKRIVALIŠČE · \d+ m/.test(M.goal) && M.msgs.includes('MISIJA OPRAVLJENA!') && M.screen === 'results' && M.title === 'Misija opravljena!' && /garažo/.test(M.sub) &&
       M.rows.includes('Kontrola prometa: nisi ustavil, pobegnil') && M.rows.some(r => /^Prevožena pot: 12,3 \/ 12,3 km$/.test(r)) && r.radioOff,
       `${M.title} "${M.sub}", HUD "${M.goal}", messages ${JSON.stringify(M.msgs)}, rows ${JSON.stringify(M.rows.slice(0, 4))}`);
+  }
+
+  // 6e. Harju, the city stage in Jyväskylä: first its evening sky from the cockpit (the sky dome drawn: the theme's own zenith and its warm glow
+  //     towards the sun by day, no glow at dusk); then to the flying finish: the record under 'harju@cs', the distance to go on the HUD, the
+  //     stage's words and the medal on the results, the co-driver's calls ready (the changes of surface among them: onto the gravel, the cobbles, the tarmac)
+  {
+    await startTrack(page, 'harju');
+    const s = await page.evaluate(async () => {
+      const g = window.__game, fr = async (n) => { for (let k = 0; k < n; k++) await new Promise(r => requestAnimationFrame(r)); };
+      g.S.camera = 'cockpit'; await fr(4); const day = Render.show;
+      Render.setAtmos({ season: 'summer', tod: 'dusk' }); await fr(3); const dusk = Render.show;
+      Render.setAtmos({ season: 'summer', tod: 'day' }); g.S.camera = 'chase'; await fr(2);
+      return { day: { sky: day.sky, warm: day.warm, todK: day.todK }, dusk: { sky: dusk.sky, warm: dusk.warm, todK: dusk.todK } };
+    });
+    T.check('Harju from the cockpit: the evening sky drawn with its warm glow towards the sun by day, none at dusk',
+      s.day.sky && s.day.todK === 0 && s.day.warm > 0.5 && s.dusk.sky && s.dusk.todK === 0.5 && s.dusk.warm === 0, JSON.stringify(s));
+    const r = await page.evaluate(async () => {
+      const g = window.__game;
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const left = document.getElementById('h-alt').textContent, calls = g.codrv.calls, notes = g.race.track.paceNotes().map(n => n.text);
+      for (let i = 0; i < 200 && g.phase !== 'done'; i++) { g.sim(1, true); if (i % 10 === 0) await new Promise(r => setTimeout(r, 0)); }
+      await new Promise(r => setTimeout(r, 800));
+      const rec = JSON.parse(localStorage.getItem('tdgp-records') || '{}');
+      return { phase: g.phase, t: g.race.player.finishTime, left, calls, notes, again: document.getElementById('res-restart').textContent, sub: document.getElementById('res-sub').textContent, rec: rec.tracks && rec.tracks['harju@cs'] };
+    });
+    const surf = ['onto gravel', 'onto cobbles', 'onto tarmac'].filter(w => r.notes.some(n => n.includes(w)));
+    T.check('Harju stage finishes, record saved for cs, the distance to go on the HUD, a medal on the results, the co-driver\'s calls of the surfaces',
+      r.phase === 'done' && r.rec && r.rec.bestTime > 0 && r.left === 'še 2,5 km' && r.again === 'Ponovi preizkušnjo' && /Harju/.test(r.sub) && /medalja/.test(r.sub) && r.calls >= 8 && surf.length === 3,
+      `time ${r.t && r.t.toFixed(2)} s, record ${r.rec && r.rec.bestTime}, HUD "${r.left}", button "${r.again}", "${r.sub}", ${r.calls} co-driver calls, surfaces: ${surf.join(', ')}`);
   }
   T.check('no page errors during the whole run', !errors.length, errors.slice(0, 5).join(' | '));
   await ctx.close();

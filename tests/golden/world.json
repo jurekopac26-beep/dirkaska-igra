@@ -345,6 +345,26 @@
    "roadwear:MeshLambertMaterial": "e5109e86"
   }
  },
+ "harju": {
+  "meshes": 909,
+  "verts": 1669339,
+  "instances": 10358,
+  "props": 33,
+  "crowd": 5931,
+  "world": "ec12f0",
+  "propsHash": "d16c96de",
+  "floor": "c8a71170/5488",
+  "groups": {
+   "-:MeshLambertMaterial": "4ab952f",
+   "-:MeshPhongMaterial": "1f58ec5c",
+   "-:MeshBasicMaterial": "cb960f93",
+   "puddles:MeshBasicMaterial": "c916858d",
+   "crowd:MeshLambertMaterial": "f0bf19ac",
+   "ao:MeshBasicMaterial": "39196fc",
+   "tyremarks:MeshBasicMaterial": "762d32d",
+   "roadwear:MeshLambertMaterial": "72bad0be"
+  }
+ },
  "bathurst": {
   "meshes": 973,
   "verts": 592185,
