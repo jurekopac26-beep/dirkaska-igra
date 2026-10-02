@@ -34,8 +34,9 @@ try {
 
   const head = () => page.evaluate(() => ({ head: [...document.querySelectorAll('#h-head i.on')].map(e => ({ cls: e.className, txt: e.lastElementChild.textContent })), n: document.querySelectorAll('#h-head i').length, nTail: document.querySelectorAll('#h-tail i').length,
     box: (() => { const r = document.getElementById('h-head').getBoundingClientRect(), s = document.getElementById('h-pol').getBoundingClientRect(); return { t: r.top, b: r.bottom, l: r.left, r: r.right, polB: s.bottom, w: innerWidth }; })() }));
+  await page.waitForFunction(() => document.querySelector('#h-head i.on.k'), null, { timeout: 40000 }).catch(() => 0);
   const h1 = await head(), k1 = h1.head.find(a => / k( |$)/.test(a.cls + ' '));
-  T.check('at the top, under the stars: an orange arrow to the patrol car with the spike strip, the metres to it (~' + s0.to + ' m), four places in each bar', !!k1 && /^\d+ m$/.test(k1.txt) && Math.abs(parseInt(k1.txt) - s0.to) <= 30 && h1.n === 4 && h1.nTail === 4 && h1.box.t >= h1.box.polB - 1 && h1.box.l >= 0 && h1.box.r <= h1.box.w, JSON.stringify(h1));
+  T.check('at the top, under the stars: an orange arrow to the patrol car with the spike strip, the metres to it (~' + s0.to + ' m), four places in each bar', !!k1 && /^\d+ m$/.test(k1.txt) && (k1 ? Math.abs(parseInt(k1.txt) - s0.to) : 999) <= 30 && h1.n === 4 && h1.nTail === 4 && h1.box.t >= h1.box.polB - 1 && h1.box.l >= 0 && h1.box.r <= h1.box.w, JSON.stringify(h1));
 
   // 60 m before it: the strip is laid, a hazard mat across the road seen from afar
   const s1 = await page.evaluate(async () => {
@@ -49,7 +50,7 @@ try {
   T.check('the strip laid (60 m ahead): a metre of it a mat 1.2 m wide (it was 0.56) with the spikes standing 0.24 m up, as many metres as the road is wide there', s1.on && s1.to <= 70 && !!mat && mat.y >= 0.2 && s1.metres >= Math.floor(s1.len) - 1 && s1.metres <= Math.ceil(s1.len) + 1, JSON.stringify(s1));
   await page.waitForFunction((to) => [...document.querySelectorAll('#h-head i.on.k')].some(e => parseInt(e.lastElementChild.textContent) <= to), 80, { timeout: 30000 }).catch(() => 0);
   const h2 = await head(), k2 = h2.head.find(a => / k( |$)/.test(a.cls + ' '));
-  T.check('and the orange arrow is still there, nearer', !!k2 && parseInt(k2.txt) < parseInt(k1.txt) && parseInt(k2.txt) <= 80, JSON.stringify(h2.head));
+  T.check('and the orange arrow is still there, nearer', !!k2 && k1 && parseInt(k2.txt) < parseInt(k1.txt) && parseInt(k2.txt) <= 80, JSON.stringify(h2.head));
 
   // the radio: a line in the column at the right, under the map, as wide as it, small; not in the middle
   const rd = await page.waitForFunction(() => { const e = document.getElementById('h-radio'); return e.className.includes('show') && e.textContent.length > 5; }, null, { timeout: 40000 }).then(() => page.evaluate(() => {
