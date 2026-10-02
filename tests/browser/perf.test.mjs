@@ -3,6 +3,9 @@
 // places around the lap. Fails when the busiest of them needs more than tests/golden/perf.json allows (+10 % +5 draw
 // calls, +10 % +20k vertices), e.g. a change that makes a track or car too heavy for phones. The JavaScript time of
 // physics+AI and of the render-side updates is only printed (it depends on the machine).
+// The field is the 13 cars of the earlier default (openGame pins it: the cost of the track and the car stay comparable). Each car in view costs
+// about 10 draw calls, so the full field of 22 (Izberi progo: Tekmovalci, the default) costs some 90 calls more (measured at Riviera 288 -> 380,
+// Monaco 226 -> 281, Toskana 313 -> 423 on average; the busiest place 387 -> 489): a phone that cannot keep up takes a smaller field.
 //   node tests/browser/perf.test.mjs            check
 //   node tests/browser/perf.test.mjs --update   write new reference values
 import fs from 'node:fs';

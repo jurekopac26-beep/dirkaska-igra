@@ -1,7 +1,8 @@
-// The timing tower and the lap table: a race at Jezero Ring (13 cars, on autopilot): upright, the tower under the place in the left
-// column: the leader (VODI), the first three and the player with the two ahead and behind, the gaps growing down the order, the player's
-// row lit; switched off in the settings: gone. On its side: at the right under the map, the player with one ahead and behind. The results:
-// every driver's laps (3 each for those at the line), the race's fastest lap in purple once, the pit stops.
+// The timing tower, the race's notes and the lap table: a race at Jezero Ring (13 cars, on autopilot): upright and on its side the tower at the
+// right under the map: the leader (VODI), the first three and the player with the two ahead and behind (on its side one), the gaps growing down
+// the order, the player's row lit; switched off in the settings: gone. Under the tower the race's notes: a yellow one (ZADNJI KROG!) small, a
+// toast (Kamera: ...) under it, none covering another; a red one (NAPAČNA SMER!) big in the middle. The results: the toast back in the corner of
+// the screen, every driver's laps (3 each for those at the line), the race's fastest lap in purple once, the pit stops.
 //   node tests/browser/tower.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -14,16 +15,39 @@ try {
   await page.evaluate(() => { const g = window.__game; g.pause(); g.sim(22, true); g.resume(); });
   // (the tower is drawn four times a second of the race; a slow software renderer takes a few frames to get there: read it once it shows
   // the order as it is now)
-  const read = () => { const g = window.__game, P = g.race.player, H = document.getElementById('h-tower'), r = H.getBoundingClientRect(), k = document.getElementById('h-rank').getBoundingClientRect();
+  const read = () => { const g = window.__game, P = g.race.player, H = document.getElementById('h-tower'), r = H.getBoundingClientRect(), m = document.getElementById('h-map').getBoundingClientRect();
     const rows = [...H.querySelectorAll('.tw-r')].map(e => ({ pos: +e.querySelector('b').textContent, code: e.querySelector('span').textContent, gap: e.querySelector('em').textContent, me: e.classList.contains('me') }));
-    return { rows, sep: H.querySelectorAll('.tw-sep').length, pos: P.pos, n: g.race.cars.length, left: r.left, top: r.top, colBottom: k.bottom, visible: getComputedStyle(H).display !== 'none' }; };
+    return { rows, sep: H.querySelectorAll('.tw-sep').length, pos: P.pos, n: g.race.cars.length, left: r.left, right: r.right, top: r.top, bottom: r.bottom, mapLeft: m.left, mapBottom: m.bottom, w: innerWidth, h: innerHeight, visible: getComputedStyle(H).display !== 'none' }; };
   const t1 = await page.waitForFunction((src) => { const t = (0, eval)(src)(), me = t.rows.find(x => x.me); return me && me.pos === t.pos && t.rows.some(x => /^\+\d/.test(x.gap)) && t; }, read.toString(), { timeout: 20000 })
     .then(h => h.jsonValue()).catch(() => page.evaluate((src) => (0, eval)(src)(), read.toString()));
   const r = t1.rows, me = r.find(x => x.me), gaps = r.filter(x => /^\+\d/.test(x.gap)).map(x => parseFloat(x.gap.slice(1)));
   const want = t1.pos <= 6 ? 8 : 8;   // (3 first + the player with two ahead and two behind: 8 rows whether the blocks meet or not)
-  T.check('upright: the tower in the left column, the leader (VODI), the first three, the player (TI, lit) with two ahead and behind', t1.visible && t1.left < 60 && r.length >= 7 && r.length <= want && r[0].pos === 1 && r[0].gap === 'VODI' && r[1].pos === 2 && r[2].pos === 3 && me && me.code === 'TI' && me.pos === t1.pos &&
+  T.check('upright: the tower at the right under the map, the leader (VODI), the first three, the player (TI, lit) with two ahead and behind', t1.visible && t1.left >= t1.mapLeft - 2 && t1.top >= t1.mapBottom && t1.right <= t1.w && r.length >= 7 && r.length <= want && r[0].pos === 1 && r[0].gap === 'VODI' && r[1].pos === 2 && r[2].pos === 3 && me && me.code === 'TI' && me.pos === t1.pos &&
     r.some(x => x.pos === Math.min(t1.n, t1.pos + 2)) && (t1.pos - 2 <= 4 || t1.sep === 1), JSON.stringify(t1));
   T.check('the gaps to the leader grow down the order (+s.s), other drivers by three letters', gaps.length >= 4 && gaps.every((v, i) => i === 0 || v >= gaps[i - 1] - 0.3) && r.filter(x => !x.me).every(x => /^[A-ZČŠŽ]{3}$/.test(x.code)), JSON.stringify(r));
+  // the race's notes under the tower (upright and on its side): a yellow one small, a toast under it (the camera key makes one), a red one big in the middle
+  const notes = async () => {
+    const settled = () => page.evaluate(() => Promise.all(['h-msg', 'toast'].flatMap(id => document.getElementById(id).getAnimations().map(a => a.finished.catch(() => 0)))));   // (the 0.2 s the note fades in: measured once it is done)
+    await page.evaluate(() => { const m = document.getElementById('h-msg'); m.textContent = 'ZADNJI KROG!'; m.className = 'show gold'; });
+    await page.keyboard.press('KeyC'); await page.waitForTimeout(250); await settled();
+    const gold = await page.evaluate(() => {
+      const $ = (id) => document.getElementById(id), rc = (e) => { const r = e.getBoundingClientRect(); return { l: r.left, r: r.right, t: r.top, b: r.bottom }; }, fs = (e) => parseFloat(getComputedStyle(e).fontSize);
+      const m = $('h-msg'), t = $('toast');
+      return { msg: Object.assign(rc(m), { fs: fs(m), pos: getComputedStyle(m).position }), toast: Object.assign(rc(t), { fs: fs(t), parent: t.parentNode.id, on: t.classList.contains('show'), text: t.textContent }), tower: rc($('h-tower')), side: rc($('h-side')) };
+    });
+    for (let k = 0; k < 3; k++) { await page.keyboard.press('KeyC'); await page.waitForTimeout(100); }   // (round the four cameras: the setting as it was)
+    await page.evaluate(() => { const m = document.getElementById('h-msg'); m.textContent = 'NAPAČNA SMER!'; m.className = 'show warn'; }); await settled();
+    const warn = await page.evaluate(() => { const m = document.getElementById('h-msg');
+      const cs = getComputedStyle(m), r = m.getBoundingClientRect(), o = { fs: parseFloat(cs.fontSize), pos: cs.position, al: cs.textAlign, l: r.left, r: r.right, w: innerWidth }; m.className = ''; return o; });
+    return { gold, warn };
+  };
+  const noteChecks = (where, n) => {
+    const g = n.gold, w = n.warn;
+    T.check(`${where}: a yellow note (ZADNJI KROG!) small, in the column at the right under the order`, g.msg.pos === 'static' && g.msg.fs <= 16 && Math.abs(g.msg.r - g.side.r) <= 1 && g.msg.t >= g.tower.b - 1, JSON.stringify({ msg: g.msg, tower: g.tower, side: g.side }));
+    T.check(`${where}: a toast (Kamera: ...) in the same column, under the note and not covering it, small`, g.toast.parent === 'h-side' && /^Kamera: /.test(g.toast.text) && g.toast.t >= g.msg.b - 1 && Math.abs(g.toast.r - g.side.r) <= 1 && g.toast.fs <= 14, JSON.stringify(g.toast));
+    T.check(`${where}: a red note (NAPAČNA SMER!) stays big, in the middle`, w.pos === 'fixed' && w.fs >= 24 && w.al === 'center' && w.l <= 1 && w.r >= w.w - 1, JSON.stringify(w));
+  };
+  noteChecks('upright', await notes());
   await page.evaluate(() => { window.__game.onAction('to-settings'); document.querySelector('[data-set="tower"] button[data-v="0"]').click(); window.__game.onAction('settings-done'); });
   await page.waitForTimeout(300);
   const off = await page.evaluate(() => getComputedStyle(document.getElementById('h-tower')).display);
@@ -37,11 +61,13 @@ try {
   const t2 = await page.waitForFunction((src) => { const t = (0, eval)(src)(); return t.rows <= 7 && t; }, read2.toString(), { timeout: 20000 })   // (drawn again at its next quarter of a second)
     .then(h => h.jsonValue()).catch(() => page.evaluate((src) => (0, eval)(src)(), read2.toString()));
   T.check('on its side: at the right under the map, clear of the pedals (at most 7 rows)', t2.left >= t2.mapLeft - 2 && t2.top >= t2.mapBottom && t2.bottom < t2.h * 0.66 && t2.rows >= 5 && t2.rows <= 7, JSON.stringify(t2));
+  noteChecks('on its side', await notes());
   await page.setViewportSize({ width: 390, height: 844 }); await page.waitForTimeout(300);
 
   // the results: every driver's laps
   await page.evaluate(() => { const g = window.__game; g.pause(); for (let k = 0; k < 300 && g.phase !== 'done'; k++) g.sim(2, true); if (g.phase !== 'done') g.resume(); });
   await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 180000 });
+  T.check('the results: a note of the game back in the corner of the screen (not in the HUD that is gone)', await page.evaluate(() => document.getElementById('toast').parentNode.id === 'app'));
   const lt = await page.evaluate(() => { const E = document.getElementById('res-laps'), rows = [...E.querySelectorAll('tbody tr')];
     return { shown: !E.classList.contains('off'), head: [...E.querySelectorAll('thead th')].map(t => t.textContent), rows: rows.length, laps: rows.map(tr => [...tr.querySelectorAll('td')].slice(2, 5).filter(td => /^\d+:\d\d\.\d{3}$/.test(td.textContent)).length),
       purple: E.querySelectorAll('td.ob').length, green: E.querySelectorAll('td.pb').length, me: !!E.querySelector('tr.me'), stops: rows.map(tr => tr.lastElementChild.textContent) }; });
