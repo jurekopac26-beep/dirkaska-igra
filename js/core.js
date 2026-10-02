@@ -56,10 +56,12 @@ const Core = (function () {
   // around one beyond its limit that still counts as in it (rm m: what flies over its edge comes back down onto it)
   const SR = { ds: 2, fl: 3.5, lf: 12, rm: 4 }, _sp = { S: null, j: -1, f: 0, t: 0, u: 0, kx: 1, kz: 0 }, _n2 = [0, 0];
 
+  const ROAD_WIDEN = 1.3;
   class Track {
     constructor(def) {
       this.def = def;
-      this.w = def.halfWidth;
+      this.wk = def.barW ? 1 : ROAD_WIDEN;   // every road is ROAD_WIDEN times its drawn width (as wide on average as the reference game's); Vršič (barW) was widened on its own
+      this.w = def.halfWidth * this.wk;
       // def.open: a point-to-point road (hill climb). Sample 0 = points[0] (bottom end), sample N-1 = the last point (top end);
       // nothing wraps: every neighbour lookup is clamped to [0, N-1] instead of taken modulo N.
       const open = this.open = !!def.open;
@@ -372,7 +374,7 @@ const Core = (function () {
       const N = this.N, ds = this.ds, s0 = def.start ? this.nearestIdx(def.start[0], def.start[1]) * ds : 0, at = (d) => clamp(Math.round((s0 + d) / ds), 0, N - 1);
       const wa = this.wa = new Float64Array(N).fill(this.w);
       if (def.widths) {
-        const K = def.widths.map(([d, hw]) => [s0 + d, hw]).sort((a, b) => a[0] - b[0]);
+        const K = def.widths.map(([d, hw]) => [s0 + d, hw * this.wk]).sort((a, b) => a[0] - b[0]);
         for (let i = 0, m = 0; i < N; i++) {
           const s = i * ds; while (m < K.length - 1 && K[m + 1][0] <= s) m++;
           wa[i] = s <= K[0][0] ? K[0][1] : m >= K.length - 1 ? K[K.length - 1][1] : lerp(K[m][1], K[m + 1][1], (s - K[m][0]) / Math.max(1e-6, K[m + 1][0] - K[m][0]));
