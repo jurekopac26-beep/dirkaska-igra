@@ -119,10 +119,10 @@
   "jsMs": 1.31
  },
  "beartooth": {
-  "calls": 327,
-  "maxCalls": 420,
-  "kverts": 961,
-  "maxKverts": 1173,
-  "jsMs": 1.09
+  "calls": 299,
+  "maxCalls": 380,
+  "kverts": 934,
+  "maxKverts": 1149,
+  "jsMs": 1
  }
 }
