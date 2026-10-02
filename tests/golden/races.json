@@ -502,52 +502,52 @@
  "vrsic/cs": {
   "finished": 13,
   "cars": 13,
-  "winner": 403.91,
+  "winner": 405.42,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "5bc0953adad7b58efd8dab0a"
+  "digest": "8dd4aeb168f3edaae3e76ca7"
  },
  "vrsic/cs/rain": {
   "finished": 13,
   "cars": 13,
-  "winner": 439.63,
+  "winner": 444.76,
   "spins": 0,
-  "walls": 0,
+  "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "0f7646c2fa55580c1ea990b1"
+  "digest": "6220dda31754cbbd41e25b33"
  },
  "vrsic/cs/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 369.83,
-  "spins": 4,
-  "walls": 8,
+  "winner": 366.04,
+  "spins": 1,
+  "walls": 7,
   "rescues": 0,
   "nan": false,
-  "digest": "9137bf0d60b367299e57255a"
+  "digest": "893bd794094f1c44dd336b8d"
  },
  "vrsic/cs/lm": {
   "finished": 13,
   "cars": 13,
-  "winner": 368.69,
+  "winner": 371.93,
   "spins": 0,
-  "walls": 0,
+  "walls": 5,
   "rescues": 0,
   "nan": false,
-  "digest": "040cb4d420edea64d90eab7c"
+  "digest": "03e218a4332bf02446a8d5ee"
  },
  "vrsic/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 403.57,
+  "winner": 402.8,
   "spins": 0,
-  "walls": 0,
+  "walls": 5,
   "rescues": 0,
   "nan": false,
-  "digest": "f398f825ddf1d7ead8b122d9"
+  "digest": "621a6a04c4c58d176b0463b4"
  },
  "nring/cs": {
   "finished": 21,
@@ -848,5 +848,105 @@
   "rescues": 0,
   "nan": false,
   "digest": "23a49c43f0de0338644e78ff"
+ },
+ "harju/cs": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 90.19,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e226d7dead5c8913d9308c62"
+ },
+ "harju/cs/rain": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 97.78,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "6274e02dbedde8551953df67"
+ },
+ "harju/cs/formula": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 85.83,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "f48d4ea03275e87cb31e6c94"
+ },
+ "harju/cs/lm": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 86.84,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "672114ca9a687df8ec272f77"
+ },
+ "harju/cs/car": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 92.72,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e779093f36f921231334dcc6"
+ },
+ "bathurst/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 286.78,
+  "spins": 0,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "6265fe88b78d830c56ce95bb"
+ },
+ "bathurst/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 299.79,
+  "spins": 0,
+  "walls": 6,
+  "rescues": 0,
+  "nan": false,
+  "digest": "2ae0f0d80f5efe53e5cf9aee"
+ },
+ "bathurst/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 239.15,
+  "spins": 0,
+  "walls": 20,
+  "rescues": 0,
+  "nan": false,
+  "digest": "00ce31126391989592555ac0"
+ },
+ "bathurst/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 241.91,
+  "spins": 0,
+  "walls": 24,
+  "rescues": 0,
+  "nan": false,
+  "digest": "00afbd29e73981b55ea6ed9d"
+ },
+ "bathurst/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 286.8,
+  "spins": 0,
+  "walls": 8,
+  "rescues": 0,
+  "nan": false,
+  "digest": "fb1c990519513b95c2e08e56"
  }
 }
