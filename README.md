@@ -101,7 +101,7 @@ Okolica:
 - **Dirka**: start z lučmi pod portalom LARGADA, modri portali kontrolnih točk z višino, cilj META v Portillu s tablo PORTILLO in modrima tablama proti meji, transparent SUBIDA LOS CARACOLES, čilske zastave ob štartni vrsti, gledalci ob startu, cilju, kontrolnih točkah, vsakem tretjem ovinku in pri razgledišču. Na zaprti cesti čakajo tovornjaki: ob startu v odstavnem pasu, v Portillu na parkirišču in na koncu ceste pred zaporo proti meji.
 - **Kondorji**: trije andski kondorji krožijo na vzgornikih nad cesto, blizu avta.
 
-## Beartooth (dirka, kronometer, promet, policija)
+## Beartooth, ZDA (dirka, kronometer, promet, policija)
 
 Najbolj znan del ceste Beartooth Highway (U.S. Route 212 med Red Lodgeom v Montani in prelazom Beartooth Pass v Wyomingu): serpentine na strani Montane, kjer se cesta po strmem pobočju nad dolino Rock Creek dvigne proti visoki planoti, v pravem merilu. Proga se začne na dolgem kraku ceste nad dolino Rock Creek (2.631 m, 45,0252° S, 109,4264° Z), gre skozi pet obratov (trije za 150° in več, dva za ~100°) mimo razgledišča Rock Creek Vista (4. ovinek, 2.801 m) in se konča na vrhu serpentin (2.849 m, 45,0365° S, 109,4033° Z), kjer cesta zavije proti planoti: 4,94 km in 218 m vzpona. Kartica proge je ena, s stikalom **Dirka / Kronometer / Promet / Policija**, kot na Vršiču:
 
