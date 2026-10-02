@@ -1,24 +1,10 @@
 {
- "jezero": {
-  "calls": 268,
-  "maxCalls": 296,
-  "kverts": 642,
-  "maxKverts": 782,
-  "jsMs": 0.97
- },
  "riviera": {
   "calls": 288,
   "maxCalls": 336,
   "kverts": 509,
   "maxKverts": 607,
   "jsMs": 0.75
- },
- "gora": {
-  "calls": 254,
-  "maxCalls": 295,
-  "kverts": 997,
-  "maxKverts": 1054,
-  "jsMs": 1.65
  },
  "ljubljana": {
   "calls": 281,
@@ -34,26 +20,12 @@
   "maxKverts": 757,
   "jsMs": 0.79
  },
- "gozd": {
-  "calls": 322,
-  "maxCalls": 343,
-  "kverts": 1558,
-  "maxKverts": 1890,
-  "jsMs": 1.08
- },
  "toskana": {
   "calls": 313,
   "maxCalls": 387,
   "kverts": 1336,
   "maxKverts": 1403,
   "jsMs": 0.89
- },
- "grom": {
-  "calls": 330,
-  "maxCalls": 384,
-  "kverts": 1530,
-  "maxKverts": 1670,
-  "jsMs": 0.87
  },
  "pikes": {
   "calls": 90,
@@ -138,5 +110,40 @@
   "kverts": 461,
   "maxKverts": 798,
   "jsMs": 0.85
+ },
+ "chapman": {
+  "calls": 211,
+  "maxCalls": 289,
+  "kverts": 1087,
+  "maxKverts": 1271,
+  "jsMs": 0.94
+ },
+ "jezero": {
+  "calls": 278,
+  "maxCalls": 330,
+  "kverts": 611,
+  "maxKverts": 748,
+  "jsMs": 0.97
+ },
+ "gora": {
+  "calls": 254,
+  "maxCalls": 295,
+  "kverts": 997,
+  "maxKverts": 1054,
+  "jsMs": 1.65
+ },
+ "gozd": {
+  "calls": 322,
+  "maxCalls": 343,
+  "kverts": 1558,
+  "maxKverts": 1890,
+  "jsMs": 1.08
+ },
+ "grom": {
+  "calls": 330,
+  "maxCalls": 384,
+  "kverts": 1530,
+  "maxKverts": 1670,
+  "jsMs": 0.87
  }
 }
