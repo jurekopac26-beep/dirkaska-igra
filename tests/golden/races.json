@@ -998,5 +998,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "8731a6ecbcca5ca7d3ce96ab"
+ },
+ "chapman/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 132.65,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "4664e1b60fac6885f5e5301e"
+ },
+ "chapman/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 143.67,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "f2e9fdbcc994ae320a496178"
+ },
+ "chapman/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 113.8,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "902b8adf34013930d392b7f4"
+ },
+ "chapman/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 116.05,
+  "spins": 0,
+  "walls": 8,
+  "rescues": 0,
+  "nan": false,
+  "digest": "8e83f4b8ebcedd4992f063ea"
+ },
+ "chapman/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 132.86,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e8e7c26beb731a0968375a4f"
  }
 }
