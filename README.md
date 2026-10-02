@@ -1,11 +1,11 @@
 # dirkaska-igra
 Dirkanje z avti 
 
-## Pikes Peak (kronometer)
+## Pikes Peak, ZDA (kronometer)
 
 Vzpon od starta (2862 m) do vrha (4301 m) proti uri, brez nasprotnikov. Na poti so kontrolne točke CP1–CP4 z vmesnimi časi. Po cilju se osebni rekord in lestvica najboljših 10 časov shranita v brskalnik na tej napravi. Pred vožnjo lahko avto nadgradiš (motor, gume, zavore, aerodinamika); nadgradnje veljajo na vseh progah. Proga je sorazmerno skrajšana na ~6,2 km (prava je 19,99 km), višine na zaslonu so prave.
 
-## Ouninpohja (kronometer na makadamu)
+## Ouninpohja, Finska (kronometer na makadamu)
 
 Najslavnejša hitrostna preizkušnja Relija Finska (Jämsä): vožnja proti uri po makadamu, brez nasprotnikov, od Hämepohje do Hassintieja, v smeri, v kateri jo vozijo od leta 1995. Prava preizkušnja je dolga ~33 km in ima več kot 75 skokov, v igri je sorazmerno skrajšana na ~9,7 km z 28 skoki, kraji pa so v pravem vrstnem redu:
 
@@ -39,7 +39,7 @@ Okolica:
 - **Helikopter in kamera**: TV helikopter se drži daleč od kamere (prej je v izometričnem pogledu pogosto prekril pol zaslona), njegova senca pa drsi po tleh. Drevesa in hiše med kamero in avtom se sproti razredčijo, da avta ne zakrijejo.
 - **Finske podrobnosti**: rumene table z losom ob gozdu, los na robu gozda in drugi, ki brodi po ribniku med trstiko. Na jezerih so čolni z navijači, na velikem jezeru otok z bori. Iz žarov ob taborih navijačev in iz dimnikov savn se vije dim. Na obzorju se dvigajo gozdnati griči.
 
-## Harju (kronometer v mestu)
+## Harju, Finska (kronometer v mestu)
 
 Mestna hitrostna preizkušnja Relija Finska na grebenu Harju sredi Jyväskyläja. Na njej so tekmovali že na prvih Jyväskylän Suurajot leta 1951, danes pa odpira reli v četrtek zvečer (in se ponovi v petek). Proga je v pravem merilu in po pravih ulicah (OpenStreetMap), višine so iz satelitskega višinskega modela ArcticDEM (2 m), iz katerega so odstranjena drevesa in stavbe. Postavitev je iz let 2025 in 2026 (uradno 2,58 km), prerisana z zemljevida preizkušnje na rally-maps.com na ulice in poti iz OpenStreetMap. Od zastavice za start do zastavice za cilj meri ~2,47 km (narisana črta na zemljevidu meri ~2,5 km, vodnik za gledalce 2025 pa je navajal 2,50 km):
 
@@ -63,7 +63,7 @@ Potek se ujema z opisom gledaliških mest iz vodnika 2025: po spustu zaviranje i
 - **Park Harju**: ~3.600 dreves po modelu višine krošenj: stari rdeči bori na grebenu (oranžno rjava debla zgoraj, nepravilne blazine iglic v krošnji), smreke in breze, na ulicah in dvoriščih lipe in javorji. Tla pod bori so iglice, mah in pesek, ob progi rastejo borovnice, brusnice in vresje, trave in poznopoletno cvetje (ozkolistni vrbovec, rman, zvončice), okoli lesenih hiš so vrtovi z grmi. Dlje od ceste so drevesa preprostejša, da igra na telefonih ostane tekoča.
 - **Reli**: ~5.900 gledalcev (največ v modrem, belem in črnem) na pobočjih, stopnicah in pločnikih za jeklenimi ograjami (v mestu) in oranžno mrežo (v parku), z dolgimi večernimi sencami, reklamnimi pasicami izmišljenih znamk igre, table YLEISÖALUE in KIELLETTY ALUE (zaprte stranske ulice, redarji v oranžnem), stojnice z žarom pod rdeče-belimi šotori (vrsta, pivske mize) in prenosna stranišča za množico, zidovi iz bal slame v šikanah in okoli otoka lasnice, premakljive bale na zunanji strani ostrih ovinkov, start z lučmi, CP loki, rumena in rdeča tabla pred ciljem, STOP, TV stolpi s snemalci in TV helikopter. Na obzorju so gozdnati griči okoli mesta in jezero Jyväsjärvi.
 
-## Vršič (dirka, kronometer, promet, policija)
+## Vršič, Slovenija (dirka, kronometer, promet, policija)
 
 Cesta čez prelaz Vršič (regionalna cesta R1-206, »Ruska cesta«), njena severna stran: od križišča v Kranjski Gori (~800 m) mimo jezera Jasna, skozi gozd in po 24 oštevilčenih serpentinah do prelaza na 1611 m, v pravem merilu (v igri 12,3 km, uradno 12,35 km, 811 m vzpona). Cesta je široka 16,9 m (za 30 % širša od prvotnih 13 m, ograje so ostale, kjer so bile); v Kranjski Gori in pri Jasni sta na obeh straneh pločnika (2,2 m, granitni robnik in tlakovci), ki sta del ceste: po njiju se da voziti z enakim oprijemom kot po asfaltu. Čez cesto vodi pet prehodov za pešce (zebre s tablami), ob njej je dvanajst avtobusnih postaj z nadstreški. Kartica proge je ena, na njej pa je stikalo **Dirka / Kronometer / Promet / Policija**:
 
@@ -104,7 +104,7 @@ Okolica:
 - **Kraji**: hiše in hoteli Kranjske Gore po obrisih iz OpenStreetMap, jezero Jasna s kipom Zlatoroga na skali ob vodi, Mihov dom, Ruska kapelica (lesena, z dvema čebulastima kupolama), Koča na Gozdu, Erjavčeva koča, Tičarjev dom in Poštarski dom na prelazu; ob cesti pri kočah so table z imeni, pred vsako serpentino tabla z njeno številko in višino.
 - **Cesta**: asfalt s prekinjeno sredinsko črto, tlakovane serpentine s kamnitim zidom na zunanji strani, jeklene varnostne ograje, kjer teren pada, betonske ograje na mostovih (pod daljšimi je struga potoka), ob cesti smerniki. Start z lučmi v Kranjski Gori, zeleni loki kontrolnih točk, cilj na prelazu s tablo PRELAZ VRŠIČ 1.611 m, parkiriščem in gledalci (v begu pred policijo ni semaforja ne cilja, je pa garaža za prelazom).
 
-## Los Caracoles (dirka, kronometer, promet, policija)
+## Los Caracoles, Čile (dirka, kronometer, promet, policija)
 
 Najslavnejši odsek čilske ceste Ruta 60 (iz Los Andesa čez prelaz Los Libertadores proti Mendozi v Argentini), »polži«: 29 oštevilčenih ovinkov tik pod mejnim prehodom, v pravem merilu. Proga se začne na cesti ob reki Juncalillo (~2.200 m), čez most se dvigne do 1. ovinka (2.276 m), nato po »lestvi« dvajsetih ovinkov, naloženih drug nad drugim na pobočju, do ~2.560 m, po dolgih prečnicah mimo dveh betonskih galerij proti plazovom in po zadnjih devetih ovinkih do 29. ovinka (~2.795 m) na planoti Llano La Calavera, od tam pa do cilja v Portillu ob jezeru Laguna del Inca (2.866 m): 10,8 km in 666 m vzpona. Kartica proge je ena, s stikalom **Dirka / Kronometer / Promet / Policija**, kot na Vršiču:
 
@@ -125,7 +125,7 @@ Okolica:
 - **Dirka**: start z lučmi pod portalom LARGADA, modri portali kontrolnih točk z višino, cilj META v Portillu s tablo PORTILLO in modrima tablama proti meji, transparent SUBIDA LOS CARACOLES, čilske zastave ob štartni vrsti, gledalci ob startu, cilju, kontrolnih točkah, vsakem tretjem ovinku in pri razgledišču. Na zaprti cesti čakajo tovornjaki: ob startu v odstavnem pasu, v Portillu na parkirišču in na koncu ceste pred zaporo proti meji.
 - **Kondorji**: trije andski kondorji krožijo na vzgornikih nad cesto, blizu avta.
 
-## Katu-Jaryk (spust proti uri na makadamu)
+## Katu-Jaryk, Rusija (spust proti uri na makadamu)
 
 Legendarni spust s prelaza Katu-Jaryk (Кату-Ярык) v Republiki Altaj v Rusiji, po edini cesti v dolino reke Čulišman (regionalna cesta 84K-5 Baliktujul–Balikča). Prvi kronometer v igri, ki pelje **navzdol**: sam proti uri, brez nasprotnikov, od starta na Ulaganski planoti (1242 m) mimo parkirišča in razgledišč na robu kanjona (1206 m), po sedmih lasnicah in strmem prečenju pobočja nad reko do letečega cilja na dnu doline (683 m). Proga je v pravem merilu: od starta do cilja 4,7 km in 559 m spusta, povprečno 12 %, najstrmeje 22 %.
 
@@ -144,11 +144,11 @@ Okolica:
 - **Dolina**: reka Čulišman (bregovi iz OpenStreetMap; zelenkasto modra ledeniška voda, ki ob dolini pada navzdol) z brzicami, kjer bela voda teče s tokom mimo skal, kamp ob vznožju spusta z jurtami, brunaricami, ograjami in tablo na vhodu, kampi turistov iz OpenStreetMap (Kurkure, Ažu, baza Ajhan in dva brez imena) s šotori, jurtami, ognjišči, ljudmi in avtomobili, lesena stranišča, viseča brv čez reko (pot do slapov) z blagajno na začetku, leteči cilj s tablami kot na Ouninpohji (rumena 100 m pred ciljem, rdeča na cilju, STOP 200 m za njim).
 - Navijači stojijo na startu, na vrhu, ob lasnicah, pri kontrolnih točkah in na cilju ter vzklikajo, ko pripelješ mimo. Jeseni macesni porumenijo in trava postane slamnata, pozimi je vse pod snegom (makadam je steptan).
 
-## Nürburgring Nordschleife
+## Nürburg, Nemčija (Nordschleife)
 
 Pravi „Zeleni pekel“ v Nemčiji v pravem merilu: en krog (20,7 km) proti 20 tekmecem (na drugih progah jih je 12), ki so tu hitrejši kot drugod, start in cilj pri tribuni T13, vožnja v smeri urinega kazalca. Oblika proge je iz OpenStreetMap, višine pa iz satelitskih višinskih modelov (SRTM in Copernicus), zato so klanci in spusti pravi: od T13 (~620 m) po Fuchsröhre navzdol do Breidscheida (~335 m, najnižja točka), nato dolg vzpon do Hohe Acht (~617 m). Ovinka Karussell in Kleines Karussell sta nagnjena (betonska skleda na notranji strani, avto ju lahko odpelje hitreje), na Flugplatzu, v Pflanzgartnu in na Sprunghüglu avto poskoči. Med vožnjo se pod uro izpišejo imena ovinkov (Hatzenbach, Flugplatz, Fuchsröhre, Adenauer Forst, Wehrseifen, Breidscheid, Bergwerk, Kesselchen, Karussell, Hohe Acht, Brünnchen, Pflanzgarten, Schwalbenschwanz, Döttinger Höhe …), pri KROG pa, koliko kilometrov kroga je že za tabo. Gozd, travniki, vasi in mostovi so postavljeni po pravi rabi tal in stavbah iz OpenStreetMap; gozd ima smreke, bukve, macesne in suhe smreke, ob robu grmovje in mlado drevje, tla pod krošnjami so temna. Na asfaltu so grafiti in zastave navijačev (največ pri znanih ovinkih in na Döttinger Höhe), katranske razpoke, zaplate in sledi gum pred počasnimi ovinki. Ob progi so kampi navijačev (šotori, prikolice, paviljoni, zastave, odri), reklame na ograjah, maršalske hišice s številkami na vsakih 250 m, table 300/200/100 pred zaviranjem in puščice v najostrejših ovinkih; pod mostovi proge tečejo ceste, na Döttinger Höhe so drevored in ograje ob poljih.
 
-## Spa-Francorchamps
+## Spa, Belgija
 
 Prava proga v Belgiji v pravem merilu: krog meri 7,0 km (uradno 7,004 km), dva kroga proti 12 tekmecem, vožnja v smeri urinega kazalca, start in cilj pred stavbo boksov. Oblika proge in imena ovinkov so iz OpenStreetMap, višine pa iz lidarskega modela reliefa Valonije (ločljivost 0,5 m), zato so klanci pravi: od La Source (423 m) navzdol do Eau Rouge (390 m), po Raidillonu navzgor z do 16 % naklona, po ravnini Kemmel do Les Combes in Malmedyja (469 m, najvišja točka), nato navzdol skozi Pouhon do Paul Frère (367 m, najnižja točka) in spet navzgor skozi Blanchimont do šikane Bus Stop; skupaj 102 m višinske razlike. Med vožnjo se pod uro izpišejo imena ovinkov (La Source, Eau Rouge, Raidillon, Kemmel, Les Combes, Malmedy, Bruxelles, Speaker's Corner, Pouhon, Fagnes, Campus, Paul Frère, Blanchimont, Bus Stop). Gozd in travniki, tribune (Raidillon, F1, Silver, Endurance, RX, tribune pri La Source), stavbi boksov z boksarsko stezo in redarske postaje P1–P19 so postavljeni po OpenStreetMap; pred La Source, Les Combes, Bruxelles in Bus Stop stojijo table za zaviranje (300, 200, 100 m). Spa ima svojo pokrajino, drugačno od Nordschleife: sveže zelene pašnike in travnike s senom, na strmih pobočjih Arden pa smreke, posajene v ravnih vrstah (odseki starih in mladih smrek, posekane jase z orlovo praprotjo, brezami in mladim drevjem, bukovi gozdovi, ob robu gozda breze); tla pod smrekami so rjava od iglic. Ob progi so hiše s skrilastimi strehami, tribune z barvnimi sedeži, polne navijačev, na brežinah pri znanih ovinkih gledalci s šotori in avti v gozdu, trava ob progi in na odprtih zelenicah za ograjami pa je pokošena v svetle in temnejše pasove vzdolž proge (kot na Red Bull Ringu). Zaletišča so kot na progah formule 1: kjer ograje stojijo daleč od proge, je za rdeče-belimi robniki zelen pas, za njim pa svetlejši asfalt, po katerem se vozi skoraj kot po progi. Na zunanji strani Raidillona, Les Combes, Bruxellesa, Pouhona, Paul Frère in Blanchimonta je namesto asfalta gramoz, ki avto upočasni (v Blanchimontu je ograja zato 12 m dlje od proge). Ob ciljni ravnini in pred tribunami stojijo betonski zidovi, okrog počasnejših ovinkov gumijaste pregrade, drugod dvojne jeklene ograje. Na spustu od La Source proti Eau Rouge stoji desno betonski zid z lovilno ograjo le 1,5 m od roba proge, za njim pa sta boksarska steza in garaže pomožnih boksov (za spremljevalne in vzdržljivostne dirke). Na dnu Eau Rouge teče pod progo potok Eau Rouge (rjasto rdeč od železa), ki gre pri Paul Frère še enkrat pod progo. Voda v njem teče: po strmejših odsekih hitreje in z brzicami, na gladini se odseva nebo, ob kamnih in pri propustih pod progo se peni. Na zunanji strani znanih ovinkov (La Source, Raidillon, Les Combes, Pouhon, Blanchimont, Bus Stop) stojijo odri s TV kamero, snemalcem in senčnikom, nasproti tribun veliki zasloni s prenosom dirke, ob ravninah (spust proti Eau Rouge, Kemmel, Blanchimont, pred Bus Stopom) so na ograjah panoji sponzorjev igre, pri redarskih postajah pa redarji v oranžnem, eden z zastavico. Za šikano Bus Stop lahko zapelješ v bokse (desno, po dolgem uvozu ob ciljni ravnini): omejitev 80 km/h, ustaviš se v svojem boksu in mehaniki ti popravijo avto, tako kot v Bakrenem gozdu; nad garažami je nadstropje stavbe boksov.
 
@@ -175,7 +175,7 @@ Proga formule 1 v Spielbergu na avstrijskem Štajerskem v pravem merilu: en krog
 - **Prelet letal in TV helikopter**: pred startom kamera s tal pokaže tri letala, ki z rdeče-belo-rdečim dimom (avstrijska zastava) preletijo ciljno ravnino. Med dirko TV helikopter samo enkrat, ko drugič pripelješ na ciljno ravnino, nizko preleti progo pred tabo in odleti, da ne moti vožnje.
 - **Zmagovalni oder**: po cilju kamera za 8 s pokaže oder na strehi stavbe boksov: prve tri v barvah njihovih avtov (imena so na zaslonu), pokal, avstrijske zastave, šampanjec in oranžen dim. V dirki s prijateljem odra ni.
 
-## Suzuka
+## Suzuka, Japonska
 
 Prava proga Suzuka na Japonskem v pravem merilu (5,807 km, 2 kroga proti 12 tekmecem), edina proga v obliki osmice: zadnja ravnina pred ovinkom 130R pelje po mostu čez cesto med Degnerjem in lasnico. Start in cilj sta na ciljni ravnini pred boksi in glavno tribuno, vožnja v smeri urinega kazalca po vzhodni zanki in v obratni smeri po zahodni. Oblika proge je iz OpenStreetMap, višine pa iz satelitskega višinskega modela Copernicus: ciljna ravnina se spušča do prvega ovinka (~17 m, najnižja točka), S-zavoji se vzpenjajo do Dunlopa in Degnerja (~50 m), cesta se pod mostom spusti v useko, nato vzpon do lasnice, 200R in Spoona (~59 m, najvišja točka), zadnja ravnina se spusti in čez most do 130R, sledita šikana Casio Triangle in zadnji ovinek. Med vožnjo se pod uro izpišejo imena ovinkov (Prvi ovinek, S-zavoji, Dunlop, Degner, Pod mostom, Lasnica, 200R, Spoon, Zadnja ravnina, 130R, Casio Triangle, Zadnji ovinek).
 
@@ -192,7 +192,7 @@ Proga po javnih cestah okoli hriba nad mestom Bathurst v Novem Južnem Walesu, v
 - **Dirka:** pokrita tribuna ob ciljni ravnini (nasproti boksarske steze, ki je ni), navijači na travi pri 1. zavoju, ob vzponu, na vrhu hriba, ob dolgi ravnini in pri šikani, zastave v zeleni in zlati ter modri in beli barvi, video zasloni, napisi BATHURST in NEW SOUTH WALES (izmišljeni sponzorji na zidovih, kot na drugih progah), table s številkami zavojev, kamere na stolpih, redarji, reševalno vozilo. Na koncu 1. zavoja, šikane in zadnjega zavoja je asfaltni izletni pas, drugod so zidovi z lovilnimi ograjami blizu ceste. Pred štartom preletijo ravnino letala z belim dimom.
 - Na Bathurstu ni boksov za popravilo.
 
-## Toskana in Gromski rt
+## Toskana, Italija, in Gromski rt
 
 Progi v slogu dveh prog iz igre Circuit Superstars (posnetek dirke `parta.mp4`), z drugače oblikovanimi ovinki, tako da nista enaki originaloma:
 
@@ -513,6 +513,7 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 
 ### Nova proga
 
+0. Ime proge je v obliki »Kraj, Država« (npr. `Vršič, Slovenija`), glej `CLAUDE.md`.
 1. Nova datoteka `js/tracks/<id>.js` z definicijo proge (po vzoru obstoječih).
 2. V `index.html` dodaj `<script src="js/tracks/<id>.js"></script>` pred `js/core.js`, na mesto, kjer naj bo proga v meniju, nato zaženi `node tools/stamp.js`.
 3. Okolica: vsaka tema (`theme`) v `js/world.js` gradi okolico svoje proge (jezero, stavbe, gozd …), zato nova proga potrebuje svojo temo ali prilagojeno obstoječo. Proge v slogu Circuit Superstars (teme `forest`, `italia`, `kamp`) si delijo tribune, boks z mehaniki, gume, bale in robove; Toskana in Gromski rt svojo okolico (tribune, table, hiše, ciprese, kamp, zastavice, gledalce, jezero) naštejeta kar v datoteki proge. Pravi progi Nordschleife in Spa (temi `nring`, `spa`) si delita teren pasu ob progi (višinski model in raba tal iz datoteke proge), okolico pa gradi vsaka svoj graditelj (`buildNring`, `buildSpa`): Nordschleife gozd z mešanimi drevesi, kampe navijačev in grafite na asfaltu, Spa smreke v vrstah, pašnike, tribune in zaletišča formule 1.
