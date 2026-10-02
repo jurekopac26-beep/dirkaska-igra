@@ -72,8 +72,9 @@ try {
   const grid2 = await A.page.evaluate(() => window.__game.net.race.grid);
   await wait(3000);
   const gone = P[2], goneId = await gone.page.evaluate(() => window.__game.net.me);
-  await gone.ctx.close();
+  // (the toasts watched before the friend leaves: the news can come before an observer set up after the close would see it)
   await Promise.all([P[1], P[3]].map(x => x.page.evaluate(() => { window.__toasts = []; new MutationObserver(() => window.__toasts.push(document.getElementById('toast').textContent)).observe(document.getElementById('toast'), { childList: true, characterData: true, subtree: true }); })));
+  await gone.ctx.close();
   const after = await Promise.all([P[0], P[1], P[3]].map(x => until(x.page, (id) => { const g = window.__game, n = g.net, c = g.race && g.race.remotes.find(r => r.netOf.id === id);
     return n && n.race && c && c.x === 1e5 && n.players.length === 3 ? { toast: document.getElementById('toast').textContent, told: (window.__toasts || []).some(t => /Cvet je odšel/.test(t)), state: g.race.state, players: n.players.length } : null; }, goneId, 40000)));
   T.check('second race (the grid in turn); a friend leaves: the others are told, its car off the track, the race goes on', grid2.join() !== g0.join() && after.every(a => a.state === 'racing' && a.players === 3) && /Cvet/.test(after[0].toast) && after.slice(1).every(a => a.told),
