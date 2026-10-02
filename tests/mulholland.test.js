@@ -45,7 +45,7 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
   check('places: in order up the road (La Sierra Creek, Seminole Drive, Elephant Rock ... Brewster Road at the finish), each with the commentator\'s lines', ok && N.length === 7 && N[0].n === 'La Sierra Creek' && /^Brewster Road/.test(N[N.length - 1].n) && N[N.length - 1].d > T.raceLen - 30,
     N.map(q => `${q.n}@${Math.round(q.d)}`).join(', '));
   const all = JSON.stringify([def.name, def.en.name, def.escTo, def.en.escTo, N.map(q => [q.n, q.say]), def.comm, def.police]);   // (the description may name the riders' nickname for the bends)
-  check('names: the track is Mulholland Highway, no nickname as its name, no bar, shop or brand anywhere in the names and lines', def.name === 'Mulholland Highway' && def.en.name === 'Mulholland Highway' && !/snake|rock store|harley|ducati|honda|yamaha/i.test(all),
+  check('names: the track is Mulholland Highway, ZDA (USA in English), no nickname as its name, no bar, shop or brand anywhere in the names and lines', def.name === 'Mulholland Highway, ZDA' && def.en.name === 'Mulholland Highway, USA' && !/snake|rock store|harley|ducati|honda|yamaha/i.test(all),
     def.name);
   check('names: the viewpoint in English on the HUD (Viewpoint · 522 m)', /^Viewpoint · \d{3} m$/.test((Lang.set('en'), Lang.place(N.find(q => /^Razgled/.test(q.n)).n))), (Lang.set('en'), Lang.place(N.find(q => /^Razgled/.test(q.n)).n)));
   Lang.set('sl');
