@@ -101,7 +101,7 @@ Okolica:
 - **Dirka**: start z lučmi pod portalom LARGADA, modri portali kontrolnih točk z višino, cilj META v Portillu s tablo PORTILLO in modrima tablama proti meji, transparent SUBIDA LOS CARACOLES, čilske zastave ob štartni vrsti, gledalci ob startu, cilju, kontrolnih točkah, vsakem tretjem ovinku in pri razgledišču. Na zaprti cesti čakajo tovornjaki: ob startu v odstavnem pasu, v Portillu na parkirišču in na koncu ceste pred zaporo proti meji.
 - **Kondorji**: trije andski kondorji krožijo na vzgornikih nad cesto, blizu avta.
 
-## Chapman's Peak (dirka, kronometer, promet, policija)
+## Chapman's Peak, Južna Afrika (dirka, kronometer, promet, policija)
 
 Cesta Chapman's Peak Drive na polotoku Cape Peninsula v Južnoafriški republiki (pri Cape Townu), vklesana v pečine gore Chapman's Peak nad Atlantskim oceanom. Cela cesta od Hout Baya do Noordhoeka je dolga ~9 km; v igri je njen severni del v pravem merilu: **od konca ceste Main Road v Hout Bayu ob plaži (18,3619° V, 34,0487° J, ~19 m) mimo trdnjave East Fort, razgledišča nad zalivom in cestninske postaje, po pečinah pod lovilnimi mrežami do razgledišča Chapman's Peak na najvišji točki ceste (18,3568° V, 34,0777° J, ~153 m)**: 4,98 km in ~134 m vzpona, 17 izrazitejših ovinkov, nakloni do ~8 %. **V JAR vozijo po levi**, zato promet na tej progi vozi po levi polovici ceste. Kartica proge je ena, s stikalom **Dirka / Kronometer / Promet / Policija**, kot na Vršiču:
 
