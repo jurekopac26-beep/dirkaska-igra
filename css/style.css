@@ -85,7 +85,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
    never wider than the room right of the clock */
 #h-feed, #h-talk { display: none; }
 #hud.pol { --pf: clamp(24px, 8vh, 30px); }   /* (a road the radio does not know, Los Caracoles: room for the note only) */
-#hud.pol.rd { --pf: clamp(56px, 21vh, 78px); }
+#hud.pol.rd { --pf: clamp(56px, 23.5vh, 86px); }
 #hud.pol #h-map { top: calc(8px + var(--st) + var(--pf)); }
 #hud.pol #h-feed { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; position: absolute; right: calc(62px + var(--sr)); top: calc(4px + var(--st)); height: var(--pf); justify-content: flex-end;
   width: max(clamp(96px, 30vh, 150px), calc(50vw - 140px - var(--sr))); max-width: 380px; }

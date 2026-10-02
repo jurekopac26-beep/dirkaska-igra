@@ -2390,7 +2390,7 @@
       if (b) { rd.q.splice(rd.q.indexOf(b), 1); rd.cur = b; b.on = false; b.at = t + (b.person ? 0.05 : 0.18); if (!b.person) { Sfx.radioOpen(); Sfx.radioBed(true); } }
     }
     if (!rd.cur && t > rd.capT) { if (elR.className) elR.className = ''; if (elT.className) elT.className = ''; }
-    if (phase === 'racing' && !P.finished && !rd.cur && !rd.q.length && t >= rd.chatT && !(piT > 0)) rdChat(P, t);   // (not while the mission is up there)
+    if (phase === 'racing' && !P.finished && !rd.cur && !rd.q.length && t >= rd.chatT) rdChat(P, t);
   }
   function rdEnd(t, cut) {
     const C = rd.cur; rd.cur = null; if (!C) return;
