@@ -11,7 +11,7 @@
     '↺ Na progo': '↺ Back on track', 'Dirkaj': 'Race', 'Prvenstvo': 'Championship', 'Kariera': 'Career', 'Dirka s prijateljem': 'Race a friend',
     'Lestvica': 'Leaderboard', 'Nastavitve': 'Settings', 'Celoten zaslon': 'Full screen', 'Namesti igro': 'Install the game', 'Nadgradnje': 'Upgrades',
     'Barva': 'Colour', 'Upravljanje': 'Controls', 'Tipke': 'Buttons', 'Volan': 'Wheel', 'Nagib': 'Tilt', 'Nazaj': 'Back', 'Naprej': 'Next',
-    'Nova kariera': 'New career', 'Začni kariero': 'Start career', 'Serijsko': 'Stock', 'Izberi progo': 'Choose a track', 'Vreme': 'Weather',
+    'Nova kariera': 'New career', 'Začni kariero': 'Start career', 'Serijsko': 'Stock', 'Izberi progo': 'Choose a track', 'Za izbris · samo za testiranje': 'For deletion · testing only', 'Vreme': 'Weather',
     'Suho': 'Dry', 'Dež': 'Rain', 'Naključno': 'Random', 'Menljivo': 'Changing', 'Kvalifikacije': 'Qualifying', 'Vklop': 'On', 'Izklop': 'Off',
     'Letni čas': 'Season', 'Poletje': 'Summer', 'Jesen': 'Autumn', 'Zima': 'Winter', 'Čas dneva': 'Time of day', 'Dan': 'Day', 'Večer': 'Evening', 'Noč': 'Night',
     'Krilo': 'Wing', 'Malo': 'Low', 'Srednje': 'Medium', 'Veliko': 'High', 'Prestave': 'Gears', 'Kratke': 'Short', 'Dolge': 'Long',
@@ -66,7 +66,7 @@
     /* ---- Pikes Peak on its historic gravel road (the road a choice on its card) ---- */
     'Cesta': 'Road', 'Asfalt': 'Tarmac', 'Makadam': 'Gravel', 'Današnja asfaltna cesta': 'Today\u2019s paved road', 'Zgodovinska makadamska cesta (do 2011)': 'The historic gravel road (until 2011)',
     'Cesta: makadam (zgodovinska, do 2011)': 'Road: gravel (historic, until 2011)',
-    'Prelet proge pred startom (Pikes Peak)': 'Course flyover before the start (Pikes Peak)', 'Pikes Peak: proti komu voziš (legenda: avtopilot z najhitrejšim avtom razreda, na zlati čas)': 'Pikes Peak: who you race against (the legend: the autopilot in the fastest car of the class, on the gold time)',
+    'Prelet proge pred startom (Pikes Peak, Katu-Jaryk)': 'Course flyover before the start (Pikes Peak, Katu-Yaryk)', 'Pikes Peak: proti komu voziš (legenda: avtopilot z najhitrejšim avtom razreda, na zlati čas)': 'Pikes Peak: who you race against (the legend: the autopilot in the fastest car of the class, on the gold time)',
     'GORIVO {0}%': 'FUEL {0}%', 'BATERIJA {0}%': 'BATTERY {0}%', 'Baterija je skoraj prazna: zapelji v bokse, mehaniki jo napolnijo.': 'The battery is nearly flat: come into the pits, the mechanics will charge it.', 'PRAZNA BATERIJA!': 'BATTERY FLAT!', 'Malo goriva: zapelji v bokse, mehaniki natočijo gorivo.': 'Low on fuel: come into the pits, the mechanics will fill the tank.', 'BREZ GORIVA!': 'OUT OF FUEL!', 'VEČER': 'EVENING', 'PADA NOČ': 'NIGHT FALLS',
     'POLNO': 'TANK FULL', ' · POLNO': ' · TANK FULL',
     'agresivna vožnja': 'aggressive driving', 'previdna vožnja': 'careful driving', 'uravnotežena vožnja': 'balanced driving', 'popušča pod pritiskom': 'cracks under pressure', 'mirna kri': 'cool under pressure',
@@ -123,7 +123,7 @@
     'Dirka': 'Race', 'Kronometer': 'Time trial', 'Promet': 'Traffic',
     'Srebrna medalja': 'Silver medal', 'Bronasta medalja': 'Bronze medal', 'Brez medalje': 'No medal',
     ' · do brona {0} ({1})': ' · bronze at {0} ({1})', ' · do srebra {0} ({1})': ' · silver at {0} ({1})', ' · do zlata {0} ({1})': ' · gold at {0} ({1})',
-    'Ponovi vzpon': 'Climb again', 'Ponovi preizkušnjo': 'Run the stage again', 'Ponovi krog': 'Drive the lap again', 'Ponovi beg': 'Run again',
+    'Ponovi vzpon': 'Climb again', 'Ponovi preizkušnjo': 'Run the stage again', 'Ponovi spust': 'Descend again', 'Ponovi krog': 'Drive the lap again', 'Ponovi beg': 'Run again',
     'Višina': 'Altitude', 'Razdalja': 'Distance',
     ' · dež': ' · rain', ' · morda dež': ' · maybe rain', ' · menljivo vreme': ' · changing weather', ' · jesen': ' · autumn', ' · zima': ' · winter', ' · večer': ' · evening', ' · noč': ' · night',
     'Proga: {0}': 'Track: {0}', ' (osebni rekord {0})': ' (personal best {0})', ' (še brez časa)': ' (no time yet)', ' · kronometer · brez nasprotnikov': ' · time trial · no rivals',
@@ -162,12 +162,12 @@
     'Izklopi kariero': 'Switch the career off', 'Nadaljuj kariero': 'Continue the career', 'Kariera: {0} na računu.': 'Career: {0} in the bank.', 'Kariera je izklopljena, voziš prosto.': 'The career is switched off, you drive freely.',
     ' {0}: +{1} (imaš {2}).': ' {0}: +{1} (you have {2}).', 'Premalo denarja: {0} stane {1}, imaš {2}. Zasluži ga z dirkami.': 'Not enough money: the {0} costs {1}, you have {2}. Earn it by racing.',
     'Kupil si {0} za {1}. Ostane {2}.': 'You bought the {0} for {1}. {2} left.',
-    ' (pravih {0} km)': ' (real {0} km)', ' · vzpon {0} m': ' · climb {0} m', ' · dvoboj z enim tekmecem v prometu': ' · duel with one rival in traffic', ' · rekord {0}': ' · record {0}',
+    ' (pravih {0} km)': ' (real {0} km)', ' · vzpon {0} m': ' · climb {0} m', ' · spust {0} m': ' · descent {0} m', ' · dvoboj z enim tekmecem v prometu': ' · duel with one rival in traffic', ' · rekord {0}': ' · record {0}',
     ' · beg pred policijo': ' · police chase', ' · najhitrejši pobeg {0}': ' · fastest escape {0}', ' · dirka z {0} tekmeci': ' · race with {0} rivals', ' · kronometer': ' · time trial',
     ' · kronometer v dežju': ' · time trial in the rain', '{0} ovinkov': '{0} corners', 'Način vožnje': 'Driving mode', 'Nalagam progo {0}…': 'Loading {0}…',
     'Zaostanek': 'Gap', 'Najboljši štartni položaj!': 'Pole position!', 'Tvoj krog {0}': 'Your lap {0}', ' (nov rekord proge)': ' (new track record)',
     '. Na štartu boš {0} od {1}.': '. You will start {0} of {1}.', ' {0}, dirka {1}/{2}.': ' {0}, race {1}/{2}.', 'Na štart': 'To the grid', 'Za prvo štartno mesto': 'For pole position',
-    'ČASI TEKMECEV …': 'RIVALS’ TIMES …', 'POLICIJA': 'POLICE', ' · DEŽ': ' · RAIN', 'POLNI PLIN!': 'FLAT OUT!', 'VZPON NA VRH!': 'CLIMB TO THE TOP!',
+    'ČASI TEKMECEV …': 'RIVALS’ TIMES …', 'POLICIJA': 'POLICE', ' · DEŽ': ' · RAIN', 'POLNI PLIN!': 'FLAT OUT!', 'VZPON NA VRH!': 'CLIMB TO THE TOP!', 'SPUST V DOLINO!': 'DOWN TO THE VALLEY!',
     'DIRKA {0}/{1} · ': 'RACE {0}/{1} · ', 'KVALIFIKACIJE': 'QUALIFYING', 'POLICIJA TE LOVI!': 'THE POLICE ARE AFTER YOU!', 'DVOBOJ V PROMETU!': 'DUEL IN TRAFFIC!', 'DIRKA NA VRH!': 'RACE TO THE TOP!',
     'CILJ': 'FINISH', 'Datum': 'Date', 'Povprečno': 'Average', 'Točke': 'Points', 'Nov osebni rekord!': 'New personal best!', 'Cilj': 'Finish',
     'Prejšnji rekord {0} ({1}).': 'Previous record {0} ({1}).', 'Prvi čas na tej progi.': 'The first time on this track.', '{0} za rekordom (rekord {1}).': '{0} behind the record (record {1}).',
@@ -251,7 +251,12 @@
     /* ---- the championships (Core.CHAMPS keep their own English in .en) and place names on the HUD ---- */
     'Razgledišče Kurokamidaira': 'Kurokamidaira lookout', 'Ovinek は (3)': 'Curve は (3)', 'Ovinek に (4)': 'Curve に (4)', 'Ovinek ほ (5)': 'Curve ほ (5)', 'Ovinek へ (6)': 'Curve へ (6)', 'Ovinek と (7)': 'Curve と (7)', 'Ovinek ち (8)': 'Curve ち (8)', 'Ovinek り (9)': 'Curve り (9)', 'Ovinek ぬ (10)': 'Curve ぬ (10)', 'Ovinek る (11)': 'Curve る (11)', 'Ovinek を (12)': 'Curve を (12)', 'Ovinek わ (13)': 'Curve わ (13)', 'Ovinek か (14)': 'Curve か (14)', 'Ovinek よ (15)': 'Curve よ (15)', 'Ovinek た (16)': 'Curve た (16)', 'Ovinek れ (17)': 'Curve れ (17)', 'Ovinek そ (18)': 'Curve そ (18)', 'Ovinek つ (19)': 'Curve つ (19)', 'Ovinek ね (20)': 'Curve ね (20)',   // (Irohazaka: the lookout, the curves by their signs)
     'Ruski križ': 'Russian Cross', 'Ruska kapelica': 'Russian Chapel', 'Ajdovska deklica': 'Heathen Maiden', 'Lasnica Fairmont': 'Fairmont Hairpin', 'Predor': 'Tunnel',
-    'Prvi ovinek': 'First Curve', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under the Bridge', 'Lasnica': 'Hairpin', 'Zadnja ravnina': 'Back Straight', 'Zadnji ovinek': 'Final Corner',
+    'Most Rocky Creek': 'Rocky Creek Bridge', 'Razgledišče Castle Rock': 'Castle Rock Viewpoint', 'Most Bixby Creek': 'Bixby Creek Bridge',   // (Big Sur)
+    'Prvi ovinek': 'First Curve', 'Zanka': 'The Loop', 'Tianmenska jama': 'Tianmen Cave', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under the Bridge', 'Lasnica': 'Hairpin', 'Zadnja ravnina': 'Back Straight', 'Zadnji ovinek': 'Final Corner',
+    'Soteska Uncompahgre': 'Uncompahgre Gorge', 'Slap Bear Creek': 'Bear Creek Falls', 'Plaz Mother Cline': 'Mother Cline Slide', 'Galerija Riverside': 'Riverside Snow Shed', 'ZGRMEL SI V PREPAD!': 'OVER THE EDGE!',   // (Uncompahgre)
+    'Lesoto': 'Lesotho',   // (Sani Pass: the top; Mkhomazana, Drakensberg and Twelve Apostles stay as they are)
+    'Prelaz Katu-Jaryk': 'Katu-Yaryk Pass', 'Sedem serpentin': 'Seven Hairpins', 'Prečka nad Čulišmanom': 'Traverse above the Chulyshman', 'Dolina Čulišmana': 'Chulyshman Valley',   // (Katu-Jaryk: the HUD, the flyover)
+    'Razgledišče': 'Lookout', 'Cestninska postaja': 'Toll Plaza',   // (the lookouts and the toll plaza above Hout Bay)
     /* ---- the run from the police (Vršič): the checkpoint, the hideout, the HUD, the rap sheet, the call signs on the radio; the screen to turn the phone ---- */
     'Kamera »{0}« je za pokončni položaj.': 'The camera “{0}” is for holding the phone upright.', 'Kamera »{0}« je za ležeči položaj.': 'The camera “{0}” is for holding the phone sideways.',
     'Lahko pa igraš pokončno s kamero za avtom.': 'Or play upright with the chase camera.', 'Lahko pa igraš ležeče z izometrično kamero.': 'Or play sideways with the isometric camera.',
@@ -300,7 +305,7 @@
   // a place name on the HUD: the numbered turns and hairpins, the heights on them (Serpentina 4 · 1.060 m -> Hairpin 4 · 1,060 m), a few known names
   function place(n) {
     if (cur !== 'en') return n;
-    return String(n).split(' · ').map(p => has.call(EN, p) ? EN[p] : p.replace(/^Serpentina (\d+)$/, 'Hairpin $1').replace(/^Zavoj (\d+)$/, 'Turn $1').replace(/\b(\d{1,3})\.(\d{3}) m\b/g, '$1,$2 m')).join(' · ');
+    return String(n).split(' · ').map(p => has.call(EN, p) ? EN[p] : p.replace(/^Serpentina (\d+)$/, 'Hairpin $1').replace(/^Zavoj (\d+)$/, 'Turn $1').replace(/^Ovinek (\d+)$/, 'Bend $1').replace(/\b(\d{1,3})\.(\d{3}) m\b/g, '$1,$2 m')).join(' · ');
   }
   // the page as written in index.html: its texts and labels in the chosen language. Each node keeps its Slovenian text (a WeakMap), so a
   // text changed by the game in the meantime is not touched; a text the game wrote in the other language is turned by the dictionary
