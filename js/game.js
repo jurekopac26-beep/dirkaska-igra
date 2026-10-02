@@ -2015,19 +2015,12 @@
     else if (k === 'hideout' && Render.goalShot) { Render.goalShot(race.pol.goal); $('hud').classList.add('shot'); }   // (into the building at the top: the camera outside its door)
     if (phase !== 'racing' || P.finished) return;
     if (!rdOn && POL_COMM[k]) Comm.say(POL_COMM[k], null, k === 'join' || k === 'wreck' ? 2 : 3);   // (a road the radio does not know: the commentator)
-    if (k === 'fled') { showMsg(tr(e.why === 'hit' ? 'ZBIL SI POLICISTA!' : 'POLICIJA TE LOVI!'), 'slow', 2.2); if (e.why === 'hit') { Sfx.thud(0.9); vibrate(70); } }
-    else if (k === 'spikes') showMsg(tr('BODIČASTI TRAK!'), 'slow', 2.2);
-    else if (k === 'block') showMsg(tr(e.heavy ? 'TEŽKA ZAPORA NAPREJ!' : 'ZAPORA NAPREJ!'), 'slow', 2.2);
-    else if (k === 'flat') { showMsg(tr('PREBITA GUMA!'), 'slow', 2); Sfx.pop(); vibrate(90); }
+    // (no banners of the run on the screen: the radio tells it in the column at the right, the arrows show where the patrol cars and the strips are; the thuds and the buzz stay)
+    if (k === 'fled') { if (e.why === 'hit') { Sfx.thud(0.9); vibrate(70); } }
+    else if (k === 'flat') { Sfx.pop(); vibrate(90); }
     else if (k === 'ram') vibrate(50);
-    else if (k === 'wreck') showMsg(tr('PATRULJA JE IZLOČENA!'), 'fast', 1.6);
-    else if (k === 'heli') showMsg(tr('HELIKOPTER!'), 'slow', 2);
-    else if (k === 'ambush') showMsg(tr('ZASEDA!'), 'slow', 2);
-    else if (k === 'undercover') showMsg(tr('NEOZNAČENA PATRULJA!'), 'slow', 2.2);
-    else if (k === 'lost') showMsg(tr('IZGUBILI SO SLED!'), 'fast', 2.2);
-    else if (k === 'spotted') showMsg(tr('SPET TE VIDIJO!'), 'slow', 1.8);
-    else if (k === 'motoDown') { if (e.byP) { showMsg(tr('ZBIL SI POLICISTA!'), 'slow', 2); Sfx.thud(0.9); vibrate(70); } }
-    else if (k === 'logs') { showMsg(tr('HLODI NA CESTI!'), 'fast', 2); Sfx.thud(1); setTimeout(() => Sfx.thud(0.7), 180); vibrate(60); }
+    else if (k === 'motoDown') { if (e.byP) { Sfx.thud(0.9); vibrate(70); } }
+    else if (k === 'logs') { Sfx.thud(1); setTimeout(() => Sfx.thud(0.7), 180); vibrate(60); }
   }
 
   /* ---------------- the police radio (the run from the police) ----------------
@@ -2950,7 +2943,7 @@
       setText('h-flat', nf ? tr('PREBITE GUME: {0}', nf) : '');
       const hid = ch && !pol.lost && pol.hide > 0.02 && !P.finished; $('h-pol').classList.toggle('hid', hid); $('h-pol').classList.toggle('lost', pol.lost && !P.finished);   // (out of their sight: the meter; lost: grey stars)
       $('h-hidebar').style.width = (pol.hide * 100).toFixed(0) + '%'; setText('h-hidel', P.finished || !ch ? '' : tr(pol.lost ? 'IZGUBILI SO SLED' : hid ? 'SKRIVANJE' : pol.heli && pol.heli.st === 'track' ? 'HELIKOPTER NAD TABO' : ''));
-      chkHUD(P, pol); tailHUD(P, pol);
+      chkHUD(P, pol); tailHUD(P, pol); headHUD(P, pol);
       if (pol.hold && phase === 'racing') $('touch').classList.add('off');   // (parked at the checkpoint: the brakes held, the arrest on the screen)
     } else if (race.tf) {   // the duel: how far the rival is ahead or behind (in seconds at the speed now)
       const o = race.cars.find(c => c !== P);
@@ -2979,31 +2972,52 @@
     const h = t ? '<b>' + t + '</b>' + (s ? '<span>' + s + '</span>' : '') : '';
     if (h !== chkKey) { chkKey = h; const el = $('h-chk'); el.innerHTML = h; el.classList.toggle('on', !!h); }
   }
-  // the run from the police: the patrol cars behind the player (in the chase or searching; just alongside too), the nearest four by the road:
-  // an arrow at the bottom pointing where each is from the player's heading, placed across by that, with how far back it is along the road
-  // (a car in a side road, or the player in one: in a straight line); blue and red flashing in the chase, grey searching, fainter far back
-  const tail = { el: null, k: [] };
-  function tailHUD(P, pol) {
-    if (!tail.el) { tail.el = [...$('h-tail').children]; tail.k = tail.el.map(() => ''); }
-    const ch = Math.cos(P.h), sh = Math.sin(P.h), inS = P.q.k >= 0, L = [], bl = (performance.now() / 260 | 0) % 2;
-    if (!P.finished && phase === 'racing') for (const c of pol.cars) {
-      const m = c.pol.mode; if (m !== 'chase' && m !== 'search') continue;
-      const dx = c.x - P.x, dz = c.z - P.z, lon = dx * ch + dz * sh, lat = -dx * sh + dz * ch, st = inS || c.q.k >= 0, g = st ? Math.hypot(dx, dz) : P.q.s - c.q.s;
-      if (st ? g > 400 || lon > 6 : g < -6 || g > 600) continue;
-      L.push({ c, g, m, a: Math.atan2(lat, -lon) });   // (a: 0 straight behind, + to the right)
-    }
-    L.sort((a, b) => a.g - b.g); L.length = Math.min(L.length, tail.el.length);
+  // the run from the police: two bars of arrows, each pointing where a patrol car (or a spike strip) is from the player's heading, placed across the
+  // bar by that, with the metres to it along the road (a car in a side road, or the player in one: in a straight line). The patrol cars behind
+  // (in the chase or searching; just alongside too) at the bottom; at the top what is ahead: the ones coming up the road, a roadblock and the patrol
+  // car that brought a spike strip. Blue and red flashing in the chase, grey searching, orange for a roadblock or a strip, fainter far away
+  const tail = { box: 'h-tail', el: null, k: [] }, head = { box: 'h-head', el: null, k: [] };
+  // L: the nearest four of { id, g: metres, a: the angle from the car's heading (0 straight behind, +-PI ahead, + to the right), m: 'chase' | 'search' | 'warn' }
+  function arrowBar(bar, L) {
+    if (!bar.el) { bar.el = [...$(bar.box).children]; bar.k = bar.el.map(() => ''); }
+    const bl = (performance.now() / 260 | 0) % 2;
+    L.sort((a, b) => a.g - b.g); L.length = Math.min(L.length, bar.el.length);
     const X0 = L.map(e => 50 + 44 * Math.sin(e.a)), X = X0.slice(), ord = X.map((x, i) => i).sort((a, b) => X[a] - X[b]);   // (across by the angle, then kept 13 % apart, the group where it was)
     for (let j = 1; j < ord.length; j++) X[ord[j]] = Math.max(X[ord[j]], X[ord[j - 1]] + 13);
     if (ord.length) { let d = (X0.reduce((a, b) => a + b, 0) - X.reduce((a, b) => a + b, 0)) / X.length; const lo = X[ord[0]] + d, hi = X[ord[ord.length - 1]] + d;
       if (lo < 6) d += 6 - lo; else if (hi > 94) d -= hi - 94; for (let i = 0; i < X.length; i++) X[i] += d; }
-    tail.el.forEach((el, i) => {
-      const e = L[i], key = e ? [X[i].toFixed(1), Math.round(180 - e.a * 180 / Math.PI), e.m === 'search' ? 's' : bl ^ (e.c.id & 1) ? 'b' : 'r', e.g < 5 ? 'ob tebi' : (e.g < 50 ? Math.round(e.g) : Math.round(e.g / 5) * 5) + ' m', (e.g > 300 ? clamp(1 - (e.g - 300) / 500, 0.4, 1) : 1).toFixed(2)].join('|') : '';
-      if (key === tail.k[i]) return;
-      tail.k[i] = key; if (!e) { el.className = ''; return; }
+    bar.el.forEach((el, i) => {
+      const e = L[i], key = e ? [X[i].toFixed(1), Math.round(180 - e.a * 180 / Math.PI), e.m === 'search' ? 's' : e.m === 'warn' ? 'k' : bl ^ (e.id & 1) ? 'b' : 'r', e.g < 5 ? 'ob tebi' : (e.g < 50 ? Math.round(e.g) : Math.round(e.g / 5) * 5) + ' m', (e.g > 300 ? clamp(1 - (e.g - 300) / 500, 0.4, 1) : 1).toFixed(2)].join('|') : '';
+      if (key === bar.k[i]) return;
+      bar.k[i] = key; if (!e) { el.className = ''; return; }
       const [x, r, cl, txt, op] = key.split('|');
       el.className = 'on ' + cl + (i ? '' : ' n'); el.style.left = x + '%'; el.style.opacity = op; el.firstElementChild.style.transform = 'rotate(' + r + 'deg)'; el.lastElementChild.textContent = txt;
     });
+  }
+  function tailHUD(P, pol) {
+    const ch = Math.cos(P.h), sh = Math.sin(P.h), inS = P.q.k >= 0, L = [];
+    if (!P.finished && phase === 'racing') for (const c of pol.cars) {
+      const m = c.pol.mode; if (m !== 'chase' && m !== 'search') continue;
+      const dx = c.x - P.x, dz = c.z - P.z, lon = dx * ch + dz * sh, lat = -dx * sh + dz * ch, st = inS || c.q.k >= 0, g = st ? Math.hypot(dx, dz) : P.q.s - c.q.s;
+      if (st ? g > 400 || lon > 6 : g < -6 || g > 600) continue;
+      L.push({ id: c.id, g, m, a: Math.atan2(lat, -lon) });
+    }
+    arrowBar(tail, L);
+  }
+  function headHUD(P, pol) {
+    const ch = Math.cos(P.h), sh = Math.sin(P.h), inS = P.q.k >= 0, L = [];
+    const at = (c, m, s) => {   // the car c, on the road at s: ahead of the player (not more than 6 m behind), within 600 m
+      const dx = c.x - P.x, dz = c.z - P.z, lon = dx * ch + dz * sh, lat = -dx * sh + dz * ch, st = inS || c.q.k >= 0, g = st ? Math.hypot(dx, dz) : s - P.q.s;
+      if (st ? g > 400 || lon < -6 : g < -6 || g > 600) return;
+      L.push({ id: c.id, g: Math.max(0, g), m, a: Math.atan2(lat, -lon) });
+    };
+    if (!P.finished && phase === 'racing') {
+      for (const c of pol.cars) { const m = c.pol.mode;
+        if ((m === 'chase' || m === 'search') && !c.locked && !(c.pol.stub && c.pol.stub.wait)) at(c, m, c.q.s); }   // (coming up the road; not the ones waiting at the start or down a side road)
+      for (const sp of pol.spikes) if (!sp.gone && sp.car) at(sp.car, 'warn', sp.s);   // (the patrol car that brought a spike strip, parked before it)
+      pol.blocks.forEach((b, k) => { if (!b.passed) { const i = track.idx(b.s); at({ x: track.px[i], z: track.pz[i], q: { k: -1 }, id: 1000 + k }, 'warn', b.s); } });   // (a roadblock: one arrow for all its cars)
+    }
+    arrowBar(head, L);
   }
 
   /* ---------------- the timing tower (Časovna tabela): the order with the gaps to the leader, as on TV ----------------

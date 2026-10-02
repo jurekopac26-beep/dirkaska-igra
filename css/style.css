@@ -79,32 +79,35 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-chk.on { display: flex; flex-direction: column; align-items: center; gap: 1px; margin-top: 3px; padding: 3px 9px 4px; max-width: min(46vw, 380px); border-radius: 5px; border-bottom: 2px solid #3a78ff; background: rgba(8, 16, 36, 0.78); text-align: center; }
 #h-chk b { font: 700 italic clamp(10px, 2.9vh, 14px)/1.2 var(--f-ui); color: #ffd23c; letter-spacing: 0.04em; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); }
 #h-chk span { font: 600 clamp(9px, 2.4vh, 12px)/1.25 var(--f-ui); color: #e3ebff; }
-/* the police radio: a line at a time at the bottom, between the steering and the pedals, over the arrows (the speaker's call sign first; in person:
-   the officer, the driver, in yellow) */
+/* the police radio: the line being said, one at a time, in the column at the right under the map, as wide as the map (the speaker's call sign first;
+   in person: the officer, the driver, in yellow). Small, and not in the middle of the screen */
 #h-radio { display: none; }
-#hud.pol #h-radio { display: block; position: absolute; left: 50%; bottom: calc(50px + var(--sb)); transform: translateX(-50%); width: max-content; max-width: min(44vw, 430px, calc(100vw - 2 * (40px + 2 * clamp(64px, 23vh, 104px)) - 2 * max(var(--sl), var(--sr)))); padding: 4px 9px;
-  border-left: 3px solid #3a78ff; border-radius: 4px; background: rgba(8, 16, 36, 0.78); font: 600 clamp(9px, 2.4vh, 12px)/1.3 var(--f-ui); color: #e3ebff; text-align: left; opacity: 0; transition: opacity 0.25s; }
-#hud.pol #h-radio.show { opacity: 1; }
+#hud.pol #h-radio.show { display: block; flex: none; margin-top: 6px; padding: 3px 6px 3px 5px; border-left: 3px solid #3a78ff; border-radius: 4px; background: rgba(8, 16, 36, 0.78); font: 600 clamp(8px, 2.5vw, 10.5px)/1.3 var(--f-ui); color: #e3ebff; text-align: left; overflow-wrap: anywhere; animation: noteIn 0.25s; }
 #hud.pol #h-radio.person { border-left-color: #ffd23c; background: rgba(28, 24, 10, 0.8); color: #fff6dc; font-style: italic; }
-#h-radio b { margin-right: 6px; color: #8fb3ff; font-size: 0.85em; letter-spacing: 1px; font-style: normal; }
+#h-radio b { display: block; margin-bottom: 1px; color: #8fb3ff; font-size: 0.85em; letter-spacing: 1px; font-style: normal; }
 #h-radio.person b { color: #ffd23c; }
-@media (orientation: landscape) { #hud.pol.shot #h-radio { bottom: calc(12px + var(--sb)); } }   /* (a TV shot: no arrows under it) */
-/* the patrol cars behind the player: an arrow for each (where it is from the car's heading, across the bar by that), the metres back along the road */
-#h-tail { display: none; }
+@media (orientation: landscape) { #hud.pol #h-radio.show { font-size: clamp(8px, 2.6vh, 10.5px); } }
+/* the patrol cars behind the player: an arrow for each (where it is from the car's heading, across the bar by that), the metres back along the road;
+   the same at the top (#h-head, under the stars) for what is ahead: the patrol cars coming up the road, a roadblock and the car that brought a spike strip (orange) */
+#h-tail, #h-head { display: none; }
 #hud.pol #h-tail { display: block; position: absolute; left: 50%; bottom: calc(6px + var(--sb)); width: min(46vw, 440px, calc(100vw - 2 * (40px + 2 * clamp(64px, 23vh, 104px)) - 2 * max(var(--sl), var(--sr)))); height: 40px; transform: translateX(-50%); }   /* (between the steering and the pedals) */
-#h-tail i { display: none; position: absolute; bottom: 0; width: 52px; margin-left: -26px; flex-direction: column; align-items: center; gap: 1px; font-style: normal; transition: left 0.25s; }
-#h-tail i.on { display: flex; }
-#h-tail svg { width: clamp(16px, 4.6vh, 22px); height: clamp(16px, 4.6vh, 22px); transform-origin: 50% 50%; filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.9)); }
-#h-tail path { fill: #3a78ff; stroke: rgba(255, 255, 255, 0.85); stroke-width: 1.2; stroke-linejoin: round; }
-#h-tail i.r path { fill: #ff3b3b; }
-#h-tail i.s path { fill: #9aa3b5; stroke: rgba(255, 255, 255, 0.5); }
-#h-tail span { font: 700 clamp(9px, 2.4vh, 12px)/1 var(--f-ui); color: #e3ebff; text-shadow: 0 1px 2px #000; white-space: nowrap; font-variant-numeric: tabular-nums; }
-#h-tail i.s span { color: #c2c8d4; }
-#h-tail i.n svg { width: clamp(20px, 5.8vh, 28px); height: clamp(20px, 5.8vh, 28px); }   /* (the nearest one) */
-#h-tail i.n span { color: #fff; }
+#hud.pol #h-head { display: block; position: relative; width: min(40vw, 320px); height: 40px; margin: 3px auto 0; }
+#h-tail i, #h-head i { display: none; position: absolute; width: 52px; margin-left: -26px; flex-direction: column; align-items: center; gap: 1px; font-style: normal; transition: left 0.25s; }
+#h-tail i { bottom: 0; } #h-head i { top: 0; }
+#h-tail i.on, #h-head i.on { display: flex; }
+#h-tail svg, #h-head svg { width: clamp(16px, 4.6vh, 22px); height: clamp(16px, 4.6vh, 22px); transform-origin: 50% 50%; filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.9)); }
+#h-tail path, #h-head path { fill: #3a78ff; stroke: rgba(255, 255, 255, 0.85); stroke-width: 1.2; stroke-linejoin: round; }
+#h-tail i.r path, #h-head i.r path { fill: #ff3b3b; }
+#h-tail i.s path, #h-head i.s path { fill: #9aa3b5; stroke: rgba(255, 255, 255, 0.5); }
+#h-head i.k path { fill: #ffb21f; stroke: #fff; }   /* (a roadblock, a spike strip) */
+#h-tail span, #h-head span { font: 700 clamp(9px, 2.4vh, 12px)/1 var(--f-ui); color: #e3ebff; text-shadow: 0 1px 2px #000; white-space: nowrap; font-variant-numeric: tabular-nums; }
+#h-tail i.s span, #h-head i.s span { color: #c2c8d4; }
+#h-head i.k span { color: #ffd98a; }
+#h-tail i.n svg, #h-head i.n svg { width: clamp(20px, 5.8vh, 28px); height: clamp(20px, 5.8vh, 28px); }   /* (the nearest one) */
+#h-tail i.n span, #h-head i.n span { color: #fff; }
+@media (orientation: landscape) { #hud.pol #h-head { width: min(46vw, 320px); } }
 @media (orientation: portrait) {   /* (a phone upright: above the steering and the pedals) */
   #hud.pol #h-tail { bottom: calc(26px + clamp(100px, 32vw, 150px) + var(--sb)); width: 84vw; }   /* (above the gas pedal, the tallest control) */
-  #hud.pol #h-radio { bottom: calc(70px + clamp(100px, 32vw, 150px) + var(--sb)); max-width: 86vw; }
   #h-chk.on { max-width: 42vw; padding: 2px 6px 3px; }   /* (between the place and the map) */
   #h-chk b { font-size: clamp(10px, 3.1vw, 13px); }
   #h-chk span { font-size: clamp(9px, 2.7vw, 11px); }
@@ -144,16 +147,13 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-lights i { width: clamp(20px, 7vh, 34px); height: clamp(20px, 7vh, 34px); border-radius: 50%; background: #3a0b0b; box-shadow: inset 0 -3px 0 rgba(0,0,0,.4); }
 #h-lights i.on { background: #ff2a1c; box-shadow: 0 0 14px #ff3a20, inset 0 -3px 0 rgba(0,0,0,.25); }
 #h-lights.go i { background: #29e05a; box-shadow: 0 0 14px #2cff66; }
-/* the race's notes (showMsg in js/game.js): a yellow or green one (and the red split of a time trial, .bad) small in the column at the right,
-   under the order; a rule or a danger (.slow, .warn: a place to give back, a penalty, the police, the wrong way) big in the middle, where it
-   cannot be missed */
+/* the race's notes (showMsg in js/game.js): small in the column at the right, under the order and the radio, never in the middle of the screen; the
+   colour tells: yellow, green, red (.warn, .bad: a place to give back, a penalty, the wrong way, a slower split), white */
 #h-msg { display: none; align-self: flex-end; width: max-content; max-width: min(62vw, 340px); margin-top: 6px; padding: 3px 8px; border-radius: 5px; background: rgba(10, 14, 20, .6); text-align: right; font: 700 italic clamp(11px, 3vh, 15px)/1.2 var(--f-ui); letter-spacing: .03em; color: var(--chalk); text-shadow: 0 1px 2px rgba(0, 0, 0, .8); }
 #h-msg.show { display: block; animation: noteIn .2s; }
 @keyframes noteIn { from { opacity: 0; } to { opacity: 1; } }
-#h-msg.slow, #h-msg.warn { position: fixed; left: 0; right: 0; top: 40%; width: auto; max-width: none; margin: 0; padding: 0; border-radius: 0; background: none; text-align: center; font: 400 italic clamp(28px, 10vh, 56px)/1 var(--f-display); letter-spacing: 0; text-shadow: 3px 4px 0 rgba(0,0,0,.55); }
-#h-msg.slow.show, #h-msg.warn.show { animation: msgPop .2s; }
-@keyframes msgPop { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
-#hud.shot > *:not(#podium-cap):not(#h-radio) { visibility: hidden; }   /* a TV shot (the jets before the start, the podium; busted: the arrest, the radio on): no HUD */
+#hud.shot > *:not(#podium-cap) { visibility: hidden; }   /* a TV shot (the jets before the start, the podium; busted: the arrest, the radio on): no HUD (but the radio and a toast in the column at the right) */
+#h-side > #h-radio { visibility: visible; }
 #podium-cap { position: absolute; left: 50%; bottom: calc(10px + var(--sb, 0px)); transform: translateX(-50%); display: flex; gap: 14px; padding: 6px 14px; border-radius: 6px; background: rgba(12,16,40,.72); font: 700 italic clamp(12px, 3.4vh, 18px)/1.2 var(--f-ui); color: var(--chalk); white-space: nowrap; opacity: 0; transition: opacity .4s; pointer-events: none; }
 #podium-cap.show { opacity: 1; }
 #podium-cap b { color: #ffcf2e; }
@@ -330,7 +330,7 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
 .ld-bar i { display: block; height: 100%; width: 100%; background: var(--asphalt); transform-origin: right; animation: ld 1.4s ease-in-out infinite alternate; }
 @keyframes ld { from { transform: scaleX(1); } to { transform: scaleX(.1); } }
 #ld-msg { margin: 0; font: 600 14px/1.3 var(--f-ui); color: var(--muted); }
-@media (prefers-reduced-motion: reduce) { #rotate .phone, .ld-bar i, #h-msg.show, #h-msg.slow.show, #h-msg.warn.show { animation: none; } #h-note, .tb { transition: none; } }
+@media (prefers-reduced-motion: reduce) { #rotate .phone, .ld-bar i, #h-msg.show, #hud.pol #h-radio.show { animation: none; } #h-note, .tb { transition: none; } }
 @media (max-height: 360px) { .panel { padding: 12px 16px 12px 22px; } .btns { gap: 6px; margin-top: 8px; } .btn { min-height: 38px; padding: 8px 16px; } .row { margin: 4px 0; } }
 
 /* ================= PORTRAIT (chase camera) ================= */
@@ -351,7 +351,6 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
   #h-note { top: 30%; width: clamp(44px, 13vw, 60px); height: clamp(44px, 13vw, 60px); margin-left: calc(clamp(44px, 13vw, 60px) / -2); }
   #h-lights { top: 36%; }
   #h-lights i { width: clamp(18px, 6vw, 30px); height: clamp(18px, 6vw, 30px); }
-  #h-msg.slow, #h-msg.warn { font-size: clamp(24px, 9vw, 44px); top: 44%; }
   .steer { width: clamp(60px, 19vw, 92px); height: clamp(60px, 19vw, 92px); bottom: calc(18px + var(--sb)); }
   #c-right { left: calc(24px + var(--sl) + clamp(60px, 19vw, 92px)); }
   .pedal { width: clamp(56px, 17vw, 84px); height: clamp(84px, 26vw, 128px); bottom: calc(18px + var(--sb)); }

@@ -4,7 +4,7 @@
 // 2. The cockpit: the sky drawn with its clouds; at night the moon; in the rain an overcast sky, the wipers on the windscreen and the
 //    puddles' water on the road.
 // 3. The Gorski reli in the evening: the sun's rays between the trees.
-// 4. At speed: the picture streaks out towards its edges; the summer's heat over the asphalt seen from the cockpit.
+// 4. At speed: the picture stays sharp (no streaks, no depth of field); the summer's heat over the asphalt seen from the cockpit.
 // 5. Quality 'normal': none of the costly ones (no clouds, no rays, no streaks), the precomputed ones stay (the contact shading).
 //   node tests/browser/look2.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -49,12 +49,12 @@ try {
   const g1 = await look();
   T.check('the Gorski reli in the evening: the sun\'s rays between the trees', g1.rays, JSON.stringify(g1));
 
-  // 4. at speed: the streaks towards the edges; the summer's heat from the cockpit
+  // 4. at speed: nothing blurred; the summer's heat from the cockpit
   await act('to-track'); await page.waitForTimeout(200); await pick('tod', 'day');
   await startTrack(page, 'spa');
   await page.evaluate(() => { const g = window.__game, P = g.race.player; g.pause(); for (let i = 0; i < 600 && P.speed < 50; i++) g.sim(0.1, true); });
   const s1 = await draw(3, 'chase');
-  T.check('at speed: the picture streaks out towards its edges', s1.speedBlur > 0.2, JSON.stringify(s1));
+  T.check('at speed: the picture stays sharp (no streaks towards its edges, no depth of field: nothing blurred)', s1.speedBlur === 0 && s1.blur === 0, JSON.stringify(s1));
   const s2 = await draw(3, 'cockpit');
   T.check('the summer\'s heat over the far asphalt, from the cockpit (and no streaks there: the car\'s inside goes with the driver)', s2.heat === 1 && s2.speedBlur === 0, JSON.stringify(s2));
 

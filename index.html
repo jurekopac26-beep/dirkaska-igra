@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
-<link rel="stylesheet" href="css/style.css?v=0b58e9a8">
+<link rel="stylesheet" href="css/style.css?v=440ff440">
 </head>
 <body>
 <div id="app">
@@ -61,18 +61,19 @@
       <div id="h-sec" aria-hidden="true"><i></i><i></i><i></i></div>
       <div id="h-split"></div>
       <div id="h-pol" aria-label="Policija"><span id="h-heat"></span><div id="h-bust"><i id="h-bustbar"></i></div><div id="h-hide"><i id="h-hidebar"></i></div><span id="h-hidel"></span><span id="h-flat"></span><div id="h-chk"></div></div>
+      <div id="h-head" aria-hidden="true"><i><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 L18 17.5 L10 13.2 L2 17.5 Z"/></svg><span></span></i><i><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 L18 17.5 L10 13.2 L2 17.5 Z"/></svg><span></span></i><i><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 L18 17.5 L10 13.2 L2 17.5 Z"/></svg><span></span></i><i><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 L18 17.5 L10 13.2 L2 17.5 Z"/></svg><span></span></i></div><!-- the run from the police: arrows for what is ahead, at the top under the stars: the patrol cars coming up the road, a roadblock, the patrol car with a spike strip (orange), how far -->
       <div id="h-gap"></div>
     </div>
-    <div id="h-side"><!-- the column at the right, under the pause button: the map, the height profile (a time trial), the timing tower and the race's notes -->
+    <div id="h-side"><!-- the column at the right, under the pause button: the map, the height profile (a time trial), the timing tower, the police radio and the race's notes -->
       <div id="h-map"><canvas id="minimap"></canvas></div>
       <div id="h-prof" aria-hidden="true"><canvas id="h-prof-c"></canvas></div>
       <div id="h-tower" aria-hidden="true"></div><!-- the timing tower: the order with the gaps, as on TV -->
-      <div id="h-msg"></div><!-- the race's notes: yellow and green ones small here, a rule or a danger (red, white) big in the middle -->
+      <div id="h-radio" aria-live="polite"></div><!-- the run from the police: the police radio, a line at a time, as wide as the map -->
+      <div id="h-msg"></div><!-- the race's notes (the radio's lines and a toast under them): small, never in the middle of the screen -->
     </div>
     <div id="h-note"><svg viewBox="0 0 64 64" aria-hidden="true"><path id="h-note-path" d="" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <div id="pk-note" aria-hidden="true"><i><svg viewBox="0 0 64 64"><path id="pk-note-path" d="" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></i><b></b><small></small></div><!-- Pikes Peak: the corner warnings -->
     <div id="h-lights"><i></i><i></i><i></i><i></i><i></i></div>
-    <div id="h-radio" aria-live="polite"></div><!-- the run from the police: the police radio -->
     <div id="h-tail" aria-hidden="true"><i><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 L18 17.5 L10 13.2 L2 17.5 Z"/></svg><span></span></i><i><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 L18 17.5 L10 13.2 L2 17.5 Z"/></svg><span></span></i><i><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 L18 17.5 L10 13.2 L2 17.5 Z"/></svg><span></span></i><i><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 L18 17.5 L10 13.2 L2 17.5 Z"/></svg><span></span></i></div><!-- the run from the police: arrows for the patrol cars behind, how far back -->
     <div id="h-school"></div><!-- the driving school: the lesson under way -->
     <div id="podium-cap"></div>
@@ -385,17 +386,17 @@
 <script src="js/tracks/harju.js?v=530db216"></script>
 <script src="js/tracks/bathurst.js?v=6387e681"></script>
 <script src="js/tracks/chapman.js?v=56b588a8"></script>
-<script src="js/lang.js?v=a60d3b4c"></script>
+<script src="js/lang.js?v=10f2a88d"></script>
 <script src="js/core.js?v=b2a2375d"></script>
 <script src="js/tex.js?v=c8d887ce"></script>
 <script src="js/world.js?v=b60575f4"></script>
 <script src="js/data/p206.js?v=0016824f"></script>
-<script src="js/render.js?v=ef578f38"></script>
+<script src="js/render.js?v=d878ce3c"></script>
 <script src="js/sfx.js?v=4275d2ee"></script>
 <script src="js/input.js?v=d3dda4cf"></script>
 <script src="js/comm.js?v=86b3df24"></script>
 <script src="js/vendor/peerjs.min.js?v=76b403e4"></script>
 <script src="js/net.js?v=ba863f32"></script>
-<script src="js/game.js?v=cc17ed58"></script>
+<script src="js/game.js?v=cff5f1ef"></script>
 </body>
 </html>

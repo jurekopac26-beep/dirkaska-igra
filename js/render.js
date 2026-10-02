@@ -3248,11 +3248,10 @@ const Render = (function () {
     for (let k = 0; k < 12; k++) { const a = rnd() * 6.2832, d = 46 + rnd() * 12; blob(64 + Math.cos(a) * d, 64 + Math.sin(a) * d, 1.5 + rnd() * 3.5, 0.9); }
     return new THREE.CanvasTexture(cv);
   }
-  function rdSpikeGeo() {   // a metre of a spike strip (laid across the road, z along it): steel scissor links, yellow reflectors at the joints, spikes up
-    const g = new GB(), K = [0.12, 0.12, 0.13], S = [0.9, 0.92, 0.96], Y = [1.0, 0.8, 0.08], hw = 0.28, y = 0.05;
-    for (const z of [0, 0.5]) for (const sg of [1, -1]) rdRod(g, [hw * sg, y, z], [-hw * sg, y, z + 0.5], 0.07, K);
-    for (const z of [0, 0.5]) for (const sg of [1, -1]) World.box(g, hw * sg, 0.01, z + 0.02, 0.14, 0.085, 0.14, 0, Y);
-    for (const z of [0.125, 0.375, 0.625, 0.875]) for (const x of [-hw / 2, hw / 2]) World.cyl(g, x, 0.07, z, 0.03, 0.12, 4, S, S, 0.002);
+  function rdSpikeGeo() {   // a metre of a spike strip (laid across the road, z along it): a hazard mat 1.2 m wide, yellow and black stripes across it (seen from afar and from above: the strip a tyre must not meet is ~1 m deep), the steel spikes standing up from it
+    const g = new GB(), K = [0.1, 0.1, 0.11], S = [0.9, 0.92, 0.96], Y = [1.0, 0.78, 0.06], hw = 0.6;
+    for (let k = 0; k < 4; k++) World.box(g, 0, 0, 0.125 + k * 0.25, hw * 2, 0.04, 0.25, 0, k % 2 ? K : Y, k % 2 ? K : Y, true);
+    for (const z of [0.125, 0.375, 0.625, 0.875]) for (const x of [-0.42, -0.14, 0.14, 0.42]) World.cyl(g, x, 0.04, z, 0.04, 0.2, 4, S, S, 0.004);
     return g.geometry();
   }
   // the police's van: white, a blue band with yellow edges along both sides and across the back, the light bar on the roof (its two lamps
@@ -3632,6 +3631,7 @@ const Render = (function () {
       let ns = 0; for (const sp of R.pol.spikes) { if (!sp.on) continue; const i = T.idx(sp.s), L = sp.d1 - sp.d0; _re.set(0, -T.hd[i], 0, 'YZX'); _rq.setFromEuler(_re);
         for (let k = 0; k < L && ns < 64; k++) { const a = atS2(T, sp.s, sp.d0 + k); _rv.set(a[0], T.hy[i] + 0.02, a[1]); _rs.set(1, 1, Math.min(1, L - k)); _rm.compose(_rv, _rq, _rs); Q.S.setMatrixAt(ns++, _rm); } }
       _rs.set(1, 1, 1);
+      for (const sp of R.pol.spikes) if (sp.on && (time * 2.5 | 0) % 2 === (sp.s | 0) % 2) { const i = T.idx(sp.s); for (const d of [sp.d0, sp.d1]) { const a = atS2(T, sp.s, d); glows.add(a[0], T.hy[i] + 0.7, a[1], dusk ? 3.4 : 2.6, 1.0, 0.62, 0.08, dusk ? 1 : 0.9); } }   // (an amber beacon flashing at each end of a strip: seen from afar)
       Q.S.count = ns; if (ns) Q.S.instanceMatrix.needsUpdate = true;
       // the log piles: stacked on the bank behind two stakes, the red and white one at the road's edge that holds them; let go: the logs
       // rolling down and across the road (turning as they go), the stakes knocked flat
@@ -4855,14 +4855,7 @@ const Render = (function () {
   // heat: by day, dry, the air over the far asphalt trembles just under the horizon (seen from a low camera)
   const _mf = new THREE.Vector3();
   function speedLook(target, alpha, U) {
-    let mb = 0;
-    if (target && !cam.shot && !cam.ck && (lastMode === 'chase' || lastMode === 'kino')) {   // (not from the cockpit: the car's inside, at the edges of the picture, goes with the driver)
-      const sp = target.speed || 0; mb = clamp((sp - 30) / 45, 0, 1) * 0.75;
-      if (mb > 0) { const x = lerp(target.px, target.x, alpha), z = lerp(target.pz, target.z, alpha), y = target.y || 0, v = Math.hypot(target.vx || 0, target.vz || 0) || 1;
-        _mf.set(x + (target.vx || 0) / v * 150, y, z + (target.vz || 0) / v * 150).project(camera); U.uMF.value.set(clamp(_mf.x * 0.5 + 0.5, -0.5, 1.5), clamp(_mf.y * 0.5 + 0.5, -0.5, 1.5));
-        _mf.set(x, y + 0.6, z).project(camera); U.uMC.value.set(_mf.x * 0.5 + 0.5, _mf.y * 0.5 + 0.5); }
-    }
-    U.uMB.value = mb;
+    U.uMB.value = 0;   // (no speed streaks at the picture's edges: nothing blurred at speed; the shader still has them, switched on by uMB)
     const heat = atmos.season === 'summer' && todK < 0.2 && !dawn && wet <= 0 && themeId !== 'pikes' ? 1 : 0;   // (a summer's day: not in the morning)
     U.uHeat.value = 0; if (heat) { camera.getWorldDirection(_mf); const h = Math.hypot(_mf.x, _mf.z) || 1; _mf.set(camera.position.x + _mf.x / h * 900, camera.position.y, camera.position.z + _mf.z / h * 900).project(camera);
       const hy = _mf.y * 0.5 + 0.5; if (hy > 0.05 && hy < 1.1) { U.uHeat.value = heat; U.uHorY.value = hy; U.uTm.value = time % 600; } }
@@ -4932,8 +4925,8 @@ const Render = (function () {
           const ex = far ? px / pl * 1.15 : px, ey = far ? py / pl * 1.15 : py;
           post.mat.uniforms.uSun.value.set((ex / asp) * 0.5 + 0.5, ey * 0.5 + 0.5); }
         post.hk += ((front > 0.02 ? 1 : 0) - post.hk) * Math.min(1, dt * 3); post.mat.uniforms.uHaze.value = post.hk > 0.005 ? post.haze * post.hk : 0; }   // (fades in and out as a turning view brings the sun round: no pop)
-      const U = post.mat.uniforms; U.uFocus.value = post.focus; U.uBand.value = (lastMode === 'kino' ? 0.3 : camera.aspect < 1 ? 0.2 : 0.24) + (post.span || 0); U.uBlur.value = lastMode === 'kino' ? 0.7 : 0.8;   // kino: a soft depth of field only towards the edges, as in the reference
-      if (cam.ck) U.uBlur.value = 0; else if (cam.shot && cam.shot.blur != null) { U.uBlur.value = cam.shot.blur; if (cam.shot.blur > 0) U.uBand.value = 0.06; }   // (no miniature look from the driver's seat; the photo mode's own: a narrow sharp band on the car)
+      const U = post.mat.uniforms; U.uFocus.value = post.focus; U.uBand.value = (lastMode === 'kino' ? 0.3 : camera.aspect < 1 ? 0.2 : 0.24) + (post.span || 0); U.uBlur.value = 0;   // (no depth of field: no car or road is blurred, the one ahead and the one behind too; only the photo mode's own, below: a narrow sharp band on the car)
+      if (cam.shot && cam.shot.blur != null) { U.uBlur.value = cam.shot.blur; if (cam.shot.blur > 0) U.uBand.value = 0.06; }
       speedLook(target, alpha, U);
       renderer.setRenderTarget(post.rt); renderer.render(scene, camera); if (ckOn) ckDraw();
       if (post.bloom > 0) bloomPass(); U.uBloom.value = post.bloom;
@@ -5025,7 +5018,7 @@ const Render = (function () {
     const sc = asU.uAsC.value, U = post && post.mat.uniforms;
     return { sheen: +Math.max(sc.r, sc.g, sc.b).toFixed(3), asphalt: asph, clouds: sky ? sky.u.uCl.value : 0, overcast: sky ? +sky.u.uOv.value.toFixed(2) : 0, moon: nsky.moon && nsky.moon.visible ? +nsky.moon.material.opacity.toFixed(2) : 0, skyOn: !!(sky && sky.mesh.visible),
       ao, worn, natGrass: nat, rays: !!(pkR.mesh && pkR.mesh.visible), flare: +pkF.vis.toFixed(3), wipers: !!(cam.ck && ck.parts && ck.parts.rain && ck.parts.rain.visible),
-      speedBlur: U && postOn() ? +U.uMB.value.toFixed(3) : 0, heat: U && postOn() ? U.uHeat.value : 0, puddleK: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0 };
+      speedBlur: U && postOn() ? +U.uMB.value.toFixed(3) : 0, blur: U && postOn() ? +U.uBlur.value.toFixed(3) : 0, heat: U && postOn() ? U.uHeat.value : 0, puddleK: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0 };
   }
   function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0, water: wetW }; }   // (tests)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
