@@ -1664,5 +1664,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "harju/race/cs": {
+  "digest": "ae7049b852ea3d69de5b7416",
+  "lead": 1486.5,
+  "car0": [
+   -303.38,
+   -488.93
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "harju/demo/cs": {
+  "digest": "9055a2160d4b71a5e6a38b95",
+  "lead": 1504.4,
+  "car0": [
+   -308.37,
+   -472.73
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 6,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "harju/upg/cs": {
+  "digest": "d4a05e3061ce7c10b6d4f7d8",
+  "lead": 1477,
+  "car0": [
+   -300.67,
+   -498
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "harju/crash/cs": {
+  "digest": "820c26ab6fdf74a58a5060e5",
+  "lead": 1483.1,
+  "car0": [
+   -302.45,
+   -492.06
+  ],
+  "cover": {
+   "dmg": 0.4,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "harju/formula/cs": {
+  "digest": "af9d475cfa05554024fc9a5a",
+  "lead": 1426,
+  "car0": [
+   -281.41,
+   -519.57
+  ],
+  "cover": {
+   "dmg": 0.98,
+   "loose": 4,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
+ "harju/lm/cs": {
+  "digest": "56cfc148abfe5db1c6732799",
+  "lead": 1485.6,
+  "car0": [
+   -303.24,
+   -490.08
+  ],
+  "cover": {
+   "dmg": 0.86,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "harju/car/cs": {
+  "digest": "858d451acc65ad5a811a9076",
+  "lead": 1441.2,
+  "car0": [
+   -287.7,
+   -526.89
+  ],
+  "cover": {
+   "dmg": 0.7,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
  }
 }

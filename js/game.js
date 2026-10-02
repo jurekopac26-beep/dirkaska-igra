@@ -118,7 +118,8 @@
     return (k >= 0 ? MEDAL_ICON[k] + ' ' + tr(MEDAL[k]) : tr('Brez medalje')) + (n >= 0 ? tr(k < 0 ? ' · do brona {0} ({1})' : n === 0 ? ' · do zlata {0} ({1})' : ' · do srebra {0} ({1})', fmt(M[n], true), sgn(t - M[n])) : '') + '.'; };
   const ttAgain = (d) => tr(isRally(d) ? 'Ponovi preizkušnjo' : 'Ponovi vzpon');
   const TT_LINES = { intro: ['introTT', 'introStage', 'introPassTT'], go: ['goTT', 'goStage', 'goPassTT'], cpFirst: ['cpFirst', 'cpFirstStage'], record: ['summitRecord', 'stageRecord'], even: ['summitEven', 'stageEven'], end: ['summit', 'stageEnd'] };
-  const ttLine = (d, k) => k === 'intro' && d && d.theme === 'pikes' && d.roadSurface === 'makadam' ? 'introTTg' : TT_LINES[k][isRally(d) ? 1 : d && d.modes ? 2 : 0] || TT_LINES[k][0];   // (a hill climb, a rally stage, a mountain pass)
+  const TT_CITY = { intro: 'introCity', go: 'goCity' };   // (a city stage, def.cityStage: Harju in Jyväskylä, its own welcome and start)
+  const ttLine = (d, k) => (d && d.cityStage && TT_CITY[k]) || (k === 'intro' && d && d.theme === 'pikes' && d.roadSurface === 'makadam' ? 'introTTg' : TT_LINES[k][isRally(d) ? 1 : d && d.modes ? 2 : 0] || TT_LINES[k][0]);   // (a hill climb, a rally stage, a mountain pass)
   // (Pikes Peak on its historic gravel road: its own welcome)
   // a road's own commentator lines for a key (def.comm: Los Caracoles' instead of Vršič's): the key of its pool, registered with Comm when first said
   const ownLine = (d, key) => { const L = d && d.comm && d.comm[key]; if (!L) return key; const k = key + '@' + d.id; Comm.addLines(k, L); return k; };
@@ -3045,7 +3046,7 @@
   const PART_EN = { bumperF: 'front bumper', bumperR: 'rear bumper', hood: 'bonnet', trunk: 'boot lid', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'front wing', fenderR: 'front wing' };
   const PART_EN_F = { bumperF: 'front wing', bumperR: 'rear wing', hood: 'nose cone', trunk: 'engine cover', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'bargeboard', fenderR: 'bargeboard' };   // (the formula's parts)
   const PART_EN_LM = { bumperF: 'splitter', bumperR: 'rear wing', hood: 'nose', trunk: 'engine cover', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'louvre panel', fenderR: 'louvre panel' };   // (the prototype's)
-  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', pikesg: 'Pikes Peak', ouninpohja: 'Ouninpohja', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka', vrsic: 'the Vrshich pass', caracoles: 'Los Caracoles' };
+  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', pikesg: 'Pikes Peak', ouninpohja: 'Ouninpohja', harju: 'Harju', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka', vrsic: 'the Vrshich pass', caracoles: 'Los Caracoles' };
   const cev = { wall: 0, car: 0 };          // impacts collected per physics step
   let cs = null;
   function commReset() {

@@ -1650,6 +1650,7 @@ const Render = (function () {
     nring:    { fog: 0xb7c7cc, sun: 0xfff0d8, sunI: 1.1, sky: 0xcadcf0, gnd: 0x3e4a2a, hemiI: 0.6, tint: [1.03, 1.0, 0.95], sat: 1.04, sunOff: [-80, 76, 70] },   // the Eifel: a summer afternoon over the 'green hell' (a lower sun: longer shadows)
     spa:      { fog: 0xc3ced7, sun: 0xfff1de, sunI: 0.98, sky: 0xd0dde9, gnd: 0x43522f, hemiI: 0.64, tint: [0.99, 1.0, 1.01], sat: 1.1 },   // the Ardennes: a little greyer, softer daylight (Spa's changeable weather)
     rbring:   { fog: 0xc6daea, sun: 0xfff1d8, sunI: 1.12, sky: 0xcfe3fb, gnd: 0x46602c, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.06, sunOff: [-86, 78, 52] },   // Styria in early summer, an afternoon sun (longer shadows): clear alpine air, fresh meadows, dark spruce woods
+    harju:    { fog: 0xcdd5dc, sun: 0xffcf96, sunI: 1.65, sky: 0xbad0ee, gnd: 0x58553f, hemiI: 0.58, tint: [1.02, 1.0, 0.97], sat: 1.1, haze: 0.16, hazeCol: [1, 0.82, 0.6], sunOff: [-100, 33, -8], skyTop: 0x3d74c4, skyK: 0.72, skyWarm: 0xf3dcb2, skyWarmK: 0.7, sunDist: 190 },   // Harju at 19:05 on a late-July evening: the sun 18 degrees up just north of west (as on 31 July), shadows three times as long as the pines and the blocks across the streets, a warm sun and cool shade, the clear blue sky of a Finnish summer evening with a warm glow towards the sun
     suzuka:   { fog: 0xc8d9e6, sun: 0xfff1dc, sunI: 1.06, sky: 0xd5e7fa, gnd: 0x4f5c34, hemiI: 0.62, tint: [1.01, 1.0, 0.99], sat: 1.12 },   // Suzuka: a clear spring day in Mie
     caracoles: { fog: 0xc2d3e8, sun: 0xfff3de, sunI: 1.32, sky: 0xb4cdf2, gnd: 0x6e5e4c, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.07, sunOff: [-72, 98, -62] },   // Los Caracoles: a clear afternoon of the Andean summer, the thin air's strong sun from the north-west (the southern hemisphere), a cool blue haze
   };
@@ -4229,7 +4230,8 @@ const Render = (function () {
     const texel = 160 / sun.shadow.mapSize.x;
     const cx = Math.round(sx / texel) * texel, cz = Math.round(sz / texel) * texel;
     sun.target.position.set(cx, baseY, cz);
-    sun.position.set(cx + sunOff[0], baseY + sunOff[1], cz + sunOff[2]);
+    const thm = THEMES[themeId], sd = thm && thm.sunDist ? thm.sunDist / Math.hypot(sunOff[0], sunOff[1], sunOff[2]) : 1;   // (theme.sunDist: a low sun placed further up its ray, so the long shadows of casters far up-sun reach the view)
+    sun.position.set(cx + sunOff[0] * sd, baseY + sunOff[1] * sd, cz + sunOff[2] * sd);
     sun.target.updateMatrixWorld();
   }
   let sunOff = [-80, 96, 70], camYaw = 0, lastMode = 'iso';
@@ -4409,19 +4411,21 @@ const Render = (function () {
   let sky = null;
   // the sky overhead: the fog's colour (the horizon's) deepened towards the time of day's blue (less under the rain's overcast)
   const _skA = new THREE.Color(), _skB = new THREE.Color();
-  function skyTop(out) {   // (day blue .. dusk blue .. night: by todK)
-    const r = Math.max(0, wet); _skA.setHex(atmos.season === 'winter' ? 0x86a6d0 : 0x3f7cd0);
+  function skyTop(out) {   // (day blue .. dusk blue .. night: by todK; a theme's own zenith by day: theme.skyTop, skyK)
+    const r = Math.max(0, wet), T = THEMES[themeId] || {}, own = T.skyTop != null && atmos.season !== 'winter';
+    _skA.setHex(own ? T.skyTop : atmos.season === 'winter' ? 0x86a6d0 : 0x3f7cd0);
     if (todK > 0) { if (todK <= 0.5) _skA.lerp(_skB.setHex(0x34497f), todK / 0.5); else _skA.setHex(0x34497f).lerp(_skB.setHex(0x010207), (todK - 0.5) / 0.5); }
-    return out.copy(scene.fog.color).lerp(_skA, (0.55 + 0.25 * sstep(0.5, 1, todK)) * (1 - 0.8 * r));
+    const k = own ? T.skyK + (0.55 - T.skyK) * Math.min(1, todK / 0.5) : 0.55;   // (the theme's own share by day, the usual one from dusk on)
+    return out.copy(scene.fog.color).lerp(_skA, (k + 0.25 * sstep(0.5, 1, todK)) * (1 - 0.8 * r));
   }
   function skyStep(on) {
     if (!sky) {
       if (!on) return;
-      const u = { uBot: { value: new THREE.Color() }, uTop: { value: new THREE.Color() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uSunC: { value: new THREE.Color() }, uSunA: { value: 0 }, uStar: { value: 0 },
+      const u = { uBot: { value: new THREE.Color() }, uTop: { value: new THREE.Color() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uSunC: { value: new THREE.Color() }, uSunA: { value: 0 }, uStar: { value: 0 }, uWarm: { value: new THREE.Color() }, uWarmK: { value: 0 },
         uCl: { value: 0 }, uCO: { value: new THREE.Vector2() }, uCL: { value: new THREE.Color() }, uCD: { value: new THREE.Color() }, uOv: { value: 0 } };
       const mat = new THREE.ShaderMaterial({ uniforms: u, depthWrite: false, depthTest: false, fog: false, side: THREE.BackSide,
         vertexShader: 'varying vec3 vD; void main(){ vD = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-        fragmentShader: 'uniform vec3 uBot; uniform vec3 uTop; uniform vec3 uSun; uniform vec3 uSunC; uniform float uSunA; uniform float uStar; varying vec3 vD;' +
+        fragmentShader: 'uniform vec3 uBot; uniform vec3 uTop; uniform vec3 uSun; uniform vec3 uSunC; uniform float uSunA; uniform float uStar; uniform vec3 uWarm; uniform float uWarmK; varying vec3 vD;' +
           'uniform float uCl; uniform vec2 uCO; uniform vec3 uCL; uniform vec3 uCD; uniform float uOv;' +
           // the clouds (quality 'high'): a layer 450 m up, the same noise as the cloud shadows on the ground (World's CLOUD_VB, the same drift):
           // a cloud seen in the sky casts the shadow the ground shows, along the sun's rays. Puffy edges from a finer noise; lit on the side
@@ -4430,6 +4434,8 @@ const Render = (function () {
           'float clVN(vec2 p, float n) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(clHash(i, n), clHash(i + vec2(1.0, 0.0), n), f.x), mix(clHash(i + vec2(0.0, 1.0), n), clHash(i + 1.0, n), f.x), f.y); }' +
           'float clF(vec2 q) { return 0.65 * clVN(q, 64.0) + 0.35 * clVN(q * 2.0 + vec2(17.0, 5.0), 128.0); }' +
           'void main(){ vec3 d = normalize(vD); vec3 c = mix(uBot, uTop, pow(smoothstep(0.0, 0.85, d.y), 0.75)); float s = max(dot(d, uSun), 0.0);' +
+          ' if (uWarmK > 0.0) { float hl = length(d.xz), sl = length(uSun.xz); float a = hl > 1e-4 && sl > 1e-4 ? max(dot(d.xz / hl, uSun.xz / sl), 0.0) : 0.0;' +   // (a warm band low over the horizon towards the sun)
+          ' c = mix(c, uWarm, uWarmK * pow(a, 3.0) * smoothstep(-0.01, 0.05, d.y) * (1.0 - smoothstep(0.0, 0.55, d.y))); }' +
           ' c += uSunC * uSunA * (pow(s, 90.0) * 0.8 + pow(s, 8.0) * 0.15);' +
           ' float D = 0.0;' +
           ' if (uCl > 0.0 && d.y > 0.008) {' +
@@ -4453,6 +4459,8 @@ const Render = (function () {
     if (!on) { sky.u.uStar.value = 0; return; }   // (no stars seen)
     const r = Math.max(0, wet), U = sky.u;
     U.uBot.value.copy(scene.fog.color); skyTop(U.uTop.value);
+    const T = THEMES[themeId] || {}, own = T.skyTop != null && atmos.season !== 'winter';   // (theme.skyWarm, skyWarmK: the glow towards the sun by day, gone by dusk as the theme's own zenith)
+    U.uWarmK.value = own && T.skyWarm != null ? T.skyWarmK * (1 - r) * (1 - Math.min(1, todK / 0.5)) : 0; if (U.uWarmK.value > 0) U.uWarm.value.setHex(T.skyWarm);
     const sl = Math.hypot(sunOff[0], sunOff[1], sunOff[2]); U.uSun.value.set(sunOff[0] / sl, sunOff[1] / sl, sunOff[2] / sl);
     U.uSunC.value.copy(sun.color); U.uSunA.value = (todK <= 0.5 ? 1 + 0.6 * todK : 1.3 - 1.9 * (todK - 0.5)) * (1 - 0.85 * r); U.uStar.value = 0.9 * sstep(0.7, 1, todK) * (1 - 0.95 * r);   // (the rain's clouds hide them)
     // the clouds (quality 'high'): white by day (a touch of the sun's colour), pink and orange at dusk and at dawn, dark at night, grey and
@@ -5003,6 +5011,6 @@ const Render = (function () {
   }
   function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0, water: wetW }; }   // (tests)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, open: !!ck.parts.open, gear: ck.parts.scr && ck.parts.scr.txt ? ck.parts.scr.txt.split('|')[0] : null, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, goalShot, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get cockpit() { return cam.ck && ck.parts ? { car: ck.car, key: ck.key, formula: ck.parts.formula, open: !!ck.parts.open, gear: ck.parts.scr && ck.parts.scr.txt ? ck.parts.scr.txt.split('|')[0] : null, wheel: ck.parts.turn.rotation.z, near: camera.near, sky: !!sky && sky.mesh.visible } : null; }, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, setStartLights, shake, resetCam, setShot, goalShot, setShowCar, renderShowroom, debugShot, setDynScale, getDynScale, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, get crew() { return crew; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 
