@@ -376,11 +376,11 @@
  },
  "tianmen": {
   "meshes": 891,
-  "verts": 712918,
+  "verts": 713426,
   "instances": 13758,
   "props": 43,
   "crowd": 357,
-  "world": "2e411c08",
+  "world": "3aec69b2",
   "propsHash": "ac014ea9",
   "floor": "690d6505/10332",
   "groups": {
@@ -390,7 +390,7 @@
    "crowd:MeshLambertMaterial": "b3e0f5ad",
    "ao:MeshBasicMaterial": "4f26df40",
    "tyremarks:MeshBasicMaterial": "bcc0bc51",
-   "roadwear:MeshLambertMaterial": "506cfbe8"
+   "roadwear:MeshLambertMaterial": "fc4e0e1a"
   }
  },
  "jezero": {
