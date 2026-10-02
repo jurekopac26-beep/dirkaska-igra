@@ -10460,7 +10460,9 @@ const World = (function () {
     const hi = sstep(1360, 1400, A), fo = vrLCf(x, z, 1), sh = vrLCf(x, z, 2), se = vrLCf(x, z, 3) * hi;   // (WorldCover's built-up below the plateau: the road's own strip, overgrown)   // (the plateau's grassland: tawny patches; below it the lush green of the clearings)
     let R = lerp(0.27, 0.4, hi), G = lerp(0.42, 0.5, hi), B = lerp(0.16, 0.23, hi);
     const straw = sstep(0.56, 0.8, q) * 0.55 * hi; R = lerp(R, 0.6, straw); G = lerp(G, 0.57, straw); B = lerp(B, 0.3, straw);
-    R = lerp(R, 0.19, fo); G = lerp(G, 0.26, fo); B = lerp(B, 0.12, fo);
+    { const m6 = P.n6(x, z), lit = sstep(0.62, 0.82, P.n3(x * 2.6, z * 2.6)) * 0.55;   // (the forest floor mottled: darker hollows, lighter clearings, brown leaf litter)
+      const fr = 0.19 + (m6 - 0.5) * 0.08, fg = 0.26 + (m6 - 0.5) * 0.1, fb = 0.12 + (m6 - 0.5) * 0.04;
+      R = lerp(R, lerp(fr, 0.34, lit), fo); G = lerp(G, lerp(fg, 0.27, lit), fo); B = lerp(B, lerp(fb, 0.15, lit), fo); }
     R = lerp(R, 0.29, sh * 0.7); G = lerp(G, 0.38, sh * 0.7); B = lerp(B, 0.16, sh * 0.7);
     R = lerp(R, 0.56, se * 0.6); G = lerp(G, 0.54, se * 0.6); B = lerp(B, 0.49, se * 0.6);
     R += (f - 0.5) * 0.08; G += (f - 0.5) * 0.08; B += (f - 0.5) * 0.05;
@@ -10568,8 +10570,8 @@ const World = (function () {
       for (let k = 0; k < 8; k++) { const a = k / 8 * TAU + R() * 0.4; frond(0, 0.88, 0, a, 0.42 + R() * 0.1, 0.07, 0.26, 0.05, k % 2 ? [0.2, 0.36, 0.12] : [0.24, 0.4, 0.14], [0.3, 0.44, 0.18]); }
       frond(0, 0.88, 0, 0, 0.05, 0.14, -0.05, 0.02, [0.3, 0.46, 0.16], [0.3, 0.46, 0.16]);
     } else if (kind === 3) {
-      ROCK_SMOOTH = false; cyl(g, 0, -0.02, 0, 0.06, 0.62, 5, [0.2, 0.15, 0.1], null, 0.05);
-      for (let k = 0; k < 9; k++) { const a = k / 9 * TAU + R() * 0.3; frond(0, 0.6, 0, a, 0.55 + R() * 0.12, 0.12, 0.36, 0.08, k % 2 ? [0.22, 0.42, 0.14] : [0.27, 0.48, 0.16], [0.36, 0.54, 0.2]); }
+      ROCK_SMOOTH = false; cyl(g, 0, -0.02, 0, 0.06, 0.62, 4, [0.2, 0.15, 0.1], null, 0.05);
+      for (let k = 0; k < 7; k++) { const a = k / 7 * TAU + R() * 0.3; frond(0, 0.6, 0, a, 0.58 + R() * 0.12, 0.12, 0.36, 0.1, k % 2 ? [0.22, 0.42, 0.14] : [0.27, 0.48, 0.16], [0.36, 0.54, 0.2]); }
     } else if (kind === 4) {
       ROCK_SMOOTH = false; const bark = [0.4, 0.3, 0.22], nd = [0.13, 0.24, 0.1], ndt = [0.2, 0.32, 0.13];
       cyl(g, 0, -0.02, 0, 0.03, 0.9, 5, bark, null, 0.018);
@@ -10582,6 +10584,32 @@ const World = (function () {
       for (let k = 0; k < 2; k++) ico(g, k ? 0.22 : -0.1, k ? 0.38 : 0.47, k ? 0.12 : -0.05, k ? 0.32 : 0.38, 1.1, cs[k], R, 0.35);
     }
     ROCK_SMOOTH = rs;
+    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
+  function rrLifeGeo(kind) {   // unit pieces of the landscape's life (the instances scale and colour them): 0 a flowering tree (a broadleaf with a pale crown:
+    // the instance gives it the purple of a quaresmeira, the yellow of an ipê, a pink or a white one), 1 a hydrangea bush (green leaves, pale heads of
+    // flowers tinted blue, pink or lilac), 2 a cow (2.3 m long, x forward; pale: the instance gives the coat), 3 a fence post (1.3 m)
+    const g = new GB(), R = rng(900 + kind), rs = ROCK_SMOOTH;
+    if (kind === 0) { ROCK_SMOOTH = true; cyl(g, 0, -0.02, 0, 0.035, 0.5, 3, [0.62, 0.58, 0.52], null, 0.025);
+      ico(g, -0.05, 0.66, -0.04, 0.32, 0.6, [0.96, 0.94, 0.96], R, 0.32); ico(g, 0.2, 0.56, 0.12, 0.24, 0.66, [0.88, 0.86, 0.88], R, 0.35); }
+    else if (kind === 1) { ROCK_SMOOTH = true; ico(g, 0, 0.32, 0, 0.5, 0.65, [0.34, 0.5, 0.26], R, 0.3);
+      for (let k = 0; k < 2; k++) { const a = k * Math.PI + 0.4; ico(g, Math.cos(a) * 0.22, 0.6, Math.sin(a) * 0.22, 0.27, 0.75, [0.95, 0.95, 0.98], R, 0.25); } }
+    else if (kind === 2) { ROCK_SMOOTH = false; const C = [1, 1, 1], L = [0.78, 0.76, 0.74];
+      box(g, 0, 0.62, 0, 1.75, 0.78, 0.78, 0, C, null, true); box(g, 1.1, 0.95, 0, 0.5, 0.42, 0.38, 0, [0.9, 0.88, 0.86], null, true);
+      box(g, 0.66, 0, 0, 0.22, 0.66, 0.66, 0, L, null, true); box(g, -0.66, 0, 0, 0.22, 0.66, 0.66, 0, L, null, true); box(g, -0.92, 0.82, 0, 0.1, 0.5, 0.08, 0, L, null, true); }
+    else { ROCK_SMOOTH = false; box(g, 0, -0.2, 0, 0.13, 1.5, 0.13, 0, [1, 1, 1], [0.8, 0.8, 0.8], true); }
+    ROCK_SMOOTH = rs;
+    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
+  // a black vulture (urubu, x forward, wingspan ~1.5 m: the instance scales it): black all over, the grey-white patches near the wing tips, the short
+  // tail; it soars on the thermals over the cliff (as Los Caracoles' condors: caCondors moves them)
+  function rrVultureGeo() {
+    const g = new GB(), K = [0.08, 0.08, 0.09], Wt = [0.72, 0.72, 0.7], R = rng(3001);
+    ROCK_SMOOTH = true; ico(g, 0, 0, 0, 0.22, 0.45, K, R, 0.1); ROCK_SMOOTH = false; box(g, 0.24, -0.04, 0, 0.18, 0.1, 0.1, 0, [0.22, 0.22, 0.24]);
+    for (const sd of [-1, 1]) { const A = [0.12, 0, 0.12 * sd], B = [-0.18, 0, 0.12 * sd], C = [-0.14, 0.08, 0.78 * sd], D = [0.14, 0.08, 0.76 * sd];
+      g.quadO(A, B, C, D, K, [0, -1, sd * 0.9]); g.quadO(A, B, C, D, K, [0, 1, sd * 0.9]);
+      const E = [-0.12, 0.085, 0.62 * sd], F = [0.1, 0.085, 0.6 * sd]; g.quadO(F, E, [-0.13, 0.09, 0.76 * sd], [0.13, 0.09, 0.75 * sd], Wt, [0, -1, sd]); }
+    g.triO([-0.18, 0, -0.1], [-0.18, 0, 0.1], [-0.42, 0.01, 0], K, [-0.3, -1, 0]); g.triO([-0.18, 0, -0.1], [-0.42, 0.01, 0], [-0.18, 0, 0.1], K, [-0.3, 1, 0]);
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
   // the knockable roadside posts: white with a black top
@@ -10690,7 +10718,7 @@ const World = (function () {
       const vc = [-1, 1].map((side, si) => { const a = []; for (let i = 0; i < N; i++) { const bar = side > 0 ? T.br[i] : T.bl[i];
         a.push(vp[si][i].map(([o, y], k) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
           if (onBr[i]) return k < 3 ? deck : [0.52, 0.51, 0.49];
-          const wl = vp[si][i][2][1] < -2.6; if (wl && (k === 1 || k === 2)) { const q = 0.92 + 0.12 * rpHash(i >> 2, 51 + si); return k === 1 ? [0.72 * q, 0.71 * q, 0.67 * q] : [0.5 * q, 0.5 * q, 0.46 * q]; }   // (the retaining wall's coping, its weathered, damp foot)
+          const wl = vp[si][i][2][1] < -2.6; if (wl && (k === 1 || k === 2)) { const q = 0.9 + 0.14 * rpHash(i >> 2, 51 + si), ms = sstep(0.45, 0.7, P.c5(x * 2, z * 2)), jt = (i & 3) === 0 ? 0.85 : 1; return k === 1 ? [0.74 * q * jt, 0.73 * q * jt, 0.69 * q * jt] : [lerp(0.48, 0.3, ms) * q, lerp(0.48, 0.38, ms) * q, lerp(0.44, 0.24, ms) * q]; }   // (the retaining wall: its coping with a joint every 8 m, its damp foot streaked with moss)
           if (k === 4) return rrGCol(x, z);
           const f = P.n4(x * 1.7, z * 1.7), hiA = sstep(1360, 1400, T.hy[i] + base), mown = k === 0 ? 0.3 : 0;   // (the verge: mown grass, the ditch a little darker and lusher; tawny up on the plateau; the shoulder's edge worn)
           const g0 = [lerp(0.3, 0.42, hiA) + (f - 0.5) * 0.08, lerp(0.45, 0.5, hiA) + (f - 0.5) * 0.08, lerp(0.17, 0.24, hiA) + (f - 0.5) * 0.04], dk = k === 2 ? 0.86 : 1;
@@ -10951,7 +10979,7 @@ const World = (function () {
           const gk = sp === 1 || sp === 5 ? 0 : sp;   // (the geometry: the emergent trees and the bamboo clumps are broadleaf crowns, scaled and tinted: fewer kinds, fewer draws)
           if (sp === 5) col = [col[0] * 1.25, col[1] * 1.2, col[2] * 1.1];
           const away = !(nn.i >= 0 && nn.dd < 38); if (away && (sp === 3 || r4 > 0.6)) continue;   // (farther out: fewer, wider crowns; the tree ferns hidden under them)
-          if (away) tf[gk === 4 ? 4 : 0].add(x, y - 0.15, z, r1 * 70, wid * far * 1.3, hgt * far, col); else (nn.dd < 14 || gk === 3 ? tk : tn)[gk].add(x, y - 0.15, z, r1 * 70, wid * far, hgt * far, col);   // (fewer kinds, fewer draws: far out the palms and the bamboo are crowns like any other; the small ones near the road all in one set)
+          if (away) tf[gk === 4 ? 4 : 0].add(x, y - 0.15, z, r1 * 70, wid * far * 1.3, hgt * far, col); else (nn.dd < 10 && gk !== 3 ? tk : tn)[gk].add(x, y - 0.15, z, r1 * 70, wid * far, hgt * far, col);   // (fewer kinds, fewer draws: far out the palms and the bamboo are crowns like any other; the ferns cast no shadow)
           if (++nTrees >= maxT) break grid;
         }
       }
@@ -10959,6 +10987,50 @@ const World = (function () {
     for (const t of tk) if (t) t.addTo(root, true);
     for (const t of tn) if (t) t.addTo(root, false);
     for (const t of tf) if (t) t.addTo(root, false);
+
+    /* ---- the life of the landscape: flowering trees over the canopy (the purple quaresmeiras, the yellow ipês, a few pink and white ones), the blue,
+       pink and lilac hydrangeas along the road up high and on the plateau, cattle grazing the plateau's pastures behind their fences (posts and two
+       strands of wire), black vultures soaring over the cliff (all instanced; their own random stream, so nothing above is re-rolled) ---- */
+    let nFlower = 0, nHyd = 0, nCows = 0, nPosts = 0;
+    {
+      const RL = rng(3371), G = P.G, Lt = VRC * VRT, tiles = []; for (let k = 0; k < G.ntx * G.ntz; k++) if (G.on[k]) tiles.push(k);
+      const fl = new IChunks(rrLifeGeo(0), tMatT, 224), hy = new IChunks(rrLifeGeo(1), tMatT, 192), cw = new IChunks(rrLifeGeo(2), tMatT, 256), po = new IChunks(rrLifeGeo(3), tMatT, 256);
+      const spot = () => { const k = tiles[Math.floor(RL() * tiles.length)], ti = k % G.ntx, tj = Math.floor(k / G.ntx); return [G.x0 + (ti + RL()) * Lt, G.z0 + (tj + RL()) * Lt]; };
+      const flC = [[0.66, 0.4, 0.78], [0.62, 0.36, 0.72], [1.0, 0.84, 0.24], [0.97, 0.6, 0.78], [0.96, 0.96, 0.92]];
+      for (let k = 0; k < 900 * dens && nFlower < 340 * dens; k++) {   // the flowering trees: in the forest, a little over the canopy
+        const [x, z] = spot(), r = RL(), r2 = RL(); if (vrLC(x, z) !== 1 || excluded(x, z) || vrWater(x, z).e > -4) continue;
+        const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < 4) continue; if (caSlope(x, z) > 1.5) continue;
+        const h = 17 + r * 9; fl.add(x, caGround(x, z) - 0.15, z, r2 * 70, h * (0.8 + r2 * 0.2), h, vary(flC[r < 0.38 ? 0 : r < 0.62 ? 1 : r < 0.86 ? 2 : r < 0.95 ? 3 : 4], RL, 0.1)); nFlower++;
+      }
+      const hyC = [[0.55, 0.66, 1.0], [0.62, 0.7, 1.0], [1.0, 0.62, 0.82], [0.8, 0.66, 1.0], [0.98, 0.98, 1.0]];
+      for (let s = sStart - 60; s < sFin + 160; s += 2.6) for (const side of [-1, 1]) {   // the hydrangeas: clumps along the verges up high (the planted roadsides of the Serra)
+        const i = T.idx(s), A = T.hy[i] + base; if (A < 1220 || onBr[i]) continue;
+        const r = RL(), r2 = RL(), r3 = RL(); if (sstep(0.35, 0.65, P.n5(s * 0.9, side * 300)) < r * 0.9 + 0.1) continue;
+        const [x, z] = onSide(s, side, 0.7 + r2 * 2.2); if (vrNear(x, z).dd < 0.5 || excluded(x, z) || vrWater(x, z).e > -3) continue;
+        const sc = 1.1 + r3 * 0.9; hy.add(x, caGround(x, z) - 0.1, z, r * TAU, sc * 1.3, sc, vary(hyC[Math.floor(P.c1(s * 0.6, side * 77) * 4.99)], RL, 0.08)); nHyd++;
+      }
+      const pas = (x, z) => vrLC(x, z) === 0 && caGround(x, z) + base > 1385 && caSlope(x, z) < 0.35 && !excluded(x, z) && vrWater(x, z).e < -4;   // (the plateau's pasture)
+      const coat = [[0.14, 0.12, 0.12], [0.5, 0.3, 0.18], [0.94, 0.92, 0.88], [0.72, 0.56, 0.38], [0.36, 0.22, 0.14]];
+      for (let h = 0, tries = 0; h < 7 && tries < 600; tries++) {   // the herds: a few cows to a dozen, grazing together, facing all ways
+        const [hx, hz] = spot(), nn = vrNear(hx, hz); if (!pas(hx, hz) || (nn.i >= 0 && nn.dd < 28)) continue;
+        const n = 4 + Math.floor(RL() * 8);
+        for (let k = 0; k < n; k++) { const x = hx + (RL() - 0.5) * 34, z = hz + (RL() - 0.5) * 34, n2 = vrNear(x, z); if (!pas(x, z) || (n2.i >= 0 && n2.dd < 18)) continue;
+          cw.add(x, caGround(x, z) - 0.04, z, RL() * TAU, 0.95 + RL() * 0.15, 0.95 + RL() * 0.15, coat[Math.floor(RL() * coat.length)]); nCows++; }
+        h++;
+      }
+      const wire = [0.3, 0.3, 0.32];
+      for (const side of [-1, 1]) {   // the pasture fences along the road on the plateau: a post every 3.2 m, two strands of wire, a gap for a gate now and then
+        let prev = null;
+        for (let s = sStart + 3300; s < sFin + 170; s += 3.2) {
+          const i = T.idx(s), [x, z] = onSide(s, side, 4.5), ok = pas(x, z) && vrNear(x, z).dd > 3 && rpHash(Math.floor(s / 140), side + 9) > 0.06 && (s % 140) > 8;
+          if (!ok) { prev = null; continue; }
+          const y = caGround(x, z); po.add(x, y, z, RL() * TAU, 1, 0.92 + RL() * 0.12, [0.46 + RL() * 0.06, 0.34, 0.22]); nPosts++;
+          if (prev) { const g = scen.get(x, z); for (const hh of [0.55, 1.0]) ouRod(g, [prev[0], prev[1] + hh, prev[2]], [x, y + hh, z], 0.02, wire, 3); }
+          prev = [x, y, z];
+        }
+      }
+      fl.addTo(root, false); hy.addTo(root, false); cw.addTo(root, true); po.addTo(root, false);
+    }
 
     /* ---- the verges and the cliffs: ferns and shrubs right behind the barrier, the red earth and rocks at the foot of the cuts, crags of dark basalt
        (pink sandstone lower down) where the slope rises steep beside the road and out on the escarpment ---- */
@@ -11007,8 +11079,13 @@ const World = (function () {
       }
       out.dyn.rrMist = { L, root }; rrMist(out.dyn.rrMist, 0);
     }
+    { const geo = rrVultureGeo(), mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), i0 = T.idx(sStart), L = [];   // the vultures over the cliff
+      for (const [r, sp, h, ox, oz, ph] of [[34, 0.2, 40, 20, -30, 0], [48, -0.15, 58, -30, 20, 1.7], [26, 0.24, 30, 15, 40, 3.3], [56, 0.12, 72, -10, -50, 5.1]]) {
+        const m = new THREE.Mesh(geo, mat); m.scale.setScalar(1.6); m.castShadow = true; root.add(m); L.push({ m, r, sp, h, ox, oz, ph, bank: 0.3 }); }
+      out.dyn.condors = { L, x0: T.px[i0], z0: T.pz[i0], y0: T.hy[i0], ax: T.px[i0], az: T.pz[i0], ay: T.hy[i0], t: null };
+      caCondors(out.dyn.condors, 0, null); }
     crowdFinish(CR, root, out);
-    out.stats = { trees: nTrees, araucarias: nArauc, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), falls: nFalls, mist: out.dyn.rrMist.L.length };   // (read by the tests)
+    out.stats = { trees: nTrees, araucarias: nArauc, flowering: nFlower, hydrangeas: nHyd, cows: nCows, fencePosts: nPosts, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), falls: nFalls, mist: out.dyn.rrMist.L.length };   // (read by the tests)
     return out;
   }
 
