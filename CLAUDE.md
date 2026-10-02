@@ -6,7 +6,7 @@ Veljajo za vsako progo, ki jo dodamo v igro (glej tudi razdelek »Nova proga« v
 - Vsaka proga se imenuje po kraju in državi, v obliki **»Kraj, Država«** (države v slovenščini): npr. `Vršič, Slovenija`, `Ljubljana, Slovenija`, `Bathurst, Avstralija`, `Štajerska, Avstrija`.
 - To velja za polje `name` v `js/tracks/<id>.js`, za angleško ime in opis v `js/lang.js` (angleščina: `Vršič, Slovenia`) in za vse besedilo v `README.md`.
 - Za kraj izberi zemljepisno ime (kraj, prelaz, dolina, regija), ne imena dirkališča, prireditve ali podjetja. `id` ostane kratek in brez presledkov.
-- Obstoječe proge, ki še nimajo imena v tej obliki, preimenuj le, kadar te za to prosi uporabnik.
+- Izmišljene proge, ki jih ne bomo uporabljali, imajo v datoteki proge `test: true`: v menuju so na koncu pod naslovom »Za izbris · samo za testiranje« in ostanejo samo za testiranje.
 
 ## Pravna varnost (igra gre na Google Play)
 - V igri so samo zemljepisna imena. Brez logotipov, imen podjetij, lokalov, sponzorjev, prireditev in znamk avtomobilov. Table in napisi so generični ali izmišljeni.
