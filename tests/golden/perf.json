@@ -98,10 +98,10 @@
   "jsMs": 1
  },
  "rbring": {
-  "calls": 282,
-  "maxCalls": 324,
-  "kverts": 573,
-  "maxKverts": 741,
+  "calls": 279,
+  "maxCalls": 367,
+  "kverts": 546,
+  "maxKverts": 716,
   "jsMs": 1.04
  },
  "suzuka": {

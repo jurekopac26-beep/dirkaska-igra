@@ -22,11 +22,11 @@ check('Suzuka: one crossing, the lower road after Degner, the bridge on the back
   X ? `lower road ${dLo.toFixed(0)} m, bridge ${dUp.toFixed(0)} m after the start line, at (${X.x.toFixed(1)}, ${X.z.toFixed(1)})` : 'none');
 check('the bridge 7.5-9 m over the lower road, the roads crossing at ~60 deg', X && X.dy > 7.5 && X.dy < 9 && X.sin > 0.8 && X.sin < 0.92,
   X ? `height gap ${X.dy.toFixed(2)} m, sin ${X.sin.toFixed(3)}` : '');
-{ const iu = Math.round(X.up), il = Math.round(X.lo);
-  check('parapets on the bridge 3 m from the road, the underpass walls 3.4 m', Math.abs(T.bl[iu] - T.w - 3) < 0.05 && Math.abs(T.br[iu] - T.w - 3) < 0.05 && Math.abs(T.bl[il] - T.w - 3.4) < 0.05 && Math.abs(T.br[il] - T.w - 3.4) < 0.05,
-    `bridge ${(T.bl[iu] - T.w).toFixed(2)} / ${(T.br[iu] - T.w).toFixed(2)} m, underpass ${(T.bl[il] - T.w).toFixed(2)} / ${(T.br[il] - T.w).toFixed(2)} m`);
+{ const iu = Math.round(X.up), il = Math.round(X.lo), wu = T.wa[iu], wl = T.wa[il];   // (from the asphalt's edge there: its own half width)
+  check('parapets on the bridge 3 m from the road, the underpass walls 3.4 m', Math.abs(T.bl[iu] - wu - 3) < 0.05 && Math.abs(T.br[iu] - wu - 3) < 0.05 && Math.abs(T.bl[il] - wl - 3.4) < 0.05 && Math.abs(T.br[il] - wl - 3.4) < 0.05,
+    `bridge ${(T.bl[iu] - wu).toFixed(2)} / ${(T.br[iu] - wu).toFixed(2)} m, underpass ${(T.bl[il] - wl).toFixed(2)} / ${(T.br[il] - wl).toFixed(2)} m`);
   // (the old rule would have pinched both roads' barriers to the minimum wherever the other road passes within 80 m)
-  let wide = 0; for (let d = 60; d <= 90; d += 2) { const a = T.idx(sLo + d), b = T.idx(sLo - d); if (Math.min(T.bl[a], T.br[a], T.bl[b], T.br[b]) > T.w + 3.4 + 0.5) wide++; }
+  let wide = 0; for (let d = 60; d <= 90; d += 2) { const a = T.idx(sLo + d), b = T.idx(sLo - d); if (Math.min(T.bl[a] - T.wa[a], T.br[a] - T.wa[a], T.bl[b] - T.wa[b], T.br[b] - T.wa[b]) > 3.4 + 0.5) wide++; }
   check('away from the bridge the lower road has its normal run-off again', wide >= 12, `${wide} of 16 samples 60-90 m either side wider than the walls`); }
 
 // 2. two cars at the very same spot, one on the bridge, one under it, both driving on: they never touch
@@ -48,7 +48,7 @@ r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 2, phys: 'cs', playerModel: C
 P = r.player; place(r, P, sUp - 40, 32); r.start();
 let hit = 0, yMin = 1e9, dMax = 0;
 for (let k = 0; k < 3 / DT; k++) { P.inThr = 1; P.inBrk = 0; P.inSteer = k * DT > 0.4 ? 1 : 0; P.digitalSteer = true; r.step(DT); hit = Math.max(hit, P.hitWall); if (Math.abs(P.q.s - sUp) < 30) { yMin = Math.min(yMin, P.y); dMax = Math.max(dMax, Math.abs(P.q.d)); } }
-check('into the parapet on the bridge: the car hits it and stays up on the bridge', hit > 3 && yMin > T.hy[Math.round(X.lo)] + 6 && dMax < T.w + 3.2,
+check('into the parapet on the bridge: the car hits it and stays up on the bridge', hit > 3 && yMin > T.hy[Math.round(X.lo)] + 6 && dMax < T.wa[Math.round(X.up)] + 3.2,
   `impact ${hit.toFixed(1)} m/s, lowest ${yMin.toFixed(2)} m over the bridge (the road below ${T.hy[Math.round(X.lo)].toFixed(2)} m), ${dMax.toFixed(2)} m off the centre line`);
 
 // 4. rescued right at the crossing: back on its own level

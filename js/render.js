@@ -1780,7 +1780,7 @@ const Render = (function () {
     const hint = target.q && target.q.a >= 0 ? target.q.a : -1;
     for (; splash.acc >= 1; splash.acc -= 1) {
       const x = cx + (spRnd() - 0.5) * 2 * R, z = cz + (spRnd() - 0.5) * 2 * R, q = T.query(x, z, hint, _sq);
-      if (Math.abs(q.d) > T.w + 0.6) continue;   // (on the road only)
+      if (Math.abs(q.d) > T.wq(q) + 0.6) continue;   // (on the road only)
       let y = T.hasElev && T.hy ? T.hy[q.a] : 0; if (T.bank) y += T.bankAt(q.s, q.d, _bk).dy;
       splash.put(x, y + 0.04, z, time);
     }
@@ -1803,8 +1803,8 @@ const Render = (function () {
     const pos = [], uv = [], idx = [], P = (s, o) => { const i = T.idx(s); let y = (T.hasElev && T.hy ? T.hy[i] : 0) + 0.035; if (T.bank) y += T.bankAt(s, o, _bk).dy; pos.push(T.px[i] + T.nx[i] * o, y, T.pz[i] + T.nz[i] * o); };
     for (let s = 7; s < T.len - 7; s += 8) {
       const h = hash3(s * 0.137 + 5); if (h < 0.45) continue;
-      const mid = hash3(s * 0.71 + 3) < 0.12, sd = hash3(s * 0.29 + 1) < 0.5 ? -1 : 1, L = 1.8 + 4 * hash3(s * 0.53 + 7), W = Math.min(0.8 + 1.4 * hash3(s * 0.91 + 2), T.w * 0.5);
-      const o = mid ? (hash3(s * 0.37 + 9) - 0.5) * T.w * 0.7 : sd * (T.w - 0.25 - W / 2 - 0.8 * hash3(s * 0.43 + 4)), b = pos.length / 3, k = Math.floor(hash3(s * 0.19 + 8) * 4), cu = (k & 1) * 0.5, cv = (k >> 1) * 0.5;
+      const ws = T.wAt(s), mid = hash3(s * 0.71 + 3) < 0.12, sd = hash3(s * 0.29 + 1) < 0.5 ? -1 : 1, L = 1.8 + 4 * hash3(s * 0.53 + 7), W = Math.min(0.8 + 1.4 * hash3(s * 0.91 + 2), ws * 0.5);
+      const o = mid ? (hash3(s * 0.37 + 9) - 0.5) * ws * 0.7 : sd * (ws - 0.25 - W / 2 - 0.8 * hash3(s * 0.43 + 4)), b = pos.length / 3, k = Math.floor(hash3(s * 0.19 + 8) * 4), cu = (k & 1) * 0.5, cv = (k >> 1) * 0.5;
       P(s - L / 2, o - W / 2); P(s - L / 2, o + W / 2); P(s + L / 2, o + W / 2); P(s + L / 2, o - W / 2);
       uv.push(cu, cv, cu + 0.5, cv, cu + 0.5, cv + 0.5, cu, cv + 0.5);
       idx.push(b, b + 1, b + 2, b, b + 2, b + 3);   // (facing up)
@@ -2013,7 +2013,7 @@ const Render = (function () {
     });
     if (!cnt.size) return null;
     const q = {};
-    return (x, z, road) => { const qq = T.query(x, z, sunHint, q); if (Math.abs(qq.d) < T.w + 3) return -1; if (road) return 0;   // (the followed car's place on the road: the search starts there)
+    return (x, z, road) => { const qq = T.query(x, z, sunHint, q); if (Math.abs(qq.d) < T.wq(qq) + 3) return -1; if (road) return 0;   // (the followed car's place on the road: the search starts there)
       return clamp((cnt.get(Math.floor(x / C) * 65536 + Math.floor(z / C)) || 0) / 5, 0, 1); };
   }
   let sunT = 0, sunHint = -1;
@@ -2188,9 +2188,9 @@ const Render = (function () {
     const heads = new THREE.InstancedMesh(new THREE.BoxGeometry(0.9, 0.3, 0.5), new THREE.MeshBasicMaterial({ color: 0xfff1cf }), n);
     const hp = new Float32Array(n * 3), hc = new Float32Array(n * 4), hs = new Float32Array(n), fp = new Float32Array(n * 3);
     for (let k = 0; k < n; k++) {
-      const s = k * 30 + 10, i = T.idx(s), sd = k % 2 ? 1 : -1, y = T.hasElev && T.hy ? T.hy[i] : 0, e = sd > 0 ? (T.br ? T.br[i] : T.w) : (T.bl ? T.bl[i] : T.w), d = sd * (Math.max(T.w, Math.min(e, T.w + 6)) + 1.2);
+      const s = k * 30 + 10, i = T.idx(s), sd = k % 2 ? 1 : -1, y = T.hasElev && T.hy ? T.hy[i] : 0, wi = T.wa[i], e = sd > 0 ? (T.br ? T.br[i] : wi) : (T.bl ? T.bl[i] : wi), d = sd * (Math.max(wi, Math.min(e, wi + 6)) + 1.2);
       const gr = T.hasElev && T.grade ? T.grade[i] : 0; rn.set(-gr * T.tx[i], 1, -gr * T.tz[i]).normalize();   // (the pool in the road's plane: on a climb a level one would cut into the road ahead and float above it behind)
-      p.set(T.px[i] + T.nx[i] * sd * T.w * 0.35, y + 0.07, T.pz[i] + T.nz[i] * sd * T.w * 0.35); q.setFromUnitVectors(up, rn); sc.set(T.w * 3.2, 1, T.w * 3.2); m4.compose(p, q, sc); pools.setMatrixAt(k, m4); q.identity();
+      p.set(T.px[i] + T.nx[i] * sd * wi * 0.35, y + 0.07, T.pz[i] + T.nz[i] * sd * wi * 0.35); q.setFromUnitVectors(up, rn); sc.set(wi * 3.2, 1, wi * 3.2); m4.compose(p, q, sc); pools.setMatrixAt(k, m4); q.identity();
       fp[k * 3] = p.x; fp[k * 3 + 1] = p.y - 0.03; fp[k * 3 + 2] = p.z;
       p.set(T.px[i] + T.nx[i] * d, y, T.pz[i] + T.nz[i] * d); sc.set(1, 1, 1); m4.compose(p, q, sc); poles.setMatrixAt(k, m4);
       p.y += 9; q.setFromAxisAngle(up, -Math.atan2(T.nz[i], T.nx[i])); m4.compose(p, q, sc); heads.setMatrixAt(k, m4);
@@ -2551,7 +2551,7 @@ const Render = (function () {
       const wt = Math.max(wetW > 0.1 ? wetW : 0, fw / 4);   // a wet road: the rain's water or the melt water under the wheels
       if (!c.air && c.speed > 0.5) {
         const sr = c.q && c.q.k >= 0 && curTrack && curTrack.stubs ? curTrack.stubs[c.q.k] : null;   // (a side road: a gravel one, or its verge, is the verge)
-        const off = c.q && (sr ? sr.grav || Math.abs(c.q.u) > curTrack.stubHw(sr, c.q.st) : Math.abs(c.q.d || 0) > ((curTrack && curTrack.def.halfWidth) || 7)), k = Math.abs(c.speed) * dt * (off ? 4 : 1);   // (on the gravel verge: 4x as fast)
+        const off = c.q && (sr ? sr.grav || Math.abs(c.q.u) > curTrack.stubHw(sr, c.q.st) : Math.abs(c.q.d || 0) > (curTrack ? (c.q.a >= 0 ? curTrack.wq(c.q) : curTrack.w) : 7)), k = Math.abs(c.speed) * dt * (off ? 4 : 1);   // (on the gravel verge: 4x as fast)
         u.d.value = Math.min(1, u.d.value + k / 7000 * (1 - wt) * (1 - sn)); X.x = Math.min(1, X.x + k / 2600 * wt); X.y = Math.min(1, X.y + k / 2400 * sn);
         pkCarDust.set(c, [u.d.value, X.x, X.y]);
       }
@@ -4240,7 +4240,7 @@ const Render = (function () {
     const out = [], n = Math.max(1, Math.floor(T.len / 170));
     for (let k = 0; k < n; k++) {
       const s = k * 170 + 110, i = T.idx(s); let ks = 0; for (let d = -40; d <= 40; d += 8) ks += T.k[T.idx(s + d)] || 0;
-      const side = Math.abs(ks) > 0.004 ? (ks > 0 ? -1 : 1) : (k % 2 ? 1 : -1), off = side * ((T.br ? Math.max(T.w, side > 0 ? T.br[i] : (T.bl ? T.bl[i] : T.w)) : T.w) + 14);
+      const side = Math.abs(ks) > 0.004 ? (ks > 0 ? -1 : 1) : (k % 2 ? 1 : -1), off = side * ((T.br ? Math.max(T.wa[i], side > 0 ? T.br[i] : (T.bl ? T.bl[i] : T.wa[i])) : T.wa[i]) + 14);
       const x = T.px[i] + T.nx[i] * off, z = T.pz[i] + T.nz[i] * off; let y = (T.hasElev && T.hy ? T.hy[i] : 0) + 9;
       if (world && world.groundH) { const g = world.groundH(x, z); if (Number.isFinite(g)) y = Math.max(y, g + 5); }
       out.push({ x, y, z, s, side, i });
@@ -4262,7 +4262,7 @@ const Render = (function () {
   function tvPost(T, k) {
     const P = tvCams(T)[k]; if (P.ok) return P; P.ok = true;
     const gy = (i) => (T.hasElev && T.hy ? T.hy[i] : 0), road = [-100, -45, 30].map(d => { const j = T.idx(P.s + d); return [T.px[j], gy(j) + 0.8, T.pz[j]]; });
-    const at = (side, ex, up) => { const i = P.i, bar = T.br ? (side > 0 ? T.br[i] : (T.bl ? T.bl[i] : T.w)) : T.w, off = side * (Math.max(T.w, bar) + ex), x = T.px[i] + T.nx[i] * off, z = T.pz[i] + T.nz[i] * off;
+    const at = (side, ex, up) => { const i = P.i, bar = T.br ? (side > 0 ? T.br[i] : (T.bl ? T.bl[i] : T.wa[i])) : T.wa[i], off = side * (Math.max(T.wa[i], bar) + ex), x = T.px[i] + T.nx[i] * off, z = T.pz[i] + T.nz[i] * off;
       let y = gy(i) + up; if (world && world.groundH) { const g = world.groundH(x, z); if (Number.isFinite(g)) y = Math.max(y, g + up - 4); } return { x, y, z }; };
     for (const [sd, ex, up] of [[1, 14, 9], [1, 5, 9], [-1, 14, 9], [-1, 5, 9], [1, 5, 15], [-1, 5, 15]]) {
       const c = at(sd * P.side, ex, up);
@@ -4619,11 +4619,11 @@ const Render = (function () {
       const s = e.s, f = ((s % T.len) + T.len) % T.len / T.ds, i = Math.floor(f) % T.N, x = T.px[i], z = T.pz[i], nx = T.nx[i], nz = T.nz[i], y = T.hasElev ? T.elevAt(s).y : 0;
       if (e.kind === 'stop') {   // the line: 0.8 m deep, across the whole road, in red and white squares
         const cv = document.createElement('canvas'); cv.width = 256; cv.height = 16; const cx = cv.getContext('2d'); for (let q = 0; q < 16; q++) { cx.fillStyle = q % 2 ? '#ffffff' : '#d8261c'; cx.fillRect(q * 16, 0, 16, 16); }
-        const tex = new THREE.CanvasTexture(cv), m = new THREE.Mesh(new THREE.PlaneGeometry(T.w * 2, 0.8), new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+        const tex = new THREE.CanvasTexture(cv), m = new THREE.Mesh(new THREE.PlaneGeometry(T.wa[i] * 2, 0.8), new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
         m.rotation.order = 'YXZ'; m.rotation.set(-Math.PI / 2, Math.atan2(-nz, nx), 0); m.position.set(x, y + 0.04, z); marks.add(m);   // (flat on the road, its long side across it)
       }
       const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: markTex(e.label, e.kind === 'stop' ? '#d8261c' : '#1d4fa8', '#ffffff') }));   // the sign on the right, 2.2 m up
-      sp.scale.set(1.6, 1.6, 1); sp.position.set(x + nx * (T.w + 1.6), y + 2.2, z + nz * (T.w + 1.6)); marks.add(sp);
+      sp.scale.set(1.6, 1.6, 1); sp.position.set(x + nx * (T.wa[i] + 1.6), y + 2.2, z + nz * (T.wa[i] + 1.6)); marks.add(sp);
       const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.5, 6), new THREE.MeshLambertMaterial({ color: 0x9aa3ad })); post.position.set(sp.position.x, y + 0.75, sp.position.z); marks.add(post);
     }
     scene.add(marks);
