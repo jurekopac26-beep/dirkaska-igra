@@ -117,5 +117,12 @@
   "kverts": 305,
   "maxKverts": 393,
   "jsMs": 2.08
+ },
+ "sani": {
+  "calls": 92,
+  "maxCalls": 137,
+  "kverts": 301,
+  "maxKverts": 536,
+  "jsMs": 0.24
  }
 }

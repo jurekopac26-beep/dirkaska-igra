@@ -848,5 +848,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "23a49c43f0de0338644e78ff"
+ },
+ "sani/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 202.2,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "13ee629902f30c3ec9a32edf"
+ },
+ "sani/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 226.9,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "910310702bc6289b3ee7a689"
+ },
+ "sani/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 211.18,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "895ad8360713ce34838c1050"
+ },
+ "sani/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 221.47,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c1e7636b87d07e45584da20e"
+ },
+ "sani/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 201.13,
+  "spins": 0,
+  "walls": 6,
+  "rescues": 0,
+  "nan": false,
+  "digest": "fb597aa7435f35bb5140917c"
  }
 }

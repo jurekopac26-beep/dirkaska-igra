@@ -177,6 +177,9 @@ const Core = (function () {
         const a = this.settAt = new Uint8Array(N);
         for (const [s0, s1] of def.setts) for (let d = s0; d <= s1; d += ds / 2) { const i = Math.floor((this.startS + d) / ds); if (i >= 0 && i < N) a[i] = 1; }
       }
+      // paved stretches of a gravel road (def.paved = [[from, to], ...], metres after the start line; open roads: Sani Pass at the border post): asphalt (surface 0)
+      this.pavedAt = null;
+      if (def.paved && open) { const a = this.pavedAt = new Uint8Array(N); for (const [s0, s1] of def.paved) for (let d = s0; d <= s1; d += ds / 2) { const i = Math.floor((this.startS + d) / ds); if (i >= 0 && i < N) a[i] = 1; } }
       // sidewalks (def.walks = [[from, to, side (-1 left, 1 right, 0 both), width], ...], metres after the start line; open roads: Kranjska
       // Gora and Jasna on Vršič): part of the road, drivable with the grip of asphalt (surface 0), eased in and out over 10 m; the barriers
       // stand 1.8 m past them (1 m on a road widened between its barriers, def.barW). walk: per side ([0] left, [1] right) the sidewalk's width at every sample (0: none)
@@ -814,7 +817,7 @@ const Core = (function () {
       const d = q.d, ad = Math.abs(d), w = this.w;
       if (ad <= w || (this.walk && ad <= w + this.walk[d > 0 ? 1 : 0][q.a])) {   // (a sidewalk: part of the road)
         if (this.settAt && this.settAt[q.a]) return this.inRain ? 8 : 7;
-        if (this.def.roadSurface !== 'makadam') return 0;
+        if (this.def.roadSurface !== 'makadam' || (this.pavedAt && this.pavedAt[q.a])) return 0;
         const p = this.inRain && this.pudAt ? this.pudAt[q.a] : -1;
         if (p >= 0) { const u = this.puddles[p], a = (q.s - u[0]) / u[2], b = (d - u[1]) / u[3]; if (a * a + b * b < 1) return 6; }
         return 5;
@@ -2008,6 +2011,7 @@ const Core = (function () {
     constructor(race, dens) {
       const T = race.track;
       this.race = race; this.T = T; this.R = rng(((race.opts.seed || 7) * 7919 + 101) >>> 0);
+      this.L = T.def.leftHand ? -1 : 1;   // the side of the road the traffic keeps to: 1 the right, -1 the left (def.leftHand: Sani Pass); a vehicle's own side, dir * L
       this.veh = []; this.ped = []; this.grp = []; this.t = 0; this.nid = 0;
       this.zeb = (T.def.zebras || []).map(z => ({ s: T.startS + z, want: 0, busy: 0 }));
       this.stops = (T.def.stops || []).map(([d, side]) => ({ s: T.startS + d, side }));
@@ -2033,8 +2037,8 @@ const Core = (function () {
       this.vp = [dn, up];
     }
     _vpAt(v) { return Math.min(TF_VMAX, this.vp[v.dir > 0 ? 1 : 0][this.T.idx(v.s)] * Math.sqrt(TFK[v.p].lat / 2.1)) * (v.kind === 4 && v.dir < 0 ? 0.8 : 1); }
-    _lane(v) { const w = this.T.w; return v.kind === 4 ? v.dir * (w - 0.7) : v.dir * w * TFK[v.p].lane; }
-    _edge(v) { return v.dir * (this.T.w - (v.kind === 4 ? 0.35 : v.wid / 2 + 0.3)); }   // (pulled over: the asphalt's edge of its side, less half its width and 0.3 m; a bicycle right at the edge)
+    _lane(v) { const w = this.T.w, sd = v.dir * this.L; return v.kind === 4 ? sd * (w - 0.7) : sd * w * TFK[v.p].lane; }
+    _edge(v) { return v.dir * this.L * (this.T.w - (v.kind === 4 ? 0.35 : v.wid / 2 + 0.3)); }   // (pulled over: the asphalt's edge of its side, less half its width and 0.3 m; a bicycle right at the edge)
 
     // the vehicles (uphill one every ~290 m, downhill one every ~250 m; one in 14 a bus, one in 6 a van, one in 12 a motorbike, or the road's own
     // mix, def.traffic: Los Caracoles' trucks; the cyclists every ~2.4 km each way (def.traffic.bike: a cyclist every so many metres instead of
@@ -2146,7 +2150,7 @@ const Core = (function () {
 
     // one vehicle on its lane: what is ahead of it, its speed (IDM), its place across the road (lane, pulling over, dodging, going round)
     _drive(a, dt) {
-      const T = this.T, K = TFK[a.p], dir = a.dir, L = dir > 0 ? this.up : this.dn, k = L[a.k] === a ? a.k : L.indexOf(a), hw = a.wid / 2;
+      const T = this.T, K = TFK[a.p], dir = a.dir, sd = dir * this.L, L = dir > 0 ? this.up : this.dn, k = L[a.k] === a ? a.k : L.indexOf(a), hw = a.wid / 2;
       let gap = 1e9, lv = 0, lead = null, still = false, pace = false, onc = false;
       const cand = (g, vs, o, st, oc) => { if (g < gap) { gap = g; lv = vs; lead = o; still = st; pace = false; onc = !!oc; } };
       const over = (d, w) => Math.abs(d - a.d) < (w + a.wid) / 2 + 0.25;
@@ -2171,22 +2175,22 @@ const Core = (function () {
           else if (g < 0 && g > -40) pol = Math.max(pol, 1);
         }
       }
-      if (horn) dT = a.d + dir * Math.min(1.5, Math.max(0, dir * this._edge(a) - dir * a.d));   // (toward its edge, not all the way)
-      else if (fromBehind) dT += dir * 0.4;
+      if (horn) dT = a.d + sd * Math.min(1.5, Math.max(0, sd * this._edge(a) - sd * a.d));   // (toward its edge, not all the way)
+      else if (fromBehind) dT += sd * 0.4;
       if (side && !(a.sdT > 0)) { a.sdT = 1; a.sdD = a.d + side * 0.5; }
       if (a.sdT > 0) { a.sdT -= dt; dT = a.sdD; }
       // a zebra crossing someone waits at or walks over: stop before it; a bus: its bus stops (2 m past, at the edge, 6 s)
       for (const z of this.zeb) { if (!(z.want + z.busy)) continue; const g = (z.s - a.s) * dir - 3.5 - a.len / 2; if (g > -0.5 && g < 50) cand(g, 0, z, false); }
-      if (a.kind === 2) for (const st of this.stops) if (st.side === dir && st.s !== a.stopS) { const g = (st.s - a.s) * dir - a.len / 2; if (g > -1 && g < 70) { cand(Math.max(0, g), 0, st, false); dT = dir * (T.w - hw - 0.2);
+      if (a.kind === 2) for (const st of this.stops) if (st.side === sd && st.s !== a.stopS) { const g = (st.s - a.s) * dir - a.len / 2; if (g > -1 && g < 70) { cand(Math.max(0, g), 0, st, false); dT = sd * (T.w - hw - 0.2);
         if (g < 4 && a.v < 0.4) { a.stopT += dt; if (a.stopT > 6) { a.stopS = st.s; a.stopT = 0; } } } }
       const yld = this._yield(a, pol, dt); if (yld) { dT = this._edge(a); a.pass = null; }
       // going round something standing in its lane (a wreck, a car pulled up): when it has waited 2 s and the other half is clear 90 m ahead
       if (a.pass) { const o = a.pass, os = o.m ? o.q.s : o.s, od = o.m ? o.q.d : o.d, ow = o.m ? o.m.wid : o.wid || 0.8, ol = o.m ? o.m.len : o.len || 0.6;
-        if ((a.s - os) * dir > (a.len + ol) / 2 + 3 || o.off || (a.t += dt) > 20) { a.pass = null; a.t = 0; } else dT = od - dir * (ow / 2 + hw + 0.6); }
+        if ((a.s - os) * dir > (a.len + ol) / 2 + 3 || o.off || (a.t += dt) > 20) { a.pass = null; a.t = 0; } else dT = od - sd * (ow / 2 + hw + 0.6); }
       else if ((still || (lead && lead.kind === 2 && lead.stopT > 0)) && lead && gap < 12 && a.v < 0.5 && !a.yl && (a.wait += dt) > 2) {   // (a wreck, a race car standing, a bus at its stop)
         let clear = true; const other = dir > 0 ? this.dn : this.up;
         for (const b of other) { const g = (b.s - a.s) * dir; if (g > -10 && g < 90) { clear = false; break; } }
-        for (const c of this.cl) if (c !== lead) { const g = (c.q.s - a.s) * dir; if (g > -10 && g < 60 && c.q.d * dir < 0.5) { clear = false; break; } }
+        for (const c of this.cl) if (c !== lead) { const g = (c.q.s - a.s) * dir; if (g > -10 && g < 60 && c.q.d * sd < 0.5) { clear = false; break; } }
         if (clear) { a.pass = lead; a.wait = 0; a.t = 0; }
       } else if (!still) a.wait = 0;
       if (a.pass && lead === a.pass) { gap = 1e9; lv = 0; }
@@ -2211,7 +2215,7 @@ const Core = (function () {
       const e = a.dT - a.d, cap = Math.min(K.dl, a.v * (a.pass ? 0.45 : 0.18)), want = Math.sign(e) * Math.min(cap, Math.sqrt(2 * Math.abs(e)), 2 * Math.abs(e));
       a.sv += clamp(want - a.sv, -1.5 * dt, 1.5 * dt); a.sv = clamp(a.sv, -cap, cap);
       const dd = a.sv * dt; a.d += dd;
-      a.ind = a.kind === 4 ? 0 : a.yl === 1 ? dir : Math.abs(e) > 0.6 ? Math.sign(e) : 0;
+      a.ind = a.kind === 4 ? 0 : a.yl === 1 ? sd : Math.abs(e) > 0.6 ? Math.sign(e) : 0;
       a.lean += ((a.kind >= 3 ? -clamp(a.v * a.v * T.k[a.i] * dir / 9.8, -0.6, 0.6) : 0) - a.lean) * Math.min(1, dt * 4);   // (two wheels lean into the bends)
       this._pose(a, a.sv);
       if (a.s > this.s1 || a.s < this.s0) this._recycle(a);
@@ -2224,7 +2228,7 @@ const Core = (function () {
     _yield(a, pol, dt) {
       if (!a.yl && pol === 2) { a.yl = 1; a.yS = a.s + a.dir * (a.len / 2 + Math.max(8, a.v * a.v / 7, Math.abs(this._edge(a) - a.d) / 0.11));
         const g = a.grp, l = g && g.m[0]; if (l && l !== a && l.yl === 1) a.yS = l.yS - a.dir * g.m.indexOf(a) * TF_PACE;   // (one of a group of cyclists: the file stops together behind the first)
-        const G = this.T.gap && this.T.gap[a.dir > 0 ? 1 : 0];   // (not in a side road's mouth on its side: on past it, the police may need the way in)
+        const G = this.T.gap && this.T.gap[a.dir * this.L > 0 ? 1 : 0];   // (not in a side road's mouth on its side: on past it, the police may need the way in)
         if (G) for (let n = 0; n < 30; n++) { let m = false; for (let o = -12; o <= 8; o += 2) if (G[this.T.idx(a.yS + a.dir * o)]) { m = true; break; } if (!m) break; a.yS += a.dir * 3; } }
       if (a.yl === 1) {
         const sb = a.len / 2 + a.v * a.v / 7; a.yS = a.dir > 0 ? Math.max(a.yS, a.s + sb) : Math.min(a.yS, a.s - sb);   // (never harder than 3.5 m/s^2)
@@ -2616,19 +2620,20 @@ const Core = (function () {
       const T = this.T, s = c.q.s, hw = c.m.wid / 2, cl2 = c.m.len / 2, edge = T.w - 0.3;
       c.tfStk = v < 1.5 && c.tfFol ? (c.tfStk || 0) + 0.15 : 0;   // (held up for a while: it squeezes by with less room)
       const sq = c.tfStk > 2.5 ? 0.3 : 1, mg = (os, ol) => { const k = Math.abs(T.k[T.idx(os)]); return (0.9 + Math.max(0.9 * Math.min(1, k * 18), ol * ol * k / 8) + 0.022 * v * 0.7) * sq; };   // (ol * ol * k / 8: a long body's ends off the curve, a truck's in a hairpin)
-      let lo = -1e9, hi = 1e9, fg = 1e9, clearL = 1e9, ng = 1e9, nO = null, nLen = 0, nVs = 0;
+      let lo = -1e9, hi = 1e9, fg = 1e9, clearL = 1e9, ng = 1e9, nO = null, nLen = 0, nVs = 0, mir = this.L;   // (mir: the traffic keeping left, the corridor worked out in the mirror image, the left for the right; back below)
       out.fol = null;
-      for (const o of this.veh) {   // the ones coming down: to their right
+      for (const o of this.veh) {   // the ones coming down: to their right (keeping left: to their left)
         if (o.off || o.st !== 0 || o.dir > 0 || o.v < 1) continue;   // (one standing still: below, with the other things standing)
         const g = o.s - s - cl2 - o.len / 2; if (g < -o.len - 2 || g > 260) continue;
-        if (o.d < 1.2 && g > 0 && g < clearL) clearL = g;
-        if (g < 20 + (v + o.v) * 2.2) lo = Math.max(lo, o.d + o.wid / 2 + hw + mg(o.s, o.len) + (o.kind === 4 ? 0.6 : 0));   // (a cyclist: 0.6 m more room)
+        const od = o.d * mir; if (od < 1.2 && g > 0 && g < clearL) clearL = g;
+        if (g < 20 + (v + o.v) * 2.2) lo = Math.max(lo, od + o.wid / 2 + hw + mg(o.s, o.len) + (o.kind === 4 ? 0.6 : 0));   // (a cyclist: 0.6 m more room)
       }
       const block = (g, o, len, vs) => { if (g < fg) { fg = g; out.fol = { o, len, vs }; } };
       const one = (o, os, od, ow, olen, vs) => {
         const g = os - s - cl2 - olen / 2, cls = v - Math.max(0, vs);
         if (g < -olen - c.m.len - 1 || g > 20 + Math.max(0, cls) * 4.5 || (vs > 1 && cls < 1 && g > 10)) return;
-        if (g < 0) { const m = 0.5 + 0.02 * v; if (c.q.d < od) hi = Math.min(hi, od - ow / 2 - hw - m); else lo = Math.max(lo, od + ow / 2 + hw + m); return; }   // (alongside: keep to its side)
+        od *= mir;
+        if (g < 0) { const m = 0.5 + 0.02 * v; if (c.q.d * mir < od) hi = Math.min(hi, od - ow / 2 - hw - m); else lo = Math.max(lo, od + ow / 2 + hw + m); return; }   // (alongside: keep to its side)
         if (g < ng) { ng = g; nO = o; nLen = olen; nVs = vs; }
         const m = mg(os, olen), pL = od - ow / 2 - hw - m, pR = od + ow / 2 + hw + m, lo2 = Math.max(lo, -edge + hw), rL = pL - lo2, rR = Math.min(hi, edge - hw) - pR;
         if (vs > 1) { if (rL >= 0.3 || (pL > -edge + hw && clearL > g + 45 + v * 2)) hi = Math.min(hi, pL); else block(g, o, olen, vs); return; }   // same way, slower
@@ -2636,6 +2641,7 @@ const Core = (function () {
       };
       for (const o of this.veh) { if (o.off || (o.st === 0 && o.dir < 0 && o.v >= 1)) continue; const g = o.s - s; if (g < -20 || g > 220) continue; one(o, o.s, o.d, o.kind === 4 && o.st === 0 ? o.wid + 1.2 : o.wid, o.len, o.st === 0 ? o.v * o.dir : 0); }   // (a cyclist: 0.6 m more room)
       for (const p of this.onRoad) { const t = Math.min(1.5, Math.max(0, p.s - s) / Math.max(5, v)), dP = clamp(p.d + (p.dd || 0) * t, -T.w - 1, T.w + 1); one(p, p.s, (p.d + dP) / 2, Math.abs(dP - p.d) + (p.wid || 0.7), p.len || 0.5, 0); }   // (someone on the road: from where they are to where they will be as it gets there; someone lying there dead)
+      if (mir < 0) { const a = lo; lo = -hi; hi = -a; mir = 1; }   // (out of the mirror image: the police below as on the right)
       if (this.race.pol) for (const o of this.race.pol.obstacles(this._obs)) if (!c.police || !o.fresh) one(o, o.s, o.d, o.wid, o.len, 0);   // (logs on the road; a patrol car right behind the player does not see them coming)
       let vE = 0, sLo = -1e9, sHi = 1e9;   // (past a patrol car parked across the road the verge will do: how far out; a roadblock's or a spike strip's gap: a hard limit)
       if (this.race.pol) {
