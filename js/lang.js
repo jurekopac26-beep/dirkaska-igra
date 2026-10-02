@@ -250,7 +250,8 @@
 
     /* ---- the championships (Core.CHAMPS keep their own English in .en) and place names on the HUD ---- */
     'Ruski križ': 'Russian Cross', 'Ruska kapelica': 'Russian Chapel', 'Ajdovska deklica': 'Heathen Maiden', 'Lasnica Fairmont': 'Fairmont Hairpin', 'Predor': 'Tunnel',
-    'Prvi ovinek': 'First Curve', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under the Bridge', 'Lasnica': 'Hairpin', 'Zadnja ravnina': 'Back Straight', 'Zadnji ovinek': 'Final Corner',
+    'Most Rocky Creek': 'Rocky Creek Bridge', 'Razgledišče Castle Rock': 'Castle Rock Viewpoint', 'Most Bixby Creek': 'Bixby Creek Bridge',   // (Big Sur)
+    'Prvi ovinek': 'First Curve', 'Zanka': 'The Loop', 'Tianmenska jama': 'Tianmen Cave', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under the Bridge', 'Lasnica': 'Hairpin', 'Zadnja ravnina': 'Back Straight', 'Zadnji ovinek': 'Final Corner',
     'Prelaz Katu-Jaryk': 'Katu-Yaryk Pass', 'Sedem serpentin': 'Seven Hairpins', 'Prečka nad Čulišmanom': 'Traverse above the Chulyshman', 'Dolina Čulišmana': 'Chulyshman Valley',   // (Katu-Jaryk: the HUD, the flyover)
     'Razgledišče': 'Lookout', 'Cestninska postaja': 'Toll Plaza',   // (the lookouts and the toll plaza above Hout Bay)
     /* ---- the run from the police (Vršič): the checkpoint, the hideout, the HUD, the rap sheet, the call signs on the radio; the screen to turn the phone ---- */
@@ -301,7 +302,7 @@
   // a place name on the HUD: the numbered turns and hairpins, the heights on them (Serpentina 4 · 1.060 m -> Hairpin 4 · 1,060 m), a few known names
   function place(n) {
     if (cur !== 'en') return n;
-    return String(n).split(' · ').map(p => has.call(EN, p) ? EN[p] : p.replace(/^Serpentina (\d+)$/, 'Hairpin $1').replace(/^Zavoj (\d+)$/, 'Turn $1').replace(/\b(\d{1,3})\.(\d{3}) m\b/g, '$1,$2 m')).join(' · ');
+    return String(n).split(' · ').map(p => has.call(EN, p) ? EN[p] : p.replace(/^Serpentina (\d+)$/, 'Hairpin $1').replace(/^Zavoj (\d+)$/, 'Turn $1').replace(/^Ovinek (\d+)$/, 'Bend $1').replace(/\b(\d{1,3})\.(\d{3}) m\b/g, '$1,$2 m')).join(' · ');
   }
   // the page as written in index.html: its texts and labels in the chosen language. Each node keeps its Slovenian text (a WeakMap), so a
   // text changed by the game in the meantime is not touched; a text the game wrote in the other language is turned by the dictionary

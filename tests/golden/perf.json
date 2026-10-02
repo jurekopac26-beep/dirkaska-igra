@@ -118,6 +118,20 @@
   "maxKverts": 827,
   "jsMs": 1.49
  },
+ "bigsur": {
+  "calls": 232,
+  "maxCalls": 282,
+  "kverts": 586,
+  "maxKverts": 785,
+  "jsMs": 1.01
+ },
+ "tianmen": {
+  "calls": 337,
+  "maxCalls": 370,
+  "kverts": 1153,
+  "maxKverts": 1292,
+  "jsMs": 0.76
+ },
  "jezero": {
   "calls": 278,
   "maxCalls": 330,

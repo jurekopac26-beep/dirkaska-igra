@@ -1048,5 +1048,105 @@
   "rescues": 0,
   "nan": false,
   "digest": "e8e7c26beb731a0968375a4f"
+ },
+ "bigsur/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 93.11,
+  "spins": 0,
+  "walls": 14,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d55c0148061c3fe9978653f9"
+ },
+ "bigsur/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 100.14,
+  "spins": 0,
+  "walls": 6,
+  "rescues": 0,
+  "nan": false,
+  "digest": "a84834707ec150c18287ce61"
+ },
+ "bigsur/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 76.61,
+  "spins": 0,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "8169837dc56eb6d19cb264a7"
+ },
+ "bigsur/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 77.79,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "795c819b2e4a0fdd6c55fd45"
+ },
+ "bigsur/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 93.7,
+  "spins": 0,
+  "walls": 7,
+  "rescues": 0,
+  "nan": false,
+  "digest": "628e4abc0d766445a64cf4aa"
+ },
+ "tianmen/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 211.84,
+  "spins": 0,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d94474a6f23378cfb93d8b20"
+ },
+ "tianmen/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 228.43,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "609664b9efc5d52e32f330d9"
+ },
+ "tianmen/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 200.23,
+  "spins": 2,
+  "walls": 8,
+  "rescues": 1,
+  "nan": false,
+  "digest": "4007f70839dd238f253eaf3c"
+ },
+ "tianmen/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 202.68,
+  "spins": 2,
+  "walls": 10,
+  "rescues": 0,
+  "nan": false,
+  "digest": "0e7f8bafff5d1c8c57a452f6"
+ },
+ "tianmen/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 212.47,
+  "spins": 2,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "fe6616b79d387c6f743a16f5"
  }
 }

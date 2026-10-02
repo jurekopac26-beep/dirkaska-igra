@@ -144,8 +144,8 @@ const Core = (function () {
         }
       }
       // more run-off where a track asks for it (def.wide = [[from, to, side (-1 left, 1 right), metres], ...], metres after the start line;
-      // closed circuits): the barrier on that side moves out, eased in and out over 30 m
-      if (def.wide && !open) for (const [a, b, sd, m] of def.wide) for (let d = a - 30; d <= b + 30; d += ds) {
+      // closed circuits, and the pull-outs of an open road: Big Sur): the barrier on that side moves out, eased in and out over 30 m
+      if (def.wide) for (const [a, b, sd, m] of def.wide) for (let d = a - 30; d <= b + 30; d += ds) {
         const i = this.idx(this.startS + d), f = Math.min(sstep(a - 30, a, d), sstep(b + 30, b, d)); if (sd < 0) this.bl[i] += m * f; else this.br[i] += m * f;
       }
       // gravel strips (def.gravelStrips = [[from, to, side, width], ...], metres after the start line, side -1 left / 1 right; closed
@@ -192,9 +192,10 @@ const Core = (function () {
         const wb = def.barW ? 1.0 : 1.8;   // (a road widened between its barriers (def.barW): the barrier 1 m past the sidewalk)
         for (let i = 0; i < N; i++) { this.bl[i] = Math.max(this.bl[i], this.w + W[0][i] + wb); this.br[i] = Math.max(this.br[i], this.w + W[1][i] + wb); }
       }
-      // avalanche galleries over the road (def.galleries = [[from, to, side], ...], metres after the start line; open roads: Los Caracoles): the
-      // barriers close in to the gallery's wall and pillars 1.6 m past the road's edges, eased in and out over 25 m at its portals
-      if (def.galleries && open) for (const [a, b] of def.galleries) for (let d = a - 25; d <= b + 25; d += ds / 2) {
+      // avalanche galleries over the road (def.galleries = [[from, to, side], ...], metres after the start line; open roads: Los Caracoles) and
+      // narrow bridges (def.narrow = [[from, to], ...]: Big Sur's, a sidewalk and the parapet): the barriers close in to the gallery's wall and
+      // pillars, or the parapet, 1.6 m past the road's edges, eased in and out over 25 m at its ends
+      if ((def.galleries || def.narrow) && open) for (const [a, b] of (def.galleries || []).concat(def.narrow || [])) for (let d = a - 25; d <= b + 25; d += ds / 2) {
         const i = Math.floor((this.startS + d) / ds); if (i < 0 || i >= N) continue;
         const f = Math.min(sstep(a - 25, a, d), sstep(b + 25, b, d)), t = this.w + 1.6;
         if (this.bl[i] > t) this.bl[i] = lerp(this.bl[i], t, f); if (this.br[i] > t) this.br[i] = lerp(this.br[i], t, f);
@@ -511,18 +512,19 @@ const Core = (function () {
     // where the centre line crosses itself on two levels (a figure of eight: one leg on a bridge over the other). A crossing counts only
     // where the two legs are at least 4 m apart in height. cross = [{ lo, up, x, z, sin, dy, loZ, upZ }]: the sample positions (fractional
     // indices) of the lower and the upper leg at the crossing point, the point, the sine of the angle between the legs, the height gap,
-    // and how far along each leg (m) the underpass walls / the bridge parapets reach (_buildEdges narrows the barriers there)
+    // and how far along each leg (m) the underpass walls / the bridge parapets reach (_buildEdges narrows the barriers there). An open road
+    // too (Tianmen's loop over its own road at bend 90; nothing wraps: the last sample starts no segment)
     _findCrossings() {
-      const N = this.N, px = this.px, pz = this.pz, hy = this.hy, cross = this.cross = [];
-      if (this.open || !this.hasElev) return;
+      const N = this.N, px = this.px, pz = this.pz, hy = this.hy, cross = this.cross = [], open = this.open;
+      if (!this.hasElev) return;
       const C = 16, hash = new Map(), key = (a, b) => a * 65536 + b, cell = (i) => { const j = (i + 1) % N; return [Math.floor((px[i] + px[j]) / 2 / C), Math.floor((pz[i] + pz[j]) / 2 / C)]; };
       for (let i = 0; i < N; i++) { const [a, b] = cell(i), k = key(a, b); let L = hash.get(k); if (!L) hash.set(k, L = []); L.push(i); }
-      for (let i = 0; i < N; i++) {
+      for (let i = 0; i < N - (open ? 1 : 0); i++) {
         const [ca, cb] = cell(i), i1 = (i + 1) % N;
         for (let a = ca - 1; a <= ca + 1; a++) for (let b = cb - 1; b <= cb + 1; b++) {
           const L = hash.get(key(a, b)); if (!L) continue;
           for (const m of L) {
-            if (m <= i || Math.min(m - i, N - m + i) < 40) continue;
+            if (m <= i || Math.min(m - i, N - m + i) < 40 || (open && m === N - 1)) continue;
             const m1 = (m + 1) % N, ax = px[i1] - px[i], az = pz[i1] - pz[i], bx = px[m1] - px[m], bz = pz[m1] - pz[m], den = ax * bz - az * bx;
             if (Math.abs(den) < 1e-9) continue;
             const ex = px[m] - px[i], ez = pz[m] - pz[i], t = (ex * bz - ez * bx) / den, u = (ex * az - ez * ax) / den;
