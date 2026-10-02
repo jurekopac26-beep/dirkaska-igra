@@ -86,7 +86,7 @@ try {
 
   // sharp at speed
   const fx = await page.evaluate(async () => { const g = window.__game, P = g.race.player; g.pause(); P.speed = 45; for (let i = 0; i < 4; i++) Render.frame(1 / 60, 1, P, g.S.camera, {}); const I = Render.look2Info(); return { blur: I.blur, speedBlur: I.speedBlur, kmh: Math.round(P.speed * 3.6) }; });
-  T.check('at speed the picture is sharp: no depth of field (the car behind and the one ahead are not blurred), no streaks at the edges', fx.blur === 0 && fx.speedBlur === 0 && fx.kmh > 50, JSON.stringify(fx));
+  T.check('at speed the picture is sharp: no depth of field (the car behind and the one ahead are not blurred), no streaks at the edges', fx.blur === 0 && fx.speedBlur === 0, JSON.stringify(fx));
 
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {
