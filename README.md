@@ -152,7 +152,7 @@ Progi v slogu dveh prog iz igre Circuit Superstars (posnetek dirke `parta.mp4`),
 
 Na obeh lahko zapelješ v bokse (desno takoj za zadnjim ovinkom pred ciljno ravnino) in mehaniki ti popravijo avto, tako kot v Bakrenem gozdu.
 
-## Moki Dugway (kronometer, promet)
+## Moki Dugway, ZDA (kronometer, promet)
 
 Cesta Utah State Route 261 na jugovzhodu Utaha (ZDA), blizu kraja Mexican Hat: makadamske serpentine, vklesane v pečino planote Cedar Mesa nad dolino Valley of the Gods, v pravem merilu. Proga se začne na asfaltu 60 m za križiščem s cesto Valley of the Gods Road (1.624 m), čez dno doline pripelje pod pečino, kjer se asfalt konča, po makadamu in petih serpentinah (od 1.702 m do 1.922 m) mimo razgledišča nad dolino na rob planote, kjer se spet začne asfalt, cilj pa je na planoti Cedar Mesa tik pred odcepom za Muley Point (1.961 m): 4,95 km in 336 m vzpona, naklon do 10,5 %, makadam 3,3 km (po OpenStreetMap). Vozi se navzgor, z juga proti severu. Cesta je ozka (pas in pol, v merilu igre 9 m) in ograj na večini nima. Kartica proge je ena, s stikalom **Kronometer / Promet**:
 
