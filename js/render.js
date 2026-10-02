@@ -3250,8 +3250,8 @@ const Render = (function () {
   }
   function rdSpikeGeo() {   // a metre of a spike strip (laid across the road, z along it): a hazard mat 1.2 m wide, yellow and black stripes across it (seen from afar and from above: the strip a tyre must not meet is ~1 m deep), the steel spikes standing up from it
     const g = new GB(), K = [0.1, 0.1, 0.11], S = [0.9, 0.92, 0.96], Y = [1.0, 0.78, 0.06], hw = 0.6;
-    for (let k = 0; k < 4; k++) World.box(g, 0, 0, 0.125 + k * 0.25, hw * 2, 0.04, 0.25, 0, k % 2 ? K : Y, k % 2 ? K : Y, true);
-    for (const z of [0.125, 0.375, 0.625, 0.875]) for (const x of [-0.42, -0.14, 0.14, 0.42]) World.cyl(g, x, 0.04, z, 0.04, 0.2, 4, S, S, 0.004);
+    for (let k = 0; k < 4; k++) World.box(g, 0, 0, 0.125 + k * 0.25, hw * 2, 0.06, 0.25, 0, k % 2 ? K : Y, k % 2 ? K : Y, true);
+    for (const z of [0.125, 0.375, 0.625, 0.875]) for (const x of [-0.42, -0.14, 0.14, 0.42]) World.cyl(g, x, 0.06, z, 0.05, 0.3, 4, S, S, 0.004);
     return g.geometry();
   }
   // the police's van: white, a blue band with yellow edges along both sides and across the back, the light bar on the roof (its two lamps
@@ -3629,7 +3629,7 @@ const Render = (function () {
       }
       // the spike strips (only while laid), a metre at a time (the last one shortened)
       let ns = 0; for (const sp of R.pol.spikes) { if (!sp.on) continue; const i = T.idx(sp.s), L = sp.d1 - sp.d0; _re.set(0, -T.hd[i], 0, 'YZX'); _rq.setFromEuler(_re);
-        for (let k = 0; k < L && ns < 64; k++) { const a = atS2(T, sp.s, sp.d0 + k); _rv.set(a[0], T.hy[i] + 0.02, a[1]); _rs.set(1, 1, Math.min(1, L - k)); _rm.compose(_rv, _rq, _rs); Q.S.setMatrixAt(ns++, _rm); } }
+        for (let k = 0; k < L && ns < 64; k++) { const a = atS2(T, sp.s, sp.d0 + k); _rv.set(a[0], T.hy[i] + 0.1, a[1]); _rs.set(1, 1, Math.min(1, L - k)); _rm.compose(_rv, _rq, _rs); Q.S.setMatrixAt(ns++, _rm); } }
       _rs.set(1, 1, 1);
       for (const sp of R.pol.spikes) if (sp.on && (time * 2.5 | 0) % 2 === (sp.s | 0) % 2) { const i = T.idx(sp.s); for (const d of [sp.d0, sp.d1]) { const a = atS2(T, sp.s, d); glows.add(a[0], T.hy[i] + 0.7, a[1], dusk ? 3.4 : 2.6, 1.0, 0.62, 0.08, dusk ? 1 : 0.9); } }   // (an amber beacon flashing at each end of a strip: seen from afar)
       Q.S.count = ns; if (ns) Q.S.instanceMatrix.needsUpdate = true;

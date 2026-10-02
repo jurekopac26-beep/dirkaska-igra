@@ -47,7 +47,7 @@ try {
     return { on: sp.on, to: Math.round(sp.s - P.q.s), metres: ri.spikes, mats, len: +(sp.d1 - sp.d0).toFixed(1) };
   });
   const mat = s1.mats.find(m => m.x > 1.1 && m.x < 1.3 && m.z > 0.9 && m.z < 1.1);
-  T.check('the strip laid (60 m ahead): a metre of it a mat 1.2 m wide (it was 0.56) with the spikes standing 0.24 m up, as many metres as the road is wide there', s1.on && s1.to <= 70 && !!mat && mat.y >= 0.2 && s1.metres >= Math.floor(s1.len) - 1 && s1.metres <= Math.ceil(s1.len) + 1, JSON.stringify(s1));
+  T.check('the strip laid (60 m ahead): a metre of it a mat 1.2 m wide (it was 0.56) with the spikes standing 0.36 m up, as many metres as the road is wide there', s1.on && s1.to <= 70 && !!mat && mat.y >= 0.3 && s1.metres >= Math.floor(s1.len) - 1 && s1.metres <= Math.ceil(s1.len) + 1, JSON.stringify(s1));
   await page.waitForFunction((to) => [...document.querySelectorAll('#h-head i.on.k')].some(e => parseInt(e.lastElementChild.textContent) <= to), 80, { timeout: 30000 }).catch(() => 0);
   const h2 = await head(), k2 = h2.head.find(a => / k( |$)/.test(a.cls + ' '));
   T.check('and the orange arrow is still there, nearer', !!k2 && k1 && parseInt(k2.txt) < parseInt(k1.txt) && parseInt(k2.txt) <= 80, JSON.stringify(h2.head));
