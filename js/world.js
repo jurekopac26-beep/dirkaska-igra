@@ -4514,7 +4514,7 @@ const World = (function () {
     return (t && t.avgCol) || [0.35, 0.53, 0.23];
   }
   function pixAvg(d) { const s = [0, 0, 0]; for (let o = 0; o < d.length; o += 4) { s[0] += d[o]; s[1] += d[o + 1]; s[2] += d[o + 2]; } const n = d.length / 4 * 255; return [s[0] / n, s[1] / n, s[2] / n]; }   // (of an ImageData's pixels)
-  const LAWN = { nring: [0.92, 0.95, 0.82], spa: [0.95, 1.0, 0.95], rbring: [0.96, 1.0, 0.9], suzuka: [0.95, 1.0, 0.92], bathurst: [1.0, 1.0, 0.86] };   // (the corridor builders' lawns: their vertex colours, roughly)
+  const LAWN = { nring: [0.92, 0.95, 0.82], spa: [0.95, 1.0, 0.95], rbring: [0.96, 1.0, 0.9], suzuka: [0.95, 1.0, 0.92], bathurst: [1.0, 1.0, 0.86], riverside: [0.92, 0.88, 0.86] };   // (the corridor builders' lawns: their vertex colours, roughly)
   function tuftWindMat(W) {   // the clumps' material (the verges' tufts, Los Caracoles' bunch grass): vertex colours, the blades bent by the wind (W: World's dyn.wind)
     const mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
     mat.onBeforeCompile = (sh) => {
@@ -16522,6 +16522,24 @@ const World = (function () {
     };
     root.add(mesh); return mesh;
   }
+  function rsGrassTex(aniso) {   // the dry grass of a Californian summer under the vertex colours (256 px = 14 m, tileable): straw in clumps, darker stems and
+    // seed heads, bleached blades, specks of sandy soil and a few grey-green weeds (dryGrass: the seasons snow it over in winter as they do a green lawn)
+    const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), img = x.createImageData(S, S), d = img.data, r = rng(5301);
+    const n1 = nrPN(8, 5302), n2 = nrPN(24, 5303), n3 = nrPN(64, 5304);
+    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) {
+      const u = i / S, v = j / S, n = n1(u, v) * 0.3 + n2(u, v) * 0.4 + n3(u, v) * 0.3, k = 0.82 + n * 0.32 + (r() - 0.5) * 0.16, y = n2(u + 0.37, v + 0.61) - 0.5, o = (j * S + i) * 4;
+      d[o] = clamp((170 + y * 16) * k, 0, 255); d[o + 1] = clamp((156 + y * 10) * k, 0, 255); d[o + 2] = clamp((120 - y * 6) * k, 0, 255); d[o + 3] = 255;
+    }
+    x.putImageData(img, 0, 0); const avg = pixAvg(d);
+    x.lineWidth = 1;
+    for (const [st, n] of [['rgba(100,86,60,0.5)', 900], ['rgba(222,210,172,0.45)', 640], ['rgba(132,136,108,0.3)', 220]]) {   // blades (drawn across the edges too: tileable)
+      x.strokeStyle = st; x.beginPath();
+      for (let k = 0; k < n; k++) { const px = r() * S, py = r() * S, dx = (r() - 0.5) * 2.4, dy = -(1.5 + r() * 3);
+        for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const qx = px + a * S, qy = py + b * S; if (qx > -6 && qx < S + 6 && qy > -6 && qy < S + 6) { x.moveTo(qx, qy); x.lineTo(qx + dx, qy + dy); } } }
+      x.stroke(); }
+    for (const [st, n, sz] of [['rgba(206,184,146,0.9)', 160, 2], ['rgba(116,94,66,0.7)', 120, 1], ['#ece4cc', 120, 1]]) { x.fillStyle = st; for (let k = 0; k < n; k++) x.fillRect(Math.floor(r() * (S - 1)), Math.floor(r() * (S - 1)), sz, sz); }   // soil, seed heads, bleached stalks
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = aniso || 4; t.grassPic = true; t.dryGrass = true; t.avgCol = avg; return t;
+  }
   function buildRiverside(scene, tex, opts) {
     const R = rng(5271), N = T.N, w = T.w, ds = T.ds, dens = opts.density || 1, sStart = T.startS, def = T.def, L = T.len;
     const root = new THREE.Group(); scene.add(root);
@@ -16536,12 +16554,14 @@ const World = (function () {
     const P = NR, G = P.G;
     P.seC = [1.16, 1.06, 0.86];   // the yards and lots by the houses: dry, trampled
     P.colMod = (x, z, c) => {   // the open land in the dry season: golden and straw-pale grass, bare sandy patches; the scrub grey-green
-      const n = P.n5(x * 0.55 + 700, z * 0.55), m = P.n3(x * 1.6 + 300, z * 1.6), k = 0.97 + (n - 0.5) * 0.22 + (m - 0.5) * 0.12, fm = nrLCf(x, z, 0), fs = nrLCf(x, z, 2);
-      c[0] *= k * 1.5; c[1] *= k * 1.16; c[2] *= k * 1.95;   // (the olive grass picture: pale straw)
-      const bare = sstep(0.56, 0.82, P.n1(x * 1.15 - 90, z * 1.15 + 40)) * 0.6 * fm, pale = sstep(0.4, 0.75, P.n3(x * 0.8 + 90, z * 0.8 - 40)) * 0.6 * fm;
-      c[0] = lerp(c[0], c[0] * 1.1 + 0.06, pale); c[1] = lerp(c[1], c[1] * 1.12 + 0.06, pale); c[2] = lerp(c[2], c[2] * 1.15 + 0.06, pale);
-      c[0] = lerp(c[0], 2.0, bare); c[1] = lerp(c[1], 1.62, bare); c[2] = lerp(c[2], 1.5, bare);   // (bare sandy ground)
-      c[0] = lerp(c[0], 1.02, fs * 0.85); c[1] = lerp(c[1], 1.06, fs * 0.85); c[2] = lerp(c[2], 1.08, fs * 0.85);   // (the sage scrub: grey-green)
+      const n = P.n5(x * 0.55 + 700, z * 0.55), m = P.n3(x * 1.6 + 300, z * 1.6), q = P.n6(x * 0.7 - 400, z * 0.7 + 260), k = 0.95 + (n - 0.5) * 0.26 + (m - 0.5) * 0.14, fm = nrLCf(x, z, 0), fs = nrLCf(x, z, 2);
+      { const Lm = (c[0] + c[1] + c[2]) / 3; c[0] = lerp(c[0], Lm, 0.75); c[1] = lerp(c[1], Lm, 0.75); c[2] = lerp(c[2], Lm, 0.75); }   // (no farmland here: the shared ground's crop fields and meadows lose their colour, keep their light and dark)
+      c[0] *= k * 0.92; c[1] *= k * 0.88; c[2] *= k * 0.86;   // (on the straw picture)
+      const bare = sstep(0.55, 0.8, P.n1(x * 1.15 - 90, z * 1.15 + 40)) * 0.7 * fm, pale = sstep(0.4, 0.72, P.n3(x * 0.8 + 90, z * 0.8 - 40)) * 0.65 * fm, dark = sstep(0.58, 0.82, q) * 0.5 * fm;
+      c[0] = lerp(c[0], c[0] * 1.1 + 0.06, pale); c[1] = lerp(c[1], c[1] * 1.1 + 0.06, pale); c[2] = lerp(c[2], c[2] * 1.12 + 0.06, pale);   // (bleached straw)
+      c[0] = lerp(c[0], c[0] * 0.84, dark); c[1] = lerp(c[1], c[1] * 0.8, dark); c[2] = lerp(c[2], c[2] * 0.7, dark);   // (wild oats and mustard gone brown)
+      c[0] = lerp(c[0], 1.22, bare); c[1] = lerp(c[1], 1.1, bare); c[2] = lerp(c[2], 1.1, bare);   // (bare sandy ground)
+      c[0] = lerp(c[0], 0.74, fs * 0.85); c[1] = lerp(c[1], 0.82, fs * 0.85); c[2] = lerp(c[2], 0.96, fs * 0.85);   // (the sage scrub: grey-green)
     };
     // level ground: the pit lane, its stalls and the paddock (left of the main straight), the grandstand (right): the terrain pulled to the
     // road's height (the main straight is straight there: a point is projected on its chord)
@@ -16562,7 +16582,7 @@ const World = (function () {
     const W1 = [1, 1, 1], CH = 128;
 
     /* ---- terrain tiles: which ones (built at the end, when the trees have shaded the ground under them) ---- */
-    const gMat = new THREE.MeshLambertMaterial({ map: ownTex(nrGrassTex(tex.grass.anisotropy)), vertexColors: true }), tiles = [];
+    const gMat = new THREE.MeshLambertMaterial({ map: ownTex(rsGrassTex(tex.grass.anisotropy)), vertexColors: true }), tiles = [];
     for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) { const on = nrTileOn(ti, tj); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; tiles.push(ti, tj, on); }
 
     /* ---- the road: the asphalt of 1960, a little paler and greyer, the oil and rubber of the racing line darker; no kerbs, no lines ---- */
@@ -16587,21 +16607,30 @@ const World = (function () {
     const sandMat = new THREE.MeshLambertMaterial({ map: ownTex(rbGravelTex()), vertexColors: true });
     const SAND = [0.98, 0.86, 0.66], SAND2 = [0.92, 0.79, 0.6];
     const verge = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i], y = T.hy[i], lift = (o, h) => { const q = side * o; return [o, Math.max(h, nrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) + 0.05 - y)]; };
-      return [[w, 0.0], [w + 0.6, -0.03], lift(Math.max(w + 1.6, bar - 0.6), -0.08), lift(bar + 2.6, -0.2), lift(bar + 4.5, -0.45)]; };
+      return [[w, 0.0], [w + 0.6, -0.03], lift(Math.max(w + 1.6, bar - 0.6), -0.08), lift(bar + 2.6, -0.2), lift(bar + 4.5, -0.45)]; };   // (the knockable props' floor)
+    const vergeN = valueNoise2(5291, 14);   // (sandy and grassy patches along the verge)
     for (let c0 = 0; c0 < N; c0 += CH) {
-      const gv = new RB(true), pv = [-1, -1];
+      const gv = new RB(true), gg = new RB(true), pv = [-1, -1], pg = [-1, -1];
       for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++) {
         const i = ii % N;
         for (const side of [-1, 1]) {
-          const si = side > 0 ? 1 : 0, pr = verge(i, side), gl = (side > 0 ? T.gravR : T.gravL)[i];
-          const pts = pr.map(([o, h]) => Pt(i, side * o, h)), n3 = crH(i, side, 5) * 0.08, DRY = [0.86 - n3, 0.76 - n3, 0.56 - n3], STRAW = [0.8, 0.72, 0.52];   // (the sand picture's colours: sand, then the dust settled on the dry grass)
-          const cols = [SAND, SAND2, gl ? SAND : DRY, [lerp(DRY[0], STRAW[0], 0.6), lerp(DRY[1], STRAW[1], 0.6), lerp(DRY[2], STRAW[2], 0.6)], STRAW];
-          const ord = side > 0 ? { p: pts, c: cols } : { p: pts.slice().reverse(), c: cols.slice().reverse() };
-          const rv = gv.row(ord.p, ord.c, ord.p.map(p => [p[0] / 3, -p[2] / 3]));
-          if (pv[si] >= 0) gv.link(pv[si], rv, 0, 4); pv[si] = rv;
+          const si = side > 0 ? 1 : 0, bar = side > 0 ? T.br[i] : T.bl[i], gl = (side > 0 ? T.gravR : T.gravL)[i], y = T.hy[i];
+          const lift = (o, h) => { const q = side * o; return Math.max(h, nrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) + 0.05 - y); };
+          const oS = Math.min(w + (gl ? 3.4 : 2.2), bar - 0.7), oM = Math.max(oS + 0.3, bar - 0.6);
+          // the sand: from the asphalt's edge, 2-3 m (the cars' dust)
+          const sp = [[w, 0.0], [w + 0.6, -0.03], [oS, lift(oS, -0.07)]].map(([o, h]) => Pt(i, side * o, h)), sc = [SAND, SAND2, SAND2];
+          const so = side > 0 ? { p: sp, c: sc } : { p: sp.slice().reverse(), c: sc.slice().reverse() };
+          const rv = gv.row(so.p, so.c, so.p.map(p => [p[0] / 3, -p[2] / 3])); if (pv[si] >= 0) gv.link(pv[si], rv, 0, 2); pv[si] = rv;
+          // dusty dry grass out to the bank and over it (on the run-offs more sand than grass), in patches
+          const xm = T.px[i] + T.nx[i] * side * (oS + oM) / 2, zm = T.pz[i] + T.nz[i] * side * (oS + oM) / 2, f = vergeN(xm, zm), sandy = clamp((gl ? 0.75 : 0.35) + (f - 0.5) * 0.9, 0, 1);
+          const DG = [lerp(0.96, 1.06, sandy), lerp(0.9, 0.95, sandy), lerp(0.86, 0.96, sandy)], gc = nrGCol(...Pt(i, side * (bar + 4.5), 0).filter((v, k) => k !== 1));
+          const gp = [[oS, lift(oS, -0.07)], [oM, lift(oM, -0.08)], [bar + 2.6, lift(bar + 2.6, -0.2)], [bar + 4.5, lift(bar + 4.5, -0.45)]].map(([o, h]) => Pt(i, side * o, h));
+          const gcols = [[1.08, 0.97, 0.98], DG, [lerp(DG[0], gc[0], 0.5), lerp(DG[1], gc[1], 0.5), lerp(DG[2], gc[2], 0.5)], gc];
+          const go = side > 0 ? { p: gp, c: gcols } : { p: gp.slice().reverse(), c: gcols.slice().reverse() };
+          const rg = gg.row(go.p, go.c, go.p.map(p => [p[0] / 14, -p[2] / 14])); if (pg[si] >= 0) gg.link(pg[si], rg, 0, 3); pg[si] = rg;
         }
       }
-      addM(gv, sandMat);
+      addM(gv, sandMat); addM(gg, gMat);
     }
     /* ---- on the asphalt: oil and rubber into the slower corners, patches and sealed cracks (the Nordschleife's decal atlas) ---- */
     let nDecals = 0;
@@ -16943,6 +16972,89 @@ const World = (function () {
     for (const t of tk) t.addTo(root, true);
     for (const t of tf) t.addTo(root, false);
 
+    /* ---- the dry hills' small things, merged per 256 m chunk (one draw each, seen from above in the iso view and from behind the car): the
+       rounded granite boulders of the Box Springs hills on the slopes and the scrub (clusters, half sunk), low grey-green sage and dark
+       creosote bushes, tufts of dry grass along the verges and out in the fields, tumbleweeds caught on the fences; the dirt tracks across
+       the open land (the 1967 map's unpaved roads, here made up), telephone poles along the roads of 1966. Their own random stream ---- */
+    let nRocks = 0, nBush = 0, nTufts = 0, nPoles = 0;
+    {
+      const RR = rng(5281), rs = ROCK_SMOOTH; ROCK_SMOOTH = true;
+      const dC = new Chunks(256), dT = new Chunks(256);   // (dC: boulders and bushes, casting shadows; dT: tufts and tumbleweeds, none)
+      const GRAN = [[0.78, 0.74, 0.68], [0.72, 0.66, 0.6], [0.66, 0.62, 0.58], [0.8, 0.72, 0.62]], SAGE = [[0.5, 0.58, 0.44], [0.44, 0.52, 0.4], [0.58, 0.62, 0.5], [0.46, 0.48, 0.34]], CREO = [[0.26, 0.32, 0.17], [0.3, 0.35, 0.19]];
+      const clear = (x, z, r) => !excluded(x, z) && P.pad(x, z, 0) === 0 && nrDist(x, z) > w + r && nrNear(x, z).dd > r * 0.6;
+      const boulder = (x, z, sz) => { const y = nrGround(x, z), c = GRAN[Math.floor(RR() * GRAN.length)], k = 0.9 + RR() * 0.2;
+        rock(dC.get(x, z), x, y + sz * 0.15, z, sz * (0.9 + RR() * 0.5), sz * (0.65 + RR() * 0.35), sz * (0.8 + RR() * 0.4), RR() * TAU, [c[0] * k, c[1] * k, c[2] * k], RR, 0.3);
+        nrShade(x, z, sz * 1.1, 0.35); nRocks++; };
+      // boulder clusters: on the slopes and in the scrub (granite weathering out of the hills), a few lone ones in the grass
+      const Lt = NRC * NRT;
+      for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
+        if (!G.on[tj * G.ntx + ti]) continue;
+        const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
+        for (let zz = za; zz < za + Lt; zz += 24) for (let xx = xa; xx < xa + Lt; xx += 24) {
+          const x = xx + RR() * 24, z = zz + RR() * 24, rd = nrDist(x, z); if (rd > 330) continue;
+          const sl = nrSlope(x, z), cl = nrLC(x, z), p = cl === 3 ? 0 : 0.03 + (cl === 2 ? 0.16 : 0) + clamp((sl - 0.04) * 3, 0, 0.3);
+          if (RR() > p || !clear(x, z, 9)) continue;
+          const n = 1 + Math.floor(RR() * RR() * 7), big = 0.9 + RR() * 1.8;
+          for (let k = 0; k < n; k++) { const a = RR() * TAU, d = k === 0 ? 0 : 1.2 + RR() * big * 2.2, bx = x + Math.cos(a) * d, bz = z + Math.sin(a) * d; if (!clear(bx, bz, 7)) continue; boulder(bx, bz, (k === 0 ? big : big * (0.35 + RR() * 0.5))); }
+        }
+      }
+      // bushes: sage (low, round, grey-green) in the scrub and scattered over the grass, creosote (darker, looser) on the flats
+      for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
+        if (!G.on[tj * G.ntx + ti]) continue;
+        const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
+        for (let zz = za; zz < za + Lt; zz += 9) for (let xx = xa; xx < xa + Lt; xx += 9) {
+          const x = xx + RR() * 9, z = zz + RR() * 9, rd = nrDist(x, z), r1 = RR(); if (rd > 280) continue;
+          const near = sstep(160, 30, rd), cl = nrLC(x, z), p = (cl === 2 ? 0.34 : cl === 3 ? 0.02 : 0.05 + 0.07 * sstep(0.5, 0.8, P.n2(x * 0.7, z * 0.7))) * (1 + 1.2 * near);
+          if (r1 > p || !clear(x, z, 5)) continue;
+          const y = nrGround(x, z), creo = RR() < 0.3, sz = creo ? 1.0 + RR() * 0.8 : 0.7 + RR() * 0.8, cc = creo ? CREO[Math.floor(RR() * 2)] : SAGE[Math.floor(RR() * 4)], g = dC.get(x, z);
+          puff(g, x, y + sz * 0.35, z, sz * 1.25, 0.62, cc, RR, 0.35, 0.62, 1.05, false);
+          if (RR() < 0.5) puff(g, x + (RR() - 0.5) * sz * 1.6, y + sz * 0.3, z + (RR() - 0.5) * sz * 1.6, sz * 0.85, 0.6, cc, RR, 0.35, 0.62, 1.05, false);
+          nrShade(x, z, sz * 1.3, 0.3); nBush++;
+        }
+      }
+      // tufts of dry grass: thick along the verges and the banks (where the mowers never came), thinner out in the fields
+      const tuft = (x, z, h, c) => { const y = nrGround(x, z) - 0.04, g = dT.get(x, z), a0 = RR() * TAU, n = 5;
+        for (let k = 0; k < n; k++) { const a = a0 + k / n * TAU, r = h * (0.5 + RR() * 0.35), tx = x + Math.cos(a) * r, tz = z + Math.sin(a) * r, k2 = 0.9 + RR() * 0.3, cl = [c[0] * k2, c[1] * k2, c[2] * k2], bw = 0.07 + h * 0.18, lo = [c[0] * 0.62, c[1] * 0.6, c[2] * 0.56];
+          g.tri([x + Math.cos(a + 1.6) * bw, y, z + Math.sin(a + 1.6) * bw], [tx, y + h * (0.7 + RR() * 0.5), tz], [x - Math.cos(a + 1.6) * bw, y, z - Math.sin(a + 1.6) * bw], lo, cl, lo);
+          g.N.splice(g.N.length - 9, 9, 0, 1, 0, 0, 1, 0, 0, 1, 0); }   // (lit like the ground: the seasons paint them as grass)
+        nTufts++; };
+      const STRAW = [[0.9, 0.8, 0.58], [0.84, 0.74, 0.52], [0.95, 0.88, 0.68], [0.76, 0.68, 0.5]];
+      for (const side of [-1, 1]) for (let i = 0; i < N; i += 1) {   // along the verges: 1-2 tufts every 2 m, from the sand's edge to past the bank
+        const bar = side > 0 ? T.br[i] : T.bl[i], d = dS(i * ds); if (side < 0 && pitAt(i)) continue;
+        for (let k = 0; k < 3; k++) { if (RR() < 0.3) continue; const o = Math.min(w + 2.6, bar - 0.8) + RR() * (bar + 5 - Math.min(w + 2.6, bar - 0.8)), [x, z] = atSf(i * ds + RR() * 2, side * o);
+          if (nrDist(x, z) < w + 2.4 || excluded(x, z) || P.pad(x, z, 0) !== 0) continue; tuft(x, z, 0.45 + RR() * 0.4, STRAW[Math.floor(RR() * 4)]); }
+      }
+      for (let k = 0; k < 16000 * dens; k++) {   // out in the fields, near the road (seen from the cameras)
+        const i = Math.floor(RR() * N), side = RR() < 0.5 ? -1 : 1, o = (side > 0 ? T.br[i] : T.bl[i]) + 5 + RR() * RR() * 70, [x, z] = atSf(i * ds, side * o);
+        if (nrLC(x, z) === 3 || nrDist(x, z) < w + 6 || excluded(x, z) || P.pad(x, z, 0) !== 0) continue; tuft(x, z, 0.4 + RR() * 0.5, STRAW[Math.floor(RR() * 4)]);
+      }
+      // tumbleweeds caught against the chain link and the banks (a few), and lying out in the grass
+      for (let k = 0; k < 140; k++) { const i = Math.floor(RR() * N), side = RR() < 0.5 ? -1 : 1, o = (side > 0 ? T.br[i] : T.bl[i]) + 1.4 + RR() * RR() * 30, [x, z] = atSf(i * ds, side * o);
+        if (nrDist(x, z) < w + 3 || excluded(x, z)) continue; const r = 0.35 + RR() * 0.3, c = [0.66 + RR() * 0.08, 0.56, 0.38];
+        puff(dT.get(x, z), x, nrGround(x, z) + r * 0.8, z, r, 0.9, c, RR, 0.45, 0.7, 1.05, false); nTufts++; }
+      // the dirt tracks across the open land: meandering two-rut trails between the roads (pale, worn)
+      const trailM = new Chunks(256, true), TR = [0.98, 0.84, 0.62];
+      const trail = (pts) => { for (let k = 0; k + 1 < pts.length; k++) { const [xa, za] = pts[k], [xb, zb] = pts[k + 1], l = Math.hypot(xb - xa, zb - za) || 1, nx = -(zb - za) / l, nz = (xb - xa) / l;
+          for (const o of [-0.85, 0.85]) { const q = [[xa + nx * (o - 0.35), za + nz * (o - 0.35)], [xa + nx * (o + 0.35), za + nz * (o + 0.35)], [xb + nx * (o + 0.35), zb + nz * (o + 0.35)], [xb + nx * (o - 0.35), zb + nz * (o - 0.35)]].map(([x, z]) => [x, nrGround(x, z) + 0.05, z]);
+            trailM.get(xa, za).quadUp(q[0], q[1], q[2], q[3], [TR, TR, TR, TR], q.map(p => [p[0] / 3, p[2] / 3])); } } };
+      for (let t = 0; t < 14; t++) {   // each a random walk from a point by the track outwards, bending gently, until it leaves the area or meets something
+        const i = Math.floor(RR() * N), side = RR() < 0.5 ? -1 : 1; let [x, z] = atS(i * ds, side * ((side > 0 ? T.br[i] : T.bl[i]) + 12)), hd = Math.atan2(T.nz[i] * side, T.nx[i] * side) + (RR() - 0.5) * 1.2;
+        const pts = [[x, z]];
+        for (let k = 0; k < 60; k++) { hd += (RR() - 0.5) * 0.35; const nx2 = x + Math.cos(hd) * 6, nz2 = z + Math.sin(hd) * 6; if (nrDist(nx2, nz2) < w + 10 || nrDist(nx2, nz2) > 320 || excluded(nx2, nz2) || nrLC(nx2, nz2) === 3) break; x = nx2; z = nz2; pts.push([x, z]); }
+        if (pts.length > 8) trail(pts);
+      }
+      trailM.addTo(root, new THREE.MeshLambertMaterial({ map: sandMat.map, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }), false, true);
+      // telephone poles along the roads of 1966 (every 45 m, a crossarm; the wires too thin to see)
+      const poleRow = (pts, off) => { let acc = 0; for (let k = 0; k + 1 < pts.length; k++) { const [x0, z0] = pts[k], [x1, z1] = pts[k + 1], l = Math.hypot(x1 - x0, z1 - z0) || 1, nx = -(z1 - z0) / l, nz = (x1 - x0) / l, hd = Math.atan2(z1 - z0, x1 - x0);
+        for (let q = (45 - acc % 45) % 45; q < l; q += 45) { const x = x0 + (x1 - x0) * q / l + nx * off, z = z0 + (z1 - z0) * q / l + nz * off; if (excluded(x, z) || nrDist(x, z) < w + 6) continue; const y = nrGround(x, z), g = dC.get(x, z);
+          box(g, x, y - 0.3, z, 0.24, 9.3, 0.24, hd, [0.42, 0.33, 0.25]); box(g, x, y + 8.2, z, 0.14, 0.16, 2.4, hd, [0.42, 0.33, 0.25]); nPoles++; } acc += l; } };
+      if (RD2.euc) poleRow(RD2.euc, -6.5);
+      if (def.day) poleRow(def.day, 7);
+      if (def.hwy) poleRow(def.hwy, 13);
+      ROCK_SMOOTH = rs;
+      dC.addTo(root, matV, true, true); dT.addTo(root, new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), false, true);
+    }
+
     /* ---- terrain tiles, coloured now (the shade under the trees) ---- */
     let nTiles = 0;
     { const grp = new THREE.Group(); root.add(grp); out.ground = grp;
@@ -16962,7 +17074,17 @@ const World = (function () {
     if (flagL.length) root.add(rbFlags(flagL, CR.U.uTime));
     out.crowdPts = Float32Array.from(crowdPts);
     if (def.far) out.dyn.far = rsFar(root, def.far, sea, hyS(sStart) + 6);
-    out.stats = { tiles: nTiles, trees: nTrees, bales: nBales, rails: nRail, apexTyres: nApex, stalls: nStalls, stands: nStands, cars: nCars, houses: nHouses, billboards: nBill, decals: nDecals, flags: flagL.length };   // (read by the tests)
+    // dust: a few dust devils wandering over the dry fields by the track and a low haze of dust over the car parks (not in winter; hidden in
+    // the rain: rsFar's per-frame hook)
+    if (sea !== 'winter') {
+      const RD3 = rng(5290), DL = [], DEV = { per: 22, life: 7, lifeV: 3, rise: 16, riseV: 8, flare: 0 }, HAZE = { per: 10, life: 12, lifeV: 4, rise: 2.5, riseV: 1.5, flare: 0 };
+      for (let k = 0, tries = 0; k < 6 && tries < 200; tries++) { const i = Math.floor(RD3() * N), side = RD3() < 0.5 ? -1 : 1, [x, z] = atS(i * ds, side * ((side > 0 ? T.br[i] : T.bl[i]) + 25 + RD3() * 45));
+        if (excluded(x, z) || nrLC(x, z) === 3 || nrDist(x, z) < 25) continue; DL.push([x, nrGround(x, z) - 0.3, z, [0.86, 0.74, 0.56], 1.6, DEV]); k++; }
+      for (const [a, b, sd] of def.ga || []) { const [x, z] = atS(sAt((a + b) / 2), sd * 30); DL.push([x, nrGround(x, z), z, [0.84, 0.74, 0.58], 4.5, HAZE]); }
+      const dust = rbSmoke(DL, CR.U.uTime, ownTex(rbSmokeTex()), [1.6, -0.6]); dust.name = 'rsDust'; root.add(dust); out.dyn.rsDust = dust;
+      if (out.dyn.far) { const f0 = out.dyn.far.onBeforeRender; out.dyn.far.onBeforeRender = (rd, sc, cam, ...a) => { f0(rd, sc, cam, ...a); dust.visible = !(typeof Render !== 'undefined' && Render.raining); }; }
+    }
+    out.stats = { tiles: nTiles, trees: nTrees, rocks: nRocks, bushes: nBush, tufts: nTufts, poles: nPoles, bales: nBales, rails: nRail, apexTyres: nApex, stalls: nStalls, stands: nStands, cars: nCars, houses: nHouses, billboards: nBill, decals: nDecals, flags: flagL.length };   // (read by the tests)
     return out;
   }
 
