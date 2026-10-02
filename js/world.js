@@ -10462,6 +10462,11 @@ const World = (function () {
     const P = VR, line = 2640 - 180 * clamp(sz * 2.2, -1, 1) + (P.c4(x, z) - 0.5) * 220;
     return sstep(line, line + 120, A) * sstep(0.5, 0.72, ny) * sstep(0.45, 0.7, P.c5(x, z) + 0.25 * sstep(line, line + 300, A));
   }
+  function saStream(x, z) {   // distance to the nearest stream (def.streams, sampled every 4 m in VR.str: 24 m cells), up to 30 m
+    const S = VR.str; if (!S) return 30; let d2 = 900; const cx = Math.floor(x / 24), cz = Math.floor(z / 24);
+    for (let a = cx - 1; a <= cx + 1; a++) for (let b = cz - 1; b <= cz + 1; b++) { const L = S.get(a * 65536 + b); if (!L) continue; for (let k = 0; k < L.length; k += 2) { const dx = x - L[k], dz = z - L[k + 1], q = dx * dx + dz * dz; if (q < d2) d2 = q; } }
+    return Math.sqrt(d2);
+  }
   function saCol(x, z, h, ny, sz, dd, sx) {   // ground colour (times the grey grit map): the grass of the slopes in the season's colour, in patches; the wetlands
     // greener (browner in the winter); the basalt dark grey-brown in bands on the steep faces (lc 1 and the steep ground); shrubs olive; Sani Top's
     // trodden earth; the snow; a trodden gravel verge
@@ -10471,12 +10476,22 @@ const World = (function () {
     const k = sstep(0.3, 0.75, m);
     let R = lerp(G0[0], G1[0], k), G = lerp(G0[1], G1[1], k), B = lerp(G0[2], G1[2], k);
     R += (f - 0.5) * 0.08; G += (f - 0.5) * 0.08; B += (f - 0.5) * 0.05;
+    // the mosaic of the grassland: darker tussock patches, paler dry patches, grey rocky ground, greener by the streams; in the winter the
+    // firebreaks burnt black in strips (and their regrowth darker in summer)
+    const tu = sstep(0.55, 0.78, P.c6(x, z)), dr = sstep(0.62, 0.82, P.c6(x * 0.7 + 400, z * 0.7)), ro = sstep(0.66, 0.85, P.c2(x * 1.7, z * 1.7)) * sstep(0.97, 0.85, ny);
+    R *= 1 - 0.14 * tu; G *= 1 - 0.08 * tu; B *= 1 - 0.12 * tu;
+    R = lerp(R, R * 1.18 + 0.03, dr * 0.6); G = lerp(G, G * 1.06 + 0.02, dr * 0.6); B = lerp(B, B * 1.1 + 0.03, dr * 0.6);
+    R = lerp(R, 0.47, ro * 0.6); G = lerp(G, 0.45, ro * 0.6); B = lerp(B, 0.42, ro * 0.6);
+    const ws = sstep(14, 3, saStream(x, z)) * (1 - sstep(0.75, 0.5, ny)), wg = SAS === 'summer' ? [0.27, 0.43, 0.17] : SAS === 'autumn' ? [0.46, 0.46, 0.24] : [0.4, 0.38, 0.26];
+    R = lerp(R, wg[0], ws * 0.75); G = lerp(G, wg[1], ws * 0.75); B = lerp(B, wg[2], ws * 0.75);
+    const fb = sstep(0.04, 0.0, Math.abs(P.c7(x, z) - 0.5)) * sstep(0.7, 0.9, ny), burn = SAS === 'winter' ? fb : SAS === 'summer' ? fb * 0.3 : 0;
+    if (burn > 0) { const bc = SAS === 'winter' ? [0.17, 0.16, 0.15] : [0.3, 0.46, 0.2]; R = lerp(R, bc[0], burn * 0.85); G = lerp(G, bc[1], burn * 0.85); B = lerp(B, bc[2], burn * 0.85); }
     const hi = sstep(2780, 2860, A) * 0.35; R = lerp(R, R * 1.06, hi); G = lerp(G, G * 0.96, hi);   // (the plateau's short grass: paler)
     const wc = SAS === 'summer' ? [0.32, 0.46, 0.22] : [0.48, 0.42, 0.28]; R = lerp(R, wc[0], wt * 0.7); G = lerp(G, wc[1], wt * 0.7); B = lerp(B, wc[2], wt * 0.7);
     R = lerp(R, 0.36, sh * 0.5); G = lerp(G, 0.4, sh * 0.5); B = lerp(B, 0.22, sh * 0.5);
     R = lerp(R, 0.56, vi * 0.55); G = lerp(G, 0.48, vi * 0.55); B = lerp(B, 0.37, vi * 0.55);
     const st = Math.max(sstep(0.62, 0.42, ny), rk * sstep(0.9, 0.72, ny) * 0.85), bank = sstep(0.82, 0.6, ny) * (1 - st);   // the basalt: bands along the height; the steep earthy banks between the legs
-    R = lerp(R, 0.5, bank * 0.6); G = lerp(G, 0.43, bank * 0.6); B = lerp(B, 0.32, bank * 0.6);
+    R = lerp(R, 0.6, bank * 0.7); G = lerp(G, 0.52, bank * 0.7); B = lerp(B, 0.4, bank * 0.7);   // (lighter, ochre earth and scree: lit or in the shade, the bank reads as ground)
     if (st > 0) { const band = 0.5 + 0.5 * Math.sin(A / 5.5 + q * 6), kk = 0.82 + 0.2 * band; R = lerp(R, 0.37 * kk, st); G = lerp(G, 0.34 * kk, st); B = lerp(B, 0.31 * kk, st); }
     if (sx != null && st < 0.5) { const hz = Math.hypot(sx, sz), fan = sstep(0.18, 0.4, hz) * (1 - st); if (fan > 0) { const u = (z * sx - x * sz) / hz, w = Math.sin(u * 0.2 + P.c5(x, z) * 5) * fan * 0.04; R += w; G += w; B += w * 0.7; } }   // (runnels down the fall line)
     const sn = saSnow(x, z, A, ny, sz); R = lerp(R, CA_SNC[0], sn); G = lerp(G, CA_SNC[1], sn); B = lerp(B, CA_SNC[2], sn);
@@ -10538,6 +10553,30 @@ const World = (function () {
     if (goat) for (const v of [-0.05, 0.05]) box(g, 0.5, 1.02, v, 0.18, 0.04, 0.03, 0.6, [0.3, 0.27, 0.22]);
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
+  function saFlowerGeo(kind) {   // 0 a clump of red-hot pokers (orange-red spikes on green stems, ~1 m), 1 a cushion of yellow everlastings
+    const g = new GB(), R = rng(3311 + kind);
+    if (kind === 0) for (let k = 0; k < 5; k++) { const a = R() * TAU, d = R() * 0.3, x = Math.cos(a) * d, z = Math.sin(a) * d, h = 0.6 + R() * 0.4;
+      box(g, x, 0, z, 0.05, h, 0.05, 0, [0.3, 0.42, 0.18]); box(g, x, h, z, 0.13, 0.22, 0.13, a, [0.95, 0.36, 0.1], [0.98, 0.55, 0.15]); box(g, x, h - 0.16, z, 0.12, 0.16, 0.12, a, [0.98, 0.82, 0.25]); }
+    else { ROCK_SMOOTH = true; ico(g, 0, 0.12, 0, 0.42, 0.45, [0.92, 0.78, 0.22], R, 0.25); ico(g, 0.3, 0.1, 0.12, 0.25, 0.45, [0.96, 0.86, 0.3], R, 0.25); ROCK_SMOOTH = false; }
+    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
+  function saBeastGeo(kind) {   // x forward; the coat white (the instance colour tints it): 0 a pony, 1 a pony with its rider in a blanket and a conical hat, 2 a cow
+    const g = new GB(), W = [0.95, 0.95, 0.95], D = [0.18, 0.15, 0.12], cow = kind === 2;
+    const L = cow ? 1.9 : 1.6, Hb = cow ? 0.75 : 0.6, y = cow ? 0.75 : 0.85;
+    box(g, 0, y, 0, L, Hb, cow ? 0.75 : 0.5, 0, W);
+    box(g, L / 2 + 0.1, y + (cow ? 0.25 : 0.45), 0, cow ? 0.45 : 0.35, cow ? 0.42 : 0.7, cow ? 0.4 : 0.26, cow ? 0 : -0.5, W);   // the neck and the head
+    if (cow) box(g, L / 2 + 0.38, y + 0.3, 0, 0.42, 0.36, 0.36, 0, [0.92, 0.86, 0.82]);
+    else { box(g, L / 2 + 0.42, y + 0.92, 0, 0.5, 0.22, 0.2, 0, W); box(g, L / 2 + 0.05, y + 0.75, 0, 0.5, 0.12, 0.08, -0.5, D); box(g, -L / 2 - 0.1, y - 0.1, 0, 0.12, 0.65, 0.1, 0.2, D); }   // (the mane, the tail)
+    for (const [u, v] of [[L / 2 - 0.15, -0.16], [L / 2 - 0.15, 0.16], [-L / 2 + 0.15, -0.16], [-L / 2 + 0.15, 0.16]]) box(g, u, 0, v, 0.13, y - Hb / 2 + 0.05, 0.13, 0, cow ? W : D);
+    if (cow) for (const v of [-0.16, 0.16]) box(g, L / 2 + 0.3, y + 0.55, v * 1.6, 0.06, 0.06, 0.25, 0, [0.88, 0.84, 0.72]);
+    if (kind === 1) {   // the rider: the blanket (red, blue or green with the stripes of the Basotho blanket), the straw hat
+      box(g, 0.05, y + Hb / 2, 0, 0.45, 0.85, 0.62, 0, [0.62, 0.14, 0.12], [0.75, 0.62, 0.2]);
+      box(g, 0.05, y + Hb / 2 + 0.4, 0, 0.47, 0.08, 0.64, 0, [0.85, 0.7, 0.2]);
+      box(g, 0.08, y + Hb / 2 + 0.85, 0, 0.22, 0.22, 0.2, 0, [0.35, 0.22, 0.15]);
+      cone(g, 0.08, y + Hb / 2 + 1.05, 0, 0.32, 0.35, 8, [0.86, 0.74, 0.46], [0.7, 0.55, 0.3], 0);
+    }
+    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
   function buildSani(scene, tex, opts) {
     const R = rng(3211), N = T.N, w = T.w, dens = opts.density || 1, def = T.def, PI = Math.PI;
     SAS = opts.season === 'autumn' || opts.season === 'winter' ? opts.season : 'summer';
@@ -10545,7 +10584,10 @@ const World = (function () {
     const out = { root, dyn: {}, groundH: caGround, camFloor: caGround, props: [], farClip: true, ownTex: [], dust: [0.78, 0.69, 0.56], season: SAS, ownSeason: true, paintFor: (s) => (s === 'autumn' || s === 'winter' ? s : 'summer') };
     vrPrep();
     const P = VR, iE = N - 1, sStart = T.startS, sFin = T.finishS, base = P.D.base;
-    P.c1 = valueNoise2(731, 120); P.c2 = valueNoise2(732, 60); P.c3 = valueNoise2(733, 190); P.c4 = valueNoise2(734, 110); P.c5 = valueNoise2(735, 24);
+    P.c1 = valueNoise2(731, 120); P.c2 = valueNoise2(732, 60); P.c3 = valueNoise2(733, 190); P.c4 = valueNoise2(734, 110); P.c5 = valueNoise2(735, 24); P.c6 = valueNoise2(736, 22); P.c7 = valueNoise2(737, 150);
+    P.str = new Map();   // the streams every 4 m, hashed (saStream: the greener ground and the shrubs along them)
+    for (const st of def.streams || []) { const p = st.p; for (let q = 0; q + 3 < p.length; q += 2) { const L = Math.hypot(p[q + 2] - p[q], p[q + 3] - p[q + 1]), n = Math.max(1, Math.ceil(L / 4));
+      for (let t = 0; t < n; t++) { const x = lerp(p[q], p[q + 2], t / n), z = lerp(p[q + 1], p[q + 3], t / n), k = Math.floor(x / 24) * 65536 + Math.floor(z / 24); let A = P.str.get(k); if (!A) P.str.set(k, A = []); A.push(x, z); } } }
     P.fin = [T.px[T.finishIdx], T.pz[T.finishIdx]];
     const bord = def.border || [T.px[iE], T.pz[iE], T.len - sStart];
     // the buildings (def.bld [x, z, length, width, angle, kind 0 a stone house / 2 a round hut]): clear of the road
@@ -10590,8 +10632,13 @@ const World = (function () {
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     const vProf = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i], y = T.hy[i], gAt = (o) => { const q = side * o; return caGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - y; };
       const lift = (o, h) => [o, Math.max(h, gAt(o) + 0.05)];
+      if (gAt(bar + 0.8) < -2.4) return [[w, 0.01], [w + 0.7, -0.03], [Math.max(w + 1.3, bar - 0.5), -0.08], [bar + 0.3, -0.12], [bar + 0.34, gAt(bar + 0.34) - 0.15]];   // (a dry-stone retaining wall down to the leg below: its top flush with the verge)
       return [[w, 0.01], [w + 0.7, -0.03], lift(Math.max(w + 1.3, bar - 0.7), -0.1), [bar + 0.45, Math.min(-0.3, gAt(bar + 0.45) - 0.2)], [bar + 1.9, gAt(bar + 1.9) + 0.03]]; };
-    const vp = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vProf(i, side)); return a; });
+    const vpIn = (i, side, q) => {   // on the inside of a tight bend the verge's columns end short of the centre of the bend (else their quads fold over into a fan)
+      let kk = 0; for (let d = -3; d <= 3; d++) { const v = T.k[clamp(i + d, 0, N - 1)]; if (Math.abs(v) > Math.abs(kk)) kk = v; }
+      if (side * kk <= 0) return q; const lim = Math.max(w + 1.2, 0.9 / Math.abs(kk)); let prev = -1;
+      for (const c of q) { c[0] = Math.max(Math.min(c[0], lim - (q.length - 1 - q.indexOf(c)) * 0.15), prev + 0.05); prev = c[0]; } return q; };
+    const vp = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vpIn(i, side, vProf(i, side))); return a; });
     {
       const tileL = 7, grav = [1.06, 1.0, 0.92], ash = [0.84, 0.84, 0.86], pav = T.pavedAt;
       const cols = (i) => { const rl = clamp(T.rl[i], -w + 1.9, w - 1.9); return [-w, -w + 0.4, rl - 1.6, rl - 1.15, rl - 0.65, rl - 0.25, rl + 0.25, rl + 0.65, rl + 1.15, rl + 1.6, w - 0.4, w]; };
@@ -10602,6 +10649,7 @@ const World = (function () {
         k *= 0.92 + 0.14 * P.n2(T.px[i] * 0.7 + 50, T.pz[i] * 0.7);
         return [grav[0] * k, grav[1] * k, grav[2] * k]; };
       const vc = [-1, 1].map((side, si) => { const a = []; for (let i = 0; i < N; i++) a.push(vp[si][i].map(([o, y], k) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
+        const wl = vp[si][i][4][0] - vp[si][i][3][0] < 0.1; if (wl && k >= 3) { const q = 0.9 + 0.16 * rpHash(i >> 1, 61 + si); return k === 3 ? [0.66 * q, 0.62 * q, 0.55 * q] : [0.5 * q, 0.47 * q, 0.42 * q]; }   // (the wall: weathered stone, its foot darker)
         if (k === 4) return saGCol(x, z); if (k <= 1) return [0.62, 0.57, 0.5]; const sl = caSlope(x, z), l = Math.sqrt(1 + sl * sl); return saCol(x, z, T.hy[i] + y, 1 / l, 0, k === 2 ? 1 : 3).slice(); })); return a; });
       const wuv = (p) => [p[0] / 9, -p[2] / 9];
       for (let c0 = 0; c0 < N - 1; c0 += 60) {
@@ -10613,7 +10661,8 @@ const World = (function () {
           for (const side of [-1, 1]) {
             const si = side > 0 ? 1 : 0, qi = vp[si][i], qj = vp[si][j], ci = vc[si][i], cj = vc[si][j];
             for (let k = 0; k < 4; k++) { const a = Pt(i, side * qi[k][0], qi[k][1]), b = Pt(i, side * qi[k + 1][0], qi[k + 1][1]), c = Pt(j, side * qj[k + 1][0], qj[k + 1][1]), d = Pt(j, side * qj[k][0], qj[k][1]);
-              gv.quadUp(a, b, c, d, [ci[k], ci[k + 1], cj[k + 1], cj[k]], [wuv(a), wuv(b), wuv(c), wuv(d)]); }
+              if (k === 3 && (qi[4][0] - qi[3][0] < 0.1 || qj[4][0] - qj[3][0] < 0.1)) gv.quadO(a, b, c, d, null, Pt(i, 0, Math.min(qi[4][1], qj[4][1]) * 0.5), [[a[0] / 3, a[1] / 3], [b[0] / 3, b[1] / 3], [c[0] / 3, c[1] / 3], [d[0] / 3, d[1] / 3]], [ci[k], ci[k + 1], cj[k + 1], cj[k]]);   // (the wall's face: out, towards the leg below; the grit in courses)
+              else gv.quadUp(a, b, c, d, [ci[k], ci[k + 1], cj[k + 1], cj[k]], [wuv(a), wuv(b), wuv(c), wuv(d)]); }
           }
         }
         addM(gr, rMat); addM(ga, aMat); addM(gv, gMat);
@@ -10724,7 +10773,7 @@ const World = (function () {
        stony ford where one crosses the road (def.fords) ---- */
     let nFall = 0;
     {
-      const gw = new GB(true), gc = new GB(), wc = SAS === 'winter' ? [0.62, 0.7, 0.76] : [0.2, 0.27, 0.27], foam = SAS === 'winter' ? [0.86, 0.92, 0.97] : [0.9, 0.93, 0.95];
+      const gw = new GB(true), gc = new GB(), wc = SAS === 'winter' ? [0.62, 0.7, 0.76] : [0.13, 0.19, 0.19], foam = SAS === 'winter' ? [0.86, 0.92, 0.97] : [0.9, 0.93, 0.95];
       for (const st of def.streams || []) {
         const p = st.p, n = p.length / 2;
         for (let q = 0; q < n - 1; q++) {
@@ -10732,7 +10781,7 @@ const World = (function () {
           for (let t = 0; t < steps; t++) {
             const xa = lerp(x0, x1, t / steps), za = lerp(z0, z1, t / steps), xb = lerp(x0, x1, (t + 1) / steps), zb = lerp(z0, z1, (t + 1) / steps);
             if (vrDist((xa + xb) / 2, (za + zb) / 2) > 430) continue; const na = vrNear(xa, za), nb = vrNear(xb, zb); if ((na.i >= 0 && na.dd < 0.5) || (nb.i >= 0 && nb.dd < 0.5)) continue;
-            const ya = caGround(xa, za) + 0.12, yb = caGround(xb, zb) + 0.12, dl = Math.hypot(xb - xa, zb - za) || 1, ux = -(zb - za) / dl, uz = (xb - xa) / dl, steep = Math.abs(yb - ya) / dl, hw = 0.45 + 0.4 * sstep(0.4, 0.05, steep);
+            const ya = caGround(xa, za) + 0.12, yb = caGround(xb, zb) + 0.12, dl = Math.hypot(xb - xa, zb - za) || 1, ux = -(zb - za) / dl, uz = (xb - xa) / dl, steep = Math.abs(yb - ya) / dl, hw = 0.35 + 0.35 * sstep(0.4, 0.05, steep);
             const c = steep > 0.45 ? foam : wc;
             gw.quadUp([xa - ux * hw, ya, za - uz * hw], [xa + ux * hw, ya, za + uz * hw], [xb + ux * hw, yb, zb + uz * hw], [xb - ux * hw, yb, zb - uz * hw], [c, c, c, c], [[0, ya / 6], [0.3, ya / 6], [0.3, yb / 6], [0, yb / 6]]);
             if (steep > 0.8) { nFall++; const g = scen.get(xa, za); rock(g, xa + ux * 2.2, ya + 0.4, za + uz * 2.2, 1.4, 1.1, 1.2, R() * TAU, [0.34, 0.32, 0.3], R, 0.3); rock(g, xa - ux * 2.2, ya + 0.4, za - uz * 2.2, 1.3, 1.0, 1.2, R() * TAU, [0.36, 0.33, 0.31], R, 0.3); }   // (the black rock either side of a cascade)
@@ -10778,7 +10827,9 @@ const World = (function () {
       const run = (sa, sb, side, o) => crowdRun(CR, Math.max(sa, 8), Math.min(sb, T.len - 8), side, Object.assign({}, M, o));
       for (const sd of [-1, 1]) { run(sStart - 40, sStart + 40, sd, { rows: 2, dens: 0.5, label: 'SA start' }); run(sFin - 60, sFin + 10, sd, { rows: 2, dens: 0.5, label: 'SA finish' }); }
       T.cpS.forEach((s0) => { const i = T.idx(s0), side = T.br[i] > T.bl[i] ? 1 : -1; run(s0 - 20, s0 + 16, side, { rows: 2, dens: 0.4, label: 'SA cp' }); });
-      (def.curves || []).forEach(([d, , turn], k) => { if (k % 3 !== 1) return; run(sStart + d - 18, sStart + d + 18, -turn, { rows: 2, dens: 0.35, label: 'SA hairpin ' + (k + 1) }); });
+      (def.curves || []).forEach(([d, , turn], k) => { if (k % 3 !== 1) return; run(sStart + d - 18, sStart + d + 18, -turn, { rows: 2, dens: 0.35, label: 'SA hairpin ' + (k + 1) });
+        for (const o of [-34, 30]) { const [px, pz, ii] = onSide(sStart + d + o, -turn, 4.5); if (excluded(px, pz) || caSlope(px, pz) > 0.35 || vrNear(px, pz).dd < 2.2) continue;   // (the spectators' four-wheel drives pulled off the road)
+          caCar(scen.get(px, pz), px, caGround(px, pz), pz, T.hd[ii] + 0.25, vary(carCols[(k + (o > 0 ? 1 : 0)) % carCols.length], R, 0.15)); exclPush(px, pz, 3.5); } });
     }
     for (const e of CR.circ) exclPush(e.x, e.z, e.r);
 
@@ -10787,8 +10838,8 @@ const World = (function () {
     const pMat = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
     const wMat = tuftWindMat(out.dyn.wind || (out.dyn.wind = { value: 0 })), wB = wMat.onBeforeCompile; ouCutMat(wMat, cut);
     { const cB = wMat.onBeforeCompile; wMat.onBeforeCompile = (sh) => { wB(sh); cB(sh); }; wMat.customProgramCacheKey = () => 'tuftWindCut'; wMat.side = THREE.FrontSide; }
-    const pk = [0, 1, 3, 4].map(k => new IChunks(caPlantGeo(k), k === 0 ? wMat : pMat, k === 4 ? 64 : 96));
-    const tuftC = SAS === 'summer' ? [0.62, 0.95, 0.56] : SAS === 'autumn' ? [1.0, 0.96, 0.78] : [0.86, 0.76, 0.62];
+    const pk = [0, 1, 3, 4].map(k => new IChunks(caPlantGeo(k), k === 0 ? wMat : pMat, k === 4 ? 64 : 96)).concat([0, 1].map(k => new IChunks(saFlowerGeo(k), pMat, 64)));   // (4, 5: the red-hot pokers, the yellow everlastings)
+    const tuftC = SAS === 'summer' ? [0.5, 0.82, 0.4] : SAS === 'autumn' ? [1.0, 0.96, 0.78] : [0.86, 0.76, 0.62];
     let nPlants = 0;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(60000 * dens), RT = rng(3241), SP = 3.4 / Math.sqrt(dens);
@@ -10801,16 +10852,23 @@ const World = (function () {
           if (hd > 70 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;
           const c = vrLC(x, z), y0 = caGround(x, z), A = y0 + base, sl = caSlope(x, z);
           let kind = -1;
-          if (c === 0 || c === 4) kind = r1 < (A > 2800 ? 0.3 : 0.5) ? 0 : r1 < 0.52 ? 2 : -1;
+          const sd = saStream(x, z), fl = SAS === 'summer' ? 1 : SAS === 'autumn' ? 0.4 : 0;
+          if (sd < 7 && sl < 0.9) kind = r1 < 0.32 ? 6 : r1 < 0.6 ? 0 : -1;   // (along the streams: thickets of shrubs in the lush grass)
+          else if (c === 0 || c === 4) kind = r1 < (A > 2800 ? 0.3 : 0.5) ? 0 : r1 < 0.52 ? 2 : r1 < 0.52 + 0.05 * fl && A < 2800 ? 4 : r1 < 0.6 + 0.03 * fl ? (r1 < 0.57 ? 5 : 1) : -1;
           else if (c === 2) kind = r1 < 0.35 ? 1 : r1 < 0.6 ? 0 : -1;
           else if (c === 1) kind = r1 < 0.05 ? 2 : r1 < 0.12 ? 0 : -1;
+          if (kind === 5 && fl === 0) kind = -1;
+          if (sl > 0.85 && sl < 1.6 && kind !== 2) kind = r1 < 0.35 ? 3 : -1;   // (the steep banks between the legs and the slopes: scree)
           if (kind < 0) continue;
-          if (sl > (kind === 2 ? 1.1 : 0.85)) continue;
+          if (sl > (kind === 2 || kind === 3 ? 1.6 : 0.85)) continue;
           const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < 1.6) continue;
           if (excluded(x, z)) continue;
           const ny = 1 / Math.sqrt(1 + sl * sl); if (saSnow(x, z, A, ny, 0) > 0.35) continue;
           if (kind === 0) pk[0].add(x, y0 - 0.05, z, r2 * TAU, 0.5 + r3 * 0.5, 0.4 + r4 * 0.35, [tuftC[0] * (0.92 + r2 * 0.16), tuftC[1] * (0.92 + r3 * 0.12), tuftC[2] * (0.88 + r4 * 0.16)]);
           else if (kind === 1) pk[1].add(x, y0 - 0.1, z, r2 * TAU, 0.6 + r3 * 0.9, 0.5 + r4 * 0.6, [0.82 + r2 * 0.2, 0.95 + r3 * 0.12, 0.8]);
+          else if (kind === 6) pk[1].add(x, y0 - 0.2, z, r2 * TAU, 1.6 + r3 * 1.6, 1.3 + r4 * 1.4, SAS === 'winter' ? [0.75, 0.7, 0.6] : [0.62 + r2 * 0.1, 0.86 + r3 * 0.1, 0.58]);
+          else if (kind === 3) { const k = 0.7 + r3 * 0.25; pk[3].add(x, y0 - 0.05, z, r2 * TAU, 0.9 + r4 * 1.3, 0.8 + r3 * 0.6, [k, k * 0.95, k * 0.88]); }
+          else if (kind === 4 || kind === 5) pk[kind].add(x, y0 - 0.05, z, r2 * TAU, 0.8 + r3 * 0.6, 0.8 + r4 * 0.5, [1, 1, 1]);
           else { const k = 0.6 + r3 * 0.2; pk[2].add(x, y0 - 0.15, z, r4 * TAU, 0.5 + r3 * 1.3, 0.4 + r4 * 0.9, [k, k * 0.97, k * 0.95]); }
           if (++nPlants >= maxT) break grid;
         }
@@ -10826,19 +10884,46 @@ const World = (function () {
     }
     for (const t of pk) t.addTo(root, false);
 
-    /* ---- the flocks: sheep and goats grazing on the plateau and the slopes below it, a herder in a blanket with each ---- */
-    let nSheep = 0;
+    /* ---- the flocks and herds: sheep and goats grazing on the plateau and the slopes below it, cattle by the kraals, Basotho ponies (some with
+       their riders in blankets and straw hats) on the plateau and on the paths; a herder with each flock; the herders' stone huts on the
+       gentler slopes along the road, each with its round kraal and its cattle; smoke from the huts' fires at Sani Top ---- */
+    let nSheep = 0, nBeast = 0;
+    const smoke = [];
     {
-      const RF = rng(3251), sh = new IChunks(saSheepGeo(false), pMat, 96), gt = new IChunks(saSheepGeo(true), pMat, 96);
+      const RF = rng(3251), sh = new IChunks(saSheepGeo(false), pMat, 96), gt = new IChunks(saSheepGeo(true), pMat, 96), bz = [0, 1, 2].map(k => new IChunks(saBeastGeo(k), pMat, 128));
+      const free = (x, z, m) => { const nn = vrNear(x, z); return !((nn.i >= 0 && nn.dd < (m || 3)) || excluded(x, z) || caSlope(x, z) > 0.6); };
+      const coats = [[0.42, 0.26, 0.16], [0.16, 0.13, 0.11], [0.62, 0.6, 0.58], [0.85, 0.82, 0.76], [0.5, 0.36, 0.2]], cows = [[0.55, 0.3, 0.16], [0.18, 0.15, 0.13], [0.9, 0.88, 0.84], [0.66, 0.5, 0.3]];
+      const herd = (cx, cz, n, pick, spread) => { let placed = 0; for (let k = 0; k < n * 3 && placed < n; k++) { const x = cx + (RF() - 0.5) * spread, z = cz + (RF() - 0.5) * spread; if (!free(x, z)) continue; pick(x, caGround(x, z), z, RF() * TAU); placed++; } return placed; };
+      const sheep = (x, y, z, r) => { (RF() < 0.3 ? gt : sh).add(x, y, z, r, 0.9 + RF() * 0.25, 0.9 + RF() * 0.2, [1, 1, 1]); nSheep++; };
+      const cow = (x, y, z, r) => { bz[2].add(x, y, z, r, 0.95 + RF() * 0.15, 0.95 + RF() * 0.1, cows[Math.floor(RF() * cows.length)]); nBeast++; };
+      const pony = (x, y, z, r) => { bz[RF() < 0.35 ? 1 : 0].add(x, y, z, r, 0.95 + RF() * 0.1, 1, coats[Math.floor(RF() * coats.length)]); nBeast++; };
       const spots = [[sFin + 140, padF.sd, 60], [sFin - 160, -padF.sd, 45], [sStart + 3300, 1, 40], [sStart + 1200, -1, 35]];
       for (const [s, side, off] of spots) {
-        if (s < 0 || s > T.len) continue; const [cx, cz] = onSide(s, side, off), n = 10 + Math.floor(RF() * 12);
-        let placed = 0;
-        for (let k = 0; k < n * 3 && placed < n; k++) { const x = cx + (RF() - 0.5) * 34, z = cz + (RF() - 0.5) * 34; const nn = vrNear(x, z); if ((nn.i >= 0 && nn.dd < 3) || excluded(x, z) || caSlope(x, z) > 0.6) continue;
-          (RF() < 0.3 ? gt : sh).add(x, caGround(x, z), z, RF() * TAU, 0.9 + RF() * 0.25, 0.9 + RF() * 0.2, [1, 1, 1]); placed++; nSheep++; }
-        person(cx + 6, cz - 4, RF() * TAU);
+        if (s < 0 || s > T.len) continue; const [cx, cz] = onSide(s, side, off);
+        herd(cx, cz, 10 + Math.floor(RF() * 12), sheep, 34); person(cx + 6, cz - 4, RF() * TAU);
       }
-      sh.addTo(root, true); gt.addTo(root, true);
+      { const [cx, cz] = onSide(sFin + 60, -padF.sd, 70); herd(cx, cz, 9, pony, 50); }   // the ponies on the plateau, and riders on the road's shoulder past the finish
+      for (let k = 0; k < 3; k++) { const [x, z, i] = onSide(sFin + 30 + k * 14, -padF.sd, 2.5); if (free(x, z, 1.2)) { bz[1].add(x, caGround(x, z), z, T.hd[i] + (k === 1 ? Math.PI : 0), 1, 1, coats[k]); nBeast++; exclPush(x, z, 2); } }
+      { // cattle by the kraals of Sani Top (the walls' middles)
+        const ks = (def.kraals || []).filter(k => k[k.length - 1] === 1);
+        for (let q = 0; q < ks.length; q += 4) { const k = ks[q]; herd(k[0] + 6, k[1] + 6, 4, cow, 24); }
+      }
+      // the herders' huts on the gentler slopes below the escarpment: a round stone hut with a thatched cone, a round kraal wall, cattle, the herder
+      const RH = rng(3261), stone = [0.55, 0.51, 0.46], th = SAS === 'summer' ? [0.6, 0.52, 0.34] : [0.56, 0.48, 0.32];
+      for (const [d, side] of [[650, 1], [1750, -1], [2700, 1], [3200, -1]]) {
+        let site = null;
+        for (let t = 0; t < 30 && !site; t++) { const [x, z] = onSide(sStart + d + (RH() - 0.5) * 160, side * (RH() < 0.5 ? 1 : 1), 45 + RH() * 110);
+          if (vrDist(x, z) > 200 || caSlope(x, z) > 0.3 || excluded(x, z) || saStream(x, z) < 12) continue; let ok = true; for (const [a, b] of [[8, 0], [-8, 0], [0, 8], [0, -8], [14, 6]]) if (caSlope(x + a, z + b) > 0.45 || vrNear(x + a, z + b).dd < 8) ok = false; if (ok) site = [x, z]; }
+        if (!site) continue;
+        const [x, z] = site, g = scen.get(x, z), y = caGround(x, z), r = 2.4 + RH() * 0.8;
+        cyl(g, x, y - 0.4, z, r, 2.5, 9, vary(stone, RH, 0.1)); cone(g, x, y + 2.05, z, r * 1.22, r * 1.15, 9, vary(th, RH, 0.12), vary(th, RH, 0.2), 0); smoke.push([x + 0.3, y + 3.4, z, 1]);
+        const kx = x + 9 + RH() * 3, kz = z + 3 - RH() * 6, kr = 5.5 + RH() * 2;
+        for (let a = 0; a < 18; a++) { if (a === 4) continue; const t0 = a / 18 * TAU, px = kx + Math.cos(t0) * kr, pz = kz + Math.sin(t0) * kr, py = caGround(px, pz); box(scen.get(px, pz), px, py - 0.25, pz, 0.6, 1.15, kr * TAU / 18 + 0.1, t0, vary(stone, RH, 0.1)); }
+        herd(kx, kz, 3, cow, kr * 1.1); herd(x - 10, z + 8, 4, cow, 18); person(x + 3.5, z - 2, RH() * TAU);
+        exclPush(x, z, r + 2); exclPush(kx, kz, kr + 1); nBld++;
+      }
+      for (const b of blds) if (b.kind === 2 && rpHash(Math.round(b.x), Math.round(b.z)) < 0.12) smoke.push([b.x, caGround(b.x, b.z) + 4, b.z, 1]);   // (fires in a few of the huts at the top)
+      sh.addTo(root, true); gt.addTo(root, true); for (const b of bz) b.addTo(root, true);
     }
 
     /* ---- the puddles of a race in the rain (T.puddles; as Ouninpohja's) ---- */
@@ -10866,7 +10951,11 @@ const World = (function () {
       out.dyn.condors = { L, x0: T.px[i0], z0: T.pz[i0], y0: T.hy[i0], ax: T.px[i0], az: T.pz[i0], ay: T.hy[i0], t: null };
       caCondors(out.dyn.condors, 0, null); }
     crowdFinish(CR, root, out);
-    out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, sheep: nSheep, falls: nFall };   // (read by the tests)
+    if (smoke.length) {   // thin smoke from the huts' fires, drifting in the breeze (Ouninpohja's)
+      const t = rbSmokeTex(); out.ownTex.push(t);
+      root.add(rbSmoke(smoke.map(([x, y, z]) => [x, y - 0.5, z, [0.72, 0.72, 0.74], 0.55, { per: 10, life: 7, lifeV: 2, rise: 7, riseV: 3, flare: 0.05 }]), CR.U.uTime, t, [0.5, 0.3]));
+    }
+    out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, sheep: nSheep, beasts: nBeast, falls: nFall, smoke: smoke.length };   // (read by the tests)
     return out;
   }
 
