@@ -101,7 +101,7 @@ Okolica:
 - **Dirka**: start z lučmi pod portalom LARGADA, modri portali kontrolnih točk z višino, cilj META v Portillu s tablo PORTILLO in modrima tablama proti meji, transparent SUBIDA LOS CARACOLES, čilske zastave ob štartni vrsti, gledalci ob startu, cilju, kontrolnih točkah, vsakem tretjem ovinku in pri razgledišču. Na zaprti cesti čakajo tovornjaki: ob startu v odstavnem pasu, v Portillu na parkirišču in na koncu ceste pred zaporo proti meji.
 - **Kondorji**: trije andski kondorji krožijo na vzgornikih nad cesto, blizu avta.
 
-## Serra do Rio do Rastro (dirka, kronometer, promet, policija)
+## Rio do Rastro, Brazilija (dirka, kronometer, promet, policija)
 
 Cesta SC-390 v brazilski zvezni državi Santa Catarina, ki se iz Lauro Müllerja v dolini vzpne po navpični steni planote Serra Geral proti Bom Jardim da Serra. Proga je njen zgornji in najbolj znani del, v pravem merilu: od ceste v deževnem gozdu pod serpentinami (~1.010 m, 28,395° J, 49,544° Z; 5 km pred vrhom po cesti) po 17 oštevilčenih ovinkih, od katerih je 11 serpentin (zasuk 150° in več), naloženih drugo nad drugo na pečini, mimo slapa Cascata Rio do Rastro, na rob planote (Alto da Serra) in po njej do razgledišča Mirante da Serra do Rio do Rastro (1.421 m): **4,99 km in ~410 m vzpona**. Kartica proge je ena, s stikalom **Dirka / Kronometer / Promet / Policija**, kot na Vršiču:
 
