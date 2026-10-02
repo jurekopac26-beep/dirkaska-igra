@@ -3248,10 +3248,11 @@ const Render = (function () {
     for (let k = 0; k < 12; k++) { const a = rnd() * 6.2832, d = 46 + rnd() * 12; blob(64 + Math.cos(a) * d, 64 + Math.sin(a) * d, 1.5 + rnd() * 3.5, 0.9); }
     return new THREE.CanvasTexture(cv);
   }
-  function rdSpikeGeo() {   // a metre of a spike strip (laid across the road, z along it): a hazard mat 1.2 m wide, yellow and black stripes across it (seen from afar and from above: the strip a tyre must not meet is ~1 m deep), the steel spikes standing up from it
-    const g = new GB(), K = [0.1, 0.1, 0.11], S = [0.9, 0.92, 0.96], Y = [1.0, 0.78, 0.06], hw = 0.6;
-    for (let k = 0; k < 4; k++) World.box(g, 0, 0, 0.125 + k * 0.25, hw * 2, 0.06, 0.25, 0, k % 2 ? K : Y, k % 2 ? K : Y, true);
-    for (const z of [0.125, 0.375, 0.625, 0.875]) for (const x of [-0.42, -0.14, 0.14, 0.42]) World.cyl(g, x, 0.06, z, 0.05, 0.3, 4, S, S, 0.004);
+  function rdSpikeGeo() {   // a metre of a spike strip (laid across the road, z along it): a hazard mat 2.4 m deep (yellow and black blocks: seen from afar, from above, on a phone), in its middle the red metre where a tyre meets the steel spikes (the hit is within 0.5 m of the line)
+    const g = new GB(), K = [0.1, 0.1, 0.11], S = [0.9, 0.92, 0.96], Y = [1.0, 0.78, 0.06], R = [0.9, 0.1, 0.08];
+    for (let k = 0; k < 2; k++) World.box(g, 0, 0, 0.25 + k * 0.5, 2.4, 0.05, 0.5, 0, k % 2 ? K : Y, k % 2 ? K : Y, true);
+    World.box(g, 0, 0.05, 0.5, 1.0, 0.03, 1, 0, R, R, true);
+    for (const z of [0.125, 0.375, 0.625, 0.875]) for (const x of [-0.4, -0.13, 0.13, 0.4]) World.cyl(g, x, 0.08, z, 0.05, 0.3, 4, S, S, 0.004);
     return g.geometry();
   }
   // the police's van: white, a blue band with yellow edges along both sides and across the back, the light bar on the roof (its two lamps
