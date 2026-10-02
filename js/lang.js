@@ -200,7 +200,7 @@
     '{0} {1}, {2}. Zmagovalec {3} ({4}).': '{0} {1}, {2}. Winner: {3} ({4}).', 'Zmage': 'Wins', 'Zadnja': 'Last', 'Novo prvenstvo': 'New championship', 'Naslednja dirka: {0}': 'Next race: {0}',
     'Idealna linija je suha: dežne gume se na suhem hitro obrabijo. Zapelji v bokse po suhe gume.': 'The racing line is dry: wet tyres wear quickly on a dry road. Pit for dry tyres.',
     'ZBIL SI PEŠCA!': 'YOU HIT A PEDESTRIAN!', 'ZBIL SI KOLESARJA!': 'YOU HIT A CYCLIST!', 'TEKMEC JE ZBIL PEŠCA': 'YOUR RIVAL HIT A PEDESTRIAN', 'TEKMEC JE ZBIL KOLESARJA': 'YOUR RIVAL HIT A CYCLIST',
-    'BODIČASTI TRAK!': 'SPIKE STRIP!', 'ZAPORA NAPREJ!': 'ROADBLOCK AHEAD!', 'PREBITA GUMA!': 'FLAT TYRE!', 'PATRULJA JE IZLOČENA!': 'PATROL CAR WRECKED!',
+    'BODIČASTI TRAK!': 'SPIKE STRIP!', 'ZAPORA NAPREJ!': 'ROADBLOCK AHEAD!', 'PREBITA GUMA!': 'FLAT TYRE!', 'Patrulja je izločena!': 'Patrol car wrecked!',
     'RUMENA ZASTAVA': 'YELLOW FLAG', 'Rumena zastava: pred tabo je ustavljen avto. Upočasni in ne prehitevaj, dokler je ne prevoziš.': 'Yellow flag: a car has stopped ahead. Slow down and do not overtake until you are past it.',
     'VARNOSTNI AVTO': 'SAFETY CAR', 'Varnostni avto: ne prehitevaj in se drži avta pred sabo. Ko gre s proge, se dirka nadaljuje na ciljni črti.': 'Safety car: do not overtake and stay behind the car ahead. When it leaves the track, the race goes on from the finish line.',
     'VARNOSTNI AVTO GRE V BOKSE': 'SAFETY CAR INTO THE PITS', 'VARNOSTNI AVTO GRE S PROGE': 'SAFETY CAR LEAVING THE TRACK', 'NE PREHITEVAJ DO CILJNE ČRTE': 'NO OVERTAKING UNTIL THE LINE', 'ZELENA ZASTAVA!': 'GREEN FLAG!',
@@ -279,7 +279,7 @@
     'Policist hoče dokumente (ali pobegni)': 'The officer wants your papers (or flee)', 'ZAPELJI OB ROB VOZIŠČA': 'PULL OVER TO THE ROADSIDE', 'Parkiraj v označeno polje': 'Park in the marked box',
     ' (ali pobegni)': ' (or flee)', 'Greš s policistom na postajo': 'You go to the station with the officer', 'SKRIVALIŠČE · {0} m': 'HIDEOUT · {0} m',
     'Garaža desno ob cesti: zapelji noter': 'The garage on the right of the road: drive in', 'Garaža levo ob cesti: zapelji noter': 'The garage on the left of the road: drive in',
-    'Super težka': 'Super hard', 'Beg pred policijo: najhujši pregon; dirke kot Težka': 'The police chase: the toughest pursuit; races as Hard', 'MOTORIST {0}': 'BIKE {0}', 'CIVILNA {0}': 'UNMARKED {0}', 'KOMBI': 'VAN', 'POLICIST': 'OFFICER',
+    'Super težka': 'Super hard', 'Beg pred policijo: najhujši pregon; dirke kot Težka': 'The police chase: the toughest pursuit; races as Hard', 'Enota {0}': 'Unit {0}', 'Motorist {0}': 'Bike {0}', 'Civilna {0}': 'Unmarked {0}', 'Kombi': 'Van', 'POLICIST': 'OFFICER',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['APEX', 'RACING', 'APEX RACING', 'TV', 'DRS', 'KM/H', 'Circuit Superstars', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English']);

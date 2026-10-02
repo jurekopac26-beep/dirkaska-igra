@@ -2264,14 +2264,14 @@ const Render = (function () {
     if (rt.isWebGLMultisampleRenderTarget) rt.samples = 4;
     rt.texture.generateMipmaps = false;
     const mat = new THREE.ShaderMaterial({
-      uniforms: { tD: { value: rt.texture }, uRes: { value: new THREE.Vector2(4, 4) }, uMB: { value: 0 }, uMF: { value: new THREE.Vector2(0.5, 1) }, uMC: { value: new THREE.Vector2(0.5, 0.3) }, uHeat: { value: 0 }, uHorY: { value: 2 }, uTm: { value: 0 }, uFocus: { value: 0.45 }, uBand: { value: 0.22 }, uBlur: { value: 0.8 }, uGam: { value: 0.88 },
+      uniforms: { tD: { value: rt.texture }, uRes: { value: new THREE.Vector2(4, 4) }, uMB: { value: 0 }, uMF: { value: new THREE.Vector2(0.5, 1) }, uMC: { value: new THREE.Vector2(0.5, 0.3) }, uKS: { value: [0, 1, 2, 3, 4, 5].map(() => new THREE.Vector3()) }, uHeat: { value: 0 }, uHorY: { value: 2 }, uTm: { value: 0 }, uFocus: { value: 0.45 }, uBand: { value: 0.22 }, uBlur: { value: 0.8 }, uGam: { value: 0.88 },
         uTint: { value: new THREE.Vector3(1, 1, 1) }, uSat: { value: 1.1 }, uCon: { value: 1.04 }, uVig: { value: 0.17 },
         uSun: { value: new THREE.Vector2(0, 1.2) }, uHaze: { value: 0 }, uHazeCol: { value: new THREE.Vector3(1, 0.8, 0.6) }, tB: { value: null }, uBloom: { value: 0 }, uShT: { value: new THREE.Vector3(1, 1, 1) }, uHiT: { value: new THREE.Vector3(1, 1, 1) } },
       vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
       fragmentShader: [
         'uniform sampler2D tD; uniform vec2 uRes; uniform float uFocus; uniform float uBand; uniform float uBlur; uniform float uGam; uniform vec3 uTint; uniform float uSat; uniform float uCon; uniform float uVig; uniform vec2 uSun; uniform float uHaze; uniform vec3 uHazeCol; uniform sampler2D tB; uniform float uBloom; uniform vec3 uShT; uniform vec3 uHiT; varying vec2 vUv;',
         'float lum(vec3 c){ return dot(c, vec3(0.299, 0.587, 0.114)); }',
-        'uniform float uMB; uniform vec2 uMF; uniform vec2 uMC; uniform float uHeat; uniform float uHorY; uniform float uTm;',
+        'uniform float uMB; uniform vec2 uMF; uniform vec2 uMC; uniform vec3 uKS[6]; uniform float uHeat; uniform float uHorY; uniform float uTm;',
         'void main(){',
         // the summer's heat over the far asphalt: the picture just under the horizon trembles (a low camera: the cockpit, the TV cameras)
         '  vec2 uv = vUv; if (uHeat > 0.0) { float hb = uHeat * smoothstep(0.12, 0.0, uHorY - vUv.y) * step(vUv.y, uHorY); uv.x += sin(vUv.y * 310.0 + uTm * 8.0 + sin(vUv.x * 37.0 + uTm * 2.3) * 2.0) * 0.0011 * hb; }',
@@ -2288,8 +2288,10 @@ const Render = (function () {
         '    float mx = max(max(max(lN, lS), max(lE, lW)), lC), mn = min(min(min(lN, lS), min(lE, lW)), lC);',
         '    if (mx - mn > 0.08) { vec2 dir = vec2(lS - lN, lE - lW); dir = dir / (length(dir) + 1e-4) * px * 0.9; c = mix(c, 0.5 * (texture2D(tD, vUv + dir).rgb + texture2D(tD, vUv - dir).rgb), 0.55); }',
         '  }',
-        // speed: away from the followed car the picture streaks out from the point it drives towards (the edges the most)
+        // speed: away from the followed car the picture streaks out from the point it drives towards (the edges the most); the other cars
+        // near it (the patrol cars on its tail, the rivals) stay sharp (uKS: where each is on the screen and how big, as uMC)
         '  if (uMB > 0.0) { vec2 as = vec2(uRes.x / uRes.y, 1.0); float m = uMB * smoothstep(0.1, 0.5, length((vUv - uMF) * as) * 0.6) * smoothstep(0.07, 0.24, length((vUv - uMC) * as));',
+        '    for (int k = 0; k < 6; k++) { if (uKS[k].z > 0.0) m *= smoothstep(uKS[k].z, uKS[k].z * 1.7, length((vUv - uKS[k].xy) * as)); }',
         '    if (m > 0.01) { vec2 st = (vUv - uMF) * 0.022 * m; vec3 s = c + texture2D(tD, vUv - st).rgb + texture2D(tD, vUv - st * 2.0).rgb + texture2D(tD, vUv - st * 3.0).rgb + texture2D(tD, vUv + st).rgb; c = s * 0.2; } }',
         '  c *= uTint; c *= mix(uShT, uHiT, smoothstep(0.12, 0.72, lum(c))); float l = lum(c); c = mix(vec3(l), c, uSat); c = (c - 0.5) * uCon + 0.5; c = pow(max(c, vec3(0.0)), vec3(uGam));',
         '  if (uHaze > 0.0) { vec2 sd = (vUv - uSun) * vec2(uRes.x / uRes.y, 1.0); float hg = exp(-dot(sd, sd) * 2.2); c = 1.0 - (1.0 - c) * (1.0 - uHazeCol * (uHaze * hg)); }',   // warm glow of the low sun just off screen (as in the reference)
@@ -3246,11 +3248,12 @@ const Render = (function () {
     for (let k = 0; k < 12; k++) { const a = rnd() * 6.2832, d = 46 + rnd() * 12; blob(64 + Math.cos(a) * d, 64 + Math.sin(a) * d, 1.5 + rnd() * 3.5, 0.9); }
     return new THREE.CanvasTexture(cv);
   }
-  function rdSpikeGeo() {   // a metre of a spike strip (laid across the road, z along it): steel scissor links, yellow reflectors at the joints, spikes up
-    const g = new GB(), K = [0.12, 0.12, 0.13], S = [0.9, 0.92, 0.96], Y = [1.0, 0.8, 0.08], hw = 0.28, y = 0.05;
-    for (const z of [0, 0.5]) for (const sg of [1, -1]) rdRod(g, [hw * sg, y, z], [-hw * sg, y, z + 0.5], 0.07, K);
-    for (const z of [0, 0.5]) for (const sg of [1, -1]) World.box(g, hw * sg, 0.01, z + 0.02, 0.14, 0.085, 0.14, 0, Y);
-    for (const z of [0.125, 0.375, 0.625, 0.875]) for (const x of [-hw / 2, hw / 2]) World.cyl(g, x, 0.07, z, 0.03, 0.12, 4, S, S, 0.002);
+  function rdSpikeGeo() {   // a metre of a spike strip (laid across the road, z along it; 1 m wide along the road, as wide as the wheels feel it): steel
+    // scissor links, big yellow reflectors at the joints and where the links cross, spikes up (seen from far off: a yellow and black band across the road)
+    const g = new GB(), K = [0.1, 0.1, 0.11], S = [0.9, 0.92, 0.96], Y = [1.0, 0.8, 0.08], hw = 0.5, y = 0.055;
+    for (const z of [0, 0.5]) for (const sg of [1, -1]) rdRod(g, [hw * sg, y, z], [-hw * sg, y, z + 0.5], 0.09, K);
+    for (const z of [0, 0.5]) { for (const sg of [1, -1]) World.box(g, hw * sg, 0.005, z + 0.03, 0.22, 0.12, 0.2, 0, Y); World.box(g, 0, 0.01, z + 0.25, 0.17, 0.11, 0.15, 0, Y); }
+    for (const z of [0.125, 0.375, 0.625, 0.875]) for (const x of [-hw / 2, hw / 2]) World.cyl(g, x, 0.08, z, 0.035, 0.16, 4, S, S, 0.003);   // (on the links)
     return g.geometry();
   }
   // the police's van: white, a blue band with yellow edges along both sides and across the back, the light bar on the roof (its two lamps
@@ -3626,9 +3629,10 @@ const Render = (function () {
         else if ((a || b) && near && m !== 'out') { const ch = Math.cos(c.h), sh = Math.sin(c.h), hl = c.m.len / 2, lz = (a ? -1 : 1) * 0.32;
           lamp(c.x + ch * (hl - 0.05) - sh * lz, c.y + 0.58, c.z + sh * (hl - 0.05) + ch * lz, 0.75); lamp(c.x + ch * 0.55 + sh * lz, c.y + 1.12, c.z + sh * 0.55 - ch * lz, 0.55); }
       }
-      // the spike strips (only while laid), a metre at a time (the last one shortened)
-      let ns = 0; for (const sp of R.pol.spikes) { if (!sp.on) continue; const i = T.idx(sp.s), L = sp.d1 - sp.d0; _re.set(0, -T.hd[i], 0, 'YZX'); _rq.setFromEuler(_re);
-        for (let k = 0; k < L && ns < 64; k++) { const a = atS2(T, sp.s, sp.d0 + k); _rv.set(a[0], T.hy[i] + 0.02, a[1]); _rs.set(1, 1, Math.min(1, L - k)); _rm.compose(_rv, _rq, _rs); Q.S.setMatrixAt(ns++, _rm); } }
+      // the spike strips (only while laid), a metre at a time (the last one shortened); on the road's surface where they lie (its height
+      // between two samples, tilted with the grade: from the sample before it, on a steep road, the strip was under the asphalt)
+      let ns = 0; for (const sp of R.pol.spikes) { if (!sp.on) continue; const i = T.idx(sp.s), L = sp.d1 - sp.d0, e = T.elevAt(sp.s); _re.set(0, -T.hd[i], Math.atan(e.grade || 0), 'YZX'); _rq.setFromEuler(_re);
+        for (let k = 0; k < L && ns < 64; k++) { const a = atS2(T, sp.s, sp.d0 + k); _rv.set(a[0], e.y + 0.015, a[1]); _rs.set(1, 1, Math.min(1, L - k)); _rm.compose(_rv, _rq, _rs); Q.S.setMatrixAt(ns++, _rm); } }
       _rs.set(1, 1, 1);
       Q.S.count = ns; if (ns) Q.S.instanceMatrix.needsUpdate = true;
       // the log piles: stacked on the bank behind two stakes, the red and white one at the road's edge that holds them; let go: the logs
@@ -3742,7 +3746,14 @@ const Render = (function () {
     heli: !!road.heli && road.heli.heli.visible, beam: !!road.heli && road.heli.cone.visible, vans: road.V.pvan.count, motos: road.V.pmoto.count, logs: road.LG.count, officers: road.n.off,
     bikes: road.V.bike.count, blood: road.BL.count, dead: road.n.dead, dogs: road.DG.count, leashes: road.LS.count / 2, groups: road.n.grp, cycGroups: road.n.cgrp, yielding: road.n.yld, indicators: road.n.ind,
     chk: road.ck ? { cop: road.n.cop, drv: road.n.drv, paddle: road.ck.PD.count, cones: road.ck.CN.count, board: road.ck.sign.visible, box: road.ck.box.visible ? +road.ck.box.material.opacity.toFixed(2) : 0 } : null,
-    door: world && world.dyn.vrHide ? +(world.dyn.vrHide.k || 0).toFixed(2) : null } : null; }   // (tests)
+    door: world && world.dyn.vrHide ? +(world.dyn.vrHide.k || 0).toFixed(2) : null, strip: spikeInfo() } : null; }   // (tests)
+  // (tests) the first spike strip laid as drawn: its height over the road where it lies, its tilt along the road against the grade there, how wide it is along the road
+  function spikeInfo() {
+    const R = curRace, sp = R && R.pol && R.pol.spikes.find(q => q.on); if (!sp || !road.S.count) return null;
+    const G = road.S.geometry; if (!G.boundingBox) G.computeBoundingBox(); const bb = G.boundingBox, e = R.track.elevAt(sp.s), m = new THREE.Matrix4(); road.S.getMatrixAt(0, m);
+    const c = new THREE.Vector3().setFromMatrixPosition(m), f = new THREE.Vector3(bb.max.x, 0, 0).applyMatrix4(m), b = new THREE.Vector3(bb.min.x, 0, 0).applyMatrix4(m);
+    return { lift: +(c.y - e.y).toFixed(3), tilt: +((f.y - b.y) / Math.max(0.01, Math.hypot(f.x - b.x, f.z - b.z))).toFixed(3), grade: +e.grade.toFixed(3), wide: +(bb.max.x - bb.min.x).toFixed(2), high: +bb.max.y.toFixed(2) };
+  }
 
   // the crowd's excitement (World's spectators and grandstands: they cheer, jump and put flags up): the lights going out, an overtake by the
   // player, the finish (held a while), dying away over ~4 s; as the crowd's sound does (Sfx)
@@ -4851,7 +4862,7 @@ const Render = (function () {
   // the feel of speed (quality 'high', the post pass): from about 110 km/h the picture streaks out from the point the followed car drives
   // towards, the more the faster and the farther from the car (it stays sharp); not in the photo mode, a TV shot or the cockpit. And the summer's
   // heat: by day, dry, the air over the far asphalt trembles just under the horizon (seen from a low camera)
-  const _mf = new THREE.Vector3();
+  const _mf = new THREE.Vector3(), _kd = new THREE.Vector3(), _kn = [];
   function speedLook(target, alpha, U) {
     let mb = 0;
     if (target && !cam.shot && !cam.ck && (lastMode === 'chase' || lastMode === 'kino')) {   // (not from the cockpit: the car's inside, at the edges of the picture, goes with the driver)
@@ -4861,6 +4872,18 @@ const Render = (function () {
         _mf.set(x, y + 0.6, z).project(camera); U.uMC.value.set(_mf.x * 0.5 + 0.5, _mf.y * 0.5 + 0.5); }
     }
     U.uMB.value = mb;
+    for (const k of U.uKS.value) k.z = 0;
+    if (mb > 0 && curRace) {   // the cars near it stay sharp (the six nearest within 80 m in front of the camera: the patrol cars, the rivals)
+      camera.getWorldDirection(_kd); const tf = Math.tan(camera.fov * Math.PI / 360), near = _kn; near.length = 0;
+      const add = (c) => { if (!c || c === target || c.x == null) return; const dx = c.x - camera.position.x, dy = (c.y || 0) + 0.7 - camera.position.y, dz = c.z - camera.position.z, dep = dx * _kd.x + dy * _kd.y + dz * _kd.z;
+        if (dep > 0.5 && dep < 80) near.push([dep, c]); };
+      for (const c of curRace.cars || []) add(c);
+      if (curRace.pol) for (const c of curRace.pol.cars) add(c);
+      near.sort((a, b) => a[0] - b[0]);
+      for (let k = 0; k < Math.min(6, near.length); k++) { const [dep, c] = near[k], half = c.m && c.m.len ? c.m.len * 0.55 + 0.4 : 2.6;
+        _mf.set(lerp(c.px != null ? c.px : c.x, c.x, alpha), (c.y || 0) + 0.7, lerp(c.pz != null ? c.pz : c.z, c.z, alpha)).project(camera);
+        U.uKS.value[k].set(_mf.x * 0.5 + 0.5, _mf.y * 0.5 + 0.5, Math.min(0.6, half / (dep * tf) * 0.5)); }
+    }
     const heat = atmos.season === 'summer' && todK < 0.2 && !dawn && wet <= 0 && themeId !== 'pikes' ? 1 : 0;   // (a summer's day: not in the morning)
     U.uHeat.value = 0; if (heat) { camera.getWorldDirection(_mf); const h = Math.hypot(_mf.x, _mf.z) || 1; _mf.set(camera.position.x + _mf.x / h * 900, camera.position.y, camera.position.z + _mf.z / h * 900).project(camera);
       const hy = _mf.y * 0.5 + 0.5; if (hy > 0.05 && hy < 1.1) { U.uHeat.value = heat; U.uHorY.value = hy; U.uTm.value = time % 600; } }
@@ -5023,7 +5046,7 @@ const Render = (function () {
     const sc = asU.uAsC.value, U = post && post.mat.uniforms;
     return { sheen: +Math.max(sc.r, sc.g, sc.b).toFixed(3), asphalt: asph, clouds: sky ? sky.u.uCl.value : 0, overcast: sky ? +sky.u.uOv.value.toFixed(2) : 0, moon: nsky.moon && nsky.moon.visible ? +nsky.moon.material.opacity.toFixed(2) : 0, skyOn: !!(sky && sky.mesh.visible),
       ao, worn, natGrass: nat, rays: !!(pkR.mesh && pkR.mesh.visible), flare: +pkF.vis.toFixed(3), wipers: !!(cam.ck && ck.parts && ck.parts.rain && ck.parts.rain.visible),
-      speedBlur: U && postOn() ? +U.uMB.value.toFixed(3) : 0, heat: U && postOn() ? U.uHeat.value : 0, puddleK: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0 };
+      speedBlur: U && postOn() ? +U.uMB.value.toFixed(3) : 0, sharpCars: U && postOn() ? U.uKS.value.filter(k => k.z > 0).length : 0, heat: U && postOn() ? U.uHeat.value : 0, puddleK: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0 };
   }
   function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0, water: wetW }; }   // (tests)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)

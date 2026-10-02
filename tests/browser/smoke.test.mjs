@@ -225,9 +225,9 @@ try {
         if (md === 'police') {   // the heat up (as if the player had wrecked half the police's cars): the helicopter comes, the radio says so
           let heli = false;
           g.race.pol.cool = -3; for (let i = 0; i < 40 && !heli; i++) { g.sim(1, true); await frame(); heli = !!(Render.roadInfo() || {}).heli; }
-          g.autoDrive = true; for (let i = 0; i < 300 && !g.radio.log.some(e => e.who === 'BOBER'); i++) await wait(100);   // (the radio's lines take their time (real time): the car drives on meanwhile)
+          g.autoDrive = true; for (let i = 0; i < 300 && !g.radio.log.some(e => e.who === 'Bober'); i++) await wait(100);   // (the radio's lines take their time (real time): the car drives on meanwhile)
           g.autoDrive = false;
-          Object.assign(out.police, { heli, heli2: g.race.pol.heli ? g.race.pol.heli.st : '', bober: (g.radio.log.find(e => e.who === 'BOBER') || {}).txt, log: g.radio.log.map(e => e.who + ': ' + e.txt) });
+          Object.assign(out.police, { heli, heli2: g.race.pol.heli ? g.race.pol.heli.st : '', bober: (g.radio.log.find(e => e.who === 'Bober') || {}).txt, log: g.radio.log.map(e => e.who + ': ' + e.txt) });
           // the places on the radio: [as written, in English, as the voice reads it]
           out.places = [1813, 6533, 7038, 7300, 12297, 860].map(d => g.radioPlace(d));
           // the mission: placed below the building at the top on the right lane, going up; the autopilot drives into it
@@ -256,10 +256,10 @@ try {
       `${D.cars} cars, gap "${D.gap}", drawn ${JSON.stringify(D.road)}, ${Math.round(D.dist)} m, radio mode ${D.radioMode}`);
     T.check('Vršič Policija, the start: no start lights, nobody after the player (the checkpoint\'s patrol car parked ahead), no stars, the commentator silent, the police radio on the air (the checkpoint set up on Vršiška cesta), the checkpoint ahead on the HUD',
       Q.pc === 1 && Q.mode === 'park' && Q.chkCar && !Q.lights && !Q.phases.includes('lights') && Q.phases.includes('racing') && Q.pos.every(p => p === '0') && Q.heat.every(h => h === '') && Q.radioMode &&
-      Q.caps.some(c => /^OKC KRANJ .*kontrola prometa/.test(c)) && Q.chk.some(c => /^wait:KONTROLA PROMETA · \d+ m$/.test(c)) && Q.chk.some(c => /^approach:POLICIJSKA KONTROLA · \d+ mUstavi pri policistu \(ali pobegni\)$/.test(c)),
+      Q.caps.some(c => /^OKC Kranj .*kontrola prometa/.test(c)) && Q.chk.some(c => /^wait:KONTROLA PROMETA · \d+ m$/.test(c)) && Q.chk.some(c => /^approach:POLICIJSKA KONTROLA · \d+ mUstavi pri policistu \(ali pobegni\)$/.test(c)),
       `lights ${Q.lights}, phases ${[...new Set(Q.phases)]}, patrol cars ${Q.pc} (${Q.mode}), HUD ${[...new Set(Q.pos)]} "${[...new Set(Q.heat)]}", radio ${JSON.stringify([...new Set(Q.caps)].slice(0, 3))}, prompts ${JSON.stringify([...new Set(Q.chk)].filter((c, i, a) => i < 2 || i === a.length - 1))}`);
     T.check('Vršič Policija: the autopilot drives through the checkpoint (it does not stop): the chase; the officer shouts, the unit there calls it in (the car\'s colour and model)',
-      Q.stage === 'chase' && Q.why === 'skip' && Q.seen && P.log.some(l => /^POLICIST: (Stojte|Hej|Stoj)/.test(l)) && P.log.some(l => /^KG-1: .*kontrol.*Gre za [a-zčšž]+ [A-Z]/.test(l)),
+      Q.stage === 'chase' && Q.why === 'skip' && Q.seen && P.log.some(l => /^POLICIST: (Stojte|Hej|Stoj)/.test(l)) && P.log.some(l => /^Enota 1: .*kontrol.*Gre za [a-zčšž]+ [A-Z]/.test(l)),
       `${Q.stage} (${Q.why}), radio: ${JSON.stringify(P.log.slice(0, 7))}`);
     T.check('Vršič Policija: the chase: patrol cars drawn with their lights flashing, the HUD with the patrol cars after the player and the heat',
       P.mode === 'police' && P.cars === 1 && P.tf && P.pol >= 1 && P.polHud && !P.duel && P.lbl === 'POLICIJA' && +P.pos >= 1 && /^\u2605+\u2606*$/.test(P.heat) && P.heat.length === 5 && P.road && P.road.pol >= 1 && P.road.lampOn && P.dist > 300,
@@ -268,7 +268,7 @@ try {
       P.tail.length >= 1 && P.tail.every(t => /^[brs]( n)? (\d+ m|ob tebi)$/.test(t)) && P.rot.filter(a => a > 95 && a < 265).length >= P.rot.length * 0.6,
       `${JSON.stringify(P.tail)}, angles ${P.rot.slice(0, 8).join(' ')}`);
     T.check('Vršič Policija: the police radio talks in the chase (the speakers\' call signs, the real places)',
-      P.caps.some(c => /^(KG-\d+|OKC KRANJ|MOTORIST \d+|CIVILNA \d+|BOBER|PP BOVEC|POLICIST) .{12,}/.test(c)) && P.log.some(l => /(pri|na|v|pod|pred) (Jasni|Jasno|Kranjski Gori|Vršiški cesti|Eriškem|Eriškim|razglednem|Šumici|\d+\. serpentin)/.test(l)),
+      P.caps.some(c => /^(Enota \d+|OKC Kranj|Motorist \d+|Civilna \d+|Bober|PP Bovec|POLICIST) .{12,}/.test(c)) && P.log.some(l => /(pri|na|v|pod|pred) (Jasni|Jasno|Kranjski Gori|Vršiški cesti|Eriškem|Eriškim|razglednem|Šumici|\d+\. serpentin)/.test(l)),
       JSON.stringify(P.caps.slice(0, 4)));
     T.check('Vršič Policija, the heat up: the helicopter drawn over the player, the radio hears of it (Bober)',
       P.heli && !!P.bober, `helicopter ${P.heli} (${P.heli2}), Bober: "${P.bober}"`);

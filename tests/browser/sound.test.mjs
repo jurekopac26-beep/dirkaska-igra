@@ -62,7 +62,7 @@ try {
       const g = window.__game, out = { on: [], off: [], caps: [] };
       for (let k = 0; k < 150 && (out.on.length < 3 || out.off.length < 3); k++) {   // (real time: the radio speaks at its own pace)
         await new Promise(r => setTimeout(r, 100)); const c = g.radio.cur, lv = Sfx.levels().radio;
-        if (c && /^(OKC|KG)/.test(c)) { out.on.push(+lv.toFixed(3)); out.caps.push(c); } else if (!c && !g.radio.cap) out.off.push(+lv.toFixed(3));
+        if (c && /^(OKC|Enota)/.test(c)) { out.on.push(+lv.toFixed(3)); out.caps.push(c); } else if (!c && !g.radio.cap) out.off.push(+lv.toFixed(3));
       }
       return out;
     });
