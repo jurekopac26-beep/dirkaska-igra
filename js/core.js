@@ -680,8 +680,9 @@ const Core = (function () {
       if (wMax) for (let i = 0; i < N; i++) v[i] = Math.min(v[i], wMax / Math.max(Math.abs(rk[i]), 1e-5));   // cs: the car turns no faster than wMax (rad/s) along its path
       if (this.open) {   // open road: come to a stop at the far end of the road, nothing wraps
         v[N - 1] = 0;
-        if (gk) { for (let i = N - 2; i >= 0; i--) v[i] = Math.min(v[i], Math.sqrt(v[i + 1] * v[i + 1] + 2 * brakeA * gAt(i) * rds[i])); return v; }
-        for (let i = N - 2; i >= 0; i--) v[i] = Math.min(v[i], Math.sqrt(v[i + 1] * v[i + 1] + 2 * brakeA * rds[i]));
+        if (gk) { for (let i = N - 2; i >= 0; i--) v[i] = Math.min(v[i], Math.sqrt(v[i + 1] * v[i + 1] + 2 * brakeA * gAt(i) * rds[i])); return v; }   // a road of several surfaces (Harju): brake by each one's grip
+        const gd = this.def.descent && this.def.gradeForce && this.hasElev ? this.grade : null;   // a descent (def.descent): braking downhill takes longer, as on the closed circuits below
+        for (let i = N - 2; i >= 0; i--) { const a = gd ? Math.max(brakeA * 0.6, brakeA + G * gd[i]) : brakeA; v[i] = Math.min(v[i], Math.sqrt(v[i + 1] * v[i + 1] + 2 * a * rds[i])); }
         return v;
       }
       // closed circuit with gravity on the slopes (def.gradeForce): braking downhill takes longer, uphill shorter

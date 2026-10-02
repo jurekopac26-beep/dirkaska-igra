@@ -1646,6 +1646,7 @@ const Render = (function () {
     mountain: { fog: 0xb4cadf, sun: 0xfff2e0, sunI: 1.0, sky: 0xc8dcff, gnd: 0x4d5c33, hemiI: 0.6, tint: [0.98, 1.0, 1.03], sat: 1.12 },
     ouni:     { fog: 0xc4d3dc, sun: 0xffe9c6, sunI: 1.18, sky: 0xcfe1f5, gnd: 0x4a5a2e, hemiI: 0.56, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-88, 72, 58] },   // Ouninpohja: a clear Finnish August afternoon, a warm sun lower in the west (the forest's long shadows across the road), soft haze over the lakes
     vrsic:    { fog: 0xc6d4e0, sun: 0xffe8c4, sunI: 1.16, sky: 0xcfe0f4, gnd: 0x55603a, hemiI: 0.58, tint: [1.02, 1.0, 0.96], sat: 1.12, sunOff: [-84, 70, 56] },   // Vršič: a clear afternoon in the Julian Alps, a lower sun (long shadows across the hairpins), a crisp blue haze (in autumn the season's warmer light)
+    katu:     { fog: 0xc9d5dd, sun: 0xfff0d4, sunI: 1.2, sky: 0xc9dcf3, gnd: 0x6b6040, hemiI: 0.58, tint: [1.03, 1.0, 0.96], sat: 1.12, sunOff: [96, 76, 18] },   // Katu-Jaryk: a clear Altai summer morning, the sun in the east over the canyon (the hairpins' shadows falling down the slope), a light blue haze
     pikes:    { fog: 0xdfd0cc, sun: 0xffcc8f, sunI: 1.58, sky: 0x9fbbf1, gnd: 0x70604e, hemiI: 0.75, tint: [1.05, 1.0, 0.925], sat: 1.13, haze: 0.25, hazeCol: [1, 0.77, 0.48], sunOff: [104, 48, -60] },   // early morning on race day: a low golden sun from the east-north-east (long shadows down the slopes, its warm glow at the edge of the view when it is ahead), cool blue shade from the clear sky, a light warm haze over the valleys
     nring:    { fog: 0xb7c7cc, sun: 0xfff0d8, sunI: 1.1, sky: 0xcadcf0, gnd: 0x3e4a2a, hemiI: 0.6, tint: [1.03, 1.0, 0.95], sat: 1.04, sunOff: [-80, 76, 70] },   // the Eifel: a summer afternoon over the 'green hell' (a lower sun: longer shadows)
     spa:      { fog: 0xc3ced7, sun: 0xfff1de, sunI: 0.98, sky: 0xd0dde9, gnd: 0x43522f, hemiI: 0.64, tint: [0.99, 1.0, 1.01], sat: 1.1 },   // the Ardennes: a little greyer, softer daylight (Spa's changeable weather)
@@ -4338,31 +4339,45 @@ const Render = (function () {
     else { const k = e(1.3); st.hx += (hx - x - st.hx) * k; st.hz += (hz - z - st.hz) * k; st.hy += (hy - cy - st.hy) * e(hy - cy > st.hy ? 2.5 : 1); }
     o.px = x + st.hx; o.pz = z + st.hz; o.py = Math.max(cy + st.hy, G(o.px, o.pz) + 24) + 0.6 * Math.sin(time * 0.7); o.half = 9.5; o.key = -1; return o;
   }
-  /* ---------------- Pikes Peak's course flyover (prelet proge) before a fresh time trial: a TV sweep from the start line up the mountain to the
-     summit, a camera high over the road looking down at it (the course's middle line: the road's points averaged over +-150 m, so the view
-     follows the climb, not every hairpin), slowing at the famous places (their captions) and at the two ends. The path is made once per
+  /* ---------------- the course flyover (prelet proge) before a fresh time trial on Pikes Peak (up the mountain to the summit) and on Katu-Jaryk
+     (down from the plateau to the valley, def.fly: its places): a TV sweep from the start line to the finish, a camera high over the road looking
+     down at it (the course's middle line: the road's points averaged over +-150 m, so the view follows the climb or the descent, not every
+     hairpin), slowing at the famous places (their captions) and at the two ends. The path is made once per
      track (points every 40 m: over the ground as the TV cameras keep it, world.groundH, with the ground and the trees clear between the
      camera and the road; the heights smoothed), then a Catmull-Rom spline through them. game.js asks for it (pkFly.at(t): the shot for
      Render.setShot, filled in place, and the caption on screen) during the race's intro, before the lights: the race is not touched.
      The view is kept short (fogD: the far clip ~600 m), so it draws not much more than the kino camera does and streams the world in gently ---------------- */
   const pkFly = (() => {
     const DUR = 11.5, STEP = 40, PL = [[0, 'START'], [578, "Engineer's Corner"], [1000, 'Halfway Picnic Grounds'], [2688, 'Glen Cove'], [2918, "The W's"], [4050, "Devil's Playground"], [4466, 'Bottomless Pit'], [5360, 'Boulder Park'], [-1, 'CILJ']];
+    const places = (T) => (T && T.def.fly) || (themeId === 'pikes' ? PL : null);   // ([metres after the start line (-1: the finish), caption]: Pikes Peak's above, a track's own def.fly)
     const shot = { px: 0, py: 0, pz: 0, tx: 0, ty: 0, tz: 0, fov: 50, fogD: 80, near: 2, gy: 0 }, res = { shot, k: -1, a: 0 };
     function build(T) {
+      const PL = places(T), TL = themeId === 'pikes' ? 196 : Infinity;   // TL: the tree line, metres above the start (Pikes Peak's; elsewhere trees all the way)
       const G = world.groundH, s0 = T.startS, s1 = T.finishS, n = Math.ceil((s1 - s0) / STEP) + 1, sAt = (j) => Math.min(s1, s0 + j * STEP);
       const road = (s) => { const f = clamp(s, 0, T.len - 1) / T.ds, i = Math.min(T.N - 2, Math.floor(f)), u = f - i; return [lerp(T.px[i], T.px[i + 1], u), lerp(T.hy[i], T.hy[i + 1], u), lerp(T.pz[i], T.pz[i + 1], u)]; };
       const mid = (s) => {   // the course's middle line: the road averaged over +-150 m (less towards the ends: there the start line, the finish itself)
         const W = 150 * Math.min(Core.sstep(s0, s0 + 450, s), Core.sstep(s1, s1 - 450, s)); if (W < 2) return road(s);
         let x = 0, y = 0, z = 0, w = 0; for (let d = -2 * W; d <= 2 * W; d += 10) { const p = road(s + d), q = Math.exp(-(d * d) / (W * W)); x += p[0] * q; y += p[1] * q; z += p[2] * q; w += q; }
         return [x / w, y / w, z / w]; };
-      const Tg = [], C = [];
+      const Tg = [], C = [], dirAt = (s) => { const a = mid(Math.max(s0, s - 220)), b = mid(Math.min(s1, s + 220)); let dx = b[0] - a[0], dz = b[2] - a[2]; const dl = Math.hypot(dx, dz) || 1; return [dx / dl, dz / dl]; };
+      // a descent (def.descent): the camera out over the slope below the road (down the fall line of the ground there, smoothed along the course,
+      // the farther out the steeper the face), a little behind and above, looking back across and up at the road: the face, its hairpins and
+      // the depth of the valley in one view (on the flat ends behind the road as on a climb)
+      const desc = !!T.def.descent, fall = [];
+      if (desc) {
+        const raw = []; for (let j = 0; j < n; j++) { const t = mid(sAt(j)), gx = (G(t[0] + 40, t[2]) - G(t[0] - 40, t[2])) / 80, gz = (G(t[0], t[2] + 40) - G(t[0], t[2] - 40)) / 80; raw.push(Number.isFinite(gx) && Number.isFinite(gz) ? [-gx, -gz] : [0, 0]); }
+        for (let j = 0; j < n; j++) { let fx = 0, fz = 0, q = 0; for (let d = -5; d <= 5; d++) { const k = clamp(j + d, 0, n - 1), f = Math.exp(-(d * d) / 10); fx += raw[k][0] * f; fz += raw[k][1] * f; q += f; }
+          fx /= q; fz /= q; const sl = Math.hypot(fx, fz); fall.push(sl > 1e-4 ? [fx / sl, fz / sl, sl] : [0, 0, 0]); }
+      }
       for (let j = 0; j < n; j++) {
-        const s = sAt(j), t = mid(s), a = mid(Math.max(s0, s - 220)), b = mid(Math.min(s1, s + 220)); let dx = b[0] - a[0], dz = b[2] - a[2]; const dl = Math.hypot(dx, dz) || 1; dx /= dl; dz /= dl;
-        const e = Math.min(Core.sstep(s0, s0 + 600, s), Core.sstep(s1, s1 - 700, s)), B = lerp(j ? 55 : 42, 80, e), H = lerp(j ? 34 : 26, 112, e);   // (low over the start line and the finish, high between, ~55 deg down: the view ends on the ground, not far off in the haze)
-        const x = t[0] - dx * B, z = t[2] - dz * B; let y = t[1] + H;
-        const g = G(x, z); if (Number.isFinite(g)) y = Math.max(y, g + (g < 196 ? 38 : 24));   // (over the trees below the tree line)
+        const s = sAt(j), t = mid(s), [dx, dz] = dirAt(s);
+        const e = Math.min(Core.sstep(s0, s0 + 600, s), Core.sstep(s1, s1 - 700, s));
+        let x, z, y;
+        if (desc) { const F = fall[j], f = e * clamp(F[2] / 0.3, 0, 1), D = 135 * f, B = lerp(j ? 50 : 40, 25, f), H = lerp(j ? 30 : 24, 46, e); x = t[0] + F[0] * D - dx * B; z = t[2] + F[1] * D - dz * B; y = t[1] + H; }
+        else { const B = lerp(j ? 55 : 42, 80, e), H = lerp(j ? 34 : 26, 112, e); x = t[0] - dx * B; z = t[2] - dz * B; y = t[1] + H; }   // (low over the start line and the finish, high between, ~55 deg down: the view ends on the ground, not far off in the haze)
+        const g = G(x, z); if (Number.isFinite(g)) y = Math.max(y, g + (g < TL ? 38 : 24));   // (over the trees below the tree line)
         for (let it = 0; it < 12; it++) {   // the ground (and the trees) clear between the camera and the road it looks at
-          let ok = true; for (let q = 1; q < 12 && ok; q++) { const u = q / 12, px = x + (t[0] - x) * u, pz = z + (t[2] - z) * u, gh = G(px, pz), ly = y + (t[1] - y) * u; if (Number.isFinite(gh) && ly < gh + (u > 0.85 ? 2 : gh < 196 ? 16 : 6)) ok = false; }
+          let ok = true; for (let q = 1; q < 12 && ok; q++) { const u = q / 12, px = x + (t[0] - x) * u, pz = z + (t[2] - z) * u, gh = G(px, pz), ly = y + (t[1] - y) * u; if (Number.isFinite(gh) && ly < gh + (u > 0.85 ? 2 : desc && u > 0.6 ? 8 : gh < TL ? 16 : 6)) ok = false; }   // (a descent: the road's verges clear near it)
           if (ok) break; y += 12; }
         Tg.push(t); C.push([x, y, z]);
       }
@@ -4379,8 +4394,8 @@ const Render = (function () {
       return { T, s0, s1, n, Tg, C, cum, M, cap, ps };
     }
     const cr = (a, b, c, d, u) => { const u2 = u * u, u3 = u2 * u; return 0.5 * (2 * b + (c - a) * u + (2 * a - 5 * b + 4 * c - d) * u2 + (3 * b - a - 3 * c + d) * u3); };   // (Catmull-Rom)
-    function at(t) {   // the shot at t s into the flyover (null: not Pikes Peak)
-      const T = curTrack; if (!T || !world || !world.groundH || !T.hy || themeId !== 'pikes') return null;
+    function at(t) {   // the shot at t s into the flyover (null: a track without one)
+      const T = curTrack; if (!T || !world || !world.groundH || !T.hy || !places(T)) return null;
       const F = T._pkFly || (T._pkFly = build(T)), M = F.M, tt = clamp(t, 0, DUR);
       let lo = 0, hi = M; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (F.cum[m] <= tt) lo = m; else hi = m; }
       const s = F.s0 + (F.s1 - F.s0) * (lo + clamp((tt - F.cum[lo]) / Math.max(1e-6, F.cum[hi] - F.cum[lo]), 0, 1)) / M;
@@ -4398,7 +4413,7 @@ const Render = (function () {
     function end() { if (crowd) cull(false); crowd = null; }
     function warm() {   // the world's shaders compiled in one go (game.js: before the first frame of the flyover), not one by one as it flies over new ground
       const t0 = performance.now(), n0 = renderer.info.programs.length; renderer.compile(scene, camera); return [Math.round(performance.now() - t0), n0, renderer.info.programs.length]; }
-    return { at, end, DUR, warm, get caps() { const T = curTrack, F = T && T._pkFly; return PL.map(([d, n], k) => ({ n, s: F ? F.ps[k] : 0 })); } };
+    return { at, end, DUR, warm, get caps() { const T = curTrack, F = T && T._pkFly; return (places(T) || PL).map(([d, n], k) => ({ n, s: F ? F.ps[k] : 0 })); } };
   })();
   function shake(a) { cam.shake = Math.max(cam.shake, Math.min(1.2, a)); }
   function resetCam() { cam.init = false; }
