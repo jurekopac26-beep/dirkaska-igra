@@ -101,7 +101,7 @@ Okolica:
 - **Dirka**: start z lučmi pod portalom LARGADA, modri portali kontrolnih točk z višino, cilj META v Portillu s tablo PORTILLO in modrima tablama proti meji, transparent SUBIDA LOS CARACOLES, čilske zastave ob štartni vrsti, gledalci ob startu, cilju, kontrolnih točkah, vsakem tretjem ovinku in pri razgledišču. Na zaprti cesti čakajo tovornjaki: ob startu v odstavnem pasu, v Portillu na parkirišču in na koncu ceste pred zaporo proti meji.
 - **Kondorji**: trije andski kondorji krožijo na vzgornikih nad cesto, blizu avta.
 
-## Sani Pass (kronometer, dvoboj v prometu)
+## Sani Pass, Južna Afrika (kronometer, dvoboj v prometu)
 
 Makadamska cesta čez gorovje Drakensberg, ki povezuje KwaZulu-Natal (Južnoafriška republika) z visoko planoto Lesota. Igra vzame zgornjih 5 km ceste v pravem merilu: **od doline potoka Mkhomazana (~2.230 m, ~2,9 km nad južnoafriškim mejnim prehodom, kjer se začne makadam) do vrha strmine pod lesotskim mejnim prehodom (2.872 m), kjer se makadam konča**. Proga je dolga 4,99 km, vzpon je 643 m (povprečno 12,9 %, najbolj strmo 24 %), zgornji del je 13 gostih serpentin pod bazaltnimi stenami (Twelve Apostles). Vsa proga je na makadamu, kot je v OpenStreetMap tudi prava cesta; asfaltiranih je le zadnjih ~100 m pri mejnem prehodu, za ciljem. Kartica proge je ena, s stikalom **Kronometer / Promet**:
 
