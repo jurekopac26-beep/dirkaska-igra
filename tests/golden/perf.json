@@ -201,5 +201,12 @@
   "kverts": 1530,
   "maxKverts": 1670,
   "jsMs": 0.87
+ },
+ "longbeach": {
+  "calls": 296,
+  "maxCalls": 349,
+  "kverts": 699,
+  "maxKverts": 885,
+  "jsMs": 1.08
  }
 }

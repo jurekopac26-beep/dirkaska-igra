@@ -22511,6 +22511,7 @@ const World = (function () {
         for (const [x, z] of poly) g0 = Math.min(g0, lbGround(x, z));
         const near = lbDist(cx, cz) < 330, NI = near ? 0 : 1, hh = crH(Math.round(cx), Math.round(cz), 31), hh2 = crH(Math.round(cx), Math.round(cz), 32);
         if (!near && (b.h < 5 || (b.h < 10 && lbDist(cx, cz) > 650))) continue;   // (far low buildings: the haze)
+        if (def.lb.ship && inPoly(def.lb.ship, cx, cz)) continue;   // (the liner's own deckhouses: her shape below)
         const Wb = ck('w', cx, cz, () => { const g = new GB(true); g.dUV = [10500.5, 0.5]; return g; });   // (walls and roofs: the facades' atlas; untextured parts on the roof's tile)
         const H = Math.max(b.h, 3), y0 = g0 - 0.3 + b.mh;
         const yTop = b.mh ? g0 + b.h : g0 + H, k = b.kind;
