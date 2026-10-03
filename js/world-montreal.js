@@ -465,12 +465,23 @@
           g.quadO(q(A, A.o0, tA + 0.5), q(B, B.o0, tB + 0.5), q(B, B.o1, tB - 0.3), q(A, A.o1, tA - 0.3), [0.6, 0.62, 0.66], q(A, (A.o0 + A.o1) / 2, tA + 5));
           if (m % 2 === 0) { const p = atSf(A.s, side * (A.o1 - 0.4)); box(g, p[0], -0.3, p[1], 0.4, tA + 0.3, 0.4, 0, [0.86, 0.87, 0.9]); } }
       }
+      // flagpoles along the back of the stand, the flags of Canada and of Québec in turn (one every 15 m)
+      for (let m = 1; m < rowsP.length - 1; m += 3) { const r = rowsP[m], p = atSf(r.s, side * (r.o1 + 0.3)); mtFlag(scen.get(p[0], p[1]), p[0], p[1], r.top + 3.2, T.hd[T.idx(r.s)], ((m / 3) | 0) % 2); }
       for (const r of rowsP) { const p = atSf(r.s, side * (r.prof[0][0] + rows * dep * 0.5)); exclPush(p[0], p[1], rows * dep / 2 + 5); CR.exclAdd(p[0], p[1], rows * dep / 2 + 3); }
     }
     if (!crowdG.empty) addM(crowdG, K.crowdUV(new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), 1, 0.11, 0.1));
     // fans on the grass
     for (const [a, b, side] of def.ga || []) K.crowdRun(CR, sStart + a, sStart + b, side, { rows: 3, dens: 0.55, first: 1.6, gap: 0.9, clump: 0.6, sit: 0.3, flag: 0.08, below: 1.2, above: 2, label: 'ga' });
     for (const [a, b, side] of def.stands || []) K.crowdRun(CR, sStart + a - 12, sStart + a, side, { rows: 2, dens: 0.4, first: 1.6, label: 'standEnd' });
+  }
+
+  /* ---- a flagpole (height h) with its flag flying along yaw: Canada (red, white, red, the leaf a red square: simplified) or Québec (blue, a white cross) ---- */
+  function mtFlag(g, x, z, h, yaw, qc) {
+    const c = Math.cos(yaw), s = Math.sin(yaw), at = (u) => [x + c * u, z + s * u], F = 1.3, y = h - 1.05 * F, red = [0.82, 0.1, 0.12], wh = [0.95, 0.95, 0.94];
+    box(g, x, 0, z, 0.1, h + 0.1, 0.1, yaw, [0.78, 0.8, 0.82]);
+    const bar = (u0, u1, y0, y1, col, t) => { const [cx, cz] = at((u0 + u1) / 2 * F); box(g, cx, y + y0 * F, cz, (u1 - u0) * F, (y1 - y0) * F, t, yaw, col); };
+    if (qc) { bar(0.06, 1.86, 0, 0.9, [0.05, 0.25, 0.62], 0.03); bar(0.06, 1.86, 0.38, 0.52, wh, 0.05); bar(0.86, 1.06, 0, 0.9, wh, 0.05); }
+    else { bar(0.06, 0.51, 0, 0.9, red, 0.03); bar(0.51, 1.41, 0, 0.9, wh, 0.03); bar(1.41, 1.86, 0, 0.9, red, 0.03); bar(0.8, 1.12, 0.22, 0.68, red, 0.05); }
   }
 
   /* ---- the nearest road sample to (x, z) through a 32 m hash of the samples; its lateral offset and the barrier on that side ---- */
