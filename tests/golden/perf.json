@@ -222,5 +222,12 @@
   "kverts": 1530,
   "maxKverts": 1670,
   "jsMs": 0.87
+ },
+ "newcastle": {
+  "calls": 341,
+  "maxCalls": 394,
+  "kverts": 922,
+  "maxKverts": 1085,
+  "jsMs": 0.81
  }
 }
