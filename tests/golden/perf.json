@@ -201,5 +201,12 @@
   "kverts": 1530,
   "maxKverts": 1670,
   "jsMs": 0.87
+ },
+ "hongkong": {
+  "calls": 310,
+  "maxCalls": 347,
+  "kverts": 778,
+  "maxKverts": 921,
+  "jsMs": 0.88
  }
 }

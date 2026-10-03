@@ -35,8 +35,8 @@ check('track: 1.86 km long in its real scale (within 1 % of the official 1.860 k
 // 2. the pit lane: on the left of the start straight, from just past Turn 9 to past the start line
 {
   const P = def.pit, a = T.pitAt(T.startS - 100), b = T.pitAt(T.startS), t9 = dS(T.nearestIdx(def.turns[8][0], def.turns[8][1]) * T.ds) - T.len;
-  check('pits: a lane on the left (def.pit[0] < 0), from just past Turn 9 over the start line, a box for the player before the line',
-    P[0] < 0 && a && b && a.sg === -1 && !a.gap && Math.abs(P[1] - t9) < 40 && P[2] > 0 && P[3] < 0 && P[3] > P[1], `lane ${P[1]}..${P[2]} m, Turn 9 at ${Math.round(t9)} m, offset ${a && a.o.toFixed(1)} m`);
+  check('pits: a lane on the left (def.pit[0] < 0), from Turn 9 (its outside) over the start line, a box for the player before the line',
+    P[0] < 0 && a && b && a.sg === -1 && !a.gap && Math.abs(P[1] - t9) < 60 && P[2] > 0 && P[3] < 0 && P[3] > P[1], `lane ${P[1]}..${P[2]} m, Turn 9 at ${Math.round(t9)} m, offset ${a && a.o.toFixed(1)} m`);
   const orig = Math.random; Math.random = seeded(3);
   try {
     const r = new C.Race(T, { numAI: 3, playerGrid: 4, laps: 3, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1 });

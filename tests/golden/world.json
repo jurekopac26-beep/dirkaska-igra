@@ -335,6 +335,25 @@
    "worn:MeshLambertMaterial": "b38c2a31"
   }
  },
+ "hongkong": {
+  "meshes": 153,
+  "verts": 345383,
+  "instances": 1858,
+  "props": 149,
+  "crowd": 281,
+  "world": "fa2d48ae",
+  "propsHash": "7f5890fe",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "a4d2fd9b",
+   "-:MeshPhongMaterial": "50e1a47c",
+   "-:MeshBasicMaterial": "c136c3d3",
+   "crowd:MeshLambertMaterial": "de99d940",
+   "ao:MeshBasicMaterial": "47f6da9b",
+   "tyremarks:MeshBasicMaterial": "90779014",
+   "roadwear:MeshLambertMaterial": "c5a2d9d3"
+  }
+ },
  "chapman": {
   "meshes": 2170,
   "verts": 1479904,
