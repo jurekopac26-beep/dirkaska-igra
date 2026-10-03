@@ -181,6 +181,13 @@
   "maxKverts": 511,
   "jsMs": 0.23
  },
+ "sietelagos": {
+  "calls": 228,
+  "maxCalls": 315,
+  "kverts": 743,
+  "maxKverts": 951,
+  "jsMs": 1.07
+ },
  "cpalace": {
   "calls": 281,
   "maxCalls": 303,

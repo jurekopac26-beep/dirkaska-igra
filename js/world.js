@@ -17946,8 +17946,8 @@ const World = (function () {
     else { r = 0.63 + (m - 0.5) * 0.12 + (q - 0.5) * 0.08; g = 0.53 + (m - 0.5) * 0.08; b = 0.31 + (m - 0.5) * 0.04;
       const gn = sstep(0.45, 0.75, P.n2(x, z)) * 0.4; r = lerp(r, 0.46, gn); g = lerp(g, 0.5, gn); b = lerp(b, 0.26, gn); }
     const cc = slCan(x, z), fl = Math.max(fo * 0.8, cc >= 2 ? 0.92 : cc === 1 ? 0.5 : 0), moss = sstep(0.5, 0.78, P.n7(x * 1.7 + 90, z * 1.7)) * 0.65, up = sstep(980, 1150, A);
-    const lr = au ? lerp(0.34, 0.5, up) : 0.2, lg = au ? lerp(0.25, 0.27, up) : 0.26, lb = au ? 0.13 : 0.11;   // (the leaf litter: in autumn the coihue's brown low down, the lenga's rust higher)
-    r = lerp(r, lerp(lr, 0.16, moss) + m * 0.05, fl); g = lerp(g, lerp(lg, 0.29, moss) + m * 0.05, fl); b = lerp(b, lerp(lb, 0.09, moss) + m * 0.02, fl);
+    const lr = au ? lerp(0.3, 0.44, up) : 0.17, lg = au ? lerp(0.22, 0.24, up) : 0.22, lb = au ? 0.11 : 0.09;   // (the leaf litter: in autumn the coihue's brown low down, the lenga's rust higher)
+    r = lerp(r, lerp(lr, 0.14, moss) + m * 0.04, fl); g = lerp(g, lerp(lg, 0.25, moss) + m * 0.04, fl); b = lerp(b, lerp(lb, 0.08, moss) + m * 0.02, fl);
     r = lerp(r, au ? 0.5 : 0.28, sh * 0.6); g = lerp(g, au ? 0.3 : 0.37, sh * 0.6); b = lerp(b, 0.16, sh * 0.6);
     r = lerp(r, 0.6, se * 0.5); g = lerp(g, 0.58, se * 0.5); b = lerp(b, 0.53, se * 0.5);
     const st = Math.max(rk * 0.9, sstep(0.78, 0.5, ny) * 0.95);   // the rock: grey granite and dark volcanic bands, lichen
@@ -18083,9 +18083,9 @@ const World = (function () {
     const g = new GB(), R = rng(890 + kind), rs = ROCK_SMOOTH, su = VRS === 'summer';
     if (kind === 0) {
       const cane = [0.72, 0.68, 0.42], leaf = su ? [0.42, 0.55, 0.2] : [0.5, 0.52, 0.22], leaf2 = su ? [0.6, 0.7, 0.3] : [0.66, 0.62, 0.3];
-      for (let k = 0; k < 11; k++) { const a = k * 2.399 + R() * 0.4, lean = 0.08 + R() * 0.32, hh = 0.75 + R() * 0.25, bx = Math.cos(a) * 0.05, bz = Math.sin(a) * 0.05, tx = Math.cos(a) * lean, tz = Math.sin(a) * lean, ox = -Math.sin(a) * 0.012, oz = Math.cos(a) * 0.012;
+      for (let k = 0; k < 8; k++) { const a = k * 2.399 + R() * 0.4, lean = 0.08 + R() * 0.32, hh = 0.75 + R() * 0.25, bx = Math.cos(a) * 0.05, bz = Math.sin(a) * 0.05, tx = Math.cos(a) * lean, tz = Math.sin(a) * lean, ox = -Math.sin(a) * 0.012, oz = Math.cos(a) * 0.012;
         g.triO([bx - ox, 0, bz - oz], [bx + ox, 0, bz + oz], [tx, hh, tz], cane, [tx * 0.5, hh * 0.4, tz * 0.5], cane, cane);
-        for (let q = 0; q < 3; q++) { const t = 0.45 + q * 0.2, px = bx + (tx - bx) * t, py = hh * t, pz = bz + (tz - bz) * t, la = a + (q - 1) * 1.1 + R(), ll = 0.14 + R() * 0.06, ex = px + Math.cos(la) * ll, ez = pz + Math.sin(la) * ll, ey = py - 0.05;
+        for (let q = 0; q < 2; q++) { const t = 0.5 + q * 0.28, px = bx + (tx - bx) * t, py = hh * t, pz = bz + (tz - bz) * t, la = a + (q - 1) * 1.1 + R(), ll = 0.22 + R() * 0.1, ex = px + Math.cos(la) * ll, ez = pz + Math.sin(la) * ll, ey = py - 0.05;
           g.triO([px, py, pz], [px + ox * 4, py + 0.03, pz + oz * 4], [ex, ey, ez], leaf, [px, py - 1, pz], leaf, leaf2); } }
     } else if (kind === 1) {
       const base = su ? [0.42, 0.5, 0.22] : [0.66, 0.56, 0.3], tip = su ? [0.7, 0.72, 0.4] : [0.86, 0.78, 0.5];
@@ -18166,6 +18166,7 @@ const World = (function () {
     const P = VR, iE = N - 1, sStart = T.startS, sFin = T.finishS, base = P.D.base, au = VRS !== 'summer';
     P.c1 = valueNoise2(531, 120); P.c2 = valueNoise2(532, 60); P.c3 = valueNoise2(533, 200); P.c4 = valueNoise2(534, 90); P.c5 = valueNoise2(535, 24);
     P.gcol = slCol;   // (the terrain tiles and the side roads' edges in this road's colours: vrTileGeo, vrGCol)
+    for (const L of P.lakes) { const lv = (def.lakeLv || []).find(([a]) => a === L.area); if (lv) L.h = lv[1] - base - 0.15; }   // (the water at its real level: def.lakeLv; the river between Falkner and Villarino at theirs)
     const sOf = (i) => i * T.ds - sStart;
     // the bridges (1 on the deck and 3 m past it), the pull-outs (def.wide), the car parks' outlines (def.lots)
     const onBr = new Uint8Array(N), pull = [new Uint8Array(N), new Uint8Array(N)];
@@ -18211,19 +18212,20 @@ const World = (function () {
       const WO = { len: 1, amp: 0.85, refl: 0.42, land: 0.55, shal: 0.75, lap: 0.45, surf: 0 }, wMat = waterMat(tex, Object.assign({ vc: true }, WO));
       const deep = [0.06, 0.2, 0.33], mid = [0.1, 0.32, 0.42], shal = [0.22, 0.5, 0.5], bands = [];
       for (const L of P.lakes) {
+        const gx = L.area < 50000 ? 70 : 20;   // (a small one, the river between the lakes: out over the stream bed under the bridge)
         const colAt = (x, z) => { const e = vrWater(x, z).e, k = 0.08 * (P.n2(x * 0.5, z * 0.5) - 0.5); return [0, 1, 2].map(c => lerp(lerp(shal[c], mid[c], sstep(1, 14, e)), deep[c], sstep(14, 70, e)) + k); };
         const g = new GB(true), uv = (x, z) => [x / 14, -z / 14], cc = new Map(), wc = (x, z) => { const key = Math.round(x) * 100003 + Math.round(z); let c = cc.get(key); if (!c) cc.set(key, c = colAt(x, z)); return c; };
         const wet = (x, z) => { if (tileAt(x, z)) return vrGround(x, z) < L.h + 0.4 || vrWater(x, z).e > 0; return vrWater(x, z).e > -1; };
         const quad = (x, z, c) => { const A = [x, L.h, z], B = [x + c, L.h, z], C = [x + c, L.h, z + c], D = [x, L.h, z + c]; g.quadUp(A, B, C, D, [wc(x, z), wc(x + c, z), wc(x + c, z + c), wc(x, z + c)], [uv(x, z), uv(x + c, z), uv(x + c, z + c), uv(x, z + c)]); };
         const C2 = 20;
-        for (let z = Math.floor((L.z0 - 20) / C2) * C2; z < L.z1 + 20; z += C2) for (let x = Math.floor((L.x0 - 20) / C2) * C2; x < L.x1 + 20; x += C2) {
+        for (let z = Math.floor((L.z0 - gx) / C2) * C2; z < L.z1 + gx; z += C2) for (let x = Math.floor((L.x0 - gx) / C2) * C2; x < L.x1 + gx; x += C2) {
           const dd = vrDist(x + C2 / 2, z + C2 / 2); if (dd > 1100) continue;
           if (dd < 160) { for (let b = 0; b < 2; b++) for (let a = 0; a < 2; a++) { const xx = x + a * 10, zz = z + b * 10; if (wet(xx, zz) || wet(xx + 10, zz) || wet(xx, zz + 10) || wet(xx + 10, zz + 10) || wet(xx + 5, zz + 5)) quad(xx, zz, 10); } }
           else if (wet(x, z) || wet(x + C2, z) || wet(x, z + C2) || wet(x + C2, z + C2) || wet(x + C2 / 2, z + C2 / 2)) quad(x, z, C2);
         }
         if (g.empty) continue;
         const m = new THREE.Mesh(g.geometry(), wMat); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); root.add(m); nLake++;
-        const i0 = clamp(Math.floor((L.x0 - 20 - G.x0) / VRC), 0, G.nx - 2), j0 = clamp(Math.floor((L.z0 - 20 - G.z0) / VRC), 0, G.nz - 2), i1 = clamp(Math.ceil((L.x1 + 20 - G.x0) / VRC), 1, G.nx - 1), j1 = clamp(Math.ceil((L.z1 + 20 - G.z0) / VRC), 1, G.nz - 1);
+        const i0 = clamp(Math.floor((L.x0 - gx - G.x0) / VRC), 0, G.nx - 2), j0 = clamp(Math.floor((L.z0 - gx - G.z0) / VRC), 0, G.nz - 2), i1 = clamp(Math.ceil((L.x1 + gx - G.x0) / VRC), 1, G.nx - 1), j1 = clamp(Math.ceil((L.z1 + gx - G.z0) / VRC), 1, G.nz - 1);
         const wl = waterline((i, j) => (tileAt(G.x0 + i * VRC, G.z0 + j * VRC) === 1 ? vrGH(i, j) : L.h + 10), G.x0, G.z0, VRC, i0, i1, j0, j1, L.h), sd = (x, z) => (tileAt(x, z) === 1 ? wl(x, z) : 99);
         bands.push(shoreBand(G.x0 + i0 * VRC, G.z0 + j0 * VRC, G.x0 + i1 * VRC, G.z0 + j1 * VRC, L.h + 0.015, sd, 14, { col: colAt }));
         out.marks['lake' + nLake] = [L.cx, L.cz, L.h];
@@ -18629,7 +18631,7 @@ const World = (function () {
     const tMatT = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
     const tk = [0, 1, 2, 3, 4, 5, 6, 7].map(k => new IChunks(slTreeGeo(k), tMatT, k === 1 || k === 3 ? 192 : 112));
     let nTrees = 0;
-    const CANH = [0, 4, 8, 13, 18, 23, 30, 24];   // (the canopy's class -> the height, m: Meta's map runs low in tall forest; 7: WorldCover's trees in a gap of the canopy map)
+    const CANH = [0, 4, 10, 16, 22, 27, 32, 24];   // (the canopy's class -> the height, m: Meta's map runs low in tall forest; 7: WorldCover's trees in a gap of the canopy map)
     {
       const Lt = VRC * VRT, maxT = Math.round(60000 * dens), RT = rng(5371), SP = 7.5 / Math.sqrt(dens);
       grid: for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
@@ -18642,11 +18644,11 @@ const World = (function () {
           const cc = slCan(x, z), c = vrLC(x, z);
           const p = cc === 0 ? (c === 1 ? 0.12 : 0.015) : cc === 1 ? 0.3 : [0, 0, 0.62, 0.78, 0.86, 0.9, 0.92, 0.82][cc];
           if (r1 > p) continue;
-          const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < 3) continue; if (nn.i >= 0 && nn.dd < 6 && r2 < 0.35) continue;
+          const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < 4.5) continue; if (nn.i >= 0 && nn.dd < 8 && r2 < 0.4) continue;   // (the road's clearing)
           if (excluded(x, z) || vrWater(x, z).e > -2.5 || inLot(x, z)) continue;
           const sl = vrSlope(x, z); if (sl > 1.25) continue;
           const y = vrGround(x, z), A = y + base, hi = sstep(990, 1120, A), we = vrWater(x, z).e;
-          let sp, hgt = (cc ? CANH[cc] : 6) * (0.85 + r4 * 0.35), wid;
+          let sp, hgt = (cc ? CANH[cc] : 6) * (0.85 + r4 * 0.35) * (nn.i >= 0 ? lerp(0.7, 1, sstep(6, 16, nn.dd)) : 1), wid;   // (by the road's clearing younger, lower trees)
           if (cc <= 1) { sp = r3 < 0.7 ? 4 : r3 < 0.85 ? 2 : 7; hgt = sp === 4 ? 3 + r4 * 4 : sp === 7 ? 9 + r4 * 8 : 6 + r4 * 6; }   // (the clearings' scrub: ñire, a young lenga, a snag)
           else if (we > -26 && r3 < 0.18) sp = 6;   // (arrayanes by the water)
           else if (sl > 0.7 && r3 < 0.12 + 0.1 * sstep(0.7, 1.1, sl)) sp = 5;   // (a cypress on the rocky slopes)
@@ -18654,7 +18656,7 @@ const World = (function () {
           else sp = r2 < lerp(0.82, 0.18, hi) ? 0 : 2;   // (coihue low down and by the lakes, lenga higher)
           if (sp === 6) hgt = Math.min(hgt, 9 + r4 * 6);
           if (sp === 5) hgt = Math.min(hgt, 12 + r4 * 8);
-          wid = sp === 0 ? hgt * (0.42 + r2 * 0.12) : sp === 2 ? hgt * (0.55 + r2 * 0.15) : sp === 4 ? hgt * (0.8 + r2 * 0.3) : sp === 5 ? hgt * 0.32 : sp === 6 ? hgt * 0.75 : hgt * 0.4;
+          wid = sp === 0 ? hgt * (0.72 + r2 * 0.16) : sp === 2 ? hgt * (0.78 + r2 * 0.18) : sp === 4 ? hgt * (0.8 + r2 * 0.3) : sp === 5 ? hgt * 0.32 : sp === 6 ? hgt * 0.75 : hgt * 0.4;
           const kind = far && (sp === 0 || sp === 2) ? sp + 1 : sp;
           const col = sp === 2 && au ? [0.85 + r2 * 0.3, 0.8 + r4 * 0.45, 0.8 + r3 * 0.3] : sp === 4 && au ? [0.9 + r2 * 0.2, 0.85 + r4 * 0.35, 0.9] : [0.9 + r2 * 0.18, 0.92 + r4 * 0.14, 0.9 + r3 * 0.14];   // (autumn's lenga from crimson to gold)
           tk[kind].add(x, y - 0.15, z, r1 * 70, wid * (far ? 1.1 : 1), hgt * (far ? 1.05 : 1), col);
@@ -18683,9 +18685,9 @@ const World = (function () {
           const hd = vrDist(x, z); if (hd > 150) continue;
           if (hd > 45 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;
           const nn = vrNear(x, z), dd = nn.i >= 0 ? nn.dd : 99; if (dd < 1.4) continue;
-          const cc = slCan(x, z), c = vrLC(x, z), edge = dd < 14;
+          const cc = slCan(x, z), c = vrLC(x, z), edge = dd < 18, fo = cc >= 2 || (cc === 0 && c === 1);
           let kind = -1;
-          if (cc >= 2) kind = edge ? (r1 < 0.55 ? 0 : r1 < 0.6 ? 6 : -1) : (r1 < 0.16 ? 0 : r1 < 0.2 ? 6 : r1 < 0.205 ? 4 : -1);   // (colihue thick at the forest's edge on the road)
+          if (fo) kind = edge ? (r1 < 0.6 ? 0 : -1) : (r1 < 0.18 ? 0 : r1 < 0.188 ? 6 : r1 < 0.193 ? 4 : -1);   // (colihue thick at the forest's edge on the road)
           else if (cc === 1) kind = r1 < 0.3 ? 0 : r1 < 0.45 ? 3 : r1 < 0.6 ? 1 : -1;
           else if (c === 4) kind = r1 < 0.08 ? 4 : r1 < 0.2 ? 1 : -1;
           else kind = edge && !au && r1 < 0.16 ? 2 : r1 < 0.5 ? 1 : r1 < 0.56 ? 3 : r1 < 0.57 ? 4 : edge && au && r1 < 0.62 ? 2 : -1;   // (lupines on the verges; in autumn their dry stalks, fewer)
@@ -18693,12 +18695,12 @@ const World = (function () {
           const sl = vrSlope(x, z); if (sl > (kind === 4 ? 1.2 : 0.95)) continue;
           if (vrWater(x, z).e > -3 || excluded(x, z) || inLot(x, z)) continue;
           const y0 = vrGround(x, z);
-          if (kind === 0) pk[0].add(x, y0 - 0.05, z, r2 * TAU, 1.4 + r3 * 1.4, 2.6 + r4 * 2.4, [0.9 + r2 * 0.2, 0.92 + r3 * 0.14, 0.9]);
+          if (kind === 0) pk[0].add(x, y0 - 0.05, z, r2 * TAU, 2.2 + r3 * 1.8, 2.8 + r4 * 2.4, [0.9 + r2 * 0.2, 0.92 + r3 * 0.14, 0.9]);
           else if (kind === 1) pk[1].add(x, y0 - 0.05, z, r2 * TAU, 0.6 + r3 * 0.5, 0.45 + r4 * 0.4, [0.92 + r2 * 0.16, 0.92 + r3 * 0.14, 0.88 + r4 * 0.14]);
           else if (kind === 2) pk[2].add(x, y0 - 0.05, z, r2 * TAU, 0.6 + r3 * 0.5, 0.7 + r4 * 0.5, au ? [1, 1, 1] : lupC[Math.floor(r4 * lupC.length)]);
           else if (kind === 3) pk[3].add(x, y0 - 0.1, z, r2 * TAU, 1.2 + r3 * 1.4, 0.9 + r4 * 1.0, r2 < 0.25 && !au ? [1.25, 1.2, 0.5] : [0.9 + r2 * 0.2, 0.92 + r3 * 0.14, 0.9]);   // (one in four the yellow of the broom in flower)
           else if (kind === 4) { const k = 0.86 + r3 * 0.28; pk[4].add(x, y0 - 0.2, z, r4 * TAU, 0.8 + r3 * 2.0, 0.6 + r4 * 1.5, [k, k, k * 0.98]); }
-          else if (kind === 6) { const L = 6 + r3 * 10; pk[6].add(x, y0 - 0.1, z, r2 * TAU, L, 0.35 + r4 * 0.35, [0.95 + r3 * 0.1, 0.95 + r3 * 0.1, 0.95 + r3 * 0.1]); }
+          else if (kind === 6) { const L = 4 + r3 * 6; pk[6].add(x, y0 - 0.12, z, r2 * TAU, L, 0.3 + r4 * 0.3, [0.62 + r3 * 0.1, 0.6 + r3 * 0.1, 0.58 + r3 * 0.1]); }
           if (++nPlants >= maxT) break grid;
         }
       }
