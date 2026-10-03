@@ -55,8 +55,9 @@ const Core = (function () {
   // side roads (Track._buildStubs): the polyline's step (m), the mouth's corners (the kerb returns: an arc of radius r m tangent to the road's
   // edge and the side road's, per corner; r by kind: a street, a service road or forest road, a narrow driveway; the arc's tangent at most lt m
   // along the side road, its width at most em m), the region around one beyond its limit that still counts as in it (rm m: what flies over
-  // its edge comes back down onto it)
-  const SR = { ds: 2, r: [6.5, 4.5, 4.5], rN: 3.2, lt: 24, em: 12, rm: 4 }, _sp = { S: null, j: -1, f: 0, t: 0, u: 0, kx: 1, kz: 0 }, _n2 = [0, 0];
+  // its edge comes back down onto it), the barrier's clearance from a mouth (gc m: it ends this far before the kerb return, as a guard rail's
+  // end does; the traffic does not pull up there either)
+  const SR = { ds: 2, r: [6.5, 4.5, 4.5], rN: 3.2, lt: 24, em: 12, rm: 4, gc: 2 }, _sp = { S: null, j: -1, f: 0, t: 0, u: 0, kx: 1, kz: 0 }, _n2 = [0, 0];
 
   class Track {
     constructor(def) {
@@ -291,10 +292,10 @@ const Core = (function () {
         // the road's samples nearest to its region: they look for it (Track.query)
         const mark = (i) => { for (let o = -3; o <= 3; o++) { const ii = i + o; if (ii < 0 || ii >= N) continue; let c = 0; while (c < 3 && near[ii * 3 + c] >= 0 && near[ii * 3 + c] !== k) c++; if (c < 3) near[ii * 3 + c] = k; if (at[ii] < 0) at[ii] = k; } };
         for (let j = 0; j < n; j++) { const hl = this.stubHw(S, j * D, -1) + lim + SR.rm, hr = this.stubHw(S, j * D, 1) + lim + SR.rm; for (const u of [-hl, -hl / 2, 0, hr / 2, hr]) mark(nearest(x[j] - tz[j] * u, z[j] + tx[j] * u)); }
-        // the barrier open across its mouth: where the barrier line lies within its corridor
+        // the barrier open across its mouth: where the barrier line lies within its corridor, and SR.gc more
         const G = gap[side > 0 ? 1 : 0], sp = {};
         for (let i = Math.max(0, i0 - 80); i <= Math.min(N - 1, i0 + 80); i++) { const b = side > 0 ? this.br[i] : this.bl[i], bx = px[i] + this.nx[i] * side * b, bz = pz[i] + this.nz[i] * side * b;
-          if (this._stubProj(S, bx, bz, sp) && sp.t > 0 && sp.t < S.L && Math.abs(sp.u) <= this.stubHw(S, sp.t, sp.u) + lim) G[i] = 1; }
+          if (this._stubProj(S, bx, bz, sp) && sp.t > 0 && sp.t < S.L && Math.abs(sp.u) <= this.stubHw(S, sp.t, sp.u) + lim + SR.gc) G[i] = 1; }
       }
     }
     _hyAt(s) { const N = this.N, f = clamp(s / this.ds, 0, N - 1), i = Math.min(N - 2, Math.floor(f)); return this.hy[i] + (this.hy[i + 1] - this.hy[i]) * (f - i); }   // (the road's height at s, open roads)
@@ -3440,7 +3441,7 @@ const Core = (function () {
         return true;
       }
     }
-    if (st.block) { if (ck && c.q.st > S.tb + 2) { c.inThr = 0; c.inBrk = 1; c.inSteer = 0; c.inHand = 0; return true; } stubDrive(c, race, st.k, 1, st.bs * Math.max(0, T.stubHw(S, S.tb + 2, st.bs) - 1.1, S.hw - 0.6)); stubQueue(c, race, S, 1); return true; }   // (at the side of the mouth: its corner's kerb return, at least its own edge)
+    if (st.block) { const tB = Math.min(S.L - 8, Math.max(S.tb, S.tv[0], S.tv[1]) + 2); if (ck && c.q.st > tB) { c.inThr = 0; c.inBrk = 1; c.inSteer = 0; c.inHand = 0; return true; } stubDrive(c, race, st.k, 1, st.bs * Math.max(0, T.stubHw(S, tB, st.bs) - 1.1, S.hw - 0.6)); stubQueue(c, race, S, 1); return true; }   // (at the side of its mouth, where all of it has left the road: by its corner's kerb return, at least its own edge)
     if (ck && pk && P.q.st < c.q.st - 5 && dP > 7) { c.pol.stub = { k: st.k, dir: -1, wait: false, t: 0, chase: true }; return polStub(c, race, c.pol.stub, dt); }   // (they got past it: round and after them)
     if (ck && pk && P.q.st > c.q.st && dP < 22 && P.speed < 6) {   // (close to them down there, them slow (stopped, turning round): at them, the push held to a few m/s)
       steerAt(c, P.x, P.z); const vC = P.speed + clamp(dP * 0.25, 1, 5); c.inThr = c.speed < vC ? 0.8 : 0; c.inBrk = c.speed > vC + 1.5 ? 0.6 : 0; c.inHand = 0;

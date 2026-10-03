@@ -11029,7 +11029,7 @@ const World = (function () {
       if (K.posts === 'along') { const pm = clamp(S.lim - 0.3, 0.2, 0.6), step = S.s < (K.village || 0) ? 15 : 11;
         for (let t = S.tb + 1; t <= S.L - 2; t += step) { const p = T.stubPt(k, t, F); for (const sd of [-1, 1]) { const hw = T.stubHw(S, t, sd) + pm; post(p.x - p.tz * hw * sd, p.z + p.tx * hw * sd, p.h, T.stubHint(k, t)); } } }
       if (K.posts !== 'none') { let a = -1, b = -1; for (let i = Math.max(0, S.i0 - 80); i <= Math.min(T.N - 1, S.i0 + 80); i++) { const bar = side > 0 ? T.br[i] : T.bl[i], x = T.px[i] + T.nx[i] * side * bar, z = T.pz[i] + T.nz[i] * side * bar;   // (its own stretch of open barrier)
-          VRSP.S = null; if (T._stubProj(S, x, z, VRSP) && VRSP.t > 0 && VRSP.t < S.L && Math.abs(VRSP.u) <= T.stubHw(S, VRSP.t, VRSP.u) + S.lim) { if (a < 0) a = i; b = i; } }
+          VRSP.S = null; if (T._stubProj(S, x, z, VRSP) && VRSP.t > 0 && VRSP.t < S.L && Math.abs(VRSP.u) <= T.stubHw(S, VRSP.t, VRSP.u) + S.lim + 2) { if (a < 0) a = i; b = i; } }   // (as T.gap: the barrier's clearance)
         for (const i of a >= 0 ? [a - 1, b + 1] : []) { const bar = (side > 0 ? T.br[i] : T.bl[i]) - 0.35, x = T.px[i] + T.nx[i] * side * bar, z = T.pz[i] + T.nz[i] * side * bar; post(x, z, T.hd[i], i); } }
       for (const c of T.stubCones(k)) { out.props.push(c); nCone++; }
       if (S.end !== 2) { const p = T.stubPt(k, S.L, {}), nx = -p.tz, nz = p.tx, hc = S.hw + S.lim, g = scen.get(p.x, p.z), rot = p.h + Math.PI / 2;
