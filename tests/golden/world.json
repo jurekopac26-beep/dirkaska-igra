@@ -413,22 +413,22 @@
   }
  },
  "sani": {
-  "meshes": 2394,
-  "verts": 1002360,
-  "instances": 73227,
+  "meshes": 2573,
+  "verts": 1039894,
+  "instances": 73239,
   "props": 26,
-  "crowd": 415,
-  "world": "f908daea",
+  "crowd": 427,
+  "world": "1573596d",
   "propsHash": "2f7e0c0f",
   "floor": "776db860/10920",
   "groups": {
-   "-:MeshLambertMaterial": "fd2d27a1",
+   "-:MeshLambertMaterial": "f36deca5",
    "-:MeshPhongMaterial": "76e23ffc",
    "-:MeshBasicMaterial": "1c742f2",
    "puddles:MeshBasicMaterial": "6f281577",
-   "crowd:MeshLambertMaterial": "290258fb",
+   "crowd:MeshLambertMaterial": "7c8f5509",
    "smoke:ShaderMaterial": "a1ed33df",
-   "ao:MeshBasicMaterial": "bfc90fee"
+   "ao:MeshBasicMaterial": "16eee2a"
   }
  },
  "iroha": {

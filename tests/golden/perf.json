@@ -140,11 +140,11 @@
   "jsMs": 0.96
  },
  "sani": {
-  "calls": 113,
+  "calls": 118,
   "maxCalls": 172,
-  "kverts": 415,
-  "maxKverts": 740,
-  "jsMs": 0.62
+  "kverts": 424,
+  "maxKverts": 683,
+  "jsMs": 0.52
  },
  "iroha": {
   "calls": 355,

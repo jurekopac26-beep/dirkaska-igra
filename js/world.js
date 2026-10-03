@@ -15061,6 +15061,14 @@ const World = (function () {
     else { ROCK_SMOOTH = true; ico(g, 0, 0.12, 0, 0.42, 0.45, [0.92, 0.78, 0.22], R, 0.25); ico(g, 0.3, 0.1, 0.12, 0.25, 0.45, [0.96, 0.86, 0.3], R, 0.25); ROCK_SMOOTH = false; }
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
+  function saFloraGeo(kind) {   // 0 a spiral aloe (Aloe polyphylla: a rosette of thick grey-green leaves, ~0.8 m across), 1 a protea bush (dark leaves, pink flower heads)
+    const g = new GB(), R = rng(3341 + kind);
+    if (kind === 0) for (let k = 0; k < 15; k++) { const a = k * 2.4, l = 0.25 + (k / 15) * 0.25, up = 0.35 - (k / 15) * 0.25, c = [0.46 + 0.04 * (k % 2), 0.58, 0.48], tip = [0.6, 0.42, 0.32];
+      const ca = Math.cos(a), sa = Math.sin(a), w = 0.07; g.triO([-sa * w, 0.05, ca * w], [sa * w, 0.05, -ca * w], [ca * l, up, sa * l], c, [0, -1, 0], c, tip); }
+    else { ROCK_SMOOTH = true; ico(g, 0, 0.55, 0, 0.6, 0.85, [0.22, 0.3, 0.17], R, 0.3); ico(g, 0.3, 0.4, 0.2, 0.38, 0.85, [0.25, 0.33, 0.19], R, 0.3); ROCK_SMOOTH = false;
+      for (let k = 0; k < 6; k++) { const a = R() * TAU, d = 0.2 + R() * 0.35; box(g, Math.cos(a) * d, 0.85 + R() * 0.3, Math.sin(a) * d, 0.18, 0.16, 0.18, a, [0.92, 0.48, 0.58], [0.98, 0.72, 0.76]); } }
+    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
   function saPebbleGeo() {   // one flat stone (a unit across, 15 faces): the stones bedded in the road
     const g = new GB(), R = rng(3331), col = [0.64, 0.6, 0.55], lo = col.map(v => v * 0.7), hi = col.map(v => v * 1.12), B = [], M = [], top = [0.05, 0.32, -0.04], inn = [0, 0.08, 0];
     for (let q = 0; q < 5; q++) { const a = (q + (R() - 0.5) * 0.5) / 5 * TAU, f = 0.85 + R() * 0.3; B.push([Math.cos(a) * 0.5 * f, -0.1, Math.sin(a) * 0.5 * f]); M.push([Math.cos(a) * 0.42 * f, 0.18, Math.sin(a) * 0.42 * f]); }
@@ -15349,7 +15357,7 @@ const World = (function () {
     const pMat = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
     const wMat = tuftWindMat(out.dyn.wind || (out.dyn.wind = { value: 0 })), wB = wMat.onBeforeCompile; ouCutMat(wMat, cut);
     { const cB = wMat.onBeforeCompile; wMat.onBeforeCompile = (sh) => { wB(sh); cB(sh); }; wMat.customProgramCacheKey = () => 'tuftWindCut'; wMat.side = THREE.FrontSide; }
-    const pk = [0, 1, 3, 4].map(k => new IChunks(caPlantGeo(k), k === 0 ? wMat : pMat, k === 4 ? 64 : 96)).concat([0, 1].map(k => new IChunks(saFlowerGeo(k), pMat, 64)), [new IChunks(saPebbleGeo(), pMat, 64)]);   // (4, 5: the red-hot pokers, the yellow everlastings; 6: the stones in the road)
+    const pk = [0, 1, 3, 4].map(k => new IChunks(caPlantGeo(k), k === 0 ? wMat : pMat, k === 4 ? 64 : 96)).concat([0, 1].map(k => new IChunks(saFlowerGeo(k), pMat, 64)), [new IChunks(saPebbleGeo(), pMat, 64)], [0, 1].map(k => new IChunks(saFloraGeo(k), pMat, 96)));   // (7, 8: the spiral aloes, the proteas)   // (4, 5: the red-hot pokers, the yellow everlastings; 6: the stones in the road)
     const tuftC = SAS === 'summer' ? [0.58, 0.88, 0.46] : SAS === 'autumn' ? [1.0, 0.96, 0.78] : [0.86, 0.76, 0.62];
     let nPlants = 0;
     {
@@ -15369,9 +15377,11 @@ const World = (function () {
           else if (c === 2) kind = r1 < 0.35 ? 1 : r1 < 0.6 ? 0 : -1;
           else if (c === 1) kind = r1 < 0.05 ? 2 : r1 < 0.12 ? 0 : -1;
           if (kind === 5 && fl === 0) kind = -1;
-          if (sl > 0.85 && sl < 1.6 && kind !== 2) kind = r1 < 0.35 ? 3 : -1;   // (the steep banks between the legs and the slopes: scree)
+          if (kind < 0 && (c === 1 || (sl > 0.45 && sl < 1.1)) && A > 2550 && r1 > 0.93) kind = 7;   // (the spiral aloes on the rocky slopes up high)
+          if (kind < 0 && (c === 0 || c === 2) && A < 2600 && sl < 0.7 && r1 > 0.965) kind = 8;   // (protea bushes on the lower grassy slopes)
+          if (sl > 0.85 && sl < 1.6 && kind !== 2 && kind !== 7) kind = r1 < 0.35 ? 3 : -1;   // (the steep banks between the legs and the slopes: scree)
           if (kind < 0) continue;
-          if (sl > (kind === 2 || kind === 3 ? 1.6 : 0.85)) continue;
+          if (sl > (kind === 2 || kind === 3 ? 1.6 : kind === 7 ? 1.2 : 0.85)) continue;
           const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < 1.6) continue;
           if (excluded(x, z)) continue;
           const ny = 1 / Math.sqrt(1 + sl * sl); if (saSnow(x, z, A, ny, 0) > 0.35) continue;
@@ -15379,6 +15389,8 @@ const World = (function () {
           else if (kind === 1) pk[1].add(x, y0 - 0.1, z, r2 * TAU, 0.6 + r3 * 0.9, 0.5 + r4 * 0.6, [0.82 + r2 * 0.2, 0.95 + r3 * 0.12, 0.8]);
           else if (kind === 6) pk[1].add(x, y0 - 0.2, z, r2 * TAU, 1.6 + r3 * 1.6, 1.3 + r4 * 1.4, SAS === 'winter' ? [0.75, 0.7, 0.6] : [0.62 + r2 * 0.1, 0.86 + r3 * 0.1, 0.58]);
           else if (kind === 3) { const k = 0.7 + r3 * 0.25; pk[3].add(x, y0 - 0.05, z, r2 * TAU, 0.9 + r4 * 1.3, 0.8 + r3 * 0.6, [k, k * 0.95, k * 0.88]); }
+          else if (kind === 7) pk[7].add(x, y0 - 0.03, z, r2 * TAU, 0.9 + r3 * 0.8, 0.8 + r4 * 0.5, SAS === 'winter' ? [0.9, 0.86, 0.82] : [1, 1, 1]);
+          else if (kind === 8) pk[8].add(x, y0 - 0.1, z, r2 * TAU, 0.9 + r3 * 0.9, 0.8 + r4 * 0.6, SAS === 'summer' ? [1, 1, 1] : [1, 0.95, 0.85]);
           else if (kind === 4 || kind === 5) pk[kind].add(x, y0 - 0.05, z, r2 * TAU, 0.8 + r3 * 0.6, 0.8 + r4 * 0.5, [1, 1, 1]);
           else { const k = 0.6 + r3 * 0.2; pk[2].add(x, y0 - 0.15, z, r4 * TAU, 0.5 + r3 * 1.3, 0.4 + r4 * 0.9, [k, k * 0.97, k * 0.95]); }
           if (++nPlants >= maxT) break grid;
@@ -15439,6 +15451,15 @@ const World = (function () {
         herd(kx, kz, 3, cow, kr * 1.1); herd(x - 10, z + 8, 4, cow, 18); person(x + 3.5, z - 2, RH() * TAU);
         exclPush(x, z, r + 2); exclPush(kx, kz, kr + 1); nBld++;
       }
+      // stone cairns: on the edge of the escarpment by the finish and on the outside of some hairpins (the viewpoints), stones stacked into a cone
+      const RC = rng(3271), cairn = (x, z) => { const y = caGround(x, z), g = scen.get(x, z), n = 5 + Math.floor(RC() * 4);
+        for (let k = 0; k < n; k++) { const f = 1 - k / n, r = 0.25 + 0.75 * f; box(g, x + (RC() - 0.5) * 0.15, y - 0.1 + k * 0.32, z + (RC() - 0.5) * 0.15, r * 1.2, 0.36, r, RC() * TAU, vary([0.5, 0.47, 0.43], RC, 0.18)); }
+        exclPush(x, z, 1.6); nBld++; };
+      for (let k = 0; k < 6; k++) { const [x, z] = onSide(sFin - 120 + k * 45, k % 2 ? 1 : -1, 6 + RC() * 10); if (!excluded(x, z) && caSlope(x, z) < 0.5) cairn(x, z); }
+      (def.curves || []).forEach(([d, , turn], k) => { if (k % 4 !== 2) return; const [x, z] = onSide(sStart + d, -turn, 3.5); if (!excluded(x, z) && caSlope(x, z) < 0.6 && vrNear(x, z).dd > 1) cairn(x, z); });
+      // hikers on the shoulder (twos and threes, walking up or down)
+      for (const d of [700, 1600, 2450, 3550, 4250]) { const side = rpHash(d, 7) < 0.5 ? -1 : 1, dir = rpHash(d, 9) < 0.5 ? 0 : Math.PI, n = 2 + Math.floor(rpHash(d, 11) * 2);
+        for (let k = 0; k < n; k++) { const [x, z, i] = onSide(sStart + d + k * 1.6, side, 0.8 + (k % 2) * 0.6); if (!excluded(x, z)) person(x, z, T.hd[i] - Math.PI / 2 + dir); } }
       for (const b of blds) if (b.kind === 2 && rpHash(Math.round(b.x), Math.round(b.z)) < 0.12) smoke.push([b.x, caGround(b.x, b.z) + 4, b.z, 1]);   // (fires in a few of the huts at the top)
       sh.addTo(root, true); gt.addTo(root, true); for (const b of bz) b.addTo(root, true);
     }
