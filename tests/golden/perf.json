@@ -222,5 +222,12 @@
   "kverts": 1530,
   "maxKverts": 1670,
   "jsMs": 0.87
+ },
+ "lemmon": {
+  "calls": 263,
+  "maxCalls": 340,
+  "kverts": 896,
+  "maxKverts": 1128,
+  "jsMs": 1.21
  }
 }

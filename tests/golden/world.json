@@ -524,6 +524,25 @@
    "ao:MeshBasicMaterial": "bf4eccf9"
   }
  },
+ "lemmon": {
+  "meshes": 2777,
+  "verts": 1953346,
+  "instances": 112910,
+  "props": 245,
+  "crowd": 920,
+  "world": "f91682c5",
+  "propsHash": "f2770139",
+  "floor": "4a7a2f89/17220",
+  "groups": {
+   "-:MeshLambertMaterial": "5b8bb887",
+   "-:MeshBasicMaterial": "7c5ea3b2",
+   "-:MeshPhongMaterial": "ea64e78b",
+   "crowd:MeshLambertMaterial": "e22e26ae",
+   "ao:MeshBasicMaterial": "74738b35",
+   "tyremarks:MeshBasicMaterial": "cb89d695",
+   "roadwear:MeshLambertMaterial": "b530368b"
+  }
+ },
  "cpalace": {
   "meshes": 300,
   "verts": 382518,
