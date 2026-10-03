@@ -22301,6 +22301,9 @@ const World = (function () {
       const WO = { len: 1.4, amp: 0.7, refl: 0.5, land: 0.6, shal: 0.35, lap: 0.4, surf: 0 }, wMat = waterMat(tex, Object.assign({ color: 0x9fbccb }, WO));
       const geo = new THREE.PlaneGeometry(36000, 36000, 1, 1); geo.rotateX(-Math.PI / 2); const uv = geo.attributes.uv; for (let k = 0; k < uv.count; k++) uv.setXY(k, uv.getX(k) * 1500, uv.getY(k) * 1500);
       const m = new THREE.Mesh(geo, wMat); m.position.set(0, 0, 0); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); root.add(m); out.dyn.water = tex.water;
+      // the band along the shore near the circuit (the foam lapping at the quays and the beaches): the waterline on the ground grid
+      const bx0 = -900, bz0 = -300, bx1 = 1100, bz1 = 900, i0 = Math.max(0, Math.floor((bx0 - G.x0) / LBC)), i1 = Math.min(G.nx - 2, Math.ceil((bx1 - G.x0) / LBC)), j0 = Math.max(0, Math.floor((bz0 - G.z0) / LBC)), j1 = Math.min(G.nz - 2, Math.ceil((bz1 - G.z0) / LBC));
+      addShore(root, shoreBand(bx0, bz0, bx1, bz1, 0.015, waterline(lbGH, G.x0, G.z0, LBC, i0, i1, j0, j1, 0), 24, { F: 8 }), wMat, WO);
     }
 
 
