@@ -18941,7 +18941,7 @@ const World = (function () {
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }  function btGumGeo(kind) {   // Bathurst's gums (height 1): 0 near, 2 far: a pale trunk, darker and shedding low down, forking into three limbs, loose drooping clumps of blue-grey leaves at their ends; 1, 3 the wattles (auTreeGeo)
     if (kind === 1 || kind === 3) return auTreeGeo(kind);
-    const g = new GB(), R = rng(650 + kind), rs = ROCK_SMOOTH, far = kind === 2, n = far ? 4 : 6; ROCK_SMOOTH = true;
+    const g = new GB(), R = rng(650 + kind), rs = ROCK_SMOOTH, far = kind === 2, n = 4; ROCK_SMOOTH = true;   // (4-sided limbs: as light as the old gums, ~450 points a tree)
     const seg = (a, b, r0, r1, c0, c1) => {   // a tapered prism from a to b, its colour from c0 to c1
       const t = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], l = Math.hypot(...t), u = Math.abs(t[1] / l) < 0.9 ? [0, 1, 0] : [1, 0, 0];
       let v = [t[1] * u[2] - t[2] * u[1], t[2] * u[0] - t[0] * u[2], t[0] * u[1] - t[1] * u[0]]; const lv = Math.hypot(...v); v = v.map(q => q / lv);
@@ -18954,10 +18954,9 @@ const World = (function () {
     const lf = [[0.31, 0.4, 0.33], [0.26, 0.34, 0.28], [0.36, 0.42, 0.3], [0.3, 0.37, 0.36]];
     tips.forEach((t, k) => {
       if (!far) seg(fork, t, 0.016, 0.007, pale, cream);
-      const cl = far ? [[0, 0.02, 0, 0.17]] : [[0, 0.03, 0, 0.12], [0.07, -0.04, 0.05, 0.09], [-0.06, -0.06, -0.03, 0.085], [0.02, -0.12, 0.07, 0.07]];   // (the leaves hang: lower clumps beside the tip)
+      const cl = far ? [[0, 0.02, 0, 0.17]] : [[0, 0.02, 0, 0.13], [0.04, -0.09, 0.05, 0.09]];   // (the leaves hang: a lower clump beside the tip)
       for (const [dx, dy, dz, r] of cl) ico(g, t[0] + dx, t[1] + dy, t[2] + dz, r, 0.55, lf[(k + Math.round(r * 100)) % 4], R, 0.35);
     });
-    if (!far) for (const [x, y, z, r] of [[0.08, 0.62, -0.06, 0.08], [-0.07, 0.66, 0.08, 0.07]]) ico(g, x, y, z, r, 0.55, lf[1], R, 0.35);   // (a few clumps lower down the limbs)
     ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
@@ -20210,7 +20209,7 @@ const World = (function () {
           if (rd > 260) continue;
           if (rd > 70 && ((Math.floor(xx / 6.2) + Math.floor(zz / 6.2)) & 1)) continue;   // farther out every other spot, bigger trees
           const cl = nrLC(x, z), far = rd > 70;
-          const p = AU ? (cl === 1 ? 0.55 : cl === 2 ? 0.2 : 0.022) : cl === 1 ? 0.9 : cl === 2 ? 0.003 : cl === 3 ? 0.012 : 0.012;   // (Styria: class 2 is farmland; Bathurst: open eucalypt woods, lone gums in the paddocks)
+          const p = AU ? (cl === 1 ? 0.42 : cl === 2 ? 0.2 : 0.022) : cl === 1 ? 0.9 : cl === 2 ? 0.003 : cl === 3 ? 0.012 : 0.012;   // (Styria: class 2 is farmland; Bathurst: open eucalypt woods, lone gums in the paddocks)
           if (r1 > p) continue;
           if (rd < 48) { const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 3.5) continue; if (nn.i >= 0 && nn.dd < 8 && r2 < 0.4) continue; }
           if (excluded(x, z) || P.pad(x, z, 0) !== 0) continue;   // (not on the level pit complex either)
