@@ -18204,7 +18204,7 @@ const World = (function () {
     {
       const offs = [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8;
       const shade = (i, o) => { const rl = T.rl[i]; let k = 0.84 - 0.13 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; return [k, k, k * 1.02]; };
-      const wht = [0.95, 0.95, 0.92], gc = [0.7, 0.68, 0.63];
+      const wht = [0.95, 0.95, 0.92], gc = [0.66, 0.66, 0.65];   // (the shoulder: grey crushed rock)
       const vc = [-1, 1].map((side, si) => { const a = []; for (let i = 0; i < N; i++) { const bar = side > 0 ? T.br[i] : T.bl[i];
         a.push(vp[si][i].map(([o, y], k) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
           const wl = vp[si][i][2][1] < -2.6 && !(T.gap && T.gap[si][i]); if (wl && (k === 1 || k === 2)) { const q = 0.9 + 0.14 * rpHash(i >> 1, 53 + si); return k === 1 ? [0.64 * q, 0.62 * q, 0.58 * q] : [0.5 * q, 0.48 * q, 0.45 * q]; }   // (the wall's stone coping, its face)
@@ -18424,7 +18424,7 @@ const World = (function () {
       const poleO = [0.95, 0.4, 0.08], poleK = [0.09, 0.09, 0.1];
       for (const sp of poleSpots) {   // the snow poles just past the barrier line: tall, orange with black bands
         const [i, side] = sp, o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 0.42), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, y0 = Math.min(T.hy[i], vrGround(x, z)) - 0.15, g = scen.get(x, z), H = 3.4;
-        for (let b = 0; b < 6; b++) box(g, x, y0 + H * b / 6, z, 0.07, H / 6, 0.07, T.hd[i], b === 5 || b === 3 ? poleK : poleO, null, true);
+        for (let b = 0; b < 6; b++) box(g, x, y0 + H * b / 6, z, 0.09, H / 6, 0.09, T.hd[i], b === 5 || b === 3 ? poleK : poleO, null, true);
         nPole++; }
     }
 

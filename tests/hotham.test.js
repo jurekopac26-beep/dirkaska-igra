@@ -161,7 +161,36 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
     `${r.cars.filter(c => c.finished).length}/2 in ${t.toFixed(0)} s, people hit ${hits}, longest stand ${standMax.toFixed(1)} s, ${r.tf.veh.length} vehicles, ${nL}/${all} moving on their left`);
 }
 
-// 10. the medal times of the time trial (dry and wet): gold < silver < bronze, the rain slower; gold is the stock rally car on the autopilot x 1.01
+// 10. the run from the police: no checkpoint, no building (the chase from the start, the escape over the finish in the village), the player starts
+// on the left half of the road; whole runs on autopilot at the easy level end in an escape or an arrest, the autopilot gets away at least once in
+// three; and never the helicopter (def.noHeli), not even at the hardest level with the heat at its top
+{
+  const orig = Math.random, popts = (o) => Object.assign({ numAI: 0, playerGrid: 1, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 0, damage: 2, police: true }, o);
+  let heli = 0, heatMax = 0;
+  const runs = [[11, 0], [12, 0], [13, 0], [14, 3]].map(([seed, dif]) => {
+    Math.random = seeded(3);
+    const r = new C.Race(T, popts({ seed, difficulty: dif })), P = r.player, pol = r.pol, pc = pol.cars[0];
+    const st = { stage: pol.stage, chk: pol.chk, goal: pol.goal, chase: pc && pc.pol.mode === 'chase', left: P.q.d < -1 };
+    r.start();
+    let t = 0, k = 0, nan = false;
+    while (t < 900 && !P.finished && !pol.busted) {
+      Math.random = seeded(5000 + (++k));
+      C.aiControl(P, r, DT); r.step(DT); t += DT;
+      if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P);
+      if (!Number.isFinite(P.x + P.z)) nan = true;
+      if (pol.heli) heli++; heatMax = Math.max(heatMax, pol.heat || 0);
+    }
+    Math.random = orig;
+    return { seed, dif, st, nan, t, escaped: pol.escaped && !pol.busted && P.finished, busted: pol.busted, at: P.q.s - T.startS };
+  });
+  const easy = runs.filter(r => !r.dif);
+  check('police: the chase from the start on the left half, the escape over the finish in Hotham Heights; on autopilot at the easy level it gets away at least once in three; the patrol cars read POLICE',
+    def.police.label === 'POLICE' && runs.every(r => r.st.stage === 'chase' && !r.st.chk && !r.st.goal && r.st.chase && r.st.left && !r.nan && (r.escaped || r.busted)) && easy.some(r => r.escaped),
+    runs.map(r => `seed ${r.seed}/${r.dif}: ${r.escaped ? 'escaped' : r.busted ? 'busted' : '-'} in ${r.t.toFixed(0)} s at ${r.at.toFixed(0)} m`).join('; '));
+  check('police: never the helicopter on this road (def.noHeli), whatever the heat', def.noHeli === true && heli === 0, `heat up to ${heatMax.toFixed(1)}, helicopter frames ${heli}`);
+}
+
+// 11. the medal times of the time trial (dry and wet): gold < silver < bronze, the rain slower; gold is the stock rally car on the autopilot x 1.01
 {
   const M = def.medals, asc = (a) => Array.isArray(a) && a.length === 3 && a[0] < a[1] && a[1] < a[2], got = {};
   for (const rain of [false, true]) {
