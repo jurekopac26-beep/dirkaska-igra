@@ -507,6 +507,25 @@
    "roadwear:MeshLambertMaterial": "932c41c2"
   }
  },
+ "singapur": {
+  "meshes": 719,
+  "verts": 720865,
+  "instances": 7245,
+  "props": 194,
+  "crowd": 1442,
+  "world": "ebdffefe",
+  "propsHash": "589ae238",
+  "floor": "9857c825/9828",
+  "groups": {
+   "-:MeshPhongMaterial": "df09fce4",
+   "-:MeshLambertMaterial": "50c2d7f3",
+   "-:MeshBasicMaterial": "92560864",
+   "crowd:MeshLambertMaterial": "4bf8c5d6",
+   "ao:MeshBasicMaterial": "9ee6d6c3",
+   "tyremarks:MeshBasicMaterial": "16cfa6fd",
+   "roadwear:MeshLambertMaterial": "44f8b5b0"
+  }
+ },
  "jezero": {
   "meshes": 154,
   "verts": 591648,

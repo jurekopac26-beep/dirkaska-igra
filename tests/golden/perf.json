@@ -201,5 +201,12 @@
   "kverts": 1530,
   "maxKverts": 1670,
   "jsMs": 0.87
+ },
+ "singapur": {
+  "calls": 281,
+  "maxCalls": 410,
+  "kverts": 778,
+  "maxKverts": 913,
+  "jsMs": 1.64
  }
 }

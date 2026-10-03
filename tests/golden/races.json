@@ -1448,5 +1448,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "c6f02bfa502378f469a604da"
+ },
+ "singapur/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 266.47,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "5313a76f10f3a14f0ec65f6b"
+ },
+ "singapur/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 283.22,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "3b662e22b58c2c4b3643fa4e"
+ },
+ "singapur/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 233.74,
+  "spins": 0,
+  "walls": 6,
+  "rescues": 0,
+  "nan": false,
+  "digest": "65e703870aa0a0c366e2cfd2"
+ },
+ "singapur/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 236.71,
+  "spins": 1,
+  "walls": 5,
+  "rescues": 1,
+  "nan": false,
+  "digest": "f5330f1876f189c086f27a0c"
+ },
+ "singapur/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 268.96,
+  "spins": 0,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "3d4178292c5eb639c5403eda"
  }
 }
