@@ -4,9 +4,9 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // Circuit de Monaco on the real layout and scale (metres, origin = Sainte-Dévote, x east, z south): Boulevard Albert Ier (start) → Sainte Dévote →
   // Beau Rivage climb → Massenet → Casino → Mirabeau → Fairmont hairpin → Portier → tunnel → Nouvelle Chicane → Tabac → Piscine → Rascasse → Anthony Noghès.
   TRACK_DEFS.push({
-    id: 'monaco', name: 'Monako', theme: 'monaco', laps: 2, halfWidth: 5.8,
+    id: 'monaco', name: 'Monte Carlo, Monako', theme: 'monaco', laps: 2, halfWidth: 5.8,
     desc: 'Prava proga skozi Monako v pravem merilu: Sainte Dévote, vzpon do Casinoja, lasnica pri hotelu Fairmont, predor, šikana ob pristanišču, bazen in Rascasse.',
-    en: { name: 'Monaco', desc: 'The real circuit through Monaco at full scale: Sainte Dévote, the climb to the Casino, the Fairmont hairpin, the tunnel, the harbour chicane, the swimming pool and Rascasse.' },   // (the English page: Jezik · Language)
+    en: { name: 'Monte Carlo, Monaco', desc: 'The real circuit through Monaco at full scale: Sainte Dévote, the climb to the Casino, the Fairmont hairpin, the tunnel, the harbour chicane, the swimming pool and Rascasse.' },   // (the English page: Jezik · Language)
     points: [[-72,449],[-85,384],[-93,292],[-93,194],[-85,120],[-65,64],[-36,26],[0,3],[36,-6],[105,-6],[203,-6],[301,-2],[399,1],[483,-6],[546,-27],[603,-59],[652,-104],[684,-146],[712,-182],[750,-205],[791,-217],[831,-231],[869,-242],[897,-235],[913,-211],[925,-190],[934,-172],[951,-167],[964,-179],[967,-200],[974,-223],[990,-237],[1013,-244],[1043,-237],[1062,-217],[1055,-191],[1027,-162],[987,-125],[938,-84],[880,-43],[824,-6],[766,21],[693,39],[619,49],[546,54],[505,55],[487,65],[465,66],[444,59],[383,60],[301,64],[219,65],[145,65],[98,70],[72,87],[56,110],[42,132],[33,162],[19,208],[12,256],[3,292],[8,325],[16,361],[28,400],[39,431],[40,454],[23,472],[-5,477],[-35,474],[-59,463]],
     start: [-93,194], runoff: 0.4, inner: 3, side: 3, offSurface: 'paving',
     // named places: [HUD label, x, z, what the commentator may say there] (English lines: Sainte Devote, Noghes without accents for the voice)
