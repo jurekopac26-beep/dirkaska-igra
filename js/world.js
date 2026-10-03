@@ -13164,7 +13164,7 @@ const World = (function () {
           else if (sp === 3) { hgt = 11 + r4 * 8; wid = hgt * (0.85 + r2 * 0.2); col = r2 < 0.5 ? [1, 1, 1] : [0.9, 1.05, 0.95]; }
           else if (sp === 4) { hgt = 1.0 + r4 * 1.3; wid = 1.8 + r2 * 2.2; col = r2 < 0.35 ? [1.12, 1.08, 0.82] : [1, 1, 1]; }   // (some caragana yellower)
           else { hgt = 0.6 + r4 * 0.5; wid = 2.2 + r2 * 2.4; col = [1, 1, 1]; }
-          if (sp < 2) tk.add(x, y - 0.15, z, r1 * 70, wid * far, hgt * far, col); else hoPut(scen.get(x, z), tg[sp], x, y - 0.15, z, r1 * 70, wid * far, hgt * far, col);
+          tk[sp].add(x, y - 0.15, z, r1 * 70, wid * far, hgt * far, col);
           if (++nTrees >= maxT) break grid;
         }
       }
@@ -15762,7 +15762,7 @@ const World = (function () {
           else if (sp === 2) { hgt = 15 + r4 * 9; wid = hgt * (0.8 + r2 * 0.25); col = su ? [1, 1, 1] : (r2 < 0.4 ? [1.08, 1.2, 0.95] : r2 < 0.8 ? [1, 1, 1] : [0.86, 0.74, 0.66]); }
           else if (sp === 3) { const cedar = r2 < 0.3; hgt = (cedar ? 24 : 18) + r4 * 10; wid = hgt * (cedar ? 0.3 : 0.45 + r2 * 0.1); col = [0.88 + r3 * 0.2, 0.92 + r4 * 0.14, 0.9]; }
           else { hgt = 10 + r4 * 6; wid = hgt * (0.6 + r2 * 0.2); col = [1, 1, 1]; }
-          if (sp < 2) tk.add(x, y - 0.15, z, r1 * 70, wid * far, hgt * far, col); else hoPut(scen.get(x, z), tg[sp], x, y - 0.15, z, r1 * 70, wid * far, hgt * far, col);
+          tk[sp].add(x, y - 0.15, z, r1 * 70, wid * far, hgt * far, col);
           if (++nTrees >= maxT) break grid;
         }
       }
@@ -16853,7 +16853,7 @@ const World = (function () {
           else if (sp === 2) { hgt = (8 + r4 * 6) * shrink; wid = hgt * (0.8 + r2 * 0.3); col = [0.95 + r2 * 0.1, 0.95 + r3 * 0.1, 0.92]; }
           else if (sp === 3) { hgt = 6 + r4 * 6; wid = hgt * 0.6; col = [0.95 + r2 * 0.1, 0.95 + r2 * 0.1, 0.95 + r2 * 0.1]; }
           else { hgt = 0.8 + r4 * 1.3; wid = 2 + r2 * 3; col = [0.9 + r3 * 0.2, 0.95 + r4 * 0.1, 0.9]; }
-          if (sp < 2) tk.add(x, y - 0.15, z, r1 * 70, wid * far, hgt * far, col); else hoPut(scen.get(x, z), tg[sp], x, y - 0.15, z, r1 * 70, wid * far, hgt * far, col);
+          tk[sp].add(x, y - 0.15, z, r1 * 70, wid * far, hgt * far, col);
           if (++nTrees >= maxT) break grid;
         }
       }
@@ -17451,7 +17451,7 @@ const World = (function () {
           else if (sp === 3) { hgt = 3 + r4 * 3.2; wid = hgt * 1.1; col = [0.92 + r2 * 0.16, 1, 0.92]; }
           else if (sp === 4) { hgt = 14 + r4 * 12; wid = hgt * (0.85 + r2 * 0.2); col = [0.95 + r2 * 0.1, 0.97 + r4 * 0.06, 0.95]; nArauc++; }
           else { hgt = 2.2 + r4 * 2.6; wid = 2.4 + r2 * 2.4; col = [0.92 + r3 * 0.18, 0.98 + r4 * 0.1, 0.9]; }
-          if (sp < 2) tk.add(x, y - 0.15, z, r1 * 70, wid * far, hgt * far, col); else hoPut(scen.get(x, z), tg[sp], x, y - 0.15, z, r1 * 70, wid * far, hgt * far, col);
+          tk[sp].add(x, y - 0.15, z, r1 * 70, wid * far, hgt * far, col);
           if (++nTrees >= maxT) break grid;
         }
       }

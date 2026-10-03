@@ -222,5 +222,12 @@
   "kverts": 1530,
   "maxKverts": 1670,
   "jsMs": 0.87
+ },
+ "hotham": {
+  "calls": 227,
+  "maxCalls": 331,
+  "kverts": 733,
+  "maxKverts": 925,
+  "jsMs": 1.24
  }
 }
