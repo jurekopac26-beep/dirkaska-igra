@@ -225,9 +225,9 @@
  },
  "singapur": {
   "calls": 281,
-  "maxCalls": 410,
-  "kverts": 778,
-  "maxKverts": 913,
-  "jsMs": 1.64
+  "maxCalls": 409,
+  "kverts": 780,
+  "maxKverts": 911,
+  "jsMs": 0.88
  }
 }
