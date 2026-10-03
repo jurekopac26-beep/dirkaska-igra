@@ -23636,7 +23636,7 @@ const World = (function () {
               g.quadO(A, B2, C2, D2, (i & 1) ? col : col.map(v => v * 0.9), ins); g.quadO(D2, C2, F, E, top, ins); if (kindAt((i + N - 1) % N, side) !== 2) g.quadO(A, D2, E, Pt(i, side * (bi + 0.95), -0.05), col, ins); }
             prev = -1; pkd = k; fence[side > 0 ? 1 : 0][i] = k; continue; }
           const r = wallRow(gr, i, side); if (prev >= 0) gr.link(prev, r, 0, 4); prev = r; pkd = k; fence[side > 0 ? 1 : 0][i] = k; } }
-      addM(gr, rMat, true);
+      addM(gr, rMat, false);   // (low: their shadows hardly show, not worth a pass of their own)
     }
     { const W1 = [1, 1, 1];
       for (const side of [-1, 1]) { const fc = fence[side > 0 ? 1 : 0], bar = side > 0 ? T.br : T.bl; let acc = 0;
@@ -23708,7 +23708,34 @@ const World = (function () {
     // the lamps along the barriers: the street lights of the streets on the lap (every ~28 m, both sides, behind the fence), standing
     for (const side of [-1, 1]) for (let s = 6 + (side > 0 ? 14 : 0); s < L; s += 28) { const i = T.idx(s), bar = side > 0 ? T.br[i] : T.bl[i]; if (bar > W_(i) + 4) continue;
       const o = side * (bar + 1.6), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; if (bldIn(x, z, 0.5) || water(x, z)) continue;
-      dtFurn(furnC.get(x, z), 'lamp', x, gH(x, z), z, Math.atan2(-T.nz[i] * side, -T.nx[i] * side)); }
+      dtFurn(furnC.get(x, z), 'lamp', x, gH(x, z), z, Math.atan2(-T.nz[i] * side, -T.nx[i] * side));
+      { const g = furnC.get(x, z), y = gH(x, z), tx = T.tx[i], tz = T.tz[i], cb = ((s / 28) | 0) % 2 ? [0.1, 0.24, 0.52] : [0.72, 0.12, 0.12], wh = [0.92, 0.92, 0.9];   // the race's banners on the pole (no words: the city's colours, a white band)
+        for (const e of [-1, 1]) { const bx = x + tx * e * 0.42, bz = z + tz * e * 0.42; box(g, bx, y + 4.6, bz, 0.66, 2.2, 0.03, Math.atan2(tz, tx), cb); box(g, bx, y + 5.5, bz, 0.67, 0.22, 0.035, Math.atan2(tz, tx), wh); } } }
+    // the streets' manholes and storm drains (dark iron on the asphalt): on the lap and the cross streets near it
+    for (let s = 9; s < L; s += 23) { const i = T.idx(s), o = (crH(s, 1, 81) - 0.5) * W_(i) * 1.2, [x, z] = atSf(s, o), y = T.hy[i] + 0.047, g = mkC.get(x, z), mc = [0.2, 0.2, 0.21], n = 8;
+      for (let q = 0; q < n; q++) { const a0 = q / n * TAU, a1 = (q + 1) / n * TAU; g.triO([x, y, z], [x + Math.cos(a0) * 0.42, y, z + Math.sin(a0) * 0.42], [x + Math.cos(a1) * 0.42, y, z + Math.sin(a1) * 0.42], mc, [x, y - 1, z]); }
+      for (const sd of [-1, 1]) { if (crH(s, sd, 82) < 0.5) continue; const wi = W_(i), yy = T.hy[i] + 0.047, dc = [0.16, 0.16, 0.17], Q = (a, o) => { const [qx, qz] = atSf(s + a, sd * o); return [qx, yy, qz]; };   // (a drain's grate at the gutter)
+        g.quadUp(Q(4.5, wi - 0.55), Q(4.5, wi - 0.12), Q(5.5, wi - 0.12), Q(5.5, wi - 0.55), [dc, dc, dc, dc]); } }
+    // the race's marshals: posts every ~180 m behind the fences (a hut on a scaffold, the flag), the TV towers at the hairpin and at Turn 1
+    { const post = (s, side) => { const i = T.idx(s), bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 2.2), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; if (bldIn(x, z, 1.5) || water(x, z) || excluded(x, z)) return false;
+        const y = gH(x, z), g = scen.get(x, z), hd = T.hd[i], og = [0.94, 0.5, 0.1]; for (const e of [[-0.8, -0.6], [0.8, -0.6], [-0.8, 0.6], [0.8, 0.6]]) box(g, x + Math.cos(hd) * e[0] - Math.sin(hd) * e[1], y, z + Math.sin(hd) * e[0] + Math.cos(hd) * e[1], 0.08, 2.0, 0.08, 0, [0.6, 0.62, 0.64]);
+        box(g, x, y + 2.0, z, 2.0, 0.12, 1.6, hd, [0.5, 0.52, 0.55]); box(g, x, y + 2.12, z, 1.7, 1.9, 1.3, hd, og, [0.92, 0.92, 0.9]); box(g, x - T.nx[i] * side * 0.66, y + 3.0, z - T.nz[i] * side * 0.66, 1.2, 0.5, 0.02, hd, [0.16, 0.2, 0.26]);   // (the hut: orange, a window to the track)
+        exclPush(x, z, 2.5); return true; };
+      for (let s = 60; s < L; s += 180) for (let t = 0; t < 30; t += 6) if (post(s + t, ((s / 180) | 0) % 2 ? 1 : -1)) break;
+      const tower = (d, side) => { const s = sAt(d), i = T.idx(s), bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 4), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; if (bldIn(x, z, 2) || excluded(x, z)) return;
+        const y = gH(x, z), g = scen.get(x, z), sc = [0.66, 0.68, 0.7];
+        for (const [ex, ez] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) box(g, x + ex * 1.1, y, z + ez * 1.1, 0.1, 9, 0.1, 0, sc);
+        for (let h = 1.5; h < 9; h += 2.5) box(g, x, y + h, z, 2.3, 0.06, 2.3, 0, sc); box(g, x, y + 9, z, 2.6, 0.15, 2.6, 0, [0.4, 0.42, 0.45]); box(g, x, y + 9.15, z, 0.5, 0.6, 0.8, T.hd[i], [0.12, 0.12, 0.13]); exclPush(x, z, 3); };
+      tower(1380, 1); tower(1500, 1); tower(130, -1); tower(2050, 1); }
+    // two footbridges over the lap for the fans (steel trusses on towers with stairs, no names): on the avenue and on the riverfront
+    for (const [d, sp] of [[700, 0], [2130, 0]]) { const s = sAt(d), i = T.idx(s), hd = T.hd[i], nx = T.nx[i], nz = T.nz[i], tx = T.tx[i], tz = T.tz[i], wl = T.bl[i] + 2.5, wr = T.br[i] + 2.5, y0 = T.hy[i] + 6.0, g = scen.get(T.px[i], T.pz[i]);
+      const P2 = (o, a, y) => [T.px[i] + nx * o + tx * a, y, T.pz[i] + nz * o + tz * a], st = [0.24, 0.3, 0.36], dkc = [0.82, 0.83, 0.85];
+      if (bldIn(...P2(-wl, 0, 0).filter((v, q) => q !== 1), 2) || bldIn(...P2(wr, 0, 0).filter((v, q) => q !== 1), 2)) continue;
+      g.quadO(P2(-wl, -1.6, y0), P2(wr, -1.6, y0), P2(wr, 1.6, y0), P2(-wl, 1.6, y0), dkc, P2(0, 0, y0 - 2));   // the deck
+      g.quadO(P2(-wl, -1.6, y0 - 0.5), P2(wr, -1.6, y0 - 0.5), P2(wr, 1.6, y0 - 0.5), P2(-wl, 1.6, y0 - 0.5), st, P2(0, 0, y0 + 2));
+      for (const e of [-1.6, 1.6]) { g.quadO(P2(-wl, e, y0 - 0.5), P2(wr, e, y0 - 0.5), P2(wr, e, y0 + 1.3), P2(-wl, e, y0 + 1.3), st, P2(0, 0, y0)); }   // (the trusses' sides)
+      g.quadO(P2(-wl, -1.7, y0 + 2.4), P2(wr, -1.7, y0 + 2.4), P2(wr, 1.7, y0 + 2.4), P2(-wl, 1.7, y0 + 2.4), [0.9, 0.9, 0.92], P2(0, 0, y0));   // (the roof)
+      for (const o of [-wl, wr]) { const [cx, , cz] = P2(o, 0, 0), y = gH(cx, cz); box(g, cx, y, cz, 3.4, y0 + 2.4 - y, 3.4, hd, st, [0.9, 0.9, 0.92]); exclPush(cx, cz, 4); } }
 
     /* ---- START / FINISH: the gantry with the start lights over the start straight ---- */
     { const [x, z, h, i] = atS(sStart, 0), gy = T.hy[i], g = scen.get(x, z), span = Math.max(T.bl[i], T.br[i]) + 1.0, nx = T.nx[i], nz = T.nz[i], gray = [0.2, 0.22, 0.26];
@@ -23928,7 +23955,7 @@ const World = (function () {
     /* ---- the car parks: cars in rows on the mapped lots near the track, the stalls' lines ---- */
     let nCars = 0;
     { const cg = dtCarGeo(), ic = new IChunks(cg, matVC, 256), lines = mkC, PAL = [[0.85, 0.85, 0.86], [0.12, 0.12, 0.14], [0.55, 0.57, 0.6], [0.6, 0.08, 0.08], [0.1, 0.2, 0.45], [0.9, 0.9, 0.88], [0.3, 0.32, 0.34], [0.75, 0.62, 0.3], [0.2, 0.35, 0.25]];
-      for (const p of P.lu) { if (p.k !== 3) continue; let near = 1e9; for (const [x, z] of p.pts) near = Math.min(near, dtGroundD(x, z)); if (near > 110) continue;
+      for (const p of P.lu) { if (p.k !== 3) continue; let near = 1e9; for (const [x, z] of p.pts) near = Math.min(near, dtGroundD(x, z)); if (near > 90) continue;
         let bi = 0, bl = 0; for (let e = 0; e < p.pts.length; e++) { const [ax, az] = p.pts[e], [bx, bz] = p.pts[(e + 1) % p.pts.length], l = Math.hypot(bx - ax, bz - az); if (l > bl) { bl = l; bi = e; } }
         const [ax, az] = p.pts[bi], [bx, bz] = p.pts[(bi + 1) % p.pts.length], ux = (bx - ax) / bl, uz = (bz - az) / bl, vx = -uz, vz = ux, yaw = Math.atan2(vz, vx);
         let u0 = 1e9, u1 = -1e9, v0 = 1e9, v1 = -1e9; for (const [x, z] of p.pts) { const u = (x - ax) * ux + (z - az) * uz, v = (x - ax) * vx + (z - az) * vz; u0 = Math.min(u0, u); u1 = Math.max(u1, u); v0 = Math.min(v0, v); v1 = Math.max(v1, v); }
@@ -23936,7 +23963,7 @@ const World = (function () {
           const vc = v + half * 2.7, x = ax + ux * u + vx * vc, z = az + uz * u + vz * vc; if (!dtInPoly(p.pts, x, z) || bldIn(x, z, 1) || excluded(x, z) || dtStreetAt(x, z, 0.5)) continue; const bq = barAt(x, z); if (bq.ad < bq.lim + 2) continue;
           { const y = gH(x, z) + 0.06, a1 = [x + ux * 1.35 - vx * 2.6 * half, y, z + uz * 1.35 - vz * 2.6 * half], a2 = [x + ux * 1.35 + vx * 2.6 * half, y, z + uz * 1.35 + vz * 2.6 * half], wl = [0.92, 0.92, 0.9];
             lines.get(x, z).quadUp([a1[0] - ux * 0.06, y, a1[2] - uz * 0.06], [a1[0] + ux * 0.06, y, a1[2] + uz * 0.06], [a2[0] + ux * 0.06, y, a2[2] + uz * 0.06], [a2[0] - ux * 0.06, y, a2[2] - uz * 0.06], [wl, wl, wl, wl]); }
-          if (crH(Math.round(x * 2), Math.round(z * 2), 61) > 0.6 * dens || dtGroundD(x, z) > 130) continue;
+          if (crH(Math.round(x * 2), Math.round(z * 2), 61) > 0.45 * dens || dtGroundD(x, z) > 110) continue;
           ic.add(x, gH(x, z), z, -(yaw + (half > 0 ? Math.PI : 0)) + (crH(x, z, 62) - 0.5) * 0.06, 1, 1, PAL[Math.floor(crH(x, z, 63) * PAL.length)]); nCars++; } }
       ic.addTo(root, false); }
 
@@ -23989,7 +24016,7 @@ const World = (function () {
   }
   function dtTreeGeo(kind) {   // unit trees (height 1): 0 a honey locust (an airy, open crown of light green), 1 a linden or maple (round, dense), 2 a pine
     const g = new GB(), Rr = rng(900 + kind), bk = [0.34, 0.28, 0.22], rs = ROCK_SMOOTH; ROCK_SMOOTH = true;
-    cyl(g, 0, -0.02, 0, 0.035, kind === 2 ? 0.6 : 0.45, 5, bk, null, 0.022);
+    cyl(g, 0, -0.02, 0, 0.035, kind === 2 ? 0.6 : 0.45, 4, bk, null, 0.022);
     if (kind === 0) { for (const [x, y, z, r] of [[0.1, 0.64, 0.05, 0.26], [-0.1, 0.76, -0.04, 0.24]]) ico(g, x, y, z, r, 0.75, [0.4, 0.53, 0.25], Rr, 0.35); }
     else if (kind === 1) ico(g, 0, 0.66, 0, 0.38, 0.95, [0.25, 0.38, 0.18], Rr, 0.22);
     else { cone(g, 0, 0.3, 0, 0.26, 0.45, 7, [0.16, 0.3, 0.18], [0.2, 0.34, 0.2], 0); cone(g, 0, 0.55, 0, 0.2, 0.45, 7, [0.18, 0.32, 0.19], [0.22, 0.36, 0.2], 0); }
