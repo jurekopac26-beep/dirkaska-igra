@@ -20,8 +20,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     en: { name: 'Hong Kong, China', desc: "A street circuit by Victoria Harbour in the heart of Hong Kong, at full scale (the 2016-2019 layout): 1.86 km and ten turns. A hairpin at the end of the start straight, a long straight along the waterfront, a chicane among the skyscrapers, a lap of the roundabout by the ferry piers and a second hairpin by the big observation wheel. Traffic keeps left; traffic lights and street furniture at the junctions can be knocked over. Data: © OpenStreetMap (ODbL)." },   // (the English page: Jezik · Language)
     start: [0, 0], runoff: 0.35, inner: 2.2, side: 1.6, realKm: 1.86, leftHand: true, noBirds: true, offSurface: 'paving',
     // the junctions: the barrier moves back into each side street ([from, to, side, metres], metres after the start line); the hairpin's escape road
-    wide: [[218,262,-1,7],[466,483,1,3.5],[467,483,-1,8],[705,721,-1,8],[831,853,-1,8],[831,863,1,8],[963,992,-1,8],[1060,1076,1,4.5],[1065,1079,-1,8],[1088,1102,-1,8],[1469,1486,-1,8]],
-    pit: [-15,-235,75,-40,55], pitRow: [-130, 50],   // pit lane on the left (in the event space): [centre offset (negative: left), from, to, the player's box, way in]; the entry on the outside of Turn 9
+    wide: [[218,262,-1,7],[466,483,1,3.5],[467,483,-1,8],[705,721,-1,8],[831,853,-1,8],[963,992,-1,8],[1065,1079,-1,8],[1088,1102,-1,8]],
+    pit: [-15,-235,110,-30,55], pitRow: [-58, 66],   // pit lane on the left (in the event space): [centre offset (negative: left), from, to, the player's box, way in]; the entry on the outside of Turn 9
     sectors: [620, 1240],
     // named places: the turns by their numbers only ([HUD label, x, z, the commentator's lines]); the commentator alone ({ hud: false })
     names: [["Zavoj 1",233.5,78.1,["Turn one, the hairpin at the end of the straight!","Hard on the brakes for the hairpin!","Round the first hairpin, full lock!"]],

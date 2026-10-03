@@ -1569,13 +1569,13 @@ const Core = (function () {
       rbstack: { m: 78, rh: 0.9, rb: 1.1,  h0: 0.85,  breaks: 'rbale', parts: [[-0.66, -0.425, 0], [0.66, -0.425, 0], [0, 0.425, 0]], pf: [[1.1, 0.6], [1.0, 0.9], [0.8, 2.4]] },
       post:   { m: 4,  rh: 0.14, rb: 0.62, h0: 0.55,  e: 0.3,  mu: 0.6,  lift: 1.0,  I: 0.4,  pts: boxPts(0.07, 0.55, 0.07) },   // roadside post (stebriček): light, snaps over and cartwheels away
       // street furniture at a town circuit's junctions (dmg: a little damage to the car from a hard knock)
-      tlight: { m: 24, rh: 0.16, rb: 1.75, h0: 1.7,   e: 0.2,  mu: 0.6,  lift: 0.25, I: 20,   dmg: 0.006, pts: boxPts(0.12, 1.7, 0.16) },   // traffic light on its pole (semafor)
+      tlight: { m: 16, rh: 0.16, rb: 1.75, h0: 1.7,   e: 0.2,  mu: 0.6,  lift: 0.25, I: 20,   dmg: 0.0012, pts: boxPts(0.12, 1.7, 0.16) },   // traffic light on its pole (semafor)
       sign:   { m: 9,  rh: 0.12, rb: 1.25, h0: 1.2,   e: 0.25, mu: 0.6,  lift: 0.4,  I: 4.5,  pts: boxPts(0.05, 1.2, 0.3) },     // road sign on its post (znak)
       bollard: { m: 12, rh: 0.13, rb: 0.5, h0: 0.45,  e: 0.25, mu: 0.6,  lift: 0.6,  I: 0.8,  pts: cylPts(0.13, -0.45, 0.45, 6) },   // bollard (stebriček na pločniku)
-      bin:    { m: 14, rh: 0.3,  rb: 0.58, h0: 0.5,   e: 0.25, mu: 0.6,  lift: 0.5,  I: 1.4,  pts: cylPts(0.3, -0.5, 0.5, 6) },     // litter bin (smetnjak)
-      hydrant: { m: 30, rh: 0.2, rb: 0.45, h0: 0.38,  e: 0.2,  mu: 0.7,  lift: 0.3,  I: 1.0,  dmg: 0.008, pts: cylPts(0.2, -0.38, 0.38, 6) },   // fire hydrant
-      cabinet: { m: 55, rh: 0.5, rb: 0.82, h0: 0.65,  e: 0.15, mu: 0.7,  lift: 0.25, I: 9,    dmg: 0.008, pts: boxPts(0.45, 0.65, 0.25) },   // roadside electrical cabinet (omarica)
-      rail:   { m: 20, rh: 0.5,  rb: 1.15, h0: 0.55,  e: 0.2,  mu: 0.6,  lift: 0.35, I: 7,    pts: boxPts(1.0, 0.55, 0.04) },     // a panel of pedestrian guard rail (ograja ob pločniku)
+      bin:    { m: 9,  rh: 0.3,  rb: 0.58, h0: 0.5,   e: 0.25, mu: 0.6,  lift: 0.5,  I: 1.4,  pts: cylPts(0.3, -0.5, 0.5, 6) },     // litter bin (smetnjak)
+      hydrant: { m: 20, rh: 0.2, rb: 0.45, h0: 0.38,  e: 0.2,  mu: 0.7,  lift: 0.3,  I: 1.0,  dmg: 0.0015, pts: cylPts(0.2, -0.38, 0.38, 6) },   // fire hydrant
+      cabinet: { m: 22, rh: 0.5, rb: 0.82, h0: 0.65,  e: 0.15, mu: 0.7,  lift: 0.25, I: 9,    dmg: 0.0015, pts: boxPts(0.45, 0.65, 0.25) },   // roadside electrical cabinet (omarica)
+      rail:   { m: 12, rh: 0.5,  rb: 1.15, h0: 0.55,  e: 0.2,  mu: 0.6,  lift: 0.35, I: 7,    pts: boxPts(1.0, 0.55, 0.04) },     // a panel of pedestrian guard rail (ograja ob pločniku)
     };
   })();
   const _pq = {};
@@ -1624,7 +1624,7 @@ const Core = (function () {
       race.propFx(b, vrel);
       const wl = Math.hypot(b.wx, b.wy, b.wz); if (wl > 14) { b.wx *= 14 / wl; b.wy *= 14 / wl; b.wz *= 14 / wl; }
       propFeel(c, K.m, vrel, b.kind);
-      if (K.dmg && vrel > 5) applyDamage(c, (vrel - 5) * K.dmg, (px - c.x) * ch + (pz - c.z) * sh, -(px - c.x) * sh + (pz - c.z) * ch);   // (the heavy street furniture: a little damage where it hit)
+      if (K.dmg && vrel > 5 && !b.hurt) b.hurt = 1, applyDamage(c, (vrel - 5) * K.dmg, (px - c.x) * ch + (pz - c.z) * sh, -(px - c.x) * sh + (pz - c.z) * ch);   // (the heavy street furniture: a little damage where it hit)
       return;
     }
   }

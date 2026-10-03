@@ -18367,7 +18367,8 @@ const World = (function () {
      the side street, and the junction's own furniture (traffic lights, signs, bollards, bins, hydrants, cabinets, guard rails) is left
      standing inside: the cars knock it over (Core's props). Seen from the two phone cameras (iso, chase), from 45-55 m up: the far side
      of the harbour and the hills lie in the haze, so they are not built. */
-  const HK_ROAD = [6.5, 5.5, 5.0, 4.0, 3.4, 2.4];   // the half width of a carriageway by road class (trunk .. service), m
+  const HK_ROAD = [6.5, 5.5, 5.0, 4.0, 3.4, 2.4];
+  let HK_IN_ROAD = null;   // (buildHongKong: is a point in a street other than the one given)   // the half width of a carriageway by road class (trunk .. service), m
   function hkPts(a, k0) { const o = []; for (let k = k0 || 0; k + 1 < a.length; k += 2) o.push([a[k] / 2, a[k + 1] / 2]); return o; }   // (half metres -> [x, z])
   function hkFacadeTex(kind) {   // a facade picture, one window bay x one floor a tile (the lit windows at night: the blue of the glass, Render.litWindows)
     const c = document.createElement('canvas'); c.width = 64; c.height = 64; const g = c.getContext('2d');
@@ -18395,7 +18396,7 @@ const World = (function () {
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 ouCam;\nuniform vec3 ouCar;\nvarying vec3 vOuW;')
         .replace('void main() {', 'void main() {\n' +
           '  vec3 ouD = ouCar - ouCam; float ouU = clamp( dot( vOuW - ouCam, ouD ) / max( dot( ouD, ouD ), 1.0 ), 0.0, 1.0 );\n' +
-          '  float ouR = mix( 3.0, 11.0, ouU ), ouF = smoothstep( ouR, ouR * 0.6, length( vOuW - ouCam - ouD * ouU ) ) * step( ouU, 0.95 ) * step( ouCar.y + 1.6, vOuW.y );\n' +
+          '  float ouR = mix( 9.0, 26.0, ouU ), ouF = smoothstep( ouR, ouR * 0.6, length( vOuW - ouCam - ouD * ouU ) ) * step( ouU, 0.95 ) * step( ouCar.y + 1.6, vOuW.y );\n' +
           '  vec2 ouQ = mod( floor( gl_FragCoord.xy ), 4.0 ), ouA = mod( ouQ, 2.0 ), ouB = floor( ouQ * 0.5 );\n' +
           '  if ( ouF * 0.95 > ( 4.0 * ( 2.0 * mod( ouA.x + ouA.y, 2.0 ) + ouA.y ) + 2.0 * mod( ouB.x + ouB.y, 2.0 ) + ouB.y + 0.5 ) / 16.0 ) discard;');
     };
@@ -18440,7 +18441,7 @@ const World = (function () {
     const inBld = (x, z) => { for (const b of bld) { if (b.mh > 3) continue; const p = b.p; if (inPoly(p, x, z)) return true; } return false; };
     const trackClear = (x, z, m) => clearance(x, z) > (m || 0);   // past the barriers (World.clearance: the nearest sample's barrier)
     const roads = H.roads.map(a => ({ c: a[0], hw: HK_ROAD[a[0]], p: hkPts(a, 1) }));
-    const scen = new Chunks(256), facG = [new Chunks(600, true), new Chunks(600, true), new Chunks(600, true)];
+    const scen = new Chunks(256), facG = [new Chunks(4000, true), new Chunks(4000, true), new Chunks(4000, true)];   // (a few thousand vertices: one mesh a style)
     const one = [1, 1, 1];
 
     /* ---- the ground: the island's land (pale paving: the pavements and plazas), a concrete sea wall down into the water, the harbour ---- */
@@ -18478,20 +18479,29 @@ const World = (function () {
        yellow line along the kerb; zebra and signal crossings where the map has them ---- */
     const crossings = hkPts(H.furn.cross || []), signals = hkPts(H.furn.sig || []);
     {
-      const ga = new GB(true), gk = new GB(), gm = new GB(), asp = [0.9, 0.9, 0.9], kc = [0.74, 0.73, 0.7], yl = [0.92, 0.75, 0.16], wl = [0.93, 0.93, 0.9];
-      const seg = (p, q, hw0, hw1, y, g, col, uv) => {   // a quad from p to q, hw0 to the left .. hw1 to the right of its direction
-        const dx = q[0] - p[0], dz = q[1] - p[1], l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l;
+      const gaC = new Chunks(400, true), gmC = new Chunks(400), asp = [0.9, 0.9, 0.9], kc = [0.74, 0.73, 0.7], yl = [0.92, 0.75, 0.16], wl = [0.93, 0.93, 0.9];
+      const seg = (p, q, hw0, hw1, y, gc, col, uv) => {   // a quad from p to q, hw0 to the left .. hw1 to the right of its direction (gc: the chunks it goes into)
+        const g = gc.get(p[0], p[1]), dx = q[0] - p[0], dz = q[1] - p[1], l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l;
         const A = [p[0] + nx * hw0, y, p[1] + nz * hw0], B = [p[0] + nx * hw1, y, p[1] + nz * hw1], C = [q[0] + nx * hw1, y, q[1] + nz * hw1], D = [q[0] + nx * hw0, y, q[1] + nz * hw0];
         if (uv) g.quadUp(A, B, C, D, [col, col, col, col], [A, B, C, D].map(v => [v[0] / 8, -v[2] / 8])); else g.quadUp(A, B, C, D, [col, col, col, col]); };
+      const segH = new Map(), SH = 24;   // the streets' segments, hashed: a line of one street stops where it runs into another (a junction)
+      for (const r of roads) for (let k = 0; k + 1 < r.p.length; k++) { const p = r.p[k], q = r.p[k + 1]; for (const [x, z] of [p, q, [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2]]) { const key = Math.floor(x / SH) + ',' + Math.floor(z / SH); let Lq = segH.get(key); if (!Lq) segH.set(key, Lq = []); Lq.push([p, q, r.hw, r]); } }
+      const inOther = (x, z, self, pad) => { for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const Lq = segH.get((Math.floor(x / SH) + a) + ',' + (Math.floor(z / SH) + b)); if (!Lq) continue;
+        for (const [p, q, hw, r] of Lq) { if (r === self) continue; const vx = q[0] - p[0], vz = q[1] - p[1], l2 = vx * vx + vz * vz || 1, t = clamp(((x - p[0]) * vx + (z - p[1]) * vz) / l2, 0, 1); if (Math.hypot(x - p[0] - vx * t, z - p[1] - vz * t) < hw + pad) return true; } } return false; };
+      HK_IN_ROAD = inOther;
       for (const r of roads) {
         const P = r.p, hw = r.hw;
         for (let k = 0; k + 1 < P.length; k++) {
           const p = P[k], q = P[k + 1], len = Math.hypot(q[0] - p[0], q[1] - p[1]); if (len < 0.05) continue;
           const ext = (k + 1 < P.length - 1) ? Math.min(hw * 0.6, 3) : 0, dx = (q[0] - p[0]) / len, dz = (q[1] - p[1]) / len, q2 = [q[0] + dx * ext, q[1] + dz * ext];   // (overlapping a little at the joints: no gaps in the bends)
-          seg(p, q2, -hw, hw, 0.0, ga, asp, true);
-          if (r.c <= 4) for (const sd of [-1, 1]) seg(p, q, sd * hw, sd * (hw + 0.25), 0.012, gm, kc);   // the kerb's face, pale
-          if (r.c <= 3) seg(p, q, -hw + 0.35, -hw + 0.5, 0.008, gm, yl);   // the yellow line along the near-side kerb
-          if (r.c <= 2 && hw >= 4.5) for (let t = 0; t + 3 < len; t += 9) { const a = [p[0] + dx * t, p[1] + dz * t], b = [p[0] + dx * (t + 3), p[1] + dz * (t + 3)]; seg(a, b, -0.07, 0.07, 0.008, gm, wl); }   // the lane line
+          seg(p, q2, -hw, hw, 0.0, gaC, asp, true);
+          const at = (t) => [p[0] + dx * t, p[1] + dz * t], runs = [-1, -1, -1];   // (each line in runs of 2 m pieces, drawn as one quad a run)
+          const line = (k, on, t, t1, draw) => { if (on && runs[k] < 0) runs[k] = t; if ((!on || t1 >= len - 0.01) && runs[k] >= 0) { draw(at(runs[k]), at(on ? t1 : t)); runs[k] = -1; } };
+          for (let t = 0; t < len - 0.01; t += 2) { const t1 = Math.min(len, t + 2), mx = p[0] + dx * (t + t1) / 2, mz = p[1] + dz * (t + t1) / 2;
+            if (r.c <= 4) [-1, 1].forEach((sd, k) => line(k, !inOther(mx - dz * sd * (hw + 0.1), mz + dx * sd * (hw + 0.1), r, 0), t, t1, (a, b) => seg(a, b, sd * hw, sd * (hw + 0.25), 0.012, gmC, kc)));   // the kerb's face, pale
+            if (r.c <= 3) line(2, !inOther(mx + dz * (hw - 0.4), mz - dx * (hw - 0.4), r, 0.3), t, t1, (a, b) => seg(a, b, -hw + 0.35, -hw + 0.5, 0.008, gmC, yl));   // the yellow line along the near-side kerb
+            if (r.c <= 2 && hw >= 4.5 && Math.floor(t / 2) % 4 === 0 && !inOther(mx, mz, r, 0.5)) { const a = at(t); seg(a, [a[0] + dx * Math.min(3, t1 - t + 1), a[1] + dz * Math.min(3, t1 - t + 1)], -0.07, 0.07, 0.008, gmC, wl); }   // the lane line
+          }
         }
       }
       // crossings: zebras (white bars across the road) and the signal crossings (two rows of studs: a pair of broken lines), across the nearest street
@@ -18499,10 +18509,10 @@ const World = (function () {
       for (const [x, z] of crossings) {
         const nr = nearestRoad(x, z); if (!nr) continue;
         const sig = signals.some(([sx, sz]) => Math.hypot(sx - x, sz - z) < 30), ux = nr.ux, uz = nr.uz, hw = nr.r.hw;
-        if (sig) for (const o of [-1.6, 1.6]) for (let a = -hw; a < hw - 0.3; a += 0.9) { const p = [nr.cx + ux * o - uz * a, nr.cz + uz * o + ux * a], q = [p[0] - uz * 0.5, p[1] + ux * 0.5]; seg([p[0] - ux * 0.09, p[1] - uz * 0.09], [q[0] - ux * 0.09, q[1] - uz * 0.09], 0, 0.18, 0.016, gm, wl); }
-        else for (let a = -hw + 0.3; a < hw - 0.3; a += 1.1) { const p = [nr.cx - uz * a - ux * 1.5, nr.cz + ux * a - uz * 1.5], q = [p[0] + ux * 3, p[1] + uz * 3]; seg(p, q, -0.28, 0.28, 0.016, gm, wl); }
+        if (sig) for (const o of [-1.6, 1.6]) for (let a = -hw; a < hw - 0.3; a += 0.9) { const p = [nr.cx + ux * o - uz * a, nr.cz + uz * o + ux * a], q = [p[0] - uz * 0.5, p[1] + ux * 0.5]; seg([p[0] - ux * 0.09, p[1] - uz * 0.09], [q[0] - ux * 0.09, q[1] - uz * 0.09], 0, 0.18, 0.016, gmC, wl); }
+        else for (let a = -hw + 0.3; a < hw - 0.3; a += 1.1) { const p = [nr.cx - uz * a - ux * 1.5, nr.cz + ux * a - uz * 1.5], q = [p[0] + ux * 3, p[1] + uz * 3]; seg(p, q, -0.28, 0.28, 0.016, gmC, wl); }
       }
-      addM(ga, aMat); addM(gm, lMat);
+      gaC.addTo(root, aMat, false, true); gmC.addTo(root, lMat, false, true);
     }
 
     /* ---- the course: the asphalt between the edges (the racing line a little darker), the rest of the carriageway out to the blocks, the
@@ -18538,9 +18548,10 @@ const World = (function () {
         else for (let a = -w + 0.4; a < w - 0.3; a += 1.1) { const p = atSf(s0 - 1.5, a - 0.28), p2 = atSf(s0 - 1.5, a + 0.28), p3 = atSf(s0 + 1.5, a + 0.28), p4 = atSf(s0 + 1.5, a - 0.28); gl.quadUp([p[0], 0.036, p[1]], [p2[0], 0.036, p2[1]], [p3[0], 0.036, p3[1]], [p4[0], 0.036, p4[1]], [wl, wl, wl, wl]); }
         exclPush(x, z, 2); }
       // kerbs: red and white on the inside of every bend (and the outside of the hairpins), raised a little towards their outer edge
+      const kmax = (i) => { let m = 0; for (let d = -8; d <= 8; d++) m = Math.max(m, Math.abs(T.k[(i + d + N) % N])); return m; };
       for (const side of [-1, 1]) { let pk = -1;
         const rk = new RB(true);
-        for (let ii = 0; ii <= N; ii++) { const i = ii % N, k = T.k[i], on = T.curb[i] && (side * k > 0 || Math.abs(k) > 1 / 14);
+        for (let ii = 0; ii <= N; ii++) { const i = ii % N, k = T.k[i], on = T.curb[i] && ((side * k > 0 && kmax(i) > 1 / 70) || Math.abs(k) > 1 / 14);
           if (!on) { pk = -1; continue; }
           const kp = side > 0 ? [Pt(i, w - 0.02, 0.04), Pt(i, w + 1.1, 0.085)] : [Pt(i, -(w + 1.1), 0.085), Pt(i, -w + 0.02, 0.04)];
           const r = rk.row(kp, [one, one], side > 0 ? [[0, ii * ds / 3], [1, ii * ds / 3]] : [[1, ii * ds / 3], [0, ii * ds / 3]]); if (pk >= 0) rk.link(pk, r, 0, 1); pk = r; }
@@ -18601,7 +18612,8 @@ const World = (function () {
        guard rail panels along the kerb, now and then a hydrant or a cabinet. The traffic lights the map has inside the course stay too ---- */
     const PR = out.props, qq = {};
     const fits = (x, z, rh) => { const n = nearest(x, z); if (n.i < 0) return false; const a = Math.abs(n.lat); return a > w + 0.55 + rh && a < n.bar - 0.35 - rh && !PR.some(p => Math.hypot(p.x - x, p.z - z) < 1.1 + rh); };
-    const put = (kind, x, z, yaw, rh) => { if (!fits(x, z, rh)) return false; PR.push({ kind, x, z, yaw, col: 0, i: nearest(x, z).i }); exclPush(x, z, 1.2); return true; };
+    const sigFall = [];   // (a junction's traffic light left out past the blocks: a standing one there)
+    const put = (kind, x, z, yaw, rh) => { if (!fits(x, z, rh)) { if (kind === 'tlight' && clearance(x, z) > 0.7) sigFall.push([x, z, yaw]); return false; } PR.push({ kind, x, z, yaw, col: 0, i: nearest(x, z).i }); exclPush(x, z, 1.2); return true; };
     let nJ = 0;
     for (const [a, b, side, m, cl] of H.jn) {
       const big = cl <= 3, h0 = (k) => rpHash(Math.round(a * 7 + side), k);
@@ -18611,11 +18623,11 @@ const World = (function () {
         if (big) put('tlight', x + nx * 0.2, z + nz * 0.2, dir < 0 ? hd + Math.PI : Math.atan2(nz, nx) + Math.PI, 0.16);
         for (let k = 1; k <= 3; k++) put('bollard', x + nx * (0.9 + k * 1.1) - tx * dir * 0.6, z + nz * (0.9 + k * 1.1) - tz * dir * 0.6, 0, 0.13);   // bollards round the corner of the pavement
         for (let k = 0; k < 2; k++) { const a2 = -dir * (2.4 + k * 2.05); put('rail', x + tx * a2 + nx * 0.15, z + tz * a2 + nz * 0.15, hd, 0.5); }   // guard rail along the kerb before the corner
-        const r = h0(dir + 5);
-        if (r < 0.45) put('bin', x - tx * dir * 1.4 + nx * 1.6, z - tz * dir * 1.4 + nz * 1.6, 0, 0.3);
-        else if (r < 0.7 && big) put('hydrant', x - tx * dir * 1.0 + nx * 1.3, z - tz * dir * 1.0 + nz * 1.3, 0, 0.2);
-        else if (big) put('cabinet', x - tx * dir * 2.2 + nx * 1.8, z - tz * dir * 2.2 + nz * 1.8, hd, 0.5);
-        if (big || r > 0.5) put('sign', x - tx * dir * 0.6 + nx * 0.9, z - tz * dir * 0.6 + nz * 0.9, dir < 0 ? hd + Math.PI : hd, 0.12);
+        const r = h0(dir + 5), spot = (along, out) => [x - tx * dir * along + nx * out, z - tz * dir * along + nz * out];
+        { const [sx, sz] = spot(-1.6, 0.6); put('sign', sx, sz, dir < 0 ? hd + Math.PI : hd, 0.12); }   // the keep-left sign on the corner
+        const tryPut = (kind, rh, yaw, L) => { for (const [al, ou] of L) { const [px, pz] = spot(al, ou); if (put(kind, px, pz, yaw, rh)) return; } };
+        tryPut(r < 0.5 ? 'bin' : 'hydrant', 0.3, r * 6, [[0.9, 2.0], [1.5, 3.2], [-0.9, 1.4], [6.5, 2.0], [2.5, 4.4]]);
+        if (big) tryPut(r < 0.5 ? 'cabinet' : 'bin', 0.5, hd, [[3.0, 3.6], [5.0, 4.2], [7.0, 3.0], [1.0, 5.0]]);
       };
       corner(a + 3.5, -1); corner(b - 3.5, 1); nJ++;
     }
@@ -18625,15 +18637,19 @@ const World = (function () {
     /* ---- the street furniture past the blocks (static): lamp posts, the guard rails along the kerbs, traffic lights, bus shelters with their
        benches, signs; red taxis parked by the kerbs of the closed streets ---- */
     {
-      const lampGeo = (() => { const g = new GB(), c = [0.55, 0.57, 0.6]; cyl(g, 0, 0, 0, 0.11, 9.5, 6, c, c, 0.08); box(g, 0.9, 9.3, 0, 1.9, 0.12, 0.12, 0, c, c); box(g, 1.85, 9.0, 0, 0.7, 0.25, 0.32, 0, [0.3, 0.3, 0.32], [0.95, 0.94, 0.85]); return g.geometry(); })();
-      const sigGeo = (() => { const g = new GB(), p = [0.24, 0.25, 0.27], k = [0.08, 0.08, 0.09]; cyl(g, 0, 0, 0, 0.08, 3.4, 6, p, p); box(g, 0.16, 2.25, 0, 0.26, 1.05, 0.34, 0, k, k);
-        [[1, 0.12, 0.1], [1, 0.72, 0.1], [0.15, 0.95, 0.35]].forEach((c, n) => box(g, 0.3, 2.97 - n * 0.32, 0, 0.03, 0.2, 0.2, 0, c, c)); return g.geometry(); })();
-      const taxiGeo = (() => { const g = new GB(), red = [0.78, 0.1, 0.1], sil = [0.82, 0.83, 0.85], gl = [0.15, 0.18, 0.22], tyre = [0.06, 0.06, 0.07];
-        box(g, 0, 0.25, 0, 4.6, 0.75, 1.72, 0, red, red); box(g, -0.2, 1.0, 0, 2.6, 0.58, 1.56, 0, gl, sil); box(g, 0.4, 1.58, 0, 0.36, 0.14, 0.5, 0, [0.95, 0.9, 0.3], [0.95, 0.9, 0.3]);
-        for (const [x, z] of [[1.4, 0.8], [1.4, -0.8], [-1.45, 0.8], [-1.45, -0.8]]) box(g, x, 0, z, 0.66, 0.6, 0.22, 0, tyre, tyre); return g.geometry(); })();
-      const shelGeo = (() => { const g = new GB(), c = [0.5, 0.56, 0.6], gl = [0.62, 0.72, 0.78], rf = [0.82, 0.84, 0.86]; box(g, 0, 2.5, 0, 6, 0.15, 2.0, 0, rf, rf);
-        for (const x of [-2.8, 2.8]) for (const z of [-0.8, 0.8]) box(g, x, 0, z, 0.1, 2.5, 0.1, 0, c, c); box(g, 0, 0.3, 0.9, 5.6, 2.0, 0.05, 0, gl, gl); box(g, 0, 0.45, 0.4, 3.5, 0.1, 0.45, 0, [0.4, 0.3, 0.22], [0.5, 0.36, 0.24]); return g.geometry(); })();
-      const lamps = new IChunks(lampGeo, matV, 400), sigs = new IChunks(sigGeo, matV, 400), taxis = new IChunks(taxiGeo, matV, 400), shel = new IChunks(shelGeo, matV, 400);
+      // (all merged into the scenery's chunks: no draw call of their own) h: the way the thing faces (+x local)
+      const LOC = (x, z, h) => { const c = Math.cos(h), sn = Math.sin(h); return (lx, lz) => [x + lx * c - lz * sn, z + lx * sn + lz * c]; };
+      const lampAt = (x, z, h) => { const g = scen.get(x, z), c = [0.55, 0.57, 0.6], P = LOC(x, z, h), [ax, az] = P(0.9, 0), [hx, hz] = P(1.85, 0);
+        cyl(g, x, 0, z, 0.11, 9.5, 5, c, c, 0.08); box(g, ax, 9.3, az, 1.9, 0.12, 0.12, h, c, c); box(g, hx, 9.0, hz, 0.7, 0.25, 0.32, h, [0.3, 0.3, 0.32], [0.95, 0.94, 0.85]); };
+      const sigAt = (x, z, h) => { const g = scen.get(x, z), p = [0.24, 0.25, 0.27], k = [0.08, 0.08, 0.09], P = LOC(x, z, h), [bx, bz] = P(0.16, 0), [lx, lz] = P(0.3, 0);
+        cyl(g, x, 0, z, 0.08, 3.4, 5, p, p); box(g, bx, 2.25, bz, 0.26, 1.05, 0.34, h, k, k); [[1, 0.12, 0.1], [1, 0.72, 0.1], [0.15, 0.95, 0.35]].forEach((cc, n) => box(g, lx, 2.97 - n * 0.32, lz, 0.03, 0.2, 0.2, h, cc, cc)); };
+      const TAXI = [[0.78, 0.1, 0.1], [0.8, 0.12, 0.12], [0.74, 0.09, 0.1]];
+      const taxiAt = (x, z, h, k) => { const g = scen.get(x, z), red = TAXI[k % 3], sil = [0.82, 0.83, 0.85], gl = [0.15, 0.18, 0.22], P = LOC(x, z, h), [rx, rz] = P(-0.2, 0), [sx, sz] = P(0.4, 0);
+        box(g, x, 0.25, z, 4.6, 0.75, 1.72, h, red, red); box(g, rx, 1.0, rz, 2.6, 0.58, 1.56, h, gl, sil); box(g, sx, 1.58, sz, 0.36, 0.14, 0.5, h, [0.95, 0.9, 0.3], [0.95, 0.9, 0.3]); };
+      const shelAt = (x, z, h) => { const g = scen.get(x, z), c = [0.5, 0.56, 0.6], gl = [0.62, 0.72, 0.78], rf = [0.82, 0.84, 0.86], P = LOC(x, z, h);
+        box(g, x, 2.5, z, 6, 0.15, 2.0, h, rf, rf); for (const lx of [-2.8, 2.8]) for (const lz of [-0.8, 0.8]) { const [px, pz] = P(lx, lz); box(g, px, 0, pz, 0.1, 2.5, 0.1, h, c, c); }
+        { const [px, pz] = P(0, 0.9); box(g, px, 0.3, pz, 5.6, 2.0, 0.05, h, gl, gl); } { const [px, pz] = P(0, 0.4); box(g, px, 0.45, pz, 3.5, 0.1, 0.45, h, [0.4, 0.3, 0.22], [0.5, 0.36, 0.24]); } };
+      const lamps = { add: (x, y, z, rot) => lampAt(x, z, -rot) }, sigs = { add: (x, y, z, rot) => sigAt(x, z, -rot) }; let nT = 0; const taxis = { add: (x, y, z, rot) => taxiAt(x, z, -rot, nT++) }, shel = { add: (x, y, z, rot) => shelAt(x, z, -rot) };
       const near = (x, z) => { const n = nearest(x, z); return n.i < 0 ? 1e9 : Math.abs(n.lat) - n.bar; };
       // along the course itself: its lamp posts out past the blocks on the pavement, every ~32 m, the arm over the road
       for (let d = 10; d < L; d += 32) for (const side of [-1, 1]) { if ((Math.floor(d / 32) + (side > 0 ? 1 : 0)) % 2) continue;
@@ -18643,10 +18659,7 @@ const World = (function () {
       // along the other streets: lamps, and the guard rails along their kerbs (a band of rails: one strip per run, a picture with gaps)
       const rail = new GB(true), rc = document.createElement('canvas'); rc.width = 64; rc.height = 32; { const x2 = rc.getContext('2d'); x2.clearRect(0, 0, 64, 32); x2.fillStyle = '#c4c8cc'; x2.fillRect(0, 0, 64, 3); x2.fillRect(0, 26, 64, 3); for (let k = 0; k < 64; k += 7) x2.fillRect(k, 0, 2, 32); x2.fillRect(0, 0, 4, 32); }
       const railTex = ownTex(new THREE.CanvasTexture(rc)); railTex.wrapS = THREE.RepeatWrapping;
-      const segH = new Map(), SH = 24;   // the streets' segments, hashed (a kerb point inside another street: a junction, no rail)
-      for (const r of roads) for (let k = 0; k + 1 < r.p.length; k++) { const p = r.p[k], q = r.p[k + 1]; for (const [x, z] of [p, q, [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2]]) { const key = Math.floor(x / SH) + ',' + Math.floor(z / SH); let Lq = segH.get(key); if (!Lq) segH.set(key, Lq = []); Lq.push([p, q, r.hw]); } }
-      const inRoad = (x, z, pad) => { for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const Lq = segH.get((Math.floor(x / SH) + a) + ',' + (Math.floor(z / SH) + b)); if (!Lq) continue;
-        for (const [p, q, hw] of Lq) { const vx = q[0] - p[0], vz = q[1] - p[1], l2 = vx * vx + vz * vz || 1, t = clamp(((x - p[0]) * vx + (z - p[1]) * vz) / l2, 0, 1); if (Math.hypot(x - p[0] - vx * t, z - p[1] - vz * t) < hw + pad) return true; } } return false; };
+      const inRoad = (x, z, pad) => HK_IN_ROAD(x, z, null, pad);   // (in any street: a junction, no rail)
       const nearCross = (x, z) => crossings.some(([cx, cz]) => Math.hypot(cx - x, cz - z) < 5.5);
       let nRail = 0, nLamp = 0;
       for (const r of roads) { if (r.c > 3) continue; const P = r.p; let acc = 0;
@@ -18661,6 +18674,7 @@ const World = (function () {
           acc += len; } }
       addM(rail, new THREE.MeshLambertMaterial({ map: railTex, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide, transparent: false }), false);
       // the traffic lights of the map out past the blocks; bus shelters by their stops
+      for (const [x, z, yaw] of sigFall) if (!excluded(x, z)) { sigs.add(x, 0, z, -yaw, 1, 1); exclPush(x, z, 1); }
       for (const [x, z] of signals) { if (near(x, z) < 0.6 || excluded(x, z) || inRoad(x, z, -0.5)) continue; let rot = 0; const n = nearest(x, z); if (n.i >= 0) rot = -(T.hd[n.i] + Math.PI); sigs.add(x, 0, z, rot, 1, 1); exclPush(x, z, 1); }
       for (const [x, z] of hkPts(H.furn.bus || [])) { if (Math.hypot(x, z) > 380 || near(x, z) < 2 || excluded(x, z) || inBld(x, z) || !onLand(x, z)) continue;
         let best = null, bd = 9; for (const r of roads) for (let k = 0; k + 1 < r.p.length; k++) { const p = r.p[k], q = r.p[k + 1], vx = q[0] - p[0], vz = q[1] - p[1], l2 = vx * vx + vz * vz || 1, t = clamp(((x - p[0]) * vx + (z - p[1]) * vz) / l2, 0, 1), d = Math.hypot(x - p[0] - vx * t, z - p[1] - vz * t); if (d < bd) { bd = d; best = { vx, vz, l: Math.sqrt(l2), px: p[0] + vx * t, pz: p[1] + vz * t, hw: r.hw }; } }
@@ -18675,7 +18689,6 @@ const World = (function () {
           for (let t = 4; t + 5 < len; t += 5.6) { const x = p[0] + ux * t - uz * sd * (r.hw - 1.2), z = p[1] + uz * t + ux * sd * (r.hw - 1.2), nr = near(x, z);
             if (nr < 3 || nr > 60 || rpHash(Math.round(x * 3), Math.round(z * 3)) > 0.3 || excluded(x, z) || nearCross(x, z)) continue;
             taxis.add(x, 0, z, -Math.atan2(uz, ux), 1, 1); exclPush(x, z, 2.6); nTaxi++; } } }
-      lamps.addTo(root, false); sigs.addTo(root, false); taxis.addTo(root, false); shel.addTo(root, false);
       out.hkStats.rails = nRail; out.hkStats.lamps = nLamp; out.hkStats.taxis = nTaxi;
     }
 
@@ -18685,7 +18698,7 @@ const World = (function () {
     const facT = [0, 1, 2].map(k => ownTex(hkFacadeTex(k))); out.winMaps = facT;
     let nBld = 0;
     {
-      const roofG = new Chunks(600), BAY = [3.0, 3.4, 3.2], FLR = [3.6, 3.8, 3.0];
+      const roofG = new Chunks(4000), BAY = [3.0, 3.4, 3.2], FLR = [3.6, 3.8, 3.0];
       for (const b of bld) {
         const p = b.p; if (p.length < 3) continue;
         let clash = false; for (const [x, z] of p) { if (clearance(x, z) < 0.3) { clash = true; break; } }
@@ -18693,7 +18706,7 @@ const World = (function () {
         if (!clash) { const n = nearest(cx, cz); if (n.i >= 0 && Math.abs(n.lat) < n.bar + 0.3) clash = true; }
         if (clash && b.mh < 4.5) continue;   // (a footprint over the course: the blocks stand there; bridges between the towers stay over it)
         const hr = rpHash(Math.round(cx * 3), Math.round(cz * 3)), hh = b.h, y0 = b.mh > 0.5 ? b.mh : -0.2;
-        const st = hh >= 70 ? (hr < 0.62 ? 0 : 1) : hh >= 22 ? (hr < 0.5 ? 1 : 2) : 2;
+        const st = hh >= 45 ? 0 : hh >= 16 && hr < 0.5 ? 1 : 2;
         const tint = st === 0 ? [0.92 + hr * 0.1, 0.96 + hr * 0.06, 1] : st === 1 ? [0.95 + hr * 0.08, 0.95 + hr * 0.06, 0.92 + hr * 0.08] : [[1, 0.98, 0.94], [0.95, 0.93, 0.88], [0.98, 0.96, 0.98], [0.9, 0.92, 0.9]][Math.floor(hr * 4)];
         const g = facG[st].get(cx, cz), bay = BAY[st], flr = FLR[st];
         let area = 0; for (let k = 0; k < p.length; k++) { const a = p[k], c = p[(k + 1) % p.length]; area += a[0] * c[1] - c[0] * a[1]; }
@@ -18719,7 +18732,7 @@ const World = (function () {
     /* ---- footbridges and covered walkways (OpenStreetMap): a deck 5.6 m up between parapets, a roof on posts over the covered ones, piers
        where they stand clear of the course ---- */
     {
-      const g = new Chunks(400), deck = [0.72, 0.72, 0.7], par = [0.86, 0.86, 0.84], roof = [0.62, 0.66, 0.7], col = [0.68, 0.68, 0.66];
+      const g = new Chunks(4000), deck = [0.72, 0.72, 0.7], par = [0.86, 0.86, 0.84], roof = [0.62, 0.66, 0.7], col = [0.68, 0.68, 0.66];
       for (const a of H.foot) { const cov = a[0], P = hkPts(a, 1), y = 5.6;
         for (let k = 0; k + 1 < P.length; k++) { const p = P[k], q = P[k + 1], len = Math.hypot(q[0] - p[0], q[1] - p[1]); if (len < 0.3) continue;
           const ux = (q[0] - p[0]) / len, uz = (q[1] - p[1]) / len, nx = -uz, nz = ux, hw = 1.9, gg = g.get(p[0], p[1]), ext = 0.4;
@@ -18755,8 +18768,12 @@ const World = (function () {
         else { cyl(g, 0, 0, 0, 0.06, 0.45, 6, [0.42, 0.36, 0.3], null, 0.04); const r = rng(77); for (const [x, y, z, rr] of [[0, 0.64, 0, 0.4], [0.2, 0.56, 0.14, 0.28]]) puff(g, x, y, z, rr, 0.75, [0.24, 0.42, 0.2], r, 0.3, 0.7, 1.15); }
         return g.geometry(); };
       const tMat = hkCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut), tk = [new IChunks(treeGeo(false), tMat, 600), new IChunks(treeGeo(true), tMat, 600)];
+      const palmAt = (x, z, h, rot) => { const g = scen.get(x, z), tc = [0.55, 0.47, 0.38], fr = [0.25, 0.48, 0.2], w2 = h * 0.5;   // (the palms in the scenery's chunks: no mesh of their own)
+        cyl(g, x, 0, z, 0.32, h * 0.86, 5, tc, null, 0.24);
+        for (let k = 0; k < 8; k++) { const a = rot + k / 8 * TAU, c = Math.cos(a), sn = Math.sin(a), P = (r, y, o) => [x + (c * r - sn * o) * w2, h * y, z + (sn * r + c * o) * w2];
+          g.triO([x, h * 0.86, z], P(0.42, 0.8, 0.06), P(0.42, 0.8, -0.06), fr, [x, h * 0.5, z]); g.triO(P(0.42, 0.8, 0.06), P(0.42, 0.8, -0.06), P(0.62, 0.66, 0), fr.map(v => v * 0.85), [x, h * 0.5, z]); } };
       const plant = (x, z, palm) => { if (!onLand(x, z) || clearance(x, z) < 2.2 || excluded(x, z) || inBld(x, z)) return; const h = palm ? 9 + R() * 4 : 7 + R() * 5;
-        tk[palm ? 1 : 0].add(x, 0, z, R() * TAU, palm ? h * 0.5 : h * (0.9 + R() * 0.3), h, [0.85 + R() * 0.25, 0.9 + R() * 0.2, 0.85 + R() * 0.2]); exclPush(x, z, palm ? 1.5 : 3); nTrees++; };
+        if (palm) palmAt(x, z, h, R() * TAU); else tk[0].add(x, 0, z, R() * TAU, h * (0.9 + R() * 0.3), h, [0.85 + R() * 0.25, 0.9 + R() * 0.2, 0.85 + R() * 0.2]); exclPush(x, z, palm ? 1.5 : 3); nTrees++; };
       const tr = hkPts(H.trees); for (const [x, z] of tr) plant(x, z, rpHash(Math.round(x), Math.round(z)) < 0.25);
       for (const a of H.lu) { if (a[0] > 1) continue; const p = hkPts(a, 1); let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of p) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
         for (let z = z0 + 4; z < z1; z += 9) for (let x = x0 + 4; x < x1; x += 9) { const jx = x + (R() - 0.5) * 6, jz = z + (R() - 0.5) * 6; if (inPoly(p, jx, jz) && R() < 0.38 * dens) plant(jx, jz, R() < 0.15); } }
@@ -18793,7 +18810,7 @@ const World = (function () {
     {
       const B = out.dyn.hkBoats = [], mk = (kind) => { const g = new GB(); if (kind === 0) hkFerry(g); else if (kind === 1) { box(g, 0, -0.5, 0, 14, 1.8, 4.2, 0, [0.85, 0.85, 0.86], [0.6, 0.45, 0.3]); box(g, -1, 1.3, 0, 6, 1.8, 3.4, 0, [0.95, 0.95, 0.95], [0.8, 0.82, 0.84]); }
         else { box(g, 0, -0.8, 0, 36, 2.2, 10, 0, [0.22, 0.24, 0.3], [0.45, 0.42, 0.38]); box(g, 12, 1.4, 0, 6, 4, 8, 0, [0.9, 0.9, 0.88], [0.7, 0.7, 0.72]); box(g, -4, 1.4, 0, 3, 7, 3, 0, [0.85, 0.6, 0.15], [0.85, 0.6, 0.15]); }
-        const m = new THREE.Mesh(g.geometry(), matV); m.castShadow = true; root.add(m); return m; };
+        const m = new THREE.Mesh(g.geometry(), matV); root.add(m); return m; };
       for (const [kind, x0, z0, x1, z1, v, ph] of [[0, -40, -400, 140, -760, 6, 0.1], [0, -230, -470, -330, -820, 7, 0.6], [1, 80, -330, 420, -520, 9, 0.3], [2, -520, -520, 300, -700, 3, 0.8], [0, 20, -420, -260, -760, 6.5, 1.3]])
         B.push({ m: mk(kind), x0, z0, x1, z1, v, ph, L: Math.hypot(x1 - x0, z1 - z0), y: WL + 0.4 });
       hkBoatStep(B, 0);
@@ -18828,8 +18845,19 @@ const World = (function () {
       addM(gs, matV, true); addM(gc, crowdUV(new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), 1, 0.06, 0.06));
     }
 
+    /* ---- the fans standing along the fences: at the hairpins, at Turn 2, along the waterfront straight, by the chicane ---- */
+    let nFans = 0;
+    {
+      const CR = crowdCtx({ gH: (x, z) => 0, near: (x, z) => clearance(x, z), maxSlope: 9 });
+      const M = { first: 1.2, gap: 1.0, excluded: (x, z) => excluded(x, z) || inBld(x, z) || !onLand(x, z), below: 2, above: 2, sit: 0.1, flag: 0.06 };
+      for (const [d0, d1, side, rows, dn] of [[232, 270, -1, 3, 0.55], [300, 380, -1, 2, 0.3], [530, 700, -1, 2, 0.25], [815, 875, -1, 3, 0.55], [880, 960, -1, 2, 0.35], [1120, 1200, -1, 2, 0.3], [1340, 1400, -1, 2, 0.3]])
+        nFans += crowdRun(CR, sStart + d0, sStart + d1, side, Object.assign({}, M, { rows, dens: dn * dens, label: 'HK ' + d0 }));
+      for (const e of CR.circ) exclPush(e.x, e.z, e.r);
+      crowdFinish(CR, root, out);
+    }
+
     scen.addTo(root, matV, true, true);
-    out.stats = { buildings: nBld, trees: nTrees, stands: nStands };
+    out.stats = { buildings: nBld, trees: nTrees, stands: nStands, fans: nFans };
     return out;
   }
 
