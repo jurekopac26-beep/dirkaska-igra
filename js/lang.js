@@ -249,11 +249,14 @@
     'Napaka pri zagonu: {0}': 'Error at start-up: {0}',
 
     /* ---- the championships (Core.CHAMPS keep their own English in .en) and place names on the HUD ---- */
+    'Razgledišče Kurokamidaira': 'Kurokamidaira lookout', 'Ovinek は (3)': 'Curve は (3)', 'Ovinek に (4)': 'Curve に (4)', 'Ovinek ほ (5)': 'Curve ほ (5)', 'Ovinek へ (6)': 'Curve へ (6)', 'Ovinek と (7)': 'Curve と (7)', 'Ovinek ち (8)': 'Curve ち (8)', 'Ovinek り (9)': 'Curve り (9)', 'Ovinek ぬ (10)': 'Curve ぬ (10)', 'Ovinek る (11)': 'Curve る (11)', 'Ovinek を (12)': 'Curve を (12)', 'Ovinek わ (13)': 'Curve わ (13)', 'Ovinek か (14)': 'Curve か (14)', 'Ovinek よ (15)': 'Curve よ (15)', 'Ovinek た (16)': 'Curve た (16)', 'Ovinek れ (17)': 'Curve れ (17)', 'Ovinek そ (18)': 'Curve そ (18)', 'Ovinek つ (19)': 'Curve つ (19)', 'Ovinek ね (20)': 'Curve ね (20)',   // (Irohazaka: the lookout, the curves by their signs)
     'Ruski križ': 'Russian Cross', 'Ruska kapelica': 'Russian Chapel', 'Ajdovska deklica': 'Heathen Maiden', 'Lasnica Fairmont': 'Fairmont Hairpin', 'Predor': 'Tunnel',
     'Most Rocky Creek': 'Rocky Creek Bridge', 'Razgledišče Castle Rock': 'Castle Rock Viewpoint', 'Most Bixby Creek': 'Bixby Creek Bridge',   // (Big Sur)
     'Prvi ovinek': 'First Curve', 'Zanka': 'The Loop', 'Tianmenska jama': 'Tianmen Cave', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under the Bridge', 'Lasnica': 'Hairpin', 'Zadnja ravnina': 'Back Straight', 'Zadnji ovinek': 'Final Corner',
+    'Soteska Uncompahgre': 'Uncompahgre Gorge', 'Slap Bear Creek': 'Bear Creek Falls', 'Plaz Mother Cline': 'Mother Cline Slide', 'Galerija Riverside': 'Riverside Snow Shed', 'ZGRMEL SI V PREPAD!': 'OVER THE EDGE!',   // (Uncompahgre)
+    'Lesoto': 'Lesotho',   // (Sani Pass: the top; Mkhomazana, Drakensberg and Twelve Apostles stay as they are)
     'Prelaz Katu-Jaryk': 'Katu-Yaryk Pass', 'Sedem serpentin': 'Seven Hairpins', 'Prečka nad Čulišmanom': 'Traverse above the Chulyshman', 'Dolina Čulišmana': 'Chulyshman Valley',   // (Katu-Jaryk: the HUD, the flyover)
-    'Razgledišče': 'Lookout', 'Cestninska postaja': 'Toll Plaza',   // (the lookouts and the toll plaza above Hout Bay)
+    'Razgledišče': 'Viewpoint', 'Cestninska postaja': 'Toll Plaza',   // (the viewpoints and the toll plaza above Hout Bay; the viewpoint of Mulholland Highway)
     /* ---- the run from the police (Vršič): the checkpoint, the hideout, the HUD, the rap sheet, the call signs on the radio; the screen to turn the phone ---- */
     'Kamera »{0}« je za pokončni položaj.': 'The camera “{0}” is for holding the phone upright.', 'Kamera »{0}« je za ležeči položaj.': 'The camera “{0}” is for holding the phone sideways.',
     'Lahko pa igraš pokončno s kamero za avtom.': 'Or play upright with the chase camera.', 'Lahko pa igraš ležeče z izometrično kamero.': 'Or play sideways with the isometric camera.',

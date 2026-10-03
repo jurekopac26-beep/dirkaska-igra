@@ -393,6 +393,82 @@
    "roadwear:MeshLambertMaterial": "fc4e0e1a"
   }
  },
+ "uncompahgre": {
+  "meshes": 1838,
+  "verts": 837714,
+  "instances": 51620,
+  "props": 127,
+  "crowd": 1417,
+  "world": "7f6701c0",
+  "propsHash": "2fda5eec",
+  "floor": "46791ccf/10612",
+  "groups": {
+   "-:MeshLambertMaterial": "4932661b",
+   "-:MeshPhongMaterial": "365c29fd",
+   "-:MeshBasicMaterial": "ede2d97f",
+   "crowd:MeshLambertMaterial": "e729df50",
+   "ao:MeshBasicMaterial": "60464f5d",
+   "tyremarks:MeshBasicMaterial": "27d1b418",
+   "roadwear:MeshLambertMaterial": "a40a696b"
+  }
+ },
+ "sani": {
+  "meshes": 1508,
+  "verts": 716805,
+  "instances": 57933,
+  "props": 26,
+  "crowd": 413,
+  "world": "8055577d",
+  "propsHash": "2f7e0c0f",
+  "floor": "51d175bc/10920",
+  "groups": {
+   "-:MeshLambertMaterial": "4a36f9fc",
+   "-:MeshPhongMaterial": "a5b913ca",
+   "-:MeshBasicMaterial": "1c742f2",
+   "puddles:MeshBasicMaterial": "6f281577",
+   "crowd:MeshLambertMaterial": "fea21dab",
+   "ao:MeshBasicMaterial": "cc27d058"
+  }
+ },
+ "iroha": {
+  "meshes": 1610,
+  "verts": 973594,
+  "instances": 31731,
+  "props": 82,
+  "crowd": 1202,
+  "world": "6203eb59",
+  "propsHash": "f04f2d54",
+  "floor": "7058067d/11088",
+  "groups": {
+   "-:MeshLambertMaterial": "77bfff89",
+   "crowd:MeshLambertMaterial": "a5824a48",
+   "-:MeshBasicMaterial": "697d28ce",
+   "-:MeshPhongMaterial": "28801892",
+   "irFar:MeshLambertMaterial": "563df77",
+   "ao:MeshBasicMaterial": "728c0a16",
+   "tyremarks:MeshBasicMaterial": "eb1ae63e",
+   "roadwear:MeshLambertMaterial": "66a17331"
+  }
+ },
+ "mulholland": {
+  "meshes": 2242,
+  "verts": 1008664,
+  "instances": 77118,
+  "props": 101,
+  "crowd": 1087,
+  "world": "97b9a29",
+  "propsHash": "8f67c586",
+  "floor": "bbda564b/9744",
+  "groups": {
+   "-:MeshLambertMaterial": "3fbb6f1f",
+   "-:MeshPhongMaterial": "24212f4f",
+   "-:MeshBasicMaterial": "bd867cb5",
+   "crowd:MeshLambertMaterial": "bb2c37e3",
+   "ao:MeshBasicMaterial": "c0c23b52",
+   "tyremarks:MeshBasicMaterial": "9cf7368e",
+   "roadwear:MeshLambertMaterial": "9388c9f4"
+  }
+ },
  "jezero": {
   "meshes": 154,
   "verts": 591648,

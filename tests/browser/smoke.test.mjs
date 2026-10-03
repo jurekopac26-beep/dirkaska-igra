@@ -67,8 +67,9 @@ try {
     await startTrack(page, id);
     const nan = await simulate(page, 20);
     const r = await page.evaluate(() => { const g = window.__game, P = g.race.player; return { phase: g.phase, dist: Math.round(P.dist), phys: P.phys, crew: Render.crew ? Render.crew.men.length : 0, id: g.race.track.def.id, pit: !!g.race.track.def.pit }; });
+    // (more than 100 m in 20 s with the 3 s of the countdown: a car that does not move stays near 0 m; Tianmen's 45 hairpins, with the player on the last row of the grid in the pack, give 127-176 m from run to run)
     const crewOk = r.pit ? r.crew > 0 : r.crew === 0;   // (pit crews on the circuits with a pit lane: Bakreni gozd, Toskana, Gromski rt)
-    T.check(`${id}: 20 s race on autopilot`, r.phase === 'racing' && r.dist > 150 && r.phys === 'cs' && !nan && crewOk && errors.length === e0,
+    T.check(`${id}: 20 s race on autopilot`, r.phase === 'racing' && r.dist > 100 && r.phys === 'cs' && !nan && crewOk && errors.length === e0,
       `dist ${r.dist} m, phys ${r.phys}, pit crew ${r.crew}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
   }
 

@@ -132,6 +132,34 @@
   "maxKverts": 1292,
   "jsMs": 0.76
  },
+ "uncompahgre": {
+  "calls": 194,
+  "maxCalls": 228,
+  "kverts": 711,
+  "maxKverts": 908,
+  "jsMs": 0.96
+ },
+ "sani": {
+  "calls": 92,
+  "maxCalls": 137,
+  "kverts": 301,
+  "maxKverts": 536,
+  "jsMs": 0.29
+ },
+ "iroha": {
+  "calls": 355,
+  "maxCalls": 404,
+  "kverts": 1527,
+  "maxKverts": 1830,
+  "jsMs": 1.21
+ },
+ "mulholland": {
+  "calls": 242,
+  "maxCalls": 302,
+  "kverts": 900,
+  "maxKverts": 1136,
+  "jsMs": 1.51
+ },
  "jezero": {
   "calls": 278,
   "maxCalls": 330,
