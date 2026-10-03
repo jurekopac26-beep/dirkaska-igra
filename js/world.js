@@ -22718,7 +22718,7 @@ const World = (function () {
     const CR = crowdCtx({ chunk: 256, gH: sgGround, near: (x, z) => { const q = T.query(x, z, -1, _sgQ); return Math.abs(q.d) - (q.d > 0 ? q.br : q.bl); }, maxSlope: 0.7 });
     CR.water = (x, z) => !sgLand(x, z);
     {
-      const gs = new GB(), gc = new RB(true), gr = new GB(), stC = [0.64, 0.65, 0.68], stD = [0.5, 0.51, 0.55], stT = [0.76, 0.77, 0.8], roofC = [0.93, 0.94, 0.95], roofU = [0.7, 0.71, 0.74];
+      const gs = new GB(), gc = new RB(true), gr = new GB(), stC = [0.64, 0.65, 0.68], stD = [0.5, 0.51, 0.55], stT = [0.76, 0.77, 0.8], roofC = [0.74, 0.77, 0.82], roofU = [0.55, 0.57, 0.6];
       for (const [d0, d1, side, dep, roof] of def.stands) {
         let prev = null, pc = -1;
         const cap = (cs, inn) => { gs.quadO(cs[0], cs[1], cs[3], cs[4], stD, inn); gs.quadO(cs[1], cs[2], cs[3], cs[3], stD, inn); };
