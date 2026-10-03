@@ -107,9 +107,9 @@
  "bathurst": {
   "calls": 245,
   "maxCalls": 385,
-  "kverts": 461,
-  "maxKverts": 798,
-  "jsMs": 0.85
+  "kverts": 691,
+  "maxKverts": 1338,
+  "jsMs": 0.89
  },
  "chapman": {
   "calls": 211,

@@ -316,23 +316,23 @@
   }
  },
  "bathurst": {
-  "meshes": 973,
-  "verts": 592185,
-  "instances": 16406,
+  "meshes": 979,
+  "verts": 681235,
+  "instances": 16392,
   "props": 94,
   "crowd": 4220,
-  "world": "6cae4cb5",
+  "world": "61649b88",
   "propsHash": "9e34cc63",
-  "floor": "88b8b5f7/12404",
+  "floor": "8a20442b/12404",
   "groups": {
-   "-:MeshLambertMaterial": "d56448cf",
-   "-:MeshBasicMaterial": "8d213485",
-   "crowd:MeshLambertMaterial": "5b9dbb6e",
+   "-:MeshLambertMaterial": "48f7367c",
+   "-:MeshBasicMaterial": "47f31aa0",
+   "crowd:MeshLambertMaterial": "23f5b47f",
    "flags:MeshLambertMaterial": "8a648a11",
    "jet smoke:MeshBasicMaterial": "684b759b",
-   "ao:MeshBasicMaterial": "b7cbc948",
+   "ao:MeshBasicMaterial": "7159d7c6",
    "roadwear:MeshLambertMaterial": "74d19b29",
-   "worn:MeshLambertMaterial": "b38c2a31"
+   "worn:MeshLambertMaterial": "1a992b4a"
   }
  },
  "chapman": {
