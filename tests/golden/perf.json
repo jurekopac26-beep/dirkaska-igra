@@ -120,10 +120,10 @@
  },
  "bigsur": {
   "calls": 233,
-  "maxCalls": 293,
-  "kverts": 558,
-  "maxKverts": 694,
-  "jsMs": 0.99
+  "maxCalls": 291,
+  "kverts": 557,
+  "maxKverts": 684,
+  "jsMs": 1.01
  },
  "tianmen": {
   "calls": 337,
@@ -131,6 +131,48 @@
   "kverts": 1153,
   "maxKverts": 1292,
   "jsMs": 0.76
+ },
+ "uncompahgre": {
+  "calls": 194,
+  "maxCalls": 228,
+  "kverts": 711,
+  "maxKverts": 908,
+  "jsMs": 0.96
+ },
+ "sani": {
+  "calls": 92,
+  "maxCalls": 137,
+  "kverts": 301,
+  "maxKverts": 536,
+  "jsMs": 0.29
+ },
+ "iroha": {
+  "calls": 355,
+  "maxCalls": 404,
+  "kverts": 1527,
+  "maxKverts": 1830,
+  "jsMs": 1.21
+ },
+ "mulholland": {
+  "calls": 242,
+  "maxCalls": 302,
+  "kverts": 900,
+  "maxKverts": 1136,
+  "jsMs": 1.51
+ },
+ "beartooth": {
+  "calls": 328,
+  "maxCalls": 420,
+  "kverts": 961,
+  "maxKverts": 1173,
+  "jsMs": 1.05
+ },
+ "rastro": {
+  "calls": 302,
+  "maxCalls": 369,
+  "kverts": 1413,
+  "maxKverts": 1857,
+  "jsMs": 0.83
  },
  "jezero": {
   "calls": 278,
