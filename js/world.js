@@ -14268,7 +14268,7 @@ const World = (function () {
 
     /* ---- the Old Coast Road (def.oldRoad): a gravel track 4.2 m wide from the highway down into the Bixby Creek canyon, laid on the ground (a
        little above it), only within the built corridor ---- */
-    let nOld = 0, nDrive = 0;
+    let nOld = 0, nDrive = 0, nPond = 0;
     {
       const g = new GB(true), RW = 2.1, oc = [0.74, 0.66, 0.54], oe = [0.6, 0.55, 0.44];
       for (const [, , p] of def.oldRoad || []) {
@@ -14303,6 +14303,18 @@ const World = (function () {
         nDrive++;
       }
       addM(g, sMat);
+      // the stock ponds on the pastures: a small round pond dug for the cattle, brown-green water level in a bare muddy rim (where the ground
+      // rises above the water level the terrain covers it: an uneven shore)
+      const RPd = rng(4013), gp = new GB();
+      for (let k = 0, tries = 0; k < 5 && tries < 800; tries++) {
+        const s = sStart - 100 + RPd() * (T.len - sStart), [x, z] = onSide(s, RPd() < 0.75 ? -1 : 1, 50 + RPd() * 180);
+        if (vrLC(x, z) !== 0 || bsSlope(x, z) > 0.09 || vrDist(x, z) > 250 || excluded(x, z) || bsGround(x, z) + base < 15 || bsScrub(x, z) > 0.4) continue;
+        const R = 6 + RPd() * 6, yw = bsGround(x, z) + 0.1, NQ = 14, ring = (r, f) => Array.from({ length: NQ }, (_, q) => { const a = q / NQ * TAU, w = r * (1 + 0.12 * Math.sin(q * 2.7 + k)), px = x + Math.cos(a) * w * 1.2, pz = z + Math.sin(a) * w; return [px, f(px, pz), pz]; });
+        const wi = ring(R, (px, pz) => bsGround(px, pz) + 0.1), mi = ring(R, (px, pz) => bsGround(px, pz) + 0.07), mo = ring(R + 3, (px, pz) => bsGround(px, pz) + 0.04), wc = [0.27, 0.33, 0.27], mc = [0.42, 0.36, 0.27], mo2 = [0.56, 0.5, 0.38];
+        for (let q = 0; q < NQ; q++) { const q1 = (q + 1) % NQ; gp.quadUp([x, yw, z], [x, yw, z], wi[q1], wi[q], [wc, wc, wc, wc]); scen.get(x, z).quadUp(mi[q], mi[q1], mo[q1], mo[q], [mc, mc, mo2, mo2]); }
+        exclPush(x, z, R * 1.2 + 4); k++; nPond++;
+      }
+      if (!gp.empty) { const m = new THREE.Mesh(gp.geometry(), new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 80, specular: 0x506068 })); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); }
       // a car parked at the gravel's edge near the junction (the hikers' car)
       const O = (def.oldRoad || [])[0];
       if (O) { const p = O[2], n = p.length / 2;
@@ -14334,7 +14346,7 @@ const World = (function () {
     const pk = [0, 1, 2, 3, 4].map(k => new IChunks(caPlantGeo(k), k === 0 ? wMat : pMat, k === 4 ? 64 : 128));
     const bk = [0, 1].map(k => new IChunks(bsBushGeo(k), k === 1 ? wMat : pMat, 128));
     const tk = [0, 1].map(k => new IChunks(bsTreeGeo(k), pMat, 128));
-    let nPlants = 0, nTrees = 0, nBush = 0, nSeal = 0, nBarn = 0, nBoat = 0, nWhale = 0, nCrop = 0;
+    let nPlants = 0, nTrees = 0, nBush = 0, nSeal = 0, nBarn = 0, nBoat = 0, nWhale = 0, nCrop = 0, nEuc = 0;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(70000 * dens), maxTr = Math.round(9000 * dens), RT = rng(3961), SP = 3.4 / Math.sqrt(dens);
       const BC = [[0.82, 0.98, 0.84], [0.74, 0.92, 0.78], [1.12, 1.1, 1.04], [1.2, 1.04, 0.82]];   // (coyote brush, darker; sage, grey-green; dried, brown)
@@ -14506,6 +14518,16 @@ const World = (function () {
       for (const b of blds) { if (b.kind === 3 || RV() < 0.45) continue; const c = Math.cos(b.ang), sn = Math.sin(b.ang), o = -(b.W / 2 + 7), n = 4 + Math.floor(RV() * 5), L0 = (n - 1) * 3.6 / 2;
         for (let q = 0; q < n; q++) { const t = q * 3.6 - L0, x = b.x - sn * o + c * t, z = b.z + c * o + sn * t; if (vrNear(x, z).dd < 9 || excluded(x, z) || bsSlope(x, z) > 0.6) continue;
           const h = 7 + RV() * 4; tk[0].add(x, bsGround(x, z) - 0.2, z, (RV() - 0.5) * 0.5, h * 0.95, h, [0.78 + RV() * 0.1, 0.84 + RV() * 0.1, 0.82 + RV() * 0.1]); exclPush(x, z, 2.5); nTrees++; } }
+      // blue gum eucalyptus planted as windbreaks across the pastures: long rows of tall, narrow trees, their crowns blue-grey
+      const RE = rng(4011);
+      for (let r = 0, tries = 0; r < 6 && tries < 600; tries++) {
+        const s = sStart - 100 + RE() * (T.len - sStart), i = T.idx(s), [cx, cz] = onSide(s, -1, 45 + RE() * 110);
+        if (vrLC(cx, cz) !== 0 || bsSlope(cx, cz) > 0.35 || vrDist(cx, cz) > 260 || excluded(cx, cz)) continue;
+        const a = T.hd[i] + (RE() - 0.5) * 0.8, c = Math.cos(a), sn = Math.sin(a), n = 8 + Math.floor(RE() * 8); let m = 0;
+        for (let q = 0; q < n; q++) { const t = (q - n / 2) * 6.5, x = cx + c * t + (RE() - 0.5) * 1.5, z = cz + sn * t + (RE() - 0.5) * 1.5; if (vrNear(x, z).dd < 12 || excluded(x, z) || bsSlope(x, z) > 0.5) continue;
+          const h = 20 + RE() * 10; tk[1].add(x, bsGround(x, z) - 0.2, z, RE() * TAU, h * 0.5, h, [1.45 + RE() * 0.12, 1.4 + RE() * 0.1, 1.75 + RE() * 0.15]); exclPush(x, z, 3); nTrees++; m++; }
+        if (m) { r++; nEuc++; }
+      }
     }
     for (const t of pk) t.addTo(root, false);
     for (const t of bk) t.addTo(root, false);
@@ -14541,7 +14563,7 @@ const World = (function () {
       out.dyn.condors = { L, x0: T.px[i0], z0: T.pz[i0], y0: T.hy[i0], ax: T.px[i0], az: T.pz[i0], ay: T.hy[i0], t: null };
       caCondors(out.dyn.condors, 0, null); }
     crowdFinish(CR, root, out);
-    out.stats = { plants: nPlants, bushes: nBush, cows: nCows, fence: nFence, seals: nSeal, barns: nBarn, boats: nBoat, whales: nWhale, trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), bridges: brInfo.length, oldRoad: nOld, driveways: nDrive, outcrops: nCrop };   // (read by the tests)
+    out.stats = { plants: nPlants, bushes: nBush, cows: nCows, fence: nFence, seals: nSeal, barns: nBarn, boats: nBoat, whales: nWhale, trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), bridges: brInfo.length, oldRoad: nOld, driveways: nDrive, outcrops: nCrop, ponds: nPond, eucalyptus: nEuc };   // (read by the tests)
     return out;
   }
 
