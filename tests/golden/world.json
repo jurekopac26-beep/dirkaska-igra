@@ -524,6 +524,26 @@
    "ao:MeshBasicMaterial": "bf4eccf9"
   }
  },
+ "mountrose": {
+  "meshes": 3357,
+  "verts": 1218118,
+  "instances": 87174,
+  "props": 426,
+  "crowd": 1272,
+  "world": "75781ae8",
+  "propsHash": "f8835b1d",
+  "floor": "12468540/17136",
+  "groups": {
+   "-:MeshLambertMaterial": "6b774c82",
+   "-:MeshPhongMaterial": "fdc1bafc",
+   "-:MeshBasicMaterial": "3e2dad49",
+   "irFar:MeshLambertMaterial": "42822520",
+   "crowd:MeshLambertMaterial": "48d5fb71",
+   "ao:MeshBasicMaterial": "477fce18",
+   "tyremarks:MeshBasicMaterial": "4ab1b4d0",
+   "roadwear:MeshLambertMaterial": "6a9c62df"
+  }
+ },
  "cpalace": {
   "meshes": 300,
   "verts": 382518,

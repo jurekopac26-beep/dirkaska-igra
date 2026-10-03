@@ -181,6 +181,13 @@
   "maxKverts": 511,
   "jsMs": 0.23
  },
+ "mountrose": {
+  "calls": 237,
+  "maxCalls": 295,
+  "kverts": 885,
+  "maxKverts": 1377,
+  "jsMs": 1.09
+ },
  "cpalace": {
   "calls": 281,
   "maxCalls": 303,
