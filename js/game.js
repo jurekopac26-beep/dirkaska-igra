@@ -386,9 +386,28 @@
     switch (S.detail) { case 'low': return 0; case 'med': return 1; case 'high': return 2; }
     return noAdapt ? 2 : autoTier;
   }
+  // the runtime draw-distance (metres) for the cull of far vegetation at a tier: VISOKA off (Infinity → nothing culled, identical to before),
+  // SREDNJA a long distance, NIZKA a shorter one. adaptive() scales it between these for the frame rate (detailDistK).
+  let detailDistK = 1;
+  const TIER_DIST = [210, 360, Infinity];   // NIZKA / SREDNJA / VISOKA
+  function detailDistFor(tier) { const base = TIER_DIST[tier]; return base === Infinity ? Infinity : base * detailDistK; }
+  function applyDetailDist() { Render.setDetailDist(detailDistFor(detailTier())); }
+  // the device's graphics tier for 'Samodejno', read once at start-up from the GPU name (WEBGL_debug_renderer_info) and the device hints:
+  // known weak mobile/integrated GPUs start at NIZKA, known strong ones at VISOKA, the rest fall back to the core/memory hint. During play
+  // adaptive() only tightens the runtime draw distance (it never rebuilds), so this initial choice is what the world is built at.
+  function gpuTier() {
+    let s = '';
+    try { const c = document.createElement('canvas'); const gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+      if (gl) { const e = gl.getExtension('WEBGL_debug_renderer_info'); s = String((e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : '') || '').toLowerCase(); } } catch (_) { }
+    if (!s) return null;
+    if (/mali-[4t]|mali-g3|mali-g5|adreno \(tm\) [1-5]\d\d|adreno [1-5]\d\d|powervr|videocore|apple a[0-9]\b|apple a1[0-2]\b|(hd|uhd) graphics/.test(s)) return 0;   // weak mobile / integrated
+    if (/rtx|radeon rx|geforce|apple m[1-9]|apple a1[3-9]|adreno \(tm\) [78]\d\d|adreno [78]\d\d/.test(s)) return 2;   // strong desktop / recent mobile
+    return 1;   // named but unknown: the middle
+  }
+  function initAutoTier() { try { const t = gpuTier(); autoTier = t != null ? t : (lowEnd ? 1 : 2); } catch (_) { autoTier = lowEnd ? 1 : 2; } }
   // the picture's settings to the renderer only when they change (it builds every shader again: a language or a sound switch must not)
   let rsKey = '';
-  function renderSettings() { const rs = { quality: S.quality, shadows: shadowsOn(), camera: S.camera }, k = JSON.stringify(rs); if (k !== rsKey) { rsKey = k; Render.applySettings(rs); } Render.setSaver(saverOn()); }
+  function renderSettings() { const rs = { quality: S.quality, shadows: shadowsOn(), camera: S.camera }, k = JSON.stringify(rs); if (k !== rsKey) { rsKey = k; Render.applySettings(rs); } Render.setSaver(saverOn()); applyDetailDist(); }
   // the battery saver (Varčevanje z baterijo): 30 frames a second and a lower resolution; 'auto' while the battery is at 20 % or less and not
   // charging (where the browser tells: Chrome; elsewhere 'auto' stays off)
   let batLow = false;
@@ -899,6 +918,7 @@
       const t0 = performance.now();
       track = getTrack(id);
       Render.buildWorld(track, S.quality === 'retro' ? 0.8 : 1, detailTier());
+      applyDetailDist();   // the new world's far-vegetation cull distance for this tier
       Render.precompile();
       demo = null;
       mm.img = null; mm.w = 0;
@@ -3659,6 +3679,12 @@
         if (++perf.slow >= 3) { perf.slow = 0; perf.pending = true; perf.slowAvg = avg; toast(tr('Igra na tej napravi teče počasi: od naslednjega premora ali dirke bo brez senc (vklopiš jih v Nastavitvah).'), 4200); }
       } else perf.slow = 0;
     }
+    // adaptive graphics detail (LOD), the deepest lever: once the resolution is at its floor and the shadows are already off and it is still
+    // slow, pull the far-vegetation cull distance in; when the frame rate recovers, let it back out. Only on the lower tiers (VISOKA never culls).
+    if (detailTier() < 2) {
+      if (avg > 24 && k <= 0.6 && autoNoShadows && detailDistK > 0.5) { detailDistK = Math.max(0.5, detailDistK - 0.1); applyDetailDist(); }
+      else if (avg < 15.5 && detailDistK < 1) { detailDistK = Math.min(1, detailDistK + 0.05); applyDetailDist(); }
+    }
   }
   // a pause or a race start: carry out what adaptive() decided
   function adaptBreak() {
@@ -3864,8 +3890,10 @@
     try {
       track = getTrack(S.track);
       Render.init($('gl'));
+      initAutoTier();   // the device's graphics tier for 'Samodejno' (before the first world is built)
       Render.setAtmos({ season: S.season, tod: S.tod });   // (before the first world: it is built in the season)
       Render.buildWorld(track, S.quality === 'retro' ? 0.8 : 1, detailTier());
+      applyDetailDist();   // the new world's far-vegetation cull distance for this tier
       Input.init($('touch'), () => { if (screen === 'pause') resume(); else if (screen === 'none') pause(); });
       Input.onCam = () => { if (bg === 'race' && !replay && (screen === 'none' || screen === 'pause')) cycleCam(); };   // (C on the keyboard)
       Render.onThunder = (delay, vol) => Sfx.thunder(delay, vol);   // (a thunderstorm: the thunder after each lightning)
