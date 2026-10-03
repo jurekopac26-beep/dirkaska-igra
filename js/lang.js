@@ -249,11 +249,19 @@
     'Napaka pri zagonu: {0}': 'Error at start-up: {0}',
 
     /* ---- the championships (Core.CHAMPS keep their own English in .en) and place names on the HUD ---- */
+    'Razgledišče Kurokamidaira': 'Kurokamidaira lookout', 'Ovinek は (3)': 'Curve は (3)', 'Ovinek に (4)': 'Curve に (4)', 'Ovinek ほ (5)': 'Curve ほ (5)', 'Ovinek へ (6)': 'Curve へ (6)', 'Ovinek と (7)': 'Curve と (7)', 'Ovinek ち (8)': 'Curve ち (8)', 'Ovinek り (9)': 'Curve り (9)', 'Ovinek ぬ (10)': 'Curve ぬ (10)', 'Ovinek る (11)': 'Curve る (11)', 'Ovinek を (12)': 'Curve を (12)', 'Ovinek わ (13)': 'Curve わ (13)', 'Ovinek か (14)': 'Curve か (14)', 'Ovinek よ (15)': 'Curve よ (15)', 'Ovinek た (16)': 'Curve た (16)', 'Ovinek れ (17)': 'Curve れ (17)', 'Ovinek そ (18)': 'Curve そ (18)', 'Ovinek つ (19)': 'Curve つ (19)', 'Ovinek ね (20)': 'Curve ね (20)',   // (Irohazaka: the lookout, the curves by their signs)
     'Ruski križ': 'Russian Cross', 'Ruska kapelica': 'Russian Chapel', 'Ajdovska deklica': 'Heathen Maiden', 'Lasnica Fairmont': 'Fairmont Hairpin', 'Predor': 'Tunnel',
-    'Prvi ovinek': 'First Curve', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under the Bridge', 'Lasnica': 'Hairpin', 'Zadnja ravnina': 'Back Straight', 'Zadnji ovinek': 'Final Corner',
+    'Most Rocky Creek': 'Rocky Creek Bridge', 'Razgledišče Castle Rock': 'Castle Rock Viewpoint', 'Most Bixby Creek': 'Bixby Creek Bridge',   // (Big Sur)
+    'Prvi ovinek': 'First Curve', 'Zanka': 'The Loop', 'Tianmenska jama': 'Tianmen Cave', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under the Bridge', 'Lasnica': 'Hairpin', 'Zadnja ravnina': 'Back Straight', 'Zadnji ovinek': 'Final Corner',
+    'Soteska Uncompahgre': 'Uncompahgre Gorge', 'Slap Bear Creek': 'Bear Creek Falls', 'Plaz Mother Cline': 'Mother Cline Slide', 'Galerija Riverside': 'Riverside Snow Shed', 'ZGRMEL SI V PREPAD!': 'OVER THE EDGE!',   // (Uncompahgre)
+    'Lesoto': 'Lesotho',   // (Sani Pass: the top; Mkhomazana, Drakensberg and Twelve Apostles stay as they are)
     'Prelaz Katu-Jaryk': 'Katu-Yaryk Pass', 'Sedem serpentin': 'Seven Hairpins', 'Prečka nad Čulišmanom': 'Traverse above the Chulyshman', 'Dolina Čulišmana': 'Chulyshman Valley',   // (Katu-Jaryk: the HUD, the flyover)
     'Vodni stolp': 'Water Tower', 'Viadukt': 'Viaduct', 'Most čez South Esk': 'South Esk Bridge', 'Nivojski prehod': 'Level Crossing', 'Ravnina pri strojarni': 'Tannery Straight',
     'Ovinek pri strojarni': 'Tannery Corner', 'Dolgi most': 'Long Bridge', 'Leteča milja': 'Flying Mile',   // (Longford: the HUD)
+    'Razgledišče': 'Viewpoint', 'Cestninska postaja': 'Toll Plaza',   // (the viewpoints and the toll plaza above Hout Bay; the viewpoint of Mulholland Highway)
+    'Dolina Rock Creek': 'Rock Creek Valley', 'Vrh serpentin': 'Top of the Switchbacks',   // (Beartooth: Serpentina N and the heights by the rules of Lang.place)
+    'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
+    'Konec asfalta': 'Pavement Ends', 'Konec makadama': 'Back on Asphalt',   // (the Moki Dugway; Razgledisce is in the dictionary already, from the Mulholland Highway)
     /* ---- the run from the police (Vršič): the checkpoint, the hideout, the HUD, the rap sheet, the call signs on the radio; the screen to turn the phone ---- */
     'Kamera »{0}« je za pokončni položaj.': 'The camera “{0}” is for holding the phone upright.', 'Kamera »{0}« je za ležeči položaj.': 'The camera “{0}” is for holding the phone sideways.',
     'Lahko pa igraš pokončno s kamero za avtom.': 'Or play upright with the chase camera.', 'Lahko pa igraš ležeče z izometrično kamero.': 'Or play sideways with the isometric camera.',
@@ -302,7 +310,7 @@
   // a place name on the HUD: the numbered turns and hairpins, the heights on them (Serpentina 4 · 1.060 m -> Hairpin 4 · 1,060 m), a few known names
   function place(n) {
     if (cur !== 'en') return n;
-    return String(n).split(' · ').map(p => has.call(EN, p) ? EN[p] : p.replace(/^Serpentina (\d+)$/, 'Hairpin $1').replace(/^Zavoj (\d+)$/, 'Turn $1').replace(/\b(\d{1,3})\.(\d{3}) m\b/g, '$1,$2 m')).join(' · ');
+    return String(n).split(' · ').map(p => has.call(EN, p) ? EN[p] : p.replace(/^Serpentina (\d+)$/, 'Hairpin $1').replace(/^Zavoj (\d+)$/, 'Turn $1').replace(/^Ovinek (\d+)$/, 'Bend $1').replace(/\b(\d{1,3})\.(\d{3}) m\b/g, '$1,$2 m')).join(' · ');
   }
   // the page as written in index.html: its texts and labels in the chosen language. Each node keeps its Slovenian text (a WeakMap), so a
   // text changed by the game in the meantime is not touched; a text the game wrote in the other language is turned by the dictionary
