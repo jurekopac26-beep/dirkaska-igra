@@ -1549,6 +1549,56 @@
   "nan": false,
   "digest": "34f6a9a86d535b8497f9de72"
  },
+ "riverside/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 225.36,
+  "spins": 0,
+  "walls": 9,
+  "rescues": 0,
+  "nan": false,
+  "digest": "160ac9e560969ec053828605"
+ },
+ "riverside/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 238.38,
+  "spins": 0,
+  "walls": 8,
+  "rescues": 0,
+  "nan": false,
+  "digest": "219068c35f305e163743641e"
+ },
+ "riverside/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 184.85,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "486979e8cc5932068caf603c"
+ },
+ "riverside/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 187.37,
+  "spins": 0,
+  "walls": 6,
+  "rescues": 0,
+  "nan": false,
+  "digest": "00dc3b980124c85fc3fd986f"
+ },
+ "riverside/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 223.52,
+  "spins": 0,
+  "walls": 13,
+  "rescues": 0,
+  "nan": false,
+  "digest": "4c53c94c9086f66bc8a7b4f0"
+ },
  "troisrivieres/cs": {
   "finished": 13,
   "cars": 13,
@@ -1592,11 +1642,11 @@
  "troisrivieres/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 150.38,
-  "spins": 1,
-  "walls": 2,
+  "winner": 152.2,
+  "spins": 0,
+  "walls": 4,
   "rescues": 0,
   "nan": false,
-  "digest": "99558a685a19757640b31255"
+  "digest": "a9395f18877182ed21ffefa5"
  }
 }
