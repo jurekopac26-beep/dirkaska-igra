@@ -203,10 +203,10 @@
   "jsMs": 0.87
  },
  "detroit": {
-  "calls": 287,
-  "maxCalls": 371,
-  "kverts": 857,
-  "maxKverts": 1034,
-  "jsMs": 1.24
+  "calls": 288,
+  "maxCalls": 372,
+  "kverts": 874,
+  "maxKverts": 1050,
+  "jsMs": 1.26
  }
 }

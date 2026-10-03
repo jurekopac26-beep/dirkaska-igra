@@ -583,17 +583,17 @@
   }
  },
  "detroit": {
-  "meshes": 365,
-  "verts": 822934,
+  "meshes": 366,
+  "verts": 826455,
   "instances": 4433,
   "props": 180,
   "crowd": 1441,
-  "world": "2c9897ce",
+  "world": "d0cef4f3",
   "propsHash": "f81a6d53",
   "floor": null,
   "groups": {
    "ground:MeshLambertMaterial": "6dc09e79",
-   "-:MeshPhongMaterial": "f7a4ccdb",
+   "-:MeshPhongMaterial": "50edf711",
    "dt-scen:MeshLambertMaterial": "3ae2e7ed",
    "dt-streets:MeshLambertMaterial": "6aa6ccea",
    "dt-track:MeshLambertMaterial": "e2feefb7",

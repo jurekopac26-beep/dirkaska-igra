@@ -22295,6 +22295,9 @@ const World = (function () {
     { const sh = new THREE.Shape(P.river.map(([x, z]) => new THREE.Vector2(x, -z))), g = new THREE.ShapeGeometry(sh, 1); g.rotateX(-Math.PI / 2); g.translate(0, S.water, 0);
       const uv = g.attributes.uv, pos = g.attributes.position; for (let k = 0; k < uv.count; k++) uv.setXY(k, pos.getX(k) / 16, -pos.getZ(k) / 16);
       const wm = waterMat(tex, { len: 2.4, color: 0x5d7f78, refl: 0.5 }), m = new THREE.Mesh(g, wm); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); out.dyn.water = tex.water;
+      { const E = []; for (let k = 0; k < P.river.length; k++) { const [ax, az] = P.river[k], [bx, bz] = P.river[(k + 1) % P.river.length]; if (Math.max(az, bz) < 900 && Math.min(az, bz) > -200 && Math.max(ax, bx) > -1400 && Math.min(ax, bx) < 720) E.push([ax, az, bx, bz]); }
+        const sd = (x, z) => { let d = 1e9; for (const [ax, az, bx, bz] of E) { const vx = bx - ax, vz = bz - az, t = clamp(((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz || 1), 0, 1); d = Math.min(d, Math.hypot(x - ax - vx * t, z - az - vz * t)); } return dtInPoly(P.river, x, z) ? d : -d; };
+        addShore(root, shoreBand(-1300, 0, 700, 900, S.water + 0.01, sd, 16), wm, { len: 2.4, refl: 0.5, lap: 0.6, shal: 0.3 }); }   // (the band along the seawall: the water lapping at it)
       // the seawall and the railing along the near shore (within the world): the shore line where the river meets this bank
       const RV = P.river, g2 = new GB(), rail = [0.2, 0.22, 0.22], wall = [0.6, 0.58, 0.54];
       for (let k = 0; k < RV.length; k++) { const [ax, az] = RV[k], [bx, bz] = RV[(k + 1) % RV.length]; if (az > 800 || bz > 800 || ax < -1300 || ax > 620) continue;   // (this bank only)
