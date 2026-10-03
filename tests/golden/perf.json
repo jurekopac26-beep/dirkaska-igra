@@ -203,10 +203,10 @@
   "jsMs": 0.87
  },
  "tokio": {
-  "calls": 295,
-  "maxCalls": 403,
-  "kverts": 923,
-  "maxKverts": 1064,
-  "jsMs": 0.88
+  "calls": 296,
+  "maxCalls": 404,
+  "kverts": 956,
+  "maxKverts": 1097,
+  "jsMs": 1.01
  }
 }

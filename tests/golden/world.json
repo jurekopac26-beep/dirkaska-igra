@@ -508,17 +508,17 @@
   }
  },
  "tokio": {
-  "meshes": 302,
-  "verts": 640111,
+  "meshes": 303,
+  "verts": 647013,
   "instances": 2459,
   "props": 178,
   "crowd": 491,
-  "world": "c84d7b18",
+  "world": "9175ec00",
   "propsHash": "1faf5706",
   "floor": null,
   "groups": {
    "-:MeshLambertMaterial": "9ed5b93f",
-   "-:MeshPhongMaterial": "aa6b432",
+   "-:MeshPhongMaterial": "5cd22a12",
    "crowd:MeshLambertMaterial": "ee089a1a",
    "-:MeshBasicMaterial": "577da86f",
    "tkFar:MeshLambertMaterial": "5b5d97e5",

@@ -22388,6 +22388,15 @@ const World = (function () {
             gq.quadO([xa, TK_SEA - 1.5, za], [xb, TK_SEA - 1.5, zb], [xb, yb + 0.05, zb], [xa, ya + 0.05, za], wc, [mx - ox * land, TK_SEA, mz - oz * land]);
             gq.quadUp([xa, ya + 0.05, za], [xb, yb + 0.05, zb], [xb + ox * land * 1.3, yb + 0.05, zb + oz * land * 1.3], [xa + ox * land * 1.3, ya + 0.05, za + oz * land * 1.3], [[0.7, 0.7, 0.68], [0.7, 0.7, 0.68], [0.7, 0.7, 0.68], [0.7, 0.7, 0.68]]); } } }
       const mw = addM(gw, wm, false); if (mw) mw.receiveShadow = true; addM(gq, matV, false);
+      // the band along the quays (waterMat's band: the paler water and a little foam lapping at the walls): sd from the shore lines, + on the water
+      { const H = 16, hs = new Map(); let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
+        for (const pts of P.shore) for (let k = 0; k < pts.length - 1; k++) { const [ax, az] = pts[k], [bx, bz] = pts[k + 1]; x0 = Math.min(x0, ax, bx); x1 = Math.max(x1, ax, bx); z0 = Math.min(z0, az, bz); z1 = Math.max(z1, az, bz);
+          for (let a2 = Math.floor(Math.min(ax, bx) / H) - 1; a2 <= Math.floor(Math.max(ax, bx) / H) + 1; a2++) for (let b2 = Math.floor(Math.min(az, bz) / H) - 1; b2 <= Math.floor(Math.max(az, bz) / H) + 1; b2++) { const kk = a2 + ',' + b2; let Lq = hs.get(kk); if (!Lq) hs.set(kk, Lq = []); Lq.push(ax, az, bx, bz); } }
+        const sd = (x, z) => { let best = 24 * 24; const a0 = Math.floor(x / H), b0 = Math.floor(z / H);
+          for (let a2 = a0 - 1; a2 <= a0 + 1; a2++) for (let b2 = b0 - 1; b2 <= b0 + 1; b2++) { const Lq = hs.get(a2 + ',' + b2); if (!Lq) continue;
+            for (let q = 0; q < Lq.length; q += 4) { const ax = Lq[q], az = Lq[q + 1], vx = Lq[q + 2] - ax, vz = Lq[q + 3] - az, t = clamp(((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz || 1e-9), 0, 1), dx = x - ax - vx * t, dz = z - az - vz * t, dd = dx * dx + dz * dz; if (dd < best) best = dd; } }
+          return Math.sqrt(best) * (tkWater(x, z) ? 1 : -1); };
+        if (x0 < x1) addShore(root, shoreBand(Math.floor(x0 / 64) * 64 - 64, Math.floor(z0 / 64) * 64 - 64, x1 + 64, z1 + 64, TK_SEA + 0.02, sd, 30, { F: 4 }), wm, { len: 1.6, amp: 0.8, refl: 0.6, lap: 0.5 }); }
     }
     /* ---- parks, lawns, plazas and car parks (OSM areas draped on the ground in 40 m pieces) ---- */
     {
