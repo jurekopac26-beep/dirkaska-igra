@@ -22205,7 +22205,7 @@ const World = (function () {
     else if (kind === 4) { row = rowG = 4; fh = 5; col = [[0.86, 0.87, 0.88], [0.78, 0.82, 0.84], [0.88, 0.85, 0.78]][Math.floor(u2 * 3)]; }
     else if (kind === 5) { row = rowG = 8; fh = 3.2; col = [0.86, 0.86, 0.84]; }
     else if (kind === 6 || kind === 7) { row = 2; rowG = 3; fh = 4.2; }
-    else if (kind === 8) { row = rowG = 4; fh = 5.5; col = [0.9, 0.91, 0.92]; roofC = [0.72, 0.74, 0.76]; }
+    else if (kind === 8) { row = rowG = 4; fh = 5.5; col = [0.9, 0.91, 0.92]; roofC = [0.5, 0.55, 0.6]; }
     else if (kind === 9) { row = rowG = 0; fh = 4; col = [0.82, 0.84, 0.86]; roofC = [0.7, 0.72, 0.74]; }
     else if (kind === 10) { row = rowG = 6; fh = 4; col = [0.7, 0.7, 0.68]; }
     else if (kind === 11) { row = rowG = 0; fh = 2; col = [0.88, 0.9, 0.92]; }
@@ -22231,6 +22231,13 @@ const World = (function () {
     for (const [a, b, c] of tris) {
       g.triO([poly[a][0], top, poly[a][1]], [poly[b][0], top, poly[b][1]], [poly[c][0], top, poly[c][1]], RC, [B.cx, top - 5, B.cz], RC, RC, ruv(poly[a]), ruv(poly[b]), ruv(poly[c]));
       if (B.mh > 0.5) g.triO([poly[a][0], y0, poly[a][1]], [poly[b][0], y0, poly[b][1]], [poly[c][0], y0, poly[c][1]], [col[0] * 0.6, col[1] * 0.6, col[2] * 0.6], [B.cx, y0 + 5, B.cz]); }   // (a floating storey's underside)
+    if (kind === 8 && B.r > 30) {   // an exhibition hall's roof: long ridges of skylights across its span (along its longest wall)
+      let bl = 0, dx = 1, dz = 0; for (let k = 0; k < n; k++) { const [ax, az] = poly[k], [bx, bz] = poly[(k + 1) % n], l = Math.hypot(bx - ax, bz - az); if (l > bl) { bl = l; dx = (bx - ax) / l; dz = (bz - az) / l; } }
+      let u0 = 1e9, u1 = -1e9, v0 = 1e9, v1 = -1e9; for (const [x, z] of poly) { const a = (x - B.cx) * dx + (z - B.cz) * dz, b = -(x - B.cx) * dz + (z - B.cz) * dx; u0 = Math.min(u0, a); u1 = Math.max(u1, a); v0 = Math.min(v0, b); v1 = Math.max(v1, b); }
+      const rot = Math.atan2(dz, dx), sk = [0.72, 0.8, 0.86], fr = [0.82, 0.83, 0.84];
+      for (let v = v0 + 12; v < v1 - 8; v += 18) { const m0 = u0 + 6, m1 = u1 - 6, mx = B.cx + dx * (m0 + m1) / 2 - dz * v, mz = B.cz + dz * (m0 + m1) / 2 + dx * v; if (!inPoly(poly, mx, mz)) continue;
+        box(g, mx, top, mz, m1 - m0, 1.4, 3.2, rot, fr, sk, true); }
+    }
     if (!far && kind <= 7 && B.r > 6 && top - yb > 7) {   // the roof's plant: a machine room, air-conditioning units, on a tower a helipad square
       const mc = [0.78, 0.78, 0.76], m = Math.min(3, 1 + Math.floor(B.r / 14));
       for (let k = 0; k < m; k++) { const a = R() * TAU, rr = B.r * 0.35 * R(), x = B.cx + Math.cos(a) * rr, z = B.cz + Math.sin(a) * rr; if (!inPoly(poly, x, z)) continue;
@@ -22478,6 +22485,10 @@ const World = (function () {
         for (const db of [30, 50]) for (const lc of [-w * 2 / 3, 0, w * 2 / 3]) { const c = s - db; const P3 = (a, o) => { const p = atSf(c + a, lc + o); return [p[0], Y(c + a) + 0.087, p[1]]; };
           gm.quadUp(P3(-3, 0), P3(0, 0.75), P3(0.3, 0.6), P3(-2.6, -0.1), [wl, wl, wl, wl]); gm.quadUp(P3(-3, 0), P3(-2.6, 0.1), P3(0.3, -0.6), P3(0, -0.75), [wl, wl, wl, wl]);
           gm.quadUp(P3(3, 0), P3(2.6, -0.1), P3(-0.3, 0.6), P3(0, 0.75), [wl, wl, wl, wl]); gm.quadUp(P3(3, 0), P3(0, -0.75), P3(-0.3, -0.6), P3(2.6, 0.1), [wl, wl, wl, wl]); } }
+      // the crossings over the side streets' mouths (they run along the circuit, 4 m wide, just inside each open mouth) and the side street's stop line
+      for (const [d, side, dep] of def.junctions || []) { if (dep < 6) continue; const s0 = sAt(d), o0 = side * (w + 1.4), o1 = side * (w + 5.4);
+        for (let a = -9; a <= 9; a += 0.9) { const sa = s0 + a; mk(sa, sa + 0.45, Math.min(o0, o1), Math.max(o0, o1), wl, 0.089); }
+        const o2 = side * (w + 6.4), o3 = side * (w + 6.85); mk(s0 - 9.5, s0 + 0.5, Math.min(o2, o3), Math.max(o2, o3), wl, 0.089); }
       out.zebras = zeb.length;
       // the start line (a chequered band), the grid's boxes (two by two, 8 m apart), the pit exit's line
       { const s0 = sStart; for (let o = -w; o < w - 0.01; o += 0.5) for (let k = 0; k < 2; k++) mk(s0 - 0.5 + k * 0.5, s0 + k * 0.5, o, o + 0.5, ((Math.round((o + w) * 2) + k) % 2) ? [0.08, 0.08, 0.09] : wl, 0.09);
@@ -22676,6 +22687,12 @@ const World = (function () {
       for (let r = 0; r < 3; r++) for (let k = 0; k < 7; k++) { const u = (k - 3) * 13, v = (r - 1) * 4.2, x = bx + bc * u - bs * v, z = bz + bs * u + bc * v;
         if (onBld(x, z) || tkNear(x, z).dd < 4) continue; tkBus(scen.get(x, z), x, gH(x, z), z, br); nCars++; }
     }
+    /* ---- the halls' loading yard along the third straight: lorries and vans backed up to the walls (an approximation) ---- */
+    { const RV = rng(9437), VC = [[0.92, 0.92, 0.9], [0.86, 0.86, 0.84], [0.2, 0.36, 0.62], [0.95, 0.95, 0.95]];
+      for (let d = 1900; d < 2180; d += 9 + RV() * 14) { const s = sAt(d), i = T.idx(s), o = -(T.bl[i] + 9 + RV() * 10), [x, z] = atSf(s, o); if (onBld(x, z) || excluded(x, z) || tkWater(x, z)) continue;
+        const g = scen.get(x, z), y = gH(x, z), rot = T.hd[i] + Math.PI / 2 + (RV() - 0.5) * 0.2, c = Math.cos(rot), sn = Math.sin(rot), col = VC[Math.floor(RV() * VC.length)];
+        if (RV() < 0.6) { box(g, x + c * 1.4, y + 0.55, z + sn * 1.4, 7.2, 2.8, 2.45, rot, col, [0.8, 0.8, 0.8], true); box(g, x - c * 3.2, y + 0.45, z - sn * 3.2, 2.0, 2.4, 2.4, rot, [0.95, 0.95, 0.96], null, true); box(g, x, y, z, 8.6, 0.55, 2.2, rot, [0.08, 0.08, 0.09], null, true); }
+        else tkCar(g, x, y, z, rot, RV); exclPush(x, z, 5); } }
     /* ---- the fans: along the walls at the chicane, Turn 12, Turn 15 and in the car park at Turns 1-3 and 16-18 (the stands have their own) ---- */
     {
       const C = crowdCtx({ gH, near: nearD, excluded: (x, z) => excluded(x, z) || onBld(x, z), water: tkWater, maxSlope: 0.5 });
