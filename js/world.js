@@ -14603,7 +14603,7 @@ const World = (function () {
       if (ok) blds.push({ x, z, L, W, ang });
     }
     // the old mines (def.mines [metres after the start line, side, metres out]): a level plot for the ore house, the headframe beside it, the tailings below
-    const mines = (def.mines || []).map(([d, sd, o]) => { const [x, z, i] = onSide(sStart + d, sd, o - (sd > 0 ? T.br[T.idx(sStart + d)] : T.bl[T.idx(sStart + d)])); return { x, z, i, sd, rot: T.hd[i] }; });
+    const mines = (def.mines || []).map(([d, sd, o]) => { const [x, z, i] = onSide(sStart + d, sd, o - (sd > 0 ? T.br[T.idx(sStart + d)] : T.bl[T.idx(sStart + d)])); return { x, z, i, sd, d, rot: T.hd[i] }; });
     for (const M of mines) { M.pad = { x: M.x, z: M.z, r: 7, b: 9, h: vrFar(M.x, M.z) }; P.pads.push(M.pad); }
     // the car parks: at the finish (beside the road past the line, on the side where the ground lies nearer the road's height) and before the start
     // (the cars held at the closed road)
@@ -14786,6 +14786,60 @@ const World = (function () {
         for (let k = 0; k < 3; k++) { const px = M.x + (RB() - 0.5) * 14, pz = M.z + (RB() - 0.5) * 14, n = vrNear(px, pz); if (n.i >= 0 && n.dd < 2.5) continue; const a = RB() * TAU, l = 3 + RB() * 3, y = unGround(px, pz) + 0.15;
           ouRod(scen.get(px, pz), [px, y, pz], [px + Math.cos(a) * l, y + 0.1, pz + Math.sin(a) * l], 0.13, [0.34, 0.29, 0.24], 4); }   // (rotten timbers)
         nMine++; out.marks['mine' + nMine] = [M.x, M.z];
+      }
+    }
+    /* ---- the avalanche and rockfall works: a rockfall net (steel posts, the grey mesh between them) at the foot of the highest cuts above the road;
+       rows of timber snow fences high in the Mother Cline and Riverside slide paths; at each mine a log cabin fallen in and a timber ore bin ---- */
+    let nNet = 0, nFence = 0;
+    {
+      const RF = rng(6113), steel = [0.3, 0.31, 0.33], mesh = [0.5, 0.51, 0.5], wood = [0.26, 0.2, 0.15], step = 5;
+      const busy = (d) => d < 70 || d > 4830 || Math.abs(d - 541) < 40 || Math.abs(d - 985.6) < 45 || Math.abs(d - 2642.7) < 40 || mines.some(M => Math.abs(M.d - d) < 40);
+      const net = (pts) => {   // pts: [x, y(ground), z] along the foot of the cut, a post at each, the mesh 3 m high between them, the cables top and bottom
+        const H = 3.1; for (let k = 0; k < pts.length; k++) { const [x, y, z] = pts[k], g = scen.get(x, z); ouRod(g, [x, y - 0.3, z], [x, y + H + 0.2, z], 0.07, steel, 4); exclPush(x, z, 2.5);
+          if (k) { const [a, ay, az] = pts[k - 1], mx = (a + x) / 2, mz = (az + z) / 2, nx = -(z - az), nz = x - a, l = Math.hypot(nx, nz) || 1, ux = nx / l * 0.6, uz = nz / l * 0.6;
+            const A = [a, ay + 0.15, az], B = [x, y + 0.15, z], C = [x, y + H, z], D = [a, ay + H, az];
+            g.quadO(A, B, C, D, mesh, [mx + ux, (ay + y) / 2 + H / 2, mz + uz]); g.quadO(A, B, C, D, mesh, [mx - ux, (ay + y) / 2 + H / 2, mz - uz]);
+            ouRod(g, [a, ay + H + 0.1, az], [x, y + H + 0.1, z], 0.03, [0.15, 0.15, 0.16], 3); ouRod(g, [a, ay + 0.2, az], [x, y + 0.2, z], 0.03, [0.15, 0.15, 0.16], 3); } }
+        nNet++; if (nNet === 1) out.marks.rockNet = [pts[0][0], pts[0][2]]; };
+      let run = [], total = 0;
+      const flush = () => { if (run.length >= 5 && total < 520) { net(run); total += (run.length - 1) * step; } run = []; };
+      for (let d = 60; d < 4900; d += step) {
+        if (busy(d)) { flush(); continue; }
+        const i = T.idx(sStart + d); let best = null;
+        for (const sd of [-1, 1]) { const e = sd > 0 ? T.br[i] : T.bl[i], at = (o) => vrFar(T.px[i] + T.nx[i] * sd * (e + o), T.pz[i] + T.nz[i] * sd * (e + o)) - T.hy[i];
+          const r16 = at(16); if (at(6) > 2 && r16 > 10 && (!best || r16 > best.r)) best = { sd, e, r: r16 }; }
+        if (!best || (run.length && run.sd !== best.sd)) { flush(); if (!best) continue; }
+        const o = best.sd * (best.e + 3.4), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, n = vrNear(x, z);
+        if (n.i >= 0 && n.dd < 2.2) { flush(); continue; }
+        run.sd = best.sd; run.push([x, unGround(x, z), z]);
+      }
+      flush();
+      // snow fences: staggered rows across the slide path, 24 to 57 m up the slope from the road
+      for (const dc of [3382.9, 4800]) {
+        const i0 = T.idx(sStart + dc), up = (sd) => vrFar(T.px[i0] + T.nx[i0] * sd * 50, T.pz[i0] + T.nz[i0] * sd * 50), sd = up(1) > up(-1) ? 1 : -1;
+        for (let row = 0; row < 4; row++) { const off = 24 + row * 11, d0 = dc - 52 + (row % 2) * 9;
+          for (let seg = 0; seg < 4; seg++) { const pts = [];
+            for (let k = 0; k <= 4; k++) { const i = T.idx(sStart + d0 + seg * 26 + k * 3.5), o = sd * ((sd > 0 ? T.br[i] : T.bl[i]) + off + (RF() - 0.5) * 1.5), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; pts.push([x, unGround(x, z), z]); }
+            const g = scen.get(pts[2][0], pts[2][2]);
+            for (const [x, y, z] of pts) { ouRod(g, [x, y - 0.3, z], [x, y + 2.6, z], 0.09, wood, 4); exclPush(x, z, 2.5); }
+            for (let k = 1; k < pts.length; k++) { const a = pts[k - 1], b = pts[k]; for (let h = 0.7; h < 2.7; h += 0.5) ouRod(g, [a[0], a[1] + h, a[2]], [b[0], b[1] + h, b[2]], 0.06, vary(wood, RF, 0.12), 3); }
+            nFence++; if (nFence === 1) out.marks.snowFence = [pts[0][0], pts[0][2]]; } } }
+      // at each mine: a log cabin fallen in (low log walls, no roof, the roof timbers on the ground), a timber ore bin on legs with its chute
+      for (const M of mines) {
+        const c = Math.cos(M.rot), s = Math.sin(M.rot), logc = [0.31, 0.25, 0.19], bw = [0.37, 0.3, 0.23];
+        const cx = M.x - T.tx[M.i] * 10 + T.nx[M.i] * M.sd * 6, cz = M.z - T.tz[M.i] * 10 + T.nz[M.i] * M.sd * 6, n = vrNear(cx, cz);
+        if (!(n.i >= 0 && n.dd < 4)) { const g = scen.get(cx, cz), y = unGround(cx, cz), W = 4.4, Dp = 3.6;
+          const P = (u, v) => [cx + c * u - s * v, cz + s * u + c * v];
+          for (const [u0, v0, u1, v1] of [[-W / 2, -Dp / 2, W / 2, -Dp / 2], [W / 2, -Dp / 2, W / 2, Dp / 2], [W / 2, Dp / 2, -W / 2, Dp / 2], [-W / 2, Dp / 2, -W / 2, -Dp / 2]]) {
+            const lv = 2 + Math.floor(RF() * 3), [ax, az] = P(u0, v0), [bx2, bz2] = P(u1, v1);
+            for (let k = 0; k < lv; k++) { const yy = y + 0.15 + k * 0.32, f = k === lv - 1 ? 0.45 + RF() * 0.55 : 1; ouRod(g, [ax, yy, az], [ax + (bx2 - ax) * f, yy, az + (bz2 - az) * f], 0.16, vary(logc, RF, 0.1), 4); } }
+          for (let k = 0; k < 3; k++) { const a = RF() * TAU, l = 2 + RF() * 2.5, px = cx + (RF() - 0.5) * 2, pz = cz + (RF() - 0.5) * 2; ouRod(g, [px, y + 0.2, pz], [px + Math.cos(a) * l, y + 0.5 + RF() * 0.6, pz + Math.sin(a) * l], 0.15, logc, 4); }
+          exclPush(cx, cz, 4.5); }
+        const bx = M.x + T.tx[M.i] * 11 - T.nx[M.i] * M.sd * 2, bz = M.z + T.tz[M.i] * 11 - T.nz[M.i] * M.sd * 2, nb = vrNear(bx, bz);
+        if (!(nb.i >= 0 && nb.dd < 3)) { const g = scen.get(bx, bz), y = unGround(bx, bz);
+          for (const [u, v] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { const px = bx + c * u * 1.4 - s * v * 1.1, pz = bz + s * u * 1.4 + c * v * 1.1; ouRod(g, [px, y - 0.2, pz], [px, y + 2.4, pz], 0.12, bw, 4); }
+          box(g, bx, y + 2.3, bz, 3.2, 2.2, 2.6, M.rot, bw, [0.24, 0.2, 0.16]); box(g, bx + c * 1.9, y + 1.6, bz + s * 1.9, 1.2, 0.25, 1.0, M.rot, [0.29, 0.23, 0.18]);
+          exclPush(bx, bz, 3.5); }
       }
     }
     const fmtAlt = (m) => String(Math.round(m)).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' m';
@@ -15196,7 +15250,7 @@ const World = (function () {
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: unAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);
     let dropM = 0; if (T.dropAt) for (let i = 0; i < N; i++) dropM += (T.dropAt[0][i] | T.dropAt[1][i]) * T.ds;
-    out.stats = { trees: nTrees, snags: nSnag, shrubs: nShrub, logs: nLog, tufts: nTufts, flowers: nFlowers, animals: nBeast, turnouts: pulls.length, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, mines: nMine, posts: nPost, creeks: nCreek, galleries: GAL.length, drops: Math.round(dropM) };   // (read by the tests)
+    out.stats = { trees: nTrees, nets: nNet, snowFences: nFence, snags: nSnag, shrubs: nShrub, logs: nLog, tufts: nTufts, flowers: nFlowers, animals: nBeast, turnouts: pulls.length, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, mines: nMine, posts: nPost, creeks: nCreek, galleries: GAL.length, drops: Math.round(dropM) };   // (read by the tests)
     return out;
   }
 
