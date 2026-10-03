@@ -16905,7 +16905,7 @@ const World = (function () {
     };
     const asp = [0.86, 0.85, 0.84];
     const RD2 = def.roads || {};
-    for (const k of ['oval', 't6t8', 't7']) if (RD2[k]) drape(RD2[k], 4.5, asp);
+    for (const k of ['oval', 't6t8', 't7']) if (RD2[k]) { drape(RD2[k], 5.6, [0.98, 0.86, 0.66], 0.05); drape(RD2[k], 4.3, asp); }   // (a dusty shoulder either side)
     if (RD2.paddock) drape(RD2.paddock, 3.5, asp);
     if (RD2.euc) drape(RD2.euc, 3.2, [0.92, 0.9, 0.86]);
     if (def.day) drape(def.day, 3.4, [0.92, 0.9, 0.86]);
@@ -16940,7 +16940,7 @@ const World = (function () {
     let nCamp = 0;
     { const RC = rng(5295), TRC = [[0.62, 0.78, 0.8], [0.9, 0.78, 0.5], [0.86, 0.6, 0.58], [0.68, 0.82, 0.64], [0.8, 0.8, 0.84]], AWN = [[0.86, 0.24, 0.2], [0.22, 0.42, 0.7], [0.3, 0.6, 0.36], [0.92, 0.7, 0.18]];
       for (const [a, b, sd] of def.ga || []) for (let d = a + 12; d < b - 8; d += 22 + RC() * 14) {
-        const [x, z, i] = onSide(sAt(d), sd, 37 + RC() * 12); if (excluded(x, z) || nrSlope(x, z) > 0.2 || nrNear(x, z).dd < 8) continue;
+        const [x, z, i] = onSide(sAt(d), sd, 33 + RC() * 6); if (excluded(x, z) || nrSlope(x, z) > 0.2 || nrNear(x, z).dd < 8) continue;
         const y = nrGround(x, z), hd = T.hd[i] + (RC() - 0.5) * 0.9, g = scen.get(x, z), ca = Math.cos(hd), sa = Math.sin(hd), wh = [0.93, 0.93, 0.9];
         if (RC() < 0.6) {   // a trailer: two-tone body, the roof's rounded step, the hitch, a little awning on the door side
           const c = TRC[Math.floor(RC() * TRC.length)];
