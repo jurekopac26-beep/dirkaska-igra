@@ -2939,6 +2939,104 @@
    "repairs": 0
   }
  },
+ "maunakea/race/cs": {
+  "digest": "f58a6529331c51cceb242547",
+  "lead": 2494.2,
+  "car0": [
+   -1130.92,
+   -1777.47
+  ],
+  "cover": {
+   "dmg": 0.43,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "maunakea/demo/cs": {
+  "digest": "a1c2f8329b6e3962c3769d00",
+  "lead": 2694.7,
+  "car0": [
+   -1249.7,
+   -2144.97
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "maunakea/upg/cs": {
+  "digest": "e11d6e5bd5618cddc4dc21c6",
+  "lead": 2690,
+  "car0": [
+   -1247.85,
+   -2139.58
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "maunakea/crash/cs": {
+  "digest": "316ac32381e1d64e1d80aea1",
+  "lead": 2487.4,
+  "car0": [
+   -1112.35,
+   -1736.7
+  ],
+  "cover": {
+   "dmg": 0.76,
+   "loose": 6,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "maunakea/formula/cs": {
+  "digest": "94e80b1f0b8c462511110750",
+  "lead": 3074.9,
+  "car0": [
+   -1257.34,
+   -2313.91
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 5,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "maunakea/lm/cs": {
+  "digest": "019b098d68766996b0e8b4d3",
+  "lead": 3010.8,
+  "car0": [
+   -1279.11,
+   -2248.09
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 24,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "maunakea/car/cs": {
+  "digest": "56c51119cfd7de183db81791",
+  "lead": 2481,
+  "car0": [
+   -1052.99,
+   -1654.3
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 15,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
  "cpalace/race/cs": {
   "digest": "6c6bd7fc7cb40e3f52fda09c",
   "lead": 2222.4,
@@ -3024,15 +3122,15 @@
   }
  },
  "cpalace/car/cs": {
-  "digest": "7ba8398436d8e9eb051b3ae7",
-  "lead": 5098.7,
+  "digest": "2174fd47c461c0ad976750c3",
+  "lead": 5099.5,
   "car0": [
-   -391.87,
-   255.23
+   -477.91,
+   46.08
   ],
   "cover": {
    "dmg": 1,
-   "loose": 11,
+   "loose": 13,
    "rescues": 0,
    "repairs": 1
   }
@@ -3122,15 +3220,15 @@
   }
  },
  "riverside/car/cs": {
-  "digest": "d77673291551adda2305a71c",
-  "lead": 2620.9,
+  "digest": "b41294cfb91b202cadd07db4",
+  "lead": 2603.1,
   "car0": [
-   478.6,
-   -898.1
+   408.32,
+   -757.13
   ],
   "cover": {
-   "dmg": 1,
-   "loose": 22,
+   "dmg": 0.63,
+   "loose": 5,
    "rescues": 0,
    "repairs": 0
   }
