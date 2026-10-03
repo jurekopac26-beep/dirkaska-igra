@@ -29,7 +29,7 @@ const Garage3D = (function () {
   // middles along the back and the front wall), the wall washers on the back wall, the steel columns (x on the back and front walls,
   // z on the side walls, and the four corners; whatever stands at a wall keeps 0.2 m clear of them)
   const WIN = [3.45, 4.3], WW = 1.9, BACKW = [-5.9, -2.75, -0.35, 2.95, 6.1], FRONTW = [-6.2, -3.1, 0, 3.1, 6.2];
-  const WASH_X = [-7.4, -4.4, 1.3, 4.6, 7.6], COLS = { backFront: [-4.75, 5.0], sides: [-2.8, 2.8, 6.5], corners: true };
+  const WASH_X = [-7.4, -4.2, 1.3, 4.6, 7.6], COLS = { backFront: [-4.75, 5.0], sides: [-2.8, 2.8, 6.5], corners: true };
   // the light (init sets it from the renderer): HDR (a half-float target), how bright the luminous things glow (EMI), the outside's
   // exposure (OUTK); NOREFL: the layer only the main camera draws (not the floor's mirror, not the cube map); GLOW: the glows painted
   // round the lights (less of them where the post pass's bloom glows too); lampMat: the ceiling's lamps (one material)
@@ -63,10 +63,10 @@ const Garage3D = (function () {
     const R = Core.rng(4242);
     // the epoxy floor: a grey resin with fine flecks, faint mottling, a few old tyre marks (1 texture = 4 m)
     TX.floor = canvasTex(1024, 1024, (g, w, h) => {
-      g.fillStyle = 'rgb(52,55,61)'; g.fillRect(0, 0, w, h);
+      g.fillStyle = 'rgb(66,68,72)'; g.fillRect(0, 0, w, h);
       for (let i = 0; i < 40; i++) { const x = R() * w, y = R() * h, r = 60 + R() * 220, gr = g.createRadialGradient(x, y, 0, x, y, r), d = R() < 0.5;
         gr.addColorStop(0, d ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.04)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }
-      for (let i = 0; i < 26000; i++) { const v = R(); g.fillStyle = v < 0.5 ? 'rgba(20,22,26,0.55)' : v < 0.85 ? 'rgba(150,155,165,0.45)' : 'rgba(205,210,220,0.5)'; g.fillRect(R() * w, R() * h, 1 + (R() < 0.1), 1 + (R() < 0.1)); }
+      for (let i = 0; i < 16000; i++) { const v = R(); g.fillStyle = v < 0.5 ? 'rgba(20,22,26,0.35)' : v < 0.85 ? 'rgba(150,155,165,0.2)' : 'rgba(205,210,220,0.22)'; g.fillRect(R() * w, R() * h, 1 + (R() < 0.1), 1 + (R() < 0.1)); }
       g.strokeStyle = 'rgba(12,12,14,0.06)'; g.lineWidth = 22;
       for (let i = 0; i < 3; i++) { g.beginPath(); const x = R() * w, y = R() * h, r = 300 + R() * 400, a = R() * TAU; g.arc(x, y, r, a, a + 0.8 + R()); g.stroke(); }
     }, true);
@@ -165,6 +165,10 @@ const Garage3D = (function () {
       g.fillStyle = 'rgb(70,72,78)'; g.beginPath(); g.arc(c, c, c * 0.42, 0, TAU); g.fill();
     });
   }
+  // the light's own textures: the floor's layout map where makeTextures draws none (an even one: r the albedo x 1.6, g the gloss x 1.27)
+  function makeLightTextures() {
+    TX.layN = canvasTex(4, 4, (g, w, h) => { g.fillStyle = 'rgb(160,200,0)'; g.fillRect(0, 0, w, h); });
+  }
 
   /* ---------------- materials of the parts (shared by every car in the garage) ---------------- */
   const PM = {};
@@ -242,27 +246,87 @@ const Garage3D = (function () {
   const ROOM = { x0: -9, x1: 9, z0: -5, z1: 9, h: 4.8, door: 2.5, doorH: 3.9, R: 3.0 };
   let signGlow = null, ringMat = null, ringGlow = null, motes = null, monitor = null;
 
+  /* ---------------- the room's light: one chunk in the shaders of the room's own materials (walls, ceiling, floor, every piece's), no
+     lights and no draws of its own. Brighter under the lamps over the table, darker towards the walls, in the corners, along the floor's
+     and the ceiling's edges; the daylight through the doors (the right one in the sun: warm; the left one in the building's shade: cool),
+     the wall washers' scallops on the back wall, the sun through the front windows in patches of their shape ---------------- */
+  let ROOMLIGHT_GLSL = '';
+  function makeRoomLight() {   // (made from the room's fixed lines, once HDR is known: a window or a washer moved, its light moves too)
+    const { x0, x1, z0, z1, h, door, doorH } = ROOM, f = (v) => v.toFixed(3), v3 = (a) => 'vec3(' + a.map(f).join(', ') + ')';
+    const at = (a, v) => '(' + a + (v < 0 ? ' + ' + f(-v) : ' - ' + f(v)) + ')', ly = h - 0.5, zw = z1 - 0.15, hw = WW / 2 - 0.03;
+    ROOMLIGHT_GLSL = [
+      'varying vec3 vRp; varying vec3 vRn;',
+      // a door's daylight: from the opening's point half-way to its middle's height (the floor in front of it gets some too)
+      'float rlDoor(vec3 p, vec3 n, float x, float s){ vec3 L = vec3(x, 0.5 * clamp(p.y, 0.0, ' + f(doorH) + ') + ' + f(doorH / 4) + ', clamp(p.z, ' + f(-door) + ', ' + f(door) + ')) - p;',
+      '  float d2 = dot(L, L) + 0.3; L *= inversesqrt(d2); return max(dot(n, L), 0.0) * max(s * L.x, 0.0) * 5.0 / (1.0 + 0.55 * d2); }',
+      // a front window seen along the sun (ax: how far from its middle, pen: the soft edge): its two panes either side of the mullion
+      'float rlWin(float ax, float pen){ return (1.0 - smoothstep(' + f(hw) + ' - pen, ' + f(hw) + ' + pen, ax)) * smoothstep(0.02, 0.03 + pen, ax); }',
+      'vec3 roomLight(vec3 c, vec3 alb){',
+      '  vec3 p = vRp, n = normalize(vRn);',
+      '  float dx = ' + f((x1 - x0) / 2) + ' - abs' + at('p.x', (x0 + x1) / 2) + ', dz = ' + f((z1 - z0) / 2) + ' - abs' + at('p.z', (z0 + z1) / 2) + ', dw = min(dx, dz);',
+      '  vec2 q = p.xz / vec2(5.2, 3.8); float k = mix(0.66, 1.1, 1.0 / (1.0 + dot(q, q)));',   // (the lamps over the table)
+      '  k *= mix(0.52, 1.0, smoothstep(0.0, 1.3, dw + p.y)) * mix(0.62, 1.0, smoothstep(0.0, 1.4, dw + ' + f(h) + ' - p.y)) * mix(0.6, 1.0, smoothstep(0.0, 1.8, max(dx, dz)));',   // (the floor's and the ceiling's edges, the corners)
+      '  float wash = 0.0;',   // (the washers: a fan of light down the back wall from each)
+      '  if (n.z > 0.5 && p.z < ' + f(z0 + 0.4) + ') { float iw = 1.0 / (0.35 + 0.22 * (' + f(ly) + ' - p.y)), e;',
+      WASH_X.map(x => '    e = ' + at('p.x', x) + ' * iw; wash += exp(-e * e);').join('\n'),
+      '    wash *= smoothstep(0.8, 3.6, p.y) * (1.0 - smoothstep(' + f(ly - 0.05) + ', ' + f(ly + 0.05) + ', p.y)); }',
+      '  const vec3 S = ' + v3([SUN.x, SUN.y, SUN.z]) + '; float sun = 0.0, ns = dot(n, S);',   // (the sun: back from p along it to the front windows' plane)
+      '  if (ns > 0.0 && p.z < ' + f(zw - 0.01) + ') { float t = (' + f(zw) + ' - p.z) / S.z, pen = 0.03 + t * 0.012; vec2 w = p.xy + S.xy * t;',
+      '    float wy = smoothstep(' + f(WIN[0]) + ' - pen, ' + f(WIN[0]) + ' + pen, w.y) * (1.0 - smoothstep(' + f(WIN[1]) + ' - pen, ' + f(WIN[1]) + ' + pen, w.y));',
+      '    if (wy > 0.0) sun = wy * ns * (' + FRONTW.map(x => 'rlWin(abs' + at('w.x', x) + ', pen)').join(' + ') + '); }',
+      '  return c * k + alb * (' + v3([0.55, 0.506, 0.44]) + ' * rlDoor(p, n, ' + f(x1) + ', 1.0) + ' + v3([0.213, 0.228, 0.248]) + ' * rlDoor(p, n, ' + f(x0) + ', -1.0)',   // (the doors: 0.55 x (1, 0.92, 0.8); 0.55 x 0.45 x (0.86, 0.92, 1))
+      '    + vec3(0.9, 0.864, 0.81) * wash + vec3(1.0, 0.88, 0.7) * sun * ' + f(HDR ? 1.8 : 0.9) + ');',
+      '}'].join('\n');
+  }
+  // the chunk in a Lambert or Phong shader: the world position and normal passed on, the colour scaled at the end (call false: the
+  // material calls roomLight() itself; mapFrag: GLSL put after the map's sample, e.g. a tint)
+  function roomPatch(sh, mapFrag, call) {
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vRp; varying vec3 vRn;')
+      .replace('#include <project_vertex>', '#include <project_vertex>\nvRp = (modelMatrix * vec4(transformed, 1.0)).xyz; vRn = mat3(modelMatrix) * objectNormal;');
+    let fs = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + ROOMLIGHT_GLSL);
+    if (mapFrag) fs = fs.replace('#include <map_fragment>', '#include <map_fragment>\n' + mapFrag);
+    if (call !== false) fs = fs.replace('#include <tonemapping_fragment>', 'gl_FragColor.rgb = roomLight(gl_FragColor.rgb, diffuseColor.rgb);\n#include <tonemapping_fragment>');
+    sh.fragmentShader = fs;
+  }
+  // a room material in the room's light (key: its program's cache key, one per variant; opts.mapFrag: as above)
+  function roomLit(m, key, opts) { const mf = opts && opts.mapFrag; m.onBeforeCompile = (sh) => roomPatch(sh, mf); m.customProgramCacheKey = () => key; return m; }
+  // the gloss of a piece's matte mesh: its faces from here on (p.g's vertices so far) get their highlights x k, until the next mark
+  // (rubber, cloth 0.15; paint 1; bare metal 2.2)
+  function gloss(p, k) { p.gl.push([p.g.P.length / 3, k]); }
+
   /* ---------------- the room's pieces that step aside: what comes between the camera and the car dissolves ---------------- */
   // a wall's piece (all that stands or hangs on that wall) is gone while the camera is out beyond the wall (or close to it); a free-
   // standing thing is gone while it is in the way (a line from the camera to the car's middle or a point round its body goes through
-  // its box) or right in front of the camera.
+  // its box) or right in front of the camera (nearer than p.near).
   // The fade is a dissolve: the pixels drop out in a fine noise (no see-through things to sort); its glows and shadows fade out.
   const pieces = [], WALLS = {}, FREE = {};
-  function piece(wall) { const p = { wall: wall || null, root: new THREE.Group(), g: new World.GB(), sm: new SmoothB(), u: { value: 0 }, k: 0, box: new THREE.Box3(), fades: [] }; scene.add(p.root); pieces.push(p); return p; }
-  function hideMat(m, u) {
-    m.onBeforeCompile = (sh) => { sh.uniforms.uHide = u; sh.fragmentShader = 'uniform float uHide;\n' + sh.fragmentShader.replace('void main() {', 'void main() {\n\tif (uHide > 0.0 && fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) < uHide) discard;'); };
-    m.customProgramCacheKey = () => 'hide';
+  function piece(wall) { const p = { wall: wall || null, root: new THREE.Group(), g: new World.GB(), sm: new SmoothB(), gl: [], near: 3.4, u: { value: 0 }, k: 0, box: new THREE.Box3(), fades: [] }; scene.add(p.root); pieces.push(p); return p; }
+  // a piece's material: the dissolve first thing in the shader, then the room light (not in the glowing MeshBasic ones nor in a
+  // ShaderMaterial), the gloss of the matte mesh (gl: its geometry has the 'gloss' attribute)
+  function hideMat(m, u, gl) {
+    const rl = !m.isMeshBasicMaterial && !m.isShaderMaterial;
+    m.onBeforeCompile = (sh) => { sh.uniforms.uHide = u;
+      sh.fragmentShader = 'uniform float uHide;\n' + sh.fragmentShader.replace('void main() {', 'void main() {\n\tif (uHide > 0.0 && fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) < uHide) discard;');
+      if (rl) roomPatch(sh);
+      if (rl && gl) { sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float gloss; varying float vGloss;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvGloss = gloss;');
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vGloss;').replace('#include <lights_fragment_end>', '#include <lights_fragment_end>\nreflectedLight.directSpecular *= vGloss;'); } };
+    m.customProgramCacheKey = () => rl ? (gl ? 'hideRLG' : 'hideRL') : 'hideB';
   }
-  // each piece: its vertex-coloured things in one mesh (they cast and take shadows), its glossy round ones in another (the room's
-  // reflections in them); its materials its own (the dissolve's uniform), the box it takes up
+  // each piece: its vertex-coloured things in one mesh (they cast and take shadows; their gloss as gloss() marked it), its glossy round
+  // ones in another (the room's reflections in them), both darker where they meet the floor; its materials its own (the dissolve's
+  // uniform), the box it takes up
   function finishPieces() {
+    const ao = (geo) => { const P = geo.attributes.position, C = geo.attributes.color;   // (the low 0.4 m darker towards the floor)
+      for (let i = 0; i < P.count; i++) { const y = P.getY(i); if (y < 0.4) { const a = 0.5 + 0.5 * smooth(0, 0.4, y); C.setXYZ(i, C.getX(i) * a, C.getY(i) * a, C.getZ(i) * a); } } return geo; };
     for (const p of pieces) {
-      if (p.g.P.length) { const m = new THREE.Mesh(p.g.geometry(), new THREE.MeshPhongMaterial({ vertexColors: true, specular: 0x444444, shininess: 38 })); m.castShadow = m.receiveShadow = true; p.root.add(m); }
-      if (p.sm.P.length) { const mt = new THREE.MeshPhongMaterial({ vertexColors: true, specular: 0xffffff, shininess: 90, combine: THREE.MixOperation, reflectivity: 0.25 }); decorEnv.push(mt); const m = new THREE.Mesh(p.sm.geometry(), mt); m.castShadow = m.receiveShadow = true; p.root.add(m); }
+      if (p.g.P.length) { const geo = ao(p.g.geometry()), n = geo.attributes.position.count, gl = new Float32Array(n).fill(1);
+        p.gl.forEach(([i, k], j) => gl.fill(k, i, j + 1 < p.gl.length ? p.gl[j + 1][0] : n)); geo.setAttribute('gloss', new THREE.BufferAttribute(gl, 1));
+        const m = new THREE.Mesh(geo, new THREE.MeshPhongMaterial({ vertexColors: true, specular: 0x5a5a5a, shininess: 50 })); m.material.userData.gl = true; m.castShadow = m.receiveShadow = true; p.root.add(m); }
+      if (p.sm.P.length) { const mt = new THREE.MeshPhongMaterial({ vertexColors: true, specular: 0xffffff, shininess: 90, combine: THREE.MixOperation, reflectivity: 0.25 }); decorEnv.push(mt); const m = new THREE.Mesh(ao(p.sm.geometry()), mt); m.castShadow = m.receiveShadow = true; p.root.add(m); }
       const done = new Map();
       p.root.traverse(o => { if (!o.material) return; let m = done.get(o.material);
         if (!m) { m = o.material.clone(); if (decorEnv.includes(o.material)) decorEnv.push(m);
-          if (m.transparent) { m.userData.op = m.opacity; p.fades.push(m); } else hideMat(m, p.u); done.set(o.material, m); }
+          if (m.transparent) { m.userData.op = m.opacity; p.fades.push(m); } else hideMat(m, p.u, m.userData.gl); done.set(o.material, m); }
         o.material = m; });
       p.box.setFromObject(p.root); p.box.expandByScalar(0.05);
     }
@@ -277,10 +341,10 @@ const Garage3D = (function () {
     for (const p of pieces) {
       let want = false;
       if (p.wall) want = p.wall[0] * c.x + p.wall[1] * c.z - p.wall[2] < 0.4;
-      else if (p.box.distanceToPoint(c) < 3.4) want = true;
+      else if (p.box.distanceToPoint(c) < p.near) want = true;
       else for (const q of _cp) { _ray.origin.copy(c); _ray.direction.subVectors(q, c); const L = _ray.direction.length(); _ray.direction.divideScalar(L); if (_ray.intersectBox(p.box, _hit) && _hit.distanceTo(c) < L) { want = true; break; } }
       p.k = want ? Math.min(1, p.k + dt * 5) : Math.max(0, p.k - dt * 5);
-      p.u.value = p.k; p.root.visible = p.k < 0.999;
+      p.u.value = p.k; if ((p.k < 0.999) !== p.root.visible) { p.root.visible = !p.root.visible; shadowDirty = 2; }   // (gone or back: its shadow too)
       for (const m of p.fades) m.opacity = m.userData.op * (1 - p.k);
     }
   }
@@ -314,7 +378,7 @@ const Garage3D = (function () {
     wallRun(x1, z1, x0, z1, [0, 0, -1], FRONTW.map(x => [x1 - x - WW / 2, x1 - x + WW / 2, WIN[0], WIN[1]]));  // front
     wallRun(x0, z1, x0, z0, [1, 0, 0], [[z1 - door, z1 + door, 0, doorH]]);       // left (the way in)
     wallRun(x1, z0, x1, z1, [-1, 0, 0], [[-z0 - door, -z0 + door, 0, doorH]]);    // right (the way out)
-    const wallM = wq.mesh(lam({ map: TX.wall })), plateM = pq.mesh(new THREE.MeshPhongMaterial({ map: TX.plate, specular: 0x666666, shininess: 40 }));
+    const wallM = wq.mesh(roomLit(lam({ map: TX.wall }), 'room')), plateM = pq.mesh(roomLit(new THREE.MeshPhongMaterial({ map: TX.plate, specular: 0x666666, shininess: 40 }), 'room'));
     wallM.receiveShadow = plateM.receiveShadow = true; scene.add(wallM, plateM);
     // the windows: a deep reveal, an aluminium frame and its mullion, the glass's sheen (the daylight outside)
     const glassM = new THREE.MeshBasicMaterial({ map: TX.glass, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.55 });
@@ -329,10 +393,10 @@ const Garage3D = (function () {
     windows(PB, z0, 1, BACKW); windows(PF, z1, -1, FRONTW);
     // ceiling: dark, steel beams across, the honeycomb of LED tubes over the car
     const cq = new QB(); cq.quad([x0, h, z1], [x1, h, z1], [x1, h, z0], [x0, h, z0], [0, -1, 0], [[0, 0], [6, 0], [6, 4], [0, 4]]);
-    scene.add(cq.mesh(lam({ color: 0x1c1f25, side: THREE.DoubleSide })));
+    scene.add(cq.mesh(roomLit(lam({ color: 0x1c1f25, side: THREE.DoubleSide }), 'room')));
     const gb = new World.GB();   // (the beams: they cast no shadow, the lamps hang under them)
     for (let x = -7.5; x <= 7.6; x += 3) { World.box(gb, x, h - 0.32, (z0 + z1) / 2, 0.22, 0.32, z1 - z0, 0, [0.13, 0.14, 0.16], [0.13, 0.14, 0.16]); World.box(gb, x, h - 0.34, (z0 + z1) / 2, 0.36, 0.04, z1 - z0, 0, [0.17, 0.18, 0.2]); }
-    scene.add(new THREE.Mesh(gb.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })));
+    scene.add(new THREE.Mesh(gb.geometry(), roomLit(lam({ vertexColors: true }), 'room')));
     // the curb stripe round the walls (the menu's red and white), at 2.05 m
     const cb = (P, ax, az, bx, bz, nx, nz) => { g = P.g; const L = Math.hypot(bx - ax, bz - az), n = Math.round(L / 0.6); for (let i = 0; i < n; i++) { const t0 = i / n, t1 = (i + 1) / n, c = i % 2 ? [0.95, 0.94, 0.9] : [0.86, 0.16, 0.13];
       const p0 = [ax + (bx - ax) * t0 + nx * 0.02, az + (bz - az) * t0 + nz * 0.02], p1 = [ax + (bx - ax) * t1 + nx * 0.02, az + (bz - az) * t1 + nz * 0.02];
@@ -347,22 +411,14 @@ const Garage3D = (function () {
       const head = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, door * 2 + 0.48), hzH); head.position.set(0.05, doorH + 0.1, 0); o.add(head);
       const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, door * 2 + 0.3, 16), new THREE.MeshLambertMaterial({ color: 0x5a5f68 })); drum.rotation.x = Math.PI / 2; drum.position.set(0.45, doorH + 0.42, 0); o.add(drum);
       const sl = new THREE.Mesh(new THREE.PlaneGeometry(door * 2, 0.55), slM); sl.rotation.y = Math.PI / 2; sl.position.set(0.12, doorH - 0.27, 0); sl.material.map.repeat.set(1, 1); o.add(sl);
-      // the daylight coming in: a soft bright patch on the floor
-      const sh = new THREE.Mesh(new THREE.PlaneGeometry(4.2, door * 2 + 1.2), new THREE.MeshBasicMaterial({ map: shaftTex(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.32 }));
-      sh.rotation.x = -Math.PI / 2; sh.rotation.z = sd > 0 ? Math.PI : 0; sh.position.set(X - sd * 2.1, 0.012, 0); sh.renderOrder = 3; scene.add(sh);
     }
     // the sign, and its glow on the wall
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(4.0, 1.0), new THREE.MeshBasicMaterial({ map: TX.sign, color: emi(0xffffff, EMI.sign), transparent: true, depthWrite: false })); sign.position.set(-2.5, 2.78, z0 + 0.06); PB.root.add(sign);
     signGlow = new THREE.Mesh(new THREE.PlaneGeometry(7.5, 3), new THREE.MeshBasicMaterial({ map: TX.glow, color: 0xffd894, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: GLOW.sign }));
     signGlow.position.set(-2.5, 2.78, z0 + 0.03); PB.root.add(signGlow);
-    // wall washers: a lamp under the ceiling every few metres along the back wall (between the windows), its light fanning down the panels
+    // wall washers: a lamp under the ceiling every few metres along the back wall (between the windows; their light: the room light's)
     g = PB.g;
-    const wash = canvasTex(128, 256, (gx, w, hh) => { const gr = gx.createRadialGradient(w / 2, 0, 0, w / 2, 0, hh); gr.addColorStop(0, 'rgba(255,244,225,0.95)'); gr.addColorStop(0.25, 'rgba(255,240,215,0.45)'); gr.addColorStop(0.7, 'rgba(255,236,210,0.08)'); gr.addColorStop(1, 'rgba(255,236,210,0)'); gx.fillStyle = gr; gx.fillRect(0, 0, w, hh); });
-    const washM = new THREE.MeshBasicMaterial({ map: wash, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.32 });
-    for (const x of WASH_X) {
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 3.4), washM); m.position.set(x, h - 0.45 - 1.7, z0 + 0.04); m.renderOrder = 2; PB.root.add(m);
-      box(x, h - 0.5, z0 + 0.1, 0.5, 0.08, 0.2, [0.1, 0.1, 0.11]);
-    }
+    for (const x of WASH_X) box(x, h - 0.5, z0 + 0.1, 0.5, 0.08, 0.2, [0.1, 0.1, 0.11]);
     // the pegboard over the chests
     const peg = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.3), new THREE.MeshLambertMaterial({ map: TX.peg })); peg.position.set(-6.15, 1.92, z0 + 0.03); PB.root.add(peg);
     // a telemetry screen on the wall (a glowing trace)
@@ -424,7 +480,7 @@ const Garage3D = (function () {
     for (let i = 0; i < 6; i++) box(-3 + i * 0.62, 0, z1 - 0.32, 0.6, 1.9, 0.55, [0.2, 0.32, 0.55], [0.16, 0.26, 0.45]);
     box(3.5, 0, z1 - 0.4, 3.2, 0.9, 0.7, [0.2, 0.21, 0.24], [0.3, 0.31, 0.34]);
   }
-  // the floor's marks: the turntable's lit ring, the pool of light, the painted lines
+  // the floor's marks: the turntable's lit ring, the painted lines
   function buildFloorMarks() {
     const { x0, x1, door } = ROOM;
     // the turntable's lit ring in the floor, its glow
@@ -436,13 +492,11 @@ const Garage3D = (function () {
       fragmentShader: 'uniform vec3 uC; uniform float uK; varying vec2 vP; void main(){ float d = length(vP) - ' + (ROOM.R + 0.04).toFixed(2) + '; float a = exp(-d * d * (d < 0.0 ? 60.0 : 5.0)); gl_FragColor = vec4(uC * a * uK, 1.0); }',
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     ringGlow.rotation.x = -Math.PI / 2; ringGlow.position.y = 0.008; ringGlow.renderOrder = -1; scene.add(ringGlow);
-    const pool = new THREE.Mesh(new THREE.PlaneGeometry(9, 7), new THREE.MeshBasicMaterial({ map: TX.glow, color: 0x8f98a8, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.55 }));
-    pool.rotation.x = -Math.PI / 2; pool.position.y = 0.006; pool.renderOrder = -1; scene.add(pool);   // (the light of the honeycomb over the table)
     // painted lines on the floor: the bay's yellow edges, the arrows of the way through
     const fl = new World.GB(), Y = [0.85, 0.66, 0.12], line = (ax, az, bx, bz, w) => { const L2 = Math.hypot(bx - ax, bz - az), nx = -(bz - az) / L2 * w / 2, nz = (bx - ax) / L2 * w / 2; fl.quadUp([ax - nx, 0.006, az - nz], [ax + nx, 0.006, az + nz], [bx + nx, 0.006, bz + nz], [bx - nx, 0.006, bz - nz], [Y, Y, Y, Y]); };
     for (const sz of [-1, 1]) { line(x0, sz * (door + 0.25), -ROOM.R - 0.4, sz * (door + 0.25), 0.1); line(ROOM.R + 0.4, sz * (door + 0.25), x1, sz * (door + 0.25), 0.1); }
     for (const ax of [-6.2, 5.2]) { for (const s of [-1, 1]) line(ax, s * 0.55, ax + 0.9, 0, 0.12); }
-    const flM = new THREE.Mesh(fl.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })); flM.receiveShadow = true; scene.add(flM);
+    const flM = new THREE.Mesh(fl.geometry(), roomLit(new THREE.MeshLambertMaterial({ vertexColors: true }), 'room')); flM.receiveShadow = true; scene.add(flM);
   }
   // dust in the light over the car
   function buildMotes() {
@@ -647,13 +701,8 @@ const Garage3D = (function () {
       box(4.55, BY, BZ + 0.1, 0.22, 0.12, 0.14, [0.3, 0.42, 0.62]); box(4.55, BY + 0.12, BZ + 0.04, 0.24, 0.08, 0.05, [0.3, 0.42, 0.62]); box(4.55, BY + 0.12, BZ + 0.16, 0.24, 0.08, 0.05, [0.3, 0.42, 0.62]); obox(g, [4.42, BY + 0.06, BZ - 0.02], [4.68, BY + 0.06, BZ - 0.02], 0.02, 0.02, STEEL);   // a vice
       cylA(g, [2.1, BY + 0.015, BZ + 0.1], 'y', 0.08, 0.03, 12, DK); obox(g, [2.1, BY + 0.03, BZ + 0.1], [2.18, BY + 0.42, BZ + 0.18], 0.025, 0.025, DK); obox(g, [2.18, BY + 0.42, BZ + 0.18], [2.45, BY + 0.5, BZ - 0.02], 0.025, 0.025, DK);
       World.cone(g, 2.47, BY + 0.38, BZ - 0.04, 0.09, 0.14, 12, [0.85, 0.15, 0.12], [0.85, 0.15, 0.12], 0); }
-    // soft shadows on the floor: along the foot of every wall, under the things standing on it
-    { const ao = canvasTex(64, 64, (gx, w, h) => { const gr = gx.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(0,0,0,0.55)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); gx.fillStyle = gr; gx.fillRect(0, 0, w, h); });
-      const am = new THREE.MeshBasicMaterial({ map: ao, transparent: true, depthWrite: false });
-      const strip = (cx, cz, L, ry) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(L, 0.9), am); m.rotation.set(-Math.PI / 2, 0, ry); m.position.set(cx, 0.007, cz); m.renderOrder = -2; scene.add(m); };
-      strip(0, z0 + 0.45, x1 - x0, 0); strip(0, z1 - 0.45, x1 - x0, Math.PI);
-      for (const [a, b] of [[z0, -door], [door, z1]]) { strip(x0 + 0.45, (a + b) / 2, b - a, -Math.PI / 2); strip(x1 - 0.45, (a + b) / 2, b - a, Math.PI / 2); }
-      const blob = canvasTex(64, 64, (gx, w) => { const gr = gx.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2); gr.addColorStop(0, 'rgba(0,0,0,0.6)'); gr.addColorStop(0.6, 'rgba(0,0,0,0.3)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); gx.fillStyle = gr; gx.fillRect(0, 0, w, w); });
+    // soft shadows on the floor under the things standing on it (along the foot of the walls: the room light's)
+    { const blob = canvasTex(64, 64, (gx, w) => { const gr = gx.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2); gr.addColorStop(0, 'rgba(0,0,0,0.6)'); gr.addColorStop(0.6, 'rgba(0,0,0,0.3)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); gx.fillStyle = gr; gx.fillRect(0, 0, w, w); });
       const bm = new THREE.MeshBasicMaterial({ map: blob, transparent: true, depthWrite: false });
       const B = WALLS.back;
       for (const [x, z, w, d, , ry, P] of shadows.concat([[-6.9, z0 + 0.4, 1.9, 1.0, 0.9, 0, B], [-5.25, z0 + 0.4, 1.3, 1.0, 0.9, 0, B], [-2.6, z0 + 0.35, 3.6, 0.9, 0.8, 0, B], [3.0, z0 + 0.25, 4.0, 0.8, 0.7, 0, B], [6.45, z0 + 0.35, 2.9, 1.0, 0.9, 0, B],
@@ -803,10 +852,6 @@ const Garage3D = (function () {
     const cx = 272 + (t * 50) % 220; g.fillStyle = 'rgba(255,255,255,0.75)'; g.fillRect(cx, 141, 2, 118);
     screen.t.needsUpdate = true;
   }
-  function shaftTex() {
-    return canvasTex(128, 128, (g, w, h) => { const gr = g.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, 'rgba(255,248,232,0.9)'); gr.addColorStop(1, 'rgba(255,248,232,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
-      g.globalCompositeOperation = 'destination-in'; const m = g.createLinearGradient(0, 0, 0, h); m.addColorStop(0, 'rgba(0,0,0,0)'); m.addColorStop(0.2, 'rgba(0,0,0,1)'); m.addColorStop(0.8, 'rgba(0,0,0,1)'); m.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = m; g.fillRect(0, 0, w, h); });
-  }
   let monCtx = null, monTexObj = null;
   function monitorTex() {
     const c = document.createElement('canvas'); c.width = 256; c.height = 148; monCtx = c.getContext('2d');
@@ -828,7 +873,7 @@ const Garage3D = (function () {
     const R = ROOM.R;
     tt = new THREE.Group(); scene.add(tt);
     ttTop = new THREE.Group(); tt.add(ttTop);
-    const discTop = new THREE.Mesh(new THREE.CircleGeometry(R, 96), floorMaterial(TX.disc, 0.8));
+    const discTop = new THREE.Mesh(new THREE.CircleGeometry(R, 96), floorMaterial(TX.disc, 0.7, { rough: 1.2 }));   // (spun steel: a softer mirror than the resin)
     discTop.rotation.x = -Math.PI / 2; discTop.position.y = 0.002; discTop.receiveShadow = true; ttTop.add(discTop);
     const rim = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 0.12, 96, 1, true), new THREE.MeshLambertMaterial({ map: TX.hazard }));
     rim.material.map = TX.hazard.clone(); rim.material.map.needsUpdate = true; rim.material.map.repeat.set(24, 1); rim.position.y = -0.058; tt.add(rim);
@@ -849,28 +894,48 @@ const Garage3D = (function () {
     scis.ram.visible = h > 0.02; scis.ram.scale.y = Math.max(0.01, top - bot); scis.ram.position.set(0, bot + (top - bot) / 2, 0);
   }
 
-  /* ---------------- the floor: epoxy with a blurred mirror image (a planar reflection drawn every frame at half size) ---------------- */
-  const REF = { rt: null, cam: new THREE.PerspectiveCamera(), tm: new THREE.Matrix4(), k: { value: 0.62 }, size: 0.5 };
-  function floorMaterial(map, k) {
-    const m = new THREE.MeshPhongMaterial({ map, specular: 0x444444, shininess: 60 });
-    const uK = { value: k };
+  /* ---------------- the floor: epoxy with a mirror image (a planar reflection drawn every frame at half size), blurred and faded ---------------- */
+  // REF.depth: the mirror image's depth kept (WebGL2, or WEBGL_depth_texture): how far over the floor a reflected thing is
+  const REF = { rt: null, cam: new THREE.PerspectiveCamera(), tm: new THREE.Matrix4(), invP: new THREE.Matrix4(), k: { value: 0.85 }, size: 0.5, depth: false };
+  // the floor's material (the turntable's top's too): the room light on it, then the mirror image (k: how strong; opts.rough: how much
+  // it blurs; opts.lay: a layout map over the room, r the albedo x 1.6, g the gloss x 1.27). With the depth the blur grows with how high
+  // over the floor the reflected thing is and the image fades with it: a tyre crisp where it stands, the walls soft and faint, only
+  // bright things (the doorway, the lamps) keep a long faint smear. Epoxy's fresnel, the taps stretched into vertical streaks.
+  function floorMaterial(map, k, opts) {
+    const o = opts || {}, m = new THREE.MeshPhongMaterial({ map, specular: 0x444444, shininess: 60 }), uK = { value: k }, lay = o.lay, { x0, x1, z0, z1 } = ROOM;
     m.onBeforeCompile = (sh) => {
-      sh.uniforms.tRefl = { get value() { return REF.rt ? REF.rt.texture : null; } }; sh.uniforms.uTexM = { value: REF.tm }; sh.uniforms.uReflK = REF.k; sh.uniforms.uK = uK; sh.uniforms.uTexel = { get value() { return REF.texel; } };
-      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform mat4 uTexM;\nvarying vec4 vRefl;\nvarying vec3 vWp;')
-        .replace('#include <project_vertex>', '#include <project_vertex>\nvec4 wpR = modelMatrix * vec4(transformed, 1.0); vRefl = uTexM * wpR; vWp = wpR.xyz;');
-      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D tRefl;\nuniform float uReflK;\nuniform float uK;\nuniform vec2 uTexel;\nvarying vec4 vRefl;\nvarying vec3 vWp;')
+      Object.assign(sh.uniforms, { tRefl: { get value() { return REF.rt.texture; } }, tReflD: { get value() { return REF.rt.depthTexture; } }, uTexM: { value: REF.tm }, uRefInvP: { value: REF.invP },
+        uReflK: REF.k, uK, uRough: { value: o.rough || 1 }, uTexel: { get value() { return REF.texel; } }, tLay: { value: lay } });
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform mat4 uTexM; varying vec4 vRefl;').replace('#include <project_vertex>', '#include <project_vertex>\nvRefl = uTexM * vec4(vRp, 1.0);');
+      const lu = (a, b) => [1 / (b - a), -a / (b - a)].map(v => v.toFixed(5));   // (the map over the room: u along x, v along z)
+      roomPatch(sh, lay && 'vec4 lay = texture2D(tLay, vRp.xz * vec2(' + lu(x0, x1)[0] + ', ' + lu(z0, z1)[0] + ') + vec2(' + lu(x0, x1)[1] + ', ' + lu(z0, z1)[1] + ')); diffuseColor.rgb *= lay.r * 1.6;', false);   // (vRp set before vRefl)
+      sh.fragmentShader = (REF.depth ? '#define REFL_DEPTH\n' : '') + (lay ? '#define LAY\n' : '') + sh.fragmentShader
+        .replace('#include <common>', '#include <common>\nuniform sampler2D tRefl; uniform sampler2D tLay; uniform float uReflK; uniform float uK; uniform float uRough; uniform vec2 uTexel; varying vec4 vRefl;\n#ifdef REFL_DEPTH\nuniform sampler2D tReflD; uniform mat4 uRefInvP;\n#endif')
         .replace('gl_FragColor = vec4( outgoingLight, diffuseColor.a );', [
-          'vec2 ruv = vRefl.xy / vRefl.w;',
-          'float sp = texture2D(map, vUv * 3.7).r;',   // (the flecks break the mirror up a little)
-          'vec2 j = (vec2(sp, fract(sp * 7.3)) - 0.5) * uTexel * 1.6;',
-          'vec3 rc = vec3(0.0); float wsum = 0.0;',
-          'for (int i = 0; i < 8; i++) { float a = float(i) * 2.39996; float r = 0.6 + float(i) * 0.32; vec2 o = vec2(cos(a), sin(a)) * r * uTexel; float wgt = 1.0 / (1.0 + float(i) * 0.3); rc += texture2D(tRefl, ruv + o + j).rgb * wgt; wsum += wgt; }',
-          'rc /= wsum;',
-          'vec3 vd = normalize(cameraPosition - vWp); float fr = 0.55 + 0.45 * pow(1.0 - clamp(vd.y, 0.0, 1.0), 3.0), rk = fr * uReflK * uK;',
-          'outgoingLight = outgoingLight * (1.0 - 0.45 * rk) + rc * rk;',
+          'outgoingLight = roomLight(outgoingLight, diffuseColor.rgb);',
+          'vec2 ruv = vRefl.xy / vRefl.w; float gap = 0.0, bl = uRough;',
+          '#ifdef REFL_DEPTH',   // (the gap: metres from the floor to the reflected point, along the ray; the sky far off)
+          'float zb = texture2D(tReflD, ruv).r; vec4 vp = uRefInvP * vec4(ruv * 2.0 - 1.0, zb * 2.0 - 1.0, 1.0);',
+          'float dc = length(cameraPosition - vRp); gap = zb > 0.99999 ? 25.0 : max(0.0, length(vp.xyz / vp.w) - dc);',
+          'bl *= 0.5 + 6.0 * gap / (gap + dc);',   // (the blur's spot as the eye sees it: it grows with the gap, over the whole way to the eye)
+          '#endif',
+          '#ifdef LAY',
+          'bl *= 1.0 + 2.5 * (1.0 - lay.g);',
+          '#endif',
+          // (8 taps on a golden-angle spiral turned per pixel, the resin's flecks jittering it: no banding, a fine grain)
+          'float rot = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) * 6.2832; vec2 j = (vec2(texelColor.r, fract(texelColor.r * 7.3)) - 0.5) * uTexel * 1.6 * bl;',
+          'vec3 rc = vec3(0.0); float ws = 0.0;',
+          'for (int i = 0; i < 8; i++) { float a = float(i) * 2.39996 + rot, w = 1.0 / (1.0 + float(i) * 0.3); rc += texture2D(tRefl, ruv + j + vec2(cos(a) * 0.6, sin(a) * 1.5) * (0.6 + float(i) * 0.32) * bl * uTexel).rgb * w; ws += w; }',
+          'rc /= ws;',
+          'vec3 vd = normalize(cameraPosition - vRp); float fr = 0.18 + 0.82 * pow(1.0 - clamp(vd.y, 0.0, 1.0), 4.0);',
+          'float rk = fr * uReflK * uK * max(exp(-gap * 0.1 * uRough), 0.18 * smoothstep(0.75, 1.5, dot(rc, vec3(0.3333))));',
+          '#ifdef LAY',
+          'rk *= lay.g * 1.27;',
+          '#endif',
+          'outgoingLight = outgoingLight * (1.0 - 0.25 * rk) + rc * rk * 1.15;',
           'gl_FragColor = vec4( outgoingLight, diffuseColor.a );'].join('\n'));
     };
-    m.customProgramCacheKey = () => 'garageFloor';
+    m.customProgramCacheKey = () => 'garageFloor' + (REF.depth ? 'D' : '') + (lay ? 'L' : '');
     m.userData.k = uK;
     return m;
   }
@@ -880,10 +945,12 @@ const Garage3D = (function () {
     const hole = new THREE.Path(); hole.absarc(0, 0, ROOM.R + 0.07, 0, TAU, true); sh.holes.push(hole);
     const geo = new THREE.ShapeGeometry(sh, 48); geo.rotateX(-Math.PI / 2);
     const uv = geo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) / 4, uv.getY(i) / 4);
-    floorMat = floorMaterial(TX.floor, 1);
+    floorMat = floorMaterial(TX.floor, 1, { rough: 1.0, lay: TX.floorL || TX.layN });
     const f = new THREE.Mesh(geo, floorMat); f.receiveShadow = true; scene.add(f); refl = f;
-    REF.rt = new THREE.WebGLRenderTarget(4, 4, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat });
+    // the mirror image: half-float with HDR (the lamps and the doorway over 1 in it too), its depth in a texture where there can be one
+    REF.rt = new THREE.WebGLRenderTarget(4, 4, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, type: HDR ? THREE.HalfFloatType : THREE.UnsignedByteType });
     REF.rt.texture.generateMipmaps = false; REF.texel = new THREE.Vector2(0.25, 0.25);
+    if (renderer.capabilities.isWebGL2 || renderer.extensions.has('WEBGL_depth_texture')) { REF.rt.depthTexture = new THREE.DepthTexture(4, 4); REF.rt.depthTexture.type = THREE.UnsignedIntType; REF.depth = true; }
   }
   // the mirror camera under the floor (as three.js's Reflector: the camera reflected in y = 0, its near plane cut along the floor)
   const _v = new V3(), _t = new V3(), _q = new THREE.Vector4(), _pl = new THREE.Plane();
@@ -899,22 +966,25 @@ const Garage3D = (function () {
     const cp = new THREE.Vector4(_pl.normal.x, _pl.normal.y, _pl.normal.z, _pl.constant), pm = rc.projectionMatrix.elements;
     _q.x = (Math.sign(cp.x) + pm[8]) / pm[0]; _q.y = (Math.sign(cp.y) + pm[9]) / pm[5]; _q.z = -1; _q.w = (1 + pm[10]) / pm[14];
     cp.multiplyScalar(2 / cp.dot(_q)); pm[2] = cp.x; pm[6] = cp.y; pm[10] = cp.z + 1 - 0.003; pm[14] = cp.w;
+    REF.invP.copy(rc.projectionMatrix).invert();   // (the clipped projection's inverse: the floor's shader finds the reflected points' depth)
     refl.visible = false; ttTop.visible = false; ringGlow.visible = false;
-    const sm = renderer.shadowMap.autoUpdate; renderer.shadowMap.autoUpdate = false;
-    renderer.setRenderTarget(REF.rt); renderer.clear(); renderer.render(scene, rc); renderer.setRenderTarget(null);
-    renderer.shadowMap.autoUpdate = sm;
+    renderer.setRenderTarget(REF.rt); renderer.clear(); renderer.render(scene, rc); renderer.setRenderTarget(null);   // (the shadow map, when it is due, is drawn here)
     refl.visible = true; ttTop.visible = true; ringGlow.visible = true;
   }
 
   /* ---------------- lights ---------------- */
+  // neutral white (the cyan only in what glows): the sky's and the floor's bounce, the key light over the table with its shadows over
+  // the whole room (the map drawn again only when something moves: shadowDirty, frame()), a fill, a rim; the doors' daylight, the
+  // washers and the sun through the windows are the room light's
+  let shadowDirty = 2;   // (frames still to draw the shadow map in)
   function buildLights() {
-    scene.add(new THREE.HemisphereLight(0xdfe8ff, 0x2c2f36, 0.46));
-    keyLight = new THREE.DirectionalLight(0xfff3e2, 0.95); keyLight.position.copy(KEY_DIR).multiplyScalar(12); keyLight.castShadow = true;
-    keyLight.shadow.mapSize.set(1024, 1024); const sc = keyLight.shadow.camera; sc.left = -5.5; sc.right = 5.5; sc.top = 5.5; sc.bottom = -5.5; sc.near = 2; sc.far = 30;
-    keyLight.shadow.bias = -0.0008; keyLight.shadow.normalBias = 0.02; keyLight.shadow.radius = 4; scene.add(keyLight, keyLight.target);
-    const fill = new THREE.DirectionalLight(0xa9c8ff, 0.3); fill.position.set(-6, 3, 4); scene.add(fill);
-    const rim = new THREE.DirectionalLight(0xbfd8ff, 0.42); rim.position.set(-2, 4, -8); scene.add(rim);
-    const door = new THREE.DirectionalLight(0xfff0d8, 0.22); door.position.set(-10, 2, 0); scene.add(door);
+    scene.add(new THREE.HemisphereLight(0xf1f3f6, 0x3a3631, 0.5));
+    keyLight = new THREE.DirectionalLight(0xfff3e2, 0.85); keyLight.target.position.set(0, 0, 2); keyLight.position.copy(KEY_DIR).multiplyScalar(12).add(keyLight.target.position); keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(1024, 1024); const sc = keyLight.shadow.camera; sc.left = -9.8; sc.right = 9.8; sc.top = 8.6; sc.bottom = -8.6; sc.near = 2; sc.far = 30;
+    sc.up.set(0, 0, -1);   // (the map's box square with the room: x across, z up the map)
+    keyLight.shadow.bias = -0.0006; keyLight.shadow.normalBias = 0.03; keyLight.shadow.radius = 4; scene.add(keyLight, keyLight.target);
+    const fill = new THREE.DirectionalLight(0xdfe6f0, 0.24); fill.position.set(-6, 3, 4); scene.add(fill);
+    const rim = new THREE.DirectionalLight(0xe8eefa, 0.42); rim.position.set(-2, 4, -8); scene.add(rim);
   }
 
   /* ---------------- the camera: round the car (the user drags it left and right only), moved by the animations ---------------- */
@@ -1829,27 +1899,27 @@ const Garage3D = (function () {
     POST.on = !(typeof location !== 'undefined' && /[?&]gfx=low\b/.test(location.search));
     HDR = POST.on && renderer.capabilities.isWebGL2 && renderer.extensions.has('EXT_color_buffer_float');
     if (HDR) Object.assign(EMI, { hex: 3.0, led: 1.6, sign: 1.3, screen: 1.2, tail: 2.5, spark: 2.0 });
-    OUTK = HDR ? 1.6 : 1.12;
+    OUTK = HDR ? 1.6 : 1.12; makeRoomLight();
     if (POST.on) Object.assign(GLOW, { sign: 0.06, ring: 0.73, lamp: 0.6, blur: 8 });
     renderer.info.autoReset = false;   // (frame() counts the passes itself: _dbg.stats; the page's test reads the main pass and the post pass)
     { const sm = renderer.shadowMap, r0 = sm.render;   // (the shadow map is drawn inside the main pass's render: its draws counted apart)
       sm.render = function (...a) { const ri = renderer.info.render, c = ri.calls, t = ri.triangles; r0.apply(this, a); STATS.shadow += ri.calls - c; shT += ri.triangles - t; }; }
     renderer.localClippingEnabled = true;
     renderer.setClearColor(0x0d1420, 1);
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false;   // (drawn only when something moves: frame())
     scene = new THREE.Scene(); scene.background = new THREE.Color(0x0d1420);
     camera = new THREE.PerspectiveCamera(HOME.fov, 1.6, 0.25, 700);
-    makeTextures();
+    makeTextures(); makeLightTextures();
     buildLights(); buildFloor(); buildRoom(); buildTurntable(); buildDecor(); buildOutside(); buildPost();
     // the room in the cars' paint and glass: a cube map of it, made once from where a car's middle is
     cubeRT = new THREE.WebGLCubeRenderTarget(256, { format: THREE.RGBAFormat, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter });
     const cc = new THREE.CubeCamera(0.2, 600, cubeRT); cc.position.set(0, 0.9, 0); scene.add(cc);
-    REF.k.value = 0; ttTop.visible = true; cc.update(renderer, scene); REF.k.value = 0.62; scene.remove(cc);
+    const rk = REF.k.value; REF.k.value = 0; ttTop.visible = true; renderer.shadowMap.needsUpdate = true; cc.update(renderer, scene); REF.k.value = rk; scene.remove(cc);
     env = cubeRT.texture;
     for (const m of decorEnv) { m.envMap = env; m.needsUpdate = true; }
     makePartMats();
     puffs = new Puffs(1400, false); sparks = new Puffs(900, true); scene.add(puffs.pts, sparks.pts);
-    Render.garageLight(KEY_DIR, 0xfff2e0, 0.5, 0xffffff);
+    Render.garageLight(KEY_DIR, 0xfff2e0, 0.7, 0xffffff);
     bindInput(canvas);
     ready = true;
   }
@@ -1860,12 +1930,12 @@ const Garage3D = (function () {
     REF.rt.setSize(rw, rh); REF.texel.set(1 / rw, 1 / rh);
     const sc = H * pr / (2 * Math.tan(HOME.fov * Math.PI / 360));
     puffs.mat.uniforms.uScale.value = sparks.mat.uniforms.uScale.value = motes.material.uniforms.uScale.value = sc;
-    sizePost();
+    sizePost(); shadowDirty = 2;
   }
   // the car shown first: no drive-in, it stands there
   function show(spec) {
     if (cur) freeCar(cur);
-    cur = makeCar(spec); tt.add(cur.root);
+    cur = makeCar(spec); tt.add(cur.root); shadowDirty = 2;
   }
   function frame(dt, noDraw) {
     if (!ready) return;
@@ -1883,12 +1953,13 @@ const Garage3D = (function () {
     placeCamera(dt); stepPieces(dt); adaptExposure(dt);
     if (noDraw) return;
     const ri = renderer.info.render, post = POST.on && POST.rt;
-    renderer.info.reset(); drawReflection(); STATS.refl = ri.calls;
-    renderer.info.reset(); STATS.shadow = shT = 0;   // (from here: what the page's test counts)
+    renderer.shadowMap.needsUpdate = busy > 0 || tasks.length > 0 || shadowDirty > 0; if (shadowDirty > 0) shadowDirty--;   // (a show, a move, a piece gone or back)
+    STATS.shadow = shT = 0; renderer.info.reset(); drawReflection(); STATS.refl = ri.calls - STATS.shadow;   // (the first pass draws the shadow map when it is due)
+    const s0 = STATS.shadow, t0 = shT; renderer.info.reset();   // (from here: what the page's test counts)
     renderer.setRenderTarget(post ? POST.rt : null); renderer.render(scene, camera);
-    STATS.main = ri.calls - STATS.shadow; STATS.tris = ri.triangles - shT;
+    STATS.main = ri.calls - STATS.shadow + s0; STATS.tris = ri.triangles - shT + t0;
     if (post) postPass();
-    STATS.post = ri.calls - STATS.main - STATS.shadow;
+    STATS.post = ri.calls - STATS.main - STATS.shadow + s0;
   }
   // (every car's root knows its car: the frame poses them all, the one driving out too)
   const live = new Set();
