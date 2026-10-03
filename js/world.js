@@ -16380,8 +16380,11 @@ const World = (function () {
   let LMS = 'summer';          // the season the world is painted in ('summer' or 'autumn': buildLemmon, from opts.season)
   let LMLOT = null;            // the car parks (buildLemmon): their shore polygons, bounding boxes; lmH levels the ground in them at the road's height
   const LMCOL = [0, 0, 0];
-  function lmH(x, z) {   // terrain height: Los Caracoles' blend (caH), the car parks level with the road beside them, the side roads' bed (vrStubH)
-    let h = caH(x, z); const i = CAN.i, dd = i >= 0 ? CAN.dd : 999;
+  function lmH(x, z) {   // terrain height: Los Caracoles' blend (caNear) into the real terrain over 24 m (not 42: the highway's cuts and fills, steep
+    // beside it), never above the road around (caNear's ceiling); the car parks level with the road beside them, the side roads' bed (vrStubH)
+    const n = caNear(x, z), i = n.i, dd = i >= 0 ? n.dd : 999; let h;
+    if (i < 0) h = vrFar(x, z);
+    else { const hr = n.h - 0.3; h = dd <= 1 ? hr : lerp(hr, vrFar(x, z), sstep(1, 24, dd)); h = Math.min(h, n.env); }
     if (LMLOT) for (const L of LMLOT) { if (x < L.x0 - 9 || x > L.x1 + 9 || z < L.z0 - 9 || z > L.z1 + 9) continue;
       const e = (inPoly(L.poly, x, z) ? -1 : 1) * polyDist(L.poly, x, z); if (e > 9) continue;
       const k = T.nearestIdx(x, z), y = T.hy[k] - 0.1; h = lerp(Math.max(y, Math.min(h, y + 0.2)), h, sstep(1.5, 9, e)); }
@@ -16410,15 +16413,19 @@ const World = (function () {
     // pines' rusty needles higher up (lc 2), the granite (lc 4 and every steep face: buff and pale grey, dark lichen and water streaks), a verge of grus
     const P = VR, A = h + P.D.base, m = P.c1(x, z), q = P.c2(x, z), f = P.n4(x, z), au = LMS === 'autumn';
     const sh = vrLCf(x, z, 1), tr = vrLCf(x, z, 2), se = vrLCf(x, z, 3), rk = vrLCf(x, z, 4), pine = lmPine(A, sz || 0);
-    let R = au ? 0.6 : 0.45, G = au ? 0.52 : 0.47, B = au ? 0.34 : 0.28;   // the grass
+    let R = au ? 0.55 : 0.37, G = au ? 0.47 : 0.4, B = au ? 0.31 : 0.23;   // the grass
     const dry = sstep(0.55, 0.85, m) * (au ? 0.5 : 0.7);
-    R = lerp(R, 0.6, dry); G = lerp(G, 0.51, dry); B = lerp(B, 0.39, dry);   // (bare grus between the tufts, a pinkish buff)
+    R = lerp(R, 0.53, dry); G = lerp(G, 0.45, dry); B = lerp(B, 0.35, dry);   // (bare grus between the tufts, a pinkish buff)
     R += (f - 0.5) * 0.08; G += (f - 0.5) * 0.07; B += (f - 0.5) * 0.05;
     R = lerp(R, 0.4, sh * 0.85); G = lerp(G, 0.35, sh * 0.85); B = lerp(B, 0.25, sh * 0.85);   // under the shrubs
     const lit = [lerp(0.36, 0.42, pine), lerp(0.32, 0.3, pine), lerp(0.21, 0.2, pine)];   // the oaks' litter, the pines' needles (rust)
     R = lerp(R, lit[0], tr * 0.85); G = lerp(G, lit[1], tr * 0.85); B = lerp(B, lit[2], tr * 0.85);
     R = lerp(R, lerp(R, 0.4, 0.5), tr * sstep(0.55, 0.8, q) * 0.6); G = lerp(G, lerp(G, 0.4, 0.5), tr * sstep(0.55, 0.8, q) * (au ? 0.2 : 0.6));   // (grass in the glades)
     { const nd = pine * (0.45 + 0.35 * sstep(0.3, 0.7, P.c5(x, z))); R = lerp(R, 0.37, nd); G = lerp(G, 0.29, nd); B = lerp(B, 0.2, nd); }   // (the pines' needles over everything once they take over)
+    { const cov = Math.min(1, sh * 0.9 + tr * 0.8 + (1 - sh - tr - rk) * 0.25), pt = sstep(0.3, 0.56, P.n6(x, z) * 0.55 + P.n4(x * 0.7, z * 0.7) * 0.45) * cov;   // the canopy seen from above: patches of
+      // chaparral (grey-green manzanita, olive scrub oak), the oaks' and the pines' crowns, between them the ground (the plants stand on it)
+      const cR = lerp(lerp(0.3, 0.24, tr), 0.17, pine), cG = lerp(lerp(0.34, 0.29, tr), 0.24, pine), cB = lerp(lerp(0.24, 0.16, tr), 0.13, pine), k = 0.85 + 0.3 * P.n2(x * 2.3, z * 2.3);
+      R = lerp(R, cR * k, pt * 0.95); G = lerp(G, cG * k, pt * 0.95); B = lerp(B, cB * k, pt * 0.95); }
     R = lerp(R, 0.66, se * 0.6); G = lerp(G, 0.62, se * 0.6); B = lerp(B, 0.55, se * 0.6);
     const st = Math.max(sstep(0.8, 0.52, ny), rk * (0.6 + 0.4 * sstep(0.35, 0.65, P.n3(x, z))));
     if (st > 0) { const gr = sstep(0.45, 0.78, P.c3(x, z)), li = sstep(0.55, 0.82, P.n2(x * 1.6, z * 1.6)) * 0.45, k = 0.9 + 0.1 * Math.sin(h / 3.5 + P.c4(x * 0.6, z * 0.6) * 5);
@@ -16589,13 +16596,16 @@ const World = (function () {
   // a hoodoo or a tor of granite (bottom centre x, y, z): the rounded blocks the joints have cut, stacked; tall ones narrow as they rise and
   // often carry a balanced block on top. kind 0 a tor (two or three big rounded blocks), 1 a spire (four to seven blocks up to ~16 m)
   function lmHoodoo(g, x, y, z, H, kind, R, col) {
-    const C = [col, vary(col, R, 0.12), [col[0] * 0.92, col[1] * 0.9, col[2] * 0.88]];
+    const C = [col, vary(col, R, 0.12), [col[0] * 0.92, col[1] * 0.9, col[2] * 0.88]], rs = ROCK_SMOOTH; ROCK_SMOOTH = true;   // (the granite weathers round)
+    try { lmHoodoo0(g, x, y, z, H, kind, R, C); } finally { ROCK_SMOOTH = rs; }
+  }
+  function lmHoodoo0(g, x, y, z, H, kind, R, C) {
     if (kind === 0) {
       const r0 = H * 0.55; rock(g, x, y + r0 * 0.3, z, r0 * 1.2, r0 * 0.75, r0, R() * TAU, C[0], R, 0.25);
       for (let k = 0; k < 2; k++) { const a = R() * TAU, d = r0 * (0.3 + R() * 0.4), r = r0 * (0.55 + R() * 0.25); rock(g, x + Math.cos(a) * d, y + r0 * 0.9 + k * r * 0.6, z + Math.sin(a) * d, r * 1.1, r * 0.7, r, R() * TAU, C[1 + k], R, 0.28); }
       return;
     }
-    const n = 4 + Math.floor(R() * 4); let yy = y, r = H / (n * 1.25) * 1.35, ox = 0, oz = 0;
+    const n = 3 + Math.floor(R() * 4); let yy = y, r = H / (n * 1.1) * 1.45, ox = 0, oz = 0;
     for (let k = 0; k < n; k++) { const ry = r * (0.62 + R() * 0.25); rock(g, x + ox, yy + ry * 0.45, z + oz, r * (1.05 + R() * 0.2), ry, r * (0.9 + R() * 0.2), R() * TAU, C[k % 3], R, 0.22);
       yy += ry * 1.25; ox += (R() - 0.5) * r * 0.25; oz += (R() - 0.5) * r * 0.25; r *= 0.82 + R() * 0.12; }
     if (R() < 0.5) { const rb = r * 1.35; rock(g, x + ox, yy + rb * 0.35, z + oz, rb * 1.15, rb * 0.75, rb, R() * TAU, C[1], R, 0.25); }   // (the balanced block on top)
@@ -16872,17 +16882,17 @@ const World = (function () {
     {
       const RK = rng(3551), gc = [[0.74, 0.69, 0.6], [0.68, 0.66, 0.62], [0.78, 0.71, 0.6], [0.64, 0.6, 0.54]];
       for (const G of gr) {
-        const n = Math.min(26, Math.max(1, Math.round(G.area / 380 * dens)));
+        const n = Math.min(40, Math.max(1, Math.round(G.area / 160 * dens)));
         for (let k = 0, tries = 0; k < n && tries < n * 6; tries++) {
           const x = G.x0 + RK() * (G.x1 - G.x0), z = G.z0 + RK() * (G.z1 - G.z0); if (!inPoly(G.poly, x, z)) continue;
           const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < 3) continue; if (inLot(x, z, 3) || excluded(x, z)) continue;
-          const sl = lmSlope(x, z), spire = RK() < (sl > 0.5 ? 0.55 : 0.3), H = spire ? 6 + RK() * 10 : 3 + RK() * 4, y = lmGround(x, z) - 0.6, col = vary(gc[Math.floor(RK() * gc.length)], RK, 0.08);
+          const sl = lmSlope(x, z), spire = RK() < (sl > 0.5 ? 0.55 : 0.3), H = spire ? 8 + RK() * 10 : 4 + RK() * 5, y = lmGround(x, z) - 0.6, col = vary(gc[Math.floor(RK() * gc.length)], RK, 0.08);
           lmHoodoo(scen.get(x, z), x, y, z, H, spire ? 1 : 0, RK, col); exclPush(x, z, spire ? 3.2 : H * 0.7); nHoo++; k++; (out.dbgH || (out.dbgH = [])).push([Math.round(x), Math.round(z), Math.round(H), Math.round(y)]);
           for (let q = 0; q < 2; q++) { const a = RK() * TAU, d = 2.5 + RK() * 4, bx = x + Math.cos(a) * d, bz = z + Math.sin(a) * d, r = 0.5 + RK() * 1.3; if (vrNear(bx, bz).dd < r + 1) continue;
             rock(scen.get(bx, bz), bx, lmGround(bx, bz) + r * 0.25, bz, r * 1.2, r * 0.8, r, RK() * TAU, vary(col, RK, 0.1), RK, 0.3); }
         }
       }
-      for (const [x, z, name] of def.peaks || []) { if (!name) continue;   // a named crag: a cluster of big blocks and a spire
+      for (const [x, z, name] of def.peaks || []) { if (!/Rock$/.test(name)) continue;   // a named crag (Lizard Rock, Barnum Rock: not the forested Green Mountain): a cluster of big blocks and a spire
         const g = scen.get(x, z), y = lmGround(x, z) - 1, col = gc[0];
         lmHoodoo(g, x, y, z, 14, 1, RK, col); lmHoodoo(g, x + 6, lmGround(x + 6, z + 3) - 1, z + 3, 7, 0, RK, col); lmHoodoo(g, x - 5, lmGround(x - 5, z - 4) - 1, z - 4, 9, 1, RK, vary(col, RK, 0.1));
         exclPush(x, z, 10); out.marks[name] = [x, z]; }
@@ -16903,7 +16913,7 @@ const World = (function () {
       for (const c of T.corners) if (c.sev >= 2) { const sd = -c.dir > 0 ? 1 : 0; for (let k = Math.max(0, c.i0 - 8); k <= Math.min(N - 1, c.i1 + 8); k++) need[sd][k] = 1; }
       for (let i = 0; i < N; i += 2) for (const side of [-1, 1]) { const bar = side > 0 ? T.br[i] : T.bl[i], si = side > 0 ? 1 : 0, gA = (d) => { const o = side * (bar + d); return lmGround(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o) - T.hy[i]; };
         for (const d of [4, 8, 13, 19, 26]) if (gA(d) < -(d <= 8 ? 2.4 : 2.4 + (d - 8) * 0.35)) { need[si][i] = 1; if (i + 1 < N) need[si][i + 1] = 1; break; }
-        const rise = Math.max(gA(2.5), gA(5) - 1); if (rise > 2.6 && rpHash(i >> 6, 61 + si) < 0.6) { wall[si][i] = rise; if (i + 1 < N) wall[si][i + 1] = rise; } }
+        const rise = Math.max(gA(2.5), gA(5) - 1); if (rise > 2.2 && rpHash(i >> 6, 61 + si) < 0.5) { wall[si][i] = rise; if (i + 1 < N) wall[si][i + 1] = rise; } }
       const iS0 = T.idx(sStart + 40), iS1 = T.idx(sFin - 40), steel = [0.78, 0.8, 0.82], steelB = [0.56, 0.58, 0.6], postC = [0.48, 0.49, 0.52];
       for (const side of [-1, 1]) {
         const si = side > 0 ? 1 : 0, nd = need[si], wl = wall[si], bar = side > 0 ? T.br : T.bl;

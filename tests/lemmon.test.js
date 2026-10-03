@@ -140,19 +140,29 @@ for (const rain of [false, true]) {
     const r = new C.Race(T, popts({ seed })), P = r.player, pol = r.pol, pc = pol.cars[0];
     const st = { stage: pol.stage, chk: pol.chk, goal: pol.goal, chase: pc && pc.pol.mode === 'chase' };
     r.start();
-    let t = 0, k = 0, nan = false;
+    let t = 0, k = 0, nan = false, heli = false;
     while (t < 900 && !P.finished) {
       Math.random = seeded(5000 + (++k));
       C.aiControl(P, r, DT); r.step(DT); t += DT;
       if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P);
       if (!Number.isFinite(P.x + P.z)) nan = true;
+      if (pol.heli) heli = true;
     }
     Math.random = orig;
-    return { seed, st, nan, t, escaped: pol.escaped && !pol.busted && P.finished, busted: pol.busted, at: P.q.s - T.startS };
+    return { seed, st, nan, t, heli, escaped: pol.escaped && !pol.busted && P.finished, busted: pol.busted, at: P.q.s - T.startS };
   });
-  check('police: the chase from the start, the escape over the finish at San Pedro Vista; on autopilot at the easy level it gets away at least once in three; the patrol cars read POLICE',
-    def.police.label === 'POLICE' && runs.every(r => r.st.stage === 'chase' && !r.st.chk && !r.st.goal && r.st.chase && !r.nan && (r.escaped || r.busted)) && runs.some(r => r.escaped),
+  check('police: the chase from the start, the escape over the finish at San Pedro Vista; on autopilot at the easy level it gets away at least once in three; the patrol cars read POLICE; no helicopter',
+    def.police.label === 'POLICE' && def.noHeli && runs.every(r => r.st.stage === 'chase' && !r.st.chk && !r.st.goal && r.st.chase && !r.nan && !r.heli && (r.escaped || r.busted)) && runs.some(r => r.escaped),
     runs.map(r => `seed ${r.seed}: ${r.escaped ? 'escaped' : r.busted ? 'busted' : '-'} in ${r.t.toFixed(0)} s at ${r.at.toFixed(0)} m`).join('; '));
+}
+
+{   // the hardest level, long enough for the heat that brings the helicopter elsewhere: still none over this road; no birds in the sky either (def.noBirds: Render)
+  Math.random = seeded(3);
+  const r = new C.Race(T, Object.assign(opts({ numAI: 0, playerGrid: 1, police: true, damage: 2, difficulty: 3 }))), P = r.player, pol = r.pol; r.start();
+  let t = 0, k = 0, heli = false, heat = 0;
+  while (t < 300 && !P.finished && !pol.busted) { Math.random = seeded(8000 + (++k)); C.aiControl(P, r, DT); r.step(DT); t += DT; if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P); if (pol.heli) heli = true; heat = Math.max(heat, pol.heat); }
+  Math.random = orig;
+  check('police: no helicopter even at the hardest level and the highest heat; no birds (def.noBirds)', !heli && def.noBirds === true, `heat up to ${heat.toFixed(1)} in ${t.toFixed(0)} s`);
 }
 
 // 10. the medal times of the time trial (dry and wet): gold < silver < bronze, the rain slower; gold is the stock rally car on the autopilot x 1.01

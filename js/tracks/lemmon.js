@@ -42,6 +42,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     traffic: { mix: [0.56, 0.18, 0.02, 0.22, 0.02], bike: 380 },
     // the police of the run (their patrol cars: the label on the band along both sides, its colour, the text's): a generic dark green band
     police: { label: 'POLICE', band: '#1f3b2c', text: '#f4f6f0' }, escTo: 'Do San Pedro Vista',   // (and the results of an escape: 'Do San Pedro Vista v ...')
+    // no police helicopter over the mountain and no flocks of birds in the sky (the brief for this road)
+    noHeli: true, noBirds: true,
     // the side roads (OpenStreetMap via Overture Maps: a forest road behind its gate, Willow Canyon's lane to the cabins, Rose Canyon Road to the
     // lake, its fee booth): [metres after the start line, side, angle to the road (deg), kind (0 street, 1 lane, 2 forest road), gravel (1),
     // open length (m), its end (1 a gate), half width (m), the room past its edge (m), name, [x, z, height, ...] every 4 m (heights: USGS 3DEP)]
