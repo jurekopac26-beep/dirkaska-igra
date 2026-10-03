@@ -132,5 +132,18 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
     `dry ${M.cs.join('/')} s, wet ${M.wet.cs.join('/')} s, autopilot ${P.finishTime ? P.finishTime.toFixed(1) : '-'} s`);
 }
 
+// 9. the scenery's data (OpenStreetMap): the streams in the ravines (25 to 380 m from the road, the points ~6 m apart), the ropeway's two
+// stations past the finish (the upper one higher, ~300 m apart, out of the corridor: 430 m and more from the road)
+{
+  const dRoad = (x, z) => { let m = 1e9; for (let i = 0; i < T.N; i += 2) m = Math.min(m, Math.hypot(x - T.px[i], z - T.pz[i])); return m; };
+  const S = def.streams || [], pts = []; for (const L of S) for (let k = 0; k + 1 < L.length; k += 2) pts.push([L[k], L[k + 1], k ? Math.hypot(L[k] - L[k - 2], L[k + 1] - L[k - 1]) : 6]);
+  const dd = pts.map(p => dRoad(p[0], p[1]));
+  check('streams: at least two, every point 20-390 m from the road, ~6 m apart', S.length >= 2 && S.every(L => L.length % 2 === 0 && L.length >= 20) && dd.every(d => d > 20 && d < 390) && pts.every(p => p[2] < 12),
+    `${S.length} streams, ${pts.length} points, ${Math.round(Math.min(...dd))}-${Math.round(Math.max(...dd))} m from the road`);
+  const R = def.ropeway || [], L = Math.hypot(R[3] - R[0], R[4] - R[1]), dA = dRoad(R[0], R[1]), dB = dRoad(R[3], R[4]), dF = Math.hypot(R[0] - T.px[T.finishIdx], R[1] - T.pz[T.finishIdx]);
+  check('ropeway: two stations past the finish, the upper higher, 250-400 m apart, out of the corridor', R.length === 6 && R[5] > R[2] && L > 250 && L < 400 && dA > 430 && dB > 430 && dF < 900,
+    `${Math.round(L)} m long, ${R[2]} -> ${R[5]} m, ${Math.round(dA)} m and ${Math.round(dB)} m from the road, ${Math.round(dF)} m from the finish`);
+}
+
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
 process.exitCode = bad ? 1 : 0;
