@@ -346,17 +346,17 @@
   }
  },
  "sani": {
-  "meshes": 2306,
-  "verts": 998400,
-  "instances": 69227,
+  "meshes": 2394,
+  "verts": 1002360,
+  "instances": 73227,
   "props": 26,
   "crowd": 415,
-  "world": "dbe0c779",
+  "world": "f908daea",
   "propsHash": "2f7e0c0f",
   "floor": "776db860/10920",
   "groups": {
-   "-:MeshLambertMaterial": "81ea5529",
-   "-:MeshPhongMaterial": "6b71d7fe",
+   "-:MeshLambertMaterial": "fd2d27a1",
+   "-:MeshPhongMaterial": "76e23ffc",
    "-:MeshBasicMaterial": "1c742f2",
    "puddles:MeshBasicMaterial": "6f281577",
    "crowd:MeshLambertMaterial": "290258fb",

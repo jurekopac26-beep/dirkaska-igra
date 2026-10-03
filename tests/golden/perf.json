@@ -119,10 +119,10 @@
   "jsMs": 2.08
  },
  "sani": {
-  "calls": 108,
-  "maxCalls": 163,
-  "kverts": 404,
-  "maxKverts": 721,
-  "jsMs": 0.5
+  "calls": 113,
+  "maxCalls": 172,
+  "kverts": 415,
+  "maxKverts": 740,
+  "jsMs": 0.51
  }
 }
