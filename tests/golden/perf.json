@@ -167,6 +167,27 @@
   "maxKverts": 1173,
   "jsMs": 1.05
  },
+ "rastro": {
+  "calls": 302,
+  "maxCalls": 369,
+  "kverts": 1413,
+  "maxKverts": 1857,
+  "jsMs": 0.83
+ },
+ "moki": {
+  "calls": 132,
+  "maxCalls": 197,
+  "kverts": 331,
+  "maxKverts": 511,
+  "jsMs": 0.23
+ },
+ "cpalace": {
+  "calls": 281,
+  "maxCalls": 303,
+  "kverts": 606,
+  "maxKverts": 759,
+  "jsMs": 0.81
+ },
  "jezero": {
   "calls": 278,
   "maxCalls": 330,
