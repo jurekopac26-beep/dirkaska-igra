@@ -1598,5 +1598,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "4c53c94c9086f66bc8a7b4f0"
+ },
+ "capetown/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 147.96,
+  "spins": 0,
+  "walls": 11,
+  "rescues": 0,
+  "nan": false,
+  "digest": "eb594a87586c8d946d5d5765"
+ },
+ "capetown/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 158.73,
+  "spins": 0,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "0396217ce394e5519b06906a"
+ },
+ "capetown/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 127.12,
+  "spins": 0,
+  "walls": 13,
+  "rescues": 0,
+  "nan": false,
+  "digest": "3925f45fce848621423568e7"
+ },
+ "capetown/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 128.38,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "20781741b8d9b1dec937d751"
+ },
+ "capetown/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 148.62,
+  "spins": 0,
+  "walls": 6,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c2b1b99cf2b8ab2b7084eb89"
  }
 }

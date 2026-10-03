@@ -222,5 +222,12 @@
   "kverts": 1530,
   "maxKverts": 1670,
   "jsMs": 0.87
+ },
+ "capetown": {
+  "calls": 292,
+  "maxCalls": 342,
+  "kverts": 577,
+  "maxKverts": 741,
+  "jsMs": 1.06
  }
 }

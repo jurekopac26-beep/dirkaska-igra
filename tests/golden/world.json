@@ -563,6 +563,38 @@
    "roadwear:MeshLambertMaterial": "fc990f68"
   }
  },
+ "capetown": {
+  "meshes": 793,
+  "verts": 1475829,
+  "instances": 2178,
+  "props": 145,
+  "crowd": 544,
+  "world": "3acf5f87",
+  "propsHash": "63a72f1a",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "b5dcf162",
+   "ctWater:MeshPhongMaterial": "92e6ebc3",
+   "ctRoad:MeshLambertMaterial": "4dca0599",
+   "ctWalls:MeshLambertMaterial": "d3c18c99",
+   "ctPits:MeshLambertMaterial": "4337d20c",
+   "ctPits:MeshBasicMaterial": "e171c338",
+   "ctStands:MeshLambertMaterial": "15985dd4",
+   "ctBuildings:MeshLambertMaterial": "cbb38cf5",
+   "ctStreets:MeshLambertMaterial": "8d27fce5",
+   "ctJunctions:MeshLambertMaterial": "1da72ac1",
+   "ctLandmarks:MeshLambertMaterial": "1e10832d",
+   "ctTrees:MeshLambertMaterial": "8aa57c02",
+   "ctParking:MeshLambertMaterial": "b1136df3",
+   "ctFar:MeshLambertMaterial": "3a177fb3",
+   "ctScen:MeshLambertMaterial": "56c254b1",
+   "crowd:MeshLambertMaterial": "c939089c",
+   "-:MeshBasicMaterial": "a4d4eff3",
+   "ao:MeshBasicMaterial": "329808f1",
+   "tyremarks:MeshBasicMaterial": "21b54363",
+   "roadwear:MeshLambertMaterial": "9de1ee63"
+  }
+ },
  "jezero": {
   "meshes": 154,
   "verts": 591648,
