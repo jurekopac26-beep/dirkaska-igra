@@ -1448,5 +1448,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "c6f02bfa502378f469a604da"
+ },
+ "phillip/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 200.45,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "caa1bd4df7f8e485ae1bbce2"
+ },
+ "phillip/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 217.21,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "0b11b027f1141dea9cd10ae3"
+ },
+ "phillip/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 166.53,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "aae19ee4e6f84fba474232af"
+ },
+ "phillip/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 169.68,
+  "spins": 0,
+  "walls": 7,
+  "rescues": 0,
+  "nan": false,
+  "digest": "ee88a7d3d01b4c260ff94c50"
+ },
+ "phillip/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 203.83,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "8417a6dd4361b6e06b78a783"
  }
 }
