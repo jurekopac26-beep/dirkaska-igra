@@ -15908,7 +15908,7 @@ const World = (function () {
   }
   function mhPlantGeo(kind) {   // unit plants (height 1; the instances scale and tint them): 0 a tuft of dry golden grass, 1 a chaparral shrub (a dense,
     // dark grey-olive mound), 2 a coast live oak (a short, leaning trunk, a broad, low, dark crown of rounded clumps), 3 a sycamore (a tall, pale,
-    // mottled trunk, an open light-green crown), 4 a sandstone boulder, 5 a few stones
+    // mottled trunk, an open light-green crown), 4 a sandstone boulder, 5 a few stones, 6 a yucca's rosette, 7 its dried flower stalk
     const g = new GB(), R = rng(760 + kind), rs = ROCK_SMOOTH;
     if (kind === 0) {   // eight thin blades and seed heads, straw-gold
       const base = [0.8, 0.64, 0.3], tip = [1.0, 0.9, 0.58];
@@ -15929,6 +15929,15 @@ const World = (function () {
       ROCK_SMOOTH = true; const col = [0.36, 0.48, 0.2];
       ico(g, 0.05, 0.74, 0, 0.24, 0.9, col, R, 0.35); ico(g, -0.14, 0.62, 0.08, 0.17, 0.9, vary(col, R, 0.2), R, 0.35); ico(g, 0.18, 0.6, -0.08, 0.16, 0.9, vary(col, R, 0.2), R, 0.35); ico(g, 0.02, 0.9, 0.06, 0.15, 0.8, vary(col, R, 0.2), R, 0.3);
     } else if (kind === 4) { ROCK_SMOOTH = true; rock(g, 0, 0.3, 0, 0.62, 0.6, 0.5, 0, [0.78, 0.68, 0.52], R, 0.35); }
+    else if (kind === 6) {   // a yucca (chaparral yucca): a round rosette of stiff, narrow, blue-grey blades, the dead ones below brown
+      const base = [0.36, 0.42, 0.36], tip = [0.66, 0.74, 0.68], dead = [0.5, 0.42, 0.3];
+      for (let k = 0; k < 22; k++) { const a = k * 2.399 + R() * 0.3, up = 0.25 + (k / 22) * 1.1 + R() * 0.2, L = 0.95 + R() * 0.15, cx = Math.cos(a), cz = Math.sin(a), ox = -cz * 0.035, oz = cx * 0.035, out = Math.cos(up) * L, hy = Math.sin(up) * L * 0.85, c0 = k < 5 ? dead : base, c1 = k < 5 ? dead : tip;
+        g.triO([ox, 0.05, oz], [-ox, 0.05, -oz], [cx * out, 0.05 + hy, cz * out], c0, [cx * out * 0.5, -1, cz * out * 0.5], c0, c1); g.triO([ox, 0.05, oz], [cx * out, 0.05 + hy, cz * out], [-ox, 0.05, -oz], c0, [cx * out * 0.5, 2, cz * out * 0.5], c1, c0); }
+    } else if (kind === 7) {   // its dried flower stalk (the plant flowers once, the stalk stands for years): a tall pale cane, the seed pods on its top third
+      cyl(g, 0, 0, 0, 0.025, 0.7, 4, [0.62, 0.55, 0.42], null, 0.012);
+      ROCK_SMOOTH = true; const R2 = rng(777);
+      for (let k = 0; k < 9; k++) { const a = k * 2.1, y = 0.7 + k * 0.028; ico(g, Math.cos(a) * 0.035, y, Math.sin(a) * 0.035, 0.04, 1.3, [0.58, 0.48, 0.34], R2, 0.2); }
+    }
     else {   // three stones
       ROCK_SMOOTH = false; const C = [[0.76, 0.67, 0.52], [0.66, 0.63, 0.58], [0.7, 0.58, 0.44]];
       for (let k = 0; k < 3; k++) { const a = R() * TAU, d = k ? 0.25 + R() * 0.25 : 0, r = k ? 0.1 + R() * 0.08 : 0.17; rock(g, Math.cos(a) * d, r * 0.25, Math.sin(a) * d, r, r * 0.7, r * 0.85, R() * TAU, C[k], R, 0.3); }
@@ -16043,6 +16052,19 @@ const World = (function () {
         }
         addM(gr, aMat); addM(gl, lMat); addM(gs, sMat); addM(gv, gMat);
       }
+      // the tar snakes: the cracks in the old asphalt sealed with black tar, wandering along the lanes and across them (a ribbon 0.14 m wide just
+      // above the asphalt, under the painted lines)
+      { const RS = rng(3191), ts = new Chunks(110), tc = [0.075, 0.075, 0.085], P2 = (s, o) => { const f = clamp(s / T.ds, 0, N - 1.001), i = Math.floor(f), u = f - i, j = i + 1;
+          return [lerp(T.px[i] + T.nx[i] * o, T.px[j] + T.nx[j] * o, u), lerp(T.hy[i], T.hy[j], u) + 0.031, lerp(T.pz[i] + T.nz[i] * o, T.pz[j] + T.nz[j] * o, u)]; };
+        for (let s = sStart - 40; s < sFin + 40; s += 9) { if (RS() > 0.6) continue;
+          const across = RS() < 0.3, L = across ? 2 * w * (0.4 + RS() * 0.55) : 4 + RS() * 10, n = Math.ceil(L / 0.6), ph = RS() * 6, amp = 0.15 + RS() * 0.35;
+          let a = s + RS() * 8, o = across ? -w + 0.3 + RS() * (2 * w - L) * 0.9 : (RS() - 0.5) * 2 * (w - 0.8); const pts = [];
+          for (let k = 0; k <= n; k++) { const t = k / n * L, wig = Math.sin(t * 1.7 + ph) * amp + Math.sin(t * 4.3 + ph * 2) * amp * 0.35;
+            pts.push(across ? P2(a + wig, clamp(o + t, -w + 0.2, w - 0.2)) : P2(a + t, clamp(o + wig, -w + 0.2, w - 0.2))); }
+          const g = ts.get(pts[0][0], pts[0][2]);
+          for (let k = 0; k < n; k++) { const A = pts[k], B = pts[k + 1], dx = B[0] - A[0], dz = B[2] - A[2], l = Math.hypot(dx, dz) || 1, hx = -dz / l * 0.07, hz = dx / l * 0.07;
+            g.quadUp([A[0] - hx, A[1], A[2] - hz], [A[0] + hx, A[1], A[2] + hz], [B[0] + hx, B[1], B[2] + hz], [B[0] - hx, B[1], B[2] - hz], [tc, tc, tc, tc]); } }
+        ts.addTo(root, lMat, false, true); }
       // chequered start and finish lines, a white line at each checkpoint
       const gq = new GB(true), gw = new GB(), uM = Math.round(w * 2 / 0.8) / 16, W1 = [1, 1, 1];
       for (const s0 of [sStart, sFin]) { const a = atSf(s0 - 0.8, -w), b = atSf(s0 - 0.8, w), c = atSf(s0 + 0.8, w), d = atSf(s0 + 0.8, -w), y = (p) => T.hy[p[3]] + 0.045;
@@ -16228,6 +16250,27 @@ const World = (function () {
       for (const [n, k, o] of [['La Sierra Creek', 0, -30], ['Elephant Rock', 1, -40], ['La Sierra Canyon', 2, -20], ['Razgled', 3, -60], ['Brewster', 4, 40]]) { const q = nm(n); if (q) sign(sStart + q.d + o, 1, k); }
       sign(sStart + 120, 1, 6); sign(sStart + 420, 1, 7); sign(sStart + 2600, 1, 7); sign(sStart + 1500, 1, 5, 2); }
 
+    /* ---- the power line: weathered wooden poles every ~45 m beside the road through Cornell and below the top, a cross arm with three wires
+       sagging between them, a grey transformer can on every fourth pole ---- */
+    let nPoles = 0;
+    {
+      const wood = [0.38, 0.29, 0.2], wire = [0.1, 0.1, 0.11];
+      for (const [sa, sb, side] of [[sStart - 90, sStart + 760, -1], [sFin - 560, sFin + 220, 1]]) {
+        let prev = null, k = 0;
+        for (let s = sa; s <= sb; s += 45, k++) {
+          const [x, z, i] = onSide(s, side, 3.6), nn = vrNear(x, z);
+          if (excluded(x, z) || (nn.i >= 0 && nn.dd < 2) || caSlope(x, z) > 0.9) { prev = null; continue; }
+          const y = caGround(x, z), g = scen.get(x, z), H = 10.5, ah = T.hd[i] + Math.PI / 2, ax = Math.cos(ah), az = Math.sin(ah);
+          cyl(g, x, y - 0.3, z, 0.15, H + 0.3, 6, wood, null, 0.11); box(g, x, y + H - 0.6, z, 2.4, 0.14, 0.14, ah, wood);
+          if (k % 4 === 1) cyl(g, x + T.tx[i] * 0.3, y + H - 2.6, z + T.tz[i] * 0.3, 0.3, 1.0, 7, [0.58, 0.6, 0.62]);
+          const tops = [-1.05, 0, 1.05].map(o => [x + ax * o, y + H - 0.48 + (o ? 0 : 0.5), z + az * o]);
+          if (prev) for (let q = 0; q < 3; q++) { const a = prev[q], b = tops[q], m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2 - 0.7, (a[2] + b[2]) / 2], gg = scen.get(m[0], m[2]);
+            ouRod(gg, a, m, 0.022, wire, 3); ouRod(gg, m, b, 0.022, wire, 3); }
+          prev = tops; exclPush(x, z, 1.4); CR.avoid(x, z, 1); nPoles++;
+        }
+      }
+    }
+
     /* ---- spectators: the start and the finish, the checkpoints, the viewpoint, groups on the outside of the bends ---- */
     {
       const hard = (x, z) => { for (let k = 0; k < excl.length; k++) { const e = excl[k]; if (crSoft.has(e)) continue; const dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
@@ -16244,7 +16287,7 @@ const World = (function () {
     const pMat = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
     const wMat = tuftWindMat(out.dyn.wind || (out.dyn.wind = { value: 0 })), wB = wMat.onBeforeCompile; ouCutMat(wMat, cut);   // (the grass: in the wind, and the cut)
     { const cB = wMat.onBeforeCompile; wMat.onBeforeCompile = (sh) => { wB(sh); cB(sh); }; wMat.customProgramCacheKey = () => 'tuftWindCut'; wMat.side = THREE.FrontSide; }
-    const pk = [0, 1, 2, 3, 4, 5].map(k => new IChunks(mhPlantGeo(k), k === 0 ? wMat : pMat, k === 5 ? 64 : 96));
+    const pk = [0, 1, 2, 3, 4, 5, 6, 7].map(k => new IChunks(mhPlantGeo(k), k === 0 ? wMat : pMat, k === 5 ? 64 : 96));
     let nPlants = 0, nTrees = 0;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(80000 * dens), RT = rng(3171), SP = 3.0 / Math.sqrt(dens);
@@ -16258,18 +16301,19 @@ const World = (function () {
           const c = vrLC(x, z), y0 = caGround(x, z), sl = caSlope(x, z), cd = creekD(x, z);
           let kind = -1;
           if (cd < 14 && r1 < 0.05) kind = 3;
-          else if (c === 0) kind = r1 < 0.55 ? 0 : r1 < 0.562 ? 2 : r1 < 0.6 ? 1 : r1 < 0.605 ? 4 : -1;
-          else if (c === 1) kind = r1 < 0.5 ? 1 : r1 < 0.56 ? 0 : r1 < 0.565 ? 4 : -1;
+          else if (c === 0) kind = r1 < 0.55 ? 0 : r1 < 0.562 ? 2 : r1 < 0.6 ? 1 : r1 < 0.605 ? 4 : r1 < 0.612 && sl > 0.25 ? 6 : -1;
+          else if (c === 1) kind = r1 < 0.5 ? 1 : r1 < 0.56 ? 0 : r1 < 0.565 ? 4 : r1 < 0.575 && sl > 0.2 ? 6 : -1;
           else if (c === 2) kind = r1 < 0.03 ? 2 : r1 < 0.45 ? 1 : r1 < 0.52 ? 0 : -1;   // (WorldCover's tree cover here: mostly the tall, dense chaparral, oaks among it)
           else if (c === 3) kind = r1 < 0.02 ? 2 : r1 < 0.12 ? 0 : -1;
           else if (c === 4) kind = r1 < 0.06 ? 4 : r1 < 0.12 ? 0 : -1;
           if (kind < 0) continue;
-          if (sl > (kind === 4 ? 1.2 : kind === 0 ? 0.95 : 0.85)) continue;
+          if (sl > (kind === 4 || kind === 6 ? 1.2 : kind === 0 ? 0.95 : 0.85)) continue;
           if (vrWater(x, z).e > -3) continue;
           const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < (kind === 2 || kind === 3 ? 4 : 1.6)) continue;
           if (excluded(x, z)) continue;
           if (kind === 0) pk[0].add(x, y0 - 0.05, z, r2 * TAU, 0.8 + r3 * 0.7, 0.6 + r4 * 0.5, [0.92 + r2 * 0.16, 0.9 + r3 * 0.14, 0.86 + r4 * 0.16]);
-          else if (kind === 1) pk[1].add(x, y0 - 0.12, z, r2 * TAU, 1.4 + r3 * 1.4, 1.1 + r4 * 1.2, [0.88 + r2 * 0.24, 0.9 + r3 * 0.18, 0.88 + r4 * 0.16]);
+          else if (kind === 1) pk[1].add(x, y0 - 0.12, z, r2 * TAU, 1.4 + r3 * 1.4, 1.1 + r4 * 1.2, r2 < 0.22 ? [1.5 + r3 * 0.2, 1.5 + r3 * 0.15, 1.95 + r4 * 0.2] : [0.88 + r2 * 0.24, 0.9 + r3 * 0.18, 0.88 + r4 * 0.16]);   // (one in five the grey-green coastal sage among the chaparral)
+          else if (kind === 6) { pk[6].add(x, y0 - 0.05, z, r2 * TAU, 0.8 + r3 * 0.6, 0.7 + r4 * 0.5, [0.92 + r2 * 0.16, 0.95 + r3 * 0.1, 0.95 + r4 * 0.1]); if (r4 < 0.35) pk[7].add(x, y0, z, r3 * TAU, 1, 3.2 + r2 * 2.2, [0.9 + r3 * 0.2, 0.9 + r3 * 0.2, 0.9 + r3 * 0.2]); }
           else if (kind === 2) { pk[2].add(x, y0 - 0.15, z, r2 * TAU, 9 + r3 * 7, 7 + r4 * 5, [0.9 + r2 * 0.2, 0.92 + r3 * 0.16, 0.9]); nTrees++; }
           else if (kind === 3) { pk[3].add(x, y0 - 0.15, z, r2 * TAU, 11 + r3 * 6, 13 + r4 * 7, [0.92 + r2 * 0.16, 0.95 + r3 * 0.1, 0.9]); nTrees++; }
           else { const k = 0.86 + r3 * 0.28; pk[4].add(x, y0 - 0.2, z, r4 * TAU, 0.8 + r3 * 2.2, 0.6 + r4 * 1.6, [k, k * (0.97 + r2 * 0.05), k * (0.95 + r2 * 0.08)]); }
@@ -16315,7 +16359,7 @@ const World = (function () {
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: mhAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: mhAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);
-    out.stats = { plants: nPlants, trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3) };   // (read by the tests)
+    out.stats = { plants: nPlants, trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), poles: nPoles };   // (read by the tests)
     return out;
   }
 
