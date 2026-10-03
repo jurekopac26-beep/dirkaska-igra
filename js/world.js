@@ -8041,7 +8041,7 @@ const World = (function () {
         const a = TR() * TAU, r = 80 + Math.pow(TR(), 0.7) * 300, x = Math.cos(a) * r * 1.2, z = Math.sin(a) * r;
         if (!free(x, z, 3)) continue; tree(x, z, 0.8 + TR() * 0.6);
       }
-      for (let x = X0 - 8; x < X1 + 8; x += 9 + TR() * 4) { if (free(x, Z0 - 9, 2.5) || Math.abs(x) > 26) tree(x, Z0 - 9 - TR() * 3, 0.9 + TR() * 0.3); tree(x + 4, Z1 + 8 + TR() * 2, 0.9 + TR() * 0.3); }
+      for (let x = X0 - 8; x < X1 + 8; x += 9 + TR() * 4) { if (Math.abs(x) > 5) tree(x, Z0 - 9 - TR() * 3, 0.9 + TR() * 0.3); tree(x + 4, Z1 + 8 + TR() * 2, 0.9 + TR() * 0.3); }   // (a row behind the hedge each side; not on the path to the school)
       for (let z = Z0; z < Z1; z += 10 + TR() * 4) tree(X0 - 8 - TR() * 2, z, 0.9 + TR() * 0.3);
       for (let z = -W + 20; z < W; z += 16 + TR() * 6) if (Math.abs(z) < 260) tree(X1 + 45 + TR() * 2, z, 0.9 + TR() * 0.4);   // (along the street)
       const mat = new THREE.MeshLambertMaterial({ vertexColors: true });
