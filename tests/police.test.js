@@ -41,8 +41,8 @@ const finite = (r) => r.pol.cars.every(c => Number.isFinite(c.x + c.z + c.vx + c
   check('by the difficulty (lahka, srednja, težka, super težka): more patrol cars going for the player at once, more of them, busted sooner, pushing longer',
     D[0].atk < D[3].atk && up((a, b) => a.max <= b.max && a.bust > b.bust && a.cool > b.cool && a.pit < b.pit && a.join > b.join) && D[0].max < D[3].max,
     D.map(d => `${d.atk} at once, ${d.max} at most, busted in ${d.bust} s, PIT ${d.pit} s`).join(' | '));
-  check('by the difficulty: harder to hide, the helicopter, the motorcyclists, the unmarked car and the heavy roadblock sooner (at a lower heat), more ambushes, strips and roadblocks closer together',
-    up((a, b) => a.hide < b.hide && a.heli > b.heli && a.moto > b.moto && a.uc > b.uc && a.heavy > b.heavy && a.amb < b.amb && a.gap >= b.gap) && D[0].gap > D[3].gap,
+  check('by the difficulty: harder to hide (the helicopter on every one only at five stars), the motorcyclists, the unmarked car and the heavy roadblock sooner (at a lower heat), more ambushes, strips and roadblocks closer together',
+    up((a, b) => a.hide < b.hide && a.heli === 4.5 && b.heli === 4.5 && a.moto > b.moto && a.uc > b.uc && a.heavy > b.heavy && a.amb < b.amb && a.gap >= b.gap) && D[0].gap > D[3].gap,
     D.map(d => `hide ${d.hide} s, heli ${d.heli}, moto ${d.moto}, unmarked ${d.uc}, heavy ${d.heavy}, ambushes ${d.amb}, plan every ${d.gap} m`).join(' | '));
   const old = [{ atk: 2, bust: 3, hide: 14 }, { atk: 2, bust: 2.5, hide: 18 }];   // (the old normal and hard)
   check('the old normal is the new easy, the old hard the new medium; a race (not the police) takes super težka as težka',
@@ -53,7 +53,7 @@ const finite = (r) => r.pol.cars.every(c => Number.isFinite(c.x + c.z + c.vx + c
 
 // 4. whole runs on autopilot at the easy level (three races, three seeds; the medium one is the old hard: the autopilot, which does not dodge,
 //    rarely makes it there): through the checkpoint (the chase begins), they join, knock the player's car, lay strips, block the road, some are
-//    wrecked; the autopilot mostly goes through the gaps and into the building at the top (the police do catch it now and then: pinned, boxed in)
+//    wrecked; the autopilot mostly goes through the gaps, into the building at the top in about two runs of five (the police often catch it: pinned, boxed in)
 {
   const runs = [11, 12, 13].map(seed => {
     Math.random = seeded(3);
@@ -74,7 +74,8 @@ const finite = (r) => r.pol.cars.every(c => Number.isFinite(c.x + c.z + c.vx + c
   check('whole runs on autopilot: the checkpoint\'s car and more patrol cars after it, knocking the car (pushes and PITs, as in GTA V: no rams at full speed), laying spike strips, blocking the road, some wrecked; the heat up to 3 stars or more',
     runs.every(r => (r.evs.join || 0) >= 1 && r.rams >= 2 && (r.evs.spikes || 0) >= 1 && !r.nan) && rams >= 10 && (all.block || 0) >= 2 && wrecked >= 3 && runs.every(r => r.heat >= 3),
     `knocks ${runs.map(r => r.rams).join(' + ')}, wrecked ${runs.map(r => r.wrecked).join(' + ')}, ` + JSON.stringify(all) + ', heat ' + runs.map(r => r.heat.toFixed(1)).join(' / '));
-  check('the autopilot drives through the checkpoint (the chase begins), mostly goes through the gaps (no flat tyre) and into the building at the top (two of three runs at least)', runs.filter(r => r.escaped).length >= 2 && runs.filter(r => !r.flat).length >= 2,
+  // (the autopilot gets away in ~40 % of the runs: 8 of 22 seeds with the helicopter from heat 4, 9 of 22 with it from five stars)
+  check('the autopilot drives through the checkpoint (the chase begins), mostly goes through the gaps (no flat tyre) and into the building at the top now and then (one of three runs at least)', runs.filter(r => r.escaped).length >= 1 && runs.filter(r => !r.flat).length >= 2,
     runs.map(r => `seed ${r.seed}: ${r.escaped ? 'escaped' : r.busted ? 'busted' : '-'} in ${r.t.toFixed(0)} s at ${r.at.toFixed(0)} m, flats ${r.flat}, rescues ${r.resc}`).join('; '));
 }
 
@@ -154,7 +155,7 @@ const since = (r, n0, k) => r.pol.log.filter(e => e.n > n0 && e.k === k);
 // 8. the helicopter: from the heat POL_DIFF.heli on it flies in and then stays over the player while they drive (~30 m behind, some 30-60 m up);
 //    nobody hides from it (the patrol cars far behind: no hiding); out of fuel it flies off (heliOut) and is gone, not back for a while
 {
-  const r = mk(), P = r.player, pol = r.pol; drive(r, 15); pol.cool = -3;
+  const r = mk(), P = r.player, pol = r.pol; drive(r, 15); pol.cool = -4;   // (five stars)
   const n0 = pol.ev, tIn = drive(r, 40, () => pol.heli && pol.heli.st === 'track'), H = pol.heli;
   for (const c of pol.cars) if (c.pol.mode === 'chase') put(c, P.q.s - 600, 2.3, 0);
   let dMax = 0, hMin = 1e9, hMax = 0, t0 = r.time;

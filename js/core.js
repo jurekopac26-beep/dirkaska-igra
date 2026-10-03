@@ -2789,7 +2789,7 @@ const Core = (function () {
   // in the chase (none of the cars in it within 150 m along the road), they lose the player: the cars in the chase search (no siren,
   // slower), the heat drops a star (two at most that way), nobody joins; seen again by
   // any of them (one searching, one parked at a strip or a roadblock, an ambush, the unmarked car), the chase is on again. The helicopter
-  // (from the heat POL_DIFF.heli on; heliT s over them, then it flies off to refuel and is not back for heliCool s) follows the player from
+  // (from the heat POL_DIFF.heli on, five stars on every difficulty; heliT s over them, then it flies off to refuel and is not back for heliCool s) follows the player from
   // above: nobody hides from it. Ambushes: patrol cars waiting with their lights off by the huts (POL_DIFF.amb of them), after the player as
   // soon as they come by. The unmarked car (from the heat POL_DIFF.uc on): a dark saloon driving up the road ahead of the player like the
   // traffic, its hidden lights and siren on once they come up behind it (then it brakes in front of them). Log piles by the road in the
@@ -2812,10 +2812,10 @@ const Core = (function () {
   // pit: the s a patrol car keeps pushing into the rear quarter (the PIT) before it backs off; side: the share of the ones joining that come out of
   // a side road ahead of the player (Track.stubs) instead of from behind
   const POL_DIFF = [
-    { atk: 2, cool: 1.8, coolR: 1.2, rub: 0.3, max: 4, join: 26, bust: 3, hide: 14, heli: 4, heliT: 60, heliCool: 70, moto: 2, uc: 3, heavy: 3.6, amb: 3, gap: 1400, pace: 1.14, jump: 3, pDmg: 0.35, pit: 0.35, side: 0.3 },
-    { atk: 2, cool: 1.1, coolR: 0.8, rub: 0.4, max: 4, join: 20, bust: 2.5, hide: 18, heli: 3.4, heliT: 75, heliCool: 50, moto: 1.6, uc: 2.5, heavy: 3, amb: 4, gap: 1400, pace: 1.14, jump: 2.5, pDmg: 0.45, pit: 0.5, side: 0.45 },
-    { atk: 3, cool: 0.8, coolR: 0.6, rub: 0.5, max: 5, join: 16, bust: 2, hide: 22, heli: 2.8, heliT: 90, heliCool: 40, moto: 1.4, uc: 2.2, heavy: 2.6, amb: 5, gap: 1100, pace: 1.17, jump: 2, pDmg: 0.6, pit: 0.65, side: 0.6 },
-    { atk: 3, cool: 0.5, coolR: 0.4, rub: 0.6, max: 6, join: 12, bust: 1.6, hide: 26, heli: 2.2, heliT: 120, heliCool: 30, moto: 1.2, uc: 1.8, heavy: 2.2, amb: 6, gap: 900, pace: 1.2, jump: 1.5, pDmg: 0.8, pit: 0.8, side: 0.75 }];
+    { atk: 2, cool: 1.8, coolR: 1.2, rub: 0.3, max: 4, join: 26, bust: 3, hide: 14, heli: 4.5, heliT: 60, heliCool: 70, moto: 2, uc: 3, heavy: 3.6, amb: 3, gap: 1400, pace: 1.14, jump: 3, pDmg: 0.35, pit: 0.35, side: 0.3 },
+    { atk: 2, cool: 1.1, coolR: 0.8, rub: 0.4, max: 4, join: 20, bust: 2.5, hide: 18, heli: 4.5, heliT: 75, heliCool: 50, moto: 1.6, uc: 2.5, heavy: 3, amb: 4, gap: 1400, pace: 1.14, jump: 2.5, pDmg: 0.45, pit: 0.5, side: 0.45 },
+    { atk: 3, cool: 0.8, coolR: 0.6, rub: 0.5, max: 5, join: 16, bust: 2, hide: 22, heli: 4.5, heliT: 90, heliCool: 40, moto: 1.4, uc: 2.2, heavy: 2.6, amb: 5, gap: 1100, pace: 1.17, jump: 2, pDmg: 0.6, pit: 0.65, side: 0.6 },
+    { atk: 3, cool: 0.5, coolR: 0.4, rub: 0.6, max: 6, join: 12, bust: 1.6, hide: 26, heli: 4.5, heliT: 120, heliCool: 30, moto: 1.2, uc: 1.8, heavy: 2.2, amb: 6, gap: 900, pace: 1.2, jump: 1.5, pDmg: 0.8, pit: 0.8, side: 0.75 }];
   const POL_AMB = ['Mihov dom', 'Erjavčeva koča', 'Koča na Gozdu', 'Ruski križ', 'Šumica', 'Jasna'];   // the ambushes, in this order by the difficulty: by the huts' (and places') bus stops
   const POL_EUR = { wreck: 26000, moto: 8000, crash: 4500, flat: 350, ram: 900, log: 1200, block: 2500 };   // the rap sheet's damage (EUR): a patrol car wrecked, a motorbike down, a crash into the traffic, a patrol car's burst tyre, a knock, a log hit, a patrol car of a roadblock hit
   class Police {

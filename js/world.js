@@ -18157,6 +18157,7 @@ const World = (function () {
   }
   function tmSlope(x, z) { const a = tmGround(x - 2.5, z), b = tmGround(x + 2.5, z), c = tmGround(x, z - 2.5), d = tmGround(x, z + 2.5); return Math.hypot(b - a, d - c) / 5; }
   const TMCOL = [0, 0, 0];
+  const TMSUN = (() => { const a = [-70, 92, 60], l = Math.hypot(...a); return a.map(v => v / l); })();   // (the sun's direction: Render's sunOff of the theme)
   function tmCol(x, z, h, ny, dd, sx, sz) {   // ground colour (times the grey grit map): the dark forest floor (lc 0), greener scrub and grass (lc 1), the
     // limestone on the steep faces (pale grey, streaked dark down the fall line where the rain runs, rusty stains, moss in the cracks), bare
     // rock (lc 2), concrete where it is built up (lc 3), a trodden verge of grit by the road
@@ -18180,6 +18181,17 @@ const World = (function () {
     }
     R = lerp(R, 0.6, built * 0.6); G = lerp(G, 0.59, built * 0.6); B = lerp(B, 0.56, built * 0.6);
     if (dd < 1.2) { const t = sstep(1.2, 0.2, dd) * 0.4; R = lerp(R, 0.5, t); G = lerp(G, 0.48, t); B = lerp(B, 0.42, t); }   // (a strip of grit at the foot of the barrier)
+    { // far from the road (no trees out there: see the forest) the forest floor is a carpet of crowns seen from above: blotches of dark and lighter green
+      const fo = sstep(120, 190, dd) * (1 - sh * 0.6) * (1 - bare) * (1 - st);
+      if (fo > 0) { const b1 = P.n3(x * 2.3, z * 2.3), b2 = P.c3(x * 1.7 + 31, z * 1.7), cr = sstep(0.35, 0.75, b1) * 0.8 + sstep(0.6, 0.85, b2) * 0.35, dk = 0.72 + 0.4 * cr;
+        R = lerp(R, 0.16 * dk + 0.03 * sstep(0.7, 0.9, b2), fo); G = lerp(G, 0.27 * dk, fo); B = lerp(B, 0.12 * dk, fo); }
+    }
+    { // the slopes shaded by their aspect (the faces turned to the theme's sun lighter, those turned away darker), a little red
+      // earth showing on the steeper ground by the road (2 to 3 times as much as on the gentle slopes), so the hills read in relief from above
+      const L = TMSUN, k = 1 + 0.26 * ((sx || 0) * L[0] + ny * L[1] + (sz || 0) * L[2] - L[1]);
+      const er = sstep(0.95, 0.75, ny) * sstep(60, 10, dd) * sstep(0.55, 0.8, P.c4(x * 1.3 + 17, z * 1.3)) * 0.4; R = lerp(R, 0.5, er); G = lerp(G, 0.31, er); B = lerp(B, 0.2, er);
+      R *= k; G *= k; B *= k;
+    }
     TMCOL[0] = R; TMCOL[1] = G; TMCOL[2] = B; return TMCOL;
   }
   function tmGCol(x, z) {   // the terrain mesh's own vertex colour at (x, z) (bilinear over the grid vertices, each coloured as in tmTileGeo)
@@ -18191,7 +18203,7 @@ const World = (function () {
   }
   function tmCurv(i, j, h) {   // the ground's curvature over 10 m (the same for every tile, coarse or fine): the gullies and hollows darker, the ridges and spurs lighter
     const lap = (tmGH(i + 2, j) + tmGH(i - 2, j) + tmGH(i, j + 2) + tmGH(i, j - 2) - 4 * h) / 100;
-    return 1 - clamp(lap * 2.6, -0.12, 0.17);
+    return 1 - clamp(lap * 3.2, -0.15, 0.22);
   }
   function tmTileGeo(ti, tj, st) {   // one 100 m terrain tile (every st-th grid vertex), as caTileGeo, coloured by tmCol
     const G = VR.G, m = VRT / st, n = m + 1, pos = new Float32Array(n * n * 3), nor = new Float32Array(n * n * 3), col = new Float32Array(n * n * 3), uv = new Float32Array(n * n * 2), stp = new Float32Array(n * n), i0 = ti * VRT, j0 = tj * VRT;
@@ -18261,6 +18273,11 @@ const World = (function () {
     const nn = (p) => { const x = (p[0] - cx) / r, y = (p[1] - cy) / (r * sy * sy), z = (p[2] - cz) / r, l = Math.hypot(x, y, z) || 1; return [x / l, y / l, z / l]; };
     for (const f of ICO_F) { if (ICO_V[f[0]][1] + ICO_V[f[1]][1] + ICO_V[f[2]][1] < -0.9) continue; const a = vs[f[0]], b = vs[f[1]], c = vs[f[2]]; g.triON(a, b, c, nn(a), nn(b), nn(c), inn, sc(a), sc(b), sc(c)); }
   }
+  function tmLumpLo(g, cx, cy, cz, r, sy, col, R, jit) {   // a cheaper lump for the smaller crowns: a low four-sided pyramid, smooth shaded (12 vertices)
+    const a0 = R() * TAU, top = [cx, cy + r * sy, cz], ring = [0, 1, 2, 3].map(k => { const a = a0 + k / 4 * TAU, q = r * (1 + (R() - 0.5) * jit); return [cx + Math.cos(a) * q, cy, cz + Math.sin(a) * q]; });
+    const nn = (p) => { const x = (p[0] - cx) / r, y = (p[1] - cy) / (r * sy * sy) + 0.35, z = (p[2] - cz) / r, l = Math.hypot(x, y, z) || 1; return [x / l, y / l, z / l]; }, dk = col.map(v => v * 0.82), inn = [cx, cy - r, cz];
+    for (let k = 0; k < 4; k++) { const a = ring[k], b = ring[(k + 1) % 4]; g.triON(a, top, b, nn(a), nn(top), nn(b), inn, dk, col, dk); }
+  }
   function tmPlantGeo(kind) {   // unit plants (height 1; the instances scale and tint them): 0 an evergreen broadleaf tree (a trunk, a crown of soft lumps), 1 a
     // pine (a bare trunk, flat tiers of needles up top), 2 a clump of bamboo (thin canes, feathery tops), 3 a shrub of the ledges, 4 a limestone boulder,
     // 5 a clump of ferns and grass (fronds fanned out from a tight base, both faces: the verges, the slopes between the legs)
@@ -18268,7 +18285,7 @@ const World = (function () {
     if (kind === 0) {
       cyl(g, 0, 0, 0, 0.035, 0.45, 3, [0.3, 0.24, 0.18]);
       const C = [[0.2, 0.33, 0.14], [0.17, 0.3, 0.13], [0.24, 0.37, 0.16]];
-      tmLump(g, 0.04, 0.66, 0.02, 0.36, 0.8, C[0], R, 0.2); tmLump(g, -0.15, 0.56, -0.09, 0.27, 0.75, C[2], R, 0.22);
+      tmLump(g, 0.04, 0.66, 0.02, 0.36, 0.8, C[0], R, 0.2); tmLumpLo(g, -0.15, 0.5, -0.09, 0.3, 0.9, C[2], R, 0.22);
     } else if (kind === 1) {
       cyl(g, 0, 0, 0, 0.025, 0.7, 3, [0.36, 0.26, 0.2]);
       const C = [0.16, 0.27, 0.15];
@@ -18310,6 +18327,15 @@ const World = (function () {
     });
     M.im.instanceMatrix.needsUpdate = true;
   }
+  function tmWalk(W, t) {   // the tourists on the steps: each along the flight at its own pace, turning back at either end, a little bob in the step
+    const dt = W.t == null ? 0 : clamp(t - W.t, 0, 0.25), S = W.st, qx = -S.uz, qz = S.ux, h = Math.atan2(S.uz, S.ux); W.t = t;
+    W.L.forEach((m, k) => {
+      m.a += m.v * dt; if (m.a > S.L - 1) { m.a = S.L - 1; m.v = -Math.abs(m.v); } else if (m.a < 1) { m.a = 1; m.v = Math.abs(m.v); }
+      const y = S.y0 + (S.y1 - S.y0) * m.a / S.L + 0.04 * Math.abs(Math.sin(t * 3.2 + m.ph));
+      W.v.set(S.x0 + S.ux * m.a + qx * m.o, y, S.z0 + S.uz * m.a + qz * m.o); W.e.set(0, -(m.v > 0 ? h : h + Math.PI), 0); W.q.setFromEuler(W.e); W.m4.compose(W.v, W.q, W.sc); W.im.setMatrixAt(k, W.m4);
+    });
+    W.im.instanceMatrix.needsUpdate = true;
+  }
   function tmUpdate(D, t, car) {
     if (D.cab) {   // the gondolas: k-th of a span at (k + t * v / spacing) along it, up one side and down the other
       const C = D.cab; let n = 0;
@@ -18320,6 +18346,11 @@ const World = (function () {
       C.im.instanceMatrix.needsUpdate = true;
     }
     if (D.monk) tmMonkeys(D.monk, t, car);
+    if (D.walk) tmWalk(D.walk, t);
+    const R0 = typeof Render !== 'undefined' ? Render : null, tod = R0 && R0.atmos ? R0.atmos.tod : 'day', rain = !!(R0 && R0.raining);
+    if (D.lan) D.lan.emissiveIntensity = tod === 'night' ? 1.1 : tod === 'dusk' || tod === 'dawn' ? 0.6 : 0;   // (the lanterns lit from dusk)
+    if (D.pud) D.pud.visible = rain && !!car;   // (the water in the hairpins while it rains)
+    if (D.rays) { D.rays.visible = !rain && tod !== 'night'; if (D.rays.visible) D.rays.material.opacity = (tod === 'day' ? 0.1 : 0.07) * (0.85 + 0.15 * Math.sin(t * 0.13)); }   // (the sun's shafts through the haze, by day)
     if (D.mist) D.mist.position.set(Math.sin(t * 0.021) * 6, Math.sin(t * 0.017) * 0.8, Math.cos(t * 0.016) * 6);   // (the banks drift, a few metres)
     if (D.wet) { const on = typeof Render !== 'undefined' && !!Render.raining && !!car; D.wet.visible = on; if (on) D.wet.material.map.offset.y = (t * 0.35) % 1; }   // (the rain runs down the walls)
   }
@@ -18394,26 +18425,42 @@ const World = (function () {
 
     /* ---- the pillars: sandstone and limestone towers standing out of the forest 180-420 m off the road, as all round Zhangjiajie (low poly, one mesh:
        a tapered prism in three drums, grey streaked darker, a cap of shrubs on top; from the chase camera they stand against the sky) ---- */
-    let nPil = 0;
+    const lanP = [];   // (the red lanterns: one mesh of their own, lit at dusk and at night, tmUpdate)
+    let nPil = 0, nCurt = 0, nTea = 0, nLan = 0, nWalk = 0, nRays = 0, nPud = 0;
     {
       const g = new GB(), RP = rng(3971), road = []; for (let i = 0; i < N; i += 8) road.push([T.px[i], T.pz[i]]);
-      const clear = (x, z, r) => road.every(([a, b]) => (a - x) * (a - x) + (b - z) * (b - z) > r * r), placed = [];
-      for (let s = 40; s < T.len - 40 && nPil < 34; s += 70) for (const side of [-1, 1]) {
-        if (RP() < 0.45) continue;
-        const i = T.idx(s), o = side * (180 + RP() * 240), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, r = 9 + RP() * 11, h = 45 + RP() * 75;
-        if (!clear(x, z, 170) || behind(x, z) || placed.some(([a, b]) => Math.hypot(a - x, b - z) < 60)) continue;
-        placed.push([x, z]);
-        const y0 = (inCorr(x, z) ? tmGround(x, z) : farAt(x, z)) - 6, k = 0.85 + RP() * 0.2, C = [[0.62, 0.61, 0.57], [0.55, 0.54, 0.5], [0.66, 0.63, 0.56]];
-        let y = y0, rr = r; const sides = 7, a0 = RP() * TAU;
-        for (let d = 0; d < 3; d++) { const hh = h * [0.42, 0.33, 0.25][d], r2 = rr * (0.8 + RP() * 0.12), c = C[(d + nPil) % 3].map(v => v * k * (d === 1 ? 0.92 : 1)), ct = d === 2 ? [0.42, 0.44, 0.38] : null;
+      const clear = (x, z, r) => road.every(([a, b]) => (a - x) * (a - x) + (b - z) * (b - z) > r * r), placed = [], C = [[0.62, 0.61, 0.57], [0.55, 0.54, 0.5], [0.66, 0.63, 0.56]];
+      const pillar = (x, z, r, h) => {   // a tapered prism in three drums, each a little off the one below, a cap of green on top; returns its top
+        const y0 = (inCorr(x, z) ? tmGround(x, z) : farAt(x, z)) - 6, k = 0.85 + RP() * 0.2, sides = 7, a0 = RP() * TAU;
+        let y = y0, rr = r, cx = x, cz = z;
+        for (let d = 0; d < 3; d++) { const hh = h * [0.42, 0.33, 0.25][d], r2 = rr * (0.78 + RP() * 0.14), c = C[(d + nPil) % 3].map(v => v * k * (d === 1 ? 0.92 : 1)), ct = d === 2 ? [0.42, 0.44, 0.38] : null;
           const dx = (RP() - 0.5) * rr * 0.25, dz = (RP() - 0.5) * rr * 0.25;
-          for (let q = 0; q < sides; q++) { const b0 = a0 + q / sides * TAU, b1 = a0 + (q + 1) / sides * TAU, inn = [x, y + hh / 2, z];
-            const p0 = [x + Math.cos(b0) * rr, y, z + Math.sin(b0) * rr], p1 = [x + Math.cos(b1) * rr, y, z + Math.sin(b1) * rr];
-            const t0 = [x + dx + Math.cos(b0) * r2, y + hh, z + dz + Math.sin(b0) * r2], t1 = [x + dx + Math.cos(b1) * r2, y + hh, z + dz + Math.sin(b1) * r2];
-            g.quadO(p0, t0, t1, p1, q & 1 ? c.map(v => v * 0.86) : c, inn); if (ct) g.triO([x + dx, y + hh, z + dz], t1, t0, ct, inn); }
-          y += hh; rr = r2; }
-        tmLump(g, x, y - 1, z, rr * 1.15, 0.45, [0.2, 0.31, 0.14], RP, 0.3);   // (the cap of green on top)
-        nPil++;
+          for (let q = 0; q < sides; q++) { const b0 = a0 + q / sides * TAU, b1 = a0 + (q + 1) / sides * TAU, inn = [cx, y + hh / 2, cz];
+            const p0 = [cx + Math.cos(b0) * rr, y, cz + Math.sin(b0) * rr], p1 = [cx + Math.cos(b1) * rr, y, cz + Math.sin(b1) * rr];
+            const t0 = [cx + dx + Math.cos(b0) * r2, y + hh, cz + dz + Math.sin(b0) * r2], t1 = [cx + dx + Math.cos(b1) * r2, y + hh, cz + dz + Math.sin(b1) * r2];
+            g.quadO(p0, t0, t1, p1, q & 1 ? c.map(v => v * 0.86) : c, inn); if (ct) g.triO([cx + dx, y + hh, cz + dz], t1, t0, ct, inn); }
+          y += hh; rr = r2; cx += dx; cz += dz; }
+        tmLump(g, cx, y - 1, cz, rr * 1.15, 0.45, [0.2, 0.31, 0.14], RP, 0.3);   // (the cap of green on top)
+        if (RP() < 0.5) tmLump(g, cx + rr * 0.5, y - h * 0.3, cz - rr * 0.3, rr * 0.5, 0.5, [0.22, 0.33, 0.15], RP, 0.3);   // (a pine clinging to a ledge)
+        nPil++; return [cx, y, cz, rr];
+      };
+      for (let s = 40; s < T.len - 40 && nPil < 52; s += 60) for (const side of [-1, 1]) {
+        if (RP() < 0.4) continue;
+        const i = T.idx(s), o = side * (190 + RP() * 260), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
+        if (!clear(x, z, 175) || behind(x, z) || placed.some(([a, b]) => Math.hypot(a - x, b - z) < 90)) continue;
+        placed.push([x, z]);
+        // a group: one to three towers 25-45 m apart, the tallest up to ~160 m; now and then a natural bridge of rock between two of them
+        const n = 1 + Math.floor(RP() * 3), tops = [];
+        for (let q = 0; q < n; q++) { const a = RP() * TAU, dd = q ? 25 + RP() * 20 : 0, px = x + Math.cos(a) * dd, pz = z + Math.sin(a) * dd;
+          if (!clear(px, pz, 165)) continue; tops.push(pillar(px, pz, 8 + RP() * 12, q ? 40 + RP() * 70 : 60 + RP() * 100)); }
+        if (tops.length > 1 && RP() < 0.35) { const [A, B] = tops, y = Math.min(A[1], B[1]) - 25, th = 7, wd = 5;
+          const dx = B[0] - A[0], dz = B[2] - A[2], l = Math.hypot(dx, dz) || 1, nx = -dz / l * wd, nz = dx / l * wd, c = [0.6, 0.59, 0.55], cu = [0.46, 0.45, 0.42];
+          const P4 = (p, u, yy) => [p[0] + nx * u, yy, p[2] + nz * u], M = [(A[0] + B[0]) / 2, y + 6, (A[2] + B[2]) / 2];
+          for (const [p0, p1, y0, y1] of [[A, M, y, y + 6], [M, B, y + 6, y]]) {
+            g.quadUp(P4(p0, -1, y0), P4(p0, 1, y0), P4(p1, 1, y1), P4(p1, -1, y1), [c, c, c, c]);
+            g.quadO(P4(p0, -1, y0 - th), P4(p1, -1, y1 - th), P4(p1, 1, y1 - th), P4(p0, 1, y0 - th), cu, [M[0], M[1] + 30, M[2]]);
+            for (const u of [-1, 1]) g.quadO(P4(p0, u, y0), P4(p1, u, y1), P4(p1, u, y1 - th), P4(p0, u, y0 - th), cu, [M[0] - nx * u * 3, M[1], M[2] - nz * u * 3]); }
+          tmLump(g, M[0], M[1] - 0.5, M[2], wd * 1.4, 0.4, [0.21, 0.32, 0.14], RP, 0.3); }
       }
       if (!g.empty) { const m = new THREE.Mesh(g.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })); m.matrixAutoUpdate = false; root.add(m); }
     }
@@ -18477,6 +18524,11 @@ const World = (function () {
                   const A = L4(a, b, f0), Bq = L4(a, b, f1), C = L4(d, c, f1), D = L4(d, c, f0), h = rpHash((i >> 1) * 7 + side, q * 13 + 5), iv = sstep(0.5, 0.75, rpHash(i >> 2, 71 + side)) * sstep(nb * 0.9, 0, q), t = (0.82 + 0.2 * h) * (1 - 0.18 * f1);
                   const col = [lerp(0.6 * t, 0.2, iv), lerp(0.59 * t, 0.32, iv), lerp(0.55 * t, 0.14, iv)];
                   gv.quadO(A, Bq, C, D, null, inn, [wuv(A), wuv(Bq), wuv(C), wuv(D)], [col, col, col, col]); }
+                { // a curtain of creepers hanging over the wall's top (in patches 20-40 m long, ragged at the foot): green from above, from the leg below
+                  const cv = (q) => sstep(0.42, 0.62, rpHash(q >> 3, 91 + side)) * (0.35 + 0.55 * rpHash(q, 93 + side)), ci2 = cv(i), cj2 = cv(j);
+                  if (ci2 > 0.02 || cj2 > 0.02) { const nx = T.nx[i] * side * 0.14, nz = T.nz[i] * side * 0.14, nx2 = T.nx[j] * side * 0.14, nz2 = T.nz[j] * side * 0.14;
+                    const hi = (a[1] - b[1]) * ci2, hj = (d[1] - c[1]) * cj2, top = [0.17, 0.27, 0.11], ft = [0.3, 0.42, 0.16];
+                    gl.quadO([a[0] + nx, a[1] + 0.05, a[2] + nz], [a[0] + nx, a[1] - hi, a[2] + nz], [d[0] + nx2, d[1] - hj, d[2] + nz2], [d[0] + nx2, d[1] + 0.05, d[2] + nz2], null, inn, null, [top, ft, ft, top]); nCurt++; } }
                 { const ox = T.nx[i] * side * 0.06, oz = T.nz[i] * side * 0.06, ox2 = T.nx[j] * side * 0.06, oz2 = T.nz[j] * side * 0.06, u0 = i * T.ds / 3, u1 = j * T.ds / 3, W4 = [1, 1, 1];   // (the rain on it: a film of runnels, shown only in the rain)
                   gwet.quadO([a[0] + ox, a[1], a[2] + oz], [b[0] + ox, b[1], b[2] + oz], [c[0] + ox2, c[1], c[2] + oz2], [d[0] + ox2, d[1], d[2] + oz2], W4, inn, [[u0, 0], [u0, (a[1] - b[1]) / 4], [u1, (d[1] - c[1]) / 4], [u1, 0]]); }
               } else if (onBr[i] && k === 2) gv.quadO(a, b, c, d, null, Pt(i, 0, Math.min(qi[2][1], qj[2][1]) * 0.5), [wuv(a), wuv(b), wuv(c), wuv(d)], [ci[k], ci[k + 1], cj[k + 1], cj[k]]);   // (the bridge deck's edge)
@@ -18500,6 +18552,22 @@ const World = (function () {
         const wt = new THREE.CanvasTexture(c); wt.wrapS = wt.wrapT = THREE.RepeatWrapping; out.ownTex.push(wt);
         const mw = new THREE.Mesh(gwet.geometry(), new THREE.MeshBasicMaterial({ map: wt, transparent: true, depthWrite: false, opacity: 0.55 })); mw.visible = false; mw.matrixAutoUpdate = false; mw.renderOrder = 1; root.add(mw);
         (out.dyn.tm || (out.dyn.tm = {})).wet = mw;
+      }
+      { // the rain on the road: in the hairpins (where it runs off the camber and gathers on the inside and in the worn patches outside) sheets of
+        // water mirroring the grey sky, shown only while it rains (tmUpdate; one mesh, one draw)
+        const gp = new GB(true), RP2 = rng(3995), W1 = [1, 1, 1];
+        for (const c of HPc) for (let i = c.i0; i <= c.i1; i += 3) { if (onBr[i] || RP2() < 0.45) continue;
+          const sd = RP2() < 0.6 ? c.dir : -c.dir, L = 1.6 + RP2() * 3.2, W = 0.7 + RP2() * 1.5, o = sd * (w - 0.3 - W / 2 - RP2() * 1.2), s0 = i * T.ds, k = Math.floor(RP2() * 4), cu = (k & 1) * 0.5, cv = (k >> 1) * 0.5;
+          const Q = (ds, dw) => { const j = T.idx(s0 + ds), oo = o + dw; return [T.px[j] + T.nx[j] * oo, T.hy[j] + 0.03, T.pz[j] + T.nz[j] * oo]; };
+          gp.quadUp(Q(-L / 2, -W / 2), Q(-L / 2, W / 2), Q(L / 2, W / 2), Q(L / 2, -W / 2), [W1, W1, W1, W1], [[cu, cv], [cu + 0.5, cv], [cu + 0.5, cv + 0.5], [cu, cv + 0.5]]); nPud++; }
+        if (!gp.empty) {
+          const S = 128, cnv = document.createElement('canvas'); cnv.width = cnv.height = S; const x2 = cnv.getContext('2d'), img = x2.createImageData(S, S), dt = img.data;
+          for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) { const k = (i >> 6) + 2 * (j >> 6), u = ((i & 63) + 0.5) / 32 - 1, v = ((j & 63) + 0.5) / 32 - 1, an = Math.atan2(v, u), r = Math.hypot(u, v), o2 = (j * S + i) * 4;
+            const e = 0.72 + 0.1 * Math.sin(an * 2 + k * 1.7) + 0.07 * Math.sin(an * 5 + k * 2.9), al = clamp((e - r) / 0.12, 0, 1); dt[o2] = dt[o2 + 1] = dt[o2 + 2] = 255; dt[o2 + 3] = Math.round(255 * al); }
+          x2.putImageData(img, 0, 0); const pt = new THREE.CanvasTexture(cnv); out.ownTex.push(pt);
+          const mp = new THREE.Mesh(gp.geometry(), new THREE.MeshPhongMaterial({ color: 0x1c2126, emissive: 0x4e5961, specular: 0x9aa6b0, shininess: 90, map: pt, transparent: true, opacity: 0.85, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -3 }));
+          mp.visible = false; mp.matrixAutoUpdate = false; mp.renderOrder = 1; root.add(mp); (out.dyn.tm || (out.dyn.tm = {})).pud = mp;
+        }
       }
       // chequered start and finish lines, a white line at each checkpoint
       const gq = new GB(true), gw = new GB(), uM = Math.round(w * 2 / 0.8) / 16, W1 = [1, 1, 1];
@@ -18760,7 +18828,7 @@ const World = (function () {
         cyl(g, v.x, y - 1.6, v.z, 6.5, 1.85, 12, pave, pave);   // (the terrace)
         for (let k = 0; k < 6; k++) { const a = k / 6 * TAU + hd, px = v.x + Math.cos(a) * r, pz = v.z + Math.sin(a) * r;
           cyl(g, px, y + 0.25, pz, 0.16, 3.0, 6, red, red);
-          const lx = v.x + Math.cos(a) * (r + 0.9), lz = v.z + Math.sin(a) * (r + 0.9); ROCK_SMOOTH = true; ico(g, lx, y + 2.7, lz, 0.28, 1.2, [0.95, 0.2, 0.12], R, 0.05); ROCK_SMOOTH = false; }   // (the lanterns)
+          lanP.push([v.x + Math.cos(a) * (r + 0.9), y + 2.7, v.z + Math.sin(a) * (r + 0.9), 0.3]); }   // (the lanterns)
         cyl(g, v.x, y + 3.2, v.z, r + 0.4, 0.35, 6, wood, wood);
         cone(g, v.x, y + 3.5, v.z, r + 1.6, 2.6, 6, roofC, roofC, hd);
         for (let k = 0; k < 6; k++) { const a = k / 6 * TAU + hd, px = v.x + Math.cos(a) * (r + 1.7), pz = v.z + Math.sin(a) * (r + 1.7); box(g, px, y + 3.45, pz, 0.5, 0.3, 0.5, a, roofC); }   // (the upturned corners)
@@ -18812,6 +18880,35 @@ const World = (function () {
     }
     for (const e of CR.circ) exclPush(e.x, e.z, e.r);
 
+    /* ---- the tea terraces: on the gentler slopes round the foot of the road (below ~50 m over the start), in fields where the land is open, rows
+       of clipped tea bushes along the contours, 1.5 m apart in height (marching squares over the terrain grid: one mesh, the trees kept out) ---- */
+    const yTea = T.hy[T.idx(sStart)] + 50;
+    const teaAt = (x, z) => { const d = vrDist(x, z); if (d < 26 || d > 240) return false; const c = vrLC(x, z); if (c === 2 || c === 3) return false;
+      if (P.c2(x * 0.45 + 300, z * 0.45) < (c === 0 ? 0.62 : 0.4)) return false; const sl = tmSlope(x, z); return sl > 0.18 && sl < 0.8 && tmGround(x, z) < yTea; };
+    {
+      const G = P.G, g = new GB(), RTe = rng(3969), dL = 1.5, maxSeg = 3000;
+      tea: for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
+        if (!G.on[tj * G.ntx + ti]) continue;
+        for (let j = tj * VRT; j < (tj + 1) * VRT; j++) for (let i = ti * VRT; i < (ti + 1) * VRT; i++) {
+          const x = G.x0 + i * VRC, z = G.z0 + j * VRC, xc = x + VRC / 2, zc = z + VRC / 2;
+          if (!teaAt(xc, zc) || excluded(xc, zc) || vrNear(xc, zc).dd < 6) continue;
+          const h00 = tmGH(i, j), h10 = tmGH(i + 1, j), h01 = tmGH(i, j + 1), h11 = tmGH(i + 1, j + 1), lo = Math.min(h00, h10, h01, h11), hi = Math.max(h00, h10, h01, h11);
+          let gx = (h10 - h00 + h11 - h01) / (2 * VRC), gz = (h01 - h00 + h11 - h10) / (2 * VRC); const gl = Math.hypot(gx, gz) || 1; gx /= gl; gz /= gl;   // (uphill)
+          for (let lv = Math.ceil(lo / dL) * dL; lv < hi; lv += dL) {
+            const P2 = [], E = [[h00, h10, x, z, x + VRC, z], [h10, h11, x + VRC, z, x + VRC, z + VRC], [h11, h01, x + VRC, z + VRC, x, z + VRC], [h01, h00, x, z + VRC, x, z]];
+            for (const [ha, hb, xa, za, xb, zb] of E) if ((ha - lv) * (hb - lv) < 0) { const f = (lv - ha) / (hb - ha); P2.push([lerp(xa, xb, f), lerp(za, zb, f)]); }
+            if (P2.length < 2) continue;
+            const [p, q] = P2, k = 0.9 + 0.2 * RTe(), top = [0.34 * k, 0.5 * k, 0.17 * k], fr = [0.2 * k, 0.31 * k, 0.11 * k], wd = 1.05;
+            const A = [p[0], lv + 0.5, p[1]], B = [q[0], lv + 0.5, q[1]], C2 = [q[0] - gx * wd, lv + 0.42 - wd * 0.3, q[1] - gz * wd], D = [p[0] - gx * wd, lv + 0.42 - wd * 0.3, p[1] - gz * wd];
+            g.quadUp(A, B, C2, D, [top, top, fr, fr]);   // (the row's top, darker on its downhill edge)
+            if (nTea % 400 === 0) (out.marks.tea || (out.marks.tea = [])).push([A[0], A[1], A[2]]);
+            if (++nTea >= maxSeg) break tea;
+          }
+        }
+      }
+      if (!g.empty) { const m = new THREE.Mesh(g.geometry(), ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut)); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); }
+    }
+
     /* ---- the forest (instanced per 96 m chunk): evergreen broadleaves and pines thick on the slopes, bamboo near the road lower down, shrubs on
        the ledges of the cliffs; none on the bare faces, the road, the plots; limestone boulders at the foot of the cuts ---- */
     const pMat = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
@@ -18824,9 +18921,9 @@ const World = (function () {
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
-          const hd = vrDist(x, z); if (hd > 210) continue;
-          const cell = (Math.floor(xx / SP) & 1) + 2 * (Math.floor(zz / SP) & 1); if ((hd > 70 && (cell & 1)) || (hd > 130 && cell)) continue;   // (farther out every other spot, then one in four)
-          if (hd > 130 && r1 > 0.6) continue;   // (past 130 m only the broadleaves: the hillsides there are the terrain's colours, a few crowns on them)
+          const hd = vrDist(x, z); if (hd > 160) continue;   // (farther out the ground's own carpet of crowns: tmCol)
+          const cell = (Math.floor(xx / SP) & 1) + 2 * (Math.floor(zz / SP) & 1); if ((hd > 70 && (cell & 1)) || (hd > 110 && cell)) continue;   // (farther out every other spot, then one in four)
+          if (hd > 110 && r1 > 0.6) continue;   // (past 110 m only the broadleaves: the hillsides there are the terrain's colours, a few crowns on them)
           const c = vrLC(x, z), y0 = tmGround(x, z), sl = tmSlope(x, z), A = y0 + base;
           let kind = -1;
           if (c === 0) kind = r1 < 0.6 ? 0 : r1 < 0.8 ? 1 : r1 < 0.86 && A < 1050 ? 2 : 3;
@@ -18835,7 +18932,7 @@ const World = (function () {
           if (kind < 0) continue;
           if (sl > 1.7) { if (kind !== 3 || sl > 2.6 || (r2 < 0.4 && hd > 40)) continue; }   // (the trees cling to the steep slopes too; the cliffs bare but for a shrub on a ledge here and there, more of them by the road)
           const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < (kind < 2 ? 2.4 : 1.4)) continue;
-          if (excluded(x, z)) continue;
+          if (excluded(x, z) || teaAt(x, z)) continue;
           if (kind === 0) pk[0].add(x, y0 - 0.2, z, r2 * TAU, 6 + r3 * 5, 8 + r4 * 9, [0.85 + r2 * 0.3, 0.88 + r3 * 0.24, 0.85 + r4 * 0.2]);
           else if (kind === 1) pk[0].add(x, y0 - 0.2, z, r2 * TAU, 4.5 + r3 * 2.5, 12 + r4 * 8, [0.66 + r2 * 0.1, 0.78 + r3 * 0.1, 0.86]);   // (the pines: the same crowns, smaller, darker and bluer, higher up)
           else if (kind === 2) pk[3].add(x, y0 - 0.1, z, r2 * TAU, 1.8 + r3 * 1.2, 4 + r4 * 3, [1.1 + r2 * 0.15, 1.12 + r3 * 0.1, 0.82]);   // (the bamboo: a tall, lighter clump; from above it reads as one)
@@ -18901,6 +18998,76 @@ const World = (function () {
       if (!gwat.empty) { const m = new THREE.Mesh(gwat.geometry(), new THREE.MeshPhongMaterial({ map: tex.water, vertexColors: true, shininess: 50, specular: 0x2a3a44 })); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); out.dyn.water = tex.water; }
     }
 
+    /* ---- the red lanterns: under the pavilions' eaves, on posts along both sides of the road at the start and up to the finish, along the steps;
+       one mesh (a lantern a soft red ball with a gold cap and tassel), lit from dusk (tmUpdate: emissive), the posts in the scenery ---- */
+    {
+      const post = [0.36, 0.12, 0.08], RL = rng(3997);
+      const onPost = (x, z, y, h, ax, az) => { const g = scen.get(x, z); box(g, x, y - 0.1, z, 0.14, h + 0.1, 0.14, 0, post, null, true);
+        ouRod(g, [x, y + h - 0.05, z], [x + ax * 0.7, y + h - 0.05, z + az * 0.7], 0.035, post, 3); lanP.push([x + ax * 0.7, y + h - 0.55, z + az * 0.7, 0.32]); };
+      for (const [s0, s1] of [[sStart - 30, sStart + 260], [sFin - 320, sFin + 60]]) for (let s = s0; s < s1; s += 24) for (const side of [-1, 1]) {
+        const i = T.idx(s); if (onBr[i]) continue; const bar = side > 0 ? T.br[i] : T.bl[i], [x, z] = atS(s + (side > 0 ? 12 : 0), side * (bar + 0.5));
+        if (excluded(x, z) || Math.abs(tmGround(x, z) - T.hy[i]) > 1.5) continue; onPost(x, z, Math.min(T.hy[i], tmGround(x, z)) - 0.05, 3.1, -T.nx[i] * side, -T.nz[i] * side); }
+      { const qx = -st.uz, qz = st.ux; for (let a = 6; a < st.L - 4; a += 16) for (const o of [-3.6, 3.6]) { const y = st.y0 + (st.y1 - st.y0) * a / st.L; lanP.push([st.x0 + st.ux * a + qx * o, y + 1.45, st.z0 + st.uz * a + qz * o, 0.24]); } }   // (on the handrails' posts)
+      if (lanP.length) {
+        const g = new GB(), red = [0.9, 0.16, 0.1], gold = [0.86, 0.66, 0.22];
+        ROCK_SMOOTH = true; for (const [x, y, z, r] of lanP) { ico(g, x, y, z, r, 1.15, red, RL, 0.02); box(g, x, y + r * 1.1, z, r * 0.9, r * 0.25, r * 0.9, 0, gold); box(g, x, y - r * 1.5, z, r * 0.2, r * 0.6, r * 0.2, 0, gold); } ROCK_SMOOTH = false;
+        const lm = new THREE.MeshLambertMaterial({ vertexColors: true, emissive: 0xff3a1c, emissiveIntensity: 0 }), m = new THREE.Mesh(g.geometry(), lm); m.matrixAutoUpdate = false; root.add(m);
+        (out.dyn.tm || (out.dyn.tm = {})).lan = lm; nLan = lanP.length;
+      }
+    }
+
+    /* ---- the tourists on the 999 steps: slowly up and down the flight in ones and twos (one instanced mesh, moved in tmUpdate) ---- */
+    {
+      const g = new GB(), RT2 = rng(3961), W1 = [1, 1, 1], skin = [0.86, 0.68, 0.55];
+      box(g, 0, 0, 0, 0.3, 0.8, 0.22, 0, [0.22, 0.22, 0.26], null, true); box(g, 0, 0.8, 0, 0.42, 0.62, 0.26, 0, W1, null, true); ROCK_SMOOTH = true; ico(g, 0, 1.6, 0, 0.13, 1.1, skin, RT2, 0.02); ROCK_SMOOTH = false;
+      const L = [], cols = [[0.86, 0.13, 0.12], [0.95, 0.95, 0.95], [0.98, 0.8, 0.15], [0.2, 0.42, 0.75], [0.3, 0.6, 0.35], [1, 0.55, 0.1], [0.6, 0.62, 0.66], [0.9, 0.5, 0.6]];
+      for (let k = 0; k < 40; k++) L.push({ a: RT2() * st.L, o: (RT2() - 0.5) * 4.6, v: (RT2() < 0.55 ? 1 : -1) * (0.28 + RT2() * 0.22), c: cols[Math.floor(RT2() * cols.length)], ph: RT2() * TAU });
+      const im = new THREE.InstancedMesh(g.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true }), L.length), cc = new THREE.Color();
+      L.forEach((m, k) => { cc.setRGB(m.c[0], m.c[1], m.c[2]); im.setColorAt(k, cc); }); im.frustumCulled = false; root.add(im);
+      (out.dyn.tm || (out.dyn.tm = {})).walk = { im, L, st, m4: new THREE.Matrix4(), q: new THREE.Quaternion(), v: new THREE.Vector3(), sc: new THREE.Vector3(1, 1, 1), e: new THREE.Euler(), t: null };
+      nWalk = L.length; tmWalk(out.dyn.tm.walk, 0);
+    }
+
+    /* ---- the glass skywalk: a walkway of glass bolted to the face of the cliff above the finish, left of the cave's arch, ~20 m above its crown,
+       steel struts back into the rock, a handrail each side, tourists on it looking down (the glass one mesh of its own, the steel in the scenery) ---- */
+    {
+      const C = TMC, qx = -uz, qz = ux, Hh = CV.h, yW = Hh + 22, l0 = -98, l1 = -36, a0 = -3.4, a1 = -5.9, steel = [0.62, 0.64, 0.66];
+      const Wp = (l, y, a) => [C.x + qx * l + ux * a, C.y + y, C.z + qz * l + uz * a];
+      const gg = new GB(), Wg = [1, 1, 1];
+      for (let l = l0; l < l1; l += 4) { const l2 = Math.min(l1, l + 4); gg.quadO(Wp(l, yW, a0), Wp(l2, yW, a0), Wp(l2, yW, a1), Wp(l, yW, a1), Wg, Wp((l + l2) / 2, yW - 5, (a0 + a1) / 2)); }
+      const pm = Wp((l0 + l1) / 2, yW, a1), gs2 = scen.get(pm[0], pm[2]);
+      for (const a of [a0 + 0.05, a1 - 0.05]) ouRod(gs2, Wp(l0, yW + 1.1, a), Wp(l1, yW + 1.1, a), 0.04, steel, 4);
+      for (let l = l0; l <= l1 + 0.01; l += 4) { for (const a of [a0 + 0.05, a1 - 0.05]) ouRod(gs2, Wp(l, yW, a), Wp(l, yW + 1.1, a), 0.03, steel, 3);
+        if (Math.round(l) % 8 === 2) ouRod(gs2, Wp(l, yW - 0.1, a1), Wp(l, yW - 4.5, 1), 0.08, steel, 4); }   // (a strut down into the rock every 8 m)
+      const mg = new THREE.Mesh(gg.geometry(), new THREE.MeshPhongMaterial({ color: 0x9fc4d4, specular: 0xdde8f0, shininess: 90, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false }));
+      mg.matrixAutoUpdate = false; mg.renderOrder = 1; root.add(mg);
+      const RW2 = rng(3963);
+      for (let k = 0; k < 9; k++) { const l = lerp(l0 + 3, l1 - 3, RW2()), p = Wp(l, yW + 0.03, lerp(a0 - 0.6, a1 + 0.6, RW2())); crowdPut(CR, p[0], p[1], p[2], -ux, -uz, { col: fans[Math.floor(RW2() * fans.length)] }, 1); }
+      out.marks.skywalk = [Wp(l0, yW, a1), Wp(l1, yW, a1)].map(p => [p[0], p[1], p[2]]);
+    }
+
+    /* ---- the sun's shafts: pale beams slanting down through the haze into the valley below the road (two crossed sheets each, additive, no depth
+       writes; by day and in the dry only, tmUpdate). Seen from behind the car against the far side of the valley ---- */
+    {
+      const c = document.createElement('canvas'); c.width = 64; c.height = 128; const x = c.getContext('2d');
+      for (let j = 0; j < 128; j++) { const v = j / 127, a = Math.min(1, v / 0.25) * Math.min(1, (1 - v) / 0.45);
+        const gr = x.createLinearGradient(0, 0, 64, 0); gr.addColorStop(0, 'rgba(255,244,214,0)'); gr.addColorStop(0.5, `rgba(255,244,214,${(0.9 * a).toFixed(3)})`); gr.addColorStop(1, 'rgba(255,244,214,0)'); x.fillStyle = gr; x.fillRect(0, j, 64, 1); }
+      const t = new THREE.CanvasTexture(c); out.ownTex.push(t);
+      const L = TMSUN, RR = rng(3967), pos = [], uvs = [];
+      for (let k = 0; k < 400 && nRays < 7; k++) {
+        const x2 = P.bx0 - 200 + RR() * (P.bx1 - P.bx0 + 400), z2 = P.bz0 - 200 + RR() * (P.bz1 - P.bz0 + 400), d = vrDist(x2, z2); if (d < 140 || d > 460) continue;
+        const gy = d < 420 ? tmGround(x2, z2) : farAt(x2, z2); if (gy > T.hy[0] - 20) continue;   // (down in the valley)
+        const len = 260 + RR() * 120, wd = 60 + RR() * 50, top = [x2 + L[0] * len, gy + L[1] * len, z2 + L[2] * len];
+        for (const ang of [0, Math.PI / 2]) { const sx = Math.cos(ang + RR() * 0.3), sz = Math.sin(ang + RR() * 0.3), Q = (p, u) => [p[0] + sx * u * wd / 2, p[1], p[2] + sz * u * wd / 2];
+          const A = Q([x2, gy, z2], -1), B = Q([x2, gy, z2], 1), C2 = Q(top, 1), D = Q(top, -1);
+          for (const [p2, uv] of [[A, [0, 0]], [B, [1, 0]], [C2, [1, 1]], [A, [0, 0]], [C2, [1, 1]], [D, [0, 1]]]) { pos.push(...p2); uvs.push(...uv); } }
+        nRays++;
+      }
+      if (nRays) { const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); geo.computeBoundingSphere();
+        const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: t, transparent: true, opacity: 0.1, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+        m.renderOrder = 3; m.matrixAutoUpdate = false; root.add(m); (out.dyn.tm || (out.dyn.tm = {})).rays = m; }
+    }
+
     /* ---- the mist: soft white banks of low cloud in the valley below the road and against the cliffs above it (no depth writes, in the fog) ---- */
     {
       const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), gr = x.createRadialGradient(64, 64, 4, 64, 64, 62);
@@ -18940,7 +19107,7 @@ const World = (function () {
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: tmAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: tmAtlas2(def.curves || []), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);
-    out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), steps: nSteps, views: views.length, monkeys: nMonk, cabins: nCab, mist: out.mist, falls: nFalls, pillars: nPil };   // (read by the tests)
+    out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), steps: nSteps, views: views.length, monkeys: nMonk, cabins: nCab, mist: out.mist, falls: nFalls, pillars: nPil, curtains: nCurt, tea: nTea, lanterns: nLan, tourists: nWalk, rays: nRays, puddles: nPud };   // (read by the tests)
     return out;
   }
 
