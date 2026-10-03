@@ -89,9 +89,12 @@
         for (let b = 0; b < nz && !dry; b++) for (let a = 0; a < nx; a++) if (gyAt(ti + a, tj + b) > WY - 1) { dry = true; break; }
         if (!dry) continue;   // (open lake: the water covers it)
         const g = stG(GX0 + (ti + 1) * GC, GZ0 + (tj + 1) * GC, 'w'); let prev = -1;
-        for (let b = nz - 1; b >= 0; b--) { const pts = [], cols = [], uvs = [];
-          for (let a = 0; a < nx; a++) { const i = ti + a, j = tj + b, x = GX0 + i * GC, z = GZ0 + j * GC; pts.push([x, gyAt(i, j), z]); cols.push(gCol(x, z)); uvs.push([x / 7, -z / 7]); }
-          const r = g.row(pts, cols, uvs); if (prev >= 0) g.link(prev, r, 0, nx - 1); prev = r; }
+        let far = true; for (let b = 0; b < nz && far; b += 4) for (let a = 0; a < nx; a += 4) { const q = near(GX0 + (ti + a) * GC, GZ0 + (tj + b) * GC, 160); if (q.i >= 0) { far = false; break; } }
+        const st = far ? 2 : 1, cols0 = []; for (let a = 0; a < nx; a += st) cols0.push(a); if (cols0[cols0.length - 1] !== nx - 1) cols0.push(nx - 1);   // (a tile 160 m and more off the circuit: 20 m cells)
+        const rows0 = []; for (let b = nz - 1; b >= 0; b -= st) rows0.push(b); if (rows0[rows0.length - 1] !== 0) rows0.push(0);
+        for (const b of rows0) { const pts = [], cols = [], uvs = [];
+          for (const a of cols0) { const i = ti + a, j = tj + b, x = GX0 + i * GC, z = GZ0 + j * GC; pts.push([x, gyAt(i, j), z]); cols.push(gCol(x, z)); uvs.push([x / 7, -z / 7]); }
+          const r = g.row(pts, cols, uvs); if (prev >= 0) g.link(prev, r, 0, cols0.length - 1); prev = r; }
       }
     }
 
@@ -113,9 +116,10 @@
       for (let k = 0; k < Lc.length; k += 2) { const S = ST[Lc[k]]; if (S.k === self || S.circ || S.kind === 2 || S.kind === 3 || S.lv) continue; const m = Lc[k + 1], a = S.P[m], b = S.P[m + 1]; if (segD(x, z, a[0], a[1], b[0], b[1]) < S.hw + (pad || 0)) return true; }
       return false; };
     const scen = new Chunks(384), scenU = new Chunks(384, true);   // vertex-coloured scenery (cast shadows); with uvs (the grit): low things
+    const wl = [0.94, 0.94, 0.9], yl = [0.95, 0.75, 0.12];
     const conc = [0.92, 0.9, 0.86], concK = [0.66, 0.65, 0.62], asph = [0.82, 0.82, 0.84], path = [0.8, 0.76, 0.68], ped = [0.84, 0.8, 0.72];
     const deckY = (S, x, z) => groundH(x, z) + (S.lv ? 2.8 * S.lv : 0);
-    let nStreet = 0;
+    let nStreet = 0; const stMarks = [], traffic = [];   // (the streets' lines and the expressway's traffic: laid out once the line mesh and the cars' are there)
     for (const S of ST) {
       if (S.circ) continue;
       // resample: every 3 m near the circuit, 6 m farther off
@@ -146,6 +150,15 @@
           const rs = gs.row(pp, cc, pp.map(p => [p[0] / 6, -p[2] / 6])); if (prevS[si] >= 0) gs.link(prevS[si], rs, 0, 2); prevS[si] = rs;
         }
       }
+      // the lines: a double yellow down the middle of the two-way streets, white dashes between the expressway's lanes (none in the junctions);
+      // the traffic on the expressway (it stays open during the race)
+      if ((S.kind === 0 && hw >= 4) || S.kind === 4) { let acc = 0;
+        for (let k = 0; k + 1 < pts.length; k++) { const [x, z] = pts[k], [x2, z2] = pts[k + 1], [nx, nz] = nr[k], l = Math.hypot(x2 - x, z2 - z), y = deckY(S, x, z) + yOff + 0.012, y2 = deckY(S, x2, z2) + yOff + 0.012; acc += l;
+          const q = near(x, z, 16); if (!S.lv && ((q.i >= 0 && q.dd < (q.lat > 0 ? T.br[q.i] : T.bl[q.i]) - WA[q.i] + 3) || onRoad(x, z, S.k, 1) || onRoad(x2, z2, S.k, 1))) continue;
+          const L4 = (o0, o1, col, f) => stMarks.push([[x + nx * o0, y, z + nz * o0], [x + nx * o1, y, z + nz * o1], [x + (x2 - x) * f + nx * o1, lerp(y, y2, f), z + (z2 - z) * f + nz * o1], [x + (x2 - x) * f + nx * o0, lerp(y, y2, f), z + (z2 - z) * f + nz * o0], col]);
+          if (S.kind === 0) { L4(-0.2, -0.08, yl, 1); L4(0.08, 0.2, yl, 1); }
+          else { if (Math.floor(acc / 6) % 2) for (const o of [-hw / 3, hw / 3]) L4(o - 0.07, o + 0.07, wl, 1);
+            if (R() < l / 22) { const f = R(), lane = Math.floor(R() * 3) - 1, big = R() < 0.18; traffic.push([x + (x2 - x) * f + nx * lane * hw / 1.6, lerp(y, y2, f) - 0.02, z + (z2 - z) * f + nz * lane * hw / 1.6, -Math.atan2(z2 - z, x2 - x), big ? 1.7 : 1, big ? [0.92, 0.92, 0.9] : [[0.9, 0.9, 0.9], [0.12, 0.12, 0.13], [0.6, 0.61, 0.64], [0.7, 0.1, 0.1], [0.15, 0.25, 0.5]][Math.floor(R() * 5)]]); } } } }
       nStreet++;
       // the expressway: its deck's edges (parapets) and piers every 32 m
       if (S.lv) { let acc = 0;
@@ -202,7 +215,8 @@
     }
     // the markings: the start line and the grid, the streets' own lines (Canada: a double yellow line down the middle of the two-way streets,
     // white dashes between the lanes of the boulevards), the zebra crossings and the stop lines at the junctions (OpenStreetMap's crossings)
-    const lineG = new GB(), wl = [0.94, 0.94, 0.9], yl = [0.95, 0.75, 0.12];
+    const lineG = new GB();
+    for (const [a, b, c, d, col] of stMarks) lineG.quadUp(a, b, c, d, [col, col, col, col]);
     const strip = (s0, s1, o0, o1, col, y) => { const a = atSf(s0, o0), b = atSf(s0, o1), c = atSf(s1, o1), d = atSf(s1, o0), Y = (p) => T.hy[p[3]] + (y || 0.034);
       lineG.quadUp([a[0], Y(a), a[1]], [b[0], Y(b), b[1]], [c[0], Y(c), c[1]], [d[0], Y(d), d[1]], [col, col, col, col]); };
     {
@@ -444,7 +458,7 @@
     const TCH = [new IChunks(treeGeo(0), tMat, 384), new IChunks(treeGeo(1), tMat, 768)];   // (near the circuit: two crowns and a shadow; farther off one crown)
     let nTrees = 0;
     const treeOk = (x, z) => { if (onBld(x, z) || inLake(x, z) || pitZone(x, z)) return false; const q = near(x, z, 20); if (q.i >= 0 && q.dd < (q.lat > 0 ? T.br[q.i] : T.bl[q.i]) - WA[q.i] + 2.5) return false; return !onRoad(x, z, -1, 0.6); };
-    const plant = (x, z, big) => { if (!treeOk(x, z)) return; const h = R(), kind = h < 0.42 ? 0 : h < 0.7 ? 1 : h < 0.94 ? 2 : 3, ht = (big ? 11 : 8) + R() * 8, sx = ht * (kind === 3 ? 0.62 : kind === 1 ? 0.7 : 0.9), sy = kind === 3 ? ht * 1.15 : ht;
+    const plant = (x, z, big) => { if (!treeOk(x, z)) return; const h = R(), kind = h < 0.42 ? 0 : h < 0.7 ? 1 : h < 0.94 ? 2 : 3, ht = (big ? 9 : 7) + R() * 6, sx = ht * (kind === 3 ? 0.62 : kind === 1 ? 0.7 : 0.9), sy = kind === 3 ? ht * 1.15 : ht;
       (near(x, z, 70).dd < 60 ? TCH[0] : TCH[1]).add(x, groundH(x, z) - 0.1, z, R() * TAU, sx, sy, kind === 3 ? vary([0.62, 0.78, 0.78], R, 0.1) : kind === 2 ? vary([1.12, 1.08, 0.92], R, 0.12) : vary([1, 1, 1], R, 0.16)); nTrees++; };   // (the locusts' lighter, yellower green by the instance colour)
     { const Tr = D.trees; for (let k = 0; k < Tr.length; k += 2) plant(Tr[k] + (R() - 0.5), Tr[k + 1] + (R() - 0.5), true); }
     for (let j = 0; j < LCD.nz; j += 2) for (let i = 0; i < LCD.nx; i += 2) {   // WorldCover's tree cover (lawn under trees, class 2): one tree per ~12 m square there
@@ -455,6 +469,7 @@
     const cars = new IChunks(carGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), 384);
     const CARC = [[0.92, 0.92, 0.92], [0.12, 0.12, 0.13], [0.62, 0.63, 0.66], [0.75, 0.1, 0.1], [0.16, 0.26, 0.5], [0.85, 0.85, 0.8], [0.35, 0.36, 0.38], [0.5, 0.12, 0.12], [0.22, 0.4, 0.3]];
     let nCars = 0;
+    for (const [x, y, z, rot, sc, col] of traffic) cars.add(x, y, z, rot, sc, sc, col);
     for (const pk of D.parks) { const ang = pk[0], Pp = H2(pk.slice(1)), ux = Math.cos(ang), uz = Math.sin(ang);
       let u0 = 1e9, u1 = -1e9, v0 = 1e9, v1 = -1e9; for (const [x, z] of Pp) { const u = x * ux + z * uz, v = -x * uz + z * ux; u0 = Math.min(u0, u); u1 = Math.max(u1, u); v0 = Math.min(v0, v); v1 = Math.max(v1, v); }
       for (let v = v0 + 3; v < v1 - 2.5; v += 16.4) for (const dv of [0, 5.4]) for (let u = u0 + 2; u < u1 - 1.5; u += 2.7) {
@@ -488,6 +503,7 @@
       boats.addTo(root, true);
     }
 
+    let tramStop = null;
     /* ---- the railway north of the expressway (ballast, two rails a track) and the streetcar tracks (concrete, two rails, the overhead line's
        poles); a streetcar waiting in the loop (red and white, generic) and its platform with a shelter ---- */
     {
@@ -506,11 +522,15 @@
       }
       addM(g, matV); addM(gr, matV);
       // the streetcar in the loop: the longest tram line, near its middle
-      const tl = D.rail.filter(r => r[0] === 1).map(r => H2(r.slice(1))).sort((a, b) => b.length - a.length)[0];
-      if (tl && tl.length > 6) { const m = Math.floor(tl.length / 2), [x, z] = tl[m], [x2, z2] = tl[Math.min(tl.length - 1, m + 2)], h = Math.atan2(z2 - z, x2 - x), y = groundH(x, z) + 0.2, gg = scen.get(x, z), ux = Math.cos(h), uz = Math.sin(h);
+      // (the loop by the grounds: the streetcar track's point nearest the circuit, 35 m off it at least)
+      let tl = null, m = 0, bd = 1e9; for (const r of D.rail) { if (r[0] !== 1) continue; const P = H2(r.slice(1)); if (P.length < 6) continue; for (let k = 2; k < P.length - 3; k++) { const q = near(P[k][0], P[k][1], 80); if (q.i >= 0 && q.dd > 35 && q.dd < bd) { bd = q.dd; tl = P; m = k; } } }
+      if (tl) { const [x, z] = tl[m], [x2, z2] = tl[Math.min(tl.length - 1, m + 2)], h = Math.atan2(z2 - z, x2 - x), y = groundH(x, z) + 0.2, gg = scen.get(x, z), ux = Math.cos(h), uz = Math.sin(h);
         const red = [0.82, 0.12, 0.12], wh = [0.94, 0.94, 0.92], gl = [0.2, 0.26, 0.32];
         for (const o of [-10, 0, 10]) { const cx = x + ux * o, cz = z + uz * o; box(gg, cx, y + 0.3, cz, 9.6, 1.4, 2.5, h, red, red); box(gg, cx, y + 1.7, cz, 9.6, 1.25, 2.5, h, gl, gl); box(gg, cx, y + 2.95, cz, 9.6, 0.5, 2.5, h, wh, [0.84, 0.85, 0.86]); }
-        box(gg, x + ux * 15, y + 0.3, z + uz * 15, 0.5, 2.6, 2.4, h, red, red); box(gg, x, y + 3.45, z, 4, 0.5, 1.4, h, [0.5, 0.5, 0.52]); }
+        box(gg, x + ux * 15, y + 0.3, z + uz * 15, 0.5, 2.6, 2.4, h, red, red); box(gg, x, y + 3.45, z, 4, 0.5, 1.4, h, [0.5, 0.5, 0.52]);
+        // the platform beside it (a raised concrete island with a yellow edge strip)
+        const px = x - uz * 3.4, pz = z + ux * 3.4; box(gg, px, y - 0.25, pz, 44, 0.5, 2.6, h, [0.7, 0.7, 0.68], [0.82, 0.81, 0.78]); box(gg, px + uz * 1.15, y + 0.25, pz - ux * 1.15, 44, 0.012, 0.3, h, [0.95, 0.8, 0.1]);
+        tramStop = { x: px, z: pz, h, y: y + 0.25 }; }
     }
 
     /* ---- the city on the horizon: the towers downtown and round about (OpenStreetMap heights) and the very tall TV tower (generic), drawn
@@ -579,6 +599,7 @@
       const A = F[key] || []; for (let k = 0; k < A.length; k += 2) { const x = A[k] / 10, z = A[k + 1] / 10; if (!free(x, z, 0.4)) continue; put(kind, x, z, kind === 'lamp' ? toRoad(x, z) : R() * TAU); } }
     { const A = F.stop || []; for (let k = 0; k < A.length; k += 2) { const x = A[k] / 10, z = A[k + 1] / 10, a = toRoad(x, z), bx = x - Math.cos(a) * 1.6, bz = z - Math.sin(a) * 1.6;   // the bus stops: a shelter set back, the stop's sign at the kerb
       if (free(bx, bz, 1.2)) put('shelter', bx, bz, a); if (free(x, z, 0.2)) put('sign', x + Math.cos(a + 1.57) * 2.4, z + Math.sin(a + 1.57) * 2.4, a); } }
+    if (tramStop) for (const o of [-12, 12]) put('shelter', tramStop.x + Math.cos(tramStop.h) * o, tramStop.z + Math.sin(tramStop.h) * o, tramStop.h - Math.PI / 2);   // (the streetcar stop's shelters)
     // the junctions in the barriers' pockets
     const SIG = F.sig || [], xG = new GB();
     let nJ = 0;
@@ -665,7 +686,7 @@
     });
 
     /* ---- benches (OpenStreetMap) and the like: static, on the sidewalks ---- */
-    { const A = F.bench || []; for (let k = 0; k < A.length; k += 2) { const x = A[k] / 10, z = A[k + 1] / 10; if (!free(x, z, 0.8)) continue; const a = toRoad(x, z) + Math.PI / 2, y = groundH(x, z) + 0.15, g = scen.get(x, z);
+    { const A = F.bench || []; for (let k = 0; k < A.length; k += 2) { const x = A[k] / 10, z = A[k + 1] / 10, qb = near(x, z, 30); if (!free(x, z, 0.8) || (qb.i >= 0 && Math.abs(qb.lat) < barO(qb.i, Math.sign(qb.lat) || 1) + 1.2)) continue; const a = toRoad(x, z) + Math.PI / 2, y = groundH(x, z) + 0.15, g = scen.get(x, z);
       box(g, x, y + 0.42, z, 1.8, 0.06, 0.45, -a, [0.46, 0.32, 0.2]); box(g, x - Math.cos(a + 1.57) * 0.25, y + 0.5, z - Math.sin(a + 1.57) * 0.25, 1.8, 0.4, 0.05, -a, [0.46, 0.32, 0.2]); for (const o of [-0.75, 0.75]) box(g, x + Math.cos(a) * o, y, z + Math.sin(a) * o, 0.08, 0.45, 0.45, -a, [0.15, 0.15, 0.16]); } }
 
     /* ---- finish the meshes ---- */
@@ -681,7 +702,6 @@
     cars.addTo(root, false);
     crowdFinish(CR, root, out);
     out.dyn.ext = (t, car, cam) => { skyUpdate(car ? cam : null); };
-    out._dbg = { onRoad, near, ST, SH };
     out.stats = { buildings: nBld, trees: nT, cars: nCars, streets: nStreet, props: props.length, junctions: nJ, crowd: out.crowdN };   // (read by the tests)
     return out;
   };
