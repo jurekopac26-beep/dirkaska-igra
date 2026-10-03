@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="sl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0e1626">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>APEX RACING · Garaža</title>
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
+<link rel="stylesheet" href="css/garage.css?v=dff1fb40">
+</head>
+<body>
+<!-- The garage: opened from the menu's "Tvoj avto" card (joined with the menu later). The car on the turntable in the workshop above,
+     its upgrades, service and paint below; each change plays its animation on the car. -->
+<div id="g-app">
+  <div id="g-demo" class="g-demo">
+    <span class="g-demo-l">MOCKUP</span>
+    <div class="g-modes" id="g-modes"><button data-mode="free">Brezplačno</button><button data-mode="full">Polna igra</button><button data-mode="vet">Veteran</button></div>
+    <button class="g-ico" data-act="reset" aria-label="Ponastavi"><svg viewBox="0 0 24 24"><path d="M5 12a7 7 0 1 0 2.1-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M4 3.5v5h5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button class="g-ico g-lang" data-act="lang" id="g-lang">EN</button>
+    <button class="g-ico" data-act="demo-off" aria-label="Skrij"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+  </div>
+
+  <header class="g-head">
+    <button class="g-back" data-act="back" aria-label="Nazaj"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <div class="g-title"><h1>GARAŽA</h1><p id="g-sub">TVOJ AVTO</p></div>
+    <div class="g-cr" id="g-cr"><i class="g-coin">CR</i><b id="g-money">0</b></div>
+  </header>
+
+  <div class="g-stage" id="g-stage">
+    <canvas id="g-gl"></canvas>
+    <div class="g-vig"></div>
+    <div class="g-pill" id="g-views"><span>POGLED</span><button data-view="0" class="sel">1</button><button data-view="1">2</button><button data-view="2">3</button><button data-view="spin" aria-label="Okoli avta"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M19 3v4.5h-4.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+    <div class="g-tag"><span id="g-tag">FF</span></div>
+    <button class="g-snd" id="g-snd" data-act="sound" aria-label="Zvok"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path class="g-snd-on" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="g-snd-off" d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <div class="g-nav"><button class="g-arrow" data-act="prev" aria-label="Prejšnji avto"><svg viewBox="0 0 24 24"><path d="M15 6l-8 6 8 6z" fill="currentColor"/></svg></button><span class="g-dots" id="g-dots"></span><button class="g-arrow" data-act="next" aria-label="Naslednji avto"><svg viewBox="0 0 24 24"><path d="M9 6l8 6-8 6z" fill="currentColor"/></svg></button></div>
+    <div class="g-chip" id="g-chip"></div>
+    <div class="g-load" id="g-load"><div class="g-spin"></div><p>Odpiram garažo …</p></div>
+  </div>
+
+  <section class="g-card">
+    <div class="g-curb"></div>
+    <div class="g-in">
+      <div class="g-namerow"><h2 id="g-name">PICO TURBO</h2><span class="g-badge" id="g-drive">FF</span></div>
+      <div class="g-stats" id="g-stats"></div>
+      <div class="g-body" id="g-body"></div>
+    </div>
+  </section>
+
+  <footer class="g-foot">
+    <button class="g-btn g-btn-back" data-act="back" aria-label="Nazaj"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button class="g-btn g-btn-go" id="g-go" data-act="go">Izberi</button>
+  </footer>
+  <div class="g-toast" id="g-toast"></div>
+</div>
+
+<script src="js/vendor/three.r128.min.js?v=04c3c2be"></script>
+<script src="js/lang.js?v=8d7c699a"></script>
+<script src="js/core.js?v=a666ef04"></script>
+<script src="js/tex.js?v=c8d887ce"></script>
+<script src="js/world.js?v=9204c4fb"></script>
+<script src="js/data/p206.js?v=0016824f"></script>
+<script src="js/render.js?v=29b86c17"></script>
+<script src="js/sfx.js?v=4275d2ee"></script>
+<script src="js/garage3d.js?v=98341228"></script>
+<script src="js/garage.js?v=4ad1dc6c"></script>
+</body>
+</html>

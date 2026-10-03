@@ -286,9 +286,25 @@
     ' (ali pobegni)': ' (or flee)', 'Greš s policistom na postajo': 'You go to the station with the officer', 'SKRIVALIŠČE · {0} m': 'HIDEOUT · {0} m',
     'Garaža desno ob cesti: zapelji noter': 'The garage on the right of the road: drive in', 'Garaža levo ob cesti: zapelji noter': 'The garage on the left of the road: drive in',
     'Super težka': 'Super hard', 'Beg pred policijo: najhujši pregon; dirke kot Težka': 'The police chase: the toughest pursuit; races as Hard', 'MOTORIST {0}': 'BIKE {0}', 'CIVILNA {0}': 'UNMARKED {0}', 'KOMBI': 'VAN', 'POLICIST': 'OFFICER',
+    /* ---- the garage (garaza.html, js/garage.js) ---- */
+    'GARAŽA': 'GARAGE', 'V GARAŽI {0}/{1}': 'IN THE GARAGE {0}/{1}', 'POGLED': 'VIEW', 'Odpiram garažo …': 'Opening the garage …', 'Brezplačno': 'Free', 'Polna igra': 'Full game',
+    'Ponastavi': 'Reset', 'Skrij': 'Hide', 'Okoli avta': 'Round the car', 'Masa': 'Mass', 'Stanje': 'Condition', 'Teža': 'Weight', 'Izberi': 'Select', 'Izbran ✓': 'Selected ✓',
+    'V polni igri': 'In the full game', 'POLNA IGRA': 'FULL GAME', 'Kupi · {0} CR': 'Buy · {0} CR', 'Servis': 'Service', 'Popoln servis': 'Full service', 'Stanje {0} %': 'Condition {0} %',
+    'Povleci po sliki, da obrneš kamero. Tapni med animacijo, da jo pospešiš.': 'Drag the picture to turn the camera. Tap during an animation to speed it up.',
+    '{0} je na voljo v polni igri.': '{0} comes with the full game.', '{0} še ni tvoj: kupiš ga z gumbom spodaj.': '{0} is not yours yet: buy it with the button below.',
+    '{0} od {1}': '{0} of {1}', 'V GARAŽI': 'IN GARAGE', 'NOV AVTO V GARAŽI': 'NEW CAR IN THE GARAGE', 'Najprej kupi avto.': 'Buy the car first.',
+    'S = serijsko. Rumena pika: še ni kupljeno. Cena stopnje 1, 2, 3: {0}, {1}, {2} CR.': 'S = stock. Yellow dot: not bought yet. Levels 1, 2, 3 cost {0}, {1}, {2} CR.',
+    'Barvanje {0} CR': 'Paint job {0} CR', 'Dirkalne črte': 'Racing stripes', 'Druga barva na pokrovu in bokih · {0} CR': 'A second colour on the bonnet and the sides · {0} CR', 'Da': 'Yes', 'Ne': 'No',
+    'Premalo kreditov: potrebuješ {0} CR, imaš {1} CR.': 'Not enough credits: you need {0} CR, you have {1} CR.', '{0} je izbran za naslednjo dirko.': '{0} is selected for the next race.',
+    'Nazaj v meni (garaža bo kasneje povezana z menijem).': 'Back to the menu (the garage will be joined with the menu later).', 'Profil je ponastavljen.': 'The profile is reset.', 'MOČ': 'POWER', 'KONČANO': 'DONE',
+    'Rdeča': 'Red', 'Bela': 'White', 'Modra': 'Blue', 'Rumena': 'Yellow', 'Črna': 'Black', 'Zelena': 'Green', 'Oranžna': 'Orange', 'Vijolična': 'Purple',
+    'Kupe': 'Coupé', 'Limuzina': 'Saloon', 'Športni avto': 'Sports car', 'Reli': 'Rally', 'Prototip': 'Prototype', 'Električni': 'Electric', 'Terenec': 'Off-roader',
+    'Pranje': 'Wash', 'Pena, voda, vosek': 'Foam, water, wax', 'Karoserija': 'Bodywork', 'Praske in udrtine': 'Scratches and dents', 'Motor in olje': 'Engine and oil', 'Olje, filtri, svečke': 'Oil, filters, spark plugs',
+    'Športni izpuh': 'Sports exhaust', 'Dvojni izpuh, zračniki': 'Twin exhaust, bonnet vents', 'Štirje izpuhi, zajemalnik': 'Quad exhaust, bonnet scoop', 'Bel napis': 'White lettering', 'Rumen pas': 'Yellow band', 'Rdeč pas': 'Red band',
+    'Rdeče čeljusti': 'Red calipers', 'Rumene čeljusti': 'Yellow calipers', 'Zlate, karbonski diski': 'Gold calipers, carbon discs', 'Spojler, spodnja ustnica': 'Spoiler, front lip', 'Zadnje krilo': 'Rear wing', 'Krilo GT, krilca, pragovi': 'GT wing, dive planes, side skirts',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
-  const SAME = new Set(['APEX', 'RACING', 'APEX RACING', 'TV', 'DRS', 'KM/H', 'Circuit Superstars', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English']);
+  const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'APEX', 'RACING', 'APEX RACING', 'TV', 'DRS', 'KM/H', 'Circuit Superstars', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English']);
 
   const has = Object.prototype.hasOwnProperty;
   let cur = 'sl', REV = null;   // (REV: English -> Slovenian, for the page: a text the game wrote in English goes back)

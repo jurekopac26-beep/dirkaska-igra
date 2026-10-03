@@ -397,6 +397,18 @@ Gumb **Kariera** na naslovnem zaslonu odpre kariero: z dirkami služiš denar, z
 - **Nadgradnje:** vsaka stopnja stane 4.000 €, 7.000 € ali 12.000 € (cena je napisana na gumbu; preskočene stopnje se plačajo zraven). Kupljenih delov ne moreš prodati.
 - **Izklopi kariero** te vrne v prosto igro z vsemi avti in brezplačnimi nadgradnjami (te so ločene od kariere). Kariera ostane shranjena in jo kasneje nadaljuješ. **Nova kariera** (dvakrat tapni) začne znova.
 
+## Garaža (`garaza.html`)
+
+Garaža je zaslon, ki se bo odprl, ko v meniju tapneš kartico **Tvoj avto**. Zaenkrat je samostojna stran (`garaza.html`) v slogu novega menija; z menijem in kariero jo povežemo kasneje.
+
+- **Zgoraj je 3D delavnica:** avto stoji na vrtljivi plošči z modro osvetljenim robom, nad njim je satovje LED luči, tla iz epoksi smole odsevajo avto in luči. Ob stenah so omare z orodjem, stojalo z gumami, napis APEX RACING in vrata v obeh stranskih stenah. Po sliki povlečeš, da kamero zavrtiš okoli avta (dva prsta ali kolešček: bližje, dlje); gumbi **POGLED 1, 2, 3** pokažejo avto spredaj, s strani in od zadaj, četrti ga počasi obkroža.
+- **Menjava avta:** s puščicama na sliki ali v plošči **Avto** (slike vseh avtov). Avto na plošči prižge luči in motor (zvok je iz igre), zapelje skozi desna vrata, nov avto pa pripelje skozi leva in zavre na plošči. Avto, ki ga še nimaš, si lahko ogledaš; rdeči gumb spodaj ga **kupi**.
+- **Nadgradnje** (motor, gume, zavore, aerodinamika; stopnje kot v igri) se na avtu vidijo in vsaka ima svojo animacijo: plošča obrne avto, kamera pokaže mesto, stari deli odletijo, novi priletijo na svoje mesto. Motor: večji, dvojni ali štirje izpuhi, zračniki in zajemalnik na pokrovu; nato motor zaturira, iz izpuha bruhnejo plameni, napis pokaže novo moč. Električni avto namesto izpuhov dobi modro luč pod pragovi. Gume: avto se dvigne na zračnih dvigalkah, kolesa se zavrtijo, na boku gume se izriše bel napis, rumen ali rdeč pas. Zavore: rdeče, rumene ali zlate čeljusti in diski, ki med preizkusom zažarijo. Aerodinamika: spojler in spodnja ustnica, zadnje krilo, paket GT s krilci in pragovi; nato zračni tunel s tokovnicami čez avto. Kupljena stopnja ostane tvoja: nižjo in spet višjo lahko izbiraš brezplačno.
+- **Servis:** umazanija, praske in obraba motorja se na avtu vidijo (prah od pragov navzgor, praske v laku, dim iz izpuha, ko motor teče). Pranje (lok s šobami pelje čez avto), karoserija (skener in poliranje) in motor (plošča se dvigne na škarjastem dvigalu, iskre in olje pod avtom); popoln servis je 15 % cenejši.
+- **Barva:** osem barv igre in dirkalne črte. Lok z barvo pelje od sprednjega dela nazaj in za njim je avto nove barve (sveže pobarvan je tudi čist in brez prask).
+- **MOCKUP:** vrstica na vrhu izbere preizkusni profil (brezplačna igra, polna igra, veteran), ↺ ga ponastavi, EN/SL zamenja jezik. Profil garaže se shrani v brskalnik (`apex-garage`), ločeno od igre. Krediti (CR) in cene so cene kariere.
+- Med animacijo tapni sliko, da se pospeši; več zaporednih ukazov se odigra po vrsti (hitreje), hitro preklapljanje avtov pa pripelje samo zadnjega izbranega.
+
 ## Šola vožnje
 
 Gumb **Šola vožnje** na naslovnem zaslonu odpre štiri vaje z medaljami (zlato, srebro, bron). Vse vaje se vozijo z avtom KAZE RS (serijski, na suhem), igra pa za vsako fiziko hrani najboljši rezultat in medaljo.
@@ -674,10 +686,11 @@ Igra ne potrebuje namestitve ali prevajanja: `index.html` naloži datoteke po vr
 | `js/sfx.js`, `js/input.js`, `js/comm.js` | zvok, upravljanje, komentator |
 | `js/net.js`, `js/vendor/peerjs.min.js` | povezava dveh telefonov za dirko s prijateljem (soba s kodo, usklajena ura); knjižnica PeerJS (MIT) |
 | `js/game.js` | meniji, nastavitve, HUD, rekordi, prvenstvo, dirka s prijateljem, glavna zanka |
+| `garaza.html`, `css/garage.css`, `js/garage.js`, `js/garage3d.js` | garaža (glej zgoraj): stran in njena kartica (stanje profila, krediti, plošče), 3D delavnica z avtom, deli nadgradenj in animacije; avte izriše `js/render.js` (`Render.garageCar`) |
 | `manifest.webmanifest`, `icons/` | opis aplikacije (ime, ikone, celoten zaslon) za namestitev na telefon; ikone nariše `node tools/icons.mjs` |
 | `sw.js` | service worker: igra brez interneta in vedno najnovejša različica, ko je internet na voljo (opis v datoteki) |
 | `tests/` | samodejni testi (glej `tests/README.md`) |
-| `tools/stamp.js` | po vsaki spremembi datoteke v `js/` ali `css/` zaženi `node tools/stamp.js`: povezave v `index.html` dobijo oznako vsebine (`?v=…`), da brskalnik po posodobitvi ne pomeša starih in novih datotek |
+| `tools/stamp.js` | po vsaki spremembi datoteke v `js/` ali `css/` zaženi `node tools/stamp.js`: povezave v `index.html` in `garaza.html` dobijo oznako vsebine (`?v=…`), da brskalnik po posodobitvi ne pomeša starih in novih datotek |
 
 Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) ne deluje. Z diska (brez spletnega strežnika) igra deluje, le brez igranja brez interneta in namestitve.
 

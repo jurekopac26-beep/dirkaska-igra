@@ -1,6 +1,6 @@
 // The English page (js/lang.js, no browser): every Slovenian text the game shows has its English, with the same {0} {1} ... slots.
 // Checked: the first argument of every tr(...) in the scripts (each string in it: tr(a ? 'x' : 'y')), the tables the game reads through
-// tr() (DRIVE_TXT, NET_ERR, ...), the texts and labels of index.html, the upgrades and the car credit (Core), the English of every track,
+// tr() (DRIVE_TXT, NET_ERR, ...), the texts and labels of index.html, the garage (js/garage.js, its tables, garaza.html), the upgrades and the car credit (Core), the English of every track,
 // championship and famous jump (def.en), the place names on the HUD, and the helpers for numbers, money and places.
 //   node tests/lang.test.js
 'use strict';
@@ -40,7 +40,7 @@ const noComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').map(l =
 
 // 1. every tr(...) in the game's scripts: each string of its first argument is in the dictionary
 const missing = [], keysUsed = new Set();
-for (const f of ['js/game.js']) {
+for (const f of ['js/game.js', 'js/garage.js']) {
   const src = noComments(read(f));
   for (const m of src.matchAll(/\btr\(/g)) for (const s of literals(firstArg(src, m.index + 3))) { if (s === '') continue; keysUsed.add(s); if (!has(s)) missing.push(s); }
 }
@@ -76,6 +76,24 @@ check(`tr(): all ${keysUsed.size} texts of the game have their English`, !missin
   check('index.html: every text and label has its English', !miss.length, miss.slice(0, 12).join(' | '));
   check('index.html: the settings have the language switch (Slovenščina / English) and js/lang.js loads before the game', /data-set="lang"[^>]*><button data-v="sl">Slovenščina<\/button><button data-v="en">English<\/button>/.test(html) &&
     html.indexOf('js/lang.js') > 0 && html.indexOf('js/lang.js') < html.indexOf('js/game.js'));
+}
+
+// 3b. the garage (garaza.html, js/garage.js): the page's texts and labels, the tables the garage reads through tr()
+{
+  const html = read('garaza.html'), body = html.slice(html.indexOf('<body')).replace(/<script[\s\S]*?<\/script>/g, '').replace(/<svg[\s\S]*?<\/svg>/g, '').replace(/<!--[\s\S]*?-->/g, '');
+  const dec = (t) => t.replace(/&#(\d+);/g, (m, c) => String.fromCodePoint(+c)).replace(/&middot;/g, '·').replace(/&amp;/g, '&');
+  const PLACEHOLDER = new Set(['PICO TURBO', 'FF', '0', 'TVOJ AVTO', 'Izberi', 'EN']);   // (written over by the garage at once)
+  const miss = [];
+  for (const m of body.matchAll(/>([^<>]+)</g)) { const t = dec(m[1]).replace(/\s+/g, ' ').trim(); if (t && /[A-Za-zČŠŽčšž]/.test(t) && !has(t) && !Lang.SAME.has(t) && !PLACEHOLDER.has(t)) miss.push(t); }
+  for (const m of body.matchAll(/\b(aria-label|placeholder|title)="([^"]+)"/g)) { const t = dec(m[2]); if (!has(t) && !Lang.SAME.has(t)) miss.push('@' + m[1] + ' ' + t); }
+  const src = noComments(read('js/garage.js'));
+  const tableSrc = (name) => { const m = new RegExp('\\b' + name + ' = (?=[\\[{])').exec(src); if (!m) return null; let i = m.index + m[0].length, d = 0, j = i;
+    for (; j < src.length; j++) { const ch = src[j]; if (ch === "'" || ch === '"') { j = strAt(src, j)[1] - 1; continue; } if ('([{'.includes(ch)) d++; else if (')]}'.includes(ch) && --d === 0) break; } return src.slice(i, j + 1); };
+  for (const k of ['COLORS', 'BODY', 'SRV', 'UPG_FX', 'METER', 'DONE_NAME', 'CARDESC']) {
+    const t = tableSrc(k); if (!t) { miss.push('(no table ' + k + ')'); continue; }
+    for (const s of literals(t)) if (/[a-zčšž]{2}/.test(s) && !/^(power|grip|weight|drift|clean|body|engine|motor|gume|zavore|aero|paint)$/.test(s) && !has(s) && !Lang.SAME.has(s)) miss.push(k + ': ' + s);
+  }
+  check('the garage: every text and label of garaza.html and of its tables has its English', !miss.length, miss.slice(0, 14).join(' | '));
 }
 
 // 4. the same slots in both languages; English with no Slovenian letters; no text twice in the dictionary (the second would win unseen)
