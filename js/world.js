@@ -10991,7 +10991,6 @@ const World = (function () {
     return [[e0, -0.02], sf(Math.max(e0 + 0.6, bar - 0.7)), sf(bar + 0.45), sf(bar + 1.15), sf(bar + 1.9)];
   }
   function stubRails(nd, side) { const G = T.gap && T.gap[side > 0 ? 1 : 0]; if (G) for (let i = 0; i < nd.length; i++) if (G[i]) nd[i] = 0; return nd; }   // (the barrier open across the mouths)
-  function stubOpen(i, side) { return !!(T.gap && T.gap[side > 0 ? 1 : 0][i]); }
   function stubExcl(push) { for (const S of T.stubs || []) for (let t = 0, e = S.end === 2 ? S.L : S.Lend + 3; t <= e; t += 3) { const p = T.stubPt(S.k, t, {}); push(p.x, p.z, T.stubHw(S, t) + S.lim + 1.2); } }   // (nothing grows or stands on the side roads)
   // the side roads' boards (one canvas, 8 rows of 128 px): row 0 the closure board (K.closed, red rim), the round no-entry sign and red and white stripes;
   // row 1 the gate's plate (K.gate) and the first street name; then two street names a row (K.plate: its colours, as the street signs there)
