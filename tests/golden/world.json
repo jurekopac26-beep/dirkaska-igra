@@ -524,6 +524,26 @@
    "ao:MeshBasicMaterial": "bf4eccf9"
   }
  },
+ "baldy": {
+  "meshes": 3054,
+  "verts": 1360832,
+  "instances": 101623,
+  "props": 644,
+  "crowd": 1036,
+  "world": "3c52ef76",
+  "propsHash": "50f0d0e8",
+  "floor": "c4538765/15232",
+  "groups": {
+   "-:MeshLambertMaterial": "7643115d",
+   "bdFar:MeshLambertMaterial": "81e0e9ca",
+   "-:MeshPhongMaterial": "99a5fd46",
+   "-:MeshBasicMaterial": "c0a09753",
+   "crowd:MeshLambertMaterial": "6482cd27",
+   "ao:MeshBasicMaterial": "99ea5eab",
+   "tyremarks:MeshBasicMaterial": "741df78",
+   "roadwear:MeshLambertMaterial": "7889a348"
+  }
+ },
  "cpalace": {
   "meshes": 300,
   "verts": 382518,
