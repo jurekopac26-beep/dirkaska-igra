@@ -145,9 +145,9 @@ const Core = (function () {
       }
       // more run-off where a track asks for it (def.wide = [[from, to, side (-1 left, 1 right), metres], ...], metres after the start line;
       // closed circuits, and the pull-outs of an open road: Big Sur): the barrier on that side moves out, eased in and out over 30 m
-      if (def.wide) for (const [a, b, sd, m] of def.wide) for (let d = a - 30; d <= b + 30; d += ds) {
-        const i = this.idx(this.startS + d), f = Math.min(sstep(a - 30, a, d), sstep(b + 30, b, d)); if (sd < 0) this.bl[i] += m * f; else this.br[i] += m * f;
-      }
+      if (def.wide) for (const [a, b, sd, m, e0] of def.wide) { const e = e0 || 30; for (let d = a - e; d <= b + e; d += ds) {   // (e: the ease, default 30 m; a junction's mouth on a street circuit: a few metres)
+        const i = this.idx(this.startS + d), f = Math.min(sstep(a - e, a, d), sstep(b + e, b, d)); if (sd < 0) this.bl[i] += m * f; else this.br[i] += m * f;
+      } }
       // gravel strips (def.gravelStrips = [[from, to, side, width], ...], metres after the start line, side -1 left / 1 right; closed
       // circuits): a band of gravel from the kerb's outer edge outwards, as the strips the Red Bull Ring laid at the exits of Turns 9 and
       // 10 in 2024 against running wide (see surface: gravel there even where the run-off beyond it is asphalt)
@@ -1567,6 +1567,15 @@ const Core = (function () {
       rbale:  { m: 26, rh: 0.62, rb: 0.75, h0: 0.43,  e: 0.15, mu: 0.8,  lift: 0.3,  I: 4.6,  pts: (() => { const p = []; for (const x of [-0.62, 0.62]) for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; p.push([x, Math.cos(a) * 0.43, Math.sin(a) * 0.43]); } return p; })() },   // round straw bale lying on its side (Toskana)
       rbstack: { m: 78, rh: 0.9, rb: 1.1,  h0: 0.85,  breaks: 'rbale', parts: [[-0.66, -0.425, 0], [0.66, -0.425, 0], [0, 0.425, 0]], pf: [[1.1, 0.6], [1.0, 0.9], [0.8, 2.4]] },
       post:   { m: 4,  rh: 0.14, rb: 0.62, h0: 0.55,  e: 0.3,  mu: 0.6,  lift: 1.0,  I: 0.4,  pts: boxPts(0.07, 0.55, 0.07) },   // roadside post (stebriček): light, snaps over and cartwheels away
+      // street furniture of the street circuits' junctions (generic): a traffic light on its pole, a traffic sign, a bollard, a litter bin, a fire
+      // hydrant, an electrical cabinet, a street lamp. Each breaks off its foot and topples away, the car only a little slower
+      tlight: { once: true, m: 30, rh: 0.16, rb: 2.2,  h0: 2.0,   e: 0.2,  mu: 0.6,  lift: 0.5,  I: 30,   pts: boxPts(0.25, 2.0, 0.25) },
+      sign:   { once: true, m: 9,  rh: 0.1,  rb: 1.3,  h0: 1.2,   e: 0.25, mu: 0.6,  lift: 0.8,  I: 4,    pts: boxPts(0.32, 1.2, 0.08) },
+      bollard: { once: true, m: 6, rh: 0.12, rb: 0.5,  h0: 0.45,  e: 0.3,  mu: 0.6,  lift: 0.9,  I: 0.4,  pts: cylPts(0.12, -0.45, 0.45, 6) },
+      bin:    { once: true, m: 8,  rh: 0.3,  rb: 0.6,  h0: 0.48,  e: 0.25, mu: 0.6,  lift: 0.6,  I: 0.8,  pts: cylPts(0.3, -0.48, 0.48, 8) },
+      hydrant: { once: true, m: 14, rh: 0.17, rb: 0.5, h0: 0.4,   e: 0.2,  mu: 0.6,  lift: 0.5,  I: 0.6,  pts: cylPts(0.17, -0.4, 0.4, 6) },
+      cabinet: { once: true, m: 35, rh: 0.45, rb: 0.85, h0: 0.65, e: 0.15, mu: 0.7,  lift: 0.3,  I: 6,    pts: boxPts(0.45, 0.65, 0.25) },
+      lamp:   { once: true, m: 40, rh: 0.14, rb: 4.2,  h0: 4.0,   e: 0.2,  mu: 0.6,  lift: 0.4,  I: 120,  pts: boxPts(0.6, 4.0, 0.15) },
     };
   })();
   const _pq = {};
@@ -1603,7 +1612,8 @@ const Core = (function () {
       const px = b.x - nx * K.rh, pz = b.z - nz * K.rh, rcx = px - c.x, rcz = pz - c.z;
       const vcx = c.vx - c.w * rcz, vcz = c.vz + c.w * rcx, vrel = (vcx - b.vx) * nx + (vcz - b.vz) * nz;   // closing speed at the contact
       b.x += nx * (r - e); b.z += nz * (r - e); b.dirty = true;                                          // the prop gives way
-      if (vrel < 0.5) return;
+      if (vrel < 0.5 || (K.once && b.hitC === c && b.age < 0.6)) return;   // (K.once: the street furniture is knocked once by a car, then only pushed aside)
+      if (K.once) b.hitC = c;
       if (K.breaks) { race.breakProp(b, nx, nz, vrel, c.vx, c.vz); propFeel(c, K.m, vrel, b.kind); return; }
       const rx = -nx * K.rh, rz = -nz * K.rh, ry = clamp(cy + 0.42 - b.y, -K.rb * 0.8, K.rb * 0.8);          // hit at bumper height: it topples away
       const ax2 = ry * nz, ay2 = rz * nx - rx * nz, az2 = -ry * nx;
