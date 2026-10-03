@@ -1564,9 +1564,10 @@
   function pkFlyStep() {   // updatePhase, in the intro: the shot and its caption at this moment
     const o = Render.pkFly.at(phaseT), el = $('pk-fly');
     if (!o || phaseT >= Render.pkFly.DUR) { pkFlyEnd(); return; }
-    if (o.k !== pkF.k && o.k >= 0) { const C = Render.pkFly.caps, c = C[o.k], al = track.def.alt, a = al && !o.k ? al[0] : al && o.k === C.length - 1 ? al[1] : track.altAt(track.hy[track.idx(c.s)]);   // (the start's and the finish's: as the HUD shows them)
+    const k = o.k >= 0 ? o.k : pkF.k === -2 ? 0 : -1;   // (from its first step the start's words, faded out until their time: never the words of the last flyover, another track's)
+    if (k !== pkF.k && k >= 0) { const C = Render.pkFly.caps, c = C[k], al = track.def.alt, a = al && !k ? al[0] : al && k === C.length - 1 ? al[1] : track.altAt(track.hy[track.idx(c.s)]);   // (the start's and the finish's: as the HUD shows them)
       el.children[1].textContent = tr(c.n); el.children[2].textContent = a != null ? numDot(al ? clamp(a, Math.min(al[0], al[1]), Math.max(al[0], al[1])) : a) + ' m' : ''; }   // (a descent: its alt falls)
-    pkF.k = o.k; el.className = 'show';
+    pkF.k = k; el.className = 'show';
     el.style.opacity = Math.min(1, phaseT / 0.3, (Render.pkFly.DUR - phaseT) / 0.3).toFixed(2);
     const a = o.k >= 0 ? o.a.toFixed(2) : '0'; el.children[1].style.opacity = a; el.children[2].style.opacity = a;
   }
