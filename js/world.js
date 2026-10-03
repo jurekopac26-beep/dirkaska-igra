@@ -11015,7 +11015,7 @@ const World = (function () {
   // before a building it leads into); a street's name on a pole at its mouth (K.loc.plate: the streets with a name). K: scen, out, root, gH,
   // loc { closed, gate, plate }, posts, village, postCol(S). Returns the counts
   function stubProps(K) {
-    const { scen, out, root, gH } = K, L = K.loc || { closed: 'ROAD CLOSED', gate: 'CLOSED' }, F = {}, Q = {}, w = T.w, ban = new GB(true), W1 = [1, 1, 1];
+    const { scen, out, root, gH } = K, L = K.loc || { closed: 'ROAD CLOSED', gate: 'CLOSED' }, F = {}, Q = {}, w = T.w, ban = new GB(true), W1 = [1, 1, 1];   // (ban: the boards, one mesh: one draw call)
     const yAt = (x, z, S, t) => T.yAt(T.query(x, z, T.stubHint(S.k, t), Q));
     const bannerQ = (cx, cy, cz, tx, tz, W, H, v0, v1, u0, u1) => { const ux = tz, uz = -tx;   // double-sided board (bottom centre cx, cy, cz) readable from +t and -t; atlas cell u0..u1 x v0..v1
       for (const f of [-1, 1]) { const ox = tx * 0.04 * f, oz = tz * 0.04 * f, hw = W / 2 * f, A = [cx + ox - ux * hw, cy, cz + oz - uz * hw], B = [cx + ox + ux * hw, cy, cz + oz + uz * hw], C = [B[0], B[1] + H, B[2]], D = [A[0], A[1] + H, A[2]];
