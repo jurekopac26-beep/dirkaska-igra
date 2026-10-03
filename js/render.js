@@ -1680,6 +1680,7 @@ const Render = (function () {
     moki: [[0.95, 0.99, 1.07], [1.05, 1.0, 0.94]], cpalace: [[0.97, 1.0, 1.04], [1.03, 1.0, 0.95]],
     riverside: [[0.96, 0.99, 1.05], [1.06, 1.01, 0.92]] };
   THEMES.uncompahgre = { fog: 0xbfcfe0, sun: 0xfff0d8, sunI: 1.24, sky: 0xb8d0f0, gnd: 0x4c5236, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-70, 92, 62] };   // the Uncompahgre Gorge: a clear afternoon in the San Juans, the sun from the south-west over the cliffs, a crisp blue haze
+  THEMES.lemmon = { fog: 0xcdd8e4, sun: 0xfff1d6, sunI: 1.34, sky: 0xa9c8f0, gnd: 0x6a5e44, hemiI: 0.6, tint: [1.02, 1.0, 0.96], sat: 1.06, sunOff: [-78, 96, 54] }; SPLIT.lemmon = [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]];   // Mount Lemmon: a clear, dry day on the sky island above Tucson, a high sun from the south-west, the thin air's deep blue
   SPLIT.uncompahgre = [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]];
   SPLIT.iroha = [[0.96, 0.99, 1.05], [1.04, 1.0, 0.95]];   // (Irohazaka: cool shade under the maples, a warm autumn sun)
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
