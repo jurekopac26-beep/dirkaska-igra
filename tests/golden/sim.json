@@ -2939,6 +2939,104 @@
    "repairs": 0
   }
  },
+ "lemmon/race/cs": {
+  "digest": "e0050b1ce433ec3559514de2",
+  "lead": 2130.5,
+  "car0": [
+   -1629.59,
+   756.94
+  ],
+  "cover": {
+   "dmg": 0.83,
+   "loose": 8,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "lemmon/demo/cs": {
+  "digest": "d4b1cb97ffe2098d973f988c",
+  "lead": 2327.4,
+  "car0": [
+   -1926.35,
+   870.18
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "lemmon/upg/cs": {
+  "digest": "481592f70cdeddae15c87aa2",
+  "lead": 2322.6,
+  "car0": [
+   -1852.95,
+   881.17
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "lemmon/crash/cs": {
+  "digest": "7db3f49ae4bf31c50a7596f9",
+  "lead": 2124.9,
+  "car0": [
+   -1616.43,
+   736.67
+  ],
+  "cover": {
+   "dmg": 0.78,
+   "loose": 7,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "lemmon/formula/cs": {
+  "digest": "0b8946ae60d252ea75e431d9",
+  "lead": 2460.6,
+  "car0": [
+   -1954.82,
+   867.65
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 8,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "lemmon/lm/cs": {
+  "digest": "3f1fd5d29127cb3793f3edda",
+  "lead": 2440.1,
+  "car0": [
+   -1948.84,
+   870.14
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 8,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "lemmon/car/cs": {
+  "digest": "3ce3e30586c1eadad6f347e9",
+  "lead": 2124.5,
+  "car0": [
+   -1585.56,
+   696.24
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 10,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
  "cpalace/race/cs": {
   "digest": "6c6bd7fc7cb40e3f52fda09c",
   "lead": 2222.4,
@@ -3024,15 +3122,15 @@
   }
  },
  "cpalace/car/cs": {
-  "digest": "7ba8398436d8e9eb051b3ae7",
-  "lead": 5098.7,
+  "digest": "2174fd47c461c0ad976750c3",
+  "lead": 5099.5,
   "car0": [
-   -391.87,
-   255.23
+   -477.91,
+   46.08
   ],
   "cover": {
    "dmg": 1,
-   "loose": 11,
+   "loose": 13,
    "rescues": 0,
    "repairs": 1
   }
@@ -3122,15 +3220,15 @@
   }
  },
  "riverside/car/cs": {
-  "digest": "d77673291551adda2305a71c",
-  "lead": 2620.9,
+  "digest": "b41294cfb91b202cadd07db4",
+  "lead": 2603.1,
   "car0": [
-   478.6,
-   -898.1
+   408.32,
+   -757.13
   ],
   "cover": {
-   "dmg": 1,
-   "loose": 22,
+   "dmg": 0.63,
+   "loose": 5,
    "rescues": 0,
    "repairs": 0
   }
