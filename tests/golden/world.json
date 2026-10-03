@@ -450,6 +450,25 @@
    "roadwear:MeshLambertMaterial": "66a17331"
   }
  },
+ "mulholland": {
+  "meshes": 2005,
+  "verts": 919804,
+  "instances": 76764,
+  "props": 101,
+  "crowd": 1098,
+  "world": "daa1e603",
+  "propsHash": "8f67c586",
+  "floor": "bbda564b/9744",
+  "groups": {
+   "-:MeshLambertMaterial": "511525d0",
+   "-:MeshPhongMaterial": "24212f4f",
+   "-:MeshBasicMaterial": "9f55c186",
+   "crowd:MeshLambertMaterial": "7f82f55",
+   "ao:MeshBasicMaterial": "c0c23b52",
+   "tyremarks:MeshBasicMaterial": "9cf7368e",
+   "roadwear:MeshLambertMaterial": "9388c9f4"
+  }
+ },
  "jezero": {
   "meshes": 154,
   "verts": 591648,
