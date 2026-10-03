@@ -10739,12 +10739,14 @@ const World = (function () {
       const gr = sstep(0.38, 0.72, P.n2(x, z)) * lerp(0.85, 0.3, up); r = lerp(r, 0.4, gr); g = lerp(g, 0.5, gr); b = lerp(b, 0.22, gr);   // patches still green (most in the valley, few up high)
       const bil = up * sstep(0.52, 0.76, P.n7(x, z)) * 0.75; r = lerp(r, 0.6, bil); g = lerp(g, 0.25, bil); b = lerp(b, 0.14, bil);   // bilberry leaves turned red
       lr = lerp(lerp(0.5, 0.34, up), 0.25, ms); lg = lerp(lerp(0.32, 0.29, up), 0.32, ms); lb = lerp(0.17, 0.14, ms);   // beech leaves low, needles higher, moss in patches
+      if (THEME === 'iroha') { lr = lerp(0.56 + (q - 0.5) * 0.12, 0.3, ms); lg = lerp(0.25, 0.3, ms); lb = lerp(0.12, 0.14, ms); }   // (Irohazaka: the maples' red leaves on the forest floor)
     }
     r = lerp(r, lr + m * 0.07, fo); g = lerp(g, lg + m * 0.05, fo); b = lerp(b, lb + m * 0.03, fo);
     r = lerp(r, 0.22 + m * 0.05, sc * 0.8); g = lerp(g, 0.28 + m * 0.05, sc * 0.8); b = lerp(b, 0.15, sc * 0.8);   // under the dwarf pines
     r = lerp(r, su ? 0.34 : 0.44, se * 0.6); g = lerp(g, su ? 0.5 : 0.52, se * 0.6); b = lerp(b, su ? 0.2 : 0.26, se * 0.6);   // lawns and gardens
     const st = Math.max(rk * 0.9, sstep(0.8, 0.58, ny) * 0.95);   // scree and rock, and every steep face: limestone
-    r = lerp(r, 0.78 + m * 0.07, st); g = lerp(g, 0.77 + m * 0.06, st); b = lerp(b, 0.74 + m * 0.06, st);
+    if (THEME === 'iroha') { r = lerp(r, 0.4 + m * 0.08, st); g = lerp(g, 0.41 + m * 0.07, st); b = lerp(b, 0.33 + m * 0.05, st); }   // (Irohazaka: dark andesite under moss and ferns)
+    else { r = lerp(r, 0.78 + m * 0.07, st); g = lerp(g, 0.77 + m * 0.06, st); b = lerp(b, 0.74 + m * 0.06, st); }
     const sn = vrSnow(x, z, A, ny); r = lerp(r, 1.04, sn); g = lerp(g, 1.06, sn); b = lerp(b, 1.12, sn);
     if (dd < 4) { const t = sstep(4, 0.5, dd) * 0.4 * (1 - sn); r = lerp(r, su ? 0.48 : 0.54, t); g = lerp(g, su ? 0.5 : 0.49, t); b = lerp(b, su ? 0.32 : 0.36, t); }   // trodden verge
     VRCOL[0] = r; VRCOL[1] = g; VRCOL[2] = b; return VRCOL;
@@ -15406,14 +15408,17 @@ const World = (function () {
     txt('IROHAZAKA HILL CLIMB', 512, 962, 76, '#c4161c', 960);
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (irATex = t);
   }
-  function irAtlas2(cv) {   // the curves' signs (128 x 128 each, 8 a row): a white board in a blue rim, the letter (hiragana strokes) and its number of the 20
-    const key = cv.map(c => c[3]).join(''); if (irA2Tex && irA2Key === key) return irA2Tex;
+  function irAtlas2(cv) {   // the curves' signs (128 x 128 each, 8 a row): a white board in a blue rim, the letter (hiragana strokes) and its number of the 20; row 3 the chevrons
+    const key = cv.map(c => c[3] + c[4]).join('') + '>'; if (irA2Tex && irA2Key === key) return irA2Tex;
     if (irA2Tex) irA2Tex.dispose(); irA2Key = key;
     const c = document.createElement('canvas'); c.width = 1024; c.height = 512; const x = c.getContext('2d');
     cv.forEach((q, k) => { const x0 = (k % 8) * 128, y0 = Math.floor(k / 8) * 128;
       x.fillStyle = '#1d4f9a'; x.fillRect(x0, y0, 128, 128); x.fillStyle = '#f6f5f0'; x.fillRect(x0 + 8, y0 + 8, 112, 112);
       irKana(x, q[3], x0 + 22, y0 + 10, 84, '#16181c', 11);
-      x.fillStyle = '#1d4f9a'; x.font = '700 21px Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText((k + 1) + ' / 20', x0 + 64, y0 + 106, 100); });
+      x.fillStyle = '#1d4f9a'; x.font = '700 21px Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(q[4] + ' / 20', x0 + 64, y0 + 106, 100); });
+    for (const [col, dir] of [[0, 1], [1, -1]]) { const x0 = col * 128, y0 = 384, cx = x0 + 64;   // the chevron boards round the hairpins (row 3: pointing right, left): black arrows on yellow
+      x.fillStyle = '#16181c'; x.fillRect(x0, y0, 128, 128); x.fillStyle = '#f2c21a'; x.fillRect(x0 + 6, y0 + 6, 116, 116); x.fillStyle = '#16181c';
+      for (const o of [-26, 10]) { x.beginPath(); x.moveTo(cx + dir * (o - 6), y0 + 22); x.lineTo(cx + dir * (o + 24), y0 + 64); x.lineTo(cx + dir * (o - 6), y0 + 106); x.lineTo(cx + dir * (o - 26), y0 + 106); x.lineTo(cx + dir * (o + 4), y0 + 64); x.lineTo(cx + dir * (o - 26), y0 + 22); x.closePath(); x.fill(); } }
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (irA2Tex = t);
   }
   function irTreeGeo(kind) {   // unit trees (height 1; the instances scale and tint them): 0 Japanese maple (a broad, layered crown: scarlet in autumn,
@@ -15423,7 +15428,7 @@ const World = (function () {
     if (kind === 0) {
       cyl(g, 0, -0.02, 0, 0.026, 0.3, 4, [0.3, 0.24, 0.2], null, 0.02); cyl(g, 0.05, 0.22, 0.02, 0.016, 0.24, 3, [0.3, 0.24, 0.2], null, 0.01);
       const col = su ? [0.24, 0.42, 0.13] : [0.84, 0.15, 0.07];
-      [[0, 0.62, 0, 0.36, 0.42], [0.2, 0.5, 0.12, 0.24, 0.5], [-0.2, 0.5, -0.1, 0.25, 0.5], [0.06, 0.46, -0.24, 0.22, 0.5], [-0.08, 0.48, 0.22, 0.22, 0.5], [0.02, 0.78, 0.04, 0.22, 0.55]].forEach(([x, y, z, r, sy]) => ico(g, x, y, z, r, sy, vary(col, R, 0.18), R, 0.35));
+      [[0, 0.52, 0, 0.42, 0.3], [0.22, 0.46, 0.14, 0.26, 0.38], [-0.22, 0.47, -0.12, 0.27, 0.38], [0.1, 0.44, -0.26, 0.24, 0.38], [-0.12, 0.45, 0.25, 0.24, 0.38], [0.02, 0.67, 0.02, 0.32, 0.34], [0.04, 0.83, -0.02, 0.19, 0.45]].forEach(([x, y, z, r, sy]) => ico(g, x, y, z, r, sy, vary(col, R, 0.18), R, 0.35));
     } else {
       cyl(g, 0, -0.02, 0, 0.032, 0.42, 4, [0.32, 0.29, 0.26], null, 0.022);
       const col = su ? [0.2, 0.34, 0.12] : [0.6, 0.38, 0.13];
@@ -15461,9 +15466,11 @@ const World = (function () {
     for (let j = 0; j + 1 < nz; j++) for (let i = 0; i + 1 < nx; i++) { const a = j * nx + i, b2 = a + 1, c = a + nx, d = c + 1;
       if (Math.min(dr[a], dr[b2], dr[c], dr[d]) < 470) continue; I.push(a, c, b2, b2, c, d); }
     // the Kegon falls: a white ribbon down the cliff below the lake's outlet (97 m), a little out from the model's face, towards the road
-    const K = T.def.far.kegon; if (K) { const cx = (VR.bx0 + VR.bx1) / 2, cz = (VR.bz0 + VR.bz1) / 2, dx = cx - K[0], dz = cz - K[1], l = Math.hypot(dx, dz), ux = dx / l, uz = dz / l, px = -uz, pz = ux, o = 24, hw = 9, y0 = K[2] - base;
-      const v0 = P0.length / 3; for (const [u, y] of [[-hw, y0], [hw, y0], [hw * 1.4, y0 - 97], [-hw * 1.4, y0 - 97]]) { P0.push(K[0] + ux * o + px * u, y, K[1] + uz * o + pz * u); C.push(0.93, 0.95, 0.98); }
-      I.push(v0, v0 + 1, v0 + 2, v0, v0 + 2, v0 + 3, v0, v0 + 2, v0 + 1, v0, v0 + 3, v0 + 2); }
+    const K = T.def.far.kegon; if (K) { const cx = (VR.bx0 + VR.bx1) / 2, cz = (VR.bz0 + VR.bz1) / 2, dx = cx - K[0], dz = cz - K[1], l = Math.hypot(dx, dz), ux = dx / l, uz = dz / l, px = -uz, pz = ux, o = 24, hw = 13, y0 = K[2] - base;
+      const quad = (pts, oo, col) => { const v0 = P0.length / 3; for (const [u, y] of pts) { P0.push(K[0] + ux * oo + px * u, y, K[1] + uz * oo + pz * u); C.push(col[0], col[1], col[2]); } I.push(v0, v0 + 1, v0 + 2, v0, v0 + 2, v0 + 3, v0, v0 + 2, v0 + 1, v0, v0 + 3, v0 + 2); };
+      quad([[-48, y0 + 6], [48, y0 + 6], [56, y0 - 112], [-56, y0 - 112]], o - 8, [0.22, 0.21, 0.2]);   // (the dark lava cliff)
+      quad([[-hw, y0], [hw, y0], [hw * 1.5, y0 - 97], [-hw * 1.5, y0 - 97]], o, [0.95, 0.97, 1.0]);
+      quad([[-hw * 3, y0 - 70], [hw * 3, y0 - 70], [hw * 3.6, y0 - 104], [-hw * 3.6, y0 - 104]], o + 4, [0.86, 0.89, 0.92]); }   // (its spray)
     const g = new THREE.BufferGeometry(), nv = P0.length / 3;
     g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(P0), 3)); g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(C), 3));
     g.setAttribute('aHz', new THREE.BufferAttribute(new Float32Array(nv).fill(0.5), 1)); g.setIndex(I); g.computeVertexNormals();
@@ -15706,14 +15713,51 @@ const World = (function () {
         box(g, p[0], p[1] - 0.2, p[2], 0.13, 1.2, 0.13, T.hd[i], [0.94, 0.94, 0.92], null, true); box(g, p[0], p[1] + 0.72, p[2], 0.14, 0.2, 0.14, T.hd[i], [0.9, 0.5, 0.1], null, true); }
     }
 
-    /* ---- the curves' signs (the letter and its number) 25 m before each, on the left (Japan's side of the road), facing the cars coming up ---- */
-    CV.forEach(([d], k) => {
-      const [px, pz, ii] = onSide(sStart + d - 25, -1, 0.9); if (excluded(px, pz)) return;
-      const py = vrGround(px, pz), g = scen.get(px, pz), u0 = (k % 8) / 8, v1 = 1 - Math.floor(k / 8) / 4;
-      box(g, px, py - 0.2, pz, 0.08, 2.2, 0.08, T.hd[ii], [0.6, 0.61, 0.63]);
-      bannerQ(px, py + 1.25, pz, -T.tx[ii], -T.tz[ii], 0.9, 0.9, v1 - 1 / 4, v1, u0, u0 + 1 / 8, ban2);
-      exclPush(px, pz, 1.5); CR.avoid(px, pz, 0.8);
+    /* ---- the curves' signs (the letter and its number, 1.2 m square on a post) 25 m before each, on the left (Japan's side of the road), facing
+       the cars coming up; round the outside of each hairpin three yellow chevron boards on short posts at the barrier, pointing the way it turns ---- */
+    CV.forEach(([d, , turn], k) => {
+      const [px, pz, ii] = onSide(sStart + d - 25, -1, 0.9); if (!excluded(px, pz)) {
+        const py = vrGround(px, pz), g = scen.get(px, pz), u0 = (k % 8) / 8, v1 = 1 - Math.floor(k / 8) / 4;
+        box(g, px, py - 0.2, pz, 0.09, 2.6, 0.09, T.hd[ii], [0.6, 0.61, 0.63]);
+        bannerQ(px, py + 1.4, pz, -T.tx[ii], -T.tz[ii], 1.2, 1.2, v1 - 1 / 4, v1, u0, u0 + 1 / 8, ban2);
+        exclPush(px, pz, 1.5); CR.avoid(px, pz, 0.8); }
+      if (k >= 16) return;   // (つ and ね: wider bends)
+      for (const o of [-9, 0, 9]) { const [cx, cz, ci] = onSide(sStart + d + o, -turn, 0.35), cy = T.hy[ci], g = scen.get(cx, cz), u0 = turn > 0 ? 0 : 1 / 8;
+        box(g, cx, cy - 0.3, cz, 0.08, 1.1, 0.08, T.hd[ci], [0.6, 0.61, 0.63]);
+        bannerQ(cx, cy + 0.65, cz, -T.tx[ci], -T.tz[ci], 0.75, 0.75, 0, 1 / 4, u0, u0 + 1 / 8, ban2); }
     });
+
+    /* ---- concrete lattice frames (the grid of beams that holds a cut slope) where the slope above the road is steep, ~3-4 m squares draped on the
+       ground from 4 m to 16 m past the barrier; in autumn the maples' fallen leaves on the shoulders and the edges of the asphalt, thicker in the hairpins ---- */
+    let nFrame = 0, nLeaf = 0;
+    {
+      const fr = new Chunks(110), cc = [0.7, 0.7, 0.66], cd = [0.6, 0.6, 0.57], o0 = 4, o1 = 16;
+      for (const side of [-1, 1]) {
+        const on = new Uint8Array(N), bar = side > 0 ? T.br : T.bl, gA = (i, d) => { const o = side * (bar[i] + d); return vrGround(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o) - T.hy[i]; };
+        for (let i = T.idx(sStart + 30); i < T.idx(sFin - 30); i += 2) if (!onBr[i] && gA(i, o0) > 0.5 && gA(i, o1) - gA(i, o0) > 5) on[i] = on[i + 1] = 1;
+        for (let i = 0; i < N;) { if (!on[i]) { i++; continue; } let j = i; while (j < N && on[j]) j++; if (j - i < 8) on.fill(0, i, j); i = j; }   // (stretches of 16 m and more)
+        const P = (i, o, f) => { const s = side * (bar[i] + o), x = T.px[i] + T.nx[i] * s + T.tx[i] * f, z = T.pz[i] + T.nz[i] * s + T.tz[i] * f; return [x, vrGround(x, z) + 0.22, z]; };
+        const beam = (g, a, b, w, col) => { const dx = b[0] - a[0], dz = b[2] - a[2], l = Math.hypot(dx, dz) || 1, nx = -dz / l * w, nz = dx / l * w;
+          g.quadUp([a[0] - nx, a[1], a[2] - nz], [a[0] + nx, a[1], a[2] + nz], [b[0] + nx, b[1], b[2] + nz], [b[0] - nx, b[1], b[2] - nz], [col, col, col, col]); };
+        for (let i = 0; i < N - 1; i++) { if (!on[i] || !on[i + 1]) continue; const g = fr.get(T.px[i], T.pz[i]);
+          for (let o = o0; o <= o1 + 0.01; o += 3) beam(g, P(i, o, 0), P(i + 1, o, 0), 0.2, cc);   // (along the slope)
+          if (i % 2 === 0) for (let o = o0; o < o1 - 0.01; o += 1.5) beam(g, P(i, o, 0), P(i, o + 1.5, 0), 0.2, cd);   // (up it, every ~4 m)
+          if (i % 3 === 0) for (const o of [o0 + 2, (o0 + o1) / 2, o1 - 1]) { const q = P(i, o, 0); exclPush(q[0], q[2], 3.6); }   // (no trees on the frames: a bare, grassy cut)
+          nFrame++; }
+      }
+      fr.addTo(root, matV, false, true);
+      if (VRS !== 'summer') {
+        const lv = new Chunks(110), RL = rng(8671), LC = [[0.78, 0.12, 0.06], [0.86, 0.3, 0.06], [0.9, 0.58, 0.1], [0.62, 0.36, 0.14], [0.7, 0.08, 0.1]];
+        const hairAt = new Float32Array(N); for (const [d] of CV) for (let q = -25; q <= 25; q += T.ds) { const i = T.idx(sStart + d + q); hairAt[i] = Math.max(hairAt[i], 1 - Math.abs(q) / 25); }
+        for (let i = 0; i < N - 1; i++) for (const side of [-1, 1]) {
+          const n = 2 + Math.round(hairAt[i] * 3 + RL() * 2);
+          for (let k = 0; k < n; k++) { const o = side * (w + sw - Math.pow(RL(), 1.6) * (1.8 + hairAt[i] * 1.5)), f = RL() * T.ds, x = T.px[i] + T.nx[i] * o + T.tx[i] * f, z = T.pz[i] + T.nz[i] * o + T.tz[i] * f;
+            const y = T.hy[i] + (Math.abs(o) > w ? 0.03 : 0.045), r = 0.12 + RL() * 0.14, a = RL() * TAU, c = vary(LC[Math.floor(RL() * LC.length)], RL, 0.2), g = lv.get(x, z);
+            g.quadUp([x + Math.cos(a) * r, y, z + Math.sin(a) * r], [x + Math.cos(a + 1.9) * r * 0.8, y, z + Math.sin(a + 1.9) * r * 0.8], [x - Math.cos(a) * r, y, z - Math.sin(a) * r], [x + Math.cos(a - 1.9) * r * 0.8, y, z + Math.sin(a - 1.9) * r * 0.8], [c, c, c, c]);
+            nLeaf++; } }
+        lv.addTo(root, lMat, false, true);
+      }
+    }
 
     /* ---- spectators: the start and the finish (the finish's in a layer of its own, CRF: finG), the checkpoints, every third hairpin ---- */
     const CRF = crowdSub(CR);
@@ -15805,7 +15849,7 @@ const World = (function () {
     addM(finS, matV, true, finG); addM(finB, banMat, false, finG);
     crowdFinish(CR, root, out);
     out.crowdN += crowdLayer(CRF, finG);
-    out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, rails: +(nRail / (2 * N)).toFixed(3), walls: +(nWall / (2 * N)).toFixed(3), signs: CV.length, far: FAR ? FAR.P0.length / 3 : 0 };   // (read by the tests)
+    out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, rails: +(nRail / (2 * N)).toFixed(3), walls: +(nWall / (2 * N)).toFixed(3), signs: CV.length, far: FAR ? FAR.P0.length / 3 : 0, frames: nFrame, leaves: nLeaf };   // (read by the tests)
     return out;
   }
 
