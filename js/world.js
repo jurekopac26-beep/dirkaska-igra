@@ -10942,7 +10942,7 @@ const World = (function () {
   // a street's name on a pole at its mouth. Ribbons in 110 m chunks (two materials), the rest in the scenery chunks. Returns the count
   function vrStubBuild(K) {
     const { scen, out, w, aMat, sMat, lMat, root, bannerQ, ban3, names } = K, Q = {}, F = {}, RS = rng(7671), gCol = K.gCol || vrGCol, gH = K.gH || vrGround;   // (gCol, gH: another road's ground)
-    const SA = new Chunks(110, true), SG = new Chunks(110, true), SL = new Chunks(110);
+    const SA = K.SA || new Chunks(110, true), SG = K.SG || new Chunks(110, true), SL = K.SL || new Chunks(110);   // (K.SA, SG, SL: the road's own chunks, drawn with it)
     const yAt = (x, z, S, t) => T.yAt(T.query(x, z, T.stubHint(S.k, t), Q));   // (the surface there, as the cars drive on it)
     const white = [0.95, 0.95, 0.92], steel = [0.78, 0.8, 0.82], steelB = [0.56, 0.58, 0.6], postC = [0.48, 0.49, 0.52], yel = [0.93, 0.74, 0.1], red = [0.84, 0.13, 0.1], blk = [0.12, 0.12, 0.13];
     let nPost = 0, nCone = 0;
@@ -10997,7 +10997,7 @@ const World = (function () {
       if (ni >= 0) { const t = S.tb + 1.5, p = T.stubPt(k, t, F), u = T.stubHw(S, t) + S.lim + 0.5, x = p.x - p.tz * u, z = p.z + p.tx * u, y = gH(x, z), g = scen.get(x, z), cell = ni + 3;
         cyl(g, x, y - 0.2, z, 0.04, 2.9, 5, [0.62, 0.63, 0.66]); bannerQ(x, y + 2.15, z, p.tx, p.tz, 1.4, 0.35, 1 - (Math.floor(cell / 2) + 1) / 8, 1 - Math.floor(cell / 2) / 8, (cell % 2) * 0.5, (cell % 2) * 0.5 + 0.5, ban3); }
     }
-    SA.addTo(root, aMat, false, true); SG.addTo(root, sMat, false, true); SL.addTo(root, lMat, false, true);
+    if (!K.SA) { SA.addTo(root, aMat, false, true); SG.addTo(root, sMat, false, true); SL.addTo(root, lMat, false, true); }
     return { n: (T.stubs || []).length, posts: nPost, cones: nCone };
   }
   // the building at the top of the run from the police (def.hideout { s: metres after the start line of its middle, side, len, wid, door }; only in
@@ -18023,12 +18023,20 @@ const World = (function () {
       ico(g, 0, 0.7, 0, 0.32, 0.72, col, R, 0.3);
       for (let k = 0; k < 5; k++) { const a = k / 5 * TAU + R() * 0.6, d = 0.26 + R() * 0.1; ico(g, Math.cos(a) * d, 0.58 + R() * 0.16, Math.sin(a) * d, 0.2 + R() * 0.07, 0.8, vary(au && k % 2 ? [0.86, 0.42, 0.12] : col, R, 0.25), R, 0.3); }
     } else if (kind === 1) {
-      cyl(g, 0, -0.02, 0, 0.022, 0.84, 5, [0.42, 0.28, 0.2], [0.34, 0.24, 0.18], 0.012);
+      cyl(g, 0, -0.02, 0, 0.022, 0.84, 4, [0.42, 0.28, 0.2], null, 0.012);
       ROCK_SMOOTH = true; const col = [0.15, 0.24, 0.14];
-      for (let k = 0; k < 6; k++) { const y = 0.44 + k * 0.085, r = 0.17 - k * 0.022, n = k < 4 ? 3 : 2, a0 = R() * TAU;
-        for (let q = 0; q < n; q++) { const a = a0 + q / n * TAU, d = r * (0.7 + R() * 0.4); cyl(g, 0, y - 0.02, 0, 0.006, 0.01, 3, [0.3, 0.22, 0.16]);
-          ico(g, Math.cos(a) * d, y, Math.sin(a) * d, 0.095 + R() * 0.035, 0.7, vary(col, R, 0.25), R, 0.35); } }
-      ico(g, 0, 0.95, 0, 0.06, 0.9, col, R, 0.3);
+      for (let k = 0; k < 4; k++) { const y = 0.47 + k * 0.12, r = 0.16 - k * 0.03, n = k < 3 ? 2 : 1, a0 = R() * TAU;   // (four tiers of needle tufts, the top one alone)
+        for (let q = 0; q < n; q++) { const a = a0 + q / n * TAU, d = n > 1 ? r * (0.75 + R() * 0.35) : 0; ico(g, Math.cos(a) * d, y, Math.sin(a) * d, 0.12 + R() * 0.04 - k * 0.012, 0.66, vary(col, R, 0.25), R, 0.35); } }
+    } else if (kind === 3) {   // a chaparral shrub (chamise, scrub oak): a tight, dark grey-olive mound of two lumps (light: thousands of them)
+      ROCK_SMOOTH = true; const col = [0.27, 0.3, 0.17];
+      ico(g, 0, 0.46, 0, 0.5, 0.9, col, R, 0.32); ico(g, 0.34, 0.3, 0.12, 0.3, 0.95, vary(col, R, 0.25), R, 0.35);
+    } else if (kind === 4) {   // a granite stone
+      ROCK_SMOOTH = false; rock(g, 0, 0.04, 0, 0.17, 0.12, 0.15, R() * TAU, [0.68, 0.66, 0.6], R, 0.3);
+    } else if (kind === 5) {   // a coast live oak, light (Mulholland Highway's in fewer clumps): a short trunk splitting low, a broad, low, dark dome
+      cyl(g, 0, -0.02, 0, 0.06, 0.32, 4, [0.25, 0.22, 0.19], null, 0.045);
+      ROCK_SMOOTH = true; const col = [0.17, 0.25, 0.1];
+      ico(g, 0, 0.62, 0, 0.46, 0.62, col, R, 0.25);
+      for (let k = 0; k < 3; k++) { const a = k / 3 * TAU + R() * 0.5, d = 0.38 + R() * 0.1; ico(g, Math.cos(a) * d, 0.5 + R() * 0.12, Math.sin(a) * d, 0.27 + R() * 0.08, 0.72, vary(col, R, 0.3), R, 0.3); }
     } else {
       cyl(g, 0, -0.02, 0, 0.03, 0.3, 5, [0.5, 0.28, 0.17], null, 0.018);
       const col = [0.19, 0.31, 0.13], tip = [0.29, 0.42, 0.18];
@@ -18108,7 +18116,7 @@ const World = (function () {
     const lMat = new THREE.MeshLambertMaterial({ vertexColors: true });
     const sMat = new THREE.MeshPhongMaterial({ map: tex.makadam, bumpMap: tex.makadamBump, bumpScale: 0.04, shininess: 5, specular: 0x14110d, vertexColors: true });
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
-    const sw = 0.6;
+    const sw = 0.6, tarCh = new Chunks(110), roadCh = new Chunks(120, true), lineCh = new Chunks(120), shCh = new Chunks(120, true);   // (the road's ribbons by place: the side roads' join them)   // (tarCh: the tar snakes, drawn with the scenery's chunks: no draw calls of their own)
     const vProf = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i], e = w;
       const y = T.hy[i], gAt = (o) => { const q = side * o; return caGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - y; }, lift = (o, h) => [o, Math.max(h, gAt(o) + 0.05)];
       if (T.gap && T.gap[side > 0 ? 1 : 0][i]) { const sf = (o) => { const q = side * o; return [o, T.yAt(T.query(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q, i, VRSQ)) - y - 0.03]; };   // a side road's mouth: no ditch, the verge at its surface
@@ -18132,9 +18140,9 @@ const World = (function () {
           const sl = k === 2 ? caSlope(x, z) : 0, l = Math.sqrt(1 + sl * sl); return plCol(x, z, T.hy[i] + y, 1 / l, 0, Math.max(0, o - bar)).slice(); })); } return a; });
       const wuv = (p) => [p[0] / 10, -p[2] / 10];
       for (let c0 = 0; c0 < N - 1; c0 += 60) {
-        const gr = new GB(true), gl = new GB(), gs = new GB(true), gv = new GB(true);
+        const gv = new GB(true);
         for (let i = c0; i < Math.min(c0 + 60, N - 1); i++) {
-          const j = i + 1, v0 = i * T.ds / tileL, v1 = j * T.ds / tileL, s0 = i * T.ds / 6, s1 = j * T.ds / 6;
+          const j = i + 1, v0 = i * T.ds / tileL, v1 = j * T.ds / tileL, s0 = i * T.ds / 6, s1 = j * T.ds / 6, gr = roadCh.get(T.px[i], T.pz[i]), gl = lineCh.get(T.px[i], T.pz[i]), gs = shCh.get(T.px[i], T.pz[i]);
           for (let c = 0; c < offs.length - 1; c++) { const o0 = offs[c], o1 = offs[c + 1];
             gr.quadUp(Pt(i, o0, 0.02), Pt(i, o1, 0.02), Pt(j, o1, 0.02), Pt(j, o0, 0.02), [shade(i, o0), shade(i, o1), shade(j, o1), shade(j, o0)], [[(o0 + w) / tileL, v0], [(o1 + w) / tileL, v0], [(o1 + w) / tileL, v1], [(o0 + w) / tileL, v1]]); }
           for (const [o0, o1, si] of [[-(w - 0.3), -(w - 0.45), 0], [w - 0.45, w - 0.3, 1]]) if (!mouthE[si][i] || (i % 2 === 0)) gl.quadUp(Pt(i, o0, 0.036), Pt(i, o1, 0.036), Pt(j, o1, 0.036), Pt(j, o0, 0.036), [wht, wht, wht, wht]);
@@ -18147,10 +18155,10 @@ const World = (function () {
               else gv.quadUp(a, b, c, d, [ci[k], ci[k + 1], cj[k + 1], cj[k]], [wuv(a), wuv(b), wuv(c), wuv(d)]); }
           }
         }
-        addM(gr, aMat); addM(gl, lMat); addM(gs, sMat); addM(gv, gMat);
+        addM(gv, gMat);
       }
       // the tar snakes: cracks in the old asphalt sealed with black tar, wandering along the lanes and across them (as Mulholland Highway's)
-      { const RS = rng(3791), ts = new Chunks(110), tc = [0.075, 0.075, 0.085], P2 = (s, o) => { const f = clamp(s / T.ds, 0, N - 1.001), i = Math.floor(f), u = f - i, j = i + 1;
+      { const RS = rng(3791), ts = tarCh, tc = [0.075, 0.075, 0.085], P2 = (s, o) => { const f = clamp(s / T.ds, 0, N - 1.001), i = Math.floor(f), u = f - i, j = i + 1;
           return [lerp(T.px[i] + T.nx[i] * o, T.px[j] + T.nx[j] * o, u), lerp(T.hy[i], T.hy[j], u) + 0.031, lerp(T.pz[i] + T.nz[i] * o, T.pz[j] + T.nz[j] * o, u)]; };
         for (let s = sStart - 40; s < sFin + 40; s += 11) { if (RS() > 0.55) continue;
           const across = RS() < 0.3, L = across ? 2 * w * (0.4 + RS() * 0.55) : 4 + RS() * 10, n = Math.ceil(L / 0.6), ph = RS() * 6, amp = 0.15 + RS() * 0.35;
@@ -18160,7 +18168,7 @@ const World = (function () {
           const g = ts.get(pts[0][0], pts[0][2]);
           for (let k = 0; k < n; k++) { const A = pts[k], B = pts[k + 1], dx = B[0] - A[0], dz = B[2] - A[2], l = Math.hypot(dx, dz) || 1, hx = -dz / l * 0.07, hz = dx / l * 0.07;
             g.quadUp([A[0] - hx, A[1], A[2] - hz], [A[0] + hx, A[1], A[2] + hz], [B[0] + hx, B[1], B[2] + hz], [B[0] - hx, B[1], B[2] - hz], [tc, tc, tc, tc]); } }
-        ts.addTo(root, lMat, false, true); }
+      }
       // chequered start and finish lines, a white line at each checkpoint
       const gq = new GB(true), gw = new GB(), uM = Math.round(w * 2 / 0.8) / 16, W1 = [1, 1, 1];
       for (const s0 of [sStart, sFin]) { const a = atSf(s0 - 0.8, -w), b = atSf(s0 - 0.8, w), c = atSf(s0 + 0.8, w), d = atSf(s0 + 0.8, -w), y = (p) => T.hy[p[3]] + 0.045;
@@ -18171,7 +18179,7 @@ const World = (function () {
     }
 
     /* ---- scenery (vertex coloured, 110 m chunks) ---- */
-    const scen = new Chunks(110), fac = new Chunks(110, true), ban = new GB(true), ban2 = new GB(true), ban3 = new GB(true), W1 = [1, 1, 1];   // (fac: the walls with windows; ban: the race's boards, ban2: the signs, ban3: the side roads')
+    const scen = tarCh, fac = new Chunks(110, true), ban = new GB(true), ban2 = new GB(true), ban3 = new GB(true), W1 = [1, 1, 1];   // (fac: the walls with windows; ban: the race's boards, ban2: the signs, ban3: the side roads')
     const onSide = (s, side, extra) => { const i = T.idx(s), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + extra); return [T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, i]; };
     const fans = [[0.84, 0.14, 0.14], [0.95, 0.95, 0.95], [0.14, 0.24, 0.6], [0.12, 0.13, 0.16], [0.96, 0.78, 0.18], [0.2, 0.5, 0.62], [0.95, 0.5, 0.14], [0.5, 0.32, 0.22], [0.3, 0.55, 0.3], [0.82, 0.82, 0.84]];
     const CR = crowdCtx({ gH: caGround, near: (x, z) => vrNear(x, z).dd, excluded, maxSlope: 0.6, water: () => false, shirts: fans }), crSoft = new Set();
@@ -18369,12 +18377,13 @@ const World = (function () {
       const run = (sa, sb, side, o) => crowdRun(CR, Math.max(sa, 8), Math.min(sb, T.len - 8), side, Object.assign({}, M, o));
       for (const sd of [-1, 1]) { run(sStart - 70, sStart + 70, sd, { rows: 3, dens: 0.6, label: 'PL start' }); run(sFin - 70, sFin + 14, sd, { rows: 3, dens: 0.6, label: 'PL finish' }); }
       T.cpS.forEach((s0) => { const i = T.idx(s0), side = T.br[i] > T.bl[i] ? 1 : -1; run(s0 - 24, s0 + 20, side, { rows: 2, dens: 0.55, label: 'PL cp+' }); run(s0 - 20, s0 + 16, -side, { rows: 2, dens: 0.4, label: 'PL cp-' }); });
-      (def.hairpins || []).forEach((h, k) => { if (k % 2) return; const sm = sStart + h[0]; run(sm - 18, sm + 18, -h[2], { rows: 2, dens: 0.45, label: 'PL hairpin' }); });
+      (def.hairpins || []).forEach((h, k) => { if (k % 3 !== 1) return; const sm = sStart + h[0]; run(sm - 18, sm + 18, -h[2], { rows: 2, dens: 0.45, label: 'PL hairpin' }); });
     }
     for (const e of CR.circ) exclPush(e.x, e.z, e.r);
 
     /* ---- the side roads (Track.stubs): Vršič's, with this road's ground and boards ---- */
-    out.stubStats = vrStubBuild({ scen, out, w, aMat, sMat, lMat, root, bannerQ, ban3, names: [], gCol: caGCol, gH: caGround, postCol: () => 0 });
+    out.stubStats = vrStubBuild({ scen, out, w, aMat, sMat, lMat, root, bannerQ, ban3, names: [], gCol: caGCol, gH: caGround, postCol: () => 0, SA: roadCh, SG: shCh, SL: lineCh });
+    for (const [ch, mat] of [[roadCh, aMat], [lineCh, lMat], [shCh, sMat]]) for (const g of ch.map.values()) addM(g, mat);   // (the road and the side roads: one mesh a chunk and material)
 
     /* ---- the plants (instanced per 96-128 m chunk), by the land cover and the height: golden grass, the chaparral, coast live oaks, chaparral yuccas on
        the sunny banks low down; from ~1100 m black oaks, Coulter pines and incense cedars; sycamores and oaks along the dry creek beds; granite boulders;
@@ -18383,7 +18392,7 @@ const World = (function () {
     const wMat = tuftWindMat(out.dyn.wind || (out.dyn.wind = { value: 0 })), wB = wMat.onBeforeCompile; ouCutMat(wMat, cut);   // (the grass: in the wind, and the cut)
     { const cB = wMat.onBeforeCompile; wMat.onBeforeCompile = (sh) => { wB(sh); cB(sh); }; wMat.customProgramCacheKey = () => 'tuftWindCut'; wMat.side = THREE.FrontSide; }
     // 0 grass, 1 chaparral, 2 live oak, 3 sycamore, 4 boulder, 5 stones, 6 yucca (Mulholland Highway's plants), 7 black oak, 8 pine, 9 incense cedar
-    const pk = [0, 1, 2, 3, 4, 5, 6].map(k => new IChunks(mhPlantGeo(k), k === 0 ? wMat : pMat, k === 0 || k === 1 ? 96 : 128)).concat([0, 1, 2].map(k => new IChunks(plTreeGeo(k), pMat, 128)));
+    const pk = [0, 1, 2, 3, 4, 5, 6].map(k => new IChunks(k === 1 ? plTreeGeo(3) : k === 5 ? plTreeGeo(4) : k === 2 ? plTreeGeo(5) : mhPlantGeo(k), k === 0 ? wMat : pMat, k === 1 ? 96 : k === 0 || k === 2 || k === 5 ? 128 : 192)).concat([0, 1, 2].map(k => new IChunks(plTreeGeo(k), pMat, 192)));
     let nPlants = 0, nTrees = 0;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(110000 * dens), RT = rng(3771), SP = 3.0 / Math.sqrt(dens);
@@ -18395,16 +18404,17 @@ const World = (function () {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
           const hd = vrDist(x, z); if (hd > 240) continue;
           if (hd > 80 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // (farther out every other spot)
+          if (hd > 120 && r4 < 0.45) continue;   // (and fewer still beyond 120 m, in the haze)
           const c = vrLC(x, z), y0 = caGround(x, z), sl = caSlope(x, z), A = y0 + base, up = sstep(1080, 1330, A), cd = plCreekD(x, z);
           let kind = -1;
           if (cd < 10 && r1 < 0.06) kind = A < 1250 && r2 < 0.55 ? 3 : 2;
-          else if (cd < 3.5 && r1 < 0.2) kind = r2 < 0.5 ? 5 : 4;
+          else if (cd < 3.5 && r1 < 0.1) kind = r2 < 0.5 ? 5 : 4;
           else if (c === 0) kind = r1 < 0.55 ? 0 : r1 < 0.562 + up * 0.02 ? (up > r2 ? 7 : 2) : r1 < 0.6 ? 1 : r1 < 0.606 ? 4 : r1 < 0.612 && sl > 0.25 && A < 1150 ? 6 : r1 < 0.616 + up * 0.006 && up > r3 ? 8 : -1;
-          else if (c === 1) kind = r1 < 0.66 ? 1 : r1 < 0.7 ? 0 : r1 < 0.706 ? 4 : r1 < 0.72 && sl > 0.2 && A < 1150 ? 6 : r1 < 0.725 + up * 0.01 ? (up > r2 ? 8 : 2) : -1;
+          else if (c === 1) kind = r1 < 0.38 ? 1 : r1 < 0.43 ? 0 : r1 < 0.436 ? 4 : r1 < 0.45 && sl > 0.2 && A < 1150 ? 6 : r1 < 0.455 + up * 0.01 ? (up > r2 ? 8 : 2) : -1;
           else if (c === 2) {   // the woods: low down the tall, dense chaparral with live oaks in it; higher up the oaks and the conifers, the shrubs thinning
             const tr = lerp(0.035, 0.11, up);
             if (r1 < tr) { const q = r2; kind = up < 0.15 ? 2 : q < 0.3 * up ? 8 : q < 0.5 * up ? 9 : q < 0.5 * up + 0.25 + 0.15 * up ? 7 : 2; if (kind === 7 && up < 0.3) kind = 2; }
-            else kind = r1 < tr + lerp(0.58, 0.2, up) ? 1 : r1 < tr + lerp(0.61, 0.28, up) ? 0 : r1 < tr + lerp(0.615, 0.29, up) ? 4 : -1;
+            else kind = r1 < tr + lerp(0.33, 0.15, up) ? 1 : r1 < tr + lerp(0.37, 0.23, up) ? 0 : r1 < tr + lerp(0.375, 0.24, up) ? 4 : -1;
           }
           else if (c === 3) kind = r1 < 0.02 ? 2 : r1 < 0.12 ? 0 : -1;
           else if (c === 4) kind = r1 < 0.08 ? 4 : r1 < 0.14 ? 0 : -1;
@@ -18413,7 +18423,7 @@ const World = (function () {
           const nn = vrNear(x, z), low = kind === 0 || kind === 1 || kind === 5 || kind === 6; if (nn.i >= 0 && (low ? nn.d < w + 2.6 || (nn.dd < 1.6 && nn.dd > 0) : nn.dd < (kind === 4 ? 1.6 : 4))) continue;   // (the grass, the shrubs and the stones also inside the barrier line where it stands far from the asphalt: inside the hairpins)
           if (excluded(x, z)) continue;
           if (kind === 0) pk[0].add(x, y0 - 0.05, z, r2 * TAU, 0.8 + r3 * 0.7, 0.6 + r4 * 0.5, [0.92 + r2 * 0.16, 0.9 + r3 * 0.14, 0.86 + r4 * 0.16]);
-          else if (kind === 1) pk[1].add(x, y0 - 0.12, z, r2 * TAU, 1.6 + r3 * 1.6, 1.2 + r4 * 1.5, r2 < 0.16 ? [1.22 + r3 * 0.12, 1.24 + r3 * 0.1, 1.42 + r4 * 0.12] : r2 < 0.3 ? [1.02, 1.08, 1.12] : [0.88 + r2 * 0.24, 0.9 + r3 * 0.18, 0.88 + r4 * 0.16]);   // (some grey-green: the sage and the manzanita among the chamise)
+          else if (kind === 1) pk[1].add(x, y0 - 0.12, z, r2 * TAU, 1.8 + r3 * 1.8, 1.2 + r4 * 1.5, r2 < 0.16 ? [1.22 + r3 * 0.12, 1.24 + r3 * 0.1, 1.42 + r4 * 0.12] : r2 < 0.3 ? [1.02, 1.08, 1.12] : [0.88 + r2 * 0.24, 0.9 + r3 * 0.18, 0.88 + r4 * 0.16]);   // (some grey-green: the sage and the manzanita among the chamise)
           else if (kind === 6) pk[6].add(x, y0 - 0.05, z, r2 * TAU, 0.8 + r3 * 0.6, 0.7 + r4 * 0.5, [0.92 + r2 * 0.16, 0.95 + r3 * 0.1, 0.95 + r4 * 0.1]);
           else if (kind === 2) { pk[2].add(x, y0 - 0.15, z, r2 * TAU, 9 + r3 * 7, 7 + r4 * 5, [0.9 + r2 * 0.2, 0.92 + r3 * 0.16, 0.9]); nTrees++; }
           else if (kind === 3) { pk[3].add(x, y0 - 0.15, z, r2 * TAU, 11 + r3 * 6, 13 + r4 * 7, [0.92 + r2 * 0.16, 0.95 + r3 * 0.1, 0.9]); nTrees++; }
@@ -18427,8 +18437,8 @@ const World = (function () {
       }
     }
     {   // stones strewn beside the road, thickest at its edge
-      const RS = rng(3777), maxS = Math.round(16000 * dens); let nS = 0;
-      edge: for (let s = 12; s < T.len - 12; s += 1.6 / dens) for (const side of [-1, 1]) {
+      const RS = rng(3777), maxS = Math.round(9000 * dens); let nS = 0;
+      edge: for (let s = 12; s < T.len - 12; s += 2.2 / dens) for (const side of [-1, 1]) {
         const o = 1.7 + Math.pow(RS(), 2) * 34, [x, z] = onSide(s, side, o), r1 = RS(), r2 = RS(), r3 = RS();
         if (vrNear(x, z).dd < 1.2 || excluded(x, z)) continue;
         const y0 = caGround(x, z), sl = caSlope(x, z); if (sl > 1.15 || (vrLC(x, z) === 0 && r1 < 0.5)) continue;
