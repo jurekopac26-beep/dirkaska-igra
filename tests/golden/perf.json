@@ -224,10 +224,10 @@
   "jsMs": 0.87
  },
  "hongkong": {
-  "calls": 311,
-  "maxCalls": 348,
-  "kverts": 788,
-  "maxKverts": 931,
-  "jsMs": 0.99
+  "calls": 312,
+  "maxCalls": 349,
+  "kverts": 735,
+  "maxKverts": 862,
+  "jsMs": 0.8
  }
 }
