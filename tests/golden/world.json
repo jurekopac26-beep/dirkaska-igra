@@ -411,16 +411,16 @@
   }
  },
  "longford": {
-  "meshes": 1389,
-  "verts": 747707,
+  "meshes": 1394,
+  "verts": 748217,
   "instances": 26587,
   "props": 20,
   "crowd": 5317,
-  "world": "cfb8df60",
+  "world": "3791d2e6",
   "propsHash": "b4fc4f70",
   "floor": "53fff8b0/14056",
   "groups": {
-   "-:MeshLambertMaterial": "78b7dae3",
+   "-:MeshLambertMaterial": "c5c56927",
    "-:MeshPhongMaterial": "86abe127",
    "crowd:MeshLambertMaterial": "f173a921",
    "-:MeshBasicMaterial": "4c8b271f",
