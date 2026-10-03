@@ -336,17 +336,17 @@
   }
  },
  "hongkong": {
-  "meshes": 153,
-  "verts": 345383,
+  "meshes": 154,
+  "verts": 347498,
   "instances": 1858,
   "props": 149,
   "crowd": 281,
-  "world": "fa2d48ae",
+  "world": "bc7ed5ef",
   "propsHash": "7f5890fe",
   "floor": null,
   "groups": {
    "-:MeshLambertMaterial": "a4d2fd9b",
-   "-:MeshPhongMaterial": "50e1a47c",
+   "-:MeshPhongMaterial": "5ffa63f",
    "-:MeshBasicMaterial": "c136c3d3",
    "crowd:MeshLambertMaterial": "de99d940",
    "ao:MeshBasicMaterial": "47f6da9b",
