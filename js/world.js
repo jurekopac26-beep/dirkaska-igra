@@ -14268,7 +14268,7 @@ const World = (function () {
 
     /* ---- the Old Coast Road (def.oldRoad): a gravel track 4.2 m wide from the highway down into the Bixby Creek canyon, laid on the ground (a
        little above it), only within the built corridor ---- */
-    let nOld = 0;
+    let nOld = 0, nDrive = 0;
     {
       const g = new GB(true), RW = 2.1, oc = [0.74, 0.66, 0.54], oe = [0.6, 0.55, 0.44];
       for (const [, , p] of def.oldRoad || []) {
@@ -14286,6 +14286,21 @@ const World = (function () {
             g.quadUp(Ae, Ad, Cd, Ce, [oe, oe, oe, oe], [[0, 0], [0.2, 0], [0.2, 0.2], [0, 0.2]]); }   // (its verges down to the ground)
           exclPush((x0 + x1) / 2, (z0 + z1) / 2, RW + 1.5); nOld++;
         }
+      }
+      // the driveways: a gravel track 3 m wide from the highway's edge to each house within 260 m, bending a little with the ground
+      const RDw = rng(4007), DW = 1.5;
+      for (const b of blds) { if (b.kind === 3) continue;
+        let bi = -1, bd = 260 * 260; for (let i = 0; i < T.N; i += 2) { if (onBr[i] || pull[i]) continue; const d = (b.x - T.px[i]) ** 2 + (b.z - T.pz[i]) ** 2; if (d < bd) { bd = d; bi = i; } }
+        if (bi < 0) continue;
+        const sd = (b.x - T.px[bi]) * T.nx[bi] + (b.z - T.pz[bi]) * T.nz[bi] > 0 ? 1 : -1, eo = sd * ((sd > 0 ? T.br[bi] : T.bl[bi]) + 0.3), ex = T.px[bi] + T.nx[bi] * eo, ez = T.pz[bi] + T.nz[bi] * eo;
+        const L0 = Math.hypot(b.x - ex, b.z - ez), r0 = Math.max(b.L, b.W) / 2 + 1.5; if (L0 < r0 + 6) continue;
+        const ux = (b.x - ex) / L0, uz = (b.z - ez) / L0, L = L0 - r0, n = Math.max(2, Math.ceil(L / 4)), wob = (RDw() - 0.5) * Math.min(14, L * 0.2), pts = [];
+        for (let k = 0; k <= n; k++) { const t = k / n, w = Math.sin(Math.PI * t) * wob, x = ex + ux * L * t - uz * w, z = ez + uz * L * t + ux * w; pts.push([x, z, k === 0 ? T.hy[bi] + 0.02 : bsGround(x, z) + 0.1]); }
+        let acc = 0;
+        for (let k = 0; k < n; k++) { const [x0, z0, y0d] = pts[k], [x1, z1, y1d] = pts[k + 1], dx = x1 - x0, dz = z1 - z0, Lk = Math.hypot(dx, dz) || 1, px = -dz / Lk * DW, pz = dx / Lk * DW;
+          g.quadUp([x0 - px, y0d, z0 - pz], [x0 + px, y0d, z0 + pz], [x1 + px, y1d, z1 + pz], [x1 - px, y1d, z1 - pz], [oe, oc, oc, oe], [[0, acc / 6], [0.5, acc / 6], [0.5, (acc + Lk) / 6], [0, (acc + Lk) / 6]]); acc += Lk;
+          if (k > 0) exclPush((x0 + x1) / 2, (z0 + z1) / 2, DW + 1.2); }
+        nDrive++;
       }
       addM(g, sMat);
       // a car parked at the gravel's edge near the junction (the hikers' car)
@@ -14319,7 +14334,7 @@ const World = (function () {
     const pk = [0, 1, 2, 3, 4].map(k => new IChunks(caPlantGeo(k), k === 0 ? wMat : pMat, k === 4 ? 64 : 128));
     const bk = [0, 1].map(k => new IChunks(bsBushGeo(k), k === 1 ? wMat : pMat, 128));
     const tk = [0, 1].map(k => new IChunks(bsTreeGeo(k), pMat, 128));
-    let nPlants = 0, nTrees = 0, nBush = 0, nSeal = 0, nBarn = 0, nBoat = 0, nWhale = 0;
+    let nPlants = 0, nTrees = 0, nBush = 0, nSeal = 0, nBarn = 0, nBoat = 0, nWhale = 0, nCrop = 0;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(70000 * dens), maxTr = Math.round(9000 * dens), RT = rng(3961), SP = 3.4 / Math.sqrt(dens);
       const BC = [[0.82, 0.98, 0.84], [0.74, 0.92, 0.78], [1.12, 1.1, 1.04], [1.2, 1.04, 0.82]];   // (coyote brush, darker; sage, grey-green; dried, brown)
@@ -14369,6 +14384,16 @@ const World = (function () {
         const y = bsGround(x, z); if (y < y0 + 1.5 || bsSlope(x, z) > 1.1 || (vrLC(x, z) !== 4 && r1 < 0.6)) continue;
         const k = 0.84 + r3 * 0.28, sc = 0.7 + r1 * 1.0; pk[4].add(x, y - 0.04, z, r2 * TAU, sc, sc * (0.8 + r3 * 0.5), [k, k * 0.97, k * 0.92]);
         if (++nS >= maxS) break edge;
+      }
+      // the outcrops: clusters of weathered sandstone and granite boulders breaking through the grass on the steeper slopes, 3 to 6 together
+      const RO = rng(4009), oc = [[0.6, 0.55, 0.47], [0.55, 0.53, 0.5], [0.66, 0.6, 0.5]];
+      for (let k = 0, tries = 0; k < 45 && tries < 2000; tries++) {
+        const s = sStart - 150 + RO() * (T.len - sStart + 120), [cx, cz] = onSide(s, RO() < 0.7 ? -1 : 1, 25 + RO() * 200), sl = bsSlope(cx, cz);
+        if (sl < 0.45 || sl > 1.0 || vrNear(cx, cz).dd < 12 || vrDist(cx, cz) > 260 || excluded(cx, cz) || bsGround(cx, cz) + base < 12 || vrLC(cx, cz) === 2) continue;
+        const n = 3 + Math.floor(RO() * 4), col = oc[Math.floor(RO() * 3)], g = scen.get(cx, cz);
+        for (let q = 0; q < n; q++) { const x = cx + (RO() - 0.5) * 12, z = cz + (RO() - 0.5) * 12, r = 1.4 + RO() * RO() * 3.6; if (vrNear(x, z).dd < 6) continue;
+          rock(g, x, bsGround(x, z) + r * 0.15, z, r * (1 + RO() * 0.5), r * (0.55 + RO() * 0.4), r, RO() * TAU, vary(col, RO, 0.08), RO, 0.3); exclPush(x, z, r); }
+        k++; nCrop++;
       }
       const G = P.G, RK = rng(3971), rc = [[0.42, 0.4, 0.37], [0.5, 0.46, 0.4], [0.36, 0.35, 0.34]], gf = new GB(false, true), FW = [0.94, 0.95, 0.95];
       const seals = new IChunks(bsSealGeo(), pMat, 256), RL = rng(3973), SC = [[0.36, 0.27, 0.19], [0.24, 0.19, 0.15], [0.48, 0.38, 0.27]];   // (sea lions hauled out on the rocks, sunning)
@@ -14516,7 +14541,7 @@ const World = (function () {
       out.dyn.condors = { L, x0: T.px[i0], z0: T.pz[i0], y0: T.hy[i0], ax: T.px[i0], az: T.pz[i0], ay: T.hy[i0], t: null };
       caCondors(out.dyn.condors, 0, null); }
     crowdFinish(CR, root, out);
-    out.stats = { plants: nPlants, bushes: nBush, cows: nCows, fence: nFence, seals: nSeal, barns: nBarn, boats: nBoat, whales: nWhale, trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), bridges: brInfo.length, oldRoad: nOld };   // (read by the tests)
+    out.stats = { plants: nPlants, bushes: nBush, cows: nCows, fence: nFence, seals: nSeal, barns: nBarn, boats: nBoat, whales: nWhale, trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), bridges: brInfo.length, oldRoad: nOld, driveways: nDrive, outcrops: nCrop };   // (read by the tests)
     return out;
   }
 
