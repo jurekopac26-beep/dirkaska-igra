@@ -1,6 +1,6 @@
 // The English page (js/lang.js, no browser): every Slovenian text the game shows has its English, with the same {0} {1} ... slots.
 // Checked: the first argument of every tr(...) in the scripts (each string in it: tr(a ? 'x' : 'y')), the tables the game reads through
-// tr() (DRIVE_TXT, NET_ERR, ...), the texts and labels of index.html, the garage (js/garage.js, its tables, garaza.html), the upgrades and the car credit (Core), the English of every track,
+// tr() (DRIVE_TXT, NET_ERR, ...), the texts and labels of index.html, the garage (js/garage.js, js/garage3d.js, its tables, garaza.html), the upgrades and the car credit (Core), the English of every track,
 // championship and famous jump (def.en), the place names on the HUD, and the helpers for numbers, money and places.
 //   node tests/lang.test.js
 'use strict';
@@ -40,7 +40,7 @@ const noComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').map(l =
 
 // 1. every tr(...) in the game's scripts: each string of its first argument is in the dictionary
 const missing = [], keysUsed = new Set();
-for (const f of ['js/game.js', 'js/garage.js']) {
+for (const f of ['js/game.js', 'js/garage.js', 'js/garage3d.js']) {
   const src = noComments(read(f));
   for (const m of src.matchAll(/\btr\(/g)) for (const s of literals(firstArg(src, m.index + 3))) { if (s === '') continue; keysUsed.add(s); if (!has(s)) missing.push(s); }
 }

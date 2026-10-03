@@ -375,6 +375,199 @@ const Garage3D = (function () {
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     motes.frustumCulled = false; scene.add(motes);
   }
+  /* ---------------- the workshop's things: what makes it a racing team's garage ---------------- */
+  // helpers: a box along a segment (frames, handles, poles), a cylinder along an axis; smooth round things (helmets, cups, bottles)
+  // merged into one vertex-coloured mesh
+  function obox(g, a, b, w, h, col) {
+    const d = new V3(b[0] - a[0], b[1] - a[1], b[2] - a[2]), L = d.length(); if (L < 1e-4) return; d.divideScalar(L);
+    const up = Math.abs(d.y) > 0.95 ? new V3(1, 0, 0) : new V3(0, 1, 0), sd = new V3().crossVectors(d, up).normalize().multiplyScalar(w / 2), u = new V3().crossVectors(sd, d).normalize().multiplyScalar(h / 2);
+    const P = (e, i, j) => { const o = e ? b : a; return [o[0] + sd.x * i + u.x * j, o[1] + sd.y * i + u.y * j, o[2] + sd.z * i + u.z * j]; }, c = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+    const q = [[-1, -1], [1, -1], [1, 1], [-1, 1]];
+    for (let k = 0; k < 4; k++) { const [i0, j0] = q[k], [i1, j1] = q[(k + 1) % 4]; g.quadO(P(0, i0, j0), P(0, i1, j1), P(1, i1, j1), P(1, i0, j0), col, c); }
+    g.quadO(P(0, -1, -1), P(0, 1, -1), P(0, 1, 1), P(0, -1, 1), col, c); g.quadO(P(1, -1, -1), P(1, 1, -1), P(1, 1, 1), P(1, -1, 1), col, c);
+  }
+  function cylA(g, c, axis, r, len, n, col, cap) {   // a cylinder centred at c along 'x', 'y' or 'z', its ends capped
+    const A = (t, a, rr) => { const u = Math.cos(a) * rr, v = Math.sin(a) * rr; return axis === 'x' ? [c[0] + t, c[1] + u, c[2] + v] : axis === 'y' ? [c[0] + u, c[1] + t, c[2] + v] : [c[0] + u, c[1] + v, c[2] + t]; };
+    for (let i = 0; i < n; i++) { const a0 = i / n * TAU, a1 = (i + 1) / n * TAU;
+      g.quadO(A(-len / 2, a0, r), A(len / 2, a0, r), A(len / 2, a1, r), A(-len / 2, a1, r), col, c);
+      for (const e of [-1, 1]) g.triO(A(e * len / 2, 0, 0), A(e * len / 2, a0, r), A(e * len / 2, a1, r), cap || col, A(-e * len, 0, 0)); }
+  }
+  class SmoothB {   // round, glossy things: three.js geometries placed by a matrix, one colour each, merged
+    constructor() { this.P = []; this.N = []; this.C = []; }
+    add(geo, m, col) {
+      const g = geo.index ? geo.toNonIndexed() : geo; g.applyMatrix4(m); const p = g.attributes.position, nr = g.attributes.normal;
+      for (let i = 0; i < p.count; i++) { this.P.push(p.getX(i), p.getY(i), p.getZ(i)); this.N.push(nr.getX(i), nr.getY(i), nr.getZ(i)); this.C.push(col[0], col[1], col[2]); }
+      geo.dispose(); if (g !== geo) g.dispose();
+    }
+    geometry() { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(this.P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(this.N, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(this.C, 3)); g.computeBoundingSphere(); return g; }
+  }
+  const M4 = (x, y, z, rx, ry, rz, sx, sy, sz) => new THREE.Matrix4().compose(new V3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx || 0, ry || 0, rz || 0)), new V3(sx || 1, sy || sx || 1, sz || sx || 1));
+  const decorEnv = [];   // (the glossy materials: the room's cube map once it is made)
+  let screen = null;
+  function buildDecor() {
+    const { z0, z1, x0, x1, door } = ROOM, g = new World.GB(), sm = new SmoothB(), box = (cx, cy, cz, sx, sy, sz, col, top, rot) => World.box(g, cx, cy, cz, sx, sy, sz, rot || 0, col, top);
+    const RED = [0.74, 0.1, 0.08], DK = [0.07, 0.07, 0.08], STEEL = [0.62, 0.65, 0.7], ALU = [0.42, 0.44, 0.47], CHROME = [0.86, 0.88, 0.92];
+    const shadows = [];   // (soft dark patches on the floor under things: [x, z, w, d, k])
+    // an engine on its stand behind the turntable, left: a V8 with red valve covers, chrome air cleaner, the pulleys at the front
+    { const X = -5.25, Z = -2.35, sr = RED;
+      obox(g, [X - 0.45, 0.05, Z - 0.38], [X - 0.45, 0.05, Z + 0.38], 0.07, 0.07, sr); obox(g, [X - 0.45, 0.05, Z], [X + 0.5, 0.05, Z], 0.07, 0.07, sr);
+      for (const [cx, cz] of [[X - 0.45, Z - 0.36], [X - 0.45, Z + 0.36], [X + 0.48, Z]]) cylA(g, [cx, 0.035, cz], 'z', 0.035, 0.03, 8, DK);
+      obox(g, [X - 0.45, 0.05, Z], [X - 0.45, 0.82, Z], 0.08, 0.08, sr); obox(g, [X - 0.45, 0.8, Z], [X - 0.26, 0.8, Z], 0.08, 0.08, sr);
+      cylA(g, [X - 0.25, 0.8, Z], 'x', 0.17, 0.03, 12, [0.45, 0.08, 0.06]);
+      box(X + 0.05, 0.6, Z, 0.6, 0.38, 0.42, ALU, [0.5, 0.52, 0.55]);   // the block
+      box(X + 0.05, 0.47, Z, 0.5, 0.13, 0.3, DK);                        // the sump
+      for (const sd of [-1, 1]) { const hz = Z + sd * 0.17; obox(g, [X - 0.24, 1.0, hz], [X + 0.34, 1.0, hz], 0.17, 0.08, [0.82, 0.12, 0.1]); obox(g, [X - 0.2, 0.92, hz + sd * 0.06], [X + 0.3, 0.92, hz + sd * 0.06], 0.08, 0.12, ALU);
+        for (let i = 0; i < 4; i++) { const hx = X - 0.18 + i * 0.15; obox(g, [hx, 0.86, Z + sd * 0.26], [hx + 0.02, 0.64, Z + sd * 0.36], 0.035, 0.035, [0.62, 0.47, 0.36]); }   // (the headers, heat-blued steel)
+        obox(g, [X - 0.2, 0.62, Z + sd * 0.37], [X + 0.35, 0.58, Z + sd * 0.38], 0.06, 0.06, [0.5, 0.4, 0.34]); }
+      box(X + 0.05, 0.99, Z, 0.46, 0.1, 0.16, CHROME);   // the intake
+      cylA(g, [X + 0.05, 1.13, Z], 'y', 0.17, 0.06, 18, CHROME, [0.2, 0.2, 0.22]); cylA(g, [X + 0.05, 1.17, Z], 'y', 0.03, 0.03, 8, CHROME);
+      cylA(g, [X + 0.37, 0.72, Z], 'x', 0.1, 0.04, 14, DK); cylA(g, [X + 0.37, 0.93, Z + 0.1], 'x', 0.06, 0.05, 12, STEEL); cylA(g, [X + 0.37, 0.88, Z - 0.12], 'x', 0.055, 0.05, 12, DK);
+      shadows.push([X, Z, 1.4, 1.1, 0.8]); }
+    // a roll cab on the floor by the table: red, drawers, a black top with the tools on it, a push bar
+    { const X = -6.75, Z = -2.2, w = 0.82, d = 0.5;
+      box(X, 0.12, Z, w, 0.7, d, RED, [0.08, 0.08, 0.09]);
+      for (let i = 0; i < 4; i++) { const y = 0.12 + 0.7 - (i + 1) * 0.175; box(X, y + 0.004, Z + d / 2 + 0.003, w - 0.05, 0.01, 0.01, [0.5, 0.06, 0.05]); box(X, y + 0.11, Z + d / 2 + 0.012, w * 0.6, 0.022, 0.022, STEEL); }
+      for (const sx of [-1, 1]) { obox(g, [X + sx * (w / 2 + 0.05), 0.75, Z - 0.15], [X + sx * (w / 2 + 0.05), 0.75, Z + 0.15], 0.03, 0.03, STEEL); obox(g, [X + sx * (w / 2), 0.75, Z - 0.15], [X + sx * (w / 2 + 0.05), 0.75, Z - 0.15], 0.03, 0.03, STEEL); obox(g, [X + sx * (w / 2), 0.75, Z + 0.15], [X + sx * (w / 2 + 0.05), 0.75, Z + 0.15], 0.03, 0.03, STEEL); }
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) cylA(g, [X + sx * (w / 2 - 0.07), 0.05, Z + sz * (d / 2 - 0.07)], 'z', 0.05, 0.04, 8, DK);
+      box(X, 0.82, Z, w - 0.04, 0.02, d - 0.04, [0.12, 0.12, 0.13]);
+      for (let i = 0; i < 4; i++) obox(g, [X - 0.3 + i * 0.07, 0.85, Z - 0.15], [X - 0.27 + i * 0.07, 0.85, Z + 0.12], 0.025, 0.01, STEEL);   // spanners
+      box(X + 0.15, 0.84, Z - 0.05, 0.08, 0.14, 0.06, [0.95, 0.75, 0.1]); obox(g, [X + 0.15, 0.95, Z - 0.05], [X + 0.32, 0.95, Z - 0.05], 0.07, 0.07, [0.95, 0.75, 0.1]); box(X + 0.15, 0.82, Z - 0.05, 0.1, 0.03, 0.08, DK);   // a cordless drill
+      cylA(g, [X + 0.3, 0.92, Z + 0.13], 'y', 0.045, 0.16, 10, [0.15, 0.4, 0.85], [0.8, 0.8, 0.82]);   // a spray can
+      shadows.push([X, Z, 1.2, 0.9, 0.85]); }
+    // a trolley jack by the engine, its handle up
+    { const X = -3.55, Z = -3.5;
+      obox(g, [X - 0.35, 0.1, Z], [X + 0.3, 0.1, Z], 0.26, 0.12, RED); obox(g, [X + 0.3, 0.14, Z], [X + 0.42, 0.22, Z], 0.12, 0.06, RED); cylA(g, [X + 0.45, 0.24, Z], 'y', 0.07, 0.03, 10, DK);
+      obox(g, [X - 0.33, 0.14, Z], [X - 0.8, 0.85, Z + 0.1], 0.04, 0.04, RED); obox(g, [X - 0.8, 0.85, Z + 0.1], [X - 0.86, 0.95, Z + 0.11], 0.05, 0.05, DK);
+      for (const sz of [-1, 1]) { cylA(g, [X - 0.28, 0.05, Z + sz * 0.15], 'z', 0.05, 0.04, 10, DK); cylA(g, [X + 0.24, 0.04, Z + sz * 0.12], 'z', 0.04, 0.03, 8, DK); }
+      shadows.push([X, Z, 1.0, 0.6, 0.7]); }
+    // a new set of wheels behind the table, ready to go on: two lying, two leaning on them (tyre, rim, its spokes, the hub)
+    { const X = 1.85, Z = -3.25, T = [0.07, 0.07, 0.08], RIM = [0.78, 0.8, 0.84], DISH = [0.22, 0.23, 0.25];
+      const wheel = (m) => { sm.add(new THREE.CylinderGeometry(0.33, 0.33, 0.24, 26), m, T); sm.add(new THREE.CylinderGeometry(0.215, 0.215, 0.245, 22), m, DISH);
+        for (const sd of [-1, 1]) { const f = new THREE.Matrix4().makeTranslation(0, sd * 0.124, 0); sm.add(new THREE.RingGeometry(0.17, 0.215, 22).rotateX(sd * Math.PI / 2), m.clone().multiply(f), RIM); sm.add(new THREE.CircleGeometry(0.05, 10).rotateX(-sd * Math.PI / 2 + Math.PI), m.clone().multiply(f), RIM);
+          for (let k = 0; k < 5; k++) sm.add(new THREE.BoxGeometry(0.03, 0.006, 0.16).translate(0, sd * 0.003, 0.09).rotateY(k / 5 * TAU), m.clone().multiply(f), RIM); } };
+      wheel(M4(X, 0.12, Z)); wheel(M4(X + 0.04, 0.37, Z + 0.02, 0, 0.6, 0));
+      wheel(M4(X + 0.62, 0.36, Z + 0.1, 0, 0.3, Math.PI / 2 - 0.2)); wheel(M4(X - 0.25, 0.36, Z + 0.62, Math.PI / 2 - 0.25, 0, 0));
+      shadows.push([X + 0.15, Z + 0.25, 1.7, 1.5, 0.9]); }
+    // stacks of tyres by the way in (two with rims: a set of wheels ready), cones by the way out
+    const tyreStack = (x, z, n, rim) => { for (let i = 0; i < n; i++) { const y = i * 0.23; cylA(g, [x, y + 0.115, z], 'y', 0.33, 0.22, 16, [0.07, 0.07, 0.08], rim ? [0.1, 0.1, 0.11] : [0.05, 0.05, 0.055]); if (rim) cylA(g, [x, y + 0.225, z], 'y', 0.2, 0.012, 14, [0.72, 0.74, 0.78]); else cylA(g, [x, y + 0.225, z], 'y', 0.19, 0.012, 12, [0.02, 0.02, 0.02]); } shadows.push([x, z, 0.95, 0.95, 0.9]); };
+    tyreStack(-7.75, -4.35, 4, false); tyreStack(-6.95, -3.6, 3, true); tyreStack(-8.25, 3.6, 2, false);
+    for (const [x, z, n] of [[7.9, -3.5, 3], [7.4, -4.1, 1]]) { for (let i = 0; i < n; i++) { box(x, i * 0.07, z, 0.4, 0.035, 0.4, [0.95, 0.35, 0.06]); World.cone(g, x, i * 0.07 + 0.035, z, 0.16, 0.62, 12, [1, 0.42, 0.08], [1, 0.5, 0.12], 0); } World.cyl(g, x, n * 0.07 + 0.2, z, 0.115, 0.1, 12, [0.95, 0.95, 0.93]); shadows.push([x, z, 0.8, 0.8, 0.6]); }
+    // the safety corner by the left door: an extinguisher on its bracket, its sign, a first-aid box
+    { const X = x0 + 0.17, Z = -3.9;
+      sm.add(new THREE.CylinderGeometry(0.1, 0.1, 0.5, 18), M4(X, 0.55, Z), [0.85, 0.08, 0.07]);
+      sm.add(new THREE.SphereGeometry(0.1, 18, 8, 0, TAU, 0, Math.PI / 2), M4(X, 0.8, Z), [0.85, 0.08, 0.07]);
+      sm.add(new THREE.CylinderGeometry(0.035, 0.04, 0.1, 10), M4(X, 0.92, Z), [0.1, 0.1, 0.11]);
+      obox(g, [X, 0.95, Z], [X + 0.03, 0.97, Z + 0.15], 0.03, 0.025, [0.1, 0.1, 0.11]); obox(g, [X, 0.9, Z + 0.06], [X + 0.02, 0.4, Z + 0.13], 0.025, 0.025, DK);
+      box(X - 0.12, 0.62, Z, 0.04, 0.05, 0.24, STEEL);
+      box(x0 + 0.04, 1.2, Z, 0.02, 0.32, 0.32, [0.82, 0.1, 0.08]); box(x0 + 0.055, 1.27, Z, 0.01, 0.06, 0.18, [1, 1, 1]); box(x0 + 0.055, 1.25, Z, 0.01, 0.16, 0.05, [1, 1, 1]);   // (its sign: a red square, a white mark)
+      box(x0 + 0.08, 1.45, Z + 0.7, 0.14, 0.32, 0.42, [0.93, 0.94, 0.93]); box(x0 + 0.155, 1.61 - 0.11, Z + 0.7, 0.01, 0.22, 0.07, [0.1, 0.62, 0.3]); box(x0 + 0.155, 1.58, Z + 0.7, 0.01, 0.07, 0.22, [0.1, 0.62, 0.3]);   // (a first-aid box: a green cross)
+      shadows.push([X + 0.1, Z, 0.5, 0.5, 0.6]); }
+    // a shelf over the tyre rack: helmets of the team's drivers, two cups won
+    { const sx0 = 1.75, sx1 = 4.55, Y = 2.34, Z = z0 + 0.17;
+      box((sx0 + sx1) / 2, Y - 0.04, Z, sx1 - sx0, 0.04, 0.3, [0.16, 0.17, 0.19], [0.24, 0.25, 0.28]);
+      for (const x of [sx0 + 0.2, sx1 - 0.2]) obox(g, [x, Y - 0.05, z0 + 0.02], [x, Y - 0.25, z0 + 0.02], 0.03, 0.03, STEEL), obox(g, [x, Y - 0.06, z0 + 0.02], [x, Y - 0.06, z0 + 0.28], 0.03, 0.03, STEEL);
+      const helmet = (x, a, b, c) => {   // a helmet: its shell, a stripe over it, the dark visor
+        sm.add(new THREE.SphereGeometry(0.15, 20, 14), M4(x, Y + 0.14, Z, 0, 0.35, 0, 1, 0.92, 1.08), a);
+        sm.add(new THREE.TorusGeometry(0.152, 0.018, 6, 24, Math.PI * 1.15), M4(x, Y + 0.14, Z, 0, 0.35 + Math.PI / 2, -0.08, 1, 0.92, 1.08), b);
+        sm.add(new THREE.SphereGeometry(0.153, 16, 8, Math.PI / 2 - 0.95, 1.9, 1.15, 0.6), M4(x, Y + 0.13, Z, 0, 0.35, 0, 1, 0.92, 1.08), c);
+        sm.add(new THREE.CylinderGeometry(0.13, 0.145, 0.04, 16), M4(x, Y + 0.02, Z, 0, 0, 0, 1, 1, 1.08), [0.08, 0.08, 0.09]); };
+      helmet(sx0 + 0.45, [0.88, 0.12, 0.1], [0.97, 0.97, 0.95], [0.05, 0.06, 0.08]);
+      helmet(sx0 + 0.95, [0.95, 0.95, 0.93], [0.12, 0.35, 0.85], [0.05, 0.06, 0.08]);
+      helmet(sx0 + 1.45, [0.98, 0.78, 0.12], [0.08, 0.08, 0.09], [0.3, 0.55, 0.85]);
+      const GOLD = [0.98, 0.76, 0.26], cup = new THREE.LatheGeometry([[0, 0], [0.05, 0], [0.05, 0.02], [0.018, 0.04], [0.018, 0.1], [0.04, 0.12], [0.09, 0.2], [0.1, 0.26], [0.095, 0.27]].map(p => new THREE.Vector2(p[0], p[1])), 20);
+      for (const [x, k] of [[sx1 - 0.65, 1], [sx1 - 0.3, 0.8]]) { box(x, Y, Z, 0.16 * k + 0.04, 0.07, 0.16 * k + 0.04, [0.1, 0.1, 0.11]); sm.add(cup.clone(), M4(x, Y + 0.07, Z, 0, 0, 0, k), GOLD);
+        sm.add(new THREE.TorusGeometry(0.045 * k, 0.01, 6, 14, Math.PI), M4(x + 0.1 * k, Y + 0.07 + 0.2 * k, Z, 0, 0, -Math.PI / 2), GOLD); sm.add(new THREE.TorusGeometry(0.045 * k, 0.01, 6, 14, Math.PI), M4(x - 0.1 * k, Y + 0.07 + 0.2 * k, Z, 0, 0, Math.PI / 2), GOLD); }
+      cup.dispose(); }
+    // crossed chequered flags on the left wall by the door
+    { const flag = canvasTex(128, 96, (gx, w, h) => { for (let j = 0; j < 6; j++) for (let i = 0; i < 8; i++) { gx.fillStyle = (i + j) % 2 ? '#111215' : '#f4f4f0'; gx.fillRect(i * w / 8, j * h / 6, w / 8 + 1, h / 6 + 1); } });
+      const fm = new THREE.MeshLambertMaterial({ map: flag, side: THREE.DoubleSide });
+      const C = [x0 + 0.1, 2.35, -3.75];
+      for (const sd of [-1, 1]) {   // (each pole leans out over the other; its flag flies from the top, away from the middle)
+        const d = [0, Math.sin(0.62), -sd * Math.cos(0.62)], tip = [C[0], C[1] + d[1] * 0.85, C[2] + d[2] * 0.85];
+        obox(g, [C[0], C[1] - d[1] * 0.3, C[2] - d[2] * 0.3], tip, 0.025, 0.025, [0.88, 0.88, 0.86]);
+        const geo = new THREE.PlaneGeometry(0.62, 0.42, 10, 4), P = geo.attributes.position;
+        for (let i = 0; i < P.count; i++) { const u = P.getX(i) + 0.31; P.setZ(i, Math.sin(u * 9) * 0.035 * u); }   // (the cloth's waves, more towards its free end)
+        geo.translate(0.31, -0.21, 0); geo.computeVertexNormals();
+        const m = new THREE.Mesh(geo, fm); m.position.set(tip[0] + 0.012, tip[1], tip[2]); m.rotation.y = Math.PI / 2; if (sd < 0) m.scale.x = -1; scene.add(m);
+      } }
+    // the team's big screen on the back wall, right of the sign: the car on the table, its power, its parts (live)
+    { const c = document.createElement('canvas'); c.width = 512; c.height = 288; const t = new THREE.CanvasTexture(c); t.anisotropy = 4;
+      screen = { c, g: c.getContext('2d'), t, key: '' };
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(1.62, 0.91), new THREE.MeshBasicMaterial({ map: t })); m.position.set(0.4, 2.5, z0 + 0.075); scene.add(m);
+      box(0.4, 2.0, z0 + 0.03, 1.74, 1.03, 0.08, [0.05, 0.05, 0.06]);
+      const gl = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 2.0), new THREE.MeshBasicMaterial({ map: TX.glow, color: 0x2f8fd0, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.22 })); gl.position.set(0.4, 2.5, z0 + 0.03); scene.add(gl);
+      drawScreen(0); }
+    // a light line along the walls at the top of the tread plate (the menu's cyan), its glow on the panels
+    { const LM = new THREE.MeshBasicMaterial({ color: 0x7fd6ff }), GM = new THREE.MeshBasicMaterial({ map: canvasTex(16, 64, (gx, w, h) => { const gr = gx.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(90,190,255,0)'); gr.addColorStop(0.5, 'rgba(90,190,255,1)'); gr.addColorStop(1, 'rgba(90,190,255,0)'); gx.fillStyle = gr; gx.fillRect(0, 0, w, h); }), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.35 });
+      const run = (ax, az, bx, bz, nx, nz) => { const L = Math.hypot(bx - ax, bz - az), cx = (ax + bx) / 2, cz = (az + bz) / 2, ry = nx ? nx * Math.PI / 2 : nz > 0 ? 0 : Math.PI;   // (the plane faces the room)
+        const l = new THREE.Mesh(new THREE.BoxGeometry(L, 0.018, 0.02), LM); l.position.set(cx + nx * 0.012, 1.01, cz + nz * 0.012); l.rotation.y = ry; scene.add(l);
+        const gw = new THREE.Mesh(new THREE.PlaneGeometry(L, 0.5), GM); gw.position.set(cx + nx * 0.016, 1.01, cz + nz * 0.016); gw.rotation.y = ry; gw.renderOrder = 2; scene.add(gw); };
+      run(x0, z0, x1, z0, 0, 1); run(x0, -door - 0.4, x0, z0, 1, 0); run(x1, z0, x1, -door - 0.4, -1, 0); }
+    // a car under its cover in the front corner (a project waiting): the cover's shape measured on a car, draped to the floor, its folds
+    { const v = Render.garageCar(Core.MODELS.find(m => m.id === 'kaze'), 0x888888, 0, false), P = bodyProbe(v), bb = P.bb, nx = 26, na = 22, pos = [], uv = [], idx = [];
+      const R = Core.rng(9), wob = [], len = bb.max.x - bb.min.x; for (let i = 0; i <= nx; i++) wob.push(R());
+      for (let i = 0; i <= nx; i++) {
+        const t = i / nx, x = bb.min.x - 0.06 + t * (len + 0.12), xs = clamp(x, bb.min.x + 0.05, bb.max.x - 0.05), top = (P.top(xs, 0) || 0.9) + 0.035, end = Math.pow(Math.sin(Math.PI * clamp(t * 1.04 - 0.02, 0, 1)), 0.25);
+        const hw = (P.side(xs, Math.min(top - 0.1, 0.62), 1) || bb.max.z) + 0.05;
+        for (let j = 0; j <= na; j++) {
+          const a = j / na * Math.PI, sy = Math.sin(a), cz = Math.cos(a), fold = 0.012 * Math.sin(j * 1.7 + wob[i] * 6) * (1 - sy * 0.5);
+          const ex = Math.pow(Math.abs(cz), 0.35) * Math.sign(cz), ey = Math.pow(sy, 0.6);
+          const z = ex * (hw + 0.02 + 0.05 * (1 - ey)) * (0.75 + 0.25 * end), y = 0.03 + ey * (top - 0.03) * (0.82 + 0.18 * end) + fold;
+          pos.push(x + (1 - end) * -Math.sign(t - 0.5) * 0.08 * (1 - ey), y, z + fold); uv.push(t * 3, j / na * 2);
+        }
+      }
+      for (let i = 0; i < nx; i++) for (let j = 0; j < na; j++) { const a = i * (na + 1) + j, b = a + na + 1; idx.push(a, b, a + 1, b, b + 1, a + 1); }
+      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); geo.setIndex(idx); geo.computeVertexNormals();
+      const cloth = canvasTex(256, 256, (gx, w, h) => { gx.fillStyle = '#5a6272'; gx.fillRect(0, 0, w, h); for (let k = 0; k < 2200; k++) { gx.fillStyle = 'rgba(' + (Math.random() < 0.5 ? '0,0,0,0.06' : '255,255,255,0.05') + ')'; gx.fillRect(Math.random() * w, Math.random() * h, 1 + Math.random() * 3, 1); }
+        for (let k = 0; k < 18; k++) { const y = Math.random() * h; const gr = gx.createLinearGradient(0, y - 8, 0, y + 8); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(0.5, 'rgba(0,0,0,0.12)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); gx.fillStyle = gr; gx.fillRect(0, y - 8, w, 16); }
+        gx.fillStyle = 'rgba(255,198,41,0.85)'; gx.font = 'italic 900 34px Roboto, Arial, sans-serif'; gx.fillText('APEX', 70, 140); }, true);
+      const cm = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: cloth, side: THREE.DoubleSide })); cm.position.set(-5.3, 0, 5.6); cm.rotation.y = 0.42; cm.castShadow = cm.receiveShadow = true; scene.add(cm);
+      shadows.push([-5.3, 5.6, len + 0.9, 2.6, 1, 0.42]);
+      Render.garageFree(v); }
+    // soft shadows on the floor: along the foot of every wall, under the things standing on it
+    { const ao = canvasTex(64, 64, (gx, w, h) => { const gr = gx.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(0,0,0,0.55)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); gx.fillStyle = gr; gx.fillRect(0, 0, w, h); });
+      const am = new THREE.MeshBasicMaterial({ map: ao, transparent: true, depthWrite: false });
+      const strip = (cx, cz, L, ry) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(L, 0.9), am); m.rotation.set(-Math.PI / 2, 0, ry); m.position.set(cx, 0.007, cz); m.renderOrder = -2; scene.add(m); };
+      strip(0, z0 + 0.45, x1 - x0, 0); strip(0, z1 - 0.45, x1 - x0, Math.PI);
+      for (const [a, b] of [[z0, -door], [door, z1]]) { strip(x0 + 0.45, (a + b) / 2, b - a, -Math.PI / 2); strip(x1 - 0.45, (a + b) / 2, b - a, Math.PI / 2); }
+      const blob = canvasTex(64, 64, (gx, w) => { const gr = gx.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2); gr.addColorStop(0, 'rgba(0,0,0,0.6)'); gr.addColorStop(0.6, 'rgba(0,0,0,0.3)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); gx.fillStyle = gr; gx.fillRect(0, 0, w, w); });
+      const bm = new THREE.MeshBasicMaterial({ map: blob, transparent: true, depthWrite: false });
+      for (const [x, z, w, d, , ry] of shadows.concat([[-6.9, z0 + 0.4, 1.9, 1.0, 0.9], [-5.25, z0 + 0.4, 1.3, 1.0, 0.9], [-2.6, z0 + 0.35, 3.6, 0.9, 0.8], [3.0, z0 + 0.25, 4.0, 0.8, 0.7], [6.45, z0 + 0.35, 2.9, 1.0, 0.9], [-8.42, z0 + 1.5, 0.9, 1.6, 0.8], [3.5, z1 - 0.4, 3.6, 1.0, 0.8]])) {
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), bm); m.rotation.set(-Math.PI / 2, 0, ry || 0); m.position.set(x, 0.008, z); m.renderOrder = -2; scene.add(m); }
+      // a few old oil stains on the epoxy
+      const stain = canvasTex(64, 64, (gx, w) => { for (let k = 0; k < 6; k++) { const x = 20 + Math.random() * 24, y = 20 + Math.random() * 24, r = 6 + Math.random() * 14, gr = gx.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgba(10,8,6,0.35)'); gr.addColorStop(1, 'rgba(10,8,6,0)'); gx.fillStyle = gr; gx.fillRect(0, 0, w, w); } });
+      const sMat = new THREE.MeshBasicMaterial({ map: stain, transparent: true, depthWrite: false });
+      for (const [x, z, s2] of [[-5.6, -1.6, 1.1], [4.6, 2.2, 0.8], [6.2, -3.0, 1.3], [-6.8, 3.4, 0.9]]) { const m = new THREE.Mesh(new THREE.PlaneGeometry(s2, s2), sMat); m.rotation.set(-Math.PI / 2, 0, x); m.position.set(x, 0.007, z); m.renderOrder = -2; scene.add(m); } }
+    // the vertex-coloured things (cast and take shadows), the glossy round ones (the room's reflections in them)
+    const gm = new THREE.Mesh(g.geometry(), new THREE.MeshPhongMaterial({ vertexColors: true, specular: 0x555555, shininess: 45 })); gm.castShadow = gm.receiveShadow = true; scene.add(gm);
+    const smM = new THREE.MeshPhongMaterial({ vertexColors: true, specular: 0xffffff, shininess: 90, combine: THREE.MixOperation, reflectivity: 0.25 }); decorEnv.push(smM);
+    const smm = new THREE.Mesh(sm.geometry(), smM); smm.castShadow = true; smm.receiveShadow = true; scene.add(smm);
+  }
+  // the big screen: the car on the turntable (its name, drive, power), its four upgrades as bars, a telemetry trace running
+  function drawScreen(t) {
+    if (!screen) return;
+    const g = screen.g, w = 512, h = 288, cv = cur, M = cv && cv.M, up = cv ? cv.spec.upg || {} : {};
+    g.fillStyle = '#081221'; g.fillRect(0, 0, w, h);
+    const bg = g.createLinearGradient(0, 0, w, h); bg.addColorStop(0, 'rgba(40,110,190,0.25)'); bg.addColorStop(1, 'rgba(10,20,40,0)'); g.fillStyle = bg; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#d9453a'; g.fillRect(0, 0, 10, h); for (let y = 0; y < h; y += 28) { g.fillStyle = '#f2efe8'; g.fillRect(0, y + 14, 10, 14); }   // (the kerb stripe of the menu)
+    g.fillStyle = '#ffd23f'; g.font = 'italic 900 22px Roboto, Arial, sans-serif'; g.fillText('APEX RACING', 28, 36);
+    const tr = (s) => typeof Lang !== 'undefined' ? Lang.tr(s) : s;
+    g.fillStyle = '#a3b2d3'; g.font = 'italic 700 16px Roboto, Arial, sans-serif'; g.fillText(tr('GARAŽA · V ŽIVO'), 190, 36);
+    if (M) {
+      const st = Core.upgStats(M, up);
+      g.fillStyle = '#ffffff'; g.font = 'italic 900 46px Roboto, Arial, sans-serif'; g.fillText(M.name, 28, 92, 330);
+      g.fillStyle = '#6cc8f7'; g.font = 'italic 900 34px Roboto, Arial, sans-serif'; g.fillText(Math.round(st.kw) + ' kW', 360, 92, 140);
+      g.fillStyle = '#a3b2d3'; g.font = '700 15px Roboto, Arial, sans-serif'; g.fillText(M.drive + ' · ' + M.mass + ' kg', 28, 118);
+      [tr('Motor'), tr('Gume'), tr('Zavore'), 'Aero'].forEach((n, i) => { const k = ['motor', 'gume', 'zavore', 'aero'][i], lv = up[k] || 0, y = 146 + i * 26;
+        g.fillStyle = '#a3b2d3'; g.font = '700 14px Roboto, Arial, sans-serif'; g.fillText(n.toUpperCase(), 28, y + 13);
+        for (let p = 0; p < 3; p++) { g.fillStyle = p < lv ? ['#5fd38a', '#f5c84c', '#ff6b5b'][Math.min(2, lv - 1)] : '#1d2b41'; g.fillRect(110 + p * 46, y + 2, 40, 13); } });
+    }
+    g.strokeStyle = 'rgba(80,130,190,0.35)'; g.lineWidth = 1; g.strokeRect(272, 140, 220, 120);
+    const f = (x) => 0.55 + 0.3 * Math.sin(x * 0.05 + t * 0.6) + 0.12 * Math.sin(x * 0.17 + 1 + t);
+    g.strokeStyle = '#47c6ff'; g.lineWidth = 2.5; g.beginPath(); for (let x = 0; x <= 220; x += 4) { const y = 255 - f(x) * 100; x ? g.lineTo(272 + x, y) : g.moveTo(272, y); } g.stroke();
+    const cx = 272 + (t * 50) % 220; g.fillStyle = 'rgba(255,255,255,0.75)'; g.fillRect(cx, 141, 2, 118);
+    screen.t.needsUpdate = true;
+  }
   function shaftTex() {
     return canvasTex(128, 128, (g, w, h) => { const gr = g.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, 'rgba(255,248,232,0.9)'); gr.addColorStop(1, 'rgba(255,248,232,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
       g.globalCompositeOperation = 'destination-in'; const m = g.createLinearGradient(0, 0, 0, h); m.addColorStop(0, 'rgba(0,0,0,0)'); m.addColorStop(0.2, 'rgba(0,0,0,1)'); m.addColorStop(0.8, 'rgba(0,0,0,1)'); m.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = m; g.fillRect(0, 0, w, h); });
@@ -490,7 +683,7 @@ const Garage3D = (function () {
   }
 
   /* ---------------- the camera: round the car (the user drags it), moved by the animations ---------------- */
-  const HOME = { yaw: 0.55, pitch: 0.17, dist: 8.4, tx: 0.1, ty: 0.6, tz: 0, fov: 33 };
+  const HOME = { yaw: 0.55, pitch: 0.18, dist: 9.2, tx: -0.2, ty: 0.62, tz: 0, fov: 33 };
   const rig = Object.assign({}, HOME), user = { yaw: 0, pitch: 0, zoom: 1, vy: 0 };
   function placeCamera(dt) {
     if (!user.drag) { user.yaw += user.vy * dt; user.vy *= Math.exp(-dt * 3); }
@@ -1336,12 +1529,13 @@ const Garage3D = (function () {
     scene = new THREE.Scene(); scene.background = new THREE.Color(0x0d1420);
     camera = new THREE.PerspectiveCamera(HOME.fov, 1.6, 0.1, 60);
     makeTextures();
-    buildLights(); buildFloor(); buildRoom(); buildTurntable();
+    buildLights(); buildFloor(); buildRoom(); buildTurntable(); buildDecor();
     // the room in the cars' paint and glass: a cube map of it, made once from where a car's middle is
     cubeRT = new THREE.WebGLCubeRenderTarget(256, { format: THREE.RGBAFormat, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter });
     const cc = new THREE.CubeCamera(0.2, 40, cubeRT); cc.position.set(0, 0.9, 0); scene.add(cc);
     REF.k.value = 0; ttTop.visible = true; cc.update(renderer, scene); REF.k.value = 0.62; scene.remove(cc);
     env = cubeRT.texture;
+    for (const m of decorEnv) { m.envMap = env; m.needsUpdate = true; }
     makePartMats();
     puffs = new Puffs(1400, false); sparks = new Puffs(900, true); scene.add(puffs.pts, sparks.pts);
     Render.garageLight(KEY_DIR, 0xfff2e0, 0.5, 0xffffff);
@@ -1372,7 +1566,7 @@ const Garage3D = (function () {
     motes.material.uniforms.uT.value = time;
     ringGlow.material.uniforms.uK.value = 0.3 + 0.06 * Math.sin(time * 1.6);
     signGlow.material.opacity = 0.17 + 0.015 * Math.sin(time * 2.3);
-    if ((time * 4 | 0) !== ((time - dt) * 4 | 0)) drawMonitor(time);   // (the screen four times a second)
+    if ((time * 4 | 0) !== ((time - dt) * 4 | 0)) drawScreen(time);   // (the big screen four times a second)
     if (autoSpin && !busy && !user.drag) rig.yaw += dt * 0.32;
     placeCamera(dt);
     if (noDraw) return;

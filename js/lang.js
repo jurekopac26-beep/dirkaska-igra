@@ -296,7 +296,7 @@
     'S = serijsko. Rumena pika: še ni kupljeno. Cena stopnje 1, 2, 3: {0}, {1}, {2} CR.': 'S = stock. Yellow dot: not bought yet. Levels 1, 2, 3 cost {0}, {1}, {2} CR.',
     'Barvanje {0} CR': 'Paint job {0} CR', 'Dirkalne črte': 'Racing stripes', 'Druga barva na pokrovu in bokih · {0} CR': 'A second colour on the bonnet and the sides · {0} CR', 'Da': 'Yes', 'Ne': 'No',
     'Premalo kreditov: potrebuješ {0} CR, imaš {1} CR.': 'Not enough credits: you need {0} CR, you have {1} CR.', '{0} je izbran za naslednjo dirko.': '{0} is selected for the next race.',
-    'Nazaj v meni (garaža bo kasneje povezana z menijem).': 'Back to the menu (the garage will be joined with the menu later).', 'Profil je ponastavljen.': 'The profile is reset.', 'MOČ': 'POWER', 'KONČANO': 'DONE',
+    'Nazaj v meni (garaža bo kasneje povezana z menijem).': 'Back to the menu (the garage will be joined with the menu later).', 'Profil je ponastavljen.': 'The profile is reset.', 'MOČ': 'POWER', 'KONČANO': 'DONE', 'GARAŽA · V ŽIVO': 'GARAGE · LIVE',
     'Rdeča': 'Red', 'Bela': 'White', 'Modra': 'Blue', 'Rumena': 'Yellow', 'Črna': 'Black', 'Zelena': 'Green', 'Oranžna': 'Orange', 'Vijolična': 'Purple',
     'Kupe': 'Coupé', 'Limuzina': 'Saloon', 'Športni avto': 'Sports car', 'Reli': 'Rally', 'Prototip': 'Prototype', 'Električni': 'Electric', 'Terenec': 'Off-roader',
     'Pranje': 'Wash', 'Pena, voda, vosek': 'Foam, water, wax', 'Karoserija': 'Bodywork', 'Praske in udrtine': 'Scratches and dents', 'Motor in olje': 'Engine and oil', 'Olje, filtri, svečke': 'Oil, filters, spark plugs',
