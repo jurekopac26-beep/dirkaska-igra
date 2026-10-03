@@ -4316,7 +4316,7 @@ const World = (function () {
      the mountain road, fewer in the streets, a few on a modern circuit), and on a circuit the rubber
      laid down along the racing line in the two tyre tracks, darkest where the cars brake and turn. Decals just over the road in the road's own
      colour (lit, its shadows on them; the rain darkens them with it: userData.wear), indexed, in 256 m chunks (culled) ---- */
-  const ROAD_WEAR = { nring: 1, vrsic: 1, caracoles: 0.8, monaco: 0.75, city: 0.75, ljubljana: 0.85, harju: 1 };   // per theme (else a modern circuit's: 0.3, an open road's: 0.8, as Los Caracoles; Harju's old town streets as worn as the Nordschleife, and twice as often again: roadWear's sp)
+  const ROAD_WEAR = { nring: 1, vrsic: 1, caracoles: 0.8, monaco: 0.75, city: 0.75, ljubljana: 0.85, harju: 1, cpalace: 1 };   // per theme (else a modern circuit's: 0.3, an open road's: 0.8, as Los Caracoles; Harju's old town streets as worn as the Nordschleife, and twice as often again: roadWear's sp)
   function roadWear(o, tex) {
     if (T.def.roadSurface === 'makadam' || THEME === 'pikes' || !T.rl || !tex.wear) return;   // (Pikes Peak's road has its own cracks and patches)
     const N = T.N, ds = T.ds, w = T.w, len = T.len, open = T.open, R = rng(4242), bk = { dy: 0, sl: 0 }, cells = new Map(), lim = w - 0.6;
@@ -20956,7 +20956,12 @@ const World = (function () {
       wm.receiveShadow = true; wm.matrixAutoUpdate = false; wm.updateMatrix(); root.add(wm); out.dyn.water = tex.water;
       const bands = P.lakes.map(L => { const b = L.b, sd = (x, z) => { let d = polyDist(L.poly, x, z); for (const h of L.holes) d = Math.min(d, polyDist(h, x, z)); return inPoly(L.poly, x, z) && !L.holes.some(h => inPoly(h, x, z)) ? d : -d; };
         return shoreBand(b[0] - 6, b[2] - 6, b[1] + 6, b[3] + 6, L.lvl + 0.015, sd, 16); });
-      addShore(root, mergeBands(bands), wm.material, WO); }   // (the shore band round every lake and the islands: the shallows, the foam at the waterline)
+      const band = addShore(root, mergeBands(bands), wm.material, WO);   // (the shore band round every lake and the islands: the shallows, the foam at the waterline)
+      const gi = new GB();   // the ice in winter (World.update shows it instead of the water): pale grey-blue, lighter where the snow lies on it
+      for (const L of P.lakes) { const V = (p) => new THREE.Vector2(p[0], p[1]), all = [...L.poly, ...[].concat(...L.holes)], ic = (p) => { const k = 0.9 + crH(p[0] * 0.3, p[1] * 0.3, 2) * 0.16; return [0.78 * k, 0.84 * k, 0.88 * k]; };
+        for (const [a, b, c] of THREE.ShapeUtils.triangulateShape(L.poly.map(V), L.holes.map(h => h.map(V)))) { const Q = (p) => [p[0], L.lvl + 0.03, p[1]]; gi.triO(Q(all[a]), Q(all[b]), Q(all[c]), ic(all[a]), [all[a][0], L.lvl - 5, all[a][1]], ic(all[b]), ic(all[c])); } }
+      const ice = new THREE.Mesh(gi.geometry(), K.matV); ice.visible = false; ice.receiveShadow = true; ice.matrixAutoUpdate = false; root.add(ice);
+      out.dyn.cpIce = { ice, wet: [wm, band], s: null }; }
     // the sculptures (1854): painted stone, each facing the open water (the lake's middle)
     { const SC = [[0.44, 0.47, 0.38], [0.47, 0.44, 0.38], [0.52, 0.47, 0.37], [0.56, 0.45, 0.32], [0.42, 0.4, 0.37]];
       for (const [x, z, kind] of C.dinos) {
@@ -21047,7 +21052,7 @@ const World = (function () {
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
   function cpTrees(K) {
-    const { root, R, excluded, dens } = K, P = NR, G = P.G, C = T.def.cp, tMat = new THREE.MeshLambertMaterial({ vertexColors: true });
+    const { root, R, excluded, dens, out } = K, P = NR, G = P.G, C = T.def.cp, tMat = new THREE.MeshLambertMaterial({ vertexColors: true }), lv = new Chunks(512), LV = [[0.56, 0.4, 0.18], [0.5, 0.32, 0.15], [0.62, 0.5, 0.24]];   // (lv: the leaves fallen under the near trees, shown in autumn)
     const nk = new IChunks(cpTreeGeo(0), tMat, 200), fg = new IChunks(cpTreeGeo(2), tMat, 320), tk = [nk, nk], tf = [fg, fg];   // (one shape near the road, one cheaper far out: the planes and the chestnuts by their colours and proportions)
     const terr = (x, z) => { for (const L of CPK.walls) { const b = L.b; if (x < b[0] - 140 || x > b[1] + 20 || z < b[2] || z > b[3]) continue; for (const p of L.W) if (Math.hypot(x - p.x, z - p.z) < 26) return true; } return false; };   // (the open lawns of the terraces)
     let n = 0;
@@ -21055,9 +21060,12 @@ const World = (function () {
       const rd = nrDist(x, z); if (rd > 300) return;
       if (rd < 48) { const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 3.0) return; if (nn.i >= 0 && nn.dd < 7 && crH(x, z, 9) < 0.35) return; }
       if (excluded(x, z) || P.pad(x, z, 0) !== 0 || terr(x, z)) return;
-      const far = rd > 80, cv = 0.86 + crH(x, z, 2) * 0.28, kd = crH(x, z, 11), M = sp ? [0.9, 0.92, 0.9] : kd < 0.38 ? [0.84, 0.88, 0.8] : kd < 0.55 ? [1.14, 1.1, 0.86] : [1, 1, 1];   // the kinds by their colours: horse chestnuts dark, oaks olive, birches and limes light, the planes
+      const far = rd > 55, cv = 0.86 + crH(x, z, 2) * 0.28, kd = crH(x, z, 11), M = sp ? [0.9, 0.92, 0.9] : kd < 0.38 ? [0.84, 0.88, 0.8] : kd < 0.55 ? [1.14, 1.1, 0.86] : [1, 1, 1];   // the kinds by their colours: horse chestnuts dark, oaks olive, birches and limes light, the planes
       (far ? tf : tk)[sp].add(x, nrGround(x, z) - 0.1, z, crH(x, z, 3) * TAU, wid, hgt, [cv * M[0] * (0.95 + crH(x, z, 4) * 0.1), cv * M[1], cv * M[2] * (0.94 + crH(x, z, 5) * 0.1)]);
       nrShade(x, z, wid * 0.33, 1); n++;
+      if (!far) { const g = lv.get(x, z), r = wid * 0.36, c0 = LV[Math.floor(crH(x, z, 15) * 3)], cm = [c0[0] * 0.8, c0[1] * 0.8, c0[2] * 0.8], ctr = [x, nrGround(x, z) + 0.07, z], pts = [];
+        for (let k = 0; k < 8; k++) { const a = k / 8 * TAU + crH(x, z, 20 + k) * 0.5, rr = r * (0.7 + crH(x, z, 30 + k) * 0.6), px = x + Math.cos(a) * rr, pz = z + Math.sin(a) * rr; pts.push([px, nrGround(px, pz) + 0.07, pz]); }
+        for (let k = 0; k < 8; k++) g.triO(ctr, pts[k], pts[(k + 1) % 8], cm, [x, ctr[1] - 5, z], c0, c0); }
     };
     for (let k = 0; k < C.trees.length; k += 2) { const x = C.trees[k], z = C.trees[k + 1], sp = crH(x, z, 1) < 0.62 ? 0 : 1, h = (sp ? 15 : 19) + crH(x, z, 6) * 9; put(x, z, sp, h, h * (sp ? 0.85 : 0.78)); }
     for (const L of C.paths) for (let k = 0, run = 0; k + 3 < L.length; k += 2) {   // trees along the walks, now on one side, now on the other (the Victorian park's avenues), every 14-20 m
@@ -21078,13 +21086,14 @@ const World = (function () {
     }
     for (const t of new Set(tk)) t.addTo(root, true);
     fg.addTo(root, false);
+    const lg = new THREE.Group(); root.add(lg); lv.addTo(lg, new THREE.MeshLambertMaterial({ vertexColors: true }), false, true); lg.children.forEach(m => { m.visible = false; }); out.dyn.cpLeaves = lg.children;
     return n;
   }
   // the park's smaller things: its gravel footpaths (OpenStreetMap's), shrubberies along the woods' edges and by the paths, the flower beds on
   // the terraces, the spectators' cars parked on the lawns behind the banks, refreshment marquees, swans and ducks on the two big lakes
   // (K.nc: drawn without shadows of their own, as the houses; the cars and the marquees cast theirs)
   function cpExtras(K) {
-    const { scen, nc, exclPush, excluded, root, out, sAt } = K, C = T.def.cp, P = CPK, st = { paths: 0, shrubs: 0, beds: 0, cars: 0, tents: 0, fowl: 0 };
+    const { scen, nc, exclPush, excluded, root, out, sAt, CR } = K, C = T.def.cp, P = CPK, st = { paths: 0, shrubs: 0, beds: 0, cars: 0, tents: 0, fowl: 0 };
     const upper = (x, z) => { const w = P.wallAt(x, z); if (!w || w[2] > 0.5) return null; const [p, d] = w; return d > -1.5 && d < 0.6 ? -1 : d >= 0.6 && d <= 21.5 ? p.hi + 0.12 : null; };   // (the upper lawns over the walls: their height; -1 the wall itself)
     const open = (x, z) => !excluded(x, z) && !P.lakeAt(x, z) && upper(x, z) == null && (NR.pad(x, z, 0) === 0 || !!P.wallAt(x, z));   // (not the pits' level ground, nor a lake's bank; the terraces' lower lawns, levelled by the walls, are open)
     // the paths: gravel 3 m wide, a darker worn edge, over the lawns (also over the terraces' upper lawns)
@@ -21122,13 +21131,14 @@ const World = (function () {
         shrub(px, pz, 1.3 + R() * 1.4);
       } }
     // the flower beds on the upper terraces (bedding plants in ovals, a rim of dark soil), every 32 m along the walls, 11 m behind them
-    { const FL = [[0.78, 0.13, 0.1], [0.92, 0.74, 0.16], [0.82, 0.36, 0.52], [0.86, 0.84, 0.8]], SO = [0.34, 0.27, 0.2];
+    { const FL = [[0.74, 0.14, 0.1], [0.9, 0.7, 0.16], [0.56, 0.26, 0.5], [0.88, 0.42, 0.12]], SO = [0.3, 0.25, 0.19];
       for (const Lw of P.walls) for (let k = 4, j = 0; k < Lw.W.length - 4; k += 8, j++) {
-        const p = Lw.W[k], cx = p.x + p.nx * 11, cz = p.z + p.nz * 11, y = p.hi + 0.16, g = nc.get(cx, cz), a = Math.atan2(p.tz, p.tx), c = Math.cos(a), s = Math.sin(a), f1 = FL[j % FL.length], f2 = FL[(j + 1) % FL.length];
+        const p = Lw.W[k], cx = p.x + p.nx * 11, cz = p.z + p.nz * 11, y = p.hi + 0.16, g = nc.get(cx, cz), a = Math.atan2(p.tz, p.tx), c = Math.cos(a), s = Math.sin(a), f1 = FL[j % FL.length];
         const at = (t, r) => [cx + Math.cos(t) * 4.2 * r * c - Math.sin(t) * 1.9 * r * s, y, cz + Math.cos(t) * 4.2 * r * s + Math.sin(t) * 1.9 * r * c], inn = [cx, y - 5, cz];
         for (let q = 0; q < 14; q++) { const t0 = q / 14 * TAU, t1 = (q + 1) / 14 * TAU, A = at(t0, 1), B = at(t1, 1), A2 = at(t0, 0.82), B2 = at(t1, 0.82), A3 = at(t0, 0.4), B3 = at(t1, 0.4);
           A2[1] = B2[1] = A3[1] = B3[1] = y + 0.08;
-          g.quadO(A, B, B2, A2, SO, inn); g.quadO(A2, B2, B3, A3, f1, inn); g.triO(A3, B3, [cx, y + 0.12, cz], f2, inn); }
+          const sp = (c, k) => { const v = 0.85 + crH(cx, cz, q * 3 + k) * 0.3; return [c[0] * v, c[1] * v, c[2] * v]; }, gr = [0.2, 0.32, 0.14];
+          g.quadO(A, B, B2, A2, SO, inn); g.quadO(A2, B2, B3, A3, sp(f1, 0), inn, null, [sp(f1, 1), sp(f1, 2), sp(f1, 0), sp(f1, 2)]); g.triO(A3, B3, [cx, y + 0.3, cz], q % 2 ? sp(f1, 1) : sp(f1, 2), inn, sp(f1, 0), gr); }   // (bedding plants of one colour, a dark green centre)
         st.beds++;
       } }
     // the spectators' cars (1930s saloons and tourers: black, maroon, bottle green, navy, cream, grey) in two rows on the lawn behind each
@@ -21155,7 +21165,92 @@ const World = (function () {
           car(x, z, rot + (crH(i, r, 3) - 0.5) * 0.12, CC[Math.floor(crH(i, r, 4) * CC.length)]); exclPush(x, z, 2.6);
         }
       } }
-    // swans and ducks on the two big lakes: drifting slowly from one open-water spot to the next (cpFowlStep)
+    // the burnt-out palace (the fire of November 1936) on the top terrace behind the upper wall: its blackened floor and basement walls, rows of
+    // charred iron column stumps, heaps of rubble; and its two water towers, which stood until 1941, one at either end (cpTower)
+    const Wu = P.walls.reduce((a, L) => (!a || L.W.reduce((s, p) => s + p.hi, 0) / L.W.length > a.W.reduce((s, p) => s + p.hi, 0) / a.W.length ? L : a), null).W;   // (the upper of the two walls)
+    { const SL = [0.36, 0.34, 0.31], SLd = [0.24, 0.23, 0.22], BR = [0.42, 0.3, 0.24], IR = [0.16, 0.15, 0.15], RB = [0.3, 0.29, 0.28];
+      const cell = (k, o) => { const p = Wu[clamp(k, 0, Wu.length - 1)]; return [p.x + p.nx * o, p.z + p.nz * o]; };
+      const deep = (k) => { const f = k / (Wu.length - 1); return 40 + 34 * Math.max(sstep(0.12, 0.02, Math.abs(f - 0.5)), sstep(0.1, 0.0, f), sstep(0.9, 1.0, f)); };   // (wider at the transepts: the middle and the ends)
+      let nR = 0; const used = [];
+      for (let k = 0; k + 1 < Wu.length; k++) {
+        const o0 = 25, d0 = deep(k), d1 = deep(k + 1), A = cell(k, o0), B = cell(k + 1, o0), Cc = cell(k + 1, o0 + d1), D = cell(k, o0 + d0), mid = cell(k, o0 + d0 / 2);
+        if (!open(mid[0], mid[1])) continue;
+        const Y = (q) => [q[0], nrGround(q[0], q[1]) + 0.35, q[1]], g = nc.get(mid[0], mid[1]), c = crH(k, 0, 1) < 0.3 ? SLd : SL, c2 = crH(k, 1, 1) < 0.3 ? SLd : SL;
+        for (let f = 0; f < 1 - 1e-6; f += 0.125) { const q0 = (k2, dd, t) => cell(k2, o0 + dd * t), a0 = q0(k, d0, f), b0 = q0(k + 1, d1, f), b1 = q0(k + 1, d1, f + 0.125), a1 = q0(k, d0, f + 0.125), cc = crH(k, f * 8, 1) < 0.3 ? SLd : c;
+          g.quadUp(Y(a0), Y(b0), Y(b1), Y(a1), [cc, c2, c2, cc]); }   // the floor (in strips across: draped over the ground), sooty in patches
+        for (const [p, q] of [[A, B], [D, Cc]]) { const pa = Y(p), qa = Y(q), lo = (v) => [v[0], v[1] - 1.2, v[2]], hi = (v) => [v[0], v[1] + 0.9 + crH(p[0], p[1], 3) * 0.6, v[2]];
+          scen.get(p[0], p[1]).quadO(lo(pa), lo(qa), hi(qa), hi(pa), BR, [mid[0], pa[1], mid[1]]); }   // the basement walls along both long sides, broken off at different heights
+        if (k % 2 === 0) for (let o = 3; o < d0 - 2; o += 7.3) {   // the column stumps, a 7.3 m grid (the palace's 24 feet)
+          const [x, z] = cell(k, o0 + o), r = crH(x, z, 4); if (r < 0.35) continue;
+          const tall = crH(x, z, 5) < 0.12 ? 5 + crH(x, z, 6) * 6 : 0.8 + crH(x, z, 6) * 2.4; box(scen.get(x, z), x, nrGround(x, z) + 0.3, z, 0.45, tall, 0.45, Math.atan2(Wu[k].tz, Wu[k].tx), IR, [0.1, 0.1, 0.1], true);
+          if (r > 0.86) { rock(nc.get(x, z), x + 2, nrGround(x, z) + 0.5, z + 1.5, 1.6 + r, 0.9, 1.4, r * 6, RB, rng(Math.round(x * 13 + z)), 0.35); nR++; }
+        }
+        used.push([mid[0], mid[1], d0 / 2 + 4]);
+      }
+      for (const [x, z, r] of used) exclPush(x, z, r);   // (after: each piece would shut out the next)
+      st.ruins = used.length; { const p = Wu[Wu.length >> 1]; (out.cpSpots = out.cpSpots || []).push([p.x + p.nx * 40, p.z + p.nz * 40]); }
+      const tower = (x, z) => {   // a water tower of the palace: an octagonal shaft of buff brick with stone bands, the iron tank on top, a lantern
+        const y = nrGround(x, z), g = scen.get(x, z), BK = [0.62, 0.5, 0.38], ST = [0.78, 0.74, 0.66], TK = [0.3, 0.3, 0.32];
+        box(g, x, y - 1, z, 15, 5, 15, Math.PI / 8, ST, ST, true);
+        for (let h = 4, r = 6.4; h < 72; h += 17) { cyl(g, x, y + h, z, r, 17, 8, BK, null, r - 0.35); cyl(g, x, y + h + 16, z, r + 0.25, 1, 8, ST, ST, r); r -= 0.35; }
+        cyl(g, x, y + 72, z, 7.6, 9, 12, TK, TK, 7.6); cone(g, x, y + 81, z, 7.8, 3.5, 12, [0.24, 0.25, 0.27], [0.3, 0.3, 0.3], 0); cyl(g, x, y + 84.5, z, 0.9, 2.5, 6, ST, TK, 0.6);
+        exclPush(x, z, 14); CR.exclAdd(x, z, 10); st.towers = (st.towers || 0) + 1; (out.cpSpots = out.cpSpots || []).push([x, z]); };
+      for (const e of [0, Wu.length - 1]) { const p = Wu[e], sg = e ? 1 : -1; tower(p.x + p.tx * sg * 34 + p.nx * 46, p.z + p.tz * sg * 34 + p.nz * 46); } }
+    // the paddock behind the pits: the teams' transporters (period lorries, the racing car on the flat bed under a tarpaulin), canvas garages,
+    // fuel drums and spare wheels
+    { const PD = T.def.pit, PR = T.def.pitRow || [PD[1], PD[2]], CAB = [[0.12, 0.2, 0.14], [0.32, 0.08, 0.08], [0.08, 0.08, 0.1], [0.12, 0.14, 0.28]], TARP = [0.38, 0.36, 0.28], CV = [0.9, 0.88, 0.8], WD = [0.48, 0.38, 0.27];
+      const at = (d, o) => { const i = T.idx(sAt(d)); return [T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, Math.atan2(T.tz[i], T.tx[i])]; };
+      let nL = 0;
+      for (let d = PR[0] - 6, k = 0; d <= PR[1] + 6; d += 15, k++) {
+        const [x, z, hd] = at(d, 40 + (k % 2) * 3), y = nrGround(x, z);
+        if (!open(x, z) || nrSlope(x, z) > 0.12) continue;
+        const g = scen.get(x, z), c = Math.cos(hd), s = Math.sin(hd), P2 = (a, b) => [x + a * c - b * s, z + a * s + b * c], cab = CAB[k % CAB.length];
+        { const [bx, bz] = P2(-1.2, 0); box(g, bx, y + 0.8, bz, 6.4, 0.25, 2.3, hd, WD, WD, true); }   // the flat bed
+        { const [bx, bz] = P2(-1.4, 0); box(g, bx, y + 1.05, bz, 4.2, 0.9, 1.7, hd, TARP, [TARP[0] * 1.1, TARP[1] * 1.1, TARP[2] * 1.05], true); }   // the car under its sheet
+        { const [bx, bz] = P2(2.9, 0); box(g, bx, y + 0.55, bz, 1.8, 1.8, 2.1, hd, cab, [0.1, 0.1, 0.1], true); }   // the cab
+        { const [bx, bz] = P2(4.4, 0); box(g, bx, y + 0.55, bz, 1.4, 1.0, 1.4, hd, cab, null, true); }   // the bonnet
+        for (const [a, b] of [[3.9, 1.0], [3.9, -1.0], [-2.6, 1.05], [-2.6, -1.05]]) { const [wx, wz] = P2(a, b); box(g, wx, y, wz, 0.9, 0.85, 0.3, hd, [0.05, 0.05, 0.05], null, true); }
+        { const [gx, gz] = P2(0, 9); if (open(gx, gz)) { box(g, gx, y - 0.1, gz, 7, 2.6, 5, hd, CV, null, true); gable(g, gx, y + 2.5, gz, 7.4, 5.6, 1.5, hd, [0.8, 0.78, 0.7], CV); } }   // a canvas garage
+        for (let q = 0; q < 4; q++) { const [fx, fz] = P2(-5.5 - (q % 2) * 0.75, 1.6 + Math.floor(q / 2) * 0.75); cyl(g, fx, y, fz, 0.32, 0.9, 7, q % 3 ? [0.58, 0.12, 0.1] : [0.16, 0.3, 0.18], [0.4, 0.4, 0.4]); }   // fuel drums
+        exclPush(x, z, 9); nL++; if (k === 3) (out.cpSpots = out.cpSpots || []).push([x, z]);
+      }
+      st.lorries = nL; }
+    // spectators along the terraces: a row at the balustrade of each wall, in groups, looking down over the park and the road
+    { let n = 0; const o = { flag: 0, shirts: K.shirts };
+      for (const L of P.walls) for (const p of L.W) for (const e of [0.9, 1.7]) {
+        const along = crNoise((p.x + p.z) * 0.08), f = e > 1 ? 0.25 : 0.55; if (crH(p.x, p.z, e * 10) > f * (0.4 + along)) continue;
+        const x = p.x + p.nx * e + p.tx * (crH(p.x, p.z, 7) - 0.5) * 3, z = p.z + p.nz * e + p.tz * (crH(p.x, p.z, 8) - 0.5) * 3;
+        if (crowdPut(CR, x, p.hi + 0.06, z, -p.nx, -p.nz, o, e > 1 ? 1 : 0)) n++; }
+      st.terraceCrowd = n; }
+    // cast-iron railings: round the two big lakes, a little way back from the water, and along the walks across the terraces' lower lawns
+    { const RL = [0.1, 0.11, 0.1], RT = [0.16, 0.17, 0.16];
+      const rail = (a, b) => { const ya = nrGround(a[0], a[1]), yb = nrGround(b[0], b[1]), g = nc.get(a[0], a[1]), dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1, ox = -dz / l * 0.03, oz = dx / l * 0.03;
+        const A = [a[0], ya, a[1]], B = [b[0], yb, b[1]], up = (v, h) => [v[0], v[1] + h, v[2]];
+        g.quadO(up(A, 0.05), up(B, 0.05), up(B, 1.0), up(A, 1.0), RL, [a[0] + ox * 30, ya + 0.5, a[1] + oz * 30]); g.quadO(up(A, 0.05), up(B, 0.05), up(B, 1.0), up(A, 1.0), RL, [a[0] - ox * 30, ya + 0.5, a[1] - oz * 30]);
+        g.quadUp([A[0] - ox, A[1] + 1.04, A[2] - oz], [B[0] - ox, B[1] + 1.04, B[2] - oz], [B[0] + ox, B[1] + 1.04, B[2] + oz], [A[0] + ox, A[1] + 1.04, A[2] + oz], [RT, RT, RT, RT]); };
+      let nRl = 0;
+      const big = P.lakes.filter(L => (L.b[1] - L.b[0]) * (L.b[3] - L.b[2]) > 2500 && L.poly.length > 8);
+      for (const L of big) { const pts = []; for (let k = 0; k < L.poly.length; k++) { const a = L.poly[k], b = L.poly[(k + 1) % L.poly.length], n = Math.max(1, Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]) / 3)); for (let j = 0; j < n; j++) pts.push([a[0] + (b[0] - a[0]) * j / n, a[1] + (b[1] - a[1]) * j / n]); }
+        const off = pts.map((p, k) => { const a = pts[(k + pts.length - 1) % pts.length], b = pts[(k + 1) % pts.length], tl = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; let nx = -(b[1] - a[1]) / tl, nz = (b[0] - a[0]) / tl; if (inPoly(L.poly, p[0] + nx, p[1] + nz)) { nx = -nx; nz = -nz; } return [p[0] + nx * 3.5, p[1] + nz * 3.5]; });
+        for (let k = 0; k < off.length; k++) { const a = off[k], b = off[(k + 1) % off.length]; if (Math.hypot(b[0] - a[0], b[1] - a[1]) > 6 || P.lakeAt(a[0], a[1]) || nrNear(a[0], a[1]).dd < 4 || excluded(a[0], a[1]) || excluded(b[0], b[1])) continue; rail(a, b); nRl++; } }
+      for (const L of C.paths) for (let k = 0; k + 3 < L.length; k += 2) {
+        const a = [L[k], L[k + 1]], b = [L[k + 2], L[k + 3]], m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], w = P.wallAt(m[0], m[1]); if (!w || w[1] > -3 || w[1] < -24 || w[2] > 0.5) continue;
+        const l = Math.hypot(b[0] - a[0], b[1] - a[1]); if (l < 4) continue; const nx = -(b[1] - a[1]) / l * 1.9, nz = (b[0] - a[0]) / l * 1.9;
+        for (const sd of [-1, 1]) { const A = [a[0] + nx * sd, a[1] + nz * sd], B = [b[0] + nx * sd, b[1] + nz * sd]; if (!excluded(A[0], A[1]) && nrNear(A[0], A[1]).dd > 4) { rail(A, B); nRl++; } } }
+      st.railings = nRl; }
+    // the marshals (a white coat, a flag furled under the arm) and a policeman (dark blue, the tall helmet) outside every corner, behind the fence
+    { let n = 0; const fig = (g, x, z, y, yaw, coat, head, helmet) => { const c = Math.cos(yaw), s = Math.sin(yaw);
+        for (const sd of [-0.13, 0.13]) box(g, x - s * sd, y, z + c * sd, 0.18, 0.85, 0.18, yaw, [0.12, 0.12, 0.13], null, true);   // the legs
+        box(g, x, y + 0.82, z, 0.5, 0.75, 0.32, yaw, coat, coat, true); box(g, x, y + 1.57, z, 0.22, 0.24, 0.22, yaw, [0.86, 0.68, 0.56], head);   // the body, the head
+        if (helmet) cyl(g, x, y + 1.78, z, 0.15, 0.3, 6, helmet, helmet, 0.08); };
+      for (const c of T.corners) { if (c.sev < 2) continue;
+        const i1c = c.i1 < c.i0 ? c.i1 + T.N : c.i1, i = ((Math.round((c.i0 + i1c) / 2) % T.N) + T.N) % T.N, sd = -c.dir, bar = sd > 0 ? T.br[i] : T.bl[i];
+        const pt = (o, dd) => { const j = T.idx(i * T.ds + dd); return [T.px[j] + T.nx[j] * sd * o, T.pz[j] + T.nz[j] * sd * o]; };
+        const [mx, mz] = pt(bar + 2.6, -8), [px2, pz2] = pt(bar + 3.4, -5), yaw = Math.atan2(-T.nz[i] * sd, -T.nx[i] * sd);
+        if (!P.lakeAt(mx, mz) && crFree(CR, mx, mz)) { const g = scen.get(mx, mz), y = nrGround(mx, mz); fig(g, mx, mz, y, yaw, [0.9, 0.89, 0.84], [0.25, 0.22, 0.18], null); box(g, mx + 0.3, y + 0.9, mz, 0.06, 0.06, 0.7, yaw, [0.85, 0.7, 0.1]); CR.avoid(mx, mz, 0.8); n++; }
+        if (!P.lakeAt(px2, pz2) && crFree(CR, px2, pz2)) { fig(scen.get(px2, pz2), px2, pz2, nrGround(px2, pz2), yaw, [0.1, 0.12, 0.22], null, [0.08, 0.09, 0.16]); CR.avoid(px2, pz2, 0.8); n++; } }
+      st.marshals = n; }
+    // swans and ducks on the two big lakes: drifting slowly from one open-water spot to the next (cpFowlStep); rowing boats on the biggest
     { const g = new GB(), W = [0.97, 0.97, 0.95], BE = [0.95, 0.45, 0.1];
       cpBlob(g, 0, 0.22, 0, 0.62, 0.28, 0.34, 0, W, 0.85, ICO0); cpBlob(g, -0.42, 0.42, 0, 0.26, 0.12, 0.22, 0.4, W, 0.9, ICO0);   // the body, the raised wings
       cyl(g, 0.5, 0.3, 0, 0.07, 0.62, 5, W, W, 0.06); cpBlob(g, 0.58, 0.95, 0, 0.13, 0.09, 0.08, 0, W, 0.95, ICO0); box(g, 0.75, 0.9, 0, 0.18, 0.06, 0.07, 0, BE);   // the neck, the head, the bill
@@ -21173,8 +21268,27 @@ const World = (function () {
         im.castShadow = false; im.receiveShadow = true; im.matrixAutoUpdate = false; root.add(im);
         list.push({ im, B, init, y: L.lvl, L }); st.fowl += B.length;
       }
+      if (big.length) {   // rowing boats (varnished timber, a rower in white shirtsleeves, the oars out) on the biggest lake
+        const [k, L] = big[0], gb = new GB(), HL = [0.46, 0.29, 0.16], IN = [0.3, 0.2, 0.12];
+        box(gb, 0, -0.1, 0, 3.4, 0.42, 1.1, 0, HL, IN, true); box(gb, 1.75, -0.1, 0, 0.5, 0.36, 0.6, 0, HL, IN, true);   // the hull, the bow
+        box(gb, -0.1, 0.2, 0, 0.4, 0.55, 0.36, 0, [0.92, 0.9, 0.86]); box(gb, -0.1, 0.78, 0, 0.2, 0.22, 0.2, 0, [0.86, 0.68, 0.56], [0.3, 0.24, 0.18]);   // the rower
+        box(gb, 0.1, 0.3, 0, 0.08, 0.05, 3.4, 0.25, [0.6, 0.48, 0.3]);   // the oars
+        const init = () => { const R = rng(6300 + k), pick = () => { for (let t = 0; t < 60; t++) { const x = L.b[0] + R() * (L.b[1] - L.b[0]), z = L.b[2] + R() * (L.b[3] - L.b[2]); if (P.lakeAt(x, z) === L && polyDist(L.poly, x, z) > 8 && L.holes.every(h => polyDist(h, x, z) > 8)) return [x, z]; } return null; };
+          const B = []; for (let q = 0; q < 4; q++) { const p = pick(); if (p) B.push({ x: p[0], z: p[1], h: R() * TAU, t: pick() || p, v: 0.7, s: 1, pick }); } return B; };
+        const B = init();
+        if (B.length) { const geo = gb.geometry(), im = new THREE.InstancedMesh(geo, mat, B.length), cx = (L.b[0] + L.b[1]) / 2, cz = (L.b[2] + L.b[3]) / 2;
+          im.geometry = geo.clone(); im.geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(cx, L.lvl, cz), Math.hypot(L.b[1] - L.b[0], L.b[3] - L.b[2]) / 2 + 4);
+          const wc = new THREE.Color(1, 1, 1); B.forEach((b, q) => im.setColorAt(q, wc));   // (the material is the birds': it takes an instance colour)
+          im.castShadow = false; im.receiveShadow = true; im.matrixAutoUpdate = false; root.add(im); list.push({ im, B, init, y: L.lvl + 0.12, L }); st.boats = B.length; }
+      }
       out.dyn.cpFowl = { list, t: null, m4: new THREE.Matrix4(), q: new THREE.Quaternion(), e: new THREE.Euler(), v: new THREE.Vector3(), s: new THREE.Vector3() }; cpFowlStep(out.dyn.cpFowl, 0); }
     return st;
+  }
+  function cpSeasonStep(d) {   // winter: the ice instead of the water, no birds nor boats; autumn: the fallen leaves under the trees
+    const A = typeof Render !== 'undefined' && Render.atmos, s = A && A.season ? A.season : 'summer', I = d.cpIce; if (I.s === s) return; I.s = s;
+    const w = s === 'winter'; I.ice.visible = w; for (const m of I.wet) if (m) m.visible = !w;
+    if (d.cpFowl) for (const E of d.cpFowl.list) E.im.visible = !w;
+    for (const m of d.cpLeaves || []) m.visible = s === 'autumn';
   }
   function cpFowlStep(F, t) {   // the birds paddle towards their spot, turning slowly; there a new one
     const back = F.t == null || t <= 0 || t < F.t, dt = back ? 0 : clamp(t - F.t, 0, 0.1); F.t = t;
@@ -22064,14 +22178,14 @@ const World = (function () {
       for (const sd of [-1, 1]) run(300, L - 470, sd, { rows: 2, dens: 0.05, clump: 0.95, strip: false, label: 'RBR groups' });
       for (const e of CR.circ) exclPush(e.x, e.z, e.r);   // the forest keeps clear of them
     }
-    if (PARK) { Object.assign(parkSt, cpExtras(Object.assign(PK, { excluded, sAt }))); PK.nc.addTo(root, matV, false, true); }   // (Crystal Palace: the paths, shrubs, flower beds, parked cars, marquees, the birds on the lakes)
+    if (PARK) { Object.assign(parkSt, cpExtras(Object.assign(PK, { excluded, sAt, shirts: LK.shirts }))); PK.nc.addTo(root, matV, false, true); }   // (Crystal Palace: the paths, shrubs, flower beds, parked cars, marquees, the birds on the lakes)
 
     /* ---- the woods: spruce and beech where the land cover has forest, bushes on the scrub, lone trees on the meadows and round the farms ---- */
     const tMat = new THREE.MeshLambertMaterial({ vertexColors: true });
     const AU = LK.trees === 'au', TG = AU ? auTreeGeo : nrTreeGeo;   // (Styria: spruce and beech; Bathurst: eucalypts and wattle)
     const tk = PARK ? [] : [new IChunks(TG(0), tMat, 128), new IChunks(TG(1), tMat, 128)];   // near the road: casting shadows
     const tf = PARK ? [] : [new IChunks(TG(2), tMat, 192), new IChunks(TG(3), tMat, 192)];   // more than 70 m out: cheaper, no shadows (as on the Nordschleife)
-    let nTrees = PARK ? cpTrees({ root, R, excluded, dens }) : 0;   // (Crystal Palace: the park's old trees)
+    let nTrees = PARK ? cpTrees({ root, R, excluded, dens, out }) : 0;   // (Crystal Palace: the park's old trees)
     if (!PARK) {
       const Lt = NRC * NRT, maxT = Math.round(60000 * dens), CR0 = AU ? [0.24, 0.4] : [0.3, 0.33];   // (crown radius / width of a spruce, a beech (a eucalypt, a wattle): the forest floor under it)
       for (let tj = 0; tj < G.ntz && nTrees < maxT; tj++) for (let ti = 0; ti < G.ntx && nTrees < maxT; ti++) {
@@ -23420,6 +23534,7 @@ const World = (function () {
     if (d.podium) d.podium.step(t);   // Red Bull Ring: the podium after the race
     if (d.cpMast && cam) cpMastStep(d.cpMast, cam, out.root.parent && out.root.parent.fog);   // Crystal Palace: the mast on the hill, seen from afar
     if (d.cpFowl) cpFowlStep(d.cpFowl, t);   // Crystal Palace: the swans and ducks on the lakes
+    if (d.cpIce) cpSeasonStep(d);   // Crystal Palace: the lakes frozen in winter, the leaves down in autumn
     if (d.screens) { const f = Math.floor(t / 6) % 4; if (f !== d.screens.f) { d.screens.f = f; d.screens.tex.offset.x = f * 0.25; } }   // Red Bull Ring: the video walls' next picture every 6 s
     if (d.water) { d.water.offset.x = (t * 0.012) % 1; d.water.offset.y = (t * 0.007) % 1; }
     if (d.wind) d.wind.value = t % 1000;   // the trees sway (Nordschleife, Spa)
