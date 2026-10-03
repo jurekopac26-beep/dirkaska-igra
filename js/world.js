@@ -10500,7 +10500,7 @@ const World = (function () {
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (mkATex = t);
   }
   // the road signs (generic, as along any state road): two a row, 512 x 128
-  const MK_BOARDS = [['PAVEMENT ENDS', '#f1c21b'], ['SCENIC VIEW', '#6b4a22'], ['SPEED LIMIT 15', '#f2f2ee'], ['SWITCHBACKS AHEAD', '#f1c21b'], ['CEDAR MESA', '#6b4a22'], ['VALLEY OF THE GODS', '#6b4a22'], ['GRAVEL ROAD', '#f1c21b'], ['MEXICAN HAT', '#1f6b3a'], ['SWITCHBACK  10 MPH', '#f1c21b'], ['OPEN RANGE', '#f1c21b']];
+  const MK_BOARDS = [['PAVEMENT ENDS', '#f1c21b'], ['SCENIC VIEW', '#6b4a22'], ['SPEED LIMIT 15', '#f2f2ee'], ['SWITCHBACKS AHEAD', '#f1c21b'], ['CEDAR MESA', '#6b4a22'], ['VALLEY OF THE GODS', '#6b4a22'], ['GRAVEL ROAD', '#f1c21b'], ['MEXICAN HAT', '#1f6b3a'], ['SWITCHBACK  10 MPH', '#f1c21b'], ['OPEN RANGE', '#f1c21b'], ['MOKI DUGWAY', '#6b4a22']];
   function mkAtlas2() {
     if (mkA2Tex) return mkA2Tex;
     const c = document.createElement('canvas'); c.width = 1024; c.height = 1024; const x = c.getContext('2d');
@@ -10573,6 +10573,34 @@ const World = (function () {
     for (const sd of [-1, 1]) { const A = [0.08, 0, 0.05 * sd], B = [-0.1, 0, 0.05 * sd], C = [-0.12, 0.05, 0.6 * sd], D = [0.04, 0.05, 0.56 * sd]; g.quadO(A, B, C, D, K, [0, -1, sd * 0.9]); g.quadO(A, B, C, D, K, [0, 1, sd * 0.9]); }
     g.triO([-0.1, 0, -0.06], [-0.1, 0, 0.06], [-0.32, 0, 0], K, [-0.2, -1, 0]); g.triO([-0.1, 0, -0.06], [-0.32, 0, 0], [-0.1, 0, 0.06], K, [-0.2, 1, 0]);
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
+  function mkSheepGeo() {   // a desert bighorn ewe or ram (x forward, ~1.5 m long; the instance tints it): a tawny body, the pale rump and muzzle, dark legs, the
+    // horns curling back from the head (the rams' heavy curls, scaled down for the ewes by the instance's tint alone: one shape)
+    const g = new GB(), c = [0.74, 0.6, 0.44], p = [1.0, 0.96, 0.9], d = [0.36, 0.28, 0.22], hn = [0.62, 0.55, 0.44];
+    box(g, 0, 0.55, 0, 1.05, 0.5, 0.42, 0, c, c); box(g, -0.5, 0.58, 0, 0.1, 0.42, 0.38, 0, p); box(g, 0.62, 0.86, 0, 0.32, 0.26, 0.22, -0.35, c); box(g, 0.78, 0.82, 0, 0.12, 0.14, 0.16, 0, p);
+    box(g, 0.48, 0.78, 0, 0.22, 0.3, 0.24, 0, c);
+    for (const sd of [-1, 1]) { box(g, 0.56, 1.06, 0.1 * sd, 0.2, 0.1, 0.08, 0, hn); box(g, 0.44, 0.96, 0.16 * sd, 0.08, 0.16, 0.08, 0, hn); box(g, 0.52, 0.86, 0.18 * sd, 0.12, 0.08, 0.07, 0, hn); }
+    for (const [u, v] of [[0.38, 0.13], [0.38, -0.13], [-0.38, 0.13], [-0.38, -0.13]]) box(g, u, 0, v, 0.09, 0.58, 0.09, 0, d);
+    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
+  function mkHawkGeo() {   // a red-tailed hawk soaring (x forward, wingspan ~1.3 m): a brown back and wings, the pale breast, the rusty fanned tail, the wingtips spread
+    const g = new GB(), B = [0.34, 0.22, 0.14], L = [0.86, 0.78, 0.66], T2 = [0.72, 0.34, 0.18], R = rng(2993);
+    ROCK_SMOOTH = true; ico(g, 0, 0, 0, 0.12, 0.55, B, R, 0.1); ROCK_SMOOTH = false; box(g, 0.14, -0.03, 0, 0.1, 0.08, 0.08, 0, L);
+    for (const sd of [-1, 1]) { const A = [0.1, 0, 0.05 * sd], Bq = [-0.12, 0, 0.05 * sd], C = [-0.14, 0.06, 0.66 * sd], D = [0.06, 0.06, 0.62 * sd];
+      g.quadO(A, Bq, C, D, B, [0, 1, sd * 0.9]); g.quadO(A, Bq, C, D, L, [0, -1, sd * 0.9]); }
+    g.triO([-0.1, 0, -0.07], [-0.1, 0, 0.07], [-0.36, 0, 0.12], T2, [0, 1, 0]); g.triO([-0.1, 0, -0.07], [-0.36, 0, -0.12], [-0.36, 0, 0.12], T2, [0, 1, 0]);
+    g.triO([-0.1, 0, -0.07], [-0.36, 0, 0.12], [-0.1, 0, 0.07], T2, [0, -1, 0]); g.triO([-0.1, 0, -0.07], [-0.36, 0, 0.12], [-0.36, 0, -0.12], T2, [0, -1, 0]);
+    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
+  function mkDroneGeo() {   // a small photo drone: a grey body, four arms, the rotor discs (dark, a blur), the camera under it
+    const g = new GB(), K = [0.22, 0.23, 0.25], Wt = [0.85, 0.86, 0.88], P = [0.12, 0.12, 0.13];
+    box(g, 0, 0, 0, 0.28, 0.08, 0.16, 0, Wt); box(g, 0.1, -0.07, 0, 0.06, 0.07, 0.06, 0, P);
+    for (const a of [0.8, 2.35, 3.93, 5.5]) { const x = Math.cos(a) * 0.2, z = Math.sin(a) * 0.2; box(g, x / 2, 0.02, z / 2, 0.2, 0.03, 0.03, -a, K); cyl(g, x, 0.05, z, 0.11, 0.01, 8, P); }
+    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
+  function mkDrone(D, t) {   // the drone hangs off the viewpoint's edge, drifting and turning slowly, now and then climbing for a wider shot
+    const m = D.m, a = t * 0.13, up = Math.max(0, Math.sin(t * 0.07)) * 9;
+    m.position.set(D.x + Math.cos(a) * 6, D.y + 4 + up + Math.sin(t * 1.7) * 0.15, D.z + Math.sin(a * 1.3) * 5); m.rotation.set(Math.sin(t * 0.9) * 0.06, D.ro + Math.sin(t * 0.21) * 0.8, 0);
   }
   // dust devils on the valley floor: a column of thin, spinning dust (three tapered rings of vertex-alpha quads), drifting slowly round its home and
   // fading in and out (World.update: mkDevils)
@@ -10774,6 +10802,13 @@ const World = (function () {
         bannerQ(bx, hy + 0.9, bz, -ox, -oz, 2.6, 0.65, v0, v1, u0, u1, ban2, -0.3); }
       for (const [a, o, c] of [[-4, 2.5, [0.72, 0.12, 0.1]], [2, 3, [0.85, 0.85, 0.83]]]) caCar(g, padV.x + T.tx[i] * a + ox * o, hy, padV.z + T.tz[i] * a + oz * o, T.hd[i] + PI / 2, c);
       for (let k = 0; k < 7; k++) { const a = (R() - 0.5) * 12, o = 6.5 + R() * 1.6, px = padV.x + T.tx[i] * a + ox * o, pz = padV.z + T.tz[i] * a + oz * o; person(px, pz, Math.atan2(oz, ox) - PI / 2 + (R() - 0.5) * 0.8); }
+      // two cyclists resting at the viewpoint: their bikes on the stand by the wall, the riders in their bright jerseys beside them
+      for (const [a, col] of [[6.2, [0.95, 0.85, 0.1]], [7.4, [0.1, 0.55, 0.85]]]) { const bx = padV.x + T.tx[i] * a + ox * 7.6, bz = padV.z + T.tz[i] * a + oz * 7.6, by = hy + 0.02, tx = ox, tz = oz;
+        for (const w of [-0.5, 0.5]) { const wx = bx + tx * w, wz = bz + tz * w, P8 = []; for (let q = 0; q <= 10; q++) { const t2 = q / 10 * TAU; P8.push([wx + tx * Math.cos(t2) * 0.34, by + 0.34 + Math.sin(t2) * 0.34, wz + tz * Math.cos(t2) * 0.34]); }
+          for (let q = 0; q < 10; q++) ouRod(g, P8[q], P8[q + 1], 0.018, [0.08, 0.08, 0.09], 3); }
+        const fr = (a2, y2, b2, y3) => ouRod(g, [bx + tx * a2, by + y2, bz + tz * a2], [bx + tx * b2, by + y3, bz + tz * b2], 0.022, col, 3);
+        fr(-0.5, 0.34, 0, 0.36); fr(0, 0.36, 0.5, 0.34); fr(0, 0.36, -0.1, 0.8); fr(-0.1, 0.8, 0.42, 0.78); fr(0.42, 0.78, 0.5, 0.34); fr(0.42, 0.78, 0.45, 0.95);
+        person(bx - T.tx[i] * 0.9 - ox * 1.1, bz - T.tz[i] * 0.9 - oz * 1.1, Math.atan2(oz, ox) - PI / 2, col); }
     }
 
     /* ---- no guardrails on most of the road (as on the real one): where the ground falls away past the barrier line a low berm of gravel along
@@ -10891,6 +10926,22 @@ const World = (function () {
       cows.addTo(root, true);
     }
 
+    /* ---- desert bighorn sheep: small bands on the steep ledges of the cliff above and below the switchbacks, standing on the talus, some lying down ---- */
+    let nSheep = 0;
+    {
+      const sh = new IChunks(mkSheepGeo(), matV, 128), RB = rng(3983);
+      for (let gi = 0, tries = 0; gi < 8 && tries < 300; tries++) {
+        const s = sStart + 1350 + RB() * 3000, side = RB() < 0.5 ? -1 : 1, [cx, cz] = onSide(s, side, 9 + RB() * 24), A = caGround(cx, cz) + base, sl = caSlope(cx, cz);
+        if (sl < 0.3 || sl > 0.9 || A < 1700 || A > 1935 || excluded(cx, cz) || vrNear(cx, cz).dd < 10) continue;
+        gi++; const n = 2 + Math.floor(RB() * 4); (out.marks.sheep || (out.marks.sheep = [])).push(Math.round(s - sStart));
+        for (let k = 0; k < n; k++) { const x = cx + (RB() - 0.5) * 12, z = cz + (RB() - 0.5) * 12, r = RB();
+          if (caSlope(x, z) > 1.0 || excluded(x, z) || vrNear(x, z).dd < 7) continue;
+          const k2 = 0.9 + RB() * 0.2, sc = (r < 0.3 ? 0.85 : 1 + RB() * 0.12) * 1.45, lie = RB() < 0.25;   // (the lambs smaller; some lying down: sunk in, lower)
+          sh.add(x, caGround(x, z) - (lie ? 0.32 : 0.04), z, RB() * TAU, sc, lie ? sc * 0.7 : sc, [k2, k2 * 0.98, k2 * 0.95]); exclPush(x, z, 1.2); nSheep++; }
+      }
+      sh.addTo(root, true);
+    }
+
     let campFire = null;
     /* ---- parked cars: a gravel pull-out on the mesa by the finish (cars, pickups, a camper), cars along the Valley of the Gods Road by the start ---- */
     {
@@ -10905,6 +10956,10 @@ const World = (function () {
       for (let k = 0; k < 7; k++) { const a = -12 + k * 4, b = -3 * sd, x = pad.x + c * a - sn * b, z = pad.z + sn * a + c * b, col = cols[Math.floor(RP() * cols.length)];
         if (k === 3) camper(g, x - sn * sd * 1.2, pad.h, z + c * sd * 1.2, hh + PI / 2 + 0.05); else if (k % 2) pickup(g, x, pad.h, z, hh + PI / 2 + (RP() - 0.5) * 0.1, col); else caCar(g, x, pad.h, z, hh + PI / 2 + (RP() - 0.5) * 0.1, col); }
       exclPush(pad.x, pad.z, pad.r + 3); out.marks.parking = [pad.x, pad.z];
+      { // a plain stone marker at the pull-out's road end: a block of the mesa's pale sandstone, a brown plate with the road's name on it
+        const a = -14, b = 4.5 * sd, x = pad.x + c * a - sn * b, z = pad.z + sn * a + c * b, [v0, v1, u0, u1] = board(10);
+        rock(g, x, pad.h + 0.45, z, 1.0, 1.1, 1.0, hh + PI / 2, [0.86, 0.76, 0.6], RP, 0.08, true);   // (its plate facing the pull-out)
+        bannerQ(x + c * 1.02, pad.h + 0.6, z + sn * 1.02, c, sn, 1.5, 0.38, v0, v1, u0, u1, ban2, 0.45); exclPush(x, z, 2); CR.avoid(x, z, 1.4); }
       for (let k = 0; k < 6; k++) { const px = pad.x + (RP() - 0.5) * 20, pz = pad.z + (RP() - 0.5) * 12; if (vrNear(px, pz).dd < 1) continue; person(px, pz, RP() * TAU); }
       const vg = (def.roads || [])[0];   // (the Valley of the Gods Road: cars parked along it near the junction, spectators of the start)
       if (vg) for (let k = 4, m = 0; k < vg.p.length / 2 - 1 && m < 6; k += 2) { const x0 = vg.p[2 * k], z0 = vg.p[2 * k + 1], x1 = vg.p[2 * k + 2], z1 = vg.p[2 * k + 3], L = Math.hypot(x1 - x0, z1 - z0) || 1, ux = -(z1 - z0) / L, uz = (x1 - x0) / L;
@@ -11026,12 +11081,15 @@ const World = (function () {
     { const geo = mkRavenGeo(), mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), i0 = T.idx(sStart), L = [];
       for (const [r, sp, h, ox, oz, ph] of [[24, 0.42, 22, 10, -8, 0], [30, -0.36, 30, -14, 12, 2.1], [18, 0.5, 26, 4, 20, 4.2]]) {
         const m = new THREE.Mesh(geo, mat); m.castShadow = true; root.add(m); L.push({ m, r, sp, h, ox, oz, ph, bank: 0.38 }); }
+      { const m = new THREE.Mesh(mkHawkGeo(), mat); m.scale.setScalar(1.15); m.castShadow = true; root.add(m); L.push({ m, r: 42, sp: 0.22, h: 14, ox: -6, oz: 4, ph: 1.2, bank: 0.22 }); }   // a red-tailed hawk, lower and wider than the ravens
       out.dyn.condors = { L, x0: T.px[i0], z0: T.pz[i0], y0: T.hy[i0], ax: T.px[i0], az: T.pz[i0], ay: T.hy[i0], t: null };
       caCondors(out.dyn.condors, 0, null); }
     if (opts.season !== 'winter') { const geo = mkDevilGeo(), mat = new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide }), L = [], RD = rng(3999);   // (lit: dark at night; none on the winter's snow)
       for (const [s, sd, o] of [[150, 1, 70], [700, -1, 90], [1150, 1, 60]]) { const [x, z] = onSide(sStart + s, sd, o); if (caSlope(x, z) > 0.3) continue;
         const m = new THREE.Mesh(geo, mat); m.renderOrder = 2; root.add(m); L.push({ m, x, z, r: 14 + RD() * 10, sp: 0.05 + RD() * 0.04, ph: RD() * 6, lf: 0.11 + RD() * 0.06, gH: caGround }); }
       out.dyn.devils = { L }; mkDevils(out.dyn.devils, 0); }
+    { const m = new THREE.Mesh(mkDroneGeo(), new THREE.MeshLambertMaterial({ vertexColors: true })), i = padV.i;   // a photo drone over the viewpoint's edge, out above the drop
+      root.add(m); out.dyn.drone = { m, x: padV.x + T.nx[i] * vsd * 12, y: padV.h, z: padV.z + T.nz[i] * vsd * 16, ro: -T.hd[i] }; mkDrone(out.dyn.drone, 0); }
 
     /* ---- finish the meshes ---- */
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
@@ -11045,7 +11103,7 @@ const World = (function () {
       for (const [s, sd, o] of [[60, 1, 30], [380, -1, 25], [820, 1, 40], [1150, -1, 30]]) { const [x, z] = onSide(sStart + s, sd, o), a = 0.45 + RW() * 0.3, m = new THREE.Mesh(geo, mat), sc = 0.8 + RW() * 0.6;
         m.scale.setScalar(sc); m.castShadow = true; root.add(m); L.push({ m, x, z, dx: Math.cos(a), dz: Math.sin(a), len: 140, sp: 2.2 + RW() * 1.6, ph: RW(), s: sc, gH: caGround }); }
       out.dyn.weeds = { L }; mkWeeds(out.dyn.weeds, 0); }
-    out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, rails: +(nRail / (2 * N)).toFixed(3), berm: +(nBerm / (2 * N)).toFixed(3), buttes: (def.buttes || []).length, cows: nCows, roads: srPts.length / 2 };   // (read by the tests)
+    out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, rails: +(nRail / (2 * N)).toFixed(3), berm: +(nBerm / (2 * N)).toFixed(3), buttes: (def.buttes || []).length, cows: nCows, sheep: nSheep, roads: srPts.length / 2 };   // (read by the tests)
     return out;
   }
 
@@ -14998,6 +15056,7 @@ const World = (function () {
     if (d.condors) caCondors(d.condors, t, car);   // Los Caracoles: the condors circle over the road
     if (d.devils) mkDevils(d.devils, t);   // the Moki Dugway: the dust devils on the valley floor (and the tumbleweeds)
     if (d.weeds) mkWeeds(d.weeds, t);
+    if (d.drone) mkDrone(d.drone, t);
     if (d.pkLife) pkWildlifeUpdate(d.pkLife, t, car);   // Pikes Peak: marmots and bighorn sheep
     if (d.pkAmb) pkAmbientUpdate(d.pkAmb, t, car);   // Pikes Peak: flags, dust and leaves, grill smoke
     if (d.boats) {

@@ -346,21 +346,21 @@
   }
  },
  "moki": {
-  "meshes": 2126,
-  "verts": 905920,
-  "instances": 30156,
+  "meshes": 2135,
+  "verts": 911295,
+  "instances": 30183,
   "props": 142,
-  "crowd": 371,
-  "world": "7c88e8db",
+  "crowd": 373,
+  "world": "c63db67d",
   "propsHash": "127d9044",
   "floor": "3e0a51bf/10920",
   "groups": {
-   "-:MeshLambertMaterial": "6667bea5",
+   "-:MeshLambertMaterial": "d212ee29",
    "-:MeshPhongMaterial": "66caa8f",
    "-:MeshBasicMaterial": "5c20f993",
-   "crowd:MeshLambertMaterial": "8d9d46f7",
+   "crowd:MeshLambertMaterial": "e1076312",
    "smoke:ShaderMaterial": "430acf01",
-   "ao:MeshBasicMaterial": "abd24b85"
+   "ao:MeshBasicMaterial": "6158fa97"
   }
  }
 }
