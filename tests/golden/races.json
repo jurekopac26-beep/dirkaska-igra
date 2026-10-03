@@ -1599,54 +1599,54 @@
   "nan": false,
   "digest": "4c53c94c9086f66bc8a7b4f0"
  },
- "hotham/cs": {
+ "longford/cs": {
   "finished": 13,
   "cars": 13,
-  "winner": 197.75,
-  "spins": 0,
-  "walls": 4,
-  "rescues": 0,
-  "nan": false,
-  "digest": "d445dad3b3a0c8e3466a37a2"
- },
- "hotham/cs/rain": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 212.91,
-  "spins": 0,
-  "walls": 1,
-  "rescues": 0,
-  "nan": false,
-  "digest": "18fc0c810571b3b467295f28"
- },
- "hotham/cs/formula": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 163.93,
-  "spins": 0,
-  "walls": 4,
-  "rescues": 0,
-  "nan": false,
-  "digest": "b7e07c1e633802e9b1567be5"
- },
- "hotham/cs/lm": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 168.3,
-  "spins": 0,
-  "walls": 5,
-  "rescues": 0,
-  "nan": false,
-  "digest": "a4fe0a13f0dd0a998cb77010"
- },
- "hotham/cs/car": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 197.74,
+  "winner": 294.47,
   "spins": 0,
   "walls": 10,
   "rescues": 0,
   "nan": false,
-  "digest": "044461610ccfeaed25b9195f"
+  "digest": "96c672eeccb014cb9bf03c97"
+ },
+ "longford/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 306.29,
+  "spins": 0,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "13bb3288f434afce7e1f8e5e"
+ },
+ "longford/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 241.57,
+  "spins": 0,
+  "walls": 24,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c8beb48d74e14f7f8e15c3ba"
+ },
+ "longford/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 243.43,
+  "spins": 0,
+  "walls": 22,
+  "rescues": 0,
+  "nan": false,
+  "digest": "da8f42a27cd739610596dc92"
+ },
+ "longford/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 294.18,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d3aa121f8632ba6f463c887e"
  }
 }

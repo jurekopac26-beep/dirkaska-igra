@@ -9,21 +9,23 @@ const { spawnSync } = require('child_process');
 const path = require('path');
 
 const SUITES = {
-  node: ['stamp.test.js', 'golden.test.js', 'races.test.js', 'cs-handling.test.js', 'net-core.test.js', 'crossover.test.js', 'champ.test.js', 'rally.test.js', 'quali.test.js', 'weather.test.js', 'compounds.test.js', 'flags.test.js', 'vrsic.test.js', 'katu.test.js', 'traffic.test.js', 'police.test.js', 'caracoles.test.js', 'chapman.test.js', 'bigsur.test.js', 'tianmen.test.js', 'uncompahgre.test.js', 'sani.test.js', 'iroha.test.js', 'mulholland.test.js', 'beartooth.test.js', 'rastro.test.js', 'moki.test.js', 'cpalace.test.js', 'riverside.test.js', 'hotham.test.js', 'lang.test.js', 'fuel.test.js', 'rivals.test.js'],
+  node: ['stamp.test.js', 'golden.test.js', 'races.test.js', 'cs-handling.test.js', 'net-core.test.js', 'crossover.test.js', 'champ.test.js', 'rally.test.js', 'quali.test.js', 'weather.test.js', 'compounds.test.js', 'flags.test.js', 'vrsic.test.js', 'katu.test.js', 'traffic.test.js', 'police.test.js', 'caracoles.test.js', 'chapman.test.js', 'bigsur.test.js', 'tianmen.test.js', 'uncompahgre.test.js', 'sani.test.js', 'iroha.test.js', 'mulholland.test.js', 'beartooth.test.js', 'rastro.test.js', 'moki.test.js', 'cpalace.test.js', 'riverside.test.js', 'longford.test.js', 'hotham.test.js', 'lang.test.js', 'fuel.test.js', 'rivals.test.js'],
   browser: ['browser/smoke.test.mjs', 'browser/app.test.mjs', 'browser/world.test.mjs', 'browser/pits.test.mjs', 'browser/champ.test.mjs', 'browser/quali.test.mjs', 'browser/weather.test.mjs', 'browser/flags.test.mjs', 'browser/career.test.mjs', 'browser/replay.test.mjs', 'browser/atmos.test.mjs', 'browser/sound.test.mjs', 'browser/cockpit.test.mjs', 'browser/gfx.test.mjs', 'browser/look.test.mjs', 'browser/look2.test.mjs', 'browser/pad.test.mjs', 'browser/memory.test.mjs', 'browser/perf.test.mjs', 'browser/online.test.mjs', 'browser/online4.test.mjs', 'browser/lang.test.mjs', 'browser/saver.test.mjs', 'browser/tower.test.mjs', 'browser/share.test.mjs', 'browser/sky.test.mjs', 'browser/fuel.test.mjs', 'browser/rivals.test.mjs', 'browser/school.test.mjs'],
 };
 const which = process.argv[2];
 const list = which ? SUITES[which] : [...SUITES.node, ...SUITES.browser];
 if (!list) { console.error('unknown suite: ' + which + ' (node | browser)'); process.exit(2); }
 const LIMIT = (+process.env.TEST_TIMEOUT_MIN || 15) * 60000;
+// (the memory test goes three times through every track: it grows with each new track, so it gets twice the time)
+const LIMIT_OF = (f) => (/memory\.test/.test(f) ? 2 : 1) * LIMIT;
 
 const results = [];
 for (const f of list) {
   const t0 = Date.now();
   console.log(`\n### ${f}`);
-  const r = spawnSync(process.execPath, [path.join(__dirname, f)], { stdio: 'inherit', timeout: LIMIT, killSignal: 'SIGKILL' });
+  const r = spawnSync(process.execPath, [path.join(__dirname, f)], { stdio: 'inherit', timeout: LIMIT_OF(f), killSignal: 'SIGKILL' });
   const timedOut = !!(r.error && r.error.code === 'ETIMEDOUT');
-  if (timedOut) console.log(`FAIL ${f}: stopped after ${LIMIT / 60000} min (TEST_TIMEOUT_MIN)`);
+  if (timedOut) console.log(`FAIL ${f}: stopped after ${LIMIT_OF(f) / 60000} min (TEST_TIMEOUT_MIN)`);
   results.push({ f, ok: r.status === 0, s: ((Date.now() - t0) / 1000).toFixed(0), timedOut });
 }
 console.log('\n=== summary');
