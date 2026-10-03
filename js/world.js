@@ -18131,7 +18131,7 @@ const World = (function () {
     {
       const offs = [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8;
       const shade = (i, o) => { const rl = T.rl[i]; let k = 0.82 - 0.12 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k += 0.03; return [k, k * 0.99, k * 0.97]; };   // (sun-bleached grey, the wheel tracks darker)
-      const wht = [0.95, 0.95, 0.92], ylw = [0.96, 0.76, 0.16], gc = [0.72, 0.68, 0.6], grav = [0.76, 0.7, 0.6];
+      const wht = [0.95, 0.95, 0.92], ylw = [0.96, 0.76, 0.16], gc = [0.64, 0.63, 0.6], grav = [0.7, 0.67, 0.61];
       const vc = [-1, 1].map((side, si) => { const a = []; for (let i = 0; i < N; i++) { const bar = side > 0 ? T.br[i] : T.bl[i];
         a.push(vp[si][i].map(([o, y], k) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
           const wl = vp[si][i][2][1] < -2.6 && !(T.gap && T.gap[si][i]); if (wl && (k === 1 || k === 2)) { const q = 0.9 + 0.14 * rpHash(i >> 1, 47 + si); return k === 1 ? [0.68 * q, 0.66 * q, 0.62 * q] : [0.52 * q, 0.5 * q, 0.46 * q]; }   // (the wall's granite coping, its face)
