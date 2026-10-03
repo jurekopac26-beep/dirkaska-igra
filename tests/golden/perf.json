@@ -111,6 +111,13 @@
   "maxKverts": 798,
   "jsMs": 0.85
  },
+ "rio": {
+  "calls": 273,
+  "maxCalls": 375,
+  "kverts": 658,
+  "maxKverts": 810,
+  "jsMs": 1.32
+ },
  "chapman": {
   "calls": 211,
   "maxCalls": 289,

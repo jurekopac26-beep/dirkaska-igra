@@ -1598,5 +1598,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "4c53c94c9086f66bc8a7b4f0"
+ },
+ "rio/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 237.77,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "77f1d53969f3edac1d3f7aaa"
+ },
+ "rio/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 254.05,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "5bc2eb49b7dfdceda8e60c24"
+ },
+ "rio/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 200.61,
+  "spins": 0,
+  "walls": 6,
+  "rescues": 0,
+  "nan": false,
+  "digest": "a8962299be5ee0875f41b619"
+ },
+ "rio/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 202.92,
+  "spins": 0,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "bf8b3ba2089beafb1a8a91c3"
+ },
+ "rio/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 237.76,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "ba60727d8908d2579a34d57b"
  }
 }
