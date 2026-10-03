@@ -892,6 +892,7 @@ const World = (function () {
     if (THEME === 'cpalace') return finish(buildRbring(scene, tex, opts), tex);   // Crystal Palace 1937: the same builder in its period look and the park (RB_LOOK, cpPark)
     if (THEME === 'suzuka') return finish(buildSuzuka(scene, tex, opts), tex); // Suzuka, the figure of eight on its real ground (below)
     if (THEME === 'riverside') return finish(buildRiverside(scene, tex, opts), tex);   // Riverside, the circuit of 1960 in the dry hills (below)
+    if (RB_LOOK[THEME]) return finish(buildRbring(scene, tex, opts), tex);   // a look registered from a file of its own (World.rbLook: js/world-<track>.js) on the Red Bull Ring's builder
     const R = rng(4242);
     hillN = valueNoise2(77, 60);
     mtnN = valueNoise2(83, 130); mtnN2 = valueNoise2(91, 55); mtnPeak = valueNoise2(97, 220);
@@ -20421,7 +20422,7 @@ const World = (function () {
     const c = document.createElement('canvas'); c.width = 1024; c.height = 1024; const x = c.getContext('2d');
     const cell = (k, bg, fg, txt, px, stripe) => { const cx = (k % 4) * 256, cy = Math.floor(k / 4) * 64; x.fillStyle = bg; x.fillRect(cx, cy, 256, 64); if (stripe) { x.fillStyle = stripe; x.fillRect(cx, cy + 56, 256, 8); x.fillRect(cx, cy, 256, 4); }
       x.fillStyle = fg; x.font = '900 ' + px + 'px Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(txt, cx + 128, cy + 33, 240); };
-    const AT = LK.at, nb = LK.ban === RB_BAN ? ['#1c2856', '#fff', '#e2202c'] : ['#0b3b2a', '#fff', '#f2c21a'];   // (Bathurst's numbers bottle green and gold)
+    const AT = LK.at, nb = LK.numCol || (LK.ban === RB_BAN ? ['#1c2856', '#fff', '#e2202c'] : ['#0b3b2a', '#fff', '#f2c21a']);   // (Bathurst's numbers bottle green and gold)
     for (let k = 1; k <= LK.nums; k++) cell(AT.num + k - 1, nb[0], nb[1], String(k), 52, nb[2]);
     ['300', '200', '100'].forEach((t, k) => cell(AT.brake + k, '#f4f4f0', '#111', t, 50, '#111'));
     LK.ban.forEach(([t, bg, fg, st], k) => cell(AT.ban + k, bg, fg, t, t.length > 10 ? 30 : 38, st));
@@ -21105,6 +21106,7 @@ const World = (function () {
         const f = Math.min(sstep(-40, 0, al), sstep(Lp + 40, Lp, al), sstep(11.5, 15, lat), sstep(125, 100, lat)); if (!(f > 0)) return h;
         return lerp(h, hyS(sa + clamp(al, 0, Lp)) - 0.14, f); };
     }
+    if (LK.prep) LK.prep(P, RB_KIT);   // (a registered look's own ground: its lakes, before any height is taken)
     const PARK = LK.park && def.cp ? cpPrep(P) : null;   // (Crystal Palace: the lakes and the terrace walls cut into the ground)
     out.bounds = { minX: P.x0, maxX: P.x1, minZ: P.z0, maxZ: P.z1 };
     const matV = new THREE.MeshLambertMaterial({ vertexColors: true }); out.matV = matV;
@@ -21346,7 +21348,7 @@ const World = (function () {
     const RX = rng(4322), smokeL = [], flagL = [], scrG = new GB(true), WROT = Math.atan2(RB_WIND[1], RB_WIND[0]), SMK = [[1, 0.5, 0.12], [1, 0.45, 0.08], [0.98, 0.56, 0.18]];
     const FL = { nl: [[0.68, 0.11, 0.16], [0.95, 0.95, 0.94], [0.13, 0.28, 0.55]], at: [[0.8, 0.1, 0.14], [0.95, 0.95, 0.94], [0.8, 0.1, 0.14]], or: [[1, 0.5, 0.08]], st: [[0.95, 0.95, 0.94], [0.12, 0.5, 0.25]], rb: [[0.12, 0.16, 0.36]],
       gg: [[0.02, 0.45, 0.22], [0.98, 0.78, 0.1]], au: [[0.05, 0.14, 0.42], [0.95, 0.95, 0.94], [0.05, 0.14, 0.42]], tm: [[0.86, 0.12, 0.14], [0.95, 0.95, 0.94]],
-      cpA: [[0.9, 0.85, 0.7]], cpB: [[0.18, 0.34, 0.24]], cpC: [[0.5, 0.12, 0.12]] };   // (Crystal Palace: plain bunting of the 1930s)   // (Bathurst: green and gold, navy and white, a team's red and white)
+      cpA: [[0.9, 0.85, 0.7]], cpB: [[0.18, 0.34, 0.24]], cpC: [[0.5, 0.12, 0.12]], ...(LK.fl || {}) };   // (Crystal Palace: plain bunting of the 1930s)   // (Bathurst: green and gold, navy and white, a team's red and white)
     const flagAt = (x, y, z, h, k, W) => { W = W || 1.6; cyl(scen.get(x, z), x, y - 0.2, z, 0.05, h + 0.2, 5, [0.86, 0.86, 0.88]); flagL.push([x, y + h, z, WROT + (RX() - 0.5) * 0.3, FL[k], W, W * 0.66]); };   // (the cloth flies downwind)
     const pick = (o) => { let u = RX(); for (const k in o) { if (u < o[k]) return k; u -= o[k]; } return Object.keys(o)[0]; };
 
@@ -21898,7 +21900,7 @@ const World = (function () {
         if (openAt(fx, fz)) flagAt(fx, nrGround(fx, fz), fz, 6, pick(LK.flags.camp), 1.9); }
       exclPush(x, z, 42);
     }
-    for (let tries = 0; !PER && tries < 300 && nFarm < 7; tries++) {   // a farm: in Styria a white house under a dark roof and a timber barn, at Bathurst a homestead under red iron and a shed
+    for (let tries = 0; !PER && LK.farm && tries < 300 && nFarm < 7; tries++) {   // a farm: in Styria a white house under a dark roof and a timber barn, at Bathurst a homestead under red iron and a shed
       const x = P.x0 + 120 + R() * (P.x1 - P.x0 - 240), z = P.z0 + 120 + R() * (P.z1 - P.z0 - 240), rd = nrDist(x, z); if (rd < 150 || rd > 420 || !openAt(x, z)) continue;
       const rot = R() * TAU, g = scen.get(x, z), y = nrGround(x, z), c = Math.cos(rot), s = Math.sin(rot), bx2 = x - s * 16, bz2 = z + c * 16;
       if (!openAt(bx2, bz2)) continue;
@@ -21913,7 +21915,7 @@ const World = (function () {
     { const cg = new GB(); box(cg, 0, 0.25, 0, 4.3, 0.8, 1.85, 0, [1, 1, 1], [1, 1, 1], true); box(cg, -0.35, 1.05, 0, 2.3, 0.62, 1.62, 0, [0.3, 0.33, 0.38], [1, 1, 1], true);
       const cars = new IChunks(cg.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true }), 256), LC = P.L, a0 = T.hd[T.idx(sStart)];
       const ccols = [[0.93, 0.93, 0.92], [0.72, 0.74, 0.77], [0.12, 0.12, 0.13], [0.42, 0.44, 0.47], [0.16, 0.22, 0.42], [0.62, 0.1, 0.1], [0.86, 0.85, 0.8], [0.25, 0.3, 0.26]];
-      for (let j = 0; !PER && j < LC.nz && nCars < 1400; j++) for (let i = 0; i < LC.nx && nCars < 1400; i++) {
+      for (let j = 0; !PER && LK.carParks !== false && j < LC.nz && nCars < 1400; j++) for (let i = 0; i < LC.nx && nCars < 1400; i++) {
         if (P.lc[j * LC.nx + i] !== 3) continue;
         const x = LC.x0 + (i + 0.5) * LC.cell, z = LC.z0 + (j + 0.5) * LC.cell, rd = nrDist(x, z);
         if (rd < 45 || rd > 420 || excluded(x, z) || nrSlope(x, z) > 0.08 || P.pad(x, z, 0) !== 0) continue;
@@ -21929,7 +21931,7 @@ const World = (function () {
       cars.addTo(root, true);
     }
 
-    const PK = { root, tex, scen, exclPush, CR, out, matV }, parkSt = PARK ? cpPark(PK) : null;   // (Crystal Palace: the lakes, the sculptures, the terraces, the mast, the houses)
+    const PK = { root, tex, scen, exclPush, excluded, CR, out, matV, R, ownTex, addM, P, def, crowdPts, flagAt }, parkSt = PARK ? cpPark(PK) : LK.extra ? LK.extra(PK, RB_KIT) : null;   // (Crystal Palace: the lakes, the sculptures, the terraces, the mast, the houses; a registered look's own scenery: LK.extra)
 
     /* ---- spectators on the grass (the hill between Turns 3 and 4, the infield), fans along the fences, a few everywhere ---- */
     {
@@ -21944,10 +21946,11 @@ const World = (function () {
     /* ---- the woods: spruce and beech where the land cover has forest, bushes on the scrub, lone trees on the meadows and round the farms ---- */
     const tMat = new THREE.MeshLambertMaterial({ vertexColors: true });
     const AU = LK.trees === 'au', TG = AU ? auTreeGeo : nrTreeGeo;   // (Styria: spruce and beech; Bathurst: eucalypts and wattle)
-    const tk = PARK ? [] : [new IChunks(TG(0), tMat, 128), new IChunks(TG(1), tMat, 128)];   // near the road: casting shadows
-    const tf = PARK ? [] : [new IChunks(TG(2), tMat, 192), new IChunks(TG(3), tMat, 192)];   // more than 70 m out: cheaper, no shadows (as on the Nordschleife)
-    let nTrees = PARK ? cpTrees({ root, R, excluded, dens }) : 0;   // (Crystal Palace: the park's old trees)
-    if (!PARK) {
+    const OWN = PARK || LK.ownTrees;   // (Crystal Palace, a registered look with its own trees: LK.extra planted them)
+    const tk = OWN ? [] : [new IChunks(TG(0), tMat, 128), new IChunks(TG(1), tMat, 128)];   // near the road: casting shadows
+    const tf = OWN ? [] : [new IChunks(TG(2), tMat, 192), new IChunks(TG(3), tMat, 192)];   // more than 70 m out: cheaper, no shadows (as on the Nordschleife)
+    let nTrees = PARK ? cpTrees({ root, R, excluded, dens }) : LK.ownTrees ? (parkSt && parkSt.trees) || 0 : 0;   // (Crystal Palace: the park's old trees)
+    if (!OWN) {
       const Lt = NRC * NRT, maxT = Math.round(60000 * dens), CR0 = AU ? [0.24, 0.4] : [0.3, 0.33];   // (crown radius / width of a spruce, a beech (a eucalypt, a wattle): the forest floor under it)
       for (let tj = 0; tj < G.ntz && nTrees < maxT; tj++) for (let ti = 0; ti < G.ntx && nTrees < maxT; ti++) {
         if (!G.on[tj * G.ntx + ti]) continue;
@@ -22033,7 +22036,7 @@ const World = (function () {
     }
     if (flagL.length) root.add(rbFlags(flagL, CR.U.uTime));
     out.crowdPts = Float32Array.from(crowdPts);
-    if (!PER) out.dyn.air = out.air = rbAir(root, ownTex, nrGround, LK.jets);   // the helicopter's pass, the jets before the start (game.js: air.go, air.shot); not in the 1930s
+    if (!PER && LK.air !== false) out.dyn.air = out.air = rbAir(root, ownTex, nrGround, LK.jets);   // the helicopter's pass, the jets before the start (game.js: air.go, air.shot); not in the 1930s
     if (!scrG.empty) { const st = ownTex(rbScreenTex(LK)); addM(scrG, new THREE.MeshBasicMaterial({ map: st })); out.dyn.screens = { tex: st, f: -1 }; }
     out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, stands: nStands, boxes: nBoxes, camp: nCamp, farms: nFarm, cars: nCars, tv: nTV, decals: nDecals, smoke: smokeL.length, flags: flagL.length, screens: nScr, photographers: nPh, park: parkSt };   // (read by the tests)
     return out;
@@ -23339,6 +23342,9 @@ const World = (function () {
   }
   const _hjV = new THREE.Vector3();
 
-  return { build, update, view, GB, box, cyl, cone, ico, gable, hex, vary, waterSky: WSKY, heli: tvHeli };   // (heli: the TV helicopter's model, also the police's on Vršič)
+  // a look for the Red Bull Ring's builder from a file of its own (js/world-<track>.js): its RB_LOOK entry (LK.extra(PK, kit): its own scenery)
+  const RB_KIT = { GB, RB, Chunks, IChunks, rng, crH, vary, box, cyl, cone, ico, puff, gable, rock, inPoly, polyDist, waterMat, shoreBand, mergeBands, addShore, nrGround, nrNear, nrDist, nrLC, nrLCf, nrSlope, nrDem, crowdRun, get T() { return T; } };
+  function rbLook(id, look) { RB_LOOK[id] = look; }
+  return { build, update, view, GB, box, cyl, cone, ico, gable, hex, vary, waterSky: WSKY, heli: tvHeli, rbLook };   // (heli: the TV helicopter's model, also the police's on Vršič)
 })();
 

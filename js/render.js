@@ -1512,6 +1512,7 @@ const Render = (function () {
     if (dryLn) { scene.remove(dryLn); dryLn.geometry.dispose(); dryLn.material.dispose(); dryLn = null; }
     if (pud) { scene.remove(pud); pud.geometry.dispose(); pud.material.dispose(); pud = null; } splash.clear();
     birds.reset(!!(track.def && (track.def.sea || track.def.theme === 'monaco')));   // (gulls by the sea)
+    if (track.def && track.def.noBirds) birds.mesh.visible = false;
     valleyFog(); rainbow(false); setMarks(null);   // (the morning mist, no rainbow or school marks from the last world)
     return world;
   }
@@ -1689,6 +1690,7 @@ const Render = (function () {
     moki:     { fog: 0xc9d6e6, sun: 0xffeccc, sunI: 1.3, sky: 0x8fb6ee, gnd: 0x8a5a3c, hemiI: 0.62, tint: [1.03, 1.0, 0.96], sat: 1.1, sunOff: [-86, 82, 46] },   // the Moki Dugway: a clear afternoon over the Utah desert, a deep blue sky, the warm sun from the south-west (the cliff's red light bounced into the shade)
     cpalace:  { fog: 0xc9d3db, sun: 0xfff0d8, sunI: 1.08, sky: 0xcddcec, gnd: 0x4c5a32, hemiI: 0.62, tint: [1.02, 1.0, 0.96], sat: 1.02, sunOff: [-60, 74, 66] },   // Crystal Palace: a spring afternoon in south London, a soft English light with a little haze, the sun from the south-west
     riverside: { fog: 0xd9dfe3, sun: 0xffecc8, sunI: 1.3, sky: 0xc3d8f2, gnd: 0x8a7650, hemiI: 0.62, tint: [1.04, 1.0, 0.93], sat: 1.04, haze: 0.12, hazeCol: [1, 0.86, 0.66], sunOff: [-70, 74, 78] },   // Riverside: a clear, dry afternoon in southern California, the sun from the south-west, a little dust in the warm haze
+    saopaulo: { fog: 0xd3dde4, sun: 0xfff0d2, sunI: 1.16, sky: 0xc6dcf2, gnd: 0x5a6038, hemiI: 0.64, tint: [1.03, 1.0, 0.96], sat: 1.08, haze: 0.08, hazeCol: [0.96, 0.92, 0.86], sunOff: [-40, 86, 70] },   // São Paulo: a warm, hazy November afternoon over the city, the sun high
   };
   // each track's own grade on top (high quality, the post pass): its shadows and its highlights tinted apart, a little (split toning:
   // [shadows], [highlights]); cool shade and a warm sun mostly, the Riviera's teal and gold, Toskana's golden light, Spa's greyer air
@@ -1701,7 +1703,7 @@ const Render = (function () {
     tianmen: [[0.97, 1.0, 1.03], [1.02, 1.0, 0.98]],
     sani: [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]],
     moki: [[0.95, 0.99, 1.07], [1.05, 1.0, 0.94]], cpalace: [[0.97, 1.0, 1.04], [1.03, 1.0, 0.95]],
-    riverside: [[0.96, 0.99, 1.05], [1.06, 1.01, 0.92]] };
+    riverside: [[0.96, 0.99, 1.05], [1.06, 1.01, 0.92]], saopaulo: [[0.96, 1.0, 1.05], [1.05, 1.0, 0.94]] };
   THEMES.uncompahgre = { fog: 0xbfcfe0, sun: 0xfff0d8, sunI: 1.24, sky: 0xb8d0f0, gnd: 0x4c5236, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-70, 92, 62] };   // the Uncompahgre Gorge: a clear afternoon in the San Juans, the sun from the south-west over the cliffs, a crisp blue haze
   SPLIT.uncompahgre = [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]];
   SPLIT.iroha = [[0.96, 0.99, 1.05], [1.04, 1.0, 0.95]];   // (Irohazaka: cool shade under the maples, a warm autumn sun)
@@ -1764,7 +1766,7 @@ const Render = (function () {
   function applyWeather(r) {
     wet = r; applyTheme(themeId); rain.mesh.visible = r > 0 && atmos.season !== 'winter'; rain.mat.uniforms.uA.value = 0.5 * Math.min(1, r * 1.5);
     snow.mesh.visible = r > 0 && atmos.season === 'winter';
-    birds.mesh.visible = !(r > 0); if (r > 0) birds.reset(birds.gull);   // (no birds in the rain)
+    birds.mesh.visible = !(r > 0) && !(curTrack && curTrack.def.noBirds); if (r > 0) birds.reset(birds.gull);   // (no birds in the rain, nor where a track has none: def.noBirds)
     if (!world || !world.root) return;
     if (world.dyn.clouds) world.dyn.clouds.K.value = world.dyn.clouds.k0 * (1 - r);   // (no cloud shadows under the rain's overcast)
   }
@@ -4932,7 +4934,7 @@ const Render = (function () {
     sunFx(target);   // (every other world: the sun's rays in the woods, its lens flare)
     stormStep(dt); bowStep(dt); winU.value = sstep(0.3, 0.85, todK);
     if (vfog) { vfog.U.uT.value = time; vfog.U.uC.value.copy(scene.fog.color).lerp(_c2.setRGB(1, 0.97, 0.96), 0.55); }
-    if (birds.mesh.visible && target && world) birds.update(Math.min(dt, 0.1), cam.vcx || 0, cam.vcz || 0, world.groundH || (() => 0));
+    if (birds.mesh.visible && target && world && !curTrack.def.noBirds) birds.update(Math.min(dt, 0.1), cam.vcx || 0, cam.vcz || 0, world.groundH || (() => 0));
     if (snow.mesh.visible) { const U = snow.mat.uniforms, B = lastMode === 'cockpit' ? [28, 12, 28] : lastMode === 'chase' ? [62, 30, 62] : [80, 36, 80]; U.uBox.value.set(B[0], B[1], B[2]); U.uC.value.set(cam.vcx || 0, (cam.gy || 0) + B[1] * 0.42, cam.vcz || 0); U.uT.value = time % 600; U.uA.value = 0.9 * Math.min(1, wet * 1.5); U.uScale.value = particles.mat.uniforms.uScale.value; }
     if (rain.mesh.visible) {   // the box of streaks around the view centre (the iso camera sees the most ground, the chase camera the least)
       const U = rain.mat.uniforms, B = lastMode === 'cockpit' ? [28, 12, 28] : lastMode === 'chase' ? [62, 30, 62] : lastMode === 'kino' ? [72, 34, 72] : [86, 38, 86];   // (the cockpit: the streaks close round the car)

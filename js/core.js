@@ -1569,14 +1569,14 @@ const Core = (function () {
       post:   { m: 4,  rh: 0.14, rb: 0.62, h0: 0.55,  e: 0.3,  mu: 0.6,  lift: 1.0,  I: 0.4,  pts: boxPts(0.07, 0.55, 0.07) },   // roadside post (stebriček): light, snaps over and cartwheels away
       // street furniture (generic, any world's junctions; Render.propGeometry draws each; the foot at -h0, an arm over the road along local +x):
       // a traffic signal on its pole and arm, a street lamp, a sign on a post, a bollard, a litter bin, a fire hydrant, an electrical cabinet.
-      // They snap off their foot and topple, the car drives on; dmg: the heavy ones dent it a little, once (propCarHit)
-      signal: { m: 60, rh: 0.15, rb: 3.0, h0: 2.6,  e: 0.15, mu: 0.6,  lift: 0.3,  I: 110, dmg: 0.6, pts: boxPts(0.12, 2.6, 0.12).concat([[3.2, 2.4, 0]]) },
-      lamp:   { m: 45, rh: 0.13, rb: 4.2, h0: 4.0,  e: 0.15, mu: 0.6,  lift: 0.3,  I: 160, dmg: 0.5, pts: boxPts(0.1, 4.0, 0.1).concat([[1.6, 3.9, 0]]) },
-      sign:   { m: 9,  rh: 0.1,  rb: 1.4, h0: 1.25, e: 0.25, mu: 0.6,  lift: 0.8,  I: 4,   pts: boxPts(0.05, 1.25, 0.3) },
-      bollard: { m: 12, rh: 0.12, rb: 0.5, h0: 0.45, e: 0.25, mu: 0.6,  lift: 0.8,  I: 0.8, pts: cylPts(0.12, -0.45, 0.45, 6) },
-      bin:    { m: 10, rh: 0.28, rb: 0.6, h0: 0.5,  e: 0.25, mu: 0.6,  lift: 0.7,  I: 1.0, pts: cylPts(0.26, -0.5, 0.5, 6) },
-      hydrant: { m: 30, rh: 0.2, rb: 0.5, h0: 0.4,  e: 0.2,  mu: 0.7,  lift: 0.4,  I: 1.5, dmg: 0.4, pts: cylPts(0.17, -0.4, 0.4, 6) },
-      cabinet: { m: 40, rh: 0.45, rb: 0.85, h0: 0.65, e: 0.15, mu: 0.7, lift: 0.3,  I: 7,   dmg: 0.4, pts: boxPts(0.4, 0.65, 0.25) },
+      // They snap off their foot and topple, the car drives on (once: a car knocks one once, then only pushes it aside for a moment); dmg: the heavy ones dent it a little, once (propCarHit)
+      signal: { once: 1, m: 35, rh: 0.15, rb: 3.0, h0: 2.6,  e: 0.15, mu: 0.6,  lift: 0.3,  I: 110, dmg: 0.6, pts: boxPts(0.12, 2.6, 0.12).concat([[3.2, 2.4, 0]]) },
+      lamp:   { once: 1, m: 30, rh: 0.13, rb: 4.2, h0: 4.0,  e: 0.15, mu: 0.6,  lift: 0.3,  I: 160, dmg: 0.5, pts: boxPts(0.1, 4.0, 0.1).concat([[1.6, 3.9, 0]]) },
+      sign:   { once: 1, m: 9,  rh: 0.1,  rb: 1.4, h0: 1.25, e: 0.25, mu: 0.6,  lift: 0.8,  I: 4,   pts: boxPts(0.05, 1.25, 0.3) },
+      bollard: { once: 1, m: 12, rh: 0.12, rb: 0.5, h0: 0.45, e: 0.25, mu: 0.6,  lift: 0.8,  I: 0.8, pts: cylPts(0.12, -0.45, 0.45, 6) },
+      bin:    { once: 1, m: 10, rh: 0.28, rb: 0.6, h0: 0.5,  e: 0.25, mu: 0.6,  lift: 0.7,  I: 1.0, pts: cylPts(0.26, -0.5, 0.5, 6) },
+      hydrant: { once: 1, m: 22, rh: 0.2, rb: 0.5, h0: 0.4,  e: 0.2,  mu: 0.7,  lift: 0.4,  I: 1.5, dmg: 0.4, pts: cylPts(0.17, -0.4, 0.4, 6) },
+      cabinet: { once: 1, m: 30, rh: 0.45, rb: 0.85, h0: 0.65, e: 0.15, mu: 0.7, lift: 0.3,  I: 7,   dmg: 0.4, pts: boxPts(0.4, 0.65, 0.25) },
     };
   })();
   const _pq = {};
@@ -1613,7 +1613,8 @@ const Core = (function () {
       const px = b.x - nx * K.rh, pz = b.z - nz * K.rh, rcx = px - c.x, rcz = pz - c.z;
       const vcx = c.vx - c.w * rcz, vcz = c.vz + c.w * rcx, vrel = (vcx - b.vx) * nx + (vcz - b.vz) * nz;   // closing speed at the contact
       b.x += nx * (r - e); b.z += nz * (r - e); b.dirty = true;                                          // the prop gives way
-      if (vrel < 0.5) return;
+      if (vrel < 0.5 || (K.once && b.hitBy === c && b.age < 0.8)) return;
+      if (K.once) b.hitBy = c;
       if (K.breaks) { race.breakProp(b, nx, nz, vrel, c.vx, c.vz); propFeel(c, K.m, vrel, b.kind); return; }
       const rx = -nx * K.rh, rz = -nz * K.rh, ry = clamp(cy + 0.42 - b.y, -K.rb * 0.8, K.rb * 0.8);          // hit at bumper height: it topples away
       const ax2 = ry * nz, ay2 = rz * nx - rx * nz, az2 = -ry * nx;
@@ -1623,7 +1624,7 @@ const Core = (function () {
       b.vy = Math.min(7.5, b.vy + Math.min(5, vrel * K.lift * 0.22)); b.wy += (Math.random() - 0.5) * Math.min(10, vrel * 0.5);
       const hs = Math.hypot(b.vx, b.vz), cap = Math.min(18, 0.72 * Math.hypot(c.vx, c.vz) + 2); if (hs > cap) { b.vx *= cap / hs; b.vz *= cap / hs; }
       race.propFx(b, vrel);
-      if (K.dmg && vrel > 6 && !b.dent) { b.dent = true; applyDamage(c, K.dmg * (vrel - 6) * 0.002, (px - c.x) * ch + (pz - c.z) * sh, -(px - c.x) * sh + (pz - c.z) * ch); }   // (heavy street furniture: a small dent, once)
+      if (K.dmg && vrel > 6 && !b.dent) { b.dent = true; applyDamage(c, K.dmg * (vrel - 6) * 0.001, (px - c.x) * ch + (pz - c.z) * sh, -(px - c.x) * sh + (pz - c.z) * ch); }   // (heavy street furniture: a small dent, once)
       const wl = Math.hypot(b.wx, b.wy, b.wz); if (wl > 14) { b.wx *= 14 / wl; b.wy *= 14 / wl; b.wz *= 14 / wl; }
       propFeel(c, K.m, vrel, b.kind);
       return;
