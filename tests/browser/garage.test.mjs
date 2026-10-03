@@ -1,4 +1,5 @@
-// The garage (garaza.html): the page opens with the workshop and the car, the camera (left and right only), the demo profiles, buying a car and the credits, a new car
+// The garage (garaza.html): the page opens with the workshop and the car, the camera (left and right only, always as far; what is
+// between it and the car steps aside), the demo profiles, buying a car and the credits, a new car
 // driving in, every upgrade with its parts on the car, the service (dirt and scratches gone, the engine), a new colour, the English page,
 // every car of the game on the turntable with all its parts, the pictures of the cars, the profile kept after a reload. The animations
 // run on a clock the test steps itself (software WebGL is slow). Zero page errors allowed.
@@ -45,6 +46,10 @@ try {
     await drag(-30, 20); await page.mouse.move(box.x, box.y); await page.mouse.wheel(50, 0);
     const c2 = await cam(), round = Math.hypot(c2.x - c0.x, c2.z - c0.z) > 1 && Math.abs(c2.y - c0.y) < 0.03 && Math.abs(c2.d - c0.d) < 0.03;
     T.check('the camera: up and down and the wheel do nothing; left and right (a drag, a sideways scroll) it goes round, its height and distance kept', same && round, JSON.stringify({ c0, c1, c2 }));
+    // round to behind the car: out beyond the back wall, as far as ever (it never comes closer); the back wall's things stepped aside
+    await drag(-180, 0); await drag(-180, 0);
+    const c3 = await cam(), back = await page.evaluate(() => ({ hidden: !Garage3D._dbg.WALLS.back.root.visible, front: Garage3D._dbg.WALLS.front.root.visible }));
+    T.check('behind the car: the camera out beyond the back wall at the same distance, the back wall\'s things gone from between it and the car', c3.z < -5 && Math.abs(c3.d - c0.d) < 0.03 && Math.abs(c3.y - c0.y) < 0.03 && back.hidden && back.front, JSON.stringify({ c3, back }));
     await page.evaluate(() => { Garage3D.view(0); __garage.advance(1.5); });
   }
 
