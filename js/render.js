@@ -1557,6 +1557,38 @@ const Render = (function () {
       const wh = [0.95, 0.95, 0.93], bk = [0.08, 0.08, 0.09], rf = [1, 0.45, 0.08];
       W.box(g, 0, -0.65, 0, 0.14, 1.2, 0.14, 0, wh, wh); W.box(g, 0, 0.18, 0, 0.146, 0.22, 0.146, 0, bk, bk);
       for (const x of [-0.074, 0.074]) W.box(g, x, 0.22, 0, 0.012, 0.12, 0.09, 0, rf, rf); }
+    else {   // the town circuits' street furniture (generic: no names or logos); the foot at -h0, a pole's arm along +x over the road
+      const gy = [0.6, 0.62, 0.63], dk = [0.13, 0.14, 0.15], h0 = { signal: 2.7, lamp: 3.9, sign: 1.25, busstop: 1.1, bollard: 0.4, bin: 0.45, hydrant: 0.4, cabinet: 0.7, vending: 0.92, railing: 0.45 }[kind] || 0, y0 = -h0;
+      if (kind === 'signal') {   // a galvanised pole, a long arm with the flat horizontal head (green, amber, red seen from the road), a pedestrian light lower down
+        W.cyl(g, 0, y0, 0, 0.13, 5.4, 6, gy, gy, 0.1); W.box(g, 1.7, y0 + 5.0, 0, 3.4, 0.12, 0.12, 0, gy, gy);
+        W.box(g, 3.0, y0 + 4.72, 0, 1.3, 0.42, 0.3, 0, dk, dk);
+        [[0.08, 0.62, 0.42], [0.95, 0.65, 0.1], [0.9, 0.16, 0.12]].forEach((c, k) => { W.box(g, 2.6 + k * 0.4, y0 + 4.78, -0.17, 0.3, 0.3, 0.03, 0, c, c); W.box(g, 2.6 + k * 0.4, y0 + 5.08, -0.2, 0.34, 0.03, 0.12, 0, dk, dk); });
+        W.box(g, 1.2, y0 + 4.2, 0, 1.0, 0.32, 0.04, 0, [0.12, 0.3, 0.62], [0.12, 0.3, 0.62]);   // (a blank blue street-name board under the arm)
+        W.box(g, 0.2, y0 + 2.4, 0, 0.3, 0.75, 0.3, 0, dk, dk); W.box(g, 0.2, y0 + 2.8, -0.16, 0.22, 0.22, 0.02, 0, [0.9, 0.2, 0.15], [0.9, 0.2, 0.15]); W.box(g, 0.2, y0 + 2.48, -0.16, 0.22, 0.22, 0.02, 0, [0.15, 0.55, 0.7], [0.15, 0.55, 0.7]);
+      } else if (kind === 'lamp') {   // a tall street lamp, its arm and lantern over the road
+        W.cyl(g, 0, y0, 0, 0.14, 8.0, 6, gy, gy, 0.08); W.box(g, 0.8, y0 + 7.85, 0, 1.6, 0.1, 0.1, 0, gy, gy); W.box(g, 1.7, y0 + 7.75, 0, 0.8, 0.18, 0.34, 0, [0.55, 0.56, 0.58], [0.98, 0.96, 0.85]);
+      } else if (kind === 'sign') {   // a yellow diamond warning sign (black rim) on a grey post
+        W.cyl(g, 0, y0, 0, 0.04, 2.7, 5, gy, gy);
+        const c = [0, y0 + 2.1, 0], yl = [0.98, 0.78, 0.12];
+        for (const [r, col, xo] of [[0.48, dk, 0.045], [0.42, yl, 0.05]]) for (let k = 0; k < 4; k++) { const a0 = k / 4 * TAU2, a1 = (k + 1) / 4 * TAU2; g.triO([xo, c[1], 0], [xo, c[1] + Math.sin(a0) * r, Math.cos(a0) * r], [xo, c[1] + Math.sin(a1) * r, Math.cos(a1) * r], col, [-1, c[1], 0]); }
+        W.box(g, 0.055, y0 + 2.04, 0, 0.01, 0.2, 0.06, 0, dk, dk); W.box(g, 0.055, y0 + 1.92, 0, 0.01, 0.05, 0.05, 0, dk, dk);
+      } else if (kind === 'busstop') {   // a bus stop: a round blank sign and a timetable box on a pole, its round concrete foot
+        W.cyl(g, 0, y0, 0, 0.36, 0.14, 8, [0.62, 0.6, 0.57], [0.66, 0.64, 0.6]); W.cyl(g, 0, y0, 0, 0.04, 2.5, 5, gy, gy);
+        W.cyl(g, 0, y0 + 2.2, 0, 0.3, 0.05, 10, [0.9, 0.9, 0.88], [0.15, 0.4, 0.3]); W.box(g, 0, y0 + 1.1, 0, 0.06, 0.7, 0.42, 0, [0.95, 0.95, 0.93], [0.95, 0.95, 0.93]);
+      } else if (kind === 'bollard') { const yl = [0.95, 0.76, 0.1]; W.cyl(g, 0, y0, 0, 0.08, 0.8, 6, [0.82, 0.82, 0.8], yl); W.cyl(g, 0, y0 + 0.55, 0, 0.083, 0.12, 6, yl);
+      } else if (kind === 'bin') { const gr = [0.35, 0.48, 0.42]; W.box(g, 0, y0, 0, 0.56, 0.86, 0.44, 0, gr, [0.25, 0.3, 0.3]); W.box(g, 0, y0 + 0.62, -0.225, 0.3, 0.12, 0.02, 0, dk, dk);
+      } else if (kind === 'hydrant') { const rd = [0.82, 0.14, 0.12]; W.cyl(g, 0, y0, 0, 0.16, 0.72, 8, rd, rd); W.cyl(g, 0, y0 + 0.72, 0, 0.18, 0.08, 8, rd, [0.7, 0.12, 0.1], 0.08); W.box(g, 0, y0 + 0.45, 0, 0.5, 0.12, 0.12, 0, rd, rd);
+      } else if (kind === 'cabinet') { const c = [0.72, 0.74, 0.72]; W.box(g, 0, y0, 0, 0.8, 0.12, 0.48, 0, [0.5, 0.5, 0.5]); W.box(g, 0, y0 + 0.12, 0, 0.76, 1.28, 0.44, 0, c, [0.66, 0.68, 0.66]); W.box(g, 0, y0 + 0.6, -0.225, 0.02, 0.5, 0.01, 0, dk, dk);
+      } else if (kind === 'vending') {   // a drinks machine: a coloured cabinet, a lit window of bottles, the coin panel and the slot
+        const body = [0.85, 0.15, 0.13]; W.box(g, 0, y0, 0, 1.04, 1.84, 0.8, 0, body, [0.75, 0.75, 0.74]);
+        W.box(g, 0, y0 + 1.0, -0.405, 0.9, 0.7, 0.01, 0, [0.92, 0.94, 0.95], [0.92, 0.94, 0.95]);
+        for (let r = 0; r < 3; r++) for (let k = 0; k < 6; k++) W.box(g, -0.36 + k * 0.144, y0 + 1.06 + r * 0.22, -0.415, 0.08, 0.14, 0.01, 0, [[0.2, 0.5, 0.85], [0.95, 0.6, 0.1], [0.2, 0.65, 0.3]][(k + r) % 3], null);
+        W.box(g, 0.3, y0 + 0.6, -0.405, 0.22, 0.3, 0.01, 0, [0.2, 0.2, 0.22], null); W.box(g, 0, y0 + 0.12, -0.405, 0.7, 0.24, 0.01, 0, dk, null);
+      } else if (kind === 'railing') {   // a white steel guard railing panel: two posts, two rails, vertical bars
+        const wh = [0.93, 0.94, 0.93]; for (const x of [-0.98, 0.98]) W.box(g, x, y0, 0, 0.06, 0.9, 0.06, 0, wh, wh);
+        for (const y of [0.18, 0.84]) W.box(g, 0, y0 + y, 0, 2.0, 0.05, 0.05, 0, wh, wh); for (let k = -6; k <= 6; k++) W.box(g, k * 0.14, y0 + 0.2, 0, 0.025, 0.64, 0.025, 0, wh, wh);
+      }
+    }
     return g.geometry();
   }
   function clearPropMeshes() { for (const k in propMeshes) { const m = propMeshes[k]; scene.remove(m); m.geometry.dispose(); } propMeshes = {}; }
@@ -1655,6 +1687,7 @@ const Render = (function () {
     suzuka:   { fog: 0xc8d9e6, sun: 0xfff1dc, sunI: 1.06, sky: 0xd5e7fa, gnd: 0x4f5c34, hemiI: 0.62, tint: [1.01, 1.0, 0.99], sat: 1.12 },   // Suzuka: a clear spring day in Mie
     caracoles: { fog: 0xc2d3e8, sun: 0xfff3de, sunI: 1.32, sky: 0xb4cdf2, gnd: 0x6e5e4c, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.07, sunOff: [-72, 98, -62] },   // Los Caracoles: a clear afternoon of the Andean summer, the thin air's strong sun from the north-west (the southern hemisphere), a cool blue haze
     bathurst: { fog: 0xcfdbe6, sun: 0xfff0d2, sunI: 1.22, sky: 0xc6dcf6, gnd: 0x6b6a3c, hemiI: 0.6, tint: [1.03, 1.0, 0.95], sat: 1.05, sunOff: [-74, 86, -56] },   // Bathurst: a clear spring afternoon in New South Wales, the sun from the north-west (the southern hemisphere), the dry pastures' golden light
+    tokio:    { fog: 0xd3dde6, sun: 0xfff2dc, sunI: 1.1, sky: 0xcde0f2, gnd: 0x76776f, hemiI: 0.64, tint: [1.0, 1.0, 1.01], sat: 1.04, sunOff: [-62, 84, 70] },   // Tokio: a bright, slightly hazy afternoon over the bay, the sun from the south-west
     chapman:  { fog: 0xc9dbe8, sun: 0xfff0d6, sunI: 1.24, sky: 0xbcd6f4, gnd: 0x5e5a40, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-92, 74, -40] },   // Chapman's Peak: a clear late-summer afternoon at the Cape, the sun low over the Atlantic in the west-north-west, a soft sea haze
     bigsur:   { fog: 0xc8d6e2, sun: 0xfff0d8, sunI: 1.14, sky: 0xc6dcf2, gnd: 0x5c6040, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-86, 74, 58] },   // Big Sur: a clear afternoon on the coast, the sun over the Pacific in the south-west, a soft sea haze
     tianmen:  { fog: 0xc9d2d4, sun: 0xfff0dc, sunI: 1.02, sky: 0xd4dfe6, gnd: 0x4a5636, hemiI: 0.68, tint: [1.0, 1.0, 0.99], sat: 1.04, haze: 0.12, hazeCol: [0.92, 0.95, 1.0], sunOff: [-70, 92, 60] },   // Tianmen: a humid subtropical day, the sun veiled by the mist, a pale grey-green haze over the cliffs
@@ -2081,7 +2114,7 @@ const Render = (function () {
     world.winLit = true;
     const maps = [tex.facade, tex.facadeBal].filter(Boolean);
     world.root.traverse(o => { for (const m of o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []) {
-      if (!m.map || !maps.includes(m.map) || m.userData.win) continue;
+      if (!m.map || !(maps.includes(m.map) || m.map.winPic) || m.userData.win) continue;   // (winPic: a world's own facade picture, its glass blue as theirs)
       const prev = m.onBeforeCompile, key = m.customProgramCacheKey(); m.userData.win = true;   // (on top of what the material's shader has already: Ouninpohja's cut-out)
       m.onBeforeCompile = (sh, r) => { prev.call(m, sh, r); sh.uniforms.uWinK = winU;
         sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uWinK;').replace('#include <emissivemap_fragment>', WIN_GLSL); };

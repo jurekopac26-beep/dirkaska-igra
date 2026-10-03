@@ -1567,6 +1567,18 @@ const Core = (function () {
       rbale:  { m: 26, rh: 0.62, rb: 0.75, h0: 0.43,  e: 0.15, mu: 0.8,  lift: 0.3,  I: 4.6,  pts: (() => { const p = []; for (const x of [-0.62, 0.62]) for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; p.push([x, Math.cos(a) * 0.43, Math.sin(a) * 0.43]); } return p; })() },   // round straw bale lying on its side (Toskana)
       rbstack: { m: 78, rh: 0.9, rb: 1.1,  h0: 0.85,  breaks: 'rbale', parts: [[-0.66, -0.425, 0], [0.66, -0.425, 0], [0, 0.425, 0]], pf: [[1.1, 0.6], [1.0, 0.9], [0.8, 2.4]] },
       post:   { m: 4,  rh: 0.14, rb: 0.62, h0: 0.55,  e: 0.3,  mu: 0.6,  lift: 1.0,  I: 0.4,  pts: boxPts(0.07, 0.55, 0.07) },   // roadside post (stebriček): light, snaps over and cartwheels away
+      // street furniture at the junctions of the town circuits (generic, drawn by Render.propGeometry): a pole stands on its foot point and
+      // topples when knocked; the arm of a traffic light or a lamp reaches over the road along the prop's local +x (its yaw)
+      signal: { m: 45, rh: 0.15, rb: 3.6, h0: 2.7,  e: 0.12, mu: 0.6,  lift: 0.2,  I: 95,  pts: [[0, -2.7, 0], [0, 2.5, 0], [3.4, 2.3, 0], [0, -2.7, 0.25]] },   // traffic light (semafor) on its pole and arm
+      lamp:   { m: 40, rh: 0.13, rb: 4.4, h0: 3.9,  e: 0.12, mu: 0.6,  lift: 0.2,  I: 140, pts: [[0, -3.9, 0], [0, 3.9, 0], [1.6, 4.1, 0], [0, -3.9, 0.25]] },  // street lamp (ulična svetilka)
+      sign:   { m: 10, rh: 0.07, rb: 1.5,  h0: 1.25, e: 0.2,  mu: 0.6,  lift: 0.5,  I: 4,   pts: [[0, -1.25, 0], [0, 1.4, 0.4], [0, 1.4, -0.4], [0, -1.25, 0.15]] },   // road sign on a post (prometni znak)
+      busstop: { m: 18, rh: 0.3, rb: 1.5,  h0: 1.1,  e: 0.15, mu: 0.7,  lift: 0.35, I: 6,   pts: [[0.3, -1.1, 0.3], [-0.3, -1.1, -0.3], [0.3, -1.1, -0.3], [0, 1.4, 0.3], [0, 1.4, -0.3]] },   // bus stop pole on its weighted foot (postajališče)
+      bollard: { m: 7, rh: 0.09, rb: 0.45, h0: 0.4,  e: 0.3,  mu: 0.6,  lift: 0.8,  I: 0.5, pts: boxPts(0.08, 0.4, 0.08) },   // steel bollard (stebriček)
+      bin:    { m: 9,  rh: 0.3,  rb: 0.55, h0: 0.45, e: 0.25, mu: 0.6,  lift: 0.7,  I: 1.2, pts: boxPts(0.28, 0.45, 0.22) },   // litter bin (smetnjak)
+      hydrant: { m: 30, rh: 0.2, rb: 0.5,  h0: 0.4,  e: 0.2,  mu: 0.7,  lift: 0.3,  I: 2,   pts: boxPts(0.18, 0.4, 0.18) },   // fire hydrant
+      cabinet: { m: 45, rh: 0.4, rb: 0.85, h0: 0.7,  e: 0.12, mu: 0.7,  lift: 0.25, I: 9,   pts: boxPts(0.38, 0.7, 0.22) },   // electrical cabinet (omarica)
+      vending: { m: 70, rh: 0.55, rb: 1.1, h0: 0.92, e: 0.1,  mu: 0.75, lift: 0.2,  I: 30,  pts: boxPts(0.52, 0.92, 0.4) },   // drinks vending machine (avtomat)
+      railing: { m: 12, rh: 0.7, rb: 1.05, h0: 0.45, e: 0.2,  mu: 0.6,  lift: 0.5,  I: 4,   pts: boxPts(1.0, 0.45, 0.04) },   // a 2 m panel of pedestrian guard railing (ograja za pešce)
     };
   })();
   const _pq = {};
