@@ -35,11 +35,12 @@ try {
   const s = w.st;
   T.check('the kart track by Turn 3: a loop of 0.5-0.7 km clear of the circuit, its tyre walls, five karts lapping it (on its line, ~27 m in 2 s)',
     s.kart > 500 && s.kart < 700 && w.kart.clear > 9 && s.tyres > 20 && w.kart.d > 20 && w.kart.d < 32 && w.kart.on < 0.6, `${s.kart} m, ${s.tyres} tyre stacks, a kart ${w.kart.d.toFixed(1)} m in 2 s, ${w.kart.on.toFixed(2)} m off its line, ${w.kart.clear.toFixed(0)} m from the circuit`);
-  T.check('the convention centre in the west (1-2 km out): its five halls and car park from OpenStreetMap, parked cars, drawn',
-    w.conv.halls === 5 && w.conv.lot > 8 && w.conv.west && w.conv.mesh && s.conv === 5 && s.convCars > 200, JSON.stringify(w.conv) + `, ${s.convCars} cars`);
+  T.check('the convention centre in the west (1-2 km out): its five halls and car park from OpenStreetMap, drawn',
+    w.conv.halls === 5 && w.conv.lot > 8 && w.conv.west && w.conv.mesh && s.conv === 5, JSON.stringify(w.conv));
   T.check('the lagoon: boats on the water, egrets at its edge, cormorants flying over it', w.boats >= 5 && w.wet === w.boats && s.egrets >= 10 && w.birds === 7 && w.over >= 4,
     `${w.boats} boats (${w.wet} on the water), ${s.egrets} egrets, ${w.birds} cormorants (${w.over} over the water)`);
   T.check('the skyline: four bands of mountains and the town at their foot; the lagoon mirrors the mountains', w.sky === 5 && s.band > 300 && /\|true$/.test(w.water || ''), `${w.sky} rings, the water's material ${w.water}`);
+  T.check('seen from above: trees in bloom near the track, a marshals\' post past every turn', s.bloom >= 20 && s.posts >= 9, `${s.bloom} trees in bloom, ${s.posts} marshals' posts`);
   T.check('people on the pit building\'s roof and on the banks; the samba group on its stage by the main stand (before the start line, beyond the barrier)',
     s.roof > 100 && s.bank > 100 && s.samba >= 15 && w.samba && w.sambaD > 8 && w.sambaD < 25 && Math.hypot(w.samba[0] - w.start[0], w.samba[1] - w.start[1]) < 330,
     `roof ${s.roof}, banks ${s.bank}, samba ${s.samba} at ${w.sambaD && w.sambaD.toFixed(1)} m from the track`);

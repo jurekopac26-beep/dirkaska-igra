@@ -20497,6 +20497,9 @@ const World = (function () {
         const n = P.n5(x * 0.55 + 700, z * 0.55), m = P.n3(x * 1.6 + 300, z * 1.6), k = 0.92 + (n - 0.5) * 0.16 + (m - 0.5) * 0.1, mf = nrLCf(x, z, 2);
         c[0] *= k * 0.88; c[1] *= k * 0.94; c[2] *= k * 0.8;
         if (mf > 0) { c[0] = lerp(c[0], 0.7, mf * 0.6); c[1] = lerp(c[1], 0.74, mf * 0.6); c[2] = lerp(c[2], 0.5, mf * 0.6); }
+        { const fm = nrLCf(x, z, 0), dry = sstep(0.56, 0.78, P.n3(x * 0.7 + 90, z * 0.7 - 40)) * 0.5 * fm, lush = sstep(0.6, 0.8, P.n1(x * 1.1 - 210, z * 1.1 + 75)) * 0.35 * fm;   // patches burnt dry by the sun, darker lush ones in the hollows
+          c[0] = lerp(c[0], c[0] * 1.3 + 0.08, dry); c[1] = lerp(c[1], c[1] * 1.08 + 0.03, dry); c[2] = lerp(c[2], c[2] * 0.7, dry);
+          c[0] = lerp(c[0], c[0] * 0.82, lush); c[1] = lerp(c[1], c[1] * 0.95, lush); c[2] = lerp(c[2], c[2] * 0.85, lush); }
       } },
     cpalace: { ban: CP_BAN, at: CP_AT, nums: 0, shirts: CP_SHIRTS, smoke: false, camps: 0, trees: 'park', seC: [1.0, 0.96, 0.92], period: true, park: true,
       flags: { stand: [{ cpA: 0.4, cpB: 0.3, cpC: 0.3 }, { cpA: 0.4, cpB: 0.3, cpC: 0.3 }], ga: { cpA: 0.4, cpB: 0.3, cpC: 0.3 }, camp: { cpA: 1 }, pole: 'cpB', podium: 'cpA' },   // (plain bunting: cream, dark green, maroon)
@@ -20550,9 +20553,18 @@ const World = (function () {
     }
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
+  function rioFlowerGeo() {   // a flowering tree (an ipe, a flame tree: the instance's colour is its bloom): a short dark trunk, a round crown of bloom over a little green
+    const g = new GB(), R = rng(861);
+    cyl(g, 0, -0.02, 0, 0.05, 0.45, 5, [0.3, 0.26, 0.2], null, 0.035);
+    for (const [x, y, z, r] of [[0.18, 0.66, 0.08, 0.26], [-0.18, 0.67, 0.05, 0.25], [0, 0.65, -0.2, 0.25], [0.02, 0.8, 0.04, 0.27]]) puff(g, x, y, z, r, 0.75, [0.95, 0.95, 0.95], R, 0.25, 0.62, 1.1, false);
+    for (const [x, y, z, r] of [[0.1, 0.55, 0.22, 0.17], [-0.2, 0.55, -0.12, 0.16]]) puff(g, x, y, z, r, 0.7, [0.3, 0.46, 0.2], R, 0.25, 0.55, 1.05, false);   // (green showing through underneath)
+    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
+  const RIO_BLOOM = [[1.0, 0.82, 0.16], [1.0, 0.86, 0.2], [0.82, 0.46, 0.78], [0.95, 0.56, 0.74], [0.92, 0.26, 0.12]];   // yellow and pink ipe, the red flame tree
   function rioTree(cl, R, far) {   // [species, height, width] of a tree on a spot of land cover class cl
     const f = far ? 1.08 : 1;
     if (cl === 2 && R() < 0.85) { const h = (4.5 + R() * 3) * f; return [2, h, h * (1.3 + R() * 0.4)]; }   // mangroves on the marsh
+    if (!far && cl !== 2 && R() < 0.2) { const h = (8 + R() * 5) * f; return [3, h, h * (1.05 + R() * 0.25)]; }   // a flowering tree (near the track: seen from it and from above)
     if (R() < (cl === 1 ? 0.4 : 0.75)) { const h = (11 + R() * 9) * f; return [0, h, h * (0.44 + R() * 0.12)]; }   // a coconut palm
     const h = (9 + R() * 8) * f; return [1, h, h * (1.0 + R() * 0.3)];
   }
@@ -20587,6 +20599,9 @@ const World = (function () {
       kbox(g, s0, 5, f0 + 7.9, 12.0, 10.02, 0.25, 15.6, CON2, [0.7, 0.69, 0.66]); kbox(g, s0, 5, f0 + 0.05, 12.25, 10.02, 1.0, 0.18, CON2);   // the roof and its parapet
       kbox(g, s0, 5, f0 - 0.06, 12.4, 10.02, 0.32, 0.05, [0.02, 0.5, 0.26], null, true); kbox(g, s0, 5, f0 - 0.06, 12.72, 10.02, 0.16, 0.05, [0.98, 0.82, 0.1], null, true);   // painted in green and yellow
       kbox(g, s0, 5, f0 + 0.3, 14.1, 10.02, 0.07, 0.07, [0.18, 0.34, 0.66], null, true); kbox(g, s0, 0.1, f0 + 0.3, 13.25, 0.06, 0.9, 0.06, [0.18, 0.34, 0.66], null, true);   // a blue railing over it
+      if (((q / 10) | 0) % 4 === 1) { const [tx, tz] = atSf(s0 + 5, f0 + 11), ty = hyS(s0 + 5) + 12.25;   // on the roof: a blue water tank on a stand (as on every roof in Rio), a grey plant box
+        box(g, tx, ty, tz, 2.6, 0.5, 2.6, T.hd[ik], [0.6, 0.6, 0.6]); cyl(g, tx, ty + 0.5, tz, 1.05, 1.3, 8, [0.16, 0.36, 0.7], [0.2, 0.42, 0.78], 0.95);
+        const [ax, az] = atSf(s0 + 1.5, f0 + 6); box(g, ax, ty, az, 2.2, 1.0, 1.6, T.hd[ik], [0.62, 0.63, 0.64], [0.5, 0.51, 0.52]); }
       exclPush(T.px[ik] + T.nx[ik] * (f0 + 8), T.pz[ik] + T.nz[ik] * (f0 + 8), 12);
       if (q === pq0 + 60) mid = { s: s0 + 5, f0 };
     }
@@ -20594,6 +20609,7 @@ const World = (function () {
       board(x, hyS(s0) + 12.4, z, T.nx[i], T.nz[i], 24, 2.2, AT.ban + bk); } }
     { const q = PB[1] + 2, s0 = sStart + q, f0 = gb(s0 - 20) || 30.5, o = f0 + 6, ik = T.idx(s0 + 5), g = scen.get(T.px[ik] + T.nx[ik] * o, T.pz[ik] + T.nz[ik] * o);   // race control: a concrete tower, a glazed cab on top
       kbox(g, s0, 5, o, 0, 8, 15.5, 8, CON, CONT); kbox(g, s0, 5, o, 15.5, 9.5, 0.4, 9.5, CON2); kbox(g, s0, 5, o, 15.9, 8.4, 3.2, 8.4, GL, CON2); kbox(g, s0, 5, o, 19.1, 9.6, 0.45, 9.6, CON2, [0.7, 0.69, 0.66]);
+      { const [tx, tz] = atSf(s0 + 5, o + 1.5); cyl(g, tx, hyS(s0) + 19.55, tz, 1.0, 1.3, 8, [0.16, 0.36, 0.7], [0.2, 0.42, 0.78], 0.9); }   // (its water tank)
       for (let y = 2.5; y < 15; y += 4) kface(g, s0, 1.5, 8.5, o - 4.02, y, y + 1.6, GL);
       exclPush(T.px[ik] + T.nx[ik] * o, T.pz[ik] + T.nz[ik] * o, 12); }
     for (let q = PB[0], k = 0; q < PB[1]; q += 16, k++) {   // the paddock: the teams' box-bodied transporters of the time in rows
@@ -20767,6 +20783,11 @@ const World = (function () {
         const off = q.bl + 5.5 + r * 1.6, x = q.px - q.nx * off, z = q.pz - q.nz * off, nx = q.nx, nz = q.nz;
         if (!hd) hd = Math.atan2(q.tz, q.tx); if (crowdPut(CR, x, nrGround(x, z) + 1.2, z, nx, nz, { pose: r === 0 ? 4 : 1 + ((r + k) % 2), col: pal[(r * 7 + k) % pal.length], flag: 0 }, r)) { spots.push([x, z, r, nx, nz]); cx += x; cz += z; } }
       if (spots.length) { P.samba = { spots, x: cx / spots.length, z: cz / spots.length, hd }; exclPush(P.samba.x, P.samba.z, 10); } }
+    P.posts = [];   // the marshals' posts: a hut with an orange roof outside each turn, past its apex (seen from above), clear of the run-off and the crowds
+    for (const [ax, az] of T.def.turns || []) { const q = T.query(ax, az, -1, {}); if (!q || q.i < 0) continue; const k0 = T.k[T.idx(q.s)], sd = k0 > 0 ? -1 : 1;
+      for (const d of [28, 48, 70]) { const i = T.idx(q.s + d), o = sd * ((sd > 0 ? T.br[i] : T.bl[i]) + 4), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
+        if (rioWet(x, z, 4) || nrNear(x, z).dd < 2.5 || P.posts.some(([px, pz]) => Math.hypot(px - x, pz - z) < 30)) continue;
+        P.posts.push([x, z, T.hd[i]]); exclPush(x, z, 4.5); break; } }
     for (const [a, b, sd] of [[620, 760, -1], [2940, 3080, 1], [4010, 4150, -1]]) P.bank += run(a, b, sd, { rows: 4, dens: 0.3, gap: 1.3, clump: 0.8, label: 'RIO bank' });
     return P;
   }
@@ -20846,7 +20867,7 @@ const World = (function () {
       for (let k = 0; k < U.length; k++) { const a = U[(k + U.length - 2) % U.length], b = U[(k + 2) % U.length]; Hd[k] = Math.atan2(b[1] - a[1], b[0] - a[0]); }
       const im = new THREE.InstancedMesh(rioKartGeo(), matI, 5), cols = [[0.9, 0.15, 0.12], [0.98, 0.8, 0.1], [0.15, 0.4, 0.85], [0.1, 0.6, 0.3], [0.95, 0.5, 0.1]], c3 = new THREE.Color();
       for (let k = 0; k < 5; k++) { c3.setRGB(...cols[k]); im.setColorAt(k, c3); }
-      im.instanceColor.needsUpdate = true; im.castShadow = true; im.frustumCulled = false; root.add(im);
+      im.instanceColor.needsUpdate = true; im.castShadow = false; im.frustumCulled = false; root.add(im);
       D.karts = { im, U, Hd, Y: U.map(([x, z]) => Ay(x, z)), v: [13.2, 13.8, 12.6, 14.1, 13.5], o: [0, 21, 45, 66, 90] };
       st.kart = Math.round(acc); st.tyres = tyres;
     }
@@ -20858,9 +20879,8 @@ const World = (function () {
       let y0 = 0, n0 = 0; for (const [x, z] of C.lot) { y0 += gy(x, z); n0++; } y0 /= n0;
       flat(C.lot, y0 + 0.1, Gr);
       let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of C.lot) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
-      let cars = 0; const CC = [[0.85, 0.85, 0.82], [0.6, 0.1, 0.1], [0.2, 0.3, 0.55], [0.15, 0.15, 0.16], [0.75, 0.7, 0.55], [0.3, 0.45, 0.3]];   // rows of parked cars
-      for (let z = z0 + 8; z < z1 - 4; z += 16) for (let x = x0 + 4; x < x1 - 4; x += 2.8) { if (!inPoly(C.lot, x, z) || !inPoly(C.lot, x, z + 6) || !inPoly(C.lot, x, z - 6) || R() < 0.85) continue;
-        for (const dz of [-2.6, 2.6]) { if (R() < 0.3) continue; const col = CC[Math.floor(R() * CC.length)]; box(ga, x, y0 + 0.1, z + dz, 1.7, 1.3, 4.2, 0, col, [col[0] * 0.8, col[1] * 0.8, col[2] * 0.8]); cars++; } }
+      for (let z = z0 + 8; z < z1 - 4; z += 16) { const P = (x) => [x, y0 + 0.13, z];   // the car park's white lines between the rows (no cars: 1-2 km out they would not show)
+        for (let x = x0; x < x1; x += 4) if (inPoly(C.lot, x, z) && inPoly(C.lot, x + 4, z)) ga.quadUp(P(x), P(x + 4), [x + 4, y0 + 0.13, z + 0.25], [x, y0 + 0.13, z + 0.25], [[0.85, 0.85, 0.82], [0.85, 0.85, 0.82], [0.85, 0.85, 0.82], [0.85, 0.85, 0.82]]); }
       for (const [h, poly] of C.halls) {   // a hall: bare concrete walls, a dark band of glass under the eaves, a flat roof a little over them
         let cx = 0, cz = 0; for (const [x, z] of poly) { cx += x; cz += z; } cx /= poly.length; cz /= poly.length; const inn = [cx, y0 + h / 2, cz], n = poly.length;
         for (let k = 0; k < n; k++) { const [ax, az] = poly[k], [bx, bz] = poly[(k + 1) % n];
@@ -20871,7 +20891,7 @@ const World = (function () {
       const g = ga.geometry(); g.computeBoundingSphere();
       const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true, depthWrite: false })); m.renderOrder = -45; m.matrixAutoUpdate = false; root.add(m);   // (drawn first, over the mountains, under everything nearer)
       D.conv = { m, c: g.boundingSphere.center.clone() };
-      st.conv = C.halls.length; st.convCars = cars;
+      st.conv = C.halls.length;
     }
     /* boats on the lagoon (seen from the track: 150-650 m out, 30 m off the shore at least), egrets wading at its edge, cormorants flying low over it */
     if (L) {
@@ -20933,6 +20953,10 @@ const World = (function () {
           ' gl_FragColor = vec4(uHor * 1.06, k * smoothstep(0.2, 0.75, n) * 0.85); }' });
       const me = new THREE.Mesh(g, mat); me.renderOrder = 1; me.frustumCulled = false; me.visible = false; me.matrixAutoUpdate = false; root.add(me); D.heat = { me, U }; }
     /* the samba group's drums: the front row with snares and tamborims at the waist, two big surdos on stands */
+    for (const [x, z, hd] of P.posts || []) { const y = nrGround(x, z);   // the marshals' posts: white, an orange roof, a flag on a short pole
+      box(near, x, y - 0.1, z, 2.2, 2.4, 2.2, hd, [0.92, 0.91, 0.87]); box(near, x, y + 2.3, z, 2.8, 0.25, 2.8, hd, [0.95, 0.45, 0.1], [0.98, 0.5, 0.12]);
+      cyl(near, x + 1.3, y, z + 1.3, 0.04, 4, 4, [0.8, 0.8, 0.82]); box(near, x + 1.3, y + 3.2, z + 1.55, 0.02, 0.6, 0.5, 0, [0.98, 0.84, 0.1]); }
+    st.posts = (P.posts || []).length;
     if (P.samba) { const S = P.samba; let k = 0;
       { const y = nrGround(S.x, S.z); box(near, S.x, y - 0.3, S.z, 14, 1.5, 6.4, S.hd, [0.55, 0.4, 0.26], [0.62, 0.47, 0.3]); box(near, S.x, y + 1.2, S.z, 14.2, 0.06, 6.6, S.hd, [0.95, 0.8, 0.12]);   // the stage: boards on a frame, a yellow skirt
         for (const sd of [-1, 1]) cyl(near, S.x + Math.cos(S.hd) * sd * 7.6, y, S.z + Math.sin(S.hd) * sd * 7.6, 0.06, 3.2, 5, [0.75, 0.75, 0.78]); }   // (two flagpoles)
@@ -21615,7 +21639,7 @@ const World = (function () {
     for (let i0 = 0, k = 0; i0 < N; k++) { const n = 60 + Math.floor(crH(k, 3, 97) * 70), t = 0.94 + crH(k, 5, 97) * 0.09; for (let i = i0; i < Math.min(N, i0 + n); i++) secT[i] = t; i0 += n; }
     for (const c of T.corners) if (c.sev >= 2) for (let k = -70; k <= 6; k++) { const i = (c.i0 + k + N) % N, f = k < -10 ? sstep(-70, -12, k) : sstep(6, -10, k); if (f > brk[i]) brk[i] = f; }
     const shade = (i, o) => { const rl = T.rl[i]; let k = (0.85 - (0.16 + 0.12 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.92) k -= 0.03; return [k, k, k * 1.02]; };
-    const MOW_D = [0.22, 0.15, 0.18], vg = [0.9, 0.99, 0.86], vgD = vg.map((v, k) => v * (1 - MOW_D[k]));   // the verge inside the barriers: mown, in stripes along the track (MOW_W m bands, dark and light in turn, from 1.2 m past the edge; the dark ones a deeper green)
+    const MOW_D = LK.trees === 'rio' ? [0.12, 0.08, 0.1] : [0.22, 0.15, 0.18], vg = LK.trees === 'rio' ? [0.92, 0.95, 0.78] : [0.9, 0.99, 0.86], vgD = vg.map((v, k) => v * (1 - MOW_D[k]));   // (Rio: the verge drier in the sun, the stripes fainter)   // the verge inside the barriers: mown, in stripes along the track (MOW_W m bands, dark and light in turn, from 1.2 m past the edge; the dark ones a deeper green)
     const MOW_W = 3, MOW_N = 6, MOW_B = 5, MOW_O = 3.5;   // (MOW_B: the darker bands, MOW_O m wide, on the lawns out past the barrier)
     for (let c0 = 0; c0 < N; c0 += CH) {
       const gr = new RB(true), gl = new RB(), gk = new RB(true);
@@ -21663,7 +21687,7 @@ const World = (function () {
       const gs = new GB(true), gbl = new GB(), blue = [0.1, 0.32, 0.86], gcl = LK.gravel ? [0.86, 0.82, 0.72] : [1.05, 1.05, 1.05], uvg = (p) => [p[0] / 2.5, -p[2] / 2.5];
       for (const [a, b, side, wd] of def.gravelStrips) {
         for (let d = a; d < b - 0.01; d += ds) {
-          const i = T.idx(sAt(d)), j = T.idx(sAt(Math.min(b, d + ds))), o0 = w + T.curbW, e = (q) => (LK.gravel ? 0.4 + 0.6 * Math.min(1, (q - a) / 24, (b - q) / 24) : 1), o1 = o0 + wd * e(d), o1j = o0 + wd * e(Math.min(b, d + ds));   // (Rio: the sand traps' ends rounded off)
+          const i = T.idx(sAt(d)), j = T.idx(sAt(Math.min(b, d + ds))), o0 = w + T.curbW, e = (q) => { if (!LK.gravel) return 1; const f = clamp(Math.min((q - a) / 30, (b - q) / 30), 0, 1); return Math.max(0.04, Math.sqrt(1 - (1 - f) * (1 - f))); }, o1 = o0 + wd * e(d), o1j = o0 + wd * e(Math.min(b, d + ds));   // (Rio: the sand traps' ends rounded off)
           const A = Pt(i, side * o0, 0.036), B = Pt(i, side * o1, 0.036), C = Pt(j, side * o1j, 0.036), D = Pt(j, side * o0, 0.036);
           if (!LK.gravel) gs.quadUp(A, B, C, D, [gcl, gcl, gcl, gcl], [uvg(A), uvg(B), uvg(C), uvg(D)]);
           else {   // Rio's sand: darker and churned up by the tyres along the kerb, raked patches of lighter and darker sand further out
@@ -22442,6 +22466,7 @@ const World = (function () {
     const AU = LK.trees === 'au', RIO = LK.trees === 'rio', TG = RIO ? rioTreeGeo : AU ? auTreeGeo : nrTreeGeo, NSP = RIO ? 3 : 2;   // (Styria: spruce and beech; Bathurst: eucalypts and wattle; Rio: palms, tropical trees, mangroves)
     const tk = PARK ? [] : [...Array(NSP)].map((q, k) => new IChunks(TG(k), tMat, 128));   // near the road: casting shadows
     const tf = PARK ? [] : [...Array(NSP)].map((q, k) => new IChunks(TG(k + NSP), tMat, 192));   // more than 70 m out: cheaper, no shadows (as on the Nordschleife)
+    const fl = RIO ? new IChunks(rioFlowerGeo(), tMat, 512) : null; let nBloom = 0;   // (Rio: the trees in bloom, in big chunks: a few draws)
     let nTrees = PARK ? cpTrees({ root, R, excluded, dens }) : 0;   // (Crystal Palace: the park's old trees)
     if (!PARK) {
       const Lt = NRC * NRT, maxT = Math.round(60000 * dens), CR0 = RIO ? [0.3, 0.42, 0.45] : AU ? [0.24, 0.4] : [0.3, 0.33];   // (crown radius / width of a spruce, a beech (a eucalypt, a wattle): the forest floor under it)
@@ -22463,12 +22488,14 @@ const World = (function () {
             hgt = sp === 0 ? (15 + R() * 12) * (far ? 1.05 : 1) : 3 + R() * 3.5; wid = hgt * (sp === 0 ? 0.62 + R() * 0.2 : 1.1 + R() * 0.3); }
           else { sp = cl === 1 ? (P.n1(x * 2.2 + 500, z * 2.2) < 0.62 + (R() - 0.5) * 0.3 ? 0 : 1) : 1;
             hgt = sp === 0 ? (13 + R() * 7) * (far ? 1.1 : 1) : (10 + R() * 5) * (far ? 1.15 : 1); wid = hgt * (sp === 0 ? 0.82 : 0.95 + R() * 0.25); }
+          if (sp === 3) { const b = RIO_BLOOM[Math.floor(R() * RIO_BLOOM.length)], k = 0.92 + R() * 0.12; fl.add(x, y - 0.1, z, R() * TAU, wid, hgt, [b[0] * k, b[1] * k, b[2] * k]); nrShade(x, z, wid * 0.42, 1); nTrees++; nBloom++; continue; }   // (Rio: in bloom)
           const cv = 0.86 + R() * 0.28; (far ? tf : tk)[sp].add(x, y - 0.1, z, R() * TAU, wid, hgt, [cv * (0.95 + R() * 0.1), cv, cv * (0.95 + R() * 0.1)]);
           nrShade(x, z, wid * CR0[sp], 1); nTrees++;
         }
       }
     }
     for (const t of tk) t.addTo(root, true);
+    if (fl) fl.addTo(root, false);   // (no shadows of their own: a few draws less)
     for (const t of tf) t.addTo(root, false);
 
     /* ---- terrain tiles and the grass verges out past the barriers (256 m chunks), coloured now: the forest floor under the trees ---- */
@@ -22534,7 +22561,7 @@ const World = (function () {
     if (out.air) out.air.finOnly = !!LK.heliFin;   // (Rio: the helicopter only over the finish, after the race)
     if (!scrG.empty) { const st = ownTex(rbScreenTex(LK)); addM(scrG, new THREE.MeshBasicMaterial({ map: st })); out.dyn.screens = { tex: st, f: -1 }; }
     out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, stands: nStands, boxes: nBoxes, camp: nCamp, farms: nFarm, cars: nCars, tv: nTV, decals: nDecals, smoke: smokeL.length, flags: flagL.length, screens: nScr, photographers: nPh, park: parkSt };   // (read by the tests)
-    if (RIO) out.stats.rio = rioExtra(scene, root, out, ownTex, tex, excluded, exclPush);   // Rio: the lagoon, palms along the straights, the mountains round the basin
+    if (RIO) { out.stats.rio = rioExtra(scene, root, out, ownTex, tex, excluded, exclPush); out.stats.rio.bloom = nBloom; }   // Rio: the lagoon, palms along the straights, the mountains round the basin
     return out;
   }
 
