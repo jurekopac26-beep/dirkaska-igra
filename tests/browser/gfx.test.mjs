@@ -7,8 +7,8 @@
 import { serve, launch, openGame, startTrack, trackIds, checker } from './lib.mjs';
 
 const T = checker('graphics: car glint, water, worn tarmac');
-const WATER = ['jezero', 'riviera', 'ljubljana', 'monaco', 'gozd', 'toskana', 'suzuka', 'ouninpohja', 'katu', 'bigsur', 'phillip'];   // (with a shore band; Pikes Peak: its reservoir only; Katu-Jaryk: the Chulyshman; Big Sur: the Pacific; Phillip Island: Bass Strait)
-const NO_WEAR = ['gora', 'ouninpohja', 'pikes', 'pikesg', 'katu', 'sani'];   // (pikesg: Pikes Peak on its historic gravel road; Sani Pass: a gravel road)
+const WATER = ['jezero', 'riviera', 'ljubljana', 'monaco', 'gozd', 'toskana', 'suzuka', 'ouninpohja', 'katu', 'bigsur', 'cpalace', 'phillip'];   // (with a shore band; Pikes Peak: its reservoir only; Katu-Jaryk: the Chulyshman; Big Sur: the Pacific; Phillip Island: Bass Strait; Crystal Palace: the park's lakes)
+const NO_WEAR = ['gora', 'ouninpohja', 'pikes', 'pikesg', 'katu', 'sani', 'moki'];   // (pikesg: Pikes Peak on its historic gravel road; Sani Pass and the Moki Dugway: gravel roads)
 const srv = await serve();
 const browser = await launch();
 try {
