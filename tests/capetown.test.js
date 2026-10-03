@@ -78,8 +78,8 @@ const at = (d) => T.idx(((T.startS + d) % T.len + T.len) % T.len);
 // grandstand with its roof across from it on the right
 {
   const [a, b, o] = def.pitLane;
-  check('pits: the lane on the left of Vlei Road (12-20 m out), across the start line, on the straight between Turn 12 and Turn 1; scenery only',
-    o < -12 && o > -20 && a < 0 && b > 0 && a > -190 && b < 150 && !def.pit, `lane ${a} .. ${b} m, ${o} m to the side, def.pit ${def.pit ? 'set' : 'none'}`);
+  check('pits: the lane on the left of Vlei Road (9-20 m out, before the stadium\'s grandstand), across the start line, on the straight between Turn 12 and Turn 1; scenery only',
+    o < -9 && o > -20 && a < 0 && b > 0 && a > -190 && b < 150 && !def.pit, `lane ${a} .. ${b} m, ${o} m to the side, def.pit ${def.pit ? 'set' : 'none'}`);
   check('pits: the main grandstand across from them, on the right of Vlei Road at the start line, roofed',
     def.stands[0][2] === 1 && def.stands[0][0] < 0 && def.stands[0][1] > 0 && def.stands[0][4] === 1, JSON.stringify(def.stands[0]));
 }

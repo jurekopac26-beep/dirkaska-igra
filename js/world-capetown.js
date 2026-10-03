@@ -85,15 +85,26 @@
     const dT = new Float32Array(n), hT = new Float32Array(n), sideB = new Float32Array(n);
     for (let k = 0; k < n; k++) { const x = G.x0 + (k % G.nx) * c, z = G.z0 + Math.floor(k / G.nx) * c, q = near(x, z, true);
       dT[k] = q.dc; if (q.i >= 0) { hT[k] = T.hy[q.i]; sideB[k] = Math.abs(q.lat) - q.bar; } else { hT[k] = 0; sideB[k] = 1e9; } }
+    // near the coast the true distance to the land's outline (its edges hashed in 16 m cells): a smooth waterline, no steps
+    const EH = new Map(), EC = 16;
+    for (const poly of D.land) for (const r of poly) for (let a = 0, b = r.length - 1; a < r.length; b = a++) {
+      const ax = r[b][0], az = r[b][1], bx = r[a][0], bz = r[a][1];
+      for (let qa = Math.floor(Math.min(ax, bx) / EC); qa <= Math.floor(Math.max(ax, bx) / EC); qa++) for (let qb = Math.floor(Math.min(az, bz) / EC); qb <= Math.floor(Math.max(az, bz) / EC); qb++) { const key = qa * 65536 + qb; let Le = EH.get(key); if (!Le) EH.set(key, Le = []); Le.push(ax, az, bx, bz); } }
+    const edgeD = (x, z) => { let best = 1e9; const a0 = Math.floor(x / EC), b0 = Math.floor(z / EC);
+      for (let a = a0 - 1; a <= a0 + 1; a++) for (let b = b0 - 1; b <= b0 + 1; b++) { const Le = EH.get(a * 65536 + b); if (!Le) continue;
+        for (let q = 0; q < Le.length; q += 4) { const ax = Le[q], az = Le[q + 1], vx = Le[q + 2] - ax, vz = Le[q + 3] - az, t = clamp(((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz || 1e-9), 0, 1), dx = x - ax - vx * t, dz = z - az - vz * t, dd = dx * dx + dz * dz; if (dd < best) best = dd; } }
+      return Math.sqrt(best); };
     const SD = new Float32Array(n);
     for (let k = 0; k < n; k++) {
-      const sd = land[k] ? sdW[k] : -sdL[k]; SD[k] = sd;   // (+ on the land: metres to the sea)
+      let sd = land[k] ? sdW[k] : -sdL[k];
+      if (Math.abs(sd) < 20) { const e = edgeD(G.x0 + (k % G.nx) * c, G.z0 + Math.floor(k / G.nx) * c); if (e < 21) sd = land[k] ? e : -e; }
+      SD[k] = sd;   // (+ on the land: metres to the sea)
       const x = G.x0 + (k % G.nx) * c, z = G.z0 + Math.floor(k / G.nx) * c;
       let h;
-      if (sd <= 0) h = G.WL - 0.6 + Math.max(-7, sd * 0.12);   // (the sea bed falling away)
+      if (sd <= 0) h = G.WL + Math.max(-7, sd * 0.3);   // (the sea bed falling away)
       else {
-        const dm = demAt(x, z) - base, coast = G.WL + 0.4 + Math.min(2.6, sd * 0.35);   // (the rocks and the sea wall rising out of the water)
-        h = Math.max(lerp(coast, dm, sstep(4, 22, sd)), G.WL + 0.3);
+        const dm = demAt(x, z) - base, coast = G.WL + Math.min(2.8, sd * 0.4);   // (the rocks and the sea wall rising out of the water)
+        h = Math.max(lerp(coast, dm, sstep(5, 24, sd)), G.WL + Math.min(0.3, sd * 0.4));
         if (sideB[k] < 40) { const tgt = hT[k] - 0.12, f = sstep(40, 6, sideB[k]); h = lerp(h, tgt, f); }   // (beside the circuit: level with its road)
         if (wetP[k]) { h -= 1.2; kind[k] = KIND.water; }
         if (sd < 9 && kind[k] !== KIND.sand && kind[k] !== KIND.paved) kind[k] = KIND.rock;
@@ -135,11 +146,14 @@
     const exclPush = (x, z, r) => { const e = { x, z, r }; for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let Lc = eh.get(k); if (!Lc) eh.set(k, Lc = []); Lc.push(e); } };
     const excluded = (x, z) => { const Lc = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!Lc) return false; for (const e of Lc) if ((x - e.x) ** 2 + (z - e.z) ** 2 < e.r * e.r) return true; return false; };
     const C = { T, D, def, N, w, ds, L, sStart, R, root, out, tex, opts, ownTex, matV, dS, sAt, Pt, atSf, hyS, addM, scen, exclPush, excluded, near, WL };
+    { const BH = new Map(); for (const b of D.bld) { const r = b[4]; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const p of r) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); z0 = Math.min(z0, p[1]); z1 = Math.max(z1, p[1]); }
+        for (let a = Math.floor(x0 / 32); a <= Math.floor(x1 / 32); a++) for (let c = Math.floor(z0 / 32); c <= Math.floor(z1 / 32); c++) { const k = a + ',' + c; let Lb = BH.get(k); if (!Lb) BH.set(k, Lb = []); Lb.push(r); } }
+      C.inBld = (x, z, m) => { const Lb = BH.get(Math.floor(x / 32) + ',' + Math.floor(z / 32)); if (!Lb) return false; for (const r of Lb) if (K.inPoly(r, x, z) || (m && K.polyDist(r, x, z) < m)) return true; return false; }; }
     const tag = (f, nm) => { const n0 = root.children.length; f(); for (let k = n0; k < root.children.length; k++) if (!root.children[k].name) root.children[k].name = nm; };
     tag(() => ctGroundMesh(C), 'ctGround');
     tag(() => ctWater(C), 'ctWater');
-    tag(() => ctRoad(C), 'ctRoad');
     ctLegs(C);
+    tag(() => ctRoad(C), 'ctRoad');
     tag(() => ctWalls(C), 'ctWalls');
     tag(() => ctPits(C), 'ctPits');
     tag(() => ctStands(C), 'ctStands');
@@ -222,7 +236,7 @@
     const lMat = new THREE.MeshLambertMaterial({ vertexColors: true }), cMat = new THREE.MeshLambertMaterial({ map: tex.curb, vertexColors: true }), pMat = new THREE.MeshLambertMaterial({ map: tex.paving, vertexColors: true });
     C.aMat = aMat; C.lMat = lMat; C.pMat = pMat;
     const kerb = [new Uint8Array(N), new Uint8Array(N)];
-    for (let i = 0; i < N; i++) if (T.curb[i]) { const k = T.k[i]; for (const side of [-1, 1]) if (side * k > 0 || Math.abs(k) > 1 / 40) kerb[side > 0 ? 1 : 0][i] = 1; }
+    for (let i = 0; i < N; i++) if (T.curb[i]) { const k = T.k[i]; for (const side of [-1, 1]) if ((side * k > 0 && Math.abs(k) > 1 / 36) || Math.abs(k) > 1 / 21) kerb[side > 0 ? 1 : 0][i] = 1; }   // (a street circuit: kerbs at the apexes only)
     const brk = new Float32Array(N);
     for (const c of T.corners) if (c.sev >= 2) for (let k = -60; k <= 6; k++) { const i = (c.i0 + k + N) % N, f = k < -10 ? sstep(-60, -12, k) : sstep(6, -10, k); if (f > brk[i]) brk[i] = f; }
     const secT = new Float32Array(N); for (let i0 = 0, k = 0; i0 < N; k++) { const n = 40 + Math.floor(hash(k, 3) * 60), t = 0.94 + hash(k, 5) * 0.1; for (let i = i0; i < Math.min(N, i0 + n); i++) secT[i] = t; i0 += n; }
@@ -362,15 +376,16 @@
     for (let q = a; q < b; q += 2) { const s0 = sStart + q, s1 = s0 + 2, e = Math.min(sstep(a, a + 40, q), sstep(b, b - 30, q)), lo = lerp(bar(s0) + 0.8, O, e), lo1 = lerp(bar(s1) + 0.8, O, e);
       quad(gl, s0, s1, Math.max(bar(s0) + 0.8, lo - 3.5), lo + 3.5, 0.03, one, true);
       quad(gp, s0, s1, lo + 3.2, lo + 3.4, 0.04, wl);
-      if (e > 0.99) { quad(gp, s0, s1, lo + 3.5, O + 12, 0.025, [0.8, 0.81, 0.78]); if (q % 20 === 0) quad(gp, s0, s1, lo - 3.4, lo - 3.2, 0.04, wl); }
+      if (e > 0.99) { quad(gp, s0, s1, lo + 3.5, O + 4.2, 0.025, [0.8, 0.81, 0.78]); if (q % 20 === 0) quad(gp, s0, s1, lo - 3.4, lo - 3.2, 0.04, wl); }
       if (q % 6 === 0) { const p = atSf(s0, sg * (O + 4)); exclPush(p[0], p[1], 10); } }
     // the speed limit lines and the garages: white tents 8 m wide along the lane, each team's colour over its door, the tool trolleys
     for (const q of [a + 45, b - 34]) quad(gp, sStart + q, sStart + q + 0.4, O - 3.4, O + 3.4, 0.045, yel);
     for (let q = a + 50, k = 0; q < b - 40; q += 9, k++) {
-      const s0 = sStart + q, mid = at(s0 + 4.5, O + 10, 0), g = scen.get(mid[0], mid[2]), tc = TEAM[k % TEAM.length], hd = T.hd[T.idx(s0 + 4.5)];
+      const s0 = sStart + q, mid = at(s0 + 4.5, O + 7, 0), g = scen.get(mid[0], mid[2]), tc = TEAM[k % TEAM.length];
+      if ([[0.5, 4.2], [8.5, 4.2], [0.5, 10.5], [8.5, 10.5], [4.5, 7]].some(([da, o]) => { const p = at(s0 + da, O + o, 0); return C.inBld(p[0], p[2], 0.5); })) continue;   // (no room: the stadium's grandstand)
       const blk = (sa, sb2, o0, o1, y0, y1, col, top) => { const P8 = [at(sa, o0, y0), at(sb2, o0, y0), at(sb2, o1, y0), at(sa, o1, y0), at(sa, o0, y1), at(sb2, o0, y1), at(sb2, o1, y1), at(sa, o1, y1)], m = at((sa + sb2) / 2, (o0 + o1) / 2, (y0 + y1) / 2);
         for (const [i0, i1, i2, i3, cc] of [[0, 1, 5, 4, col], [1, 2, 6, 5, col], [2, 3, 7, 6, col], [3, 0, 4, 7, col], [4, 5, 6, 7, top || col]]) g.quadO(P8[i0], P8[i1], P8[i2], P8[i3], cc, m); };
-      blk(s0 + 0.1, s0 + 8.9, O + 4.2, O + 16, 0, 3.4, [0.95, 0.95, 0.94], [0.97, 0.97, 0.97]);   // the tent
+      blk(s0 + 0.1, s0 + 8.9, O + 4.2, O + 10.5, 0, 3.4, [0.95, 0.95, 0.94], [0.97, 0.97, 0.97]);   // the tent
       blk(s0 + 0.3, s0 + 8.7, O + 4.15, O + 4.3, 2.7, 3.4, tc);                               // the team's band over the door
       blk(s0 + 0.5, s0 + 8.5, O + 4.25, O + 4.3, 0, 2.6, [0.2, 0.21, 0.24]);                  // the open door (dark inside)
       for (const t of [1.5, 7.5]) blk(s0 + t - 0.4, s0 + t + 0.4, O + 3.4, O + 3.9, 0, 1.0, [0.16, 0.17, 0.2], tc);
@@ -538,7 +553,7 @@
      bigger roads), pavements along them; paths (paving); street lamps along the roads ---- */
   function ctStreets(C) {
     const { D, root, tex, scen } = C, near = C.near, G = MG;
-    const road = new K.Chunks(192, true), path = new K.Chunks(192, true), mark = new K.Chunks(192), walk = new K.Chunks(192, true);
+    const road = new K.Chunks(256, true), mark = new K.Chunks(256), walk = new K.Chunks(256, true);
     const legs = C.legs || [];
     const inLeg = (x, z) => { for (const Lg of legs) { const dx = x - Lg.cx, dz = z - Lg.cz, r = dx * Lg.ux + dz * Lg.uz, v = -dx * Lg.uz + dz * Lg.ux; if (r > Lg.r0 - 2 && r < Lg.rEnd + 2 && Math.abs(v) < Lg.hw + 3) return true; } return false; };
     const yel = [0.92, 0.74, 0.16], W1 = [0.96, 0.96, 0.94], pv = [0.8, 0.79, 0.76];
@@ -546,7 +561,7 @@
     for (const [cls, hw, lv, pts] of D.roads) {
       if (lv) continue;
       const isPath = /^(footway|path|cycleway|steps|pedestrian|track)$/.test(cls), half = isPath ? Math.min(hw, 1.2) : hw, big = /^(primary|secondary|tertiary|trunk|motorway)$/.test(cls);
-      const tgt = isPath ? path : road, col = isPath ? [0.86, 0.84, 0.8] : [0.8, 0.8, 0.82], y0 = isPath ? 0.06 : 0.05;
+      const tgt = isPath ? walk : road, col = isPath ? [0.86, 0.84, 0.8] : [0.8, 0.8, 0.82], y0 = isPath ? 0.06 : 0.05;
       const P = []; for (let k = 0; k + 1 < pts.length; k++) { const [ax, az] = pts[k], [bx, bz] = pts[k + 1], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 4)); for (let q = 0; q < n; q++) P.push([ax + (bx - ax) * q / n, az + (bz - az) * q / n]); }
       P.push(pts[pts.length - 1]);
       let run = [];
@@ -580,7 +595,7 @@
       }
       flush();
     }
-    road.addTo(root, C.aMat, false, true); path.addTo(root, new THREE.MeshLambertMaterial({ map: tex.paving, vertexColors: true }), false, true); walk.addTo(root, C.pMat, false, true);
+    C.roadCh = road; C.walkCh = walk;   // (the junctions add theirs, then the chunks go into the world)
     mark.addTo(root, new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }), false, true);
     // street lamps along the bigger roads (static: away from the circuit; the ones by the circuit are props of the junctions)
     for (const [x, z, a] of lampAt) { if (near(x, z).d < 3 || C.excluded(x, z)) continue; const g = scen.get(x, z), y = ctGround(x, z);
@@ -592,7 +607,7 @@
      street (the road closed for the race); the furniture of def.furniture on the corners, all of it knockable; OSM's own street furniture ---- */
   function ctJunctions(C) {
     const { T, w, root, scen, out, near, exclPush } = C, legs = C.legs || [], wh = [0.94, 0.94, 0.9], walk = [0.8, 0.79, 0.76], curbC = [0.66, 0.65, 0.62];
-    const gr = new K.Chunks(192, true), gm = new GB(), gs = new K.Chunks(192, true);
+    const gr = C.roadCh, gm = new GB(), gs = C.walkCh, fz = new K.Chunks(320, true);
     const prop = (kind, x, z, yaw, col) => { const q = near(x, z); if (q.d > -0.7 || Math.abs(q.lat) < w + 0.7) return false; out.props.push({ kind, x, z, yaw: yaw || 0, col: col || 0, i: q.i }); C.nJ = (C.nJ || 0) + 1; return true; };
     for (const Lg of legs) {
       const P = (r, v) => [Lg.cx + Lg.ux * r + Lg.vx * v, Lg.cz + Lg.uz * r + Lg.vz * v], Q = (r, v, y) => { const p = P(r, v); return [p[0], Lg.cy + y, p[1]]; };
@@ -608,25 +623,14 @@
       // the fence across the street at the barrier's end: concrete blocks with a catch fence (the race's), and the road closed sign
       { const r = Lg.rF + 0.9, g = scen.get(...P(r, 0)); for (let v = -Lg.hw - 2; v < Lg.hw + 2; v += 2) { const [x, z] = P(r, v + 1); box(g, x, Lg.cy, z, 2.0, 1.05, 0.6, yV, [0.88, 0.88, 0.86], [0.94, 0.94, 0.92]); }
         for (let v = -Lg.hw - 2; v < Lg.hw + 2; v += 2.5) { const [x, z] = P(r + 0.3, v); box(g, x, Lg.cy + 1.0, z, 0.08, 2.5, 0.08, yV, [0.55, 0.56, 0.58]); }
-        const [x, z] = P(r + 0.32, 0); box(g, x, Lg.cy + 1.0, z, (Lg.hw + 2) * 2, 2.4, 0.03, yV, [0.42, 0.45, 0.42]); }
-      // in the mouth: the paved corners either side of the leg (inside the barrier, off the circuit, off the leg's width)
-      const sn = Math.sin(Lg.a);
-      for (let q = Lg.qa - 3; q <= Lg.qb + 3; q += 1) {
-        const s = Lg.s + q, i = T.idx(s), bar = Lg.sd > 0 ? T.br[i] : T.bl[i]; if (bar < w + 3) continue;
-        for (let l = w + 0.6; l < bar - 0.3; l += 1) {
-          const l1 = Math.min(bar - 0.3, l + 1), cs = [[q, l], [q + 1, l], [q + 1, l1], [q, l1]].map(([qq, ll]) => { const p = C.atSf(Lg.s + qq, Lg.sd * ll); return [p[0], C.hyS(Lg.s + qq) + 0.16, p[1]]; });
-          const mx = (cs[0][0] + cs[2][0]) / 2, mz = (cs[0][2] + cs[2][2]) / 2, dx = mx - Lg.cx, dz = mz - Lg.cz, v = dx * Lg.vx + dz * Lg.vz, r = dx * Lg.ux + dz * Lg.uz;
-          if (r < Lg.r0 - 0.5 || Math.abs(v) < Lg.hw + 0.2) continue;
-          gs.get(mx, mz).quadUp(cs[0], cs[1], cs[2], cs[3], [walk, walk, walk, walk], cs.map(p => [p[0] / 1.5, -p[2] / 1.5]));
-        }
-      }
+        const A = Q(r + 0.32, -Lg.hw - 2, 1.0), B = Q(r + 0.32, Lg.hw + 2, 1.0), u = (Lg.hw + 2) * 2 / 2.5; fz.get(A[0], A[2]).quadO(A, B, [B[0], B[1] + 2.4, B[2]], [A[0], A[1] + 2.4, A[2]], [1, 1, 1], Q(r - 3, 0, 1.5), [[0, 0], [u, 0], [u, 0.96], [0, 0.96]]); }
       // markings in the mouth: the zebra crossing over the leg (white bars), the stop line, the broken centre line
       const z0 = Lg.r0 + 2.0, z1 = Lg.r0 + 5.0, yM = 0.045;
       if (z1 < Lg.rF - 1) { for (let v = -Lg.hw + 0.3; v < Lg.hw - 0.3; v += 1.0) gm.quadUp(Q(z0, v, yM), Q(z0, v + 0.5, yM), Q(z1, v + 0.5, yM), Q(z1, v, yM), [wh, wh, wh, wh]);
         gm.quadUp(Q(z1 + 1.0, 0, yM), Q(z1 + 1.0, Lg.hw - 0.2, yM), Q(z1 + 1.35, Lg.hw - 0.2, yM), Q(z1 + 1.35, 0, yM), [wh, wh, wh, wh]);
         for (let r = z1 + 1.6; r < Lg.rF - 0.6; r += 3) gm.quadUp(Q(r, -0.07, yM), Q(r, 0.07, yM), Q(Math.min(r + 1.0, Lg.rF - 0.6), 0.07, yM), Q(Math.min(r + 1.0, Lg.rF - 0.6), -0.07, yM), [wh, wh, wh, wh]); }
       // the circuit's own zebra crossing at the signals and zebras (the street's markings, left under the race's paint)
-      if (Lg.kind === 'sig' || Lg.kind === 'zebra') { const qc = -(Lg.hw / sn + 2.6), gw = [0.8, 0.8, 0.78];
+      if (Lg.kind === 'sig' || Lg.kind === 'zebra') { const qc = -(Lg.hw / Math.max(0.35, Math.sin(Lg.a)) + 2.6), gw = [0.8, 0.8, 0.78];
         for (let l = -w + 0.6; l < w - 0.4; l += 1.1) { const s0 = Lg.s + qc - 1.6, s1 = Lg.s + qc + 1.6, a = C.atSf(s0, l), b = C.atSf(s0, l + 0.55), c = C.atSf(s1, l + 0.55), d = C.atSf(s1, l);
           gm.quadUp([a[0], C.hyS(s0) + 0.036, a[1]], [b[0], C.hyS(s0) + 0.036, b[1]], [c[0], C.hyS(s1) + 0.036, c[1]], [d[0], C.hyS(s1) + 0.036, d[1]], [gw, gw, gw, gw]); } }
       exclPush(...P(Lg.rF * 0.6, 0), Math.max(8, Lg.rF * 0.6));
@@ -637,7 +641,7 @@
       const yaw = face === 'N' ? Math.atan2(-T.nz[i] * sd, -T.nx[i] * sd) : face === 'F' ? Math.atan2(tz, tx) : face === 'B' ? Math.atan2(-tz, -tx) : Math.atan2(-Lg.uz, -Lg.ux);
       prop(kind, x, z, yaw, col);
     }
-    gr.addTo(root, C.aMat, false, true); gs.addTo(root, C.pMat, false, true);
+    gr.addTo(root, C.aMat, false, true); gs.addTo(root, C.pMat, false, true); fz.addTo(root, new THREE.MeshLambertMaterial({ map: C.tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide }), false, true);
     if (!gm.empty) { const m = new THREE.Mesh(gm.geometry(), C.lMat); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); }
     // OSM's own street furniture round the circuit: inside the barriers knockable, outside as scenery (benches, bus stop signs and shelters,
     // traffic lights of the other junctions, lamps, bins)
@@ -675,14 +679,13 @@
       cyl(g, x, y + Hh + 0.4, z, 1.3, 2.4, 8, [0.85, 0.9, 0.92], [0.2, 0.2, 0.22], 1.3); cone(g, x, y + Hh + 2.8, z, 1.5, 1.2, 8, [0.22, 0.22, 0.24], [0.3, 0.3, 0.32], 0);
       box(g, x - 7, y, z + 3, 9, 4.2, 6, yaw, [0.96, 0.95, 0.92], [0.7, 0.2, 0.15]);   // (the keepers' house)
       C.exclPush(x, z, 12); }
-    // the sea wall and the promenade's railing along the coast near the circuit (where the land meets the sea within 900 m of it)
-    const rail = new K.Chunks(192);
-    for (let j = 1; j < G.nz - 1; j++) for (let i = 1; i < G.nx - 1; i++) { const k = j * G.nx + i; if (!G.land[k] || G.SD[k] > 8.5 || G.dT[k] > 900) continue;
-      if (G.land[k + 1] && G.land[k - 1] && G.land[k + G.nx] && G.land[k - G.nx]) { const x = G.x0 + i * G.c, z = G.z0 + j * G.c, y = G.H[k];
-        if (G.kind[k] === KIND.sand) continue;
-        if ((i + j) % 2 === 0) rock(rail.get(x, z), x + (hash(i, j) - 0.5) * 6, y - 0.6, z + (hash(j, i) - 0.5) * 6, 1.4 + hash(i * 3, j) * 1.8); } }
-    rail.addTo(C.root, C.matV, true, true);
-    function rock(g, x, y, z, r) { ico(g, x, y, z, r, 0.6, [0.5 + hash(Math.round(x), 1) * 0.12, 0.48 + hash(Math.round(z), 2) * 0.1, 0.45], rng(Math.round(x * 7 + z)), 0.35); }
+    // the granite boulders of the shore (Mouille Point's rocky coast; not on the beaches): instanced, along the waterline near the circuit
+    const rg = new GB(); ico(rg, 0, 0, 0, 1, 0.62, [1, 1, 1], rng(31), 0.32); const rGeo = rg.geometry(); rGeo.computeBoundingSphere();
+    const rocks = new K.IChunks(rGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), 384), RR = rng(77);
+    for (let j = 1; j < G.nz - 1; j++) for (let i = 1; i < G.nx - 1; i++) { const k = j * G.nx + i, sd = G.SD[k]; if (sd > 7 || sd < -6 || G.dT[k] > 1100) continue;
+      for (let q = 0; q < 3; q++) { const x = G.x0 + i * G.c + (RR() - 0.5) * G.c, z = G.z0 + j * G.c + (RR() - 0.5) * G.c, sd2 = gAt(G.SD, x, z); if (sd2 > 6 || sd2 < -5 || ctKind(x, z) === KIND.sand || C.near(x, z).d < 2) continue;
+        const r = 0.8 + RR() * RR() * 2.6, t = 0.82 + RR() * 0.3; rocks.add(x, Math.max(ctGround(x, z), C.WL - 1) - r * 0.25, z, RR() * TAU, r, r, [0.44 * t, 0.42 * t, 0.4 * t]); } }
+    rocks.addTo(C.root, true);
   }
 
   /* ---- trees: OSM's trees (single and in rows) and the land cover's tree cells: palms along the coast and the boulevards (tall fan palms and
@@ -800,9 +803,9 @@
     return (cam) => {
       if (!cam) return; const c = cam.position;
       cam.getWorldDirection(_fd); const top = Math.asin(clamp(_fd.y, -1, 1)) + (cam.fov || 50) * Math.PI / 360 * 1.15; mesh.visible = top > -0.02; if (!mesh.visible) return;
-      if (Math.abs(c.x - S.cx) + Math.abs(c.y - S.cy) + Math.abs(c.z - S.cz) < 2 && cam.far === S.cf) return;
+      if (Math.abs(c.x - S.cx) + Math.abs(c.y - S.cy) + Math.abs(c.z - S.cz) < 9 && cam.far === S.cf) return;   // (moved less than 9 m: the shell stays; it lies 20-70 m inside the far plane)
       S.cx = c.x; S.cy = c.y; S.cz = c.z; S.cf = cam.far;
-      const p = g.attributes.position.array, hz = g.attributes.aHz.array, R0 = cam.far - 60, R1 = cam.far - 5;
+      const p = g.attributes.position.array, hz = g.attributes.aHz.array, R0 = cam.far - 70, R1 = cam.far - 20;
       for (let v = 0, k = 0; k < Pf.length; v++, k += 3) { const dx = Pf[k] - c.x, dy = Pf[k + 1] - c.y, dz = Pf[k + 2] - c.z, Dd = Math.max(1, Math.sqrt(dx * dx + dy * dy + dz * dz)), r = R0 + (R1 - R0) * (1 - Math.exp(-Math.max(0, Dd - 300) / 2500)), f = r / Dd;
         p[k] = c.x + dx * f; p[k + 1] = c.y + dy * f; p[k + 2] = c.z + dz * f; hz[v] = 0.22 + 0.5 * (1 - Math.exp(-Math.max(0, Dd - 400) / 6000)); }
       g.attributes.position.needsUpdate = true; g.attributes.aHz.needsUpdate = true;

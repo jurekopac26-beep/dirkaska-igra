@@ -91,8 +91,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     elev: CPT_H.map((h, i) => [i / CPT_H.length, h / 10]), elevSmooth: 8,
     walls, junctions: JUNCTIONS, junctionOff: JOFF, furniture: FURN,
     // the pit lane (scenery: [from, to, offset to the right (negative: left)], metres from the start line): left of Vlei Road, between the circuit
-    // and the athletics stadium, across the start line (the cars do not stop there: the game's pit stops are on the right)
-    pitLane: [-150, 125, -16],
+    // and the back of the athletics stadium's grandstand, across the start line (the cars do not stop there: the game's pit stops are on the right)
+    pitLane: [-150, 125, -11.5],
     // temporary grandstands [from, to, side, rows, roof]: across from the pits on Vlei Road, outside Turn 1, along the boulevard, at Turn 7, on
     // the coast at Turn 9, outside Turn 10 (approximate)
     stands: [[-115, 60, 1, 9, 1], [300, 420, -1, 7, 0], [1340, 1420, -1, 6, 0], [-960, -880, -1, 6, 0], [-560, -500, -1, 7, 0]],
