@@ -471,19 +471,19 @@
  },
  "beartooth": {
   "meshes": 1527,
-  "verts": 811691,
-  "instances": 57497,
+  "verts": 821080,
+  "instances": 57496,
   "props": 212,
-  "crowd": 1256,
-  "world": "1e1ab9f7",
+  "crowd": 1255,
+  "world": "6b907844",
   "propsHash": "cc912f13",
   "floor": "195008bb/10836",
   "groups": {
-   "-:MeshLambertMaterial": "c3f655aa",
+   "-:MeshLambertMaterial": "a4591abe",
    "-:MeshPhongMaterial": "693613f3",
    "-:MeshBasicMaterial": "7b9855ff",
-   "crowd:MeshLambertMaterial": "82982e0f",
-   "ao:MeshBasicMaterial": "6df89e90",
+   "crowd:MeshLambertMaterial": "c2a8a8a9",
+   "ao:MeshBasicMaterial": "347daa13",
    "tyremarks:MeshBasicMaterial": "efca3455",
    "roadwear:MeshLambertMaterial": "84337b0e"
   }

@@ -16402,7 +16402,10 @@ const World = (function () {
     if (st > 0) { const pink = sstep(0.45, 0.75, P.c3(x, z)), lich = sstep(0.55, 0.8, P.n2(x * 1.7, z * 1.7)) * 0.5, band = 0.9 + 0.1 * Math.sin(A / 5.5 + P.c2(x * 0.4, z * 0.4) * 6);
       const gr = [lerp(0.6, 0.66, pink) * band, lerp(0.59, 0.58, pink) * band, lerp(0.57, 0.55, pink) * band];
       R = lerp(R, lerp(gr[0], 0.36, lich), st); G = lerp(G, lerp(gr[1], 0.36, lich), st); B = lerp(B, lerp(gr[2], 0.33, lich), st); }
-    const sn = btSnow(x, z, A, ny, sz, sx); R = lerp(R, BT_SNC[0], sn); G = lerp(G, BT_SNC[1], sn); B = lerp(B, BT_SNC[2], sn);
+    const sn = btSnow(x, z, A, ny, sz, sx), wet = sstep(0.01, 0.12, sn) * (1 - sstep(0.25, 0.55, sn)) * 0.35;   // (the ground soaked dark round the melting snow)
+    R *= 1 - wet; G *= 1 - wet * 0.8; B *= 1 - wet * 0.7;
+    R = lerp(R, BT_SNC[0], sn); G = lerp(G, BT_SNC[1], sn); B = lerp(B, BT_SNC[2], sn);
+    { const ed = sn * (1 - sn) * 4 * (0.6 + 0.4 * P.n4(x * 2, z * 2)); R -= 0.11 * ed; G -= 0.1 * ed; B -= 0.06 * ed; }   // (its edge grey with grit and needles, the middle clean)
     if (dd < 4) { const t = sstep(4, 0.5, dd) * 0.5 * (1 - sn); R = lerp(R, 0.58, t); G = lerp(G, 0.56, t); B = lerp(B, 0.52, t); }
     BTCOL[0] = R; BTCOL[1] = G; BTCOL[2] = B; return BTCOL;
   }
@@ -16820,9 +16823,21 @@ const World = (function () {
         exclPush(v[0], v[1], 6.5); for (let k = 0; k < 6; k++) { const a = RC() * TAU, r = 2 + RC() * 2.2; person(v[0] + Math.cos(a) * r, v[1] + Math.sin(a) * r, a + PI / 2); } }
       const q = T.names.find(n => /Rock Creek Vista/.test(n.n)); if (q) { signPost(sStart + q.d - 160, 1, 1.4, 32 + 2, 3.4, 0.85, 2.6); signPost(sStart + q.d - 140, 1, 1.4, 32 + 3, 3.4, 0.85, 2.6); }
     }
+    let nCrew = 0, yard = null;
+    {   // dry-stone walls round the far side of every pull-out (granite blocks, knee high), the road crew's yard at the biggest one away from the vista and the
+      // finish: a yellow plough truck with its blade, a heap of grit and a stack of spare snow poles
+      for (const p of pulls) { const i = p.i, sd = Math.sign((p.x - T.px[i]) * T.nx[i] + (p.z - T.pz[i]) * T.nz[i]) || 1, a0 = Math.atan2(T.nz[i] * sd, T.nx[i] * sd), R0 = p.r + 0.8;
+        for (let a = a0 - 1.25; a < a0 + 1.25; a += 0.6 / R0 * 2) { const x0 = p.x + Math.cos(a) * R0, z0 = p.z + Math.sin(a) * R0, a2 = a + 1.2 / R0, x1 = p.x + Math.cos(a2) * R0, z1 = p.z + Math.sin(a2) * R0; if (vrNear(x0, z0).dd < 1.2) continue;
+          const y0 = caGround(x0, z0), q = 0.85 + 0.2 * rpHash(Math.round(x0 * 7), Math.round(z0 * 7)); box(scen.get(x0, z0), (x0 + x1) / 2, Math.min(y0, caGround(x1, z1)) - 0.3, (z0 + z1) / 2, Math.hypot(x1 - x0, z1 - z0) + 0.1, 0.9, 0.6, Math.atan2(z1 - z0, x1 - x0), [0.6 * q, 0.57 * q, 0.55 * q], [0.68 * q, 0.65 * q, 0.62 * q], true); } }
+      yard = pulls.filter(p => p !== vPad && Math.hypot(p.x - padF.x, p.z - padF.z) > 150).sort((a, b) => b.r - a.r)[0];
+      if (yard) { const hh = T.hd[yard.i], c = Math.cos(hh), sn = Math.sin(hh), RY = rng(3993), g = scen.get(yard.x, yard.z);
+        { const px = yard.x - c * 3, pz = yard.z - sn * 3; caTruck(g, px, caGround(px, pz), pz, hh, [0.95, 0.72, 0.1], [0.5, 0.5, 0.52]); const bx = px + c * 8.6, bz = pz + sn * 8.6; box(g, bx, caGround(bx, bz) + 0.2, bz, 0.3, 1.1, 3.4, hh + 0.35, [0.95, 0.72, 0.1], null, true); nCrew++; }   // the plough truck and its blade
+        { const gx = yard.x + c * 6 - sn * 3, gz = yard.z + sn * 6 + c * 3; cone(g, gx, caGround(gx, gz) - 0.2, gz, 3.2, 1.8, 9, [0.5, 0.47, 0.44], [0.58, 0.55, 0.51], RY() * TAU); nCrew++; }   // the heap of grit
+        for (let k = 0; k < 14; k++) { const sx = yard.x - c * 9 + sn * (2 + k * 0.12), sz = yard.z - sn * 9 - c * (2 + k * 0.12); box(g, sx, caGround(sx, sz) + 0.06 + (k % 3) * 0.08, sz, 3.4, 0.07, 0.07, hh, k % 2 ? [0.95, 0.4, 0.08] : [0.1, 0.1, 0.1]); } nCrew++; }   // the spare poles
+    }
     {   // the other pull-outs: a few hikers and cyclists resting, a parked car or a bike leaning on its stand now and then
       const RH = rng(3997), hik = [[0.86, 0.3, 0.12], [0.2, 0.4, 0.62], [0.9, 0.72, 0.18], [0.3, 0.5, 0.3], [0.7, 0.18, 0.2], [0.55, 0.55, 0.58]];
-      for (const p of pulls) { if (p === vPad) continue; const n = 2 + Math.floor(RH() * 3), hh = T.hd[p.i];
+      for (const p of pulls) { if (p === vPad || p === yard) continue; const n = 2 + Math.floor(RH() * 3), hh = T.hd[p.i];
         for (let k = 0; k < n; k++) { const a = RH() * TAU, r = RH() * p.r * 0.7, px = p.x + Math.cos(a) * r, pz = p.z + Math.sin(a) * r; if (vrNear(px, pz).dd < 1.2) continue; person(px, pz, RH() * TAU, hik[Math.floor(RH() * hik.length)]); }
         if (RH() < 0.5 && p.r > 7) { const px = p.x + Math.cos(hh) * p.r * 0.3, pz = p.z + Math.sin(hh) * p.r * 0.3; if (vrNear(px, pz).dd > 1.5) caCar(scen.get(px, pz), px, caGround(px, pz), pz, hh, vary(carCols[Math.floor(RH() * carCols.length)], RH, 0.15)); }
         else { const px = p.x - Math.cos(hh) * 1.5, pz = p.z - Math.sin(hh) * 1.5; if (vrNear(px, pz).dd > 1.2) btBike(scen.get(px, pz), px, caGround(px, pz), pz, hh + 0.3, hik[Math.floor(RH() * hik.length)], false); } }
@@ -17091,7 +17106,7 @@ const World = (function () {
       out.dyn.condors = { L, x0: T.px[i0], z0: T.pz[i0], y0: T.hy[i0], ax: T.px[i0], az: T.pz[i0], ay: T.hy[i0], t: null };
       caCondors(out.dyn.condors, 0, null); }
     crowdFinish(CR, root, out);
-    out.stats = { streams: nStream, walls: nWall, fences: nFence, trees: nTrees, plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), poles: nPole + out.propStats.posts, drifts: nDrift, animals: nAnimals, pulls: pulls.length };   // (read by the tests)
+    out.stats = { crew: nCrew, streams: nStream, walls: nWall, fences: nFence, trees: nTrees, plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), poles: nPole + out.propStats.posts, drifts: nDrift, animals: nAnimals, pulls: pulls.length };   // (read by the tests)
     return out;
   }
 
