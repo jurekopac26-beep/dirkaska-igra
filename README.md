@@ -156,7 +156,7 @@ Cesta Chapman's Peak Drive na polotoku Cape Peninsula v Južnoafriški republiki
 - **Policija**: beg pred policijo do razgledišča; kot na Los Caracoles se pregon začne že na startu (na levi polovici ceste), pobegneš čez cilj (»Do razgledišča v …«). Drugo je kot na Vršiču (bodičasti trakovi, zapore, helikopter, motoristi, trki kot v GTA V, štiri težavnosti); patrulje imajo ob bokih moder pas z napisom POLICE.
 - **Levostranski promet je lastnost proge** (`leftHand: true` v `js/tracks/<id>.js`): `js/core.js` (`tfSide`) zrcali pasove, rob za umik, obvoz, avtobusne postaje, smernike, prehitevanje tekmeca (mimo počasnejših po desni, mimo nasproti vozečih po levi), neoznačeno patruljo in začetni položaj v begu pred policijo. Proge brez te lastnosti (Vršič, Los Caracoles) vozijo po desni kot prej.
 - Med vožnjo se pod uro izpišejo kraji (Hout Bay, East Fort, Razgledišče, Cestninska postaja, Razgledišče · The Sentinel, Chapman's Peak · 153 m), komentator jih občasno omeni in ima na tej progi svoje stavke ob startu, cilju in pobegu.
-- **Oblika in višine**: sredinska črta je iz OpenStreetMap (zglajena, povprečno za 0,05 m, največ 1,6 m; dve enosmerni vozišči pri cestninski postaji sta v igri ena cesta). Višine so iz satelitskega višinskega modela Copernicus (drseča mediana na 200 m, zglajene). Cesta je v igri široka 13 m (prava je ožja, ~7 m; razširjena kot na drugih odprtih cestah, da je prostor za promet in prehitevanje).
+- **Oblika in višine**: sredinska črta je iz OpenStreetMap (zglajena, povprečno za 0,05 m, največ 1,6 m; dve enosmerni vozišči pri cestninski postaji sta v igri ena cesta). Višine so iz satelitskega višinskega modela Copernicus (drseča mediana na 200 m, zglajene). Cesta je v igri široka 16,9 m (prava je ožja, ~7 m; razširjena, da je prostor za promet in prehitevanje).
 
 Okolica:
 
@@ -589,3 +589,6 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 - Proga Bathurst (sredinska črta): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/), prek [Overture Maps Foundation](https://overturemaps.org). Iz njih izpeljani podatki v `js/tracks/bathurst.js` so na voljo pod ODbL 1.0.
 - Višine in teren Bathursta: Copernicus DEM GLO-30: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
 - Raba tal Bathursta: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
+## Širina cest
+Vse proge (razen Vršiča, ki je bil razširjen posebej) so v igri 1,3-krat širše, kot so zapisane v datotekah prog (`ROAD_WIDEN` v `js/core.js`), da je cesta v povprečju tako široka kot v referenčni igri Super Wooden Rally 2. Širina še vedno niha po odsekih (npr. Harju).

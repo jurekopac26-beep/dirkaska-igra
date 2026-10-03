@@ -18,8 +18,8 @@ const opts = (o) => Object.assign({ numAI: 12, playerGrid: 12, laps: 1, playerMo
 const wrap = (a) => a - 2 * Math.PI * Math.round(a / (2 * Math.PI));
 
 // 1. the track: an open road, four ways to drive it, its checkpoints and climb; not a round of the big championship
-check('track: an open road with four ways to drive it (def.modes: race, time trial, traffic, police), 4 checkpoints, the road 13 m wide',
-  def.open && !def.timeTrial && (def.modes || []).join(',') === 'race,tt,traffic,police' && T.cpS.length === 4 && T.w === 6.5,
+check('track: an open road with four ways to drive it (def.modes: race, time trial, traffic, police), 4 checkpoints, the road 16.9 m wide (1.3 x the drawn 13 m)',
+  def.open && !def.timeTrial && (def.modes || []).join(',') === 'race,tt,traffic,police' && T.cpS.length === 4 && T.w === def.halfWidth * 1.3,
   `race ${Math.round(T.raceLen)} m, ${T.cpS.length} checkpoints, climb ${def.alt.join('-')} m, modes ${(def.modes || []).join(',')}`);
 check('track: from the Juncalillo river (~2200 m) up to Portillo (~2870 m), ~10.8 km', Math.abs(def.alt[0] - 2200) < 20 && Math.abs(def.alt[1] - 2868) < 20 && T.raceLen > 10500 && T.raceLen < 11000 && Math.abs(T.altAt(T.hFinish) - def.alt[1]) < 1,
   `${Math.round(T.raceLen)} m, ${def.alt[0]} -> ${def.alt[1]} m`);

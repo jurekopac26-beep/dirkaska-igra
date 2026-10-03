@@ -68,8 +68,8 @@ const dAt = (s) => Math.round(s - T.startS);   // (metres after the start line)
 {
   const hd = C.TRACKS.find(d => d.id === 'harju'), H = new C.Track(hd), at = (d) => H.idx(H.startS + d), K = (s) => H.sf[at(s)];
   const wmin = Math.min(...H.wa), wmax = Math.max(...H.wa), D = [50, 300, 600, 900, 1100, 1450, 2050, 2400, 2490];
-  check('Harju: the road half width by section (2.9-4.8 m), the surfaces: tarmac on the boulevard, gravel up the ridge, at the stadium and in the park, paving stones by the school',
-    !!H.wa && wmin >= 2.85 && wmin <= 3.1 && wmax >= 4.7 && D.map(K).join(',') === '0,0,5,0,5,0,5,4,0',
+  check('Harju: the road half width by section (3.8-6.2 m, 1.3 x the drawn), the surfaces: tarmac on the boulevard, gravel up the ridge, at the stadium and in the park, paving stones by the school',
+    !!H.wa && wmin >= 3.7 && wmin <= 4.0 && wmax >= 6.1 && D.map(K).join(',') === '0,0,5,0,5,0,5,4,0',
     `half width ${wmin.toFixed(2)}-${wmax.toFixed(2)} m, surfaces at ${D.join('/')} m: ${D.map(K).join(',')}`);
   let iN = 0; for (let i = 0; i < H.N; i++) if (H.pz[i] < H.pz[iN]) iN = i;
   const dN = iN * H.ds - H.startS;

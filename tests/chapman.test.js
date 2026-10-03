@@ -18,8 +18,8 @@ const opts = (o) => Object.assign({ numAI: 12, playerGrid: 12, laps: 1, playerMo
 const left = (v) => v.d * v.dir < -0.5;   // (a vehicle on its own half when they keep left: + across the road is the right looking uphill)
 
 // 1. the track: an open road, four ways to drive it, driven on the left; at most 5 km, from Hout Bay (~20 m) up to the view point (~150 m)
-check('track: an open road with four ways to drive it, 4 checkpoints, the road 13 m wide, the traffic on the left (def.leftHand)',
-  def.open && !def.timeTrial && (def.modes || []).join(',') === 'race,tt,traffic,police' && T.cpS.length === 4 && T.w === 6.5 && def.leftHand === true,
+check('track: an open road with four ways to drive it, 4 checkpoints, the road 16.9 m wide (1.3 x the drawn 13 m), the traffic on the left (def.leftHand)',
+  def.open && !def.timeTrial && (def.modes || []).join(',') === 'race,tt,traffic,police' && T.cpS.length === 4 && T.w === def.halfWidth * 1.3 && def.leftHand === true,
   `race ${Math.round(T.raceLen)} m, ${T.cpS.length} checkpoints, climb ${def.alt.join('-')} m, modes ${(def.modes || []).join(',')}`);
 check('track: from Hout Bay (~20 m) up to the view point (~150 m), 4.5-5 km, the climb ~130 m', T.raceLen > 4500 && T.raceLen <= 5000 && Math.abs(def.alt[0] - 19) < 10 && Math.abs(def.alt[1] - 153) < 15 && Math.abs(T.altAt(T.hFinish) - def.alt[1]) < 1,
   `${Math.round(T.raceLen)} m, ${def.alt[0]} -> ${def.alt[1]} m`);

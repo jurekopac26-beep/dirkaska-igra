@@ -24,7 +24,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 20,
     elev: CHAPMAN_H.map((h, i) => [i / (CHAPMAN_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: { cs: [126, 132, 142], wet: { cs: [137, 144, 154] } },
+    medals: { cs: [124, 130, 139], wet: { cs: [135, 142, 152] } },
     // the little bridge over a gully 1.9 km up (OpenStreetMap: bridge=yes): [from, to] in metres after the start line
     bridges: [[1931.0,1941.0]],
     // the toll plaza (a generic one: booths at both edges, a canopy over the road, the barriers up): [metres after the start line]; the view
