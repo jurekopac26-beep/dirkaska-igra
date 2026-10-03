@@ -2083,7 +2083,7 @@ const Render = (function () {
     winU.value = (todK >= 1 ? 1 : todK <= 0.5 ? 0.8 * todK : 0.4 + 1.2 * (todK - 0.5)) * (dawn ? 0.75 : 1);   // (day 0, dusk 0.4, night 1: with the time of day, also as it moves on in an endurance race; in the morning a few)
     if (!winU.value || !world || !world.root || world.winLit) return;
     world.winLit = true;
-    const maps = [tex.facade, tex.facadeBal].filter(Boolean);
+    const maps = [tex.facade, tex.facadeBal].concat(world.winMaps || []).filter(Boolean);   // (world.winMaps: a builder's own facades)
     world.root.traverse(o => { for (const m of o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []) {
       if (!m.map || !maps.includes(m.map) || m.userData.win) continue;
       const prev = m.onBeforeCompile, key = m.customProgramCacheKey(); m.userData.win = true;   // (on top of what the material's shader has already: Ouninpohja's cut-out)
