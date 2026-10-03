@@ -181,6 +181,13 @@
   "maxKverts": 511,
   "jsMs": 0.23
  },
+ "baldy": {
+  "calls": 267,
+  "maxCalls": 313,
+  "kverts": 748,
+  "maxKverts": 888,
+  "jsMs": 1.28
+ },
  "cpalace": {
   "calls": 281,
   "maxCalls": 303,
