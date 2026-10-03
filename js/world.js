@@ -10739,7 +10739,8 @@ const World = (function () {
           for (let c = 0; c < offs.length - 1; c++) { const o0 = offs[c], o1 = offs[c + 1];
             gr.quadUp(Pt(i, o0, 0.02), Pt(i, o1, 0.02), Pt(j, o1, 0.02), Pt(j, o0, 0.02), [shade(i, o0), shade(i, o1), shade(j, o1), shade(j, o0)], [[(o0 + w) / tileL, v0], [(o1 + w) / tileL, v0], [(o1 + w) / tileL, v1], [(o0 + w) / tileL, v1]]); }
           for (const [o0, o1] of [[-(w - 0.3), -(w - 0.45)], [w - 0.45, w - 0.3]]) gl.quadUp(Pt(i, o0, 0.036), Pt(i, o1, 0.036), Pt(j, o1, 0.036), Pt(j, o0, 0.036), [wht, wht, wht, wht]);
-          for (const [o0, o1] of [[-0.21, -0.09], [0.09, 0.21]]) gl.quadUp(Pt(i, o0, 0.036), Pt(i, o1, 0.036), Pt(j, o1, 0.036), Pt(j, o0, 0.036), [ylw, ylw, ylw, ylw]);
+          { const hp = (def.curves || []).some(([d]) => Math.abs(i * T.ds - sStart - d) < 45), wr = (hp ? 0.55 : 0.12) * rpHash(i >> 1, 85), yl = [lerp(ylw[0], 0.56, wr), lerp(ylw[1], 0.53, wr), lerp(ylw[2], 0.46, wr)];   // (the centre line worn by the tyres, most in the hairpins)
+            for (const [o0, o1] of [[-0.21, -0.09], [0.09, 0.21]]) gl.quadUp(Pt(i, o0, 0.036), Pt(i, o1, 0.036), Pt(j, o1, 0.036), Pt(j, o0, 0.036), [yl, yl, yl, yl]); }
           { const h = rpHash(i, 77), tar = [0.1, 0.1, 0.11];   // crack sealing: black tar lines, across the road now and then and along the wheel tracks (the old road heaves in the frost)
             if (h < 0.05) { let o = -w + 0.3, z0 = (rpHash(i, 78) - 0.5) * 0.8; while (o < w - 0.3) { const o2 = Math.min(w - 0.3, o + 0.8 + rpHash(i + Math.round(o * 10), 79) * 1.2), z1 = (rpHash(i + Math.round(o2 * 10), 80) - 0.5) * 0.8, a = atSf(i * T.ds + z0, o), b = atSf(i * T.ds + z1, o2), Y = (q) => T.hy[q[3]] + 0.03;
                 gl.quadUp([a[0] - T.tx[i] * 0.04, Y(a), a[1] - T.tz[i] * 0.04], [b[0] - T.tx[i] * 0.04, Y(b), b[1] - T.tz[i] * 0.04], [b[0] + T.tx[i] * 0.04, Y(b), b[1] + T.tz[i] * 0.04], [a[0] + T.tx[i] * 0.04, Y(a), a[1] + T.tz[i] * 0.04], [tar, tar, tar, tar]); o = o2; z0 = z1; } }
@@ -10882,6 +10883,13 @@ const World = (function () {
           ouRod(g, [v[0] + Math.cos(a0) * 4.8, y + 0.1, v[1] + Math.sin(a0) * 4.8], [v[0] + Math.cos(a0) * 4.8, y + 1.15, v[1] + Math.sin(a0) * 4.8], 0.04, [0.3, 0.3, 0.32], 4); }
         exclPush(v[0], v[1], 6.5); for (let k = 0; k < 6; k++) { const a = RC() * TAU, r = 2 + RC() * 2.2; person(v[0] + Math.cos(a) * r, v[1] + Math.sin(a) * r, a + PI / 2); } }
       const q = T.names.find(n => /Rock Creek Vista/.test(n.n)); if (q) { signPost(sStart + q.d - 160, 1, 1.4, 32 + 2, 3.4, 0.85, 2.6); signPost(sStart + q.d - 140, 1, 1.4, 32 + 3, 3.4, 0.85, 2.6); }
+    }
+    {   // the other pull-outs: a few hikers and cyclists resting, a parked car or a bike leaning on its stand now and then
+      const RH = rng(3997), hik = [[0.86, 0.3, 0.12], [0.2, 0.4, 0.62], [0.9, 0.72, 0.18], [0.3, 0.5, 0.3], [0.7, 0.18, 0.2], [0.55, 0.55, 0.58]];
+      for (const p of pulls) { if (p === vPad) continue; const n = 2 + Math.floor(RH() * 3), hh = T.hd[p.i];
+        for (let k = 0; k < n; k++) { const a = RH() * TAU, r = RH() * p.r * 0.7, px = p.x + Math.cos(a) * r, pz = p.z + Math.sin(a) * r; if (vrNear(px, pz).dd < 1.2) continue; person(px, pz, RH() * TAU, hik[Math.floor(RH() * hik.length)]); }
+        if (RH() < 0.5 && p.r > 7) { const px = p.x + Math.cos(hh) * p.r * 0.3, pz = p.z + Math.sin(hh) * p.r * 0.3; if (vrNear(px, pz).dd > 1.5) caCar(scen.get(px, pz), px, caGround(px, pz), pz, hh, vary(carCols[Math.floor(RH() * carCols.length)], RH, 0.15)); }
+        else { const px = p.x - Math.cos(hh) * 1.5, pz = p.z - Math.sin(hh) * 1.5; if (vrNear(px, pz).dd > 1.2) btBike(scen.get(px, pz), px, caGround(px, pz), pz, hh + 0.3, hik[Math.floor(RH() * hik.length)], false); } }
     }
 
     /* ---- guardrails where the ground falls away and round the outside of the bends, chevrons on the outside of every hairpin; the tall snow poles along both

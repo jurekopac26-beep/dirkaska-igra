@@ -348,17 +348,17 @@
  "beartooth": {
   "meshes": 1630,
   "verts": 790429,
-  "instances": 57493,
+  "instances": 57497,
   "props": 212,
-  "crowd": 1252,
-  "world": "ff79e6c3",
+  "crowd": 1256,
+  "world": "1b51820",
   "propsHash": "cc912f13",
   "floor": "195008bb/10836",
   "groups": {
-   "-:MeshLambertMaterial": "b2746cb5",
+   "-:MeshLambertMaterial": "eef72d5",
    "-:MeshPhongMaterial": "693613f3",
    "-:MeshBasicMaterial": "7b9855ff",
-   "crowd:MeshLambertMaterial": "66375b1c",
+   "crowd:MeshLambertMaterial": "82982e0f",
    "ao:MeshBasicMaterial": "ed016322",
    "tyremarks:MeshBasicMaterial": "efca3455",
    "roadwear:MeshLambertMaterial": "c07d6f3d"
