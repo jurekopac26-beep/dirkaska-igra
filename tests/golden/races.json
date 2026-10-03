@@ -1448,5 +1448,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "c6f02bfa502378f469a604da"
+ },
+ "moki/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 152.73,
+  "spins": 0,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "45667b758962dc6450a87da5"
+ },
+ "moki/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 167.29,
+  "spins": 0,
+  "walls": 8,
+  "rescues": 0,
+  "nan": false,
+  "digest": "4716c25b70cf89b1cfc52219"
+ },
+ "moki/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 150.16,
+  "spins": 0,
+  "walls": 6,
+  "rescues": 0,
+  "nan": false,
+  "digest": "49f156d8dd7b9a9e921b2b99"
+ },
+ "moki/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 153.98,
+  "spins": 0,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "40112e147397b8e234ef7840"
+ },
+ "moki/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 152.63,
+  "spins": 1,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "4b49bef3cdf43ed363e89027"
  }
 }
