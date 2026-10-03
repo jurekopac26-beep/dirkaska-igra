@@ -3134,5 +3134,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "puertomadero/race/cs": {
+  "digest": "5d40f60006dae3c0607fc2ba",
+  "lead": 1724.1,
+  "car0": [
+   -190.52,
+   457.25
+  ],
+  "cover": {
+   "dmg": 0.59,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "puertomadero/demo/cs": {
+  "digest": "435c8e213ffd7efef4cce4e1",
+  "lead": 1818.2,
+  "car0": [
+   -95.09,
+   564.34
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "puertomadero/upg/cs": {
+  "digest": "1eacf13a25aaef4238736f49",
+  "lead": 1826.2,
+  "car0": [
+   -148.32,
+   624.6
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "puertomadero/crash/cs": {
+  "digest": "29619d2338587612f62039e9",
+  "lead": 1722.1,
+  "car0": [
+   -202.85,
+   402.17
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 7,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "puertomadero/formula/cs": {
+  "digest": "1bd16652e656b1c6b665eb35",
+  "lead": 1977.4,
+  "car0": [
+   -175.17,
+   621.45
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 9,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "puertomadero/lm/cs": {
+  "digest": "a6535df519b8b093ca6158d9",
+  "lead": 1947.9,
+  "car0": [
+   -172.58,
+   635.02
+  ],
+  "cover": {
+   "dmg": 0.94,
+   "loose": 11,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "puertomadero/car/cs": {
+  "digest": "ad9df5b537156f55f258ef73",
+  "lead": 1722.6,
+  "car0": [
+   -188.87,
+   488.29
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 0
+  }
  }
 }

@@ -563,6 +563,26 @@
    "roadwear:MeshLambertMaterial": "fc990f68"
   }
  },
+ "puertomadero": {
+  "meshes": 307,
+  "verts": 1133129,
+  "instances": 1214,
+  "props": 242,
+  "crowd": 1214,
+  "world": "e5b42f80",
+  "propsHash": "c0e85ada",
+  "floor": null,
+  "groups": {
+   "-:MeshPhongMaterial": "6077b6d4",
+   "-:MeshLambertMaterial": "2eb0cc7b",
+   "crowd:MeshLambertMaterial": "291370cb",
+   "-:MeshBasicMaterial": "63cfd62",
+   "flags:MeshLambertMaterial": "da0fcc41",
+   "ao:MeshBasicMaterial": "9b0e0515",
+   "tyremarks:MeshBasicMaterial": "97c7cde1",
+   "roadwear:MeshLambertMaterial": "985e7be0"
+  }
+ },
  "jezero": {
   "meshes": 154,
   "verts": 591648,

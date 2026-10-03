@@ -222,5 +222,12 @@
   "kverts": 1530,
   "maxKverts": 1670,
   "jsMs": 0.87
+ },
+ "puertomadero": {
+  "calls": 321,
+  "maxCalls": 403,
+  "kverts": 736,
+  "maxKverts": 839,
+  "jsMs": 0.67
  }
 }
