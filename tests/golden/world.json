@@ -524,24 +524,24 @@
    "ao:MeshBasicMaterial": "bf4eccf9"
   }
  },
- "riverside": {
-  "meshes": 592,
-  "verts": 907953,
-  "instances": 5325,
-  "props": 47,
-  "crowd": 3125,
-  "world": "62096f6d",
-  "propsHash": "ee4f06a0",
-  "floor": "35af8a01/10528",
+ "cpalace": {
+  "meshes": 300,
+  "verts": 382518,
+  "instances": 6876,
+  "props": 29,
+  "crowd": 2457,
+  "world": "e0e31673",
+  "propsHash": "3744002c",
+  "floor": "5a965253/6440",
   "groups": {
-   "-:MeshLambertMaterial": "bf25f1e5",
-   "crowd:MeshLambertMaterial": "6034ae43",
-   "-:MeshBasicMaterial": "87f4168d",
-   "flags:MeshLambertMaterial": "d8eee42",
-   "rsFar:MeshBasicMaterial": "2c7b1f67",
-   "rsDust:ShaderMaterial": "399c219b",
-   "ao:MeshBasicMaterial": "332d0cc3",
-   "roadwear:MeshLambertMaterial": "fc990f68"
+   "-:MeshLambertMaterial": "e2922c1d",
+   "-:MeshPhongMaterial": "ac8feb3b",
+   "crowd:MeshLambertMaterial": "4a2d10fc",
+   "-:MeshBasicMaterial": "b41923f5",
+   "flags:MeshLambertMaterial": "859872c7",
+   "ao:MeshBasicMaterial": "3555589",
+   "roadwear:MeshLambertMaterial": "ba389577",
+   "worn:MeshLambertMaterial": "5a1d01e1"
   }
  },
  "jezero": {
