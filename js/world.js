@@ -11519,7 +11519,7 @@ const World = (function () {
         }
       }
     }
-    tk.forEach((t, k) => t.addTo(root, k < 3));   // (kind 1 is no longer planted: the maples' crowns vary in height)
+    for (const t of tk) t.addTo(root, true);
 
     /* ---- the verges: shrubs in their autumn colours right behind the barrier (hazel yellow, bramble and dogwood red, faded olive), tufts of dry
        grass higher up; limestone boulders and crags where the slope rises steep beside the road; up high the snow the ploughs pushed off the road ---- */
@@ -13170,7 +13170,7 @@ const World = (function () {
         }
       }
     }
-    tk.forEach((t, k) => t.addTo(root, k < 3));   // (kind 1 is no longer planted: the maples' crowns vary in height)
+    for (const t of tk) t.addTo(root, true);
 
     /* ---- the rock: crags along the cliffs (OpenStreetMap) and where the slope is steep beside the road, boulders fallen onto the verges; clumps of the
        steppe's feather grass and its flowers on the shoulders ---- */
@@ -14282,7 +14282,7 @@ const World = (function () {
       }
     }
     for (const t of pk) t.addTo(root, false);
-    tk.forEach((t, k) => t.addTo(root, k < 3));   // (kind 1 is no longer planted: the maples' crowns vary in height)
+    for (const t of tk) t.addTo(root, true);
 
     /* ---- the marine layer: two sheets of fog over the sea off the coast (always: the fog bank lying offshore, thin), thick over the land too on a
        misty run (dyn.bsMist.on, from the race; bsMistStep) ---- */
@@ -14903,7 +14903,7 @@ const World = (function () {
         }
       }
     }
-    tk.forEach((t, k) => t.addTo(root, k < 3));   // (kind 1 is no longer planted: the maples' crowns vary in height)
+    for (const t of tk) t.addTo(root, true);
 
     /* ---- the rocks: boulders and scree at the foot of the cuts (grey, rust, red), crags where the slope rises steep beside the road and on the cliffs
        below the drops, loose stones along the verges ---- */
@@ -15767,7 +15767,7 @@ const World = (function () {
         }
       }
     }
-    tk.forEach((t, k) => t.addTo(root, k < 3));   // (kind 1 is no longer planted: the maples' crowns vary in height)
+    for (const t of tk) t.addTo(root, true);
 
     /* ---- the verges: sasa (dwarf bamboo, green the year round) under the trees behind the barrier, shrubs in their autumn colours, grey andesite
        boulders and crags where the slope is steep ---- */
@@ -16858,7 +16858,7 @@ const World = (function () {
         }
       }
     }
-    tk.forEach((t, k) => t.addTo(root, k < 3));   // (kind 1 is no longer planted: the maples' crowns vary in height)
+    for (const t of tk) t.addTo(root, true);
 
     /* ---- the tundra's plants (instanced per 96 m chunk): tufts of grass and sedge, cushions of flowers (pink moss campion, yellow cinquefoil, blue
        forget-me-not, white phlox), granite boulders; thicker near the road, none on the snow, under the trees or on the cliffs ---- */
@@ -17456,7 +17456,7 @@ const World = (function () {
         }
       }
     }
-    tk.forEach((t, k) => t.addTo(root, k < 3));   // (kind 1 is no longer planted: the maples' crowns vary in height)
+    for (const t of tk) t.addTo(root, true);
 
     /* ---- the verges and the cliffs: ferns and shrubs right behind the barrier, the red earth and rocks at the foot of the cuts, crags of dark basalt
        (pink sandstone lower down) where the slope rises steep beside the road and out on the escarpment ---- */
@@ -19263,7 +19263,7 @@ const World = (function () {
     const rMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
     const fMat = new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide });
     const postGeo = (() => { const g = new GB(); box(g, 0, 0, 0, 0.13, 1, 0.13, 0, [0.42, 0.43, 0.46], null, true); return g.geometry(); })();
-    const posts = new IChunks(postGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), 768);
+    const posts = new IChunks(postGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), 256);
     const fence = [new Uint8Array(N), new Uint8Array(N)];   // catch fences (set below where the spectators stand)
     const kind = (i) => (onBridge(i) ? 2 : t13(i) ? 1 : 0);   // 0 armco, 1 wall + fence, 2 parapet
     const steel = [0.8, 0.82, 0.85], steelD = [0.5, 0.52, 0.56], conc = [0.72, 0.72, 0.7], concD = [0.6, 0.6, 0.58];
@@ -19288,7 +19288,7 @@ const World = (function () {
       }
       addM(gr, rMat, true);
     }
-    const nPosts = Math.ceil(N);
+    const nPosts = posts.addTo(root, true);
     nringProps(out, t13, onBridge, inKar);   // knockable tyre walls and roadside posts
 
     /* ---- the banked bowls (Karussell, Kleines Karussell): the inner half of the road in concrete slabs, laid on the road's own quads (the same
@@ -19632,7 +19632,7 @@ const World = (function () {
         plant(1, false, x, nrGround(x, z) - 0.1, z, crH(d, side, 65) * TAU, hgt * (pop ? 0.42 : 0.9), hgt, [cv * (pop ? 0.92 : 1), cv * (pop ? 1.05 : 1), cv * 0.9]);
       }
     }
-    tk.forEach((t, k) => t.addTo(root, k < 3));   // (kind 1 is no longer planted: the maples' crowns vary in height)
+    for (const t of tk) t.addTo(root, true);
     for (const t of tf) t.addTo(root, false);
 
     /* ---- terrain tiles and the grass verges (256 m chunks), coloured now: the forest floor under the trees ---- */
@@ -19916,7 +19916,7 @@ const World = (function () {
     const fMat = new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide });
     const tyMat = new THREE.MeshLambertMaterial({ map: tex.tires, vertexColors: true });
     const postGeo = (() => { const g = new GB(); box(g, 0, 0, 0, 0.13, 1, 0.13, 0, [0.42, 0.43, 0.46], null, true); return g.geometry(); })();
-    const posts = new IChunks(postGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), 768);
+    const posts = new IChunks(postGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), 256);
     const fence = [new Uint8Array(N), new Uint8Array(N)];   // catch fences (1: behind a rail or a wall, 2: behind a tyre wall); more below where the spectators stand
     const steel = [0.8, 0.82, 0.85], steelD = [0.5, 0.52, 0.56], conc = [0.78, 0.78, 0.76], concD = [0.64, 0.64, 0.62], W1 = [1, 1, 1];
     const railRow = (gr, i, side, k) => {   // armco / wall cross-section at sample i (rows run so that the faces look at the road)
@@ -19948,7 +19948,7 @@ const World = (function () {
       }
       addM(gr, rMat, true); addM(gt, tyMat, true);
     }
-    const nPosts = Math.ceil(N);
+    const nPosts = posts.addTo(root, true);
     spaProps(out, (i) => t13(i));   // knockable tyre stacks at the exits and apexes
     // advertising on the concrete walls (the game's own brands, tex.sponsors: 4 m boards, the text read from the road)
     { const sb = new Chunks(128, true);
@@ -20346,7 +20346,7 @@ const World = (function () {
         }
       }
     }
-    tk.forEach((t, k) => t.addTo(root, k < 3));   // (kind 1 is no longer planted: the maples' crowns vary in height)
+    for (const t of tk) t.addTo(root, true);
     for (const t of tf) t.addTo(root, false);
 
     /* ---- terrain tiles and the grass verges out past the barriers (256 m chunks), coloured now; mown in stripes along the track (as at the
@@ -21268,7 +21268,7 @@ const World = (function () {
     const fMat = new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide });
     const tyMat = new THREE.MeshLambertMaterial({ map: tex.tires, vertexColors: true });
     const postGeo = (() => { const g = new GB(); box(g, 0, 0, 0, 0.13, 1, 0.13, 0, [0.42, 0.43, 0.46], null, true); return g.geometry(); })();
-    const posts = new IChunks(postGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), 768);
+    const posts = new IChunks(postGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), 256);
     const fence = [new Uint8Array(N), new Uint8Array(N)];
     const steel = [0.8, 0.82, 0.85], steelD = [0.5, 0.52, 0.56], conc = [0.76, 0.76, 0.74], concD = [0.62, 0.62, 0.6], W1 = [1, 1, 1];
     const railRow = (gr, i, side, k) => {   // armco / wall cross-section at sample i (rows run so that the faces look at the road)
@@ -21304,7 +21304,7 @@ const World = (function () {
       }
       addM(gr, rMat, true); addM(gt, tyMat, true);
     }
-    const nPosts = Math.ceil(N);
+    const nPosts = posts.addTo(root, true);
     // advertising boards on the concrete walls (the game's own brands, tex.sponsors: 4 m boards, the text read from the road)
     { const sb = new Chunks(128, true);
       for (const side of [-1, 1]) for (let i = 0, n = 0; i + 2 <= N; i += 2) {
@@ -21928,7 +21928,7 @@ const World = (function () {
         }
         exclPush(x, z, 11);
       }
-      cars.addTo(root, false);
+      cars.addTo(root, true);
     }
 
     const PK = { root, tex, scen, exclPush, CR, out, matV }, parkSt = PARK ? cpPark(PK) : null;   // (Crystal Palace: the lakes, the sculptures, the terraces, the mast, the houses)
@@ -21973,7 +21973,7 @@ const World = (function () {
         }
       }
     }
-    tk.forEach((t, k) => t.addTo(root, k < 3));   // (kind 1 is no longer planted: the maples' crowns vary in height)
+    for (const t of tk) t.addTo(root, true);
     for (const t of tf) t.addTo(root, false);
 
     /* ---- terrain tiles and the grass verges out past the barriers (256 m chunks), coloured now: the forest floor under the trees ---- */
@@ -22938,7 +22938,7 @@ const World = (function () {
     const rMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), tyMat = new THREE.MeshLambertMaterial({ map: tex.tires, vertexColors: true });
     const fMat = new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide });
     const postGeo = (() => { const g = new GB(); box(g, 0, 0, 0, 0.13, 1, 0.13, 0, [0.42, 0.43, 0.46], null, true); return g.geometry(); })();
-    const posts = new IChunks(postGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), 768);
+    const posts = new IChunks(postGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), 256);
     const fence = [new Uint8Array(N), new Uint8Array(N)];   // catch fences (set below where the spectators are)
     const steel = [0.8, 0.82, 0.85], steelD = [0.5, 0.52, 0.56], concD = [0.6, 0.6, 0.58];
     const railRow = (gr, i, side, k) => {   // barrier cross-section at sample i, 5 points (rows run so that the faces look at the road)
@@ -22970,7 +22970,7 @@ const World = (function () {
       }
       addM(gr, rMat, true); addM(grB, dMatB, true); addM(gt, tyMat, true);
     }
-    const nPosts = Math.ceil(N);
+    const nPosts = posts.addTo(root, true);
     for (let i = 0; i < N; i++) if (mainStr(i)) { fence[0][i] = 1; fence[1][i] = 1; }
 
     /* ---- the bridge: a concrete deck under the back straight, from wall to wall of the underpass (its fascias and underside seen from below) ---- */
@@ -23239,7 +23239,7 @@ const World = (function () {
         }
       }
     }
-    tk.forEach((t, k) => t.addTo(root, k < 3));   // (kind 1 is no longer planted: the maples' crowns vary in height)
+    for (const t of tk) t.addTo(root, true);
 
     // knockable tyre walls and roadside posts (not on the main straight, round the crossover or on the grid)
     suzukaProps(out, (i, side, x, z) => mainStr(i) || nearX(i, 70) || excluded(x, z) || inRects(x, z));
