@@ -563,6 +563,41 @@
    "roadwear:MeshLambertMaterial": "fc990f68"
   }
  },
+ "marrakesh": {
+  "meshes": 174,
+  "verts": 371206,
+  "instances": 2311,
+  "props": 78,
+  "crowd": 829,
+  "world": "93f29955",
+  "propsHash": "72cb1ffd",
+  "floor": "13ba048b/5936",
+  "groups": {
+   "mr verge:MeshLambertMaterial": "f66a4714",
+   "mr kerbs:MeshLambertMaterial": "4f3bf466",
+   "mr marks:MeshLambertMaterial": "ee66da8a",
+   "mr barriers:MeshLambertMaterial": "6e510584",
+   "mr streets:MeshLambertMaterial": "f053306d",
+   "mr buildings:MeshLambertMaterial": "29babd47",
+   "mr agdal wall:MeshLambertMaterial": "ff25f880",
+   "mr pools:MeshPhongMaterial": "43e99cfc",
+   "mr pools:MeshLambertMaterial": "2cb9910",
+   "mr paddock:MeshLambertMaterial": "e59bc09f",
+   "mr stands:MeshLambertMaterial": "828f3667",
+   "mr trees:MeshLambertMaterial": "a60651c1",
+   "mr cars:MeshLambertMaterial": "2d87f15b",
+   "mr lamps:MeshLambertMaterial": "9fbab53f",
+   "mr terrain:MeshLambertMaterial": "15c1db56",
+   "mr scenery:MeshLambertMaterial": "51ef3739",
+   "crowd:MeshLambertMaterial": "6ce0090f",
+   "mr crowds:MeshBasicMaterial": "dbee8c1f",
+   "rsFar:MeshBasicMaterial": "3a569e96",
+   "mrFar:MeshBasicMaterial": "496fcd92",
+   "ao:MeshBasicMaterial": "f345b62b",
+   "tyremarks:MeshBasicMaterial": "619f7c92",
+   "roadwear:MeshLambertMaterial": "1d7af542"
+  }
+ },
  "jezero": {
   "meshes": 154,
   "verts": 591648,

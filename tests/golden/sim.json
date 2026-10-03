@@ -3134,5 +3134,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "marrakesh/race/cs": {
+  "digest": "f79efdbe9aee832cbd33fa85",
+  "lead": 1943.6,
+  "car0": [
+   -197.35,
+   -683.14
+  ],
+  "cover": {
+   "dmg": 0.6,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "marrakesh/demo/cs": {
+  "digest": "10772ea627c333caec994a7e",
+  "lead": 2074.2,
+  "car0": [
+   -421.43,
+   -613.96
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "marrakesh/upg/cs": {
+  "digest": "38442ce810043ffb22e9936a",
+  "lead": 2075.7,
+  "car0": [
+   -340.97,
+   -615.17
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "marrakesh/crash/cs": {
+  "digest": "a8a6169f70a100a9c186ff1b",
+  "lead": 1939.5,
+  "car0": [
+   -138.72,
+   -673.63
+  ],
+  "cover": {
+   "dmg": 0.99,
+   "loose": 9,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "marrakesh/formula/cs": {
+  "digest": "46404947dfbe67dd86d59d25",
+  "lead": 2158.7,
+  "car0": [
+   -394.63,
+   -610.39
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 28,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "marrakesh/lm/cs": {
+  "digest": "95c53eee4b8dfa175a1c8766",
+  "lead": 2145.9,
+  "car0": [
+   -426.51,
+   -613.32
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 11,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "marrakesh/car/cs": {
+  "digest": "35a47fbc327bb8e483a49c97",
+  "lead": 1939.2,
+  "car0": [
+   -147.04,
+   -675.44
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 12,
+   "rescues": 0,
+   "repairs": 0
+  }
  }
 }

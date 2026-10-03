@@ -1598,5 +1598,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "4c53c94c9086f66bc8a7b4f0"
+ },
+ "marrakesh/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 173.47,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "b522ecc13de3a2fbfe1ed765"
+ },
+ "marrakesh/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 186.6,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "dbb8fba6ddd107a49ba15c94"
+ },
+ "marrakesh/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 154.15,
+  "spins": 0,
+  "walls": 9,
+  "rescues": 0,
+  "nan": false,
+  "digest": "22bce802f4d3a00ada19a2ad"
+ },
+ "marrakesh/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 156.97,
+  "spins": 1,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e7de5eb223da002f256e2c52"
+ },
+ "marrakesh/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 175.68,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "0a666d41d788196cb42bf40e"
  }
 }
