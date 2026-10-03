@@ -8048,7 +8048,8 @@ const World = (function () {
   // the trees and buildings between the camera and the followed car fade out (an ordered screen-door dither), so the forest standing right
   // beside the road never hides the car: a cone along the line from the camera (1.5 m) to the car (5.5 m). World.view sets U.uCam and
   // U.uCar every frame (without a car the point is parked far away: nothing fades). The shadows stay (the depth pass is not patched)
-  function ouCutMat(m, U) {
+  function ouCutMat(m, U, wide) {   // (wide: a wider cut round the line from the camera to the car, [radius at the camera, at the car]; default [1.5, 5.5])
+    const W0 = wide ? wide[0].toFixed(1) : '1.5', W1 = wide ? wide[1].toFixed(1) : '5.5';
     m.onBeforeCompile = (sh) => {
       sh.uniforms.ouCam = U.uCam; sh.uniforms.ouCar = U.uCar;
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vOuW;')
@@ -8056,11 +8057,11 @@ const World = (function () {
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 ouCam;\nuniform vec3 ouCar;\nvarying vec3 vOuW;')
         .replace('void main() {', 'void main() {\n' +
           '  vec3 ouD = ouCar - ouCam; float ouU = clamp( dot( vOuW - ouCam, ouD ) / max( dot( ouD, ouD ), 1.0 ), 0.0, 1.0 );\n' +
-          '  float ouR = mix( 1.5, 5.5, ouU ), ouF = smoothstep( ouR, ouR * 0.55, length( vOuW - ouCam - ouD * ouU ) ) * step( ouU, 0.96 );\n' +
+          '  float ouR = mix( ' + W0 + ', ' + W1 + ', ouU ), ouF = smoothstep( ouR, ouR * 0.55, length( vOuW - ouCam - ouD * ouU ) ) * step( ouU, 0.96 );\n' +
           '  vec2 ouQ = mod( floor( gl_FragCoord.xy ), 4.0 ), ouA = mod( ouQ, 2.0 ), ouB = floor( ouQ * 0.5 );\n' +
           '  if ( ouF * 0.9 > ( 4.0 * ( 2.0 * mod( ouA.x + ouA.y, 2.0 ) + ouA.y ) + 2.0 * mod( ouB.x + ouB.y, 2.0 ) + ouB.y + 0.5 ) / 16.0 ) discard;');
     };
-    m.customProgramCacheKey = () => 'ouCut';
+    m.customProgramCacheKey = () => (wide ? 'ouCut' + W0 + '/' + W1 : 'ouCut');
     return m;
   }
   function buildOuni(scene, tex, opts) {
@@ -10469,7 +10470,7 @@ const World = (function () {
     R = lerp(R, 0.56, se * 0.6); G = lerp(G, 0.54, se * 0.6); B = lerp(B, 0.49, se * 0.6);
     R += (f - 0.5) * 0.08; G += (f - 0.5) * 0.08; B += (f - 0.5) * 0.05;
     const st = sstep(0.64, 0.42, ny);
-    if (st > 0) { const band = 0.5 + 0.5 * Math.sin(A / 6.5 + P.c2(x * 0.4, z * 0.4) * 6), k = 0.8 + 0.22 * band, ss = sstep(1180, 1110, A + (P.c1(x, z) - 0.5) * 60);
+    if (st > 0) { const ph = A / 6.5 + P.c2(x * 0.4, z * 0.4) * 6, band = 0.5 + 0.5 * Math.sin(ph), crack = sstep(0.93, 0.99, Math.sin(ph * 2.7 + 1.3)), k = (0.74 + 0.34 * band) * (1 - 0.3 * crack), ss = sstep(1180, 1110, A + (P.c1(x, z) - 0.5) * 60);   // (the layers of the lava flows and the sandstone: light and dark bands, a dark joint now and then)
       const moss = Math.max(sstep(0.42, 0.72, P.c5(x, z)) * 0.55, 0.95 * sstep(60, 22, dd)), rr = lerp(0.35, 0.66, ss) * k, rg = lerp(0.34, 0.49, ss) * k, rb = lerp(0.33, 0.4, ss) * k;
       R = lerp(R, lerp(rr, 0.18, moss), st); G = lerp(G, lerp(rg, 0.31, moss), st); B = lerp(B, lerp(rb, 0.1, moss), st); }
     if (dd < 1.6) { const t = sstep(1.6, 0.2, dd) * 0.35; R = lerp(R, 0.5, t); G = lerp(G, 0.36, t); B = lerp(B, 0.24, t); }
@@ -10629,6 +10630,7 @@ const World = (function () {
   // the mist rising out of the valley: soft banks (sprites) over the low ground below the road, drifting up the cliff and fading out as they rise,
   // then coming up again from below; a fixed pose at t (no car: the world test's pose at time 0)
   function rrMist(M, t) {
+    if (M.rot) for (const r of M.rot) r.m.rotation.z = r.p + t * 1.05;   // (the wind turbines' rotors turn)
     const sc = M.root && M.root.parent, fc = sc && sc.fog ? sc.fog.color : null;   // (the mist in the haze's colour: pale by day, dark at night)
     for (const b of M.L) {
       if (fc) b.s.material.color.copy(fc).multiplyScalar(1.12);
@@ -10663,7 +10665,7 @@ const World = (function () {
     const padF = padBeside(sFin + 60, 14); P.pads.push(padF);
     out.bounds = { minX: P.bx0 - 170, maxX: P.bx1 + 170, minZ: P.bz0 - 170, maxZ: P.bz1 + 170 };
     const cut = out.dyn.ouCut = { uCam: { value: new THREE.Vector3() }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) } };   // (the trees and buildings between the camera and the car fade out)
-    const matV = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut); out.matV = matV;
+    const matV = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut, [2.5, 8]); out.matV = matV;   // (the crags on the slope between the camera and the car cut too)
     const excl = [], eh = new Map(), EHC = 32;   // exclusion circles (buildings, crowds, plots) for the plants and the rocks, hashed
     const exclPush = (x, z, r) => { const e = { x, z, r }; excl.push(e); for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let L = eh.get(k); if (!L) eh.set(k, L = []); L.push(e); } return e; };
     const excluded = (x, z) => { const L = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!L) return false; for (let k = 0; k < L.length; k++) { const e = L[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
@@ -10967,7 +10969,7 @@ const World = (function () {
     /* ---- the forest (instanced per 96 m chunk): the closed canopy of the Atlantic rainforest on the slopes (broadleaf crowns in many greens, emergent
        trees over them, palms, tree ferns in the gullies, bamboo at the edges); on the plateau's grassland the araucarias, alone and in groves, and
        shrubs. Right up to the ditch, thinner and bigger farther out, none on the cliffs ---- */
-    const tMatT = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
+    const tMatT = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut, [3, 10]);   // (a wider cut: the big crowns and their trunks on the slope between the isometric camera and the car)
     const tk = [0, 1, 2, 3, 4, 5].map(k => k === 1 || k === 5 ? null : new IChunks(rrTreeGeo(k), tMatT, 128)), tn = [0, 1, 2, 3, 4, 5].map(k => k === 1 || k === 5 ? null : new IChunks(rrTreeGeo(k), tMatT, 160)), tf = [0, 1, 2, 3, 4, 5].map(k => k === 0 || k === 4 ? new IChunks(rrTreeFarGeo(k), tMatT, 224) : null);   // (tk: by the road, casting shadows across it; tn: a little farther, without; tf: farther still, plainer)
     let nTrees = 0, nArauc = 0;
     {
@@ -11032,7 +11034,7 @@ const World = (function () {
       const hyC = [[0.55, 0.66, 1.0], [0.62, 0.7, 1.0], [1.0, 0.62, 0.82], [0.8, 0.66, 1.0], [0.98, 0.98, 1.0]];
       for (let s = sStart - 60; s < sFin + 160; s += 2.6) for (const side of [-1, 1]) {   // the hydrangeas: clumps along the verges up high (the planted roadsides of the Serra)
         const i = T.idx(s), A = T.hy[i] + base; if (A < 1220 || onBr[i]) continue;
-        const r = RL(), r2 = RL(), r3 = RL(); if (sstep(0.35, 0.65, P.n5(s * 0.9, side * 300)) < r * 0.9 + 0.1) continue;
+        const r = RL(), r2 = RL(), r3 = RL(); if (sstep(0.35, 0.65, P.n5(s * 0.9, side * 300)) < r * 0.9 + 0.1 || (A > 1390 && r3 < 0.55)) continue;   // (thinner on the plateau)
         const [x, z] = onSide(s, side, 0.7 + r2 * 2.2); if (vrNear(x, z).dd < 0.5 || excluded(x, z) || vrWater(x, z).e > -3) continue;
         const sc = 1.1 + r3 * 0.9; hy.add(x, caGround(x, z) - 0.1, z, r * TAU, sc * 1.3, sc, vary(hyC[Math.floor(P.c1(s * 0.6, side * 77) * 4.99)], RL, 0.08)); nHyd++;
       }
@@ -11089,6 +11091,18 @@ const World = (function () {
         const y = caGround(x, z), sl = caSlope(x, z); if (sl < 0.4) continue;
         rock(scen.get(x, z), x, y + sz * 0.3, z, sz * 1.2, sz, sz, RV() * TAU, vary(rockC(T.hy[i] + base), RV, 0.1), RV, 0.3);
       }
+      {   // the ledges of the escarpment: flat slabs of rock jutting out of the steep faces, level like the layers they belong to (instanced)
+        const sg = new GB(), RL2 = rng(3411); rock(sg, 0, 0.35, 0, 1, 0.55, 1, 0, [1, 1, 1], RL2, 0.3, 0.9); const sgeo = sg.geometry(); sgeo.computeBoundingSphere();
+        const sl = new IChunks(sgeo, matV, 192), G = P.G, Lt = VRC * VRT; let nL = 0;
+        for (let k = 0; k < 9000 * dens && nL < 1800 * dens; k++) {
+          const tk2 = Math.floor(RL2() * G.ntx * G.ntz); if (!G.on[tk2]) continue;
+          const x = G.x0 + ((tk2 % G.ntx) + RL2()) * Lt, z = G.z0 + (Math.floor(tk2 / G.ntx) + RL2()) * Lt, slp = caSlope(x, z); if (slp < 1.05) continue;
+          const nn = vrNear(x, z); if ((nn.i >= 0 && nn.dd < 14) || excluded(x, z) || vrWater(x, z).e > -3) continue;
+          const y = caGround(x, z), w0 = 2 + RL2() * 3, col = rockC(y + base), dk = 0.62 + RL2() * 0.2;   // (weathered, darker than the boulders by the road)
+          sl.add(x, y - 0.5, z, RL2() * TAU, w0, w0 * (0.3 + RL2() * 0.25), [col[0] * dk, col[1] * dk, col[2] * dk]); nL++;
+        }
+        sl.addTo(root, false); out.ledges = nL;
+      }
       for (let s = 16; s < T.len - 16; s += 14) for (const side of [-1, 1]) {   // crags where the slope is steep
         if (RV() < 0.35) continue;
         const [x, z] = onSide(s, side, 8 + RV() * 120); if (excluded(x, z) || vrNear(x, z).dd < 6) continue;
@@ -11099,6 +11113,22 @@ const World = (function () {
       }
     }
 
+    const rotors = [];   // the wind turbines on the plateau (the Serra's wind farms: in the game 38-60 m from the road, where the cameras see them; the real ones stand ~3 km to the south-west):
+    {                    // a white tapered tower 78 m tall, the nacelle, a three-bladed rotor facing the east wind (its own mesh: World.update turns it)
+      const RW2 = rng(3421), rg = new GB(), wht = [0.93, 0.94, 0.95], picked = [];
+      for (let k = 0; k < 3; k++) { const a = k / 3 * TAU, ca = Math.cos(a), sa = Math.sin(a), px = -sa, py = ca, P0 = (r, w) => [ca * r + px * w, sa * r + py * w, 0];
+        rg.quadO(P0(1.5, -1.3), P0(38, -0.3), P0(38, 0.3), P0(1.5, 1.4), wht, [0, 0, -1]); rg.quadO(P0(1.5, -1.3), P0(38, -0.3), P0(38, 0.3), P0(1.5, 1.4), wht, [0, 0, 1]); }
+      ROCK_SMOOTH = true; ico(rg, 0, 0, 0.6, 1.4, 1, wht, RW2, 0); ROCK_SMOOTH = false;
+      const rgeo = rg.geometry(); rgeo.computeBoundingSphere(); const rmat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), yaw = 0.7;
+      for (let tries = 0; tries < 400 && picked.length < 5; tries++) {
+        const s = sStart + 3500 + RW2() * (sFin - sStart - 3300), i = T.idx(s), sd = RW2() < 0.5 ? -1 : 1, o = 38 + RW2() * 22, x = T.px[i] + T.nx[i] * sd * o, z = T.pz[i] + T.nz[i] * sd * o;
+        if (vrDist(x, z) < 34 || caGround(x, z) + base < 1385 || caSlope(x, z) > 0.25 || excluded(x, z) || vrWater(x, z).e > -5 || picked.some(([a, b]) => Math.hypot(a - x, b - z) < 150)) continue;
+        picked.push([x, z]);
+        const y = caGround(x, z), g = scen.get(x, z); cyl(g, x, y - 0.5, z, 2.2, 79, 8, wht, wht, 1.3); box(g, x - Math.cos(yaw) * 2, y + 78, z + Math.sin(yaw) * 2, 9, 3.4, 3.4, -yaw, wht, null, true);
+        const m = new THREE.Mesh(rgeo, rmat), hx = x + Math.cos(yaw) * 3.2, hz = z - Math.sin(yaw) * 3.2; m.position.set(hx, y + 79.7, hz); m.rotation.set(0, yaw + Math.PI / 2, 0, 'YXZ'); m.castShadow = true; root.add(m);
+        rotors.push({ m, p: RW2() * TAU }); exclPush(x, z, 8); out.marks["turbine" + rotors.length] = [x, z];
+      }
+    }
     /* ---- finish the meshes ---- */
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
@@ -11116,7 +11146,7 @@ const World = (function () {
         const s2 = new THREE.Sprite(new THREE.SpriteMaterial({ map: mt, color: 0xe9eeee, transparent: true, opacity: 0, depthWrite: false, fog: true }));
         root.add(s2); L.push({ s: s2, x, z, y: gy + 8, H: 70 + RM() * 60, v: 0.6 + RM() * 0.6, p0: RM(), a: 0.3 + RM() * 0.2, r: 70 + RM() * 60 }); k++;
       }
-      out.dyn.rrMist = { L, root }; rrMist(out.dyn.rrMist, 0);
+      out.dyn.rrMist = { L, root, rot: rotors }; rrMist(out.dyn.rrMist, 0);
     }
     { const geo = rrVultureGeo(), mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), i0 = T.idx(sStart), L = [];   // the vultures over the cliff
       for (const [r, sp, h, ox, oz, ph] of [[34, 0.2, 40, 20, -30, 0], [48, -0.15, 58, -30, 20, 1.7], [26, 0.24, 30, 15, 40, 3.3], [56, 0.12, 72, -10, -50, 5.1]]) {
@@ -11124,7 +11154,7 @@ const World = (function () {
       out.dyn.condors = { L, x0: T.px[i0], z0: T.pz[i0], y0: T.hy[i0], ax: T.px[i0], az: T.pz[i0], ay: T.hy[i0], t: null };
       caCondors(out.dyn.condors, 0, null); }
     crowdFinish(CR, root, out);
-    out.stats = { trees: nTrees, araucarias: nArauc, flowering: nFlower, hydrangeas: nHyd, cows: nCows, fencePosts: nPosts, coatis: nCoati, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), falls: nFalls, mist: out.dyn.rrMist.L.length };   // (read by the tests)
+    out.stats = { trees: nTrees, araucarias: nArauc, flowering: nFlower, hydrangeas: nHyd, cows: nCows, fencePosts: nPosts, coatis: nCoati, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), falls: nFalls, turbines: rotors.length, mist: out.dyn.rrMist.L.length };   // (read by the tests)
     return out;
   }
 
