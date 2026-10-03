@@ -1490,7 +1490,7 @@ const Render = (function () {
     rain = new Rain(3200); scene.add(rain.mesh);
     streaks = new Streaks(420); scene.add(streaks.mesh); splash = new Splashes(360); scene.add(splash.mesh);   // (the wet road: the lights' reflections, the drops' splashes)
     snow = new Snow(2600); scene.add(snow.mesh);
-    birds = new Birds(16); scene.add(birds.mesh);
+    birds = new Birds(16); scene.add(birds.mesh); birds.mesh.visible = false;   // (no flocks any more: they got in the way of the play; the object stays for the tests)
     scene.fog = new THREE.Fog(0xbcd3e4, 80, 400);
     initPost();
     return renderer;
@@ -1735,7 +1735,7 @@ const Render = (function () {
   function applyWeather(r) {
     wet = r; applyTheme(themeId); rain.mesh.visible = r > 0 && atmos.season !== 'winter'; rain.mat.uniforms.uA.value = 0.5 * Math.min(1, r * 1.5);
     snow.mesh.visible = r > 0 && atmos.season === 'winter';
-    birds.mesh.visible = !(r > 0); if (r > 0) birds.reset(birds.gull);   // (no birds in the rain)
+    birds.mesh.visible = false;   // (no birds: not in the rain, nor in the dry)
     if (!world || !world.root) return;
     if (world.dyn.clouds) world.dyn.clouds.K.value = world.dyn.clouds.k0 * (1 - r);   // (no cloud shadows under the rain's overcast)
   }
