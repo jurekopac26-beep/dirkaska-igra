@@ -806,7 +806,7 @@ const Core = (function () {
       return out;
     }
 
-    // pit lane (def.pit = [centre offset to the right, from, to, player's box, entry length (default 60 m)] in metres from the start line): a lane
+    // pit lane (def.pit = [centre offset to the right (negative: a lane on the left), from, to, player's box, entry length (default 60 m)] in metres from the start line): a lane
     // beside the straight, tapering in from the circuit edge at both ends. Returns null outside it. gap: the lane touches the circuit (no pit wall) -
     // where you drive in and out.
     // inner: the player's limit on the pit-wall side: the rail, but where the teams' stands sit on the grass strip behind it (pitStands [d0, d1],
@@ -815,10 +815,11 @@ const Core = (function () {
       const P = this.def && this.def.pit; if (!P) return null;
       const L = this.len; let d = s - this.startS; d = ((d % L) + L) % L; if (d > L / 2) d -= L;
       if (d < P[1] || d > P[2]) return null;
-      const f = (((s % L) + L) % L) / this.ds, i = Math.floor(f) % this.N, j = (i + 1) % this.N, br = lerp(this.br[i], this.br[j], f - Math.floor(f));
-      const full = Math.max(P[0], br + 5), t = Math.min(sstep(P[1], P[1] + (P[4] || 60), d), sstep(P[2], P[2] - 30, d)), o = lerp(this.w + 3.6, full, t);   // a long, gentle way in
+      const sg = P[0] < 0 ? -1 : 1, B = sg > 0 ? this.br : this.bl;   // (a lane on the left: def.pit[0] < 0; o is then negative, the rest as on the right)
+      const f = (((s % L) + L) % L) / this.ds, i = Math.floor(f) % this.N, j = (i + 1) % this.N, br = lerp(B[i], B[j], f - Math.floor(f));
+      const full = Math.max(P[0] * sg, br + 5), t = Math.min(sstep(P[1], P[1] + (P[4] || 60), d), sstep(P[2], P[2] - 30, d)), o = lerp(this.w + 3.6, full, t);   // a long, gentle way in
       const S = this.pitStands, e = S ? Math.min(sstep(S[0] - 26, S[0] - 1, d), sstep(S[1] + 26, S[1] + 1, d)) : 0, wall = br + 0.25, lin = o - 3.5;
-      return { d, o, t, br, gap: o - 3.5 < br + 0.8, wall, lin, lout: o + 3.5, inner: wall + 0.12 + Math.max(0, lin - 0.3 - wall - 0.12) * e };
+      return { d, o: o * sg, sg, t, br, gap: o - 3.5 < br + 0.8, wall, lin, lout: o + 3.5, inner: wall + 0.12 + Math.max(0, lin - 0.3 - wall - 0.12) * e };
     }
 
     // nearest point search around hint index; returns object (reused)
@@ -1567,6 +1568,16 @@ const Core = (function () {
       rbale:  { m: 26, rh: 0.62, rb: 0.75, h0: 0.43,  e: 0.15, mu: 0.8,  lift: 0.3,  I: 4.6,  pts: (() => { const p = []; for (const x of [-0.62, 0.62]) for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; p.push([x, Math.cos(a) * 0.43, Math.sin(a) * 0.43]); } return p; })() },   // round straw bale lying on its side (Toskana)
       rbstack: { m: 78, rh: 0.9, rb: 1.1,  h0: 0.85,  breaks: 'rbale', parts: [[-0.66, -0.425, 0], [0.66, -0.425, 0], [0, 0.425, 0]], pf: [[1.1, 0.6], [1.0, 0.9], [0.8, 2.4]] },
       post:   { m: 4,  rh: 0.14, rb: 0.62, h0: 0.55,  e: 0.3,  mu: 0.6,  lift: 1.0,  I: 0.4,  pts: boxPts(0.07, 0.55, 0.07) },   // roadside post (stebriček): light, snaps over and cartwheels away
+      // street furniture at junctions (Montréal): a traffic signal pole with its mast arm over the road (along local +x), a sign on a post (col: the
+      // plate's colour), a stop sign, a street lamp (its arm along +x), a fire hydrant, a litter bin, a utility cabinet, a bollard
+      signal: { m: 160, rh: 0.2, rb: 3.3, h0: 3.1,  e: 0.12, mu: 0.6,  lift: 0.12, I: 170, pts: boxPts(0.18, 3.1, 0.18).concat([[5.6, 2.95, 0], [5.6, 2.2, 0]]) },
+      sign:   { m: 11, rh: 0.12, rb: 1.35, h0: 1.25,  e: 0.2,  mu: 0.6,  lift: 0.5,  I: 4.5,  pts: boxPts(0.05, 1.25, 0.05).concat([[0, 1.2, 0.38], [0, 1.2, -0.38]]) },
+      stop:   { m: 12, rh: 0.12, rb: 1.35, h0: 1.25,  e: 0.2,  mu: 0.6,  lift: 0.5,  I: 4.8,  pts: boxPts(0.05, 1.25, 0.05).concat([[0, 1.15, 0.38], [0, 1.15, -0.38]]) },
+      lamp:   { m: 110, rh: 0.17, rb: 4.2, h0: 4.0,  e: 0.12, mu: 0.6,  lift: 0.1,  I: 480, pts: boxPts(0.14, 4.0, 0.14).concat([[2.3, 3.9, 0]]) },
+      hydrant: { m: 45, rh: 0.22, rb: 0.5, h0: 0.38,  e: 0.25, mu: 0.7,  lift: 0.45, I: 1.6,  pts: cylPts(0.2, -0.38, 0.38, 6) },
+      bin:    { m: 22, rh: 0.3, rb: 0.6,  h0: 0.5,   e: 0.25, mu: 0.7,  lift: 0.55, I: 1.9,  pts: cylPts(0.29, -0.5, 0.5, 6) },
+      cabinet: { m: 85, rh: 0.48, rb: 0.88, h0: 0.72, e: 0.15, mu: 0.75, lift: 0.3,  I: 9,    pts: boxPts(0.32, 0.72, 0.48) },
+      bollard: { m: 14, rh: 0.12, rb: 0.55, h0: 0.5,  e: 0.25, mu: 0.6,  lift: 0.7,  I: 0.9,  pts: boxPts(0.1, 0.5, 0.1) },
     };
   })();
   const _pq = {};
@@ -1695,11 +1706,11 @@ const Core = (function () {
       const wx = rx * ch - rz * sh, wz = rx * sh + rz * ch; // world offset
       const px = c.x + wx, pz = c.z + wz;
       const q = trk.query(px, pz, c.q.i, _q);
-      let pen = 0, nx = 0, nz = 0, br = q.br, inner = -1e9;
-      if ((c.isPlayer || c.pitWant || c.inPit) && trk.def.pit) { const pz2 = trk.pitAt(q.s); if (pz2) { if (pz2.gap) br = Math.max(br, pz2.lout); else if (c.inPit) { inner = pz2.inner; br = pz2.lout; } } }   // in the pit lane: between the pit wall (the kerb in front of the stands) and the lane's outer edge
-      if (q.d > br) { pen = q.d - br; nx = -q.nx; nz = -q.nz; }
-      else if (q.d < inner) { pen = inner - q.d; nx = q.nx; nz = q.nz; }
-      else if (q.d < -q.bl) { pen = -q.bl - q.d; nx = q.nx; nz = q.nz; }
+      let pen = 0, nx = 0, nz = 0, br = q.br, bl = q.bl, dd = q.d, sg = 1, inner = -1e9;
+      if ((c.isPlayer || c.pitWant || c.inPit) && trk.def.pit) { const pz2 = trk.pitAt(q.s); if (pz2) { sg = pz2.sg; if (sg < 0) { dd = -q.d; br = q.bl; bl = q.br; } if (pz2.gap) br = Math.max(br, pz2.lout); else if (c.inPit) { inner = pz2.inner; br = pz2.lout; } } }   // in the pit lane: between the pit wall (the kerb in front of the stands) and the lane's outer edge (a lane on the left: mirrored, sg -1)
+      if (dd > br) { pen = dd - br; nx = -q.nx * sg; nz = -q.nz * sg; }
+      else if (dd < inner) { pen = inner - dd; nx = q.nx * sg; nz = q.nz * sg; }
+      else if (dd < -bl) { pen = -bl - dd; nx = q.nx * sg; nz = q.nz * sg; }
       if (trk.open) {   // open road: the two ends of the road are walls 0.5 m in from the last samples
         const sl = q.s + (q.over || 0), N = trk.N;
         if (sl < 0.5 && 0.5 - sl > pen) { pen = 0.5 - sl; nx = trk.tx[0]; nz = trk.tz[0]; }
@@ -1707,7 +1718,7 @@ const Core = (function () {
       }
       if (q.k >= 0) { const ps = trk.stubPen(q, 0, _wn); if (ps <= 0) pen = 0; else if (q.deep || ps < pen) { pen = ps; nx = _wn[0]; nz = _wn[1]; } }   // a side road: inside it no barrier; out of it its own limit (Track.stubPen)
       if (pen <= 0) continue;
-      if (canFall && trk.dropAt && !(q.k >= 0) && trk.dropAt[q.d > 0 ? 1 : 0][q.i] && (q.d > 0 ? q.d > br : q.d < -q.bl)) {   // the edge of a drop: out over it at more than 2.5 m/s, the car goes over (slower, the shoulder's edge holds it)
+      if (canFall && trk.dropAt && !(q.k >= 0) && trk.dropAt[q.d > 0 ? 1 : 0][q.i] && (q.d > 0 ? q.d > (sg > 0 ? br : q.br) : q.d < -(sg > 0 ? q.bl : br))) {   // the edge of a drop: out over it at more than 2.5 m/s, the car goes over (slower, the shoulder's edge holds it)
         const vo = -((c.vx - c.w * wz) * nx + (c.vz + c.w * wx) * nz);
         if (vo > 2.5) { if (vo < 4.5) { c.vx -= nx * (4.5 - vo); c.vz -= nz * (4.5 - vo); }   // (off the edge: out at 4.5 m/s at least, clear of the cliff)
           c.fall = { t: 0 }; c.air = 1; c.vy = Math.max(0, c.vy || 0) + 1.2; c.w = c.w * 0.6 + (c.w >= 0 ? 0.9 : -0.9); return; }
@@ -1960,8 +1971,8 @@ const Core = (function () {
       if (pz && (c.ty || c.fuel != null) && !c.isPlayer && !pz.gap) {   // (an AI car in for tyres or fuel: the fast lane beside the boxes, over to its own box to stop; past a car at the box before its own first)
         const L = T.len; let db = T.startS + race._aiBox(c) - sT; db = ((db % L) + L) % L; if (db > L / 2) db -= L;
         const o = c.aiThreat, held = o && o.inPit && o.pitState && !o.pitDone && c.aiGap < 12 && c.fuel != null;   // (fuel on: a stop takes long enough to jam the lane)
-        off += !c.pitDone && db > -8 && db < 16 && !held ? -2 : 1.5;
-      } else if (!c.isPlayer) { const P = T.def.pit, L = T.len; let d = sT - T.startS; d = ((d % L) + L) % L; if (d > L / 2) d -= L; if (d > P[1] - 220 && d < P[1]) off = lim; }   // (an AI car in for tyres: over to the lane's side of the road first)
+        off += (!c.pitDone && db > -8 && db < 16 && !held ? -2 : 1.5) * pz.sg;
+      } else if (!c.isPlayer) { const P = T.def.pit, L = T.len; let d = sT - T.startS; d = ((d % L) + L) % L; if (d > L / 2) d -= L; if (d > P[1] - 220 && d < P[1]) off = P[0] < 0 ? -lim : lim; }   // (an AI car in for tyres: over to the lane's side of the road first)
     }
     if (c.parkS != null) off = lerp(off, c.parkD, sstep(c.parkS - 90, c.parkS - 30, sT));   // (past the finish of a race up the road: over to its slot, see Race._progressOpen)
     const tx = lerp(T.px[i0], T.px[i1], ft) + lerp(T.nx[i0], T.nx[i1], ft) * off;
@@ -3948,7 +3959,7 @@ const Core = (function () {
       const T = this.track, P = T.def.pit, q = T.query(c.x, c.z, c.q.i, _pq2), pz = T.pitAt(q.s);
       if (pre) {
         if (!pz) { if (c.inPit) { c.inPit = false; c.pitEv = 'exit'; if (!c.isPlayer) c.pitWant = false; } c.pitDone = false; c.pitState = null; return; }
-        if (pz.gap) { const was = c.inPit; c.inPit = q.d > pz.wall; if (c.inPit && !was) c.pitEv = 'enter'; else if (!c.inPit && was) { c.pitEv = 'exit'; c.pitDone = false; c.pitState = null; if (!c.isPlayer) c.pitWant = false; } }   // (an AI car out of the lane: on with the race)
+        if (pz.gap) { const was = c.inPit; c.inPit = q.d * pz.sg > pz.wall; if (c.inPit && !was) c.pitEv = 'enter'; else if (!c.inPit && was) { c.pitEv = 'exit'; c.pitDone = false; c.pitState = null; if (!c.isPlayer) c.pitWant = false; } }   // (an AI car out of the lane: on with the race)
         else if (!c.isPlayer && !c.inPit && pz.d < 0) c.pitWant = false;   // (an AI car that missed the way in: the next lap)
         return;
       }
@@ -4033,7 +4044,7 @@ const Core = (function () {
         }
         if (S.state === 'in') {   // into the pit lane (through the gap in the pit wall), or away up the road; then gone
           const pz = T.def.pit ? T.pitAt(q.s) : null;
-          if ((pz && pz.gap && q.d > pz.wall + 2) || (!S.pit && gl > 260) || gl > 900) { S.state = 'gone'; S.car = null; F.ev++; F.evK = 'scGone'; }
+          if ((pz && pz.gap && q.d * pz.sg > pz.wall + 2) || (!S.pit && gl > 260) || gl > 900) { S.state = 'gone'; S.car = null; F.ev++; F.evK = 'scGone'; }
         }
       }
       if (S) {
