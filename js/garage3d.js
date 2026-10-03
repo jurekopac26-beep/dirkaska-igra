@@ -1811,7 +1811,7 @@ const Garage3D = (function () {
     setCond(c) { if (cur) setCond(cur, c); },
     get cur() { return cur; },
     get info() { return cur ? { car: cur.M.id, color: cur.spec.color, stripe: cur.spec.stripe !== false, upg: Object.assign({}, cur.spec.upg), parts: Object.keys(cur.parts).reduce((o, k) => (o[k] = cur.parts[k].userData.items.length, o), {}), dirt: cur.v.dirtU ? +cur.v.dirtU.value.toFixed(3) : null, scr: cur.v.scrU ? +cur.v.scrU.value.toFixed(3) : null, lift: +lift.toFixed(3), ang: +ttAng.toFixed(3) } : null; },
-    _dbg: { REF, TX, tasks, user, pieces, WALLS, get floorMat() { return floorMat; }, get keyLight() { return keyLight; } },
+    _dbg: { REF, TX, tasks, user, rig, pieces, WALLS, get floorMat() { return floorMat; }, get keyLight() { return keyLight; } },
     get renderer() { return renderer; }, get camera() { return camera; }, get scene() { return scene; },
   };
 })();
