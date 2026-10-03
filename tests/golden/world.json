@@ -337,11 +337,11 @@
  },
  "montreal": {
   "meshes": 1280,
-  "verts": 1321743,
+  "verts": 1329735,
   "instances": 9398,
   "props": 74,
   "crowd": 1765,
-  "world": "4132109b",
+  "world": "6c84c305",
   "propsHash": "1b5c4dff",
   "floor": null,
   "groups": {
@@ -359,7 +359,7 @@
    "mtBridges:MeshLambertMaterial": "9ae6c6c0",
    "mtBasin:MeshLambertMaterial": "73a5961e",
    "mtFar:MeshLambertMaterial": "aac2c796",
-   "mtScen:MeshLambertMaterial": "1fe0c96",
+   "mtScen:MeshLambertMaterial": "6c55085e",
    "crowd:MeshLambertMaterial": "b387c775",
    "-:MeshBasicMaterial": "30f65383",
    "ao:MeshBasicMaterial": "dca29b03",
