@@ -47,8 +47,8 @@ const dAt = (s) => Math.round(s - T.startS);   // (metres after the start line)
   const dry = mk(0), wet = mk(1);
   wet.step(1 / 120); const w1 = T.inRain; dry.step(1 / 120); const w2 = T.inRain;
   check('rain: the track has its puddles while the wet race steps, none for the dry one; the wet grip on the car', w1 === true && w2 === false && wet.player.wet < 1 && dry.player.wet === 1, `wet ${w1}, then dry ${w2}; grip ${wet.player.wet} / ${dry.player.wet}`);
-  const others = C.TRACKS.filter(d => d.rain && !d.rally);
-  check('puddles only on the rally stages (def.rain)', !others.length, others.map(d => d.id).join(', '));
+  const others = C.TRACKS.filter(d => d.rain && !d.rally && d.roadSurface !== 'makadam');
+  check('puddles only on gravel roads (def.rain: the rally stages, Sani Pass)', !others.length, others.map(d => d.id).join(', '));
 }
 
 // the famous jump and the medals

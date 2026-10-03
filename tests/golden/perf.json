@@ -139,6 +139,13 @@
   "maxKverts": 908,
   "jsMs": 0.96
  },
+ "sani": {
+  "calls": 92,
+  "maxCalls": 137,
+  "kverts": 301,
+  "maxKverts": 536,
+  "jsMs": 0.29
+ },
  "jezero": {
   "calls": 278,
   "maxCalls": 330,

@@ -178,6 +178,9 @@ const Core = (function () {
         const a = this.settAt = new Uint8Array(N);
         for (const [s0, s1] of def.setts) for (let d = s0; d <= s1; d += ds / 2) { const i = Math.floor((this.startS + d) / ds); if (i >= 0 && i < N) a[i] = 1; }
       }
+      // paved stretches of a gravel road (def.paved = [[from, to], ...], metres after the start line; open roads: Sani Pass at the border post): asphalt (surface 0)
+      this.pavedAt = null;
+      if (def.paved && open) { const a = this.pavedAt = new Uint8Array(N); for (const [s0, s1] of def.paved) for (let d = s0; d <= s1; d += ds / 2) { const i = Math.floor((this.startS + d) / ds); if (i >= 0 && i < N) a[i] = 1; } }
       // sidewalks (def.walks = [[from, to, side (-1 left, 1 right, 0 both), width], ...], metres after the start line; open roads: Kranjska
       // Gora and Jasna on Vršič): part of the road, drivable with the grip of asphalt (surface 0), eased in and out over 10 m; the barriers
       // stand 1.8 m past them (1 m on a road widened between its barriers, def.barW). walk: per side ([0] left, [1] right) the sidewalk's width at every sample (0: none)
@@ -877,7 +880,7 @@ const Core = (function () {
       if (ad <= w || (this.walk && ad <= w + this.walk[d > 0 ? 1 : 0][q.a])) {   // (a sidewalk: part of the road)
         if (this.settAt && this.settAt[q.a]) return this.inRain ? 8 : 7;
         if (this.sf) { const sf = this.sf[q.a]; if (sf !== 5) return sf; }
-        else if (this.def.roadSurface !== 'makadam') return 0;
+        else if (this.def.roadSurface !== 'makadam' || (this.pavedAt && this.pavedAt[q.a])) return 0;
         const p = this.inRain && this.pudAt ? this.pudAt[q.a] : -1;
         if (p >= 0) { const u = this.puddles[p], a = (q.s - u[0]) / u[2], b = (d - u[1]) / u[3]; if (a * a + b * b < 1) return 6; }
         return 5;
