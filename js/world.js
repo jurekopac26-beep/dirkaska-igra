@@ -22549,6 +22549,7 @@ const World = (function () {
     if (flagL.length) root.add(rbFlags(flagL, CR.U.uTime));
     out.crowdPts = Float32Array.from(crowdPts);
     if (def.far) out.dyn.far = rsFar(root, def.far, sea, hyS(sStart) + 6);
+    if (def.minaret) mrFarTower(root, def.minaret[0], def.minaret[1], def.minaret[2]);   // (the old town's minaret on the horizon to the north)
     out.stats = { tiles: nTiles, trees: nTrees, bales: nBales, rails: nRail, apexTyres: nApex, stalls: nStalls, stands: nStands, cars: nCars, houses: nHouses, billboards: nBill, decals: nDecals, flags: flagL.length };   // (read by the tests)
     return out;
   }
@@ -23445,6 +23446,23 @@ const World = (function () {
   // everything into four)
   class MrChunks extends Chunks { get(x, z) { return super.get(x + 4000, z + 4000); } }
   class MrIChunks extends IChunks { add(x, y, z, rot, sxz, sy, col) { const k = Math.floor((x + 4000) / this.size) + ',' + Math.floor((z + 4000) / this.size); let L = this.map.get(k); if (!L) this.map.set(k, L = []); L.push(x, y, z, rot, sxz, sy, col ? col[0] : 1, col ? col[1] : 1, col ? col[2] : 1); } }
+  // the old town's great minaret on the northern horizon (a generic square tower: no likeness of any building in particular), drawn as rsFar's
+  // ring is: inside the far clip, in its real direction and angular size from the camera (x, z, height: where it stands and how tall)
+  function mrFarTower(root, x, z, h) {
+    const g = new GB(), c = [0.78, 0.52, 0.4], cT = [0.86, 0.6, 0.46];
+    box(g, 0, -40, 0, 12.5, h * 0.78 + 40, 12.5, 0, c, cT); box(g, 0, h * 0.78, 0, 13.6, 1.4, 13.6, 0, cT, cT);   // (the shaft, its crown)
+    box(g, 0, h * 0.8, 0, 6.5, h * 0.14, 6.5, 0, c, cT); cone(g, 0, h * 0.94, 0, 2.2, h * 0.06, 8, [0.3, 0.5, 0.4], [0.85, 0.75, 0.4], 0);   // (the lantern, its dome)
+    const m = new THREE.Mesh(g.geometry(), new THREE.MeshBasicMaterial({ vertexColors: true, fog: false }));
+    m.frustumCulled = false; m.matrixAutoUpdate = false; m.renderOrder = -1; m.name = 'mrFar';
+    const dist = Math.hypot(x, z), dx = x / dist, dz = z / dist, ref = new THREE.Color(0xd9dfe3), tc = new THREE.Color();
+    m.onBeforeRender = (rd, sc, cam) => {
+      if (!cam.isPerspectiveCamera || cam.far < 50) return;
+      const D = cam.far * 0.72, k = D / Math.hypot(x - cam.position.x, z - cam.position.z);
+      m.position.set(cam.position.x + (x - cam.position.x) * k, cam.position.y + (0 - cam.position.y) * k, cam.position.z + (z - cam.position.z) * k); m.scale.setScalar(k); m.updateMatrix(); m.updateMatrixWorld(true);
+      if (sc.fog) { tc.setRGB(sc.fog.color.r / ref.r, sc.fog.color.g / ref.g, sc.fog.color.b / ref.b); m.material.color.setRGB(Math.min(1.05, tc.r * 0.92), Math.min(1.05, tc.g * 0.92), Math.min(1.05, tc.b * 0.95)); }   // (hazy with the distance, the time of day's tint)
+    };
+    root.add(m); return m;
+  }
   function mrArea(p) { let a = 0; for (let i = 0, j = p.length - 1; i < p.length; j = i++) a += (p[j][0] + p[i][0]) * (p[j][1] - p[i][1]); return Math.abs(a) / 2; }
   const MR_SHIRTS = [[0.95, 0.94, 0.9], [0.9, 0.88, 0.82], [0.72, 0.18, 0.14], [0.16, 0.42, 0.26], [0.62, 0.45, 0.3], [0.3, 0.36, 0.55], [0.85, 0.7, 0.42], [0.2, 0.22, 0.26], [0.55, 0.3, 0.42], [0.92, 0.8, 0.6]];   // (the crowd: white and pale, earth tones, the red and green of the flag)
   function buildMarrakesh(scene, tex, opts) {
@@ -23816,6 +23834,48 @@ const World = (function () {
     }
 
     mark('paddock');
+    // the trees' meshes and their placing (the palms of the roundabout's island and the streets below)
+    const tMat = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
+    const TG = [0, 1, 2, 3, 4, 5].map(k => mrTreeGeo(k));
+    const tNear = TG.map((g, k) => new MrIChunks(g, tMat, 8192)), tFarP = new MrIChunks(TG[4], tMat, 1024), tFarO = new MrIChunks(TG[5], tMat, 1024);   // (the near trees in one piece each; the far ones in 1 km pieces)   // (the few garden trees in one piece each)
+    let nPalm = 0, nOlive = 0, nTree = 0;
+    const okTree = (x, z, r) => { if (excluded(x, z)) return false; const n = nrNear(x, z); if (n.i >= 0 && n.dd < (r || 1.2)) return false; if (mrStreetAt(x, z, 0.3)) return false; return true; };
+    const palm = (x, z, h) => { if (!okTree(x, z, 1.4)) return false; const y = nrGround(x, z), far = nrDist(x, z) > 35;
+      (far ? tFarP : tNear[0]).add(x, y - 0.1, z, crH(x, z, 1) * TAU, h * (0.95 + crH(x, z, 2) * 0.2), h, [0.95 + crH(x, z, 3) * 0.1, 1, 0.95]); nrShade(x, z, h * 0.16, 0.5); nPalm++; return true; };
+    /* ---- the footbridge over Turn 2 (def.bridges: its ends from OpenStreetMap): a steel deck 6 m over the road on two trestles, stairs down
+       at both ends, a board on its side; the roundabout's island south of Turn 1 (def.rbt): a kerbed lawn with palms round a tiled fountain ---- */
+    let nBridge = 0;
+    for (const [ax, az, bx, bz] of def.bridges || []) {
+      const l = Math.hypot(bx - ax, bz - az), tx = (bx - ax) / l, tz = (bz - az) / l, nx = -tz, nz = tx, rot = Math.atan2(tz, tx), ya = nrGround(ax, az), yb = nrGround(bx, bz), y = Math.max(ya, yb) + 6.2, g = scen.get(ax, az), st = [0.86, 0.86, 0.84], dk = [0.3, 0.32, 0.35];
+      box(g, (ax + bx) / 2, y, (az + bz) / 2, l, 0.35, 3.0, rot, st, [0.72, 0.62, 0.52]);   // (the deck)
+      for (const sd of [-1, 1]) { const ox = nx * 1.45 * sd, oz = nz * 1.45 * sd; box(g, (ax + bx) / 2 + ox, y + 0.35, (az + bz) / 2 + oz, l, 1.2, 0.08, rot, [0.92, 0.92, 0.9]); }   // (the solid sides)
+      for (const t of [0.12, 0.88]) { const x = ax + (bx - ax) * t, z = az + (bz - az) * t, yg = nrGround(x, z); for (const sd of [-1, 1]) box(g, x + nx * 1.2 * sd, yg - 0.3, z + nz * 1.2 * sd, 0.35, y - yg + 0.3, 0.35, rot, dk); }
+      for (const [ex, ez, yg, dir] of [[ax, az, ya, -1], [bx, bz, yb, 1]]) for (let k = 0; k < 8; k++) {   // (the stairs: steps down from the deck's ends, away from the road)
+        const t = k / 8, x = ex + tx * dir * (1 + t * 8), z = ez + tz * dir * (1 + t * 8); box(g, x, yg, z, 1.1, Math.max(0.2, (y - yg) * (1 - t)), 2.6, rot, st, [0.78, 0.76, 0.72], true); }
+      const mx = (ax + bx) / 2, mz = (az + bz) / 2; board(mx + nx * 1.55, y - 1.0, mz + nz * 1.55, -nx, -nz, 16, 1.6, MR_AT.ban); board(mx - nx * 1.55, y - 1.0, mz - nz * 1.55, nx, nz, 16, 1.6, MR_AT.ban + 1);
+      exclPush(ax, az, 6); exclPush(bx, bz, 6); nBridge++;
+    }
+    let nFount = 0;
+    for (const [cx, cz, r] of def.rbt || []) {
+      const g = scen.get(cx, cz), y = nrGround(cx, cz), n = 28, gr = [0.42, 0.62, 0.3], kb = [0.85, 0.85, 0.82], til = [0.18, 0.5, 0.45], wt = [0.4, 0.68, 0.8];
+      for (let k = 0; k < n; k++) { const a0 = k / n * TAU, a1 = (k + 1) / n * TAU, P0 = [cx + Math.cos(a0) * r, cz + Math.sin(a0) * r], P1 = [cx + Math.cos(a1) * r, cz + Math.sin(a1) * r];
+        g.triO([cx, y + 0.22, cz], [P0[0], y + 0.2, P0[1]], [P1[0], y + 0.2, P1[1]], gr, [cx, y - 5, cz]);
+        g.quadO([P0[0], y - 0.1, P0[1]], [P1[0], y - 0.1, P1[1]], [P1[0], y + 0.2, P1[1]], [P0[0], y + 0.2, P0[1]], k % 2 ? kb : [0.15, 0.15, 0.16], [cx, y, cz]); }   // (the kerb, painted black and white)
+      cyl(g, cx, y + 0.2, cz, 5.0, 0.6, 16, til, [0.92, 0.88, 0.8]); cyl(g, cx, y + 0.78, cz, 4.4, 0.05, 16, wt, wt);   // (the fountain's basin, its water)
+      cyl(g, cx, y + 0.8, cz, 0.6, 2.4, 8, [0.92, 0.88, 0.8], til); cyl(g, cx, y + 3.2, cz, 1.4, 0.3, 8, til, [0.92, 0.88, 0.8]);
+      for (let k = 0; k < 8; k++) { const a = k / 8 * TAU + 0.2; palm(cx + Math.cos(a) * r * 0.66, cz + Math.sin(a) * r * 0.66, 9 + crH(cx, k, 3) * 4); }
+      exclPush(cx, cz, r + 2); nFount++;
+    }
+    /* ---- a market by the paddock, outside the circuit: stalls under striped awnings, their goods (spices, rugs, lanterns, oranges) ---- */
+    let nStall = 0;
+    { const AW = [[0.86, 0.3, 0.18], [0.95, 0.75, 0.3], [0.2, 0.45, 0.62], [0.55, 0.2, 0.35], [0.25, 0.5, 0.3]], GD = [[0.85, 0.45, 0.12], [0.62, 0.18, 0.12], [0.9, 0.78, 0.35], [0.45, 0.25, 0.5], [0.95, 0.6, 0.1]];
+      for (const [d0, d1, sd, off] of [[340, 430, 1, 16], [140, 200, 1, 26]]) for (let d = d0, k = 0; d < d1; d += 7, k++) for (let row = 0; row < 2; row++) {
+        const [x, z, i] = onSide(sAt(d), sd, off + row * 9); if (excluded(x, z) || mrStreetAt(x, z, 1) || nrSlope(x, z) > 0.2) continue;
+        const y = nrGround(x, z), g = scen.get(x, z), rot = T.hd[i], aw = AW[(k + row) % AW.length], gd = GD[(k * 3 + row) % GD.length], ca = Math.cos(rot), sa = Math.sin(rot);
+        for (const [a, b] of [[-2.2, -1.4], [2.2, -1.4], [-2.2, 1.4], [2.2, 1.4]]) box(g, x + ca * a - sa * b, y, z + sa * a + ca * b, 0.1, 2.4, 0.1, rot, [0.4, 0.3, 0.22]);
+        for (let q = 0; q < 4; q++) box(g, x + ca * (-1.65 + q * 1.1), y + 2.35, z + sa * (-1.65 + q * 1.1), 1.1, 0.1, 3.2, rot, q % 2 ? [0.95, 0.93, 0.88] : aw);   // (the striped awning)
+        box(g, x, y, z, 4.0, 0.9, 1.6, rot, [0.5, 0.36, 0.24], [0.56, 0.42, 0.3]); for (let q = 0; q < 5; q++) cone(g, x + ca * (-1.6 + q * 0.8), y + 0.9, z + sa * (-1.6 + q * 0.8), 0.3, 0.3, 6, gd, gd, 0);   // (the counter, heaps of goods)
+        exclPush(x, z, 3.5); CR.exclAdd(x, z, 2.6); nStall++; } }
     /* ---- the grandstands (def.stands): steel tiers behind the catch fence, a white canopy over them, the crowd; spectators on the pavements
        of the streets (def.ga) behind the fences ---- */
     const crowdMat = ownTex(rbCrowdTex(false)), crowdG = new GB(true);
@@ -23864,13 +23924,6 @@ const World = (function () {
     mark('boards');
     /* ---- the trees: date palms along the boulevards (both sides and on the median) and the streets by the circuit, in the hotels' gardens
        with orange trees and flowering shrubs; the Agdal's olive groves in their rows behind its wall; the land cover's trees elsewhere ---- */
-    const tMat = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
-    const TG = [0, 1, 2, 3, 4, 5].map(k => mrTreeGeo(k));
-    const tNear = TG.map((g, k) => new MrIChunks(g, tMat, 8192)), tFarP = new MrIChunks(TG[4], tMat, 1024), tFarO = new MrIChunks(TG[5], tMat, 1024);   // (the near trees in one piece each; the far ones in 1 km pieces)   // (the few garden trees in one piece each)
-    let nPalm = 0, nOlive = 0, nTree = 0;
-    const okTree = (x, z, r) => { if (excluded(x, z)) return false; const n = nrNear(x, z); if (n.i >= 0 && n.dd < (r || 1.2)) return false; if (mrStreetAt(x, z, 0.3)) return false; return true; };
-    const palm = (x, z, h) => { if (!okTree(x, z, 1.4)) return false; const y = nrGround(x, z), far = nrDist(x, z) > 35;
-      (far ? tFarP : tNear[0]).add(x, y - 0.1, z, crH(x, z, 1) * TAU, h * (0.95 + crH(x, z, 2) * 0.2), h, [0.95 + crH(x, z, 3) * 0.1, 1, 0.95]); nrShade(x, z, h * 0.16, 0.5); nPalm++; return true; };
     // along the streets: the boulevard and the avenues every ~10 m both sides (and so on the median between the boulevard's carriageways)
     for (const r of M.st) { if (r.cls > 1) continue; const gap = r.cls === 0 ? 11 : 15;
       for (let k = 0; k + 1 < r.p.length; k++) { const [x0, z0] = r.p[k], [x1, z1] = r.p[k + 1], l = Math.hypot(x1 - x0, z1 - z0) || 1, nx = -(z1 - z0) / l, nz = (x1 - x0) / l;
@@ -23940,8 +23993,9 @@ const World = (function () {
     mark('scenery'); crowdFinish(CR, root, out); mark('crowds');
     out.crowdPts = Float32Array.from(crowdPts);
     if (def.far) out.dyn.far = rsFar(root, def.far, sea, hyS(sStart) + 6);
+    if (def.minaret) mrFarTower(root, def.minaret[0], def.minaret[1], def.minaret[2]);   // (the old town's minaret on the horizon to the north)
     mark('far');
-    out.stats = { tiles: nTiles, buildings: nBld, crenels: nCren, towers: nTow, palms: nPalm, olives: nOlive, trees: nTree, cars: nCars, stands: nStands, tents: nTent, trucks: nTruck, props: nProps, islands: nIsl, zebras: nZebra, marks: nMark, banners: nBan, posts: nPost, streets: nSt };   // (read by the tests)
+    out.stats = { tiles: nTiles, buildings: nBld, crenels: nCren, towers: nTow, palms: nPalm, olives: nOlive, trees: nTree, cars: nCars, stands: nStands, tents: nTent, trucks: nTruck, props: nProps, islands: nIsl, zebras: nZebra, marks: nMark, banners: nBan, posts: nPost, streets: nSt, bridges: nBridge, fountains: nFount, stalls: nStall };   // (read by the tests)
     return out;
   }
 
