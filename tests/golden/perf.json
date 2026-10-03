@@ -146,6 +146,13 @@
   "maxKverts": 536,
   "jsMs": 0.29
  },
+ "iroha": {
+  "calls": 355,
+  "maxCalls": 404,
+  "kverts": 1527,
+  "maxKverts": 1830,
+  "jsMs": 1.21
+ },
  "jezero": {
   "calls": 278,
   "maxCalls": 330,
