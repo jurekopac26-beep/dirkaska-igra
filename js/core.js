@@ -1567,6 +1567,16 @@ const Core = (function () {
       rbale:  { m: 26, rh: 0.62, rb: 0.75, h0: 0.43,  e: 0.15, mu: 0.8,  lift: 0.3,  I: 4.6,  pts: (() => { const p = []; for (const x of [-0.62, 0.62]) for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; p.push([x, Math.cos(a) * 0.43, Math.sin(a) * 0.43]); } return p; })() },   // round straw bale lying on its side (Toskana)
       rbstack: { m: 78, rh: 0.9, rb: 1.1,  h0: 0.85,  breaks: 'rbale', parts: [[-0.66, -0.425, 0], [0.66, -0.425, 0], [0, 0.425, 0]], pf: [[1.1, 0.6], [1.0, 0.9], [0.8, 2.4]] },
       post:   { m: 4,  rh: 0.14, rb: 0.62, h0: 0.55,  e: 0.3,  mu: 0.6,  lift: 1.0,  I: 0.4,  pts: boxPts(0.07, 0.55, 0.07) },   // roadside post (stebriček): light, snaps over and cartwheels away
+      // street furniture of the town circuits (the corners of a crossing): the centre at h0 above the foot, the foot at -h0 (the mast arm along +x)
+      signal: { m: 150, rh: 0.2, rb: 2.0, h0: 2.6, e: 0.15, mu: 0.6, lift: 0.25, I: 260, pts: boxPts(0.12, 2.6, 0.12).concat([[4.6, 2.9, 0], [4.6, 2.2, 0]]) },   // traffic signal on a mast arm
+      lamp:   { m: 110, rh: 0.18, rb: 2.0, h0: 3.6, e: 0.15, mu: 0.6, lift: 0.25, I: 320, pts: boxPts(0.11, 3.6, 0.11).concat([[1.5, 3.6, 0]]) },   // street lamp
+      sign:   { m: 9,  rh: 0.12, rb: 0.8,  h0: 1.15, e: 0.25, mu: 0.6,  lift: 0.8,  I: 2.2,  pts: boxPts(0.3, 1.15, 0.05) },   // a sign on its post
+      bollard:{ m: 22, rh: 0.12, rb: 0.5,  h0: 0.5,  e: 0.3,  mu: 0.6,  lift: 0.7,  I: 1.4,  pts: boxPts(0.1, 0.5, 0.1) },    // steel bollard
+      bin:    { m: 25, rh: 0.32, rb: 0.6,  h0: 0.5,  e: 0.3,  mu: 0.7,  lift: 0.6,  I: 1.8,  pts: boxPts(0.3, 0.5, 0.3) },    // litter bin
+      hydrant:{ m: 60, rh: 0.2,  rb: 0.5,  h0: 0.42, e: 0.25, mu: 0.7,  lift: 0.5,  I: 2.6,  pts: boxPts(0.17, 0.42, 0.17) },  // fire hydrant
+      meter:  { m: 14, rh: 0.12, rb: 0.75, h0: 0.7,  e: 0.25, mu: 0.6,  lift: 0.8,  I: 1.6,  pts: boxPts(0.12, 0.7, 0.1) },   // parking meter
+      cabinet:{ m: 120, rh: 0.5, rb: 0.95, h0: 0.75, e: 0.15, mu: 0.75, lift: 0.3,  I: 22,   pts: boxPts(0.55, 0.75, 0.3) },  // a traffic signal's controller cabinet
+      tlight: { m: 45, rh: 0.14, rb: 1.8, h0: 1.7, e: 0.15, mu: 0.6, lift: 0.4, I: 45, pts: boxPts(0.1, 1.7, 0.1).concat([[0, 1.2, -0.3]]) },   // traffic signal on its own post at the kerb (lanterns at the top)
     };
   })();
   const _pq = {};
