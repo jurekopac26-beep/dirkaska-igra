@@ -181,6 +181,13 @@
   "maxKverts": 511,
   "jsMs": 0.23
  },
+ "cpalace": {
+  "calls": 281,
+  "maxCalls": 303,
+  "kverts": 606,
+  "maxKverts": 759,
+  "jsMs": 0.81
+ },
  "jezero": {
   "calls": 278,
   "maxCalls": 330,
