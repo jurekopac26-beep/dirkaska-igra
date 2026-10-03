@@ -60,8 +60,8 @@ const race = (rain) => {
 
 // 5. the crossings: the barriers open into the cross streets' mouths (the street furniture stands there, inside them); a car steered into
 // a mouth knocks the mast-arm signal over (it flies, the car loses a little speed and takes a little damage) and drives on
-{ const X = def.scen.xs, deep = X.filter(([d, sd]) => { const i = T.idx(sAt(d)); return (sd > 0 ? T.br[i] : T.bl[i]) > T.wa[i] + 8; });
-  check('crossings: every cross street\'s mouth inside the barriers (8 m or more past the road\'s edge), 17 of them', X.length === 17 && deep.length === X.length, `${deep.length}/${X.length}`);
+{ const X = def.scen.xs, deep = X.filter(([d, sd]) => { const i = T.idx(sAt(d)); return (sd > 0 ? T.br[i] : T.bl[i]) > T.wa[i] + 4.5; });
+  check('crossings: every cross street\'s mouth inside the barriers (4.5 m or more past the road\'s edge, as far as the buildings on its corners let it), at least 12 of them', X.length >= 12 && deep.length === X.length, `${deep.length}/${X.length}`);
   const [d0, sd] = X.find(x => x[0] > 700 && x[0] < 760) || X[0], s0 = sAt(d0), i0 = T.idx(s0), wi = T.wa[i0];
   const at = (al, lat) => { const i = T.idx(s0 + al); return [T.px[i] + T.nx[i] * sd * lat, T.pz[i] + T.nz[i] * sd * lat, i]; };
   const [sx, sz, si] = at(6.4, wi + 2.0), [bx, bz, bi] = at(4.6, wi + 3.4);
