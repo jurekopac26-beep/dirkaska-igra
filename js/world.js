@@ -22633,6 +22633,13 @@ const World = (function () {
         D.x = car.x - Math.cos(car.h || 0) * 1.8; D.z = car.z - Math.sin(car.h || 0) * 1.8; D.y = car.roadY || 0; D.t0 = t; } }
     for (const D of F.dust) { const a = t - D.t0, ok = a >= 0 && a < 2.4, f = a / 2.4;   // the dust: a low brown cloud that spreads and settles
       put(F.puffs, n++, D.x + F.wx * a * 0.8, D.y + 0.4 + a * 0.5, D.z + F.wz * a * 0.8, a, ok ? (0.7 + a * 1.4) * (1 - f * f) : 0); }
+    if (F.train) { const Tr = F.train, P = 260, u = (t % P) / P, ez = (x) => x * x * (3 - 2 * x);   // the train: out (0-40 %), a wait, back (50-90 %), a wait
+      const f = u < 0.4 ? ez(u / 0.4) : u < 0.5 ? 1 : u < 0.9 ? 1 - ez((u - 0.5) / 0.4) : 0, head = lerp(Tr.a0, Tr.a1, f), moving = (u < 0.4 || (u >= 0.5 && u < 0.9)) ? 1 : 0, back = u >= 0.5 && u < 0.9 ? 1 : 0;
+      const L0 = Tr.atRail(head); put(Tr.loco, 0, L0[0], L0[1], L0[2], L0[3], 1, 0); Tr.loco.instanceMatrix.needsUpdate = true;   // (the locomotive at the a1 end of the train, facing a1)
+      for (let k = 0; k < 5; k++) { const p = Tr.atRail(head - (12.6 + k * 11) ); put(Tr.vans, k, p[0], p[1], p[2], p[3], 1, 0); } Tr.vans.instanceMatrix.needsUpdate = true;
+      const cx = L0[0] + Math.cos(L0[3]) * 4.1, cz = L0[2] - Math.sin(L0[3]) * 4.1, dx = Math.cos(L0[3]) * (back ? -1 : 1), dz = -Math.sin(L0[3]) * (back ? -1 : 1);
+      for (let k = 0; k < 10; k++) { const ph = (t * 0.45 + k / 10) % 1, sz = (0.5 + ph * 2.2) * (1 - ph * ph * ph);   // its smoke, trailing back along the train while it runs
+        put(F.puffs, n++, cx - dx * ph * 16 * moving + F.wx * ph * 4, L0[1] + 3.3 + ph * (moving ? 3 : 8), cz - dz * ph * 16 * moving + F.wz * ph * 4, ph * 3, sz); } }
     F.puffs.instanceMatrix.needsUpdate = true;
     let b = 0;
     for (const L of F.flocks) {
@@ -23058,6 +23065,21 @@ const World = (function () {
         box(gw, wx + 3, wy - 0.1, wz, 3, 0.55, 0.8, yaw, [0.56, 0.58, 0.6], [0.38, 0.46, 0.5]); exclPush(wx, wz, 4); }
       exclPush(tx, tz, 3); farms.push([x, z, yaw]);
     }
+    // woolsheds (made up): a long iron shed by the road, its sheep yards beside it (post and rail pens; the sheep in them below)
+    const yards = [];
+    for (let f = 0, tries = 0; f < 3 && tries < 1500; tries++) {
+      const x = P.x0 + 200 + R() * (P.x1 - P.x0 - 400), z = P.z0 + 200 + R() * (P.z1 - P.z0 - 400), rd = nrDist(x, z); if (rd < 45 || rd > 120) continue;
+      if (nrLC(x, z) !== 0 || excluded(x, z) || wet(x, z, 20) || railNear(x, z, 25) || nrSlope(x, z) > 0.1 || nearBld(x, z, 40) || yards.some(q => Math.hypot(q[0] - x, q[1] - z) < 600)) continue;
+      f++; const yaw = PDA + (R() < 0.5 ? 0 : Math.PI / 2), c = Math.cos(yaw), sn = Math.sin(yaw), at = (a, b) => [x + c * a - sn * b, z + sn * a + c * b];
+      houseAt(2, x, z, yaw, 1.15);
+      const [yx, yz] = at(0, 15), g = scen.get(yx, yz), RL = [0.56, 0.5, 0.42];   // the yards: 22 x 12 m, three pens, two rails
+      const lineF = (a0, b0, a1, b1) => { const n = Math.max(1, Math.round(Math.hypot(a1 - a0, b1 - b0) / 2.4)); let pv = null;
+        for (let k = 0; k <= n; k++) { const [px, pz] = at(a0 + (a1 - a0) * k / n, 15 + b0 + (b1 - b0) * k / n), py = nrGround(px, pz); box(g, px, py - 0.2, pz, 0.14, 1.35, 0.14, yaw, TIMd, null, true);
+          if (pv) for (const h of [0.55, 1.0]) { const dx = px - pv[0], dz = pz - pv[2]; box(g, (px + pv[0]) / 2, (py + pv[1]) / 2 + h, (pz + pv[2]) / 2, Math.hypot(dx, dz), 0.1, 0.06, Math.atan2(dz, dx), RL, null, true); }
+          pv = [px, py, pz]; } };
+      lineF(-11, -6, 11, -6); lineF(-11, 6, 11, 6); lineF(-11, -6, -11, 6); lineF(11, -6, 11, 6); lineF(-3.7, -6, -3.7, 6); lineF(3.7, -6, 3.7, 6);
+      exclPush(yx, yz, 14); yards.push([yx, yz, yaw]);
+    }
     for (const H of HK) H.addTo(root, true);
 
     /* ---- the grandstand across the road from the pits: open timber tiers, a corrugated roof on posts, the crowd on the benches ---- */
@@ -23112,6 +23134,9 @@ const World = (function () {
       for (let k = 0; k < n; k++) { const r = 3 + R() * 16, a = R() * TAU, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r; if (!openAt(px, pz, 28)) continue;
         sheep.add(px, nrGround(px, pz) - 0.05, pz, a0 + (R() - 0.5) * 1.6, 0.9 + R() * 0.25, 0.9 + R() * 0.2, [0.92 + R() * 0.12, 0.9 + R() * 0.1, 0.84 + R() * 0.1]); nSheep++; }
     }
+    for (const [yx, yz, yaw] of yards) { const c = Math.cos(yaw), sn = Math.sin(yaw);   // the yards full of sheep waiting to be shorn
+      for (let k = 0; k < 26; k++) { const a = (R() - 0.5) * 20, b = (R() - 0.5) * 10, px = yx + c * a - sn * b, pz = yz + sn * a + c * b;
+        sheep.add(px, nrGround(px, pz) - 0.05, pz, R() * TAU, 0.95 + R() * 0.2, 0.95 + R() * 0.15, [0.9 + R() * 0.1, 0.87 + R() * 0.1, 0.8 + R() * 0.1]); nSheep++; } }
     sheep.addTo(root, false);
     let nHay = 0;
     { const hay = new IChunks(baleGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), 256);
@@ -23385,10 +23410,10 @@ const World = (function () {
           tu.add(x, y - 0.03, z, u * 26, 1.0 + 1.1 * crH(x, z, 84), 0.32 + 0.38 * crH(x, z, 85), [gc[0] * av[0] * g * 1.05, gc[1] * av[1] * g * 1.05, gc[2] * av[2] * g * 1.05]);
         }
         for (let d = 0; d < L; d += 1.5) for (const side of [-1, 1]) { const s0 = sAt(d), i = T.idx(s0); if (kindAt(i, side) !== 0 || crH(d, side, 102) < 0.5) continue;   // (the long grass the mower missed along the fence)
-          const bar = side > 0 ? T.br[i] : T.bl[i], [x, z] = onSide(s0, side, -0.3 - crH(d, side, 103) * 0.3), y = out.propFloor({ i, d: side * (bar - 0.4) }, true), gc = nrGCol(x, z);
+          const bar = side > 0 ? T.br[i] : T.bl[i], [x, z] = onSide(s0, side, -0.3 - crH(d, side, 103) * 0.3), y = T.hy[i] + out.propFloor({ i, d: side * (bar - 0.4) }, true), gc = nrGCol(x, z);
           tu.add(x, y - 0.03, z, crH(d, side, 104) * 26, 0.6 + 0.4 * crH(d, side, 105), 0.45 + 0.3 * crH(d, side, 106), [gc[0] * av[0] * 1.12, gc[1] * av[1] * 1.12, gc[2] * av[2] * 0.98]); }
         const gt = new THREE.Group(); root.add(gt); tu.addTo(gt, false); gt.traverse(m => { if (m.isInstancedMesh && m.instanceColor) m.instanceColor.ground = true; }); }
-      { const ge = new GB(), Fl = (i, o) => { const x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; return [x, out.propFloor({ i, d: o }, true) + 0.035, z]; };
+      { const ge = new GB(), Fl = (i, o) => { const x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; return [x, T.hy[i] + out.propFloor({ i, d: o }, true) + 0.035, z]; };   // (propFloor: over the road's own height)
         for (let i = 0; i < N; i += 2) for (const side of [-1, 1]) { const j = (i + 2) % N; if (kindAt(i, side) !== 1 || kindAt(j, side) !== 1 || crH(i, side, 107) < 0.35) continue;   // (the earth in front of the bales, trodden bare)
           const bi = side > 0 ? T.br[i] : T.bl[i], bj = side > 0 ? T.br[j] : T.bl[j], e = vary([0.58, 0.48, 0.34], () => crH(i, side, 108), 0.18), e2 = e.map(v => v * 1.06);
           ge.quadUp(Fl(i, side * (bi - 1.3)), Fl(i, side * (bi - 0.15)), Fl(j, side * (bj - 0.15)), Fl(j, side * (bj - 1.3)), [e2, e, e, e2]); }
@@ -23410,12 +23435,30 @@ const World = (function () {
       { const gg = lfGalahGeo();   // and a small flock of galahs wheeling low over the paddocks by the road (one mesh each, close together)
         for (let k = 0; k < 5; k++) { const m = new THREE.Mesh(gg, mat); m.scale.setScalar(1.6); root.add(m); Lb.push({ m, r: 22 + k * 1.6, sp: 0.42 + k * 0.012, h: 14 + (k % 3) * 1.2, ox: -15 + k * 1.1, oz: 20 - k * 0.8, ph: 1.1 + k * 0.16, bank: 0.45 }); } }
       out.dyn.condors = { L: Lb, x0: T.px[i0], z0: T.pz[i0], y0: T.hy[i0], ax: T.px[i0], az: T.pz[i0], ay: T.hy[i0], t: null }; caCondors(out.dyn.condors, 0, null); }
+    if (def.far) out.dyn.far = rsFar(root, def.far, opts.season === 'winter' ? 'winter' : 'summer', hyS(sStart) + 6);   // the Great Western Tiers and Ben Lomond on the horizon (the snow on them in winter)
+    let train = null;
+    { const rl = def.rail, cum = LFQ.cum, Lr = cum[cum.length - 1];   // a short goods train on the Western Line: it runs over the viaduct and back, never as far as the level crossing (no trains on race day there)
+      const alAt = (x, z) => { let b = 0, bd = 1e18; for (let k = 0; k < rl.length; k++) { const d = (rl[k][0] - x) ** 2 + (rl[k][1] - z) ** 2; if (d < bd) { bd = d; b = k; } } return cum[b]; };
+      const pV = atSf(sAt(LF.viaduct), 0), pX = atSf(sAt(LF.level), 0), aV = alAt(pV[0], pV[1]), aX = alAt(pX[0], pX[1]);
+      const a0 = aV < aX ? Math.max(80, aV - 1300) : aX + 260, a1 = aV < aX ? aX - 260 : Math.min(Lr - 80, aV + 1300);
+      const lg = new GB(), K = [0.12, 0.12, 0.13], RD = [0.5, 0.12, 0.1], GR = [0.3, 0.32, 0.3];   // the locomotive (facing +x) with its tender
+      box(lg, 0, 0.55, 0, 11.5, 0.45, 2.5, 0, K); box(lg, 1.6, 1.0, 0, 6.2, 1.55, 1.6, 0, K, [0.2, 0.2, 0.22]); box(lg, 4.85, 0.95, 0, 0.35, 1.7, 1.7, 0, K); cyl(lg, 4.1, 2.5, 0, 0.28, 0.75, 6, K);
+      box(lg, -2.4, 0.95, 0, 2.4, 2.35, 2.6, 0, K, GR); box(lg, -5.3, 0.95, 0, 3.4, 1.7, 2.5, 0, K, [0.08, 0.08, 0.08]); box(lg, 5.8, 0.45, 0, 0.3, 0.55, 2.6, 0, RD);
+      for (const a of [-4.6, -0.6, 1.6, 3.6]) for (const e of [-1, 1]) box(lg, a, 0.05, e * 1.15, 1.4, 1.0, 0.18, 0, RD, null, true);
+      const cg = new GB(), BR = [0.44, 0.17, 0.14];   // a goods wagon / a guard's van (the same shape: a closed box van)
+      box(cg, 0, 0.55, 0, 10.5, 0.4, 2.5, 0, K); box(cg, 0, 0.95, 0, 10.2, 2.5, 2.6, 0, BR, [0.5, 0.48, 0.44]);
+      for (const a of [-3.6, 3.6]) for (const e of [-1, 1]) box(cg, a, 0.05, e * 1.15, 1.6, 0.8, 0.18, 0, K, null, true);
+      const loco = new THREE.InstancedMesh(lg.geometry(), matV, 1), vans = new THREE.InstancedMesh(cg.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true }), 5);
+      for (const m of [loco, vans]) { m.frustumCulled = false; m.castShadow = true; m.receiveShadow = true; root.add(m); }
+      const atRail = (al) => { let k = 0, lo = 0, hi = cum.length - 2; while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (cum[mid] <= al) lo = mid; else hi = mid - 1; } k = lo;
+        const t = clamp((al - cum[k]) / Math.max(1e-6, cum[k + 1] - cum[k]), 0, 1), a = rl[k], b = rl[k + 1]; return [lerp(a[0], b[0], t), lerp(a[2], b[2], t) + 0.14, lerp(a[1], b[1], t), Math.atan2(-(b[1] - a[1]), b[0] - a[0])]; };
+      train = { loco, vans, atRail, a0, a1, up: aV < aX ? 1 : -1 }; }
     { const src = [];   // the chimneys smoking: the farms nearest the road and some of the town's houses
       for (const [x, z] of farms.slice().sort((a, b) => nrDist(a[0], a[1]) - nrDist(b[0], b[1])).slice(0, 8)) src.push({ x, y: nrGround(x, z) + 6.2, z, ph: crH(x, z, 121) });
       for (const [x, z] of blds) { if (src.length >= 14) break; if (townAt(x, z) && nrDist(x, z) < 70 && crH(x, z, 122) < 0.3) src.push({ x, y: nrGround(x, z) + 6.8, z, ph: crH(x, z, 123) }); }
       const pg = new GB(), RR = rng(1963); ROCK_SMOOTH = true; ico(pg, 0, 0, 0, 1, 1, [1, 1, 1], RR, 0.2); ROCK_SMOOTH = false;
-      const nD = 24, puffs = new THREE.InstancedMesh(pg.geometry(), new THREE.MeshLambertMaterial({ transparent: true, opacity: 0.32, depthWrite: false }), src.length * 5 + nD);
-      const c = new THREE.Color(); for (let k = 0; k < src.length * 5 + nD; k++) { const dk = k >= src.length * 5; c.setRGB(dk ? 0.78 : 0.86, dk ? 0.68 : 0.86, dk ? 0.52 : 0.88); puffs.setColorAt(k, c); }
+      const nD = 24, nT = 10, puffs = new THREE.InstancedMesh(pg.geometry(), new THREE.MeshLambertMaterial({ transparent: true, opacity: 0.32, depthWrite: false }), src.length * 5 + nD + nT);
+      const c = new THREE.Color(); for (let k = 0; k < src.length * 5 + nD + nT; k++) { const dk = k >= src.length * 5 && k < src.length * 5 + nD, tk = k >= src.length * 5 + nD; c.setRGB(tk ? 0.62 : dk ? 0.78 : 0.86, tk ? 0.62 : dk ? 0.68 : 0.86, tk ? 0.64 : dk ? 0.52 : 0.88); puffs.setColorAt(k, c); }
       puffs.frustumCulled = false; root.add(puffs);
       const flocks = [], nB = 7;
       for (const d of [LF.mount - 520, LF.level + 330, LF.tower - 240]) { const s0 = sAt(d), i = T.idx(s0);   // the flocks in the paddocks beside the straights
@@ -23425,7 +23468,7 @@ const World = (function () {
           flocks.push(L); break; } }
       const birds = new THREE.InstancedMesh(lfGalahGeo(), new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), Math.max(1, flocks.length * nB)); birds.frustumCulled = false; root.add(birds);
       const wa = 0.6;   // (the wind from the north-west: the smoke drifts to the south-east)
-      out.dyn.lfFx = { puffs, birds, src, flocks, dust: Array.from({ length: nD }, () => ({ x: 0, y: 0, z: 0, t0: -99 })), di: 0, nd: 0, cx: 0, cz: 0, t: null, wx: Math.cos(wa), wz: Math.sin(wa),
+      out.dyn.lfFx = { puffs, birds, src, flocks, train, dust: Array.from({ length: nD }, () => ({ x: 0, y: 0, z: 0, t0: -99 })), di: 0, nd: 0, cx: 0, cz: 0, t: null, wx: Math.cos(wa), wz: Math.sin(wa),
         m4: new THREE.Matrix4(), q: new THREE.Quaternion(), v: new THREE.Vector3(), sc: new THREE.Vector3(), e: new THREE.Euler() };
       lfFxUpdate(out.dyn.lfFx, 0, null); }
     out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, bales: nBales, boxes: nBoxes, houses: nHouses, stands: nStands, arches: nArch, sheep: nSheep, hay: nHay, cars: nCars, poles: nPoles, hedges: nHedge, roads: nRoads, fence: nFence, cattle: nCattle, farms: farms.length, marshals: nMarsh, rugs: nRugs, distBoards: nDist, trailers: nTrail, tents: nTents, town: nTown };   // (read by the tests)
