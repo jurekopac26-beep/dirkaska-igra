@@ -195,6 +195,13 @@
   "maxKverts": 376,
   "jsMs": 0.7
  },
+ "saopaulo": {
+  "calls": 272,
+  "maxCalls": 310,
+  "kverts": 680,
+  "maxKverts": 772,
+  "jsMs": 0.73
+ },
  "jezero": {
   "calls": 278,
   "maxCalls": 330,

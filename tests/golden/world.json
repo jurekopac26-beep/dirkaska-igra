@@ -563,6 +563,29 @@
    "roadwear:MeshLambertMaterial": "fc990f68"
   }
  },
+ "saopaulo": {
+  "meshes": 524,
+  "verts": 1014175,
+  "instances": 4468,
+  "props": 83,
+  "crowd": 919,
+  "world": "9ab27f78",
+  "propsHash": "aab56d48",
+  "floor": "2d3abe87/8624",
+  "groups": {
+   "-:MeshLambertMaterial": "b640b4d9",
+   "-:MeshBasicMaterial": "ef5c3a8",
+   "-:LineBasicMaterial": "c91d6357",
+   "sp-road:MeshLambertMaterial": "c6b59ff1",
+   "-:MeshPhongMaterial": "7c982abe",
+   "sp-bld:MeshLambertMaterial": "911ddfff",
+   "crowd:MeshLambertMaterial": "cbc03051",
+   "flags:MeshLambertMaterial": "3ab61a70",
+   "ao:MeshBasicMaterial": "d46d3d36",
+   "roadwear:MeshLambertMaterial": "ad292ae4",
+   "worn:MeshLambertMaterial": "58d64e3c"
+  }
+ },
  "jezero": {
   "meshes": 154,
   "verts": 591648,

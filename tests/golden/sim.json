@@ -3134,5 +3134,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "saopaulo/race/cs": {
+  "digest": "88952368459313ae789a4dd6",
+  "lead": 2382.3,
+  "car0": [
+   9.31,
+   -311.96
+  ],
+  "cover": {
+   "dmg": 0.26,
+   "loose": 13,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "saopaulo/demo/cs": {
+  "digest": "97172545a35d45aa18bcb4ba",
+  "lead": 2494.2,
+  "car0": [
+   141.06,
+   -328.04
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 8,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "saopaulo/upg/cs": {
+  "digest": "69e117ac858a820325a19fa4",
+  "lead": 2493.5,
+  "car0": [
+   68.8,
+   -314.01
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "saopaulo/crash/cs": {
+  "digest": "cdd9344d5f0a2f2f11793b7b",
+  "lead": 2365,
+  "car0": [
+   17.28,
+   -207.09
+  ],
+  "cover": {
+   "dmg": 0.82,
+   "loose": 10,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "saopaulo/formula/cs": {
+  "digest": "8fba675f90418f8c8a32ecd9",
+  "lead": 2707.4,
+  "car0": [
+   142.66,
+   -380.33
+  ],
+  "cover": {
+   "dmg": 0.97,
+   "loose": 11,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "saopaulo/lm/cs": {
+  "digest": "8e259cba90e32be089867ec5",
+  "lead": 2667.2,
+  "car0": [
+   102.38,
+   -300.47
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 11,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "saopaulo/car/cs": {
+  "digest": "c97845c5b42b42bc511be8e6",
+  "lead": 2367.3,
+  "car0": [
+   30.71,
+   -166.01
+  ],
+  "cover": {
+   "dmg": 0.56,
+   "loose": 6,
+   "rescues": 0,
+   "repairs": 0
+  }
  }
 }
