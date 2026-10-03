@@ -3052,10 +3052,11 @@
   }
 
   /* ---------------- commentator (English) ---------------- */
+  const STREET_PROPS = new Set(['signal', 'sign', 'stop', 'lamp', 'hydrant', 'bin', 'cabinet', 'bollard']);   // (the junctions' street furniture: the commentator's own lines)
   const PART_EN = { bumperF: 'front bumper', bumperR: 'rear bumper', hood: 'bonnet', trunk: 'boot lid', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'front wing', fenderR: 'front wing' };
   const PART_EN_F = { bumperF: 'front wing', bumperR: 'rear wing', hood: 'nose cone', trunk: 'engine cover', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'bargeboard', fenderR: 'bargeboard' };   // (the formula's parts)
   const PART_EN_LM = { bumperF: 'splitter', bumperR: 'rear wing', hood: 'nose', trunk: 'engine cover', mirrorL: 'mirror', mirrorR: 'mirror', fenderL: 'louvre panel', fenderR: 'louvre panel' };   // (the prototype's)
-  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', pikesg: 'Pikes Peak', ouninpohja: 'Ouninpohja', harju: 'Harju', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka', vrsic: 'the Vrshich pass', caracoles: 'Los Caracoles', katu: 'the Katu-Yaryk pass', bathurst: 'Bathurst', chapman: "Chapman's Peak", bigsur: 'Big Sur', tianmen: 'Tianmen', sani: 'Sani Pass', mulholland: 'Mulholland Highway', beartooth: 'the Beartooth Highway', moki: 'the Moki Dugway', cpalace: 'Crystal Palace', riverside: 'Riverside' };
+  const EN_NAME = { monaco: 'Monte Carlo', gozd: 'the Copper Forest',  jezero: 'Jezero Ring', riviera: 'the Riviera', gora: 'the mountain rally stage', pikes: 'Pikes Peak', pikesg: 'Pikes Peak', ouninpohja: 'Ouninpohja', harju: 'Harju', nring: 'the Nürburgring Nordschleife', spa: 'Spa-Francorchamps', toskana: 'Tuscany', grom: 'Thunder Cape', rbring: 'the Red Bull Ring', suzuka: 'Suzuka', vrsic: 'the Vrshich pass', caracoles: 'Los Caracoles', katu: 'the Katu-Yaryk pass', bathurst: 'Bathurst', chapman: "Chapman's Peak", bigsur: 'Big Sur', tianmen: 'Tianmen', sani: 'Sani Pass', mulholland: 'Mulholland Highway', beartooth: 'the Beartooth Highway', moki: 'the Moki Dugway', cpalace: 'Crystal Palace', riverside: 'Riverside', santiago: 'Santiago' };
   const cev = { wall: 0, car: 0 };          // impacts collected per physics step
   let cs = null;
   function commReset() {
@@ -3099,7 +3100,7 @@
     if (dmgOn() && P.dmg > 0.5 && !cs.dmg1) { cs.dmg1 = true; if (!pitHint) Comm.say('damage', null, 2); }   // (on a track with pits the pit advice said it already)
     if (dmgOn() && P.dmg > 0.8 && !cs.dmg2) { cs.dmg2 = true; Comm.say('heavyDamage', null, 3); }
     // knocked-over trackside props
-    if (P.propKnock) { const k = P.propKnock, key = k === 'cone' ? 'propCone' : k === 'tyre' || k === 'tstack' ? 'propTyre' : k === 'bale' || k === 'bstack' || k === 'rbale' || k === 'rbstack' ? 'propBale' : k === 'pylon' ? 'propPylon' : k === 'post' ? 'propPost' : 'propCrate';
+    if (P.propKnock) { const k = P.propKnock, key = k === 'cone' ? 'propCone' : k === 'tyre' || k === 'tstack' ? 'propTyre' : k === 'bale' || k === 'bstack' || k === 'rbale' || k === 'rbstack' ? 'propBale' : k === 'pylon' ? 'propPylon' : k === 'post' ? 'propPost' : STREET_PROPS.has(k) ? 'propStreet' : 'propCrate';
       P.propKnock = null; if (P.propKnockV > 7 && cool('prop', 12) && Math.random() < 0.75) Comm.say(key, null, 1); }
     // crashes and contact
     if (cev.wall > 6 && cool('crash', 8)) Comm.say('crash', null, 2);

@@ -1567,6 +1567,16 @@ const Core = (function () {
       rbale:  { m: 26, rh: 0.62, rb: 0.75, h0: 0.43,  e: 0.15, mu: 0.8,  lift: 0.3,  I: 4.6,  pts: (() => { const p = []; for (const x of [-0.62, 0.62]) for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; p.push([x, Math.cos(a) * 0.43, Math.sin(a) * 0.43]); } return p; })() },   // round straw bale lying on its side (Toskana)
       rbstack: { m: 78, rh: 0.9, rb: 1.1,  h0: 0.85,  breaks: 'rbale', parts: [[-0.66, -0.425, 0], [0.66, -0.425, 0], [0, 0.425, 0]], pf: [[1.1, 0.6], [1.0, 0.9], [0.8, 2.4]] },
       post:   { m: 4,  rh: 0.14, rb: 0.62, h0: 0.55,  e: 0.3,  mu: 0.6,  lift: 1.0,  I: 0.4,  pts: boxPts(0.07, 0.55, 0.07) },   // roadside post (stebriček): light, snaps over and cartwheels away
+      // street furniture at junctions (Montréal): a traffic signal pole with its mast arm over the road (along local +x), a sign on a post (col: the
+      // plate's colour), a stop sign, a street lamp (its arm along +x), a fire hydrant, a litter bin, a utility cabinet, a bollard
+      signal: { m: 160, rh: 0.2, rb: 3.3, h0: 3.1,  e: 0.12, mu: 0.6,  lift: 0.12, I: 170, pts: boxPts(0.18, 3.1, 0.18).concat([[5.6, 2.95, 0], [5.6, 2.2, 0]]) },
+      sign:   { m: 11, rh: 0.12, rb: 1.35, h0: 1.25,  e: 0.2,  mu: 0.6,  lift: 0.5,  I: 4.5,  pts: boxPts(0.05, 1.25, 0.05).concat([[0, 1.2, 0.38], [0, 1.2, -0.38]]) },
+      stop:   { m: 12, rh: 0.12, rb: 1.35, h0: 1.25,  e: 0.2,  mu: 0.6,  lift: 0.5,  I: 4.8,  pts: boxPts(0.05, 1.25, 0.05).concat([[0, 1.15, 0.38], [0, 1.15, -0.38]]) },
+      lamp:   { m: 110, rh: 0.17, rb: 4.2, h0: 4.0,  e: 0.12, mu: 0.6,  lift: 0.1,  I: 480, pts: boxPts(0.14, 4.0, 0.14).concat([[2.3, 3.9, 0]]) },
+      hydrant: { m: 45, rh: 0.22, rb: 0.5, h0: 0.38,  e: 0.25, mu: 0.7,  lift: 0.45, I: 1.6,  pts: cylPts(0.2, -0.38, 0.38, 6) },
+      bin:    { m: 22, rh: 0.3, rb: 0.6,  h0: 0.5,   e: 0.25, mu: 0.7,  lift: 0.55, I: 1.9,  pts: cylPts(0.29, -0.5, 0.5, 6) },
+      cabinet: { m: 85, rh: 0.48, rb: 0.88, h0: 0.72, e: 0.15, mu: 0.75, lift: 0.3,  I: 9,    pts: boxPts(0.32, 0.72, 0.48) },
+      bollard: { m: 14, rh: 0.12, rb: 0.55, h0: 0.5,  e: 0.25, mu: 0.6,  lift: 0.7,  I: 0.9,  pts: boxPts(0.1, 0.5, 0.1) },
     };
   })();
   const _pq = {};
