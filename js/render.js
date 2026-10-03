@@ -1681,6 +1681,8 @@ const Render = (function () {
     moki: [[0.95, 0.99, 1.07], [1.05, 1.0, 0.94]], cpalace: [[0.97, 1.0, 1.04], [1.03, 1.0, 0.95]],
     riverside: [[0.96, 0.99, 1.05], [1.06, 1.01, 0.92]],
     longford: [[0.97, 1.0, 1.04], [1.04, 1.0, 0.95]] };
+  THEMES.lot = { fog: 0xc8d8e6, sun: 0xfff0d6, sunI: 1.1, sky: 0xcfe2f8, gnd: 0x5a6436, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-80, 92, 66] };   // the driving school's parking lot (Celje): a clear afternoon
+  SPLIT.lot = [[0.97, 1.0, 1.04], [1.03, 1.0, 0.96]];
   THEMES.uncompahgre = { fog: 0xbfcfe0, sun: 0xfff0d8, sunI: 1.24, sky: 0xb8d0f0, gnd: 0x4c5236, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-70, 92, 62] };   // the Uncompahgre Gorge: a clear afternoon in the San Juans, the sun from the south-west over the cliffs, a crisp blue haze
   SPLIT.uncompahgre = [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]];
   SPLIT.iroha = [[0.96, 0.99, 1.05], [1.04, 1.0, 0.95]];   // (Irohazaka: cool shade under the maples, a warm autumn sun)
@@ -4160,7 +4162,7 @@ const Render = (function () {
     const x = lerp(c.px, c.x, alpha), z = lerp(c.pz, c.z, alpha);
     const h = c.ph + wrapPi(c.h - c.ph) * alpha;
     const spd = c.speed, pitZ = crew && c === crew.P && (crew.mode === 'work' || (crew.mode === 'out' && c.pitState === 'stop')) ? 0.62 : 1;   // pitZ: closer while the car pulls into its box and the crew works on it
-    if (!cam.init) { cam.lx = 0; cam.lz = 0; cam.zoom = 1; cam.hs = h; cam.gy = c.roadY || 0; cam.init = true; }
+    if (!cam.init) { cam.lx = 0; cam.lz = 0; cam.zoom = 1; cam.hs = h; cam.gy = c.roadY || 0; cam.rv = 0; cam.init = true; }
     if (cam.shot && cam.shot.gy != null) cam.gy = cam.shot.gy; else cam.gy += ((c.roadY || 0) - cam.gy) * (1 - Math.exp(-dt * 5));   // (a shot may say how high its view is: Pikes Peak's flyover, for the altitude's light and the sun's shadow box)
     const baseY = cam.gy;
     const k1 = 1 - Math.exp(-dt * 2.0), k2 = 1 - Math.exp(-dt * 1.4);
@@ -4192,7 +4194,8 @@ const Render = (function () {
       // phone held upright: higher camera, wider lens, long view ahead, car in the lower part of the screen
       const portrait = camera.aspect < 1;
       const D = (portrait ? 46 : 30) * cam.zoom * cam.userZoom, pitch = portrait ? 0.98 : 0.9;
-      const ahead = (portrait ? 13 : 8.5) * (1 - 0.8 * clamp((1 - cam.zoom) / 0.38, 0, 1)), fov = portrait ? 58 : 46;   // (in the pit box, zoomed in: look at the car and its crew)
+      cam.rv = (cam.rv || 0) + ((c.gear === -1 && c.vl < -0.3 ? 1 : 0) - (cam.rv || 0)) * (1 - Math.exp(-dt * 1.6));   // (backing up, e.g. into a parking bay: the view slides back over where the car goes)
+      const ahead = (portrait ? 13 : 8.5) * (1 - 0.8 * clamp((1 - cam.zoom) / 0.38, 0, 1)) * (1 - 1.45 * cam.rv), fov = portrait ? 58 : 46;   // (in the pit box, zoomed in: look at the car and its crew)
       const fx = Math.cos(cam.hs), fz = Math.sin(cam.hs);
       tx = x + fx * ahead; tz = z + fz * ahead; ty = baseY;
       px = tx - fx * D * Math.cos(pitch); pz = tz - fz * D * Math.cos(pitch); py = baseY + D * Math.sin(pitch);
@@ -4661,6 +4664,7 @@ const Render = (function () {
     const T = curTrack; if (!list || !list.length || !T || !scene) return;
     marks = new THREE.Group();
     for (const e of list) {
+      if (e.kind === 'zone' || e.kind === 'gate' || e.kind === 'spots') { marks.add(e.kind === 'zone' ? zoneMark(e) : e.kind === 'gate' ? gateMark(e) : spotMarks(e)); continue; }   // (the driving school's parking lot: in the lot's own x, z)
       const s = e.s, f = ((s % T.len) + T.len) % T.len / T.ds, i = Math.floor(f) % T.N, x = T.px[i], z = T.pz[i], nx = T.nx[i], nz = T.nz[i], y = T.hasElev ? T.elevAt(s).y : 0;
       if (e.kind === 'stop') {   // the line: 0.8 m deep, across the whole road, in red and white squares
         const cv = document.createElement('canvas'); cv.width = 256; cv.height = 16; const cx = cv.getContext('2d'); for (let q = 0; q < 16; q++) { cx.fillStyle = q % 2 ? '#ffffff' : '#d8261c'; cx.fillRect(q * 16, 0, 16, 16); }
@@ -4672,6 +4676,37 @@ const Render = (function () {
       const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.5, 6), new THREE.MeshLambertMaterial({ color: 0x9aa3ad })); post.position.set(sp.position.x, y + 0.75, sp.position.z); marks.add(post);
     }
     scene.add(marks);
+  }
+
+  // the box a mission on the parking lot ends in (x, z, heading, length, width): a light green fill, a bright green border 0.2 m wide and a
+  // darker corner at each end, flat on the asphalt (drawn over the paint; lit by nothing: it reads the same by day and at night)
+  function zoneMark(e) {
+    const P = [], C = [], c = Math.cos(e.h), s = Math.sin(e.h), y = 0.02, at = (a, b) => [e.x + c * a - s * b, y, e.z + s * a + c * b];
+    const quad = (a0, b0, a1, b1, col, al) => { for (const [a, b] of [[a0, b0], [a1, b0], [a1, b1], [a0, b0], [a1, b1], [a0, b1]]) { P.push(...at(a, b)); C.push(col[0], col[1], col[2], al); } };
+    const L = e.len / 2, W = e.wid / 2, t = 0.2, G = [0.25, 0.95, 0.35];
+    quad(-L, -W, L, W, G, 0.18);
+    quad(-L, -W, L, -W + t, G, 0.9); quad(-L, W - t, L, W, G, 0.9); quad(-L, -W + t, -L + t, W - t, G, 0.9); quad(L - t, -W + t, L, W - t, G, 0.9);
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 4));
+    const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }));
+    m.renderOrder = 2; return m;
+  }
+  // where a mission's cones stand (pts: [[x, z], ...]): a painted ring round each, as on a training ground (the cones read from above too)
+  function spotMarks(e) {
+    const P = [], C = [], n = 10, r0 = 0.5, r1 = 0.68, y = 0.018;
+    for (const [x, z] of e.pts) for (let k = 0; k < n; k++) { const a0 = k / n * Math.PI * 2, a1 = (k + 1) / n * Math.PI * 2, p = (r, a) => [x + Math.cos(a) * r, y, z + Math.sin(a) * r];
+      for (const q of [p(r0, a0), p(r1, a0), p(r1, a1), p(r0, a0), p(r1, a1), p(r0, a1)]) { P.push(...q); C.push(1, 1, 1, 0.85); } }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 4));
+    const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }));
+    m.renderOrder = 2; return m;
+  }
+  // a gate of a mission (between its two cones): a dashed yellow line across the asphalt
+  function gateMark(e) {
+    const P = [], C = [], dx = e.x1 - e.x0, dz = e.z1 - e.z0, l = Math.hypot(dx, dz) || 1, ux = dx / l, uz = dz / l, nx = -uz * 0.09, nz = ux * 0.09, y = 0.02, n = Math.max(2, Math.round(l / 0.8));
+    for (let k = 0; k < n; k += 2) { const a = 0.35 + (l - 0.7) * k / n, b = 0.35 + (l - 0.7) * (k + 1) / n, p0 = [e.x0 + ux * a, e.z0 + uz * a], p1 = [e.x0 + ux * b, e.z0 + uz * b];
+      for (const [x, z, o] of [[p0[0], p0[1], 1], [p1[0], p1[1], 1], [p1[0], p1[1], -1], [p0[0], p0[1], 1], [p1[0], p1[1], -1], [p0[0], p0[1], -1]]) { P.push(x + nx * o, y, z + nz * o); C.push(1, 0.82, 0.2, 0.95); } }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 4));
+    const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }));
+    m.renderOrder = 2; return m;
   }
 
   function valleyFog() {

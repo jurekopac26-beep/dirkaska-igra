@@ -141,7 +141,8 @@
   const lapsOf = (d) => d.open ? 1 : Math.max(1, Math.round((d.laps || LAPS) * (LEN_K[S.length] || 1)));
   const lapWord = (n) => Lang.cur === 'en' ? n + (n === 1 ? ' LAP' : ' LAPS') : n + (n === 1 ? ' KROG' : n === 2 ? ' KROGA' : n <= 4 ? ' KROGI' : ' KROGOV');
   const trackCache = new Map();
-  const getTrack = (id) => { if (!trackCache.has(id)) trackCache.set(id, new Core.Track(Core.TRACKS.find(d => d.id === id) || Core.TRACKS[0])); return trackCache.get(id); };
+  const defOf = (id) => Core.TRACKS.find(d => d.id === id) || Core.SCHOOL_TRACKS.find(d => d.id === id);   // (a race track or a ground of the driving school: the parking lot)
+  const getTrack = (id) => { if (!trackCache.has(id)) trackCache.set(id, new Core.Track(defOf(id) || Core.TRACKS[0])); return trackCache.get(id); };
   function save() { try { localStorage.setItem('tdgp-settings', JSON.stringify(S)); } catch (_) { } }
   // one-time switch to the player's own rally car (number 7, blue livery)
   if (!(S.carV >= 2)) { S.car = Core.MODELS.findIndex(m => m.id === 'rally'); S.color = 2; S.carV = 2; save(); }
@@ -239,6 +240,7 @@
     ['online', 'S prijateljem', 'Pripelji do cilja dirke s prijateljem.'],
     ['school', 'Učenec', 'Osvoji zlato medaljo v šoli vožnje.'],
     ['schoolAll', 'Diplomant', 'Osvoji zlato v vseh vajah šole vožnje.', () => [SCHOOL.filter(L => schoolRec(L).medal === 0).length, SCHOOL.length]],
+    ['schoolLot', 'Vozniški izpit', 'Opravi vseh deset misij na parkirišču šole vožnje.', () => [SCHOOL.filter(L => L.lot && Number.isFinite(schoolRec(L).best)).length, SCHOOL.filter(L => L.lot).length]],
   ];
   let achNew = [];   // (unlocked during the race on screen: listed on its results)
   function achGet(id) {
@@ -884,7 +886,7 @@
   // shows it (demoOn): a race started from the menus does not wait for its cars to drive their first seconds
   function ensureTrack(id, cb) {
     if (track && track.def.id === id && !Render.worldStale) { cb(); return; }   // (the same track: rebuilt only when it paints itself for the season and that changed: Vršič)
-    $('ld-msg').textContent = tr('Nalagam progo {0}…', Lang.of(Core.TRACKS.find(d => d.id === id), 'name') || '');
+    $('ld-msg').textContent = tr('Nalagam progo {0}…', Lang.of(defOf(id), 'name') || '');
     $('loading').classList.remove('off');
     setTimeout(() => {
       const t0 = performance.now();
@@ -901,9 +903,18 @@
   let loadMs = 0;   // (tests: how long the last track took to load)
   // the title demo: ten cars racing on the loaded track behind the menus, their first seconds driven at once
   function demoMake(sec) {
+    if (track.lot) { demoLot(); return; }
     demo = new Core.Race(track, { numAI: 10, noPlayer: true, difficulty: 2, laps: 9999, seed: 11, phys: physOf(), rain: demoRain() });
     demo.start(); for (let i = 0; i < 120 * sec; i++) demo.step(STEP);
     demoTarget = null; demoSwitch = 0;   // the title camera picks a car of the new demo right away (not one left over from the previous track)
+  }
+  // the driving school's parking lot behind the menus (after one of its missions): no race round it, the instructor's slalom over and over
+  // (Core.lessonPilot), the car put back on its start after each run
+  function demoLot() {
+    const L = LOT.lessons.find(M => M.slalom) || LOT.lessons[0];
+    demo = new Core.Race(track, { numAI: 0, playerGrid: 1, laps: 99, playerModel: modelById(LOT_CAR), playerColor: PLAYER_COLORS[S.color], seed: 1, difficulty: 1, assist: 2, damage: 0, phys: physOf(), rain: 0 });
+    Core.Lesson.place(demo.player, track, L); demo.setProps(Core.Lesson.props(L)); demo.start(); demo.lot = { L, st: {} };
+    demoTarget = null; demoSwitch = 0;
   }
   const demoOn = () => { if (!demo || demo.track !== track) demoMake(4); return demo; };
   function demoShow() { demoAt = demoOn(); Render.attachRace(demoAt); }   // (the demo behind the menus again)
@@ -1154,9 +1165,10 @@
         remote: on.grid.filter(id => id !== mp.me).map(id => { const F = rs.find(p => p.id === id) || { name: tr('Prijatelj'), car: M.id, color: 0 };
           return { id, model: modelById(F.car), color: PLAYER_COLORS[F.color] || PLAYER_COLORS[0], num: nums[id], name: F.name, grid: on.grid.indexOf(id) + 1 }; }) }));
     } else if (school) {   // the driving school: alone, the lesson's car, dry; the braking lesson from the start of the straight
-      school = { L: school.L, on: 0, all: 0, D: { pts: 0, chain: 0, calm: 0, best: 0, lost: 0 } };
+      school = { L: school.L, on: 0, all: 0, D: { pts: 0, chain: 0, calm: 0, best: 0, lost: 0 }, demo: !!school.demo };
       race = new Core.Race(track, schoolOpts(school.L));
       if (school.L.id === 'brake') placeAt(race.player, track, BRAKE_S0);
+      if (school.L.lot) { const M = school.L.lot; Core.Lesson.place(race.player, track, M); race.setProps(Core.Lesson.props(M)); school.M = new Core.Lesson(race, M); school.pst = {}; }   // (a mission on the parking lot: from its start, its cones)
     } else race = new Core.Race(track, Object.assign(mine, {   // time trial: alone on the start line, one run to the finish; qualifying: alone, one flying lap
       numAI: tt || quali ? 0 : nAI, playerGrid: tt || quali || chase ? 1 : duel ? 2 : Q ? Q.res.grid : PLAYER_GRID, aiOrder: Q ? Q.res.order : undefined, qualiBack: quali ? qual.back : 0,
       laps: tt || quali ? 1 : lapsOf(track.def), fuel: !tt && !quali && !!S.fuel, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali ? null : W.wx, tyres: !tt && !!track.def.pit, compounds: true, playerCmp: S.cmp, flags: !tt && !quali, winter: S.season === 'winter', champ: cr >= 0, tt,
@@ -1170,9 +1182,9 @@
     Render.setStorm(race.storm);
     race.endu = !on && !tt && !quali && !school && !track.def.open && S.length === 'endurance';   // an endurance race: from the afternoon into the night (enduStep)
     Render.setLine(lineWant());   // (the racing line helper: the setting, or the school's lesson of it)
-    Render.setMarks(school && school.L.id === 'brake' ? [150, 100, 50].map(m => ({ s: BRAKE_S0 + BRAKE_RUN - m, kind: 'board', label: String(m) })).concat([{ s: BRAKE_S0 + BRAKE_RUN, kind: 'stop', label: 'STOP' }]) : null);
-    Input.setOptions({ autoGas: !!S.autoGas && !(school && school.L.id === 'start') });   // (the start lesson: the throttle is the player's own, the reaction counts)
-    $('hud').classList.toggle('school', !!school); $('res-school').classList.add('off'); $('res-replay').classList.remove('off');
+    Render.setMarks(school && school.L.id === 'brake' ? [150, 100, 50].map(m => ({ s: BRAKE_S0 + BRAKE_RUN - m, kind: 'board', label: String(m) })).concat([{ s: BRAKE_S0 + BRAKE_RUN, kind: 'stop', label: 'STOP' }]) : school && school.L.lot ? lotMarks(school.L.lot) : null);
+    Input.setOptions({ autoGas: !!S.autoGas && !(school && (school.L.id === 'start' || school.L.lot)) });   // (the start lesson: the throttle is the player's own, the reaction counts; the parking lot: the player's own, to creep)
+    $('hud').classList.toggle('school', !!school); $('hud').classList.toggle('lot', !!(school && school.L.lot)); $('res-school').classList.add('off'); $('res-replay').classList.remove('off');
     if (race.endu) { Render.setTodK(0); enduK = 0; } else Render.setAtmos({ season: S.season, tod: S.tod }, true);
     fuelTold = { low: false, out: false };
     Render.attachRace(race);
@@ -1204,7 +1216,8 @@
     Sfx.resume(); Sfx.setRunning(true);
     Comm.stop(); commReset(); Comm.setRadioMode(rdOn);   // (the run from the police on Vršič: only the police radio speaks)
     const wetTxt = race.rain ? tr(' · DEŽ') : '';
-    if (race.timeTrial) { Comm.say(ownLine(track.def, ttLine(track.def, 'intro')), { track: EN_NAME[track.def.id] || track.def.name, cps: track.cpS.length }, 2); showMsg(tr(isRally(track.def) ? 'POLNI PLIN!' : isDesc(track.def) ? 'SPUST V DOLINO!' : 'VZPON NA VRH!') + wetTxt, 'gold', race.rain ? 1.8 : 1.2); }
+    if (school) { showMsg(school.L.lot ? tr('MISIJA {0}', school.L.n) : schName(school.L).toUpperCase(), 'gold', 1.4); if (school.L.lot) toast(school.demo ? tr('Inštruktor pokaže: {0}', schName(school.L)) : schGoal(school.L), 5000); }   // (the driving school: the mission and what to do, no commentator)
+    else if (race.timeTrial) { Comm.say(ownLine(track.def, ttLine(track.def, 'intro')), { track: EN_NAME[track.def.id] || track.def.name, cps: track.cpS.length }, 2); showMsg(tr(isRally(track.def) ? 'POLNI PLIN!' : isDesc(track.def) ? 'SPUST V DOLINO!' : 'VZPON NA VRH!') + wetTxt, 'gold', race.rain ? 1.8 : 1.2); }
     else if (quali) { Comm.say('qualiIntro', { track: EN_NAME[track.def.id] || track.def.name }, 2); showMsg((race.champ ? tr('DIRKA {0}/{1} · ', race.champ.round + 1, race.champ.n) : '') + tr('KVALIFIKACIJE') + wetTxt, 'gold', 1.8); }
     else {
       if (race.pol && race.pol.chk) { showMsg('KRANJSKA GORA' + wetTxt, 'gold', 1.8); if (race.pol.goal) toast(tr('Misija: pripelji avto do garaže na vrhu Vršiča (desno ob cesti, takoj za prelazom).'), 4200); }   // (the run from the police up to its checkpoint: a calm start, nobody after the player yet)
@@ -1216,7 +1229,7 @@
         showMsg((race.champ ? tr('DIRKA {0}/{1} · ', race.champ.round + 1, race.champ.n) : '') + (track.open ? tr('DIRKA NA VRH!') : lapWord(race.laps)) + wetTxt, 'gold', race.rain || race.champ ? 1.8 : 1.2);
       }
     }
-    if (race.rain) Comm.say(track.def.id === 'spa' ? 'rainSpa' : 'rain', null, 2, { ttl: 12000 });   // (after the welcome)
+    if (race.rain && !school) Comm.say(track.def.id === 'spa' ? 'rainSpa' : 'rain', null, 2, { ttl: 12000 });   // (after the welcome)
   }
   function setLights(n, go) {
     const ls = $('h-lights').children;
@@ -1253,7 +1266,7 @@
     stSave();   // (the km of a race left before its end)
     endPodium(); champRecord(); champRun = false; replay = null; recd = null; $('replay-ui').classList.add('off');
     paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); Comm.setRadioMode(false); rdOn = false; radioReset(); ghRec = ghPlay = ghLap = ghFr = null; qual = null; Render.setGhost(null, true); Render.setGhostF(null, true);
-    school = null; Render.setLine(false); Render.setMarks(null); Input.setOptions({ autoGas: !!S.autoGas }); $('hud').classList.remove('school');
+    school = null; Render.setLine(false); Render.setMarks(null); Input.setOptions({ autoGas: !!S.autoGas }); $('hud').classList.remove('school'); $('hud').classList.remove('lot');
     Sfx.setRunning(false); Sfx.silence();
     demoShow(); Render.resetCam(); Render.setStorm(S.weather === 'storm'); Render.setAtmos({ season: S.season, tod: S.tod }, true);   // (after an endurance race: the time of day of the setting again)
     setLights(0, false);
@@ -1363,26 +1376,31 @@
     $('board-body').innerHTML = h; $('board-body').scrollTop = 0;
   }
   // Dosežki (from the title): the player's numbers, then every achievement (unlocked: the date; the counting ones: how far)
-  /* ---------------- the driving school (Šola vožnje): four lessons with medals, all in the KAZE RS (stock, standard set-up, dry), the
-     best of each kept per physics (tdgp-school). Start: from the lights out to 100 m (the throttle before they go out: a jump start);
-     braking: from a standing start down the Red Bull Ring's straight, stop as near the STOP line as you can, not over it (past the 100 m
+  /* ---------------- the driving school (Šola vožnje): first the ten missions on its parking lot (js/tracks/parkirisce.js: def.lessons,
+     from the easiest to the hardest; their rules in Core.Lesson), in the PICO TURBO, the time to the stop in the box plus 2 s for every cone
+     knocked against the mission's medals, out at the curb, a parked car, a missed gate or slalom cone, out of the lane or over the time
+     (Pokaži: the instructor drives it, Core.lessonPilot; nothing kept); then four lessons on the circuits, all in the KAZE RS (stock,
+     standard set-up, dry). The best of each kept per physics (tdgp-school). Start: from the lights out to 100 m (the throttle before
+     they go out: a jump start); braking: from a standing start down the Red Bull Ring's straight, stop as near the STOP line as you can, not over it (past the 100 m
      board at 120 km/h at least); the racing line: a lap of the Jezero Ring on the line the helper draws (the share of the lap within
      1.5 m of it, in a time limit); drift: 40 s at the Jezero Ring (points for the angle times the speed, a chain banked when the slide
      ends, lost at a knock). The medals of the start and of the drift and the line's time limit: against the autopilot's own run of the
      lesson in the same car and physics (a quick simulation) ---------------- */
-  const SCHOOL_CAR = 'kaze', SCHOOL_DRIFT_T = 40, BRAKE_S0 = 4000, BRAKE_RUN = 400;
-  const SCHOOL = [
+  const SCHOOL_CAR = 'kaze', LOT_CAR = 'pico', SCHOOL_DRIFT_T = 40, BRAKE_S0 = 4000, BRAKE_RUN = 400;
+  const LOT = Core.SCHOOL_TRACKS.find(d => d.id === 'parkirisce');
+  const SCHOOL = (LOT ? LOT.lessons.map((M, k) => ({ id: M.id, track: LOT.id, lot: M, n: k + 1 })) : []).concat([
     { id: 'start', track: 'rbring', name: 'Štart', goal: 'Ko ugasnejo luči, čim hitreje prevozi 100 m. Plin pritisni šele, ko ugasnejo: prej je prehiter štart.' },
     { id: 'brake', track: 'rbring', name: 'Zaviranje do oznake', goal: 'Pospeši po ravnini in se ustavi čim bližje črti STOP, a ne čeznjo. Mimo table 100 m pelji vsaj 120 km/h.' },
     { id: 'line', track: 'jezero', name: 'Idealna linija', goal: 'Odpelji krog po idealni liniji, ki jo riše pomoč (zeleno: plin, rumeno: ovinek, rdeče: zaviraj, belo: točka zaviranja). Čim več kroga na njej, v omejenem času.' },
     { id: 'drift', track: 'jezero', name: 'Drift', goal: 'V 40 sekundah zberi čim več točk drsenja: bočno, hitro in brez udarcev (udarec izbriše verigo).' },
-  ];
-  let school = null;   // the lesson under way: { L, s0, v100, on, all, D, done }
+  ]);
+  const schName = (L) => (L.lot ? Lang.of(L.lot, 'name') : tr(L.name)), schGoal = (L) => (L.lot ? Lang.of(L.lot, 'goal') : tr(L.goal));   // (a mission's texts in the track file, with their English)
+  let school = null;   // the lesson under way: { L, s0, v100, on, all, D, done; a mission on the parking lot: M (its Core.Lesson), demo (the instructor drives), pst (his state) }
   let schoolData = {};
   try { const j = JSON.parse(localStorage.getItem('tdgp-school') || 'null'); if (isObj(j)) for (const k in j) { const e = j[k]; if (isObj(e) && Number.isFinite(e.best) && [0, 1, 2, -1].includes(e.medal)) schoolData[k] = { best: e.best, medal: e.medal }; } } catch (_) { schoolData = {}; }
   const schoolKey = (L) => L.id + '@' + physOf();
   const schoolRec = (L) => schoolData[schoolKey(L)] || { best: NaN, medal: -1 };
-  const schoolLower = (L) => L.id === 'start' || L.id === 'brake';
+  const schoolLower = (L) => !!L.lot || L.id === 'start' || L.id === 'brake';
   const lineWant = () => school ? school.L.id === 'line' : !!S.line;
   const wrapD = (d, L) => (d > L / 2 ? d - L : d < -L / 2 ? d + L : d);
   function driftTick(D, P, dt) {   // the drift's points (the lesson and its reference): a chain grows while the car slides, banked when it ends, lost at a knock
@@ -1391,7 +1409,7 @@
     if (b > 0.2 && v > 8 && !P.air) { D.chain += v * b * dt * 10; D.calm = 0; }
     else if (D.chain > 0 && (D.calm += dt) > 0.6) { D.pts += D.chain; D.best = Math.max(D.best, D.chain); D.chain = 0; D.calm = 0; }
   }
-  const schoolOpts = (L) => ({ numAI: 0, playerGrid: 1, laps: L.id === 'line' ? 1 : 99, playerModel: modelById(SCHOOL_CAR), playerUpg: upgNorm(null), playerSetup: { wing: 1, gear: 1 }, playerColor: PLAYER_COLORS[S.color], playerNum: carNum(),
+  const schoolOpts = (L) => ({ numAI: 0, playerGrid: 1, laps: L.id === 'line' ? 1 : 99, playerModel: modelById(L.lot ? LOT_CAR : SCHOOL_CAR), playerUpg: upgNorm(null), playerSetup: { wing: 1, gear: 1 }, playerColor: PLAYER_COLORS[S.color], playerNum: carNum(),
     seed: 1, difficulty: 1, assist: S.assist, damage: 0, phys: physOf(), rain: 0 });
   function placeAt(c, T, s) {   // (the braking lesson: the car standing at s on the ideal line)
     const i = T.idx(s), off = T.rl[i];
@@ -1401,7 +1419,7 @@
   const schoolRefs = {};
   function schoolRef(L) {   // the autopilot's run of the lesson: the start's 100 m time, the line's lap time, the drift's points (cached)
     const key = schoolKey(L) + '@' + S.assist; if (schoolRefs[key] != null) return schoolRefs[key];
-    if (L.id === 'brake') return (schoolRefs[key] = 0);
+    if (L.id === 'brake' || L.lot) return (schoolRefs[key] = 0);
     const T = getTrack(L.track), r = new Core.Race(T, schoolOpts(L)), P = r.player, D = { pts: 0, chain: 0, calm: 0, best: 0, lost: 0 };
     r.start(); const s0 = P.q.s; let t = 0, v = NaN;
     while (t < 240) {
@@ -1414,25 +1432,40 @@
   }
   function schoolMedals(L) {   // [gold, silver, bronze]
     const r = schoolRef(L), r10 = (x) => Math.max(10, Math.round(x / 10) * 10);
-    return L.id === 'start' ? [r + 0.3, r + 0.5, r + 0.9] : L.id === 'brake' ? [1, 3, 8] : L.id === 'line' ? [75, 55, 35] : [r10(r * 1.15), r10(r * 0.85), r10(r * 0.5)];
+    return L.lot ? L.lot.medals.slice() : L.id === 'start' ? [r + 0.3, r + 0.5, r + 0.9] : L.id === 'brake' ? [1, 3, 8] : L.id === 'line' ? [75, 55, 35] : [r10(r * 1.15), r10(r * 0.85), r10(r * 0.5)];
   }
   function schoolMedal(L, v) { if (v == null || !Number.isFinite(v)) return -1; const m = schoolMedals(L), lo = schoolLower(L); for (let k = 0; k < 3; k++) if (lo ? v <= m[k] : v >= m[k]) return k; return -1; }
-  const schoolVal = (L, v) => !Number.isFinite(v) ? '–' : L.id === 'start' ? Lang.dec(v.toFixed(2)) + ' s' : L.id === 'brake' ? Lang.dec(v.toFixed(2)) + ' m' : L.id === 'line' ? Math.round(v) + ' %' : numDot(Math.round(v)) + tr(' točk');
+  const schoolVal = (L, v) => !Number.isFinite(v) ? '–' : L.lot || L.id === 'start' ? Lang.dec(v.toFixed(2)) + ' s' : L.id === 'brake' ? Lang.dec(v.toFixed(2)) + ' m' : L.id === 'line' ? Math.round(v) + ' %' : numDot(Math.round(v)) + tr(' točk');
   function buildSchoolScreen() {
-    $('school-list').innerHTML = SCHOOL.map(L => { const m = schoolMedals(L), R = schoolRec(L), lo = schoolLower(L);
-      return '<div class="sch' + (R.medal === 0 ? ' gold' : '') + '"><div class="sch-h"><b>' + esc(tr(L.name)) + '</b><span class="sch-m">' + (R.medal >= 0 ? MEDAL_ICON[R.medal] : '') + '</span></div>' +
-        '<p>' + esc(tr(L.goal)) + '</p><p class="sch-t">' + m.map((x, k) => MEDAL_ICON[k] + ' ' + (lo ? '\u2264 ' : '\u2265 ') + schoolVal(L, x)).join(' \u00b7 ') + '</p>' +
-        '<p class="sch-b">' + tr('Tvoj najboljši: {0}', schoolVal(L, R.best)) + '</p><button class="btn mini primary" data-act="school-go" data-lesson="' + L.id + '">' + tr('Začni') + '</button></div>'; }).join('');
+    $('school-list').innerHTML = SCHOOL.map((L, k) => { const m = schoolMedals(L), R = schoolRec(L), lo = schoolLower(L);
+      const head = L.lot && L.n === 1 ? '<p class="ltab-h">' + esc(tr('Parkirišče · {0}', Core.MODELS.find(x => x.id === LOT_CAR).name)) + '</p>' : !L.lot && SCHOOL[k - 1] && SCHOOL[k - 1].lot ? '<p class="ltab-h">' + esc(tr('Dirkališča · {0}', Core.MODELS.find(x => x.id === SCHOOL_CAR).name)) + '</p>' : '';   // (the missions on the parking lot, then the lessons on the circuits)
+      return head + '<div class="sch' + (R.medal === 0 ? ' gold' : '') + '"><div class="sch-h"><b>' + (L.lot ? L.n + '. ' : '') + esc(schName(L)) + '</b><span class="sch-m">' + (R.medal >= 0 ? MEDAL_ICON[R.medal] : '') + '</span></div>' +
+        '<p>' + esc(schGoal(L)) + '</p><p class="sch-t">' + m.map((x, k) => MEDAL_ICON[k] + ' ' + (lo ? '\u2264 ' : '\u2265 ') + schoolVal(L, x)).join(' \u00b7 ') + '</p>' +
+        '<p class="sch-b">' + tr('Tvoj najboljši: {0}', schoolVal(L, R.best)) + '</p><div class="sch-go"><button class="btn mini primary" data-act="school-go" data-lesson="' + L.id + '">' + tr('Začni') + '</button>' +
+        (L.lot ? '<button class="btn mini" data-act="school-demo" data-lesson="' + L.id + '">' + tr('Pokaži') + '</button>' : '') + '</div></div>'; }).join('');
   }
-  function schoolGo(id) {
+  function schoolGo(id, demo) {   // (demo: the instructor drives the mission, Core.lessonPilot)
     const L = SCHOOL.find(x => x.id === id); if (!L) return;
     Comm.unlock(); champRun = false; qual = null;
-    ensureTrack(L.track, () => { school = { L }; newRace(); });
+    ensureTrack(L.track, () => { school = { L, demo: !!(demo && L.lot) }; newRace(); });
   }
+  // the marks of a mission on the parking lot (Render.setMarks)
+  const lotMarks = (M) => [{ kind: 'zone', x: M.zone[0], z: M.zone[1], h: M.zone[2], len: M.zone[3], wid: M.zone[4] }].concat(M.cones ? [{ kind: 'spots', pts: M.cones }] : [],
+    (M.gates || []).map(([a, b]) => ({ kind: 'gate', x0: M.cones[a][0], z0: M.cones[a][1], x1: M.cones[b][0], z1: M.cones[b][1] })));   // (its box, a ring where each cone stands, a line across each gate)
+  const lotNote = (r) => r.ok ? tr('Misija opravljena v {0} s.', Lang.dec(r.t.toFixed(2))) + (r.cones ? tr(' Podrti stožci: {0} (+{1} s).', r.cones, r.cones * Core.LESSON.cone) : '') :
+    tr(r.why === 'curb' ? 'Avto je zadel robnik.' : r.why === 'car' ? 'Avto se je dotaknil parkiranega avtomobila.' : r.why === 'gate' ? 'Avto je zgrešil vrata.' : r.why === 'slalom' ? 'Avto je obvozil stožec po napačni strani.' : r.why === 'stay' ? 'Avto je zapustil hodnik med stožci.' : 'Čas je potekel.');
   function schoolStep(P, dt, inp) {   // (after each physics step)
     const s = school, L = s.L, T = track; if (s.done) return;
     if (phase === 'lights' && L.id === 'start' && inp && inp.thr > 0.5) { schoolEnd(null, tr('Prehiter štart: plin je bil pritisnjen, preden so ugasnile luči.')); return; }
     if (phase !== 'racing') return;
+    if (L.lot) {   // a mission on the parking lot: its rules (Core.Lesson); a beep for each gate and slalom cone passed, a loop done; a cone knocked: its 2 s
+      const M = s.M, r = M.step(), g = M.gate + M.sl + M.loop.filter(Boolean).length;
+      if (g > (s.gp || 0)) { s.gp = g; Sfx.beep(880, 0.06, 0.08); }
+      if (M.knocked > (s.kn || 0)) { s.kn = M.knocked; showMsg(tr('STOŽEC +{0} s', Core.LESSON.cone), 'slow', 0.9); }
+      s.live = race.time;
+      if (r) schoolEnd(r.ok ? r.v : null, lotNote(r));
+      return;
+    }
     if (s.s0 == null) s.s0 = P.q.s;
     const d = wrapD(P.q.s - s.s0, T.len);
     if (L.id === 'start') { s.live = d; if (d >= 100) schoolEnd(race.time, tr('100 m v {0} s po tem, ko so ugasnile luči.', Lang.dec(race.time.toFixed(2)))); }
@@ -1458,6 +1491,12 @@
   }
   function schoolHUD() {   // the lesson's line at the top: what to do, how it goes
     const s = school, L = s && s.L; if (!L) return;
+    if (L.lot) {   // the mission's number, its clock with the penalties, what is to do next
+      const M = s.M, t = phase === 'racing' || phase === 'done' ? race.time : 0, nd = M.need, Lm = L.lot;
+      setText('h-school', tr('{0}/{1} · {2} s', L.n, LOT.lessons.length, Lang.dec(t.toFixed(1))) + (M.knocked ? tr(' · +{0} s', M.knocked * Core.LESSON.cone) : '') + ' · ' + (nd === 'gate' ? tr('VRATA {0}/{1}', M.gate + 1, Lm.gates.length) :
+        nd === 'slalom' ? tr('SLALOM {0}/{1}', M.sl + 1, Lm.slalom.cones.length) : nd === 'around' ? tr('OKOLI STOŽCA') : M.inZone ? tr('USTAVI') : tr('V POLJE')));
+      return;
+    }
     const v = s.live, txt = L.id === 'start' ? (phase === 'racing' ? tr('ŠTART · {0} s · {1} m', Lang.dec(race.time.toFixed(2)), Math.max(0, Math.round(v || 0))) : tr('ŠTART · plin šele, ko ugasnejo luči')) :
       L.id === 'brake' ? tr('ZAVIRANJE · do črte STOP {0} m', v == null ? BRAKE_RUN : Math.max(0, Math.round(v))) : L.id === 'line' ? tr('LINIJA · na liniji {0} %', Math.round(v == null ? 100 : v)) :
       tr('DRIFT · {0} točk · {1} s', numDot(Math.round(v || 0)), Math.max(0, Math.ceil(SCHOOL_DRIFT_T - (phase === 'racing' ? race.time : 0))));
@@ -1466,21 +1505,23 @@
   function schoolEnd(v, note) {
     const s = school, L = s.L; s.done = true;
     phase = 'done'; Sfx.setRunning(false); Input.setOptions({ autoGas: !!S.autoGas });
-    const m = schoolMedal(L, v), R = schoolRec(L), lo = schoolLower(L), better = Number.isFinite(v) && (!Number.isFinite(R.best) || (lo ? v < R.best : v > R.best));
-    if (better || (m >= 0 && (R.medal < 0 || m < R.medal))) { schoolData[schoolKey(L)] = { best: better ? v : R.best, medal: R.medal < 0 ? m : m < 0 ? R.medal : Math.min(R.medal, m) }; try { localStorage.setItem('tdgp-school', JSON.stringify(schoolData)); } catch (_) { } }
-    if (m === 0) { achGet('school'); if (SCHOOL.every(x => schoolRec(x).medal === 0)) achGet('schoolAll'); }
+    const m = schoolMedal(L, v), R = schoolRec(L), lo = schoolLower(L), better = !s.demo && Number.isFinite(v) && (!Number.isFinite(R.best) || (lo ? v < R.best : v > R.best));
+    if (!s.demo && (better || (m >= 0 && (R.medal < 0 || m < R.medal)))) { schoolData[schoolKey(L)] = { best: better ? v : R.best, medal: R.medal < 0 ? m : m < 0 ? R.medal : Math.min(R.medal, m) }; try { localStorage.setItem('tdgp-school', JSON.stringify(schoolData)); } catch (_) { } }   // (the instructor's run: nothing kept)
+    if (m === 0 && !s.demo) { achGet('school'); if (SCHOOL.every(x => schoolRec(x).medal === 0)) achGet('schoolAll'); }
+    if (L.lot && !s.demo && Number.isFinite(v) && SCHOOL.every(x => !x.lot || Number.isFinite(schoolRec(x).best))) achGet('schoolLot');
     showMsg(m === 0 ? tr('ZLATO!') : m === 1 ? tr('SREBRO!') : m === 2 ? tr('BRON!') : v == null ? tr('NEUSPEŠNO') : tr('BREZ MEDALJE'), m >= 0 ? 'gold' : 'slow', 2);
     Sfx.beep(m >= 0 ? 990 : 330, 0.2, 0.14);
     $('res-head').classList.remove('tt'); $('res-tt').classList.add('off'); $('res-laps').classList.add('off');
     $('res-pos').textContent = m >= 0 ? MEDAL_ICON[m] : '\u2013';
-    $('res-title').textContent = tr(m === 0 ? 'Zlata medalja!' : m === 1 ? 'Srebrna medalja!' : m === 2 ? 'Bronasta medalja!' : v == null ? 'Neuspešno' : 'Brez medalje');
-    $('res-sub').textContent = tr(L.name) + ': ' + note + (better && Number.isFinite(R.best) ? tr(' Nov osebni rekord!') : '') + achLine();
+    $('res-title').textContent = s.demo ? tr('Prikaz inštruktorja') : tr(m === 0 ? 'Zlata medalja!' : m === 1 ? 'Srebrna medalja!' : m === 2 ? 'Bronasta medalja!' : v == null ? 'Neuspešno' : 'Brez medalje');
+    $('res-sub').textContent = schName(L) + ': ' + note + (better && Number.isFinite(R.best) ? tr(' Nov osebni rekord!') : '') + achLine();
     const M = schoolMedals(L), cur = schoolRec(L);
     $('res-table').querySelector('thead').innerHTML = '<tr><th>' + tr('Medalja') + '</th><th>' + tr('Cilj') + '</th></tr>';   // (two columns: a phone upright hides the third)
     $('res-table').querySelector('tbody').innerHTML = M.map((x, k) => '<tr' + (k === m ? ' class="me"' : '') + '><td>' + MEDAL_ICON[k] + ' ' + tr(['Zlato', 'Srebro', 'Bron'][k]) + '</td><td>' + (lo ? '\u2264 ' : '\u2265 ') + schoolVal(L, x) + '</td></tr>').join('') +
       '<tr><td>' + tr('Tvoj rezultat') + '</td><td>' + schoolVal(L, v) + '</td></tr><tr><td>' + tr('Tvoj najboljši') + '</td><td>' + schoolVal(L, cur.best) + '</td></tr>';
-    $('res-restart').dataset.act = 'restart'; $('res-restart').textContent = tr('Ponovi vajo'); $('res-replay').classList.add('off'); $('res-school').classList.remove('off');
+    $('res-restart').dataset.act = 'restart'; $('res-restart').textContent = tr(s.demo ? 'Poskusi sam' : 'Ponovi vajo'); $('res-replay').classList.add('off'); $('res-school').classList.remove('off');
     showScreen('results');
+    s.demo = false;   // (Poskusi sam after the instructor's run: the player's own)
   }
 
   function buildStatsScreen() {
@@ -1934,9 +1975,12 @@
     recStep();
     const P = race.player;
     const pol = race.pol, hold = pol && (pol.hold || (pol.stage === 'check' && /^(stopped|walk|docs)$/.test(pol.chk.st) && !(inp.gas > 0) && !autoDrive));   // (the police: parked, arrested, in the building; stopped at the officer: the foot on the brake unless on the gas itself (Samodejni plin: the gas pressed to drive off))
-    if (((phase === 'finish' || phase === 'done') && (race.timeTrial || P.busted)) || hold) { P.inThr = 0; P.inBrk = 1; P.inSteer = 0; P.inHand = 0; P.digitalSteer = false; }   // time trial: brake to a stop past the finish (the road ends); busted by the police: stays where they stopped it
+    if (((phase === 'finish' || phase === 'done') && (race.timeTrial || P.busted)) || hold) { P.inThr = 0; P.inBrk = 1; P.inSteer = 0; P.inHand = 0; P.digitalSteer = false; }
+    else if (phase === 'done' && school && school.L.lot) { const rv = P.gear === -1; P.inThr = 0; P.inBrk = rv ? 0 : 1; P.inHand = rv ? 1 : 0; P.inSteer = 0; P.noReverse = true; P.digitalSteer = false; }   // (a mission over: the car stops where it is)   // time trial: brake to a stop past the finish (the road ends); busted by the police: stays where they stopped it
     else if (phase === 'finish' || phase === 'done' || autoDrive) { P.pitWant = !!P.inPit; Core.aiControl(P, race, dt); P.digitalSteer = false; }   // (autoDrive: automated tests of online races drive in real time)
-    else { P.inSteer = inp.steer; P.inThr = inp.thr; P.inBrk = inp.brk; P.inHand = inp.hand; P.digitalSteer = inp.digital; }
+    else if (school && school.demo && phase === 'racing') { Core.lessonPilot(P, school.L.lot, school.pst); P.digitalSteer = false; }   // (the driving school: the instructor drives the mission)
+    else { P.inSteer = inp.steer; P.inThr = inp.thr; P.inBrk = inp.brk; P.inHand = inp.hand; P.digitalSteer = inp.digital;
+      if (school && school.L.lot && P.gear === -1 && P.inThr > 0.1 && P.vl > -1 && P.vl < -0.05) { P.inThr = 0; P.inHand = 1; } }   // (the parking lot: the throttle stops a car rolling slowly back before it puts it in first)
     race.step(dt);
     twMark(); stDrive(P, dt);
     if (school) schoolStep(P, dt, inp);
@@ -2920,7 +2964,7 @@
     // wrong way
     if (phase === 'racing') {
       if (P.wrongT > 1.1) { if ($('h-msg').textContent !== tr('NAPAČNA SMER!')) showMsg(tr('NAPAČNA SMER!'), 'warn', 0.5); else msgT = 0.4; }
-      const stuck = (P.stuckT > 2.5 || P.wrongT > 4) && !(race.pol && (race.pol.hold || race.pol.stage === 'check'));   // (stopped at the police checkpoint on purpose: no rescue)
+      const stuck = (P.stuckT > 2.5 || P.wrongT > 4) && !(race.pol && (race.pol.hold || race.pol.stage === 'check')) && !track.lot;   // (the parking lot: standing still is part of it, no rescue)   // (stopped at the police checkpoint on purpose: no rescue)
       $('btn-rescue').classList.toggle('off', !stuck);
     }
     if (P.pitState === 'repair' && P.pitDur > 0) { const pct = Math.min(99, Math.floor(P.pitT / P.pitDur * 100)); const txt = tr('POPRAVILO {0} %', pct); if ($('h-msg').textContent !== txt) { $('h-msg').textContent = txt; $('h-msg').className = 'show gold'; } msgT = 0.3; }
@@ -3597,10 +3641,11 @@
     if (bg === 'demo') {
       if (demoOn() !== demoAt) demoShow();   // (a new demo on the menus, e.g. an online race's track loaded)
       acc += dt; let n = 0;
-      while (acc >= STEP && n < 8) { demo.step(STEP); for (const c of demo.cars) { c.hitWall = 0; c.hitCar = 0; } acc -= STEP; n++; }
+      while (acc >= STEP && n < 8) { const D = demo.lot; if (D) { const P = demo.player; P.digitalSteer = false; if (Core.lessonPilot(P, D.L, D.st) && P.speed < 0.05) { Core.Lesson.place(P, track, D.L); D.st = {}; } }   // (the parking lot: the instructor's run)
+        demo.step(STEP); for (const c of demo.cars) { c.hitWall = 0; c.hitCar = 0; } acc -= STEP; n++; }
       if (n >= 8) acc = 0;
       demoSwitch -= dt;
-      if (!demoTarget || demoSwitch <= 0) { demoTarget = demo.order ? demo.order[(Math.random() * 4) | 0] : demo.cars[0]; demoSwitch = 9; }
+      if (!demoTarget || demoSwitch <= 0) { demoTarget = demo.order ? demo.order[(Math.random() * Math.min(4, demo.order.length)) | 0] : demo.cars[0]; demoSwitch = 9; }
       Render.frame(dt, acc / STEP, demoTarget, 'iso', {});
       if (screen === 'settings') updateTiltLive();
       return;
@@ -3691,6 +3736,7 @@
       case 'to-stats': buildStatsScreen(); showScreen('stats'); break;
       case 'to-school': if (race) toTitle(); buildSchoolScreen(); showScreen('school'); break;
       case 'school-go': schoolGo(el && el.dataset.lesson); break;
+      case 'school-demo': schoolGo(el && el.dataset.lesson, true); break;
       case 'gh-link': case 'gh-file': ghShare(boardId, act === 'gh-link' ? 'link' : 'file'); break;
       case 'gh-import': pickFile(ghImport); break;
       case 'gh-del': try { localStorage.removeItem('tdgp-fghost-' + boardId); } catch (_) { } buildBoardScreen(); break;
@@ -3886,7 +3932,8 @@
         radioPlace: (d, k) => track ? rdWhere(track.startS + d, k == null ? -1 : k).concat([rdSpeech(rdWhere(track.startS + d, k == null ? -1 : k)[0])]) : null,   // where d m after the start line is as the police say it, and as the voice reads it)
         sim(sec, auto, steer) { pkFlySkip(); /* (a simulated race starts without Pikes Peak's flyover) */ const inp = { steer: steer || 0, thr: 1, brk: 0, hand: 0, gas: 1, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; inp.gas = inp.thr > 0.05 ? 1 : 0; } if (phase !== 'done') updatePhase(STEP, inp); stepRace(STEP, inp); } },
         drive(sec, f) { pkFlySkip(); const inp = { steer: 0, thr: 0, brk: 0, hand: 0, digital: true }; for (let t = 0; t < sec && race && phase !== 'done'; t += STEP) { Core.aiControl(race.player, race, STEP); const o = f(race.player, school && school.live, phase) || {}; inp.steer = race.player.inSteer; inp.thr = o.thr || 0; inp.brk = o.brk || 0; updatePhase(STEP, inp); stepRace(STEP, inp); } },   // (tests: the autopilot's steering, the throttle and the brake given)
-        get school() { return school && { id: school.L.id, live: school.live, done: !!school.done }; }, schoolMedals: (id) => { const L = SCHOOL.find(x => x.id === id); return L && { m: schoolMedals(L), ref: schoolRef(L), rec: schoolRec(L) }; } };
+        pilot(sec) { const st = {}; for (let t = 0; t < sec && race && school && school.L.lot && phase !== 'done'; t += STEP) { const P = race.player; Core.lessonPilot(P, school.L.lot, st); updatePhase(STEP, { steer: P.inSteer, thr: P.inThr, brk: P.inBrk, hand: P.inHand, digital: false }); stepRace(STEP, { steer: P.inSteer, thr: P.inThr, brk: P.inBrk, hand: P.inHand, digital: false }); } },   // (tests: a mission on the parking lot driven as the player, with the instructor's inputs)
+        get school() { return school && { id: school.L.id, live: school.live, done: !!school.done, demo: !!school.demo, lot: school.M ? { need: school.M.need, knocked: school.M.knocked, inZone: school.M.inZone, res: school.M.res } : null }; }, schoolMedals: (id) => { const L = SCHOOL.find(x => x.id === id); return L && { m: schoolMedals(L), ref: schoolRef(L), rec: schoolRec(L) }; } };
     } catch (e) {
       console.error(e);
       $('ld-msg').textContent = tr('Napaka pri zagonu: {0}', e.message);

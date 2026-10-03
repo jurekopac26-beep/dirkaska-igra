@@ -336,6 +336,7 @@ input[type=range] { width: 160px; accent-color: var(--curb); }
   #h-kmh { font-size: clamp(8px, 2.2vw, 10px); }
   #h-note { top: 30%; width: clamp(44px, 13vw, 60px); height: clamp(44px, 13vw, 60px); margin-left: calc(clamp(44px, 13vw, 60px) / -2); }
   #h-lights { top: 36%; }
+  #hud.school #h-school { top: calc(env(safe-area-inset-top, 0px) + clamp(92px, 27vw, 128px)); }   /* (below the speedometer) */
   #h-lights i { width: clamp(18px, 6vw, 30px); height: clamp(18px, 6vw, 30px); }
   #h-msg { font-size: clamp(24px, 9vw, 44px); top: 44%; }
   .steer { width: clamp(60px, 19vw, 92px); height: clamp(60px, 19vw, 92px); bottom: calc(18px + var(--sb)); }
@@ -640,6 +641,8 @@ select.txt:disabled { opacity: .75; }
   font: 700 italic clamp(11px, 3vh, 15px)/1.2 var(--f-ui); color: #fff; white-space: nowrap; letter-spacing: .03em; pointer-events: none; }
 #hud.school #h-school { display: block; }
 #hud.school #h-rank > .h-lbl:first-child, #hud.school .h-rankrow, #hud.school #h-lap, #hud.school #h-sec, #hud.school #h-best { display: none; }
+#hud.lot #h-map, #hud.lot #h-note, #hud.lot #h-tower, #hud.lot #h-time { display: none; }   /* (the parking lot: no map of a loop, no corners, no race clock: the mission's line has its own) */
+.sch-go { display: flex; gap: 6px; flex-wrap: wrap; }
 .st-cell { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; border-radius: 8px; background: rgba(255, 255, 255, .06); }
 .st-cell b { font: 700 italic clamp(14px, 4vh, 19px)/1.1 var(--f-ui); color: var(--meter); font-variant-numeric: tabular-nums; }
 .st-cell span { font: 600 clamp(10px, 2.7vh, 12px)/1.2 var(--f-ui); opacity: .75; }

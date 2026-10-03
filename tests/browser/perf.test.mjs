@@ -2,15 +2,18 @@
 // autopilot and the WebGL work per frame is counted (draw calls and vertices of all passes: shadows and scene) at six
 // places around the lap. Fails when the busiest of them needs more than tests/golden/perf.json allows (+10 % +5 draw
 // calls, +10 % +20k vertices), e.g. a change that makes a track or car too heavy for phones. The JavaScript time of
-// physics+AI and of the render-side updates is only printed (it depends on the machine).
+// physics+AI and of the render-side updates is only printed (it depends on the machine). The driving school's parking lot (not in the
+// track menu) is measured too, on its final test driven by the instructor (Pokaži).
 //   node tests/browser/perf.test.mjs            check
 //   node tests/browser/perf.test.mjs --update   write new reference values
+//   node tests/browser/perf.test.mjs --update --only=parkirisce   measure only these (the others kept as they are in perf.json)
 import fs from 'node:fs';
 import path from 'node:path';
 import { REPO, serve, launch, openGame, startTrack, trackIds, checker } from './lib.mjs';
 
 const FILE = path.join(REPO, 'tests', 'golden', 'perf.json');
 const update = process.argv.includes('--update');
+const only = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7).split(',').filter(Boolean);
 const golden = fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, 'utf8')) : {};
 const T = checker('phone budget (844x390, normal quality, shadows)');
 const srv = await serve();
@@ -25,9 +28,13 @@ try {
     wrap('drawElements', a => a[1]); wrap('drawArrays', a => a[2]);
     wrap('drawElementsInstanced', a => a[1] * a[4]); wrap('drawArraysInstanced', a => a[2] * a[3]);
   });
-  for (const id of await trackIds(page)) {
-    await startTrack(page, id);
-    const r = await page.evaluate(() => {
+  const SCHOOL = ['parkirisce'];   // (the school's grounds: their last mission, the instructor driving)
+  for (const id of (await trackIds(page)).concat(SCHOOL).filter(id => !only.length || only.includes(id))) {
+    const school = SCHOOL.includes(id);
+    if (school) await page.evaluate(async () => { const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)); g.onAction('to-title'); await wait(250); g.onAction('to-school'); await wait(250);
+      const b = [...document.querySelectorAll('[data-act="school-demo"]')].pop(); g.onAction('school-demo', b); for (let k = 0; k < 1200 && !(g.race && g.race.track.def.id === 'parkirisce'); k++) await wait(100); await wait(300); });
+    else await startTrack(page, id);
+    const r = await page.evaluate((school) => {
       // a fresh race with Math.random seeded, paused at once: nothing moves by itself, the race is stepped and drawn only
       // here, in one go, so the counts are the same every run
       const g = window.__game; let seed = 12345; Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
@@ -35,7 +42,7 @@ try {
       const P = g.race.player, s = [];
       let tPhys = 0, tRend = 0;
       for (let k = 0; k < 6; k++) {
-        const dt = Math.min(30, g.race.track.len / 45 / 6); for (let i = 0; i < dt; i++) g.sim(1, true);
+        const dt = school ? 4 : Math.min(30, g.race.track.len / 45 / 6); for (let i = 0; i < dt; i++) g.sim(1, !school);   // (the school: its instructor drives)
         Render.resetCam(); for (let i = 0; i < 10; i++) Render.frame(1 / 60, 1, P, g.S.camera, {});   // the camera settles
         const c0 = __gl.calls, v0 = __gl.verts; Render.frame(1 / 60, 1, P, g.S.camera, {}); s.push([__gl.calls - c0, __gl.verts - v0]);
         let t0 = performance.now(); for (let i = 0; i < 30; i++) g.sim(1 / 60, true); tPhys += performance.now() - t0;
@@ -44,7 +51,7 @@ try {
       const c = s.map(x => x[0]), v = s.map(x => x[1]);
       return { calls: Math.round(c.reduce((a, b) => a + b) / c.length), maxCalls: Math.max(...c), kverts: Math.round(v.reduce((a, b) => a + b) / v.length / 1000), maxKverts: Math.round(Math.max(...v) / 1000),
         jsMs: +((tPhys + tRend) / 180).toFixed(2) };
-    });
+    }, school);
     out[id] = r;
     const g = golden[id], line = `calls/frame ${r.calls} (max ${r.maxCalls}), vertices/frame ${r.kverts}k (max ${r.maxKverts}k), JS ${r.jsMs} ms/frame`;
     if (update) { console.log(`${id.padEnd(10)} ${line}`); continue; }
@@ -58,5 +65,5 @@ try {
 } finally {
   await browser.close(); await srv.close();
 }
-if (update) { fs.writeFileSync(FILE, JSON.stringify(out, null, 1) + '\n'); console.log('written ' + FILE); }
+if (update) { fs.writeFileSync(FILE, JSON.stringify(only.length ? Object.assign({}, golden, out) : out, null, 1) + '\n'); console.log('written ' + FILE); }
 else T.done();

@@ -1,4 +1,7 @@
-// The driving school (Šola vožnje) and the racing line helper: the school's screen (four lessons, each with its medals and the best);
+// The driving school (Šola vožnje) and the racing line helper: the school's screen (the ten missions on the parking lot, numbered, each
+// with Začni and Pokaži, then the four lessons on the circuits, each with its medals and the best); a mission on the parking lot: the
+// instructor's run (Pokaži: its box and cone rings on the lot, the HUD's line, no map; done, nothing kept), then the player's own (Poskusi
+// sam, driven with the instructor's inputs: gold, kept), a run into the parked cars (Neuspešno);
 // the start: the throttle before the lights go out is a jump start, after them the time to 100 m against its medals; braking to a mark
 // on the Red Bull Ring's straight (the STOP line and its boards): over the line, too slow past the 100 m board, and a stop half a metre
 // short of it (gold); the racing line: a lap on the autopilot on the line the helper draws (gold, the achievement), the result kept on the
@@ -29,9 +32,34 @@ try {
 
   // 1. the school's screen
   await act('to-school'); await page.waitForTimeout(300);
-  const s1 = await page.evaluate(() => [...document.querySelectorAll('.sch')].map(e => ({ name: e.querySelector('.sch-h b').textContent, t: e.querySelector('.sch-t').textContent, b: e.querySelector('.sch-b').textContent, go: !!e.querySelector('[data-act="school-go"]') })));
-  T.check('the school: four lessons (Štart, Zaviranje do oznake, Idealna linija, Drift), each its three medals and the best so far', s1.length === 4 && s1.map(x => x.name).join() === 'Štart,Zaviranje do oznake,Idealna linija,Drift' &&
-    s1.every(x => x.go && /🥇.*🥈.*🥉/.test(x.t) && x.b === 'Tvoj najboljši: –'), JSON.stringify(s1));
+  const s1 = await page.evaluate(() => [...document.querySelectorAll('.sch')].map(e => ({ name: e.querySelector('.sch-h b').textContent, t: e.querySelector('.sch-t').textContent, b: e.querySelector('.sch-b').textContent, go: !!e.querySelector('[data-act="school-go"]'), demo: !!e.querySelector('[data-act="school-demo"]') })));
+  const heads = await page.evaluate(() => [...document.querySelectorAll('#school-list .ltab-h')].map(e => e.textContent));
+  T.check('the school: the ten missions on the parking lot first (1. Speljevanje in ustavljanje .. 10. Končni preizkus, Začni and Pokaži), then the four lessons (Štart, Zaviranje do oznake, Idealna linija, Drift), each its three medals and the best so far',
+    s1.length === 14 && /^1\. Speljevanje in ustavljanje$/.test(s1[0].name) && /^10\. Končni preizkus$/.test(s1[9].name) && s1.slice(0, 10).every(x => x.demo) && s1.slice(10).map(x => x.name).join() === 'Štart,Zaviranje do oznake,Idealna linija,Drift' &&
+    !s1.slice(10).some(x => x.demo) && heads.join('|') === 'Parkirišče · PICO TURBO|Dirkališča · KAZE RS' && s1.every(x => x.go && /🥇.*🥈.*🥉/.test(x.t) && x.b === 'Tvoj najboljši: –'), JSON.stringify({ s1: s1.map(x => x.name), heads }));
+
+  // 1b. a mission on the parking lot: the instructor's run, then the player's own, then a run into the parked cars
+  const goLot = async (id, demo) => { await page.evaluate(([id, demo]) => window.__game.onAction(demo ? 'school-demo' : 'school-go', document.querySelector(`[data-act="${demo ? 'school-demo' : 'school-go'}"][data-lesson="${id}"]`)), [id, demo]);
+    await page.waitForFunction((id) => { const g = window.__game; return g.school && g.school.id === id && g.race && g.phase === 'intro'; }, id, { timeout: 60000 }); };
+  await goLot('pk5', true);
+  await toRacing();
+  const l0 = await page.evaluate(async () => { await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); const g = window.__game, h = document.getElementById('hud');
+    return { lot: h.classList.contains('lot'), map: getComputedStyle(document.getElementById('h-map')).display, line: document.getElementById('h-school').textContent, marks: Render.show.marks, cones: g.race.props.length, track: g.race.track.def.id, car: g.race.player.m.id, demo: g.school.demo }; });
+  await page.evaluate(() => { const g = window.__game; g.pause(); for (let k = 0; k < 60 && g.phase !== 'done'; k++) g.sim(1, false); });
+  const l1 = await res();
+  T.check('the parking lot: Pokaži, the slalom (its six cones, its box and the cone rings on the lot, the HUD\'s line, no map), the instructor drives it through', l0.lot && l0.map === 'none' && /^5\/10 · \d+,\d s · SLALOM 1\/6$/.test(l0.line) && l0.marks === 2 && l0.cones === 6 &&
+    l0.track === 'parkirisce' && l0.car === 'pico' && l0.demo && l1.title === 'Prikaz inštruktorja' && /^Slalom: Misija opravljena v \d+,\d\d s\.$/.test(l1.sub) && l1.again === 'Poskusi sam' && l1.school, JSON.stringify({ l0, l1 }));
+  await act('restart'); await toRacing();
+  await page.evaluate(() => { const g = window.__game; g.pause(); g.pilot(60); });
+  const l2 = await res(), t2 = num(/opravljena v ([\d,]+) s/, l2.sub);
+  T.check('the parking lot: Poskusi sam, the player\'s own run (the instructor\'s inputs): gold, its time on the results (Ponovi vajo)', l2.title === 'Zlata medalja!' && t2 > 8 && t2 <= 15 && l2.again === 'Ponovi vajo' && /^🥇 Zlato ≤ 15,00 s$/.test(l2.rows[0]), JSON.stringify(l2));
+  await act('to-school'); await goLot('pk7', false); await toRacing();
+  await page.evaluate(() => { const g = window.__game; g.pause(); for (let k = 0; k < 60 && g.phase !== 'done'; k++) g.sim(0.1, false, k > 8 ? -1 : 0); });   // (full throttle, then hard left into the parked cars)
+  const l3 = await res();
+  await act('to-school'); await page.waitForTimeout(200);
+  const s2 = await page.evaluate(() => [...document.querySelectorAll('.sch')].map(e => ({ gold: e.classList.contains('gold'), b: e.querySelector('.sch-b').textContent })));
+  T.check('the parking lot: into the parked cars: Neuspešno; back on the school\'s screen the instructor\'s run kept nothing, the player\'s slalom its gold and its best',
+    l3.title === 'Neuspešno' && /parkiranega avtomobila/.test(l3.sub) && s2[4].gold && /Tvoj najboljši: \d+,\d\d s/.test(s2[4].b) && s2[6].b === 'Tvoj najboljši: –' && !s2[6].gold, JSON.stringify({ l3: l3.sub, s2: [s2[4], s2[6]] }));
 
   // 2. the start: a jump start, then a proper one
   await go('start');
@@ -82,7 +110,7 @@ try {
   T.check('the racing line: the autopilot\'s lap nearly all on the line, in the time: gold, the achievement Učenec', li.title === 'Zlata medalja!' && /Na idealni liniji (9\d|100) % kroga/.test(li.sub) && ach.includes('school'), JSON.stringify({ li: li.sub, ach }));
   await act('to-school'); await page.waitForTimeout(200);
   const s4 = await page.evaluate(() => [...document.querySelectorAll('.sch')].map(e => ({ gold: e.classList.contains('gold'), b: e.querySelector('.sch-b').textContent, m: e.querySelector('.sch-m').textContent })));
-  T.check('back on the school\'s screen: the bests and the medals kept (the braking and the line gold)', s4[1].gold && s4[2].gold && /Tvoj najboljši: 0,\d\d m/.test(s4[1].b) && /Tvoj najboljši: (9\d|100) %/.test(s4[2].b) && s4[2].m === '🥇', JSON.stringify(s4));
+  T.check('back on the school\'s screen: the bests and the medals kept (the braking and the line gold)', s4[11].gold && s4[12].gold && /Tvoj najboljši: 0,\d\d m/.test(s4[11].b) && /Tvoj najboljši: (9\d|100) %/.test(s4[12].b) && s4[12].m === '🥇', JSON.stringify(s4.slice(10)));
 
   // 5. drift: 40 s on the autopilot
   await go('drift'); await toRacing();

@@ -229,5 +229,12 @@
   "kverts": 1530,
   "maxKverts": 1670,
   "jsMs": 0.87
+ },
+ "parkirisce": {
+  "calls": 67,
+  "maxCalls": 70,
+  "kverts": 207,
+  "maxKverts": 215,
+  "jsMs": 0.27
  }
 }

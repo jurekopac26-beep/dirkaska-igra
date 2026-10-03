@@ -28,7 +28,10 @@ const Core = (function () {
   // The track definitions (layout, heights, scenery anchors, named places) live in js/tracks/<id>.js, one file per track.
   // Each adds itself to TRACK_DEFS; index.html loads them before this file, in the order of the track menu. (In Node, load
   // Core with tests/lib/core.js, which reads the track files first; a plain require of this file gives a Core without tracks.)
-  const TRACKS = (typeof TRACK_DEFS !== 'undefined' ? TRACK_DEFS : []).slice();
+  // A def with school: true is a ground of the driving school (the parking lot): it is in SCHOOL_TRACKS, not in TRACKS (the menus, the
+  // championships, the races and their tests), and only the school drives there.
+  const DEFS = typeof TRACK_DEFS !== 'undefined' ? TRACK_DEFS : [];
+  const TRACKS = DEFS.filter(d => !d.school), SCHOOL_TRACKS = DEFS.filter(d => d.school);
   const TRACK_DEF = TRACKS.find(d => d.id === 'jezero'), PIKES_DEF = TRACKS.find(d => d.id === 'pikes');   // (exported by name)
 
   // centripetal Catmull-Rom through the control points. Closed loop by default; open = a road with two ends
@@ -105,6 +108,7 @@ const Core = (function () {
       this._buildEdges();
       this._buildRacingLine();
       this._buildCorners();
+      this._buildLot(def);
       // start line index: nearest sample to startX on main straight (first straight near z of point 0)
       let best = 0, bd = 1e9;
       for (let i = 0; i < N; i++) {
@@ -218,6 +222,28 @@ const Core = (function () {
       // side roads (def.sideRoads; open roads: the streets, service roads and forest roads that meet Vršič): see _buildStubs
       this.stubs = null; this.stubAt = null; this.stubNear = null; this.gap = null;
       if (def.sideRoads && def.sideRoads.length && open) this._buildStubs(def.sideRoads);
+    }
+
+    /* ---- a parking lot (def.lot = [x0, z0, x1, z1]: the asphalt between its curbs; the driving school's ground): one open surface of
+       asphalt, limited by its curbs all round (lotPen) instead of the barriers along a road (bl / br out of reach, no kerbs, no gravel), and
+       the parked cars standing in its bays solid (def.parked = [[x, z, heading], ...], each def.parkedSize = [length, width]: the boxes in
+       parked, Race._parked). The centre line (def.points) is only a loop round the lot for the progress and the camera ---- */
+    _buildLot(def) {
+      this.lot = null; this.parked = null;
+      if (!def.lot) return;
+      this.lot = def.lot.slice();
+      this.bl.fill(1e4); this.br.fill(1e4); this.curb.fill(0); this.gravL.fill(0); this.gravR.fill(0);
+      const sz = def.parkedSize || [4.3, 1.8];
+      this.parked = (def.parked || []).map(p => [p[0], p[1], p[2] || 0, sz[0], sz[1]]);
+    }
+    // how far a point (radius r) is past the lot's curbs (> 0: that far past one; <= 0: inside); n: the way back in
+    lotPen(x, z, r, n) {
+      const L = this.lot, a = L[0] + r - x, b = x - (L[2] - r), c = L[1] + r - z, d = z - (L[3] - r);
+      let pen = a; n[0] = 1; n[1] = 0;
+      if (b > pen) { pen = b; n[0] = -1; n[1] = 0; }
+      if (c > pen) { pen = c; n[0] = 0; n[1] = 1; }
+      if (d > pen) { pen = d; n[0] = 0; n[1] = -1; }
+      return pen;
     }
 
     /* ---- side roads ("stubs"): a car can turn off into one, the barrier open across its mouth (delineator posts there, a row of cones
@@ -353,6 +379,7 @@ const Core = (function () {
     // the shared limit (the props, the loose parts, the knocked vehicles, people): how far a point (radius r; negative: that far past) of a
     // query result is past the road's barriers, or out of the side road it is in (inside either: <= 0); n: the way back
     wall(q, r, n) {
+      if (this.lot) return this.lotPen(q.x, q.z, r, n);   // (a parking lot: its curbs)
       let pen = -1e9;
       if (!q.deep) { const sg = q.d > 0 ? 1 : -1; pen = Math.abs(q.d) - ((sg > 0 ? q.br : q.bl) - r); n[0] = -q.nx * sg; n[1] = -q.nz * sg; }
       if (q.k >= 0) { const ps = this.stubPen(q, r, _n2); if (ps <= 0) return Math.min(pen, ps); if (q.deep || ps < pen) { n[0] = _n2[0]; n[1] = _n2[1]; return ps; } }
@@ -876,6 +903,7 @@ const Core = (function () {
     // (def.setts), 8 cobbles in the rain; a road of several kinds (_buildSections): the width, the road's surface and the verge's at the query's
     // sample. A side road (q.k >= 0, past the road's own asphalt): asphalt, or makadam on a forest road, the gravel of the verge past its edge
     surface(q) {
+      if (this.lot) return 0;   // (a parking lot: asphalt from curb to curb)
       const wa = this.wa, d = q.d, ad = Math.abs(d), w = wa ? lerp(wa[q.a], wa[this.open ? Math.min(this.N - 1, q.a + 1) : (q.a + 1) % this.N], q.t) : this.w;
       if (ad <= w || (this.walk && ad <= w + this.walk[d > 0 ? 1 : 0][q.a])) {   // (a sidewalk: part of the road)
         if (this.settAt && this.settAt[q.a]) return this.inRain ? 8 : 7;
@@ -1651,6 +1679,7 @@ const Core = (function () {
     const lim = (q.d > 0 ? q.br : q.bl) - K.rh - (F && F.inset && !q.deep ? F.inset[q.i * 2 + (q.d > 0 ? 1 : 0)] : 0);   // barriers (with the catch fences above them; F.inset: solid scenery in front of them)
     let pen = q.deep ? -1e9 : Math.abs(q.d) - lim, nx = q.nx * Math.sign(q.d), nz = q.nz * Math.sign(q.d);
     if (q.k >= 0) { const ps = T.stubPen(q, K.rh, _wn); if (ps <= 0) pen = 0; else if (q.deep || ps < pen) { pen = ps; nx = -_wn[0]; nz = -_wn[1]; } }   // (a side road's limits)
+    if (T.lot) { pen = T.lotPen(b.x, b.z, K.rh, _wn); nx = -_wn[0]; nz = -_wn[1]; }   // (a parking lot: its curbs)
     if (pen > 0 && b.y - gy < 3.2) {
       b.x -= nx * pen; b.z -= nz * pen;
       const vn = b.vx * nx + b.vz * nz; if (vn > 0) { b.vx -= 1.35 * vn * nx; b.vz -= 1.35 * vn * nz; b.wy += (Math.random() - 0.5) * vn; }
@@ -1676,8 +1705,8 @@ const Core = (function () {
     if (b.vy > 8) b.vy = 8;                                                          // no trampoline bounces off a spinning edge
     if (touch) { const k = Math.max(0, 1 - 2.2 * dt), kv = Math.max(0, 1 - 1.4 * dt); b.wx *= k; b.wy *= k; b.wz *= k; b.vx *= kv; b.vz *= kv; }   // rolling resistance, scuffing
     else { const kv = Math.max(0, 1 - 0.25 * dt); b.vx *= kv; b.vz *= kv; }          // a little air drag
-    const arr = race.propBk, nb = arr.length;
-    for (let o = -1; o <= 1; o++) { const L = arr[(b.bk + o + nb) % nb]; for (let n = L.length - 1; n >= 0; n--) { const c = L[n]; if (c !== b && !c.dead) propPair(race, b, c); } }
+    const arr = race.propBk, nb = arr.length, sp = nb >= 3 ? 1 : 0;   // (a parking lot: all of them in one bucket)
+    for (let o = -sp; o <= sp; o++) { const L = arr[(b.bk + o + nb) % nb]; for (let n = L.length - 1; n >= 0; n--) { const c = L[n]; if (c !== b && !c.dead) propPair(race, b, c); } }
     const v2 = b.vx * b.vx + b.vy * b.vy + b.vz * b.vz, w2 = b.wx * b.wx + b.wy * b.wy + b.wz * b.wz;
     if (touch && v2 < 0.05 && w2 < 0.2) b.t += dt; else b.t = 0;
     if (b.t > 0.35 || (b.age > 20 && v2 < 1)) { b.sleep = true; b.vx = b.vy = b.vz = b.wx = b.wy = b.wz = 0; b.t = 0; }
@@ -1706,6 +1735,7 @@ const Core = (function () {
         else if (sl > trk.len - 0.5 && sl - (trk.len - 0.5) > pen) { pen = sl - (trk.len - 0.5); nx = -trk.tx[N - 1]; nz = -trk.tz[N - 1]; }
       }
       if (q.k >= 0) { const ps = trk.stubPen(q, 0, _wn); if (ps <= 0) pen = 0; else if (q.deep || ps < pen) { pen = ps; nx = _wn[0]; nz = _wn[1]; } }   // a side road: inside it no barrier; out of it its own limit (Track.stubPen)
+      if (trk.lot) { pen = trk.lotPen(px, pz, 0, _wn); nx = _wn[0]; nz = _wn[1]; }   // a parking lot: its curbs
       if (pen <= 0) continue;
       if (canFall && trk.dropAt && !(q.k >= 0) && trk.dropAt[q.d > 0 ? 1 : 0][q.i] && (q.d > 0 ? q.d > br : q.d < -q.bl)) {   // the edge of a drop: out over it at more than 2.5 m/s, the car goes over (slower, the shoulder's edge holds it)
         const vo = -((c.vx - c.w * wz) * nx + (c.vz + c.w * wx) * nz);
@@ -1736,7 +1766,7 @@ const Core = (function () {
         if (-vn > hit) { hit = -vn; hitK = k; hnx = nx; hnz = nz; }
       }
     }
-    if (hit > 0) { c.hitWall = Math.max(c.hitWall, hit); c.fxWall = Math.max(c.fxWall || 0, hit); }
+    if (hit > 0) { c.hitWall = Math.max(c.hitWall, hit); c.fxWall = Math.max(c.fxWall || 0, hit); if (trk.lot) c.curbHit = Math.max(c.curbHit || 0, hit); }   // (curbHit: the driving school's, see Lesson)
     if (hit > 2.5) {   // 36 km/h into the wall ≈ 21 %; which face hit follows from the wall direction seen from the car
       const fx = -(hnx * ch + hnz * sh), fz = -(-hnx * sh + hnz * ch), cx = c.corners[hitK][0], cz = c.corners[hitK][1];
       const side = Math.abs(fz) > Math.abs(fx) * 0.9;
@@ -3747,6 +3777,17 @@ const Core = (function () {
       if (this.track.open && this.opts.noPlayer) for (const c of this.cars) { c.relT = (c.grid - 1) * 0.5; if (c.relT > 0) c.locked = true; }
     }
 
+    // a parking lot's parked cars (Track.parked): a car pushed out of them as out of a wall (boxCollide); c.touchParked: how deep it went
+    // into one this step (the driving school's: a parked car touched, see Lesson)
+    _parked(c) {
+      for (const B of this.track.parked) {
+        const dx = B[0] - c.x, dz = B[1] - c.z; if (dx * dx + dz * dz > 49) continue;
+        const o = obbHit(c.x, c.z, c.h, c.m.len, c.m.wid, B[0], B[1], B[2], B[3], B[4]); if (!o) continue;
+        c.touchParked = Math.max(c.touchParked || 0, o.pen);
+        boxCollide(c, B[0], B[1], B[2], B[3], B[4]);
+      }
+    }
+
     // trackside props from the scenery builder: [{ kind, x, z, yaw, col }]; stacks get their tyres / bales ready (hidden) for when they burst.
     // floor(q): the verge's height relative to the road there (from the world builder; worlds whose verge drops away from the road edge)
     setProps(list, floor) {
@@ -3761,7 +3802,7 @@ const Core = (function () {
       }
       for (const k in cap) if (!slots[k]) slots[k] = 0;
       this.props = props; this.propSlots = slots; this.propCap = cap;
-      const nb = Math.max(1, Math.ceil(T.N / 6)); this.propBk = []; for (let k = 0; k < nb; k++) this.propBk.push([]);
+      const nb = T.lot ? 1 : Math.max(1, Math.ceil(T.N / 6)); this.propBk = []; for (let k = 0; k < nb; k++) this.propBk.push([]);   // (by the samples of the road; a parking lot: one bucket, near in the lot is not near along its loop)
       for (const b of props) if (!b.dead) this._bkPut(b);
     }
     _bkPut(b) { const k = Math.max(0, Math.floor(b.qi / 6)) % this.propBk.length; b.bk = k; this.propBk[k].push(b); }
@@ -3786,8 +3827,8 @@ const Core = (function () {
     stepProps(dt) {
       if (!this.props) return;
       const T = this.track, bk = this.propBk, nb = bk.length;
-      const hit = (c) => { if (!(c.q.i >= 0)) return; const k0 = Math.floor(c.q.i / 6);
-        for (let o = -1; o <= 1; o++) { const L = bk[(k0 + o + nb) % nb]; for (let n = L.length - 1; n >= 0; n--) { const b = L[n]; if (b && !b.dead) propCarHit(this, c, b); } } };
+      const sp = nb >= 3 ? 1 : 0, hit = (c) => { if (!(c.q.i >= 0)) return; const k0 = Math.floor(c.q.i / 6);
+        for (let o = -sp; o <= sp; o++) { const L = bk[(k0 + o + nb) % nb]; for (let n = L.length - 1; n >= 0; n--) { const b = L[n]; if (b && !b.dead) propCarHit(this, c, b); } } };
       for (const c of this.cars) hit(c);
       if (this.pol) for (const c of this.pol.cars) if (c.pol.mode !== 'gone') hit(c);   // (the patrol cars too: the cones across a side road they come out of)
       for (const b of this.props) if (!b.sleep && !b.dead) propStep(this, b, T, dt);
@@ -3844,6 +3885,7 @@ const Core = (function () {
       if (this.pol) this.pol.collide();
       if (T.def.pit) for (const c of cars) if (c.isPlayer || c.pitWant || c.inPit) this.pitStep(c, dt, true);   // which side of the pit wall the car is on (before the walls push it; AI: on the way in for tyres)
       for (const c of cars) if (!c.net && !c.fall) wallCollide(c, T, true);
+      if (T.parked) for (const c of cars) if (!c.net) this._parked(c);   // (a parking lot: its parked cars)
       if (T.def.pit) for (const c of cars) if (c.isPlayer || c.pitWant || c.inPit) this.pitStep(c, dt, false);  // speed limiter, stopping at the box, repair
       for (const c of cars) if (c.detach.length) { for (const name of c.detach) this.spawnDebris(c, name); c.detach.length = 0; }
       for (const c of cars) if (!c.net && !Number.isFinite(c.x + c.z + c.vx + c.vz + c.h + c.w + (c.y || 0))) { c.x = c.z = c.vx = c.vz = c.w = c.h = 0; c.y = 0; c.vy = 0; c.air = 0; c.q.s = c.goodS || 0; c.q.i = -1; this.rescue(c); }
@@ -3859,7 +3901,7 @@ const Core = (function () {
         c.dist += ds;
         if (T.open) this._progressOpen(c, q, ds, dt);
         const lapsDone = Math.floor(c.dist / T.len);
-        if (this.state !== 'grid' && !T.open) {
+        if (this.state !== 'grid' && !T.open && !T.lot) {   // (a parking lot: no laps)
           while (c.lap <= lapsDone && c.lap <= this.laps) {
             if (c.lap >= 1) { c.lapTimes.push(this.time - c.lapStart); }
             c.lapStart = this.time;
@@ -3871,7 +3913,7 @@ const Core = (function () {
         }
         if (this.drsLast) this._drs(c, ds, dt);
         if (this.secBest) this._sectors(c, ds, dt);   // (TV sectors: the Red Bull Ring's)
-        else if (!T.open && this.state !== 'grid') this._thirds(c);   // (elsewhere: the thirds of the lap)
+        else if (!T.open && !T.lot && this.state !== 'grid') this._thirds(c);   // (elsewhere: the thirds of the lap)
         if (c.ty && ds > 0 && this.state === 'racing') {   // tyre wear: 0.8 % a km, up to 4 % more a km in a full slide; rain tyres on a drying road 2.5 times as fast
           const W = this.wst, sl = Math.min(1, Math.abs(c.beta || 0) / 0.35);
           const K = tyreK(c.ty);
@@ -3902,7 +3944,7 @@ const Core = (function () {
         }
         // wrong way
         const fwd = Math.cos(c.h) * q.tx + Math.sin(c.h) * q.tz;
-        if (fwd < -0.2 && c.speed > 3 && !(q.k >= 0)) c.wrongT += dt; else c.wrongT = Math.max(0, c.wrongT - dt * 2);   // (in a side road no wrong way: it is a road of its own)
+        if (fwd < -0.2 && c.speed > 3 && !(q.k >= 0) && !T.lot) c.wrongT += dt; else c.wrongT = Math.max(0, c.wrongT - dt * 2);   // (in a side road no wrong way: it is a road of its own; on a parking lot none either)
         // a crowded pit lane (the lap the field comes in for fuel): a car knocked across it in the queue (its nose in a wall or a car, too slow
         // to steer out: the AI and the autopilot have no reverse gear) is pushed straight by the marshals where it stands, its stop still to come
         // (a rescue would cost it the stop; the player's car too, spared backing out of the jam)
@@ -4218,6 +4260,156 @@ const Core = (function () {
   }
 
   /* ---------------------------------------------------------------------
+     THE DRIVING SCHOOL'S MISSIONS on a parking lot (Track.lot, its def.lessons): the course and its rules, no DOM (game.js shows them).
+     A mission: start [x, z, heading] (the car standing there); cones [[x, z], ...] (knockable props: Lesson.props for Race.setProps, cone k
+     is race.props[k]); gates [[cone a, cone b], ...] to drive through in their order (crossing the line between the two cones; across its
+     line beside them, within three widths of the gate: a miss); slalom { cones: [k, ...], side: [-1 left | 1 right, ...], dir: [x, z] } (each
+     cone passed on its side of the direction dir, the car's middle LESSON.side m to that side at least, in order); around [[cone, dir],
+     ...] (a loop round the cone: 300 deg of turn round it, dir 1 clockwise on the map with north up, -1 the other way, 0 either; eight:
+     the two loops the opposite ways, a figure of eight); zone
+     [x, z, heading, length, width] (the end: the whole car inside it, standing still for LESSON.still s, after all the rest; face: the car's
+     heading there, within LESSON.face); stay [x0, z0, x1, z1] (the car's middle must not leave it); limit (s); medals [gold, silver,
+     bronze] (s); demo: the instructor's way through it (lessonPath, lessonPilot). The result (Lesson.res): ok with v = the time the car
+     stood still in the zone + LESSON.cone s for every cone knocked; not ok (why): 'curb' (into the curb harder than LESSON.curb m/s:
+     Car.curbHit), 'car' (a parked car touched at all: Car.touchParked), 'gate', 'slalom' (missed), 'stay' (out of the area), 'time' (over
+     the limit)
+     --------------------------------------------------------------------- */
+  const LESSON = { still: 0.5, stillV: 0.25, cone: 2, curb: 0.6, touch: 1e-4, face: 30 * Math.PI / 180, loop: 300 * Math.PI / 180, moved: 0.1, miss: 3, side: 0.4 };   // (touch: any overlap with a parked car is a touch, however slow; side: a slalom cone passed with the car's middle at least that far to its side)
+  // all four corners of a box (centre, heading, length, width) inside a zone [x, z, heading, length, width]
+  function boxInZone(x, z, h, len, wid, Z) {
+    const ch = Math.cos(h), sh = Math.sin(h), zc = Math.cos(Z[2]), zs = Math.sin(Z[2]);
+    for (const [a, b] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+      const px = x + ch * a * len / 2 - sh * b * wid / 2 - Z[0], pz = z + sh * a * len / 2 + ch * b * wid / 2 - Z[1];
+      if (Math.abs(px * zc + pz * zs) > Z[3] / 2 || Math.abs(-px * zs + pz * zc) > Z[4] / 2) return false;
+    }
+    return true;
+  }
+  class Lesson {
+    constructor(race, L) {
+      this.race = race; this.L = L;
+      this.gate = 0; this.sl = 0; this.knocked = 0; this.still = false; this.t0 = 0; this.done = false; this.res = null; this.inZone = false;
+      this.sweep = (L.around || []).map(() => 0); this.ang = (L.around || []).map(() => null); this.loop = (L.around || []).map(() => false);
+      this.hit = (L.cones || []).map(() => false);
+      const P = race.player; this.x = P.x; this.z = P.z;
+    }
+    // the mission's cones for Race.setProps, in its order
+    static props(L) { return (L.cones || []).map(([x, z], k) => ({ kind: 'cone', x, z, yaw: k * 1.3, col: 0 })); }
+    // the car standing on the mission's start
+    static place(c, T, L) { const [x, z, h] = L.start; c.place(x, z, h); c.q = T.query(x, z, -1, c.q); c.sPrev = c.q.s; c.dist = 0; c.curbHit = 0; c.touchParked = 0; }
+    get loopsDone() { const L = this.L, S = this.sweep; if (!this.loop.every(Boolean)) return false; return !L.eight || (S.length === 2 && S[0] * S[1] < 0); }
+    // what is still to do: 'gate', 'slalom', 'around' (the loops), 'zone' (into it and stand still)
+    get need() { const L = this.L; return L.slalom && this.sl < L.slalom.cones.length ? 'slalom' : this.gate < (L.gates || []).length ? 'gate' : !this.loopsDone ? 'around' : 'zone'; }
+    // where along a -> b the car's middle crossed the line through them this step (0..1: between them), or null
+    _cross(ax, az, bx, bz, x1, z1) {
+      const ex = bx - ax, ez = bz - az, s0 = (this.x - ax) * ez - (this.z - az) * ex, s1 = (x1 - ax) * ez - (z1 - az) * ex;
+      if ((s0 >= 0) === (s1 >= 0)) return null;
+      const f = s0 / (s0 - s1), cx = this.x + (x1 - this.x) * f, cz = this.z + (z1 - this.z) * f;
+      return ((cx - ax) * ex + (cz - az) * ez) / (ex * ex + ez * ez);
+    }
+    _end(ok, why) { this.done = true; this.res = ok ? { ok: true, v: this.t0 + LESSON.cone * this.knocked, t: this.t0, cones: this.knocked } : { ok: false, why, cones: this.knocked }; return this.res; }
+    // after each step of the race (racing): the rules; returns the result once it is over
+    step() {
+      if (this.done) return this.res;
+      const r = this.race, P = r.player, L = this.L, C = L.cones || [], x = P.x, z = P.z;
+      if (r.props) for (let k = 0; k < C.length; k++) { const b = r.props[k]; if (!this.hit[k] && b && (!b.sleep || Math.hypot(b.x - C[k][0], b.z - C[k][1]) > LESSON.moved)) { this.hit[k] = true; this.knocked++; } }
+      const curb = P.curbHit || 0, touch = P.touchParked || 0; P.curbHit = 0; P.touchParked = 0;
+      if (curb > LESSON.curb) return this._end(false, 'curb');
+      if (touch > LESSON.touch) return this._end(false, 'car');
+      const G = L.gates || [];
+      if (this.gate < G.length) { const [a, b] = G[this.gate], u = this._cross(C[a][0], C[a][1], C[b][0], C[b][1], x, z);
+        if (u != null) { if (u >= 0 && u <= 1) this.gate++; else if (u > -LESSON.miss && u < 1 + LESSON.miss) return this._end(false, 'gate'); } }
+      const S = L.slalom;
+      if (S && this.sl < S.cones.length) { const c = C[S.cones[this.sl]], dx = S.dir[0], dz = S.dir[1], a0 = (this.x - c[0]) * dx + (this.z - c[1]) * dz, a1 = (x - c[0]) * dx + (z - c[1]) * dz;
+        if (a0 < 0 && a1 >= 0) { const lat = (x - c[0]) * -dz + (z - c[1]) * dx; if (lat * S.side[this.sl] < LESSON.side) return this._end(false, 'slalom'); this.sl++; } }   // (straight over it is no side either)
+      (L.around || []).forEach(([k, dir], j) => { const a = Math.atan2(z - C[k][1], x - C[k][0]); if (this.ang[j] != null) this.sweep[j] += wrapPi(a - this.ang[j]); this.ang[j] = a;
+        const s = this.sweep[j]; if (dir > 0 ? s >= LESSON.loop : dir < 0 ? s <= -LESSON.loop : Math.abs(s) >= LESSON.loop) this.loop[j] = true; });
+      this.x = x; this.z = z;
+      if (L.stay && (x < L.stay[0] || x > L.stay[2] || z < L.stay[1] || z > L.stay[3])) return this._end(false, 'stay');
+      const Z = L.zone, faced = L.face == null || Math.abs(wrapPi(P.h - L.face)) <= LESSON.face;
+      this.inZone = !!Z && boxInZone(x, z, P.h, P.m.len, P.m.wid, Z);
+      if (this.inZone && faced && P.speed < LESSON.stillV && this.need === 'zone') { if (!this.still) { this.still = true; this.t0 = r.time; } if (r.time - this.t0 >= LESSON.still - 1e-9) return this._end(true); }
+      else this.still = false;
+      if (r.time > L.limit) return this._end(false, 'time');
+      return null;
+    }
+  }
+
+  /* ---- the instructor's way through a mission (def.lessons[k].demo): segments [dir (1 forward, -1 backward), speed (m/s), ...moves] from
+     the start, each a run that ends standing; a move 'L', metres (straight on), 'A', radius, degrees (an arc turning the car that much,
+     + clockwise on the map) or 'C', x, z, x, z, ... (a smooth curve through those points, leaving along the car's heading). lessonPath: the points every 0.25 m of each segment (cached); lessonPilot: drives a car along them (pure pursuit
+     forward or backward, the speed easing into the end of each segment; a reversing car stopped with the handbrake), for the tests and
+     the instructor's run ---- */
+  const _lp = new WeakMap(), LP_DS = 0.25;
+  function lessonPath(L) {
+    let S = _lp.get(L); if (S) return S;
+    S = []; let [x, z, h] = L.start;
+    for (const seg of L.demo || []) {
+      const d = seg[0], v = seg[1], P = [x, z];
+      for (const mv of seg.slice(2)) {
+        if (mv[0] === 'L') { const n = Math.max(1, Math.round(mv[1] / LP_DS)), st = mv[1] / n; for (let k = 0; k < n; k++) { x += d * Math.cos(h) * st; z += d * Math.sin(h) * st; P.push(x, z); } }
+        else if (mv[0] === 'C') {   // (Catmull-Rom through the points; a phantom point behind the start keeps the car's heading there)
+          const Q = [[x - d * Math.cos(h) * 4, z - d * Math.sin(h) * 4], [x, z]]; for (let k = 1; k < mv.length; k += 2) Q.push([mv[k], mv[k + 1]]);
+          const m = Q.length, e = Q[m - 1], f = Q[m - 2]; Q.push([2 * e[0] - f[0], 2 * e[1] - f[1]]);
+          const D = []; for (let k = 1; k < m - 1; k++) { const p0 = Q[k - 1], p1 = Q[k], p2 = Q[k + 1], p3 = Q[k + 2], nn = Math.max(4, Math.ceil(Math.hypot(p2[0] - p1[0], p2[1] - p1[1]) / 0.05));
+            for (let i = 1; i <= nn; i++) { const t = i / nn, t2 = t * t, t3 = t2 * t, cr = (a, b, c, g) => 0.5 * (2 * b + (c - a) * t + (2 * a - 5 * b + 4 * c - g) * t2 + (3 * b - a - 3 * c + g) * t3);
+              D.push(cr(p0[0], p1[0], p2[0], p3[0]), cr(p0[1], p1[1], p2[1], p3[1])); } }
+          let px = x, pz = z, acc = 0;   // (resampled every LP_DS m)
+          for (let i = 0; i < D.length; i += 2) { const sl = Math.hypot(D[i] - px, D[i + 1] - pz); acc += sl; px = D[i]; pz = D[i + 1]; if (acc >= LP_DS || i === D.length - 2) { P.push(px, pz); acc = 0; } }
+          const L2 = D.length; h = Math.atan2(d * (D[L2 - 1] - D[L2 - 3]), d * (D[L2 - 2] - D[L2 - 4])); x = D[L2 - 2]; z = D[L2 - 1];
+        }
+        else { const R = mv[1], ph = mv[2] * Math.PI / 180, ux = d * Math.cos(h), uz = d * Math.sin(h), sg = Math.sign(ph), cx = x - uz * R * sg, cz = z + ux * R * sg, n = Math.max(2, Math.round(Math.abs(ph) * R / LP_DS));
+          for (let k = 1; k <= n; k++) { const f = ph * k / n, rx = x - cx, rz = z - cz, c = Math.cos(f), s = Math.sin(f); P.push(cx + rx * c - rz * s, cz + rx * s + rz * c); }
+          const rx = x - cx, rz = z - cz, c = Math.cos(ph), s = Math.sin(ph); x = cx + rx * c - rz * s; z = cz + rx * s + rz * c; h += ph; }
+      }
+      const n = P.length / 2, A = new Float64Array(n), K = new Float64Array(n);   // (the direction of travel at each point, the curvature: + clockwise)
+      for (let k = 0; k < n; k++) { const a = Math.max(0, k - 1), b = Math.min(n - 1, k + 1); A[k] = b > a ? Math.atan2(P[b * 2 + 1] - P[a * 2 + 1], P[b * 2] - P[a * 2]) : Math.atan2(d * Math.sin(h), d * Math.cos(h)); }
+      for (let k = 0; k < n; k++) { const a = Math.max(0, k - 2), b = Math.min(n - 1, k + 2); K[k] = b > a ? wrapPi(A[b] - A[a]) / ((b - a) * LP_DS) : 0; }
+      S.push({ d, v, P: Float64Array.from(P), A, K, n, end: [x, z, h] });
+    }
+    _lp.set(L, S); return S;
+  }
+  // st: the pilot's own state ({} at the start); sets the car's pedals and steering; returns true once it has driven all of it
+  function lessonPilot(c, L, st) {
+    const S = lessonPath(L);
+    if (st.k == null) { st.k = 0; st.j = 0; st.stop = false; }
+    c.inHand = 0;
+    const seg = S[st.k];
+    if (!seg) { c.inThr = 0; c.inBrk = 0; c.inSteer = 0; c.inHand = c.speed > 0.05 && c.gear === -1 ? 1 : 0; if (c.gear !== -1 && c.speed > 0.05) c.inBrk = 0.6; return true; }
+    const d = seg.d, P = seg.P, n = seg.n, v = d * c.vl;
+    let j = st.j, bd = 1e9; for (let k = st.j; k < Math.min(n, st.j + 60); k++) { const dd = (P[k * 2] - c.x) ** 2 + (P[k * 2 + 1] - c.z) ** 2; if (dd < bd) { bd = dd; j = k; } }
+    st.j = j;
+    const ex = P[(n - 1) * 2], ez = P[(n - 1) * 2 + 1], th = seg.end[2], tx = d * Math.cos(th), tz = d * Math.sin(th);
+    const rem = Math.max((ex - c.x) * tx + (ez - c.z) * tz, (n - 1 - j) * LP_DS * (j < n - 8 ? 1 : 0));
+    if (!st.stop && rem < 0.06) st.stop = true;
+    if (st.stop) {   // standing at the end of the segment: then the next one
+      c.inSteer = 0; c.inThr = 0; c.inBrk = 0;
+      if (c.gear === -1) { if (c.vl < -1.3) c.inThr = 1; else if (c.vl < -0.02) c.inHand = 1; } else if (c.vl > 0.02) c.inBrk = 1;
+      if (c.speed < 0.05) { st.k++; st.j = 0; st.stop = false; }
+      return false;
+    }
+    // steering: pure pursuit on the point Ld ahead along the path (backward: the car's tail its nose)
+    const Ld = d > 0 ? clamp(1.6 + Math.abs(v) * 0.45, 1.6, 6) : clamp(1 + Math.abs(v) * 0.45, 1.2, 4), m = Math.min(n - 1, j + Math.round(Ld / LP_DS));
+    let ax = P[m * 2], az = P[m * 2 + 1];
+    if (m === n - 1) { const over = Ld - (n - 1 - j) * LP_DS; if (over > 0) { ax += tx * over; az += tz * over; } }   // (past the end: on along its last direction)
+    if (d > 0) steerAt(c, ax, az);
+    else {   // backward: the path's own curvature a little ahead, corrected by the error of the direction and of the place across it (a reversing car turns as it rolls: Car.stepCS)
+      const jl = Math.min(n - 1, j + 2), ta = seg.A[j], tc = c.h + Math.PI, el = (c.x - P[j * 2]) * -Math.sin(ta) + (c.z - P[j * 2 + 1]) * Math.cos(ta);
+      const kap = seg.K[jl] + 1.3 * wrapPi(ta - tc) - 0.6 * el;
+      c.inSteer = clamp(-kap * ((c.arc && c.arc.rmin) || 4.2), -1, 1); }
+    // speed: the segment's, easing into its end; pedals for the gear (backward: the brake pedal drives, the throttle brakes)
+    const vT = Math.max(d > 0 ? 0.35 : 0.6, Math.min(seg.v, Math.sqrt(2 * (d > 0 ? 3 : 1.5) * Math.max(0, rem - 0.03)))), e = vT - v;   // (backward: not under 0.6 m/s, the car turns only above 0.5)
+    c.inThr = 0; c.inBrk = 0;
+    if (d > 0) {
+      if (c.gear === -1) { if (c.vl < -1.3) c.inThr = 1; else if (c.vl < -0.02) c.inHand = 1; else c.inThr = 0.15; }   // (stopped: the throttle puts it in first)
+      else if (e > 0) c.inThr = clamp(e * 0.03, 0.004, 1); else if (e < -0.15) c.inBrk = clamp(-e * 0.4, 0, 1);
+    } else {
+      if (c.gear !== -1) c.inBrk = 1;   // (held at a standstill: reverse)
+      else if (e > 0) c.inBrk = clamp(0.03 + e * 0.25, 0.03, 1); else if (e < -0.15) { if (c.vl < -1.3) c.inThr = clamp(-e * 0.4, 0, 1); else c.inHand = 1; }   // (the throttle brakes only well over 1 m/s backward: under it, it would put the car in first)
+    }
+    return false;
+  }
+
+  /* ---------------------------------------------------------------------
      CHAMPIONSHIP (prvenstvo): a series of races on several circuits. Points by the finishing order (25, 18, 15, 12, 10, 8, 6, 4, 2, 1
      for the first ten, as in Formula 1); the standings by points, a tie by more wins, then more second places and so on. The
      AI drivers are the same in every round (aiDriver). A round = { track, order: [driver key, ...] (the winner first) }; the
@@ -4270,7 +4462,7 @@ const Core = (function () {
   // the price of an upgrade from level `from` to level `to` (the levels in between too)
   const careerUpgPrice = (from, to) => { let p = 0; for (let l = from + 1; l <= to; l++) p += CAREER.upg[l] || 0; return p; };
 
-  return { crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
+  return { crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, SCHOOL_TRACKS, Lesson, LESSON, lessonPath, lessonPilot, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, CAREER, careerPrize, careerUpgPrice };
 })();
 
