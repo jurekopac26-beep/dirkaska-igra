@@ -16639,9 +16639,17 @@ const World = (function () {
     const tMat = pkGroundMat();
     {
       const G = P.G, grp = new THREE.Group(); root.add(grp); out.ground = grp;
+      const blocks = new Map();   // (the 100 m tiles merged in blocks of 2 x 2: fewer draws)
       for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
         const on = vrTileOn(ti, tj); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; else nFar++;
-        const m = new THREE.Mesh(vrTileGeo(ti, tj, on), tMat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m);
+        const k = Math.floor(ti / 2) + ',' + Math.floor(tj / 2); let L = blocks.get(k); if (!L) blocks.set(k, L = []); L.push(vrTileGeo(ti, tj, on));
+      }
+      for (const L of blocks.values()) {
+        const nv = L.reduce((a, g) => a + g.attributes.position.count, 0), ni = L.reduce((a, g) => a + g.index.count, 0), g = new THREE.BufferGeometry(), idx = new Uint16Array(ni);
+        for (const [name, sz] of [['position', 3], ['normal', 3], ['color', 3], ['uv', 2], ['steep', 1]]) { const A = new Float32Array(nv * sz); let o = 0; for (const q of L) { A.set(q.attributes[name].array, o); o += q.attributes[name].array.length; } g.setAttribute(name, new THREE.BufferAttribute(A, sz)); }
+        let o = 0, v0 = 0; for (const q of L) { const I = q.index.array; for (let k = 0; k < I.length; k++) idx[o + k] = I[k] + v0; o += I.length; v0 += q.attributes.position.count; }
+        g.setIndex(new THREE.BufferAttribute(idx, 1)); g.computeBoundingSphere();
+        const m = new THREE.Mesh(g, tMat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m);
       }
     }
 
@@ -16654,6 +16662,7 @@ const World = (function () {
     const sMat = new THREE.MeshPhongMaterial({ map: tex.makadam, bumpMap: tex.makadamBump, bumpScale: 0.04, shininess: 5, specular: 0x14110d, vertexColors: true });
     const gMat = new THREE.MeshLambertMaterial({ map: vrGritTex(), vertexColors: true });
     const addM = (g, mat, cast, grp) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; (grp || root).add(m); return m; };
+    const TS0 = new Chunks(200);   // (the painted lines and the tar snakes: one draw per 200 m)
     const onBr = new Uint8Array(N), sw = 0.6;
     if (OV) for (let s = sStart + OV.d - OV.len / 2; s <= sStart + OV.d + OV.len / 2; s += T.ds / 2) { const i = T.idx(s); if (i > 0 && i < iE) onBr[i] = 1; }
     const vProf = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i], e = w;
@@ -16675,9 +16684,9 @@ const World = (function () {
           if (k === 4) return vrGCol(x, z);
           const sl = k === 2 ? vrSlope(x, z) : 0; return asoCol(x, z, T.hy[i] + y, 1 / Math.sqrt(1 + sl * sl), Math.max(0, o - bar)).slice(); })); } return a; });
       const wuv = (p) => [p[0] / 10, -p[2] / 10];
-      for (let c0 = 0; c0 < N - 1; c0 += 60) {
-        const gr = new GB(true), gl = new GB(), gs = new GB(true), gv = new GB(true);
-        for (let i = c0; i < Math.min(c0 + 60, N - 1); i++) {
+      for (let c0 = 0; c0 < N - 1; c0 += 100) {   // (200 m chunks)
+        const gr = new GB(true), gl = TS0.get(T.px[Math.min(N - 1, c0 + 50)], T.pz[Math.min(N - 1, c0 + 50)]), gv = new GB(true);
+        for (let i = c0; i < Math.min(c0 + 100, N - 1); i++) {
           const j = i + 1, v0 = i * T.ds / tileL, v1 = j * T.ds / tileL, s0 = i * T.ds / 6, s1 = j * T.ds / 6;
           for (let c = 0; c < offs.length - 1; c++) { const o0 = offs[c], o1 = offs[c + 1];
             gr.quadUp(Pt(i, o0, 0.02), Pt(i, o1, 0.02), Pt(j, o1, 0.02), Pt(j, o0, 0.02), [shade(i, o0), shade(i, o1), shade(j, o1), shade(j, o0)], [[(o0 + w) / tileL, v0], [(o1 + w) / tileL, v0], [(o1 + w) / tileL, v1], [(o0 + w) / tileL, v1]]); }
@@ -16687,15 +16696,15 @@ const World = (function () {
           for (const [o0, o1, cl] of ln) gl.quadUp(Pt(i, o0, 0.036), Pt(i, o1, 0.036), Pt(j, o1, 0.036), Pt(j, o0, 0.036), [cl, cl, cl, cl]);
           for (const side of [-1, 1]) {
             const si = side > 0 ? 1 : 0, ci = vc[si][i], cj = vc[si][j], qi = vp[si][i], qj = vp[si][j], sc = onBr[i] ? deck : gc;
-            gs.quadUp(Pt(i, side * w, 0.012), Pt(i, side * (w + sw), -0.02), Pt(j, side * (w + sw), -0.02), Pt(j, side * w, 0.012), [sc, sc, sc, sc], [[0, s0], [sw / 4, s0], [sw / 4, s1], [0, s1]]);
+            gv.quadUp(Pt(i, side * w, 0.012), Pt(i, side * (w + sw), -0.02), Pt(j, side * (w + sw), -0.02), Pt(j, side * w, 0.012), [sc, sc, sc, sc], [[0, s0], [sw / 4, s0], [sw / 4, s1], [0, s1]]);   // (the shoulder with the verge: one draw less a chunk)
             for (let k = 0; k < 4; k++) { const a = Pt(i, side * qi[k][0], qi[k][1]), b = Pt(i, side * qi[k + 1][0], qi[k + 1][1]), c = Pt(j, side * qj[k + 1][0], qj[k + 1][1]), d = Pt(j, side * qj[k][0], qj[k][1]);
               gv.quadUp(a, b, c, d, [ci[k], ci[k + 1], cj[k + 1], cj[k]], [wuv(a), wuv(b), wuv(c), wuv(d)]); }
           }
         }
-        addM(gr, aMat); addM(gl, lMat); addM(gs, sMat); addM(gv, gMat);
+        addM(gr, aMat); addM(gv, gMat);
       }
       // the tar snakes: the cracks in the asphalt sealed with black tar (a ribbon 0.14 m wide just above the asphalt, under the painted lines)
-      { const RS = rng(5391), ts = new Chunks(110), tc = [0.08, 0.08, 0.09], P2 = (s, o) => { const f = clamp(s / T.ds, 0, N - 1.001), i = Math.floor(f), u = f - i, j = i + 1;
+      { const RS = rng(5391), ts = TS0, tc = [0.08, 0.08, 0.09], P2 = (s, o) => { const f = clamp(s / T.ds, 0, N - 1.001), i = Math.floor(f), u = f - i, j = i + 1;
           return [lerp(T.px[i] + T.nx[i] * o, T.px[j] + T.nx[j] * o, u), lerp(T.hy[i], T.hy[j], u) + 0.031, lerp(T.pz[i] + T.nz[i] * o, T.pz[j] + T.nz[j] * o, u)]; };
         for (let s = sStart - 40; s < sFin + 40; s += 13) { if (RS() > 0.5) continue;
           const across = RS() < 0.35, L = across ? 2 * w * (0.4 + RS() * 0.55) : 4 + RS() * 9, n = Math.ceil(L / 0.6), ph = RS() * 6, amp = 0.12 + RS() * 0.3;
@@ -16705,7 +16714,7 @@ const World = (function () {
           const g = ts.get(pts[0][0], pts[0][2]);
           for (let k = 0; k < n; k++) { const A = pts[k], B = pts[k + 1], dx = B[0] - A[0], dz = B[2] - A[2], l = Math.hypot(dx, dz) || 1, hx = -dz / l * 0.07, hz = dx / l * 0.07;
             g.quadUp([A[0] - hx, A[1], A[2] - hz], [A[0] + hx, A[1], A[2] + hz], [B[0] + hx, B[1], B[2] + hz], [B[0] - hx, B[1], B[2] - hz], [tc, tc, tc, tc]); } }
-        ts.addTo(root, lMat, false, true); }
+        TS0.addTo(root, lMat, false, true); }
       // chequered start and finish lines, a white line at each checkpoint
       const gq = new GB(true), gw = new GB(), uM = Math.round(w * 2 / 0.8) / 16, W1 = [1, 1, 1];
       for (const s0 of [sStart, sFin]) { const a = atSf(s0 - 0.8, -w), b = atSf(s0 - 0.8, w), c = atSf(s0 + 0.8, w), d = atSf(s0 + 0.8, -w), y = (p) => T.hy[p[3]] + 0.045;
@@ -16839,7 +16848,7 @@ const World = (function () {
       for (const pk of parks) {
         const poly = pk.poly, tri = THREE.ShapeUtils.triangulateShape(poly.map(p => new THREE.Vector2(p[0], p[1])), []);
         const sub = (a, b, c, d) => { const l = Math.max(Math.hypot(a[0] - b[0], a[1] - b[1]), Math.hypot(b[0] - c[0], b[1] - c[1]), Math.hypot(c[0] - a[0], c[1] - a[1]));
-          if (l > 3 && d < 6) { const m = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2], ab = m(a, b), bc = m(b, c), ca = m(c, a); sub(a, ab, ca, d + 1); sub(ab, b, bc, d + 1); sub(ca, bc, c, d + 1); sub(ab, bc, ca, d + 1); return; }
+          if (l > 6 && d < 5) { const m = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2], ab = m(a, b), bc = m(b, c), ca = m(c, a); sub(a, ab, ca, d + 1); sub(ab, b, bc, d + 1); sub(ca, bc, c, d + 1); sub(ab, bc, ca, d + 1); return; }
           const P3 = (p) => [p[0], yA(p[0], p[1]), p[1]], uv = (p) => [p[0] / 8, -p[1] / 8], A = P3(a); ga.triO(A, P3(b), P3(c), pa, [A[0], A[1] - 5, A[2]], pa, pa, uv(a), uv(b), uv(c)); };
         for (const [a, b, c] of tri) sub(poly[a], poly[b], poly[c], 0);
         // the bays: rows across the polygon's longest edge, a line every 2.5 m, cars in two of three
@@ -17010,10 +17019,9 @@ const World = (function () {
       const hard = (x, z) => { for (let k = 0; k < excl.length; k++) { const e = excl[k]; if (crSoft.has(e)) continue; const dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return inPark(x, z); };
       const M = { first: 2.6, gap: 1.05, below: 1.2, maxSlope: 0.55, excluded: hard, sit: 0.3, flag: 0.12, keepBar: 1.6 };
       const run = (sa, sb, side, o) => crowdRun(CR, Math.max(sa, 8), Math.min(sb, T.len - 8), side, Object.assign({}, M, o));
-      for (const sd of [-1, 1]) { run(sStart - 70, sStart + 70, sd, { rows: 3, dens: 0.6, label: 'AS start' }); run(sFin - 90, sFin + 14, sd, { rows: 2, dens: 0.55, label: 'AS finish' }); }
+      for (const sd of [-1, 1]) { run(sStart - 60, sStart + 50, sd, { rows: 2, dens: 0.6, label: 'AS start' }); if (sd < 0) run(sFin - 90, sFin + 14, sd, { rows: 2, dens: 0.55, label: 'AS finish' }); }
       T.cpS.forEach((s0) => { run(s0 - 24, s0 + 20, -1, { rows: 2, dens: 0.55, label: 'AS cp-' }); run(s0 - 20, s0 + 16, 1, { rows: 2, dens: 0.4, label: 'AS cp+' }); });
       const vw = T.names.find(q => /^Razgled/.test(q.n)); if (vw) run(sStart + vw.d - 30, sStart + vw.d + 30, 1, { rows: 2, dens: 0.5, label: 'AS view' });
-      T.corners.filter(c => c.sev >= 2).forEach((c, k) => { if (k % 2) return; const sm = (c.i0 + c.i1) / 2 * T.ds; if (sm < sStart + 100 || sm > sFin - 150) return; run(sm - 18, sm + 18, c.dir > 0 ? -1 : 1, { rows: 2, dens: 0.4, label: 'AS bend' }); });
     }
     for (const e of CR.circ) exclPush(e.x, e.z, e.r);
 
@@ -17023,7 +17031,7 @@ const World = (function () {
     const pMat = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
     const wMat = tuftWindMat(out.dyn.wind || (out.dyn.wind = { value: 0 })), wB = wMat.onBeforeCompile; ouCutMat(wMat, cut);   // (the grass: in the wind, and the cut)
     { const cB = wMat.onBeforeCompile; wMat.onBeforeCompile = (sh) => { wB(sh); cB(sh); }; wMat.customProgramCacheKey = () => 'tuftWindCut'; wMat.side = THREE.DoubleSide; }
-    const pk = [0, 1, 2, 3, 4, 5, 6].map(k => new IChunks(asoPlantGeo(k), k === 0 ? wMat : pMat, k === 2 || k === 3 ? 140 : k >= 4 ? 256 : 110));
+    const pk = [0, 1, 2, 3, 4, 5].map(k => new IChunks(asoPlantGeo(k), k === 0 ? wMat : pMat, k === 2 || k === 3 ? 140 : k >= 4 ? 256 : 110));
     let nPlants = 0, nTrees = 0, nCows = 0, nBales = 0;
     const freeAt = (x, z, r) => { const nn = vrNear(x, z); return !(nn.i >= 0 && nn.dd < r) && !excluded(x, z) && !inPark(x, z) && !vrStubAt(x, z, 2); };
     {
@@ -17049,7 +17057,7 @@ const World = (function () {
           const y0 = vrGround(x, z);
           if (kind === 0) pk[0].add(x, y0 - 0.05, z, r2 * TAU, 1.1 + r3 * 0.8, su ? 1.0 + r4 * 0.6 : 1.4 + r4 * 0.7, [0.9 + r2 * 0.18, 0.9 + r3 * 0.14, 0.88 + r4 * 0.16]);
           else if (kind === 1) pk[1].add(x, y0 - 0.1, z, r2 * TAU, 0.9 + r3 * 1.1, 0.7 + r4 * 0.6, [0.88 + r2 * 0.24, 0.9 + r3 * 0.18, 0.88 + r4 * 0.16]);
-          else { const k = 0.86 + r3 * 0.28; pk[4].add(x, y0 - 0.2, z, r4 * TAU, 0.7 + r3 * 1.8, 0.6 + r4 * 1.3, [k, k, k]); }
+          else { const k = 0.86 + r3 * 0.28, sx = 0.7 + r3 * 1.8, sy = 0.6 + r4 * 1.3; rock(scen.get(x, z), x, y0 - 0.2 + 0.3 * sy, z, 0.62 * sx, 0.55 * sy, 0.5 * sx, r4 * TAU, [0.36 * k, 0.34 * k, 0.33 * k], RT, 0.35); }   // (into the scenery's chunks: no draw of their own)
           if (++nPlants >= maxT) break grid;
         }
       }
@@ -17087,7 +17095,11 @@ const World = (function () {
       for (let s = sStart + 500; s < sFin - 200; s += 600 + RC() * 500) { const side = RC() < 0.8 ? -1 : 1, i = T.idx(s), d = 18 + RC() * 40, bx = T.px[i] + T.nx[i] * side * d, bz = T.pz[i] + T.nz[i] * side * d;
         if (vrLC(bx, bz) !== 6) continue; const n = 4 + Math.floor(RC() * 8), a = T.hd[i] + (RC() - 0.5) * 0.4;
         for (let k = 0; k < n; k++) { const x = bx + Math.cos(a) * k * 1.4, z = bz + Math.sin(a) * k * 1.4; if (!freeAt(x, z, 8) || vrSlope(x, z) > 0.3) continue;
-          pk[6].add(x, vrGround(x, z) - 0.08, z, a, 1, 1, RC() < 0.2 ? [0.25, 0.27, 0.25] : [1, 1, 1]); nBales++; } }
+          const g = scen.get(x, z), y = vrGround(x, z) - 0.08, c = Math.cos(a), sn = Math.sin(a), W = RC() < 0.2 ? [0.24, 0.26, 0.24] : [0.95, 0.96, 0.95], E = [W[0] * 0.9, W[1] * 0.9, W[2] * 0.92];   // (a wrapped bale on its side, 1.2 m across, in the scenery's chunks)
+          const P3 = (u, v, w2) => [x + c * u - sn * w2, y + v, z + sn * u + c * w2], ctr = [x, y + 0.6, z];
+          for (let q = 0; q < 8; q++) { const a0 = q / 8 * TAU, a1 = (q + 1) / 8 * TAU, pp = (an, sd) => P3(sd * 0.6, 0.6 + Math.sin(an) * 0.6, Math.cos(an) * 0.6);
+            g.quadO(pp(a0, -1), pp(a1, -1), pp(a1, 1), pp(a0, 1), W, ctr); g.triO(P3(-0.6, 0.6, 0), pp(a0, -1), pp(a1, -1), E, P3(0.5, 0.6, 0)); g.triO(P3(0.6, 0.6, 0), pp(a0, 1), pp(a1, 1), E, P3(-0.5, 0.6, 0)); }
+          nBales++; } }
     }
     for (let k = 0; k < pk.length; k++) pk[k].addTo(root, k === 2 || k === 3 || k === 5);
 
