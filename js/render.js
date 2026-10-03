@@ -1655,6 +1655,16 @@ const Render = (function () {
     suzuka:   { fog: 0xc8d9e6, sun: 0xfff1dc, sunI: 1.06, sky: 0xd5e7fa, gnd: 0x4f5c34, hemiI: 0.62, tint: [1.01, 1.0, 0.99], sat: 1.12 },   // Suzuka: a clear spring day in Mie
     caracoles: { fog: 0xc2d3e8, sun: 0xfff3de, sunI: 1.32, sky: 0xb4cdf2, gnd: 0x6e5e4c, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.07, sunOff: [-72, 98, -62] },   // Los Caracoles: a clear afternoon of the Andean summer, the thin air's strong sun from the north-west (the southern hemisphere), a cool blue haze
     bathurst: { fog: 0xcfdbe6, sun: 0xfff0d2, sunI: 1.22, sky: 0xc6dcf6, gnd: 0x6b6a3c, hemiI: 0.6, tint: [1.03, 1.0, 0.95], sat: 1.05, sunOff: [-74, 86, -56] },   // Bathurst: a clear spring afternoon in New South Wales, the sun from the north-west (the southern hemisphere), the dry pastures' golden light
+    chapman:  { fog: 0xc9dbe8, sun: 0xfff0d6, sunI: 1.24, sky: 0xbcd6f4, gnd: 0x5e5a40, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-92, 74, -40] },   // Chapman's Peak: a clear late-summer afternoon at the Cape, the sun low over the Atlantic in the west-north-west, a soft sea haze
+    bigsur:   { fog: 0xc8d6e2, sun: 0xfff0d8, sunI: 1.14, sky: 0xc6dcf2, gnd: 0x5c6040, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-86, 74, 58] },   // Big Sur: a clear afternoon on the coast, the sun over the Pacific in the south-west, a soft sea haze
+    tianmen:  { fog: 0xc9d2d4, sun: 0xfff0dc, sunI: 1.02, sky: 0xd4dfe6, gnd: 0x4a5636, hemiI: 0.68, tint: [1.0, 1.0, 0.99], sat: 1.04, haze: 0.12, hazeCol: [0.92, 0.95, 1.0], sunOff: [-70, 92, 60] },   // Tianmen: a humid subtropical day, the sun veiled by the mist, a pale grey-green haze over the cliffs
+    sani:     { fog: 0xc8d6e4, sun: 0xfff0d8, sunI: 1.28, sky: 0xb8d0f0, gnd: 0x5e5a40, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-70, 92, -58] },   // Sani Pass: a clear afternoon in the Drakensberg, the high sun in the north (the southern hemisphere)
+    iroha:    { fog: 0xc9d6df, sun: 0xffecc8, sunI: 1.12, sky: 0xd0e0f0, gnd: 0x4c5a32, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.12, sunOff: [-80, 74, 60] },   // Irohazaka: a clear afternoon above Nikko, a lower sun through the woods (long shadows across the hairpins), a soft blue haze over the valley
+    mulholland: { fog: 0xd8d4c8, sun: 0xfff0d2, sunI: 1.4, sky: 0xb8d2f0, gnd: 0x7a6a48, hemiI: 0.62, tint: [1.04, 1.0, 0.94], sat: 1.06, sunOff: [-70, 104, 48] },   // Mulholland Highway: a hot, clear Californian summer afternoon, a strong high sun from the south-west, a warm dusty haze over the canyons
+    beartooth: { fog: 0xc6d7e8, sun: 0xfff1da, sunI: 1.26, sky: 0xb3cdf0, gnd: 0x4c5636, hemiI: 0.6, tint: [1.01, 1.0, 0.98], sat: 1.08, sunOff: [-84, 90, 58] },   // Beartooth: a clear summer afternoon in the northern Rockies, the sun from the south-west (shadows across the switchbacks), thin blue mountain haze
+    rastro:   { fog: 0xc4d0d0, sun: 0xfff0d8, sunI: 1.1, sky: 0xc2d4e6, gnd: 0x4a5a32, hemiI: 0.66, tint: [1.0, 1.01, 0.98], sat: 1.08, sunOff: [-66, 92, -64] },   // Serra do Rio do Rastro: a humid afternoon over the rainforest, the sun from the north-west (the southern hemisphere), a soft green-grey haze
+    moki:     { fog: 0xc9d6e6, sun: 0xffeccc, sunI: 1.3, sky: 0x8fb6ee, gnd: 0x8a5a3c, hemiI: 0.62, tint: [1.03, 1.0, 0.96], sat: 1.1, sunOff: [-86, 82, 46] },   // the Moki Dugway: a clear afternoon over the Utah desert, a deep blue sky, the warm sun from the south-west (the cliff's red light bounced into the shade)
+    cpalace:  { fog: 0xc9d3db, sun: 0xfff0d8, sunI: 1.08, sky: 0xcddcec, gnd: 0x4c5a32, hemiI: 0.62, tint: [1.02, 1.0, 0.96], sat: 1.02, sunOff: [-60, 74, 66] },   // Crystal Palace: a spring afternoon in south London, a soft English light with a little haze, the sun from the south-west
     riverside: { fog: 0xd9dfe3, sun: 0xffecc8, sunI: 1.3, sky: 0xc3d8f2, gnd: 0x8a7650, hemiI: 0.62, tint: [1.04, 1.0, 0.93], sat: 1.04, haze: 0.12, hazeCol: [1, 0.86, 0.66], sunOff: [-70, 74, 78] },   // Riverside: a clear, dry afternoon in southern California, the sun from the south-west, a little dust in the warm haze
   };
   // each track's own grade on top (high quality, the post pass): its shadows and its highlights tinted apart, a little (split toning:
@@ -1664,7 +1674,14 @@ const Render = (function () {
     italia: [[1.0, 0.98, 1.02], [1.05, 1.01, 0.92]], kamp: [[0.98, 1.0, 1.03], [1.03, 1.0, 0.96]], monaco: [[0.95, 1.0, 1.05], [1.05, 1.0, 0.93]], mountain: [[0.95, 0.99, 1.06], [1.02, 1.0, 0.97]],
     ouni: [[0.97, 1.01, 1.03], [1.03, 1.0, 0.96]], vrsic: [[0.96, 0.99, 1.06], [1.04, 1.0, 0.94]], pikes: [[0.96, 0.99, 1.06], [1.03, 1.0, 0.95]], nring: [[0.97, 1.01, 1.02], [1.02, 1.0, 0.97]],
     spa: [[0.97, 1.0, 1.04], [1.01, 1.0, 0.99]], rbring: [[0.96, 1.0, 1.05], [1.03, 1.0, 0.96]], suzuka: [[0.98, 1.0, 1.03], [1.03, 1.0, 0.97]], caracoles: [[0.95, 0.99, 1.07], [1.04, 1.0, 0.95]], bathurst: [[0.96, 1.0, 1.05], [1.05, 1.01, 0.93]],
+    chapman: [[0.96, 1.0, 1.06], [1.04, 1.0, 0.95]],
+    tianmen: [[0.97, 1.0, 1.03], [1.02, 1.0, 0.98]],
+    sani: [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]],
+    moki: [[0.95, 0.99, 1.07], [1.05, 1.0, 0.94]], cpalace: [[0.97, 1.0, 1.04], [1.03, 1.0, 0.95]],
     riverside: [[0.96, 0.99, 1.05], [1.06, 1.01, 0.92]] };
+  THEMES.uncompahgre = { fog: 0xbfcfe0, sun: 0xfff0d8, sunI: 1.24, sky: 0xb8d0f0, gnd: 0x4c5236, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-70, 92, 62] };   // the Uncompahgre Gorge: a clear afternoon in the San Juans, the sun from the south-west over the cliffs, a crisp blue haze
+  SPLIT.uncompahgre = [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]];
+  SPLIT.iroha = [[0.96, 0.99, 1.05], [1.04, 1.0, 0.95]];   // (Irohazaka: cool shade under the maples, a warm autumn sun)
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   // The time of day as one number, todK: 0 day, 0.5 dusk, 1 night (setAtmos sets it from the setting; an endurance race moves it with its
   // clock: setTodK). The light, the fog and the grade are blended between the day's (the theme's), the dusk's and the night's; dawn (the
@@ -2140,7 +2157,7 @@ const Render = (function () {
     const t = snowTex.clone(); t.needsUpdate = true; if (src) { t.repeat.copy(src.repeat); t.offset.copy(src.offset); t.anisotropy = src.anisotropy; } return t;
   }
   function seasonWorld() {
-    const sea = world && world.season === 'autumn' && atmos.season !== 'winter' ? 'summer' : atmos.season;   // (a world painted for a season of its own (world.season: Vršič's autumn look) is as built in autumn; the winter snows it over)
+    const sea = world && (world.ownSeason || (world.season === 'autumn' && atmos.season !== 'winter')) ? 'summer' : atmos.season;   // (a world painted for every season itself (world.ownSeason: Sani Pass) is as built; a world painted for a season of its own (world.season: Vršič's autumn look) is as built in autumn; the winter snows it over)
     if (!world || !world.root || world.seasonKey === sea) return;
     if (!world.seasonKey && sea === 'summer') { world.seasonKey = 'summer'; return; }   // (a new world in summer: as built)
     world.seasonKey = seaW = sea;
@@ -4879,6 +4896,7 @@ const Render = (function () {
       const nv = makeView(c); nv.sk = v.sk; nv.acc = v.acc; disposeView(v, debrisRes()); views[k] = nv;   // (its loose panels on the track stay drawable)
       for (let n = 0; n < 12; n++) sparkP.emit(c.x + (Math.random() - 0.5) * 3, (c.y || 0) + 0.4 + Math.random() * 1.2, c.z + (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 2, 1 + Math.random() * 2, (Math.random() - 0.5) * 2, 0.4 + Math.random() * 0.3, 0.45, 0.8, 1, 0.95, 0.7, 0.7, -1, 1.2, c.y || 0); } }
     particles.update(dt); sparkP.update(dt);
+    if (world && world.dyn.bsMist) world.dyn.bsMist.on = curRace && curRace.opts && curRace.opts.mist ? 1 : 0;   // (Big Sur: the marine layer of this run)
     World.update(world, time, target, camera);
     if (target) updateCamera(dt, target, mode, alpha);
     lineStep(target);   // (the racing line helper, from the followed car's place of this frame)
