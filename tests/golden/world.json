@@ -563,6 +563,36 @@
    "roadwear:MeshLambertMaterial": "fc990f68"
   }
  },
+ "santiago": {
+  "meshes": 438,
+  "verts": 1544127,
+  "instances": 2737,
+  "props": 72,
+  "crowd": 532,
+  "world": "338d0ac0",
+  "propsHash": "37d8252",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "c7058dfd",
+   "scWater:MeshPhongMaterial": "f535476f",
+   "scRoad:MeshLambertMaterial": "a68114fe",
+   "scWalls:MeshLambertMaterial": "1cc9e7ff",
+   "scPits:MeshLambertMaterial": "ecdca6f7",
+   "scPits:MeshBasicMaterial": "a57f21e2",
+   "scStands:MeshLambertMaterial": "66f86207",
+   "scBuildings:MeshLambertMaterial": "87844d99",
+   "scRoads:MeshLambertMaterial": "65824591",
+   "scJunctions:MeshLambertMaterial": "da2a9128",
+   "scTrees:MeshLambertMaterial": "8733a261",
+   "scFar:MeshLambertMaterial": "d4cf5038",
+   "scScen:MeshLambertMaterial": "5f81d707",
+   "crowd:MeshLambertMaterial": "5869256f",
+   "-:MeshBasicMaterial": "9c4e772b",
+   "ao:MeshBasicMaterial": "a91d636f",
+   "tyremarks:MeshBasicMaterial": "a5878411",
+   "roadwear:MeshLambertMaterial": "b325f830"
+  }
+ },
  "jezero": {
   "meshes": 154,
   "verts": 591648,

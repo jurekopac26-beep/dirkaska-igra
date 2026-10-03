@@ -1598,5 +1598,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "4c53c94c9086f66bc8a7b4f0"
+ },
+ "santiago/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 149.24,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "7679226cfcdaefcf99b0bd3d"
+ },
+ "santiago/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 158.77,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d7a6ea8e1b59f34943127602"
+ },
+ "santiago/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 133.96,
+  "spins": 6,
+  "walls": 19,
+  "rescues": 0,
+  "nan": false,
+  "digest": "fe8f72c09d1b9e231a31e472"
+ },
+ "santiago/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 135.96,
+  "spins": 5,
+  "walls": 11,
+  "rescues": 0,
+  "nan": false,
+  "digest": "a1305fdb60adcc6b575a646c"
+ },
+ "santiago/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 149.18,
+  "spins": 1,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "6a3d2a76d25b69383df4c056"
  }
 }

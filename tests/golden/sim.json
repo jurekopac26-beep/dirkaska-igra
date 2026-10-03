@@ -3134,5 +3134,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "santiago/race/cs": {
+  "digest": "2fe27d9a1fab5f8fe910973b",
+  "lead": 1771.9,
+  "car0": [
+   -24.9,
+   242.98
+  ],
+  "cover": {
+   "dmg": 0.41,
+   "loose": 6,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "santiago/demo/cs": {
+  "digest": "f2756a4bdcc432d0adfee387",
+  "lead": 1886.7,
+  "car0": [
+   -0.21,
+   330.64
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "santiago/upg/cs": {
+  "digest": "b6e3a43964a66059897737d3",
+  "lead": 1885.3,
+  "car0": [
+   -8.52,
+   265.06
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "santiago/crash/cs": {
+  "digest": "3a2e83c7116d3f87bacae334",
+  "lead": 1767.7,
+  "car0": [
+   -21.09,
+   389.07
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 19,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "santiago/formula/cs": {
+  "digest": "8a6d582ef0288b859e7b8713",
+  "lead": 1938.2,
+  "car0": [
+   -1.37,
+   321.79
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 32,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "santiago/lm/cs": {
+  "digest": "b012fec43a4fc7e51bacdf72",
+  "lead": 1924.1,
+  "car0": [
+   -10.83,
+   240.53
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 22,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "santiago/car/cs": {
+  "digest": "bf70d72b8f82b9103b765fc4",
+  "lead": 1773.5,
+  "car0": [
+   -28.22,
+   266.87
+  ],
+  "cover": {
+   "dmg": 0.87,
+   "loose": 15,
+   "rescues": 0,
+   "repairs": 0
+  }
  }
 }
