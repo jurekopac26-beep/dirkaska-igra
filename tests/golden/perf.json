@@ -222,5 +222,12 @@
   "kverts": 1530,
   "maxKverts": 1670,
   "jsMs": 0.87
+ },
+ "zao": {
+  "calls": 230,
+  "maxCalls": 306,
+  "kverts": 821,
+  "maxKverts": 976,
+  "jsMs": 0.91
  }
 }

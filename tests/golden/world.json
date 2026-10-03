@@ -563,6 +563,28 @@
    "roadwear:MeshLambertMaterial": "fc990f68"
   }
  },
+ "zao": {
+  "meshes": 1869,
+  "verts": 1072157,
+  "instances": 95142,
+  "props": 256,
+  "crowd": 1386,
+  "world": "5d137d2d",
+  "propsHash": "be4d8b9f",
+  "floor": "bee0c732/16268",
+  "groups": {
+   "-:MeshLambertMaterial": "a17625d5",
+   "okama:MeshPhongMaterial": "523d4622",
+   "crowd:MeshLambertMaterial": "a6639ddf",
+   "-:MeshBasicMaterial": "36ba5237",
+   "-:MeshPhongMaterial": "212c51af",
+   "zaFar:MeshLambertMaterial": "f4b67aea",
+   "zaFume:ShaderMaterial": "4e491673",
+   "ao:MeshBasicMaterial": "54ad36b6",
+   "tyremarks:MeshBasicMaterial": "50cb33f2",
+   "roadwear:MeshLambertMaterial": "bf85526f"
+  }
+ },
  "jezero": {
   "meshes": 154,
   "verts": 591648,

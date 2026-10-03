@@ -15855,7 +15855,7 @@ const World = (function () {
     const P = VR, A = h + P.D.base, m = P.c1(x, z), q = P.c2(x, z), f = P.n4(x, z), su = ZAS === 'summer';
     const fo = vrLCf(x, z, 1), rk = vrLCf(x, z, 4), se = vrLCf(x, z, 3);
     const sub = sstep(1280, 1460, A + (m - 0.5) * 60), alp = sstep(1540, 1690, A + (q - 0.5) * 80);
-    let R = su ? 0.27 + (m - 0.5) * 0.06 : 0.36 + (m - 0.5) * 0.1, G = su ? 0.42 + (m - 0.5) * 0.06 : 0.42 + (m - 0.5) * 0.05, B = su ? 0.16 : 0.19;
+    let R = su ? 0.31 + (m - 0.5) * 0.07 : 0.4 + (m - 0.5) * 0.1, G = su ? 0.41 + (m - 0.5) * 0.06 : 0.42 + (m - 0.5) * 0.05, B = su ? 0.19 : 0.2;   // (the meadows: a muted green, the sasa darker in patches below)
     const heath = sub * (1 - alp * 0.4) * sstep(0.35, 0.7, P.c3(x, z));
     R = lerp(R, su ? 0.31 : 0.62, heath); G = lerp(G, su ? 0.41 : 0.27, heath); B = lerp(B, su ? 0.18 : 0.16, heath);
     R = lerp(R, su ? 0.46 : 0.62, alp * 0.7); G = lerp(G, su ? 0.48 : 0.5, alp * 0.7); B = lerp(B, su ? 0.29 : 0.31, alp * 0.7);
@@ -15864,13 +15864,13 @@ const World = (function () {
     const st = Math.max(rk * 0.95, sstep(0.78, 0.55, ny) * 0.9, alp * sstep(0.42, 0.72, P.c4(x, z)) * 0.85);
     if (st > 0) {
       const rust = sstep(0.55, 0.85, m), och = sstep(0.6, 0.86, q) * (1 - rust), ash = sstep(0.55, 0.8, P.c5(x, z)) * (1 - rust);
-      let r = 0.5, g = 0.47, b = 0.44;
-      r = lerp(r, 0.58, rust); g = lerp(g, 0.42, rust); b = lerp(b, 0.34, rust);
-      r = lerp(r, 0.68, och); g = lerp(g, 0.6, och); b = lerp(b, 0.44, och);
+      let r = 0.5, g = 0.48, b = 0.46;
+      r = lerp(r, 0.55, rust * 0.8); g = lerp(g, 0.45, rust * 0.8); b = lerp(b, 0.4, rust * 0.8);
+      r = lerp(r, 0.63, och * 0.7); g = lerp(g, 0.59, och * 0.7); b = lerp(b, 0.51, och * 0.7);
       r = lerp(r, 0.36, ash * 0.7); g = lerp(g, 0.35, ash * 0.7); b = lerp(b, 0.34, ash * 0.7);
       const k = P.okc, dk = k ? Math.hypot(x - k[0], z - k[1]) : 1e9;
       if (dk < 720) { const cw = sstep(720, 380, dk) * sstep(0.9, 0.62, ny), band = 0.5 + 0.5 * Math.sin(A / 5.5 + P.c2(x * 0.5, z * 0.5) * 5), b2 = 0.5 + 0.5 * Math.sin(A / 2.3 + 1.7);
-        r = lerp(r, lerp(0.64, 0.42, band) + 0.05 * b2, cw); g = lerp(g, lerp(0.53, 0.4, band) + 0.03 * b2, cw); b = lerp(b, lerp(0.42, 0.38, band), cw); }
+        r = lerp(r, lerp(0.6, 0.42, band) + 0.05 * b2, cw); g = lerp(g, lerp(0.52, 0.41, band) + 0.03 * b2, cw); b = lerp(b, lerp(0.44, 0.4, band), cw); }
       r += (f - 0.5) * 0.08; g += (f - 0.5) * 0.075; b += (f - 0.5) * 0.07;
       R = lerp(R, r, st); G = lerp(G, g, st); B = lerp(B, b, st);
     }
@@ -15918,7 +15918,7 @@ const World = (function () {
     out.setIndex(new THREE.BufferAttribute(idx, 1)); out.computeBoundingSphere(); return out;
   }
   let zaATex = null, zaAKey = '', zaA2Tex = null, zaA3Tex = null;   // (the board atlases, made once and reused by every build of the road)
-  function zaAtlas(cps, finA) {   // text boards (8 rows of 1024 x 128): START, GOAL, CP1-CP4 with the altitude, the summit's brown board, the race's banner
+  function zaAtlas(cps, finA) {   // text boards (8 rows of 1024 x 128): START, GOAL, CP1-CP4 with the altitude, the summit's brown board, the race's banner (the places' names)
     const key = cps.join('|') + '|' + finA; if (zaATex && zaAKey === key) return zaATex;
     if (zaATex) zaATex.dispose(); zaAKey = key;
     const c = document.createElement('canvas'); c.width = 1024; c.height = 1024; const x = c.getContext('2d');
@@ -15931,7 +15931,7 @@ const World = (function () {
     x.fillStyle = '#4a2f1c'; x.fillRect(0, 768, 1024, 128); x.strokeStyle = '#efe3c8'; x.lineWidth = 8; x.strokeRect(8, 776, 1008, 112);   // (a brown board, as at the sights in Japan's parks)
     txt('KATTADAKE · OKAMA', 512, 812, 56, '#f3ead6', 960); txt(finA, 512, 862, 44, '#f3ead6', 900);
     x.fillStyle = '#f2f0ea'; x.fillRect(0, 896, 1024, 128); x.fillStyle = '#1d5a4a'; x.fillRect(0, 900, 1024, 10); x.fillRect(0, 1010, 1024, 10);
-    txt('ZAO HILL CLIMB', 512, 962, 84, '#1d5a4a', 960);
+    txt('ZAO', 512, 938, 62, '#1d5a4a', 960); txt('ECHO LINE · KATTA PASS · OKAMA', 512, 990, 40, '#4a2f1c', 960);   // (place names only: no event's name)
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (zaATex = t);
   }
   const ZA_BOARDS = [['SAI-NO-KAWARA', '#4a2f1c'], ['KOMAKUSADAIRA', '#4a2f1c'], ['SHIMANOSAWA', '#4a2f1c'], ['KATTA PASS', '#4a2f1c'], ['← YAMAGATA', '#1d4f9a'], ['OKAMA  ↑', '#1d4f9a'], ['TOLL GATE', '#1d4f9a'], ['KATTADAKE  1,758 m', '#4a2f1c']];
@@ -16149,13 +16149,13 @@ const World = (function () {
         const m = new THREE.Mesh(gs.length === 1 ? gs[0] : zaMerge(gs), tMat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m);
       }
       if (okL) {   // a 10 m grid over the lake where the ground lies below the water: milky emerald, paler in the shallows, the sky in it here and there
-        const L = okL, deep = [0.1, 0.4, 0.36], shal = [0.38, 0.6, 0.5], sky = [0.56, 0.72, 0.74], g = new GB(true), uv = (q) => [q[0] / 14, -q[2] / 14], C = 10;
-        const wc = (x, z) => { const e = vrWater(x, z).e, ks = 0.3 * sstep(0.55, 0.8, P.n2(x * 1.6, z * 1.6)); return [0, 1, 2].map(k => lerp(lerp(shal[k], deep[k], sstep(3, 40, e)), sky[k], ks)); };
+        const L = okL, deep = [0.16, 0.46, 0.4], shal = [0.42, 0.62, 0.5], sky = [0.5, 0.66, 0.64], g = new GB(true), uv = (q) => [q[0] / 14, -q[2] / 14], C = 10;   // (milky emerald: the volcano's minerals in the water)
+        const wc = (x, z) => { const e = vrWater(x, z).e, ks = 0.25 * sstep(0.55, 0.8, P.n2(x * 1.6, z * 1.6)), d = 0.04 * (P.n4(x * 3, z * 3) - 0.5); return [0, 1, 2].map(k => lerp(lerp(shal[k], deep[k], sstep(3, 50, e)), sky[k], ks) + d); };
         for (let zz = Math.floor((L.z0 - 10) / C) * C; zz < L.z1 + 10; zz += C) for (let xx = Math.floor((L.x0 - 10) / C) * C; xx < L.x1 + 10; xx += C) {
           if (!(zaGround(xx, zz) < L.h + 0.3 || zaGround(xx + C, zz) < L.h + 0.3 || zaGround(xx, zz + C) < L.h + 0.3 || zaGround(xx + C, zz + C) < L.h + 0.3)) continue;
           const A = [xx, L.h, zz], B = [xx + C, L.h, zz], Cc = [xx + C, L.h, zz + C], D = [xx, L.h, zz + C];
           g.quadUp(A, B, Cc, D, [wc(A[0], A[2]), wc(B[0], B[2]), wc(Cc[0], Cc[2]), wc(D[0], D[2])], [uv(A), uv(B), uv(Cc), uv(D)]); }
-        if (!g.empty) { const m = new THREE.Mesh(g.geometry(), new THREE.MeshPhongMaterial({ map: tex.water, vertexColors: true, shininess: 70, specular: 0x2a3a3a })); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); out.dyn.water = tex.water; }
+        if (!g.empty) { const m = new THREE.Mesh(g.geometry(), new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 80, specular: 0x34403c })); m.receiveShadow = true; m.matrixAutoUpdate = false; m.name = 'okama'; root.add(m); }
       }
     }
 
@@ -16172,6 +16172,8 @@ const World = (function () {
       const y = T.hy[i], gAt = (o) => { const q = side * o; return zaGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - y; }, lift = (o, h) => [o, Math.max(h, gAt(o) + 0.05)];
       if (T.gap && T.gap[side > 0 ? 1 : 0][i]) { const sf = (o) => { const q = side * o; return [o, T.yAt(T.query(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q, i, VRSQ)) - y - 0.03]; };   // a side road's mouth: no ditch, the verge at its surface
         return [[e + sw, -0.02], sf(Math.max(e + sw + 0.6, bar - 0.7)), sf(bar + 0.45), sf(bar + 1.15), sf(bar + 1.9)]; }
+      { const o = side * (bar + 2), L = inLot(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, 3); if (L) { const lf = (q) => { const x = T.px[i] + T.nx[i] * side * q, z = T.pz[i] + T.nz[i] * side * q; return [q, Math.min(-0.02, L.a + L.b * x + L.c * z + 0.05 - y)]; };   // a car park beside the road: no ditch, level with it
+        return [[e + sw, -0.02], lf(Math.max(e + sw + 0.6, bar - 0.7)), lf(bar + 0.45), lf(bar + 1.15), lf(bar + 1.9)]; } }
       if (gAt(bar + 0.45) < -2.6) return [[e + sw, -0.02], [bar + 0.3, -0.04], [bar + 0.42, gAt(bar + 0.42) - 0.08], [bar + 1.15, gAt(bar + 1.15) + 0.03], [bar + 1.9, gAt(bar + 1.9) + 0.03]];   // (a fill slope: the verge's edge, then down)
       return [[e + sw, -0.02], lift(Math.max(e + sw + 0.6, bar - 0.7), -0.12), [bar + 0.45, Math.min(-0.42, gAt(bar + 0.45) - 0.25)], lift(bar + 1.15, -0.3), [bar + 1.9, gAt(bar + 1.9) + 0.03]]; };
     const vp = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vProf(i, side)); return a; });
@@ -16181,10 +16183,11 @@ const World = (function () {
     {
       const offs = [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8;
       const shade = (i, o) => { const rl = T.rl[i]; let k = 0.84 - 0.13 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; return [k, k, k * 1.02]; };
-      const wht = [0.95, 0.95, 0.92], ylw = [0.95, 0.68, 0.12], gc = [0.7, 0.68, 0.64];
+      const wht = [0.95, 0.95, 0.92], ylw = [0.95, 0.68, 0.12], gc = [0.68, 0.68, 0.66];   // (gc: the narrow shoulder, grey)
       const vc = [-1, 1].map((side, si) => { const a = []; for (let i = 0; i < N; i++) { const bar = side > 0 ? T.br[i] : T.bl[i];
         a.push(vp[si][i].map(([o, y], k) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
           if (k === 4) return zaGCol(x, z);
+          if (k > 0 && inLot(x, z, 2.5)) return [0.6, 0.6, 0.59];   // (the car park's edge: asphalt grey)
           const sl = k === 2 ? zaSlope(x, z) : 0; return zaCol(x, z, T.hy[i] + y, 1 / Math.sqrt(1 + sl * sl), Math.max(0, o - bar)).slice(); })); } return a; });
       const wuv = (p) => [p[0] / 10, -p[2] / 10];
       for (let c0 = 0; c0 < N - 1; c0 += 110) {   // (220 m chunks)
@@ -16202,7 +16205,7 @@ const World = (function () {
               gv.quadUp(a, b, c, d, [ci[k], ci[k + 1], cj[k + 1], cj[k]], [wuv(a), wuv(b), wuv(c), wuv(d)]); }
           }
         }
-        addM(gr, aMat); addM(gl, lMat); addM(gs, sMat); addM(gv, gMat);
+        addM(gr, aMat); addM(gl, lMat); addM(gs, gMat); addM(gv, gMat);   // (the shoulder: grey grit)
       }
       // chequered start and finish lines (the finish's in its group), a white line at each checkpoint
       const gq = new GB(true), gqF = new GB(true), gw = new GB(), uM = Math.round(w * 2 / 0.8) / 16, W1 = [1, 1, 1];
@@ -16508,7 +16511,7 @@ const World = (function () {
             ouRod(g, a2, m, 0.03, rope, 3); ouRod(g, m, b2, 0.03, rope, 3);
             for (const f of [0.3, 0.7]) { const sag = 1.2 * 4 * f * (1 - f), cx = lerp(a2[0], b2[0], f), cy = lerp(a2[1], b2[1], f) - sag, cz = lerp(a2[2], b2[2], f);   // a chair: the hanger, the seat and its back
               ouRod(g, [cx, cy, cz], [cx, cy - 1.8, cz], 0.025, steel, 3); box(g, cx, cy - 2.05, cz, 0.55, 0.12, 1.4, hd, chairC); box(g, cx - ux * 0.25 * Math.sign(o), cy - 2.0, cz - uz * 0.25 * Math.sign(o), 0.08, 0.6, 1.4, hd, chairC); } } }
-        nLifts++;
+        out.marks['lift' + nLifts] = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]; nLifts++;
       }
     }
 
@@ -16524,7 +16527,7 @@ const World = (function () {
         let x = fx, z = fz; for (let k = 0; k < 40; k++) { const [dx, dz] = gradAt(x, z), nx = x - dx * 1.6, nz = z - dz * 1.6; if (zaGround(nx, nz) - zaGround(fx, fz) > drop * 0.5 || vrNear(nx, nz).dd < 6) break; x = nx; z = nz; up.push([x, z]); }
         x = fx; z = fz; for (let k = 0; k < 40; k++) { const [dx, dz] = gradAt(x, z), nx = x + dx * 1.6, nz = z + dz * 1.6; if (zaGround(fx, fz) - zaGround(nx, nz) > drop * 0.5 || vrNear(nx, nz).dd < 6) break; x = nx; z = nz; dn.push([x, z]); }
         const line = [...up.reverse(), [fx, fz], ...dn]; if (line.length < 4) continue;
-        const g = new GB(true), foam = [1, 1, 1], blue = [0.8, 0.88, 0.9];
+        const g = new GB(true), foam = [1.3, 1.3, 1.3], blue = [1.0, 1.06, 1.08];   // (white water: the blue map lifted to white)
         for (let k = 0; k < line.length - 1; k++) { const [x0, z0] = line[k], [x1, z1] = line[k + 1], ux = z1 - z0, uz = -(x1 - x0), ul = Math.hypot(ux, uz) || 1, px = ux / ul * wid / 2, pz = uz / ul * wid / 2;
           const y0 = zaGround(x0, z0) + 0.35, y1 = zaGround(x1, z1) + 0.35, c0 = k % 3 ? blue : foam, c1 = (k + 1) % 3 ? blue : foam;
           g.quadUp([x0 - px, y0, z0 - pz], [x0 + px, y0, z0 + pz], [x1 + px, y1, z1 + pz], [x1 - px, y1, z1 - pz], [c0, c0, c1, c1], [[0, k * 0.35], [1, k * 0.35], [1, (k + 1) * 0.35], [0, (k + 1) * 0.35]]); }
@@ -16540,7 +16543,7 @@ const World = (function () {
     /* ---- the streams (def.streams: OpenStreetMap) near the road: a ribbon of water on the ground of their gullies, stones along them; under the road a culvert ---- */
     let nStream = 0;
     {
-      const g = new GB(true), RS = rng(1371), wc = [0.62, 0.7, 0.72], sc = [0.42, 0.4, 0.38];
+      const g = new GB(true), RS = rng(1371), wc = [0.4, 0.5, 0.52], sc = [0.42, 0.4, 0.38];   // (wc: clear mountain water over the stones: the blue map toned down)
       for (const st of def.streams || []) {
         const pts = []; for (let k = 0; k + 1 < st.length; k += 2) pts.push([st[k], st[k + 1]]);
         const sm = []; for (let k = 0; k + 1 < pts.length; k++) { const [ax, az] = pts[k], [bx, bz] = pts[k + 1], L = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.ceil(L / 4)); for (let q = 0; q < n; q++) sm.push([ax + (bx - ax) * q / n, az + (bz - az) * q / n]); }
@@ -16576,10 +16579,10 @@ const World = (function () {
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(70000 * dens), RT = rng(1381), SP = 5.6 / Math.sqrt(dens), su = ZAS === 'summer';
       const X2 = (c) => [c[0] * 2, c[1] * 2, c[2] * 2];   // (the shapes are grey: the colour is the instance's, twice the leaves')
-      const BEECH = su ? [[0.18, 0.31, 0.11], [0.2, 0.33, 0.12], [0.17, 0.29, 0.11]] : [[0.86, 0.6, 0.16], [0.74, 0.4, 0.12], [0.8, 0.52, 0.14], [0.56, 0.36, 0.16]];
-      const MAPLE = su ? [[0.21, 0.37, 0.12], [0.24, 0.4, 0.14], [0.19, 0.34, 0.12]] : [[0.84, 0.15, 0.07], [0.68, 0.08, 0.1], [0.92, 0.4, 0.08], [0.92, 0.72, 0.12], [0.86, 0.26, 0.08], [0.6, 0.1, 0.08]];
-      const BIRCH = su ? [[0.27, 0.42, 0.15]] : [[0.92, 0.74, 0.2], [0.88, 0.66, 0.16]], PINE = [[0.1, 0.2, 0.1], [0.12, 0.22, 0.11]];
-      const SHRUB = su ? [[0.17, 0.28, 0.11], [0.2, 0.31, 0.12]] : [[0.7, 0.14, 0.08], [0.6, 0.1, 0.09], [0.76, 0.3, 0.1], [0.5, 0.34, 0.14]];
+      const BEECH = su ? [[0.16, 0.26, 0.1], [0.18, 0.28, 0.11], [0.15, 0.24, 0.1], [0.19, 0.27, 0.12]] : [[0.86, 0.6, 0.16], [0.74, 0.4, 0.12], [0.8, 0.52, 0.14], [0.56, 0.36, 0.16]];
+      const MAPLE = su ? [[0.19, 0.31, 0.11], [0.22, 0.33, 0.13], [0.17, 0.29, 0.11]] : [[0.84, 0.15, 0.07], [0.68, 0.08, 0.1], [0.92, 0.4, 0.08], [0.92, 0.72, 0.12], [0.86, 0.26, 0.08], [0.6, 0.1, 0.08]];
+      const BIRCH = su ? [[0.24, 0.35, 0.14]] : [[0.92, 0.74, 0.2], [0.88, 0.66, 0.16]], PINE = [[0.1, 0.2, 0.1], [0.12, 0.22, 0.11]];
+      const SHRUB = su ? [[0.15, 0.24, 0.1], [0.18, 0.27, 0.11], [0.2, 0.25, 0.12]] : [[0.7, 0.14, 0.08], [0.6, 0.1, 0.09], [0.76, 0.3, 0.1], [0.5, 0.34, 0.14]];
       const pick = (L, r) => X2(L[Math.floor(r * 997) % L.length]);
       grid: for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
         if (!G.on[tj * G.ntx + ti]) continue;
@@ -16600,10 +16603,10 @@ const World = (function () {
           else { const pM = 0.22 + (nn.i >= 0 && nn.dd < 16 ? 0.1 : 0); sp = r3 < 0.42 ? 0 : r3 < 0.42 + pM ? 3 : r3 < 0.78 ? 1 : r3 < 0.9 ? 2 : 5; }   // (more maples by the road, where the light is)
           const shrink = lerp(1, 0.5, sub) * lerp(1, 0.55, alp), far = hd > 90 ? 1.12 : 1;
           let hgt, wid, col, k;
-          if (sp === 0) { k = 0; hgt = (13 + r4 * 8) * shrink; wid = hgt * (0.85 + r2 * 0.25); col = pick(BEECH, r2); }
+          if (sp === 0) { k = 0; hgt = (11 + r4 * 7) * shrink; wid = hgt * (0.72 + r2 * 0.22); col = pick(BEECH, r2); }
           else if (sp === 1) { k = 1; hgt = (14 + r4 * 9) * shrink; wid = hgt * (0.32 + r2 * 0.08); col = [0.88 + r3 * 0.2, 0.92 + r4 * 0.14, 0.94 + r2 * 0.12]; }
           else if (sp === 2) { k = 0; hgt = (9 + r4 * 6) * shrink; wid = hgt * (0.55 + r2 * 0.15); col = pick(BIRCH, r2); }
-          else if (sp === 3) { k = 0; hgt = (7 + r4 * 6) * shrink; wid = hgt * (0.95 + r2 * 0.3); col = pick(MAPLE, r2); }
+          else if (sp === 3) { k = 0; hgt = (6 + r4 * 5) * shrink; wid = hgt * (0.85 + r2 * 0.25); col = pick(MAPLE, r2); }
           else if (sp === 4) { k = 2; hgt = 0.8 + r4 * 1.2; wid = 2.2 + r2 * 3; col = pick(PINE, r3); }
           else { k = 2; hgt = 0.7 + r4 * 1.1; wid = 1.4 + r2 * 1.6; col = pick(SHRUB, r3); }
           (k < 2 && nn.i >= 0 && nn.dd < 22 ? tkN : tk)[k].add(x, y - 0.15, z, r1 * 70, wid * far, hgt * far, col);
@@ -16621,7 +16624,7 @@ const World = (function () {
     const pk = [0, 1, 2].map(k => new IChunks(zaPlantGeo(k), k === 1 ? wMat : pMat, 128));
     let nPlants = 0;
     {
-      const G = P.G, Lt = VRC * VRT, maxT = Math.round(36000 * dens), RT = rng(1391), SP = 3.4 / Math.sqrt(dens), su = ZAS === 'summer';
+      const G = P.G, Lt = VRC * VRT, maxT = Math.round(60000 * dens), RT = rng(1391), SP = 3.4 / Math.sqrt(dens), su = ZAS === 'summer';
       grid: for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
         if (!G.on[tj * G.ntx + ti]) continue;
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
@@ -16641,7 +16644,7 @@ const World = (function () {
           if (excluded(x, z) || inLot(x, z, 1) || vrWater(x, z).e > -2) continue;
           if (kind === 0) pk[0].add(x, y0 - 0.08, z, r2 * TAU, 1.0 + r3 * 0.9, 0.7 + r4 * 0.6, [0.92 + r2 * 0.16, 0.92 + r3 * 0.14, 0.9 + r4 * 0.14]);
           else if (kind === 1) pk[1].add(x, y0 - 0.05, z, r2 * TAU, 0.5 + r3 * 0.5, 0.35 + r4 * 0.35, su ? [0.92 + r2 * 0.16, 0.95 + r3 * 0.1, 0.9] : [1.25 + r2 * 0.2, 1.05 + r3 * 0.1, 0.95]);
-          else { const k = 0.86 + r3 * 0.28, rc = r2 < 0.3 ? [1.1, 0.92, 0.84] : [1, 1, 1]; pk[2].add(x, y0 - 0.15, z, r4 * TAU, 0.6 + r3 * 1.9, 0.45 + r4 * 1.3, [rc[0] * k, rc[1] * k, rc[2] * k]); }
+          else { const k = 0.86 + r3 * 0.28, rc = r2 < 0.3 ? [1.04, 0.97, 0.92] : [1, 1, 1]; pk[2].add(x, y0 - 0.15, z, r4 * TAU, 0.6 + r3 * 1.9, 0.45 + r4 * 1.3, [rc[0] * k, rc[1] * k, rc[2] * k]); }
           if (++nPlants >= maxT) break grid;
         }
       }
@@ -16660,7 +16663,7 @@ const World = (function () {
 
     /* ---- the slopes: boulders at the foot of the cuts, crags of andesite where the slope is steep, bigger blocks of scoria on the volcano's bare ground ---- */
     {
-      const RV = rng(1401), rockC = [[0.5, 0.47, 0.44], [0.44, 0.42, 0.41], [0.56, 0.5, 0.44], [0.58, 0.44, 0.36], [0.4, 0.39, 0.38]];
+      const RV = rng(1401), rockC = [[0.5, 0.47, 0.44], [0.44, 0.42, 0.41], [0.56, 0.5, 0.44], [0.54, 0.47, 0.42], [0.4, 0.39, 0.38]];
       for (let s = 10; s < T.len - 10; s += 7) for (const side of [-1, 1]) {
         if (RV() > 0.3) continue;
         const o = 1.6 + Math.pow(RV(), 1.5) * 34, [x, z] = onSide(s, side, o), sz = 0.4 + RV() * 1.2; if (vrNear(x, z).dd < sz + 0.6 || excluded(x, z) || inLot(x, z, 2)) continue;
@@ -16682,7 +16685,7 @@ const World = (function () {
     if (okL) {   // three vents on the crater's north-east wall, above the water (an approximation: the crater steams in places)
       const vents = []; for (const [a, d] of [[-0.35, 1.25], [-0.15, 1.4], [0.1, 1.3]]) { let r = 0; for (const [x, z] of okL.poly) r = Math.max(r, Math.hypot(x - okL.cx, z - okL.cz));
         const ang = Math.atan2(-1, 1) + a, x = okL.cx + Math.cos(ang) * r * d * 0.85, z = okL.cz + Math.sin(ang) * r * d * 0.85; vents.push([x, Math.max(zaGround(x, z), okL.h + 3), z]); }
-      const F = zaFumeMk(vents); root.add(F.pts); out.dyn.zaFume = F; }
+      const F = zaFumeMk(vents); root.add(F.pts); out.dyn.zaFume = F; out.marks.fume = [vents[1][0], vents[1][2]]; }
 
     /* ---- finish the meshes ---- */
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
