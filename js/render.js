@@ -1655,7 +1655,7 @@ const Render = (function () {
     suzuka:   { fog: 0xc8d9e6, sun: 0xfff1dc, sunI: 1.06, sky: 0xd5e7fa, gnd: 0x4f5c34, hemiI: 0.62, tint: [1.01, 1.0, 0.99], sat: 1.12 },   // Suzuka: a clear spring day in Mie
     caracoles: { fog: 0xc2d3e8, sun: 0xfff3de, sunI: 1.32, sky: 0xb4cdf2, gnd: 0x6e5e4c, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.07, sunOff: [-72, 98, -62] },   // Los Caracoles: a clear afternoon of the Andean summer, the thin air's strong sun from the north-west (the southern hemisphere), a cool blue haze
     bathurst: { fog: 0xcfdbe6, sun: 0xfff0d2, sunI: 1.22, sky: 0xc6dcf6, gnd: 0x6b6a3c, hemiI: 0.6, tint: [1.03, 1.0, 0.95], sat: 1.05, sunOff: [-74, 86, -56] },   // Bathurst: a clear spring afternoon in New South Wales, the sun from the north-west (the southern hemisphere), the dry pastures' golden light
-    rio:      { fog: 0xd3dfe6, sun: 0xfff3dc, sunI: 1.34, sky: 0xbfd8f4, gnd: 0x5d6a3a, hemiI: 0.62, tint: [1.03, 1.0, 0.96], sat: 1.1, sunOff: [-30, 120, -40] },   // Rio in March: a strong tropical sun high in the north (the southern hemisphere: short shadows), a humid, pale haze
+    rio:      { fog: 0xd3dfe6, sun: 0xfff3dc, sunI: 1.3, sky: 0xbfd8f4, gnd: 0x5d6a3a, hemiI: 0.62, tint: [1.03, 1.0, 0.96], sat: 0.98, sunOff: [-30, 120, -40] },   // Rio in March: a strong tropical sun high in the north (the southern hemisphere: short shadows), a humid, pale haze
   };
   // each track's own grade on top (high quality, the post pass): its shadows and its highlights tinted apart, a little (split toning:
   // [shadows], [highlights]); cool shade and a warm sun mostly, the Riviera's teal and gold, Toskana's golden light, Spa's greyer air

@@ -4412,7 +4412,7 @@ const World = (function () {
     m.customProgramCacheKey = () => 'grassLook' + (sd ? 'S' : '') + (nat ? 'N' : '');
     m.needsUpdate = true;
   }
-  const GRASS_NAT = { spa: 0.85, suzuka: 0.9, lake: 0.75, nring: 0.6, rbring: 0.45, bathurst: 0.7, rio: 0.35 };   // how much of the loud green to tone down, per theme
+  const GRASS_NAT = { spa: 0.85, suzuka: 0.9, lake: 0.75, nring: 0.6, rbring: 0.45, bathurst: 0.7, rio: 0.75 };   // how much of the loud green to tone down, per theme
   function grassWorld(o, tex) {
     const lawn = !T.open && ['lake', 'forest', 'kamp', 'italia', 'rbring', 'bathurst'].includes(THEME);   // (the circuits whose lawns are mown in stripes; Spa and Suzuka lay their own)
     let sd = null; if (lawn) { const i = T.idx(T.startS); sd = [-T.tz[i], T.tx[i]]; }   // (the stripes run along the start straight)
@@ -15175,7 +15175,7 @@ const World = (function () {
       screen: { name: ['RIO DE JANEIRO', ''], km: '5,031 km', sub: '11 zavojev', fans: ['#ffd21f', '#0a6a3a', '#f4f4f0', '#123c8c', '#e2202c', '#ff9a2e', '#0a6a3a'], glow: '255,210,31' },
       colMod: (P) => (x, z, c) => {   // the tropics in the rainy summer: a lush, deeper green in patches; the marsh by the lagoon olive and muddy
         const n = P.n5(x * 0.55 + 700, z * 0.55), m = P.n3(x * 1.6 + 300, z * 1.6), k = 0.92 + (n - 0.5) * 0.16 + (m - 0.5) * 0.1, mf = nrLCf(x, z, 2);
-        c[0] *= k * 0.9; c[1] *= k * 1.04; c[2] *= k * 0.84;
+        c[0] *= k * 0.88; c[1] *= k * 0.94; c[2] *= k * 0.8;
         if (mf > 0) { c[0] = lerp(c[0], 0.7, mf * 0.6); c[1] = lerp(c[1], 0.74, mf * 0.6); c[2] = lerp(c[2], 0.5, mf * 0.6); }
       } },
   };
@@ -15247,6 +15247,8 @@ const World = (function () {
       for (const y of [4.9, 8.9]) { kface(g, s0, 0.2, 9.8, f0 + 0.28, y, y + 2.4, GL); kbox(g, s0, 5, f0 + 0.2, y - 0.9, 10.02, 0.5, 0.4, CON2, null, true); }   // ribbon windows over a slab edge
       for (let a = 1.25; a < 10; a += 2.5) kbox(g, s0, a, f0 - 0.05, 4.0, 0.16, 8.0, 0.55, CON2, null, true);   // the concrete fins in front of them (against the sun)
       kbox(g, s0, 5, f0 + 7.9, 12.0, 10.02, 0.25, 15.6, CON2, [0.7, 0.69, 0.66]); kbox(g, s0, 5, f0 + 0.05, 12.25, 10.02, 1.0, 0.18, CON2);   // the roof and its parapet
+      kbox(g, s0, 5, f0 - 0.06, 12.4, 10.02, 0.32, 0.05, [0.02, 0.5, 0.26], null, true); kbox(g, s0, 5, f0 - 0.06, 12.72, 10.02, 0.16, 0.05, [0.98, 0.82, 0.1], null, true);   // painted in green and yellow
+      kbox(g, s0, 5, f0 + 0.3, 14.1, 10.02, 0.07, 0.07, [0.18, 0.34, 0.66], null, true); kbox(g, s0, 0.1, f0 + 0.3, 13.25, 0.06, 0.9, 0.06, [0.18, 0.34, 0.66], null, true);   // a blue railing over it
       exclPush(T.px[ik] + T.nx[ik] * (f0 + 8), T.pz[ik] + T.nz[ik] * (f0 + 8), 12);
       if (q === pq0 + 60) mid = { s: s0 + 5, f0 };
     }
@@ -15294,6 +15296,23 @@ const World = (function () {
     if (def.pitBuilding) row(def.pitBuilding[0], def.pitBuilding[1], 1, 62, 14);
     row(1900, 2650, -1, 16, 18); row(300, 560, -1, 22, 20);
     for (const c of pg) c.addTo(root, true); st.palms = nPalm;
+    /* the timing pylon of the time past the main stand, facing the pit straight: the running order as rows of car numbers in yellow bulbs
+       on black (made-up numbers), the lap counter on top */
+    { const [x, z, i] = rioPylon(), y = nrGround(x, z), H = 15, W = 2.8;
+      if (!excluded(x, z)) {
+        const c = document.createElement('canvas'); c.width = 128; c.height = 640; const q = c.getContext('2d'), RN = rng(1981);
+        q.fillStyle = '#0c0d10'; q.fillRect(0, 0, 128, 640); q.fillStyle = '#ffd21f'; q.font = '900 46px "Russo One", "Arial Black", Arial, sans-serif'; q.textAlign = 'center'; q.textBaseline = 'middle';
+        q.fillText('2', 64, 40); q.fillStyle = '#e8e8e2'; q.fillRect(10, 72, 108, 4);
+        for (let k = 0; k < 10; k++) { q.fillStyle = '#ffd21f'; q.fillText(String(1 + Math.floor(RN() * 30)), 64, 112 + k * 52); }
+        const t = ownTex(new THREE.CanvasTexture(c)), g = new GB(true), gp = new GB(), fx = T.nx[i], fz = T.nz[i], rx = -T.tx[i], rz = -T.tz[i];   // (its face towards the track; the reader's right against the traffic)
+        const F = (u, v) => [x + fx * 0.62 + rx * (u - 0.5) * W, y + 3 + v * H, z + fz * 0.62 + rz * (u - 0.5) * W];
+        g.quadO(F(0, 0), F(1, 0), F(1, 1), F(0, 1), [1, 1, 1], [x, y + 3 + H / 2, z], [[0, 0], [1, 0], [1, 1], [0, 1]]);
+        box(gp, x, y + 2.9, z, W + 0.3, H + 0.3, 1.2, T.hd[i], [0.16, 0.17, 0.19], [0.3, 0.31, 0.33]);
+        for (const sd of [-1, 1]) box(gp, x + rx * sd * 0.9, y - 0.2, z + rz * sd * 0.9, 0.35, 3.2, 0.35, T.hd[i], [0.62, 0.63, 0.66]);
+        const mt = new THREE.Mesh(g.geometry(), new THREE.MeshBasicMaterial({ map: t })), mp = new THREE.Mesh(gp.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true }));
+        for (const m of [mt, mp]) { m.castShadow = m === mp; m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); }
+        exclPush(x, z, 5); st.pylon = 1;
+      } }
     /* hoardings on posts behind the barrier of the back straight, facing the cars (the game's own invented brands, tex.sponsors) */
     { const gH = new GB(true), gP = new GB(); let n = 0;
       for (let d = 1980, k = 0; d < 2600; d += 90, k++) {
@@ -15329,6 +15348,10 @@ const World = (function () {
       out.dyn.skyline = { meshes, fog: scene.fog }; st.skyline = meshes.length;
     }
     return st;
+  }
+  function rioPylon(px, pz) {   // the timing pylon's place (175 m after the start line, 9 m behind the left barrier); with a point: whether a tree there would hide it
+    const i = T.idx((T.startS + 175) % T.len), o = -(T.bl[i] + 9), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
+    return px == null ? [x, z, i] : Math.hypot(px - x - T.nx[i] * 6, pz - z - T.nz[i] * 6) < 16;   // (a circle round it and towards the track)
   }
   function rioSkyline(S, cam) {   // the mountains' ring round the camera, as big as the view reaches, in the haze's colour
     if (!cam) return;
@@ -15808,7 +15831,13 @@ const World = (function () {
         for (let d = a; d < b - 0.01; d += ds) {
           const i = T.idx(sAt(d)), j = T.idx(sAt(Math.min(b, d + ds))), o0 = w + T.curbW, e = (q) => (LK.gravel ? 0.4 + 0.6 * Math.min(1, (q - a) / 24, (b - q) / 24) : 1), o1 = o0 + wd * e(d), o1j = o0 + wd * e(Math.min(b, d + ds));   // (Rio: the sand traps' ends rounded off)
           const A = Pt(i, side * o0, 0.036), B = Pt(i, side * o1, 0.036), C = Pt(j, side * o1j, 0.036), D = Pt(j, side * o0, 0.036);
-          gs.quadUp(A, B, C, D, [gcl, gcl, gcl, gcl], [uvg(A), uvg(B), uvg(C), uvg(D)]);
+          if (!LK.gravel) gs.quadUp(A, B, C, D, [gcl, gcl, gcl, gcl], [uvg(A), uvg(B), uvg(C), uvg(D)]);
+          else {   // Rio's sand: darker and churned up by the tyres along the kerb, raked patches of lighter and darker sand further out
+            const dj = Math.min(b, d + ds), sc = (q, o) => { const k = 0.9 + 0.07 * Math.sin(q * 0.11 + o * 0.6) + 0.05 * Math.sin(q * 0.37 - o * 1.3); return [0.8 * k, 0.73 * k, 0.6 * k]; }, ed = [0.6, 0.53, 0.43];
+            const om = o0 + Math.min(1.8, (o1 - o0) * 0.3), omj = o0 + Math.min(1.8, (o1j - o0) * 0.3), M = Pt(i, side * om, 0.036), Mj = Pt(j, side * omj, 0.036);
+            gs.quadUp(A, M, Mj, D, [ed, sc(d, om), sc(dj, omj), ed], [uvg(A), uvg(M), uvg(Mj), uvg(D)]);
+            gs.quadUp(M, B, C, Mj, [sc(d, om), sc(d, o1), sc(dj, o1j), sc(dj, omj)], [uvg(M), uvg(B), uvg(C), uvg(Mj)]);
+          }
         }
         if (!LK.gravel) for (let d = a - 30; d < b + 12; d += ds) {   // the blue line: from before the corner to the end of the strip
           const i = T.idx(sAt(d)), j = T.idx(sAt(d + ds));
@@ -16553,7 +16582,7 @@ const World = (function () {
           const p = RIO ? RIO_TP[cl] : AU ? (cl === 1 ? 0.55 : cl === 2 ? 0.2 : 0.022) : cl === 1 ? 0.9 : cl === 2 ? 0.003 : cl === 3 ? 0.012 : 0.012;   // (Styria: class 2 is farmland; Bathurst: open eucalypt woods, lone gums in the paddocks)
           if (r1 > p) continue;
           if (rd < 48) { const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 3.5) continue; if (nn.i >= 0 && nn.dd < 8 && r2 < 0.4) continue; }
-          if (excluded(x, z) || P.pad(x, z, 0) !== 0 || (RIO && rioWet(x, z, 3))) continue;   // (not on the level pit complex either, nor in the lagoon)
+          if (excluded(x, z) || P.pad(x, z, 0) !== 0 || (RIO && (rioWet(x, z, 3) || rioPylon(x, z)))) continue;   // (not on the level pit complex either, nor in the lagoon)
           const y = nrGround(x, z); let sp, hgt, wid;
           if (RIO) [sp, hgt, wid] = rioTree(cl, R, far);
           else if (AU) { sp = R() < (cl === 1 ? 0.8 : cl === 2 ? 0.3 : 0.85) ? 0 : 1;   // a eucalypt 15-27 m (crowns high and loose), or a wattle 3-6 m

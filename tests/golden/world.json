@@ -336,24 +336,24 @@
   }
  },
  "rio": {
-  "meshes": 590,
-  "verts": 506558,
+  "meshes": 593,
+  "verts": 515656,
   "instances": 10111,
   "props": 151,
   "crowd": 1853,
-  "world": "ffab65d1",
+  "world": "5369dfa5",
   "propsHash": "940ce7ae",
   "floor": "8352b82e/9800",
   "groups": {
-   "-:MeshLambertMaterial": "f034c3e9",
-   "-:MeshBasicMaterial": "463cd203",
+   "-:MeshLambertMaterial": "46795224",
+   "-:MeshBasicMaterial": "9197dd9d",
    "crowd:MeshLambertMaterial": "77615746",
    "champagne:ShaderMaterial": "c906711c",
    "smoke:ShaderMaterial": "5a97f7c",
    "flags:MeshLambertMaterial": "d0d3d77d",
    "jet smoke:MeshBasicMaterial": "684b759b",
    "-:MeshPhongMaterial": "d2ec366f",
-   "ao:MeshBasicMaterial": "119402b1",
+   "ao:MeshBasicMaterial": "a585db4a",
    "roadwear:MeshLambertMaterial": "619aacf1",
    "worn:MeshLambertMaterial": "418a694"
   }
