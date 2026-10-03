@@ -14282,6 +14282,13 @@ const World = (function () {
         }
       }
       addM(g, sMat);
+      // a car parked at the gravel's edge near the junction (the hikers' car)
+      const O = (def.oldRoad || [])[0];
+      if (O) { const p = O[2], n = p.length / 2;
+        for (let k = 6; k < Math.min(n, 16); k++) { const k0 = k - 1, k1 = Math.min(n - 1, k + 1), dx = p[2 * k1] - p[2 * k0], dz = p[2 * k1 + 1] - p[2 * k0 + 1], l = Math.hypot(dx, dz) || 1, o = RW + 1.9;
+          const x = p[2 * k] - dz / l * o, z = p[2 * k + 1] + dx / l * o; if (vrNear(x, z).dd < 6 || bsSlope(x, z) > 0.3 || vrDist(x, z) > 400) continue;
+          caCar(scen.get(x, z), x, bsGround(x, z), z, Math.atan2(dz, dx), [0.62, 0.6, 0.55]); exclPush(x, z, 3); break; }
+      }
     }
 
     /* ---- spectators: the start and the finish, the checkpoints, the sightseers at the pull-outs, the crowd at the north end of the Bixby Creek Bridge
@@ -14306,7 +14313,7 @@ const World = (function () {
     const pk = [0, 1, 2, 3, 4].map(k => new IChunks(caPlantGeo(k), k === 0 ? wMat : pMat, k === 4 ? 64 : 128));
     const bk = [0, 1].map(k => new IChunks(bsBushGeo(k), k === 1 ? wMat : pMat, 128));
     const tk = [0, 1].map(k => new IChunks(bsTreeGeo(k), pMat, 128));
-    let nPlants = 0, nTrees = 0, nBush = 0, nSeal = 0, nBarn = 0;
+    let nPlants = 0, nTrees = 0, nBush = 0, nSeal = 0, nBarn = 0, nBoat = 0;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(70000 * dens), maxTr = Math.round(9000 * dens), RT = rng(3961), SP = 3.4 / Math.sqrt(dens);
       const BC = [[0.82, 0.98, 0.84], [0.74, 0.92, 0.78], [1.12, 1.1, 1.04], [1.2, 1.04, 0.82]];   // (coyote brush, darker; sage, grey-green; dried, brown)
@@ -14372,8 +14379,21 @@ const World = (function () {
             gf.quadUp([x + Math.cos(a0) * ri, yy, z + Math.sin(a0) * ri], [x + Math.cos(a1) * ri, yy, z + Math.sin(a1) * ri], [x + Math.cos(a1) * ro * w0, yy, z + Math.sin(a1) * ro * w0], [x + Math.cos(a0) * ro * w0, yy, z + Math.sin(a0) * ro * w0], [[...FW, 0.75], [...FW, 0.75], [...FW, 0], [...FW, 0]]); }
         }
       }
-      if (!gf.empty) { const m = new THREE.Mesh(gf.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -8 })); m.matrixAutoUpdate = false; m.renderOrder = 2; root.add(m); }
       seals.addTo(root, true);
+      // fishing boats out on the Pacific, 120-300 m off the cliffs, at anchor or trolling: a white hull, the wheelhouse, a mast and outriggers
+      for (let k = 0, tries = 0; k < 6 && tries < 200; tries++) {
+        const s = sStart + RK() * (T.len - sStart - 40), [x, z] = onSide(s, 1, 120 + RK() * 180); if (bsGround(x, z) > y0 - 8) continue;
+        const a = RK() * TAU, c = Math.cos(a), sn = Math.sin(a), L = 9 + RK() * 5, g = scen.get(x, z), hc = RK() < 0.7 ? [0.93, 0.93, 0.9] : [0.24, 0.42, 0.56];
+        box(g, x, y0 - 0.5, z, L, 1.6, L * 0.32, a, hc, [0.56, 0.58, 0.6], true); box(g, x + c * L * 0.42, y0 + 0.4, z + sn * L * 0.42, L * 0.16, 0.7, L * 0.22, a, hc, null, true);
+        box(g, x + c * L * 0.12, y0 + 1.1, z + sn * L * 0.12, L * 0.3, 1.7, L * 0.25, a, [0.95, 0.95, 0.92], [0.3, 0.36, 0.42], true);
+        cyl(g, x - c * L * 0.1, y0 + 1, z - sn * L * 0.1, 0.09, 6, 4, [0.7, 0.7, 0.7], null);
+        ouRod(g, [x - c * L * 0.1, y0 + 5.5, z - sn * L * 0.1], [x - c * L * 0.1 - sn * 5, y0 + 2.5, z - sn * L * 0.1 + c * 5], 0.05, [0.7, 0.7, 0.7], 3);
+        ouRod(g, [x - c * L * 0.1, y0 + 5.5, z - sn * L * 0.1], [x - c * L * 0.1 + sn * 5, y0 + 2.5, z - sn * L * 0.1 - c * 5], 0.05, [0.7, 0.7, 0.7], 3);
+        if (RK() < 0.5) for (let q = 0; q < 4; q++) { const d0 = L * 0.5 + q * 5, d1 = d0 + 5, w0 = 1.4 + q * 1.2, w1 = w0 + 1.2, A = 0.6 - q * 0.15;   // (a wake behind one under way)
+          gf.quadUp([x - c * d0 - sn * w0, y0 + 0.05, z - sn * d0 + c * w0], [x - c * d0 + sn * w0, y0 + 0.05, z - sn * d0 - c * w0], [x - c * d1 + sn * w1, y0 + 0.05, z - sn * d1 - c * w1], [x - c * d1 - sn * w1, y0 + 0.05, z - sn * d1 + c * w1], [[...FW, A], [...FW, A], [...FW, A - 0.15], [...FW, A - 0.15]]); }
+        k++; nBoat++;
+      }
+      if (!gf.empty) { const m = new THREE.Mesh(gf.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -8 })); m.matrixAutoUpdate = false; m.renderOrder = 2; root.add(m); }
     }
 
     /* ---- life on the land: the power line on its wooden poles (def.power, OpenStreetMap) with three sagging wires, the ranch fences (wooden posts and
@@ -14435,6 +14455,10 @@ const World = (function () {
       const RV = rng(3993), VC = [[0.85, 0.85, 0.83], [0.2, 0.22, 0.25], [0.55, 0.12, 0.1], [0.2, 0.32, 0.5], [0.62, 0.6, 0.55], [0.3, 0.36, 0.28]];
       for (const b of blds) { if (b.kind === 3 || RV() < 0.25) continue; const c = Math.cos(b.ang), sn = Math.sin(b.ang), o = b.W / 2 + 3.2, x = b.x - sn * o, z = b.z + c * o;
         if (vrNear(x, z).dd < 3 || bsSlope(x, z) > 0.4) continue; caCar(scen.get(x, z), x, bsGround(x, z), z, b.ang + (RV() - 0.5) * 0.4, VC[Math.floor(RV() * VC.length)]); }
+      // the windbreaks: a row of Monterey cypresses behind a house (on its far side from the car), dark, dense, wind-shaped
+      for (const b of blds) { if (b.kind === 3 || RV() < 0.45) continue; const c = Math.cos(b.ang), sn = Math.sin(b.ang), o = -(b.W / 2 + 7), n = 4 + Math.floor(RV() * 5), L0 = (n - 1) * 3.6 / 2;
+        for (let q = 0; q < n; q++) { const t = q * 3.6 - L0, x = b.x - sn * o + c * t, z = b.z + c * o + sn * t; if (vrNear(x, z).dd < 9 || excluded(x, z) || bsSlope(x, z) > 0.6) continue;
+          const h = 7 + RV() * 4; tk[0].add(x, bsGround(x, z) - 0.2, z, (RV() - 0.5) * 0.5, h * 0.95, h, [0.78 + RV() * 0.1, 0.84 + RV() * 0.1, 0.82 + RV() * 0.1]); exclPush(x, z, 2.5); nTrees++; } }
     }
     for (const t of pk) t.addTo(root, false);
     for (const t of bk) t.addTo(root, false);
@@ -14455,8 +14479,8 @@ const World = (function () {
       const M = out.dyn.bsMist = { on: 0, k: 0, U, root, base: new THREE.Color(), mc: new THREE.Color(0xd9dfe4), hex: -1 };
       // a line of brown pelicans gliding low over the water along the coast, up and down it (one mesh; bsPelicanStep moves it)
       const pel = new THREE.Mesh(bsPelicanGeo(), new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide })); pel.castShadow = true; root.add(pel);
-      const PL = out.dyn.bsPel = { m: pel, a: sStart - 100, b: T.len - 40 };
-      out.dyn.afterCam = (cam) => { bsMistStep(M, cam); bsPelicanStep(PL, M.t || 0); };
+      out.dyn.bsPel = { m: pel, a: sStart - 100, b: T.len - 40 };
+      out.dyn.afterCam = (cam) => bsMistStep(M, cam);
     }
 
     /* ---- finish the meshes ---- */
@@ -14470,7 +14494,7 @@ const World = (function () {
       out.dyn.condors = { L, x0: T.px[i0], z0: T.pz[i0], y0: T.hy[i0], ax: T.px[i0], az: T.pz[i0], ay: T.hy[i0], t: null };
       caCondors(out.dyn.condors, 0, null); }
     crowdFinish(CR, root, out);
-    out.stats = { plants: nPlants, bushes: nBush, cows: nCows, fence: nFence, seals: nSeal, barns: nBarn, trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), bridges: brInfo.length, oldRoad: nOld };   // (read by the tests)
+    out.stats = { plants: nPlants, bushes: nBush, cows: nCows, fence: nFence, seals: nSeal, barns: nBarn, boats: nBoat, trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), bridges: brInfo.length, oldRoad: nOld };   // (read by the tests)
     return out;
   }
 
@@ -19087,6 +19111,7 @@ const World = (function () {
     if (d.pkVeg && !car) d.pkVeg();   // Pikes Peak: the plants' buffers in a fixed state (the world test)   // Pikes Peak: the summit's smoke and flags, the sea of clouds   // Pikes Peak: the marshals' flags
     if (d.wheel) szWheel(d.wheel, t);   // Suzuka: the Ferris wheel turns
     if (d.condors) caCondors(d.condors, t, car);   // Los Caracoles: the condors circle over the road
+    if (d.bsPel) bsPelicanStep(d.bsPel, t);   // Big Sur: the pelicans fly along the coast
     if (d.pkLife) pkWildlifeUpdate(d.pkLife, t, car);   // Pikes Peak: marmots and bighorn sheep
     if (d.pkAmb) pkAmbientUpdate(d.pkAmb, t, car);   // Pikes Peak: flags, dust and leaves, grill smoke
     if (d.boats) {
