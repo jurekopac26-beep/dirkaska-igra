@@ -1183,7 +1183,7 @@
     { const air = Render.world && Render.world.air;   // the Red Bull Ring: first the jets over the grid, filmed from the grid (not online, not in a time trial or qualifying)
       if (air && !on && !tt && !quali && !school) { air.go = true; introLen += JET_SHOT; Render.setShot(air.shot); $('hud').classList.add('shot'); } }
     pkFlyStart(!on && tt && !quali);   // (Pikes Peak, Katu-Jaryk: the course flyover first, at a fresh start only)
-    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; dmgKey = ''; pitHint = false; drsN = 0; secN = 0; wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
+    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; dmgKey = ''; pitHint = false; drsN = 0; secN = 0; wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; flSeen = flPSeen = 0; flKey = '-'; flTold = {}; flMsgEnd = -1;
     $('h-msg').className = ''; $('h-split').className = ''; $('h-note').className = '';
     $('h-lights').className = ''; setLights(0, false);
     $('h-tot').textContent = quali || race.pol ? '' : '/' + race.cars.length; $('h-rank').firstElementChild.textContent = tr(race.pol ? 'POLICIJA' : 'MESTO');   // (the run from the police: how many patrol cars are after the player)
@@ -1966,6 +1966,15 @@
     if (P.air && !jmp.air) { jmp.air = true; jmp.x = P.x; jmp.z = P.z; jmp.s = P.q.s; }
     else if (!P.air && jmp.air) { jmp.air = false; if (phase === 'racing' && !P.finished) jumpLanded(Math.hypot(P.x - jmp.x, P.z - jmp.z), jmp.s); }
     if (P.pitEv) { const e = P.pitEv; P.pitEv = null; pitEvent(e); }
+    // lap events, in the step they happen as the race's other events (a time trial has its own checkpoint / finish popups); the last lap's
+    // message gives way to the flags: not while a flag's message is still up (race time) or a flag is there for the player to mind
+    if (!race.timeTrial && !race.quali && P.lapTimes.length > lastLapCount) {
+      lastLapCount = P.lapTimes.length;
+      const t = P.lapTimes[lastLapCount - 1];
+      const isBest = t <= Math.min(...P.lapTimes) + 1e-6 && lastLapCount > 1;
+      const el = $('h-split'); el.textContent = tr('KROG {0}: {1}', lastLapCount, fmt(t, true)) + (isBest ? tr('  NAJHITREJŠI') : ''); el.className = 'show'; splitT = 3.2; cornerShow = false;
+      if (!P.finished && P.lap === race.laps) { if (!(race.time < flMsgEnd || flagOn(P))) showMsg(tr('ZADNJI KROG!'), 'gold', 2); Sfx.beep(880, 0.12, 0.12); }
+    }
     if (race.wst && race.wst.ev !== wxSeen) { wxSeen = race.wst.ev; wxEvent(race.wst.evK, P); }
     if (race.fl) { const F = race.fl; if (F.ev !== flSeen) { flSeen = F.ev; flagEvent(F.evK, P); } if (F.pev !== flPSeen) { flPSeen = F.pev; flagPlayer(F.pevK); } }
     if (race.tf) { const L = race.tf; if (L.ev !== tfSeen) { for (const e of L.log) if (e.n > tfSeen) roadEvent(e.k, e.c, P); tfSeen = L.ev; } roadSound(P); }   // (the traffic's events in order: two in one step both heard)
@@ -2409,23 +2418,30 @@
   // a changing weather (Race opts weather) and tyres (opts tyres): the rain starts or stops (race.wst.ev), the tyres on the HUD
   let wxSeen = 0, dryHint = false, tyreKey = '';
   // flags (Race opts flags): a yellow flag where a car has stopped, the safety car after a heavy crash, the player overtaking under them
-  let flSeen = 0, flPSeen = 0, flKey = '', flTold = {};
+  let flSeen = 0, flPSeen = 0, flKey = '', flTold = {}, flMsgEnd = -1;   // (flMsgEnd: the race time until which a flag's message has the HUD's message)
+  const flagMsg = (txt, cls, dur) => { showMsg(txt, cls, dur); flMsgEnd = race.time + dur; };
+  // a flag the player has to mind now: a place to give back, the safety car, a yellow zone they are in or have within 700 m ahead
+  function flagOn(P) {
+    const F = race.fl; if (!F) return false;
+    if ((P.fl && P.fl.owe) || F.sc) return true;
+    return F.yel.some(y => y.car !== P && (((y.s - P.q.s) % track.len) + track.len) % track.len < 700) || !!race._yelAt(P.q.s);
+  }
   function flagEvent(k, P) {
     if (phase !== 'racing' || P.finished) return;
     const F = race.fl;
     if (k === 'yellow') {   // (a car stopped ahead: the zone before it)
       const y = F.yel[F.yel.length - 1]; if (!y || y.car === P) return;
       let d = y.s - P.q.s; d = ((d % track.len) + track.len) % track.len;
-      if (d < 700) { showMsg(tr('RUMENA ZASTAVA'), 'gold', 1.8); if (!flTold.y) { flTold.y = true; toast(tr('Rumena zastava: pred tabo je ustavljen avto. Upočasni in ne prehitevaj, dokler je ne prevoziš.'), 4200); } Comm.say('yellow', null, 2); }
-    } else if (k === 'sc') { showMsg(tr('VARNOSTNI AVTO'), 'gold', 2.6); Sfx.beep(520, 0.2, 0.12); if (!flTold.sc) { flTold.sc = true; toast(tr('Varnostni avto: ne prehitevaj in se drži avta pred sabo. Ko gre s proge, se dirka nadaljuje na ciljni črti.'), 5200); } Comm.say('sc', null, 3); }
-    else if (k === 'scIn') { showMsg(tr(F.sc && F.sc.pit ? 'VARNOSTNI AVTO GRE V BOKSE' : 'VARNOSTNI AVTO GRE S PROGE'), 'gold', 2.2); Comm.say('scIn', null, 2); }
-    else if (k === 'scGone') { showMsg(tr('NE PREHITEVAJ DO CILJNE ČRTE'), 'gold', 2.2); }
-    else if (k === 'green') { showMsg(tr('ZELENA ZASTAVA!'), 'fast', 1.8); Sfx.beep(990, 0.12, 0.12); setTimeout(() => Sfx.beep(1320, 0.16, 0.12), 140); Comm.say('green', null, 3); }
+      if (d < 700) { flagMsg(tr('RUMENA ZASTAVA'), 'gold', 1.8); if (!flTold.y) { flTold.y = true; toast(tr('Rumena zastava: pred tabo je ustavljen avto. Upočasni in ne prehitevaj, dokler je ne prevoziš.'), 4200); } Comm.say('yellow', null, 2); }
+    } else if (k === 'sc') { flagMsg(tr('VARNOSTNI AVTO'), 'gold', 2.6); Sfx.beep(520, 0.2, 0.12); if (!flTold.sc) { flTold.sc = true; toast(tr('Varnostni avto: ne prehitevaj in se drži avta pred sabo. Ko gre s proge, se dirka nadaljuje na ciljni črti.'), 5200); } Comm.say('sc', null, 3); }
+    else if (k === 'scIn') { flagMsg(tr(F.sc && F.sc.pit ? 'VARNOSTNI AVTO GRE V BOKSE' : 'VARNOSTNI AVTO GRE S PROGE'), 'gold', 2.2); Comm.say('scIn', null, 2); }
+    else if (k === 'scGone') { flagMsg(tr('NE PREHITEVAJ DO CILJNE ČRTE'), 'gold', 2.2); }
+    else if (k === 'green') { flagMsg(tr('ZELENA ZASTAVA!'), 'fast', 1.8); Sfx.beep(990, 0.12, 0.12); setTimeout(() => Sfx.beep(1320, 0.16, 0.12), 140); Comm.say('green', null, 3); }
   }
   function flagPlayer(k) {
-    if (k === 'passWarn') { showMsg(tr('VRNI MESTO!'), 'slow', 2.6); vibrate(60); toast(tr('Prehitel si pod rumeno zastavo ali za varnostnim avtom. Spusti ga nazaj pred sabo v 10 sekundah, sicer dobiš 5 sekund kazni.'), 5200); Comm.say('passWarn', null, 3); }
-    else if (k === 'passOk') showMsg(tr('MESTO VRNJENO'), 'gold', 1.4);
-    else if (k === 'pen') { showMsg(tr('KAZEN +5 s'), 'slow', 2.6); vibrate(80); Comm.say('penalty', null, 3); }
+    if (k === 'passWarn') { flagMsg(tr('VRNI MESTO!'), 'slow', 2.6); vibrate(60); toast(tr('Prehitel si pod rumeno zastavo ali za varnostnim avtom. Spusti ga nazaj pred sabo v 10 sekundah, sicer dobiš 5 sekund kazni.'), 5200); Comm.say('passWarn', null, 3); }
+    else if (k === 'passOk') flagMsg(tr('MESTO VRNJENO'), 'gold', 1.4);
+    else if (k === 'pen') { flagMsg(tr('KAZEN +5 s'), 'slow', 2.6); vibrate(80); Comm.say('penalty', null, 3); }
   }
   // the flag on the HUD: yellow (in or before a yellow zone), the safety car board, the countdown to give a place back
   function flagHUD(P) {
@@ -2907,14 +2923,6 @@
     drawSpeedo(P);
     drawMinimap();
     updateNote(P);
-    // lap events (a time trial has its own checkpoint / finish popups)
-    if (!race.timeTrial && !race.quali && P.lapTimes.length > lastLapCount) {
-      lastLapCount = P.lapTimes.length;
-      const t = P.lapTimes[lastLapCount - 1];
-      const isBest = t <= Math.min(...P.lapTimes) + 1e-6 && lastLapCount > 1;
-      const el = $('h-split'); el.textContent = tr('KROG {0}: {1}', lastLapCount, fmt(t, true)) + (isBest ? tr('  NAJHITREJŠI') : ''); el.className = 'show'; splitT = 3.2; cornerShow = false;
-      if (!P.finished && P.lap === race.laps) { showMsg(tr('ZADNJI KROG!'), 'gold', 2); Sfx.beep(880, 0.12, 0.12); }
-    }
     if (splitT > 0) { splitT -= dt; if (splitT <= 0) $('h-split').className = ''; }
     updateCorner(P);
     updateCodrv(P);
