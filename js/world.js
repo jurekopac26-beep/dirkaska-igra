@@ -15755,7 +15755,7 @@ const World = (function () {
     for (const L of C.paths) for (let k = 0, run = 0; k + 3 < L.length; k += 2) {   // trees along the walks, now on one side, now on the other (the Victorian park's avenues), every 14-20 m
       const x0 = L[k], z0 = L[k + 1], dx = L[k + 2] - x0, dz = L[k + 3] - z0, l = Math.hypot(dx, dz);
       for (; run < l; run += 14 + crH(x0, z0, run) * 6) { const x = x0 + dx * run / l, z = z0 + dz * run / l, sd = crH(x, z, 12) < 0.5 ? -1 : 1, o = 4.5 + crH(x, z, 13) * 2;
-        if (crH(x, z, 14) < 0.42) { const px = x - dz / l * o * sd, pz = z + dx / l * o * sd, sp = crH(px, pz, 1) < 0.6 ? 0 : 1, h = (sp ? 13 : 16) + crH(px, pz, 6) * 8; put(px, pz, sp, h, h * (sp ? 0.85 : 0.78)); } }
+        if (crH(x, z, 14) < 0.28) { const px = x - dz / l * o * sd, pz = z + dx / l * o * sd, sp = crH(px, pz, 1) < 0.6 ? 0 : 1, h = (sp ? 13 : 16) + crH(px, pz, 6) * 8; put(px, pz, sp, h, h * (sp ? 0.85 : 0.78)); } }
       run -= l;
     }
     const Lt = NRC * NRT, maxT = Math.round(9000 * dens);
@@ -15778,30 +15778,30 @@ const World = (function () {
   function cpExtras(K) {
     const { scen, nc, exclPush, excluded, root, out, sAt } = K, C = T.def.cp, P = CPK, st = { paths: 0, shrubs: 0, beds: 0, cars: 0, tents: 0, fowl: 0 };
     const upper = (x, z) => { const w = P.wallAt(x, z); if (!w || w[2] > 0.5) return null; const [p, d] = w; return d > -1.5 && d < 0.6 ? -1 : d >= 0.6 && d <= 21.5 ? p.hi + 0.12 : null; };   // (the upper lawns over the walls: their height; -1 the wall itself)
-    const open = (x, z) => !excluded(x, z) && !P.lakeAt(x, z) && NR.pad(x, z, 0) === 0 && upper(x, z) == null;
+    const open = (x, z) => !excluded(x, z) && !P.lakeAt(x, z) && upper(x, z) == null && (NR.pad(x, z, 0) === 0 || !!P.wallAt(x, z));   // (not the pits' level ground, nor a lake's bank; the terraces' lower lawns, levelled by the walls, are open)
     // the paths: gravel 3 m wide, a darker worn edge, over the lawns (also over the terraces' upper lawns)
     const onP = new Set(), near = new Set(), nk = (x, z) => Math.floor(x / 6) + ',' + Math.floor(z / 6);   // (6 m cells: on a path, beside one)
     { const PC = [0.66, 0.63, 0.54], PE = [0.56, 0.55, 0.46], hw = 1.25;
       for (const L of C.paths) {
-        const pts = []; for (let k = 0; k + 3 < L.length; k += 2) { const x0 = L[k], z0 = L[k + 1], x1 = L[k + 2], z1 = L[k + 3], n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, z1 - z0) / 3)); for (let j = 0; j < n; j++) pts.push([x0 + (x1 - x0) * j / n, z0 + (z1 - z0) * j / n]); }
+        const pts = []; for (let k = 0; k + 3 < L.length; k += 2) { const x0 = L[k], z0 = L[k + 1], x1 = L[k + 2], z1 = L[k + 3], n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, z1 - z0) / 4)); for (let j = 0; j < n; j++) pts.push([x0 + (x1 - x0) * j / n, z0 + (z1 - z0) * j / n]); }
         pts.push([L[L.length - 2], L[L.length - 1]]);
         let piece = [];
         const emit = () => {   // (a piece of path cut off by the road or a lake shorter than 15 m: left out)
-          if (piece.length >= 6) for (let k = 0; k < piece.length; k++) { const { row, pc, x, z, nx, nz } = piece[k];
-            if (k) { const prev = piece[k - 1].row, g = nc.get(x, z); g.quadUp(prev[0], row[0], row[1], prev[1], [PE, PE, pc, pc]); g.quadUp(prev[1], row[1], row[2], prev[2], [pc, pc, pc, pc]); g.quadUp(prev[2], row[2], row[3], prev[3], [pc, pc, PE, PE]); }
+          if (piece.length >= 4) for (let k = 0; k < piece.length; k++) { const { row, pc, x, z, nx, nz } = piece[k];
+            if (k) { const prev = piece[k - 1].row, g = nc.get(x, z); g.quadUp(prev[0], row[0], row[1], prev[1], [PE, PE, pc, pc]); g.quadUp(prev[1], row[1], row[2], prev[2], [pc, pc, PE, PE]); }
             onP.add(nk(x, z)); near.add(nk(x + nx * 4, z + nz * 4)); near.add(nk(x - nx * 4, z - nz * 4)); }
           piece = []; };
         for (let k = 0; k < pts.length; k++) {
           const [x, z] = pts[k], a = pts[Math.max(0, k - 1)], b = pts[Math.min(pts.length - 1, k + 1)], tl = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, nx = -(b[1] - a[1]) / tl, nz = (b[0] - a[0]) / tl, u = upper(x, z);
           if (u === -1 || P.lakeAt(x, z) || nrNear(x, z).dd < 2) { emit(); continue; }
-          const row = [-hw - 0.3, -hw + 0.3, hw - 0.3, hw + 0.3].map(o => { const px = x + nx * o, pz = z + nz * o; return [px, u != null ? u : nrGround(px, pz) + 0.09, pz]; });
+          const row = [-hw, 0, hw].map(o => { const px = x + nx * o, pz = z + nz * o; return [px, u != null ? u : nrGround(px, pz) + 0.09, pz]; });
           const v = 0.94 + crH(x, z, 3) * 0.1; piece.push({ row, pc: [PC[0] * v, PC[1] * v, PC[2] * v], x, z, nx, nz });
         }
         emit(); st.paths++;
       } }
     // shrubberies: rhododendron, laurel, holly and privet in clumps of soft lumps, along the woods' edges and here and there by the paths
     { const SH = [[0.2, 0.31, 0.14], [0.27, 0.39, 0.16], [0.17, 0.26, 0.13], [0.3, 0.41, 0.19]], R = rng(5151);
-      const shrub = (x, z, s) => { const y = nrGround(x, z), g = nc.get(x, z), n = 2 + Math.floor(crH(x, z, 7) * 3), base = SH[Math.floor(crH(x, z, 8) * SH.length)];
+      const shrub = (x, z, s) => { const y = nrGround(x, z), g = nc.get(x, z), n = 2 + Math.floor(crH(x, z, 7) * 2), base = SH[Math.floor(crH(x, z, 8) * SH.length)];
         for (let k = 0; k < n; k++) { const a = crH(x, z, 10 + k) * TAU, r = s * (0.45 + 0.3 * crH(x, z, 20 + k)), o = k ? s * 0.6 : 0, bx = x + Math.cos(a) * o, bz = z + Math.sin(a) * o;
           cpBlob(g, bx, y + r * 0.5, bz, r * 1.15, r * 0.8, r, a, vary(base, () => crH(bx, bz, 30), 0.16), 0.72, ICO0); }
         nrShade(x, z, s * 0.9, 0.7); exclPush(x, z, s); st.shrubs++; };
@@ -15809,7 +15809,7 @@ const World = (function () {
       for (let z = G.z0 + 4; z < G.z0 + G.nz * NRC; z += 6) for (let x = G.x0 + 4; x < G.x0 + G.nx * NRC; x += 6) {
         const px = x + (R() - 0.5) * 4, pz = z + (R() - 0.5) * 4, r1 = R(), rd = nrDist(px, pz); if (rd > 230 || rd < 9) continue;
         const wd = nrLCf(px, pz, 1), edge = nrLC(px, pz) !== 1 && wd > 0.08 && wd < 0.7, q = nk(px, pz), byPath = near.has(q) && !onP.has(q);
-        if (onP.has(q) || r1 > (edge ? 0.42 : 0) + (byPath ? 0.07 : 0) + 0.006) continue;
+        if (onP.has(q) || r1 > (edge ? 0.24 : 0) + (byPath ? 0.04 : 0) + 0.004) continue;
         if (!open(px, pz) || nrNear(px, pz).dd < 6) continue;
         shrub(px, pz, 1.3 + R() * 1.4);
       } }
@@ -15839,13 +15839,13 @@ const World = (function () {
         exclPush(x, z, 7); st.tents++; };
       for (const [a, b, sd] of T.def.ga || []) {
         const m = (a + b) / 2, i0 = T.idx(sAt(m)), rot = Math.atan2(-T.nz[i0] * sd, -T.nx[i0] * sd);   // (facing the track)
+        if (Math.round(a / 5) % 2 === 0) for (const o2 of [36, 46, 30]) { const i = T.idx(sAt(b - 12)), bar = sd > 0 ? T.br[i] : T.bl[i], o = bar + o2, x = T.px[i] + T.nx[i] * sd * o, z = T.pz[i] + T.nz[i] * sd * o;
+          if (open(x, z) && nrSlope(x, z) < 0.18 && nrNear(x, z).dd > 20) { tent(x, z, Math.atan2(T.tz[i], T.tx[i])); break; } }
         for (let r = 0; r < 2; r++) for (let q = -7; q <= 7; q++) {
           const i = T.idx(sAt(m + q * 2.7)), bar = sd > 0 ? T.br[i] : T.bl[i], o = bar + 22 + r * 6.5, x = T.px[i] + T.nx[i] * sd * o + (crH(i, r, 1) - 0.5) * 0.5, z = T.pz[i] + T.nz[i] * sd * o;
           if (crH(i, r, 2) < 0.22 || !open(x, z) || nrSlope(x, z) > 0.14 || nrNear(x, z).dd < 14) continue;
           car(x, z, rot + (crH(i, r, 3) - 0.5) * 0.12, CC[Math.floor(crH(i, r, 4) * CC.length)]); exclPush(x, z, 2.6);
         }
-        if (Math.round(a / 5) % 2 === 0) { const i = T.idx(sAt(b - 10)), bar = sd > 0 ? T.br[i] : T.bl[i], o = bar + 26, x = T.px[i] + T.nx[i] * sd * o, z = T.pz[i] + T.nz[i] * sd * o;
-          if (open(x, z) && nrSlope(x, z) < 0.18) tent(x, z, Math.atan2(T.tz[i], T.tx[i])); }
       } }
     // swans and ducks on the two big lakes: drifting slowly from one open-water spot to the next (cpFowlStep)
     { const g = new GB(), W = [0.97, 0.97, 0.95], BE = [0.95, 0.45, 0.1];
@@ -15854,21 +15854,25 @@ const World = (function () {
       const geo = g.geometry(), mat = new THREE.MeshLambertMaterial({ vertexColors: true }), list = [];
       const big = P.lakes.map((L, k) => [k, L]).filter(([, L]) => (L.b[1] - L.b[0]) * (L.b[3] - L.b[2]) > 2500 && L.poly.length > 8).sort((p, q) => (q[1].b[1] - q[1].b[0]) * (q[1].b[3] - q[1].b[2]) - (p[1].b[1] - p[1].b[0]) * (p[1].b[3] - p[1].b[2])).slice(0, 2);
       for (const [k, L] of big) {
-        const R = rng(6200 + k), pick = () => { for (let t = 0; t < 60; t++) { const x = L.b[0] + R() * (L.b[1] - L.b[0]), z = L.b[2] + R() * (L.b[3] - L.b[2]); if (P.lakeAt(x, z) === L && polyDist(L.poly, x, z) > 4 && L.holes.every(h => polyDist(h, x, z) > 4)) return [x, z]; } return null; };
-        const B = []; for (let q = 0; q < (k === big[0][0] ? 9 : 6); q++) { const p = pick(); if (!p) continue; const duck = q % 3 !== 0; B.push({ x: p[0], z: p[1], h: R() * TAU, t: pick() || p, v: duck ? 0.5 : 0.32, s: duck ? 0.62 : 1, R, pick }); }
-        if (!B.length) continue;
+        const init = () => {   // (the birds as they start: the same every time, so World.update at time 0 puts them back)
+          const R = rng(6200 + k), pick = () => { for (let t = 0; t < 60; t++) { const x = L.b[0] + R() * (L.b[1] - L.b[0]), z = L.b[2] + R() * (L.b[3] - L.b[2]); if (P.lakeAt(x, z) === L && polyDist(L.poly, x, z) > 4 && L.holes.every(h => polyDist(h, x, z) > 4)) return [x, z]; } return null; };
+          const B = []; for (let q = 0; q < (k === big[0][0] ? 9 : 6); q++) { const p = pick(); if (!p) continue; const duck = q % 3 !== 0; B.push({ x: p[0], z: p[1], h: R() * TAU, t: pick() || p, v: duck ? 0.5 : 0.32, s: duck ? 0.62 : 1, pick }); }
+          return B; };
+        const B = init(); if (!B.length) continue;
         const im = new THREE.InstancedMesh(geo, mat, B.length), cl = new THREE.Color();
         B.forEach((b, q) => im.setColorAt(q, b.s < 1 ? cl.setRGB(0.5, 0.38, 0.26) : cl.setRGB(1, 1, 1)));   // (the ducks: brown)
         const cx = (L.b[0] + L.b[1]) / 2, cz = (L.b[2] + L.b[3]) / 2; im.geometry = geo.clone(); im.geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(cx, L.lvl, cz), Math.hypot(L.b[1] - L.b[0], L.b[3] - L.b[2]) / 2 + 2);
         im.castShadow = false; im.receiveShadow = true; im.matrixAutoUpdate = false; root.add(im);
-        list.push({ im, B, y: L.lvl, L }); st.fowl += B.length;
+        list.push({ im, B, init, y: L.lvl, L }); st.fowl += B.length;
       }
       out.dyn.cpFowl = { list, t: null, m4: new THREE.Matrix4(), q: new THREE.Quaternion(), e: new THREE.Euler(), v: new THREE.Vector3(), s: new THREE.Vector3() }; cpFowlStep(out.dyn.cpFowl, 0); }
     return st;
   }
   function cpFowlStep(F, t) {   // the birds paddle towards their spot, turning slowly; there a new one
-    const dt = F.t == null ? 0 : clamp(t - F.t, 0, 0.1); F.t = t;
-    for (const { im, B, y } of F.list) {
+    const back = F.t == null || t <= 0 || t < F.t, dt = back ? 0 : clamp(t - F.t, 0, 0.1); F.t = t;
+    for (const E of F.list) {
+      if (back) E.B = E.init();   // (time 0 or back in time: where they started)
+      const { im, B, y } = E;
       B.forEach((b, q) => {
         const dx = b.t[0] - b.x, dz = b.t[1] - b.z, d = Math.hypot(dx, dz);
         if (d < 1.5) b.t = b.pick() || b.t;

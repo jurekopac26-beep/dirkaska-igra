@@ -336,23 +336,23 @@
   }
  },
  "cpalace": {
-  "meshes": 300,
-  "verts": 382518,
-  "instances": 6876,
+  "meshes": 306,
+  "verts": 519698,
+  "instances": 7008,
   "props": 29,
-  "crowd": 2457,
-  "world": "e0e31673",
+  "crowd": 2456,
+  "world": "594fc1d8",
   "propsHash": "3744002c",
-  "floor": "5a965253/6440",
+  "floor": "c1e59073/6440",
   "groups": {
-   "-:MeshLambertMaterial": "e2922c1d",
-   "-:MeshPhongMaterial": "ac8feb3b",
-   "crowd:MeshLambertMaterial": "4a2d10fc",
-   "-:MeshBasicMaterial": "b41923f5",
-   "flags:MeshLambertMaterial": "859872c7",
-   "ao:MeshBasicMaterial": "3555589",
+   "-:MeshLambertMaterial": "b5f38f9a",
+   "-:MeshPhongMaterial": "ce97bff3",
+   "crowd:MeshLambertMaterial": "90266f8a",
+   "-:MeshBasicMaterial": "437a80e4",
+   "flags:MeshLambertMaterial": "445967a6",
+   "ao:MeshBasicMaterial": "2480f820",
    "roadwear:MeshLambertMaterial": "ba389577",
-   "worn:MeshLambertMaterial": "5a1d01e1"
+   "worn:MeshLambertMaterial": "2d31a3ac"
   }
  },
  "jezero": {
