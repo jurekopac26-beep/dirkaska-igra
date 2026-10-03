@@ -188,6 +188,13 @@
   "maxKverts": 759,
   "jsMs": 0.81
  },
+ "riverside": {
+  "calls": 197,
+  "maxCalls": 255,
+  "kverts": 309,
+  "maxKverts": 376,
+  "jsMs": 0.7
+ },
  "jezero": {
   "calls": 278,
   "maxCalls": 330,
