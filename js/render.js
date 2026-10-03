@@ -1521,6 +1521,7 @@ const Render = (function () {
   const PROP_COLS = [[0.88, 0.33, 0.24], [0.95, 0.95, 0.94], [0.27, 0.6, 0.35], [0.2, 0.2, 0.22], [0.92, 0.89, 0.74]];   // instance tint: red / white / green / black / cream (painted tyres, the same as the tyre walls)
   const POST_SNOW = [1, 0.53, 0.13];                              // instance tint of the orange snow poles high up on Pikes Peak (a 'post' with col 1)
   let propMat = null, propMatTyre = null;
+  const SMALL_K = new Set(['sign', 'bollard', 'bin', 'hydrant', 'cabinet', 'shelter']);   // (street furniture without a shadow of its own)
   function propGeometry(kind) {
     const W = World, g = new W.GB(kind === 'tyre' || kind === 'tstack'), white = [1, 1, 1], TAU2 = Math.PI * 2;
     const disc = (y, r, n, rim, mid, up) => { for (let k = 0; k < n; k++) { const a0 = k / n * TAU2, a1 = (k + 1) / n * TAU2, c = [0, y, 0], p0 = [Math.cos(a0) * r, y, Math.sin(a0) * r], p1 = [Math.cos(a1) * r, y, Math.sin(a1) * r];
@@ -1557,7 +1558,50 @@ const Render = (function () {
       const wh = [0.95, 0.95, 0.93], bk = [0.08, 0.08, 0.09], rf = [1, 0.45, 0.08];
       W.box(g, 0, -0.65, 0, 0.14, 1.2, 0.14, 0, wh, wh); W.box(g, 0, 0.18, 0, 0.146, 0.22, 0.146, 0, bk, bk);
       for (const x of [-0.074, 0.074]) W.box(g, x, 0.22, 0, 0.012, 0.12, 0.09, 0, rf, rf); }
+    else streetGeometry(g, kind);   // (a town's street furniture)
     return g.geometry();
+  }
+  // the street furniture of the town circuits' junctions, generic (no names, no brands): each stands with its foot at -K.h0, its lights, its
+  // lantern or its sign facing local +x (the builder turns +x towards the road)
+  function streetGeometry(g, kind) {
+    const W = World, dk = [0.12, 0.12, 0.13], gr = [0.36, 0.38, 0.4], wh = [0.94, 0.94, 0.92], yl = [0.95, 0.78, 0.12];
+    if (kind === 'signal') {   // a traffic light on its pole (4.4 m): grey, black and white bands at the foot, the three-lamp head with a yellow-edged backplate (the red lit), a smaller one for the pedestrians
+      W.box(g, 0, -2.2, 0, 0.32, 0.12, 0.32, 0, gr, gr); W.cyl(g, 0, -2.1, 0, 0.075, 4.1, 8, gr, gr);
+      for (let k = 0; k < 4; k++) W.cyl(g, 0, -2.08 + k * 0.22, 0, 0.078, 0.11, 8, k % 2 ? wh : dk, null);
+      W.box(g, 0.08, 0.95, 0, 0.04, 1.25, 0.56, 0, yl, yl); W.box(g, 0.1, 1.0, 0, 0.05, 1.15, 0.46, 0, dk, dk); W.box(g, 0.2, 1.02, 0, 0.26, 1.1, 0.34, 0, dk, dk);
+      [[1, 0.18, 0.12], [0.35, 0.22, 0.06], [0.08, 0.24, 0.12]].forEach((c, k) => { const y = 1.82 - k * 0.36; W.box(g, 0.34, y, 0, 0.02, 0.24, 0.24, 0, c, c); W.box(g, 0.4, y + 0.14, 0, 0.14, 0.03, 0.26, 0, dk, dk); });
+      W.box(g, 0.18, -0.1, 0, 0.2, 0.62, 0.3, 0, dk, dk); W.box(g, 0.29, 0.06, 0, 0.02, 0.2, 0.18, 0, [1, 0.2, 0.15], [1, 0.2, 0.15]); W.box(g, 0.29, -0.2, 0, 0.02, 0.2, 0.18, 0, [0.1, 0.25, 0.14], [0.1, 0.25, 0.14]);
+    } else if (kind === 'lamp') {   // a street lamp in the old style (8 m): a dark green octagonal post on a plinth, rings, a curved arm to a lantern with a pointed cap
+      const gn = [0.14, 0.22, 0.17], gd = [0.62, 0.52, 0.28];
+      W.box(g, 0, -4.0, 0, 0.5, 0.7, 0.5, 0, gn, gn); W.cyl(g, 0, -3.3, 0, 0.13, 7.2, 8, gn, gn, 0.08);
+      for (const y of [-3.32, -1.6, 3.2]) W.cyl(g, 0, y, 0, 0.16, 0.12, 8, gd, gd);
+      W.box(g, 0.55, 3.85, 0, 1.1, 0.08, 0.08, 0, gn, gn); W.box(g, 0.3, 3.55, 0, 0.6, 0.06, 0.06, 0.6, gn, gn);
+      W.cyl(g, 1.25, 3.42, 0, 0.2, 0.42, 6, [1, 0.88, 0.62], null, 0.24); W.cone(g, 1.25, 3.84, 0, 0.27, 0.36, 6, gn, gd, 0); W.cyl(g, 1.25, 3.34, 0, 0.12, 0.1, 6, gn, gn);
+      W.cone(g, 0, 3.9, 0, 0.16, 0.3, 8, gn, gd, 0);
+    } else if (kind === 'sign') {   // a round blue sign with a white arrow (keep right, as on the islands of the junctions), a white plate under it, on a grey post
+      W.cyl(g, 0, -1.25, 0, 0.04, 2.5, 6, gr, gr);
+      const bl = [0.12, 0.3, 0.68]; for (let k = 0; k < 10; k++) { const a0 = k / 10 * Math.PI * 2, a1 = (k + 1) / 10 * Math.PI * 2, c = [0.05, 0.95, 0], r = 0.33;
+        g.triO(c, [0.05, 0.95 + Math.cos(a0) * r, Math.sin(a0) * r], [0.05, 0.95 + Math.cos(a1) * r, Math.sin(a1) * r], k === 3 || k === 4 ? bl : bl, [-1, 0.95, 0]);
+        g.triO([-0.05, 0.95, 0], [-0.05, 0.95 + Math.cos(a0) * r, Math.sin(a0) * r], [-0.05, 0.95 + Math.cos(a1) * r, Math.sin(a1) * r], gr, [1, 0.95, 0]); }
+      W.box(g, 0.06, 0.95, 0, 0.012, 0.06, 0.34, 0.8, wh, wh); W.box(g, 0.06, 0.86, -0.08, 0.012, 0.06, 0.18, -0.8, wh, wh);
+      W.box(g, 0.04, 0.4, 0, 0.03, 0.26, 0.5, 0, wh, wh);
+    } else if (kind === 'bollard') {   // a steel bollard painted in red and white bands
+      for (let k = 0; k < 4; k++) W.cyl(g, 0, -0.45 + k * 0.2, 0, 0.11, 0.2, 8, k % 2 ? [0.94, 0.94, 0.92] : [0.78, 0.12, 0.1], null);
+      W.cone(g, 0, 0.35, 0, 0.11, 0.1, 8, [0.78, 0.12, 0.1], [0.85, 0.2, 0.18], 0);
+    } else if (kind === 'bin') {   // a green litter bin on a short post, a lid
+      const gn = [0.15, 0.42, 0.24]; W.cyl(g, 0, -0.48, 0, 0.05, 0.4, 6, gr, gr); W.cyl(g, 0, -0.1, 0, 0.27, 0.48, 10, gn, null, 0.24); W.cone(g, 0, 0.38, 0, 0.28, 0.1, 10, [0.12, 0.34, 0.2], [0.18, 0.46, 0.28], 0);
+    } else if (kind === 'hydrant') {   // a red fire hydrant on its post (the French kind), a white cap
+      const rd = [0.8, 0.12, 0.1]; W.cyl(g, 0, -0.4, 0, 0.13, 0.66, 8, rd, rd); W.cone(g, 0, 0.26, 0, 0.14, 0.14, 8, wh, wh, 0);
+      for (const sz of [-1, 1]) W.box(g, 0, 0.0, sz * 0.14, 0.12, 0.12, 0.08, 0, wh, wh); W.box(g, 0.14, -0.05, 0, 0.1, 0.16, 0.16, 0, wh, wh);
+    } else if (kind === 'cabinet') {   // a grey-beige electrical cabinet on its plinth, two doors
+      const c = [0.72, 0.7, 0.62]; W.box(g, 0, -0.7, 0, 0.94, 0.12, 0.54, 0, [0.6, 0.6, 0.58]); W.box(g, 0, -0.58, 0, 0.88, 1.24, 0.48, 0, c, [0.78, 0.76, 0.68]);
+      W.box(g, 0.0, -0.5, 0.245, 0.02, 1.0, 0.01, 0, [0.4, 0.4, 0.38]); W.box(g, 0.2, 0.1, 0.25, 0.08, 0.04, 0.02, 0, dk);
+    } else if (kind === 'shelter') {   // a bus stop shelter: a bench, a glazed back and sides, a flat roof, a timetable panel
+      const fr = [0.32, 0.34, 0.36], gl = [0.5, 0.62, 0.68];
+      for (const sx of [-1.45, 1.45]) for (const sz of [-0.55, 0.55]) W.box(g, sx, -1.25, sz, 0.08, 2.4, 0.08, 0, fr, fr);
+      W.box(g, 0, 1.12, 0, 3.2, 0.12, 1.4, 0, fr, [0.82, 0.82, 0.8]); W.box(g, 0, -1.0, -0.55, 2.9, 1.9, 0.03, 0, gl, gl); for (const sx of [-1.45, 1.45]) W.box(g, sx, -0.95, 0, 0.03, 1.7, 1.0, 0, gl, gl);
+      W.box(g, 0, -0.85, -0.3, 2.4, 0.06, 0.4, 0, [0.6, 0.45, 0.3]); W.box(g, 1.2, -0.8, -0.52, 0.5, 1.2, 0.04, 0, [0.92, 0.9, 0.84]);
+    }
   }
   function clearPropMeshes() { for (const k in propMeshes) { const m = propMeshes[k]; scene.remove(m); m.geometry.dispose(); } propMeshes = {}; }
   function setupProps(race) {
@@ -1569,7 +1613,7 @@ const Render = (function () {
       if (!m || m.userData.cap < cap[kind]) {
         if (m) { scene.remove(m); m.geometry.dispose(); }
         m = new THREE.InstancedMesh(propGeometry(kind), kind === 'tyre' || kind === 'tstack' ? propMatTyre : propMat, cap[kind]); m.userData.cap = cap[kind];
-        m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.castShadow = true; m.receiveShadow = true; m.frustumCulled = false;
+        m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.castShadow = !SMALL_K.has(kind); m.receiveShadow = true; m.frustumCulled = false;   // (the small street furniture casts no shadow: fewer draw calls)
         scene.add(m); propMeshes[kind] = m;
       }
       m.visible = true;
@@ -1741,7 +1785,7 @@ const Render = (function () {
   function applyWeather(r) {
     wet = r; applyTheme(themeId); rain.mesh.visible = r > 0 && atmos.season !== 'winter'; rain.mat.uniforms.uA.value = 0.5 * Math.min(1, r * 1.5);
     snow.mesh.visible = r > 0 && atmos.season === 'winter';
-    birds.mesh.visible = !(r > 0); if (r > 0) birds.reset(birds.gull);   // (no birds in the rain)
+    birds.mesh.visible = !(r > 0) && !(curTrack && curTrack.def && curTrack.def.noBirds); if (r > 0) birds.reset(birds.gull);   // (no birds in the rain, nor on a track that wants none: def.noBirds)
     if (!world || !world.root) return;
     if (world.dyn.clouds) world.dyn.clouds.K.value = world.dyn.clouds.k0 * (1 - r);   // (no cloud shadows under the rain's overcast)
   }

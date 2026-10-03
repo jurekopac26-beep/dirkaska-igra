@@ -145,9 +145,9 @@ const Core = (function () {
       }
       // more run-off where a track asks for it (def.wide = [[from, to, side (-1 left, 1 right), metres], ...], metres after the start line;
       // closed circuits, and the pull-outs of an open road: Big Sur): the barrier on that side moves out, eased in and out over 30 m
-      if (def.wide) for (const [a, b, sd, m] of def.wide) for (let d = a - 30; d <= b + 30; d += ds) {
-        const i = this.idx(this.startS + d), f = Math.min(sstep(a - 30, a, d), sstep(b + 30, b, d)); if (sd < 0) this.bl[i] += m * f; else this.br[i] += m * f;
-      }
+      if (def.wide) for (const [a, b, sd, m, e0] of def.wide) { const e = e0 || 30; for (let d = a - e; d <= b + e; d += ds) {   // (e: the ease, default 30 m; a junction's mouth on a street circuit: a few metres)
+        const i = this.idx(this.startS + d), f = Math.min(sstep(a - e, a, d), sstep(b + e, b, d)); if (sd < 0) this.bl[i] += m * f; else this.br[i] += m * f;
+      } }
       // gravel strips (def.gravelStrips = [[from, to, side, width], ...], metres after the start line, side -1 left / 1 right; closed
       // circuits): a band of gravel from the kerb's outer edge outwards, as the strips the Red Bull Ring laid at the exits of Turns 9 and
       // 10 in 2024 against running wide (see surface: gravel there even where the run-off beyond it is asphalt)
@@ -1567,6 +1567,16 @@ const Core = (function () {
       rbale:  { m: 26, rh: 0.62, rb: 0.75, h0: 0.43,  e: 0.15, mu: 0.8,  lift: 0.3,  I: 4.6,  pts: (() => { const p = []; for (const x of [-0.62, 0.62]) for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; p.push([x, Math.cos(a) * 0.43, Math.sin(a) * 0.43]); } return p; })() },   // round straw bale lying on its side (Toskana)
       rbstack: { m: 78, rh: 0.9, rb: 1.1,  h0: 0.85,  breaks: 'rbale', parts: [[-0.66, -0.425, 0], [0.66, -0.425, 0], [0, 0.425, 0]], pf: [[1.1, 0.6], [1.0, 0.9], [0.8, 2.4]] },
       post:   { m: 4,  rh: 0.14, rb: 0.62, h0: 0.55,  e: 0.3,  mu: 0.6,  lift: 1.0,  I: 0.4,  pts: boxPts(0.07, 0.55, 0.07) },   // roadside post (stebriček): light, snaps over and cartwheels away
+      // street furniture of the town circuits' junctions (generic: World places it, Render draws it): its foot at -h0, an arm or a head over
+      // the road along local +x; it snaps off its footing and topples, the car goes on a little slower; dmg: a heavy one dents the car a little
+      signal:  { m: 55,  rh: 0.15, rb: 2.5,  h0: 2.2,  e: 0.15, mu: 0.6,  lift: 0.3,  I: 80,  dmg: 0.004,  pts: boxPts(0.12, 2.2, 0.12).concat([[0.45, 1.9, 0], [0.45, 1.0, 0]]) },   // traffic light on its pole (semafor)
+      lamp:    { m: 60,  rh: 0.15, rb: 4.3,  h0: 4.0,  e: 0.12, mu: 0.6,  lift: 0.2,  I: 300, dmg: 0.004,  pts: boxPts(0.11, 4.0, 0.11).concat([[1.5, 3.9, 0]]) },   // street lamp (ulična svetilka)
+      sign:    { m: 9,   rh: 0.1,  rb: 1.35, h0: 1.25, e: 0.25, mu: 0.6,  lift: 0.6,  I: 4,   pts: boxPts(0.05, 1.25, 0.05).concat([[0, 1.1, 0.33], [0, 1.1, -0.33]]) },   // road sign on its post (prometni znak)
+      bollard: { m: 12,  rh: 0.12, rb: 0.5,  h0: 0.45, e: 0.3,  mu: 0.6,  lift: 0.7,  I: 0.8, pts: cylPts(0.12, -0.45, 0.45, 6) },   // bollard (stebriček na pločniku)
+      bin:     { m: 12,  rh: 0.3,  rb: 0.58, h0: 0.48, e: 0.25, mu: 0.6,  lift: 0.6,  I: 1.2, pts: cylPts(0.29, -0.48, 0.48, 6) },   // litter bin (smetnjak)
+      hydrant: { m: 30,  rh: 0.2,  rb: 0.48, h0: 0.4,  e: 0.2,  mu: 0.7,  lift: 0.4,  I: 1.5, dmg: 0.005,  pts: cylPts(0.18, -0.4, 0.4, 6) },   // fire hydrant (hidrant)
+      cabinet: { m: 45,  rh: 0.45, rb: 0.85, h0: 0.7,  e: 0.12, mu: 0.7,  lift: 0.25, I: 9,   dmg: 0.005,  pts: boxPts(0.45, 0.7, 0.25) },   // electrical cabinet (omarica)
+      shelter: { m: 120, rh: 0.9,  rb: 1.9,  h0: 1.25, e: 0.1,  mu: 0.75, lift: 0.2,  I: 120, dmg: 0.004,  pts: boxPts(1.5, 1.25, 0.6) },   // bus stop shelter (avtobusno postajališče)
     };
   })();
   const _pq = {};
@@ -1613,6 +1623,7 @@ const Core = (function () {
       b.vy = Math.min(7.5, b.vy + Math.min(5, vrel * K.lift * 0.22)); b.wy += (Math.random() - 0.5) * Math.min(10, vrel * 0.5);
       const hs = Math.hypot(b.vx, b.vz), cap = Math.min(18, 0.72 * Math.hypot(c.vx, c.vz) + 2); if (hs > cap) { b.vx *= cap / hs; b.vz *= cap / hs; }
       race.propFx(b, vrel);
+      if (K.dmg && vrel > 6 && !b.hurt) { b.hurt = 1; const lx = px - c.x, lz = pz - c.z; applyDamage(c, (vrel - 6) * K.dmg, lx * ch + lz * sh, -lx * sh + lz * ch); }   // (heavy street furniture: a dent, once)
       const wl = Math.hypot(b.wx, b.wy, b.wz); if (wl > 14) { b.wx *= 14 / wl; b.wy *= 14 / wl; b.wz *= 14 / wl; }
       propFeel(c, K.m, vrel, b.kind);
       return;
