@@ -1,8 +1,8 @@
 // Browser smoke test: the page loads (over http like GitHub Pages, and from a local file), every track can be
 // raced for 20 s on autopilot, settings migrate (one driving physics: Circuit Superstars; four difficulty levels), the
-// title demo runs, a Pikes Peak run and an Ouninpohja run finish and their records are saved (Ouninpohja also in the
-// rain, apart), Vršič's four ways to drive it (the run from the police: the checkpoint, the chase, the police radio,
-// the arrows, the mission in the building at the top). Zero page errors allowed.
+// title demo runs, a Pikes Peak run, an Ouninpohja run, a Harju run and a Katu-Jaryk descent finish and their records are
+// saved (Ouninpohja also in the rain, apart), Vršič's four ways to drive it (the run from the police: the checkpoint, the
+// chase, the police radio, the arrows, the mission in the building at the top). Zero page errors allowed.
 //   node tests/browser/smoke.test.mjs
 import path from 'node:path';
 import url from 'node:url';
@@ -67,8 +67,9 @@ try {
     await startTrack(page, id);
     const nan = await simulate(page, 20);
     const r = await page.evaluate(() => { const g = window.__game, P = g.race.player; return { phase: g.phase, dist: Math.round(P.dist), phys: P.phys, crew: Render.crew ? Render.crew.men.length : 0, id: g.race.track.def.id, pit: !!g.race.track.def.pit }; });
+    // (more than 100 m in 20 s with the 3 s of the countdown: a car that does not move stays near 0 m; Tianmen's 45 hairpins, with the player on the last row of the grid in the pack, give 127-176 m from run to run)
     const crewOk = r.pit ? r.crew > 0 : r.crew === 0;   // (pit crews on the circuits with a pit lane: Bakreni gozd, Toskana, Gromski rt)
-    T.check(`${id}: 20 s race on autopilot`, r.phase === 'racing' && r.dist > 150 && r.phys === 'cs' && !nan && crewOk && errors.length === e0,
+    T.check(`${id}: 20 s race on autopilot`, r.phase === 'racing' && r.dist > 100 && r.phys === 'cs' && !nan && crewOk && errors.length === e0,
       `dist ${r.dist} m, phys ${r.phys}, pit crew ${r.crew}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
   }
 
@@ -281,6 +282,69 @@ try {
       M.escaped && !M.busted && /^SKRIVALIŠČE · \d+ m/.test(M.goal) && M.msgs.includes('MISIJA OPRAVLJENA!') && M.screen === 'results' && M.title === 'Misija opravljena!' && /garažo/.test(M.sub) &&
       M.rows.includes('Kontrola prometa: nisi ustavil, pobegnil') && M.rows.some(r => /^Prevožena pot: 12,3 \/ 12,3 km$/.test(r)) && r.radioOff,
       `${M.title} "${M.sub}", HUD "${M.goal}", messages ${JSON.stringify(M.msgs)}, rows ${JSON.stringify(M.rows.slice(0, 4))}`);
+  }
+
+  // 6e. Harju, the city stage in Jyväskylä: first its evening sky from the cockpit (the sky dome drawn: the theme's own zenith and its warm glow
+  //     towards the sun by day, no glow at dusk); then to the flying finish: the record under 'harju@cs', the distance to go on the HUD, the
+  //     stage's words and the medal on the results, the co-driver's calls ready (the changes of surface among them: onto the gravel, the cobbles, the tarmac)
+  {
+    await startTrack(page, 'harju');
+    const s = await page.evaluate(async () => {
+      const g = window.__game, fr = async (n) => { for (let k = 0; k < n; k++) await new Promise(r => requestAnimationFrame(r)); };
+      g.S.camera = 'cockpit'; await fr(4); const day = Render.show;
+      Render.setAtmos({ season: 'summer', tod: 'dusk' }); await fr(3); const dusk = Render.show;
+      Render.setAtmos({ season: 'summer', tod: 'day' }); g.S.camera = 'chase'; await fr(2);
+      return { day: { sky: day.sky, warm: day.warm, todK: day.todK }, dusk: { sky: dusk.sky, warm: dusk.warm, todK: dusk.todK } };
+    });
+    T.check('Harju from the cockpit: the evening sky drawn with its warm glow towards the sun by day, none at dusk',
+      s.day.sky && s.day.todK === 0 && s.day.warm > 0.5 && s.dusk.sky && s.dusk.todK === 0.5 && s.dusk.warm === 0, JSON.stringify(s));
+    const r = await page.evaluate(async () => {
+      const g = window.__game;
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const left = document.getElementById('h-alt').textContent, calls = g.codrv.calls, notes = g.race.track.paceNotes().map(n => n.text);
+      for (let i = 0; i < 200 && g.phase !== 'done'; i++) { g.sim(1, true); if (i % 10 === 0) await new Promise(r => setTimeout(r, 0)); }
+      await new Promise(r => setTimeout(r, 800));
+      const rec = JSON.parse(localStorage.getItem('tdgp-records') || '{}');
+      return { phase: g.phase, t: g.race.player.finishTime, left, calls, notes, again: document.getElementById('res-restart').textContent, sub: document.getElementById('res-sub').textContent, rec: rec.tracks && rec.tracks['harju@cs'] };
+    });
+    const surf = ['onto gravel', 'onto cobbles', 'onto tarmac'].filter(w => r.notes.some(n => n.includes(w)));
+    T.check('Harju stage finishes, record saved for cs, the distance to go on the HUD, a medal on the results, the co-driver\'s calls of the surfaces',
+      r.phase === 'done' && r.rec && r.rec.bestTime > 0 && r.left === 'še 2,5 km' && r.again === 'Ponovi preizkušnjo' && /Harju/.test(r.sub) && /medalja/.test(r.sub) && r.calls >= 8 && surf.length === 3,
+      `time ${r.t && r.t.toFixed(2)} s, record ${r.rec && r.rec.bestTime}, HUD "${r.left}", button "${r.again}", "${r.sub}", ${r.calls} co-driver calls, surfaces: ${surf.join(', ')}`);
+  }
+  // 6e. Katu-Jaryk, the descent: the card shows the drop; first the course flyover (def.fly: the captions in order, the camera down into the valley,
+  //     a key skips it); the run down to the flying finish on the autopilot: the altitude falling on the HUD (from 1.242 m) with the height profile,
+  //     the co-driver's calls ready, the record under 'katu@cs', the descent's words on the results (Ponovi spust, the splits with the altitudes), a medal line
+  {
+    const r = await page.evaluate(async () => {
+      const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)), frame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(300);
+      const meta = document.querySelector('[data-track="katu"] .tmeta').textContent;
+      document.querySelector('[data-track="katu"]').click(); await wait(150); g.onAction('start');
+      for (let k = 0; k < 1200 && !(g.race && g.race.track.def.id === 'katu'); k++) await wait(100);
+      await frame();
+      const F = Render.pkFly, el = document.getElementById('pk-fly'), fly = { on: !!g.pkFly, show: el.className, cap: [el.children[1].textContent, el.children[2].textContent], names: [] };
+      for (let t = 0, k = -1; t <= F.DUR; t += 0.05) { const o = F.at(t); if (o && o.k >= 0 && o.k !== k) { k = o.k; fly.names.push(F.caps[k].n); } }
+      fly.y0 = F.at(0).shot.py; fly.y1 = F.at(F.DUR - 0.05).shot.py;   // (the camera: over the start, over the finish)
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'x' })); await frame(); fly.after = { on: !!g.pkFly, show: el.className };
+      const alt0 = document.getElementById('h-alt').textContent, prof = document.getElementById('hud').classList.contains('ttp'), calls = g.codrv.calls;
+      g.sim(60, true); await frame(); const alt1 = document.getElementById('h-alt').textContent;
+      for (let i = 0; i < 300 && g.phase !== 'done'; i++) { g.sim(1, true); if (i % 10 === 0) await wait(0); }
+      await wait(800);
+      const rec = JSON.parse(localStorage.getItem('tdgp-records') || '{}').tracks || {}, head = [...document.querySelectorAll('#res-tt th')].map(e => e.textContent);
+      return { meta, fly, alt0, alt1, prof, calls, phase: g.phase, t: g.race.player.finishTime, again: document.getElementById('res-restart').textContent, head: head.join('|'), sub: document.getElementById('res-sub').textContent, rec: rec['katu@cs'] };
+    });
+    const a1 = +r.alt1.replace(/\D/g, ''), f = r.fly;
+    T.check('Katu-Jaryk: the course flyover first (START at 1.242 m, the captions in order down to the finish, the camera ~500 m lower over the finish), a key skips it',
+      f.on && f.show === 'show' && f.cap[0] === 'START' && f.cap[1] === '1.242 m' && f.names.join('|') === 'START|Prelaz Katu-Jaryk|Sedem serpentin|Prečka nad Čulišmanom|CILJ' &&
+      f.y0 - f.y1 > 400 && !f.after.on && f.after.show === '',
+      `${f.on ? 'on' : 'off'} "${f.cap.join(' ')}", captions ${f.names.join(' > ')}, camera ${Math.round(f.y0)} -> ${Math.round(f.y1)} m, after a key: ${JSON.stringify(f.after)}`);
+    T.check('Katu-Jaryk: the card shows the drop, the altitude falling on the HUD with the profile, the co-driver\'s calls ready',
+      /spust 559 m/.test(r.meta) && / kronometer/.test(r.meta) && r.alt0 === '1.242 m' && a1 > 683 && a1 < 1150 && r.prof && r.calls > 10,
+      `card "${r.meta}", HUD "${r.alt0}" -> "${r.alt1}" after 60 s, profile ${r.prof}, ${r.calls} co-driver calls`);
+    T.check('Katu-Jaryk: down to the flying finish, the record under katu@cs, Ponovi spust, the splits with the altitudes, a medal line',
+      r.phase === 'done' && r.rec && r.rec.bestTime > 0 && r.again === 'Ponovi spust' && r.head.startsWith('Točka|Višina|') && /medalj/.test(r.sub),
+      `time ${r.t && r.t.toFixed(2)} s, record ${r.rec && r.rec.bestTime}, button "${r.again}", splits "${r.head}", "${r.sub}"`);
   }
   T.check('no page errors during the whole run', !errors.length, errors.slice(0, 5).join(' | '));
   await ctx.close();
