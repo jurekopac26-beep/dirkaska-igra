@@ -1448,5 +1448,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "c6f02bfa502378f469a604da"
+ },
+ "longbeach/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 178.93,
+  "spins": 0,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "4461b6244d204edb5163a8c7"
+ },
+ "longbeach/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 192.09,
+  "spins": 1,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e0937d3e23de165d240a5c5f"
+ },
+ "longbeach/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 160.32,
+  "spins": 1,
+  "walls": 7,
+  "rescues": 0,
+  "nan": false,
+  "digest": "0b9dc61e539ad484a0f9e02f"
+ },
+ "longbeach/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 161.48,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "0567d458665ff0b0c9a47bf4"
+ },
+ "longbeach/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 180.77,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "bbc4ae00c45816ffbad176d4"
  }
 }

@@ -2840,5 +2840,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "longbeach/race/cs": {
+  "digest": "88610578d260753eedb17a62",
+  "lead": 1980.2,
+  "car0": [
+   51.21,
+   -407.36
+  ],
+  "cover": {
+   "dmg": 0.3,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "longbeach/demo/cs": {
+  "digest": "0163264a0f24ba060073a2c4",
+  "lead": 2107.2,
+  "car0": [
+   433.81,
+   -387.1
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 7,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "longbeach/upg/cs": {
+  "digest": "194a66b269025bcb83a9ac13",
+  "lead": 2107,
+  "car0": [
+   384.03,
+   -391.34
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "longbeach/crash/cs": {
+  "digest": "88030de81aef5bb2a53b544b",
+  "lead": 3872.2,
+  "car0": [
+   -222.29,
+   -113.01
+  ],
+  "cover": {
+   "dmg": 0.85,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "longbeach/formula/cs": {
+  "digest": "58cade245d47cc1a04fee574",
+  "lead": 4823.5,
+  "car0": [
+   -460.06,
+   -269.45
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 19,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "longbeach/lm/cs": {
+  "digest": "1cda2cbd64ecfeff1b19014f",
+  "lead": 4708.4,
+  "car0": [
+   -538.02,
+   -280.76
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 16,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "longbeach/car/cs": {
+  "digest": "12a158093302f9320e901bb2",
+  "lead": 4258.8,
+  "car0": [
+   -403.45,
+   -113.52
+  ],
+  "cover": {
+   "dmg": 0.9,
+   "loose": 8,
+   "rescues": 0,
+   "repairs": 1
+  }
  }
 }
