@@ -16513,6 +16513,14 @@ const World = (function () {
     for (const n of [-1, 1]) g.triO([-0.16, 0, -0.07], [-0.55, 0.01, -0.13 * n], [-0.55, 0.01, 0.13 * n], Kl, [-0.4, -n, 0]);
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
+  function lfGalahGeo() {   // a galah in flight (0.7 m across, facing +x): rose-pink below, grey wings and back
+    const g = new GB(), PK = [0.86, 0.46, 0.52], GR = [0.66, 0.66, 0.68];
+    box(g, 0, -0.04, 0, 0.3, 0.09, 0.09, 0, PK, GR); box(g, 0.17, -0.03, 0, 0.07, 0.07, 0.07, 0, [0.92, 0.72, 0.76]);
+    for (const sd of [-1, 1]) { const A = [0.06, 0, 0.04 * sd], B = [-0.06, 0, 0.04 * sd], C = [-0.05, 0.05, 0.36 * sd], D = [0.04, 0.05, 0.34 * sd];
+      g.quadO(A, B, C, D, GR, [0, -1, sd * 0.5]); g.quadO(A, B, C, D, PK, [0, 1, sd * 0.5]); }
+    g.triO([-0.14, 0, -0.04], [-0.3, 0, 0], [-0.14, 0, 0.04], GR, [-0.2, -1, 0]); g.triO([-0.14, 0, -0.04], [-0.14, 0, 0.04], [-0.3, 0, 0], GR, [-0.2, 1, 0]);
+    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
   function lfHouseGeo(kind) {   // unit buildings (instances scale them): 0 a brick cottage (11 x 7 m, one storey, a hipped iron roof, chimneys),
     // 1 a two-storey Georgian house (12 x 9 m, a hipped slate roof, a fanlit door, sash windows), 2 a shed (16 x 9 m, corrugated iron),
     // 3 a church (a nave and a square tower), 4 a weatherboard farm cottage under red iron
@@ -17102,8 +17110,9 @@ const World = (function () {
     const tMat = new THREE.MeshLambertMaterial({ vertexColors: true });
     const tk = [0, 1, 2, 3].map(k => new IChunks(lfTreeGeo(k), tMat, 128)), tf = [new IChunks(lfTreeGeo(4), tMat, 192), new IChunks(lfTreeGeo(5), tMat, 192)];
     let nTrees = 0;
+    const LFH = [W1, W1, [1.12, 1.06, 0.84], [0.9, 0.98, 1.08], [0.84, 0.9, 0.86], [1.06, 1.0, 0.8]];   // the crowns' hues: as they are, yellow-green, blue-green, dark, late-summer gold
     const tree = (kd, x, z, h, wdt, tint) => { if (excluded(x, z) || wet(x, z, 1)) return; const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 4) return;
-      const far = nrDist(x, z) > 90, y = nrGround(x, z), cv = 0.86 + R() * 0.28, t = tint || W1, col = [cv * (0.95 + R() * 0.1) * t[0], cv * t[1], cv * (0.95 + R() * 0.1) * t[2]];
+      const far = nrDist(x, z) > 90, y = nrGround(x, z), cv = 0.86 + R() * 0.28, t = tint || LFH[Math.floor(crH(x, z, 98) * LFH.length)], col = [cv * (0.95 + R() * 0.1) * t[0], cv * t[1], cv * (0.95 + R() * 0.1) * t[2]];
       if (far && (kd === 1 || kd === 0)) tf[kd === 0 ? 1 : 0].add(x, y - 0.1, z, R() * TAU, wdt, h, col); else tk[kd].add(x, y - 0.1, z, R() * TAU, wdt, h, col);
       nrShade(x, z, wdt * 0.32, 1); nTrees++; };
     for (const r of def.rows) for (let k = 0; k + 1 < r.length; k++) { const a = r[k], b = r[k + 1], len = Math.hypot(b[0] - a[0], b[1] - a[1]); for (let d = 0; d < len; d += 6) tree(0, a[0] + (b[0] - a[0]) * d / len, a[1] + (b[1] - a[1]) * d / len, 22 + R() * 6, 4.5); }
@@ -17186,8 +17195,10 @@ const World = (function () {
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
     crowdFinish(CR, root, out);
     out.crowdPts = Float32Array.from(crowdPts);
-    { const geo = lfEagleGeo(), mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), i0 = T.idx(sStart), Lb = [];   // a wedge-tailed eagle circling over the paddocks (caCondors moves them)
+    { const geo = lfEagleGeo(), mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), i0 = T.idx(sStart), Lb = [];   // a wedge-tailed eagle circling over the paddocks, a flock of galahs (caCondors moves them)
       for (const [r, sp, h, ox, oz, ph] of [[46, 0.17, 48, 30, -25, 0]]) { const m = new THREE.Mesh(geo, mat); root.add(m); Lb.push({ m, r, sp, h, ox, oz, ph, bank: 0.28 }); }
+      { const gg = lfGalahGeo();   // and a small flock of galahs wheeling low over the paddocks by the road (one mesh each, close together)
+        for (let k = 0; k < 5; k++) { const m = new THREE.Mesh(gg, mat); m.scale.setScalar(1.6); root.add(m); Lb.push({ m, r: 22 + k * 1.6, sp: 0.42 + k * 0.012, h: 14 + (k % 3) * 1.2, ox: -15 + k * 1.1, oz: 20 - k * 0.8, ph: 1.1 + k * 0.16, bank: 0.45 }); } }
       out.dyn.condors = { L: Lb, x0: T.px[i0], z0: T.pz[i0], y0: T.hy[i0], ax: T.px[i0], az: T.pz[i0], ay: T.hy[i0], t: null }; caCondors(out.dyn.condors, 0, null); }
     out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, bales: nBales, boxes: nBoxes, houses: nHouses, stands: nStands, arches: nArch, sheep: nSheep, hay: nHay, cars: nCars, poles: nPoles, hedges: nHedge, roads: nRoads, fence: nFence, cattle: nCattle, farms: farms.length, marshals: nMarsh, rugs: nRugs, distBoards: nDist, trailers: nTrail };   // (read by the tests)
     return out;
