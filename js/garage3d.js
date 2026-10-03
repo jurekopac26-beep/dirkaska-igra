@@ -35,11 +35,9 @@ const Garage3D = (function () {
   function* wait(s) { let t = 0; while (t < s) t += yield; }
   function* tween(s, f, ez) { let t = 0; for (;;) { const u = s > 0 ? Math.min(1, t / s) : 1; f(ez ? ez(u) : u, u); if (u >= 1) return; t += yield; } }
   function* par(...gs) { const L = gs.filter(Boolean).map(g => ({ g, done: false })); let dt = 0; for (;;) { let all = true; for (const x of L) if (!x.done) { if (x.g.next(dt).done) x.done = true; else all = false; } if (all) return; dt = yield; } }
-  function* after(s, g) { yield* wait(s); yield* g; }
-  function* call(f) { f(); }
   // one show at a time: a change asked for while another plays waits for it
   let queue = Promise.resolve(), busy = 0;
-  function play(mk) { busy++; viewTok++; autoSpin = false; const p = queue.then(() => spawn(mk())).finally(() => { busy--; if (!busy) speed = 1; }); queue = p.catch(() => {}); return p; }
+  function play(mk) { busy++; viewTok++; autoSpin = false; if (busy === 1) hud('busy', true); const p = queue.then(() => spawn(mk())).finally(() => { busy--; if (!busy) { speed = 1; hud('busy', false); } }); queue = p.catch(() => {}); return p; }
 
   /* ---------------- textures (drawn once, no image files) ---------------- */
   function canvasTex(w, h, draw, rep) {
@@ -264,7 +262,6 @@ const Garage3D = (function () {
     const gb = new World.GB();   // (the beams: they cast no shadow, the lamps hang under them)
     for (let x = -7.5; x <= 7.6; x += 3) { World.box(gb, x, h - 0.32, (z0 + z1) / 2, 0.22, 0.32, z1 - z0, 0, [0.13, 0.14, 0.16], [0.13, 0.14, 0.16]); World.box(gb, x, h - 0.34, (z0 + z1) / 2, 0.36, 0.04, z1 - z0, 0, [0.17, 0.18, 0.2]); }
     scene.add(new THREE.Mesh(gb.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })));
-    for (let x = 99; x < 0; x += 3) { box(x, h - 0.32, (z0 + z1) / 2, 0.22, 0.32, z1 - z0, [0.13, 0.14, 0.16], [0.13, 0.14, 0.16]); box(x, h - 0.34, (z0 + z1) / 2, 0.36, 0.04, z1 - z0, [0.17, 0.18, 0.2]); }
     // the back wall's furniture: a red tool chest and a bench under the pegboard (left), the tyre rack (right), a cabinet row
     const RED = [0.72, 0.1, 0.09], RED2 = [0.55, 0.07, 0.07], STEEL = [0.55, 0.58, 0.62], DK = [0.09, 0.1, 0.11];
     const chest = (cx, w, hh, d) => {   // a roll cab: drawers with their handles, a dark top, castors
@@ -323,6 +320,13 @@ const Garage3D = (function () {
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(4.0, 1.0), new THREE.MeshBasicMaterial({ map: TX.sign, transparent: true, depthWrite: false })); sign.position.set(-2.5, 2.78, z0 + 0.06); scene.add(sign);
     signGlow = new THREE.Mesh(new THREE.PlaneGeometry(7.5, 3), new THREE.MeshBasicMaterial({ map: TX.glow, color: 0xffd894, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.18 }));
     signGlow.position.set(-2.5, 2.78, z0 + 0.03); scene.add(signGlow);
+    // wall washers: a lamp under the ceiling every few metres along the back wall, its light fanning down the panels
+    const wash = canvasTex(128, 256, (gx, w, hh) => { const gr = gx.createRadialGradient(w / 2, 0, 0, w / 2, 0, hh); gr.addColorStop(0, 'rgba(255,244,225,0.95)'); gr.addColorStop(0.25, 'rgba(255,240,215,0.45)'); gr.addColorStop(0.7, 'rgba(255,236,210,0.08)'); gr.addColorStop(1, 'rgba(255,236,210,0)'); gx.fillStyle = gr; gx.fillRect(0, 0, w, hh); });
+    const washM = new THREE.MeshBasicMaterial({ map: wash, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.32 });
+    for (const x of [-7.4, -4.4, 1.3, 4.6, 7.6]) {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 3.4), washM); m.position.set(x, h - 0.45 - 1.7, z0 + 0.04); m.renderOrder = 2; scene.add(m);
+      box(x, h - 0.5, z0 + 0.1, 0.5, 0.08, 0.2, [0.1, 0.1, 0.11]);
+    }
     // the pegboard over the chests
     const peg = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.3), new THREE.MeshLambertMaterial({ map: TX.peg })); peg.position.set(-6.15, 1.92, z0 + 0.03); scene.add(peg);
     // a telemetry screen on the wall (a glowing trace)
@@ -488,7 +492,6 @@ const Garage3D = (function () {
   /* ---------------- the camera: round the car (the user drags it), moved by the animations ---------------- */
   const HOME = { yaw: 0.55, pitch: 0.17, dist: 8.4, tx: 0.1, ty: 0.6, tz: 0, fov: 33 };
   const rig = Object.assign({}, HOME), user = { yaw: 0, pitch: 0, zoom: 1, vy: 0 };
-  let userT = 0;   // (seconds since the user last turned the camera)
   function placeCamera(dt) {
     if (!user.drag) { user.yaw += user.vy * dt; user.vy *= Math.exp(-dt * 3); }
     const aspect = W / H, fov = rig.fov, th = Math.tan(fov * Math.PI / 360), need = 3.5 / (th * aspect), fit = Math.max(1, need / HOME.dist);
@@ -536,7 +539,7 @@ const Garage3D = (function () {
       if (pts.size === 2) { const [a, b] = [...pts.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (pinch > 0) user.zoom = clamp(user.zoom * pinch / d, 0.62, 1.3); pinch = d; moved += 10; return; }
       const dx = e.clientX - lastX, dy = e.clientY - lastY; lastX = e.clientX; lastY = e.clientY; moved += Math.abs(dx) + Math.abs(dy);
       const k = 3.2 / Math.max(240, el.clientWidth);
-      user.yaw -= dx * k; user.pitch = clamp(user.pitch + dy * k * 0.8, -0.16, 0.75); user.vy = -dx * k * 60 * 0.5; userT = 0;
+      user.yaw -= dx * k; user.pitch = clamp(user.pitch + dy * k * 0.8, -0.16, 0.75); user.vy = -dx * k * 60 * 0.5;
     });
     const up = (e) => { pts.delete(e.pointerId); if (pts.size < 2) pinch = 0; if (!pts.size) { user.drag = false; if (moved < 8 && performance.now() - t0 < 300 && busy) speed = 3; } };
     el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
@@ -686,6 +689,8 @@ const Garage3D = (function () {
     const cc = cv.spec.cond, v = cv.v;
     if (v.dirtU) v.dirtU.value = (1 - clamp(cc.clean, 0, 1)) * 0.75;
     if (v.scrU) v.scrU.value = (1 - clamp(cc.body, 0, 1)) * 1.0;
+    const d = v.dirtU ? v.dirtU.value : 0;   // (the wheels of their own get the mud the body's rear ones have)
+    for (const w of cv.wheels) if (w.obj) w.obj.traverse(o => { if (o.isMesh && o.material && o.material.color && !(o.material.userData && o.material.userData.own)) o.material.color.setRGB(1 - 0.3 * d, 1 - 0.38 * d, 1 - 0.5 * d); });
   }
   function lamps(cv, head, tail) {
     for (const s of cv.head) s.material.opacity = head * 0.9;
@@ -738,7 +743,7 @@ const Garage3D = (function () {
   }
   function tipGeo(r, len, oval, ti) {   // an exhaust tip: a short tube along x with a rolled lip, dark inside
     const g = new THREE.CylinderGeometry(r, r * 0.92, len, 20, 1, true); g.rotateZ(Math.PI / 2); if (oval) g.scale(1, 0.62, 1.25);
-    if (ti) { const p = g.attributes.position, c = []; for (let i = 0; i < p.count; i++) { const t = clamp((p.getX(i) + len / 2) / len, 0, 1); const hue = [lerp(0.55, 0.25, t), lerp(0.42, 0.3, t), lerp(0.25, 0.78, t)]; c.push(...(t > 0.5 ? [lerp(0.7, 0.35, (t - 0.5) * 2), lerp(0.55, 0.32, (t - 0.5) * 2), lerp(0.4, 0.85, (t - 0.5) * 2)] : [lerp(0.78, 0.7, t * 2), lerp(0.76, 0.55, t * 2), lerp(0.74, 0.4, t * 2)])); void hue; } g.setAttribute('color', new THREE.Float32BufferAttribute(c, 3)); }
+    if (ti) { const p = g.attributes.position, c = []; for (let i = 0; i < p.count; i++) { const t = clamp((p.getX(i) + len / 2) / len, 0, 1); c.push(...(t > 0.5 ? [lerp(0.7, 0.35, (t - 0.5) * 2), lerp(0.55, 0.32, (t - 0.5) * 2), lerp(0.4, 0.85, (t - 0.5) * 2)] : [lerp(0.78, 0.7, t * 2), lerp(0.76, 0.55, t * 2), lerp(0.74, 0.4, t * 2)])); } g.setAttribute('color', new THREE.Float32BufferAttribute(c, 3)); }
     return g;
   }
   function mesh(geo, mat, x, y, z, parent) { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; if (parent) parent.add(m); return m; }
@@ -751,9 +756,9 @@ const Garage3D = (function () {
     if (kind === 'motor') {
       if (M.ev) {   // the electric car: a blue light under its sills, brighter with each level, and a lit diffuser
         if (lv > 0) {
-          const s = new THREE.Mesh(bx(K.wfx - K.wrx - 0.6, 0.02, 0.03), PM.blueGlow); for (const sd of [-1, 1]) { const m = s.clone(); m.position.set((K.wfx + K.wrx) / 2, K.bottom + 0.02, sd * (K.sideZ - 0.04)); grp.add(item(m, 'side')); }
-          const pool = new THREE.Mesh(new THREE.PlaneGeometry(K.front - K.rear + 0.4, K.hw * 2 + 0.7), new THREE.MeshBasicMaterial({ map: TX.glow, color: 0x2a8cff, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.25 + lv * 0.18 }));
-          pool.material.userData.own = true; pool.rotation.x = -Math.PI / 2; pool.position.set((K.front + K.rear) / 2, -K.bottom + 0.0, 0); pool.renderOrder = 4; grp.add(item(pool, 'fade'));
+          const s = new THREE.Mesh(bx(K.wfx - K.wrx - 0.6, 0.035, 0.03), PM.blueGlow); for (const sd of [-1, 1]) { const m = s.clone(); m.position.set((K.wfx + K.wrx) / 2, K.bottom + 0.02, sd * (K.sideZ - 0.04)); grp.add(item(m, 'side')); }
+          const pool = new THREE.Mesh(new THREE.PlaneGeometry(K.front - K.rear + 0.4, K.hw * 2 + 0.7), new THREE.MeshBasicMaterial({ map: TX.glow, color: 0x2a8cff, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.4 + lv * 0.2 }));
+          pool.material.userData.own = true; pool.rotation.x = -Math.PI / 2; pool.position.set((K.front + K.rear) / 2, 0.016, 0); pool.renderOrder = 4; grp.add(item(pool, 'fade'));
           if (lv >= 2) { const d = new THREE.Mesh(bx(0.02, 0.025, K.hw * 1.2), PM.blueGlow); d.position.set(K.exXc - 0.01, K.exY + 0.12, 0); grp.add(item(d, 'back')); }
           grp.userData.tips = [];
         }
@@ -862,7 +867,7 @@ const Garage3D = (function () {
   function dropParts(grp) { if (!grp) return; for (const o of grp.userData.extra || []) disposeTree(o); disposeTree(grp); }   // (the rings on the wheels of their own too)
   function buildParts(cv) { for (const k of ['motor', 'gume', 'zavore', 'aero']) { if (cv.parts[k]) dropParts(cv.parts[k]); cv.parts[k] = partsFor(cv, k, (cv.spec.upg || {})[k] || 0); } }
   // a part group coming on (k 0 -> 1) or going off (1 -> 0): each item from its own way (dropped from above, slid in from a side ...)
-  function partsK(grp, k, kind, zone) {
+  function partsK(grp, k, zone) {
     for (const it of grp.userData.items) {
       if (zone && it.zone !== zone) continue;
       const o = it.o, e = clamp(k, 0, 1);
@@ -878,7 +883,6 @@ const Garage3D = (function () {
       else o.position.copy(h);
       o.scale.setScalar(it.from === 'wheel' ? Math.max(0.001, b) : Math.max(0.001, 0.3 + 0.7 * Math.min(1, e * 1.4)));
     }
-    void kind;
   }
 
   /* ---------------- effects on a car ---------------- */
@@ -994,8 +998,8 @@ const Garage3D = (function () {
     }
     for (const sd of [-1, 1]) for (const [k, y] of [[0, K.bottom + 0.22], [1, lerp(K.bottom, K.top, 0.55)]]) {   // along the sides, bulging round the car
       const out = [];
-      for (let x = x0; x >= x1; x -= 0.2) { const t = clamp((x - K.rear) / (K.front - K.rear), 0, 1), inside = x <= K.front && x >= K.rear, w = (P.side(clamp(x, K.rear + 0.1, K.front - 0.1), y, sd) || K.hw) + 0.1;
-        out.push(new V3(x, y, sd * (inside ? Math.max(w, K.hw * 0.9 + 0.1) : lerp(K.hw * 0.75, K.hw + 0.1, x > K.front ? 1 - (x - K.front) / (x0 - K.front) : 1 - (K.rear - x) / (K.rear - x1) * 0.5)))); void t; }
+      for (let x = x0; x >= x1; x -= 0.2) { const inside = x <= K.front && x >= K.rear, w = (P.side(clamp(x, K.rear + 0.1, K.front - 0.1), y, sd) || K.hw) + 0.1;
+        out.push(new V3(x, y, sd * (inside ? Math.max(w, K.hw * 0.9 + 0.1) : lerp(K.hw * 0.75, K.hw + 0.1, x > K.front ? 1 - (x - K.front) / (x0 - K.front) : 1 - (K.rear - x) / (K.rear - x1) * 0.5)))); }
       tube(out, 0.2 + k * 0.5 + (sd > 0 ? 0.1 : 0.6));
     }
     g.userData.mat = mat; cv.v.bodyG.add(g); return g;
@@ -1101,7 +1105,7 @@ const Garage3D = (function () {
     return play(function* () {
       const cv = cur; if (!cv) return;
       const from = cv.spec.upg[kind] || 0; if (from === lv) return;
-      const up = lv > from, old = cv.parts[kind], nw = partsFor(cv, kind, lv); partsK(nw, 0, kind); cv.spec.upg[kind] = lv;
+      const up = lv > from, old = cv.parts[kind], nw = partsFor(cv, kind, lv); partsK(nw, 0); cv.spec.upg[kind] = lv;
       const K = cv.kit;
       if (kind === 'motor') {   // the exhaust (or the electric car's light under it), then the bonnet; the engine revved: flames, the power
         let running = false;
@@ -1179,14 +1183,14 @@ const Garage3D = (function () {
   function* partsOut(cv, grp, kind, zone) {
     if (!hasZone(grp, zone)) return;
     SFX.whoosh(0.6);
-    yield* tween(0.45, (k) => partsK(grp, 1 - k, kind, zone), EZ.in);
+    yield* tween(0.45, (k) => partsK(grp, 1 - k, zone), EZ.in);
     if (!zone) grp.visible = false;
   }
   function* partsIn(cv, grp, kind, s, zone) {
     if (!hasZone(grp, zone)) return;
     let clunked = false;
-    yield* tween(s || 0.8, (k) => { partsK(grp, k, kind, zone); if (k > 0.72 && !clunked) { clunked = true; SFX.clunk(0.9); } }, (t) => t);
-    partsK(grp, 1, kind, zone);
+    yield* tween(s || 0.8, (k) => { partsK(grp, k, zone); if (k > 0.72 && !clunked) { clunked = true; SFX.clunk(0.9); } }, (t) => t);
+    partsK(grp, 1, zone);
     const box = zoneBox(grp, zone); if (!box.isEmpty()) { const c = box.getCenter(new V3()), sz = box.getSize(new V3()); for (let i = 0; i < 5; i++) glint(c.clone().add(new V3((Math.random() - 0.5) * sz.x, (Math.random() - 0.3) * sz.y, (Math.random() - 0.5) * sz.z)), 0.3, 0xffffff); SFX.ping(2093); }
   }
   // where the car turns and the camera goes to show a zone of the car (the turntable's angle; the camera round a point of the car)
@@ -1194,7 +1198,7 @@ const Garage3D = (function () {
     const K = cv.kit, mid = (K.top + K.bottom) / 2;
     const V = {
       'motor.rear': [1.75, { at: [K.exX + 0.15, K.exY + 0.16, 0], pitch: 0.12, dist: 4.1 }],
-      'motor.side': [0.55, { at: [0, K.bottom + 0.15, 0], pitch: 0.04, dist: 6.6 }],
+      'motor.side': [0.55, { at: [0, K.bottom + 0.2, 0], pitch: 0.1, dist: 7.8 }],
       'motor.front': [-0.45, { at: [K.hoodX, K.hoodY, 0], pitch: 0.48, dist: 4.9 }],
       'aero.rear': [1.6, { at: [K.rear + 0.55, (K.deckY + K.bottom) / 2 + 0.25, 0], pitch: 0.3, dist: 5.6 }],
       'aero.front': [-0.45, { at: [K.front - 0.5, K.frontLow + 0.22, 0], pitch: 0.2, dist: 4.7 }],
@@ -1205,14 +1209,14 @@ const Garage3D = (function () {
   }
   function* goZone(cv, kind, zone, s) { const z = zoneView(cv, kind, zone); yield* par(turnTo(z.ang, s || 1.1), camTo(z.cam, (s || 1.1) + 0.1)); }
   function* weld(cv, grp, zone) {   // a welder's flicker and sparks where the new parts go
-    partsK(grp, 1, 'motor', zone); const box = zoneBox(grp, zone); partsK(grp, 0, 'motor', zone); if (box.isEmpty()) return;
+    partsK(grp, 1, zone); const box = zoneBox(grp, zone); partsK(grp, 0, zone); if (box.isEmpty()) return;
     const c = box.getCenter(new V3()), sz = box.getSize(new V3());
     const fl = new THREE.Sprite(new THREE.SpriteMaterial({ map: TX.glow, color: 0xbfe2ff, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); fl.scale.setScalar(0.9); scene.add(fl);
     yield* tween(0.8, (k, u) => {
       const p = c.clone().add(new V3((Math.random() - 0.5) * sz.x, (Math.random() - 0.5) * sz.y * 0.5, (Math.random() - 0.5) * sz.z));
       fl.position.copy(p); fl.material.opacity = Math.random() < 0.6 ? 0.9 : 0.2; fl.scale.setScalar(0.5 + Math.random() * 0.7);
       for (let i = 0; i < 3; i++) sparks.emit(p.x, p.y, p.z, (Math.random() - 0.5) * 3, Math.random() * 2.5, (Math.random() - 0.5) * 3, 0.3 + Math.random() * 0.4, 0.04, 0.012, [1, 0.75, 0.35], 1, 9, 0.5, 0.02);
-      if (Math.random() < 0.3) SFX.spark(); void u;
+      if (Math.random() < 0.3) SFX.spark();
     });
     scene.remove(fl); fl.material.dispose();
   }
@@ -1368,8 +1372,7 @@ const Garage3D = (function () {
     motes.material.uniforms.uT.value = time;
     ringGlow.material.uniforms.uK.value = 0.3 + 0.06 * Math.sin(time * 1.6);
     signGlow.material.opacity = 0.17 + 0.015 * Math.sin(time * 2.3);
-    if ((time * 10 | 0) % 2 === 0) drawMonitor(time);
-    userT += dt;
+    if ((time * 4 | 0) !== ((time - dt) * 4 | 0)) drawMonitor(time);   // (the screen four times a second)
     if (autoSpin && !busy && !user.drag) rig.yaw += dt * 0.32;
     placeCamera(dt);
     if (noDraw) return;
@@ -1403,6 +1406,7 @@ const Garage3D = (function () {
     set onHud(f) { hud = f || (() => {}); },
     set fast(k) { fast = k > 0 ? k : 1; },
     get busy() { return busy > 0; }, get ready() { return ready; },
+    get idle() { return !busy && !tasks.length && !user.drag && !autoSpin && Math.abs(user.vy) < 0.01 && !flames.length && !glints.length; },   // (nothing moving but the dust: the page draws less often)
     sound(on) { sndInit(); if (SND.out) SND.out.gain.value = on ? 0.7 : 0; SND.vol = on ? 0.7 : 0; if (typeof Sfx !== 'undefined') { Sfx.resume(); Sfx.setEnabled(on); } },
     setCond(c) { if (cur) setCond(cur, c); },
     get cur() { return cur; },

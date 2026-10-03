@@ -132,11 +132,11 @@ svg { display: block; }
 
 /* the four big buttons (as the menu's car / weather cards) */
 .g-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.g-tile { position: relative; display: flex; align-items: center; gap: 10px; min-height: 74px; padding: 10px 26px 10px 11px; min-width: 0; border-radius: 16px; border: 1.5px solid var(--edge2); background: linear-gradient(180deg, #14263a, #112033); text-align: left; overflow: hidden; }
+.g-tile { position: relative; display: flex; align-items: center; gap: 8px; min-height: 74px; padding: 10px 26px 10px 11px; min-width: 0; border-radius: 16px; border: 1.5px solid var(--edge2); background: linear-gradient(180deg, #14263a, #112033); text-align: left; overflow: hidden; }
 .g-tile:active { background: #18304a; }
 .g-tile::after { content: ''; position: absolute; right: 12px; top: 50%; width: 9px; height: 9px; border-right: 2.5px solid #c8d3e6; border-top: 2.5px solid #c8d3e6; transform: translateY(-50%) rotate(45deg); }
-.g-tile .ic { width: 38px; height: 38px; flex: 0 0 auto; display: grid; place-items: center; color: #fff; }
-.g-tile .ic svg { width: 34px; height: 34px; }
+.g-tile .ic { width: 32px; height: 32px; flex: 0 0 auto; display: grid; place-items: center; color: #fff; }
+.g-tile .ic svg { width: 30px; height: 30px; }
 .g-tile .ic img { width: 66px; height: 38px; object-fit: contain; margin: 0 -14px 0 -12px; filter: drop-shadow(0 3px 3px rgba(0,0,0,.5)); }
 .g-tile > span:last-child { min-width: 0; }
 .g-tile small { display: block; font: 600 11px/1.15 var(--f); letter-spacing: .07em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--muted); text-transform: uppercase; }
@@ -178,8 +178,8 @@ svg { display: block; }
 .g-meter b { font: italic 900 14px/1 var(--f); text-align: right; }
 
 /* a row: an upgrade, a service, with its icon, its levels, its button */
-.g-row { display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 8px; border-radius: 14px; border: 1.5px solid #22324a; background: #12203a; margin-bottom: 8px; }
-.g-row .ic { width: 36px; height: 36px; flex: 0 0 auto; display: grid; place-items: center; color: #fff; border-radius: 10px; background: #1a2c45; }
+.g-row { display: flex; align-items: center; gap: 9px; padding: 7px 9px 7px 7px; border-radius: 14px; border: 1.5px solid #22324a; background: #12203a; margin-bottom: 6px; }
+.g-row .ic { width: 34px; height: 34px; flex: 0 0 auto; display: grid; place-items: center; color: #fff; border-radius: 10px; background: #1a2c45; }
 .g-row .ic svg { width: 26px; height: 26px; }
 .g-row .tx { flex: 1 1 auto; min-width: 0; }
 .g-row .tx b { display: block; font: italic 900 16px/1.1 var(--f); color: #fff; }
@@ -235,6 +235,11 @@ svg { display: block; }
   .g-demo { grid-column: 1 / -1; padding: 4px 12px; }
   .g-head { grid-column: 2; grid-row: 2; padding: 8px 12px 4px; }
   .g-back { width: 44px; height: 44px; }
+  .g-title h1 { font-size: 26px; }
+  .g-title p { font-size: 11px; letter-spacing: .1em; }
+  .g-cr { padding: 6px 10px 6px 8px; }
+  .g-cr b { font-size: 19px; }
+  .g-coin { width: 24px; height: 24px; }
   .g-stage { grid-column: 1; grid-row: 2 / 5; height: auto; margin: 8px 0 10px 10px; border-radius: 18px; }
   .g-card { grid-column: 2; grid-row: 3; margin: 6px 12px 0; }
   .g-foot { grid-column: 2; grid-row: 4; padding: 10px 12px 10px; }

@@ -162,8 +162,8 @@
   function render() { head(); body(); }
 
   /* ---------------- the car pictures for the list (drawn by Garage3D one at a time, between frames) ---------------- */
-  function queueThumbs() {
-    for (const id of ORDER) { const k = S.cars[id], key = k.color + (k.stripe ? 's' : ''); if (!(thumbs[id] && thumbs[id][key]) && !thumbQ.some(q => q[0] === id && q[1] === key)) thumbQ.push([id, key]); }
+  function queueThumbs(ids) {
+    for (const id of ids || ORDER) { const k = S.cars[id], key = k.color + (k.stripe ? 's' : ''); if (!(thumbs[id] && thumbs[id][key]) && !thumbQ.some(q => q[0] === id && q[1] === key)) thumbQ.push([id, key]); }
   }
   function thumbStep() {
     if (!thumbQ.length || G.busy) return;
@@ -187,7 +187,7 @@
   function countMoney(a, b) { cancelAnimationFrame(moneyAnim); const t0 = performance.now(), el = $('g-money'); const st = (t) => { const k = Math.min(1, (t - t0) / 700); el.textContent = num(Math.round(a + (b - a) * (1 - Math.pow(1 - k, 3)))); if (k < 1) moneyAnim = requestAnimationFrame(st); }; moneyAnim = requestAnimationFrame(st); }
   function pickCar(id) {
     if (id === S.car) return;
-    S.car = id; save(); render();
+    S.car = id; save(); queueThumbs([id]); render();
     $('g-name').parentElement.classList.remove('new'); void $('g-name').offsetWidth; $('g-name').parentElement.classList.add('new');
     G.swap(spec(id));
   }
@@ -214,7 +214,7 @@
     if (col === c.color && stripe === c.stripe) return;
     const p = (col !== c.color ? PAINT : 0) + (stripe !== c.stripe ? STRIPE : 0);
     if (!pay(p)) return;
-    c.color = col; c.stripe = stripe; c.cond.clean = 1; c.cond.body = 1; save(); render(); queueThumbs();
+    c.color = col; c.stripe = stripe; c.cond.clean = 1; c.cond.body = 1; save(); render(); queueThumbs([S.car]);
     G.paint(COLORS[col][0], stripe);
   }
   function buy() {
@@ -223,7 +223,7 @@
     S.cars[id].own = true; save(); render(); G.sfx('ping');
     chip(tr('NOV AVTO V GARAŽI'), esc(M().name));
   }
-  function onAct(act, el) {
+  function onAct(act) {
     G.sound(S.sound);
     switch (act) {
       case 'prev': step(-1); break;
@@ -242,7 +242,6 @@
       case 'reset': S = profile(S.mode); S.demo = true; save(); thumbs = {}; panel = 'home'; render(); G.swap(spec(S.car)); toast(tr('Profil je ponastavljen.')); break;
       case 'demo-off': $('g-demo').classList.add('off'); S.demo = false; save(); resize(); break;
     }
-    void el;
   }
   function setLang() { Lang.set(S.lang); Lang.apply(document.body); $('g-lang').textContent = S.lang === 'en' ? 'SL' : 'EN'; render(); }
 
@@ -250,7 +249,7 @@
   function bind() {
     document.addEventListener('click', (e) => {
       const t = e.target.closest('button'); if (!t) return;
-      if (t.dataset.act) return onAct(t.dataset.act, t);
+      if (t.dataset.act) return onAct(t.dataset.act);
       if (t.dataset.car) { G.sound(S.sound); pickCar(t.dataset.car); document.querySelectorAll('.g-car').forEach(x => x.classList.toggle('sel', x.dataset.car === S.car)); return; }
       if (t.dataset.upg) { G.sound(S.sound); return fitUpg(t.dataset.upg, +t.dataset.lv); }
       if (t.dataset.srv) { G.sound(S.sound); return doService(t.dataset.srv); }
@@ -263,6 +262,7 @@
     window.addEventListener('resize', resize);
     window.addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') step(-1); else if (e.key === 'ArrowRight') step(1); });
     G.onHud = (k, d) => {
+      if (k === 'busy') { if (d) document.querySelectorAll('#g-views button').forEach(x => x.classList.toggle('sel', x.dataset.view === '0')); $('g-stage').classList.toggle('busy', !!d); return; }
       if (k === 'power') { const Mm = M(), a = Core.upgStats(Mm, Object.assign({}, C().upg, { motor: d.from })).kw, b = Core.upgStats(Mm, Object.assign({}, C().upg, { motor: d.lv })).kw;
         chip(tr('MOČ'), Math.round(a) + ' → <em>' + Math.round(b) + ' kW</em>'); }
       else if (k === 'done') { const n = DONE_NAME[d.kind];
@@ -272,10 +272,13 @@
   function markMode() { document.querySelectorAll('#g-modes button').forEach(b => b.classList.toggle('sel', b.dataset.mode === S.mode)); }
   function resize() { const st = $('g-stage'), r = st.getBoundingClientRect(); G.resize(r.width, r.height, Math.min(window.devicePixelRatio || 1, 2)); }
 
-  let last = 0, hold = false;   // (hold: the tests step the clock themselves, advance)
+  let last = 0, hold = false, skip = 0;   // (hold: the tests step the clock themselves, advance)
   function loop(t) {
     const dt = last ? (t - last) / 1000 : 0.016; last = t;
-    if (!hold) G.frame(dt);
+    // idle (nothing moving but the dust in the light): about 30 frames a second, for the battery
+    if (G.idle && !thumbQ.length && (skip += dt) < 1 / 31) { requestAnimationFrame(loop); return; }
+    const step = Math.max(dt, skip); skip = 0;
+    if (!hold) G.frame(step);
     if (thumbQ.length) thumbStep();
     requestAnimationFrame(loop);
   }
@@ -286,7 +289,7 @@
     $('g-snd').classList.toggle('mute', !S.sound);
     G.init($('g-gl')); resize();
     G.show(spec(S.car));
-    queueThumbs(); thumbQ.sort((a, b) => (b[0] === S.car) - (a[0] === S.car));
+    queueThumbs([S.car]);   // (the car shown: its picture on the Avto tile; the others when the car panel opens)
     render();
     requestAnimationFrame((t) => { last = t; loop(t); setTimeout(() => $('g-load').classList.add('done'), 120); });
     window.__garage = { get S() { return S; }, G, onAct, pickCar, fitUpg, doService, doPaint, buy, get panel() { return panel; }, set panel(p) { panel = p; body(); }, thumbs: () => thumbs, render,
