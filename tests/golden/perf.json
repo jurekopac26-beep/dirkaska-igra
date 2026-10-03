@@ -168,11 +168,11 @@
   "jsMs": 1.05
  },
  "rastro": {
-  "calls": 243,
-  "maxCalls": 299,
-  "kverts": 626,
-  "maxKverts": 772,
-  "jsMs": 0.85
+  "calls": 247,
+  "maxCalls": 301,
+  "kverts": 625,
+  "maxKverts": 783,
+  "jsMs": 0.79
  },
  "moki": {
   "calls": 132,

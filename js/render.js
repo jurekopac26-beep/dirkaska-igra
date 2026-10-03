@@ -1662,7 +1662,7 @@ const Render = (function () {
     iroha:    { fog: 0xc9d6df, sun: 0xffecc8, sunI: 1.12, sky: 0xd0e0f0, gnd: 0x4c5a32, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.12, sunOff: [-80, 74, 60] },   // Irohazaka: a clear afternoon above Nikko, a lower sun through the woods (long shadows across the hairpins), a soft blue haze over the valley
     mulholland: { fog: 0xd8d4c8, sun: 0xfff0d2, sunI: 1.4, sky: 0xb8d2f0, gnd: 0x7a6a48, hemiI: 0.62, tint: [1.04, 1.0, 0.94], sat: 1.06, sunOff: [-70, 104, 48] },   // Mulholland Highway: a hot, clear Californian summer afternoon, a strong high sun from the south-west, a warm dusty haze over the canyons
     beartooth: { fog: 0xc6d7e8, sun: 0xfff1da, sunI: 1.26, sky: 0xb3cdf0, gnd: 0x4c5636, hemiI: 0.6, tint: [1.01, 1.0, 0.98], sat: 1.08, sunOff: [-84, 90, 58] },   // Beartooth: a clear summer afternoon in the northern Rockies, the sun from the south-west (shadows across the switchbacks), thin blue mountain haze
-    rastro:   { fog: 0xc4d0d0, sun: 0xfff0d8, sunI: 1.1, sky: 0xc2d4e6, gnd: 0x4a5a32, hemiI: 0.66, tint: [1.0, 1.01, 0.98], sat: 1.08, sunOff: [-66, 92, -64] },   // Serra do Rio do Rastro: a humid afternoon over the rainforest, the sun from the north-west (the southern hemisphere), a soft green-grey haze
+    rastro:   { fog: 0xbecbd6, sun: 0xffe4bc, sunI: 1.2, sky: 0xbfd3ea, gnd: 0x4a5a32, hemiI: 0.62, tint: [1.03, 1.0, 0.96], sat: 1.08, haze: 0.12, hazeCol: [1, 0.84, 0.62], sunOff: [-82, 66, -72] },   // Serra do Rio do Rastro: a humid late afternoon over the rainforest, a low warm sun from the north-west (the southern hemisphere; long shadows down the cliff), a soft blue haze in the valley
     moki:     { fog: 0xc9d6e6, sun: 0xffeccc, sunI: 1.3, sky: 0x8fb6ee, gnd: 0x8a5a3c, hemiI: 0.62, tint: [1.03, 1.0, 0.96], sat: 1.1, sunOff: [-86, 82, 46] },   // the Moki Dugway: a clear afternoon over the Utah desert, a deep blue sky, the warm sun from the south-west (the cliff's red light bounced into the shade)
     cpalace:  { fog: 0xc9d3db, sun: 0xfff0d8, sunI: 1.08, sky: 0xcddcec, gnd: 0x4c5a32, hemiI: 0.62, tint: [1.02, 1.0, 0.96], sat: 1.02, sunOff: [-60, 74, 66] },   // Crystal Palace: a spring afternoon in south London, a soft English light with a little haze, the sun from the south-west
     riverside: { fog: 0xd9dfe3, sun: 0xffecc8, sunI: 1.3, sky: 0xc3d8f2, gnd: 0x8a7650, hemiI: 0.62, tint: [1.04, 1.0, 0.93], sat: 1.04, haze: 0.12, hazeCol: [1, 0.86, 0.66], sunOff: [-70, 74, 78] },   // Riverside: a clear, dry afternoon in southern California, the sun from the south-west, a little dust in the warm haze
@@ -1677,6 +1677,7 @@ const Render = (function () {
     chapman: [[0.96, 1.0, 1.06], [1.04, 1.0, 0.95]],
     tianmen: [[0.97, 1.0, 1.03], [1.02, 1.0, 0.98]],
     sani: [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]],
+    rastro: [[0.95, 0.99, 1.06], [1.05, 1.0, 0.94]],
     moki: [[0.95, 0.99, 1.07], [1.05, 1.0, 0.94]], cpalace: [[0.97, 1.0, 1.04], [1.03, 1.0, 0.95]],
     riverside: [[0.96, 0.99, 1.05], [1.06, 1.01, 0.92]] };
   THEMES.uncompahgre = { fog: 0xbfcfe0, sun: 0xfff0d8, sunI: 1.24, sky: 0xb8d0f0, gnd: 0x4c5236, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-70, 92, 62] };   // the Uncompahgre Gorge: a clear afternoon in the San Juans, the sun from the south-west over the cliffs, a crisp blue haze
