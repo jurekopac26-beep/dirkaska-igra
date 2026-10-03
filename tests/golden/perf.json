@@ -119,10 +119,10 @@
   "jsMs": 1.72
  },
  "moki": {
-  "calls": 151,
-  "maxCalls": 221,
-  "kverts": 442,
-  "maxKverts": 649,
-  "jsMs": 0.61
+  "calls": 152,
+  "maxCalls": 222,
+  "kverts": 482,
+  "maxKverts": 689,
+  "jsMs": 0.47
  }
 }

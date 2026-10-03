@@ -346,16 +346,16 @@
   }
  },
  "moki": {
-  "meshes": 2119,
-  "verts": 862866,
+  "meshes": 2120,
+  "verts": 902610,
   "instances": 30182,
   "props": 142,
   "crowd": 367,
-  "world": "883783ea",
+  "world": "4238b115",
   "propsHash": "127d9044",
   "floor": "3e0a51bf/10920",
   "groups": {
-   "-:MeshLambertMaterial": "8e0547e9",
+   "-:MeshLambertMaterial": "86319fd2",
    "-:MeshPhongMaterial": "66caa8f",
    "-:MeshBasicMaterial": "5c20f993",
    "crowd:MeshLambertMaterial": "cc9c5088",

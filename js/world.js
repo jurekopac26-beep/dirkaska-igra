@@ -10959,10 +10959,26 @@ const World = (function () {
         if (RV() < 0.35) continue;
         const [x, z] = onSide(s, side, 6 + RV() * 70); if (excluded(x, z) || vrNear(x, z).dd < 6) continue;
         const sl = caSlope(x, z); if (sl < 0.75) continue;
-        const y = caGround(x, z), g = scen.get(x, z), n = 2 + Math.floor(RV() * 3), A = y + base, b0 = A > 1880 ? [0.86, 0.76, 0.6] : A > 1720 ? [0.78, 0.48, 0.32] : [0.6, 0.36, 0.28];
-        for (let q = 0; q < n; q++) { const r0 = 2 + RV() * 4, qx = x + (RV() - 0.5) * 9, qz = z + (RV() - 0.5) * 9, qy = caGround(qx, qz); if (vrNear(qx, qz).dd < r0 + 1) continue;
-          rock(g, qx, qy + r0 * 0.35, qz, r0 * 1.2, r0 * (0.6 + RV() * 0.5), r0 * (0.7 + RV() * 0.4), RV() * TAU, vary(b0, RV, 0.1), RV, 0.3, true); }
+        const y = caGround(x, z), g = scen.get(x, z), n = 2 + Math.floor(RV() * 3), A = y + base, b0 = A > 1880 ? [0.82, 0.72, 0.58] : A > 1720 ? [0.7, 0.46, 0.34] : [0.56, 0.36, 0.3];
+        for (let q = 0; q < n; q++) { const r0 = 1.4 + RV() * 2.6, qx = x + (RV() - 0.5) * 9, qz = z + (RV() - 0.5) * 9, qy = caGround(qx, qz); if (vrNear(qx, qz).dd < r0 + 1) continue;
+          rock(g, qx, qy + r0 * 0.2, qz, r0 * 1.3, r0 * (0.45 + RV() * 0.35), r0 * (0.7 + RV() * 0.4), RV() * TAU, vary(b0, RV, 0.14), RV, 0.32, true); }
       }
+    }
+
+    /* ---- the windrows of loose gravel the grader leaves along both edges of the gravel road: a low, pale ridge just off the running surface (the
+       road's edge reads from above even where there is no berm) ---- */
+    {
+      const wr = new GB(), pal = [0.9, 0.78, 0.66], sh = [0.66, 0.54, 0.44], paved = T.pavedAt;
+      for (let i = 0; i < N - 1; i++) {
+        if (paved && (paved[i] || paved[i + 1])) continue;
+        const j = i + 1, k = 0.94 + 0.1 * rpHash(i >> 3, 91);
+        for (const side of [-1, 1]) {
+          const Q = (q, o, y) => [T.px[q] + T.nx[q] * side * o, T.hy[q] + y, T.pz[q] + T.nz[q] * side * o], a = w + 0.15, b = w + 0.55, c = w + 1.05;
+          const ca = [pal[0] * k, pal[1] * k, pal[2] * k], cs = [sh[0] * k, sh[1] * k, sh[2] * k], inn = Q(i, b, -1);
+          wr.quadO(Q(i, a, 0.01), Q(j, a, 0.01), Q(j, b, 0.13), Q(i, b, 0.13), ca, inn); wr.quadO(Q(i, b, 0.13), Q(j, b, 0.13), Q(j, c, -0.04), Q(i, c, -0.04), cs, inn);
+        }
+      }
+      const m = addM(wr, matV); if (m) m.castShadow = false;
     }
 
     /* ---- the talus at the foot of the cliff: big flat blocks of sandstone fallen from the rim, half buried, on the slopes beside the road ---- */
