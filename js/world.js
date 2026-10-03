@@ -18463,6 +18463,9 @@ const World = (function () {
       const wm = waterMat(tex, { color: 0x7fa0a4, len: 1.6, amp: 0.7, refl: 0.5, land: 0.4 }), g = new GB(true), Wd = 1500, y = WL;
       g.quadUp([-Wd, y, -Wd], [Wd, y, -Wd], [Wd, y, Wd], [-Wd, y, Wd], [one, one, one, one], [[-Wd / 30, Wd / 30], [Wd / 30, Wd / 30], [Wd / 30, -Wd / 30], [-Wd / 30, -Wd / 30]]);
       const m = addM(g, wm); m.receiveShadow = true; out.dyn.water = tex.water;
+      // the band along the sea wall: the water a little paler near it, the swell lapping white at its foot (sd: metres from the wall, + out on the water)
+      const sd = (x, z) => { let d = 1e9; for (const p of land) d = Math.min(d, polyDist(p, x, z)); return onLand(x, z) ? -d : d; };
+      addShore(root, shoreBand(-600, -520, 560, 460, y + 0.015, sd, 30, { lip: 1.2 }), wm, { color: 0x7fa0a4, len: 1.6, amp: 0.7, refl: 0.5, land: 0.4, lap: 0.8, surf: 0.15 });
     }
 
     /* ---- parks and plazas (OpenStreetMap land use): lawns and flower beds, plazas in a lighter stone ---- */
