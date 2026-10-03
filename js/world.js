@@ -23469,8 +23469,8 @@ const World = (function () {
     const R = rng(2971), N = T.N, w = T.w, ds = T.ds, dens = opts.density || 1, sStart = T.startS, def = T.def, L = T.len;
     const WA = T.wa || new Float64Array(N).fill(w);
     const root = new THREE.Group(); scene.add(root);
-    const sea = opts.season === 'winter' || opts.season === 'autumn' ? opts.season : 'summer';   // (the snow on the Atlas: built again when the season changes)
-    const out = { root, dyn: {}, groundH: nrGround, camFloor: nrGround, props: [], farClip: true, ownTex: [], season: 'mr-' + sea, paintFor: (s) => 'mr-' + (s === 'winter' || s === 'autumn' ? s : 'summer'), dust: [0.78, 0.55, 0.42] };
+    const sea = opts.season === 'winter' || opts.season === 'autumn' ? opts.season : 'summer';   // (the snow on the Atlas: built again when the season changes; the town at 470 m has none: ownSeason, painted as built all year)
+    const out = { root, dyn: {}, groundH: nrGround, camFloor: nrGround, props: [], farClip: true, ownTex: [], ownSeason: true, season: 'mr-' + sea, paintFor: (s) => 'mr-' + (s === 'winter' || s === 'autumn' ? s : 'summer'), dust: [0.78, 0.55, 0.42] };
     const ownTex = (t) => { out.ownTex.push(t); return t; };
     const dS = (s) => { let d = s - sStart; d = ((d % L) + L) % L; return d > L / 2 ? d - L : d; };   // metres from the start line (-L/2 .. L/2)
     const dP = (s) => { let d = s - sStart; return ((d % L) + L) % L; };   // (0 .. L)

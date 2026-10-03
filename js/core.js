@@ -1623,7 +1623,7 @@ const Core = (function () {
       b.vy = Math.min(7.5, b.vy + Math.min(5, vrel * K.lift * 0.22)); b.wy += (Math.random() - 0.5) * Math.min(10, vrel * 0.5);
       const hs = Math.hypot(b.vx, b.vz), cap = Math.min(18, 0.72 * Math.hypot(c.vx, c.vz) + 2); if (hs > cap) { b.vx *= cap / hs; b.vz *= cap / hs; }
       race.propFx(b, vrel);
-      if (K.dmg && vrel > 6 && !b.hurt) { b.hurt = 1; const lx = px - c.x, lz = pz - c.z; applyDamage(c, (vrel - 6) * K.dmg, lx * ch + lz * sh, -lx * sh + lz * ch); }   // (heavy street furniture: a dent, once)
+      if (K.dmg && vrel > 6 && !b.hurt) { b.hurt = 1; const lx = px - c.x, lz = pz - c.z; applyDamage(c, Math.min(0.06, (vrel - 6) * K.dmg), lx * ch + lz * sh, -lx * sh + lz * ch); }   // (heavy street furniture: a dent, once, a light one)
       const wl = Math.hypot(b.wx, b.wy, b.wz); if (wl > 14) { b.wx *= 14 / wl; b.wy *= 14 / wl; b.wz *= 14 / wl; }
       propFeel(c, K.m, vrel, b.kind);
       return;
