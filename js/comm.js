@@ -121,6 +121,8 @@ const Comm = (() => {
     propPylon: ['Took the marker post with him!', 'That marker post is history!'],
     propPost: ["He's clipped a marker post!", 'Roadside post down!', 'That post never stood a chance!', 'Flattened a post there!'],
     propCrate: ['Smashed straight into the crate!', 'There goes the crate!'],
+    propSignal: ['Took out the traffic lights!', 'The traffic lights are down!', 'Straight through the traffic lights!'],
+    propStreet: ['Flattened the street furniture!', 'There goes a sign!', 'Clipped something on the corner there!', 'That will cost the city a bit!'],
     // time trial (hill climb against the clock, no opponents): the hill climb is Pikes Peak, so the commentator speaks as its race announcer on the
     // start line (short lines: the welcome, said as the countdown begins, ends before the green flag; the green flag call leaves room for the first place line)
     introTT: ['Welcome to the Pikes Peak International Hill Climb, the Race to the Clouds!', 'Twelve point four miles and a hundred and fifty-six turns to the summit!', "Welcome to America's Mountain! Fourteen thousand one hundred and fifteen feet, here we come!"],

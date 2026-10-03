@@ -1567,6 +1567,16 @@ const Core = (function () {
       rbale:  { m: 26, rh: 0.62, rb: 0.75, h0: 0.43,  e: 0.15, mu: 0.8,  lift: 0.3,  I: 4.6,  pts: (() => { const p = []; for (const x of [-0.62, 0.62]) for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; p.push([x, Math.cos(a) * 0.43, Math.sin(a) * 0.43]); } return p; })() },   // round straw bale lying on its side (Toskana)
       rbstack: { m: 78, rh: 0.9, rb: 1.1,  h0: 0.85,  breaks: 'rbale', parts: [[-0.66, -0.425, 0], [0.66, -0.425, 0], [0, 0.425, 0]], pf: [[1.1, 0.6], [1.0, 0.9], [0.8, 2.4]] },
       post:   { m: 4,  rh: 0.14, rb: 0.62, h0: 0.55,  e: 0.3,  mu: 0.6,  lift: 1.0,  I: 0.4,  pts: boxPts(0.07, 0.55, 0.07) },   // roadside post (stebriček): light, snaps over and cartwheels away
+      // the street furniture of a town's junctions (generic, any city track): it breaks off its foot and topples, the car drives on
+      signal: { m: 55, rh: 0.16, rb: 2.4, h0: 2.1,   e: 0.15, mu: 0.6,  lift: 0.5,  I: 85,   pts: boxPts(0.12, 2.1, 0.12) },   // traffic lights on a post (semafor)
+      mast:   { m: 80, rh: 0.18, rb: 3.4, h0: 3.1,   e: 0.12, mu: 0.6,  lift: 0.4,  I: 300,  pts: boxPts(0.14, 3.1, 0.14).concat([[5.6, 2.6, 0], [5.6, 2.2, 0]]) },   // a pole with its arm over the road (local +x), the lights on it
+      lamp:   { m: 50, rh: 0.14, rb: 3.6, h0: 3.6,   e: 0.15, mu: 0.6,  lift: 0.5,  I: 220,  pts: boxPts(0.1, 3.6, 0.1) },     // street lamp
+      sign:   { m: 9,  rh: 0.1,  rb: 1.4, h0: 1.3,   e: 0.2,  mu: 0.6,  lift: 0.9,  I: 4,    pts: boxPts(0.05, 1.3, 0.05) },    // road sign on a post
+      bollard:{ m: 14, rh: 0.13, rb: 0.5, h0: 0.45,  e: 0.25, mu: 0.6,  lift: 0.8,  I: 0.8,  pts: cylPts(0.13, -0.45, 0.45, 6) },
+      hydrant:{ m: 24, rh: 0.2,  rb: 0.45, h0: 0.38, e: 0.2,  mu: 0.7,  lift: 0.6,  I: 1.2,  pts: cylPts(0.18, -0.38, 0.38, 6) },
+      bin:    { m: 12, rh: 0.3,  rb: 0.56, h0: 0.48, e: 0.25, mu: 0.6,  lift: 0.7,  I: 1.0,  pts: cylPts(0.29, -0.48, 0.48, 8) },  // litter bin
+      newsbox:{ m: 18, rh: 0.3,  rb: 0.64, h0: 0.55, e: 0.2,  mu: 0.6,  lift: 0.6,  I: 1.6,  pts: boxPts(0.24, 0.55, 0.22) },   // newspaper box
+      cabinet:{ m: 35, rh: 0.48, rb: 0.85, h0: 0.7,  e: 0.15, mu: 0.7,  lift: 0.4,  I: 4.5,  pts: boxPts(0.45, 0.7, 0.3) },    // the lights' control cabinet
     };
   })();
   const _pq = {};

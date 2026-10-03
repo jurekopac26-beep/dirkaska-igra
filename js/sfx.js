@@ -824,9 +824,9 @@ const Sfx = (function () {
   function knock(kind, v) {
     if (!ctx || ctx.state !== 'running' || !running) return;
     const now = ctx.currentTime; if (now - lastKnock < 0.05) return; lastKnock = now;
-    const vol = clamp(v / 18, 0.12, 0.8), cone = kind === 'cone' || kind === 'pylon' || kind === 'post', straw = kind === 'bale' || kind === 'bstack' || kind === 'rbale' || kind === 'rbstack', wood = kind === 'crate';
+    const vol = clamp(v / 18, 0.12, 0.8), cone = kind === 'cone' || kind === 'pylon' || kind === 'post', straw = kind === 'bale' || kind === 'bstack' || kind === 'rbale' || kind === 'rbstack', wood = kind === 'crate', metal = kind === 'signal' || kind === 'mast' || kind === 'lamp' || kind === 'sign' || kind === 'bollard' || kind === 'hydrant' || kind === 'newsbox' || kind === 'cabinet' || kind === 'bin';
     const o = ctx.createOscillator(); o.type = cone ? 'square' : 'triangle';
-    const f0 = cone ? 520 + Math.random() * 120 : straw ? 90 : wood ? 260 : 150;
+    const f0 = cone ? 520 + Math.random() * 120 : straw ? 90 : wood ? 260 : metal ? 330 + Math.random() * 140 : 150;   // (the town's street furniture: a hollow metal clang)
     o.frequency.setValueAtTime(f0, now); o.frequency.exponentialRampToValueAtTime(f0 * (cone ? 0.55 : 0.4), now + (cone ? 0.06 : 0.14));
     const og = ctx.createGain(); og.gain.setValueAtTime(0.0001, now); og.gain.exponentialRampToValueAtTime((cone ? 0.16 : 0.42) * vol, now + 0.005); og.gain.exponentialRampToValueAtTime(0.001, now + (cone ? 0.08 : 0.18));
     o.connect(og); og.connect(bus); o.start(now); o.stop(now + 0.22);

@@ -1521,6 +1521,8 @@ const Render = (function () {
   const PROP_COLS = [[0.88, 0.33, 0.24], [0.95, 0.95, 0.94], [0.27, 0.6, 0.35], [0.2, 0.2, 0.22], [0.92, 0.89, 0.74]];   // instance tint: red / white / green / black / cream (painted tyres, the same as the tyre walls)
   const POST_SNOW = [1, 0.53, 0.13];                              // instance tint of the orange snow poles high up on Pikes Peak (a 'post' with col 1)
   let propMat = null, propMatTyre = null;
+  // the tints of the town's street furniture by col: the newspaper boxes and the litter bins come in a few colours
+  const PROP_TINT = { newsbox: [[0.22, 0.38, 0.78], [0.82, 0.16, 0.13], [0.96, 0.8, 0.16], [0.2, 0.55, 0.3], [0.92, 0.92, 0.9]], bin: [[0.2, 0.32, 0.22], [0.16, 0.17, 0.19], [0.36, 0.38, 0.42]] };
   function propGeometry(kind) {
     const W = World, g = new W.GB(kind === 'tyre' || kind === 'tstack'), white = [1, 1, 1], TAU2 = Math.PI * 2;
     const disc = (y, r, n, rim, mid, up) => { for (let k = 0; k < n; k++) { const a0 = k / n * TAU2, a1 = (k + 1) / n * TAU2, c = [0, y, 0], p0 = [Math.cos(a0) * r, y, Math.sin(a0) * r], p1 = [Math.cos(a1) * r, y, Math.sin(a1) * r];
@@ -1557,6 +1559,7 @@ const Render = (function () {
       const wh = [0.95, 0.95, 0.93], bk = [0.08, 0.08, 0.09], rf = [1, 0.45, 0.08];
       W.box(g, 0, -0.65, 0, 0.14, 1.2, 0.14, 0, wh, wh); W.box(g, 0, 0.18, 0, 0.146, 0.22, 0.146, 0, bk, bk);
       for (const x of [-0.074, 0.074]) W.box(g, x, 0.22, 0, 0.012, 0.12, 0.09, 0, rf, rf); }
+    else W.streetProp(kind, g);   // the town's street furniture (World.streetProp)
     return g.geometry();
   }
   function clearPropMeshes() { for (const k in propMeshes) { const m = propMeshes[k]; scene.remove(m); m.geometry.dispose(); } propMeshes = {}; }
@@ -1602,7 +1605,7 @@ const Render = (function () {
       const dx = b.x - cx, dz = b.z - cz; if (dx * dx + dz * dz > R2) continue;
       const n = m.userData.n++;
       _pv3.set(b.x, b.y, b.z); _pq4.set(b.qx, b.qy, b.qz, b.qw); _pm4.compose(_pv3, _pq4, _ps3); m.setMatrixAt(n, _pm4);
-      const c = (b.kind === 'tyre' || b.kind === 'tstack') ? (PROP_COLS[b.col] || PROP_COLS[1]) : b.kind === 'post' && b.col === 1 ? POST_SNOW : null;   // (col 1 posts: orange snow poles)
+      const c = (b.kind === 'tyre' || b.kind === 'tstack') ? (PROP_COLS[b.col] || PROP_COLS[1]) : b.kind === 'post' && b.col === 1 ? POST_SNOW : PROP_TINT[b.kind] ? PROP_TINT[b.kind][b.col % PROP_TINT[b.kind].length] : null;   // (col 1 posts: orange snow poles; the town's boxes and bins)
       if (c) m.setColorAt(n, _pc.setRGB(c[0], c[1], c[2])); else if (m.instanceColor) m.setColorAt(n, _pc.setRGB(1, 1, 1));
     }
     for (const k in propMeshes) { const m = propMeshes[k]; m.count = m.userData.n; m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; }
@@ -1663,6 +1666,7 @@ const Render = (function () {
     mulholland: { fog: 0xd8d4c8, sun: 0xfff0d2, sunI: 1.4, sky: 0xb8d2f0, gnd: 0x7a6a48, hemiI: 0.62, tint: [1.04, 1.0, 0.94], sat: 1.06, sunOff: [-70, 104, 48] },   // Mulholland Highway: a hot, clear Californian summer afternoon, a strong high sun from the south-west, a warm dusty haze over the canyons
     beartooth: { fog: 0xc6d7e8, sun: 0xfff1da, sunI: 1.26, sky: 0xb3cdf0, gnd: 0x4c5636, hemiI: 0.6, tint: [1.01, 1.0, 0.98], sat: 1.08, sunOff: [-84, 90, 58] },   // Beartooth: a clear summer afternoon in the northern Rockies, the sun from the south-west (shadows across the switchbacks), thin blue mountain haze
     rastro:   { fog: 0xc4d0d0, sun: 0xfff0d8, sunI: 1.1, sky: 0xc2d4e6, gnd: 0x4a5a32, hemiI: 0.66, tint: [1.0, 1.01, 0.98], sat: 1.08, sunOff: [-66, 92, -64] },   // Serra do Rio do Rastro: a humid afternoon over the rainforest, the sun from the north-west (the southern hemisphere), a soft green-grey haze
+    longbeach: { fog: 0xd6dde2, sun: 0xfff2dc, sunI: 1.3, sky: 0xb4d0ee, gnd: 0x8a8070, hemiI: 0.64, tint: [1.03, 1.0, 0.96], sat: 1.08, sunOff: [-60, 100, 52] },   // Long Beach: a clear Southern Californian afternoon by the sea, a high sun from the south-west, a pale salty haze over the harbour
   };
   // each track's own grade on top (high quality, the post pass): its shadows and its highlights tinted apart, a little (split toning:
   // [shadows], [highlights]); cool shade and a warm sun mostly, the Riviera's teal and gold, Toskana's golden light, Spa's greyer air
@@ -1673,7 +1677,7 @@ const Render = (function () {
     spa: [[0.97, 1.0, 1.04], [1.01, 1.0, 0.99]], rbring: [[0.96, 1.0, 1.05], [1.03, 1.0, 0.96]], suzuka: [[0.98, 1.0, 1.03], [1.03, 1.0, 0.97]], caracoles: [[0.95, 0.99, 1.07], [1.04, 1.0, 0.95]], bathurst: [[0.96, 1.0, 1.05], [1.05, 1.01, 0.93]],
     chapman: [[0.96, 1.0, 1.06], [1.04, 1.0, 0.95]],
     tianmen: [[0.97, 1.0, 1.03], [1.02, 1.0, 0.98]],
-    sani: [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]] };
+    sani: [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]], longbeach: [[0.95, 1.0, 1.05], [1.05, 1.0, 0.94]] };
   THEMES.uncompahgre = { fog: 0xbfcfe0, sun: 0xfff0d8, sunI: 1.24, sky: 0xb8d0f0, gnd: 0x4c5236, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-70, 92, 62] };   // the Uncompahgre Gorge: a clear afternoon in the San Juans, the sun from the south-west over the cliffs, a crisp blue haze
   SPLIT.uncompahgre = [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]];
   SPLIT.iroha = [[0.96, 0.99, 1.05], [1.04, 1.0, 0.95]];   // (Irohazaka: cool shade under the maples, a warm autumn sun)
@@ -1736,7 +1740,7 @@ const Render = (function () {
   function applyWeather(r) {
     wet = r; applyTheme(themeId); rain.mesh.visible = r > 0 && atmos.season !== 'winter'; rain.mat.uniforms.uA.value = 0.5 * Math.min(1, r * 1.5);
     snow.mesh.visible = r > 0 && atmos.season === 'winter';
-    birds.mesh.visible = !(r > 0); if (r > 0) birds.reset(birds.gull);   // (no birds in the rain)
+    birds.mesh.visible = !(r > 0) && !(world && world.noBirds); if (r > 0) birds.reset(birds.gull);   // (no birds in the rain, nor over a world without them: world.noBirds)
     if (!world || !world.root) return;
     if (world.dyn.clouds) world.dyn.clouds.K.value = world.dyn.clouds.k0 * (1 - r);   // (no cloud shadows under the rain's overcast)
   }
@@ -2037,7 +2041,7 @@ const Render = (function () {
   function sunFx(target) {
     if (themeId === 'pikes' || !world) return;
     const dt = clamp(time - sunT, 0, 0.25), r = Math.max(0, wet); sunT = time; sunHint = target && target.q && target.q.a >= 0 ? target.q.a : -1;
-    let rays = settings.quality === 'high' && r <= 0 && !['city', 'monaco', 'ljubljana'].includes(themeId) ? (0.75 + 0.45 * sstep(0, 0.5, todK)) * (1 - sstep(0.5, 0.7, todK)) : 0;   // (by todK: the low sun's the strongest)
+    let rays = settings.quality === 'high' && r <= 0 && !['city', 'monaco', 'ljubljana', 'longbeach'].includes(themeId) ? (0.75 + 0.45 * sstep(0, 0.5, todK)) * (1 - sstep(0.5, 0.7, todK)) : 0;   // (by todK: the low sun's the strongest)
     if (rays > 0 && world.pkWood === undefined) world.pkWood = sunWood();
     if (!world.pkWood) rays = 0;
     pkRays(rays, dt);
