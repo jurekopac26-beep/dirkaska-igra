@@ -1511,7 +1511,7 @@ const Render = (function () {
     curTrack = track; seasonWorld(); floodlights(); litWindows(); asphaltWorld();   // (the season and the time of day on the new world; the asphalt's sheen)
     if (dryLn) { scene.remove(dryLn); dryLn.geometry.dispose(); dryLn.material.dispose(); dryLn = null; }
     if (pud) { scene.remove(pud); pud.geometry.dispose(); pud.material.dispose(); pud = null; } splash.clear();
-    birds.reset(!!(track.def && (track.def.sea || track.def.theme === 'monaco')));   // (gulls by the sea)
+    birds.reset(!!(track.def && (track.def.sea || track.def.theme === 'monaco')));   birds.off = !!(track.def && track.def.noBirds);   // (a track without birds)   // (gulls by the sea)
     valleyFog(); rainbow(false); setMarks(null);   // (the morning mist, no rainbow or school marks from the last world)
     return world;
   }
@@ -1557,6 +1557,33 @@ const Render = (function () {
       const wh = [0.95, 0.95, 0.93], bk = [0.08, 0.08, 0.09], rf = [1, 0.45, 0.08];
       W.box(g, 0, -0.65, 0, 0.14, 1.2, 0.14, 0, wh, wh); W.box(g, 0, 0.18, 0, 0.146, 0.22, 0.146, 0, bk, bk);
       for (const x of [-0.074, 0.074]) W.box(g, x, 0.22, 0, 0.012, 0.12, 0.09, 0, rf, rf); }
+    // street furniture of the junctions (the generic kinds; foot at -h0, the face towards +x, the traffic it serves)
+    else if (kind === 'tlight') {   // a traffic light on its pole: a black head on a matt black backboard with a white border, red lit
+      const pl = [0.55, 0.56, 0.58], bk = [0.07, 0.07, 0.08], wh = [0.9, 0.9, 0.88];
+      W.cyl(g, 0, -2.0, 0, 0.08, 3.8, 6, pl, pl, 0.07);
+      W.box(g, 0.1, 0.5, 0, 0.03, 1.36, 0.62, 0, wh, wh); W.box(g, 0.13, 0.56, 0, 0.03, 1.24, 0.5, 0, bk, bk); W.box(g, 0.24, 0.62, 0, 0.2, 1.12, 0.3, 0, bk, bk);
+      [[1.42, [1, 0.12, 0.08]], [1.06, [0.42, 0.3, 0.06]], [0.7, [0.06, 0.3, 0.14]]].forEach(([y, c]) => W.box(g, 0.35, y - 0.11, 0, 0.03, 0.22, 0.22, 0, c, c));
+      W.box(g, -0.1, -0.6, 0, 0.14, 0.24, 0.12, 0, [0.85, 0.75, 0.15], [0.85, 0.75, 0.15]);   // (the pedestrians' push-button box)
+    } else if (kind === 'sign') {   // a traffic sign: a grey post, a round sign (white, red ring) towards +x, grey at the back
+      const pl = [0.62, 0.63, 0.66], rd = [0.85, 0.1, 0.1], wh = [0.95, 0.95, 0.93], n = 10, yc = 0.75;
+      W.box(g, 0, -1.2, 0, 0.07, 2.25, 0.07, 0, pl, pl);
+      for (let k = 0; k < n; k++) { const a0 = k / n * TAU2, a1 = (k + 1) / n * TAU2, R = (x, r, a) => [x, yc + Math.cos(a) * r, Math.sin(a) * r];
+        g.triO([0.05, yc, 0], R(0.05, 0.36, a0), R(0.05, 0.36, a1), rd, [-1, yc, 0]); g.triO([0.06, yc, 0], R(0.06, 0.28, a0), R(0.06, 0.28, a1), wh, [-1, yc, 0]);
+        g.triO([0.04, yc, 0], R(0.04, 0.36, a1), R(0.04, 0.36, a0), pl, [1, yc, 0]); }
+    } else if (kind === 'bollard') {   // a black bollard with a white reflective band, its foot 10 cm in the ground
+      const bk = [0.12, 0.12, 0.13]; W.cyl(g, 0, -0.55, 0, 0.11, 1.0, 8, bk, bk);
+      W.cyl(g, 0, 0.18, 0, 0.113, 0.1, 8, [0.95, 0.95, 0.93], [0.95, 0.95, 0.93]);
+    } else if (kind === 'bin') {   // a litter bin: a dark green drum with a grey lid
+      W.cyl(g, 0, -0.48, 0, 0.26, 0.86, 9, [0.12, 0.3, 0.2], null, 0.3); W.cyl(g, 0, 0.38, 0, 0.32, 0.1, 9, [0.5, 0.52, 0.5], [0.5, 0.52, 0.5]);
+    } else if (kind === 'hydrant') {   // a fire hydrant, red with a yellow cap
+      W.cyl(g, 0, -0.5, 0, 0.13, 0.75, 7, [0.82, 0.1, 0.08], null, 0.15); W.cyl(g, 0, 0.25, 0, 0.11, 0.15, 7, [0.95, 0.78, 0.12], [0.95, 0.78, 0.12]);
+    } else if (kind === 'cabinet') {   // a grey electrical cabinet (the traffic lights' controller) on a concrete foot
+      W.box(g, 0, -0.75, 0, 0.95, 0.2, 0.55, 0, [0.6, 0.6, 0.58]); W.box(g, 0, -0.55, 0, 0.9, 1.2, 0.5, 0, [0.62, 0.66, 0.64], [0.54, 0.58, 0.56]);
+      W.box(g, 0, 0.1, 0.255, 0.3, 0.2, 0.01, 0, [0.95, 0.8, 0.1], [0.95, 0.8, 0.1]);
+    } else if (kind === 'lamp') {   // a street lamp: a grey pole 8 m, its arm and lantern out over +x
+      const pl = [0.6, 0.61, 0.64]; W.cyl(g, 0, -4.1, 0, 0.12, 8.0, 6, pl, pl, 0.07);
+      W.box(g, 0.75, 3.65, 0, 1.6, 0.1, 0.1, 0, pl, pl); W.box(g, 1.45, 3.5, 0, 0.6, 0.16, 0.26, 0, [0.35, 0.36, 0.38], [0.98, 0.95, 0.85]);
+    }
     return g.geometry();
   }
   function clearPropMeshes() { for (const k in propMeshes) { const m = propMeshes[k]; scene.remove(m); m.geometry.dispose(); } propMeshes = {}; }
@@ -4909,6 +4936,7 @@ const Render = (function () {
     sunFx(target);   // (every other world: the sun's rays in the woods, its lens flare)
     stormStep(dt); bowStep(dt); winU.value = sstep(0.3, 0.85, todK);
     if (vfog) { vfog.U.uT.value = time; vfog.U.uC.value.copy(scene.fog.color).lerp(_c2.setRGB(1, 0.97, 0.96), 0.55); }
+    if (birds.off) birds.mesh.visible = false;
     if (birds.mesh.visible && target && world) birds.update(Math.min(dt, 0.1), cam.vcx || 0, cam.vcz || 0, world.groundH || (() => 0));
     if (snow.mesh.visible) { const U = snow.mat.uniforms, B = lastMode === 'cockpit' ? [28, 12, 28] : lastMode === 'chase' ? [62, 30, 62] : [80, 36, 80]; U.uBox.value.set(B[0], B[1], B[2]); U.uC.value.set(cam.vcx || 0, (cam.gy || 0) + B[1] * 0.42, cam.vcz || 0); U.uT.value = time % 600; U.uA.value = 0.9 * Math.min(1, wet * 1.5); U.uScale.value = particles.mat.uniforms.uScale.value; }
     if (rain.mesh.visible) {   // the box of streaks around the view centre (the iso camera sees the most ground, the chase camera the least)
