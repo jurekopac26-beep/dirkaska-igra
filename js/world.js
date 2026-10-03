@@ -21372,20 +21372,20 @@ const World = (function () {
      beach (sand, casuarinas and palms, sunshades and deckchairs, food stalls), the sea to the horizon, the far hills (def.bs.far: Khao Sam
      Muk), concrete walls with debris fences, the pit lane on the beach side, grandstands, power poles with their bundles of cables, spirit
      houses, motorbikes parked by the shops, a temple at the hairpin. Only geographic names, generic signs, no brands. */
-  const BS_A64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
-  function bsInts(str) {   // zigzag varints, 5 bits a character (bit 5: more follows)
+  const BGS_A64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+  function bgsInts(str) {   // zigzag varints, 5 bits a character (bit 5: more follows)
     const out = []; let u = 0, sh = 0;
-    for (let k = 0; k < str.length; k++) { const c = BS_A64.indexOf(str[k]); u += (c & 31) * Math.pow(2, sh); sh += 5; if (!(c & 32)) { out.push(u % 2 ? -(u + 1) / 2 : u / 2); u = 0; sh = 0; } }
+    for (let k = 0; k < str.length; k++) { const c = BGS_A64.indexOf(str[k]); u += (c & 31) * Math.pow(2, sh); sh += 5; if (!(c & 32)) { out.push(u % 2 ? -(u + 1) / 2 : u / 2); u = 0; sh = 0; } }
     return out;
   }
-  function bsDecode(B) {   // the buildings ([h, kind, [[x, z], ...]]), the streets ([w, cls, [[x, z], ...]]), the coast ([[x, z], ...])
-    const rd = (str, n) => { const a = bsInts(str), L = []; let p = 0;
+  function bgsDecode(B) {   // the buildings ([h, kind, [[x, z], ...]]), the streets ([w, cls, [[x, z], ...]]), the coast ([[x, z], ...])
+    const rd = (str, n) => { const a = bgsInts(str), L = []; let p = 0;
       for (let k = 0; k < n; k++) { const h = a[p++] / 2, kd = a[p++], m = a[p++], pts = []; let x = 0, z = 0; for (let q = 0; q < m; q++) { x += a[p++]; z += a[p++]; pts.push([x / 2, z / 2]); } L.push([h, kd, pts]); }
       return L; };
-    const c = bsInts(B.coast), coast = []; let x = 0, z = 0; for (let k = 0; k < c.length; k += 2) { x += c[k]; z += c[k + 1]; coast.push([x / 2, z / 2]); }
+    const c = bgsInts(B.coast), coast = []; let x = 0, z = 0; for (let k = 0; k < c.length; k += 2) { x += c[k]; z += c[k + 1]; coast.push([x / 2, z / 2]); }
     return { bld: rd(B.bld, B.nb), st: rd(B.st, B.ns), coast };
   }
-  function bsTreeGeo(kind) {   // unit trees (height 1): 0 a coconut palm, 1 a casuarina, 2 a rain tree (wide, flat crown), 3 a far palm, 4 a far round crown, 5 a shrub
+  function bgsTreeGeo(kind) {   // unit trees (height 1): 0 a coconut palm, 1 a casuarina, 2 a rain tree (wide, flat crown), 3 a far palm, 4 a far round crown, 5 a shrub
     const g = new GB(), R = rng(880 + kind), rs = ROCK_SMOOTH; ROCK_SMOOTH = true;
     const tr = [0.52, 0.44, 0.34], lf = [0.3, 0.52, 0.2], lfD = [0.22, 0.42, 0.16];
     if (kind === 0 || kind === 3) {   // the palm: a thin curved trunk, a crown of drooping fronds
@@ -21407,7 +21407,7 @@ const World = (function () {
     ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
-  function bsShopTex() {   // the shophouses' ground floors (one 4 m bay a tile): a roller shutter half up, the shop's dark inside, a coloured sign board above
+  function bgsShopTex() {   // the shophouses' ground floors (one 4 m bay a tile): a roller shutter half up, the shop's dark inside, a coloured sign board above
     const c = document.createElement('canvas'); c.width = 128; c.height = 128; const x = c.getContext('2d');
     x.fillStyle = '#d9d2c2'; x.fillRect(0, 0, 128, 128);
     x.fillStyle = '#2a2826'; x.fillRect(8, 46, 112, 82);                       // the open front
@@ -21418,7 +21418,7 @@ const World = (function () {
     x.fillStyle = '#bdb6a6'; x.fillRect(0, 0, 4, 128); x.fillRect(124, 0, 4, 128);   // the columns
     const t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; t.wrapT = THREE.ClampToEdgeWrapping; t.anisotropy = 4; return t;
   }
-  function bsGroundTex() {   // the ground under the vertex colours (256 px = 14 m, tileable): a neutral dusty grey with flecks
+  function bgsGroundTex() {   // the ground under the vertex colours (256 px = 14 m, tileable): a neutral dusty grey with flecks
     const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), r = rng(9061), img = x.createImageData(S, S), d = img.data;
     const n1 = valueNoise2(9062, 40), n2 = valueNoise2(9063, 9), wr = (f, i, j) => { const u = i / S, v = j / S; return f(i, j) * (1 - u) * (1 - v) + f(i - S, j) * u * (1 - v) + f(i, j - S) * (1 - u) * v + f(i - S, j - S) * u * v; };
     for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) { const o = (j * S + i) * 4, k = 0.78 + wr(n1, i, j) * 0.16 + wr(n2, i, j) * 0.1 + (r() - 0.5) * 0.12;
@@ -21428,14 +21428,14 @@ const World = (function () {
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t;
   }
   function buildBangsaen(scene, tex, opts) {
-    const R = rng(3740), N = T.N, w = T.w, ds = T.ds, dens = opts.density || 1, sStart = T.startS, def = T.def, L = T.len, BS = def.bs;
+    const R = rng(3740), N = T.N, w = T.w, ds = T.ds, dens = opts.density || 1, sStart = T.startS, def = T.def, L = T.len, BSD = def.bs;
     const root = new THREE.Group(); scene.add(root);
     const out = { root, dyn: {}, groundH: nrGround, camFloor: nrGround, props: [], farClip: true, ownTex: [], ownMarks: true };
     const ownTex = (t) => { out.ownTex.push(t); return t; };
     const dS = (s) => { let d = s - sStart; d = ((d % L) + L) % L; return d > L / 2 ? d - L : d; };
     const sAt = (d) => (((sStart + d) % L) + L) % L;
     const hyS = (s) => T.elevAt(wrapS(s)).y;
-    const PD = def.pit, D = bsDecode(BS), SEA = BS.seaY;
+    const PD = def.pit, D = bgsDecode(BSD), SEA = BSD.seaY;
     nrPrep();
     const P = NR, G = P.G;
     out.bounds = { minX: P.x0, maxX: P.x1, minZ: P.z0, maxZ: P.z1 };
@@ -21475,7 +21475,7 @@ const World = (function () {
       r = lerp(r, 1.12, sd); g = lerp(g, 1.04, sd); b = lerp(b, 0.84, sd);
       if (dd < 4) { const t = sstep(4, 0.5, dd); r = lerp(r, 0.9, t); g = lerp(g, 0.88, t); b = lerp(b, 0.84, t); }
       o[0] = r; o[1] = g; o[2] = b; return o; };
-    const gMat = new THREE.MeshLambertMaterial({ map: ownTex(bsGroundTex()), vertexColors: true });
+    const gMat = new THREE.MeshLambertMaterial({ map: ownTex(bgsGroundTex()), vertexColors: true });
     const tiles = [];
     for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) { const on = nrTileOn(ti, tj); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; tiles.push(ti, tj, on); }
 
@@ -21677,8 +21677,8 @@ const World = (function () {
 
     /* ---- the buildings: the real footprints (concrete, painted in Thai pastels; flat roofs with parapets and water tanks, the houses under
        hipped tile roofs) and rows of shophouses filling the built-up land along the streets where the data has none ---- */
-    const facMat = new THREE.MeshLambertMaterial({ map: tex.facade, vertexColors: true }), shopT = ownTex(bsShopTex()), shopMat = new THREE.MeshLambertMaterial({ map: shopT, vertexColors: true });
-    const fac = new Chunks(256, true), shop = new Chunks(256, true), roofs = new Chunks(256);
+    const facMat = new THREE.MeshLambertMaterial({ map: tex.facade, vertexColors: true }), shopT = ownTex(bgsShopTex()), shopMat = new THREE.MeshLambertMaterial({ map: shopT, vertexColors: true });
+    const fac = new Chunks(160, true), shop = new Chunks(256, true), roofs = new Chunks(256);
     const PAL = [[0.97, 0.95, 0.9], [0.98, 0.92, 0.78], [0.95, 0.86, 0.72], [0.92, 0.95, 0.93], [0.86, 0.92, 0.96], [0.98, 0.86, 0.84], [0.88, 0.88, 0.86], [0.96, 0.96, 0.82], [0.8, 0.92, 0.84]];
     const SIGN = [[0.9, 0.2, 0.18], [0.15, 0.4, 0.8], [0.98, 0.78, 0.15], [0.2, 0.62, 0.3], [0.95, 0.5, 0.1], [0.96, 0.96, 0.95], [0.6, 0.15, 0.5]];
     const TILE = [[0.72, 0.3, 0.18], [0.6, 0.24, 0.16], [0.5, 0.36, 0.3], [0.32, 0.36, 0.42]];
@@ -21732,9 +21732,9 @@ const World = (function () {
       const g = shop.get(cx, cz), inside = [cx, y0 + H / 2, cz], a = pts[0], b = pts[1];
       g.quadO([a[0], y0, a[1]], [b[0], y0, b[1]], [b[0], y0 + 3.6, b[1]], [a[0], y0 + 3.6, a[1]], run.sign[run.n % run.sign.length], inside, [[0, 0], [1, 0], [1, 1], [0, 1]]);
       fac.get(cx, cz).quadO([a[0], y0 + 3.6, a[1]], [b[0], y0 + 3.6, b[1]], [b[0], y0 + H, b[1]], [a[0], y0 + H, a[1]], run.col, inside, [[0, 0], [1, 0], [1, run.f - 0.1], [0, run.f - 0.1]]);
-      for (const [p, q] of [[pts[1], pts[2]], [pts[3], pts[0]], [pts[2], pts[3]]]) fac.get(cx, cz).quadO([p[0], y0, p[1]], [q[0], y0, q[1]], [q[0], y0 + H, q[1]], [p[0], y0 + H, p[1]], run.col.map(v => v * 0.9), inside, [[0, 0], [2, 0], [2, run.f], [0, run.f]]);
+      for (const [p, q] of [[pts[1], pts[2]], [pts[3], pts[0]]]) fac.get(cx, cz).quadO([p[0], y0, p[1]], [q[0], y0, q[1]], [q[0], y0 + H, q[1]], [p[0], y0 + H, p[1]], run.col.map(v => v * 0.9), inside, [[0, 0], [2, 0], [2, run.f], [0, run.f]]);
       flatRoof(pts, y0 + H, run.col, cx, cz, Math.floor(x * 7 + z * 13));
-      box(roofs.get(cx, cz), x + nx * 0.5, y0 + 3.5, z + nz * 0.5, W - 0.2, 0.12, 1.2, Math.atan2(tz, tx), run.awn, run.awn);   // the canopy over the shop front
+      { const ax = tx * (W / 2 - 0.1), az = tz * (W / 2 - 0.1), y = y0 + 3.55; roofs.get(cx, cz).quadUp([x - ax, y, z - az], [x + ax, y, z + az], [x + ax - nx * 1.2, y - 0.25, z + az - nz * 1.2], [x - ax - nx * 1.2, y - 0.25, z - az - nz * 1.2], [run.awn, run.awn, run.awn, run.awn]); }   // the canopy over the shop front
       for (const [u, v] of [[0, 0], [W, 0], [0, dep], [W, dep], [W / 2, dep / 2], [0, dep / 2], [W, dep / 2]]) { const k = ocK(pts[0][0] + tx * u + nx * v, pts[0][1] + tz * u + nz * v); if (k >= 0 && !occ[k]) occ[k] = 2; }
       run.n++; nShop++; CR.block(cx, cz, W, dep, Math.atan2(tz, tx));
       return true;
@@ -21769,7 +21769,7 @@ const World = (function () {
     const prop = (kind, x, z, yaw, i) => out.props.push({ kind, x, z, yaw, col: 0, i });
     const inside = (s, o) => { const i = T.idx(s), bar = o > 0 ? T.br[i] : T.bl[i]; return Math.abs(o) > w + 0.5 && Math.abs(o) < bar - 0.45; };
     let nJ = 0;
-    for (const [d, side, ang, sw, kind] of BS.jn) {
+    for (const [d, side, ang, sw, kind] of BSD.jn) {
       if (!kind) continue;
       const s = sAt(d), i = T.idx(s), bar = side > 0 ? T.br[i] : T.bl[i], hd = T.hd[i], fwd = hd, back = hd + Math.PI, out2 = Math.atan2(T.nz[i] * side, T.nx[i] * side);
       const hw = sw / 2, mouth = bar - w;
@@ -21843,7 +21843,7 @@ const World = (function () {
       }
       // plastic water barriers (red and white) across each side street a little behind the wall, cars parked behind them
       const CARS = [[0.92, 0.92, 0.92], [0.2, 0.2, 0.22], [0.62, 0.64, 0.68], [0.75, 0.12, 0.12], [0.2, 0.32, 0.6], [0.95, 0.95, 0.95]];
-      for (const [d, side, ang, sw, kind] of BS.jn) { if (!kind) continue; const s = sAt(d), i = T.idx(s), bar = side > 0 ? T.br[i] : T.bl[i];
+      for (const [d, side, ang, sw, kind] of BSD.jn) { if (!kind) continue; const s = sAt(d), i = T.idx(s), bar = side > 0 ? T.br[i] : T.bl[i];
         for (let a = -sw / 2; a <= sw / 2; a += 1.1) { const [x, z] = atSf(s + a, side * (bar + 3.5)); if (inTrack(x, z)) continue; const y = nrGround(x, z); box(scen.get(x, z), x, y, z, 1.0, 0.8, 0.45, T.hd[i], Math.round(a) % 2 ? [0.85, 0.12, 0.1] : [0.95, 0.95, 0.94]); }
         for (let k = 0; k < 3; k++) { const [x, z] = atSf(s + (k % 2 ? 1.6 : -1.6), side * (bar + 9 + k * 6)); if (inTrack(x, z) || ocGet(x, z) === 2) continue; const y = nrGround(x, z), c = CARS[Math.floor(crH(d, k, 47) * CARS.length)], rot = out2rot(i, side);
           const g = scen.get(x, z), cs = Math.cos(rot), sn = Math.sin(rot); box(g, x, y + 0.25, z, 4.3, 0.75, 1.75, rot, c, c); box(g, x - cs * 0.2, y + 1.0, z - sn * 0.2, 2.3, 0.55, 1.6, rot, [0.18, 0.22, 0.28], c); } }
@@ -21852,7 +21852,7 @@ const World = (function () {
 
     /* ---- the temples (simplified, generic): a white hall on a terrace under tiers of orange roofs with green edges, gold at the ridges; one
        by the hairpin, one off Sai 2 ---- */
-    for (const [tx0, tz0, rot0] of BS.temples || []) {
+    for (const [tx0, tz0, rot0] of BSD.temples || []) {
       let x = tx0, z = tz0; for (let k = 0; k < 30 && (ocGet(x, z) === 3 || ocGet(x, z) === 1); k++) { x += (R() - 0.5) * 12; z += (R() - 0.5) * 12; }
       const y = nrGround(x, z), g = scen.get(x, z), rot = rot0 || 0, cs = Math.cos(rot), sn = Math.sin(rot), OR = [0.9, 0.42, 0.12], GR = [0.16, 0.42, 0.3], GD = [0.95, 0.75, 0.2], WH = [0.96, 0.95, 0.92];
       box(g, x, y - 0.5, z, 20, 1.6, 12, rot, [0.86, 0.84, 0.8]); box(g, x, y + 1.1, z, 16, 5.4, 8.5, rot, WH, WH);
@@ -21865,8 +21865,8 @@ const World = (function () {
 
     /* ---- the trees: coconut palms and casuarinas on the beach (sunshades and deckchairs under them), palms along the beach road, rain trees
        where the land cover has trees, shrubs on Sai 2's median ---- */
-    const tMat = new THREE.MeshLambertMaterial({ vertexColors: true }), TG = [0, 1, 2, 5].map(bsTreeGeo), TF = [3, 4].map(bsTreeGeo);
-    const tk = TG.map(gq => new IChunks(gq, tMat, 384)), tf = TF.map(gq => new IChunks(gq, tMat, 640));
+    const tMat = new THREE.MeshLambertMaterial({ vertexColors: true }), TG = [0, 1, 2, 5].map(bgsTreeGeo), TF = [3, 4].map(bgsTreeGeo);
+    const tk = TG.map(gq => new IChunks(gq, tMat, 192)), tf = TF.map(gq => new IChunks(gq, tMat, 640));
     let nTrees = 0; const maxT = Math.round(9000 * dens);
     const treeOk = (x, z, r) => { if (inTrack(x, z)) return false; const n = nrNear(x, z); if (n.i >= 0 && n.dd < r) return false; const o = ocGet(x, z); return o === 0 || o === 4; };
     {
@@ -21914,7 +21914,7 @@ const World = (function () {
       const i0 = 0, i1 = G.nx - 1, j0 = 0, j1 = G.nz - 1;
       addShore(root, shoreBand(G.x0, G.z0, G.x0 + i1 * NRC, G.z0 + j1 * NRC, SEA + 0.015, waterline(nrGH, G.x0, G.z0, NRC, i0, i1, j0, j1, SEA), 22, { F: 4 }), sea.material, WO);
       // the far land (def.bs.far, 64 m cells) where the corridor's terrain does not reach, a little lower so its edge hides under the near tiles
-      const F = BS.far, bin = atob(F.b64), n = F.n, H = (i, j) => F.lo + bin.charCodeAt(j * n + i) * F.step, gf = new GB();
+      const F = BSD.far, bin = atob(F.b64), n = F.n, H = (i, j) => F.lo + bin.charCodeAt(j * n + i) * F.step, gf = new GB();
       const colF = (h, x, z) => { const t = clamp(h / 30, 0, 1), k = 0.9 + crH(Math.floor(x / 64), Math.floor(z / 64), 3) * 0.15; return h < SEA + 0.6 ? [0.86, 0.8, 0.62] : [lerp(0.36, 0.2, t) * k, lerp(0.42, 0.34, t) * k, lerp(0.3, 0.2, t) * k]; };
       for (let j = 0; j + 1 < n; j++) for (let i = 0; i + 1 < n; i++) {
         const x = F.x0 + (i + 0.5) * F.cell, z = F.z0 + (j + 0.5) * F.cell; if (nrDist(x, z) < 520 && x > P.x0 && x < P.x1 && z > P.z0 && z < P.z1) continue;

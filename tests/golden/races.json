@@ -1448,5 +1448,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "c6f02bfa502378f469a604da"
+ },
+ "bangsaen/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 153.13,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "644bde2748fbbde076abaeea"
+ },
+ "bangsaen/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 158.23,
+  "spins": 0,
+  "walls": 10,
+  "rescues": 0,
+  "nan": false,
+  "digest": "783474092271223a7ddc6ca3"
+ },
+ "bangsaen/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 126.52,
+  "spins": 1,
+  "walls": 13,
+  "rescues": 0,
+  "nan": false,
+  "digest": "af977a5280f6b8a65f905861"
+ },
+ "bangsaen/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 128.01,
+  "spins": 3,
+  "walls": 10,
+  "rescues": 0,
+  "nan": false,
+  "digest": "b1f8277a6a9409a9a0f60d78"
+ },
+ "bangsaen/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 153.28,
+  "spins": 0,
+  "walls": 9,
+  "rescues": 0,
+  "nan": false,
+  "digest": "25cb7a4cf50697cd5f78ae7b"
  }
 }

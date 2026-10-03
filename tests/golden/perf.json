@@ -201,5 +201,12 @@
   "kverts": 1530,
   "maxKverts": 1670,
   "jsMs": 0.87
+ },
+ "bangsaen": {
+  "calls": 260,
+  "maxCalls": 353,
+  "kverts": 785,
+  "maxKverts": 885,
+  "jsMs": 1.23
  }
 }
