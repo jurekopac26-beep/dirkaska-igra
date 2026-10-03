@@ -15823,11 +15823,11 @@ const World = (function () {
     // chaparral (lc 1), leaf litter and shade under the oaks (lc 2), dusty yards (lc 3), tan and grey sandstone (lc 4, the steep faces), a dusty verge
     const P = VR, m = P.c1(x, z), q = P.c2(x, z), f = P.n4(x, z);
     const ch = vrLCf(x, z, 1), oak = vrLCf(x, z, 2), se = vrLCf(x, z, 3), sa = vrLCf(x, z, 4);
-    let R = 0.74, G = 0.61, B = 0.37;   // the dry grass
-    R = lerp(R, 0.7, sstep(0.55, 0.85, m) * 0.6); G = lerp(G, 0.62, sstep(0.55, 0.85, m) * 0.6);   // (paler, bleached patches)
+    let R = 0.77, G = 0.62, B = 0.33;   // the dry grass, golden
+    R = lerp(R, 0.82, sstep(0.55, 0.85, m) * 0.5); G = lerp(G, 0.7, sstep(0.55, 0.85, m) * 0.5); B = lerp(B, 0.42, sstep(0.55, 0.85, m) * 0.5);   // (paler, bleached patches)
     R = lerp(R, 0.62, sstep(0.6, 0.86, q) * 0.5); G = lerp(G, 0.56, sstep(0.6, 0.86, q) * 0.5); B = lerp(B, 0.34, sstep(0.6, 0.86, q) * 0.5);   // (browner patches)
-    R = lerp(R, 0.4, ch * 0.85); G = lerp(G, 0.39, ch * 0.85); B = lerp(B, 0.25, ch * 0.85);
-    R = lerp(R, 0.36, oak * 0.8); G = lerp(G, 0.32, oak * 0.8); B = lerp(B, 0.2, oak * 0.8);
+    R = lerp(R, 0.31, ch * 0.95); G = lerp(G, 0.34, ch * 0.95); B = lerp(B, 0.2, ch * 0.95);   // (the chaparral's dark olive cover: the ground reads as dense scrub between the shrubs)
+    R = lerp(R, 0.29, oak * 0.9); G = lerp(G, 0.32, oak * 0.9); B = lerp(B, 0.19, oak * 0.9);
     R = lerp(R, 0.66, se * 0.6); G = lerp(G, 0.61, se * 0.6); B = lerp(B, 0.52, se * 0.6);
     R += (f - 0.5) * 0.08; G += (f - 0.5) * 0.07; B += (f - 0.5) * 0.05;
     const st = Math.max(sstep(0.82, 0.55, ny), sa * 0.8);   // the steep faces and the bare ground: sandstone in bands, tan with grey
@@ -15908,22 +15908,21 @@ const World = (function () {
   }
   function mhPlantGeo(kind) {   // unit plants (height 1; the instances scale and tint them): 0 a tuft of dry golden grass, 1 a chaparral shrub (a dense,
     // dark grey-olive mound), 2 a coast live oak (a short, leaning trunk, a broad, low, dark crown of rounded clumps), 3 a sycamore (a tall, pale,
-    // mottled trunk, an open light-green crown), 4 a sandstone boulder, 5 a few stones, 6 a yucca's rosette, 7 its dried flower stalk
+    // mottled trunk, an open light-green crown), 4 a sandstone boulder, 5 a stone, 6 a yucca's rosette, 7 its dried flower stalk
     const g = new GB(), R = rng(760 + kind), rs = ROCK_SMOOTH;
-    if (kind === 0) {   // eight thin blades and seed heads, straw-gold
+    if (kind === 0) {   // five thin blades and seed heads, straw-gold
       const base = [0.8, 0.64, 0.3], tip = [1.0, 0.9, 0.58];
-      for (let k = 0; k < 8; k++) { const a = k / 8 * TAU + R() * 0.6, lean = 0.18 + R() * 0.22, hh = 0.7 + R() * 0.3, bx = Math.cos(a) * 0.04, bz = Math.sin(a) * 0.04, tx = Math.cos(a) * lean, tz = Math.sin(a) * lean, ox = -Math.sin(a) * 0.05, oz = Math.cos(a) * 0.05;
+      for (let k = 0; k < 5; k++) { const a = k / 5 * TAU + R() * 0.6, lean = 0.18 + R() * 0.22, hh = 0.7 + R() * 0.3, bx = Math.cos(a) * 0.04, bz = Math.sin(a) * 0.04, tx = Math.cos(a) * lean, tz = Math.sin(a) * lean, ox = -Math.sin(a) * 0.05, oz = Math.cos(a) * 0.05;
         g.triO([bx - ox, 0, bz - oz], [bx + ox, 0, bz + oz], [tx, hh, tz], base, [tx * 0.5, hh * 0.2, tz * 0.5], base, tip); g.triO([bx - ox, 0, bz - oz], [tx, hh, tz], [bx + ox, 0, bz + oz], base, [-tx, hh * 0.4, -tz], tip, base); }
-    } else if (kind === 1) {   // five tight lumps
+    } else if (kind === 1) {   // two lumps, one leaning on the other (from above a dense, uneven mound; 120 vertices)
       ROCK_SMOOTH = true; const col = [0.27, 0.3, 0.17];
-      ico(g, 0, 0.48, 0, 0.45, 0.95, col, R, 0.3);
-      for (let k = 0; k < 4; k++) { const a = k / 4 * TAU + R() * 0.7, d = 0.32 + R() * 0.1; ico(g, Math.cos(a) * d, 0.32 + R() * 0.1, Math.sin(a) * d, 0.28 + R() * 0.08, 0.9, vary(col, R, 0.25), R, 0.35); }
+      ico(g, -0.08, 0.46, 0, 0.47, 0.95, col, R, 0.3); ico(g, 0.3, 0.33, 0.12, 0.33, 0.9, [col[0] * 0.88, col[1] * 0.92, col[2] * 0.86], R, 0.35);
     } else if (kind === 2) {   // the oak: dark bark, a trunk splitting low into leaning limbs, a wide dome of clumps
       cyl(g, 0, -0.02, 0, 0.06, 0.32, 5, [0.25, 0.22, 0.19], null, 0.045);
       cyl(g, 0.06, 0.28, 0.02, 0.04, 0.22, 4, [0.27, 0.23, 0.2], null, 0.025); cyl(g, -0.06, 0.28, -0.02, 0.04, 0.2, 4, [0.27, 0.23, 0.2], null, 0.025);
       ROCK_SMOOTH = true; const col = [0.17, 0.25, 0.1];
-      ico(g, 0, 0.62, 0, 0.44, 0.62, col, R, 0.25);
-      for (let k = 0; k < 6; k++) { const a = k / 6 * TAU + R() * 0.5, d = 0.36 + R() * 0.12; ico(g, Math.cos(a) * d, 0.52 + R() * 0.12, Math.sin(a) * d, 0.24 + R() * 0.08, 0.75, vary(col, R, 0.3), R, 0.3); }
+      ico(g, 0, 0.62, 0, 0.46, 0.62, col, R, 0.25);
+      for (let k = 0; k < 3; k++) { const a = k / 3 * TAU + R() * 0.5, d = 0.38 + R() * 0.1; ico(g, Math.cos(a) * d, 0.52 + R() * 0.12, Math.sin(a) * d, 0.3 + R() * 0.06, 0.72, vary(col, R, 0.3), R, 0.3); }
     } else if (kind === 3) {   // the sycamore: a white and grey trunk (leaning), a few airy clumps high up
       cyl(g, 0, -0.02, 0, 0.035, 0.5, 5, [0.82, 0.8, 0.74], [0.7, 0.68, 0.62], 0.025); cyl(g, 0.04, 0.46, 0, 0.022, 0.28, 4, [0.86, 0.84, 0.78], null, 0.012);
       ROCK_SMOOTH = true; const col = [0.36, 0.48, 0.2];
@@ -15938,10 +15937,7 @@ const World = (function () {
       ROCK_SMOOTH = true; const R2 = rng(777);
       for (let k = 0; k < 9; k++) { const a = k * 2.1, y = 0.7 + k * 0.028; ico(g, Math.cos(a) * 0.035, y, Math.sin(a) * 0.035, 0.04, 1.3, [0.58, 0.48, 0.34], R2, 0.2); }
     }
-    else {   // three stones
-      ROCK_SMOOTH = false; const C = [[0.76, 0.67, 0.52], [0.66, 0.63, 0.58], [0.7, 0.58, 0.44]];
-      for (let k = 0; k < 3; k++) { const a = R() * TAU, d = k ? 0.25 + R() * 0.25 : 0, r = k ? 0.1 + R() * 0.08 : 0.17; rock(g, Math.cos(a) * d, r * 0.25, Math.sin(a) * d, r, r * 0.7, r * 0.85, R() * TAU, C[k], R, 0.3); }
-    }
+    else { ROCK_SMOOTH = false; rock(g, 0, 0.04, 0, 0.2, 0.14, 0.17, 0, [0.74, 0.66, 0.53], R, 0.3); }   // a stone (the instances tint and scatter it)
     ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
@@ -15952,6 +15948,19 @@ const World = (function () {
     const sA = T.startS + 30, sB = T.finishS - 30;
     return out.propStats = roadsideProps(out.props, { spots, postEdge: [1.2, 1.6], postCol: () => 0, exits: 0, apexes: 0, wallEdge: [1.4, 1.9], stacks: [5, 6], rows2: 0, maxLat: T.w + 2,
       floor: out.propFloor, skip: (i) => { const s = i * T.ds; return s < sA || s > sB; } });
+  }
+  // a red-tailed hawk (x forward, wingspan ~1.25 m): a brown body, broad wings held in a shallow V (it soars on the canyon's updraughts), the
+  // pale underside and the rufous tail; seen from above a dark cross with lighter wing bars
+  function mhHawkGeo() {
+    const g = new GB(), B = [0.36, 0.25, 0.16], D = [0.26, 0.18, 0.12], L = [0.7, 0.6, 0.48], T_ = [0.66, 0.32, 0.18];
+    box(g, 0, -0.05, 0, 0.5, 0.11, 0.14, 0, B); box(g, 0.29, -0.03, 0, 0.12, 0.09, 0.09, 0, D);   // body, head
+    for (const sd of [-1, 1]) {
+      const r0 = 0.06 * sd, r1 = 0.62 * sd, y1 = 0.1, A = [0.13, 0, r0], Bk = [-0.14, 0, r0], C = [-0.08, y1, r1], Dd = [0.1, y1, r1 * 0.97];
+      g.quadO(A, Bk, C, Dd, B, [0, -1, sd * 0.9]); g.quadO(A, Bk, C, Dd, L, [0, 1, sd * 0.9]);   // the wing: brown on top, pale below
+      g.quadO([0.04, 0.006, r0 * 3], [-0.06, 0.006, r0 * 3], [-0.04, y1 * 0.8 + 0.006, r1 * 0.8], [0.06, y1 * 0.8 + 0.006, r1 * 0.8], D, [0, -1, sd * 0.8]);   // a darker bar along it
+    }
+    g.triO([-0.22, 0, -0.07], [-0.22, 0, 0.07], [-0.44, 0.01, 0], T_, [-0.3, -1, 0]); g.triO([-0.22, 0, -0.07], [-0.44, 0.01, 0], [-0.22, 0, 0.07], T_, [-0.3, 1, 0]);   // the tail
+    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
   function buildMulholland(scene, tex, opts) {
     const R = rng(3111), N = T.N, w = T.w, dens = opts.density || 1, def = T.def, PI = Math.PI;
@@ -16035,9 +16044,9 @@ const World = (function () {
           if (k === 4) return mhGCol(x, z);
           const sl = k === 2 ? caSlope(x, z) : 0, l = Math.sqrt(1 + sl * sl); return mhCol(x, z, T.hy[i] + y, 1 / l, Math.max(0, o - bar)).slice(); })); } return a; });
       const wuv = (p) => [p[0] / 10, -p[2] / 10];
-      for (let c0 = 0; c0 < N - 1; c0 += 60) {
+      for (let c0 = 0; c0 < N - 1; c0 += 120) {   // (240 m pieces: half the draw calls of 120 m ones)
         const gr = new GB(true), gl = new GB(), gs = new GB(true), gv = new GB(true);
-        for (let i = c0; i < Math.min(c0 + 60, N - 1); i++) {
+        for (let i = c0; i < Math.min(c0 + 120, N - 1); i++) {
           const j = i + 1, v0 = i * T.ds / tileL, v1 = j * T.ds / tileL, s0 = i * T.ds / 6, s1 = j * T.ds / 6;
           for (let c = 0; c < offs.length - 1; c++) { const o0 = offs[c], o1 = offs[c + 1];
             gr.quadUp(Pt(i, o0, 0.02), Pt(i, o1, 0.02), Pt(j, o1, 0.02), Pt(j, o0, 0.02), [shade(i, o0), shade(i, o1), shade(j, o1), shade(j, o0)], [[(o0 + w) / tileL, v0], [(o1 + w) / tileL, v0], [(o1 + w) / tileL, v1], [(o0 + w) / tileL, v1]]); }
@@ -16287,7 +16296,7 @@ const World = (function () {
     const pMat = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
     const wMat = tuftWindMat(out.dyn.wind || (out.dyn.wind = { value: 0 })), wB = wMat.onBeforeCompile; ouCutMat(wMat, cut);   // (the grass: in the wind, and the cut)
     { const cB = wMat.onBeforeCompile; wMat.onBeforeCompile = (sh) => { wB(sh); cB(sh); }; wMat.customProgramCacheKey = () => 'tuftWindCut'; wMat.side = THREE.FrontSide; }
-    const pk = [0, 1, 2, 3, 4, 5, 6, 7].map(k => new IChunks(mhPlantGeo(k), k === 0 ? wMat : pMat, k === 5 ? 64 : 96));
+    const pk = [0, 1, 2, 3, 4, 5, 6, 7].map(k => new IChunks(mhPlantGeo(k), k === 0 ? wMat : pMat, k === 0 ? 144 : 96));   // (the light grass tufts in bigger pieces: fewer draw calls; kind 5, the loose stones, left out: from above only specks, the grit of the ground shows them)
     let nPlants = 0, nTrees = 0;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(80000 * dens), RT = rng(3171), SP = 3.0 / Math.sqrt(dens);
@@ -16302,8 +16311,8 @@ const World = (function () {
           let kind = -1;
           if (cd < 14 && r1 < 0.05) kind = 3;
           else if (c === 0) kind = r1 < 0.55 ? 0 : r1 < 0.562 ? 2 : r1 < 0.6 ? 1 : r1 < 0.605 ? 4 : r1 < 0.612 && sl > 0.25 ? 6 : -1;
-          else if (c === 1) kind = r1 < 0.5 ? 1 : r1 < 0.56 ? 0 : r1 < 0.565 ? 4 : r1 < 0.575 && sl > 0.2 ? 6 : -1;
-          else if (c === 2) kind = r1 < 0.03 ? 2 : r1 < 0.45 ? 1 : r1 < 0.52 ? 0 : -1;   // (WorldCover's tree cover here: mostly the tall, dense chaparral, oaks among it)
+          else if (c === 1) kind = r1 < 0.4 ? 1 : r1 < 0.56 ? 0 : r1 < 0.565 ? 4 : r1 < 0.575 && sl > 0.2 ? 6 : -1;
+          else if (c === 2) kind = r1 < 0.03 ? 2 : r1 < 0.36 ? 1 : r1 < 0.43 ? 0 : -1;   // (WorldCover's tree cover here: mostly the tall, dense chaparral, oaks among it)
           else if (c === 3) kind = r1 < 0.02 ? 2 : r1 < 0.12 ? 0 : -1;
           else if (c === 4) kind = r1 < 0.06 ? 4 : r1 < 0.12 ? 0 : -1;
           if (kind < 0) continue;
@@ -16312,23 +16321,13 @@ const World = (function () {
           const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < (kind === 2 || kind === 3 ? 4 : 1.6)) continue;
           if (excluded(x, z)) continue;
           if (kind === 0) pk[0].add(x, y0 - 0.05, z, r2 * TAU, 0.8 + r3 * 0.7, 0.6 + r4 * 0.5, [0.92 + r2 * 0.16, 0.9 + r3 * 0.14, 0.86 + r4 * 0.16]);
-          else if (kind === 1) pk[1].add(x, y0 - 0.12, z, r2 * TAU, 1.4 + r3 * 1.4, 1.1 + r4 * 1.2, r2 < 0.22 ? [1.5 + r3 * 0.2, 1.5 + r3 * 0.15, 1.95 + r4 * 0.2] : [0.88 + r2 * 0.24, 0.9 + r3 * 0.18, 0.88 + r4 * 0.16]);   // (one in five the grey-green coastal sage among the chaparral)
+          else if (kind === 1) pk[1].add(x, y0 - 0.12, z, r2 * TAU, 1.6 + r3 * 1.6, 1.2 + r4 * 1.3, r2 < 0.22 ? [1.5 + r3 * 0.2, 1.5 + r3 * 0.15, 1.95 + r4 * 0.2] : [0.88 + r2 * 0.24, 0.9 + r3 * 0.18, 0.88 + r4 * 0.16]);   // (one in five the grey-green coastal sage among the chaparral)
           else if (kind === 6) { pk[6].add(x, y0 - 0.05, z, r2 * TAU, 0.8 + r3 * 0.6, 0.7 + r4 * 0.5, [0.92 + r2 * 0.16, 0.95 + r3 * 0.1, 0.95 + r4 * 0.1]); if (r4 < 0.35) pk[7].add(x, y0, z, r3 * TAU, 1, 3.2 + r2 * 2.2, [0.9 + r3 * 0.2, 0.9 + r3 * 0.2, 0.9 + r3 * 0.2]); }
           else if (kind === 2) { pk[2].add(x, y0 - 0.15, z, r2 * TAU, 9 + r3 * 7, 7 + r4 * 5, [0.9 + r2 * 0.2, 0.92 + r3 * 0.16, 0.9]); nTrees++; }
           else if (kind === 3) { pk[3].add(x, y0 - 0.15, z, r2 * TAU, 11 + r3 * 6, 13 + r4 * 7, [0.92 + r2 * 0.16, 0.95 + r3 * 0.1, 0.9]); nTrees++; }
           else { const k = 0.86 + r3 * 0.28; pk[4].add(x, y0 - 0.2, z, r4 * TAU, 0.8 + r3 * 2.2, 0.6 + r4 * 1.6, [k, k * (0.97 + r2 * 0.05), k * (0.95 + r2 * 0.08)]); }
           if (++nPlants >= maxT) break grid;
         }
-      }
-    }
-    {   // stones strewn beside the road, thickest at its edge
-      const RS = rng(3177), maxS = Math.round(16000 * dens); let nS = 0;
-      edge: for (let s = 12; s < T.len - 12; s += 1.3 / dens) for (const side of [-1, 1]) {
-        const o = 1.7 + Math.pow(RS(), 2) * 34, [x, z] = onSide(s, side, o), r1 = RS(), r2 = RS(), r3 = RS();
-        if (vrNear(x, z).dd < 1.2 || excluded(x, z) || vrWater(x, z).e > -3) continue;
-        const y0 = caGround(x, z), sl = caSlope(x, z); if (sl > 1.15 || (vrLC(x, z) === 0 && r1 < 0.5)) continue;
-        const k = 0.86 + r3 * 0.24, sc = 0.8 + r1 * 1.1; pk[5].add(x, y0 - 0.04, z, r2 * TAU, sc, sc * (0.8 + r3 * 0.5), [k, k, k]);
-        if (++nS >= maxS) break edge;
       }
     }
     for (let k = 0; k < pk.length; k++) pk[k].addTo(root, k === 2 || k === 3);
@@ -16358,8 +16357,13 @@ const World = (function () {
     fac.addTo(sceneryGroup, ouCutMat(new THREE.MeshLambertMaterial({ map: tex.facade, vertexColors: true }), cut), true, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: mhAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: mhAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
+    { const geo = mhHawkGeo(), mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), i0 = T.idx(sStart), L = [];   // three hawks circling over the road (Los Caracoles' condors' flight: out.dyn.condors)
+      for (const [r, sp, h, ox, oz, ph] of [[34, 0.22, 34, 20, -15, 0], [46, -0.17, 48, -30, 20, 2.1], [28, 0.26, 26, 8, 40, 4.2]]) {
+        const m = new THREE.Mesh(geo, mat); m.scale.setScalar(1.6); root.add(m); L.push({ m, r, sp, h, ox, oz, ph, bank: 0.38 }); }   // (no shadow: from 25-50 m up it would hardly show)
+      out.dyn.condors = { L, x0: T.px[i0], z0: T.pz[i0], y0: T.hy[i0], ax: T.px[i0], az: T.pz[i0], ay: T.hy[i0], t: null };
+      caCondors(out.dyn.condors, 0, null); }
     crowdFinish(CR, root, out);
-    out.stats = { plants: nPlants, trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), poles: nPoles };   // (read by the tests)
+    out.stats = { plants: nPlants, trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), poles: nPoles, hawks: 3 };   // (read by the tests)
     return out;
   }
 
