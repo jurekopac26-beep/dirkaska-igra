@@ -147,11 +147,11 @@
   "jsMs": 0.29
  },
  "iroha": {
-  "calls": 358,
-  "maxCalls": 406,
-  "kverts": 1641,
-  "maxKverts": 1991,
-  "jsMs": 1.73
+  "calls": 292,
+  "maxCalls": 345,
+  "kverts": 917,
+  "maxKverts": 1058,
+  "jsMs": 1.25
  },
  "mulholland": {
   "calls": 242,

@@ -266,9 +266,10 @@ Gorska cesta nad mestom Nikko na Japonskem (prefektura Tochigi, državna cesta 1
 
 Okolica:
 
-- **Gost listnati gozd**: japonski javorji, hrasti in bukve, med njimi čugi (hemlock) in nekaj kriptomerij, ob cesti nizek bambus sasa, grmičevje in balvani andezita. Raba tal je iz satelitske karte ESA WorldCover. Poleti je gozd zelen, jeseni (letni čas Jesen) javorji zažarijo v škrlatni, karminasti, oranžni in rumeni barvi, hrasti porjavijo, bukve se pozlatijo; Zima ga zasneži.
+- **Gost listnati gozd**: japonski javorji, hrasti in bukve (in breze), med njimi čugi (hemlock) in nekaj kriptomerij, pod drevesi zelen bambus sasa z zameti rdečega listja; drevesa tik ob cesti so nižja, da cesta ostane vidna z obeh kamer, dlje od 165 m je gozd narisan v barvah krošenj na terenu, ob cesti nizek bambus sasa, grmičevje in balvani andezita. Raba tal je iz satelitske karte ESA WorldCover. Poleti je gozd zelen, jeseni (letni čas Jesen) javorji zažarijo v škrlatni, karminasti, oranžni in rumeni barvi, hrasti porjavijo, bukve se pozlatijo; Zima ga zasneži.
 - **Cesta**: bela prekinjena črta med pasovoma in polni robni črti (japonske oznake), bele jeklene ograje, kjer teren pada, in na zunanji strani serpentin, kamniti in betonski podporni zidovi (z odprtinami za odvodnjavanje), kjer se pobočje dviga, betonske mreže na strmih useklinah nad cesto, rumene table s puščicami na zunanji strani serpentin; jeseni po bankinah in robovih asfalta leži odpadlo javorjevo listje (v serpentinah več).
-- **Razgledišče Kurokamidaira**: parkirišče ob cesti z ograjo nad dolino, avti in obiskovalci, rjava tabla z imenom in višino.
+- **Razgledišče Kurokamidaira**: parkirišče ob cesti z ograjo nad dolino, avti in obiskovalci, rjava tabla z imenom in višino, dve kamniti svetilki.
+- **Japonski makaki**: ob vsaki drugi serpentini na bankini in ograji sedi skupina opic (tudi mati z mladičem).
 - **Pogled**: za gozdom se vidita gora Nantai (2.486 m) in dolina reke Daiya, v daljavi jezero Chūzenji in slap Kegon, vse iz istega višinskega modela, narisano za meglico bližnje okolice.
 - **Dirka**: start z lučmi pod portalom START, šotor za merjenje časa, zastavice ob štartni vrsti, rdeči portali kontrolnih točk z višino, cilj GOAL z modro tablo AKECHIDAIRA ↑ 1 km, transparent IROHAZAKA HILL CLIMB, gledalci ob startu, cilju, kontrolnih točkah in vsaki tretji serpentini. Napisi so generični: brez imen podjetij, trgovin, žičnic ali znamk.
 

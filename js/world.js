@@ -10734,14 +10734,19 @@ const World = (function () {
       const al = up * 0.55; r = lerp(r, 0.44 + (m - 0.5) * 0.08, al); g = lerp(g, 0.5, al); b = lerp(b, 0.27, al);   // higher up the short, grey-green alpine sward
       const bil = up * sstep(0.52, 0.76, P.n7(x, z)) * 0.6; r = lerp(r, 0.24, bil); g = lerp(g, 0.36, bil); b = lerp(b, 0.14, bil);   // bilberry and alpenrose: dark green
       lr = lerp(lerp(0.36, 0.3, up), 0.22, ms); lg = lerp(lerp(0.34, 0.3, up), 0.33, ms); lb = lerp(0.17, 0.13, ms);   // last year's leaves and needles, moss in patches
+      if (THEME === 'iroha') { lr = 0.22 + (q - 0.5) * 0.06; lg = 0.37 + (m - 0.5) * 0.06; lb = 0.13; }   // (Irohazaka: the sasa under the trees)
     } else {
       r = 0.64 + (m - 0.5) * 0.14 + (q - 0.5) * 0.1; g = 0.54 + (m - 0.5) * 0.1 + (q - 0.5) * 0.07; b = 0.3 + (m - 0.5) * 0.06;   // dry autumn grass
       const gr = sstep(0.38, 0.72, P.n2(x, z)) * lerp(0.85, 0.3, up); r = lerp(r, 0.4, gr); g = lerp(g, 0.5, gr); b = lerp(b, 0.22, gr);   // patches still green (most in the valley, few up high)
       const bil = up * sstep(0.52, 0.76, P.n7(x, z)) * 0.75; r = lerp(r, 0.6, bil); g = lerp(g, 0.25, bil); b = lerp(b, 0.14, bil);   // bilberry leaves turned red
       lr = lerp(lerp(0.5, 0.34, up), 0.25, ms); lg = lerp(lerp(0.32, 0.29, up), 0.32, ms); lb = lerp(0.17, 0.14, ms);   // beech leaves low, needles higher, moss in patches
-      if (THEME === 'iroha') { lr = lerp(0.56 + (q - 0.5) * 0.12, 0.3, ms); lg = lerp(0.25, 0.3, ms); lb = lerp(0.12, 0.14, ms); }   // (Irohazaka: the maples' red leaves on the forest floor)
+      if (THEME === 'iroha') { const lf = sstep(0.42, 0.7, P.n7(x * 1.3 + 20, z * 1.3)); lr = lerp(0.27 + (q - 0.5) * 0.06, 0.58, lf); lg = lerp(0.37 + (m - 0.5) * 0.06, 0.24, lf); lb = lerp(0.15, 0.12, lf); }   // (Irohazaka: the green sasa under the trees, red leaves in drifts)
     }
     r = lerp(r, lr + m * 0.07, fo); g = lerp(g, lg + m * 0.05, fo); b = lerp(b, lb + m * 0.03, fo);
+    if (THEME === 'iroha' && fo > 0) { const t = sstep(135, 180, vrDist(x, z)) * fo;   // (Irohazaka: past the trees, 165 m out, the ground in the colours of the crowns seen from above)
+      if (t > 0) { const k = P.n1(x * 1.9, z * 1.9), j = P.n2(x * 2.3 + 50, z * 2.3);
+        const c = su ? [0.17 + j * 0.06, 0.3 + k * 0.08, 0.12] : k < 0.38 ? [0.6, 0.15 + j * 0.06, 0.08] : k < 0.62 ? [0.72, 0.4 + j * 0.1, 0.1] : k < 0.8 ? [0.6, 0.5, 0.15] : [0.14, 0.23, 0.13];
+        r = lerp(r, c[0], t); g = lerp(g, c[1], t); b = lerp(b, c[2], t); } }
     r = lerp(r, 0.22 + m * 0.05, sc * 0.8); g = lerp(g, 0.28 + m * 0.05, sc * 0.8); b = lerp(b, 0.15, sc * 0.8);   // under the dwarf pines
     r = lerp(r, su ? 0.34 : 0.44, se * 0.6); g = lerp(g, su ? 0.5 : 0.52, se * 0.6); b = lerp(b, su ? 0.2 : 0.26, se * 0.6);   // lawns and gardens
     const st = Math.max(rk * 0.9, sstep(0.8, 0.58, ny) * 0.95);   // scree and rock, and every steep face: limestone
@@ -15421,20 +15426,36 @@ const World = (function () {
       for (const o of [-26, 10]) { x.beginPath(); x.moveTo(cx + dir * (o - 6), y0 + 22); x.lineTo(cx + dir * (o + 24), y0 + 64); x.lineTo(cx + dir * (o - 6), y0 + 106); x.lineTo(cx + dir * (o - 26), y0 + 106); x.lineTo(cx + dir * (o + 4), y0 + 64); x.lineTo(cx + dir * (o - 26), y0 + 22); x.closePath(); x.fill(); } }
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (irA2Tex = t);
   }
-  function irTreeGeo(kind) {   // unit trees (height 1; the instances scale and tint them): 0 Japanese maple (a broad, layered crown: scarlet in autumn,
-    // the instances tint it crimson, orange or yellow), 1 oak (russet), 2 beech (Vršič's: copper and gold), 3 hemlock (Vršič's spruce), 4 birch
-    if (kind === 2) return vrTreeGeo(2); if (kind === 3) return vrTreeGeo(0); if (kind === 4) return vrTreeGeo(4);
-    const g = new GB(), R = rng(870 + kind), rs = ROCK_SMOOTH, su = VRS === 'summer'; ROCK_SMOOTH = true;
+  function irMerge(L) {   // indexed geometries with the same attributes (the terrain tiles) as one
+    const out = new THREE.BufferGeometry(), names = Object.keys(L[0].attributes); let nv = 0, ni = 0;
+    for (const g of L) { nv += g.attributes.position.count; ni += g.index.count; }
+    for (const a of names) { const sz = L[0].attributes[a].itemSize, arr = new Float32Array(nv * sz); let o = 0; for (const g of L) { arr.set(g.attributes[a].array, o); o += g.attributes[a].array.length; } out.setAttribute(a, new THREE.BufferAttribute(arr, sz)); }
+    const idx = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni); let o = 0, base = 0;
+    for (const g of L) { const I = g.index.array; for (let k = 0; k < I.length; k++) idx[o + k] = I[k] + base; o += I.length; base += g.attributes.position.count; g.dispose(); }
+    out.setIndex(new THREE.BufferAttribute(idx, 1)); out.computeBoundingSphere(); return out;
+  }
+  // a crown clump as ico (smooth, ROCK_SMOOTH's shading) without the faces that look down: from the two cameras of the game (from above, from
+  // behind the car) the underside of a crown is never seen; about a third fewer vertices a tree
+  function irClump(g, cx, cy, cz, r, sy, col, r_, jit) {
+    const vs = ICO_V.map(v => { const k = 1 + (r_() - 0.5) * jit; return [cx + v[0] * r * k, cy + v[1] * r * sy * k, cz + v[2] * r * k]; }), inn = [cx, cy, cz];
+    const sc = (p) => { const k = 0.82 + 0.3 * ((p[1] - cy) / (r * sy) * 0.5 + 0.5); return [col[0] * k, col[1] * k, col[2] * k]; };
+    const nn = (p) => { const x = (p[0] - cx) / r, y = (p[1] - cy) / (r * sy * sy), z = (p[2] - cz) / r, l = Math.hypot(x, y, z) || 1; return [x / l, y / l, z / l]; };
+    for (const f of ICO_F) { const a = vs[f[0]], b = vs[f[1]], c = vs[f[2]]; if ((a[1] + b[1] + c[1]) / 3 - cy < -0.45 * r * sy) continue; g.triON(a, b, c, nn(a), nn(b), nn(c), inn, sc(a), sc(b), sc(c)); }
+  }
+  function irTreeGeo(kind) {   // unit trees (height 1; the instances scale and tint them): 0 Japanese maple (a broad, layered umbrella of a crown:
+    // scarlet in autumn, the instances tint it crimson, orange or yellow), 1 oak (russet), 2 beech (copper and gold; tinted yellow, the birches),
+    // 3 hemlock and cedar (Vršič's spruce); the crowns without their undersides (irClump), the trunks short stubs (hidden under the crowns from both cameras)
+    if (kind === 3) return vrTreeGeo(0);
+    const g = new GB(), R = rng(870 + kind), su = VRS === 'summer', bark = [0.3, 0.25, 0.21];
     if (kind === 0) {
-      cyl(g, 0, -0.02, 0, 0.026, 0.3, 4, [0.3, 0.24, 0.2], null, 0.02); cyl(g, 0.05, 0.22, 0.02, 0.016, 0.24, 3, [0.3, 0.24, 0.2], null, 0.01);
+      cyl(g, 0, -0.02, 0, 0.026, 0.42, 3, bark, null, 0.018);
       const col = su ? [0.24, 0.42, 0.13] : [0.84, 0.15, 0.07];
-      [[0, 0.52, 0, 0.42, 0.3], [0.22, 0.46, 0.14, 0.26, 0.38], [-0.22, 0.47, -0.12, 0.27, 0.38], [0.1, 0.44, -0.26, 0.24, 0.38], [-0.12, 0.45, 0.25, 0.24, 0.38], [0.02, 0.67, 0.02, 0.32, 0.34], [0.04, 0.83, -0.02, 0.19, 0.45]].forEach(([x, y, z, r, sy]) => ico(g, x, y, z, r, sy, vary(col, R, 0.18), R, 0.35));
+      [[0, 0.52, 0, 0.44, 0.32], [0.24, 0.46, 0.12, 0.27, 0.4], [-0.22, 0.47, -0.14, 0.28, 0.4], [0.02, 0.68, 0.02, 0.33, 0.36], [0.04, 0.84, -0.02, 0.19, 0.45]].forEach(([x, y, z, r, sy]) => irClump(g, x, y, z, r, sy, vary(col, R, 0.18), R, 0.3));
     } else {
-      cyl(g, 0, -0.02, 0, 0.032, 0.42, 4, [0.32, 0.29, 0.26], null, 0.022);
-      const col = su ? [0.2, 0.34, 0.12] : [0.6, 0.38, 0.13];
-      ico(g, 0, 0.64, 0, 0.3, 0.75, col, R, 0.32); ico(g, 0.15, 0.52, 0.06, 0.2, 0.8, vary(col, R, 0.2), R, 0.35); ico(g, -0.14, 0.55, -0.08, 0.21, 0.8, vary(col, R, 0.2), R, 0.35);
+      cyl(g, 0, -0.02, 0, 0.032, 0.5, 3, kind === 2 ? [0.55, 0.55, 0.52] : [0.32, 0.29, 0.26], null, 0.022);
+      const col = kind === 2 ? (su ? [0.2, 0.36, 0.12] : [0.82, 0.44, 0.13]) : (su ? [0.2, 0.34, 0.12] : [0.6, 0.38, 0.13]);
+      irClump(g, 0, 0.64, 0, 0.3, 0.75, col, R, 0.32); irClump(g, 0.15, 0.52, 0.06, 0.2, 0.8, vary(col, R, 0.2), R, 0.35); irClump(g, -0.14, 0.55, -0.08, 0.21, 0.8, vary(col, R, 0.2), R, 0.35);
     }
-    ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
   // the view beyond the corridor (def.farDem, the real terrain on a 200 m grid; the lake; the Kegon falls at def.far.kegon): one mesh, its
@@ -15524,11 +15545,12 @@ const World = (function () {
     let nFar = 0;
     const tMat = pkGroundMat(), gMat = new THREE.MeshLambertMaterial({ map: vrGritTex(), vertexColors: true });
     {
-      const G = P.G, grp = new THREE.Group(); root.add(grp); out.ground = grp;
+      const G = P.G, grp = new THREE.Group(), blk = new Map(); root.add(grp); out.ground = grp;   // (the tiles merged 2 x 2: one draw for 200 m of ground)
       for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
         const on = vrTileOn(ti, tj); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; else nFar++;
-        const m = new THREE.Mesh(vrTileGeo(ti, tj, on), tMat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m);
+        const k = Math.floor(ti / 2) + ',' + Math.floor(tj / 2); let L = blk.get(k); if (!L) blk.set(k, L = []); L.push(vrTileGeo(ti, tj, on));
       }
+      for (const L of blk.values()) { const m = new THREE.Mesh(irMerge(L), tMat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m); }
     }
 
     /* ---- the road: asphalt, the white dashed line between the two lanes and the solid white edge lines (Japan's markings), a gravel shoulder,
@@ -15556,9 +15578,9 @@ const World = (function () {
           if (k === 4) return vrGCol(x, z);
           const sl = k === 2 ? vrSlope(x, z) : 0; return vrCol(x, z, T.hy[i] + y, 1 / Math.sqrt(1 + sl * sl), Math.max(0, o - bar)).slice(); })); } return a; });
       const wuv = (p) => [p[0] / 10, -p[2] / 10];
-      for (let c0 = 0; c0 < N - 1; c0 += 60) {
+      for (let c0 = 0; c0 < N - 1; c0 += 150) {   // (300 m chunks: fewer draws)
         const gr = new GB(true), gl = new GB(), gs = new GB(true), gv = new GB(true);
-        for (let i = c0; i < Math.min(c0 + 60, N - 1); i++) {
+        for (let i = c0; i < Math.min(c0 + 150, N - 1); i++) {
           const j = i + 1, v0 = i * T.ds / tileL, v1 = j * T.ds / tileL, s0 = i * T.ds / 6, s1 = j * T.ds / 6;
           for (let c = 0; c < offs.length - 1; c++) { const o0 = offs[c], o1 = offs[c + 1];
             gr.quadUp(Pt(i, o0, 0.02), Pt(i, o1, 0.02), Pt(j, o1, 0.02), Pt(j, o0, 0.02), [shade(i, o0), shade(i, o1), shade(j, o1), shade(j, o0)], [[(o0 + w) / tileL, v0], [(o1 + w) / tileL, v0], [(o1 + w) / tileL, v1], [(o0 + w) / tileL, v1]]); }
@@ -15584,7 +15606,7 @@ const World = (function () {
     }
 
     /* ---- scenery (vertex coloured, 110 m chunks) ---- */
-    const scen = new Chunks(110), ban = new GB(true), ban2 = new GB(true), W1 = [1, 1, 1];   // (ban: the race's boards, ban2: the curves' signs)
+    const scen = new Chunks(220), ban = new GB(true), ban2 = new GB(true), W1 = [1, 1, 1];   // (ban: the race's boards, ban2: the curves' signs)
     const finS = new GB(), finB = new GB(true);
     const onSide = (s, side, extra) => { const i = T.idx(s), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + extra); return [T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, i]; };
     const fans = [[0.86, 0.14, 0.12], [0.96, 0.82, 0.2], [0.16, 0.36, 0.78], [0.95, 0.95, 0.95], [0.2, 0.6, 0.3], [1, 0.55, 0.1], [0.12, 0.14, 0.2], [0.55, 0.3, 0.6]];
@@ -15651,7 +15673,10 @@ const World = (function () {
       { const [v0, v1] = row(6); bannerQ(sx, sy + 1.2, sz, T.tx[si], T.tz[si], W2, H2, v0, v1, u0, u1, null, tl); }
       exclPush(sx, sz, 4);
     };
-    if (padL) { park(padL, padL.i, padL.sd, true, 14); signAt(padL.i * T.ds - 14, padL.sd, 0, 0.5); }
+    if (padL) { park(padL, padL.i, padL.sd, true, 14); signAt(padL.i * T.ds - 14, padL.sd, 0, 0.5);
+      const hh = T.hd[padL.i], c = Math.cos(hh), sn = Math.sin(hh);   // two stone lanterns (tōrō) at the car park's corners by the road: a base, a post, the light box under a wide cap
+      for (const a of [-13, 13]) { const b = -8 * padL.sd, x = padL.x - sn * b + c * a, z = padL.z + c * b + sn * a, y = vrGround(x, z), g = scen.get(x, z), st = [0.6, 0.59, 0.55];
+        box(g, x, y - 0.1, z, 0.8, 0.3, 0.8, hh, st); cyl(g, x, y + 0.2, z, 0.16, 0.9, 6, st); box(g, x, y + 1.1, z, 0.55, 0.45, 0.55, hh, [0.42, 0.41, 0.38], st); cone(g, x, y + 1.55, z, 0.62, 0.42, 6, st, [0.5, 0.49, 0.46], hh); exclPush(x, z, 1.5); } }
 
     /* ---- FINISH (just past curve ね): chequered gantry and flags (finG), the blue sign on to Akechidaira, the lay-by with the race's cars and
        people, the road closed farther on ---- */
@@ -15731,7 +15756,7 @@ const World = (function () {
        ground from 4 m to 16 m past the barrier; in autumn the maples' fallen leaves on the shoulders and the edges of the asphalt, thicker in the hairpins ---- */
     let nFrame = 0, nLeaf = 0;
     {
-      const fr = new Chunks(110), cc = [0.7, 0.7, 0.66], cd = [0.6, 0.6, 0.57], o0 = 4, o1 = 16;
+      const fr = new Chunks(220), cc = [0.7, 0.7, 0.66], cd = [0.6, 0.6, 0.57], o0 = 4, o1 = 16;
       for (const side of [-1, 1]) {
         const on = new Uint8Array(N), bar = side > 0 ? T.br : T.bl, gA = (i, d) => { const o = side * (bar[i] + d); return vrGround(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o) - T.hy[i]; };
         for (let i = T.idx(sStart + 30); i < T.idx(sFin - 30); i += 2) if (!onBr[i] && gA(i, o0) > 0.5 && gA(i, o1) - gA(i, o0) > 5) on[i] = on[i + 1] = 1;
@@ -15747,7 +15772,7 @@ const World = (function () {
       }
       fr.addTo(root, matV, false, true);
       if (VRS !== 'summer') {
-        const lv = new Chunks(110), RL = rng(8671), LC = [[0.78, 0.12, 0.06], [0.86, 0.3, 0.06], [0.9, 0.58, 0.1], [0.62, 0.36, 0.14], [0.7, 0.08, 0.1]];
+        const lv = new Chunks(220), RL = rng(8671), LC = [[0.78, 0.12, 0.06], [0.86, 0.3, 0.06], [0.9, 0.58, 0.1], [0.62, 0.36, 0.14], [0.7, 0.08, 0.1]];
         const hairAt = new Float32Array(N); for (const [d] of CV) for (let q = -25; q <= 25; q += T.ds) { const i = T.idx(sStart + d + q); hairAt[i] = Math.max(hairAt[i], 1 - Math.abs(q) / 25); }
         for (let i = 0; i < N - 1; i++) for (const side of [-1, 1]) {
           const n = 2 + Math.round(hairAt[i] * 3 + RL() * 2);
@@ -15757,6 +15782,24 @@ const World = (function () {
             nLeaf++; } }
         lv.addTo(root, lMat, false, true);
       }
+    }
+
+    /* ---- Japanese macaques: a troop of two to five at every other hairpin, sitting on the verge and the guardrail at its outside, a mother
+       with her young among them (grey-brown fur, the red face); in the scenery chunks (no draws of their own) ---- */
+    let nMonk = 0;
+    {
+      const RM = rng(8681), fur = [[0.52, 0.47, 0.4], [0.58, 0.52, 0.44], [0.46, 0.42, 0.37]], face = [0.78, 0.36, 0.33];
+      const monkey = (g, x, y, z, rot, k, col) => { const c = Math.cos(rot), s = Math.sin(rot), at = (u, v) => [x + c * u - s * v, z + s * u + c * v];
+        ROCK_SMOOTH = true; ico(g, x, y + 0.26 * k, z, 0.2 * k, 1.25, col, RM, 0.15);   // (the body, sitting)
+        const [hx, hz] = at(0.1 * k, 0); ico(g, hx, y + 0.56 * k, hz, 0.12 * k, 1, col, RM, 0.1); const [fx, fz] = at(0.19 * k, 0); ico(g, fx, y + 0.55 * k, fz, 0.06 * k, 1.1, face, RM, 0.05);
+        for (const sd of [-1, 1]) { const [lx, lz] = at(0.12 * k, sd * 0.1 * k); ico(g, lx, y + 0.07 * k, lz, 0.07 * k, 0.8, col, RM, 0.1); }   // (the feet in front)
+        ROCK_SMOOTH = false; nMonk++; };
+      CV.forEach(([d, , turn], k) => { if (k % 2 || k >= 16) return;
+        const n = 2 + Math.floor(RM() * 4);
+        for (let q = 0; q < n; q++) { const [x, z, i] = onSide(sStart + d + (RM() - 0.5) * 30, -turn, -0.5 + RM() * 1.2); if (excluded(x, z) || vrNear(x, z).dd < 0.2) continue;
+          const y = vrGround(x, z), rot = Math.atan2(T.pz[i] - z, T.px[i] - x) + (RM() - 0.5) * 1.6, col = fur[Math.floor(RM() * 3)];
+          monkey(scen.get(x, z), x, y, z, rot, 1, col); if (q === 0 && n > 2) { const c = Math.cos(rot), sn = Math.sin(rot); monkey(scen.get(x, z), x + c * 0.35 - sn * 0.2, y, z + sn * 0.35 + c * 0.2, rot, 0.55, col); }   // (a mother and her young)
+          CR.avoid(x, z, 0.8); } });
     }
 
     /* ---- spectators: the start and the finish (the finish's in a layer of its own, CRF: finG), the checkpoints, every third hairpin ---- */
@@ -15775,37 +15818,37 @@ const World = (function () {
        up), right up to the ditch, thinner and bigger farther out; in autumn the maples scarlet, crimson, orange and yellow, the oaks russet,
        the beeches gold ---- */
     const tMatT = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
-    const tk = [0, 1, 2, 3, 4].map(k => new IChunks(irTreeGeo(k), tMatT, 96));
+    const tk = [0, 1, 2, 3].map(k => new IChunks(irTreeGeo(k), tMatT, 128)), tkF = tk.map(t => new IChunks(t.base, tMatT, 128));   // (four shapes; 128 m chunks; tkF: past 45 m from the road, no shadows)
     let nTrees = 0;
     {
-      const G = P.G, Lt = VRC * VRT, maxT = Math.round(110000 * dens), RT = rng(8641), SP = 5.4 / Math.sqrt(dens), su = VRS === 'summer';
+      const G = P.G, Lt = VRC * VRT, maxT = Math.round(110000 * dens), RT = rng(8641), SP = 6.0 / Math.sqrt(dens), su = VRS === 'summer';   // (a tree every ~6 m, the crowns a little wider: closed from above)
       const MAPLE = su ? [[1, 1, 1], [0.92, 1.05, 0.9], [1.1, 1.02, 1.05], [0.95, 0.95, 1]] : [[1, 1, 1], [0.8, 0.55, 0.9], [1.08, 2.7, 1.3], [1.1, 4.0, 1.6], [0.6, 3.1, 2.0], [1.02, 1.6, 1.0]];   // (autumn: scarlet, crimson, orange, yellow, still green, red-orange)
       grid: for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
         if (!G.on[tj * G.ntx + ti]) continue;
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
-          const hd = vrDist(x, z); if (hd > 250) continue;
-          if (hd > 90 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // farther out every other spot (bigger trees)
+          const hd = vrDist(x, z); if (hd > 165) continue;   // (out to 165 m; past it the ground's own canopy colours, irCanopy)
+          if (hd > 70 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // farther out every other spot (bigger trees)
           const c = vrLC(x, z), p = c === 1 ? 0.95 : c === 2 ? 0.55 : c === 0 ? 0.12 : c === 3 ? 0.06 : 0.03;
           if (r1 > p) continue;
           const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < 2.2) continue; if (nn.i >= 0 && nn.dd < 5 && r2 < 0.15) continue;
           if (excluded(x, z)) continue;
           const y = vrGround(x, z), A = y + base, up = sstep(950, 1200, A); if (vrSlope(x, z) > 1.3) continue;   // (none on the cliffs)
           const pM = lerp(0.36, 0.3, up) + (nn.i >= 0 && nn.dd < 16 ? 0.12 : 0), pO = lerp(0.26, 0.16, up), pB = lerp(0.1, 0.24, up), pH = 0.17, sp = r3 < pM ? 0 : r3 < pM + pO ? 1 : r3 < pM + pO + pB ? 2 : r3 < pM + pO + pB + pH ? 3 : 4;   // (more maples by the road, where the light is)
-          const far = hd > 90 ? 1.15 : 1;
+          const far = hd > 70 ? 1.25 : 1.08, low = nn.i >= 0 ? lerp(0.6, 1, sstep(3, 14, nn.dd)) : 1;   // (low: the ones right by the road lower, the road stays in sight from the camera)
           let hgt, wid, col;
           if (sp === 0) { hgt = 9 + r4 * 7; wid = hgt * (0.85 + r2 * 0.3); col = MAPLE[Math.floor(r2 * 997) % MAPLE.length]; }
           else if (sp === 1) { hgt = 15 + r4 * 8; wid = hgt * (0.72 + r2 * 0.2); col = su ? [0.95 + r2 * 0.1, 1, 0.95] : (r2 < 0.3 ? [1.2, 1.25, 1.1] : r2 < 0.75 ? [1, 1, 1] : [0.8, 0.7, 0.8]); }
           else if (sp === 2) { hgt = 15 + r4 * 9; wid = hgt * (0.8 + r2 * 0.25); col = su ? [1, 1, 1] : (r2 < 0.4 ? [1.08, 1.2, 0.95] : r2 < 0.8 ? [1, 1, 1] : [0.86, 0.74, 0.66]); }
           else if (sp === 3) { const cedar = r2 < 0.3; hgt = (cedar ? 24 : 18) + r4 * 10; wid = hgt * (cedar ? 0.3 : 0.45 + r2 * 0.1); col = [0.88 + r3 * 0.2, 0.92 + r4 * 0.14, 0.9]; }
-          else { hgt = 10 + r4 * 6; wid = hgt * (0.6 + r2 * 0.2); col = [1, 1, 1]; }
-          tk[sp].add(x, y - 0.15, z, r1 * 70, wid * far, hgt * far, col);
+          else { hgt = 10 + r4 * 6; wid = hgt * (0.6 + r2 * 0.2); col = su ? [1.2, 1.15, 1.1] : [1.1, 1.6, 1.25]; }   // (a birch: the beech's shape, slimmer, yellow in autumn)
+          (hd < 45 ? tk : tkF)[Math.min(sp, 2 + (sp === 3))].add(x, y - 0.15, z, r1 * 70, wid * far * (0.4 + 0.6 * low), hgt * far * low, col);   // (near the road: the ones that cast shadows on it)
           if (++nTrees >= maxT) break grid;
         }
       }
     }
-    for (const t of tk) t.addTo(root, true);
+    for (const t of tk) t.addTo(root, true); for (const t of tkF) t.addTo(root, false);   // (farther out no shadows: neither camera sees them on the forest floor)
 
     /* ---- the verges: sasa (dwarf bamboo, green the year round) under the trees behind the barrier, shrubs in their autumn colours, grey andesite
        boulders and crags where the slope is steep ---- */
@@ -15849,7 +15892,7 @@ const World = (function () {
     addM(finS, matV, true, finG); addM(finB, banMat, false, finG);
     crowdFinish(CR, root, out);
     out.crowdN += crowdLayer(CRF, finG);
-    out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, rails: +(nRail / (2 * N)).toFixed(3), walls: +(nWall / (2 * N)).toFixed(3), signs: CV.length, far: FAR ? FAR.P0.length / 3 : 0, frames: nFrame, leaves: nLeaf };   // (read by the tests)
+    out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, rails: +(nRail / (2 * N)).toFixed(3), walls: +(nWall / (2 * N)).toFixed(3), signs: CV.length, far: FAR ? FAR.P0.length / 3 : 0, frames: nFrame, leaves: nLeaf, monkeys: nMonk };   // (read by the tests)
     return out;
   }
 
