@@ -257,6 +257,7 @@
     'Lesoto': 'Lesotho',   // (Sani Pass: the top; Mkhomazana, Drakensberg and Twelve Apostles stay as they are)
     'Prelaz Katu-Jaryk': 'Katu-Yaryk Pass', 'Sedem serpentin': 'Seven Hairpins', 'Prečka nad Čulišmanom': 'Traverse above the Chulyshman', 'Dolina Čulišmana': 'Chulyshman Valley',   // (Katu-Jaryk: the HUD, the flyover)
     'Razgledišče': 'Viewpoint', 'Cestninska postaja': 'Toll Plaza',   // (the viewpoints and the toll plaza above Hout Bay; the viewpoint of Mulholland Highway)
+    'Dolina Rock Creek': 'Rock Creek Valley', 'Vrh serpentin': 'Top of the Switchbacks',   // (Beartooth: Serpentina N and the heights by the rules of Lang.place)
     /* ---- the run from the police (Vršič): the checkpoint, the hideout, the HUD, the rap sheet, the call signs on the radio; the screen to turn the phone ---- */
     'Kamera »{0}« je za pokončni položaj.': 'The camera “{0}” is for holding the phone upright.', 'Kamera »{0}« je za ležeči položaj.': 'The camera “{0}” is for holding the phone sideways.',
     'Lahko pa igraš pokončno s kamero za avtom.': 'Or play upright with the chase camera.', 'Lahko pa igraš ležeče z izometrično kamero.': 'Or play sideways with the isometric camera.',

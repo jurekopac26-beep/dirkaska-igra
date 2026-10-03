@@ -1661,6 +1661,7 @@ const Render = (function () {
     sani:     { fog: 0xc8d6e4, sun: 0xfff0d8, sunI: 1.28, sky: 0xb8d0f0, gnd: 0x5e5a40, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-70, 92, -58] },   // Sani Pass: a clear afternoon in the Drakensberg, the high sun in the north (the southern hemisphere)
     iroha:    { fog: 0xc9d6df, sun: 0xffecc8, sunI: 1.12, sky: 0xd0e0f0, gnd: 0x4c5a32, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.12, sunOff: [-80, 74, 60] },   // Irohazaka: a clear afternoon above Nikko, a lower sun through the woods (long shadows across the hairpins), a soft blue haze over the valley
     mulholland: { fog: 0xd8d4c8, sun: 0xfff0d2, sunI: 1.4, sky: 0xb8d2f0, gnd: 0x7a6a48, hemiI: 0.62, tint: [1.04, 1.0, 0.94], sat: 1.06, sunOff: [-70, 104, 48] },   // Mulholland Highway: a hot, clear Californian summer afternoon, a strong high sun from the south-west, a warm dusty haze over the canyons
+    beartooth: { fog: 0xc6d7e8, sun: 0xfff1da, sunI: 1.26, sky: 0xb3cdf0, gnd: 0x4c5636, hemiI: 0.6, tint: [1.01, 1.0, 0.98], sat: 1.08, sunOff: [-84, 90, 58] },   // Beartooth: a clear summer afternoon in the northern Rockies, the sun from the south-west (shadows across the switchbacks), thin blue mountain haze
   };
   // each track's own grade on top (high quality, the post pass): its shadows and its highlights tinted apart, a little (split toning:
   // [shadows], [highlights]); cool shade and a warm sun mostly, the Riviera's teal and gold, Toskana's golden light, Spa's greyer air
