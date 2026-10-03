@@ -428,7 +428,7 @@ Ulično dirkališče na umetnih otokih četrti Ariake (Koto) ob Tokijskem zalivu
   - boksi s padokom in tovornjaki ekip ob zalivu, štartni portal;
   - na obzorju mesto, generičen viseči most na zahodu in mostna konstrukcija za boksi na jugovzhodu.
 - Napisi na ograjah so le zemljepisna imena (TOKYO, 東京, ARIAKE, 有明 …). Imena prizorišča, serije, prireditve ali sponzorjev ni nikjer.
-- Obremenitev telefona (`tests/golden/perf.json`, kamera za avtom): povprečno ~296 klicev risanja in ~956 tisoč oglišč na sličico. Največ jih je pri 1. ovinku v prvih sekundah, ko je vseh 13 avtov skupaj (~404 klice, ~1,1 milijona oglišč). Čas JavaScripta je ~1,0 ms.
+- Obremenitev telefona (`tests/golden/perf.json`, kamera za avtom): povprečno ~295 klicev risanja in ~826 tisoč oglišč na sličico. Največ jih je pri 1. ovinku v prvih sekundah, ko je vseh 13 avtov skupaj (~402 klica, ~977 tisoč oglišč). Čas JavaScripta je ~0,8–1,0 ms.
 
 ## Crystal Palace, Anglija
 

@@ -3134,5 +3134,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "tokio/race/cs": {
+  "digest": "d77553820308c21177172884",
+  "lead": 1773.8,
+  "car0": [
+   -451.03,
+   218.23
+  ],
+  "cover": {
+   "dmg": 0.36,
+   "loose": 10,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "tokio/demo/cs": {
+  "digest": "7a90a4f63c693ed9fa17075b",
+  "lead": 1861.9,
+  "car0": [
+   -358.36,
+   490.89
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "tokio/upg/cs": {
+  "digest": "fdf050ce45cc74d1d74caf63",
+  "lead": 1860.7,
+  "car0": [
+   -421.91,
+   388.77
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "tokio/crash/cs": {
+  "digest": "d943e36e22c588c519dca74c",
+  "lead": 4043.5,
+  "car0": [
+   -11.83,
+   -372.32
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 7,
+   "rescues": 1,
+   "repairs": 1
+  }
+ },
+ "tokio/formula/cs": {
+  "digest": "3139f566927f58215c7b0daf",
+  "lead": 4456.9,
+  "car0": [
+   -130.02,
+   -335.56
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 17,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "tokio/lm/cs": {
+  "digest": "aa304374d12556faeb536928",
+  "lead": 4426.7,
+  "car0": [
+   -123.95,
+   -309.22
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 20,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "tokio/car/cs": {
+  "digest": "25ace9b18b2c37bf98b2c189",
+  "lead": 4041.5,
+  "car0": [
+   -5.58,
+   -267.87
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 5,
+   "rescues": 4,
+   "repairs": 1
+  }
  }
 }
