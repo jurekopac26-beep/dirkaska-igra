@@ -13,9 +13,10 @@ let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 Math.random = seeded(31);
 
-// 1. the crossing: only Suzuka has one, at the real bridge, the back straight ~8 m over the lower road
-const others = C.TRACKS.filter(d => d.id !== 'suzuka').map(d => [d.id, new C.Track(d).cross.length]).filter(([, k]) => k);
-check('no other track has a crossing', !others.length, others.map(([id, k]) => id + ': ' + k).join(', '));
+// 1. the crossing: only Suzuka has one, at the real bridge, the back straight ~8 m over the lower road (and Tianmen's loop, an open road:
+// tests/tianmen.test.js)
+const others = C.TRACKS.filter(d => d.id !== 'suzuka' && d.id !== 'tianmen').map(d => [d.id, new C.Track(d).cross.length]).filter(([, k]) => k);
+check('no other track has a crossing (but Tianmen\'s loop)', !others.length, others.map(([id, k]) => id + ': ' + k).join(', '));
 const T = new C.Track(C.TRACKS.find(d => d.id === 'suzuka')), X = T.cross[0], ds = T.ds, sLo = X ? X.lo * ds : 0, sUp = X ? X.up * ds : 0;
 const dLo = ((sLo - T.startS) % T.len + T.len) % T.len, dUp = ((sUp - T.startS) % T.len + T.len) % T.len;
 check('Suzuka: one crossing, the lower road after Degner, the bridge on the back straight before 130R', T.cross.length === 1 && dLo > 2250 && dLo < 2400 && dUp > 4600 && dUp < 4760 && Math.hypot(X.x + 883, X.z + 69) < 8,
