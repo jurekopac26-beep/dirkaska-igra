@@ -57,7 +57,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   const mouth = (ang, hw) => { const a = ang * Math.PI / 180, ct = Math.cos(a) / Math.sin(a), e = hw / Math.sin(a), q0 = HW * ct, q1 = (HW + JOFF) * ct;
     return { ct, e, qa: Math.min(q0, q1) - e - 4.5, qb: Math.max(q0, q1) + e + 4.5 }; };
   const walls = [];
-  for (const [d, sd, ang, hw] of JUNCTIONS) { const M = mouth(ang, hw); walls.push([d + M.qa, d + M.qb, sd, JOFF, 3]); }
+  for (const [d, sd, ang, hw] of JUNCTIONS) { const M = mouth(ang, hw); walls.push([d + M.qa, d + M.qb, sd, JOFF, 5]); }
   // the street furniture of the junctions, all of it knockable (World props -> Core's loose props): [metres after the start line, side, kind,
   // metres out from the centre line, facing ('B' the traffic coming along the circuit, 'F' ahead, 'U' up the side road, 'N' across the circuit),
   // colour, the junction]: on the corners either side of the mouth (-1 before it, 1 after it). South Africa: the traffic lights ("robots") on
@@ -105,7 +105,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
       ['Zavoj 5', 602.6, -41.1, ['The chicane round the small traffic circle!', 'Left, right, left through the chicane!', 'Turns four, five and six, the little roundabout!']],
       ['Zavoj 7', 777.4, -173.0, ['Turn seven, left in the roundabout onto Beach Road!', 'Through the roundabout, Turn Seven!', 'Turn seven, and down to the sea!']],
       ['Zavoj 9', 278.4, -615.0, ['Turn nine, fast left by the sea!', 'Flat out past Granger Bay, Turn Nine!', 'Turn nine, the ocean right beside us!']],
-      { n: 'Mouille Point', x: -150, z: -605, hud: false, say: ['Along the coast at Mouille Point!', 'Flat out along Beach Road, the Atlantic on the right!', 'Past the lighthouse, flat out!'] },
+      { n: 'Mouille Point', x: -150, z: -605, hud: false, say: ['Along the coast at Mouille Point!', 'Flat out along Beach Road, the Atlantic on the right!', 'The lighthouse up ahead, flat out along the sea!'] },
       ['Zavoj 10', 47.3, -584.0, ['Turn ten, hard on the brakes!', 'The sharp left of Turn Ten!', 'Turn ten, off Beach Road!']],
       ['Zavoj 12', 133.8, -132.6, ['Turn twelve, the last right!', 'Through Turn Twelve, back onto Vlei Road!', 'Turn twelve, and the line is near!']],
       { n: 'stadion', x: 280, z: -260, hud: false, say: ['Past the stadium!', 'The big stadium on our left!', 'Round the stadium!'] },

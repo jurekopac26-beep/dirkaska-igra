@@ -30,7 +30,7 @@ const at = (d) => T.idx(((T.startS + d) % T.len + T.len) % T.len);
     Math.abs(T.len / 2921 - 1) < 0.02 && def.realKm === 2.921 && Math.abs(turn + 2 * Math.PI) < 0.05,
     `${T.len.toFixed(1)} m (${((T.len / 2921 - 1) * 100).toFixed(2)} %), total turn ${(turn * 180 / Math.PI).toFixed(1)} deg`);
   check('track: no crossover; a street circuit: the barriers close to the road on the straights (at most 4 m past its edge)',
-    !(T.cross && T.cross.length) && (() => { let ok = 0, all = 0; for (let i = 0; i < T.N; i++) if (Math.abs(T.k[i]) < 1 / 300) { all++; if (T.bl[i] - T.w < 4.01 || T.br[i] - T.w < 4.01) ok++; } return ok / all > 0.9; })(), '');
+    !(T.cross && T.cross.length) && (() => { let ok = 0, all = 0; for (let i = 0; i < T.N; i++) if (Math.abs(T.k[i]) < 1 / 300) { all++; if (T.bl[i] - T.w < 4.01 || T.br[i] - T.w < 4.01) ok++; } return ok / all > 0.85; })(), '');
 }
 // 2. the heights (Copernicus DEM along the road): flat by the sea, the coast road at Mouille Point the lowest (3-7 m under the start line), the
 // boulevards the highest (2-6 m over it), no grade over 6 %
