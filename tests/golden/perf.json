@@ -182,11 +182,11 @@
   "jsMs": 0.23
  },
  "cpalace": {
-  "calls": 285,
-  "maxCalls": 308,
-  "kverts": 676,
-  "maxKverts": 855,
-  "jsMs": 0.9
+  "calls": 286,
+  "maxCalls": 309,
+  "kverts": 678,
+  "maxKverts": 824,
+  "jsMs": 0.83
  },
  "riverside": {
   "calls": 197,

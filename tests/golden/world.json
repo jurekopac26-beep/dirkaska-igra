@@ -525,22 +525,22 @@
   }
  },
  "cpalace": {
-  "meshes": 306,
-  "verts": 519698,
-  "instances": 7008,
+  "meshes": 322,
+  "verts": 573838,
+  "instances": 7234,
   "props": 29,
-  "crowd": 2456,
-  "world": "594fc1d8",
+  "crowd": 2827,
+  "world": "eb314aaf",
   "propsHash": "3744002c",
   "floor": "c1e59073/6440",
   "groups": {
-   "-:MeshLambertMaterial": "b5f38f9a",
+   "-:MeshLambertMaterial": "79c0ceb8",
    "-:MeshPhongMaterial": "ce97bff3",
-   "crowd:MeshLambertMaterial": "90266f8a",
-   "-:MeshBasicMaterial": "437a80e4",
-   "flags:MeshLambertMaterial": "445967a6",
-   "ao:MeshBasicMaterial": "2480f820",
-   "roadwear:MeshLambertMaterial": "ba389577",
+   "crowd:MeshLambertMaterial": "602653f8",
+   "-:MeshBasicMaterial": "b6a169fc",
+   "flags:MeshLambertMaterial": "eec1a18d",
+   "ao:MeshBasicMaterial": "c09b3f2b",
+   "roadwear:MeshLambertMaterial": "f205d6f1",
    "worn:MeshLambertMaterial": "2d31a3ac"
   }
  },
