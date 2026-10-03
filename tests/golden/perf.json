@@ -119,10 +119,10 @@
   "jsMs": 2.08
  },
  "rastro": {
-  "calls": 301,
-  "maxCalls": 369,
-  "kverts": 1413,
-  "maxKverts": 1857,
-  "jsMs": 0.83
+  "calls": 240,
+  "maxCalls": 298,
+  "kverts": 618,
+  "maxKverts": 755,
+  "jsMs": 0.69
  }
 }

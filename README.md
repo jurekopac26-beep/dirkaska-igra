@@ -120,6 +120,8 @@ Okolica:
 - **Planota**: travišče z araukarijami (posamezne in v gajih), nekaj ribnikov in stavb (po obrisih iz OpenStreetMap). Na razgledišču je tlakovana ploščad na robu pečine z ograjo, klopmi in ljudmi, ki gledajo na serpentine, ob cesti za ciljem parkirišče.
 - **Megla iz doline**: nad nižjim svetom pod pečino se ves čas dvigajo meglene zaplate, ki se med dvigovanjem razblinijo. Ločene vremenske možnosti »megla« igra nima (vreme pozna le suho, dež, menljivo, naključno in nevihto), zato je megla del okolice proge; pri času dneva Jutro se dolina napolni še z jutranjo meglo kot na drugih progah. Pri vremenu Naključno ali Menljivo tu dežuje v približno dveh od petih dirk (vlažna Serra Geral).
 - **Noč**: kot na drugih progah stojijo ob cesti vsakih 30 m luči na drogovih, zato so ponoči osvetljeni vsi ovinki lestve.
+- **Življenje v pokrajini**: nad krošnjami cvetoča drevesa (vijolične quaresmeire, rumeni ipêji, nekaj rožnatih in belih), ob cesti zgoraj in na planoti modre, rožnate in lila hortenzije, na pašnikih planote govedo za lesenimi ograjami z žico, nad pečino krožijo črni jastrebi (urubuji). Robovi ceste so pokošena trava, podporni zidovi imajo stike in mah ob vznožju. Gozd je zimzelen, zato je jeseni enak kot poleti (pozimi ga pobeli sneg).
+- **Telefon**: drevesa tik ob cesti mečejo sence, malo dlje so brez senc, daleč od ceste pa so preprostejša in redkejša s širšimi krošnjami; bambus in visoka drevesa so pobarvane krošnje listavcev (manj vrst geometrije, manj klicev risanja).
 - Table in napisi so generični (imena krajev, CURVA, NEBLINA, MIRANTE …), brez imen podjetij in znamk.
 
 ## Nürburgring Nordschleife

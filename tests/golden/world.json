@@ -346,16 +346,16 @@
   }
  },
  "rastro": {
-  "meshes": 1392,
-  "verts": 812066,
-  "instances": 28492,
+  "meshes": 948,
+  "verts": 697088,
+  "instances": 21093,
   "props": 81,
   "crowd": 791,
-  "world": "fd491d25",
+  "world": "9fba051a",
   "propsHash": "1599f175",
   "floor": "79b4102c/10836",
   "groups": {
-   "-:MeshLambertMaterial": "dc12af14",
+   "-:MeshLambertMaterial": "b95dcd08",
    "-:MeshPhongMaterial": "6f171605",
    "-:MeshBasicMaterial": "af49995a",
    "crowd:MeshLambertMaterial": "59686ad9",

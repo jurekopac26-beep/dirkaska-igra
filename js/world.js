@@ -10635,7 +10635,7 @@ const World = (function () {
   function buildRastro(scene, tex, opts) {
     const R = rng(3311), N = T.N, w = T.w, dens = opts.density || 1, def = T.def, PI = Math.PI;
     const root = new THREE.Group(); scene.add(root);
-    const out = { root, dyn: {}, groundH: caGround, camFloor: caGround, props: [], farClip: true, ownTex: [], dust: [0.55, 0.42, 0.32] };
+    const out = { root, dyn: {}, groundH: caGround, camFloor: caGround, props: [], farClip: true, ownTex: [], dust: [0.55, 0.42, 0.32], season: 'autumn' };   // (season: the subtropical rainforest is evergreen, so in autumn it stays as built; winter still snows it over)
     vrPrep();
     const P = VR, iE = N - 1, sStart = T.startS, sFin = T.finishS, base = P.D.base;
     P.c1 = valueNoise2(811, 150); P.c2 = valueNoise2(812, 64); P.c3 = valueNoise2(813, 210); P.c4 = valueNoise2(814, 120); P.c5 = valueNoise2(815, 26);
