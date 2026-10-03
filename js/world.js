@@ -16261,6 +16261,64 @@ const World = (function () {
       for (const [n, k, o] of [['La Sierra Creek', 0, -30], ['Elephant Rock', 1, -40], ['La Sierra Canyon', 2, -20], ['Razgled', 3, -60], ['Brewster', 4, 40]]) { const q = nm(n); if (q) sign(sStart + q.d + o, 1, k); }
       sign(sStart + 120, 1, 6); sign(sStart + 420, 1, 7); sign(sStart + 2600, 1, 7); sign(sStart + 1500, 1, 5, 2); }
 
+    /* ---- the paths off the road (def.paths, OpenStreetMap): pale dirt fire roads over the ridges, grey driveways and streets to the houses,
+       narrow trails; and the dry creek beds (def.creeks): a band of pale cobbles and sand under the sycamores. Ribbons draped on the ground
+       (a point every ~3 m, lifted a little; in the scenery's own pieces: no draw calls of their own), stopped where they reach the road's verge ---- */
+    let nPaths = 0;
+    {
+      const W = [2.0, 1.7, 0.45, 1.5], C = [[0.76, 0.66, 0.5], [0.5, 0.5, 0.49], [0.72, 0.62, 0.47], [0.78, 0.74, 0.66]];
+      const ribbon = (p, k0, kind) => {
+        const hw = W[kind], pts = [];
+        for (let k = k0; k + 3 < p.length; k += 2) { const x0 = p[k], z0 = p[k + 1], x1 = p[k + 2], z1 = p[k + 3], n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, z1 - z0) / 3)); for (let q = 0; q < n; q++) pts.push([lerp(x0, x1, q / n), lerp(z0, z1, q / n)]); }
+        pts.push([p[p.length - 2], p[p.length - 1]]);
+        const y = (x, z) => caGround(x, z) + 0.12;
+        for (let k = 0; k < pts.length - 1; k++) {
+          const [ax, az] = pts[k], [bx, bz] = pts[k + 1], dx = bx - ax, dz = bz - az, l = Math.hypot(dx, dz) || 1, ux = -dz / l * hw, uz = dx / l * hw;
+          const na = vrNear(ax, az), nb = vrNear(bx, bz); if ((na.i >= 0 && na.dd < 0.6) || (nb.i >= 0 && nb.dd < 0.6) || vrDist(ax, az) > 440 || vrWater(ax, az).e > -1) continue;
+          if (kind === 3 && caSlope(ax, az) > 0.9) continue;
+          const t = 0.93 + 0.1 * rpHash(k, 3201 + nPaths), c = [C[kind][0] * t, C[kind][1] * t, C[kind][2] * t];
+          scen.get(ax, az).quadUp([ax - ux, y(ax - ux, az - uz), az - uz], [ax + ux, y(ax + ux, az + uz), az + uz], [bx + ux, y(bx + ux, bz + uz), bz + uz], [bx - ux, y(bx - ux, bz - uz), bz - uz], [c, c, c, c]);
+        }
+        nPaths++;
+      };
+      for (const p of def.paths || []) ribbon(p, 1, p[0]);
+      for (const c of def.creeks || []) ribbon(c, 0, 3);
+    }
+
+    /* ---- two horse paddocks at Cornell: flat open grass beside the road, a white post-and-rail fence round each, a few horses grazing
+       (bay, chestnut, grey) ---- */
+    let nHorses = 0;
+    {
+      const RH = rng(3211), coats = [[0.42, 0.26, 0.15], [0.55, 0.3, 0.16], [0.72, 0.7, 0.66], [0.2, 0.15, 0.12]], wht = [0.93, 0.92, 0.88];
+      const flat = (x, z, r) => { const h0 = caGround(x, z); for (const [a, b] of [[r, 0], [-r, 0], [0, r], [0, -r], [r * 0.7, r * 0.7], [-r * 0.7, -r * 0.7]]) if (Math.abs(caGround(x + a, z + b) - h0) > r * 0.17) return false; return true; };
+      const pads = [];
+      for (let s = sStart + 40; s < sStart + 1400 && pads.length < 2; s += 29) for (const side of [-1, 1]) {
+        if (pads.length >= 2) break;
+        const [x, z, i] = onSide(s, side, 26), r = 15; let ok = flat(x, z, r) && vrLC(x, z) !== 1 && vrLC(x, z) !== 2;
+        for (let a = 0; a < 8 && ok; a++) { const px = x + Math.cos(a * PI / 4) * (r + 2), pz = z + Math.sin(a * PI / 4) * (r + 2), nn = vrNear(px, pz); if (excluded(px, pz) || (nn.i >= 0 && nn.dd < 3)) ok = false; }
+        if (ok) for (const p of def.paths || []) { for (let k = 1; k + 1 < p.length && ok; k += 2) if (Math.hypot(p[k] - x, p[k + 1] - z) < r + 4) ok = false; if (!ok) break; }   // (no driveway through it)
+        if (ok && pads.every(q => Math.hypot(q[0] - x, q[1] - z) > 60)) pads.push([x, z, T.hd[i], r]);
+      }
+      for (const [cx, cz, rot, r] of pads) {
+        const c = Math.cos(rot), sn = Math.sin(rot), Q = (u, v) => [cx + c * u - sn * v, cz + sn * u + c * v], g = scen.get(cx, cz), cs = [[-r, -r * 0.7], [r, -r * 0.7], [r, r * 0.7], [-r, r * 0.7]];
+        for (let e = 0; e < 4; e++) { const [u0, v0] = cs[e], [u1, v1] = cs[(e + 1) % 4], L = Math.hypot(u1 - u0, v1 - v0), n = Math.ceil(L / 3);
+          for (let k = 0; k <= n; k++) { if (e === 0 && k === Math.floor(n / 2)) continue;   // (the gate side: a gap)
+            const [px, pz] = Q(lerp(u0, u1, k / n), lerp(v0, v1, k / n)); box(g, px, caGround(px, pz) - 0.2, pz, 0.14, 1.5, 0.14, rot, wht, null, true); }
+          for (let k = 0; k < n; k++) { if (e === 0 && (k === Math.floor(n / 2) || k === Math.floor(n / 2) - 1)) continue;
+            const [ax, az] = Q(lerp(u0, u1, k / n), lerp(v0, v1, k / n)), [bx, bz] = Q(lerp(u0, u1, (k + 1) / n), lerp(v0, v1, (k + 1) / n)), ay = caGround(ax, az), by = caGround(bx, bz);
+            for (const hh of [0.6, 1.15]) ouRod(g, [ax, ay + hh, az], [bx, by + hh, bz], 0.05, wht, 4); } }
+        const nh = 2 + Math.floor(RH() * 3);
+        for (let k = 0; k < nh; k++) { const [hx, hz] = Q((RH() - 0.5) * r * 1.3, (RH() - 0.5) * r * 0.9), hy = caGround(hx, hz), a = RH() * TAU, ca = Math.cos(a), sa = Math.sin(a), col = coats[Math.floor(RH() * coats.length)], dk = [col[0] * 0.6, col[1] * 0.6, col[2] * 0.6], graze = RH() < 0.6;
+          box(g, hx, hy + 0.85, hz, 1.6, 0.62, 0.5, a, col, null, true);   // body
+          for (const [u, v] of [[0.6, 0.17], [0.6, -0.17], [-0.6, 0.17], [-0.6, -0.17]]) box(g, hx + ca * u - sa * v, hy, hz + sa * u + ca * v, 0.14, 0.88, 0.14, a, dk, null, true);   // legs
+          const nx = hx + ca * 0.95, nz = hz + sa * 0.95; box(g, nx, hy + (graze ? 0.35 : 1.2), nz, 0.42, graze ? 0.75 : 0.6, 0.26, a, col, null, true);   // neck
+          box(g, hx + ca * (graze ? 1.2 : 1.25), hy + (graze ? 0.12 : 1.65), hz + sa * (graze ? 1.2 : 1.25), 0.55, 0.26, 0.24, a, dk, null, true);   // head
+          box(g, hx - ca * 0.88, hy + 0.55, hz - sa * 0.88, 0.12, 0.6, 0.12, a, dk, null, true);   // tail
+          nHorses++; }
+        exclPush(cx, cz, r + 1.5); CR.block(cx, cz, 2 * r, 1.4 * r, rot);
+      }
+    }
+
     /* ---- the power line: weathered wooden poles every ~45 m beside the road through Cornell and below the top, a cross arm with three wires
        sagging between them, a grey transformer can on every fourth pole ---- */
     let nPoles = 0;
@@ -16365,7 +16423,7 @@ const World = (function () {
       out.dyn.condors = { L, x0: T.px[i0], z0: T.pz[i0], y0: T.hy[i0], ax: T.px[i0], az: T.pz[i0], ay: T.hy[i0], t: null };
       caCondors(out.dyn.condors, 0, null); }
     crowdFinish(CR, root, out);
-    out.stats = { plants: nPlants, trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), poles: nPoles, hawks: 3 };   // (read by the tests)
+    out.stats = { plants: nPlants, trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), poles: nPoles, hawks: 3, paths: nPaths, horses: nHorses };   // (read by the tests)
     return out;
   }
 
