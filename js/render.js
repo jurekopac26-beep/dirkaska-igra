@@ -1557,7 +1557,57 @@ const Render = (function () {
       const wh = [0.95, 0.95, 0.93], bk = [0.08, 0.08, 0.09], rf = [1, 0.45, 0.08];
       W.box(g, 0, -0.65, 0, 0.14, 1.2, 0.14, 0, wh, wh); W.box(g, 0, 0.18, 0, 0.146, 0.22, 0.146, 0, bk, bk);
       for (const x of [-0.074, 0.074]) W.box(g, x, 0.22, 0, 0.012, 0.12, 0.09, 0, rf, rf); }
+    else streetGeometry(W, g, kind);
     return g.geometry();
+  }
+  // the street furniture of the junctions (Core PROPK signal ... cabinet; generic, no names): the foot at -h0, the arm of a signal or a lamp along
+  // +x, a signal's heads and the signs' faces look along +z (World turns them to the traffic). Galvanised steel, painted where it is usual
+  function streetGeometry(W, g, kind) {
+    const gal = [0.6, 0.62, 0.62], galD = [0.46, 0.48, 0.48], blk = [0.08, 0.08, 0.09], wh = [0.95, 0.95, 0.93], yel = [0.98, 0.78, 0.1], conc = [0.68, 0.67, 0.64];
+    const plate = (y, wd, ht, col, z0) => { z0 = z0 || 0.03; W.box(g, 0, y, z0 - 0.015, wd, ht, 0.02, 0, galD); W.box(g, 0, y + 0.02, z0 + 0.005, wd - 0.04, ht - 0.04, 0.012, 0, col); };   // a sign's plate on its post, its face to +z
+    const border = (y, wd, ht, col, z) => { for (const [bx, by, bw, bh] of [[0, y + 0.04, wd - 0.08, 0.025], [0, y + ht - 0.065, wd - 0.08, 0.025], [-wd / 2 + 0.05, y + 0.04, 0.025, ht - 0.08], [wd / 2 - 0.05, y + 0.04, 0.025, ht - 0.08]]) W.box(g, bx, by, z, bw, bh, 0.01, 0, col); };
+    const head = (x, y, z) => {   // a three-section signal head under the arm (red, amber, green from the top), on a black backplate with a yellow edge
+      W.box(g, x, y - 0.04, z - 0.17, 0.64, 1.18, 0.03, 0, yel); W.box(g, x, y, z - 0.155, 0.56, 1.1, 0.03, 0, blk);
+      W.box(g, x, y + 0.03, z - 0.14, 0.34, 1.04, 0.26, 0, [0.12, 0.12, 0.13]);
+      [[0.95, 0.12, 0.08], [0.72, 0.5, 0.08], [0.1, 0.55, 0.32]].forEach((c, k) => { const yy = y + 0.12 + (2 - k) * 0.33; W.box(g, x, yy, z, 0.22, 0.22, 0.02, 0, c); W.box(g, x, yy + 0.22, z - 0.01, 0.28, 0.04, 0.2, 0, blk); });
+      W.box(g, x, y + 1.07, z - 0.14, 0.06, 0.18, 0.06, 0, galD); };
+    if (kind === 'signal') {   // a mast-arm signal pole: the concrete footing, the pole, the arm over the lanes with two heads, a third head on the pole, the street name, the luminaire on top
+      W.box(g, 0, -3.0, 0, 0.7, 0.16, 0.7, 0, conc); W.cyl(g, 0, -2.86, 0, 0.17, 0.3, 8, galD); W.cyl(g, 0, -2.6, 0, 0.14, 5.9, 8, gal, gal, 0.11);
+      W.box(g, 3.05, 2.6, 0, 6.1, 0.17, 0.17, 0, gal); W.box(g, 0.45, 2.46, 0, 0.7, 0.32, 0.22, 0, gal);   // (the arm and its clamp)
+      head(3.5, 1.32, 0.12); head(5.7, 1.32, 0.12); head(0.32, -0.6, 0.12);
+      W.box(g, 1.75, 2.82, 0.02, 1.9, 0.48, 0.03, 0, [0.06, 0.34, 0.2]); border(2.82, 1.9, 0.48, wh, 0.04);   // the street name (a green blade, no words: too small to read)
+      W.box(g, 0.05, 3.25, 0, 0.1, 0.08, 0.08, 0, gal); W.box(g, 1.2, 3.3, 0, 2.3, 0.09, 0.09, 0, gal); W.box(g, 2.6, 3.2, 0, 0.8, 0.2, 0.38, 0, [0.5, 0.52, 0.53], [0.56, 0.58, 0.58]); W.box(g, 2.6, 3.18, 0, 0.56, 0.03, 0.28, 0, [1, 0.94, 0.8]);
+      W.box(g, -0.15, -1.6, 0, 0.12, 0.2, 0.14, 0, [0.82, 0.68, 0.12]);   // the pedestrians' push button
+    } else if (kind === 'lamp') {   // a cobra-head street light on its tapered pole
+      W.box(g, 0, -4.2, 0, 0.45, 0.12, 0.45, 0, conc); W.cyl(g, 0, -4.08, 0, 0.13, 8.1, 8, gal, gal, 0.07);
+      W.box(g, 0.95, 3.95, 0, 1.9, 0.09, 0.09, 0, gal); W.box(g, 2.05, 3.82, 0, 0.78, 0.22, 0.4, 0, [0.5, 0.52, 0.53], [0.58, 0.6, 0.6]); W.box(g, 2.05, 3.8, 0, 0.56, 0.03, 0.3, 0, [1, 0.94, 0.8]);
+    } else if (kind === 'sign') {   // a white regulatory sign (a speed limit) on a square steel post
+      W.box(g, 0, -1.3, 0, 0.06, 2.3, 0.06, 0, gal); plate(0.25, 0.61, 0.76, wh); border(0.25, 0.61, 0.76, blk, 0.046);
+      for (const [y, wd, ht] of [[0.82, 0.42, 0.05], [0.72, 0.36, 0.05], [0.38, 0.12, 0.26]]) W.box(g, 0, y, 0.046, wd, ht, 0.01, 0, blk);
+      W.box(g, 0.08, 0.38, 0.046, 0.12, 0.26, 0.01, 0, blk);
+    } else if (kind === 'warn') {   // a yellow diamond (a warning: a junction, a signal ahead) on a square steel post
+      W.box(g, 0, -1.3, 0, 0.06, 2.2, 0.06, 0, gal); const c = 0.38, y0 = 0.5;
+      for (const [r, z, col] of [[c + 0.02, 0.012, galD], [c, 0.03, yel], [c - 0.04, 0.034, blk], [c - 0.07, 0.038, yel]]) g.quadO([0, y0 + r, z], [r, y0, z], [0, y0 - r, z], [-r, y0, z], col, [0, y0, z - 1]);
+      W.box(g, 0, y0 - 0.18, 0.042, 0.07, 0.36, 0.01, 0, blk); W.box(g, 0, y0 + 0.08, 0.042, 0.3, 0.07, 0.01, 0, blk);   // (a crossroads)
+    } else if (kind === 'stop') {   // the red octagon, the street names on two crossed green blades on top
+      W.box(g, 0, -1.4, 0, 0.06, 2.6, 0.06, 0, gal); const y0 = 0.62, oct = (r, z, col) => { for (let k = 0; k < 8; k++) { const a0 = (k + 0.5) / 8 * Math.PI * 2, a1 = (k + 1.5) / 8 * Math.PI * 2; g.triO([0, y0, z], [Math.cos(a0) * r, y0 + Math.sin(a0) * r, z], [Math.cos(a1) * r, y0 + Math.sin(a1) * r, z], col, [0, y0, z - 1]); } };
+      oct(0.4, 0.012, galD); oct(0.38, 0.03, wh); oct(0.34, 0.034, [0.76, 0.08, 0.08]); W.box(g, 0, y0 - 0.06, 0.038, 0.44, 0.12, 0.01, 0, wh);
+      W.box(g, 0, 1.18, 0, 0.92, 0.2, 0.03, 0, [0.06, 0.34, 0.2]); W.box(g, 0, 1.4, 0, 0.03, 0.2, 0.92, 0, [0.06, 0.34, 0.2]);
+    } else if (kind === 'busstop') {   // a bus stop: a pole with a blue and white plate (the bus drawn on it), a timetable holder
+      W.box(g, 0, -1.4, 0, 0.07, 2.75, 0.07, 0, gal); plate(0.85, 0.46, 0.5, [0.12, 0.3, 0.62]); W.box(g, 0, 0.98, 0.046, 0.3, 0.17, 0.01, 0, wh); W.box(g, 0, 0.92, 0.047, 0.24, 0.05, 0.01, 0, [0.12, 0.3, 0.62]);
+      W.box(g, 0, 0.0, 0.05, 0.26, 0.4, 0.04, 0, [0.85, 0.86, 0.84]);
+    } else if (kind === 'bollard') {   // a steel pipe painted safety yellow, a black band, a domed top
+      W.cyl(g, 0, -0.5, 0, 0.11, 0.92, 8, yel); W.cyl(g, 0, 0.18, 0, 0.113, 0.1, 8, blk); W.cone(g, 0, 0.42, 0, 0.11, 0.08, 8, yel, [1, 0.86, 0.2], 0);
+    } else if (kind === 'bin') {   // a park's litter bin: a slatted dark green steel drum with its lid
+      W.cyl(g, 0, -0.47, 0, 0.27, 0.06, 8, [0.12, 0.14, 0.12]); W.cyl(g, 0, -0.41, 0, 0.29, 0.74, 10, [0.16, 0.3, 0.2]); W.cyl(g, 0, 0.33, 0, 0.31, 0.1, 10, [0.12, 0.22, 0.15], [0.18, 0.32, 0.22]);
+      for (let k = 0; k < 10; k++) { const a = k / 10 * Math.PI * 2; W.box(g, Math.cos(a) * 0.292, -0.36, Math.sin(a) * 0.292, 0.035, 0.64, 0.035, -a, [0.1, 0.2, 0.13]); }
+    } else if (kind === 'hydrant') {   // a wet-barrel fire hydrant (the warm west): yellow, a bonnet, two hose outlets and the big pumper outlet
+      W.cyl(g, 0, -0.4, 0, 0.19, 0.06, 8, [0.6, 0.5, 0.12]); W.cyl(g, 0, -0.34, 0, 0.14, 0.56, 8, yel); W.cyl(g, 0, 0.22, 0, 0.16, 0.06, 8, [0.9, 0.7, 0.1]); W.cone(g, 0, 0.28, 0, 0.13, 0.1, 8, [0.92, 0.92, 0.9], [0.8, 0.8, 0.8], 0);
+      W.box(g, 0.17, -0.02, 0, 0.12, 0.1, 0.1, 0, [0.9, 0.72, 0.1]); W.box(g, -0.17, -0.02, 0, 0.12, 0.1, 0.1, 0, [0.9, 0.72, 0.1]); W.box(g, 0, -0.06, 0.17, 0.16, 0.16, 0.12, 0, [0.9, 0.72, 0.1]);
+    } else if (kind === 'cabinet') {   // the signals' controller: a bare aluminium cabinet on its concrete pad, a seam down the door, louvres
+      W.box(g, 0, -0.75, 0, 1.1, 0.1, 0.8, 0, conc); W.box(g, 0, -0.65, 0, 0.9, 1.35, 0.6, 0, [0.72, 0.74, 0.74], [0.78, 0.8, 0.8]);
+      W.box(g, 0, -0.62, 0.301, 0.015, 1.28, 0.01, 0, [0.5, 0.52, 0.52]); for (let k = 0; k < 4; k++) W.box(g, 0.24, -0.5 + k * 0.08, 0.302, 0.3, 0.025, 0.01, 0, [0.52, 0.54, 0.54]);
+    }
   }
   function clearPropMeshes() { for (const k in propMeshes) { const m = propMeshes[k]; scene.remove(m); m.geometry.dispose(); } propMeshes = {}; }
   function setupProps(race) {
@@ -1666,6 +1716,7 @@ const Render = (function () {
     moki:     { fog: 0xc9d6e6, sun: 0xffeccc, sunI: 1.3, sky: 0x8fb6ee, gnd: 0x8a5a3c, hemiI: 0.62, tint: [1.03, 1.0, 0.96], sat: 1.1, sunOff: [-86, 82, 46] },   // the Moki Dugway: a clear afternoon over the Utah desert, a deep blue sky, the warm sun from the south-west (the cliff's red light bounced into the shade)
     cpalace:  { fog: 0xc9d3db, sun: 0xfff0d8, sunI: 1.08, sky: 0xcddcec, gnd: 0x4c5a32, hemiI: 0.62, tint: [1.02, 1.0, 0.96], sat: 1.02, sunOff: [-60, 74, 66] },   // Crystal Palace: a spring afternoon in south London, a soft English light with a little haze, the sun from the south-west
     riverside: { fog: 0xd9dfe3, sun: 0xffecc8, sunI: 1.3, sky: 0xc3d8f2, gnd: 0x8a7650, hemiI: 0.62, tint: [1.04, 1.0, 0.93], sat: 1.04, haze: 0.12, hazeCol: [1, 0.86, 0.66], sunOff: [-70, 74, 78] },   // Riverside: a clear, dry afternoon in southern California, the sun from the south-west, a little dust in the warm haze
+    monterey: { fog: 0xd8dfe4, sun: 0xfff0d2, sunI: 1.24, sky: 0xc6dbf0, gnd: 0x84724e, hemiI: 0.64, tint: [1.03, 1.0, 0.95], sat: 1.04, haze: 0.14, hazeCol: [0.94, 0.9, 0.84], sunOff: [-66, 74, 70] },   // Monterey: a clear afternoon in the coastal hills, the sun from the south-west, a little sea haze in the light
   };
   // each track's own grade on top (high quality, the post pass): its shadows and its highlights tinted apart, a little (split toning:
   // [shadows], [highlights]); cool shade and a warm sun mostly, the Riviera's teal and gold, Toskana's golden light, Spa's greyer air
@@ -1678,7 +1729,7 @@ const Render = (function () {
     tianmen: [[0.97, 1.0, 1.03], [1.02, 1.0, 0.98]],
     sani: [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]],
     moki: [[0.95, 0.99, 1.07], [1.05, 1.0, 0.94]], cpalace: [[0.97, 1.0, 1.04], [1.03, 1.0, 0.95]],
-    riverside: [[0.96, 0.99, 1.05], [1.06, 1.01, 0.92]] };
+    riverside: [[0.96, 0.99, 1.05], [1.06, 1.01, 0.92]], monterey: [[0.96, 0.99, 1.05], [1.05, 1.01, 0.93]] };
   THEMES.uncompahgre = { fog: 0xbfcfe0, sun: 0xfff0d8, sunI: 1.24, sky: 0xb8d0f0, gnd: 0x4c5236, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-70, 92, 62] };   // the Uncompahgre Gorge: a clear afternoon in the San Juans, the sun from the south-west over the cliffs, a crisp blue haze
   SPLIT.uncompahgre = [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]];
   SPLIT.iroha = [[0.96, 0.99, 1.05], [1.04, 1.0, 0.95]];   // (Irohazaka: cool shade under the maples, a warm autumn sun)
