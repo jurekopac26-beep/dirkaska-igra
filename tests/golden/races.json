@@ -1598,5 +1598,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "4c53c94c9086f66bc8a7b4f0"
+ },
+ "palomar/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 256.06,
+  "spins": 0,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "84ed22605e3f9e334d3f3102"
+ },
+ "palomar/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 278.27,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "12b0d7772d1d91941be5276e"
+ },
+ "palomar/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 227.97,
+  "spins": 0,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "3e871fa494e3f8aaadb38752"
+ },
+ "palomar/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 227.77,
+  "spins": 0,
+  "walls": 9,
+  "rescues": 0,
+  "nan": false,
+  "digest": "5ef7d2e0c5c565e06d64066c"
+ },
+ "palomar/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 256.6,
+  "spins": 0,
+  "walls": 7,
+  "rescues": 0,
+  "nan": false,
+  "digest": "cb6ea6dc6a85c8d23a48e888"
  }
 }

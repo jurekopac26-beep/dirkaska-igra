@@ -563,6 +563,25 @@
    "roadwear:MeshLambertMaterial": "fc990f68"
   }
  },
+ "palomar": {
+  "meshes": 2130,
+  "verts": 1127519,
+  "instances": 63597,
+  "props": 336,
+  "crowd": 986,
+  "world": "72fa185f",
+  "propsHash": "84bc7d65",
+  "floor": "bf9fc785/16856",
+  "groups": {
+   "-:MeshLambertMaterial": "4344c32",
+   "-:MeshBasicMaterial": "cb7ce791",
+   "-:MeshPhongMaterial": "8c97cd65",
+   "crowd:MeshLambertMaterial": "a04e24ca",
+   "ao:MeshBasicMaterial": "2611db6c",
+   "tyremarks:MeshBasicMaterial": "deae0f1",
+   "roadwear:MeshLambertMaterial": "acd3b5d6"
+  }
+ },
  "jezero": {
   "meshes": 154,
   "verts": 591648,

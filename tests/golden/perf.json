@@ -195,6 +195,13 @@
   "maxKverts": 376,
   "jsMs": 0.7
  },
+ "palomar": {
+  "calls": 256,
+  "maxCalls": 324,
+  "kverts": 760,
+  "maxKverts": 1218,
+  "jsMs": 1.01
+ },
  "jezero": {
   "calls": 278,
   "maxCalls": 330,
