@@ -26,10 +26,10 @@ const SETUPS = {
   race: { opts: raceOpts },
   demo: { opts: (C, tt, phys) => ({ numAI: 10, noPlayer: true, difficulty: 2, laps: 9999, seed: 11, phys }) },
   upg: { opts: (C, tt, phys) => ({ numAI: tt ? 0 : 12, playerGrid: tt ? 1 : 3, laps: 2, playerModel: C.MODELS[0], playerUpg: { motor: 3, gume: 2, zavore: 3, aero: 3 }, assist: 0, seed: 5, difficulty: 2, damage: 0, phys }) },
-  crash: { opts: raceOpts, drive: crashDrive, seconds: (T) => T.def.pit ? Math.max(80, Math.ceil(T.len / 30) + 20) : 60 },
-  formula: { opts: (C, tt, phys) => Object.assign(raceOpts(C, tt, phys), { playerModel: C.MODELS.find(m => m.id === 'formula') }), drive: crashDrive, seconds: (T) => T.def.pit ? Math.max(100, Math.ceil(T.len / 30) + 30) : 60 },   // (a field of formulas: 20 s more to reach the pit repair)
-  lm: { opts: (C, tt, phys) => Object.assign(raceOpts(C, tt, phys), { playerModel: C.MODELS.find(m => m.id === 'lm') }), drive: crashDrive, seconds: (T) => T.def.pit ? Math.max(100, Math.ceil(T.len / 30) + 30) : 60 },   // (a field of prototypes)
-  car: { opts: (C, tt, phys, tid) => Object.assign(raceOpts(C, tt, phys), { playerModel: C.MODELS.find(m => m.id === NEW_CARS[C.TRACKS.findIndex(d => d.id === tid) % NEW_CARS.length]) }), drive: crashDrive, seconds: (T) => T.def.pit ? Math.max(100, Math.ceil(T.len / 30) + 30) : 60 },   // (the truck is slow on tarmac: 20 s more to the pit repair)
+  crash: { opts: raceOpts, drive: crashDrive, seconds: (T) => CRASH_S[T.def.id] || (T.def.pit ? Math.max(80, Math.ceil(T.len / 30) + 20) : 60) },
+  formula: { opts: (C, tt, phys) => Object.assign(raceOpts(C, tt, phys), { playerModel: C.MODELS.find(m => m.id === 'formula') }), drive: crashDrive, seconds: (T) => CRASH_S[T.def.id] || (T.def.pit ? Math.max(100, Math.ceil(T.len / 30) + 30) : 60) },   // (a field of formulas: 20 s more to reach the pit repair)
+  lm: { opts: (C, tt, phys) => Object.assign(raceOpts(C, tt, phys), { playerModel: C.MODELS.find(m => m.id === 'lm') }), drive: crashDrive, seconds: (T) => CRASH_S[T.def.id] || (T.def.pit ? Math.max(100, Math.ceil(T.len / 30) + 30) : 60) },   // (a field of prototypes)
+  car: { opts: (C, tt, phys, tid) => Object.assign(raceOpts(C, tt, phys), { playerModel: C.MODELS.find(m => m.id === NEW_CARS[C.TRACKS.findIndex(d => d.id === tid) % NEW_CARS.length]) }), drive: crashDrive, seconds: (T) => CRASH_S[T.def.id] || (T.def.pit ? Math.max(100, Math.ceil(T.len / 30) + 30) : 60) },   // (the truck is slow on tarmac: 20 s more to the pit repair)
 };
 
 // the player in the crash set-up: autopilot, but from 6 s to 8.5 s full throttle and full left lock (into the barrier or
@@ -38,6 +38,8 @@ const SETUPS = {
 // starts earlier: Katu-Jaryk runs downhill from the start, by 6 s the car is in the plateau's fast left-hander at 140 km/h and the left
 // lock only grazes the inside barrier there; 1.5 s earlier every car of the crash set-ups goes off across the outside of the right-hander before it
 const CRASH_AT = { katu: 4.5 };
+// CRASH_S: a track whose crash runs need longer to reach the pit repair (Tokio: the walls close behind the pit exit, a slow lap of 2.6 km round to the pits)
+const CRASH_S = { tokio: 135 };
 function crashDrive(C, race, k) {
   const P = race.player, t = k * DT, stuck = P.stuckT > 3 || P.wrongT > 3, t0 = CRASH_AT[race.track.def.id] || 6;
   if (stuck) race.rescue(P);
