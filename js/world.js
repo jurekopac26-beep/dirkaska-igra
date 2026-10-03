@@ -23330,12 +23330,13 @@ const World = (function () {
     for (const p of roads) sgFill(G, p, 4);
     for (const p of grass) sgFill(G, p, 8);
     for (const b of bld) if (b.kind !== 5 && b.mh < 3) sgFill(G, [b.pts], 2);
+    const cons = S.cons ? sgPolys(S.cons) : []; for (const p of cons) sgFill(G, p, 16);   // (16: a building site)
     // the shore: the land's rings as segments in 16 m cells (sgShore: the distance to the nearest, + on the water)
     const SH = new Map(), sk = (a, b) => a * 65536 + b;
     for (const p of land) for (const r of p) for (let k = 0; k < r.length; k++) { const a = r[k], b = r[(k + 1) % r.length], L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.ceil(L / 8));
       for (let m = 0; m < n; m++) { const xa = a[0] + (b[0] - a[0]) * m / n, za = a[1] + (b[1] - a[1]) * m / n, xb = a[0] + (b[0] - a[0]) * (m + 1) / n, zb = a[1] + (b[1] - a[1]) * (m + 1) / n, key = sk(Math.floor((xa + xb) / 32) + 32768, Math.floor((za + zb) / 32) + 32768);
         let Lc = SH.get(key); if (!Lc) SH.set(key, Lc = []); Lc.push(xa, za, xb, zb); } }
-    SG = { def: T.def, land, roads, grass, bld, rcl, br, fur, trees, G, L8, SH, sk };
+    SG = { def: T.def, land, roads, grass, cons, bld, rcl, br, fur, trees, G, L8, SH, sk };
     return SG;
   }
   function sgCell(x, z) { const G = SG.G, i = Math.floor((x - G.x0) / 2), j = Math.floor((z - G.z0) / 2); if (i < 0 || j < 0 || i >= G.nx || j >= G.nz) return -1; return G.a[j * G.nx + i]; }
@@ -23398,6 +23399,15 @@ const World = (function () {
     for (const x of [-4, -0.5, 3]) for (const z of [-1.3, 1.3]) box(g, x, 0.6, z, 0.1, 1.5, 0.1, 0, [0.4, 0.3, 0.2]);
     return g.geometry();
   }
+  function sgShipGeo() {   // a ship at anchor in the strait (unit: 1 m): a dark hull with a pointed bow, rows of containers, the bridge aft
+    const g = new GB(), hull = [0.22, 0.24, 0.28], red = [0.55, 0.16, 0.12], wh = [0.92, 0.92, 0.9], CC = [[0.75, 0.22, 0.16], [0.18, 0.35, 0.6], [0.8, 0.62, 0.18], [0.3, 0.55, 0.35], [0.6, 0.6, 0.62]];
+    const P = [[-90, -15], [70, -15], [95, 0], [70, 15], [-90, 15]];
+    for (let k = 0; k < 5; k++) { const a = P[k], c = P[(k + 1) % 5]; g.quadO([a[0], -2, a[1]], [c[0], -2, c[1]], [c[0], 9, c[1]], [a[0], 9, a[1]], k === 4 ? hull : hull, [0, 4, 0]); g.quadO([a[0], -3, a[1]], [c[0], -3, c[1]], [c[0], -2, c[1]], [a[0], -2, a[1]], red, [0, 4, 0]); }
+    g.quadO([-90, 9, -15], [70, 9, -15], [70, 9, 15], [-90, 9, 15], [0.35, 0.3, 0.28], [0, 0, 0]); g.triO([70, 9, -15], [95, 9, 0], [70, 9, 15], [0.35, 0.3, 0.28], [80, 0, 0]);
+    for (let k = 0; k < 6; k++) box(g, -55 + k * 20, 9, 0, 17, 7 + (k % 3) * 2.6, 26, 0, CC[k % 5]);
+    box(g, -80, 9, 0, 14, 20, 26, 0, wh, wh); box(g, -84, 29, 0, 4, 9, 4, 0, [0.15, 0.15, 0.17]);
+    return g.geometry();
+  }
   function sgAtlas() {   // text boards (4 x 8 cells of 256 x 128): the turn numbers 1-19, the braking boards, generic words only
     const c = document.createElement('canvas'); c.width = 1024; c.height = 1024; const x = c.getContext('2d');
     const cell = (k, bg, fg, txt, px) => { const cx = (k % 4) * 256, cy = Math.floor(k / 4) * 128; x.fillStyle = bg; x.fillRect(cx, cy, 256, 128);
@@ -23417,6 +23427,7 @@ const World = (function () {
     const ownTex = (t) => { out.ownTex.push(t); return t; };
     out.bounds = { minX: -2300, maxX: 1000, minZ: -1300, maxZ: 1500 };
     const matV = new THREE.MeshLambertMaterial({ vertexColors: true }); out.matV = matV;
+    const scen = new Chunks(400), fac = new Chunks(400, true), facFar = new Chunks(900, true);
     const vcC = new Chunks(600);   // (the quay walls, the streets' paint, the trusses' chords, the viaducts: one mesh per 600 m square)
     const addC = (C, mat, cast, recv) => { for (const g of C.map.values()) addM(g, mat, cast, recv); };   // (Chunks: every chunk its own mesh, culled)
     const addM = (g, mat, cast, recv) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = recv !== false; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
@@ -23465,6 +23476,27 @@ const World = (function () {
       const grC = new Chunks(700, true), ac = [0.62, 0.62, 0.64];
       for (const p of P.roads) for (const [a, b, c] of sgTris(p)) { const U = (q) => [q[0] / 8, -q[1] / 8], y = SG_GY + 0.055; grC.get(a[0], a[1]).quadUp([a[0], y, a[1]], [b[0], y, b[1]], [c[0], y, c[1]], [c[0], y, c[1]], [ac, ac, ac, ac], [U(a), U(b), U(c), U(c)]); }
       addC(grC, new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true }), false);
+      // the building sites: bare red-brown earth, a blue hoarding round them (not across the circuit), tower cranes over the big ones
+      const gdC = new Chunks(700, true), dirt = [0.78, 0.6, 0.48], hb = [0.2, 0.42, 0.72], hw = [0.9, 0.9, 0.88];
+      for (const p of P.cons) {
+        for (const [a, b, c] of sgTris(p)) { const U = (q) => [q[0] / 6, -q[1] / 6], y = SG_GY + 0.045; gdC.get(a[0], a[1]).quadUp([a[0], y, a[1]], [b[0], y, b[1]], [c[0], y, c[1]], [c[0], y, c[1]], [dirt, dirt, dirt, dirt], [U(a), U(b), U(c), U(c)]); }
+        const r = p[0]; let ar = 0, cx = 0, cz = 0; for (let k = 0; k < r.length; k++) { const a = r[k], b = r[(k + 1) % r.length]; ar += a[0] * b[1] - b[0] * a[1]; cx += a[0]; cz += a[1]; } ar = Math.abs(ar) / 2; cx /= r.length; cz /= r.length;
+        for (let k = 0; k < r.length; k++) { const a = r[k], b = r[(k + 1) % r.length], L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.ceil(L / 6));
+          for (let m = 0; m < n; m++) { const xa = a[0] + (b[0] - a[0]) * m / n, za = a[1] + (b[1] - a[1]) * m / n, xb = a[0] + (b[0] - a[0]) * (m + 1) / n, zb = a[1] + (b[1] - a[1]) * (m + 1) / n;
+            if (inBar((xa + xb) / 2, (za + zb) / 2, 2)) continue; const g = vcC.get(xa, za), inn = [cx, 1, cz];
+            g.quadO([xa, SG_GY, za], [xb, SG_GY, zb], [xb, SG_GY + 2.1, zb], [xa, SG_GY + 2.1, za], hb, inn); g.quadO([xa, SG_GY + 2.1, za], [xb, SG_GY + 2.1, zb], [xb, SG_GY + 2.4, zb], [xa, SG_GY + 2.4, za], hw, inn); } }
+        const nc = ar > 8000 ? Math.min(3, Math.max(1, Math.round(ar / 45000))) : 0;
+        for (let k = 0, t = 0; k < nc && t < 40; t++) {   // a tower crane: a yellow lattice mast, its jib and counter-jib, the counterweight, the cab
+          const hh = (q) => { const v = Math.sin(cx * 3.1 + cz * 1.7 + t * 7.3 + q * 11.1) * 43758.5453; return v - Math.floor(v); }, x = cx + (hh(1) - 0.5) * Math.sqrt(ar) * 0.6, z = cz + (hh(2) - 0.5) * Math.sqrt(ar) * 0.6;
+          if (!inPoly(r, x, z) || inBar(x, z, 30)) continue; k++;
+          const H = 42 + hh(3) * 22, a = hh(4) * TAU, c = Math.cos(a), sn = Math.sin(a), g = scen.get(x, z), ye = [0.95, 0.72, 0.1], gr = [0.4, 0.4, 0.42];
+          box(g, x, SG_GY - 0.3, z, 4, 1.2, 4, a, [0.6, 0.6, 0.58]); box(g, x, SG_GY, z, 1.8, H, 1.8, a, ye, ye, true);
+          box(g, x + c * 22, SG_GY + H, z + sn * 22, 50, 1.4, 1.2, a, ye, ye); box(g, x - c * 9, SG_GY + H, z - sn * 9, 18, 1.4, 1.4, a, ye, ye);
+          box(g, x - c * 15, SG_GY + H - 2.2, z - sn * 15, 4, 2.4, 2.2, a, gr, gr); box(g, x + c * 1.6, SG_GY + H - 3, z + sn * 1.6, 2.2, 2.6, 2.2, a, [0.9, 0.9, 0.88], [0.9, 0.9, 0.88]);
+          box(g, x, SG_GY + H + 1.4, z, 1.2, 6, 1.2, a, ye, ye);
+        }
+      }
+      addC(gdC, new THREE.MeshLambertMaterial({ map: tex.sand, vertexColors: true }), false);
       const gm2C = vcC, wh = [0.9, 0.9, 0.86], ye = [0.92, 0.74, 0.16], y = SG_GY + 0.075;
       const strip = (A, B, o, wd, col, dash) => {   // a painted line along a segment A-B, offset o to its right, dashed (dash: [on, period]) or solid
         const dx = B[0] - A[0], dz = B[1] - A[1], L = Math.hypot(dx, dz); if (L < 0.5) return; const ux = dx / L, uz = dz / L, nx = -uz, nz = ux;
@@ -23534,7 +23566,6 @@ const World = (function () {
 
     /* ---- barriers: concrete blocks (light grey, a dark foot) under a debris fence 4 m high leaning in at the top, posts every 3 m; on the
        bridges the same. Scenery chunks: the light towers, the start gantry ---- */
-    const scen = new Chunks(400), fac = new Chunks(400, true), facFar = new Chunks(900, true);
     const conc = [0.8, 0.8, 0.78], concD = [0.52, 0.52, 0.5], concT = [0.88, 0.88, 0.86];
     {
       const fgC = new Chunks(500, true), fMat = new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide });
@@ -23619,7 +23650,7 @@ const World = (function () {
           isl.quadUp([a[0], y1, a[1]], [b[0], y1, b[1]], [c[0], y1, c[1]], [d[0], y1, d[1]], [kc, kc, kc, kc]);
           for (const [e, f] of [[a, b], [b, c], [c, d], [d, a]]) isl.quadO([e[0], SG_GY, e[1]], [f[0], SG_GY, f[1]], [f[0], y1, f[1]], [e[0], y1, e[1]], [0.7, 0.7, 0.68], [(a[0] + c[0]) / 2, 0, (a[1] + c[1]) / 2]);
           const sp = at(c1 + 1.1, 0); put('sign', sp[0], sp[1], Math.atan2(-uz, -ux), i, 0.3);
-          for (let t = c1 + 2.2; t < B - 1; t += 1.6) { const q = at(t, 0); ico(isl, q[0], SG_GY + 0.45, q[1], 0.55, 0.6, [0.22, 0.42, 0.16], R, 0.3); }   // (the island's shrubs)
+          for (let t = c1 + 2.2; t < B - 1; t += 1.6) { const q = at(t, 0); ico(isl, q[0], SG_GY + 0.45, q[1], 0.55, 0.6, Math.round(t) % 3 === 0 ? [0.84, 0.28, 0.55] : [0.22, 0.42, 0.16], R, 0.3); }   // (the island's shrubs)
         }
         // the two corners: where the side street's kerb meets the circuit's (k = -1 before the mouth, +1 after it)
         const cr = (k, t) => at(t, k * (hw + 1.3));
@@ -23797,7 +23828,10 @@ const World = (function () {
             g.quadO(p(A, -hw, ha - 1.4), p(C, -hw, hb - 1.4), p(C, hw, hb - 1.4), p(A, hw, ha - 1.4), under, [mid[0], mid[1] + 5, mid[2]]);
             for (const e of [-hw, hw]) { const o = [mid[0] + nx * e * 3, mid[1], mid[2] + nz * e * 3], ii = [mid[0] - nx * e * 3, mid[1], mid[2] - nz * e * 3];
               g.quadO(p(A, e, ha - 1.4), p(C, e, hb - 1.4), p(C, e, hb + 1.0), p(A, e, ha + 1.0), side, ii);
-              const e2 = e - Math.sign(e) * 0.3; g.quadO(p(A, e2, ha), p(C, e2, hb), p(C, e2, hb + 1.0), p(A, e2, ha + 1.0), par, o); g.quadO(p(A, e, ha + 1.0), p(C, e, hb + 1.0), p(C, e2, hb + 1.0), p(A, e2, ha + 1.0), par, [mid[0], mid[1] - 5, mid[2]]); }
+              const e2 = e - Math.sign(e) * 0.3; g.quadO(p(A, e2, ha), p(C, e2, hb), p(C, e2, hb + 1.0), p(A, e2, ha + 1.0), par, o);
+              const fl = (k + m) % 3 === 0 ? [0.32, 0.5, 0.22] : (k + m) % 3 === 1 ? [0.86, 0.26, 0.56] : [0.78, 0.3, 0.62];   // (the planters along the parapets: bougainvillea in flower)
+              g.quadO(p(A, e, ha + 1.0), p(C, e, hb + 1.0), p(C, e2, hb + 1.0), p(A, e2, ha + 1.0), fl, [mid[0], mid[1] - 5, mid[2]]);
+              g.quadO(p(A, e, ha + 0.55), p(C, e, hb + 0.55), p(C, e, hb + 1.0), p(A, e, ha + 1.0), fl, ii); }
             pierAcc += t1 - t0;
             if (pierAcc > 32 && ha > 3) { pierAcc = 0; const q = T.query(A[0], A[1], -1, Q); if (!(Math.abs(q.d) < (q.d > 0 ? q.br : q.bl) + 1.5)) {
               box(scen.get(A[0], A[1]), A[0], SG_WL - 0.5, A[1], 1.6, ha - 1.4 - SG_WL + 0.5 + SG_GY, Math.max(2, b.w * 0.55), Math.atan2(uz, ux), [0.66, 0.65, 0.62]); } }
@@ -23838,9 +23872,9 @@ const World = (function () {
     let nTrees = 0;
     {
       const hs = (x, z, k) => { const v = Math.sin(x * 12.9898 + z * 78.233 + k * 37.719) * 43758.5453; return v - Math.floor(v); };
-      const Q = {}, maxT = Math.round(1900 * dens);
+      const Q = {}, maxT = Math.round(1700 * dens);
       const plant = (x, z, own) => {
-        if (nTrees >= maxT) return; const c = sgCell(x, z); if (c >= 0 ? !(c & 1) || (c & 2) || (!own && (c & 4)) : !sgLand(x, z)) return;
+        if (nTrees >= maxT) return; const c = sgCell(x, z); if (c >= 0 ? !(c & 1) || (c & 18) || (!own && (c & 4)) : !sgLand(x, z)) return;
         const q = T.query(x, z, -1, Q), ex = Math.abs(q.d) - (q.d > 0 ? q.br : q.bl); if (ex < 7 || (q.k >= 0) || (!own && (ex > 220 || (ex > 90 && hs(x, z, 9) < 0.55)))) return;   // (well off the barriers: the views from above and behind see the cars)
         const h1 = hs(x, z, 1), shore = Math.abs(sgShore(x, z)) < 22, sp = shore && own && h1 < 0.5 ? 2 : shore && h1 < 0.15 ? 2 : h1 < 0.08 ? 3 : (c & 8) || h1 < 0.55 ? 0 : 1;
         const hgt = sp === 0 ? 8.5 + hs(x, z, 2) * 4 : sp === 1 ? 6.5 + hs(x, z, 2) * 4 : sp === 2 ? 8 + hs(x, z, 2) * 6 : 1.4 + hs(x, z, 2) * 1.2;
@@ -23899,6 +23933,10 @@ const World = (function () {
         boatC.add(x, SG_WL + 0.05, z, rot, 1, 1, BC[k % 3]); k++; nBoats++;
       }
       boatC.addTo(root, true);
+      // ships at anchor out in the strait to the south (the view over the bay and the sea)
+      const shipC = new IChunks(sgShipGeo(), matV, 2000);
+      for (let k = 0; k < 14; k++) { const x = -1600 + ((k * 397) % 4200), z = 1750 + ((k * 263) % 1500); shipC.add(x, SG_WL, z, (k * 1.37) % TAU, 1, 1); }
+      shipC.addTo(root, false);
     }
     /* ---- grandstands (where the buildings and the water leave room: def.stands) packed with fans, roofed ones over the pit straight, the
        Padang and the bay; spectators standing at the corners and along the fences ---- */
