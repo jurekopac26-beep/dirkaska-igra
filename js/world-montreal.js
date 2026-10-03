@@ -27,12 +27,13 @@
     let z0 = 1e9, z1 = -1e9; for (const r of rings) for (const p of r) { z0 = Math.min(z0, p[1]); z1 = Math.max(z1, p[1]); }
     const j0 = Math.max(0, Math.floor((z0 - G.z0) / G.c)), j1 = Math.min(G.nz - 1, Math.ceil((z1 - G.z0) / G.c)), xs = [];
     for (let j = j0; j <= j1; j++) {
-      const z = G.z0 + (j + 0.5) * G.c; xs.length = 0;
+      const z = G.z0 + j * G.c; xs.length = 0;
       for (const r of rings) for (let a = 0, b = r.length - 1; a < r.length; b = a++) { const za = r[a][1], zb = r[b][1]; if ((za > z) !== (zb > z)) xs.push(r[a][0] + (z - za) / (zb - za) * (r[b][0] - r[a][0])); }
       xs.sort((p, q) => p - q);
-      for (let k = 0; k + 1 < xs.length; k += 2) { const i0 = Math.max(0, Math.ceil((xs[k] - G.x0) / G.c - 0.5)), i1 = Math.min(G.nx - 1, Math.floor((xs[k + 1] - G.x0) / G.c - 0.5)); for (let i = i0; i <= i1; i++) M[j * G.nx + i] = v; }
+      for (let k = 0; k + 1 < xs.length; k += 2) { const i0 = Math.max(0, Math.ceil((xs[k] - G.x0) / G.c)), i1 = Math.min(G.nx - 1, Math.floor((xs[k + 1] - G.x0) / G.c)); for (let i = i0; i <= i1; i++) M[j * G.nx + i] = v; }
     }
   }
+  // (the grid's vertices: (x0 + i c, z0 + j c))
   // two-pass chamfer distance (metres) to the cells where seed(k) is true
   function chamfer(G, seed) {
     const n = G.nx * G.nz, D = new Float32Array(n), c = G.c, d2 = c * Math.SQRT2;
@@ -65,18 +66,38 @@
     // distance to the circuit's centre line: its samples seeded, then the chamfer
     const seedT = new Uint8Array(n); for (let i = 0; i < T.N; i++) { const a = Math.round((T.px[i] - G.x0) / c), b = Math.round((T.pz[i] - G.z0) / c); if (a >= 0 && b >= 0 && a < G.nx && b < G.nz) seedT[b * G.nx + a] = 1; }
     const dT = chamfer(G, (k) => seedT[k] === 1);
+    { const TH = new Map(), TC = 16;   // within 45 m of the road the true distance to its centre line (the chamfer's octagons would step the banks)
+      for (let i = 0; i < T.N; i++) { const key = Math.floor(T.px[i] / TC) * 65536 + Math.floor(T.pz[i] / TC); let L = TH.get(key); if (!L) TH.set(key, L = []); L.push(i); }
+      for (let k = 0; k < n; k++) { if (dT[k] > 45) continue; const x = G.x0 + (k % G.nx) * c, z = G.z0 + Math.floor(k / G.nx) * c, a0 = Math.floor(x / TC), b0 = Math.floor(z / TC); let best = 1e18;
+        for (let a = a0 - 3; a <= a0 + 3; a++) for (let b = b0 - 3; b <= b0 + 3; b++) { const L = TH.get(a * 65536 + b); if (!L) continue;
+          for (const i of L) { const j = (i + 1) % T.N, ax = T.px[i], az = T.pz[i], vx = T.px[j] - ax, vz = T.pz[j] - az, t = clamp(((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz || 1e-9), 0, 1), dx = x - ax - vx * t, dz = z - az - vz * t, dd = dx * dx + dz * dz; if (dd < best) best = dd; } }
+        dT[k] = Math.sqrt(best); } }
+    // near the shores the true distance to the water's outline (the polygons' edges, hashed in 16 m cells): smooth banks, no steps
+    const EH = new Map(), EC = 16;
+    for (const [, rings] of D.water) for (const r of rings) for (let a = 0, b = r.length - 1; a < r.length; b = a++) {
+      const ax = r[b][0], az = r[b][1], bx = r[a][0], bz = r[a][1]; if (Math.max(ax, bx) < G.x0 - 20 || Math.min(ax, bx) > G.x0 + G.nx * c + 20 || Math.max(az, bz) < G.z0 - 20 || Math.min(az, bz) > G.z0 + G.nz * c + 20) continue;
+      for (let qa = Math.floor(Math.min(ax, bx) / EC); qa <= Math.floor(Math.max(ax, bx) / EC); qa++) for (let qb = Math.floor(Math.min(az, bz) / EC); qb <= Math.floor(Math.max(az, bz) / EC); qb++) { const key = qa * 65536 + qb; let L = EH.get(key); if (!L) EH.set(key, L = []); L.push(ax, az, bx, bz); } }
+    const edgeD = (x, z) => { let best = 1e9; const a0 = Math.floor(x / EC), b0 = Math.floor(z / EC);
+      for (let a = a0 - 1; a <= a0 + 1; a++) for (let b = b0 - 1; b <= b0 + 1; b++) { const L = EH.get(a * 65536 + b); if (!L) continue;
+        for (let q = 0; q < L.length; q += 4) { const ax = L[q], az = L[q + 1], vx = L[q + 2] - ax, vz = L[q + 3] - az, t = clamp(((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz || 1e-9), 0, 1), dx = x - ax - vx * t, dz = z - az - vz * t, dd = dx * dx + dz * dz; if (dd < best) best = dd; } }
+      return Math.sqrt(best); };
     const H = new Float32Array(n), SD = new Float32Array(n);
     for (let k = 0; k < n; k++) {
-      const sd = wet[k] ? -sdL[k] + c * 0.5 : sdW[k] - c * 0.5; SD[k] = sd;   // (+ on the land, metres to the waterline)
-      let h = sd > 0 ? lerp(WL - 0.5, -0.14, sstep(0, 9, sd)) : WL - 0.5 - Math.min(3.2, -sd * 0.35);
-      if (dT[k] < 30) h = Math.max(h, lerp(-0.14, h, sstep(18, 30, dT[k])));   // (the circuit stays on the island's level)
-      if (dT[k] < 26) h = Math.max(h, lerp(-0.03, -0.14, sstep(17, 26, dT[k])));   // (the verges inside the barriers level with the road's edge)
+      let sd = wet[k] ? -sdL[k] : sdW[k];
+      if (Math.abs(sd) < 14) { const e = edgeD(G.x0 + (k % G.nx) * c, G.z0 + Math.floor(k / G.nx) * c); if (e < 15) sd = wet[k] ? -e : e; }
+      SD[k] = sd;   // (+ on the land, metres to the waterline)
+      // the height, from the distance to the water only near its edge (a smooth waterline): the bed under the water, the bank rising out of it,
+      // steep (3 m) beside the circuit, where the verges stay level with the road, gentle (9 m) elsewhere
+      const tgt = dT[k] < 26 ? lerp(-0.03, -0.14, sstep(17, 26, dT[k])) : -0.14;
+      let h;
+      if (sd <= 0) h = WL - 0.35 + Math.max(-3.2, sd * 0.4);
+      else h = lerp(lerp(WL - 0.35, tgt, sstep(0, 3, sd)), lerp(WL - 0.35, tgt, sstep(0, 9, sd)), sstep(26, 40, dT[k]));
       H[k] = h;
     }
     for (const [d, sd, ang, hw] of T.def.junctions || []) {   // (a junction's mouth: the ground level with the road, the furniture stands on it)
-      const half = hw / Math.max(0.35, Math.sin(ang * Math.PI / 180)) + 4.5, JO = T.def.junctionOff || 11.5;
-      for (let q = -half - 2; q <= half + 2; q += 1.5) for (let l = T.w; l <= T.w + JO + 1; l += 1.5) { const p = K.atSf(((T.startS + d + q) % T.len + T.len) % T.len, sd * l), a = Math.round((p[0] - G.x0) / c), b = Math.round((p[1] - G.z0) / c);
-        for (let e = -1; e <= 1; e++) for (let f = -1; f <= 1; f++) { const kk = (b + f) * G.nx + a + e; if (kk >= 0 && kk < n) H[kk] = Math.max(H[kk], -0.02); } }
+      const a = ang * Math.PI / 180, JO = T.def.junctionOff || 11.5, ct = Math.cos(a) / Math.sin(a), e = hw / Math.sin(a), qa = Math.min(T.w * ct, (T.w + JO) * ct) - e - 4.5, qb = Math.max(T.w * ct, (T.w + JO) * ct) + e + 4.5;
+      for (let q = qa - 2; q <= qb + 2; q += 1.5) for (let l = T.w; l <= T.w + JO + 1; l += 1.5) { const p = K.atSf(((T.startS + d + q) % T.len + T.len) % T.len, sd * l), ia = Math.round((p[0] - G.x0) / c), ib = Math.round((p[1] - G.z0) / c);
+        for (let ee = -1; ee <= 1; ee++) for (let f = -1; f <= 1; f++) { const kk = (ib + f) * G.nx + ia + ee; if (kk >= 0 && kk < n && SD[kk] > 3) H[kk] = Math.max(H[kk], -0.02); } }
     }
     MG = Object.assign(G, { wet, kind, H, SD, dT, x1: G.x0 + (G.nx - 1) * c, z1: G.z0 + (G.nz - 1) * c });
     return MG;
@@ -130,42 +151,50 @@
     out.dyn.step = (t, car, cam) => { ships(t); far(cam); fade(t, car); };
     tag(() => scen.addTo(root, matV, true, true), 'mtScen');
     K.crowdFinish(ctx.CR, root, out);
-    out.junctionProps = ctx.nJ || 0;
+    out.junctionProps = ctx.nJ || 0; out.mg = MG;
+    { let m = 1e9; for (let k = 0; k < MG.dT.length; k++) if (MG.SD[k] < 0) m = Math.min(m, MG.dT[k]); out.waterNear = m; }   // (how close the water comes to the centre line)
     return out;
   }
 
-  /* ---- the ground mesh: 256 m chunks of the 4 m grid (cells deep under the water left out), coloured by the land's kind; the grass map ---- */
-  const KCOL = [[0.68, 0.74, 0.56], [0.52, 0.6, 0.42], [0.8, 0.8, 0.8], [0.6, 0.62, 0.55], [1.55, 1.38, 1.0], [0.78, 0.78, 0.8], [0.95, 1.05, 0.7], [0.82, 1.08, 0.66], [0.95, 0.93, 0.88]];
+  /* ---- the ground mesh: 256 m chunks of the 4 m grid (cells deep under the water left out), one grass material, the land's kind in its
+     vertex colours (soft edges); the car parks, plazas and beaches on top as their own OSM outlines (crisp edges) ---- */
+  const KCOL = [[0.68, 0.74, 0.56], [0.52, 0.6, 0.42], [0.66, 0.66, 0.6], [0.6, 0.62, 0.55], [0.86, 0.82, 0.62], [0.62, 0.64, 0.58], [0.95, 1.05, 0.7], [0.82, 1.08, 0.66], [0.72, 0.72, 0.66]];
   function mtGroundMesh(C) {
     const G = MG, mat = new THREE.MeshLambertMaterial({ map: C.tex.grass, vertexColors: true }), grp = new THREE.Group(); C.root.add(grp); C.out.ground = grp;
-    const pav = new THREE.MeshLambertMaterial({ map: C.tex.asphalt, vertexColors: true }), sand = new THREE.MeshLambertMaterial({ map: C.tex.sand, vertexColors: true }), plz = new THREE.MeshLambertMaterial({ map: C.tex.paving, vertexColors: true });
     const S = 64;   // cells per chunk side (256 m)
     for (let cj = 0; cj < G.nz - 1; cj += S) for (let ci = 0; ci < G.nx - 1; ci += S) {
       const ni = Math.min(S, G.nx - 1 - ci), nj = Math.min(S, G.nz - 1 - cj);
-      const P = [], Cl = [], U = [], I = [[], [], [], []];   // (index lists per material: grass, asphalt (car parks, built-up), sand, paving (plazas))
-      let any = false;
+      const P = [], Cl = [], U = [], I = [];
       for (let j = 0; j <= nj; j++) for (let i = 0; i <= ni; i++) {
         const k = (cj + j) * G.nx + ci + i, x = G.x0 + (ci + i) * G.c, z = G.z0 + (cj + j) * G.c, h = G.H[k], kd = G.wet[k] ? 3 : G.kind[k];
         const n1 = hash(ci + i, cj + j), n2 = 0.92 + 0.16 * Math.sin(x * 0.031 + Math.sin(z * 0.027) * 2) * Math.sin(z * 0.023 + x * 0.007);
         let col = KCOL[kd].map(v => v * n2 * (0.96 + 0.08 * n1));
-        const sd = G.SD[k]; if (sd < 6) { const t = sstep(6, 0, sd); col = [lerp(col[0], 0.78, t), lerp(col[1], 0.74, t), lerp(col[2], 0.62, t)]; }   // (the banks: stony, rip-rap)
+        const sd = G.SD[k]; if (sd < 5) { const t = sstep(5, 0.5, sd); col = [lerp(col[0], 0.72, t), lerp(col[1], 0.69, t), lerp(col[2], 0.6, t)]; }   // (the banks: stony, rip-rap)
         if (h < WL) { const t = sstep(WL, WL - 2, h); col = [lerp(col[0], 0.42, t), lerp(col[1], 0.42, t), lerp(col[2], 0.36, t)]; }
         P.push(x, h, z); Cl.push(col[0], col[1], col[2]); U.push(x / 14, -z / 14);
       }
       const W1 = ni + 1;
       for (let j = 0; j < nj; j++) for (let i = 0; i < ni; i++) {
-        const a = j * W1 + i, b = a + 1, c = a + W1, d = c + 1, k = (cj + j) * G.nx + ci + i;
+        const a = j * W1 + i, b = a + 1, c = a + W1, d = c + 1;
         if (Math.max(P[a * 3 + 1], P[b * 3 + 1], P[c * 3 + 1], P[d * 3 + 1]) < WL - 0.6) continue;   // (deep under the water)
-        const kd = G.wet[k] ? 3 : G.kind[k], m = kd === 5 || kd === 2 ? 1 : kd === 4 ? 2 : kd === 8 ? 3 : 0;
-        I[m].push(a, c, b, b, c, d); any = true;
+        I.push(a, c, b, b, c, d);
       }
-      if (!any) continue;
+      if (!I.length) continue;
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(Cl, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2));
-      const all = I[0].concat(I[1], I[2], I[3]); g.setIndex(all); g.computeVertexNormals(); g.clearGroups();
-      let o = 0; [mat, pav, sand, plz].forEach((mm, q) => { if (I[q].length) g.addGroup(o, I[q].length, q); o += I[q].length; });
-      g.computeBoundingSphere();
-      const m = new THREE.Mesh(g, [mat, pav, sand, plz]); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m);
+      g.setIndex(I); g.computeVertexNormals(); g.computeBoundingSphere();
+      const m = new THREE.Mesh(g, mat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m);
     }
+    // the car parks (asphalt), the plazas (paving) and the beaches (sand): OSM outlines, a few cm over the ground
+    const OV = { parking: [C.tex.asphalt, [0.8, 0.8, 0.82], 8], pedestrian: [C.tex.paving, [0.95, 0.93, 0.88], 3], plaza: [C.tex.paving, [0.95, 0.93, 0.88], 3], sand: [C.tex.sand, [1.0, 0.95, 0.8], 6], beach: [C.tex.sand, [1.0, 0.95, 0.8], 6] };
+    const ov = {}, near = C.near;
+    for (const [cl, ring] of C.D.lu) { const o = OV[cl]; if (!o || ring.length < 3) continue;
+      const pts = ring.map(p => new THREE.Vector2(p[0], p[1])); if (THREE.ShapeUtils.isClockWise(pts)) pts.reverse();
+      let tris; try { tris = THREE.ShapeUtils.triangulateShape(pts, []); } catch (e) { continue; }
+      const key = cl === 'beach' ? 'sand' : cl === 'plaza' ? 'pedestrian' : cl, g = ov[key] || (ov[key] = new K.Chunks(256, true)), y = (p) => Math.max(mtGround(p.x, p.y), WL + 0.05) + 0.04;
+      for (const [a, b, c] of tris) { const A = pts[a], B = pts[b], Cc = pts[c], m = [(A.x + B.x + Cc.x) / 3, (A.y + B.y + Cc.y) / 3]; if (near(m[0], m[1]).d < 0.5) continue;
+        g.get(m[0], m[1]).quadUp([A.x, y(A), A.y], [B.x, y(B), B.y], [Cc.x, y(Cc), Cc.y], [Cc.x, y(Cc), Cc.y], [o[1], o[1], o[1], o[1]], [[A.x / o[2], -A.y / o[2]], [B.x / o[2], -B.y / o[2]], [Cc.x / o[2], -Cc.y / o[2]], [Cc.x / o[2], -Cc.y / o[2]]]); }
+    }
+    for (const k in ov) { const o = OV[k]; ov[k].addTo(grp, new THREE.MeshLambertMaterial({ map: o[0], vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }), false, true); }
   }
 
   /* ---- the water: one plane at the water's level (the river, the seaway, the rowing basin, the lake, the canals: the ground keeps it out where
@@ -512,9 +541,9 @@
         const row = Math.round(b / 6.2), x = cx + ux * a + vx * b, z = cz + uz * a + vz * b;
         if (!K.inPoly(ring, x, z) || K.polyDist(ring, x, z) < 1.5 || near(x, z).d < 2 || C.excluded(x, z)) continue;
         const ins = ring.length > 2;
-        if (ins && Math.abs(row) % 2 === 0) { const g = mark.get(x, z), p = (s, t) => [x + ux * s + vx * t, -0.08, z + uz * s + vz * t]; g.quadUp(p(-1.3, -2.6), p(-1.18, -2.6), p(-1.18, 2.6), p(-1.3, 2.6), [W1, W1, W1, W1]); }
+        if (ins && Math.abs(row) % 2 === 0) { const g = mark.get(x, z), yb = Math.max(mtGround(x, z), WL + 0.05) + 0.06, p = (s, t) => [x + ux * s + vx * t, yb, z + uz * s + vz * t]; g.quadUp(p(-1.3, -2.6), p(-1.18, -2.6), p(-1.18, 2.6), p(-1.3, 2.6), [W1, W1, W1, W1]); }
         if (R() < 0.5 && C.near(x, z).d < 260) { const yaw = Math.atan2(vz, vx) + (R() < 0.5 ? Math.PI : 0) + (R() - 0.5) * 0.06, col = CARC[Math.floor(R() * CARC.length)], k = 0.85 + 0.25 * R();
-          cars.add(x + ux * (R() - 0.5) * 0.3, -0.1, z + uz * (R() - 0.5) * 0.3, -yaw, 1, 1, [col[0] * k, col[1] * k, col[2] * k]); nCars++; }
+          cars.add(x + ux * (R() - 0.5) * 0.3, Math.max(mtGround(x, z), WL + 0.05) + 0.04, z + uz * (R() - 0.5) * 0.3, -yaw, 1, 1, [col[0] * k, col[1] * k, col[2] * k]); nCars++; }
       }
     }
     cars.addTo(root, true); C.out.parkedCars = nCars;
@@ -786,7 +815,7 @@
     const { D } = C, F = D.far, n = F.n, raw = b64(F.b64), G = MG, P0 = [], Cl = [], I = [];
     const H = (i, j) => raw[clamp(j, 0, n - 1) * n + clamp(i, 0, n - 1)] * F.step + F.base;
     // water on the coarse grid: the OSM water polygons at the grid's own vertices
-    const wet = new Uint8Array(n * n), WG = { x0: F.x0 - F.cell / 2, z0: F.z0 - F.cell / 2, c: F.cell, nx: n, nz: n };
+    const wet = new Uint8Array(n * n), WG = { x0: F.x0, z0: F.z0, c: F.cell, nx: n, nz: n };
     for (const [, rings] of D.water) rasterPoly(wet, WG, rings, 1);
     const inNear = (x, z) => x > G.x0 + 60 && x < G.x1 - 60 && z > G.z0 + 60 && z < G.z1 - 60;
     for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
