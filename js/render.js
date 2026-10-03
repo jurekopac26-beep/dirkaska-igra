@@ -1557,6 +1557,29 @@ const Render = (function () {
       const wh = [0.95, 0.95, 0.93], bk = [0.08, 0.08, 0.09], rf = [1, 0.45, 0.08];
       W.box(g, 0, -0.65, 0, 0.14, 1.2, 0.14, 0, wh, wh); W.box(g, 0, 0.18, 0, 0.146, 0.22, 0.146, 0, bk, bk);
       for (const x of [-0.074, 0.074]) W.box(g, x, 0.22, 0, 0.012, 0.12, 0.09, 0, rf, rf); }
+    else if (kind === 'signal' || kind === 'lamp') {   // street furniture: a grey pole on its foot (at -h0), the arm along +x; the signal's head hangs at its end, lenses both ways, a pedestrian head on the pole
+      const gr = [0.5, 0.52, 0.54], grD = [0.36, 0.37, 0.4], H = kind === 'lamp' ? 4.0 : 2.6, arm = kind === 'lamp' ? 1.7 : 3.4, bk = [0.07, 0.07, 0.08];
+      W.cyl(g, 0, -H - 0.1, 0, 0.13, 0.35, 8, grD, null, 0.11); W.cyl(g, 0, -H + 0.25, 0, 0.09, 2 * H - 0.25, 8, gr, gr, 0.07);
+      W.box(g, arm / 2, H - 0.12, 0, arm, 0.1, 0.1, 0, gr, gr);
+      if (kind === 'lamp') { W.box(g, arm, H - 0.22, 0, 0.7, 0.16, 0.3, 0, [0.42, 0.44, 0.46], [0.55, 0.57, 0.6]); W.box(g, arm, H - 0.31, 0, 0.5, 0.02, 0.22, 0, [1, 0.95, 0.8], null); }
+      else {
+        const lens = [[0.95, 0.15, 0.1], [0.4, 0.3, 0.05], [0.08, 0.3, 0.12]], head = (x, y0) => { W.box(g, x, y0, 0, 0.36, 1.0, 0.28, 0, bk, bk);
+          for (let k = 0; k < 3; k++) for (const sz of [-1, 1]) W.box(g, x, y0 + 0.72 - k * 0.3, sz * 0.145, 0.2, 0.2, 0.02, 0, lens[k], lens[k]); };
+        head(arm - 0.15, H - 1.2); head(0.3, -0.1);
+        W.box(g, -0.24, -0.7, 0, 0.3, 0.6, 0.26, 0, bk, bk); W.box(g, -0.24, -0.6, 0.14, 0.2, 0.18, 0.01, 0, [0.95, 0.2, 0.1], null); W.box(g, -0.24, -0.82, 0.14, 0.2, 0.18, 0.01, 0, [0.85, 0.95, 0.9], null); }   // (the walking man, the red hand)
+    } else if (kind === 'sign') {   // a generic regulatory plate on a grey post: white, a red rim, both ways
+      const gr = [0.5, 0.52, 0.54], rd = [0.82, 0.12, 0.1];
+      W.box(g, 0, -1.35, 0, 0.07, 2.4, 0.07, 0, gr, gr); W.box(g, 0, 0.75, 0, 0.05, 0.6, 0.6, 0, rd, rd); W.box(g, 0, 0.75, 0, 0.056, 0.46, 0.46, 0, white, null);
+    } else if (kind === 'bollard') {   // a concrete bollard, a dark band
+      W.cyl(g, 0, -0.55, 0, 0.12, 0.92, 7, [0.72, 0.71, 0.68], [0.78, 0.77, 0.74], 0.11); W.cyl(g, 0, 0.18, 0, 0.115, 0.1, 7, [0.2, 0.2, 0.22], null);
+    } else if (kind === 'bin') {   // a small orange litter bin on its post
+      W.box(g, 0, -0.6, 0, 0.06, 0.9, 0.06, 0, [0.4, 0.42, 0.44], null); W.cyl(g, 0, -0.05, 0, 0.24, 0.5, 8, [0.95, 0.5, 0.1], [0.12, 0.12, 0.12], 0.21);
+    } else if (kind === 'hydrant') {   // red, a yellow cap
+      const red = [0.8, 0.12, 0.08], yl = [0.95, 0.78, 0.12];
+      W.cyl(g, 0, -0.4, 0, 0.17, 0.08, 7, red, red); W.cyl(g, 0, -0.32, 0, 0.13, 0.55, 7, red, red); W.cone(g, 0, 0.23, 0, 0.14, 0.14, 7, yl, yl, 0); W.box(g, 0, -0.02, 0, 0.42, 0.1, 0.1, 0, yl, yl);
+    } else if (kind === 'cabinet') {   // a grey electrical cabinet on a plinth
+      W.box(g, 0, -0.65, 0, 0.84, 0.12, 0.54, 0, [0.6, 0.6, 0.58], [0.66, 0.66, 0.64]); W.box(g, 0, -0.53, 0, 0.78, 1.15, 0.48, 0, [0.62, 0.64, 0.62], [0.55, 0.57, 0.55]);
+      W.box(g, 0, -0.1, 0.245, 0.01, 0.8, 0.012, 0, [0.3, 0.32, 0.3], null); }
     return g.geometry();
   }
   function clearPropMeshes() { for (const k in propMeshes) { const m = propMeshes[k]; scene.remove(m); m.geometry.dispose(); } propMeshes = {}; }
