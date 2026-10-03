@@ -121,7 +121,7 @@
     const scen = new Chunks(512), scenN = new Chunks(700);   // vertex-coloured scenery: casting shadows, and the thin or low things not
     const wl = [0.95, 0.95, 0.92], yl = [0.96, 0.78, 0.15];
     const conc = [0.86, 0.85, 0.81], concK = [0.66, 0.65, 0.62], asph = [0.82, 0.82, 0.84], pathC = WET ? [0.82, 0.8, 0.74] : [0.84, 0.8, 0.72];
-    let nStreet = 0, nHyd = 0; const stMarks = [], kerbCars = [], scenH = new Chunks(700);   // (scenH: the hydrants' markers, small: no shadows)
+    let nStreet = 0, nHyd = 0; const stMarks = [], kerbCars = [];
     for (const S of ST) {
       if (S.circ) continue;
       const P = S.P, pts = [];
@@ -166,7 +166,7 @@
         for (let k = 0; k + 1 < pts.length; k++) { const [x, z] = pts[k], [x2, z2] = pts[k + 1], [nx, nz] = nr[k], l = Math.hypot(x2 - x, z2 - z); acc += l; if (acc < 90) continue; acc = 0;
           const q = near(x, z, 20); if (q.i >= 0 && q.dd < barO(q.i, q.lat > 0 ? 1 : -1) - WA[q.i] + 3) continue;
           const y = groundH(x, z) + yOff, bl = [0.15, 0.35, 0.85]; stMarks.push([[x - 0.12, y + 0.02, z - 0.12], [x + 0.12, y + 0.02, z - 0.12], [x + 0.12, y + 0.02, z + 0.12], [x - 0.12, y + 0.02, z + 0.12], bl]);
-          const sd = k % 2 ? 1 : -1, px = x + nx * sd * (hw + 0.8), pz = z + nz * sd * (hw + 0.8), g = scenH.get(px, pz), gy = groundH(px, pz); if (onRoad(px, pz, S.k, 0.1)) continue;
+          const sd = k % 2 ? 1 : -1, px = x + nx * sd * (hw + 0.8), pz = z + nz * sd * (hw + 0.8), g = scenN.get(px, pz), gy = groundH(px, pz); if (onRoad(px, pz, S.k, 0.1)) continue;
           box(g, px, gy, pz, 0.08, 0.95, 0.08, 0, [0.94, 0.94, 0.92]); box(g, px, gy + 0.7, pz, 0.2, 0.22, 0.03, Math.atan2(nz, nx) + Math.PI / 2, bl); nHyd++; } }
       nStreet++;
     }
@@ -250,7 +250,7 @@
       return g.row(p, c);
     };
     {
-      const CH = 720;
+      const CH = 360;
       for (let c0 = 0; c0 < N; c0 += CH) {
         const g = new RB(), gf = new RB(true);
         for (const sd of [-1, 1]) { let pw = -1, pf = -1;
@@ -436,7 +436,10 @@
     const plant = (x, z, kind, ht) => { const h = ht || (kind < 2 ? 9 + R() * 8 : kind === 2 ? 9 + R() * 7 : kind === 3 ? 7 + R() * 4 : 6 + R() * 3);
       const sx = kind < 2 ? h : kind === 2 ? h * 1.25 : kind === 4 ? h * 1.3 : h * 0.95, crown = kind < 2 ? sx * 0.36 : sx * 0.5;   // (the crown's reach: kept off the track's fence)
       if (!treeOk(x, z, kind < 2 ? Math.max(1.5, crown - 2) : crown + 1)) return false;
-      (near(x, z, 130).dd < 120 ? TCH : TCF)[kind].add(x, groundH(x, z) - 0.1, z, R() * TAU, sx, h, kind === 4 || kind === 5 ? vary([1, 1, 1], R, 0.12) : vary([1, 1, 1], R, WET ? 0.14 : 0.2).map((c, q) => c * (WET ? 1 : [1.1, 1.0, 0.85][q]))); nTrees++; return true; };
+      const nearT = near(x, z, 130).dd < 120, fk = nearT ? kind : kind < 2 ? 0 : kind === 5 ? 5 : 2;   // (farther off: one palm, one broad crown; the poincianas by their colour)
+      let col = kind === 4 || kind === 5 ? vary([1, 1, 1], R, 0.12) : vary([1, 1, 1], R, WET ? 0.14 : 0.2).map((c, q) => c * (WET ? 1 : [1.1, 1.0, 0.85][q]));
+      if (kind === 4 && !nearT) col = col.map((c, q) => c * (season === 'summer' ? [2.45, 0.57, 0.88] : [1.38, 1.1, 1.18])[q]);
+      (nearT ? TCH : TCF)[fk].add(x, groundH(x, z) - 0.1, z, R() * TAU, sx, h, col); nTrees++; return true; };
     const pick = () => { const u = R(); return u < 0.32 ? 0 : u < 0.46 ? 1 : u < 0.9 ? 2 : 4; };
     { const Tr = i16(D.trees); for (let k = 0; k < Tr.length; k += 2) plant(Tr[k] / 2, Tr[k + 1] / 2, pick()); }
     for (let j = 0; j < LCD.nz; j += 2) for (let i = 0; i < LCD.nx; i += 2) {   // WorldCover's trees: one per ~12 m square; the yards of the town: a palm or a mango now and then
@@ -458,13 +461,12 @@
     const park = (x, y, z, rot) => { (R() < 0.22 ? utes : cars).add(x, y, z, rot, 1, 1, CARC[Math.floor(R() * CARC.length)]); nCars++; };
     for (const [x, y, z, rot] of kerbCars) { const q = near(x, z, 20); if (q.i < 0 || q.dd > barO(q.i, q.lat > 0 ? 1 : -1) - WA[q.i] + 4) park(x, y, z, rot); }
     {   // the car parks (OpenStreetMap's outlines): asphalt, the bays' white lines in double rows along the long side, cars in most bays
-      const lg = new GB();
+      const lg = new GB(), cpg = new Chunks(900, true);
       for (const cp of D.cp || []) {
         const ang = cp[0] / 1000, Pp = []; for (let k = 1; k < cp.length; k += 2) Pp.push([cp[k] / 2, cp[k + 1] / 2]);
         let cx = 0, cz = 0; for (const [x, z] of Pp) { cx += x / Pp.length; cz += z / Pp.length; }
         const tri = THREE.ShapeUtils.triangulateShape(Pp.map(([x, z]) => new THREE.Vector2(x, z)), []), y0 = groundH(cx, cz) + 0.045, ac = [0.8, 0.8, 0.82];
-        const g = new GB(true); for (const [a, b, c] of tri) g.triO([Pp[a][0], y0, Pp[a][1]], [Pp[b][0], y0, Pp[b][1]], [Pp[c][0], y0, Pp[c][1]], ac, [cx, y0 - 5, cz], ac, ac, [Pp[a][0] / 6, -Pp[a][1] / 6], [Pp[b][0] / 6, -Pp[b][1] / 6], [Pp[c][0] / 6, -Pp[c][1] / 6]);
-        const m = addM(g, aMat, false); if (m) m.name = 'tsvCarPark';
+        const g = cpg.get(cx, cz); for (const [a, b, c] of tri) g.triO([Pp[a][0], y0, Pp[a][1]], [Pp[b][0], y0, Pp[b][1]], [Pp[c][0], y0, Pp[c][1]], ac, [cx, y0 - 5, cz], ac, ac, [Pp[a][0] / 6, -Pp[a][1] / 6], [Pp[b][0] / 6, -Pp[b][1] / 6], [Pp[c][0] / 6, -Pp[c][1] / 6]);
         const ux = Math.cos(ang), uz = Math.sin(ang); let u0 = 1e9, u1 = -1e9, v0 = 1e9, v1 = -1e9; for (const [x, z] of Pp) { const u = x * ux + z * uz, v = -x * uz + z * ux; u0 = Math.min(u0, u); u1 = Math.max(u1, u); v0 = Math.min(v0, v); v1 = Math.max(v1, v); }
         const at = (u, v) => [u * ux - v * uz, u * uz + v * ux];
         for (let v = v0 + 2.8; v < v1 - 2.6; v += 16.4) for (const dv of [0, 5.4]) {
@@ -473,7 +475,7 @@
             const [lx, lz] = at(u - 1.3, vv), [ex, ez] = at(u - 1.3, vv + (dv ? 2.7 : -2.7)); lg.quadUp([lx - ux * 0.05, y0 + 0.012, lz - uz * 0.05], [lx + ux * 0.05, y0 + 0.012, lz + uz * 0.05], [ex + ux * 0.05, y0 + 0.012, ez + uz * 0.05], [ex - ux * 0.05, y0 + 0.012, ez - uz * 0.05], [wl, wl, wl, wl]);
             if (R() < 0.68 && nCars < 1100) { const [px, pz] = at(u, vv + (dv ? 1.3 : -1.3)); park(px, y0, pz, -(ang + Math.PI / 2) + (R() - 0.5) * 0.06 + (R() < 0.5 ? Math.PI : 0)); } } }
       }
-      out.carParks = (D.cp || []).length; addM(lg, matV, false);
+      out.carParks = (D.cp || []).length; addM(lg, matV, false); cpg.addTo(root, aMat, false, true);
     }
 
     /* ---- the water: Ross Creek, the river and the sea (OpenStreetMap), the shore band (mud, shallows) where the ground meets it; the open sea
@@ -550,8 +552,11 @@
       const grid = (F, skip) => {   // a grid of the DEM (heights above the start line), its cells skipped where skip(x, z) for all four corners
         const Hh = (() => { const b = atob(F.b64), a = new Float32Array(b.length); for (let k = 0; k < b.length; k++) a[k] = F.lo + b.charCodeAt(k) * F.step; return a; })(), v0 = P0.length / 3;
         for (let j = 0; j < F.nz; j++) for (let i = 0; i < F.nx; i++) { const x = F.x0 + i * F.cell, z = F.z0 + j * F.cell, h = Hh[j * F.nx + i], sea = h <= WY - 0.5, d = Math.hypot(x, z);
-          const granite = h > 20 && Math.hypot(x + 850, z + 1520) < 1400, k = clamp((h - 20) / 300, 0, 1);
-          const col = sea ? [0.38, 0.55, 0.6] : granite ? [lerp(0.52, 0.68, k), lerp(0.5, 0.54, k), lerp(0.36, 0.45, k)] : WET ? [lerp(0.33, 0.4, k), lerp(0.42, 0.44, k), lerp(0.24, 0.3, k)] : [lerp(0.5, 0.44, k), lerp(0.48, 0.44, k), lerp(0.32, 0.32, k)];
+          const granite = h > 12 && Math.hypot(x + 850, z + 1520) < 1400, k = clamp((h - 20) / 300, 0, 1);
+          const hN = (di, dj) => Hh[clamp(j + dj, 0, F.nz - 1) * F.nx + clamp(i + di, 0, F.nx - 1)], sl = Math.hypot(hN(1, 0) - hN(-1, 0), hN(0, 1) - hN(0, -1)) / (2 * F.cell);   // (the slope)
+          const vn = noise(x * 1.7, z * 1.7), scrub = granite ? clamp(1.2 - sl * 1.6 + (vn - 0.5) * 1.2, 0, 1) : 0;   // (the granite dome: bare pink rock on the steep faces, grey-green scrub in the gullies and on the gentler ground)
+          const rock = [0.62 + (vn - 0.5) * 0.12, 0.47 + (vn - 0.5) * 0.08, 0.4], veg = WET ? [0.3, 0.38, 0.22] : [0.44, 0.43, 0.3];
+          const col = sea ? [0.38, 0.55, 0.6] : granite ? [lerp(rock[0], veg[0], scrub), lerp(rock[1], veg[1], scrub), lerp(rock[2], veg[2], scrub)] : WET ? [lerp(0.33, 0.4, k), lerp(0.42, 0.44, k), lerp(0.24, 0.3, k)] : [lerp(0.5, 0.44, k), lerp(0.48, 0.44, k), lerp(0.32, 0.32, k)];
           P0.push(x, sea ? WY - 0.4 : h, z); C.push(col[0], col[1], col[2]); HZ.push(clamp((d - 1500) / 14000, 0, 1) * 0.5); }
         for (let j = 0; j + 1 < F.nz; j++) for (let i = 0; i + 1 < F.nx; i++) { const x = F.x0 + i * F.cell, z = F.z0 + j * F.cell;
           if (skip(x, z) && skip(x + F.cell, z) && skip(x, z + F.cell) && skip(x + F.cell, z + F.cell)) continue;
@@ -767,7 +772,7 @@
     /* ---- finish the meshes ---- */
     matV.name = 'tsvV'; aMat.name = 'tsvAsph'; gMat.name = 'tsvGround'; fMat.name = 'tsvFence'; facMats.forEach((m, k) => { m.name = 'tsvFac' + k; }); tMat.name = 'tsvTree';
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
-    scen.addTo(sceneryGroup, matV, true, true); scenN.addTo(sceneryGroup, matV, false, true); scenH.addTo(sceneryGroup, matV, false, true);
+    scen.addTo(sceneryGroup, matV, true, true); scenN.addTo(sceneryGroup, matV, false, true);
     fac.forEach((ch, k) => ch.addTo(sceneryGroup, facMats[k], k === 2, true));   // (the walls of the low buildings cast no shadow of their own: their roofs do)
     addM(lineG, new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }));
     addM(ban, new THREE.MeshLambertMaterial({ map: atlas }), false);

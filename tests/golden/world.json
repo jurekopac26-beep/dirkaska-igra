@@ -335,6 +335,27 @@
    "worn:MeshLambertMaterial": "b38c2a31"
   }
  },
+ "townsville": {
+  "meshes": 517,
+  "verts": 566900,
+  "instances": 6815,
+  "props": 241,
+  "crowd": 592,
+  "world": "a3a38804",
+  "propsHash": "7b927a5f",
+  "floor": "f3956e45/5712",
+  "groups": {
+   "-:MeshLambertMaterial": "3e682591",
+   "-:MeshBasicMaterial": "50dcdb3",
+   "tsvCarPark:MeshLambertMaterial": "8c2308f5",
+   "-:MeshPhongMaterial": "d0c695ea",
+   "tsvFar:MeshLambertMaterial": "1c156d14",
+   "crowd:MeshLambertMaterial": "8ddbcf4b",
+   "ao:MeshBasicMaterial": "62f3fb81",
+   "tyremarks:MeshBasicMaterial": "3bee59d4",
+   "roadwear:MeshLambertMaterial": "b0117d46"
+  }
+ },
  "chapman": {
   "meshes": 2170,
   "verts": 1479904,
