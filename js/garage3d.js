@@ -31,8 +31,11 @@ const Garage3D = (function () {
   const WIN = [3.45, 4.3], WW = 1.9, BACKW = [-5.9, -2.75, -0.35, 2.95, 6.1], FRONTW = [-6.2, -3.1, 0, 3.1, 6.2];
   const WASH_X = [-7.4, -4.4, 1.3, 4.6, 7.6], COLS = { backFront: [-4.75, 5.0], sides: [-2.8, 2.8, 6.5], corners: true };
   // the light (init sets it from the renderer): HDR (a half-float target), how bright the luminous things glow (EMI), the outside's
-  // exposure (OUTK); NOREFL: the layer only the main camera draws (not the floor's mirror, not the cube map)
-  let HDR = false, OUTK = 1; const EMI = { hex: 1, led: 1, sign: 1, screen: 1, tail: 1, spark: 1 }, NOREFL = 1;
+  // exposure (OUTK); NOREFL: the layer only the main camera draws (not the floor's mirror, not the cube map); GLOW: the glows painted
+  // round the lights (less of them where the post pass's bloom glows too); lampMat: the ceiling's lamps (one material)
+  let HDR = false, OUTK = 1, lampMat = null; const EMI = { hex: 1, led: 1, sign: 1, screen: 1, tail: 1, spark: 1 }, NOREFL = 1;
+  const GLOW = { sign: 0.18, ring: 1, lamp: 1, blur: 28 };
+  const emi = (hex, k) => new THREE.Color(hex).multiplyScalar(k);   // (a colour over 1: it glows in the HDR picture)
 
   /* ---------------- coroutines: every animation is a generator stepped once a frame with the frame's dt ---------------- */
   const tasks = [];
@@ -135,7 +138,7 @@ const Garage3D = (function () {
     TX.sign = canvasTex(1024, 256, (g, w, h) => {
       g.font = 'italic 900 150px Roboto, "Arial Black", Arial, sans-serif'; g.textBaseline = 'middle';
       const a = g.measureText('APEX ').width, b = g.measureText('RACING').width, x = (w - a - b) / 2;
-      g.shadowColor = 'rgba(255,190,40,0.9)'; g.shadowBlur = 28; g.fillStyle = '#ffd23f'; g.fillText('APEX', x, h / 2 + 6);
+      g.shadowColor = 'rgba(255,190,40,0.9)'; g.shadowBlur = GLOW.blur; g.fillStyle = '#ffd23f'; g.fillText('APEX', x, h / 2 + 6);
       g.shadowColor = 'rgba(160,210,255,0.9)'; g.fillStyle = '#f4f8ff'; g.fillText('RACING', x + a, h / 2 + 6);
     });
     // the car's contact shadow: a rounded rectangle, darkest under the body, soft at its edge (on the blob plane: len x 1.25, wid x 1.45)
@@ -174,7 +177,7 @@ const Garage3D = (function () {
     PM.hole = new THREE.MeshBasicMaterial({ color: 0x050506 });
     PM.red = new THREE.MeshPhongMaterial({ color: 0xe0281f, specular: 0xffffff, shininess: 110, envMap: env, combine: THREE.MixOperation, reflectivity: 0.12 });
     PM.yellow = new THREE.MeshPhongMaterial({ color: 0xf5c21a, specular: 0xffffff, shininess: 110, envMap: env, combine: THREE.MixOperation, reflectivity: 0.12 });
-    PM.blueGlow = new THREE.MeshBasicMaterial({ color: 0x47c6ff });
+    PM.blueGlow = new THREE.MeshBasicMaterial({ color: emi(0x47c6ff, EMI.led) });
     PM.cal = [new THREE.MeshPhongMaterial({ color: 0x3b3f46, specular: 0x666666, shininess: 50 }), PM.red, PM.yellow,
       new THREE.MeshPhongMaterial({ color: 0xffb21a, specular: 0xffffff, shininess: 140, envMap: env, combine: THREE.MixOperation, reflectivity: 0.2 })];
   }
@@ -192,7 +195,7 @@ const Garage3D = (function () {
       this.mat = new THREE.ShaderMaterial({
         uniforms: { uScale: { value: 400 } },
         vertexShader: 'attribute float psize; attribute vec4 pcol; uniform float uScale; varying vec4 vC; void main(){ vC = pcol; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = psize * uScale / max(0.2, -mv.z); gl_Position = projectionMatrix * mv; }',
-        fragmentShader: additive ? 'varying vec4 vC; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0; if (r > 1.0) discard; gl_FragColor = vec4(vC.rgb, vC.a * pow(1.0 - r, 1.6)); }'
+        fragmentShader: additive ? 'varying vec4 vC; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0; if (r > 1.0) discard; gl_FragColor = vec4(vC.rgb * ' + EMI.spark.toFixed(2) + ', vC.a * pow(1.0 - r, 1.6)); }'
           : 'varying vec4 vC; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0; if (r > 1.0) discard; float a = vC.a * (1.0 - r) * (1.0 - 0.5 * r); gl_FragColor = vec4(vC.rgb * (1.04 - 0.14 * gl_PointCoord.y), a); }',
         transparent: true, depthWrite: false, blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
       });
@@ -349,8 +352,8 @@ const Garage3D = (function () {
       sh.rotation.x = -Math.PI / 2; sh.rotation.z = sd > 0 ? Math.PI : 0; sh.position.set(X - sd * 2.1, 0.012, 0); sh.renderOrder = 3; scene.add(sh);
     }
     // the sign, and its glow on the wall
-    const sign = new THREE.Mesh(new THREE.PlaneGeometry(4.0, 1.0), new THREE.MeshBasicMaterial({ map: TX.sign, transparent: true, depthWrite: false })); sign.position.set(-2.5, 2.78, z0 + 0.06); PB.root.add(sign);
-    signGlow = new THREE.Mesh(new THREE.PlaneGeometry(7.5, 3), new THREE.MeshBasicMaterial({ map: TX.glow, color: 0xffd894, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.18 }));
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(4.0, 1.0), new THREE.MeshBasicMaterial({ map: TX.sign, color: emi(0xffffff, EMI.sign), transparent: true, depthWrite: false })); sign.position.set(-2.5, 2.78, z0 + 0.06); PB.root.add(sign);
+    signGlow = new THREE.Mesh(new THREE.PlaneGeometry(7.5, 3), new THREE.MeshBasicMaterial({ map: TX.glow, color: 0xffd894, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: GLOW.sign }));
     signGlow.position.set(-2.5, 2.78, z0 + 0.03); PB.root.add(signGlow);
     // wall washers: a lamp under the ceiling every few metres along the back wall (between the windows), its light fanning down the panels
     g = PB.g;
@@ -363,7 +366,7 @@ const Garage3D = (function () {
     // the pegboard over the chests
     const peg = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.3), new THREE.MeshLambertMaterial({ map: TX.peg })); peg.position.set(-6.15, 1.92, z0 + 0.03); PB.root.add(peg);
     // a telemetry screen on the wall (a glowing trace)
-    monitor = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.86), new THREE.MeshBasicMaterial({ map: monitorTex() })); monitor.position.set(6.45, 2.85, z0 + 0.08); PB.root.add(monitor);
+    monitor = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.86), new THREE.MeshBasicMaterial({ map: monitorTex(), color: emi(0xffffff, EMI.screen) })); monitor.position.set(6.45, 2.85, z0 + 0.08); PB.root.add(monitor);
     box(6.45, 2.4, z0 + 0.02, 1.6, 0.94, 0.08, [0.06, 0.06, 0.07]);
     // the honeycomb of LED tubes over the car
     const hexG = new World.GB(), L = 0.6, seen = new Set(), WHITE = [1, 1, 1];
@@ -377,7 +380,7 @@ const Garage3D = (function () {
         World.box(hexG, mx, h - 0.16, mz, L * 0.93, 0.035, 0.05, ang, WHITE, WHITE);
       }
     }
-    const hex = new THREE.Mesh(hexG.geometry(), new THREE.MeshBasicMaterial({ color: 0xf2f7ff })); scene.add(hex);
+    lampMat = new THREE.MeshBasicMaterial({ color: emi(0xf2f7ff, EMI.hex) }); scene.add(new THREE.Mesh(hexG.geometry(), lampMat));
   }
   // the furniture along the walls, the oil drums
   function buildFurniture() {
@@ -425,10 +428,10 @@ const Garage3D = (function () {
   function buildFloorMarks() {
     const { x0, x1, door } = ROOM;
     // the turntable's lit ring in the floor, its glow
-    ringMat = new THREE.MeshBasicMaterial({ color: 0x55c4ff });
+    ringMat = new THREE.MeshBasicMaterial({ color: emi(0x55c4ff, EMI.led) });
     const ring = new THREE.Mesh(new THREE.RingGeometry(ROOM.R + 0.01, ROOM.R + 0.07, 128), ringMat); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.004; scene.add(ring);
     ringGlow = new THREE.Mesh(new THREE.RingGeometry(ROOM.R - 0.5, ROOM.R + 0.9, 128, 1), new THREE.ShaderMaterial({
-      uniforms: { uC: { value: new THREE.Color(0x3aa8ff) }, uK: { value: 0.32 } },
+      uniforms: { uC: { value: new THREE.Color(0x3aa8ff) }, uK: { value: 0.3 * GLOW.ring } },
       vertexShader: 'varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
       fragmentShader: 'uniform vec3 uC; uniform float uK; varying vec2 vP; void main(){ float d = length(vP) - ' + (ROOM.R + 0.04).toFixed(2) + '; float a = exp(-d * d * (d < 0.0 ? 60.0 : 5.0)); gl_FragColor = vec4(uC * a * uK, 1.0); }',
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
@@ -573,12 +576,12 @@ const Garage3D = (function () {
     // the team's big screen on the back wall, right of the sign: the car on the table, its power, its parts (live)
     { const c = document.createElement('canvas'); c.width = 512; c.height = 288; const t = new THREE.CanvasTexture(c); t.anisotropy = 4;
       screen = { c, g: c.getContext('2d'), t, key: '' }; use(WALLS.back);
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(1.62, 0.91), new THREE.MeshBasicMaterial({ map: t })); m.position.set(0.4, 2.5, z0 + 0.075); WALLS.back.root.add(m);
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(1.62, 0.91), new THREE.MeshBasicMaterial({ map: t, color: emi(0xffffff, EMI.screen) })); m.position.set(0.4, 2.5, z0 + 0.075); WALLS.back.root.add(m);
       box(0.4, 2.0, z0 + 0.03, 1.74, 1.03, 0.08, [0.05, 0.05, 0.06]);
-      const gl = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 2.0), new THREE.MeshBasicMaterial({ map: TX.glow, color: 0x2f8fd0, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.22 })); gl.position.set(0.4, 2.5, z0 + 0.03); WALLS.back.root.add(gl);
+      if (!POST.on) { const gl = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 2.0), new THREE.MeshBasicMaterial({ map: TX.glow, color: 0x2f8fd0, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.22 })); gl.position.set(0.4, 2.5, z0 + 0.03); WALLS.back.root.add(gl); }   // (its glow: the bloom's, with the post pass)
       drawScreen(0); }
     // a light line along the walls at the top of the tread plate (the menu's cyan), its glow on the panels
-    { const LM = new THREE.MeshBasicMaterial({ color: 0x7fd6ff }), GM = new THREE.MeshBasicMaterial({ map: canvasTex(16, 64, (gx, w, h) => { const gr = gx.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(90,190,255,0)'); gr.addColorStop(0.5, 'rgba(90,190,255,1)'); gr.addColorStop(1, 'rgba(90,190,255,0)'); gx.fillStyle = gr; gx.fillRect(0, 0, w, h); }), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.35 });
+    { const LM = new THREE.MeshBasicMaterial({ color: emi(0x7fd6ff, EMI.led) }), GM = new THREE.MeshBasicMaterial({ map: canvasTex(16, 64, (gx, w, h) => { const gr = gx.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(90,190,255,0)'); gr.addColorStop(0.5, 'rgba(90,190,255,1)'); gr.addColorStop(1, 'rgba(90,190,255,0)'); gx.fillStyle = gr; gx.fillRect(0, 0, w, h); }), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.35 });
       const run = (P, ax, az, bx, bz, nx, nz) => { const L = Math.hypot(bx - ax, bz - az), cx = (ax + bx) / 2, cz = (az + bz) / 2, ry = nx ? nx * Math.PI / 2 : nz > 0 ? 0 : Math.PI;   // (the plane faces the room)
         const l = new THREE.Mesh(new THREE.BoxGeometry(L, 0.018, 0.02), LM); l.position.set(cx + nx * 0.012, 1.01, cz + nz * 0.012); l.rotation.y = ry; P.root.add(l);
         const gw = new THREE.Mesh(new THREE.PlaneGeometry(L, 0.5), GM); gw.position.set(cx + nx * 0.016, 1.01, cz + nz * 0.016); gw.rotation.y = ry; gw.renderOrder = 2; P.root.add(gw); };
@@ -640,7 +643,7 @@ const Garage3D = (function () {
       box(4.7, 2.28, Zw - 0.01, 1.7, 0.04, 0.06, ALU); box(4.7, 3.2, Zw - 0.01, 1.7, 0.03, 0.04, ALU);
       const BY = 0.9, BZ = z1 - 0.5;
       box(2.85, BY, BZ, 0.38, 0.02, 0.26, [0.18, 0.19, 0.21]);   // the laptop: its base, the lit screen leaning back
-      const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.36, 0.22), new THREE.MeshBasicMaterial({ map: monTexObj })); scr.position.set(2.85, BY + 0.13, BZ + 0.15); scr.rotation.set(0.25, Math.PI, 0); P.root.add(scr);
+      const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.36, 0.22), new THREE.MeshBasicMaterial({ map: monTexObj, color: emi(0xffffff, EMI.screen) })); scr.position.set(2.85, BY + 0.13, BZ + 0.15); scr.rotation.set(0.25, Math.PI, 0); P.root.add(scr);
       box(4.55, BY, BZ + 0.1, 0.22, 0.12, 0.14, [0.3, 0.42, 0.62]); box(4.55, BY + 0.12, BZ + 0.04, 0.24, 0.08, 0.05, [0.3, 0.42, 0.62]); box(4.55, BY + 0.12, BZ + 0.16, 0.24, 0.08, 0.05, [0.3, 0.42, 0.62]); obox(g, [4.42, BY + 0.06, BZ - 0.02], [4.68, BY + 0.06, BZ - 0.02], 0.02, 0.02, STEEL);   // a vice
       cylA(g, [2.1, BY + 0.015, BZ + 0.1], 'y', 0.08, 0.03, 12, DK); obox(g, [2.1, BY + 0.03, BZ + 0.1], [2.18, BY + 0.42, BZ + 0.18], 0.025, 0.025, DK); obox(g, [2.18, BY + 0.42, BZ + 0.18], [2.45, BY + 0.5, BZ - 0.02], 0.025, 0.025, DK);
       World.cone(g, 2.47, BY + 0.38, BZ - 0.04, 0.09, 0.14, 12, [0.85, 0.15, 0.12], [0.85, 0.15, 0.12], 0); }
@@ -672,7 +675,7 @@ const Garage3D = (function () {
       const k = smooth(h0, h1, Math.hypot(P.getX(i), P.getZ(i))) * hk;
       C.setXYZ(i, lerp(C.getX(i) * l, HAZE[0], k), lerp(C.getY(i) * l, HAZE[1], k), lerp(C.getZ(i) * l, HAZE[2], k));
     }
-    const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, side: side || THREE.FrontSide })); scene.add(m); return m;
+    const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, color: new THREE.Color().setScalar(OUTK), side: side || THREE.FrontSide })); scene.add(m); return m;   // (OUTK: the daylight brighter than the room)
   }
   function buildOutside() {
     const { x0, x1, z0, z1 } = ROOM;
@@ -688,7 +691,7 @@ const Garage3D = (function () {
         + '  if (d.y > 0.0) { vec2 p = d.xz / (d.y + 0.1) * 1.3; float n = vn(p) * 0.55 + vn(p * 2.3 + 4.1) * 0.3 + vn(p * 5.1 + 9.7) * 0.15;'
         + '   float k = smoothstep(0.52, 0.78, n) * smoothstep(0.0, 0.1, d.y); c = mix(c, vec3(0.97, 0.98, 1.0) - (1.0 - smoothstep(0.5, 0.9, n)) * 0.12, k * 0.9); }'
         + '  c += vec3(1.0, 0.9, 0.7) * (pow(s, 900.0) * 3.0 + pow(s, 14.0) * 0.22); if (d.y < 0.0) c = vec3(0.76, 0.82, 0.86);'
-        + '  gl_FragColor = vec4(c, 1.0); }' }));
+        + '  gl_FragColor = vec4(mix(c, vec3(dot(c, vec3(0.3333))), 0.15) * ' + OUTK.toFixed(2) + ', 1.0); }' }));
     sky.renderOrder = 10; sky.frustumCulled = false; scene.add(sky);   // (drawn after the room: only where nothing else is)
     // the ground: meadows (a mottled green), a gravel strip round the workshop, the road through both doors (wide by the doors),
     // its white lines, the red and white kerbs along it (the menu's), the haze of the distance
@@ -713,7 +716,7 @@ const Garage3D = (function () {
         + '  float ln = max(1.0 - smoothstep(0.06, 0.1, abs(az - rw + 0.35)), (1.0 - smoothstep(0.06, 0.1, az)) * step(0.55, fract(ax / 6.0))) * far;'
         + '  a = mix(a, vec3(0.9, 0.9, 0.88), ln * 0.85); c = mix(c, a, (1.0 - smoothstep(rw - 0.05, rw + 0.05, az)) * step(9.0, ax));'
         + '  c *= 0.74 + 0.26 * smoothstep(0.0, 2.6, dw);'
-        + '  c = mix(c, vec3(' + HAZE.join(', ') + '), smoothstep(30.0, 430.0, d) * 0.9); gl_FragColor = vec4(c, 1.0); }' }));
+        + '  c = mix(c, vec3(' + HAZE.join(', ') + '), smoothstep(30.0, 430.0, d) * 0.9); gl_FragColor = vec4(mix(c, vec3(dot(c, vec3(0.3333))), 0.15) * ' + OUTK.toFixed(2) + ', 1.0); }' }));
     ground.position.y = -0.002; ground.renderOrder = 9; scene.add(ground);
     // the mountains round the valley: green hills, forested ridges behind them, rock and snow far off (a curtain of facets in three rings)
     const mg = new World.GB(), R = Core.rng(5150);
@@ -769,7 +772,7 @@ const Garage3D = (function () {
       World.box(og, X0 + L / 2 + 2.3, 0.35, Z, L, 0.42, Wd - 0.4, 0, DKo, DKo); }
     bakeOut(og, 40, 260, 0.6);
     // the flags of the team by the way in: three poles, the menu's colours flying from them
-    const fl = new THREE.MeshBasicMaterial({ color: 0xffffff, vertexColors: true, side: THREE.DoubleSide }), fg = new World.GB();
+    const fl = new THREE.MeshBasicMaterial({ color: new THREE.Color().setScalar(OUTK), vertexColors: true, side: THREE.DoubleSide }), fg = new World.GB();
     [[-13.5, 8.4, RD], [-15.5, 8.4, W], [-17.5, 8.4, CY]].forEach(([x, z, c]) => { World.box(fg, x, 0, z, 0.1, 8, 0.1, 0, W, W);
       for (let i = 0; i < 8; i++) { const u0 = i / 8, u1 = (i + 1) / 8, w = (u) => Math.sin(u * 7 + x) * 0.18 * u, k = 0.85 + 0.15 * Math.cos(i * 0.9 + x);
         fg.quadUp([x + u0 * 2.2, 7.9, z + w(u0)], [x + u1 * 2.2, 7.9, z + w(u1)], [x + u1 * 2.2, 6.6, z + w(u1)], [x + u0 * 2.2, 6.6, z + w(u0)], [0, 1, 2, 3].map(() => [c[0] * k, c[1] * k, c[2] * k])); } });
@@ -1085,7 +1088,7 @@ const Garage3D = (function () {
     cv.wheels = wheelsOf(v, M); root.userData.cv = cv;
     carMats(cv);
     if (v.blob) { v.blob.material.map = TX.under; v.blob.material.opacity = 0.9; v.blob.scale.set(1, 1, 1); v.blob.position.y = 0.012; }
-    cv.tailOn = new THREE.MeshBasicMaterial({ color: 0xff2a1a }); cv.tailOn.clippingPlanes = [cv.clip]; cv.tailOff = v.tail.material;
+    cv.tailOn = new THREE.MeshBasicMaterial({ color: emi(0xff2a1a, EMI.tail) }); cv.tailOn.clippingPlanes = [cv.clip]; cv.tailOff = v.tail.material;
     // the lamps' glows
     const gl = (p, col, s) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: TX.glow, color: col, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 })); sp.position.copy(p); sp.scale.set(s, s, s); sp.renderOrder = 10; v.bodyG.add(sp); return sp; };
     cv.head = v.noHead ? [] : [gl(v.lights[0], 0xfff3d6, 0.9), gl(v.lights[1], 0xfff3d6, 0.9)];
@@ -1116,8 +1119,8 @@ const Garage3D = (function () {
     for (const w of cv.wheels) if (w.obj) w.obj.traverse(o => { if (o.isMesh && o.material && o.material.color && !(o.material.userData && o.material.userData.own)) o.material.color.setRGB(1 - 0.3 * d, 1 - 0.38 * d, 1 - 0.5 * d); });
   }
   function lamps(cv, head, tail) {
-    for (const s of cv.head) s.material.opacity = head * 0.9;
-    for (const s of cv.tailG) s.material.opacity = tail * 0.85;
+    for (const s of cv.head) s.material.opacity = head * 0.9 * GLOW.lamp;
+    for (const s of cv.tailG) s.material.opacity = tail * 0.85 * GLOW.lamp;
     cv.v.tail.material = tail > 0.6 ? cv.tailOn : cv.tailOff;
   }
   // the car's pose each frame: the body's pitch, roll, bounce and shake on its springs, the wheels' spin
@@ -1332,7 +1335,7 @@ const Garage3D = (function () {
     for (const t of exhaustTips(cv)) {
       const p = carPt(cv, t.x, t.y, t.z);
       for (let i = 0; i < 4 * k; i++) sparks.emit(p.x, p.y, p.z, back.x * (3 + Math.random() * 3) + (Math.random() - 0.5), (Math.random() - 0.3) * 1.2, back.z * (3 + Math.random() * 3) + (Math.random() - 0.5), 0.12 + Math.random() * 0.12, 0.06, 0.02, [1, 0.6, 0.2], 1, 2, 2);
-      const m = new THREE.Mesh(FLAME_GEO(), new THREE.MeshBasicMaterial({ map: TX.flame, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }));
+      const m = new THREE.Mesh(FLAME_GEO(), new THREE.MeshBasicMaterial({ map: TX.flame, color: emi(0xffffff, EMI.spark), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }));
       m.position.set(t.x - 0.02, t.y, t.z); m.scale.set(0.8 + k * 0.6, 1, 1); cv.v.bodyG.add(m);
       const gl = new THREE.Sprite(new THREE.SpriteMaterial({ map: TX.glow, color: 0xff8a2a, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); gl.position.copy(m.position); gl.scale.setScalar(0.7 + k * 0.5); cv.v.bodyG.add(gl);
       flames.push({ m, gl, t: 0, life: 0.12 + Math.random() * 0.08 + k * 0.05 });
@@ -1364,7 +1367,7 @@ const Garage3D = (function () {
     const ym = new THREE.MeshLambertMaterial({ color: 0x1e2a3a }); ym.userData.own = true;
     for (const sd of [-1, 1]) { mesh(bx(0.16, hgt, 0.16), fm, 0, hgt / 2, sd * hw, g); mesh(bx(0.5, 0.06, 0.34), ym, 0, 0.03, sd * hw, g); }
     mesh(bx(0.18, 0.18, hw * 2 + 0.16), fm, 0, hgt, 0, g);
-    const lm = new THREE.MeshBasicMaterial({ color: 0x47c6ff }); lm.userData.own = true;
+    const lm = new THREE.MeshBasicMaterial({ color: emi(0x47c6ff, EMI.led) }); lm.userData.own = true;
     mesh(bx(0.03, 0.03, hw * 2 - 0.1), lm, 0.1, hgt - 0.1, 0, g);
     for (const sd of [-1, 1]) mesh(bx(0.03, hgt - 0.3, 0.03), lm, 0.1, hgt / 2, sd * (hw - 0.1), g);
     g.userData.noz = [];
@@ -1750,16 +1753,94 @@ const Garage3D = (function () {
   }
   const isIn = (o, p) => { for (let q = o; q; q = q.parent) if (q === p) return true; return false; };
 
+  /* ---------------- the picture's last pass: the room drawn into a target of its own (HDR: half-float, 4x MSAA), its bright parts
+     bloomed at a quarter size, one composite to the screen: exposure, a soft shoulder over the highlights, a gentle S, cool shade and
+     warm light, a vignette, a still dither (?gfx=low or _dbg.post.on = false: drawn straight to the canvas, as before) ---------------- */
+  const POST = { on: true, rt: null, expo: 1.08 };
+  const STATS = { shadow: 0, refl: 0, main: 0, post: 0, tris: 0 };   // (the last frame's draws by pass: _dbg.stats)
+  let shT = 0;   // (the shadow pass's triangles, taken off the main pass's)
+  function buildPost() {
+    if (!POST.on) return;
+    const o = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, type: HDR ? THREE.HalfFloatType : THREE.UnsignedByteType, stencilBuffer: false };
+    const rt = POST.rt = HDR ? new THREE.WebGLMultisampleRenderTarget(2, 2, o) : new THREE.WebGLRenderTarget(2, 2, o); rt.texture.generateMipmaps = false;
+    // (a depth texture: 24-bit depth in the target, so the decals on the walls do not flicker)
+    if (renderer.capabilities.isWebGL2 || renderer.extensions.has('WEBGL_depth_texture')) { rt.depthTexture = new THREE.DepthTexture(2, 2); rt.depthTexture.type = THREE.UnsignedIntType; }
+    const bo = Object.assign({}, o, { depthBuffer: false }), bA = POST.bA = new THREE.WebGLRenderTarget(2, 2, bo), bB = POST.bB = new THREE.WebGLRenderTarget(2, 2, bo);
+    bA.texture.generateMipmaps = bB.texture.generateMipmaps = false;
+    const px = POST.px = new THREE.Vector2(), bpx = POST.bpx = new THREE.Vector2(), vs = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
+    const sm = (u, fs) => new THREE.ShaderMaterial({ uniforms: u, vertexShader: vs, fragmentShader: fs, depthTest: false, depthWrite: false });
+    // the bright parts: four bilinear taps (a 4 x 4 block), kept by how far over white they are (LDR: what is near white)
+    POST.bright = sm({ tD: { value: rt.texture }, uPx: { value: px } }, 'uniform sampler2D tD; uniform vec2 uPx; varying vec2 vUv;'
+      + ' vec3 bp(vec2 o){ vec3 c = texture2D(tD, vUv + o * uPx).rgb; return c * smoothstep(' + (HDR ? '0.8, 1.6' : '0.72, 1.0') + ', max(c.r, max(c.g, c.b))); }'
+      + ' void main(){ gl_FragColor = vec4((bp(vec2(-1.0)) + bp(vec2(1.0, -1.0)) + bp(vec2(-1.0, 1.0)) + bp(vec2(1.0))) * 0.25, 1.0); }');
+    // the blur: a 9-tap gaussian in 5 bilinear fetches, across and down, then again 2.4 times wider (bA -> bB -> bA -> bB -> bA)
+    POST.blur = [[1, 0], [0, 1], [2.4, 0], [0, 2.4]].map(([x, y], i) => sm({ tD: { value: (i % 2 ? bB : bA).texture }, uDir: { value: new THREE.Vector2(x, y) }, uPx: { value: bpx } },
+      'uniform sampler2D tD; uniform vec2 uDir; uniform vec2 uPx; varying vec2 vUv; void main(){ vec2 d = uDir * uPx;'
+      + ' gl_FragColor = vec4(texture2D(tD, vUv).rgb * 0.227 + (texture2D(tD, vUv + d * 1.385).rgb + texture2D(tD, vUv - d * 1.385).rgb) * 0.316 + (texture2D(tD, vUv + d * 3.231).rgb + texture2D(tD, vUv - d * 3.231).rgb) * 0.07, 1.0); }'));
+    POST.comp = sm({ tD: { value: rt.texture }, tB: { value: bA.texture }, uExpo: { value: POST.expo }, uBloom: { value: 0.5 }, uPx: { value: px } }, [
+      'uniform sampler2D tD; uniform sampler2D tB; uniform float uExpo; uniform float uBloom; uniform vec2 uPx; varying vec2 vUv;',
+      'float lum(vec3 c){ return dot(c, vec3(0.2126, 0.7152, 0.0722)); }',
+      'void main(){ vec3 c = texture2D(tD, vUv).rgb;',
+      HDR ? '' : [   // (no MSAA: the edges softened along themselves where the light changes sharply)
+        '  float lC = lum(c), lN = lum(texture2D(tD, vUv + vec2(0.0, uPx.y)).rgb), lS = lum(texture2D(tD, vUv - vec2(0.0, uPx.y)).rgb), lE = lum(texture2D(tD, vUv + vec2(uPx.x, 0.0)).rgb), lW = lum(texture2D(tD, vUv - vec2(uPx.x, 0.0)).rgb);',
+        '  if (max(max(lN, lS), max(max(lE, lW), lC)) - min(min(lN, lS), min(min(lE, lW), lC)) > 0.08) { vec2 d = vec2(lS - lN, lE - lW); d = d / (length(d) + 1e-4) * uPx * 0.9; c = mix(c, 0.5 * (texture2D(tD, vUv + d).rgb + texture2D(tD, vUv - d).rgb), 0.55); }'].join('\n'),
+      '  c = c * uExpo + texture2D(tB, vUv).rgb * uBloom;',
+      '  float l = lum(c); c = mix(c, vec3(l), smoothstep(1.0, 4.0, l) * 0.6);',   // (hot light goes white)
+      '  const float K = 0.72; c = mix(c, K + (1.0 - K) * (1.0 - exp((K - c) / (1.0 - K))), step(K, c));',   // (a soft shoulder over 0.72; the colours under it stay)
+      '  c = mix(c, c * c * (3.0 - 2.0 * c), 0.2);',   // (a gentle S: deeper darks)
+      '  c *= mix(vec3(0.97, 1.0, 1.05), vec3(1.04, 1.0, 0.95), smoothstep(0.15, 0.75, l));',   // (cool shade, warm light)
+      '  vec2 q = vUv - 0.5; c *= 1.0 - 0.44 * dot(q, q);',   // (the vignette)
+      '  c += (fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) - 0.5) / 255.0;',   // (a still dither: no bands in the dark gradients)
+      '  gl_FragColor = vec4(c, 1.0); }'].join('\n'));
+    POST.quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), POST.comp); POST.quad.frustumCulled = false;
+    POST.scene = new THREE.Scene(); POST.scene.add(POST.quad); POST.cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  }
+  // the targets at the drawing buffer's size (the bloom's at a quarter); a big buffer gets 2 samples, not 4
+  const _sz = new THREE.Vector2();
+  function sizePost() {
+    if (!POST.rt) return;
+    const s = renderer.getDrawingBufferSize(_sz), w = s.x, h = s.y, bw = Math.max(1, w >> 2), bh = Math.max(1, h >> 2);
+    if (POST.rt.isWebGLMultisampleRenderTarget) POST.rt.samples = w * h > 1.2e6 ? 2 : Math.min(4, renderer.capabilities.maxSamples);
+    POST.rt.setSize(w, h); POST.bA.setSize(bw, bh); POST.bB.setSize(bw, bh); POST.px.set(1 / w, 1 / h); POST.bpx.set(1 / bw, 1 / bh);
+  }
+  function postPass() {
+    const q = POST.quad, pass = (m, to) => { q.material = m; renderer.setRenderTarget(to); renderer.render(POST.scene, POST.cam); };
+    pass(POST.bright, POST.bA);
+    POST.blur.forEach((m, i) => pass(m, i % 2 ? POST.bA : POST.bB));
+    pass(POST.comp, null);
+  }
+  // the eye's adaptation: looking into a bright doorway the picture darkens a little, away from it it opens up again (no read-back:
+  // how squarely the camera faces a door, how near it is)
+  const _fw = new V3();
+  function adaptExposure(dt) {
+    if (!POST.comp) return;
+    const c = camera.position; camera.getWorldDirection(_fw); const fl = Math.hypot(_fw.x, _fw.z) || 1;
+    let vis = 0;
+    for (const x of [ROOM.x0, ROOM.x1]) { const dx = x - c.x, dz = -c.z, d = Math.hypot(dx, dz) || 1;
+      vis += smooth(0.9, 0.98, (_fw.x * dx + _fw.z * dz) / (fl * d)) * smooth(30, 10, Math.hypot(dx, 1.9 - c.y, dz)); }
+    POST.expo += (1.08 - 0.16 * Math.min(1, vis) - POST.expo) * (1 - Math.exp(-dt * 2.5));
+    POST.comp.uniforms.uExpo.value = POST.expo;
+  }
+
   /* ---------------- set-up, size, the frame ---------------- */
   function init(canvas) {
     renderer = Render.init(canvas);
+    // the post pass (unless ?gfx=low), HDR where half-float targets can be drawn to: the luminous things over 1, the daylight brighter
+    POST.on = !(typeof location !== 'undefined' && /[?&]gfx=low\b/.test(location.search));
+    HDR = POST.on && renderer.capabilities.isWebGL2 && renderer.extensions.has('EXT_color_buffer_float');
+    if (HDR) Object.assign(EMI, { hex: 3.0, led: 1.6, sign: 1.3, screen: 1.2, tail: 2.5, spark: 2.0 });
+    OUTK = HDR ? 1.6 : 1.12;
+    if (POST.on) Object.assign(GLOW, { sign: 0.06, ring: 0.73, lamp: 0.6, blur: 8 });
+    renderer.info.autoReset = false;   // (frame() counts the passes itself: _dbg.stats; the page's test reads the main pass and the post pass)
+    { const sm = renderer.shadowMap, r0 = sm.render;   // (the shadow map is drawn inside the main pass's render: its draws counted apart)
+      sm.render = function (...a) { const ri = renderer.info.render, c = ri.calls, t = ri.triangles; r0.apply(this, a); STATS.shadow += ri.calls - c; shT += ri.triangles - t; }; }
     renderer.localClippingEnabled = true;
     renderer.setClearColor(0x0d1420, 1);
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     scene = new THREE.Scene(); scene.background = new THREE.Color(0x0d1420);
-    camera = new THREE.PerspectiveCamera(HOME.fov, 1.6, 0.1, 700);
+    camera = new THREE.PerspectiveCamera(HOME.fov, 1.6, 0.25, 700);
     makeTextures();
-    buildLights(); buildFloor(); buildRoom(); buildTurntable(); buildDecor(); buildOutside();
+    buildLights(); buildFloor(); buildRoom(); buildTurntable(); buildDecor(); buildOutside(); buildPost();
     // the room in the cars' paint and glass: a cube map of it, made once from where a car's middle is
     cubeRT = new THREE.WebGLCubeRenderTarget(256, { format: THREE.RGBAFormat, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter });
     const cc = new THREE.CubeCamera(0.2, 600, cubeRT); cc.position.set(0, 0.9, 0); scene.add(cc);
@@ -1779,6 +1860,7 @@ const Garage3D = (function () {
     REF.rt.setSize(rw, rh); REF.texel.set(1 / rw, 1 / rh);
     const sc = H * pr / (2 * Math.tan(HOME.fov * Math.PI / 360));
     puffs.mat.uniforms.uScale.value = sparks.mat.uniforms.uScale.value = motes.material.uniforms.uScale.value = sc;
+    sizePost();
   }
   // the car shown first: no drive-in, it stands there
   function show(spec) {
@@ -1794,14 +1876,19 @@ const Garage3D = (function () {
     engFrame(dt);
     puffs.update(dt); sparks.update(dt); stepFlames(dt); stepGlints(dt);
     motes.material.uniforms.uT.value = time;
-    ringGlow.material.uniforms.uK.value = 0.3 + 0.06 * Math.sin(time * 1.6);
-    signGlow.material.userData.op = 0.17 + 0.015 * Math.sin(time * 2.3);
+    ringGlow.material.uniforms.uK.value = GLOW.ring * (0.3 + 0.055 * Math.sin(time * 1.6));
+    signGlow.material.userData.op = GLOW.sign * (0.94 + 0.08 * Math.sin(time * 2.3));
     if ((time * 4 | 0) !== ((time - dt) * 4 | 0)) drawScreen(time);   // (the big screen four times a second)
     if (autoSpin && !busy && !user.drag) rig.yaw += dt * 0.32;
-    placeCamera(dt); stepPieces(dt);
+    placeCamera(dt); stepPieces(dt); adaptExposure(dt);
     if (noDraw) return;
-    drawReflection();
-    renderer.render(scene, camera);
+    const ri = renderer.info.render, post = POST.on && POST.rt;
+    renderer.info.reset(); drawReflection(); STATS.refl = ri.calls;
+    renderer.info.reset(); STATS.shadow = shT = 0;   // (from here: what the page's test counts)
+    renderer.setRenderTarget(post ? POST.rt : null); renderer.render(scene, camera);
+    STATS.main = ri.calls - STATS.shadow; STATS.tris = ri.triangles - shT;
+    if (post) postPass();
+    STATS.post = ri.calls - STATS.main - STATS.shadow;
   }
   // (every car's root knows its car: the frame poses them all, the one driving out too)
   const live = new Set();
@@ -1835,7 +1922,7 @@ const Garage3D = (function () {
     setCond(c) { if (cur) setCond(cur, c); },
     get cur() { return cur; },
     get info() { return cur ? { car: cur.M.id, color: cur.spec.color, stripe: cur.spec.stripe !== false, upg: Object.assign({}, cur.spec.upg), parts: Object.keys(cur.parts).reduce((o, k) => (o[k] = cur.parts[k].userData.items.length, o), {}), dirt: cur.v.dirtU ? +cur.v.dirtU.value.toFixed(3) : null, scr: cur.v.scrU ? +cur.v.scrU.value.toFixed(3) : null, lift: +lift.toFixed(3), ang: +ttAng.toFixed(3) } : null; },
-    _dbg: { REF, TX, tasks, user, rig, pieces, WALLS, get floorMat() { return floorMat; }, get keyLight() { return keyLight; } },
+    _dbg: { REF, TX, tasks, user, rig, pieces, WALLS, post: POST, stats: STATS, get floorMat() { return floorMat; }, get keyLight() { return keyLight; } },
     get renderer() { return renderer; }, get camera() { return camera; }, get scene() { return scene; },
   };
 })();
