@@ -10500,10 +10500,10 @@ const World = (function () {
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (mkATex = t);
   }
   // the road signs (generic, as along any state road): two a row, 512 x 128
-  const MK_BOARDS = [['PAVEMENT ENDS', '#f1c21b'], ['SCENIC VIEW', '#6b4a22'], ['SPEED LIMIT 15', '#f2f2ee'], ['SWITCHBACKS AHEAD', '#f1c21b'], ['CEDAR MESA', '#6b4a22'], ['VALLEY OF THE GODS', '#6b4a22'], ['GRAVEL ROAD', '#f1c21b'], ['MEXICAN HAT', '#1f6b3a']];
+  const MK_BOARDS = [['PAVEMENT ENDS', '#f1c21b'], ['SCENIC VIEW', '#6b4a22'], ['SPEED LIMIT 15', '#f2f2ee'], ['SWITCHBACKS AHEAD', '#f1c21b'], ['CEDAR MESA', '#6b4a22'], ['VALLEY OF THE GODS', '#6b4a22'], ['GRAVEL ROAD', '#f1c21b'], ['MEXICAN HAT', '#1f6b3a'], ['SWITCHBACK  10 MPH', '#f1c21b'], ['OPEN RANGE', '#f1c21b']];
   function mkAtlas2() {
     if (mkA2Tex) return mkA2Tex;
-    const c = document.createElement('canvas'); c.width = 1024; c.height = 512; const x = c.getContext('2d');
+    const c = document.createElement('canvas'); c.width = 1024; c.height = 1024; const x = c.getContext('2d');
     MK_BOARDS.forEach(([n, bg], k) => { const x0 = (k % 2) * 512, y0 = Math.floor(k / 2) * 128, dark = bg === '#f1c21b' || bg === '#f2f2ee';
       x.fillStyle = bg; x.fillRect(x0, y0, 512, 128); x.strokeStyle = dark ? '#16181c' : '#f2f2ee'; x.lineWidth = 6; x.strokeRect(x0 + 8, y0 + 8, 496, 112);
       x.fillStyle = dark ? '#16181c' : '#f2f2ee'; x.font = '900 50px Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(n, x0 + 256, y0 + 66, 470); });
@@ -10588,6 +10588,18 @@ const World = (function () {
     for (const v of D.L) { const a = v.ph + t * v.sp, m = v.m, life = 0.5 + 0.5 * Math.sin(t * v.lf + v.ph);
       const x = v.x + Math.cos(a) * v.r, z = v.z + Math.sin(a * 0.7) * v.r;
       m.position.set(x, v.gH(x, z) - 0.3, z); m.rotation.y = -t * 2.6 + v.ph; m.scale.set(0.6 + life * 0.6, 0.4 + life * 0.9, 0.6 + life * 0.6); m.visible = life > 0.12; }
+  }
+  // tumbleweeds: dry, round bushes of thin twigs that the wind rolls over the valley floor and the road, bouncing, now and then (World.update: mkWeeds)
+  function mkWeedGeo() {
+    const g = new GB(), R = rng(3003), c = [0.66, 0.56, 0.4];
+    for (let k = 0; k < 16; k++) { const a = R() * TAU, b = Math.acos(2 * R() - 1), a2 = R() * TAU, b2 = Math.acos(2 * R() - 1), P = (aa, bb) => [Math.sin(bb) * Math.cos(aa) * 0.45, Math.cos(bb) * 0.45, Math.sin(bb) * Math.sin(aa) * 0.45];
+      ouRod(g, P(a, b), P(a2, b2), 0.022, vary(c, R, 0.2), 3); }
+    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
+  function mkWeeds(D, t) {
+    for (const v of D.L) { const L = v.len, u = ((t * v.sp + v.ph * L) % L + L) % L, x = v.x + v.dx * (u - L / 2), z = v.z + v.dz * (u - L / 2), m = v.m;
+      const hop = Math.abs(Math.sin(u * 0.55 + v.ph)) * 0.7 * (0.6 + 0.4 * Math.sin(u * 0.13)); m.position.set(x, v.gH(x, z) + 0.45 * v.s + hop, z);
+      m.rotation.set(u / (0.45 * v.s) * v.dz, 0, -u / (0.45 * v.s) * v.dx); m.visible = u > 3 && u < L - 3; }
   }
   function buildMoki(scene, tex, opts) {
     const R = rng(3911), N = T.N, w = T.w, dens = opts.density || 1, def = T.def, PI = Math.PI;
@@ -10699,7 +10711,7 @@ const World = (function () {
         (gb || ban).quadO(A, B, C, D, W1, [cx + kx / 2 - tx * ca * f, cy + ky / 2 + sa * f, cz + kz / 2 - tz * ca * f], [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]); }
     };
     const row = (k) => [1 - (k + 1) / 8, 1 - k / 8];   // atlas row k (0 = top) -> [v0, v1]
-    const board = (k) => { const v1 = 1 - Math.floor(k / 2) / 4; return [v1 - 1 / 4, v1, (k % 2) * 0.5, (k % 2) * 0.5 + 0.5]; };   // a road sign of the second atlas: [v0, v1, u0, u1]
+    const board = (k) => { const v1 = 1 - Math.floor(k / 2) / 8; return [v1 - 1 / 8, v1, (k % 2) * 0.5, (k % 2) * 0.5 + 0.5]; };   // a road sign of the second atlas: [v0, v1, u0, u1]
     const sign = (s, side, k, facing, h) => {   // a road sign on a post beside the road, facing the cars coming up (facing 1) or down (-1)
       const [bx, bz, bi] = onSide(s, side, 1.2); if (excluded(bx, bz)) return; const by = caGround(bx, bz), [v0, v1, u0, u1] = board(k);
       box(scen.get(bx, bz), bx, by - 0.2, bz, 0.1, (h || 2.2) + 0.5, 0.1, T.hd[bi], [0.6, 0.61, 0.63]);
@@ -10747,6 +10759,8 @@ const World = (function () {
       sign(sStart + g0 - 160, 1, 3, 1); sign(sStart + g0 - 90, 1, 0, 1); sign(sStart + g0 + 30, 1, 2, 1); sign(sStart + g0 + 60, -1, 6, -1);
       sign(sStart + vs[0] - 120, 1, 1, 1);
       sign(sStart + g1 + 40, 1, 4, 1); sign(sStart + g1 - 50, -1, 0, -1);
+      for (const [d] of def.curves || []) sign(sStart + d - 75, 1, 8, 1);   // an advisory sign before every switchback
+      sign(sStart + 110, 1, 9, 1); sign(sStart + 700, -1, 9, -1);   // the open range: cattle on the road
     }
 
     /* ---- the viewpoint: a gravel plot beside the road, a low wall of sandstone blocks along its edge, a board, two parked cars, people looking out
@@ -10877,6 +10891,7 @@ const World = (function () {
       cows.addTo(root, true);
     }
 
+    let campFire = null;
     /* ---- parked cars: a gravel pull-out on the mesa by the finish (cars, pickups, a camper), cars along the Valley of the Gods Road by the start ---- */
     {
       const RP = rng(3991), cols = [[0.85, 0.85, 0.83], [0.72, 0.12, 0.1], [0.14, 0.24, 0.5], [0.18, 0.18, 0.2], [0.55, 0.57, 0.6], [0.6, 0.48, 0.3], [0.2, 0.36, 0.24], [0.92, 0.92, 0.9]];
@@ -10895,6 +10910,20 @@ const World = (function () {
       if (vg) for (let k = 4, m = 0; k < vg.p.length / 2 - 1 && m < 6; k += 2) { const x0 = vg.p[2 * k], z0 = vg.p[2 * k + 1], x1 = vg.p[2 * k + 2], z1 = vg.p[2 * k + 3], L = Math.hypot(x1 - x0, z1 - z0) || 1, ux = -(z1 - z0) / L, uz = (x1 - x0) / L;
         const x = x0 + ux * 4.2, z = z0 + uz * 4.2; if (vrNear(x, z).dd < 3 || excluded(x, z) || vrDist(x, z) > 120) continue;
         const rot = Math.atan2(z1 - z0, x1 - x0), y = caGround(x, z), gg = scen.get(x, z); if (m % 3 === 1) pickup(gg, x, y, z, rot, cols[(m * 3) % cols.length]); else caCar(gg, x, y, z, rot, cols[(m * 5 + 1) % cols.length]); exclPush(x, z, 3.5); m++; }
+      // a camp beside the Valley of the Gods Road out on the valley floor: a camper and a pickup, a tent, a table and chairs, people round a fire ring with a
+      // thin plume of smoke drifting away (the smoke after the crowds: below)
+      if (vg) for (let k = 14; k < vg.p.length / 2 - 2; k += 2) { const x0 = vg.p[2 * k], z0 = vg.p[2 * k + 1], x1 = vg.p[2 * k + 2], z1 = vg.p[2 * k + 3], L = Math.hypot(x1 - x0, z1 - z0) || 1, ux = -(z1 - z0) / L, uz = (x1 - x0) / L;
+        const cx = x0 + ux * 16, cz = z0 + uz * 16; if (vrDist(cx, cz) < 45 || vrDist(cx, cz) > 160 || caSlope(cx, cz) > 0.15 || excluded(cx, cz)) continue;
+        const rot = Math.atan2(z1 - z0, x1 - x0), c = Math.cos(rot), sn = Math.sin(rot), at = (a2, b2) => [cx + c * a2 - sn * b2, cz + sn * a2 + c * b2], gc = scen.get(cx, cz);
+        { const [px, pz] = at(-6, 0); camper(gc, px, caGround(px, pz), pz, rot); }
+        { const [px, pz] = at(3, -1.5); pickup(gc, px, caGround(px, pz), pz, rot + 0.15, [0.55, 0.57, 0.6]); }
+        { const [px, pz] = at(-1, 7), py = caGround(px, pz); gable(gc, px, py, pz, 2.6, 2.3, 1.4, rot + 0.4, [0.24, 0.42, 0.56], [0.2, 0.36, 0.5]); }
+        { const [px, pz] = at(2, 4), py = caGround(px, pz); box(gc, px, py + 0.72, pz, 1.8, 0.06, 0.8, rot, [0.55, 0.4, 0.26]); for (const o of [-0.8, 0.8]) box(gc, px + c * o, py, pz + sn * o, 0.06, 0.72, 0.7, rot, [0.4, 0.4, 0.42]); }
+        const [fx, fz] = at(5, 6.5), fy = caGround(fx, fz);
+        for (let q = 0; q < 8; q++) { const a2 = q / 8 * TAU; rock(gc, fx + Math.cos(a2) * 0.75, fy + 0.1, fz + Math.sin(a2) * 0.75, 0.22, 0.16, 0.2, a2, [0.5, 0.45, 0.42], R, 0.2); }
+        box(gc, fx, fy, fz, 0.9, 0.08, 0.9, 0, [0.12, 0.1, 0.09]);
+        for (let q = 0; q < 4; q++) { const a2 = q / 4 * TAU + 0.4, px = fx + Math.cos(a2) * 2.2, pz = fz + Math.sin(a2) * 2.2; box(gc, px, caGround(px, pz) + 0.42, pz, 0.5, 0.06, 0.5, 0, [0.2, 0.36, 0.5]); person(px, pz, Math.atan2(fz - pz, fx - px) - PI / 2); }
+        campFire = [fx, fy, fz]; exclPush(cx, cz, 16); out.marks.camp = [cx, cz]; break; }
     }
 
     /* ---- the plants (instanced per 96 m chunk): on the valley floor sagebrush and bunch grass, a juniper here and there; on the talus slopes fallen
@@ -11010,6 +11039,12 @@ const World = (function () {
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: mkAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: mkAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);
+    if (campFire) { const t = rbSmokeTex(); out.ownTex.push(t);   // the camp fire's thin smoke, drifting in the light breeze
+      root.add(rbSmoke([[campFire[0], campFire[1] - 0.4, campFire[2], [0.7, 0.68, 0.66], 0.55, { per: 12, life: 7, lifeV: 2, rise: 7, riseV: 3, flare: 0.28 }]], CR.U.uTime, t, [0.9, 0.4])); }
+    if (opts.season !== 'winter') { const geo = mkWeedGeo(), mat = new THREE.MeshLambertMaterial({ vertexColors: true }), L = [], RW = rng(3007);   // the tumbleweeds, rolling with the wind (none on the snow)
+      for (const [s, sd, o] of [[60, 1, 30], [380, -1, 25], [820, 1, 40], [1150, -1, 30]]) { const [x, z] = onSide(sStart + s, sd, o), a = 0.45 + RW() * 0.3, m = new THREE.Mesh(geo, mat), sc = 0.8 + RW() * 0.6;
+        m.scale.setScalar(sc); m.castShadow = true; root.add(m); L.push({ m, x, z, dx: Math.cos(a), dz: Math.sin(a), len: 140, sp: 2.2 + RW() * 1.6, ph: RW(), s: sc, gH: caGround }); }
+      out.dyn.weeds = { L }; mkWeeds(out.dyn.weeds, 0); }
     out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, rails: +(nRail / (2 * N)).toFixed(3), berm: +(nBerm / (2 * N)).toFixed(3), buttes: (def.buttes || []).length, cows: nCows, roads: srPts.length / 2 };   // (read by the tests)
     return out;
   }
@@ -14961,7 +14996,8 @@ const World = (function () {
     if (d.pkVeg && !car) d.pkVeg();   // Pikes Peak: the plants' buffers in a fixed state (the world test)   // Pikes Peak: the summit's smoke and flags, the sea of clouds   // Pikes Peak: the marshals' flags
     if (d.wheel) szWheel(d.wheel, t);   // Suzuka: the Ferris wheel turns
     if (d.condors) caCondors(d.condors, t, car);   // Los Caracoles: the condors circle over the road
-    if (d.devils) mkDevils(d.devils, t);   // the Moki Dugway: the dust devils on the valley floor
+    if (d.devils) mkDevils(d.devils, t);   // the Moki Dugway: the dust devils on the valley floor (and the tumbleweeds)
+    if (d.weeds) mkWeeds(d.weeds, t);
     if (d.pkLife) pkWildlifeUpdate(d.pkLife, t, car);   // Pikes Peak: marmots and bighorn sheep
     if (d.pkAmb) pkAmbientUpdate(d.pkAmb, t, car);   // Pikes Peak: flags, dust and leaves, grill smoke
     if (d.boats) {
