@@ -24,8 +24,9 @@ const World = (function () {
     return {
       tier: T, dens: densMul,
       draw(cat) { const m = DETAIL[cat]; return m == null ? true : T >= m; },
-      radius(m) { return m * radMul; },
-      count(n) { return Math.max(0, Math.round(n * densMul)); },
+      radius(m) { return T >= 2 ? m : m * radMul; },          // VISOKA: the exact distance (identical), lower tiers: shorter
+      count(n) { return T >= 2 ? n : Math.max(0, Math.round(n * densMul)); },   // VISOKA: the exact count (identical)
+      cap(m) { return T >= 2 ? Infinity : m * radMul; },      // add a far cut-off only below VISOKA (loops that had none stay unbounded at VISOKA)
     };
   }
   let LOD = makeLOD(2);   // set per build() from opts.tier; VISOKA by default
@@ -12261,8 +12262,8 @@ const World = (function () {
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
-          const hd = vrDist(x, z); if (hd > 230) continue;
-          if (hd > 70 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // (farther out every other spot)
+          const hd = vrDist(x, z); if (hd > LOD.radius(230)) continue;   // (LOD: a shorter plant/tree draw distance on the lower tiers)
+          if (hd > LOD.radius(70) && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // (farther out every other spot)
           const c = vrLC(x, z), y0 = caGround(x, z), A = y0 + base, sl = caSlope(x, z);
           let kind = -1;
           if (c === 1) kind = r1 < 0.52 ? 0 : r1 < 0.56 ? 1 : -1;
@@ -13710,8 +13711,8 @@ const World = (function () {
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
-          const hd = vrDist(x, z); if (hd > 230) continue;
-          if (hd > 70 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;
+          const hd = vrDist(x, z); if (hd > LOD.radius(230)) continue;   // (LOD: a shorter plant/tree draw distance on the lower tiers)
+          if (hd > LOD.radius(70) && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;
           const c = vrLC(x, z), y0 = chGround(x, z), A = y0 + base, sl = chSlope(x, z);
           if (A < 4 || c === 4 || c === 5) continue;
           let kind = -1;
@@ -14264,8 +14265,8 @@ const World = (function () {
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
-          const hd = vrDist(x, z); if (hd > 230) continue;
-          if (hd > 70 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // (farther out every other spot)
+          const hd = vrDist(x, z); if (hd > LOD.radius(230)) continue;   // (LOD: a shorter plant/tree draw distance on the lower tiers)
+          if (hd > LOD.radius(70) && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // (farther out every other spot)
           const c = vrLC(x, z), y = bsGround(x, z), A = y + base; if (A < 1.5) continue;
           const sl = bsSlope(x, z);
           let kind = -1;
@@ -14297,7 +14298,7 @@ const World = (function () {
         if (++nS >= maxS) break edge;
       }
       const G = P.G, RK = rng(3971), rc = [[0.42, 0.4, 0.37], [0.5, 0.46, 0.4], [0.36, 0.35, 0.34]];
-      for (let k = 0; k < 9000 * dens; k++) {
+      for (let k = 0; k < LOD.count(9000 * dens); k++) {   // (LOD: fewer scattered beach boulders on the lower tiers)
         const x = G.x0 + RK() * G.ntx * VRC * VRT, z = G.z0 + RK() * G.ntz * VRC * VRT, r1 = RK(), r2 = RK(), r3 = RK();
         const ti = Math.floor((x - G.x0) / (VRC * VRT)), tj = Math.floor((z - G.z0) / (VRC * VRT)); if (!G.on[tj * G.ntx + ti]) continue;
         const y = bsGround(x, z); if (y > y0 + 1.2 || y < y0 - 2.5) continue;
@@ -14309,7 +14310,7 @@ const World = (function () {
 
     /* ---- the marine layer: two sheets of fog over the sea off the coast (always: the fog bank lying offshore, thin), thick over the land too on a
        misty run (dyn.bsMist.on, from the race; bsMistStep) ---- */
-    {
+    if (LOD.draw('marineFog')) {   // (LOD: the offshore fog sheets only on VISOKA; its consumers in render/game are guarded by `if (world.dyn.bsMist)`)
       const U = { uT: { value: 0 }, uK: { value: 0.3 }, uC: { value: new THREE.Color(0xdde3e8) }, uLand: { value: 0 } }, mat = bsMistMat(U);
       const G = P.G, X1 = G.x0 + G.ntx * VRC * VRT, Z0 = G.z0 - 1500, Z1 = G.z0 + G.ntz * VRC * VRT + 1500, XW = G.x0 - 4000, coast = Math.min(...Array.from({ length: 8 }, (_, k) => T.px[Math.round(k / 7 * iE)])) - 120;
       for (const [hgt, sp] of [[y0 + 28, 0], [y0 + 75, 1]]) {   // (uv.x: 0 at the coast .. 1 far out; uv.y across the strip, for the soft ends)
@@ -15323,8 +15324,8 @@ const World = (function () {
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
-          const hd = vrDist(x, z); if (hd > 230) continue;
-          if (hd > 70 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;
+          const hd = vrDist(x, z); if (hd > LOD.radius(230)) continue;   // (LOD: a shorter plant/tree draw distance on the lower tiers)
+          if (hd > LOD.radius(70) && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;
           const c = vrLC(x, z), y0 = caGround(x, z), A = y0 + base, sl = caSlope(x, z);
           let kind = -1;
           if (c === 0 || c === 4) kind = r1 < (A > 2800 ? 0.3 : 0.5) ? 0 : r1 < 0.52 ? 2 : -1;
@@ -16899,7 +16900,7 @@ const World = (function () {
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
           const hd = vrDist(x, z); if (hd > 220) continue;
-          if (hd > 70 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;
+          if (hd > LOD.radius(70) && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;
           const c = vrLC(x, z);
           let kind = -1;
           if (c === 0) kind = r1 < 0.5 ? 0 : r1 < 0.62 ? 1 : r1 < 0.65 ? 2 : -1;
@@ -17869,8 +17870,8 @@ const World = (function () {
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
-          const hd = vrDist(x, z); if (hd > 230) continue;
-          if (hd > 70 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // (farther out every other spot)
+          const hd = vrDist(x, z); if (hd > LOD.radius(230)) continue;   // (LOD: a shorter plant/tree draw distance on the lower tiers)
+          if (hd > LOD.radius(70) && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // (farther out every other spot)
           const y0 = caGround(x, z), A = y0 + base, sl = caSlope(x, z), top = A > 1925, slope = sl > 0.32;
           let kind = -1;
           if (top && !slope) kind = r1 < 0.05 ? 0 : r1 < 0.075 ? 1 : r1 < 0.2 ? 2 : r1 < 0.24 ? 3 : -1;
