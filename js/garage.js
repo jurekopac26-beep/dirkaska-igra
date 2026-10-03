@@ -117,7 +117,7 @@
         tile('p-upg', I.upg, tr('Nadgradnje'), nu + ' / 12', '', !c.own) +
         tile('p-srv', I.srv, tr('Servis'), c.own ? Math.round(q * 100) + ' %' : '–', c.own ? '<div class="bar"><i style="width:' + Math.round(q * 100) + '%;background:' + condCol(q) + '"></i></div>' : '', !c.own) +
         tile('p-paint', '<i style="width:30px;height:30px;border-radius:50%;background:' + CSS(col[0]) + ';border:2.5px solid #d8e0ea;display:block"></i>', tr('Barva'), tr(col[1]), '', !c.own) +
-        '</div><p class="g-hint">' + esc(c.own ? tr('Povleci po sliki, da obrneš kamero. Tapni med animacijo, da jo pospešiš.') : locked(S.car) ? tr('{0} je na voljo v polni igri.', Mm.name) : tr('{0} še ni tvoj: kupiš ga z gumbom spodaj.', Mm.name)) + '</p>';
+        '</div><p class="g-hint">' + esc(c.own ? tr('Povleci po sliki levo ali desno, da zavrtiš kamero okoli avta. Tapni med animacijo, da jo pospešiš.') : locked(S.car) ? tr('{0} je na voljo v polni igri.', Mm.name) : tr('{0} še ni tvoj: kupiš ga z gumbom spodaj.', Mm.name)) + '</p>';
     } else if (panel === 'car') {
       const st = Core.upgStats(Mm, c.upg), b0 = Core.upgStats(Mm, null);
       b.innerHTML = ph(tr('Avto'), tr('{0} od {1}', ORDER.indexOf(S.car) + 1, ORDER.length)) + '<div class="g-cars" id="g-cars">' + ORDER.map(id => {

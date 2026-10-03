@@ -1,4 +1,4 @@
-// The garage (garaza.html): the page opens with the workshop and the car, the demo profiles, buying a car and the credits, a new car
+// The garage (garaza.html): the page opens with the workshop and the car, the camera (left and right only), the demo profiles, buying a car and the credits, a new car
 // driving in, every upgrade with its parts on the car, the service (dirt and scratches gone, the engine), a new colour, the English page,
 // every car of the game on the turntable with all its parts, the pictures of the cars, the profile kept after a reload. The animations
 // run on a clock the test steps itself (software WebGL is slow). Zero page errors allowed.
@@ -31,6 +31,21 @@ try {
     T.check('opens: 11.500 CR, PICO TURBO on the turntable, the go button "Izberi"', u.money === '11.500' && u.name === 'PICO TURBO' && u.info.car === 'pico' && u.go === 'Izberi' && u.title === 'GARAŽA', JSON.stringify({ money: u.money, name: u.name, car: u.info.car, go: u.go }));
     T.check('the worn car shows its wear: dirt and scratches on the paint', u.info.dirt > 0.2 && u.info.scr > 0.2, JSON.stringify(u.info));
     T.check('draw calls of the garage stay modest (< 260)', calls > 20 && calls < 260, calls + ' calls');
+  }
+
+  // 1b. the camera: dragged left or right it goes round the car; up and down, the wheel, a pinch: nothing (no zoom, the height stays)
+  {
+    const box = await page.evaluate(() => { const r = document.getElementById('g-gl').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
+    const cam = () => page.evaluate(() => { __garage.advance(1); const p = Garage3D.camera.position; return { x: p.x, y: p.y, z: p.z, d: Math.hypot(p.x + 0.2, p.z) }; });
+    // (held still at the end: no swing after it; small turns: the camera stays clear of the walls)
+    const drag = async (dx, dy) => { await page.mouse.move(box.x, box.y); await page.mouse.down(); for (let i = 1; i <= 7; i++) await page.mouse.move(box.x + dx * Math.min(1, i / 6), box.y + dy * Math.min(1, i / 6)); await page.mouse.up(); };
+    const c0 = await cam();
+    await drag(0, 120); await page.mouse.move(box.x, box.y); await page.mouse.wheel(0, 600);
+    const c1 = await cam(), same = Math.hypot(c1.x - c0.x, c1.z - c0.z) < 0.02 && Math.abs(c1.y - c0.y) < 0.03;
+    await drag(-30, 20); await page.mouse.move(box.x, box.y); await page.mouse.wheel(50, 0);
+    const c2 = await cam(), round = Math.hypot(c2.x - c0.x, c2.z - c0.z) > 1 && Math.abs(c2.y - c0.y) < 0.03 && Math.abs(c2.d - c0.d) < 0.03;
+    T.check('the camera: up and down and the wheel do nothing; left and right (a drag, a sideways scroll) it goes round, its height and distance kept', same && round, JSON.stringify({ c0, c1, c2 }));
+    await page.evaluate(() => { Garage3D.view(0); __garage.advance(1.5); });
   }
 
   // 2. a car not bought: it drives in, the go button buys it; too few credits: refused, nothing taken

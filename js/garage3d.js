@@ -682,13 +682,13 @@ const Garage3D = (function () {
     const door = new THREE.DirectionalLight(0xfff0d8, 0.22); door.position.set(-10, 2, 0); scene.add(door);
   }
 
-  /* ---------------- the camera: round the car (the user drags it), moved by the animations ---------------- */
+  /* ---------------- the camera: round the car (the user drags it left and right only), moved by the animations ---------------- */
   const HOME = { yaw: 0.55, pitch: 0.18, dist: 9.2, tx: -0.2, ty: 0.62, tz: 0, fov: 33 };
-  const rig = Object.assign({}, HOME), user = { yaw: 0, pitch: 0, zoom: 1, vy: 0 };
+  const rig = Object.assign({}, HOME), user = { yaw: 0, vy: 0 };
   function placeCamera(dt) {
     if (!user.drag) { user.yaw += user.vy * dt; user.vy *= Math.exp(-dt * 3); }
     const aspect = W / H, fov = rig.fov, th = Math.tan(fov * Math.PI / 360), need = 3.5 / (th * aspect), fit = Math.max(1, need / HOME.dist);
-    const yaw = rig.yaw + user.yaw, pitch = clamp(rig.pitch + user.pitch, -0.02, 1.2), d = rig.dist * fit * user.zoom;
+    const yaw = rig.yaw + user.yaw, pitch = clamp(rig.pitch, -0.02, 1.2), d = rig.dist * fit;
     camera.fov = fov; camera.aspect = aspect; camera.updateProjectionMatrix();
     const ty = rig.ty + Math.sin(time * 0.31) * 0.012;
     camera.position.set(rig.tx + Math.sin(yaw) * Math.cos(pitch) * d, ty + Math.sin(pitch) * d, rig.tz + Math.cos(yaw) * Math.cos(pitch) * d);
@@ -709,7 +709,7 @@ const Garage3D = (function () {
     yield* tween(s, (k) => {
       if (stop && stop()) return;
       for (const key of ['pitch', 'dist', 'tx', 'ty', 'tz', 'fov']) rig[key] = lerp(from[key], to[key], k);
-      rig.yaw = from.yaw + u0.yaw + dy * k; user.yaw = 0; user.pitch = u0.pitch * (1 - k); user.zoom = lerp(u0.zoom, 1, k); user.vy = 0;
+      rig.yaw = from.yaw + u0.yaw + dy * k; user.yaw = 0; user.vy = 0;
     }, ez || EZ.io);
   }
   const home = (s) => camTo(HOME, s == null ? 1.1 : s);
@@ -722,21 +722,20 @@ const Garage3D = (function () {
     spawn(camTo(autoSpin ? Object.assign({}, HOME, { yaw: rig.yaw + user.yaw, pitch: 0.24 }) : VIEWS[i] || HOME, 1.0, null, () => tok !== viewTok));
   }
 
-  /* ---------------- input: drag to go round the car, pinch or wheel to come closer; a tap speeds an animation up ---------------- */
+  /* ---------------- input: drag left or right to go round the car (only that: the camera's height and distance stay, no zoom);
+     a sideways scroll (a touchpad, shift and the wheel) turns it too; a tap speeds an animation up ---------------- */
   function bindInput(el) {
-    const pts = new Map(); let lastX = 0, lastY = 0, moved = 0, pinch = 0, t0 = 0;
-    el.addEventListener('pointerdown', (e) => { el.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); lastX = e.clientX; lastY = e.clientY; moved = 0; t0 = performance.now(); user.drag = true; user.vy = 0;
-      if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = Math.hypot(a[0] - b[0], a[1] - b[1]); } });
+    let id = null, lastX = 0, moved = 0, t0 = 0;   // (one finger turns it: a second one is ignored)
+    const k = () => 3.2 / Math.max(240, el.clientWidth);
+    el.addEventListener('pointerdown', (e) => { if (id !== null) { moved += 10; return; } id = e.pointerId; el.setPointerCapture(id); lastX = e.clientX; moved = 0; t0 = performance.now(); user.drag = true; user.vy = 0; });
     el.addEventListener('pointermove', (e) => {
-      if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, [e.clientX, e.clientY]);
-      if (pts.size === 2) { const [a, b] = [...pts.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (pinch > 0) user.zoom = clamp(user.zoom * pinch / d, 0.62, 1.3); pinch = d; moved += 10; return; }
-      const dx = e.clientX - lastX, dy = e.clientY - lastY; lastX = e.clientX; lastY = e.clientY; moved += Math.abs(dx) + Math.abs(dy);
-      const k = 3.2 / Math.max(240, el.clientWidth);
-      user.yaw -= dx * k; user.pitch = clamp(user.pitch + dy * k * 0.8, -0.16, 0.75); user.vy = -dx * k * 60 * 0.5;
+      if (e.pointerId !== id) return;
+      const dx = e.clientX - lastX; lastX = e.clientX; moved += Math.abs(dx);
+      user.yaw -= dx * k(); user.vy = -dx * k() * 60 * 0.5;
     });
-    const up = (e) => { pts.delete(e.pointerId); if (pts.size < 2) pinch = 0; if (!pts.size) { user.drag = false; if (moved < 8 && performance.now() - t0 < 300 && busy) speed = 3; } };
+    const up = (e) => { if (e.pointerId !== id) return; id = null; user.drag = false; if (moved < 8 && performance.now() - t0 < 300 && busy) speed = 3; };
     el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
-    el.addEventListener('wheel', (e) => { e.preventDefault(); user.zoom = clamp(user.zoom * Math.exp(e.deltaY * 0.001), 0.62, 1.3); }, { passive: false });
+    el.addEventListener('wheel', (e) => { e.preventDefault(); if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) user.yaw += e.deltaX * (e.deltaMode ? 16 : 1) * k() * 0.6; }, { passive: false });
   }
 
   /* ---------------- sound: the car's own engine (Sfx's, fed a car that stands still), and the workshop's noises ---------------- */

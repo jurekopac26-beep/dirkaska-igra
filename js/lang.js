@@ -290,7 +290,7 @@
     'GARAŽA': 'GARAGE', 'V GARAŽI {0}/{1}': 'IN THE GARAGE {0}/{1}', 'POGLED': 'VIEW', 'Odpiram garažo …': 'Opening the garage …', 'Brezplačno': 'Free', 'Polna igra': 'Full game',
     'Ponastavi': 'Reset', 'Skrij': 'Hide', 'Okoli avta': 'Round the car', 'Masa': 'Mass', 'Stanje': 'Condition', 'Teža': 'Weight', 'Izberi': 'Select', 'Izbran ✓': 'Selected ✓',
     'V polni igri': 'In the full game', 'POLNA IGRA': 'FULL GAME', 'Kupi · {0} CR': 'Buy · {0} CR', 'Servis': 'Service', 'Popoln servis': 'Full service', 'Stanje {0} %': 'Condition {0} %',
-    'Povleci po sliki, da obrneš kamero. Tapni med animacijo, da jo pospešiš.': 'Drag the picture to turn the camera. Tap during an animation to speed it up.',
+    'Povleci po sliki levo ali desno, da zavrtiš kamero okoli avta. Tapni med animacijo, da jo pospešiš.': 'Drag the picture left or right to turn the camera round the car. Tap during an animation to speed it up.',
     '{0} je na voljo v polni igri.': '{0} comes with the full game.', '{0} še ni tvoj: kupiš ga z gumbom spodaj.': '{0} is not yours yet: buy it with the button below.',
     '{0} od {1}': '{0} of {1}', 'V GARAŽI': 'IN GARAGE', 'NOV AVTO V GARAŽI': 'NEW CAR IN THE GARAGE', 'Najprej kupi avto.': 'Buy the car first.',
     'S = serijsko. Rumena pika: še ni kupljeno. Cena stopnje 1, 2, 3: {0}, {1}, {2} CR.': 'S = stock. Yellow dot: not bought yet. Levels 1, 2, 3 cost {0}, {1}, {2} CR.',
