@@ -507,6 +507,26 @@
    "roadwear:MeshLambertMaterial": "932c41c2"
   }
  },
+ "phillip": {
+  "meshes": 841,
+  "verts": 537659,
+  "instances": 14108,
+  "props": 190,
+  "crowd": 2360,
+  "world": "d010781",
+  "propsHash": "826c3b3a",
+  "floor": "5c2dbccb/8904",
+  "groups": {
+   "-:MeshLambertMaterial": "64b1da73",
+   "-:MeshBasicMaterial": "c8a06c30",
+   "-:MeshPhongMaterial": "7c2d9877",
+   "crowd:MeshLambertMaterial": "7f4967c3",
+   "flags:MeshLambertMaterial": "81867d8e",
+   "ao:MeshBasicMaterial": "bf658e4f",
+   "roadwear:MeshLambertMaterial": "e7f710cb",
+   "worn:MeshLambertMaterial": "4ab76d49"
+  }
+ },
  "jezero": {
   "meshes": 154,
   "verts": 591648,
