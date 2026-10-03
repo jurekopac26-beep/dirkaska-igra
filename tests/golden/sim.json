@@ -3134,5 +3134,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "monterey/race/cs": {
+  "digest": "45a405daa5effab95172037b",
+  "lead": 2281.2,
+  "car0": [
+   648.16,
+   566.72
+  ],
+  "cover": {
+   "dmg": 0.86,
+   "loose": 6,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "monterey/demo/cs": {
+  "digest": "08aed16899702b6dfdbcf5f5",
+  "lead": 2420.5,
+  "car0": [
+   675.45,
+   212.2
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "monterey/upg/cs": {
+  "digest": "3f0df18370c79d57cfbc1899",
+  "lead": 2420,
+  "car0": [
+   652.55,
+   554.91
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "monterey/crash/cs": {
+  "digest": "4ec18dd7e9674febc369cadf",
+  "lead": 2280.9,
+  "car0": [
+   649.94,
+   558.98
+  ],
+  "cover": {
+   "dmg": 0.84,
+   "loose": 12,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "monterey/formula/cs": {
+  "digest": "b380ddbfeabecc66afd6e2c7",
+  "lead": 2584.4,
+  "car0": [
+   673.11,
+   174.81
+  ],
+  "cover": {
+   "dmg": 0.74,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "monterey/lm/cs": {
+  "digest": "3fe2bf3c510cdd7e63e796cd",
+  "lead": 2560.5,
+  "car0": [
+   659.14,
+   461.34
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 15,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "monterey/car/cs": {
+  "digest": "812d460c6262540e2bcea8ce",
+  "lead": 2265.7,
+  "car0": [
+   603.21,
+   662.8
+  ],
+  "cover": {
+   "dmg": 0.71,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 0
+  }
  }
 }

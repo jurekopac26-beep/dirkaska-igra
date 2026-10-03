@@ -22619,7 +22619,7 @@ const World = (function () {
     // the ground's colours: the grass golden in summer (the race season), tan in autumn, green after the winter rains; the oak woodland's floor
     // dark with leaf litter, the chaparral grey-green, the car parks dusty
     P.seC = sea === 'winter' ? [1.0, 1.0, 0.86] : [1.18, 1.06, 0.84];
-    const GC = sea === 'winter' ? [0.86, 1.06, 0.72] : sea === 'autumn' ? [1.42, 1.1, 1.36] : [1.58, 1.22, 1.62];
+    const GC = sea === 'winter' ? [0.92, 1.05, 0.86] : sea === 'autumn' ? [1.48, 1.04, 1.8] : [1.62, 1.1, 2.15];   // (the olive grass picture: golden straw in summer, a duller tan in autumn, fresh green in winter)
     P.colMod = (x, z, c) => {
       const n = P.n5(x * 0.55 + 700, z * 0.55), m = P.n3(x * 1.6 + 300, z * 1.6), k = 0.96 + (n - 0.5) * 0.22 + (m - 0.5) * 0.12, fm = nrLCf(x, z, 0), fs = nrLCf(x, z, 2);
       c[0] *= k * GC[0]; c[1] *= k * GC[1]; c[2] *= k * GC[2];
@@ -22630,7 +22630,9 @@ const World = (function () {
     };
     // level ground and water: the lake and ponds of the infield (the ground pulled under their water level)
     const lakes = (M.water || []).map(Pp => { const b = mtBox(Pp); let lo = 1e9; for (let k = 0; k < Pp.length; k += 2) lo = Math.min(lo, nrFar(Pp[k], Pp[k + 1])); return { P: Pp, b, y: lo - 0.4 }; });
-    P.pad = (x, z, h) => { for (const lk of lakes) { const b = lk.b; if (x < b[0] - 6 || x > b[2] + 6 || z < b[1] - 6 || z > b[3] + 6) continue; if (mtIn(lk.P, x, z)) return Math.min(h, lk.y - 1.0); } return h; };
+    const edgeD = (Pp, x, z) => { let m = 1e9; for (let i = 0, j = Pp.length - 2; i < Pp.length; j = i, i += 2) { const ax = Pp[j], az = Pp[j + 1], bx = Pp[i] - ax, bz = Pp[i + 1] - az, l2 = bx * bx + bz * bz || 1, t = clamp(((x - ax) * bx + (z - az) * bz) / l2, 0, 1); m = Math.min(m, Math.hypot(x - ax - bx * t, z - az - bz * t)); } return m; };
+    P.pad = (x, z, h) => { for (const lk of lakes) { const b = lk.b; if (x < b[0] - 6 || x > b[2] + 6 || z < b[1] - 6 || z > b[3] + 6) continue;   // (the ground just above the water at the shore, below it a metre or two in)
+      const ed = edgeD(lk.P, x, z), sd = mtIn(lk.P, x, z) ? -ed : ed; if (sd < 10) return Math.min(h, Math.max(lk.y - 1.6, lk.y + 0.3 * sd)); } return h; };
     out.bounds = { minX: P.x0, maxX: P.x1, minZ: P.z0, maxZ: P.z1 };
     const matV = new THREE.MeshLambertMaterial({ vertexColors: true }); out.matV = matV;
     const excl = [], eh = new Map(), EHC = 64;
@@ -22970,14 +22972,19 @@ const World = (function () {
     const markMat = new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 });
     const roads = new Chunks(256, true), dirt = new Chunks(256, true), marks = new Chunks(256);
     const RY = (x, z) => nrGround(x, z) + 0.05, ok = (x, z) => { const n = nrNear(x, z); return !(n.i >= 0 && n.dd < 3) && inWorld(x, z); };
-    const strip = (ch, pts, o0, o1, col, uv, dash) => {   // a band from o0 to o1 m (+ right) along the polyline, on the ground
+    const JR = (M.junc || []).map(([x, z]) => [x, z]);
+    const inJ = (x, z, r) => { for (const [jx, jz] of JR) if (Math.abs(x - jx) < r && Math.abs(z - jz) < r && Math.hypot(x - jx, z - jz) < r) return true; return false; };
+    const disc = (ch, x, z, r, col) => { if (!ok(x, z)) return; const g = ch.get(x, z), c = [x, RY(x, z), z];   // (the round patch where two pieces of a road meet, and over a junction)
+      for (let k = 0; k < 10; k++) { const a0 = k / 10 * TAU, a1 = (k + 1) / 10 * TAU, p0 = [x + Math.cos(a0) * r, 0, z + Math.sin(a0) * r], p1 = [x + Math.cos(a1) * r, 0, z + Math.sin(a1) * r];
+        p0[1] = RY(p0[0], p0[2]); p1[1] = RY(p1[0], p1[2]); g.triO(c, p0, p1, col, [x, c[1] - 5, z], col, col, [x / 8, z / 8], [p0[0] / 8, p0[2] / 8], [p1[0] / 8, p1[2] / 8]); } };
+    const strip = (ch, pts, o0, o1, col, uv, dash, cut) => {   // a band from o0 to o1 m (+ right) along the polyline, on the ground (cut: not inside the junctions)
       let acc = 0;
       for (let k = 0; k + 1 < pts.length; k++) {
         const [x0, z0] = pts[k], [x1, z1] = pts[k + 1], l = Math.hypot(x1 - x0, z1 - z0) || 1, n = Math.max(1, Math.ceil(l / 4)), nx = -(z1 - z0) / l, nz = (x1 - x0) / l;
         for (let q = 0; q < n; q++, acc += l / n) {
           if (dash && (Math.floor(acc / dash[0]) % 2)) continue;
           const xa = x0 + (x1 - x0) * q / n, za = z0 + (z1 - z0) * q / n, xb = x0 + (x1 - x0) * (q + 1) / n, zb = z0 + (z1 - z0) * (q + 1) / n;
-          if (!ok(xa, za) || !ok(xb, zb)) continue;
+          if (!ok(xa, za) || !ok(xb, zb) || (cut && (inJ(xa, za, cut) || inJ(xb, zb, cut)))) continue;
           const Q = [[xa + nx * o0, za + nz * o0], [xa + nx * o1, za + nz * o1], [xb + nx * o1, zb + nz * o1], [xb + nx * o0, zb + nz * o0]].map(([x, z]) => [x, RY(x, z) + (uv ? 0 : 0.012), z]);
           ch.get(xa, za).quadUp(Q[0], Q[1], Q[2], Q[3], [col, col, col, col], uv ? Q.map(p => [p[0] / 8, p[2] / 8]) : null);
         }
@@ -22989,8 +22996,10 @@ const World = (function () {
       const hw = r.w / 2;
       if (r.c >= 5) { strip(dirt, r.pts, -hw, hw, r.c === 6 ? [1.12, 1.0, 0.84] : dc, true); continue; }
       strip(roads, r.pts, -hw, hw, asp, true);
-      if (r.c <= 3) { for (const o of [-0.14, 0.14]) strip(marks, r.pts, o - 0.06, o + 0.06, YL); for (const sd of [-1, 1]) strip(marks, r.pts, sd * (hw - 0.35), sd * (hw - 0.22), WL); }   // the double yellow, the edge lines
+      for (let k = 1; k + 1 < r.pts.length; k++) disc(roads, r.pts[k][0], r.pts[k][1], hw, asp);
+      if (r.c <= 3) { for (const o of [-0.14, 0.14]) strip(marks, r.pts, o - 0.06, o + 0.06, YL, false, null, hw + 4); for (const sd of [-1, 1]) strip(marks, r.pts, sd * (hw - 0.35), sd * (hw - 0.22), WL, false, null, hw + 2.5); }   // the double yellow, the edge lines (not across the junctions)
     }
+    for (const [jx, jz] of JR) { let hw = 0; for (const r of RL) if (r.c <= 4 && r.pts.some(p => Math.hypot(p[0] - jx, p[1] - jz) < 1.2)) hw = Math.max(hw, r.w / 2); if (hw) disc(roads, jx, jz, hw + 1.2, asp); }
     roads.addTo(root, roadMat, false, true); dirt.addTo(root, dirtMat, false, true);
     /* ---- the junctions (OSM: where three or more roads meet): as in the US, a stop sign with the street names on top on the approaches of the
        smaller roads (all of them where the roads are alike: an all-way stop), the white stop bar across their lane, a crosswalk where the
@@ -22998,19 +23007,27 @@ const World = (function () {
     let nJunc = 0;
     const furn = (kind, x, z, yaw) => { if (!ok(x, z) || excluded(x, z)) return false; out.props.push({ kind, x, z, yaw, i: nrNear(x, z).i }); return true; };
     const faceYaw = (ux, uz) => Math.atan2(-ux, uz);   // a prop's face (local +z) to the direction (ux, uz)
-    const nearCrowd = (x, z) => { for (let k = 0; k < crowdPts.length; k += 3) if (Math.hypot(crowdPts[k] - x, crowdPts[k + 1] - z) < 140) return true; return false; };
+    const nearCrowd = (x, z) => { for (let k = 0; k < crowdPts.length; k += 3) if (Math.hypot(crowdPts[k] - x, crowdPts[k + 1] - z) < 220) return true; return false; };
     for (const [jx, jz] of M.junc || []) {
       if (!inWorld(jx, jz) || !ok(jx, jz)) continue;
       const arms = [];
-      for (const r of RL) { if (r.c > 4) continue; const p = r.pts, e = [[p[0], p[1]], [p[p.length - 1], p[p.length - 2]]];
-        for (let k = 0; k < p.length; k++) if (Math.hypot(p[k][0] - jx, p[k][1] - jz) < 1.2) {   // the junction's point on this road: an arm each way
-          for (const q of [k - 1, k + 1]) if (q >= 0 && q < p.length) { const dx = p[q][0] - jx, dz = p[q][1] - jz, l = Math.hypot(dx, dz) || 1; arms.push({ ux: dx / l, uz: dz / l, c: r.c, hw: r.w / 2, l }); } } }
+      RL.forEach((r, ri) => { if (r.c > 4) return; const p = r.pts;
+        for (let k = 0; k < p.length; k++) if (Math.hypot(p[k][0] - jx, p[k][1] - jz) < 1.2) {   // the junction's point on this road: an arm each way (thru: the road goes on through it)
+          const thru = k > 0 && k < p.length - 1;
+          for (const q of [k - 1, k + 1]) if (q >= 0 && q < p.length) { const dx = p[q][0] - jx, dz = p[q][1] - jz, l = Math.hypot(dx, dz) || 1; arms.push({ ux: dx / l, uz: dz / l, c: r.c, hw: r.w / 2, l, ri, thru }); } } });
       if (arms.length < 3) continue;
-      const top = Math.min(...arms.map(a => a.c)), allWay = arms.every(a => a.c === top), hwJ = Math.max(...arms.map(a => a.hw));
+      // which arms stop: the road that goes on through the junction (the biggest such) has the right of way; where every road ends here,
+      // the biggest road's two arms do, if there is one bigger than the rest; else all of them stop (an all-way stop, as in the park)
+      const th = arms.filter(a => a.thru), top = Math.min(...arms.map(a => a.c)), hwJ = Math.max(...arms.map(a => a.hw));
+      let pair = null, pc = 1e9;   // (OSM's roads end at their junctions: the through road is the straightest pair of arms of the same, biggest kind)
+      for (let p = 0; p < arms.length; p++) for (let q = p + 1; q < arms.length; q++) { const A = arms[p], B = arms[q], dt = A.ux * B.ux + A.uz * B.uz;
+        if (A.c === B.c && dt < -0.8 && (A.c < pc || (A.c === pc && dt < pair.dt))) { pair = { a: A, b: B, dt }; pc = A.c; } }
+      if (th.length) { const ri = th.reduce((b, a) => (a.c < b.c ? a : b)).ri; pair = { a: th.find(a => a.ri === ri), b: th.filter(a => a.ri === ri)[1] }; }
+      const stops = (a) => !pair || (a !== pair.a && a !== pair.b), allWay = arms.every(stops);
       const busy = nearCrowd(jx, jz); let any = false;
       for (const a of arms) {
         const rx = a.uz, rz = -a.ux, dStop = hwJ + 3.5;   // (the approach drives along -u: its right is (uz, -ux))
-        if (allWay || a.c > top) {
+        if (stops(a)) {
           any = furn('stop', jx + a.ux * dStop + rx * (a.hw + 1.3), jz + a.uz * dStop + rz * (a.hw + 1.3), faceYaw(a.ux, a.uz)) || any;
           const sb = dStop - 1.2, P0 = [[jx + a.ux * sb, jz + a.uz * sb], [jx + a.ux * (sb + 0.45), jz + a.uz * (sb + 0.45)]];   // the stop bar across the approach lane
           strip(marks, P0, 0.1, a.hw - 0.2, WL);
@@ -23065,9 +23082,9 @@ const World = (function () {
     /* ---- water: the lake and the ponds of the infield (OSM), at the level of their shore ---- */
     { const wg = new GB(true);
       for (const lk of lakes) { const Pp = lk.P, n = Pp.length / 2; let cx = 0, cz = 0; for (let k = 0; k < n; k++) { cx += Pp[k * 2]; cz += Pp[k * 2 + 1]; } cx /= n; cz /= n;
-        for (let k = 0; k < n; k++) { const j = (k + 1) % n; wg.triO([cx, lk.y, cz], [Pp[k * 2], lk.y, Pp[k * 2 + 1]], [Pp[j * 2], lk.y, Pp[j * 2 + 1]], W1, [cx, lk.y - 5, cz], W1, W1, [cx / 9, cz / 9], [Pp[k * 2] / 9, Pp[k * 2 + 1] / 9], [Pp[j * 2] / 9, Pp[j * 2 + 1] / 9]); }
+        for (let k = 0; k < n; k++) { const j = (k + 1) % n; wg.triO([cx, lk.y, cz], [Pp[k * 2], lk.y, Pp[k * 2 + 1]], [Pp[j * 2], lk.y, Pp[j * 2 + 1]], W1, [cx, lk.y - 5, cz], W1, W1, [cx / 4, cz / 4], [Pp[k * 2] / 4, Pp[k * 2 + 1] / 4], [Pp[j * 2] / 4, Pp[j * 2 + 1] / 4]); }
         exclPush(cx, cz, Math.hypot(lk.b[2] - lk.b[0], lk.b[3] - lk.b[1]) / 2); }
-      if (!wg.empty) { const m = new THREE.Mesh(wg.geometry(), waterMat(tex, { color: 0x8aa6a0, refl: 0.5, land: 0.6 })); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); } }
+      if (!wg.empty) { const m = new THREE.Mesh(wg.geometry(), waterMat(tex, { color: 0x7f9a86, refl: 0.45, land: 0.7, amp: 0.35, len: 0.6, shal: 0.7 })); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); } }
 
     /* ---- trees: coast live oaks in the woodland (the land cover's class 1) and alone in the golden grass, chaparral on the slopes (class 2), a
        few Monterey pines by the buildings ---- */

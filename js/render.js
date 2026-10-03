@@ -1560,25 +1560,13 @@ const Render = (function () {
     else streetGeometry(W, g, kind);
     return g.geometry();
   }
-  // the street furniture of the junctions (Core PROPK signal ... cabinet; generic, no names): the foot at -h0, the arm of a signal or a lamp along
-  // +x, a signal's heads and the signs' faces look along +z (World turns them to the traffic). Galvanised steel, painted where it is usual
+  // the street furniture of the junctions (Core PROPK lamp ... cabinet; generic, no names): the foot at -h0, a lamp's arm along +x, the signs'
+  // faces look along +z (World turns them to the traffic). Galvanised steel, painted where it is usual
   function streetGeometry(W, g, kind) {
     const gal = [0.6, 0.62, 0.62], galD = [0.46, 0.48, 0.48], blk = [0.08, 0.08, 0.09], wh = [0.95, 0.95, 0.93], yel = [0.98, 0.78, 0.1], conc = [0.68, 0.67, 0.64];
     const plate = (y, wd, ht, col, z0) => { z0 = z0 || 0.03; W.box(g, 0, y, z0 - 0.015, wd, ht, 0.02, 0, galD); W.box(g, 0, y + 0.02, z0 + 0.005, wd - 0.04, ht - 0.04, 0.012, 0, col); };   // a sign's plate on its post, its face to +z
     const border = (y, wd, ht, col, z) => { for (const [bx, by, bw, bh] of [[0, y + 0.04, wd - 0.08, 0.025], [0, y + ht - 0.065, wd - 0.08, 0.025], [-wd / 2 + 0.05, y + 0.04, 0.025, ht - 0.08], [wd / 2 - 0.05, y + 0.04, 0.025, ht - 0.08]]) W.box(g, bx, by, z, bw, bh, 0.01, 0, col); };
-    const head = (x, y, z) => {   // a three-section signal head under the arm (red, amber, green from the top), on a black backplate with a yellow edge
-      W.box(g, x, y - 0.04, z - 0.17, 0.64, 1.18, 0.03, 0, yel); W.box(g, x, y, z - 0.155, 0.56, 1.1, 0.03, 0, blk);
-      W.box(g, x, y + 0.03, z - 0.14, 0.34, 1.04, 0.26, 0, [0.12, 0.12, 0.13]);
-      [[0.95, 0.12, 0.08], [0.72, 0.5, 0.08], [0.1, 0.55, 0.32]].forEach((c, k) => { const yy = y + 0.12 + (2 - k) * 0.33; W.box(g, x, yy, z, 0.22, 0.22, 0.02, 0, c); W.box(g, x, yy + 0.22, z - 0.01, 0.28, 0.04, 0.2, 0, blk); });
-      W.box(g, x, y + 1.07, z - 0.14, 0.06, 0.18, 0.06, 0, galD); };
-    if (kind === 'signal') {   // a mast-arm signal pole: the concrete footing, the pole, the arm over the lanes with two heads, a third head on the pole, the street name, the luminaire on top
-      W.box(g, 0, -3.0, 0, 0.7, 0.16, 0.7, 0, conc); W.cyl(g, 0, -2.86, 0, 0.17, 0.3, 8, galD); W.cyl(g, 0, -2.6, 0, 0.14, 5.9, 8, gal, gal, 0.11);
-      W.box(g, 3.05, 2.6, 0, 6.1, 0.17, 0.17, 0, gal); W.box(g, 0.45, 2.46, 0, 0.7, 0.32, 0.22, 0, gal);   // (the arm and its clamp)
-      head(3.5, 1.32, 0.12); head(5.7, 1.32, 0.12); head(0.32, -0.6, 0.12);
-      W.box(g, 1.75, 2.82, 0.02, 1.9, 0.48, 0.03, 0, [0.06, 0.34, 0.2]); border(2.82, 1.9, 0.48, wh, 0.04);   // the street name (a green blade, no words: too small to read)
-      W.box(g, 0.05, 3.25, 0, 0.1, 0.08, 0.08, 0, gal); W.box(g, 1.2, 3.3, 0, 2.3, 0.09, 0.09, 0, gal); W.box(g, 2.6, 3.2, 0, 0.8, 0.2, 0.38, 0, [0.5, 0.52, 0.53], [0.56, 0.58, 0.58]); W.box(g, 2.6, 3.18, 0, 0.56, 0.03, 0.28, 0, [1, 0.94, 0.8]);
-      W.box(g, -0.15, -1.6, 0, 0.12, 0.2, 0.14, 0, [0.82, 0.68, 0.12]);   // the pedestrians' push button
-    } else if (kind === 'lamp') {   // a cobra-head street light on its tapered pole
+    if (kind === 'lamp') {   // a cobra-head street light on its tapered pole
       W.box(g, 0, -4.2, 0, 0.45, 0.12, 0.45, 0, conc); W.cyl(g, 0, -4.08, 0, 0.13, 8.1, 8, gal, gal, 0.07);
       W.box(g, 0.95, 3.95, 0, 1.9, 0.09, 0.09, 0, gal); W.box(g, 2.05, 3.82, 0, 0.78, 0.22, 0.4, 0, [0.5, 0.52, 0.53], [0.58, 0.6, 0.6]); W.box(g, 2.05, 3.8, 0, 0.56, 0.03, 0.3, 0, [1, 0.94, 0.8]);
     } else if (kind === 'sign') {   // a white regulatory sign (a speed limit) on a square steel post
@@ -1593,9 +1581,6 @@ const Render = (function () {
       W.box(g, 0, -1.4, 0, 0.06, 2.6, 0.06, 0, gal); const y0 = 0.62, oct = (r, z, col) => { for (let k = 0; k < 8; k++) { const a0 = (k + 0.5) / 8 * Math.PI * 2, a1 = (k + 1.5) / 8 * Math.PI * 2; g.triO([0, y0, z], [Math.cos(a0) * r, y0 + Math.sin(a0) * r, z], [Math.cos(a1) * r, y0 + Math.sin(a1) * r, z], col, [0, y0, z - 1]); } };
       oct(0.4, 0.012, galD); oct(0.38, 0.03, wh); oct(0.34, 0.034, [0.76, 0.08, 0.08]); W.box(g, 0, y0 - 0.06, 0.038, 0.44, 0.12, 0.01, 0, wh);
       W.box(g, 0, 1.18, 0, 0.92, 0.2, 0.03, 0, [0.06, 0.34, 0.2]); W.box(g, 0, 1.4, 0, 0.03, 0.2, 0.92, 0, [0.06, 0.34, 0.2]);
-    } else if (kind === 'busstop') {   // a bus stop: a pole with a blue and white plate (the bus drawn on it), a timetable holder
-      W.box(g, 0, -1.4, 0, 0.07, 2.75, 0.07, 0, gal); plate(0.85, 0.46, 0.5, [0.12, 0.3, 0.62]); W.box(g, 0, 0.98, 0.046, 0.3, 0.17, 0.01, 0, wh); W.box(g, 0, 0.92, 0.047, 0.24, 0.05, 0.01, 0, [0.12, 0.3, 0.62]);
-      W.box(g, 0, 0.0, 0.05, 0.26, 0.4, 0.04, 0, [0.85, 0.86, 0.84]);
     } else if (kind === 'bollard') {   // a steel pipe painted safety yellow, a black band, a domed top
       W.cyl(g, 0, -0.5, 0, 0.11, 0.92, 8, yel); W.cyl(g, 0, 0.18, 0, 0.113, 0.1, 8, blk); W.cone(g, 0, 0.42, 0, 0.11, 0.08, 8, yel, [1, 0.86, 0.2], 0);
     } else if (kind === 'bin') {   // a park's litter bin: a slatted dark green steel drum with its lid

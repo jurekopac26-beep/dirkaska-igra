@@ -1567,18 +1567,16 @@ const Core = (function () {
       rbale:  { m: 26, rh: 0.62, rb: 0.75, h0: 0.43,  e: 0.15, mu: 0.8,  lift: 0.3,  I: 4.6,  pts: (() => { const p = []; for (const x of [-0.62, 0.62]) for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; p.push([x, Math.cos(a) * 0.43, Math.sin(a) * 0.43]); } return p; })() },   // round straw bale lying on its side (Toskana)
       rbstack: { m: 78, rh: 0.9, rb: 1.1,  h0: 0.85,  breaks: 'rbale', parts: [[-0.66, -0.425, 0], [0.66, -0.425, 0], [0, 0.425, 0]], pf: [[1.1, 0.6], [1.0, 0.9], [0.8, 2.4]] },
       post:   { m: 4,  rh: 0.14, rb: 0.62, h0: 0.55,  e: 0.3,  mu: 0.6,  lift: 1.0,  I: 0.4,  pts: boxPts(0.07, 0.55, 0.07) },   // roadside post (stebriček): light, snaps over and cartwheels away
-      // street furniture of the junctions (generic, any track's; World places them, Render draws them): it snaps off its foot and topples,
-      // the car only a little slower. The arm of a traffic signal or a lamp reaches over the road along local +x (the prop's yaw)
-      signal:  { m: 110, rh: 0.17, rb: 3.4, h0: 3.0,  e: 0.12, mu: 0.6,  lift: 0.15, I: 330, pts: boxPts(0.14, 3.0, 0.14).concat([[5.6, 2.7, 0], [5.6, 1.7, 0]]) },   // traffic signal (semafor) on its pole and mast arm
-      lamp:    { m: 70,  rh: 0.14, rb: 4.4, h0: 4.2,  e: 0.12, mu: 0.6,  lift: 0.15, I: 300, pts: boxPts(0.11, 4.2, 0.11).concat([[2.0, 4.1, 0]]) },   // street lamp (ulična svetilka)
+      // street furniture of the junctions (generic, any track's; World places them, Render draws them): on breakaway feet, it snaps off and topples,
+      // the car only a little slower. A lamp's arm reaches over the road along local +x (the prop's yaw)
+      lamp:    { m: 22,  rh: 0.14, rb: 4.4, h0: 4.2,  e: 0.12, mu: 0.6,  lift: 0.2,  I: 100, pts: boxPts(0.11, 4.2, 0.11).concat([[2.0, 4.1, 0]]) },   // street lamp (ulična svetilka)
       sign:    { m: 9,   rh: 0.1,  rb: 1.5, h0: 1.25, e: 0.2,  mu: 0.6,  lift: 0.7,  I: 4,   pts: boxPts(0.05, 1.25, 0.05).concat([[0, 1.1, 0.4], [0, 1.1, -0.4]]) },   // road sign on its post (a white regulatory one)
       warn:    { m: 9,   rh: 0.1,  rb: 1.5, h0: 1.25, e: 0.2,  mu: 0.6,  lift: 0.7,  I: 4,   pts: boxPts(0.05, 1.25, 0.05).concat([[0, 1.0, 0.45], [0, 1.0, -0.45]]) },   // warning sign (a yellow diamond)
       stop:    { m: 10,  rh: 0.1,  rb: 1.6, h0: 1.35, e: 0.2,  mu: 0.6,  lift: 0.7,  I: 5,   pts: boxPts(0.05, 1.35, 0.05).concat([[0, 1.0, 0.4], [0, 1.0, -0.4]]) },   // stop sign, the street names on top
-      busstop: { m: 14,  rh: 0.12, rb: 1.7, h0: 1.4,  e: 0.2,  mu: 0.6,  lift: 0.6,  I: 7,   pts: boxPts(0.05, 1.4, 0.05).concat([[0, 1.25, 0.32], [0, 1.25, -0.32]]) },   // bus stop sign on its pole
-      bollard: { m: 16,  rh: 0.12, rb: 0.6, h0: 0.5,  e: 0.25, mu: 0.6,  lift: 0.7,  I: 1.1, pts: cylPts(0.11, -0.5, 0.5, 6) },   // steel bollard (stebriček)
-      bin:     { m: 14,  rh: 0.3,  rb: 0.6, h0: 0.47, e: 0.25, mu: 0.65, lift: 0.6,  I: 1.0, pts: cylPts(0.29, -0.47, 0.47, 8) },   // litter bin (smetnjak)
-      hydrant: { m: 40,  rh: 0.2,  rb: 0.5, h0: 0.4,  e: 0.2,  mu: 0.7,  lift: 0.4,  I: 1.6, pts: cylPts(0.17, -0.4, 0.4, 6) },   // fire hydrant (hidrant)
-      cabinet: { m: 70,  rh: 0.5,  rb: 0.95, h0: 0.75, e: 0.12, mu: 0.75, lift: 0.25, I: 12,  pts: boxPts(0.45, 0.75, 0.3) },   // electrical cabinet, the signals' controller (omarica)
+      bollard: { m: 12,  rh: 0.12, rb: 0.6, h0: 0.5,  e: 0.25, mu: 0.6,  lift: 0.7,  I: 1.1, pts: cylPts(0.11, -0.5, 0.5, 6) },   // steel bollard (stebriček)
+      bin:     { m: 10,  rh: 0.3,  rb: 0.6, h0: 0.47, e: 0.25, mu: 0.65, lift: 0.6,  I: 1.0, pts: cylPts(0.29, -0.47, 0.47, 8) },   // litter bin (smetnjak)
+      hydrant: { m: 18,  rh: 0.2,  rb: 0.5, h0: 0.4,  e: 0.2,  mu: 0.7,  lift: 0.45, I: 0.8, pts: cylPts(0.17, -0.4, 0.4, 6) },   // fire hydrant (hidrant)
+      cabinet: { m: 22,  rh: 0.5,  rb: 0.95, h0: 0.75, e: 0.12, mu: 0.75, lift: 0.3,  I: 3.8, pts: boxPts(0.45, 0.75, 0.3) },   // electrical cabinet, the signals' controller (omarica)
     };
   })();
   const _pq = {};
