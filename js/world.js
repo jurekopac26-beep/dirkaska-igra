@@ -10590,7 +10590,7 @@ const World = (function () {
   }
   function rrLifeGeo(kind) {   // unit pieces of the landscape's life (the instances scale and colour them): 0 a flowering tree (a broadleaf with a pale crown:
     // the instance gives it the purple of a quaresmeira, the yellow of an ipê, a pink or a white one), 1 a hydrangea bush (green leaves, pale heads of
-    // flowers tinted blue, pink or lilac), 2 a cow (2.3 m long, x forward; pale: the instance gives the coat), 3 a fence post (1.3 m)
+    // flowers tinted blue, pink or lilac), 2 a cow (2.3 m long, x forward; pale: the instance gives the coat), 3 a fence post (1.3 m), 4 a coati
     const g = new GB(), R = rng(900 + kind), rs = ROCK_SMOOTH;
     if (kind === 0) { ROCK_SMOOTH = true; cyl(g, 0, -0.02, 0, 0.035, 0.5, 3, [0.62, 0.58, 0.52], null, 0.025);
       ico(g, -0.05, 0.66, -0.04, 0.32, 0.6, [0.96, 0.94, 0.96], R, 0.32); ico(g, 0.2, 0.56, 0.12, 0.24, 0.66, [0.88, 0.86, 0.88], R, 0.35); }
@@ -10599,7 +10599,11 @@ const World = (function () {
     else if (kind === 2) { ROCK_SMOOTH = false; const C = [1, 1, 1], L = [0.78, 0.76, 0.74];
       box(g, 0, 0.62, 0, 1.75, 0.78, 0.78, 0, C, null, true); box(g, 1.1, 0.95, 0, 0.5, 0.42, 0.38, 0, [0.9, 0.88, 0.86], null, true);
       box(g, 0.66, 0, 0, 0.22, 0.66, 0.66, 0, L, null, true); box(g, -0.66, 0, 0, 0.22, 0.66, 0.66, 0, L, null, true); box(g, -0.92, 0.82, 0, 0.1, 0.5, 0.08, 0, L, null, true); }
-    else { ROCK_SMOOTH = false; box(g, 0, -0.2, 0, 0.13, 1.5, 0.13, 0, [1, 1, 1], [0.8, 0.8, 0.8], true); }
+    else if (kind === 3) { ROCK_SMOOTH = false; box(g, 0, -0.2, 0, 0.13, 1.5, 0.13, 0, [1, 1, 1], [0.8, 0.8, 0.8], true); }
+    else { ROCK_SMOOTH = false; const B = [0.55, 0.38, 0.24], D = [0.22, 0.16, 0.12], L = [0.86, 0.8, 0.7];   // 4 a coati (quati, ~1 m with its tail): the brown body, the long pale-tipped snout, the ringed tail held up
+      box(g, 0, 0.16, 0, 0.5, 0.22, 0.2, 0, B, null, true); box(g, 0.32, 0.2, 0, 0.18, 0.12, 0.11, 0, L, null, true); box(g, 0.43, 0.2, 0, 0.08, 0.06, 0.06, 0, D, null, true);
+      for (const u of [0.17, -0.17]) box(g, u, 0, 0, 0.07, 0.17, 0.18, 0, D, null, true);
+      for (let k = 0; k < 4; k++) box(g, -0.27 - k * 0.025, 0.3 + k * 0.1, 0, 0.06, 0.1, 0.06, 0, k % 2 ? D : B, null, true); }
     ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
@@ -11014,7 +11018,7 @@ const World = (function () {
     /* ---- the life of the landscape: flowering trees over the canopy (the purple quaresmeiras, the yellow ipês, a few pink and white ones), the blue,
        pink and lilac hydrangeas along the road up high and on the plateau, cattle grazing the plateau's pastures behind their fences (posts and two
        strands of wire), black vultures soaring over the cliff (all instanced; their own random stream, so nothing above is re-rolled) ---- */
-    let nFlower = 0, nHyd = 0, nCows = 0, nPosts = 0;
+    let nFlower = 0, nHyd = 0, nCows = 0, nPosts = 0, nCoati = 0;
     {
       const RL = rng(3371), G = P.G, Lt = VRC * VRT, tiles = []; for (let k = 0; k < G.ntx * G.ntz; k++) if (G.on[k]) tiles.push(k);
       const fl = new IChunks(rrLifeGeo(0), tMatT, 224), hy = new IChunks(rrLifeGeo(1), tMatT, 192), cw = new IChunks(rrLifeGeo(2), tMatT, 256), po = new IChunks(rrLifeGeo(3), tMatT, 256);
@@ -11052,7 +11056,19 @@ const World = (function () {
           prev = [x, y, z];
         }
       }
-      fl.addTo(root, false); hy.addTo(root, false); cw.addTo(root, true); po.addTo(root, false);
+      const qa = new IChunks(rrLifeGeo(4), tMatT, 256);   // the coatis: bands of a few to eight foraging at the forest's edge by the upper road, tails up
+      for (let s = sStart + 900, n = 0; s < sFin - 200 && n < 14; s += 180 + RL() * 260) {
+        const side = RL() < 0.5 ? -1 : 1, [cx, cz] = onSide(s, side, 3 + RL() * 7); if (vrNear(cx, cz).dd < 2 || excluded(cx, cz) || caSlope(cx, cz) > 0.9) continue;
+        const k = 3 + Math.floor(RL() * 6);
+        for (let q = 0; q < k; q++) { const x = cx + (RL() - 0.5) * 6, z = cz + (RL() - 0.5) * 6; if (vrNear(x, z).dd < 1.5 || excluded(x, z)) continue;
+          qa.add(x, caGround(x, z) - 0.02, z, RL() * TAU, 1, 1, [0.9 + RL() * 0.2, 0.9 + RL() * 0.15, 0.9]); nCoati++; }
+        n++;
+      }
+      { const RC = rng(3397), carC = [[0.85, 0.85, 0.83], [0.72, 0.12, 0.1], [0.12, 0.28, 0.6], [0.16, 0.16, 0.18], [0.6, 0.62, 0.64]];   // sightseers' cars pulled over on the plateau's verge (a photo of the view)
+        for (const d of [3720, 4180, 4560]) { const side = rpHash(d, 3) < 0.5 ? -1 : 1;
+          for (let q = 0; q < 2; q++) { const s = sStart + d + q * 6, [x, z, i] = onSide(s, side, 2.6); if (vrNear(x, z).dd < 1.2 || excluded(x, z)) continue;
+            caCar(scen.get(x, z), x, caGround(x, z), z, T.hd[i] + (side > 0 ? 0 : PI), vary(carC[Math.floor(RC() * carC.length)], RC, 0.15)); person(x + T.nx[i] * side * 2.2, z + T.nz[i] * side * 2.2, Math.atan2(T.nz[i] * side, T.nx[i] * side)); exclPush(x, z, 3.5); } } }
+      fl.addTo(root, false); hy.addTo(root, false); cw.addTo(root, true); po.addTo(root, false); qa.addTo(root, false);
     }
 
     /* ---- the verges and the cliffs: ferns and shrubs right behind the barrier, the red earth and rocks at the foot of the cuts, crags of dark basalt
@@ -11108,7 +11124,7 @@ const World = (function () {
       out.dyn.condors = { L, x0: T.px[i0], z0: T.pz[i0], y0: T.hy[i0], ax: T.px[i0], az: T.pz[i0], ay: T.hy[i0], t: null };
       caCondors(out.dyn.condors, 0, null); }
     crowdFinish(CR, root, out);
-    out.stats = { trees: nTrees, araucarias: nArauc, flowering: nFlower, hydrangeas: nHyd, cows: nCows, fencePosts: nPosts, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), falls: nFalls, mist: out.dyn.rrMist.L.length };   // (read by the tests)
+    out.stats = { trees: nTrees, araucarias: nArauc, flowering: nFlower, hydrangeas: nHyd, cows: nCows, fencePosts: nPosts, coatis: nCoati, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), falls: nFalls, mist: out.dyn.rrMist.L.length };   // (read by the tests)
     return out;
   }
 
