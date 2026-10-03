@@ -2546,5 +2546,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "mulholland/race/cs": {
+  "digest": "dcb285205d770c9cd8827ea7",
+  "lead": 1891.6,
+  "car0": [
+   -345.79,
+   973.57
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 23,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "mulholland/demo/cs": {
+  "digest": "dd946be8b4dc3ee5c36861cf",
+  "lead": 2019.6,
+  "car0": [
+   -457.45,
+   1099.38
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "mulholland/upg/cs": {
+  "digest": "4639ae5d327e61dcbf665fd1",
+  "lead": 2008.9,
+  "car0": [
+   -393.4,
+   1107.84
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "mulholland/crash/cs": {
+  "digest": "63d22e7931c1fa80f0c29354",
+  "lead": 1889.4,
+  "car0": [
+   -348,
+   932.76
+  ],
+  "cover": {
+   "dmg": 0.91,
+   "loose": 12,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "mulholland/formula/cs": {
+  "digest": "484764d84e89bb84a7032bcc",
+  "lead": 2085.3,
+  "car0": [
+   -362.38,
+   1082.38
+  ],
+  "cover": {
+   "dmg": 0.76,
+   "loose": 19,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "mulholland/lm/cs": {
+  "digest": "9f89277503e50026c300e977",
+  "lead": 2065,
+  "car0": [
+   -375.25,
+   1054.44
+  ],
+  "cover": {
+   "dmg": 0.73,
+   "loose": 6,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "mulholland/car/cs": {
+  "digest": "eed8ea95375e606763e7fecf",
+  "lead": 1889.3,
+  "car0": [
+   -334.11,
+   882.96
+  ],
+  "cover": {
+   "dmg": 0.82,
+   "loose": 7,
+   "rescues": 1,
+   "repairs": 0
+  }
  }
 }
