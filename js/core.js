@@ -1567,6 +1567,16 @@ const Core = (function () {
       rbale:  { m: 26, rh: 0.62, rb: 0.75, h0: 0.43,  e: 0.15, mu: 0.8,  lift: 0.3,  I: 4.6,  pts: (() => { const p = []; for (const x of [-0.62, 0.62]) for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; p.push([x, Math.cos(a) * 0.43, Math.sin(a) * 0.43]); } return p; })() },   // round straw bale lying on its side (Toskana)
       rbstack: { m: 78, rh: 0.9, rb: 1.1,  h0: 0.85,  breaks: 'rbale', parts: [[-0.66, -0.425, 0], [0.66, -0.425, 0], [0, 0.425, 0]], pf: [[1.1, 0.6], [1.0, 0.9], [0.8, 2.4]] },
       post:   { m: 4,  rh: 0.14, rb: 0.62, h0: 0.55,  e: 0.3,  mu: 0.6,  lift: 1.0,  I: 0.4,  pts: boxPts(0.07, 0.55, 0.07) },   // roadside post (stebriček): light, snaps over and cartwheels away
+      // street furniture of the junctions on the street circuits (generic; World places them, Render draws them): a traffic signal on its
+      // pole, one on a pole with a mast arm over the side street (+x), a sign, a bollard, a litter bin, a hydrant, a street cabinet, a lamp post
+      tlight: { m: 30, rh: 0.13, rb: 2.0,  h0: 2.0,   e: 0.2,  mu: 0.6,  lift: 0.5,  I: 40,   pts: boxPts(0.1, 2.0, 0.1) },
+      tmast:  { m: 90, rh: 0.16, rb: 3.2,  h0: 3.0,   e: 0.15, mu: 0.6,  lift: 0.3,  I: 300,  pts: boxPts(0.12, 3.0, 0.12).concat([[4.6, 2.75, 0.1], [4.6, 2.75, -0.1]]) },
+      sign:   { m: 12, rh: 0.3,  rb: 1.3,  h0: 1.25,  e: 0.25, mu: 0.6,  lift: 0.7,  I: 6,    pts: boxPts(0.3, 1.25, 0.05) },
+      bollard: { m: 15, rh: 0.12, rb: 0.55, h0: 0.5,  e: 0.3,  mu: 0.6,  lift: 0.8,  I: 1.3,  pts: boxPts(0.1, 0.5, 0.1) },
+      bin:    { m: 12, rh: 0.29, rb: 0.55, h0: 0.45,  e: 0.25, mu: 0.6,  lift: 0.7,  I: 0.7,  pts: cylPts(0.28, -0.45, 0.45, 6) },
+      hydrant: { m: 40, rh: 0.2, rb: 0.48, h0: 0.4,   e: 0.2,  mu: 0.6,  lift: 0.4,  I: 1.6,  pts: cylPts(0.17, -0.4, 0.4, 6) },
+      cabinet: { m: 60, rh: 0.62, rb: 0.95, h0: 0.65, e: 0.15, mu: 0.7,  lift: 0.3,  I: 12,   pts: boxPts(0.6, 0.65, 0.25) },
+      lamp:   { m: 60, rh: 0.13, rb: 4.6,  h0: 4.5,   e: 0.15, mu: 0.6,  lift: 0.3,  I: 400,  pts: boxPts(0.1, 4.5, 0.1).concat([[1.6, 4.3, 0]]) },
     };
   })();
   const _pq = {};

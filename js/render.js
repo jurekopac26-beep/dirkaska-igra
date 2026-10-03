@@ -1521,6 +1521,32 @@ const Render = (function () {
   const PROP_COLS = [[0.88, 0.33, 0.24], [0.95, 0.95, 0.94], [0.27, 0.6, 0.35], [0.2, 0.2, 0.22], [0.92, 0.89, 0.74]];   // instance tint: red / white / green / black / cream (painted tyres, the same as the tyre walls)
   const POST_SNOW = [1, 0.53, 0.13];                              // instance tint of the orange snow poles high up on Pikes Peak (a 'post' with col 1)
   let propMat = null, propMatTyre = null;
+  // the street circuits' junction furniture (Core's PROPK: tlight, tmast, sign, bollard, bin, hydrant, cabinet, lamp), generic: the body's centre at
+  // the origin (its foot at -h0), local +x the way a signal or a sign faces (tmast: its arm along +x, the signals looking along -z), grey poles
+  const STREET_PROPS = (() => {
+    const pole = [0.6, 0.62, 0.64], dark = [0.09, 0.09, 0.1], R = [0.85, 0.12, 0.08], A = [0.95, 0.62, 0.08], G = [0.1, 0.75, 0.35];
+    const head = (W, g, x, y, z, rot) => { const c = Math.cos(rot), s = Math.sin(rot);   // a signal head (red, amber, green) facing +x turned by rot
+      W.box(g, x, y, z, 0.3, 0.95, 0.34, rot, dark); W.box(g, x - s * 0.05, y - 0.05, z + c * 0.05, 0.04, 1.05, 0.5, rot, dark);
+      [R, A, G].forEach((cl, k) => W.box(g, x + c * 0.16, y + 0.68 - k * 0.3, z + s * 0.16, 0.03, 0.2, 0.2, rot, cl)); };
+    return {
+      tlight: (g, W) => { W.cyl(g, 0, -2, 0, 0.08, 4, 6, pole, pole); W.cyl(g, 0, -2, 0, 0.16, 0.12, 6, pole, pole); head(W, g, 0.2, 0.9, 0, 0);
+        W.box(g, 0, -0.2, -0.16, 0.24, 0.5, 0.2, 0, dark); W.box(g, 0, -0.08, -0.27, 0.16, 0.14, 0.03, 0, R); W.box(g, 0, -0.32, -0.27, 0.16, 0.14, 0.03, 0, G);   // the pedestrians' signal
+        W.box(g, 0, -1.0, 0.1, 0.12, 0.18, 0.08, 0, [0.95, 0.8, 0.1]); },   // the push button
+      tmast: (g, W) => { W.cyl(g, 0, -3, 0, 0.12, 6, 7, pole, pole, 0.1); W.cyl(g, 0, -3, 0, 0.22, 0.15, 7, pole, pole); W.box(g, 2.4, 2.65, 0, 4.9, 0.14, 0.14, 0, pole);
+        W.box(g, 1.0, 2.2, 0, 1.6, 0.06, 0.06, -0.3, pole); for (const x of [2.6, 4.3]) head(W, g, x, 1.55, 0, -Math.PI / 2); head(W, g, 0.22, -0.2, 0, 0); },
+      sign: (g, W) => { W.box(g, 0, -1.25, 0, 0.07, 2.5, 0.07, 0, pole); const n = 10, bl = [0.08, 0.3, 0.72], wh = [0.95, 0.95, 0.95];   // a round blue sign, a white arrow (keep left)
+        for (let k = 0; k < n; k++) { const a0 = k / n * Math.PI * 2, a1 = (k + 1) / n * Math.PI * 2, P = (a, r, x) => [x, 0.85 + Math.cos(a) * r, Math.sin(a) * r];
+          for (const x of [0.05, 0.035]) g.triO(P(a0, 0.32, x), P(a1, 0.32, x), [x, 0.85, 0], x > 0.04 ? bl : [0.5, 0.52, 0.55], [x - 1, 0.85, 0]); }
+        g.triO([0.055, 0.98, -0.1], [0.055, 0.72, 0.06], [0.055, 0.72, -0.1], wh, [-1, 0.85, 0]); g.triO([0.055, 0.98, -0.1], [0.055, 0.98, 0.06], [0.055, 0.72, 0.06], wh, [-1, 0.85, 0]); },
+      bollard: (g, W) => { W.cyl(g, 0, -0.5, 0, 0.1, 1.0, 7, [0.24, 0.25, 0.27], [0.4, 0.41, 0.43]); W.cyl(g, 0, 0.22, 0, 0.105, 0.1, 7, [0.95, 0.95, 0.92]); },
+      bin: (g, W) => { W.cyl(g, 0, -0.45, 0, 0.27, 0.78, 8, [0.16, 0.36, 0.24]); W.cyl(g, 0, 0.33, 0, 0.29, 0.12, 8, [0.3, 0.32, 0.33], [0.22, 0.23, 0.24]); },
+      hydrant: (g, W) => { W.cyl(g, 0, -0.4, 0, 0.2, 0.1, 7, [0.75, 0.1, 0.08]); W.cyl(g, 0, -0.3, 0, 0.15, 0.55, 7, [0.82, 0.12, 0.1]); W.cyl(g, 0, 0.25, 0, 0.13, 0.15, 7, [0.95, 0.75, 0.1], [0.95, 0.75, 0.1], 0.06);
+        W.box(g, 0, -0.1, 0, 0.5, 0.1, 0.1, 0, [0.85, 0.85, 0.85]); },
+      cabinet: (g, W) => { W.box(g, 0, -0.65, 0, 1.2, 1.25, 0.5, 0, [0.52, 0.58, 0.54], [0.44, 0.48, 0.46]); W.box(g, 0, 0.6, 0, 1.28, 0.06, 0.58, 0, [0.4, 0.44, 0.42]); W.box(g, 0.3, -0.1, 0.255, 0.03, 0.4, 0.02, 0, dark); },
+      lamp: (g, W) => { W.cyl(g, 0, -4.5, 0, 0.12, 9, 7, pole, pole, 0.07); W.box(g, 0.8, 4.3, 0, 1.6, 0.1, 0.1, 0, pole); W.box(g, 1.6, 4.1, 0, 0.7, 0.18, 0.32, 0, [0.35, 0.36, 0.38], [0.35, 0.36, 0.38]);
+        W.box(g, 1.6, 4.08, 0, 0.6, 0.02, 0.26, 0, [1, 0.95, 0.8]); },
+    };
+  })();
   function propGeometry(kind) {
     const W = World, g = new W.GB(kind === 'tyre' || kind === 'tstack'), white = [1, 1, 1], TAU2 = Math.PI * 2;
     const disc = (y, r, n, rim, mid, up) => { for (let k = 0; k < n; k++) { const a0 = k / n * TAU2, a1 = (k + 1) / n * TAU2, c = [0, y, 0], p0 = [Math.cos(a0) * r, y, Math.sin(a0) * r], p1 = [Math.cos(a1) * r, y, Math.sin(a1) * r];
@@ -1557,6 +1583,7 @@ const Render = (function () {
       const wh = [0.95, 0.95, 0.93], bk = [0.08, 0.08, 0.09], rf = [1, 0.45, 0.08];
       W.box(g, 0, -0.65, 0, 0.14, 1.2, 0.14, 0, wh, wh); W.box(g, 0, 0.18, 0, 0.146, 0.22, 0.146, 0, bk, bk);
       for (const x of [-0.074, 0.074]) W.box(g, x, 0.22, 0, 0.012, 0.12, 0.09, 0, rf, rf); }
+    else if (STREET_PROPS[kind]) STREET_PROPS[kind](g, W);   // (the street circuits' junction furniture)
     return g.geometry();
   }
   function clearPropMeshes() { for (const k in propMeshes) { const m = propMeshes[k]; scene.remove(m); m.geometry.dispose(); } propMeshes = {}; }
@@ -1677,6 +1704,8 @@ const Render = (function () {
   THEMES.uncompahgre = { fog: 0xbfcfe0, sun: 0xfff0d8, sunI: 1.24, sky: 0xb8d0f0, gnd: 0x4c5236, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-70, 92, 62] };   // the Uncompahgre Gorge: a clear afternoon in the San Juans, the sun from the south-west over the cliffs, a crisp blue haze
   SPLIT.uncompahgre = [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]];
   SPLIT.iroha = [[0.96, 0.99, 1.05], [1.04, 1.0, 0.95]];   // (Irohazaka: cool shade under the maples, a warm autumn sun)
+  THEMES.singapur = { fog: 0xcfd8de, sun: 0xfff0d8, sunI: 1.12, sky: 0xc2d6ec, gnd: 0x6a665a, hemiI: 0.68, tint: [1.02, 1.0, 0.97], sat: 1.08, haze: 0.12, hazeCol: [1, 0.92, 0.8], sunOff: [-50, 104, 34] };   // Singapur: a humid tropical afternoon, the sun high
+  SPLIT.singapur = [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]];
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   // The time of day as one number, todK: 0 day, 0.5 dusk, 1 night (setAtmos sets it from the setting; an endurance race moves it with its
   // clock: setTodK). The light, the fog and the grade are blended between the day's (the theme's), the dusk's and the night's; dawn (the
@@ -2205,7 +2234,7 @@ const Render = (function () {
     const heads = new THREE.InstancedMesh(new THREE.BoxGeometry(0.9, 0.3, 0.5), new THREE.MeshBasicMaterial({ color: 0xfff1cf }), n);
     const hp = new Float32Array(n * 3), hc = new Float32Array(n * 4), hs = new Float32Array(n), fp = new Float32Array(n * 3);
     for (let k = 0; k < n; k++) {
-      const s = k * 30 + 10, i = T.idx(s), sd = k % 2 ? 1 : -1, y = T.hasElev && T.hy ? T.hy[i] : 0, e = sd > 0 ? (T.br ? T.br[i] : T.w) : (T.bl ? T.bl[i] : T.w), d = sd * (Math.max(T.w, Math.min(e, T.w + 6)) + 1.2);
+      const s = k * 30 + 10, i = T.idx(s), sd = k % 2 ? 1 : -1, y = T.hasElev && T.hy ? T.hy[i] : 0, e = sd > 0 ? (T.br ? T.br[i] : T.w) : (T.bl ? T.bl[i] : T.w), d = world.floodOff ? world.floodOff(i, sd) : sd * (Math.max(T.w, Math.min(e, T.w + 6)) + 1.2);   // (floodOff: a world with its own light towers there)
       const gr = T.hasElev && T.grade ? T.grade[i] : 0; rn.set(-gr * T.tx[i], 1, -gr * T.tz[i]).normalize();   // (the pool in the road's plane: on a climb a level one would cut into the road ahead and float above it behind)
       p.set(T.px[i] + T.nx[i] * sd * T.w * 0.35, y + 0.07, T.pz[i] + T.nz[i] * sd * T.w * 0.35); q.setFromUnitVectors(up, rn); sc.set(T.w * 3.2, 1, T.w * 3.2); m4.compose(p, q, sc); pools.setMatrixAt(k, m4); q.identity();
       fp[k * 3] = p.x; fp[k * 3 + 1] = p.y - 0.03; fp[k * 3 + 2] = p.z;
@@ -2217,7 +2246,7 @@ const Render = (function () {
     const hg = new THREE.BufferGeometry(); hg.setAttribute('position', new THREE.BufferAttribute(hp, 3)); hg.setAttribute('pcolor', new THREE.BufferAttribute(hc, 4)); hg.setAttribute('psize', new THREE.BufferAttribute(hs, 1));
     const halo = new THREE.Points(hg, glows.mat); halo.renderOrder = 7;   // (the car lights' glow material: no program of its own)
     pools.renderOrder = 1; pools.frustumCulled = false; poles.frustumCulled = false; heads.frustumCulled = false; halo.frustumCulled = false;
-    scene.add(pools); scene.add(poles); scene.add(heads); scene.add(halo); flood = { pools, poles, heads, halo, fp };
+    scene.add(pools); if (!world.floodOff) { scene.add(poles); scene.add(heads); } scene.add(halo); flood = { pools, poles, heads, halo, fp };
   }
   // dusk and night: the headlights' beam on the road ahead of a car (additive): the two lamps' cones, each widening and fading with the
   // distance (a soft edge all round, the brightest a few metres ahead), merging into one warm fan further out
