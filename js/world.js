@@ -22136,6 +22136,7 @@ const World = (function () {
         for (let u = gx - 3; u <= gx + 3; u++) for (let v = gz - 3; v <= gz + 3; v++) { const L = H.get(u + ',' + v); if (L) for (const s of L) { const d = (x - T.px[s]) ** 2 + (z - T.pz[s]) ** 2; if (d < bd) { bd = d; best = s; } } }
         a[j * Q.nx + i] = best; } }
     P.near = { i: -1, lat: 0, dd: 1e9 };
+    P.dist = (x, z) => { let m = 1e18; for (let i = 0; i < T.N; i += 3) { const d = (x - T.px[i]) ** 2 + (z - T.pz[i]) ** 2; if (d < m) m = d; } return Math.sqrt(m); };   // (the distance to the centre line, coarse: for what to build at all)
     return P;
   }
   // the nearest track sample to (x, z) (refined over its neighbours), the lateral offset (+ right) and the distance past that side's barrier
@@ -22242,13 +22243,13 @@ const World = (function () {
   // black pine (a crooked trunk, flat tiers), 3 a cherry (a broad low dome), 4 a camphor (a dense round evergreen)
   function tkTreeGeo(kind) {
     const g = new GB(), R = rng(9311 + kind * 13), rs = ROCK_SMOOTH; ROCK_SMOOTH = true;
-    const bark = [0.33, 0.28, 0.24], trunk = (h, r) => cyl(g, 0, -0.03, 0, r, h, 4, bark, null, r * 0.6);
-    if (kind === 0) { trunk(0.42, 0.035); ico(g, 0, 0.62, 0, 0.27, 0.8, [0.2, 0.36, 0.13], R, 0.3); ico(g, 0.15, 0.74, 0.06, 0.19, 0.7, [0.23, 0.4, 0.15], R, 0.3); ico(g, -0.13, 0.78, -0.08, 0.18, 0.7, [0.21, 0.38, 0.14], R, 0.3); }
-    else if (kind === 1) { trunk(0.4, 0.03); ico(g, 0, 0.58, 0, 0.16, 1.9, [0.36, 0.5, 0.16], R, 0.25); ico(g, 0.03, 0.82, 0, 0.11, 1.5, [0.4, 0.55, 0.18], R, 0.3); }
+    const bark = [0.33, 0.28, 0.24], trunk = (h, r) => cyl(g, 0, -0.03, 0, r, h, 3, bark, null, r * 0.6);
+    if (kind === 0) { trunk(0.42, 0.035); hjLump(g, 0, 0.62, 0, 0.28, 0.8, [0.2, 0.36, 0.13], R, 5, 0.7); hjLump(g, 0.06, 0.8, 0.02, 0.19, 0.7, [0.23, 0.4, 0.15], R, 5, 0.7); }
+    else if (kind === 1) { trunk(0.4, 0.03); hjLump(g, 0, 0.62, 0, 0.17, 2.1, [0.36, 0.5, 0.16], R, 5, 0.7); }
     else if (kind === 2) { cyl(g, 0, -0.03, 0, 0.035, 0.45, 4, [0.36, 0.3, 0.26], null, 0.025); cyl(g, 0.06, 0.4, 0.02, 0.025, 0.35, 4, [0.36, 0.3, 0.26], null, 0.015);
-      for (const [x, y, z, r] of [[0.08, 0.72, 0.03, 0.2], [-0.12, 0.6, -0.05, 0.17], [0.16, 0.5, 0.1, 0.14], [0.02, 0.88, 0, 0.13]]) ico(g, x, y, z, r, 0.45, [0.12, 0.24, 0.13], R, 0.3); }
-    else if (kind === 3) { trunk(0.32, 0.04); ico(g, 0, 0.6, 0, 0.36, 0.55, [0.25, 0.4, 0.15], R, 0.3); ico(g, 0.2, 0.62, 0.1, 0.22, 0.5, [0.27, 0.43, 0.16], R, 0.3); ico(g, -0.2, 0.6, -0.12, 0.22, 0.5, [0.26, 0.41, 0.15], R, 0.3); }
-    else { trunk(0.35, 0.04); ico(g, 0, 0.62, 0, 0.32, 0.85, [0.15, 0.3, 0.12], R, 0.25); ico(g, 0.12, 0.8, 0.05, 0.2, 0.8, [0.18, 0.33, 0.14], R, 0.3); }
+      for (const [x, y, z, r] of [[0.08, 0.74, 0.03, 0.22], [-0.12, 0.58, -0.05, 0.18]]) hjLump(g, x, y, z, r, 0.45, [0.12, 0.24, 0.13], R, 5, 0.7); }
+    else if (kind === 3) { trunk(0.32, 0.04); hjLump(g, 0, 0.6, 0, 0.4, 0.55, [0.25, 0.4, 0.15], R, 5, 0.7); }
+    else { trunk(0.35, 0.04); hjLump(g, 0, 0.64, 0, 0.33, 0.9, [0.15, 0.3, 0.12], R, 5, 0.7); }
     ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
@@ -22259,7 +22260,7 @@ const World = (function () {
     box(g, x, y + 0.22, z, L, kei || van ? 1.0 : 0.72, Wd, rot, col, null, true);
     if (van) box(g, x + c * 0.2, y + 1.22, z + s * 0.2, L - 1.1, 0.75, Wd - 0.08, rot, gl, col, true);
     else box(g, x - c * 0.15, y + (kei ? 1.22 : 0.94), z - s * 0.15, L * (kei ? 0.62 : 0.52), kei ? 0.62 : 0.55, Wd - 0.12, rot, gl, col, true);
-    for (const [a, b] of [[L * 0.32, Wd * 0.42], [L * 0.32, -Wd * 0.42], [-L * 0.32, Wd * 0.42], [-L * 0.32, -Wd * 0.42]]) box(g, x + c * a - s * b, y, z + s * a + c * b, 0.6, 0.6, 0.2, rot, [0.07, 0.07, 0.08], null, true);
+    box(g, x, y + 0.02, z, L * 0.86, 0.32, Wd + 0.02, rot, [0.07, 0.07, 0.08], null, true);   // (the wheels and the shadow under the body: one dark box)
   }
   function tkBus(g, x, y, z, rot) {
     const c = Math.cos(rot), s = Math.sin(rot), wh = [0.93, 0.94, 0.92], gr = [0.18, 0.55, 0.36], gl = [0.15, 0.19, 0.23];
@@ -22279,7 +22280,7 @@ const World = (function () {
   function tkFar(R) {
     const P0 = [], C = [], I = [], add = (g) => { const b = P0.length / 3; for (let k = 0; k < g.P.length; k += 3) P0.push(g.P[k], g.P[k + 1], g.P[k + 2]); for (let k = 0; k < g.C.length; k++) C.push(g.C[k]); for (let k = 0; k < g.P.length / 3; k++) I.push(b + k); };
     const g = new GB(), cx = -230, cz = 60;   // (the circuit's middle)
-    for (const B of TK.bld) { if (B.h < 40) continue; const n = tkNear(B.cx, B.cz); if (n.i >= 0 && n.dd < 500) continue;
+    for (const B of TK.bld) { if (B.h < 40) continue; const n = tkNear(B.cx, B.cz), dd = n.i >= 0 ? n.dd : TK.dist(B.cx, B.cz) - 8; if (dd < 500) continue;
       const c = vary([0.78, 0.8, 0.83], R, 0.1); let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of B.pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
       box(g, (x0 + x1) / 2, -2, (z0 + z1) / 2, x1 - x0, B.h + 2, z1 - z0, 0, c, [c[0] * 0.8, c[1] * 0.8, c[2] * 0.8]); }
     // the city on the land: towers 2-7 km off, thinning out with distance, in the sectors where the land is (north-west to north-east, the west)
@@ -22306,13 +22307,14 @@ const World = (function () {
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aHz;\nvarying float vHz;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvHz = aHz;');
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uHz;\nvarying float vHz;').replace('#include <dithering_fragment>', '#include <dithering_fragment>\ngl_FragColor.rgb = mix( gl_FragColor.rgb, uHz, vHz );'); };
     m.customProgramCacheKey = () => 'tkFar';
+    m.transparent = true;   // (drawn after the world, behind it; and aoWorld leaves it alone)
     const mesh = new THREE.Mesh(geo, m); mesh.frustumCulled = false; mesh.renderOrder = -50; mesh.matrixAutoUpdate = false; mesh.name = 'tkFar';
     mesh.onBeforeRender = (r, sc) => { if (sc && sc.fog) U.uHz.value.copy(sc.fog.color); };
     return { mesh, P0: Float32Array.from(P0), rim: new Float32Array(nv), cx: 1e9, cy: 0, cz: 0, cf: 0 };
   }
   function tkFarUpdate(F, cam) {   // (no camera: the shapes where they are, the world test's pose)
     if (!cam) { if (F.cx !== 1e9) { F.mesh.geometry.attributes.position.array.set(F.P0); F.mesh.geometry.attributes.position.needsUpdate = true; F.cx = 1e9; } return; }
-    const c = cam.position; if (Math.abs(c.x - F.cx) + Math.abs(c.y - F.cy) + Math.abs(c.z - F.cz) < 0.5 && cam.far === F.cf) return;
+    const c = cam.position; if (Math.abs(c.x - F.cx) + Math.abs(c.z - F.cz) < 30 && Math.abs(c.y - F.cy) < 10 && cam.far === F.cf) return;   // (600 m off, a few metres of the camera's travel do not show)
     F.cx = c.x; F.cy = c.y; F.cz = c.z; F.cf = cam.far;
     const g = F.mesh.geometry, p = g.attributes.position.array, hz = g.attributes.aHz.array, P0 = F.P0, R0 = cam.far - 90, R1 = cam.far - 8;
     for (let v = 0, k = 0; k < P0.length; v++, k += 3) { const dx = P0[k] - c.x, dy = P0[k + 1] - c.y, dz = P0[k + 2] - c.z, D = Math.max(1, Math.hypot(dx, dz)), r = R0 + (R1 - R0) * (1 - Math.exp(-Math.max(0, D - 400) / 3000)), f = r / Math.max(D, r);
@@ -22342,20 +22344,27 @@ const World = (function () {
     /* ---- the ground: an 8 m grid over the circuit's surroundings, a 40 m one out to 1.3 km (no faces under the fine one); paving where nothing else
        is (the streets, sidewalks, parks and car parks lie on it), lowered under the bay and the canals ---- */
     const pavMat = new THREE.MeshLambertMaterial({ map: tex.paving, vertexColors: true });
+    const slab = (() => {   // the plazas' and forecourts' big grey slabs (1.6 m, four to a 3.2 m tile of the texture), a faint grout
+      const S = 128, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), r = rng(9405);
+      for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) { const k = 196 + Math.floor(r() * 18); x.fillStyle = 'rgb(' + k + ',' + (k - 2) + ',' + (k - 6) + ')'; x.fillRect(i * 64, j * 64, 64, 64); }
+      for (let q = 0; q < 700; q++) { x.fillStyle = r() < 0.5 ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.06)'; x.fillRect(r() * S, r() * S, 1 + r() * 3, 1 + r() * 3); }
+      x.fillStyle = 'rgba(70,70,68,0.35)'; for (const v of [0, 64]) { x.fillRect(v, 0, 2, S); x.fillRect(0, v, S, 2); }
+      const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return ownTex(t); })();
+    const gMat = new THREE.MeshLambertMaterial({ map: slab, vertexColors: true });
     {
       const mk = (x0, z0, c, nx, nz, skip) => {
         const pos = [], col = [], uv = [], idx = [];
         for (let j = 0; j <= nz; j++) for (let i = 0; i <= nx; i++) { const x = x0 + i * c, z = z0 + j * c, wet = tkWater(x, z), h = wet ? TK_SEA - 3 : gH(x, z) - (skip ? 0.12 : 0), q = crH(i, j, 77) * 0.06;
-          pos.push(x, h, z); const k = wet ? 0.5 : 0.8 + q; col.push(k * 0.98, k * 0.97, k * 0.94); uv.push(x / 7, -z / 7); }
+          pos.push(x, h, z); const k = wet ? 0.5 : 0.84 + q; col.push(k, k, k * 0.98); uv.push(x / 3.2, -z / 3.2); }
         for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) { if (skip && skip(x0 + (i + 0.5) * c, z0 + (j + 0.5) * c)) continue; const a = j * (nx + 1) + i, b = a + 1, d = a + nx + 1, e = d + 1; idx.push(a, d, b, b, d, e); }
         const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
-        g.setIndex(idx); g.computeVertexNormals(); const m = new THREE.Mesh(g, pavMat); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); return m;
+        g.setIndex(idx); g.computeVertexNormals(); const m = new THREE.Mesh(g, gMat); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); return m;
       };
       let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (let i = 0; i < N; i++) { x0 = Math.min(x0, T.px[i]); x1 = Math.max(x1, T.px[i]); z0 = Math.min(z0, T.pz[i]); z1 = Math.max(z1, T.pz[i]); }
-      const M = 330, fx0 = Math.floor((x0 - M) / 8) * 8, fz0 = Math.floor((z0 - M) / 8) * 8, fnx = Math.ceil((x1 - x0 + 2 * M) / 8), fnz = Math.ceil((z1 - z0 + 2 * M) / 8);
-      out.ground = mk(fx0, fz0, 8, fnx, fnz, null);
-      const C = 40, gx0 = Math.floor((cx0 - 1300) / C) * C, gz0 = Math.floor((cz0 - 1300) / C) * C;
-      mk(gx0, gz0, C, 65, 65, (x, z) => x > fx0 + 20 && x < fx0 + fnx * 8 - 20 && z > fz0 + 20 && z < fz0 + fnz * 8 - 20);
+      const M = 300, c = 12, tn = 24, fx0 = Math.floor((x0 - M) / c) * c, fz0 = Math.floor((z0 - M) / c) * c, fnx = Math.ceil((x1 - x0 + 2 * M) / (c * tn)) * tn, fnz = Math.ceil((z1 - z0 + 2 * M) / (c * tn)) * tn;
+      for (let tj = 0; tj < fnz; tj += tn) for (let ti = 0; ti < fnx; ti += tn) { const m = mk(fx0 + ti * c, fz0 + tj * c, c, tn, tn, null); if (!out.ground) out.ground = m; }   // (288 m tiles: the view culls them)
+      const C = 48, gx0 = Math.floor((cx0 - 1000) / C) * C, gz0 = Math.floor((cz0 - 1000) / C) * C;
+      mk(gx0, gz0, C, 42, 42, (x, z) => x > fx0 + 20 && x < fx0 + fnx * c - 20 && z > fz0 + 20 && z < fz0 + fnz * c - 20);
     }
     const UV7 = [0.5, 0.5];
     /* ---- the bay and the canals (the sky in them, wavelets), the quays' walls along their shores ---- */
@@ -22392,11 +22401,13 @@ const World = (function () {
     const scen = new Chunks(256);   // street furniture, cars, small things (vertex coloured)
     const street = [];   // the street trees along the avenues' sidewalks (planted with the trees below)
     {
-      const gr = new RB(true), gl = new GB(), gs = new GB(true), gk = new GB(), gv = new GB(), gvo = new GB(), piers = [];
+      const cells = new Map(), cellAt = (x, z) => { const k = Math.floor(x / 256) + ',' + Math.floor(z / 256); let c = cells.get(k); if (!c) cells.set(k, c = { ga: new GB(true), gl: new GB() }); return c; };   // (256 m cells: the view culls them; the asphalt and the sidewalks' tops in one mesh, the lines and kerbs in another)
+      const gv = new GB(), gvo = new GB(), piers = [];
       const dense = (pts, st) => { const o = []; for (let k = 0; k < pts.length - 1; k++) { const [ax, az] = pts[k], [bx, bz] = pts[k + 1], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / st)); for (let m = 0; m < n; m++) o.push([lerp(ax, bx, m / n), lerp(az, bz, m / n)]); } o.push(pts[pts.length - 1]); return o; };
-      const asp = [0.78, 0.78, 0.79], wl = [0.93, 0.93, 0.9], sw = [0.82, 0.81, 0.78], kerbC = [0.66, 0.66, 0.64], yel = [0.92, 0.76, 0.2];
+      const asp = [0.78, 0.78, 0.79], wl = [0.93, 0.93, 0.9], sw = [1.32, 1.3, 1.26], kerbC = [0.66, 0.66, 0.64], yel = [0.92, 0.76, 0.2];
       for (const r of P.roads) {
         if (r.cls === 8 && !r.el) continue;
+        { let m = 1e9; for (let k = 0; k < r.pts.length; k++) m = Math.min(m, P.dist(r.pts[k][0], r.pts[k][1])); if (m > 330) continue; }   // (farther: the fog's)
         const D = dense(r.pts, 6), hw = r.hw, elev = (r.cls <= 1 && (r.el || r.cls === 0) && (r.lvl >= 1 || r.cls === 0)) || (r.cls >= 7 && r.el), H = r.cls >= 7 ? 6.5 : r.cls === 0 ? 14 : 8 + 3 * Math.max(0, r.lvl - 1);
         const nrm = (k) => { const a = D[Math.max(0, k - 1)], b = D[Math.min(D.length - 1, k + 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; return [-(b[1] - a[1]) / l, (b[0] - a[0]) / l]; };
         if (elev) {   // a viaduct: a deck with its walls (the decks of footways narrow, with rails), its piers every ~36 m (not on the circuit)
@@ -22415,10 +22426,10 @@ const World = (function () {
         // at ground: the asphalt (a little above the ground; under the circuit's own surface), the lines, the sidewalks
         const lift = 0.04 + (6 - r.cls) * 0.002, rows = [];
         for (let k = 0; k < D.length; k++) { const [x, z] = D[k], n = nrm(k), y = gH(x, z) + lift; rows.push({ x, z, n, y, dd: tkNear(x, z).dd }); }
-        let prev = -1;
-        for (let k = 0; k < rows.length; k++) { const q = rows[k], P2 = (o) => [q.x + q.n[0] * o, q.y, q.z + q.n[1] * o];
-          const rr = gr.row([P2(-hw), P2(0), P2(hw)], [asp, asp, asp], [[q.x / 8, -q.z / 8], [q.x / 8 + 0.3, -q.z / 8], [q.x / 8 + 0.6, -q.z / 8]]); if (prev >= 0) gr.link(prev, rr, 0, 2); prev = rr; }
-        for (let k = 0; k < rows.length - 1; k++) { const a = rows[k], b = rows[k + 1]; if (a.dd < 0 && b.dd < 0) continue;
+        for (let k = 0; k < rows.length - 1; k++) { const a = rows[k], b = rows[k + 1], C = cellAt(a.x, a.z), gs = C.ga, gl = C.gl, gk = C.gl, U = (p) => [p[0] / 8, -p[2] / 8];
+          { const A0 = [a.x - a.n[0] * hw, a.y, a.z - a.n[1] * hw], A1 = [a.x + a.n[0] * hw, a.y, a.z + a.n[1] * hw], B1 = [b.x + b.n[0] * hw, b.y, b.z + b.n[1] * hw], B0 = [b.x - b.n[0] * hw, b.y, b.z - b.n[1] * hw];
+            C.ga.quadUp(A0, A1, B1, B0, [asp, asp, asp, asp], [U(A0), U(A1), U(B1), U(B0)]); }
+          if (a.dd < 0 && b.dd < 0) continue;
           const Q = (q, o, y) => [q.x + q.n[0] * o, q.y + y, q.z + q.n[1] * o], line = (o0, o1, c) => gl.quadUp(Q(a, o0, 0.012), Q(a, o1, 0.012), Q(b, o1, 0.012), Q(b, o0, 0.012), [c, c, c, c]);
           if (r.cls <= 6) { line(-hw + 0.25, -hw + 0.4, wl); line(hw - 0.4, hw - 0.25, wl); }
           if (k % 2 === 0) { if (hw >= 5) { for (const f of [-1 / 3, 1 / 3]) line(f * 2 * hw - 0.07, f * 2 * hw + 0.07, wl); } else if (r.cls <= 5) line(-0.07, 0.07, wl); }
@@ -22429,16 +22440,16 @@ const World = (function () {
             const pa = Q(a, s * (hw + swW + 0.25), 0), pb = Q(b, s * (hw + swW + 0.25), 0); if (tkNear(pa[0], pa[2]).dd < 0.6 || tkNear(pb[0], pb[2]).dd < 0.6 || tkWater(pa[0], pa[2])) continue;
             const o0 = s * hw, o1 = s * (hw + swW), us = 2.5;
             const A0 = Q(a, o0, 0.15), A1 = Q(a, o1, 0.15), B0 = Q(b, o0, 0.15), B1 = Q(b, o1, 0.15);
-            gs.quadUp(A0, A1, B1, B0, [sw, sw, sw, sw], [[A0[0] / us, -A0[2] / us], [A1[0] / us, -A1[2] / us], [B1[0] / us, -B1[2] / us], [B0[0] / us, -B0[2] / us]]);
+            gs.quadUp(A0, A1, B1, B0, [sw, sw, sw, sw], [[A0[0] / us, -A0[2] / us], [A1[0] / us, -A1[2] / us], [B1[0] / us, -B1[2] / us], [B0[0] / us, -B0[2] / us]]);   // (on the asphalt's texture, light: one mesh with the road)
             gk.quadO(Q(a, o0, -0.05), Q(b, o0, -0.05), Q(b, o0, 0.15), Q(a, o0, 0.15), kerbC, Q(a, s * (hw + 1), 0.05));
             if (r.cls <= 4) { const t0 = s * (hw + swW * 0.6), t1 = s * (hw + swW * 0.6 + 0.3); gk.quadUp(Q(a, t0, 0.16), Q(a, t1, 0.16), Q(b, t1, 0.16), Q(b, t0, 0.16), [yel, yel, yel, yel]); }
           } }
       }
       const pg = new GB();
       for (const [x, z, y, rw, cap, rot] of piers) { const g0 = gH(x, z) - 0.3; if (cap > 0) { box(pg, x, g0, z, rw, y - g0 - 1.2, rw, rot, [0.7, 0.7, 0.68]); box(pg, x, y - 1.3, z, 1.8, 1.3, cap * 2, rot, [0.68, 0.68, 0.66]); } else cyl(pg, x, g0, z, 0.22, y - g0, 6, [0.72, 0.73, 0.75]); }
-      const mr = new THREE.Mesh(gr.geometry(), aMat); mr.receiveShadow = true; mr.matrixAutoUpdate = false; root.add(mr);
-      const lm = new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }); addM(gl, lm);
-      addM(gs, pavMat); addM(gk, matV); addM(gv, matV, true); addM(pg, matV, true);
+      const lm = new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
+      for (const C of cells.values()) { addM(C.ga, aMat); addM(C.gl, lm); }
+      addM(gv, matV, true); addM(pg, matV, true);
       if (!gvo.empty) { const om = new THREE.MeshLambertMaterial({ vertexColors: true }); over.mats.push(om); addM(gvo, om, true); }
     }
 
@@ -22448,7 +22459,7 @@ const World = (function () {
     const pubA = 676, pubB = 1858;   // the public roads: from Turn 7 to Turn 15 (metres after the start line)
     const pub = (s) => { const d = dS(s); return d > pubA && d < pubB; };
     {
-      const gr = new RB(true), gm = new GB(), gk = new RB(true), CH = 128;
+      const gr = new RB(true), gm = new GB(), gk = new RB(true), CH = 256;
       const sh = (i, o) => { const rl = T.rl[i], k = (pub(i * ds) ? 0.8 : 0.86) - 0.12 * Math.exp(-((o - rl) * (o - rl)) / 5); return [k, k, k * 1.01]; };
       for (let c0 = 0; c0 < N; c0 += CH) { let pr = -1; const g = new RB(true);
         for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++) { const i = ii % N, offs = [-T.bl[i] - 0.3, -w, -w / 3, w / 3, w, T.br[i] + 0.3], v = ii * ds / 8;
@@ -22474,7 +22485,7 @@ const World = (function () {
       const lm = new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }); addM(gm, lm);
       // kerbs: red and white, on the inside of every apex (the outside too in the tight car-park corners)
       const cMat = new THREE.MeshLambertMaterial({ map: tex.curb, vertexColors: true });
-      for (const side of [-1, 1]) { let pk = -1; for (let ii = 0; ii <= N; ii++) { const i = ii % N, k = T.k[i], on = T.curb[i] && (side * k > 0 || Math.abs(k) > 1 / 25);
+      for (const side of [-1, 1]) { let pk = -1; for (let ii = 0; ii <= N; ii++) { const i = ii % N, k = T.k[i], on = T.curb[i] && Math.abs(k) > 1 / 70 && side * k > 0;
         if (!on) { pk = -1; continue; } const kp = side > 0 ? [Pt(i, w - 0.02, 0.075), Pt(i, w + 1.2, 0.12)] : [Pt(i, -w - 1.2, 0.12), Pt(i, -w + 0.02, 0.075)];
         const rk = gk.row(kp, [[1, 1, 1], [1, 1, 1]], side > 0 ? [[0, ii * ds / 3], [1, ii * ds / 3]] : [[1, ii * ds / 3], [0, ii * ds / 3]]); if (pk >= 0) gk.link(pk, rk, 0, 1); pk = rk; } }
       addM(gk, cMat);
@@ -22495,12 +22506,12 @@ const World = (function () {
         for (let ii = 0; ii <= N; ii++) { const i = ii % N;
           if (gap(i, side)) { pw = pf = pb = -1; continue; }
           const bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 0.05), o2 = side * (bar + 0.65), v = ii * ds;
-          let p = [Pt(i, o, -0.2), Pt(i, o, 0.95), Pt(i, side * (bar + 0.15), 1.05), Pt(i, side * (bar + 0.55), 1.05), Pt(i, o2, -0.2)], c = [cd, cw, ct, ct, cd];
+          let p = [Pt(i, o, -0.2), Pt(i, o, 1.0), Pt(i, side * (bar + 0.6), 1.05), Pt(i, o2, 0.2)], c = [cd, cw, ct, cd];
           if (side < 0) { p = p.reverse(); c = c.reverse(); }
-          const rw = gw.row(p, c); if (pw >= 0) gw.link(pw, rw, 0, 4); pw = rw;
+          const rw = gw.row(p, c); if (pw >= 0) gw.link(pw, rw, 0, 3); pw = rw;
           let fp = [Pt(i, side * (bar + 0.35), 1.05), Pt(i, side * (bar + 0.35), 3.9)], fu = [[v / 1.6, 0], [v / 1.6, 1.8]];
           const rf = gf.row(fp, [[1, 1, 1], [1, 1, 1]], fu); if (pf >= 0) gf.link(pf, rf, 0, 1); pf = rf;
-          if (ii % 2 === 0) { const q = Pt(i, side * (bar + 0.35), 1.0); posts.add(q[0], q[1], q[2], T.hd[i], 1, 2.95); }
+          if (ii % 3 === 0) { const q = Pt(i, side * (bar + 0.35), 1.0); posts.add(q[0], q[1], q[2], T.hd[i], 1, 2.95); }
           if (bnr(i)) { const bo = side * (bar + 0.33), bp = [Pt(i, bo, 1.15), Pt(i, bo, 2.05)], bu = [[v / 9, 0.02], [v / 9, 0.98]]; const rb = gb.row(bp, [[1, 1, 1], [1, 1, 1]], bu); if (pb >= 0) gb.link(pb, rb, 0, 1); pb = rb; } else pb = -1;
         } }
       const mw = new THREE.Mesh(gw.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide })); mw.castShadow = mw.receiveShadow = true; mw.matrixAutoUpdate = false; root.add(mw);
@@ -22514,10 +22525,10 @@ const World = (function () {
     {
       const fac = tkFacadeTex(), fm = new THREE.MeshLambertMaterial({ map: fac, vertexColors: true }), bch = new Chunks(300, true), ov = new GB(true), U7 = [0.5, tkFV(7, 0.5)], RB2 = rng(9411);
       ov.dUV = U7;
-      for (const B of P.bld) { const n = tkNear(B.cx, B.cz), dd = n.i >= 0 ? n.dd : 1e9; if (dd >= 500) continue;
+      for (const B of P.bld) { const n = tkNear(B.cx, B.cz), dd = n.i >= 0 ? n.dd : P.dist(B.cx, B.cz) - 8; if (dd >= 500) continue;
         const flies = B.mh > 4.5 && P.bld && B.pts.some(([x, z]) => tkNear(x, z).dd < 0.5);
         const g = flies ? ov : bch.get(B.cx, B.cz); g.dUV = U7;
-        tkBuilding(g, B, RB2, dd > 320 && B.kind !== 9); nBld++;
+        tkBuilding(g, B, RB2, dd > 160 && B.kind !== 9 && B.kind !== 11); nBld++;
         if (flies) markUnder(B.cx, B.cz, B.r + 8);
         if (B.mh <= 0.5) exclPush(B.cx, B.cz, Math.min(B.r * 0.7, 30)); }
       bch.addTo(root, fm, true, true);
@@ -22563,16 +22574,16 @@ const World = (function () {
        avenues, cherries, black pines and camphors in the parks (instanced per 128 m chunk) ---- */
     let nTrees = 0;
     {
-      const tm = new THREE.MeshLambertMaterial({ vertexColors: true }), ch = [0, 1, 2, 3, 4].map(k => new IChunks(tkTreeGeo(k), tm, 128));
+      const tm = new THREE.MeshLambertMaterial({ vertexColors: true }), ch = [0, 1, 2, 3, 4].map(k => new IChunks(tkTreeGeo(k), tm, 256));
       for (const [x, z, src] of P.trees) {
-        const n = tkNear(x, z); if (n.i >= 0 && n.dd < 1.2) continue; if (onBld(x, z) || tkWater(x, z)) continue;
+        const n = tkNear(x, z); if (n.i >= 0 && n.dd < 1.2) continue; if (onBld(x, z) || tkWater(x, z) || P.dist(x, z) > 380) continue;
         const h1 = crH(x, z, 1), h2 = crH(x, z, 2);
         let k = src === 1 ? (crH(Math.round(x / 60), Math.round(z / 60), 3) < 0.55 ? 0 : 1) : src === 2 ? (h1 < 0.45 ? 2 : h1 < 0.75 ? 4 : 3) : src === 3 ? (h1 < 0.5 ? 4 : 0) : (h1 < 0.38 ? 0 : h1 < 0.6 ? 1 : h1 < 0.8 ? 3 : 4);
         const ht = (k === 1 ? 9 : k === 2 ? 7 : k === 3 ? 6.5 : 9) * (0.8 + 0.45 * h2), col = vary([1, 1, 1], R, 0.14);
         ch[k].add(x, gH(x, z), z, h1 * TAU, ht, ht, col); nTrees++;
         exclPush(x, z, 1.5); }
       const th = new Set(P.trees.map(([x, z]) => Math.round(x / 6) + ',' + Math.round(z / 6)));
-      for (const [x, z, k] of street) { if (onBld(x, z) || excluded(x, z)) continue; let near = false; for (let a = -1; a <= 1 && !near; a++) for (let b = -1; b <= 1; b++) if (th.has((Math.round(x / 6) + a) + ',' + (Math.round(z / 6) + b))) near = true; if (near) continue;
+      for (const [x, z, k] of street) { if (onBld(x, z) || excluded(x, z) || P.dist(x, z) > 220) continue; let near = false; for (let a = -1; a <= 1 && !near; a++) for (let b = -1; b <= 1; b++) if (th.has((Math.round(x / 6) + a) + ',' + (Math.round(z / 6) + b))) near = true; if (near) continue;
         const h2 = crH(x, z, 2), ht = (k ? 10 : 9) * (0.8 + 0.35 * h2); ch[k].add(x, gH(x, z) + 0.15, z, crH(x, z, 1) * TAU, ht, ht, vary([1, 1, 1], R, 0.12)); nTrees++; exclPush(x, z, 1.5); }
       for (const c of ch) c.addTo(root, true);
     }
@@ -22591,7 +22602,7 @@ const World = (function () {
     let nStands = 0;
     {
       const gs = new GB(), gc = new RB(true), gro = new GB(), stC = [0.56, 0.58, 0.62], stD = [0.42, 0.44, 0.48], roofC = [0.95, 0.95, 0.96];
-      for (const [d0, d1, side, depth, roof] of [[-175, 185, -1, 13, 1], [252, 300, 1, 9, 0]]) {
+      for (const [d0, d1, side, depth, roof] of [[-175, 185, -1, 13, 0], [252, 300, 1, 9, 0]]) {
         let prev = null, pc = -1;
         for (let d = d0; d <= d1; d += 2) { const s = sAt(d), q = crAt(s); if (!q) continue; const bar = side > 0 ? q.br : q.bl, pz = side > 0 ? T.pitAt(s) : null, front = (pz ? pz.lout + 30 : bar + 3.2);
           const P2 = (o, h) => [q.px + q.nx * side * o, h, q.pz + q.nz * side * o], y0 = q.hy, top = y0 + 1.6 + depth * 0.55;
@@ -22618,8 +22629,8 @@ const World = (function () {
         for (let s = 0; s < L; s += 3) { if (!pub(s)) { pr = null; continue; } const i = T.idx(s), bar = side > 0 ? T.br[i] : T.bl[i];
           const [rx, rz] = atSf(s, side * (bar + 1.3)); if (onBld(rx, rz) || tkWater(rx, rz) || tkNear(rx, rz).dd < 0.8) { pr = null; continue; }
           const y = gH(rx, rz) + 0.15, cur = [rx, y, rz];
-          if (pr) { for (const h of [0.35, 0.82]) { const a = [pr[0], pr[1] + h, pr[2]], b = [cur[0], cur[1] + h, cur[2]], mx = (a[0] + b[0]) / 2, mz = (a[2] + b[2]) / 2; box(gl, mx, a[1] - 0.03, mz, Math.hypot(b[0] - a[0], b[2] - a[2]) + 0.05, 0.06, 0.06, Math.atan2(b[2] - a[2], b[0] - a[0]), wh, wh, true); }
-            box(gl, rx, y - 0.1, rz, 0.07, 0.95, 0.07, 0, wh, wh, true); }
+          if (pr) { for (const h of [0.35, 0.82]) gl.quadO([pr[0], pr[1] + h - 0.04, pr[2]], [cur[0], cur[1] + h - 0.04, cur[2]], [cur[0], cur[1] + h + 0.04, cur[2]], [pr[0], pr[1] + h + 0.04, pr[2]], wh, [T.px[i], y, T.pz[i]]);   // (the rails' faces toward the road)
+            if (Math.round(s / 3) % 2 === 0) gl.quadO([rx, y - 0.1, rz], [rx + T.tx[i] * 0.07, y - 0.1, rz + T.tz[i] * 0.07], [rx + T.tx[i] * 0.07, y + 0.86, rz + T.tz[i] * 0.07], [rx, y + 0.86, rz], wh, [T.px[i], y, T.pz[i]]); }
           pr = cur;
           if (s - last > 35) { const [lx, lz] = atSf(s, side * (bar + 2.6)); if (!onBld(lx, lz)) { last = s; const ly = gH(lx, lz); cyl(gl, lx, ly, lz, 0.13, 9, 6, gy, gy, 0.08); const fx = -side * T.nx[i], fz = -side * T.nz[i];
             box(gl, lx + fx * 0.9, ly + 8.9, lz + fz * 0.9, 1.8, 0.1, 0.1, Math.atan2(fz, fx), gy, gy); box(gl, lx + fx * 1.9, ly + 8.75, lz + fz * 1.9, 0.9, 0.2, 0.36, Math.atan2(fz, fx), [0.55, 0.56, 0.58], [0.98, 0.96, 0.85]); } } } }
@@ -22657,9 +22668,9 @@ const World = (function () {
     {
       const RC = rng(9431), rot = 0.995, c = Math.cos(rot), sn = Math.sin(rot);
       for (const a of P.areas) { if (a.t !== 4) continue; let ax = 0, az = 0; for (const p of a.pts) { ax += p[0] / a.pts.length; az += p[1] / a.pts.length; }
-        const n0 = tkNear(ax, az); if (n0.i >= 0 && n0.dd < 25) continue;
+        const n0 = tkNear(ax, az); if ((n0.i >= 0 && n0.dd < 25) || P.dist(ax, az) > 190) continue;
         for (let u = -30; u <= 30; u += 6.2) for (let v = -30; v <= 30; v += 2.6) { const x = ax + c * u - sn * v, z = az + sn * u + c * v;
-          if (!inPoly(a.pts, x, z) || onBld(x, z) || excluded(x, z) || RC() > 0.66) continue; const nn = tkNear(x, z); if (nn.i >= 0 && nn.dd < 8) continue;
+          if (!inPoly(a.pts, x, z) || onBld(x, z) || excluded(x, z) || RC() > 0.42) continue; const nn = tkNear(x, z); if (nn.i >= 0 && nn.dd < 8) continue;
           tkCar(scen.get(x, z), x, gH(x, z), z, rot + (RC() < 0.5 ? 0 : Math.PI), RC); nCars++; } }
       const bx = -186, bz = -330, br = 1.29, bc = Math.cos(br), bs = Math.sin(br);
       for (let r = 0; r < 3; r++) for (let k = 0; k < 7; k++) { const u = (k - 3) * 13, v = (r - 1) * 4.2, x = bx + bc * u - bs * v, z = bz + bs * u + bc * v;
@@ -22669,7 +22680,7 @@ const World = (function () {
     {
       const C = crowdCtx({ gH, near: nearD, excluded: (x, z) => excluded(x, z) || onBld(x, z), water: tkWater, maxSlope: 0.5 });
       for (const [d0, d1, side, dens] of [[318, 360, -1, 0.7], [1385, 1488, -1, 0.65], [1520, 1560, 1, 0.55], [1866, 1905, -1, 0.6], [2296, 2340, -1, 0.7], [2232, 2270, 1, 0.5], [600, 640, 1, 0.5]])
-        crowdRun(C, sAt(d0), sAt(d0) + (d1 - d0), side, { rows: 4, dens, first: 1.6, label: 'tk' + d0 });
+        crowdRun(C, sAt(d0), sAt(d0) + (d1 - d0), side, { rows: 3, dens, first: 1.6, label: 'tk' + d0 });
       crowdFinish(C, root, out);
     }
     scen.addTo(root, matV, true, true);
