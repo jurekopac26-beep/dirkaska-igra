@@ -18019,9 +18019,9 @@ const World = (function () {
     if (kind === 0) {
       cyl(g, 0, -0.02, 0, 0.05, 0.4, 5, [0.2, 0.18, 0.16], null, 0.035);
       cyl(g, 0.05, 0.36, 0.02, 0.032, 0.24, 4, [0.22, 0.19, 0.17], null, 0.02); cyl(g, -0.05, 0.36, -0.03, 0.03, 0.22, 4, [0.22, 0.19, 0.17], null, 0.02);
-      ROCK_SMOOTH = true; const col = au ? [0.8, 0.56, 0.16] : [0.2, 0.31, 0.12];
+      ROCK_SMOOTH = true; const col = au ? [0.7, 0.52, 0.17] : [0.2, 0.31, 0.12];
       ico(g, 0, 0.7, 0, 0.32, 0.72, col, R, 0.3);
-      for (let k = 0; k < 5; k++) { const a = k / 5 * TAU + R() * 0.6, d = 0.26 + R() * 0.1; ico(g, Math.cos(a) * d, 0.58 + R() * 0.16, Math.sin(a) * d, 0.2 + R() * 0.07, 0.8, vary(au && k % 2 ? [0.86, 0.42, 0.12] : col, R, 0.25), R, 0.3); }
+      for (let k = 0; k < 5; k++) { const a = k / 5 * TAU + R() * 0.6, d = 0.26 + R() * 0.1; ico(g, Math.cos(a) * d, 0.58 + R() * 0.16, Math.sin(a) * d, 0.2 + R() * 0.07, 0.8, vary(au && k % 2 ? [0.72, 0.4, 0.14] : col, R, 0.25), R, 0.3); }
     } else if (kind === 1) {
       cyl(g, 0, -0.02, 0, 0.022, 0.84, 4, [0.42, 0.28, 0.2], null, 0.012);
       ROCK_SMOOTH = true; const col = [0.15, 0.24, 0.14];
