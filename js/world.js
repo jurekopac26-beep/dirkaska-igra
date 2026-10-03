@@ -13807,7 +13807,9 @@ const World = (function () {
     if (st > 0) { const band = 0.5 + 0.5 * Math.sin(A / 3.7 + P.c2(x * 0.5, z * 0.5) * 6), k = 0.8 + 0.2 * band, gr = sstep(0.5, 0.8, q), lo = sstep(45, 8, A);
       const rr = lerp(lerp(0.6, 0.5, gr), 0.4, lo) * k, rg = lerp(lerp(0.52, 0.49, gr), 0.37, lo) * k, rb = lerp(lerp(0.42, 0.46, gr), 0.34, lo) * k;
       R = lerp(R, rr, st); G = lerp(G, rg, st); B = lerp(B, rb, st); }
-    const wet = sstep(4, 0.8, A); if (wet > 0) { R = lerp(R, 0.24, wet); G = lerp(G, 0.23, wet); B = lerp(B, 0.22, wet); }   // the splash zone, dark
+    const sand = A > 0.2 && A < 4.5 ? sstep(0.88, 0.96, ny) * sstep(4.5, 2, A) * (1 - tr) : 0;   // the coves' beaches: pale sand where the shore is gentle, wet and darker at the water
+    if (sand > 0) { const w = sstep(2.2, 0.4, A), k = 0.94 + 0.12 * fine; R = lerp(R, lerp(0.8, 0.58, w) * k, sand); G = lerp(G, lerp(0.74, 0.53, w) * k, sand); B = lerp(B, lerp(0.6, 0.44, w) * k, sand); }
+    const wet = sstep(4, 0.8, A) * (1 - sand); if (wet > 0) { R = lerp(R, 0.24, wet); G = lerp(G, 0.23, wet); B = lerp(B, 0.22, wet); }   // the splash zone, dark
     if (A < 0.2) { const d = sstep(0.2, -6, A); R = lerp(0.36, 0.18, d); G = lerp(0.35, 0.24, d); B = lerp(0.3, 0.25, d); }   // (the sea floor)
     if (dd < 4) { const t = sstep(4, 0.5, dd) * 0.5; R = lerp(R, 0.62, t); G = lerp(G, 0.58, t); B = lerp(B, 0.5, t); }
     if (A > 1) {   // the light in the folds of the land: the hollows and gullies darker (the sky hidden), the ridges a little brighter
@@ -14349,7 +14351,7 @@ const World = (function () {
     const pk = [0, 1, 2, 3, 4].map(k => new IChunks(caPlantGeo(k), k === 0 ? wMat : pMat, k === 4 ? 64 : 128));
     const bk = [0, 1].map(k => new IChunks(bsBushGeo(k), k === 1 ? wMat : pMat, 128));
     const tk = [0, 1].map(k => new IChunks(bsTreeGeo(k), pMat, 128));
-    let nPlants = 0, nTrees = 0, nBush = 0, nSeal = 0, nBarn = 0, nBoat = 0, nWhale = 0, nCrop = 0, nEuc = 0;
+    let nPlants = 0, nTrees = 0, nBush = 0, nSeal = 0, nBarn = 0, nBoat = 0, nWhale = 0, nCrop = 0, nEuc = 0, nGuano = 0, nRed = 0;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(70000 * dens), maxTr = Math.round(9000 * dens), RT = rng(3961), SP = 3.4 / Math.sqrt(dens);
       const BC = [[0.82, 0.98, 0.84], [0.74, 0.92, 0.78], [1.12, 1.1, 1.04], [1.2, 1.04, 0.82]];   // (coyote brush, darker; sage, grey-green; dried, brown)
@@ -14411,13 +14413,16 @@ const World = (function () {
         k++; nCrop++;
       }
       const G = P.G, RK = rng(3971), rc = [[0.42, 0.4, 0.37], [0.5, 0.46, 0.4], [0.36, 0.35, 0.34]], gf = new GB(false, true), FW = [0.94, 0.95, 0.95];
-      const seals = new IChunks(bsSealGeo(), pMat, 256), RL = rng(3973), SC = [[0.36, 0.27, 0.19], [0.24, 0.19, 0.15], [0.48, 0.38, 0.27]];   // (sea lions hauled out on the rocks, sunning)
+      const seals = new IChunks(bsSealGeo(), pMat, 256), RL = rng(3973), RGu = rng(4017), SC = [[0.36, 0.27, 0.19], [0.24, 0.19, 0.15], [0.48, 0.38, 0.27]];   // (sea lions hauled out on the rocks, sunning)
       for (let k = 0; k < 9000 * dens; k++) {
         const x = G.x0 + RK() * G.ntx * VRC * VRT, z = G.z0 + RK() * G.ntz * VRC * VRT, r1 = RK(), r2 = RK(), r3 = RK();
         const ti = Math.floor((x - G.x0) / (VRC * VRT)), tj = Math.floor((z - G.z0) / (VRC * VRT)); if (!G.on[tj * G.ntx + ti]) continue;
         const y = bsGround(x, z); if (y > y0 + 1.2 || y < y0 - 2.5) continue;
         const s = 1.2 + r1 * r1 * 4.5, g = scen.get(x, z); rock(g, x, y0 - s * 0.25, z, s * (1 + r2 * 0.6), s * (0.7 + r3 * 0.6), s, r2 * TAU, vary(rc[Math.floor(r3 * 3)], RK, 0.1), RK, 0.35);
-        if (s > 2.2 && RL() < 0.4) { const yt = y0 - s * 0.25 + 0.6 * s * (0.7 + r3 * 0.6), n = 1 + Math.floor(RL() * 3);
+        const sl0 = s > 2.2 && RL() < 0.4;
+        if (!sl0 && s > 3 && RGu() < 0.65) { const yt = y0 - s * 0.25 + 0.6 * s * (0.7 + r3 * 0.6);   // the seabirds' white on the bigger stacks' tops
+          rock(g, x, yt - s * 0.06, z, s * (0.65 + r2 * 0.3), s * 0.22, s * 0.6, r2 * TAU, vary([0.86, 0.85, 0.8], RGu, 0.05), RGu, 0.3, true); nGuano++; }
+        if (sl0) { const yt = y0 - s * 0.25 + 0.6 * s * (0.7 + r3 * 0.6), n = 1 + Math.floor(RL() * 3);
           for (let q = 0; q < n; q++) { const a = RL() * TAU, d = RL() * s * 0.35, sz = 0.9 + RL() * 0.5; seals.add(x + Math.cos(a) * d, yt - 0.05, z + Math.sin(a) * d, RL() * TAU, sz, sz, SC[Math.floor(RL() * 3)]); nSeal++; } }
         if (y < y0 - 0.3) {   // the foam round a rock in the surf: a ring of white fading out over the water
           const ri = s * (0.9 + r2 * 0.4), ro = ri + 1.2 + s * 0.6, n = 9, yy = y0 + 0.05;
@@ -14531,6 +14536,15 @@ const World = (function () {
           const h = 20 + RE() * 10; tk[1].add(x, bsGround(x, z) - 0.2, z, RE() * TAU, h * 0.5, h, [1.45 + RE() * 0.12, 1.4 + RE() * 0.1, 1.75 + RE() * 0.15]); exclPush(x, z, 3); nTrees++; m++; }
         if (m) { r++; nEuc++; }
       }
+      // coast redwoods in the creek canyons below the bridges: tall, narrow, dark red-green spires, thickest along the canyon floor
+      const RR = rng(4019);
+      for (const [a, b] of def.bridges || []) { const i = T.idx(sStart + (a + b) / 2); let m = 0;
+        for (let tries = 0; tries < 700 && m < 45; tries++) {
+          const d = 30 + RR() * 330, o = (RR() - 0.5) * 160, x = T.px[i] - T.nx[i] * d + T.tx[i] * o, z = T.pz[i] - T.nz[i] * d + T.tz[i] * o, y = bsGround(x, z);
+          if (y + base < 6 || vrNear(x, z).dd < 10 || vrDist(x, z) > 380 || bsSlope(x, z) > 0.9 || excluded(x, z)) continue;
+          const gul = ((bsGround(x - 20, z) + bsGround(x + 20, z) + bsGround(x, z - 20) + bsGround(x, z + 20)) / 4 - y) / 4; if (gul < 0.25 && vrLC(x, z) !== 2) continue;
+          const h = 28 + RR() * 18; tk[1].add(x, y - 0.3, z, RR() * TAU, h * 0.22, h, [0.72 + RR() * 0.08, 0.86 + RR() * 0.08, 0.8 + RR() * 0.08]); exclPush(x, z, 2.5); nTrees++; m++; nRed++; }
+      }
     }
     for (const t of pk) t.addTo(root, false);
     for (const t of bk) t.addTo(root, false);
@@ -14566,7 +14580,7 @@ const World = (function () {
       out.dyn.condors = { L, x0: T.px[i0], z0: T.pz[i0], y0: T.hy[i0], ax: T.px[i0], az: T.pz[i0], ay: T.hy[i0], t: null };
       caCondors(out.dyn.condors, 0, null); }
     crowdFinish(CR, root, out);
-    out.stats = { plants: nPlants, bushes: nBush, cows: nCows, fence: nFence, seals: nSeal, barns: nBarn, boats: nBoat, whales: nWhale, trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), bridges: brInfo.length, oldRoad: nOld, driveways: nDrive, outcrops: nCrop, ponds: nPond, eucalyptus: nEuc };   // (read by the tests)
+    out.stats = { plants: nPlants, bushes: nBush, cows: nCows, fence: nFence, seals: nSeal, barns: nBarn, boats: nBoat, whales: nWhale, trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), bridges: brInfo.length, oldRoad: nOld, driveways: nDrive, outcrops: nCrop, ponds: nPond, eucalyptus: nEuc, guano: nGuano, redwoods: nRed };   // (read by the tests)
     return out;
   }
 
