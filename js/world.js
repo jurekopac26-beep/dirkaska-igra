@@ -13235,8 +13235,10 @@ const World = (function () {
   function chH(x, z) {   // terrain height (as caH, on caNear: the road's blend near it, the real terrain and the sea floor farther out)
     const n = caNear(x, z), i = n.i, dd = n.dd; let h;
     if (i < 0) h = chFar(x, z);
-    else { const hr = n.h - 0.3, f = chFar(x, z); h = dd <= 1 ? hr : lerp(hr, f, sstep(1, 42, dd));
-      if (dd > 1.5 && f > hr) h = Math.max(h, Math.min(f, hr + 1.7 * (dd - 1.5))); }   // (uphill: the road cut into the rock, a steep face behind it)
+    else { const hr = n.h - 0.3, f0 = chFar(x, z), seaL = -VR.D.base, ex = sstep(170, 50, dd) * 0.7;   // (below the road the drop exaggerated, the model blurs the cliffs; never below halfway to the sea)
+      const f = f0 < hr ? Math.max(seaL + 0.5 * Math.max(0, f0 - seaL), f0 - (hr - f0) * ex) : f0; h = dd <= 1 ? hr : lerp(hr, f, sstep(1, 42, dd));
+      if (dd > 1.5 && f > hr) h = Math.max(h, Math.min(f, hr + 1.7 * (dd - 1.5)));   // (uphill: the road cut into the rock, a steep face behind it)
+      else if (dd > 2 && f < hr) h = Math.min(h, Math.max(f, hr - 2.4 * (dd - 2))); }   // (downhill: the cliff under the road, falling steeply to the ground (the model blurs it to a gentle slope))
     const pads = VR.pads; for (let k = 0; k < pads.length; k++) { const p = pads[k], d = Math.hypot(x - p.x, z - p.z), pb = p.b || 12; if (d < p.r + pb) h = lerp(p.h, h, sstep(p.r, p.r + pb, d)); }   // level plots: the lay-bys, the start
     if (i >= 0) h = Math.min(h, n.env);
     return h;
@@ -13444,6 +13446,20 @@ const World = (function () {
       for (const [a, b, c2, d2] of [[X0 - 3000, Z0 - 3000, X0, Z1 + 3000], [X0, Z1, X1 + 3000, Z1 + 3000]]) {   // the open ocean beyond the model: west and south of it
         const A = [a, seaY, b], B = [c2, seaY, b], C = [c2, seaY, d2], E = [a, seaY, d2]; sc.get(-1e5, -1e5).quadUp(A, B, C, E, [deep, deep, deep, deep], [uv(a, b), uv(c2, b), uv(c2, d2), uv(a, d2)]); }
       sc.addTo(root, wMat, false, true); out.dyn.water = tex.water; out.sea = seaY;
+      // the surf: a band of white foam along the shore within 420 m of the road (4 m cells where the water line runs, a fainter one a cell out to sea),
+      // in the water's own moving picture (dyn.water scrolls it); 480 m chunks
+      { const fc = new Chunks(480, true), fm = new THREE.MeshBasicMaterial({ map: tex.water, vertexColors: true, transparent: true, depthWrite: false }), cs = 4;
+        const wet = (a, b) => chGround(a, b) < seaY + 0.15, F = (al) => [0.97, 0.99, 1, al];
+        for (let z0 = D.z0; z0 < Z1; z0 += cs) for (let x0 = D.x0; x0 < X1; x0 += cs) {
+          if (vrDist(x0, z0) > 420) { x0 += 28; continue; }
+          const n = (wet(x0, z0) ? 1 : 0) + (wet(x0 + cs, z0) ? 1 : 0) + (wet(x0, z0 + cs) ? 1 : 0) + (wet(x0 + cs, z0 + cs) ? 1 : 0);
+          let al = n > 0 && n < 4 ? 0.85 : 0;
+          if (!al && n === 4) { const m = (wet(x0 - cs, z0) ? 1 : 0) + (wet(x0 + 2 * cs, z0) ? 1 : 0) + (wet(x0, z0 - cs) ? 1 : 0) + (wet(x0, z0 + 2 * cs) ? 1 : 0); if (m < 4) al = 0.4; }   // (the next cell out: a fainter line)
+          if (!al) continue;
+          const y = seaY + 0.06, q = 0.6 * rpHash(Math.round(x0), Math.round(z0)), A = [x0, y, z0], B = [x0 + cs, y, z0], C = [x0 + cs, y, z0 + cs], E = [x0, y, z0 + cs], c = F(al * (0.7 + q));
+          const gq = fc.get(x0, z0); gq.A = true; gq.quadUp(A, B, C, E, [c, c, c, c], [uv(x0 * 3, z0 * 3), uv((x0 + cs) * 3, z0 * 3), uv((x0 + cs) * 3, (z0 + cs) * 3), uv(x0 * 3, (z0 + cs) * 3)]);
+        }
+        fc.addTo(root, fm, false, false); }
       // the land beyond the corridor (the bay's shores, The Sentinel, the mountain behind): a coarse 32 m mesh of the model, sunk under the corridor's tiles
       const fg = new GB(true), fc = (x, z, h) => { const c = chCol(x, z, h, 0.8, 999); return [c[0] * 0.92, c[1] * 0.94, c[2] * 0.98]; }, cs = D.cell;
       const fh = (x, z) => chFar(x, z) - 40 * sstep(480, 380, vrDist(x, z));
@@ -13493,6 +13509,9 @@ const World = (function () {
             gr.quadUp(Pt(i, o0, 0.02), Pt(i, o1, 0.02), Pt(j, o1, 0.02), Pt(j, o0, 0.02), [shade(i, o0), shade(i, o1), shade(j, o1), shade(j, o0)], [[(o0 + w) / tileL, v0], [(o1 + w) / tileL, v0], [(o1 + w) / tileL, v1], [(o0 + w) / tileL, v1]]); }
           for (const [o0, o1] of [[-(w - 0.3), -(w - 0.45)], [w - 0.45, w - 0.3]]) gl.quadUp(Pt(i, o0, 0.036), Pt(i, o1, 0.036), Pt(j, o1, 0.036), Pt(j, o0, 0.036), [ylw, ylw, ylw, ylw]);
           for (const [o0, o1] of [[-0.21, -0.09], [0.09, 0.21]]) gl.quadUp(Pt(i, o0, 0.036), Pt(i, o1, 0.036), Pt(j, o1, 0.036), Pt(j, o0, 0.036), [wht, wht, wht, wht]);
+          if (i % 6 === 0) { const ce = [0.98, 0.98, 0.96]; gl.quadUp(Pt(i, -0.08, 0.04), Pt(i, 0.08, 0.04), Pt(j, 0.08, 0.04), Pt(j, -0.08, 0.04), [ce, ce, ce, ce]); }   // (a cat's eye stud on the centre line every ~12 m)
+          { const ph = rpHash(i >> 3, 91), ln = ph < 0.12 ? (ph < 0.06 ? -1 : 1) : 0; if (ln && (i & 7) < 3) { const pc = [0.62, 0.62, 0.64], o0 = ln < 0 ? -w * 0.85 : 0.35, o1 = ln < 0 ? -0.35 : w * 0.85;   // (a patch of newer asphalt over one lane, ~6 m long: darker)
+            gr.quadUp(Pt(i, o0, 0.028), Pt(i, o1, 0.028), Pt(j, o1, 0.028), Pt(j, o0, 0.028), [pc, pc, pc, pc], [[(o0 + w) / tileL, v0], [(o1 + w) / tileL, v0], [(o1 + w) / tileL, v1], [(o0 + w) / tileL, v1]]); } }
           for (const side of [-1, 1]) {
             const si = side > 0 ? 1 : 0, ci = vc[si][i], cj = vc[si][j], qi = vp[si][i], qj = vp[si][j], sc = onBr[i] ? deck : gc;
             gs.quadUp(Pt(i, side * w, 0.012), Pt(i, side * (w + sw), -0.02), Pt(j, side * (w + sw), -0.02), Pt(j, side * w, 0.012), [sc, sc, sc, sc], [[0, s0], [sw / 4, s0], [sw / 4, s1], [0, s1]]);
@@ -13662,6 +13681,7 @@ const World = (function () {
           bannerQ(cx, cy + 0.75, cz, -T.tx[ci], -T.tz[ci], 0.7, 0.7, 7 / 8, 1, u0, u0 + 1 / 8, ban2); CR.avoid(cx, cz, 0.6); } }
     }
 
+    const fallen = [];   // (where stones lie fallen on the shoulder under the nets: [s, side])
     /* ---- the rockfall nets: on the mountain side where the slope above the road is steep, a row of steel posts (4.5 m, leaning out over the road a
        little) 2-5 m behind the barrier line with a wire mesh between them, the anchor ropes up the slope; the rockfall warning sign before each
        run ---- */
@@ -13678,6 +13698,7 @@ const World = (function () {
             const off = 3 + 1.5 * rpHash(i, 81), Qn = (k, y) => { const o = side * (bar[k] + off); const x = T.px[k] + T.nx[k] * o, z = T.pz[k] + T.nz[k] * o; return [x, chGround(x, z) + y, z]; };
             for (let k = i; k < j - 1; k++) { const a = Qn(k, 0.1), b = Qn(k + 1, 0.1), c = Qn(k + 1, 4.3), d = Qn(k, 4.3); c[0] -= T.nx[k + 1] * side * 0.6; c[2] -= T.nz[k + 1] * side * 0.6; d[0] -= T.nx[k] * side * 0.6; d[2] -= T.nz[k] * side * 0.6;
               ng.quadUp(a, b, c, d, [nc, nc, nc, nc], [[0, 0], [1, 0], [1, 1], [0, 1]]); nNet++; }
+            for (let k = i; k < j; k += 3) fallen.push([k * T.ds + (rpHash(k, 7) - 0.5) * 4, side]);   // (stones come down through the nets: on the shoulder below)
             for (let k = i; k < j; k += 4) { const a = Qn(k, -0.2), g = scen.get(a[0], a[2]); box(g, a[0] - T.nx[k] * side * 0.3, a[1], a[2] - T.nz[k] * side * 0.3, 0.16, 4.7, 0.16, T.hd[k], steel);
               const up = Qn(k, 0); exclPush(up[0], up[2], 1.4); }
             const [wx, wz, wi] = onSide(i * T.ds - 30, -side, 0.9); if (!excluded(wx, wz)) { const wy = chGround(wx, wz); box(scen.get(wx, wz), wx, wy - 0.2, wz, 0.08, 2.2, 0.08, T.hd[wi], [0.6, 0.61, 0.63]); bannerQ(wx, wy + 1.3, wz, -T.tx[wi], -T.tz[wi], 0.9, 0.8, 7 / 8, 1, 2 / 8, 3 / 8, ban2); exclPush(wx, wz, 1.2); }
@@ -13756,6 +13777,11 @@ const World = (function () {
       }
       nPlants += nG;
     }
+    {   // stones fallen through the nets onto the shoulder, by the asphalt's edge (grey granite and brown sandstone, a few of them big)
+      const RF = rng(3049);
+      for (const [s0, side] of fallen) for (let q = 0; q < 2; q++) { const i = T.idx(s0 + (RF() - 0.5) * 3), o = w + 0.3 + RF() * 1.6, d = side * o, x = T.px[i] + T.nx[i] * d, z = T.pz[i] + T.nz[i] * d, k = 0.75 + RF() * 0.3, sc = 0.5 + Math.pow(RF(), 3) * 1.4;
+        pk[4].add(x, T.hy[i] - 0.03, z, RF() * TAU, sc, sc * 0.8, RF() < 0.5 ? [k, k, k] : [k * 1.1, k * 0.9, k * 0.72]); }
+    }
     {   // stones strewn at the foot of the cuts beside the road
       const RS = rng(3047), maxS = Math.round(14000 * dens); let nS = 0;
       edge: for (let s = 12; s < T.len - 12; s += 1.4 / dens) for (const side of [-1, 1]) {
@@ -13814,6 +13840,26 @@ const World = (function () {
         nBoat++; };
       for (let k = 0, tries = 0; k < 7 && tries < 400; tries++) { const s = sStart + RB() * (sFin - sStart), sd = 1, [x, z] = onSide(s, sd, 70 + RB() * 310);   // (the sea is on the right)
         if (seaY - chFar(x, z) < 6 || excluded(x, z)) continue; boat(x, z, RB() * TAU, 6 + RB() * 7, k === 3 ? 1 : 0, k % 3 !== 0); exclPush(x, z, 30); k++; }
+      // cyclists resting on the lay-bys (the road is a favourite climb): bikes leaning on the wall, their riders beside them in bright kit; on the lay-by
+      // before the finish a fruit stall (a generic one: an awning in stripes, crates of oranges, apples and melons) and a tour bus (no names on it)
+      const kit = [[0.95, 0.85, 0.12], [0.2, 0.55, 0.85], [0.92, 0.3, 0.2], [0.15, 0.15, 0.17], [0.95, 0.95, 0.95], [0.3, 0.75, 0.4]];
+      views.forEach((v, k) => { if (k % 3 !== 2) return;
+        const hh = T.hd[v.i], c = Math.cos(hh), sn = Math.sin(hh), nx = T.nx[v.i] * v.sd, nz = T.nz[v.i] * v.sd, n = 2 + Math.floor(RB() * 3);
+        for (let q = 0; q < n; q++) { const u = (q - n / 2) * 1.1 + (RB() - 0.5) * 0.3, bx = v.x + c * u + nx * (v.r - 1.3), bz = v.z + sn * u + nz * (v.r - 1.3), by = chGround(bx, bz), g = scen.get(bx, bz), col = kit[Math.floor(RB() * kit.length)];
+          box(g, bx, by + 0.33, bz, 0.9, 0.06, 0.05, hh + PI / 2, col); box(g, bx, by, bz, 1.7, 0.66, 0.03, hh + PI / 2 + 0.12, [0.12, 0.12, 0.13]);   // (a frame on its two wheels, seen from above a dark line)
+          person(bx - nx * 1.0 + (RB() - 0.5), bz - nz * 1.0 + (RB() - 0.5), RB() * TAU); }
+      });
+      { const v = views[views.length - 1], hh = T.hd[v.i], c = Math.cos(hh), sn = Math.sin(hh), nx = T.nx[v.i] * v.sd, nz = T.nz[v.i] * v.sd;
+        const sx = v.x - c * (v.r - 2.5) + nx * 2, sz = v.z - sn * (v.r - 2.5) + nz * 2, sy = chGround(sx, sz), g = scen.get(sx, sz);
+        box(g, sx, sy, sz, 2.6, 0.85, 1.2, hh, [0.55, 0.38, 0.22], [0.5, 0.34, 0.2], true);   // the stall: its table
+        for (let k = 0; k < 6; k++) { const u = -1.0 + (k % 3) * 1.0, w0 = k < 3 ? -0.3 : 0.3, px = sx + c * u - sn * w0, pz = sz + sn * u + c * w0; box(g, px, sy + 0.85, pz, 0.8, 0.2, 0.5, hh, [[0.98, 0.55, 0.1], [0.86, 0.15, 0.12], [0.4, 0.66, 0.2], [0.98, 0.82, 0.2], [0.98, 0.55, 0.1], [0.75, 0.2, 0.3]][k], null, true); }   // crates of fruit
+        for (let k = 0; k < 6; k++) { const u = -1.5 + k * 0.6 + 0.3, px = sx + c * u, pz = sz + sn * u; box(g, px, sy + 2.2, pz, 0.6, 0.06, 2.0, hh, k % 2 ? [0.95, 0.95, 0.92] : [0.2, 0.5, 0.36], null, true); }   // the awning in stripes
+        for (const u of [-1.5, 1.5]) for (const w0 of [-0.9, 0.9]) box(g, sx + c * u - sn * w0, sy, sz + sn * u + c * w0, 0.06, 2.2, 0.06, hh, [0.6, 0.6, 0.62]);
+        exclPush(sx, sz, 3); CR.block(sx, sz, 3.4, 2.2, hh); person(sx - nx * 1.4, sz - nz * 1.4, Math.atan2(nz, nx));
+        const v2 = views[views.length - 3] || v, h2 = T.hd[v2.i], bx = v2.x + T.nx[v2.i] * v2.sd * 1.5, bz = v2.z + T.nz[v2.i] * v2.sd * 1.5, by = chGround(bx, bz), gb = scen.get(bx, bz), c2 = Math.cos(h2), s2 = Math.sin(h2);   // the tour bus
+        box(gb, bx, by + 0.35, bz, 12, 2.9, 2.5, h2, [0.95, 0.95, 0.94], [0.88, 0.9, 0.92], true); box(gb, bx, by + 1.6, bz, 11.6, 1.0, 2.52, h2, [0.18, 0.26, 0.34], null, true); box(gb, bx, by + 0.5, bz, 12.02, 0.35, 2.52, h2, [0.15, 0.42, 0.68], null, true);
+        for (const u of [-4, 3.8]) for (const w0 of [-1.2, 1.2]) box(gb, bx + c2 * u - s2 * w0, by, bz + s2 * u + c2 * w0, 1.0, 1.0, 0.3, h2, [0.08, 0.08, 0.09], null, true);
+        exclPush(bx, bz, 7); CR.block(bx, bz, 12.4, 2.8, h2); }
       // the beach at Hout Bay (lc 4 near the start): sunshades, towels and people
       const RBe = rng(3071); let nb = 0;
       for (let k = 0; k < 900 && nb < 40; k++) { const x = P.st[0] + (RBe() - 0.5) * 560, z = P.st[1] + (RBe() - 0.5) * 560; if (vrLC(x, z) !== 4 || vrNear(x, z).dd < 4 || excluded(x, z)) continue;
