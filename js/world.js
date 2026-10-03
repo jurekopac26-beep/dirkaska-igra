@@ -22648,6 +22648,7 @@ const World = (function () {
       for (let k = 0; k < n; k++) cyl(g, poly[k][0], 0, poly[k][1], 0.12, top, 5, [0.4, 0.42, 0.45]);
       return top;
     }
+    let LMAX = 0; for (let k = 0; k < n; k++) LMAX = Math.max(LMAX, Math.hypot(poly[(k + 1) % n][0] - poly[k][0], poly[(k + 1) % n][1] - poly[k][1]));
     for (let k = 0; k < n; k++) {
       const [ax, az] = poly[k], [bx, bz] = poly[(k + 1) % n], Le = Math.hypot(bx - ax, bz - az); if (Le < 0.3) continue;
       const ox = sgn * (bz - az) / Le, oz = -sgn * (bx - ax) / Le, inn = [(ax + bx) / 2 - ox, (y0 + top) / 2, (az + bz) / 2 - oz], U1 = Math.max(1, Math.round(Le / bw));
@@ -22661,7 +22662,7 @@ const World = (function () {
         gr.quadO([ax, top, az], [bx, top, bz], [bx, top + para, bz], [ax, top + para, az], cp, inn, [U9, U9, U9, U9]);
         g.quadO([ax, top + para, az], [bx, top + para, bz], [bx + ix, top + para, bz + iz], [ax + ix, top + para, az + iz], COP, [(ax + bx) / 2, top, (az + bz) / 2]);
         g.quadO([ax + ix, top, az + iz], [bx + ix, top, bz + iz], [bx + ix, top + para, bz + iz], [ax + ix, top + para, az + iz], cp, [(ax + bx) / 2 + ox, top, (az + bz) / 2 + oz]); }
-      if (kind === 'k' && Le > 2) {   // the kiosk's awning over this side
+      if (kind === 'k' && Le > 2 && Le >= LMAX - 0.01) {   // the kiosk's awning over its front (its longest side)
         const aw = [[0.25, 0.55, 0.82], [0.85, 0.3, 0.22], [0.25, 0.6, 0.35], [0.95, 0.75, 0.2]][Math.floor(crH(cx, cz, 5) * 4)], A = [ax, top - 0.4, az], B = [bx, top - 0.4, bz], C = [bx + ox * 1.4, top - 0.95, bz + oz * 1.4], D = [ax + ox * 1.4, top - 0.95, az + oz * 1.4];
         g.quadO(A, B, C, D, aw, [(ax + bx) / 2, top - 3, (az + bz) / 2]); }
     }
@@ -22900,7 +22901,7 @@ const World = (function () {
 
     /* ---- the junctions (def.wide: the wall stands back into each side street): on the corners of its pocket the street's own things, which a
        car knocks down and drives on (Race.setProps): traffic lights on their poles where the junction has them (OpenStreetMap), a road sign, bollards
-       along the kerb, a litter bin, a street lamp, the lights' cabinet, a bus shelter where a bus stops there; the side street behind the wall
+       along the kerb, a litter bin, a fire hydrant, a street lamp, the lights' cabinet, a bus shelter where a bus stops there; the side street behind the wall
        closed with steel crowd barriers ---- */
     const props = out.props, sigs = (S.pts.sig || []).map(p => [p[0] / 2, p[1] / 2]), buses = (S.pts.bus || []).map(p => [p[0] / 2, p[1] / 2]);
     let nPocket = 0;
@@ -22918,8 +22919,9 @@ const World = (function () {
         if (m >= 6) prop('bollard', s(5.6), sd * (w + 2.2), 0);
         if (m >= 6) { if (end < 0) prop('sign', s(1.8), sd * (w + 2.4), face); else prop('lamp', s(1.6), sd * (w + 1.4), face); }
         if (m >= 6 && (k + (end > 0 ? 1 : 0)) % 2 === 0) prop('bin', s(4.8), sd * Math.min(back - 0.4, w + 3.6), 0);
+        if (m >= 8 && end < 0 && k % 2 === 1) prop('hydrant', s(5.2), sd * (w + 1.2), face);
       }
-      if (sig && m >= 8) prop('cabinet', sAt(b - 2.2), sd * Math.min(back - 0.5, w + 4.6), sd > 0 ? 0 : Math.PI);
+      if (sig && m >= 8) prop('cabinet', sAt(b - 4.2), sd * Math.min(back - 0.5, w + 2.8), sd > 0 ? 0 : Math.PI);
       if (bus && m >= 8) prop('shelter', sAt(a + 3), sd * Math.min(back - 1.0, w + 5.2), sd > 0 ? 0 : Math.PI);
     }
     // the kinds' footprints keep the trees off; the floor: the pavement
@@ -22989,10 +22991,10 @@ const World = (function () {
       const Lp = []; let tot = 0; for (let k = 0; k + 1 < P.length; k++) { const l = Math.hypot(P[k + 1][0] - P[k][0], P[k + 1][1] - P[k][1]); Lp.push(l); tot += l; }
       const at = (d) => { let k = 0; while (k < Lp.length - 1 && d > Lp[k]) { d -= Lp[k]; k++; } const [ax, az] = P[k], [bx, bz] = P[k + 1], t = clamp(d / Lp[k], 0, 1), tx = (bx - ax) / Lp[k], tz = (bz - az) / Lp[k]; return { x: ax + (bx - ax) * t, z: az + (bz - az) * t, tx, tz, lx: tz, lz: -tx }; };   // (lx, lz: to the left of the way north)
       const C = [0.95, 0.95, 0.93];
-      for (let d = 2; d < tot - 2; d += 3) { const q = at(d), q2 = at(d + 1.6); for (const o of [-3.2, 3.2]) gLn.get(q.x, q.z).quadUp([q.x + q.lx * o - q.tz * 0.07, 0.05, q.z + q.lz * o + q.tx * 0.07], [q.x + q.lx * o + q.tz * 0.07, 0.05, q.z + q.lz * o - q.tx * 0.07], [q2.x + q2.lx * o + q2.tz * 0.07, 0.05, q2.z + q2.lz * o - q2.tx * 0.07], [q2.x + q2.lx * o - q2.tz * 0.07, 0.05, q2.z + q2.lz * o + q2.tx * 0.07], [C, C, C, C]); }
+      for (let d = 2; d < tot - 2; d += 3) { const q = at(d), q2 = at(d + 1.6); for (const o of [-3.2, 3.2]) if (!onTrack(q.x + q.lx * o, q.z + q.lz * o, 1.5) && !onTrack(q2.x + q2.lx * o, q2.z + q2.lz * o, 1.5)) gLn.get(q.x, q.z).quadUp([q.x + q.lx * o - q.tz * 0.07, 0.05, q.z + q.lz * o + q.tx * 0.07], [q.x + q.lx * o + q.tz * 0.07, 0.05, q.z + q.lz * o - q.tx * 0.07], [q2.x + q2.lx * o + q2.tz * 0.07, 0.05, q2.z + q2.lz * o - q2.tx * 0.07], [q2.x + q2.lx * o - q2.tz * 0.07, 0.05, q2.z + q2.lz * o + q2.tx * 0.07], [C, C, C, C]); }
       for (let d = 10; d < tot - 8; d += 5.4) {   // the garages, 5 m wide, on the west side
         const q = at(d), x = q.x + q.lx * 8.2, z = q.z + q.lz * 8.2, rot = Math.atan2(q.tz, q.tx), tc = TEAM[nGarages % TEAM.length];
-        box(G, x, 0, z, 5.0, 3.6, 6.0, rot, [0.93, 0.93, 0.92], [0.82, 0.82, 0.8]); box(G, x - q.lx * 3.02, 2.6, z - q.lz * 3.02, 5.0, 0.6, 0.06, rot, tc);
+        box(G, x, 0, z, 5.0, 3.6, 6.0, rot, [0.93, 0.93, 0.92], [0.78, 0.79, 0.8]); box(G, x - q.lx * 3.02, 2.6, z - q.lz * 3.02, 5.0, 0.6, 0.06, rot, tc); box(G, x - q.lx * 1.2, 3.6, z - q.lz * 1.2, 4.6, 0.04, 1.4, rot, tc, tc);
         box(G, x - q.lx * 3.01, 0, z - q.lz * 3.01, 4.2, 2.5, 0.05, rot, [0.16, 0.17, 0.19]);
         box(G, x - q.lx * 1.4, 0.15, z - q.lz * 1.4, 1.8, 0.5, 4.2, rot + Math.PI / 2, tc, tc); box(G, x - q.lx * 1.4, 0.65, z - q.lz * 1.4, 0.7, 0.35, 1.4, rot + Math.PI / 2, [0.1, 0.1, 0.12]);   // (the car being worked on)
         exclPush(x, z, 4.5); CR.exclAdd(x, z, 4); nGarages++;
@@ -23039,6 +23041,9 @@ const World = (function () {
         put(k === 'jaca' && crH(x, z, 48) < 0.45 ? 'bloom' : k, x, z, k === 'palm' ? 1 : 0.85 + 0.35 * crH(x, z, 49));
         along.add(Math.floor(x / 6) + ',' + Math.floor(z / 6));
       }
+      // the waterfront promenade between the long straight and the lagoon: rows of tipas and palms (the old Costanera)
+      for (let d = -230; d < 330; d += 13) for (const e of [9, 21]) { const s0 = sAt(d + (e > 10 ? 6.5 : 0)), i = T.idx(s0), [x, z] = atSf(s0, T.br[i] + e);
+        if (!free(x, z, 2) || crH(x, z, 57) < 0.15) continue; const h = crH(x, z, 58); put(h < 0.35 ? 'palm' : 'tipa', x, z, 0.85 + 0.3 * crH(x, z, 59)); }
       // the parks: more trees where OpenStreetMap has none (a loose jittered grid, clumps by a noise), off the paths
       const paths = (S.paths || []).map(a => ({ hw: a[0], pts: pmDec(a, 1) }));
       const onPath = (x, z) => { for (const r of paths) for (let k = 0; k + 1 < r.pts.length; k++) { const [ax, az] = r.pts[k], [bx, bz] = r.pts[k + 1]; if (Math.max(ax, bx) < x - 4 || Math.min(ax, bx) > x + 4 || Math.max(az, bz) < z - 4 || Math.min(az, bz) > z + 4) continue;

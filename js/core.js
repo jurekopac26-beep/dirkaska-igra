@@ -1573,6 +1573,7 @@ const Core = (function () {
       sign:   { m: 9,  rh: 0.1,  rb: 1.3,  h0: 1.2,   e: 0.25, mu: 0.6,  lift: 0.8,  I: 4,    pts: boxPts(0.05, 1.2, 0.05).concat([[0, 1.1, 0.3], [0, 1.1, -0.3]]) },   // road sign on its post (znak)
       bollard:{ m: 14, rh: 0.13, rb: 0.5,  h0: 0.45,  e: 0.25, mu: 0.6,  lift: 0.7,  I: 0.9,  pts: cylPts(0.12, -0.45, 0.45, 6) },   // bollard (stebriček na pločniku)
       bin:    { m: 12, rh: 0.3,  rb: 0.56, h0: 0.45,  e: 0.25, mu: 0.6,  lift: 0.6,  I: 1.0,  pts: cylPts(0.28, -0.45, 0.45, 6) },   // litter bin (smetnjak)
+      hydrant:{ m: 30, rh: 0.2,  rb: 0.5,  h0: 0.5,   e: 0.2,  mu: 0.7,  lift: 0.5,  I: 1.6,  pts: cylPts(0.17, -0.5, 0.4, 6) },   // fire hydrant (hidrant)
       cabinet:{ m: 45, rh: 0.5,  rb: 0.85, h0: 0.7,   e: 0.15, mu: 0.7,  lift: 0.3,  I: 8,    pts: boxPts(0.45, 0.7, 0.25) },   // electrical cabinet (omarica)
       shelter:{ m: 150, rh: 1.0, rb: 2.1,  h0: 1.25,  e: 0.1,  mu: 0.75, lift: 0.2,  I: 120,  pts: boxPts(1.8, 1.25, 0.7) },    // bus shelter (avtobusno postajališče)
     };
