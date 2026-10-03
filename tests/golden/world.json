@@ -507,23 +507,60 @@
    "roadwear:MeshLambertMaterial": "932c41c2"
   }
  },
- "singapur": {
-  "meshes": 719,
-  "verts": 720865,
-  "instances": 7245,
-  "props": 194,
-  "crowd": 1442,
-  "world": "ebdffefe",
-  "propsHash": "589ae238",
-  "floor": "9857c825/9828",
+ "moki": {
+  "meshes": 1585,
+  "verts": 723493,
+  "instances": 19825,
+  "props": 142,
+  "crowd": 361,
+  "world": "8b885125",
+  "propsHash": "127d9044",
+  "floor": "a80c6856/10920",
   "groups": {
-   "-:MeshPhongMaterial": "df09fce4",
-   "-:MeshLambertMaterial": "50c2d7f3",
-   "-:MeshBasicMaterial": "92560864",
-   "crowd:MeshLambertMaterial": "4bf8c5d6",
-   "ao:MeshBasicMaterial": "9ee6d6c3",
-   "tyremarks:MeshBasicMaterial": "16cfa6fd",
-   "roadwear:MeshLambertMaterial": "44f8b5b0"
+   "-:MeshLambertMaterial": "658b95fd",
+   "-:MeshPhongMaterial": "2b7341a9",
+   "-:MeshBasicMaterial": "7ed161db",
+   "crowd:MeshLambertMaterial": "c3e8c025",
+   "ao:MeshBasicMaterial": "bf4eccf9"
+  }
+ },
+ "cpalace": {
+  "meshes": 300,
+  "verts": 382518,
+  "instances": 6876,
+  "props": 29,
+  "crowd": 2457,
+  "world": "e0e31673",
+  "propsHash": "3744002c",
+  "floor": "5a965253/6440",
+  "groups": {
+   "-:MeshLambertMaterial": "e2922c1d",
+   "-:MeshPhongMaterial": "ac8feb3b",
+   "crowd:MeshLambertMaterial": "4a2d10fc",
+   "-:MeshBasicMaterial": "b41923f5",
+   "flags:MeshLambertMaterial": "859872c7",
+   "ao:MeshBasicMaterial": "3555589",
+   "roadwear:MeshLambertMaterial": "ba389577",
+   "worn:MeshLambertMaterial": "5a1d01e1"
+  }
+ },
+ "riverside": {
+  "meshes": 457,
+  "verts": 296138,
+  "instances": 5358,
+  "props": 47,
+  "crowd": 3125,
+  "world": "efb2b77f",
+  "propsHash": "ee4f06a0",
+  "floor": "35af8a01/10528",
+  "groups": {
+   "-:MeshLambertMaterial": "d4705128",
+   "crowd:MeshLambertMaterial": "6034ae43",
+   "-:MeshBasicMaterial": "87f4168d",
+   "flags:MeshLambertMaterial": "d8eee42",
+   "rsFar:MeshBasicMaterial": "257c3615",
+   "ao:MeshBasicMaterial": "f4db3fe6",
+   "roadwear:MeshLambertMaterial": "fc990f68"
   }
  },
  "jezero": {
