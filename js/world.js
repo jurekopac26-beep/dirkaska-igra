@@ -13423,7 +13423,7 @@ const World = (function () {
     const sea = (x, z) => chGround(x, z) < seaY + 0.3;
 
     /* ---- terrain tiles, the sea (one plane at height 0: turquoise over the sand near the shore, deep blue farther out) ---- */
-    let nFar = 0;
+    let nFar = 0, nOver = 0;
     const tMat = pkGroundMat(), gMat = new THREE.MeshLambertMaterial({ map: vrGritTex(), vertexColors: true });
     {
       const G = P.G, grp = new THREE.Group(); root.add(grp); out.ground = grp;
@@ -13504,6 +13504,7 @@ const World = (function () {
           if (k === 7) return chGCol(x, z);
           const sl = k === 5 ? chSlope(x, z) : 0, l = Math.sqrt(1 + sl * sl); return chCol(x, z, T.hy[i] + y, 1 / l, Math.max(0, o - bar)).slice(); })); } return a; });
       const wuv = (p) => [p[0] / 10, -p[2] / 10];
+      const gut = [0, 1].map(si => { const a = new Uint8Array(N); for (let i = 0; i < N; i++) { let m = -9; for (let k = Math.max(0, i - 4); k <= Math.min(N - 1, i + 4); k++) m = Math.max(m, vp[si][k][7][1]); a[i] = m > 1 && !onBr[i] ? 1 : 0; } return a; });   // (the mountain side: where the ground rises beside the road, over a few samples: the grid's steps)
       for (let c0 = 0; c0 < N - 1; c0 += 60) {
         const gr = new GB(true), gl = new GB(), gs = new GB(true), gv = new GB(true);
         for (let i = c0; i < Math.min(c0 + 60, N - 1); i++) {
@@ -13518,6 +13519,9 @@ const World = (function () {
           for (const side of [-1, 1]) {
             const si = side > 0 ? 1 : 0, ci = vc[si][i], cj = vc[si][j], qi = vp[si][i], qj = vp[si][j], sc = onBr[i] ? deck : gc;
             gs.quadUp(Pt(i, side * w, 0.012), Pt(i, side * (w + sw), -0.02), Pt(j, side * (w + sw), -0.02), Pt(j, side * w, 0.012), [sc, sc, sc, sc], [[0, s0], [sw / 4, s0], [sw / 4, s1], [0, s1]]);
+            if (gut[si][i] && gut[si][j]) for (const [f0, f1, gk] of [[0.05, 0.45, 0.9], [0.45, 0.85, 0.7]]) {   // (on the mountain side a concrete gutter at the verge's foot: a V, its far half in shade)
+              const yv = (q, o) => q[0][1] + (q[1][1] - q[0][1]) * (o - q[0][0]) / Math.max(1e-3, q[1][0] - q[0][0]) + 0.045, o0 = w + sw + f0, o1 = w + sw + f1, cc = [0.74 * gk, 0.73 * gk, 0.7 * gk];
+              gl.quadUp(Pt(i, side * o0, yv(qi, o0)), Pt(i, side * o1, yv(qi, o1)), Pt(j, side * o1, yv(qj, o1)), Pt(j, side * o0, yv(qj, o0)), [cc, cc, cc, cc]); }
             for (let k = 0; k < 7; k++) { const a = Pt(i, side * qi[k][0], qi[k][1]), b = Pt(i, side * qi[k + 1][0], qi[k + 1][1]), c = Pt(j, side * qj[k + 1][0], qj[k + 1][1]), d = Pt(j, side * qj[k][0], qj[k][1]);
               if (k === 4 && (qi[5][1] < -2.6 || qj[5][1] < -2.6)) gv.quadO(a, b, c, d, null, Pt(i, 0, Math.min(qi[5][1], qj[5][1]) * 0.5), [wuv(a), wuv(b), wuv(c), wuv(d)], [ci[k], ci[k + 1], cj[k + 1], cj[k]]);
               else gv.quadUp(a, b, c, d, [ci[k], ci[k + 1], cj[k + 1], cj[k]], [wuv(a), wuv(b), wuv(c), wuv(d)]); }
@@ -13808,6 +13812,22 @@ const World = (function () {
         for (let q = 0; q < n; q++) { const r0 = 1.1 + RV() * 2.2, qx = x + (RV() - 0.5) * 8, qz = z + (RV() - 0.5) * 8, qy = chGround(qx, qz); if (vrNear(qx, qz).dd < r0 + 1 || sea(qx, qz)) continue;
           rock(g, qx, qy + r0 * 0.35, qz, r0, r0 * (A > 110 ? 0.6 + RV() * 0.4 : 0.8 + RV() * 0.6), r0 * (0.7 + RV() * 0.4), RV() * TAU, vary(b0, RV, 0.08), RV, A > 110 ? 0.2 : 0.35, A > 110); }
       }
+      // the overhangs: where the road is cut deep into the mountain, ledges of the banded sandstone jut out of the cut face above the verge (as the
+      // road's famous overhanging rock), layered slabs, their backs in the slope; at least 400 m apart
+      let last = -1e9;
+      for (let s = sStart + 60; s < sFin - 40; s += 4) {
+        if (s - last < 400) continue;
+        const i = T.idx(s);
+        for (const side of [-1, 1]) {
+          const at = (o) => { const q = side * o; return chGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - T.hy[i]; };
+          if (onBr[i] || at(w + 10) < 7 || at(w + 8) < 4) continue;
+          const [x, z] = onSide(s, side, 0); if (excluded(x, z)) continue;
+          const rot = Math.atan2(T.tz[i], T.tx[i]), L = 7 + RV() * 6, y0 = T.hy[i] + 3.6 + RV() * 0.6, b0 = vary(sand[Math.floor(RV() * sand.length)], RV, 0.06);
+          for (let q = 0; q < 3; q++) { const o = w + 7.2 + q * 1.1, d = side * o, px = T.px[i] + T.nx[i] * d, pz = T.pz[i] + T.nz[i] * d, yq = Math.max(y0 + q * 1.1, T.hy[i] + at(o + 1.8) - 0.2);   // (three slabs stacked back into the face, each a little higher, their backs in the slope)
+            rock(scen.get(px, pz), px, yq, pz, L * (1 - q * 0.12) / 2, 0.9 + RV() * 0.3, 3.4 - q * 0.5, rot, vary(b0, RV, 0.07), RV, 0.15, true); }
+          nOver++; last = s; break;
+        }
+      }
     }
 
     /* ---- life by the road and on the sea: chacma baboons (the cliffs' known residents) in troops on the lay-bys' walls and the verges, kelp beds in
@@ -13878,7 +13898,7 @@ const World = (function () {
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: chAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: chAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);
-    out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, walls: +(nWall / (2 * N)).toFixed(3), parapet: nRail, nets: nNet, views: views.length, baboons: nBab, kelp: nKelp, boats: nBoat };   // (read by the tests)
+    out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, walls: +(nWall / (2 * N)).toFixed(3), parapet: nRail, nets: nNet, views: views.length, baboons: nBab, kelp: nKelp, boats: nBoat, overhangs: nOver };   // (read by the tests)
     return out;
   }
 
