@@ -583,6 +583,25 @@
    "worn:MeshLambertMaterial": "2877cdfe"
   }
  },
+ "medvode": {
+  "meshes": 988,
+  "verts": 1748350,
+  "instances": 7494,
+  "props": 94,
+  "crowd": 522,
+  "world": "91099e0e",
+  "propsHash": "7f89fb11",
+  "floor": "530bfec8/13244",
+  "groups": {
+   "-:MeshLambertMaterial": "61de062f",
+   "-:MeshPhongMaterial": "e20755c9",
+   "crowd:MeshLambertMaterial": "a8ae7ba",
+   "-:MeshBasicMaterial": "ab62ec00",
+   "ao:MeshBasicMaterial": "6b22868f",
+   "tyremarks:MeshBasicMaterial": "fe945062",
+   "roadwear:MeshLambertMaterial": "a3dc6b21"
+  }
+ },
  "jezero": {
   "meshes": 154,
   "verts": 591648,

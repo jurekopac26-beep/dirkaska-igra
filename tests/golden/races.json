@@ -1648,5 +1648,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "d3aa121f8632ba6f463c887e"
+ },
+ "medvode/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 179.88,
+  "spins": 0,
+  "walls": 18,
+  "rescues": 1,
+  "nan": false,
+  "digest": "a9583213a7bd009f699cfa9f"
+ },
+ "medvode/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 193.7,
+  "spins": 4,
+  "walls": 17,
+  "rescues": 0,
+  "nan": false,
+  "digest": "0c5b3d4b243d082fff8e114e"
+ },
+ "medvode/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 160.29,
+  "spins": 10,
+  "walls": 28,
+  "rescues": 1,
+  "nan": false,
+  "digest": "05e05435cad3b1b93410cab3"
+ },
+ "medvode/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 159.7,
+  "spins": 19,
+  "walls": 48,
+  "rescues": 0,
+  "nan": false,
+  "digest": "a41af45c370a3cdafef306aa"
+ },
+ "medvode/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 180.01,
+  "spins": 2,
+  "walls": 21,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c6b652fca7511dde3151751f"
  }
 }
