@@ -2,7 +2,7 @@
 var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
   // São Paulo, Brazil: the permanent circuit in the district of Interlagos (the land between the two reservoirs, Guarapiranga and
-  // Billings) in the south of the city, in its layout of 1990 on (shortened again in 1999-2000: the one raced today), 4.309 km, 15 turns,
+  // Billings) in the south of the city, in the layout raced since 1999 (the fifth of the circuit; the old 7.9 km lap was shortened in 1990), 4.309 km, 15 turns,
   // anticlockwise; the start line on the main straight with the pit lane on its left (scenery here: the game's pit stops are on the
   // right), the grandstands on its right. The turns by their numbers; the corners' old place names where they are not names of people
   // (the first two turns carry a person's name: numbers only). Centre line: OpenStreetMap (© OpenStreetMap contributors, ODbL; the
