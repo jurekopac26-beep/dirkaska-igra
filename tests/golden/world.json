@@ -346,20 +346,20 @@
   }
  },
  "beartooth": {
-  "meshes": 1609,
-  "verts": 764161,
-  "instances": 57464,
+  "meshes": 1630,
+  "verts": 790429,
+  "instances": 57493,
   "props": 212,
   "crowd": 1252,
-  "world": "3f123874",
+  "world": "ff79e6c3",
   "propsHash": "cc912f13",
   "floor": "195008bb/10836",
   "groups": {
-   "-:MeshLambertMaterial": "359df1af",
+   "-:MeshLambertMaterial": "b2746cb5",
    "-:MeshPhongMaterial": "693613f3",
    "-:MeshBasicMaterial": "7b9855ff",
    "crowd:MeshLambertMaterial": "66375b1c",
-   "ao:MeshBasicMaterial": "bdf1662d",
+   "ao:MeshBasicMaterial": "ed016322",
    "tyremarks:MeshBasicMaterial": "efca3455",
    "roadwear:MeshLambertMaterial": "c07d6f3d"
   }
