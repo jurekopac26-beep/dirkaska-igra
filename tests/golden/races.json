@@ -1648,5 +1648,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "3173d6e192119cc7f241d37c"
+ },
+ "longford/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 294.47,
+  "spins": 0,
+  "walls": 10,
+  "rescues": 0,
+  "nan": false,
+  "digest": "96c672eeccb014cb9bf03c97"
+ },
+ "longford/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 306.29,
+  "spins": 0,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "13bb3288f434afce7e1f8e5e"
+ },
+ "longford/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 241.57,
+  "spins": 0,
+  "walls": 24,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c8beb48d74e14f7f8e15c3ba"
+ },
+ "longford/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 243.43,
+  "spins": 0,
+  "walls": 22,
+  "rescues": 0,
+  "nan": false,
+  "digest": "da8f42a27cd739610596dc92"
+ },
+ "longford/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 294.54,
+  "spins": 0,
+  "walls": 18,
+  "rescues": 0,
+  "nan": false,
+  "digest": "69fb502470219741db3d3337"
  }
 }

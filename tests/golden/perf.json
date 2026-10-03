@@ -186,7 +186,7 @@
   "maxCalls": 295,
   "kverts": 885,
   "maxKverts": 1377,
-  "jsMs": 1.09
+  "jsMs": 1.32
  },
  "cpalace": {
   "calls": 281,
@@ -201,6 +201,13 @@
   "kverts": 309,
   "maxKverts": 376,
   "jsMs": 0.7
+ },
+ "longford": {
+  "calls": 198,
+  "maxCalls": 263,
+  "kverts": 363,
+  "maxKverts": 564,
+  "jsMs": 0.92
  },
  "jezero": {
   "calls": 278,
