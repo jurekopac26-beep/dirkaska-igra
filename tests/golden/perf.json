@@ -224,10 +224,10 @@
   "jsMs": 0.87
  },
  "bangsaen": {
-  "calls": 260,
+  "calls": 261,
   "maxCalls": 353,
   "kverts": 785,
-  "maxKverts": 885,
-  "jsMs": 1.23
+  "maxKverts": 880,
+  "jsMs": 1.26
  }
 }

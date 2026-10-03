@@ -563,6 +563,25 @@
    "roadwear:MeshLambertMaterial": "fc990f68"
   }
  },
+ "bangsaen": {
+  "meshes": 634,
+  "verts": 866458,
+  "instances": 6154,
+  "props": 145,
+  "crowd": 659,
+  "world": "174b3a98",
+  "propsHash": "badfb29b",
+  "floor": "9e1c2dc5/7168",
+  "groups": {
+   "-:MeshLambertMaterial": "f469c765",
+   "-:LineBasicMaterial": "5dfcbbb2",
+   "-:MeshPhongMaterial": "736c8329",
+   "crowd:MeshLambertMaterial": "b5edd5c1",
+   "-:MeshBasicMaterial": "3b7005f6",
+   "ao:MeshBasicMaterial": "81233542",
+   "roadwear:MeshLambertMaterial": "20dd0dbe"
+  }
+ },
  "jezero": {
   "meshes": 154,
   "verts": 591648,
