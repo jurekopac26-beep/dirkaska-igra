@@ -13801,6 +13801,9 @@ const World = (function () {
     const wet = sstep(4, 0.8, A); if (wet > 0) { R = lerp(R, 0.24, wet); G = lerp(G, 0.23, wet); B = lerp(B, 0.22, wet); }   // the splash zone, dark
     if (A < 0.2) { const d = sstep(0.2, -6, A); R = lerp(0.36, 0.18, d); G = lerp(0.35, 0.24, d); B = lerp(0.3, 0.25, d); }   // (the sea floor)
     if (dd < 4) { const t = sstep(4, 0.5, dd) * 0.5; R = lerp(R, 0.62, t); G = lerp(G, 0.58, t); B = lerp(B, 0.5, t); }
+    if (A > 1) {   // the light in the folds of the land: the hollows and gullies darker (the sky hidden), the ridges a little brighter
+      const h0 = vrDem(x, z), cv = clamp(((vrDem(x - 20, z) + vrDem(x + 20, z) + vrDem(x, z - 20) + vrDem(x, z + 20)) / 4 - h0) / 4, -1, 1), k = cv > 0 ? 1 - 0.2 * cv : 1 - 0.07 * cv;
+      R *= k; G *= k; B *= k * (cv > 0 ? 1.03 : 1); }
     BSCOL[0] = R; BSCOL[1] = G; BSCOL[2] = B; return BSCOL;
   }
   function bsGCol(x, z) {   // the terrain mesh's own vertex colour at (x, z) (bilinear over the grid vertices, as caGCol)
@@ -13900,6 +13903,23 @@ const World = (function () {
     }
     ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
+  function bsSealGeo() {   // a sea lion lying on a rock (x forward, ~2 m): a long soft body tapering to the flippers, the head raised a little
+    const g = new GB(), R = rng(791), rs = ROCK_SMOOTH; ROCK_SMOOTH = true;
+    ico(g, 0, 0.2, 0, 0.5, 0.45, [1, 1, 1], R, 0.15); ico(g, -0.6, 0.12, 0, 0.32, 0.4, [0.92, 0.92, 0.92], R, 0.15); ico(g, 0.55, 0.35, 0, 0.2, 0.9, [1.05, 1.05, 1.05], R, 0.1);
+    ROCK_SMOOTH = rs; const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
+  function bsPelicanGeo() {   // seven brown pelicans in a line, one behind the other a little to the side (x the way they fly): a body, broad wings held flat, the long bill
+    const g = new GB(), K = [0.36, 0.32, 0.28], H = [0.86, 0.82, 0.7], B = [0.62, 0.52, 0.36];
+    for (let k = 0; k < 7; k++) { const ox = -k * 4.2, oz = k * 1.4 * (k % 2 ? 1 : -0.4), oy = Math.sin(k * 1.7) * 0.4;
+      box(g, ox, oy - 0.15, oz, 1.0, 0.3, 0.3, 0, K, null, true); box(g, ox + 0.6, oy, oz, 0.25, 0.2, 0.2, 0, H, null, true); box(g, ox + 1.0, oy - 0.02, oz, 0.6, 0.06, 0.08, 0, B, null, true);
+      for (const sd of [-1, 1]) g.quadO([ox + 0.25, oy, oz + sd * 0.12], [ox - 0.25, oy, oz + sd * 0.12], [ox - 0.35, oy + 0.15, oz + sd * 1.1], [ox + 0.15, oy + 0.15, oz + sd * 1.1], K, [ox, oy - 1, oz + sd]); }
+    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
+  function bsPelicanStep(P, t) {   // the flock flies along the road at ~11 m/s, ~60 m out over the water, ~9 m above the waves; at either end it turns back
+    const L = P.b - P.a, u = (t * 11) % (2 * L), back = u > L, s = P.a + (back ? 2 * L - u : u), i = T.idx(s), o = Math.max(T.br[i] + 45, 60);
+    const x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, y = Math.max(BS.y0, bsGround(x, z)) + 9 + Math.sin(t * 0.7) * 1.5;
+    P.m.position.set(x, y, z); P.m.rotation.set(0, -(T.hd[i] + (back ? Math.PI : 0)), 0);
   }
   function bsCowGeo() {   // a beef cow grazing (x forward, ~2.2 m long; tinted by the instance: black, red-brown, white-faced): the body, the head down to the
     // grass, four legs, the tail; the face and the belly a little paler
@@ -14286,7 +14306,7 @@ const World = (function () {
     const pk = [0, 1, 2, 3, 4].map(k => new IChunks(caPlantGeo(k), k === 0 ? wMat : pMat, k === 4 ? 64 : 128));
     const bk = [0, 1].map(k => new IChunks(bsBushGeo(k), k === 1 ? wMat : pMat, 128));
     const tk = [0, 1].map(k => new IChunks(bsTreeGeo(k), pMat, 128));
-    let nPlants = 0, nTrees = 0, nBush = 0;
+    let nPlants = 0, nTrees = 0, nBush = 0, nSeal = 0, nBarn = 0;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(70000 * dens), maxTr = Math.round(9000 * dens), RT = rng(3961), SP = 3.4 / Math.sqrt(dens);
       const BC = [[0.82, 0.98, 0.84], [0.74, 0.92, 0.78], [1.12, 1.1, 1.04], [1.2, 1.04, 0.82]];   // (coyote brush, darker; sage, grey-green; dried, brown)
@@ -14338,11 +14358,14 @@ const World = (function () {
         if (++nS >= maxS) break edge;
       }
       const G = P.G, RK = rng(3971), rc = [[0.42, 0.4, 0.37], [0.5, 0.46, 0.4], [0.36, 0.35, 0.34]], gf = new GB(false, true), FW = [0.94, 0.95, 0.95];
+      const seals = new IChunks(bsSealGeo(), pMat, 256), RL = rng(3973), SC = [[0.36, 0.27, 0.19], [0.24, 0.19, 0.15], [0.48, 0.38, 0.27]];   // (sea lions hauled out on the rocks, sunning)
       for (let k = 0; k < 9000 * dens; k++) {
         const x = G.x0 + RK() * G.ntx * VRC * VRT, z = G.z0 + RK() * G.ntz * VRC * VRT, r1 = RK(), r2 = RK(), r3 = RK();
         const ti = Math.floor((x - G.x0) / (VRC * VRT)), tj = Math.floor((z - G.z0) / (VRC * VRT)); if (!G.on[tj * G.ntx + ti]) continue;
         const y = bsGround(x, z); if (y > y0 + 1.2 || y < y0 - 2.5) continue;
         const s = 1.2 + r1 * r1 * 4.5, g = scen.get(x, z); rock(g, x, y0 - s * 0.25, z, s * (1 + r2 * 0.6), s * (0.7 + r3 * 0.6), s, r2 * TAU, vary(rc[Math.floor(r3 * 3)], RK, 0.1), RK, 0.35);
+        if (s > 2.2 && RL() < 0.4) { const yt = y0 - s * 0.25 + 0.6 * s * (0.7 + r3 * 0.6), n = 1 + Math.floor(RL() * 3);
+          for (let q = 0; q < n; q++) { const a = RL() * TAU, d = RL() * s * 0.35, sz = 0.9 + RL() * 0.5; seals.add(x + Math.cos(a) * d, yt - 0.05, z + Math.sin(a) * d, RL() * TAU, sz, sz, SC[Math.floor(RL() * 3)]); nSeal++; } }
         if (y < y0 - 0.3) {   // the foam round a rock in the surf: a ring of white fading out over the water
           const ri = s * (0.9 + r2 * 0.4), ro = ri + 1.2 + s * 0.6, n = 9, yy = y0 + 0.05;
           for (let q = 0; q < n; q++) { const a0 = q / n * TAU, a1 = (q + 1) / n * TAU, w0 = 0.85 + 0.3 * Math.sin(q * 2.3 + r3 * 9);
@@ -14350,6 +14373,7 @@ const World = (function () {
         }
       }
       if (!gf.empty) { const m = new THREE.Mesh(gf.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -8 })); m.matrixAutoUpdate = false; m.renderOrder = 2; root.add(m); }
+      seals.addTo(root, true);
     }
 
     /* ---- life on the land: the power line on its wooden poles (def.power, OpenStreetMap) with three sagging wires, the ranch fences (wooden posts and
@@ -14394,6 +14418,15 @@ const World = (function () {
         const s = sStart - 100 + RC() * (T.len - sStart), side = RC() < 0.75 ? -1 : 1, [cx, cz] = onSide(s, side, 40 + RC() * 200);
         if (vrLC(cx, cz) !== 0 || bsScrub(cx, cz) > 0.4 || bsSlope(cx, cz) > 0.32 || vrDist(cx, cz) > 260 || excluded(cx, cz) || bsGround(cx, cz) + base < 10) continue;
         h++; const n = 4 + Math.floor(RC() * 9), ha = RC() * TAU;
+        if (h <= 4) {   // the ranch's barn (weathered board walls, a rusty metal roof) and its water tank on stilts, at the edge of the pasture
+          const bx = cx + Math.cos(ha) * 28, bz = cz + Math.sin(ha) * 28;
+          if (vrNear(bx, bz).dd > 14 && !excluded(bx, bz) && bsSlope(bx, bz) < 0.35 && vrDist(bx, bz) < 280) {
+            const by = bsGround(bx, bz), g = scen.get(bx, bz), wc = [[0.52, 0.22, 0.16], [0.56, 0.5, 0.42], [0.4, 0.33, 0.25]][h % 3], rf = [0.46, 0.33, 0.24];
+            box(g, bx, by - 0.4, bz, 14, 4.8, 9, ha, wc, null, true); gable(g, bx, by + 4.4, bz, 14.8, 10, 3.2, ha, rf, wc);
+            const tx = bx + Math.cos(ha + 1.6) * 11, tz = bz + Math.sin(ha + 1.6) * 11, ty = bsGround(tx, tz);
+            for (const [ox, oz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) box(g, tx + ox * 1.2, ty - 0.2, tz + oz * 1.2, 0.2, 3.4, 0.2, 0, [0.4, 0.31, 0.22], null, true);
+            cyl(g, tx, ty + 3.2, tz, 1.8, 2.6, 8, [0.6, 0.6, 0.58], [0.5, 0.5, 0.5]);
+            exclPush(bx, bz, 10); exclPush(tx, tz, 3); CR.block(bx, bz, 15, 10, ha); nBarn++; } }
         for (let k = 0; k < n; k++) { const x = cx + (RC() - 0.5) * 34, z = cz + (RC() - 0.5) * 34; if (vrNear(x, z).dd < 10 || excluded(x, z) || bsSlope(x, z) > 0.4) continue;
           const c = CC[Math.floor(RC() * CC.length)], sz = 0.95 + RC() * 0.15; cows.add(x, bsGround(x, z), z, ha + (RC() - 0.5) * 1.6, sz, sz, c); exclPush(x, z, 1.4); nCows++; }
       }
@@ -14420,7 +14453,10 @@ const World = (function () {
         const m = new THREE.Mesh(g, mat); m.renderOrder = 3; m.matrixAutoUpdate = false; root.add(m);
       }
       const M = out.dyn.bsMist = { on: 0, k: 0, U, root, base: new THREE.Color(), mc: new THREE.Color(0xd9dfe4), hex: -1 };
-      out.dyn.afterCam = (cam) => bsMistStep(M, cam);
+      // a line of brown pelicans gliding low over the water along the coast, up and down it (one mesh; bsPelicanStep moves it)
+      const pel = new THREE.Mesh(bsPelicanGeo(), new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide })); pel.castShadow = true; root.add(pel);
+      const PL = out.dyn.bsPel = { m: pel, a: sStart - 100, b: T.len - 40 };
+      out.dyn.afterCam = (cam) => { bsMistStep(M, cam); bsPelicanStep(PL, M.t || 0); };
     }
 
     /* ---- finish the meshes ---- */
@@ -14434,7 +14470,7 @@ const World = (function () {
       out.dyn.condors = { L, x0: T.px[i0], z0: T.pz[i0], y0: T.hy[i0], ax: T.px[i0], az: T.pz[i0], ay: T.hy[i0], t: null };
       caCondors(out.dyn.condors, 0, null); }
     crowdFinish(CR, root, out);
-    out.stats = { plants: nPlants, bushes: nBush, cows: nCows, fence: nFence, trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), bridges: brInfo.length, oldRoad: nOld };   // (read by the tests)
+    out.stats = { plants: nPlants, bushes: nBush, cows: nCows, fence: nFence, seals: nSeal, barns: nBarn, trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), bridges: brInfo.length, oldRoad: nOld };   // (read by the tests)
     return out;
   }
 
