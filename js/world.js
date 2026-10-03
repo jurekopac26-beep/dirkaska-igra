@@ -891,8 +891,8 @@ const World = (function () {
     if (THEME === 'bathurst') return finish(buildRbring(scene, tex, opts), tex);   // Bathurst: the Red Bull Ring's builder in its own look (RB_LOOK)
     if (THEME === 'cpalace') return finish(buildRbring(scene, tex, opts), tex);   // Crystal Palace 1937: the same builder in its period look and the park (RB_LOOK, cpPark)
     if (THEME === 'suzuka') return finish(buildSuzuka(scene, tex, opts), tex); // Suzuka, the figure of eight on its real ground (below)
-    if (THEME === 'riverside') return finish(buildRiverside(scene, tex, opts), tex);   // Riverside, the circuit of 1960 in the dry hills (below)
     if (THEME === 'bangsaen') return finish(buildBangsaen(scene, tex, opts), tex);   // Bang Saen, the street circuit by the Gulf of Thailand: the corridor terrain, its town (below)
+    if (THEME === 'riverside') return finish(buildRiverside(scene, tex, opts), tex);   // Riverside, the circuit of 1960 in the dry hills (below)
     const R = rng(4242);
     hillN = valueNoise2(77, 60);
     mtnN = valueNoise2(83, 130); mtnN2 = valueNoise2(91, 55); mtnPeak = valueNoise2(97, 220);
@@ -22807,8 +22807,7 @@ const World = (function () {
         const Q = (i, o, y) => [T.px[i] + T.nx[i] * side * o, T.hy[i] + y, T.pz[i] + T.nz[i] * side * o];
         for (let r = 0; r < rows; r++) {
           const o0a = b0 + r * 0.9, o0b = b1 + r * 0.9, y = 0.6 + r * 0.55, ins = Q(i0, o0a + 6, y - 3);
-          cg.quadO(Q(i0, o0a, y - 0.55), Q(i1, o0b, y - 0.55), Q(i1, o0b, y + 0.45), Q(i0, o0a, y + 0.45), W1, Q(i0, o0a - 3, y), [[d / 6, r * 0.25], [(d + 4) / 6, r * 0.25], [(d + 4) / 6, r * 0.25 + 0.25], [d / 6, r * 0.25 + 0.25]]);   // the crowd, a tier
-          sg.quadO(Q(i0, o0a, y + 0.45), Q(i1, o0b, y + 0.45), Q(i1, o0b + 0.9, y + 0.45), Q(i0, o0a + 0.9, y + 0.45), [0.5, 0.52, 0.56], ins);
+          cg.quadO(Q(i0, o0a, y - 0.4), Q(i1, o0b, y - 0.4), Q(i1, o0b + 0.9, y + 0.45), Q(i0, o0a + 0.9, y + 0.45), W1, Q(i0, o0a + 3, y - 2), [[d / 6, r * 0.25], [(d + 4) / 6, r * 0.25], [(d + 4) / 6, r * 0.25 + 0.25], [d / 6, r * 0.25 + 0.25]]);   // the crowd on a tier (sloped: seen from above), facing the road
         }
         const top = 0.6 + rows * 0.55, back = rows * 0.9;
         sg.quadO(Q(i0, b0 + back, -0.4), Q(i1, b1 + back, -0.4), Q(i1, b1 + back, top + 0.6), Q(i0, b0 + back, top + 0.6), [0.36, 0.38, 0.42], Q(i0, b0, top / 2));   // the back
@@ -23121,6 +23120,66 @@ const World = (function () {
       for (let k = 0; k < 900; k++) { const x = F.x0 + RF() * (n - 1) * F.cell, z = F.z0 + RF() * (n - 1) * F.cell; if (nrDist(x, z) < 560) continue;
         const gi = Math.floor((x - F.x0) / F.cell), gj = Math.floor((z - F.z0) / F.cell), h = H(gi, gj); if (h < 10) continue; th.add(x, h - 1, z, RF() * TAU, 16, 13, [0.8, 0.85, 0.8]); }
       th.addTo(root, false);
+    }
+
+    /* ---- the piers at Laem Thaen (their real outlines): a concrete deck on piles over the water, its railings and lamps, a pavilion with a
+       stepped orange roof; long-tail fishing boats (painted hulls, a canopy, garlands on the bow) moored off the cape and drawn up on the sand;
+       Thai flags along the beach road; songthaews and tuk-tuks parked in the side streets; blue direction boards over the road (no words) ---- */
+    { const pg = scen, dk = [0.78, 0.77, 0.74], pl = [0.6, 0.6, 0.58], yD = SEA + 1.6;
+      for (const [kind, pts] of BSD.piers || []) {
+        if (kind === 'P') { const cx = pts.reduce((a, p) => a + p[0], 0) / pts.length, cz = pts.reduce((a, p) => a + p[1], 0) / pts.length;
+          for (let k = 0; k + 1 < pts.length; k++) { const a = pts[k], b = pts[k + 1]; pg.get(cx, cz).triO([cx, yD, cz], [a[0], yD, a[1]], [b[0], yD, b[1]], dk, [cx, yD - 3, cz]);
+            pg.get(cx, cz).quadO([a[0], yD - 0.5, a[1]], [b[0], yD - 0.5, b[1]], [b[0], yD, b[1]], [a[0], yD, a[1]], pl, [cx, yD, cz]);
+            const l = Math.hypot(b[0] - a[0], b[1] - a[1]); for (let t = 0; t < l; t += 6) { const x = a[0] + (b[0] - a[0]) * t / l, z = a[1] + (b[1] - a[1]) * t / l; cyl(pg.get(x, z), x, SEA - 2, z, 0.25, 3.6, 5, pl); box(pg.get(x, z), x, yD, z, 0.12, 1.0, 0.12, 0, [0.9, 0.9, 0.88]); } }
+          const g = pg.get(cx, cz); box(g, cx, yD, cz, 10, 3.2, 8, 0.52, [0.95, 0.94, 0.9], null, true); for (let q = 0; q < 2; q++) gable(g, cx, yD + 3.2 + q * 1.3, cz, 12 - q * 3, 9.5 - q * 2.5, 2.2 - q * 0.6, 0.52, q ? [0.82, 0.28, 0.1] : [0.9, 0.42, 0.12], [0.95, 0.75, 0.2]);   // the pavilion (sala)
+          ocDisc(cx, cz, 30, 5); }
+        else for (let k = 0; k + 1 < pts.length; k++) { const a = pts[k], b = pts[k + 1], l = Math.hypot(b[0] - a[0], b[1] - a[1]), ux = (b[0] - a[0]) / l, uz = (b[1] - a[1]) / l, nx = -uz * 2.2, nz = ux * 2.2, g = pg.get((a[0] + b[0]) / 2, (a[1] + b[1]) / 2);
+          g.quadUp([a[0] - nx, yD, a[1] - nz], [a[0] + nx, yD, a[1] + nz], [b[0] + nx, yD, b[1] + nz], [b[0] - nx, yD, b[1] - nz], [dk, dk, dk, dk]);
+          for (let t = 0; t < l; t += 5) { const x = a[0] + ux * t, z = a[1] + uz * t; for (const sd of [-1, 1]) { cyl(g, x + nx * sd, SEA - 2, z + nz * sd, 0.2, 3.5, 5, pl); box(g, x + nx * sd, yD, z + nz * sd, 0.1, 1.0, 0.1, 0, [0.9, 0.9, 0.88]); }
+            if (t % 20 === 0) { cyl(g, x + nx, yD, z + nz, 0.07, 4.5, 5, [0.62, 0.63, 0.66]); box(g, x + nx * 0.8, yD + 4.4, z + nz * 0.8, 0.3, 0.2, 0.3, 0, [0.98, 0.95, 0.85]); } }
+          for (const sd of [-1, 1]) g.quadO([a[0] + nx * sd, yD + 0.95, a[1] + nz * sd], [b[0] + nx * sd, yD + 0.95, b[1] + nz * sd], [b[0] + nx * sd, yD + 1.05, b[1] + nz * sd], [a[0] + nx * sd, yD + 1.05, a[1] + nz * sd], [0.9, 0.9, 0.88], [(a[0] + b[0]) / 2, yD + 1, (a[1] + b[1]) / 2]); }
+      }
+      // the boats: one instanced long-tail boat (hull, a canopy on posts, the engine's long shaft astern), tinted per boat
+      const bgq = (() => { const g = new GB(), H = [1, 1, 1], C = [0.95, 0.93, 0.88];
+        g.quadO([-4.5, 0.2, 0], [0, 0, -0.9], [0, 0.85, -1.0], [-5.0, 1.15, 0], H, [0, 0.5, 0]); g.quadO([-4.5, 0.2, 0], [0, 0, 0.9], [0, 0.85, 1.0], [-5.0, 1.15, 0], H, [0, 0.5, 0]);
+        g.quadO([0, 0, -0.9], [4, 0.1, -0.7], [4, 0.85, -0.8], [0, 0.85, -1.0], H, [0, 0.5, 0]); g.quadO([0, 0, 0.9], [4, 0.1, 0.7], [4, 0.85, 0.8], [0, 0.85, 1.0], H, [0, 0.5, 0]);
+        g.quadO([4, 0.1, -0.7], [4, 0.1, 0.7], [4, 0.85, 0.8], [4, 0.85, -0.8], H, [0, 0.5, 0]);
+        g.quadUp([-4.5, 0.6, 0], [0, 0.6, 0.85], [4, 0.6, 0.7], [0, 0.6, -0.85], [[0.5, 0.36, 0.22], [0.5, 0.36, 0.22], [0.5, 0.36, 0.22], [0.5, 0.36, 0.22]]);
+        g.quadUp([-0.5, 2.0, -1.0], [-0.5, 2.0, 1.0], [2.8, 2.0, 1.0], [2.8, 2.0, -1.0], [C, C, C, C]);
+        for (const [x, z] of [[-0.4, -0.8], [-0.4, 0.8], [2.7, -0.8], [2.7, 0.8]]) box(g, x, 0.6, z, 0.08, 1.4, 0.08, 0, [0.4, 0.3, 0.2]);
+        box(g, 4.6, 0.7, 0, 3.2, 0.08, 0.08, 0.12, [0.25, 0.25, 0.27]); box(g, 3.9, 0.85, 0, 0.6, 0.4, 0.4, 0, [0.3, 0.3, 0.32]);
+        for (const [x, y] of [[-5.0, 1.12], [-4.8, 1.0]]) box(g, x, y, 0, 0.12, 0.12, 0.3, 0, [0.95, 0.3, 0.5]);
+        const geo = g.geometry(); geo.computeBoundingSphere(); return geo; })();
+      const boats = new IChunks(bgq, matV, 640), RB2 = rng(3742), HC = [[0.2, 0.42, 0.75], [0.15, 0.55, 0.45], [0.85, 0.2, 0.18], [0.95, 0.75, 0.2], [0.92, 0.92, 0.9], [0.4, 0.62, 0.85]]; let nBoat = 0;
+      for (let k = 0; k < 900 && nBoat < 46; k++) { const p = CO[Math.floor(RB2() * CO.length)], ox = (RB2() - 0.5) * 300, oz = (RB2() - 0.5) * 300, x = p[0] + ox, z = p[1] + oz, sd = seaD(x, z);
+        if (z > -500 || nrDist(x, z) > 900) continue;   // (off the cape: the north end)
+        const beachB = sd > -14 && sd < -6 && nBoat % 4 === 3, water = sd > 25 && sd < 260 && nrGround(x, z) < SEA - 0.6;
+        if (!beachB && !water) continue;
+        const y = water ? SEA - 0.25 : nrGround(x, z) - 0.1; boats.add(x, y, z, RB2() * TAU, 1, 1, HC[Math.floor(RB2() * HC.length)]); nBoat++; }
+      boats.addTo(root, true); out.stats.boats = nBoat;
+      // Thai flags (red, white, blue, white, red) on poles along the beach road behind the wall and at the big junctions
+      const flag = (x, z, rot) => { const y = nrGround(x, z), g = scen.get(x, z), cs = Math.cos(rot), sn = Math.sin(rot); cyl(g, x, y, z, 0.05, 6.5, 5, [0.88, 0.88, 0.9]);
+        const st = [[0.8, 0.1, 0.14], [0.95, 0.95, 0.94], [0.12, 0.18, 0.5], [0.12, 0.18, 0.5], [0.95, 0.95, 0.94], [0.8, 0.1, 0.14]];
+        for (let k = 0; k < 6; k++) { const y0 = y + 6.3 - (k + 1) * 0.2, y1 = y0 + 0.2, A = [x, y0, z], B2 = [x + cs * 1.8, y0, z + sn * 1.8]; g.quadO(A, B2, [B2[0], y1, B2[2]], [x, y1, z], st[k], [x - sn, y0, z + cs]); g.quadO(A, B2, [B2[0], y1, B2[2]], [x, y1, z], st[k], [x + sn, y0, z - cs]); } };
+      for (let d = -140; d < 340; d += 30) { const s = sAt(d), i = T.idx(s), [x, z] = atSf(s, -(T.bl[i] + 1.4)); if (!inTrack(x, z) && ocGet(x, z) !== 2) flag(x, z, T.hd[i] + 0.4); }
+      for (const [d, side, , , kind] of BSD.jn) if (kind === 2) { const s = sAt(d + 12), i = T.idx(s), bar = side > 0 ? T.br[i] : T.bl[i]; if (wide(i, side)) continue; const [x, z] = atSf(s, side * (bar + 1.2)); if (!inTrack(x, z)) flag(x, z, T.hd[i] + 0.4); }
+      // songthaews (a pick-up with a roofed bench bed) and tuk-tuks parked along the side streets behind their closures
+      const ST = [[0.2, 0.4, 0.8], [0.85, 0.2, 0.18], [0.95, 0.85, 0.2], [0.25, 0.6, 0.35], [0.92, 0.92, 0.9]];
+      for (const [d, side, , , kind] of BSD.jn) { if (!kind) continue; const s = sAt(d), i = T.idx(s), bar = side > 0 ? T.br[i] : T.bl[i], rot = Math.atan2(T.nz[i] * side, T.nx[i] * side), cs = Math.cos(rot), sn = Math.sin(rot);
+        for (let k = 0; k < 2; k++) { const [x, z] = atSf(s + (k ? -2.2 : 2.2), side * (bar + 26 + k * 7)); if (inTrack(x, z) || ocGet(x, z) === 2) continue; const y = nrGround(x, z), g = scen.get(x, z), c = ST[Math.floor(crH(d, k, 91) * ST.length)];
+          if ((d + k) % 3) { box(g, x + cs * 1.4, y + 0.3, z + sn * 1.4, 1.8, 1.2, 1.8, rot, c, c); box(g, x - cs * 1.0, y + 0.3, z - sn * 1.0, 3.0, 0.7, 1.8, rot, c, c); box(g, x - cs * 1.0, y + 2.0, z - sn * 1.0, 3.2, 0.12, 1.9, rot, c, c);   // a songthaew
+            for (const sd2 of [-1, 1]) box(g, x - cs * 1.0 - sn * sd2 * 0.88, y + 1.0, z - sn * 1.0 + cs * sd2 * 0.88, 3.0, 1.0, 0.06, rot, [0.25, 0.25, 0.27]); }
+          else { box(g, x, y + 0.2, z, 2.6, 0.7, 1.3, rot, c, c); box(g, x - cs * 0.3, y + 1.6, z - sn * 0.3, 2.2, 0.1, 1.4, rot, [0.12, 0.3, 0.6], [0.12, 0.3, 0.6]); for (const a of [0.8, -1.1]) box(g, x + cs * a, y + 0.9, z + sn * a, 0.08, 0.8, 1.2, rot, [0.3, 0.3, 0.32]); } } }   // a tuk-tuk
+      // blue direction boards on gantries over the road before Turn 3 and before the hairpin (white arrows, no words)
+      for (const d of [560, 2090]) { const s = sAt(d), i = T.idx(s), hd = T.hd[i], bl = T.bl[i] + 1.0, br = T.br[i] + 1.0, [xl, zl] = atSf(s, -bl), [xr, zr] = atSf(s, br), y = T.hy[i], g = scen.get(xl, zl);
+        for (const [x, z] of [[xl, zl], [xr, zr]]) cyl(g, x, y - 0.3, z, 0.18, 7.3, 6, [0.62, 0.63, 0.66]);
+        const [mx, mz] = atSf(s, (br - bl) / 2); box(g, mx, y + 6.6, mz, 0.2, 0.3, bl + br, hd, [0.62, 0.63, 0.66]);
+        const fx = -T.tx[i], fz = -T.tz[i], bw = Math.min(9, (bl + br) * 0.7), ux = T.nx[i], uz = T.nz[i], o = [mx + fx * 0.15, mz + fz * 0.15], BL = [0.1, 0.3, 0.68], WH = [0.95, 0.95, 0.94];
+        g.quadO([o[0] - ux * bw / 2, y + 5.0, o[1] - uz * bw / 2], [o[0] + ux * bw / 2, y + 5.0, o[1] + uz * bw / 2], [o[0] + ux * bw / 2, y + 7.4, o[1] + uz * bw / 2], [o[0] - ux * bw / 2, y + 7.4, o[1] - uz * bw / 2], BL, [mx - fx, y + 6, mz - fz]);
+        g.quadO([o[0] - ux * bw / 2, y + 5.0, o[1] - uz * bw / 2], [o[0] + ux * bw / 2, y + 5.0, o[1] + uz * bw / 2], [o[0] + ux * bw / 2, y + 7.4, o[1] + uz * bw / 2], [o[0] - ux * bw / 2, y + 7.4, o[1] - uz * bw / 2], [0.55, 0.56, 0.58], [mx + fx, y + 6, mz + fz]);
+        const q = [o[0] + fx * 0.03, o[1] + fz * 0.03];
+        for (const a of [-bw / 4, bw / 4]) { const cx = q[0] + ux * a, cz = q[1] + uz * a; g.quadO([cx - ux * 0.12, y + 5.4, cz - uz * 0.12], [cx + ux * 0.12, y + 5.4, cz + uz * 0.12], [cx + ux * 0.12, y + 6.6, cz + uz * 0.12], [cx - ux * 0.12, y + 6.6, cz - uz * 0.12], WH, [mx - fx, y + 6, mz - fz]);
+          g.triO([cx - ux * 0.45, y + 6.5, cz - uz * 0.45], [cx + ux * 0.45, y + 6.5, cz + uz * 0.45], [cx, y + 7.1, cz], WH, [mx - fx, y + 6, mz - fz]); } }
     }
 
     /* ---- the terrain tiles, the scenery chunks, the fence, the crowds ---- */
