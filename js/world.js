@@ -6,6 +6,30 @@ const World = (function () {
   const { clamp, lerp, sstep, rng } = Core;
   const TAU = Math.PI * 2;
 
+  /* ---------------- adaptive graphics detail (LOD) ----------------
+     One shared mechanism every track builder consults, so a track never copies LOD logic. The tier (opts.tier) comes from the game's
+     "Podrobnosti" setting / the device: 0 = NIZKA (the phone budget from CLAUDE.md, up to ~300 draw calls and ~900k vertices), 1 = SREDNJA,
+     2 = VISOKA (the full detail; VISOKA is a no-op — identical to before this system). A builder keeps the base (road, edges, terrain,
+     start/finish, the essentials) at every tier and asks LOD before emitting the extra decoration:
+       LOD.draw(category)  — is this decorative category drawn at the current tier? (base categories are not listed, so always drawn)
+       LOD.radius(metres)  — a decorative draw distance, shortened on the lower tiers
+       LOD.count(n)        — a decorative instance/scatter count, thinned on the lower tiers (on top of opts.density)
+       LOD.dens            — the same thinning factor, to fold into a builder's own `dens`
+     DETAIL maps a category to the lowest tier at which it is still drawn (absent = always). Tuned per builder in later steps. */
+  const DETAIL = { boulders: 1, marineFog: 2, animals: 1, boats: 1, extraTrees: 1, farProps: 1 };
+  function makeLOD(tier) {
+    const T = tier == null ? 2 : (tier | 0);
+    const densMul = T >= 2 ? 1 : T === 1 ? 0.72 : 0.45;   // SREDNJA / NIZKA thin the decoration
+    const radMul = T >= 2 ? 1 : T === 1 ? 0.78 : 0.55;
+    return {
+      tier: T, dens: densMul,
+      draw(cat) { const m = DETAIL[cat]; return m == null ? true : T >= m; },
+      radius(m) { return m * radMul; },
+      count(n) { return Math.max(0, Math.round(n * densMul)); },
+    };
+  }
+  let LOD = makeLOD(2);   // set per build() from opts.tier; VISOKA by default
+
   /* ---------------- geometry builder (non-indexed, flat normals) -------- */
   const GB_UV0 = [0, 0];
   class GB {
@@ -860,6 +884,7 @@ const World = (function () {
 
   /* ---------------- BUILD ---------------- */
   function build(scene, track, tex, opts) {
+    LOD = makeLOD(opts.tier);   // the graphics detail tier for this build (every builder below consults the shared LOD)
     CROWDS = [];   // (the crowds of this build: their sound, see crowdPoints)
     T = track; THEME = (track.def && track.def.theme) || 'lake'; CSX = THEME === 'forest' || THEME === 'italia' || THEME === 'kamp'; ROCK_SMOOTH = CSX; SEA = (track.def && track.def.sea) || null; RIVER = track.def.river || null; RW = track.def.riverW || 26; CASTLE = track.def.castle || null; buildHash();
     if (THEME !== 'nring' && THEME !== 'spa' && THEME !== 'rbring' && THEME !== 'bathurst' && THEME !== 'cpalace') NR = null;   // free the last corridor build's grids (the Nordschleife's, Spa's, the Red Bull Ring's, Bathurst's, Crystal Palace's)

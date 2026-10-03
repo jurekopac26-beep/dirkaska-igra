@@ -26,7 +26,7 @@
 
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
-  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.2, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 1, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, line: 0 };
+  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.2, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 1, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, line: 0 };
   let S = Object.assign({}, DEF);
   let records = {};
   try { const j = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (j) S = Object.assign(S, j); } catch (_) { }
@@ -48,6 +48,7 @@
   S.difficulty = Number.isFinite(+S.difficulty) ? clamp(Math.round(+S.difficulty), 0, 3) : DEF.difficulty;   // (lahka, srednja, težka, super težka: the police all four, a race takes the last as težka)
   if (S.lang !== 'en') S.lang = 'sl';
   if (!['off', 'auto', 'on'].includes(S.saver)) S.saver = 'off';
+  if (!['low', 'med', 'high', 'auto'].includes(S.detail)) S.detail = 'auto';   // adaptive graphics detail (LOD) level, see detailTier()
   if (!['short', 'normal', 'long', 'endurance'].includes(S.length)) S.length = 'normal';
   Lang.set(S.lang); if (S.lang !== 'sl') Lang.apply(document.body);   // (the page in the chosen language before anything is drawn)
   S.name = cleanName(S.name) || tr(DEF.name);
@@ -377,6 +378,14 @@
     $('btn-career').textContent = tr('Kariera') + (inCareer() ? ' · ' + eur(career.money) : '');
   }
   function shadowsOn() { return !!S.shadows && !autoNoShadows; }
+  // adaptive graphics detail (LOD): the tier the world is built at. 0 = NIZKA (the phone budget, up to ~300 draw calls and ~900k vertices),
+  // 1 = SREDNJA, 2 = VISOKA (today's full detail, a no-op). 'Samodejno' picks a tier from the device (autoTier, set at start-up and nudged by
+  // adaptive()). Tests set tdgp-noadapt and so freeze 'Samodejno' to VISOKA, keeping the golden worlds the full-detail reference.
+  let autoTier = 2;
+  function detailTier() {
+    switch (S.detail) { case 'low': return 0; case 'med': return 1; case 'high': return 2; }
+    return noAdapt ? 2 : autoTier;
+  }
   // the picture's settings to the renderer only when they change (it builds every shader again: a language or a sound switch must not)
   let rsKey = '';
   function renderSettings() { const rs = { quality: S.quality, shadows: shadowsOn(), camera: S.camera }, k = JSON.stringify(rs); if (k !== rsKey) { rsKey = k; Render.applySettings(rs); } Render.setSaver(saverOn()); }
@@ -889,7 +898,7 @@
     setTimeout(() => {
       const t0 = performance.now();
       track = getTrack(id);
-      Render.buildWorld(track, S.quality === 'retro' ? 0.8 : 1);
+      Render.buildWorld(track, S.quality === 'retro' ? 0.8 : 1, detailTier());
       Render.precompile();
       demo = null;
       mm.img = null; mm.w = 0;
@@ -3856,7 +3865,7 @@
       track = getTrack(S.track);
       Render.init($('gl'));
       Render.setAtmos({ season: S.season, tod: S.tod });   // (before the first world: it is built in the season)
-      Render.buildWorld(track, S.quality === 'retro' ? 0.8 : 1);
+      Render.buildWorld(track, S.quality === 'retro' ? 0.8 : 1, detailTier());
       Input.init($('touch'), () => { if (screen === 'pause') resume(); else if (screen === 'none') pause(); });
       Input.onCam = () => { if (bg === 'race' && !replay && (screen === 'none' || screen === 'pause')) cycleCam(); };   // (C on the keyboard)
       Render.onThunder = (delay, vol) => Sfx.thunder(delay, vol);   // (a thunderstorm: the thunder after each lightning)

@@ -1496,7 +1496,7 @@ const Render = (function () {
     return renderer;
   }
 
-  function buildWorld(track, density) {
+  function buildWorld(track, density, tier) {
     camYaw = (track && track.def && track.def.camYaw) || 0;   // fixed heading of the 'kino' camera for this circuit (clockwise from north)
     if (world && world.root) {   // switching tracks: drop and free the previous scenery
       scene.remove(world.root);
@@ -1505,7 +1505,7 @@ const Render = (function () {
       if (skids) skids.clear();
     }
     clearPropMeshes();
-    world = World.build(scene, track, tex, { density, season: atmos.season });   // (a world may paint itself for the season: Vršič)
+    world = World.build(scene, track, tex, { density, tier, season: atmos.season });   // (a world may paint itself for the season: Vršič; tier: the graphics detail level, see World's LOD)
     if (!world.farClip && camera.far !== 700) { camera.far = 700; camera.updateProjectionMatrix(); }
     applyTheme((track.def && track.def.theme) || 'lake'); wet = wetW = -1;   // (the weather again on the new world's road)
     curTrack = track; seasonWorld(); floodlights(); litWindows(); asphaltWorld();   // (the season and the time of day on the new world; the asphalt's sheen)
