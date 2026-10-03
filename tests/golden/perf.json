@@ -201,5 +201,12 @@
   "kverts": 1530,
   "maxKverts": 1670,
   "jsMs": 0.87
+ },
+ "tokio": {
+  "calls": 295,
+  "maxCalls": 403,
+  "kverts": 923,
+  "maxKverts": 1064,
+  "jsMs": 0.88
  }
 }

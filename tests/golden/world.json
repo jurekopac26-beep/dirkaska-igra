@@ -507,6 +507,26 @@
    "roadwear:MeshLambertMaterial": "932c41c2"
   }
  },
+ "tokio": {
+  "meshes": 302,
+  "verts": 640111,
+  "instances": 2459,
+  "props": 178,
+  "crowd": 491,
+  "world": "c84d7b18",
+  "propsHash": "1faf5706",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "9ed5b93f",
+   "-:MeshPhongMaterial": "aa6b432",
+   "crowd:MeshLambertMaterial": "ee089a1a",
+   "-:MeshBasicMaterial": "577da86f",
+   "tkFar:MeshLambertMaterial": "5b5d97e5",
+   "ao:MeshBasicMaterial": "28eab440",
+   "tyremarks:MeshBasicMaterial": "ca9937f8",
+   "roadwear:MeshLambertMaterial": "2c61e6e9"
+  }
+ },
  "jezero": {
   "meshes": 154,
   "verts": 591648,
