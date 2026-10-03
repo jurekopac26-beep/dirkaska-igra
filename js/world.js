@@ -16452,7 +16452,7 @@ const World = (function () {
   function bdShrubGeo(kind) {   // 0 a chaparral shrub (chamise, scrub oak, ceanothus: three tight olive lumps), 1 a manzanita (a dull grey-green mound over red stems)
     const g = new GB(), R = rng(4330 + kind), rs = ROCK_SMOOTH; ROCK_SMOOTH = true;
     if (kind === 0) { const col = [0.2, 0.24, 0.12]; ico(g, -0.08, 0.44, 0, 0.5, 0.85, col, R, 0.3); ico(g, 0.36, 0.3, 0.06, 0.32, 0.9, vary(col, R, 0.25), R, 0.35); }
-    else { const col = [0.31, 0.36, 0.25]; ROCK_SMOOTH = false; cyl(g, 0, 0, 0, 0.05, 0.3, 4, [0.55, 0.2, 0.12], null, 0.03); ROCK_SMOOTH = true; ico(g, 0.06, 0.48, -0.04, 0.56, 0.7, col, R, 0.25); }
+    else { const col = [0.27, 0.31, 0.21]; ROCK_SMOOTH = false; cyl(g, 0, 0, 0, 0.05, 0.3, 4, [0.55, 0.2, 0.12], null, 0.03); ROCK_SMOOTH = true; ico(g, 0.06, 0.48, -0.04, 0.56, 0.7, col, R, 0.25); }
     ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
@@ -16645,7 +16645,7 @@ const World = (function () {
     {
       const offs = [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8;
       const shade = (i, o) => { const rl = T.rl[i]; let k = 0.82 - 0.12 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k += 0.03; return [k, k * 0.995, k * 0.985]; };   // (an old grey asphalt, the wheel tracks darker)
-      const wht = [0.95, 0.95, 0.92], ylw = [0.96, 0.76, 0.16], gc = [0.76, 0.71, 0.62], deck = [0.66, 0.65, 0.62];
+      const wht = [0.95, 0.95, 0.92], ylw = [0.96, 0.76, 0.16], gc = [0.64, 0.62, 0.58], deck = [0.66, 0.65, 0.62];
       const vc = [-1, 1].map((side, si) => { const a = []; for (let i = 0; i < N; i++) { const bar = side > 0 ? T.br[i] : T.bl[i];
         a.push(vp[si][i].map(([o, y], k) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
           if (onBr[i]) return k < 3 ? deck : [0.52, 0.51, 0.49];
@@ -16773,10 +16773,16 @@ const World = (function () {
       const RL = rng(4131), gA = new Chunks(110, true), lc = [0.6, 0.6, 0.6], q3 = 3;
       for (const L of lots) {
         const yAt = (x, z) => caGround(x, z) + 0.06;
-        for (let z = Math.floor(L.z0 / q3) * q3; z < L.z1; z += q3) for (let x = Math.floor(L.x0 / q3) * q3; x < L.x1; x += q3) {
-          if (!inPoly(L.poly, x + q3 / 2, z + q3 / 2) || vrNear(x + q3 / 2, z + q3 / 2).dd < 0.6) continue;
-          const A = [x, yAt(x, z), z], B = [x + q3, yAt(x + q3, z), z], C = [x + q3, yAt(x + q3, z + q3), z + q3], D = [x, yAt(x, z + q3), z + q3], k = 0.95 + 0.05 * rpHash(x | 0, z | 0), c = [lc[0] * k, lc[1] * k, lc[2] * k];
-          gA.get(x, z).quadUp(A, B, C, D, [c, c, c, c], [[x / 8, -z / 8], [(x + q3) / 8, -z / 8], [(x + q3) / 8, -(z + q3) / 8], [x / 8, -(z + q3) / 8]]); }
+        for (let z = Math.floor(L.z0 / q3) * q3; z < L.z1; z += q3) for (let x = Math.floor(L.x0 / q3) * q3; x < L.x1; x += q3) {   // (each 3 m cell of the grid clipped to the outline: a clean edge)
+          if (vrNear(x + q3 / 2, z + q3 / 2).dd < 0.6) continue;
+          let pg = L.poly;
+          for (const [ax, az, v] of [[1, 0, x], [-1, 0, -(x + q3)], [0, 1, z], [0, -1, -(z + q3)]]) {   // (Sutherland-Hodgman against the cell's four sides)
+            const o = [], inS = (p) => ax * p[0] + az * p[1] >= v; for (let k = 0; k < pg.length; k++) { const a = pg[k], b = pg[(k + 1) % pg.length], ia = inS(a), ib = inS(b);
+              if (ia) o.push(a); if (ia !== ib) { const da = ax * a[0] + az * a[1] - v, db = ax * b[0] + az * b[1] - v, t = da / (da - db); o.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); } }
+            pg = o; if (pg.length < 3) break; }
+          if (pg.length < 3) continue;
+          const k = 0.95 + 0.05 * rpHash(x | 0, z | 0), c = [lc[0] * k, lc[1] * k, lc[2] * k], g = gA.get(x, z), V = pg.map(p => [p[0], yAt(p[0], p[1]), p[1]]), uv = (p) => [p[0] / 8, -p[2] / 8];
+          for (let q = 1; q + 1 < V.length; q++) g.quadUp(V[0], V[q], V[q + 1], V[q + 1], [c, c, c, c], [uv(V[0]), uv(V[q]), uv(V[q + 1]), uv(V[q + 1])]); }
         // the cars: in rows along the outline's longest edge, about half the bays taken
         let best = 0, ux = 1, uz = 0; for (let k = 0; k < L.poly.length; k++) { const a = L.poly[k], b = L.poly[(k + 1) % L.poly.length], l = Math.hypot(b[0] - a[0], b[1] - a[1]); if (l > best) { best = l; ux = (b[0] - a[0]) / l; uz = (b[1] - a[1]) / l; } }
         const rot = Math.atan2(uz, ux) + PI / 2, occ = L.area > 3000 ? 0.45 : 0.6;
@@ -17046,13 +17052,13 @@ const World = (function () {
     }
     {   // the verge inside the barrier line: bunches of dry grass and a few small shrubs (none on the side roads' mouths, at the start or the finish)
       const RG = rng(4179);
-      for (let s = 10; s < T.len - 10; s += 1.1 / dens) for (const side of [-1, 1]) {
-        const i = T.idx(s), bar = side > 0 ? T.br[i] : T.bl[i], room = bar - w - 1.2; if (room < 0.6 || RG() < 0.35) continue;
+      for (let s = 10; s < T.len - 10; s += 0.9 / dens) for (const side of [-1, 1]) {
+        const i = T.idx(s), bar = side > 0 ? T.br[i] : T.bl[i], room = bar - w - 1.2; if (room < 0.6 || RG() < 0.3) continue;
         if (Math.abs(s - sStart) < 60 || Math.abs(s - sFin) < 60) continue;
         const o = side * (w + 1.0 + RG() * room), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; if (excluded(x, z) || vrStubAt(x, z, 1) || (T.gap && T.gap[side > 0 ? 1 : 0][i])) continue;
         const y0 = caGround(x, z), r = RG(), r2 = RG(), r3 = RG();
-        if (r < 0.88) PL.grass.add(x, y0 - 0.04, z, r2 * TAU, 0.7 + r3 * 0.6, 0.45 + r2 * 0.45, [0.88 + r2 * 0.16, 0.88 + r3 * 0.14, 0.82 + r2 * 0.16]);
-        else if (Math.abs(o) > w + 2.2) PL.shrub.add(x, y0 - 0.12, z, r2 * TAU, 1.2 + r3 * 1.0, 0.7 + r2 * 0.6, [0.9 + r2 * 0.2, 0.92 + r3 * 0.16, 0.9]);
+        if (r < 0.76) PL.grass.add(x, y0 - 0.04, z, r2 * TAU, 0.9 + r3 * 0.7, 0.55 + r2 * 0.5, [0.78 + r2 * 0.14, 0.8 + r3 * 0.12, 0.72 + r2 * 0.14]);
+        else if (Math.abs(o) > w + 2.2) PL.shrub.add(x, y0 - 0.12, z, r2 * TAU, 1.3 + r3 * 1.2, 0.6 + r2 * 0.5, [0.9 + r2 * 0.2, 0.92 + r3 * 0.16, 0.9]);
       }
     }
     for (const [k, ic] of Object.entries(PL)) ic.addTo(root, k === 'pine' || k === 'fir' || k === 'cedar' || k === 'dfir' || k === 'oak' || k === 'alder');
