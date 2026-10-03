@@ -23722,7 +23722,7 @@ const World = (function () {
           if (ii % 3 === 0) { const q = Pt(i, side * (bar + 0.35), 1.0); posts.add(q[0], q[1], q[2], T.hd[i], 1, 2.95); }
           if (bnr(i)) { const bo = side * (bar + 0.33), bp = [Pt(i, bo, 1.15), Pt(i, bo, 2.05)], bu = [[v / 9, 0.02], [v / 9, 0.98]]; const rb = gb.row(bp, [[1, 1, 1], [1, 1, 1]], bu); if (pb >= 0) gb.link(pb, rb, 0, 1); pb = rb; } else pb = -1;
         } }
-      const mw = new THREE.Mesh(gw.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide })); mw.castShadow = mw.receiveShadow = true; mw.matrixAutoUpdate = false; root.add(mw);
+      const mw = new THREE.Mesh(gw.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide })); mw.receiveShadow = true;   // (no shadow of their own: the aoWorld strips darken their feet) mw.matrixAutoUpdate = false; root.add(mw);
       const mf = new THREE.Mesh(gf.geometry(), fMat); mf.matrixAutoUpdate = false; root.add(mf);
       const mb = new THREE.Mesh(gb.geometry(), new THREE.MeshLambertMaterial({ map: banner, vertexColors: true, side: THREE.DoubleSide })); mb.matrixAutoUpdate = false; mb.castShadow = true; root.add(mb);
       posts.addTo(root, true);
@@ -23876,13 +23876,28 @@ const World = (function () {
     {
       const RC = rng(9431), rot = 0.995, c = Math.cos(rot), sn = Math.sin(rot);
       for (const a of P.areas) { if (a.t !== 4) continue; let ax = 0, az = 0; for (const p of a.pts) { ax += p[0] / a.pts.length; az += p[1] / a.pts.length; }
-        const n0 = tkNear(ax, az); if ((n0.i >= 0 && n0.dd < 25) || P.dist(ax, az) > 190) continue;
+        const n0 = tkNear(ax, az); if ((n0.i >= 0 && n0.dd < 25) || P.dist(ax, az) > 150 || P.dist(ax, az) < 45) continue;
         for (let u = -30; u <= 30; u += 6.2) for (let v = -30; v <= 30; v += 2.6) { const x = ax + c * u - sn * v, z = az + sn * u + c * v;
           if (!inPoly(a.pts, x, z) || onBld(x, z) || excluded(x, z) || RC() > 0.42) continue; const nn = tkNear(x, z); if (nn.i >= 0 && nn.dd < 8) continue;
           tkCar(scen.get(x, z), x, gH(x, z), z, rot + (RC() < 0.5 ? 0 : Math.PI), RC); nCars++; } }
       const bx = -186, bz = -330, br = 1.29, bc = Math.cos(br), bs = Math.sin(br);
       for (let r = 0; r < 3; r++) for (let k = 0; k < 7; k++) { const u = (k - 3) * 13, v = (r - 1) * 4.2, x = bx + bc * u - bs * v, z = bz + bs * u + bc * v;
         if (onBld(x, z) || tkNear(x, z).dd < 4) continue; tkBus(scen.get(x, z), x, gH(x, z), z, br); nCars++; }
+    }
+    /* ---- the medians: clipped azalea hedges in a kerbed planter between the carriageways (the long straight, the road between the halls), and the
+       blue direction boards over the avenue on their gantries (blank arrows, no names) ---- */
+    {
+      const hg = [0.2, 0.36, 0.16], hgT = [0.27, 0.45, 0.2], kb = [0.68, 0.68, 0.66];
+      for (const [d0, d1, side] of [[1132, 1370, -1], [1525, 1620, 1], [1660, 1835, 1]]) for (let d = d0; d < d1; d += 4) {
+        if (Math.abs(d - 1265) < 12) continue;   // (the gap at the service gate)
+        const s = sAt(d), i = T.idx(s), bar = side > 0 ? T.br[i] : T.bl[i], [x, z, hd] = atSf(s + 2, side * (bar + 1.9)); if (onBld(x, z) || tkWater(x, z)) continue;
+        const g = scen.get(x, z), y = gH(x, z); box(g, x, y, z, 4.05, 0.25, 2.4, hd, kb, kb, true); box(g, x, y + 0.25, z, 3.9, 0.55 + crH(x, z, 4) * 0.15, 2.0, hd, hg, hgT, true); }
+      const blue = [0.1, 0.3, 0.62], wh = [0.95, 0.95, 0.95], gy = [0.6, 0.62, 0.63];
+      for (const d of [1000, 1240]) { const s = sAt(d), i = T.idx(s), y = Y(s), hd = T.hd[i], nx = T.nx[i], nz = T.nz[i], g = scen.get(T.px[i], T.pz[i]), oL = -(T.bl[i] + 1.2), oR = T.br[i] + 1.2;
+        for (const o of [oL, oR]) cyl(g, T.px[i] + nx * o, y - 0.2, T.pz[i] + nz * o, 0.22, 7.6, 6, gy, gy);
+        const mo = (oL + oR) / 2, cx = T.px[i] + nx * mo, cz = T.pz[i] + nz * mo; box(g, cx, y + 7.1, cz, 0.35, 0.35, oR - oL, hd, gy, gy);
+        box(g, cx - Math.cos(hd) * 0.25, y + 4.7, cz - Math.sin(hd) * 0.25, 0.12, 2.6, 2 * w + 1, hd, blue, blue);
+        for (const k of [-1, 0, 1]) { const ax = cx + nx * k * 3.4 - Math.cos(hd) * 0.32, az = cz + nz * k * 3.4 - Math.sin(hd) * 0.32; box(g, ax, y + 5.0, az, 0.05, 1.5, 0.22, hd, wh, wh); box(g, ax, y + 6.35, az, 0.05, 0.35, 0.8, hd, wh, wh); } }
     }
     /* ---- the halls' loading yard along the third straight: lorries and vans backed up to the walls (an approximation) ---- */
     { const RV = rng(9437), VC = [[0.92, 0.92, 0.9], [0.86, 0.86, 0.84], [0.2, 0.36, 0.62], [0.95, 0.95, 0.95]];
@@ -23893,8 +23908,8 @@ const World = (function () {
     /* ---- the fans: along the walls at the chicane, Turn 12, Turn 15 and in the car park at Turns 1-3 and 16-18 (the stands have their own) ---- */
     {
       const C = crowdCtx({ gH, near: nearD, excluded: (x, z) => excluded(x, z) || onBld(x, z), water: tkWater, maxSlope: 0.5 });
-      for (const [d0, d1, side, dens] of [[318, 360, -1, 0.7], [1385, 1488, -1, 0.65], [1520, 1560, 1, 0.55], [1866, 1905, -1, 0.6], [2296, 2340, -1, 0.7], [2232, 2270, 1, 0.5], [600, 640, 1, 0.5]])
-        crowdRun(C, sAt(d0), sAt(d0) + (d1 - d0), side, { rows: 3, dens, first: 1.6, label: 'tk' + d0 });
+      for (const [d0, d1, side, dens] of [[318, 360, -1, 0.6], [1395, 1488, -1, 0.55], [1866, 1900, -1, 0.5], [2296, 2340, -1, 0.6]])
+        crowdRun(C, sAt(d0), sAt(d0) + (d1 - d0), side, { rows: 2, dens, first: 1.6, label: 'tk' + d0 });
       crowdFinish(C, root, out);
     }
     scen.addTo(root, matV, true, true);

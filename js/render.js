@@ -1582,11 +1582,11 @@ const Render = (function () {
       } else if (kind === 'vending') {   // a drinks machine: a coloured cabinet, a lit window of bottles, the coin panel and the slot
         const body = [0.85, 0.15, 0.13]; W.box(g, 0, y0, 0, 1.04, 1.84, 0.8, 0, body, [0.75, 0.75, 0.74]);
         W.box(g, 0, y0 + 1.0, -0.405, 0.9, 0.7, 0.01, 0, [0.92, 0.94, 0.95], [0.92, 0.94, 0.95]);
-        for (let r = 0; r < 3; r++) for (let k = 0; k < 6; k++) W.box(g, -0.36 + k * 0.144, y0 + 1.06 + r * 0.22, -0.415, 0.08, 0.14, 0.01, 0, [[0.2, 0.5, 0.85], [0.95, 0.6, 0.1], [0.2, 0.65, 0.3]][(k + r) % 3], null);
+        for (let r = 0; r < 3; r++) W.box(g, 0, y0 + 1.06 + r * 0.22, -0.415, 0.82, 0.14, 0.01, 0, [[0.2, 0.5, 0.85], [0.95, 0.6, 0.1], [0.2, 0.65, 0.3]][r], null);   // (a shelf of bottles each)
         W.box(g, 0.3, y0 + 0.6, -0.405, 0.22, 0.3, 0.01, 0, [0.2, 0.2, 0.22], null); W.box(g, 0, y0 + 0.12, -0.405, 0.7, 0.24, 0.01, 0, dk, null);
       } else if (kind === 'railing') {   // a white steel guard railing panel: two posts, two rails, vertical bars
         const wh = [0.93, 0.94, 0.93]; for (const x of [-0.98, 0.98]) W.box(g, x, y0, 0, 0.06, 0.9, 0.06, 0, wh, wh);
-        for (const y of [0.18, 0.84]) W.box(g, 0, y0 + y, 0, 2.0, 0.05, 0.05, 0, wh, wh); for (let k = -6; k <= 6; k++) W.box(g, k * 0.14, y0 + 0.2, 0, 0.025, 0.64, 0.025, 0, wh, wh);
+        for (const y of [0.18, 0.84]) W.box(g, 0, y0 + y, 0, 2.0, 0.05, 0.05, 0, wh, wh); for (let k = -3; k <= 3; k++) W.box(g, k * 0.28, y0 + 0.2, 0, 0.03, 0.64, 0.03, 0, wh, wh);
       }
     }
     return g.geometry();

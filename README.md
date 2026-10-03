@@ -422,6 +422,7 @@ Ulično dirkališče na umetnih otokih četrti Ariake (Koto) ob Tokijskem zalivu
   - nadvozi hitre ceste;
   - zaliv in kanali z obrežnimi zidovi;
   - parki in zelenice (OpenStreetMap in ESA WorldCover), drevesa iz OpenStreetMap (zelkove, ginkgi, češnje, črni bori, kafrovci), drevoredi ob pločnikih;
+  - na sredinskih otokih živice azalej v robnikih, nad avenijo modre usmerjevalne table na portalih (samo puščice, brez imen);
   - parkirani avtomobili na parkiriščih, avtobusi v garaži, ulične svetilke in bele ograje ob pločnikih;
   - tribune ob ciljni ravnini in pri 1. ovinku, gledalci ob šikani, pri 12. in 15. ovinku ter na parkirišču;
   - boksi s padokom in tovornjaki ekip ob zalivu, štartni portal;
