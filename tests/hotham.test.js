@@ -84,7 +84,7 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
     pulls.length >= 6 && lifts.length >= 5 && sb.length === 1 && sb[0] > 7400 && sb[0] < T.raceLen - 100 && (def.lakes || []).length === 1,
     `${pulls.length} car parks, ${lifts.length} lifts, ski bridge at ${sb.map(Math.round).join(',')} m, ${(def.lakes || []).length} reservoir`);
   const F = def.farDem, fb = Buffer.from(F.b64, 'base64'), fe = def.far['Mount Feathertop'];
-  check('scenery: the view beyond the corridor (250 m grid, ~13 km round the road), Mount Feathertop (1922 m) north of the road', fb.length === F.nx * F.nz * 2 && F.cell === 250 && fe && fe[2] === 1922 && fe[1] < -8000,
+  check('scenery: the view beyond the corridor (500 m grid, ~12 km round the road), Mount Feathertop (1922 m) north of the road', fb.length === F.nx * F.nz * 2 && F.cell === 500 && fe && fe[2] === 1922 && fe[1] < -8000,
     `far ${F.nx}x${F.nz}, Feathertop at ${fe ? fe.join(', ') : '-'}`);
   const S = T.stubs || [];
   check('scenery: the side roads (service roads, the track to the summit with its gate, the village streets) on both sides', S.length === 9 && S.some(s => s.side < 0) && S.some(s => s.side > 0) && S.some(s => s.grav && s.end === 1) && S.some(s => s.name === 'Hot Plate Drive'),

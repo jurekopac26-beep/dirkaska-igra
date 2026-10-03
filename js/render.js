@@ -1682,6 +1682,8 @@ const Render = (function () {
   THEMES.uncompahgre = { fog: 0xbfcfe0, sun: 0xfff0d8, sunI: 1.24, sky: 0xb8d0f0, gnd: 0x4c5236, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-70, 92, 62] };   // the Uncompahgre Gorge: a clear afternoon in the San Juans, the sun from the south-west over the cliffs, a crisp blue haze
   SPLIT.uncompahgre = [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]];
   SPLIT.iroha = [[0.96, 0.99, 1.05], [1.04, 1.0, 0.95]];   // (Irohazaka: cool shade under the maples, a warm autumn sun)
+  THEMES.hotham = { fog: 0xc4d4e4, sun: 0xfff2dc, sunI: 1.3, sky: 0xb2cdf0, gnd: 0x5a5e40, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.06, sunOff: [-64, 96, -58] };   // Mount Hotham: a clear summer afternoon in the Victorian Alps, the high sun from the north-west (the southern hemisphere), a thin blue haze over the ranges
+  SPLIT.hotham = [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]];
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   // The time of day as one number, todK: 0 day, 0.5 dusk, 1 night (setAtmos sets it from the setting; an endurance race moves it with its
   // clock: setTodK). The light, the fog and the grade are blended between the day's (the theme's), the dusk's and the night's; dawn (the
@@ -1741,7 +1743,7 @@ const Render = (function () {
   function applyWeather(r) {
     wet = r; applyTheme(themeId); rain.mesh.visible = r > 0 && atmos.season !== 'winter'; rain.mat.uniforms.uA.value = 0.5 * Math.min(1, r * 1.5);
     snow.mesh.visible = r > 0 && atmos.season === 'winter';
-    birds.mesh.visible = !(r > 0); if (r > 0) birds.reset(birds.gull);   // (no birds in the rain)
+    birds.mesh.visible = !(r > 0) && !(world && world.noBirds); if (r > 0) birds.reset(birds.gull);   // (no birds in the rain, nor in a world without them: world.noBirds, Mount Hotham)
     if (!world || !world.root) return;
     if (world.dyn.clouds) world.dyn.clouds.K.value = world.dyn.clouds.k0 * (1 - r);   // (no cloud shadows under the rain's overcast)
   }
