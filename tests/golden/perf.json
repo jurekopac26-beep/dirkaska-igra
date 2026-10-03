@@ -121,8 +121,8 @@
  "rastro": {
   "calls": 240,
   "maxCalls": 298,
-  "kverts": 618,
-  "maxKverts": 755,
-  "jsMs": 0.69
+  "kverts": 620,
+  "maxKverts": 761,
+  "jsMs": 0.78
  }
 }

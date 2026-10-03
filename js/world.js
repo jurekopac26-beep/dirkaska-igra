@@ -10460,6 +10460,8 @@ const World = (function () {
     const hi = sstep(1360, 1400, A), fo = vrLCf(x, z, 1), sh = vrLCf(x, z, 2), se = vrLCf(x, z, 3) * hi;   // (WorldCover's built-up below the plateau: the road's own strip, overgrown)   // (the plateau's grassland: tawny patches; below it the lush green of the clearings)
     let R = lerp(0.27, 0.4, hi), G = lerp(0.42, 0.5, hi), B = lerp(0.16, 0.23, hi);
     const straw = sstep(0.56, 0.8, q) * 0.55 * hi; R = lerp(R, 0.6, straw); G = lerp(G, 0.57, straw); B = lerp(B, 0.3, straw);
+    if (hi > 0) { const dk = sstep(0.55, 0.78, P.n6(x * 0.7 + 50, z * 0.7)) * 0.5 * hi, ft = sstep(0.7, 0.86, P.n4(x * 2.3 - 80, z * 2.3)) * 0.4 * hi;   // (the pasture in clumps: darker tussocks, worn cattle paths)
+      R = lerp(R, 0.24, dk); G = lerp(G, 0.36, dk); B = lerp(B, 0.14, dk); R = lerp(R, 0.5, ft); G = lerp(G, 0.44, ft); B = lerp(B, 0.3, ft); }
     { const m6 = P.n6(x, z), lit = sstep(0.62, 0.82, P.n3(x * 2.6, z * 2.6)) * 0.55;   // (the forest floor mottled: darker hollows, lighter clearings, brown leaf litter)
       const fr = 0.19 + (m6 - 0.5) * 0.08, fg = 0.26 + (m6 - 0.5) * 0.1, fb = 0.12 + (m6 - 0.5) * 0.04;
       R = lerp(R, lerp(fr, 0.34, lit), fo); G = lerp(G, lerp(fg, 0.27, lit), fo); B = lerp(B, lerp(fb, 0.15, lit), fo); }
@@ -10825,6 +10827,18 @@ const World = (function () {
       for (let k = 0; k < 10; k++) { const a = -12 + (k % 5) * 6, b = (k < 5 ? -4.5 : 4.5) * sdP, px = padF.x - sn * b + c * a, pz = padF.z + c * b + sn * a; if (vrNear(px, pz).dd < 1.5 || k === 2 || k === 7) continue;
         caCar(scen.get(px, pz), px, caGround(px, pz), pz, hh + PI / 2, vary(carCols[k % carCols.length], R, 0.2)); }
       for (let k = 0; k < 12; k++) { const px = padF.x + (R() - 0.5) * 22, pz = padF.z + (R() - 0.5) * 22; if (vrNear(px, pz).dd < 1) continue; person(px, pz, R() * TAU); }
+      { const RB2 = rng(3381), busC = [[0.95, 0.95, 0.94], [0.16, 0.36, 0.7], [0.82, 0.2, 0.16]];   // two coaches of sightseers on the car park's edge (generic, no names)
+        for (let k = 0; k < 2; k++) { const b = (k ? 1 : -1) * 9.5 * sdP, a = 9, px = padF.x - sn * b + c * a * (k ? -1 : 1), pz = padF.z + c * b + sn * a * (k ? -1 : 1); if (vrNear(px, pz).dd < 2) continue;
+          const g = scen.get(px, pz), py = caGround(px, pz), col = busC[Math.floor(RB2() * busC.length)];
+          box(g, px, py + 0.35, pz, 12, 2.9, 2.5, hh, col, [0.86, 0.86, 0.86], true); box(g, px, py + 1.75, pz, 11.4, 0.85, 2.54, hh, [0.12, 0.15, 0.2], null, true);   // body, the band of windows
+          for (const u of [-3.8, 3.6]) for (const v of [-1.2, 1.2]) box(g, px + c * u - sn * v, py, pz + sn * u + c * v, 1.0, 0.95, 0.35, hh, [0.08, 0.08, 0.09], null, true); } }
+      if (mir) {   // the stalls by the plaza: a trestle table under a striped umbrella each (fruit, honey, crafts: nothing written on them)
+        const RS2 = rng(3391), um = [[0.86, 0.18, 0.14], [0.96, 0.8, 0.16], [0.16, 0.42, 0.78], [0.2, 0.6, 0.36]], ox = mir.x - T.px[mir.i], oz = mir.z - T.pz[mir.i], oa = Math.atan2(oz, ox);
+        for (let k = 0; k < 4; k++) { const a = oa + PI + (k - 1.5) * 0.42, r = 15.5, x = mir.x + Math.cos(a) * r, z = mir.z + Math.sin(a) * r; if (vrNear(x, z).dd < 1.5) continue;
+          const g = scen.get(x, z), y = caGround(x, z); box(g, x, y + 0.75, z, 2.0, 0.12, 0.9, a, [0.62, 0.46, 0.3], null, true); box(g, x, y, z, 1.8, 0.75, 0.75, a, [0.42, 0.3, 0.2], null, true);
+          for (let q = 0; q < 3; q++) box(g, x + (q - 1) * 0.55 * Math.cos(a + PI / 2), y + 0.87, z + (q - 1) * 0.55 * Math.sin(a + PI / 2), 0.45, 0.22, 0.4, a, [[0.9, 0.42, 0.12], [0.78, 0.12, 0.16], [0.95, 0.78, 0.2]][q], null, true);
+          cyl(g, x, y, z, 0.04, 2.3, 4, [0.85, 0.85, 0.85]); cone(g, x, y + 2.05, z, 1.6, 0.55, 8, um[k % 4], [0.95, 0.95, 0.92], RS2() * TAU);
+          person(x + Math.cos(a) * 1.1, z + Math.sin(a) * 1.1, a + PI); exclPush(x, z, 2.2); } }
       const eX = T.px[iE] + T.tx[iE] * 1.2, eZ = T.pz[iE] + T.tz[iE] * 1.2;   // the end of the road: concrete blocks across it
       for (let o = -T.bl[iE]; o <= T.br[iE]; o += 2.05) { const bx = eX + T.nx[iE] * o, bz = eZ + T.nz[iE] * o; box(scen.get(bx, bz), bx, T.hy[iE] - 0.1, bz, 0.7, 0.9, 1.95, T.hd[iE], [0.76, 0.75, 0.72], [0.84, 0.83, 0.8]); }
       if (mir) {   // the plaza: stone paving, a railing round its outer half (the side away from the road, over the cliff), benches, the people at the railing
@@ -10904,9 +10918,12 @@ const World = (function () {
     {
       const fMat = new THREE.MeshLambertMaterial({ map: tex.water, vertexColors: true, transparent: true, opacity: 0.86, depthWrite: false }), RW = rng(3331);
       const gradAt = (x, z) => { const e = 6, gx = vrFar(x + e, z) - vrFar(x - e, z), gz = vrFar(x, z + e) - vrFar(x, z - e), l = Math.hypot(gx, gz) || 1; return [-gx / l, -gz / l]; };   // (downhill)
-      for (const [fx, fz, drop0, name] of def.falls || []) {
+      for (let [fx, fz, drop0, name] of def.falls || []) {
         if (vrDist(fx, fz) > 430) continue;
-        const drop = drop0 || 26, wid = name ? 4.2 : 3 + RW() * 1.5, up = [], dn = [];
+        const drop = drop0 || 26, wid = name ? 7.5 : 3.5 + RW() * 1.5, up = [], dn = [];
+        { const n0 = vrNear(fx, fz); if (n0.i >= 0 && n0.dd < 6) { const i = n0.i; let best = null;   // (a fall right by the road, the stream passing under it: drawn on the higher side, down to the ditch)
+          for (const sd of [-1, 1]) { const o = sd * ((sd > 0 ? T.br[i] : T.bl[i]) + 6), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, h = caGround(x, z); if (!best || h > best[2]) best = [x, z, h]; }
+          fx = best[0]; fz = best[1]; } }
         let x = fx, z = fz; for (let k = 0; k < 40; k++) { const [dx, dz] = gradAt(x, z), nx = x - dx * 1.6, nz = z - dz * 1.6; if (caGround(nx, nz) - caGround(fx, fz) > drop * 0.55 || vrNear(nx, nz).dd < 4) break; x = nx; z = nz; up.push([x, z]); }
         x = fx; z = fz; for (let k = 0; k < 40; k++) { const [dx, dz] = gradAt(x, z), nx = x + dx * 1.6, nz = z + dz * 1.6; if (caGround(fx, fz) - caGround(nx, nz) > drop * 0.55 || vrNear(nx, nz).dd < 4) break; x = nx; z = nz; dn.push([x, z]); }
         const line = [...up.reverse(), [fx, fz], ...dn]; if (line.length < 4) continue;
@@ -10920,7 +10937,13 @@ const World = (function () {
         const gr = scen.get(fx, fz);   // the wet rock beside it, boulders at its foot
         for (let k = 0; k < line.length; k += 3) for (const sd of [-1, 1]) { const [lx, lz] = line[Math.min(k, line.length - 1)], [ax, az] = line[Math.min(k + 1, line.length - 1)], ux = az - lz, uz = -(ax - lx), ul = Math.hypot(ux, uz) || 1, bx = lx + ux / ul * sd * (wid / 2 + 1.2), bz = lz + uz / ul * sd * (wid / 2 + 1.2);
           if (vrNear(bx, bz).dd < 2) continue; const r0 = 0.8 + RW() * 1.6; rock(gr, bx, caGround(bx, bz) + r0 * 0.3, bz, r0 * 1.2, r0, r0, RW() * TAU, vary([0.26, 0.26, 0.25], RW, 0.15), RW, 0.3); }
-        for (const [x2, z2] of line) exclPush(x2, z2, wid / 2 + 1.5);
+        { const [lx, lz] = line[line.length - 1], gy = caGround(lx, lz), pr = wid * 0.85, pg = new GB(true), fc = [0.9, 0.95, 0.97], wc = [0.5, 0.66, 0.7];   // the plunge pool at its foot (white foam over green water: the part seen from above) and the spray
+          for (let k = 0; k < 12; k++) { const a0 = k / 12 * TAU, a1 = (k + 1) / 12 * TAU, P0 = [lx, gy + 0.25, lz], P1 = [lx + Math.cos(a0) * pr, gy + 0.25, lz + Math.sin(a0) * pr], P2 = [lx + Math.cos(a1) * pr, gy + 0.25, lz + Math.sin(a1) * pr];
+            pg.quadUp(P0, P1, P2, P0, [fc, wc, wc, fc], [[0.5, 0.5], [0.5 + Math.cos(a0) * 0.5, 0.5 + Math.sin(a0) * 0.5], [0.5 + Math.cos(a1) * 0.5, 0.5 + Math.sin(a1) * 0.5], [0.5, 0.5]]); }
+          const pm = new THREE.Mesh(pg.geometry(), fMat); pm.matrixAutoUpdate = false; pm.renderOrder = 1; root.add(pm);
+          ROCK_SMOOTH = true; for (let k = 0; k < 5; k++) ico(gr, lx + (RW() - 0.5) * wid, gy + 0.6 + RW() * 1.2, lz + (RW() - 0.5) * wid, 1.0 + RW() * 1.0, 0.6, [0.93, 0.96, 0.97], RW, 0.3);
+          ROCK_SMOOTH = false; exclPush(lx, lz, pr + 3); }
+        for (const [x2, z2] of line) exclPush(x2, z2, wid / 2 + 7);   // (no tree crown over it)
         nFalls++;
       }
     }
