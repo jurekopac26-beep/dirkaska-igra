@@ -68,7 +68,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // grandstands [from, to, side, rows, roof]: temporary stands round the Elipse and at the first turns (approximate)
     stands: [[-150, 110, 1, 12, 1], [140, 200, 1, 8, 0], [-330, -250, 1, 8, 0], [1500, 1545, -1, 8, 0]],
     // spectators on the grass [from, to, side]
-    ga: [[260, 330, 1], [420, 520, -1], [880, 1000, 1], [1150, 1260, -1], [1600, 1700, -1]],
+    ga: [[260, 330, 1], [420, 520, -1], [880, 1000, 1], [1600, 1700, -1]],
     sectors: [700, 1500],
     // named places: [HUD label, x, z, the commentator's lines]; the turns by their numbers only
     names: [

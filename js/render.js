@@ -1716,7 +1716,7 @@ const Render = (function () {
   THEMES.uncompahgre = { fog: 0xbfcfe0, sun: 0xfff0d8, sunI: 1.24, sky: 0xb8d0f0, gnd: 0x4c5236, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-70, 92, 62] };   // the Uncompahgre Gorge: a clear afternoon in the San Juans, the sun from the south-west over the cliffs, a crisp blue haze
   SPLIT.uncompahgre = [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]];
   SPLIT.iroha = [[0.96, 0.99, 1.05], [1.04, 1.0, 0.95]];   // (Irohazaka: cool shade under the maples, a warm autumn sun)
-  THEMES.santiago = { fog: 0xd6dbe0, sun: 0xfff0d4, sunI: 1.26, sky: 0xbdd3ee, gnd: 0x6f6a48, hemiI: 0.62, tint: [1.03, 1.0, 0.95], sat: 1.06, haze: 0.1, hazeCol: [0.98, 0.9, 0.8], sunOff: [-62, 90, -70] };   // Santiago: a hot, clear summer afternoon, the sun from the north-west (the southern hemisphere), a light haze over the city
+  THEMES.santiago = { fog: 0xc8d4de, sun: 0xfff0d4, sunI: 1.26, sky: 0xaecbec, gnd: 0x6f6a48, hemiI: 0.62, tint: [1.02, 1.0, 0.96], sat: 1.04, sunOff: [-62, 90, -70] };   // Santiago: a hot, clear summer afternoon, the sun from the north-west (the southern hemisphere), a light haze over the city
   SPLIT.santiago = [[0.96, 0.99, 1.05], [1.05, 1.0, 0.94]];
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   // The time of day as one number, todK: 0 day, 0.5 dusk, 1 night (setAtmos sets it from the setting; an endurance race moves it with its
