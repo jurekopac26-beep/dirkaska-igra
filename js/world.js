@@ -14320,6 +14320,15 @@ const World = (function () {
   let UNS = 'summer';                          // the season the world is painted in ('summer' or 'autumn': buildUncompahgre, from opts.season; winter: the autumn look, snowed over)
   const UNCOL = [0, 0, 0];
   let UNW = null;                              // per road sample and side ([0] left, [1] right): how much of a drop is there (0..1, eased over ~24 m)
+  let UNC = null;                              // the creeks' courses for their beds: { L: [{ hw, x, z, y }] (3 m steps, y the water's level, falling downstream), cells: 16 m hash of [creek, step] }
+  const UNCQ = { d: 1e9, y: 0, hw: 0 };
+  function unCreekAt(x, z) {   // the nearest creek within its bed's reach: lateral distance, water level and half width there (UNCQ; d 1e9: none)
+    UNCQ.d = 1e9; const L = UNC.cells.get(Math.floor(x / 16) + ',' + Math.floor(z / 16)); if (!L) return UNCQ;
+    for (let q = 0; q < L.length; q += 2) { const C = UNC.L[L[q]], k = L[q + 1], ax = C.x[k], az = C.z[k], bx = C.x[k + 1], bz = C.z[k + 1], dx = bx - ax, dz = bz - az, l2 = dx * dx + dz * dz || 1;
+      const t = clamp(((x - ax) * dx + (z - az) * dz) / l2, 0, 1), px = ax + dx * t - x, pz = az + dz * t - z, d = Math.sqrt(px * px + pz * pz);
+      if (d < UNCQ.d) { UNCQ.d = d; UNCQ.y = C.y[k] + (C.y[k + 1] - C.y[k]) * t; UNCQ.hw = C.hw; } }
+    return UNCQ;
+  }
   let UNF = null;                              // Bear Creek Falls: where the creek drops off below the bridge ({ x, z: the lip, dx, dz: out over the gorge, y: the lip's height })
   function unH(x, z) {   // terrain height (as caH; on a drop the ground falls at ~62 degrees from the edge of the shoulder down to the real terrain)
     const n = caNear(x, z), i = n.i, dd = n.dd; let h;
@@ -14329,8 +14338,11 @@ const World = (function () {
       if (UNW) { const lat = (x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i], w = UNW[lat > 0 ? 1 : 0][i];
         if (w > 0 && dd > 0) h = lerp(h, Math.min(h, Math.max(f, T.hy[i] - 0.35 - 2.75 * Math.max(0, dd - 0.15))), w); }
     }
-    if (UNF) { const F = UNF, a = (x - F.x) * F.dx + (z - F.z) * F.dz, b = Math.abs((x - F.x) * F.dz - (z - F.z) * F.dx);   // the falls' chasm: a sheer drop from the lip, a pool at its foot
-      if (a > -6 && a < 40 && b < 16 + a * 0.4) { const f = vrFar(x, z), bed = Math.max(f - 2, F.y - 1 - 44 * sstep(1.5, 4.5, a)) + Math.max(0, a - 24) * 0.4, k = sstep(5 + a * 0.25, 13 + a * 0.4, b) + sstep(-1, -6, a); h = Math.min(h, lerp(bed, h, clamp(k, 0, 1))); } }
+    if (UNC && (i < 0 || dd > 7)) { const q = unCreekAt(x, z); if (q.d < q.hw + 7) {   // a creek's bed: a shallow bowl under the water, the banks rising to the slope over 7 m
+      const dep = 0.3 + 0.05 * q.hw * 2, t = q.d < q.hw ? q.y - dep * (1 - (q.d / q.hw) * (q.d / q.hw)) : lerp(q.y + 0.04, h, sstep(q.hw, q.hw + 7, q.d)); h = Math.min(h, lerp(h, t, i >= 0 ? sstep(7, 12, dd) : 1)); } }   // (none right by the road: the culverts)
+    if (UNF) { const F = UNF, a = (x - F.x) * F.dx + (z - F.z) * F.dz, b = Math.abs((x - F.x) * F.dz - (z - F.z) * F.dx);   // the falls' slot: a narrow, ragged ravine from the lip, widening down to the pool and on
+      if (a > -5 && a < 36) { const wd = 2.4 + 0.3 * Math.max(0, a) + (VR.n6(x, z) - 0.5) * 3.2; if (b < wd + 7) { const f = vrFar(x, z), bed = Math.max(f - 1.5, F.y - 1 - 34 * sstep(1.2, 5, a)) + Math.max(0, a - 20) * 0.55;
+        h = Math.min(h, lerp(bed, h, clamp(sstep(wd, wd + 6, b) + sstep(-0.5, -4.5, a), 0, 1))); } } }
     const pads = VR.pads; for (let k = 0; k < pads.length; k++) { const p = pads[k], d = Math.hypot(x - p.x, z - p.z), pb = p.b || 12; if (d < p.r + pb) h = lerp(p.h, h, sstep(p.r, p.r + pb, d)); }   // level plots: the car parks, the mines
     for (const b of VR.gul) {   // the creek's bed under the bridge (as vrH)
       if (i < 0 || Math.abs(i - b.i) * T.ds > b.half + 30) continue;
@@ -14365,8 +14377,8 @@ const World = (function () {
     const fo = vrLCf(x, z, 1), gr = vrLCf(x, z, 0), sh = vrLCf(x, z, 2), ro = vrLCf(x, z, 4), se = vrLCf(x, z, 3);
     let R = 0.41, G = 0.4, B = 0.4;   // grey quartzite and slate
     const rust = sstep(0.58, 0.86, m), red = sstep(0.64, 0.88, q) * (1 - 0.5 * rust), dark = sstep(0.52, 0.8, r);
-    R = lerp(R, 0.54, rust); G = lerp(G, 0.38, rust); B = lerp(B, 0.27, rust);
-    R = lerp(R, 0.5, red); G = lerp(G, 0.3, red); B = lerp(B, 0.24, red);
+    R = lerp(R, 0.5, rust * 0.75); G = lerp(G, 0.38, rust * 0.75); B = lerp(B, 0.29, rust * 0.75);   // (rust and iron-red, not too pink under the warm grit)
+    R = lerp(R, 0.46, red * 0.7); G = lerp(G, 0.32, red * 0.7); B = lerp(B, 0.26, red * 0.7);
     R = lerp(R, 0.29, dark * 0.8); G = lerp(G, 0.29, dark * 0.8); B = lerp(B, 0.31, dark * 0.8);
     const och = sstep(0.66, 0.88, P.c4(x * 1.3, z * 1.3)) * (1 - dark); R = lerp(R, 0.62, och * 0.4); G = lerp(G, 0.5, och * 0.4); B = lerp(B, 0.32, och * 0.4);
     R += (f - 0.5) * 0.1; G += (f - 0.5) * 0.095; B += (f - 0.5) * 0.09;
@@ -14374,9 +14386,9 @@ const World = (function () {
     if (st > 0) { const band = 0.5 + 0.5 * Math.sin(A / 5.5 + P.c2(x * 0.4, z * 0.4) * 7), k = 0.78 + 0.24 * band, sk = sstep(0.55, 0.85, P.n3(x * 2.4 + z * 0.3, A * 0.05)) * 0.5;
       R = lerp(R, 0.38 * k + rust * 0.12 + red * 0.08 + sk * 0.14, st); G = lerp(G, 0.37 * k + rust * 0.03 + sk * 0.05, st); B = lerp(B, 0.37 * k, st); }
     const veg = 1 - st * 0.8;
-    const mg = gr * veg * (0.75 + 0.25 * P.n2(x * 1.7, z * 1.7));   // meadows
+    const mg = Math.min(1, gr + ro * 0.5 * sstep(24, 4, dd)) * veg * (0.75 + 0.25 * P.n2(x * 1.7, z * 1.7));   // meadows (and the grassy verges in WorldCover's bare strip along the road itself)
     if (au) { R = lerp(R, 0.6 + (m - 0.5) * 0.12, mg); G = lerp(G, 0.52 + (q - 0.5) * 0.08, mg); B = lerp(B, 0.33, mg); }
-    else { R = lerp(R, 0.38 + (m - 0.5) * 0.1, mg); G = lerp(G, 0.47 + (q - 0.5) * 0.08, mg); B = lerp(B, 0.22, mg); }
+    else { R = lerp(R, 0.31 + (m - 0.5) * 0.1, mg); G = lerp(G, 0.45 + (q - 0.5) * 0.08, mg); B = lerp(B, 0.19, mg); }
     const ff = fo * veg; R = lerp(R, au ? 0.36 : 0.3, ff); G = lerp(G, au ? 0.32 : 0.33, ff); B = lerp(B, 0.2, ff);   // the forest floor (in autumn the aspens' leaves on it)
     R = lerp(R, au ? 0.58 : 0.4, sh * veg * 0.7); G = lerp(G, au ? 0.42 : 0.45, sh * veg * 0.7); B = lerp(B, 0.24, sh * veg * 0.7);
     R = lerp(R, 0.55 + rust * 0.08, ro * 0.35 * (1 - st)); G = lerp(G, 0.52, ro * 0.35 * (1 - st)); B = lerp(B, 0.48, ro * 0.35 * (1 - st));   // the scree: paler
@@ -14458,6 +14470,80 @@ const World = (function () {
       txt(n, x0 + 256, y0 + 66, 54, dark ? '#16181c' : '#f2f2ee', 470); });
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (unA2Tex = t);
   }
+  function unTreeGeo(kind) {   // unit trees (height 1; the instances scale and tint them), shaped for the high cameras: 0 Engelmann spruce and subalpine fir (four drooping
+    // tiers, the sunlit tips lighter), 1 the same far from the road (three tiers of four tips: the outline from above is what reads), 2 quaking aspen (a white trunk, a
+    // round, lumpy crown of light leaves: green in summer, gold in autumn), 4 the spruce under snow
+    const g = new GB(), R = rng(560 + kind), rs = ROCK_SMOOTH, au = UNS !== 'summer', snow = [0.93, 0.95, 0.99];
+    ROCK_SMOOTH = false;
+    if (kind === 0 || kind === 4) {
+      const col = [0.075, 0.16, 0.115], tip = [0.19, 0.31, 0.22];
+      [[0.02, 0.31, 0.32, 0.06], [0.23, 0.25, 0.31, 0.05], [0.44, 0.19, 0.28, 0.045], [0.61, 0.13, 0.24, 0.035]].forEach(([y, r, h, dr], k) => {
+        const kk = k % 2 ? 1.1 : 1, c = [col[0] * kk, col[1] * kk, col[2] * kk]; starCone(g, 0, y, 0, r, h, 5, kind === 4 ? snow : c, kind === 4 ? c : tip, k * 0.66, dr); });
+      cone(g, 0, 0.78, 0, 0.055, 0.22, 4, kind === 4 ? snow : col, tip, 0.4);
+    } else if (kind === 1) {
+      const col = [0.08, 0.165, 0.12], tip = [0.18, 0.3, 0.21];
+      [[0.03, 0.31, 0.4, 0.06], [0.33, 0.22, 0.34, 0.045], [0.58, 0.14, 0.27, 0.035]].forEach(([y, r, h, dr], k) => starCone(g, 0, y, 0, r, h, 4, k % 2 ? [col[0] * 1.1, col[1] * 1.1, col[2] * 1.1] : col, tip, k * 0.8, dr));
+      cone(g, 0, 0.8, 0, 0.05, 0.2, 3, col, tip, 0.3);
+    } else {
+      const leaf = au ? [0.95, 0.72, 0.18] : [0.38, 0.55, 0.2], bark = [0.86, 0.86, 0.8];
+      cyl(g, 0, -0.02, 0, 0.026, 0.6, 3, bark, null, 0.014);
+      ROCK_SMOOTH = true;
+      puff(g, 0.02, 0.68, -0.02, 0.28, 1.05, leaf, R, 0.5, 0.6, 1.12);   // (one lumpy clump: the outline from above irregular)
+    }
+    ROCK_SMOOTH = rs;
+    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
+  // a standing dead spruce (the spruce beetle's grey stands in the San Juans): a bare tapering trunk, three tiers of stiff grey branch stubs; red: one killed
+  // last year, its needles still on, rusty red-brown
+  function unSnag(g, x, y, z, h, w, rot, red, R) {
+    const bk = vary(red ? [0.36, 0.28, 0.22] : [0.55, 0.52, 0.48], R, 0.12), br = red ? vary([0.34, 0.2, 0.13], R, 0.1) : [bk[0] * 0.82, bk[1] * 0.82, bk[2] * 0.82];
+    cyl(g, x, y - 0.3, z, Math.max(0.12, h * 0.016), h + 0.3, 3, bk, null, 0.03);
+    for (const [f, r] of [[0.3, 0.5], [0.52, 0.36], [0.72, 0.22]]) starCone(g, x, y + h * f, z, w * r * (red ? 0.7 : 1), h * (red ? 0.24 : 0.1), red ? 5 : 3, br, red ? [br[0] * 1.15, br[1] * 1.08, br[2]] : br, rot + f * 5, h * 0.03);
+  }
+  function unFlowerGeo() {   // a clump of wildflowers (the unit about a metre across, height 1; the instance tints the petals): five heads on short stems, each a little
+    // star of petals facing up (both faces), a darker heart
+    const g = new GB(), R = rng(571), stem = [0.26, 0.36, 0.16];
+    for (let k = 0; k < 5; k++) { const a = k / 5 * TAU + R(), d = k ? 0.18 + R() * 0.25 : 0, cx = Math.cos(a) * d, cz = Math.sin(a) * d, h = 0.35 + R() * 0.3, r = 0.07 + R() * 0.04, w = [1, 1, 1], hc = [0.9, 0.85, 0.6];
+      g.triO([cx - 0.012, 0, cz], [cx + 0.012, 0, cz], [cx, h, cz], stem, [cx, h * 0.5, cz + 1]); g.triO([cx - 0.012, 0, cz], [cx, h, cz], [cx + 0.012, 0, cz], stem, [cx, h * 0.5, cz - 1]);
+      for (let q = 0; q < 4; q++) { const b = q / 4 * TAU + a, c = Math.cos(b), s = Math.sin(b), c2 = Math.cos(b + 0.6), s2 = Math.sin(b + 0.6), P0 = [cx, h + 0.02, cz], P1 = [cx + c * r, h, cz + s * r], P2 = [cx + c2 * r * 0.7, h + 0.01, cz + s2 * r * 0.7];
+        g.triO(P0, P1, P2, w, [cx, h - 1, cz], hc, w); g.triO(P0, P2, P1, w, [cx, h + 1, cz], hc, w); } }
+    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
+  // the animals of the gorge, life size and a little more (they read from the high cameras), merged into the scenery: 0 a bighorn sheep (brown, the white rump,
+  // a ram's heavy curls), 1 a mountain goat (white, short black horns), 2 a mule deer (grey-brown, the white rump, big ears), 3 an elk (tan, the dark neck and
+  // head, the pale rump, a bull's antlers). +x forward; graze: the head down in the grass
+  function unBeast(g, x, y, z, h, kind, sc, R, male, graze) {
+    const D = [[1.5, 0.95, [0.46, 0.36, 0.26], [0.42, 0.32, 0.23], [0.9, 0.86, 0.78]], [1.45, 0.95, [0.9, 0.88, 0.82], [0.88, 0.86, 0.8], [0.92, 0.9, 0.84]], [1.6, 1.0, [0.48, 0.41, 0.33], [0.44, 0.37, 0.3], [0.9, 0.88, 0.82]], [2.3, 1.45, [0.6, 0.46, 0.3], [0.32, 0.24, 0.16], [0.84, 0.74, 0.55]]][kind];
+    const L = D[0] * sc, H = D[1] * sc, coat = vary(D[2], R, 0.08), neck = vary(D[3], R, 0.06), rump = D[4], c = Math.cos(h), s = Math.sin(h), Pp = (u, v, w) => [x + c * u - s * w, y + v, z + s * u + c * w], dark = [0.1, 0.09, 0.08];
+    const rs = ROCK_SMOOTH; ROCK_SMOOTH = true; const br = H * 0.3;
+    let p = Pp(0.2 * L, 0.64 * H, 0); ico(g, p[0], p[1], p[2], br * 1.05, 0.86, coat, R, 0.12);
+    p = Pp(-0.2 * L, 0.62 * H, 0); ico(g, p[0], p[1], p[2], br, 0.86, coat, R, 0.12);
+    p = Pp(-0.4 * L, 0.64 * H, 0); ico(g, p[0], p[1], p[2], br * 0.62, 0.95, rump, R, 0.1);
+    const hx = graze ? 0.5 : 0.56, hy = graze ? 0.3 : 1.02; p = Pp(0.42 * L, (graze ? 0.62 : 0.86) * H, 0); ico(g, p[0], p[1], p[2], br * 0.5, graze ? 0.9 : 1.3, neck, R, 0.1);
+    const hp = Pp(hx * L, hy * H, 0); ico(g, hp[0], hp[1], hp[2], br * 0.42, 0.85, neck, R, 0.1);
+    if (kind === 2) for (const w of [-1, 1]) { const e = Pp(hx * L - 0.05, hy * H + br * 0.45, w * br * 0.45); ico(g, e[0], e[1], e[2], br * 0.22, 0.6, neck, R, 0.1); }   // (the mule deer's ears)
+    ROCK_SMOOTH = false;
+    for (const [u, w] of [[0.28, 0.13], [0.28, -0.13], [-0.3, 0.13], [-0.3, -0.13]]) { const q = Pp(u * L, 0, w * H); box(g, q[0], q[1] - 0.05, q[2], 0.08 * H, 0.52 * H, 0.08 * H, h, kind === 1 ? [0.84, 0.82, 0.76] : [coat[0] * 0.85, coat[1] * 0.85, coat[2] * 0.85]); }
+    if (kind === 0 && male) for (const w of [-1, 1]) { const q = Pp(hx * L - 0.06, hy * H + br * 0.15, w * br * 0.55); ico(g, q[0], q[1], q[2], br * 0.36, 0.9, [0.78, 0.68, 0.5], R, 0.15); }   // (the ram's curls)
+    if (kind === 1) for (const w of [-1, 1]) { const q = Pp(hx * L - 0.05, hy * H + br * 0.3, w * br * 0.2); cone(g, q[0], q[1], q[2], 0.04 * sc, 0.22 * sc, 3, dark, dark, 0); }
+    if (kind === 3 && male) for (const w of [-1, 1]) { const a = Pp(hx * L - 0.1, hy * H + br * 0.3, w * br * 0.25), b = Pp(hx * L - 0.5, hy * H + br * 0.3 + 0.9 * sc, w * 0.55 * sc), m = Pp(hx * L - 0.25, hy * H + 0.5 * sc, w * 0.4 * sc);
+      ouRod(g, a, b, 0.04 * sc, [0.62, 0.54, 0.42], 3); ouRod(g, m, [m[0] + c * 0.35 * sc, m[1] + 0.3 * sc, m[2] + s * 0.35 * sc], 0.03 * sc, [0.62, 0.54, 0.42], 3); }   // (the bull's antlers)
+    ROCK_SMOOTH = rs;
+  }
+  function unRavenGeo() {   // a raven, wings spread for soaring (x forward, ~1.6 m across at scale 1): the black body and head, the long wedge tail, both faces of the wings
+    const g = new GB(), K = [0.05, 0.05, 0.06], R = rng(577);
+    ROCK_SMOOTH = true; ico(g, 0, 0, 0, 0.16, 0.55, K, R, 0.1); ico(g, 0.2, 0.02, 0, 0.08, 0.8, K, R, 0.1); ROCK_SMOOTH = false;
+    for (const sd of [-1, 1]) { const A = [0.12, 0, sd * 0.08], B = [-0.12, 0, sd * 0.08], C = [-0.08, 0.08, sd * 0.8], D = [0.1, 0.07, sd * 0.78]; g.quadO(A, B, C, D, K, [0, -1, sd * 0.4]); g.quadO(A, B, C, D, K, [0, 1, sd * 0.4]); }
+    g.triO([-0.14, 0, -0.07], [-0.14, 0, 0.07], [-0.46, 0.01, 0], K, [-0.3, -1, 0]); g.triO([-0.14, 0, -0.07], [-0.46, 0.01, 0], [-0.14, 0, 0.07], K, [-0.3, 1, 0]);
+    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
+  function unStoneGeo() {   // two stones of the scree, sunk in it (the unit about a metre across): four-sided, the tops lit, the feet darker (24 faces)
+    const g = new GB(), R = rng(579), C = [[0.6, 0.57, 0.53], [0.55, 0.47, 0.41]];
+    for (let k = 0; k < 2; k++) { const a0 = R() * TAU, d = k ? 0.3 : 0, cx = Math.cos(a0) * d, cz = Math.sin(a0) * d, rx = k ? 0.12 : 0.22, ry = rx * (0.6 + R() * 0.3), col = C[k], lo = col.map(v => v * 0.66), hi = col.map(v => v * 1.15), B = [], M = [], top = [cx, ry, cz], inn = [cx, ry * 0.2, cz];
+      for (let q = 0; q < 4; q++) { const a = (q + (R() - 0.5) * 0.5) / 4 * TAU + a0, f = 0.8 + R() * 0.4; B.push([cx + Math.cos(a) * rx * f, -ry * 0.25, cz + Math.sin(a) * rx * f]); M.push([cx + Math.cos(a) * rx * f * 0.8, ry * 0.5, cz + Math.sin(a) * rx * f * 0.8]); }
+      for (let q = 0; q < 4; q++) { const j = (q + 1) % 4; g.quadO(B[q], B[j], M[j], M[q], col, inn, null, [lo, lo, col, col]); g.triO(M[q], M[j], top, col, inn, col, hi); } }
+    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
   // a weathered timber building of an old mine (L along x, the downhill side at -z): a stone footing, plank walls grey-brown with age, a rusty tin roof
   // (one end of it caved in: a few sheets missing), dark window holes
   function unMineHouse(g, x, y0, y1, z, rot, L, D, fl, R) {
@@ -14484,6 +14570,22 @@ const World = (function () {
     P.c1 = valueNoise2(811, 140); P.c2 = valueNoise2(812, 60); P.c3 = valueNoise2(813, 200); P.c4 = valueNoise2(814, 110); P.c5 = valueNoise2(815, 26);
     UNW = null;
     if (T.dropAt) { UNW = [new Float32Array(N), new Float32Array(N)]; for (let sd = 0; sd < 2; sd++) { const D = T.dropAt[sd], W = UNW[sd]; for (let i = 0; i < N; i++) { let s = 0; for (let o = -6; o <= 6; o++) s += D[clamp(i + o, 0, N - 1)]; W[i] = sstep(0.1, 0.75, s / 13); } } }
+    UNC = null;   // the creeks' courses (def.creeks, every 3 m), their water's level falling downstream (the real terrain along them, a running minimum, smoothed)
+    if (def.creeks && def.creeks.length) {
+      const L = [], cells = new Map();
+      for (const cr of def.creeks) {
+        const W = cr[0] <= 2 ? 1.3 : cr[0] >= 6 ? 7 : cr[0], xs = [], zs = [];   // (the brooks narrower, the river a little wider)
+        for (let k = 1; k + 3 < cr.length; k += 2) { const ax = cr[k], az = cr[k + 1], bx = cr[k + 2], bz = cr[k + 3], l = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.ceil(l / 3)); for (let m = 0; m < n; m++) { xs.push(ax + (bx - ax) * m / n); zs.push(az + (bz - az) * m / n); } }
+        xs.push(cr[cr.length - 2]); zs.push(cr[cr.length - 1]);
+        let y = xs.map((x, k) => vrDem(x, zs[k])); if (y[0] < y[y.length - 1]) { xs.reverse(); zs.reverse(); y.reverse(); }   // (upstream first)
+        for (let it = 0; it < 3; it++) { for (let k = 1; k < y.length; k++) y[k] = Math.min(y[k], y[k - 1]); const o = y.slice(); for (let k = 1; k < y.length - 1; k++) y[k] = (o[k - 1] + 2 * o[k] + o[k + 1]) / 4; }
+        for (let k = 1; k < y.length; k++) y[k] = Math.min(y[k], y[k - 1]);
+        const C = { hw: W / 2, x: xs, z: zs, y: y.map(v => v - 0.4) }, ci = L.length; L.push(C);
+        for (let k = 0; k < xs.length - 1; k++) { const m = C.hw + 7.5, x0 = Math.floor((Math.min(xs[k], xs[k + 1]) - m) / 16), x1 = Math.floor((Math.max(xs[k], xs[k + 1]) + m) / 16), z0 = Math.floor((Math.min(zs[k], zs[k + 1]) - m) / 16), z1 = Math.floor((Math.max(zs[k], zs[k + 1]) + m) / 16);
+          for (let a = x0; a <= x1; a++) for (let b = z0; b <= z1; b++) { const key = a + ',' + b; let A = cells.get(key); if (!A) cells.set(key, A = []); A.push(ci, k); } }
+      }
+      UNC = { L, cells };
+    }
     UNF = null;
     if (def.falls) { const i = T.nearestIdx(def.falls[0], def.falls[1]), up = (sd) => vrFar(T.px[i] + T.nx[i] * sd * 40, T.pz[i] + T.nz[i] * sd * 40), sd = up(1) < up(-1) ? 1 : -1, o = (sd > 0 ? T.br[i] : T.bl[i]) + 1.5;   // (out: the gorge's side)
       UNF = { x: T.px[i] + T.nx[i] * sd * o, z: T.pz[i] + T.nz[i] * sd * o, dx: T.nx[i] * sd, dz: T.nz[i] * sd, y: T.hy[i] - 4.6, i }; }
@@ -14501,7 +14603,7 @@ const World = (function () {
       if (ok) blds.push({ x, z, L, W, ang });
     }
     // the old mines (def.mines [metres after the start line, side, metres out]): a level plot for the ore house, the headframe beside it, the tailings below
-    const mines = (def.mines || []).map(([d, sd, o]) => { const [x, z, i] = onSide(sStart + d, sd, o - (sd > 0 ? T.br[T.idx(sStart + d)] : T.bl[T.idx(sStart + d)])); return { x, z, i, sd, rot: T.hd[i] }; });
+    const mines = (def.mines || []).map(([d, sd, o]) => { const [x, z, i] = onSide(sStart + d, sd, o - (sd > 0 ? T.br[T.idx(sStart + d)] : T.bl[T.idx(sStart + d)])); return { x, z, i, sd, d, rot: T.hd[i] }; });
     for (const M of mines) { M.pad = { x: M.x, z: M.z, r: 7, b: 9, h: vrFar(M.x, M.z) }; P.pads.push(M.pad); }
     // the car parks: at the finish (beside the road past the line, on the side where the ground lies nearer the road's height) and before the start
     // (the cars held at the closed road)
@@ -14509,6 +14611,12 @@ const World = (function () {
       return { x: T.px[i] + T.nx[i] * sd * o, z: T.pz[i] + T.nz[i] * sd * o, r, b: 14, h: T.hy[i] - 0.25, sd, i }; };
     const padF = padBeside(sFin + 60, 13); P.pads.push(padF);
     const padS = padBeside(Math.max(30, sStart - 70), 10); P.pads.push(padS);
+    const pulls = [];   // the turnouts where the spectators left their cars (the overlook by Bear Creek Falls, the Alpine Loop junction, two more): a level plot beside the road, never on a drop's side
+    for (const d of [655, 935, 2640, 4690]) { const s0 = sStart + d, i = T.idx(s0); if (s0 > sFin - 60 || galAt[i] || galAt[T.idx(s0 - 25)] || galAt[T.idx(s0 + 25)]) continue;
+      const far = (sd) => Math.abs(vrFar(T.px[i] + T.nx[i] * sd * 18, T.pz[i] + T.nz[i] * sd * 18) - T.hy[i]), sd = dropAt(i, 1) || dropAt(T.idx(s0 + 15), 1) ? -1 : dropAt(i, -1) || dropAt(T.idx(s0 + 15), -1) ? 1 : far(1) < far(-1) ? 1 : -1;
+      if (dropAt(i, sd) || dropAt(T.idx(s0 - 15), sd) || dropAt(T.idx(s0 + 15), sd)) continue;
+      const r = 8.5, o = (sd > 0 ? T.br[i] : T.bl[i]) + r - 1.2, pad = { x: T.px[i] + T.nx[i] * sd * o, z: T.pz[i] + T.nz[i] * sd * o, r, b: 12, h: T.hy[i] - 0.22, sd, i };
+      P.pads.push(pad); pulls.push(pad); }
     out.bounds = { minX: P.bx0 - 170, maxX: P.bx1 + 170, minZ: P.bz0 - 170, maxZ: P.bz1 + 170 };
     const cut = out.dyn.ouCut = { uCam: { value: new THREE.Vector3() }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) } };   // (the trees and buildings between the camera and the car fade out)
     const matV = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut); out.matV = matV;
@@ -14518,6 +14626,7 @@ const World = (function () {
     for (const b of blds) exclPush(b.x, b.z, Math.hypot(b.L, b.W) / 2 + 2.5);
     for (const M of mines) exclPush(M.x, M.z, 11);
     exclPush(padF.x, padF.z, padF.r + 4); exclPush(padS.x, padS.z, padS.r + 4);
+    for (const p of pulls) exclPush(p.x, p.z, p.r + 3);
     out.marks = {};   // (where the landmarks stand: the tests look for them)
 
     /* ---- terrain tiles, the reservoir below the start ---- */
@@ -14600,7 +14709,7 @@ const World = (function () {
     }
 
     /* ---- scenery (vertex coloured, 110 m chunks) ---- */
-    const scen = new Chunks(110), ban = new GB(true), ban2 = new GB(true), W1 = [1, 1, 1];   // (ban: the race's boards, ban2: the signs)
+    const scen = new Chunks(110), det = scen, ban = new GB(true), ban2 = new GB(true), W1 = [1, 1, 1];   // (det: the flat details on the ground, in the scenery's chunks: no draws of their own; ban: the race's boards, ban2: the signs)
     const fans = [[0.7, 0.13, 0.17], [0.95, 0.95, 0.95], [0.16, 0.2, 0.42], [0.36, 0.5, 0.3], [0.95, 0.95, 0.95], [0.9, 0.62, 0.16], [0.24, 0.26, 0.3], [0.5, 0.3, 0.2], [0.2, 0.42, 0.62], [0.95, 0.5, 0.12]];
     const CR = crowdCtx({ gH: unGround, near: (x, z) => vrNear(x, z).dd, excluded, maxSlope: 0.6, water: (x, z) => vrWater(x, z).e > -4, shirts: fans }), crSoft = new Set();
     const bannerQ = (cx, cy, cz, tx, tz, W, H, v0, v1, u0, u1, gb, tilt) => {   // double-sided board (bottom centre cx, cy, cz) readable from +t and -t; atlas cell u0..u1 x v0..v1; tilt leans its top towards +t
@@ -14658,10 +14767,79 @@ const World = (function () {
           for (let a = 0; a < 4; a++) for (let b = 0; b < 14; b++) { const r0 = a / 4, r1 = (a + 1) / 4, t0 = b / 14 * TAU, t1 = (b + 1) / 14 * TAU, inn = [cx, unGround(cx, cz) - 30, cz];
             tg.quadO(V(r0, t0), V(r1, t0), V(r1, t1), V(r0, t1), null, inn, null, [C(r0, t0), C(r1, t0), C(r1, t1), C(r0, t1)]); }
           for (let k = 0; k < 7; k++) { const th = RB() * TAU, rr = 0.2 + RB() * 0.7, p = V(rr, th), sz = 0.4 + RB() * 0.7; rock(tg, p[0], p[1] + sz * 0.2, p[2], sz, sz * 0.7, sz, RB() * TAU, vary(tail[Math.floor(RB() * tail.length)], RB, 0.1), RB, 0.3); }
+          { const rl = [], rail = [0.24, 0.16, 0.12];   // the track along the dump's crest from the ore house to its end, a rusty ore car at the end of it
+            for (let k = 0; k <= 8; k++) { const f = k / 8, p = f < 0.5 ? V(1 - f * 2, PI) : V((f - 0.5) * 2 * 0.86, 0); rl.push([p[0], p[1] + 0.12, p[2]]); }
+            for (const o of [-0.45, 0.45]) for (let k = 0; k < 8; k++) { const a = rl[k], b = rl[k + 1]; ouRod(tg, [a[0] - dz * o, a[1], a[2] + dx * o], [b[0] - dz * o, b[1], b[2] + dx * o], 0.05, rail, 3); }
+            for (let k = 0; k < 16; k++) { const f = k / 16, a = rl[Math.floor(f * 8)], b = rl[Math.floor(f * 8) + 1], t2 = f * 8 - Math.floor(f * 8), px = a[0] + (b[0] - a[0]) * t2, pz = a[2] + (b[2] - a[2]) * t2, py = a[1] + (b[1] - a[1]) * t2; box(tg, px, py - 0.08, pz, 0.25, 0.08, 1.4, Math.atan2(dz, dx), [0.3, 0.25, 0.2]); }   // (the sleepers)
+            const e = rl[7]; box(tg, e[0], e[1] + 0.25, e[2], 1.3, 0.75, 0.95, Math.atan2(dz, dx), [0.46, 0.27, 0.16], [0.2, 0.14, 0.1], true); }
+          { const ax = M.x - dx * (L / 2 + 3.5), az = M.z - dz * (L / 2 + 3.5), ay = unGround(ax, az), rot = Math.atan2(dz, dx), wood = [0.36, 0.3, 0.25];   // the adit: a timbered portal in the slope behind the house, black inside
+            for (const v of [-1, 1]) box(tg, ax - dz * v * 1.1, ay - 0.2, az + dx * v * 1.1, 0.3, 2.6, 0.3, rot, wood); box(tg, ax, ay + 2.3, az, 0.35, 0.35, 2.6, rot, wood);
+            box(tg, ax - dx * 0.25, ay, az - dz * 0.25, 0.1, 2.3, 1.9, rot, [0.03, 0.03, 0.03]); }
+          if (nMine % 2 === 1) {   // an old aerial tramway up the mountainside from the mine: timber towers, the cables sagging between them
+            let prev = null; for (let k = 0; k <= 4; k++) { const tx2 = M.x - dx * (12 + k * 38), tz2 = M.z - dz * (12 + k * 38), n2 = vrNear(tx2, tz2); if (n2.i >= 0 && n2.dd < 6) { prev = null; continue; }
+              const ty = unGround(tx2, tz2), H2 = 7 + RB() * 2, gw = scen.get(tx2, tz2), wood = vary([0.38, 0.32, 0.26], RB, 0.1), top = [];
+              for (const v of [-1, 1]) { ouRod(gw, [tx2 - dz * v * 1.6, ty - 0.3, tz2 + dx * v * 1.6], [tx2 - dz * v * 0.7, ty + H2, tz2 + dx * v * 0.7], 0.14, wood, 4); top.push([tx2 - dz * v * 1.1, ty + H2 + 0.2, tz2 + dx * v * 1.1]); }
+              box(gw, tx2, ty + H2, tz2, 0.3, 0.3, 2.8, Math.atan2(dz, dx), wood); exclPush(tx2, tz2, 2.5);
+              if (prev) for (const v of [0, 1]) { const a = prev[v], b = top[v], m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2 - 1.4, (a[2] + b[2]) / 2]; ouRod(gw, a, m, 0.03, [0.1, 0.1, 0.1], 3); ouRod(gw, m, b, 0.03, [0.1, 0.1, 0.1], 3); }
+              prev = top; } }
           exclPush(cx, cz, Rw + 2); exclPush(cx + dx * Rl * 0.5, cz + dz * Rl * 0.5, Rw); }
         for (let k = 0; k < 3; k++) { const px = M.x + (RB() - 0.5) * 14, pz = M.z + (RB() - 0.5) * 14, n = vrNear(px, pz); if (n.i >= 0 && n.dd < 2.5) continue; const a = RB() * TAU, l = 3 + RB() * 3, y = unGround(px, pz) + 0.15;
           ouRod(scen.get(px, pz), [px, y, pz], [px + Math.cos(a) * l, y + 0.1, pz + Math.sin(a) * l], 0.13, [0.34, 0.29, 0.24], 4); }   // (rotten timbers)
         nMine++; out.marks['mine' + nMine] = [M.x, M.z];
+      }
+    }
+    /* ---- the avalanche and rockfall works: a rockfall net (steel posts, the grey mesh between them) at the foot of the highest cuts above the road;
+       rows of timber snow fences high in the Mother Cline and Riverside slide paths; at each mine a log cabin fallen in and a timber ore bin ---- */
+    let nNet = 0, nFence = 0;
+    {
+      const RF = rng(6113), steel = [0.3, 0.31, 0.33], mesh = [0.5, 0.51, 0.5], wood = [0.26, 0.2, 0.15], step = 5;
+      const busy = (d) => d < 70 || d > 4830 || Math.abs(d - 541) < 40 || Math.abs(d - 985.6) < 45 || Math.abs(d - 2642.7) < 40 || mines.some(M => Math.abs(M.d - d) < 40);
+      const net = (pts) => {   // pts: [x, y(ground), z] along the foot of the cut, a post at each, the mesh 3 m high between them, the cables top and bottom
+        const H = 3.1; for (let k = 0; k < pts.length; k++) { const [x, y, z] = pts[k], g = scen.get(x, z); ouRod(g, [x, y - 0.3, z], [x, y + H + 0.2, z], 0.07, steel, 4); exclPush(x, z, 2.5);
+          if (k) { const [a, ay, az] = pts[k - 1], mx = (a + x) / 2, mz = (az + z) / 2, nx = -(z - az), nz = x - a, l = Math.hypot(nx, nz) || 1, ux = nx / l * 0.6, uz = nz / l * 0.6;
+            const A = [a, ay + 0.15, az], B = [x, y + 0.15, z], C = [x, y + H, z], D = [a, ay + H, az];
+            g.quadO(A, B, C, D, mesh, [mx + ux, (ay + y) / 2 + H / 2, mz + uz]); g.quadO(A, B, C, D, mesh, [mx - ux, (ay + y) / 2 + H / 2, mz - uz]);
+            ouRod(g, [a, ay + H + 0.1, az], [x, y + H + 0.1, z], 0.03, [0.15, 0.15, 0.16], 3); ouRod(g, [a, ay + 0.2, az], [x, y + 0.2, z], 0.03, [0.15, 0.15, 0.16], 3); } }
+        nNet++; if (nNet === 1) out.marks.rockNet = [pts[0][0], pts[0][2]]; };
+      let run = [], total = 0;
+      const flush = () => { if (run.length >= 5 && total < 520) { net(run); total += (run.length - 1) * step; } run = []; };
+      for (let d = 60; d < 4900; d += step) {
+        if (busy(d)) { flush(); continue; }
+        const i = T.idx(sStart + d); let best = null;
+        for (const sd of [-1, 1]) { const e = sd > 0 ? T.br[i] : T.bl[i], at = (o) => vrFar(T.px[i] + T.nx[i] * sd * (e + o), T.pz[i] + T.nz[i] * sd * (e + o)) - T.hy[i];
+          const r16 = at(16); if (at(6) > 2 && r16 > 10 && (!best || r16 > best.r)) best = { sd, e, r: r16 }; }
+        if (!best || (run.length && run.sd !== best.sd)) { flush(); if (!best) continue; }
+        const o = best.sd * (best.e + 3.4), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, n = vrNear(x, z);
+        if (n.i >= 0 && n.dd < 2.2) { flush(); continue; }
+        run.sd = best.sd; run.push([x, unGround(x, z), z]);
+      }
+      flush();
+      // snow fences: staggered rows across the slide path, 24 to 57 m up the slope from the road
+      for (const dc of [3382.9, 4800]) {
+        const i0 = T.idx(sStart + dc), up = (sd) => vrFar(T.px[i0] + T.nx[i0] * sd * 50, T.pz[i0] + T.nz[i0] * sd * 50), sd = up(1) > up(-1) ? 1 : -1;
+        for (let row = 0; row < 4; row++) { const off = 24 + row * 11, d0 = dc - 52 + (row % 2) * 9;
+          for (let seg = 0; seg < 4; seg++) { const pts = [];
+            for (let k = 0; k <= 4; k++) { const i = T.idx(sStart + d0 + seg * 26 + k * 3.5), o = sd * ((sd > 0 ? T.br[i] : T.bl[i]) + off + (RF() - 0.5) * 1.5), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; pts.push([x, unGround(x, z), z]); }
+            const g = scen.get(pts[2][0], pts[2][2]);
+            for (const [x, y, z] of pts) { ouRod(g, [x, y - 0.3, z], [x, y + 2.6, z], 0.09, wood, 4); exclPush(x, z, 2.5); }
+            for (let k = 1; k < pts.length; k++) { const a = pts[k - 1], b = pts[k]; for (let h = 0.7; h < 2.7; h += 0.5) ouRod(g, [a[0], a[1] + h, a[2]], [b[0], b[1] + h, b[2]], 0.06, vary(wood, RF, 0.12), 3); }
+            nFence++; if (nFence === 1) out.marks.snowFence = [pts[0][0], pts[0][2]]; } } }
+      // at each mine: a log cabin fallen in (low log walls, no roof, the roof timbers on the ground), a timber ore bin on legs with its chute
+      for (const M of mines) {
+        const c = Math.cos(M.rot), s = Math.sin(M.rot), logc = [0.31, 0.25, 0.19], bw = [0.37, 0.3, 0.23];
+        const cx = M.x - T.tx[M.i] * 10 + T.nx[M.i] * M.sd * 6, cz = M.z - T.tz[M.i] * 10 + T.nz[M.i] * M.sd * 6, n = vrNear(cx, cz);
+        if (!(n.i >= 0 && n.dd < 4)) { const g = scen.get(cx, cz), y = unGround(cx, cz), W = 4.4, Dp = 3.6;
+          const P = (u, v) => [cx + c * u - s * v, cz + s * u + c * v];
+          for (const [u0, v0, u1, v1] of [[-W / 2, -Dp / 2, W / 2, -Dp / 2], [W / 2, -Dp / 2, W / 2, Dp / 2], [W / 2, Dp / 2, -W / 2, Dp / 2], [-W / 2, Dp / 2, -W / 2, -Dp / 2]]) {
+            const lv = 2 + Math.floor(RF() * 3), [ax, az] = P(u0, v0), [bx2, bz2] = P(u1, v1);
+            for (let k = 0; k < lv; k++) { const yy = y + 0.15 + k * 0.32, f = k === lv - 1 ? 0.45 + RF() * 0.55 : 1; ouRod(g, [ax, yy, az], [ax + (bx2 - ax) * f, yy, az + (bz2 - az) * f], 0.16, vary(logc, RF, 0.1), 4); } }
+          for (let k = 0; k < 3; k++) { const a = RF() * TAU, l = 2 + RF() * 2.5, px = cx + (RF() - 0.5) * 2, pz = cz + (RF() - 0.5) * 2; ouRod(g, [px, y + 0.2, pz], [px + Math.cos(a) * l, y + 0.5 + RF() * 0.6, pz + Math.sin(a) * l], 0.15, logc, 4); }
+          exclPush(cx, cz, 4.5); }
+        const bx = M.x + T.tx[M.i] * 11 - T.nx[M.i] * M.sd * 2, bz = M.z + T.tz[M.i] * 11 - T.nz[M.i] * M.sd * 2, nb = vrNear(bx, bz);
+        if (!(nb.i >= 0 && nb.dd < 3)) { const g = scen.get(bx, bz), y = unGround(bx, bz);
+          for (const [u, v] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { const px = bx + c * u * 1.4 - s * v * 1.1, pz = bz + s * u * 1.4 + c * v * 1.1; ouRod(g, [px, y - 0.2, pz], [px, y + 2.4, pz], 0.12, bw, 4); }
+          box(g, bx, y + 2.3, bz, 3.2, 2.2, 2.6, M.rot, bw, [0.24, 0.2, 0.16]); box(g, bx + c * 1.9, y + 1.6, bz + s * 1.9, 1.2, 0.25, 1.0, M.rot, [0.29, 0.23, 0.18]);
+          exclPush(bx, bz, 3.5); }
       }
     }
     const fmtAlt = (m) => String(Math.round(m)).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' m';
@@ -14690,6 +14868,21 @@ const World = (function () {
       for (let k = 0; k < 6; k++) { const px = padS.x + (R() - 0.5) * 14, pz = padS.z + (R() - 0.5) * 14; if (vrNear(px, pz).dd < 1) continue; person(px, pz, R() * TAU); }
     }
     T.cpS.forEach((s, k) => arch(s, 2 + k, [0.86, 0.86, 0.88], [0.42, 0.2, 0.12]));
+    { const RP = rng(5631);   // the turnouts: the spectators' cars and campers nosed in along the plot, people at its edge looking at the gorge and the race
+      for (const p of pulls) { const hh = T.hd[p.i], c = Math.cos(hh), sn = Math.sin(hh), n = 3 + Math.floor(RP() * 3);
+        for (let k = 0; k < n; k++) { const a = (k - (n - 1) / 2) * 3.1 + (RP() - 0.5) * 0.6, b = p.sd * (1.5 + RP() * 1.2), px = p.x + c * a - sn * b, pz = p.z + sn * a + c * b; if (vrNear(px, pz).dd < 1.2) continue;
+          const g = scen.get(px, pz), col = vary(carCols[Math.floor(RP() * carCols.length)], RP, 0.15), rot = hh + PI / 2 * p.sd + (RP() - 0.5) * 0.2;
+          if (RP() < 0.25) camper(g, px, unGround(px, pz), pz, rot, col); else caCar(g, px, unGround(px, pz), pz, rot, col); }
+        for (let k = 0; k < 5; k++) { const a = (RP() - 0.5) * 14, b = -p.sd * (p.r - 2.5), px = p.x + c * a - sn * b, pz = p.z + sn * a + c * b; if (vrNear(px, pz).dd < 0.8) continue; person(px, pz, hh - PI / 2 * p.sd + (RP() - 0.5)); }
+        out.marks['turnout' + Math.round(p.i * T.ds - sStart)] = [p.x, p.z]; } }
+    { const RP = rng(5641), tc = [[0.92, 0.92, 0.9], [0.72, 0.16, 0.14], [0.16, 0.3, 0.56], [0.24, 0.42, 0.26], [0.94, 0.72, 0.18]];   // the teams' canopies by the start's lay-by and the finish's car park: plain colours, no names
+      const tent = (x, z, rot, col) => { const g = scen.get(x, z), y = unGround(x, z), c = Math.cos(rot), sn = Math.sin(rot), W = 3, H = 2.4;
+        for (const [u, v] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { const px = x + (c * u - sn * v) * W / 2, pz = z + (sn * u + c * v) * W / 2; ouRod(g, [px, unGround(px, pz) - 0.1, pz], [px, y + H, pz], 0.035, [0.75, 0.76, 0.78], 4); }
+        box(g, x, y + H, z, W + 0.1, 0.12, W + 0.1, rot, col, col, true); box(g, x, y + H + 0.12, z, W * 0.7, 0.32, W * 0.7, rot, col, [col[0] * 1.08, col[1] * 1.08, col[2] * 1.08], true);   // (the roof and its peak)
+        for (const v of [-1, 1]) { const px = x - sn * v * W / 2, pz = z + c * v * W / 2; box(g, px, y + H - 0.32, pz, W + 0.1, 0.32, 0.03, rot, [col[0] * 0.85, col[1] * 0.85, col[2] * 0.85]); }   // (the valances)
+        box(g, x, y + 0.7, z, 1.8, 0.05, 0.7, rot, [0.86, 0.86, 0.84]); CR.block(x, z, W + 0.6, W + 0.6, rot); };
+      for (const [pd, n] of [[padS, 2], [padF, 3]]) { const hh = T.hd[pd.i], c = Math.cos(hh), sn = Math.sin(hh);
+        for (let k = 0; k < n; k++) { const a = (k - (n - 1) / 2) * 4.4, b = -(pd.sd || 1) * (pd.r - 2.6), px = pd.x + c * a - sn * b, pz = pd.z + sn * a + c * b; if (vrNear(px, pz).dd < 2) continue; tent(px, pz, hh, tc[Math.floor(RP() * tc.length)]); } } }
     {
       arch(sFin, 1, [0.95, 0.95, 0.95], [0.1, 0.1, 0.12]);
       for (const side of [-1, 1]) for (let s = sFin - 28; s < sFin + 12; s += 7) { const ii0 = T.idx(s); if (dropAt(ii0, side)) continue; const [px, pz, ii] = onSide(s, side, 1.2), py = unGround(px, pz), gg = scen.get(px, pz);
@@ -14785,6 +14978,10 @@ const World = (function () {
           } else if (!onBr[i] && !galAt[i] && !dropAt(i, side) && i % 25 === 0 && i > 2 && i < iE - 2) mkPosts.push([i, side]);
         }
       }
+      for (let i = 0; i < N; i += 8) for (const side of [-1, 1]) {   // the tall snow poles the ploughs steer by, right at the edge of every drop: from above a row of strokes (and their shadows) that marks the brink
+        if (!dropAt(i, side) || galAt[i] || onBr[i]) continue;
+        const o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 0.12), px = T.px[i] + T.nx[i] * o, pz = T.pz[i] + T.nz[i] * o, g = scen.get(px, pz), hp = 2.4 + 0.3 * rpHash(i, 91);
+        box(g, px, T.hy[i] - 0.25, pz, 0.14, hp, 0.14, T.hd[i], [0.3, 0.26, 0.22], null, true); box(g, px, T.hy[i] - 0.25 + hp, pz, 0.16, 0.55, 0.16, T.hd[i], [1.0, 0.55, 0.06], [1.0, 0.75, 0.3], true); nPost++; }
       out.propR = 150; out.propFloor = propFloorTable(null, (i, side) => vp[side > 0 ? 1 : 0][i]);
       const sA = sStart + 30, sB = sFin - 30;
       out.propStats = roadsideProps(out.props, { spots: mkPosts, postEdge: [1.0, 1.4], postCol: () => 0, exits: 0, apexes: 0, wallEdge: [1.2, 1.6], stacks: [5, 6], rows2: 0, maxLat: T.w + 2,
@@ -14815,40 +15012,59 @@ const World = (function () {
        down the cliff into the gorge, a pool of foam at its foot ---- */
     let nCreek = 0;
     {
-      const wg = new Chunks(200, true), shal = [0.4, 0.46, 0.42], deep = [0.2, 0.28, 0.28];
-      for (const cr of def.creeks || []) {
-        const W = cr[0], pts = [];
-        for (let k = 1; k + 3 < cr.length; k += 2) { const ax = cr[k], az = cr[k + 1], bx = cr[k + 2], bz = cr[k + 3], l = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.ceil(l / 3)); for (let m = 0; m < n; m++) pts.push([ax + (bx - ax) * m / n, az + (bz - az) * m / n]); }
-        pts.push([cr[cr.length - 2], cr[cr.length - 1]]);
-        let dist = 0; const hw = W / 2;
-        for (let k = 0; k < pts.length - 1; k++) {
-          const [ax, az] = pts[k], [bx, bz] = pts[k + 1], l = Math.hypot(bx - ax, bz - az) || 1, d0 = dist; dist += l;
-          if (vrDist(ax, az) > 330) continue; const na = vrNear(ax, az), nb = vrNear(bx, bz); if ((na.i >= 0 && na.dd < 3 + hw) || (nb.i >= 0 && nb.dd < 3 + hw)) continue;   // (under the road: a culvert)
-          const nx = -(bz - az) / l, nz = (bx - ax) / l, Pb = (x, z, o) => { const X = x + nx * o, Z = z + nz * o; return [X, unGround(X, Z) + 0.14, Z]; };
-          const st = clamp((unGround(ax, az) - unGround(bx, bz)) / l / 0.12, 0, 1), S2 = 2 * Math.round(st * 10), d1 = d0 + l, g = wg.get(ax, az);
-          g.quadUp(Pb(ax, az, -hw), Pb(ax, az, 0), Pb(bx, bz, 0), Pb(bx, bz, -hw), [shal, deep, deep, shal], [[S2, d0], [S2 + 0.5, d0], [S2 + 0.5, d1], [S2, d1]]);
-          g.quadUp(Pb(ax, az, 0), Pb(ax, az, hw), Pb(bx, bz, hw), Pb(bx, bz, 0), [deep, shal, shal, deep], [[S2 + 0.5, d0], [S2 + 1, d0], [S2 + 1, d1], [S2 + 0.5, d1]]);
-          if (k % 2 === 0) { exclPush(ax, az, hw + 1.2); CR.block(ax, az, l + 0.4, W + 1, Math.atan2(bz - az, bx - ax)); }
+      const wg = new Chunks(200, true), wcr = new Chunks(320, true), shal = [0.5, 0.22, 0.15], deep = [0.28, 0.13, 0.09], white = [2.2, 1.1, 0.85], wet = [0.12, 0.12, 0.11], dry = [0.22, 0.21, 0.19], RC = rng(5581);   // (wcr: the creeks' water, times the blue water map: a dark grey-green, white riffles; wg: the falls' white water)
+      const cob = [[0.5, 0.48, 0.45], [0.44, 0.42, 0.4], [0.56, 0.5, 0.44], [0.38, 0.37, 0.36]];
+      for (const C of UNC ? UNC.L : []) {
+        let dist = 0; const hw = C.hw, W = hw * 2, bw = 0.6 + W * 0.18, n = C.x.length;   // (bw: the wet gravel bank either side)
+        for (let k = 0; k < n - 1; k++) {
+          const ax = C.x[k], az = C.z[k], bx = C.x[k + 1], bz = C.z[k + 1], l = Math.hypot(bx - ax, bz - az) || 1, d0 = dist; dist += l;
+          if (vrDist(ax, az) > 330) continue; const na = vrNear(ax, az), nb = vrNear(bx, bz); if ((na.i >= 0 && na.dd < 7 + hw) || (nb.i >= 0 && nb.dd < 7 + hw)) continue;   // (under the road: a culvert)
+          const nx = -(bz - az) / l, nz = (bx - ax) / l, Pb = (x, z, o, dy) => { const X = x + nx * o, Z = z + nz * o; return [X, unGround(X, Z) + dy, Z]; }, Pw = (x, z, o, yw) => { const X = x + nx * o, Z = z + nz * o; return [X, Math.min(yw, unGround(X, Z) + 0.3), Z]; };
+          const st = clamp((C.y[Math.max(0, k - 2)] - C.y[Math.min(n - 1, k + 3)]) / 15 / 0.14, 0, W >= 6 ? 0.45 : 0.9), g = wcr.get(ax, az), ya = C.y[k], yb2 = C.y[k + 1];
+          const rip = (j) => { const q = st * (0.45 + 0.55 * rpHash(k + j * 7, 77 + n)); return [lerp(shal[0], white[0], q), lerp(shal[1], white[1], q), lerp(shal[2], white[2], q)]; }, mid = [lerp(deep[0], white[0], st * 0.6), lerp(deep[1], white[1], st * 0.6), lerp(deep[2], white[2], st * 0.6)];   // (riffles of white where it runs steep)
+          const uvw = (p) => [p[0] / 9, -p[2] / 9], A0 = Pw(ax, az, -hw, ya), A1 = Pw(ax, az, 0, ya), A2 = Pw(ax, az, hw, ya), B0 = Pw(bx, bz, -hw, yb2), B1 = Pw(bx, bz, 0, yb2), B2 = Pw(bx, bz, hw, yb2);
+          g.quadUp(A0, A1, B1, B0, [rip(0), mid, mid, rip(1)], [uvw(A0), uvw(A1), uvw(B1), uvw(B0)]);
+          g.quadUp(A1, A2, B2, B1, [mid, rip(2), rip(3), mid], [uvw(A1), uvw(A2), uvw(B2), uvw(B1)]);
+          const gd = det.get(ax, az);
+          for (const sd of [-1, 1]) gd.quadUp(Pb(ax, az, sd * (hw - 0.1), 0.05), Pb(ax, az, sd * (hw + bw), 0.06), Pb(bx, bz, sd * (hw + bw), 0.06), Pb(bx, bz, sd * (hw - 0.1), 0.05), [wet, dry, dry, wet]);   // (the wet gravel along it)
+          if (RC() < 0.35 + 0.3 * st) { const sd = RC() < 0.5 ? -1 : 1, o = sd * (hw * (0.4 + RC() * 0.7) + RC() * bw), f = RC(), cx = ax + (bx - ax) * f + nx * o, cz = az + (bz - az) * f + nz * o, r0 = 0.25 + RC() * 0.45 * (W > 3 ? 1.6 : 1);   // (cobbles and boulders in and beside it)
+            rock(gd, cx, unGround(cx, cz) + r0 * 0.15, cz, r0 * 1.2, r0 * 0.8, r0, RC() * TAU, vary(cob[Math.floor(RC() * cob.length)], RC, 0.12), RC, 0.3); }
+          if (k % 2 === 0) { exclPush(ax, az, hw + bw + 0.8); CR.block(ax, az, l + 0.4, W + 2 * bw + 1, Math.atan2(bz - az, bx - ax)); }
           nCreek++;
         }
       }
-      if (UNF) {   // the falls: a curtain of white water from the lip below the bridge straight down the chasm, a pool of foam at its foot
-        const F = UNF, i = F.i, g = wg.get(F.x, F.z), wc = [0.88, 0.92, 0.94], wc2 = [0.76, 0.82, 0.86], tx = F.dz, tz = -F.dx, yb = unGround(F.x + F.dx * 7, F.z + F.dz * 7);
-        let prev = null, dl = 0;
-        for (let k = 0; k <= 14; k++) {
-          const t = k / 14, o = 0.4 + 3.6 * Math.pow(t, 1.5), x = F.x + F.dx * o, z = F.z + F.dz * o, y = F.y + 0.2 - (F.y + 0.2 - yb - 0.3) * t, hwf = 1.4 + 1.6 * t;
-          const L = [x - tx * hwf, y, z - tz * hwf], Rr = [x + tx * hwf, y, z + tz * hwf];
-          if (prev) { const d1 = dl + Math.hypot(x - prev[2], y - prev[3], z - prev[4]); g.quadO(prev[0], prev[1], Rr, L, null, [x - F.dx * 8, y, z - F.dz * 8], [[20, dl], [21, dl], [21, d1], [20, d1]], [wc, wc2, wc2, wc]); dl = d1; }
-          prev = [L, Rr, x, y, z];
-        }
-        { const L = [F.x - tx * 1.4, F.y + 0.2, F.z - tz * 1.4], Rr = [F.x + tx * 1.4, F.y + 0.2, F.z + tz * 1.4], bx = T.px[i], bz = T.pz[i];   // (the creek under the bridge up to the lip)
-          g.quadUp([bx - tx * 1.4, F.y + 0.2, bz - tz * 1.4], [bx + tx * 1.4, F.y + 0.2, bz + tz * 1.4], Rr, L, [wc2, wc2, wc, wc], [[16, 0], [17, 0], [17, 8], [16, 8]]); }
-        const bx = F.x + F.dx * 7, bz = F.z + F.dz * 7; for (let k = 0; k < 10; k++) { const a = k / 10 * TAU, b = (k + 1) / 10 * TAU, r = 4.5;   // the pool of foam at the foot
-          g.quadUp([bx, yb + 0.3, bz], [bx + Math.cos(b) * r * 0.5, yb + 0.3, bz + Math.sin(b) * r * 0.5], [bx + Math.cos(b) * r, unGround(bx + Math.cos(b) * r, bz + Math.sin(b) * r) + 0.25, bz + Math.sin(b) * r], [bx + Math.cos(a) * r, unGround(bx + Math.cos(a) * r, bz + Math.sin(a) * r) + 0.25, bz + Math.sin(a) * r], [wc, wc, wc2, wc2], [[20, 0], [20.5, 0], [21, 2], [21, 2]]); }
+      if (UNF) {   // the falls: a curtain of white water from the lip below the bridge down the chasm (bulging out, so the high cameras see its face), a pool of
+        // foam at its foot, the white run-out down to the river, a cloud of spray over the pool
+        const F = UNF, i = F.i, g = wg.get(F.x, F.z), wc = [0.9, 0.93, 0.95], wc2 = [0.62, 0.68, 0.72], tx = F.dz, tz = -F.dx, bxp = F.x + F.dx * 6, bzp = F.z + F.dz * 6, yb = unGround(bxp, bzp);
+        const row = (t) => { const o = 0.4 + 2.6 * Math.pow(t, 1.5), cx = F.x + F.dx * o, cz = F.z + F.dz * o, y = F.y + 0.2 - (F.y + 0.2 - yb - 0.3) * t, hw = 1.0 + 1.4 * t, P = [];
+          for (let j = 0; j <= 4; j++) { const ph = (j / 4 - 0.5) * 1.7, u = Math.sin(ph) * hw, v = (Math.cos(ph) - 1) * hw * 0.55; P.push([cx + tx * u + F.dx * v, y, cz + tz * u + F.dz * v]); } return { P, cx, cz, y }; };
+        let prev = row(0), dl = 0;
+        for (let k = 1; k <= 14; k++) { const cur = row(k / 14), d1 = dl + Math.hypot(cur.cx - prev.cx, cur.y - prev.y, cur.cz - prev.cz);
+          for (let j = 0; j < 4; j++) g.quadO(prev.P[j], prev.P[j + 1], cur.P[j + 1], cur.P[j], null, [cur.cx - F.dx * 6, cur.y, cur.cz - F.dz * 6], [[20 + j / 4, dl], [20.25 + j / 4, dl], [20.25 + j / 4, d1], [20 + j / 4, d1]], j === 0 || j === 3 ? [wc2, wc, wc, wc2] : [wc, wc, wc, wc]);
+          prev = cur; dl = d1; }
+        { const L = [F.x - tx * 1.6, F.y + 0.2, F.z - tz * 1.6], Rr = [F.x + tx * 1.6, F.y + 0.2, F.z + tz * 1.6], bx = T.px[i], bz = T.pz[i];   // (the creek under the bridge up to the lip)
+          g.quadUp([bx - tx * 1.6, F.y + 0.2, bz - tz * 1.6], [bx + tx * 1.6, F.y + 0.2, bz + tz * 1.6], Rr, L, [wc2, wc2, wc, wc], [[16, 0], [17, 0], [17, 8], [16, 8]]); }
+        for (let k = 0; k < 12; k++) { const a = k / 12 * TAU, b = (k + 1) / 12 * TAU, r = 3.6;   // the pool of foam at the foot
+          g.quadUp([bxp, yb + 0.3, bzp], [bxp + Math.cos(b) * r * 0.5, yb + 0.3, bzp + Math.sin(b) * r * 0.5], [bxp + Math.cos(b) * r, unGround(bxp + Math.cos(b) * r, bzp + Math.sin(b) * r) + 0.25, bzp + Math.sin(b) * r], [bxp + Math.cos(a) * r, unGround(bxp + Math.cos(a) * r, bzp + Math.sin(a) * r) + 0.25, bzp + Math.sin(a) * r], [wc, wc, wc2, wc2], [[20, 0], [20.5, 0], [21, 2], [21, 2]]); }
+        { let best = null; for (const cr of def.creeks || []) { if (cr[0] < 6) continue; for (let k = 1; k + 1 < cr.length; k += 2) { const d = Math.hypot(cr[k] - bxp, cr[k + 1] - bzp); if (d > 20 && (!best || d < best.d)) best = { d, x: cr[k], z: cr[k + 1] }; } }   // the run-out: white water down to the river
+          if (best && best.d < 170) { const n = Math.ceil(best.d / 3), ux = (best.x - bxp) / best.d, uz = (best.z - bzp) / best.d, nx = -uz, nz = ux; let d0 = 0;
+            for (let k = 0; k < n; k++) { const f0 = k / n, f1 = (k + 1) / n, ax = bxp + (best.x - bxp) * f0 + nx * Math.sin(k * 0.9) * 1.2, az = bzp + (best.z - bzp) * f0 + nz * Math.sin(k * 0.9) * 1.2, cx = bxp + (best.x - bxp) * f1 + nx * Math.sin((k + 1) * 0.9) * 1.2, cz = bzp + (best.z - bzp) * f1 + nz * Math.sin((k + 1) * 0.9) * 1.2;
+              if (k * 3 < 4) continue; const hw = 1.5, Q = (x, z, o) => [x + nx * o, unGround(x + nx * o, z + nz * o) + 0.16, z + nz * o], st = clamp((unGround(ax, az) - unGround(cx, cz)) / 3 / 0.12, 0.4, 1), S2 = 2 * Math.round(st * 10), d1 = d0 + 3, gg = wg.get(ax, az);
+              gg.quadUp(Q(ax, az, -hw), Q(ax, az, hw), Q(cx, cz, hw), Q(cx, cz, -hw), [shal, shal, shal, shal], [[S2, d0], [S2 + 1, d0], [S2 + 1, d1], [S2, d1]]); d0 = d1;
+              if (k % 2 === 0) exclPush(ax, az, hw + 1.5); } } }
+        { const RM = rng(5591), pts = [];   // the spray: soft white clouds over the pool and along the fall (points with a soft round sprite: one draw)
+          for (let k = 0; k < 30; k++) { const t = k < 18 ? 0.85 + RM() * 0.15 : RM() * 0.85, o = 0.4 + 2.6 * Math.pow(t, 1.5) + (RM() - 0.2) * (k < 18 ? 5 : 2), x = F.x + F.dx * o + tx * (RM() - 0.5) * (k < 18 ? 6 : 3), z = F.z + F.dz * o + tz * (RM() - 0.5) * (k < 18 ? 6 : 3);
+            pts.push(x, k < 18 ? yb + 0.6 + RM() * 6 : F.y - (F.y - yb) * t, z); }
+          const c = document.createElement('canvas'); c.width = c.height = 64; const x2 = c.getContext('2d'), gr = x2.createRadialGradient(32, 32, 0, 32, 32, 32);
+          gr.addColorStop(0, 'rgba(255,255,255,0.9)'); gr.addColorStop(0.45, 'rgba(255,255,255,0.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x2.fillStyle = gr; x2.fillRect(0, 0, 64, 64);
+          const st = new THREE.CanvasTexture(c); out.ownTex.push(st);
+          const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3)); pg.computeBoundingSphere();
+          const pm = new THREE.Points(pg, new THREE.PointsMaterial({ size: 7, map: st, color: 0xf4f8fb, transparent: true, opacity: 0.55, depthWrite: false, sizeAttenuation: true })); pm.matrixAutoUpdate = false; pm.renderOrder = 2; root.add(pm); }
         exclPush(F.x + F.dx * 8, F.z + F.dz * 8, 12);
         out.marks['Slap Bear Creek'] = [F.x, F.z]; out.fallsH = F.y - yb;
       }
       out.dyn.brook = { uT: { value: 0 } }; wg.addTo(root, brookMat(out.dyn.brook), false, true);
+      wcr.addTo(root, new THREE.MeshPhongMaterial({ map: tex.water, vertexColors: true, shininess: 60, specular: 0x2a3a44 }), false, true); out.dyn.water = tex.water;   // (the water map drifts: World.update)
     }
 
     /* ---- spectators: the start and the finish, the checkpoints, the Bear Creek Falls overlook and the Alpine Loop junction, a few groups along the road
@@ -14867,46 +15083,91 @@ const World = (function () {
     /* ---- the forest (instanced per 96 m chunk): Engelmann spruce and subalpine fir (tall and narrow), groves of aspen on the gentler slopes (white trunks,
        green in summer, gold and orange in autumn), willow scrub; lone conifers on the ledges of the cliffs; none on the sheerest faces, the road or
        the water; under the snow the spruces white ---- */
-    const VRS0 = VRS; VRS = UNS;   // (Vršič's tree shapes, coloured for this world's season)
     const tMatT = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
-    const tk = [0, 4, 3, 5].map(k => new IChunks(vrTreeGeo(k), tMatT, 96));
-    VRS = VRS0;
-    let nTrees = 0;
+    const tk = [0, 1, 2, 4].map(k => new IChunks(unTreeGeo(k), tMatT, k === 1 ? 128 : 96));   // (0 / 1 spruce near / far from the road, 2 aspen, 3 spruce under snow; the far spruce in bigger chunks: fewer draws)
+    let nTrees = 0, nSnag = 0, nShrub = 0, nLog = 0;
     {
-      const G = P.G, Lt = VRC * VRT, maxT = Math.round(90000 * dens), RT = rng(5561), SP = 5.2 / Math.sqrt(dens), au = UNS !== 'summer';
+      const G = P.G, Lt = VRC * VRT, maxT = Math.round(70000 * dens), RT = rng(5561), SP = 5.2 / Math.sqrt(dens), au = UNS !== 'summer', NEAR = 46, FAR = 125;
+      const shrubC = au ? [[0.78, 0.6, 0.2], [0.66, 0.36, 0.14], [0.5, 0.42, 0.2], [0.82, 0.48, 0.16]] : [[0.3, 0.42, 0.17], [0.25, 0.36, 0.15], [0.36, 0.44, 0.2], [0.28, 0.38, 0.22]];
+      const logC = [[0.5, 0.45, 0.4], [0.42, 0.36, 0.3], [0.56, 0.52, 0.47]];
       grid: for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
         if (!G.on[tj * G.ntx + ti]) continue;
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
-          const hd = vrDist(x, z); if (hd > 250) continue;
-          if (hd > 90 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // (farther out every other spot)
-          const c = vrLC(x, z), p = c === 1 ? 0.9 : c === 2 ? 0.45 : c === 0 ? 0.1 + 0.25 * sstep(0.6, 0.8, P.n5(x * 1.3 + 40, z * 1.3)) : c === 4 ? 0.07 + 0.2 * sstep(0.5, 0.75, P.n5(x * 1.7, z * 1.7 + 90)) : c === 3 ? 0.04 : 0;
+          const hd = vrDist(x, z); if (hd > FAR) continue;   // (beyond ~125 m from the road neither camera ever looks)
+          const c = vrLC(x, z), road = sstep(34, 6, hd), p = c === 1 ? 0.9 : c === 2 ? 0.45 : c === 0 ? 0.12 + 0.25 * sstep(0.6, 0.8, P.n5(x * 1.3 + 40, z * 1.3)) : c === 4 ? 0.1 + 0.22 * sstep(0.5, 0.75, P.n5(x * 1.7, z * 1.7 + 90)) + 0.16 * road : c === 3 ? 0.04 : 0;   // (WorldCover's bare strip along the road itself: more trees in it than on the real scree)
           if (r1 > p) continue;
           if (vrWater(x, z).e > -4) continue;
           const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < 1.8) continue; if (nn.i >= 0 && nn.dd < 5 && r2 < 0.2) continue;
           if (nn.i >= 0 && nn.dd < 11 && UNW && UNW[nn.lat > 0 ? 1 : 0][nn.i] > 0.3) continue;   // (the edge of a drop: nothing but the cliff right below it)
           if (excluded(x, z)) continue;
           const y = unGround(x, z), A = y + base, sl = unSlope(x, z); if (sl > 1.45) continue;
-          const asp = sstep(0.5, 0.68, P.n7(x * 0.8 + 300, z * 0.8)) * (1 - sstep(3050, 3250, A)) * (1 - sstep(0.75, 1.05, sl));   // (aspen groves: patches on the gentler, lower slopes)
-          let sp = c === 2 ? 2 : r3 < asp * 0.92 ? 1 : 0;
-          const shrink = lerp(1, 0.6, sstep(3200, 3500, A)) * (sl > 0.95 ? 0.75 : 1), far = hd > 90 ? 1.15 : 1;
-          let hgt, wid, col;
-          if (sp === 0) { hgt = (15 + r4 * 13) * shrink; wid = hgt * (r2 < 0.45 ? 0.3 + r3 * 0.06 : 0.4 + r3 * 0.1); col = r2 < 0.45 ? [0.86 + r3 * 0.12, 0.95 + r4 * 0.1, 1.02 + r3 * 0.12] : [0.95 + r2 * 0.15, 0.95 + r4 * 0.12, 0.88 + r3 * 0.12]; }   // (the firs narrower and bluer)
-          else if (sp === 1) { hgt = (11 + r4 * 8) * shrink; wid = hgt * (0.38 + r2 * 0.12); col = au ? (r2 < 0.12 ? [0.82, 0.98, 0.72] : r2 < 0.82 ? [1.06, 1.0, 0.86] : [1.1, 0.74, 0.5]) : (r2 < 0.3 ? [0.92, 1.04, 0.86] : [1, 1, 1]); }   // (autumn: gold, a few still green, some orange)
-          else { hgt = 1.4 + r4 * 1.6; wid = 2.4 + r2 * 2.6; col = au ? [1.25, 0.95, 0.7] : [0.95 + r3 * 0.15, 1.02, 0.9]; }
-          const kind = sp === 0 && unSnow(x, z, A, 1 / Math.sqrt(1 + sl * sl), 0) > 0.4 ? 3 : sp;
-          tk[kind].add(x, y - 0.15, z, r1 * 70, wid * far, hgt * far, col);
+          const asp = sstep(0.5, 0.66, P.n7(x * 0.8 + 300, z * 0.8)) * (1 - sstep(3050, 3250, A)) * (1 - sstep(0.75, 1.05, sl));   // (aspen groves: patches on the gentler, lower slopes)
+          const near = hd < NEAR;
+          if (c === 2 || (c === 0 && r3 < 0.18) || (c === 4 && r3 < 0.1 && hd < 40)) {   // willow and currant scrub, a lone bush on the meadows and the scree (merged: no draw of their own)
+            if (hd < 70) { const sz = 0.8 + r4 * 1.4, g = scen.get(x, z); ROCK_SMOOTH = true; puff(g, x, y + sz * 0.32, z, sz, 0.62, vary(shrubC[Math.floor(r2 * shrubC.length)], RT, 0.16), RT, 0.35, 0.62, 1.12); ROCK_SMOOTH = false; nShrub++; }
+            continue; }
+          const sp = r3 < asp * 0.95 ? 1 : 0, shrink = lerp(1, 0.6, sstep(3200, 3500, A)) * (sl > 0.95 ? 0.75 : 1);
+          let hgt, wid, col, kind;
+          if (sp === 0) {
+            const snag = r4 < 0.07 + 0.05 * sstep(2700, 2900, A);   // (standing dead spruce: the beetle's grey trees among the green)
+            hgt = (14 + r4 * 13) * shrink; wid = hgt * (r2 < 0.45 ? 0.3 + r3 * 0.06 : 0.4 + r3 * 0.1);
+            if (snag && hd < 95) { unSnag(scen.get(x, z), x, y, z, hgt * 0.9, wid * 0.55, r1 * 9, r2 < 0.75 ? 0 : 1, RT); nSnag++; continue; }   // (merged: grey, a few still red-brown)
+            col = r2 < 0.45 ? [0.86 + r3 * 0.12, 0.95 + r4 * 0.1, 1.02 + r3 * 0.12] : [0.95 + r2 * 0.15, 0.95 + r4 * 0.12, 0.88 + r3 * 0.12];   // (the firs narrower and bluer)
+            kind = unSnow(x, z, A, 1 / Math.sqrt(1 + sl * sl), 0) > 0.4 ? 3 : near ? 0 : 1;
+          } else {
+            hgt = (10 + r4 * 7) * shrink; wid = hgt * (0.46 + r2 * 0.16);
+            col = au ? (r2 < 0.1 ? [0.84, 1.0, 0.76] : r2 < 0.8 ? [1.04, 1.0, 0.9] : [1.06, 0.72, 0.56]) : (r2 < 0.3 ? [0.92, 1.05, 0.86] : r2 < 0.85 ? [1, 1, 1] : [1.06, 1.06, 0.9]);   // (autumn: gold, a few still green, some orange)
+            kind = 2;
+          }
+          tk[kind].add(x, y - 0.15, z, r1 * 70, wid, hgt, col);
+          if (sp === 0 && c === 1 && r2 > 0.86 && hd > 6 && hd < 80 && sl < 0.9) {   // a fallen trunk on the forest floor, along the slope's contour (merged)
+            const gx = unGround(x + 2, z) - unGround(x - 2, z), gz = unGround(x, z + 2) - unGround(x, z - 2), a = Math.atan2(gx, -gz) + (r3 - 0.5) * 0.6, L = 5 + r4 * 6, ox = Math.cos(a) * L / 2, oz = Math.sin(a) * L / 2;
+            const lx = x + Math.sin(r1 * 9) * 3, lz = z + Math.cos(r1 * 9) * 3, ya = unGround(lx - ox, lz - oz), yb = unGround(lx + ox, lz + oz), n2 = vrNear(lx, lz);
+            if (!(n2.i >= 0 && n2.dd < 3) && !excluded(lx, lz)) { ouRod(scen.get(lx, lz), [lx - ox, ya + 0.22, lz - oz], [lx + ox, yb + 0.18, lz + oz], 0.2 + r2 * 0.08, logC[Math.floor(r4 * 3)], 5); nLog++; } }
           if (++nTrees >= maxT) break grid;
         }
       }
     }
     for (const t of tk) t.addTo(root, true);
 
+    /* ---- the ground cover (instanced per 64 m chunk, no shadow pass): tufts of grass bending in the wind on the meadows, along the verges and in the
+       clearings, green in summer and straw in autumn; in summer the wildflowers of the high meadows in patches (purple lupine, red paintbrush, yellow
+       and white daisies) ---- */
+    let nTufts = 0, nFlowers = 0;
+    {
+      const wMat = tuftWindMat(out.dyn.wind || (out.dyn.wind = { value: 0 })), wB = wMat.onBeforeCompile; ouCutMat(wMat, cut);
+      { const cB = wMat.onBeforeCompile; wMat.onBeforeCompile = (sh) => { wB(sh); cB(sh); }; wMat.customProgramCacheKey = () => 'tuftWindCut'; wMat.side = THREE.FrontSide; }
+      const tu = new IChunks(tuftGeo(false), wMat, 128), fl = UNS === 'summer' ? new IChunks(unFlowerGeo(), ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut), 128) : null;
+      const G = P.G, Lt = VRC * VRT, RG = rng(5601), SPg = 2.5 / Math.sqrt(dens), au = UNS !== 'summer', maxT = Math.round(30000 * dens);
+      const flC = [[0.55, 0.36, 0.86], [0.5, 0.32, 0.8], [0.9, 0.22, 0.16], [0.98, 0.82, 0.22], [0.97, 0.96, 0.92]];
+      grid: for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
+        if (!G.on[tj * G.ntx + ti]) continue;
+        const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
+        for (let zz = za; zz < za + Lt - 0.01; zz += SPg) for (let xx = xa; xx < xa + Lt - 0.01; xx += SPg) {
+          const x = xx + (RG() - 0.5) * SPg, z = zz + (RG() - 0.5) * SPg, r1 = RG(), r2 = RG(), r3 = RG();
+          const hd = vrDist(x, z); if (hd > 72) continue;
+          const c = vrLC(x, z), patch = P.n5(x * 2.3 + 17, z * 2.3), p = c === 0 ? 0.42 + 0.3 * patch : c === 4 ? (hd < 22 ? 0.2 : 0.06) * (0.5 + patch) : c === 1 ? 0.06 : c === 2 ? 0.3 : 0;
+          if (r1 > p) continue;
+          const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < 0.7) continue;
+          if (excluded(x, z) || vrWater(x, z).e > -2) continue;
+          const sl = unSlope(x, z); if (sl > 0.95) continue;
+          const y = unGround(x, z); if (unSnow(x, z, y + base, 1 / Math.sqrt(1 + sl * sl), 0) > 0.3) continue;
+          if (fl && c === 0 && patch > 0.55 && r2 < 0.22) { const fc = flC[Math.floor(r3 * flC.length)]; fl.add(x, y - 0.02, z, r1 * TAU, 0.8 + r2 * 2, 0.7 + r3 * 0.5, fc); nFlowers++; continue; }
+          const tint = au ? [0.62 + r2 * 0.08, 0.53 + r3 * 0.06, 0.3 + r2 * 0.05] : [0.27 + r2 * 0.08, 0.42 + r3 * 0.08, 0.15 + r2 * 0.05];   // (the clump's colours times the meadow's: green, straw in autumn)
+          tu.add(x, y - 0.05, z, r2 * TAU, 1.0 + r3 * 1.1, 0.45 + r1 * 0.45, tint);
+          if (++nTufts >= maxT) break grid;
+        }
+      }
+      tu.addTo(root, false); if (fl) fl.addTo(root, false);
+      for (const m of root.children) if (m.isInstancedMesh && m.instanceColor && m.material === wMat) m.instanceColor.ground = true;   // (the seasons' code: the tufts are grass)
+    }
+
     /* ---- the rocks: boulders and scree at the foot of the cuts (grey, rust, red), crags where the slope rises steep beside the road and on the cliffs
        below the drops, loose stones along the verges ---- */
     {
-      const RV = rng(5571), rockC = [[0.5, 0.47, 0.44], [0.56, 0.42, 0.32], [0.46, 0.44, 0.42], [0.6, 0.52, 0.44], [0.52, 0.36, 0.28], [0.4, 0.39, 0.38]];
+      const RV = rng(5571), rockC = [[0.44, 0.42, 0.4], [0.5, 0.4, 0.32], [0.4, 0.39, 0.38], [0.47, 0.44, 0.41], [0.46, 0.35, 0.29], [0.35, 0.34, 0.34]];   // (grey quartzite and slate, rusty ones)
       for (let s = 10; s < T.len - 10; s += 5) for (const side of [-1, 1]) {   // at the foot of the cuts and out on the scree
         const i = T.idx(s); if (galAt[i] || RV() > 0.34) continue;
         const o = 1.4 + Math.pow(RV(), 1.5) * 36, [x, z] = onSide(s, side, o), sz = 0.35 + RV() * 1.2; if (vrNear(x, z).dd < sz + 0.5 || excluded(x, z) || vrWater(x, z).e > -3) continue;
@@ -14918,10 +15179,10 @@ const World = (function () {
         const i = T.idx(s), dr = dropAt(i, side), [x, z] = onSide(s, side, (dr ? 3 : 7) + RV() * 60); if (excluded(x, z) || vrNear(x, z).dd < (dr ? 2.5 : 5)) continue;
         const sl = unSlope(x, z); if (sl < 0.75) continue;
         const y = unGround(x, z), g = scen.get(x, z), n = 2 + Math.floor(RV() * 3), b0 = vary(rockC[Math.floor(RV() * rockC.length)], RV, 0.08);
-        for (let q = 0; q < n; q++) { const r0 = 1.8 + RV() * 3.6, qx = x + (RV() - 0.5) * 7, qz = z + (RV() - 0.5) * 7, qy = unGround(qx, qz); if (vrNear(qx, qz).dd < r0 + 0.8) continue;
-          rock(g, qx, qy + r0 * 0.3, qz, r0, r0 * (0.9 + RV() * 0.9), r0 * (0.7 + RV() * 0.4), RV() * TAU, vary(b0, RV, 0.08), RV, 0.35); }
+        for (let q = 0; q < n; q++) { const r0 = 1.4 + RV() * 2.6, qx = x + (RV() - 0.5) * 7, qz = z + (RV() - 0.5) * 7, qy = unGround(qx, qz); if (vrNear(qx, qz).dd < r0 + 0.8) continue;
+          rock(g, qx, qy + r0 * 0.12, qz, r0, r0 * (0.8 + RV() * 0.8), r0 * (0.7 + RV() * 0.4), RV() * TAU, vary(b0, RV, 0.08), RV, 0.4); }   // (sunk into the slope: outcrops rather than loose blocks)
       }
-      const pk = new IChunks(caPlantGeo(4), ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut), 64), RS = rng(5577), maxS = Math.round(16000 * dens); let nS = 0;   // the loose stones
+      const pk = new IChunks(unStoneGeo(), ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut), 96), RS = rng(5577), maxS = Math.round(13000 * dens); let nS = 0;   // the loose stones
       edge: for (let s = 12; s < T.len - 12; s += 1.1 / dens) for (const side of [-1, 1]) {
         if (galAt[T.idx(s)]) continue;
         const o = 1.5 + Math.pow(RS(), 2) * 30, [x, z] = onSide(s, side, o), r1 = RS(), r2 = RS(), r3 = RS();
@@ -14930,17 +15191,66 @@ const World = (function () {
         const k = 0.8 + r3 * 0.3, sc = 0.8 + r1 * 1.1 - 0.006 * o; pk.add(x, y0 - 0.04, z, r2 * TAU, sc, sc * (0.8 + r3 * 0.5), [k, k * 0.96, k * 0.92]);
         if (++nS >= maxS) break edge;
       }
+      { const G = P.G, Lt = VRC * VRT, SPt = 3.4 / Math.sqrt(dens), maxT2 = Math.round(11000 * dens); let nT = 0;   // the talus: the bare rocky slopes (WorldCover's rock) strewn with stones, thickest on the steeper ones
+        talus: for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
+          if (!G.on[tj * G.ntx + ti]) continue; const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
+          for (let zz = za; zz < za + Lt - 0.01; zz += SPt) for (let xx = xa; xx < xa + Lt - 0.01; xx += SPt) {
+            const x = xx + (RS() - 0.5) * SPt, z = zz + (RS() - 0.5) * SPt, r1 = RS(), r2 = RS(), r3 = RS(); if (vrDist(x, z) > 75 || vrLC(x, z) !== 4) continue;
+            const sl = unSlope(x, z); if (r1 > 0.25 + 0.5 * sstep(0.35, 0.9, sl) || sl > 1.25) continue;
+            const nn = vrNear(x, z); if ((nn.i >= 0 && nn.dd < 1.5) || excluded(x, z)) continue;
+            const y0 = unGround(x, z), k = 0.78 + r3 * 0.32, sc = 0.9 + r2 * 1.6; pk.add(x, y0 - 0.06, z, r2 * TAU, sc, sc * (0.7 + r3 * 0.5), [k * 1.02, k * 0.95, k * 0.9]);
+            if (++nT >= maxT2) break talus; } } }
       pk.addTo(root, false);
+      for (let s = sStart + 40; s < sFin - 40; s += 9) for (const side of [-1, 1]) {   // a few rocks fallen from the cut onto the mountain side's shoulder (beyond the edge line, clear of the lane)
+        const i = T.idx(s); if (dropAt(i, side) || galAt[i] || onBr[i] || RV() > 0.08) continue;
+        const bar = side > 0 ? T.br[i] : T.bl[i]; if (bar < w + 1.6) continue;
+        const [x, z] = onSide(s, side, -(0.4 + RV() * (bar - w - 1.2))), r0 = 0.18 + RV() * 0.28; if (excluded(x, z)) continue;
+        rock(scen.get(x, z), x, T.hy[i] + r0 * 0.2, z, r0 * 1.2, r0 * 0.8, r0, RV() * TAU, vary(rockC[Math.floor(RV() * rockC.length)], RV, 0.1), RV, 0.35); }
+    }
+
+    /* ---- wildlife: bands of bighorn sheep on the rocky slopes above and below the road, mountain goats on the cliffs, mule deer at the forest's edge, elk
+       grazing on the big meadow (merged into the scenery; placed on spots the cameras look at: 10-45 m from the road) ---- */
+    let nBeast = 0;
+    {
+      const RA = rng(5651);
+      const find = (sa, sb, sl0, sl1, lc) => { let best = null;
+        for (let s = sa; s <= sb; s += 6) for (const side of [-1, 1]) for (const e of [12, 18, 26, 36]) { const [x, z, i] = onSide(sStart + s, side, e), n = vrNear(x, z); if (n.i >= 0 && n.dd < 7) continue;
+          if (excluded(x, z) || vrWater(x, z).e > -3 || (UNC && unCreekAt(x, z).d < unCreekAt(x, z).hw + 3)) continue;
+          const sl = unSlope(x, z), c = vrLC(x, z); if (sl < sl0 || sl > sl1 || (lc != null && c !== lc)) continue;
+          const sc = -Math.abs(sl - (sl0 + sl1) / 2) - e * 0.01 + RA() * 0.15; if (!best || sc > best.sc) best = { x, z, i, sc }; }
+        return best; };
+      const band = (sa, sb, kind, n, sl0, sl1, lc) => { const b = find(sa, sb, sl0, sl1, lc); if (!b) return;
+        for (let k = 0, tries = 0; k < n && tries < 60; tries++) { const x = b.x + (RA() - 0.5) * 12, z = b.z + (RA() - 0.5) * 12, nn = vrNear(x, z); if ((nn.i >= 0 && nn.dd < 5) || excluded(x, z)) continue;
+          const sl = unSlope(x, z); if (sl > sl1 + 0.15) continue;
+          const gx = unGround(x + 1, z) - unGround(x - 1, z), gz = unGround(x, z + 1) - unGround(x, z - 1), h = (Math.hypot(gx, gz) > 0.1 ? Math.atan2(gx, -gz) + (RA() < 0.5 ? PI : 0) : RA() * TAU) + (RA() - 0.5) * 0.9;   // (across the slope)
+          const male = k === 0, sc = (kind === 3 ? 1.05 : 1.15) * (male ? 1.08 : k > n - 2 && RA() < 0.4 ? 0.65 : 0.92 + RA() * 0.12);
+          unBeast(scen.get(x, z), x, unGround(x, z) - 0.04, z, h, kind, sc, RA, male, RA() < 0.55); nBeast++; }
+        exclPush(b.x, b.z, 9); out.marks['beast' + kind + '@' + sa] = [b.x, b.z]; };
+      band(1350, 1700, 0, 5, 0.45, 1.0, null);   // bighorn sheep
+      band(3150, 3500, 0, 6, 0.45, 1.0, null);
+      band(4050, 4400, 0, 4, 0.45, 1.0, null);
+      band(2250, 2550, 1, 3, 0.8, 1.35, 4);    // mountain goats on the rock
+      band(3800, 4000, 1, 2, 0.8, 1.35, 4);
+      band(450, 900, 2, 3, 0.05, 0.45, null);  // mule deer
+      band(2700, 3000, 2, 2, 0.05, 0.45, null);
+      band(1500, 2100, 3, 6, 0.0, 0.35, 0);    // elk on the meadow
     }
 
     /* ---- finish the meshes ---- */
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
+    {   // ravens soaring over the gorge (one instanced mesh; Los Caracoles' condors' flight: caCondors poses them, here through stand-ins that write the instances)
+      const im = new THREE.InstancedMesh(unRavenGeo(), new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), 4), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), sv = new THREE.Vector3(1.15, 1.15, 1.15), i0 = T.idx(sStart);
+      im.castShadow = true; im.frustumCulled = false; im.matrixAutoUpdate = false; root.add(im);
+      const L = [[24, 0.22, 24, 20, -14, 0], [31, -0.17, 30, -24, 18, 2.1], [19, 0.27, 20, 6, 30, 4.2], [36, 0.14, 34, 30, 34, 1.0]].map(([r, sp, hh, ox, oz, ph], k) => { const pv = new THREE.Vector3();
+        return { r, sp, h: hh, ox, oz, ph, bank: 0.42, m: { position: { set: (x, y, z) => pv.set(x, y, z) }, rotation: { set: (a, b, c, o) => { e.set(a, b, c, o); q.setFromEuler(e); m4.compose(pv, q, sv); im.setMatrixAt(k, m4); im.instanceMatrix.needsUpdate = true; } } } }; });
+      out.dyn.condors = { L, x0: T.px[i0], z0: T.pz[i0], y0: T.hy[i0], ax: T.px[i0], az: T.pz[i0], ay: T.hy[i0], t: null };
+      caCondors(out.dyn.condors, 0, null); }
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: unAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: unAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);
     let dropM = 0; if (T.dropAt) for (let i = 0; i < N; i++) dropM += (T.dropAt[0][i] | T.dropAt[1][i]) * T.ds;
-    out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, mines: nMine, posts: nPost, creeks: nCreek, galleries: GAL.length, drops: Math.round(dropM) };   // (read by the tests)
+    out.stats = { trees: nTrees, nets: nNet, snowFences: nFence, snags: nSnag, shrubs: nShrub, logs: nLog, tufts: nTufts, flowers: nFlowers, animals: nBeast, turnouts: pulls.length, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, mines: nMine, posts: nPost, creeks: nCreek, galleries: GAL.length, drops: Math.round(dropM) };   // (read by the tests)
     return out;
   }
 

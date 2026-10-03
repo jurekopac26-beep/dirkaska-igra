@@ -133,11 +133,11 @@
   "jsMs": 0.76
  },
  "uncompahgre": {
-  "calls": 194,
-  "maxCalls": 228,
-  "kverts": 711,
-  "maxKverts": 908,
-  "jsMs": 0.96
+  "calls": 208,
+  "maxCalls": 247,
+  "kverts": 641,
+  "maxKverts": 745,
+  "jsMs": 1.17
  },
  "sani": {
   "calls": 92,
