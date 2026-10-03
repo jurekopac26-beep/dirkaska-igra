@@ -16412,7 +16412,10 @@ const World = (function () {
   }
   function btTileOn(ti, tj) {   // 0: none, 1: full tile (5 m cells), 2: coarse outer ring (10 m cells, in the haze); wider round the vista (the view down into the valley)
     const G = VR.G, L = VRC * VRT, x = G.x0 + (ti + 0.5) * L, z = G.z0 + (tj + 0.5) * L, d = vrDist(x, z), v = VR.vista, dv = v ? Math.hypot(x - v[0], z - v[1]) : 1e9;
-    return d < 300 || dv < 200 ? 1 : d < 440 || dv < 650 ? 2 : 0;
+    if (d < 300 || dv < 200) return 1;
+    if (d < 440 || dv < 650) return 2;
+    if (d < 680) { const n = vrNear(x, z), i = n.i >= 0 ? n.i : T.nearestIdx(x, z); if (vrDem(x, z) < T.hy[i] - 90) return 2; }   // (the view down into the Rock Creek valley: far below the road, the coarse ring goes on)
+    return 0;
   }
   function btTileGeo(ti, tj, st) {   // one 100 m terrain tile (every st-th grid vertex), as caTileGeo, coloured by btCol
     const G = VR.G, m = VRT / st, n = m + 1, pos = new Float32Array(n * n * 3), nor = new Float32Array(n * n * 3), col = new Float32Array(n * n * 3), uv = new Float32Array(n * n * 2), stp = new Float32Array(n * n), i0 = ti * VRT, j0 = tj * VRT;
@@ -16621,9 +16624,20 @@ const World = (function () {
     const tMat = pkGroundMat(), gMat = new THREE.MeshLambertMaterial({ map: vrGritTex(), vertexColors: true });
     {
       const G = P.G, grp = new THREE.Group(); root.add(grp); out.ground = grp;
+      const far = new Map();   // (the coarse tiles merged 3 x 3 into one mesh: fewer draw calls for the haze ring)
       for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
         const on = btTileOn(ti, tj); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; else nFar++;
+        if (on === 2) { const k = Math.floor(ti / 3) + ',' + Math.floor(tj / 3); let L = far.get(k); if (!L) far.set(k, L = []); L.push(btTileGeo(ti, tj, on)); continue; }
         const m = new THREE.Mesh(btTileGeo(ti, tj, on), tMat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m);
+      }
+      for (const L of far.values()) {
+        const names = ['position', 'normal', 'color', 'uv', 'steep'], A = {}, I = []; let nv = 0;
+        for (const n of names) A[n] = [];
+        for (const g of L) { for (const n of names) A[n].push(g.attributes[n].array); const ix = g.index.array; for (let q = 0; q < ix.length; q++) I.push(ix[q] + nv); nv += g.attributes.position.count; g.dispose(); }
+        const g = new THREE.BufferGeometry(), cat = (arrs) => { let n = 0; for (const a of arrs) n += a.length; const o = new Float32Array(n); let k = 0; for (const a of arrs) { o.set(a, k); k += a.length; } return o; };
+        for (const [n, sz] of [['position', 3], ['normal', 3], ['color', 3], ['uv', 2], ['steep', 1]]) g.setAttribute(n, new THREE.BufferAttribute(cat(A[n]), sz));
+        g.setIndex(new THREE.BufferAttribute(nv > 65535 ? new Uint32Array(I) : new Uint16Array(I), 1)); g.computeBoundingSphere();
+        const m = new THREE.Mesh(g, tMat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m);
       }
     }
 
@@ -16902,6 +16916,7 @@ const World = (function () {
             const hw = 0.7 + 0.3 * Math.min(1, k / 10), bw = hw + 1.6;
             g.quadUp([a[0] - ux * bw, ya + 0.04, a[1] - uz * bw], [a[0] + ux * bw, ya + 0.04, a[1] + uz * bw], [b[0] + ux * bw, yb + 0.04, b[1] + uz * bw], [b[0] - ux * bw, yb + 0.04, b[1] - uz * bw], [bank, bank, bank, bank]);
             g.quadUp([a[0] - ux * hw, ya + 0.1, a[1] - uz * hw], [a[0] + ux * hw, ya + 0.1, a[1] + uz * hw], [b[0] + ux * hw, yb + 0.1, b[1] + uz * hw], [b[0] - ux * hw, yb + 0.1, b[1] - uz * hw], [c, c, c, c]);
+            if (st > 0.35 && (k + q) % 2 === 0) { ROCK_SMOOTH = true; ico(g, (a[0] + b[0]) / 2, (ya + yb) / 2 + 0.25, (a[1] + b[1]) / 2, 0.8 + st * 0.6, 0.45, [0.93, 0.95, 0.97], R, 0.25); ROCK_SMOOTH = false; }   // (the spray where it falls steeply)
             exclPush(a[0], a[1], bw + 0.5); streamPts.push(a); nStream++; prev = b; } }
       }
     }
@@ -16909,7 +16924,7 @@ const World = (function () {
     /* ---- the forest (instanced per 96 m chunk): spruce and fir with lodgepole pines low down, fewer and smaller higher up, whitebark pines and their silver
        snags near the treeline, krummholz mats on the tundra; none on the rock, the snow or the cliffs ---- */
     const tMatT = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
-    const tk = [0, 1, 2, 3, 4].map(k => new IChunks(btTreeGeo(k), tMatT, k < 2 ? 128 : 256));   // (the common spruce and pine in 128 m chunks; the rarer ones in bigger: fewer draw calls)
+    const tk = [0, 1, 2, 3, 4].map(k => new IChunks(btTreeGeo(k), tMatT, k < 2 ? 128 : 256));   // (the common spruce and pine in 128 m chunks; the rarer ones in bigger: fewer draw calls)   // (the common spruce and pine in 128 m chunks; the rarer ones in bigger: fewer draw calls)
     let nTrees = 0;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(90000 * dens), RT = rng(3961), SP = 5.2 / Math.sqrt(dens);
@@ -17038,6 +17053,10 @@ const World = (function () {
           for (let k = 0; k < 4; k++) { const gx = x + (RA() - 0.5) * 9, gz = z + (RA() - 0.5) * 9; if (vrNear(gx, gz).dd < 8) continue; btGoat(scen.get(gx, gz), gx, caGround(gx, gz) - 0.05, gz, RA() * TAU, k === 3 ? 0.6 : 0.95 + RA() * 0.15); nAnimals++; }
           exclPush(x, z, 7); return; } };
       herd(sStart + 2300, 1); herd(sStart + 4300, -1); herd(sStart + 3300, -1);
+      for (const [s0, side] of [[sStart + 1200, 1], [sStart + 3900, 1]]) for (let tries = 0; tries < 30; tries++) {   // bighorn sheep: tawny brown, on the rocky slopes
+        const [x, z] = onSide(s0 + (RA() - 0.5) * 120, side, 20 + RA() * 45); if (excluded(x, z) || vrNear(x, z).dd < 12) continue; const sl = caSlope(x, z); if (sl < 0.3 || sl > 1.2) continue;
+        for (let k = 0; k < 5; k++) { const gx = x + (RA() - 0.5) * 10, gz = z + (RA() - 0.5) * 10; if (vrNear(gx, gz).dd < 10) continue; btGoat(scen.get(gx, gz), gx, caGround(gx, gz) - 0.05, gz, RA() * TAU, k === 4 ? 0.65 : 0.9 + RA() * 0.15, [0.62, 0.5, 0.36]); nAnimals++; }
+        exclPush(x, z, 7); break; }
       for (const s0 of [sStart + 700, sStart + 1600]) for (let tries = 0; tries < 30; tries++) {   // mule deer at the edge of the forest, low down
         const side = RA() < 0.5 ? -1 : 1, [x, z] = onSide(s0 + (RA() - 0.5) * 120, side, 12 + RA() * 25); if (excluded(x, z) || vrNear(x, z).dd < 9 || vrLC(x, z) === 4 || caSlope(x, z) > 0.6) continue;
         for (let k = 0; k < 3; k++) { const gx = x + (RA() - 0.5) * 7, gz = z + (RA() - 0.5) * 7; btGoat(scen.get(gx, gz), gx, caGround(gx, gz) - 0.05, gz, RA() * TAU, 0.9 + RA() * 0.15, [0.55, 0.42, 0.3]); nAnimals++; }
@@ -17064,6 +17083,8 @@ const World = (function () {
     { const geo = btRavenGeo(), mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), i0 = T.idx(sStart), L = [];   // two ravens over the road (caCondors flies them)
       for (const [r, sp, h, ox, oz, ph] of [[24, 0.32, 26, 20, -10, 0], [30, -0.27, 34, -15, 18, 2.6]]) {
         const m = new THREE.Mesh(geo, mat); m.castShadow = true; root.add(m); L.push({ m, r, sp, h, ox, oz, ph, bank: 0.38 }); }
+      { const m = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color: 0x8a6440, side: THREE.DoubleSide }));   // a golden eagle: the same build, twice the span, brown, higher and slower
+        m.scale.setScalar(1.9); m.castShadow = true; root.add(m); L.push({ m, r: 48, sp: 0.14, h: 58, ox: -30, oz: -25, ph: 4.1, bank: 0.28 }); }
       out.dyn.condors = { L, x0: T.px[i0], z0: T.pz[i0], y0: T.hy[i0], ax: T.px[i0], az: T.pz[i0], ay: T.hy[i0], t: null };
       caCondors(out.dyn.condors, 0, null); }
     crowdFinish(CR, root, out);

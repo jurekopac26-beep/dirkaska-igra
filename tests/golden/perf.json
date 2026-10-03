@@ -161,11 +161,11 @@
   "jsMs": 1.51
  },
  "beartooth": {
-  "calls": 328,
-  "maxCalls": 420,
-  "kverts": 961,
-  "maxKverts": 1173,
-  "jsMs": 1.05
+  "calls": 301,
+  "maxCalls": 381,
+  "kverts": 944,
+  "maxKverts": 1170,
+  "jsMs": 1.02
  },
  "rastro": {
   "calls": 302,
