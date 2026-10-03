@@ -24,6 +24,15 @@ const Garage3D = (function () {
   let cur = null;   // the car on the turntable: { M, spec, v (Render's view), root, kit, parts, ... }
   let hud = () => {};   // (the page's overlay: hud(kind, data))
   const KEY_DIR = new V3(0.22, 1, 0.34).normalize();
+  const SUN = new V3(0.48, 0.47, 0.74).normalize();   // (the sun outside: the key light's azimuth, 28 deg up, so the shadows inside and out fall alike)
+  // the room's fixed lines (the room light's shader is made from them too): the window band (its height, a window's width, the windows'
+  // middles along the back and the front wall), the wall washers on the back wall, the steel columns (x on the back and front walls,
+  // z on the side walls, and the four corners; whatever stands at a wall keeps 0.2 m clear of them)
+  const WIN = [3.45, 4.3], WW = 1.9, BACKW = [-5.9, -2.75, -0.35, 2.95, 6.1], FRONTW = [-6.2, -3.1, 0, 3.1, 6.2];
+  const WASH_X = [-7.4, -4.4, 1.3, 4.6, 7.6], COLS = { backFront: [-4.75, 5.0], sides: [-2.8, 2.8, 6.5], corners: true };
+  // the light (init sets it from the renderer): HDR (a half-float target), how bright the luminous things glow (EMI), the outside's
+  // exposure (OUTK); NOREFL: the layer only the main camera draws (not the floor's mirror, not the cube map)
+  let HDR = false, OUTK = 1; const EMI = { hex: 1, led: 1, sign: 1, screen: 1, tail: 1, spark: 1 }, NOREFL = 1;
 
   /* ---------------- coroutines: every animation is a generator stepped once a frame with the frame's dt ---------------- */
   const tasks = [];
@@ -274,10 +283,15 @@ const Garage3D = (function () {
   }
 
   function buildRoom() {
-    const { x0, x1, z0, z1, h, door, doorH } = ROOM;
-    const lam = (o) => new THREE.MeshLambertMaterial(o);
+    const { x0, x1, z0, z1 } = ROOM;
     // the walls' pieces (inward normal x, z and the plane's offset: the camera's distance in front of the wall is nx x + nz z - c)
-    const PB = WALLS.back = piece([0, 1, z0]), PF = WALLS.front = piece([0, -1, -z1]), PL = WALLS.left = piece([1, 0, x0]), PR = WALLS.right = piece([-1, 0, -x1]);
+    WALLS.back = piece([0, 1, z0]); WALLS.front = piece([0, -1, -z1]); WALLS.left = piece([1, 0, x0]); WALLS.right = piece([-1, 0, -x1]);
+    buildShell(); buildFurniture(); buildFloorMarks(); buildMotes();
+  }
+  // the shell: the walls and their windows, the ceiling, the kerb stripe, the doors, what hangs on the back wall, the honeycomb of lamps
+  function buildShell() {
+    const { x0, x1, z0, z1, h, door, doorH } = ROOM, { back: PB, front: PF, left: PL, right: PR } = WALLS;
+    const lam = (o) => new THREE.MeshLambertMaterial(o);
     let g = PB.g;
     const box = (cx, cy, cz, sx, sy, sz, col, top, rot) => World.box(g, cx, cy, cz, sx, sy, sz, rot || 0, col, top);
     // walls (panels over a tread-plate skirt 1 m high): a door in each side wall, a band of windows high in the back and the front wall
@@ -293,7 +307,6 @@ const Garage3D = (function () {
         if (y1 < h) wq.wall(p[0], p[1], q[0], q[1], Math.max(WY, y1), h, n, 3, 3.8, s0);
       }
     };
-    const WIN = [3.45, 4.3], WW = 1.9, BACKW = [-5.9, -2.75, -0.35, 2.95, 6.1], FRONTW = [-6.2, -3.1, 0, 3.1, 6.2];
     wallRun(x0, z0, x1, z0, [0, 0, 1], BACKW.map(x => [x - x0 - WW / 2, x - x0 + WW / 2, WIN[0], WIN[1]]));    // back
     wallRun(x1, z1, x0, z1, [0, 0, -1], FRONTW.map(x => [x1 - x - WW / 2, x1 - x + WW / 2, WIN[0], WIN[1]]));  // front
     wallRun(x0, z1, x0, z0, [1, 0, 0], [[z1 - door, z1 + door, 0, doorH]]);       // left (the way in)
@@ -317,8 +330,61 @@ const Garage3D = (function () {
     const gb = new World.GB();   // (the beams: they cast no shadow, the lamps hang under them)
     for (let x = -7.5; x <= 7.6; x += 3) { World.box(gb, x, h - 0.32, (z0 + z1) / 2, 0.22, 0.32, z1 - z0, 0, [0.13, 0.14, 0.16], [0.13, 0.14, 0.16]); World.box(gb, x, h - 0.34, (z0 + z1) / 2, 0.36, 0.04, z1 - z0, 0, [0.17, 0.18, 0.2]); }
     scene.add(new THREE.Mesh(gb.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })));
-    // the back wall's furniture: a red tool chest and a bench under the pegboard (left), the tyre rack (right), a cabinet row
+    // the curb stripe round the walls (the menu's red and white), at 2.05 m
+    const cb = (P, ax, az, bx, bz, nx, nz) => { g = P.g; const L = Math.hypot(bx - ax, bz - az), n = Math.round(L / 0.6); for (let i = 0; i < n; i++) { const t0 = i / n, t1 = (i + 1) / n, c = i % 2 ? [0.95, 0.94, 0.9] : [0.86, 0.16, 0.13];
+      const p0 = [ax + (bx - ax) * t0 + nx * 0.02, az + (bz - az) * t0 + nz * 0.02], p1 = [ax + (bx - ax) * t1 + nx * 0.02, az + (bz - az) * t1 + nz * 0.02];
+      g.quadO([p0[0], 2.0, p0[1]], [p1[0], 2.0, p1[1]], [p1[0], 2.16, p1[1]], [p0[0], 2.16, p0[1]], c, [p0[0] - nx, 2.08, p0[1] - nz]); } };
+    cb(PB, x0, z0, x1, z0, 0, 1); cb(PL, x0, z1, x0, z1 - (z1 - door - 0.4), 1, 0); cb(PL, x0, -door - 0.4, x0, z0, 1, 0); cb(PR, x1, z0, x1, -door - 0.4, -1, 0); cb(PR, x1, door + 0.4, x1, z1, -1, 0); cb(PF, x1, z1, x0, z1, 0, -1);
+    // the doors: jambs in hazard stripes, the rolled-up shutter's drum and the last slats showing (the world outside: buildOutside)
+    const hzTex = (u, v) => { const t = TX.hazard.clone(); t.needsUpdate = true; t.repeat.set(u, v); return t; };
+    const hzV = new THREE.MeshLambertMaterial({ map: hzTex(0.25, 4) }), hzH = new THREE.MeshLambertMaterial({ map: hzTex(5, 0.6) }), slM = new THREE.MeshLambertMaterial({ map: TX.slats });
+    for (const sd of [-1, 1]) {
+      const X = sd * 9, o = new THREE.Group(); o.position.set(X, 0, 0); if (sd > 0) o.rotation.y = Math.PI; (sd < 0 ? PL : PR).root.add(o);   // (local: +x into the room)
+      for (const zz of [-door - 0.12, door + 0.12]) { const j = new THREE.Mesh(new THREE.BoxGeometry(0.3, doorH, 0.24), hzV); j.position.set(0.05, doorH / 2, zz); o.add(j); }
+      const head = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, door * 2 + 0.48), hzH); head.position.set(0.05, doorH + 0.1, 0); o.add(head);
+      const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, door * 2 + 0.3, 16), new THREE.MeshLambertMaterial({ color: 0x5a5f68 })); drum.rotation.x = Math.PI / 2; drum.position.set(0.45, doorH + 0.42, 0); o.add(drum);
+      const sl = new THREE.Mesh(new THREE.PlaneGeometry(door * 2, 0.55), slM); sl.rotation.y = Math.PI / 2; sl.position.set(0.12, doorH - 0.27, 0); sl.material.map.repeat.set(1, 1); o.add(sl);
+      // the daylight coming in: a soft bright patch on the floor
+      const sh = new THREE.Mesh(new THREE.PlaneGeometry(4.2, door * 2 + 1.2), new THREE.MeshBasicMaterial({ map: shaftTex(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.32 }));
+      sh.rotation.x = -Math.PI / 2; sh.rotation.z = sd > 0 ? Math.PI : 0; sh.position.set(X - sd * 2.1, 0.012, 0); sh.renderOrder = 3; scene.add(sh);
+    }
+    // the sign, and its glow on the wall
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(4.0, 1.0), new THREE.MeshBasicMaterial({ map: TX.sign, transparent: true, depthWrite: false })); sign.position.set(-2.5, 2.78, z0 + 0.06); PB.root.add(sign);
+    signGlow = new THREE.Mesh(new THREE.PlaneGeometry(7.5, 3), new THREE.MeshBasicMaterial({ map: TX.glow, color: 0xffd894, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.18 }));
+    signGlow.position.set(-2.5, 2.78, z0 + 0.03); PB.root.add(signGlow);
+    // wall washers: a lamp under the ceiling every few metres along the back wall (between the windows), its light fanning down the panels
     g = PB.g;
+    const wash = canvasTex(128, 256, (gx, w, hh) => { const gr = gx.createRadialGradient(w / 2, 0, 0, w / 2, 0, hh); gr.addColorStop(0, 'rgba(255,244,225,0.95)'); gr.addColorStop(0.25, 'rgba(255,240,215,0.45)'); gr.addColorStop(0.7, 'rgba(255,236,210,0.08)'); gr.addColorStop(1, 'rgba(255,236,210,0)'); gx.fillStyle = gr; gx.fillRect(0, 0, w, hh); });
+    const washM = new THREE.MeshBasicMaterial({ map: wash, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.32 });
+    for (const x of WASH_X) {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 3.4), washM); m.position.set(x, h - 0.45 - 1.7, z0 + 0.04); m.renderOrder = 2; PB.root.add(m);
+      box(x, h - 0.5, z0 + 0.1, 0.5, 0.08, 0.2, [0.1, 0.1, 0.11]);
+    }
+    // the pegboard over the chests
+    const peg = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.3), new THREE.MeshLambertMaterial({ map: TX.peg })); peg.position.set(-6.15, 1.92, z0 + 0.03); PB.root.add(peg);
+    // a telemetry screen on the wall (a glowing trace)
+    monitor = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.86), new THREE.MeshBasicMaterial({ map: monitorTex() })); monitor.position.set(6.45, 2.85, z0 + 0.08); PB.root.add(monitor);
+    box(6.45, 2.4, z0 + 0.02, 1.6, 0.94, 0.08, [0.06, 0.06, 0.07]);
+    // the honeycomb of LED tubes over the car
+    const hexG = new World.GB(), L = 0.6, seen = new Set(), WHITE = [1, 1, 1];
+    for (let q = -7; q <= 7; q++) for (let r = -7; r <= 7; r++) {
+      const cx = 1.5 * L * q, cz = Math.sqrt(3) * L * (r + q / 2);
+      if (Math.abs(cx) > 4.2 || Math.abs(cz) > 2.9 || (cx * cx) / 20 + (cz * cz) / 9.5 > 1) continue;
+      for (let k = 0; k < 6; k++) {
+        const a0 = k / 6 * TAU, a1 = (k + 1) / 6 * TAU, p0 = [cx + Math.cos(a0) * L, cz + Math.sin(a0) * L], p1 = [cx + Math.cos(a1) * L, cz + Math.sin(a1) * L];
+        const key = Math.round((p0[0] + p1[0]) * 50) + ',' + Math.round((p0[1] + p1[1]) * 50); if (seen.has(key)) continue; seen.add(key);
+        const mx = (p0[0] + p1[0]) / 2, mz = (p0[1] + p1[1]) / 2, ang = Math.atan2(p1[1] - p0[1], p1[0] - p0[0]);
+        World.box(hexG, mx, h - 0.16, mz, L * 0.93, 0.035, 0.05, ang, WHITE, WHITE);
+      }
+    }
+    const hex = new THREE.Mesh(hexG.geometry(), new THREE.MeshBasicMaterial({ color: 0xf2f7ff })); scene.add(hex);
+  }
+  // the furniture along the walls, the oil drums
+  function buildFurniture() {
+    const { z0, z1 } = ROOM, { back: PB, front: PF } = WALLS;
+    let g = PB.g;
+    const box = (cx, cy, cz, sx, sy, sz, col, top, rot) => World.box(g, cx, cy, cz, sx, sy, sz, rot || 0, col, top);
+    // the back wall's furniture: a red tool chest and a bench under the pegboard (left), the tyre rack (right), a cabinet row
     const RED = [0.72, 0.1, 0.09], RED2 = [0.55, 0.07, 0.07], STEEL = [0.55, 0.58, 0.62], DK = [0.09, 0.1, 0.11];
     const chest = (cx, w, hh, d) => {   // a roll cab: drawers with their handles, a dark top, castors
       box(cx, 0.12, z0 + d / 2 + 0.05, w, hh, d, RED, [0.1, 0.1, 0.11]);
@@ -354,54 +420,10 @@ const Garage3D = (function () {
     g = PF.g;
     for (let i = 0; i < 6; i++) box(-3 + i * 0.62, 0, z1 - 0.32, 0.6, 1.9, 0.55, [0.2, 0.32, 0.55], [0.16, 0.26, 0.45]);
     box(3.5, 0, z1 - 0.4, 3.2, 0.9, 0.7, [0.2, 0.21, 0.24], [0.3, 0.31, 0.34]);
-    // the curb stripe round the walls (the menu's red and white), at 2.05 m
-    const cb = (P, ax, az, bx, bz, nx, nz) => { g = P.g; const L = Math.hypot(bx - ax, bz - az), n = Math.round(L / 0.6); for (let i = 0; i < n; i++) { const t0 = i / n, t1 = (i + 1) / n, c = i % 2 ? [0.95, 0.94, 0.9] : [0.86, 0.16, 0.13];
-      const p0 = [ax + (bx - ax) * t0 + nx * 0.02, az + (bz - az) * t0 + nz * 0.02], p1 = [ax + (bx - ax) * t1 + nx * 0.02, az + (bz - az) * t1 + nz * 0.02];
-      g.quadO([p0[0], 2.0, p0[1]], [p1[0], 2.0, p1[1]], [p1[0], 2.16, p1[1]], [p0[0], 2.16, p0[1]], c, [p0[0] - nx, 2.08, p0[1] - nz]); } };
-    cb(PB, x0, z0, x1, z0, 0, 1); cb(PL, x0, z1, x0, z1 - (z1 - door - 0.4), 1, 0); cb(PL, x0, -door - 0.4, x0, z0, 1, 0); cb(PR, x1, z0, x1, -door - 0.4, -1, 0); cb(PR, x1, door + 0.4, x1, z1, -1, 0); cb(PF, x1, z1, x0, z1, 0, -1);
-    // the doors: jambs in hazard stripes, the rolled-up shutter's drum and the last slats showing (the world outside: buildOutside)
-    const hzTex = (u, v) => { const t = TX.hazard.clone(); t.needsUpdate = true; t.repeat.set(u, v); return t; };
-    const hzV = new THREE.MeshLambertMaterial({ map: hzTex(0.25, 4) }), hzH = new THREE.MeshLambertMaterial({ map: hzTex(5, 0.6) }), slM = new THREE.MeshLambertMaterial({ map: TX.slats });
-    for (const sd of [-1, 1]) {
-      const X = sd * 9, o = new THREE.Group(); o.position.set(X, 0, 0); if (sd > 0) o.rotation.y = Math.PI; (sd < 0 ? PL : PR).root.add(o);   // (local: +x into the room)
-      for (const zz of [-door - 0.12, door + 0.12]) { const j = new THREE.Mesh(new THREE.BoxGeometry(0.3, doorH, 0.24), hzV); j.position.set(0.05, doorH / 2, zz); o.add(j); }
-      const head = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, door * 2 + 0.48), hzH); head.position.set(0.05, doorH + 0.1, 0); o.add(head);
-      const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, door * 2 + 0.3, 16), new THREE.MeshLambertMaterial({ color: 0x5a5f68 })); drum.rotation.x = Math.PI / 2; drum.position.set(0.45, doorH + 0.42, 0); o.add(drum);
-      const sl = new THREE.Mesh(new THREE.PlaneGeometry(door * 2, 0.55), slM); sl.rotation.y = Math.PI / 2; sl.position.set(0.12, doorH - 0.27, 0); sl.material.map.repeat.set(1, 1); o.add(sl);
-      // the daylight coming in: a soft bright patch on the floor
-      const sh = new THREE.Mesh(new THREE.PlaneGeometry(4.2, door * 2 + 1.2), new THREE.MeshBasicMaterial({ map: shaftTex(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.32 }));
-      sh.rotation.x = -Math.PI / 2; sh.rotation.z = sd > 0 ? Math.PI : 0; sh.position.set(X - sd * 2.1, 0.012, 0); sh.renderOrder = 3; scene.add(sh);
-    }
-    // the sign, and its glow on the wall
-    const sign = new THREE.Mesh(new THREE.PlaneGeometry(4.0, 1.0), new THREE.MeshBasicMaterial({ map: TX.sign, transparent: true, depthWrite: false })); sign.position.set(-2.5, 2.78, z0 + 0.06); PB.root.add(sign);
-    signGlow = new THREE.Mesh(new THREE.PlaneGeometry(7.5, 3), new THREE.MeshBasicMaterial({ map: TX.glow, color: 0xffd894, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.18 }));
-    signGlow.position.set(-2.5, 2.78, z0 + 0.03); PB.root.add(signGlow);
-    // wall washers: a lamp under the ceiling every few metres along the back wall (between the windows), its light fanning down the panels
-    g = PB.g;
-    const wash = canvasTex(128, 256, (gx, w, hh) => { const gr = gx.createRadialGradient(w / 2, 0, 0, w / 2, 0, hh); gr.addColorStop(0, 'rgba(255,244,225,0.95)'); gr.addColorStop(0.25, 'rgba(255,240,215,0.45)'); gr.addColorStop(0.7, 'rgba(255,236,210,0.08)'); gr.addColorStop(1, 'rgba(255,236,210,0)'); gx.fillStyle = gr; gx.fillRect(0, 0, w, hh); });
-    const washM = new THREE.MeshBasicMaterial({ map: wash, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.32 });
-    for (const x of [-7.4, -4.4, 1.3, 4.6, 7.6]) {
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 3.4), washM); m.position.set(x, h - 0.45 - 1.7, z0 + 0.04); m.renderOrder = 2; PB.root.add(m);
-      box(x, h - 0.5, z0 + 0.1, 0.5, 0.08, 0.2, [0.1, 0.1, 0.11]);
-    }
-    // the pegboard over the chests
-    const peg = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.3), new THREE.MeshLambertMaterial({ map: TX.peg })); peg.position.set(-6.15, 1.92, z0 + 0.03); PB.root.add(peg);
-    // a telemetry screen on the wall (a glowing trace)
-    monitor = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.86), new THREE.MeshBasicMaterial({ map: monitorTex() })); monitor.position.set(6.45, 2.85, z0 + 0.08); PB.root.add(monitor);
-    box(6.45, 2.4, z0 + 0.02, 1.6, 0.94, 0.08, [0.06, 0.06, 0.07]);
-    // the honeycomb of LED tubes over the car
-    const hexG = new World.GB(), L = 0.6, seen = new Set(), WHITE = [1, 1, 1];
-    for (let q = -7; q <= 7; q++) for (let r = -7; r <= 7; r++) {
-      const cx = 1.5 * L * q, cz = Math.sqrt(3) * L * (r + q / 2);
-      if (Math.abs(cx) > 4.2 || Math.abs(cz) > 2.9 || (cx * cx) / 20 + (cz * cz) / 9.5 > 1) continue;
-      for (let k = 0; k < 6; k++) {
-        const a0 = k / 6 * TAU, a1 = (k + 1) / 6 * TAU, p0 = [cx + Math.cos(a0) * L, cz + Math.sin(a0) * L], p1 = [cx + Math.cos(a1) * L, cz + Math.sin(a1) * L];
-        const key = Math.round((p0[0] + p1[0]) * 50) + ',' + Math.round((p0[1] + p1[1]) * 50); if (seen.has(key)) continue; seen.add(key);
-        const mx = (p0[0] + p1[0]) / 2, mz = (p0[1] + p1[1]) / 2, ang = Math.atan2(p1[1] - p0[1], p1[0] - p0[0]);
-        World.box(hexG, mx, h - 0.16, mz, L * 0.93, 0.035, 0.05, ang, WHITE, WHITE);
-      }
-    }
-    const hex = new THREE.Mesh(hexG.geometry(), new THREE.MeshBasicMaterial({ color: 0xf2f7ff })); scene.add(hex);
+  }
+  // the floor's marks: the turntable's lit ring, the pool of light, the painted lines
+  function buildFloorMarks() {
+    const { x0, x1, door } = ROOM;
     // the turntable's lit ring in the floor, its glow
     ringMat = new THREE.MeshBasicMaterial({ color: 0x55c4ff });
     const ring = new THREE.Mesh(new THREE.RingGeometry(ROOM.R + 0.01, ROOM.R + 0.07, 128), ringMat); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.004; scene.add(ring);
@@ -418,7 +440,9 @@ const Garage3D = (function () {
     for (const sz of [-1, 1]) { line(x0, sz * (door + 0.25), -ROOM.R - 0.4, sz * (door + 0.25), 0.1); line(ROOM.R + 0.4, sz * (door + 0.25), x1, sz * (door + 0.25), 0.1); }
     for (const ax of [-6.2, 5.2]) { for (const s of [-1, 1]) line(ax, s * 0.55, ax + 0.9, 0, 0.12); }
     const flM = new THREE.Mesh(fl.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })); flM.receiveShadow = true; scene.add(flM);
-    // dust in the light over the car
+  }
+  // dust in the light over the car
+  function buildMotes() {
     const N = 140, mp = new Float32Array(N * 3); const Rm = Core.rng(77);
     for (let i = 0; i < N; i++) { mp[i * 3] = (Rm() - 0.5) * 9; mp[i * 3 + 1] = 0.3 + Rm() * 4.2; mp[i * 3 + 2] = (Rm() - 0.5) * 7; }
     const mg = new THREE.BufferGeometry(); mg.setAttribute('position', new THREE.BufferAttribute(mp, 3));
@@ -640,7 +664,7 @@ const Garage3D = (function () {
   }
   /* ---------------- outside: the valley round the workshop (sky, mountains, forest, meadows, the road through both doors) ---------------- */
   // all of it lit once, in its colours (the sun on its faces, the haze of the distance): no lights, no shadows, cheap to draw
-  const SUN = new V3(-0.5, 0.42, -0.76).normalize(), HAZE = [0.8, 0.86, 0.91];
+  const HAZE = [0.8, 0.86, 0.91];
   function bakeOut(gb, h0, h1, hk, side) {
     const geo = gb.geometry(), P = geo.attributes.position, N = geo.attributes.normal, C = geo.attributes.color;
     for (let i = 0; i < P.count; i++) {
