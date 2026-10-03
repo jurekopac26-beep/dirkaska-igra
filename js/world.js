@@ -22150,8 +22150,8 @@ const World = (function () {
   function trH(x, z) {   // terrain height: the road's height inside the barriers and on the verges, blended into the model's ground 4-60 m beyond them
     const n = nearest(x, z), f = trDem(x, z) + (TRW.n1(x, z) - 0.5) * 0.4;
     if (n.i < 0) return f;
-    const dd = Math.abs(n.lat) - n.bar, hr = T.hy[n.i] - 0.02;
-    return dd <= 0.5 ? hr : lerp(hr, f, sstep(4, 60, dd));
+    const dd = Math.abs(n.lat) - n.bar, hr = T.hy[n.i] - 0.02, h = dd <= 0.5 ? hr - 0.3 : lerp(hr, f, sstep(4, 60, dd));
+    return dd < 18 ? Math.min(h, hr - 0.3) : h;   // (under the road's level inside the walls and on 18 m beyond them: the big cells never rise through the verges)
   }
   function trGH(i, j, cell, x0, z0) { const k = (i + 30000) * 65536 + j + 30000 + cell * 1e10, c = TRW.hcache; let h = c.get(k); if (h === undefined) { h = trH(x0 + i * cell, z0 + j * cell); c.set(k, h); } return h; }
   function trGround(x, z) {   // the terrain mesh's surface (4 m cells in the tiles near the circuit, 16 m beyond: the same two triangles per cell as the mesh)
@@ -22165,7 +22165,7 @@ const World = (function () {
   const TRCOL = [0, 0, 0];
   function trCol(x, z) {
     const P = TRW, m = P.n2(x, z), big = P.n3(x, z), lu = trLU(x, z), tr = trLCf(x, z, 1), bu = trLCf(x, z, 2), ba = trLCf(x, z, 3);
-    let r = 0.98 + (m - 0.5) * 0.16 + (big - 0.5) * 0.1, g = 1.04 + (m - 0.5) * 0.12, b = 0.86 + (m - 0.5) * 0.14;
+    let r = 0.9 + (m - 0.5) * 0.16 + (big - 0.5) * 0.12, g = 0.9 + (m - 0.5) * 0.12 + (big - 0.5) * 0.06, b = 0.72 + (m - 0.5) * 0.14;
     r = lerp(r, 0.62 + m * 0.1, tr * 0.6); g = lerp(g, 0.7 + m * 0.08, tr * 0.6); b = lerp(b, 0.5, tr * 0.6);   // leaf litter and shade under the trees
     r = lerp(r, 1.04, bu * 0.25); g = lerp(g, 0.98, bu * 0.25); b = lerp(b, 0.86, bu * 0.25);                  // the lawns between the houses, worn
     const grey = (k, v) => { r = lerp(r, 1.22 * v, k); g = lerp(g, 0.76 * v, k); b = lerp(b, 1.8 * v, k); };
@@ -22209,7 +22209,7 @@ const World = (function () {
     const addM = (g, mat, cast, nm) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; if (nm) m.name = nm; root.add(m); return m; };
     const named = (nm, f) => { const n0 = root.children.length; f(); for (let k = n0; k < root.children.length; k++) if (!root.children[k].name) root.children[k].name = nm; };   // (the tests and the profiler tell the parts apart)
     const Pt = (i, o, y) => [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o];
-    const scen = new Chunks(512), CH = 256, asphC = new Chunks(512, true), markC = new Chunks(512);   // (the scenery, the streets' and car parks' asphalt, the white and yellow markings: one mesh per 512 m each)
+    const scen = new Chunks(512), CH = 256, asphC = new Chunks(1024, true), markC = new Chunks(1024);   // (the scenery, the streets' and car parks' asphalt, the white and yellow markings: one mesh per 512 m each)
 
     /* ---- terrain: 512 m tiles, 4 m cells within ~250 m of the circuit, 16 m beyond (one mesh), out to ~1.5 km ---- */
     const gMat = new THREE.MeshLambertMaterial({ map: tex.grass, vertexColors: true });
@@ -22250,7 +22250,7 @@ const World = (function () {
           const i = ii % N, v = ii * ds / 8, of = offs(i), w = WA(i);
           const r = gr.row(of.map(o => Pt(i, o, 0.02)), of.map(o => shade(i, o)), of.map(o => [(o + w) / 8, v])); if (pr >= 0) gr.link(pr, r, 0, of.length - 1); pr = r;
           for (const side of [-1, 1]) {
-            const si = side > 0 ? 1 : 0, bar = side > 0 ? T.br[i] : T.bl[i], asph = asphV(side, i), o3 = [w, w + 0.35, bar + 0.05], cols = asph ? [[0.8, 0.8, 0.82], [0.86, 0.86, 0.88], [0.86, 0.86, 0.88]] : [[0.62, 0.62, 0.62], [0.95, 0.95, 0.93], [0.92, 0.92, 0.9]];
+            const si = side > 0 ? 1 : 0, bar = side > 0 ? T.br[i] : T.bl[i], asph = false, o3 = [w, w + 0.35, bar + 0.05], cols = [[0.56, 0.57, 0.6], [0.86, 0.88, 0.92], [0.84, 0.86, 0.9]];
             const pts = o3.map((o, k) => Pt(i, side * o, k === 0 ? 0.02 : asph ? 0.02 : 0.025)), ord = side > 0 ? [0, 1, 2] : [2, 1, 0];
             const tgt = asph ? ga : gv, rr = tgt.row(ord.map(k => pts[k]), ord.map(k => cols[k]), ord.map(k => [pts[k][0] / 8, -pts[k][2] / 8]));
             const prev = asph ? pa : pv, other = asph ? pv : pa;
@@ -22282,11 +22282,11 @@ const World = (function () {
       const gw = new RB(), gt = new RB(true);
       for (const side of [-1, 1]) {
         let pw = -1, pt = -1;
-        const e1 = Math.min(c0 + CHB, N), II = []; for (let ii = c0; ii < e1; ii += 2) II.push(ii); II.push(e1);   // (a row every 4 m)
+        const e1 = Math.min(c0 + CHB, N), II = []; for (let ii = c0; ii < e1; ii += 2) II.push(ii); II.push(e1);   // (a row every 4 m, a fence post every 8 m)
         for (let q2 = 0; q2 < II.length; q2++) {
           const ii = II[q2], i = ii % N, bar = side > 0 ? T.br[i] : T.bl[i], ty = corner(i, side), o0 = bar + (ty ? 0.9 : 0), s = ii * ds, blk = Math.floor(s / 3.7), jt = s - blk * 3.7 < 0.3;
           const sh = (0.86 + 0.06 * ((blk * 7) % 3) / 2) * (jt ? 0.7 : 1), cc = [0.8 * sh, 0.8 * sh, 0.78 * sh], ct = [0.88 * sh, 0.88 * sh, 0.86 * sh];
-          let p = [Pt(i, side * o0, -0.05), Pt(i, side * (o0 + 0.05), 0.26), Pt(i, side * (o0 + 0.2), 0.82), Pt(i, side * (o0 + 0.4), 0.82), Pt(i, side * (o0 + 0.6), -0.05)], c = [cc, cc, ct, ct, [0.6, 0.6, 0.58]];
+          let p = [Pt(i, side * o0, -0.05), Pt(i, side * (o0 + 0.05), 0.26), Pt(i, side * (o0 + 0.2), 0.82), Pt(i, side * (o0 + 0.4), 0.82), Pt(i, side * (o0 + 0.6), -0.45)], c = [cc, cc, ct, ct, [0.6, 0.6, 0.58]];
           if (side < 0) { p = p.reverse(); c = c.reverse(); }
           const r = gw.row(p, c); if (pw >= 0) gw.link(pw, r, 0, 4); pw = r;
           if (ty) {   // the tyre wall: black tyres four high in front of the blocks, a belt over their face
@@ -22298,7 +22298,7 @@ const World = (function () {
           if (q2 + 1 < II.length) { const st2 = II[q2 + 1] - ii, j = (i + st2) % N, bj = side > 0 ? T.br[j] : T.bl[j], oj = bj + (corner(j, side) ? 0.9 : 0) + 0.3, oi = o0 + 0.3, u0 = s / 2.5, u1 = (s + ds * st2) / 2.5;
             const A = Pt(i, side * oi, 0.82), B = Pt(j, side * oj, 0.82), C = Pt(j, side * oj, 4.0), D = Pt(i, side * oi, 4.0), ins = Pt(i, side * (oi + 3), 1);
             if (!inPitZone(s) || side !== pitSd) fenceG.quadO(A, B, C, D, [1, 1, 1], ins, [[u0, 0], [u1, 0], [u1, 1.3], [u0, 1.3]]);
-            box(scen.get(A[0], A[2]), A[0], A[1] - 0.1, A[2], 0.09, 3.3, 0.09, T.hd[i], [0.5, 0.51, 0.54], null, true); }
+            if (q2 % 2 === 0) box(scen.get(A[0], A[2]), A[0], A[1] - 0.1, A[2], 0.09, 3.3, 0.09, T.hd[i], [0.5, 0.51, 0.54], null, true); }
         }
       }
       addM(gw, matV, true, 'trWall'); addM(gt, tyMat, true, 'trTyres');
@@ -22426,17 +22426,17 @@ const World = (function () {
     const RCOL = [[0.8, 0.8, 0.82], [0.84, 0.84, 0.86], [0.86, 0.86, 0.88], [0.88, 0.88, 0.9], [0.92, 0.92, 0.93], [0.92, 0.92, 0.93], [0.96, 0.95, 0.94], [1.1, 1.06, 1.0], [1.25, 1.22, 1.15], [1.0, 0.72, 0.66], [0.9, 0.84, 0.72], [0.9, 0.9, 0.9], [0.95, 0.95, 0.96]];
     let nStreets = 0;
     {
-      const ga = asphC, gs = new Chunks(512, true), gm = markC, rail = scen, SW = [0.95, 0.94, 0.9];
+      const ga = asphC, gs = new Chunks(1024, true), gm = markC, rail = scen, SW = [0.86, 0.88, 0.92];
       const segs = [];   // the parts of the streets out of the circuit's corridor: [cl, ax, az, bx, bz]
       for (const o of P.rd) {
         if (o.cl === 11) continue;
-        const pts = o.pts, ins = pts.map(([x, z]) => inCorr(x, z, 0.4));
+        const inA = (x, z) => { const n = nearest(x, z); return n.i >= 0 && Math.abs(n.lat) < WA(n.i) + 0.2; }, pts = o.pts, ins = pts.map(([x, z]) => inA(x, z));
         for (let j = 0; j + 1 < pts.length; j++) {
           let [ax, az] = pts[j], [bx, bz] = pts[j + 1];
           if (ins[j] && ins[j + 1]) continue;
           if (ins[j] || ins[j + 1]) {   // cut at the corridor's edge (bisection)
-            let lo = 0, hi = 1; const inA = ins[j]; for (let it = 0; it < 10; it++) { const t = (lo + hi) / 2, x = ax + (bx - ax) * t, z = az + (bz - az) * t; if (inCorr(x, z, 0.4) === inA) lo = t; else hi = t; }
-            const t = (lo + hi) / 2, x = ax + (bx - ax) * t, z = az + (bz - az) * t; if (inA) { ax = x; az = z; } else { bx = x; bz = z; }
+            let lo = 0, hi = 1; const in0 = ins[j]; for (let it = 0; it < 10; it++) { const t = (lo + hi) / 2, x = ax + (bx - ax) * t, z = az + (bz - az) * t; if (inA(x, z) === in0) lo = t; else hi = t; }
+            const t = (lo + hi) / 2, x = ax + (bx - ax) * t, z = az + (bz - az) * t; if (in0) { ax = x; az = z; } else { bx = x; bz = z; }
           }
           segs.push([o.cl, ax, az, bx, bz, j === 0, j === pts.length - 2]);
         }
@@ -22602,31 +22602,38 @@ const World = (function () {
     const tMat = new THREE.MeshLambertMaterial({ vertexColors: true });
     const treeGeo = (kind) => { const g = new GB(), r = rng(1534 + kind), rs = ROCK_SMOOTH; ROCK_SMOOTH = true;
       const bk = [0.32, 0.26, 0.21], lf = [0.24, 0.4, 0.14], lf2 = [0.28, 0.44, 0.16];
-      if (kind === 0) { cyl(g, 0, -0.02, 0, 0.035, 0.45, 4, bk, null, 0.025); ico(g, 0, 0.62, 0, 0.38, 0.88, lf, r, 0.3); }   // a maple: a full round crown
+      if (kind === 0) { cone(g, 0, -0.02, 0, 0.04, 0.62, 3, bk, bk, 0.4); ico(g, 0, 0.62, 0, 0.38, 0.88, lf, r, 0.3); }   // a maple: a full round crown
       else if (kind === 1) { cyl(g, 0, -0.02, 0, 0.04, 0.55, 4, bk, null, 0.025); ico(g, 0, 0.74, 0, 0.32, 1.0, [0.27, 0.42, 0.17], r, 0.3); }   // an elm or an ash: a tall vase
       else if (kind === 2) { cone(g, 0, -0.02, 0, 0.03, 0.3, 4, bk, null, 0); const c = [0.12, 0.24, 0.16]; cone(g, 0, 0.12, 0, 0.26, 0.5, 6, c, [0.17, 0.3, 0.2], 0.3); cone(g, 0, 0.48, 0, 0.17, 0.5, 6, c, [0.17, 0.3, 0.2], 0.8); }   // a spruce
       else ico(g, 0, 0.5, 0, 0.45, 0.85, lf, r, 0.3);   // the plain one far out
       ROCK_SMOOTH = rs; const geo = g.geometry(); geo.computeBoundingSphere(); return geo; };
-    const tk = [0, 1, 2, 3].map(k => new IChunks(treeGeo(k), tMat, 768));
+    const tk = [0, 1, 2, 3].map(k => new IChunks(treeGeo(k), tMat, 384));
     let nTrees = 0;
-    const treeOk = (x, z, m) => !inCorr(x, z, 2.2) && !excluded(x, z) && !trInBld(x, z, m == null ? 1.6 : m) && trRoadD(x, z, 12).d > 0.6 && ![0, 1, 2, 7, 8].includes(trLU(x, z));
-    const plant = (x, z, kind, hs) => { const y = trGround(x, z), sp = kind != null ? (kind === 1 ? 0 : kind) : R() < 0.85 ? 0 : 2, hgt = (sp === 2 ? 11 + R() * 7 : 9 + R() * 9) * (hs || 1), wid = hgt * (sp === 2 ? 0.45 : sp === 1 ? 0.75 : 0.85 + R() * 0.15), cv = 0.85 + R() * 0.3;
+    const treeOk = (x, z, m) => !inCorr(x, z, 4.5) && !excluded(x, z) && !trInBld(x, z, m == null ? 1.6 : m) && trRoadD(x, z, 12).d > 0.6 && ![0, 1, 2, 7, 8].includes(trLU(x, z));
+    const plant = (x, z, kind, hs) => { const y = trGround(x, z), sp = kind != null ? (kind === 1 ? 0 : kind) : 0, hgt = (sp === 2 ? 11 + R() * 7 : 9 + R() * 9) * (hs || 1), wid = hgt * (sp === 2 ? 0.45 : sp === 1 ? 0.75 : 0.85 + R() * 0.15), cv = 0.85 + R() * 0.3;
       tk[sp].add(x, y - 0.1, z, R() * TAU, wid, hgt, [cv * (0.92 + R() * 0.12), cv, cv * (0.9 + R() * 0.15)]); nTrees++; };
-    for (const [x, z] of P.trees) if (treeOk(x, z, 0.5)) plant(x, z);
-    const MAXT = Math.round(1500 * dens);
+    // candidates first (the map's trees, the street trees, the woods and parks of the land cover), then the nearest to the circuit planted
+    // first: the budget goes where the cameras look
+    const cand = [], DG = P.DG || (P.DG = (() => { const G = P.G, d = new Float32Array(G.nx * G.nz).fill(1e9); for (let i = 0; i < N; i++) { const a = Math.floor((T.px[i] - G.x0) / G.c), b = Math.floor((T.pz[i] - G.z0) / G.c); if (a >= 0 && b >= 0 && a < G.nx && b < G.nz) d[b * G.nx + a] = 0; } nrChamfer(d, G.nx, G.nz, G.c); return d; })());
+    const tdist = (x, z) => DG[P.cell(x, z)];
+    const want = (x, z, kind, pr) => { cand.push([x, z, kind == null ? -1 : kind, tdist(x, z) + (pr || 0)]); };
+    for (const [x, z] of P.trees) want(x, z, null, -30);
     for (const o of P.rd) if (o.cl >= 1 && o.cl <= 5) {   // street trees
       const hw = TR_RW[o.cl] + 2.7; let acc = R() * 10;
-      for (let j = 0; j + 1 < o.pts.length && nTrees < MAXT; j++) { const [ax, az] = o.pts[j], [bx, bz] = o.pts[j + 1], L = Math.hypot(bx - ax, bz - az); if (L < 1) continue; const ux = (bx - ax) / L, uz = (bz - az) / L;
-        for (let a = acc; a < L; a += 9 + R() * 5) for (const sd of [-1, 1]) { const x = ax + ux * a - uz * sd * hw, z = az + uz * a + ux * sd * hw; if (R() < (trLCf(x, z, 1) > 0.2 ? 0.75 : 0.35) && treeOk(x, z)) plant(x, z, R() < 0.8 ? 0 : 1); }
+      for (let j = 0; j + 1 < o.pts.length; j++) { const [ax, az] = o.pts[j], [bx, bz] = o.pts[j + 1], L = Math.hypot(bx - ax, bz - az); if (L < 1) continue; const ux = (bx - ax) / L, uz = (bz - az) / L;
+        for (let a = acc; a < L; a += 9 + R() * 5) for (const sd of [-1, 1]) { const x = ax + ux * a - uz * sd * hw, z = az + uz * a + ux * sd * hw; if (R() < (trLCf(x, z, 1) > 0.2 ? 0.75 : 0.4)) want(x, z, 0, -10); }
         acc = 0; }
     }
-    { const G = P.TG;   // the woods and the parks of the land cover (the near tiles: 7 m apart; the coarse ring: 14 m, the plain trees)
-      for (let tj = 0; tj < G.n; tj++) for (let ti = 0; ti < G.n; ti++) { const fine = G.st[tj * G.n + ti] !== 2, step = fine ? 8 : 20, x0 = G.x0 + ti * G.L, z0 = G.z0 + tj * G.L;
-        for (let zz = z0; zz < z0 + G.L && nTrees < MAXT; zz += step) for (let xx = x0; xx < x0 + G.L && nTrees < MAXT; xx += step) {
-          const x = xx + (R() - 0.5) * step * 0.8, z = zz + (R() - 0.5) * step * 0.8, lc = trLC(x, z), r1 = R();
-          const p = lc === 1 ? (fine ? 0.6 : 0.85) : lc === 2 ? (fine ? 0.02 : 0.1) : lc === 0 && trLU(x, z) === 3 ? 0.05 : 0;
-          if (r1 >= p || !treeOk(x, z)) continue;
-          if (fine) plant(x, z); else plant(x, z, 3, 1.25); } } }
+    { const G = P.TG;   // the woods and the parks of the land cover (7 m apart near the circuit, 16 m beyond)
+      for (let tj = 0; tj < G.n; tj++) for (let ti = 0; ti < G.n; ti++) { const fine = G.st[tj * G.n + ti] !== 2, step = fine ? 7 : 16, x0 = G.x0 + ti * G.L, z0 = G.z0 + tj * G.L;
+        for (let zz = z0; zz < z0 + G.L; zz += step) for (let xx = x0; xx < x0 + G.L; xx += step) {
+          const x = xx + (R() - 0.5) * step * 0.8, z = zz + (R() - 0.5) * step * 0.8, lc = trLC(x, z), r1 = R(), lu = fine ? trLU(x, z) : -1;
+          const p = lc === 1 ? (fine ? 0.7 : 0.8) : lc === 2 ? (fine ? 0.05 : 0.1) : lu === 3 || lu === 5 ? 0.06 : lc === 0 ? 0.015 : 0;
+          if (r1 < p) want(x, z, fine ? null : 3, fine ? 0 : 200); } } }
+    cand.sort((a, b) => a[3] - b[3]);
+    const MAXT = Math.round(1150 * dens), MAXF = Math.round(450 * dens); let nFar = 0;
+    for (const [x, z, kind] of cand) { if (kind === 3 ? nFar >= MAXF : nTrees - nFar >= MAXT) continue; if (!treeOk(x, z, kind === -1 ? 0.5 : null)) continue;
+      if (kind === 3) { plant(x, z, 3, 1.25); nFar++; } else plant(x, z, kind === -1 ? null : kind); }
     tk.forEach((t, k) => named('trTree' + k, () => t.addTo(root, k < 3)));   // (kind 1 is no longer planted: the maples' crowns vary in height)
 
     /* ---- the wooden utility poles along the residential streets (a crossarm, now and then a transformer, a lamp on an arm over the street),
