@@ -544,6 +544,25 @@
    "worn:MeshLambertMaterial": "5a1d01e1"
   }
  },
+ "singapur": {
+  "meshes": 763,
+  "verts": 769578,
+  "instances": 7059,
+  "props": 194,
+  "crowd": 1442,
+  "world": "7eba141",
+  "propsHash": "589ae238",
+  "floor": "9857c825/9828",
+  "groups": {
+   "-:MeshPhongMaterial": "df09fce4",
+   "-:MeshLambertMaterial": "dafb6262",
+   "-:MeshBasicMaterial": "92560864",
+   "crowd:MeshLambertMaterial": "4bf8c5d6",
+   "ao:MeshBasicMaterial": "b6672600",
+   "tyremarks:MeshBasicMaterial": "16cfa6fd",
+   "roadwear:MeshLambertMaterial": "44f8b5b0"
+  }
+ },
  "riverside": {
   "meshes": 457,
   "verts": 296138,
