@@ -22103,6 +22103,7 @@ const World = (function () {
       mesh.position.set(cam.position.x, cam.position.y - 4, cam.position.z); mesh.scale.setScalar(cam.far * 0.74); mesh.updateMatrix(); mesh.updateMatrixWorld(true);   // (with the camera: its angles are the eye's over the road)
       const Rn = typeof Render !== 'undefined' ? Render : null, wet = Rn && Rn.raining ? 1 : 0;
       if (sc.fog) { tc.setRGB(sc.fog.color.r / ref.r, sc.fog.color.g / ref.g, sc.fog.color.b / ref.b); m.color.setRGB(Math.min(1.1, tc.r), Math.min(1.1, tc.g), Math.min(1.1, tc.b)); }
+      if (!wet && Rn && Rn.atmos && Rn.atmos.tod === 'dusk') m.color.multiply(tc.setRGB(1.22, 0.9, 0.82));   // (at dusk: the alpenglow on the San Gabriels and San Bernardinos)
       if (wet) m.color.lerp(sc.fog ? sc.fog.color : tc.setRGB(0.6, 0.62, 0.65), 0.85);   // (the rain: the mountains in the cloud)
     };
     root.add(mesh); return mesh;
@@ -22157,6 +22158,19 @@ const World = (function () {
       const fl = lat < 0 ? Math.min(sstep(-11, -14, lat), sstep(-78, -60, lat)) : Math.min(sstep(11, 14, lat), sstep(48, 36, lat));
       const f = Math.min(sstep(-40, 0, al), sstep(Lp + 40, Lp, al), fl); if (!(f > 0)) return h;
       return lerp(h, hyS(sa0 + clamp(al, 0, Lp)) - 0.14, f); };
+    // the spectators' earth banks on the outside of Turns 6 and 9 (bulldozed up in the 1960s along the fences): ~3 m on the terrain's 8 m grid,
+    // from 2 to 30 m past the track's limit, eased in and out along the bend; a height field on 2 m cells added to the terrain (the crowd stands on it)
+    { const MC = 2, banks = [[1440, 1600, -1], [4690, 4960, -1]], pts = [];
+      for (const [a, b, sd] of banks) for (let d = a - 20; d <= b + 20; d += 1) { const s = sAt(d), i = T.idx(s), bar = sd > 0 ? T.br[i] : T.bl[i], fe = Math.min(sstep(a - 20, a + 15, d), sstep(b + 20, b - 15, d));
+        for (let o = 2; o <= 30; o += 1) { const [x, z] = atSf(s, sd * (bar + o)), t = (o - 2) / 28, hh = 4.2 * fe * Math.pow(Math.sin(Math.PI * t), 1.2); pts.push(x, z, hh); } }
+      let bx0 = 1e9, bz0 = 1e9, bx1 = -1e9, bz1 = -1e9; for (let k = 0; k < pts.length; k += 3) { bx0 = Math.min(bx0, pts[k]); bx1 = Math.max(bx1, pts[k]); bz0 = Math.min(bz0, pts[k + 1]); bz1 = Math.max(bz1, pts[k + 1]); }
+      const MB = []; for (const [a, b, sd] of banks) { let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9; for (let d = a - 25; d <= b + 25; d += 4) { const s = sAt(d), i = T.idx(s); for (const o of [0, 33]) { const [x, z] = atSf(s, sd * ((sd > 0 ? T.br[i] : T.bl[i]) + o)); x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } }
+        const nx = Math.ceil((x1 - x0) / MC) + 2, nz = Math.ceil((z1 - z0) / MC) + 2; MB.push({ x0: x0 - MC, z0: z0 - MC, nx, nz, h: new Float32Array(nx * nz) }); }
+      for (let k = 0; k < pts.length; k += 3) for (const B of MB) { const gi = Math.round((pts[k] - B.x0) / MC), gj = Math.round((pts[k + 1] - B.z0) / MC); if (gi < 0 || gj < 0 || gi >= B.nx || gj >= B.nz) continue; const q = gj * B.nx + gi; if (pts[k + 2] > B.h[q]) B.h[q] = pts[k + 2]; }
+      for (const B of MB) { const t = new Float32Array(B.h.length); for (let j = 0; j < B.nz; j++) for (let i = 0; i < B.nx; i++) { let sm = 0, n = 0; for (let b = -1; b <= 1; b++) for (let a = -1; a <= 1; a++) { const ii = i + a, jj = j + b; if (ii < 0 || jj < 0 || ii >= B.nx || jj >= B.nz) continue; sm += B.h[jj * B.nx + ii]; n++; } t[j * B.nx + i] = sm / n; } B.h = t; }   // (smoothed)
+      const mound = (x, z) => { for (const B of MB) { const gx = (x - B.x0) / MC, gz = (z - B.z0) / MC; if (gx < 0 || gz < 0 || gx >= B.nx - 1 || gz >= B.nz - 1) continue; const i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, H = B.h, W = B.nx;
+        return (H[j * W + i] * (1 - u) + H[j * W + i + 1] * u) * (1 - v) + (H[(j + 1) * W + i] * (1 - u) + H[(j + 1) * W + i + 1] * u) * v; } return 0; };
+      const pad0 = P.pad; P.pad = (x, z, h) => { const r = pad0(x, z, h), m = mound(x, z); return m > 0.01 && nrNear(x, z).dd > 1.5 ? r + m : r; }; }
     out.bounds = { minX: P.x0, maxX: P.x1, minZ: P.z0, maxZ: P.z1 };
     const matV = new THREE.MeshLambertMaterial({ vertexColors: true }); out.matV = matV;
     const excl = [], eh = new Map(), EHC = 64;   // tree exclusion circles (buildings, stands, crowds), hashed
@@ -22177,6 +22191,7 @@ const World = (function () {
     const secT = new Float32Array(N), brk = new Float32Array(N);
     for (let i0 = 0, k = 0; i0 < N; k++) { const n = 50 + Math.floor(crH(k, 3, 61) * 80), t = 0.95 + crH(k, 5, 61) * 0.1; for (let i = i0; i < Math.min(N, i0 + n); i++) secT[i] = t; i0 += n; }
     for (const c of T.corners) if (c.sev >= 2) for (let k = -70; k <= 6; k++) { const i = (c.i0 + k + N) % N, f = k < -10 ? sstep(-70, -12, k) : sstep(6, -10, k); if (f > brk[i]) brk[i] = f; }
+    for (let d = 4480; d <= 4720; d += ds) { const i = T.idx(sAt(d)), f = 1.35 * Math.min(sstep(4480, 4600, d), sstep(4720, 4680, d)); if (f > brk[i]) brk[i] = f; }   // (Turn 9: the hardest braking of the lap, at the end of the back straight)
     const shade = (i, o) => { const rl = T.rl[i]; let k = (0.93 - (0.14 + 0.1 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.9) k *= 1.04; return [k * 1.01, k, k * 0.97]; };
     for (let c0 = 0; c0 < N; c0 += CH) {
       const gr = new RB(true); let pr = -1;
@@ -22227,6 +22242,7 @@ const World = (function () {
         if (RD() < 0.08) put(i, 5 + Math.floor(RD() * 4), (RD() - 0.5) * 6, 1.2 + RD() * 0.6, 24 + Math.floor(RD() * 2), 0.8, 1);
         if (RD() < 0.08) { const hw = 1.5 + RD() * 1.2; put(i, 2 + Math.floor(RD() * 6), (RD() < 0.5 ? -1 : 1) * (w - 0.8 - hw) * RD(), hw, 28 + Math.floor(RD() * 4), 0.9, 0); } }
       for (const c of T.corners) if (c.sev >= 2) for (let n = 3; n > 0; n--) put((c.i0 - 4 - Math.floor(RD() * 34) + N) % N, 10 + Math.floor(RD() * 7), (RD() - 0.5) * 1.8, 1.25, 26 + (RD() < 0.35 ? 1 : 0), 0.4 + RD() * 0.3, 2, true);
+      for (let n = 0; n < 12; n++) put(T.idx(sAt(4520 + RD() * 170)), 12 + Math.floor(RD() * 10), (RD() - 0.5) * 2.6, 1.25, 26 + (RD() < 0.4 ? 1 : 0), 0.5 + RD() * 0.35, 2, true);   // (the long black marks into Turn 9)
       dcs.sort((a, b) => a[6] - b[6]);
       const rbs = new Map();
       for (const [i0, n, c, hw, cell, a, , fol] of dcs) {
@@ -22316,7 +22332,7 @@ const World = (function () {
       for (const c of T.corners) {
         const i1c = c.i1 < c.i0 ? c.i1 + N : c.i1, side = c.dir, im = Math.round((c.i0 + i1c) / 2);
         for (let k = c.i0 - 4; k <= i1c + 4; k += 3) { const i = ((k % N) + N) % N, [x, z] = atSf(i * ds, side * (w + 0.75)); if (excluded(x, z)) continue;
-          tm.add(x, T.hy[i] - 0.06, z, -T.hd[i], 1, 1, [0.95, 0.95, 0.92]); nApex++; }
+          tm.add(x, T.hy[i] - 0.06, z, -T.hd[i], 1, 1, nApex % 2 ? [0.82, 0.14, 0.12] : [0.95, 0.95, 0.92]); nApex++; }
         if (c.sev >= 2) { const i = ((im % N) + N) % N, [x, z] = atSf(i * ds, side * (w + 2.2)); tm.add(x, T.hy[i] - 0.06, z, -T.hd[i] + 0.6, 1.1, 1.1, [0.95, 0.95, 0.92]); }
       }
       tm.addTo(root, false);
@@ -22544,6 +22560,58 @@ const World = (function () {
         exclPush(x, z, 5.5); nCamp++;
       }
     }
+    /* ---- the 1967 map's places by the circuit and the race day's extras: the water tank (WT) on its hill west of Day Street, the trailer
+       park by Eucalyptus Avenue and Day Street, the paddock's second row (transporters, open trailers with race cars, canopies), timing and
+       camera towers at Turn 1 and at the end of the back straight, rows of tall fan palms along the streets of Edgemont ---- */
+    let nPalms = 0, nTowers = 0, nPark = 0;
+    { const toG = (X, Y) => [X + 284.1, -(Y + 698.8)];   // (the 1967 map's local metres -> the world's: the start line's offset)
+      const RP = rng(5299);
+      // the water tank: a round steel tank on a low base with a ladder and a railing (WT on the map, west of Day Street)
+      { const [x, z] = toG(-800, -655), y = nrGround(x, z), g = scen.get(x, z), wc = [0.86, 0.87, 0.86];
+        cyl(g, x, y - 0.5, z, 9.5, 1.2, 18, [0.7, 0.68, 0.64], [0.74, 0.72, 0.68]); cyl(g, x, y + 0.6, z, 9, 8.6, 18, wc, null); cone(g, x, y + 9.2, z, 9.4, 1.6, 18, [0.78, 0.79, 0.8], [0.82, 0.83, 0.84], 0);
+        box(g, x + 9.1, y, z, 0.12, 9.6, 0.6, 0, [0.5, 0.5, 0.52]); exclPush(x, z, 13); CR.exclAdd(x, z, 12); }
+      // the trailer park west of Day Street: rows of mobile homes along a loop road, carports, a few trees (Trailer Park on the map)
+      { const [cx, cz] = toG(-808, -490), y0 = nrGround(cx, cz), TRC = [[0.94, 0.92, 0.86], [0.86, 0.9, 0.92], [0.94, 0.88, 0.76], [0.84, 0.92, 0.84], [0.95, 0.86, 0.84]];
+        for (let r = 0; r < 5; r++) for (let k = 0; k < 9; k++) { if (RP() < 0.15) continue; const x = cx - 32 + r * 16 + (RP() - 0.5) * 1.5, z = cz - 60 + k * 14 + (RP() - 0.5) * 2; if (excluded(x, z)) continue;
+          const y = nrGround(x, z), g = scen.get(x, z), c = TRC[Math.floor(RP() * TRC.length)], rot = Math.PI / 2 + (RP() - 0.5) * 0.06;
+          box(g, x, y - 0.1, z, 3.4, 3.0, 13, rot, c, [0.76, 0.76, 0.78], true); box(g, x, y + 1.3, z, 3.42, 0.25, 13.02, rot, [0.36, 0.42, 0.48], null, true);   // (a single-wide, its window band)
+          if (RP() < 0.5) box(g, x + 3.6, y + 2.3, z, 2.6, 0.1, 6, rot, [0.7, 0.72, 0.74], null, true); nPark++; }
+        exclPush(cx, cz, 70); }
+      // the paddock's second row behind the transporters: open trailers with the race cars, team canopies, tow cars
+      { const [p0, p1, po] = PL, PC = [[0.1, 0.32, 0.18], [0.75, 0.12, 0.12], [0.12, 0.25, 0.55], [0.9, 0.9, 0.86], [0.85, 0.62, 0.12], [0.16, 0.16, 0.18], [0.3, 0.5, 0.75]];
+        for (let k = 0; k < 9; k++) { const d = (p0 + p1) / 2 - 80 + k * 18 + (RP() - 0.5) * 4, s = sAt(d), i = T.idx(s), [x, z] = atSf(s, po - 68 - RP() * 6); if (excluded(x, z) || nrSlope(x, z) > 0.2) continue;
+          const y = nrGround(x, z), hd = T.hd[i] + Math.PI / 2 + (RP() - 0.5) * 0.2, g = scen.get(x, z), ca = Math.cos(hd), sa = Math.sin(hd), cc = PC[k % PC.length];
+          if (k % 3 === 2) { for (let q = 0; q < 4; q++) box(g, x + ca * (-2.25 + q * 1.5), y + 2.6, z + sa * (-2.25 + q * 1.5), 1.5, 0.1, 4.2, hd, q % 2 ? [0.95, 0.95, 0.92] : cc, null, true);   // a canopy over the tools
+            for (const [a, b] of [[-2.9, -2], [2.9, -2], [-2.9, 2], [2.9, 2]]) box(g, x + ca * a - sa * b, y - 0.2, z + sa * a + ca * b, 0.07, 2.85, 0.07, hd, [0.7, 0.7, 0.72]);
+            box(g, x, y, z, 1.2, 0.9, 0.6, hd, [0.5, 0.2, 0.12]); }
+          else { box(g, x, y + 0.45, z, 4.8, 0.18, 2.0, hd, [0.36, 0.36, 0.38], null, true);   // an open trailer, the race car on it, the tow car in front
+            box(g, x, y + 0.63, z, 3.9, 0.5, 1.15, hd, cc, cc, true); box(g, x + ca * 1.4, y + 0.7, z + sa * 1.4, 1.1, 0.4, 0.85, hd, cc, cc, true);
+            box(g, x + ca * 5.6, y + 0.3, z + sa * 5.6, 4.8, 0.75, 1.9, hd, [0.6, 0.7, 0.78], [0.62, 0.72, 0.8], true); box(g, x + ca * 5.4, y + 1.05, z + sa * 5.4, 2.4, 0.55, 1.7, hd, [0.7, 0.8, 0.86], null, true); }
+          exclPush(x, z, 6); } }
+      // timing and camera towers: open timber scaffolds with a roofed platform, at Turn 1 and before Turn 9 (where the back straight ends)
+      for (const [d, sd] of [[560, -1], [4580, 1]]) { const s = sAt(d), i = T.idx(s), [x, z] = onSide(s, sd, 7), y = nrGround(x, z), g = scen.get(x, z), hd = T.hd[i], ca = Math.cos(hd), sa = Math.sin(hd), tb = [0.5, 0.4, 0.3], H = 7;
+        if (excluded(x, z)) continue;
+        for (const [a, b] of [[-1.3, -1.3], [1.3, -1.3], [-1.3, 1.3], [1.3, 1.3]]) box(g, x + ca * a - sa * b, y - 0.3, z + sa * a + ca * b, 0.2, H + 2.9, 0.2, hd, tb);
+        for (let hh = 1.8; hh < H; hh += 1.8) { box(g, x, y + hh, z, 2.8, 0.12, 0.12, hd, tb); box(g, x, y + hh, z, 0.12, 0.12, 2.8, hd, tb); }
+        box(g, x, y + H, z, 3.2, 0.2, 3.2, hd, [0.58, 0.47, 0.34]); box(g, x, y + H + 0.2, z, 3.2, 1.0, 0.1, hd + Math.PI / 2, [0.62, 0.5, 0.36]);
+        box(g, x, y + H + 2.6, z, 3.6, 0.15, 3.6, hd, [0.7, 0.72, 0.74], [0.74, 0.76, 0.78]);   // (the tin roof)
+        const fx = -T.nx[i] * sd, fz = -T.nz[i] * sd; box(g, x + fx * 0.6, y + H + 0.2, z + fz * 0.6, 0.5, 1.6, 0.4, hd, [0.86, 0.86, 0.82], null, true); box(g, x + fx * 1.0, y + H + 1.5, z + fz * 1.0, 0.6, 0.5, 0.45, hd, [0.12, 0.12, 0.14], null, true);   // the cameraman, his camera
+        exclPush(x, z, 4); CR.avoid(x, z, 2.5); nTowers++; }
+      // tall fan palms along the streets of Edgemont and by the trailer park (the skyline of the Inland Empire's towns from the track)
+      const palmGeo = (() => { const g = new GB(), tr = [0.5, 0.42, 0.34], fr = [0.38, 0.46, 0.24], fd = [0.3, 0.36, 0.2];
+        cyl(g, 0, 0, 0, 0.032, 0.9, 6, tr, null, 0.022); cyl(g, 0, 0.84, 0, 0.05, 0.08, 6, [0.42, 0.34, 0.24], null, 0.05);   // trunk, the skirt of dead fronds
+        for (let k = 0; k < 10; k++) { const a = k / 10 * TAU, c = Math.cos(a), s2 = Math.sin(a), t = [0, 0.93, 0];
+          const m = [c * 0.1, 0.97, s2 * 0.1], e = [c * 0.17, 0.86, s2 * 0.17], l = [-s2 * 0.035, 0, c * 0.035];
+          g.triO(t, [m[0] + l[0], m[1], m[2] + l[2]], [m[0] - l[0], m[1], m[2] - l[2]], k % 2 ? fr : fd, [0, 0.5, 0]); g.triO([m[0] + l[0], m[1], m[2] + l[2]], e, [m[0] - l[0], m[1], m[2] - l[2]], k % 2 ? fr : fd, [0, 0.5, 0]); }
+        return g.geometry(); })();
+      const palms = new IChunks(palmGeo, new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), 256);
+      const palmRow = (pts, gap, off) => { let acc = 0; for (let k = 0; k + 1 < pts.length; k++) { const [x0, z0] = pts[k], [x1, z1] = pts[k + 1], l = Math.hypot(x1 - x0, z1 - z0) || 1, nx = -(z1 - z0) / l, nz = (x1 - x0) / l;
+        for (let q = (gap - acc % gap) % gap; q < l; q += gap) for (const sd of [-1, 1]) { const x = x0 + (x1 - x0) * q / l + nx * off * sd, z = z0 + (z1 - z0) * q / l + nz * off * sd; if (excluded(x, z) || nrDist(x, z) < w + 8 || RP() < 0.25) continue;
+          const h = 16 + RP() * 9; palms.add(x, nrGround(x, z) - 0.2, z, RP() * TAU, h, h, [0.92 + RP() * 0.16, 1, 0.92 + RP() * 0.16]); nPalms++; } acc += l; } };
+      if (def.day) palmRow([[-285, -1400], [-284, -330], [-277, -174], [-278, 700]], 13, 9);   // (Day Street: its line evened out, the carriageways' zigzag left aside)
+      if (RD2.euc) palmRow(RD2.euc, 15, 5.5);
+      { const [cx, cz] = toG(-808, -490); palmRow([[cx - 45, cz - 70], [cx - 45, cz + 70]], 11, 0); }
+      palms.addTo(root, true); }
     cars.addTo(root, true);
 
     /* ---- trees: lone eucalypts and rows of them along the roads (windbreaks), the sage scrub and chaparral on the hillsides, a few
@@ -22690,10 +22758,13 @@ const World = (function () {
       for (let k = 0, tries = 0; k < 6 && tries < 200; tries++) { const i = Math.floor(RD3() * N), side = RD3() < 0.5 ? -1 : 1, [x, z] = atS(i * ds, side * ((side > 0 ? T.br[i] : T.bl[i]) + 25 + RD3() * 45));
         if (excluded(x, z) || nrLC(x, z) === 3 || nrDist(x, z) < 25) continue; DL.push([x, nrGround(x, z) - 0.3, z, [0.86, 0.74, 0.56], 1.6, DEV]); k++; }
       for (const [a, b, sd] of def.ga || []) { const [x, z] = atS(sAt((a + b) / 2), sd * 30); DL.push([x, nrGround(x, z), z, [0.84, 0.74, 0.58], 4.5, HAZE]); }
+      const DRIFT = { per: 12, life: 9, lifeV: 3, rise: 1.6, riseV: 1.2, flare: 0 }, side0 = -1;   // low drifts off the bare ground upwind of the road (the wind blows from the west-south-west: across the straights)
+      for (let d = 300, k = 0; d < L - 200; d += sea === 'summer' ? 320 : 520, k++) { const s = sAt(d + (RD3() - 0.5) * 80), i = T.idx(s), sd = k % 3 === 0 ? -side0 : side0, [x, z] = atS(s, sd * ((sd > 0 ? T.br[i] : T.bl[i]) + 4 + RD3() * 10));
+        if (excluded(x, z) || nrLC(x, z) === 3) continue; DL.push([x, nrGround(x, z) - 0.2, z, [0.88, 0.78, 0.6], 2.6, DRIFT]); }
       const dust = rbSmoke(DL, CR.U.uTime, ownTex(rbSmokeTex()), [1.6, -0.6]); dust.name = 'rsDust'; root.add(dust); out.dyn.rsDust = dust;
       if (out.dyn.far) { const f0 = out.dyn.far.onBeforeRender; out.dyn.far.onBeforeRender = (rd, sc, cam, ...a) => { f0(rd, sc, cam, ...a); dust.visible = !(typeof Render !== 'undefined' && Render.raining); }; }
     }
-    out.stats = { tiles: nTiles, trees: nTrees, camp: nCamp, rocks: nRocks, bushes: nBush, tufts: nTufts, poles: nPoles, bales: nBales, rails: nRail, apexTyres: nApex, stalls: nStalls, stands: nStands, cars: nCars, houses: nHouses, billboards: nBill, decals: nDecals, flags: flagL.length };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, palms: nPalms, towers: nTowers, trailers: nPark, camp: nCamp, rocks: nRocks, bushes: nBush, tufts: nTufts, poles: nPoles, bales: nBales, rails: nRail, apexTyres: nApex, stalls: nStalls, stands: nStands, cars: nCars, houses: nHouses, billboards: nBill, decals: nDecals, flags: flagL.length };   // (read by the tests)
     return out;
   }
 

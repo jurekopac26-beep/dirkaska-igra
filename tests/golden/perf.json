@@ -189,11 +189,11 @@
   "jsMs": 0.81
  },
  "riverside": {
-  "calls": 197,
-  "maxCalls": 255,
-  "kverts": 309,
-  "maxKverts": 376,
-  "jsMs": 0.7
+  "calls": 219,
+  "maxCalls": 274,
+  "kverts": 490,
+  "maxKverts": 616,
+  "jsMs": 1.1
  },
  "jezero": {
   "calls": 278,
