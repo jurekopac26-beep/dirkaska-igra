@@ -159,6 +159,9 @@ const Comm = (() => {
     jumpPB: ['{m} metres at {place}, your longest jump there!', 'A new personal best at {place}, {m} metres!'],
     jumpBeat: ['{m} metres at {place}! Longer than {by}!', "Unbelievable! {m} metres, beyond {by}'s {rec}!"],
     medal: ['That is a {medal} medal time!', 'And that is worth a {medal} medal!', 'A {medal} medal on this stage!'],
+    // the city stage (def.cityStage: Harju): tarmac, gravel and cobbles through the town, the whole of Jyvaskyla watching
+    introCity: ['Welcome to {track}, the city stage of the Rally of Finland, right in the heart of Jyvaskyla!', 'Here we are at {track}. Tarmac, gravel and cobbles, and the whole town is watching!', 'Welcome to {track}! Up the ridge, round the water tower and back into town. {cps} splits, just you and the clock.'],
+    goCity: ['Go! Down the boulevard!', "And you're away! Flat out down the university street!", 'Green light! Listen to that crowd!'],
     goStage: ['Go! Flat out into the forest!', "And you're away! Keep it flat over the crests!", 'Green light! The clock is running!'],
     cpFirstStage: ['Split {cp}, {time}.', 'Through split {cp}. Keep it flat!', 'Split {cp}, {time}. Hold on tight!'],
     stageRecord: ['Flying finish! A new personal best, {time}!', 'Record run through {track}! {time}!', 'What a stage! A new personal best, {time}!'],
@@ -169,7 +172,14 @@ const Comm = (() => {
     pkFinFirst: ['Across the line at the summit! The official time, {time}! That is the record to beat on the mountain!', 'At the top in {time}! The first time on the board, and the new record!', 'The clock stops at {time}! A record at the summit, now go and beat it!'],
     pkFinEven: ['Across the line at the summit! {time}, and that equals the record, to the thousandth!', 'The clock stops at {time}, dead level with the best time on the mountain!'],
     pkFinOff: ['Across the line at the summit! The official time, {time}. That is {delta} seconds off the record.', 'At the top in {time}, {delta} seconds short of the best time on the mountain.', 'The clock stops at {time}. {delta} seconds away from the record.'],
-    stageEnd: ['Flying finish in {time}, {delta} seconds off your best.', 'Across the line. {time}, just {delta} short of the record.', "That's the end of the stage. {time}. {delta} seconds to find next time."]
+    stageEnd: ['Flying finish in {time}, {delta} seconds off your best.', 'Across the line. {time}, just {delta} short of the record.', "That's the end of the stage. {time}. {delta} seconds to find next time."],
+    // time trial down a mountain road (def.descent: Katu-Yaryk, from the Ulagan plateau down the canyon's face to the Chulyshman)
+    introDescTT: ['Welcome to {track}! Seven hairpins and over five hundred metres down to the river, just you and the clock.', 'Here we are on the Ulagan plateau, at the top of {track}. {cps} checkpoints between you and the valley floor.', 'Welcome to {track}, the famous descent in the Altai mountains! No rivals, only the clock. Brake early!'],
+    goDescTT: ['Green light! Over the edge we go!', "Go! And it's all downhill from here!", "And you're away! Down into the canyon!"],
+    cpFirstDesc: ['Checkpoint {cp}, {time}.', 'Through checkpoint {cp}. Keep it on the road!', 'Checkpoint {cp}. Still a long way down!'],
+    descRecord: ['Down in the valley! A new personal best, {time}!', 'Record run! {time} down {track}!', 'What a descent! New personal best, {time}!'],
+    descEven: ['At the bottom in {time}. That is your record to the thousandth!', '{time} at the finish, dead level with your best!'],
+    descEnd: ['Down in the valley in {time}, {delta} seconds off your best.', 'Across the line at the bottom. {time}, just {delta} short of the record.', "That's the descent. {time}. {delta} seconds to find next time."]
   };
 
   // Speech engines don't report gender, so voices are scored by known name/URI markers.
