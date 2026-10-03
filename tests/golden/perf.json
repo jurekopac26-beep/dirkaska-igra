@@ -140,10 +140,10 @@
   "jsMs": 0.85
  },
  "longford": {
-  "calls": 214,
-  "maxCalls": 276,
-  "kverts": 468,
-  "maxKverts": 663,
-  "jsMs": 1.02
+  "calls": 221,
+  "maxCalls": 282,
+  "kverts": 517,
+  "maxKverts": 764,
+  "jsMs": 1.15
  }
 }
