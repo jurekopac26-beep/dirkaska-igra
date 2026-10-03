@@ -141,7 +141,7 @@
     const Pt = (i, o, y) => [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o];
     const atSf = K.atSf, hyS = (s) => T.elevAt(K.wrapS(s)).y;
     const addM = (g, mat, cast, recv) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = recv !== false; m.castShadow = !!cast; m.matrixAutoUpdate = false; m.updateMatrix(); root.add(m); return m; };
-    const scen = new K.Chunks(192);   // vertex coloured scenery in 192 m chunks
+    const scen = new K.Chunks(288);   // vertex coloured scenery in 288 m chunks
     const eh = new Map(), EHC = 32;   // tree / building exclusion (hashed circles)
     const exclPush = (x, z, r) => { const e = { x, z, r }; for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let Lc = eh.get(k); if (!Lc) eh.set(k, Lc = []); Lc.push(e); } };
     const excluded = (x, z) => { const Lc = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!Lc) return false; for (const e of Lc) if ((x - e.x) ** 2 + (z - e.z) ** 2 < e.r * e.r) return true; return false; };
@@ -176,7 +176,7 @@
   const KCOL = [[0.62, 0.66, 0.46], [0.42, 0.52, 0.34], [0.74, 0.73, 0.69], [0.5, 0.56, 0.52], [0.92, 0.86, 0.68], [0.5, 0.54, 0.4], [0.58, 0.74, 0.42], [0.48, 0.74, 0.36], [0.82, 0.8, 0.76], [0.6, 0.78, 0.44], [0.52, 0.5, 0.47], [0.78, 0.36, 0.28]];
   function ctGroundMesh(C) {
     const G = MG, mat = new THREE.MeshLambertMaterial({ map: C.tex.grass, vertexColors: true }), grp = new THREE.Group(); C.root.add(grp); C.out.ground = grp;
-    const S = 32, WL = C.WL;   // (cells per chunk side: 256 m)
+    const S = 48, WL = C.WL;   // (cells per chunk side: 384 m)
     for (let cj = 0; cj < G.nz - 1; cj += S) for (let ci = 0; ci < G.nx - 1; ci += S) {
       const ni = Math.min(S, G.nx - 1 - ci), nj = Math.min(S, G.nz - 1 - cj), P = [], Cl = [], U = [], I = [];
       for (let j = 0; j <= nj; j++) for (let i = 0; i <= ni; i++) {
@@ -231,7 +231,7 @@
   /* ---- the circuit: asphalt (the racing line rubbered in, darker in the braking zones), the street's old lane lines faded under the race's
      white edge lines, red and white kerbs, the pavements between the road and the barriers (kerbstones, paving), the start line and the grid ---- */
   function ctRoad(C) {
-    const { T, N, w, ds, tex, Pt, addM } = C, CH = 128, offs = [-w, -w * 2 / 3, -w / 3, 0, w / 3, w * 2 / 3, w], tileL = 8;
+    const { T, N, w, ds, tex, Pt, addM } = C, CH = 256, offs = [-w, -w * 2 / 3, -w / 3, 0, w / 3, w * 2 / 3, w], tileL = 8;
     const aMat = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true }); C.out.asphaltMat = aMat;
     const lMat = new THREE.MeshLambertMaterial({ vertexColors: true }), cMat = new THREE.MeshLambertMaterial({ map: tex.curb, vertexColors: true }), pMat = new THREE.MeshLambertMaterial({ map: tex.paving, vertexColors: true });
     C.aMat = aMat; C.lMat = lMat; C.pMat = pMat;
@@ -293,7 +293,7 @@
   /* ---- the barriers: concrete walls (the street circuit's blocks, white with a grey foot, the game's own adverts on some), tyre walls round the
      outside of the slow corners, catch fences on poles above them ---- */
   function ctWalls(C) {
-    const { T, N, ds, Pt, addM, tex } = C, side2 = (s) => (s > 0 ? 1 : 0), CH = 128;
+    const { T, N, ds, Pt, addM, tex } = C, side2 = (s) => (s > 0 ? 1 : 0), CH = 256;
     const tyreOn = [new Uint8Array(N), new Uint8Array(N)];
     for (const c of T.corners) { if (c.sev < 3) continue; const i1c = c.i1 < c.i0 ? c.i1 + N : c.i1, si = side2(-c.dir);
       for (let k = c.i0 - 8; k <= i1c + 12; k++) { const ii = ((k % N) + N) % N, bar = si ? T.br[ii] : T.bl[ii]; if (bar > T.w + 5 && !C.jm[si][ii]) tyreOn[si][ii] = 1; } }
@@ -326,7 +326,7 @@
       addM(gr, rMat, true); addM(gt, tyMat, true);
     }
     // the game's own adverts on the concrete walls (tex.sponsors: 4 m boards) where the wall runs straight along the road
-    { const sb = new K.Chunks(192, true);
+    { const sb = new K.Chunks(384, true);
       for (const side of [-1, 1]) for (let i = 0, n = 0; i + 2 <= N; i += 2) {
         const j = (i + 2) % N, bar = side > 0 ? T.br : T.bl; if (kindAt(i, side) !== 1 || kindAt(j, side) !== 1 || Math.abs(bar[i] - bar[j]) > 0.3 || C.jm[side2(side)][i] > 0 || (i >> 1) % 5 > 2) continue;
         const k = (n++ * 3 + (side > 0 ? 1 : 0)) % 8, u0 = (k % 2) * 0.5, v1 = 1 - Math.floor(k / 2) * 0.25, o = (ii) => side * (bar[ii] + 0.32);
@@ -334,7 +334,7 @@
         sb.get(A[0], A[2]).quadO(A, B, Cq, Dq, W1, Pt(i, side * (bar[i] + 2), 0.6), [[uL, v1 - 0.25], [uR, v1 - 0.25], [uR, v1], [uL, v1]]); }
       sb.addTo(C.root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true); }
     // catch fences on the walls (taller behind the tyre walls)
-    const fg = new K.Chunks(192, true);
+    const fg = new K.Chunks(384, true);
     for (const side of [-1, 1]) {
       const fc = fence[side2(side)], bar = side > 0 ? T.br : T.bl; let acc = 0;
       for (let i = 0; i < N; i++) {
@@ -685,7 +685,7 @@
     for (let j = 1; j < G.nz - 1; j++) for (let i = 1; i < G.nx - 1; i++) { const k = j * G.nx + i, sd = G.SD[k]; if (sd > 7 || sd < -6 || G.dT[k] > 1100) continue;
       for (let q = 0; q < 3; q++) { const x = G.x0 + i * G.c + (RR() - 0.5) * G.c, z = G.z0 + j * G.c + (RR() - 0.5) * G.c, sd2 = gAt(G.SD, x, z); if (sd2 > 6 || sd2 < -5 || ctKind(x, z) === KIND.sand || C.near(x, z).d < 2) continue;
         const r = 0.8 + RR() * RR() * 2.6, t = 0.82 + RR() * 0.3; rocks.add(x, Math.max(ctGround(x, z), C.WL - 1) - r * 0.25, z, RR() * TAU, r, r, [0.44 * t, 0.42 * t, 0.4 * t]); } }
-    rocks.addTo(C.root, true);
+    rocks.addTo(C.root, false);
   }
 
   /* ---- trees: OSM's trees (single and in rows) and the land cover's tree cells: palms along the coast and the boulevards (tall fan palms and
@@ -710,11 +710,15 @@
     } else {   // a eucalypt: a tall pale trunk, loose grey-green clumps high up
       cyl(g, 0, 0, 0, 0.025, 0.7, 5, [0.78, 0.76, 0.7], null, 0.016); for (const [x, y, z, r] of [[0.1, 0.7, 0.04, 0.17], [-0.12, 0.78, -0.06, 0.16], [0.02, 0.9, 0.1, 0.14]]) K.puff(g, x, y, z, r, 0.7, [0.36, 0.44, 0.32], R, 0.3, 0.6, 1.1);
     }
-    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+    return g;
   }
   function ctTrees(C) {
     const { root, near } = C, G = MG, R = rng(1967), mat = new THREE.MeshLambertMaterial({ vertexColors: true });
-    const IC = [0, 1, 2, 3, 4].map(k => new K.IChunks(ctTreeGeo(k), mat, 256));
+    // the five kinds' models (height 1) copied into 384 m chunks of one mesh each (one draw for all the trees of a chunk, all kinds)
+    const BASE = [0, 1, 2, 3, 4].map(k => ctTreeGeo(k)), ch = new K.Chunks(384);
+    const IC = BASE.map(b => ({ add: (x, y, z, rot, sxz, sy, col) => { const g = ch.get(x, z), c = Math.cos(rot), sn = Math.sin(rot), P = b.P, Nn = b.N, Cc = b.C;
+      for (let v = 0; v < P.length; v += 3) { const px = P[v] * sxz, pz = P[v + 2] * sxz; g.P.push(x + px * c - pz * sn, y + P[v + 1] * sy, z + px * sn + pz * c);
+        const nx = Nn[v], nz = Nn[v + 2]; g.N.push(nx * c - nz * sn, Nn[v + 1], nx * sn + nz * c); g.C.push(Cc[v] * col[0], Cc[v + 1] * col[1], Cc[v + 2] * col[2]); } } }));
     let n = 0;
     const put = (x, z, sp) => { const q = near(x, z); if (q.d < 1.2 || C.excluded(x, z) || ctSea(x, z) || gAt(G.SD, x, z) < 3) return;
       const h = sp === 0 ? 13 + R() * 8 : sp === 1 ? 8 + R() * 4 : sp === 2 ? 11 + R() * 6 : sp === 3 ? 7 + R() * 5 : 16 + R() * 8, tone = 0.86 + 0.28 * R();
@@ -727,19 +731,18 @@
     // the land cover's tree cells (the park and the golf course): where OSM has no trees
     for (let j = 1; j < G.nz - 1; j += 1) for (let i = 1; i < G.nx - 1; i += 1) { const k = j * G.nx + i; if (G.kind[k] !== KIND.trees || !G.land[k] || G.dT[k] > 800) continue;
       if (R() > 0.35) continue; const x = G.x0 + i * G.c + (R() - 0.5) * 6, z = G.z0 + j * G.c + (R() - 0.5) * 6; put(x, z, R() < 0.45 ? 2 : R() < 0.6 ? 3 : 4); }
-    for (const ic of IC) ic.addTo(root, true);
+    ch.addTo(root, mat, true, true);
     C.out.treeN = n;
   }
 
   /* ---- the car parks (OSM): white bays and parked cars ---- */
   function ctCarGeo() {
-    const g = new GB(), W1 = [1, 1, 1], gl = [0.12, 0.15, 0.18], tyre = [0.06, 0.06, 0.07];
-    box(g, 0, 0.3, 0, 4.4, 0.64, 1.78, 0, W1, W1, true); box(g, -0.2, 0.94, 0, 2.3, 0.56, 1.6, 0, gl, W1, true);
-    for (const z of [-0.8, 0.8]) box(g, 0, 0.0, z, 3.4, 0.6, 0.24, 0, tyre, tyre, true);
+    const g = new GB(), W1 = [1, 1, 1], gl = [0.12, 0.15, 0.18];
+    box(g, 0, 0.12, 0, 4.4, 0.82, 1.78, 0, W1, W1, true); box(g, -0.2, 0.94, 0, 2.3, 0.56, 1.6, 0, gl, W1, true);   // (the body down to the road, dark glass over it: seen from above)
     return g.geometry();
   }
   function ctParking(C) {
-    const { D, root, near } = C, R = rng(767), cars = new K.IChunks(ctCarGeo(), new THREE.MeshLambertMaterial({ vertexColors: true }), 192), mark = new K.Chunks(192), W1 = [1, 1, 1];
+    const { D, root, near } = C, R = rng(767), cars = new K.IChunks(ctCarGeo(), new THREE.MeshLambertMaterial({ vertexColors: true }), 320), mark = new K.Chunks(320), W1 = [1, 1, 1];
     const CARC = [[0.92, 0.92, 0.92], [0.12, 0.12, 0.13], [0.5, 0.52, 0.55], [0.7, 0.1, 0.1], [0.15, 0.25, 0.55], [0.78, 0.78, 0.8], [0.3, 0.32, 0.35], [0.95, 0.95, 0.95]];
     let nCars = 0;
     for (const ring of D.parking) {
@@ -752,11 +755,11 @@
         if (!K.inPoly(ring, x, z) || K.polyDist(ring, x, z) < 1.5 || near(x, z).d < 2 || C.excluded(x, z)) continue;
         const yb = ctGround(x, z) + 0.07;
         if (Math.abs(row) % 2 === 0) { const g = mark.get(x, z), p = (s, t) => [x + ux * s + vx * t, yb, z + uz * s + vz * t]; g.quadUp(p(-1.3, -2.6), p(-1.18, -2.6), p(-1.18, 2.6), p(-1.3, 2.6), [W1, W1, W1, W1]); }
-        if (R() < 0.55) { const yaw = Math.atan2(vz, vx) + (R() < 0.5 ? Math.PI : 0) + (R() - 0.5) * 0.06, col = CARC[Math.floor(R() * CARC.length)], k = 0.85 + 0.25 * R();
+        if (R() < 0.38) { const yaw = Math.atan2(vz, vx) + (R() < 0.5 ? Math.PI : 0) + (R() - 0.5) * 0.06, col = CARC[Math.floor(R() * CARC.length)], k = 0.85 + 0.25 * R();
           cars.add(x, yb, z, -yaw, 1, 1, [col[0] * k, col[1] * k, col[2] * k]); nCars++; }
       }
     }
-    cars.addTo(root, true); mark.addTo(root, C.lMat, false, true); C.out.parkedCars = nCars;
+    cars.addTo(root, false); mark.addTo(root, C.lMat, false, true); C.out.parkedCars = nCars;
   }
 
   /* ---- the view beyond the near ground: the land to 9 km (Copernicus DEM): Signal Hill, Lion's Head, Table Mountain's flat top and its cliffs,
