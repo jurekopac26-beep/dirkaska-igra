@@ -2928,7 +2928,10 @@
   }
   function updateHUDUp(P) {   // a race up an open road (Vršič): the place, km done of the whole road, the altitude, the race clock, the best race so far
     const L = polLen(), al = track.def.alt, done = P.finished && !P.busted, alt = track.altAt(done && !race.pol ? track.hy[track.finishIdx] : P.roadY || 0);   // (busted by the police: where they were stopped; the run from the police: the building at the top)
-    setText('h-pos', race.pol ? String(race.pol.cars.filter(c => c.pol.mode === 'chase').length) : String(P.pos || race.cars.length));
+    // the run from the police: how many patrol cars are after the player, in place of the place. Knocked out (out, down), the ones in the chase
+    // can all be gone for a while before the next one joins (up to D.join s): while the chase is on and they have not lost the player, at least 1
+    const nChase = race.pol ? race.pol.cars.filter(c => c.pol.mode === 'chase').length : 0;
+    setText('h-pos', race.pol ? String(race.pol.stage === 'chase' && !race.pol.lost ? Math.max(1, nChase) : nChase) : String(P.pos || race.cars.length));
     setText('h-lap', kmTxt(clamp(done ? L : P.dist, 0, L), 1) + '/' + kmTxt(L, 1) + ' KM');
     setText('h-alt', alt != null ? numDot(al ? clamp(alt, al[0], al[1]) : alt) + ' m' : '');
     setText('h-time', fmt(P.finished ? P.finishTime : phase === 'racing' ? race.time : 0, true));
