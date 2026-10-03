@@ -1548,5 +1548,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "34f6a9a86d535b8497f9de72"
+ },
+ "troisrivieres/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 151.53,
+  "spins": 0,
+  "walls": 6,
+  "rescues": 0,
+  "nan": false,
+  "digest": "324863817ffee40b5f606d5e"
+ },
+ "troisrivieres/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 161.23,
+  "spins": 0,
+  "walls": 7,
+  "rescues": 0,
+  "nan": false,
+  "digest": "ab920acff8161557b9240859"
+ },
+ "troisrivieres/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 134.55,
+  "spins": 2,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "be8c2eb6d43c0412493d3f1b"
+ },
+ "troisrivieres/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 136.28,
+  "spins": 8,
+  "walls": 9,
+  "rescues": 0,
+  "nan": false,
+  "digest": "434fbb487f70304720e21ef1"
+ },
+ "troisrivieres/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 150.38,
+  "spins": 1,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "99558a685a19757640b31255"
  }
 }

@@ -3036,5 +3036,103 @@
    "rescues": 0,
    "repairs": 1
   }
+ },
+ "troisrivieres/race/cs": {
+  "digest": "428f0436afe0d96242928814",
+  "lead": 1939.8,
+  "car0": [
+   -327.33,
+   -153.59
+  ],
+  "cover": {
+   "dmg": 0.48,
+   "loose": 5,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "troisrivieres/demo/cs": {
+  "digest": "e8fc8d2c1bc60e4108617bc7",
+  "lead": 2013.1,
+  "car0": [
+   -366.05,
+   28.29
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "troisrivieres/upg/cs": {
+  "digest": "976cf4be85e01618ce83143c",
+  "lead": 2015.9,
+  "car0": [
+   -363.71,
+   14.86
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "troisrivieres/crash/cs": {
+  "digest": "f7492fba27f8f7dd5d3e867f",
+  "lead": 3141.4,
+  "car0": [
+   -48.52,
+   -16.55
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 20,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "troisrivieres/formula/cs": {
+  "digest": "5acfbb5675f96d34789053cc",
+  "lead": 4203,
+  "car0": [
+   345.63,
+   252.42
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 23,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "troisrivieres/lm/cs": {
+  "digest": "1aea022901bacc5e1a41869c",
+  "lead": 4101.3,
+  "car0": [
+   336.29,
+   276.28
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 19,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "troisrivieres/car/cs": {
+  "digest": "3e47ce6d3ccd767727fe935e",
+  "lead": 3662.4,
+  "car0": [
+   232.23,
+   260.53
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 8,
+   "rescues": 0,
+   "repairs": 1
+  }
  }
 }

@@ -89,7 +89,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
       { n: "boksi", x: -292, z: -0.9, hud: false, say: ["Past the pits!", "Along the pit lane!", "The crews are waiting in the pits!"] },
     ],
     turns: [[212.2, 40.0], [155.8, 230.7], [341.6, 275.6], [366.3, 195.3], [318.3, -42.5], [148.7, -343.4], [-206.7, -163.7], [-333.5, -152.1], [-344.3, 44.8], [-219.9, -55.4], [-181.1, -29.3]],   // the apexes of Turns 1-11
-    stands: [[-215, -95, 1, 10, 1], [10, 150, 1, 12, 1], [560, 605, -1, 8, 0], [1990, 2040, -1, 6, 0], [1180, 1260, -1, 6, 0]],   // grandstands [from, to, side, rows, roof]
+    stands: [[-215, -95, 1, 10, 0], [10, 150, 1, 12, 0], [560, 605, -1, 8, 0], [1990, 2040, -1, 6, 0], [1180, 1260, -1, 6, 0]],   // grandstands [from, to, side, rows, roof]
     ga: [[250, 380, 1], [660, 800, 1], [1330, 1500, -1], [1700, 1800, -1], [1850, 1980, -1]],   // spectators along the fences [from, to, side]
     sectors: [700, 1600],
     gate: [341.6, 275.6],
