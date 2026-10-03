@@ -355,6 +355,7 @@
       if (pi.t > 0.999 && pj.t > 0.999) { quad(gp, s0, s1, pi.wall + 0.45, oi - 3.5, oj - 3.5, pj.wall + 0.45, 0.022, [0.72, 0.72, 0.7]);   // (the strip behind the pit wall: concrete)
         quad(gp, s0, s1, oi + 3.5, PB[2], PB[2], oj + 3.5, 0.022, apC); if (q % 20 === 0) quad(gp, s0, s1, oi + 3.5, oi + 3.7, oj + 3.7, oj + 3.5, 0.03, wl); }
       else if (pi.t > 0.05) quad(gl, s0, s1, oi + 3.5, Math.max(oi + 3.6, PB[2] * pi.t), Math.max(oj + 3.6, PB[2] * pj.t), oj + 3.5, 0.02, one, true);   // (the way in and out: asphalt out to the building line)
+      if (q % 6 === 0) { const p = atSf(s0, sg * (oi + 2)); exclPush(p[0], p[1], 9.5); }   // (no trees in the lane, on its strip or apron)
     }
     // the 80 km/h line across the lane at its two ends
     for (const q of [PD[1] + 45, PD[2] - 34]) { const p = T.pitAt(sStart + q); if (p) quad(gp, sStart + q, sStart + q + 0.4, p.o * sg - 3.4, p.o * sg + 3.4, p.o * sg + 3.4, p.o * sg - 3.4, 0.036, wl); }
