@@ -79,7 +79,8 @@ check('track: "Rio de Janeiro, Brazilija" (English "Rio de Janeiro, Brazil"), a 
 }
 
 // 4. the scenery's data: the lagoon (its outline, the water below the track, south of the circuit), the terrain and land cover grids, the
-// mountains' skyline (the Pedra Branca massif in the north-west the highest, ~8° over the horizon)
+// mountains' skyline (the Pedra Branca massif in the north-west the highest, ~8° over the horizon; the Tijuca massif in the east), the
+// convention centre in the west
 {
   const W = def.lagoon, poly = W.poly, inP = (x, z) => { let c = false; for (let a = 0, b = poly.length - 1; a < poly.length; b = a++) { const [xa, za] = poly[a], [xb, zb] = poly[b]; if ((za > z) !== (zb > z) && x < (xb - xa) * (z - za) / (zb - za) + xa) c = !c; } return c; };
   let wet = 0, dmin = 1e9; for (let i = 0; i < T.N; i += 2) { if (inP(T.px[i], T.pz[i])) wet++; for (const [x, z] of poly) dmin = Math.min(dmin, Math.hypot(T.px[i] - x, T.pz[i] - z)); }
@@ -92,9 +93,15 @@ check('track: "Rio de Janeiro, Brazilija" (English "Rio de Janeiro, Brazil"), a 
   const cnt = [0, 0, 0, 0]; lc.forEach(c => cnt[c]++);
   check('terrain and land cover: whole grids round the track (16 m), all four classes (grass, trees, marsh and mangroves, built-up)', bin.length === D.nx * D.nz && lc.length === Lc.nx * Lc.nz && cnt.every(c => c > 300) &&
     D.x0 < -1000 && D.x0 + D.nx * 16 > 1000, `${D.nx} x ${D.nz} cells, classes ${cnt.join('/')}`);
-  const S = def.sky, mx = S.ang.map(b => Math.max(...b) / 10), at = S.ang[1].indexOf(Math.max(...S.ang[1]));
-  check('skyline: three bands, 360 azimuths each, the highest 6-9° up in the north-west (the Pedra Branca massif), flat to the south (the sea)', S.ang.length === 3 && S.ang.every(b => b.length === 360) &&
-    Math.max(...mx) > 6 && Math.max(...mx) < 9 && at > 270 && at < 330 && S.ang.every(b => Math.max(...b.slice(150, 210)) < 10), `highest ${mx.map(v => v.toFixed(1)).join(' / ')}° at ${at}°`);
+  const S = def.sky, mx = S.ang.map(b => Math.max(...b) / 10), at = S.ang[1].indexOf(Math.max(...S.ang[1])) / 2, tj = Math.max(...S.ang[2].slice(120, 200)) / 10;
+  check('skyline: four bands, 720 azimuths each (every half degree), the highest 6-9° up in the north-west (the Pedra Branca massif), the Tijuca massif in the east (60-100°), flat to the south (the sea)',
+    S.ang.length === 4 && S.ang.every(b => b.length === 720) && S.dist.every(b => b.length === 720) && Math.max(...mx) > 6 && Math.max(...mx) < 9 && at > 270 && at < 330 && tj > 1.5 &&
+    S.ang.every(b => Math.max(...b.slice(300, 420)) < 10), `highest ${mx.map(v => v.toFixed(1)).join(' / ')}° at ${at}°, Tijuca ${tj.toFixed(1)}°`);
+  const C = def.conv, area = (P) => { let a = 0; for (let k = 0; k < P.length; k++) { const [x0, z0] = P[k], [x1, z1] = P[(k + 1) % P.length]; a += x0 * z1 - x1 * z0; } return Math.abs(a / 2); };
+  const cd = Math.min(...C.halls.map(([h, P]) => Math.min(...P.map(([x, z]) => { let d = 1e9; for (let i = 0; i < T.N; i += 4) d = Math.min(d, Math.hypot(T.px[i] - x, T.pz[i] - z)); return d; }))));
+  check('the convention centre: its car park and five halls (OpenStreetMap, 2012) west of the circuit, 0.9-2 km from the track, low (10-15 m), 1-4 ha each',
+    C.lot.length >= 8 && C.halls.length === 5 && C.halls.every(([h, P]) => h >= 10 && h <= 15 && P.length >= 4 && area(P) > 9000 && area(P) < 40000 && P.every(([x]) => x < -1000)) && cd > 900 && cd < 2000,
+    `${C.halls.length} halls, ${C.halls.map(([h, P]) => (area(P) / 1e4).toFixed(1) + ' ha').join(', ')}, nearest ${cd.toFixed(0)} m from the track`);
 }
 
 // 5. whole races with the AI, in the dry and in the rain: everybody to the line; the rain slower

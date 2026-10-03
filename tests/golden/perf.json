@@ -112,11 +112,11 @@
   "jsMs": 1.08
  },
  "rio": {
-  "calls": 263,
-  "maxCalls": 361,
-  "kverts": 606,
-  "maxKverts": 738,
-  "jsMs": 1.57
+  "calls": 273,
+  "maxCalls": 371,
+  "kverts": 656,
+  "maxKverts": 816,
+  "jsMs": 1
  },
  "jezero": {
   "calls": 278,
