@@ -336,20 +336,20 @@
   }
  },
  "hongkong": {
-  "meshes": 154,
-  "verts": 347498,
+  "meshes": 155,
+  "verts": 360878,
   "instances": 1858,
   "props": 149,
   "crowd": 281,
-  "world": "bc7ed5ef",
+  "world": "494c752f",
   "propsHash": "7f5890fe",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "a4d2fd9b",
+   "-:MeshLambertMaterial": "518b2958",
    "-:MeshPhongMaterial": "5ffa63f",
    "-:MeshBasicMaterial": "c136c3d3",
    "crowd:MeshLambertMaterial": "de99d940",
-   "ao:MeshBasicMaterial": "47f6da9b",
+   "ao:MeshBasicMaterial": "964fcb78",
    "tyremarks:MeshBasicMaterial": "90779014",
    "roadwear:MeshLambertMaterial": "c5a2d9d3"
   }
