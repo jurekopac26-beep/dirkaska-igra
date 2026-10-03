@@ -2,7 +2,7 @@
 var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
   // Bathurst, New South Wales, Australia: the circuit on the public roads round the hill above the town (6.213 km, anticlockwise), in its real
-  // layout and scale. The start line on the main straight (-33.43930, 149.55846); the pit lane on its left is not built (no pits).
+  // layout and scale. The start line on the main straight (-33.43930, 149.55846); the pit lane on its left (pitSide -1).
   // Centre line: OpenStreetMap (© OpenStreetMap contributors, ODbL), via Overture Maps, smoothed; metres, origin = the start line, x east,
   // z south. Heights (BAT_H): Copernicus DEM GLO-30 along the line (the lowest across the road's width: no trees in it), a running median,
   // smoothed, the grade at most 17 % (the steepest of the real climb is 1 in 6.1), every 1/619 of the lap from points[0] (= the start
@@ -42,6 +42,9 @@ var TRACK_DEFS = TRACK_DEFS || [];
       ["Zavoj 18", 244.7, 56.9, ["The last corner, Turn Eighteen!", "Turn eighteen, and onto the main straight!", "Through the last corner, the lap is nearly done!"]],
     ],
     turns: [[-255.5, -21.4], [-448.8, 1056.6], [-800.0, 948.2], [-900.4, 973.4], [-830.9, 1120.4], [-855.3, 1262.6], [-954.4, 1786.9], [-627.3, 1828.3], [-569.5, 1857.4], [-502.2, 1856.1], [-453.6, 1908.8], [-399.8, 1918.9], [-316.8, 1990.5], [-248.5, 2023.6], [-170.1, 2126.5], [242.0, 594.1], [183.6, 501.0], [244.7, 56.9]],   // the apexes of Turns 1-18 (their number boards)
+    // the pit lane on the left of the main straight (the inside, as on the real circuit): [centre offset towards it, from, to, the player's
+    // box, entry length] (metres from the start line); in past the exit of the last corner, out before Turn 1; 13 crews' boxes
+    pit: [15, -215, 230, -60], pitSide: -1, pitRow: [-125, -5],
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: along the main straight across from the pit lane
     stands: [[-205, 200, 1, 12, 1, 3, 0, 'GRANDSTAND']],
     ga: [[215, 340, 1], [620, 1000, 1], [2650, 3050, 1], [4580, 4900, -1], [5240, 5480, 1]],   // spectators on the grass: [from, to, side] (Turn 1, the climb, the top of the hill, the long straight, the chicane)
