@@ -22140,6 +22140,9 @@ const World = (function () {
     { const c = 8, nx2 = Math.floor((G.nx - 1) * G.cell / c) + 1, nz2 = Math.floor((G.nz - 1) * G.cell / c) + 1, d = new Float32Array(nx2 * nz2).fill(1e9);
       for (let j = 0; j < nz2; j++) for (let i = 0; i < nx2; i++) if (dtInPoly(P.river, x0 + i * c, z0 + j * c)) d[j * nx2 + i] = 0;
       nrChamfer(d, nx2, nz2, c); P.SD = { c, nx: nx2, nz: nz2, d }; }
+    { const c = 8, nx2 = Math.floor((G.nx - 1) * G.cell / c) + 1, nz2 = Math.floor((G.nz - 1) * G.cell / c) + 1, d = new Float32Array(nx2 * nz2).fill(1e9);   // the distance from the track's centre line (the same lattice)
+      for (let i = 0; i < N; i++) { const a = Math.round((T.px[i] - x0) / c), b = Math.round((T.pz[i] - z0) / c); if (a >= 0 && b >= 0 && a < nx2 && b < nz2) d[b * nx2 + a] = 0; }
+      nrChamfer(d, nx2, nz2, c); P.TD = { c, nx: nx2, nz: nz2, d }; }
   }
   function dtShore(x, z) { const S = DT.SD, gx = clamp((x - DT.G.x0) / S.c, 0, S.nx - 1.001), gz = clamp((z - DT.G.z0) / S.c, 0, S.nz - 1.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, a = S.d, W = S.nx;
     return (a[j * W + i] * (1 - u) + a[j * W + i + 1] * u) * (1 - v) + (a[(j + 1) * W + i] * (1 - u) + a[(j + 1) * W + i + 1] * u) * v; }
@@ -22246,7 +22249,8 @@ const World = (function () {
     const matVC = hjCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);   // (what stands on the roofs: cut with them)
     const addM = (g, mat, cast, recv) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = recv !== false; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     const q0 = {};
-    const barAt = (x, z, hint) => { const q = T.query(x, z, hint == null ? -1 : hint, q0); return { q, lim: q.d > 0 ? q.br : q.bl, ad: Math.abs(q.d) }; };
+    const near0 = (x, z) => { const G = P.G, gi = Math.round((x - G.x0) / G.cell), gj = Math.round((z - G.z0) / G.cell); return gi < 0 || gj < 0 || gi >= G.nx || gj >= G.nz ? -1 : G.ii[gj * G.nx + gi]; };   // (the nearest road sample: a lookup's hint)
+    const FAR = { q: null, lim: 0, ad: 1e9 }, barAt = (x, z, hint) => { const h = hint == null ? near0(x, z) : hint; if (h < 0) return FAR; const q = T.query(x, z, h, q0); return { q, lim: q.d > 0 ? q.br : q.bl, ad: Math.abs(q.d) }; };   // (FAR: more than 46 m from the road)
     const inBarrier = (x, z, m, hint) => { const b = barAt(x, z, hint); return b.ad < b.lim - (m || 0) ? b : null; };   // (inside the barriers, m metres clear of them)
     // building footprints (for the stands, the trees, the crowds): a 16 m hash of their polygons
     const BH = new Map(), bldIn = (x, z, pad) => { const Lb = BH.get(Math.floor(x / 16) * 4096 + Math.floor(z / 16)); if (!Lb) return false;
@@ -22260,19 +22264,19 @@ const World = (function () {
         if (!mh) for (let i = Math.floor(x0 / 16); i <= Math.floor(x1 / 16); i++) for (let j = Math.floor(z0 / 16); j <= Math.floor(z1 / 16); j++) { const key = i * 4096 + j; let Lb = BH.get(key); if (!Lb) BH.set(key, Lb = []); Lb.push(b); } } }
     const excl = new Map(), exclPush = (x, z, r) => { for (let a = Math.floor((x - r) / 16); a <= Math.floor((x + r) / 16); a++) for (let b = Math.floor((z - r) / 16); b <= Math.floor((z + r) / 16); b++) { const k = a * 4096 + b; let Le = excl.get(k); if (!Le) excl.set(k, Le = []); Le.push([x, z, r]); } };
     const excluded = (x, z) => { const Le = excl.get(Math.floor(x / 16) * 4096 + Math.floor(z / 16)); if (Le) for (const [ex, ez, r] of Le) if ((x - ex) ** 2 + (z - ez) ** 2 < r * r) return true; return false; };
-    const water = (x, z) => dtInPoly(P.river, x, z);
+    const water = (x, z) => { const d = dtShore(x, z); return d > 12 ? false : dtInPoly(P.river, x, z); };   // (far from the shore: dry, no polygon test)
 
     /* ---- the ground: sidewalks and plazas (concrete slabs), lawns, the car parks' asphalt; 128 m tiles, 8 m cells ---- */
-    const concTex = ownTex(dtConcTex(301, '#c9c6bf', 'rgba(60,58,52,0.35)', 43)), gMat = new THREE.MeshLambertMaterial({ map: concTex, vertexColors: true });
+    const concTex = ownTex(dtConcTex(301, '#c9c6bf', 'rgba(60,58,52,0.35)', 43)), gMat = new THREE.MeshLambertMaterial({ map: concTex, vertexColors: true }); gMat.userData.wear = true;   // (the rain darkens the sidewalks with the road)
     let nTiles = 0;
-    { const G = P.G, gx0 = G.x0, gz0 = G.z0, TS = 512, C8 = 8, nT = Math.ceil((G.nx - 1) * G.cell / TS), mT = Math.ceil((G.nz - 1) * G.cell / TS);
+    { const G = P.G, gx0 = G.x0, gz0 = G.z0, TS = 512, C8 = 12.8, nT = Math.ceil((G.nx - 1) * G.cell / TS), mT = Math.ceil((G.nz - 1) * G.cell / TS);
       const luAt = (x, z) => { let k = -1; for (const p of P.lu) { if (x < p.bb[0] || x > p.bb[2] || z < p.bb[1] || z > p.bb[3]) continue; if (dtInPoly(p.pts, x, z)) { if (p.k === 0 || p.k === 1) return 0; k = p.k; } } return k; };
       const n3 = valueNoise2(611, 40), n4 = valueNoise2(612, 9);
       for (let tj = 0; tj < mT; tj++) for (let ti = 0; ti < nT; ti++) {
         const rb = new RB(true), n = TS / C8 + 1, X0 = gx0 + ti * TS, Z0 = gz0 + tj * TS; let any = false;
         for (let b = 0; b < n; b++) { const P2 = [], C2 = [], U2 = [];
           for (let a = 0; a < n; a++) { const x = X0 + a * C8, z = Z0 + b * C8; let y = gH(x, z) - 0.04;
-            const wt = water(x, z), lc = dtLC(x, z), lu = wt ? -1 : luAt(x, z), m = 0.8 + (n3(x, z) - 0.5) * 0.12 + (n4(x, z) - 0.5) * 0.06;
+            const wt = water(x, z), lc = dtLC(x, z), lu = wt ? -1 : luAt(x, z), m = 0.7 + (n3(x, z) - 0.5) * 0.14 + (n4(x, z) - 0.5) * 0.07;
             let c = [m, m, m * 0.98];
             if (wt) { y = Math.min(y, S.water - 3); c = [0.3, 0.32, 0.3]; }
             else if (lu === 0 || (lc === 2 && lu < 0) || (lc === 1 && lu < 0)) { const g = 0.86 + (n4(x * 1.7, z * 1.7) - 0.5) * 0.2; c = [0.42 * g, 0.62 * g, 0.3 * g]; }
@@ -22302,13 +22306,13 @@ const World = (function () {
         g2.quadO([ax, ya + 1.0, az], [bx, yb + 1.0, bz], [bx, yb + 1.08, bz], [ax, ya + 1.08, az], rail, ins);
         g2.quadO([ax, ya + 0.5, az], [bx, yb + 0.5, bz], [bx, yb + 0.53, bz], [ax, ya + 0.53, az], rail, ins); }
       addM(g2, matV, true); }
-    function dtGroundD(x, z) { const G = P.G, i = clamp(Math.round((x - G.x0) / G.cell), 0, G.nx - 1), j = clamp(Math.round((z - G.z0) / G.cell), 0, G.nz - 1); return Math.sqrt(G.dd[j * G.nx + i]); }
+    function dtGroundD(x, z) { const D = P.TD, i = Math.round((x - P.G.x0) / D.c), j = Math.round((z - P.G.z0) / D.c); return i < 0 || j < 0 || i >= D.nx || j >= D.nz ? 1e9 : D.d[j * D.nx + i]; }   // (metres from the track's centre line, on the 8 m lattice)
 
     /* ---- the streets: asphalt ribbons (a little under the track's), the junctions filled; the curbs along their edges; markings ---- */
     const aMat = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
     const mkMat = new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -10 });
     const stC = new Chunks(256, true), mkC = new Chunks(256), cuC = mkC;
-    const onTrack = (x, z) => { const q = T.query(x, z, -1, q0), wi = T.wa ? T.wa[q.i] : w; return Math.abs(q.d) < wi - 0.2 ? q : null; };
+    const onTrack = (x, z) => { const h = near0(x, z); if (h < 0) return null; const q = T.query(x, z, h, q0), wi = T.wa ? T.wa[q.i] : w; return Math.abs(q.d) < wi - 0.2 ? q : null; };
     const yS = (x, z) => gH(x, z);
     const YEL = [0.93, 0.74, 0.16], WHT = [0.94, 0.94, 0.92];
     const stripe = (gC, ax, az, bx, bz, o, hw, col, y0) => {   // a painted strip from a to b, offset o across, half width hw
@@ -22351,7 +22355,7 @@ const World = (function () {
     // the crosswalks (the mapped crossings): the bars along the street, across its whole width
     const PTS = dtI16(S.pts), items = []; for (let p = 0; p < PTS.length; p += 3) items.push([PTS[p], PTS[p + 1] / 4, PTS[p + 2] / 4]);
     let nCross = 0;
-    for (const [k, x, z] of items) { if (k !== 8) continue; const st = dtStreetAt(x, z, 1.5); if (!st || st.r.cls > 4) continue;
+    for (const [k, x, z] of items) { if (k !== 8 || dtGroundD(x, z) > 220) continue; const st = dtStreetAt(x, z, 1.5); if (!st || st.r.cls > 4) continue;
       const hw = Math.min(st.r.hw, 9), q = onTrack(x, z), tx = q ? T.tx[q.i] : st.tx, tz = q ? T.tz[q.i] : st.tz, nx = -tz, nz = tx;   // (on the track: across the track)
       const wi = q ? (T.wa ? T.wa[q.i] : w) : hw, ox = q ? T.px[q.i] : x, oz = q ? T.pz[q.i] : z, y0 = q ? T.hy[q.i] - 0.025 : null;
       for (let o = -wi + 0.3; o < wi - 0.3; o += 1.2) stripe(mkC, ox - tx * 1.5, oz - tz * 1.5, ox + tx * 1.5, oz + tz * 1.5, o + 0.3, 0.25, WHT, y0);
@@ -22397,7 +22401,7 @@ const World = (function () {
     // the streets' markings on the track: [from, to, kind] (0 two-way: double yellow in the middle; 1 one-way: dashes between four lanes, yellow along the median)
     const MK = [[-200, 150, 0], [210, 318, 0], [372, 1385, 1], [1492, 1600, 1], [1645, 1798, 0], [1850, 2315, 0], [2355, 2432, 0]];
     { const gd = mkC, Y2 = YEL;
-      const put = (d0, d1, o, hw, col) => { for (let d = d0; d < d1 - 0.01; d += 2) { const s0 = sAt(d), s1 = sAt(Math.min(d1, d + 2)), i = T.idx(s0);
+      const put = (d0, d1, o, hw, col) => { for (let d = d0; d < d1 - 0.01; d += 4) { const s0 = sAt(d), s1 = sAt(Math.min(d1, d + 4)), i = T.idx(s0);
         if (mouth[0][i] && mouth[1][i]) continue; const A = atSf(s0, o - hw), B2 = atSf(s0, o + hw), C2 = atSf(s1, o + hw), D2 = atSf(s1, o - hw);
         gd.get(A[0], A[1]).quadUp([A[0], hyS(s0) + 0.045, A[1]], [B2[0], hyS(s0) + 0.045, B2[1]], [C2[0], hyS(s1) + 0.045, C2[1]], [D2[0], hyS(s1) + 0.045, D2[1]], [col, col, col, col]); } };
       for (const [a, b, kind] of MK) {
@@ -22498,7 +22502,7 @@ const World = (function () {
       if (b.ad < b.lim + 0.3) { const kind = STK[k]; if (kind && b.ad > W_(b.q.i) + 0.8) putProp(kind, x, z, R() * TAU); continue; }   // (inside: knockable; on the road itself: none)
       if (b.ad < b.lim + 1.0 || bldIn(x, z, 0.3)) continue;
       const st = dtStreetAt(x, z, 0.3); if (st && k !== 1) continue;   // (not on a street)
-      const nt = b.q, yaw = Math.atan2(-nt.nz * Math.sign(nt.d), -nt.nx * Math.sign(nt.d));   // (facing the track)
+      const nt = b.q, yaw = nt ? Math.atan2(-nt.nz * Math.sign(nt.d), -nt.nx * Math.sign(nt.d)) : crH(x, z, 5) * TAU;   // (facing the track)
       if (k === 0) stat.lamp.push([x, z, yaw]); else if (k === 1) { /* the mapped signal: a node on the junction; its poles go on the corners below */ }
       else if (k === 2) stat.hydrant.push([x, z, R() * TAU]); else if (k === 3) stat.bollard.push([x, z, 0]); else if (k === 4) stat.bin.push([x, z, R() * TAU]);
       else if (k === 5) stat.shelter.push([x, z, yaw]); else if (k === 6) stat.bench.push([x, z, yaw]);
@@ -22682,6 +22686,17 @@ const World = (function () {
     }
     bC.addTo(root, bMat, true, true); rC.addTo(root, rfMat, false, true);
 
+    /* ---- the elevated light rail loop round the centre: its concrete box beam 7 m up on round columns (none on the track) ---- */
+    { const a = dtI16(S.pm || ''), cc = [0.72, 0.71, 0.68], cs = [0.6, 0.59, 0.56], cb = [0.5, 0.49, 0.47];
+      for (let p = 0; p < a.length;) { const n = a[p], pts = []; for (let q = 0; q < n; q++) pts.push([a[p + 1 + 2 * q] / 4, a[p + 2 + 2 * q] / 4]); p += 1 + 2 * n;
+        for (let k = 0; k + 1 < n; k++) { const [ax, az] = pts[k], [bx, bz] = pts[k + 1], L2 = Math.hypot(bx - ax, bz - az); if (L2 < 0.1) continue;
+          const nx = -(bz - az) / L2 * 1.3, nz = (bx - ax) / L2 * 1.3, ya = gH(ax, az) + 7, yb = gH(bx, bz) + 7, g = scen.get(ax, az), ins = [(ax + bx) / 2, (ya + yb) / 2 + 0.8, (az + bz) / 2];
+          const A = (x, z, y, o) => [x + nx * o, y, z + nz * o];
+          g.quadO(A(ax, az, ya, -1), A(bx, bz, yb, -1), A(bx, bz, yb + 1.7, -1), A(ax, az, ya + 1.7, -1), cs, ins); g.quadO(A(ax, az, ya, 1), A(bx, bz, yb, 1), A(bx, bz, yb + 1.7, 1), A(ax, az, ya + 1.7, 1), cs, ins);
+          g.quadO(A(ax, az, ya + 1.7, -1), A(bx, bz, yb + 1.7, -1), A(bx, bz, yb + 1.7, 1), A(ax, az, ya + 1.7, 1), cc, ins); g.quadO(A(ax, az, ya, -1), A(bx, bz, yb, -1), A(bx, bz, yb, 1), A(ax, az, ya, 1), cb, ins);
+          for (let t = (k * 7) % 24; t < L2; t += 24) { const x = ax + (bx - ax) * t / L2, z = az + (bz - az) * t / L2; if (inBarrier(x, z, -2) || bldIn(x, z, 0.8) || dtStreetAt(x, z, -1.5)) continue;
+            const y0 = gH(x, z); cyl(g, x, y0, z, 0.55, 7, 8, cs, null); box(g, x, y0 + 6.4, z, 1.8, 0.6, 1.8, Math.atan2(bz - az, bx - ax), cc); } } } }
+
     /* ---- the trees: the mapped ones, the street trees of the boulevards and the riverfront's, the parks' from the land cover; honey locusts,
        lindens and maples, a few pines; cut away between the camera and the car ---- */
     const tMatT = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut), tgeo = [dtTreeGeo(0), dtTreeGeo(1)], tic = tgeo.map(g => new IChunks(g, tMatT, 384));
@@ -22691,10 +22706,10 @@ const World = (function () {
       tic[kind].add(x, gH(x, z), z, crH(x, z, 44) * TAU, s * (kind === 2 ? 0.6 : 0.85), s, [gc, gc * (0.96 + crH(x, z, 45) * 0.08), gc]); exclPush(x, z, 1.5); nTrees++; return true; };
     for (const [k, x, z] of items) if (k === 11) plant(x, z, true);
     { const RV = P.river; for (let k = 0; k < RV.length; k++) { const [ax, az] = RV[k], [bx, bz] = RV[(k + 1) % RV.length], L2 = Math.hypot(bx - ax, bz - az); if (az > 800 || bz > 800 || L2 > 300) continue;   // the promenade's trees, a row 12 m from the water
-        const nx = (bz - az) / L2, nz = -(bx - ax) / L2; for (let t = 4; t < L2; t += 10) { let x = ax + (bx - ax) * t / L2 + nx * 13, z = az + (bz - az) * t / L2 + nz * 13; if (water(x, z)) { x -= nx * 26; z -= nz * 26; } if (dtGroundD(x, z) < 330) plant(x, z, false); } } }
+        const nx = (bz - az) / L2, nz = -(bx - ax) / L2; for (let t = 4; t < L2; t += 10) { let x = ax + (bx - ax) * t / L2 + nx * 13, z = az + (bz - az) * t / L2 + nz * 13; if (water(x, z)) { x -= nx * 26; z -= nz * 26; } if (dtGroundD(x, z) < 200) plant(x, z, false); } } }
     { const G = P.G; for (let z = G.z0; z < G.z0 + (G.nz - 1) * G.cell; z += 9) for (let x = G.x0; x < G.x0 + (G.nx - 1) * G.cell; x += 9) {   // the land cover's trees and the lawns' scattered ones (in the parks along the river)
-        if (dtGroundD(x, z) > 330) continue; const lc = dtLC(x, z), j = crH(Math.round(x), Math.round(z), 46);
-        if (lc === 1 && j < 0.75 * dens) plant(x + (crH(x, z, 47) - 0.5) * 6, z + (crH(x, z, 48) - 0.5) * 6, true);
+        if (dtGroundD(x, z) > 200) continue; const lc = dtLC(x, z), j = crH(Math.round(x), Math.round(z), 46);
+        if (lc === 1 && j < 0.5 * dens) plant(x + (crH(x, z, 47) - 0.5) * 6, z + (crH(x, z, 48) - 0.5) * 6, true);
         else if (lc === 2 && j < 0.08 * dens) plant(x + (crH(x, z, 47) - 0.5) * 6, z + (crH(x, z, 48) - 0.5) * 6, false); } }
     for (const r of P.streets) { if (r.cls > 2 || r.hw < 5.5) continue;   // the street trees along the wider streets (in pits in the sidewalk, ~11 m apart)
       for (let k = 0; k + 1 < r.pts.length; k++) { const [ax, az] = r.pts[k], [bx, bz] = r.pts[k + 1], L2 = Math.hypot(bx - ax, bz - az); if (L2 < 12) continue; const nx = -(bz - az) / L2, nz = (bx - ax) / L2;
@@ -22702,7 +22717,7 @@ const World = (function () {
     for (const ic of tic) ic.addTo(root, true);
 
     /* ---- the fans: on the sidewalks behind the fences along the lap (thicker at the corners and by the stands), on the parking decks' roofs ---- */
-    const CR = crowdCtx({ chunk: 256, gH, near: (x, z) => { const b = barAt(x, z); return b.ad - b.lim; }, maxSlope: 0.9 });
+    const CR = crowdCtx({ chunk: 160, gH, near: (x, z) => { const b = barAt(x, z); return b.ad - b.lim; }, maxSlope: 0.9 });
     let nFans = 0;
     const fanOk = (x, z) => !bldIn(x, z, 0.5) && !water(x, z) && !excluded(x, z) && !dtStreetAt(x, z, -1.5);
     for (const side of [-1, 1]) for (let s = 0; s < L; s += 1.1) { const i = T.idx(s), bar = side > 0 ? T.br[i] : T.bl[i]; if (bar > W_(i) + 4) continue;
@@ -22722,7 +22737,7 @@ const World = (function () {
     /* ---- the car parks: cars in rows on the mapped lots near the track, the stalls' lines ---- */
     let nCars = 0;
     { const cg = dtCarGeo(), ic = new IChunks(cg, matVC, 256), lines = mkC, PAL = [[0.85, 0.85, 0.86], [0.12, 0.12, 0.14], [0.55, 0.57, 0.6], [0.6, 0.08, 0.08], [0.1, 0.2, 0.45], [0.9, 0.9, 0.88], [0.3, 0.32, 0.34], [0.75, 0.62, 0.3], [0.2, 0.35, 0.25]];
-      for (const p of P.lu) { if (p.k !== 3) continue; let near = 1e9; for (const [x, z] of p.pts) near = Math.min(near, dtGroundD(x, z)); if (near > 130) continue;
+      for (const p of P.lu) { if (p.k !== 3) continue; let near = 1e9; for (const [x, z] of p.pts) near = Math.min(near, dtGroundD(x, z)); if (near > 110) continue;
         let bi = 0, bl = 0; for (let e = 0; e < p.pts.length; e++) { const [ax, az] = p.pts[e], [bx, bz] = p.pts[(e + 1) % p.pts.length], l = Math.hypot(bx - ax, bz - az); if (l > bl) { bl = l; bi = e; } }
         const [ax, az] = p.pts[bi], [bx, bz] = p.pts[(bi + 1) % p.pts.length], ux = (bx - ax) / bl, uz = (bz - az) / bl, vx = -uz, vz = ux, yaw = Math.atan2(vz, vx);
         let u0 = 1e9, u1 = -1e9, v0 = 1e9, v1 = -1e9; for (const [x, z] of p.pts) { const u = (x - ax) * ux + (z - az) * uz, v = (x - ax) * vx + (z - az) * vz; u0 = Math.min(u0, u); u1 = Math.max(u1, u); v0 = Math.min(v0, v); v1 = Math.max(v1, v); }
@@ -22730,7 +22745,7 @@ const World = (function () {
           const vc = v + half * 2.7, x = ax + ux * u + vx * vc, z = az + uz * u + vz * vc; if (!dtInPoly(p.pts, x, z) || bldIn(x, z, 1) || excluded(x, z) || dtStreetAt(x, z, 0.5)) continue; const bq = barAt(x, z); if (bq.ad < bq.lim + 2) continue;
           { const y = gH(x, z) + 0.06, a1 = [x + ux * 1.35 - vx * 2.6 * half, y, z + uz * 1.35 - vz * 2.6 * half], a2 = [x + ux * 1.35 + vx * 2.6 * half, y, z + uz * 1.35 + vz * 2.6 * half], wl = [0.92, 0.92, 0.9];
             lines.get(x, z).quadUp([a1[0] - ux * 0.06, y, a1[2] - uz * 0.06], [a1[0] + ux * 0.06, y, a1[2] + uz * 0.06], [a2[0] + ux * 0.06, y, a2[2] + uz * 0.06], [a2[0] - ux * 0.06, y, a2[2] - uz * 0.06], [wl, wl, wl, wl]); }
-          if (crH(Math.round(x * 2), Math.round(z * 2), 61) > 0.6 * dens || dtGroundD(x, z) > 150) continue;
+          if (crH(Math.round(x * 2), Math.round(z * 2), 61) > 0.6 * dens || dtGroundD(x, z) > 130) continue;
           ic.add(x, gH(x, z), z, -(yaw + (half > 0 ? Math.PI : 0)) + (crH(x, z, 62) - 0.5) * 0.06, 1, 1, PAL[Math.floor(crH(x, z, 63) * PAL.length)]); nCars++; } }
       ic.addTo(root, false); }
 
@@ -22738,8 +22753,9 @@ const World = (function () {
        downstream; one mesh drawn on the camera's lines of sight just inside its far plane (as Irohazaka's irFar) ---- */
     { const P0 = [], C = [], I = [], add = (x, y, z, c) => { P0.push(x, y, z); C.push(c[0], c[1], c[2]); return P0.length / 3 - 1; };
       const prism = (pts, y0, y1, c, cTop) => { const n = pts.length, b0 = P0.length / 3; for (const [x, z] of pts) { add(x, y0, z, c); add(x, y1, z, cTop || c); }
-        for (let e = 0; e < n; e++) { const a = b0 + e * 2, b2 = b0 + ((e + 1) % n) * 2; I.push(a, b2, a + 1, b2, b2 + 1, a + 1, a, a + 1, b2, b2, a + 1, b2 + 1); }
-        for (let e = 1; e + 1 < n; e++) I.push(b0 + 1, b0 + e * 2 + 1, b0 + e * 2 + 3, b0 + 1, b0 + e * 2 + 3, b0 + e * 2 + 1); };
+        let ar = 0; for (let e = 0; e < n; e++) { const [x0, z0] = pts[e], [x1, z1] = pts[(e + 1) % n]; ar += x0 * z1 - x1 * z0; } const cw = ar > 0;   // (the faces outward, whichever way the outline runs)
+        for (let e = 0; e < n; e++) { const a = b0 + e * 2, b2 = b0 + ((e + 1) % n) * 2; if (cw) I.push(a, a + 1, b2, b2, a + 1, b2 + 1); else I.push(a, b2, a + 1, b2, b2 + 1, a + 1); }
+        for (let e = 1; e + 1 < n; e++) if (cw) I.push(b0 + 1, b0 + e * 2 + 3, b0 + e * 2 + 1); else I.push(b0 + 1, b0 + e * 2 + 1, b0 + e * 2 + 3); };
       const fa = dtI16(S.far), FC = [[0.52, 0.36, 0.3], [0.6, 0.52, 0.42], [0.74, 0.7, 0.6], [0.36, 0.44, 0.52], [0.62, 0.62, 0.6], [0.36, 0.46, 0.44], [0.6, 0.6, 0.58], [0.72, 0.7, 0.66], [0.34, 0.35, 0.36]];
       for (let p = 0; p < fa.length;) { const n = fa[p], k = fa[p + 1], h = fa[p + 2] / 2, pts = []; for (let q = 0; q < n; q++) pts.push([fa[p + 3 + 2 * q] * 2, fa[p + 4 + 2 * q] * 2]); p += 3 + 2 * n;
         const cx = pts.reduce((a, q) => a + q[0], 0) / n, cz = pts.reduce((a, q) => a + q[1], 0) / n, y0 = (cz > 900 ? 3 : dtDem(cx, cz)) - 2, c = FC[k] || FC[4]; prism(pts, y0, y0 + 2 + h, c, c.map(v => v * 1.1)); }
@@ -22757,7 +22773,7 @@ const World = (function () {
           prism([[ax - 0.6, az], [bx - 0.6, bz], [bx + 0.6, bz], [ax + 0.6, az]], sag(f0) - 1.2, sag(f0), BC); } }
       const g = new THREE.BufferGeometry(), nv = P0.length / 3; g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(P0), 3)); g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(C), 3));
       g.setAttribute('aHz', new THREE.BufferAttribute(new Float32Array(nv).fill(0.5), 1)); g.setIndex(I); g.computeVertexNormals();
-      const U = { uHz: { value: new THREE.Color(0xc8d6e2) } }, m = new THREE.MeshLambertMaterial({ vertexColors: true, fog: false, alphaTest: 0.01 });
+      const U = { uHz: { value: new THREE.Color(0xc8d6e2) } }, m = new THREE.MeshLambertMaterial({ vertexColors: true, fog: false, alphaTest: 0.01, side: THREE.DoubleSide });
       m.onBeforeCompile = (sh) => { sh.uniforms.uHz = U.uHz;
         sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aHz;\nvarying float vHz;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvHz = aHz;');
         sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uHz;\nvarying float vHz;').replace('#include <dithering_fragment>', '#include <dithering_fragment>\ngl_FragColor.rgb = mix( gl_FragColor.rgb, uHz, vHz );'); };
@@ -22783,8 +22799,8 @@ const World = (function () {
   function dtTreeGeo(kind) {   // unit trees (height 1): 0 a honey locust (an airy, open crown of light green), 1 a linden or maple (round, dense), 2 a pine
     const g = new GB(), Rr = rng(900 + kind), bk = [0.34, 0.28, 0.22], rs = ROCK_SMOOTH; ROCK_SMOOTH = true;
     cyl(g, 0, -0.02, 0, 0.035, kind === 2 ? 0.6 : 0.45, 5, bk, null, 0.022);
-    if (kind === 0) { for (const [x, y, z, r] of [[0.1, 0.62, 0.05, 0.24], [-0.12, 0.68, -0.06, 0.22], [0.0, 0.82, 0.02, 0.2]]) ico(g, x, y, z, r, 0.75, [0.4, 0.53, 0.25], Rr, 0.35); }
-    else if (kind === 1) { ico(g, 0, 0.64, 0, 0.36, 0.95, [0.25, 0.38, 0.18], Rr, 0.22); ico(g, 0.12, 0.78, 0.05, 0.22, 0.9, [0.28, 0.43, 0.2], Rr, 0.2); }
+    if (kind === 0) { for (const [x, y, z, r] of [[0.1, 0.64, 0.05, 0.26], [-0.1, 0.76, -0.04, 0.24]]) ico(g, x, y, z, r, 0.75, [0.4, 0.53, 0.25], Rr, 0.35); }
+    else if (kind === 1) ico(g, 0, 0.66, 0, 0.38, 0.95, [0.25, 0.38, 0.18], Rr, 0.22);
     else { cone(g, 0, 0.3, 0, 0.26, 0.45, 7, [0.16, 0.3, 0.18], [0.2, 0.34, 0.2], 0); cone(g, 0, 0.55, 0, 0.2, 0.45, 7, [0.18, 0.32, 0.19], [0.22, 0.36, 0.2], 0); }
     ROCK_SMOOTH = rs; const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }

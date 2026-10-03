@@ -581,5 +581,37 @@
    "tyremarks:MeshBasicMaterial": "20e8e311",
    "roadwear:MeshLambertMaterial": "18e7be7b"
   }
+ },
+ "detroit": {
+  "meshes": 365,
+  "verts": 822934,
+  "instances": 4433,
+  "props": 180,
+  "crowd": 1441,
+  "world": "2c9897ce",
+  "propsHash": "f81a6d53",
+  "floor": null,
+  "groups": {
+   "ground:MeshLambertMaterial": "6dc09e79",
+   "-:MeshPhongMaterial": "f7a4ccdb",
+   "dt-scen:MeshLambertMaterial": "3ae2e7ed",
+   "dt-streets:MeshLambertMaterial": "6aa6ccea",
+   "dt-track:MeshLambertMaterial": "e2feefb7",
+   "dt-kerbs:MeshLambertMaterial": "778e8ad5",
+   "-:MeshLambertMaterial": "d8c936de",
+   "dt-marks:MeshLambertMaterial": "d7fb9838",
+   "dt-walls:MeshLambertMaterial": "d91c3d67",
+   "dt-fences:MeshLambertMaterial": "967e0d34",
+   "-:MeshBasicMaterial": "aee7fbf0",
+   "dt-bld:MeshLambertMaterial": "6b9b3b0d",
+   "dt-roofs:MeshLambertMaterial": "76d3b5fe",
+   "dt-trees:MeshLambertMaterial": "df8804d7",
+   "dt-cut:MeshLambertMaterial": "2c225834",
+   "dtFar:MeshLambertMaterial": "79d04d8f",
+   "crowd:MeshLambertMaterial": "1f491416",
+   "ao:MeshBasicMaterial": "539968d8",
+   "tyremarks:MeshBasicMaterial": "7d802a1b",
+   "roadwear:MeshLambertMaterial": "ac63a49d"
+  }
  }
 }

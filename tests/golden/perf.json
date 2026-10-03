@@ -201,5 +201,12 @@
   "kverts": 1530,
   "maxKverts": 1670,
   "jsMs": 0.87
+ },
+ "detroit": {
+  "calls": 287,
+  "maxCalls": 371,
+  "kverts": 857,
+  "maxKverts": 1034,
+  "jsMs": 1.24
  }
 }
