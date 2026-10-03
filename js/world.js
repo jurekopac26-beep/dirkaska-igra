@@ -14313,7 +14313,7 @@ const World = (function () {
     const pk = [0, 1, 2, 3, 4].map(k => new IChunks(caPlantGeo(k), k === 0 ? wMat : pMat, k === 4 ? 64 : 128));
     const bk = [0, 1].map(k => new IChunks(bsBushGeo(k), k === 1 ? wMat : pMat, 128));
     const tk = [0, 1].map(k => new IChunks(bsTreeGeo(k), pMat, 128));
-    let nPlants = 0, nTrees = 0, nBush = 0, nSeal = 0, nBarn = 0, nBoat = 0;
+    let nPlants = 0, nTrees = 0, nBush = 0, nSeal = 0, nBarn = 0, nBoat = 0, nWhale = 0;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(70000 * dens), maxTr = Math.round(9000 * dens), RT = rng(3961), SP = 3.4 / Math.sqrt(dens);
       const BC = [[0.82, 0.98, 0.84], [0.74, 0.92, 0.78], [1.12, 1.1, 1.04], [1.2, 1.04, 0.82]];   // (coyote brush, darker; sage, grey-green; dried, brown)
@@ -14393,6 +14393,19 @@ const World = (function () {
           gf.quadUp([x - c * d0 - sn * w0, y0 + 0.05, z - sn * d0 + c * w0], [x - c * d0 + sn * w0, y0 + 0.05, z - sn * d0 - c * w0], [x - c * d1 + sn * w1, y0 + 0.05, z - sn * d1 - c * w1], [x - c * d1 - sn * w1, y0 + 0.05, z - sn * d1 + c * w1], [[...FW, A], [...FW, A], [...FW, A - 0.15], [...FW, A - 0.15]]); }
         k++; nBoat++;
       }
+      // grey whales passing along the coast, 160-320 m out: the mottled back just above the water, the foam round it, and the blow (a spout of
+      // spray every few seconds: dyn.bsWhale, World.update)
+      const RW2 = rng(4003), spM = new THREE.MeshBasicMaterial({ color: 0xf2f4f4, transparent: true, opacity: 0.55, depthWrite: false, fog: true }); out.dyn.bsWhale = [];
+      for (let k = 0, tries = 0; k < 2 && tries < 100; tries++) {
+        const s = sStart + 300 + RW2() * (T.len - sStart - 600), i = T.idx(s), [x, z] = onSide(s, 1, 160 + RW2() * 160); if (bsGround(x, z) > y0 - 7) continue;
+        const a = -T.hd[i] + (RW2() - 0.5) * 0.5, c = Math.cos(a), sn = Math.sin(a), g = scen.get(x, z);
+        rock(g, x, y0 - 0.15, z, 6.5, 0.9, 2.0, a, [0.34, 0.35, 0.36], RW2, 0.15, true); rock(g, x - c * 7.5, y0 - 0.3, z - sn * 7.5, 1.6, 0.5, 1.0, a, [0.3, 0.31, 0.32], RW2, 0.1, true);
+        for (let q = 0; q < 10; q++) { const a0 = q / 10 * TAU, a1 = (q + 1) / 10 * TAU, E = (an, r) => [x + Math.cos(a) * Math.cos(an) * r * 1.6 - Math.sin(a) * Math.sin(an) * r * 0.7, y0 + 0.05, z + Math.sin(a) * Math.cos(an) * r * 1.6 + Math.cos(a) * Math.sin(an) * r * 0.7];
+          gf.quadUp(E(a0, 4.6), E(a1, 4.6), E(a1, 7), E(a0, 7), [[...FW, 0.6], [...FW, 0.6], [...FW, 0], [...FW, 0]]); }
+        const sg = new GB(); cyl(sg, 0, 0, 0, 0.25, 5, 7, [1, 1, 1], [1, 1, 1], 1.3);
+        const sp = new THREE.Mesh(sg.geometry(), spM); sp.position.set(x + c * 4.2, y0 + 0.6, z + sn * 4.2); sp.scale.set(1, 0.01, 1); sp.visible = false; root.add(sp);
+        out.dyn.bsWhale.push({ m: sp, ph: k * 3.7 }); k++; nWhale++;
+      }
       if (!gf.empty) { const m = new THREE.Mesh(gf.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -8 })); m.matrixAutoUpdate = false; m.renderOrder = 2; root.add(m); }
     }
 
@@ -14446,7 +14459,10 @@ const World = (function () {
             const tx = bx + Math.cos(ha + 1.6) * 11, tz = bz + Math.sin(ha + 1.6) * 11, ty = bsGround(tx, tz);
             for (const [ox, oz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) box(g, tx + ox * 1.2, ty - 0.2, tz + oz * 1.2, 0.2, 3.4, 0.2, 0, [0.4, 0.31, 0.22], null, true);
             cyl(g, tx, ty + 3.2, tz, 1.8, 2.6, 8, [0.6, 0.6, 0.58], [0.5, 0.5, 0.5]);
-            exclPush(bx, bz, 10); exclPush(tx, tz, 3); CR.block(bx, bz, 15, 10, ha); nBarn++; } }
+            exclPush(bx, bz, 10); exclPush(tx, tz, 3); CR.block(bx, bz, 15, 10, ha); nBarn++;
+            const hx = bx + Math.cos(ha - 1.6) * 12, hz = bz + Math.sin(ha - 1.6) * 12;   // round hay bales in a row beside the barn, a few stacked two high
+            for (let q = 0; q < 7; q++) { const x = hx + Math.cos(ha) * (q - 3) * 1.9, z = hz + Math.sin(ha) * (q - 3) * 1.9; if (vrNear(x, z).dd < 8 || excluded(x, z) || bsSlope(x, z) > 0.4) continue;
+              const y = bsGround(x, z), hc = [0.78, 0.66, 0.4], ht = [0.86, 0.76, 0.5]; cyl(g, x, y - 0.1, z, 0.85, 1.3, 8, hc, ht); if (q % 3 === 1) cyl(g, x, y + 1.2, z, 0.85, 1.3, 8, hc, ht); exclPush(x, z, 1.2); } } }
         for (let k = 0; k < n; k++) { const x = cx + (RC() - 0.5) * 34, z = cz + (RC() - 0.5) * 34; if (vrNear(x, z).dd < 10 || excluded(x, z) || bsSlope(x, z) > 0.4) continue;
           const c = CC[Math.floor(RC() * CC.length)], sz = 0.95 + RC() * 0.15; cows.add(x, bsGround(x, z), z, ha + (RC() - 0.5) * 1.6, sz, sz, c); exclPush(x, z, 1.4); nCows++; }
       }
@@ -14494,7 +14510,7 @@ const World = (function () {
       out.dyn.condors = { L, x0: T.px[i0], z0: T.pz[i0], y0: T.hy[i0], ax: T.px[i0], az: T.pz[i0], ay: T.hy[i0], t: null };
       caCondors(out.dyn.condors, 0, null); }
     crowdFinish(CR, root, out);
-    out.stats = { plants: nPlants, bushes: nBush, cows: nCows, fence: nFence, seals: nSeal, barns: nBarn, boats: nBoat, trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), bridges: brInfo.length, oldRoad: nOld };   // (read by the tests)
+    out.stats = { plants: nPlants, bushes: nBush, cows: nCows, fence: nFence, seals: nSeal, barns: nBarn, boats: nBoat, whales: nWhale, trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), bridges: brInfo.length, oldRoad: nOld };   // (read by the tests)
     return out;
   }
 
@@ -19112,6 +19128,7 @@ const World = (function () {
     if (d.wheel) szWheel(d.wheel, t);   // Suzuka: the Ferris wheel turns
     if (d.condors) caCondors(d.condors, t, car);   // Los Caracoles: the condors circle over the road
     if (d.bsPel) bsPelicanStep(d.bsPel, t);   // Big Sur: the pelicans fly along the coast
+    if (d.bsWhale) for (const w of d.bsWhale) { const u = (t * 0.16 + w.ph) % 1, f = u < 0.25 ? Math.sin(u / 0.25 * Math.PI) : 0; w.m.visible = f > 0.02; w.m.scale.set(0.6 + f * 0.6, Math.max(0.01, f), 0.6 + f * 0.6); }   // Big Sur: the whales blow every ~6 s
     if (d.pkLife) pkWildlifeUpdate(d.pkLife, t, car);   // Pikes Peak: marmots and bighorn sheep
     if (d.pkAmb) pkAmbientUpdate(d.pkAmb, t, car);   // Pikes Peak: flags, dust and leaves, grill smoke
     if (d.boats) {
