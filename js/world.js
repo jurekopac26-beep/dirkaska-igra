@@ -21349,7 +21349,7 @@ const World = (function () {
       const h = b[0] / 2, kind = b[1], P2 = phI(b.slice(2)); if (P2.length < 3) continue;
       let cx = 0, cz = 0; for (const [x, z] of P2) { cx += x; cz += z; } cx /= P2.length; cz /= P2.length; if (nrDist(cx, cz) > 640) continue;
       let y0 = 1e9; for (const [x, z] of P2) y0 = Math.min(y0, gy(x, z)); const g = scen.get(cx, cz), hh = crH(Math.round(cx), Math.round(cz), 7);
-      const wall = kind === 2 || kind === 3 ? [0.94, 0.94, 0.93] : kind === 1 || kind === 5 ? [0.7, 0.71, 0.72] : WALL[Math.floor(hh * WALL.length)], roof = kind === 2 || kind === 3 ? [0.82, 0.83, 0.84] : ROOF[Math.floor(crH(Math.round(cz), 5, 9) * ROOF.length)];
+      const wall = kind === 2 || kind === 3 ? [0.94, 0.94, 0.93] : kind === 1 || kind === 5 ? [0.7, 0.71, 0.72] : WALL[Math.floor(hh * WALL.length)], roof = kind === 2 || kind === 3 ? [0.66, 0.68, 0.7] : ROOF[Math.floor(crH(Math.round(cz), 5, 9) * ROOF.length)];
       let ar = 0; for (let k = 0; k < P2.length; k++) { const [ax, az] = P2[k], [bx, bz] = P2[(k + 1) % P2.length]; ar += ax * bz - bx * az; }
       const ccw = ar > 0, ins = [cx, y0 + h / 2, cz];
       for (let k = 0; k < P2.length; k++) { const [ax, az] = P2[k], [bx, bz] = P2[(k + 1) % P2.length], len = Math.hypot(bx - ax, bz - az); if (len < 0.05) continue;
@@ -21374,6 +21374,20 @@ const World = (function () {
         const tri = THREE.ShapeUtils.triangulateShape(P2.map(([x, z]) => new THREE.Vector2(x, z)), []), top = y0 + h + (kind === 5 ? 0 : 0.05);
         for (const [a, bb, c] of tri) { const A = [P2[a][0], top, P2[a][1]], Bq = [P2[bb][0], top, P2[bb][1]], C2 = [P2[c][0], top, P2[c][1]]; g.triO(A, Bq, C2, roof, [cx, top - 5, cz]); }
       }
+      if ((kind === 2 || kind === 3 || Math.abs(ar) > 600) && kind !== 5 && !(P2.length === 4 && kind !== 2 && kind !== 3)) {   // a big flat roof: a darker parapet round its edge, the air-conditioning plant on it
+        const top = y0 + h + 0.05, rim = [0.5, 0.52, 0.55];
+        for (let k = 0; k < P2.length; k++) { const [ax, az] = P2[k], [bx, bz] = P2[(k + 1) % P2.length], len = Math.hypot(bx - ax, bz - az); if (len < 0.5) continue;
+          box(g, (ax + bx) / 2, top - 0.05, (az + bz) / 2, len + 0.4, 0.55, 0.4, Math.atan2(bz - az, bx - ax), rim, [0.6, 0.62, 0.64]); }
+        const nP = Math.min(6, Math.floor(Math.sqrt(Math.abs(ar) / 2) / 9)); for (let k = 0; k < nP; k++) { const t = (k + 0.5) / nP, [ax, az] = P2[0], [bx, bz] = P2[Math.floor(P2.length / 2)], px = ax + (bx - ax) * t * 0.8 + (cx - ax) * 0.2, pz = az + (bz - az) * t * 0.8 + (cz - az) * 0.2;
+          if (inPoly(P2, px, pz)) box(g, px, top, pz, 2.4, 1.3, 1.6, crH(k, kind, 3) * 0.3, [0.78, 0.79, 0.8], [0.7, 0.71, 0.72]); }
+      }
+      if (kind === 2 && D.pit && D.pit.lane) {   // the pit buildings' front on the pit lane: the teams' cars on the apron, nose to their garage, a roll cab beside each
+        let bk = -1, bd = 1e9; for (let k = 0; k < P2.length; k++) { const [ax, az] = P2[k], [bx, bz] = P2[(k + 1) % P2.length], mx = (ax + bx) / 2, mz = (az + bz) / 2; let d = 1e9; const L2 = D.pit.lane; for (let q = 1; q < L2.length; q++) { const [px, pz] = L2[q - 1], vx = L2[q][0] - px, vz = L2[q][1] - pz, t = clamp(((mx - px) * vx + (mz - pz) * vz) / (vx * vx + vz * vz || 1), 0, 1); d = Math.min(d, Math.hypot(px + vx * t - mx, pz + vz * t - mz)); } if (d < bd && Math.hypot(bx - ax, bz - az) > 30) { bd = d; bk = k; } }
+        if (bk >= 0) { const [ax, az] = P2[bk], [bx, bz] = P2[(bk + 1) % P2.length], len = Math.hypot(bx - ax, bz - az), ux = (bx - ax) / len, uz = (bz - az) / len; let nx = -uz, nz = ux; if ((cx - ax) * nx + (cz - az) * nz > 0) { nx = -nx; nz = -nz; }   // (n: out of the building)
+          const TC = [[0.12, 0.16, 0.36], [0.85, 0.12, 0.14], [0.94, 0.94, 0.92], [0.96, 0.52, 0.1], [0.16, 0.46, 0.3], [0.14, 0.14, 0.16], [0.16, 0.36, 0.8], [0.96, 0.78, 0.12]], RT = rng(4453);
+          for (let u = 3.7, k = 0; u < len - 3; u += 4.6, k++) { if (RT() < 0.35) continue; const px = ax + ux * u + nx * 3.4, pz = az + uz * u + nz * 3.4, py = gy(px, pz), rot = Math.atan2(nz, nx), tc = TC[k % TC.length];
+            box(g, px, py + 0.22, pz, 4.5, 0.62, 1.9, rot, tc, tc, true); box(g, px - nx * 0.3, py + 0.84, pz - nz * 0.3, 2.1, 0.48, 1.6, rot, [0.12, 0.14, 0.18], tc, true); box(g, px + nx * 2.1, py + 0.22, pz + nz * 2.1, 0.5, 0.2, 1.9, rot, [0.1, 0.1, 0.11], null, true);   // (body, cabin, the front wing)
+            box(g, px + ux * 1.9 - nx * 1.6, py, pz + uz * 1.9 - nz * 1.6, 0.6, 1.0, 1.1, rot, [0.78, 0.14, 0.12], [0.15, 0.15, 0.16], true); stats.pitCars = (stats.pitCars || 0) + 1; } } }
       exclPush(cx, cz, Math.min(40, Math.sqrt(Math.abs(ar) / 2) * 0.75 + 3)); CR.exclAdd(cx, cz, Math.sqrt(Math.abs(ar) / 2) * 0.6 + 2); stats.bld++;
     }
 
@@ -21431,6 +21445,14 @@ const World = (function () {
     for (let z = G.z0; z < GZ1; z += 9) for (let x = G.x0; x < GX1; x += 9) { const px = x + (R() - 0.5) * 8, pz = z + (R() - 0.5) * 8, d = nrDist(px, pz); if (d > 420 || d < 14) continue;
       const h0 = gy(px, pz) - SEA, sc = nrLC(px, pz) === 2 || (h0 > 2 && h0 < 16 && PH.wl(px, pz) > -45 && R() < 0.5); if (!sc || R() > 0.55 || excluded(px, pz) || inTrack(px, pz, 5) || h0 < 1.2) continue;
       const hgt = 1.6 + R() * 2.4; tg[1].add(px, gy(px, pz) - 0.15, pz, R() * TAU, hgt * (1.2 + R() * 0.5), hgt, [0.9 + R() * 0.2, 0.9 + R() * 0.2, 0.9 + R() * 0.15]); stats.trees++; }
+    // the tussock grass of the coast (in clumps on the open grass 4-45 m beyond the barriers and on the cliff tops), straw-green, no shadows
+    { const tg2 = new GB(), RT = rng(4454), cl = [[0.62, 0.6, 0.36], [0.54, 0.56, 0.32], [0.7, 0.66, 0.42]];
+      for (let k = 0; k < 7; k++) { const a = k / 7 * TAU, r = 0.18; cone(tg2, Math.cos(a) * r, 0, Math.sin(a) * r, 0.22, 0.75 + RT() * 0.35, 4, cl[k % 3], [0.82, 0.78, 0.55], 0); }
+      const tus = new IChunks(tg2.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true }), 256); let nT = 0;
+      for (let s = 0; s < T.len; s += 2.3) for (const side of [-1, 1]) { const i = T.idx(s), bar = side > 0 ? T.br[i] : T.bl[i], o = bar + 4 + Math.pow(R(), 1.6) * 41, x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
+        if (R() > 0.42 || nrLC(x, z) !== 0 || excluded(x, z) || inTrack(x, z, 3) || nrSlope(x, z) > 0.6 || gy(x, z) < SEA + 1) continue;
+        const sc = 0.7 + R() * 0.7, cv = 0.85 + R() * 0.3; tus.add(x, gy(x, z) - 0.05, z, R() * TAU, sc, sc * (0.8 + R() * 0.4), [cv, cv, cv * 0.95]); nT++; }
+      tus.addTo(root, false); stats.tussock = nT; }
     stats.fencePosts = posts.addTo(root, true); wire.addTo(root, new THREE.MeshLambertMaterial({ vertexColors: true }), false, false);
     tg[0].addTo(root, true); tg[1].addTo(root, false); gum.addTo(root, true);
 
@@ -21566,7 +21588,8 @@ const World = (function () {
           const fi = flag[i] ? 1 : 0, fj = flag[j] ? 1 : 0, inI = w + (kerb[side > 0 ? 1 : 0][i] ? T.curbW : 0.05), inJ = w + (kerb[side > 0 ? 1 : 0][j] ? T.curbW : 0.05);
           const outI = lerp(inI + 0.1, bar[i] - 0.7, fi), outJ = lerp(inJ + 0.1, bar[j] - 0.7, fj);
           const a = Pt(i, side * inI, 0.028), b = Pt(i, side * outI, 0.028), c = Pt(j, side * outJ, 0.028), d = Pt(j, side * inJ, 0.028), uvp = LK.gravelRunoff ? (p) => [p[0] / 2.5, -p[2] / 2.5] : (p) => [p[0] / 8, -p[2] / 8];
-          rc.get(a[0], a[2]).quadUp(a, b, c, d, [roC, roC, roC, roC], [uvp(a), uvp(b), uvp(c), uvp(d)]);
+          const gc = LK.gravelRunoff ? (p, o) => { const n = crH(Math.floor(p[0] / 3), Math.floor(p[2] / 3), 17), tr = Math.max(0, Math.sin((o - inI) * 1.7 + i * 0.013) - 0.7) * sstep(9, 2, o - inI) * (crH(i >> 4, side, 5) < 0.5 ? 1 : 0), k = (0.9 + 0.16 * n) * (1 - 0.9 * tr); return [roC[0] * k, roC[1] * k, roC[2] * k]; } : () => roC;   // (Phillip Island's gravel: lighter and darker patches, the tracks of the cars that ran wide)
+          rc.get(a[0], a[2]).quadUp(a, b, c, d, [gc(a, inI), gc(b, outI), gc(c, outJ), gc(d, inJ)], [uvp(a), uvp(b), uvp(c), uvp(d)]);
           if (fi && fj && !LK.gravelRunoff) { const e0 = Math.min(outI, inI + 2.2), e1 = Math.min(outJ, inJ + 2.2);   // the green band just outside the kerb
             gb.get(a[0], a[2]).quadUp(Pt(i, side * (inI + 0.9), 0.034), Pt(i, side * e0, 0.034), Pt(j, side * e1, 0.034), Pt(j, side * (inJ + 0.9), 0.034), [grn, grn, grn, grn]); }
         }
