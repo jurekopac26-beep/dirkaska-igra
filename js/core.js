@@ -148,6 +148,11 @@ const Core = (function () {
       if (def.wide) for (const [a, b, sd, m] of def.wide) for (let d = a - 30; d <= b + 30; d += ds) {
         const i = this.idx(this.startS + d), f = Math.min(sstep(a - 30, a, d), sstep(b + 30, b, d)); if (sd < 0) this.bl[i] += m * f; else this.br[i] += m * f;
       }
+      if (def.gravel && !this.open) {   // only the gravel traps the track lists (def.gravel = [[from, to, side], ...], metres after the start line), where the barrier stands back: grass elsewhere
+        const keep = [new Uint8Array(this.N), new Uint8Array(this.N)];
+        for (const [a, b, sd] of def.gravel) for (let d = a; d <= b; d += ds) keep[sd > 0 ? 1 : 0][this.idx(this.startS + d)] = 1;
+        for (let i = 0; i < this.N; i++) { this.gravL[i] = keep[0][i] && this.bl[i] > this.w + 9 ? 1 : 0; this.gravR[i] = keep[1][i] && this.br[i] > this.w + 9 ? 1 : 0; }
+      }
       // gravel strips (def.gravelStrips = [[from, to, side, width], ...], metres after the start line, side -1 left / 1 right; closed
       // circuits): a band of gravel from the kerb's outer edge outwards, as the strips the Red Bull Ring laid at the exits of Turns 9 and
       // 10 in 2024 against running wide (see surface: gravel there even where the run-off beyond it is asphalt)
@@ -1567,6 +1572,15 @@ const Core = (function () {
       rbale:  { m: 26, rh: 0.62, rb: 0.75, h0: 0.43,  e: 0.15, mu: 0.8,  lift: 0.3,  I: 4.6,  pts: (() => { const p = []; for (const x of [-0.62, 0.62]) for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; p.push([x, Math.cos(a) * 0.43, Math.sin(a) * 0.43]); } return p; })() },   // round straw bale lying on its side (Toskana)
       rbstack: { m: 78, rh: 0.9, rb: 1.1,  h0: 0.85,  breaks: 'rbale', parts: [[-0.66, -0.425, 0], [0.66, -0.425, 0], [0, 0.425, 0]], pf: [[1.1, 0.6], [1.0, 0.9], [0.8, 2.4]] },
       post:   { m: 4,  rh: 0.14, rb: 0.62, h0: 0.55,  e: 0.3,  mu: 0.6,  lift: 1.0,  I: 0.4,  pts: boxPts(0.07, 0.55, 0.07) },   // roadside post (stebriček): light, snaps over and cartwheels away
+      // street furniture (any world's junctions and streets): a traffic signal, road signs (round, give way, warning diamond) on a post, a wheelie
+      // bin, a mailbox on its post, a street lamp; all on frangible posts: they snap at the foot and topple, the car drives on
+      signal: { m: 40, rh: 0.16, rb: 1.75, h0: 1.65,  e: 0.2,  mu: 0.6,  lift: 0.45, I: 36,   pts: boxPts(0.13, 1.65, 0.13) },
+      sign:   { m: 9,  rh: 0.12, rb: 1.2,  h0: 1.1,   e: 0.25, mu: 0.6,  lift: 0.8,  I: 3.6,  pts: boxPts(0.06, 1.1, 0.3) },
+      giveway: { m: 9, rh: 0.12, rb: 1.2,  h0: 1.1,   e: 0.25, mu: 0.6,  lift: 0.8,  I: 3.6,  pts: boxPts(0.06, 1.1, 0.35) },
+      warn:   { m: 9,  rh: 0.12, rb: 1.25, h0: 1.15,  e: 0.25, mu: 0.6,  lift: 0.8,  I: 3.8,  pts: boxPts(0.06, 1.15, 0.38) },
+      bin:    { m: 14, rh: 0.36, rb: 0.62, h0: 0.53,  e: 0.3,  mu: 0.6,  lift: 0.5,  I: 1.7,  pts: boxPts(0.29, 0.53, 0.36) },
+      mailbox: { m: 8, rh: 0.2,  rb: 0.75, h0: 0.62,  e: 0.25, mu: 0.6,  lift: 0.7,  I: 1.0,  pts: boxPts(0.2, 0.62, 0.14) },
+      lamp:   { m: 60, rh: 0.14, rb: 4.1,  h0: 4.0,   e: 0.15, mu: 0.6,  lift: 0.3,  I: 320,  pts: boxPts(0.1, 4.0, 0.1) },
     };
   })();
   const _pq = {};

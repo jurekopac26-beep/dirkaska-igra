@@ -1557,6 +1557,29 @@ const Render = (function () {
       const wh = [0.95, 0.95, 0.93], bk = [0.08, 0.08, 0.09], rf = [1, 0.45, 0.08];
       W.box(g, 0, -0.65, 0, 0.14, 1.2, 0.14, 0, wh, wh); W.box(g, 0, 0.18, 0, 0.146, 0.22, 0.146, 0, bk, bk);
       for (const x of [-0.074, 0.074]) W.box(g, x, 0.22, 0, 0.012, 0.12, 0.09, 0, rf, rf); }
+    else {   // street furniture (Core PROPK): faces towards local +x; a sign's plate both ways (its back grey), the pole galvanised
+      const pole = [0.66, 0.68, 0.7], dk = [0.1, 0.1, 0.11], back = [0.58, 0.6, 0.62], h0 = { signal: 1.65, sign: 1.1, giveway: 1.1, warn: 1.15, bin: 0.53, mailbox: 0.62, lamp: 4.0 }[kind] || 0.5;
+      const plate = (P, col, x) => { for (let k = 1; k + 1 < P.length; k++) { const a = [x, P[0][1], P[0][0]], b = [x, P[k][1], P[k][0]], c = [x, P[k + 1][1], P[k + 1][0]];
+        g.triO(a, b, c, col, [x - 1, a[1], a[2]]); g.triO([x - 0.02, a[1], a[2]], [x - 0.02, b[1], b[2]], [x - 0.02, c[1], c[2]], back, [x + 1, a[1], a[2]]); } };   // (P: [z, y] around, the face at +x)
+      const ring = (r, n, y, a0) => { const P = []; for (let k = 0; k < n; k++) { const a = a0 + k / n * TAU2; P.push([Math.cos(a) * r, y + Math.sin(a) * r]); } return P; };
+      if (kind === 'signal') {   // an Australian traffic signal: a galvanised post, a black head of three lenses (red lit) on a black target board with a white rim
+        W.cyl(g, 0, -h0, 0, 0.08, 3.3, 8, pole); W.box(g, 0.05, 0.38, 0, 0.3, 1.12, 0.36, 0, dk, dk);
+        W.box(g, 0.21, 0.26, 0, 0.02, 1.36, 0.64, 0, [0.92, 0.92, 0.9]); W.box(g, 0.225, 0.3, 0, 0.02, 1.28, 0.56, 0, dk);
+        [[1.22, [1, 0.16, 0.1]], [0.88, [0.4, 0.26, 0.05]], [0.54, [0.06, 0.22, 0.12]]].forEach(([y, c]) => { W.box(g, 0.25, y, 0, 0.04, 0.24, 0.24, 0, c, c); W.box(g, 0.3, y + 0.24, 0, 0.12, 0.03, 0.28, 0, dk, dk); });
+      } else if (kind === 'sign' || kind === 'giveway' || kind === 'warn') {   // a regulatory disc (white, a red ring), a give-way triangle, a yellow warning diamond, on a 2.2 m post
+        W.box(g, -0.04, -h0, 0, 0.06, 2.2, 0.06, 0, pole);
+        if (kind === 'sign') { plate(ring(0.3, 14, h0 - 0.35, 0), [0.84, 0.1, 0.1], 0.006); plate(ring(0.235, 14, h0 - 0.35, 0), [0.96, 0.96, 0.94], 0.012); }
+        else if (kind === 'giveway') { plate(ring(0.42, 3, h0 - 0.45, -Math.PI / 2), [0.86, 0.1, 0.1], 0.006); plate(ring(0.26, 3, h0 - 0.45, -Math.PI / 2), [0.96, 0.96, 0.94], 0.012); }
+        else { plate(ring(0.42, 4, h0 - 0.4, 0), [0.08, 0.08, 0.08], 0.006); plate(ring(0.37, 4, h0 - 0.4, 0), [0.98, 0.8, 0.1], 0.012); W.box(g, 0.012, h0 - 0.55, -0.03, 0.01, 0.28, 0.06, 0, [0.08, 0.08, 0.08]); }
+      } else if (kind === 'bin') {   // a council wheelie bin: dark green, a red lid, two wheels at the back
+        W.box(g, 0, -h0 + 0.05, 0, 0.56, 0.9, 0.7, 0, [0.12, 0.3, 0.2], [0.12, 0.3, 0.2]); W.box(g, -0.02, 0.42, 0, 0.62, 0.07, 0.74, 0, [0.78, 0.12, 0.1], [0.82, 0.16, 0.12]);
+        for (const z of [-0.26, 0.26]) W.box(g, -0.3, -h0, z, 0.2, 0.2, 0.08, 0, dk, dk);
+      } else if (kind === 'mailbox') {   // a farm mailbox: a galvanised drum on a timber post
+        W.box(g, 0, -h0, 0, 0.1, 1.0, 0.1, 0, [0.48, 0.38, 0.26]); W.box(g, 0, 0.38, 0, 0.42, 0.24, 0.26, 0, [0.72, 0.74, 0.76], [0.8, 0.82, 0.84]); W.box(g, 0.214, 0.42, 0, 0.01, 0.16, 0.2, 0, [0.82, 0.14, 0.1]);
+      } else if (kind === 'lamp') {   // a street lamp: a tapered grey pole, the outreach arm, the luminaire over the road (+x)
+        W.cyl(g, 0, -h0, 0, 0.1, 8.0, 8, pole, null, 0.06); W.box(g, 0.9, 3.85, 0, 1.8, 0.08, 0.08, 0, pole); W.box(g, 1.85, 3.72, 0, 0.62, 0.16, 0.3, 0, back, [0.95, 0.94, 0.85]);
+      }
+    }
     return g.geometry();
   }
   function clearPropMeshes() { for (const k in propMeshes) { const m = propMeshes[k]; scene.remove(m); m.geometry.dispose(); } propMeshes = {}; }
@@ -1663,6 +1686,7 @@ const Render = (function () {
     mulholland: { fog: 0xd8d4c8, sun: 0xfff0d2, sunI: 1.4, sky: 0xb8d2f0, gnd: 0x7a6a48, hemiI: 0.62, tint: [1.04, 1.0, 0.94], sat: 1.06, sunOff: [-70, 104, 48] },   // Mulholland Highway: a hot, clear Californian summer afternoon, a strong high sun from the south-west, a warm dusty haze over the canyons
     beartooth: { fog: 0xc6d7e8, sun: 0xfff1da, sunI: 1.26, sky: 0xb3cdf0, gnd: 0x4c5636, hemiI: 0.6, tint: [1.01, 1.0, 0.98], sat: 1.08, sunOff: [-84, 90, 58] },   // Beartooth: a clear summer afternoon in the northern Rockies, the sun from the south-west (shadows across the switchbacks), thin blue mountain haze
     rastro:   { fog: 0xc4d0d0, sun: 0xfff0d8, sunI: 1.1, sky: 0xc2d4e6, gnd: 0x4a5a32, hemiI: 0.66, tint: [1.0, 1.01, 0.98], sat: 1.08, sunOff: [-66, 92, -64] },   // Serra do Rio do Rastro: a humid afternoon over the rainforest, the sun from the north-west (the southern hemisphere), a soft green-grey haze
+    phillip:  { fog: 0xc9d9e4, sun: 0xfff2dc, sunI: 1.16, sky: 0xbdd6f0, gnd: 0x55663a, hemiI: 0.64, tint: [1.01, 0.99, 0.97], sat: 0.96, sunOff: [-70, 90, -60] },   // Phillip Island: a bright, breezy spring afternoon on the coast, the sun from the north-west (the southern hemisphere), the sea air's soft haze
   };
   // each track's own grade on top (high quality, the post pass): its shadows and its highlights tinted apart, a little (split toning:
   // [shadows], [highlights]); cool shade and a warm sun mostly, the Riviera's teal and gold, Toskana's golden light, Spa's greyer air
@@ -1670,7 +1694,7 @@ const Render = (function () {
     lake: [[0.97, 1.0, 1.05], [1.03, 1.0, 0.96]], city: [[0.95, 1.0, 1.05], [1.05, 1.0, 0.93]], ljubljana: [[0.98, 0.99, 1.04], [1.04, 1.0, 0.95]], forest: [[0.98, 1.0, 1.03], [1.02, 1.0, 0.98]],
     italia: [[1.0, 0.98, 1.02], [1.05, 1.01, 0.92]], kamp: [[0.98, 1.0, 1.03], [1.03, 1.0, 0.96]], monaco: [[0.95, 1.0, 1.05], [1.05, 1.0, 0.93]], mountain: [[0.95, 0.99, 1.06], [1.02, 1.0, 0.97]],
     ouni: [[0.97, 1.01, 1.03], [1.03, 1.0, 0.96]], vrsic: [[0.96, 0.99, 1.06], [1.04, 1.0, 0.94]], pikes: [[0.96, 0.99, 1.06], [1.03, 1.0, 0.95]], nring: [[0.97, 1.01, 1.02], [1.02, 1.0, 0.97]],
-    spa: [[0.97, 1.0, 1.04], [1.01, 1.0, 0.99]], rbring: [[0.96, 1.0, 1.05], [1.03, 1.0, 0.96]], suzuka: [[0.98, 1.0, 1.03], [1.03, 1.0, 0.97]], caracoles: [[0.95, 0.99, 1.07], [1.04, 1.0, 0.95]], bathurst: [[0.96, 1.0, 1.05], [1.05, 1.01, 0.93]],
+    spa: [[0.97, 1.0, 1.04], [1.01, 1.0, 0.99]], rbring: [[0.96, 1.0, 1.05], [1.03, 1.0, 0.96]], suzuka: [[0.98, 1.0, 1.03], [1.03, 1.0, 0.97]], caracoles: [[0.95, 0.99, 1.07], [1.04, 1.0, 0.95]], bathurst: [[0.96, 1.0, 1.05], [1.05, 1.01, 0.93]], phillip: [[0.95, 1.0, 1.06], [1.03, 1.0, 0.96]],
     chapman: [[0.96, 1.0, 1.06], [1.04, 1.0, 0.95]],
     tianmen: [[0.97, 1.0, 1.03], [1.02, 1.0, 0.98]],
     sani: [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]] };
