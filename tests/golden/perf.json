@@ -167,6 +167,34 @@
   "maxKverts": 1172,
   "jsMs": 1.02
  },
+ "rastro": {
+  "calls": 302,
+  "maxCalls": 369,
+  "kverts": 1413,
+  "maxKverts": 1857,
+  "jsMs": 0.83
+ },
+ "moki": {
+  "calls": 132,
+  "maxCalls": 197,
+  "kverts": 331,
+  "maxKverts": 511,
+  "jsMs": 0.23
+ },
+ "cpalace": {
+  "calls": 281,
+  "maxCalls": 303,
+  "kverts": 606,
+  "maxKverts": 759,
+  "jsMs": 0.81
+ },
+ "riverside": {
+  "calls": 197,
+  "maxCalls": 255,
+  "kverts": 309,
+  "maxKverts": 376,
+  "jsMs": 0.7
+ },
  "jezero": {
   "calls": 280,
   "maxCalls": 338,
