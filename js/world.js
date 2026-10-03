@@ -22564,7 +22564,7 @@ const World = (function () {
      horizon. Built for the game's two cameras (from above, behind the car): roofs, streets, the walls, trees and the skyline; nothing small
      at eye height. Place names only; no names of events, series, sponsors, people or businesses. ---- */
   let NC = null;                                // per-build data (decoded scenery, the ground grid)
-  const NCC = 8, NCB = 64;                      // ground cell (m), ground block (cells)
+  const NCC = 8, NCB = 32;                      // ground cell (m), ground block (cells)
   function ncI16(b64) { const s = atob(b64), n = s.length >> 1, a = new Int16Array(n); for (let k = 0; k < n; k++) a[k] = ((s.charCodeAt(2 * k) | (s.charCodeAt(2 * k + 1) << 8)) << 16) >> 16; return a; }
   function ncU8(b64) { const s = atob(b64), a = new Uint8Array(s.length); for (let k = 0; k < s.length; k++) a[k] = s.charCodeAt(k); return a; }
   function ncPrep() {
@@ -22700,7 +22700,7 @@ const World = (function () {
       else { const H = kind === 1 ? 9.5 : kind === 4 ? 6.6 : 2.4, r = kind === 1 ? 9 : kind === 4 ? 3.6 : 2; cyl(g, 0, -0.2, 0, r * 0.08, H * 0.5, 4, tr); ico(g, 0, H, 0, r, kind === 1 ? 0.55 : 0.8, kind === 5 ? [0.33, 0.41, 0.28] : [0.16, 0.3, 0.15], R, 0.25); }
     } else if (kind === 0) {   // Norfolk Island pine, 24 m
       const H = 24; cyl(g, 0, -0.2, 0, 0.32, H, 5, [0.42, 0.34, 0.27], null, 0.08);
-      for (let k = 0; k < 6; k++) { const y = 5 + k * 3.1, r = (1 - k / 7) * 4.6 + 0.5, col = k % 2 ? [0.16, 0.3, 0.17] : [0.19, 0.34, 0.19];
+      for (let k = 0; k < 5; k++) { const y = 5 + k * 3.7, r = (1 - k / 7) * 4.6 + 0.5, col = k % 2 ? [0.16, 0.3, 0.17] : [0.19, 0.34, 0.19];
         starCone(g, 0, y, 0, r, 2.0, 5, col, [0.24, 0.4, 0.22], k * 0.6, 0.6); }
       cone(g, 0, H - 2.6, 0, 1.0, 3.4, 5, [0.2, 0.36, 0.2], [0.26, 0.42, 0.24], 0);
     } else if (kind === 1) {   // Moreton Bay fig, 15 m, 22 m across
@@ -22778,7 +22778,7 @@ const World = (function () {
     {
       const nbx = Math.ceil((G.nx - 1) / NCB), nbz = Math.ceil((G.nz - 1) / NCB), Lb = NCB * NCC;
       for (let bj = 0; bj < nbz; bj++) for (let bi = 0; bi < nbx; bi++) { const cx = G.x0 + (bi + 0.5) * Lb, cz = G.z0 + (bj + 0.5) * Lb; let dm = 1e9; for (let i = 0; i < N; i += 8) dm = Math.min(dm, Math.hypot(T.px[i] - cx, T.pz[i] - cz));
-        if (dm < 120 + Lb * 0.71) nearB.add(bi + ',' + bj); }
+        if (dm < 70 + Lb * 0.71) nearB.add(bi + ',' + bj); }
       const grid = (i0, j0, ni, nj, st, skip) => {
         const n = (ni + 1) * (nj + 1), pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), col = new Float32Array(n * 3), uv = new Float32Array(n * 2); let k = 0;
         for (let b = 0; b <= nj; b++) for (let a = 0; a <= ni; a++, k++) { const i = i0 + a * st, j = j0 + b * st, x = G.x0 + i * NCC, z = G.z0 + j * NCC, h = ncGH(i, j);
@@ -22790,7 +22790,7 @@ const World = (function () {
       const grp = new THREE.Group(); root.add(grp); out.ground = grp;
       for (const key of nearB) { const [bi, bj] = key.split(',').map(Number), i0 = bi * NCB, j0 = bj * NCB, ni = Math.min(NCB, G.nx - 1 - i0), nj = Math.min(NCB, G.nz - 1 - j0); if (ni < 1 || nj < 1) continue;
         const m = new THREE.Mesh(grid(i0, j0, ni, nj, 1), gMat); m.name = 'groundNear'; m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m); }
-      const st = 3, TL = 120;
+      const st = 3, TL = 96;
       for (let j0 = 0; j0 < G.nz - 1; j0 += TL) for (let i0 = 0; i0 < G.nx - 1; i0 += TL) { const ni = Math.floor(Math.min(TL, G.nx - 1 - i0) / st), nj = Math.floor(Math.min(TL, G.nz - 1 - j0) / st); if (ni < 1 || nj < 1) continue;
         const m = new THREE.Mesh(grid(i0, j0, ni, nj, st, (i, j) => nearB.has(Math.floor(i / NCB) + ',' + Math.floor(j / NCB))), gMat); m.name = 'groundFar'; m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m); }
     }
@@ -22895,7 +22895,7 @@ const World = (function () {
         const Q = (ii, y) => { const o = side * (bar[ii] + 0.4); return [T.px[ii] + T.nx[ii] * o, T.hy[ii] + y, T.pz[ii] + T.nz[ii] * o]; };
         const u0 = acc / 2.5, u1 = (acc + ds) / 2.5, ins = Q(i, 1); ins[0] += T.nx[i] * side * 3; ins[2] += T.nz[i] * side * 3;
         fenceG.quadO(Q(i, 1.1), Q(j, 1.1), Q(j, 4.0), Q(i, 4.0), [1, 1, 1], ins, [[u0, 0], [u1, 0], [u1, 1.16], [u0, 1.16]]);
-        if (i % 4 === 0) { const p = Q(i, 0); box(scen.get(p[0], p[2]), p[0], p[1] + 0.9, p[2], 0.1, 3.2, 0.1, T.hd[i], [0.55, 0.56, 0.58], null, true); }
+        if (i % 6 === 0) { const p = Q(i, 0); box(scen.get(p[0], p[2]), p[0], p[1] + 0.9, p[2], 0.1, 3.2, 0.1, T.hd[i], [0.55, 0.56, 0.58], null, true); }
         acc += ds;
       }
     }
@@ -23032,7 +23032,7 @@ const World = (function () {
         const split = (a, b, c, d) => { const ab = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], bc = [(b[0] + c[0]) / 2, (b[1] + c[1]) / 2], ca = [(c[0] + a[0]) / 2, (c[1] + a[1]) / 2]; put(a, ab, ca, d + 1); put(ab, b, bc, d + 1); put(ca, bc, c, d + 1); put(ab, bc, ca, d + 1); };
         const put = (a, b, c, d) => { const Lm = Math.max(Math.hypot(a[0] - b[0], a[1] - b[1]), Math.hypot(b[0] - c[0], b[1] - c[1]), Math.hypot(c[0] - a[0], c[1] - a[1]));
           if (Lm > mx && d < 9) { split(a, b, c, d); return; }
-          const mx2 = (a[0] + b[0] + c[0]) / 3, mz2 = (a[1] + b[1] + c[1]) / 3; if (inCorr(mx2, mz2, 0.6) || inCorr(a[0], a[1], -0.5) || inCorr(b[0], b[1], -0.5) || inCorr(c[0], c[1], -0.5)) { if (Lm > 3 && d < 9) split(a, b, c, d); return; }   // (not over the circuit)
+          const mx2 = (a[0] + b[0] + c[0]) / 3, mz2 = (a[1] + b[1] + c[1]) / 3; if (inCorr(mx2, mz2, 0.6) || inCorr(a[0], a[1], -0.5) || inCorr(b[0], b[1], -0.5) || inCorr(c[0], c[1], -0.5)) { if (Lm > 5 && d < 6) split(a, b, c, d); return; }   // (not over the circuit)
           const P3 = (q) => [q[0], ncGround(q[0], q[1]) + off, q[1]], U = (q) => [q[0] / uvS, -q[1] / uvS], A = P3(a), B = P3(b), C = P3(c), cc = (q) => col(q[0], q[1]);
           gg.triO(A, B, C, cc(a), [(A[0] + B[0] + C[0]) / 3, A[1] - 5, (A[2] + B[2] + C[2]) / 3], cc(b), cc(c), U(a), U(b), U(c)); };
         for (const [a, b, c] of tris) put(all[a], all[b], all[c], 0);
@@ -23043,7 +23043,7 @@ const World = (function () {
       const flatMat = new THREE.MeshLambertMaterial({ map: ncConcrete(), vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
       const pkMat = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
       for (const a of P.areas) {
-        if (a.t === 0) continue; const cx = (a.bx0 + a.bx1) / 2, cz = (a.bz0 + a.bz1) / 2, dA = ncDist(cx, cz); if (dA > 900 || (dA > 450 && (a.bx1 - a.bx0) * (a.bz1 - a.bz0) < 900)) continue;
+        if (a.t === 0) continue; const cx = (a.bx0 + a.bx1) / 2, cz = (a.bz0 + a.bz1) / 2, dA = ncDist(cx, cz); if (dA > 900 || a.t === 10 || (dA > 150 && (a.bx1 - a.bx0) * (a.bz1 - a.bz0) < 400) || (dA > 450 && (a.bx1 - a.bx0) * (a.bz1 - a.bz0) < 2500)) continue;
         const t = a.t;
         if (t === 3) fill(ck('sand', cx, cz, () => new GB(true), 2048), a.rings, 0.03, () => [1, 0.97, 0.9], 8, 40);
         else if (t === 1 || t === 4 || t === 10 || t === 9) fill(ck('lawn', cx, cz, () => new GB(true), 2048), a.rings, 0.05, t === 4 ? () => [0.58, 0.74, 0.48] : t === 10 ? (x, z) => gGrass(x, z).map(v => v * 0.82) : t === 9 ? (x, z) => gGrass(x, z).map(v => v * 0.7) : gGrass, 14, 40);
@@ -23160,7 +23160,7 @@ const World = (function () {
         if (Math.abs(n.lat) < w + 0.55 || Math.abs(n.lat) > n.bar - 0.35 || T.pitAt(n.i * ds)) return false;
         { let d = n.i * ds - sStart; d = ((d % L) + L) % L; if (d > L - 120 || d < 15) return false; }   // (not along the grid)
         out.props.push({ kind, x, z, yaw, col: col || 0, i: n.i }); nProps++; return true; }
-      if (ncDist(x, z) > 650 || !STILL[kind]) return false;
+      if (ncDist(x, z) > 420 || !STILL[kind]) return false;
       STILL[kind](furnC.get(x, z), x, ncGround(x, z), z, Math.cos(yaw), Math.sin(yaw)); nStill++; return true;
     };
     {
@@ -23201,7 +23201,7 @@ const World = (function () {
       for (const s of P.st) {
         if (s.cl > 3) continue; const hw = SWD(s.cl) / 2 + 0.8; let acc = 12 + crH(s.pts[0][0] | 0, s.pts[0][1] | 0, 43) * 20;
         for (let k = 0; k + 1 < s.pts.length; k++) { const [ax0, az0] = s.pts[k], [bx, bz] = s.pts[k + 1], Lk = Math.hypot(bx - ax0, bz - az0), tx = (bx - ax0) / Lk, tz = (bz - az0) / Lk;
-          for (let t = acc; t < Lk; t += 36) { const x0 = ax0 + tx * t, z0 = az0 + tz * t; if (ncDist(x0, z0) > 320 || ixNear(x0, z0, 16)) continue;
+          for (let t = acc; t < Lk; t += 36) { const x0 = ax0 + tx * t, z0 = az0 + tz * t; if (ncDist(x0, z0) > 220 || ixNear(x0, z0, 16)) continue;
             for (const sd of [-1, 1]) { const x = x0 - tz * sd * hw, z = z0 + tx * sd * hw; furn('lamp', x, z, Math.atan2(tx * sd, -tz * sd)); } }
           acc = ((acc - Lk) % 36 + 36) % 36; }
       }
@@ -23218,7 +23218,7 @@ const World = (function () {
     let nTrees = 0;
     const treeOk = (x, z, r) => !(ncWater(x, z) || inBld(x, z, r) || excluded(x, z) || inCorr(x, z, 3) || x < P.x0 || x > P.x1 || z < P.z0 || z > P.z1 || ncArea(x, z, 7) || ncArea(x, z, 4));
     const plant = (sp, x, z, sz) => { const y = ncGround(x, z), hh = crH(Math.round(x * 5), Math.round(z * 5), 51), s = sz * (0.82 + hh * 0.36), k = 0.86 + crH(Math.round(x), Math.round(z), 52) * 0.26;
-      const dd = ncDist(x, z); if (dd > 380 && crH(Math.round(x), Math.round(z), 53) < 0.4) return; (dd < 170 ? TK : TKf)[sp].add(x, y - 0.1, z, hh * TAU, s, s, [k, k, k]); nTrees++; };
+      const dd = ncDist(x, z); if (dd > 380 && crH(Math.round(x), Math.round(z), 53) < 0.4) return; (dd < 80 ? TK : TKf)[sp].add(x, y - 0.1, z, hh * TAU, s, s, [k, k, k]); nTrees++; };
     {
       const beachy = (x, z) => ncArea(x, z, 3) || ncArea(x + 30, z, 3) || ncArea(x - 30, z, 3) || ncArea(x, z + 30, 3) || ncArea(x, z - 30, 3) || ncArea(x, z, 0);
       for (const [x, z] of P.tree) { if (!treeOk(x, z, 0.5)) continue; const h = crH(x | 0, z | 0, 56), coast = beachy(x, z);
@@ -23255,7 +23255,7 @@ const World = (function () {
           for (let aa = u0 + 1.5; aa < u1 - 1.5; aa += 2.7) { const x = cx + dx * aa - dz * v, z = cz + dz * aa + dx * v; if (!inPoly(poly, x, z)) continue;
             { const g2 = ck('mk', x, z, () => new GB(), 1536), lx = x + dx * 1.35, lz = z + dz * 1.35, y = ncGround(lx, lz) + 0.09, WL = [0.9, 0.9, 0.86], Q = (p, q) => [lx + dx * p - dz * q, y, lz + dz * p + dx * q];
               if (!inCorr(lx, lz, 0.5)) g2.quadUp(Q(-0.06, -2.6), Q(0.06, -2.6), Q(0.06, 2.6), Q(-0.06, 2.6), [WL, WL, WL, WL]); }
-            if (crH(Math.round(aa * 3), Math.round(v * 3) + poly.length, 62) > 0.55) continue; car(x, z, Math.atan2(dz, dx) + Math.PI / 2 + (crH(aa | 0, v | 0, 63) < 0.5 ? 0 : Math.PI)); } } }
+            if (crH(Math.round(aa * 3), Math.round(v * 3) + poly.length, 62) > 0.45) continue; car(x, z, Math.atan2(dz, dx) + Math.PI / 2 + (crH(aa | 0, v | 0, 63) < 0.5 ? 0 : Math.PI)); } } }
       for (const s of P.st) { if (s.cl < 2 || s.cl > 4) continue; const hw = SWD(s.cl) / 2 - 1.2;
         for (let k = 0; k + 1 < s.pts.length; k++) { const [ax0, az0] = s.pts[k], [bx, bz] = s.pts[k + 1], Lk = Math.hypot(bx - ax0, bz - az0), tx = (bx - ax0) / Lk, tz = (bz - az0) / Lk;
           for (let t = 4; t < Lk - 4; t += 6.2) { const x0 = ax0 + tx * t, z0 = az0 + tz * t; if (ncDist(x0, z0) > 220 || ncDist(x0, z0) < 14 || ixNear(x0, z0, 16)) continue;
@@ -23294,7 +23294,7 @@ const World = (function () {
     {
       const g = new GB(), FB = ncI16(def.nc.fb), RF = [[0.62, 0.27, 0.2], [0.42, 0.43, 0.45], [0.72, 0.4, 0.3], [0.56, 0.58, 0.6]], WF = [[0.92, 0.9, 0.86], [0.86, 0.84, 0.8], [0.95, 0.94, 0.9], [0.8, 0.76, 0.7]];
       for (let k = 0; k < FB.length; k += 6) { const x = FB[k] / 2, z = FB[k + 1] / 2, Lb = FB[k + 2] / 4, Db = FB[k + 3] / 4, a = FB[k + 4] * Math.PI / 180, h = FB[k + 5] / 4, y = ncGround(x, z), hh = crH(Math.round(x), Math.round(z), 95);
-        if (Lb * Db < 60 && hh < 0.5) continue;
+        if (Lb * Db < 90 || (Lb * Db < 150 && hh < 0.4) || ncDist(x, z) > 1500) continue;
         box(g, x, y - 0.3, z, Lb, h + 0.3, Db, a, WF[Math.floor(hh * 4)], h < 6 && Lb * Db < 400 ? RF[Math.floor(crH(Math.round(x), Math.round(z), 96) * 4)] : null, true); }
       addM(g, new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true }), false, true, 'stockton');   // (transparent: no ambient occlusion strips at their feet, the haze hides them)
       const sg = new GB(), HB = [0.2, 0.22, 0.26], HR = [0.55, 0.14, 0.12], DK = [0.42, 0.4, 0.36], WH = [0.94, 0.94, 0.92];
