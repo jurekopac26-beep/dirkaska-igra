@@ -18871,7 +18871,7 @@ const World = (function () {
     {
       const gg = new GB(true), gpz = new GB(true), LC = [[0.78, 0.92, 0.62], [0.9, 1.0, 0.72], [0.82, 0.86, 0.66], [1, 1, 1]];
       for (const a of H.lu) { const k = a[0], p = hkPts(a, 1); if (p.length < 3) continue;
-        const tri = THREE.ShapeUtils.triangulateShape(p.map(([x, z]) => new THREE.Vector2(x, z)), []), y = k === 3 ? -0.015 : 0.0, c = LC[k], gx = k === 3 ? gpz : gg, sc = k === 3 ? 10 : 14;
+        const tri = THREE.ShapeUtils.triangulateShape(p.map(([x, z]) => new THREE.Vector2(x, z)), []), pz = k >= 3, y = pz ? -0.015 : 0.0, c = k === 4 ? [0.86, 0.8, 0.7] : LC[k], gx = pz ? gpz : gg, sc = pz ? 10 : 14;   // (4: a building site, dusty)
         for (const [a0, b0, c0] of tri) { const A = [p[a0][0], y, p[a0][1]], B = [p[b0][0], y, p[b0][1]], C = [p[c0][0], y, p[c0][1]], U = (q) => [q[0] / sc, -q[2] / sc];
           gx.quadUp(A, B, C, C, [c, c, c, c], [U(A), U(B), U(C), U(C)]); } }
       addM(gg, gMat); addM(gpz, new THREE.MeshLambertMaterial({ map: tex.paving, vertexColors: true, color: 0xf2eee6 }));
@@ -19117,6 +19117,12 @@ const World = (function () {
         for (let k = 0; k < p.length; k++) { const a = p[k], c = p[(k + 1) % p.length], el = Math.hypot(c[0] - a[0], c[1] - a[1]); if (el < 0.05) continue;
           const nx = (c[1] - a[1]) / el * cw, nz = -(c[0] - a[0]) / el * cw, inn = [(a[0] + c[0]) / 2 - nx, (y0 + hh) / 2, (a[1] + c[1]) / 2 - nz], u0 = acc / bay, u1 = (acc + el) / bay;
           g.quadO([a[0], y0, a[1]], [c[0], y0, c[1]], [c[0], hh, c[1]], [a[0], hh, a[1]], tint, inn, [[u0, y0 / flr], [u1, y0 / flr], [u1, hh / flr], [u0, hh / flr]]); acc += el; }
+        // the shops at street level (near the course): a band of dark shop windows and a canopy over the pavement on every wall
+        if (b.mh < 0.5 && hh > 9 && clearance(cx, cz) < 150) { const sg = roofG.get(cx, cz), shop = [0.16, 0.2, 0.24], can = [0.78, 0.79, 0.8];
+          for (let k = 0; k < p.length; k++) { const a = p[k], c = p[(k + 1) % p.length], el = Math.hypot(c[0] - a[0], c[1] - a[1]); if (el < 4) continue;
+            const nx = (c[1] - a[1]) / el * cw, nz = -(c[0] - a[0]) / el * cw, o = 0.06, A = [a[0] + nx * o, 0.3, a[1] + nz * o], C = [c[0] + nx * o, 0.3, c[1] + nz * o], inn = [(a[0] + c[0]) / 2 - nx, 2, (a[1] + c[1]) / 2 - nz];
+            sg.quadO(A, C, [C[0], 3.6, C[2]], [A[0], 3.6, A[2]], shop, inn);
+            sg.quadO([A[0], 4.1, A[2]], [C[0], 4.1, C[2]], [C[0] + nx * 1.4, 4.1, C[2] + nz * 1.4], [A[0] + nx * 1.4, 4.1, A[2] + nz * 1.4], can, [inn[0], 0, inn[2]]); } }
         // the roof: a flat slab in the roofing's grey; the towers' plant room on top, a low one's air conditioners
         const tri = THREE.ShapeUtils.triangulateShape(p.map(([x, z]) => new THREE.Vector2(x, z)), []), rg = roofG.get(cx, cz), rc = st === 0 ? [0.5, 0.53, 0.56] : [0.62 + hr * 0.1, 0.62 + hr * 0.08, 0.6];
         for (const [i0, i1, i2] of tri) rg.triO([p[i0][0], hh, p[i0][1]], [p[i1][0], hh, p[i1][1]], [p[i2][0], hh, p[i2][1]], rc, [cx, hh - 5, cz]);
@@ -19167,7 +19173,7 @@ const World = (function () {
         if (palm) { cyl(g, 0, 0, 0, 0.07, 0.86, 6, [0.55, 0.47, 0.38], null, 0.05); for (let k = 0; k < 8; k++) { const a = k / 8 * TAU, c = Math.cos(a), s = Math.sin(a), fr = [0.25, 0.48, 0.2];
             g.triO([0, 0.86, 0], [c * 0.42 - s * 0.06, 0.8, s * 0.42 + c * 0.06], [c * 0.42 + s * 0.06, 0.8, s * 0.42 - c * 0.06], fr, [0, 0.5, 0]);
             g.triO([c * 0.42 - s * 0.06, 0.8, s * 0.42 + c * 0.06], [c * 0.42 + s * 0.06, 0.8, s * 0.42 - c * 0.06], [c * 0.62, 0.66, s * 0.62], fr.map(v => v * 0.85), [0, 0.5, 0]); } }
-        else { cyl(g, 0, 0, 0, 0.06, 0.45, 6, [0.42, 0.36, 0.3], null, 0.04); const r = rng(77); for (const [x, y, z, rr] of [[0, 0.64, 0, 0.4], [0.2, 0.56, 0.14, 0.28]]) puff(g, x, y, z, rr, 0.75, [0.24, 0.42, 0.2], r, 0.3, 0.7, 1.15); }
+        else { cyl(g, 0, 0, 0, 0.06, 0.45, 4, [0.42, 0.36, 0.3], null, 0.04); const r = rng(77); puff(g, 0, 0.64, 0, 0.44, 0.72, [0.24, 0.42, 0.2], r, 0.35, 0.7, 1.15); }
         return g.geometry(); };
       const tMat = hkCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut), tk = [new IChunks(treeGeo(false), tMat, 600), new IChunks(treeGeo(true), tMat, 600)];
       const palmAt = (x, z, h, rot) => { const g = scen.get(x, z), tc = [0.55, 0.47, 0.38], fr = [0.25, 0.48, 0.2], w2 = h * 0.5;   // (the palms in the scenery's chunks: no mesh of their own)
@@ -19245,6 +19251,36 @@ const World = (function () {
         nStands++;
       }
       addM(gs, matV, true); addM(gc, crowdUV(new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), 1, 0.06, 0.06));
+    }
+
+    /* ---- the building sites (OpenStreetMap): green hoardings round them, site offices stacked two high, a tower crane ---- */
+    {
+      const hd = [0.22, 0.42, 0.3], ht = [0.9, 0.9, 0.86];
+      for (const a of H.lu) { if (a[0] !== 4) continue; const p = hkPts(a, 1); let cx = 0, cz = 0, x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
+        for (const [x, z] of p) { cx += x; cz += z; x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } cx /= p.length; cz /= p.length;
+        for (let k = 0; k < p.length; k++) { const A = p[k], B = p[(k + 1) % p.length], el = Math.hypot(B[0] - A[0], B[1] - A[1]);
+          for (let t = 0; t < el - 0.1; t += 2.5) { const t1 = Math.min(el, t + 2.5), P0 = [A[0] + (B[0] - A[0]) * t / el, A[1] + (B[1] - A[1]) * t / el], P1 = [A[0] + (B[0] - A[0]) * t1 / el, A[1] + (B[1] - A[1]) * t1 / el], mx = (P0[0] + P1[0]) / 2, mz = (P0[1] + P1[1]) / 2;
+            if (clearance(mx, mz) < 1 || HK_IN_ROAD(mx, mz, null, 0.3)) continue; const g = scen.get(mx, mz), q = [cx, 1, cz];
+            g.quadO([P0[0], 0, P0[1]], [P1[0], 0, P1[1]], [P1[0], 2.1, P1[1]], [P0[0], 2.1, P0[1]], hd, q); g.quadO([P0[0], 2.1, P0[1]], [P1[0], 2.1, P1[1]], [P1[0], 2.45, P1[1]], [P0[0], 2.45, P0[1]], ht, q);
+            g.quadO([P0[0], 0, P0[1]], [P1[0], 0, P1[1]], [P1[0], 2.45, P1[1]], [P0[0], 2.45, P0[1]], hd.map(v => v * 0.8), [2 * mx - cx, 1, 2 * mz - cz]); } }
+        if (!inPoly(p, cx, cz)) continue; const g = scen.get(cx, cz), r = rpHash(Math.round(cx), Math.round(cz));
+        for (let k = 0; k < 4; k++) { const ox = cx + (k % 2) * 6.5 - 12, oz = cz + 10 + (k > 1 ? 0 : 0), y = k > 1 ? 2.6 : 0; if (inPoly(p, ox, oz) && clearance(ox, oz) > 4) box(g, ox, y, oz, 6, 2.6, 2.4, 0.2, [0.92, 0.9, 0.82], [0.75, 0.76, 0.78]); }
+        const H2 = 46 + r * 14, jr = r * TAU, c = Math.cos(jr), sn = Math.sin(jr), yl = [0.95, 0.75, 0.12];   // the tower crane: the mast, the jib and its counter-jib, the cab
+        if (clearance(cx, cz) > 30) { box(g, cx, 0, cz, 1.8, H2, 1.8, jr, yl, yl); box(g, cx + c * 16, H2, cz + sn * 16, 44, 1.4, 1.2, jr, yl, yl); box(g, cx - c * 9, H2 - 2.2, cz - sn * 9, 4, 2.2, 2.4, jr, [0.6, 0.6, 0.62], [0.6, 0.6, 0.62]); box(g, cx, H2 + 1.4, cz, 1.2, 6, 1.2, jr, yl, yl); box(g, cx + c * 1.6, H2 - 3, cz + sn * 1.6, 2, 2.4, 2, jr, [0.9, 0.9, 0.9], [0.9, 0.9, 0.9]); exclPush(cx, cz, 4); }
+      }
+    }
+
+    /* ---- banners on the debris fences (the place names only: no sponsors) ---- */
+    {
+      const c2 = document.createElement('canvas'); c2.width = 512; c2.height = 64; const x2 = c2.getContext('2d');
+      const BN = [['HONG KONG', '#c8102e', '#fff'], ['CENTRAL', '#1d2a44', '#fff'], ['VICTORIA HARBOUR', '#f4f1ea', '#1d2a44'], ['HONG KONG', '#1d2a44', '#e8c35a']];
+      BN.forEach(([t, bg, fg], k) => { x2.fillStyle = bg; x2.fillRect(k * 128, 0, 128, 64); x2.fillStyle = fg; x2.font = '900 ' + (t.length > 10 ? 15 : 22) + 'px "Arial Black", Arial, sans-serif'; x2.textAlign = 'center'; x2.textBaseline = 'middle'; x2.fillText(t, k * 128 + 64, 33); });
+      const bt = ownTex(new THREE.CanvasTexture(c2)), gb = new GB(true), W1 = [1, 1, 1];
+      for (const [d0, d1, side] of [[320, 800, -1], [320, 800, 1], [20, 210, 1], [200, 262, -1], [1205, 1275, -1], [1060, 1120, -1]]) {
+        for (let d = d0, k = 0; d + 6 < d1; d += 6.5, k++) { const s0 = sAt(d), s1 = sAt(d + 6), i0 = T.idx(s0), i1 = T.idx(s1), b0 = (side > 0 ? T.br[i0] : T.bl[i0]) + 0.36, b1 = (side > 0 ? T.br[i1] : T.bl[i1]) + 0.36;
+          if (Math.abs(b0 - b1) > 0.6) continue; const A = atSf(s0, side * b0), B = atSf(s1, side * b1), u0 = (k % 4) / 4, u1 = u0 + 0.25, ins = atS(s0, side * (b0 + 3));
+          gb.quadO([A[0], 1.15, A[1]], [B[0], 1.15, B[1]], [B[0], 2.0, B[1]], [A[0], 2.0, A[1]], W1, [ins[0], 1.5, ins[1]], side > 0 ? [[u1, 0], [u0, 0], [u0, 1], [u1, 1]] : [[u0, 0], [u1, 0], [u1, 1], [u0, 1]]); } }
+      addM(gb, new THREE.MeshLambertMaterial({ map: bt, side: THREE.DoubleSide }), false);
     }
 
     /* ---- the fans standing along the fences: at the hairpins, at Turn 2, along the waterfront straight, by the chicane ---- */
