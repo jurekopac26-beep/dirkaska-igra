@@ -507,6 +507,43 @@
    "roadwear:MeshLambertMaterial": "932c41c2"
   }
  },
+ "moki": {
+  "meshes": 1585,
+  "verts": 723493,
+  "instances": 19825,
+  "props": 142,
+  "crowd": 361,
+  "world": "8b885125",
+  "propsHash": "127d9044",
+  "floor": "a80c6856/10920",
+  "groups": {
+   "-:MeshLambertMaterial": "658b95fd",
+   "-:MeshPhongMaterial": "2b7341a9",
+   "-:MeshBasicMaterial": "7ed161db",
+   "crowd:MeshLambertMaterial": "c3e8c025",
+   "ao:MeshBasicMaterial": "bf4eccf9"
+  }
+ },
+ "cpalace": {
+  "meshes": 300,
+  "verts": 382518,
+  "instances": 6876,
+  "props": 29,
+  "crowd": 2457,
+  "world": "e0e31673",
+  "propsHash": "3744002c",
+  "floor": "5a965253/6440",
+  "groups": {
+   "-:MeshLambertMaterial": "e2922c1d",
+   "-:MeshPhongMaterial": "ac8feb3b",
+   "crowd:MeshLambertMaterial": "4a2d10fc",
+   "-:MeshBasicMaterial": "b41923f5",
+   "flags:MeshLambertMaterial": "859872c7",
+   "ao:MeshBasicMaterial": "3555589",
+   "roadwear:MeshLambertMaterial": "ba389577",
+   "worn:MeshLambertMaterial": "5a1d01e1"
+  }
+ },
  "jezero": {
   "meshes": 154,
   "verts": 591648,
