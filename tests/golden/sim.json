@@ -3134,5 +3134,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "greatalpine/race/cs": {
+  "digest": "0448b08dd2b7a0e867bd84b0",
+  "lead": 2319.1,
+  "car0": [
+   1004.52,
+   1270.25
+  ],
+  "cover": {
+   "dmg": 0.99,
+   "loose": 8,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "greatalpine/demo/cs": {
+  "digest": "e2d2a221659a467626e53894",
+  "lead": 2478.2,
+  "car0": [
+   1166.23,
+   1507.65
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "greatalpine/upg/cs": {
+  "digest": "39d4b5028c77dc8efd5ed70a",
+  "lead": 2472.6,
+  "car0": [
+   1103.79,
+   1462.29
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "greatalpine/crash/cs": {
+  "digest": "9c1b7427cb4275479b4c95f0",
+  "lead": 2295.9,
+  "car0": [
+   1006,
+   1311.61
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "greatalpine/formula/cs": {
+  "digest": "0209f3b51899570bacd67a10",
+  "lead": 2647.6,
+  "car0": [
+   1201.12,
+   1593.64
+  ],
+  "cover": {
+   "dmg": 0.64,
+   "loose": 10,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "greatalpine/lm/cs": {
+  "digest": "7a5dbec1092343066f7bda3a",
+  "lead": 2606.5,
+  "car0": [
+   1191.9,
+   1527.79
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 7,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "greatalpine/car/cs": {
+  "digest": "e0694e931fa824cfa67b9632",
+  "lead": 2294.1,
+  "car0": [
+   949.07,
+   1128.55
+  ],
+  "cover": {
+   "dmg": 0.89,
+   "loose": 3,
+   "rescues": 1,
+   "repairs": 0
+  }
  }
 }
