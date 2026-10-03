@@ -207,6 +207,18 @@ check('track: the name is the place and the country (Mauna Kea, ZDA; Mauna Kea, 
     runs.map(r => `seed ${r.seed}: ${r.escaped ? 'escaped' : r.busted ? 'busted' : '-'} in ${r.t.toFixed(0)} s at ${r.at.toFixed(0)} m`).join('; '));
 }
 
+// 10b. no helicopter over this road (def.noHeli: a whole run at the hardest level, the heat past the helicopter's threshold) and no birds in its
+// sky (def.noBirds: the renderer's flocks stay hidden)
+{
+  Math.random = seeded(3);
+  const r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 3, damage: 2, police: true }), P = r.player; r.start();
+  let t = 0, k = 0, heli = 0, heat = 0;
+  while (t < 300 && !P.finished && !r.pol.busted) { Math.random = seeded(6000 + (++k)); C.aiControl(P, r, DT); r.step(DT); t += DT; if (r.pol.heli) heli++; heat = Math.max(heat, r.pol.heat); if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P); }
+  Math.random = orig;
+  check('police: no helicopter on this road, even past its heat at the hardest level; no birds in the sky', def.noHeli === true && def.noBirds === true && !heli && heat >= r.pol.D.heli,
+    `heat ${heat.toFixed(2)} (the helicopter's ${r.pol.D.heli}), helicopter ${heli ? 'seen' : 'none'} in ${t.toFixed(0)} s`);
+}
+
 // 11. the medal times of the time trial (dry and wet): gold < silver < bronze, the rain slower; gold is the stock rally car on the autopilot x 1.01
 {
   const M = def.medals, asc = (a) => Array.isArray(a) && a.length === 3 && a[0] < a[1] && a[1] < a[2];
