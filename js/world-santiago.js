@@ -243,7 +243,10 @@
           if (kb) { const cw = T.curbW, pf = [[w - 0.02, 0.035], [w + 0.14, 0.078], [w + cw - 0.12, 0.085], [w + cw + 0.02, 0.03]], vv = ii * ds / 2, sh = [0.84, 1, 1, 0.78].map(k => [k, k, k]), us = [0, 0.1, 0.92, 1], o = side > 0 ? [0, 1, 2, 3] : [3, 2, 1, 0];
             const rk = gk.row(o.map(k => Pt(i, side * pf[k][0], pf[k][1])), o.map(k => sh[k]), o.map(k => [us[k], vv])); if (pk[si] >= 0) gk.link(pk[si], rk, 0, 3); pk[si] = rk; } else pk[si] = -1;
           // the verge from the kerb (or the edge) to the wall: the park's paving (pale concrete), the sidewalks' joints in its texture
-          const pc = jMouth[si][i] > 0.01 ? [0.66, 0.67, 0.7] : [0.72, 0.73, 0.76], q0 = Pt(i, side * (e0 + 0.02), 0.026), q1 = Pt(i, side * Math.max(e0 + 0.3, bar + 0.2), 0.026), qq = side > 0 ? [q0, q1] : [q1, q0];
+          const inn = side * T.k[i] > 0 ? 0.88 / Math.abs(T.k[i]) : 1e9; let ve = Math.min(bar + 0.2, inn, e0 + 4.5);   // (4.5 m at most: the park's lawns and paving beyond it)   // (on the inside of a tight bend no farther than its radius: the strip would fold over the road)
+          for (let t = 0; t < 30 && ve > e0 + 0.4; t++) { const p = Pt(i, side * ve, 0), q = C.near(p[0], p[2]), di = Math.abs(q.i - i), dd = Math.min(di, N - di);   // (nor over another part of the circuit)
+            if (q.i < 0 || dd < 5 || Math.abs(q.lat) > q.bar) break; ve -= 1; }
+          const pc = jMouth[si][i] > 0.01 ? [0.66, 0.67, 0.7] : [0.72, 0.73, 0.76], q0 = Pt(i, side * (e0 + 0.02), 0.012), q1 = Pt(i, side * Math.max(e0 + 0.3, ve), 0.012), qq = side > 0 ? [q0, q1] : [q1, q0];
           const rp = gp.row(qq, [pc, pc], qq.map(p => [p[0] / 3, -p[2] / 3])); if (pp[si] >= 0) gp.link(pp[si], rp, 0, 1); pp[si] = rp;
         }
       }

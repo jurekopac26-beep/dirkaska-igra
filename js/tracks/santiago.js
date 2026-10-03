@@ -22,10 +22,10 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // where OpenStreetMap has them meet the circuit. The two roads up to the avenue north of the park have their traffic lights at the avenue
   // (OSM, 40 m on); here they stand in the mouths too (an approximation), the others are the park's own roads with stop signs
   const JUNCTIONS = [
-    [250, -1, 114, 3.2, 'stop', 50, 'park'],
+    [250, -1, 114, 3.2, 'stop', 10, 'park'],     // (250 and 769: the two ends of one short park road between two parts of the circuit, ~55 m)
     [554, 1, 86, 3.5, 'sig', 44, 'avenue'],
     [579, 1, 90, 3.5, 'sig', 44, 'avenue'],
-    [769, -1, 92, 3.0, 'stop', 40, 'park'],
+    [769, -1, 92, 3.0, 'stop', 10, 'park'],
     [1062, 1, 85, 3.5, 'sig', 70, 'street'],
     [1276, -1, 87, 3.0, 'stop', 40, 'arena'],
     [1299, 1, 151, 3.0, 'stop', 45, 'park'],
