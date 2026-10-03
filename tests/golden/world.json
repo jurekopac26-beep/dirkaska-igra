@@ -508,21 +508,22 @@
   }
  },
  "moki": {
-  "meshes": 2135,
-  "verts": 911295,
-  "instances": 30183,
+  "meshes": 2128,
+  "verts": 930280,
+  "instances": 30416,
   "props": 142,
-  "crowd": 373,
-  "world": "c63db67d",
+  "crowd": 377,
+  "world": "9649cfa5",
   "propsHash": "127d9044",
   "floor": "3e0a51bf/10920",
   "groups": {
-   "-:MeshLambertMaterial": "d212ee29",
+   "-:MeshLambertMaterial": "595cda41",
    "-:MeshPhongMaterial": "66caa8f",
    "-:MeshBasicMaterial": "5c20f993",
-   "crowd:MeshLambertMaterial": "e1076312",
+   "puddles:MeshBasicMaterial": "8c4c342f",
+   "crowd:MeshLambertMaterial": "166f06cf",
    "smoke:ShaderMaterial": "430acf01",
-   "ao:MeshBasicMaterial": "6158fa97"
+   "ao:MeshBasicMaterial": "9f9d0ab"
   }
  },
  "cpalace": {

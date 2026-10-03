@@ -175,11 +175,11 @@
   "jsMs": 0.83
  },
  "moki": {
-  "calls": 155,
-  "maxCalls": 226,
-  "kverts": 484,
-  "maxKverts": 697,
-  "jsMs": 0.49
+  "calls": 157,
+  "maxCalls": 225,
+  "kverts": 489,
+  "maxKverts": 693,
+  "jsMs": 0.61
  },
  "cpalace": {
   "calls": 281,

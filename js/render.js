@@ -1663,7 +1663,7 @@ const Render = (function () {
     mulholland: { fog: 0xd8d4c8, sun: 0xfff0d2, sunI: 1.4, sky: 0xb8d2f0, gnd: 0x7a6a48, hemiI: 0.62, tint: [1.04, 1.0, 0.94], sat: 1.06, sunOff: [-70, 104, 48] },   // Mulholland Highway: a hot, clear Californian summer afternoon, a strong high sun from the south-west, a warm dusty haze over the canyons
     beartooth: { fog: 0xc6d7e8, sun: 0xfff1da, sunI: 1.26, sky: 0xb3cdf0, gnd: 0x4c5636, hemiI: 0.6, tint: [1.01, 1.0, 0.98], sat: 1.08, sunOff: [-84, 90, 58] },   // Beartooth: a clear summer afternoon in the northern Rockies, the sun from the south-west (shadows across the switchbacks), thin blue mountain haze
     rastro:   { fog: 0xc4d0d0, sun: 0xfff0d8, sunI: 1.1, sky: 0xc2d4e6, gnd: 0x4a5a32, hemiI: 0.66, tint: [1.0, 1.01, 0.98], sat: 1.08, sunOff: [-66, 92, -64] },   // Serra do Rio do Rastro: a humid afternoon over the rainforest, the sun from the north-west (the southern hemisphere), a soft green-grey haze
-    moki:     { fog: 0xc4d4e8, sun: 0xfff2de, sunI: 1.32, sky: 0x8fb6ee, gnd: 0x6e4c38, hemiI: 0.6, tint: [1.0, 1.0, 0.98], sat: 1.12, sunOff: [-86, 78, 52] },   // the Moki Dugway: a clear afternoon over the Utah desert, a deep blue sky, the warm sun from the south-west (the cliff's red light bounced into the shade)
+    moki:     { fog: 0xc4d4e8, sun: 0xfff2de, sunI: 1.32, sky: 0x8fb6ee, gnd: 0x6e4c38, hemiI: 0.6, tint: [1.0, 1.0, 0.98], sat: 1.12, sunOff: [-86, 78, 52], dusk: { sun: 0xff6a30, gnd: 0x9a4426, k: 0.28, hi: [1.03, 0.99, 0.95], tint: [1.03, 0.99, 0.95] } },   // the Moki Dugway: a clear afternoon over the Utah desert, a deep blue sky, the warm sun from the south-west (the cliff's red light bounced into the shade)
     cpalace:  { fog: 0xc9d3db, sun: 0xfff0d8, sunI: 1.08, sky: 0xcddcec, gnd: 0x4c5a32, hemiI: 0.62, tint: [1.02, 1.0, 0.96], sat: 1.02, sunOff: [-60, 74, 66] },   // Crystal Palace: a spring afternoon in south London, a soft English light with a little haze, the sun from the south-west
     riverside: { fog: 0xd9dfe3, sun: 0xffecc8, sunI: 1.3, sky: 0xc3d8f2, gnd: 0x8a7650, hemiI: 0.62, tint: [1.04, 1.0, 0.93], sat: 1.04, haze: 0.12, hazeCol: [1, 0.86, 0.66], sunOff: [-70, 74, 78] },   // Riverside: a clear, dry afternoon in southern California, the sun from the south-west, a little dust in the warm haze
   };
@@ -1721,6 +1721,7 @@ const Render = (function () {
       K.off = [s0[0] * 1.6, 30, s0[2] * 1.6]; K.tint = [1.1, 0.97, 0.86]; K.uHaze = 0.34 * (1 - r); K.hazeCol = [1, 0.6, 0.32];
       K.shT = [0.97, 0.96, 1.04]; K.hiT = [1.07, 0.99, 0.88]; K.bloom = 0.5; K.lit = [0.97, 0.85, 0.74];
     }
+    if (t.dusk) { const d = t.dusk; to(K.sunC, d.sun, d.k); to(K.gnd, d.gnd, d.k); for (let i = 0; i < 3; i++) { K.hiT[i] *= d.hi[i]; K.tint[i] *= d.tint[i]; } }   // (a theme's own low sun, morning and evening: the Moki Dugway's red cliff)
     N.fog.setHex(0x070b16); N.sky.setHex(0x26324f); N.gnd.setHex(0x06080b); N.sunC.setHex(0x93aaff); N.hemiI = 0.55; N.sunI = 0.2 * (1 - 0.6 * r);
     N.off = [-40, 110, 60]; N.tint = [0.86, 0.93, 1.12]; N.sat = D.sat * 0.85; N.uHaze = 0; N.postHaze = 0; N.hazeCol = K.hazeCol.slice();   // (no sun glow at night, not even Pikes Peak's)
     N.shT = [1, 1, 1]; N.hiT = [1.02, 1.0, 0.97]; N.bloom = 1.05 + 0.25 * r; N.bThr = 0.62; N.lit = [0.36, 0.4, 0.5];   // (the lamps' light a little warm)
