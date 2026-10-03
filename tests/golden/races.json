@@ -1348,5 +1348,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "39f316a97324ee0c501e2283"
+ },
+ "beartooth/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 131.72,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "fe13c7afbd6bcad88e9e2954"
+ },
+ "beartooth/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 142.06,
+  "spins": 0,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "fd663e222527c018b02ba3a7"
+ },
+ "beartooth/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 113.26,
+  "spins": 0,
+  "walls": 12,
+  "rescues": 0,
+  "nan": false,
+  "digest": "8a85683b263b73ee2246235f"
+ },
+ "beartooth/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 113.99,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e06b4179349c780362891f23"
+ },
+ "beartooth/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 131.77,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "6e1bb466cc96fa7186fdb621"
  }
 }
