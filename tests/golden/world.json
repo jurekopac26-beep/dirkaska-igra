@@ -395,20 +395,20 @@
  },
  "uncompahgre": {
   "meshes": 1768,
-  "verts": 1434085,
-  "instances": 55109,
+  "verts": 1463791,
+  "instances": 54570,
   "props": 127,
-  "crowd": 1388,
-  "world": "3c90d065",
+  "crowd": 1333,
+  "world": "21eb1173",
   "propsHash": "2fda5eec",
   "floor": "1c6f95b9/10612",
   "groups": {
-   "-:MeshLambertMaterial": "72d2b6b5",
+   "-:MeshLambertMaterial": "1f2d308e",
    "-:MeshPhongMaterial": "40bf4704",
-   "-:MeshBasicMaterial": "33a9b248",
+   "-:MeshBasicMaterial": "2f8e1ee3",
    "-:PointsMaterial": "f996ff5a",
-   "crowd:MeshLambertMaterial": "40ee7f61",
-   "ao:MeshBasicMaterial": "88231789",
+   "crowd:MeshLambertMaterial": "82a994e",
+   "ao:MeshBasicMaterial": "865c2c4c",
    "tyremarks:MeshBasicMaterial": "27d1b418",
    "roadwear:MeshLambertMaterial": "a40a696b"
   }
