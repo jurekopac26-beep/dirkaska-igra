@@ -892,6 +892,7 @@ const World = (function () {
     if (THEME === 'cpalace') return finish(buildRbring(scene, tex, opts), tex);   // Crystal Palace 1937: the same builder in its period look and the park (RB_LOOK, cpPark)
     if (THEME === 'suzuka') return finish(buildSuzuka(scene, tex, opts), tex); // Suzuka, the figure of eight on its real ground (below)
     if (THEME === 'riverside') return finish(buildRiverside(scene, tex, opts), tex);   // Riverside, the circuit of 1960 in the dry hills (below)
+    if (THEME === 'puertomadero') return finish(buildPM(scene, tex, opts), tex);   // Puerto Madero, the street circuit in the docklands of Buenos Aires (below)
     const R = rng(4242);
     hillN = valueNoise2(77, 60);
     mtnN = valueNoise2(83, 130); mtnN2 = valueNoise2(91, 55); mtnPeak = valueNoise2(97, 220);
@@ -22548,6 +22549,619 @@ const World = (function () {
     out.crowdPts = Float32Array.from(crowdPts);
     if (def.far) out.dyn.far = rsFar(root, def.far, sea, hyS(sStart) + 6);
     out.stats = { tiles: nTiles, trees: nTrees, bales: nBales, rails: nRail, apexTyres: nApex, stalls: nStalls, stands: nStands, cars: nCars, houses: nHouses, billboards: nBill, decals: nDecals, flags: flagL.length };   // (read by the tests)
+    return out;
+  }
+
+  /* ================= PUERTO MADERO (theme 'puertomadero'): the street circuit of 2016-2017 in the docklands of Buenos Aires =================
+     A flat city on the river: the ground is the pavement of the docklands (concrete paving), the parks and the nature reserve on it (def.pm.green,
+     the land cover def.pm.lc: ESA WorldCover), the docks and the lagoon below their quay walls (def.pm.water), the streets of OpenStreetMap
+     (def.pm.roads) with their kerbs, the buildings in their real outlines and heights (def.pm.bld: the towers, the blocks of flats, the brick
+     warehouses on the docks, the houses of the barrio by the reserve, the sheds, the kiosks of the waterfront), the trees (def.pm.pts.tree). The
+     circuit: concrete walls with debris fences in the colours of the flag, the street's lane lines and zebra crossings still on it, the side
+     streets closed behind the walls; at each junction the wall stands back (def.wide) and its things there can be knocked down (the traffic
+     lights, signs, bollards, bins, lamps, cabinets, a bus shelter: Race.setProps). What of a building hides the car fades (hjCutMat). All of it
+     generic: no names, logos or brands. */
+  let PM = null;   // per-build: the water polygons and the side streets (pmGround, the props' floor)
+  let pmFTex = null;
+  // the facades (128 x 2048: 16 rows of one window bay x one storey; the glass is blue-grey, so the windows light up at night: Render.litWindows):
+  // 0 a tower's curtain wall, 1 glass and white slab edges (balconies), 2 a rendered wall with a window and its sill (tinted), 3 a window with a
+  // balcony and a railing, 4 red brick with a tall window under a brick arch (the old warehouses), 5 plain brick, 6 a shop front (glass, a fascia),
+  // 7 the barrio's bare brick with a small window, 8 corrugated sheet, 9 plain concrete, 10 a kiosk (a roller shutter, a counter), 11 a window with
+  // wooden blinds half down (persianas), 12 a ground floor with an arcade, 13 a shed's door
+  function pmFacadeTex() {
+    if (pmFTex) return pmFTex;
+    const W = 128, c = document.createElement('canvas'); c.width = W; c.height = W * 16; const x = c.getContext('2d'), r = rng(9101);
+    const row = (k) => k * W, fill = (col, a, b, cw, ch, k) => { x.fillStyle = col; x.fillRect(a, row(k) + b, cw, ch); };
+    const glass = (a, b, cw, ch, k, lt) => { const y0 = row(k) + b, gr = x.createLinearGradient(a, y0, a + cw * 0.7, y0 + ch); gr.addColorStop(0, lt || '#7f93a8'); gr.addColorStop(0.5, '#3c4b5a'); gr.addColorStop(1, '#26303b'); x.fillStyle = gr; x.fillRect(a, y0, cw, ch); };
+    const grain = (k, n, a) => { for (let q = 0; q < n; q++) { x.fillStyle = r() < 0.5 ? 'rgba(0,0,0,' + a + ')' : 'rgba(255,255,255,' + a * 1.3 + ')'; x.fillRect(r() * W, row(k) + r() * W, 2 + r() * 5, 2 + r() * 5); } };
+    const brick = (k, y0, y1, base) => { x.fillStyle = '#8c8070'; x.fillRect(0, row(k) + y0, W, y1 - y0); for (let cc = 0, yy = y0; yy < y1; yy += 4, cc++) for (let xx = cc % 2 ? -5 : 0; xx < W; xx += 10) {
+      const t = r(); x.fillStyle = 'rgb(' + [base[0] + t * 34, base[1] + t * 18, base[2] + t * 12].map(v => v | 0).join(',') + ')'; x.fillRect(xx + 0.7, row(k) + yy + 0.7, 8.4, 3); } };
+    // 0: curtain wall, four storeys a tile: panes, a spandrel band at each slab; 1: glass behind white slab edges and glass balustrades, four storeys
+    for (let f = 0; f < 4; f++) { const b = f * 32; glass(0, b, W, 32, 0, '#8aa0b6'); fill('#6d7883', 0, b + 26, W, 6, 0); fill('#b3bcc4', 0, b + 25, W, 1.5, 0);
+      glass(0, b, W, 32, 1); fill('#f2f2ee', 0, b + 25, W, 4, 1); fill('rgba(190,215,225,0.5)', 0, b + 17, W, 8, 1); fill('#d9dad6', 0, b + 29, W, 3, 1); }
+    for (let a = 0; a < W; a += 32) { fill('#9aa4ad', a, 0, 2, W, 0); }
+    for (let a = 0; a < W; a += 42) fill('#8e98a2', a, 0, 2, W, 1);
+    // 2, 3, 11: rendered walls (white, the vertex colour tints them)
+    for (const k of [2, 3, 11, 12, 9]) { fill('#f4f3ef', 0, 0, W, W, k); grain(k, 260, 0.035); }
+    fill('#fbfbf8', 30, 22, 68, 78, 2); glass(36, 28, 56, 66, 2); fill('#fbfbf8', 62, 28, 4, 66, 2); fill('#cfccc4', 26, 100, 76, 7, 2); fill('rgba(0,0,0,0.12)', 28, 107, 72, 3, 2);
+    fill('#fbfbf8', 18, 10, 92, 86, 3); glass(24, 16, 80, 80, 3); fill('#fbfbf8', 62, 16, 4, 80, 3); fill('#d6d4cd', 6, 96, 116, 10, 3); fill('rgba(0,0,0,0.18)', 8, 106, 112, 6, 3);
+    for (let a = 10; a < 118; a += 6) fill('#3d4246', a, 66, 2, 30, 3); fill('#3d4246', 8, 64, 112, 3, 3);
+    // 4: the warehouses' red brick, a tall window under an arch of headers, a stone sill; 5: plain brick
+    brick(4, 0, W, [128, 52, 38]); fill('#e8e2d6', 36, 108, 56, 6, 4); glass(42, 30, 44, 78, 4, '#71859a'); x.fillStyle = '#5a2418'; x.beginPath(); x.arc(64 , row(4) + 32, 26, Math.PI, 0); x.lineTo(86, row(4) + 32); x.arc(64, row(4) + 32, 22, 0, Math.PI, true); x.fill();
+    x.fillStyle = '#3c4b5a'; x.beginPath(); x.arc(64, row(4) + 31, 22, Math.PI, 0); x.fill(); fill('#d8d2c4', 63, 18, 3, 90, 4); fill('#d8d2c4', 42, 66, 44, 3, 4);
+    brick(5, 0, W, [128, 52, 38]); fill('rgba(40,20,10,0.25)', 0, 118, W, 10, 5);
+    // 6: a shop front: glass to the floor, a fascia (blank: no names), a door
+    fill('#2c3238', 0, 0, W, W, 6); glass(6, 34, 116, 90, 6, '#90a6b8'); fill('#d8d6d0', 0, 0, W, 30, 6); fill('#2c3238', 62, 34, 4, 94, 6); fill('rgba(255,255,255,0.18)', 10, 40, 30, 80, 6);
+    // 7: the barrio: rough bare brick, mortar smears, a small window with a grille
+    brick(7, 0, W, [150, 74, 52]); for (let q = 0; q < 12; q++) fill('rgba(205,198,185,0.55)', r() * W, r() * W, 10 + r() * 30, 6 + r() * 20, 7);
+    fill('#4a4c4e', 40, 34, 46, 46, 7); glass(44, 38, 38, 38, 7); for (let a = 46; a < 84; a += 8) fill('#2b2d2f', a, 38, 2, 38, 7);
+    // 8: corrugated sheet (pale: tinted)
+    for (let a = 0; a < W; a += 8) { fill('#e6e6e6', a, 0, 4, W, 8); fill('#c4c4c4', a + 4, 0, 4, W, 8); }
+    // 9: plain concrete with formwork lines
+    for (let yy = 0; yy < W; yy += 32) fill('rgba(0,0,0,0.08)', 0, yy, W, 2, 9);
+    // 10: a kiosk: a roller shutter half up, the counter, a striped awning
+    fill('#f1efe8', 0, 0, W, W, 10); for (let yy = 30; yy < 76; yy += 4) fill(yy % 8 ? '#b9bcbf' : '#9ea2a6', 6, yy, 116, 3, 10); glass(6, 76, 116, 22, 10, '#a7b8c4'); fill('#7d6a55', 0, 98, W, 30, 10);
+    for (let a = 0; a < W; a += 16) fill(a % 32 ? '#f4f4f0' : '#4f8fc9', a, 0, 16, 26, 10);
+    // 11: a window with wooden blinds half down (persianas), its sill
+    fill('#fbfbf8', 30, 18, 68, 84, 11); glass(36, 24, 56, 72, 11); for (let yy = 24; yy < 58; yy += 4) fill(yy % 8 ? '#8a6a4a' : '#755639', 36, yy, 56, 3, 11); fill('#cfccc4', 26, 102, 76, 7, 11);
+    // 12: an arcade on the ground floor: dark under the arches
+    fill('#3a3f45', 10, 20, 108, 108, 12); glass(18, 40, 92, 88, 12); fill('#f4f3ef', 0, 0, 10, W, 12); fill('#f4f3ef', 118, 0, 10, W, 12);
+    // 13: a shed's big door
+    for (let a = 0; a < W; a += 8) { fill('#d8d8d8', a, 0, 4, W, 13); fill('#b4b4b4', a + 4, 0, 4, W, 13); } fill('#55595e', 16, 28, 96, 100, 13); for (let yy = 28; yy < W; yy += 6) fill('#474b50', 16, yy, 96, 2, 13);
+    const t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; t.anisotropy = 4; return (pmFTex = t);
+  }
+  const pmFV = (k, f) => { const v1 = 1 - k / 16, v0 = v1 - 1 / 16, pad = 3 / 2048; return v0 + pad + (v1 - v0 - 2 * pad) * f; };   // (facade row k, height fraction f -> v)
+  const pmDec = (a, k0) => { const o = []; for (let k = k0 || 0; k + 1 < a.length; k += 2) o.push([a[k] / 2, a[k + 1] / 2]); return o; };   // (half metres -> [x, z] points)
+  function pmInPoly(P, x, z) { if (x < P.bb[0] || x > P.bb[2] || z < P.bb[1] || z > P.bb[3]) return false; return inPoly(P.pts, x, z); }
+  function pmWater(x, z) { if (!PM) return null; for (const W of PM.water) if (pmInPoly(W, x, z)) return W; return null; }
+  function pmGround(x, z) { const W = pmWater(x, z); return W ? W.y : 0; }
+  // the floor under a knocked prop: the side street's tarmac (0.03), else the pavement (0.15) past the road's own edge
+  function pmFloor(q) { if (Math.abs(q.d) <= T.w + 0.35) return 0; const x = q.x, z = q.z; return PM && pmOnRoad(x, z) ? 0.03 : 0.15; }
+  function pmOnRoad(x, z) {
+    const L = PM.rh.get(Math.floor(x / 24) + ',' + Math.floor(z / 24)); if (!L) return false;
+    for (const s of L) { const vx = s[2] - s[0], vz = s[3] - s[1], l2 = vx * vx + vz * vz || 1, t = clamp(((x - s[0]) * vx + (z - s[1]) * vz) / l2, 0, 1), dx = x - s[0] - vx * t, dz = z - s[1] - vz * t; if (dx * dx + dz * dz < s[4] * s[4]) return true; }
+    return false;
+  }
+  // one building on flat ground (poly: [x, z] points, either way round): walls in bands of the atlas, a flat roof with its parapet and, by kind,
+  // the water tanks of Buenos Aires roofs, machine rooms, a tower's crown. kind: t tower, m block, b brick warehouse, h barrio house, s shed,
+  // k kiosk, r roof on posts. Returns the roof's height
+  function pmBuilding(g, gr, poly, kind, h, mh, R) {
+    const n = poly.length; let a2 = 0, cx = 0, cz = 0;
+    for (let k = 0; k < n; k++) { const [ax, az] = poly[k], [bx, bz] = poly[(k + 1) % n]; a2 += ax * bz - bx * az; cx += ax / n; cz += az / n; }
+    const sgn = a2 > 0 ? 1 : -1, u = R(), u2 = R(), area = Math.abs(a2) / 2;
+    const PLA = [[0.95, 0.93, 0.88], [0.93, 0.88, 0.78], [0.9, 0.86, 0.8], [0.86, 0.84, 0.82], [0.92, 0.8, 0.68], [0.82, 0.78, 0.72], [0.94, 0.9, 0.82], [0.78, 0.74, 0.7]];
+    const GLA = [[0.86, 0.96, 1.06], [0.82, 0.98, 0.95], [1.02, 0.94, 0.84], [0.9, 0.92, 0.96], [0.78, 0.86, 0.98]];
+    const BAR = [[0.98, 0.72, 0.6], [0.62, 0.82, 0.9], [0.95, 0.88, 0.55], [0.86, 0.62, 0.72], [0.7, 0.86, 0.66], [0.96, 0.96, 0.94], [1, 1, 1], [1, 1, 1]];
+    let row = 2, rowG = 6, col, fh = 3.1, per = 1, ground = 0;   // per: storeys per band (the towers' rows hold four)
+    if (kind === 't') { row = u < 0.6 ? 0 : 1; rowG = u < 0.6 ? 0 : 12; col = GLA[Math.floor(u2 * GLA.length)]; fh = 3.2; per = 4; ground = 5; }
+    else if (kind === 'b') { row = 4; rowG = 4; col = [1, 0.97, 0.95]; fh = 4.2; }
+    else if (kind === 'h') { row = rowG = u < 0.55 ? 7 : 11; col = row === 7 ? [1, 1, 1] : BAR[Math.floor(u2 * BAR.length)]; fh = 2.7; }
+    else if (kind === 's') { row = 8; rowG = 13; col = [[0.72, 0.74, 0.78], [0.62, 0.7, 0.78], [0.82, 0.8, 0.74], [0.6, 0.64, 0.62]][Math.floor(u2 * 4)]; fh = Math.max(3, h); }
+    else if (kind === 'k') { row = rowG = 10; col = [1, 1, 1]; fh = Math.max(2.8, h); }
+    else { row = u < 0.4 ? 2 : u < 0.75 ? 3 : 11; rowG = u2 < 0.6 ? 6 : 12; col = PLA[Math.floor(u2 * PLA.length)]; fh = 3.0; }
+    col = vary(col, R, 0.06);
+    const y0 = Math.max(0, mh), top = Math.max(y0 + 2.4, h), nB = Math.max(1, Math.round((top - y0) / (fh * per))), bh = (top - y0) / nB;
+    const para = (kind === 'm' || kind === 'b' || kind === 't') && top > 6 ? (kind === 't' ? 1.2 : 0.7) : 0, COP = [0.8, 0.8, 0.78], bw = kind === 't' ? 3.0 : kind === 'b' ? 4.4 : 3.4;
+    if (kind === 'r') {   // a roof on posts (the canopies of the waterfront)
+      const pts = poly.map(([x, z]) => new THREE.Vector2(x, z)), tris = THREE.ShapeUtils.triangulateShape(pts, []), RC = [0.85, 0.85, 0.83];
+      for (const [a, b, c] of tris) { g.triO([poly[a][0], top, poly[a][1]], [poly[b][0], top, poly[b][1]], [poly[c][0], top, poly[c][1]], RC, [cx, top - 3, cz]); g.triO([poly[a][0], top - 0.25, poly[a][1]], [poly[b][0], top - 0.25, poly[b][1]], [poly[c][0], top - 0.25, poly[c][1]], [0.5, 0.5, 0.5], [cx, top + 3, cz]); }
+      for (let k = 0; k < n; k++) cyl(g, poly[k][0], 0, poly[k][1], 0.12, top, 5, [0.4, 0.42, 0.45]);
+      return top;
+    }
+    for (let k = 0; k < n; k++) {
+      const [ax, az] = poly[k], [bx, bz] = poly[(k + 1) % n], Le = Math.hypot(bx - ax, bz - az); if (Le < 0.3) continue;
+      const ox = sgn * (bz - az) / Le, oz = -sgn * (bx - ax) / Le, inn = [(ax + bx) / 2 - ox, (y0 + top) / 2, (az + bz) / 2 - oz], U1 = Math.max(1, Math.round(Le / bw));
+      const q = (ya, yb, rk, c, fa, fb, cc) => gr.quadO([ax, ya, az], [bx, ya, bz], [bx, yb, bz], [ax, yb, az], c, inn, [[0, pmFV(rk, fa)], [U1, pmFV(rk, fa)], [U1, pmFV(rk, fb)], [0, pmFV(rk, fb)]], cc);
+      if (y0 < 0.1) {   // the ground floor (a tower's: a tall lobby of glass), darker at its foot
+        const gH = ground || fh, ft = [col[0] * 0.82, col[1] * 0.82, col[2] * 0.82];
+        q(0, Math.min(gH, top), rowG, col, 0, 1, [ft, ft, col, col]);
+        for (let b = 0, yb = gH; yb < top - 0.2; b++) { const ya = yb; yb = Math.min(top, ya + (per > 1 ? bh : fh)); q(ya, yb, row, col, 0, per > 1 ? (yb - ya) / bh : 1); }
+      } else for (let b = 0; b < nB; b++) q(y0 + b * bh, y0 + (b + 1) * bh, row, col, 0, 1);
+      if (para) { const ix = -ox * 0.3, iz = -oz * 0.3, cp = [col[0] * 0.93, col[1] * 0.93, col[2] * 0.93], U9 = [0.5, pmFV(9, 0.5)];
+        gr.quadO([ax, top, az], [bx, top, bz], [bx, top + para, bz], [ax, top + para, az], cp, inn, [U9, U9, U9, U9]);
+        g.quadO([ax, top + para, az], [bx, top + para, bz], [bx + ix, top + para, bz + iz], [ax + ix, top + para, az + iz], COP, [(ax + bx) / 2, top, (az + bz) / 2]);
+        g.quadO([ax + ix, top, az + iz], [bx + ix, top, bz + iz], [bx + ix, top + para, bz + iz], [ax + ix, top + para, az + iz], cp, [(ax + bx) / 2 + ox, top, (az + bz) / 2 + oz]); }
+      if (kind === 'k' && Le > 2) {   // the kiosk's awning over this side
+        const aw = [[0.25, 0.55, 0.82], [0.85, 0.3, 0.22], [0.25, 0.6, 0.35], [0.95, 0.75, 0.2]][Math.floor(crH(cx, cz, 5) * 4)], A = [ax, top - 0.4, az], B = [bx, top - 0.4, bz], C = [bx + ox * 1.4, top - 0.95, bz + oz * 1.4], D = [ax + ox * 1.4, top - 0.95, az + oz * 1.4];
+        g.quadO(A, B, C, D, aw, [(ax + bx) / 2, top - 3, (az + bz) / 2]); }
+    }
+    // the roof: the footprint triangulated
+    const RF = kind === 's' ? [[0.66, 0.68, 0.7], [0.55, 0.38, 0.32], [0.52, 0.58, 0.62]][Math.floor(crH(cx, cz, 3) * 3)] : kind === 'h' ? [0.55, 0.52, 0.5] : kind === 't' ? [0.5, 0.52, 0.54] : [[0.62, 0.6, 0.57], [0.5, 0.48, 0.46], [0.7, 0.66, 0.6]][Math.floor(crH(cx, cz, 4) * 3)];
+    const pts = poly.map(([x, z]) => new THREE.Vector2(x, z)), tris = THREE.ShapeUtils.triangulateShape(pts, []);
+    for (const [a, b, c] of tris) g.triO([poly[a][0], top, poly[a][1]], [poly[b][0], top, poly[b][1]], [poly[c][0], top, poly[c][1]], vary(RF, R, 0.04), [cx, top - 5, cz]);
+    // on it: the water tanks (Buenos Aires: one or two on every block, a black plastic one on the barrio's houses), machine rooms, a tower's crown
+    let bl = 0, dx = 1, dz = 0; for (let k = 0; k < n; k++) { const [ax, az] = poly[k], [bx, bz] = poly[(k + 1) % n], l = Math.hypot(bx - ax, bz - az); if (l > bl) { bl = l; dx = (bx - ax) / l; dz = (bz - az) / l; } }
+    const rot = Math.atan2(dz, dx);
+    if (kind === 'm' && area > 120) { const k2 = Math.max(1, Math.min(3, Math.round(area / 500))); for (let m = 0; m < k2; m++) { const a = (m - (k2 - 1) / 2) * 7, px = cx + dx * a, pz = cz + dz * a; if (!inPoly(poly, px, pz)) continue;
+      box(g, px, top, pz, 3.6, 2.2, 3.0, rot, [0.84, 0.82, 0.78], [0.62, 0.6, 0.58], true); box(g, px + dz * 2.6, top, pz - dx * 2.6, 2.4, 1.6, 2.4, rot, [0.7, 0.7, 0.72], [0.5, 0.5, 0.5], true); } }
+    else if (kind === 'h' && area > 20) { cyl(g, cx, top, cz, 0.55, 1.1, 7, crH(cx, cz, 6) < 0.6 ? [0.12, 0.12, 0.13] : [0.2, 0.38, 0.62], [0.2, 0.2, 0.2]); }
+    else if (kind === 't') { const p2 = poly.map(([x, z]) => [cx + (x - cx) * 0.62, cz + (z - cz) * 0.62]);   // a smaller crown block, the masts
+      const t2 = THREE.ShapeUtils.triangulateShape(p2.map(([x, z]) => new THREE.Vector2(x, z)), []), ch = 4.5, CC = [0.62, 0.66, 0.7];
+      for (let k = 0; k < n; k++) { const [ax, az] = p2[k], [bx, bz] = p2[(k + 1) % n]; g.quadO([ax, top, az], [bx, top, bz], [bx, top + ch, bz], [ax, top + ch, az], CC, [cx, top + 1, cz]); }
+      for (const [a, b, c] of t2) g.triO([p2[a][0], top + ch, p2[a][1]], [p2[b][0], top + ch, p2[b][1]], [p2[c][0], top + ch, p2[c][1]], [0.48, 0.5, 0.52], [cx, top, cz]);
+      cyl(g, cx, top + ch, cz, 0.15, 7, 4, [0.85, 0.85, 0.86]); }
+    else if (kind === 'b') { for (let m = 0, nm = Math.max(1, Math.round(bl / 25)); m < nm; m++) { const a = (m - (nm - 1) / 2) * 25, px = cx + dx * a, pz = cz + dz * a; if (inPoly(poly, px, pz)) box(g, px, top, pz, 6, 2.6, 4, rot, [0.5, 0.26, 0.2], [0.3, 0.32, 0.34], true); } }
+    return top;
+  }
+  function buildPM(scene, tex, opts) {
+    const R = rng(2480), N = T.N, w = T.w, ds = T.ds, def = T.def, S = def.pm, L = T.len, sStart = T.startS, dens = opts.density || 1;
+    const root = new THREE.Group(); scene.add(root);
+    const out = { root, dyn: {}, groundH: pmGround, props: [], ownTex: [], farClip: true, winMaps: [pmFacadeTex()] };   // (winMaps: the facades whose windows light up at night)
+    const dS = (s) => { let d = s - sStart; d = ((d % L) + L) % L; return d > L / 2 ? d - L : d; };   // metres from the start line (-L/2 .. L/2)
+    const sAt = (d) => (((sStart + d) % L) + L) % L;
+    const cut = out.dyn.ouCut = { uCam: { value: new THREE.Vector3() }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) }, uA: { value: new THREE.Vector4(0, 0, -1e6, 1) }, uB: { value: new THREE.Vector4(0, 0, -1e6, 1) } };   // (what of a building hides the car fades: hjCutMat)
+    const matV = new THREE.MeshLambertMaterial({ vertexColors: true }); out.matV = matV;
+    const addM = (g, mat, cast, grp) => { if (!g || g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; (grp || root).add(m); return m; };
+    const excl = [], eh = new Map(), EHC = 32;   // tree exclusion circles (buildings, stands, crowds, the junctions' things), hashed
+    const exclPush = (x, z, r) => { const e = { x, z, r }; excl.push(e); for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let Lc = eh.get(k); if (!Lc) eh.set(k, Lc = []); Lc.push(e); } };
+    const excluded = (x, z) => { const Lc = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!Lc) return false; for (let k = 0; k < Lc.length; k++) { const e = Lc[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
+    const nearBar = (x, z) => { const n = nearest(x, z); return n.i < 0 ? 999 : Math.abs(n.lat) - n.bar; };   // metres beyond the wall (negative: inside the circuit)
+    const B = { x0: -950, z0: -1100, x1: 1100, z1: 1250 }; out.bounds = { minX: B.x0, maxX: B.x1, minZ: B.z0, maxZ: B.z1 };
+    const W1 = [1, 1, 1];
+
+    /* ---- the data: water (docks 2.3 m below the quays, the lagoon and the canal lower than the land by a metre or so), the side streets ---- */
+    const poly = (a, k0) => { const pts = pmDec(a, k0); let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9; for (const [x, z] of pts) { x0 = Math.min(x0, x); z0 = Math.min(z0, z); x1 = Math.max(x1, x); z1 = Math.max(z1, z); } return { pts, bb: [x0, z0, x1, z1] }; };
+    PM = { water: S.water.map(a => { const P = poly(a, 1), dock = a[0] === 'rive' || a[0] === 'cana' && false; P.cls = a[0]; P.dock = a[0] === 'rive' || a[0] === 'wate'; P.y = P.dock ? -2.3 : a[0] === 'pond' ? -0.5 : -1.2; return P; }), rh: new Map() };
+    const roads = S.roads.map(a => ({ hw: a[0], br: a[1], pts: pmDec(a, 2) }));
+    for (const r of roads) for (let k = 0; k + 1 < r.pts.length; k++) { const [ax, az] = r.pts[k], [bx, bz] = r.pts[k + 1], seg = [ax, az, bx, bz, r.hw + 0.2];
+      for (let a = Math.floor((Math.min(ax, bx) - r.hw) / 24); a <= Math.floor((Math.max(ax, bx) + r.hw) / 24); a++) for (let b = Math.floor((Math.min(az, bz) - r.hw) / 24); b <= Math.floor((Math.max(az, bz) + r.hw) / 24); b++) { const key = a + ',' + b; let Lc = PM.rh.get(key); if (!Lc) PM.rh.set(key, Lc = []); Lc.push(seg); } }
+    const landAt = (x, z) => !pmWater(x, z);
+
+    /* ---- the ground: the docklands' concrete paving (32 m tiles, cut round the water: 4 m cells there), the green over it ---- */
+    const gSt = new Chunks(640, true), gLn = new Chunks(640), gKb = gLn;   // (the kerbs with the lines: one material)
+    const gPave = new Chunks(800, true), gGrass = new Chunks(800, true), gBand = gPave;   // (the bands round the water and the lawns' edges: in the paving's chunks, a little higher)
+    const paveCol = (x, z) => { const k = 0.9 + 0.1 * crH(Math.floor(x / 16), Math.floor(z / 16), 31); return [0.84 * k, 0.83 * k, 0.81 * k]; };
+    const quadG = (ch, x0, z0, x1, z1, y, col, us) => { const c = col || paveCol(x0, z0), u = us || 4, a = [x0, y, z0], b = [x1, y, z0], cc = [x1, y, z1], d = [x0, y, z1];
+      ch.get((x0 + x1) / 2, (z0 + z1) / 2).quadUp(a, d, cc, b, [c, c, c, c], [[x0 / u, -z0 / u], [x0 / u, -z1 / u], [x1 / u, -z1 / u], [x1 / u, -z0 / u]]); };
+    for (let z = B.z0; z < B.z1; z += 32) for (let x = B.x0; x < B.x1; x += 32) {
+      let wet = 0; for (let a = 0; a <= 32; a += 8) for (let b = 0; b <= 32; b += 8) if (!landAt(x + a, z + b)) wet++;
+      if (!wet) { quadG(gPave, x, z, x + 32, z + 32, 0); continue; }
+      if (wet === 25) continue;
+      for (let b = 0; b < 32; b += 4) for (let a = 0; a < 32; a += 4) if (landAt(x + a, z + b) && landAt(x + a + 4, z + b) && landAt(x + a, z + b + 4) && landAt(x + a + 4, z + b + 4)) quadG(gPave, x + a, z + b, x + a + 4, z + b + 4, 0);
+    }
+    // the land cover east of the waterfront (the nature reserve: its woods, scrub, grass and marsh; ESA WorldCover), 16 m cells in runs
+    const LC = S.lc, lcA = new Uint8Array(LC.nx * LC.nz); { let p = 0; for (const t of LC.rle.split(',')) { const c = +t[0], n = +t.slice(1); lcA.fill(c, p, p + n); p += n; } }
+    const lcAt = (x, z) => { const i = Math.floor((x - LC.x0) / LC.cell), j = Math.floor((z - LC.z0) / LC.cell); return i < 0 || j < 0 || i >= LC.nx || j >= LC.nz ? 0 : lcA[j * LC.nx + i]; };
+    const GRC = [null, [0.4, 0.46, 0.3], [0.52, 0.52, 0.36], [0.56, 0.58, 0.38], [0.9, 0.82, 0.64], null, [0.54, 0.54, 0.38]];   // (on the grass picture: woods, scrub, grass, bare sand, marsh)
+    for (let j = 0; j < LC.nz; j++) for (let i = 0; i < LC.nx;) {
+      const c = lcA[j * LC.nx + i], x = LC.x0 + i * LC.cell, z = LC.z0 + j * LC.cell;
+      if (!GRC[c] || x < 120) { i++; continue; }
+      let i1 = i + 1; while (i1 < LC.nx && lcA[j * LC.nx + i1] === c && i1 - i < 8) i1++;
+      const x1 = LC.x0 + i1 * LC.cell; let ok = true; for (const [a, b] of [[x, z], [x1, z], [x, z + LC.cell], [x1, z + LC.cell]]) if (!landAt(a, b)) ok = false;
+      if (ok) { const k = 0.92 + 0.12 * crH(i, j, 33), cc = GRC[c].map(v => v * k); quadG(gGrass, x, z, x1, z + LC.cell, 0.02, cc, 14); }
+      i = i1;
+    }
+    // the parks and lawns of OpenStreetMap (triangulated: the playgrounds sand, the pitches a brighter green)
+    const green = S.green.map(a => Object.assign(poly(a, 1), { k: a[0] }));
+    for (const P of green) {
+      const tris = THREE.ShapeUtils.triangulateShape(P.pts.map(([x, z]) => new THREE.Vector2(x, z)), []), col = P.k === 'y' ? [1.0, 0.88, 0.68] : P.k === 'p' ? [0.56, 0.64, 0.4] : P.k === 'f' ? [0.42, 0.48, 0.32] : P.k === 'w' ? [0.54, 0.54, 0.38] : [0.52, 0.6, 0.38];
+      const y = 0.025, cx = (P.bb[0] + P.bb[2]) / 2, cz = (P.bb[1] + P.bb[3]) / 2, uv = (p) => [p[0] / 14, -p[1] / 14];
+      for (const [a, b, c] of tris) { const A = P.pts[a], Bp = P.pts[b], C = P.pts[c], mx = (A[0] + Bp[0] + C[0]) / 3, mz = (A[1] + Bp[1] + C[1]) / 3;
+        gGrass.get(mx, mz).triO([A[0], y, A[1]], [Bp[0], y, Bp[1]], [C[0], y, C[1]], col, [mx, y - 5, mz], col, col, uv(A), uv(Bp), uv(C)); }
+      for (let k = 0; k < P.pts.length; k++) { const [ax, az] = P.pts[k], [bx, bz] = P.pts[(k + 1) % P.pts.length], l = Math.hypot(bx - ax, bz - az); if (l < 1) continue;   // a low stone edge round the lawn
+        const nx = -(bz - az) / l * 0.12, nz = (bx - ax) / l * 0.12, E = [0.82, 0.8, 0.76];
+        gBand.get(ax, az).quadUp([ax - nx, 0.06, az - nz], [ax + nx, 0.06, az + nz], [bx + nx, 0.06, bz + nz], [bx - nx, 0.06, bz - nz], [E, E, E, E], [[0, 0], [0, 0.05], [l / 4, 0.05], [l / 4, 0]]); }
+    }
+
+    /* ---- the water: the docks between their granite quay walls (a coping, rings and bollards), the lagoon and the canal with reedy banks ---- */
+    let nWater = 0;
+    {
+      const wg = new GB(true), qg = gLn, WO = { len: 1.1, amp: 0.7, refl: 0.5, land: 0.55, shal: 0.35, lap: 0.45, surf: 0 };
+      const wMat = waterMat(tex, Object.assign({ color: 0x6f8a78, vc: true }, WO));
+      for (const P of PM.water) {
+        const tris = THREE.ShapeUtils.triangulateShape(P.pts.map(([x, z]) => new THREE.Vector2(x, z)), []), y = P.y, wc = P.dock ? [0.62, 0.72, 0.68] : P.cls === 'pond' ? [0.62, 0.74, 0.62] : [0.66, 0.66, 0.52];   // (the docks green-grey, the lagoon's water brown with the river's silt)
+        for (const [a, b, c] of tris) { const A = P.pts[a], Bp = P.pts[b], C = P.pts[c]; wg.triO([A[0], y, A[1]], [Bp[0], y, Bp[1]], [C[0], y, C[1]], wc, [A[0], y - 5, A[1]], wc, wc, [A[0] / 9, -A[1] / 9], [Bp[0] / 9, -Bp[1] / 9], [C[0] / 9, -C[1] / 9]); }
+        // the edge: a vertical quay wall (the docks) or a sloping muddy bank with a strip of grass (the lagoon), and the band of land behind it
+        const n = P.pts.length; let a2 = 0; for (let k = 0; k < n; k++) { const [ax, az] = P.pts[k], [bx, bz] = P.pts[(k + 1) % n]; a2 += ax * bz - bx * az; }
+        const sg = a2 > 0 ? 1 : -1;
+        for (let k = 0; k < n; k++) {
+          const [ax, az] = P.pts[k], [bx, bz] = P.pts[(k + 1) % n], l = Math.hypot(bx - ax, bz - az); if (l < 0.2) continue;
+          const ox = -sg * (bz - az) / l, oz = sg * (bx - ax) / l, g = qg.get(ax, az);   // (ox, oz: out of the water onto the land)
+          if (P.dock) {
+            const QW = [0.5, 0.48, 0.45], CP = [0.82, 0.8, 0.76];
+            g.quadO([ax, y - 0.5, az], [bx, y - 0.5, bz], [bx, 0.12, bz], [ax, 0.12, az], QW, [(ax + bx) / 2 + ox, -1, (az + bz) / 2 + oz]);
+            g.quadO([ax, 0.12, az], [bx, 0.12, bz], [bx + ox * 0.7, 0.12, bz + oz * 0.7], [ax + ox * 0.7, 0.12, az + oz * 0.7], CP, [(ax + bx) / 2, -1, (az + bz) / 2]);
+            quadBand(gBand, ax + ox * 0.7, az + oz * 0.7, bx + ox * 0.7, bz + oz * 0.7, ox, oz, 4.2, 0.03, paveCol(ax, az));
+            for (let t = 9; t < l - 2; t += 18) { const px = ax + (bx - ax) * t / l + ox * 0.45, pz = az + (bz - az) * t / l + oz * 0.45; cyl(g, px, 0.12, pz, 0.22, 0.45, 7, [0.16, 0.16, 0.17], [0.22, 0.22, 0.23], 0.18); }   // (iron mooring bollards)
+          } else {
+            const MUD = [0.52, 0.47, 0.36], GR = [0.56, 0.62, 0.4];
+            g.quadO([ax - ox * 1.5, y - 0.4, az - oz * 1.5], [bx - ox * 1.5, y - 0.4, bz - oz * 1.5], [bx + ox * 1.2, 0.0, bz + oz * 1.2], [ax + ox * 1.2, 0.0, az + oz * 1.2], MUD, [(ax + bx) / 2, -5, (az + bz) / 2]);
+            quadBand(gGrass, ax + ox * 1.2, az + oz * 1.2, bx + ox * 1.2, bz + oz * 1.2, ox, oz, 4.5, 0.02, GR, true);
+          }
+        }
+        nWater++;
+      }
+      const wm = new THREE.Mesh(wg.geometry(), wMat); wm.receiveShadow = true; wm.matrixAutoUpdate = false; root.add(wm); out.dyn.water = tex.water;
+    }
+    function quadBand(ch, ax, az, bx, bz, ox, oz, wd, y, col, grass) {   // a band of land behind an edge (covers the paving's 4 m steps round the water)
+      const l = Math.hypot(bx - ax, bz - az), u = grass ? 14 : 4, A = [ax, y, az], Bq = [bx, y, bz], C = [bx + ox * wd, y, bz + oz * wd], D = [ax + ox * wd, y, az + oz * wd];
+      ch.get(ax, az).quadUp(A, Bq, C, D, [col, col, col, col], [[A[0] / u, -A[2] / u], [Bq[0] / u, -Bq[2] / u], [C[0] / u, -C[2] / u], [D[0] / u, -D[2] / u]]);
+    }
+
+    /* ---- the side streets (not the circuit): tarmac, granite kerbs, a dashed line down the wider ones; where they meet the circuit they stop at its edge ---- */
+    const sMat = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }); out.asphaltMat = sMat;
+    const lMat = new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6 });
+    const onTrack = (x, z, m) => { const n = nearest(x, z); return n.i >= 0 && Math.abs(n.lat) < w + (m || 0); };
+    const dense = (pts, st) => { const o = []; for (let k = 0; k + 1 < pts.length; k++) { const [ax, az] = pts[k], [bx, bz] = pts[k + 1], l = Math.hypot(bx - ax, bz - az), m = Math.max(1, Math.ceil(l / st)); for (let q = 0; q < m; q++) o.push([ax + (bx - ax) * q / m, az + (bz - az) * q / m]); } o.push(pts[pts.length - 1]); return o; };
+    let nStreets = 0;
+    for (const r of roads) {
+      const D = dense(r.pts, 3), M = D.length; if (M < 2) continue;
+      const Nn = D.map((p, q) => { const a = D[Math.max(0, q - 1)], b = D[Math.min(M - 1, q + 1)], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1; return [-dz / l, dx / l]; });
+      const keep = D.map(([x, z]) => !onTrack(x, z, 0.2));
+      const SC = [0.93, 0.93, 0.95], hw = r.hw;
+      for (let q = 0; q + 1 < M; q++) {
+        if (!keep[q] || !keep[q + 1]) continue;
+        const P = (k, o, y) => [D[k][0] + Nn[k][0] * o, y, D[k][1] + Nn[k][1] * o], uv = (p) => [p[0] / 7, -p[2] / 7];
+        const a = P(q, -hw, 0.02), b = P(q, hw, 0.02), c = P(q + 1, hw, 0.02), d = P(q + 1, -hw, 0.02);
+        gSt.get(D[q][0], D[q][1]).quadUp(a, b, c, d, [SC, SC, SC, SC], [uv(a), uv(b), uv(c), uv(d)]);
+        if (hw >= 2.5 && q % 2 === 0) for (const sd of [-1, 1]) {   // the kerb: a strip of grey granite, a little above the tarmac (6 m pieces)
+          const q2 = Math.min(M - 1, q + 2), K = [0.78, 0.77, 0.74], o0 = sd * hw, o1 = sd * (hw + 0.3), e0 = P(q, o0, 0.13), e1 = P(q2, o0, 0.13), f0 = P(q, o1, 0.13), f1 = P(q2, o1, 0.13);
+          if (!keep[q2] || onTrack(e0[0], e0[2], 1) || onTrack(e1[0], e1[2], 1)) continue;
+          gKb.get(D[q][0], D[q][1]).quadUp(e0, e1, f1, f0, [K, K, K, K]); }
+        if (hw >= 4.5 && q % 3 === 0) { const C = [0.94, 0.94, 0.9]; const l0 = P(q, -0.06, 0.04), l1 = P(q, 0.06, 0.04), l2 = P(q + 1, 0.06, 0.04), l3 = P(q + 1, -0.06, 0.04); gLn.get(D[q][0], D[q][1]).quadUp(l0, l1, l2, l3, [C, C, C, C]); }   // (a dashed centre line)
+      }
+      nStreets++;
+    }
+    // the zebra crossings of the side streets (OpenStreetMap's crossings off the circuit): white bars across the street at the crossing
+    const xing = (S.pts.xing || []).map(p => [p[0] / 2, p[1] / 2]);
+    let nZebra = 0;
+    const zebra = (x, z, tx, tz, half, ch) => {   // bars 0.5 m wide every 1 m, 3 m long along the street (tx, tz), across its whole width (half)
+      const nx = -tz, nz = tx, C = [0.95, 0.95, 0.93];
+      for (let o = -half + 0.5; o <= half - 0.3; o += 1.0) { const P = (a, b) => [x + nx * a + tx * b, 0.045, z + nz * a + tz * b];
+        ch.get(x, z).quadUp(P(o, -1.5), P(o + 0.5, -1.5), P(o + 0.5, 1.5), P(o, 1.5), [C, C, C, C]); }
+      nZebra++; };
+    for (const [x, z] of xing) {
+      if (onTrack(x, z, 1.5)) continue;
+      let best = null, bd = 6; for (const r of roads) for (let k = 0; k + 1 < r.pts.length; k++) { const [ax, az] = r.pts[k], [bx, bz] = r.pts[k + 1], vx = bx - ax, vz = bz - az, l2 = vx * vx + vz * vz || 1, t = clamp(((x - ax) * vx + (z - az) * vz) / l2, 0, 1), d = Math.hypot(x - ax - vx * t, z - az - vz * t);
+        if (d < bd) { bd = d; const l = Math.sqrt(l2); best = { x: ax + vx * t, z: az + vz * t, tx: vx / l, tz: vz / l, hw: r.hw }; } }
+      if (best && best.hw >= 2.5) zebra(best.x, best.z, best.tx, best.tz, best.hw, gLn);
+    }
+
+    /* ---- the circuit: the streets' tarmac (patched, darker on the racing line and into the braking zones), their lane lines and zebra
+       crossings still on it, granite kerbs along its edges where the pavement meets it, the chequered line and the grid ---- */
+    const CH = 128, offs = [-w, -w * 2 / 3, -w / 3, 0, w / 3, w * 2 / 3, w];
+    const secT = new Float32Array(N), brk = new Float32Array(N);
+    for (let i0 = 0, k = 0; i0 < N; k++) { const n = 30 + Math.floor(crH(k, 3, 71) * 60), t = 0.93 + crH(k, 5, 71) * 0.12; for (let i = i0; i < Math.min(N, i0 + n); i++) secT[i] = t; i0 += n; }   // (the streets were resurfaced in patches)
+    for (const c of T.corners) if (c.sev >= 2) for (let k = -60; k <= 6; k++) { const i = (c.i0 + k + N) % N, f = k < -10 ? sstep(-60, -12, k) : sstep(6, -10, k); if (f > brk[i]) brk[i] = f; }
+    const shade = (i, o) => { const rl = T.rl[i]; const k = (0.95 - (0.12 + 0.1 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; return [k, k, k * 1.01]; };
+    const Pt = (i, o, y) => [T.px[i] + T.nx[i] * o, y, T.pz[i] + T.nz[i] * o];
+    for (let i = 0; i < N; i++) { const j = (i + 1) % N, v0 = i * ds / 8, v1 = (i + 1) * ds / 8, g = gSt.get(T.px[i], T.pz[i]);   // (in the side streets' chunks: one material)
+      for (let k = 0; k + 1 < offs.length; k++) { const o0 = offs[k], o1 = offs[k + 1];
+        g.quadUp(Pt(i, o0, 0.03), Pt(i, o1, 0.03), Pt(j, o1, 0.03), Pt(j, o0, 0.03), [shade(i, o0), shade(i, o1), shade(j, o1), shade(j, o0)], [[(o0 + w) / 8, v0], [(o1 + w) / 8, v0], [(o1 + w) / 8, v1], [(o0 + w) / 8, v1]]); } }
+    // the kerbs along both edges (not across the junctions' mouths: there the side street's tarmac meets the circuit)
+    const mouth = [new Uint8Array(N), new Uint8Array(N)];
+    for (const [a, b, sd] of def.wide || []) for (let d = a + 6; d <= b - 6; d += ds) mouth[sd > 0 ? 1 : 0][T.idx(sAt(d))] = 1;
+    {
+      const K = [0.8, 0.79, 0.76], KF = [0.6, 0.6, 0.58];
+      for (let i = 0; i < N; i++) { const j = (i + 1) % N;
+        for (const sd of [-1, 1]) { if (mouth[sd > 0 ? 1 : 0][i] || mouth[sd > 0 ? 1 : 0][j]) continue;
+          const g = gKb.get(T.px[i], T.pz[i]), a0 = Pt(i, sd * w, 0.13), a1 = Pt(j, sd * w, 0.13), b0 = Pt(i, sd * (w + 0.3), 0.13), b1 = Pt(j, sd * (w + 0.3), 0.13);
+          g.quadUp(a0, a1, b1, b0, [K, K, K, K]); } }
+    }
+    // the lane lines (white dashes 3 m in 8 m between the street's lanes), the zebra crossings where OpenStreetMap has them on the circuit, a stop line before each
+    {
+      const C = [0.95, 0.95, 0.92], Cw = [0.86, 0.86, 0.83], lanes = Math.max(2, Math.round(2 * w / 3.4));
+      for (let d = 0; d < L; d += 8) { if (crH(d, 0, 73) < 0.08) continue;   // (worn away here and there)
+        for (let k = 1; k < lanes; k++) { const o = -w + 2 * w * k / lanes, s0 = sAt(d), s1 = sAt(d + 3), a = atSf(s0, o - 0.06), b = atSf(s0, o + 0.06), c = atSf(s1, o + 0.06), e = atSf(s1, o - 0.06);
+          gLn.get(a[0], a[1]).quadUp([a[0], 0.045, a[1]], [b[0], 0.045, b[1]], [c[0], 0.045, c[1]], [e[0], 0.045, e[1]], [Cw, Cw, Cw, Cw]); } }
+      const seen = [];
+      for (const [x, z] of xing) {
+        const n = nearest(x, z); if (n.i < 0 || Math.abs(n.lat) > w + 1.5) continue;
+        const s = n.i * ds; if (seen.some(q => Math.abs(dS(q) - dS(s)) < 12) || Math.abs(dS(s)) < 30) continue; seen.push(s);
+        for (let o = -w + 0.4; o <= w - 0.5; o += 1.0) { const a = atSf(s - 1.5, o), b = atSf(s - 1.5, o + 0.5), c = atSf(s + 1.5, o + 0.5), e = atSf(s + 1.5, o);
+          gLn.get(a[0], a[1]).quadUp([a[0], 0.05, a[1]], [b[0], 0.05, b[1]], [c[0], 0.05, c[1]], [e[0], 0.05, e[1]], [C, C, C, C]); }
+        for (const sb of [s - 3.2, s + 2.8]) { const a = atSf(sb, -w), b = atSf(sb, w), c = atSf(sb + 0.4, w), e = atSf(sb + 0.4, -w);   // (the stop lines: both ways, as the street's traffic ran)
+          gLn.get(a[0], a[1]).quadUp([a[0], 0.05, a[1]], [b[0], 0.05, b[1]], [c[0], 0.05, c[1]], [e[0], 0.05, e[1]], [Cw, Cw, Cw, Cw]); }
+        nZebra++;
+      }
+      // the start / finish line (chequered) and the grid boxes
+      const gq = new GB(true), uM = Math.round(w * 2 / 0.8) / 16;
+      const a = atSf(sStart - 0.8, -w), b = atSf(sStart - 0.8, w), c = atSf(sStart + 0.8, w), e = atSf(sStart + 0.8, -w);
+      gq.quadUp([a[0], 0.055, a[1]], [b[0], 0.055, b[1]], [c[0], 0.055, c[1]], [e[0], 0.055, e[1]], [W1, W1, W1, W1], [[0, 0], [uM, 0], [uM, 0.5], [0, 0.5]]);
+      tex.checker.repeat.set(1, 1); addM(gq, new THREE.MeshLambertMaterial({ map: tex.checker, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6 }));
+      for (let k = 1; k <= 14; k++) { const sb = sStart - 9 - (k - 1) * 7.5 + 2.6, lat = (k % 2 === 1 ? 1 : -1) * 3;
+        for (const [o0, o1, s0, s1] of [[lat - 1.4, lat + 1.4, sb, sb + 0.3], [lat - 1.4, lat - 1.1, sb - 2.2, sb + 0.3], [lat + 1.1, lat + 1.4, sb - 2.2, sb + 0.3]]) {
+          const p0 = atSf(s0, o0), p1 = atSf(s0, o1), p2 = atSf(s1, o1), p3 = atSf(s1, o0); gLn.get(p0[0], p0[1]).quadUp([p0[0], 0.05, p0[1]], [p1[0], 0.05, p1[1]], [p2[0], 0.05, p2[1]], [p3[0], 0.05, p3[1]], [C, C, C, C]); } }
+    }
+
+    /* ---- the walls: concrete blocks (1 m) along the circuit's limits, painted in panels of the flag's light blue and white, a debris fence
+       (3 m) on posts on top; they close the side streets at the back of each junction's pocket ---- */
+    const scen = new Chunks(200), fenceG = new Chunks(640, true);
+    {
+      const CEL = [0.46, 0.7, 0.9], WHT = [0.95, 0.95, 0.93], TOP = [0.66, 0.66, 0.64], H = 1.0, TH = 0.6, FH = 3.0, Wd = [1, 1, 1];
+      for (const side of [-1, 1]) {
+        const bar = side > 0 ? T.br : T.bl;
+        for (let i = 0; i < N; i++) {
+          const j = (i + 1) % N, oi = side * bar[i], oj = side * bar[j], g = scen.get(T.px[i], T.pz[i]), pan = Math.floor((i * ds + (side > 0 ? 3 : 0)) / 6) % 2 ? CEL : WHT;
+          const a = Pt(i, oi, 0), b = Pt(j, oj, 0), a1 = Pt(i, oi, H), b1 = Pt(j, oj, H), c = Pt(i, oi + side * TH, H), d = Pt(j, oj + side * TH, H), c0 = Pt(i, oi + side * TH, 0), d0 = Pt(j, oj + side * TH, 0), inside = Pt(i, oi + side * TH / 2, H / 2);
+          g.quadO(a, b, b1, a1, pan, inside); g.quadO(a1, b1, d, c, TOP, Pt(i, oi + side * TH / 2, -1)); g.quadO(c0, d0, d, c, [0.6, 0.6, 0.6], inside);
+          const fa = Pt(i, oi + side * 0.2, H), fb = Pt(j, oj + side * 0.2, H), u0 = i * ds / 2.5, u1 = u0 + ds / 2.5;
+          fenceG.get(T.px[i], T.pz[i]).quadO(fa, fb, [fb[0], H + FH, fb[2]], [fa[0], H + FH, fa[2]], Wd, Pt(i, oi + side * 3, H + 1.5), [[u0, 0], [u1, 0], [u1, 1], [u0, 1]]);
+          if (i % 3 === 0) { const p = Pt(i, oi + side * 0.25, H); box(g, p[0], H - 0.05, p[2], 0.08, FH + 0.1, 0.08, T.hd[i], [0.3, 0.32, 0.34], null, true); }
+        }
+      }
+    }
+
+    /* ---- the buildings (def.pm.bld: the real outlines and heights of OpenStreetMap; where it has none, an estimate by the kind and the size) ---- */
+    const fMat = hjCutMat(new THREE.MeshLambertMaterial({ map: pmFacadeTex(), vertexColors: true }), cut), rMat = hjCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
+    const bWall = new Chunks(200, true), bRoof = bWall, RB2 = rng(2483);
+    let nBld = 0, nTower = 0;
+    const blds = [];
+    for (const a of S.bld) {
+      const kind = a[0], h = a[1], mh = a[2], pts = pmDec(a, 4); if (pts.length < 3) continue;
+      let cx = 0, cz = 0; for (const [x, z] of pts) { cx += x / pts.length; cz += z / pts.length; }
+      if (pts.some(([x, z]) => nearBar(x, z) < 0.5)) continue;   // (none on the circuit: the junctions' pockets)
+      const gw = bWall.get(cx, cz); gw.dUV = gw.dUV || [0.5, pmFV(9, 0.5)]; pmBuilding(gw, gw, pts, kind, h, mh, RB2); nBld++; if (kind === 't') nTower++;
+      blds.push({ pts, cx, cz, kind, h });
+      let r = 0; for (const [x, z] of pts) r = Math.max(r, Math.hypot(x - cx, z - cz)); exclPush(cx, cz, r * 0.85 + 1);
+    }
+    bWall.addTo(root, fMat, true, true);   // (the roofs and the things on them in the same chunks: the atlas' plain concrete under their colours)
+    const inBld = (x, z) => { for (const b of blds) if (Math.abs(x - b.cx) < 80 && Math.abs(z - b.cz) < 80 && inPoly(b.pts, x, z)) return true; return false; };
+
+    /* ---- the junctions (def.wide: the wall stands back into each side street): on the corners of its pocket the street's own things, which a
+       car knocks down and drives on (Race.setProps): traffic lights on their poles where the junction has them (OpenStreetMap), a road sign, bollards
+       along the kerb, a litter bin, a street lamp, the lights' cabinet, a bus shelter where a bus stops there; the side street behind the wall
+       closed with steel crowd barriers ---- */
+    const props = out.props, sigs = (S.pts.sig || []).map(p => [p[0] / 2, p[1] / 2]), buses = (S.pts.bus || []).map(p => [p[0] / 2, p[1] / 2]);
+    let nPocket = 0;
+    const prop = (kind, s, lat, yaw, col) => { const [x, z, hd, i] = atSf(s, lat); props.push({ kind, x, z, yaw: hd + (yaw || 0), col: col || 0, i }); exclPush(x, z, 1.4); return [x, z]; };
+    for (const [a, b, sd, m] of def.wide || []) {
+      if (m < 3) continue;
+      const sm = sAt((a + b) / 2), sA = sAt(a + 2.2), sB = sAt(b - 2.2), i0 = T.idx(sm), bar = (sd > 0 ? T.br[i0] : T.bl[i0]), back = bar - 0.9, edge = w + 0.9;
+      const [mx, mz] = atSf(sm, sd * (w + 4)), sig = sigs.some(([x, z]) => Math.hypot(x - mx, z - mz) < 45), bus = buses.some(([x, z]) => Math.hypot(x - mx, z - mz) < 40), k = nPocket++;
+      const face = sd > 0 ? Math.PI / 2 : -Math.PI / 2;   // (a thing's +x turned to face the circuit)
+      // the corner before the mouth (its 6 m of pavement along the circuit: from a) and after it (to b)
+      for (const [c, end] of [[a, -1], [b, 1]]) {
+        const s = (k2) => sAt(c - end * k2);
+        if (sig || m >= 8) prop('signal', s(3.2), sd * edge, (end < 0 ? Math.PI : 0) + 0.15 * sd);   // (the lights face the traffic that came along the street)
+        for (const k2 of [0.8, 2.2, 4.4]) prop('bollard', s(k2), sd * (w + 0.6), 0);
+        if (m >= 6) prop('bollard', s(5.6), sd * (w + 2.2), 0);
+        if (m >= 6) { if (end < 0) prop('sign', s(1.8), sd * (w + 2.4), face); else prop('lamp', s(1.6), sd * (w + 1.4), face); }
+        if (m >= 6 && (k + (end > 0 ? 1 : 0)) % 2 === 0) prop('bin', s(4.8), sd * Math.min(back - 0.4, w + 3.6), 0);
+      }
+      if (sig && m >= 8) prop('cabinet', sAt(b - 2.2), sd * Math.min(back - 0.5, w + 4.6), sd > 0 ? 0 : Math.PI);
+      if (bus && m >= 8) prop('shelter', sAt(a + 3), sd * Math.min(back - 1.0, w + 5.2), sd > 0 ? 0 : Math.PI);
+    }
+    // the kinds' footprints keep the trees off; the floor: the pavement
+    out.propStats = { pockets: nPocket, props: props.length, kinds: [...new Set(props.map(p => p.kind))].join(',') };
+
+    /* ---- race day: the grandstands (scaffold tiers, the crowd on them, a light blue and white skirt), spectators along the walls and in the
+       closed side streets behind the junctions' walls, the start gantry with its lights, the big screens, the pits on the inside of Turn 10
+       (the teams' garages along the service road, the pit wall: scenery, the game's pit stops are on the right) ---- */
+    const PM_SHIRTS = [[0.48, 0.72, 0.92], [0.95, 0.95, 0.94], [0.48, 0.72, 0.92], [0.95, 0.95, 0.94], [0.12, 0.13, 0.16], [0.86, 0.16, 0.13], [0.95, 0.8, 0.18], [0.16, 0.4, 0.86], [0.18, 0.55, 0.3], [0.6, 0.18, 0.5], [0.82, 0.82, 0.84], [0.2, 0.24, 0.42]];   // (many in the light blue and white)
+    const CR = crowdCtx({ gH: () => 0, near: nearBar, maxSlope: 9, shirts: PM_SHIRTS, water: (x, z) => !!pmWater(x, z) });
+    let nStands = 0;
+    const crowdMat = (() => { const t = rbCrowdTex(false); out.ownTex.push(t); return t; })(), crowdG = new GB(true), CEL = [0.46, 0.7, 0.9], WHT = [0.95, 0.95, 0.93], STL = [0.55, 0.57, 0.6];
+    for (const [sa, sb, side, rows] of def.stands || []) {
+      const dep = 0.85, rise = 0.48, rws = [];
+      for (let d = sa; d <= sb + 0.01; d += 4) {
+        const s = sAt(d), i = T.idx(s), f0 = (side > 0 ? T.br[i] : T.bl[i]) + 2.2, prof = [[f0 - 0.2, 0], [f0 - 0.2, 1.1]]; let y = 1.1;
+        for (let k = 0; k < rows; k++) { const o = f0 + k * dep; y = 1.1 + k * rise; prof.push([o, y], [o + dep, y]); }
+        const back = f0 + rows * dep; prof.push([back, y + 1.3], [back + 0.15, y + 1.3], [back + 0.15, 0]);
+        const pts = prof.map(([o, yy]) => { const [x, z] = atSf(s, side * o); return [x, yy, z]; }), [bx, bz] = atSf(s, side * (back + 1)), [mx, mz] = atSf(s, side * (f0 + back) / 2);
+        rws.push({ s, prof, pts, ok: !inBld(pts[2][0], pts[2][2]) && !inBld(bx, bz) && !inBld(mx, mz) && !pmWater(bx, bz) });   // (no stand where a building stands)
+      }
+      for (let m = 1; m + 1 < rws.length; m++) if (!rws[m - 1].ok && !rws[m + 1].ok) rws[m].ok = false;
+      for (let m = 0; m + 1 < rws.length; m++) {
+        const A = rws[m], Bq = rws[m + 1], g = scen.get(A.pts[2][0], A.pts[2][2]), n = A.pts.length; if (!A.ok || !Bq.ok) continue;
+        for (let e = 0; e + 1 < n; e++) { const a0 = A.pts[e], a1 = A.pts[e + 1], b0 = Bq.pts[e], b1 = Bq.pts[e + 1], up = Math.abs(a1[1] - a0[1]) < 0.05, om = (A.prof[e][0] + A.prof[e + 1][0]) / 2, ym = (a0[1] + a1[1]) / 2;
+          const [ix, iz] = atSf(A.s, side * (up ? om : e === 0 || e >= n - 3 ? om + 1 : om + 1)), cc = e === 0 ? (m % 2 ? CEL : WHT) : e >= n - 3 ? STL : up ? [0.72, 0.72, 0.74] : [0.42, 0.44, 0.48];
+          g.quadO(a0, a1, b1, b0, cc, [ix, up ? ym - 1 : ym, iz]); }
+        for (let k = 0; k < rows; k++) { const a0 = A.pts[2 + k * 2], a1 = A.pts[3 + k * 2], b0 = Bq.pts[2 + k * 2], b1 = Bq.pts[3 + k * 2], len = Math.hypot(Bq.pts[2][0] - A.pts[2][0], Bq.pts[2][2] - A.pts[2][2]), v = (k * 0.11) % 1, u0 = (m * 4) / 12;
+          crowdG.quadUp([a0[0], a0[1] + 0.02, a0[2]], [a1[0], a1[1] + 0.02, a1[2]], [b1[0], b1[1] + 0.02, b1[2]], [b0[0], b0[1] + 0.02, b0[2]], [W1, W1, W1, W1], [[u0, v], [u0, v + 0.1], [u0 + len / 12, v + 0.1], [u0 + len / 12, v]]); }
+        if (m % 2 === 0) for (const k of [0, rows]) { const o = A.prof[2 + Math.min(k, rows - 1) * 2][0], [x, z] = atSf(A.s, side * o); box(g, x, 0, z, 0.12, 1.1 + Math.min(k, rows - 1) * rise, 0.12, T.hd[T.idx(A.s)], STL); }
+      }
+      for (let m = 0; m < rws.length; m++) { const A = rws[m], st = A.ok && (m === 0 || !rws[m - 1].ok), en = A.ok && (m === rws.length - 1 || !rws[m + 1].ok); if (!st && !en) continue; const d = st ? sa : sb; if (st && en) continue;
+        const g = scen.get(A.pts[2][0], A.pts[2][2]), cc = [A.pts[0], ...A.pts.slice(2, A.pts.length - 2), A.pts[A.pts.length - 1]];   // (the stand's ends: a light panel)
+        for (let e = 1; e + 1 < cc.length; e++) g.triO(cc[0], cc[e], cc[e + 1], [0.82, 0.84, 0.86], [A.pts[2][0] + T.tx[T.idx(A.s)] * (d === sa ? 3 : -3), 2, A.pts[2][2] + T.tz[T.idx(A.s)] * (d === sa ? 3 : -3)]); }
+      const Mid = rws[rws.length >> 1]; exclPush(Mid.pts[2][0], Mid.pts[2][2], 4);
+      for (let d = sa - 2; d <= sb + 2; d += 6) { const [x, z] = atSf(sAt(d), side * ((side > 0 ? T.br[T.idx(sAt(d))] : T.bl[T.idx(sAt(d))]) + 2.2 + rows * 0.4)); exclPush(x, z, rows * 0.5 + 2); CR.exclAdd(x, z, rows * 0.5 + 1.5); }
+      nStands++;
+    }
+    addM(crowdG, crowdUV(new THREE.MeshLambertMaterial({ map: crowdMat, vertexColors: true }), 1, 0.11, 0.1));
+    {
+      const M = { first: 1.3, gap: 0.95, below: 1, above: 2, sit: 0, flag: 0.06, maxSlope: 9 };
+      for (const [a, b, sd] of def.ga || []) crowdRun(CR, sStart + a, sStart + b, sd, Object.assign({}, M, { rows: 3, dens: 0.5, clump: 0.6, label: 'PM ga' }));
+      for (const [a, b, sd, m] of def.wide || []) if (m >= 6) crowdRun(CR, sStart + a + 3, sStart + b - 3, sd, Object.assign({}, M, { rows: 3, dens: 0.42, clump: 0.5, label: 'PM side street' }));   // (behind the junctions' walls)
+      for (const sd of [-1, 1]) crowdRun(CR, sStart + 240, sStart + L - 120, sd, Object.assign({}, M, { rows: 1, dens: 0.05, clump: 0.9, strip: false, label: 'PM along' }));
+      for (const e of CR.circ) exclPush(e.x, e.z, e.r);
+    }
+    // the start gantry over the line (a white truss, the five red lights over the middle, a blank board), the big screens facing the long straight
+    {
+      const s = sAt(-3), i = T.idx(s), sp = w + 2.4, hd = T.hd[i], TR = [0.92, 0.92, 0.9];
+      for (const sd of [-1, 1]) { const [x, z] = atSf(s, sd * sp); box(scen.get(x, z), x, 0, z, 0.5, 6.4, 0.5, hd, TR); }
+      const [cx, cz] = atSf(s, 0), g = scen.get(cx, cz);
+      box(g, cx, 5.6, cz, 0.6, 0.8, sp * 2 + 0.5, hd, TR); box(g, cx - T.tx[i] * 0.35, 4.6, cz - T.tz[i] * 0.35, 0.3, 1.0, 3.4, hd, [0.1, 0.1, 0.11]);
+      for (let k = 0; k < 5; k++) { const o = (k - 2) * 0.65, [lx, lz] = atSf(s - 0.55, o); box(g, lx, 4.9, lz, 0.08, 0.32, 0.32, hd, [0.9, 0.1, 0.08]); }
+      for (const [d, sd] of [[260, -1], [-120, 1]]) {   // the screens (a dark frame, a picture of blue and white blocks: no names)
+        const s2 = sAt(d), i2 = T.idx(s2), o = (sd > 0 ? T.br[i2] : T.bl[i2]) + 4, [x, z] = atSf(s2, sd * o), g2 = scen.get(x, z), fx = -T.nx[i2] * sd, fz = -T.nz[i2] * sd, rot = Math.atan2(fz, fx);
+        for (const e of [-3.4, 3.4]) box(g2, x - fz * e, 0, z + fx * e, 0.3, 5.2, 0.3, rot, STL);
+        box(g2, x, 4.4, z, 0.4, 4.2, 7.6, rot, [0.12, 0.12, 0.13]);
+        for (let a = 0; a < 4; a++) for (let b = 0; b < 2; b++) box(g2, x + fx * 0.22 - fz * (-2.7 + a * 1.8), 4.75 + b * 1.75, z + fz * 0.22 + fx * (-2.7 + a * 1.8), 0.02, 1.55, 1.7, rot, (a + b) % 2 ? [0.55, 0.8, 1.0] : [0.92, 0.95, 1.0]);
+        exclPush(x, z, 5); CR.exclAdd(x, z, 5);
+      }
+    }
+    // the pits: the service road on the inside of Turn 10 (def.pm.pit, from the avenue to the waterfront), the pit wall on its circuit side, the
+    // garages along its other side (white, a band in each team's colour, a car inside), the race control's cabin
+    let nGarages = 0;
+    if (S.pit) {
+      const P = pmDec(S.pit), G = new GB(), TEAM = [[0.85, 0.12, 0.1], [0.1, 0.32, 0.75], [0.95, 0.75, 0.1], [0.1, 0.55, 0.3], [0.12, 0.12, 0.14], [0.95, 0.45, 0.1], [0.55, 0.2, 0.62], [0.2, 0.7, 0.85], [0.9, 0.9, 0.9], [0.7, 0.1, 0.25]];
+      const Lp = []; let tot = 0; for (let k = 0; k + 1 < P.length; k++) { const l = Math.hypot(P[k + 1][0] - P[k][0], P[k + 1][1] - P[k][1]); Lp.push(l); tot += l; }
+      const at = (d) => { let k = 0; while (k < Lp.length - 1 && d > Lp[k]) { d -= Lp[k]; k++; } const [ax, az] = P[k], [bx, bz] = P[k + 1], t = clamp(d / Lp[k], 0, 1), tx = (bx - ax) / Lp[k], tz = (bz - az) / Lp[k]; return { x: ax + (bx - ax) * t, z: az + (bz - az) * t, tx, tz, lx: tz, lz: -tx }; };   // (lx, lz: to the left of the way north)
+      const C = [0.95, 0.95, 0.93];
+      for (let d = 2; d < tot - 2; d += 3) { const q = at(d), q2 = at(d + 1.6); for (const o of [-3.2, 3.2]) gLn.get(q.x, q.z).quadUp([q.x + q.lx * o - q.tz * 0.07, 0.05, q.z + q.lz * o + q.tx * 0.07], [q.x + q.lx * o + q.tz * 0.07, 0.05, q.z + q.lz * o - q.tx * 0.07], [q2.x + q2.lx * o + q2.tz * 0.07, 0.05, q2.z + q2.lz * o - q2.tx * 0.07], [q2.x + q2.lx * o - q2.tz * 0.07, 0.05, q2.z + q2.lz * o + q2.tx * 0.07], [C, C, C, C]); }
+      for (let d = 10; d < tot - 8; d += 5.4) {   // the garages, 5 m wide, on the west side
+        const q = at(d), x = q.x + q.lx * 8.2, z = q.z + q.lz * 8.2, rot = Math.atan2(q.tz, q.tx), tc = TEAM[nGarages % TEAM.length];
+        box(G, x, 0, z, 5.0, 3.6, 6.0, rot, [0.93, 0.93, 0.92], [0.82, 0.82, 0.8]); box(G, x - q.lx * 3.02, 2.6, z - q.lz * 3.02, 5.0, 0.6, 0.06, rot, tc);
+        box(G, x - q.lx * 3.01, 0, z - q.lz * 3.01, 4.2, 2.5, 0.05, rot, [0.16, 0.17, 0.19]);
+        box(G, x - q.lx * 1.4, 0.15, z - q.lz * 1.4, 1.8, 0.5, 4.2, rot + Math.PI / 2, tc, tc); box(G, x - q.lx * 1.4, 0.65, z - q.lz * 1.4, 0.7, 0.35, 1.4, rot + Math.PI / 2, [0.1, 0.1, 0.12]);   // (the car being worked on)
+        exclPush(x, z, 4.5); CR.exclAdd(x, z, 4); nGarages++;
+      }
+      for (let d = 6; d < tot - 4; d += 2) { const q = at(d), q2 = at(Math.min(tot, d + 2));   // the pit wall (concrete, light blue and white) on the circuit side of the lane, a debris fence
+        const A = [q.x - q.lx * 4.4, 0, q.z - q.lz * 4.4], Bq = [q2.x - q2.lx * 4.4, 0, q2.z - q2.lz * 4.4], cc = Math.floor(d / 6) % 2 ? CEL : WHT;
+        G.quadO(A, Bq, [Bq[0], 1.0, Bq[2]], [A[0], 1.0, A[2]], cc, [q.x - q.lx * 6, 0.5, q.z - q.lz * 6]); G.quadO([A[0], 1.0, A[2]], [Bq[0], 1.0, Bq[2]], [Bq[0] - q2.lx * 0.5, 1.0, Bq[2] - q2.lz * 0.5], [A[0] - q.lx * 0.5, 1.0, A[2] - q.lz * 0.5], [0.66, 0.66, 0.64], [q.x, -1, q.z]); }
+      { const q = at(tot * 0.5), x = q.x + q.lx * 15, z = q.z + q.lz * 15, rot = Math.atan2(q.tz, q.tx);   // the race control: a two-storey cabin
+        box(G, x, 0, z, 9, 3.0, 4, rot, [0.93, 0.93, 0.92]); box(G, x, 3.0, z, 9, 2.6, 4, rot, [0.25, 0.32, 0.4], [0.8, 0.8, 0.8]); exclPush(x, z, 7); CR.exclAdd(x, z, 6); }
+      addM(G, matV, true);
+    }
+    crowdFinish(CR, root, out);
+
+    /* ---- the trees: every tree of OpenStreetMap (the street trees and the parks' trees), more in the big parks, the reserve's woods east of the
+       lagoon; Buenos Aires' own: plane trees (plátanos) along the avenues, jacarandas (some in their purple bloom) and tipas in the parks, palms
+       on the waterfront, willows and alders in the reserve. Instanced (one draw per kind and 200 m chunk) ---- */
+    let nTrees = 0;
+    {
+      const RT = rng(2487), tg = (fn) => { const g = new GB(); fn(g); return g; };   // (a template: its triangles are copied into the chunks, moved, turned and tinted)
+      const trunk = (g, h, r, col) => cyl(g, 0, -0.2, 0, r, h + 0.2, 5, col, null, r * 0.7);
+      let MAXR = 0; const crown = (L) => (MAXR = Math.max(...L.map(e => e[3])), L);
+      const KINDS = {
+        plane: tg(g => { trunk(g, 4.2, 0.24, [0.62, 0.58, 0.5]); for (const [a, b, c, r] of crown([[0, 7.2, 0, 3.8], [2.0, 6.4, 1.2, 2.7], [-1.6, 7.2, -1.3, 2.8]])) puff(g, a, b, c, r, 0.85, [0.3, 0.46, 0.2], RT, 0.25, 0.62, 1.1, false); }),
+        jaca: tg(g => { trunk(g, 3.4, 0.2, [0.36, 0.3, 0.25]); for (const [a, b, c, r] of crown([[0, 5.6, 0, 3.4], [2.2, 5.2, 0.8, 2.2], [-2.0, 5.3, -1.0, 2.3]])) puff(g, a, b, c, r, 0.6, [0.32, 0.48, 0.22], RT, 0.3, 0.6, 1.08, false); }),
+        bloom: tg(g => { trunk(g, 3.4, 0.2, [0.36, 0.3, 0.25]); for (const [a, b, c, r] of crown([[0, 5.6, 0, 3.4], [2.2, 5.2, 0.8, 2.2], [-2.0, 5.3, -1.0, 2.3]])) puff(g, a, b, c, r, 0.6, [0.58, 0.44, 0.84], RT, 0.3, 0.66, 1.1, false); }),
+        tipa: tg(g => { trunk(g, 4.6, 0.3, [0.42, 0.36, 0.3]); for (const [a, b, c, r] of crown([[0, 7.0, 0, 4.6], [3.3, 6.6, 1.4, 3.1], [-2.6, 6.7, -2.2, 3.2]])) puff(g, a, b, c, r, 0.48, [0.38, 0.52, 0.22], RT, 0.25, 0.64, 1.1, false); }),
+        palm: tg(g => { cyl(g, 0, -0.2, 0, 0.42, 9.5, 7, [0.55, 0.47, 0.36], null, 0.36); puff(g, 0, 9.4, 0, 0.9, 0.9, [0.45, 0.42, 0.3], RT, 0.1, 0.8, 1);
+          for (let k = 0; k < 9; k++) { const a = k / 9 * TAU + 0.3, c = Math.cos(a), s = Math.sin(a), P = (r, y, o) => [c * r - s * o, y, s * r + c * o];
+            g.triO(P(0.3, 9.9, 0), P(2.4, 10.1, 0.55), P(4.4, 8.6, 0), [0.32, 0.5, 0.22], [0, 8, 0], [0.38, 0.56, 0.24], [0.3, 0.46, 0.2]); g.triO(P(0.3, 9.9, 0), P(2.4, 10.1, -0.55), P(4.4, 8.6, 0), [0.3, 0.46, 0.2], [0, 8, 0]); } }),
+        willow: tg(g => { trunk(g, 2.6, 0.26, [0.4, 0.36, 0.3]); for (const [a, b, c, r] of crown([[0, 4.6, 0, 3.2], [1.6, 3.8, 1.0, 2.4], [-1.5, 3.9, -1.2, 2.4]])) puff(g, a, b, c, r, 0.95, [0.36, 0.5, 0.24], RT, 0.35, 0.6, 1.05); }),
+        bush: tg(g => { puff(g, 0, 1.2, 0, 2.2, 0.75, [0.3, 0.4, 0.2], RT, 0.35, 0.6, 1.0); }),
+      };
+      const tMat = hjCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut), TC = new Chunks(160);   // (merged: one draw a chunk for all the kinds)
+      const stamp = (Tp, x, z, rot, sxz, sy, col) => { const g = TC.get(x, z), c = Math.cos(rot), s = Math.sin(rot), P = Tp.P, Nn = Tp.N, C = Tp.C;
+        for (let k = 0; k < P.length; k += 3) { const px = P[k] * sxz, pz = P[k + 2] * sxz; g.P.push(x + px * c - pz * s, P[k + 1] * sy, z + px * s + pz * c); const nx = Nn[k], nz = Nn[k + 2]; g.N.push(nx * c - nz * s, Nn[k + 1], nx * s + nz * c); g.C.push(C[k] * col[0], C[k + 1] * col[1], C[k + 2] * col[2]); } };
+      const free = (x, z, r) => !pmWater(x, z) && nearBar(x, z) > r && !pmOnRoad(x, z) && !excluded(x, z) && !inBld(x, z);
+      const put = (k, x, z, s) => { const t = 0.85 + 0.3 * crH(x, z, 41); stamp(KINDS[k], x, z, crH(x, z, 42) * TAU, s * (0.9 + 0.2 * crH(x, z, 43)), s * (0.92 + 0.16 * crH(x, z, 44)), [t, t * (0.96 + 0.08 * crH(x, z, 45)), t * 0.95]); nTrees++; };
+      const along = new Set();   // (the streets' trees: their cells, so the parks' fill keeps off them)
+      for (const p of S.pts.tree || []) {
+        const x = p[0] / 2, z = p[1] / 2; if (!free(x, z, 1.2) || nearBar(x, z) > 400) continue;
+        const h = crH(x, z, 47), street = pmOnRoad(x + 4, z) || pmOnRoad(x - 4, z) || pmOnRoad(x, z + 4) || pmOnRoad(x, z - 4) || nearBar(x, z) < 8;
+        const nn = nearest(x, z), sd = nn.i >= 0 ? dS(nn.i * ds) : 9e9, costa = nn.i >= 0 && nn.lat > 0 && Math.abs(nn.lat) < 45 && sd > -230 && sd < 330;   // (the waterfront by the lagoon: palms among the tipas)
+        const k = costa ? (h < 0.35 ? 'palm' : 'tipa') : street ? (h < 0.6 ? 'plane' : h < 0.85 ? 'tipa' : 'jaca') : (h < 0.3 ? 'jaca' : h < 0.55 ? 'tipa' : h < 0.85 ? 'plane' : 'willow');
+        put(k === 'jaca' && crH(x, z, 48) < 0.45 ? 'bloom' : k, x, z, k === 'palm' ? 1 : 0.85 + 0.35 * crH(x, z, 49));
+        along.add(Math.floor(x / 6) + ',' + Math.floor(z / 6));
+      }
+      // the parks: more trees where OpenStreetMap has none (a loose jittered grid, clumps by a noise), off the paths
+      const paths = (S.paths || []).map(a => ({ hw: a[0], pts: pmDec(a, 1) }));
+      const onPath = (x, z) => { for (const r of paths) for (let k = 0; k + 1 < r.pts.length; k++) { const [ax, az] = r.pts[k], [bx, bz] = r.pts[k + 1]; if (Math.max(ax, bx) < x - 4 || Math.min(ax, bx) > x + 4 || Math.max(az, bz) < z - 4 || Math.min(az, bz) > z + 4) continue;
+        const vx = bx - ax, vz = bz - az, l2 = vx * vx + vz * vz || 1, t = clamp(((x - ax) * vx + (z - az) * vz) / l2, 0, 1); if (Math.hypot(x - ax - vx * t, z - az - vz * t) < r.hw + 1.8) return true; } return false; };
+      for (const P of green) { if (P.k !== 'g' && P.k !== 'f') continue;
+        const cx = (P.bb[0] + P.bb[2]) / 2, cz = (P.bb[1] + P.bb[3]) / 2; if (Math.abs(cx) > 900 || Math.abs(cz - 100) > 900) continue;
+        for (let z = P.bb[1] + 4; z < P.bb[3]; z += 13) for (let x = P.bb[0] + 4; x < P.bb[2]; x += 13) {
+          const jx = x + (crH(x, z, 51) - 0.5) * 9, jz = z + (crH(x, z, 52) - 0.5) * 9;
+          if (crH(jx * 0.02, jz * 0.02, 53) * 0.6 + crH(jx, jz, 54) * 0.4 > (P.k === 'f' ? 0.75 : 0.5)) continue;
+          if (!pmInPoly(P, jx, jz) || along.has(Math.floor(jx / 6) + ',' + Math.floor(jz / 6)) || !free(jx, jz, 3) || onPath(jx, jz)) continue;
+          const h = crH(jx, jz, 55), k = h < 0.28 ? 'jaca' : h < 0.55 ? 'tipa' : h < 0.8 ? 'plane' : 'willow';
+          put(k === 'jaca' && crH(jx, jz, 48) < 0.45 ? 'bloom' : k, jx, jz, 0.8 + 0.4 * crH(jx, jz, 56)); } }
+      // the reserve's woods and scrub east of the lagoon (the land cover's woods: willows, alders and scrub), within ~500 m of the circuit
+      for (let z = -700; z < 900; z += 10) for (let x = 150; x < 700; x += 10) {
+        const jx = x + (crH(x, z, 61) - 0.5) * 7, jz = z + (crH(x, z, 62) - 0.5) * 7, c = lcAt(jx, jz); if (c !== 1 && c !== 2) continue;
+        if (c === 2 && crH(jx, jz, 63) < 0.5) continue; if (nearBar(jx, jz) > 260 || !free(jx, jz, 3)) continue;
+        const h = crH(jx, jz, 64); put(c === 2 || h < 0.3 ? 'bush' : 'willow', jx, jz, 0.8 + 0.5 * crH(jx, jz, 65));
+      }
+      TC.addTo(root, tMat, true, true);
+    }
+
+    /* ---- the street's things away from the junctions (not knockable: behind the walls): tall lamps along the circuit and the avenues, the
+       traffic lights of the other junctions, bus shelters, benches, cars parked along the side streets; the waterfront's balustrade and its
+       globe lamps along the lagoon; on the docks: bridges, the old cranes, the white footbridge with its leaning mast (simplified), a sailing
+       frigate and yachts; flags of the country by the stands ---- */
+    const furn = scen, glow = new Chunks(800), LAMP = [0.42, 0.44, 0.47], LIT = [1, 0.97, 0.86];
+    const lampAt = (x, z, fx, fz, h) => { const g = furn.get(x, z); cyl(g, x, 0, z, 0.11, h, 5, LAMP, LAMP, 0.07); const hx = x + fx * 1.4, hz = z + fz * 1.4;
+      box(g, (x + hx) / 2, h - 0.15, (z + hz) / 2, 1.5, 0.08, 0.08, Math.atan2(fz, fx), LAMP); box(glow.get(hx, hz), hx, h - 0.3, hz, 0.6, 0.18, 0.3, Math.atan2(fz, fx), LIT); };
+    let nLamps = 0, nCars = 0, nSig = 0, nBal = 0;
+    // along the circuit, behind both walls every 34 m (not where a pocket or a stand is)
+    const standAt = (d, sd) => (def.stands || []).some(([a, b, s2]) => s2 === sd && d > a - 6 && d < b + 6);
+    for (let d = 10; d < L; d += 34) for (const sd of [-1, 1]) {
+      const s = sAt(d + (sd > 0 ? 17 : 0)), i = T.idx(s), dd = dS(s); if ((sd > 0 ? T.br[i] : T.bl[i]) > w + 4 || standAt(dd, sd)) continue;
+      const [x, z] = atSf(s, sd * ((sd > 0 ? T.br[i] : T.bl[i]) + 1.4)); if (inBld(x, z) || pmWater(x, z)) continue;
+      lampAt(x, z, -T.nx[i] * sd, -T.nz[i] * sd, 9); exclPush(x, z, 1.5); nLamps++; }
+    // along the avenues and streets near the circuit
+    for (const r of roads) { if (r.hw < 4) continue; const D = dense(r.pts, 30);
+      for (let q = 0; q + 1 < D.length; q++) { const [ax, az] = D[q], [bx, bz] = D[q + 1], l = Math.hypot(bx - ax, bz - az); if (l < 5) continue; const nx = -(bz - az) / l, nz = (bx - ax) / l, sd = q % 2 ? 1 : -1, x = ax + nx * sd * (r.hw + 1.4), z = az + nz * sd * (r.hw + 1.4);
+        if (nearBar(x, z) < 2 || nearBar(x, z) > 330 || inBld(x, z) || pmWater(x, z) || pmOnRoad(x, z)) continue; lampAt(x, z, -nx * sd, -nz * sd, 8); nLamps++; } }
+    // the other junctions' traffic lights (a pole on a corner of each), bus shelters, benches
+    const sigPole = (x, z, rot) => { const g = furn.get(x, z), BK = [0.07, 0.07, 0.075], YB = [0.86, 0.7, 0.12]; cyl(g, x, 0, z, 0.075, 3.5, 5, [0.2, 0.21, 0.2]); box(g, x + Math.cos(rot) * 0.16, 2.1, z + Math.sin(rot) * 0.16, 0.26, 1.0, 0.34, rot, BK); box(g, x + Math.cos(rot) * 0.03, 2.06, z + Math.sin(rot) * 0.03, 0.04, 1.08, 0.44, rot, YB); nSig++; };
+    for (const [x0, z0] of sigs) { if (nearBar(x0, z0) < 14) continue;
+      let best = null, bd = 30; for (const r of roads) for (let k = 0; k + 1 < r.pts.length; k++) { const [ax, az] = r.pts[k], [bx, bz] = r.pts[k + 1], vx = bx - ax, vz = bz - az, l2 = vx * vx + vz * vz || 1, t = clamp(((x0 - ax) * vx + (z0 - az) * vz) / l2, 0, 1), d = Math.hypot(x0 - ax - vx * t, z0 - az - vz * t); if (d < bd) { bd = d; const l = Math.sqrt(l2); best = { tx: vx / l, tz: vz / l, hw: r.hw }; } }
+      if (!best) continue; for (const [a, b] of [[1, 1], [-1, -1]]) { const x = x0 + best.tx * a * (best.hw + 2) - best.tz * b * (best.hw + 1), z = x0 === x0 ? z0 + best.tz * a * (best.hw + 2) + best.tx * b * (best.hw + 1) : 0;
+        if (!pmOnRoad(x, z) && !inBld(x, z) && nearBar(x, z) > 2) sigPole(x, z, Math.atan2(-best.tz * a, -best.tx * a)); } }
+    for (const [x0, z0] of buses) { if (nearBar(x0, z0) < 12 || inBld(x0, z0) || pmOnRoad(x0, z0)) continue; const n = nearest(x0, z0), rot = n.i >= 0 && nearBar(x0, z0) < 40 ? T.hd[n.i] : 0, g = furn.get(x0, z0), c = Math.cos(rot), s = Math.sin(rot);
+      for (const e of [-1.7, 1.7]) box(g, x0 + c * e, 0, z0 + s * e, 0.08, 2.4, 0.08, rot, [0.3, 0.32, 0.34]); box(g, x0, 2.35, z0, 3.8, 0.1, 1.5, rot, [0.3, 0.32, 0.34], [0.55, 0.62, 0.66]); box(g, x0 - s * 0.6, 0.2, z0 + c * 0.6, 3.4, 1.9, 0.05, rot, [0.62, 0.72, 0.76]); exclPush(x0, z0, 3); }
+    for (const p of S.pts.bench || []) { const x = p[0] / 2, z = p[1] / 2; if (nearBar(x, z) < 1 || pmWater(x, z)) continue; const g = furn.get(x, z), r2 = crH(x, z, 9) * TAU; box(g, x, 0.4, z, 1.8, 0.08, 0.5, r2, [0.5, 0.36, 0.24]); box(g, x, 0, z, 1.5, 0.4, 0.3, r2, [0.3, 0.3, 0.32]); }
+    // cars parked along the side streets (both kerbs, gaps, none near the junctions or the circuit), instanced
+    {
+      const cg = new GB(); box(cg, 0, 0.18, 0, 4.2, 0.62, 1.78, 0, W1, W1, true); box(cg, -0.25, 0.8, 0, 2.3, 0.55, 1.6, 0, [0.82, 0.86, 0.9], W1, true); box(cg, 0.95, 0.8, 0, 0.06, 0.5, 1.5, 0, [0.25, 0.3, 0.36]);
+      for (const [a, b] of [[1.35, 0.8], [1.35, -0.8], [-1.35, 0.8], [-1.35, -0.8]]) cyl(cg, a, 0, b, 0.32, 0.12, 6, [0.08, 0.08, 0.09]);
+      const cars = { add: (x, y, z, rot, a, b, col) => { const g = furn.get(x, z), c = Math.cos(rot), s = Math.sin(rot); for (let k = 0; k < cg.P.length; k += 3) { const px = cg.P[k], pz = cg.P[k + 2]; g.P.push(x + px * c + pz * s, cg.P[k + 1] + y, z - px * s + pz * c); g.N.push(cg.N[k] * c + cg.N[k + 2] * s, cg.N[k + 1], -cg.N[k] * s + cg.N[k + 2] * c); g.C.push(cg.C[k] * col[0], cg.C[k + 1] * col[1], cg.C[k + 2] * col[2]); } } },   // (merged into the street's chunks)
+         CC = [[0.92, 0.92, 0.9], [0.15, 0.16, 0.18], [0.62, 0.64, 0.66], [0.75, 0.12, 0.1], [0.2, 0.3, 0.55], [0.85, 0.85, 0.83], [0.4, 0.42, 0.44], [0.9, 0.75, 0.2], [0.3, 0.45, 0.35]];
+      for (const r of roads) { if (r.hw < 3.4) continue; const D = dense(r.pts, 6.2);
+        for (let q = 0; q + 1 < D.length; q++) { const [ax, az] = D[q], [bx, bz] = D[q + 1], l = Math.hypot(bx - ax, bz - az); if (l < 4) continue; const tx = (bx - ax) / l, tz = (bz - az) / l;
+          for (const sd of [-1, 1]) { if (crH(ax, az, sd + 21) < 0.42) continue; const o = r.hw - 1.15, x = (ax + bx) / 2 - tz * sd * o, z = (az + bz) / 2 + tx * sd * o, nb = nearBar(x, z);
+            if (nb < 4 || nb > 260 || pmWater(x, z)) continue;
+            let jn = false; for (const r2 of roads) if (r2 !== r) for (let k = 0; k + 1 < r2.pts.length && !jn; k++) { const [cx, cz] = r2.pts[k], [dx, dz] = r2.pts[k + 1], vx = dx - cx, vz = dz - cz, l2 = vx * vx + vz * vz || 1, t = clamp(((x - cx) * vx + (z - cz) * vz) / l2, 0, 1); if (Math.hypot(x - cx - vx * t, z - cz - vz * t) < r2.hw + 7) jn = true; }
+            if (jn) continue; cars.add(x, 0.03, z, -Math.atan2(tz, tx) + (sd > 0 ? 0 : Math.PI), 1, 1, CC[Math.floor(crH(x, z, 23) * CC.length)]); nCars++; } } }
+    }
+    // the waterfront: a white stone balustrade along the lagoon by the long straight, globe lamps on it, the promenade's benches
+    {
+      const lag = PM.water.filter(P => !P.dock && P.cls !== 'pond'), BAL = [0.9, 0.88, 0.82];
+      for (const P of lag) for (let k = 0; k < P.pts.length; k++) {
+        const [ax, az] = P.pts[k], [bx, bz] = P.pts[(k + 1) % P.pts.length], l = Math.hypot(bx - ax, bz - az); if (l < 1) continue;
+        let a2 = 0; for (let q = 0; q < P.pts.length; q++) { const [cx, cz] = P.pts[q], [ex, ez] = P.pts[(q + 1) % P.pts.length]; a2 += cx * ez - ex * cz; }
+        const sg = a2 > 0 ? 1 : -1, ox = -sg * (bz - az) / l * 2.4, oz = sg * (bx - ax) / l * 2.4;   // (2.4 m back on the land: behind the bank)
+        for (let t0 = 0; t0 < l - 0.5; t0 += 12) { const t1 = Math.min(l, t0 + 12), A = [ax + (bx - ax) * t0 / l + ox, az + (bz - az) * t0 / l + oz], Bq = [ax + (bx - ax) * t1 / l + ox, az + (bz - az) * t1 / l + oz];
+        const n = nearest((A[0] + Bq[0]) / 2, (A[1] + Bq[1]) / 2); if (n.i < 0 || n.lat <= 0 || Math.abs(n.lat) > 90) continue; const d0 = dS(n.i * ds); if (d0 < -260 || d0 > 360) continue;
+        { const l = t1 - t0, g = furn.get(A[0], A[1]), rot = Math.atan2(Bq[1] - A[1], Bq[0] - A[0]);
+        box(g, (A[0] + Bq[0]) / 2, 0.85, (A[1] + Bq[1]) / 2, l, 0.14, 0.32, rot, BAL); box(g, (A[0] + Bq[0]) / 2, 0, (A[1] + Bq[1]) / 2, l, 0.16, 0.36, rot, BAL);
+        for (let t = 0.3; t < l; t += 0.62) cyl(g, A[0] + (Bq[0] - A[0]) * t / l, 0.16, A[1] + (Bq[1] - A[1]) * t / l, 0.07, 0.69, 4, BAL, null, 0.1);
+        if (crH(A[0], A[1], 3) < 0.55) { const x = A[0], z = A[1]; cyl(g, x, 0, z, 0.12, 3.6, 6, [0.2, 0.22, 0.2], null, 0.07); ico(glow.get(x, z), x, 3.9, z, 0.32, 1, [1, 0.98, 0.9], () => 0.5, 0); nLamps++; }
+        nBal++; } }
+      }
+    }
+    // the docks: decks of the road bridges over the water, the movable bridges, the white footbridge on its leaning mast, cranes, ships
+    {
+      const g = new GB(), WB = [0.92, 0.92, 0.9], RUST = [0.55, 0.22, 0.14];
+      for (const b of S.br) { if (b[0] !== 'brid' && b[0] !== 'mova') continue; const pts = pmDec(b, 2), poly = b[1] === 1, hw = b[0] === 'mova' ? 3.5 : 3;
+        if (poly) { if (!pts.some(([x, z]) => pmWater(x, z))) continue; const tr = THREE.ShapeUtils.triangulateShape(pts.map(([x, z]) => new THREE.Vector2(x, z)), []); for (const [a, c, d] of tr) g.triO([pts[a][0], 0.5, pts[a][1]], [pts[c][0], 0.5, pts[c][1]], [pts[d][0], 0.5, pts[d][1]], [0.6, 0.6, 0.6], [pts[a][0], -2, pts[a][1]]); continue; }
+        for (let k = 0; k + 1 < pts.length; k++) { const [ax, az] = pts[k], [bx, bz] = pts[k + 1], l = Math.hypot(bx - ax, bz - az); if (l < 0.5 || !(pmWater(ax, az) || pmWater(bx, bz) || pmWater((ax + bx) / 2, (az + bz) / 2))) continue;
+          const rot = Math.atan2(bz - az, bx - ax), mx = (ax + bx) / 2, mz = (az + bz) / 2; box(g, mx, 0.0, mz, l + 0.4, 0.55, hw * 2, rot, [0.58, 0.58, 0.58], [0.48, 0.48, 0.5]);
+          for (const sd of [-1, 1]) box(g, mx - Math.sin(rot) * sd * hw, 0.55, mz + Math.cos(rot) * sd * hw, l + 0.4, 1.0, 0.12, rot, b[0] === 'mova' ? RUST : [0.4, 0.42, 0.45]); } }
+      // the footbridge over the third dock (its rotating middle on a white mast leaning back over the water, the stays to the deck): simplified, no name
+      const fb = S.br.find(b => b[0] === 'mova' && Math.abs(b[2] / 2 - b[4] / 2) > 100);
+      if (fb) { const [ax, az] = [fb[2] / 2, fb[3] / 2], [bx, bz] = [fb[4] / 2, fb[5] / 2], l = Math.hypot(bx - ax, bz - az), tx = (bx - ax) / l, tz = (bz - az) / l, rot = Math.atan2(tz, tx), px = ax + tx * l * 0.42, pz = az + tz * l * 0.42;
+        box(g, ax + tx * l / 2, 0.6, az + tz * l / 2, l, 0.5, 6.2, rot, WB, [0.75, 0.62, 0.48]);
+        for (const sd of [-1, 1]) box(g, ax + tx * l / 2 - tz * sd * 3.1, 1.1, az + tz * l / 2 + tx * sd * 3.1, l, 1.0, 0.1, rot, [0.85, 0.86, 0.88]);
+        const top = [px - tx * 26, 39, pz - tz * 26]; ouRod(g, [px, 1.1, pz], top, 0.9, WB, 6);   // (the mast leans back, 39 m up)
+        for (let k = 1; k <= 7; k++) { const q = [px + tx * k * 6.5, 1.2, pz + tz * k * 6.5], tq = [px + (top[0] - px) * (0.45 + k * 0.07), 1.1 + (top[1] - 1.1) * (0.45 + k * 0.07), pz + (top[2] - pz) * (0.45 + k * 0.07)]; ouRod(g, tq, q, 0.05, [0.85, 0.85, 0.86], 3); }
+        exclPush(px, pz, 8); }
+      // the old cranes on the docks' western quays (rust red, a cabin on a portal, the jib up)
+      const docks = PM.water.filter(P => P.dock && (P.bb[2] - P.bb[0]) * (P.bb[3] - P.bb[1]) > 20000);
+      let nCr = 0;
+      for (const P of docks) { const west = P.pts.filter(([x]) => x < (P.bb[0] + P.bb[2]) / 2); if (west.length < 2) continue;
+        for (let t = 0; t < 4; t++) { const z = P.bb[1] + (P.bb[3] - P.bb[1]) * (0.15 + 0.23 * t); let x = 1e9; for (let q = 0; q < P.pts.length; q++) { const [ax, az] = P.pts[q], [bx, bz] = P.pts[(q + 1) % P.pts.length]; if ((az - z) * (bz - z) <= 0 && az !== bz) { const xi = ax + (bx - ax) * (z - az) / (bz - az); if (xi < x) x = xi; } }
+          if (x > 1e8) continue; x -= 5; const rot = crH(x, z, 7) * 0.6 - 0.3;
+          for (const [a, b] of [[-2.5, -2.5], [2.5, -2.5], [-2.5, 2.5], [2.5, 2.5]]) box(g, x + a, 0, z + b, 0.4, 7, 0.4, 0, RUST);
+          box(g, x, 7, z, 6, 4.2, 4, rot, RUST, [0.4, 0.18, 0.12]); ouRod(g, [x + 2, 9, z], [x + 20 * Math.cos(rot), 26, z + 20 * Math.sin(rot)], 0.45, RUST, 4); ouRod(g, [x - 1, 11.5, z], [x + 20 * Math.cos(rot), 26, z + 20 * Math.sin(rot)], 0.08, [0.3, 0.3, 0.3], 3); nCr++; } }
+      // a three-masted training frigate at the third dock's quay (a museum ship: black hull, white band), yachts in the marina of the first
+      if (fb) { const sx = fb[2] / 2 + 30, sz = fb[3] / 2 + 70, rot = Math.PI / 2;
+        if (pmWater(sx, sz)) { box(g, sx, -2.6, sz, 9, 4.2, 70, 0, [0.12, 0.12, 0.13], [0.62, 0.5, 0.36]); box(g, sx, 0.4, sz, 9.05, 0.6, 66, 0, WB); box(g, sx, 1.6, sz + 24, 7, 2.2, 12, 0, [0.85, 0.82, 0.75]);
+          for (const [e, h] of [[-22, 34], [0, 40], [20, 34]]) { cyl(g, sx, 1.6, sz + e, 0.35, h, 6, [0.4, 0.3, 0.22], null, 0.2); for (const y of [12, 20, 27]) box(g, sx, y, sz + e, 16 - y * 0.25, 0.25, 0.25, 0, [0.4, 0.3, 0.22]); } } }
+      for (const b of S.br) { if (b[0] !== 'pier' || b[1] !== 1) continue; const pts = pmDec(b, 2); let k = 0;
+        for (let q = 0; q + 1 < pts.length; q++) { const [ax, az] = pts[q], [bx, bz] = pts[q + 1], l = Math.hypot(bx - ax, bz - az); for (let t = 4; t < l - 3; t += 7) { const x = ax + (bx - ax) * t / l + (bz - az) / l * 6, z = az + (bz - az) * t / l - (bx - ax) / l * 6; if (!pmWater(x, z) || k++ > 14) continue;
+          const rot = Math.atan2(bz - az, bx - ax) + Math.PI / 2; box(g, x, -2.5, z, 11, 1.3, 3.6, rot, WB, [0.75, 0.62, 0.48]); box(g, x - Math.cos(rot) * 1, -1.2, z - Math.sin(rot) * 1, 4.5, 1.0, 2.6, rot, [0.92, 0.92, 0.9]); cyl(g, x, -1.2, z, 0.08, 13, 3, [0.85, 0.85, 0.86]); } } }
+      out.cranes = nCr; addM(g, matV, true);
+    }
+    // flags of the country by the stands (light blue, white, light blue)
+    { const flagL = [], AR = [[0.46, 0.7, 0.92], [0.97, 0.97, 0.96], [0.46, 0.7, 0.92]], WROT = Math.atan2(-0.7, 1.4);
+      for (const [sa, sb, side] of def.stands || []) for (let d = sa; d <= sb; d += 24) { const s = sAt(d), i = T.idx(s), [x, z] = atSf(s, side * ((side > 0 ? T.br[i] : T.bl[i]) + 9)); cyl(furn.get(x, z), x, 0, z, 0.05, 9, 5, [0.86, 0.86, 0.88]); flagL.push([x, 9, z, WROT + crH(x, z, 4) * 0.3, AR, 2.2, 1.4]); }
+      if (flagL.length) root.add(rbFlags(flagL, CR.U.uTime)); out.flags = flagL.length; }
+    glow.addTo(root, new THREE.MeshBasicMaterial({ vertexColors: true }), false, false);
+
+    /* ---- finish the meshes ---- */
+    scen.addTo(root, matV, true, true);
+    gSt.addTo(root, sMat, false, true); gLn.addTo(root, lMat, false, true);
+    gPave.addTo(root, new THREE.MeshLambertMaterial({ map: tex.paving, vertexColors: true }), false, true);
+    gGrass.addTo(root, new THREE.MeshLambertMaterial({ map: tex.grass, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }), false, true);
+    fenceG.addTo(root, new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide }), false, true);
+    out.stats = { buildings: nBld, towers: nTower, streets: nStreets, zebras: nZebra, water: nWater, trees: nTrees, stands: nStands, garages: nGarages, lamps: nLamps, cars: nCars, signals: nSig, balustrade: nBal };   // (read by the tests)
     return out;
   }
 

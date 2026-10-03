@@ -145,8 +145,8 @@ const Core = (function () {
       }
       // more run-off where a track asks for it (def.wide = [[from, to, side (-1 left, 1 right), metres], ...], metres after the start line;
       // closed circuits, and the pull-outs of an open road: Big Sur): the barrier on that side moves out, eased in and out over 30 m
-      if (def.wide) for (const [a, b, sd, m] of def.wide) for (let d = a - 30; d <= b + 30; d += ds) {
-        const i = this.idx(this.startS + d), f = Math.min(sstep(a - 30, a, d), sstep(b + 30, b, d)); if (sd < 0) this.bl[i] += m * f; else this.br[i] += m * f;
+      if (def.wide) for (const [a, b, sd, m, e = 30] of def.wide) for (let d = a - e; d <= b + e; d += ds) {   // (e: the ease, 30 m; a street circuit's junction pocket: a few)
+        const i = this.idx(this.startS + d), f = Math.min(sstep(a - e, a, d), sstep(b + e, b, d)); if (sd < 0) this.bl[i] += m * f; else this.br[i] += m * f;
       }
       // gravel strips (def.gravelStrips = [[from, to, side, width], ...], metres after the start line, side -1 left / 1 right; closed
       // circuits): a band of gravel from the kerb's outer edge outwards, as the strips the Red Bull Ring laid at the exits of Turns 9 and
@@ -1567,6 +1567,14 @@ const Core = (function () {
       rbale:  { m: 26, rh: 0.62, rb: 0.75, h0: 0.43,  e: 0.15, mu: 0.8,  lift: 0.3,  I: 4.6,  pts: (() => { const p = []; for (const x of [-0.62, 0.62]) for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; p.push([x, Math.cos(a) * 0.43, Math.sin(a) * 0.43]); } return p; })() },   // round straw bale lying on its side (Toskana)
       rbstack: { m: 78, rh: 0.9, rb: 1.1,  h0: 0.85,  breaks: 'rbale', parts: [[-0.66, -0.425, 0], [0.66, -0.425, 0], [0, 0.425, 0]], pf: [[1.1, 0.6], [1.0, 0.9], [0.8, 2.4]] },
       post:   { m: 4,  rh: 0.14, rb: 0.62, h0: 0.55,  e: 0.3,  mu: 0.6,  lift: 1.0,  I: 0.4,  pts: boxPts(0.07, 0.55, 0.07) },   // roadside post (stebriček): light, snaps over and cartwheels away
+      // street furniture at the junctions of the street circuits (generic kinds; each city draws its own look in Render)
+      signal: { m: 45, rh: 0.14, rb: 1.8,  h0: 1.7,   e: 0.15, mu: 0.6,  lift: 0.3,  I: 45,   pts: boxPts(0.1, 1.7, 0.1) },     // traffic lights on a pole (semafor)
+      lamp:   { m: 70, rh: 0.14, rb: 3.6,  h0: 3.5,   e: 0.12, mu: 0.6,  lift: 0.2,  I: 280,  pts: boxPts(0.1, 3.5, 0.1) },     // street lamp (ulična svetilka)
+      sign:   { m: 9,  rh: 0.1,  rb: 1.3,  h0: 1.2,   e: 0.25, mu: 0.6,  lift: 0.8,  I: 4,    pts: boxPts(0.05, 1.2, 0.05).concat([[0, 1.1, 0.3], [0, 1.1, -0.3]]) },   // road sign on its post (znak)
+      bollard:{ m: 14, rh: 0.13, rb: 0.5,  h0: 0.45,  e: 0.25, mu: 0.6,  lift: 0.7,  I: 0.9,  pts: cylPts(0.12, -0.45, 0.45, 6) },   // bollard (stebriček na pločniku)
+      bin:    { m: 12, rh: 0.3,  rb: 0.56, h0: 0.45,  e: 0.25, mu: 0.6,  lift: 0.6,  I: 1.0,  pts: cylPts(0.28, -0.45, 0.45, 6) },   // litter bin (smetnjak)
+      cabinet:{ m: 45, rh: 0.5,  rb: 0.85, h0: 0.7,   e: 0.15, mu: 0.7,  lift: 0.3,  I: 8,    pts: boxPts(0.45, 0.7, 0.25) },   // electrical cabinet (omarica)
+      shelter:{ m: 150, rh: 1.0, rb: 2.1,  h0: 1.25,  e: 0.1,  mu: 0.75, lift: 0.2,  I: 120,  pts: boxPts(1.8, 1.25, 0.7) },    // bus shelter (avtobusno postajališče)
     };
   })();
   const _pq = {};

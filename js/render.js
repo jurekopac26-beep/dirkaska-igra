@@ -1521,6 +1521,33 @@ const Render = (function () {
   const PROP_COLS = [[0.88, 0.33, 0.24], [0.95, 0.95, 0.94], [0.27, 0.6, 0.35], [0.2, 0.2, 0.22], [0.92, 0.89, 0.74]];   // instance tint: red / white / green / black / cream (painted tyres, the same as the tyre walls)
   const POST_SNOW = [1, 0.53, 0.13];                              // instance tint of the orange snow poles high up on Pikes Peak (a 'post' with col 1)
   let propMat = null, propMatTyre = null;
+  // street furniture (the knockable kinds of the junctions; local +x faces the traffic, the foot at -h0): generic, no names or logos
+  const STREET_PROP = {
+    signal: (g, W) => { const pl = [0.2, 0.21, 0.2], bk = [0.07, 0.07, 0.075], yb = [0.86, 0.7, 0.12];   // a dark pole (yellow and black band at its foot), the lights at the top, a walker's head below
+      W.cyl(g, 0, -1.8, 0, 0.075, 3.5, 6, pl, pl); for (let k = 0; k < 3; k++) W.cyl(g, 0, -1.7 + k * 0.24, 0, 0.082, 0.12, 6, k % 2 ? bk : yb);
+      W.box(g, 0.16, 0.42, 0, 0.26, 1.0, 0.34, 0, bk, bk); W.box(g, 0.14, 0.38, 0, 0.04, 1.08, 0.44, 0, yb, yb);   // the head on its yellow backboard
+      [[0.95, 0.12, 0.08], [1, 0.62, 0.05], [0.15, 0.85, 0.35]].forEach((c, k) => { W.box(g, 0.3, 1.18 - k * 0.3, 0, 0.03, 0.2, 0.2, 0, c, c); W.box(g, 0.33, 1.27 - k * 0.3, 0, 0.1, 0.03, 0.24, 0, bk, bk); });
+      W.box(g, -0.14, -0.3, 0, 0.2, 0.5, 0.26, 0, bk, bk); W.box(g, -0.25, -0.2, 0, 0.02, 0.16, 0.16, 0, [0.95, 0.35, 0.1]); W.box(g, -0.25, -0.4, 0, 0.02, 0.16, 0.16, 0, [0.9, 0.95, 0.95]); },
+    lamp: (g, W) => { const st = [0.52, 0.54, 0.56], hd = [0.3, 0.31, 0.33];   // a tall steel pole, its arm and the lamp head over the road (+x)
+      W.cyl(g, 0, -3.6, 0, 0.13, 0.5, 6, st, st, 0.1); W.cyl(g, 0, -3.1, 0, 0.09, 6.4, 6, st, st, 0.06);
+      W.box(g, 0.75, 3.18, 0, 1.6, 0.08, 0.08, 0, st, st); W.box(g, 1.6, 3.06, 0, 0.75, 0.14, 0.3, 0, hd, hd); W.box(g, 1.6, 3.02, 0, 0.6, 0.04, 0.22, 0, [1, 0.97, 0.86]); },
+    sign: (g, W) => { const st = [0.6, 0.62, 0.64], rd = [0.82, 0.12, 0.1], wh = [0.95, 0.95, 0.93], n = 8;   // a grey post, a round sign (red rim, white face) both ways
+      W.box(g, 0, -1.3, 0, 0.06, 2.45, 0.06, 0, st, st);
+      for (let k = 0; k < n; k++) { const a0 = k / n * Math.PI * 2, a1 = (k + 1) / n * Math.PI * 2, P = (a, r, x) => [x, 0.82 + Math.cos(a) * r, Math.sin(a) * r];
+        for (const x of [0.04, -0.04]) { g.triO(P(a0, 0.34, x), P(a1, 0.34, x), [x, 0.82, 0], rd, [0, 0.82, 0]); g.triO(P(a0, 0.25, x * 1.3), P(a1, 0.25, x * 1.3), [x * 1.3, 0.82, 0], wh, [0, 0.82, 0]); } }
+      W.box(g, 0.055, 0.78, 0, 0.01, 0.08, 0.32, 0, rd, rd); },
+    bollard: (g, W) => { const c = [0.16, 0.17, 0.18];   // a dark cast-iron bollard with a pale band
+      W.cyl(g, 0, -0.55, 0, 0.13, 0.85, 7, c, c, 0.11); W.cyl(g, 0, 0.3, 0, 0.11, 0.12, 7, [0.85, 0.85, 0.8], c, 0.06); W.cyl(g, 0, 0.12, 0, 0.125, 0.06, 7, [0.9, 0.88, 0.8]); },
+    bin: (g, W) => { const c = [0.24, 0.32, 0.27], rim = [0.15, 0.17, 0.16];   // a round steel litter bin on its stem
+      W.cyl(g, 0, -0.45, 0, 0.06, 0.3, 5, rim); W.cyl(g, 0, -0.18, 0, 0.27, 0.6, 9, c, [0.1, 0.1, 0.1], 0.29); W.cyl(g, 0, 0.42, 0, 0.3, 0.04, 9, rim, rim); },
+    cabinet: (g, W) => { const c = [0.72, 0.72, 0.66], d = [0.6, 0.6, 0.55];   // a grey street cabinet on a concrete plinth, door lines
+      W.box(g, 0, -0.75, 0, 1.0, 0.12, 0.55, 0, [0.62, 0.6, 0.57]); W.box(g, 0, -0.63, 0, 0.9, 1.25, 0.5, 0, c, [0.68, 0.68, 0.63]);
+      for (const z of [-0.252, 0.252]) { W.box(g, 0, -0.55, z, 0.02, 1.05, 0.005, 0, d, d); W.box(g, 0.3, -0.1, z, 0.08, 0.02, 0.006, 0, [0.3, 0.3, 0.3]); } },
+    shelter: (g, W) => { const fr = [0.3, 0.32, 0.34], gl = [0.62, 0.72, 0.76], ad = [0.92, 0.9, 0.84];   // a bus shelter: steel frame, glass back and roof, an advert panel at one end, a bench
+      for (const x of [-1.75, 1.75]) for (const z of [-0.62, 0.55]) W.box(g, x, -1.25, z, 0.08, 2.45, 0.08, 0, fr, fr);
+      W.box(g, 0, 1.15, -0.05, 3.8, 0.1, 1.5, 0, fr, [0.55, 0.62, 0.66]); W.box(g, 0, -1.0, -0.62, 3.4, 1.9, 0.04, 0, gl, gl);
+      W.box(g, 1.75, -1.0, 0, 0.1, 1.9, 1.0, 0, ad, ad); W.box(g, 0, -0.82, -0.4, 2.4, 0.06, 0.38, 0, [0.45, 0.42, 0.38]); for (const x of [-1, 1]) W.box(g, x, -1.25, -0.4, 0.06, 0.43, 0.3, 0, fr); },
+  };
   function propGeometry(kind) {
     const W = World, g = new W.GB(kind === 'tyre' || kind === 'tstack'), white = [1, 1, 1], TAU2 = Math.PI * 2;
     const disc = (y, r, n, rim, mid, up) => { for (let k = 0; k < n; k++) { const a0 = k / n * TAU2, a1 = (k + 1) / n * TAU2, c = [0, y, 0], p0 = [Math.cos(a0) * r, y, Math.sin(a0) * r], p1 = [Math.cos(a1) * r, y, Math.sin(a1) * r];
@@ -1557,6 +1584,7 @@ const Render = (function () {
       const wh = [0.95, 0.95, 0.93], bk = [0.08, 0.08, 0.09], rf = [1, 0.45, 0.08];
       W.box(g, 0, -0.65, 0, 0.14, 1.2, 0.14, 0, wh, wh); W.box(g, 0, 0.18, 0, 0.146, 0.22, 0.146, 0, bk, bk);
       for (const x of [-0.074, 0.074]) W.box(g, x, 0.22, 0, 0.012, 0.12, 0.09, 0, rf, rf); }
+    else if (STREET_PROP[kind]) STREET_PROP[kind](g, W);
     return g.geometry();
   }
   function clearPropMeshes() { for (const k in propMeshes) { const m = propMeshes[k]; scene.remove(m); m.geometry.dispose(); } propMeshes = {}; }
@@ -1682,6 +1710,8 @@ const Render = (function () {
   THEMES.uncompahgre = { fog: 0xbfcfe0, sun: 0xfff0d8, sunI: 1.24, sky: 0xb8d0f0, gnd: 0x4c5236, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-70, 92, 62] };   // the Uncompahgre Gorge: a clear afternoon in the San Juans, the sun from the south-west over the cliffs, a crisp blue haze
   SPLIT.uncompahgre = [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]];
   SPLIT.iroha = [[0.96, 0.99, 1.05], [1.04, 1.0, 0.95]];   // (Irohazaka: cool shade under the maples, a warm autumn sun)
+  THEMES.puertomadero = { fog: 0xd2dce4, sun: 0xfff2dc, sunI: 1.22, sky: 0xb4cff0, gnd: 0x6e6a5c, hemiI: 0.64, tint: [1.01, 1.0, 0.98], sat: 1.02, haze: 0.1, hazeCol: [0.9, 0.9, 0.86], sunOff: [-55, 84, -62] };   // Puerto Madero: a bright, humid summer day by the river, the sun in the north (the southern hemisphere)
+  SPLIT.puertomadero = [[0.96, 0.99, 1.05], [1.04, 1.0, 0.95]];
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   // The time of day as one number, todK: 0 day, 0.5 dusk, 1 night (setAtmos sets it from the setting; an endurance race moves it with its
   // clock: setTodK). The light, the fog and the grade are blended between the day's (the theme's), the dusk's and the night's; dawn (the
@@ -2084,7 +2114,7 @@ const Render = (function () {
     winU.value = (todK >= 1 ? 1 : todK <= 0.5 ? 0.8 * todK : 0.4 + 1.2 * (todK - 0.5)) * (dawn ? 0.75 : 1);   // (day 0, dusk 0.4, night 1: with the time of day, also as it moves on in an endurance race; in the morning a few)
     if (!winU.value || !world || !world.root || world.winLit) return;
     world.winLit = true;
-    const maps = [tex.facade, tex.facadeBal].filter(Boolean);
+    const maps = [tex.facade, tex.facadeBal].concat(world.winMaps || []).filter(Boolean);   // (winMaps: a world's own facade pictures)
     world.root.traverse(o => { for (const m of o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []) {
       if (!m.map || !maps.includes(m.map) || m.userData.win) continue;
       const prev = m.onBeforeCompile, key = m.customProgramCacheKey(); m.userData.win = true;   // (on top of what the material's shader has already: Ouninpohja's cut-out)
