@@ -733,118 +733,307 @@ const Garage3D = (function () {
       for (const [x, z, s2] of [[-5.6, -1.6, 1.1], [4.6, 2.2, 0.8], [6.2, -3.0, 1.3], [-6.8, 3.4, 0.9]]) { const m = new THREE.Mesh(new THREE.PlaneGeometry(s2, s2), sMat); m.rotation.set(-Math.PI / 2, 0, x); m.position.set(x, 0.007, z); m.renderOrder = -2; scene.add(mainOnly(m)); } }
     finishPieces();
   }
-  /* ---------------- outside: the valley round the workshop (sky, mountains, forest, meadows, the road through both doors) ---------------- */
-  // all of it lit once, in its colours (the sun on its faces, the haze of the distance): no lights, no shadows, cheap to draw
-  const HAZE = [0.8, 0.86, 0.91];
-  function bakeOut(gb, h0, h1, hk, side) {
+  /* ---------------- outside: the valley round the workshop (the sky, its clouds and the mountains round the valley in one shader; the
+     meadows, the fields, the apron and the road away round a bend in another; the forest at the doors' edges, the paddock, a hayrack, a
+     farm, a church on a knoll) ---------------- */
+  // all of it lit once, in its colours (the sun on its faces, the haze of the distance): no lights, cheap to draw. The ground's shader
+  // has the shadows: the near boxes' swept from their footprints, the trees' and the far buildings' painted into a map once. What stands
+  // out there is the main camera's only (mainOnly): the floor's mirror and the cars' cube map get the sky and the ground
+  const SUNH = new THREE.Vector2(SUN.x, SUN.z).normalize(), AIR = 420;   // (the haze of the distance d: 0.85 (1 - exp(-d / AIR)))
+  // the horizon's colour round the panorama, warmer and paler toward the sun, bluer away from it: what everything far fades into
+  // (horz() in the shaders the same)
+  const horzJS = (dx, dz) => { const s = (dx * SUNH.x + dz * SUNH.y) / (Math.hypot(dx, dz) || 1), p = Math.max(s, 0), q = Math.max(-s, 0); return [0.78 + 0.09 * p - 0.05 * q, 0.85 + 0.06 * p - 0.03 * q, 0.93 + 0.01 * p]; };
+  // the shaders' shared part: the sun, a hash without sin (no stripes far out), value noise (vp: periodic in x with the period N, round
+  // the panorama: no seam), horz(), the last line (OUTK: the daylight brighter than the room; a little less colour)
+  function outGL() {
+    const f = (v) => v.toFixed(4);
+    return ['const vec3 oSun = vec3(' + f(SUN.x) + ', ' + f(SUN.y) + ', ' + f(SUN.z) + '); const vec2 oSunH = vec2(' + f(SUNH.x) + ', ' + f(SUNH.y) + ');',
+      'float hs(vec2 p){ vec3 q = fract(vec3(p.xyx) * 0.1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }',
+      'float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(hs(i), hs(i + vec2(1.0, 0.0)), f.x), mix(hs(i + vec2(0.0, 1.0)), hs(i + vec2(1.0, 1.0)), f.x), f.y); }',
+      'float vp(vec2 p, float N){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); float a = mod(i.x, N), b = mod(i.x + 1.0, N);',
+      '  return mix(mix(hs(vec2(a, i.y)), hs(vec2(b, i.y)), f.x), mix(hs(vec2(a, i.y + 1.0)), hs(vec2(b, i.y + 1.0)), f.x), f.y); }',
+      'vec3 horz(vec2 h){ float s = dot(h, oSunH) * inversesqrt(dot(h, h) + 1e-6); return vec3(0.78, 0.85, 0.93) + vec3(0.09, 0.06, 0.01) * max(s, 0.0) - vec3(0.05, 0.03, 0.0) * max(-s, 0.0); }',
+      'vec4 outC(vec3 c){ return vec4(mix(c, vec3(dot(c, vec3(0.3333))), 0.15) * ' + OUTK.toFixed(2) + ', 1.0); }'].join('\n');
+  }
+  // the far things' colours: the sun on each face (a darker foot), the haze toward the horizon's colour, a little less colour (as the
+  // shaders' last line); unlit: vertex ranges that keep their colour (glass: the sky in it)
+  function bakeOut(gb, unlit) {
     const geo = gb.geometry(), P = geo.attributes.position, N = geo.attributes.normal, C = geo.attributes.color;
     for (let i = 0; i < P.count; i++) {
-      const nx = N.getX(i), ny = N.getY(i), nz = N.getZ(i), l = 0.6 + 0.5 * Math.max(0, nx * SUN.x + ny * SUN.y + nz * SUN.z) + 0.1 * ny;
-      const k = smooth(h0, h1, Math.hypot(P.getX(i), P.getZ(i))) * hk;
-      C.setXYZ(i, lerp(C.getX(i) * l, HAZE[0], k), lerp(C.getY(i) * l, HAZE[1], k), lerp(C.getZ(i) * l, HAZE[2], k));
+      const x = P.getX(i), z = P.getZ(i), ny = N.getY(i), H = horzJS(x, z), k = 0.85 * (1 - Math.exp(-Math.hypot(x, z) / AIR));
+      const l = unlit.some(([a, b]) => i >= a && i < b) ? 1 : (0.6 + 0.6 * Math.max(0, N.getX(i) * SUN.x + ny * SUN.y + N.getZ(i) * SUN.z) + 0.06 * ny) * (0.8 + 0.2 * smooth(0, 2.5, P.getY(i)));
+      const r = lerp(C.getX(i) * l, H[0], k), g = lerp(C.getY(i) * l, H[1], k), b = lerp(C.getZ(i) * l, H[2], k), m = (r + g + b) / 3;
+      C.setXYZ(i, lerp(r, m, 0.15), lerp(g, m, 0.15), lerp(b, m, 0.15));
     }
-    const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, color: new THREE.Color().setScalar(OUTK), side: side || THREE.FrontSide })); scene.add(m); return m;   // (OUTK: the daylight brighter than the room)
+    const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, color: new THREE.Color().setScalar(OUTK) })); scene.add(mainOnly(m)); return m;
   }
+  // the sky (tan of the elevation t, the azimuth u in turns): its blue, paler and warmer toward the horizon and the sun; fair-weather
+  // clouds overhead in perspective, heaps of cumulus over the far ridges; the skyline in three layers (H1 the far limestone range: summits where the doors and the
+  // windows look, the big snowy massif behind the back windows; H2 forested ridges, higher across the valley; H3 the near wooded hills),
+  // each lit from the sun by its slope, hazed by its distance, its edge smoothed over a pixel
+  const SKY_FS = [
+    'varying vec3 vD;',
+    'float rdg(float n){ return 1.0 - abs(2.0 * n - 1.0); }',
+    'float bump(float u, float u0, float h, float w){ return h * (1.0 - smoothstep(0.0, w, abs(fract(u - u0 + 0.5) - 0.5))); }',
+    'float H1(float u){ float env = 0.022 + bump(u, 0.015, 0.05, 0.07) + bump(u, 0.5, 0.045, 0.06) + bump(u, -0.22, 0.075, 0.16) + bump(u, 0.27, 0.035, 0.12);',
+    '  float r = rdg(vp(vec2(u * 13.0, 2.1), 13.0)) * 0.5 + rdg(vp(vec2(u * 31.0, 3.7), 31.0)) * 0.27 + rdg(vp(vec2(u * 71.0, 5.3), 71.0)) * 0.14 + vp(vec2(u * 167.0, 7.9), 167.0) * 0.09;',
+    '  return 0.02 + env * pow(r, 1.7) * 1.15 + rdg(vp(vec2(u * 389.0, 9.1), 389.0)) * 0.0018; }',
+    'float H2(float u, float fl){ float n = vp(vec2(u * 7.0, 11.1), 7.0) * 0.55 + vp(vec2(u * 19.0, 12.7), 19.0) * 0.3 + vp(vec2(u * 47.0, 14.3), 47.0) * 0.15;',
+    '  return (0.009 + 0.034 * n * n) * mix(0.6, 1.5, fl) + 0.0012 * vp(vec2(u * 500.0, 15.0), 500.0); }',
+    'float H3(float u, float fl){ float n = vp(vec2(u * 13.0, 21.1), 13.0) * 0.6 + vp(vec2(u * 37.0, 23.9), 37.0) * 0.4;',
+    '  return (0.003 + 0.01 * n) * (0.55 + 0.45 * fl) + 0.001 * vp(vec2(u * 1300.0, 25.0), 1300.0); }',
+    // (a face's light: its normal toward the eye, turned along the skyline by its slope and the facets (s), tilted up (up))
+    'float faceLit(vec2 dh, float s, float up){ vec2 tg = vec2(-dh.y, dh.x); vec3 n = normalize(vec3(-dh.x, 0.0, -dh.y) - vec3(tg.x, 0.0, tg.y) * clamp(s, -3.0, 3.0) + vec3(0.0, up, 0.0)); return clamp(dot(n, oSun), 0.0, 1.0); }',
+    'void main(){ vec3 d = normalize(vD); float lh = max(length(d.xz), 1e-4), t = d.y / lh, u = atan(d.z, d.x) / 6.2831853;',
+    '  vec2 dh = d.xz / lh; float px = max(fwidth(t), 1e-5); vec3 hz = horz(dh);',
+    '  float e = max(d.y, 0.0), s = max(dot(d, oSun), 0.0);',
+    '  vec3 c = mix(hz, vec3(0.19, 0.41, 0.83), 1.0 - exp(-e * 4.5)); c = mix(c, vec3(1.0, 0.96, 0.88), pow(s, 8.0) * 0.3); c += vec3(1.0, 0.9, 0.7) * pow(s, 900.0) * 3.0;',
+    // (the clouds overhead, in perspective: small and flat toward the horizon, the side toward the sun brighter)
+    '  if (d.y > 0.05) { vec2 p = d.xz / d.y * 0.9 + vec2(3.0, 7.0); float n = vn(p) * 0.5 + vn(p * 2.2 + 4.1) * 0.3 + vn(p * 5.3 + 9.7) * 0.2;',
+    '    float cov = smoothstep(0.3, 0.75, vn(p * 0.23 + 1.7)), k = smoothstep(0.58, 0.72, n * (0.75 + 0.45 * cov)) * smoothstep(0.05, 0.14, d.y);',
+    '    float lt = clamp((vn(p * 2.2 + 4.1 + oSun.xz * 0.25) - vn(p * 2.2 + 4.1)) * 3.0 + 0.6, 0.0, 1.0);',
+    '    vec3 cc = mix(vec3(0.72, 0.76, 0.84), vec3(1.0, 0.99, 0.96), clamp(lt * 0.7 + smoothstep(0.62, 0.85, n) * 0.5, 0.0, 1.0));',
+    '    c = mix(c, mix(cc, hz, 0.4 * (1.0 - smoothstep(0.05, 0.25, d.y))), k * 0.9); }',
+    // (heaps of cumulus far off over the ridges, seen from the side: flat bases, billowing tops; lit where they face the sun, grey
+    // where they do not, a bright rim against the sun; hazy. Drawn before the mountains: the summits stand in front of them)
+    '  float cb = 0.024 + 0.016 * vp(vec2(u * 9.0, 41.0), 9.0), cm = vp(vec2(u * 17.0, 43.0), 17.0) * 0.7 + vp(vec2(u * 43.0, 44.0), 43.0) * 0.3;',
+    '  float ch = max(cm - 0.5, 0.0) * 0.17 * (0.75 + 0.5 * vp(vec2(u * 110.0, 45.0), 110.0)), y = (t - cb) / max(ch, 1e-4);',
+    '  if (ch > 0.002 && y > 0.0 && y < 1.4) { float bl = vp(vec2(u * 460.0, t * 80.0), 460.0) * 0.6 + vp(vec2(u * 1150.0, t * 190.0), 1150.0) * 0.4, ed = 1.0 - y + (bl - 0.5) * 0.55;',
+    '    float k = smoothstep(0.0, 0.1, ed) * smoothstep(0.0, 0.05, y), sf = dot(dh, oSunH);',
+    '    float lt = clamp(0.3 + 0.5 * y + (bl - 0.5) * 0.9 - 0.3 * sf, 0.0, 1.0) + (1.0 - smoothstep(0.0, 0.25, ed)) * max(sf, 0.0) * 0.6;',
+    '    c = mix(c, mix(mix(vec3(0.62, 0.67, 0.76), vec3(1.0, 0.98, 0.94), lt), hz, 0.3), k * 0.92); }',
+    '  float fl = smoothstep(0.08, 0.7, abs(dh.y)), h1 = H1(u);',
+    // (the limestone: lit and shaded faces under each summit (the shade lit by the blue sky), ribs and gullies, a few ledges, the summer's
+    // last snow in the high gullies and on the summits, scree, dwarf pine, forest at its foot; darker than the sky but for its snow)
+    '  if (t < h1 + px) { float ee = 0.0012, sl = (H1(u + ee) - H1(u - ee)) / (2.0 * ee), hn = clamp((h1 - t) / max(h1 - 0.004, 0.01), 0.0, 1.0);',
+    '    float g = vp(vec2(u * 520.0, t * 70.0), 520.0) * 0.55 + vp(vec2(u * 1300.0, t * 160.0), 1300.0) * 0.3 + vp(vec2(u * 3100.0, t * 380.0), 3100.0) * 0.15;',
+    // (the ribs and the gullies down the faces: ridged noise stretched downward and bent a little, two sizes; across it, how a rib's
+    // sides turn: sharp at its crest, one side in the sun, the other in the shade)
+    '    vec2 q1 = vec2(u * 260.0 + (h1 - t) * 70.0 * (vp(vec2(u * 30.0, 1.0), 30.0) - 0.5), t * 9.0), q2 = vec2(u * 780.0, t * 26.0);',
+    '    float r1 = rdg(vp(q1, 260.0)), r2 = rdg(vp(q2 + vec2(r1 * 2.0, 0.0), 780.0));',
+    '    float fac = (rdg(vp(q1 + vec2(0.2, 0.0), 260.0)) - r1) * 5.0 + (rdg(vp(q2 + vec2(r1 * 2.0 + 0.2, 0.0), 780.0)) - r2) * 2.5;',
+    '    float gl = 1.0 - r1 * 0.65 - r2 * 0.35, ledge = smoothstep(0.86, 0.97, fract(t * 60.0 + r1 * 2.0)) * smoothstep(0.55, 0.75, r2) * 0.6;',
+    '    float lit = faceLit(dh, sl * (1.0 - smoothstep(0.0, 0.3, hn)) + fac, 0.32 + 0.5 * (g - 0.5) + ledge);',
+    '    vec3 col = mix(vec3(0.27, 0.29, 0.32), vec3(0.47, 0.46, 0.43), smoothstep(0.3, 0.7, g));',
+    '    float tl = 0.6 + 0.12 * vp(vec2(u * 160.0, 6.0), 160.0) + 0.05 * vp(vec2(u * 800.0, 8.0), 800.0) - 0.16 * (r1 - 0.5);',   // (the tree line: higher up the ribs, lower in the gullies)
+    '    float sc = smoothstep(tl - 0.24, tl - 0.1, hn) * smoothstep(0.5, 0.62, vp(vec2(u * 240.0, 4.0), 240.0) + 0.35 * (hn - tl + 0.24));',
+    '    col = mix(col, vec3(0.5, 0.49, 0.46), sc * 0.7); col = mix(col, vec3(0.14, 0.19, 0.12), smoothstep(tl - 0.08, tl - 0.03, hn) * 0.7);',
+    '    col = mix(col, vec3(0.09, 0.14, 0.1) * (0.85 + 0.3 * g), smoothstep(tl, tl + 0.03, hn));',
+    '    float sn = smoothstep(0.0, 0.004, t - (0.052 + 0.012 * vp(vec2(u * 40.0, 3.0), 40.0))) * smoothstep(0.56, 0.66, gl + (0.5 - g) * 0.25);',
+    '    sn = clamp(sn + (1.0 - smoothstep(0.0, 0.07, hn)) * smoothstep(0.07, 0.09, h1) * smoothstep(0.4, 0.52, gl), 0.0, 1.0) * (1.0 - smoothstep(0.24, 0.38, hn));',
+    '    col = mix(col, vec3(0.92, 0.94, 0.97), sn) * (vec3(0.2, 0.23, 0.29) + vec3(0.78, 0.74, 0.68) * lit);',
+    '    c = mix(c, mix(col, hz, 0.2 + 0.25 * hn), 1.0 - smoothstep(h1 - px, h1 + px, t)); }',
+    // (the forested ridges: their slopes lit by their lie, clearings of meadow on them; the near wooded hills)
+    '  float h2 = H2(u, fl);',
+    '  if (t < h2 + px) { float ee = 0.002, sl = (H2(u + ee, fl) - H2(u - ee, fl)) / (2.0 * ee), hn = clamp((h2 - t) / h2, 0.0, 1.0);',
+    '    float g = vp(vec2(u * 1500.0, t * 600.0), 1500.0), lit = faceLit(dh, sl * (1.0 - smoothstep(0.0, 0.5, hn)) + (g - 0.5) * 0.9, 0.45);',
+    '    vec3 col = mix(vec3(0.09, 0.15, 0.11), vec3(0.16, 0.25, 0.16), g);',
+    '    col = mix(col, vec3(0.22, 0.31, 0.16), smoothstep(0.68, 0.72, vp(vec2(u * 300.0, t * 420.0), 300.0) * 0.6 + vp(vec2(u * 37.0, 2.0), 37.0) * 0.4) * smoothstep(0.1, 0.3, hn)) * (0.5 + 0.7 * lit);',
+    '    c = mix(c, mix(col, hz, 0.34), 1.0 - smoothstep(h2 - px, h2 + px, t)); }',
+    '  float h3 = H3(u, fl);',
+    '  if (t < h3 + px) { float g = vp(vec2(u * 2600.0, t * 1100.0), 2600.0), lit = faceLit(dh, (g - 0.5) * 1.4, 0.45);',
+    '    vec3 col = mix(vec3(0.08, 0.15, 0.09), vec3(0.18, 0.28, 0.15), g) * (0.6 + 0.6 * lit);',
+    '    c = mix(c, mix(col, hz, 0.18), 1.0 - smoothstep(h3 - px, h3 + px, t)); }',
+    '  if (t < 0.0) c = mix(vec3(0.31, 0.42, 0.18), hz, 0.58);',   // (under the horizon, beyond the ground: the valley's floor far off)
+    '  gl_FragColor = outC(c); }'];
   function buildOutside() {
-    const { x0, x1, z0, z1 } = ROOM;
-    // the sky: blue overhead, pale at the horizon, the sun's glow, fair-weather clouds
+    const { x0, x1, z0, z1 } = ROOM, GL = outGL();
     const sky = new THREE.Mesh(new THREE.SphereGeometry(470, 32, 16), new THREE.ShaderMaterial({
-      uniforms: { uSun: { value: SUN } }, side: THREE.BackSide, depthWrite: false,
+      side: THREE.BackSide, depthWrite: false, extensions: { derivatives: true },
       vertexShader: 'varying vec3 vD; void main(){ vD = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-      fragmentShader: 'uniform vec3 uSun; varying vec3 vD;'
-        + ' float hs(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }'
-        + ' float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(hs(i), hs(i + vec2(1.0, 0.0)), f.x), mix(hs(i + vec2(0.0, 1.0)), hs(i + vec2(1.0, 1.0)), f.x), f.y); }'
-        + ' void main(){ vec3 d = normalize(vD); float y = max(d.y, 0.0), s = max(dot(d, uSun), 0.0);'
-        + '  vec3 c = mix(vec3(0.84, 0.9, 0.95), vec3(0.27, 0.52, 0.86), pow(y, 0.5));'
-        + '  if (d.y > 0.0) { vec2 p = d.xz / (d.y + 0.1) * 1.3; float n = vn(p) * 0.55 + vn(p * 2.3 + 4.1) * 0.3 + vn(p * 5.1 + 9.7) * 0.15;'
-        + '   float k = smoothstep(0.52, 0.78, n) * smoothstep(0.0, 0.1, d.y); c = mix(c, vec3(0.97, 0.98, 1.0) - (1.0 - smoothstep(0.5, 0.9, n)) * 0.12, k * 0.9); }'
-        + '  c += vec3(1.0, 0.9, 0.7) * (pow(s, 900.0) * 3.0 + pow(s, 14.0) * 0.22); if (d.y < 0.0) c = vec3(0.76, 0.82, 0.86);'
-        + '  gl_FragColor = vec4(mix(c, vec3(dot(c, vec3(0.3333))), 0.15) * ' + OUTK.toFixed(2) + ', 1.0); }' }));
+      fragmentShader: [SKY_FS[0], GL].concat(SKY_FS.slice(1)).join('\n') }));
     sky.renderOrder = 10; sky.frustumCulled = false; scene.add(sky);   // (drawn after the room: only where nothing else is)
-    // the ground: meadows (a mottled green), a gravel strip round the workshop, the road through both doors (wide by the doors),
-    // its white lines, the red and white kerbs along it (the menu's), the haze of the distance
-    const nz = canvasTex(256, 256, (g, w, h) => { const R = Core.rng(31); g.fillStyle = 'rgb(128,128,128)'; g.fillRect(0, 0, w, h);
-      for (let i = 0; i < 2600; i++) { const r = 2 + R() * 9; g.fillStyle = 'rgba(' + (R() * 255 | 0) + ',' + (R() * 255 | 0) + ',' + (R() * 255 | 0) + ',0.35)'; g.beginPath(); g.arc(R() * w, R() * h, r, 0, TAU); g.fill(); }
-      for (let i = 0; i < 9000; i++) { g.fillStyle = R() < 0.5 ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.25)'; g.fillRect(R() * w, R() * h, 1, 1); } }, true);
+    // what stands out there, in one mesh: the forest, the posts and the fences, the transporter, the paddock, the valley's own things
+    const og = new World.GB(), unlit = [], TS = [], HL = [];   // (unlit: glass; TS: the trees' shadows [x, z, h, r, a spruce]; HL: the far buildings' [footprint, h])
+    const R = Core.rng(5150), Rt = Core.rng(77); for (let i = 0; i < 385; i++) R();   // (the old mountain rings' draws: the same woods)
+    const WT = [0.93, 0.94, 0.95], GR = [0.28, 0.3, 0.33], DK = [0.08, 0.08, 0.09], NV = [0.1, 0.13, 0.25], GD = [0.93, 0.71, 0.2], CY = [0.3, 0.72, 0.93];
+    const glass = (f) => { const a = og.P.length / 3; f(); unlit.push([a, og.P.length / 3]); };
+    const rp = (x, z, rot) => { const c = Math.cos(rot), s = Math.sin(rot); return (lx, lz) => [x + lx * c - lz * s, z + lx * s + lz * c]; };   // (a point in a building's own frame)
+    // the forest: Norway spruce (five drooping tiers, the tips lighter, the undersides dark), a few larches, beech in round clumps at the
+    // woods' edges; far ones simpler. Only in the wedges beside the doors' views: the valley open through the doors, the sky through the windows
+    const trunk = (x, z, r, h, c) => { for (let k = 0; k < 3; k++) { const a0 = k / 3 * TAU + x, a1 = a0 + TAU / 3, P = (a, y) => [x + Math.cos(a) * r, y, z + Math.sin(a) * r]; og.quadO(P(a0, 0), P(a1, 0), P(a1, h), P(a0, h), c, [x, h / 2, z]); } };
+    const tier = (x, z, y0, y1, r, n, rot, cb, ct, under) => {   // n drooping tips round an inner ring; the underside from the tips in
+      const ap = [x, y1, z], rim = [], m = 2 * n, cm = [(cb[0] + ct[0]) / 2, (cb[1] + ct[1]) / 2, (cb[2] + ct[2]) / 2], inn = [x, y0 + (y1 - y0) * 0.3, z];
+      for (let k = 0; k < m; k++) { const a = rot + k / m * TAU, tip = !(k & 1), rr = tip ? r : r * 0.55; rim.push([x + Math.cos(a) * rr, tip ? y0 - r * 0.12 : y0 + (y1 - y0) * 0.14, z + Math.sin(a) * rr]); }
+      for (let k = 0; k < m; k++) og.triO(rim[k], rim[(k + 1) % m], ap, k & 1 ? cm : ct, inn, k & 1 ? ct : cm, cb);
+      if (under) { const c0 = [x, y0 + (y1 - y0) * 0.1, z], cu = [cb[0] * 0.7, cb[1] * 0.7, cb[2] * 0.7]; for (let k = 0; k < m; k += 2) og.triO(rim[k], rim[(k + 2) % m], c0, cu, [x, y1 + 9, z]); } };
+    const spruce = (x, z, h, near, larch) => { const r = h * (larch ? 0.13 : 0.16), rot = Rt() * TAU, dk = 0.85 + Rt() * 0.3, nt = near ? 5 : 3;
+      const cb = (larch ? [0.24, 0.33, 0.13] : [0.07, 0.15, 0.1]).map(v => v * dk), ct = (larch ? [0.42, 0.55, 0.24] : [0.13, 0.25, 0.15]).map(v => v * dk);
+      trunk(x, z, h * 0.025, h * 0.3, [0.3, 0.22, 0.15]);
+      for (let t = 0; t < nt; t++) { const f = t / nt, y0 = h * (0.1 + 0.8 * f); tier(x, z, y0, t === nt - 1 ? h : y0 + h * (near ? 0.3 : 0.42), r * (1.04 - f), near ? 6 : 5, rot + t * 0.6, cb, ct, near); }
+      TS.push([x, z, h, r, 1]); };
+    const ico = new THREE.IcosahedronGeometry(1, 0), IP = ico.attributes.position;   // (non-indexed: three vertices a face)
+    const clump = (cx, cy, cz, r, base) => { for (let i = 0; i < IP.count; i += 3) { const v = (j) => [cx + IP.getX(j) * r, cy + IP.getY(j) * r * 0.85, cz + IP.getZ(j) * r], e = (0.9 + Rt() * 0.2) * (0.82 + 0.18 * (IP.getY(i) + IP.getY(i + 1) + IP.getY(i + 2) + 3) / 6);
+      og.triO(v(i), v(i + 1), v(i + 2), [base[0] * e, base[1] * e, base[2] * e], [cx, cy, cz]); } };
+    const broad = (x, z, h, n) => { const dk = 0.88 + Rt() * 0.24, base = [0.3 * dk, 0.46 * dk, 0.18 * dk], r = h * 0.26;
+      trunk(x, z, h * 0.04, h * 0.55, [0.36, 0.3, 0.24]);
+      clump(x, h * 0.74, z, r * 1.1, base);
+      for (let b = 0; b < (n || 3); b++) { const a = b / (n || 3) * TAU + Rt(); clump(x + Math.cos(a) * r * 0.75, h * (0.56 + Rt() * 0.12), z + Math.sin(a) * r * 0.75, r * (0.8 + Rt() * 0.15), base); }
+      TS.push([x, z, h, r * 1.5, 0]); };
+    // (kept clear: the doors' views down the valley, the windows' sky, round the paddock's units)
+    const LM = [[-29, 15.7, 13], [29, -14, 13]];
+    const clear = (x, z) => (x > x0 - 4 && x < x1 + 4 && z > z0 - 4 && z < z1 + 4) || (Math.abs(x) > x1 && Math.abs(z) < Math.max(10, 6 + 0.17 * Math.abs(x))) || Math.abs(z) > 0.45 * Math.abs(x) || LM.some(([lx, lz, r]) => Math.hypot(x - lx, z - lz) < r);
+    for (let i = 0, nT = 0; i < 3000 && nT < 520; i++) {
+      const a = R() * TAU, r = 16 + Math.pow(R(), 0.85) * 76, x = Math.cos(a) * r, z = Math.sin(a) * r; if (clear(x, z)) continue;
+      const wood = Math.sin(x * 0.045 + 1.3) * Math.sin(z * 0.055 + 0.4) + 0.7 * Math.sin(x * 0.012 - z * 0.016 + 2); if (wood < -0.2 && R() < 0.85) continue;   // (meadows between the woods)
+      const h = (7 + R() * 9) * (r > 90 ? 1.25 : 1); if (wood > 0.3 || R() < 0.5) spruce(x, z, h, r < 45, Rt() < 0.15); else broad(x, z, h, r < 45 ? 3 : 2); nT++;
+    }
+    for (const sd of [-1, 1]) for (const sz of [-1, 1]) { const x = sd * (30 + R() * 8), z = sz * (12 + R() * 4); if (!LM.some(([lx, lz, r]) => Math.hypot(x - lx, z - lz) < r)) broad(x, z, 6 + R() * 4, 3); }   // (by the road)
+    // by the road: a lamp post each side of each apron, a fence of weathered wood along the meadows (not where the paddock is), white
+    // marker posts along the bend; the team's flagpoles
+    const FW = [0.46, 0.4, 0.33];
+    for (const sd of [-1, 1]) {
+      for (const sz of [-1, 1]) { const X = sd * 24, Z = sz * 7.4; World.box(og, X, 0, Z, 0.16, 7.2, 0.16, 0, GR, GR); obox(og, [X, 7.1, Z], [X, 7.25, Z - sz * 1.4], 0.1, 0.1, GR); World.box(og, X, 6.98, Z - sz * 1.4, 0.5, 0.14, 0.3, 0, DK, DK); }
+      const Z = sd * 8.6;
+      for (let x = 13; x < 37; x += 2.5) World.box(og, sd * x, 0, Z, 0.11, 1.0, 0.11, 0, FW, [0.38, 0.33, 0.27]);
+      for (const y of [0.45, 0.85]) obox(og, [sd * 13, y, Z], [sd * 35.5, y, Z], 0.06, 0.08, FW);
+      for (const xs of [48, 72, 96, 120]) { const b = xs - 36, zc = 0.011 * b * b, k = Math.sqrt(1 + 0.022 * 0.022 * b * b) * 3.7;
+        for (const e of [-1, 1]) { World.box(og, sd * xs, 0, zc + e * k, 0.12, 0.8, 0.12, 0, WT, WT); World.box(og, sd * xs, 0.8, zc + e * k, 0.13, 0.22, 0.13, 0, DK, DK); } }
+    }
+    const FLG = [[-13.5, NV], [-15.5, GD], [-17.5, CY]];
+    for (const [x] of FLG) { World.box(og, x, 0, 8.4, 0.1, 8, 0.1, 0, WT, WT); World.box(og, x, 8, 8.4, 0.16, 0.1, 0.16, 0, GR, GR); }
+    // the transporter on its pad by the left door: a navy cab (dark glass, the sky in its top, mirrors), the white box with the team's
+    // navy band and gold and cyan pinstripes (no marks), black arches, skirts and mud flaps, its wheels
+    { const X0 = -21.8, Z = -4.7, L = 9.2, Wd = 2.5, B = X0 + 2.3, Gl = [0.13, 0.17, 0.22], Sk = [0.62, 0.72, 0.84];
+      World.box(og, B + L / 2, 0.75, Z, L, 3.2, Wd, 0, WT, [0.85, 0.86, 0.88]);
+      for (const sd of [-1, 1]) { const zz = Z + sd * (Wd / 2 + 0.006);
+        obox(og, [B + 0.03, 1.2, zz], [B + L - 0.03, 1.2, zz], 0.012, 0.9, NV); obox(og, [B + 0.03, 1.73, zz], [B + L - 0.03, 1.73, zz], 0.012, 0.07, GD); obox(og, [B + 0.03, 1.84, zz], [B + L - 0.03, 1.84, zz], 0.012, 0.035, CY); }
+      obox(og, [B + L + 0.01, 0.78, Z], [B + L + 0.01, 3.92, Z], 0.035, 0.02, [0.55, 0.56, 0.58]);   // (the rear doors' seam)
+      obox(og, [B + L + 0.006, 1.2, Z - Wd / 2 + 0.03], [B + L + 0.006, 1.2, Z + Wd / 2 - 0.03], 0.012, 0.9, NV);
+      World.box(og, X0 + 1.2, 0.6, Z, 2.2, 2.3, Wd - 0.04, 0, NV, NV);   // (the cab, its roof deflector up to the box)
+      obox(og, [X0 + 0.5, 3.05, Z], [B + 0.02, 3.75, Z], Wd - 0.14, 0.3, NV); World.box(og, X0 + 1.4, 2.9, Z, 1.8, 0.2, Wd - 0.14, 0, NV, NV);
+      glass(() => { World.box(og, X0 + 0.07, 1.72, Z, 0.06, 0.95, Wd - 0.34, 0, Gl, Gl); World.box(og, X0 + 0.04, 2.58, Z, 0.04, 0.09, Wd - 0.34, 0, Sk, Sk);
+        for (const sd of [-1, 1]) { World.box(og, X0 + 0.75, 1.75, Z + sd * (Wd / 2 - 0.01), 1.0, 0.85, 0.04, 0, Gl, Gl); World.box(og, X0 + 0.75, 2.52, Z + sd * (Wd / 2 - 0.005), 1.0, 0.08, 0.04, 0, Sk, Sk); } });
+      World.box(og, X0 - 0.02, 0.62, Z, 0.08, 0.7, Wd - 0.3, 0, DK, DK);   // (the grille and the bumper)
+      for (const sd of [-1, 1]) { obox(og, [X0 + 0.15, 2.2, Z + sd * (Wd / 2)], [X0 - 0.05, 2.25, Z + sd * (Wd / 2 + 0.32)], 0.04, 0.04, DK); World.box(og, X0 - 0.05, 1.85, Z + sd * (Wd / 2 + 0.36), 0.08, 0.42, 0.18, 0, DK, DK); }
+      World.box(og, B + L / 2, 0.32, Z, L, 0.45, Wd - 0.5, 0, DK, DK);   // (the chassis)
+      for (const wx of [X0 + 1.2, B + L - 2.1, B + L - 0.8]) for (const sd of [-1, 1]) cylA(og, [wx, 0.5, Z + sd * (Wd / 2 - 0.16)], 'z', 0.5, 0.34, 10, DK, [0.5, 0.52, 0.55]);
+      for (const sd of [-1, 1]) { const zz = Z + sd * (Wd / 2 - 0.02);
+        World.box(og, B + L - 1.45, 0.98, zz, 2.6, 0.12, 0.12, 0, DK, DK); World.box(og, X0 + 1.2, 1.0, zz + sd * 0.02, 1.2, 0.1, 0.1, 0, DK, DK);   // (the arches)
+        World.box(og, B + 2.4, 0.34, zz, 4.6, 0.42, 0.05, 0, DK, DK);   // (the skirt between the axles)
+        World.box(og, B + L - 0.15, 0.12, zz - sd * 0.1, 0.03, 0.5, 0.38, 0, DK, DK); World.box(og, X0 + 2.0, 0.12, zz - sd * 0.1, 0.03, 0.45, 0.36, 0, DK, DK); } }   // (mud flaps)
+    // the paddock: the team's hospitality unit across the left apron (two storeys: navy below, a glass band above, the gold line between),
+    // three neighbours' garage units across the right one (grey, their doors rolled down)
+    { const xa = -36, xb = -22, za = 13, zb = 18.5, cx = (xa + xb) / 2, cz = (za + zb) / 2, L = xb - xa, D = zb - za;
+      World.box(og, cx, 0, cz, L, 3.0, D, 0, NV, NV); World.box(og, cx, 3.0, cz, L + 0.08, 0.16, D + 0.08, 0, GD, GD);
+      glass(() => { World.box(og, cx, 3.16, cz, L - 0.04, 2.5, D - 0.04, 0, [0.42, 0.52, 0.64], [0.42, 0.52, 0.64]); World.box(og, cx, 5.2, cz, L, 0.5, D, 0, [0.66, 0.75, 0.86], [0.66, 0.75, 0.86]);
+        for (let i = 0; i < 4; i++) World.box(og, xa + 1.5 + i * 2.2, 0.0, za - 0.03, 1.6, 2.4, 0.06, 0, [0.12, 0.15, 0.2], [0.12, 0.15, 0.2]); });
+      for (let x = xa; x <= xb + 0.01; x += L / 8) obox(og, [x, 3.16, za - 0.02], [x, 5.7, za - 0.02], 0.08, 0.08, DK);   // (the mullions)
+      World.box(og, cx, 5.7, cz, L + 0.2, 0.45, D + 0.2, 0, [0.2, 0.22, 0.26], [0.3, 0.31, 0.33]);   // (the flat roof, its parapet)
+      World.box(og, xb - 2.6, 0, za - 0.03, 1.2, 2.3, 0.06, 0, DK, DK); World.box(og, xb - 2.6, 2.55, za - 0.8, 2.6, 0.12, 1.6, 0, [0.22, 0.24, 0.28], [0.3, 0.32, 0.36]);   // (the door, its canopy)
+      for (let i = 0; i < 3; i++) { const cx2 = 23 + i * 6, LG = [0.72, 0.74, 0.77];
+        World.box(og, cx2, 0, -14, 5.96, 4.4, 6, 0, LG, [0.5, 0.52, 0.55]);
+        World.box(og, cx2, 0, -10.97, 4.2, 3.7, 0.06, 0, [0.6, 0.63, 0.68], [0.6, 0.63, 0.68]); for (let k = 1; k < 9; k++) obox(og, [cx2 - 2.08, k * 0.41, -10.93], [cx2 + 2.08, k * 0.41, -10.93], 0.02, 0.035, [0.48, 0.5, 0.55]);
+        World.box(og, cx2, 3.7, -10.95, 4.5, 0.22, 0.1, 0, [0.36, 0.38, 0.42], [0.36, 0.38, 0.42]); }
+      World.box(og, 29, 4.4, -14, 18.3, 0.3, 6.3, 0, [0.22, 0.23, 0.26], [0.36, 0.37, 0.39]); }
+    // the valley's own things where the doors look out: a double hayrack (toplar) in the meadow, an alpine farmhouse with its orchard, a
+    // white church on a knoll and a few houses at its foot (generic, unnamed). A gable roof: two slopes, the eaves' course darker, the ends
+    const roof = (cx, cy, cz, L, D, h, rot, col, end) => { const c = Math.cos(rot), s = Math.sin(rot), P = (lx, ly, lz) => [cx + lx * c - lz * s, cy + ly, cz + lx * s + lz * c], inn = [cx, cy + h * 0.3, cz];
+      for (const sd of [-1, 1]) for (const [t0, t1, f] of [[0, 0.22, 0.8], [0.22, 1, sd > 0 ? 1 : 0.93]]) og.quadO(P(-L / 2, h * t0, sd * D / 2 * (1 - t0)), P(L / 2, h * t0, sd * D / 2 * (1 - t0)), P(L / 2, h * t1, sd * D / 2 * (1 - t1)), P(-L / 2, h * t1, sd * D / 2 * (1 - t1)), col.map(v => v * f), inn);
+      og.triO(P(-L / 2, 0, -D / 2), P(-L / 2, 0, D / 2), P(-L / 2, h, 0), end || col, inn); og.triO(P(L / 2, 0, -D / 2), P(L / 2, 0, D / 2), P(L / 2, h, 0), end || col, inn); };
+    const hull = (x, z, L, D, rot, h) => { const P = rp(x, z, rot); HL.push([[P(-L / 2, -D / 2), P(L / 2, -D / 2), P(L / 2, D / 2), P(-L / 2, D / 2)], h]); };
+    const WD = [0.4, 0.29, 0.19], WD2 = [0.5, 0.37, 0.24], WHT = [0.93, 0.92, 0.88], DKR = [0.32, 0.28, 0.27], TILE = [0.62, 0.26, 0.18], DW = [0.14, 0.15, 0.18];
+    { const x = 112, z = -13, rot = Math.PI / 2 - 0.12, bays = 4, L = bays * 3.2, P = rp(x, z, rot);   // (the toplar: two racks of laths under one roof, a loft between, hay drying in most bays)
+      for (const lz of [-2, 2]) { const sg = Math.sign(lz), [bx, bz] = P(0, lz - 0.5 * sg);
+        World.box(og, bx, 0.3, bz, L, 3.9, 0.1, rot, [0.15, 0.12, 0.1], [0.15, 0.12, 0.1]);   // (the dark inside, seen between the laths)
+        for (let i = 0; i <= bays; i++) { const [px, pz] = P(-L / 2 + i * 3.2, lz); World.box(og, px, 0, pz, 0.34, 5.6, 0.34, rot, WD, WD); }
+        for (let k = 0; k < 8; k++) { const [lx, lz2] = P(0, lz - 0.2 * sg); World.box(og, lx, 0.75 + k * 0.48, lz2, L + 0.6, 0.08, 0.1, rot, WD2, WD2); }
+        for (let i = 0; i < bays; i++) if (i !== 1 || lz > 0) { const [hx, hz] = P(-L / 2 + 1.6 + i * 3.2, lz - 0.33 * sg), hh = 1.9 + ((i * 7 + lz) & 3) * 0.48, hc = i & 1 ? [0.6, 0.55, 0.31] : [0.53, 0.52, 0.29];
+          World.box(og, hx, 0.62, hz, 2.95, hh, 0.3, rot, hc, hc); } }
+      World.box(og, x, 4.1, z, L + 0.3, 0.18, 4.0, rot, WD, WD); roof(x, 5.6, z, L + 2, 6, 2.5, rot, [0.24, 0.2, 0.18], [0.15, 0.12, 0.1]); hull(x, z, L, 4.4, rot, 6.5); }
+    { const x = 172, z = 21, rot = Math.PI / 2 + 0.2, L = 11, D = 9, P = rp(x, z, rot), TB = [0.48, 0.32, 0.2];   // (the farmhouse: masonry below, timber above, a balcony of flowers toward the workshop)
+      World.box(og, x, 0, z, L, 3.0, D, rot, WHT, WHT); World.box(og, x, 3.0, z, L, 2.5, D, rot, TB, TB); roof(x, 5.5, z, L + 1.8, D + 2, 3.6, rot, DKR, TB);
+      const [bx, bz] = P(0, D / 2 + 0.55); World.box(og, bx, 3.0, bz, L * 0.85, 1.0, 1.1, rot, [0.4, 0.27, 0.16], [0.4, 0.27, 0.16]); World.box(og, bx, 4.0, bz, L * 0.85, 0.24, 1.14, rot, [0.78, 0.22, 0.18], [0.7, 0.3, 0.2]);
+      for (const i of [-1, 0, 1]) { const [wx, wz] = P(i * L * 0.3, D / 2 + 0.03); World.box(og, wx, 1.0, wz, 1.0, 1.1, 0.08, rot, DW, DW); }
+      const [cx, cz] = P(L * 0.25, -D * 0.2); World.box(og, cx, 6.5, cz, 0.6, 2.6, 0.6, rot, [0.6, 0.58, 0.55], [0.2, 0.19, 0.19]); hull(x, z, L, D, rot, 7.3);
+      for (let i = 0; i < 6; i++) { const [tx, tz] = P(-6 + (i % 3) * 5, D / 2 + 6 + (i / 3 | 0) * 5), b = [0.26, 0.42, 0.17]; trunk(tx, tz, 0.12, 1.6, WD); clump(tx, 2.6, tz, 1.5, b); clump(tx + 0.6, 2.2, tz - 0.5, 1.1, b); TS.push([tx, tz, 3.8, 1.8, 0]); } }
+    { const x = -310, z = 30, KH = 6, KR = 55, G0 = [0.34, 0.48, 0.21];   // (the knoll, the church on it: its tower and spire toward the workshop; houses at its foot)
+      const ring = (r) => KH * Math.pow(Math.max(0, 1 - (r / KR) * (r / KR)), 1.6);
+      for (let i = 0; i < 4; i++) { const r0 = KR * i / 4, r1 = KR * (i + 1) / 4; for (let k = 0; k < 16; k++) { const a0 = k / 16 * TAU, a1 = (k + 1) / 16 * TAU, Q = (r, a) => [x + Math.cos(a) * r, ring(r), z + Math.sin(a) * r];
+        if (i === 0) og.triO([x, KH, z], Q(r1, a0), Q(r1, a1), G0, [x, -10, z]); else og.quadO(Q(r0, a0), Q(r1, a0), Q(r1, a1), Q(r0, a1), G0, [x, -10, z]); } }
+      const cy = KH - 0.4; World.box(og, x, cy - 1, z, 12, 7, 7, 0, WHT, WHT); roof(x, cy + 6, z, 12.6, 7.6, 3.6, 0, TILE, WHT);
+      World.box(og, x - 6.6, cy - 1, z, 2.6, 5.5, 4.4, 0, WHT, TILE); World.box(og, x + 7.4, cy - 1, z, 3.6, 13.5, 3.6, 0, WHT, WHT); World.cone(og, x + 7.4, cy + 12.5, z, 2.7, 5.5, 4, [0.3, 0.31, 0.34], [0.24, 0.25, 0.27], Math.PI / 4);
+      World.box(og, x + 9.23, cy + 9.3, z, 0.06, 1.6, 1.2, 0, DK, DK); World.box(og, x + 7.4, cy + 9.3, z - 1.83, 1.2, 1.6, 0.06, 0, DK, DK);   // (the belfry's openings)
+      for (const [hx, hz, r, rf] of [[-292, 58, 0.3, TILE], [-326, 4, -0.2, DKR], [-282, 14, 0.1, DKR], [-338, 52, 0.5, TILE]]) { World.box(og, hx, 0, hz, 9, 5, 7, r, WHT, WHT); roof(hx, 5, hz, 10, 8.4, 3.4, r, rf.map(v => v * 0.8), WHT);
+        const Ph = rp(hx, hz, r); for (const i of [-1, 1]) for (const yy of [1.0, 3.0]) { const [wx, wz] = Ph(i * 2.4, 3.53); World.box(og, wx, yy, wz, 1.0, 1.0, 0.08, r, DW, DW); } } }
+    ico.dispose(); bakeOut(og, unlit);
+    // the ground: meadows near the workshop, fields further out (strips of a grid turned 30 deg, their edges wandering: meadow, cut hay in
+    // mowing stripes, lush grass, ripe hay, pasture; darker headlands), a gravel strip round the walls; the concrete apron by each door (its
+    // joints, a drain, the bay's yellow lines carried out), the road narrowing and away round a bend (worn tracks, white edge lines, the
+    // menu's kerbs along its straight), the paddock's asphalt and the truck's gravel pad; the shadows; the haze toward the horizon
+    const cot = Math.sqrt(1 - SUN.y * SUN.y) / SUN.y, sx = -SUNH.x * cot, sz = -SUNH.y * cot;   // (a metre of height's shadow along x and z)
+    const shT = canvasTex(512, 512, (g, w) => { const k = w / 384, X = (x) => (x / 384 + 0.5) * w, Y = (z) => (0.5 - z / 384) * w;   // (384 m square: 0.75 m a pixel)
+      g.fillStyle = '#000'; g.fillRect(0, 0, w, w);
+      const blob = (x, z, r, a) => { const gr = g.createRadialGradient(X(x), Y(z), 0, X(x), Y(z), r * k); gr.addColorStop(0, 'rgba(255,255,255,' + a + ')'); gr.addColorStop(0.6, 'rgba(255,255,255,' + a * 0.8 + ')'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.beginPath(); g.arc(X(x), Y(z), r * k, 0, TAU); g.fill(); };
+      for (const [x, z, h, r, sp] of TS) { blob(x, z, Math.max(0.6, r * 0.35), 0.5);   // (round the trunk; a spruce's cone: a wedge of blobs, a beech's crown: one long blob)
+        if (sp) for (const f of [0.15, 0.4, 0.62, 0.82]) blob(x + sx * h * (0.1 + 0.9 * f), z + sz * h * (0.1 + 0.9 * f), r * (1.05 - f) + 0.3, 0.6);
+        else { g.save(); g.translate(X(x + sx * h * 0.72), Y(z + sz * h * 0.72)); g.rotate(Math.atan2(-sz, sx)); g.scale(1 + Math.hypot(sx, sz) * h * 0.22 / r, 1); g.translate(-X(x + sx * h * 0.72), -Y(z + sz * h * 0.72)); blob(x + sx * h * 0.72, z + sz * h * 0.72, r, 0.7); g.restore(); } }
+      g.fillStyle = 'rgba(255,255,255,0.9)';
+      for (const [fp, h] of HL) { const pts = fp.concat(fp.map(([x, z]) => [x + sx * h, z + sz * h])).sort((a, b) => a[0] - b[0] || a[1] - b[1]), cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]), lo = [], hi = [];   // (the footprint swept down-sun: its hull)
+        for (const p of pts) { while (lo.length > 1 && cr(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop(); lo.push(p); }
+        for (const p of pts.slice().reverse()) { while (hi.length > 1 && cr(hi[hi.length - 2], hi[hi.length - 1], p) <= 0) hi.pop(); hi.push(p); }
+        g.beginPath(); lo.slice(0, -1).concat(hi.slice(0, -1)).forEach(([x, z], i) => i ? g.lineTo(X(x), Y(z)) : g.moveTo(X(x), Y(z))); g.fill(); } });
+    const nz = canvasTex(256, 256, (g, w, h) => { const Rn = Core.rng(31); g.fillStyle = 'rgb(128,128,128)'; g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 2600; i++) { const r = 2 + Rn() * 9; g.fillStyle = 'rgba(' + (Rn() * 255 | 0) + ',' + (Rn() * 255 | 0) + ',' + (Rn() * 255 | 0) + ',0.35)'; g.beginPath(); g.arc(Rn() * w, Rn() * h, r, 0, TAU); g.fill(); }
+      for (let i = 0; i < 9000; i++) { g.fillStyle = Rn() < 0.5 ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.25)'; g.fillRect(Rn() * w, Rn() * h, 1, 1); } }, true);
+    // the near boxes' shadows (x0 z0 x1 z1, h): the workshop, the transporter's box and cab, the hospitality, the units
+    const v4 = (b) => 'vec4(' + b.slice(0, 4).map(v => v.toFixed(2)).join(', ') + ')', mx = (l) => l.length > 1 ? 'max(' + l[0] + ', ' + mx(l.slice(1)) + ')' : l[0], BX = [[x0, z0, x1, z1, 5.0], [-19.5, -5.95, -10.3, -3.45, 3.95], [-21.8, -5.9, -19.5, -3.5, 3.4], [-36, 13, -22, 18.5, 6.15], [20, -17, 38, -11, 4.7]];
     const gs = new THREE.Shape([[-500, -500], [500, -500], [500, 500], [-500, 500]].map(([x, y]) => new THREE.Vector2(x, y)));   // (a hole where the workshop stands)
     gs.holes.push(new THREE.Path([[x0, -z0], [x0, -z1], [x1, -z1], [x1, -z0]].map(([x, y]) => new THREE.Vector2(x, y))));
     const ground = new THREE.Mesh(new THREE.ShapeGeometry(gs).rotateX(-Math.PI / 2), new THREE.ShaderMaterial({
-      uniforms: { uN: { value: nz } },
+      uniforms: { uN: { value: nz }, uSh: { value: shT } }, extensions: { derivatives: true },
       vertexShader: 'varying vec3 vW; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }',
-      fragmentShader: 'uniform sampler2D uN; varying vec3 vW;'
-        + ' void main(){ vec2 p = vW.xz; float ax = abs(p.x), az = abs(p.y);'
-        + '  float d = length(p), n1 = texture2D(uN, p * 0.09).r, n2 = texture2D(uN, p * 0.012 + 0.3).g, n3 = texture2D(uN, p * 0.55).b;'
-        + '  vec3 c = mix(vec3(0.25, 0.44, 0.19), vec3(0.45, 0.6, 0.27), n2) * (0.8 + 0.34 * n1) * (0.9 + 0.16 * n3);'
-        + '  float dw = max(max(' + x0.toFixed(1) + ' - p.x, p.x - ' + x1.toFixed(1) + '), max(' + z0.toFixed(1) + ' - p.y, p.y - ' + z1.toFixed(1) + '));'
-        + '  c = mix(c, vec3(0.56, 0.55, 0.5) * (0.78 + 0.34 * n3), 1.0 - smoothstep(1.1, 1.3, dw));'
-        + '  float rw = mix(6.0, 3.4, smoothstep(15.0, 24.0, ax)), far = smoothstep(19.0, 23.0, ax);'
-        + '  float sh = step(rw, az) * (1.0 - smoothstep(rw + 1.1, rw + 1.5, az)); c = mix(c, vec3(0.6, 0.58, 0.52) * (0.8 + 0.3 * n3), sh);'
-        + '  float kb = step(rw, az) * step(az, rw + 0.42) * far * (1.0 - smoothstep(70.0, 74.0, ax)); c = mix(c, mod(floor(ax * 0.9), 2.0) < 1.0 ? vec3(0.84, 0.17, 0.14) : vec3(0.95, 0.94, 0.9), kb);'
-        + '  vec3 a = vec3(0.32, 0.33, 0.35) * (0.84 + 0.28 * n3) * (0.93 + 0.12 * n1);'
-        + '  float ln = max(1.0 - smoothstep(0.06, 0.1, abs(az - rw + 0.35)), (1.0 - smoothstep(0.06, 0.1, az)) * step(0.55, fract(ax / 6.0))) * far;'
-        + '  a = mix(a, vec3(0.9, 0.9, 0.88), ln * 0.85); c = mix(c, a, (1.0 - smoothstep(rw - 0.05, rw + 0.05, az)) * step(9.0, ax));'
-        + '  c *= 0.74 + 0.26 * smoothstep(0.0, 2.6, dw);'
-        + '  c = mix(c, vec3(' + HAZE.join(', ') + '), smoothstep(30.0, 430.0, d) * 0.9); gl_FragColor = vec4(mix(c, vec3(dot(c, vec3(0.3333))), 0.15) * ' + OUTK.toFixed(2) + ', 1.0); }' }));
+      fragmentShader: ['uniform sampler2D uN; uniform sampler2D uSh; varying vec3 vW;', GL,
+        // (a box's shadow: is p in its footprint swept along the sun's offset of its top? soft at the edge)
+        'float sweep(vec2 p, vec4 r, float h){ vec2 s = -oSun.xz / oSun.y * h, a = (p - r.zw) / s, b = (p - r.xy) / s, t0 = min(a, b), t1 = max(a, b);',
+        '  return smoothstep(-0.012, 0.03, min(min(t1.x, t1.y), 1.0) - max(max(t0.x, t0.y), 0.0)); }',
+        'float rect(vec2 p, vec4 r){ vec2 q = max(r.xy - p, p - r.zw); return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0); }',   // (out of a rectangle; < 0 in it)
+        'float line(float x, float w, float f){ return 1.0 - smoothstep(w - f, w + f, x); }',   // (|x| < w, soft over a pixel's f)
+        'void main(){ vec2 p = vW.xz; float ax = abs(p.x), az0 = abs(p.y), d = length(p); vec2 fw = fwidth(p); float px = max(fw.x, fw.y) + 1e-3, e = px * 0.6;',
+        '  vec4 A = texture2D(uN, p * 0.09), B = texture2D(uN, p * 0.012 + 0.3), C = texture2D(uN, p * 0.55); float n1 = A.r, n2 = B.g, n3 = C.b;',
+        '  vec2 fp = vec2(p.x * 0.866 + p.y * 0.5, p.y * 0.866 - p.x * 0.5) + (vec2(vn(p * 0.011), vn(p * 0.011 + 7.3)) - 0.5) * 40.0, fq = fp / vec2(24.0, 75.0), fr = fract(fq);',
+        '  float hc = hs(floor(fq) + 3.0);',
+        '  vec3 fc = hc < 0.35 ? vec3(0.27, 0.4, 0.16) : hc < 0.6 ? vec3(0.38, 0.46, 0.2) : hc < 0.78 ? vec3(0.3, 0.44, 0.16) : hc < 0.9 ? vec3(0.5, 0.48, 0.26) : vec3(0.25, 0.36, 0.15);',
+        '  fc *= (1.0 + 0.07 * sin(fp.x * 2.2 + hc * 9.0) * step(0.35, hc) * step(hc, 0.6) * (1.0 - smoothstep(0.4, 1.2, px))) * (0.93 + 0.14 * n2);',
+        '  float ed = min(min(fr.x, 1.0 - fr.x) * 24.0, min(fr.y, 1.0 - fr.y) * 75.0); fc = mix(fc * mix(0.8, 1.0, smoothstep(0.4, 2.0, ed)), vec3(0.31, 0.42, 0.18), smoothstep(5.0, 25.0, px));',
+        '  float dw = rect(p, ' + v4([x0, z0, x1, z1]) + ');',
+        '  vec3 c = mix(mix(vec3(0.24, 0.38, 0.15), vec3(0.36, 0.48, 0.21), n2), fc, smoothstep(20.0, 35.0, dw)) * (0.74 + 0.46 * n1) * (0.86 + 0.26 * n3) * vec3(1.0 + 0.12 * (A.b - 0.5), 1.0, 1.0 - 0.2 * (A.b - 0.5));',
+        '  vec3 gv = vec3(0.56, 0.54, 0.48) * (0.78 + 0.34 * n3) * (0.94 + 0.1 * n1);',   // (gravel)
+        '  float bend = max(ax - 36.0, 0.0), zc = 0.011 * bend * bend, sl = 0.022 * bend, rz = p.y - zc, az = abs(rz) / sqrt(1.0 + sl * sl), rw = mix(6.0, 3.1, smoothstep(15.5, 17.5, ax));',
+        '  float rd = ax > 9.0 ? az - rw : 99.0, fcd = min(rect(p, vec4(-37.5, 3.0, -14.0, 20.5)), rect(p, vec4(14.0, -18.5, 40.0, -3.0))), pv = min(rd, fcd), pad = rect(p, vec4(-24.0, -7.6, -14.0, -2.5));',
+        '  c = mix(c, gv, max(1.0 - smoothstep(0.6, 1.0, min(pv, dw - 0.2)), 1.0 - smoothstep(-e, e, pad)));',   // (gravel round the walls, along the road and the paddock, the truck's pad)
+        '  vec3 a = vec3(0.31, 0.32, 0.34) * (0.84 + 0.28 * n3) * (0.93 + 0.12 * n1);',   // (asphalt; worn tracks along the road)
+        '  a *= 1.0 - 0.08 * (1.0 - smoothstep(0.3, 0.9, abs(abs(rz) - 1.5))) * step(14.5, ax) * step(rd, 0.0);',
+        '  vec3 cr = vec3(0.6, 0.6, 0.58) * (0.86 + 0.2 * n3) * (0.94 + 0.1 * n1) * (1.0 - 0.18 * smoothstep(0.55, 0.8, A.g));',   // (concrete: 4 m slabs, old stains)
+        '  vec2 jt = abs(fract(p / 4.0) - 0.5) * 4.0; cr *= 1.0 - 0.3 * line(min(jt.x, jt.y), 0.05, e) * (1.0 - smoothstep(0.1, 0.3, px));',
+        '  a = mix(a, cr, (1.0 - smoothstep(14.3, 14.7, ax)) * (1.0 - smoothstep(6.3, 6.7, az0)));',
+        '  a = mix(a, vec3(0.86, 0.86, 0.84), line(abs(az - rw + 0.3), 0.06, e) * smoothstep(15.0, 18.0, ax) * step(rd, 0.5) * 0.75);',   // (the edge lines)
+        '  a = mix(a, vec3(0.85, 0.66, 0.12), line(abs(az0 - 2.75), 0.05, e) * (1.0 - smoothstep(13.9, 14.1, ax)));',   // (the bay's lines)
+        '  a = mix(a, vec3(0.86, 0.86, 0.84), line(abs(fract((p.x - 20.0) / 6.0 + 0.5) - 0.5) * 6.0, 0.06, e) * step(19.8, p.x) * step(p.x, 38.2) * step(-11.0, p.y) * step(p.y, -6.5) * 0.7);',   // (the units' bays)
+        '  a = mix(a, vec3(0.12, 0.12, 0.13) * (0.7 + 0.6 * step(0.5, fract(p.y * 8.0)) * (1.0 - smoothstep(0.05, 0.12, px))), step(9.15, ax) * step(ax, 9.6) * step(az0, 2.6));',   // (the drain's grate)
+        '  c = mix(c, a, 1.0 - smoothstep(-e, e, pv));',
+        '  float kb = step(0.0, rd) * step(rd, 0.42) * smoothstep(17.0, 19.0, ax) * (1.0 - smoothstep(34.0, 36.0, ax)) * smoothstep(0.0, 0.5, fcd), kq = abs(fract(ax * 0.45) - 0.5) * 2.0;',   // (the kerbs)
+        '  c = mix(c, mix(vec3(0.86, 0.86, 0.84), vec3(0.74, 0.14, 0.12), smoothstep(0.5 - px, 0.5 + px, kq)), kb);',
+        '  c *= 0.74 + 0.26 * smoothstep(0.0, 2.6, dw);',   // (darker by the walls)
+        '  float shd = texture2D(uSh, p / 384.0 + 0.5).r * step(max(ax, az0), 190.0);',
+        '  if (d < 70.0) { shd = max(shd, ' + mx(BX.map(b => 'sweep(p, ' + v4(b) + ', ' + b[4].toFixed(2) + ')')) + ');',
+        '    c *= 0.8 + 0.2 * smoothstep(0.0, 1.0, min(min(rect(p, ' + v4(BX[1]) + '), rect(p, ' + v4(BX[3]) + ')), rect(p, ' + v4(BX[4]) + '))); }',
+        '  c *= mix(vec3(1.0), vec3(0.5, 0.56, 0.68), shd);',
+        '  gl_FragColor = outC(mix(c, horz(p), 0.85 * (1.0 - exp(-d / ' + AIR.toFixed(1) + ')))); }'].join('\n') }));
     ground.position.y = -0.002; ground.renderOrder = 9; scene.add(ground);
-    // the mountains round the valley: green hills, forested ridges behind them, rock and snow far off (a curtain of facets in three rings)
-    const mg = new World.GB(), R = Core.rng(5150);
-    const range = (Rd, n, base, amp, cLow, cTop, snow, valley) => {   // (valley: low where the road goes out, both ways along x)
-      const ph = [R() * 9, R() * 9, R() * 9, R() * 9], H = (a) => { const f = 0.45 * (1 - Math.abs(Math.sin(a * 2.5 + ph[0]))) + 0.3 * (1 - Math.abs(Math.sin(a * 6.3 + ph[1]))) + 0.17 * (1 - Math.abs(Math.sin(a * 15.7 + ph[2]))) + 0.08 * Math.sin(a * 41 + ph[3]);
-        return (base + amp * Math.pow(Math.max(0, f), 1.5)) * (valley ? lerp(valley, 1, smooth(0.04, 0.4, Math.abs(Math.sin(a)))) : 1); };
-      const rows = []; for (let i = 0; i <= n; i++) { const a = i / n * TAU, h = H(a), j = (R() - 0.5) * 0.3;
-        rows.push([[Math.cos(a) * (Rd - 60), -4, Math.sin(a) * (Rd - 60)], [Math.cos(a) * (Rd - 22 + j * 30), h * (0.5 + j), Math.sin(a) * (Rd - 22 + j * 30)], [Math.cos(a) * Rd, h, Math.sin(a) * Rd], h]); }
-      const col = (y, h) => { const t = clamp(y / Math.max(1, base + amp), 0, 1); let c = [lerp(cLow[0], cTop[0], t), lerp(cLow[1], cTop[1], t), lerp(cLow[2], cTop[2], t)]; if (snow && y > snow) c = [0.93, 0.95, 0.98]; return c; };
-      for (let i = 0; i < n; i++) { const A = rows[i], B = rows[i + 1];
-        for (let k = 0; k < 2; k++) { const a0 = A[k], a1 = A[k + 1], b0 = B[k], b1 = B[k + 1], ins = [0, a0[1], 0];
-          mg.triO(a0, b0, b1, col(a0[1], A[3]), ins, col(b0[1], B[3]), col(b1[1], B[3])); mg.triO(a0, b1, a1, col(a0[1], A[3]), ins, col(b1[1], B[3]), col(a1[1], A[3])); } } };
-    range(330, 150, 30, 150, [0.36, 0.42, 0.44], [0.55, 0.58, 0.62], 115);
-    range(230, 120, 14, 62, [0.17, 0.3, 0.2], [0.26, 0.38, 0.3], 0, 0.35);
-    range(150, 100, 4, 24, [0.24, 0.42, 0.2], [0.33, 0.5, 0.25], 0, 0.05);
-    bakeOut(mg, 100, 340, 0.62);
-    // the forest: spruces in their tiers, round broadleaf trees, in woods with meadows between (not on the road, not by the workshop)
-    const tg = new World.GB();
-    const spruce = (x, z, h) => { const tr = h * 0.035, r = h * 0.24, rot = R() * TAU, dk = 0.8 + R() * 0.3;
-      for (let k = 0; k < 4; k++) { const a0 = rot + k / 4 * TAU, a1 = a0 + TAU / 4, P = (a, y) => [x + Math.cos(a) * tr, y, z + Math.sin(a) * tr]; tg.quadO(P(a0, 0), P(a1, 0), P(a1, h * 0.3), P(a0, h * 0.3), [0.28, 0.19, 0.12], [x, h * 0.15, z]); }
-      for (let t = 0; t < 3; t++) { const y0 = h * (0.14 + t * 0.24), y1 = y0 + h * (0.46 - t * 0.04), rr = r * (1 - t * 0.28), c = [0.12 * dk * (1 + t * 0.12), 0.27 * dk * (1 + t * 0.1), 0.17 * dk];
-        for (let k = 0; k < 7; k++) { const a0 = rot + t + k / 7 * TAU, a1 = a0 + TAU / 7; tg.triO([x + Math.cos(a0) * rr, y0, z + Math.sin(a0) * rr], [x + Math.cos(a1) * rr, y0, z + Math.sin(a1) * rr], [x, y1, z], c, [x, y0 + (y1 - y0) * 0.25, z]); } } };
-    const ico = new THREE.IcosahedronGeometry(1, 0), IP = ico.attributes.position;   // (non-indexed: three faces a run)
-    const broad = (x, z, h) => { const tr = h * 0.045, dk = 0.85 + R() * 0.3, base = [0.3 * dk, 0.47 * dk, 0.18 * dk];
-      for (let k = 0; k < 4; k++) { const a0 = k / 4 * TAU + 0.4, a1 = a0 + TAU / 4, P = (a, y) => [x + Math.cos(a) * tr, y, z + Math.sin(a) * tr]; tg.quadO(P(a0, 0), P(a1, 0), P(a1, h * 0.5), P(a0, h * 0.5), [0.33, 0.24, 0.16], [x, h * 0.25, z]); }
-      for (let b = 0; b < 3; b++) { const r = h * (0.3 - b * 0.04), cx = x + (R() - 0.5) * h * 0.3, cy = h * (0.6 + b * 0.12), cz = z + (R() - 0.5) * h * 0.3;
-        for (let i = 0; i < IP.count; i += 3) { const v = (j) => [cx + IP.getX(j) * r, cy + IP.getY(j) * r * 0.85, cz + IP.getZ(j) * r]; const e = 0.9 + R() * 0.2; tg.triO(v(i), v(i + 1), v(i + 2), [base[0] * e, base[1] * e, base[2] * e], [cx, cy, cz]); } } };
-    const clear = (x, z) => (x > x0 - 4 && x < x1 + 4 && z > z0 - 4 && z < z1 + 4) || (Math.abs(x) > x1 && Math.abs(z) < 10);
-    let nT = 0;
-    for (let i = 0; i < 3000 && nT < 520; i++) {
-      const a = R() * TAU, r = 16 + Math.pow(R(), 0.85) * 76, x = Math.cos(a) * r, z = Math.sin(a) * r; if (clear(x, z)) continue;
-      const wood = Math.sin(x * 0.045 + 1.3) * Math.sin(z * 0.055 + 0.4) + 0.7 * Math.sin(x * 0.012 - z * 0.016 + 2); if (wood < -0.2 && R() < 0.85) continue;   // (meadows between the woods)
-      const h = 7 + R() * 9; (wood > 0.3 || R() < 0.5 ? spruce : broad)(x, z, h * (r > 90 ? 1.25 : 1)); nT++;
-    }
-    // along the road: a row of broadleaf trees a little back from it, the fences of the paddocks
-    for (const sd of [-1, 1]) for (let x = 30; x < 88; x += 11 + R() * 6) for (const sz of [-1, 1]) if (R() < 0.8) broad(sd * x, sz * (12 + R() * 4), 6 + R() * 4);
-    ico.dispose();
-    bakeOut(tg, 40, 260, 0.6, THREE.DoubleSide);
-    // by the road: lamp posts, a low white fence, the team's transporter parked on the apron by the way in
-    const og = new World.GB(), W = [0.93, 0.94, 0.95], GR = [0.28, 0.3, 0.33], RD = [0.84, 0.16, 0.13], CY = [0.3, 0.72, 0.93], DKo = [0.08, 0.08, 0.09];
-    for (const sd of [-1, 1]) {
-      for (let x = 24; x < 88; x += 16) for (const sz of [-1, 1]) { const X = sd * x, Z = sz * 5.4; World.box(og, X, 0, Z, 0.16, 7.2, 0.16, 0, GR, GR); obox(og, [X, 7.1, Z], [X, 7.25, Z - sz * 1.4], 0.1, 0.1, GR); World.box(og, X, 6.98, Z - sz * 1.4, 0.5, 0.14, 0.3, 0, DKo, DKo); }
-      for (const sz of [-1, 1]) { const Z = sz * 8.6;
-        for (let x = 13; x < 88; x += 2.5) World.box(og, sd * x, 0, Z, 0.09, 0.9, 0.09, 0, W, W);
-        for (const y of [0.45, 0.8]) obox(og, [sd * 13, y, Z], [sd * 88, y, Z], 0.05, 0.08, W); }
-    }
-    { const X0 = -21.8, Z = -4.7, L = 9.2, Wd = 2.5;   // the transporter: a box body (white, the menu's red and cyan stripes), the cab, its wheels
-      World.box(og, X0 + L / 2 + 2.3, 0.75, Z, L, 3.2, Wd, 0, W, [0.85, 0.86, 0.88]);
-      for (const sd of [-1, 1]) { obox(og, [X0 + 2.3, 1.55, Z + sd * (Wd / 2 + 0.005)], [X0 + 2.3 + L, 1.55, Z + sd * (Wd / 2 + 0.005)], 0.01, 0.42, RD); obox(og, [X0 + 2.3, 1.95, Z + sd * (Wd / 2 + 0.005)], [X0 + 2.3 + L, 1.95, Z + sd * (Wd / 2 + 0.005)], 0.01, 0.14, CY); }
-      World.box(og, X0 + 1.15, 0.75, Z, 2.3, 2.1, Wd - 0.05, 0, RD, RD); World.box(og, X0 + 0.75, 2.85, Z, 1.5, 0.6, Wd - 0.1, 0, RD, RD);
-      World.box(og, X0 + 0.26, 1.85, Z, 0.06, 0.9, Wd - 0.3, 0, [0.12, 0.16, 0.2], [0.12, 0.16, 0.2]); World.box(og, X0 + 0.02, 0.6, Z, 0.08, 0.35, Wd - 0.2, 0, GR, GR);
-      for (const wx of [X0 + 1.2, X0 + 7.6, X0 + 9.0]) for (const sd of [-1, 1]) cylA(og, [wx, 0.5, Z + sd * (Wd / 2 - 0.15)], 'z', 0.5, 0.36, 14, DKo, [0.55, 0.57, 0.6]);
-      World.box(og, X0 + L / 2 + 2.3, 0.35, Z, L, 0.42, Wd - 0.4, 0, DKo, DKo); }
-    bakeOut(og, 40, 260, 0.6);
-    // the flags of the team by the way in: three poles, the menu's colours flying from them
-    const fl = new THREE.MeshBasicMaterial({ color: new THREE.Color().setScalar(OUTK), vertexColors: true, side: THREE.DoubleSide }), fg = new World.GB();
-    [[-13.5, 8.4, RD], [-15.5, 8.4, W], [-17.5, 8.4, CY]].forEach(([x, z, c]) => { World.box(fg, x, 0, z, 0.1, 8, 0.1, 0, W, W);
-      for (let i = 0; i < 8; i++) { const u0 = i / 8, u1 = (i + 1) / 8, w = (u) => Math.sin(u * 7 + x) * 0.18 * u, k = 0.85 + 0.15 * Math.cos(i * 0.9 + x);
-        fg.quadUp([x + u0 * 2.2, 7.9, z + w(u0)], [x + u1 * 2.2, 7.9, z + w(u1)], [x + u1 * 2.2, 6.6, z + w(u1)], [x + u0 * 2.2, 6.6, z + w(u0)], [0, 1, 2, 3].map(() => [c[0] * k, c[1] * k, c[2] * k])); } });
-    scene.add(new THREE.Mesh(fg.geometry(), fl));
+    // the team's flags by the way in, in its colours: a slow wave running out along each (the vertex shader: fw, how far out along its
+    // flag; the time set as it is drawn)
+    const fg = new World.GB(), fw = [], uT = { value: 0 };
+    FLG.forEach(([x, c]) => { const i0 = fg.P.length / 3, cl = c.map(v => lerp(v, (c[0] + c[1] + c[2]) / 3, 0.15));
+      for (let i = 0; i < 10; i++) { const x0f = x + 0.05 + i / 10 * 2.2, x1f = x + 0.05 + (i + 1) / 10 * 2.2; fg.quadUp([x0f, 7.95, 8.4], [x1f, 7.95, 8.4], [x1f, 6.65, 8.4], [x0f, 6.65, 8.4], [cl, cl, cl, cl]); }
+      for (let i = i0; i < fg.P.length / 3; i++) fw.push((fg.P[i * 3] - x) / 2.25); });
+    const fgeo = fg.geometry(); fgeo.setAttribute('fw', new THREE.Float32BufferAttribute(fw, 1));
+    const fm = new THREE.MeshBasicMaterial({ vertexColors: true, color: new THREE.Color().setScalar(OUTK), side: THREE.DoubleSide });
+    fm.onBeforeCompile = (sh) => { sh.uniforms.uT = uT;
+      sh.vertexShader = 'uniform float uT; attribute float fw;\n' + sh.vertexShader.replace('#include <color_vertex>', '#include <color_vertex>\nvColor.rgb *= 1.0 - 0.24 * cos(position.x * 4.2 - uT * 2.6) * fw;')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\nfloat ph = position.x * 4.2 - uT * 2.6; transformed.z += (sin(ph) * 0.17 + sin(ph * 1.7 + 1.3) * 0.05) * fw; transformed.y -= (1.0 - cos(ph * 0.5)) * 0.05 * fw;'); };
+    fm.customProgramCacheKey = () => 'outFlag';
+    const flags = new THREE.Mesh(fgeo, fm); flags.onBeforeRender = () => { uT.value = (performance.now() / 1000) % (Math.PI * 1000); }; scene.add(mainOnly(flags));
   }
   // the big screen: the car on the turntable (its name, drive, power), its four upgrades as bars, a telemetry trace running
   function drawScreen(t) {
@@ -1983,7 +2172,7 @@ const Garage3D = (function () {
     renderer = Render.init(canvas);
     HDR = POST.on && renderer.capabilities.isWebGL2 && renderer.extensions.has('EXT_color_buffer_float');
     if (HDR) Object.assign(EMI, { hex: 3.0, led: 1.6, sign: 1.3, screen: 1.2, tail: 2.5, spark: 2.0 });
-    OUTK = HDR ? 1.6 : 1.12; makeRoomLight();
+    OUTK = HDR ? 1.45 : 1.12; makeRoomLight();
     if (POST.on) Object.assign(GLOW, { sign: 0.06, ring: 0.73, lamp: 0.6, blur: 8 });
     renderer.info.autoReset = false;   // (frame() counts the passes itself: _dbg.stats; the page's test reads the main pass and the post pass)
     { const sm = renderer.shadowMap, r0 = sm.render;   // (the shadow map is drawn inside the main pass's render: its draws counted apart)
