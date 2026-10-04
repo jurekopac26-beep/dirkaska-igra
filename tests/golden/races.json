@@ -1599,54 +1599,54 @@
   "nan": false,
   "digest": "4c53c94c9086f66bc8a7b4f0"
  },
- "phillip/cs": {
+ "longford/cs": {
   "finished": 13,
   "cars": 13,
-  "winner": 200.45,
+  "winner": 294.47,
   "spins": 0,
-  "walls": 0,
+  "walls": 10,
   "rescues": 0,
   "nan": false,
-  "digest": "caa1bd4df7f8e485ae1bbce2"
+  "digest": "96c672eeccb014cb9bf03c97"
  },
- "phillip/cs/rain": {
+ "longford/cs/rain": {
   "finished": 13,
   "cars": 13,
-  "winner": 217.21,
+  "winner": 306.29,
   "spins": 0,
-  "walls": 0,
+  "walls": 5,
   "rescues": 0,
   "nan": false,
-  "digest": "0b11b027f1141dea9cd10ae3"
+  "digest": "13bb3288f434afce7e1f8e5e"
  },
- "phillip/cs/formula": {
+ "longford/cs/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 166.53,
+  "winner": 241.57,
   "spins": 0,
-  "walls": 1,
+  "walls": 24,
   "rescues": 0,
   "nan": false,
-  "digest": "aae19ee4e6f84fba474232af"
+  "digest": "c8beb48d74e14f7f8e15c3ba"
  },
- "phillip/cs/lm": {
+ "longford/cs/lm": {
   "finished": 13,
   "cars": 13,
-  "winner": 169.68,
+  "winner": 243.43,
   "spins": 0,
-  "walls": 7,
+  "walls": 22,
   "rescues": 0,
   "nan": false,
-  "digest": "ee88a7d3d01b4c260ff94c50"
+  "digest": "da8f42a27cd739610596dc92"
  },
- "phillip/cs/car": {
+ "longford/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 203.83,
+  "winner": 294.18,
   "spins": 0,
-  "walls": 0,
+  "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "8417a6dd4361b6e06b78a783"
+  "digest": "d3aa121f8632ba6f463c887e"
  }
 }
