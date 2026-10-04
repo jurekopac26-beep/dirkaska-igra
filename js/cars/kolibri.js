@@ -108,6 +108,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         LD.side([[X0, 0.425], [X1, 0.425], [X1, 0.5], [X0, 0.5]], S, null, 0.006);
         LD.side([[X0, 0.515], [X1, 0.515], [X1, 0.527], [X0, 0.527]], S, null, 0.006);
         for (const x of [0.79, -0.35]) LD.side([[x - 0.006, 0.33], [x + 0.006, 0.33], [x + 0.006, 0.86], [x - 0.006, 0.86]], D, null, 0.005);
+        for (const [xa, xb] of [[1.475, 1.7], [-1.69, -1.505]]) LD.side([[xa, 0.529], [xb, 0.529], [xb, 0.541], [xa, 0.541]], D, null, 0.005);   // (the bumpers' joints)
         for (const sd of [-1, 1]) {
           K.rect(-0.24, 0.79, sd * 0.739, 0.13, 0.026, B, { dir: fz(sd), host: sd < 0 ? 'doorL' : 'doorR' });
           K.rect(1.3, 0.7, sd * 0.733, 0.06, 0.024, AMB, { dir: fz(sd), host: sd < 0 ? 'fenderL' : 'fenderR' });
