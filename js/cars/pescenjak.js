@@ -19,7 +19,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     parts: { set: 'none', ht: 1.85, y0: 0.45,
       extra: {
         nose: { z: 0, th: 0.55, m: 6, rW: 0.35, h: 0.1, lx: 0.95, lz: 0, f: 0.21 },
-        cover: { z: 1, th: 0.72, m: 9, rW: 0.38, h: 0.08, lx: -0.58, lz: 0, f: 0.38 },
+        cover: { z: 1, th: 0.72, m: 9, rW: 0.38, h: 0.08, lx: -0.52, lz: 0, f: 0.42 },
         spareL: { z: 2, th: 0.65, m: 10, r: 0.42, h: 0.3, lx: -0.22, lz: -0.79, f: 0.43 },
         spareR: { z: 3, th: 0.65, m: 10, r: 0.42, h: 0.3, lx: -0.22, lz: 0.79, f: 0.43 },
         snorkel: { z: 3, th: 0.5, m: 2, r: 0.25, h: 0.1, lx: 0.34, lz: 0.77, f: 0.77 },
@@ -124,7 +124,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         }, { hinge: [[1.96, 0.97, -0.85], [1.96, 0.97, 0.85]] });
         // ---- the tail: the lamps, the skid, the exhaust, the mudflaps; the start numbers on the cockpit's sides ----
         K.part('body', () => {
-          for (const s of [-1, 1]) { K.rect(-2.303, 0.82, s * 0.56, 0.24, 0.13, B, { dir: '-x' }); K.tailLamp(-2.305, 0.82, s * 0.56, 0.2, 0.09);
+          for (const s of [-1, 1]) { K.rect(-2.303, 0.83, s * 0.56, 0.28, 0.16, B, { dir: '-x' }); K.tailLamp(-2.305, 0.83, s * 0.56, 0.24, 0.12);
             K.rect(-2.0, 0.45, s * 0.98, 0.3, 0.46, B, { dir: '-x' });
             K.number(0.5, 0.69, s * 0.982, 0.24, { dir: s < 0 ? '-z' : 'z' }); }
           K.grille(-2.302, 0.83, 0, 0.56, 0.13, { dir: -1, slats: 2 });                                // the cooling outlet between the lamps
