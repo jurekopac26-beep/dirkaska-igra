@@ -128,7 +128,7 @@ Kje so proge na Zemlji:
 - Na tleh je **senca helikopterja** (z vrtečim se rotorjem).
 - **Kraji ob progi so označeni v 3D** z imeni, ki stojijo na svojem mestu v pokrajini (na Vršiču: Kranjska Gora, Lake Jasna, Mihov dom, Russian Chapel, Koča na Gozdu, Ajdovska deklica, Erjavčeva koča, Vršič Pass). Ko sta dve imeni blizu, ima eno daljši drog, da se ne prekrivata. Seznam krajev za vse proge je v `orodja/landmarks.json`.
 - Igra ima pokrajino samo ob progi. Kar je dlje, je dorisano: prave višine in pokrovnost tal (gozd, travniki, polja, kraji, skale, voda) z drevesi in hišami iz igre, pri obalnih progah morje do obzorja.
-- Na robu sveta igre se dorisana pokrajina zlije z njim: v pasu približno 250 m prevzame barve tal igre, z nepravilnim robom, zato ni vidnih ravnih robov (`heli.json`: `feather`, metri).
+- Na robu sveta igre se dorisana pokrajina zlije z njim: v pasu približno 250 m prevzame barve tal igre, z nepravilnim robom, zato ni vidnih ravnih robov (`heli.json`: `feather`, metri; La Condamine 100 m). Leta za Colorado in La Condamine sta še iz prejšnjega izrisa, brez tega prehoda; nova narišeš z `REDO=1 node heli.mjs pikes,monaco` (v `orodja/`), nato `python3 intro_data.py` in `python3 intro_assets.py`.
 - V dežju pada dež čez let s helikopterjem (na globusu ne).
 - Po letu se prižge pet rdečih luči, ugasnejo in *GO!* – dirka se začne. Zadnji akord glasbe izzveni v luči.
 
