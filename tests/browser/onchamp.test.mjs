@@ -37,7 +37,7 @@ try {
     t.value = 'jezero'; t.dispatchEvent(new Event('change')); l.value = '1'; l.dispatchEvent(new Event('change'));
     g.onAction('net-ch-on'); t.value = 'riviera'; t.dispatchEvent(new Event('change')); g.onAction('net-ch-add'); });
   const lists = await Promise.all(pages.map(p => until(p, () => { const li = [...document.querySelectorAll('#on-ch .on-ch-tracks li')].map(e => e.firstChild.textContent.trim()); return li.length === 2 ? { li, go: document.getElementById('on-go').textContent, row: !document.getElementById('on-chrow').classList.contains('off') } : null; }, null, 20000)));
-  T.check('the championship on: Jezero Ring, then Riviera, on every page; the host\'s button "Začni dirko 1/2"', lists.every(x => x.li.join() === 'Jezero Ring,Riviera' && x.row) && lists[0].go === 'Začni dirko 1/2', JSON.stringify(lists));
+  T.check('the championship on: Jezero Ring, then Riviera, on every page; the host\'s button "Začni dirko 1/2"', lists.every(x => x.li.join() === 'Jezero Ring,Riviera, Francija' && x.row) && lists[0].go === 'Začni dirko 1/2', JSON.stringify(lists));
 
   // 3. the first race: everyone on autopilot in real time; the standings under the results on every page
   for (const p of pages) await p.evaluate(() => { window.__game.autoDrive = true; });
@@ -55,7 +55,7 @@ try {
   await until(A.page, () => !document.getElementById('on-go').disabled, null, 30000);
   const room = await Promise.all(pages.map(p => until(p, () => { const el = document.getElementById('on-ch'), nx = el.querySelector('li.next'); return nx ? { next: nx.firstChild.textContent.trim(), done: el.querySelectorAll('li.done').length, rows: el.querySelectorAll('tbody tr').length,
     track: document.getElementById('on-track').value, locked: document.getElementById('on-track').disabled, go: document.getElementById('on-go').textContent } : null; }, null, 20000)));
-  T.check('back in the room: the standings, Riviera next (chosen and locked), "Začni dirko 2/2"', room.every(r => r.next === 'Riviera' && r.done === 1 && r.rows === 3 && r.track === 'riviera' && r.locked) && room[0].go === 'Začni dirko 2/2', JSON.stringify(room));
+  T.check('back in the room: the standings, Riviera next (chosen and locked), "Začni dirko 2/2"', room.every(r => r.next === 'Riviera, Francija' && r.done === 1 && r.rows === 3 && r.track === 'riviera' && r.locked) && room[0].go === 'Začni dirko 2/2', JSON.stringify(room));
 
   // 5. Cvet leaves the room: the points stay, marked odšel
   const cvId = await Cv.page.evaluate(() => window.__game.net.me);
