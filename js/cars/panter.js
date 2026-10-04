@@ -18,6 +18,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     parts: { set: 'race', ht: 1.3, y0: 0.18,
       over: {
         wing: { f: 0.78, lx: -0.88, m: 4 },
+        // (where the look has them: the front lid low between the wings, the high front wings forward of the axle)
+        hood: { lx: 0.66, y: 0.69 }, fenderL: { lx: 0.69, lz: -0.79, y: 0.63 }, fenderR: { lx: 0.69, lz: 0.79, y: 0.63 },
       },
     },
     // the look (KIT API v1, render.js; look units = metres): one loft from the tail panel to the front lid's edge (the lid low between the
@@ -62,22 +64,23 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         //      black sills from arch to arch, the arches' ledges black ----
         const L = K.loft(K.body.secs, (k, e, kind, at) => {
           if (e === 0 || e === 8) return at.arch || (at.x > XA && at.x < XB) ? B : K.shade(P, 0.55);
-          if (kind === 'gf' && e >= 2 && e <= 6) return G;
+          if (kind === 'gf' && e >= 3 && e <= 5) return G;                                     // (its sides: paint, the side glass a decal over them)
           if (kind === 'r' && (e === 2 || e === 6)) return G;
           if (kind === 'gr') { if (e >= 3 && e <= 5) return G; if ((e === 2 || e === 6) && at.x > XQ) return G; }
           return P;
-        }, { caps: { front: { col: P, high: 'hood' }, rear: { col: P } } });
+        }, { caps: { front: { col: P, high: 'hood' }, rear: { col: P } }, glass: (k, e, kind) => kind === 'gf' && (e === 2 || e === 6) });
         const D2 = L.decal;
-        // the window graphics: the sail behind the quarter window's slanted edge, the A-pillars, the door frame's rear edge, the seals
+        // the window graphics: the sail behind the quarter window's slanted edge, the door window's front up to the A-pillar (glass on the
+        // painted band by the windscreen: by the cowl the band lies flat, it would face the driver's eyes), the door frame's rear edge, the seals
         D2.band([[XQ, 0], [-0.65, 1], [XQ, 1]], P, null, 0.01);                                         // (the sail: the glass's rear edge slants)
-        D2.band([[0.08, 0.834], [0.39, 0.684], [0.39, 1], [0.08, 1]], P, null, 0.01);                   // the A-pillar (6 cm wide along the screen)
-        D2.band([[0.39, 0.684], [0.62, 0], [0.7, 0], [0.7, 1], [0.39, 1]], P, null, 0.01);
+        D2.band([[0.08, 0], [0.58, 0], [0.39, 0.684], [0.08, 0.834]], G, null, 0.006);                   // (the A-pillar 6 cm wide over it)
         D2.band([[-0.53, 0], [-0.49, 0], [-0.47, 1], [-0.51, 1]], B, null, 0.012);                      // the door frame's rear edge
         D2.band([[XQ, 0], [0.64, 0], [0.64, 0.05], [XQ, 0.05]], B, null, 0.008);                        // the seal along the sill
         D2.band([[-0.67, 0.94], [0.1, 0.94], [0.1, 1], [-0.67, 1]], B, null, 0.008);                    // the drip rail over the side windows
         // the livery: a stripe along the sills between the arches (the stripe colour: the paint when the car has none)
         D2.side([[XA + 0.04, 0.31], [XB - 0.04, 0.31], [XB - 0.04, 0.37], [XA + 0.04, 0.37]], S, null, 0.006);
         for (const sd of [-1, 1]) K.rect(-0.3, 0.745, sd * 0.787, 0.13, 0.026, B, { dir: sd < 0 ? '-z' : 'z' });   // the door handles
+        for (const x of [-0.5, 0.7]) D2.side([[x - 0.008, 0.3], [x + 0.008, 0.3], [x + 0.008, 0.8], [x - 0.008, 0.8]], D, null, 0.004);   // the doors' shut lines
         // ---- the front wings: high over the lid, round lamps upright at their noses (skins on the loft's shoulders: from its belt over the
         //      crest and down to the lid's edge, a gutter by the lid), in the fenders ----
         const WC = [[0.7, 0.835, 0.69], [0.95, 0.855, 0.675], [1.25, 0.858, 0.66], [1.55, 0.842, 0.64], [1.85, 0.808, 0.62], [2.04, 0.775, 0.605]];   // x, the crest's height and its z
@@ -131,7 +134,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         }, { hinge: [[-2.04, 0.3, -0.6], [-2.04, 0.3, 0.6]] });
         // ---- the tail: the full-width light bar under the engine lid (one lamp each half: it lights right across) ----
         K.rect(-2.052, 0.655, 0, 1.54, 0.15, B, { dir: '-x', part: 'body' });
-        for (const sd of [-1, 1]) K.tailLamp(-2.054, 0.655, sd * 0.375, 0.74, 0.1);
+        for (const sd of [-1, 1]) K.tailLamp(-2.054, 0.655, sd * 0.38, 0.76, 0.1);
         // ---- the door mirrors (flag mirrors in the paint) ----
         for (const sd of [-1, 1]) K.mirror(0.55, 0.89, sd * 0.87, { w: 0.09, h: 0.075, d: 0.14, z0: sd * 0.785 });
         // ---- hinges: the lids at their edges by the glass, the doors at the front ----
@@ -144,7 +147,12 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const sd of [-1, 1]) K.seat(-0.3, 0.44, sd * 0.36, { w: 0.48, back: 0.62, tilt: 0.3, col: SEAT });
         K.seat(-0.98, 0.42, 0, { w: 1.0, l: 0.32, back: 0.4, tilt: 0.45, col: SEAT });
         K.box(0.46, 0.58, 0, 0.3, 0.26, 1.42, 0, D, null, false, { inner: true, part: 'body' });
-        K.box(0.3, 0.76, -0.36, 0.1, 0.1, 0.46, 0, [0.06, 0.06, 0.07], null, false, { inner: true, part: 'body' });
+        K.box(0.3, 0.76, -0.36, 0.1, 0.1, 0.46, 0, [0.06, 0.06, 0.07], null, false, { inner: true, part: 'body' });   // (the instruments' hood)
+        K.inner(() => K.part('body', () => {                                                               // the steering wheel (four spokes)
+          const C = [0.16, 0.86, -0.36], rr = 0.18, pt = (a) => [C[0] - Math.sin(a) * rr * 0.6, C[1] + Math.sin(a) * rr * 0.8, C[2] + Math.cos(a) * rr];
+          for (let i = 0; i < 8; i++) K.bar(pt(i * Math.PI / 4), pt((i + 1) * Math.PI / 4), 0.014, [0.05, 0.05, 0.055], { n: 3 });
+          K.bar([0.36, 0.7, -0.36], C, 0.02, [0.1, 0.1, 0.11], { n: 4 });
+        }));
         K.engine(-1.62, 0.26, 0, { l: 0.64, w: 0.82, h: 0.42, col: [0.42, 0.43, 0.45], cover: [0.14, 0.14, 0.15] });
         K.cyl([-1.84, 0.6, 0], [-1.72, 0.6, 0], 0.17, [0.22, 0.22, 0.23], { n: 10, inner: true, part: 'body', capA: [0.55, 0.3, 0.1] });
         K.cyl([1.55, 0.24, 0], [1.55, 0.4, 0], 0.27, [0.06, 0.06, 0.065], { n: 10, inner: true, part: 'body', capB: [0.55, 0.56, 0.6] });
