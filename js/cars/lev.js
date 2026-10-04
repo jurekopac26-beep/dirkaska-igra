@@ -28,9 +28,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         quarterL: { lx: -0.675, lz: -0.92, y: 0.72 }, quarterR: { lx: -0.675, lz: 0.92, y: 0.72 }, doorL: { lz: -0.92, y: 0.67 }, doorR: { lz: 0.92, y: 0.67 },
         mirrorL: { lx: 0.28, lz: -0.99, y: 0.94 }, mirrorR: { lx: 0.28, lz: 0.99, y: 0.94 }, wing: { lx: -0.85, y: 1.32 } },
     },
-    // the look (KIT API v1, render.js; look units = metres): one loft traced from the 206 (the scratchpad map p206.txt, section I: the
+    // the look (KIT API v1, render.js; look units = metres): one loft, the LEV family's three-door body (the
     // windscreen raked 26 degrees flowing into the curved roof, the belt rising to the rear, the rounded tailgate, the bonnet sloping to the
-    // nose), lowered 3 cm, its arches flared out to 1.81 m (a bulge over each wheel: the WRC's wings and quarters, the doors 1.69 m), a WRC
+    // nose), lowered 3 cm, its arches flared out to 1.81 m (a bulge over each wheel: the rally car's wings and quarters, the doors 1.69 m), a rally
     // bumper 11 cm longer at the back (4.00 m). The standard regions split it, but the bumper's top goes with the bumper, the tailgate is the
     // panel between the lamps up to the roof and the bonnet starts at the cowl. On it: the almond head lamps on the nose's corners (two
     // projectors in each, swept back along the shoulders), the slim grille, the wide mouth with the fog lamps, the splitter; the lamps
@@ -39,7 +39,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     look: {
       body: {
         //       x       w      yb     ybelt  wt     yt     cr     kind  tuck
-        secs: [[-2.0, 0.76, 0.25, 0.48, 0.72, 0.53, 0.02, 'b', 0.09],       // the WRC bumper's rear face (the end cap)
+        secs: [[-2.0, 0.76, 0.25, 0.48, 0.72, 0.53, 0.02, 'b', 0.09],       // the rally bumper's rear face (the end cap)
           [-1.885, 0.8, 0.22, 0.56, 0.62, 0.6, 0.02, 'b', 0.1],             // its top meets the tailgate's foot
           [-1.84, 0.83, 0.21, 0.72, 0.62, 0.89, 0.03, 'b', 0.1],            // the tailgate's lower panel (upright), the lamps' faces beside it
           [-1.69, 0.865, 0.21, 0.94, 0.6, 0.965, 0.04, 'gr', 0.1],          // the rear glass's foot
