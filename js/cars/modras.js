@@ -77,7 +77,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         D2.band([[-0.655, 0.06], [-1.06, 0.3], [-0.655, 1]], B, null, 0.008);
         // ---- the flanks: the lower door scooped (a darker shade) back into the hexagonal intake ahead of the rear wheel (its surround, the
         //      dark hole), the black sills, a line over them ----
-        D2.side([[0.97, 0.3], [0.97, 0.41], [-0.42, 0.575], [-0.6, 0.36], [-0.6, 0.3]], K.shade(P, 0.72), null, 0.004);
+        D2.side([[0.97, 0.3], [0.97, 0.41], [-0.42, 0.575], [-0.6, 0.36], [-0.6, 0.3]], K.shade(P, 0.66), null, 0.004);
+        D2.side([[0.97, 0.41], [-0.42, 0.575], [-0.42, 0.59], [0.97, 0.425]], K.shade(P, 1.22), null, 0.005);   // (the crease's lit edge over it)
         const hexI = [[-0.42, 0.55], [-0.52, 0.75], [-0.805, 0.77], [-0.868, 0.6], [-0.805, 0.38], [-0.52, 0.36]];
         D2.side(hexI, TRIM, null, 0.006);
         D2.side(hexI.map(([x, y]) => [-0.66 + (x + 0.66) * 0.76 - 0.012, 0.55 + (y - 0.55) * 0.72 - 0.02]), B, null, 0.01);
@@ -86,6 +87,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- the glass cover's frame (black, along its outer edges) ----
         for (const sd of [-1, 1]) for (const [x0, x1, z0, z1] of [[-0.801, -1.259, 0.575, 0.655], [-1.261, -1.749, 0.655, 0.715]])
           D2.top([[x0, sd * z0], [x1, sd * z1], [x1, sd * (z1 + 0.035)], [x0, sd * (z0 + 0.035)]], B, 0.006);
+        for (const x of [-1.8, -1.87, -1.94, -2.01]) K.box(x, top(x, 0) + 0.006, 0, 0.022, 0.016, 1.42, 0, B, null, true, { part: 'trunk' });   // (the vent's louvres)
         // ---- the V10 under the glass: its two banks' red cam covers with five coil packs each, the intake plenum between them ----
         const yB = top(-1.24, 0);
         K.part('body', () => {
@@ -109,6 +111,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           hx([[0.53, 0.236], [0.77, 0.29], [0.76, 0.305], [0.53, 0.252]], P);
           hx([[0.53, 0.236], [0.74, 0.17], [0.75, 0.186], [0.53, 0.252]], P);
         }
+        D2.band([[2.104, 0.5], [2.176, 0.4], [2.166, 0.999], [2.102, 0.999]], B, null, 0.006, { host: 'bumperF' });   // (each lamp wrapping round the corner)
         face([[-0.25, 0.13], [-0.23, 0.19], [0.23, 0.19], [0.25, 0.13], [0.23, 0.115], [-0.23, 0.115]].map(([z, y]) => [2.263, y, z]), B, [1, 0, 0], { host: 'bumperF' });
         K.part('bumperF', () => K.box(2.16, 0.07, 0, 0.24, 0.03, 1.66, 0, B), { hinge: [[2.2, 0.12, -0.7], [2.2, 0.12, 0.7]] });
         // ---- the tail: the hexagonal tail lamps in black clusters under the spoiler, a vent between them; the lower bumper black: its mesh, two
@@ -122,13 +125,14 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.part('bumperR', () => {
           K.grille(-2.262, 0.52, 0, 1.5, 0.1, { dir: -1, slats: 2, col: B, slatCol: [0.24, 0.24, 0.25] });
           for (const z of [-0.31, -0.17, 0.17, 0.31]) { K.exhaust(-2.31, 0.4, z, 0.046, 0.14, { n: 6, col: [0.55, 0.55, 0.57] }); K.discX(-2.302, 0.4, z, 0.064, 6, [0.72, 0.73, 0.76], -1); }
-          for (const z of [-0.5, -0.2, 0.2, 0.5]) K.box(-2.14, 0.17, z, 0.28, 0.08, 0.022, 0, TRIM);
+          K.box(-2.12, 0.14, 0, 0.32, 0.1, 1.36, 0, B, null, true);   // the diffuser, its fins
+          for (const z of [-0.5, -0.2, 0.2, 0.5]) K.rect(-2.282, 0.19, z, 0.022, 0.1, TRIM, { dir: '-x' });
         }, { hinge: [[-2.2, 0.26, -0.7], [-2.2, 0.26, 0.7]] });
         // ---- the rear spoiler: a blade over the tail lamps on two struts, black end plates (never crushed with the roof) ----
         K.part('wing', () => {
           K.wingPlank(-2.04, 1.012, -2.31, 1.058, 0.036, -0.85, 0.85, P);
           for (const sd of [-1, 1]) { K.box(-2.16, 0.95, sd * 0.6, 0.12, 0.09, 0.03, 0, B); K.endplate([[-2.03, 1.0], [-2.32, 1.045], [-2.32, 1.105], [-2.05, 1.06]], sd * 0.862, 0.016, B); }
-        }, { noCrush: true, hinge: [[-2.06, 1.02, -0.6], [-2.06, 1.02, 0.6]] });
+        }, { noCrush: true, noDent: true, hinge: [[-2.06, 1.02, -0.6], [-2.06, 1.02, 0.6]] });
         // ---- the door mirrors on black stalks, the wiper ----
         for (const sd of [-1, 1]) K.mirror(0.7, 0.85, sd * 0.99, { w: 0.13, h: 0.075, d: 0.17, arm: B, z0: sd * 0.86 });
         K.bar([0.87, top(0.87, -0.5) + 0.012, -0.5], [0.76, top(0.76, 0.32) + 0.012, 0.32], 0.009, B, { n: 4, part: 'body' });
