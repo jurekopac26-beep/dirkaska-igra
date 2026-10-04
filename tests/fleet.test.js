@@ -171,6 +171,18 @@ check('Core: the 11 first, in their places, then all the new ones in the roster 
   const inField = [];
   for (const M of [null].concat(C.MODELS.filter(m => !m.retired))) for (let k = 0; k < 16; k++) { const A = C.aiModel(k, M || undefined); if (!A || A.retired) inField.push((M ? M.id : 'none') + ':' + k); }
   check('the retired model in no AI field: aiModel with every model in use as the player\'s (and with none), drivers 0-15', !inField.length, inField.slice(0, 6).join(', '));
+  // the fuel a vehicle carries full (a race with fuel on a circuit with pits: c.tankKg, Core.fuelTank): an electric one its battery (0),
+  // every other some, by its size: the trucks and the monster truck the most (over twice any road car's), the limousine more than any
+  // road car, the kart and the small cars less than a road car's 45 kg; the 11 as they always were
+  const Tf = track('toskana'), tank = {};
+  for (const M of C.MODELS) { const c = new C.Race(Tf, { numAI: 0, playerGrid: 1, laps: 3, playerModel: M, phys: 'cs', seed: 5, fuel: true }).player; tank[M.id] = c.fuelKg === c.tankKg ? c.tankKg : NaN; }
+  const kitT = C.MODELS.filter(M => M.kit), road = C.MODELS.filter(M => !M.retired && ['mali', 'sportni', 'super', 'klasika'].includes(M.cat)), maxRoad = Math.max(...road.map(M => tank[M.id]));
+  const tBad = kitT.filter(M => !(M.ev ? tank[M.id] === 0 : tank[M.id] > 0 && tank[M.id] <= 400) || tank[M.id] !== C.fuelTank(M)).map(M => M.id + ' ' + tank[M.id]);
+  const old = C.MODELS.slice(0, 11).map(M => M.id + ' ' + tank[M.id]).join(', ');
+  check('fuel: every vehicle starts full, an electric one (JEŽEK E) with its battery (0 kg), the others with fuel; the trucks and the monster truck carry over twice any road car\'s, the limousine more than any road car, the kart and the small cars less than 45 kg; the 11 as always',
+    !tBad.length && tank.jezek === 0 && ['titan', 'kamen', 'goljat'].every(id => tank[id] > 2 * maxRoad) && tank.predsednik > maxRoad && ['mravlja', 'miska', 'kolibri', 'raketa'].every(id => tank[id] < 45) &&
+    old === 'kaze 45, vortex 45, pico 45, strega 45, rally 60, p206 45, formula 105, lm 75, muscle 45, ev 0, truck 90',
+    (tBad.length ? 'wrong ' + tBad.join(', ') + '; ' : '') + kitT.map(M => M.id + ' ' + tank[M.id]).join(', ') + ' (road cars up to ' + maxRoad + ') | ' + old);
 }
 
 // ---- 3. handling: inside the own targets, the targets inside the category's envelope; the stat bars ----
@@ -600,12 +612,12 @@ if (!only.length) {
     X = coreWith(`var VEHICLE_DEFS = VEHICLE_DEFS || [];
       VEHICLE_DEFS.push({ id: 'ev', patch: true, cat: 'reli', field: ['ev', 'lev'], price: 21000, partNames: { spoiler: 'rear spoiler' }, snd: { kind: 'i4', hz: 1.1, loud: 1 }, look: { body: { len: 4.62 } },
         parts: { set: 'car', ht: 1.42, y0: 0.2, extra: { spoiler: { z: 1, th: 0.6, m: 2, r: 0.4, h: 0.05, lx: -0.95, lz: 0, f: 0.97 } } } });
-      VEHICLE_DEFS.push({ id: 'pico', patch: true, field: ['ev'], parts: { set: 'car', ht: 1.42, y0: 0.2 } }, { id: 'titan', patch: true, fieldN: 5, desc: 'Drugo besedilo.' },
+      VEHICLE_DEFS.push({ id: 'pico', patch: true, field: ['ev'], parts: { set: 'car', ht: 1.42, y0: 0.2 } }, { id: 'titan', patch: true, fieldN: 5, desc: 'Drugo besedilo.', tank: 150 },
         { id: 'vortex', patch: true, field: ['zzglb'] }, { id: 'zzbare', patch: true, glb: null });
       VEHICLE_DEFS.push({ id: 'nosuch', patch: true, cat: 'mali' }, { id: 'kaze', patch: true, colour: 'red' }, { id: 'raketa', patch: true, parts: { set: 'car', ht: 1.4, y0: 0.2, drop: ['wheelFL'] } },
         { id: 'muscle', patch: true, parts: { set: 'race', ht: 1.3, y0: 0.2, over: { wing: { df: 0.8 }, bumperF: { df: 0.5 } } } });
       VEHICLE_DEFS.push(${clone({ id: 'zzbad', phys: Object.assign({}, good.phys, { warp: 9 }) })}, ${clone({ id: 'zzfield', field: ['nowhere'] })}, ${clone({ id: 'titan' })}, ${clone({ id: 'hatch' })},
-        ${clone({ id: 'zzsnd', snd: { kind: 'v16', hz: 1, loud: 1 } })}, ${clone({ id: 'zzdesc', desc: 'Ima 300 kW moči.' })}, ${clone({ id: 'zzok', name: 'ZZ OK', field: ['zzok', 'p206', 'zzskin'] })},
+        ${clone({ id: 'zzsnd', snd: { kind: 'v16', hz: 1, loud: 1 } })}, ${clone({ id: 'zzdesc', desc: 'Ima 300 kW moči.' })}, ${clone({ id: 'zzok', name: 'ZZ OK', field: ['zzok', 'p206', 'zzskin'], tank: 33 })}, ${clone({ id: 'zztank', tank: -5 })},
         ${clone({ id: 'zzglb', name: 'ZZ GLB', glb: 'zz', field: ['zzglb'], look: null })}, ${clone({ id: 'zzskin', name: 'ZZ SKIN', glb: 'zz', field: ['zzskin'] })},
         ${clone({ id: 'zzbare', name: 'ZZ BARE', glb: 'zz', field: ['zzbare'], look: null })}, ${clone({ id: 'zzx1', parts: pc({ extra: { spoilerx: true } }) })}, ${clone({ id: 'zzx2', parts: pc({ over: { wheelFL: { r: 0.9 } } }) })},
         ${clone({ id: 'zzx3', parts: pc({ extra: { skirt: { z: 2, th: 0.6, cth: 0.5, m: 2, r: 0.5, h: 0.05, lx: 0, lz: -1, f: 0.2 } } }) })}, ${clone({ id: 'zzx4', arc: { amax: 1.7, kv: 2, rmin: 4.2, bscale: 9 } })},
@@ -615,14 +627,15 @@ if (!only.length) {
   check('patch defs: one attaches its fields to a vehicle (the STRELA EV: category, part table with its extra, price, sound preset, look, names; the Core without the patch untouched)', ev.cat === 'reli' && X.partsOf(ev) === ev.parts && ev.parts.spoiler && ev.parts.wheelRR.wh === 3 &&
     X.CAREER.car.ev === 21000 && ev.sndP.kind === 'i4' && ev.def.look.body.len === 4.62 && ev.def.partNames.spoiler === 'rear spoiler' && ev.glb === undefined && !C.MODELS.find(o => o.id === 'ev').parts && C.CAREER.car.ev === 75000, Object.keys(ev.parts).length + ' parts');
   const four = (k) => X.MODELS[(k * 3 + 1) % 4];
-  check('fields: a patched field (the STRELA EV\'s: an EV / LEV R cup; the PICO TURBO\'s: STRELA EVs); a glb model races in one only with a look of its own for the AI (a throwaway def with a look: in; one with no look: out, the field left empty: the four road cars); a patch may take the glb away (null: in again); the retired model never (left out of a field that names it); fieldN and texts patched, the def itself untouched',
+  check('fields: a patched field (the STRELA EV\'s: an EV / LEV R cup; the PICO TURBO\'s: STRELA EVs); a glb model races in one only with a look of its own for the AI (a throwaway def with a look: in; one with no look: out, the field left empty: the four road cars); a patch may take the glb away (null: in again); the retired model never (left out of a field that names it); fieldN and texts patched, the def itself untouched; a def\'s own fuel tank (def.tank), a patched one',
     Array.from({ length: 6 }, (_, k) => X.aiModel(k, ev) === (k % 2 ? m('lev') : ev) && X.aiModel(k, m('pico')) === ev && X.aiModel(k, m('vortex')) === four(k) && X.aiModel(k, m('zzok')) === (k % 2 ? m('zzskin') : m('zzok')) &&
       X.aiModel(k, m('zzskin')) === m('zzskin') && X.aiModel(k, m('zzbare')) === m('zzbare')).every(Boolean) &&
     m('zzglb') && X.aiModel(0, m('zzglb')) === four(0) && m('zzskin').glb === 'zz' && m('zzbare').glb === null && X.DEFS.find(d => d.id === 'zzbare' && !d.patch).glb === 'zz' && m('p206').retired &&
-    m('titan').fieldN === 5 && m('titan').def.desc === 'Drugo besedilo.' && X.DEFS.find(d => d.id === 'titan' && !d.patch).desc !== 'Drugo besedilo.');
+    m('titan').fieldN === 5 && m('titan').def.desc === 'Drugo besedilo.' && X.DEFS.find(d => d.id === 'titan' && !d.patch).desc !== 'Drugo besedilo.' &&
+    X.fuelTank(m('titan')) === 150 && X.fuelTank(m('zzok')) === 33 && C.fuelTank(model('titan')) === 210 && C.fuelTank(model('raketa')) === 30);   // (the fuel: a def's own tank, a patch's)
   const why = (id) => (X.DEFS_SKIPPED.find(s => s.id === id) || {}).why || '';
-  check('broken defs are skipped and listed (a patch of no vehicle, an unknown key, no wheel to drop, downforce shares over 1, an unknown phys key, a field of no vehicle, an id taken, a body\'s name, an unknown sound, kW in the text, true for a part with no standard entry, a wheel\'s place or size, cth with no corner, bscale out of range); good ones register as given (bscale kept, rW over a standard r)',
-    skipped.join() === ['hatch', 'kaze', 'muscle', 'nosuch', 'raketa', 'titan', 'zzbad', 'zzdesc', 'zzfield', 'zzsnd', 'zzx1', 'zzx2', 'zzx3', 'zzx4'].join() && /downforce/.test(why('muscle')) && /standard/.test(why('zzx1')) && /wheel/.test(why('zzx2')) && /cth/.test(why('zzx3')) && /bscale/.test(why('zzx4')) &&
+  check('broken defs are skipped and listed (a patch of no vehicle, an unknown key, no wheel to drop, downforce shares over 1, an unknown phys key, a field of no vehicle, an id taken, a body\'s name, an unknown sound, kW in the text, a tank below 0, true for a part with no standard entry, a wheel\'s place or size, cth with no corner, bscale out of range); good ones register as given (bscale kept, rW over a standard r)',
+    skipped.join() === ['hatch', 'kaze', 'muscle', 'nosuch', 'raketa', 'titan', 'zzbad', 'zzdesc', 'zzfield', 'zzsnd', 'zztank', 'zzx1', 'zzx2', 'zzx3', 'zzx4'].join() && /downforce/.test(why('muscle')) && /tank/.test(why('zztank')) && /standard/.test(why('zzx1')) && /wheel/.test(why('zzx2')) && /cth/.test(why('zzx3')) && /bscale/.test(why('zzx4')) &&
     X.MODELS.length === C.MODELS.length + 5 && X.MODELS.slice(0, C.MODELS.length).every((o, i) => o.id === C.MODELS[i].id) && X.ARC.zzbs.bscale === 1.3 && Math.abs(m('zzbs').parts.doorL.r - 0.3 * m('zzbs').wid) < 1e-12 && X.ARC.zzok.bscale === 1,
     'skipped ' + skipped.join(', ') + '; ' + ['muscle', 'zzx1', 'zzx2', 'zzx3', 'zzx4'].map(id => id + ': ' + why(id)).join(' / '));
   { // a patched one of the 11 with a part table of its own breaks apart as a registered vehicle does (the pico, the STRELA EV)

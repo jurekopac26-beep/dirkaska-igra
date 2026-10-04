@@ -1066,6 +1066,15 @@ const Core = (function () {
   const cmpFor = (left) => left < 8000 ? 'S' : left < 16000 ? 'M' : 'H';   // the slicks for so much racing (m) still to do
   const cmpAI = (D, g) => D < 8000 ? (g % 4 === 3 ? 'M' : 'S') : D < 16000 ? 'SMMH'[g % 4] : (g % 3 ? 'M' : 'H');   // an AI car's at the start: by the race's length, a mix over the grid
   const tyreK = (ty) => ty.k === 'dry' && ty.c ? TYRE_CMP[ty.c] : null;   // (a slick's compound, if the race has them)
+  // the fuel a car carries full (kg; Race opts fuel: its weight on the car, the share burnt the same for every car): an electric one its
+  // battery (0: as heavy full as empty); the formula 105, the prototype 75, the truck 90, the rally car 60, the other road cars 45; a
+  // registered vehicle (js/cars) its def's own (def.tank), else by its category and mass: the share of the mass the road cars carry (45 kg
+  // on ~1250 kg: 3.6 %), 5 % for the rally and off-road ones (as the rally car and the truck), 7 % for the racing ones (the prototype 7.8 %),
+  // 4 % for the trucks; in 5 kg, at least 10 (the kart). So the trucks (210, 280 kg) and the monster truck (160) carry the most, the
+  // limousine (105) more than a road car, the kart (10) and the small cars (20-40) the least; the 11 as they always were
+  const FUEL_SHARE = { reli: 0.05, teren: 0.05, dirkalni: 0.07, tovornjaki: 0.04 };
+  const fuelTank = (M) => M.ev ? 0 : M.tank != null ? M.tank : M.body === 'formula' ? 105 : M.body === 'lm' ? 75 : M.body === 'truck' ? 90 : M.id === 'rally' ? 60
+    : M.kit ? Math.max(10, Math.round(M.mass * (FUEL_SHARE[M.cat] || 0.036) / 5) * 5) : 45;
   // how long a stop at the box takes (s): the repairs by the damage and the parts lost (5 s at most), new tyres 2.6 s at least, the fuel 1.6 s
   // and 0.9 s for every tenth of the tank to fill
   function stopDur(c, race) {
@@ -3947,8 +3956,7 @@ const Core = (function () {
       // last one it could make a rival comes in when that costs it no extra stop (0 to 1.5: the stops spread over the laps)
       if (opts.fuel && track.def.pit && !track.open && !this.timeTrial) {
         this.fuelRate = 1 / (1.3 * track.len * (track.def.laps || 3) / 38);
-        const tank = (M) => M.ev ? 0 : M.body === 'formula' ? 105 : M.body === 'lm' ? 75 : M.body === 'truck' ? 90 : M.id === 'rally' ? 60 : 45;   // (the electric car: its battery, the same weight full or empty)
-        this.cars.forEach((c, i) => { c.fuel = 1; c.tankKg = tank(c.m); c.fuelKg = c.tankKg; c.fuelD = 0; c.fuelPm = this.fuelRate / 38; c.fuelK = (i % 4) * 0.5; });
+        this.cars.forEach((c, i) => { c.fuel = 1; c.tankKg = fuelTank(c.m); c.fuelKg = c.tankKg; c.fuelD = 0; c.fuelPm = this.fuelRate / 38; c.fuelK = (i % 4) * 0.5; });
       }
       if (track.drs) this.drsLast = track.drs.map(() => null);   // (per DRS zone: who crossed its detection line last, and when)
       // the slipstream (opts.slip, a race with rivals): less air drag in the wake of a car ahead (c.tow, see _tow; the field only with it on)
@@ -4843,7 +4851,7 @@ const Core = (function () {
      entries, its career price and its expanded part table. An invalid one is skipped with a console warning and listed in DEFS_SKIPPED
      (the fleet test fails on any). A patch def ({ id, patch: true, ... }) attaches fields to a vehicle already registered, one of the 11
      included (its look, its part table, its field ...): cat, ord, desc, stats, price, pk, field, fieldN, snd, expect, partNames, parts,
-     glb, credit, retired, look.
+     glb, credit, retired, look, tank (the fuel it carries full, kg: fuelTank).
      --------------------------------------------------------------------- */
   const DEFS = (typeof VEHICLE_DEFS !== 'undefined' ? VEHICLE_DEFS : []).slice(), DEFS_SKIPPED = [];
   const DRIVES = ['FR', 'FF', 'MR', 'AWD', 'RR'], PK_IDS = ['ta1', 'ppo', 'open', 'unl'];
@@ -4852,8 +4860,8 @@ const Core = (function () {
   const PHYS_OPT = { tracK: [0.2, 3], brakeK: [0.2, 3], spinK: [0.02, 3], aero: [0, 0.0005], loose: [0.2, 2], looseDrag: [0.1, 2], landV: [3, 40], landK: [0, 2], ev: null, sway: [0, 4],
     dmgK: [0.3, 2], vLim: [20, 400], aiGap: [2, 10], aiPass: [2, 8], aiEdge: [0.5, 4], aiLat: [1, 8], aiFol: [1, 6], circ: [3, 9] };
   const DEF_REQ = ['id', 'name', 'cat', 'drive', 'desc', 'phys', 'arc', 'csp', 'stats', 'price', 'pk', 'snd', 'parts'];
-  const DEF_OPT = ['ord', 'field', 'fieldN', 'num', 'expect', 'partNames', 'glb', 'credit', 'retired', 'look'];
-  const PATCH_KEYS = ['cat', 'ord', 'desc', 'stats', 'price', 'pk', 'field', 'fieldN', 'snd', 'expect', 'partNames', 'parts', 'glb', 'credit', 'retired', 'look'];
+  const DEF_OPT = ['ord', 'field', 'fieldN', 'num', 'expect', 'partNames', 'glb', 'credit', 'retired', 'look', 'tank'];
+  const PATCH_KEYS = ['cat', 'ord', 'desc', 'stats', 'price', 'pk', 'field', 'fieldN', 'snd', 'expect', 'partNames', 'parts', 'glb', 'credit', 'retired', 'look', 'tank'];
   const isNum = (v, lo, hi) => typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi;
   const isObj = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
   // the checks of a def's fields ('' when fine); a patch def's fields get the same
@@ -4876,6 +4884,7 @@ const Core = (function () {
     credit: (v) => typeof v === 'string' ? '' : 'credit not a text',
     retired: (v) => typeof v === 'boolean' ? '' : 'retired not true / false',
     look: (v) => v === null || isObj(v) ? '' : 'look: null or an object',
+    tank: (v) => isNum(v, 0, 1000) ? '' : 'tank: the fuel it carries full, 0..1000 kg (fuelTank: by its category and mass when it has none)',
   };
   function physBad(P) {
     if (!isObj(P)) return 'phys missing';
@@ -4932,7 +4941,7 @@ const Core = (function () {
         body: d.id,   // (the renderer's body: its own, from its look (the render kit; a generic kit hatch while its look is null))
         parts: expandParts(d.parts, P), field: d.field ? d.field.slice() : null,
       });
-      for (const k of ['fieldN', 'num', 'glb', 'credit', 'retired']) if (d[k] != null) M[k] = d[k];
+      for (const k of ['fieldN', 'num', 'glb', 'credit', 'retired', 'tank']) if (d[k] != null) M[k] = d[k];
       // the AI's room for a big vehicle (unless the def sets its own): the edge margin, the passing offset, the follow gap (centre to
       // centre), how far to its side a car counts as in its way and as one to follow (the hard-coded 3.2 / 2.1 for the others)
       if (P.aiEdge == null) M.aiEdge = Math.max(1.25, 0.43 * P.wid + 0.5);
@@ -4963,14 +4972,14 @@ const Core = (function () {
       if (d.field !== undefined) M.field = d.field ? d.field.slice() : null; if (d.fieldN !== undefined) M.fieldN = d.fieldN;
       if (d.parts !== undefined) M.parts = expandParts(d.parts, M);
       if (d.snd !== undefined) M.sndP = d.snd; if (d.price !== undefined) CAREER.car[M.id] = d.price;
-      for (const k of ['glb', 'credit', 'retired']) if (d[k] !== undefined) M[k] = d[k];
+      for (const k of ['glb', 'credit', 'retired', 'tank']) if (d[k] !== undefined) M[k] = d[k];
     }
   }
   registerVehicles();
 
   return { crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, CAREER, careerPrize, careerUpgPrice,
-    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, aiModel, fieldSize, statsOf, ARC, heirOf };
+    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank };
 })();
 
 

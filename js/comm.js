@@ -103,6 +103,8 @@ const Comm = (() => {
     // fuel (a race with fuel on) and an endurance race's evening and night
     fuelLow: ['Running low on fuel! Box for fuel this lap.', 'The fuel light is on! Time to come in and fill up.', 'Not much fuel left in that tank, pit now!'],
     fuelOut: ['Oh no, out of fuel! Spluttering along on the last drops!', 'Dry tank! That car is limping back to the pits now.'],
+    batteryLow: ['The battery is running low! Box this lap for a charge.', 'Not much charge left in that battery, pit now!'],   // (an electric car)
+    batteryOut: ['The battery is flat! Crawling along on the last of the charge!', 'Flat battery! That car is creeping back to the pits now.'],
     puncture: ['Puncture! That tyre is going down!', 'That knock has cut a tyre! A puncture!', 'A slow puncture, the car is pulling to one side now!'],
     // a friend's challenge (the challenge link): the run, beaten or not
     chalIntro: ["A challenge from {name}! The time to beat: {time}.", "{name} has set the bar at {time}. Let us see if you can beat it!"],
@@ -123,6 +125,7 @@ const Comm = (() => {
     brakesHot: ['The brakes are overheating! They will not stop the car as well now.', 'Smoking hot brakes! Brake a little earlier for a while.'],
     engineHot: ['The engine is running hot! Losing power now.', 'Temperature warning, that engine is overheating!'],
     fuelIn: ['Fuel in, and back out onto the track!', 'Tank full again, off it goes!'],
+    batteryIn: ['Battery charged, and back out onto the track!', 'Fully charged again, off it goes!'],
     // the rivals' characters: a duel with the player, the standing rival, a mistake under pressure
     duel: ['A proper duel with {name} now! Nose to tail, lap after lap.', 'You and {name}, this is a real fight!', 'This battle with {name} is getting intense!'],
     duelRival: ['Here we go again: you and your old rival {name}, wheel to wheel!', 'The rivalry continues! {name} will not give you an inch.', '{name} again! These two just cannot stay away from each other.'],
