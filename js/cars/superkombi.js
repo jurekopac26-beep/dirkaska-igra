@@ -23,8 +23,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     // windscreen, a flat roof, an upright tailgate), lowered over wide slicks in flared arches. The standard regions split it (the bonnet,
     // the tailgate with its glass, the front fenders with the quarter-lights, the front doors with their glass, the rear quarters with the
     // sliding door's window and the side intake, the deep front spoiler and the rear bumper at the loft's ends); the wing on its struts
-    // across the roof's back edge in its part. The livery: the paint, a band in the stripe colour sweeping up the side, black skirts and
-    // pillars, the start number on the doors, the tailgate and the roof
+    // across the roof's back edge in its part. The livery: the paint, a band in the stripe colour sweeping up the side and twin stripes over
+    // the bonnet and the roof, black skirts and pillars, the start number on the doors and the roof
     look: {
       body: { len: 4.7, wid: 1.95, roofY: 1.63, wz: 0.17,
         // (the sections sit on the cuts the regions and the arches make anyway: the windscreen's base on the front arch's, the bonnet's
@@ -106,8 +106,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         }, { hinge: [[2.2, 0.3, -0.8], [2.2, 0.3, 0.8]] });
         for (const z of [-0.42, 0.28]) K.bar([1.34, 1.04, z - 0.3], [1.31, 1.06, z + 0.3], 0.01, B, { n: 4, part: 'body' });   // the wipers
         K.hinge('hood', [1.31, 1.02, -0.7], [1.31, 1.02, 0.7]);
-        // ---- the tail: the tail lamps up the corner posts (they stay on the body when the tailgate goes), the number on the tailgate;
-        //      the rear bumper (the loft's end under the bumper's line): a black band with the twin tailpipes, the diffuser under it ----
+        // ---- the tail: the tail lamps up the corner posts (they stay on the body when the tailgate goes), a black band across the
+        //      tailgate; the rear bumper (the loft's end under the bumper's line): a black band, the twin tailpipes, the diffuser under it ----
         for (const sd of [-1, 1]) {
           K.box(-2.29, 0.56, sd * 0.77, 0.09, 0.5, 0.18, 0, P, null, false, { part: 'body' });
           K.rect(-2.337, 0.81, sd * 0.77, 0.16, 0.46, B, { dir: '-x', part: 'body' }); K.tailLamp(-2.338, 0.81, sd * 0.77, 0.12, 0.42);
@@ -119,14 +119,15 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.box(-2.2, 0.09, 0, 0.28, 0.07, 1.5, 0, B);                                            // the diffuser
           for (const sd of [-1, 1]) K.exhaust(-2.37, 0.32, sd * 0.22, 0.05, 0.2, { n: 6 });       // (the V10's twin tailpipes)
         });
-        // ---- the wing across the roof's back edge: its plane in the stripe colour, black endplates and struts (never crushed) ----
+        // ---- the wing across the roof's back edge: its plane in the stripe colour, the endplates in the paint, black struts (never crushed,
+        //      never dented) ----
         K.part('wing', () => {
           K.wingPlank(-1.95, 1.7, -2.38, 1.73, 0.04, -0.9, 0.9, S);                               // (its top 1.77: 14 cm over the roof)
-          for (const sd of [-1, 1]) { K.endplate([[-1.92, 1.665], [-2.4, 1.665], [-2.4, 1.78], [-1.94, 1.755]], sd * 0.915, 0.014, B);
-            K.box(-2.15, 1.58, sd * 0.45, 0.2, 0.13, 0.03, 0, B); }
+          for (const sd of [-1, 1]) { K.endplate([[-1.93, 1.675], [-2.4, 1.675], [-2.4, 1.78], [-1.95, 1.755]], sd * 0.915, 0.014, P);
+            K.box(-2.16, 1.58, sd * 0.45, 0.14, 0.13, 0.025, 0, B); }
         }, { noCrush: true, noDent: true });
-        // ---- inside (seen once a part is off): two racing seats in the cage, the dashboard; the race engine behind them (the bulkhead
-        //      between), its gearbox over the rear axle; the radiator in the nose ----
+        // ---- inside (seen once a part is off): two racing seats in the cage, the dashboard and the wheel; the race engine behind them (the
+        //      bulkhead between) with its radiators beside it, its gearbox over the rear axle; a radiator in the nose ----
         for (const sd of [-1, 1]) K.seat(0.02, 0.42, sd * 0.38, { w: 0.46, back: 0.76, tilt: 0.2, col: [0.08, 0.08, 0.09] });
         K.box(1.02, 0.6, 0, 0.42, 0.34, 1.6, 0, D, null, false, { inner: true, part: 'body' });
         K.cyl([0.52, 0.94, -0.38], [0.545, 0.965, -0.38], 0.17, B, { n: 10, capA: null, capB: null, inner: true, part: 'body' });   // the wheel (on the left) on its column
@@ -142,7 +143,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.box(1.95, 0.2, 0, 0.1, 0.5, 1.3, 0, [0.16, 0.16, 0.17], null, false, { inner: true, part: 'body' });
         const C = [0.78, 0.79, 0.82];
         K.cage([[[-0.33, 0.2, -0.72], [-0.33, 1.5, -0.7]], [[-0.33, 0.2, 0.72], [-0.33, 1.5, 0.7]], [[-0.33, 1.5, -0.7], [-0.33, 1.5, 0.7]], [[-0.33, 0.25, -0.7], [-0.33, 1.48, 0.7]],
-          [[1.0, 0.3, -0.76], [0.42, 1.5, -0.7]], [[1.0, 0.3, 0.76], [0.42, 1.5, 0.7]], [[0.42, 1.5, -0.7], [-0.33, 1.5, -0.7]], [[0.42, 1.5, 0.7], [-0.33, 1.5, 0.7]]], 0.025, C);
+          [[1.0, 0.3, -0.76], [0.42, 1.5, -0.7]], [[1.0, 0.3, 0.76], [0.42, 1.5, 0.7]], [[0.42, 1.5, -0.7], [-0.33, 1.5, -0.7]], [[0.42, 1.5, 0.7], [-0.33, 1.5, 0.7]]], 0.025, C,
+          { noCrush: true, noDent: true });
       },
     },
   });
