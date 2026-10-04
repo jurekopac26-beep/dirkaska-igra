@@ -20,7 +20,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       extra: {
         grille: { z: 0, th: 0.55, m: 4, r: 0.45, h: 0.1, lx: 0.97, lz: 0, y: 0.34 },
       },
-      over: { trunk: { lx: -0.79, y: 0.96 } },   // (where the look has them: the radiator low in the bumper, the boot lid behind the steep rear glass)
+      // (the debris from where the look has the parts: the radiator low in the bumper, the bumper's middle, the boot lid behind the steep rear
+      // glass, the wing high over it, the doors and quarters up to their glass, the mirrors by the A-pillars)
+      over: { bumperF: { lx: 0.93 }, trunk: { lx: -0.79, y: 0.96 }, wing: { lx: -0.89, y: 1.22 }, doorL: { y: 0.73 }, doorR: { y: 0.73 },
+        quarterL: { y: 0.67 }, quarterR: { y: 0.67 }, mirrorL: { y: 0.94 }, mirrorR: { y: 0.94 } },
     },
     // the look (KIT API v1, render.js; look units = metres): a three-box coupé loft, its sides stepped out over both axles (the box flares:
     // flat-faced, flat-topped, the doors set in between them), a long low nose over the five ahead of the front axle, an upright glasshouse
@@ -40,8 +43,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [-0.56, 0.9, 0.22, 0.88, 0.66, 1.275, 0.06, 'r', 0.11],        // the rear flare's front end (behind the B-pillar)
           [-0.5, 0.82, 0.22, 0.88, 0.66, 1.275, 0.06, 'r', 0.11],        // the door's rear edge: the door set in between the flares
           [-0.06, 0.82, 0.22, 0.88, 0.66, 1.27, 0.06, 'gf', 0.11],       // the windscreen's top
-          [0.5, 0.82, 0.22, 0.84, 0.79, 0.87, 0.02, 'b', 0.11],          // the windscreen's base (the cowl)
-          [0.62, 0.82, 0.22, 0.84, 0.79, 0.86, 0.025, 'b', 0.11],         // the door's front edge
+          [0.5, 0.82, 0.22, 0.84, 0.79, 0.87, 0.02, 'b', 0.11],          // the windscreen's base (the cowl; its side band not a flat sliver)
+          [0.62, 0.82, 0.22, 0.84, 0.79, 0.86, 0.025, 'b', 0.11],        // the door's front edge
           [0.7, 0.9, 0.22, 0.8, 0.82, 0.85, 0.025, 'b', 0.11],           // the front flare
           [1.64, 0.9, 0.24, 0.79, 0.81, 0.83, 0.025, 'b', 0.11],         // its front end
           [1.74, 0.86, 0.26, 0.77, 0.79, 0.81, 0.025, 'b', 0.11],        // the nose's sides
@@ -72,20 +75,22 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const [za, zb] of [[-0.8, -0.24], [-0.24, 0.24], [0.24, 0.8]]) DC.top([[-0.06, za], [0.05, za], [0.05, zb], [-0.06, zb]], S, 0.008);   // (a banner across the windscreen's top)
         // ---- the livery: a broad band in the stripe colour low along the side (broken by the arches); the numbers on the doors ----
         DC.side([[-1.62, 0.43], [1.72, 0.43], [1.72, 0.55], [-1.62, 0.55]], S, null, 0.006);
-        for (const sd of [-1, 1]) K.number(0.04, 0.7, sd * 0.828, 0.24, { dir: sd < 0 ? '-z' : 'z', w: 0.34, host: sd < 0 ? 'doorL' : 'doorR' });
+        for (const sd of [-1, 1]) { const f = sd < 0 ? '-z' : 'z', door = sd < 0 ? 'doorL' : 'doorR';
+          K.number(0.04, 0.7, sd * 0.828, 0.24, { dir: f, w: 0.34, host: door });
+          K.rect(-0.38, 0.8, sd * 0.828, 0.14, 0.025, B, { dir: f, host: door }); }   // (the handle at the door's rear edge)
         // ---- the nose: rectangular lamps in a black band right across, the bonnet's two vents ----
         K.rect(1.962, 0.64, 0, 1.62, 0.16, B);
         for (const sd of [-1, 1]) K.headLamp(1.968, 0.64, sd * 0.56, 0.06, { shape: 'rect', w: 0.36, h: 0.12, ring: [0.5, 0.51, 0.53] });
         for (const sd of [-1, 1]) DC.top([[1.12, sd * 0.08], [1.44, sd * 0.08], [1.44, sd * 0.26], [1.12, sd * 0.26]], B, 0.006, { host: 'hood' });
         // ---- the front bumper: deep, in the paint, the radiator's box showing through its middle; the splitter right across under it, its end
-        //      plates up the corners, two dive planes each side (the front wing); the fog lamps ----
+        //      plates up the corners, a dive plane each side (the front wing); brake ducts low in its corners, the fog lamps over them ----
         const ring = (x, y0, y1, zw, c) => [[x, y0, -zw + c], [x, y0, zw - c], [x, y0 + c, zw], [x, y1 - c, zw], [x, y1, zw - c], [x, y1, -zw + c], [x, y1 - c, -zw], [x, y0 + c, -zw]];
         K.part('bumperF', () => {
           K.skin([ring(1.7, 0.17, 0.47, 0.87, 0.04), ring(2.02, 0.15, 0.52, 0.87, 0.05), ring(2.08, 0.17, 0.5, 0.8, 0.05)], P, B, P);
-          K.wingPlank(2.13, 0.125, 1.84, 0.13, 0.022, -0.86, 0.86, B); K.rect(2.081, 0.19, 0, 1.5, 0.04, B);
+          K.wingPlank(2.16, 0.12, 1.84, 0.13, 0.024, -0.86, 0.86, B); K.rect(2.081, 0.19, 0, 1.5, 0.04, B);
           K.rect(2.083, 0.335, 0, 0.88, 0.25, B);   // (the opening the radiator fills: black once the grille is gone)
           for (const sd of [-1, 1]) {
-            K.endplate([[2.13, 0.125], [2.13, 0.2], [1.96, 0.44], [1.86, 0.44], [1.86, 0.125]], sd * 0.878, 0.012, B);
+            K.endplate([[2.16, 0.12], [2.16, 0.22], [1.98, 0.46], [1.86, 0.46], [1.86, 0.12]], sd * 0.878, 0.012, B);
             K.plate([[2.04, 0.34, sd * 0.86], [1.9, 0.4, sd * 0.86], [1.93, 0.37, sd * 0.93]], 0.01, B);   // (the dive plane)
             K.rect(2.082, 0.26, sd * 0.6, 0.26, 0.1, B); K.discX(2.084, 0.41, sd * 0.62, 0.05, 8, K.lampHead, 1);
           }
@@ -105,7 +110,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
             K.endplate([[-1.66, 1.17], [-1.68, 1.29], [-1.79, 1.34], [-2.14, 1.34], [-2.14, 1.17]], sd * 0.872, 0.014, S);
             K.endplate([[-1.79, 0.975], [-1.83, 1.25], [-1.97, 1.27], [-1.95, 0.975]], sd * 0.5, 0.03, B);
           }
-        }, { noCrush: true, hinge: [[-1.8, 0.98, -0.5], [-1.8, 0.98, 0.5]] });
+        }, { noCrush: true, noDent: true, hinge: [[-1.8, 0.98, -0.5], [-1.8, 0.98, 0.5]] });   // (it swings back about the pylons' feet)
         // ---- the roof vent (a scoop at the roof's rear, its mouth forward), the louvres over the rear glass ----
         const sc = (x, h, w) => [[x, 1.322, -w], [x, 1.322, w], [x, 1.322 + h, w - 0.02], [x, 1.322 + h, -w + 0.02]];
         K.skin([sc(-0.93, 0.004, 0.15), sc(-0.8, 0.045, 0.19), sc(-0.71, 0.052, 0.2)], S, null, B);
@@ -128,7 +133,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.hinge('hood', [0.52, 0.88, -0.6], [0.52, 0.88, 0.6]);
         K.hinge('trunk', [-1.25, 0.99, -0.6], [-1.25, 0.99, 0.6]);
         K.hinge('doorL', [0.6, 0.4, -0.82], [0.6, 0.85, -0.82]); K.hinge('doorR', [0.6, 0.4, 0.82], [0.6, 0.85, 0.82]);
-        // ---- inside (seen once a part is off): the bucket seats, the dashboard, the roll cage, the five ahead of the front axle ----
+        // ---- inside (seen once a part is off): the bucket seats, the dashboard and the wheel, the roll cage, the extinguisher; the five ahead of
+        //      the front axle, its intercooler ----
         for (const sd of [-1, 1]) K.seat(-0.42, 0.5, sd * 0.34, { w: 0.46, l: 0.48, back: 0.68, tilt: 0.18, col: [0.1, 0.1, 0.11] });
         K.box(0.34, 0.6, 0, 0.3, 0.22, 1.5, 0, D, null, false, { inner: true, part: 'body' });
         K.cyl([0.13, 0.86, -0.34], [0.1, 0.88, -0.34], 0.17, [0.06, 0.06, 0.065], { n: 8, inner: true, part: 'body' });   // (the steering wheel, left-hand drive)
@@ -136,7 +142,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const sd of [-1, 1]) cg.push([[-0.66, 0.26, sd * 0.7], [-0.66, 1.2, sd * 0.56]], [[0.4, 0.26, sd * 0.7], [0.4, 0.84, sd * 0.7]], [[0.4, 0.84, sd * 0.7], [-0.02, 1.2, sd * 0.56]],
           [[-0.02, 1.2, sd * 0.56], [-0.66, 1.2, sd * 0.56]], [[0.4, 0.7, sd * 0.72], [-0.66, 0.4, sd * 0.72]]);
         cg.push([[-0.66, 1.2, -0.56], [-0.66, 1.2, 0.56]], [[-0.02, 1.2, -0.56], [-0.02, 1.2, 0.56]], [[-0.66, 0.26, -0.7], [-0.66, 1.2, 0.56]]);
-        K.cage(cg, 0.022, [0.78, 0.79, 0.82], { n: 4 });
+        K.cage(cg, 0.022, [0.78, 0.79, 0.82], { n: 4, noCrush: true, noDent: true });   // (the main hoop, the A-pillar bars, the roof rails, the door bars, a diagonal)
+        K.cyl([0.12, 0.3, 0.3], [0.12, 0.3, 0.02], 0.06, K.rgb(0xc81e1e), { n: 6, inner: true, part: 'body' });   // (the fire extinguisher on the floor)
         K.engine(1.38, 0.3, 0, { l: 0.62, w: 0.4, h: 0.4 });
         K.box(1.78, 0.5, 0, 0.1, 0.22, 0.62, 0, [0.55, 0.56, 0.58], null, false, { inner: true, part: 'body' });   // (the intercooler)
       },
