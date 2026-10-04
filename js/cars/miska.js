@@ -16,7 +16,130 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     price: 6000, pk: 'ta1', field: ['miska'],
     snd: { kind: 'i2', hz: 1.3, loud: 0.8 },
     expect: { t100: [4.94, 5.8], vmax: [144, 153], latG: [2.05, 2.15], d100: [22.7, 25] },
-    parts: { set: 'car', ht: 1.33, y0: 0.18 },
-    look: null,
+    // (where the look has them: the bullet mirrors on the front wings, the engine lid propped open behind the tail)
+    parts: { set: 'car', ht: 1.33, y0: 0.18, over: { mirrorL: { lx: 0.66, lz: -0.79, y: 0.84 }, mirrorR: { lx: 0.66, lz: 0.79, y: 0.84 }, trunk: { lx: -0.9, y: 0.76 } } },
+    // the look (KIT API v1, render.js; look units = metres): a round bubble lofted through the sections below. The standard regions cut it
+    // into the front lid (the bonnet over the luggage well), the front wings with their lamps, the (rear-hinged) doors with their glass, the
+    // rear wings and the bumpers; the engine bay under the lid is open (its top panels null: lined, floored, the firewall a bulkhead) with
+    // the twin in it, and the lid itself ('trunk') stands propped open on its stays over it (the trunk's region moved off the loft: the lid
+    // alone). The canvas roof, the rear window and the stripes are decals laid on the loft; the start number on the front lid, roundels on
+    // the doors
+    look: {
+      body: { len: 2.97, wid: 1.32, roofY: 1.33, wz: 0.07,
+        //       x       w      yb     ybelt  wt     yt     cr     kind  tuck
+        secs: [[-1.48, 0.52, 0.26, 0.5, 0.4, 0.53, 0.012, 'b', 0.07],      // the tail: the valance under the lid, the bumper's face
+          [-1.43, 0.585, 0.235, 0.53, 0.37, 0.555, 0.015, 'b', 0.08],      // the engine bay's lower edge (the lid's, closed)
+          [-1.33, 0.625, 0.215, 0.65, 0.36, 0.735, 0.02, 'b', 0.09],       // the lid's bend (louvres above it)
+          [-1.157, 0.64, 0.205, 0.76, 0.35, 0.9, 0.025, 'b', 0.1],         // the lid's hinge (the rear arch's end)
+          [-1.004, 0.645, 0.2, 0.83, 0.44, 0.99, 0.04, 'gr', 0.1],         // the rear window's foot
+          [-0.584, 0.645, 0.2, 0.86, 0.5, 1.16, 0.11, 'r', 0.1],           // the roof's back edge (the rear arch's front end)
+          [-0.36, 0.645, 0.2, 0.86, 0.51, 1.19, 0.14, 'r', 0.1],           // the roof's crest (the doors' back edge)
+          [0.27, 0.645, 0.2, 0.85, 0.5, 1.17, 0.12, 'gf', 0.1],            // the windscreen's top
+          [0.62, 0.64, 0.2, 0.785, 0.56, 0.835, 0.035, 'b', 0.1],          // its base (the cowl; the doors' front edge)
+          [1.1435, 0.635, 0.205, 0.66, 0.53, 0.745, 0.04, 'b', 0.1],       // the front lid (on the front arch's cut)
+          [1.2967, 0.62, 0.215, 0.635, 0.5, 0.715, 0.03, 'b', 0.09],       // (the front arch's end)
+          [1.43, 0.585, 0.23, 0.61, 0.44, 0.67, 0.022, 'b', 0.08],         // the wings' ends (the bumper's depth)
+          [1.49, 0.52, 0.25, 0.58, 0.34, 0.62, 0.012, 'b', 0.07]],         // the nose: the lamps' face
+        eye: { x: -0.3, y: 1.08, style: 'closed' },
+        decalX: 0.94, decalY: 0.818, decalRz: -0.16, decalS: 0.47, decalPart: 'hood',   // (the start number on the front lid, as the old racers had it)
+        door: [0.62, -0.36], bumpY: [0.37, 0.37], bumpR: 0.05, engine: [-1.28, 0.64], engRear: true },
+      wheels: { style: 'deep', spokes: 8, w: 0.15, gap: 0.05, rim: [0.78, 0.79, 0.82], cap: [0.3, 0.3, 0.32] },
+      // (the standard regions, the boot's moved off the loft: the propped lid is drawn whole in 'trunk'; the bay under it stays the body's)
+      regions: (std) => std.map(r => r.part === 'trunk' ? Object.assign({}, r, { x: [-2.4, -1.9] }) : r),
+      build(K) {
+        const P = K.paint, S = K.strp, B = K.black, CH = K.chrome, G = K.GLASS, WH = [0.95, 0.95, 0.93];
+        const CV = [0.13, 0.125, 0.12], SEAM = [0.25, 0.24, 0.22], AL = [0.6, 0.61, 0.63], EB = [0.16, 0.16, 0.17];
+        const XA = K.arches[1].x + K.arches[1].half, XB = K.arches[0].x - K.arches[0].half;   // (the sills between the arches)
+        // the shell: the paint; the glass (the windscreen with the vent windows, the side windows); the engine bay's top open under the
+        // lid (e 3..5 null); the sills dark, the arches' ledges black; the rear window a glass decal on the painted 'gr' segment (marked)
+        const L = K.loft(K.secs(K.body.secs), (k, e, kind, at) => {
+          if (e === 0 || e === 8) return at.arch ? B : at.x > XA && at.x < XB ? K.shade(P, 0.5) : K.shade(P, 0.62);
+          if (k >= 1 && k <= 2 && e >= 3 && e <= 5) return null;                               // (the engine bay, open under the lid)
+          if (kind === 'gf' && e >= 2 && e <= 6) return G;
+          if (kind === 'r' && (e === 2 || e === 6)) return G;
+          if (kind === 'r' && e === 4) return CV;                                               // (the canvas: the crown, the edges' strips below)
+          if (kind === 'gr' && e === 4) return G;                                               // (the rear window: the crown, its sides strips below)
+          return P;
+        }, { glass: (k, e, kind) => kind === 'gr' && (e === 3 || e === 5), caps: { front: { col: P }, rear: { col: P } } });
+        const D = L.decal;
+        // ---- the greenhouse: the rear window (a glass decal), the pillars, the window frames ----
+        for (const sd of [-1, 1]) D.top([[-1.0, sd * 0.16], [-0.59, sd * 0.18], [-0.59, sd * 0.31], [-1.0, sd * 0.26]], G, 0.006);   // (its sides on the edges, marked glass)
+        D.band([[-0.39, 0], [-0.345, 0], [-0.345, 1], [-0.39, 1]], P, null, 0.008);            // the B-pillar (the door's back edge)
+        D.band([[-0.6, 0], [0.61, 0], [0.61, 0.05], [-0.6, 0.05]], CH, null, 0.006);           // the window's chrome sill line
+        D.band([[-0.6, 0.93], [0.27, 0.93], [0.27, 1], [-0.6, 1]], P, null, 0.007);           // under the roof's edge (the drip rail)
+        for (const sd of [-1, 1]) K.bar([0.615, 0.83, sd * 0.575], [0.268, 1.175, sd * 0.505], 0.022, P, { n: 4, part: 'body' });   // the A-pillars
+        // ---- the canvas roof (rolled back to its last bow), its bows; the roof's painted rails either side ----
+        for (const sd of [-1, 1]) D.top([[-0.584, sd * 0.185], [0.255, sd * 0.185], [0.255, sd * 0.37], [-0.584, sd * 0.37]], CV, 0.006);
+        for (const x of [-0.3, -0.06, 0.16]) D.top([[x - 0.012, -0.18], [x + 0.012, -0.18], [x + 0.012, 0.18], [x - 0.012, 0.18]], SEAM, 0.006);
+        K.cyl([-0.54, 1.29, -0.37], [-0.54, 1.29, 0.37], 0.04, CV, { n: 6, part: 'body' });   // (the folded canvas)
+        // ---- the front: the lid's chrome strip down the nose, the lamps in the wings' ends, the indicators, the wipers ----
+        D.top([[0.66, -0.014], [1.495, -0.014], [1.495, 0.014], [0.66, 0.014]], CH, 0.005);
+        K.rect(1.493, 0.47, 0, 0.028, 0.29, CH);                                               // (on down the nose to the bumper)
+        for (const sd of [-1, 1]) {
+          const f = sd < 0 ? 'fenderL' : 'fenderR', z = sd * 0.405;
+          K.cyl([1.44, 0.5, z], [1.515, 0.5, z], 0.088, P, { n: 8, part: f, capA: null, capB: CH });   // the lamp's nacelle out of the wing, its chrome bezel
+          K.headLamp(1.519, 0.5, z, 0.068, { host: f, ring: null, n: 8 });
+          K.rect(1.493, 0.385, sd * 0.43, 0.075, 0.035, K.rgb(0xff9a1e), { host: f });       // the indicator under it
+        }
+        for (const z of [-0.3, 0.12]) K.bar([0.66, 0.875, z - 0.2], [0.63, 0.885, z + 0.2], 0.009, B, { n: 4, part: 'body' });   // the wipers
+        // ---- the bullet mirrors on the front wings (mirrorL / mirrorR) on their stalks ----
+        for (const sd of [-1, 1]) { const m = sd < 0 ? 'mirrorL' : 'mirrorR';
+          K.mirror(0.98, 0.845, sd * 0.52, { w: 0.06, h: 0.055, d: 0.09, col: CH, z0: sd * 0.52 });
+          K.bar([0.99, 0.77, sd * 0.52], [0.985, 0.83, sd * 0.52], 0.01, CH, { n: 4, part: m }); }
+        // ---- the flares over the wheels pushed to the corners (paint, riveted on) ----
+        for (const A of K.arches) for (const sd of [-1, 1]) K.flare(A.x, 0.31, 0.37, sd * 0.6, sd * 0.685, P, { n: 5 });
+        // ---- the livery: a stripe along the sills, a roundel with the number on each (rear-hinged) door, its handle at the front edge ----
+        D.side([[XA + 0.03, 0.32], [XB - 0.03, 0.32], [XB - 0.03, 0.385], [XA + 0.03, 0.385]], S, null, 0.006);
+        for (const sd of [-1, 1]) {
+          const d = sd < 0 ? 'doorL' : 'doorR', dir = sd < 0 ? '-z' : 'z', z = sd * 0.651, ring = [];
+          for (let i = 0; i < 12; i++) { const a = (sd > 0 ? i : -i) * Math.PI / 6; ring.push([0.1 + Math.cos(a) * 0.165, 0.6 + Math.sin(a) * 0.165, z]); }
+          K.face(ring, WH, { host: d });
+          K.number(0.1, 0.6, sd * 0.654, 0.19, { dir, w: 0.24, bg: WH, host: d });
+          K.rect(0.5, 0.75, sd * 0.652, 0.1, 0.022, CH, { dir, host: d });
+          K.hinge(d, [-0.36, 0.3, sd * 0.645], [-0.36, 0.84, sd * 0.645]);                    // (suicide doors: hinged at the B-pillar)
+        }
+        // ---- the bumpers: thin chrome blades wrapped round the corners, overriders with rubber tips ----
+        for (const [part, x, s] of [['bumperF', 1.512, 1], ['bumperR', -1.502, -1]]) K.part(part, () => {
+          K.box(x, 0.3, 0, 0.045, 0.06, 0.98, 0, CH);
+          for (const sd of [-1, 1]) { K.box(x - s * 0.07, 0.3, sd * 0.53, 0.16, 0.06, 0.04, sd * s * 0.5, CH);
+            K.box(x + s * 0.012, 0.25, sd * 0.25, 0.05, 0.16, 0.05, 0, CH); }
+        });
+        // ---- the tail: the lamps on the wings' ends, the exhaust's twin tips ----
+        for (const sd of [-1, 1]) { K.rect(-1.452, 0.47, sd * 0.47, 0.1, 0.17, CH, { dir: '-x', part: sd < 0 ? 'quarterL' : 'quarterR' }); K.tailLamp(-1.455, 0.47, sd * 0.47, 0.075, 0.14); }
+        K.exhaust(-1.57, 0.2, -0.16, 0.042, 0.22, { n: 8, part: 'body' });
+        // ---- the engine lid ('trunk'): hinged under the rear window, propped open by 20 degrees on two stays; louvres in its upper half ----
+        const H = [-1.157, 0.926], th = -20 * Math.PI / 180, ct = Math.cos(th), st = Math.sin(th);
+        const rot = (p) => { const dx = p[0] - H[0], dy = p[1] - H[1]; return [H[0] + dx * ct - dy * st, H[1] + dx * st + dy * ct, p[2]]; };
+        const lidC = [[-1.157, 0.928], [-1.33, 0.758], [-1.435, 0.54]], LW = [0.33, 0.36, 0.37], T = 0.016;   // (the closed lid's crest line, its half widths)
+        const nrm = (i) => { const a = lidC[Math.max(0, i - 1)], b = lidC[Math.min(2, i + 1)], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy); return [dy / l, -dx / l]; };   // (outward: up and back)
+        const ringAt = (i) => { const c = lidC[i], n = nrm(i), w = LW[i]; return [[c[0], c[1], -w], [c[0], c[1], w], [c[0] - n[0] * T, c[1] - n[1] * T, w * 0.98], [c[0] - n[0] * T, c[1] - n[1] * T, -w * 0.98]].map(rot); };
+        K.part('trunk', () => {
+          K.skin([0, 1, 2].map(ringAt), (k, e) => e === 2 ? K.shade(P, 0.7) : P, P, P);
+          // the louvres: dark slots across the upper half (on its outer face, facing up and back)
+          const n = nrm(0.5 | 0), on = (q, l) => rot([q[0] + n[0] * l, q[1] + n[1] * l, q[2]]);
+          for (let i = 0; i < 5; i++) { const t0 = 0.16 + i * 0.15, t1 = t0 + 0.08, a = lidC[0], b = lidC[1], p = (t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+            const q0 = p(t0), q1 = p(t1), pts = [on([q0[0], q0[1], -0.24], 0.003), on([q0[0], q0[1], 0.24], 0.003), on([q1[0], q1[1], 0.24], 0.003), on([q1[0], q1[1], -0.24], 0.003)];
+            const u = [pts[1][0] - pts[0][0], pts[1][1] - pts[0][1], pts[1][2] - pts[0][2]], v = [pts[2][0] - pts[0][0], pts[2][1] - pts[0][1], pts[2][2] - pts[0][2]], N = rot([H[0] + n[0], H[1] + n[1], 0]);
+            const cx = u[1] * v[2] - u[2] * v[1], cy = u[2] * v[0] - u[0] * v[2];
+            K.face(cx * (N[0] - H[0]) + cy * (N[1] - H[1]) >= 0 ? pts : pts.reverse(), B); }
+          // the stays: from the lid's lower corners down to the bay's edge
+          for (const sd of [-1, 1]) { const q = rot([lidC[2][0] + 0.02, lidC[2][1] + 0.02, sd * 0.3]); K.bar([q[0], q[1] - 0.01, q[2]], [-1.425, 0.548, sd * 0.31], 0.008, CH, { n: 4 }); }
+        }, { hinge: [[H[0], H[1], -0.33], [H[0], H[1], 0.33]] });
+        // ---- the twin in the open bay (the outer shell: in sight under the lid): its block, the cooling shroud, the air filter ----
+        K.part('body', () => {
+          K.box(-1.29, 0.25, 0, 0.2, 0.22, 0.5, 0, AL, null, true);                           // the crankcase, the finned sump
+          K.box(-1.29, 0.47, 0.02, 0.2, 0.13, 0.44, 0, EB, null, true);                       // the cooling shroud over the cylinders
+          K.cyl([-1.29, 0.6, -0.1], [-1.29, 0.655, -0.1], 0.1, CH, { n: 8, capA: null });      // the air filter, chrome
+        });
+        // ---- hinges: the front lid at the cowl ----
+        K.hinge('hood', [0.63, 0.86, -0.45], [0.63, 0.86, 0.45]);
+        // ---- inside (seen once a part is off): the seats, the painted dash, the luggage well (the spare lying in it, the fuel tank) ----
+        for (const sd of [-1, 1]) K.seat(-0.22, 0.46, sd * 0.28, { w: 0.42, l: 0.42, back: 0.58 });
+        K.seat(-0.78, 0.44, 0, { w: 0.92, l: 0.34, back: 0.42 });
+        K.box(0.5, 0.66, 0, 0.12, 0.12, 1.1, 0, P, null, false, { inner: true, part: 'body' });
+        K.tyre(1.12, 0.36, -0.12, { axis: 'y', inner: true, part: 'body' });
+        K.box(1.0, 0.3, 0.33, 0.3, 0.32, 0.22, 0, [0.42, 0.43, 0.45], null, false, { inner: true, part: 'body' });
+      },
+    },
   });
 })();
