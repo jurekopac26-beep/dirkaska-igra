@@ -72,7 +72,7 @@ Vse proge (dirkališča, ceste in reli etape) imajo dve različici zemljevida. P
 1. **Flyover**: posnetek preleta proge, kot v posnetku etape kolesarske dirke.
    - Kamera mirno leti za svetlečo piko, ki gre z enakomerno hitrostjo od starta do cilja. Pika je vedno na sredini slike, za njo se riše pot.
    - Barva poti pove strmino: zelena na ravnem (in navzdol), nato rumena, oranžna in rdeča, bolj ko cesta gre navzgor (temno rdeča od 12 %). Na cestah z znano višino starta in cilja je strmina taka kot na pravi cesti.
-   - Spodaj desno piše kraj, v katerem je pika, in njegova nadmorska višina. Ko pika pride v nov kraj, se ime zamenja (na Vršiču: Kranjska Gora, Jasna, Eriški most, Mihov dom, Ruska kapelica, Koča na Gozdu, Erjavčeva koča, Vršič; na dirkališčih imena ovinkov).
+   - Spodaj desno piše kraj, v katerem je pika, in njegova nadmorska višina. Ko pika pride v nov kraj, se ime zamenja (na Vršiču: *Start*, *Lake Jasna*, *Erika Bridge*, serpentine *Hairpin 1–24* z višino ali imenom, *Mihov dom*, *Russian Chapel*, *Koča na Gozdu*, *Ajdovska deklica*, *Erjavčeva koča*, *Vršič · 1,611 m*; na dirkališčih imena ovinkov, glej [Pravne opombe](#pravne-opombe)).
    - Ob poti se pokažejo tudi imena krajev, start in cilj.
    - Posnetek ima 30 sličic na sekundo. Na koncu se kamera dvigne nad cilj, nato se posnetek s kratkim prehodom začne znova.
 2. **Map**: zemljevid od zgoraj čez ves okvir, do robov.
@@ -81,53 +81,72 @@ Vse proge (dirkališča, ceste in reli etape) imajo dve različici zemljevida. P
 
 Zemljevidi in posnetki so zajeti iz sveta igre. Igra ima pokrajino samo ob progi, zato je pokrajina dlje od proge na zemljevidih dodana (hribi in gore iz višin ob progi). Vršič je vzet iz veje `ccr-461bd7ea-r4na44`, kjer se ta cesta gradi. Višine so na cestah prave (start in cilj), na reli etapah in dirkališčih približne (višina starta v `data.js`, ostalo iz sveta igre).
 
-## Pred dirko: pot po Zemlji, posnetki iz drona in komentator
+## Pred dirko: pot po Zemlji in let s helikopterjem
 
-Ko klikneš *Race!* (ali *Start mission*, *Run …* v karieri), se pred dirko predvaja uvod, kot pri televizijskem prenosu: najprej **pot po Zemlji** (3D globus), nato brez reza **posnetki iz drona**.
+Ko klikneš *Race!* (ali *Start mission*, *Run …* v karieri), se pred dirko predvaja uvod: najprej **pot po Zemlji** (3D globus) od prejšnje dirke do te, nato brez reza **let s helikopterjem** nad vso progo. Pod vsem igra glasba države, v kateri je proga.
+
+### Zaslon
+
+Uvod se odpre na mestu zaslona proge, zato prehod skoraj ni viden:
+
+- **Zgoraj** (kjer je bil naslov *Single race*): zastava države, ime proge in država (npr. *VRŠIČ, SLOVENIA*), gumb za glasbo (zvočnik) in *Skip*.
+- **Slika** je na istem mestu in iste velikosti kot zemljevid na zaslonu proge.
+- **Spodaj** je ista kartica kot pri progi (z rdeče-belim robnikom), v njej:
+  - kaj voziš: način, avto in vreme (npr. *TIME TRIAL · BURJA R7 · DRY*, pri dirki v krogih še število krogov),
+  - podatki o progi: dolžina (pri dirkališčih dolžina kroga), start, cilj in vzpon (na cestah) oziroma najvišja točka in višinska razlika (drugod), največja strmina, ovinki, podlaga, rekord,
+  - **oris proge** (kot na zemljevidu, z zastavicama starta in cilja),
+  - **višinski profil** z višinami na desni in kilometri spodaj.
+  - Na orisu in na profilu se premika pika s helikopterjem, prevoženi del je zlat. Kraji, označeni na posnetku, so na obeh pike, ki se pozlatijo, ko jih helikopter doseže.
+  - Na majhnem zaslonu ni orisa, profil je večji.
+- Zgoraj desno na sliki je vrh dirke: na cestah *SUMMIT 1,611 m* (na Vršiču še ime prelaza *Vršič*), drugod najvišja točka (*HIGHEST POINT 138 m*). Ime vrha je samo tam, kjer je zemljepisno ime prelaza; dodaš ga v `orodja/intro_data.py` (`SUMMIT`).
 
 ### Pot po Zemlji (3D globus)
 
-Pokaže, kje je bila prejšnja dirka in kje je ta, da si lažje predstavljaš, kje se vse dogaja (npr. prejšnja dirka Colorado, zdaj Vršič):
+1. **Prva slika je zemljevid prejšnje dirke**, natanko tak, kot ga kaže meni (rumena pot, zastavici starta in cilja; pri Coloradu *Crystal Reservoir* in *Summit*). Zgoraj desno je vrh prejšnje dirke (*SUMMIT 4,301 m*).
+2. Pod zemljevidom je globus, ki se z njim ujema na piksel natančno (pot, zastavici in pokrajina so na istem mestu), zato se zemljevid neopazno spremeni v 3D pokrajino.
+3. Kamera se **oddalji** (se ne približa): pot in zastavici izgineta, ostane oznaka **LAST RACE** z imenom prejšnje dirke. Oznaka stoji na pokrajini in se ne premika. Obris in ime države prejšnje dirke (npr. *USA*) se pokažeta na začetku. Ko je kamera daleč, napis vrha izgine.
+4. Kamera leti prek Zemlje (sever je zgoraj). Med potjo ni imen držav in krajev, ni meja in ni loka.
+5. Ko se spušča k novi progi, se pokažejo oznaka **NEXT RACE** z imenom nove dirke, pod njo ime države (npr. *SLOVENIA*) in obris države, nato vrh nove dirke zgoraj desno. Pokrajina je v 3D, osenčena (sonce s severozahoda). Ime ob robu slike ne obvisi odrezano: izgine takoj.
+6. Zadnja slika globusa je prva slika leta s helikopterjem. Video prevzame skozi tanek oblak, brez reza.
 
-1. Kamera se približa kraju, kjer se je prejšnja dirka končala (pri Coloradu vrh Pikes Peaka). Tam je oznaka **LAST RACE** z imenom dirke, spodaj desno kraj in višina (*Summit · 4,302 m*). Pri pravih progah je prejšnja proga narisana z belo črto.
-2. Kamera se dvigne, dokler se ne vidi cela Zemlja (sever je zgoraj, kot na zemljevidu). Zlati lok riše pot do nove proge, spodaj desno piše *To Julian Alps* in koliko kilometrov je še.
-3. Kamera se spusti k novi progi:
-   - obris države (pri Coloradu zvezne države) je obrobljen z zlato,
-   - oznaka **TODAY** z imenom dirke,
-   - nato prava pokrajina v 3D: hribi, gozdovi, travniki, jezera, kraji. Na Vršiču je jesen (rumeni macesni in bukve) in prvi sneg na vrhovih, kot v igri,
-   - pri pravih progah je proga narisana z zlato črto.
-4. Zadnja slika globusa je natanko prva slika posnetka iz drona. Video prevzame skozi tanek oblak, brez reza, kamera pa se spušča naprej do prvega kadra.
-
-Med potjo so na Zemlji imena držav, glavnih mest in drugih krajev, morij in gorovij. Komentator pove, od kod in kam, npr. *From Colorado to the Julian Alps, Slovenia: 8,750 kilometres.* Zgoraj levo so drobno navedeni viri podatkov.
-
-- Prva dirka (prejšnje še ni): pot se začne v vesolju (*Today we race in …*).
-- Ista proga kot prejšnjič: globusa ni, takoj so posnetki iz drona.
+- Prva dirka (prejšnje še ni): pot se začne v vesolju.
+- **Ljubljana nima uvoda**: proga bo pred izidom igre odstranjena, zato zanjo ni leta s helikopterjem in po *Race!* se takoj prižgejo luči. Kot prejšnja dirka je lahko začetek poti po Zemlji (njen zemljevid). Seznam takih prog je v `orodja/intro_data.py` (`NO_FLIGHT`) in v `orodja/heli.json` (`"flight": false`).
+- Ista proga kot prejšnjič (tudi *Race again*): globusa ni, samo let s helikopterjem.
 - Stanje *Veteran* ima za prejšnjo dirko Colorado, da se vidi pot Colorado → Vršič. V stanjih *Free* in *Full game* je prva dirka iz vesolja, vsaka naslednja pa se začne tam, kjer si nazadnje dirkal.
-- *Skip intro* preskoči vse (globus in posnetke).
 - Brez WebGL ali z nastavitvijo telefona za manj gibanja (*reduce motion*) globusa ni.
-- Pot traja 6–10 sekund, dlje, ko je pot daljša.
+- Pot traja 4–9 sekund: zemljevid prejšnje dirke stoji dobro sekundo, let čez Zemljo 3–7 sekund (dlje, ko je pot daljša), prehod v video še dobro sekundo.
 
 Kje so proge na Zemlji:
 
 - Prave proge so postavljene na pravo mesto tako, da se višine ceste v igri ujemajo s pravimi višinami: Vršič, Ljubljana, Styria, Mie, Ardennes, Eifel. La Condamine je postavljena po pristanišču in znanih točkah, ker so v mestu višine stavb.
 - Colorado in Ouninpohja sta v igri krajša od prave ceste. Start je na pravem startu, cesta je obrnjena proti pravemu cilju.
-- Jezero Ring, Riviera in Mountain Rally so izmišljene. Postavil sem jih na Bled, v Portorož in na Pokljuko (spremeniš jih v `orodja/geo_places.py`).
+- Jezero Ring, Riviera in Mountain Rally so izmišljene. Postavljene so na kraje, ki se ujemajo z njihovo pokrajino: Jezero Ring na ravnino pri Lescah (na suho: proga ima svoje jezerce, okoli ni pravega jezera), Riviera na ravno obalo pri Piranu (morje na isti strani kot v igri), Mountain Rally na Pokljuko. Spremeniš jih v `orodja/geo_places.py` (primerno mesto za obalo in za suho ravnino poišče `orodja/geo_fit.py`).
 
-### Posnetki iz drona
+### Let s helikopterjem
 
-- Začnejo se s **priletom**: kamera se od 2,8 km visoko spusti do prvega kadra (tu se nadaljuje pot z globusa).
-- Igra ima pokrajino samo ob progi, zato je okoli nje dodana prava pokrajina z istimi barvami kot na globusu:
-  - pri pravih progah prave višine in pokrovnost tal, zato se iz zraka vidijo prave gore okoli proge,
-  - pri izmišljenih in skrajšanih progah dorisani hribi s pokrovnostjo tal kraja, ki ga predstavljajo.
-- Sledijo 3–5 kadrov (vožnja nad cesto, kroženje okoli kraja, pogled naravnost navzdol, dvig), ki se prelivajo drug v drugega:
-  - kadre nariše igra sama, zato se v njih premika vse, kar igra pokaže: na Vršiču promet (avtomobili, kombiji, avtobusi, motoristi, kolesarji) in pešci, drugod igrini dirkači, pa tudi ptice, helikopterji, gledalci in čolni,
-  - kamera leti gladko (brez sunkov), 30 sličic na sekundo.
-- Spodaj desno v posnetku piše kraj kadra in njegova višina.
-- **Komentator** pri vsakem kadru pove nekaj zanimivega o kraju (npr. na Vršiču: ruski ujetniki so cesto zgradili leta 1915; Vršič je najvišji cestni prelaz v Sloveniji). Besedilo je napisano pod posnetkom. Glas je telefonov angleški glas (izklopi ga *Settings → Sound* ali *Commentary*, napis ostane).
-- V dežju pada dež tudi čez posnetke (na globusu ne).
-- Zgoraj je gumb *Skip intro*, spodaj vrstica, koliko uvoda je še (globus in posnetki skupaj).
+- En sam neprekinjen kader (vse proge razen Ljubljane): helikopter v 30 sekundah preleti vso progo od starta do cilja (pri dirkališčih en krog), višje kot prejšnji posnetki iz drona. Začne se s spustom z globusa, ko se zravna (po 4,5 s), leti nad progo.
+- Na tleh je **senca helikopterja** (z vrtečim se rotorjem).
+- **Kraji ob progi so označeni v 3D** z imeni, ki stojijo na svojem mestu v pokrajini (na Vršiču: Kranjska Gora, Lake Jasna, Mihov dom, Russian Chapel, Koča na Gozdu, Ajdovska deklica, Erjavčeva koča, Vršič Pass). Ko sta dve imeni blizu, ima eno daljši drog, da se ne prekrivata. Seznam krajev za vse proge je v `orodja/landmarks.json`.
+- Igra ima pokrajino samo ob progi. Kar je dlje, je dorisano: prave višine in pokrovnost tal (gozd, travniki, polja, kraji, skale, voda) z drevesi in hišami iz igre, pri obalnih progah morje do obzorja.
+- Na robu sveta igre se dorisana pokrajina zlije z njim: v pasu približno 250 m prevzame barve tal igre, z nepravilnim robom, zato ni vidnih ravnih robov (`heli.json`: `feather`, metri).
+- V dežju pada dež čez let s helikopterjem (na globusu ne).
+- Po letu se prižge pet rdečih luči, ugasnejo in *GO!* – dirka se začne. Zadnji akord glasbe izzveni v luči.
 
-Po uvodu se prižge pet rdečih luči, ugasnejo in *GO!* – dirka se začne.
+### Glasba in zvok
+
+- Vsaka država ima svojo **izvirno elektronsko skladbo** (Slovenija, ZDA, Finska, Japonska, Monako, Avstrija, Belgija, Nemčija). Skladbe so narejene za igro: vsak zvok je izračunan v programu (sintetizator v Pythonu), brez posnetih vzorcev in brez tuje glasbe.
+- Vrhunec skladbe pride v trenutku, ko se helikopter zravna nad progo; glasba je ves čas usklajena s posnetkom.
+- Pod letom se sliši **rotor helikopterja** (zvok je prav tako izračunan).
+- Gumb z zvočnikom zgoraj glasbo izklopi ali vklopi, izbira se shrani. *Settings → Sound* izklopi ves zvok.
+
+### Nastavitve
+
+- *Settings → Race intro*: **Full** (globus in helikopter), **Short** (samo helikopter), **Off** (takoj luči).
+- *Settings → Music*: *On* / *Off* (isto kot zvočnik v uvodu).
+
+### Za igro
+
+V igri lahko uvod pokrije nalaganje dirke: med uvodom se dirka nalaga, ko je naložena, se gumb *Skip* spremeni v *Start*. (V maketi se dirka ne nalaga.)
 
 ## Namesto dirke: izbira mesta
 
@@ -166,7 +185,7 @@ Brezplačna različica odpre začetek vsakega načina na brezplačnih progah (pr
   - vstopi s kodo,
   - hitra dirka z nekom, ki ravno čaka.
 - **Leaderboard**: današnja svetovna lestvica in rekordi vsake proge.
-- **Settings**
+- **Settings**: zvok, glasba, uvod pred dirko (*Race intro*: Full, Short, Off), upravljanje, kamera, težavnost, grafika, jezik; spodaj *Credits* (viri podatkov za globus in pokrajino z licencami ter glasba).
 
 ## Stanja za preizkus
 
@@ -188,15 +207,16 @@ Kako deluje:
 
 | Datoteka | Kaj je v njej |
 |---|---|
-| `data.js` | **vsa besedila, cene, avti, proge, skupine prog (`groups` in pri vsaki progi `group`), imena na zemljevidih prog, kraji ob poti in višine (`routeMaps`), imena dveh različic zemljevida (`mapVersions`), komentatorjeve vrstice za uvod pred dirko (`intro`: ena na kader, lahko tudi zapisano tako, kot naj jo glas izgovori), načini dirke (`modes`, `chase`), kariera (`career`: krogi World Cupa in točke, misije pregonov, proge časovnega preizkusa, etape relija), nagrade po mestih, današnja dirka (proge, avti, vreme, število brezplačnih voženj) in začetna stanja (`states`, pri vsakem tudi `lastTrack`: prejšnja dirka, od koder se začne pot po Zemlji)** – tu spreminjaš vsebino |
+| `data.js` | **vsa besedila, cene, avti, proge, skupine prog (`groups` in pri vsaki progi `group`), imena na zemljevidih prog, kraji ob poti in višine (`routeMaps`), imena dveh različic zemljevida (`mapVersions`), besedila uvoda pred dirko (`intro`: *Skip*, napis vrha, imena podatkov o progi), nastavitve (`settings`, med njimi *Music* in *Race intro*), načini dirke (`modes`, `chase`), kariera (`career`: krogi World Cupa in točke, misije pregonov, proge časovnega preizkusa, etape relija), nagrade po mestih, današnja dirka (proge, avti, vreme, število brezplačnih voženj) in začetna stanja (`states`, pri vsakem tudi `lastTrack`: prejšnja dirka, od koder se začne pot po Zemlji)** – tu spreminjaš vsebino |
 | `style.css` | videz (barve so na vrhu kot spremenljivke `--…`) |
-| `app.js` | zasloni, premikanje med njimi, uvod pred dirko, izbira mesta in izračun rezultata |
-| `journey.js` | pot po Zemlji pred dirko (3D globus, three.js): pot kamere, oznake, lok, predaja posnetku iz drona |
-| `geo.js` | kje so proge na Zemlji, njihova imena krajev, okolica prog, meje, obrisi držav, imena držav, krajev, morij in gorovij (ustvarjeno z `orodja/geo_build.py`, ne urejaj ročno) |
+| `app.js` | zasloni, premikanje med njimi, uvod pred dirko (glava z zastavo, kartica s podatki, oris proge in profil, oznake krajev nad letom, glasba), izbira mesta in izračun rezultata; zastave držav so narisane tu (`FLAGS`) |
+| `journey.js` | pot po Zemlji pred dirko (3D globus, three.js): prva slika kot zemljevid prejšnje dirke, pot kamere, oznake LAST RACE in NEXT RACE, obrisa držav, senčena pokrajina, predaja letu s helikopterjem |
+| `intro-data.js` | za vsako progo država (zastava, glasba), ime vrha, kje je zemljevid proge na Zemlji in kraji, označeni nad letom s helikopterjem (ustvarjeno z `orodja/intro_data.py` iz `orodja/landmarks.json`, ne urejaj ročno) |
+| `geo.js` | kje so proge na Zemlji, okolica prog, obrisi in imena držav (ustvarjeno z `orodja/geo_build.py`, ne urejaj ročno) |
 | `car3d.js` | 3D prikaz avta |
-| `assets/` | 3D modeli avtov (`cars/*.json`), slike vsakega avta v vseh 8 barvah (`cars/img/<avto>-<barva>.webp`), slike gumbov glavnega menija in načinov dirke (`menu/`), makete prog, suhe in mokre (`tracks/<proga>.webp`, `tracks/<proga>-rain.webp`), posnetki ozadja (`video/`), zemljevidi prog (`maps/`: `top-<proga>` od zgoraj, suh in moker `-rain`, `fly-<proga>.webm` posnetek preleta, `drone-<proga>.webm` posnetki iz drona za uvod pred dirko in `.webp` njuni prvi sliki), slike za globus (`geo/`: Zemlja `earth.webp`, regije `l1-<regija>`, okolica prog 80 km `l2-<proga>` in 14 km `l3-<proga>`, vsaka z višinami `-h.png`) |
+| `assets/` | 3D modeli avtov (`cars/*.json`), slike vsakega avta v vseh 8 barvah (`cars/img/<avto>-<barva>.webp`), slike gumbov glavnega menija in načinov dirke (`menu/`), makete prog, suhe in mokre (`tracks/<proga>.webp`, `tracks/<proga>-rain.webp`), posnetki ozadja (`video/`), zemljevidi prog (`maps/`: `top-<proga>` od zgoraj, suh in moker `-rain`, `fly-<proga>.webm` posnetek preleta, `heli-<proga>.webm` let s helikopterjem za uvod pred dirko, `.webp` njuni prvi sliki in `heli-<proga>.json` kamera helikopterja v vsaki sliki in kraji), glasba za uvod (`music/<država>.mp3`, `music/rotor.mp3`), slike za globus (`geo/`: Zemlja `earth.webp`, regije `l1-<regija>`, okolica prog 80 km `l2-<proga>` in 14 km `l3-<proga>`, vsaka z višinami `-h.png`) |
 | `outlines.js` | obrisi prog za majhne zemljevide (ustvarjeno, ne urejaj ročno) |
-| `routes.js` | poti prog na zemljevidih, višine, kraji, kje so start, cilj in kraji v vsaki sliki preleta in kdaj se začne kateri kader drona, kamera priletа v vsaki sliki (za predajo z globusa) (ustvarjeno z `orodja/routes.py`, ne urejaj ročno) |
+| `routes.js` | poti prog na zemljevidih, višine, kraji, kje so start, cilj in kraji v vsaki sliki preleta (ustvarjeno z `orodja/routes.py`, ne urejaj ročno) |
 
 Vsi časi, imena na lestvicah, število igralcev, denar (CR) in odstotki so primeri.
 
@@ -244,15 +264,12 @@ cd maketa-menija/orodja
 node routemap.mjs maps.json                      # zemljevidi od zgoraj, suhi in v dežju -> raw/maps/ (maps.json: [[proga, "top", ime, nastavitve], …])
 node flyover.mjs flyovers.json                   # posnetki preleta -> raw/maps/fly-<proga>.webm (samo nekatere: node flyover.mjs flyovers.json vrsic,gora)
                                                  # sličice riše več brskalnikov hkrati (PARALLEL=4), ustavljen zagon nadaljuje; kakovost CRF=44
-PREVIEW=1 node drone.mjs drones.json vrsic       # hiter pregled kadrov drona (začetek, sredina in konec vsakega) -> raw/drone/<proga>/p*.jpg
-node drone.mjs drones.json                       # posnetki iz drona za uvod (nariše jih igra sama, drone_page.js) -> raw/maps/drone-<proga>.webm
-                                                 # en kader znova: izbriši raw/drone/<proga>/s<N>_*.jpg in poženi node drone.mjs drones.json <proga>
 python3 routes.py                                # raw/maps -> ../assets/maps/ in ../routes.js
 ```
 
 V `flyovers.json` so za vsako progo hitrost pike (`speed`, m/s), kamera (`back`, `up`, `ahead`), megla, prava višina starta in cilja (`alt`, za strmino poti), največja velikost posnetka (`kbps`) in kraji ob poti (ime in metri od starta).
 
-Pot po Zemlji (globus) in prava pokrajina okoli prog v posnetkih iz drona potrebujeta Python s paketi za zemljevide:
+Pot po Zemlji (globus) in prava pokrajina okoli prog pri letu s helikopterjem potrebujeta Python s paketi za zemljevide:
 
 ```
 pip install numpy scipy pillow rasterio shapely pyshp
@@ -261,25 +278,69 @@ python3 geo_data.py                              # odprti podatki: Natural Earth
 node geo_tracks.mjs                              # sredinske črte prog iz igre -> raw/geo/<proga>-track.json
 python3 geo_match.py                             # kje je vsaka prava proga: ujemanje višin ceste s pravimi -> raw/geo/match.json
 python3 geo_monaco.py                            # La Condamine (Monako): po pristanišču in znanih točkah
+python3 geo_fit.py jezero riviera                # izmišljeni progi: Riviera na ravno obalo, Jezero Ring na suho ravnino
 python3 geo_places.py                            # vse proge na Zemlji (prave, skrajšane, izmišljene) -> raw/geo/places.json
-python3 geo_build.py ..                          # Zemlja, regije, okolica prog, meje in imena -> ../assets/geo/ in ../geo.js
-python3 geo_far.py                               # pokrajina okoli sveta igre za posnetke iz drona -> raw/geo/<proga>-far.json in .webp
-node jtest.mjs pikes vrsic all                   # pot po Zemlji v brskalniku, slika na pol sekunde -> shots_j/ (brez prve proge: - vrsic)
-node check_j.mjs veteran,vrsic,trial             # uvod pred dirko v meniju, v pravem času -> shots_jm/
-node jrec.mjs veteran,vrsic,trial 17             # video posnetek zaslona uvoda (globus in posnetki iz drona), sličica za sličico -> rec/vrsic.mp4
+python3 geo_build.py ..                          # Zemlja, regije, okolica prog, obrisi in imena držav -> ../assets/geo/ in ../geo.js
+python3 geo_far.py                               # pokrajina okoli sveta igre za let s helikopterjem -> raw/geo/<proga>-far.json in .webp
 ```
 
-Višine (AWS Terrain Tiles) in pokrovnost tal (ESA WorldCover) skripte berejo z interneta po potrebi in jih shranijo v `raw/geo/`. Barve pokrajine in letni čas (jesen in prvi sneg na Vršiču) so v `geo_paint.py`.
+Višine (Terrain Tiles, javno na AWS Open Data) in pokrovnost tal (ESA WorldCover) skripte berejo z interneta po potrebi in jih shranijo v `raw/geo/`. Barve pokrajine in letni čas (jesen in prvi sneg na Vršiču) so v `geo_paint.py`.
 
-V `drones.json` so za vsako progo način (`traffic`: dirka v prometu na Vršiču, `demo`: igrini dirkači), dodatni promet (`extra`) in kadri: vrsta (`push` vožnja ob cesti, `orbit` kroženje, `top` pogled navzdol, `rise` dvig), kraj (metri od starta), višina, razdalja, trajanje, ime za napis in čakanje na dirkača (`wait`). Komentatorjeve vrstice za kadre so v `data.js` (`intro`), v istem vrstnem redu.
+Let s helikopterjem nariše igra sama (`drone_page.js` v strani igre, v navideznem času, sličico za sličico):
 
-Vsak posnetek iz drona se začne s priletom (od 2,8 km visoko do prvega kadra, `arrive` v `drones.json` ga spremeni ali izklopi), okoli sveta igre pa je pokrajina iz `geo_far.py`. Ves posnetek znova: `REDO=1 node drone.mjs drones.json <proga>`.
+```
+cd maketa-menija/orodja
+EXPORT=1 node heli.mjs nring                     # enkrat: drevesa z Eifla za proge, ki svojih nimajo -> raw/geo/kinds-nring.json
+PREVIEW=1 AT=0,9,20,29 node heli.mjs vrsic       # hiter pregled nekaj trenutkov leta -> prev/heli_vrsic_<s>.jpg
+node heli.mjs                                    # vse proge z letom (ali node heli.mjs vrsic,spa) -> raw/heli/<proga>/f_*.jpg, raw/maps/heli-<proga>.webm
+                                                 # ena proga traja 30–60 minut, ustavljen zagon nadaljuje; vse: ./render_all.sh
+python3 intro_data.py                            # kraji nad letom, vrhovi, države -> ../intro-data.js in ../assets/maps/heli-<proga>.json
+python3 intro_assets.py                          # leti in glasba -> ../assets/maps/heli-<proga>.webm in .webp, ../assets/music/*.mp3
+node ixclock.mjs veteran,vrsic,trial             # uvod v meniju po korakih ure (globus natančno) -> shots_ixc/ (W, H: zaslon; LAST: prejšnja proga)
+node jrec.mjs veteran,vrsic,trial 46             # posnetek zaslona uvoda z glasbo, sličica za sličico -> rec/vrsic.mp4
+```
+
+V `drones.json` je za vsako progo način (`traffic`: dirka v prometu na Vršiču, `demo`: igrini dirkači) in dodatni promet (`extra`). V `heli.json` so nastavitve leta za posamezno progo (`default` velja za vse): drevesa in hiše okoli sveta igre (`plantO`), morje do obzorja (`sea`), barve na robu (`edgeTint`, `feather`: širina pasu, v katerem dorisana pokrajina prevzame barve tal igre). Kraji, označeni nad letom, so v `landmarks.json` (ime, podnapis in mesto: metri od starta, koordinate ali sredina ovinka).
+
+Glasbo izračuna sintetizator v Pythonu (brez posnetih zvokov):
+
+```
+pip install numpy scipy numba imageio-ffmpeg
+cd maketa-menija/orodja
+python3 glasba/slovenia.py                       # skladba za Slovenijo -> glasba/out/slovenia.wav (vsaka država ima svojo skripto)
+python3 glasba/rotor.py                          # rotor helikopterja -> glasba/out/rotor.wav
+python3 glasba/spectro.py glasba/out/slovenia.wav glasba/out/slovenia.png   # spektrogram za pregled
+python3 intro_assets.py                          # -> ../assets/music/*.mp3
+```
+
+Vse skladbe imajo enako zgradbo (`glasba/synth.py`): uvod pod globusom, vrhunec pri 20,0 s (ko se helikopter zravna), pristanek pri 48,2 s (konec leta, luči) in 2,5 s odzvena.
 
 Uporabljajo Playwright s Chromiumom (kot testi igre). Mape `game_main/`, `game_vrsic/` in `orodja/raw/` niso v repozitoriju.
 
-## Viri podatkov za globus
+## Viri podatkov
 
 - Zemlja: NASA Blue Marble (javna domena).
 - Pokrovnost tal (gozd, travniki, polja, kraji, skale, voda): ESA WorldCover 10 m 2021, © ESA WorldCover project, vsebuje spremenjene podatke Copernicus Sentinel (2021), licenca CC BY 4.0.
-- Višine: AWS Terrain Tiles (Mapzen; viri SRTM, EU-DEM, USGS 3DEP in drugi).
-- Meje, obrisi in imena držav, krajev, morij in gorovij: Natural Earth (javna domena).
+- Višine: Terrain Tiles (Mapzen), narejene iz SRTM in 3DEP (NASA, USGS), GMTED2010 in ETOPO1 (javna domena), EU-DEM (Copernicus, financira EU) in DGM Österreich (© offene Daten Österreichs, CC BY 4.0).
+- Obrisi in imena držav: Natural Earth (javna domena).
+- Navedba virov je na globusu spodaj levo (*NASA · © ESA WorldCover 2021, Copernicus · EU-DEM, USGS · Natural Earth*) in v celoti v *Settings → Credits*, kot zahtevata licenci CC BY.
+- Glasba in zvok rotorja: izvirno, izračunano s programom v `orodja/glasba/` (brez vzorcev, brez tuje glasbe).
+
+## Pravne opombe
+
+Igra bo naprodaj, zato maketa ne uporablja ničesar, kar bi bilo lahko pravno sporno:
+
+- Ni podatkov ali slik iz Google Maps / Google Earth. Vse slike Zemlje in pokrajine so iz zgoraj navedenih odprtih virov ali iz igre same.
+- Ni imen blagovnih znamk in oseb. Proge imajo splošna imena (*Mie*, *Ardennes*, *Eifel*, *La Condamine*, *Styria*, *Colorado*). Imena krajev nad letom s helikopterjem so samo zemljepisna ali opisna.
+- Igra sama ima pri nekaterih dirkališčih imena ovinkov, ki so blagovne znamke ali imena oseb. Maketa jih kaže z opisnimi imeni (spremenjeno v `orodja/routes.py`, `NEUTRAL`):
+  - Mie: *Dunlop* → *Uphill Left*, *Degner* → *Double Right*, *Casio Triangle* → *Last Chicane*,
+  - La Condamine: *Fairmont Hairpin* → *Grand Hairpin*, *Anthony Noghès* → *Last Corner*, *La Rascasse* → *Harbour Corner*, *Mirabeau* → *Downhill Right*, *Massenet* → *Long Left*,
+  - Ardennes: *Paul Frère* → *Long Right*, *Speaker's Corner* → *Short Left*,
+  - Eifel: *Stefan-Bellof-S* → *Fast Esses*,
+  - Colorado: *Hansen's Corner* → *Reservoir Bend*,
+  - Ouninpohja: *Amazon* → *Fast Crest*, *Mutanen* → *Farm Bend*.
+  
+  **V igri (veja `main`) so ta imena še vedno** – igre nisem spreminjal. Pred prodajo jih je treba zamenjati tudi tam.
+- Besedila so napisana na novo (nič ni prepisano).
+- Zastave držav so narisane preprosto; slovenska ima poenostavljen grb (zastava kot simbol države je dovoljena, grb je stiliziran).
+- Glasba je izvirna (glej zgoraj).

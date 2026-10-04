@@ -240,7 +240,7 @@
       attach(stage, m, entering) {
         if (entering) { wet = m === 'rain'; a = wet && !calm ? 1 : 0; }
         stage.classList.toggle('rainy', wet);   // (before anything measures the new stage, so the weather already shown does not fade in again)
-        stage.querySelector('.dio').after(cv); fit();
+        (stage.querySelector('.dio') || stage.querySelector('video')).after(cv); fit();   // (over the picture, under the names: the track screen's diorama or map, the intro's video)
         if (m !== mode || entering) { clearInterval(timer); timer = 0; mode = m; if (m === 'random') timer = setInterval(() => show(!wet), 2600); }
         void stage.offsetWidth;
         show(m === 'rain' ? true : m === 'dry' ? false : wet);
@@ -303,7 +303,7 @@
   /* ---------------- the maps of the tracks (routes.js), in two versions to choose from ----------------
      1 a flyover video: the route drawn in the game's world behind the point running along it (green on the flat, red where it climbs
        steeply), the names over it, in the corner the place the point has reached and its height; 2 a map from above to the stage's edges,
-       nothing over the route but its flags. (The drone's shots of the track are the intro before the race: startRace) */
+       nothing over the route but its flags. (The helicopter's flight over the track is the intro before the race: startRace) */
   const RT = window.ROUTES || {};
   const isRoute = (t) => !!t && !!RT[t.id];
   const pathD = (pts) => 'M' + pts.map(p => p[0] + ' ' + p[1]).join('L');
@@ -357,7 +357,7 @@
   // the map from above: the route as big as fits between the switch at the top and the arrows at the bottom (not blurred), the map to every
   // edge of the stage (as big as the flyover); the route's line, flags and point the same size on the screen however far the map is zoomed
   function fitMaps() {
-    for (const box of app.querySelectorAll('.topmap[data-map]')) {
+    for (const box of app.querySelectorAll('.dio.topmap[data-map]')) {   // (the track screen's maps: the intro's is fitted by fitIntroMap)
       const T = RT[box.dataset.map].top, svg = $('svg', box), W = box.clientWidth, H = box.clientHeight, oh = 40;
       if (!W || !H) continue;
       if (!T.bb) { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (const p of T.route) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); } T.bb = [x0, y0, x1, y1]; }
@@ -590,7 +590,8 @@
     let h = '<section class="scr" id="s-settings" aria-label="Settings">' + topbar('Settings', false) + '<div class="scroll"><div class="panel"><h3>GAME</h3>';
     h += D.settings.map((s, i) => '<div class="setrow"><span>' + esc(s.label) + '</span><div class="segs">' + s.opts.map((o, k) => '<button aria-pressed="' + (settings[i] === k) + '" data-act="set:' + i + ':' + k + '">' + esc(o) + '</button>').join('') + '</div></div>').join('');
     h += '</div><div class="panel"><h3>ABOUT THIS MOCKUP</h3><p class="note" style="text-align:left">A design mockup of the menu. The cars and tracks come from the game, but nothing here changes the game. After Race you choose where you finished, and the menu goes on from that result. Switch between the free version, the full game and a veteran player with the bar at the top.</p>' +
-      '<button class="bigbtn" data-act="reset" style="margin-top:10px"><span>Reset progress<small>Start the ' + esc(S().label.toLowerCase()) + ' state again</small></span></button></div></div>';
+      '<button class="bigbtn" data-act="reset" style="margin-top:10px"><span>Reset progress<small>Start the ' + esc(S().label.toLowerCase()) + ' state again</small></span></button>' +
+      '<button class="bigbtn" data-act="credits" style="margin-top:10px"><span>Credits<small>Maps, heights and music</small></span></button></div></div>';
     return h + foot('') + '</section>';
   }
 
@@ -647,6 +648,7 @@
   }
 
   const VIEWS = { title: vTitle, track: vTrack, car: vCar, cup: vCup, cchase: vCChase, ctrial: vCTrial, crally: vCRally, multi: vMulti, board: vBoard, settings: vSettings, results: vResults };
+  let preT = 0;   // (the track shown: its land on the globe loaded after a moment)
   function render(keepScroll) {
     const sc = $('.scroll', app), top = keepScroll && sc ? sc.scrollTop : 0;
     if (screen === 'results' && !result) screen = 'title';
@@ -663,6 +665,10 @@
     } else if (car3dReady) Car3D.setVisible(false);
     if (screen === 'track') wx.attach($('#track-stage', app), wxMode(), shown !== 'track'); else wx.detach();
     if (screen === 'track' && shown !== 'track' && window.Journey) Journey.preload(P.lastTrack ? [P.lastTrack] : []);   // (the globe before a race: the Earth, and where it starts)
+    if (screen === 'track') {   // (and the track shown: its helicopter's flight; its land on the globe once it has been looked at a moment)
+      const tt = TRACKS()[trackIdx] || (TRACKS()[trackIdx] == null ? daily().track : null); if (tt && RT[tt.id] && hasFlight(tt.id)) heliData(tt.id);
+      clearTimeout(preT); if (tt && window.Journey) preT = setTimeout(() => { if (screen === 'track') Journey.preload([tt.id]); }, 1200);
+    }
     flyLabels(); fitMaps();
     shown = screen;
     if (sheet) { app.insertAdjacentHTML('beforeend', typeof sheet === 'function' ? sheet() : sheet); if (sheetOn) $('.sheet-bg', app).classList.add('still'); }
@@ -685,6 +691,10 @@
     render(true);
   }
 
+  function creditsSheet() {   // where the menu's pictures of the Earth and its land come from, as their licences ask
+    return '<div class="sheet-bg" data-act="close-sheet"><div class="sheet credits" role="dialog" aria-label="Credits"><h2>Credits</h2><dl>' +
+      D.credits.map(c => '<dt>' + esc(c[0]) + '</dt><dd>' + esc(c[1]) + '</dd>').join('') + '</dl><div class="row"><button class="go" data-act="close-sheet">Done</button></div></div></div>';
+  }
   function weatherSheet() {
     const t = TRACKS()[trackIdx] || D.tracks[0], lp = lapsSel || t.laps;
     let h = '<div class="sheet-bg clear" data-act="close-sheet"><div class="sheet" role="dialog" aria-label="Weather"><h2>Weather</h2><div class="wopts">' +
@@ -693,86 +703,335 @@
     return h + '<div class="row"><button class="go" data-act="close-sheet">Done</button></div></div></div>';
   }
 
-  /* ---------------- a race: the intro (the drone's shots of the track, the commentator), the start lights, then "where did you finish?"
-     (mockup), then the results ---------------- */
+  /* ---------------- a race: the intro, the start lights, then "where did you finish?" (mockup), then the results ----------------
+     The intro (the Race intro setting: Full, Short or Off): on the stage where the track screen had its map or flyover, the globe from
+     the last race's map to this track (Full, the first race on a track), then the helicopter's flight over the whole run (heli-<id>.webm:
+     one shot, the places along it marked in 3D over the video), the country's own music under it all (and the helicopter's rotor under the
+     flight). Over the stage the track, its country and flag, the music switch and Skip; under it what the race is and the track's numbers,
+     its height along the run with the helicopter's point on it. (In the game the intro would cover the race's loading: Skip turns into
+     Start once it has loaded.) */
   let race = null, ixRaf = 0;
   const wxLabel = (w, wet) => (w === 'Random' ? 'random weather: ' : '') + (wet ? 'rain' : 'dry');
-  // the commentator's voice: the phone's own English voice (off with the Sound or the Commentary setting); the words are always on the screen
-  const speaks = () => 'speechSynthesis' in window && settings[0] === 0 && settings[1] === 0;
-  function say(text) {
-    if (!text || !speaks()) return;
-    try {
-      const vs = speechSynthesis.getVoices(), v = vs.find(x => /^en[-_]GB/i.test(x.lang)) || vs.find(x => /^en/i.test(x.lang));
-      const u = new SpeechSynthesisUtterance(text); u.lang = v ? v.lang : 'en-GB'; if (v) u.voice = v; u.rate = 1.04;
-      speechSynthesis.speak(u);
-    } catch (_) { /* no voice here: the words on the screen only */ }
+  const setting = (id) => settings[D.settings.findIndex(s => s.id === id)];
+  const XI = window.INTRO || {};
+  const heliCache = {}, hasFlight = (id) => !(XI[id] && XI[id].flight === false);   // (a track leaving the game before its release has no helicopter flight)
+  const heliData = (id) => heliCache[id] || (heliCache[id] = fetch('assets/maps/heli-' + id + '.json').then(r => r.ok ? r.json() : null).catch(() => null).then(j => { if (!j) delete heliCache[id]; return j; }));   // (a failure is not kept: the next intro asks again)
+  const MUSIC_DROP = 20.0, MUSIC_LEVEL = 4.5;   // (the music's drop is 20 s into its file; it falls where the helicopter levels out, 4.5 s into its video)
+  // where the track screen's stage is (the intro's video goes exactly there), or where it would be
+  function stageRect() {
+    const A = app.getBoundingClientRect(), s = $('#track-stage', app), r = s && s.getBoundingClientRect();
+    if (r && r.width > 100 && r.height > 100) return { x: r.left - A.left, y: r.top - A.top, w: r.width, h: r.height };
+    const h = Math.round(Math.min(330, Math.max(190, A.height * 0.36)));
+    return { x: 0, y: 104, w: A.width, h };
   }
-  const hush = () => { try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (_) { /* nothing to stop */ } };
-  if ('speechSynthesis' in window) try { speechSynthesis.getVoices(); } catch (_) { /* (the voices load in the background) */ }
+  // where the track screen's card is (the intro's numbers go there, down to the foot of the screen), or under the stage
+  function cardRect(st) {
+    const A = app.getBoundingClientRect(), c = $('#s-track .card', app), r = c && c.getBoundingClientRect(), ok = r && r.width > 100 && r.top - A.top > st.y + st.h - 2;
+    return ok ? { x: r.left - A.left, y: r.top - A.top, w: r.width } : { x: 12, y: st.y + st.h + 16, w: A.width - 24 };
+  }
+  // the track's numbers: from the game's data (data.js) and its run (routes.js: the heights along it)
+  function specsOf(t) {
+    const R = RT[t.id], M = D.routeMaps[t.id] || {}, X = D.intro.specs, out = [];
+    const H = R ? R.prof.map(h => altOf(R, M, h)) : null, n = H ? H.length : 0;
+    const len = (km) => km.toFixed(2) + ' km';
+    if (t.group === 'circuit') out.push([X.lap, len(t.km)]); else out.push([X.length, len(t.km)]);
+    if (H && H[0] != null) {
+      const hi = Math.max(...H), lo = Math.min(...H), step = R.len / Math.max(1, n - 1), w = Math.max(1, Math.round(100 / step));
+      let grade = 0; for (let i = w; i < n; i++) grade = Math.max(grade, Math.abs(R.prof[i] - R.prof[i - w]) / (w * step) * 100);   // (the game's own heights over its own distances: a shortened road's real heights would steepen it)
+      if (R.open && M.alt) { out.push([X.start, num(M.alt[0]) + ' m']); out.push([X.finish, num(M.alt[1]) + ' m']); out.push([X.climb, '+' + num(Math.round(M.alt[1] - M.alt[0])) + ' m']); }
+      else { out.push([X.top, num(Math.round(hi)) + ' m']); out.push([X.rise, num(Math.round(hi - lo)) + ' m']); }
+      if (grade >= 2) out.push([X.grade, Math.round(grade) + ' %']);
+    }
+    out.push([X.corners, String(t.corners)]);
+    out.push([X.surface, M.surface || D.intro.surface]);
+    out.push([X.record, t.rec[1]]);
+    return out.slice(0, 8);
+  }
+  // the summit in the corner over the video: a road over a mountain (the race's top and its name), else a circuit's highest point
+  function summitOf(id) {
+    const t = trackById(id); if (!t) return null; const R = RT[id], M = D.routeMaps[id] || {}, nm = XI[id] && XI[id].summit;
+    const H = R ? R.prof.map(h => altOf(R, M, h)) : null, top = M.alt ? Math.max(M.alt[0], M.alt[1]) : H && H[0] != null ? Math.max(...H) : null;
+    if (top == null) return null;
+    return { b: (nm || (R && R.open && M.alt) ? D.intro.summit : D.intro.top) + ' ' + num(Math.round(top)) + ' m', s: nm || '' };   // (a road over a mountain: its summit, named or not)
+  }
+  // the height profile in the card: the run's real heights (their scale at the right, the kilometres under it), a line down from each
+  // place marked over the video, the helicopter's point. Returns { svg, at(f): the point a fraction f along the run }
+  function profileOf(t, W, Hh) {
+    const R = RT[t.id], M = D.routeMaps[t.id] || {}; if (!R || W < 120 || Hh < 40) return null;
+    const H = R.prof.map(h => altOf(R, M, h)); if (H[0] == null) return null;
+    const n = H.length, lo = Math.min(...H), hi = Math.max(...H), span = Math.max(hi - lo, t.group === 'circuit' ? 60 : 120), a = (lo + hi) / 2 - span / 2, b = a + span;
+    const PX = W - 54, PT = 8, PB = Hh - 17, x = (f) => f * PX, y = (h) => PB - (h - a) / (b - a) * (PB - PT), hAt = (f) => { const i = Math.min(n - 1, Math.max(0, f * (n - 1))), i0 = Math.min(n - 2, Math.floor(i)); return H[i0] + (H[i0 + 1] - H[i0]) * (i - i0); };
+    const line = H.map((h, i) => (i ? 'L' : 'M') + x(i / (n - 1)).toFixed(1) + ' ' + y(h).toFixed(1)).join('');
+    const km = R.len / 1000, stp = [0.5, 1, 2, 2.5, 5, 10, 20].find(v => km / v <= 4.6) || 20, ticks = [];
+    for (let d = 0; d <= km + 1e-6; d += stp) ticks.push(d);
+    const axis = ticks.map((d, i) => { const xx = x(d / km); return '<text class="km" x="' + xx.toFixed(1) + '" y="' + (Hh - 3) + '" text-anchor="' + (i ? 'middle' : 'start') + '">' + (Math.round(d * 10) / 10) + (i === ticks.length - 1 ? ' km' : '') + '</text><path class="kt" d="M' + xx.toFixed(1) + ' ' + PB + 'v3"/>'; }).join('');
+    const marks = ((XI[t.id] && XI[t.id].marks) || []).map(m => { const f = Math.min(1, Math.max(0, m[2] / R.len)), xx = x(f), yy = y(hAt(f)); return '<g class="lm" data-n="' + esc(m[0]) + '"><path d="M' + xx.toFixed(1) + ' ' + PB + 'V' + (yy + 2.5).toFixed(1) + '"/><circle cx="' + xx.toFixed(1) + '" cy="' + yy.toFixed(1) + '" r="2.6"/></g>'; }).join('');
+    const near = y(lo) - y(hi) < 13, yl = (h, cls) => '<path class="gl" d="M0 ' + y(h).toFixed(1) + 'H' + PX + '"/><text class="' + cls + '" x="' + (W - 2) + '" y="' + (y(h) + (!near ? 3.4 : cls === 'hi' ? -2.5 : 9.5)).toFixed(1) + '" text-anchor="end">' + num(Math.round(h)) + ' m</text>';   // (the two heights close: one over its line, one under)
+    const svg = '<svg class="ix-prof" viewBox="0 0 ' + W + ' ' + Hh + '" width="' + W + '" height="' + Hh + '" aria-hidden="true"><defs><linearGradient id="ixpg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd23a" stop-opacity=".34"/><stop offset="1" stop-color="#ffd23a" stop-opacity="0"/></linearGradient></defs>' +
+      yl(hi, 'hi') + (hi - lo > 1 ? yl(lo, 'lo') : '') + '<path class="ar" d="' + line + 'L' + PX + ' ' + PB + 'L0 ' + PB + 'z" fill="url(#ixpg)"/><path class="base" d="M0 ' + PB + 'H' + PX + '"/>' + axis +
+      '<clipPath id="ixpc"><rect class="clip" x="-4" y="-10" width="0" height="' + (Hh + 20) + '"/></clipPath><path class="ln" d="' + line + '"/><path class="done" d="' + line + '" clip-path="url(#ixpc)"/>' + marks +
+      '<g class="pt" transform="translate(0 ' + y(H[0]).toFixed(1) + ')"><circle r="7.5" class="halo"/><circle r="3.8"/></g></svg>';
+    return { svg, at: (f) => [x(f), y(hAt(f))] };
+  }
+  // the track's outline in the card: the route as on its map (its shape and turn), its start and finish, the places marked over the
+  // video, the helicopter's point going round. Returns { svg, at(f) }
+  function layoutOf(t, W, Hh) {
+    const R = RT[t.id], T = R && R.top; if (!T || W < 120 || Hh < 70) return null;
+    const P = T.route; let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (const p of P) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); }
+    const pad = 16, sc = Math.min((W - 2 * pad) / Math.max(1, x1 - x0), (Hh - 2 * pad - 12) / Math.max(1, y1 - y0)), ox = (W - (x1 - x0) * sc) / 2, oy = (Hh - (y1 - y0) * sc) / 2 + 6;
+    const Q = P.map(p => [ox + (p[0] - x0) * sc, oy + (p[1] - y0) * sc]), cum = [0]; for (let i = 1; i < Q.length; i++) cum.push(cum[i - 1] + Math.hypot(Q[i][0] - Q[i - 1][0], Q[i][1] - Q[i - 1][1]));
+    const L = cum[cum.length - 1] || 1, at = (f) => { const d = Math.min(1, Math.max(0, f)) * L; let i = 1; while (i < Q.length - 1 && cum[i] < d) i++; const u = (d - cum[i - 1]) / ((cum[i] - cum[i - 1]) || 1); return [Q[i - 1][0] + (Q[i][0] - Q[i - 1][0]) * u, Q[i - 1][1] + (Q[i][1] - Q[i - 1][1]) * u]; };
+    const d = pathD(Q.map(q => [q[0].toFixed(1), q[1].toFixed(1)])), flag = (q, fin) => '<g class="mk" transform="translate(' + q[0].toFixed(1) + ' ' + q[1].toFixed(1) + ') scale(.5)"><circle r="6"/>' + flagSvg(fin) + '</g>';
+    const marks = ((XI[t.id] && XI[t.id].marks) || []).map(m => { const q = at(m[2] / R.len); return '<circle class="lm" data-n="' + esc(m[0]) + '" cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '" r="3.2"/>'; }).join('');
+    const svg = '<svg viewBox="0 0 ' + W + ' ' + Hh + '" width="' + W + '" height="' + Hh + '" aria-hidden="true"><path class="o" d="' + d + '"/><path class="b" d="' + d + '"/><path class="done" d="' + d + '" pathLength="1" stroke-dasharray="0 1"/>' + marks +
+      (R.open ? flag(Q[0], false) + flag(Q[Q.length - 1], true) : flag(Q[0], true)) + '<g class="pt" transform="translate(' + Q[0][0].toFixed(1) + ' ' + Q[0][1].toFixed(1) + ')"><circle r="8" class="halo"/><circle r="4"/></g></svg>';
+    return { svg, at };
+  }
+  // the national flags (drawn here: the country of the track); a made-up track stands in the country the globe takes it to
+  const FLAGS = {
+    Slovenia: '<rect width="30" height="7" fill="#fff"/><rect y="7" width="30" height="6" fill="#0b4ea2"/><rect y="13" width="30" height="7" fill="#ed1c24"/><path d="M5.6 3.6h6.4v5.8c0 2.9-1.6 4.4-3.2 5.1-1.6-.7-3.2-2.2-3.2-5.1z" fill="#0b4ea2" stroke="#ed1c24" stroke-width=".7"/><path d="M6.1 10.4l1.3-2.2.9 1.3.5-.8 1.6 2.6c-.6 1.4-1.4 2.1-1.6 2.3-.4-.2-2.1-1.3-2.7-3.2z" fill="#fff"/><path d="M6.2 11.3q.65-.45 1.3 0t1.3 0 1.3 0 1.3 0M6.5 12.2q.6-.4 1.2 0t1.2 0 1.2 0 1.1 0" fill="none" stroke="#0b4ea2" stroke-width=".35"/><g fill="#ffd200"><circle cx="7" cy="5.2" r=".45"/><circle cx="8.8" cy="4.7" r=".45"/><circle cx="10.6" cy="5.2" r=".45"/></g>',
+    USA: '<rect width="30" height="20" fill="#fff"/><g fill="#b22234">' + Array.from({ length: 7 }, (_, i) => '<rect y="' + (i * 2 * 20 / 13).toFixed(2) + '" width="30" height="' + (20 / 13).toFixed(2) + '"/>').join('') + '</g><rect width="12" height="' + (7 * 20 / 13).toFixed(2) + '" fill="#3c3b6e"/><g fill="#fff">' + Array.from({ length: 20 }, (_, i) => '<circle cx="' + (1.2 + (i % 5) * 2.4 + ((i / 5 | 0) % 2) * 1.2).toFixed(1) + '" cy="' + (1.3 + (i / 5 | 0) * 2.6).toFixed(1) + '" r=".42"/>').join('') + '</g>',
+    Finland: '<rect width="30" height="20" fill="#fff"/><path d="M8 0h5.5v20H8zM0 7.25h30v5.5H0z" fill="#002f6c"/>',
+    Japan: '<rect width="30" height="20" fill="#fff"/><circle cx="15" cy="10" r="6" fill="#bc002d"/>',
+    Monaco: '<rect width="30" height="10" fill="#ce1126"/><rect y="10" width="30" height="10" fill="#fff"/>',
+    Austria: '<rect width="30" height="20" fill="#c8102e"/><rect y="6.67" width="30" height="6.67" fill="#fff"/>',
+    Belgium: '<rect width="10" height="20" fill="#000"/><rect x="10" width="10" height="20" fill="#fdda24"/><rect x="20" width="10" height="20" fill="#ef3340"/>',
+    Germany: '<rect width="30" height="6.67" fill="#000"/><rect y="6.67" width="30" height="6.67" fill="#dd0000"/><rect y="13.33" width="30" height="6.67" fill="#ffce00"/>',
+  };
+  const countryOf = (t) => t.country || (window.GEO && GEO.tracks[t.id] ? GEO.tracks[t.id].names.country : '');
+  const flagSvgOf = (c) => FLAGS[c] ? '<svg class="ix-flag" viewBox="0 0 30 20" width="30" height="20" role="img" aria-label="Flag of ' + esc(c) + '">' + FLAGS[c] + '</svg>' : '';
+  const SPK = (on) => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 9h4l5-4v14l-5-4h-4z" fill="#fff"/>' + (on ? '<path d="M15.5 8.5a5 5 0 0 1 0 7M18.2 6a8.6 8.6 0 0 1 0 12" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>' : '<path d="M16 9.5l5 5M21 9.5l-5 5" stroke="#fff" stroke-width="2" stroke-linecap="round"/>') + '</svg>';
+  // the last race's map, as the menu's map shows it on a stage of this size (the globe's first picture): its route, its flags
+  function introMap(id) {
+    const t = trackById(id), R = RT[id], M = D.routeMaps[id] || {}; if (!t || !R || !R.top) return '';
+    const T = R.top, rally = t.group === 'rally';
+    return '<div class="ixmap topmap' + (rally ? ' rally' : '') + '" data-map="' + id + '"><svg class="mapsvg" viewBox="0 0 ' + T.W + ' ' + T.H + '" preserveAspectRatio="xMidYMid slice">' +
+      '<image href="assets/maps/top-' + id + '.webp" width="' + T.W + '" height="' + T.H + '"/>' +
+      '<path class="rt-o" d="' + pathD(T.route) + '"/><path class="rt" d="' + pathD(T.route) + '"/>' + (rally ? '<path class="rt-c" d="' + pathD(T.route) + '"/>' : '') + marks(R, M, T.route, rally) + '</svg></div>';
+  }
+  // fitted as fitMaps does (the route as big as fits, the flags their own size); returns the stage's view of it: its middle and height in
+  // the map's pixels
+  function fitIntroMap(box) {
+    const T = RT[box.dataset.map].top, svg = $('svg', box), W = box.clientWidth, H = box.clientHeight;
+    if (!T.bb) { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (const p of T.route) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); } T.bb = [x0, y0, x1, y1]; }
+    const [x0, y0, x1, y1] = T.bb, cover = Math.max(W / T.W, H / T.H), fit = Math.min((W - 40) / (x1 - x0), (H - 70) / (y1 - y0)), s = Math.max(cover, Math.min(fit, 0.72)), k = 0.5 / s;
+    const vw = W / s, vh = H / s, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2 + 10 / s;
+    const vx = Math.min(Math.max(0, cx - vw / 2), Math.max(0, T.W - vw)), vy = Math.min(Math.max(0, cy - vh / 2), Math.max(0, T.H - vh));
+    svg.setAttribute('viewBox', vx.toFixed(1) + ' ' + vy.toFixed(1) + ' ' + vw.toFixed(1) + ' ' + vh.toFixed(1)); svg.style.setProperty('--k', k.toFixed(3));
+    for (const g of svg.querySelectorAll('.mk')) { if (!g.dataset.at) g.dataset.at = g.getAttribute('transform'); g.setAttribute('transform', g.dataset.at + ' scale(' + k.toFixed(3) + ')'); }
+    return { cx: vx + vw / 2, cy: vy + vh / 2, vh };
+  }
+  // a pixel of a track's map on the Earth (intro_data.py fitted the map's pixels to the world's metres; GEO places the world)
+  function mapLL(id, px, py) {
+    const f = XI[id] && XI[id].top && XI[id].top.fit, G = window.GEO && GEO.tracks[id]; if (!f || !G || !window.Journey) return null;
+    const [A, B, tx, ty] = f, q = A * A + B * B, dx = px - tx, dy = py - ty, x = (A * dx + B * dy) / q, z = (-B * dx + A * dy) / q;
+    return Journey.gameLL(G, x, z);
+  }
+  function mapStart(id, view) {   // the globe's first view: the stage's map from straight above (its middle, its up, its height in km)
+    const f = XI[id].top.fit, G = GEO.tracks[id], [A, B] = f, q = A * A + B * B, c = mapLL(id, view.cx, view.cy); if (!c) return null;
+    const dx = -B / q, dz = -A / q, r = G.rot * Math.PI / 180, east = dx * Math.cos(r) + dz * Math.sin(r), north = dx * Math.sin(r) - dz * Math.cos(r);
+    return { lat: c.lat, lon: c.lon, h: ((G.start[2] + G.finish[2]) / 2) / 1000, heading: Math.atan2(east, north) * 180 / Math.PI, extent: view.vh / Math.sqrt(q) / 1000 };
+  }
+  // the places over the video: each frame, the helicopter's camera (its bank too) as the video's, then the video as it covers the stage
+  const pinCam = window.THREE ? new THREE.PerspectiveCamera(50, 1.5, 5, 1e6) : null, pv3 = window.THREE ? new THREE.Vector3() : null;
+  function heliCamAt(Hd, k) {
+    const c = Hd.cam[Math.max(0, Math.min(Hd.cam.length - 1, k))], P = new THREE.Vector3(c[0], c[1], c[2]), T = new THREE.Vector3(c[3], c[4], c[5]);
+    const f = T.clone().sub(P).normalize(), r = new THREE.Vector3().crossVectors(f, new THREE.Vector3(0, 1, 0)).normalize(), u = new THREE.Vector3().crossVectors(r, f), ph = c[6] || 0;
+    pinCam.fov = Hd.fov || 50; pinCam.aspect = Hd.W / Hd.H; pinCam.position.copy(P); pinCam.up.copy(u.multiplyScalar(Math.cos(ph)).addScaledVector(r, Math.sin(ph))); pinCam.lookAt(T);
+    pinCam.updateProjectionMatrix(); pinCam.updateMatrixWorld(); pinCam.matrixWorldInverse.copy(pinCam.matrixWorld).invert();
+    return P.distanceTo(T);
+  }
   function startRace(R) {
-    race = R; hush(); cancelAnimationFrame(ixRaf);
-    if (speaks()) try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } catch (_) { /* (a silent word in the tap itself: some phones only let a page speak after that) */ }
-    const t = R.track, Rt = RT[t.id], Dr = Rt && Rt.drone, M = D.routeMaps[t.id] || {}, lines = (D.intro && D.intro[t.id]) || [];
-    const under = $('#track-stage .dio.fly video', app); if (under) under.pause(); cancelAnimationFrame(flyRaf); wx.detach();   // (the map under the intro stops)
-    const el = document.createElement('div'); el.className = 'intro'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Before the race');
+    race = R; cancelAnimationFrame(ixRaf); ixStop();
+    const t = R.track, under = $('#track-stage .dio.fly video', app); if (under) under.pause(); cancelAnimationFrame(flyRaf);
+    shown = '';   // (after the race the screen it was started from is entered afresh: its weather as it is, not faded in again)
+    const off = setting('intro') === 2, rect = stageRect();
+    wx.detach();
+    const el = document.createElement('div'); el.className = 'intro ix2'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Before the race');
     app.appendChild(el);
-    if (!Dr) { lights(el); return; }
-    // first the journey on the 3D globe: from where the last race ended (or from space) to this track, down to the drone's first view;
-    // then the drone's shots, one after another, on each its place and height in the corner and the commentator's line about it.
-    // (Not when this track was the last one too, nor without WebGL, nor for someone who asked for less motion.)
-    const calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const globe = !calm && P.lastTrack !== t.id && window.Journey && window.GEO && GEO.tracks[t.id] && Journey.supported();
-    el.innerHTML = '<div class="ix-bg" style="background-image:url(assets/maps/drone-' + t.id + '.webp)" aria-hidden="true"></div>' +
-      '<div class="ix-top"><span class="ix-live"><i></i>LIVE</span><button class="ix-skip" data-ix="skip">Skip intro' + I.chev + '</button></div>' +
-      '<div class="ix-head"><h2>' + esc(fullName(t)) + '</h2><small>' + esc(R.label) + '</small></div>' +
-      '<div class="ix-v' + (globe ? ' jon' : '') + '"><div class="dio fly"><video muted playsinline' + (globe ? '' : ' autoplay') + ' preload="auto" poster="assets/maps/drone-' + t.id + '.webp" src="assets/maps/drone-' + t.id + '.webm"></video>' + hudBox() + '</div></div>' +
-      '<div class="ix-sub" aria-live="polite"><span class="ix-who">' + I.mic + 'COMMENTATOR' + (speaks() ? '' : ' · VOICE OFF') + '</span><p></p></div>' +
-      '<div class="ix-bar" aria-hidden="true"><b></b></div>';
-    const v = $('video', el), box = $('.ix-v', el), hud = $('.hud', el), hb = $('b', hud), hs = $('small', hud), sub = $('.ix-sub', el), sp = $('p', sub), bar = $('.ix-bar b', el);
-    const setHud = (name, sm) => {   // (a new place comes in; the same place with a new number, as the distance left on the globe, just changes it)
-      if (hb.textContent === name) { if (hs.textContent !== sm) hs.textContent = sm; return; }
-      hb.textContent = name; hs.textContent = sm; hud.classList.remove('in'); void hud.offsetWidth; hud.classList.add('in');
+    if (off || !RT[t.id] || !hasFlight(t.id)) { el.tabIndex = -1; el.focus({ preventScroll: true }); lights(el); return; }   // (Off, or a track without a flight: the lights at once)
+    // Full: the globe from the last race (not the same track again: the short one then), with WebGL, for someone who did not ask for less motion
+    const calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches, from = P.lastTrack && P.lastTrack !== t.id && XI[P.lastTrack] && XI[P.lastTrack].top ? P.lastTrack : null;
+    const globe = setting('intro') === 0 && P.lastTrack !== t.id && !calm && window.Journey && window.GEO && GEO.tracks[t.id] && Journey.supported();
+    const country = countryOf(t), M = D.routeMaps[t.id] || {}, car = R.role === 'catch' ? { name: 'Police car' } : R.kind === 'daily' ? daily().car : D.cars[P.car];   // (a mission in the police car: that is what you drive)
+    const what = [R.kind === 'daily' ? 'Today\'s race' : R.kind === 'multi' ? 'Duel' : R.kind === 'career' ? R.label.split(' · ')[0] : modeOf(R.mode || mode).name, car && car.name,
+      R.kind === 'single' && R.mode === 'race' && !R.trial ? laps(lapsSel || t.laps) : null, R.wet ? 'Rain' : 'Dry'].filter(Boolean).join(' · ');
+    const cr = cardRect(rect);
+    el.innerHTML = '<div class="ix-head2" style="height:' + Math.round(rect.y) + 'px"><div class="ix-name">' + flagSvgOf(country) + '<h2>' + esc(t.name) + (country ? '<small>' + esc(country) + '</small>' : '') + '</h2></div>' +
+      '<div class="ix-ctl"><button class="ix-mus" data-ix="music" aria-pressed="' + (setting('music') === 0) + '" aria-label="' + esc(D.intro.music) + '">' + SPK(setting('music') === 0) + '</button><button class="ix-skip" data-ix="skip">' + esc(D.intro.skip) + I.chev + '</button></div></div>' +
+      '<div class="ix-v ix-stage' + (globe ? ' jon' : '') + '" style="left:' + rect.x + 'px;top:' + rect.y + 'px;width:' + rect.w + 'px;height:' + rect.h + 'px">' +
+        '<video muted playsinline preload="auto" poster="assets/maps/heli-' + t.id + '.webp" src="assets/maps/heli-' + t.id + '.webm"></video>' + (globe && from ? introMap(from) : '') +
+        '<div class="ix-pins" aria-hidden="true"></div><div class="ix-summit" aria-live="polite"><b></b><small></small></div></div>' +
+      '<div class="card ix-card" style="left:' + cr.x + 'px;top:' + cr.y + 'px;width:' + cr.w + 'px"><p class="ix-what">' + esc(what.toUpperCase()) + '</p><div class="ix-specs">' + specsOf(t).map(s => '<div><small>' + esc(s[0]) + '</small><b>' + esc(s[1]) + '</b></div>').join('') + '</div>' +
+        '<div class="ix-lay"></div><div class="ix-pwrap"></div></div>';
+    const v = $('video', el), box = $('.ix-stage', el), pins = $('.ix-pins', el), sumEl = $('.ix-summit', el), mapEl = $('.ixmap', el);
+    // the outline and the profile in what room the card has: the outline as tall as its shape needs, the profile the rest (84 to 140 px);
+    // no outline in a small card (the profile takes its room)
+    const lay = $('.ix-lay', el), pw = $('.ix-pwrap', el), cw = pw.clientWidth, room = lay.clientHeight + pw.clientHeight, T0 = RT[t.id] && RT[t.id].top;
+    let nat = 0; if (T0) { let y0 = 1e9, y1 = -1e9, x0 = 1e9, x1 = -1e9; for (const p of T0.route) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); } nat = (y1 - y0) * (cw - 32) / Math.max(1, x1 - x0) + 44; }
+    const big = room >= 200 && T0, ph = big ? Math.max(84, Math.min(140, room - Math.max(96, nat))) : Math.max(56, Math.min(180, room));
+    const LO = big ? layoutOf(t, cw, room - ph) : null, PR = profileOf(t, cw, ph);
+    if (LO) lay.innerHTML = LO.svg; else lay.remove();
+    if (PR) pw.innerHTML = PR.svg; else pw.remove();
+    const prof = $('.ix-prof', el), laySvg = LO && $('svg', lay), view0 = globe && from && mapEl ? fitIntroMap(mapEl) : null;   // (the last race's map fitted at once)
+    const showSummit = (which) => {   // (the last race's summit while close over its map, this one's once close over this track)
+      const s = which ? summitOf(which === 'from' ? from : t.id) : null;
+      if (!s) { sumEl.classList.remove('on'); return; }
+      $('b', sumEl).textContent = s.b; $('small', sumEl).textContent = s.s; sumEl.classList.add('on');
     };
-    const line = (txt, spoken) => { sp.textContent = txt; sub.classList.remove('in'); void sub.offsetWidth; sub.classList.add('in'); say(spoken || txt); };
-    let shot = -1, done = false, J = null, jOff = 0, shots = false;
-    const vDur = () => isFinite(v.duration) && v.duration > 0 ? v.duration : Dr.dur;
-    const end = (skip) => {   // (at the end of the shots the commentator finishes the line, 2.4 s at most; a skip cuts it off)
-      if (done) return; done = true; cancelAnimationFrame(ixRaf); v.pause(); if (J) J.skip();
-      let n = 0; const next = () => { if (!document.contains(el)) return; if (!skip && n++ < 12 && speaks() && speechSynthesis.speaking) { setTimeout(next, 200); return; } hush(); wx.detach(); lights(el); };
-      next();
+    // the music: the country's own, its drop where the helicopter levels out; the rotor under the flight (the Sound and Music settings)
+    const sound = setting('sound') === 0, mus = XI[t.id] && XI[t.id].music;
+    const A = sound && mus ? voice('assets/music/' + mus + '.mp3') : null, Rt = sound ? voice('assets/music/rotor.mp3', true) : null;
+    if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
+    for (const o of [A, Rt]) if (o) { const p = o.a.play(); if (p && p.then) p.then(() => { if (!o.a.__go) o.a.pause(); }).catch(() => {}); }   // (unlocked silent in the tap itself: later they may start on their own)
+    { const p = v.play(); if (p && p.then) p.then(() => { if (!shots) v.pause(); }).catch(() => {}); }   // (the video too: some browsers start one later only so)
+    const vol = { m: 0, r: 0, mt: 0, rt: 0 }, musicOn = () => setting('music') === 0;
+    let mAt = -1;   // (when the music is to start, on the page's clock, and from where in its file)
+    const startMusic = (fileT) => { if (!A) return; A.a.__go = true; try { A.a.currentTime = Math.max(0, fileT); } catch (_) { /* not loaded yet */ } const p = A.a.play(); if (p && p.catch) p.catch(() => {}); vol.mt = musicOn() ? 0.9 : 0; };
+    let shots = false, done = false, J = null, Hd = null, pinsOn = !globe, globeRan = false, vErr = false;   // (the places over the video: once the globe has handed over)
+    const quit = () => { done = true; cancelAnimationFrame(ixRaf); v.pause(); if (J) J.skip(); wx.detach(); };
+    const end = (skip) => {
+      if (done) return; quit();
+      ixFade(A, skip ? 0.5 : 2.4); ixFade(Rt, skip ? 0.3 : 0.8);   // (at the end the music's last chord rings into the start)
+      lights(el);
     };
-    const step = () => {
-      if (done || !document.contains(el)) return;
-      if (!shots) { if (J) bar.style.width = Math.min(100, J.elapsed / (jOff + vDur()) * 100).toFixed(1) + '%'; ixRaf = requestAnimationFrame(step); return; }   // (the globe's own part of the bar)
-      const tm = v.currentTime || 0, dur = vDur();
-      let k = 0; Dr.shots.forEach((q, i) => { if (q[0] + 0.3 <= tm || i === 0) k = i; });
-      if (k !== shot) {
-        shot = k; const q = Dr.shots[k], ln = lines[k], txt = Array.isArray(ln) ? ln[0] : ln, a = altAt(Rt, M, q[2]);
-        setHud(q[1], a != null ? num(Math.round(a)) + ' m' : '');
-        if (txt) line(txt, Array.isArray(ln) ? ln[1] : ln);
-      }
-      bar.style.width = Math.min(100, (jOff + tm) / (jOff + dur) * 100).toFixed(1) + '%';
-      ixRaf = requestAnimationFrame(step);
-    };
-    const startShots = () => {   // the drone's video from its first frame (the globe hands over to it), the rain on it on a wet day
+    const startShots = () => {   // the helicopter's video from its first frame (the globe hands over to it), the rain on it on a wet day
       if (done || shots) return; shots = true; box.classList.remove('jon');
+      if (vErr) { end(true); return; }   // (no video: straight to the start, after the globe)
       if (R.wet) wx.attach(box, 'rain', true);
       try { v.currentTime = 0; } catch (_) { /* not loaded yet: it starts at 0 anyway */ }
-      const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
+      const pr = v.play(); if (pr && pr.catch) pr.catch((e) => { if (!done && e && e.name === 'NotAllowedError') end(true); });   // (a browser that will not play it: on to the start)
+      if (Rt) { Rt.a.__go = true; const p = Rt.a.play(); if (p && p.catch) p.catch(() => {}); vol.rt = musicOn() ? 0.22 : 0; }
+      if (!globeRan && A) startMusic(MUSIC_DROP - MUSIC_LEVEL);   // (the short intro, or no globe after all: the music from 4.5 s before its drop)
+      if (!globeRan) showSummit('to');
     };
-    v.addEventListener('ended', () => end(false)); v.addEventListener('error', () => end(true));
-    el.addEventListener('click', (e) => { if (e.target.closest('[data-ix="skip"]')) end(true); });
-    if (globe) {
-      const from = P.lastTrack && GEO.tracks[P.lastTrack] ? P.lastTrack : null, title = (id) => { const x = id && trackById(id); return x ? x.name : undefined; };
-      const a0 = altAt(Rt, M, Dr.shots[0][2]);
-      J = Journey.play(box, { from, to: t.id, arrive: Dr.arrive, video: v, fromTitle: title(from), toTitle: t.name, endHud: [Dr.shots[0][1], a0 != null ? num(Math.round(a0)) + ' m' : ''],
-        onHud: setHud, onLine: (txt) => line(txt), onHandover: startShots });
-      jOff = Math.max(0, J.total - 1.15);   // (the video starts at the hand-over)
-      J.done.then((why) => { if (why === 'nogl') startShots(); });
-    } else startShots();
+    v.addEventListener('ended', () => end(false));
+    v.addEventListener('error', () => { vErr = true; if (!globe || shots) end(true); });   // (the full intro: its globe first, then the start)
+    // (the video waiting for its data: the music waits with it, then goes on with it)
+    v.addEventListener('waiting', () => { if (shots && A && A.a.__go && !A.a.paused) { A.a.pause(); A.a.__wait = true; } });
+    v.addEventListener('playing', () => { if (A && A.a.__wait && !done) { A.a.__wait = false; try { A.a.currentTime = v.currentTime + MUSIC_DROP - MUSIC_LEVEL; } catch (_) { /* not ready */ } const p = A.a.play(); if (p && p.catch) p.catch(() => {}); } });
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('[data-ix="skip"]')) end(true);
+      const mb = e.target.closest('[data-ix="music"]');
+      if (mb) { const on = !musicOn(); settings[D.settings.findIndex(s => s.id === 'music')] = on ? 0 : 1; store.set('set-music', on ? 0 : 1); mb.setAttribute('aria-pressed', String(on)); mb.innerHTML = SPK(on); vol.mt = on && A && A.a.__go ? 0.9 : 0; vol.rt = on && shots ? 0.22 : 0; }
+    });
+    // each frame: the volumes (eased), the music kept with the video, the places over the video, the profile's point
+    const pinEls = [], STEM = [22, 50, 78];
+    let lastPT = -1, lastD = -1;
+    const layoutPins = () => {
+      if (!Hd || !pinCam) return;
+      const now = performance.now(), dt = lastPT < 0 ? 0 : Math.min(0.1, (now - lastPT) / 1000), kA = 1 - Math.exp(-dt / 0.11), kS = 1 - Math.exp(-dt / 0.16); lastPT = now;
+      const k = Math.min(Hd.n - 1, Math.max(0, Math.round((v.currentTime || 0) * Hd.fps))), dist = heliCamAt(Hd, k), Wb = box.clientWidth, Hb = box.clientHeight, s = Math.max(Wb / Hd.W, Hb / Hd.H), ox = (Wb - Hd.W * s) / 2, oy = (Hb - Hd.H * s) / 2;
+      const placed = [];
+      if (sumEl.classList.contains('on')) { const r = sumEl.getBoundingClientRect(), b = box.getBoundingClientRect(); placed.push({ x0: r.left - b.left - 8, x1: r.right - b.left + 8, y0: r.top - b.top - 8, y1: r.bottom - b.top + 8 }); }   // (none under the summit's corner)
+      const order = Hd.marks.map((m, i) => ({ m, i, d: pinCam.position.distanceTo(pv3.set(m[2], m[3], m[4])) })).sort((a, b) => a.d - b.d);
+      const xv = Math.min(1, Wb / (Hd.W * s)), yv = Math.min(1, Hb / (Hd.H * s));   // (how much of the video the stage shows: it covers the stage)
+      for (const { m, i, d } of order) {
+        const e = pinEls[i]; let vis = shots && pinsOn && d < Math.max(2400, dist * 2.3), on = false, x = 0, y = 0, lv = e.__lv || 0;
+        pv3.set(m[2], m[3], m[4]).project(pinCam);
+        if (m[6] === 1) {   // (a place the flight never has in its picture, a mountain face beside the road: at the picture's edge, pointing to it, as it is passed)
+          if (!e.__w) { const sp = e.firstChild; e.__w = sp.offsetWidth || 80; e.__h = sp.offsetHeight || 30; }
+          const w = e.__w, h = e.__h, l = pv3.x < 0;
+          on = pv3.z < 1 && Math.abs(pv3.x) < 3.2 && Math.abs(pv3.y) < 1.6;
+          vis = vis && on && Math.abs(pv3.x) > xv * 0.9 && Math.abs(pv3.x) < 3 && Math.abs(pv3.y) < 1.4;
+          if (on) { x = l ? 16 + w / 2 : Wb - 16 - w / 2; y = Math.min(Hb - h / 2 - 10, Math.max(h / 2 + 30, oy + (1 - pv3.y) / 2 * Hd.H * s)); e.classList.add('edge'); e.classList.toggle('l', l); e.classList.toggle('r', !l); }
+          if (vis) { const r = { x0: x - w / 2 - 18, x1: x + w / 2 + 18, y0: y - h / 2 - 4, y1: y + h / 2 + 4 }; if (placed.some(q => r.x0 < q.x1 && r.x1 > q.x0 && r.y0 < q.y1 && r.y1 > q.y0)) vis = false; else placed.push(r); }
+          e.__a = on ? (e.__a || 0) + ((vis ? 1 : 0) - (e.__a || 0)) * kA : 0;
+          e.style.opacity = e.__a > 0.01 ? e.__a.toFixed(2) : '0';
+          if (on && e.__a > 0.01) e.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)';
+          continue;
+        }
+        if (pv3.z < 1 && Math.abs(pv3.x) < 1.2 && Math.abs(pv3.y) < 1.2) { on = true; x = ox + (pv3.x + 1) / 2 * Hd.W * s; y = oy + (1 - pv3.y) / 2 * Hd.H * s; }
+        if (!on) vis = false;
+        if (vis) {   // (the shortest stem whose name is clear of the others and of the picture's edge: its own first, so it does not jump)
+          if (!e.__w) { const sp = e.firstChild; e.__w = sp.offsetWidth || 80; e.__h = sp.offsetHeight || 30; }
+          const w = e.__w, h = e.__h; let got = -1;
+          if (x - w / 2 >= 4 && x + w / 2 <= Wb - 4 && y <= Hb - 6) for (const L of [lv, 0, 1, 2].filter((q, j, A) => A.indexOf(q) === j)) {
+            const r = { x0: x - w / 2 - 4, x1: x + w / 2 + 4, y0: y - STEM[L] - h - 3, y1: y - STEM[L] + 3 };
+            if (r.y0 < 4 || placed.some(q => r.x0 < q.x1 && r.x1 > q.x0 && r.y0 < q.y1 && r.y1 > q.y0)) continue;
+            got = L; placed.push(r, { x0: x - 4, x1: x + 4, y0: y - STEM[L], y1: y + 4 }); break;
+          }
+          if (got < 0) vis = false; else lv = got;
+        }
+        e.__lv = lv; e.__s = e.__s == null ? STEM[lv] : e.__s + (STEM[lv] - e.__s) * kS;
+        e.__a = on ? (e.__a || 0) + ((vis ? 1 : 0) - (e.__a || 0)) * kA : 0;
+        e.style.opacity = e.__a > 0.01 ? e.__a.toFixed(2) : '0';
+        if (on && e.__a > 0.01) { e.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)'; e.style.setProperty('--s', e.__s.toFixed(1) + 'px'); }
+      }
+      // the profile's and the outline's points: where the helicopter looks along the run; the places reached turn gold
+      if (Hd.d) {
+        const Rr = RT[t.id], dNow = Hd.d[k], f = Math.min(1, Math.max(0, dNow / (Rr ? Rr.len : Hd.len)));
+        for (const [o, sv] of [[PR, prof], [LO, laySvg]]) {
+          if (!o || !sv) continue; const q = o.at(f), clip = sv.querySelector('.clip');
+          sv.querySelector('.pt').setAttribute('transform', 'translate(' + q[0].toFixed(1) + ' ' + q[1].toFixed(1) + ')');
+          if (clip) clip.setAttribute('width', (q[0] + 4).toFixed(1)); else sv.querySelector('.done').setAttribute('stroke-dasharray', f.toFixed(4) + ' 1');   // (the profile: up to the point's x; the outline: a share of its length, as its point goes)
+        }
+        if (dNow !== lastD) { lastD = dNow; for (const m of Hd.marks) for (const g of el.querySelectorAll('.lm[data-n="' + CSS.escape(m[0]) + '"]')) g.classList.toggle('on', dNow >= m[5] - 40); }
+      }
+    };
+    const step = () => {
+      if (done) return;
+      if (!document.contains(el)) { stopAll(); return; }   // (the intro taken away under it, e.g. the mockup's own bar: everything stops)
+      for (const [o, k1, k2] of [[A, 'm', 'mt'], [Rt, 'r', 'rt']]) if (o) { vol[k1] += (vol[k2] - vol[k1]) * 0.08; o.set(vol[k1]); }
+      if (A && mAt > 0 && !A.a.__go && performance.now() >= mAt) startMusic(0);
+      if (A && A.a.__go && !A.a.__wait && shots && !v.paused && v.readyState >= 3 && v.currentTime > 0.2) {   // (the music kept to the video: its drop where the helicopter levels out)
+        const want = v.currentTime + MUSIC_DROP - MUSIC_LEVEL; if (Math.abs(A.a.currentTime - want) > 0.25 && want < A.a.duration - 0.1) try { A.a.currentTime = want; } catch (_) { /* seeking not ready */ }
+      }
+      layoutPins();
+      ixRaf = requestAnimationFrame(step);
+    };
+    // the places' pins (the helicopter's camera comes with its flight's data)
+    const begin = (H) => {
+      if (done) return; Hd = H;
+      if (Hd && Hd.marks) for (const m of Hd.marks) { const e = document.createElement('div'); e.className = 'ixpin'; e.innerHTML = '<span><b>' + esc(m[0]) + '</b>' + (m[1] ? '<small>' + esc(m[1]) + '</small>' : '') + '</span><i></i>'; pins.appendChild(e); pinEls.push(e); }
+      if (globe) {
+        const title = (id) => { const x = id && trackById(id); return x ? x.name : undefined; };
+        let start = null, fromRoute = null, fromFlags = null;
+        if (from && mapEl) {
+          start = mapStart(from, view0 || fitIntroMap(mapEl));
+          const Rf = RT[from], Mf = D.routeMaps[from] || {}, route = Rf.top.route; fromRoute = route.filter((p, i) => i % 2 === 0 || i === route.length - 1).map(p => { const c = mapLL(from, p[0], p[1]); return [c.lat, c.lon]; });
+          const a = mapLL(from, route[0][0], route[0][1]), b = mapLL(from, route[route.length - 1][0], route[route.length - 1][1]), Al = Mf.alt, rf = trackById(from).group === 'rally';
+          const own = (name, sub, fin, cls) => '<svg class="jmk" width="1" height="1" aria-hidden="true">' + mark(0, 0, name, sub, fin, cls).replace('translate(0 0)', 'scale(0.5)') + '</svg>';   // (as the map draws them: half size on the screen)
+          fromFlags = Rf.open ? [{ lat: a.lat, lon: a.lon, html: own(Mf.start || 'Start', Al ? num(Al[0]) + ' m' : rf ? 'SS start' : '', false, 's') }, { lat: b.lat, lon: b.lon, html: own(Mf.finish || 'Finish', Al ? num(Al[1]) + ' m' : '', true, 'f'), fin: true }]
+            : [{ lat: a.lat, lon: a.lon, html: own('Start · finish', '', false, 's') }];
+        }
+        J = Journey.play(box, { from, to: t.id, heli: Hd, video: v, start, fromRoute, fromFlags, mapEl, fromTitle: title(from), toTitle: t.name, credit: D.creditLine,
+          onSummit: showSummit, onHandover: startShots, debug: window.__ixJDebug,
+          onStart: (c) => { globeRan = true; const at = c.total + MUSIC_LEVEL - MUSIC_DROP; if (at <= 0) startMusic(-at); else mAt = performance.now() + at * 1000; } });
+        J.done.then((why) => { pinsOn = true; if (why === 'nogl') { if (mapEl) mapEl.remove(); startShots(); } });
+      } else startShots();
+    };
+    const stopAll = () => { if (!done) quit(); for (const o of [A, Rt]) if (o) { o.a.pause(); o.a.__held = false; o.set(0); } if (ixLive && ixLive.stop === stopAll) ixLive = null; };
+    heliData(t.id).then(begin);
     ixRaf = requestAnimationFrame(step);
+    ixLive = { A, Rt, stop: stopAll }; window.__ixDebug = { A: A && A.a, Rt: Rt && Rt.a, v, get J() { return J; }, get Hd() { return Hd; } };   // (for the mockup's own checks)
     $('.ix-skip', el).focus({ preventScroll: true });
   }
+  // the intro's sounds: each through Web Audio with its own gain (iPhones ignore an element's volume), else the element's volume; faded out
+  // over sec seconds (Skip, the end: stopped by a timer too, so also in a hidden tab), stopped at once when another intro or the menu
+  // takes over (ixStop: the whole intro, its video and globe too)
+  let ixLive = null, actx = null;
+  function voice(url, loop) {
+    const a = new Audio(url); a.preload = 'auto'; a.loop = !!loop; let g = null;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) { actx = actx || new AC(); const src = actx.createMediaElementSource(a); g = actx.createGain(); g.gain.value = 0; src.connect(g); g.connect(actx.destination); }
+    } catch (_) { g = null; }
+    if (!g) a.volume = 0;
+    return { a, set(v) { v = Math.max(0, Math.min(1, v)); if (g) g.gain.value = v; else a.volume = v; }, get() { return g ? g.gain.value : a.volume; } };
+  }
+  function ixFade(o, sec) {
+    if (!o) return; if (o.a.paused) { o.a.__held = false; o.set(0); return; }   // (held in a hidden tab, or never started: it stays silent)
+    const v0 = o.get(), t0 = performance.now(), stop = () => { o.a.pause(); o.a.__held = false; o.set(0); };
+    const f = () => { const k = (performance.now() - t0) / 1000 / sec; if (k >= 1 || o.a.paused) return; o.set(v0 * (1 - k)); requestAnimationFrame(f); };
+    requestAnimationFrame(f); setTimeout(stop, sec * 1000 + 30);
+  }
+  function ixStop() { if (!ixLive) return; const L = ixLive; ixLive = null; L.stop(); }
+  document.addEventListener('visibilitychange', () => {   // (a hidden tab: the intro's sounds wait, its frames being stopped)
+    if (!ixLive) return;
+    for (const o of [ixLive.A, ixLive.Rt]) if (o) { if (document.hidden) { if (!o.a.paused) { o.a.pause(); o.a.__held = true; } } else if (o.a.__held) { o.a.__held = false; const p = o.a.play(); if (p && p.catch) p.catch(() => {}); } }
+  });
+
   // the start: five red lights one by one, then all out and away (in the mockup: then where you finished)
   function lights(el) {
     const R = race;
@@ -879,6 +1138,7 @@
       }
       case 'pick-car': carIdx = P.car; colorIdx = P.color; tab = 'stats'; go('car'); break;
       case 'pick-weather': sheet = weatherSheet; render(true); break;
+      case 'credits': sheet = creditsSheet; render(true); break;
       case 'car-select': { const c = D.cars[carIdx]; if (c.soon || carLocked(c)) break; P.car = carIdx; P.color = colorIdx; saveP(); back(); break; }
       case 'cm-race': startRace(cmRace({ cup: 'cup', cchase: 'chase', ctrial: 'trial', crally: 'rally' }[screen])); break;   // the next race of the career screen shown
       case 'race-multi': { const rival = mpMode === 'quick' ? 'T. Hayashi' : D.friendName; startRace({ kind: 'multi', track: D.tracks[0], rival, label: 'Duel with ' + rival }); break; }
@@ -898,7 +1158,7 @@
         render(true); toast('Mockup: bought. Everything is unlocked, your progress stays.'); break;
       }
       case 'lb': lbTrack = +v; render(); break;
-      case 'set': settings[+v] = +w; render(true); break;
+      case 'set': settings[+v] = +w; if (D.settings[+v].keep) store.set('set-' + D.settings[+v].id, +w); render(true); break;
       case 'mp': mpMode = v; render(true); break;
       case 'reset': P = fresh(ST); saveP(); resetView(); history = []; screen = 'title'; render(); toast('Progress reset.'); break;
       default: break;
@@ -906,6 +1166,7 @@
   }
   app.addEventListener('click', (e) => {
     const el = e.target.closest('[data-act]'); if (!el || !app.contains(el)) return;
+    if ($('.loading, .intro', app) && !el.closest('.loading, .intro')) return;   // (nothing under the intro or the result picker: a key on a button behind it)
     if (el.classList.contains('sheet-bg') && e.target !== el) return;   // clicks inside the sheet do not close it
     act(el.dataset.act, el);
   });
@@ -945,6 +1206,7 @@
       if (o.daily) { mode = dailyMode(); group = daily().track.group; trackIdx = 0; }
       if (o.trackId) { const tt = D.tracks.find(x => x.id === o.trackId); if (tt) group = tt.group; const i = TRACKS().findIndex(t => t && t.id === o.trackId); if (i >= 0) trackIdx = i; }
       if (o.tab) tab = o.tab; if (o.lbTrack != null) lbTrack = o.lbTrack; if (o.mpMode) mpMode = o.mpMode;
+      if (o.lastTrack != null) P.lastTrack = o.lastTrack;   // (the mockup's checks: where the journey on the globe starts)
       // the main menu's frame: as it is when coming back from the screen opened (Single race or Career), or as asked (o.sub)
       titleSub = o.sub !== undefined ? o.sub : scr === 'mode' || scr === 'track' ? 'single' : /^(cup|cchase|ctrial|crally)$/.test(scr) ? 'career' : null;
       if (scr === 'mode') scr = 'title';
@@ -963,7 +1225,7 @@
     data = data || {};
     ST = D.states[data.st] ? data.st : D.states[store.get('state', '')] ? store.get('state', '') : 'free';
     P = loadP(ST); resetView();
-    settings = D.settings.map(s => s.sel); mapV = +store.get('mapv', 1) || 1; if (!D.mapVersions.some(x => x.n === mapV)) mapV = 1;
+    settings = D.settings.map(s => s.keep ? +store.get('set-' + s.id, s.sel) || 0 : s.sel); mapV = +store.get('mapv', 1) || 1; if (!D.mapVersions.some(x => x.n === mapV)) mapV = 1;
     history = [];
     screen = VIEWS[data.screen] && data.screen !== 'results' ? data.screen : 'title';
     if (data.screen && data.carIdx != null) { carIdx = data.carIdx; colorIdx = data.colorIdx; mode = modeOf(data.mode).id; group = D.groups.some(g => g.id === data.group) ? data.group : 'circuit'; trackIdx = Math.max(0, Math.min(data.trackIdx || 0, TRACKS().length - 1)); tab = data.tab || 'stats'; titleSub = data.titleSub || null; }

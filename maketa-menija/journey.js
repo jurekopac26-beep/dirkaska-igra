@@ -1,9 +1,11 @@
 /* =========================================================================
-   THE JOURNEY BEFORE A RACE (mockup) — a 3D Earth at the start of the race intro. It starts close over the place where the last race
-   ended, pulls back until the whole Earth shows, flies along the great circle to the new track (a gold arc), comes down into the real
-   land round the track in 3D (its relief, its towns, its road), and ends on the very view the drone's video starts from, so the video
-   takes over without a cut. three.js r128 (as the game); the Earth's data from geo.js (window.GEO, made by geo_build.py): NASA's Blue
-   Marble, the land painted from ESA WorldCover and the AWS Terrain Tiles, Natural Earth's borders and names.
+   THE JOURNEY BEFORE A RACE (mockup) — a 3D Earth at the start of the race intro. Its first picture is the last race's map as the menu
+   shows it (its route, its flags), the same place on the Earth from straight above; then the camera pulls back until the whole Earth
+   shows (the last race's country outlined and named), flies along the great circle to the new track, comes down into the real land round
+   it in 3D (its country outlined and named), and ends on the very view the helicopter's video starts from, so the video takes over
+   without a cut. Two pins (LAST RACE, NEXT RACE) stand on the land as drawn. three.js r128 (as the game); the Earth's data from geo.js
+   (window.GEO, made by geo_build.py): NASA's Blue Marble, the land painted from ESA WorldCover and the AWS Terrain Tiles, Natural
+   Earth's outlines and names.
    ========================================================================= */
 window.Journey = (function () {
   'use strict';
@@ -67,15 +69,17 @@ window.Journey = (function () {
       gl_FragColor = vec4(mix(c * uDim, uHaze, hazeOf(vP)), 1.0);
     }`;
   // a patch of land in 3D: its painted picture, raised by its heights (exaggerated by uEx), fading in at its edges and with distance
+  // (lit as a relief map is: the slopes from each vertex's height gradient, the light from the north-west 45 degrees up; flat land as painted)
   const PATCH_V = `
-    attribute vec3 nrm; attribute float hgt; uniform float uEx; varying vec2 vUv; varying vec3 vP;
-    void main() { vUv = uv; vec3 p = position + nrm * hgt * uEx; vec4 w = modelMatrix * vec4(p, 1.0); vP = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`;
+    attribute vec3 nrm, grd; attribute float hgt; uniform float uEx; varying vec2 vUv; varying vec3 vP; varying vec3 vN;
+    void main() { vUv = uv; vN = nrm - grd * uEx; vec3 p = position + nrm * hgt * uEx; vec4 w = modelMatrix * vec4(p, 1.0); vP = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`;
   const PATCH_F = `
-    uniform sampler2D tMap; uniform float uA, uEdge; varying vec2 vUv; varying vec3 vP;` + HAZE + `
+    uniform sampler2D tMap; uniform float uA, uEdge; uniform vec3 uSun; varying vec2 vUv; varying vec3 vP; varying vec3 vN;` + HAZE + `
     void main() {
       float e = min(min(vUv.x, 1.0 - vUv.x), min(vUv.y, 1.0 - vUv.y)), a = uA * smoothstep(0.0, uEdge, e);
       if (a <= 0.003) discard;
-      gl_FragColor = vec4(mix(texture2D(tMap, vUv).rgb, uHaze, hazeOf(vP)), a);
+      float lit = 0.6 + 0.57 * max(dot(normalize(vN), uSun), 0.0);
+      gl_FragColor = vec4(mix(texture2D(tMap, vUv).rgb * lit, uHaze, hazeOf(vP)), a);
     }`;
   // the air round the Earth seen from space: a glow at the rim
   const ATM_V = `varying vec3 vN; varying vec3 vP; void main() { vN = normalize(mat3(modelMatrix) * normal); vec4 w = modelMatrix * vec4(position, 1.0); vP = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`;
@@ -149,38 +153,48 @@ window.Journey = (function () {
     catch (_) { sup = false; }
     return sup;
   }
-  /* host: the element to fill; o: { from: track id or null, to: track id, arrive: the drone video's arrival (routes.js), fromTitle, toTitle:
-     the races' names (on the pins), endHud: [name, sub] as the video's first shot has the corner, onHud(name, sub), onLine(text),
-     onHandover(): the video may start (the globe follows its arrival while it fades), video: the <video> (its clock drives the hand-over),
-     debug(course): for tests }. Returns { done: Promise ('done', 'skip' or 'nogl'), skip(), total, elapsed } (seconds) */
+  // the lens the video is seen through on a stage of this shape: the video (3:2, 50 degrees from top to bottom) covers the stage, so on a
+  // wider stage its top and bottom are cut off (and the lens is narrower)
+  function fovFor(W, H, fov, vidAspect) { const a = W / H, va = vidAspect || 1.5; return a > va ? 2 * Math.atan(Math.tan(fov * D2R / 2) * va / a) / D2R : fov; }
+  /* host: the element to fill (the intro's stage); o: {
+       from: the last race's track id (or none: from space), to: this race's track id,
+       heli: the helicopter's flight (assets/maps/heli-<to>.json: its camera every frame), video: its <video> (its clock drives the hand-over),
+       start: { lat, lon, h (km), heading (degrees), extent (km from the stage's top to its bottom) }: the last race's map as the stage shows
+         it, the first picture; fromRoute: [[lat, lon], ...] and fromFlags: [{ lat, lon, name, sub, fin }]: its route and flags, as on the map;
+       mapEl: the map itself in the stage (it fades out as the globe takes over); fromTitle, toTitle: the races' names (on the pins);
+       onStart({ total, hand }): the globe has started (its clock: the video starts at total); onSummit('from' | 'to' | null): which
+       race's summit the corner shows (the camera close over that race's land); onHandover(): the video starts; debug(course): for tests }
+     Returns { done: Promise ('done', 'skip' or 'nogl'), skip(), total, elapsed } (seconds) */
   function play(host, o) {
-    const G = window.GEO, TO = G.tracks[o.to], FROM = o.from && o.from !== o.to ? G.tracks[o.from] : null;
+    const G = window.GEO, TO = G.tracks[o.to], FROM = o.from && o.from !== o.to ? G.tracks[o.from] : null, SAME = FROM && FROM.names.country === TO.names.country;
     let alive = true, raf = 0, resolveDone; const done = new Promise(r => { resolveDone = r; });
     const W0 = host.clientWidth || 360, H0 = host.clientHeight || 300, dpr = Math.min(2, window.devicePixelRatio || 1);
     const back = document.createElement('div'); back.className = 'jback'; host.appendChild(back);
     const canvas = document.createElement('canvas'); canvas.className = 'jglobe'; host.appendChild(canvas);
     const labels = document.createElement('div'); labels.className = 'jlabels'; labels.setAttribute('aria-hidden', 'true'); host.appendChild(labels);
     const veil = document.createElement('canvas'); veil.className = 'jveil'; veil.width = Math.round(W0 * dpr / 2); veil.height = Math.round(H0 * dpr / 2); host.appendChild(veil);
-    const credit = document.createElement('div'); credit.className = 'jcredit'; credit.textContent = 'NASA Blue Marble · ESA WorldCover · AWS Terrain Tiles · Natural Earth'; host.appendChild(credit);   // (the data's credits, as on any map)
+    const credit = document.createElement('div'); credit.className = 'jcredit'; credit.textContent = o.credit || 'NASA · © ESA WorldCover 2021, Copernicus · EU-DEM, USGS · Natural Earth'; host.appendChild(credit);   // (the data's credits, as their licences ask; all of them in the menu's Credits)
     let renderer;
     try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' }); }
     catch (e) { cleanup(); resolveDone('nogl'); return { done, skip() {}, total: 0, elapsed: 0 }; }
     renderer.setPixelRatio(dpr); renderer.setSize(W0, H0, false); renderer.autoClear = false; renderer.setClearColor(0x000000, 1);
     const camera = new THREE.PerspectiveCamera(45, W0 / H0, 1, 1e5);
-    const res = new THREE.Vector2(W0 * dpr / 2, H0 * dpr / 2);
+    const res = new THREE.Vector2(W0 / 2, H0 / 2);   // (the lines' widths: CSS px, on any screen)
+    const vidAspect = o.heli && o.heli.W ? o.heli.W / o.heli.H : 1.5, vidFov = (o.heli && o.heli.fov) || 50;
+    let fovEnd = fovFor(W0, H0, vidFov, vidAspect);
 
-    // where the journey starts and ends: the last race's finish (or space), the drone video's first view
+    // where the journey ends: the helicopter video's first view (its camera every frame through the hand-over)
     const ENDP = (() => {
-      const A = o.arrive && o.arrive.cam && o.arrive.cam.length ? o.arrive : null, G0 = TO;
-      if (A) {
-        const q = A.cam[0], c = gameLL(G0, q[0], q[2]), t = gameLL(G0, q[3], q[5]);
-        return { cam: ecef(c.lat, c.lon, (q[1] + G0.offset) / 1000), tgt: ecef(t.lat, t.lon, (q[4] + G0.offset) / 1000), tLL: t, fov: A.fov || 50, path: A.cam, fps: A.fps || 30 };
+      const C = o.heli && o.heli.cam && o.heli.cam.length > 2 ? o.heli.cam : null;
+      if (C) {
+        const q = C[0], c = gameLL(TO, q[0], q[2]), t = gameLL(TO, q[3], q[5]);
+        return { cam: ecef(c.lat, c.lon, (q[1] + TO.offset) / 1000), tgt: ecef(t.lat, t.lon, (q[4] + TO.offset) / 1000), path: C, fps: o.heli.fps || 30 };
       }
-      const s = TO.start, tgt = ecef(s[0], s[1], s[2] / 1000), E = enu(s[0], s[1]);   // (no arrival: a view from the south-west, 3 km off)
+      const s = TO.start, tgt = ecef(s[0], s[1], s[2] / 1000), E = enu(s[0], s[1]);   // (no flight: a view from the south-west, 3 km off)
       const cam = tgt.clone().add(E.u.clone().multiplyScalar(1.8)).add(E.n.clone().multiplyScalar(-2.0)).add(E.e.clone().multiplyScalar(-1.0));
-      return { cam, tgt, tLL: { lat: s[0], lon: s[1] }, fov: 50, path: null, fps: 30 };
+      return { cam, tgt, path: null, fps: 30 };
     })();
-    // the end's view as target, distance, tilt from straight down, heading
+    // a view as target, distance, tilt from straight down, heading
     function viewOf(cam, tgt) {
       const ll = llOf(tgt), E = enu(ll.lat, ll.lon), v = cam.clone().sub(tgt), r = v.length(), up = v.dot(E.u) / r;
       const hd = Math.atan2(-v.dot(E.e), -v.dot(E.n)) / D2R;   // (the camera looks the other way from where it stands)
@@ -188,14 +202,16 @@ window.Journey = (function () {
     }
     const vEnd = viewOf(ENDP.cam, ENDP.tgt);
     // ---------------- the journey's course ----------------
-    // 1. down onto the place where the last race ended (its LAST RACE pin); 2. a moment there; 3. up, across and down to the new place on
-    // van Wijk & Nuij's smooth zoom and pan (as high as it takes to see both, slower at the top, from rest, arriving at the speed the
-    // drone's video goes on at); 4. the hand-over: the video takes over without a cut. North stays up while high (the map as one knows it).
-    const ZIN = FROM ? 1.5 : 0, HOLD = FROM ? 0.4 : 0.15, T0 = ZIN + HOLD;
-    let vStart;
-    if (FROM) { const f = FROM.finish; vStart = { lat: f[0], lon: f[1], h: f[2] / 1000, range: 7, tilt: 50, heading: 4 }; }
-    else vStart = { lat: clamp(vEnd.lat - 14, -60, 60), lon: vEnd.lon - 28, h: 0, range: 24000, tilt: 0, heading: 0 };
-    const vZoom = FROM ? Object.assign({}, vStart, { range: 70, tilt: 26, heading: -16 }) : null;
+    // 1. the last race's map, a moment (the globe comes in under it, the same view from straight above); 2. up, across and down to the new
+    // place on van Wijk & Nuij's smooth zoom and pan (as high as it takes to see both, slower at the top, from rest, arriving at the speed
+    // the helicopter's video goes on at); 3. the hand-over: the video takes over without a cut. North comes up while high.
+    const S0 = FROM && o.start ? o.start : null, HOLD = S0 ? 1.1 : 0.15, T0 = HOLD;
+    // the first view through a long lens: from straight above it is all but the map's own flat view (the land and the route under the
+    // map match it as it fades, whatever their heights); the lens widens to the video's as the camera climbs. The course itself is
+    // reckoned with the video's lens all the way (its 'range'): the long lens only moves the camera back along its view.
+    const FOV_HOLD = 12;
+    const vStart = S0 ? { lat: S0.lat, lon: S0.lon, h: S0.h, range: S0.extent / (2 * Math.tan(fovEnd * D2R / 2)), tilt: 0, heading: wrap(S0.heading) }
+      : { lat: clamp(vEnd.lat - 14, -60, 60), lon: vEnd.lon - 28, h: 0, range: 24000, tilt: 0, heading: 0 };
     const RHO = 2.0, D = gcDist(vStart, vEnd), w0 = vStart.range, w1 = vEnd.range;
     let S, uOf, wOf;
     if (D < 1e-3) { S = Math.abs(Math.log(w1 / w0)) / RHO; uOf = () => 0; wOf = (s) => w0 * Math.exp(Math.sign(Math.log(w1 / w0)) * RHO * s); }
@@ -208,7 +224,7 @@ window.Journey = (function () {
     const NS = 600, dS = S / NS, lw = (s) => Math.log(Math.max(1e-6, wOf(s)));
     let wTop = 0; for (let i = 0; i <= NS; i++) wTop = Math.max(wTop, wOf(i * dS));
     const dist6 = (q) => Math.hypot(q[0] - q[3], q[1] - q[4], q[2] - q[5]);
-    const vidSpeed = ENDP.path && ENDP.path.length > 2 ? Math.abs(Math.log(dist6(ENDP.path[1]) / dist6(ENDP.path[0]))) * ENDP.fps : 0;   // (the video's zoom at its start: log distance a second)
+    const vidSpeed = ENDP.path ? Math.abs(Math.log(dist6(ENDP.path[1]) / dist6(ENDP.path[0]))) * ENDP.fps : 0;   // (the video's zoom at its start: log distance a second)
     const dlw = Math.abs((lw(S) - lw(S - dS)) / dS) || RHO;
     const dens = (s) => 1 + 0.9 * sstep(Math.log(wTop * 0.2), Math.log(wTop), lw(s));   // (a while at the top, the whole way in sight)
     const TR = clamp(1.4 + S * 0.62, 3.0, 7.0);
@@ -255,113 +271,134 @@ window.Journey = (function () {
     // the land of a track's place in 3D: its 80 km round (L2) and its own 14 km (L3)
     const patches = [];
     function patch(scene, L, n, hm) {
-      const b = L.box, cLat = (b[0] + b[2]) / 2, cLon = (b[1] + b[3]) / 2, C = ecef(cLat, cLon, 0), P = new Float32Array((n + 1) ** 2 * 3), Nr = new Float32Array((n + 1) ** 2 * 3), H = new Float32Array((n + 1) ** 2), UV = new Float32Array((n + 1) ** 2 * 2);
+      const b = L.box, cLat = (b[0] + b[2]) / 2, cLon = (b[1] + b[3]) / 2, C = ecef(cLat, cLon, 0), P = new Float32Array((n + 1) ** 2 * 3), Nr = new Float32Array((n + 1) ** 2 * 3), H = new Float32Array((n + 1) ** 2), UV = new Float32Array((n + 1) ** 2 * 2), Gr = new Float32Array((n + 1) ** 2 * 3);
       const v = new THREE.Vector3();
       for (let j = 0; j <= n; j++) for (let i = 0; i <= n; i++) {
         const k = j * (n + 1) + i, lat = b[2] - (b[2] - b[0]) * j / n, lon = b[1] + (b[3] - b[1]) * i / n;
         ecef(lat, lon, 0, v); const u = v.clone().normalize(); v.sub(C); P[k * 3] = v.x; P[k * 3 + 1] = v.y; P[k * 3 + 2] = v.z; Nr[k * 3] = u.x; Nr[k * 3 + 1] = u.y; Nr[k * 3 + 2] = u.z;
         const hx = Math.round(i / n * (hm.w - 1)), hy = Math.round(j / n * (hm.h - 1)); H[k] = hm.a[hy * hm.w + hx]; UV[k * 2] = i / n; UV[k * 2 + 1] = 1 - j / n;
       }
+      // each vertex's slope: its heights' gradient (km a km) along the land's east and north, in the Earth's frame
+      const dxE = (b[3] - b[1]) * D2R * RE * Math.cos(cLat * D2R) / n, dyN = (b[2] - b[0]) * D2R * RE / n;
+      for (let j = 0; j <= n; j++) {
+        const E = enu(b[2] - (b[2] - b[0]) * j / n, cLon);
+        for (let i = 0; i <= n; i++) {
+          const k = j * (n + 1) + i, hx = (H[j * (n + 1) + Math.min(n, i + 1)] - H[j * (n + 1) + Math.max(0, i - 1)]) / ((Math.min(n, i + 1) - Math.max(0, i - 1)) * dxE);
+          const hy = (H[Math.max(0, j - 1) * (n + 1) + i] - H[Math.min(n, j + 1) * (n + 1) + i]) / ((Math.min(n, j + 1) - Math.max(0, j - 1)) * dyN);
+          Gr[k * 3] = E.e.x * hx + E.n.x * hy; Gr[k * 3 + 1] = E.e.y * hx + E.n.y * hy; Gr[k * 3 + 2] = E.e.z * hx + E.n.z * hy;
+        }
+      }
       const idx = []; for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const a = j * (n + 1) + i, b2 = a + 1, c = a + n + 1, d = c + 1; idx.push(a, c, b2, b2, c, d); }
-      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('nrm', new THREE.BufferAttribute(Nr, 3)); g.setAttribute('hgt', new THREE.BufferAttribute(H, 1)); g.setAttribute('uv', new THREE.BufferAttribute(UV, 2)); g.setIndex(idx);
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('nrm', new THREE.BufferAttribute(Nr, 3)); g.setAttribute('grd', new THREE.BufferAttribute(Gr, 3)); g.setAttribute('hgt', new THREE.BufferAttribute(H, 1)); g.setAttribute('uv', new THREE.BufferAttribute(UV, 2)); g.setIndex(idx);
+      const Ec = enu(cLat, cLon), sun = Ec.n.clone().sub(Ec.e).normalize().multiplyScalar(Math.cos(45 * D2R)).add(Ec.u.clone().multiplyScalar(Math.sin(45 * D2R))).normalize();   // (from the north-west, 45 degrees up)
       const m = new THREE.ShaderMaterial({ vertexShader: PATCH_V, fragmentShader: PATCH_F, transparent: true, depthWrite: true,
-        uniforms: Object.assign({ tMap: { value: null }, uA: { value: 0 }, uEdge: { value: 0.08 }, uEx: { value: 1 } }, U) });
+        uniforms: Object.assign({ tMap: { value: null }, uA: { value: 0 }, uEdge: { value: 0.08 }, uEx: { value: 1 }, uSun: { value: sun } }, U) });
       const mesh = new THREE.Mesh(g, m); mesh.position.copy(C); mesh.frustumCulled = false; scene.add(mesh);
-      const p = { mesh, m, C, L, ready: false }; patches.push(p); return p;
+      const p = { mesh, m, C, L, hm, ready: false }; patches.push(p); return p;
     }
-    // a track's road on its land (a real track: the game's own line, at its real height): the new one gold, the last one white
-    const roads = [];
-    function road(T, col) {
-      if (!T.route) return;
-      const C = ecef(T.route[0][0], T.route[0][1], 0), pts = T.route.map(q => ecef(q[0], q[1], q[2] / 1000 + 0.012).sub(C));
-      if (!T.open) pts.push(pts[0].clone());
-      const g = lineGeo(pts), edge = new THREE.Mesh(g, lineMat(0x1a1408, 7, 0.55, 0.5)), ln = new THREE.Mesh(g, lineMat(col, 3.6, 1, 0.3));
-      for (const m of [edge, ln]) { m.position.copy(C); m.frustumCulled = false; m.renderOrder = 5; near3.add(m); }
-      roads.push({ ln, edge, T });
+    // the land's height as drawn (km): from a place's 14 km (or 80 km) heights, raised as they are (ex), fading to the globe's own sphere
+    // as those lands fade out (a pin, a flag, the route stand on the land the camera sees, wherever it is)
+    const H3 = {}, hOf = (T, lv) => T && H3[T.l1 + '|' + lv + '|' + T[lv].img];
+    function sampleH(T, lv, lat, lon) {
+      const hm = hOf(T, lv); if (!hm) return null; const b = T[lv].box, fx = (lon - b[1]) / (b[3] - b[1]) * (hm.w - 1), fy = (b[2] - lat) / (b[2] - b[0]) * (hm.h - 1);
+      if (fx < 0 || fy < 0 || fx > hm.w - 1 || fy > hm.h - 1) return null; const i = Math.min(hm.w - 2, Math.floor(fx)), j = Math.min(hm.h - 2, Math.floor(fy)), u = fx - i, v = fy - j, a = hm.a;
+      return (a[j * hm.w + i] * (1 - u) + a[j * hm.w + i + 1] * u) * (1 - v) + (a[(j + 1) * hm.w + i] * (1 - u) + a[(j + 1) * hm.w + i + 1] * u) * v;
     }
-    // the borders between countries, and the outline of the new track's country (or state)
-    const borderMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.4, depthTest: false, depthWrite: false });
-    {
-      const P = []; for (const l of G.borders) for (let i = 2; i < l.length; i += 2) { const a = ecef(l[i - 1], l[i - 2], 0.3), b = ecef(l[i + 1], l[i], 0.3); P.push(a.x, a.y, a.z, b.x, b.y, b.z); }
-      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); over.add(new THREE.LineSegments(g, borderMat));
+    const landA = { l2: new Map(), l3: new Map() };   // (each track's lands' alpha this frame)
+    function shownH(T, lat, lon, ex) {
+      const a3 = landA.l3.get(T) || 0, a2 = landA.l2.get(T) || 0, h3 = sampleH(T, 'l3', lat, lon), h2 = sampleH(T, 'l2', lat, lon);
+      const h = h3 != null ? h3 : h2 != null ? h2 : 0, a = Math.max(h3 != null ? a3 : 0, h2 != null ? a2 : 0);
+      return h * ex * a - 0.06 * (1 - a);
     }
-    const outlines = [];
-    const homeName = TO.names.country === 'USA' ? 'Colorado' : TO.names.country;
-    for (const l of (G.outlines[homeName] || [])) {
-      const pts = []; for (let i = 0; i < l.length; i += 2) pts.push(ecef(l[i + 1], l[i], 0.5));
-      const C = pts[0].clone(); pts.forEach(p => p.sub(C));
-      const m = new THREE.Mesh(lineGeo(pts), lineMat(0xffd23a, 2.6, 0, 0.4, true)); m.position.copy(C); m.frustumCulled = false; over.add(m); outlines.push(m);
+    // the outlines of the two countries of the journey (the last race's at first, this race's as the camera comes down to it)
+    const outline = (name) => {
+      const out = [];
+      for (const l of (G.outlines[name] || [])) {
+        const pts = []; for (let i = 0; i < l.length; i += 2) pts.push(ecef(l[i + 1], l[i], 0.5));
+        const C = pts[0].clone(); pts.forEach(p => p.sub(C));
+        const m = new THREE.Mesh(lineGeo(pts), lineMat(0xffd23a, 1.2, 0, 0.4, true)); m.position.copy(C); m.frustumCulled = false; over.add(m); out.push(m);
+      }
+      return out;
+    };
+    const outTo = outline(TO.names.country), outFrom = FROM && !SAME ? outline(FROM.names.country) : [];
+    // the last race's route on its land, as on its map (yellow, a dark edge): it stands on the land as drawn (moved each frame)
+    let routeL = null;
+    function makeRoute() {
+      if (!FROM || !o.fromRoute || o.fromRoute.length < 2 || routeL) return;
+      const n = o.fromRoute.length, C = ecef(o.fromRoute[0][0], o.fromRoute[0][1], 0), pts = o.fromRoute.map(q => ecef(q[0], q[1], 0).sub(C));
+      const g = lineGeo(pts), edge = new THREE.Mesh(g, lineMat(0x080c14, 2.75, 0.75, 0.35)), ln = new THREE.Mesh(g, lineMat(0xffd23a, 1.5, 1, 0.3));   // (as the map draws it: 3 px of gold in a 5.5 px dark edge)
+      for (const m of [edge, ln]) { m.position.copy(C); m.frustumCulled = false; m.renderOrder = 5; m.material.depthTest = false; near3.add(m); }   // (over the land, as on the map: no hill cuts it)
+      routeL = { ln, edge, g, C, n, ex: -1, ups: o.fromRoute.map(q => ecef(q[0], q[1], 0).normalize()) };
     }
-    // the arc: from the last race's finish to the new track, raised over the Earth the higher the longer it is; drawn as the camera flies
-    let arc = null, arcGlow = null, comet = null;
-    if (FROM && D > 30) {
-      const n = 160, lift = Math.min(1600, D * 0.12), pts = [];
-      for (let i = 0; i <= n; i++) { const f = i / n, q = slerpLL(vStart, vEnd, f); pts.push(ecef(q.lat, q.lon, Math.sin(Math.PI * f) * lift + 0.5)); }
-      const C = pts[0].clone(); pts.forEach(p => p.sub(C)); const g = lineGeo(pts);
-      arcGlow = new THREE.Mesh(g, lineMat(0xffc629, 11, 0.22, 1.0, true)); arc = new THREE.Mesh(g, lineMat(0xffe07a, 3.2, 1, 0.35, true));
-      for (const m of [arcGlow, arc]) { m.position.copy(C); m.frustumCulled = false; over.add(m); }
-      const cv = document.createElement('canvas'); cv.width = cv.height = 64; const x = cv.getContext('2d'), gr = x.createRadialGradient(32, 32, 0, 32, 32, 32);
-      gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.25, 'rgba(255,240,170,.9)'); gr.addColorStop(1, 'rgba(255,200,40,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64);
-      comet = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), depthTest: false, depthWrite: false, transparent: true, sizeAttenuation: false }));
-      comet.scale.set(0.09, 0.09, 1); over.add(comet); comet.userData = { pts, C, lift };
+    function placeRoute(ex) {   // (the points raised to the land's height as drawn, along their own up)
+      if (!routeL) return; const r = routeL, P = r.g.attributes.position.array, Pr = r.g.attributes.prev.array, Nx = r.g.attributes.next.array, pts = [];
+      for (let i = 0; i < r.n; i++) { const q = o.fromRoute[i], h = shownH(FROM, q[0], q[1], ex) + 0.004; pts.push(ecef(q[0], q[1], h).sub(r.C)); }
+      for (let i = 0; i < r.n; i++) { const p = pts[i], a = pts[Math.max(0, i - 1)], b = pts[Math.min(r.n - 1, i + 1)];
+        for (let s = 0; s < 2; s++) { const k = (i * 2 + s) * 3; P[k] = p.x; P[k + 1] = p.y; P[k + 2] = p.z; Pr[k] = a.x; Pr[k + 1] = a.y; Pr[k + 2] = a.z; Nx[k] = b.x; Nx[k + 1] = b.y; Nx[k + 2] = b.z; } }
+      r.g.attributes.position.needsUpdate = r.g.attributes.prev.needsUpdate = r.g.attributes.next.needsUpdate = true;
     }
 
     // ---------------- the pictures: the globe first, then each place's land as it arrives ----------------
-    img('assets/geo/earth.webp').then(im => { if (alive && im) earthMat.uniforms.tE.value = texOf(im); });
+    const up = (t) => { try { renderer.initTexture(t); } catch (_) { /* at its first frame then */ } return t; };   // (each picture to the GPU as it arrives: mostly under the first map)
+    img('assets/geo/earth.webp').then(im => { if (alive && im) earthMat.uniforms.tE.value = up(texOf(im)); });
     const places = [TO]; if (FROM) places.push(FROM);
     places.forEach((T, k) => {
       const L1 = G.l1[T.l1], key = k ? 'B' : 'A';
-      img(L1.img).then(im => { if (!alive || !im) return; earthMat.uniforms['t' + key].value = texOf(im); const b = L1.box; earthMat.uniforms['b' + key].value.set(b[0], b[1], b[2], b[3]); earthMat.uniforms['a' + key].value = 1; });
+      img(L1.img).then(im => { if (!alive || !im) return; earthMat.uniforms['t' + key].value = up(texOf(im)); const b = L1.box; earthMat.uniforms['b' + key].value.set(b[0], b[1], b[2], b[3]); earthMat.uniforms['a' + key].value = 1; });
       for (const [lv, n, sc] of [['l2', 96, near2], ['l3', 176, near3]]) {
-        Promise.all([img(T[lv].img), heights(T[lv].h, T[lv].lo)]).then(([im, hm]) => { if (!alive || !im || !hm || (T === FROM && fromFreed)) return; const p = patch(sc, T[lv], n, hm); p.lv = lv; p.T = T; p.m.uniforms.tMap.value = texOf(im); p.ready = true; if (lv === 'l3') road(T, T === TO ? 0xffd23a : 0xf4f6fa); });
+        Promise.all([img(T[lv].img), heights(T[lv].h, T[lv].lo)]).then(([im, hm]) => {
+          if (!alive || !im || !hm || (T === FROM && fromFreed)) return;
+          H3[T.l1 + '|' + lv + '|' + T[lv].img] = hm;
+          const p = patch(sc, T[lv], n, hm); p.lv = lv; p.T = T; p.m.uniforms.tMap.value = up(texOf(im)); p.ready = true;
+          if (lv === 'l3' && T === FROM) makeRoute();
+        });
       }
     });
 
     // ---------------- the names on the map (HTML over the picture) ----------------
-    const LB = [];   // { el, p (Vector3), kind, show(state) -> 0..1, pri }
-    function addLabel(html, cls, lat, lon, hKm, show, pri) {   // (anchored as the CSS places it: a pin by its foot, a town by its dot, the rest by the middle)
+    const LB = [];   // { el, ll, T (whose land it stands on), up (km over it), kind, show(state) -> 0..1, pri }
+    function addLabel(html, cls, lat, lon, show, pri, T, up) {   // (anchored as the CSS places it: a pin or a flag by its foot, the rest by the middle)
       const el = document.createElement('div'); el.className = 'jl ' + cls; el.innerHTML = '<span>' + html + '</span>'; labels.appendChild(el);
-      const L = { el, p: ecef(lat, lon, hKm || 0), show, pri, a: 0, x: 0, y: 0, w: 0, h: 0, at: /\bpin\b/.test(cls) ? 'b' : /\btown\b/.test(cls) ? 'l' : 'c' }; LB.push(L); return L;
+      const L = { el, lat, lon, T: T || null, up: up || 0, p: ecef(lat, lon, 0), show, pri, a: 0, x: 0, y: 0, w: 0, h: 0, bx: 0, by: 0 }; LB.push(L); return L;
     }
     const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-    const kmTxt = (v) => Math.round(v).toLocaleString('en-US') + ' km';
-    // the countries (the bigger and the nearer ones from further away), the two of the journey first
-    for (const c of G.countries) {
-      const nm = c[0], mine = nm === TO.names.country || (FROM && nm === FROM.names.country), rank = c[3];
-      const lo = mine ? 120 : rank <= 2 ? 1800 : rank <= 4 ? 700 : 260, hi = mine ? 16000 : rank <= 2 ? 16000 : rank <= 4 ? 5200 : 1700;
-      addLabel(esc(nm.toUpperCase()), 'ctry' + (mine ? ' mine' : ''), c[2], c[1], 0, (s) => s.alt > lo && s.alt < hi ? 1 : 0, mine ? 8 : 6 - Math.min(5, rank));
-    }
-    for (const t of G.towns) { const cap = t[4], lo = 18, hi = cap ? 2600 : 700; addLabel(esc(t[0]), 'town' + (cap ? ' cap' : ''), t[2], t[1], 0, (s) => s.alt > lo && s.alt < hi ? 1 : 0, cap ? 4 : 2 - t[3] * 0.1); }
-    for (const a of G.areas) addLabel(esc(a[0]), a[4], a[2], a[1], 0, a[4] === 'sea' ? (s) => s.alt > 1500 && s.alt < 18000 && s.phase === 'travel' ? 1 : 0 : (s) => s.alt > 300 && s.alt < 2600 ? 1 : 0, a[4] === 'sea' ? 3 : 2.5);
-    // the pins: where the last race ended, where this one starts
-    const pin = (T, at, kind, cap, title) => addLabel('<b>' + esc(cap) + '</b><small>' + esc(title || (at === 'finish' ? T.names.finish : T.names.start)) + '</small><i></i>', 'pin ' + kind, T[at][0], T[at][1], T[at][2] / 1000 + 0.02,
-      (s) => s.alt > 0.6 ? 1 : 0, 10);
-    if (FROM) pin(FROM, 'finish', 'last', 'LAST RACE', o.fromTitle);
-    pin(TO, 'start', 'next', 'TODAY', o.toTitle);
+    // the two countries' names: the last race's as the camera climbs away from it, this race's as it comes down to it
+    const ctry = (nm) => G.countries.find(c => c[0] === nm);
+    const cTo = ctry(TO.names.country), cFrom = FROM && !SAME ? ctry(FROM.names.country) : null;
+    const climb = (s) => s.alt > 160 && s.alt < 7000 && (s.phase === 'travel' && s.u < 0.45), descend = (s) => s.alt > 45 && s.alt < 3200 && (s.phase === 'travel' || s.phase === 'end') && s.u > 0.55;
+    if (cTo && SAME) addLabel(esc(cTo[0].toUpperCase()), 'ctry mine', cTo[2], cTo[1], (s) => descend(s) || climb(s) ? 1 : 0, 8);   // (one country all the way: its name at its middle)
+    if (cFrom) addLabel(esc(cFrom[0].toUpperCase()), 'ctry mine', cFrom[2], cFrom[1], (s) => climb(s) ? 1 : 0, 8);
+    // the pins: where the last race ended (once the map has gone), where this one starts (as the camera comes down)
+    const pin = (T, at, kind, cap, title, show) => addLabel('<b>' + esc(cap) + '</b><small>' + esc(title || (at === 'finish' ? T.names.finish : T.names.start)) + '</small><i></i>', 'pin ' + kind, T[at][0], T[at][1], show, 10, T, 0.02);
+    if (FROM) pin(FROM, 'finish', 'last', 'LAST RACE', o.fromTitle, (s) => s.phase === 'travel' && s.u < 0.6 && s.alt > 9 ? 1 : 0);
+    const pinTo = pin(TO, 'start', 'next', 'NEXT RACE', o.toTitle, (s) => (s.phase === 'travel' && s.u > 0.5 && s.alt > 1.2) || (s.phase === 'end' && s.alt > 1.2) ? 1 : 0);
+    // this race's country's name under its pin as the camera comes down (at the country's middle it would leave the picture at once, or
+    // sit under the pin while the camera is high)
+    if (cTo && !SAME) { const L = addLabel(esc(cTo[0].toUpperCase()), 'ctry mine', TO.start[0], TO.start[1], (s) => descend(s) ? 1 : 0, 8); L.follow = pinTo; L.dy = 19; }
+    // the last race's flags, as on its map (they go as the camera climbs)
+    if (FROM && o.fromFlags) for (const f of o.fromFlags)
+      addLabel(f.html || '<em>' + (f.fin ? FLAG_FIN : FLAG_START) + '</em><b>' + esc(f.name) + '</b>' + (f.sub ? '<small>' + esc(f.sub) + '</small>' : ''), 'flag' + (f.fin ? ' fin' : '') + (f.html ? ' mkf' : ''), f.lat, f.lon,
+        (s) => (s.phase === 'hold' && s.t > HOLD - 0.5) || (s.phase === 'travel' && s.alt < 14) ? 1 : 0, 9, FROM, 0.004);   // (the map's own flags until it fades: f.html, the map's own drawing of them)
 
     // ---------------- the camera along the journey ----------------
     const tmpV = new THREE.Vector3(), tgt = new THREE.Vector3(), cpos = new THREE.Vector3();
-    function place(v) {   // v: { lat, lon, h, range, tilt, heading } -> the camera
-      const E = enu(v.lat, v.lon); ecef(v.lat, v.lon, v.h, tgt);
+    function place(v, range) {   // v: { lat, lon, h, range, tilt, heading } -> the camera (range: its own, else the view's)
+      const E = enu(v.lat, v.lon), r = range || v.range; ecef(v.lat, v.lon, v.h, tgt);
       const hd = v.heading * D2R, tl = v.tilt * D2R, fwd = E.n.clone().multiplyScalar(Math.cos(hd)).add(E.e.clone().multiplyScalar(Math.sin(hd)));
-      cpos.copy(tgt).add(E.u.clone().multiplyScalar(Math.cos(tl) * v.range)).add(fwd.clone().multiplyScalar(-Math.sin(tl) * v.range));
+      cpos.copy(tgt).add(E.u.clone().multiplyScalar(Math.cos(tl) * r)).add(fwd.clone().multiplyScalar(-Math.sin(tl) * r));
       camera.position.copy(cpos); camera.up.copy(tl < 0.02 ? fwd : E.u); camera.lookAt(tgt);
     }
     function stateAt(t) {   // the journey's view at t seconds (before the hand-over)
-      if (FROM && t < ZIN) {   // down onto the last race's finish
-        const x = t / ZIN, k = x * x * x * (x * (x * 6 - 15) + 10) * 0.55 + (1 - Math.pow(1 - x, 2)) * 0.45;   // (a steady zoom in, settling softly)
-        return { lat: vStart.lat, lon: vStart.lon, h: vStart.h, range: Math.exp(lerp(Math.log(vZoom.range), Math.log(vStart.range * 1.05), k)), tilt: lerp(vZoom.tilt, vStart.tilt, k), heading: lerp(vZoom.heading, 0, k), phase: 'hold', u: 0, f: 0 };
-      }
-      if (t < T0) { const k = ease((t - ZIN) / HOLD); return Object.assign({}, vStart, { range: vStart.range * (1.05 - 0.05 * k), heading: vStart.heading * k, phase: 'hold', u: 0, f: 0 }); }
+      if (t < T0) return Object.assign({}, vStart, { phase: 'hold', u: 0, f: 0 });
       const tt = t - T0, s = sOfT(tt), u = D > 1e-3 ? clamp(uOf(s) / D, 0, 1) : 0, w = clamp(wOf(s), Math.min(w0, w1) * 0.98, 26000), lwv = Math.log(w);
       const q = slerpLL(vStart, vEnd, u);
-      // the start's own view given up as the camera climbs, the end's taken up as it comes down (north up in between)
-      const a = sstep(Math.log(12), Math.log(250), lwv), b = 1 - sstep(Math.log(5), Math.log(350), lwv), m = D > 1e-3 ? sstep(0.25, 0.75, u) : clamp(s / S, 0, 1);
+      // the start's own view given up as the camera climbs (north up in between), the end's taken up as it comes down
+      const a = sstep(Math.log(Math.max(12, w0 * 1.5)), Math.log(250), lwv), b = 1 - sstep(Math.log(5), Math.log(350), lwv), m = D > 1e-3 ? sstep(0.25, 0.75, u) : clamp(s / S, 0, 1);
       const heading = mixAngle(mixAngle(vStart.heading, 0, a), mixAngle(0, vEnd.heading, b), m), tilt = lerp(lerp(vStart.tilt, 0, a), lerp(0, vEnd.tilt, b), m);
       return { lat: q.lat, lon: q.lon, h: lerp(vStart.h, vEnd.h, u), range: w, tilt, heading, phase: tt < TRV ? 'travel' : 'end', u, f: tt / TRV };
     }
 
-    // ---------------- the hand-over: the video's arrival starts; the globe follows it while it fades, through a little cloud ----------------
+    // ---------------- the hand-over: the video's flight starts; the globe follows it while it fades, through a little cloud ----------------
     const vctx = veil.getContext('2d'); let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     const puffs = Array.from({ length: 9 }, () => { const a = rnd() * Math.PI * 2, r = 0.12 + rnd() * 0.3; return { x: 0.5 + Math.cos(a) * r, y: 0.5 + Math.sin(a) * r * 0.8, r: 0.18 + rnd() * 0.22, s: 0.8 + rnd() * 0.9 }; });
     function drawVeil(a, t) {
@@ -373,121 +410,142 @@ window.Journey = (function () {
         vctx.fillStyle = g; vctx.fillRect(0, 0, w, h);
       }
     }
-    let handT0 = -1, vClock = -1, lastHud = '', lastHudSub = '', fromFreed = false;
-    function hud(name, sub) { if (name !== lastHud || sub !== lastHudSub) { lastHud = name; lastHudSub = sub; if (o.onHud) o.onHud(name, sub); } }
+    let handT0 = -1, vClock = 0, vLast = -1, vAt = 0, fromFreed = false, summit = undefined, lastW = W0, lastH = H0;
+    function setSummit(which) { if (which !== summit) { summit = which; if (o.onSummit) o.onSummit(which); } }
 
     // ---------------- the frame ----------------
     let t0 = -1; const tWait = performance.now();
     canvas.style.opacity = '0'; labels.style.opacity = '0';
-    function ready(waited) {   // the globe's picture (up to 4 s: without it the Earth is black), then the last race's lands (up to 1.2 s)
+    function ready(waited) {   // the globe's picture (up to 4 s: without it the Earth is black), then the last race's lands (up to 1.5 s)
       if (!earthMat.uniforms.tE.value) return waited > 4000;
-      return !FROM || waited > 1200 || patches.filter(p => p.T === FROM && p.ready).length >= 2;
+      return !FROM || waited > 1500 || patches.filter(p => p.T === FROM && p.ready).length >= 2;
     }
+    function settle() {   // the first view's height: the land under the last race's route as drawn (there the map and the land match)
+      if (!S0 || !o.fromRoute) return; const hs = [];
+      for (const q of o.fromRoute) { const h = sampleH(FROM, 'l3', q[0], q[1]); if (h != null) hs.push(h); }
+      if (hs.length > 2) { hs.sort((a, b) => a - b); vStart.h = hs[hs.length >> 1]; }
+    }
+    let lastT = -1, lastEx = 1;
     function frame(now) {
       if (!alive) return;
       raf = requestAnimationFrame(frame);
-      if (t0 < 0) { if (!ready(now - tWait)) return; t0 = now; }
+      if (t0 < 0) { if (!ready(now - tWait)) return; t0 = now; settle(); if (o.onStart) o.onStart({ total: TOTAL, hand: HAND }); }
       const W = host.clientWidth || W0, H = host.clientHeight || H0;
-      if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) { renderer.setSize(W, H, false); camera.aspect = W / H; res.set(W * dpr / 2, H * dpr / 2); veil.width = Math.round(W * dpr / 2); veil.height = Math.round(H * dpr / 2); }
+      if (W !== lastW || H !== lastH) { lastW = W; lastH = H; renderer.setSize(W, H, false); camera.aspect = W / H; res.set(W / 2, H / 2); veil.width = Math.round(W * dpr / 2); veil.height = Math.round(H * dpr / 2); fovEnd = fovFor(W, H, vidFov, vidAspect); }
       const t = (now - t0) / 1000;
       let st, fade = 1, hand = 0;
       if (t < TOTAL) st = stateAt(t);
-      else {   // the hand-over: the video's clock moves the camera along its arrival
+      else {   // the hand-over: the video's clock moves the camera along its flight
         if (handT0 < 0) { handT0 = t; if (o.onHandover) o.onHandover(); }
         const ht = t - handT0, vc = o.video && !o.video.paused && o.video.currentTime > 0 ? o.video.currentTime : -1;
-        vClock = vc >= 0 ? (vClock < 0 ? vc : vClock + (vc - vClock) * 0.35) : ht; const vt = Math.max(0, vClock);
+        // (the video's own time, carried on smoothly between its updates and never back; held at its start until it plays)
+        if (vc >= 0) { if (vc !== vLast) { vLast = vc; vAt = t; } vClock = Math.max(vClock, vc + Math.min(0.1, t - vAt)); }
+        const vt = vClock;
         hand = clamp(ht / HAND, 0, 1); fade = 1 - ease(hand);
-        st = Object.assign({}, vEnd, { phase: 'end' });
+        st = Object.assign({}, vEnd, { phase: 'end', u: 1, f: 1 });
         if (ENDP.path) { const i = Math.min(ENDP.path.length - 1, vt * ENDP.fps), a = Math.floor(i), b = Math.min(ENDP.path.length - 1, a + 1), f = i - a, q = ENDP.path[a], r = ENDP.path[b];
           const cx = lerp(q[0], r[0], f), cy = lerp(q[1], r[1], f), cz = lerp(q[2], r[2], f), tx = lerp(q[3], r[3], f), ty = lerp(q[4], r[4], f), tz = lerp(q[5], r[5], f);
-          const c = gameLL(TO, cx, cz), g2 = gameLL(TO, tx, tz); st = Object.assign(viewOf(ecef(c.lat, c.lon, (cy + TO.offset) / 1000), ecef(g2.lat, g2.lon, (ty + TO.offset) / 1000)), { phase: 'end' }); }
+          const c = gameLL(TO, cx, cz), g2 = gameLL(TO, tx, tz); st = Object.assign(viewOf(ecef(c.lat, c.lon, (cy + TO.offset) / 1000), ecef(g2.lat, g2.lon, (ty + TO.offset) / 1000)), { phase: 'end', u: 1, f: 1 }); }
         if (hand >= 1) { finish('done'); return; }
       }
+      // the camera's lens: the video's at both ends, a little wider out in space; the long lens over the first map (widening as the
+      // camera climbs: it has gone once the view is 40 times as wide, or halfway). altN: the height the camera would be at with the
+      // video's lens (what the names, the lands and the air go by: the long lens changes nothing of what is seen)
       place(st);
-      // the camera's lens: the video's at the end, a little wider out in space
-      const alt = camera.position.length() - RE, fovEnd = ENDP.fov;
-      camera.fov = lerp(fovEnd, 40, sstep(Math.log(60), Math.log(3000), Math.log(Math.max(1, alt))));
+      const altN = camera.position.length() - RE, fovN = lerp(fovEnd, 40, sstep(Math.log(60), Math.log(3000), Math.log(Math.max(1, altN))));
+      const mixN = !S0 || st.phase === 'end' ? 1 : st.phase === 'hold' ? 0 : Math.max(sstep(Math.log(1.5 * w0), Math.log(40 * w0), Math.log(st.range)), sstep(0.2, 0.5, st.u));
+      const fov = lerp(Math.min(FOV_HOLD, fovN), fovN, mixN), kZ = Math.tan(fovN * D2R / 2) / Math.tan(fov * D2R / 2);
+      if (kZ > 1.0001) place(st, st.range * kZ);
+      const alt = camera.position.length() - RE;
+      camera.fov = fov;
       const horizon = Math.sqrt(Math.max(0, (RE + alt) ** 2 - RE * RE));
       camera.near = clamp(alt * 0.02, 0.004, 400); camera.far = horizon + Math.max(400, alt) + 2000; camera.updateProjectionMatrix();
       camera.updateMatrixWorld(); camera.matrixWorldInverse.copy(camera.matrixWorld).invert();
       // the air: haze over the land when low (as the video's at the hand-over), the rim glow and the stars up high
-      const low = 1 - sstep(25, 260, alt);
-      U.uCam.value.copy(camera.position); U.uHazeK.value = low * 0.011 / Math.max(0.35, Math.sqrt(Math.max(alt, 0.1)) * 0.6);
-      skyMat.uniforms.uLow.value = low; const stars = sky.userData.stars; stars.material.opacity = 0.85 * sstep(120, 900, alt);
+      const low = 1 - sstep(25, 260, altN);
+      U.uCam.value.copy(camera.position); U.uHazeK.value = low * 0.011 / Math.max(0.35, Math.sqrt(Math.max(altN, 0.1)) * 0.6) / kZ;
+      skyMat.uniforms.uLow.value = low; const stars = sky.userData.stars; stars.material.opacity = 0.85 * sstep(120, 900, altN);
       stars.position.copy(camera.position); stars.scale.setScalar(camera.far * 0.8 / 8e4); stars.visible = stars.material.opacity > 0.01;
       skyMat.uniforms.uInvPV.value.multiplyMatrices(camera.matrixWorld, camera.projectionMatrixInverse);
-      atmMat.uniforms.uA.value = sstep(80, 900, alt);
+      atmMat.uniforms.uA.value = sstep(80, 900, altN);
       earthMat.uniforms.uDim.value = 1;
-      // the last race's land is not needed again once the camera is well on its way (its pictures freed: lighter on a phone)
-      if (FROM && !fromFreed && st.phase === 'travel' && (st.u || 0) > 0.35) {
+      // the last race's land is not needed again once the camera is well on its way: faded out, then its pictures freed (lighter on a phone)
+      const fromA = !FROM || st.phase === 'hold' ? 1 : st.phase === 'travel' ? 1 - sstep(0.2, 0.35, st.u || 0) : 0;
+      if (FROM && !fromFreed && st.phase !== 'hold' && fromA <= 0) {
         fromFreed = true;
         for (let i = patches.length - 1; i >= 0; i--) { const p = patches[i]; if (p.T !== FROM) continue; p.mesh.parent.remove(p.mesh); p.mesh.geometry.dispose(); if (p.m.uniforms.tMap.value) p.m.uniforms.tMap.value.dispose(); p.m.dispose(); patches.splice(i, 1); }
-        for (let i = roads.length - 1; i >= 0; i--) { const r = roads[i]; if (r.T !== FROM) continue; for (const m of [r.ln, r.edge]) { m.parent.remove(m); m.material.dispose(); } r.ln.geometry.dispose(); roads.splice(i, 1); }
+        if (routeL) { for (const m of [routeL.ln, routeL.edge]) { m.parent.remove(m); m.material.dispose(); } routeL.g.dispose(); routeL = null; }
+        landA.l2.delete(FROM); landA.l3.delete(FROM);
       }
       // the lands of the places: the 80 km from 600 km down, the 14 km from 90 km down (exaggerated in relief a little from afar)
-      const ex = lerp(1.0, 1.7, sstep(Math.log(8), Math.log(120), Math.log(Math.max(1, alt))));
+      const ex = lerp(1.0, 1.7, sstep(Math.log(8), Math.log(120), Math.log(Math.max(1, altN)))); lastEx = ex;
       for (const p of patches) {
-        if (!p.ready) continue; const d = camera.position.distanceTo(p.C);
-        p.m.uniforms.uA.value = p.lv === 'l2' ? 1 - sstep(260, 700, d) : 1 - sstep(45, 110, d); p.m.uniforms.uEx.value = ex; p.m.uniforms.uEdge.value = p.lv === 'l2' ? 0.26 : 0.2;
+        if (!p.ready) continue; const d = camera.position.distanceTo(p.C) / kZ;   // (as far as it looks)
+        p.m.uniforms.uA.value = (p.lv === 'l2' ? 1 - sstep(260, 700, d) : 1 - sstep(45, 110, d)) * (p.T === FROM ? fromA : 1); p.m.uniforms.uEx.value = ex; p.m.uniforms.uEdge.value = p.lv === 'l2' ? 0.26 : 0.2;
         p.mesh.visible = p.m.uniforms.uA.value > 0.003 && p.C.clone().normalize().dot(tmpV.copy(camera.position).sub(p.C).normalize()) > -0.3;
+        landA[p.lv].set(p.T, p.mesh.visible ? p.m.uniforms.uA.value : 0);
       }
-      // the overlays: the borders from afar, the new country's outline as the camera comes down to it, the arc as it flies
-      borderMat.opacity = 0.42 * sstep(70, 260, alt);
-      const oa = 0.95 * sstep(60, 300, alt) * (1 - sstep(4500, 9000, alt)) * (st.phase === 'hold' ? 0 : sstep(0.35, 0.65, st.f || 1));
-      for (const m of outlines) { m.material.uniforms.uA.value = oa; m.material.uniforms.uRes.value.copy(res); m.material.uniforms.uCam.value.copy(camera.position); }
-      if (arc) {
-        const head = st.phase === 'hold' ? 0 : st.phase === 'end' ? 1 : clamp(st.u * 1.0 + 0.002, 0, 1), aa = sstep(15, 120, alt);
-        for (const m of [arc, arcGlow]) { m.material.uniforms.uHead.value = head; m.material.uniforms.uRes.value.copy(res); m.material.uniforms.uCam.value.copy(camera.position); }
-        arc.material.uniforms.uA.value = aa; arcGlow.material.uniforms.uA.value = 0.22 * aa;
-        const P = comet.userData.pts, i = Math.min(P.length - 1, Math.round(head * (P.length - 1))); comet.position.copy(P[i]).add(comet.userData.C); comet.material.opacity = aa * (head > 0.01 && head < 0.995 ? 1 : 0);
+      // the overlays: the countries' outlines (the last race's as the camera climbs, this race's as it comes down), the last race's route
+      const ob = 0.95 * sstep(60, 300, altN) * (1 - sstep(4500, 9000, altN)), uu = st.u || 0;
+      const aFrom = st.phase === 'travel' ? ob * (1 - sstep(0.3, 0.55, uu)) : 0, aTo = (st.phase === 'travel' || st.phase === 'end') ? ob * sstep(0.45, 0.7, uu) : 0;
+      for (const m of outFrom) { m.material.uniforms.uA.value = aFrom; m.material.uniforms.uRes.value.copy(res); m.material.uniforms.uCam.value.copy(camera.position); }
+      for (const m of outTo) { m.material.uniforms.uA.value = SAME ? Math.max(aTo, st.phase === 'travel' ? ob * (1 - sstep(0.3, 0.55, uu)) : 0) : aTo; m.material.uniforms.uRes.value.copy(res); m.material.uniforms.uCam.value.copy(camera.position); }
+      if (routeL) {
+        const ra = st.phase === 'hold' ? 1 : (1 - sstep(10, 28, altN)) * fromA;
+        if (ra > 0.003 && Math.abs(routeL.ex - ex) > 0.002) { placeRoute(ex); routeL.ex = ex; }
+        for (const m of [routeL.ln, routeL.edge]) { m.material.uniforms.uRes.value.copy(res); m.material.uniforms.uA.value = (m === routeL.ln ? 1 : 0.75) * ra; m.visible = ra > 0.003; }
       }
-      for (const r of roads) for (const m of [r.ln, r.edge]) { m.material.uniforms.uRes.value.copy(res); m.material.uniforms.uA.value = (m === r.ln ? 1 : 0.55) * (1 - sstep(20, 70, alt)); }
-      // the passes: the sky, the globe, its air, the 80 km lands, the 14 km lands with the road, the lines over everything
+      // the passes: the sky, the globe, its air, the 80 km lands, the 14 km lands with the route, the lines over everything
       renderer.clear(true, true, true);
       renderer.render(sky, camera); renderer.render(earth, camera);
       renderer.clearDepth(); renderer.render(near2, camera);
       renderer.clearDepth(); renderer.render(near3, camera);
       renderer.render(over, camera);
-      const fin = Math.min(1, t / 0.35);   // (in from the dark at the start)
+      // the first picture: the map on top, the globe coming in under it (the same view), then the map fading out as the camera rises
+      const fin = S0 ? 1 : Math.min(1, t / 0.35), mapA = S0 ? 1 - sstep(HOLD - 0.55, HOLD + 0.25, t) : 0;
+      if (o.mapEl) { o.mapEl.style.opacity = mapA < 1 ? mapA.toFixed(3) : ''; if (mapA <= 0 && o.mapEl.style.visibility !== 'hidden') o.mapEl.style.visibility = 'hidden'; }
       back.style.opacity = fade < 1 ? fade.toFixed(3) : ''; credit.style.opacity = labels.style.opacity;
       canvas.style.opacity = fade < 1 || fin < 1 ? (fade * fin).toFixed(3) : '';
       labels.style.opacity = fade < 1 || fin < 1 ? (Math.max(0, fade * 2 - 1) * fin).toFixed(3) : '';
       drawVeil(hand > 0 ? Math.sin(Math.PI * hand) : 0, hand);
-      // the names: where they are on the screen, the most important first, none over another
-      const sState = { alt, phase: st.phase }, pv = new THREE.Vector3(), placed = [], cams = camera.position;
-      const cand = LB.map(L => { const want = L.show(sState); return { L, want }; }).filter(c => c.want > 0 || c.L.a > 0.01).sort((a, b) => b.L.pri - a.L.pri);
+      // the names: where they are on the screen (standing on the land as drawn), the most important first, none over another
+      const sState = { alt: altN, phase: st.phase, u: uu, t }, pv = new THREE.Vector3(), placed = [], cams = camera.position;
+      const cutBy = (L) => L.x + L.bx < 3 || L.x + L.bx + L.w > W - 3 || L.y + L.by < 3 || L.y + L.by + L.h > H - 3;   // (its box past the picture's edge)
+      const dt = lastT < 0 ? 0 : clamp(t - lastT, 0, 0.1), kA = 1 - Math.exp(-dt / 0.11), kC = 1 - Math.exp(-dt / 0.03); lastT = t;   // (a name comes or goes in about a quarter of a second; one the edge cuts goes at once)
+      const cand = LB.map(L => ({ L, want: L.show(sState) })).filter(c => c.want > 0 || c.L.a > 0.01).sort((a, b) => b.L.pri - a.L.pri);
       for (const c of cand) {
-        const L = c.L; let vis = c.want > 0;
-        if (vis) {   // in front of the camera and on the near side of the Earth
-          const toC = tmpV.copy(cams).sub(L.p); vis = L.p.dot(toC) > 0;
-          if (vis) { pv.copy(L.p).project(camera); vis = pv.z < 1 && Math.abs(pv.x) < 1.05 && Math.abs(pv.y) < 1.05; }
-          if (vis) {
-            L.x = (pv.x + 1) / 2 * W; L.y = (1 - pv.y) / 2 * H; if (!L.w) { const sp = L.el.firstChild; L.w = sp.offsetWidth || 60; L.h = sp.offsetHeight || 14; }
-            const x0 = L.at === 'l' ? L.x - 4 : L.x - L.w / 2, y0 = L.at === 'b' ? L.y - L.h : L.y - L.h / 2, r = { x0: x0 - 4, x1: x0 + L.w + 4, y0: y0 - 3, y1: y0 + L.h + 3 };
-            if (x0 < 3 || x0 + L.w > W - 3 || y0 < 3 || y0 + L.h > H - 3) vis = false;   // (none cut by the picture's edge)
-            else if (placed.some(q => r.x0 < q.x1 && r.x1 > q.x0 && r.y0 < q.y1 && r.y1 > q.y0)) vis = false; else placed.push(r);
-          }
+        const L = c.L; let vis = c.want > 0, on = false;
+        if (L.follow) { const F = L.follow; on = !!F.on && F.a > 0.01; if (on) { L.x = F.x; L.y = F.y + L.dy; } else vis = false; }   // (under its pin)
+        else {
+          if (L.T) ecef(L.lat, L.lon, shownH(L.T, L.lat, L.lon, ex) + L.up, L.p);   // (on the land as it is drawn this frame: it does not slide over it)
+          // where it is on the screen (in front of the camera, on the near side of the Earth): also while it fades out, it stays on its place
+          if (L.p.dot(tmpV.copy(cams).sub(L.p)) > 0) { pv.copy(L.p).project(camera); on = pv.z < 1 && Math.abs(pv.x) < 1.2 && Math.abs(pv.y) < 1.2; }
+          if (on) { L.x = (pv.x + 1) / 2 * W; L.y = (1 - pv.y) / 2 * H; } else vis = false;
         }
-        L.a += ((vis ? 1 : 0) - L.a) * 0.16;
+        L.on = on;
+        if (vis) {
+          if (!L.w) {   // (its box round its anchor, measured once: a pin stands on it, a flag beside its pole, a name round it)
+            L.el.style.transform = 'translate(' + L.x.toFixed(1) + 'px,' + L.y.toFixed(1) + 'px)';
+            const b = (L.el.querySelector('.mk') || L.el.firstChild).getBoundingClientRect(), a = L.el.getBoundingClientRect();
+            L.bx = b.left - a.left; L.by = b.top - a.top; L.w = b.width || 60; L.h = b.height || 14;
+          }
+          const x0 = L.x + L.bx, y0 = L.y + L.by, r = { x0: x0 - 4, x1: x0 + L.w + 4, y0: y0 - 3, y1: y0 + L.h + 3 };
+          if (placed.some(q => r.x0 < q.x1 && r.x1 > q.x0 && r.y0 < q.y1 && r.y1 > q.y0)) vis = false; else if (!cutBy(L)) placed.push(r);
+        }
+        const cut = on && L.w && cutBy(L); if (cut) vis = false;   // (none cut by the picture's edge: one that reaches it goes at once, kept inside while it goes)
+        L.a = on ? L.a + ((vis ? 1 : 0) - L.a) * (cut ? kC : kA) : 0;   // (gone at once behind the Earth)
         L.el.style.opacity = L.a > 0.01 ? L.a.toFixed(2) : '0';
-        if (L.a > 0.01) L.el.style.transform = 'translate(' + L.x.toFixed(1) + 'px,' + L.y.toFixed(1) + 'px)';
+        if (L.a > 0.01) { const x = cut ? clamp(L.x, 3 - L.bx, W - 3 - L.bx - L.w) : L.x, y = cut ? clamp(L.y, 3 - L.by, H - 3 - L.by - L.h) : L.y; L.el.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)'; }
       }
-      // the place in the corner: the last race's at first, the way to the new one while flying (the distance left), the new place at the end
-      const rem = D * (1 - (st.u || 0)), altTxt = (m) => Math.round(m).toLocaleString('en-US') + ' m';
-      if (FROM && (st.phase === 'hold' || (st.phase === 'travel' && (st.u || 0) < 0.5 && alt < 45))) hud(FROM.names.finish, altTxt(FROM.finish[2]));
-      else if (FROM && st.phase === 'travel' && D > 60 && rem > 100) hud('To ' + TO.names.region, kmTxt(rem));
-      else if (st.phase === 'travel' && alt > 28) hud(TO.names.region, TO.names.country);
-      else if (o.endHud) hud(o.endHud[0], o.endHud[1]); else hud(TO.names.start, altTxt(TO.start[2]));   // (as the video's first shot has it)
+      // the summit in the corner: the last race's while the camera is still close over it, this race's once it is close over this one
+      setSummit(FROM && (st.phase === 'hold' || (st.phase === 'travel' && uu < 0.3 && altN < 60)) ? 'from' : (st.phase === 'end' || (st.phase === 'travel' && uu > 0.7)) && altN < 60 ? 'to' : null);
     }
     raf = requestAnimationFrame(frame);
-    if (o.debug) o.debug({ stateAt, TOTAL, vEnd, fps: ENDP.fps, path: ENDP.path, vidSpeed });   // (tests: the course itself)
-    // what the commentator says on the way
-    if (o.onLine) {
-      const the = (n) => (/(Alps|Ardennes|Eifel|coast|Côte d'Azur)$/.test(n) ? 'the ' : '') + n, dist = D >= 100 ? Math.round(D / 10) * 10 : Math.round(D);
-      const same = FROM && FROM.names.region === TO.names.region, other = FROM && FROM.names.country !== TO.names.country;
-      const a = FROM ? (same ? FROM.names.finish : the(FROM.names.region)) : '', b = same ? TO.names.start : the(TO.names.region) + (other || !FROM ? ', ' + TO.names.country : '');
-      o.onLine(!FROM ? 'Today we race in ' + b + '.' : D < 2 ? 'Back to ' + TO.names.start + '.' : 'From ' + a + ' to ' + b + ': ' + dist.toLocaleString('en-US') + ' kilometres.');
-    }
+    if (o.debug) o.debug({ stateAt, TOTAL, HOLD, vStart, vEnd, fps: ENDP.fps, path: ENDP.path, vidSpeed, fovEnd: () => fovEnd, fromRoute: o.fromRoute,
+      project(lat, lon, T, up) {   // (tests: a place on the land as drawn, on the screen now, in the stage's pixels)
+        const W = host.clientWidth || W0, H = host.clientHeight || H0, ex = lastEx;
+        const p = ecef(lat, lon, (T ? shownH(T === 'from' ? FROM : TO, lat, lon, ex) : 0) + (up || 0)).project(camera); return [(p.x + 1) / 2 * W, (1 - p.y) / 2 * H, ex, camera.position.length() - RE];
+      } });   // (tests: the course itself)
     function cleanup() {
       alive = false; cancelAnimationFrame(raf);
       try { if (renderer) { renderer.dispose(); renderer.forceContextLoss && renderer.forceContextLoss(); } } catch (_) { /* gone already */ }
@@ -495,9 +553,13 @@ window.Journey = (function () {
         for (const sc of [sky, earth, near2, near3, over]) sc.traverse(x => { if (x.geometry) x.geometry.dispose(); if (x.material) { for (const k in x.material.uniforms || {}) { const v = x.material.uniforms[k].value; if (v && v.isTexture) v.dispose(); } if (x.material.map) x.material.map.dispose(); x.material.dispose(); } });
       } catch (_) { /* nothing to free */ }
       back.remove(); canvas.remove(); labels.remove(); veil.remove(); credit.remove();
+      if (o.mapEl) { o.mapEl.style.opacity = '0'; o.mapEl.style.visibility = 'hidden'; }
     }
     function finish(why) { if (!alive) return; cleanup(); resolveDone(why); }
-    return { done, skip() { finish('skip'); }, get total() { return TOTAL + HAND; }, get elapsed() { return t0 < 0 ? 0 : (performance.now() - t0) / 1000; } };
+    return { done, skip() { finish('skip'); }, get total() { return TOTAL + HAND; }, get hand() { return TOTAL; }, get elapsed() { return t0 < 0 ? 0 : (performance.now() - t0) / 1000; } };
   }
-  return { supported, preload, play };
+  // the map's flags (as the menu's map draws them: a pole with a pennant, a chequered one at the finish)
+  const FLAG_START = '<svg viewBox="-2 -28 20 30" width="16" height="24"><path d="M0 0V-26" stroke="#fff" stroke-width="2.4"/><path d="M0-26h16l-4 5.5 4 5.5H0z" fill="#3fd0ff"/></svg>';
+  const FLAG_FIN = '<svg viewBox="-2 -28 20 30" width="16" height="24"><path d="M0 0V-26" stroke="#fff" stroke-width="2.4"/><rect x="0" y="-26" width="16" height="11" fill="#fff" stroke="#1a1408" stroke-width="1"/><path d="M0-26h4v3.7h-4zM8-26h4v3.7h-4zM4-22.3h4v3.6h-4zM12-22.3h4v3.6h-4zM0-18.7h4v3.7h-4zM8-18.7h4v3.7h-4z" fill="#10151d"/></svg>';
+  return { supported, preload, play, fovFor, gameLL };
 })();

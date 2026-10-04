@@ -1,4 +1,5 @@
-# Mockup only: the Earth for the journey on the globe -> site/assets/geo/*.webp|png and site/geo.js (window.GEO).
+# Mockup only: the Earth for the journey on the globe -> site/assets/geo/*.webp|png and site/geo.js (window.GEO: the tracks' places and lands, the
+# countries' names and the outlines of the tracks' countries; the borders, towns and areas only in raw/geo/geo.json).
 # earth: the Blue Marble (NASA, public domain); l1-<region>: each region's painted land (~800 km); l2-<track>, l3-<track>: a track's
 # surroundings (80 km) and its own land (14 km), each with its heights (-h.png, 16 bit); the borders, the countries' outlines and the
 # names on the map (Natural Earth, public domain); the real tracks' roads on the land (the game's own line, placed by geo_places.py).
@@ -89,6 +90,7 @@ if 'vectors' in ONLY:
         if rec['TYPE'] in ('Dependency', 'Lease') or (rec['TYPE'] == 'Indeterminate' and nm != 'Antarctica'): continue   # (no bases, leases and small dependencies)
         C.append([nm, round(rec['LABEL_X'], 3), round(rec['LABEL_Y'], 3), int(rec['LABELRANK']), round(float(rec.get('MIN_LABEL') or 0), 1)])
         if nm in keep and nm != 'USA': OUTL[nm] = lines(g, 0.0005 if nm == 'Monaco' else 0.01, 4 if nm == 'Monaco' else 3)
+        if nm == 'USA': OUTL['USA'] = [l for l in lines(g, 0.04, 2) if len(l) >= 40]   # (the 48 states and Alaska, coarser: it is drawn from far up; no small islands)
     for rec, g in read('ne_50m_admin_1_states_provinces'):
         if rec['name'] == 'Colorado': OUTL['Colorado'] = lines(g, 0.01); C.append(['Colorado', round(rec['longitude'], 3), round(rec['latitude'], 3), 6, 4.0])
     G['countries'] = C; G['outlines'] = OUTL
@@ -119,7 +121,9 @@ if 'vectors' in ONLY:
     print('vectors: borders', len(B), 'countries', len(C), 'outlines', list(OUTL), 'towns', len(T), 'areas', len(S))
     json.dump(G, open(GJ, 'w'))
 
+# (the globe shows only the two countries of the journey: their outlines and names; the borders, towns and areas stay in geo.json)
+OUT_KEYS = ('tracks', 'l1', 'countries', 'outlines')
 with open(os.path.join(SITE, 'geo.js'), 'w') as f:
-    f.write('/* The Earth for the journey before a race: where each track is, the land round it, the borders and the names (made by geo_build.py, do not edit). */\n')
-    f.write('window.GEO = ' + json.dumps(G, separators=(',', ':'), ensure_ascii=False) + ';\n')
+    f.write('/* The Earth for the journey before a race: where each track is, the land round it, the countries\' outlines and names (made by geo_build.py, do not edit). */\n')
+    f.write('window.GEO = ' + json.dumps({k: G[k] for k in OUT_KEYS if k in G}, separators=(',', ':'), ensure_ascii=False) + ';\n')
 print('geo.js', os.path.getsize(os.path.join(SITE, 'geo.js')) // 1024, 'KB')

@@ -1,0 +1,98 @@
+{
+ "default": {
+  "feather": 250
+ },
+ "pikes": {
+  "plantO": {
+   "borrow": "raw/geo/kinds-nring.json",
+   "borrowKinds": [
+    66,
+    120
+   ],
+   "tint": [
+    0.92,
+    0.98,
+    0.95
+   ]
+  }
+ },
+ "gora": {
+  "plantO": {
+   "borrow": "raw/geo/kinds-nring.json",
+   "borrowKinds": [
+    66,
+    60
+   ],
+   "inWorld": false,
+   "ring": [
+    5,
+    140
+   ]
+  }
+ },
+ "jezero": {
+  "plantO": {
+   "borrow": "raw/geo/kinds-nring.json",
+   "borrowKinds": [
+    66,
+    60
+   ],
+   "inWorld": false,
+   "ring": [
+    5,
+    140
+   ]
+  },
+  "edgeTint": true
+ },
+ "ljubljana": {
+  "plantO": {
+   "borrow": "raw/geo/kinds-nring.json",
+   "borrowKinds": [
+    66,
+    60
+   ],
+   "borrowShare": {
+    "60": 2
+   },
+   "inWorld": false
+  },
+  "flight": false
+ },
+ "riviera": {
+  "sea": true,
+  "plantO": {
+   "borrow": "raw/geo/kinds-nring.json",
+   "borrowKinds": [
+    60
+   ],
+   "tint": [
+    0.82,
+    0.9,
+    0.66
+   ],
+   "dens": 0.6,
+   "inWorld": false
+  }
+ },
+ "monaco": {
+  "sea": true,
+  "plantO": {
+   "borrow": "raw/geo/kinds-nring.json",
+   "borrowKinds": [
+    60
+   ],
+   "tint": [
+    0.82,
+    0.9,
+    0.66
+   ],
+   "dens": 0.6,
+   "inWorld": false
+  },
+  "feather": 100
+ },
+ "vrsic": {
+  "edgeTint": true
+ }
+}

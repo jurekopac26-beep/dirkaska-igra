@@ -1,5 +1,5 @@
 // Local check of the menu mockup (the folder above), like check.mjs, but it plays the flows: today's race, single races, the career's four ways
-// and a multiplayer duel. After Race it skips the intro (the drone's shots), waits for the start lights, picks a result, then saves the
+// and a multiplayer duel. After Race it skips the intro (the globe and the helicopter's flight), waits for the start lights, picks a result, then saves the
 // results screen and the screens that follow.
 // Usage: node flow.mjs [01-,free-]  (a step whose name contains one of these; a step can need the one before it; env W, H, OUTDIR)
 import { createRequire } from 'node:module';
@@ -33,8 +33,8 @@ const page = await ctx.newPage();
 const errors = [];
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 page.on('console', m => { if (m.type() === 'error' || m.type() === 'warning') errors.push(m.type() + ': ' + m.text().slice(0, 200)); });
-page.on('requestfailed', r => {   // a video still loading when its screen is left is cut off: not an error
-  const t = (r.failure() || {}).errorText || ''; if (!/gstatic/.test(r.url()) && !(/\.webm$/.test(r.url()) && /ABORTED/.test(t))) errors.push('failed: ' + r.url() + ' ' + t);
+page.on('requestfailed', r => {   // a video or a sound still loading when its screen is left is cut off: not an error
+  const t = (r.failure() || {}).errorText || ''; if (!/gstatic/.test(r.url()) && !(/\.(webm|mp3)$/.test(r.url()) && /ABORTED/.test(t))) errors.push('failed: ' + r.url() + ' ' + t);
 });
 await page.goto(base + '/');
 await page.evaluate(() => document.fonts.ready);
@@ -47,7 +47,7 @@ const shot = async (name) => {
     const app = document.getElementById('app').getBoundingClientRect();
     for (const el of document.querySelectorAll('#app *')) {
       const r = el.getBoundingClientRect(); if (!r.width || getComputedStyle(el).visibility === 'hidden') continue;
-      if (el.closest('.scroll, .chips, .dio, .stage, .bgv, .tile .im, .mode .im, .ix-bg, .jlabels')) continue;
+      if (el.closest('.scroll, .chips, .dio, .stage, .bgv, .tile .im, .mode .im, .ix-bg, .jlabels, .ix-stage')) continue;   // (the intro's stage clips its own pins)
       if (r.right > app.right + 1 || r.left < app.left - 1) out.push('outside x: ' + el.tagName + '.' + el.className + ' ' + Math.round(r.left) + '..' + Math.round(r.right));
       if (r.bottom > app.bottom + 1) out.push('below: ' + el.tagName + '.' + el.className + ' ' + Math.round(r.bottom));
     }
@@ -62,13 +62,13 @@ const fin = async (kind, res) => { await page.evaluate(([k, r]) => window.MENU_D
 const ONLY = process.argv[2] ? process.argv[2].split(',') : null;
 let n = 0;
 const step = async (name, fn) => { n++; const nm = String(n).padStart(2, '0') + '-' + name; if (ONLY && !ONLY.some(x => nm.includes(x))) return; await fn(); await shot(nm); };
-const skip = async () => { await page.click('.ix-skip'); await wait(3800); };   // the intro skipped: the start lights, then the picker
+const skip = async () => { if (await page.$('.ix-skip')) await page.click('.ix-skip'); await wait(3800); };   // the intro skipped (a track without a flight has none: the lights at once), then the picker
 const race = async (sel) => { await page.click(sel); await wait(900); await skip(); };
 const pickRes = async (r) => { await page.click('[data-finish="' + r + '"]'); await wait(650); };
 await step('free-title', () => open('free', 'title', { fresh: true }, 2600));
 await step('free-daily', () => open('free', 'track', { daily: true }, 900));
 await step('free-intro', async () => { await page.click('[data-act="race-daily"]'); await wait(2600); });
-await step('free-lights', async () => { await page.click('.ix-skip'); await wait(1500); });
+await step('free-lights', async () => { if (await page.$('.ix-skip')) await page.click('.ix-skip'); await wait(1500); });
 await step('free-picker', async () => { await wait(2300); });
 await step('free-daily-result', () => pickRes('3'));
 await step('free-daily-after', async () => { await page.click('[data-act="res-continue"]'); await wait(700); });

@@ -228,6 +228,10 @@ svg { display: block; }
 .sheet li svg { width: 20px; height: 20px; flex: 0 0 auto; }
 .sheet .row { display: flex; gap: 10px; }
 .sheet .row .go { flex: 1; min-width: 0; }
+.sheet.credits { max-height: 82%; overflow-y: auto; }
+.sheet.credits dl { margin: 12px 0 16px; }
+.sheet.credits dt { margin-top: 12px; font: 800 italic 12px/1.2 var(--f-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--gold); }
+.sheet.credits dd { margin: 4px 0 0; font: 500 13px/1.45 var(--f-ui); color: var(--lav); }
 .loading { position: absolute; inset: 0; z-index: 25; background: radial-gradient(120% 60% at 50% 35%, #16304d, var(--navy2) 70%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px 16px; text-align: center; animation: fade .2s ease-out; }
 .toast { position: absolute; left: 50%; bottom: 96px; transform: translateX(-50%); z-index: 30; max-width: calc(100% - 32px); padding: 11px 16px; border-radius: 12px; background: rgba(8, 12, 20, .94); border: 1.5px solid rgba(255, 255, 255, .25); font: 700 italic 14px/1.3 var(--f-ui); text-align: center; box-shadow: 0 8px 24px rgba(0, 0, 0, .5); animation: up .2s ease-out; }
 
@@ -423,7 +427,7 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 @keyframes rtdraw { to { stroke-dashoffset: 0; } }
 .mk circle { fill: #fff; stroke: #10151d; stroke-width: 3; }
 .mk text { font: 900 italic 21px/1 var(--f-ui); fill: #fff; stroke: rgba(8, 12, 20, .92); stroke-width: 6; paint-order: stroke; stroke-linejoin: round; text-transform: uppercase; }
-.mk text .sub { font-size: 16px; font-weight: 600; fill: var(--gold); }
+.mk text .sub { font-size: 16px; font-weight: 600; fill: var(--gold); text-transform: none; }   /* (2,862 m: a metre, not M) */
 .sp rect { fill: #10151d; stroke: #fff; stroke-width: 2.5; } .sp text { font: 900 italic 15px/1 var(--f-ui); fill: #fff; }
 /* version 2: the map from above, nothing over the route but its flags */
 .dio.topmap { display: block; background: #1a2634; }
@@ -516,28 +520,12 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .foot.solo .go { flex: 1 1 auto; max-width: 400px; min-width: 0; font-size: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .places.six { grid-template-columns: repeat(3, 1fr); }
 
-/* ---------------- before the race: the drone's shots of the track with the commentator, then the start lights ---------------- */
+/* ---------------- before the race: the journey and the helicopter's flight (the .ix2 rules below), then the start lights ---------------- */
 .intro { position: absolute; inset: 0; z-index: 25; display: flex; flex-direction: column; overflow: hidden; background: var(--ink); animation: fade .25s ease-out; }
-.ix-bg { position: absolute; inset: -40px; background: center / cover no-repeat; filter: blur(26px) brightness(.36) saturate(1.15); pointer-events: none; }
-.ix-top { position: relative; z-index: 2; flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 0; }
-.ix-live { display: flex; align-items: center; gap: 7px; padding: 6px 10px 6px 8px; border-radius: 6px; background: rgba(230, 59, 46, .92); font: 900 italic 12px/1 var(--f-ui); letter-spacing: .14em; transform: skewX(-8deg); }
-.ix-live i { width: 8px; height: 8px; border-radius: 50%; background: #fff; animation: pulse 1.2s ease-in-out infinite; }
 .ix-skip { display: flex; align-items: center; gap: 4px; padding: 9px 9px 9px 14px; border-radius: 999px; background: rgba(8, 12, 20, .72); border: 1.5px solid rgba(255, 255, 255, .4); font: 800 italic 14px/1 var(--f-ui); }
 .ix-skip .chev { width: 14px; height: 14px; opacity: .9; }
-.ix-head { position: relative; z-index: 2; flex: 0 0 auto; margin-top: auto; padding: 14px 18px 12px; }
-.ix-head h2 { margin: 0; font: 900 italic clamp(23px, 7vw, 30px)/1.05 var(--f-ui); letter-spacing: -.3px; text-transform: uppercase; text-shadow: 0 2px 0 rgba(0, 0, 0, .4); text-wrap: balance; }
-.ix-head small { display: block; margin-top: 7px; font: 700 italic 13px/1.3 var(--f-ui); color: var(--lbl); }
 .ix-v { position: relative; z-index: 1; flex: 0 1 auto; width: 100%; aspect-ratio: 6 / 5; max-height: 52%; min-height: 200px; box-shadow: 0 18px 40px rgba(0, 0, 0, .55); }
-.ix-v .hud { bottom: 12px; }
 .ix-v canvas.rainfx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.ix-v.rainy .dio.fly video { filter: saturate(.72) brightness(.8) contrast(1.05); }
-.ix-sub { position: relative; z-index: 2; flex: 0 0 auto; margin: 16px 14px auto; padding: 12px 14px 14px; border-radius: 14px; background: rgba(8, 12, 20, .74); border: 1px solid rgba(255, 255, 255, .12); min-height: 98px; }
-.ix-who { display: flex; align-items: center; gap: 6px; font: 800 italic 11px/1 var(--f-ui); letter-spacing: .12em; color: var(--gold); }
-.ix-who svg { width: 15px; height: 15px; }
-.ix-sub p { margin: 8px 0 0; font: 700 italic 17px/1.35 var(--f-ui); text-wrap: pretty; }
-.ix-sub.in p { animation: sub-in .35s ease-out; }
-.ix-bar { position: relative; z-index: 2; flex: 0 0 auto; margin: 16px 16px 22px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .14); overflow: hidden; }
-.ix-bar b { display: block; width: 0; height: 100%; background: linear-gradient(90deg, var(--curb), var(--gold)); }
 .intro.ix-start { align-items: center; justify-content: center; gap: 26px; padding: 24px 16px; background: radial-gradient(120% 60% at 50% 35%, #16304d, var(--navy2) 70%); }
 .ready { margin: 0; text-align: center; font: 900 italic 26px/1.1 var(--f-ui); text-transform: uppercase; text-wrap: balance; }
 .ready small { display: block; margin-top: 8px; font: 800 italic 13px/1 var(--f-ui); letter-spacing: .14em; color: var(--gold); }
@@ -553,8 +541,7 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .ix-v .jglobe { z-index: 2; background: #000; }
 .ix-v .jlabels { position: absolute; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; contain: strict; }
 .ix-v .jveil { z-index: 2; pointer-events: none; }
-.ix-v .jcredit { position: absolute; left: 6px; top: 4px; z-index: 3; max-width: calc(100% - 12px); font: 500 8.5px/1.2 var(--f-ui); color: rgba(255, 255, 255, .55); text-shadow: 0 1px 2px rgba(0, 0, 0, .8); pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ix-v.jon .hud { z-index: 4; }
+.ix-v .jcredit { position: absolute; left: 6px; bottom: 4px; z-index: 3; max-width: calc(100% - 12px); font: 500 8.5px/1.25 var(--f-ui); color: rgba(255, 255, 255, .62); text-shadow: 0 1px 2px rgba(0, 0, 0, .85); pointer-events: none; }   /* (bottom left, away from the summit's corner; it wraps on a narrow stage) */
 .jl { position: absolute; left: 0; top: 0; width: 0; height: 0; opacity: 0; will-change: transform, opacity; }
 .jl > span { position: absolute; left: 0; top: 0; white-space: nowrap; color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .9), 0 0 6px rgba(0, 0, 0, .55); transform: translate(-50%, -50%); }
 .jl.ctry > span { font: 700 10.5px/1 var(--f-ui); letter-spacing: .2em; color: rgba(255, 255, 255, .86); }
@@ -573,5 +560,72 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .jl.pin.next i { background: var(--gold); }
 .jl.pin i::after { content: ''; position: absolute; left: 50%; bottom: -4px; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; background: inherit; box-shadow: 0 0 0 2px rgba(0, 0, 0, .45), 0 0 10px 3px rgba(255, 210, 80, .55); }
 .jl.pin.last i::after { box-shadow: 0 0 0 2px rgba(0, 0, 0, .45), 0 0 8px 2px rgba(255, 255, 255, .45); }
-@media (max-height: 700px) { .ix-head { padding: 10px 16px 8px; } .ix-head small { margin-top: 5px; } .ix-sub { margin-top: 10px; min-height: 86px; padding: 10px 12px 12px; } .ix-sub p { font-size: 15.5px; } .ix-bar { margin: 10px 16px 14px; } }
-@media (prefers-reduced-motion: reduce) { .ix-sub.in p, .ix-live i { animation: none; } }
+
+/* ---------- the intro before a race (app.js startRace): the stage exactly where the track screen's was, the track over it, the race
+   and the track's numbers under it; the globe's map first, then the helicopter's flight with its places marked ---------- */
+.intro.ix2 { display: block; background: radial-gradient(120% 60% at 50% 28%, #16304d 0%, var(--navy1) 55%, var(--navy2) 100%); }   /* (the menu's own night: the track screen's card and stage stay where they were) */
+.ix-head2 { position: absolute; left: 0; right: 0; top: 0; z-index: 3; display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; padding: 0 12px 10px 16px; box-sizing: border-box; animation: fade .35s ease-out both; }
+.ix-name { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ix-flag { flex: 0 0 auto; width: 30px; height: 20px; border-radius: 3px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .35), 0 2px 6px rgba(0, 0, 0, .5); }
+.ix-name h2 { margin: 0; min-width: 0; font: 900 italic clamp(21px, 6.4vw, 28px)/1 var(--f-ui); letter-spacing: -.3px; text-transform: uppercase; text-shadow: 0 2px 0 rgba(0, 0, 0, .4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ix-name h2 small { display: block; margin-top: 5px; font: 800 italic 12px/1 var(--f-ui); letter-spacing: .18em; color: var(--lbl); text-shadow: none; }
+.ix-ctl { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
+.ix-mus { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: rgba(8, 12, 20, .72); border: 1.5px solid rgba(255, 255, 255, .4); }
+.ix-mus svg { width: 20px; height: 20px; }
+.ix-mus[aria-pressed="false"] { opacity: .78; }
+.ix-v.ix-stage { position: absolute; z-index: 1; width: auto; aspect-ratio: auto; max-height: none; min-height: 0; overflow: hidden; background: #02040a; box-shadow: 0 18px 40px rgba(0, 0, 0, .55); }
+.ix-stage video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.ix-stage.rainy video { filter: saturate(.72) brightness(.8) contrast(1.05); }
+.ix-stage .ixmap { position: absolute; inset: 0; z-index: 3; background: #1a2634; }
+.ix-stage .ixmap path.rt { animation: none; stroke-dashoffset: 0; }   /* (the route already drawn: the map as the track screen left it) */
+.ix-stage .jlabels { z-index: 4; } .ix-stage .jcredit { z-index: 6; }
+.ix-pins { position: absolute; inset: 0; z-index: 4; pointer-events: none; overflow: hidden; }
+.ixpin { position: absolute; left: 0; top: 0; width: 0; height: 0; opacity: 0; will-change: transform, opacity; }
+.ixpin > span { position: absolute; left: 0; bottom: var(--s, 22px); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; white-space: nowrap; }
+.ixpin b { font: 900 italic 11px/1 var(--f-ui); letter-spacing: .04em; padding: 4px 7px 3px; background: rgba(255, 255, 255, .95); color: #10151d; transform: skewX(-10deg); box-shadow: 2px 2px 0 rgba(0, 0, 0, .35); text-transform: uppercase; }
+.ixpin small { margin-top: 3px; font: 700 italic 10.5px/1.1 var(--f-ui); color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, .95), 0 0 6px rgba(0, 0, 0, .6); }
+.ixpin i { position: absolute; left: -1px; bottom: 0; width: 2px; height: var(--s, 22px); background: rgba(255, 255, 255, .92); box-shadow: 0 0 3px rgba(0, 0, 0, .6); }
+/* a place beside the flight (never in its picture): at the picture's edge, a gold arrow pointing to it */
+.ixpin.edge > span { bottom: auto; top: 0; transform: translate(-50%, -50%); }
+.ixpin.edge i { display: none; }
+.ixpin.edge > span::before { content: ''; position: absolute; top: 50%; margin-top: -7px; border: 7px solid transparent; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .5)); }
+.ixpin.edge.l > span::before { left: -15px; border-right: 9px solid var(--gold); border-left-width: 0; }
+.ixpin.edge.r > span::before { right: -15px; border-left: 9px solid var(--gold); border-right-width: 0; }
+.ixpin i::after { content: ''; position: absolute; left: 50%; bottom: -3px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px rgba(0, 0, 0, .45), 0 0 8px 2px rgba(255, 210, 80, .5); }
+.ix-summit { position: absolute; right: 8px; top: 8px; z-index: 6; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; opacity: 0; transform: translateY(-4px); transition: opacity .45s ease, transform .45s ease; pointer-events: none; }
+.ix-summit.on { opacity: 1; transform: none; }
+.ix-summit b { background: #fff; color: #10151d; font: 900 italic 12.5px/1 var(--f-ui); letter-spacing: .02em; padding: 5px 9px 4px; transform: skewX(-10deg); box-shadow: 3px 3px 0 rgba(0, 0, 0, .35); white-space: nowrap; }   /* (its words in capitals already; the m stays a metre) */
+.ix-summit small { background: var(--gold); color: var(--gold-ink); font: 900 italic 11px/1 var(--f-ui); padding: 4px 8px 3px; transform: skewX(-10deg); margin-right: 7px; white-space: nowrap; }
+.ix-summit small:empty { display: none; }
+/* the card under the stage: where the track screen's card was (its frame and kerb), down to the foot of the screen */
+.ix-card.card { position: absolute; z-index: 2; margin: 0; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); padding: 13px 14px 11px 26px; gap: 11px; overflow: hidden; animation: fade .35s ease-out both; }
+.ix-what { margin: 0; font: 900 italic 12.5px/1.25 var(--f-ui); letter-spacing: .1em; color: var(--gold); flex: 0 0 auto; text-wrap: balance; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }   /* (two lines on a narrow phone: the weather is not cut off) */
+.ix-specs { flex: 0 0 auto; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px 10px; }
+.ix-specs small { display: block; font: 700 9.5px/1 var(--f-ui); letter-spacing: .12em; text-transform: uppercase; color: var(--lbl); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ix-specs b { display: block; margin-top: 4px; font: 900 italic 15px/1.1 var(--f-ui); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.ix-lay { position: relative; flex: 1 1 0; min-height: 0; margin: 0 -2px; border-radius: 10px; background: radial-gradient(90% 90% at 50% 50%, rgba(40, 70, 110, .32), rgba(8, 14, 24, .0) 75%); }
+.ix-lay svg { position: absolute; left: 0; top: 0; overflow: visible; }
+.ix-lay .o { fill: none; stroke: rgba(4, 8, 14, .85); stroke-width: 8; stroke-linejoin: round; stroke-linecap: round; }
+.ix-lay .b { fill: none; stroke: rgba(226, 234, 248, .5); stroke-width: 3.2; stroke-linejoin: round; stroke-linecap: round; }
+.ix-lay .done { fill: none; stroke: #ffd23a; stroke-width: 3.6; stroke-linejoin: round; stroke-linecap: round; }
+.ix-lay .lm { fill: #0d1626; stroke: rgba(255, 255, 255, .8); stroke-width: 1.6; transition: fill .3s, stroke .3s; } .ix-lay .lm.on { fill: #ffd23a; stroke: #fff; }
+.ix-lay .pt .halo, .ix-prof .pt .halo { fill: rgba(255, 210, 58, .36); } .ix-lay .pt circle + circle, .ix-prof .pt circle + circle { fill: #fff; }
+.ix-pwrap { flex: 0 0 auto; }
+.ix-prof { display: block; overflow: visible; }
+.ix-prof .ln { fill: none; stroke: rgba(255, 255, 255, .55); stroke-width: 1.6; stroke-linejoin: round; }
+.ix-prof .done { fill: none; stroke: #ffd23a; stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; }
+.ix-prof .base { stroke: rgba(160, 185, 230, .3); stroke-width: 1; } .ix-prof .kt { stroke: rgba(160, 185, 230, .45); stroke-width: 1; }
+.ix-prof .gl { stroke: rgba(160, 185, 230, .22); stroke-width: 1; stroke-dasharray: 3 4; }
+.ix-prof .lm path { stroke: rgba(255, 255, 255, .28); stroke-width: 1; stroke-dasharray: 2 2; } .ix-prof .lm circle { fill: #0d1626; stroke: rgba(255, 255, 255, .8); stroke-width: 1.4; transition: fill .3s; }
+.ix-prof .lm.on path { stroke: rgba(255, 210, 58, .55); } .ix-prof .lm.on circle { fill: #ffd23a; stroke: #fff; }
+.ix-prof text { font: 700 9.5px/1 var(--f-ui); fill: var(--lbl); font-variant-numeric: tabular-nums; } .ix-prof text.hi, .ix-prof text.lo { font: 800 italic 10.5px/1 var(--f-ui); fill: #dfe8f6; }
+/* the last race's flags on the globe (as its map draws them, until the camera climbs away) */
+.jl.flag > span { transform: translate(-3px, -100%); display: flex; flex-direction: column; align-items: flex-start; text-shadow: none; }
+.jl.flag em { order: 3; display: block; line-height: 0; }
+.jl.flag b { order: 2; font: 900 italic 14px/1 var(--f-ui); text-transform: uppercase; color: #fff; -webkit-text-stroke: 0; text-shadow: 0 0 3px rgba(8, 12, 20, .95), 0 1px 2px rgba(8, 12, 20, .95), 0 0 8px rgba(8, 12, 20, .7); }
+.jl.flag small { order: 1; margin-bottom: 3px; font: 700 italic 11.5px/1 var(--f-ui); color: var(--gold); text-shadow: 0 0 3px rgba(8, 12, 20, .95), 0 1px 2px rgba(8, 12, 20, .95); }
+.jl.flag.fin > span { transform: translate(calc(-100% + 3px), -100%); align-items: flex-end; }
+.jl.mkf > span, .jl.mkf.fin > span { transform: none; display: block; }   /* (the map's own flag drawn at its anchor) */
+.jl.mkf svg { display: block; overflow: visible; }
+@media (max-height: 700px) { .ix-specs b { font-size: 13.5px; } .ix-card.card { gap: 8px; padding-top: 10px; padding-bottom: 8px; } .ix-head2 { padding-bottom: 8px; } }
+@media (prefers-reduced-motion: reduce) { .ix-head2, .ix-card.card { animation: none; } .ix-summit { transition: none; } }

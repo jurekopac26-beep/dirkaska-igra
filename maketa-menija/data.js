@@ -13,7 +13,7 @@ window.MENU = {
     multi: { title: 'MULTIPLAYER', sub: 'Race friends online', img: 'assets/menu/multiplayer.webp' },
     career: { title: 'CAREER', img: 'assets/menu/career.webp' },
     settings: 'Settings', board: 'Leaderboard',
-    buy: 'Full Game', buySub: '+8 tracks · +4 cars · the whole career · unlimited daily races', owned: 'Full game',
+    buy: 'Full Game', buySub: '+9 tracks · +3 cars · the whole career · unlimited daily races', owned: 'Full game',
   },
 
   /* ---------- single race, step 1: the mode (step 2: the track) ---------- */
@@ -56,7 +56,7 @@ window.MENU = {
       hp: 356, kg: 1240, drive: 'RWD', gears: 6, stats: { power: 11, grip: 10, light: 10, drift: 15 }, free: true },
     { id: 'rally', model: 'rally', color: 0, name: 'BURJA R7', tag: 'AWD', desc: 'An 80s rally car with all-wheel drive and huge power. At home on gravel and in the air.',
       hp: 394, kg: 1150, drive: 'AWD', gears: 6, stats: { power: 13, grip: 13, light: 12, drift: 14 }, free: true },
-    { id: 'vortex', model: 'vortex', color: 5, name: 'VORTEX 4WD', tag: 'AWD', desc: 'All-wheel-drive saloon, stable and fast in every weather.',
+    { id: 'vortex', model: 'vortex', color: 5, name: 'VRTINEC 4WD', tag: 'AWD', desc: 'All-wheel-drive saloon, stable and fast in every weather.',
       hp: 404, kg: 1400, drive: 'AWD', gears: 6, stats: { power: 13, grip: 13, light: 7, drift: 9 } },
     { id: 'strega', model: 'strega', color: 6, name: 'STREGA MR', tag: 'MID', desc: 'Mid-engined and sharp. Turns in instantly, punishes a lazy exit.',
       hp: 385, kg: 1180, drive: 'MID', gears: 6, stats: { power: 12, grip: 13, light: 11, drift: 12 } },
@@ -102,92 +102,29 @@ window.MENU = {
      ([metres from the start, name]: the corner of the flyover shows the one the point has reached; without it, the game's own names) */
   routeMaps: {
     vrsic: { start: 'Kranjska Gora', finish: 'Vršič', alt: [810, 1611],
-      hud: [[0, 'Kranjska Gora'], [1700, 'Jasna'], [3006, 'Eriški most'], [6480, 'Mihov dom'], [7000, 'Ruska kapelica'], [8230, 'Koča na Gozdu'], [11200, 'Erjavčeva koča'], [12150, 'Vršič']] },
+      hud: [[0, 'Kranjska Gora'], [1700, 'Lake Jasna'], [3006, 'Erika Bridge'], [6480, 'Mihov dom'], [7000, 'Russian Chapel'], [8230, 'Koča na Gozdu'], [11200, 'Erjavčeva koča'], [12150, 'Vršič Pass']] },
     pikes: { start: 'Crystal Reservoir', finish: 'Summit', alt: [2862, 4301],
       hud: [[0, 'Crystal Reservoir'], [960, 'Halfway Picnic Grounds'], [1964, 'Ski Area'], [2650, 'Glen Cove'], [4000, "Devil's Playground"], [4440, 'Bottomless Pit'], [5900, 'Summit']] },
-    ouninpohja: { start: 'Hämepohja', finish: 'Flying finish', stage: 'SS 4', surface: 'Gravel', base: 130,
-      hud: [[0, 'Hämepohja'], [800, 'Naarajärvi'], [1640, 'Ouni'], [2170, 'Keltainen talo'], [2980, 'Mutanen'], [4400, 'Forest crests'], [6040, 'Village'], [7980, 'Amazon'], [8700, 'Kakaristo'], [9550, 'Flying finish']] },
-    gora: { start: 'Start', finish: 'Finish', stage: 'SS 1', surface: 'Gravel', base: 640,
+    ouninpohja: { start: 'Hämepohja', finish: 'Flying finish', stage: 'SS 2', surface: 'Gravel', base: 130,
+      hud: [[0, 'Hämepohja'], [800, 'Lake Naarajärvi'], [1640, 'Ouni'], [2170, 'Keltainen talo'], [2980, 'Farm Bend'], [4400, 'Forest crests'], [6040, 'Village'], [7980, 'Fast Crest'], [8700, 'Kakaristo'], [9550, 'Flying finish']] },
+    gora: { start: 'Start', finish: 'Finish', stage: 'SS 1', surface: 'Gravel', base: 1485,
       hud: [[0, 'Stage start'], [545, 'Split 1'], [1090, 'Split 2'], [1590, 'Stage finish']] },
-    jezero: { base: 475 }, riviera: { base: 4 }, ljubljana: { base: 295 }, monaco: { base: 8 },
+    jezero: { base: 532 }, riviera: { base: 4 }, ljubljana: { base: 295 }, monaco: { base: 8 },
     rbring: { base: 677 }, suzuka: { base: 45 }, spa: { base: 400 }, nring: { base: 616 },
   },
   // the two ways to show them, to choose from (the switch over the map)
   mapVersions: [{ n: 1, name: 'Flyover' }, { n: 2, name: 'Map' }],
 
-  /* ---------- before every race: the drone's shots of the track and the commentator ----------
-     One line per shot, in the order of the shots (the place of each shot shows in its corner). A line is the words on the screen, or
-     [the words on the screen, the same words spelt so an English voice says the names right]. The voice is the phone's own; the
-     Sound and Commentary settings switch it off (the words stay). */
+  /* ---------- before every race: the intro (the Race intro setting: Full, Short or Off) ----------
+     Full: the globe from the last race's map to this track, then the helicopter's flight over the whole run; Short (and the same track
+     again): the flight only. The country's own music under it (original, made for the game). The places marked over the flight, the
+     summits' names, the countries and their music come from intro-data.js (intro_data.py, landmarks.json). */
   intro: {
-    vrsic: [
-      ['Welcome to Kranjska Gora. From here the road climbs 800 metres, over the Julian Alps.', 'Welcome to Kranyska Gora. From here the road climbs eight hundred metres, over the Julian Alps.'],
-      ['Lake Jasna, and the Goldhorn: the white chamois with golden horns from the old legend.', 'Lake Yasna, and the Goldhorn: the white chamois with golden horns, from the old legend.'],
-      'Twenty-four cobbled hairpins to the top, each one numbered, with its height on the sign.',
-      ['Prisoners of war built this road in 1915. Their little Russian chapel is just above.', 'Prisoners of war built this road in nineteen fifteen. Their little Russian chapel is just above.'],
-      ['Vršič, 1,611 metres: the highest road pass in Slovenia. Over to you.', 'Vrshich, sixteen hundred and eleven metres: the highest road pass in Slovenia. Over to you.'],
-    ],
-    pikes: [
-      ['Colorado. From Crystal Reservoir the road climbs almost 1,500 metres to the summit.', 'Colorado. From Crystal Reservoir, the road climbs almost fifteen hundred metres to the summit.'],
-      ["The W's: hairpin stacked on hairpin. Cars have raced up this mountain since 1916.", 'The double-yous: hairpin stacked on hairpin. Cars have raced up this mountain since nineteen sixteen.'],
-      "Devil's Playground: in a storm, lightning jumps from rock to rock up here.",
-      ['The summit, 4,301 metres. This view inspired the song America the Beautiful.', 'The summit, four thousand three hundred and one metres. This view inspired the song, America the Beautiful.'],
-    ],
-    ouninpohja: [
-      ['Ouninpohja, the most famous stage of the Finnish rally, along Lake Naarajärvi.', 'Ounin-pohya, the most famous stage of the Finnish rally, along Lake Naara-yarvi.'],
-      ['The Yellow House jump. In 2003 a rally car flew 57 metres here.', 'The Yellow House jump. In two thousand and three, a rally car flew fifty-seven metres here.'],
-      "Crest after crest through the spruce forest. You can't see the road: trust your notes.",
-      'Kakaristo: the biggest crowd of the stage. Then flat out to the flying finish.',
-    ],
-    gora: [
-      'Mountain Rally, stage one: gravel, forest and rock, up the hill and down again.',
-      'The first split. Over the crests the car takes off: land it straight.',
-      'The second split. Downhill now, and the rocks punish a wide line.',
-    ],
-    jezero: [
-      'Jezero Ring: the lake, the island with its little church, and eleven corners.',
-      'Turn three, long and fast. Carry the speed through it, the trees are close.',
-      'Along the lake. Ring the island church bell, they say, and your wish comes true.',
-    ],
-    riviera: [
-      'The Riviera: palms, the sea, and a street circuit just over a kilometre long.',
-      'The promenade: café tables, palm trees and the sea, a metre from the barrier.',
-      'The hairpin: full lock and patience. There are two of them on every lap.',
-    ],
-    ljubljana: [
-      ['Ljubljana, the capital of Slovenia. The race starts along the river, past the market.', 'Lyublyana, the capital of Slovenia. The race starts along the river, past the market.'],
-      'The old square, under the castle. The Romans built a town here two thousand years ago.',
-      "The square by the bridges. Look out for dragons: the dragon is the city's symbol.",
-    ],
-    monaco: [
-      'Casino Square. Monte Carlo means Mount Charles, after the prince who opened the casino.',
-      ['The Fairmont hairpin: the slowest corner in racing, about 50 kilometres an hour.', 'The Fairmont hairpin: the slowest corner in racing, about fifty kilometres an hour.'],
-      'Into the tunnel under the hotel: dark, then blinding sunlight, at full speed.',
-      "Round the swimming pool. The whole country is smaller than New York's Central Park.",
-    ],
-    rbring: [
-      'Styria, the green heart of Austria. After turn one the road climbs at twelve percent.',
-      'Turn three: the top of the hill and the slowest corner. The best place to pass.',
-      'Turn nine, fast and downhill. Only ten corners on this lap, so every one counts.',
-    ],
-    suzuka: [
-      ['Mie, Japan: a figure of eight. The track crosses over itself on a bridge.', 'Mee-eh, Japan: a figure of eight. The track crosses over itself on a bridge.'],
-      ['The hairpin. The circuit opened in 1962, as a test track for new cars.', 'The hairpin. The circuit opened in nineteen sixty-two, as a test track for new cars.'],
-      'Spoon: a long double left, named for its shape.',
-      ['130R, named for its radius: 130 metres. Flat out, if you dare.', 'One-thirty R, named for its radius, a hundred and thirty metres. Flat out, if you dare.'],
-    ],
-    spa: [
-      'The Belgian Ardennes. Nearby Spa gave its name to every spa in the world.',
-      'Eau Rouge: red water, from the iron in the stream that runs under the track.',
-      ['Pouhon, the fast double left. In the local dialect, a pouhon is an iron-rich spring.', 'Poo-on, the fast double left. In the local dialect, a poo-on is an iron-rich spring.'],
-      ['Blanchimont: one of the fastest corners anywhere, over 300 kilometres an hour.', 'Blanchimont: one of the fastest corners anywhere, over three hundred kilometres an hour.'],
-    ],
-    nring: [
-      ['The Green Hell: almost 21 kilometres through the Eifel forest. Flugplatz means airfield.', 'The Green Hell: almost twenty-one kilometres through the Eifel forest. Flugplatz means airfield.'],
-      'Adenauer Forst, named after the nearby town of Adenau: a tight chicane in the trees.',
-      'The Karussell: a banked concrete hairpin. Drop the inside wheels in and hold on.',
-      ['Pflanzgarten: a jump, then hard on the brakes. This track opened in 1927.', 'Pflanzgarten: a jump, then hard on the brakes. This track opened in nineteen twenty-seven.'],
-    ],
+    skip: 'Skip', music: 'Music',
+    summit: 'SUMMIT', top: 'HIGHEST POINT',   // the corner over the video: a road over a mountain (its top and name), a circuit (its highest point)
+    surface: 'Asphalt',                       // (a rally stage's own surface is in routeMaps)
+    specs: { lap: 'Lap', length: 'Length', start: 'Start', finish: 'Finish', climb: 'Climb', top: 'Highest', rise: 'Rise',
+      grade: 'Steepest', corners: 'Corners', surface: 'Surface', record: 'Record' },
   },
 
   /* ---------- the career: four ways to play it (the Career button opens them in the main menu's frame) ---------- */
@@ -258,15 +195,25 @@ window.MENU = {
   leaderboardNames: ['M. Kovač', 'T. Hayashi', 'J. Novak', 'K. Weber', 'A. Silva', 'R. Horvat', 'S. Tanaka', 'N. Petek', 'E. Lindqvist', 'D. Zupan', 'H. Kimura', 'O. Nieminen'],
   settings: [
     { id: 'sound', label: 'Sound', opts: ['On', 'Off'], sel: 0 },
-    { id: 'comm', label: 'Commentary', opts: ['On', 'Off'], sel: 0 },
+    { id: 'music', label: 'Music', opts: ['On', 'Off'], sel: 0, keep: true },             // (keep: remembered in this browser)
+    { id: 'intro', label: 'Race intro', opts: ['Full', 'Short', 'Off'], sel: 0, keep: true },
     { id: 'control', label: 'Controls', opts: ['Buttons', 'Tilt', 'Wheel'], sel: 0 },
     { id: 'camera', label: 'Camera', opts: ['Chase', 'Isometric', 'TV'], sel: 0 },
     { id: 'diff', label: 'Difficulty', opts: ['Easy', 'Normal', 'Hard', 'Pro'], sel: 1 },
     { id: 'gfx', label: 'Graphics', opts: ['Low', 'Medium', 'High'], sel: 2 },
     { id: 'lang', label: 'Language', opts: ['English', 'Slovenščina'], sel: 0 },
   ],
+  // the data the menu's pictures are made from, credited as their licences ask (Settings -> Credits; a short line on the globe)
+  credits: [
+    ['The Earth', 'NASA Blue Marble, NASA Earth Observatory. Public domain.'],
+    ['Land cover', '© ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium. Licence: CC BY 4.0 (creativecommons.org/licenses/by/4.0).'],
+    ['Heights', 'Terrain Tiles by Mapzen, made from: SRTM and 3DEP (NASA, USGS), GMTED2010 and ETOPO1, public domain; EU-DEM: Produced using Copernicus data and information funded by the European Union - EU-DEM layers; © offene Daten Österreichs - Digitales Geländemodell (DGM) Österreich, CC BY 4.0.'],
+    ['Countries', 'Outlines and names: Natural Earth. Public domain.'],
+    ['Music and sound', 'Original, made for this game.'],
+  ],
+  creditLine: 'NASA · © ESA WorldCover 2021, Copernicus · EU-DEM, USGS · Natural Earth',
   offer: {
     title: 'FULL GAME', lead: 'One purchase unlocks everything. No ads, no subscription.',
-    items: ['All 12 tracks (9 more)', 'All cars (4 more)', 'The whole career: World Cup, chases, time trials, rally', 'Unlimited runs in today\'s race', 'Race a friend on every track'],
+    items: ['All 12 tracks (9 more)', 'All cars (3 more, 1 coming soon)', 'The whole career: World Cup, chases, time trials, rally', 'Unlimited runs in today\'s race', 'Race a friend on every track'],
   },
 };

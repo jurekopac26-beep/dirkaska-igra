@@ -1,7 +1,7 @@
-# Mockup only: raw/maps (routemap.mjs, flyover.mjs, drone.mjs) -> site/assets/maps/*.webp|webm and site/routes.js (window.ROUTES): for
-# each track the route over the top map, the heights along it, the places, frame by frame where the flyover video shows the start, the
-# finish and the places, and when each of the drone's shots (the intro before the race) starts. A track without its map from above yet is
-# left out; one without its flyover or drone shots yet goes without them.
+# Mockup only: raw/maps (routemap.mjs, flyover.mjs) -> site/assets/maps/*.webp|webm and site/routes.js (window.ROUTES): for each track
+# the route over the top map, the heights along it, the places, and frame by frame where the flyover video shows the start, the finish
+# and the places. A track without its map from above yet is left out; one without its flyover yet goes without it. (The intro before
+# the race, the helicopter's flight: heli.mjs, intro_data.py, intro_assets.py.)
 import json, math, os, re, shutil, subprocess, sys
 from PIL import Image, ImageEnhance
 
@@ -18,6 +18,14 @@ ROADS = ('vrsic', 'pikes')   # the open roads (the others' corners, by number, n
 EN = {'Prvi ovinek': 'First Curve', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under the Bridge', 'Lasnica': 'Hairpin', 'Zadnja ravnina': 'Back Straight',
       'Zadnji ovinek': 'Last Corner', 'Predor': 'Tunnel', 'tržnica': 'Market', 'mestni trg': 'Town Square', 'stari trg': 'Old Square',
       'trg ob mostovih': 'Bridges Square', 'nabrežje': 'Riverside', 'Gozdni vrhovi': 'Forest crests', 'Ribnik': 'Pond', 'Vas': 'Village', 'Vrh za vasjo': 'Crest past the village'}
+# the game's names of corners that are brands, people or a circuit's famous (some registered) corner names: plain English words in the
+# mockup instead, one name for a place everywhere (the game itself is not changed); its villages, mountains, streams and fields stay
+NEUTRAL = {"200R": "Fast Right", "Spoon": "Double Left", "130R": "Fast Left", "La Source": "First Hairpin", "Eau Rouge": "Steep Climb", "Raidillon": "Crest", "Kemmel": "Long Straight", "Les Combes": "Hilltop Chicane", "Malmedy": "Downhill Right", "Bruxelles": "Right Hairpin", "Pouhon": "Double Left", "Fagnes": "Forest Esses", "Campus": "Chicane", "Blanchimont": "Fast Left", "Bus Stop": "Last Chicane", "Beau Rivage": "Uphill Run", "Tabac": "Harbour Left", "Piscine": "Pool Chicane", "Karussell": "Banked Hairpin", "Kleines Karussell": "Small Banked Turn", "Schwalbenschwanz": "Fast Double Right", "Fuchsröhre": "Downhill Dip", "Kesselchen": "Valley Climb", "Eiskurve": "Cold Corner", "Brünnchen": "Spring Bend", "Pflanzgarten": "Big Jump", "Sprunghügel": "Small Jump", "Wippermann": "Twisty Section", "Antoniusbuche": "Long Straight End", "Naarajärvi": "Lake Naarajärvi", "Jasna": "Lake Jasna", "Eriški most": "Erika Bridge", "Dunlop": "Uphill Left", "Degner": "Double Right", "Casio Triangle": "Last Chicane", "Lasnica Fairmont": "Lasnica Grand", "Fairmont Hairpin": "Grand Hairpin", "Anthony Noghès": "Last Corner", "La Rascasse": "Harbour Corner", "Mirabeau": "Downhill Right", "Massenet": "Long Left", "Paul Frère": "Long Right", "Speaker's Corner": "Short Left", "Stefan-Bellof-S": "Fast Esses", "Hansen's Corner": "Reservoir Bend", "Amazon": "Fast Crest", "Mutanen": "Farm Bend"}
+SUBST = [["Ruska kapelica", "Russian Chapel"], ["Ruski križ", "Russian Cross"]]
+def neutral(n):
+    n = NEUTRAL.get(n, n)
+    for a, b in SUBST: n = n.replace(a, b)
+    return re.sub(r'(\d)\.(\d{3}) m\b', r'\1,\2 m', n)   # (1.158 m, the Slovene way: 1,158 m)
 def en(n):
     m = re.match(r'(Zavoj|Serpentina) (\d+)(.*)$', n)
     if m: return ('Turn ' if m.group(1) == 'Zavoj' else 'Hairpin ') + m.group(2) + m.group(3)
@@ -82,7 +90,7 @@ for t in TRACKS:
         s = L * k / 120; i = min(len(d) - 1, max(0, next((q for q in range(len(d)) if d[q] >= s), len(d) - 1)))
         prof.append(round(h[i], 1))
     R['prof'] = prof
-    R['places'] = [[q['n'], round(q['d'])] for q in J['names'] if q.get('hud', True)]
+    R['places'] = [[neutral(q['n']), round(q['d'])] for q in J['names'] if q.get('hud', True)]
     # the places the flyover's corner shows (the menu's own list in data.js comes first): the game's names, or the corners by number
     H = [[0, 'Start' if R['open'] else 'Start · finish']] + [[max(1, q[1] - 40), en(q[0])] for q in R['places']]
     if len(H) == 1 and t not in ROADS: H += [[max(1, round(c[0]) - 40), 'Turn %d' % (k + 1)] for k, c in enumerate(pace(J['route'], J['d'], J['mPerPx']))]
@@ -92,7 +100,7 @@ for t in TRACKS:
     # (the start near the start, the finish near the end, a place near it; elsewhere 0: the menu hides it there anyway)
     fj = os.path.join(RAW, 'fly-%s.json' % t)
     if os.path.exists(fj):
-        F = json.load(open(fj))
+        F = json.load(open(fj)); F['places'] = [neutral(x) for x in F['places']]
         src, dst = os.path.join(RAW, 'fly-%s.webm' % t), os.path.join(OUT, 'fly-%s.webm' % t)
         if not os.path.exists(dst) or os.path.getmtime(dst) < os.path.getmtime(src):
             if F['W'] <= 720: shutil.copyfile(src, dst)   # drawn at the menu's size already
@@ -107,18 +115,10 @@ for t in TRACKS:
         keep = lambda P, on: P if on and P and P[2] else 0
         fr = [[f[0], keep(f[1], f[0] < L * 0.14), keep(f[2], f[0] > L * 0.78), 0, [keep(P, abs(f[0] - pd[i]) < L * 0.09) for i, P in enumerate(f[4])]] for f in F['frames']]
         R['fly'] = { 'fps': F['fps'], 'W': F['W'], 'H': F['H'], 'places': F['places'], 'frames': fr }
-    # the drone's shots (the intro before the race): the video, its first frame, when each shot starts (seconds), its place and where it is along the run
-    dj = os.path.join(RAW, 'drone-%s.json' % t)
-    if os.path.exists(dj):
-        Dn = json.load(open(dj)); src, dst = os.path.join(RAW, 'drone-%s.webm' % t), os.path.join(OUT, 'drone-%s.webm' % t)
-        if not os.path.exists(dst) or os.path.getmtime(dst) < os.path.getmtime(src): shutil.copyfile(src, dst)
-        Image.open(os.path.join(RAW, 'drone-%s-poster.jpg' % t)).convert('RGB').save(os.path.join(OUT, 'drone-%s.webp' % t), 'WEBP', quality=72, method=6)
-        R['drone'] = { 'fps': Dn['fps'], 'W': Dn['W'], 'H': Dn['H'], 'dur': Dn['dur'], 'shots': Dn['shots'] }
-        if Dn.get('arrive'): R['drone']['arrive'] = Dn['arrive']   # (its first seconds: the camera every frame, for the globe's hand-over)
     data[t] = R
-    print(t, 'len', L, 'places', len(R['places']), 'hud', len(H), 'fly', 'fly' in R, 'drone', 'drone' in R)
+    print(t, 'len', L, 'places', len(R['places']), 'hud', len(H), 'fly', 'fly' in R)
 
 with open(os.path.join(SITE, 'routes.js'), 'w') as f:
-    f.write('/* The tracks: routes over the maps, heights, places, flyover frames and drone shots (made by routes.py, do not edit). */\n')
+    f.write('/* The tracks: routes over the maps, heights, places and flyover frames (made by routes.py, do not edit). */\n')
     f.write('window.ROUTES = ' + json.dumps(data, separators=(',', ':'), ensure_ascii=False) + ';\n')
 print('routes.js', os.path.getsize(os.path.join(SITE, 'routes.js')) // 1024, 'KB')

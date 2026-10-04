@@ -2,7 +2,7 @@
 # real: the game's world at real scale, placed by geo_match.py / geo_monaco.py (its origin, turn and height offset: real height = game
 # height + offset); scaled: a shortened copy of a real road (its start at the real start, turned towards the real finish, the finish pin
 # on the real finish); invented: a made-up track, placed at a chosen real spot (for the journey on the globe only).
-import json, math, os
+import sys, json, math, os
 import numpy as np
 from geo_lib import RAW, DEM, Geo, track, radii, haversine
 
@@ -17,8 +17,10 @@ CFG = {
     'nring': dict(kind='real', start='Nürburg', country='Germany', region='Eifel', l1='benelux'),
     'pikes': dict(kind='scaled', s=(38.91350, -105.03680), f=(38.84050, -105.04420), start='Crystal Reservoir', finish='Summit', country='USA', region='Colorado', l1='colorado'),
     'ouninpohja': dict(kind='scaled', s=(61.753636, 24.908667), bearing=0.0, start='Hämepohja', finish='Flying finish', country='Finland', region='Jämsä', l1='finland'),
-    'jezero': dict(kind='invented', c=(46.3636, 14.0937), start='Bled', country='Slovenia', region='Upper Carniola', l1='alps'),
-    'riviera': dict(kind='invented', c=(45.5150, 13.5935), start='Portorož', country='Slovenia', region='Slovenian coast', l1='alps'),
+    # (the made-up worlds put where the real land round them fits their own (geo_fit.py): the lake circuit on the dry plain under the
+    # Karavanke (its own lake in the infield), the seaside town on the south coast of the Piran peninsula, its shore on the real shore)
+    'jezero': dict(kind='invented', c=(46.387448, 14.168398), start='Lesce', country='Slovenia', region='Upper Carniola', l1='alps'),
+    'riviera': dict(kind='invented', o=(45.492821, 13.541245, 154.0), start='Piran', country='Slovenia', region='Slovenian coast', l1='alps'),
     'gora': dict(kind='invented', c=(46.3420, 13.9300), start='Pokljuka', country='Slovenia', region='Julian Alps', l1='alps'),
 }
 # the regional boxes (centre lat, lon; size km) shared by the tracks near each other
@@ -28,8 +30,10 @@ def bearing(la1, lo1, la2, lo2):
     p1, p2, dl = math.radians(la1), math.radians(la2), math.radians(lo2 - lo1)
     return math.degrees(math.atan2(math.sin(dl) * math.cos(p2), math.cos(p1) * math.sin(p2) - math.sin(p1) * math.cos(p2) * math.cos(dl))) % 360
 
-out = {}
+ONLY = sys.argv[1].split(',') if len(sys.argv) > 1 else None   # (only these again; the others as they were)
+out = json.load(open(os.path.join(RAW, 'places.json')))['tracks'] if ONLY else {}
 for tid, c in CFG.items():
+    if ONLY and tid not in ONLY: continue
     T = track(tid); P = np.array(T['pts'], dtype=np.float64); n = len(P)
     # the race's start and finish along the road (a closed track: its start line, where the race also ends)
     si = min(n - 1, int(round(T['startS'] / T['step']))); fi = min(n - 1, int(round(T['finishS'] / T['step']))) if T['open'] else si
@@ -44,6 +48,8 @@ for tid, c in CFG.items():
         rot = want - game_b
         G0 = Geo(c['s'][0], c['s'][1], rot); la, lo = G0.to_ll(-sx, -sz)   # the origin such that the start lands on the real start
         lat0, lon0 = float(la), float(lo); G = Geo(lat0, lon0, rot)
+    elif 'o' in c:   # the world's origin and turn given
+        lat0, lon0, rot = c['o']; G = Geo(lat0, lon0, rot)
     else:
         cx, cz = P[:, 0].mean(), P[:, 1].mean(); G0 = Geo(c['c'][0], c['c'][1], 0.0); la, lo = G0.to_ll(-cx, -cz)
         lat0, lon0, rot = float(la), float(lo), 0.0; G = Geo(lat0, lon0, rot)

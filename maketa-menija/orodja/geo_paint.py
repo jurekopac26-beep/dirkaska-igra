@@ -15,7 +15,7 @@ DETAIL = {0: (38, 74, 116), 10: (44, 70, 34), 20: (92, 100, 56), 30: (108, 132, 
 
 # the season of a track's land as the game shows it (the same on the globe, in the drone's far land): Vršič in October, the larches and
 # beeches turning, the first snow from about 1350 m (drones.json's snow line for its far land, there in the game's heights: + 800.8 m)
-SEASON = {'vrsic': {'autumn': 1.0, 'snow': (1350.0, 1550.0)}}
+SEASON = {'vrsic': {'autumn': 1.0, 'snow': (1480.0, 1570.0), 'game': True}}   # (the first snow as in the game's own world: from ~1480 m, on all but the steepest faces)
 
 def box_km(lat, lon, km):
     M, N = radii(lat); d = km * 500
@@ -96,8 +96,12 @@ def paint(box, W, pal, dem_z, zfac=1.2, detail=0.0, mpp=None, lc_res=None, seed=
     if season and season.get('snow'):   # the first snow: from the snow line up, thinner on steep faces, none on the water
         s0, s1 = season['snow']; gy, gx = np.gradient(h, mpp); sl = np.hypot(gx, gy)
         nz = fbm((W, W), max(2.0, 140 / mpp), seed + 23, 3); nf = fbm((W, W), max(1.5, 30 / mpp), seed + 24, 3)
-        f = np.clip((h + (nz - 0.5) * 140 + (nf - 0.5) * 80 - s0) / (s1 - s0), 0, 1); f = f * f * (3 - 2 * f)
-        f = f * (1 - 0.85 * np.clip((sl - 0.55) / 0.55, 0, 1)) * (1 - water)   # (the limestone walls stay grey)
+        if season.get('game'):   # as the game's own world has it (vrSnow): a line 1480 m +-55 m, full 90 m above it, on all but the steepest faces
+            line = s0 + (nz - 0.5) * 110; f = np.clip((h - line) / (s1 - s0), 0, 1); f = f * f * (3 - 2 * f)
+            ny = 1 / np.sqrt(1 + sl * sl); g = np.clip((ny - 0.5) / 0.24, 0, 1); f = f * g * g * (3 - 2 * g) * (1 - water)
+        else:
+            f = np.clip((h + (nz - 0.5) * 140 + (nf - 0.5) * 80 - s0) / (s1 - s0), 0, 1); f = f * f * (3 - 2 * f)
+            f = f * (1 - 0.85 * np.clip((sl - 0.55) / 0.55, 0, 1)) * (1 - water)   # (the limestone walls stay grey)
         rgb = rgb * (1 - f[..., None]) + np.array([236, 240, 246], np.float32) * (0.94 + 0.08 * nz)[..., None] * f[..., None]
     # the relief: a soft light from the north-west, a little light from the north-east, the valleys a little darker
     hh = ndimage.gaussian_filter(h, 14 / mpp) if 14 / mpp > 0.6 else h   # (the heights come at ~30 m: smoothed, no steps in the shading)
