@@ -1,5 +1,6 @@
-// The rally stage's extras (Ouninpohja): the co-driver's pace notes, the puddles of a race in the rain, the famous jump and the
-// medal times. Fast checks on the track data and the core (the races themselves: races.test.js, also in the rain).
+// The rally stages' extras (Ouninpohja, Harju): the co-driver's pace notes, the puddles of a race in the rain, the famous jump and the
+// medal times; Harju's sections (the road's width and surface: tarmac, the esker's gravel, the school yard's paving stones). Fast checks on
+// the track data and the core (the races themselves: races.test.js, also in the rain).
 //   node tests/rally.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -46,8 +47,8 @@ const dAt = (s) => Math.round(s - T.startS);   // (metres after the start line)
   const dry = mk(0), wet = mk(1);
   wet.step(1 / 120); const w1 = T.inRain; dry.step(1 / 120); const w2 = T.inRain;
   check('rain: the track has its puddles while the wet race steps, none for the dry one; the wet grip on the car', w1 === true && w2 === false && wet.player.wet < 1 && dry.player.wet === 1, `wet ${w1}, then dry ${w2}; grip ${wet.player.wet} / ${dry.player.wet}`);
-  const others = C.TRACKS.filter(d => d.id !== 'ouninpohja' && d.rain);
-  check('puddles only on the rally stage (def.rain)', !others.length, others.map(d => d.id).join(', '));
+  const others = C.TRACKS.filter(d => d.rain && !d.rally && d.roadSurface !== 'makadam');
+  check('puddles only on gravel roads (def.rain: the rally stages, Sani Pass)', !others.length, others.map(d => d.id).join(', '));
 }
 
 // the famous jump and the medals
@@ -55,8 +56,38 @@ const dAt = (s) => Math.round(s - T.startS);   // (metres after the start line)
   const J = def.jumpRec, big = jumps.reduce((a, j, k) => j.h > jumps[a].h ? k : a, 0);
   check('jump record: the Yellow House is the biggest jump, Märtin\'s 57 m', J.bump === big && J.m === 57 && /Märtin/.test(J.by), `bump ${J.bump} (biggest ${big}), ${J.m} m`);
   const M = def.medals, asc = (a) => Array.isArray(a) && a.length === 3 && a[0] < a[1] && a[1] < a[2];
-  check('medals: gold < silver < bronze for both physics, dry and wet; the rain slower', asc(M.cs) && asc(M.arcade) && asc(M.wet.cs) && asc(M.wet.arcade) && M.wet.cs[0] > M.cs[0] && M.wet.arcade[0] > M.arcade[0],
-    `cs ${M.cs}, arcade ${M.arcade}, wet cs ${M.wet.cs}, wet arcade ${M.wet.arcade}`);
+  check('medals: gold < silver < bronze, dry and wet; the rain slower', asc(M.cs) && asc(M.wet.cs) && M.wet.cs[0] > M.cs[0],
+    `dry ${M.cs}, wet ${M.wet.cs}`);
+}
+
+// Harju, the city stage (its 2025/2026 layout): the road's width and surface by section (tarmac down Yliopistonkatu and back up it, the esker's gravel
+// up the ridge, the gravel kink at the stadium's corner and the park's gravel cycleways, the school yard's paving stones), the hairpin by the
+// Keski-Suomen talo at the north end, the puddles of the rain only on its gravel, the co-driver's calls (the first hairpin, onto the gravel, the kink,
+// the two hairpins of the new part, onto the cobbles, back onto tarmac at Norssi), the barriers on the open road (the concrete blocks between the two
+// carriageways), the medals
+{
+  const hd = C.TRACKS.find(d => d.id === 'harju'), H = new C.Track(hd), at = (d) => H.idx(H.startS + d), K = (s) => H.sf[at(s)];
+  const wmin = Math.min(...H.wa), wmax = Math.max(...H.wa), D = [50, 300, 600, 900, 1100, 1450, 2050, 2400, 2490];
+  check('Harju: the road half width by section (2.9-4.8 m), the surfaces: tarmac on the boulevard, gravel up the ridge, at the stadium and in the park, paving stones by the school',
+    !!H.wa && wmin >= 2.85 && wmin <= 3.1 && wmax >= 4.7 && D.map(K).join(',') === '0,0,5,0,5,0,5,4,0',
+    `half width ${wmin.toFixed(2)}-${wmax.toFixed(2)} m, surfaces at ${D.join('/')} m: ${D.map(K).join(',')}`);
+  let iN = 0; for (let i = 0; i < H.N; i++) if (H.pz[i] < H.pz[iN]) iN = i;
+  const dN = iN * H.ds - H.startS;
+  check('Harju: 2025/2026: ~2.5 km from the start to the flying finish, the turnaround by the Keski-Suomen talo after ~1.4 km',
+    H.raceLen > 2400 && H.raceLen < 2600 && H.pz[iN] < -520 && dN > 1350 && dN < 1550, `${H.raceLen.toFixed(0)} m, furthest north z ${H.pz[iN].toFixed(0)} at ${dN.toFixed(0)} m`);
+  const P = H.puddles, onGravel = P.every(([s]) => H.sf[H.idx(s)] === 5);
+  check('Harju: the puddles as many as def.rain asks, only on the gravel', P.length === hd.rain.puddles && onGravel, `${P.length} puddles, on the gravel: ${onGravel}`);
+  const N = H.paceNotes(), txt = N.map(n => n.text);
+  check('Harju: the co-driver: the first hairpin left, onto the gravel, the kink, the new part\'s hairpins, onto the cobbles, back onto tarmac, the chicanes', /^hairpin left/.test(txt[0]) && txt.some(x => /hairpin right onto gravel/.test(x)) &&
+    txt.some(x => /right \w+ onto gravel into left \w+ into right \w+ onto tarmac/.test(x)) && txt.filter(x => /hairpin/.test(x)).length >= 4 &&
+    txt.some(x => /onto cobbles/.test(x)) && /onto tarmac/.test(txt[txt.length - 1]) && txt.filter(x => /chicane/.test(x)).length === hd.chicanes.length,
+    `${N.length} calls: "${txt[0]}" ... "${txt[txt.length - 1]}"`);
+  const i1 = at(60), i2 = at(250);   // (the sprint down and the climb back up: the concrete blocks right at the left edge, the sidewalk's crowd fence on the right)
+  check('Harju: the barriers down and back up the boulevard: the blocks between the carriageways at the edge, the fences on the sidewalks further out',
+    H.bl[i1] - H.wa[i1] < 0.4 && H.bl[i2] - H.wa[i2] < 0.4 && H.br[i1] - H.wa[i1] > 2.5 && H.br[i2] - H.wa[i2] > 2.5, `left ${(H.bl[i1] - H.wa[i1]).toFixed(2)}/${(H.bl[i2] - H.wa[i2]).toFixed(2)}, right ${(H.br[i1] - H.wa[i1]).toFixed(2)}/${(H.br[i2] - H.wa[i2]).toFixed(2)} m past the edge`);
+  const M = hd.medals, asc = (a) => Array.isArray(a) && a.length === 3 && a[0] < a[1] && a[1] < a[2];
+  check('Harju: medals gold < silver < bronze, dry and wet; the rain slower', asc(M.cs) && asc(M.wet.cs) && M.wet.cs[0] > M.cs[0],
+    `cs ${M.cs}, wet cs ${M.wet.cs}`);
 }
 
 console.log(bad ? `FAIL: ${bad} check(s)` : 'OK: all rally checks');

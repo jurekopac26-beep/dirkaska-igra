@@ -19,7 +19,8 @@ try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.2 });
   for (const id of await trackIds(page)) {
     await startTrack(page, id);
-    const fp = await page.evaluate(() => {
+    const fp = await page.evaluate(async () => {
+      for (let k = 0; k < 2; k++) await new Promise(r => requestAnimationFrame(r));   // (a frame of the new world drawn first: what follows the camera is set, e.g. Pikes Peak's shadow casters and haze, however long its first frame took)
       const W = Render.world, race = window.__game.race, Tr = race.track;
       World.update(W, 0, null);   // animated scenery (boats on the lake, water) to its pose at time 0, so the fingerprint does not depend on timing
       Render.setStartLights(0, false);   // (the start lights change colour a moment after the race starts)

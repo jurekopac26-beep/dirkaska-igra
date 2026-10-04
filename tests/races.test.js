@@ -1,18 +1,18 @@
-// Full AI races on every track with both physics (12 AI + the player on autopilot; Pikes Peak: time trial), to the finish,
-// in the dry and in the rain ('/rain': every car with the wet grip, the AI's pace from it), and with the player in the formula car
-// ('/formula': every car a formula, as in the game).
+// Full AI races on every track (Circuit Superstars physics; 12 AI + the player on autopilot; Pikes Peak: time trial), to the finish,
+// in the dry and in the rain ('/rain': every car with the wet grip, the AI's pace from it), with the player in the formula car
+// ('/formula': every car a formula, as in the game) and in the prototype ('/lm': every car a prototype), and in one of the newer road
+// cars ('/car': the V8, the electric car and the truck in turn, by the track's place in the list; the rivals in their own cars).
 // Checks that every car finishes and compares with tests/golden/races.json: the exact result (finish order, finish times
 // and the final state of every car, as a digest) must be the same. When it is not, the other values show how big the
 // change is: spins (at most 2 more than the reference), wall contacts, rescues and the winner's time (within +-3 %).
-// A race in the rain must also be slower than the same race in the dry, by 0.5-30 % (6-9 % on most tracks; the arcade cars' slow
-// hairpins, where they turn by the slide rather than the grip, lose the least: Pikes Peak ~1 %).
+// A race in the rain must also be slower than the same race in the dry, by 0.5-30 % (6-9 % on most tracks).
 //   node tests/races.test.js [--update] [--only=gozd,cs] [--only=spa,rain]
 'use strict';
 const fs = require('fs');
 const path = require('path');
 const { loadCore } = require('./lib/core.js');
 const crypto = require('crypto');
-const { DT, trackIds, PHYSICS, seeded, raceState } = require('./lib/sim.js');
+const { DT, trackIds, PHYSICS, NEW_CARS, seeded, raceState } = require('./lib/sim.js');
 
 const FILE = path.join(__dirname, 'golden', 'races.json');
 const update = process.argv.includes('--update');
@@ -51,11 +51,11 @@ function race(tid, phys, rain, model) {
 }
 
 const out = {}; let bad = 0; const t0 = Date.now();
-const FORMULA = C.MODELS.find(m => m.id === 'formula');
-for (const tid of trackIds(C)) for (const phys of PHYSICS) for (const v of ['', 'rain', 'formula']) {
+const model = (id) => C.MODELS.find(m => m.id === id);
+for (const tid of trackIds(C)) for (const phys of PHYSICS) for (const v of ['', 'rain', 'formula', 'lm', 'car']) {
   const rain = v === 'rain' ? 1 : 0, key = `${tid}/${phys}` + (v ? '/' + v : '');
   if (only.length && !only.every(o => key.split('/').includes(o))) { if (ref[key]) out[key] = ref[key]; continue; }
-  const r = race(tid, phys, rain, v === 'formula' ? FORMULA : null); out[key] = r;
+  const r = race(tid, phys, rain, v === 'formula' || v === 'lm' ? model(v) : v === 'car' ? model(NEW_CARS[C.TRACKS.findIndex(d => d.id === tid) % NEW_CARS.length]) : null); out[key] = r;
   const g = ref[key], why = [], dry = rain && (out[`${tid}/${phys}`] || ref[`${tid}/${phys}`]);
   if (r.nan) why.push('NaN in car state');
   if (r.finished !== r.cars) why.push(`only ${r.finished}/${r.cars} finished`);

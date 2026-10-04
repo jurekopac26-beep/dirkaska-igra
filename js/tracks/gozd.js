@@ -5,8 +5,9 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // Long main straight with stands and pits → left at the bottom of the V → up the right leg past a sand pit → hairpin round a rock
   // bulb → down the tongue → tight hairpin → up past the big stand → across the top → sharp corner among the rocks → straight.
   TRACK_DEFS.push({
-    id: 'gozd', name: 'Bakreni gozd', theme: 'forest', laps: 3, halfWidth: 6.2, camYaw: 0.16,   // kino camera looks NNE, as measured from the reference
+    id: 'gozd', test: true, name: 'Bakreni gozd', theme: 'forest', laps: 3, halfWidth: 6.2, camYaw: 0.16,   // kino camera looks NNE, as measured from the reference
     desc: 'Gozdna proga v obliki črke V z jezikom ob jezeru: dolga ravnina ob tribunah in boksih (zapelji vanje in mehaniki ti popravijo avto), lasnica okoli skal, tesna lasnica v jeziku, kmetija, skalna obala, stene iz gum in gost iglasti gozd v večerni svetlobi.',
+    en: { name: 'Copper Forest', desc: 'A V-shaped forest track with a tongue by the lake: a long straight past the grandstands and the pits (drive in and the mechanics repair your car), a hairpin round the rocks, a tight hairpin in the tongue, a farm, a rocky shore, tyre walls and a dense pine forest in the evening light.' },   // (the English page: Jezik · Language)
     // layout re-fitted to the reference minimap: the straight runs beside the pit lane (pits on its outside), the V hairpin sits higher,
     // a gentle S on the right leg, the top of the tongue bulges east before the lakeside road
     points: [[20,18],[44,19],[66,22],[83,34],[95,52],[129,111],[166,176],[201,237],[221,272],[231,287],[242,292],[252,292],[260,287],[267,279],[277,263],[288,245],[299,227],[317,184],[328,146],[327,106],[324,78],[328,52],[340,33],[357,16],[378,-6],[380,-34],[366,-54],[345,-58],[326,-49],[315,-32],[313,-6],[296,25],[265,50],[248,82],[256,120],[248,151],[227,158],[210,126],[189,88],[174,64],[164,45],[160,26],[161,6],[165,-14],[167,-33],[164,-55],[148,-69],[126,-69],[107,-64],[88,-59],[68,-54],[49,-48],[31,-39],[17,-26],[6,-11],[4,6]],

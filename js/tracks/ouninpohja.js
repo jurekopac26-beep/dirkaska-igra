@@ -11,8 +11,9 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // Game axes: x east, z south (north = up on the minimap). The road is OPEN: points[0] is the south end, the last point the north end.
   //   start / finish / cps : [x, z] positions, snapped to the nearest centre-line sample (cps = the split points CP1..CP4)
   TRACK_DEFS.push({
-    id: 'ouninpohja', name: 'Ouninpohja', theme: 'ouni', open: true, timeTrial: true, rally: true, laps: 1, halfWidth: 6,
+    id: 'ouninpohja', name: 'Ouninpohja, Finska', theme: 'ouni', open: true, timeTrial: true, rally: true, laps: 1, halfWidth: 6,
     desc: 'Najslavnejša hitrostna preizkušnja Relija Finska: kronometer po makadamu od Hämepohje do Hassintieja. Skok za skokom skozi gozd, dolg desni ob jezeru Naarajärvi, dvorišče kmetije Ouni, skok pri Rumeni hiši (Keltainen talo), stopnice do križišča Mutanen, hitra Okskulmantie, vrhovi v smrekovem gozdu, ribnik in vas, skok Amazon in lasnica Kakaristo med polji. Ni nasprotnikov, dirkaš proti uri, na suhem ali v dežju.',
+    en: { name: 'Ouninpohja, Finland', desc: 'The most famous special stage of Rally Finland: a time trial on gravel from Hämepohja to Hassintie. Jump after jump through the forest, a long right by Lake Naarajärvi, the Ouni farmyard, the jump at the Yellow House (Keltainen talo), the steps down to the Mutanen junction, the fast Okskulmantie, crests in the spruce forest, a pond and a village, the Amazon jump and the Kakaristo hairpin between the fields. No rivals, you race against the clock, in the dry or in the rain.' },   // (the English page: Jezik · Language)
     realKm: 33,
     recId: 'ouninpohja2',   // (the 9.7 km stage: its records and ghost apart from the old 5.9 km stage's)
     start: [0,-70], finish: [-2032.2,-5893.3], cps: [[408.7,-1202.3],[1106.7,-2575.9],[171.5,-4896.5],[-1862.4,-5333.7]],
@@ -22,9 +23,9 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // rain, a choice on the track menu (records apart): the wet gravel grips less and the puddles (seed: where they lie) drag at the wheels
     rain: { seed: 31, puddles: 46 },
     // the famous jump (game.js: each run's length there against the record, the player's own longest kept with the records)
-    jumpRec: { bump: 5, name: 'Rumena hiša', say: 'the Yellow House', m: 57, by: 'Markko Märtin', beat: 'Dlje od Märtina!' },
-    // medal times (s) per physics, dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze)
-    medals: { cs: [235, 246, 265], arcade: [241, 253, 272], wet: { cs: [258, 271, 291], arcade: [266, 279, 300] } },
+    jumpRec: { bump: 5, name: 'Rumena hiša', say: 'the Yellow House', m: 57, by: 'Markko Märtin', beat: 'Dlje od Märtina!', en: { name: 'Yellow House', beat: 'Further than Märtin!' } },
+    // medal times (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
+    medals: { cs: [235, 246, 265], wet: { cs: [258, 271, 291] } },
     // heights: [x, z, h] keyframes (m above the start line), snapped to samples, interpolated along s (not periodic); rolling lake-district hills
     elev: [[0,0,0],[0,-70,0],[0,-190,0],[84.4,-278.3,1],[136.2,-372,4],[168.4,-457.5,0],[200,-650,6],[240.8,-744.7,1],[208.8,-817.8,-3.5],[283.5,-1072.5,-4],[333.9,-1121.2,3],[404.3,-1193.4,-1],[461,-1362.3,4],[519.8,-1430.8,1],[593.4,-1536.7,1],[651.6,-1676.3,4],[642.7,-1774.7,2],[730.3,-1905.2,3],[814.2,-1938.2,6],[899.8,-1966.1,10],[951.7,-1982.9,4],[1004.4,-2000,7],[1075.6,-2033.3,7],[1096,-2067.4,6],[1119.3,-2119.9,5.5],[1152.9,-2195.3,2],[1205,-2262.6,1],[1274.7,-2325.5,-2],[1315,-2403.5,-3],[1345.9,-2498.6,-6],[1189,-2555.4,-2],[1038.7,-2592.8,-4],[904.8,-2657,0],[806.7,-2745,4],[680.6,-2856.2,0],[485.2,-2914,5],[392.7,-2931,2],[280.7,-3003.7,2],[227.1,-3208.6,6],[226.5,-3312.8,1],[164.2,-3448,5],[109,-3542.2,0],[116.1,-3677.9,7],[137.2,-3777.5,2],[106.2,-3891.7,5],[60.6,-3990.4,1],[51.9,-4116.9,4],[51.9,-4236.9,-1],[148.1,-4482.6,-2],[171.5,-4646.5,3],[171.5,-4746.5,1],[171.5,-4866.5,1],[171.5,-4936.5,1],[74.4,-4953.6,2],[-15.6,-4953.6,2],[-85.6,-4953.6,2],[-145.6,-4953.6,6],[-276.7,-4953.6,0],[-431.4,-5025.7,5],[-552.5,-5107.4,-1],[-729.2,-5159.4,6],[-871.2,-5183,0],[-1048.5,-5139.5,5],[-1198,-5095,0],[-1355.8,-5117.8,3],[-1471.4,-5196.7,6],[-1575.6,-5233.8,1],[-1674.8,-5222.8,-2],[-1766,-5274.7,3],[-1843.6,-5326.7,0],[-1998,-5313.2,0],[-2072.7,-5262.8,3],[-2147.3,-5212.5,0],[-2164.4,-5315.8,3],[-2162.2,-5410.1,0],[-2233.5,-5482.7,2],[-2239.5,-5576.4,5],[-2223.8,-5670.8,2],[-2251.3,-5734.4,1],[-2134,-5829.8,4],[-2032.2,-5893.3,2],[-1811.7,-6031.1,0]],
     // jumps: Gaussian bumps on the crests (at = share of the road from points[0], h = height, w = half width, m): at speed the car takes off
