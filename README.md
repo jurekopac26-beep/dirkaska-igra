@@ -391,6 +391,7 @@ Prava proga Suzuka na Japonskem v pravem merilu (5,807 km, 2 kroga proti 12 tekm
 - **Most:** avto na mostu in avto pod njim se ne dotakneta (trki in odpadli deli veljajo le na isti višini), na mostu so betonske ograje, spodnja cesta pelje med opornimi zidovi. Ko voziš pod mostom, most postane prosojen, da vidiš avto.
 - **Okolica:** teren iz višinskega modela, gozdovi po rabi tal (ESA WorldCover), prave tribune (V1, V2, A1, B1, B2, C, D, E, G, Q, S) z gledalci in stavba boksov s kontrolnim stolpom po obrisih iz OpenStreetMap, stavbe v okolici, ribniki, zabavišče Motopia z velikim kolesom, ki se vrti, in češnje v cvetu (dirka za veliko nagrado Japonske je aprila). Rdeče-beli robniki, gramozni izleti s stenami iz gum, lovilne ograje in table za zaviranje (300, 200, 100 m) pred prvim ovinkom, lasnico, Spoonom in šikano.
 - Na Suzuki ni boksov za popravilo (stavba boksov je le okolica).
+- **DRS** kot na VN Japonske (od 2. kroga naprej): ena cona po ciljni ravnini. Črta zaznave je 50 m pred šikano Casio Triangle, loputa se odpre 126 m za zadnjim ovinkom in ostane odprta do zaviranja pred prvim ovinkom. Čez progo sta beli črti (polna na črti zaznave, črtkana tam, kjer se cona odpre).
 - **Pokošena trava:** trava ob progi in zelenice za ogrado so pokošene v svetle in temnejše pasove vzdolž proge (ne v gozdu, grmovju, na parkiriščih, v ribnikih, ob ciljni ravnini in ob križanju).
 
 ## Bathurst, Avstralija
@@ -473,6 +474,38 @@ Na progah Ljubljana, Monako, Pikes Peak, Ouninpohja, Harju, Vršič, Los Caracol
 ## Fizika vožnje
 
 Igra ima eno fiziko, **Circuit Superstars**: avto drsi z nosom v ovinek toliko, kolikor hitro zavijaš; zaviranje v ovinku ga zavrti, na izhodu se sam poravna; brez vrtenja. Gumb za drift (preslednica) ga zavrti še malo bolj; na telefonu je to gumb **ROČNA** (ročna zavora) nad gumbom za zavoro, na igralnem plošku B / ○ ali RB / R1. Pomoč pri driftu (nizka/srednja/visoka) določa, kako daleč lahko zadrsa. Prejšnja arkadna fizika je odstranjena (kdor jo je imel izbrano, vozi zdaj Circuit Superstars; njeni stari rekordi se ne prikazujejo več).
+
+
+## Zavetrje
+
+Na dirki s tekmeci (ne v kronometru in ne v kvalifikacijah) ima avto v vrtincu za avtom pred sabo manj zračnega upora: do 40 m za njim in največ 2,4 m vstran od njegove linije, oba v hitrosti in ne v boksarski stezi. Bližje in bolj natanko za njim je, manj je upora (največ za četrtino). Na ravnini zato hitreje pridobiva hitrost in doseže večjo končno hitrost, v polnem zavetrju približno 10 % večjo. Na merilniku hitrosti se takrat prižge modra oznaka **ZAVETRJE**.
+
+Tekmeci z AI zavetrje izkoristijo: na ravnini ostanejo za avtom in se mu približujejo, vstran zapeljejo šele, ko so blizu ali ko se bliža zaviranje, in prehitijo. Pred zaviranjem za avtom pred sabo pustijo nekaj več prostora, ker jih zavetrje pripelje hitreje. Zavetrje velja tudi v dirki s prijatelji.
+
+## Okvare
+
+Na dirki s tekmeci (ne v kronometru in ne v kvalifikacijah) se avto lahko pokvari. Okvare vklopiš ali izklopiš v **Nastavitvah** (**Okvare**, privzeto so vklopljene). Na zaslonu se pod prikazom poškodb in gum za vsako okvaro prikaže rdeča ali oranžna oznaka.
+
+- **Predrta guma:** močan udarec v zid ali v drug avto (od približno 40 km/h naravnost v oviro) lahko prereže gumo na vogalu, ki je udaril, največ v četrtini primerov. Guma se izprazni v 10 sekundah. Potem prime za petino slabše in vleče avto na svojo stran (sprednja bolj kot zadnja), zato moraš rahlo zavijati v drugo smer. Na progah z boksi mehaniki ob postanku namestijo novo gumo.
+- **Vroče zavore:** zavore se segrejejo z vsakim zaviranjem in se v vožnji ohladijo. Nad 550 °C zavirajo slabše, pri 750 °C le še z dobro polovico moči. Tako vroče postanejo po več močnih zaviranjih zapored, na primer šestkrat zapored z 200 na 80 km/h. Na ravnini se ohladijo.
+- **Vroč motor:** motor se segreje, ko dolgo vozi počasi s polnim plinom in visokimi obrati, na primer ko kolesa zdrsavajo v pesku. Nad 112 °C ima manj moči, pri 130 °C 30 % manj. V hitri vožnji se ohladi.
+
+Ob vsaki okvari se prikaže sporočilo (**PREDRTA GUMA!**, **ZAVORE SE PREGREVAJO**, **MOTOR SE PREGREVA**), komentator jo omeni, spodaj pa piše, kaj storiti. Tekmeci s predrto gumo vozijo previdneje in zapeljejo v bokse po novo (kjer boksov ni, previdno pripeljejo do cilja). V dirki s prijatelji velja nastavitev gostitelja.
+
+## Radio ekipe in strategija
+
+Na dirki s tekmeci (ne v kronometru, kvalifikacijah, šoli vožnje in dirki s prijatelji) se oglaša inženir ekipe. Njegova sporočila se za nekaj sekund prikažejo v okvirčku **RADIO** na vrhu zaslona, z zvokom radijske zveze; ko je vklopljen komentator, jih tudi izgovori (v angleščini). Radio izklopiš v **Nastavitvah** (**Radio ekipe**).
+
+- **Razlike:** vsak krog na ciljni črti pove, koliko sekund je pred tabo avto spredaj in koliko za tabo avto zadaj. V zadnjem krogu doda **Zadnji krog!**
+- **Okno za postanek:** ko gorivo ali gume ne bodo zdržale do cilja, pove, v katerih krogih lahko zapelješ v bokse, da en postanek zadostuje.
+- **Boksi v tem krogu:** ko je postanek nujen, na sredini zaslona piše **BOKSI V TEM KROGU**. Nujen je, ko gorivo ne bi zdržalo do naslednjega uvoza v bokse, ko bi se gume obrabile, ko so gume napačne za mokroto proge, ob predrti gumi in ko je avto močno poškodovan. Inženir pove, na katero mesto te bo postavil postanek in katere gume dobiš. Pri tem upošteva, da morajo tudi tekmeci še na postanek.
+- **Vreme:** opozori minuto preden začne deževati in ko bo dež ponehal.
+- **Varnostni avto:** če te postanek tako ali tako čaka, svetuje, naj ga narediš zdaj, ko stane manj.
+- Po postanku pove, na katerem mestu si.
+
+V premoru je pod gumbi **strategija**: za koliko krogov imaš še goriva, koliko gum je še ostalo, koliko časa bi zdaj stal postanek in na katero mesto bi te postavil.
+
+**Gume za postanek med vožnjo:** na progah z boksi je pod gumbom za kamero okrogel gumb z gumo. Ko ga tapneš (ali pritisneš tipko **T**), izbereš gume za naslednji postanek: **A** (samodejno), **S** (mehke), **M** (srednje) ali **H** (trde). Rob gumba je v barvi zmesi. Izbira je ista kot **Gume v boksih** v premoru.
 
 ## Prvenstvo
 
@@ -594,6 +627,8 @@ Po cilju gumb **Posnetek** na zaslonu z rezultati predvaja celo dirko od štarta
 
 **Najboljši trenutki:** gumb na zaslonu z rezultati (ali **★ Trenutki** v posnetku) predvaja povzetek dirke: štart, do štiri najboljše trenutke v vrstnem redu, kot so se zgodili, in zmagovalca v cilju. Igra med dirko zapisuje prehitevanja (ne v boksih in ne za varnostnim avtom) in hude nesreče; prednost imajo tvoja prehitevanja, boji za vodstvo, prehitevanja v ovinkih in izmenjave mest. Vsak trenutek kažejo TV kamere z avtom, ki prehiteva (ali se je zaletel), nad gumbi piše, kaj se dogaja (npr. **PREHITEVANJE** · Ti ▸ R. Horvat · 8. mesto), komentator ga opiše. Po zadnjem se vrneš na rezultate; drug gumb (kamera, avto, na začetek) povzetek konča in posnetek teče naprej.
 
+**Video najboljšega trenutka:** ko končaš dirko, se pred rezultati sam predvaja tvoj najboljši trenutek, okoli 12 sekund s TV kamer, in se med predvajanjem posname kot video. Igra izbere tvoje prehitevanje ali zmago, sicer boj za vodstvo ali hudo nesrečo; če dirka nima posebnega trenutka, je to tvoj prihod v cilj (npr. **NAJBOLJŠI TRENUTEK · PREHITEVANJE** · Ti ▸ R. Horvat · 8. mesto). V videu sta tudi napis APEX RACING z imenom proge in opis trenutka. Video ima obliko zaslona (na pokončnem telefonu je pokončen, največ 1280 točk) in je brez zvoka. Shrani se kot MP4, kjer brskalnik to zna, sicer kot WebM. Med predvajanjem je spodaj samo gumb **Preskoči**: rezultati se pokažejo takoj, video pa ostane, če je bil posnet vsaj 3 sekunde. Pod rezultati se video vrti v zanki; dotik ga poveča čez cel zaslon. Gumb **Deli** na telefonu odpre meni za deljenje z video datoteko (WhatsApp, Instagram, galerija …), na računalniku pa video shrani kot datoteko. Video je samo pri dirkah s tekmeci, ne pri kronometru, kvalifikacijah ali dirki prek interneta. Izklopiš ga v Nastavitvah (**Video najboljšega trenutka po dirki**).
+
 ## Pogled iz kokpita in foto način
 
 V **Nastavitvah** je med kamerami (izometrična, za avtom, kino) še **Kokpit** (telefon ležeče): dirkaš z voznikovega sedeža. Pred sabo vidiš pokrov motorja svojega avta, okoli pa armaturno ploščo z merilnikom vrtljajev (rdeče polje pri omejevalniku), merilnikom hitrosti in prestavo, volan, ki se obrača s prednjimi kolesi, okvir vetrobranskega stekla, streho in vzvratno ogledalo; relijski avto ima varnostno kletko. V dirkalniku formule sediš v čeladi: pred tabo so nos, prednja kolesa in zaščitni lok (halo), volan pa ima zaslon s prestavo in hitrostjo ter lučke za prestavljanje (zelene, rdeče, modre). Glava se malo nagne v ovinek in pogleda v smer drsenja. Nad pokrajino je nebo (bolj modro nad obzorjem, sij sonca; ponoči temno), v predoru v Monaku pa strop, ki ga iz drugih kamer ni.
@@ -612,12 +647,29 @@ Na **Lestvici** je pri vsaki progi okvirček **Duh**. Svojega najboljšega duha 
 
 V **Nastavitvah** je vrstica **Profil**: **Izvozi v datoteko** shrani vse, kar igra hrani (nastavitve, rekorde, lestvice, kariero, prvenstvo, dosežke in duhove), v eno datoteko (npr. `apex-racing-profil-20260930.json`), **Uvozi iz datoteke** pa jo naloži na drugem telefonu ali računalniku: igra najprej vpraša, nato se znova zažene s tem profilom (dosedanji se zamenja).
 
+## Izziv s povezavo
+
+Prijatelja lahko izzoveš, naj premaga tvoj najboljši čas proge. Gumb **Izzovi prijatelja** je na rezultatih kronometra, kvalifikacij in dirke, ko imaš na progi svojega duha. Gumb **Pošlji izziv** je tudi na **Lestvici** v okvirčku **Duh**. Na telefonu se odpre meni za deljenje, na računalniku se povezava kopira.
+
+Povezava prenese tvoj čas in to, kako je bil odpeljan: progo, način (leteči krog ali kronometer), avto z barvo, nadgradnjami in nastavitvijo, vreme, letni čas in čas dneva. Priloži tudi tvojega duha, če gre v povezavo. Dolga vožnja v kronometru vanjo ne gre, zato izziv potuje brez duha.
+
+Ko prijatelj odpre povezavo, igra pokaže zaslon **Izziv**: kdo ga izziva, čas, ki ga mora premagati, in vse pogoje. Izziv počaka tudi na naslovnem zaslonu (gumb **Izziv: ime · čas**). **Sprejmi izziv** začne isto vožnjo: sam na progi, z avtom in v pogojih izzivalca, njegov duh pa vozi zraven. Pri letečem krogu se čas meri od črte, kot v kvalifikacijah. Na cilju se oba časa pokažeta drug ob drugem (**Izziv premagan!** ali **Izziv ni premagan**). Tvoji rekordi, duh in kariera ostanejo nespremenjeni. **Poskusi znova** požene isto vožnjo, **Pošlji odgovor** pa pošlje tvojo vožnjo z istimi pogoji nazaj izzivalcu. Kdor premaga izziv, dobi dosežek **Izziv sprejet**.
+
 ## Igralni plošček
 
 Igro lahko igraš z igralnim ploščkom (Xbox, PlayStation ali drug plošček s standardno razporeditvijo), ki ga povežeš s telefonom ali računalnikom (Bluetooth ali kabel). Ob prvem pritisku se pokaže kratko navodilo, gumbi na zaslonu pa se skrijejo (ko se dotakneš zaslona, se vrnejo).
 
 - **Vožnja:** leva palica krmili sorazmerno z nagibom (smerne tipke: do konca), RT / R2 je plin in LT / L2 zavora (oba sorazmerno s pritiskom), A / ✕ je tudi plin, X / ▢ tudi zavora, B / ○ ali RB / R1 je drift. **Start** ustavi dirko, **Y** / △ postavi obtičal avto nazaj na progo, **View** / Select zamenja kamero.
 - **Meniji:** palica ali smerne tipke premikajo izbiro do najbližjega gumba v tisti smeri, A ga pritisne, B gre nazaj (Nazaj, Glavni meni, iz pavze v dirko), Start pritisne glavni gumb zaslona (Dirkaj, Naprej, Start, Nadaljuj …), LB / RB listata med avti.
+
+## Kontrole po meri in volan s pedali
+
+V **Nastavitvah** gumb **Kontrole** (Tipke, plošček in volan) odpre zaslon z dvema stranema:
+
+- **Tipkovnica:** vsako dejanje (levo, desno, plin, zavora, drift, pavza, kamera, gume za postanek) ima dve tipki. Tapni polje in pritisni tipko. **Esc** pusti polje, kot je bilo, **Backspace** ga izprazni. Če je tipka že pri drugem dejanju, se tam odstrani. Privzeto: puščice ali WASD, preslednica za drift, Esc ali P za pavzo, C za kamero, T za gume.
+- **Plošček in volan:** za povezan plošček ali volan (z več napravami: **Zamenjaj**) so pokazani os za krmiljenje ter gumbi in pedali za plin, zavoro, drift, pavzo, kamero in vrnitev na progo. Tapni polje in pritisni gumb na napravi. Pedal pritisni do konca in ga spusti: igra izmeri, kje pedal miruje in kje je pritisnjen. To deluje tudi pri pedalih, ki jih brskalnik do prvega premika bere kot 0. Za krmiljenje tapni **Krmiljenje** in zavrti volan (ali palico) v desno; če naprava desno bere kot minus, se smer sama obrne (⇄). **Mrtvo območje** je del osi na sredini, ki ne krmili. **Poln zavoj pri** pove, pri katerem delu osi je zavoj do konca (pri volanu z 900° je 25 % okoli 112° v vsako smer). **Odziv** je enakomeren (za volan) ali nežen v sredini (za palico). **Obrni smer** zamenja levo in desno. Vrstice za krmiljenje, plin in zavoro sproti kažejo, koliko je pritisnjeno.
+
+Nastavitve se shranijo v brskalniku za vsako napravo posebej, zato imata plošček in volan vsak svoje. **Ponastavi** vrne privzete vrednosti strani, ki je odprta. Volan (naprava, ki se ne predstavi kot standardni plošček, npr. Logitech G29/G920, Thrustmaster, Fanatec) privzeto krmili z osjo 0, enakomerno in z majhnim mrtvim območjem, pedale pa nastaviš sam. Ob prvem pritisku igra opozori, naj jih nastaviš.
 
 ## Grafika
 
@@ -728,6 +780,7 @@ Dirka dveh, treh ali štirih igralcev, vsak na svojem telefonu (ali računalniku
 - Premor ustavi le tvoj avto: prijatelj vozi naprej in ura teče. Enako, če med dirko preklopiš v drugo aplikacijo; če telefon igro takrat ustavi za več kot 10 sekund, se povezava prekine.
 - Po cilju se vrnete v sobo na naslednjo dirko (gostitelj lahko začne, ko je v sobi vsaj en prijatelj). Če kdo odide ali se povezava z njim prekine, ostali to izvedo, njegov avto izgine s proge, dirka pa teče naprej; če odide gostitelj, je soba zaprta.
 - Poškodbe prijateljevega avta (udrtine, odpadli deli, dim) vidi le prijatelj.
+- **Prvenstvo:** gostitelj v sobi vklopi **Prvenstvo**. Proga, ki je izbrana, postane prva dirka, z gumbom **Dodaj izbrano progo** doda naslednje (največ osem). Dokler prva dirka ni odpeljana, lahko progo s seznama odstrani (✕). Dirke potekajo po vrsti, gostitelj vsako začne z gumbom **Začni dirko 1/4**, **2/4** … Proga za naslednjo dirko je izbrana sama. Po vsaki dirki gostitelj podeli točke po vrstnem redu na cilju (25, 18, 15 …; kdor ni prišel do cilja, ne dobi točk). Lestvica se pokaže pod rezultati dirke in v sobi na vseh telefonih. Kdor odide, obdrži točke (na lestvici piše **odšel**); kdor pride pozneje, začne brez točk. Po zadnji dirki je na lestvici prvak, gostitelj pa lahko z gumbom **Novo prvenstvo** začne znova z istimi progami.
 
 Telefoni so povezani neposredno (WebRTC) s knjižnico [PeerJS](https://peerjs.com): vsak prijatelj z gostiteljem, ki stanja avtov (20-krat na sekundo) in novice pošilja naprej ostalim. Da se najdeta, uporabita brezplačni javni strežnik PeerJS: pri hitri povezavi imajo čakalna mesta stalna imena (z različico igre), pri zasebni sobi je koda njun naslov na njem. Čakajoči telefon mora imeti igro odprto na zaslonu. Za neposredno povezavo telefona prek Googlovega strežnika STUN izvesta svoj javni naslov; kadar neposredna povezava ni mogoča (nekatera mobilna omrežja), gre promet prek posredniškega strežnika PeerJS (TURN). Če gostitelj med čakanjem na prijatelja za hip izgubi povezavo s strežnikom (npr. ko preklopi v drugo aplikacijo, da pošlje kodo), se soba z isto kodo sama znova poveže. Brez interneta igra deluje naprej, dirka s prijateljem pa ne.
 
