@@ -16,6 +16,114 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     snd: { kind: 'hybrid', hz: 1, loud: 1.1 },
     expect: { t100: [2.07, 2.43], vmax: [302, 321], latG: [2.48, 2.58], d100: [20.2, 22.3] },
     parts: { set: 'race', ht: 1.12, y0: 0.14 },
-    look: null,
+    // the look (KIT API v1, render.js; look units = metres): one loft, the body and the canopy in one: the fenders' crests over the front
+    // wheels with the bonnet's valley between them, the canopy (windscreen, side glass, the carbon roof, the rear glass) narrowing back to
+    // the engine cover's spine between the haunches, the body pinched behind the doors (the side intakes' black mouths face forward); the
+    // standard regions (race) cut it into the parts: the front lid (hood), the engine cover (trunk), the doors with their glass, the fenders,
+    // the quarters with the haunches, the nose and the tail (bumpers). On top: the nose's ducts and lamps, the splitter, the top-exit
+    // exhausts, the active wing on its struts (wing), the light bar, the diffuser. Livery: the paint, carbon below and on the roof, a pin line
+    look: {
+      body: { len: 4.7, wid: 1.98, roofY: 1.12, wz: 0.16,
+        //       x      w      yb     ybelt  wt     yt     cr     kind  tuck
+        secs: [[-2.35, 0.83, 0.38, 0.76, 0.78, 0.88, 0, 'b', 0.05],      // the tail's face: the light bar, the black mesh under it
+          [-2.27, 0.9, 0.32, 0.81, 0.82, 0.91, 0, 'b', 0.06],
+          [-2.05, 0.955, 0.22, 0.83, 0.8, 0.91, 0.03, 'b', 0.08],      // the tail's deck: the spine fades into it
+          [-1.8, 0.98, 0.16, 0.82, 0.7, 0.89, 0.06, 'b', 0.08],
+          [-1.3, 0.99, 0.15, 0.8, 0.66, 0.88, 0.1, 'b', 0.08],          // the rear axle: the haunches (window band), the engine cover's spine
+          [-0.85, 0.985, 0.15, 0.76, 0.62, 0.86, 0.15, 'gr', 0.08],     // the haunch's front (the intake's back wall); the rear glass's foot
+          [-0.55, 0.84, 0.15, 0.73, 0.58, 0.83, 0.23, 'r', 0.08],       // the roof's rear edge; the intake's deepest point
+          [-0.42, 0.905, 0.15, 0.72, 0.62, 0.83, 0.26, 'r', 0.08],      // the door's rear edge
+          [-0.2, 0.91, 0.15, 0.72, 0.65, 0.84, 0.28, 'r', 0.08],         // the roof's peak
+          [0.1, 0.915, 0.15, 0.72, 0.66, 0.84, 0.26, 'gf', 0.08],        // the windscreen's top
+          [0.95, 0.93, 0.16, 0.72, 0.78, 0.78, 0.04, 'b', 0.08],        // the windscreen's base (the cowl: its glass's corners tilted away from the driver)
+          [1.43, 0.985, 0.16, 0.76, 0.86, 0.86, -0.03, 'b', 0.08],      // the front axle: the fenders' crests, the bonnet's valley between them (shallow
+          [2.0, 0.94, 0.15, 0.6, 0.84, 0.7, -0.07, 'b', 0.07],           //  over the arch: a deeper one there would face its panels down), deeper ahead
+          [2.18, 0.9, 0.15, 0.53, 0.81, 0.6, -0.05, 'b', 0.06],         // the bonnet's leading edge: the lamps in its face
+          [2.2, 0.895, 0.15, 0.44, 0.8, 0.5, -0.04, 'b', 0.06],
+          [2.35, 0.8, 0.19, 0.4, 0.73, 0.45, -0.01, 'b', 0.05]],       // the nose's face: the ducts, the splitter under it
+        eye: { x: -0.36, y: 0.92, near: 0.2, tilt: 0.06, style: 'closed' },   // (low in the canopy)
+        door: [0.95, -0.42], bumpF: 0.15, bumpR: 0.3, bumpY: [0.58, 0.62],    // (the lower nose ahead of the bonnet's edge the front clip; the tail's lower half the rear one)
+        engRear: true, crush: { x0: -0.7, x1: 0.3, z: 0.56 } },               // (the V8 behind the seats; only the canopy's roof crushes)
+      wheels: { style: 'std', spokes: 10, w: 0.25, wR: 0.31, rim: [0.45, 0.46, 0.5], cap: [0.8, 0.81, 0.84], gap: 0.05 },
+      // the standard regions, the front clip also taking the lower nose's top (ahead of the bonnet's leading edge), the doors the canopy's
+      // side glass (its edge band, behind the windscreen's top)
+      regions: (std) => { const i = std.findIndex(r => r.part === 'hood');
+        return std.slice(0, i).concat([{ part: 'bumperF', x: [2.2, 3], bands: ['window', 'edge', 'crown'] }], std.slice(i),
+          ['L', 'R'].map(sd => ({ part: 'door' + sd, x: [-0.42, 0.1], bands: ['edge'], y: [0.78, 1.2], side: sd }))); },
+      build(K) {
+        const P = K.paint, S = K.strp, B = K.black, G = K.GLASS, CF = [0.11, 0.11, 0.115], DK = [0.2, 0.2, 0.22], TI = [0.7, 0.7, 0.72];
+        // a flat convex polygon facing d (its winding put right whatever the order of the points)
+        const fc = (pts, col, d, o) => { const [a, b, c] = pts, u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+          const n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+          K.face(n[0] * d[0] + n[1] * d[1] + n[2] * d[2] < 0 ? pts.slice().reverse() : pts, col, o); };
+        // ---- the shell: carbon under it all round (the sills, under the nose and the tail), the arches' ledges black; the side glass in the
+        //      door (the window band from the door's rear edge to x 0.5), the windscreen, the rear glass; the roof carbon; the intakes' mouths ----
+        const L = K.loft(K.body.secs, (k, e, kind, at) => {
+          const x = at.x;
+          if (e === 0 || e === 8) return at.arch ? B : CF;
+          if (e === 1 || e === 7) return x > -0.85 && x < -0.55 ? B : P;
+          if (e === 2 || e === 6) return P;                                            // (the shoulders: the fenders' tops, the cabin's, the haunches')
+          if (kind === 'gf' || kind === 'gr') return G;                                // (the windscreen wrapping round, the rear glass)
+          if (kind === 'r') return e === 4 || x < -0.42 ? CF : G;                      // (the side glass in the door; the roof and the C-pillars carbon)
+          return P;
+        }, { caps: { front: { col: P, colLow: CF, cut: 0.27, low: 'bumperF', high: 'bumperF' }, rear: { col: P, colLow: CF, cut: 0.62, low: 'bumperR', high: 'body' } } });
+        const D = L.decal, XA = K.arches[1].x + K.arches[1].half, XB = K.arches[0].x - K.arches[0].half;
+        // ---- the canopy's frames: the shoulder under the side glass (paint), its seal, the frame along the roof's edge down the A-pillar,
+        //      the glass's rear edge; the door's shut lines; the carbon skirt between the arches with a pin line over it ----
+        for (const sd of [-1, 1]) D.top([[0.95, sd * 0.72], [0.1, sd * 0.23], [0.1, sd * 0.28], [0.95, sd * 0.78]], B, 0.008);   // the A-pillars
+        D.side([[-0.85, 0.2], [-0.55, 0.2], [-0.55, 0.36], [-0.85, 0.36]], P, null, 0.006);   // (the intakes' mouths: from 0.36 up)
+        D.side([[-0.43, 0.2], [-0.415, 0.2], [-0.415, 0.76], [-0.43, 0.76]], B, null, 0.008);
+        D.side([[0.945, 0.2], [0.96, 0.2], [0.96, 0.76], [0.945, 0.76]], B, null, 0.008);
+        D.side([[XA, 0.2], [XB, 0.2], [XB, 0.3], [XA, 0.3]], CF, null, 0.006);
+        D.side([[XA, 0.303], [XB, 0.303], [XB, 0.316], [XA, 0.316]], S, null, 0.006);
+        D.side([[-1.76, 0.5], [-2.03, 0.48], [-2.03, 0.68], [-1.78, 0.7]], B, null, 0.006);   // the vents behind the rear wheels
+        // ---- the nose: the splitter under it, the big ducts and the middle one in its face, the slim lamps over them; the bonnet's two ducts ----
+        K.part('bumperF', () => {
+          K.box(2.14, 0.13, 0, 0.48, 0.022, 1.64, 0, B);
+          for (const sd of [-1, 1]) fc([[2.353, 0.37, sd * 0.31], [2.353, 0.385, sd * 0.72], [2.353, 0.235, sd * 0.68], [2.353, 0.22, sd * 0.31]], B, [1, 0, 0]);
+          fc([[2.353, 0.33, -0.22], [2.353, 0.33, 0.22], [2.353, 0.215, 0.2], [2.353, 0.215, -0.2]], B, [1, 0, 0]);
+        }, { hinge: [[2.2, 0.2, -0.8], [2.2, 0.2, 0.8]] });
+        for (const sd of [-1, 1]) K.headLamp(2.205, 0.53, sd * 0.62, 0.03, { shape: 'rect', w: 0.28, h: 0.05, ring: B, host: 'hood' });   // (in the bonnet's leading edge)
+        for (const sd of [-1, 1]) D.top([[1.86, sd * 0.2], [2.1, sd * 0.24], [2.1, sd * 0.42], [1.86, sd * 0.46]], B, 0.006);
+        // ---- the top-exit exhausts through the engine cover behind the cabin, their carbon collars (the engine's: they stay when the cover goes) ----
+        for (const sd of [-1, 1]) K.part('body', () => {
+          K.cyl([-0.96, 0.9, sd * 0.15], [-1.08, 1.06, sd * 0.15], 0.058, TI, { n: 8, capA: null, capB: B });
+          K.cyl([-0.99, 0.95, sd * 0.15], [-1.03, 1.008, sd * 0.15], 0.082, CF, { n: 8, capA: null, capB: CF });
+        });
+        // ---- the active wing raised on its struts over the tail (never crushed, never dented) ----
+        K.part('wing', () => {
+          K.wingPlank(-2.06, 1.03, -2.36, 1.07, 0.028, -0.8, 0.8, CF);
+          for (const sd of [-1, 1]) {
+            K.box(-2.2, 0.93, sd * 0.36, 0.16, 0.115, 0.035, 0, B);
+            K.endplate([[-2.05, 1.02], [-2.37, 1.055], [-2.38, 1.1], [-2.08, 1.07]], sd * 0.815, 0.012, CF);
+          }
+        }, { noCrush: true, noDent: true });
+        // ---- the tail: the light bar right across (the lit lenses are the tail mesh), the mesh in the bumper, the diffuser with its strakes ----
+        K.rect(-2.352, 0.82, 0, 1.56, 0.1, B, { dir: '-x', part: 'body' });
+        for (const sd of [-1, 1]) K.tailLamp(-2.354, 0.82, sd * 0.42, 0.66, 0.055);
+        K.grille(-2.352, 0.53, 0, 1.3, 0.16, { dir: -1, slats: 3, col: B, part: 'bumperR' });
+        K.part('bumperR', () => {
+          K.box(-2.12, 0.12, 0, 0.46, 0.03, 1.5, 0, B);
+          for (const z of [-0.5, -0.17, 0.17, 0.5]) K.box(-2.15, 0.12, z, 0.36, 0.21, 0.025, 0, CF);
+        });
+        // ---- the door mirrors on their stalks ----
+        for (const sd of [-1, 1]) K.mirror(0.62, 0.8, sd * 0.96, { col: P, arm: B, w: 0.09, h: 0.065, d: 0.15, z0: sd * 0.8 });
+        // ---- hinges: the front lid at the cowl, the engine cover at the cabin, the doors up the A-pillar (dihedral) ----
+        K.hinge('hood', [0.97, 0.78, -0.5], [0.97, 0.78, 0.5]);
+        K.hinge('trunk', [-0.86, 0.98, -0.4], [-0.86, 0.98, 0.4]);
+        for (const sd of [-1, 1]) K.hinge(sd < 0 ? 'doorL' : 'doorR', [0.95, 0.25, sd * 0.96], [0.6, 0.95, sd * 0.7]);
+        // ---- inside (seen once a part is off): the bucket seats low, the dashboard, the wheel, the tunnel, the bulkhead behind the seats; the V8
+        //      behind it with the hybrid's orange cables, the front axle's electric motor and the radiators in the nose ----
+        for (const sd of [-1, 1]) K.seat(-0.3, 0.33, sd * 0.34, { w: 0.46, l: 0.46, back: 0.6, tilt: 0.42 });
+        K.box(0.4, 0.42, 0, 0.32, 0.22, 1.36, 0, DK, null, false, { inner: true, part: 'body' });
+        K.cyl([0.14, 0.6, -0.34], [0.17, 0.64, -0.34], 0.16, [0.06, 0.06, 0.065], { n: 6, inner: true, part: 'body' });
+        K.box(0, 0.17, 0, 0.9, 0.2, 0.22, 0, DK, null, false, { inner: true, part: 'body' });
+        K.box(-0.66, 0.17, 0, 0.04, 0.68, 1.5, 0, K.lining, null, false, { inner: true, part: 'body' });
+        K.engine(-1.4, 0.24, 0, { l: 0.8, w: 0.6, h: 0.46, col: [0.36, 0.37, 0.4], cover: CF });
+        for (const sd of [-1, 1]) K.bar([-0.7, 0.3, sd * 0.3], [-1.02, 0.38, sd * 0.32], 0.02, [0.95, 0.45, 0.08], { n: 4, inner: true, part: 'body' });
+        K.box(1.95, 0.18, 0, 0.18, 0.3, 1.2, 0, DK, null, false, { inner: true, part: 'body' });
+        K.cyl([1.43, 0.34, -0.22], [1.43, 0.34, 0.22], 0.12, [0.4, 0.41, 0.44], { n: 6, inner: true, part: 'body' });
+      },
+    },
   });
 })();
