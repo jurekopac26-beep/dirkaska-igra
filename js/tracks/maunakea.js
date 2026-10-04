@@ -32,6 +32,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // the asphalt (OpenStreetMap: surface=paved), metres after the start line: from the end of the gravel below the start to the end of the summit road
     // at the finish; the gravel below it (the road from the visitor station) and past the finish (the track along the ridge)
     paved: [[-115.0, 5719.3]],
+    wearPaved: true,   // (the asphalt patched and cracked as on the other roads: World's roadWear, only on def.paved)
     // the dust off the cinder gravel (Render), dark grey-brown
     dust: { rate: 1.0, life: 1.8, size: 1.3, s0: 2.2, rise: 1.2, alpha: 0.9, drag: 0.6, col: [0.45, 0.4, 0.37] },
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)

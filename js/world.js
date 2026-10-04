@@ -4319,12 +4319,12 @@ const World = (function () {
      colour (lit, its shadows on them; the rain darkens them with it: userData.wear), indexed, in 256 m chunks (culled) ---- */
   const ROAD_WEAR = { nring: 1, vrsic: 1, caracoles: 0.8, monaco: 0.75, city: 0.75, ljubljana: 0.85, harju: 1 };   // per theme (else a modern circuit's: 0.3, an open road's: 0.8, as Los Caracoles; Harju's old town streets as worn as the Nordschleife, and twice as often again: roadWear's sp)
   function roadWear(o, tex) {
-    if (T.def.roadSurface === 'makadam' || THEME === 'pikes' || !T.rl || !tex.wear) return;   // (Pikes Peak's road has its own cracks and patches)
+    if ((T.def.roadSurface === 'makadam' && !(T.def.wearPaved && T.pavedAt)) || THEME === 'pikes' || !T.rl || !tex.wear) return;   // (Pikes Peak's road has its own cracks and patches; a gravel road with def.wearPaved: only its asphalt worn)
     const N = T.N, ds = T.ds, w = T.w, len = T.len, open = T.open, R = rng(4242), bk = { dy: 0, sl: 0 }, cells = new Map(), lim = w - 0.6;
     const kw = ROAD_WEAR[THEME] != null ? ROAD_WEAR[THEME] : open ? 0.8 : 0.3;   // (how worn: the gaps between the patches and cracks grow as it falls)
     const at = (k) => (open ? clamp(k, 0, N - 1) : ((k % N) + N) % N), HYi = (i) => (T.hasElev ? T.hy[i] : 0);
     // (a stage of several widths and surfaces, Track.wa / sf (Harju): its own width at each sample, and only its tarmac worn, not the gravel or the cobbles)
-    const wAt = (i) => (T.wa ? T.wa[i] : w), limAt = (i) => (T.wa ? T.wa[i] - 0.6 : lim), bare = (s) => !!T.sf && T.sf[at(Math.round(s / ds))] !== 0;
+    const wAt = (i) => (T.wa ? T.wa[i] : w), limAt = (i) => (T.wa ? T.wa[i] - 0.6 : lim), bare = (s) => (!!T.sf && T.sf[at(Math.round(s / ds))] !== 0) || (!!T.def.wearPaved && !T.pavedAt[at(Math.round(s / ds))]);
     const sp = T.sf ? 0.5 : 1;   // (and a stage through a town, its streets patched and cracked twice as often)
     const deck = (i) => { for (const c of T.cross || []) { const d = Math.abs(i - c.up); if (Math.min(d, N - d) * ds < c.upZ + 30) return true; } return false; };   // (Suzuka's bridge fades out while the car drives under it)
     const chunk = (p) => { const k = Math.floor(p[0] / 256) + ',' + Math.floor(p[2] / 256); let c = cells.get(k); if (!c) cells.set(k, c = { P: [], C: [], U: [], I: [] }); return c; };
