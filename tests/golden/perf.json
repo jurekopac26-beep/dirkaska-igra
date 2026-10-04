@@ -4,77 +4,77 @@
   "maxCalls": 336,
   "kverts": 509,
   "maxKverts": 607,
-  "jsMs": 0.99
+  "jsMs": 0.83
  },
  "ljubljana": {
   "calls": 281,
   "maxCalls": 343,
   "kverts": 583,
   "maxKverts": 653,
-  "jsMs": 0.79
+  "jsMs": 0.66
  },
  "monaco": {
   "calls": 226,
   "maxCalls": 300,
   "kverts": 676,
   "maxKverts": 757,
-  "jsMs": 0.74
+  "jsMs": 0.71
  },
  "toskana": {
   "calls": 313,
   "maxCalls": 387,
   "kverts": 1336,
   "maxKverts": 1403,
-  "jsMs": 1.11
+  "jsMs": 1.1
  },
  "pikes": {
   "calls": 90,
   "maxCalls": 101,
   "kverts": 281,
   "maxKverts": 377,
-  "jsMs": 0.32
+  "jsMs": 0.31
  },
  "pikesg": {
   "calls": 88,
   "maxCalls": 104,
   "kverts": 280,
   "maxKverts": 323,
-  "jsMs": 0.29
+  "jsMs": 0.25
  },
  "ouninpohja": {
   "calls": 167,
   "maxCalls": 181,
   "kverts": 618,
   "maxKverts": 820,
-  "jsMs": 0.72
+  "jsMs": 0.83
  },
  "vrsic": {
   "calls": 277,
   "maxCalls": 320,
   "kverts": 672,
   "maxKverts": 961,
-  "jsMs": 1.34
+  "jsMs": 1.4
  },
  "nring": {
   "calls": 187,
   "maxCalls": 354,
   "kverts": 533,
   "maxKverts": 692,
-  "jsMs": 1.93
+  "jsMs": 1.87
  },
  "spa": {
   "calls": 237,
   "maxCalls": 299,
   "kverts": 659,
   "maxKverts": 811,
-  "jsMs": 1.11
+  "jsMs": 1.08
  },
  "rbring": {
   "calls": 282,
   "maxCalls": 324,
   "kverts": 573,
   "maxKverts": 741,
-  "jsMs": 0.99
+  "jsMs": 0.92
  },
  "suzuka": {
   "calls": 262,
@@ -88,63 +88,63 @@
   "maxCalls": 271,
   "kverts": 305,
   "maxKverts": 393,
-  "jsMs": 1.15
+  "jsMs": 1.05
  },
  "katu": {
   "calls": 199,
   "maxCalls": 225,
   "kverts": 988,
   "maxKverts": 1300,
-  "jsMs": 0.34
+  "jsMs": 0.36
  },
  "harju": {
   "calls": 170,
   "maxCalls": 217,
   "kverts": 664,
   "maxKverts": 1058,
-  "jsMs": 0.32
+  "jsMs": 0.4
  },
  "bathurst": {
   "calls": 245,
   "maxCalls": 385,
   "kverts": 461,
   "maxKverts": 798,
-  "jsMs": 0.93
+  "jsMs": 1.16
  },
  "toronto": {
-  "calls": 286,
-  "maxCalls": 351,
-  "kverts": 833,
-  "maxKverts": 932,
-  "jsMs": 0.97
+  "calls": 278,
+  "maxCalls": 339,
+  "kverts": 806,
+  "maxKverts": 908,
+  "jsMs": 0.88
  },
  "chapman": {
   "calls": 211,
   "maxCalls": 288,
   "kverts": 1087,
   "maxKverts": 1271,
-  "jsMs": 0.85
+  "jsMs": 0.95
  },
  "bigsur": {
   "calls": 232,
   "maxCalls": 282,
   "kverts": 586,
   "maxKverts": 785,
-  "jsMs": 1
+  "jsMs": 0.9
  },
  "tianmen": {
   "calls": 337,
   "maxCalls": 370,
   "kverts": 1153,
   "maxKverts": 1292,
-  "jsMs": 0.72
+  "jsMs": 0.77
  },
  "uncompahgre": {
   "calls": 194,
   "maxCalls": 228,
   "kverts": 711,
   "maxKverts": 908,
-  "jsMs": 0.85
+  "jsMs": 0.92
  },
  "sani": {
   "calls": 92,
@@ -158,83 +158,83 @@
   "maxCalls": 404,
   "kverts": 1527,
   "maxKverts": 1830,
-  "jsMs": 1.08
+  "jsMs": 1.12
  },
  "mulholland": {
   "calls": 242,
   "maxCalls": 302,
   "kverts": 900,
   "maxKverts": 1136,
-  "jsMs": 0.95
+  "jsMs": 0.97
  },
  "beartooth": {
   "calls": 328,
   "maxCalls": 420,
   "kverts": 961,
   "maxKverts": 1173,
-  "jsMs": 1.15
+  "jsMs": 1.21
  },
  "rastro": {
   "calls": 302,
   "maxCalls": 369,
   "kverts": 1413,
   "maxKverts": 1857,
-  "jsMs": 0.75
+  "jsMs": 0.86
  },
  "moki": {
   "calls": 132,
   "maxCalls": 197,
   "kverts": 331,
   "maxKverts": 511,
-  "jsMs": 0.25
+  "jsMs": 0.28
  },
  "cpalace": {
   "calls": 281,
   "maxCalls": 303,
   "kverts": 606,
   "maxKverts": 759,
-  "jsMs": 0.7
+  "jsMs": 0.92
  },
  "riverside": {
   "calls": 197,
   "maxCalls": 255,
   "kverts": 309,
   "maxKverts": 376,
-  "jsMs": 0.67
+  "jsMs": 0.69
  },
  "longford": {
   "calls": 198,
   "maxCalls": 263,
   "kverts": 363,
   "maxKverts": 564,
-  "jsMs": 0.79
+  "jsMs": 0.86
  },
  "jezero": {
   "calls": 278,
   "maxCalls": 330,
   "kverts": 611,
   "maxKverts": 748,
-  "jsMs": 0.61
+  "jsMs": 0.68
  },
  "gora": {
   "calls": 254,
   "maxCalls": 295,
   "kverts": 997,
   "maxKverts": 1054,
-  "jsMs": 0.87
+  "jsMs": 0.73
  },
  "gozd": {
   "calls": 322,
   "maxCalls": 343,
   "kverts": 1558,
   "maxKverts": 1890,
-  "jsMs": 0.98
+  "jsMs": 2.47
  },
  "grom": {
   "calls": 330,
   "maxCalls": 384,
   "kverts": 1530,
   "maxKverts": 1670,
-  "jsMs": 0.84
+  "jsMs": 0.99
  }
 }

@@ -42,6 +42,10 @@
       NQ.i = bi; NQ.d2 = bd; if (bi < 0) { NQ.lat = 0; NQ.dd = 1e9; return NQ; }
       NQ.lat = (x - T.px[bi]) * T.nx[bi] + (z - T.pz[bi]) * T.nz[bi]; NQ.dd = Math.abs(NQ.lat) - WA[bi]; return NQ; };
 
+    // within ~200 m of the circuit (a 64 m grid): what lies farther is too far off for either camera to show its small details (the streets' lines)
+    const NEAR200 = new Set(); for (let i = 0; i < N; i += 2) { const cx = Math.floor(T.px[i] / 64), cz = Math.floor(T.pz[i] / 64); for (let a = -3; a <= 3; a++) for (let b = -3; b <= 3; b++) if (a * a + b * b <= 10) NEAR200.add((cx + a) * 4096 + cz + b); }
+    const in200 = (x, z) => NEAR200.has(Math.floor(x / 64) * 4096 + Math.floor(z / 64));
+
     /* ---- the ground: the real terrain, pulled to the road's height along the circuit (level with it to 4 m past the edge, blended out by 30 m) ---- */
     const groundH = (x, z) => {
       let h = demH(x, z); const q = near(x, z, 40);
@@ -154,8 +158,8 @@
       // the traffic on the expressway (it stays open during the race)
       if ((S.kind === 0 && hw >= 4) || S.kind === 4) { let acc = 0;
         for (let k = 0; k + 1 < pts.length; k++) { const [x, z] = pts[k], [x2, z2] = pts[k + 1], [nx, nz] = nr[k], l = Math.hypot(x2 - x, z2 - z), y = deckY(S, x, z) + yOff + 0.012, y2 = deckY(S, x2, z2) + yOff + 0.012; acc += l;
-          const q = near(x, z, 16); if (!S.lv && ((q.i >= 0 && q.dd < (q.lat > 0 ? T.br[q.i] : T.bl[q.i]) - WA[q.i] + 3) || onRoad(x, z, S.k, 1) || onRoad(x2, z2, S.k, 1))) continue;
-          const L4 = (o0, o1, col, f) => stMarks.push([[x + nx * o0, y, z + nz * o0], [x + nx * o1, y, z + nz * o1], [x + (x2 - x) * f + nx * o1, lerp(y, y2, f), z + (z2 - z) * f + nz * o1], [x + (x2 - x) * f + nx * o0, lerp(y, y2, f), z + (z2 - z) * f + nz * o0], col]);
+          const far = !in200(x, z), q = near(x, z, 16); if (!S.lv && ((q.i >= 0 && q.dd < (q.lat > 0 ? T.br[q.i] : T.bl[q.i]) - WA[q.i] + 3) || onRoad(x, z, S.k, 1) || onRoad(x2, z2, S.k, 1))) continue;
+          const L4 = (o0, o1, col, f) => far || stMarks.push([[x + nx * o0, y, z + nz * o0], [x + nx * o1, y, z + nz * o1], [x + (x2 - x) * f + nx * o1, lerp(y, y2, f), z + (z2 - z) * f + nz * o1], [x + (x2 - x) * f + nx * o0, lerp(y, y2, f), z + (z2 - z) * f + nz * o0], col]);
           if (S.kind === 0) { L4(-0.2, -0.08, yl, 1); L4(0.08, 0.2, yl, 1); }
           else { if (Math.floor(acc / 6) % 2) for (const o of [-hw / 3, hw / 3]) L4(o - 0.07, o + 0.07, wl, 1);
             if (R() < l / 22) { const f = R(), lane = Math.floor(R() * 3) - 1, big = R() < 0.18; traffic.push([x + (x2 - x) * f + nx * lane * hw / 1.6, lerp(y, y2, f) - 0.02, z + (z2 - z) * f + nz * lane * hw / 1.6, -Math.atan2(z2 - z, x2 - x), big ? 1.7 : 1, big ? [0.92, 0.92, 0.9] : [[0.9, 0.9, 0.9], [0.12, 0.12, 0.13], [0.6, 0.61, 0.64], [0.7, 0.1, 0.1], [0.15, 0.25, 0.5]][Math.floor(R() * 5)]]); } } } }
@@ -243,8 +247,11 @@
     /* ---- the barriers: concrete blocks (a jersey profile) with a catch fence on posts above them all the way round, open where the pit lane
        leaves and rejoins; the pit wall between the track and the lane ---- */
     const fMat = new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide });
-    const postGeo = (() => { const g = new GB(); box(g, 0, 0, 0, 0.09, 1, 0.09, 0, [0.5, 0.51, 0.53], null, true); return g.geometry(); })();
-    const posts = new IChunks(postGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), 384);
+    const POC = [[0.5, 0.51, 0.53]], POQ = [[1, 1], [1, -1], [-1, -1], [-1, 1], [1, 1]].map(([a, b]) => [a * 0.045, b * 0.045]);
+    const post = (g, x, y, z, h) => {   // a fence post (0.09 m square, 3.6 m tall) in the blocks' own mesh: its four sides, no draw call of its own
+      const c = Math.cos(h), sn = Math.sin(h), ring = (yy) => g.row(POQ.map(([a, b]) => [x + a * c - b * sn, yy, z + a * sn + b * c]), POC.concat(POC, POC, POC, POC));
+      g.link(ring(y), ring(y + 3.6), 0, 4);
+    };
     const gapAt = (i, sd) => { if (sd > 0 || !def.pit) return false; const p = pitAtI(i); return !!p && p.gap; };
     const wallRow = (g, i, sd, bar) => {   // the block's cross-section at sample i, its faces towards the road (rows left -> right)
       const shade = 0.93 + 0.07 * Math.sin(Math.floor(i * ds / 3.8) * 2.1), c0 = [0.62 * shade, 0.62 * shade, 0.6 * shade], c1 = [0.8 * shade, 0.8 * shade, 0.78 * shade], c2 = [0.86, 0.86, 0.84];
@@ -262,7 +269,7 @@
             const r = wallRow(g, i, sd, bar); if (pw >= 0) g.link(pw, r, 0, 4); pw = r;
             const u = ii * ds / 2.5, fa = Pt(i, sd * (bar + 0.31), 0.84), fb = Pt(i, sd * (bar + 0.31), 4.1);
             const rf = gf.row(sd > 0 ? [fa, fb] : [fb, fa], [[1, 1, 1], [1, 1, 1]], sd > 0 ? [[u, 0], [u, 1.3]] : [[u, 1.3], [u, 0]]); if (pf >= 0) gf.link(pf, rf, 0, 1); pf = rf;
-            if (ii < c0 + CH && ii % 2 === 0) { const p = Pt(i, sd * (bar + 0.36), 0); posts.add(p[0], p[1] + 0.6, p[2], T.hd[i], 1, 3.6); } } }
+            if (ii < c0 + CH && ii % 2 === 0) { const p = Pt(i, sd * (bar + 0.36), 0); post(g, p[0], p[1] + 0.6, p[2], T.hd[i]); } } }
         addM(g, wMat, true); addM(gf, fMat, false);
       }
     }
@@ -321,9 +328,12 @@
       for (const sdd of [-1, 1]) box(g, x + nx * span * sdd, gy - 0.3, z + nz * span * sdd, 0.9, 8.1, 0.9, h, gray);
       box(g, x, gy + 6.4, z, 1.2, 1.4, span * 2 + 0.9, h, [0.16, 0.17, 0.2], [0.26, 0.27, 0.3]);
       box(g, x, gy + 5.1, z, 0.5, 1.3, 5.6, h, [0.07, 0.07, 0.08]);
-      const lights = [], lg = new THREE.BoxGeometry(0.62, 0.62, 0.62);
-      for (let k = 0; k < 5; k++) { const o = (k - 2) * 1.0, m = new THREE.Mesh(lg, new THREE.MeshBasicMaterial({ color: 0x2a0606 })); m.position.set(x + nx * o, gy + 7.95, z + nz * o); m.rotation.y = -h; root.add(m); lights.push(m); }
-      out.dyn.lights = lights;
+      // the five lamps in one mesh (one draw call): each of out.dyn.lights stands for one lamp, its material.color.setHex recolours that lamp's vertices
+      const lg = new GB(); for (let k = 0; k < 5; k++) { const o = (k - 2) * 1.0; box(lg, x + nx * o, gy + 7.64, z + nz * o, 0.62, 0.62, 0.62, h, [1, 1, 1]); }
+      const lm = new THREE.Mesh(lg.geometry(), new THREE.MeshBasicMaterial({ vertexColors: true })), col = lm.geometry.attributes.color, per = col.count / 5, cc = new THREE.Color();
+      lm.matrixAutoUpdate = false; root.add(lm);
+      const lamp = (k) => ({ material: { color: { setHex(v) { cc.setHex(v); for (let j = k * per; j < (k + 1) * per; j++) col.setXYZ(j, cc.r, cc.g, cc.b); col.needsUpdate = true; } } } });
+      out.dyn.lights = [0, 1, 2, 3, 4].map(lamp); out.dyn.lights.forEach(l => l.material.color.setHex(0x2a0606));
     }
 
     /* ---- the buildings: OpenStreetMap's outlines and heights (or floors), walls with a facade picture (one tile = a window bay x a floor; the
@@ -697,7 +707,6 @@
     addM(lineG, new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }));
     addM(xG, matV);
     { const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas }), false); }
-    posts.addTo(root, true);
     const nT = TCH[0].addTo(root, true) + TCH[1].addTo(root, false);
     cars.addTo(root, false);
     crowdFinish(CR, root, out);
