@@ -22,8 +22,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     // into the front lid (the bonnet over the luggage well), the front wings with their lamps, the (rear-hinged) doors with their glass, the
     // rear wings and the bumpers; the engine bay under the lid is open (its top panels null: lined, floored, the firewall a bulkhead) with
     // the twin in it, and the lid itself ('trunk') stands propped open on its stays over it (the trunk's region moved off the loft: the lid
-    // alone). The canvas roof, the rear window and the stripes are decals laid on the loft; the start number on the front lid, roundels on
-    // the doors
+    // alone). The canvas is the roof's crown with strips laid over its edges (its bows, the folded canvas at the back), the rear window
+    // the crown of its segment with glass strips on the edges; the start number on the front lid, roundels on the doors
     look: {
       body: { len: 2.97, wid: 1.32, roofY: 1.33, wz: 0.07,
         //       x       w      yb     ybelt  wt     yt     cr     kind  tuck
