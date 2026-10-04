@@ -2135,8 +2135,8 @@ const Render = (function () {
     '#ifdef PK_ON', 'pkD = max(pkD, vIn * 0.85);', '#endif'].join('\n');   // (the inside: matte, Pikes Peak's glint too)
   /* the sun on the paint and the glass (every car on every track, the garage too): a clear coat that mirrors more of the sky at a glancing
      angle (fresnel), its sky in the colour of the race's sky (a warm dusk, a dark night, a grey rain: the fog's colour), and a sharp glint of
-     the sun with a broad sheen round it and a rim on the sun side, sharper and brighter on the glass (the body's panes by their colour, the
-     Peugeot's glass by its material). One patch after what a material already does (the dirt, which dulls it, and the scratches); the sun
+     the sun with a broad sheen round it and a rim on the sun side, sharper and brighter on the glass (the body's panes by their colour, a
+     chrome trim by its material). One patch after what a material already does (the dirt, which dulls it, and the scratches); the sun
      and the sky are shared uniforms set every frame (cgSet) */
   const CGU = { sun: { value: new THREE.Vector3(0, 1, 0) }, sunC: { value: new THREE.Color(0, 0, 0) }, env: { value: new THREE.Color(1, 1, 1) } }, cgOb = new WeakMap();
   const CG_COMMON = '#include <common>\nuniform vec3 uCgSun;\nuniform vec3 uCgSunC;\nuniform vec3 uCgEnv;\nuniform float uCgG;\n#ifndef CG_D\n#define CG_D\nfloat cgD = 0.0;\n#endif';
@@ -2322,55 +2322,8 @@ const Render = (function () {
   const numTexCache = new Map();
   function numTex(n) { if (!numTexCache.has(n)) numTexCache.set(n, Tex.number(n)); return numTexCache.get(n); }
 
-  /* ---------------- Peugeot 206: real 3D model ---------------- */
-  // "Peugeot 206" by Alvier (sketchfab.com), CC BY 4.0; the packed model (and its layout) is in js/data/p206.js
-  const P206_HDR = P206_MODEL.hdr, P206_BIN = P206_MODEL.bin;
-  let p206Geo = null, p206Mats = null;
-  function p206Parts() {
-    if (!p206Geo) {
-      const raw = atob(P206_BIN), buf = new Uint8Array(raw.length);
-      for (let i = 0; i < raw.length; i++) buf[i] = raw.charCodeAt(i);
-      let off = 0;
-      p206Geo = P206_HDR.nodes.map(n => ({ name: n.n, t: n.t, g: n.g, prims: n.p.map(([mat, nv, ni]) => {
-        const q = new Int16Array(buf.buffer, off, nv * 3); off += nv * 6;
-        const nq = new Int8Array(buf.buffer, off, nv * 3); off += nv * 3 + (nv * 3 & 1);
-        const idx = new Uint16Array(buf.buffer, off, ni); off += ni * 2;
-        const pos = new Float32Array(nv * 3), nrm = new Float32Array(nv * 3);
-        for (let i = 0; i < pos.length; i++) { pos[i] = q[i] * P206_HDR.q; nrm[i] = nq[i] / 127; }
-        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
-        g.setIndex(new THREE.BufferAttribute(new Uint16Array(idx), 1)); g.computeBoundingSphere();
-        return { mat, g };
-      }) }));
-      for (const n of p206Geo) if (n.g) { const src = p206Geo.find(o => o.name === n.g); n.prims = src.prims; n.mirror = Math.sign(n.t[2]) !== Math.sign(src.t[2]); }
-    }
-    if (!p206Mats) {
-      const chrome = cgMat(new THREE.MeshPhongMaterial({ color: 0x2c2e33, shininess: 90, specular: 0x777777, envMap: envTex, combine: THREE.MixOperation, reflectivity: 0.45 }), true, 'carCg');   // (the glass: its sharper glint)
-      p206Mats = { black: new THREE.MeshLambertMaterial({ color: 0x1b1c20 }), chrome, grey: new THREE.MeshLambertMaterial({ color: 0x55575c }),
-        light: new THREE.MeshLambertMaterial({ color: 0xd9d9d6 }), darkred: new THREE.MeshLambertMaterial({ color: 0x7a1510 }),
-        lamp: new THREE.MeshBasicMaterial({ color: 0xfff4dc }) };
-    }
-    return p206Geo;
-  }
-  // builds the model into a car view: body into bodyG (rolls/pitches), wheels into grp (steer/spin like the stock wheels)
-  function addP206(car, bodyG, grp, wf, wr) {
-    let bodyH = null;
-    const paint = cgMat(new THREE.MeshPhongMaterial({ color: car.color, shininess: 80, specular: 0x505050, envMap: envTex, combine: THREE.MixOperation, reflectivity: 0.2 }), false, 'carCg');
-    const tail = new THREE.MeshLambertMaterial({ color: 0x8a0d08, emissive: 0x3a0000 });
-    for (const n of p206Parts()) {
-      const holder = new THREE.Group(); holder.position.set(n.t[0], n.t[1], n.t[2]);
-      const inner = new THREE.Group(); holder.add(inner); if (n.mirror) inner.scale.z = -1;   // spin/steer stay on the holder
-      for (const p of n.prims) {
-        const m = new THREE.Mesh(p.g, p.mat === 'paint' ? paint : p.mat === 'red' ? tail : p206Mats[p.mat]);
-        m.castShadow = true; inner.add(m);
-      }
-      if (n.name === 'body') { bodyG.add(holder); bodyH = holder; }
-      else { grp.add(holder); (n.t[0] > 0 ? wf : wr).push(holder); }
-    }
-    return { paint, tail, bodyH };
-  }
-
   function makeCarMesh(car, opts) {
-    const M = car.m;
+    const M = Core.heirOf(car.m);   // (a retired model, still drawn (an old ghost, an old friend's car): the vehicle that took its place)
     const grp = new THREE.Group();
     const bodyG = new THREE.Group(); grp.add(bodyG);
     const bodyMat = (opts && opts.noDirt) ? matCar : dirtyCarMat();
@@ -2396,11 +2349,8 @@ const Render = (function () {
     }
     const wf = [], wr = [];
     const fx = M.a * (M.len / 4.4) * 0.98 + 0.05;
-    let glb = null, fp = null;
-    if (M.glb === 'p206') {   // real model: the stock body stays as an invisible stand-in (dents, glass) and the model is drawn instead
-      body.visible = false; tail.visible = false; dec.visible = false;
-      glb = addP206(car, bodyG, grp, wf, wr);
-    } else if (M.body === 'formula') {
+    let fp = null;
+    if (M.body === 'formula') {
       fp = fPartMeshes(car, bodyG);
       for (const sd of [-1, 1]) {   // open wheels: all four separate (they steer and spin; the pit crew changes them)
         const f = new THREE.Mesh(fWheelGeo(F_HUB.fr, F_HUB.fw, tyreCol(car)), matWheel), r = new THREE.Mesh(fWheelGeo(F_HUB.rr, F_HUB.rw, tyreCol(car)), matWheel);
@@ -2437,14 +2387,13 @@ const Render = (function () {
     const lights = [];
     for (const sd of [-1, 1]) lights.push(new THREE.Vector3(fs[0] * sxB + 0.05, fs[3] - 0.12, sd * fs[1] * szB * 0.62));
     for (const sd of [-1, 1]) lights.push(new THREE.Vector3(rs[0] * sxB - 0.06, rs[3] - 0.16, sd * rs[1] * szB * 0.6));
-    if (glb) { lights[0].y = lights[1].y = 0.68; lights[2].y = lights[3].y = 0.86; }
     if (dB.lamps) dB.lamps.forEach(([x, y, z], k) => { lights[k * 2].set(x * sxB, y, -z * szB); lights[k * 2 + 1].set(x * sxB, y, z * szB); });   // (the new bodies: where their lamps are)
     const noHead = M.body === 'formula';   // the formula: no headlamps, one rain light at the tip of the crash structure
     if (noHead) { lights[0].set(2.62, 0.26, -0.05); lights[1].set(2.62, 0.26, 0.05); lights[2].set(-2.49, 0.34, -0.02); lights[3].set(-2.49, 0.34, 0.02); }
     // (the kit: its ranges (immutable, shared), this car's own state: dead (parts off), deadV (their vertices: dents and the roof's crush
     // skip them), loose (the debris copies waiting for their pieces, also v.loose), ajar (parts hanging loose), tailOut (tail lamps out))
     const kit = KE ? { E: KE, R: body.geometry.userData, noHeadGlow: !!KE.body.noHeadGlow, noTailGlow: !!KE.body.noTailGlow, dead: {}, deadV: null, loose: {}, ajar: {}, tailOut: { L: 0, R: 0 }, nLost: 0, full: false, ck: false, ver: 0, lodV: 0 } : null;   // (ver: bumped whenever the body's shape changes: fireSpot, kitLod)
-    return { grp, bodyG, body, tail, dec, wf, wr, glb, fp, blob, marker, lights, noHead, kit, loose: kit ? kit.loose : null, wheelOff: [0, 0, 0, 0], wheelFix: 0, sagQ: null, sagP: null, hubAcc: [0, 0, 0, 0], hubs: [null, null, null, null], crack: [null, null, null, null],
+    return { grp, bodyG, body, tail, dec, wf, wr, fp, blob, marker, lights, noHead, kit, loose: kit ? kit.loose : null, wheelOff: [0, 0, 0, 0], wheelFix: 0, sagQ: null, sagP: null, hubAcc: [0, 0, 0, 0], hubs: [null, null, null, null], crack: [null, null, null, null],
       dirtU: bodyMat.userData && bodyMat.userData.dirt || null, scrU: bodyMat.userData && bodyMat.userData.scr || null, charU: bodyMat.userData && bodyMat.userData.char || null };   // (charU: the char, a Vector4: the fire's seat, the car's frame; w its spread)
   }
 
@@ -3327,15 +3276,13 @@ const Render = (function () {
   function getDynScale() { return dynScale; }
 
   /* ---------------- race attach ---------------- */
-  // the pieces every car shares (cached body / tail / wheel / Peugeot geometry, the common materials): never freed with a car
+  // the pieces every car shares (cached body / tail / wheel geometry, the common materials): never freed with a car
   function sharedCarRes() {
     const g = new Set([wheelGeo, wheelGeoW, ...geoCache.values(), ...tailGeoCache.values(), ...fWheelCache.values(), ...newWheelCache.values(), ...lmWheelCache.values()]);
-    if (p206Geo) for (const n of p206Geo) for (const p of n.prims) g.add(p.g);
     for (const E of kitCache.values()) { g.add(E.geo); g.add(E.tail); if (E.hub) g.add(E.hub); }   // (the kit: each model's colour-neutral body and tail, its bare hub, its wheels, the showroom's two kept bodies)
     for (const w of kitWheelCache.values()) { g.add(w.f); g.add(w.r); }
     for (const q of kitShowLRU) g.add(q.geo);
     const m = new Set([matCar, matWheel, matTailOff, matTailOn, matBlob, matMarker, matUnder, matEngine, matLens, matLensBroken, matScOn, matScOff, matCrack]);
-    if (p206Mats) for (const k in p206Mats) m.add(p206Mats[k]);
     return { g, m };
   }
   // frees what a group built for itself (geometry and materials), except the shared pieces and anything in `keep`
@@ -3437,7 +3384,7 @@ const Render = (function () {
 
   /* ---------------- Pikes Peak: the car gathers dust on the climb, the low morning sun glints on the paint ----------------
      Only the cars of a Pikes race (makeView dresses them; the ghost and every other track are untouched). The paint materials of the car
-     (the body, its panels, the Peugeot's paint and glass) get one shader patch with a stable program key: a dusty tan layer that settles
+     (the body, its panels) get one shader patch with a stable program key: a dusty tan layer that settles
      low (sills, arches, the tail) by a per-car amount that grows with the distance driven (4x on the gravel verge), and a warm specular +
      fresnel glint towards the theme's sun. The amount lives with the car (a pit repair keeps it; a new race starts clean).
      Round 6: the same layer also takes mud (a wet road: splashes low, in the arches) and snow / slush (the snow zone, winter: clumps on
@@ -3509,7 +3456,7 @@ const Render = (function () {
     const c = v.car, M = c.m, sc = M.len / 4.4, A = pkCarDust.get(c) || [0, 0, 0];
     const u = { inv: { value: new THREE.Matrix4() }, d: { value: A[0] }, w: { value: new THREE.Vector4(M.a * sc * 0.98 + 0.05, -M.b * sc * 0.98, M.rw, M.len / 2) },
       x: { value: new THREE.Vector4(A[1], A[2], 0, v.fp ? 199 : v.wr.length ? 99 : M.wid * 0.5 - 0.24) } };   // (mud, snow, the tyres' wetness, the inner face of the stock rear wheels drawn with the body; 199: the formula)
-    if (v.wf.length && v.wr.length) u.w.value.set(v.wf[0].position.x, v.wr[0].position.x, v.wf[0].position.y, M.len / 2);   // (the Peugeot, the formula: real wheels of their own)
+    if (v.wf.length && v.wr.length) u.w.value.set(v.wf[0].position.x, v.wr[0].position.x, v.wf[0].position.y, M.len / 2);   // (the formula, the prototype, the kit: real wheels of their own)
     pkCarMat(v.body.material, u, 0, 'pkCarB'); v.dirtU = null;   // the stock dirt stays off: this layer replaces it here
     if (v.partMats) { pkCarMat(v.partMats[0], u, 0, 'pkCarP');
       const t0 = v.partMats[1], tm = v.partMats[1] = pkCarMat(new THREE.MeshPhongMaterial({ color: t0.color, shininess: 12, specular: 0x141518 }), u, 0, 'pkCarT', 0);   // the bumpers (dark trim): an own Phong copy, so the snow and the dirt settle on them too
@@ -3522,11 +3469,6 @@ const Render = (function () {
     for (const w of v.wf.concat(v.wr)) w.traverse(o => { if (!o.isMesh || !o.material || Array.isArray(o.material)) return; let m = wm.get(o.material);
       if (!m) { m = pkCarMat(new THREE.MeshPhongMaterial({ color: o.material.color, vertexColors: o.material.vertexColors, shininess: 45, specular: 0x2c2d30 }), u, 0, 'pkWheel', 1); wm.set(o.material, m); }
       o.material = m; });
-    if (v.glb) {
-      pkCarMat(v.glb.paint, u, 0, 'pkCarP');
-      let gm = null;   // the Peugeot's glass: its own glinting copy (the shared one stays as it is)
-      v.bodyG.traverse(o => { if (o.isMesh && o.material === p206Mats.chrome) o.material = gm = gm || pkCarMat(o.material.clone(), u, 1, 'pkCarP'); });
-    }
     v.pk = u; v.pkS = { mk: [null, null, null, null], x: [0, 0, 0, 0], z: [0, 0, 0, 0], fw: [0, 0, 0, 0], la: 0, sp: [0, 0, 0, 0] };
   }
   function pkCarTick(v, c, dt, opt) {
@@ -4388,7 +4330,6 @@ const Render = (function () {
       const braking = (c.inBrk > 0.08 && c.vl > 0.5 && c.gear !== -1) || c.gear === -1 || c.inHand > 0.5;
       const rainL = v.noHead && (wet > 0 || (braking && time % 0.25 < 0.125));   // the formula's rain light: on in the rain, blinking while it brakes (harvesting)
       v.tail.material = v.tailDead ? vMat(v, matLensBroken) : (v.noHead ? rainL : braking) ? matTailOn : matTailOff;   // (tailDead: one of the 11's, both its tail lamps smashed or burnt out)
-      if (v.glb) v.glb.tail.emissive.setHex(v.tailDead ? 0 : braking ? 0xff1a0a : 0x3a0000);
       if (v.drsFlap) { v.drsK = (v.drsK || 0) + ((c.drs ? 1 : 0) - (v.drsK || 0)) * Math.min(1, dt * 12); v.drsFlap.rotation.z = 0.5 * v.drsK; }   // the rear wing's flap opens with DRS
       // light glows: soft warm headlights, red tail lights that flare when braking
       v.grp.updateMatrixWorld(true);
@@ -4470,14 +4411,10 @@ const Render = (function () {
     }
     v.parts = parts; v.under = under;
     v.glassTris = findGlass(v); v.winBroken = [0, 0, 0, 0]; v.roofStep = 0;
-    if (v.glb) {   // real model: no stock panels to knock off, no stock glass to crack
-      for (const k in parts) parts[k].visible = false;
-      v.glassTris = [[], [], [], []];
-    }
     // head lamp lenses (they go dark when smashed); tail lamps get a dark cover when smashed
     v.lens = []; v.lightBroken = [0, 0, 0, 0];
     const lz = dB.lens || [0.11, 0.28];   // (the new bodies: their own lens, or a round one)
-    if (!v.kit) for (let k = 0; k < 2; k++) { const L = v.lights[k], m = new THREE.Mesh(dB.lensR ? new THREE.CylinderGeometry(dB.lensR, dB.lensR, 0.02, 12).rotateZ(Math.PI / 2) : new THREE.BoxGeometry(0.045, lz[0], lz[1]), matLens); m.position.set(L.x - 0.02, L.y, L.z); m.visible = !v.glb && !v.noHead && !dB.noLens; v.bodyG.add(m); v.lens.push(m); }   // (the kit's lenses are in its body: kitLampOut)
+    if (!v.kit) for (let k = 0; k < 2; k++) { const L = v.lights[k], m = new THREE.Mesh(dB.lensR ? new THREE.CylinderGeometry(dB.lensR, dB.lensR, 0.02, 12).rotateZ(Math.PI / 2) : new THREE.BoxGeometry(0.045, lz[0], lz[1]), matLens); m.position.set(L.x - 0.02, L.y, L.z); m.visible = !v.noHead && !dB.noLens; v.bodyG.add(m); v.lens.push(m); }   // (the kit's lenses are in its body: kitLampOut)
   }
   // the formula's parts, built with the car's mesh (the garage and the ghost show them too): front wing (bumperF), nose (hood), rear wing with the
   // DRS flap (bumperR), engine cover (trunk), mirrors, bargeboards (fenderL/R). Each is centred on its own origin (a loose one tumbles about
@@ -4513,7 +4450,7 @@ const Render = (function () {
       const L = v.lights[k];
       if (k < 2) { if (v.kit) kitLampOut(v, k); else v.lens[k].material = vMat(v, matLensBroken); if (v.beam) beams(v); }   // (the night beam: the head lamps left)
       else if (v.kit) kitTailOut(v, k === 2 ? 'L' : 'R');   // (the kit's tail lamps: their side of its own tail mesh goes out)
-      else if (!v.glb) { const m = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.13, 0.3), vMat(v, matLensBroken)); m.position.set(L.x + 0.02, L.y, L.z); v.bodyG.add(m); }
+      else { const m = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.13, 0.3), vMat(v, matLensBroken)); m.position.set(L.x + 0.02, L.y, L.z); v.bodyG.add(m); }
       if (!v.kit && v.lightBroken[2] && v.lightBroken[3]) v.tailDead = true;   // (both tail lamps of one of the 11 smashed: its whole tail mesh dark, not lit round the covers)
       const ch = Math.cos(h), sh = Math.sin(h), wx = x + L.x * ch - L.z * sh, wz = z + L.x * sh + L.z * ch;
       for (let n = 0; n < 14; n++) particles.emit(wx, y + L.y, wz, c.vx * 0.5 + (rnd() - 0.5) * 4, 1 + rnd() * 2.5, c.vz * 0.5 + (rnd() - 0.5) * 4, 0.7 + rnd() * 0.5, 0.18, 0.12, 0.86, 0.92, 0.98, 0.95, 9, 0.6, y);   // glass shards
@@ -5026,21 +4963,15 @@ const Render = (function () {
   // a shared material as this car wears it: its own charred copy once it burns (charParts), else the shared one
   const vMat = (v, m) => (v.charSh && v.charSh.get(m)) || m;
   // the char of what the body's shader does not reach: the 11's separate panels darken with it, all alike, as the soot spreads over the body
-  // (one paint for them all and the trim; the formula's and the prototype's: an own copy of the shared paint for the car first; the
-  // Peugeot's model: all of its body, its own copies of the shared materials first); every car's shared under-parts (the engine block, the
-  // crash beams a lost panel bares), smashed lenses, bare hubs and wheels: an own copy each (v.charSh), swapped in as they are put on
+  // (one paint for them all and the trim; the formula's and the prototype's: an own copy of the shared paint for the car first); every
+  // car's shared under-parts (the engine block, the crash beams a lost panel bares), smashed lenses, bare hubs and wheels: an own copy
+  // each (v.charSh), swapped in as they are put on
   function charParts(v, w) { if (v.charMats || w > 0) ownRnd(() => charParts0(v, w)); }   // (its copies named without Math.random: ownRnd)
   function charParts0(v, w) {
     let L = v.charMats;
     if (!L) {
       L = v.charMats = []; v.charSh = new Map();
       if (v.partMats) for (const m of v.partMats) if (m && m.color) L.push(m);
-      if (v.glb && v.glb.bodyH) {   // (the Peugeot's model: its paint, its tail lamps, and an own copy of each shared material of its body but the black)
-        const sh = new Map(); if (p206Mats) for (const k in p206Mats) if (k !== 'black') sh.set(p206Mats[k], null);
-        v.glb.bodyH.traverse(o => { if (!o.isMesh || !o.material || Array.isArray(o.material)) return; const m = o.material;
-          if (sh.has(m)) { let q = sh.get(m); if (!q) { q = m.clone(); if (m === p206Mats.chrome) cgMat(q, true, 'carCg'); sh.set(m, q); L.push(q); } o.material = q; }
-          else if (m.color && L.indexOf(m) < 0 && !(p206Mats && m === p206Mats.black)) L.push(m); });
-      }
       if (v.fp) { let pm = null; const shared = new Set([matCar, matUnder, matEngine, matLens, matLensBroken, matWheel]);
         for (const n in v.fp.parts) v.fp.parts[n].traverse(o => { if (!o.isMesh || !o.material || Array.isArray(o.material)) return;
           if (o.material === matCar) o.material = pm = pm || cgMat(matCar.clone(), false, 'carCg'); else if (!shared.has(o.material) && L.indexOf(o.material) < 0 && o.material.color) L.push(o.material); });
@@ -5050,8 +4981,7 @@ const Render = (function () {
     const SH = [matUnder, matEngine, matLensBroken, matWheel], sw = (o) => { if (!o.isMesh || !o.material || SH.indexOf(o.material) < 0) return;
       let q = v.charSh.get(o.material); if (!q) { q = o.material.clone(); q.userData.col0 = q.color.clone(); v.charSh.set(o.material, q); L.push(q); } o.material = q; };
     v.bodyG.traverse(sw); for (const q of v.wf.concat(v.wr)) q.traverse(sw);
-    const k = clamp((7 * w - 0.5) / ((v.glb ? 0.5 : 0.8) * v.car.m.len), 0, 1) * 0.92;   // (as much as the body's soot (7 w m round the seat) would cover of the car; the
-    // Peugeot's model, all of it alike (no soot of its own), a little sooner)
+    const k = clamp((7 * w - 0.5) / (0.8 * v.car.m.len), 0, 1) * 0.92;   // (as much as the body's soot (7 w m round the seat) would cover of the car)
     for (const m of L) m.color.copy(m.userData.col0).lerp(SOOT, k);
   }
   // a loose piece's own copy of the material it wore on its car, as it is at that moment (the car's dirt, scratches and char go on without
@@ -5686,10 +5616,8 @@ const Render = (function () {
     skyStep(cam.ck || (lastMode === 'tv' && !cam.shot) || !!(cam.shot && cam.shot.sky)); cgSet(false);
     { const W = World.waterSky; W.hor.value.copy(scene.fog.color); skyTop(W.top.value); }   // (the sky the water mirrors)
     const ckOn = cam.ck && ck.car; if (ckOn) ckStep(ck.car, viewOf(ck.car));
-    { const cv = ckOn ? viewOf(ck.car) : null;   // (the Peugeot's own model has its inside, seats and all: from the seat, the plain body round the driver)
+    { const cv = ckOn ? viewOf(ck.car) : null;
       for (const v of views) if (v.kit) { const on = v === cv; if (v.kit.ck !== on) { v.kit.ck = on; kitRange(v); } }   // (the kit: from the seat, the outer shell only)
-      if (ck.glbV && ck.glbV !== cv) { ck.glbV.glb.bodyH.visible = true; ck.glbV.body.visible = false; ck.glbV = null; }
-      if (cv && cv.glb && cv.glb.bodyH && !ck.glbV) { cv.glb.bodyH.visible = false; cv.body.visible = true; ck.glbV = cv; }
       if (ck.litV && ck.litV !== cv) { carGlow(ck.litV); ck.litV = null; }   // (and it does not glow in the night round the driver: carGlow is for the others to see it)
       if (cv) { const m = cv.body.material; if (m && m.emissive && m.emissive.r) m.emissive.setScalar(0); ck.litV = cv; } }
     if (postOn()) {
@@ -5793,7 +5721,7 @@ const Render = (function () {
       showCar.grp.rotation.y = k / 36 * Math.PI * 2; showCar.grp.updateMatrixWorld(true);
       showCar.grp.traverse(m => {
         if (!m.isMesh || m === showCar.blob || !m.geometry.attributes.position) return;
-        for (let q = m; q; q = q.parent) if (!q.visible) return;   // (drawn: the Peugeot's model, not its stand-in)
+        for (let q = m; q; q = q.parent) if (!q.visible) return;   // (drawn only: a hidden mesh does not count)
         const pa = m.geometry.attributes.position, n = Math.min(pa.count, m.geometry.drawRange.count);
         for (let i = 0; i < n; i++) { p.fromBufferAttribute(pa, i).applyMatrix4(m.matrixWorld).project(showCam);
           const sx = (p.x * 0.5 + 0.5) * W, sy = (0.5 - p.y * 0.5) * H; if (sx < x0) x0 = sx; if (sx > x1) x1 = sx; if (sy < y0) y0 = sy; if (sy > y1) y1 = sy; }

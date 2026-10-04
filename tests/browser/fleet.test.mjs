@@ -32,6 +32,8 @@
 //    the player, the player then swapped for the vehicle) plus the vehicle's rival cost times as many rivals as the default field had
 //    drawn there (its rivals' calls / vertices in that frame over one default rival's whole cost; at most the field's size). Also printed:
 //    every rival of the field drawn in full (the worst case)
+//  - the retired model at index 5 (in no list: every check above skips it): still drawn when an old ghost or an old friend's car brings
+//    it, as its heir the LEV S (the showroom, a race, a wreck and a repair)
 //   node tests/browser/fleet.test.mjs            (FLEET_ONLY=titan,mravlja: the per-vehicle checks of those only)
 import fs from 'node:fs';
 import path from 'node:path';
@@ -566,6 +568,28 @@ try {
       T.check(`jezero under a wreck: each vehicle's own field and 40 of its pieces on the road (all in view) within the phone budget (calls <= ${Math.round(maxC)}, vertices <= ${Math.round(maxV / 1000)}k)`,
         rows.length === fields.length && !wb.length, (wb.length ? wb : ww).slice(0, 4).map(r => `${r.id} x${r.n} + 40 pieces (${r.pc ? r.pc[0].toFixed(2) + ' calls, ' + (r.pc[1] / 1000).toFixed(2) + 'k a piece' : 'not measured'}): ${r.wC} calls, ${Math.round(r.wV / 1000)}k`).join(', '));
     }
+  }
+
+  // ---- 6. the retired model at index 5 (DESIGN R3: in no list, but an old ghost or an old friend's car may still bring it): drawn as its
+  //         heir, the LEV S (Core.heirOf): the showroom's screen box over a whole turn the very same as the LEV S's; in a race the LEV S's
+  //         kit body round the retired model's physics, the wheels on its hubs; wrecked where it stands and repaired, no page error ----
+  if (!only.length || only.includes('levs')) {
+    const RT = await page.evaluate(() => {
+      const g = window.__game, R5 = Core.MODELS[5], L = Core.MODELS.find(m => m.id === 'levs');
+      Render.setShowCar(L, 0xd81f2a, 7); const bL = Render.showBox(); Render.setShowCar(R5, 0xd81f2a, 7); const bR = Render.showBox();
+      g.S.car = 5; g.onAction('restart'); g.pause(); g.sim(1, true);
+      const P = g.race.player, v = Render.viewOf(P); Render.frame(1 / 60, 1, P, 'chase', {});
+      const out = { retired: !!R5.retired, model: P.m.id, look: v && v.kit ? v.kit.E.M.id : null, wheels: v ? v.wf.concat(v.wr).map(w => [+w.position.x.toFixed(3), +w.position.y.toFixed(3)]) : [], same: !!bL && JSON.stringify(bL) === JSON.stringify(bR) };
+      Core.wreckCar(P); g.sim(0.5, true); for (let i = 0; i < 3; i++) Render.frame(1 / 60, 1, P, 'chase', {});
+      out.pieces = g.race.debris.filter(d => d.car === P.id && d.mesh && d.mesh.isObject3D).length;
+      g.race.repairCar(P); g.sim(0.25, true); for (let i = 0; i < 3; i++) Render.frame(1 / 60, 1, P, 'chase', {});
+      const nv = Render.viewOf(P); out.repaired = !!nv && nv !== v && !!nv.kit && !Object.keys(nv.kit.dead).length;
+      g.S.car = Core.MODELS.findIndex(m => m.id === 'rally');
+      return out;
+    });
+    T.check('the retired model at index 5 still drawn (an old ghost, an old friend\'s car): as its heir the LEV S (the showroom\'s screen box the LEV S\'s; in a race the LEV S\'s kit body, its four wheels on the hubs), wrecked (its pieces drawn) and repaired where it stands',
+      RT.retired && RT.same && RT.model === 'p206' && RT.look === 'levs' && RT.wheels.length === 4 && RT.wheels.every(([x, y]) => (Math.abs(x - 1.15) < 1e-3 || Math.abs(x + 1.32) < 1e-3) && Math.abs(y - 0.32) < 1e-3) && RT.pieces > 0 && RT.repaired,
+      JSON.stringify(RT));
   }
 
   T.check('no page errors, no warnings (but the place-holders\' fallback)', !errors.length && !warns.length, errors.concat(warns).slice(0, 5).join(' | '));

@@ -6,7 +6,9 @@
 // - one display order everywhere (CATS, then the career price, then the id): the arrows (every car in turn), the strip, the career's
 //   garage (by category), the championship's and the online picker
 // - the saved car: carId and carV 3; an index from a newer build or an unknown id: the rally car; a new car saved as an index older builds
-//   know (car <= 10); a car an older build picked since (it keeps carId as it was): that car
+//   know (car <= 10); a car an older build picked since (it keeps carId as it was): that car; the retired model at index 5 (by its id,
+//   by its index alone, picked by an older build): the LEV S, its upgrades, its record on a board and its lap ghost the LEV S's too
+// - the retired model never listed: not in the display order, the strip, the garage (the LEV S there once)
 // - the career: the upgrade prices by the car's class; the title demo: one category's field
 // - a championship started with the TITAN: its rivals TITANs in the race, in the standings, in the qualifying and the race of the next
 //   round after "Izberi avto" took the player to the PICO TURBO and back; one started in the FORMULA ORKAN (a one-make class): formulas
@@ -97,11 +99,13 @@ try {
       for (let k = 0; k < want.length; k++) { seen.push(Core.MODELS[g.S.car].id); g.onAction('car-next'); }
       const wrap = Core.MODELS[g.S.car].id;
       for (let k = 0; k < want.length; k++) { g.onAction('car-prev'); back.push(Core.MODELS[g.S.car].id); }
-      return { want, game: g.carOrder, seen, wrap, back, n: Core.MODELS.filter(m => !m.retired).length };
+      return { want, game: g.carOrder, seen, wrap, back, n: Core.MODELS.filter(m => !m.retired).length, retired: Core.MODELS.filter(m => m.retired).map(m => m.id) };
     }, expectOrder.toString());
     T.check('the display order: by category (Core.CATS), the cheapest first, then by id; the arrows visit every car in it and come round again, the other way back',
       ord.want.length === ord.n && ord.n >= 42 && ord.game.join() === ord.want.join() && ord.seen.join() === ord.want.join() && ord.wrap === ord.want[0] && ord.back.join() === ord.want.slice().reverse().join(),
       JSON.stringify({ n: ord.want.length, game: ord.game.slice(0, 8), seen: ord.seen.slice(0, 8), wrap: ord.wrap }));
+    T.check('the retired model at index 5 never listed: not in the display order, never reached by the arrows either way',
+      ord.retired.join() === 'p206' && ord.retired.every(id => !ord.game.includes(id) && !ord.seen.includes(id) && !ord.back.includes(id)) && ord.game.includes('levs'), JSON.stringify(ord.retired));
 
     // 5. the online picker in the same order (a room made without the network: Net stood in for)
     const net = await page.evaluate(() => {
@@ -166,8 +170,9 @@ try {
       for (const c of Core.CATS) { const L = want.filter(id => Core.MODELS.find(m => m.id === id).cat === c.id); if (!L.length) continue; out.push('#' + c.name); for (const id of L) out.push(c.id + ':' + Core.MODELS.find(m => m.id === id).name); }
       return out; }, expectOrder.toString());
     const heads = car.kids.filter(k => k[0] === '#'), Core_n = await page.evaluate(() => Core.MODELS.filter(m => !m.retired).length);
-    T.check('the career\'s garage: every car under its category\'s heading (Mali avti … Posebni), in the display order',
-      car.kids.join('|') === wantKids.join('|') && car.kids.length === Core_n + 10 && heads.length === 10 && heads[0] === '#Mali avti' && heads[9] === '#Posebni', JSON.stringify(car.kids.slice(0, 8)));
+    T.check('the career\'s garage: every car under its category\'s heading (Mali avti … Posebni), in the display order; the retired model not in it (the LEV S once)',
+      car.kids.join('|') === wantKids.join('|') && car.kids.length === Core_n + 10 && heads.length === 10 && heads[0] === '#Mali avti' && heads[9] === '#Posebni' && car.kids.filter(k => k === 'mali:LEV S').length === 1,
+      JSON.stringify(car.kids.slice(0, 8)));
     T.check('the career\'s strip: a price on the cars to buy (TIGER GT 85.000 €), a tick on the one in the garage',
       car.chips.some(t => /^TIGER GTFR85\.000/.test(t)) && car.chips.every(t => /€|✓/.test(t)), JSON.stringify(car.chips));
     T.check('the career\'s upgrade prices by class: the PICO TURBO as before (4.000 €, all three levels 23.000 €), the MRAVLJA (5.000 €) no cheaper than it (×1), the TITAN ×1.2 (4.800 €), ŠKORPIJON H ×2 (8.000 €; all three levels 46.000 €)',
@@ -194,6 +199,16 @@ try {
     const m8 = await load(JSON.stringify({ carV: 3, carId: 'kaze', car: 0, sound: 0, comm: 0 }));
     T.check('loading after an older build changed the car: {carId "titan", car 0} (the TITAN saved as the rally car\'s 4, then KAZE RS picked there) → KAZE RS; {carId "kaze", car 4} → the rally car; {carId "kaze", car 0} → KAZE RS',
       m6.car === 'kaze' && m7.car === 'rally' && m8.car === 'kaze', JSON.stringify({ m6: m6.car, m7: m7.car, m8: m8.car }));
+    // the retired model at index 5 (an older build's car): by its id, by its index alone (carV 3, carV 2), picked by an older build since
+    // (carId "kaze", car 5): the LEV S, saved as "levs"; its free upgrades the LEV S's (the better level of each part with the LEV S's own)
+    const r1 = await load(JSON.stringify({ carV: 3, carId: 'p206', car: 5, sound: 0, comm: 0 }));
+    const r2 = await load(JSON.stringify({ carV: 3, car: 5, sound: 0, comm: 0 }));
+    const r3 = await load(JSON.stringify({ carV: 2, car: 5, sound: 0, comm: 0 }));
+    const r4 = await load(JSON.stringify({ carV: 3, carId: 'kaze', car: 5, sound: 0, comm: 0, upg: { p206: { motor: 2, gume: 1, zavore: 0, aero: 3 }, levs: { motor: 1, gume: 2, zavore: 0, aero: 0 } } }));
+    const up = r4.stored.upg || {};
+    T.check('loading the retired model: {carId "p206", car 5}, {carV 3, car 5}, {carV 2, car 5}, {carId "kaze", car 5} → the LEV S, saved as "levs" (car: the rally car\'s index for older builds); its upgrades the LEV S\'s (Motor 2, Gume 2, Aero 3), the old id gone',
+      [r1, r2, r3, r4].every(r => r.car === 'levs' && r.stored.carId === 'levs' && r.stored.carV === 3 && r.stored.car <= 10) && !!up.levs && up.levs.motor === 2 && up.levs.gume === 2 && up.levs.zavore === 0 && up.levs.aero === 3 && !('p206' in up),
+      JSON.stringify({ r1: r1.car, r2: r2.car, r3: r3.car, r4: r4.car, stored: r1.stored.carId, up }));
     const sv = await page.evaluate(async () => { const g = window.__game; g.onAction('to-car'); await new Promise(r => setTimeout(r, 150)); document.querySelector('#car-cats [data-cat="posebni"]').click(); await new Promise(r => setTimeout(r, 100));
       return { car: Core.MODELS[g.S.car].id, stored: JSON.parse(localStorage.getItem('tdgp-settings')), rally: Core.MODELS.findIndex(m => m.id === 'rally') }; });
     await page.reload(); await page.waitForFunction(() => window.__game, null, { timeout: 60000 });
@@ -203,6 +218,18 @@ try {
     const demo = await page.evaluate(() => { const g = window.__game, M = Core.MODELS.find(m => m.id === g.demoModel), F = M && M.field ? M.field : null;
       return { id: g.demoModel, cat: M && M.cat, field: F, cars: g.demo.cars.map(c => c.m.id), ok: !!M && g.demo.cars.every(c => (M.oneMake ? [M.id] : F || ['kaze', 'vortex', 'pico', 'strega']).includes(c.m.id)) }; });
     T.check('the title demo: one category\'s vehicle picked, the AI in its field', demo.ok && !!demo.cat, JSON.stringify(demo));
+    // a record and a lap ghost of the retired model (stored by an older build): the LEV S's (its name on the boards, the ghost drawn as it)
+    await page.evaluate(() => {
+      localStorage.setItem('tdgp-records', JSON.stringify({ tracks: { 'pikes@cs': { bestTime: 250.5, board: [{ name: 'Ana', car: 'STARO IME', carId: 'p206', time: 250.5, splits: [], date: 1700000000000, upg: {} }] } } }));
+      localStorage.setItem('tdgp-ghost-jezero@cs', JSON.stringify({ v: 1, dt: 0.1, n: 3, t: 61.5, car: 'p206', color: 0xd81f2a, stripe: true, lap: 1, q0: [0, 0, 0], d: btoa(String.fromCharCode(...new Uint8Array(3 * 7 * 2))) }));
+    });
+    await load(JSON.stringify({ carV: 3, carId: 'kaze', car: 0, sound: 0, comm: 0, quali: 0, track: 'pikes' }));
+    const bd = await page.evaluate(async () => { window.__game.onAction('to-board'); await new Promise(r => setTimeout(r, 300));
+      return { rows: [...document.querySelectorAll('#board-body tbody tr')].map(tr => tr.textContent).filter(t => /Ana/.test(t)), old: /STARO IME/.test(document.getElementById('board-body').textContent) }; });
+    await startTrack(page, 'jezero');
+    const gh = await page.evaluate(() => window.__game.ghost);
+    T.check('a record and a lap ghost of the retired model: the LEV S\'s (Pikes Peak\'s board and its Time Attack 1 class: "LEV S", never the stored name; the Jezero lap ghost: the LEV S)',
+      bd.rows.length === 2 && bd.rows.every(t => /LEV S/.test(t)) && !bd.old && !!gh && gh.car === 'levs' && gh.name === 'LEV S' && gh.lap === true, JSON.stringify({ bd, gh }));
     T.check('no page errors (saves)', !errors.length, errors.slice(0, 5).join(' | '));
     await ctx.close();
   }
