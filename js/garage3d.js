@@ -539,6 +539,12 @@ const Garage3D = (function () {
       B(0.272, 0.372, 1.35, 1.57, 2.73, 2.87, [0.85, 0.86, 0.82], null, 'a');
       for (const [y, col] of [[1.52, [0.15, 0.6, 0.25]], [1.46, [0.8, 0.12, 0.1]], [1.4, [0.08, 0.08, 0.09]]]) B(0.372, 0.392, y - 0.016, y + 0.016, 2.784, 2.816, col, null, 'a');
       obox(g, T(0.29, 1.57, 2.84), T(0.29, 4.3, 2.84), 0.025, 0.025, CND);
+      // the bay's traffic light on the jamb's other column, toward the room: red (off) over green (lit, over 1: it glows), a visor over
+      // each, an amber beacon on top (off), its conduit up the column
+      B(0.272, 0.392, 2.3, 2.72, -2.88, -2.72, [0.06, 0.06, 0.07], null, 'a');
+      for (const [y, col] of [[2.6, [0.32, 0.05, 0.04]], [2.42, [0.3, 2.0, 0.6]]]) { cylA(g, T(0.4, y, -2.8), 'x', 0.055, 0.016, 10, [0.05, 0.05, 0.06], col); B(0.392, 0.47, y + 0.058, y + 0.066, -2.866, -2.734, [0.06, 0.06, 0.07]); }
+      { const c = T(0.332, 0, -2.8); drum(g, c[0], c[2], 0.05, 2.72, 2.745, [0.1, 0.1, 0.11], 10, null, [0.1, 0.1, 0.11]); drum(g, c[0], c[2], 0.042, 2.745, 2.84, [0.62, 0.38, 0.08], 10, null, [0.7, 0.45, 0.1]); }
+      obox(g, T(0.29, 2.72, -2.866), T(0.29, h, -2.866), 0.02, 0.02, CND);
       // the galvanised steel: the guide rails (the curtain's slot dark), the hood, the coil's brackets and their hubs, the motor's
       // gearbox, the motor, its terminal box, the hand chain, the drain's edges
       gloss(P, 1.8);
@@ -688,12 +694,17 @@ const Garage3D = (function () {
     const { z0, z1 } = ROOM, { back: PB, front: PF } = WALLS, { red: RED, red2: RED2, dk: DK, steel: STEEL, alu: ALU, wood: WOOD } = PAL;
     let p = PB, g = PB.g;
     const use = (q, k) => { p = q; g = q.g; gloss(q, k); }, gl = (k) => gloss(p, k), box = (...a) => fbox(g, ...a);
-    // a roll cab against the back wall: drawers with full-width pulls and a worn top edge, castors on forks (side: handles on its ends)
+    // a roll cab against the back wall: a graphite body, navy drawer fronts with dark seams, full-width satin pulls (a gold cap on the top
+    // one's), castors on forks (side: handles on its ends)
+    const CG = [0.16, 0.17, 0.2], CGT = [0.2, 0.21, 0.24], NVD = [0.11, 0.14, 0.27], SEAM = [0.035, 0.035, 0.04], GAP = CG.map(v => v * 0.75), PULL = [0.42, 0.44, 0.48], GCAP = [0.75, 0.58, 0.18];
     const chest = (cx, w, hh, d, side) => {
-      const zc = z0 + d / 2 + 0.05, zf = z0 + d + 0.05, n = Math.round(hh / 0.17), dy = hh / n, WORN = [RED[0] * 1.25, RED[1] * 1.25, RED[2] * 1.25];
-      use(PB, PAINT); box(cx, 0.12, zc, w, hh, d, RED, RED2);
-      for (let i = 0; i < n; i++) { const y = 0.12 + i * dy; box(cx, y, zf + 0.004, w - 0.05, 0.01, 0.01, RED2); box(cx, y + dy - 0.016, zf + 0.004, w - 0.05, 0.012, 0.008, WORN); }
-      gl(METAL); for (let i = 0; i < n; i++) box(cx, 0.12 + i * dy + dy * 0.6, zf + 0.014, w - 0.12, 0.022, 0.022, ALU);
+      const zc = z0 + d / 2 + 0.05, zf = z0 + d + 0.05, n = Math.round(hh / 0.17), dy = hh / n;
+      use(PB, PAINT); box(cx, 0.12, zc, w, hh, d, CG, CGT);
+      for (let i = 0; i < n; i++) { const y = 0.12 + i * dy, xa = cx - w / 2 + 0.03, xb = cx + w / 2 - 0.03, ya = y + 0.012, yb = y + dy - 0.018;
+        g.quadO([xa, ya, zf + 0.002], [xb, ya, zf + 0.002], [xb, yb, zf + 0.002], [xa, yb, zf + 0.002], NVD, [cx, (ya + yb) / 2, zf - 1]);   // (the drawer's front, 2 mm proud)
+        box(cx, y, zf + 0.004, w - 0.05, 0.01, 0.01, SEAM); box(cx, y + dy - 0.016, zf + 0.004, w - 0.05, 0.012, 0.008, GAP); }
+      gl(METAL); for (let i = 0; i < n; i++) box(cx, 0.12 + i * dy + dy * 0.6, zf + 0.014, w - 0.12, 0.022, 0.022, PULL);
+      box(cx, 0.12 + (n - 1) * dy + dy * 0.6 + 0.003, zf + 0.0265, w - 0.14, 0.016, 0.003, GCAP);
       if (side) for (const s of [-1, 1]) { const x = cx + s * (w / 2 + 0.04); obox(g, [x, 0.98, zc - 0.18], [x, 0.98, zc + 0.18], 0.022, 0.022, STEEL); for (const dz of [-0.18, 0.18]) obox(g, [x - s * 0.04, 0.98, zc + dz], [x, 0.98, zc + dz], 0.02, 0.02, STEEL); }
       for (const sx of [-1, 1]) for (const sz of [0, 1]) box(cx + sx * (w / 2 - 0.08), 0.06, z0 + 0.14 + sz * (d - 0.16), 0.05, 0.06, 0.05, DK);   // (the forks)
       gl(MATTE); for (const sx of [-1, 1]) for (const sz of [0, 1]) cylA(g, [cx + sx * (w / 2 - 0.08), 0.045, z0 + 0.14 + sz * (d - 0.16)], 'x', 0.045, 0.03, 8, DK);
@@ -701,8 +712,8 @@ const Garage3D = (function () {
     chest(-6.75, 1.5, 1.0, 0.62, true); chest(-5.45, 0.95, 0.7, 0.62, false);
     use(PB, MATTE); box(-6.75, 1.12, z0 + 0.36, 1.5, 0.014, 0.64, [0.08, 0.08, 0.09]);   // (a rubber mat on the big one)
     gl(SATIN); box(-5.45, 0.82, z0 + 0.36, 0.97, 0.05, 0.66, WOOD, [0.5, 0.36, 0.22]);   // (a butcher-block top on the small one)
-    gl(PAINT); box(-7.15, 1.134, z0 + 0.32, 0.4, 0.22, 0.26, [0.8, 0.45, 0.12], [0.86, 0.5, 0.15]); box(-7.15, 1.3, z0 + 0.32, 0.41, 0.012, 0.27, [0.55, 0.3, 0.08]);   // a parts box: its lid's seam, its handle
-    gl(METAL); obox(g, [-7.27, 1.37, z0 + 0.32], [-7.03, 1.37, z0 + 0.32], 0.02, 0.02, STEEL);
+    gl(PAINT); box(-7.15, 1.134, z0 + 0.32, 0.4, 0.166, 0.26, [0.22, 0.23, 0.26]); box(-7.15, 1.3, z0 + 0.32, 0.41, 0.054, 0.27, NVD, [0.13, 0.16, 0.3]); box(-7.15, 1.296, z0 + 0.32, 0.405, 0.006, 0.265, SEAM);   // a parts box (graphite, a navy lid): its lid's seam, its handle
+    gl(METAL); obox(g, [-7.27, 1.37, z0 + 0.32], [-7.03, 1.37, z0 + 0.32], 0.02, 0.02, STEEL); for (const x of [-7.26, -7.04]) box(x, 1.354, z0 + 0.32, 0.016, 0.01, 0.016, STEEL);
     box(-6.4, 1.134, z0 + 0.4, 0.2, 0.17, 0.15, [0.3, 0.32, 0.36]);   // a vice
     // the workbench under the sign: a cabinet (doors with recessed pulls, a dark kick plinth), a stainless top and its upstand; a rail of
     // parts bins on the wall over it
@@ -712,7 +723,7 @@ const Garage3D = (function () {
     box(-2.6, 0.72, z0 + 0.31, 3.25, 0.04, 0.62, [0.36, 0.38, 0.41], [0.42, 0.44, 0.47]); box(-2.6, 0.76, z0 + 0.012, 3.25, 0.12, 0.02, [0.38, 0.4, 0.43]);   // (steel: dark, its highlight the gloss's)
     for (const [z, w, c] of [[0.17, 0.06, 0.445], [0.33, 0.13, 0.44], [0.5, 0.05, 0.45]]) { const y = 0.7615, za = z0 + z - w / 2, zb = z0 + z + w / 2; g.quadO([-4.2, y, za], [-1.0, y, za], [-1.0, y, zb], [-4.2, y, zb], [c, c + 0.02, c + 0.05], [-2.6, 0, z0 + z]); }   // (brushed: lighter streaks along it)
     box(-2.75, 1.42, z0 + 0.03, 2.4, 0.03, 0.04, ALU);
-    gl(SATIN); [[0.2, 0.34, 0.6], [0.64, 0.16, 0.12], [0.78, 0.62, 0.16], [0.2, 0.34, 0.6], [0.64, 0.16, 0.12], [0.78, 0.62, 0.16]].forEach((c, i) => { const x = -3.7 + i * 0.38;
+    gl(SATIN); [[0.22, 0.23, 0.26], [0.22, 0.23, 0.26], NVD, [0.22, 0.23, 0.26], [0.22, 0.23, 0.26], NVD].forEach((c, i) => { const x = -3.7 + i * 0.38;
       box(x, 1.29, z0 + 0.13, 0.32, 0.15, 0.2, c, [0.03, 0.03, 0.04]); box(x, 1.33, z0 + 0.235, 0.12, 0.04, 0.008, [0.88, 0.88, 0.85]); });   // (open bins: dark inside, a blank label)
     // rubber mats on the floor in front of the bench and the big chest (dark, a yellow edge; bright: the floor's occlusion halves them)
     gl(MATTE); for (const [a, b, c, d] of [[-4.1, -1.1, -4.4, -3.95], [-7.4, -6.1, -4.28, -4.02]]) { const M = [0.12, 0.12, 0.13], Y = [1.48, 1.2, 0.4];
@@ -980,11 +991,11 @@ const Garage3D = (function () {
     makePropTextures();
     // an engine on its stand behind the turntable, left: a race V8 (red cam covers, coil packs, eight trumpets, the headers tinted by the
     // heat), the stand's head on the bellhousing; a shop crane parked over it, its chain on the engine
-    { const P = use(piece()), X = -5.25, Z = -2.35, Y0 = 0.72, AL = [0.55, 0.57, 0.6], AL2 = [0.44, 0.46, 0.5], YL = [0.9, 0.6, 0.12], YL2 = [0.76, 0.5, 0.1], Z0 = -3.85; P.near = 4.4;
-      gBox(g, null, X - 0.62, 0.1, Z, 0.08, 0.06, 0.92, RED); gBox(g, null, X - 0.06, 0.1, Z, 1.12, 0.06, 0.08, RED);   // the stand: its T on castors, the post, the head
-      gBox(g, null, X - 0.62, 0.44, Z, 0.08, 0.62, 0.08, RED); gBox(g, null, X - 0.53, Y0, Z, 0.18, 0.07, 0.07, RED);
-      gAdd(g, new THREE.CylinderGeometry(0.14, 0.14, 0.025, 16), M4(X - 0.44, Y0, Z, 0, 0, Math.PI / 2), RED2);
-      for (const a of [0.8, 2.35, 3.93, 5.5]) seg(g, [X - 0.43, Y0, Z], [X - 0.4, Y0 + Math.sin(a) * 0.19, Z + Math.cos(a) * 0.19], 0.018, RED);
+    { const P = use(piece()), X = -5.25, Z = -2.35, Y0 = 0.72, AL = [0.55, 0.57, 0.6], AL2 = [0.44, 0.46, 0.5], YL = [0.9, 0.6, 0.12], YL2 = [0.76, 0.5, 0.1], Z0 = -3.85, NS = [0.12, 0.15, 0.28], NS2 = [0.08, 0.1, 0.19]; P.near = 4.4;
+      gBox(g, null, X - 0.62, 0.1, Z, 0.08, 0.06, 0.92, NS); gBox(g, null, X - 0.06, 0.1, Z, 1.12, 0.06, 0.08, NS);   // the stand (the team's navy): its T on castors, the post, the head
+      gBox(g, null, X - 0.62, 0.44, Z, 0.08, 0.62, 0.08, NS); gBox(g, null, X - 0.53, Y0, Z, 0.18, 0.07, 0.07, NS);
+      gAdd(g, new THREE.CylinderGeometry(0.14, 0.14, 0.025, 16), M4(X - 0.44, Y0, Z, 0, 0, Math.PI / 2), NS2);
+      for (const a of [0.8, 2.35, 3.93, 5.5]) seg(g, [X - 0.43, Y0, Z], [X - 0.4, Y0 + Math.sin(a) * 0.19, Z + Math.cos(a) * 0.19], 0.018, NS);
       for (const [cx, cz] of [[X - 0.62, Z - 0.42], [X - 0.62, Z + 0.42], [X + 0.48, Z]]) gBox(g, null, cx, 0.06, cz, 0.05, 0.04, 0.05, DK);
       gl(1.3); gAdd(g, new THREE.CylinderGeometry(0.2, 0.16, 0.13, 18), M4(X - 0.36, Y0, Z, 0, 0, Math.PI / 2), AL);   // the bellhousing, the block, the dry sump (cast: satin)
       gBox(g, null, X + 0.02, 0.66, Z, 0.6, 0.3, 0.36, AL); gBox(g, null, X + 0.02, 0.47, Z, 0.56, 0.08, 0.3, [0.16, 0.17, 0.19]);
@@ -1011,15 +1022,32 @@ const Garage3D = (function () {
       gl(PAINT); gAdd(g, new THREE.TorusGeometry(0.035, 0.009, 5, 10, Math.PI * 1.4), M4(X, 1.39, -2.35, 0, Math.PI / 2, 0), [0.78, 0.14, 0.1]);   // (the hook)
       gl(METAL); gBox(g, null, X, 1.32, -2.35, 0.6, 0.035, 0.035, DK); for (const sx of [-0.28, 0.28]) seg(g, [X + sx, 1.32, -2.35], [X + sx * 0.9, 0.98, Z], 0.008, STEEL);   // (the leveller, its chains to the heads)
       gl(MATTE); for (const lx of [-6.05, -4.45]) castor(null, lx, 0.04, -2.38, 0.04); for (const lx of [-6.0, -4.5]) castor(null, lx, 0.04, Z0 - 0.08, 0.04);
+      // a spare transaxle on its dolly beside the crane (cast aluminium: the main case and its ribs, the bellhousing toward the engine, its
+      // input shaft, the diff's bulge and its dark output flanges; the shift actuator and its red cable, a finned oil cooler on top)
+      { const GX = -3.95, GZ = -2.95, CA = [0.5, 0.52, 0.55], CA2 = [0.43, 0.45, 0.49];
+        gl(PAINT); gBox(g, null, GX, 0.095, GZ, 0.5, 0.05, 0.42, RED); for (const sx of [-0.13, 0.13]) gBox(g, null, GX + sx, 0.17, GZ, 0.07, 0.1, 0.26, [0.1, 0.1, 0.11]);   // the dolly, its saddle
+        for (const sx of [-0.2, 0.2]) for (const sz of [-0.16, 0.16]) gBox(g, null, GX + sx, 0.06, GZ + sz, 0.04, 0.03, 0.04, DK);
+        gl(1.3); gBox(g, null, GX, 0.36, GZ, 0.45, 0.28, 0.3, CA); for (const sz of [-1, 1]) for (const dx of [-0.1, 0.08]) gBox(g, null, GX + dx, 0.36, GZ + sz * 0.153, 0.016, 0.26, 0.012, CA2);
+        gAdd(g, new THREE.CylinderGeometry(0.12, 0.18, 0.16, 12), M4(-4.25, 0.36, GZ, 0, 0, -Math.PI / 2), (c, n) => n[1] < -0.5 ? [0.13, 0.13, 0.14] : CA2);   // (its open face dark)
+        cylA(g, [-3.8, 0.33, GZ], 'z', 0.11, 0.34, 12, CA); gl(PAINT); for (const s of [-1, 1]) cylA(g, [-3.8, 0.33, GZ + s * 0.185], 'z', 0.06, 0.03, 8, [0.1, 0.1, 0.11]);
+        gl(METAL); cylA(g, [-4.365, 0.36, GZ], 'x', 0.016, 0.07, 6, STEEL);
+        gl(PAINT); gBox(g, null, -4.03, 0.54, GZ - 0.05, 0.1, 0.08, 0.12, [0.1, 0.1, 0.11]); gBox(g, null, -3.8, 0.53, GZ + 0.04, 0.15, 0.06, 0.17, [0.2, 0.2, 0.22]);
+        gl(METAL); for (let i = 0; i < 3; i++) gBox(g, null, -3.85 + i * 0.05, 0.59, GZ + 0.04, 0.006, 0.06, 0.16, [0.36, 0.37, 0.4]);
+        gl(MATTE); tube(g, [[-4.03, 0.58, GZ - 0.01], [-3.98, 0.62, GZ + 0.08], [-3.9, 0.56, GZ + 0.13], [-3.82, 0.5, GZ + 0.155]], 0.008, [0.7, 0.13, 0.1], 8, 3);
+        for (const sx of [-0.2, 0.2]) for (const sz of [-0.16, 0.16]) cylA(g, [GX + sx, 0.035, GZ + sz], 'z', 0.035, 0.026, 6, DK);
+        BLOBS.push([GX, GZ, 0.8, 0.7, 0.7, 0, P]); }
       BLOBS.push([X - 0.05, Z, 1.4, 1.1, 0.8, 0, P], [X, -3.15, 1.9, 1.7, 0.5, 0, P]); }
     // a roll cab on the floor by the table: drawers with their pulls, a rubber mat on top with the tools on it, a push bar, castors
-    { const P = use(piece()), X = -6.75, Z = -2.2, w = 0.82, d = 0.5, n = 4, dy = 0.7 / n, WORN = [RED[0] * 1.25, RED[1] * 1.25, RED[2] * 1.25];
-      box(X, 0.12, Z, w, 0.7, d, RED, RED2);
-      for (let i = 0; i < n; i++) { const y = 0.12 + i * dy; box(X, y, Z + d / 2 + 0.003, w - 0.05, 0.01, 0.01, RED2); box(X, y + dy - 0.016, Z + d / 2 + 0.003, w - 0.05, 0.012, 0.008, WORN); }
+    { const P = use(piece()), X = -6.75, Z = -2.2, w = 0.82, d = 0.5, n = 4, dy = 0.7 / n, zf = Z + d / 2, CG = [0.16, 0.17, 0.2], NVD = [0.11, 0.14, 0.27];   // (graphite, navy fronts: as the chests)
+      box(X, 0.12, Z, w, 0.7, d, CG, [0.2, 0.21, 0.24]);
+      for (let i = 0; i < n; i++) { const y = 0.12 + i * dy, xa = X - w / 2 + 0.03, xb = X + w / 2 - 0.03, ya = y + 0.012, yb = y + dy - 0.018;
+        g.quadO([xa, ya, zf + 0.002], [xb, ya, zf + 0.002], [xb, yb, zf + 0.002], [xa, yb, zf + 0.002], NVD, [X, (ya + yb) / 2, zf - 1]);
+        box(X, y, zf + 0.003, w - 0.05, 0.01, 0.01, [0.035, 0.035, 0.04]); box(X, y + dy - 0.016, zf + 0.003, w - 0.05, 0.012, 0.008, CG.map(v => v * 0.75)); }
       for (const sx of [-1, 1]) for (const sz of [-1, 1]) box(X + sx * (w / 2 - 0.07), 0.06, Z + sz * (d / 2 - 0.07), 0.05, 0.06, 0.05, DK);
       box(X + 0.15, 0.84, Z - 0.05, 0.08, 0.14, 0.06, [0.85, 0.68, 0.12]); obox(g, [X + 0.15, 0.95, Z - 0.05], [X + 0.32, 0.95, Z - 0.05], 0.07, 0.07, [0.85, 0.68, 0.12]); box(X + 0.15, 0.82, Z - 0.05, 0.1, 0.03, 0.08, DK);   // a cordless drill
       cylA(g, [X + 0.3, 0.92, Z + 0.13], 'y', 0.045, 0.16, 10, [0.18, 0.36, 0.7], [0.8, 0.8, 0.82]);   // a spray can
-      gl(METAL); for (let i = 0; i < n; i++) box(X, 0.12 + i * dy + dy * 0.6, Z + d / 2 + 0.012, w - 0.12, 0.022, 0.022, ALU);
+      gl(METAL); for (let i = 0; i < n; i++) box(X, 0.12 + i * dy + dy * 0.6, Z + d / 2 + 0.012, w - 0.12, 0.022, 0.022, [0.42, 0.44, 0.48]);
+      box(X, 0.12 + (n - 1) * dy + dy * 0.6 + 0.003, zf + 0.0245, w - 0.14, 0.016, 0.003, [0.75, 0.58, 0.18]);
       for (const sx of [-1, 1]) { obox(g, [X + sx * (w / 2 + 0.05), 0.75, Z - 0.15], [X + sx * (w / 2 + 0.05), 0.75, Z + 0.15], 0.03, 0.03, STEEL); for (const sz of [-0.15, 0.15]) obox(g, [X + sx * (w / 2), 0.75, Z + sz], [X + sx * (w / 2 + 0.05), 0.75, Z + sz], 0.03, 0.03, STEEL); }
       for (let i = 0; i < 4; i++) obox(g, [X - 0.3 + i * 0.07, 0.845, Z - 0.15], [X - 0.27 + i * 0.07, 0.845, Z + 0.12], 0.025, 0.01, STEEL);   // spanners
       gl(MATTE); box(X, 0.82, Z, w - 0.02, 0.014, d - 0.02, [0.08, 0.08, 0.09]);
@@ -1046,6 +1074,12 @@ const Garage3D = (function () {
     const Rt = Core.rng(5), tyreStack = (x, z, n, rim, lean) => { const P = use(piece(), MATTE); P.near = 4.4; let m = null;
       for (let i = 0; i < n; i++) { m = M4(x + (Rt() - 0.5) * 0.05, 0.12 + i * 0.24, z + (Rt() - 0.5) * 0.05, 0, Rt() * 6, (Rt() - 0.5) * 0.03); tyre(g, m, rim ? BANDS[0] : BANDS[i % 3], 12); }
       if (lean) tyre(g, M4(lean[0], 0.335, lean[1], Math.PI / 2 - 0.22, 0, 0), BANDS[1], 12);
+      // (a barcode sticker on the top one's tread toward the room: on the facet that faces it most, a dark print on it)
+      gl(SATIN); { const toC = new V3(-x, 0, -z).normalize(), nm = new THREE.Matrix3().getNormalMatrix(m); let a = 0, bd = -2;
+        for (let k = 0; k < 12; k++) { const f = (k + 0.5) / 12 * TAU, d = new V3(Math.sin(f), 0, Math.cos(f)).applyMatrix3(nm).normalize().dot(toC); if (d > bd) { bd = d; a = f; } }
+        const rf = 0.336 * Math.cos(Math.PI / 12), L = (t, y, e) => new V3(Math.sin(a) * (rf + e) + Math.cos(a) * t, y, Math.cos(a) * (rf + e) - Math.sin(a) * t).applyMatrix4(m).toArray();
+        const sq = (t0, t1, y0, y1, e, col) => g.quadO(L(t0, y0, e), L(t1, y0, e), L(t1, y1, e), L(t0, y1, e), col, L((t0 + t1) / 2, (y0 + y1) / 2, e - 0.05));
+        sq(-0.035, 0.035, -0.05, 0.05, 0.0015, [0.9, 0.9, 0.88]); for (const [t, w] of [[-0.02, 0.006], [-0.008, 0.01], [0.006, 0.004], [0.017, 0.008]]) sq(t - w / 2, t + w / 2, -0.032, 0.036, 0.0025, [0.08, 0.08, 0.09]); }
       if (rim) { gl(METAL); rimTop(g, m, [0.15, 0.36, 0.8]); }
       BLOBS.push([x, z, 0.95, 0.95, 0.9, 0, P]); if (lean) BLOBS.push([lean[0], lean[1] + 0.05, 0.8, 0.45, 0.7, 0, P]); };
     tyreStack(-8.1, -3.5, 4, false, [-7.9, -2.98]); tyreStack(-7.1, -3.65, 3, true); tyreStack(-8.25, 3.6, 2, false);
@@ -1300,7 +1334,251 @@ const Garage3D = (function () {
     finishPieces(); g = sm = cp = null;   // (the fades' closures keep this scope: not the builders)
   }
   // round 2, the left zone: the tyre service corner, the bench's tools, the drivetrain, the left wall
-  function buildKitL() {}
+  function buildKitL() {
+    const { x0, z0 } = ROOM, { back: PB, left: PL } = WALLS;
+    let g = null, sm = null, cp = null; const use = (p, k) => { g = p.g; sm = p.sm; cp = p; gloss(p, k == null ? PAINT : k); return p; }, gl = (k) => gloss(cp, k), box = (...a) => fbox(g, ...a);
+    const DK = [0.07, 0.07, 0.08], DG = [0.12, 0.125, 0.14], GR = [0.3, 0.31, 0.34], STL = [0.6, 0.63, 0.68], CHR = [0.86, 0.88, 0.92], RD = [0.58, 0.1, 0.09], WH = [0.88, 0.88, 0.86], LIT = [2.0, 2.0, 1.9];
+    // helpers: a box standing on something (no bottom), a cylinder along an axis, a shape by a matrix, a quad facing n, a disc's fan facing
+    // n (u, v: its axes), a stroke from a to b in the plane facing n, a sheet round an axis along x (both faces; angles from +z up), an open
+    // funnel round y (its outside, its inside), a coil spring along x
+    const sb = (cx, cy, cz, sx, sy, sz, col, top, rot) => World.box(g, cx, cy, cz, sx, sy, sz, rot || 0, col, top, true);
+    const cyl = (c, ax, r, l, n, col, cap) => cylA(g, c, ax, r, l, n, col, cap), shape = (geo, m, col) => gAdd(g, geo, m, col);
+    const quad = (a, b, c, d, col, n) => g.quadO(a, b, c, d, col, [(a[0] + c[0]) / 2 - n[0], (a[1] + c[1]) / 2 - n[1], (a[2] + c[2]) / 2 - n[2]]);
+    const fan = (c, u, v, r, n, col, nr) => { const P = (a) => [0, 1, 2].map(k => c[k] + (u[k] * Math.cos(a) + v[k] * Math.sin(a)) * r);
+      for (let i = 0; i < n; i++) g.triO(c, P(i / n * TAU), P((i + 1) / n * TAU), col, [c[0] - nr[0], c[1] - nr[1], c[2] - nr[2]]); };
+    const stroke = (a, b, w, col, nr) => { const s = new V3(b[0] - a[0], b[1] - a[1], b[2] - a[2]).cross(new V3(...nr)).normalize().multiplyScalar(w / 2);
+      quad([a[0] - s.x, a[1] - s.y, a[2] - s.z], [a[0] + s.x, a[1] + s.y, a[2] + s.z], [b[0] + s.x, b[1] + s.y, b[2] + s.z], [b[0] - s.x, b[1] - s.y, b[2] - s.z], col, nr); };
+    const shell = (cy, cz, r, xa, xb, a0, a1, n, col) => { const P = (x, a) => [x, cy + Math.sin(a) * r, cz + Math.cos(a) * r];
+      for (let i = 0; i < n; i++) { const A = a0 + (a1 - a0) * i / n, B = a0 + (a1 - a0) * (i + 1) / n, m = (A + B) / 2, q = [P(xa, A), P(xb, A), P(xb, B), P(xa, B)];
+        g.quadO(...q, col, [(xa + xb) / 2, cy, cz]); g.quadO(...q, col, [(xa + xb) / 2, cy + Math.sin(m) * r * 3, cz + Math.cos(m) * r * 3]); } };
+    const funnel = (cx, cz, r0, r1, y0, y1, n, co, ci) => { const P = (a, r, y) => [cx + Math.cos(a) * r, y, cz + Math.sin(a) * r];
+      for (let i = 0; i < n; i++) { const A = i / n * TAU, B = (i + 1) / n * TAU, m = (A + B) / 2, q = [P(A, r0, y0), P(B, r0, y0), P(B, r1, y1), P(A, r1, y1)];
+        g.quadO(...q, co, [cx, (y0 + y1) / 2, cz]); g.quadO(...q, ci, P(m, (r0 + r1) * 2, (y0 + y1) / 2)); } };
+    const ringX = (x, cy, cz, r0, r1, n, col, s) => { for (let i = 0; i < n; i++) { const A = i / n * TAU, B = (i + 1) / n * TAU, P = (a, r) => [x, cy + Math.sin(a) * r, cz + Math.cos(a) * r]; g.quadO(P(A, r0), P(B, r0), P(B, r1), P(A, r1), col, [x - s, cy, cz]); } };
+    const spring = (xa, xb, y, z, R, turns, r, col) => { const c = new THREE.Curve(); c.getPoint = (t, o) => (o || new V3()).set(xa + (xb - xa) * t, y + R * Math.cos(t * turns * TAU), z + R * Math.sin(t * turns * TAU));
+      shape(new THREE.TubeGeometry(c, Math.round(turns * 5), r, 3, false), null, col); };
+
+    // a tyre changer at the bench's end, a slick on it being changed: its cabinet (slate blue, a dark kick strip, the front's panel, three
+    // pedals), the turntable and its jaws (the wheel up on them), the column tilted back to the wall, its arm and the hex shaft with the
+    // mount head at the rim's edge; the bead breaker folded shut on the cabinet's side, its rubber pad
+    { use(PB); const X = -0.505, Z = -4.525, SL = [0.2, 0.25, 0.33], SLT = [0.26, 0.31, 0.4], m = M4(-0.5, 0.896, -4.5, 0, 0.4, 0, 0.88);
+      sb(X, 0, Z, 0.73, 0.06, 0.73, DK); sb(X, 0.06, Z, 0.75, 0.34, 0.75, SL); sb(X, 0.4, Z, 0.75, 0.3, 0.75, SL, SLT);
+      quad([X - 0.33, 0.12, Z + 0.3755], [X + 0.33, 0.12, Z + 0.3755], [X + 0.33, 0.6, Z + 0.3755], [X - 0.33, 0.6, Z + 0.3755], [0.17, 0.215, 0.29], [0, 0, 1]);
+      for (const [x, a] of [[-0.66, 0.16], [-0.5, 0.12], [-0.34, 0.16]]) gBox(g, M4(x, 0.05, -4.11, a, 0, 0), 0, 0, 0, 0.07, 0.022, 0.12, DK);
+      gl(METAL); shape(new THREE.CylinderGeometry(0.3, 0.3, 0.04, 16), M4(-0.5, 0.72, -4.5), STL);
+      for (let k = 0; k < 4; k++) gBox(g, M4(-0.5, 0.765, -4.5, 0, k * Math.PI / 2 + 0.4, 0), 0, 0, 0.2, 0.05, 0.05, 0.1, DG);
+      gl(PAINT); gBox(g, null, -0.5, 0.75, -4.84, 0.18, 0.1, 0.16, [0.2, 0.21, 0.24]);   // (the column's pivot)
+      obox(g, [-0.5, 0.79, -4.827], [-0.5, 1.85, -4.912], 0.14, 0.12, RD); gBox(g, null, -0.5, 1.83, -4.9, 0.16, 0.14, 0.18, RD);
+      obox(g, [-0.5, 1.83, -4.82], [-0.5, 1.83, -4.6], 0.075, 0.075, RD); gBox(g, null, -0.5, 1.81, -4.645, 0.1, 0.13, 0.1, RD);   // the arm, its lock
+      gl(METAL); cyl([-0.5, 1.385, -4.66], 'y', 0.022, 0.72, 6, STL);
+      gl(PAINT); gBox(g, M4(-0.5, 1.03, -4.665, 0.35, 0, 0), 0, 0, 0, 0.05, 0.05, 0.09, DK);   // (the head)
+      gl(MATTE); sb(-0.883, 0.27, -4.37, 0.006, 0.24, 0.2, DK);
+      gl(PAINT); obox(g, [-0.894, 0.42, -4.86], [-0.894, 0.45, -4.32], 0.012, 0.05, RD); gBox(g, null, -0.894, 0.37, -4.34, 0.012, 0.11, 0.09, DK);
+      obox(g, [-0.894, 0.45, -4.32], [-0.894, 0.86, -4.25], 0.03, 0.014, RD); gl(MATTE); obox(g, [-0.894, 0.78, -4.263], [-0.894, 0.88, -4.246], 0.036, 0.018, DK);
+      tyre(g, m, BANDS[0], 12, true); gl(METAL); rimTop(g, m, [0.62, 0.64, 0.68]);
+      BLOBS.push([-0.5, -4.52, 0.95, 0.95, 0.75, 0, PB]); WALLAO.push(['b', -0.93, -0.08, 0, 1.92, 0.5, PB]); }
+
+    // a wheel balancer beside it: its body (a dark plinth, the front's panel, a brake pedal, a tray of clip weights on top), the console
+    // sloped at the back (a lit screen, two red readouts, keys), the shaft out of its side (its flange, the cone, the wheel, the wing nut),
+    // the hood swung up out of the way
+    { use(PB); const X = 0.225, Z = -4.635, LG = [0.52, 0.54, 0.58], LGT = [0.47, 0.49, 0.53], CON = [0.1, 0.1, 0.11], cm = M4(X, 1.0, -4.78, -0.5, 0, 0);
+      sb(X, 0, Z, 0.53, 0.05, 0.51, DK); sb(X, 0.05, Z, 0.55, 0.35, 0.53, LG); sb(X, 0.4, Z, 0.55, 0.45, 0.53, LG, LGT);
+      quad([X - 0.24, 0.1, Z + 0.2655], [X + 0.24, 0.1, Z + 0.2655], [X + 0.24, 0.62, Z + 0.2655], [X - 0.24, 0.62, Z + 0.2655], [0.45, 0.47, 0.51], [0, 0, 1]);
+      gBox(g, M4(X - 0.12, 0.06, Z + 0.3, 0.15, 0, 0), 0, 0, 0, 0.08, 0.02, 0.1, DK);
+      sb(X - 0.04, 0.85, -4.54, 0.4, 0.012, 0.22, [0.25, 0.26, 0.29]);
+      gl(METAL); for (let i = 0; i < 6; i++) sb(X - 0.16 + (i % 3) * 0.13, 0.862, -4.6 + (i >= 3 ? 0.1 : 0), 0.04, 0.012, 0.018, i % 3 ? [0.62, 0.64, 0.68] : GR, null, (i * 0.7) % 1 - 0.5);
+      gl(PAINT); sb(X, 0.85, -4.79, 0.22, 0.06, 0.1, CON); gBox(g, cm, 0, 0, 0, 0.42, 0.28, 0.05, CON);
+      const pq = (x, y, w, h, col) => { const P = (a, b) => new V3(x + a, y + b, 0.0255).applyMatrix4(cm).toArray(); g.quadO(P(-w / 2, -h / 2), P(w / 2, -h / 2), P(w / 2, h / 2), P(-w / 2, h / 2), col, new V3(x, y, -1).applyMatrix4(cm).toArray()); };
+      pq(0, 0.035, 0.24, 0.13, [0.45, 1.3, 1.8]); for (const s of [-1, 1]) pq(s * 0.13, -0.085, 0.07, 0.035, [2.0, 0.35, 0.25]);   // (over 1: they glow)
+      for (let i = 0; i < 4; i++) pq(-0.045 + i * 0.03, -0.09, 0.018, 0.018, GR);
+      gl(METAL); cyl([0.665, 0.62, -4.55], 'x', 0.022, 0.33, 8, STL); cyl([0.515, 0.62, -4.55], 'x', 0.065, 0.03, 12, [0.2, 0.21, 0.23]);
+      shape(new THREE.CylinderGeometry(0.03, 0.06, 0.05, 10), M4(0.555, 0.62, -4.55, 0, 0, -Math.PI / 2), STL);
+      gl(MATTE); tyre(g, M4(0.66, 0.62, -4.55, 0, 0, Math.PI / 2, 0.88), null, 12, true);
+      gl(METAL); cyl([0.66, 0.62, -4.55], 'x', 0.19, 0.17, 14, [0.3, 0.31, 0.34], [0.58, 0.6, 0.64]); cyl([0.748, 0.62, -4.55], 'x', 0.055, 0.008, 8, [0.2, 0.21, 0.23]);
+      cyl([0.79, 0.62, -4.55], 'x', 0.032, 0.04, 8, [0.62, 0.64, 0.68]); for (const s of [-1, 1]) gBox(g, null, 0.795, 0.62 + s * 0.045, -4.55, 0.012, 0.05, 0.02, [0.62, 0.64, 0.68]);
+      gl(PAINT); shell(0.66, -4.58, 0.36, 0.53, 0.79, 1.4, 4.0, 8, [0.15, 0.16, 0.18]); cyl([0.515, 0.6, -4.87], 'x', 0.02, 0.05, 6, DK);   // (the hood, its hinge)
+      BLOBS.push([0.3, -4.62, 0.95, 0.75, 0.65, 0, PB]); WALLAO.push(['b', -0.07, 0.82, 0, 1.15, 0.45, PB]); }
+
+    // on the bench's stainless top, each in its place: a vice at its left end, spray cans by the wall, two coil-over dampers (gold bodies,
+    // a red and a blue spring), a brake disc and its caliper in an aluminium tray, a bench grinder, a drill press at its right end; a roll
+    // of blue paper on the wall under the bins
+    { use(PB); const Y = 0.76, VC = [0.22, 0.27, 0.35], VC2 = [0.18, 0.22, 0.29], AU = [0.75, 0.58, 0.2];
+      sb(-3.95, Y, -4.5, 0.15, 0.02, 0.17, VC2); sb(-3.95, Y + 0.02, -4.51, 0.18, 0.12, 0.13, VC); sb(-3.95, Y + 0.035, -4.37, 0.18, 0.105, 0.06, VC); sb(-3.95, Y + 0.035, -4.42, 0.07, 0.05, 0.06, VC2);
+      gl(METAL); sb(-3.95, Y + 0.1, -4.4425, 0.17, 0.04, 0.005, STL); sb(-3.95, Y + 0.1, -4.4025, 0.17, 0.04, 0.005, STL);
+      cyl([-3.95, Y + 0.085, -4.315], 'z', 0.01, 0.05, 6, STL); cyl([-3.95, Y + 0.085, -4.29], 'x', 0.007, 0.2, 6, STL); for (const s of [-1, 1]) sb(-3.95 + s * 0.1, Y + 0.077, -4.29, 0.018, 0.016, 0.016, STL);
+      gl(PAINT); [[-3.62, WH, [0.7, 0.12, 0.1]], [-3.55, [0.62, 0.64, 0.68], [0.15, 0.3, 0.6]], [-3.48, [0.84, 0.84, 0.82], DK]].forEach(([x, b, c]) => { cyl([x, Y + 0.1, -4.86], 'y', 0.033, 0.2, 8, b, [0.7, 0.72, 0.75]); cyl([x, Y + 0.215, -4.86], 'y', 0.026, 0.03, 6, c); });
+      const damper = (xa, xb, sc) => { const y = Y + 0.05, z = -4.56;
+        gl(PAINT); for (const x of [xa + 0.012, xb - 0.012]) sb(x, y - 0.016, z, 0.024, 0.032, 0.03, [0.15, 0.15, 0.16]);   // (its eyes)
+        gl(METAL); cyl([xa + 0.125, y, z], 'x', 0.025, 0.2, 8, AU); cyl([xa + 0.085, y, z], 'x', 0.047, 0.01, 8, AU); cyl([xb - 0.06, y, z], 'x', 0.047, 0.012, 8, AU);
+        cyl([(xa + 0.225 + xb - 0.024) / 2, y, z], 'x', 0.008, xb - 0.024 - xa - 0.225, 5, CHR);
+        gl(PAINT); spring(xa + 0.09, xb - 0.066, y, z, 0.04, 4.5, 0.007, sc); };
+      damper(-3.42, -3.07, [0.62, 0.12, 0.1]); damper(-2.98, -2.63, [0.25, 0.55, 0.75]);
+      gl(METAL); sb(-2.45, Y, -4.78, 0.36, 0.03, 0.26, [0.62, 0.64, 0.68], [0.5, 0.52, 0.56]);
+      shape(new THREE.CylinderGeometry(0.115, 0.115, 0.024, 16), M4(-2.49, Y + 0.042, -4.78), (c, n) => n[1] > 0.5 ? [0.52, 0.52, 0.54] : [0.32, 0.32, 0.34]);
+      shape(new THREE.CylinderGeometry(0.06, 0.065, 0.036, 10), M4(-2.49, Y + 0.072, -4.78), [0.28, 0.28, 0.3]);
+      for (const [x, z] of [[-2.33, -4.69], [-2.31, -4.73], [-2.34, -4.87]]) cyl([x, Y + 0.035, z], 'y', 0.012, 0.01, 6, [0.5, 0.52, 0.55]);
+      gl(PAINT); gBox(g, M4(-2.49, Y + 0.075, -4.78, 0, -0.5, 0), 0.1, 0, 0, 0.05, 0.05, 0.12, [0.7, 0.12, 0.1]);
+      const GRD = [0.36, 0.38, 0.42], GY = Y + 0.12;   // (the grinder)
+      sb(-1.85, Y, -4.62, 0.17, 0.025, 0.15, DK); sb(-1.85, Y + 0.025, -4.62, 0.07, 0.04, 0.07, GRD); cyl([-1.85, GY, -4.62], 'x', 0.068, 0.2, 10, GRD, [0.3, 0.32, 0.36]);
+      sb(-1.85, Y + 0.004, -4.54, 0.04, 0.02, 0.012, [0.7, 0.12, 0.1]);
+      gl(METAL); cyl([-1.85, GY, -4.62], 'x', 0.012, 0.38, 6, STL); for (const x of [-2.02, -1.68]) sb(x, GY - 0.04, -4.505, 0.04, 0.008, 0.04, STL);
+      gl(MATTE); for (const x of [-2.02, -1.68]) cyl([x, GY, -4.62], 'x', 0.09, 0.026, 12, [0.28, 0.28, 0.3], [0.38, 0.37, 0.35]);
+      gl(PAINT); for (const x of [-2.02, -1.68]) shell(GY, -4.62, 0.102, x - 0.022, x + 0.022, -0.35, Math.PI + 0.35, 6, GRD);
+      const DP = [0.26, 0.33, 0.3], DPT = [0.3, 0.37, 0.34];   // (the drill press)
+      sb(-1.3, Y, -4.76, 0.25, 0.03, 0.34, DP, DPT); sb(-1.3, 0.94, -4.765, 0.06, 0.03, 0.12, DP); cyl([-1.3, 0.975, -4.67], 'y', 0.12, 0.022, 12, DP, DPT);
+      sb(-1.3, 1.24, -4.75, 0.2, 0.26, 0.4, DP, DPT); sb(-1.3, 1.5, -4.79, 0.17, 0.07, 0.3, DP, DPT);
+      sb(-1.36, 1.4, -4.548, 0.025, 0.025, 0.006, [0.8, 0.12, 0.1]); sb(-1.36, 1.36, -4.548, 0.025, 0.025, 0.006, [0.15, 0.6, 0.25]);
+      gl(METAL); cyl([-1.3, 1.145, -4.85], 'y', 0.035, 0.71, 8, STL); cyl([-1.3, 1.16, -4.66], 'y', 0.026, 0.16, 8, STL);
+      shape(new THREE.CylinderGeometry(0.022, 0.014, 0.045, 8), M4(-1.3, 1.058, -4.66), DK); cyl([-1.3, 1.015, -4.66], 'y', 0.004, 0.04, 4, STL);
+      cyl([-1.185, 1.33, -4.66], 'x', 0.028, 0.03, 8, STL);
+      for (let k = 0; k < 3; k++) { const a = k / 3 * TAU + 0.5, e = [-1.17, 1.33 + Math.sin(a) * 0.13, -4.66 + Math.cos(a) * 0.13]; obox(g, [-1.17, 1.33, -4.66], e, 0.012, 0.012, STL); sb(e[0], e[1] - 0.012, e[2], 0.024, 0.024, 0.024, DK); }
+      gl(MATTE); for (const s of [-1, 1]) sb(-1.65 + s * 0.135, 1.08, z0 + 0.065, 0.01, 0.11, 0.13, DK);
+      cyl([-1.65, 1.15, z0 + 0.115], 'x', 0.085, 0.24, 12, [0.24, 0.38, 0.62], [0.55, 0.5, 0.42]);
+      for (const s of [1, -1]) quad([-1.75, 1.15, -4.799], [-1.55, 1.15, -4.799], [-1.55, 1.04, -4.795], [-1.75, 1.04, -4.795], [0.27, 0.41, 0.66], [0, 0, s]);   // (its loose end hanging)
+      // two mandatory signs over the bench (blue discs on white plates: eye and ear protection; no words)
+      for (const [x, k] of [[-2.25, 0], [-1.95, 1]]) { const N = [0, 0, 1], t = z0 + 0.005, P = (dx, dy) => [x + dx, 1.68 + dy, t];
+        quad([x - 0.075, 1.605, z0 + 0.003], [x + 0.075, 1.605, z0 + 0.003], [x + 0.075, 1.755, z0 + 0.003], [x - 0.075, 1.755, z0 + 0.003], [0.9, 0.9, 0.88], N);
+        fan([x, 1.68, z0 + 0.004], [1, 0, 0], [0, 1, 0], 0.062, 12, [0.08, 0.3, 0.62], N);
+        if (!k) { stroke(P(-0.048, 0.008), P(0.048, 0.008), 0.008, WH, N); quad(P(-0.04, -0.016), P(-0.006, -0.016), P(-0.006, 0.02), P(-0.04, 0.02), WH, N); quad(P(0.006, -0.016), P(0.04, -0.016), P(0.04, 0.02), P(0.006, 0.02), WH, N); }
+        else { for (const [a, b] of [[[-0.03, 0], [-0.025, 0.03]], [[-0.025, 0.03], [0, 0.042]], [[0, 0.042], [0.025, 0.03]], [[0.025, 0.03], [0.03, 0]]]) stroke(P(...a), P(...b), 0.007, WH, N);
+          quad(P(-0.043, -0.03), P(-0.02, -0.03), P(-0.02, 0.012), P(-0.043, 0.012), WH, N); quad(P(0.02, -0.03), P(0.043, -0.03), P(0.043, 0.012), P(0.02, 0.012), WH, N); } } }
+
+    // a cord reel under the purlin over the bench, its cord down to a cage lamp (lit) hanging at head height
+    { use(PB); const X = -2.6, Z = -3.22, YR = 4.45, YL = [0.9, 0.7, 0.12], LZ = Z + 0.03;
+      for (const s of [-1, 1]) sb(X + s * 0.072, YR, Z, 0.008, 4.64 - YR, 0.06, GR); sb(X, 4.625, Z, 0.16, 0.015, 0.06, GR);
+      cyl([X, YR, Z], 'x', 0.16, 0.12, 12, YL, [0.78, 0.6, 0.1]); cyl([X, YR, Z], 'x', 0.05, 0.135, 6, DK); sb(X, YR - 0.19, LZ, 0.04, 0.03, 0.04, DK);
+      gl(MATTE); cyl([X, (YR - 0.19 + 2.06) / 2, LZ], 'y', 0.007, YR - 0.19 - 2.06, 4, DK); cyl([X, 2.3, LZ], 'y', 0.018, 0.03, 6, [0.75, 0.12, 0.1]); cyl([X, 2.01, LZ], 'y', 0.024, 0.1, 6, [0.13, 0.13, 0.14]);
+      gl(PAINT); for (const y of [1.81, 1.955]) cyl([X, y, LZ], 'y', 0.042, 0.014, 8, GR);
+      for (let k = 0; k < 4; k++) { const a = k / 4 * TAU + 0.4, cx = X + Math.cos(a) * 0.038, cz = LZ + Math.sin(a) * 0.038; obox(g, [cx, 1.815, cz], [cx, 1.95, cz], 0.007, 0.007, YL); }
+      cyl([X, 1.882, LZ], 'y', 0.016, 0.13, 6, [2.4, 2.2, 1.8]);   // (the tube: over 1, it glows)
+      obox(g, [X, 1.803, LZ], [X, 1.77, LZ], 0.006, 0.006, GR); obox(g, [X, 1.77, LZ - 0.003], [X, 1.77, LZ + 0.02], 0.006, 0.006, GR); }
+
+    // an extension reel on the floor by the bench's end (red sides, the cable wound on it, its frame and handle): one lead flat along the
+    // floor to the tyre changer, one up the bench's end and over its top to the grinder
+    { use(PB); const X = -1.55, Y = 0.2, Z = -3.8;
+      for (const s of [-1, 1]) cyl([X + s * 0.068, Y, Z], 'x', 0.15, 0.012, 10, [0.6, 0.1, 0.08]); gl(MATTE); cyl([X, Y, Z], 'x', 0.11, 0.124, 10, [0.08, 0.08, 0.09]);
+      gl(METAL); for (const s of [-1, 1]) { for (const e of [-0.13, 0.13]) obox(g, [X + s * 0.085, Y, Z], [X + s * 0.085, 0.006, Z + e], 0.014, 0.014, STL); obox(g, [X + s * 0.085, Y, Z], [X + s * 0.085, 0.42, Z], 0.014, 0.014, STL); }
+      gl(MATTE); obox(g, [X - 0.095, 0.42, Z], [X + 0.095, 0.42, Z], 0.022, 0.022, DK);
+      tube(g, [[X + 0.05, 0.08, Z - 0.09], [X + 0.12, 0.009, Z - 0.14], [-1.25, 0.009, -3.9], [-1.0, 0.009, -4.02], [-0.93, 0.009, -4.3], [-0.9, 0.009, -4.46], [-0.888, 0.035, -4.5]], 0.009, DK, 12, 3);
+      tube(g, [[X + 0.03, 0.06, Z - 0.1], [X + 0.1, 0.009, Z - 0.16], [-1.2, 0.009, -3.93], [-1.05, 0.009, -4.06], [-1.0, 0.009, -4.3], [-0.985, 0.05, -4.37], [-0.985, 0.5, -4.372], [-0.99, 0.765, -4.39],
+        [-1.1, 0.769, -4.47], [-1.45, 0.769, -4.53], [-1.7, 0.77, -4.62], [-1.78, 0.8, -4.69]], 0.009, DK, 20, 3);
+      sb(-0.889, 0.015, -4.5, 0.014, 0.05, 0.04, [0.1, 0.1, 0.11]);   // (the plug in the changer's side)
+      BLOBS.push([X, Z, 0.5, 0.45, 0.55, 0, PB]); }
+
+    // little things of the day: a laptop open on the small chest's block top, a folded rag; a coffee mug and a tray of sockets on the big
+    // chest's mat
+    { use(PB, SATIN); const LX = -5.6, LY = 0.87, LZ = -4.62, LD = [0.1, 0.1, 0.11], lm = M4(LX, LY + 0.02, LZ - 0.12, -1.9, 0, 0);
+      sb(LX, LY, LZ, 0.34, 0.02, 0.24, LD, [0.13, 0.13, 0.14]); quad([LX - 0.15, LY + 0.0205, LZ - 0.105], [LX + 0.15, LY + 0.0205, LZ - 0.105], [LX + 0.15, LY + 0.0205, LZ + 0.02], [LX - 0.15, LY + 0.0205, LZ + 0.02], [0.05, 0.05, 0.06], [0, 1, 0]);
+      gBox(g, lm, 0, 0.006, 0.12, 0.34, 0.012, 0.24, LD);
+      { const P = (a, b) => new V3(a, -0.0006, b).applyMatrix4(lm).toArray(); g.quadO(P(-0.155, 0.02), P(0.155, 0.02), P(0.155, 0.22), P(-0.155, 0.22), [0.25, 0.45, 0.6], new V3(0, 1, 0.12).applyMatrix4(lm).toArray()); }   // (its screen, dim)
+      gl(MATTE); sb(-5.2, LY, -4.6, 0.3, 0.012, 0.2, [0.5, 0.22, 0.2], [0.52, 0.26, 0.24], 0.25); sb(-5.22, LY + 0.012, -4.6, 0.26, 0.01, 0.18, [0.4, 0.38, 0.38], [0.46, 0.44, 0.44], 0.2);
+      gl(SATIN); cyl([-6.15, 1.184, -4.55], 'y', 0.04, 0.1, 10, [0.86, 0.86, 0.84], [0.2, 0.13, 0.08]); shape(new THREE.TorusGeometry(0.026, 0.007, 4, 8, Math.PI), M4(-6.11, 1.184, -4.55, 0, 0, -Math.PI / 2), [0.86, 0.86, 0.84]);
+      sb(-6.75, 1.134, -4.5, 0.3, 0.03, 0.12, [0.09, 0.09, 0.1]);
+      gl(METAL); for (let i = 0; i < 10; i++) { const r = 0.011 + (i % 5) * 0.002; World.cyl(g, -6.87 + (i % 5) * 0.06, 1.164, i < 5 ? -4.53 : -4.47, r, 0.025 + (i % 5) * 0.004, 5, CHR, [0.15, 0.15, 0.16]); } }
+
+    // the left wall by the door: a waste-oil drainer on its castor base (the tank, its sight glass and drain valve, a hose coiled on it;
+    // the telescopic tube up to the open funnel, safety yellow, dark inside, its grate; a push handle)
+    { use(PL); const X = -7.55, Z = -2.25, YF = [0.84, 0.66, 0.14];
+      for (let k = 0; k < 4; k++) { const a = k / 4 * TAU + Math.PI / 4, e = [X + Math.cos(a) * 0.27, 0.05, Z + Math.sin(a) * 0.27]; obox(g, [X, 0.08, Z], e, 0.04, 0.03, DK); sb(e[0], 0, e[2], 0.035, 0.05, 0.035, DK); }
+      cyl([X, 0.115, Z], 'y', 0.06, 0.07, 8, DK);
+      gl(PAINT); shape(new THREE.CylinderGeometry(0.22, 0.22, 0.55, 14), M4(X, 0.425, Z), (c, n) => n[1] > 0.5 ? [0.2, 0.21, 0.23] : [0.16, 0.17, 0.19]);
+      sb(X + 0.218, 0.22, Z, 0.006, 0.4, 0.03, [0.3, 0.31, 0.34]); sb(X + 0.222, 0.24, Z, 0.004, 0.36, 0.016, [0.72, 0.74, 0.77]); sb(X + 0.2245, 0.24, Z, 0.002, 0.14, 0.017, [0.22, 0.13, 0.05]);   // (the sight glass: the oil in it)
+      gl(METAL); obox(g, [X + 0.19, 0.19, Z - 0.09], [X + 0.27, 0.19, Z - 0.09], 0.03, 0.03, [0.7, 0.58, 0.3]); gl(PAINT); sb(X + 0.27, 0.205, Z - 0.09, 0.012, 0.012, 0.07, [0.7, 0.12, 0.1]);
+      gl(MATTE); shape(new THREE.TorusGeometry(0.08, 0.013, 3, 10), M4(X + 0.03, 0.48, Z + 0.234), DK);
+      gl(METAL); cyl([X, 0.89, Z], 'y', 0.035, 0.38, 8, STL); cyl([X, 0.74, Z], 'y', 0.045, 0.06, 8, DK);
+      gl(PAINT); funnel(X, Z, 0.07, 0.3, 1.08, 1.25, 12, YF, [0.07, 0.065, 0.06]);
+      gl(METAL); for (const d of [-0.12, 0, 0.12]) { const r = 0.07 + 0.23 * (1.215 - 1.08) / 0.17, hl = Math.sqrt(r * r - d * d) - 0.006; obox(g, [X - hl, 1.215, Z + d], [X + hl, 1.215, Z + d], 0.012, 0.012, STL); }
+      gl(PAINT); for (const s of [-1, 1]) obox(g, [X - 0.2, 0.6, Z + s * 0.12], [X - 0.36, 1.02, Z + s * 0.12], 0.025, 0.025, GR); gl(MATTE); obox(g, [X - 0.36, 1.02, Z - 0.15], [X - 0.36, 1.02, Z + 0.15], 0.032, 0.032, DK);
+      BLOBS.push([X, Z, 0.75, 0.75, 0.7, 0, PL]); }
+
+    // the left wall's front half (the hose reel, the door, the oil corner, the prints): a wall's piece of its own on the same plane (it steps
+    // aside with the wall), so that its things, seen only from the right, are not drawn where the camera looks the other way
+    const PLF = piece(PL.wall.slice());
+
+    // a fire hose reel on the left wall (its swing bracket, the red reel: a solid back, an open front rim on spokes, the hose wound on it,
+    // the nozzle hanging; its red supply pipe up the wall with a valve)
+    { use(PLF); const X = -8.76, Y = 1.45, Z = 3.65, FR = [0.7, 0.11, 0.09], HO = [0.34, 0.05, 0.045];
+      sb(x0 + 0.012, Y - 0.15, Z, 0.024, 0.3, 0.12, DK); cyl([x0 + 0.13, Y, Z], 'x', 0.025, 0.24, 8, DK);
+      cyl([-8.86, Y, Z], 'x', 0.3, 0.012, 14, FR); cyl([X, Y, Z], 'x', 0.11, 0.19, 8, [0.5, 0.08, 0.06]);
+      ringX(-8.66, Y, Z, 0.27, 0.3, 14, FR, 1); ringX(-8.666, Y, Z, 0.27, 0.3, 14, FR, -1); cyl([-8.66, Y, Z], 'x', 0.09, 0.016, 8, FR);   // (the open front: a rim on three spokes)
+      for (let k = 0; k < 3; k++) gBox(g, M4(-8.663, Y, Z, Math.PI / 2 - (k / 3 * TAU + 0.3), 0, 0), 0, 0.18, 0, 0.012, 0.2, 0.03, FR);
+      gl(SATIN); for (const [r, x] of [[0.22, -8.82], [0.25, -8.76], [0.28, -8.7]]) shape(new THREE.TorusGeometry(r, 0.018, 3, 12), M4(x, Y, Z, 0, Math.PI / 2, 0), HO);
+      tube(g, [[-8.7, Y - 0.27, Z + 0.05], [-8.69, Y - 0.34, Z - 0.05], [-8.68, Y - 0.42, Z - 0.16]], 0.017, HO, 4, 4);
+      gl(PAINT); cyl([-8.68, Y - 0.5, Z - 0.17], 'y', 0.022, 0.14, 8, DK); cyl([-8.68, Y - 0.59, Z - 0.17], 'y', 0.016, 0.05, 8, FR);
+      for (const [a, b] of [[[x0 + 0.06, Y, 3.98], [x0 + 0.06, 4.4, 3.98]], [[x0 + 0.06, Y, 3.98], [x0 + 0.06, Y, 3.72]]]) obox(g, a, b, 0.05, 0.05, FR);
+      sb(x0 + 0.06, 1.82, 3.98, 0.08, 0.08, 0.08, [0.5, 0.08, 0.06]); obox(g, [x0 + 0.1, 1.86, 3.98], [x0 + 0.13, 1.86, 3.98], 0.012, 0.012, STL);
+      shape(new THREE.TorusGeometry(0.055, 0.008, 3, 10), M4(x0 + 0.135, 1.86, 3.98, 0, Math.PI / 2, 0), FR);
+      WALLAO.push(['l', 3.32, 3.98, 1.12, 1.8, 0.35, PLF]); }
+
+    // a steel personnel door in the left wall by the front (its frame, the leaf, a vision panel, a panic bar, a kick plate, hinges, a
+    // closer); over it a lit exit sign (a running man into a door, an arrow; no words), a green arrow on the column beside it
+    { use(PLF); const FRM = [0.36, 0.38, 0.42], LF = [0.55, 0.57, 0.6], N = [1, 0, 0];
+      box(x0 + 0.07, 0, 5.3, 0.14, 2.16, 0.06, FRM); box(x0 + 0.07, 0, 6.26, 0.14, 2.16, 0.06, FRM); sb(x0 + 0.07, 2.1, 5.78, 0.14, 0.06, 1.02, FRM);
+      box(x0 + 0.11, 0.01, 5.78, 0.02, 2.09, 0.9, LF);
+      const lq = (za, zb, ya, yb, t, col) => quad([x0 + t, ya, zb], [x0 + t, ya, za], [x0 + t, yb, za], [x0 + t, yb, zb], col, N);
+      lq(5.97, 6.13, 1.2, 1.9, 0.1205, [0.1, 0.13, 0.17]); stroke([x0 + 0.121, 1.32, 6.1], [x0 + 0.121, 1.72, 6.0], 0.014, [0.3, 0.34, 0.4], N);
+      gl(METAL); lq(5.36, 6.2, 0.02, 0.27, 0.1205, [0.64, 0.66, 0.7]);
+      obox(g, [x0 + 0.17, 1.0, 5.42], [x0 + 0.17, 1.0, 6.12], 0.03, 0.045, [0.7, 0.72, 0.76]); for (const z of [5.43, 6.11]) gBox(g, null, x0 + 0.15, 1.0, z, 0.06, 0.07, 0.05, [0.62, 0.64, 0.68]);
+      for (const y of [0.25, 1.05, 1.85]) gBox(g, null, x0 + 0.126, y, 5.335, 0.012, 0.1, 0.03, [0.5, 0.52, 0.56]);
+      gl(PAINT); gBox(g, null, x0 + 0.15, 2.0, 5.55, 0.06, 0.07, 0.3, GR); obox(g, [x0 + 0.165, 2.02, 5.68], [x0 + 0.15, 2.12, 5.9], 0.018, 0.018, [0.2, 0.21, 0.23]); gBox(g, null, x0 + 0.15, 2.125, 5.9, 0.02, 0.045, 0.06, [0.2, 0.21, 0.23]);
+      sb(x0 + 0.04, 2.24, 5.78, 0.08, 0.18, 0.42, [0.86, 0.86, 0.84]); lq(5.585, 5.975, 2.252, 2.408, 0.0805, [0.12, 1.25, 0.45]);
+      const E = (u, v) => [x0 + 0.0825, 2.255 + v, 5.97 - u], es = (a, b, w) => stroke(E(...a), E(...b), w, LIT, N);
+      es([0.04, 0.075], [0.105, 0.075], 0.022); g.triO(E(0.1, 0.112), E(0.1, 0.038), E(0.145, 0.075), LIT, [x0, 2.33, 5.85]);   // (the arrow)
+      quad(E(0.226, 0.109), E(0.244, 0.109), E(0.244, 0.127), E(0.226, 0.127), LIT, N); es([0.228, 0.098], [0.206, 0.062], 0.016);   // (the man: his head, his body, legs and arms)
+      es([0.206, 0.062], [0.236, 0.045], 0.012); es([0.236, 0.045], [0.256, 0.018], 0.012); es([0.206, 0.062], [0.18, 0.04], 0.012); es([0.18, 0.04], [0.158, 0.03], 0.012);
+      es([0.224, 0.092], [0.247, 0.08], 0.01); es([0.247, 0.08], [0.262, 0.094], 0.01); es([0.224, 0.092], [0.199, 0.088], 0.01); es([0.199, 0.088], [0.186, 0.07], 0.01);
+      es([0.284, 0.018], [0.284, 0.132], 0.008); es([0.28, 0.13], [0.354, 0.13], 0.008); es([0.35, 0.132], [0.35, 0.018], 0.008);   // (the door)
+      sb(x0 + 0.281, 2.25, 6.5, 0.008, 0.12, 0.22, [0.12, 1.0, 0.4]);
+      const A = (z, y) => [x0 + 0.2855, y, z]; stroke(A(6.57, 2.31), A(6.47, 2.31), 0.024, LIT, N); g.triO(A(6.48, 2.345), A(6.48, 2.275), A(6.43, 2.31), LIT, [x0, 2.31, 6.5]); }
+
+    // an oil corner by the front left corner: a galvanised shelf (one-litre bottles, spray cans and a 5 l can, a 20 l pail and a funnel,
+    // two boxes of spares up top), two jerry cans on the floor in front of it (red, yellow: the cross pressed in their sides)
+    { use(PLF, METAL); const xa = -8.9, xb = -8.5, za = 7.87, zb = 8.55, GV = [0.4, 0.42, 0.46], SH = [0.55, 0.57, 0.6], N = [1, 0, 0];
+      for (const x of [xa + 0.015, xb - 0.015]) for (const z of [za + 0.015, zb - 0.015]) World.box(g, x, 0, z, 0.03, 1.8, 0.03, 0, GV);
+      for (const y of [0.1, 0.6, 1.1, 1.6]) World.box(g, (xa + xb) / 2, y, (za + zb) / 2, 0.4, 0.02, 0.68, 0, SH);
+      gl(SATIN); [[0.18, 0.32, 0.55], [0.18, 0.32, 0.55], DK, [0.75, 0.6, 0.2], [0.75, 0.6, 0.2], DK, [0.18, 0.32, 0.55]].forEach((c, i) => { const z = 7.925 + i * 0.095;
+        sb(-8.56, 1.12, z, 0.06, 0.22, 0.09, c); sb(-8.565, 1.34, z + 0.015, 0.03, 0.03, 0.03, i % 3 === 2 ? [0.75, 0.6, 0.2] : DK); quad([-8.5295, 1.17, z + 0.035], [-8.5295, 1.17, z - 0.035], [-8.5295, 1.27, z - 0.035], [-8.5295, 1.27, z + 0.035], [0.86, 0.86, 0.84], N); });
+      for (const [z, c] of [[7.95, [0.7, 0.12, 0.1]], [8.03, [0.62, 0.64, 0.68]], [8.11, [0.15, 0.3, 0.6]]]) { World.cyl(g, -8.6, 0.62, z, 0.033, 0.2, 6, WH, c); World.cyl(g, -8.6, 0.82, z, 0.025, 0.03, 6, c, c); }
+      sb(-8.64, 0.62, 8.36, 0.12, 0.28, 0.17, [0.15, 0.25, 0.45]); World.cyl(g, -8.6, 0.9, 8.42, 0.02, 0.03, 6, DK, DK); obox(g, [-8.64, 0.912, 8.31], [-8.64, 0.912, 8.38], 0.02, 0.02, DK);
+      World.cyl(g, -8.7, 0.12, 8.06, 0.15, 0.34, 10, [0.5, 0.52, 0.55], [0.5, 0.52, 0.55]); World.cyl(g, -8.7, 0.46, 8.06, 0.155, 0.025, 10, DK, [0.1, 0.1, 0.11]);
+      World.cyl(g, -8.66, 0.12, 8.38, 0.09, 0.1, 8, [0.84, 0.66, 0.14], [0.06, 0.06, 0.07], 0.02); World.cyl(g, -8.66, 0.22, 8.38, 0.016, 0.06, 6, [0.84, 0.66, 0.14]);
+      for (const [z, ry] of [[8.04, 0.06], [8.38, -0.08]]) { const c = Math.cos(ry), s = Math.sin(ry), F = (lz, y) => [-8.7 + 0.1505 * c - lz * s, y, z + 0.1505 * s + lz * c];
+        sb(-8.7, 1.62, z, 0.3, 0.2, 0.3, [0.55, 0.42, 0.28], [0.58, 0.45, 0.3], ry); sb(-8.7, 1.82, z, 0.3, 0.002, 0.06, [0.62, 0.5, 0.36], null, ry); quad(F(0.06, 1.68), F(-0.06, 1.68), F(-0.06, 1.76), F(0.06, 1.76), [0.88, 0.88, 0.86], [c, 0, s]); }
+      gl(PAINT); for (const [z, c] of [[7.985, [0.6, 0.1, 0.08]], [8.185, [0.78, 0.6, 0.13]]]) { const s = z < 8.1 ? -1 : 1, zf = z + s * 0.0855, dk = c.map(v => v * 0.7);
+        box(-8.275, 0, z, 0.35, 0.47, 0.17, c); for (const [a, b] of [[[-8.42, 0.06], [-8.13, 0.38]], [[-8.42, 0.38], [-8.13, 0.06]]]) stroke([a[0], a[1], zf], [b[0], b[1], zf], 0.03, dk, [0, 0, s]);
+        for (const dz of [-0.045, 0, 0.045]) sb(-8.275, 0.47, z + dz, 0.16, 0.035, 0.014, c); World.cyl(g, -8.13, 0.47, z - 0.04, 0.024, 0.05, 6, DK, DK); }
+      BLOBS.push([-8.6, 8.2, 0.9, 0.8, 0.7, 0, PLF], [-8.27, 8.09, 0.5, 0.5, 0.6, 0, PLF]); WALLAO.push(['l', 7.85, 8.6, 0, 1.8, 0.6, PLF]); }
+
+    // the left wall's prints, one canvas (the team's banner on its rod, folds in it; a fire-point sign over the hose reel; no smoking over
+    // the gas bottles): one mesh, a Lambert map as the pegboard's (its program shared); the rod and the signs' plates in the wall's piece
+    { use(PLF, METAL); obox(g, [x0 + 0.05, 3.13, 4.12], [x0 + 0.05, 3.13, 6.33], 0.025, 0.025, STL); for (const z of [4.3, 6.15]) sb(x0 + 0.025, 3.115, z, 0.05, 0.03, 0.02, GR);
+      gl(PAINT); sb(x0 + 0.0025, 2.215, 3.65, 0.005, 0.26, 0.27, [0.78, 0.12, 0.1]); sb(x0 + 0.0025, 1.595, 4.7, 0.005, 0.31, 0.31, [0.9, 0.9, 0.88]);
+      const tex = canvasTex(512, 256, (c) => { const R = Core.rng(4246);
+        c.fillStyle = '#1b2242'; c.fillRect(0, 0, 512, 144);
+        c.fillStyle = '#e0ad3c'; c.beginPath(); c.moveTo(108, 0); c.lineTo(176, 0); c.lineTo(262, 72); c.lineTo(176, 144); c.lineTo(108, 144); c.lineTo(194, 72); c.closePath(); c.fill();
+        c.strokeStyle = '#6cc8f7'; c.lineWidth = 5; c.beginPath(); c.moveTo(200, -6); c.lineTo(290, 72); c.lineTo(200, 150); c.stroke();
+        c.fillStyle = '#f2f1ec'; c.font = 'italic 900 118px Roboto, Arial, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('07', 396, 78);
+        for (let i = 0; i < 2600; i++) { c.fillStyle = R() < 0.5 ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.05)'; c.fillRect(R() * 512, R() * 144, 1 + R() * 2, 1); }   // (the weave)
+        for (const [x, a] of [[70, 0.2], [232, 0.12], [330, 0.22], [470, 0.16]]) { const gr = c.createLinearGradient(x - 36, 0, x + 36, 0); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(0.5, 'rgba(0,0,0,' + a + ')'); gr.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = gr; c.fillRect(x - 36, 0, 72, 144); }
+        c.fillStyle = 'rgba(0,0,0,0.28)'; c.fillRect(0, 0, 512, 9); c.fillRect(0, 137, 512, 7);   // (its hems)
+        c.save(); c.translate(0, 152); c.fillStyle = '#c61f19'; c.fillRect(0, 0, 100, 100); c.strokeStyle = c.fillStyle = '#f4f4f0';   // (the hose reel's sign)
+        c.lineWidth = 8; c.beginPath(); c.arc(42, 44, 24, 0, TAU); c.stroke(); c.beginPath(); c.arc(42, 44, 7, 0, TAU); c.fill();
+        c.lineWidth = 6; c.beginPath(); c.moveTo(60, 62); c.quadraticCurveTo(80, 74, 78, 84); c.stroke(); c.fillRect(70, 82, 15, 9); c.restore();
+        c.save(); c.translate(108, 152); c.fillStyle = '#f4f4f0'; c.fillRect(0, 0, 100, 100); c.fillStyle = '#131313'; c.fillRect(22, 50, 42, 11); c.fillRect(67, 50, 10, 11);   // (no smoking)
+        c.strokeStyle = '#131313'; c.lineWidth = 3; c.beginPath(); c.moveTo(72, 46); c.bezierCurveTo(64, 38, 80, 32, 72, 21); c.stroke();
+        c.strokeStyle = '#c61f19'; c.lineWidth = 10; c.beginPath(); c.arc(50, 50, 42, 0, TAU); c.stroke(); c.beginPath(); c.moveTo(20, 20); c.lineTo(80, 80); c.stroke(); c.restore(); });
+      const mat = new THREE.MeshLambertMaterial({ map: tex }); mat.userData.noCube = true;
+      const pg = new World.GB(true), U = (px) => px / 512, V = (py) => 1 - py / 256, IN = [x0 - 1, 2.5, 5], W1 = [1, 1, 1];
+      const sign = (za, zb, ya, yb, t, u0, u1, v0, v1) => pg.quadO([x0 + t, ya, zb], [x0 + t, ya, za], [x0 + t, yb, za], [x0 + t, yb, zb], W1, IN, [[u0, v1], [u1, v1], [u1, v0], [u0, v0]]);
+      sign(3.52, 3.78, 2.22, 2.47, 0.006, U(1), U(99), V(153), V(251)); sign(4.55, 4.85, 1.6, 1.9, 0.006, U(109), U(207), V(153), V(251));
+      // (the banner: 18 strips, hanging from the rod a little out from the wall, its folds deeper toward its hem; smooth normals)
+      const NB = 18, ZA = 4.2, ZB = 6.25, tt = (i, k) => 0.05 - 0.016 * k + (0.008 + 0.006 * k) * Math.sin(i / NB * 7.3 * Math.PI + 0.6);
+      for (let i = 0; i < NB; i++) { const P = (j, k) => [x0 + tt(j, k), k ? 2.55 : 3.13, ZB - (ZB - ZA) * j / NB], Nn = (j, k) => { const d = (tt(j + 0.01, k) - tt(j - 0.01, k)) / (0.02 * (ZB - ZA) / NB); return new V3(1, 0, d).normalize().toArray(); };
+        const uv = (j, k) => [j / NB, k ? V(143) : V(1)];
+        pg.triON(P(i, 1), P(i + 1, 1), P(i + 1, 0), Nn(i, 1), Nn(i + 1, 1), Nn(i + 1, 0), IN, W1, W1, W1, uv(i, 1), uv(i + 1, 1), uv(i + 1, 0));
+        pg.triON(P(i, 1), P(i + 1, 0), P(i, 0), Nn(i, 1), Nn(i + 1, 0), Nn(i, 0), IN, W1, W1, W1, uv(i, 1), uv(i + 1, 0), uv(i, 0)); }
+      PLF.root.add(new THREE.Mesh(pg.geometry(), mat)); }
+  }
   // round 2, the right zone
   function buildKitR() {}
   // round 2, the front zone
