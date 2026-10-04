@@ -34,7 +34,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         //       x        w      yb     ybelt  wt     yt     cr     kind  tuck
         secs: [[-1.95, 0.5, 0.27, 0.56, 0.42, 0.64, 0.03, 'b', 0.06],          // the rear bumper's face (the end cap, under the black strip)
           [-1.91, 0.6, 0.26, 0.62, 0.57, 0.69, 0.02, 'b', 0.07],               // the bumper's top
-          [-1.895, 0.64, 0.255, 0.68, 0.58, 0.875, 0.03, 'b', 0.08],           // the boot lid's face (upright over the bumper: the lamps on its corners)
+          [-1.895, 0.64, 0.255, 0.68, 0.58, 0.875, 0.03, 'b', 0.08],           // the tail's face (upright over the bumper: the lamps on its corners)
           [-1.84, 0.745, 0.25, 0.7, 0.62, 0.95, 0.035, 'b', 0.1],              // the deck's trailing edge (the lamps round the corners)
           [-1.76, 0.795, 0.25, 0.735, 0.67, 0.99, 0.04, 'b', 0.1],
           [-1.6851, 0.82, 0.25, 0.77, 0.69, 1.008, 0.042, 'b', 0.1],           // the rear arch's end (the bumper's sides to here)
@@ -130,7 +130,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           DC.band([[x - 0.006, 0], [x + 0.006, 0], [x + 0.006, 1], [x - 0.006, 1]], D, null, 0.009); }
         DC.side([[-0.955, 0.575], [0.78, 0.515], [0.78, 0.57], [-0.955, 0.632]], B, null, 0.01);
         DC.band([[-0.82, 0.5], [0.6, 0.5], [0.6, 1], [-0.82, 1]], B, null, 0.006);              // (the rubber seal along the door tops and the quarters' by the hoops)
-        K.face([0, 1, 2, 3, 4, 5].map(i => [-1.27 + Math.cos(-i * Math.PI / 3) * 0.045, 0.8 + Math.sin(-i * Math.PI / 3) * 0.045, pr(-1.27, 'w') + 0.007]), D);   // (the fuel filler's flap, right)
+        F([0, 1, 2, 3, 4, 5].map(i => [-1.27 + Math.cos(i * Math.PI / 3) * 0.045, 0.8 + Math.sin(i * Math.PI / 3) * 0.045, pr(-1.27, 'w') + 0.007]), D, [0, 0, 1]);   // (the fuel filler's flap, right)
         for (const sd of [-1, 1]) {
           K.rect(-0.5, 0.86, sd * (pr(-0.5, 'w') + 0.008), 0.15, 0.028, D, { dir: sd < 0 ? '-z' : 'z', host: sd < 0 ? 'doorL' : 'doorR' });
           K.rect(0.83, 0.66, sd * (pr(0.83, 'w') + 0.007), 0.055, 0.022, AMBER, { dir: sd < 0 ? '-z' : 'z' });
@@ -167,7 +167,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         }, { hinge: [[0.97, 0.95, -0.6], [0.97, 0.95, 0.6]] });
 
         // ---- the windscreen: a pane of its own (three facets, wrapping a little; one-sided, facing out: the driver sees through it) from
-        //      the cowl up to the header, raked 25 degrees; its frame bright: the A-pillars and the header; the wipers parked on it ----
+        //      the cowl up to the header, raked some 25 degrees; its frame bright: the A-pillars and the header; the wipers parked on it ----
         const WB = [[0.958, 0.966, 0.68], [0.958, 1.018, 0.26]], WT = [[0.38, 1.252, 0.605], [0.38, 1.26, 0.24]];   // (the base's and the header's corner and inner points, right side)
         const mz = (p, sd) => [p[0], p[1], p[2] * sd];
         K.part('body', () => {
@@ -177,9 +177,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.bar([0.37, 1.27, -0.65], [0.37, 1.27, 0.65], 0.032, BRIGHT, { n: 6 });               // the header
           for (const z of [-0.36, 0.2]) F([[0.94, 1.032, z - 0.26], [0.932, 1.037, z - 0.26], [0.872, 1.064, z + 0.26], [0.88, 1.059, z + 0.26]], B, [0.4, 1, 0]);   // the wipers
         });
-        // ---- the tail: the lamps round the corners (a chrome surround, the red lenses; the lit part at their inner ends on the boot lid's
-        //      face), the black garnish across the boot lid between them; the strip over the bumper, its red fog lamp, the exhaust ----
-        const fX = (y) => -1.91 + Math.max(0, Math.min(1, (y - 0.69) / 0.185)) * 0.015, fP = (y, z, l) => [fX(y) - l, y, z];   // (the boot lid's face: upright, leaning in 1.5 cm)
+        // ---- the tail: the lamps round the corners (a black housing, the red lens with the reversing light at its slanted inner end; the
+        //      lit part on the face), the black garnish across the face between them; the strip over the bumper, its red fog lamp, the
+        //      number plate, the exhaust ----
+        const fX = (y) => -1.91 + Math.max(0, Math.min(1, (y - 0.69) / 0.185)) * 0.015, fP = (y, z, l) => [fX(y) - l, y, z];   // (the tail's face: upright, leaning in 1.5 cm)
         const cP = (s, sd, l) => { const p = on(-1.895, s, sd, 0); return [p[0] - l, p[1], p[2]]; };   // (the face's corner: the band's line at its top section)
         for (const sd of [-1, 1]) {   // (each: on the face from its slanted inner end out to the corner, then round it on the band)
           F([fP(0.708, sd * 0.42, 0.004), cP(0.12, sd, 0.004), cP(0.98, sd, 0.004), fP(0.87, sd * 0.33, 0.004)], B, [-1, 0, 0], LO);                    // (the housing)
