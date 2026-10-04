@@ -1509,7 +1509,7 @@ const Garage3D = (function () {
   function buildKitL() {
     const { x0, z0 } = ROOM, { back: PB, left: PL } = WALLS;
     let g = null, sm = null, cp = null; const use = (p, k) => { g = p.g; sm = p.sm; cp = p; gloss(p, k == null ? PAINT : k); return p; }, gl = (k) => gloss(cp, k), box = (...a) => fbox(g, ...a);
-    const DK = [0.07, 0.07, 0.08], DG = [0.12, 0.125, 0.14], GR = [0.3, 0.31, 0.34], STL = [0.6, 0.63, 0.68], CHR = [0.86, 0.88, 0.92], RD = [0.58, 0.1, 0.09], WH = [0.88, 0.88, 0.86], LIT = [2.0, 2.0, 1.9];
+    const DK = PAL.dk, DG = [0.17, 0.175, 0.19], GR = [0.3, 0.31, 0.34], STL = PAL.steel, CHR = PAL.chrome, RD = PAL.red, WH = [0.88, 0.88, 0.86], LIT = [2.0, 2.0, 1.9];   // (the blacks, the steel, the chrome: the room's palette's)
     // helpers: a box standing on something (no bottom), a cylinder along an axis, a shape by a matrix, a quad facing n, a disc's fan facing
     // n (u, v: its axes), a stroke from a to b in the plane facing n, a sheet round an axis along x (both faces; angles from +z up), an open
     // funnel round y (its outside, its inside), a coil spring along x
