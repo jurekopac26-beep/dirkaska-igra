@@ -74,11 +74,16 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const BD = { part: 'body' };
         DL.band([[-0.66, 0], [-0.56, 0], [-0.56, 1], [-0.66, 1]], P, null, 0.008, BD);
         DL.band([[-0.648, 0.3], [-0.572, 0.3], [-0.572, 0.62], [-0.648, 0.62]], [0.95, 0.95, 0.93], null, 0.01, BD);
-        for (const q of [[-0.1, 0.824, 0.1, 0.766], [0.1, 0.766, 0.25, 0.688], [0.25, 0.688, 0.4, 0.532], [0.4, 0.532, 0.55, 0]]) DL.band([[q[0], q[1]], [q[2], q[3]], [q[2], 1], [q[0], 1]], P, null, 0.008, BD);
-        // the window nets in the side windows (the doors' glass, from the B-pillar to under the A-pillar): straps across and up, a frame
-        const xn0 = -0.545, xn1 = 0.28, un0 = 0.08, un1 = 0.8;
-        for (const [u0, u1] of [[un0, un0 + 0.05], [0.31, 0.35], [0.54, 0.58], [un1 - 0.05, un1]]) DL.band([[xn0, u0], [xn1, u0], [xn1, u1], [xn0, u1]], NET, null, 0.01);
-        for (let i = 0; i <= 7; i++) { const x = xn0 + (xn1 - xn0) * i / 7, h = i === 0 || i === 7 ? 0.03 : 0.018; DL.band([[x - h / 2, un0], [x + h / 2, un0], [x + h / 2, un1], [x - h / 2, un1]], NET, null, 0.011); }
+        const uP = [[-0.1, 0.824], [0.1, 0.766], [0.25, 0.688], [0.4, 0.532], [0.55, 0]];   // (the A-pillar's lower edge, band u: about 7 cm of pillar)
+        for (let i = 0; i < uP.length - 1; i++) DL.band([uP[i], uP[i + 1], [uP[i + 1][0], 1], [uP[i][0], 1]], P, null, 0.008, BD);
+        // the window nets in the side windows (the doors' glass, from the B-pillar to under the A-pillar): straps across and up, a frame;
+        // its top under the A-pillar (a straight edge under the pillar's bend)
+        const xn0 = -0.545, xn1 = 0.28, un0 = 0.08, uTop = (x) => { if (x <= uP[0][0]) return 0.8;
+          for (let i = 0; i < uP.length - 1; i++) if (x <= uP[i + 1][0]) return Math.min(0.8, uP[i][1] + (uP[i + 1][1] - uP[i][1]) * (x - uP[i][0]) / (uP[i + 1][0] - uP[i][0]) - 0.02);
+          return 0; };
+        for (const [u0, u1] of [[un0, un0 + 0.05], [0.31, 0.35], [0.54, 0.58]]) DL.band([[xn0, u0], [xn1, u0], [xn1, u1], [xn0, u1]], NET, null, 0.01);
+        DL.band([[xn0, 0.75], [-0.1, 0.75], [-0.1, 0.8], [xn0, 0.8]], NET, null, 0.01); DL.band([[-0.1, 0.75], [xn1, uTop(xn1) - 0.05], [xn1, uTop(xn1)], [-0.1, 0.8]], NET, null, 0.01);
+        for (let i = 0; i <= 7; i++) { const x = xn0 + (xn1 - xn0) * i / 7, h = i === 0 || i === 7 ? 0.03 : 0.018; DL.band([[x - h / 2, un0], [x + h / 2, un0], [x + h / 2, uTop(x)], [x - h / 2, uTop(x)]], NET, null, 0.011); }
         // the rear glass's corners at its base in the paint (the C-pillars come down to the deck: the glass narrower there)
         for (const sd of [-1, 1]) DL.top([[-1.66, sd * 0.875], [-1.66, sd * 0.6], [-1.1, sd * 0.68], [-1.1, sd * 0.72]], P, 0.004);
         for (const z of [-0.2, 0.2]) DL.top([[-1.64, z - 0.02], [-1.12, z - 0.02], [-1.12, z + 0.02], [-1.64, z + 0.02]], B, 0.004);   // (the rear glass's two braces)
@@ -121,8 +126,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const sd of [-1, 1]) K.rect(-2.533, 0.4, sd * 0.7, 0.12, 0.04, [0.6, 0.05, 0.04], { dir: '-x' });   // (the reflectors)
         });
         for (const x of [-0.78, -0.88]) K.cyl([x, 0.17, 0.93], [x, 0.17, 1.005], 0.042, CH, { n: 8, capA: null, capB: [0.03, 0.03, 0.035], part: 'body' });
-        // the fuel filler on the left rear quarter
-        K.face([0, 1, 2, 3, 4, 5, 6, 7].map(i => [-1.95 - Math.cos(i * Math.PI / 4) * 0.055, 0.79 + Math.sin(i * Math.PI / 4) * 0.055, -(L.prop(-1.95, 'w') + 0.006)]), D, { part: 'quarterL' });
+        // the fuel filler on the left rear quarter (behind the slashes)
+        K.face([0, 1, 2, 3, 4, 5, 6, 7].map(i => [-2.28 - Math.cos(i * Math.PI / 4) * 0.055, 0.79 + Math.sin(i * Math.PI / 4) * 0.055, -(L.prop(-2.28, 'w') + 0.006)]), D, { part: 'quarterL' });
         // ---- the blade spoiler across the deck lid's trailing edge, its braces behind it (never crushed with the roof) ----
         K.part('wing', () => {
           K.plate([[-2.448, 1.02, -0.84], [-2.448, 1.02, 0.84], [-2.54, 1.23, 0.84], [-2.54, 1.23, -0.84]], 0.012, CF);
@@ -144,9 +149,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [[0.45, 0.4, 0.88], [-0.95, 0.4, 0.88]], [[0.45, 0.6, 0.88], [-0.95, 0.6, 0.88]],
           [[-0.95, yH, -0.6], [-1.85, 0.6, -0.6]], [[-0.95, yH, 0.6], [-1.85, 0.6, 0.6]], [[-0.95, yH, -0.6], [-0.95, 0.2, 0.8]],
         ], 0.024, cg, { n: 4 });
-        K.engine(1.55, 0.22, 0, { l: 0.72, w: 0.46, h: 0.42, cover: CF });                    // the V8: its block and the intake between the banks,
-        for (const sd of [-1, 1]) K.plate([[1.88, 0.6, sd * 0.1], [1.22, 0.6, sd * 0.1], [1.22, 0.5, sd * 0.3], [1.88, 0.5, sd * 0.3]], 0.06, [0.72, 0.1, 0.08], { inner: true, part: 'body' });   // the valve covers on the banks,
-        K.cyl([1.55, 0.64, 0], [1.55, 0.71, 0], 0.17, B, { n: 8, capB: CH, inner: true, part: 'body' });                     // the round air cleaner
+        // the V8 (its block, the intake between the banks), the valve covers on its banks, the round air cleaner on top
+        K.engine(1.55, 0.22, 0, { l: 0.72, w: 0.46, h: 0.42, cover: CF });
+        for (const sd of [-1, 1]) K.plate([[1.88, 0.6, sd * 0.1], [1.22, 0.6, sd * 0.1], [1.22, 0.5, sd * 0.3], [1.88, 0.5, sd * 0.3]], 0.06, [0.72, 0.1, 0.08], { inner: true, part: 'body' });
+        K.cyl([1.55, 0.64, 0], [1.55, 0.71, 0], 0.17, B, { n: 8, capB: CH, inner: true, part: 'body' });
         K.box(2.18, 0.14, 0, 0.06, 0.42, 1.3, 0, D, null, false, { inner: true, part: 'body' });
         K.box(-2.05, 0.28, 0, 0.5, 0.34, 0.9, 0, [0.14, 0.14, 0.15], null, false, { inner: true, part: 'body' });
       },
