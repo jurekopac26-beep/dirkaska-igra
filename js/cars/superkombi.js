@@ -36,8 +36,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [-1.68, 0.9, 0.16, 1.0, 0.8, 1.57, 0.06, 'r', 0.1],            // (the side intake's back edge)
           [0.38, 0.9, 0.14, 1.0, 0.8, 1.57, 0.06, 'gf', 0.1],            // the windscreen's top
           [1.31, 0.9, 0.14, 0.98, 0.84, 1.03, 0.03, 'b', 0.1],           // the windscreen's base (the cowl)
-          [2.18, 0.88, 0.11, 0.8, 0.83, 0.85, 0.02, 'b', 0.09],          // the short sloping bonnet; the spoiler from here, deep under it
-          [2.33, 0.84, 0.1, 0.72, 0.79, 0.76, 0.01, 'b', 0.07]],         // the nose: the lamps' panel over the spoiler's face
+          [2.18, 0.88, 0.08, 0.8, 0.83, 0.85, 0.02, 'b', 0.09],          // the short sloping bonnet; the spoiler from here, deep under it
+          [2.33, 0.84, 0.07, 0.72, 0.79, 0.76, 0.01, 'b', 0.07]],        // the nose: the lamps' panel over the spoiler's face
         eye: { x: 0.12, y: 1.22, near: 0.25, tilt: 0.06, style: 'closed' },   // (high and upright, as in a van; the roll cage round it)
         door: [1.12, -0.06], bumpF: 0.15, bumpR: 0.14, bumpY: [0.5, 0.56],
         engine: [-0.85, 0.78], engRear: true, cage: true },                  // (the race engine behind the seats, between the axles)
@@ -49,9 +49,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const A0 = K.arches[0], A1 = K.arches[1], XA = A1.x + A1.half, XB = A0.x - A0.half;    // (the skirt from the rear arch to the front one)
         const XI0 = A1.x + A1.half * Math.cos(Math.PI / 6), XI1 = A1.x - A1.half;               // (the side intake: between two of the rear arch's cuts)
         // ---- the shell: the paint; the glass (the windscreen and the quarter-lights beside it, the side windows forward of the intake, the
-        //      tailgate's window); black skirts under the sills from arch to arch, the paint's dark shade under the spoiler and the bumper ----
+        //      tailgate's window); black under the sills, the spoiler and the bumper ----
         const L = K.loft(K.body.secs, (k, e, kind, at) => {
-          if (e === 0 || e === 8) return at.arch || (at.x > XA && at.x < XB) ? B : K.shade(P, 0.5);
+          if (e === 0 || e === 8) return B;
           if (kind === 'gf') return e >= 2 && e <= 6 ? G : P;
           if (kind === 'gr') return e >= 3 && e <= 5 ? G : P;
           if (kind === 'r' && (e === 2 || e === 6)) return at.x > XI0 ? G : P;
@@ -67,8 +67,12 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // the livery: a band in the stripe colour sweeping up the side from the nose to the tail; the black skirts
         LD.side([[2.34, 0.36], [2.34, 0.54], [-2.34, 0.96], [-2.34, 0.78]], S, null, 0.008);
         LD.side([[XA + 0.02, 0.24], [XB - 0.02, 0.24], [XB - 0.02, 0.33], [XA + 0.02, 0.33]], B, null, 0.008);
+        LD.side([[2.18, 0.1], [2.34, 0.1], [2.34, 0.2], [2.18, 0.2]], B, null, 0.008);                      // (the spoiler's black lip, round its corners)
+        // the sliding door: its rear shut line under the intake's lip, its rail along the quarter under the windows
+        LD.side([[XI0 - 0.03, 0.25], [XI0 - 0.015, 0.25], [XI0 - 0.015, 0.995], [XI0 - 0.03, 0.995]], D, null, 0.009);
+        LD.side([[-2.02, 0.935], [XI0 - 0.03, 0.935], [XI0 - 0.03, 0.955], [-2.02, 0.955]], D, null, 0.009);
         // ---- the flared arches (in the paint, round the wide slicks) ----
-        for (const A of K.arches) for (const sd of [-1, 1]) K.flare(A.x, A.r, A.r + 0.12, sd * 0.86, sd * 0.975, P, { n: 6, a0: 0.06, a1: Math.PI - 0.06 });
+        for (const A of K.arches) for (const sd of [-1, 1]) K.flare(A.x, A.r, A.r + 0.15, sd * 0.85, sd * 0.975, P, { n: 6, a0: 0.04, a1: Math.PI - 0.04 });
         // ---- the side intakes for the mid-mounted engine: where the rear side window was, a black mouth with its slats, a lip at its front
         //      edge and over it standing out into the air ----
         for (const sd of [-1, 1]) {
@@ -91,10 +95,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.rect(2.336, 0.62, sd * 0.78, 0.08, 0.12, K.rgb(0xff9a1e), { part: 'body' }); }
         K.grille(2.336, 0.62, 0, 0.6, 0.1, { slats: 2, slatCol: GR, part: 'body' });
         K.part('bumperF', () => {
-          K.rect(2.334, 0.27, 0, 0.84, 0.17, B); K.grille(2.336, 0.27, 0, 0.8, 0.14, { slats: 2, slatCol: GR });   // the radiator's mouth
-          for (const sd of [-1, 1]) K.rect(2.334, 0.22, sd * 0.64, 0.3, 0.12, B);                  // the brake ducts
-          K.rect(2.334, 0.44, 0, 1.62, 0.04, S);
-          K.box(2.26, 0.055, 0, 0.22, 0.03, 1.8, 0, B);                                           // the splitter (4 cm proud of the face)
+          K.rect(2.334, 0.29, 0, 0.84, 0.17, B); K.grille(2.336, 0.29, 0, 0.8, 0.14, { slats: 2, slatCol: GR });   // the radiator's mouth
+          for (const sd of [-1, 1]) K.rect(2.334, 0.28, sd * 0.64, 0.3, 0.13, B);                  // the brake ducts
+          K.rect(2.334, 0.44, 0, 1.62, 0.04, S); K.rect(2.334, 0.135, 0, 1.64, 0.13, B);           // (a band in the stripe colour over them; the black lip under them)
+          K.box(2.25, 0.045, 0, 0.24, 0.025, 1.8, 0, B);                                          // the splitter (4 cm proud of the face)
         }, { hinge: [[2.2, 0.3, -0.8], [2.2, 0.3, 0.8]] });
         for (const z of [-0.42, 0.28]) K.bar([1.34, 1.04, z - 0.3], [1.31, 1.06, z + 0.3], 0.01, B, { n: 4, part: 'body' });   // the wipers
         K.hinge('hood', [1.31, 1.02, -0.7], [1.31, 1.02, 0.7]);
@@ -107,15 +111,15 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.number(-2.334, 0.8, 0, 0.24, { dir: '-x', host: 'trunk' });
         K.hinge('trunk', [-2.19, 1.6, -0.6], [-2.19, 1.6, 0.6]);
         K.part('bumperR', () => {
-          K.rect(-2.334, 0.27, 0, 1.6, 0.13, B, { dir: '-x' }); K.rect(-2.334, 0.5, 0, 1.6, 0.035, S, { dir: '-x' });
+          K.rect(-2.334, 0.215, 0, 1.64, 0.07, B, { dir: '-x' }); K.rect(-2.334, 0.5, 0, 1.6, 0.035, S, { dir: '-x' });
           K.box(-2.2, 0.09, 0, 0.28, 0.07, 1.5, 0, B);                                            // the diffuser
-          for (const sd of [-1, 1]) K.exhaust(-2.36, 0.27, sd * 0.24, 0.045, 0.2, { n: 6 });
+          for (const sd of [-1, 1]) K.exhaust(-2.37, 0.32, sd * 0.22, 0.05, 0.2, { n: 6 });       // (the V10's twin tailpipes)
         });
         // ---- the wing across the roof's back edge: its plane in the stripe colour, black endplates and struts (never crushed) ----
         K.part('wing', () => {
-          K.wingPlank(-1.97, 1.69, -2.37, 1.715, 0.04, -0.9, 0.9, S);
-          for (const sd of [-1, 1]) { K.endplate([[-1.93, 1.6], [-2.39, 1.6], [-2.39, 1.775], [-1.95, 1.75]], sd * 0.915, 0.014, B);
-            K.box(-2.16, 1.6, sd * 0.42, 0.24, 0.1, 0.03, 0, B); }
+          K.wingPlank(-1.95, 1.7, -2.38, 1.73, 0.04, -0.9, 0.9, S);                               // (its top 1.77: 14 cm over the roof)
+          for (const sd of [-1, 1]) { K.endplate([[-1.92, 1.665], [-2.4, 1.665], [-2.4, 1.78], [-1.94, 1.755]], sd * 0.915, 0.014, B);
+            K.box(-2.15, 1.58, sd * 0.45, 0.2, 0.13, 0.03, 0, B); }
         }, { noCrush: true });
         // ---- inside (seen once a part is off): two racing seats in the cage, the dashboard; the race engine behind them (the bulkhead
         //      between), its gearbox over the rear axle; the radiator in the nose ----
