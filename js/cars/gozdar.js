@@ -31,10 +31,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     // the look (KIT API v1, render.js; look units = metres): one loft from the tailgate to the nose: the bed (its top open: lined, floored,
     // the wheel housings inside it), the cab's back wall, the roof, the windscreen, a step out to the wide front fenders round the long
     // hood, the nose; the regions cut it into the doors (their glass with them), the fenders (their tops too) and the hood; the end caps
-    // into the tailgate over the rear valance (bumperR) and the fascia over the front valance (bumperF). On top: the wing on two endplates
-    // standing on the bed rails, the tube bumper with its skid plate, the rear tube bumper, the coil-overs and their hoop in the bed, the
-    // axles' arms under the body, the number panels on the doors, the mirrors. The livery: the body in the paint, a band rising along the
-    // sides, the wing's endplates and the sun strip in the stripe colour
+    // into the tailgate over the rear valance (bumperR) and the fascia over the front valance (bumperF). On top: the wing between its
+    // endplates on a pylon on each bed rail, the tube bumper with its skid plate, the rear tube bumper, the coil-overs and their hoop in the
+    // bed, the axles' arms under the body, the number panels on the doors, the mirrors, the roof's scoop. The livery: the body in the paint
+    // over a black lower edge, a band rising along the sides, the wing's main plane, the tailgate's band and the sun strip in the stripe
+    // colour
     look: {
       body: { len: 4.9, wid: 2.2, roofY: 1.69,
         //       x      w     yb    ybelt  wt    yt    cr    kind  tuck
@@ -42,7 +43,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [-0.66, 1.08, 0.58, 1.12, 0.86, 1.16, 0, 'b', 0.08],         // the bed's front (the headboard); its segment: the cab's back wall
           [-0.64, 0.93, 0.58, 1.17, 0.8, 1.64, 0.05, 'r', 0.08],       // the roof's back edge
           [0.34, 0.93, 0.58, 1.17, 0.8, 1.64, 0.05, 'gf', 0.08],       // the windscreen's top
-          [0.74, 0.93, 0.58, 1.17, 0.93, 1.18, 0.03, 'b', 0.08],       // its base (the cowl; no tumblehome: the window's glass never faces up at the driver); its segment: the step out to the fenders
+          [0.74, 0.93, 0.58, 1.17, 0.93, 1.18, 0.03, 'b', 0.08],       // its base, the cowl (wt = w: no glass faces up at the driver); then the step out
           [0.8, 1.08, 0.58, 1.12, 0.8, 1.15, 0.05, 'b', 0.08],         // the fenders' back edge, the hood's
           [2.24, 1.07, 0.62, 1.07, 0.78, 1.1, 0.02, 'b', 0.08],
           [2.3, 1.04, 0.64, 1.02, 0.74, 1.05, 0.01, 'b', 0.08]],       // the nose: the fascia
@@ -78,16 +79,17 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.rect(-0.666, 1.44, 0, 1.1, 0.26, G, { dir: '-x', part: 'body' });                  // the rear window in the cab's back wall
         // the scoop on the roof's front (the cabin's air: its inlet black), a wedge rising to the front
         K.skin([[0.06, 0.01, 0.15], [0.32, 0.075, 0.16]].map(([x, h, w]) => [[x, 1.686, -w], [x, 1.686 + h, -w * 0.94], [x, 1.686 + h, w * 0.94], [x, 1.686, w]]), P, null, B, { part: 'body' });
-        // ---- the livery: a band in the stripe colour sweeping up from the front fender across the door (under its number) to the top of
-        //      the bedside, a dark line under it (flat quads on the flat sides, each with the panel it lies on) ----
-        const yb0 = (x) => 0.74 + (1.0 - x) * 0.2;                                          // (the band's foot, rising to the rear)
+        // ---- the livery: a band in the stripe colour sweeping up from the front fender across the door (under its number) to the cab's back,
+        //      on along the top of the bedside (over the rear arch); a dark line under it on the cab (flat quads on the flat sides, each with
+        //      the panel it lies on) ----
+        const yb0 = (x) => 1.0 + (-0.64 - x) * 0.1585;                                      // (the band's foot, rising to the rear: 1.0 at the cab's back)
         for (const sd of [-1, 1]) {
           const f = sd < 0 ? 'fenderL' : 'fenderR', door = sd < 0 ? 'doorL' : 'doorR', lift = 0.007;
           for (const [x0, x1, w, o] of [[0.8, 1.0, 1.08, { host: f }], [-0.33, 0.74, 0.93, { host: door }], [-0.64, -0.33, 0.93, { part: 'body' }]]) {
-            onSide(sd, w + lift, [[x0, yb0(x0)], [x1, yb0(x1)], [x1, yb0(x1) + 0.11], [x0, yb0(x0) + 0.11]], S, o);
+            onSide(sd, w + lift, [[x0, yb0(x0)], [x1, yb0(x1)], [x1, yb0(x1) + 0.1], [x0, yb0(x0) + 0.1]], S, o);
             onSide(sd, w + lift + 0.002, [[x0, yb0(x0) - 0.03], [x1, yb0(x1) - 0.03], [x1, yb0(x1) - 0.012], [x0, yb0(x0) - 0.012]], D, o);
           }
-          onSide(sd, 1.08 + lift, [[-2.38, 1.01], [-0.67, 1.0], [-0.67, 1.1], [-2.38, 1.105]], S, { part: 'body' });
+          onSide(sd, 1.08 + lift, [[-2.38, 1.0], [-0.67, 1.0], [-0.67, 1.1], [-2.38, 1.1]], S, { part: 'body' });
           onSide(sd, 1.08 + lift, [[0.83, 0.93], [0.98, 0.93], [0.98, 1.05], [0.83, 1.05]], B, { host: f });   // the fender's vent behind the wheel, its slats
           for (const y of [0.965, 1.005]) onSide(sd, 1.08 + lift + 0.003, [[0.835, y], [0.975, y], [0.975, y + 0.014], [0.835, y + 0.014]], K.shade(P, 0.6), { host: f });
         }
