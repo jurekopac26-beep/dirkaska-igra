@@ -23080,11 +23080,16 @@ const World = (function () {
     cars.addTo(root, false); rvs.addTo(root, false); trls.addTo(root, false); tents.addTo(root, false);
 
     /* ---- water: the lake and the ponds of the infield (OSM), at the level of their shore ---- */
-    { const wg = new GB(true);
-      for (const lk of lakes) { const Pp = lk.P, n = Pp.length / 2; let cx = 0, cz = 0; for (let k = 0; k < n; k++) { cx += Pp[k * 2]; cz += Pp[k * 2 + 1]; } cx /= n; cz /= n;
-        for (let k = 0; k < n; k++) { const j = (k + 1) % n; wg.triO([cx, lk.y, cz], [Pp[k * 2], lk.y, Pp[k * 2 + 1]], [Pp[j * 2], lk.y, Pp[j * 2 + 1]], W1, [cx, lk.y - 5, cz], W1, W1, [cx / 4, cz / 4], [Pp[k * 2] / 4, Pp[k * 2 + 1] / 4], [Pp[j * 2] / 4, Pp[j * 2 + 1] / 4]); }
-        exclPush(cx, cz, Math.hypot(lk.b[2] - lk.b[0], lk.b[3] - lk.b[1]) / 2); }
-      if (!wg.empty) { const m = new THREE.Mesh(wg.geometry(), waterMat(tex, { color: 0x7f9a86, refl: 0.45, land: 0.7, amp: 0.35, len: 0.6, shal: 0.7 })); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); } }
+    { const gw = new GB(true), V = (p) => new THREE.Vector2(p[0], p[1]);
+      for (const lk of lakes) { const Pp = lk.P, pts = []; for (let k = 0; k < Pp.length; k += 2) pts.push([Pp[k], Pp[k + 1]]);
+        const Q = (p) => [p[0], lk.y, p[1]], uv = (p) => [p[0] / 16, -p[1] / 16];
+        for (const [a, b, c] of THREE.ShapeUtils.triangulateShape(pts.map(V), [])) { const A = pts[a], B = pts[b], Cc = pts[c]; gw.triO(Q(A), Q(B), Q(Cc), W1, [A[0], lk.y - 5, A[1]], W1, W1, uv(A), uv(B), uv(Cc)); }
+        exclPush((lk.b[0] + lk.b[2]) / 2, (lk.b[1] + lk.b[3]) / 2, Math.hypot(lk.b[2] - lk.b[0], lk.b[3] - lk.b[1]) / 2); }
+      if (!gw.empty) {   // the water, and the shore band round each pond (the shallows, a little foam at the waterline)
+        const WO = { len: 0.6, amp: 0.35, refl: 0.45, land: 0.7, shal: 0.7, lap: 0.35, surf: 0 }, wm = new THREE.Mesh(gw.geometry(), waterMat(tex, Object.assign({ color: 0x7f9a86 }, WO)));
+        wm.receiveShadow = true; wm.matrixAutoUpdate = false; wm.updateMatrix(); root.add(wm); out.dyn.water = tex.water;
+        const bands = lakes.map(lk => shoreBand(lk.b[0] - 6, lk.b[1] - 6, lk.b[2] + 6, lk.b[3] + 6, lk.y + 0.015, (x, z) => (mtIn(lk.P, x, z) ? 1 : -1) * edgeD(lk.P, x, z), 16));
+        addShore(root, mergeBands(bands), wm.material, WO); } }
 
     /* ---- trees: coast live oaks in the woodland (the land cover's class 1) and alone in the golden grass, chaparral on the slopes (class 2), a
        few Monterey pines by the buildings ---- */
