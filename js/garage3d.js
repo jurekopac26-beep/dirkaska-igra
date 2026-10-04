@@ -851,6 +851,7 @@ const Garage3D = (function () {
   const MATTE = 0.15, SATIN = 0.5, PAINT = 1, METAL = 2.2;   // (the gloss of the faces that follow: gloss())
   const BANDS = [[0.95, 0.78, 0.15], [0.86, 0.16, 0.12], [0.92, 0.92, 0.9]];   // (the slicks' compound rings: as the car's tyres' bands)
   const BLOBS = [];   // (the soft shadows on the floor: [x, z, w, d, k how dark, angle, piece]; buildDecor lays them all)
+  const WALLAO = [];   // (contact shadows on the walls behind tall things: [wall 'b'|'f'|'l'|'r', a, b (along the wall: world x on 'b'/'f', world z on 'l'/'r'), y0, y1, k 0..1, piece]; the decal block draws them)
   // a box (its bottom at cy) into g; one standing on the floor taller than 0.7 m is split at 0.4 m: the floor's occlusion (the vertex
   // colours darker under 0.4 m) stays at its foot
   function fbox(g, cx, cy, cz, sx, sy, sz, col, top, rot) {
@@ -1278,6 +1279,7 @@ const Garage3D = (function () {
       box(1.4, 0.05, 8.6, 0.48, 0.9, 0.55, [0.16, 0.26, 0.2], [0.13, 0.22, 0.17]); box(1.4, 0.95, 8.58, 0.5, 0.04, 0.6, [0.14, 0.24, 0.18]); box(1.4, 0.93, 8.88, 0.5, 0.04, 0.04, [0.1, 0.18, 0.13]);
       gl(MATTE); for (const s of [-1, 1]) cylA(g, [1.4 + s * 0.2, 0.08, 8.82], 'x', 0.08, 0.05, 10, DK);
       BLOBS.push([3.35, z1 - 0.45, 3.0, 1.0, 0.7, 0, P], [3.5, 7.78, 1.8, 0.7, 0.5, 0, P], [1.1, z1 - 0.35, 1.3, 0.8, 0.8, 0, P]); }
+    buildKitL(); buildKitR(); buildKitF();   // (round 2: each zone's new things, into the pieces before they are finished)
     // the floor's soft shadows under the things standing on it (along the foot of the walls: the room light's) and a few old oil stains:
     // one mesh over the floor, its pictures in one atlas (TX.decal); as a piece fades out, its blobs step down to lighter shades
     { const P = [], U = [], I = [], live = new Map();
@@ -1297,6 +1299,12 @@ const Garage3D = (function () {
         for (const [i, k] of list) { const s = shade(k * o); set(i, s < 0 ? 11 : s); } ua.array.set(U); ua.needsUpdate = true; } }); }
     finishPieces(); g = sm = cp = null;   // (the fades' closures keep this scope: not the builders)
   }
+  // round 2, the left zone: the tyre service corner, the bench's tools, the drivetrain, the left wall
+  function buildKitL() {}
+  // round 2, the right zone
+  function buildKitR() {}
+  // round 2, the front zone
+  function buildKitF() {}
   /* ---------------- outside: the valley round the workshop (the sky, its clouds and the mountains round the valley in one shader; the
      meadows, the fields, the apron and the road away round a bend in another; the forest at the doors' edges, the paddock, a hayrack, a
      farm, a church on a knoll) ---------------- */
