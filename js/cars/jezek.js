@@ -92,6 +92,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.rect(-1.982, 0.335, 0, 1.2, 0.06, DK, { dir: '-x' });
           for (const sd of [-1, 1]) K.rect(-1.982, 0.46, sd * 0.62, 0.14, 0.035, K.rgb(0xb01010), { dir: '-x' });
         });
+        { const y = L.topY(-1.64, 0); K.endplate([[-1.72, y - 0.01], [-1.56, y - 0.01], [-1.68, y + 0.065]], 0, 0.045, B, { part: 'body' }); }   // (the aerial's fin on the roof)
         // ---- the mirrors (the stripe colour), the wipers ----
         for (const sd of [-1, 1]) K.mirror(0.95, 1.02, sd * 0.955, { col: S, w: 0.08, h: 0.085, d: 0.15, arm: B });
         for (const z of [-0.5, 0.06]) K.bar([1.035, 1.055, z - 0.06], [0.965, 1.1, z + 0.44], 0.01, B, { n: 4, part: 'body' });
@@ -104,8 +105,14 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.rect(0.578, 0.86, 0, 1.2, 0.1, [0.28, 0.42, 0.55], { dir: '-x', inner: true, part: 'body' });
         K.cyl([0.54, 0.84, -0.36], [0.5, 0.87, -0.36], 0.17, B, { n: 8, inner: true, part: 'body' });
         K.box(0.2, 0.24, 0, 0.56, 0.24, 0.22, 0, DK, null, false, { inner: true, part: 'body' });
-        K.engine(1.4, 0.3, 0, { l: 0.5, w: 0.72, h: 0.36, col: [0.6, 0.61, 0.64], cover: [0.2, 0.2, 0.22] });
-        for (const z of [-0.18, -0.08]) K.bar([1.18, 0.56, z], [0.9, 0.3, z], 0.022, K.rgb(0xf07818), { n: 4, inner: true, part: 'body' });   // (the orange high-voltage cables to the battery under the floor)
+        // (the bay: the motor and its gearbox low between the front wheels, the inverter on it, the orange high-voltage cables from it down to
+        // the battery under the floor, the 12 V battery, the coolant tank, the radiator behind the fascia)
+        K.engine(1.4, 0.28, 0, { l: 0.46, w: 0.66, h: 0.34, col: [0.58, 0.59, 0.62], cover: [0.34, 0.35, 0.38] });
+        const OR = K.rgb(0xf07818), IN = { inner: true, part: 'body' };
+        K.box(1.42, 0.62, 0, 0.36, 0.1, 0.46, 0, [0.72, 0.73, 0.76], null, false, IN);
+        for (const z of [-0.12, 0.12]) { K.bar([1.6, 0.73, z], [1.26, 0.73, z], 0.02, OR, Object.assign({ n: 4 }, IN)); K.bar([1.26, 0.73, z], [0.98, 0.34, z], 0.022, OR, Object.assign({ n: 4 }, IN)); }
+        K.box(1.62, 0.36, 0.44, 0.22, 0.2, 0.17, 0, K.black, null, false, IN); K.box(1.66, 0.46, -0.44, 0.15, 0.15, 0.13, 0, [0.86, 0.86, 0.8], null, false, IN);
+        K.box(1.86, 0.3, 0, 0.05, 0.36, 1.2, 0, DK, null, false, IN);
       },
     },
   });
