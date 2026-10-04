@@ -1499,56 +1499,6 @@
   "nan": false,
   "digest": "4b49bef3cdf43ed363e89027"
  },
- "baldy/cs": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 228.97,
-  "spins": 0,
-  "walls": 1,
-  "rescues": 0,
-  "nan": false,
-  "digest": "24ec2c04feaa7c10870968e5"
- },
- "baldy/cs/rain": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 248.88,
-  "spins": 0,
-  "walls": 3,
-  "rescues": 0,
-  "nan": false,
-  "digest": "eccc0f76fc3b2671720e857d"
- },
- "baldy/cs/formula": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 205.16,
-  "spins": 0,
-  "walls": 4,
-  "rescues": 0,
-  "nan": false,
-  "digest": "5392844a4b3965e62eed7935"
- },
- "baldy/cs/lm": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 208.65,
-  "spins": 1,
-  "walls": 3,
-  "rescues": 0,
-  "nan": false,
-  "digest": "4f064e555fb9182124523f13"
- },
- "baldy/cs/car": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 230.36,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "64241171bf977bca645de5bb"
- },
  "cpalace/cs": {
   "finished": 13,
   "cars": 13,
@@ -1592,12 +1542,12 @@
  "cpalace/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 178.44,
+  "winner": 180.55,
   "spins": 0,
-  "walls": 5,
+  "walls": 6,
   "rescues": 0,
   "nan": false,
-  "digest": "a47a74cc48becc4e8cc4dfa3"
+  "digest": "34f6a9a86d535b8497f9de72"
  },
  "riverside/cs": {
   "finished": 13,
@@ -1642,11 +1592,61 @@
  "riverside/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 227.67,
+  "winner": 223.52,
   "spins": 0,
-  "walls": 3,
+  "walls": 13,
   "rescues": 0,
   "nan": false,
-  "digest": "3173d6e192119cc7f241d37c"
+  "digest": "4c53c94c9086f66bc8a7b4f0"
+ },
+ "longford/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 294.47,
+  "spins": 0,
+  "walls": 10,
+  "rescues": 0,
+  "nan": false,
+  "digest": "96c672eeccb014cb9bf03c97"
+ },
+ "longford/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 306.29,
+  "spins": 0,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "13bb3288f434afce7e1f8e5e"
+ },
+ "longford/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 241.57,
+  "spins": 0,
+  "walls": 24,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c8beb48d74e14f7f8e15c3ba"
+ },
+ "longford/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 243.43,
+  "spins": 0,
+  "walls": 22,
+  "rescues": 0,
+  "nan": false,
+  "digest": "da8f42a27cd739610596dc92"
+ },
+ "longford/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 294.18,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d3aa121f8632ba6f463c887e"
  }
 }
