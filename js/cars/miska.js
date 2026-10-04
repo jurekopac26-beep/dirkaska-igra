@@ -17,7 +17,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     snd: { kind: 'i2', hz: 1.3, loud: 0.8 },
     expect: { t100: [4.94, 5.8], vmax: [144, 153], latG: [2.05, 2.15], d100: [22.7, 25] },
     // (where the look has them: the bullet mirrors on the front wings, the engine lid propped open behind the tail)
-    parts: { set: 'car', ht: 1.33, y0: 0.18, over: { mirrorL: { lx: 0.66, lz: -0.79, y: 0.84 }, mirrorR: { lx: 0.66, lz: 0.79, y: 0.84 }, trunk: { lx: -0.9, y: 0.76 } } },
+    parts: { set: 'car', ht: 1.33, y0: 0.18, over: { mirrorL: { lx: 0.66, lz: -0.79, y: 0.84 }, mirrorR: { lx: 0.66, lz: 0.79, y: 0.84 }, trunk: { lx: -0.9, y: 0.76 },
+      fenderL: { h: 0.11 }, fenderR: { h: 0.11 } } },   // (a wing wraps round the nose's end and carries the lamp's nacelle: an L lying 0.31 m tall)
     // the look (KIT API v1, render.js; look units = metres): a round bubble lofted through the sections below. The standard regions cut it
     // into the front lid (the bonnet over the luggage well), the front wings with their lamps, the (rear-hinged) doors with their glass, the
     // rear wings and the bumpers; the engine bay under the lid is open (its top panels null: lined, floored, the firewall a bulkhead) with
@@ -110,8 +111,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- the tail: the lamps either side of its face (chrome rims), the exhaust's tip ----
         for (const sd of [-1, 1]) { K.rect(-1.482, 0.47, sd * 0.45, 0.09, 0.17, CH, { dir: '-x', part: sd < 0 ? 'quarterL' : 'quarterR' }); K.tailLamp(-1.484, 0.47, sd * 0.45, 0.07, 0.14); }
         K.exhaust(-1.545, 0.2, -0.16, 0.042, 0.2, { n: 8, part: 'body' });
-        // ---- the engine lid ('trunk'): hinged under the rear window, propped open by 26 degrees on two stays; louvres in its upper half ----
-        const H = [-1.157, 0.925], th = -26 * Math.PI / 180, ct = Math.cos(th), st = Math.sin(th);
+        // ---- the engine lid ('trunk'): hinged under the rear window, propped open by 34 degrees on two stays; louvres in its upper half ----
+        const H = [-1.157, 0.925], th = -34 * Math.PI / 180, ct = Math.cos(th), st = Math.sin(th);
         const rot = (p) => { const dx = p[0] - H[0], dy = p[1] - H[1]; return [H[0] + dx * ct - dy * st, H[1] + dx * st + dy * ct, p[2]]; };
         const lidC = [[-1.157, 0.928], [-1.33, 0.743], [-1.435, 0.618]], LW = [0.3, 0.34, 0.355], T = 0.03;   // (the closed lid's crest line, its half widths)
         const nrm = (i) => { const a = lidC[Math.max(0, i - 1)], b = lidC[Math.min(2, i + 1)], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy); return [dy / l, -dx / l]; };   // (outward: up and back)
