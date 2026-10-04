@@ -17,11 +17,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     expect: { t100: [3.54, 4.16], vmax: [187, 199], latG: [2.19, 2.29], d100: [22.8, 25.2] },
     parts: { set: 'open', ht: 1.23, y0: 0.18 },
     // the look (KIT API v1, render.js; look units = metres): one loft, soft and low, the cockpit an open top (its 'r' segments without a
-    // top: the lining, the floor and the bulkheads in the outer shell) behind a closed scuttle under the windscreen; the regions: the whole
-    // lower nose with the mouth the front bumper (from the front arch), the lower tail the rear one (from the rear arch), the fenders and
-    // quarters the sides and shoulders above them, the bonnet the top from the windscreen to the nose, the boot lid the top behind the
-    // deck, the doors. The details: the raised pop-up lamps on the fenders, the smiling mouth, the oval tail lamps, the windscreen in its
-    // black frame, the roll hoop over the folded soft top, the seats and the driver in sight
+    // top: the lining, the floor and the bulkheads in the outer shell) behind a closed scuttle under the windscreen; the regions: the front
+    // bumper the whole lower nose with the mouth (from the front arch) and the nose's shoulders, the rear one the lower tail (from the rear
+    // arch), the fenders and quarters the sides and shoulders between, the bonnet the top from the windscreen to the nose, the boot lid
+    // the top behind the deck with the tail's shoulders, the doors. The details: the raised pop-up lamps, the smiling mouth, the oval tail
+    // lamps, the windscreen in its black frame, the roll hoop over the folded soft top, the seats and the driver in sight
     look: {
       body: { len: 3.95, wid: 1.68, wz: 0.12, door: [0.55, -0.5], bumpY: [0.5, 0.5],
         //       x      w      yb     ybelt  wt     yt     cr     kind  tuck
@@ -42,14 +42,15 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         decalX: 1.02, decalY: 0.785, decalRz: -0.107, decalS: 0.55, decalPart: 'hood',   // (the start number on the bonnet, between the lamps)
         crush: { x0: 0.08, x1: 0.45, z: 0.6 } },                          // (a roll-over folds the windscreen's frame; the hoop stands)
       wheels: { style: 'std', spokes: 7, w: 0.19, rim: [0.74, 0.75, 0.78], gap: 0.05 },
-      // the standard regions, the bumpers taken further (the lower nose from the front arch, the lower tail from the rear one: first, so a
-      // side panel over them is cut at their top and the rest goes with the fender / quarter), the fenders and quarters to the ends, the
-      // boot lid behind the deck (no rear glass: the default takes the tail's last 25 cm)
+      // the standard regions, the bumpers taken further (the lower nose from the front arch with the nose's shoulders round its corners, the
+      // lower tail from the rear arch: first, so a side panel over them is cut at their top and the rest goes with the fender / quarter),
+      // the fenders and quarters up to the bumpers' depths (not round the corners: their pieces lie flat), the boot lid behind the deck
+      // with the tail's shoulders (no rear glass: the default takes the tail's last 25 cm)
       regions: (std) => {
         const by = (p, o) => std.filter(r => r.part === p).map(r => Object.assign({}, r, o || {}));
-        return [].concat(by('mirrorL'), by('mirrorR'), by('doorL'), by('doorR'), by('bumperF', { x: [1.51, 2.6] }), by('bumperR', { x: [-2.6, -1.46] }),
-          by('fenderL', { x: [0.55, 2.0] }), by('fenderR', { x: [0.55, 2.0] }), by('quarterL', { x: [-2.0, -0.5] }), by('quarterR', { x: [-2.0, -0.5] }),
-          by('hood'), by('trunk', { x: [-2.6, -1.11] }));
+        return [].concat(by('mirrorL'), by('mirrorR'), by('doorL'), by('doorR'), by('bumperF', { x: [1.82, 2.6], bands: ['side', 'window'], y: null }),
+          by('bumperF', { x: [1.51, 2.6] }), by('bumperR', { x: [-2.6, -1.46] }), by('fenderL', { x: [0.55, 1.82] }), by('fenderR', { x: [0.55, 1.82] }),
+          by('quarterL', { x: [-1.81, -0.5] }), by('quarterR', { x: [-1.81, -0.5] }), by('hood'), by('trunk', { x: [-2.6, -1.11] }));
       },
       build(K) {
         const P = K.paint, B = K.black, G = K.GLASS, D = [0.09, 0.09, 0.1], SEAT = [0.5, 0.39, 0.27], HOOP = [0.7, 0.71, 0.74], TOP = [0.05, 0.05, 0.055], AMB = [1, 0.62, 0.1];
@@ -79,9 +80,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const sd of [-1, 1]) { const q = [[0.15, 0.35], [0.8, 0.35], [0.8, 0.41], [0.15, 0.41]].map(([t, y]) => [1.93 + 0.05 * t + 0.0038, y, sd * (0.665 - 0.145 * t + 0.0013)]);
             K.face(sd > 0 ? q : q.reverse(), AMB); }
         });
-        // ---- the pop-up lamps, raised: a box on each front corner (its face black, the lens in it), the fender's ----
+        // ---- the pop-up lamps, raised: a box on each front corner (its face black, the lens in it), the body's (the lamp units stay when a
+        //      fender or the bonnet goes, as their mechanism does; on a fender its piece would not lie flat) ----
         for (const sd of [-1, 1]) {
-          const host = sd < 0 ? 'fenderL' : 'fenderR', prof = [[1.47, 0.665], [1.655, 0.665], [1.665, 0.79], [1.63, 0.83], [1.47, 0.82]];
+          const host = 'body', prof = [[1.47, 0.665], [1.655, 0.665], [1.665, 0.79], [1.63, 0.83], [1.47, 0.82]];
           K.skin([0.47, 0.79].map(z => prof.map(([x, y]) => [x, y, sd * z])), (k, e) => e === 1 ? B : P, P, P, { host });
           K.headLamp(1.669, 0.728, sd * 0.63, 0.05, { shape: 'rect', w: 0.25, h: 0.095, ring: null, host });
         }
