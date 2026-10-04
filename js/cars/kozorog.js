@@ -47,7 +47,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [2.17, 0.88, 0.17, 0.62, 0.7, 0.7, 0.005, 'b', 0.11]],          // the nose: the lamps, the grilles
         eye: { x: -0.45, y: 1.1, style: 'closed' }, cage: true,          // (low in the bucket, the roll cage round the driver)
         door: [0.78, -0.25], bumpF: 0.32, bumpR: 0.2, bumpY: [0.5, 0.58],
-        decalX: -0.3, decalY: 1.36, decalRz: 0.0145, decalS: 0.6 },      // (the start number on the roof's front half: the fin is behind it)
+        decalX: -0.3, decalY: 1.349, decalRz: 0.0148, decalS: 0.6 },    // (the start number on the roof's front half, 5 mm over it: the fin is behind it)
       wheels: { style: 'slick', w: 0.25, gap: 0.04 },
       // the lids take their tops only (the nose's and the tail's sloping corners stay with the body); the sill under the rear door stays too
       regions: (std) => [{ part: 'body', x: [-0.98, -0.25], bands: ['tuck'], y: [-1, 0.2] }]
