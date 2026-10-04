@@ -56,8 +56,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const fc = (pts, col, d, o) => { const [a, b, c] = pts, u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
           const n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
           K.face(n[0] * d[0] + n[1] * d[1] + n[2] * d[2] < 0 ? pts.slice().reverse() : pts, col, o); };
-        // ---- the shell: carbon under it all round (the sills, under the nose and the tail), the arches' ledges black; the side glass in the
-        //      door (the window band from the door's rear edge to x 0.5), the windscreen, the rear glass; the roof carbon; the intakes' mouths ----
+        // ---- the shell: carbon under it all round (the sills, under the nose and the tail), the arches' ledges black; the shoulders (the window
+        //      band) painted, the canopy over them: the windscreen wrapping round, the side glass in the door, the carbon roof and C-pillars, the
+        //      rear glass; the intakes' mouths black ----
         const L = K.loft(K.body.secs, (k, e, kind, at) => {
           const x = at.x;
           if (e === 0 || e === 8) return at.arch ? B : CF;
@@ -68,16 +69,17 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           return P;
         }, { caps: { front: { col: P, colLow: CF, cut: 0.27, low: 'bumperF', high: 'bumperF' }, rear: { col: P, colLow: B, cut: 0.62, low: 'bumperR', high: 'body' } } });
         const D = L.decal, XA = K.arches[1].x + K.arches[1].half, XB = K.arches[0].x - K.arches[0].half;
-        // ---- the canopy's frames: the shoulder under the side glass (paint), its seal, the frame along the roof's edge down the A-pillar,
-        //      the glass's rear edge; the door's shut lines; the carbon skirt between the arches with a pin line over it ----
+        // ---- the A-pillars across the wrapped glass; the intakes' lower edge and the doors' scoop into them; the doors' shut lines; the carbon
+        //      skirt between the arches with a pin line over it (the stripe's colour); the vents behind the rear wheels ----
         for (const sd of [-1, 1]) D.top([[0.95, sd * 0.72], [0.1, sd * 0.23], [0.1, sd * 0.28], [0.95, sd * 0.78]], B, 0.008);   // the A-pillars
         D.side([[-0.85, 0.2], [-0.55, 0.2], [-0.55, 0.46], [-0.85, 0.34]], P, null, 0.006);   // (the intakes' mouths: their lower edge rising to the door)
+        D.side([[0.9, 0.32], [-0.55, 0.46], [-0.55, 0.66], [0.9, 0.37]], K.shade(P, 0.78), null, 0.005);   // the doors' scoop sweeping back into the intakes
         D.side([[-0.43, 0.2], [-0.415, 0.2], [-0.415, 0.76], [-0.43, 0.76]], B, null, 0.008);
         D.side([[0.945, 0.2], [0.96, 0.2], [0.96, 0.76], [0.945, 0.76]], B, null, 0.008);
         D.side([[XA, 0.2], [XB, 0.2], [XB, 0.3], [XA, 0.3]], CF, null, 0.006);
         D.side([[XA, 0.303], [XB, 0.303], [XB, 0.316], [XA, 0.316]], S, null, 0.006);
-        D.side([[-1.74, 0.46], [-2.03, 0.5], [-2.03, 0.68], [-1.79, 0.68]], B, null, 0.006);   // the vents behind the rear wheels
-        // ---- the nose: the splitter under it, the big ducts and the middle one in its face, the slim lamps over them; the bonnet's two ducts ----
+        D.side([[-1.74, 0.46], [-2.03, 0.5], [-2.03, 0.68], [-1.79, 0.68]], B, null, 0.006);
+        // ---- the nose: the splitter under it, the big ducts and the middle one in its face; the slim lamps in the bonnet's leading edge, its two ducts ----
         K.part('bumperF', () => {
           K.box(2.14, 0.13, 0, 0.48, 0.022, 1.64, 0, B);
           for (const sd of [-1, 1]) fc([[2.353, 0.37, sd * 0.31], [2.353, 0.385, sd * 0.72], [2.353, 0.235, sd * 0.68], [2.353, 0.22, sd * 0.31]], B, [1, 0, 0]);
