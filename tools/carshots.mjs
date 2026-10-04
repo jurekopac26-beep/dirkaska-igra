@@ -1,5 +1,5 @@
-// Vehicle check sheets: pictures of a registered vehicle for authoring and review (the render kit, js/cars/<id>.js). Per vehicle, in
-// test-results/carshots/<id>/:
+// Vehicle check sheets: pictures of a registered vehicle for authoring and review (the render kit, js/cars/<id>.js); one of the 11 (kaze,
+// rally ...): its showroom's three-quarter views and the race's (the wreck look every vehicle has). Per vehicle, in test-results/carshots/<id>/:
 //   side, front, rear, top   near-orthographic views (fov 4 degrees from 70 m) with a 1 m grid, the target box from the def's header
 //                            (L x H, W in front / rear / top; yellow) and the wheel centres (cyan crosses, where the physics has the hubs)
 //   34f, 34r                 the showroom's three-quarter views, front and rear (a fixed angle, the turntable under the car)
@@ -9,7 +9,8 @@
 //                            the rear bumper's end down), the front left wheel off (the body down on that corner), three lamps and two panes
 //                            broken, the roof half crushed, its pieces lying round it: from the chase camera, from the front left and from
 //                            the rear right (the other cars hidden)
-//   chase-total              then Core.wreckCar: everything off
+//   chase-total, total-34    then Core.wreckCar: everything off, burning (from the chase camera; from the front left)
+//   chase-burnt, burnt-34l   20 s of race time on: the fire burnt out, the char all over, heavy black smoke (the chase camera; the rear left)
 //   cockpit                  the driver's view (the car intact)
 //   cut                      the three-quarter view with the bonnet, the right door and the tailgate taken off (the lining, the floor, the cabin)
 //   sheet.png                all of them on one picture (at most 1600 px wide: one Read call), with the measured size against the header's
@@ -74,12 +75,12 @@ try {
 
   for (const id of ids) {
     const H = header(id), box = H.L ? [H.L, H.W, H.H] : null, dir = path.join(OUT, id), tiles = [];
-    const info = await page.evaluate((id) => Render.kitInfo(id), id);
-    if (!info) { console.log(id + ': not a registered (kit) vehicle'); continue; }
-    for (const v of ['side', 'front', 'rear', 'top', '34f', '34r']) {
+    const info = await page.evaluate((id) => Render.kitInfo(id), id), known = await page.evaluate((id) => !!Core.MODELS.find(m => m.id === id), id);
+    if (!known) { console.log(id + ': no such vehicle'); continue; }
+    for (const v of info ? ['side', 'front', 'rear', 'top', '34f', '34r'] : ['34f', '34r']) {   // (one of the 11: the showroom's views only, then the race's)
       const src = await shot({ id, color, view: v, w: 960, h: 540, box }); png(path.join(dir, v + '.png'), src); tiles.push({ src, label: v });
     }
-    {   // the inside: the bonnet, the right door and the tailgate (whichever it has) taken off, the inner block drawn (the lining, floor, seats, engine)
+    if (info) {   // the inside: the bonnet, the right door and the tailgate (whichever it has) taken off, the inner block drawn (the lining, floor, seats, engine)
       const cut = ['hood', 'doorR', 'trunk', 'cover', 'tailgate'].filter(n => info.ranges[n]), src = await shot({ id, color, view: '34f', w: 960, h: 540, cut });
       png(path.join(dir, 'cut.png'), src); tiles.push({ src, label: 'cut (' + cut.join(', ') + ' off: the inside)' });
     }
@@ -113,20 +114,25 @@ try {
         for (const [x, z] of [[0.9, -1], [0.5, -1], [-0.2, -1], [-0.7, -1], [-1, 0.4], [-1, -0.5], [0.3, 1], [-0.5, 1], [1, 0.3]]) Core.applyDamage(P, 0.02, x * hl, z * hw);   // (dents and scrapes where it was hit)
         P.dmg = 0.86; P.dz = [1, 0.48, 0.8, 0.5]; P.cd = [1, 0.3, 0.5, 0.4]; P.lightOut = [1, 0, 1, 1]; P.winOut = [1, 0, 1, 0]; P.roofDmg = 0.5;
         for (const n in PT) if (!P.lost[n] && (PT[n].wh != null ? PT[n].wh === 0 : P.dz[PT[n].z] >= PT[n].th)) Core.detachPart(P, n, PT[n]);
-        still(1.6); for (let k = 0; k < 90; k++) Render.frame(1 / 60, 1, P, 'chase', {});   // (1.5 s drawn: the burst of bits and sparks over, the smoke there)
+        still(1.6); for (let k = 0; k < 90; k++) { still(1 / 60); Render.frame(1 / 60, 1, P, 'chase', {}); }   // (1.5 s drawn: the burst of bits and sparks over, the smoke there, the fire burning)
         const wreck = snap('chase', true), w34 = look(1, -1), w34r = look(-1, 1);
         const staged = { dmg: P.dmg, lost: Object.keys(P.lost).length, ajar: Object.keys(Render.viewOf(P).kit ? Render.viewOf(P).kit.ajar : {}).filter(n => !P.lost[n]).length };
-        Core.wreckCar(P); still(1.5); for (let k = 0; k < 90; k++) Render.frame(1 / 60, 1, P, 'chase', {});
-        const total = snap('chase', true);
-        return { chase, cockpit, wreck, w34, w34r, total, staged, dmg: P.dmg, lost: Object.keys(P.lost).length };
+        Core.wreckCar(P); still(1.5); for (let k = 0; k < 90; k++) { still(1 / 60); Render.frame(1 / 60, 1, P, 'chase', {}); }
+        const total = snap('chase', true), t34 = look(1, -1);
+        // the fire burnt out (its 20 s of race time): the char all over, heavy black smoke
+        still(20); for (let k = 0; k < 120; k++) { still(1 / 60); Render.frame(1 / 60, 1, P, 'chase', {}); }
+        const burnt = snap('chase', true), b34 = look(-1, -1);
+        const fire = Render.viewOf(P).fire;
+        return { chase, cockpit, wreck, w34, w34r, total, t34, burnt, b34, staged, dmg: P.dmg, lost: Object.keys(P.lost).length, fire: fire ? +(g.race.time - fire.t0).toFixed(1) : null };
       });
-      for (const [k, v] of [['chase', race.chase], ['chase-wreck', race.wreck], ['wreck-34', race.w34], ['wreck-34r', race.w34r], ['chase-total', race.total], ['cockpit', race.cockpit]]) {
+      for (const [k, v] of [['chase', race.chase], ['chase-wreck', race.wreck], ['wreck-34', race.w34], ['wreck-34r', race.w34r], ['chase-total', race.total], ['total-34', race.t34], ['chase-burnt', race.burnt], ['burnt-34l', race.b34], ['cockpit', race.cockpit]]) {
         png(path.join(dir, k + '.png'), v);
-        tiles.push({ src: v, label: k + (k === 'chase-wreck' ? ` (${race.staged.lost} parts off, ${race.staged.ajar} loose)` : k === 'chase-total' ? ' (dmg ' + race.dmg.toFixed(2) + ', ' + race.lost + ' parts off)' : '') }); }
+        tiles.push({ src: v, label: k + (k === 'chase-wreck' ? ` (${race.staged.lost} parts off, ${race.staged.ajar} loose)` : k === 'chase-total' ? ' (dmg ' + race.dmg.toFixed(2) + ', ' + race.lost + ' parts off)' : k === 'chase-burnt' ? ` (the fire's ${race.fire} s)` : '') }); }
       await page.evaluate(async () => { const g = window.__game; g.resume(); g.onAction('to-title'); await new Promise(r => setTimeout(r, 300)); g.onAction('to-car'); await new Promise(r => setTimeout(r, 400)); });
     }
-    const bb = info.bbox, mL = bb.max[0] - bb.min[0], mW = bb.max[2] - bb.min[2], mH = bb.max[1];
-    const title = `${id}: ${info.status} | body L ${mL.toFixed(2)} W ${mW.toFixed(2)} H ${mH.toFixed(2)} (header ${H.L} x ${H.W} x ${H.H}) | outer ${info.tris.outer} / ${info.budget.outer} tris, inner ${info.tris.inner} / ${info.budget.inner}, wheels ${info.wheels.style} ${info.wheels.hi.join('/')} | ${info.wheels.lo.join('/')}`;
+    const bb = info && info.bbox, mL = info ? bb.max[0] - bb.min[0] : 0, mW = info ? bb.max[2] - bb.min[2] : 0, mH = info ? bb.max[1] : 0;
+    const title = info ? `${id}: ${info.status} | body L ${mL.toFixed(2)} W ${mW.toFixed(2)} H ${mH.toFixed(2)} (header ${H.L} x ${H.W} x ${H.H}) | outer ${info.tris.outer} / ${info.budget.outer} tris, inner ${info.tris.inner} / ${info.budget.inner}, wheels ${info.wheels.style} ${info.wheels.hi.join('/')} | ${info.wheels.lo.join('/')}`
+      : `${id}: one of the 11 (its own body and panels, not the kit)`;
     const out = path.join(dir, 'sheet.png');
     png(out, await sheet(tiles, 4, 400, 225, title));
     console.log('wrote ' + path.relative(ROOT, dir) + '/{' + tiles.map(t => t.label.split(' ')[0]).join(',') + ',sheet}.png  — ' + title);
