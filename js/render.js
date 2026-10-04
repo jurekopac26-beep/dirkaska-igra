@@ -4891,7 +4891,7 @@ const Render = (function () {
   const _mf = new THREE.Vector3();
   function speedLook(target, alpha, U) {
     let mb = 0;
-    if (target && !cam.shot && !cam.ck && lastMode === 'chase') {   // (not from the cockpit: the car's inside, at the edges of the picture, goes with the driver)
+    if (false && target && !cam.shot && !cam.ck && lastMode === 'chase') {   // (switched off: the opponents' cars must stay sharp at speed)   // (not from the cockpit: the car's inside, at the edges of the picture, goes with the driver)
       const sp = target.speed || 0; mb = clamp((sp - 30) / 45, 0, 1) * 0.75;
       if (mb > 0) { const x = lerp(target.px, target.x, alpha), z = lerp(target.pz, target.z, alpha), y = target.y || 0, v = Math.hypot(target.vx || 0, target.vz || 0) || 1;
         _mf.set(x + (target.vx || 0) / v * 150, y, z + (target.vz || 0) / v * 150).project(camera); U.uMF.value.set(clamp(_mf.x * 0.5 + 0.5, -0.5, 1.5), clamp(_mf.y * 0.5 + 0.5, -0.5, 1.5));
@@ -4970,7 +4970,7 @@ const Render = (function () {
           post.mat.uniforms.uSun.value.set((ex / asp) * 0.5 + 0.5, ey * 0.5 + 0.5); }
         post.hk += ((front > 0.02 ? 1 : 0) - post.hk) * Math.min(1, dt * 3); post.mat.uniforms.uHaze.value = post.hk > 0.005 ? post.haze * post.hk : 0; }   // (fades in and out as a turning view brings the sun round: no pop)
       const U = post.mat.uniforms; U.uFocus.value = post.focus; U.uBand.value = (lastMode === 'kino' ? 0.3 : camera.aspect < 1 ? 0.2 : 0.24) + (post.span || 0); U.uBlur.value = lastMode === 'kino' ? 0.7 : 0.8;   // kino: a soft depth of field only towards the edges, as in the reference
-      if (cam.ck) U.uBlur.value = 0; else if (cam.shot && cam.shot.blur != null) { U.uBlur.value = cam.shot.blur; if (cam.shot.blur > 0) U.uBand.value = 0.06; }   // (no miniature look from the driver's seat; the photo mode's own: a narrow sharp band on the car)
+      if (!cam.shot) U.uBlur.value = 0; else if (cam.shot && cam.shot.blur != null) { U.uBlur.value = cam.shot.blur; if (cam.shot.blur > 0) U.uBand.value = 0.06; }   // (no miniature look in the race, all the cars stay sharp in every camera; the photo mode's own: a narrow sharp band on the car)
       speedLook(target, alpha, U);
       renderer.setRenderTarget(post.rt); renderer.render(scene, camera); if (ckOn) ckDraw();
       if (post.bloom > 0) bloomPass(); U.uBloom.value = post.bloom;
