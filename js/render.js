@@ -2277,7 +2277,7 @@ const Render = (function () {
     const geo = v.body.geometry, col = geo.attributes.color.array, rnd = v.kit ? rRnd : Math.random;   // (the kit's shards: the renderer's own random numbers)
     for (const t of tris) for (let q = 0; q < 3; q++) { const i = t * 9 + q * 3; col[i] = col[i] * 0.55 + 0.42 * 0.45; col[i + 1] = col[i + 1] * 0.55 + 0.46 * 0.45; col[i + 2] = col[i + 2] * 0.55 + 0.5 * 0.45; }
     geo.attributes.color.needsUpdate = true;
-    const S = crackDecal(v, k), sx = S[0], sy = S[1], sz = S[2];
+    const S = v.kit ? ownRnd(() => crackDecal(v, k)) : crackDecal(v, k), sx = S[0], sy = S[1], sz = S[2];   // (a kit car's decal named without Math.random: ownRnd)
     const ch = Math.cos(h), sh = Math.sin(h), wx = x + sx * ch - sz * sh, wz = z + sx * sh + sz * ch;
     for (let n = 0; n < 18; n++) particles.emit(wx, y + sy, wz, c.vx * 0.5 + (rnd() - 0.5) * 5, 1 + rnd() * 3, c.vz * 0.5 + (rnd() - 0.5) * 5, 0.8 + rnd() * 0.6, 0.16, 0.1, 0.84, 0.9, 0.97, 0.95, 9, 0.6, y);
   }
@@ -4656,7 +4656,7 @@ const Render = (function () {
     const P = new Float32Array(n * 3), N = new Float32Array(n * 3), C = new Float32Array(n * 3), cen = [0, 0, 0], ai = geo.attributes.aIn ? geo.attributes.aIn.array : null, A = new Uint8Array(n); let j = 0;
     for (const [a, b] of [R.o, R.i]) { if (b <= a) continue; P.set(pa.subarray(a * 3, b * 3), j * 3); N.set(na.subarray(a * 3, b * 3), j * 3); C.set(ca.subarray(a * 3, b * 3), j * 3); if (ai) A.set(ai.subarray(a, b), j); j += b - a; }
     for (let i = 0; i < n; i++) { cen[0] += P[i * 3] / n; cen[1] += P[i * 3 + 1] / n; cen[2] += P[i * 3 + 2] / n; }
-    const dg = new THREE.BufferGeometry(); dg.setAttribute('position', new THREE.BufferAttribute(P, 3)); dg.setAttribute('normal', new THREE.BufferAttribute(N, 3)); dg.setAttribute('color', new THREE.BufferAttribute(C, 3));
+    const dg = ownRnd(() => new THREE.BufferGeometry()); dg.setAttribute('position', new THREE.BufferAttribute(P, 3)); dg.setAttribute('normal', new THREE.BufferAttribute(N, 3)); dg.setAttribute('color', new THREE.BufferAttribute(C, 3));
     dg.setAttribute('aIn', new THREE.BufferAttribute(A, 1, true));   // (its inside stays clean and dark as on the car)
     dg.computeBoundingBox(); dg.computeBoundingSphere();
     const old = v.loose[name]; if (old && !old.shared) old.geo.dispose();
@@ -4681,7 +4681,7 @@ const Render = (function () {
     const ta = R.o[0] / 3, tb = R.o[1] / 3, ia = R.i[0] / 3, ib = R.i[1] / 3, inR = (t) => (t >= ta && t < tb) || (t >= ia && t < ib);
     for (let k = 0; k < 4; k++) { const G = v.glassTris[k]; if (!G || !G.some(inR)) continue;
       if (!moved) v.glassTris[k] = G.filter(t => !inR(t));
-      if (v.winBroken[k]) crackDecal(v, k); }
+      if (v.winBroken[k]) ownRnd(() => crackDecal(v, k)); }
   }
   // a tail lamp out (smashed, or gone with the part it sits on): its side (L / R) of the car's own tail mesh collapsed
   function kitTailOut(v, s) {
@@ -4723,7 +4723,7 @@ const Render = (function () {
     const M = c.m, sd = k % 2 ? 1 : -1, w = (k < 2 ? v.wf : v.wr).find(q => Math.sign(q.position.z) === sd);
     if (w) { w.visible = false; const old = v.loose[KIT_WHEEL[k]]; if (old && !old.shared) old.geo.dispose(); v.loose[KIT_WHEEL[k]] = { wheel: true, shared: true, geo: w.geometry, mat: w.material, k }; }
     const lx = k < 2 ? M.a : -M.b, lz = sd * v.kit.E.body.hw, ch = Math.cos(h), sh = Math.sin(h);
-    if (!v.hubs[k]) { const hb = v.hubs[k] = new THREE.Mesh(kitHubGeo(v.kit.E), vMat(v, v.lampsOut ? matLensBroken : matWheel)); hb.position.set(lx, M.rw, lz - sd * 0.04); v.bodyG.add(hb); }   // (the bare hub and its brake disc: on the body, down on the road with its corner; burnt: dark)
+    if (!v.hubs[k]) { const hb = v.hubs[k] = ownRnd(() => new THREE.Mesh(kitHubGeo(v.kit.E), vMat(v, v.lampsOut ? matLensBroken : matWheel))); hb.position.set(lx, M.rw, lz - sd * 0.04); v.bodyG.add(hb); }   // (the bare hub and its brake disc: on the body, down on the road with its corner; burnt: dark)
     v.hubs[k].visible = true;
     kitBits(c, x + lx * ch - lz * sh, y + M.rw * 0.6, z + lx * sh + lz * ch, y, 1);
     kitSag(v);
@@ -4811,7 +4811,8 @@ const Render = (function () {
   // -centroid: the shader's car-space position untouched), laid on its broadest face, its lowest point at d.y - d.h / 2 (the right way up
   // or upside down: lay.userData), a shadow only from 0.5 m across. null: the part is not off on the view yet (its copy comes next frame);
   // false: nothing to draw (no copy: an invisible piece, as before)
-  function kitDebrisMesh(v, d) {
+  function kitDebrisMesh(v, d) { return ownRnd(() => kitDebrisMesh0(v, d)); }   // (its objects named without Math.random)
+  function kitDebrisMesh0(v, d) {
     const L = v.loose[d.part];
     if (!L) { const PT = Core.partsOf(v.car.m), P = PT[d.part]; return P && v.car.lost[d.part] && (P.wh != null ? !v.wheelOff[P.wh] : !v.kit.dead[d.part]) ? null : false; }
     delete v.loose[d.part];
