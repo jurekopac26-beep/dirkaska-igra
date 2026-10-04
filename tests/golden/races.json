@@ -1648,5 +1648,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "d3aa121f8632ba6f463c887e"
+ },
+ "hongkong/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 117.79,
+  "spins": 3,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "547dd6cbbb198c2260faacd5"
+ },
+ "hongkong/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 127.55,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "0b211a8ce90cbed21f32b70b"
+ },
+ "hongkong/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 107.87,
+  "spins": 13,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d2b6e79574fd5bf22daa56de"
+ },
+ "hongkong/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 109.31,
+  "spins": 3,
+  "walls": 7,
+  "rescues": 0,
+  "nan": false,
+  "digest": "2ef46285355251668de5f444"
+ },
+ "hongkong/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 119.53,
+  "spins": 3,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "73f4eabed13296650a920272"
  }
 }

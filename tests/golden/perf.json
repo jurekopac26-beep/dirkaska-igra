@@ -202,6 +202,13 @@
   "maxKverts": 564,
   "jsMs": 0.92
  },
+ "hongkong": {
+  "calls": 312,
+  "maxCalls": 349,
+  "kverts": 735,
+  "maxKverts": 862,
+  "jsMs": 0.95
+ },
  "jezero": {
   "calls": 278,
   "maxCalls": 330,
@@ -229,12 +236,5 @@
   "kverts": 1530,
   "maxKverts": 1670,
   "jsMs": 0.87
- },
- "hongkong": {
-  "calls": 312,
-  "maxCalls": 349,
-  "kverts": 735,
-  "maxKverts": 862,
-  "jsMs": 0.8
  }
 }
