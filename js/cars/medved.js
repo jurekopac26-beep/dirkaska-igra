@@ -19,7 +19,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     parts: { set: 'car', ht: 1.95, y0: 0.32, drop: ['trunk'],
       extra: {
         tailgate: { z: 1, th: 0.78, m: 12, rW: 0.4, h: 0.07, lx: -0.9, lz: 0, y: 1.3 },
-        spare: { z: 1, th: 0.6, m: 10, r: 0.42, h: 0.3, lx: -0.97, lz: 0, y: 1.06 },
+        spare: { z: 1, th: 0.6, m: 10, r: 0.42, h: 0.3, lx: -0.955, lz: 0, y: 1.04 },
         roofRack: { z: 1, th: 0.7, m: 6, rW: 0.4, h: 0.15, lx: -0.24, lz: 0, y: 1.88 },
       },
       // (where the look has them: the mirrors on the doors' front corners, the bonnet's middle, the bumpers' and the tailgate's faces; a
@@ -76,9 +76,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         LD.side([[-0.84, 0.8], [1.02, 0.8], [1.02, 0.87], [-0.84, 0.87]], B, null, 0.008);
         LD.side([[-0.84, 0.828], [1.02, 0.828], [1.02, 0.842], [-0.84, 0.842]], CH, null, 0.011);   // (its chrome insert)
         for (const x of [0.01, -0.86, 1.04]) LD.side([[x - 0.008, 0.58], [x + 0.008, 0.58], [x + 0.008, 1.19], [x - 0.008, 1.19]], DK, null, 0.01);
-        for (const sd of [-1, 1]) for (const x of [0.16, -0.72]) K.rect(x, 1.06, sd * 0.942, 0.17, 0.035, B, { dir: sd < 0 ? '-z' : 'z' });
+        for (const sd of [-1, 1]) for (const x of [0.16, -0.72]) K.rect(x, 1.06, sd * 0.942, 0.17, 0.035, CH, { dir: sd < 0 ? '-z' : 'z' });
         // ---- the flares over the big tyres (black), the arch's ledge under them ----
-        for (const A of K.arches) for (const sd of [-1, 1]) K.flare(A.x, 0.44, 0.54, sd * 0.86, sd * 0.995, D, { n: 6 });
+        for (const A of K.arches) for (const sd of [-1, 1]) K.flare(A.x, 0.44, 0.54, sd * 0.86, sd * 0.995, D, { n: 7 });
         // ---- the nose: the slatted grille between two round head lamps (in the fenders: they go with them), the indicators under them ----
         K.grille(2.256, 0.87, 0, 0.78, 0.36, { slats: 4, slatCol: [0.78, 0.79, 0.82], slatH: 0.034, frame: CH, frameH: 0.018 });
         for (const sd of [-1, 1]) { const f = sd < 0 ? 'fenderL' : 'fenderR';
@@ -116,10 +116,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- the spare wheel on the tailgate (its carrier into the frame): the tyre, a cover over the rim in the paint ----
         K.part('spare', () => {
           const TY = [0.045, 0.045, 0.05], ring = (x) => { const R = []; for (let i = 0; i < 20; i++) { const a = i * Math.PI / 10, r = i % 2 ? 0.35 : 0.38; R.push([x, 1.06 + Math.sin(a) * r, Math.cos(a) * r]); } return R; };
-          K.skin([ring(-2.195), ring(-2.445)], TY, TY, TY);                                   // the tyre: its tread in blocks
-          K.discX(-2.447, 1.06, 0, 0.235, 10, [0.66, 0.67, 0.7], -1);                       // the rim's edge round
-          K.discX(-2.452, 1.06, 0, 0.2, 10, P, -1);                                         // a cover over it, in the paint
-          K.box(-2.178, 0.95, 0, 0.035, 0.22, 0.22, 0, B);                                   // the carrier
+          K.skin([ring(-2.18), ring(-2.41)], TY, TY, TY);                                     // the tyre: its tread in blocks
+          K.discX(-2.412, 1.06, 0, 0.235, 10, [0.66, 0.67, 0.7], -1);                       // the rim's edge round
+          K.discX(-2.417, 1.06, 0, 0.2, 10, P, -1);                                         // a cover over it, in the paint
+          K.box(-2.17, 0.95, 0, 0.02, 0.22, 0.22, 0, B);                                     // the carrier, its arm down to the frame
+          K.bar([-2.2, 0.98, 0], [-2.17, 0.58, 0], 0.03, B, { n: 4 });
         });
         // ---- the roof rack the length of the roof: the frame on its feet, the slats, a wind deflector at its front (never crushed) ----
         K.part('roofRack', () => {
@@ -138,6 +139,12 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.box(0.85, 1.0, 0, 0.3, 0.24, 1.7, 0, D, null, false, { inner: true, part: 'body' });
         K.cyl([0.62, 1.2, -0.42], [0.58, 1.3, -0.42], 0.19, [0.1, 0.1, 0.11], { n: 8, inner: true, part: 'body' });
         for (const sd of [-1, 1]) K.box(0.01, 0.5, sd * 0.89, 0.08, 0.7, 0.06, 0, P, null, false, { inner: true, part: 'body' });
+        K.box(0.32, 0.47, 0, 0.62, 0.42, 0.24, 0, D, null, false, { inner: true, part: 'body' });   // the console between the front seats
+        // the load behind the rear bench (what the chase camera sees once the tailgate is gone): two jerrycans, a crate; the housings over the
+        // rear wheels (the tubs are seen from outside only: from the load bay they would show the tyres)
+        for (const sd of [-1, 1]) K.box(-1.35, 0.46, sd * 0.75, 0.92, 0.42, 0.26, 0, K.lining, null, true, { inner: true, part: 'body' });
+        for (const z of [0.52, 0.28]) K.box(-1.95, 0.47, z, 0.32, 0.46, 0.16, 0, [0.27, 0.33, 0.18], null, true, { inner: true, part: 'body' });
+        K.box(-1.62, 0.47, -0.36, 0.48, 0.34, 0.5, 0, [0.42, 0.33, 0.22], null, true, { inner: true, part: 'body' });   // (clear of the wheel's tub)
         K.engine(1.68, 0.62, 0, { l: 0.72, w: 0.66, h: 0.46 });
       },
     },
