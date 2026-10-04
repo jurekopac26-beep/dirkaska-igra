@@ -24,17 +24,17 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         bumperF: {},
         bumperR: {},
         bed: { z: 1, th: 0.7, m: 12, rW: 0.4, h: 0.1, lx: -0.64, lz: 0, f: 0.31 },
-        tailgate: { z: 1, th: 0.7, m: 10, rW: 0.38, h: 0.08, lx: -0.99, lz: 0, f: 0.4 },
+        tailgate: { z: 1, th: 0.7, m: 10, rW: 0.38, h: 0.08, lx: -0.99, lz: 0, f: 0.37 },
       },
     },
     // the look (KIT API v1, render.js; look units = metres): two lofts. The cab with the bonnet (look.body.secs): the doors under open side
     // windows (the roll cage, the seat and the helmeted driver in sight through them), the windscreen, the B-pillars, the bonnet with the
-    // blower stack through it, the nose with its grille and lamps, the chrome bumper. The bed behind it (an open top, K.part 'bed'): its
-    // rails, the rear arches, a raised floor with the rear shocks rising through it to their tower; the tailgate and the rear bumper close
-    // it. Under them the tube chassis ('body', in a shade of the stripe colour): rails, cross tubes, the four-links, the axles with their
-    // differentials, the drive line, two coil-over shocks a wheel (the springs in the stripe colour). The livery: the paint, flames (the
-    // stripe colour) from the nose along the fenders onto the doors, the name in block letters on the bed's sides, the start number on the
-    // roof (the default) and on both doors (K.number)
+    // blower stack through it and the header pipes either side, the nose with its grille and lamps, the chrome bumper; under the bonnet the
+    // V8 (the inner block). The bed behind it (an open top, K.part 'bed'): its rails, the rear arches, a raised floor with the rear shocks
+    // rising through it to their hoops; the tailgate and the rear bumper close it. Under them the tube chassis ('body', in a shade of the
+    // stripe colour): rails, cross tubes, the four-links, the axles with their differentials, the drive line, two coil-over shocks a wheel
+    // (the springs in the stripe colour). The livery: the paint, flames (the stripe colour) from the nose along the fenders onto the doors,
+    // the name in block letters on the bed's sides and across the tailgate, the start number on the roof (the default) and on both doors
     look: {
       body: { len: 5, wid: 3.2, roofY: 3.14,
         //       x     w     yb    ybelt  wt    yt    cr    kind  tuck
@@ -69,8 +69,15 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           regions: [{ part: 'doorL', x: [-0.3, 0.95], bands: ['side', 'window'], side: 'L' }, { part: 'doorR', x: [-0.3, 0.95], bands: ['side', 'window'], side: 'R' },
             { part: 'hood', x: [0.95, 2.7], bands: ['edge', 'crown'], top: true }] });
         const wCab = (x) => L.prop(x, 'w'), wBed = () => 1.13;
-        // the flames (the stripe colour): four tongues from the nose back along the fender onto the door (cut at the door's front edge: the
-        // door takes its share); the door's shut lines; the number and the handle on the door
+        // GOLJAT in block letters h tall: each bar [u0, v0, u1, v1] to fn (u to the reader's right from the word's middle, v up from its foot)
+        const word = (h, fn) => { const W = 0.625 * h, t = 0.194 * h, gp = 0.2 * h, H = h, tot = 6 * W + 5 * gp;
+          const LT = { G: [[0, 0, t, H], [0, H - t, W, H], [0, 0, W, t], [W - t, 0, W, H * 0.5], [W * 0.45, H * 0.5 - t / 2, W, H * 0.5 + t / 2]],
+            O: [[0, 0, t, H], [W - t, 0, W, H], [0, H - t, W, H], [0, 0, W, t]], L: [[0, 0, t, H], [0, 0, W, t]],
+            J: [[W - t, 0, W, H], [0, 0, W, t], [0, 0, t, H * 0.4], [W * 0.3, H - t, W, H]],
+            A: [[0, 0, t, H], [W - t, 0, W, H], [0, H - t, W, H], [0, H * 0.42, W, H * 0.42 + t]], T: [[0, H - t, W, H], [W / 2 - t / 2, 0, W / 2 + t / 2, H]] };
+          'GOLJAT'.split('').forEach((ch, i) => { const u0 = -tot / 2 + i * (W + gp); for (const [a, b, c, d] of LT[ch]) fn(u0 + a, b, u0 + c, d); }); };
+        // the flames (the stripe colour): three tongues (a body, a rising tip) from the nose back along the fender onto the door (cut at the
+        // door's front edge: the door takes its share); the door's shut lines; the number and the handle on the door
         const FL = [[[2.42, 2.0], [1.05, 2.02], [1.05, 2.12], [2.42, 2.11]], [[1.05, 2.02], [0.12, 2.24], [1.05, 2.12]],        // (above the flares' line on the fender)
           [[2.42, 1.89], [1.3, 1.9], [1.3, 1.99], [2.42, 1.99]], [[1.3, 1.9], [0.48, 2.06], [1.3, 1.99]],
           [[1.0, 1.66], [0.74, 1.68], [0.74, 1.8], [1.0, 1.8]], [[0.74, 1.68], [0.3, 1.86], [0.74, 1.8]]];
@@ -115,19 +122,13 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.box(-1.48, 1.78, 0, 1.94, 0.04, 2.2, 0, [0.12, 0.115, 0.11]);                                // (a bed liner, ribbed)
           for (const z of [-0.8, -0.4, 0, 0.4, 0.8]) K.rect(-1.48, 1.823, z, 1.9, 0.06, [0.26, 0.26, 0.27], { dir: 'y' });
           for (const sd of [-1, 1]) K.flare(K.rx, 0.92, 1.03, sd * 1.07, sd * 1.25, FLR, { a0: 0.75, a1: Math.PI - 0.75, n: 6 });
-          // GOLJAT in block letters (read from either side), the stripe colour
-          const W = 0.2, H = 0.32, t = 0.062, gp = 0.065, X0 = -1.47, Y0 = 1.92, tot = 6 * W + 5 * gp;
-          const LT = { G: [[0, 0, t, H], [0, H - t, W, H], [0, 0, W, t], [W - t, 0, W, H * 0.5], [W * 0.45, H * 0.5 - t / 2, W, H * 0.5 + t / 2]],
-            O: [[0, 0, t, H], [W - t, 0, W, H], [0, H - t, W, H], [0, 0, W, t]], L: [[0, 0, t, H], [0, 0, W, t]],
-            J: [[W - t, 0, W, H], [0, 0, W, t], [0, 0, t, H * 0.4], [W * 0.3, H - t, W, H]],
-            A: [[0, 0, t, H], [W - t, 0, W, H], [0, H - t, W, H], [0, H * 0.42, W, H * 0.42 + t]], T: [[0, H - t, W, H], [W / 2 - t / 2, 0, W / 2 + t / 2, H]] };
-          for (const sd of [-1, 1]) 'GOLJAT'.split('').forEach((ch, i) => { const u0 = -tot / 2 + i * (W + gp);
-            for (const [a, b, c, d] of LT[ch]) { const xa = X0 + sd * (u0 + a), xb = X0 + sd * (u0 + c);
-              onSide(sd, wBed, [[Math.min(xa, xb), Y0 + b], [Math.max(xa, xb), Y0 + b], [Math.max(xa, xb), Y0 + d], [Math.min(xa, xb), Y0 + d]], S, 0.01); } });
-        });
+          for (const sd of [-1, 1]) word(0.32, (ua, va, ub, vb) => { const xa = -1.47 + sd * ua, xb = -1.47 + sd * ub;   // (the name, read from either side)
+            onSide(sd, wBed, [[Math.min(xa, xb), 1.92 + va], [Math.max(xa, xb), 1.92 + va], [Math.max(xa, xb), 1.92 + vb], [Math.min(xa, xb), 1.92 + vb]], S, 0.01); });
+        }, { hinge: [[-0.5, 1.3, -1.0], [-0.5, 1.3, 1.0]] });   // (loose: it tips about its front edge)
         K.part('tailgate', () => {
           K.box(-2.475, 1.56, 0, 0.05, 0.77, 2.2, 0, P);
-          K.rect(-2.503, 2.17, 0, 1.5, 0.08, S, { dir: '-x' }); K.rect(-2.503, 2.25, 0, 0.3, 0.05, B, { dir: '-x' });
+          word(0.24, (ua, va, ub, vb) => K.face([[-2.503, 1.8 + va, ua], [-2.503, 1.8 + va, ub], [-2.503, 1.8 + vb, ub], [-2.503, 1.8 + vb, ua]], S));   // (the name across it)
+          K.rect(-2.503, 2.25, 0, 0.3, 0.05, B, { dir: '-x' });
           for (const sd of [-1, 1]) K.rect(-2.502, 1.98, sd * 0.94, 0.22, 0.42, B, { dir: '-x' });
         }, { hinge: [[-2.47, 1.57, -1.0], [-2.47, 1.57, 1.0]] });
         for (const sd of [-1, 1]) K.tailLamp(-2.505, 1.98, sd * 0.94, 0.17, 0.36);
@@ -171,14 +172,14 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.cage([[[-0.22, 1.34, -0.86], [-0.22, 2.98, -0.78]], [[-0.22, 1.34, 0.86], [-0.22, 2.98, 0.78]], [[-0.22, 2.98, -0.78], [-0.22, 2.98, 0.78]], [[-0.22, 1.34, -0.86], [-0.22, 2.98, 0.78]],
           [[0.82, 1.34, -0.86], [0.82, 2.2, -0.88]], [[0.82, 1.34, 0.86], [0.82, 2.2, 0.88]], [[0.82, 2.2, -0.88], [0.45, 2.98, -0.8]], [[0.82, 2.2, 0.88], [0.45, 2.98, 0.8]],
           [[-0.22, 2.98, -0.78], [0.45, 2.98, -0.8]], [[-0.22, 2.98, 0.78], [0.45, 2.98, 0.8]], [[-0.22, 1.85, -0.9], [0.82, 1.85, -0.9]], [[-0.22, 1.85, 0.9], [0.82, 1.85, 0.9]]],   // (no bar across over the windscreen: the driver's view)
-        0.035, CHS, { n: 5, inner: false, noCrush: true, part: 'body' });
+        0.035, CHS, { n: 5, inner: false, noCrush: true, noDent: true, part: 'body' });
         K.part('body', () => {
           K.box(0.0, 1.33, 0, 0.42, 0.69, 0.42, 0, D);                                           // the seat's pedestal
           K.box(0.8, 1.95, 0, 0.28, 0.29, 1.9, 0, SEAT);                                          // the dashboard
         });
         K.seat(0.0, 2.14, 0, { w: 0.56, l: 0.48, back: 0.8, tilt: 0.16, inner: false, col: SEAT, part: 'body' });
         K.part('body', () => {
-          const hx = 0.08, hy = 2.82, HC = [0.95, 0.95, 0.93], V = [0.08, 0.09, 0.11], SU = [0.13, 0.14, 0.17];
+          const hx = 0.08, hy = 2.82, HC = [0.95, 0.95, 0.93], V = [0.2, 0.2, 0.21], SU = [0.22, 0.22, 0.24];   // (the helmet, its visor, the suit: off the glass colours)
           const rg = (y, r) => [0, 1, 2, 3, 4, 5, 6, 7].map(i => [hx + r * Math.cos(i * Math.PI / 4), y, r * Math.sin(i * Math.PI / 4)]);
           K.skin([rg(hy - 0.12, 0.1), rg(hy - 0.04, 0.145), rg(hy + 0.05, 0.14), rg(hy + 0.13, 0.075)], (k, e) => k === 1 && (e === 7 || e === 0) ? V : k === 2 && (e === 7 || e === 0 || e === 3 || e === 4) ? S : HC, HC, HC);
           const tr = (y, w, d) => [0, 1, 2, 3, 4, 5].map(i => [hx - 0.07 + d * Math.cos(i * Math.PI / 3), y, w * Math.sin(i * Math.PI / 3) * 1.15]);
@@ -190,7 +191,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.inner(() => K.part('body', () => { for (const sd of [-1, 1]) {   // (the V8's banks: the valve covers either side of the blower, the manifolds out to the headers)
           K.box(1.7, 1.98, sd * 0.3, 0.74, 0.1, 0.16, 0, [0.62, 0.1, 0.08]);
           K.box(1.6, 1.86, sd * 0.68, 0.62, 0.12, 0.56, 0, [0.4, 0.41, 0.43]); } }));
-        K.box(2.36, 1.42, 0, 0.08, 0.62, 1.4, 0, [0.14, 0.14, 0.15], null, false, { inner: true, part: 'body' });
+        K.box(2.36, 1.42, 0, 0.08, 0.62, 1.4, 0, [0.17, 0.17, 0.17], null, false, { inner: true, part: 'body' });
       },
     },
   });
