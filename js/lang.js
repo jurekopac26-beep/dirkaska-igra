@@ -7,7 +7,7 @@
   // A text EN does not know stays as it is (a name, a number). The commentator speaks English in both languages.
   const EN = {
     /* ---- the page (index.html): buttons, labels, the HUD ---- */
-    '● POSNETEK': '● REPLAY', 'Foto': 'Photo', 'Končaj': 'Done', 'MESTO': 'POS', 'NAJ': 'BEST', 'ZAVORA': 'BRAKE', 'PLIN': 'GAS', 'NAGIB': 'TILT',
+    '● POSNETEK': '● REPLAY', 'Foto': 'Photo', 'Končaj': 'Done', 'MESTO': 'POS', 'NAJ': 'BEST', 'ZAVORA': 'BRAKE', 'ROČNA': 'HANDBRAKE', 'PLIN': 'GAS', 'NAGIB': 'TILT',
     '↺ Na progo': '↺ Back on track', 'Dirkaj': 'Race', 'Prvenstvo': 'Championship', 'Kariera': 'Career', 'Dirka s prijateljem': 'Race a friend',
     'Lestvica': 'Leaderboard', 'Nastavitve': 'Settings', 'Celoten zaslon': 'Full screen', 'Namesti igro': 'Install the game', 'Nadgradnje': 'Upgrades',
     'Barva': 'Colour', 'Upravljanje': 'Controls', 'Tipke': 'Buttons', 'Volan': 'Wheel', 'Nagib': 'Tilt', 'Nazaj': 'Back', 'Naprej': 'Next',
@@ -21,7 +21,7 @@
     'Nizka': 'Low', 'Srednja': 'Medium', 'Visoka': 'High', 'Težavnost': 'Difficulty', 'Lahka': 'Easy', 'Težka': 'Hard', 'Samodejni plin': 'Auto throttle',
     'Opozorila za ovinke': 'Corner warnings', 'Duh najboljše vožnje': 'Ghost of the best run', 'Komentator (angleščina)': 'Commentator (English)',
     '▶ Preizkusi glas': '▶ Test the voice', 'Sovoznik na reliju (angleščina)': 'Rally co-driver (English)', 'Poškodbe avtov': 'Car damage', 'Samo videz': 'Looks only',
-    'Grafika': 'Graphics', 'Normalno': 'Normal', 'Visoko': 'High', 'Sence': 'Shadows', 'Zvok': 'Sound', 'Vibracija': 'Vibration', 'Končano': 'Done',
+    'Grafika': 'Graphics', 'Normalno': 'Normal', 'Visoko': 'High', 'Podrobnosti': 'Detail', 'Koliko podrobnosti ob progi (gledalci, drevesa, čeri, props …). Samodejno izbere glede na napravo in sproti prilagaja, da igra teče gladko; Nizka je za šibkejše telefone.': 'How much trackside detail (spectators, trees, cliffs, props …). Auto picks it from your device and adjusts on the fly to keep the game smooth; Low is for weaker phones.', 'Sence': 'Shadows', 'Zvok': 'Sound', 'Vibracija': 'Vibration', 'Končano': 'Done',
     'Varčevanje z baterijo': 'Battery saver', 'Samodejno': 'Auto', 'Baterija je skoraj prazna: varčni način (30 sličic na sekundo, nižja ločljivost).': 'The battery is nearly empty: battery saver on (30 frames a second, a lower resolution).',
     'Časovna tabela': 'Timing tower', 'TI': 'YOU', 'VODI': 'LEADER', 'BOKSI': 'PIT', 'Krogi vseh voznikov': 'Every driver\u2019s laps', 'K{0}': 'L{0}', 'Postanki': 'Stops',
     'Dosežki': 'Achievements', 'Nov dosežek: {0}': 'New achievement: {0}', ' Novi dosežki: {0}.': ' New achievements: {0}.', 'Dosežki {0}/{1}': 'Achievements {0}/{1}', '{0} h {1} min': '{0} h {1} min', '{0} min': '{0} min',
@@ -208,7 +208,52 @@
     'MESTO VRNJENO': 'PLACE GIVEN BACK', 'KAZEN +5 s': 'PENALTY +5 s', 'VRNI MESTO · {0}': 'GIVE IT BACK · {0}', 'SC GRE S PROGE': 'SC LEAVING', 'NE PREHITEVAJ': 'NO OVERTAKING',
     'DEŽ': 'RAIN', 'Začelo je deževati: proga bo kmalu mokra. Zapelji v bokse po dežne gume (desno takoj za zadnjim ovinkom pred ciljno ravnino).': 'It has started to rain: the track will soon be wet. Pit for wet tyres (on the right just after the last corner before the finish straight).',
     'DEŽ JE PONEHAL': 'THE RAIN HAS STOPPED', 'Dež je ponehal: proga se suši, najprej na idealni liniji.': 'The rain has stopped: the track is drying, the racing line first.',
-    'SEKTOR {0}  {1}': 'SECTOR {0}  {1}', 'BOKSI · 80 km/h': 'PITS · 80 km/h',
+    'SEKTOR {0}  {1}': 'SECTOR {0}  {1}', 'BOKSI · 80 km/h': 'PITS · 80 km/h', 'ZAVETRJE': 'SLIPSTREAM',
+    'PREDRTA GUMA': 'PUNCTURE', 'VROČE ZAVORE': 'HOT BRAKES', 'VROČ MOTOR': 'HOT ENGINE', 'PREDRTA GUMA!': 'PUNCTURE!', 'ZAVORE SE PREGREVAJO': 'BRAKES OVERHEATING', 'MOTOR SE PREGREVA': 'ENGINE OVERHEATING',
+    'Predrta guma: avto vleče na stran in slabše prime. Zapelji v bokse, mehaniki jo zamenjajo.': 'A puncture: the car pulls to one side and grips less. Come into the pits, the mechanics change the tyre.',
+    'Predrta guma: avto vleče na stran in slabše prime. Previdno do cilja.': 'A puncture: the car pulls to one side and grips less. Take it carefully to the line.',
+    'Vroče zavore slabše zavirajo: zaviraj prej in nežneje, na ravnini se ohladijo.': 'Hot brakes stop the car less well: brake earlier and more gently, they cool down on the straights.',
+    'Vroč motor ima manj moči: popusti plin, v hitri vožnji se ohladi.': 'A hot engine has less power: ease off the throttle, it cools down at speed.',
+    'Okvare': 'Failures', 'Okvare (predrta guma, vroče zavore in motor)': 'Failures (punctures, hot brakes and engine)',
+    // Kontrole: the keys, the gamepad and the wheel
+    'Kontrole': 'Controls', 'Tipke, plošček in volan': 'Keys, gamepad and wheel', 'Tipkovnica': 'Keyboard', 'Plošček in volan': 'Gamepad and wheel', 'Ponastavi': 'Reset',
+    'Levo': 'Left', 'Desno': 'Right', 'Plin': 'Throttle', 'Zavora': 'Brake', 'Drift': 'Drift', 'Nazaj na progo': 'Back on the track', 'Plošček': 'Gamepad', 'Zamenjaj': 'Switch',
+    'Pritisni tipko …': 'Press a key …', 'Tapni polje in pritisni tipko. Esc prekliče, Backspace izbriše.': 'Tap a box and press a key. Esc cancels, Backspace clears it.',
+    'Ni povezanega ploščka ali volana. Poveži ga in pritisni gumb na njem.': 'No gamepad or wheel connected. Connect one and press a button on it.',
+    'Krmiljenje': 'Steering', 'Zavrti v desno …': 'Turn right …', 'Os {0}': 'Axis {0}', 'Gumb {0}': 'Button {0}', 'Mrtvo območje': 'Dead zone', 'Poln zavoj pri': 'Full lock at', '{0} % osi': '{0} % of the axis',
+    'Odziv': 'Response', 'Enakomeren': 'Linear', 'Nežen v sredini': 'Gentle in the middle', 'Pritisni gumb ali pedal …': 'Press a button or pedal …', 'Pritisni gumb …': 'Press a button …',
+    'Volan: tapni Krmiljenje in zavrti volan v desno; nato tapni Plin (ali Zavora), pritisni pedal do konca in ga spusti.': 'Wheel: tap Steering and turn the wheel right; then tap Throttle (or Brake), press the pedal all the way down and let it go.',
+    'Tapni polje in pritisni gumb (ali premakni os).': 'Tap a box and press a button (or move an axis).', 'Nič ni bilo pritisnjeno.': 'Nothing was pressed.', 'Krmiljenje: os {0}.': 'Steering: axis {0}.', '{0}: {1}.': '{0}: {1}.',
+    'Preslednica': 'Space', 'Desni Shift': 'Right Shift', 'Desni Ctrl': 'Right Ctrl', 'Privzete tipke.': 'Default keys.', 'Privzeta nastavitev: {0}.': 'Default settings: {0}.',
+    'Volan je povezan.': 'Wheel connected.', 'Volan je povezan. Pedale nastaviš v Nastavitvah: Kontrole.': 'Wheel connected. Set up its pedals in Settings: Controls.',
+    // the best moment as a video after a race
+    'Video najboljšega trenutka po dirki': 'Video of the best moment after a race', 'Najboljši trenutek': 'Best moment', 'NAJBOLJŠI TRENUTEK': 'BEST MOMENT', 'ZMAGA': 'WIN',
+    'Ti · {0} mesto': 'You · {0} place', 'Preskoči': 'Skip', 'Deli': 'Share', 'Moj najboljši trenutek · {0}': 'My best moment · {0}', 'Video shranjen: {0}': 'Video saved: {0}',
+    // a championship over the internet (the room)
+    'Prvenstvo · končno stanje · prvak: {0}': 'Championship · final standings · champion: {0}', 'Prvenstvo · po {0}. dirki od {1}': 'Championship · after race {0} of {1}', 'Začni dirko {0}/{1}': 'Start race {0}/{1}',
+    'Odstrani': 'Remove', 'Dodaj izbrano progo': 'Add the chosen track', 'PRVENSTVO · DIRKA {0}/{1}': 'CHAMPIONSHIP · RACE {0}/{1}',
+    // a challenge from a friend (the challenge link)
+    'Izziv': 'Challenge', 'Zavrni': 'Decline', 'Kasneje': 'Later', 'Sprejmi izziv': 'Accept the challenge', 'Izzovi prijatelja': 'Challenge a friend', 'Pošlji odgovor': 'Send your reply', 'Pošlji izziv': 'Send a challenge',
+    'Leteči krog': 'Flying lap', 'Način': 'Mode', 'Poskusi znova': 'Try again', 'ti: {0}': 'you: {0}', 'Izziv: {0} · {1}': 'Challenge: {0} · {1}', 'Izziv · {0} · {1}': 'Challenge · {0} · {1}',
+    'IZZIV: {0} · {1}': 'CHALLENGE: {0} · {1}', 'IZZIV {0}  {1}': 'CHALLENGE {0}  {1}', 'IZZIV PREMAGAN!': 'CHALLENGE BEATEN!', 'Izziv premagan!': 'Challenge beaten!', 'Izziv ni premagan': 'Challenge not beaten',
+    '{0} te izziva: premagaj čas na progi {1}.': '{0} challenges you: beat the time on {1}.', 'Premagaj moj čas {0} na progi {1}!': 'Beat my time of {0} on {1}!',
+    'Povezava do izziva je kopirana: pošlji jo prijatelju.': 'The challenge link is copied: send it to a friend.', 'Povezave ni bilo mogoče kopirati.': 'The link could not be copied.',
+    'Izziva ni bilo mogoče pripraviti.': 'The challenge could not be made.', 'priložen': 'included', 'ni priložen (vožnja je predolga za povezavo)': 'not included (the run is too long for a link)', 'Povezava do izziva ni veljavna.': 'The challenge link is not valid.', 'Izziva ni bilo mogoče shraniti (premalo prostora).': 'The challenge could not be saved (not enough space).',
+    'Izziv sprejet': 'Challenge accepted', 'Premagaj prijateljev čas v izzivu.': 'Beat the time of a friend in a challenge.',
+    // the team radio and the strategy
+    'Radio ekipe (razlike, postanki, vreme)': 'Team radio (gaps, pit stops, weather)', 'Gume za postanek': 'Tyres for the stop', 'Gume za postanek: {0}': 'Tyres for the stop: {0}',
+    'Gorivo ne bo zdržalo do cilja.': 'The fuel will not last to the finish.', 'Gume ne bodo zdržale do cilja.': 'The tyres will not last to the finish.',
+    'Proga je mokra, potrebuješ dežne gume.': 'The track is wet, you need rain tyres.', 'Idealna linija je suha, potrebuješ suhe gume.': 'The racing line is dry, you need slicks.',
+    'Imaš predrto gumo.': 'You have a puncture.', 'Avto je močno poškodovan.': 'The car is badly damaged.', 'Boksi v tem krogu!': 'Box this lap!', 'BOKSI V TEM KROGU': 'BOX THIS LAP',
+    'Po postanku boš {0}., {1} bo {2} s pred tabo.': 'After the stop you will be P{0}, {1} {2} s ahead of you.', 'Po postanku boš še vedno prvi.': 'After the stop you will still be leading.',
+    'Dobiš {0} gume.': 'You get {0} tyres.', 'mehke': 'soft', 'srednje': 'medium', 'trde': 'hard',
+    'Vodiš, {0} je {1} s za tabo.': 'You are leading, {0} is {1} s behind you.', 'Vodiš.': 'You are leading.',
+    '{0} je {1} s pred tabo, {2} {3} s za tabo.': '{0} is {1} s ahead of you, {2} {3} s behind you.', '{0} je {1} s pred tabo.': '{0} is {1} s ahead of you.',
+    'Na radarju je dež: začel bo čez približno minuto.': 'Rain on the radar: it will start in about a minute.', 'Na radarju se dež umika: kmalu bo ponehal.': 'The rain is moving away on the radar: it will stop soon.',
+    'Varnostni avto! Pridi zdaj v bokse, postanek stane le okoli {0} s.': 'Safety car! Box now, the stop costs only about {0} s.',
+    'Dober postanek.': 'Good stop.', 'Si {0}., {1} je {2} s pred tabo.': 'You are P{0}, {1} is {2} s ahead of you.', 'Si {0}.': 'You are P{0}.',
+    'Postanek bo v {0}. krogu.': 'The stop will be on lap {0}.', 'Okno za postanek: od {0}. do {1}. kroga.': 'Pit window: laps {0} to {1}.', 'Zadnji krog!': 'Last lap!',
+    'Gorivo za {0} kroga.': 'Fuel for {0} laps.', 'Gume: {0} %.': 'Tyres: {0} %.', 'Postanek zdaj stane okoli {0} s, po njem bi bil {1}.': 'A stop now costs about {0} s, after it you would be P{1}.',
     ' · POPRAVLJENO': ' · REPAIRED', 'POPRAVLJENO!': 'REPAIRED!', 'še {0} km': '{0} km to go', 'OVINEK {0}/{1}': 'TURN {0}/{1}', 'LETEČI KROG': 'FLYING LAP', 'LETEČI KROG!': 'FLYING LAP!',
     'KROG {0}/{1}': 'LAP {0}/{1}', 'KROG {0}: {1}': 'LAP {0}: {1}', '  NAJHITREJŠI': '  FASTEST', 'ZADNJI KROG!': 'FINAL LAP!', 'NAPAČNA SMER!': 'WRONG WAY!', 'POPRAVILO {0} %': 'REPAIR {0} %',
     'PREBITE GUME: {0}': 'FLAT TYRES: {0}', 'TEKMEC {0} s PRED TABO': 'RIVAL {0} s AHEAD', 'TEKMEC {0} s ZA TABO': 'RIVAL {0} s BEHIND',
@@ -260,6 +305,8 @@
     'Dolina Rock Creek': 'Rock Creek Valley', 'Vrh serpentin': 'Top of the Switchbacks',   // (Beartooth: Serpentina N and the heights by the rules of Lang.place)
     'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
     'Konec asfalta': 'Pavement Ends', 'Konec makadama': 'Back on Asphalt',   // (the Moki Dugway; Razgledisce is in the dictionary already, from the Mulholland Highway)
+    'Vodni stolp': 'Water Tower', 'Viadukt': 'Viaduct', 'Most čez South Esk': 'South Esk Bridge', 'Nivojski prehod': 'Level Crossing', 'Ravnina pri strojarni': 'Tannery Straight',
+    'Ovinek pri strojarni': 'Tannery Corner', 'Dolgi most': 'Long Bridge', 'Leteča milja': 'Flying Mile',   // (Longford: the HUD)
     /* ---- the run from the police (Vršič): the checkpoint, the hideout, the HUD, the rap sheet, the call signs on the radio; the screen to turn the phone ---- */
     'Kamera »{0}« je za pokončni položaj.': 'The camera “{0}” is for holding the phone upright.', 'Kamera »{0}« je za ležeči položaj.': 'The camera “{0}” is for holding the phone sideways.',
     'Lahko pa igraš pokončno s kamero za avtom.': 'Or play upright with the chase camera.', 'Lahko pa igraš ležeče z izometrično kamero.': 'Or play sideways with the isometric camera.',
@@ -290,7 +337,7 @@
     'Super težka': 'Super hard', 'Beg pred policijo: najhujši pregon; dirke kot Težka': 'The police chase: the toughest pursuit; races as Hard', 'MOTORIST {0}': 'BIKE {0}', 'CIVILNA {0}': 'UNMARKED {0}', 'KOMBI': 'VAN', 'POLICIST': 'OFFICER',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
-  const SAME = new Set(['APEX', 'RACING', 'APEX RACING', 'TV', 'DRS', 'KM/H', 'Circuit Superstars', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English']);
+  const SAME = new Set(['APEX', 'RACING', 'APEX RACING', 'TV', 'DRS', 'KM/H', 'Circuit Superstars', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO']);
 
   const has = Object.prototype.hasOwnProperty;
   let cur = 'sl', REV = null;   // (REV: English -> Slovenian, for the page: a text the game wrote in English goes back)
