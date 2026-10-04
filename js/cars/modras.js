@@ -18,7 +18,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     parts: { set: 'race', ht: 1.17, y0: 0.15,
       over: {
         wing: { f: 0.75, m: 4 },
-        trunk: { lx: -0.64, y: 1 },   // (the glass engine cover: over the engine, behind the cabin, where the look has it)
+        // (where the look has them: the glass engine cover over the engine behind the cabin, the mirrors at the windscreen's base over the
+        // front wheel, the quarters with the haunches' tops and the buttresses)
+        trunk: { lx: -0.69, y: 1 }, mirrorL: { lx: 0.31, y: 0.84 }, mirrorR: { lx: 0.31, y: 0.84 }, quarterL: { lx: -0.465, y: 0.64 }, quarterR: { lx: -0.465, y: 0.64 },
       },
     },
     // the look (KIT API v1, render.js; look units = metres): one loft, a wedge from the nose to the roof (the bonnet and the windscreen at
@@ -29,18 +31,18 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       body: { len: 4.52, wid: 1.93, roofY: 1.175, wz: 0.16,
         //       x      w      yb    ybelt  wt     yt     cr      kind  tuck
         secs: [[-2.26, 0.87, 0.24, 0.82, 0.77, 0.955, -0.015, 'b', 0.08],     // the tail: the deck's lip over the tail lamps, the diffuser's kick under it
-          [-2.06, 0.94, 0.16, 0.845, 0.79, 0.99, -0.03, 'b', 0.1],        // the rear bumper's front edge; the black vent behind the glass cover
-          [-1.75, 0.96, 0.13, 0.86, 0.75, 1.02, -0.045, 'b', 0.12],       // the haunches; the glass cover (its clear middle flat at 0.975) from here
-          [-1.26, 0.965, 0.12, 0.865, 0.69, 1.06, -0.085, 'b', 0.12],        // the rear axle
-          [-0.8, 0.95, 0.12, 0.835, 0.61, 1.1, -0.125, 'gr', 0.12],       // the cover's front: the rear window rises steeply from here
-          [-0.66, 0.94, 0.12, 0.815, 0.56, 1.143, 0.022, 'r', 0.12],       // the roof's rear edge (flat on top: the start number lies there)
-          [-0.4, 0.932, 0.12, 0.79, 0.575, 1.148, 0.022, 'r', 0.12],       // the roof (the door's rear edge)
-          [-0.12, 0.932, 0.12, 0.78, 0.585, 1.143, 0.022, 'gf', 0.12],     // the windscreen's top
-          [0.9, 0.945, 0.12, 0.75, 0.75, 0.85, 0, 'b', 0.12],              // the windscreen's base over the front wheel's back (the cowl; the door's front edge)
-          [1.36, 0.958, 0.12, 0.74, 0.82, 0.79, -0.032, 'b', 0.12],        // the front axle: the fenders' crests over the lower bonnet
+          [-2.06, 0.94, 0.16, 0.845, 0.79, 0.99, -0.03, 'b', 0.1],            // the rear bumper's front edge; the black vent behind the glass cover
+          [-1.75, 0.96, 0.13, 0.86, 0.75, 1.02, -0.045, 'b', 0.12],           // the haunches; the glass cover (its clear middle flat at 0.975) from here
+          [-1.26, 0.965, 0.12, 0.865, 0.69, 1.06, -0.085, 'b', 0.12],         // the rear axle
+          [-0.8, 0.95, 0.12, 0.835, 0.61, 1.1, -0.125, 'gr', 0.12],           // the cover's front: the rear window rises steeply from here
+          [-0.66, 0.94, 0.12, 0.815, 0.56, 1.143, 0.022, 'r', 0.12],          // the roof's rear edge (flat on top: the start number lies there)
+          [-0.4, 0.932, 0.12, 0.79, 0.575, 1.148, 0.022, 'r', 0.12],          // the roof (the door's rear edge)
+          [-0.12, 0.932, 0.12, 0.78, 0.585, 1.143, 0.022, 'gf', 0.12],        // the windscreen's top
+          [0.9, 0.945, 0.12, 0.75, 0.75, 0.85, 0, 'b', 0.12],                 // the windscreen's base over the front wheel's back (the cowl; the door's front edge)
+          [1.36, 0.958, 0.12, 0.74, 0.82, 0.79, -0.032, 'b', 0.12],           // the front axle: the fenders' crests over the lower bonnet
           [1.85, 0.935, 0.12, 0.63, 0.8, 0.675, -0.026, 'b', 0.12],
-          [2.08, 0.9, 0.11, 0.48, 0.79, 0.54, -0.012, 'b', 0.11],          // the bonnet's front edge: the head lamps' slope from here
-          [2.26, 0.83, 0.1, 0.29, 0.75, 0.35, 0, 'b', 0.08]],              // the nose: the bumper's face with the intakes
+          [2.08, 0.9, 0.11, 0.48, 0.79, 0.54, -0.012, 'b', 0.11],             // the bonnet's front edge: the head lamps' slope from here
+          [2.26, 0.83, 0.1, 0.29, 0.75, 0.35, 0, 'b', 0.08]],                 // the nose: the bumper's face with the intakes
         eye: { x: -0.38, y: 0.98, near: 0.2, tilt: 0.05, style: 'closed' },   // (low, under the roof's peak)
         door: [0.9, -0.4], bumpF: 0.18, bumpR: 0.2, bumpY: [0.4, 0.6],
         engine: [-1.25, 1.0], engRear: true,                                 // (the V10 under the glass cover)
@@ -63,7 +65,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           if (e === 0 || e === 8) return B;
           if (kind === 'gf') return e === 1 || e === 7 ? P : G;
           if (kind === 'r') return e === 2 || e === 6 ? G : P;
-          if (kind === 'gr') return e >= 3 && e <= 5 ? G : P;
+          if (kind === 'gr') return e >= 3 && e <= 5 ? G : e === 2 || e === 6 ? B : P;   // (the buttress behind the quarter window black: the intake)
           if (e >= 3 && e <= 5 && at.x > COV[0] && at.x < COV[1]) return e === 4 ? BAY : G;
           if (e >= 3 && e <= 5 && at.x > VENT[0] && at.x < VENT[1]) return MESH;
           return P;
@@ -74,7 +76,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         D2.band([[-0.659, 0.86], [0.899, 0.86], [0.899, 1], [-0.659, 1]], B, null, 0.008);
         D2.band([[-0.659, 0], [0.899, 0], [0.899, 0.06], [-0.659, 0.06]], B, null, 0.008);
         D2.band([[-0.45, 0], [-0.401, 0], [-0.401, 1], [-0.45, 1]], B, null, 0.009);
-        D2.band([[-0.655, 0.06], [-1.06, 0.3], [-0.655, 1]], B, null, 0.008);
+        D2.band([[-0.77, 0.1], [-1.06, 0.3], [-0.86, 1], [-0.77, 1]], B, null, 0.012);
         // ---- the flanks: the lower door scooped (a darker shade) back into the hexagonal intake ahead of the rear wheel (its surround, the
         //      dark hole), the black sills, a line over them ----
         D2.side([[0.97, 0.3], [0.97, 0.41], [-0.42, 0.575], [-0.6, 0.36], [-0.6, 0.3]], K.shade(P, 0.66), null, 0.004);
@@ -82,6 +84,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const hexI = [[-0.42, 0.55], [-0.52, 0.75], [-0.805, 0.77], [-0.868, 0.6], [-0.805, 0.38], [-0.52, 0.36]];
         D2.side(hexI, TRIM, null, 0.006);
         D2.side(hexI.map(([x, y]) => [-0.66 + (x + 0.66) * 0.76 - 0.012, 0.55 + (y - 0.55) * 0.72 - 0.02]), B, null, 0.01);
+        for (const q of [[[-0.47, 0.548], [-0.63, 0.548], [-0.63, 0.562], [-0.47, 0.562]], [[-0.63, 0.548], [-0.786, 0.67], [-0.796, 0.656], [-0.63, 0.562]], [[-0.63, 0.548], [-0.796, 0.444], [-0.786, 0.43], [-0.63, 0.562]]])
+          D2.side(q, P, null, 0.013);   // (a Y blade in it, as in the nose's)
         D2.side([[XS0 + 0.01, 0.2], [XS1 - 0.01, 0.2], [XS1 - 0.01, 0.31], [XS0 + 0.01, 0.31]], B, null, 0.006);
         D2.side([[XS0 + 0.03, 0.316], [XS1 - 0.03, 0.316], [XS1 - 0.06, 0.328], [XS0 + 0.03, 0.328]], S, null, 0.006);
         // ---- the glass cover's frame (black, along its outer edges) ----
