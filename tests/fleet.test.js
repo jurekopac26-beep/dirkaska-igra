@@ -2,8 +2,8 @@
 //  - the files (before Core loads, so a broken one is named): each js/cars/<id>.js runs twice in one empty sandbox and adds exactly one
 //    def a run (id = the file's name) and nothing else (a top-level let / const / class fails the second run, a top-level var or
 //    function shows as a global, THREE / window touched while loading throws); index.html lists them after the tracks and before
-//    core.js in the roster's (registration) order; all 31 register, none skipped
-//  - the registry: every model (the 11 and the 31) has sound physics, a drive, a category, stat bars, its own ARC and CSP entries, a
+//    core.js in the roster's (registration) order; all of them register, none skipped
+//  - the registry: every model (the 11 and the new ones) has sound physics, a drive, a category, stat bars, its own ARC and CSP entries, a
 //    career price and a part table; a registered one also its sound preset, description, handling targets, part names, contact circles;
 //    the part presets as DESIGN 2.2 lists them
 //  - handling (the flat-plane rig, tests/lib/handling.js): 0-100 km/h, top speed, side grip at 100 km/h and 100-0 km/h inside the
@@ -35,7 +35,7 @@ const { DT, seeded } = require('./lib/sim.js');
 
 // the registration order (= the script tags' order, append-only: a shipped vehicle is retired, never removed or moved)
 const ROSTER = ['miska', 'kolibri', 'raketa', 'jezek', 'sokol', 'panter', 'jelen', 'lisica', 'perun', 'skorpijon', 'modras', 'jastreb', 'gad', 'blisk', 'lev', 'zmaj',
-  'pescenjak', 'medved', 'hrosc', 'gozdar', 'kozorog', 'tiger', 'tornado', 'strelica', 'mravlja', 'bizon', 'titan', 'kamen', 'superkombi', 'predsednik', 'goljat'];
+  'pescenjak', 'medved', 'hrosc', 'gozdar', 'kozorog', 'tiger', 'tornado', 'strelica', 'mravlja', 'bizon', 'titan', 'kamen', 'superkombi', 'predsednik', 'goljat', 'levs', 'levk'];
 const OLD = ['kaze', 'vortex', 'pico', 'strega', 'rally', 'p206', 'formula', 'lm', 'muscle', 'ev', 'truck'];
 // category envelopes: 0-100 km/h (s), top speed (km/h), side grip at 100 km/h with full lock (g), 100-0 km/h (m). Anchored on the 11
 // (measured with the rig: t100 2.50 ev .. 3.58 kaze / muscle, vmax 202 truck .. 295 lm, latG 2.07 truck .. 2.86 formula, d100 23.6-24.0
@@ -91,10 +91,10 @@ try { C = loadCore(); } catch (e) { check('Core loads with every vehicle file (l
 const H = require('./lib/handling.js')(C);
 const model = (id) => C.MODELS.find(m => m.id === id);
 const track = (id) => new C.Track(C.TRACKS.find(d => d.id === id));
-check('Core: the 11 first, in their places, then all 31 in the roster order; no def skipped', C.MODELS.slice(0, 11).map(m => m.id).join() === OLD.join() && C.MODELS.slice(11).map(m => m.id).join() === ROSTER.join() &&
+check('Core: the 11 first, in their places, then all the new ones in the roster order; no def skipped', C.MODELS.slice(0, 11).map(m => m.id).join() === OLD.join() && C.MODELS.slice(11).map(m => m.id).join() === ROSTER.join() &&
   C.DEFS.length === ROSTER.length && C.DEFS_SKIPPED.length === 0, C.MODELS.length + ' models, ' + C.DEFS.length + ' defs, skipped ' + JSON.stringify(C.DEFS_SKIPPED));
 
-// ---- 2. the registry: every model sound (the 11 and the 31) ----
+// ---- 2. the registry: every model sound (the 11 and the new ones) ----
 {
   const probs = [], ids = new Set(), names = new Set(), kaze = new C.Car(model('kaze'), { phys: 'cs' });
   const DRIVES = ['FR', 'FF', 'MR', 'AWD', 'RR'], cats = C.CATS.map(c => c.id);
@@ -598,7 +598,7 @@ if (!only.length) {
   const why = (id) => (X.DEFS_SKIPPED.find(s => s.id === id) || {}).why || '';
   check('broken defs are skipped and listed (a patch of no vehicle, an unknown key, no wheel to drop, downforce shares over 1, an unknown phys key, a field of no vehicle, an id taken, a body\'s name, an unknown sound, kW in the text, true for a part with no standard entry, a wheel\'s place or size, cth with no corner, bscale out of range); good ones register as given (bscale kept, rW over a standard r)',
     skipped.join() === ['hatch', 'kaze', 'muscle', 'nosuch', 'raketa', 'titan', 'zzbad', 'zzdesc', 'zzfield', 'zzsnd', 'zzx1', 'zzx2', 'zzx3', 'zzx4'].join() && /downforce/.test(why('muscle')) && /standard/.test(why('zzx1')) && /wheel/.test(why('zzx2')) && /cth/.test(why('zzx3')) && /bscale/.test(why('zzx4')) &&
-    X.MODELS.length === 45 && X.MODELS.slice(0, 42).every((o, i) => o.id === C.MODELS[i].id) && X.ARC.zzbs.bscale === 1.3 && Math.abs(m('zzbs').parts.doorL.r - 0.3 * m('zzbs').wid) < 1e-12 && X.ARC.zzok.bscale === 1,
+    X.MODELS.length === C.MODELS.length + 3 && X.MODELS.slice(0, C.MODELS.length).every((o, i) => o.id === C.MODELS[i].id) && X.ARC.zzbs.bscale === 1.3 && Math.abs(m('zzbs').parts.doorL.r - 0.3 * m('zzbs').wid) < 1e-12 && X.ARC.zzok.bscale === 1,
     'skipped ' + skipped.join(', ') + '; ' + ['muscle', 'zzx1', 'zzx2', 'zzx3', 'zzx4'].map(id => id + ': ' + why(id)).join(' / '));
   { // a patched one of the 11 with a part table of its own breaks apart as a registered vehicle does (the pico, the PEUGEOT 206)
     const pico = m('pico'), HX = require('./lib/handling.js')(X);
