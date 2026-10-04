@@ -19,7 +19,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     // the look (KIT API v1, render.js; look units = metres): one loft from the cut-off tail to the nose: the fastback's glass and the deck
     // are one tailgate (the trunk, taken out to the roof's rear edge), the bonnet a clamshell between the wings with the power bulge on it
     // (a skin of its own, the scoop at its front); the doors long and far back, the side glass running back into the sails; the details
-    // on top: the vents behind the front wheels, the swept lamps, the low mouth, the quad round tail lamps over the diffuser and four pipes
+    // on top: the vents behind the front wheels, the swept lamps, the low oval mouth, the quad round tail lamps over a black valance and
+    // its four pipes; the bulge's top in the stripe's colour (the livery: the paint when the car has no stripe)
     look: {
       body: { roofY: 1.3,
         //       x      w      yb    ybelt  wt     yt     cr     kind  tuck
@@ -74,6 +75,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const y of [0.5, 0.56]) { const s = (y - 0.44) * 0.444; D2.side([[0.66 + s, y - 0.01], [0.98 + s, y - 0.01], [0.98 + s + 0.009, y + 0.01], [0.66 + s + 0.009, y + 0.01]], P, null, 0.011); }
         for (const x of [0.14, -0.86]) D2.side([[x - 0.006, 0.32], [x + 0.006, 0.32], [x + 0.006, 0.84], [x - 0.006, 0.84]], K.shade(P, 0.45), null, 0.004);
         D2.side([[-0.78, 0.785], [-0.64, 0.785], [-0.64, 0.81], [-0.78, 0.81]], B, null, 0.006);
+        D2.side([[1.98, 0.42], [2.08, 0.42], [2.08, 0.445], [1.98, 0.445]], AMB, null, 0.006);              // (the side markers: amber in the nose,
+        D2.side([[-2.08, 0.6], [-1.98, 0.6], [-1.98, 0.625], [-2.08, 0.625]], [0.6, 0.06, 0.05], null, 0.006);   //  red in the tail)
         // the hips: a lip round each rear arch, proud of the flank (they leave with the quarters)
         for (const sd of [-1, 1]) K.flare(K.rx, 0.375, 0.445, sd * 0.955, sd * 0.99, P, { n: 6, a0: 0.12, a1: Math.PI - 0.2 });
         // ---- the power bulge down the bonnet's middle (a skin on the crown), its scoop's mouth at the front ----
@@ -98,7 +101,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           D2.top([[2.268, sd * 0.37], [2.268, sd * 0.575], [2.1, sd * 0.745], [2.13, sd * 0.52]], LC, 0.006, { host: f });
           for (const z of [0.425, 0.525]) K.headLamp(2.276, 0.462, sd * z, 0.035, { ring: D, n: 8, host: f });
         }
-        for (const z of [-0.33, 0.27]) { const a = [0.11, 0, z - 0.27], b = [0.07, 0, z + 0.27]; a[1] = L.topY(a[0], a[2]) + 0.012; b[1] = L.topY(b[0], b[2]) + 0.012; K.bar(a, b, 0.008, B, { n: 4, part: 'body' }); }
+        const onTop = (x, z) => [x, L.topY(x, z) + 0.012, z];
+        for (const z of [-0.33, 0.27]) K.bar(onTop(0.11, z - 0.27), onTop(0.07, z + 0.27), 0.008, B, { n: 4, part: 'body' });   // (the wipers on the glass's foot)
         // ---- the tail: the quad round lamps in silver rings (the lit lenses are the tail mesh), the plate; the bumper's black valance
         //      low down, four pipes in chrome rings out of it ----
         for (const sd of [-1, 1]) for (const z of [0.475, 0.68]) { K.discX(-2.283, 0.78, sd * z, 0.088, 10, [0.5, 0.51, 0.54], -1, { part: 'body' }); K.tailLamp(-2.284, 0.78, sd * z, 0.146, 0.146, { round: true }); }
