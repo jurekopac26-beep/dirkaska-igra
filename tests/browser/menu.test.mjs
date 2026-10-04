@@ -248,8 +248,9 @@ try {
     await click(page, 'single'); await click(page, 'mode:race');
     const off = await page.waitForFunction(() => { const root = document.getElementById('menu-host').shadowRoot, i = root.querySelector('#track-stage'); return !!i && root.querySelector('.card h1') ? true : false; }, null, { timeout: 20000 }).then(() => true).catch(() => false);
     const loaded = await page.evaluate(async (files) => { const out = []; for (const f of files) { try { const r = await fetch(f); out.push(r.ok); } catch (_) { out.push(false); } } return out; }, files);
+    const fonts = await page.evaluate(() => Promise.all([document.fonts.load('italic 900 20px ApexMenu', 'Vršič'), document.fonts.load('400 16px ApexMenu', 'Vršič')]).then(r => r.map(x => x.length)).catch(() => [0, 0]));
     srv.setOffline(false);
-    T.check(`offline: the game starts from the saved copy and the track step's pictures (${files.length}) come from the kept copies`, off && files.length >= 2 && loaded.every(Boolean), JSON.stringify({ off, files, loaded }));
+    T.check(`offline: the game starts from the saved copy, the track step's pictures (${files.length}) come from the kept copies, the menu's fonts (also for č and š) from the saved game`, off && files.length >= 2 && loaded.every(Boolean) && fonts.every(n => n > 0), JSON.stringify({ off, files, loaded, fonts }));
     await ctx.close();
   }
 

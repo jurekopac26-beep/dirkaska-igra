@@ -51,8 +51,8 @@
   if (S.lang !== 'en') S.lang = 'sl';
   S.intro = [0, 1, 2].includes(+S.intro) ? +S.intro : 0; S.music = +S.music === 0 ? 0 : 1; S.mapV = +S.mapV === 1 ? 1 : 2;   // (the race intro: Full, Short, Off; the music before the race; the track map shown: the flyover or the map)
   // the menu (js/menu.js: the main menu and the single race, in a shadow root) replaces the title and track screens; ?menu=old (or tdgp-menu=old in the
-  // storage, which the automated tests of the old screens set) keeps the old ones
-  let menuOn = !!window.Menu && !/[?&]menu=old\b/.test(location.search) && (() => { try { return localStorage.getItem('tdgp-menu') !== 'old'; } catch (_) { return true; } })();
+  // storage, which the automated tests of the old screens set) keeps the old ones, and so does a game opened from a file (it fetches its style and data)
+  let menuOn = !!window.Menu && location.protocol !== 'file:' && !/[?&]menu=old\b/.test(location.search) && (() => { try { return localStorage.getItem('tdgp-menu') !== 'old'; } catch (_) { return true; } })();
   if (!['off', 'auto', 'on'].includes(S.saver)) S.saver = 'off';
   if (!['low', 'med', 'high', 'auto'].includes(S.detail)) S.detail = 'auto';   // adaptive graphics detail (LOD) level, see detailTier()
   if (!['short', 'normal', 'long', 'endurance'].includes(S.length)) S.length = 'normal';

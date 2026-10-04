@@ -4,8 +4,8 @@
 //   with a server error, or is slower than 4 s (one bar of signal); the network's page is then still saved for next time.
 // - The scripts and styles it links carry a content stamp (?v=…, tools/stamp.js), so a saved copy of those is never out
 //   of date: they come from the saved copies first.
-// - A new index.html is saved only together with everything it links, so the saved game is always complete; files it no
-//   longer links are then removed. Each copy of the game (its own folder) keeps its own saved files.
+// - A new index.html is saved only together with everything it links (and the fonts its stylesheets name), so the saved game is
+//   always complete; files it no longer links are then removed. Each copy of the game (its own folder) keeps its own saved files.
 // - The menu's pictures (assets/: the models of the tracks, the maps, the cars; not the videos and the music) are kept as they are looked at, in
 //   a cache of their own: the kept copy at once, the newest from the network for next time. Without internet the menu shows the pictures
 //   already seen.
@@ -36,12 +36,21 @@ let queue = Promise.resolve();
 function save(html) {
   queue = queue.then(async () => {
     const c = await caches.open(CACHE), want = linked(html);
-    await Promise.all([...want].map(async (u) => {
+    const get = async (u) => {
       if (await c.match(u, { ignoreVary: true })) return;
       const r = await fetch(u);
       if (!r.ok) throw new Error('not saved: ' + u);
       await c.put(u, r);
-    }));
+    };
+    await Promise.all([...want].map(get));
+    // (and what the stylesheets name, the fonts: they are fetched only when text needs them, which may be without internet)
+    for (const css of [...want].filter(u => /\.css(\?|$)/.test(u))) {
+      const r = await c.match(css, { ignoreVary: true }); if (!r) continue;
+      for (const m of (await r.text()).matchAll(/url\(\s*["']?([^"')\s]+)["']?\s*\)/g)) {
+        if (/^([a-z][a-z0-9+.-]*:|\/\/|#)/i.test(m[1])) continue;
+        const u = new URL(m[1], css).href; want.add(u); await get(u);
+      }
+    }
     await c.put(PAGE(), new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } }));
     for (const req of await c.keys()) if (req.url !== PAGE() && !want.has(req.url)) await c.delete(req);
   }).catch(() => { });   // (not complete, e.g. the connection dropped: the previous saved game stays as it was)
