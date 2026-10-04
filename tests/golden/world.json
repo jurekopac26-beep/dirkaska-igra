@@ -524,6 +524,24 @@
    "ao:MeshBasicMaterial": "bf4eccf9"
   }
  },
+ "maunakea": {
+  "meshes": 2158,
+  "verts": 778318,
+  "instances": 27326,
+  "props": 252,
+  "crowd": 437,
+  "world": "7b1bf539",
+  "propsHash": "6dc9dec0",
+  "floor": "fe164f09/12376",
+  "groups": {
+   "-:MeshLambertMaterial": "ed14fc6f",
+   "-:MeshPhongMaterial": "8ce46269",
+   "-:MeshBasicMaterial": "95e76a8d",
+   "maFar:MeshLambertMaterial": "60ab73b",
+   "crowd:MeshLambertMaterial": "3ca35ce9",
+   "ao:MeshBasicMaterial": "89924bcd"
+  }
+ },
  "cpalace": {
   "meshes": 300,
   "verts": 382518,
