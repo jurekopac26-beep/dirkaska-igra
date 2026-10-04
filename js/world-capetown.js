@@ -219,7 +219,10 @@
     C.out.dyn.water = C.tex.water; C.out.sea = C.WL;
     const sd = (x, z) => gAt(G.dT, x, z) > 650 ? 99 : -gAt(G.SD, x, z);
     for (let z = G.z0; z < G.z1; z += 512) for (let x = G.x0; x < G.x1; x += 512) {
-      const band = K.shoreBand(x, z, Math.min(G.x1, x + 512), Math.min(G.z1, z + 512), C.WL + 0.01, sd, 9, { F: 4 }); if (band) K.addShore(C.root, band, wm, O); }
+      const band = K.shoreBand(x, z, Math.min(G.x1, x + 512), Math.min(G.z1, z + 512), C.WL + 0.01, sd, 9, { F: 4 }); if (!band) continue;
+      const sh = band.attributes.shore; let mn = 1e9, mx = -1e9; for (let k = 0; k < sh.count; k++) { mn = Math.min(mn, sh.getX(k)); mx = Math.max(mx, sh.getX(k)); }
+      if (sh.count < 50 || mn > -1.99 || mx < 9.99) { band.dispose(); continue; }   // (a scrap of a tile's corner without a waterline of its own)
+      K.addShore(C.root, band, wm, O); }
     // the ponds of the park (OSM water): their surface 1 m under the lawn
     const pg = new GB(true);
     for (const e of C.D.water) { const ring = e[1]; if (ring.length < 3) continue; let y = 1e9; for (const p of ring) y = Math.min(y, ctGround(p[0], p[1]) + 1.1);

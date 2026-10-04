@@ -564,17 +564,17 @@
   }
  },
  "capetown": {
-  "meshes": 793,
-  "verts": 1475829,
+  "meshes": 792,
+  "verts": 1475825,
   "instances": 2178,
   "props": 145,
   "crowd": 544,
-  "world": "3acf5f87",
+  "world": "42a3b367",
   "propsHash": "63a72f1a",
   "floor": null,
   "groups": {
    "-:MeshLambertMaterial": "b5dcf162",
-   "ctWater:MeshPhongMaterial": "92e6ebc3",
+   "ctWater:MeshPhongMaterial": "ad75800a",
    "ctRoad:MeshLambertMaterial": "4dca0599",
    "ctWalls:MeshLambertMaterial": "d3c18c99",
    "ctPits:MeshLambertMaterial": "4337d20c",
