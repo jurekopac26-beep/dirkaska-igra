@@ -86,7 +86,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         }, { hinge: [[1.9, 0.3, -0.4], [1.9, 0.3, 0.4]] });
         for (const sd of [-1, 1]) {
           const host = sd < 0 ? 'fenderL' : 'fenderR';
-          K.headLamp(1.885, 0.645, sd * 0.54, 0.086, { n: 8, host });
+          K.headLamp(1.885, 0.645, sd * 0.54, 0.086, { n: 10, host });
           K.discX(1.884, 0.5, sd * 0.625, 0.03, 6, [1, 0.6, 0.12], 1, { host });
         }
         // ---- the tail: round lamps (two a side), the plate; the bumperettes ----
