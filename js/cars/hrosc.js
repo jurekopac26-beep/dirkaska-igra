@@ -82,20 +82,23 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const wcol = (k, e) => e === 5 ? D : e === 0 ? K.shade(P, 0.7) : e === 4 ? K.shade(P, 0.9) : P;
         for (const sd of [-1, 1]) {
           K.part(sd < 0 ? 'fenderL' : 'fenderR', () => {
-            K.skin(wing(K.fx, 0.56, 2.88, 5, [[0.5, 0.5], [0.57, 0.51], [0.625, 0.62], [0.62, 0.76], [0.575, 0.865], [0.505, 0.885]], sd), wcol, P, P);
+            K.skin(wing(K.fx, 0.56, 2.88, 5, [[0.5, 0.5], [0.575, 0.505], [0.625, 0.6], [0.635, 0.71], [0.59, 0.84], [0.505, 0.885]], sd), wcol, P, P);
             K.cyl([1.52, 0.865, sd * 0.69], [1.745, 0.865, sd * 0.69], 0.105, P, { n: 6, capA: null, capB: null });   // the lamp's pod on the wing's nose
             K.headLamp(1.75, 0.865, sd * 0.69, 0.092);
           }, { hinge: [[0.95, 0.86, sd * 0.52], [1.7, 0.86, sd * 0.52]] });
           K.part('body', () => {
-            K.skin(wing(K.rx, 0.24, 2.27, 5, [[0.515, 0.5], [0.585, 0.51], [0.64, 0.64], [0.635, 0.78], [0.59, 0.885], [0.52, 0.915]], sd), wcol, P, P);
+            K.skin(wing(K.rx, 0.24, 2.27, 5, [[0.515, 0.5], [0.59, 0.505], [0.64, 0.61], [0.65, 0.73], [0.605, 0.865], [0.52, 0.915]], sd), wcol, P, P);
             K.cyl([-1.33, 0.86, sd * 0.71], [-1.465, 0.86, sd * 0.71], 0.058, B, { n: 5, capA: null, capB: B });   // the tail lamp's pod on the wing's tail
           });
           K.tailLamp(-1.47, 0.86, sd * 0.71, 0.1, 0.1, { round: true });
         }
-        // ---- the running boards, the shocks in the wheels' gaps ----
+        // ---- the running boards, the doors' handles and the livery's stripe along them, the shocks in the wheels' gaps ----
         K.part('body', () => {
           for (const sd of [-1, 1]) {
+            const f = sd < 0 ? '-z' : 'z';
             K.box(0.14, 0.42, sd * 0.73, 1.28, 0.04, 0.22, 0, RB);
+            K.rect(0.05, 0.62, sd * 0.706, 1.02, 0.06, S, { dir: f });
+            K.rect(-0.3, 0.88, sd * 0.707, 0.14, 0.026, K.chrome, { dir: f });
             K.bar([1.28, 0.46, sd * 0.57], [1.16, 0.92, sd * 0.56], 0.035, SP, { n: 5 });
             K.bar([-1.0, 0.46, sd * 0.53], [-0.84, 0.98, sd * 0.5], 0.035, SP, { n: 5 });
           }
@@ -144,6 +147,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.box(0.66, 0.78, 0, 0.16, 0.14, 1.2, 0, D, null, false, { inner: true, part: 'body' });
         K.cage([[[-0.45, 0.48, -0.56], [-0.45, 1.28, -0.48]], [[-0.45, 0.48, 0.56], [-0.45, 1.28, 0.48]], [[-0.45, 1.28, -0.48], [-0.45, 1.28, 0.48]], [[-0.45, 1.28, 0], [-1.0, 0.7, 0]]], 0.022, CG, { part: 'body' });
         K.box(1.02, 0.56, 0, 0.3, 0.26, 0.84, 0, [0.3, 0.3, 0.32], null, false, { inner: true, part: 'body' });
+        K.face([[0.9, 0.5, 0.55], [0.9, 0.5, -0.55], [0.9, 0.87, -0.55], [0.9, 0.94, -0.2], [0.9, 0.94, 0.2], [0.9, 0.87, 0.55]], K.lining, { inner: true, part: 'body' });   // (the front trunk's back wall)
         K.tyre(1.48, 0.66, 0, { axis: 'y', r: 0.3, w: 0.18, inner: true, part: 'body' });
       },
     },
