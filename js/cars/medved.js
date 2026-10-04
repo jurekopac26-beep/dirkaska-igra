@@ -18,10 +18,13 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     partNames: { tailgate: 'tailgate', spare: 'spare wheel', roofRack: 'roof rack' },
     parts: { set: 'car', ht: 1.95, y0: 0.32, drop: ['trunk'],
       extra: {
-        tailgate: { z: 1, th: 0.78, m: 12, rW: 0.4, h: 0.07, lx: -0.98, lz: 0, f: 0.5 },
-        spare: { z: 1, th: 0.6, m: 10, r: 0.42, h: 0.3, lx: -1.03, lz: 0, f: 0.42 },
-        roofRack: { z: 1, th: 0.7, m: 6, rW: 0.4, h: 0.15, lx: -0.12, lz: 0, f: 1.02 },
+        tailgate: { z: 1, th: 0.78, m: 12, rW: 0.4, h: 0.07, lx: -0.9, lz: 0, y: 1.3 },
+        spare: { z: 1, th: 0.6, m: 10, r: 0.42, h: 0.3, lx: -0.97, lz: 0, y: 1.06 },
+        roofRack: { z: 1, th: 0.7, m: 6, rW: 0.4, h: 0.15, lx: -0.24, lz: 0, y: 1.88 },
       },
+      // (where the look has them: the mirrors on the doors' front corners, the bonnet's middle, the bumpers' and the tailgate's faces; a
+      // lost one flies off from there)
+      over: { mirrorL: { lx: 0.395, y: 1.31 }, mirrorR: { lx: 0.395, y: 1.31 }, hood: { lx: 0.655, y: 1.17 }, bumperF: { lx: 0.94 }, bumperR: { lx: -0.89 } },
     },
     // the look (KIT API v1, render.js; look units = metres): one loft, the box: slab sides, flat glass leaning in a little, a flat roof (the
     // stripe colour: a two-tone roof), an upright windscreen, a flat bonnet; its end caps the grille's panel (front) and the tailgate (rear,
@@ -39,15 +42,16 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         eye: { x: 0.25, y: 1.6, near: 0.25, tilt: 0.06, style: 'closed' },   // (sitting high, close behind the upright windscreen)
         crush: { x0: -2.08, x1: 1.0, z: 0.86 } },
       wheels: { style: 'knob', w: 0.27, rimK: 0.58, rim: [0.66, 0.67, 0.7], cap: [0.28, 0.28, 0.3], gap: 0.06 },
-      // the parts' regions (look units): the doors from behind the front arch to the rear door's edge, the fenders forward of them, the
-      // quarters behind them (each side: tuck, side, window), the bonnet over the fenders' tops
+      // the parts' regions (look units): the doors from behind the front arch to the rear door's edge (side, window: their glass), the
+      // fenders forward of them, the quarters behind them under the belt (the long window, the C- and D-pillars stay with the roof), the
+      // bonnet over the fenders' tops
       regions: [
         { part: 'doorL', x: [-0.86, 1.04], bands: ['side', 'window'], side: 'L', y: [0.5, 1.85] },
         { part: 'doorR', x: [-0.86, 1.04], bands: ['side', 'window'], side: 'R', y: [0.5, 1.85] },
         { part: 'fenderL', x: [1.04, 2.3], bands: ['tuck', 'side', 'window'], side: 'L', y: [-1, 1.3] },
         { part: 'fenderR', x: [1.04, 2.3], bands: ['tuck', 'side', 'window'], side: 'R', y: [-1, 1.3] },
-        { part: 'quarterL', x: [-2.3, -0.86], bands: ['tuck', 'side', 'window'], side: 'L', y: [-1, 1.9] },
-        { part: 'quarterR', x: [-2.3, -0.86], bands: ['tuck', 'side', 'window'], side: 'R', y: [-1, 1.9] },
+        { part: 'quarterL', x: [-2.3, -0.86], bands: ['tuck', 'side'], side: 'L', y: [-1, 1.25] },
+        { part: 'quarterR', x: [-2.3, -0.86], bands: ['tuck', 'side'], side: 'R', y: [-1, 1.25] },
         { part: 'hood', x: [1.06, 2.3], bands: ['window', 'edge', 'crown'], top: true },
       ],
       build(K) {
@@ -70,6 +74,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const [z0, z1] of [[-0.865, -0.33], [-0.33, 0.33], [0.33, 0.865]]) LD.top([[0.8, z0], [0.835, z0], [0.835, z1], [0.8, z1]], P, 0.006);   // (its header)
         // the side: a black rubbing strip along the doors, the shut lines, the handles
         LD.side([[-0.84, 0.8], [1.02, 0.8], [1.02, 0.87], [-0.84, 0.87]], B, null, 0.008);
+        LD.side([[-0.84, 0.828], [1.02, 0.828], [1.02, 0.842], [-0.84, 0.842]], CH, null, 0.011);   // (its chrome insert)
         for (const x of [0.01, -0.86, 1.04]) LD.side([[x - 0.008, 0.58], [x + 0.008, 0.58], [x + 0.008, 1.19], [x - 0.008, 1.19]], DK, null, 0.01);
         for (const sd of [-1, 1]) for (const x of [0.16, -0.72]) K.rect(x, 1.06, sd * 0.942, 0.17, 0.035, B, { dir: sd < 0 ? '-z' : 'z' });
         // ---- the flares over the big tyres (black), the arch's ledge under them ----
@@ -89,7 +94,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.part('bumperF', () => {
           K.box(2.31, 0.36, 0, 0.18, 0.28, 1.8, 0, D);
           for (const sd of [-1, 1]) K.box(2.13, 0.38, sd * 0.88, 0.2, 0.24, 0.1, 0, D);
-          K.plate([[2.39, 0.37, -0.44], [2.39, 0.37, 0.44], [2.0, 0.28, 0.44], [2.0, 0.28, -0.44]], 0.02, [0.34, 0.35, 0.38]);   // (the skid plate under it)
+          K.plate([[2.39, 0.37, -0.44], [2.39, 0.37, 0.44], [2.0, 0.28, 0.44], [2.0, 0.28, -0.44]], 0.035, [0.2, 0.2, 0.22]);   // (the skid plate under it)
           for (const sd of [-1, 1]) K.discX(2.403, 0.5, sd * 0.66, 0.045, 8, [0.95, 0.93, 0.8]);
           K.rect(2.403, 0.5, 0, 0.5, 0.11, [0.93, 0.93, 0.9]);
         }, { hinge: [[2.3, 0.36, -0.9], [2.3, 0.36, 0.9]] });
@@ -99,6 +104,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.box(-2.19, 0.36, 0, 0.14, 0.28, 1.8, 0, D);
           for (const sd of [-1, 1]) K.box(-2.06, 0.38, sd * 0.88, 0.2, 0.24, 0.1, 0, D);
           K.rect(-2.262, 0.62, 0, 0.9, 0.04, AL, { dir: '-x' });                              // (the step plate along its top)
+          K.rect(-2.262, 0.47, 0, 0.5, 0.11, [0.93, 0.93, 0.9], { dir: '-x' });               // (the number plate)
         }, { hinge: [[-2.2, 0.36, -0.9], [-2.2, 0.36, 0.9]] });
         K.part('tailgate', () => {
           K.rect(-2.163, 1.6, 0, 1.24, 0.26, G, { dir: '-x' });                               // the window over the spare
@@ -109,18 +115,20 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         }, { hinge: [[-2.17, 0.66, 0.84], [-2.17, 1.74, 0.84]] });
         // ---- the spare wheel on the tailgate (its carrier into the frame): the tyre, a cover over the rim in the paint ----
         K.part('spare', () => {
-          K.tyre(-2.32, 1.06, 0, { axis: 'x', face: -1, w: 0.25 });
-          K.discX(-2.448, 1.06, 0, 0.2, 10, P, -1);
-          K.box(-2.18, 0.98, 0, 0.06, 0.16, 0.16, 0, B);
+          const TY = [0.045, 0.045, 0.05], ring = (x) => { const R = []; for (let i = 0; i < 20; i++) { const a = i * Math.PI / 10, r = i % 2 ? 0.35 : 0.38; R.push([x, 1.06 + Math.sin(a) * r, Math.cos(a) * r]); } return R; };
+          K.skin([ring(-2.195), ring(-2.445)], TY, TY, TY);                                   // the tyre: its tread in blocks
+          K.discX(-2.447, 1.06, 0, 0.235, 10, [0.66, 0.67, 0.7], -1);                       // the rim's edge round
+          K.discX(-2.452, 1.06, 0, 0.2, 10, P, -1);                                         // a cover over it, in the paint
+          K.box(-2.178, 0.95, 0, 0.035, 0.22, 0.22, 0, B);                                   // the carrier
         });
         // ---- the roof rack the length of the roof: the frame on its feet, the slats, a wind deflector at its front (never crushed) ----
         K.part('roofRack', () => {
-          for (const sd of [-1, 1]) K.box(-0.68, 1.87, sd * 0.8, 2.68, 0.08, 0.05, 0, B, null, true);   // the frame: its sides, its ends
-          for (const x of [0.655, -2.015]) K.box(x, 1.87, 0, 0.05, 0.08, 1.65, 0, B, null, true);
+          for (const sd of [-1, 1]) K.box(-0.68, 1.865, sd * 0.8, 2.68, 0.095, 0.05, 0, B, null, true);   // the frame: its sides, its ends
+          for (const x of [0.655, -2.015]) K.box(x, 1.865, 0, 0.05, 0.095, 1.65, 0, B, null, true);
           for (const x of [0.25, -0.18, -1.13, -1.57]) K.box(x, 1.865, 0, 0.05, 0.035, 1.56, 0, B, null, true);   // the slats across (clear of the number)
           for (const sd of [-1, 1]) K.box(-0.68, 1.86, sd * 0.5, 2.62, 0.03, 0.06, 0, D, null, true);   // and along
-          for (const sd of [-1, 1]) for (const x of [0.5, -0.65, -1.85]) K.box(x, 1.79, sd * 0.8, 0.07, 0.08, 0.06, 0, D, null, true);   // its feet
-          K.plate([[0.7, 1.83, -0.76], [0.7, 1.83, 0.76], [0.64, 1.94, 0.76], [0.64, 1.94, -0.76]], 0.012, B);   // the wind deflector
+          for (const sd of [-1, 1]) for (const x of [0.5, -0.65, -1.85]) K.box(x, 1.79, sd * 0.8, 0.07, 0.076, 0.06, 0, D, null, true);   // its feet
+          K.plate([[0.7, 1.83, -0.76], [0.7, 1.83, 0.76], [0.64, 1.95, 0.76], [0.64, 1.95, -0.76]], 0.012, B);   // the wind deflector
         }, { noCrush: true, hinge: [[-2.0, 1.85, -0.8], [-2.0, 1.85, 0.8]] });
         K.hinge('hood', [1.08, 1.19, -0.8], [1.08, 1.19, 0.8]);
         K.hinge('doorL', [1.03, 0.6, -0.93], [1.03, 1.2, -0.93]); K.hinge('doorR', [1.03, 0.6, 0.93], [1.03, 1.2, 0.93]);
