@@ -101,6 +101,12 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const shelf = (x, u, sd) => { const yb = L.prop(x, 'ybelt'), yt = L.prop(x, 'yt'), w = L.prop(x, 'w'), wt = L.prop(x, 'wt'), dy = yt - yb, dz = wt - w, l = Math.hypot(dy, dz);
           return [x, yb + dy * u - dz / l * 0.006, sd * (w + dz * u + dy / l * 0.006)]; };   // (u 0 at the belt, 1 at the bonnet's edge; 6 mm off it)
         for (const sd of [-1, 1]) for (const x of [0.97, 1.07, 1.17]) face([shelf(x, 0.2, sd), shelf(x + 0.05, 0.2, sd), shelf(x + 0.05, 0.85, sd), shelf(x, 0.85, sd)], B, [0, 1, 0], { part: LR('fender', sd) });
+        // the vent behind each front wheel: slats across it (in the paint, 4 mm off the black)
+        for (const sd of [-1, 1]) for (const y of [0.36, 0.48, 0.6, 0.72]) {
+          const n = [-0.07 * 0.004 / 0.139, 0, sd * 0.12 * 0.004 / 0.139], q = (x, yy, z) => [x + n[0], yy, sd * z + n[2]];
+          face([q(0.78, y, 0.905), q(0.9, y, 0.975), q(0.9, y + 0.03, 0.975), q(0.78, y + 0.03, 0.905)], P, [-0.07, 0, sd * 0.12], { part: LR('fender', sd) }); }
+        // the bonnet's pins (its front corners)
+        for (const sd of [-1, 1]) K.rect(1.9, L.prop(1.9, 'yt') + 0.004, sd * 0.62, 0.05, 0.05, B, { dir: 'y', part: 'hood' });
         // ---- the nose: a black band across it at the lamps' height (the slim lamps in it, the upper grille between them); the bumper's
         //      three mouths (the radiator's in the middle, the brake ducts at the corners), the canards on its corners, the tow strap ----
         for (const sd of [-1, 1]) {
@@ -112,7 +118,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.grille(2.173, 0.32, 0, 0.76, 0.22, { slats: 2 });
           for (const sd of [-1, 1]) {
             face([[2.173, 0.2, sd * 0.46], [2.173, 0.2, sd * 0.8], [2.173, 0.4, sd * 0.74], [2.173, 0.43, sd * 0.5]], B, [1, 0, 0]);
-            for (const [y, dy] of [[0.44, 0.03], [0.33, 0.02]]) face([[2.15, y, sd * 0.875], [1.97, y + dy, sd * 0.97], [1.99, y + dy, sd * 1.0], [2.16, y, sd * 0.905]], B, [0, 1, 0]);
+            for (const [y, dy] of [[0.45, 0.035], [0.34, 0.025]]) face([[2.14, y, sd * (L.prop(2.14, 'w') - 0.01)], [1.96, y + dy, sd * (L.prop(1.96, 'w') - 0.01)], [1.98, y + dy, sd * (L.prop(1.98, 'w') + 0.05)], [2.13, y, sd * (L.prop(2.13, 'w') + 0.04)]], B, [0, 1, 0]);
           }
           K.box(2.02, 0.097, 0, 0.28, 0.075, 1.7, 0, CF);                       // the air dam down to the splitter
           K.rect(2.174, 0.47, 0.3, 0.05, 0.08, RD);                            // the tow strap
