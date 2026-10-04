@@ -23579,6 +23579,15 @@ const World = (function () {
       }
       tex.checker.repeat.set(1, 1); addM(gq, new THREE.MeshLambertMaterial({ map: tex.checker })); addM(gw, lMat);
     }
+    if (T.drs) {   // the DRS lines across the road (def.drs, down the start / finish straight): a solid one at the detection point, a dashed one where the zone opens
+      const gd = new GB(), wl = [0.95, 0.95, 0.92], HYp = (p) => T.hy[p[3]];
+      for (const z of T.drs) for (const [at, dash] of [[z.det, false], [z.act, true]]) {
+        const s0 = sAt(at), s1 = s0 + 0.3;
+        for (let o = -w + 0.2; o < w - 0.2 - 1e-6; o += dash ? 1.2 : 2) { const o1 = Math.min(w - 0.2, o + (dash ? 0.7 : 2)), A = atSf(s0, o), B = atSf(s0, o1), C = atSf(s1, o1), D = atSf(s1, o);
+          gd.quadUp([A[0], HYp(A) + 0.036, A[1]], [B[0], HYp(B) + 0.036, B[1]], [C[0], HYp(C) + 0.036, C[1]], [D[0], HYp(D) + 0.036, D[1]], [wl, wl, wl, wl]); }
+      }
+      addM(gd, lMat);
+    }
 
     /* ---- barriers: armco on posts, tyre walls in front of it round the gravel traps, concrete walls with catch fences along the start / finish
        straight (the pit wall on the right), concrete parapets on and beside the bridge, the retaining walls of the underpass ---- */

@@ -1372,7 +1372,7 @@
   }
  },
  "suzuka/race/cs": {
-  "digest": "5f80d4be2c4d931b6f3372df",
+  "digest": "a91156d540d0b418de9b20cc",
   "lead": 2283.6,
   "car0": [
    -860.11,
@@ -1386,7 +1386,7 @@
   }
  },
  "suzuka/demo/cs": {
-  "digest": "af99003b64bf160bf05a48ec",
+  "digest": "078bccc3060c0965edb0a206",
   "lead": 2441.6,
   "car0": [
    -902.38,
@@ -1400,7 +1400,7 @@
   }
  },
  "suzuka/upg/cs": {
-  "digest": "5994cb8a9a5f6b293dcde627",
+  "digest": "c140e576c7146d031e672cd2",
   "lead": 2440.1,
   "car0": [
    -848.25,
@@ -1414,7 +1414,7 @@
   }
  },
  "suzuka/crash/cs": {
-  "digest": "bfc7fcd8e5ac2a8a58c2d74f",
+  "digest": "3bb63fd35056e3198d69113c",
   "lead": 2250.2,
   "car0": [
    -730.22,
@@ -1428,7 +1428,7 @@
   }
  },
  "suzuka/formula/cs": {
-  "digest": "30af583b9e5d729f244b84ba",
+  "digest": "62971894be51deb2c6ca641d",
   "lead": 2648.9,
   "car0": [
    -899.83,
@@ -1442,7 +1442,7 @@
   }
  },
  "suzuka/lm/cs": {
-  "digest": "c635bb3287302482afff5fdc",
+  "digest": "382742c73a3fabea32776e62",
   "lead": 2625.6,
   "car0": [
    -913.34,
@@ -1456,7 +1456,7 @@
   }
  },
  "suzuka/car/cs": {
-  "digest": "fc8f9f934a36bff81eb540e2",
+  "digest": "fd895e47a4aca82eeae573ac",
   "lead": 2250,
   "car0": [
    -713.23,
