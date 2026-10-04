@@ -389,7 +389,7 @@
   // the runtime draw-distance (metres) for the cull of far vegetation at a tier: VISOKA off (Infinity → nothing culled, identical to before),
   // SREDNJA a long distance, NIZKA a shorter one. adaptive() scales it between these for the frame rate (detailDistK).
   let detailDistK = 1;
-  const TIER_DIST = [210, 360, Infinity];   // NIZKA / SREDNJA / VISOKA
+  const TIER_DIST = [165, 320, Infinity];   // NIZKA / SREDNJA / VISOKA — runtime far-vegetation cull distance (metres)
   function detailDistFor(tier) { const base = TIER_DIST[tier]; return base === Infinity ? Infinity : base * detailDistK; }
   function applyDetailDist() { Render.setDetailDist(detailDistFor(detailTier())); }
   // the device's graphics tier for 'Samodejno', read once at start-up from the GPU name (WEBGL_debug_renderer_info) and the device hints:
