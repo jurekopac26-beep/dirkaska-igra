@@ -20,8 +20,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         mirrorL: { lx: 0.48, lz: -1.04, y: 1.01 }, mirrorR: { lx: 0.48, lz: 1.04, y: 1.01 } } },   // (where the look has them: the short bonnet, the hatch's tailgate, the long doors, the mirrors by the A-pillars)
     // the look (KIT API v1, render.js; look units = metres): one loft through the sections below, cut by the standard regions into the
     // parts (the front fascia with its light bar, the bonnet, the tailgate with its glass and light bar, the fenders, the quarters, the long
-    // doors of a three-door with their glass), the details on top. Two-tone: the body in the paint, the greenhouse's frame (pillars, roof
-    // rails, the roof's ends, the mirrors, the spoiler) in the stripe colour; the roof's middle is glass. The aero discs: steel-disc wheels
+    // doors of a three-door with their glass), the details on top. Two-tone: the body in the paint, the roof (its rails and ends), the
+    // mirrors and the spoiler in the stripe colour, the roof's middle glass; the A- and B-pillars black (the glass a dark band under the
+    // roof), the hatch's broad C-pillar in the paint. The aero discs: the steel-disc wheel (no spokes) in silver, a cyan cap (the electric's)
     look: {
       body: { len: 3.95, wid: 1.78, roofY: 1.5,
         //       x       w      yb    ybelt  wt    yt    cr    kind  tuck
@@ -48,7 +49,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const P = K.paint, S = K.strp, G = K.GLASS, B = K.black, DK = K.dark;
         const GR0 = -1.465, GR1 = 0.2, XC = -1.28;   // the glass roof's ends; the quarter window's rear edge (the C-pillar's foot)
         const XA = K.arches[1].x - K.arches[1].half, XF = K.arches[0].x + K.arches[0].half;   // (the rear arch's back end, the front arch's front end)
-        // ---- the shell: the paint below the belt, the glass, the frame of the greenhouse in the stripe colour (two-tone), black sills ----
+        // ---- the shell: the paint below the belt, the glass, the roof in the stripe colour (two-tone), black sills ----
         const L = K.loft(K.body.secs, (k, e, kind, at) => {
           if (e === 0 || e === 8) return at.arch || (at.x > XA && at.x < XF) ? B : K.shade(P, 0.62);   // (black sills and arches' ledges; the bumpers' undersides darker)
           if (e === 1 || e === 7) return P;
@@ -58,7 +59,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         }, { caps: { front: { col: P, high: 'bumperF' }, rear: { col: P } }, glass: (k, e, kind, at) => kind === 'r' && (e === 3 || e === 5) && at.x > GR0 && at.x < GR1 });
         const D = L.decal;
         // the glass roof right across the roof's top, the rails each side of it (the edges' outer parts) in the stripe colour
-        for (const sd of [-1, 1]) D.top([[GR0 + 0.04, sd * 0.27], [GR1 - 0.04, sd * 0.27], [GR1 - 0.04, sd * 0.47], [GR0 + 0.04, sd * 0.47]].map((p, i, a) => sd < 0 ? a[a.length - 1 - i] : p), G, 0.003);
+        for (const sd of [-1, 1]) D.top([[GR0 + 0.04, sd * 0.27], [GR1 - 0.04, sd * 0.27], [GR1 - 0.04, sd * 0.47], [GR0 + 0.04, sd * 0.47]], G, 0.003);   // (the edges under it: glass, unlined)
         // the A- and B-pillars black (the glass a dark band under the roof's cap): the A-pillar along the windscreen's edge (two pieces: about
         // 6 cm deep down to the mirror's black sail), the B-pillar at the doors' rear edge; the C-pillar's slanted front edge; the shut lines
         D.band([[0.4, 0.857], [0.7, 0.757], [0.7, 1], [0.4, 1]], B, null, 0.008); D.band([[0.7, 0.757], [0.89, 0.55], [0.89, 1], [0.7, 1]], B, null, 0.008);
@@ -72,7 +73,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.rect(-0.2, 0.86, sd * 0.892, 0.2, 0.032, B, { dir: f, host: h }); K.rect(-0.2, 0.86, sd * 0.896, 0.17, 0.012, K.chrome, { dir: f, host: h }); }
         K.rect(-1.62, 0.68, 0.891, 0.14, 0.11, DK, { dir: 'z', host: 'quarterR' }); K.rect(-1.62, 0.68, 0.895, 0.125, 0.095, P, { dir: 'z', host: 'quarterR' });
         // ---- the nose: the front fascia (the bumper: the whole face): the closed grille panel, gloss black, right across under the bonnet's
-        //      edge, the LED light bar along its top (the head lamps' lenses: the bar's halves, the indicators in its ends); a slim intake ----
+        //      edge, the LED light bar along its top (the head lamps' lenses: the bar's two halves); a slim intake under it ----
         K.part('bumperF', () => {
           K.face([[1.983, 0.48, 0.5], [1.983, 0.48, -0.5], [1.983, 0.58, -0.64], [1.983, 0.735, -0.64], [1.983, 0.735, 0.64], [1.983, 0.58, 0.64]], B);   // (a visor: its lower corners cut)
           K.rect(1.982, 0.37, 0, 0.84, 0.06, B);
@@ -81,10 +82,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const sd of [-1, 1]) K.headLamp(1.987, 0.7, sd * 0.31, 0.03, { shape: 'rect', w: 0.62, h: 0.05, ring: null, host: 'bumperF' });
         // ---- the tail: the tailgate's black band with the red light bar across it (the tail mesh), the spoiler over its glass, its wiper;
         //      the bumper with the plate, the reflectors, a dark diffuser ----
+        const yR = L.topY(-1.64, 0);   // (the roof's top by its back edge)
         K.part('trunk', () => {
           K.face([[-1.983, 0.685, -0.56], [-1.983, 0.685, 0.56], [-1.983, 0.74, 0.66], [-1.983, 0.835, 0.66], [-1.983, 0.835, -0.66], [-1.983, 0.74, -0.66]], B);   // (the nose's visor, mirrored)
-          const y0 = L.topY(-1.64, 0);
-          K.plate([[-1.64, y0 + 0.004, -0.62], [-1.64, y0 + 0.004, 0.62], [-1.79, y0 - 0.035, 0.6], [-1.79, y0 - 0.035, -0.6]], 0.025, S);
+          K.plate([[-1.64, yR + 0.004, -0.62], [-1.64, yR + 0.004, 0.62], [-1.79, yR - 0.035, 0.6], [-1.79, yR - 0.035, -0.6]], 0.025, S);
           K.bar([-1.915, 1.07, -0.02], [-1.85, 1.22, -0.4], 0.01, B, { n: 4 });
         }, { hinge: [[-1.72, 1.43, -0.6], [-1.72, 1.43, 0.6]] });
         for (const sd of [-1, 1]) K.tailLamp(-1.985, 0.77, sd * 0.31, 0.62, 0.055, { host: 'trunk' });
@@ -93,7 +94,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.rect(-1.982, 0.335, 0, 1.2, 0.06, DK, { dir: '-x' });
           for (const sd of [-1, 1]) K.rect(-1.982, 0.46, sd * 0.62, 0.14, 0.035, K.rgb(0xb01010), { dir: '-x' });
         });
-        { const y = L.topY(-1.64, 0); K.endplate([[-1.72, y - 0.01], [-1.56, y - 0.01], [-1.68, y + 0.065]], 0, 0.045, B, { part: 'body' }); }   // (the aerial's fin on the roof)
+        K.endplate([[-1.72, yR - 0.01], [-1.56, yR - 0.01], [-1.68, yR + 0.065]], 0, 0.045, B, { part: 'body' });   // (the aerial's fin on the roof)
         // ---- the mirrors (the stripe colour), the wipers ----
         for (const sd of [-1, 1]) K.mirror(0.95, 1.02, sd * 0.955, { col: S, w: 0.08, h: 0.085, d: 0.15, arm: B });
         for (const z of [-0.5, 0.06]) K.bar([1.035, 1.055, z - 0.06], [0.965, 1.1, z + 0.44], 0.01, B, { n: 4, part: 'body' });
