@@ -128,13 +128,14 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.hinge('doorL', [0.55, 0.3, -0.84], [0.55, 0.75, -0.84]); K.hinge('doorR', [0.55, 0.3, 0.84], [0.55, 0.75, 0.84]);
         // ---- inside (seen once a part is off): the four under the bonnet, the radiator behind the mouth, the spare lying in the boot; the
         //      boot's front wall and the bay's firewall (the cockpit's bulkheads face the cockpit only: from the boot or the bay they would
-        //      show the seats and the footwell), the lining's ring 3 cm in, facing back / forward ----
+        //      show the seats and the footwell), the lining's ring 3 cm in, facing back / forward. The boot's wall is in the outer shell (it
+        //      faces back, never seen from the seat): a low camera behind the car looks in under the tail and would see the seats' bases ----
         K.engine(0.82, 0.28, 0, { l: 0.5, w: 0.46, h: 0.38, inner: true });
         K.box(1.8, 0.27, 0, 0.05, 0.3, 0.72, 0, [0.12, 0.12, 0.13], null, false, { inner: true, part: 'body' });
         K.tyre(-1.56, 0.33, 0.12, { axis: 'y', r: 0.24, w: 0.12, inner: true, part: 'body' });
-        const wall = (x, yt, wt, cr, ybelt, dir) => { const q = [[0.2, 0.753], [0.3, 0.81], [Math.min(ybelt, yt - 0.03), 0.81], [yt - 0.03, wt - 0.03], [yt - 0.03 + cr, (wt - 0.03) * 0.38]], R = q.map(([y, z]) => [x, y, dir * z]);
-          K.face(R.concat(q.slice().reverse().map(([y, z]) => [x, y, -dir * z])), K.lining, { inner: true, part: 'body' }); };
-        wall(-0.766, 0.845, 0.67, 0, 0.685, 1); wall(0.306, 0.825, 0.68, 0.03, 0.675, -1);
+        const wall = (x, yt, wt, cr, ybelt, dir, inner) => { const q = [[0.2, 0.753], [0.3, 0.81], [Math.min(ybelt, yt - 0.03), 0.81], [yt - 0.03, wt - 0.03], [yt - 0.03 + cr, (wt - 0.03) * 0.38]], R = q.map(([y, z]) => [x, y, dir * z]);
+          K.face(R.concat(q.slice().reverse().map(([y, z]) => [x, y, -dir * z])), K.lining, { inner, part: 'body' }); };
+        wall(-0.766, 0.845, 0.67, 0, 0.685, 1, false); wall(0.306, 0.825, 0.68, 0.03, 0.675, -1, true);
       },
     },
   });
