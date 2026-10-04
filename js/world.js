@@ -22772,6 +22772,10 @@ const World = (function () {
         }
         nWater++;
       }
+      // the shore band over the water along its edges (the foam lapping at the quays and the banks, the paler shallows): one mesh for all of it
+      const segD = (P, x, z) => { let d = 1e9; for (let k = 0; k < P.pts.length; k++) { const [ax, az] = P.pts[k], [bx, bz] = P.pts[(k + 1) % P.pts.length], vx = bx - ax, vz = bz - az, l2 = vx * vx + vz * vz || 1, t = clamp(((x - ax) * vx + (z - az) * vz) / l2, 0, 1); d = Math.min(d, Math.hypot(x - ax - vx * t, z - az - vz * t)); } return d; };
+      const bands = PM.water.map(P => shoreBand(Math.floor((P.bb[0] - 4) / 64) * 64, Math.floor((P.bb[1] - 4) / 64) * 64, P.bb[2] + 68, P.bb[3] + 68, P.y + 0.01, (x, z) => segD(P, x, z) * (pmInPoly(P, x, z) ? 1 : -1), 9));
+      addShore(root, mergeBands(bands), wMat, WO);
       const wm = new THREE.Mesh(wg.geometry(), wMat); wm.receiveShadow = true; wm.matrixAutoUpdate = false; root.add(wm); out.dyn.water = tex.water;
     }
     function quadBand(ch, ax, az, bx, bz, ox, oz, wd, y, col, grass) {   // a band of land behind an edge (covers the paving's 4 m steps round the water)

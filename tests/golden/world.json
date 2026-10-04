@@ -564,16 +564,16 @@
   }
  },
  "puertomadero": {
-  "meshes": 307,
-  "verts": 1133129,
+  "meshes": 308,
+  "verts": 1145720,
   "instances": 1214,
   "props": 242,
   "crowd": 1214,
-  "world": "e5b42f80",
+  "world": "b8c60f9f",
   "propsHash": "c0e85ada",
   "floor": null,
   "groups": {
-   "-:MeshPhongMaterial": "6077b6d4",
+   "-:MeshPhongMaterial": "5245d086",
    "-:MeshLambertMaterial": "2eb0cc7b",
    "crowd:MeshLambertMaterial": "291370cb",
    "-:MeshBasicMaterial": "63cfd62",
