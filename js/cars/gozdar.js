@@ -25,6 +25,138 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         tailgate: { z: 1, th: 0.7, m: 10, rW: 0.4, h: 0.08, lx: -0.98, lz: 0, f: 0.45 },
       },
     },
-    look: null,
+    // the look (KIT API v1, render.js; look units = metres): one loft from the tailgate to the nose: the bed (its top open: lined, floored,
+    // the wheel housings inside it), the cab's back wall, the roof, the windscreen, a step out to the wide front fenders round the long
+    // hood, the nose; the regions cut it into the doors (their glass with them), the fenders (their tops too) and the hood; the end caps
+    // into the tailgate over the rear valance (bumperR) and the fascia over the front valance (bumperF). On top: the wing on two endplates
+    // standing on the bed rails, the tube bumper with its skid plate, the rear tube bumper, the coil-overs and their hoop in the bed, the
+    // axles' arms under the body, the number panels on the doors, the mirrors. The livery: the body in the paint, a band rising along the
+    // sides, the wing's endplates and the sun strip in the stripe colour
+    look: {
+      body: { len: 4.9, wid: 2.2, roofY: 1.67,
+        //       x      w     yb    ybelt  wt    yt    cr    kind  tuck
+        secs: [[-2.4, 1.08, 0.58, 1.12, 0.86, 1.16, 0, 'b', 0.08],     // the tailgate (the bed's end: open on top)
+          [-0.77, 1.08, 0.58, 1.12, 0.86, 1.16, 0, 'b', 0.08],         // the bed's front (the headboard); its segment: the cab's back wall
+          [-0.75, 0.93, 0.58, 1.17, 0.8, 1.62, 0.05, 'r', 0.08],       // the roof's back edge
+          [0.24, 0.93, 0.58, 1.17, 0.8, 1.62, 0.05, 'gf', 0.08],       // the windscreen's top
+          [0.74, 0.93, 0.58, 1.17, 0.88, 1.18, 0.03, 'b', 0.08],       // its base (the cowl); its segment: the step out to the fenders
+          [0.8, 1.08, 0.58, 1.12, 0.8, 1.15, 0.05, 'b', 0.08],         // the fenders' back edge, the hood's
+          [2.24, 1.07, 0.62, 1.07, 0.78, 1.1, 0.02, 'b', 0.08],
+          [2.3, 1.04, 0.64, 1.02, 0.74, 1.05, 0.01, 'b', 0.08]],       // the nose: the fascia
+        eye: { x: -0.26, y: 1.45, near: 0.25, tilt: 0.06, style: 'closed' },
+        crush: { x0: -0.72, x1: 0.45, z: 0.82 }, cage: true },         // (only the cab's roof crushes; a roll cage in the cockpit)
+      wheels: { style: 'knob', w: 0.32, rim: [0.2, 0.2, 0.22], cap: [0.62, 0.63, 0.66], gap: 0.16 },
+      regions: [
+        { part: 'doorL', x: [-0.42, 0.74], bands: ['side', 'window'], side: 'L' }, { part: 'doorR', x: [-0.42, 0.74], bands: ['side', 'window'], side: 'R' },
+        { part: 'fenderL', x: [0.74, 2.31], bands: ['tuck', 'side', 'window'], side: 'L' }, { part: 'fenderR', x: [0.74, 2.31], bands: ['tuck', 'side', 'window'], side: 'R' },
+        { part: 'hood', x: [0.74, 2.31], bands: ['edge', 'crown'] }],
+      build(K) {
+        const P = K.paint, S = K.strp, B = K.black, G = K.GLASS, D = [0.12, 0.12, 0.13], FR = [0.24, 0.24, 0.26], AL = [0.62, 0.63, 0.66], SP = [0.86, 0.72, 0.1];
+        // a flat quad on a flat side (z = sd * w): pts [[x, y] ...] counter-clockwise as seen from the right (x along the bottom first)
+        const onSide = (sd, w, pts, col, o) => { const q = pts.map(([x, y]) => [x, y, sd * w]); K.face(sd > 0 ? q : q.reverse(), col, o); };
+        // ---- the shell: the bed open on top (segment 0), the back wall (1), the roof (2), the windscreen (3), the cowl's step (4), the hood
+        //      and the fenders (5), the nose (6). Glass: the windscreen, the door's window (forward of the B-pillar at -0.42) ----
+        const L = K.loft(K.body.secs, (k, e, kind, at) => {
+          if (e === 0 || e === 8) return at.arch ? B : K.shade(P, 0.55);
+          if (k === 0 && e >= 3 && e <= 5) return null;                                     // (the bed: no top)
+          if (k === 3 && e >= 2 && e <= 6) return G;                                        // (the windscreen, the window's front)
+          if (k === 2 && (e === 2 || e === 6)) return at.x > -0.42 ? G : P;                 // (the door's window; the cab's corner behind it)
+          return P;
+        }, { caps: { front: { col: P, colLow: D, cut: 0.7, low: 'bumperF', high: 'body' }, rear: { col: P, colLow: D, cut: 0.68, low: 'bumperR', high: 'tailgate' } } });
+        const DL = L.decal;
+        // the windows' frames: the A-pillar (paint) over the window's front, the B-pillar, a black line under the roof's edge
+        DL.band([[0.24, 0.84], [0.66, 0], [0.74, 0], [0.74, 1], [0.24, 1]], P, null, 0.01);
+        DL.band([[-0.47, 0], [-0.42, 0], [-0.42, 1], [-0.47, 1]], B, null, 0.01);
+        DL.band([[-0.42, 0.93], [0.24, 0.93], [0.24, 1], [-0.42, 1]], B, null, 0.008);
+        DL.top([[0.24, -0.8], [0.33, -0.8], [0.33, 0.8], [0.24, 0.8]], S, 0.006);            // the sun strip over the windscreen
+        DL.top([[1.25, -0.66], [1.62, -0.66], [1.62, -0.36], [1.25, -0.36]], B, 0.006, { host: 'hood' });   // the hood's vents
+        DL.top([[1.25, 0.36], [1.62, 0.36], [1.62, 0.66], [1.25, 0.66]], B, 0.006, { host: 'hood' });
+        K.rect(-0.776, 1.43, 0, 1.1, 0.26, G, { dir: '-x', part: 'body' });                  // the rear window in the cab's back wall
+        // ---- the livery: a band in the stripe colour sweeping up from the front fender across the door (under its number) to the top of
+        //      the bedside, a dark line under it (flat quads on the flat sides, each with the panel it lies on) ----
+        const yb0 = (x) => 0.74 + (1.0 - x) * 0.2;                                          // (the band's foot, rising to the rear)
+        for (const sd of [-1, 1]) {
+          const f = sd < 0 ? 'fenderL' : 'fenderR', door = sd < 0 ? 'doorL' : 'doorR', lift = 0.007;
+          for (const [x0, x1, w, o] of [[0.8, 1.0, 1.08, { host: f }], [-0.42, 0.74, 0.93, { host: door }], [-0.75, -0.42, 0.93, { part: 'body' }]]) {
+            onSide(sd, w + lift, [[x0, yb0(x0)], [x1, yb0(x1)], [x1, yb0(x1) + 0.11], [x0, yb0(x0) + 0.11]], S, o);
+            onSide(sd, w + lift + 0.002, [[x0, yb0(x0) - 0.03], [x1, yb0(x1) - 0.03], [x1, yb0(x1) - 0.012], [x0, yb0(x0) - 0.012]], D, o);
+          }
+          onSide(sd, 1.08 + lift, [[-2.38, 1.01], [-0.78, 1.0], [-0.78, 1.1], [-2.38, 1.105]], S, { part: 'body' });
+        }
+        // ---- the doors: the number panels, the handles, the hinges at their front edges ----
+        for (const sd of [-1, 1]) {
+          const door = sd < 0 ? 'doorL' : 'doorR', f = sd < 0 ? '-z' : 'z';
+          K.number(0.17, 0.88, sd * 0.94, 0.34, { dir: f, w: 0.5, host: door });
+          K.rect(-0.3, 1.1, sd * 0.938, 0.14, 0.03, B, { dir: f, host: door });
+          K.hinge(door, [0.74, 0.66, sd * 0.93], [0.74, 1.15, sd * 0.93]);
+        }
+        // ---- the mirrors (small, black) on the doors' front corners ----
+        for (const sd of [-1, 1]) K.mirror(0.62, 1.29, sd * 1.02, { w: 0.06, h: 0.11, d: 0.15, col: B, z0: sd * 0.93 });
+        // ---- the nose: a black band across the fascia, the grille in it between the rectangular lamps ----
+        K.part('body', () => {
+          K.rect(2.302, 0.9, 0, 1.96, 0.26, B);
+          K.grille(2.306, 0.9, 0, 1.1, 0.22, { slats: 3, slatCol: [0.3, 0.3, 0.32], frame: FR, frameH: 0.02 });
+        });
+        for (const sd of [-1, 1]) K.headLamp(2.31, 0.91, sd * 0.78, 0.07, { shape: 'rect', w: 0.3, h: 0.13, ring: null, host: 'body' });
+        // ---- the tube bumper in front of the fascia (round the corners, two uprights to a bar under the grille), its skid plate, the tow hook ----
+        K.part('bumperF', () => {
+          const T = (a, b, r) => K.bar(a, b, r || 0.035, D, { n: 6 });
+          T([2.42, 0.58, -0.6], [2.42, 0.58, 0.6]);
+          for (const sd of [-1, 1]) { T([2.42, 0.58, sd * 0.6], [2.27, 0.6, sd * 0.98]); T([2.42, 0.58, sd * 0.42], [2.39, 0.78, sd * 0.42]); }
+          T([2.39, 0.78, -0.42], [2.39, 0.78, 0.42], 0.03);
+          K.plate([[2.4, 0.5, -0.55], [2.4, 0.5, 0.55], [1.95, 0.36, 0.6], [1.95, 0.36, -0.6]], 0.02, AL);   // the skid plate
+          K.rect(2.457, 0.5, 0, 0.1, 0.06, K.rgb(0xd8261c));                                  // the tow hook
+        }, { hinge: [[2.3, 0.5, -0.6], [2.3, 0.5, 0.6]] });
+        // ---- the tail: the lamps on the bed's corners (their black surrounds in the body: they stay with the bed), a band across the tailgate ----
+        for (const sd of [-1, 1]) { K.rect(-2.404, 0.98, sd * 0.97, 0.16, 0.3, B, { dir: '-x', part: 'body' }); K.tailLamp(-2.406, 0.98, sd * 0.97, 0.12, 0.26); }
+        K.rect(-2.404, 1.05, 0, 1.6, 0.1, S, { dir: '-x', host: 'tailgate' });
+        K.hinge('tailgate', [-2.4, 0.68, -0.9], [-2.4, 0.68, 0.9]);
+        // ---- the rear tube bumper under the tailgate ----
+        K.part('bumperR', () => {
+          K.bar([-2.44, 0.64, -0.86], [-2.44, 0.64, 0.86], 0.035, D, { n: 6 });
+          for (const sd of [-1, 1]) K.bar([-2.44, 0.64, sd * 0.5], [-2.28, 0.56, sd * 0.5], 0.03, D, { n: 4 });
+          K.rect(-2.477, 0.64, 0.62, 0.1, 0.06, K.rgb(0xd8261c), { dir: '-x' });
+        }, { hinge: [[-2.36, 0.58, -0.5], [-2.36, 0.58, 0.5]] });
+        K.exhaust(-2.38, 0.5, -0.55, 0.05, 0.3, { part: 'body', n: 6 });
+        // ---- the wing standing in the bed: the main plane between two big endplates on the bed rails, a flap at its trailing edge ----
+        K.part('wing', () => {
+          K.wingPlank(-1.78, 1.58, -2.3, 1.7, 0.045, -0.95, 0.95, B);
+          K.wingPlank(-2.2, 1.705, -2.37, 1.765, 0.02, -0.95, 0.95, B);
+          for (const sd of [-1, 1]) K.endplate([[-2.38, 1.16], [-2.38, 1.79], [-1.82, 1.74], [-1.64, 1.52], [-1.72, 1.16]], sd * 0.97, 0.025, S);
+        }, { noCrush: true, noDent: true, hinge: [[-2.0, 1.16, -0.97], [-2.0, 1.16, 0.97]] });
+        // ---- the bed: the rear coil-overs standing through its floor, their hoop, the fuel cell ----
+        K.part('body', () => {
+          for (const sd of [-1, 1]) {
+            K.cyl([-1.36, 0.46, sd * 0.56], [-1.12, 1.3, sd * 0.56], 0.04, AL, { n: 6, capA: null });
+            K.bar([-1.31, 0.62, sd * 0.56], [-1.2, 1.02, sd * 0.56], 0.075, SP, { n: 6 });      // (the spring)
+            K.bar([-1.08, 0.6, sd * 0.66], [-1.08, 1.33, sd * 0.6], 0.03, D, { n: 5 });         // (the hoop's legs)
+          }
+          K.bar([-1.08, 1.33, -0.6], [-1.08, 1.33, 0.6], 0.03, D, { n: 5 });
+          K.box(-0.93, 0.6, 0, 0.26, 0.34, 0.86, 0, [0.08, 0.08, 0.09]);                         // the fuel cell
+        }, { noCrush: true });
+        // ---- under the body: the front lower arms, the rear axle with its trailing arms and differential ----
+        K.part('body', () => {
+          for (const sd of [-1, 1]) {
+            K.bar([K.fx, 0.34, sd * 0.78], [K.fx - 0.28, 0.42, sd * 0.28], 0.03, FR, { n: 4 });
+            K.bar([K.fx, 0.34, sd * 0.78], [K.fx + 0.26, 0.42, sd * 0.28], 0.03, FR, { n: 4 });
+            K.bar([K.rx, 0.34, sd * 0.62], [-0.3, 0.42, sd * 0.5], 0.035, FR, { n: 4 });
+          }
+          K.cyl([K.rx, 0.42, -0.78], [K.rx, 0.42, 0.78], 0.055, D, { n: 6, capA: null, capB: null });
+          K.box(K.rx, 0.28, 0, 0.3, 0.26, 0.34, 0, D);
+        });
+        // ---- the hood's hinge at the cowl ----
+        K.hinge('hood', [0.8, 1.16, -0.6], [0.8, 1.16, 0.6]);
+        // ---- inside (seen once a part is off): the seats, the dashboard, the steering wheel, the cage; the V8 under the hood, the radiator ----
+        K.seat(-0.16, 0.74, -0.4, { w: 0.5, back: 0.7 }); K.seat(-0.16, 0.74, 0.4, { w: 0.5, back: 0.7 });
+        K.box(0.5, 0.9, 0, 0.3, 0.26, 1.7, 0, D, null, false, { inner: true, part: 'body' });
+        K.cyl([0.3, 1.12, -0.4], [0.26, 1.18, -0.4], 0.17, [0.1, 0.1, 0.11], { n: 8, inner: true, part: 'body' });
+        const cg = [];
+        for (const sd of [-1, 1]) cg.push([[-0.68, 0.62, sd * 0.78], [-0.68, 1.55, sd * 0.7]], [[-0.68, 1.55, sd * 0.7], [0.2, 1.56, sd * 0.7]], [[0.2, 1.56, sd * 0.7], [0.66, 0.9, sd * 0.8]], [[-0.68, 0.7, sd * 0.78], [0.5, 0.7, sd * 0.84]]);
+        cg.push([[-0.68, 1.55, -0.7], [-0.68, 1.55, 0.7]], [[0.2, 1.56, -0.7], [0.2, 1.56, 0.7]], [[-0.68, 0.7, -0.78], [-0.68, 1.55, 0.7]]);
+        K.cage(cg, 0.025, [0.8, 0.81, 0.84]);
+        K.engine(1.5, 0.62, 0, { l: 0.72, w: 0.6, h: 0.44 });
+        K.box(2.16, 0.68, 0, 0.08, 0.38, 1.3, 0, [0.14, 0.14, 0.15], null, false, { inner: true, part: 'body' });
+      },
+    },
   });
 })();
