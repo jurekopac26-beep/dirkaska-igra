@@ -111,25 +111,56 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
             n[0] += (a[1] - b[1]) * (a[2] + b[2]); n[1] += (a[2] - b[2]) * (a[0] + b[0]); n[2] += (a[0] - b[0]) * (a[1] + b[1]); }
           const l = Math.hypot(n[0], n[1], n[2]) * (n[0] * out[0] + n[1] * out[1] + n[2] * out[2] < 0 ? -1 : 1) || 1, m = [n[0] / l, n[1] / l, n[2] / l];
           F(pts.map(p => [p[0] + m[0] * lift, p[1] + m[1] * lift, p[2] + m[2] * lift]), col, m, o); };
-        // a polygon [[x, s] ...] on a half's top (s as for on()), cut at the loft's sections and at the bands' edges (each piece on one
-        // panel), laid along each piece's own normal; rim: a colour under it (the polygon 12 % larger about its middle)
-        const XC = L.secs.map(q => q.x), clip = (Q, k, xa, xb) => { const cut = (R, keep, X) => { const r = [];
+        // the shell as the kit draws it: a panel (segment k, band b of a half: 0 the window band, 1 the edge) is two triangles, split from
+        // its rear section's lower point to its front section's upper one on the right half (the left half's from the rear upper point to
+        // the front lower one), not on()'s smooth surface: where a segment twists, the two part by up to 14 mm. onT: [x, s] on them (the
+        // crown is flat across, and past the loft's ends: on())
+        const XC = L.secs.map(q => q.x), segOf = (x) => { const i = XC.findIndex(q => q > x); return i < 0 ? -1 : i - 1; };   // (-1: past an end)
+        const onT = (x, s, sd, k, b) => { if (k == null) { k = segOf(x); b = Math.min(2, Math.floor(s)); } if (b > 1 || k < 0) return on(x, s, sd, 0);
+          const t = (x - XC[k]) / (XC[k + 1] - XC[k]), lo = sd > 0 ? b : b + 1, hi = 2 * b + 1 - lo, u = Math.abs(s - lo), P0 = on(XC[k], lo, sd, 0), P2 = on(XC[k + 1], hi, sd, 0);
+          const [E, a, c] = u <= t ? [on(XC[k + 1], lo, sd, 0), t - u, u] : [on(XC[k], hi, sd, 0), u - t, t];
+          return [0, 1, 2].map(i => P0[i] + (E[i] - P0[i]) * a + (P2[i] - P0[i]) * c); };
+        // (how deep the chords of a piece's points P (on segment k's band b) dip under a fold that bulges out: 0 where it is a valley)
+        const sub = (p, q) => [p[0] - q[0], p[1] - q[1], p[2] - q[2]], dot = (p, q) => p[0] * q[0] + p[1] * q[1] + p[2] * q[2], crs = (p, q) => [p[1] * q[2] - p[2] * q[1], p[2] * q[0] - p[0] * q[2], p[0] * q[1] - p[1] * q[0]];
+        const sinkOf = (P, k, b, sd, out) => { if (b > 1 || k < 0) return 0;
+          const lo = sd > 0 ? b : b + 1, hi = 2 * b + 1 - lo, A = on(XC[k], lo, sd, 0), C = on(XC[k + 1], hi, sd, 0), Bc = on(XC[k + 1], lo, sd, 0);
+          const N = [Bc, on(XC[k], hi, sd, 0)].map(Q => { const n = crs(sub(Q, A), sub(C, A)), l = Math.hypot(...n) * (dot(n, out) < 0 ? -1 : 1) || 1; return n.map(v => v / l); });
+          const ac = crs([N[0][0] + N[1][0], N[0][1] + N[1][1], N[0][2] + N[1][2]], sub(C, A)), sg = dot(ac, sub(Bc, A)) < 0 ? -1 : 1, f = (p) => sg * dot(ac, sub(p, A));
+          let d = 0; for (let i = 0; i < P.length; i++) for (let j = i + 1; j < P.length; j++) { const fi = f(P[i]), fj = f(P[j]);
+            if (fi * fj < 0) { const t = fi / (fi - fj); d = Math.max(d, dot(sub(A, P[i].map((v, c) => v + (P[j][c] - v) * t)), N[0])); } }
+          return d; };
+        // layers [[poly, col, lift] ...] from the bottom up (a dark rim, the lamp over it): each polygon [[x, s] ...] on a half's top (s as for
+        // on()), cut at the loft's sections and at the bands' edges (each piece on one panel), on the kit's triangles; a panel whose fold
+        // bulges out more than 5 mm over a piece's chord has every layer's piece cut along the fold too (each part flat on its triangle),
+        // the rest go up by the most they sink. Every corner is lifted along the shell's normal smoothed over a centimetre or two: the
+        // pieces that share a corner share it lifted (no crack along a cut where the shell bends)
+        const clip = (Q, k, xa, xb) => { const cut = (R, keep, X) => { const r = [];
             for (let i = 0; i < R.length; i++) { const a = R[i], b = R[(i + 1) % R.length], ia = keep(a[k]), ib = keep(b[k]); if (ia) r.push(a); if (ia !== ib) { const t = (X - a[k]) / (b[k] - a[k]), q = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]; q[k] = X; r.push(q); } }
             return r; }; return cut(cut(Q, x => x >= xa - 1e-9, xa), x => x <= xb + 1e-9, xb); };
-        const onBand = (poly, col, sd, out, rim, o) => {
-          const c = [0, 1].map(i => poly.reduce((t, p) => t + p[i], 0) / poly.length), big = poly.map(p => [c[0] + (p[0] - c[0]) * 1.12, c[1] + (p[1] - c[1]) * 1.12]);
-          for (const [Q, cl, lf] of rim ? [[big, rim, 0.004], [poly, col, 0.008]] : [[poly, col, (o && o.lift) || 0.006]]) {
+        const half = (R, f) => { const r = []; for (let i = 0; i < R.length; i++) { const a = R[i], b = R[(i + 1) % R.length], fa = f(a), fb = f(b);   // (the part of R where f >= 0)
+          if (fa >= 0) r.push(a); if ((fa >= 0) !== (fb >= 0)) { const t = fa / (fa - fb); r.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); } } return r; };
+        const up = (x, s, sd, k, b, l, out) => { const p = onT(x, s, sd, k, b), n = crs(sub(on(x + 0.01, s, sd, 0), on(x - 0.01, s, sd, 0)), sub(on(x, Math.min(3, s + 0.02), sd, 0), on(x, Math.max(0, s - 0.02), sd, 0)));
+          const m = Math.hypot(...n) * (dot(n, out) < 0 ? -1 : 1) || 1; return p.map((v, i) => v + n[i] / m * l); };
+        const onBand = (layers, sd, out, o) => {
+          const pcs = [], sink = new Map();
+          for (const [Q, cl, lf] of layers) {
             const xs = Q.map(p => p[0]), x0 = Math.min(...xs), x1 = Math.max(...xs), cuts = [x0].concat(XC.filter(x => x > x0 + 0.002 && x < x1 - 0.002), [x1]);
-            for (let i = 0; i < cuts.length - 1; i++) for (const [s0, s1] of [[-1, 1], [1, 2], [2, 3]]) {
-              const pc = clip(clip(Q, 0, cuts[i], cuts[i + 1]), 1, s0, s1); if (pc.length >= 3) lay(pc.map(([x, q]) => on(x, Math.max(0, q), sd, 0)), cl, out, lf, o && { host: o.host, part: o.part }); }
-          } };
+            for (let i = 0; i < cuts.length - 1; i++) for (const b of [0, 1, 2]) {
+              const pc = clip(clip(Q, 0, cuts[i], cuts[i + 1]), 1, b ? b : -1, b + 1).map(([x, q]) => [x, Math.max(0, q)]); if (pc.length < 3) continue;
+              const k = segOf((cuts[i] + cuts[i + 1]) / 2); pcs.push([pc, cl, lf, k, b]);
+              sink.set(k * 3 + b, Math.max(sink.get(k * 3 + b) || 0, sinkOf(pc.map(([x, q]) => onT(x, q, sd, k, b)), k, b, sd, out))); }
+          }
+          const ex = Math.max(0, ...[...sink.values()].filter(d => d <= 0.005));
+          for (const [pc, cl, lf, k, b] of pcs) { const fold = ([x, q]) => (sd > 0 ? q - b : b + 1 - q) - (x - XC[k]) / (XC[k + 1] - XC[k]);
+            for (const pt of sink.get(k * 3 + b) > 0.005 ? [half(pc, fold), half(pc, p => -fold(p))] : [pc]) if (pt.length >= 3) lay(pt.map(([x, q]) => up(x, q, sd, k, b, lf + ex, out)), cl, out, 0, o && { host: o.host, part: o.part }); } };
+        const grow = (poly, f) => { const c = [0, 1].map(i => poly.reduce((t, p) => t + p[i], 0) / poly.length); return poly.map(p => [c[0] + (p[0] - c[0]) * f, c[1] + (p[1] - c[1]) * f]); };
 
         // ---- the sides: the doors' shut lines (the side and the top), the black rubbing strips along the doors and the quarters (rising to
         //      the back), the handles, the repeaters ----
         for (const x of [0.713, -0.613]) { DC.side([[x - 0.006, 0.24], [x + 0.006, 0.24], [x + 0.006, 1.2], [x - 0.006, 1.2]], D, null, 0.009);
           DC.band([[x - 0.006, 0], [x + 0.006, 0], [x + 0.006, 1], [x - 0.006, 1]], D, null, 0.009); }
         DC.side([[-0.955, 0.575], [0.78, 0.515], [0.78, 0.57], [-0.955, 0.632]], B, null, 0.01);
-        DC.band([[-0.82, 0.5], [0.6, 0.5], [0.6, 1], [-0.82, 1]], B, null, 0.006);              // (the rubber seal along the door tops and the quarters' by the hoops)
+        DC.band([[-0.82, 0.5], [0.705, 0.5], [0.705, 1], [-0.82, 1]], B, null, 0.006);          // (the rubber seal along the door tops to their front edges, and the quarters' by the hoops)
         F([0, 1, 2, 3, 4, 5].map(i => [-1.27 + Math.cos(i * Math.PI / 3) * 0.045, 0.8 + Math.sin(i * Math.PI / 3) * 0.045, pr(-1.27, 'w') + 0.007]), D, [0, 0, 1]);   // (the fuel filler's flap, right)
         for (const sd of [-1, 1]) {
           K.rect(-0.5, 0.86, sd * (pr(-0.5, 'w') + 0.008), 0.15, 0.028, D, { dir: sd < 0 ? '-z' : 'z', host: sd < 0 ? 'doorL' : 'doorR' });
@@ -147,8 +178,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         //      fog lamps ----
         const LO = { host: 'body' };
         for (const sd of [-1, 1]) {
-          onBand([[1.866, 0.15], [1.866, 0.85], [1.82, 1.1], [1.76, 1.2], [1.65, 1.18], [1.57, 1.0], [1.52, 0.8], [1.55, 0.4], [1.63, 0.12], [1.73, 0.0], [1.82, 0.02]], CH, sd, [0.4, 0.5, sd * 0.8], D, LO);
-          for (const [x, s, r] of [[1.7, 0.75, 0.04], [1.79, 0.62, 0.033]]) { const p = on(x, s, sd, 0), dx = r * 1.25 * Math.abs((pr(x + 0.03, 'w') - pr(x - 0.03, 'w')) / 0.06);
+          const lamp = [[1.866, 0.15], [1.866, 0.85], [1.82, 1.1], [1.76, 1.2], [1.65, 1.18], [1.57, 1.0], [1.52, 0.8], [1.55, 0.4], [1.63, 0.12], [1.73, 0.0], [1.82, 0.02]];
+          onBand([[grow(lamp, 1.12), D, 0.004], [lamp, CH, 0.008]], sd, [0.4, 0.5, sd * 0.8], LO);   // (its dark rim, the lamp)
+          for (const [x, s, r] of [[1.7, 0.75, 0.04], [1.79, 0.62, 0.033]]) { const p = onT(x, s, sd), dx = r * 1.25 * Math.abs((pr(x + 0.03, 'w') - pr(x - 0.03, 'w')) / 0.06);
             K.headLamp(x + dx + 0.004, p[1], p[2] - sd * r * 0.2, r, { n: 6, ring: CREAM, host: 'body' }); }
           const q = on(1.845, 0.55, sd, 0); K.discX(1.869, q[1], q[2] * 0.97, 0.016, 6, DRED, 1, LO);
         }
@@ -161,9 +193,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
             lay(fog(0.055), D, [0.5, 0, sd], 0.002); lay(fog(0.036), [0.8, 0.8, 0.76], [0.5, 0, sd], 0.005);
           }
         });
-        // ---- the bonnet: the two slots on its right side ----
+        // ---- the bonnet: two vents side by side on its right side (dark, two chrome slats each: the LEV S's) ----
         K.part('hood', () => {
-          for (const q of [[1.32, 1.4], [1.22, 1.3]]) { const p = [on(q[0], 1.25, 1, 0.006), on(q[0] - 0.12, 1.32, 1, 0.006), on(q[0] - 0.12, 1.4, 1, 0.006), on(q[0], 1.33, 1, 0.006)]; F(p, D, [0, 1, 0]); }
+          for (const s0 of [1.2, 1.34]) { F([on(1.33, s0, 1, 0.006), on(1.21, s0, 1, 0.006), on(1.21, s0 + 0.1, 1, 0.006), on(1.33, s0 + 0.1, 1, 0.006)], D, [0, 1, 0]);
+            for (const t of [0.03, 0.065]) F([on(1.325, s0 + t, 1, 0.009), on(1.215, s0 + t, 1, 0.009), on(1.215, s0 + t + 0.012, 1, 0.009), on(1.325, s0 + t + 0.012, 1, 0.009)], CH, [0, 1, 0]); }
         }, { hinge: [[0.97, 0.95, -0.6], [0.97, 0.95, 0.6]] });
 
         // ---- the windscreen: a pane of its own (three facets, wrapping a little; one-sided, facing out: the driver sees through it) from
@@ -186,14 +219,14 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           F([fP(0.708, sd * 0.42, 0.004), cP(0.12, sd, 0.004), cP(0.98, sd, 0.004), fP(0.87, sd * 0.33, 0.004)], B, [-1, 0, 0], LO);                    // (the housing)
           F([fP(0.72, sd * 0.43, 0.008), cP(0.2, sd, 0.008), cP(0.92, sd, 0.008), fP(0.858, sd * 0.345, 0.008)], LENS, [-1, 0, 0], LO);                 // (the lens)
           F([fP(0.735, sd * 0.425, 0.011), fP(0.735, sd * 0.47, 0.011), fP(0.843, sd * 0.405, 0.011), fP(0.843, sd * 0.36, 0.011)], [0.86, 0.86, 0.83], [-1, 0, 0], LO);   // (the reversing light)
-          onBand([[-1.895, 0.12], [-1.895, 0.98], [-1.84, 0.92], [-1.76, 0.78], [-1.69, 0.64], [-1.65, 0.55], [-1.69, 0.45], [-1.76, 0.31], [-1.84, 0.16]], B, sd, [-0.4, 0.3, sd * 0.85], null, LO);
-          onBand([[-1.895, 0.2], [-1.895, 0.92], [-1.84, 0.86], [-1.76, 0.74], [-1.7, 0.62], [-1.67, 0.55], [-1.7, 0.48], [-1.76, 0.36], [-1.84, 0.24]], LENS, sd, [-0.4, 0.3, sd * 0.85], null, Object.assign({ lift: 0.01 }, LO));
+          onBand([[[[-1.895, 0.12], [-1.895, 0.98], [-1.84, 0.92], [-1.76, 0.78], [-1.69, 0.64], [-1.65, 0.55], [-1.69, 0.45], [-1.76, 0.31], [-1.84, 0.16]], B, 0.006],
+            [[[-1.895, 0.2], [-1.895, 0.92], [-1.84, 0.86], [-1.76, 0.74], [-1.7, 0.62], [-1.67, 0.55], [-1.7, 0.48], [-1.76, 0.36], [-1.84, 0.24]], LENS, 0.01]], sd, [-0.4, 0.3, sd * 0.85], LO);
           K.tailLamp(fX(0.79) - 0.004, 0.79, sd * 0.525, 0.1, 0.09, { d: 0.006, host: 'body' });   // (the lit part, on the face)
         }
         K.rect(fX(0.79) - 0.004, 0.79, 0, 0.6, 0.05, B, { dir: '-x', part: 'body' });          // the garnish
         K.hinge('trunk', [-0.86, 1.02, -0.6], [-0.86, 1.02, 0.6]);
         K.part('bumperR', () => {
-          strip(0.64, [-1.76], [-1.93, 0.47], -1.955, null, true);
+          strip(0.64, [-1.82], [-1.93, 0.54], -1.955, null, true);                             // (its ends on the quarters: the path never more than 1.4 cm into the rounded corners)
           K.rect(-1.954, 0.36, 0, 0.1, 0.035, RED, { dir: '-x' });                              // the fog lamp
           K.rect(-1.953, 0.49, 0, 0.44, 0.1, [0.9, 0.9, 0.86], { dir: '-x' });                  // the number plate (blank)
           K.exhaust(-1.95, 0.27, -0.48, 0.035, 0.2, { n: 6 });
@@ -207,7 +240,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- the cockpit (in sight): the two seats (the head rests in their backs), the dashboard, the steering wheel (left); the roll
         //      hoops behind the seats, bright, never crushed or dented ----
         for (const sd of [-1, 1]) { const z = sd * 0.36, b0 = [-0.54, 0.47], b1 = [-0.54 - Math.sin(0.26) * 0.7, 0.47 + Math.cos(0.26) * 0.7];
-          K.box(-0.34, 0.38, z, 0.5, 0.12, 0.48, 0, SEAT, null, false, { part: 'body' });
+          K.box(-0.34, 0.255, z, 0.5, 0.245, 0.48, 0, SEAT, null, true, { part: 'body' });       // (the cushion down into the floor: no gap under it with a door off)
           K.plate([[b0[0], b0[1], z - 0.235], [b0[0], b0[1], z + 0.235], [b1[0], b1[1], z + 0.14], [b1[0], b1[1], z - 0.14]], 0.1, SEAT, { part: 'body' }); }
         K.box(0.4, 0.66, 0, 0.12, 0.28, 1.46, 0, D, null, true, { part: 'body' });
         K.box(0.02, 0.24, 0, 0.62, 0.3, 0.2, 0, D, null, true, { part: 'body' });              // (the centre console between the seats)
