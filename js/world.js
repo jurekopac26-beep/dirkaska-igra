@@ -22559,7 +22559,7 @@ const World = (function () {
      street race) and everything of the junction stands there and can be knocked over (Core PROPK: traffic lights, lamps, signs, bollards,
      bins, hydrants, cabinets, bus shelters); the crossings, stop lines and lane markings of the public roads on the asphalt. The town
      (def.bld: OpenStreetMap and Microsoft footprints) in the Najdi manner: rendered earth walls, small windows and triangular vents, flat
-     roofs behind parapets with stepped merlons; the old town's walls with their towers (def.walls); date palms in the groves, along the
+     roofs behind parapets with stepped merlons; the old town's walls with their towers (def.cwalls); date palms in the groves, along the
      avenue and on the islands; temporary grandstands with sunshades, the pit garages, light masts for the night race, parked cars, the
      wadi's stream, Riyadh's towers on the horizon (generic). No names but places', no people's figures but the crowd on the stands, no
      religious symbols. */
@@ -22732,7 +22732,7 @@ const World = (function () {
       const gw = new RB(false);
       for (const side of [-1, 1]) { let prev = -1, acc = c0 * ds;
         for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++, acc += ds) {
-          const i = ii % N, bar = side > 0 ? T.br[i] : T.bl[i], blk = Math.floor(acc / 3) % 2, cc = blk ? [0.9, 0.9, 0.88] : [0.74, 0.75, 0.76], ct = [0.84, 0.84, 0.82];
+          const i = ii % N, bar = side > 0 ? T.br[i] : T.bl[i], blk = Math.floor(acc / 3) % 4, cc = blk === 3 ? [0.16, 0.42, 0.36] : blk === 1 ? [0.78, 0.8, 0.8] : [0.93, 0.93, 0.91], ct = blk === 3 ? [0.2, 0.5, 0.42] : [0.86, 0.86, 0.84];   // (blocks in the circuit's colours: white, grey, white, green)
           const prof = [[bar - 0.05, 0], [bar - 0.05, 0.3], [bar + 0.1, 1.2], [bar + 0.5, 1.2], [bar + 0.65, 0.3], [bar + 0.65, 0]];
           const pts = prof.map(([o, h]) => Pt(i, side * o, h)), cols = [cc, cc, ct, ct, cc, cc], ord = side > 0 ? { p: pts, c: cols } : { p: pts.slice().reverse(), c: cols.slice().reverse() };
           const r = gw.row(ord.p, ord.c); if (prev >= 0) gw.link(prev, r, 0, 5); prev = r;
@@ -22800,7 +22800,7 @@ const World = (function () {
     for (let k = 0; k < RD.length;) { const n = RD[k], c = RD[k + 1], cls = c >> 4, lanes = (c >> 1) & 7, pts = []; for (let q = 0; q < n; q++) pts.push([RD[k + 2 + q * 2] / 2, RD[k + 3 + q * 2] / 2]); k += 2 + n * 2;
       if (cls === 7) continue;
       const hw = Math.max(HW[cls], lanes ? lanes * 1.75 : 0), Pp = drape(pts, hw, cls === 6 ? [1.15, 1.1, 1.02] : asp);
-      if (cls <= 3) for (let q = 3; q < Pp.length; q += 8) { const [x, z] = Pp[q], nn = nrNear(x, z); if ((nn.i >= 0 && nn.dd < 5) || nrDist(x, z) > 320) continue; lamps.push([x, z, cls]); }
+      if (cls <= 3) for (let q = 3; q < Pp.length; q += 8) { const [x, z] = Pp[q], nn = nrNear(x, z); if ((nn.i >= 0 && nn.dd < 22) || nrDist(x, z) > 320) continue; lamps.push([x, z, cls]); }
     }
     roads.addTo(root, roadMat, false, true);
 
@@ -22834,9 +22834,9 @@ const World = (function () {
     }
     bch.addTo(root, bMat, true, true);
 
-    /* ---- the old town's walls and towers (def.walls: OpenStreetMap), rendered earth, merlons on top ---- */
+    /* ---- the old town's walls and towers (def.cwalls: OpenStreetMap), rendered earth, merlons on top ---- */
     let nTow = 0;
-    { const WL = hjI16(def.walls), mud = [0.76, 0.58, 0.4], mudT = [0.82, 0.66, 0.48];
+    { const WL = hjI16(def.cwalls), mud = [0.76, 0.58, 0.4], mudT = [0.82, 0.66, 0.48];
       for (let k = 0; k < WL.length;) { const n = WL[k], cw = WL[k + 1], pts = []; for (let q = 0; q < n; q++) pts.push([WL[k + 2 + q * 2] / 2, WL[k + 3 + q * 2] / 2]); k += 2 + n * 2;
         const H = cw ? 4.6 : 2.4, TH = cw ? 1.1 : 0.4; let acc = 0;
         for (let q = 0; q + 1 < n; q++) { const [ax, az] = pts[q], [bx, bz] = pts[q + 1], len = Math.hypot(bx - ax, bz - az); if (len < 0.3) continue; const mx = (ax + bx) / 2, mz = (az + bz) / 2, nn = nrNear(mx, mz); if (nn.i >= 0 && nn.dd < 2) continue;
