@@ -40,7 +40,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [2.41, 0.895, 0.09, 0.585, 0.82, 0.645, 0.01, 'b', 0.05],      // the nose's rounded top
           [2.47, 0.83, 0.085, 0.5, 0.76, 0.555, 0.005, 'b', 0.045]],     // the nose's face: the grilles, the lamps (the splitter under it)
         eye: { x: -0.55, y: 1.05, style: 'closed' }, cage: true,        // (low and far back, the cage round the driver)
-        door: [0.55, -0.56], bumpF: 0.19, bumpR: 0.1, bumpY: [0.42, 0.48],
+        door: [0.55, -0.56], bumpF: 0.19, bumpR: 0.1, bumpY: [0.42, 0.48], crush: { x0: -1.62, x1: 0.12, z: 0.74 },   // (the roof's footprint)
         decalX: -0.47, decalY: 1.3, decalRz: 0, decalS: 0.85 },         // (the roof number: in front of the roof flaps)
       wheels: { style: 'std', spokes: 0, w: 0.28, rimK: 0.58, rim: [0.3, 0.3, 0.32], cap: [0.18, 0.18, 0.19], gap: 0.05 },
       // the nose cover takes the whole nose from the hood's leading edge; the lids take their tops only (the shoulders stay with the
@@ -61,24 +61,27 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           return P;
         }, { caps: { front: { col: P, low: 'bumperF', high: 'bumperF' }, rear: { col: P } } });
         const DL = L.decal;
-        // the glass's black frames (along the belt, under the roof's edge, the quarter glass's back edge), the B-pillar in the paint, the
-        // A-pillars in the paint (four pieces: the pillar keeps its width down to the cowl)
+        // the glass's black frames (along the belt, under the roof's edge, the quarter glass's back edge), the B-pillar in the paint with
+        // the driver's name plate (blank), the A-pillars in the paint (four pieces: the pillar keeps its width down to the cowl); the pillars
+        // stay with the body when a door or a quarter goes (the windscreen keeps its frame)
         DL.band([[-1.1, 0], [0.55, 0], [0.55, 0.06], [-1.1, 0.06]], B, null, 0.006);
         DL.band([[-1.1, 0.93], [-0.1, 0.93], [-0.1, 1], [-1.1, 1]], B, null, 0.006);
         DL.band([[-1.1, 0], [-1.06, 0], [-1.06, 1], [-1.1, 1]], B, null, 0.007);
-        DL.band([[-0.66, 0], [-0.56, 0], [-0.56, 1], [-0.66, 1]], P, null, 0.008);
-        DL.band([[-0.648, 0.3], [-0.572, 0.3], [-0.572, 0.62], [-0.648, 0.62]], [0.95, 0.95, 0.93], null, 0.01);   // (the driver's name plate, blank)
-        for (const q of [[-0.1, 0.824, 0.1, 0.766], [0.1, 0.766, 0.25, 0.688], [0.25, 0.688, 0.4, 0.532], [0.4, 0.532, 0.55, 0]]) DL.band([[q[0], q[1]], [q[2], q[3]], [q[2], 1], [q[0], 1]], P, null, 0.008);
+        const BD = { part: 'body' };
+        DL.band([[-0.66, 0], [-0.56, 0], [-0.56, 1], [-0.66, 1]], P, null, 0.008, BD);
+        DL.band([[-0.648, 0.3], [-0.572, 0.3], [-0.572, 0.62], [-0.648, 0.62]], [0.95, 0.95, 0.93], null, 0.01, BD);
+        for (const q of [[-0.1, 0.824, 0.1, 0.766], [0.1, 0.766, 0.25, 0.688], [0.25, 0.688, 0.4, 0.532], [0.4, 0.532, 0.55, 0]]) DL.band([[q[0], q[1]], [q[2], q[3]], [q[2], 1], [q[0], 1]], P, null, 0.008, BD);
         // the window nets in the side windows (the doors' glass, from the B-pillar to under the A-pillar): straps across and up, a frame
         const xn0 = -0.545, xn1 = 0.28, un0 = 0.08, un1 = 0.8;
         for (const [u0, u1] of [[un0, un0 + 0.05], [0.31, 0.35], [0.54, 0.58], [un1 - 0.05, un1]]) DL.band([[xn0, u0], [xn1, u0], [xn1, u1], [xn0, u1]], NET, null, 0.01);
         for (let i = 0; i <= 7; i++) { const x = xn0 + (xn1 - xn0) * i / 7, h = i === 0 || i === 7 ? 0.03 : 0.018; DL.band([[x - h / 2, un0], [x + h / 2, un0], [x + h / 2, un1], [x - h / 2, un1]], NET, null, 0.011); }
         // the rear glass's corners at its base in the paint (the C-pillars come down to the deck: the glass narrower there)
         for (const sd of [-1, 1]) DL.top([[-1.66, sd * 0.875], [-1.66, sd * 0.6], [-1.1, sd * 0.68], [-1.1, sd * 0.72]], P, 0.004);
+        for (const z of [-0.2, 0.2]) DL.top([[-1.64, z - 0.02], [-1.12, z - 0.02], [-1.12, z + 0.02], [-1.64, z + 0.02]], B, 0.004);   // (the rear glass's two braces)
         // the livery: a spear in the stripe colour down the hood, two slashes on each rear quarter behind the wheel, the windscreen's
         // banner (split at the crown's edges: a flat piece would sink under the crest); the numbers on the doors (big, on panels in the
         // stripe colour); the sponsors' stickers on the front fenders behind the wheels (plain blocks, no marks)
-        DL.top([[0.64, -0.3], [2.22, 0], [0.64, 0.3]], S, 0.006);
+        DL.top([[0.7, -0.27], [2.25, 0], [0.7, 0.27]], B, 0.005); DL.top([[0.745, -0.235], [2.19, 0], [0.745, 0.235]], S, 0.007);   // (a black edge round it)
         DL.side([[-2.36, 0.3], [-2.2, 0.3], [-1.96, 0.84], [-2.12, 0.84]], S, null, 0.006);
         DL.side([[-2.14, 0.3], [-2.08, 0.3], [-1.84, 0.84], [-1.9, 0.84]], S, null, 0.006);
         for (const [z0, z1] of [[-0.72, -0.275], [-0.275, 0.275], [0.275, 0.72]]) DL.top([[-0.1, z0], [0.02, z0], [0.02, z1], [-0.1, z1]], S, 0.006);
@@ -89,7 +92,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const flap = (cx, cz, a, h) => { const c = Math.cos(a), s = Math.sin(a); return [[-h, -h], [h, -h], [h, h], [-h, h]].map(([u, v]) => [cx + u * c - v * s, cz + u * s + v * c]); };
         for (const [cx, cz, a] of [[-0.95, -0.15, 0], [-0.95, 0.13, 0.5]]) { DL.top(flap(cx, cz, a, 0.105), B, 0.004); DL.top(flap(cx, cz, a, 0.09), K.shade(S, 0.82), 0.006); }
         for (const sd of [-1, 1]) K.box(-0.6, L.topY(-0.6, 0.56) - 0.006, sd * 0.56, 0.96, 0.028, 0.012, 0, K.shade(S, 0.75), null, false, { part: 'body' });
-        // the hood pins
+        // the cowl's intake across the windscreen's base (split at the crown's edges), the hood pins
+        for (const [z0, z1] of [[-0.62, -0.32], [-0.32, 0.32], [0.32, 0.62]]) DL.top([[0.565, z0], [0.64, z0], [0.64, z1], [0.565, z1]], B, 0.005);
         for (const x of [0.75, 2.1]) for (const sd of [-1, 1]) K.rect(x, L.topY(x, sd * 0.6) + 0.004, sd * 0.6, 0.04, 0.04, B, { dir: 'y' });
         // ---- the nose: a blunt face with the lower mouth, the upper grille between the lamps (stickers, as the oval racers have), the
         //      flat splitter under it all; the nose cover (bumperF) ----
@@ -105,7 +109,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         }
         // ---- the tail: a black panel across its top with the lamps; the rear bumper's black valance; the exhaust out of the right side
         //      ahead of the rear wheel ----
-        K.rect(-2.532, 0.8, 0, 1.56, 0.13, B, { dir: '-x', part: 'body' });
+        K.rect(-2.532, 0.8, 0, 1.56, 0.13, B, { dir: '-x', part: 'body' }); K.rect(-2.532, 0.705, 0, 1.6, 0.035, S, { dir: '-x', part: 'body' });
         for (const sd of [-1, 1]) K.tailLamp(-2.534, 0.8, sd * 0.52, 0.46, 0.1);
         K.part('bumperR', () => {
           K.box(-2.47, 0.12, 0, 0.12, 0.14, 1.6, 0, CF);
@@ -135,8 +139,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [[0.45, 0.4, 0.88], [-0.95, 0.4, 0.88]], [[0.45, 0.6, 0.88], [-0.95, 0.6, 0.88]],
           [[-0.95, yH, -0.6], [-1.85, 0.6, -0.6]], [[-0.95, yH, 0.6], [-1.85, 0.6, 0.6]], [[-0.95, yH, -0.6], [-0.95, 0.2, 0.8]],
         ], 0.024, cg, { n: 4 });
-        K.engine(1.55, 0.24, 0, { l: 0.72, w: 0.62, h: 0.42, cover: [0.7, 0.1, 0.08] });
-        K.cyl([1.55, 0.68, 0], [1.55, 0.73, 0], 0.17, B, { n: 8, inner: true, part: 'body' });
+        K.engine(1.55, 0.22, 0, { l: 0.72, w: 0.46, h: 0.42, cover: CF });                    // the V8: its block and the intake between the banks,
+        for (const sd of [-1, 1]) K.plate([[1.88, 0.6, sd * 0.1], [1.22, 0.6, sd * 0.1], [1.22, 0.5, sd * 0.3], [1.88, 0.5, sd * 0.3]], 0.06, [0.72, 0.1, 0.08], { inner: true, part: 'body' });   // the valve covers on the banks,
+        K.cyl([1.55, 0.64, 0], [1.55, 0.71, 0], 0.17, B, { n: 8, capB: CH, inner: true, part: 'body' });                     // the round air cleaner
         K.box(2.18, 0.14, 0, 0.06, 0.42, 1.3, 0, D, null, false, { inner: true, part: 'body' });
         K.box(-2.05, 0.28, 0, 0.5, 0.34, 0.9, 0, [0.14, 0.14, 0.15], null, false, { inner: true, part: 'body' });
       },
