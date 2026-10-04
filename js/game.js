@@ -324,6 +324,15 @@
     if (trackCards().every(droveCard)) achGet('allTracks');
     stSave();
   }
+  // a race the player retired from (Odstopi: the results say Odstop): a race entered and ended, as the career counts it (and as a run from the
+  // police ended by an arrest is one), but never a finish: no win, podium or fastest lap, no track raced to the line, no achievement of the
+  // finish (Prvi cilj, Brez praske ...), no record of the race (its time, its place). What was driven counts as driven, as in a race left
+  // from the pause: the km and the time, the top speed, the drift, the jump, the laps' achievements (stDrive), each whole lap (its record,
+  // the lap's ghost)
+  function stRetired() {
+    if (stRun.done) return; stRun.done = true;
+    st.races++; stSave();
+  }
   if (!isObj(records.champ)) records.champ = {};   // per series: best = the best final place, titles = championships won
   for (const id in records.champ) { const r = records.champ[id]; if (!isObj(r) || !Core.CHAMPS.some(c => c.id === id)) { delete records.champ[id]; continue; }
     if (!(Number.isInteger(r.best) && r.best > 0)) delete r.best; if (!(Number.isInteger(r.titles) && r.titles > 0)) delete r.titles; }
@@ -2181,7 +2190,7 @@
       : tr('Čas dirke {0}', fmt(tot, true)) + (res[myIdx].pen ? tr(' (s {0} s kazni)', res[myIdx].pen) : '') + (up ? '' : tr(', najboljši krog {0}', fmt(best, true))) + (newRec ? tr(' (nov rekord proge)') : '')) + tr('. Štartal si z {0} mesta.', Lang.ord(P.grid));
     if (race.tf) $('res-sub').textContent += tr(' Povoženi pešci: {0}, kolesarji: {1}', tfHits.ped, tfHits.bike) + (tfHits.ped + tfHits.bike ? tr(' (5 s kazni za vsakega)') : '') + '.';
     const fl = !up && best > 0 && race.cars.every(c => c === P || !c.lapTimes.length || Math.min(...c.lapTimes) >= best);   // (the fastest lap of the race)
-    if (!out) stRace(pos, res.length, fl);   // (a retirement is no finish: not counted, as a race left before its end)
+    if (out) stRetired(); else stRace(pos, res.length, fl);   // (a retirement: a race, never a finish; see stRetired)
     if (inCareer()) {   // the career: prize money (the place, the distance, the difficulty), the fastest lap of the race (a race up the road: no laps); a retirement: nothing
       const diff = race.champ ? champ.diff : raceDiff();
       career.races++; if (pos === 1 && !out) career.wins++;

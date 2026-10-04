@@ -14,7 +14,8 @@
 //   round after "Izberi avto" took the player to the PICO TURBO and back; one started in the FORMULA ORKAN (a one-make class): formulas
 //   still when the player drives the PICO TURBO
 // - a destroyed car: VOZILO UNIČENO with Odstopi (two taps), not seen through the pause (its buttons there are the pause's); the results
-//   with Odstop (no record), Ogled vozila (close, from over the road, upright too); the lost wheels on the damage picture
+//   with Odstop (no record), Ogled vozila (close, from over the road, upright too); the lost wheels on the damage picture; in the
+//   statistics a race (Dirke), never a finish (no win, podium, track raced to the line, achievement of the finish), the km as driven
 // - the commentator's destruction lines: the player's lost part (its own name), wheel, three wheels, the wreck, fire; a rival's wheel,
 //   fire and retirement nearby; the counts afresh after a repair
 //   node tests/browser/cars-ui.test.mjs
@@ -334,6 +335,7 @@ try {
     const k2 = await page.evaluate(() => { const g = window.__game, r = g.race, P = r.player; window.__said.length = 0; r.repairCar(P); g.sim(7, true); Core.detachPart(P, 'doorL'); g.sim(0.5, true); return window.__said.map(s => s.k + ':' + ((s.v && s.v.part) || '')); });
     T.check('after a repair the same lost part is told again', k2.includes('partLost:left door'), JSON.stringify(k2));
     // destroyed: VOZILO UNIČENO (wheels on the picture, the lost ones marked), the wreck and the fire said; Odstopi asks, then retires
+    const st0 = await page.evaluate(() => window.__game.stats);
     const w = await page.evaluate(async () => {
       const g = window.__game, r = g.race, P = r.player; window.__said.length = 0;
       Core.wreckCar(P); g.sim(1, true); g.resume(); for (let i = 0; i < 6; i++) await new Promise(q => requestAnimationFrame(q));
@@ -361,13 +363,19 @@ try {
     const tap2 = await page.evaluate(async () => { document.getElementById('btn-retire').click(); await new Promise(r => setTimeout(r, 300)); const g = window.__game, r = g.race;
       const me = document.querySelector('#res-table tr.me'); return { screen: g.screen, phase: g.phase, title: document.getElementById('res-title').textContent, pos: document.getElementById('res-pos').textContent, sub: document.getElementById('res-sub').textContent,
         row: me && [...me.children].map(td => td.textContent), dnfRow: !!(me && me.classList.contains('dnf')), out: r.isOut(r.player), rec: JSON.parse(localStorage.getItem('tdgp-records') || '{}'), said: window.__said.map(s => s.k),
+        st: g.stats, stored: JSON.parse(localStorage.getItem('tdgp-stats') || 'null'),
         last: (() => { const rows = [...document.querySelectorAll('#res-table tbody tr')], i = rows.findIndex(x => x.classList.contains('dnf')); return i >= 0 && rows.slice(i).every(x => x.classList.contains('dnf')); })() }; });
     const rec = tap2.rec.tracks && tap2.rec.tracks['jezero@cs'];
     T.check('Odstopi: the first tap asks ("Res odstopiš?"), the race goes on; the pause offers it too',
       tap1.btn === 'Res odstopiš?' && tap1.screen === 'none' && p0, JSON.stringify({ tap1, p0 }));
     T.check('the second tap: retired, the results ("Odstop", no place), the player among the retired at the end with "Odstop" instead of a time; no race time or place in the records; the commentator says so',
       tap2.screen === 'results' && tap2.title === 'Odstop' && tap2.pos === '✕' && /^Odstop v 1\. krogu/.test(tap2.sub) && tap2.row && tap2.row[0] === '–' && tap2.row[3] === 'Odstop' && tap2.dnfRow && tap2.last && tap2.out && !(rec && (rec.bestRace || rec.bestPos)) && tap2.said.includes('retired'),
-      JSON.stringify({ tap2: Object.assign({}, tap2, { rec }) }));
+      JSON.stringify({ tap2: Object.assign({}, tap2, { rec, st: undefined, stored: undefined }) }));
+    const S1 = tap2.st;
+    T.check('retired in the statistics: one race more (saved), never a finish: no win, podium or fastest lap, the track not raced to the line, no achievement of the finish (Prvi cilj, Brez praske, Napadalec); the km and the time as driven',
+      S1.races === st0.races + 1 && tap2.stored && tap2.stored.races === S1.races && S1.wins === st0.wins && S1.podiums === st0.podiums && S1.fl === st0.fl && !S1.tracks.jezero &&
+      !S1.ach.first && !S1.ach.cleanRace && !S1.ach.overtake && !S1.ach.win && st0.km > 0.3 && S1.km >= st0.km && S1.time >= st0.time,
+      JSON.stringify({ st0: { races: st0.races, wins: st0.wins, km: +st0.km.toFixed(2), tracks: st0.tracks, ach: Object.keys(st0.ach) }, st1: { races: S1.races, wins: S1.wins, podiums: S1.podiums, km: +S1.km.toFixed(2), tracks: S1.tracks, ach: Object.keys(S1.ach) } }));
     // Ogled vozila: the photo mode on the player's car, up close, from over the road (the retired car stands on the run-off: not from the
     // far side of it); held upright the same, close (the 24 mm lens); back to the results
     const view = () => page.evaluate(async () => { const g = window.__game, r = g.race, P = r.player, T = r.track, W = P.wreck;
