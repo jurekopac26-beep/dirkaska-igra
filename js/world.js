@@ -1716,14 +1716,14 @@ const World = (function () {
         for (let x = B.minX; x < B.maxX; x += step) {
           const px = x + (R() - 0.5) * step * 0.9, pz = z + (R() - 0.5) * step * 0.9;
           const c = clearance(px, pz);
-          if (c < 2.5 || c > 150) continue;
+          if (c < 2.5 || c > LOD.radius(150)) continue;   // (LOD: a shorter tree draw distance on the lower tiers)
           if (lakeSD(px, pz) < 4) continue;
           if (excluded(px, pz)) continue;
           const f = forestN(px, pz);
           let p = sstep(0.36, 0.62, f);
           if (c < 10) p *= 0.35;
           if (c > 110) p = Math.max(p, 0.5);
-          if (R() > p) continue;
+          if (R() > p * LOD.dens) continue;   // (LOD: thin the trees on the lower tiers)
           const g = treeCh.get(px, pz), n0 = g.P.length / 3;
           const y0 = groundH(px, pz) - 0.2;
           const tn = typeN(px, pz);
@@ -1808,7 +1808,7 @@ const World = (function () {
         const x = lerp(B.minX - 40, B.maxX + 40, R()), z = lerp(B.minZ - 40, seaZ - 30, R());
         const W = 11 + R() * 13, D = 10 + R() * 10, rad = Math.hypot(W, D) / 2;
         const c = clearance(x, z);
-        if (c < rad * 0.55 + 2.5 || excluded(x, z)) continue;
+        if (c < rad * 0.55 + 2.5 || c > LOD.cap(230) || excluded(x, z)) continue;   // (LOD: cut the far seafront buildings on the lower tiers)
         if (placed.some(p => Math.hypot(p[0] - x, p[1] - z) < (p[2] + rad) * 0.86)) continue;
         const ni = nearest(x, z).i, rot = ni >= 0 ? T.hd[ni] + (R() < 0.5 ? 0 : Math.PI / 2) : R() * TAU;
         const floors = 2 + Math.floor(R() * (c > 40 ? 6 : 4)), H = floors * 3.1 + 0.9;
@@ -1959,14 +1959,14 @@ const World = (function () {
         for (let x = B.minX; x < B.maxX; x += step) {
           const px = x + (R() - 0.5) * step * 0.9, pz = z + (R() - 0.5) * step * 0.9;
           const c = clearance(px, pz);
-          if (c < 3 || excluded(px, pz)) continue;
+          if (c < 3 || c > LOD.cap(190) || excluded(px, pz)) continue;   // (LOD: cut the far forest on the lower tiers; VISOKA keeps it all)
           const f = forestN(px, pz);
           let p = sstep(0.2, 0.52, f);
           if (c < 10) p *= 0.7;                 // slightly thinner right by the road
           if (c > 120) p = Math.max(p, 0.7);    // thick forest up the slopes
           const y0 = groundH(px, pz);
           if (y0 > 96) p *= sstep(120, 96, y0); // treeline: fewer trees near the peaks
-          if (R() > p) continue;
+          if (R() > p * LOD.dens) continue;   // (LOD: thin the forest on the lower tiers)
           const g = treeCh.get(px, pz), n0 = g.P.length / 3;
           const tn = typeN(px, pz);
           const hgt = 9 + R() * 9;
@@ -2024,7 +2024,7 @@ const World = (function () {
       for (let k = 0; k < 520 / 1; k++) {
         const px = lerp(B.minX, B.maxX, R()), pz = lerp(B.minZ, B.maxZ, R());
         const c = clearance(px, pz);
-        if (c < 3.5 || excluded(px, pz)) continue;
+        if (c < 3.5 || c > LOD.cap(190) || excluded(px, pz)) continue;   // (LOD: cut the far boulders on the lower tiers; VISOKA keeps them all)
         if (R() > 0.5) continue;
         const g = scen.get(px, pz), y0 = groundH(px, pz);
         const s = 0.8 + R() * (c < 20 ? 2.2 : 4.5);
@@ -2302,7 +2302,8 @@ const World = (function () {
       const tryBuilding = (x, z, W, D, rot, H) => {
         const rad = Math.hypot(W, D) / 2;
         if (excluded(x, z) || (RIVER && distRiver(x, z) < RWh + 3 + rad * 0.6) || gH(x, z) > 1.5) return false;
-        if (clearance(x, z) < rad * 0.55 + 2.5 || placed.some(q => Math.hypot(q[0] - x, q[1] - z) < (q[2] + rad) * 0.78)) return false;
+        const cl = clearance(x, z);
+        if (cl < rad * 0.55 + 2.5 || cl > LOD.cap(230) || placed.some(q => Math.hypot(q[0] - x, q[1] - z) < (q[2] + rad) * 0.78)) return false;   // (LOD: cut the far city blocks on the lower tiers; the street fronts by the road stay)
         const col = pal[Math.floor(R() * pal.length)], y0 = facadeBox(x, z, W, D, H, rot, col), g = scen.get(x, z), rk = R();
         gable(g, x, y0 + H, z, W + 0.6, D + 0.6, Math.min(W, D) * 0.32, rot, rk < 0.78 ? vary(tile, R, 0.08) : rk < 0.93 ? [0.36, 0.37, 0.41] : copper, col);
         box(g, x, y0 + H - 0.35, z, W + 0.3, 0.35, D + 0.3, rot, col.map(v => v * 0.82));
@@ -2319,7 +2320,7 @@ const World = (function () {
       // ---- castle hill forest ----
       for (let x = 30; x < 370; x += 6) for (let z = 85; z < 415; z += 6) {
         const px = x + (R() - 0.5) * 5, pz = z + (R() - 0.5) * 5, h0 = gH(px, pz);
-        if (h0 < 3 || R() < 0.22 || (CASTLE && Math.hypot(px - CASTLE[0], pz - CASTLE[1]) < 46) || excluded(px, pz)) continue;
+        if (clearance(px, pz) > LOD.cap(170) || h0 < 3 || R() < 0.22 || (CASTLE && Math.hypot(px - CASTLE[0], pz - CASTLE[1]) < 46) || excluded(px, pz)) continue;   // (LOD: cut the far castle-hill forest on the lower tiers)
         const g = scen.get(px, pz), hgt = 8 + R() * 6;
         cyl(g, px, h0 - 0.3, pz, 0.32, hgt * 0.45, 5, [0.42, 0.34, 0.24]);
         if (R() < 0.18) cone(g, px, h0 + hgt * 0.3, pz, hgt * 0.24, hgt * 0.75, 7, vary([0.18, 0.34, 0.2], R, 0.1), [0.24, 0.42, 0.26], R() * TAU);
@@ -2873,9 +2874,9 @@ const World = (function () {
       if (FOR) for (let z = B.minZ - 60; z < B.maxZ + 60; z += step) for (let x = B.minX - 60; x < B.maxX + 60; x += step) {
         const px = x + (R() - 0.5) * step * 0.9, pz = z + (R() - 0.5) * step * 0.9, c = clearance(px, pz);
         const fN = forestN(px, pz), lawn = 5 + 11 * (1 - sstep(0.35, 0.6, fN));   // the firs come close to the fences in places, as in the reference
-        if (c < lawn || excluded(px, pz)) continue;
+        if (c < lawn || c > LOD.cap(190) || excluded(px, pz)) continue;   // (LOD: cut the far forest on the lower tiers; VISOKA keeps it all)
         let p = 0.45 + 0.5 * sstep(0.35, 0.6, fN); if (c > 30) p = Math.max(p, 0.85); if (c < lawn + 6) p *= 0.6;
-        if (R() > p) continue;
+        if (R() > p * LOD.dens) continue;   // (LOD: thin the fir forest on the lower tiers)
         if (R() < 0.08 && c < 30) { const g = scen.get(px, pz); ico(g, px, gH(px, pz) + 2.2, pz, 2.2 + R(), 0.9, vary([0.24, 0.46, 0.2], R, 0.15), R, 0.3); }   // occasional round bush/tree
         else fir(px, pz, 10 + R() * 9);
       }
@@ -2883,9 +2884,9 @@ const World = (function () {
       if (!FOR) { const st = (ITA ? 6.4 : 5.4) / Math.sqrt(dens);
         for (let z = B.minZ - 60; z < B.maxZ + 60; z += st) for (let x = B.minX - 60; x < B.maxX + 60; x += st) {
           const px = x + (R() - 0.5) * st * 0.9, pz = z + (R() - 0.5) * st * 0.9, c = clearance(px, pz), fN = forestN(px, pz), lawn = (ITA ? 8 : 6) + 10 * (1 - sstep(0.35, 0.6, fN));
-          if (c < lawn || excluded(px, pz)) continue;
+          if (c < lawn || c > LOD.cap(190) || excluded(px, pz)) continue;   // (LOD: cut the far forest on the lower tiers; VISOKA keeps it all)
           let p = ITA ? 0.03 + 0.8 * sstep(0.46, 0.66, fN) : 0.42 + 0.5 * sstep(0.35, 0.6, fN); if (c > 45) p = Math.max(p, ITA ? 0.16 : 0.82); if (c < lawn + 6) p *= 0.6;   // (Toskana: groves on open lawns)
-          if (R() > p) continue;
+          if (R() > p * LOD.dens) continue;   // (LOD: thin the groves on the lower tiers)
           if (ITA) { const u = R(); if (u < 0.13) cypress(px, pz, 11 + R() * 6); else if (u < 0.3) puffPine(px, pz, 10 + R() * 6); else leafy(px, pz, 8 + R() * 5); }
           else if (c > 70 || R() < 0.5) fir(px, pz, 10 + R() * 8 + 7 * sstep(0.5, 0.72, fN)); else leafy(px, pz, 8.5 + R() * 5);   // (far off, where they are small on screen: the cheap far firs; the pines tallest in the thick of the wood)
         } }
