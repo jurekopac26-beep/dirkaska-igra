@@ -20,12 +20,12 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     parts: { set: 'truck', ht: 3, y0: 0.6,
       extra: {
         grille: { z: 0, th: 0.6, m: 6, rW: 0.35, h: 0.08, lx: 1, lz: 0, f: 0.35 },
-        deflector: { z: 0, th: 0.6, m: 8, rW: 0.38, h: 0.12, lx: 0.62, lz: 0, f: 0.95 },
+        deflector: { z: 0, th: 0.6, m: 8, rW: 0.38, h: 0.13, lx: 0.62, lz: 0, f: 0.95 },
         skirtL: { z: 2, th: 0.58, m: 7, r: 0.8, h: 0.06, lx: -0.12, lz: -1, f: 0.08 },
         skirtR: { z: 3, th: 0.58, m: 7, r: 0.8, h: 0.06, lx: -0.12, lz: 1, f: 0.08 },
       },
       // (where the look has them: the cab's doors and mirrors are far forward on a cab-over; a lost one flies off from there)
-      over: { doorL: { lx: 0.64, y: 1.84 }, doorR: { lx: 0.64, y: 1.84 }, mirrorL: { lx: 0.87, y: 2.17 }, mirrorR: { lx: 0.87, y: 2.17 } },
+      over: { doorL: { lx: 0.64, y: 1.84 }, doorR: { lx: 0.64, y: 1.84 }, mirrorL: { lx: 0.87, y: 2.17 }, mirrorR: { lx: 0.87, y: 2.17 }, bumperF: { h: 0.2 } },
     },
     // the look (KIT API v1, render.js; look units = metres): two lofts, the cab (doors with their glass, the windscreen; its front face the
     // grille) and the low front module under it (the bumper with four lamps, the steps, the front wheel's arch); the roof deflector, the side
@@ -103,10 +103,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- the side skirts between the axles (a stripe along them) ----
         for (const sd of [-1, 1]) K.part(sd < 0 ? 'skirtL' : 'skirtR', () => {
           K.box(-0.36, 0.38, sd * 1.2, 2.12, 0.74, 0.05, 0, P);
-          for (const x of [-1.1, 0.25]) K.box(x, 0.8, sd * 0.83, 0.06, 0.06, 0.74, 0, FRM);   // (its brackets to the frame rail)
           K.rect(-0.36, 0.86, sd * 1.226, 2.08, 0.12, S, { dir: sd < 0 ? '-z' : 'z' });
           K.rect(-0.36, 0.43, sd * 1.226, 2.08, 0.06, D, { dir: sd < 0 ? '-z' : 'z' });
         });
+        K.part('body', () => { for (const sd of [-1, 1]) for (const x of [-1.1, 0.25]) K.box(x, 0.8, sd * 0.83, 0.06, 0.06, 0.74, 0, FRM); });   // (the skirts' brackets: on the frame rail, they stay when a skirt goes)
         // ---- the stacks behind the cab, their heat shields ----
         K.part('body', () => {
           for (const sd of [-1, 1]) {
