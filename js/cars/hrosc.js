@@ -126,8 +126,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.box(0.545, yH + 0.1, 0, 0.09, 0.09, 1.0, 0, CG);
           for (const sd of [-1, 1]) { K.bar([0.5, yH, sd * 0.3], [0.54, yH + 0.1, sd * 0.3], 0.018, CG, { n: 4 }); for (const z of [0.125, 0.375]) K.headLamp(0.592, yH + 0.145, sd * z, 0.042, { ring: null }); }
         }, { noCrush: true, noDent: true, hinge: [[0.5, yH, -0.4], [0.5, yH, 0.4]] });
-        // ---- the flat four, bare behind the rear axle: the crankcase, the finned cylinders and heads each side, the fan shroud, the
-        //      generator on it, twin air cleaners, the pulley, the headers and the stinger (the body's outer shell: in sight) ----
+        // ---- the flat four, bare behind the rear axle (the body's outer shell: in sight): the crankcase, the finned cylinders and the heads
+        //      each side, twin air cleaners, the fan shroud over them with its round fan housing and the generator's pulley, the belt down to
+        //      the crank pulley, the stinger ----
         K.part('body', () => {
           K.box(-1.46, 0.32, 0, 0.5, 0.22, 0.3, 0, [0.46, 0.47, 0.49]);
           for (const sd of [-1, 1]) {
@@ -143,9 +144,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         });
         // ---- inside (seen once a part is off): the bucket seats, the dashboard, the roll bar behind the seats; the fuel tank and the spare
         //      wheel under the front lid ----
-        for (const sd of [-1, 1]) K.seat(-0.08, 0.64, sd * 0.33, { w: 0.46, l: 0.48, back: 0.66, col: [0.1, 0.1, 0.11] });
+        for (const sd of [-1, 1]) K.seat(-0.08, 0.64, sd * 0.33, { w: 0.46, l: 0.48, back: 0.6, col: [0.1, 0.1, 0.11] });
         K.box(0.66, 0.78, 0, 0.16, 0.14, 1.2, 0, D, null, false, { inner: true, part: 'body' });
-        K.cage([[[-0.45, 0.48, -0.56], [-0.45, 1.28, -0.48]], [[-0.45, 0.48, 0.56], [-0.45, 1.28, 0.48]], [[-0.45, 1.28, -0.48], [-0.45, 1.28, 0.48]], [[-0.45, 1.28, 0], [-1.0, 0.7, 0]]], 0.022, CG, { part: 'body' });
+        K.cage([[[-0.45, 0.48, -0.56], [-0.45, 1.22, -0.44]], [[-0.45, 0.48, 0.56], [-0.45, 1.22, 0.44]], [[-0.45, 1.22, -0.44], [-0.45, 1.22, 0.44]], [[-0.45, 1.22, 0], [-1.0, 0.7, 0]]], 0.022, CG, { part: 'body' });
         K.box(1.02, 0.56, 0, 0.3, 0.26, 0.84, 0, [0.3, 0.3, 0.32], null, false, { inner: true, part: 'body' });
         K.face([[0.9, 0.5, 0.55], [0.9, 0.5, -0.55], [0.9, 0.87, -0.55], [0.9, 0.94, -0.2], [0.9, 0.94, 0.2], [0.9, 0.87, 0.55]], K.lining, { inner: true, part: 'body' });   // (the front trunk's back wall)
         K.tyre(1.48, 0.66, 0, { axis: 'y', r: 0.3, w: 0.18, inner: true, part: 'body' });
