@@ -543,8 +543,8 @@ const Garage3D = (function () {
       B(0, 0.2, doorH, 4.05, -door - 0.16, door + 0.16, STL, null, 'a');
       B(0.3, 0.54, 4.16, 4.44, 2.672, 2.76, [0.22, 0.24, 0.28]); cylA(g, T(0.42, 4.3, 2.92), 'z', 0.12, 0.32, 14, [0.16, 0.18, 0.22]); cylA(g, T(0.42, 4.3, 3.1), 'z', 0.1, 0.04, 14, [0.09, 0.09, 0.1]);
       B(0.36, 0.48, 4.42, 4.52, 2.84, 2.98, [0.2, 0.22, 0.26]);
-      for (const lz of [2.7, 2.74]) obox(g, T(0.556, 4.22, lz), T(0.556, 1.75, lz), 0.012, 0.012, [0.34, 0.35, 0.37]);
-      obox(g, T(0.556, 1.75, 2.694), T(0.556, 1.75, 2.746), 0.012, 0.012, [0.34, 0.35, 0.37]);
+      for (const lz of [2.7, 2.74]) obox(g, T(0.556, 4.22, lz), T(0.556, 1.3, lz), 0.012, 0.012, [0.34, 0.35, 0.37]);
+      obox(g, T(0.556, 1.3, 2.694), T(0.556, 1.3, 2.746), 0.012, 0.012, [0.34, 0.35, 0.37]);
       for (const lx of [0.105, 0.28]) B(lx, lx + 0.015, 0, 0.007, -door, door, [0.55, 0.57, 0.6], null, 'd');
       gloss(P, 0.15); B(0.05, 0.1, 3.47, 3.5, -door - 0.06, door + 0.06, [0.05, 0.05, 0.06]); gloss(P, 1);   // (the bottom bar's rubber seal)
       // the atlas's mesh: the curtain's last slats under the hood and up to the coil, the coil (a slat a facet), the hazard band on the
@@ -1029,10 +1029,11 @@ const Garage3D = (function () {
       BLOBS.push([x, z, 0.95, 0.95, 0.9, 0, P]); if (lean) BLOBS.push([lean[0], lean[1] + 0.05, 0.8, 0.45, 0.7, 0, P]); };
     tyreStack(-8.1, -3.5, 4, false, [-7.9, -2.98]); tyreStack(-7.1, -3.65, 3, true); tyreStack(-8.25, 3.6, 2, false);
     const PC = piece(); for (const [x, z, n] of [[7.9, -3.5, 3], [7.4, -4.1, 1]]) { use(PC); for (let i = 0; i < n; i++) { box(x, i * 0.07, z, 0.4, 0.035, 0.4, [0.95, 0.35, 0.06]); World.cone(g, x, i * 0.07 + 0.035, z, 0.16, 0.62, 12, [1, 0.42, 0.08], [1, 0.5, 0.12], 0); } World.cyl(g, x, n * 0.07 + 0.2, z, 0.115, 0.1, 12, [0.95, 0.95, 0.93]); BLOBS.push([x, z, 0.8, 0.8, 0.6, 0, PC]); }
-    // the team's road cases stacked by the way out: navy on castors, black, gold on top (blank plates)
-    { const P = use(piece()); P.near = 4.4;
-      fcase(P, 8.05, 0.1, -2.45, 1.1, 0.6, 0.62, 0, [0.1, 0.12, 0.19], true, GOLD); fcase(P, 8.08, 0.73, -2.47, 0.95, 0.5, 0.56, 0.05, [0.06, 0.06, 0.07], false, [0.9, 0.9, 0.86]); fcase(P, 8.0, 1.26, -2.42, 0.55, 0.34, 0.42, -0.3, GOLD, false, null);
-      BLOBS.push([8.05, -2.45, 1.5, 1.0, 0.9, 0, P]); }
+    // the team's road cases stacked by the way out, end on to the door, clear of its hatch and bollard: navy on castors, black, gold on
+    // top (blank plates, toward the room)
+    { const P = use(piece()), q = -Math.PI / 2; P.near = 4.4;
+      fcase(P, 7.66, 0.1, -2.62, 1.1, 0.6, 0.62, q, [0.1, 0.12, 0.19], true, GOLD); fcase(P, 7.68, 0.73, -2.65, 0.95, 0.5, 0.56, q + 0.05, [0.06, 0.06, 0.07], false, [0.9, 0.9, 0.86]); fcase(P, 7.63, 1.26, -2.57, 0.55, 0.34, 0.42, q - 0.3, GOLD, false, null);
+      BLOBS.push([7.66, -2.62, 1.0, 1.5, 0.9, 0, P]); }
     // the safety corner by the left door: an extinguisher on its bracket, its sign, a first-aid box
     { const P = use(WALLS.left), X = x0 + 0.17, Z = -3.9;
       sm.add(new THREE.CylinderGeometry(0.1, 0.1, 0.5, 18), M4(X, 0.55, Z), [0.85, 0.08, 0.07]);
