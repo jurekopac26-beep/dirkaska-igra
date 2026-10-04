@@ -34,10 +34,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [0.3, 0.84, 0.18, 0.675, 0.68, 0.825, 0.03, 'gf', 0.12],        // the scuttle under the windscreen (closed: the dashboard's top)
           [0.55, 0.84, 0.18, 0.665, 0.72, 0.8, 0.035, 'b', 0.12],         // the windscreen's base, the door's front edge
           [1.16, 0.84, 0.19, 0.62, 0.75, 0.735, 0.035, 'b', 0.12],        // the front axle: the bonnet sloping down to the nose
-          [1.51, 0.825, 0.2, 0.585, 0.72, 0.685, 0.035, 'b', 0.12],
-          [1.82, 0.765, 0.21, 0.53, 0.64, 0.625, 0.03, 'b', 0.11],
-          [1.93, 0.665, 0.22, 0.47, 0.54, 0.565, 0.02, 'b', 0.1],
-          [1.98, 0.52, 0.235, 0.43, 0.42, 0.515, 0.012, 'b', 0.09]],      // the nose's face: the smiling mouth
+          [1.51, 0.825, 0.2, 0.58, 0.72, 0.675, 0.035, 'b', 0.12],
+          [1.82, 0.765, 0.21, 0.52, 0.64, 0.605, 0.03, 'b', 0.11],
+          [1.93, 0.665, 0.22, 0.46, 0.54, 0.545, 0.02, 'b', 0.1],
+          [1.98, 0.52, 0.235, 0.425, 0.42, 0.5, 0.012, 'b', 0.09]],       // the nose's face: the smiling mouth
         eye: { x: -0.4, y: 1.04, near: 0.2, tilt: 0.06, style: 'open' },   // (low behind the windscreen, its frame 9 cm over the eyes)
         decalX: 1.02, decalY: 0.785, decalRz: -0.107, decalS: 0.55, decalPart: 'hood',   // (the start number on the bonnet, between the lamps)
         crush: { x0: 0.08, x1: 0.45, z: 0.6 } },                          // (a roll-over folds the windscreen's frame; the hoop stands)
@@ -52,12 +52,13 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           by('hood'), by('trunk', { x: [-2.6, -1.11] }));
       },
       build(K) {
-        const P = K.paint, B = K.black, G = K.GLASS, D = [0.09, 0.09, 0.1], SEAT = [0.5, 0.39, 0.27], HOOP = [0.7, 0.71, 0.74], TOP = [0.13, 0.13, 0.14], AMB = [1, 0.58, 0.12];
+        const P = K.paint, B = K.black, G = K.GLASS, D = [0.09, 0.09, 0.1], SEAT = [0.5, 0.39, 0.27], HOOP = [0.7, 0.71, 0.74], TOP = [0.13, 0.13, 0.14], AMB = [1, 0.62, 0.1];
+        const XA = K.arches[1].x + K.arches[1].half, XB = K.arches[0].x - K.arches[0].half;   // (the sills: from the rear arch to the front one)
         // ---- the shell: the paint; the cockpit's top open; the scuttle's top dark (the dashboard under the glass); the sills a shade
-        //      darker, black ledges in the arches ----
+        //      darker, black ledges in the arches, the bumpers' undersides a little darker than the paint ----
         const L = K.loft(K.secs(K.body.secs), (k, e, kind, at) => {
           if (at.end) return P;
-          if (e === 0 || e === 8) return at.arch ? B : K.shade(P, 0.62);
+          if (e === 0 || e === 8) return at.arch ? B : at.x > XA && at.x < XB ? K.shade(P, 0.62) : K.shade(P, 0.86);
           if (kind === 'r' && e >= 3 && e <= 5) return null;
           if (kind === 'gf' && e >= 3 && e <= 5) return D;
           return P;
@@ -70,11 +71,13 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         DC.side([[1.64, 0.43], [1.74, 0.43], [1.74, 0.46], [1.64, 0.46]], AMB, null, 0.005);
         // ---- the nose: the smiling mouth (wide, its top flatter than its bottom), the indicators in the bumper's corners ----
         K.part('bumperF', () => {
-          const m = []; for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2, s = Math.sin(a); m.push([1.983, 0.335 + s * (s > 0 ? 0.042 : 0.074), -Math.cos(a) * 0.31]); }
+          const m = []; for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2, s = Math.sin(a); m.push([1.983, 0.335 + s * (s > 0 ? 0.045 : 0.08), -Math.cos(a) * 0.33]); }
           K.face(m, B);
-          for (const sd of [-1, 1]) { const q = [[0.22, 0.355], [0.7, 0.355], [0.7, 0.4], [0.22, 0.4]].map(([t, y]) => [1.93 + 0.05 * t + 0.0038, y, sd * (0.665 - 0.145 * t + 0.0013)]);
+          const lip = [[1.986, 0.4, 0.24]]; for (let i = 0; i <= 8; i++) { const a = Math.PI * i / 8; lip.push([1.986, 0.392 - Math.sin(a) * 0.05, Math.cos(a) * 0.24]); }
+          K.face(lip.concat([[1.986, 0.4, -0.24]]), P);   // (its upper lip, the paint over the mouth's middle: the corners turn up)
+          for (const sd of [-1, 1]) { const q = [[0.15, 0.35], [0.8, 0.35], [0.8, 0.41], [0.15, 0.41]].map(([t, y]) => [1.93 + 0.05 * t + 0.0038, y, sd * (0.665 - 0.145 * t + 0.0013)]);
             K.face(sd > 0 ? q : q.reverse(), AMB); }
-        }, { hinge: [[1.9, 0.3, -0.5], [1.9, 0.3, 0.5]] });
+        });
         // ---- the pop-up lamps, raised: a box on each front corner (its face black, the lens in it), the fender's ----
         for (const sd of [-1, 1]) {
           const host = sd < 0 ? 'fenderL' : 'fenderR', prof = [[1.47, 0.665], [1.655, 0.665], [1.665, 0.79], [1.63, 0.83], [1.47, 0.82]];
@@ -98,11 +101,18 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         }
         K.rect(-1.973, 0.43, 0, 0.4, 0.11, [0.93, 0.93, 0.9], { dir: '-x', part: 'bumperR' });
         K.exhaust(-1.995, 0.25, 0.42, 0.032, 0.2, { part: 'body' });
+        const fy = L.topY(-1.0, 0.6) + 0.004, fc = []; for (let i = 0; i < 8; i++) { const a = -i / 8 * Math.PI * 2; fc.push([-1.0 + Math.cos(a) * 0.045, fy, 0.6 + Math.sin(a) * 0.045]); }
+        K.face(fc, [0.2, 0.2, 0.21], { part: 'body' });   // (the fuel filler's cap on the right of the deck)
         // ---- the cockpit (in sight): the seats, the dashboard, the driver in the left seat; the roll hoop behind them (never crushed or
         //      dented), the folded hood on the deck behind it ----
         for (const sd of [-1, 1]) K.seat(-0.3, 0.37, sd * 0.33, { w: 0.46, l: 0.46, back: 0.56, tilt: 0.3, col: SEAT });
         K.box(0.2, 0.6, 0, 0.2, 0.2, 1.24, 0, D, null, true, { part: 'body' });
-        K.driver(-0.47, 1.06, -0.33, { r: 0.125, lean: 0.3, suit: [0.15, 0.17, 0.2], hands: [-0.02, 0.8, 0.17] });
+        K.driver(-0.47, 1.06, -0.33, { r: 0.125, lean: 0.3, suit: [0.15, 0.17, 0.2], hands: [0.02, 0.78, 0.16] });
+        K.part('body', () => {   // (his wheel: leaning back on its column, low enough that the cockpit's own dashboard hides it from the seat)
+          const C = [0.03, 0.77, -0.33], u = [-Math.sin(0.55), Math.cos(0.55), 0], pt = (a) => [C[0] + 0.16 * Math.sin(a) * u[0], C[1] + 0.16 * Math.sin(a) * u[1], C[2] + 0.16 * Math.cos(a)];
+          for (let i = 0; i < 6; i++) K.bar(pt(i / 6 * Math.PI * 2), pt((i + 1) / 6 * Math.PI * 2), 0.014, B, { n: 3 });
+          K.bar(C, [0.22, 0.66, -0.33], 0.02, D, { n: 4 }); K.bar(pt(0), pt(Math.PI), 0.01, D, { n: 3 });
+        });
         const hx = -0.84;
         K.cage([[[hx + 0.02, 0.84, -0.56], [hx, 1.12, -0.55]], [[hx, 1.12, -0.55], [hx - 0.01, 1.2, -0.44]], [[hx - 0.01, 1.2, -0.44], [hx - 0.01, 1.2, 0.44]], [[hx - 0.01, 1.2, 0.44], [hx, 1.12, 0.55]],
           [[hx, 1.12, 0.55], [hx + 0.02, 0.84, 0.56]], [[hx, 1.13, -0.53], [-1.06, 0.87, -0.5]], [[hx, 1.13, 0.53], [-1.06, 0.87, 0.5]]], 0.024, HOOP, { n: 6, noCrush: true, noDent: true });
