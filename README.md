@@ -476,7 +476,7 @@ Na progah Ljubljana, Monako, Pikes Peak, Ouninpohja, Harju, Vršič, Los Caracol
 
 ## Fizika vožnje
 
-Igra ima eno fiziko, **Circuit Superstars**: avto drsi z nosom v ovinek toliko, kolikor hitro zavijaš; zaviranje v ovinku ga zavrti, na izhodu se sam poravna; brez vrtenja. Gumb za drift (preslednica) ga zavrti še malo bolj. Pomoč pri driftu (nizka/srednja/visoka) določa, kako daleč lahko zadrsa. Prejšnja arkadna fizika je odstranjena (kdor jo je imel izbrano, vozi zdaj Circuit Superstars; njeni stari rekordi se ne prikazujejo več).
+Igra ima eno fiziko, **Circuit Superstars**: avto drsi z nosom v ovinek toliko, kolikor hitro zavijaš; zaviranje v ovinku ga zavrti, na izhodu se sam poravna; brez vrtenja. Gumb za drift (preslednica) ga zavrti še malo bolj; na telefonu je to gumb **ROČNA** (ročna zavora) nad gumbom za zavoro, na igralnem plošku B / ○ ali RB / R1. Pomoč pri driftu (nizka/srednja/visoka) določa, kako daleč lahko zadrsa. Prejšnja arkadna fizika je odstranjena (kdor jo je imel izbrano, vozi zdaj Circuit Superstars; njeni stari rekordi se ne prikazujejo več).
 
 ## Prvenstvo
 
