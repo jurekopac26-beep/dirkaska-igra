@@ -3318,15 +3318,15 @@
   }
  },
  "newcastle/car/cs": {
-  "digest": "d2e1498e46bdd2bcf337f42d",
-  "lead": 3884.8,
+  "digest": "f29cf2ae181ddddd30e167c8",
+  "lead": 3886.7,
   "car0": [
-   -224.82,
-   126.64
+   -156.49,
+   72.82
   ],
   "cover": {
-   "dmg": 0.88,
-   "loose": 9,
+   "dmg": 1,
+   "loose": 24,
    "rescues": 0,
    "repairs": 1
   }

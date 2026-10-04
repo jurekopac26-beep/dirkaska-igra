@@ -23080,7 +23080,7 @@ const World = (function () {
           const Lp = [x - nx * hw, z - nz * hw], Rp = [x + nx * hw, z + nz * hw], yL = ncGround(Lp[0], Lp[1]) + yo, yR = ncGround(Rp[0], Rp[1]) + yo, c = SC[s.cl];
           const r = ga.row([[Lp[0], yL, Lp[1]], [Rp[0], yR, Rp[1]]], [c, c], [[Lp[0] / 8, -Lp[1] / 8], [Rp[0] / 8, -Rp[1] / 8]]);
           if (prev >= 0) ga.link(prev, r, 0, 1);
-          if (pd && dd < 260 && s.cl <= 5) {   // the kerbs and the markings of this piece
+          if (pd && dd < 260 && s.cl <= 5 && pd.nx * nx + pd.nz * nz > 0.6) {   // the kerbs and the markings of this piece (none round a sharp bend: they would cross)
             const gm = ck('mk', x, z, () => new GB(), 1536), mid = ixNear(x, z, hw + 8);
             for (const sd of [-1, 1]) { const o = hw + 0.1, A = [pd.x + pd.nx * sd * o, 0, pd.z + pd.nz * sd * o], B = [x + nx * sd * o, 0, z + nz * sd * o]; A[1] = ncGround(A[0], A[2]) + yo + 0.11; B[1] = ncGround(B[0], B[2]) + yo + 0.11;
               const A2 = [A[0] + pd.nx * sd * 0.3, A[1], A[2] + pd.nz * sd * 0.3], B2 = [B[0] + nx * sd * 0.3, B[1], B[2] + nz * sd * 0.3]; gm.quadUp(A, B, B2, A2, [KC, KC, KC, KC]); }
@@ -23099,7 +23099,8 @@ const World = (function () {
       for (const q of P.ix) {
         if (inCorr(q.x, q.z, 0) || ncWater(q.x, q.z) || ncDist(q.x, q.z) > 700) continue;
         const gm = ck('mk', q.x, q.z, () => new GB(), 1536), hwm = Math.max(...q.legs.map(l => SWD(l.cl) / 2)), y = ncGround(q.x, q.z) + 0.075, c = SC[2], nseg = 12, C0 = [q.x, y, q.z];
-        for (let m = 0; m < nseg; m++) { const a0 = m / nseg * TAU, a1 = (m + 1) / nseg * TAU, rr = hwm + 0.5; gm.triO(C0, [q.x + Math.cos(a1) * rr, y, q.z + Math.sin(a1) * rr], [q.x + Math.cos(a0) * rr, y, q.z + Math.sin(a0) * rr], c, [q.x, y - 5, q.z]); }
+        { const gd = ck('jd', q.x, q.z, () => new GB(true), 2048), rr = hwm + 0.5, V = (a) => { const x = q.x + Math.cos(a) * rr, z = q.z + Math.sin(a) * rr; return [x, Math.max(y - 0.02, ncGround(x, z) + 0.072), z]; }, U = (p) => [p[0] / 8, -p[2] / 8];   // (asphalt, on the ground)
+          for (let m = 0; m < nseg; m++) { const A = V((m + 1) / nseg * TAU), B = V(m / nseg * TAU); gd.triO(C0, A, B, c, [q.x, y - 5, q.z], c, c, U(C0), U(A), U(B)); } }
         if (!q.sig && !q.give && !q.cw) continue;
         for (const l of q.legs) {
           if (l.cl > 4) continue;
@@ -23123,7 +23124,7 @@ const World = (function () {
         for (const sh of [-(b - a) / 2 - 1, (b - a) / 2 - 2]) for (let o = -w + 0.6; o < w - 0.3; o += 1.2) { const p0 = atSf(s0 + sh, o), p1 = atSf(s0 + sh + 0.15, o), p2 = atSf(s0 + sh + 0.15, o + 0.6), p3 = atSf(s0 + sh, o + 0.6), Y = (p) => [p[0], T.hy[p[3]] + 0.036, p[1]];
           gm.quadUp(Y(p0), Y(p3), Y(p2), Y(p1), [WF, WF, WF, WF]); }
       }
-      ckAdd('st', sMat); ckAdd('mk', lMat);
+      ckAdd('st', sMat); ckAdd('jd', sMat); ckAdd('mk', lMat);
     }
     /* ---- the light rail's tracks: two rails set in the street along Scott Street and across the circuit at Watt Street (the cars run over them) ---- */
     {

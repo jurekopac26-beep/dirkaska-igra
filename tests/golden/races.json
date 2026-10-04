@@ -1692,11 +1692,11 @@
  "newcastle/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 159.96,
-  "spins": 1,
-  "walls": 4,
+  "winner": 159.92,
+  "spins": 0,
+  "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "46a00200eb746bd18282792d"
+  "digest": "1450598b62a3bb35d8f490be"
  }
 }
