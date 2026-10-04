@@ -1,4 +1,4 @@
-/* Vehicle 'lev' — LEV R: a 1999-2003 world-rally hatchback on the 206 family (DESIGN section 4). Signature features: 1) the 206-like
+/* Vehicle 'lev' — LEV R: the world-rally hatchback of the LEV family (the rally sibling of the LEV S). Signature features: 1) the LEV S's
    three-door body with very wide flared arches, 2) a big rear wing on the tailgate, 3) a roof scoop, 4) mudflaps behind every wheel, 5) a
    spot-lamp pod on the bonnet and a splitter. L 4.00 W 1.80 H 1.42, wheelbase 2.47, overhangs F 0.78 R 0.75 (m). */
 var VEHICLE_DEFS = VEHICLE_DEFS || [];

@@ -17,7 +17,7 @@
   };
   const CTRL_HELP_CS = 'Levi palec: levo in desno, desni: plin in zavora. Drži smer – avto sam zadrsa z nosom v ovinek in se na izhodu sam poravna; zavora v ovinku ga zavrti.';
   const CTRL_NAME = { buttons: 'Tipke', wheel: 'Volan', tilt: 'Nagib' };
-  const CAR_DESC = { kaze: 'Rad obrne rep, rojen za drift.', vortex: 'Veliko oprijema, stabilen tudi na robu.', pico: 'Lahek in okreten, rad podvija.', strega: 'Oster in živahen, hitro zavrti.', rally: 'Relijski dirkač iz 80-ih, ogromno moči, rojen za drift.', p206: 'Pravi 3D model, lahek in natančen v ovinkih.', formula: 'Odprta kolesa in krila, ki ga pri hitrosti pritisnejo ob cesto. Zavira izjemno, na travi in makadamu pa drsi. Z njim dirkaš proti samim formulam.',
+  const CAR_DESC = { kaze: 'Rad obrne rep, rojen za drift.', vortex: 'Veliko oprijema, stabilen tudi na robu.', pico: 'Lahek in okreten, rad podvija.', strega: 'Oster in živahen, hitro zavrti.', rally: 'Relijski dirkač iz 80-ih, ogromno moči, rojen za drift.', formula: 'Odprta kolesa in krila, ki ga pri hitrosti pritisnejo ob cesto. Zavira izjemno, na travi in makadamu pa drsi. Z njim dirkaš proti samim formulam.',
     lm: 'Prototip za 24 ur Le Mansa: zaprta kabina, veliko zadnje krilo. Na ravninah najhitrejši avto v igri, v hitrih ovinkih ga krila držijo ob cesti. Z njim dirkaš proti samim prototipom.',
     muscle: 'Ameriški »muscle car« iz 70-ih z velikim V8. Na ravnini ga je težko ujeti, v ovinkih pa rad obrne rep: kralj drifta.',
     ev: 'Električni hiperšportnik s štirimi motorji: najhitrejši pospešek med cestnimi avti in skoraj brez zvoka, a težek.',
@@ -47,7 +47,10 @@
   // upgrades per car: S.upg[modelId] = {motor, gume, zavore, aero} 0..3 (own objects, never shared; old saves have none)
   const UPG_IDS = Core.UPG.map(u => u.id);
   const upgNorm = (o) => { const r = {}; for (const k of UPG_IDS) { const v = o && typeof o[k] === 'number' ? o[k] : 0; r[k] = v >= 0 && v <= 3 ? Math.floor(v) : 0; } return r; };
-  { const u = {}; if (S.upg && typeof S.upg === 'object') for (const m of Core.MODELS) if (S.upg[m.id]) u[m.id] = upgNorm(S.upg[m.id]); S.upg = u; }
+  // a stored car id as this build has it: a retired model's becomes its heir's (Core.heirOf: the vehicle that took its place); an unknown one stays
+  const heirId = (id) => { const M = Core.MODELS.find(m => m.id === id); return M ? Core.heirOf(M).id : id; };
+  const upgBest = (a, b) => { if (!a) return b; const r = {}; for (const k of UPG_IDS) r[k] = Math.max(a[k], b[k]); return r; };   // (two sets for one car: the better level of each part)
+  { const u = {}; if (S.upg && typeof S.upg === 'object') for (const m of Core.MODELS) if (S.upg[m.id]) { const id = Core.heirOf(m).id; u[id] = upgBest(u[id], upgNorm(S.upg[m.id])); } S.upg = u; }   // (a retired model's: its heir's)
   // records: plain objects all the way down; circuits keep bestLap, bestRace, bestPos
   const isObj = (o) => !!o && typeof o === 'object' && !Array.isArray(o), posNum = (v) => typeof v === 'number' && isFinite(v) && v > 0;
   if (!isObj(records)) records = {};
@@ -61,8 +64,10 @@
   const rec = (id) => { const k = recKey(id); return records.tracks[k] || (records.tracks[k] = {}); };
   // time-trial records: bestTime, bestSplits [cp1..cpN, finish], board = top 10 [{name, car, carId, time, splits, date, upg}] (drop anything malformed, rebuild the rest from known fields)
   const splitsOf = (a) => a.slice(0, 12).map(v => posNum(v) ? v : NaN);
-  const boardEntry = (e) => isObj(e) && posNum(e.time) ? { name: cleanName(e.name) || '?', car: typeof e.car === 'string' ? e.car.slice(0, 24) : '', carId: typeof e.carId === 'string' ? e.carId.slice(0, 24) : '',
-    time: e.time, splits: Array.isArray(e.splits) ? splitsOf(e.splits) : [], date: posNum(e.date) ? e.date : 0, upg: upgNorm(isObj(e.upg) ? e.upg : null) } : null;
+  // (a run in a retired model: the vehicle that took its place, its id and its name)
+  const boardCar = (o) => { const M = Core.MODELS.find(m => m.id === o.carId), H = M && Core.heirOf(M); if (H && H !== M) { o.carId = H.id; o.car = H.name; } return o; };
+  const boardEntry = (e) => isObj(e) && posNum(e.time) ? boardCar({ name: cleanName(e.name) || '?', car: typeof e.car === 'string' ? e.car.slice(0, 24) : '', carId: typeof e.carId === 'string' ? e.carId.slice(0, 24) : '',
+    time: e.time, splits: Array.isArray(e.splits) ? splitsOf(e.splits) : [], date: posNum(e.date) ? e.date : 0, upg: upgNorm(isObj(e.upg) ? e.upg : null) }) : null;
   for (const id in records.tracks) { const r = records.tracks[id]; if (!isObj(r)) { delete records.tracks[id]; continue; }
     for (const k of ['bestLap', 'bestRace', 'bestPos', 'bestTime', 'jumpRec']) if (r[k] != null && !posNum(r[k])) delete r[k];
     if (Array.isArray(r.bestSec) && r.bestSec.length === 3) r.bestSec = r.bestSec.map(v => posNum(v) ? v : null); else delete r.bestSec;   // (the best sector times: S1-S3)
@@ -77,9 +82,15 @@
   else {
     const ids = Core.MODELS.map(m => m.id), num = (x) => Number.isFinite(x) && x >= 0 ? Math.floor(x) : 0;
     career.on = !!career.on; career.money = num(career.money); career.earned = num(career.earned); career.races = num(career.races); career.wins = num(career.wins);
-    career.cars = Array.isArray(career.cars) ? career.cars.filter((id, i, a) => ids.includes(id) && a.indexOf(id) === i) : [];
-    if (!career.cars.includes(Core.CAREER.car0)) career.cars.unshift(Core.CAREER.car0);
-    const u = isObj(career.upg) ? career.upg : {}; career.upg = {}; for (const id of career.cars) career.upg[id] = upgNorm(isObj(u[id]) ? u[id] : null);
+    // the cars bought and their upgrades: a retired model's are the vehicle's that took its place (owned once; both bought: the better level of each part)
+    const u = isObj(career.upg) ? career.upg : {}, cars = [], upg = {}, car0 = Core.CAREER.car0;
+    for (const id of Array.isArray(career.cars) ? career.cars : []) {
+      if (!ids.includes(id)) continue;
+      const h = heirId(id), L = upgNorm(isObj(u[id]) ? u[id] : null);
+      if (cars.includes(h)) upg[h] = upgBest(upg[h], L); else { cars.push(h); upg[h] = L; }
+    }
+    if (!cars.includes(car0)) { cars.unshift(car0); upg[car0] = upgNorm(isObj(u[car0]) ? u[car0] : null); }
+    career.cars = cars; career.upg = {}; for (const id of cars) career.upg[id] = upg[id];
   }
   const careerNew = () => ({ v: 1, on: true, money: Core.CAREER.start, cars: [Core.CAREER.car0], upg: { [Core.CAREER.car0]: upgNorm(null) }, earned: 0, races: 0, wins: 0 });
   function careerSave() { try { localStorage.setItem('tdgp-career', JSON.stringify(career)); } catch (_) { } }
@@ -129,17 +140,19 @@
   // unless car is no longer the index this build wrote with it (an older build, which keeps carId as it found it, picked another of its
   // 11 since: that car); an id this build does not know: the rally car (never whatever another vehicle has at that index); an index
   // without an id only below 11 (the indices every build agrees on); before carV 2: the one-time switch to the player's own rally car
-  // (number 7, blue livery)
+  // (number 7, blue livery). A retired model (by its id or its index): the vehicle that took its place (Core.heirOf), saved as that one
   const LEGACY_N = 11, RALLY = Core.MODELS.findIndex(m => m.id === 'rally'), legacy = (k) => k >= 0 && k < LEGACY_N ? k : RALLY;
   function save() {
     const M = Core.MODELS[S.car] || Core.MODELS[RALLY], o = Object.assign({}, S, { carId: M.id, car: legacy(S.car), carV: 3 });
     try { localStorage.setItem('tdgp-settings', JSON.stringify(o)); } catch (_) { }
   }
   {
-    const k = typeof S.carId === 'string' ? Core.MODELS.findIndex(m => m.id === S.carId) : -2, mig = S.carV !== 3, ok = Number.isInteger(S.car) && S.car >= 0 && S.car < LEGACY_N;
+    const k = typeof S.carId === 'string' ? Core.MODELS.findIndex(m => m.id === S.carId) : -2, ok = Number.isInteger(S.car) && S.car >= 0 && S.car < LEGACY_N;
+    let mig = S.carV !== 3;
     if (!(S.carV >= 2)) { S.car = RALLY; S.color = 2; }
     else if (k >= 0) { if (!(carIn && ok && S.car !== legacy(k))) S.car = k; }   // (the id; or the car an older build picked since)
     else if (k === -1 || !ok) S.car = RALLY;
+    const M = Core.MODELS[S.car]; if (M && M.retired) { const H = Core.heirOf(M); S.car = H.retired ? RALLY : Core.MODELS.indexOf(H); mig = true; }
     delete S.carId; S.carV = 3; if (mig) save();
   }
   const carNum = () => Core.MODELS[S.car].num || 1;
@@ -186,7 +199,7 @@
   try {
     const j = JSON.parse(localStorage.getItem('tdgp-champ') || 'null'), d = isObj(j) && Core.CHAMPS.find(c => c.id === j.id);
     if (d && j.v === 1 && [0, 1, 2].includes(j.diff) && Array.isArray(j.rounds) && j.rounds.length <= d.tracks.length && j.rounds.every((r, i) => roundOk(r, d.tracks[i])))
-      champ = { v: 1, id: d.id, diff: j.diff, car: typeof j.car === 'string' && Core.MODELS.some(m => m.id === j.car) ? j.car : Core.MODELS[S.car].id,   // (one kept before the car was: the car chosen now)
+      champ = { v: 1, id: d.id, diff: j.diff, car: typeof j.car === 'string' && Core.MODELS.some(m => m.id === j.car) ? heirId(j.car) : Core.MODELS[S.car].id,   // (one kept before the car was: the car chosen now; a retired one: its heir)
         rounds: j.rounds.map(r => Object.assign({ track: r.track, order: r.order.slice(), rain: r.rain ? 1 : 0 }, r.dnf && r.dnf.length ? { dnf: r.dnf.slice() } : null)) };
   } catch (_) { champ = null; }
   // the championship's rivals: the field of the car it was started with, in every round, its qualifying and its standings (the player may
@@ -815,7 +828,7 @@
   }
   function carBuy() {
     const M = Core.MODELS[S.car], pr = Core.CAREER.car[M.id] || 0;
-    if (!inCareer() || owned(M.id)) return;
+    if (!inCareer() || owned(M.id) || M.retired) return;   // (a retired model is never for sale)
     if (career.money < pr) { toast('Premalo denarja: ' + M.name + ' stane ' + eur(pr) + ', imaš ' + eur(career.money) + '. Zasluži ga z dirkami.', 3600); return; }
     career.money -= pr; career.cars.push(M.id); career.upg[M.id] = upgNorm(null); careerSave();
     toast('Kupil si ' + M.name + ' za ' + eur(pr) + '. Ostane ' + eur(career.money) + '.', 3200); Sfx.beep(880, 0.12, 0.1);
@@ -1236,17 +1249,17 @@
   /* ---------------- PIKES PEAK: race classes, the summit ceremony, TV splits ---------------- */
   // Classes as at the real race, from the car's performance (Core.MODELS): the formula (735 kW, wings) and the TAIFUN LM prototype Unlimited;
   // the AWD cars (BURJA R7, VORTEX, STRELA EV, SAMUM 4x4) Open; the quick rear-driven road cars (STREGA, KAZE, VIHAR V8) Pikes Peak Open;
-  // the light hatchbacks (PICO, 206) Time Attack 1. A registered vehicle (js/cars) names its own (def.pk).
+  // the light hatchback PICO Time Attack 1. A registered vehicle (js/cars) names its own (def.pk; the LEV S Time Attack 1).
   // Each class keeps its own top 5 in the track's records (R0.pkCls[class], per physics and weather like the rest of the record). Times set
   // before the classes (R0.board) go, once, into the class of the car they were set with. The overall board, best time and ghost are as they were.
   // At each checkpoint: the TV pill (split time, the difference to the class best run's split) and the CP1-CP4 bar (#h-sec); at the summit
   // the ceremony (#pk-cer) for the 4.2 s before the results. Only a Pikes Peak time trial alone (never online).
   const PK_CLS = [{ id: 'unl', name: 'Unlimited' }, { id: 'open', name: 'Open' }, { id: 'ppo', name: 'Pikes Peak Open' }, { id: 'ta1', name: 'Time Attack 1' }];
-  const PK_CAR = { formula: 'unl', lm: 'unl', rally: 'open', vortex: 'open', ev: 'open', truck: 'open', strega: 'ppo', kaze: 'ppo', muscle: 'ppo', pico: 'ta1', p206: 'ta1' };
+  const PK_CAR = { formula: 'unl', lm: 'unl', rally: 'open', vortex: 'open', ev: 'open', truck: 'open', strega: 'ppo', kaze: 'ppo', muscle: 'ppo', pico: 'ta1' };
   const pk = { on: false, cls: null, best: null };
   const pkIs = (d) => !!d && d.id === 'pikes';
   function pkClsOf(carId, carName) {   // (an unknown car: by its power and drive; an entry with no known car: Open, the class of the game's own car)
-    const M = Core.MODELS.find(m => m.id === carId) || Core.MODELS.find(m => m.name === carName);
+    const M = Core.heirOf(Core.MODELS.find(m => m.id === carId) || Core.MODELS.find(m => m.name === carName));   // (a retired model: its heir's class)
     const id = !M ? 'open' : PK_CAR[M.id] || (M.def && M.def.pk) || (M.kw >= 500 ? 'unl' : M.drive === 'AWD' ? 'open' : M.kw >= 260 ? 'ppo' : 'ta1');   // (a registered vehicle: its def's class)
     return PK_CLS.find(c => c.id === id);
   }
@@ -1346,11 +1359,12 @@
   }
   /* ---------------- PIKES PEAK: corner warnings, medals per class, the legend ghost ---------------- */
   // Medals per class, dry and wet (s): measured with the autopilot (Core.aiControl, assist 2, no upgrades, as tests/races.test.js drives)
-  // on the fastest car of each class: dry FORMULA ORKAN 164.26, BURJA R7 182.30, STREGA MR 186.80, PEUGEOT 206 184.58 (VORTEX 185.13,
-  // KAZE 189.19, PICO 186.12); wet 180.68, 196.83, 204.23, 200.20. Gold ~1.5 % under that run, silver ~2.5 % over it, bronze ~8 % over.
+  // on the fastest car of each class: dry FORMULA ORKAN 164.26, BURJA R7 182.30, STREGA MR 186.80, LEV S 184.27 (VORTEX 185.13,
+  // KAZE 189.19, PICO 186.12); wet 180.68, 196.83, 204.23, 200.22 (Time Attack 1's set on the retired model at index 5: 184.58, 200.20).
+  // Gold ~1.5 % under that run, silver ~2.5 % over it, bronze ~8 % over.
   // The class's best medal is kept with its board (R0.pkMed[class] 0 gold .. 2 bronze; the board's best time counts too).
   const PK_MED = { unl: [161, 168, 177], open: [176, 183, 193], ppo: [183, 191, 201], ta1: [181, 189, 199] }, PK_MED_WET = { unl: [177, 185, 195], open: [189, 197, 208], ppo: [201, 209, 220], ta1: [197, 205, 216] };
-  const PK_LEG = { unl: 'formula', open: 'ev', ppo: 'strega', ta1: 'p206' };   // the legend's car: the class's fastest on the autopilot
+  const PK_LEG = { unl: 'formula', open: 'ev', ppo: 'strega', ta1: 'levs' };   // the legend's car: the class's fastest on the autopilot
   if (!['best', 'legend', 'off'].includes(S.pkGhost)) S.pkGhost = S.ghost ? 'best' : 'off';   // Duh: moj najboljši / legenda / brez (first time: as the ghost setting)
   S.pkNotes = +S.pkNotes === 0 ? 0 : 1;   // Opozorila na ovinke (on unless turned off)
   const pkMedSet = (d) => wetRec(d) ? PK_MED_WET : PK_MED;
@@ -2439,7 +2453,7 @@
   const NET_V = 1;   // message format; together with the game's own version (the stamps of all its scripts) both phones must match
   const gameVer = () => { let h = 2166136261; for (const s of document.querySelectorAll('script[src]')) for (const ch of s.getAttribute('src')) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return NET_V + '/' + (h >>> 0).toString(36); };
   const netTracks = () => Core.TRACKS.filter(d => !d.timeTrial);   // the tracks that race (the hill climb and the rally stage are runs for one; Vršič: the race up the pass)
-  const modelById = (id) => Core.MODELS.find(m => m.id === id) || Core.MODELS[0];
+  const modelById = (id) => { const M = Core.MODELS.find(m => m.id === id); return M ? Core.heirOf(M) : Core.MODELS[0]; };   // (a stored or sent id: a ghost's, a legend's, the friend's car; a retired model's is its heir)
   const NET_ERR = {
     'peer-unavailable': 'Sobe s to kodo ni. Preveri kodo (prijatelj mora imeti sobo odprto).',
     'browser-incompatible': 'Ta brskalnik ne podpira dirke s prijateljem. Odpri igro v Chromu ali Safariju.',
@@ -3044,7 +3058,7 @@
         get qual() { return qual && { id: qual.id, cr: qual.cr, seed: qual.seed, rain: qual.rain, sims: qual.sims ? qual.sims.k : 0, n: qual.nAI, lap: qual.lap, grid: qual.res ? qual.res.grid : 0 }; },
         get adapt() { return { dyn: Render.getDynScale(), shadowsOn: shadowsOn(), auto: autoNoShadows, pending: perf.pending, restore: perf.restore, keep: perf.keep, check: perf.check }; },
         get net() { return mp ? { role: mp.role, code: mp.code, open: Net.open, synced: Net.synced, peer: mp.peer, track: mp.track, laps: mp.laps, race: mp.race && { at: mp.race.at, goAt: mp.race.goAt, mine: mp.race.mine, theirs: mp.race.theirs, left: mp.race.left, got: mp.race.buf.length, frameT: mp.race.frameT, startT: mp.race.startT } } : null; },
-        now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get demoModel() { return demoM && demoM.id; }, get carOrder() { return ORDER.map(i => Core.MODELS[i].id); }, get replay() { return replay && { t: replay.t, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; },
+        now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get demoModel() { return demoM && demoM.id; }, get carOrder() { return ORDER.map(i => Core.MODELS[i].id); }, get ghost() { return ghPlay && { car: ghPlay.M.id, name: ghPlay.M.name, t: ghPlay.t, lap: ghPlay.lap }; }, get replay() { return replay && { t: replay.t, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; },
         sim(sec, auto, steer) { pkFlySkip(); /* (a simulated race starts without Pikes Peak's flyover) */ const inp = { steer: steer || 0, thr: 1, brk: 0, hand: 0, digital: true }; for (let t = 0; t < sec && race; t += STEP) { if (auto) { Core.aiControl(race.player, race, STEP); inp.steer = race.player.inSteer; inp.thr = race.player.inThr; inp.brk = race.player.inBrk; } if (phase !== 'done') updatePhase(STEP, inp); stepRace(STEP, inp); } } };
     } catch (e) {
       console.error(e);

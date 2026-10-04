@@ -132,7 +132,7 @@ Na naslovnem zaslonu tapni **Prvenstvo** in izberi serijo dirk: **Domači pokal*
 Gumb **Kariera** na naslovnem zaslonu odpre kariero: z dirkami služiš denar, z njim kupuješ avte in nadgradnje. **Začni kariero** ti da 10.000 € in avto PICO TURBO. Dokler je kariera vklopljena, gumb na naslovnem zaslonu kaže, koliko denarja imaš (npr. »Kariera · 12.300 €«).
 
 - **Nagrade:** po vsaki dirki (tudi v prvenstvu) dobiš denar glede na mesto (zmagovalec 6.000 €, zadnji 300 €). Daljša dirka prinese več (dirka na 2 km 0,6-krat toliko, na 8 km enkrat, največ 2,5-krat), težja težavnost tudi (lahka 0,7-krat, težka 1,4-krat). Za najhitrejši krog dirke dobiš še 500 €, za prvo štartno mesto v kvalifikacijah 1.000 €. Naslov prvaka prinese 20.000 €, 2. mesto v prvenstvu 10.000 € in 3. mesto 6.000 € (pomnoženo s težavnostjo). Na kronometrih dobiš 5.000 €, 3.000 € ali 1.500 € za zlato, srebrno ali bronasto medaljo, 2.000 € za osebni rekord, sicer 500 €. Nagrada piše na zaslonu z rezultati.
-- **Avti:** v izbiri avta imajo avti, ki jih še nimaš, ceno (PEUGEOT 206 20.000 €, KAZE RS 30.000 €, VIHAR V8 40.000 €, STREGA MR 45.000 €, VORTEX 4WD 50.000 €, SAMUM 4x4 55.000 €, BURJA R7 60.000 €, STRELA EV 75.000 €, FORMULA ORKAN 90.000 €, TAIFUN LM 110.000 €), gumb Naprej pa postane **Kupi**. Z avtom, ki ga nimaš, ne moreš dirkati.
+- **Avti:** v izbiri avta imajo avti, ki jih še nimaš, ceno (LEV S 20.000 €, KAZE RS 30.000 €, VIHAR V8 40.000 €, STREGA MR 45.000 €, VORTEX 4WD 50.000 €, SAMUM 4x4 55.000 €, BURJA R7 60.000 €, STRELA EV 75.000 €, FORMULA ORKAN 90.000 €, TAIFUN LM 110.000 €), gumb Naprej pa postane **Kupi**. Z avtom, ki ga nimaš, ne moreš dirkati.
 - **Nadgradnje:** vsaka stopnja stane 4.000 €, 7.000 € ali 12.000 € (cena je napisana na gumbu; preskočene stopnje se plačajo zraven). Kupljenih delov ne moreš prodati.
 - **Izklopi kariero** te vrne v prosto igro z vsemi avti in brezplačnimi nadgradnjami (te so ločene od kariere). Kariera ostane shranjena in jo kasneje nadaljuješ. **Nova kariera** (dvakrat tapni) začne znova.
 
@@ -320,7 +320,6 @@ Igra ne potrebuje namestitve ali prevajanja: `index.html` naloži datoteke po vr
 | `js/core.js` | proge, fizika (Circuit Superstars, oprijem v dežju), AI, pravila dirke in prvenstva, promet in pešci na odprti cesti, policija (brez DOM in three.js) |
 | `js/tex.js` | proceduralne teksture |
 | `js/world.js` | 3D svet prog (teren, drevesa, gledalci, rekviziti, boksi); Nordschleife in Red Bull Ring si delita gradnjo terena iz višinskih podatkov, Vršič ima svojega graditelja (teren iz višinskega modela, raba tal, stavbe, jesenski gozd in sneg) |
-| `js/data/p206.js` | 3D model Peugeota 206 |
 | `js/render.js` | izris, avti, delci, kamere, mehaniki v boksih, dež (curki, pršec, mokra cesta, oblačno nebo), promet, pešci, patrulje in bodičasti trakovi |
 | `js/sfx.js`, `js/input.js`, `js/comm.js` | zvok, upravljanje, komentator |
 | `js/net.js`, `js/vendor/peerjs.min.js` | povezava dveh telefonov za dirko s prijateljem (soba s kodo, usklajena ura); knjižnica PeerJS (MIT) |
@@ -341,7 +340,6 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 
 ## Zasluge
 
-- Avto PEUGEOT 206: 3D model [„Peugeot 206“](https://sketchfab.com/) avtorja **Alvier** (Sketchfab), licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Model je poenostavljen in shranjen v `js/data/p206.js`.
 - Povezava telefonov: knjižnica [PeerJS](https://peerjs.com) 1.5.5 (Michelle Bu, Eric Zhang in sodelavci), licenca MIT, shranjena v `js/vendor/peerjs.min.js`. Za iskanje sobe in posredovanje uporablja brezplačni javni strežnik PeerJS.
 - Proga Nordschleife (sredinska črta, raba tal, stavbe, mostovi, imena ovinkov): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors. Podatki so vzeti iz OpenStreetMap, ki je na voljo pod licenco [Open Database License (ODbL) 1.0](https://opendatacommons.org/licenses/odbl/1-0/). Iz njih izpeljani podatki v `js/tracks/nring.js` so prav tako na voljo pod ODbL 1.0.
 - Višine Nordschleife: SRTM (NASA/USGS, javna domena) in Copernicus DEM GLO-30: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.

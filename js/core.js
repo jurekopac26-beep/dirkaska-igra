@@ -676,13 +676,15 @@ const Core = (function () {
     gears: [3.1, 2.05, 1.5, 1.17, 0.95, 0.8], final: 4.2, rw: 0.31,
     gripF: 1.03, gripR: 1.1, cDrag: 0.44, down: 0.22, brake: 12.2, steerMax: 0.64,
     driftLoss: 0.3, len: 3.95, wid: 1.80, body: 'rally', num: 7, stats: { power: 9, grip: 8, weight: 8, drift: 9 } });
-  // Peugeot 206 with a real 3D model ("Peugeot 206" by Alvier, CC BY 4.0) - player only, drawn from the embedded P206 mesh
-  MODELS.push({ id: 'p206', name: 'PEUGEOT 206', drive: 'FF', desc: 'Francoski hot hatch s krilom',
+  // the retired model at index 5 (retired: in no menu, garage, picker or AI field; kept in its place, its physics as they were, so old
+  // saves, records and ghosts still find it and still drive). heir: the vehicle that took its place, the LEV S (js/cars/levs.js): a
+  // stored id or index of this one loads as that one, a career that owned it owns that one, its records and ghosts are that one's, the
+  // renderer draws it as that one (heirOf). Its ARC / CSP / career entries stay under its id (never shown)
+  MODELS.push({ id: 'p206', name: 'LEV S', drive: 'FF', desc: 'Upokojen model: nadomešča ga LEV S',
     mass: 1080, a: 1.15, b: 1.32, hcg: 0.47, kI: 1.12, kw: 250, redline: 7600, idle: 950,
     gears: [3.40, 2.15, 1.55, 1.20, 0.98, 0.83], final: 4.2, rw: 0.32,
     gripF: 1.05, gripR: 1.12, cDrag: 0.40, down: 0.22, brake: 12.0, steerMax: 0.64,
-    driftLoss: 0.36, len: 3.85, wid: 1.74, body: 'hatch', glb: 'p206', stats: { power: 7, grip: 8, weight: 8, drift: 5 },
-    credit: 'Model: \u201ePeugeot 206\u201c, avtor Alvier (Sketchfab), licenca CC BY 4.0' });
+    driftLoss: 0.36, len: 3.85, wid: 1.74, body: 'hatch', retired: true, heir: 'levs', stats: { power: 7, grip: 8, weight: 8, drift: 5 } });
   // open-wheel formula car (every track): light, 1000 KM, high revs. Its wings press it onto the road harder the faster it goes (aero:
   // the downforce of the aero upgrade, on top of it); carbon brakes (brakeK) and more traction (tracK) than the road cars; slicks: little
   // grip on grass, gravel and makadam (loose). A wing knocked off costs downforce until the pit repair (applyDamage). engHz: its engine
@@ -745,6 +747,12 @@ const Core = (function () {
   ];
   { const C0 = { pico: 'mali', p206: 'mali', kaze: 'sportni', vortex: 'sportni', strega: 'super', rally: 'reli', formula: 'dirkalni', lm: 'dirkalni', muscle: 'klasika', ev: 'elektricni', truck: 'teren' };
     for (const M of MODELS) M.cat = C0[M.id]; }   // (not a Car field: the golden digests never see a model's own keys)
+  // the model that stands for M wherever a stored id or index names it (the game's saves, records, ghosts, an online friend's car; the
+  // renderer's look): a retired model's heir (model.heir: a vehicle's id; followed while that one is retired too), else M itself
+  function heirOf(M) {
+    for (let n = 0; M && M.retired && M.heir && n < 8; n++) { const H = MODELS.find(m => m.id === M.heir); if (!H || H === M) break; M = H; }
+    return M;
+  }
   // the engine sound presets a vehicle may name (def.snd.kind; Sfx implements every one): straight 2-6, flat 4 / 6, rotary, V8 (cross-plane),
   // v8fp flat-plane, v8hi 1960s high-revving, v8s supercharged methanol (blower whine), V10, V12, i8s 1930s supercharged straight-8, diesel,
   // kart2t two-stroke kart, hybrid (V8 + motor whine), ev (motors only)
@@ -2532,7 +2540,7 @@ const Core = (function () {
   const CAR_NUMS = [7, 3, 11, 21, 5, 44, 9, 16, 27, 8, 12, 33, 2, 55, 14, 23, 31, 46, 63, 77, 88];   // by grid slot (the player's own number replaces the one of its slot)
   // the AI drivers in grid order (the fastest first): name, car and colour are the same in every race (a championship's standings follow them).
   // Their cars (aiModel, the one place that picks them): the field of the player's vehicle (pm.field: ids; left out: a retired model, and
-  // one with a glb player-only skin and no render look of its own for the AI's cars (def.look: the PEUGEOT 206 once its loft is there);
+  // one with a glb player-only skin and no render look of its own for the AI's cars (def.look);
   // a field left empty: none), driver k in field[k % n]; without a vehicle or a field, the four road cars in turn (MODELS[(k * 3 + 1) % 4],
   // the same objects as always)
   const aiBody = (M) => !M.glb || !!(M.def && M.def.look);
@@ -3371,7 +3379,7 @@ const Core = (function () {
      --------------------------------------------------------------------- */
   const DEFS = (typeof VEHICLE_DEFS !== 'undefined' ? VEHICLE_DEFS : []).slice(), DEFS_SKIPPED = [];
   const DRIVES = ['FR', 'FF', 'MR', 'AWD', 'RR'], PK_IDS = ['ta1', 'ppo', 'open', 'unl'];
-  const BODY_KEYS = ['coupe', 'sedan', 'hatch', 'wedge', 'rally', 'formula', 'lm', 'muscle', 'ev', 'truck', 'p206'];   // (the renderer's body names: no vehicle's id)
+  const BODY_KEYS = ['coupe', 'sedan', 'hatch', 'wedge', 'rally', 'formula', 'lm', 'muscle', 'ev', 'truck'];   // (the renderer's body names: no vehicle's id)
   const PHYS_REQ = ['mass', 'a', 'b', 'kI', 'kw', 'redline', 'idle', 'gears', 'final', 'rw', 'cDrag', 'len', 'wid', 'steerMax'];
   const PHYS_OPT = { tracK: [0.2, 3], brakeK: [0.2, 3], spinK: [0.02, 3], aero: [0, 0.0005], loose: [0.2, 2], looseDrag: [0.1, 2], landV: [3, 40], landK: [0, 2], ev: null, sway: [0, 4],
     dmgK: [0.3, 2], vLim: [20, 400], aiGap: [2, 10], aiPass: [2, 8], aiEdge: [0.5, 4], aiLat: [1, 8], aiFol: [1, 6], circ: [3, 9] };
@@ -3494,7 +3502,7 @@ const Core = (function () {
 
   return { G, clamp, lerp, wrapPi, sstep, rng, Track, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, DRIVER_NAMES, UPG, upgMods, upgStats, CSK, CSP, CSASSIST, CSSURF,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, CAREER, careerPrize, careerUpgPrice,
-    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, aiModel, fieldSize, statsOf, ARC };
+    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, wreckCar, aiModel, fieldSize, statsOf, ARC, heirOf };
 })();
 
 

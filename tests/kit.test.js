@@ -22,7 +22,7 @@ let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const t0 = Date.now();
 
-// js/world.js, the 206's data and js/render.js in one sandbox with three.js and the Core (the page's order); a window and a document
+// js/world.js and js/render.js in one sandbox with three.js and the Core (the page's order); a window and a document
 // only as far as loading them needs (no renderer: Render.init is never called)
 function loadRender() {
   const THREE = require(path.join(ROOT, 'js/vendor/three.r128.min.js'));
@@ -30,7 +30,7 @@ function loadRender() {
     atob: (b) => Buffer.from(b, 'base64').toString('binary'), performance: { now: () => 0 }, requestAnimationFrame() {},
     window: { innerWidth: 800, innerHeight: 450, addEventListener() {} }, document: { createElement: () => ({ getContext: () => null, width: 0, height: 0 }) } };
   ctx.globalThis = ctx; vm.createContext(ctx);
-  for (const [f, name] of [['js/world.js', 'World'], ['js/data/p206.js', 'P206_MODEL'], ['js/render.js', 'Render']]) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8') + `\n;globalThis.${name} = ${name};`, ctx, { filename: f });
+  for (const [f, name] of [['js/world.js', 'World'], ['js/render.js', 'Render']]) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8') + `\n;globalThis.${name} = ${name};`, ctx, { filename: f });
   return ctx;
 }
 const warn = console.warn; console.warn = () => { };   // (the place-holders' fallback warnings when their bodies register)
