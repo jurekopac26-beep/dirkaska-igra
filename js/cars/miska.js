@@ -86,10 +86,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.rect(1.493, 0.47, sd * 0.43, 0.075, 0.035, K.rgb(0xff9a1e), { host: f });         // the indicator under it
         }
         for (const z of [-0.3, 0.12]) K.bar([0.66, 0.876, z - 0.2], [0.63, 0.886, z + 0.2], 0.009, B, { n: 4, part: 'body' });   // the wipers
-        // ---- the bullet mirrors on the front wings (mirrorL / mirrorR) on their stalks ----
-        for (const sd of [-1, 1]) { const m = sd < 0 ? 'mirrorL' : 'mirrorR', y0 = top(0.99, 0.52);
-          K.mirror(0.98, y0 + 0.075, sd * 0.52, { w: 0.06, h: 0.055, d: 0.09, col: CH, z0: sd * 0.52 });
-          K.bar([0.99, y0 - 0.01, sd * 0.52], [0.985, y0 + 0.055, sd * 0.52], 0.01, CH, { n: 4, part: m }); }
+        // ---- the bullet mirrors on the front wings (mirrorL / mirrorR): chrome, the glass their back face, on stalks ----
+        for (const sd of [-1, 1]) { const part = sd < 0 ? 'mirrorL' : 'mirrorR', y0 = top(0.99, 0.52), y = y0 + 0.075, z = sd * 0.52;
+          K.cyl([1.03, y, z], [0.95, y, z], 0.018, CH, { r2: 0.034, n: 6, capB: [0.42, 0.47, 0.54], part });
+          K.bar([0.99, y0 - 0.01, z], [0.985, y - 0.02, z], 0.01, CH, { n: 4, part }); }
         // ---- the flares over the wheels pushed to the corners (paint, riveted on) ----
         for (const A of K.arches) for (const sd of [-1, 1]) K.flare(A.x, 0.31, 0.37, sd * 0.6, sd * 0.685, P, { n: 5 });
         // ---- the livery: a stripe along the sills, a roundel with the number on each (rear-hinged) door, its handle at the front edge ----
@@ -126,20 +126,25 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           // the stays: from the lid's lower corners down to the bay's edge
           for (const sd of [-1, 1]) { const q = rot([lidC[2][0] + 0.03, lidC[2][1] + 0.01, sd * 0.3]); K.bar(q, [-1.425, 0.61, sd * 0.31], 0.01, CH, { n: 4 }); }
         }, { hinge: [[H[0], H[1], -0.3], [H[0], H[1], 0.3]] });
-        // ---- the twin in the open bay (the outer shell: in sight under the lid): its block, the cooling shroud, the air filter ----
+        // ---- the twin in the open bay (the outer shell: in sight under the lid): its block, the cooling shroud, the air filter, the coil ----
         K.part('body', () => {
           K.box(-1.29, 0.26, 0, 0.2, 0.22, 0.5, 0, AL, null, true);                           // the crankcase, the finned sump
           K.box(-1.29, 0.48, 0.02, 0.2, 0.16, 0.44, 0, EB, null, true);                       // the cooling shroud over the cylinders
-          K.cyl([-1.29, 0.64, -0.1], [-1.29, 0.7, -0.1], 0.1, CH, { n: 8, capA: null });       // the air filter, chrome
+          K.cyl([-1.29, 0.64, -0.08], [-1.29, 0.7, -0.08], 0.115, CH, { n: 8, capA: null });   // the air filter, chrome
+          K.box(-1.3, 0.64, 0.17, 0.09, 0.07, 0.1, 0, [0.72, 0.1, 0.08], null, true);        // the coil (red)
         });
         // ---- hinges: the front lid at the cowl ----
         K.hinge('hood', [0.63, 0.87, -0.45], [0.63, 0.87, 0.45]);
-        // ---- inside (seen once a part is off): the seats, the roll hoop behind them, the painted dash, the luggage well (the spare lying
-        //      in it, the fuel tank) ----
+        // ---- inside (seen once a part is off): the seats, the roll hoop behind them, the painted dash and the wheel, the luggage well (the
+        //      spare lying in it, the fuel tank) ----
         for (const sd of [-1, 1]) K.seat(-0.22, 0.46, sd * 0.28, { w: 0.42, l: 0.42, back: 0.58 });
         K.seat(-0.78, 0.44, 0, { w: 0.92, l: 0.34, back: 0.42 });
         K.cage([[[-0.5, 0.3, -0.52], [-0.5, 1.1, -0.44]], [[-0.5, 1.1, -0.44], [-0.5, 1.1, 0.44]], [[-0.5, 1.1, 0.44], [-0.5, 0.3, 0.52]], [[-0.5, 1.08, -0.4], [-0.95, 0.62, -0.42]], [[-0.5, 1.08, 0.4], [-0.95, 0.62, 0.42]]], 0.022, [0.85, 0.86, 0.88]);
         K.box(0.5, 0.66, 0, 0.12, 0.12, 1.1, 0, P, null, false, { inner: true, part: 'body' });
+        K.inner(() => K.part('body', () => {   // the big thin steering wheel (left-hand drive), its column to the dash
+          const C = [0.27, 0.8, -0.28], R = 0.17, a = 0.45, pt = (t) => [C[0] + Math.sin(a) * R * Math.sin(t), C[1] + Math.cos(a) * R * Math.sin(t), C[2] + R * Math.cos(t)];
+          for (let i = 0; i < 8; i++) K.bar(pt(i * Math.PI / 4), pt((i + 1) * Math.PI / 4), 0.012, B, { n: 3 });
+          K.bar([0.48, 0.66, -0.28], C, 0.016, [0.3, 0.3, 0.32], { n: 4 }); }));
         K.tyre(1.12, 0.36, -0.12, { axis: 'y', inner: true, part: 'body' });
         K.box(1.0, 0.3, 0.33, 0.3, 0.32, 0.22, 0, [0.42, 0.43, 0.45], null, false, { inner: true, part: 'body' });
       },
