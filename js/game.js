@@ -572,7 +572,7 @@
   const priceOf = (id) => Core.CAREER.car[id] || 0;
   const ORDER = Core.MODELS.map((M, i) => i).filter(i => !Core.MODELS[i].retired).sort((a, b) => { const A = Core.MODELS[a], B = Core.MODELS[b];
     return catIx(A) - catIx(B) || priceOf(A.id) - priceOf(B.id) || (A.id < B.id ? -1 : A.id > B.id ? 1 : 0); });
-  const catName = (M) => { const c = Core.CATS.find(x => x.id === M.cat); return c ? c.name : ''; };
+  const catName = (M) => { const c = Core.CATS.find(x => x.id === M.cat); return c ? tr(c.name) : ''; };   // (in the chosen language: Mali avti, Small cars)
   const catCars = (cat) => ORDER.filter(i => Core.MODELS[i].cat === cat);
   const catList = () => Core.CATS.filter(c => ORDER.some(i => Core.MODELS[i].cat === c.id));
   const catPick = {};   // (the car last looked at in each category, this visit)
@@ -611,9 +611,9 @@
   let stripKey = '';
   function buildCarNav(M) {
     const cats = $('car-cats'), strip = $('car-strip');
-    if (!cats.children.length) cats.innerHTML = catList().map(c => '<button class="cat-chip" data-cat="' + c.id + '">' + esc(c.name) + '</button>').join('');
+    if (!cats.children.length || cats.dataset.lang !== Lang.cur) { cats.innerHTML = catList().map(c => '<button class="cat-chip" data-cat="' + c.id + '">' + esc(tr(c.name)) + '</button>').join(''); cats.dataset.lang = Lang.cur; }   // (built anew in the other language)
     let cSel = null; for (const b of cats.children) { const on = b.dataset.cat === M.cat; b.classList.toggle('sel', on); if (on) cSel = b; }
-    const L = catCars(M.cat), key = M.cat + '|' + (inCareer() ? career.cars.join() + '|' + career.money : '-');
+    const L = catCars(M.cat), key = M.cat + '|' + Lang.cur + '|' + (inCareer() ? career.cars.join() + '|' + career.money : '-');   // (the prices: 12.300 € / €12,300)
     if (key !== stripKey) {   // (another category, or the career's garage changed: the strip anew; else only the chosen chip moves)
       const padOn = padSel && padSel.parentElement === strip;
       strip.innerHTML = L.map(i => carChip(i, i === S.car)).join(''); stripKey = key;
@@ -1086,7 +1086,7 @@
       tr('V karieri z dirkami, prvenstvi in kronometri služiš denar: več za boljše mesto, daljšo dirko in težje nasprotnike, še več za najhitrejši krog, prvo štartno mesto, naslov prvaka in medalje. ') +
       tr('Z denarjem kupuješ avte in nadgradnje. Začneš z {0} in avtom {1}.', eur(C.start), Core.MODELS.find(m => m.id === C.car0).name) + (on ? '' : career ? tr(' Kariera je zdaj izklopljena: voziš prosto, z vsemi avti.') : '');
     // the garage: every car by category (the display order: in each the cheapest first), the ones bought marked
-    $('career-garage').innerHTML = catList().map(c => '<h4 class="gcat">' + esc(c.name) + '</h4>' + catCars(c.id).map(i => { const m = Core.MODELS[i], own = career && career.cars.includes(m.id);
+    $('career-garage').innerHTML = catList().map(c => '<h4 class="gcat">' + esc(tr(c.name)) + '</h4>' + catCars(c.id).map(i => { const m = Core.MODELS[i], own = career && career.cars.includes(m.id);
       return '<div class="gcar' + (own ? ' own' : '') + '" data-g="' + c.id + '"><b>' + esc(m.name) + '</b>' + (own ? tr('v garaži') : '<span class="pr">' + eur(priceOf(m.id)) + '</span>') + '</div>'; }).join('')).join('');
     $('career-toggle').textContent = tr(!career ? 'Začni kariero' : on ? 'Izklopi kariero' : 'Nadaljuj kariero');
     $('career-reset').classList.toggle('off', !career); $('career-reset').textContent = tr('Nova kariera');
@@ -3244,15 +3244,15 @@
     const key = show ? (dead ? 'd' : 'w') + (btn ? 'b' : '') + (run ? 'r' : '') : '';
     if (key === wreckKey) return; wreckKey = key; retireT = 0;
     $('h-wreck').classList.toggle('show', show); if (!show) return;
-    $('h-wreck-t').textContent = dead ? 'VOZILO UNIČENO' : 'KOLO JE ODPADLO';
-    const b = $('btn-retire'); b.classList.toggle('off', !btn); b.textContent = run ? $('pause-restart').textContent : 'Odstopi';
+    $('h-wreck-t').textContent = tr(dead ? 'VOZILO UNIČENO' : 'KOLO JE ODPADLO');
+    const b = $('btn-retire'); b.classList.toggle('off', !btn); b.textContent = run ? $('pause-restart').textContent : tr('Odstopi');
   }
   function retireTap(btn) {   // Odstopi: the first tap asks, a second one within 4 s retires
     if (!canRetire()) return;
     if (Date.now() - retireT < 4000) { retireT = 0; retirePlayer(); return; }
-    retireT = Date.now(); if (btn) btn.textContent = 'Res odstopiš?';
-    toast('Tapni še enkrat, če res odstopiš: dirka je zate končana.', 3400);
-    setTimeout(() => { if (retireT && Date.now() - retireT >= 3900) { retireT = 0; for (const b of [$('btn-retire'), $('pause-retire')]) if (b.textContent === 'Res odstopiš?') b.textContent = 'Odstopi'; } }, 4000);
+    retireT = Date.now(); if (btn) btn.textContent = tr('Res odstopiš?');
+    toast(tr('Tapni še enkrat, če res odstopiš: dirka je zate končana.'), 3400);
+    setTimeout(() => { if (retireT && Date.now() - retireT >= 3900) { retireT = 0; for (const b of [$('btn-retire'), $('pause-retire')]) if (b.textContent === tr('Res odstopiš?')) b.textContent = tr('Odstopi'); } }, 4000);
   }
   function retirePlayer() {   // out of the race (Race.retire: the car pulls off onto the run-off and stands, Odstop last in the results)
     race.retire(race.player);

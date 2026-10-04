@@ -107,24 +107,35 @@ try {
     T.check('the retired model at index 5 never listed: not in the display order, never reached by the arrows either way',
       ord.retired.join() === 'p206' && ord.retired.every(id => !ord.game.includes(id) && !ord.seen.includes(id) && !ord.back.includes(id)) && ord.game.includes('levs'), JSON.stringify(ord.retired));
 
-    // 5. the online picker in the same order (a room made without the network: Net stood in for)
-    const net = await page.evaluate(() => {
-      const g = window.__game, keep = { available: Net.available, host: Net.host, send: Net.send, close: Net.close }, sent = [];
-      Net.available = () => true; Net.host = () => { }; Net.send = (m) => sent.push(m); Net.close = () => { };
-      try {
-        g.onAction('to-online'); g.onAction('net-host');
-        g.S.car = Core.MODELS.findIndex(m => m.id === 'pico'); const ids = [];
-        for (let k = 0; k < 6; k++) { g.onAction('net-car-next'); ids.push(Core.MODELS[g.S.car].id); }
-        g.onAction('net-car-prev'); const prev = Core.MODELS[g.S.car].id;
-        const shown = document.getElementById('on-mycar').textContent;
-        g.onAction('net-leave');
-        return { ids, prev, shown, sent: sent.filter(m => m.t === 'me').map(m => m.car) };
-      } finally { Object.assign(Net, keep); }
+    // 5. the online picker in the same order (a room made without the network: Net stood in for, one friend in it): the arrows, every
+    //    vehicle in turn round the whole order, X / Y on the pad the category before / after; the friend told each time (the host sends
+    //    the room's list round, with its car in it)
+    await page.evaluate(() => {
+      const K = window.__netKeep = { available: Net.available, host: Net.host, send: Net.send, sendTo: Net.sendTo, close: Net.close, ids: Object.getOwnPropertyDescriptor(Net, 'ids') };
+      window.__sent = []; Net.available = () => true; Net.host = () => { }; Net.send = (m) => window.__sent.push(JSON.parse(JSON.stringify(m))); Net.sendTo = (id, m) => window.__sent.push(JSON.parse(JSON.stringify(m))); Net.close = () => { };   // (as sent: a copy)
+      Object.defineProperty(Net, 'ids', { configurable: true, get: () => ['g1'] });
+      const g = window.__game; g.onAction('to-online'); g.onAction('net-host'); if (!K.ids) throw new Error('Net.ids');
     });
+    const told = () => page.evaluate(() => window.__sent.filter(m => m.t === 'roster' || m.t === 'me').map(m => m.t === 'me' ? m.car : (m.list.find(p => p.id === 'h') || {}).car));
+    const net = await page.evaluate(() => {
+      const g = window.__game; g.S.car = Core.MODELS.findIndex(m => m.id === 'pico'); window.__sent.length = 0; const ids = [];
+      for (let k = 0; k < 6; k++) { g.onAction('net-car-next'); ids.push(Core.MODELS[g.S.car].id); }
+      g.onAction('net-car-prev'); const prev = Core.MODELS[g.S.car].id, shown = document.getElementById('on-mycar').textContent;
+      const all = []; for (let k = 0; k < g.carOrder.length; k++) { g.onAction('net-car-next'); all.push(Core.MODELS[g.S.car].id); }   // (round the whole order once)
+      return { ids, prev, shown, n: g.carOrder.length, every: all.slice().sort().join() === g.carOrder.slice().sort().join(), round: Core.MODELS[g.S.car].id === prev };
+    });
+    const netSent = await told();
+    await page.evaluate(() => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === 'pico'); window.__sent.length = 0; });
+    const onCat = () => page.evaluate(() => ({ id: Core.MODELS[window.__game.S.car].id, cat: Core.MODELS[window.__game.S.car].cat, shown: document.getElementById('on-mycar').textContent, name: Core.MODELS[window.__game.S.car].name }));
+    await press(3); const ny = await onCat(); await press(2); const nx = await onCat(); const padSent = await told();
+    await page.evaluate(() => { const g = window.__game, K = window.__netKeep; g.onAction('net-leave'); Object.assign(Net, { available: K.available, host: K.host, send: K.send, sendTo: K.sendTo, close: K.close }); Object.defineProperty(Net, 'ids', K.ids); });
     const netWant = await page.evaluate((src) => { const want = (0, eval)('(' + src + ')')(), i = want.indexOf('pico'); return [1, 2, 3, 4, 5, 6].map(k => want[(i + k) % want.length]); }, expectOrder.toString());
     const netPrev = await page.evaluate((id) => Core.MODELS.find(m => m.id === id).name, netWant[4]);
-    T.check('the online picker: the same order (from the PICO TURBO: the next six of the display order, then one back), the friend told each time',
-      net.ids.join() === netWant.join() && net.prev === netWant[4] && net.sent.join() === net.ids.concat([netWant[4]]).join() && net.shown === netPrev, JSON.stringify({ net, netWant }));
+    T.check('the online picker: the same order (from the PICO TURBO: the next six of the display order, then one back), every vehicle in turn round the whole order, the friend told each time',
+      net.ids.join() === netWant.join() && net.prev === netWant[4] && net.shown === netPrev && net.every && net.round && net.n >= 42 && netSent.slice(0, 7).join() === net.ids.concat([netWant[4]]).join() && netSent.length === 7 + net.n,
+      JSON.stringify({ net, netWant, sent: netSent.slice(0, 8) }));
+    T.check('the online picker on the pad: Y the next category\'s car (Mali avti → Športni), X back (Mali avti); the friend told',
+      ny.cat === 'sportni' && ny.shown === ny.name && nx.cat === 'mali' && nx.shown === nx.name && padSent.join() === [ny.id, nx.id].join(), JSON.stringify({ ny, nx, padSent }));
     // 5b. the championship's picker in the same order too (the arrows; Y on a pad: the next category's car)
     const chp = await page.evaluate(async () => { const g = window.__game, id = () => Core.MODELS[g.S.car].id, ids = [];
       g.onAction('to-champ'); await new Promise(r => setTimeout(r, 150)); g.S.car = Core.MODELS.findIndex(m => m.id === 'pico');
