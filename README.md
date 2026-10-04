@@ -132,8 +132,8 @@ Na naslovnem zaslonu tapni **Prvenstvo** in izberi serijo dirk: **Domači pokal*
 Gumb **Kariera** na naslovnem zaslonu odpre kariero: z dirkami služiš denar, z njim kupuješ avte in nadgradnje. **Začni kariero** ti da 10.000 € in avto PICO TURBO. Dokler je kariera vklopljena, gumb na naslovnem zaslonu kaže, koliko denarja imaš (npr. »Kariera · 12.300 €«).
 
 - **Nagrade:** po vsaki dirki (tudi v prvenstvu) dobiš denar glede na mesto (zmagovalec 6.000 €, zadnji 300 €). Daljša dirka prinese več (dirka na 2 km 0,6-krat toliko, na 8 km enkrat, največ 2,5-krat), težja težavnost tudi (lahka 0,7-krat, težka 1,4-krat). Za najhitrejši krog dirke dobiš še 500 €, za prvo štartno mesto v kvalifikacijah 1.000 €. Naslov prvaka prinese 20.000 €, 2. mesto v prvenstvu 10.000 € in 3. mesto 6.000 € (pomnoženo s težavnostjo). Na kronometrih dobiš 5.000 €, 3.000 € ali 1.500 € za zlato, srebrno ali bronasto medaljo, 2.000 € za osebni rekord, sicer 500 €. Nagrada piše na zaslonu z rezultati.
-- **Avti:** v izbiri avta imajo avti, ki jih še nimaš, ceno (LEV S 20.000 €, KAZE RS 30.000 €, VIHAR V8 40.000 €, STREGA MR 45.000 €, VORTEX 4WD 50.000 €, SAMUM 4x4 55.000 €, BURJA R7 60.000 €, STRELA EV 75.000 €, FORMULA ORKAN 90.000 €, TAIFUN LM 110.000 €), gumb Naprej pa postane **Kupi**. Z avtom, ki ga nimaš, ne moreš dirkati.
-- **Nadgradnje:** vsaka stopnja stane 4.000 €, 7.000 € ali 12.000 € (cena je napisana na gumbu; preskočene stopnje se plačajo zraven). Kupljenih delov ne moreš prodati.
+- **Avti:** v izbiri avta imajo vozila, ki jih še nimaš, ceno: od 5.000 € za kart MRAVLJA do 150.000 € za hiperšportnik ŠKORPIJON H (npr. MIŠKA 6.000 €, RAKETA 16V 14.000 €, LEV S 20.000 €, KAZE RS 30.000 €, VIHAR V8 40.000 €, TITAN 60.000 €, FORMULA ORKAN 90.000 €, TAIFUN LM 110.000 €; vse cene so v razpredelnicah v razdelku **Vozni park**). Gumb Naprej postane **Kupi**. Z avtom, ki ga nimaš, ne moreš dirkati. V garaži kariere so vsa vozila po kategorijah (v vsaki najprej najcenejše), kupljena so označena.
+- **Nadgradnje:** za vozila do 50.000 € stane vsaka stopnja 4.000 €, 7.000 € ali 12.000 €, za dražja sorazmerno več, največ dvakrat toliko (od 100.000 € naprej; zaokroženo na 100 €). Cena je napisana na gumbu, preskočene stopnje se plačajo zraven. Kupljenih delov ne moreš prodati.
 - **Izklopi kariero** te vrne v prosto igro z vsemi avti in brezplačnimi nadgradnjami (te so ločene od kariere). Kariera ostane shranjena in jo kasneje nadaljuješ. **Nova kariera** (dvakrat tapni) začne znova.
 
 ## Kvalifikacije
@@ -236,6 +236,139 @@ Na zaslonu **Izberi progo** izbereš še **letni čas** (Poletje, Jesen, Zima) i
 
 Na vseh dirkališčih se ob tribunah in gledalcih sliši množica (bobni, trobente, vzklikanje), glasneje, ko pelješ bliže, in s tiste strani, kjer so. Ob štartu, ko koga prehitiš, in v cilju zagrmi glasneje. Na cestnih kronometrih tega ni, na Ouninpohji imajo navijači ob cesti svoj zvok (glej zgoraj). V predoru pod hotelom v Monaku motor in tekmeci odmevajo od sten in stropa (kratek odmev majhnega, trdega prostora), prav tako pod mostom na Suzuki; ko pripelješ ven, odmev utihne.
 
+## Vozni park
+
+V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega tovornjaka s 1496 KM. Vsa so izmišljena: imena, oblike in napisi ne posnemajo nobene prave znamke. Vsako ima svoj 3D model, svoje vozne lastnosti (Moč, Oprijem, Lahkost, Drift), svoj zvok motorja (od dvovaljnika in dvotaktnega motorja karta do V12, rotacijskega motorja, hibrida, elektromotorja in turbo dizla tovornjaka) in se ob trkih razbija po delih (glej **Razpadanje vozil**).
+
+- **Izbira:** na vrhu zaslona za izbiro avta sta vrstici s kategorijami in z vozili izbrane kategorije (v karieri s ceno ali kljukico, če je vozilo že tvoje). ◀ ▶ listata po vozilih kategorije (pod imenom vozila piše npr. »Mali avti · 3/6«). Na igralnem plošku LB / RB listata po vozilih, X / Y pa po kategorijah. Enak vrstni red velja v garaži kariere, pri izbiri avta za prvenstvo in v dirki s prijateljem.
+- **Tekmeci:** z novimi vozili (razen SOKOL R in PANTER 6) vozijo vsi tekmeci isti model kot ti, vsak v svoji barvi in s svojo številko, tako kot s formulo in prototipom. Tovornjakov, limuzin in pošastnih tovornjakov je na progi manj (7 do 9), ker so veliki. S SOKOL R, PANTER 6 in starejšimi cestnimi avti dirkaš kot doslej proti KAZE RS, VORTEX 4WD, PICO TURBO in STREGA MR.
+- V predstavitveni dirki na naslovnem zaslonu ob vsakem obisku vozi drug, naključno izbran model.
+- Kdor je imel izbran avto, ki ga v igri ni več, ima zdaj namesto njega LEV S (tudi v karieri, z rekordi in duhom).
+
+### Mali avti
+
+| Vozilo | Pogon | Moč | Masa | Cena | Opis |
+|---|---|---|---|---|---|
+| **PICO TURBO** | prednji | 291 KM | 1040 kg | začetni | Lahek in okreten, rad podvija; začetni avto kariere. |
+| **MIŠKA** | zadnji, motor zadaj | 52 KM | 560 kg | 6.000 € | Italijanski mestni malček iz 60-ih, predelan za dirke: pokrov motorja vedno priprt. |
+| **KOLIBRI** | prednji | 64 KM | 680 kg | 8.000 € | Japonski žepni hot hatch iz 90-ih: škatlast, lahek in živahen, s strešnim spojlerjem. |
+| **RAKETA 16V** | prednji | 190 KM | 880 kg | 14.000 € | Oglat hot hatch iz 80-ih: štirje okrogli žarometi, rdeča črta na odbijačih in pragovih. |
+| **LEV S** | prednji | 340 KM | 1080 kg | 20.000 € | Lahek trivratni hatchback z velikimi mandljastimi žarometi, živahen v ovinkih. |
+| **LEV KABRIO** | prednji | 299 KM | 1150 kg | 24.000 € | Kabriolet družine LEV: kovinska streha zložena v prtljažnik, dva sedeža in roll bar. |
+
+### Športni
+
+| Vozilo | Pogon | Moč | Masa | Cena | Opis |
+|---|---|---|---|---|---|
+| **LISICA** | zadnji | 163 KM | 980 kg | 18.000 € | Lahek roadster iz leta 1990 z dvižnimi žarometi, odprto streho in varnostnim lokom. |
+| **KAZE RS** | zadnji | 356 KM | 1240 kg | 30.000 € | Rad obrne rep, rojen za drift. |
+| **SOKOL R** | zadnji | 340 KM | 1260 kg | 35.000 € | Japonski kupe z dvojnim turbo rotacijskim motorjem, dvižnimi žarometi in račjim repom. |
+| **PANTER 6** | zadnji, motor zadaj | 394 KM | 1350 kg | 48.000 € | Športni kupe z motorjem zadaj: okrogla žarometa, poševna zadnjica in kitov rep. |
+| **VORTEX 4WD** | 4WD | 404 KM | 1400 kg | 50.000 € | Veliko oprijema, stabilen tudi na robu. |
+| **JELEN GT** | zadnji | 544 KM | 1650 kg | 60.000 € | Gran turismo z V12 spredaj: dolg pokrov motorja, hiter in miren na dolgih ravninah. |
+
+### Superšportni
+
+| Vozilo | Pogon | Moč | Masa | Cena | Opis |
+|---|---|---|---|---|---|
+| **STREGA MR** | zadnji, motor na sredini | 385 KM | 1180 kg | 45.000 € | Oster in živahen, hitro zavrti. |
+| **PERUN V12** | zadnji, motor na sredini | 571 KM | 1490 kg | 85.000 € | Klinast superšportnik iz 80-ih s škarjastimi vrati, dovodi NACA in ogromnim krilom. |
+| **MODRAS V10** | 4WD | 639 KM | 1450 kg | 110.000 € | Sodoben superšportnik z V10 na sredini in ostrimi šesterokotnimi linijami. |
+| **ŠKORPIJON H** | 4WD | 925 KM | 1550 kg | 150.000 € | Hibridni hiperšportnik: izpuha na vrhu, nizka kabina, krila ga držijo ob cesti. |
+
+### Klasika
+
+| Vozilo | Pogon | Moč | Masa | Cena | Opis |
+|---|---|---|---|---|---|
+| **BLISK 30** | zadnji | 136 KM | 750 kg | 30.000 € | Dirkalnik za veliko nagrado iz 30-ih: ovalna maska, žična kolesa in čolnast rep. |
+| **JASTREB 6** | zadnji | 272 KM | 1250 kg | 40.000 € | Britanski GT iz 60-ih: dolg pokrov motorja, ovalna maska in žična platišča. |
+| **VIHAR V8** | zadnji | 517 KM | 1540 kg | 40.000 € | Ameriški »muscle car« iz 70-ih z velikim V8 (glej spodaj). |
+| **GAD 7L** | zadnji | 408 KM | 1100 kg | 55.000 € | Ameriški roadster iz 60-ih z velikim V8, stranskimi izpuhi in razširjenimi blatniki. |
+
+### Reli
+
+| Vozilo | Pogon | Moč | Masa | Cena | Opis |
+|---|---|---|---|---|---|
+| **LEV R** | 4WD | 408 KM | 1230 kg | 45.000 € | Relijski dirkač za svetovno prvenstvo: široki blatniki, veliko krilo, zajemalka na strehi. |
+| **BURJA R7** | 4WD | 394 KM | 1150 kg | 60.000 € | Relijski dirkač iz 80-ih, ogromno moči, rojen za drift. |
+| **ZMAJ 85** | 4WD | 476 KM | 1090 kg | 75.000 € | Relijska pošast skupine B iz leta 1985: kratka medosna razdalja in ogromna krila. |
+
+### Terenski
+
+| Vozilo | Pogon | Moč | Masa | Cena | Opis |
+|---|---|---|---|---|---|
+| **SKAKAČ 1600** | zadnji, motor zadaj | 150 KM | 850 kg | 16.000 € | Puščavski skakač z motorjem zadaj: dolg hod vzmetenja, zunanja kletka in luči na strehi. |
+| **GOZDAR** | zadnji | 517 KM | 1360 kg | 50.000 € | Dirkalni poltovornjak za kratke terenske steze z velikim krilom na kesonu. |
+| **MEDVED 4x4** | 4WD | 585 KM | 2300 kg | 50.000 € | Škatlast luksuzni terenec z rezervnim kolesom na zadnjih vratih in strešnim nosilcem. |
+| **PEŠČENJAK** | zadnji, motor na sredini | 354 KM | 1500 kg | 55.000 € | Puščavski buggy za maratonske relije: cevni okvir, rezervni kolesi in dihalka. |
+| **SAMUM 4x4** | 4WD | 571 KM | 1850 kg | 55.000 € | Terenski dirkalni tovornjak za makadam in puščavo (glej spodaj). |
+
+### Dirkalni
+
+| Vozilo | Pogon | Moč | Masa | Cena | Opis |
+|---|---|---|---|---|---|
+| **MRAVLJA** | zadnji, motor zadaj | 30 KM | 165 kg | 5.000 € | Dirkalni kart: voznik na očeh, stranska oklepa in sprednji spojler. |
+| **KOZOROG TC** | prednji | 354 KM | 1180 kg | 55.000 € | Turistični dirkalnik: široki blatniki, spojler spredaj in krilo zadaj. |
+| **TORNADO V8** | zadnji | 762 KM | 1550 kg | 65.000 € | Ameriški dirkalnik za ovale z velikimi številkami in mrežami na oknih. |
+| **STRELICA 61** | zadnji, motor na sredini | 190 KM | 460 kg | 70.000 € | Cigarast dirkalnik formule iz zgodnjih 60-ih: odprta kolesa in izpušne cevi. |
+| **TIGER GT** | zadnji | 551 KM | 1300 kg | 85.000 € | Dirkalnik GT z dolgim pokrovom motorja, velikim krilom in difuzorjem. |
+| **BIZON 70** | zadnji, motor na sredini | 748 KM | 750 kg | 90.000 € | Odprt dirkalnik iz leta 1970 z velikim motorjem in visokim krilom na nosilcih. |
+| **FORMULA ORKAN** | zadnji, motor na sredini | 1000 KM | 798 kg | 90.000 € | Dirkalnik formule z odprtimi kolesi in krili (glej spodaj). |
+| **TAIFUN LM** | zadnji, motor na sredini | 762 KM | 960 kg | 110.000 € | Prototip za vzdržljivostne dirke (glej spodaj). |
+
+### Tovornjaki
+
+| Vozilo | Pogon | Moč | Masa | Cena | Opis |
+|---|---|---|---|---|---|
+| **TITAN** | zadnji | 1115 KM | 5300 kg | 60.000 € | Dirkalni tovornjak: kabina nad motorjem, strešni deflektor in omejilnik pri 160 km/h. |
+| **KAMEN PUŠČAVA** | 4WD | 1088 KM | 7000 kg | 70.000 € | Puščavski relijski tovornjak s kabino za motorjem, velikimi kolesi in rezervnimi kolesi. |
+
+### Električni
+
+| Vozilo | Pogon | Moč | Masa | Cena | Opis |
+|---|---|---|---|---|---|
+| **JEŽEK E** | prednji | 218 KM | 1350 kg | 22.000 € | Retro električni mestni avto z LED pasovi: tih, takoj pospeši, a je težak. |
+| **STRELA EV** | 4WD | 598 KM | 1720 kg | 75.000 € | Električni hiperšportnik s štirimi motorji (glej spodaj). |
+
+### Posebni
+
+| Vozilo | Pogon | Moč | Masa | Cena | Opis |
+|---|---|---|---|---|---|
+| **PREDSEDNIK** | zadnji | 408 KM | 2900 kg | 40.000 € | Raztegnjena limuzina z zastavicama na blatnikih in obilo kroma. |
+| **GOLJAT** | 4WD | 1496 KM | 4500 kg | 55.000 € | Pošastni tovornjak: lupina poltovornjaka na cevni šasiji in ogromna kolesa. |
+| **SUPERKOMBI** | zadnji, motor na sredini | 707 KM | 1250 kg | 70.000 € | Dirkalni kombi iz 80-ih in 90-ih z dirkalnim motorjem na sredini. |
+
+### Dirkalni tovornjak TITAN
+
+**TITAN** je dirkalni tovornjak, kot jih vozijo na evropskih dirkah tovornjakov po asfaltnih dirkališčih: vlačilec s ploščato kabino nad motorjem, veliko rešetko in štirimi žarometi, strešnim deflektorjem, stranskima oklepoma med osema, dvema navpičnima izpušnima cevema za kabino in golo dirkalno šasijo zadaj, na velikih kolesih z globokimi platišči. Številka je na deflektorju in na obeh vratih.
+
+- 1115 KM, 5300 kg, deset prestav, zvok turbo dizla. Od 0 do 100 km/h pospeši v ~7 s, pri 160 km/h ga ustavi omejilnik hitrosti (kot na pravih dirkah tovornjakov), zato ga na dolgih ravninah avti prehitijo, iz ovinkov pa ga potegne ogromen navor.
+- Težak je: zavira dlje (s 100 km/h na ~32 m), v ovinkih se nagne in ima manj oprijema, obrne se šele v širšem krogu kot avto. Zadnji pogon mu rad obrne rep. Ima trdno šasijo, zato ga trki poškodujejo manj kot avto.
+- Ob trkih odletijo odbijača, rešetka, strešni deflektor, stranska oklepa, vrata kabine, ogledali in kolesa.
+- Z njim dirka do 9 tekmecev v enakih tovornjakih (vsak v svoji barvi).
+
+### Družina LEV
+
+Trije izmišljeni avti z isto karoserijo kompaktnega trivratnega hatchbacka z velikimi mandljastimi žarometi:
+
+- **LEV S** (Mali avti): cestni hot hatch s prednjim pogonom, lahek in živahen v ovinkih, 20.000 € v karieri.
+- **LEV KABRIO** (Mali avti): kabriolet s kovinsko streho, zloženo v prtljažnik, dvema sedežema in roll barom; malo težji in počasnejši od LEV S, 24.000 €.
+- **LEV R** (Reli): relijski dirkač s pogonom na vsa kolesa, širokimi blatniki, velikim krilom in zajemalko na strehi, 45.000 €.
+
+## Razpadanje vozil
+
+Pri vklopljenih poškodbah (Nastavitve → Poškodbe avtov: **Samo videz** ali **Vklop**) se vsa nova vozila ob trkih razbijajo po delih, tako da se na prvi pogled vidi, kako uničen je avto:
+
+- **Deli:** vsak del karoserije (odbijača, pokrov motorja, prtljažnik ali zadnja vrata, blatniki, vrata, ogledali, krilo, pri posebnih vozilih še njihovi: deflektor in stranska oklepa tovornjaka, rezervni kolesi, keson pošastnega tovornjaka, zadnja vrata in zastavici limuzine, oklepi karta …) ima svojo cono poškodb. Udarec v tisto stran ga najprej zrahlja: pokrov motorja se privzdigne, vrata obvisijo priprta, blatnik odstopi, odbijač in krilo se povesita, ogledalo bingla. Ob naslednjih udarcih del odpade, odleti na cesto in tam obleži z udrtinami, umazanijo in praskami, ki jih je imel na avtu. Na avtu ostane luknja, skozi katero se vidijo notranjost, kabina ali motor.
+- **Stekla in luči:** z delom gredo tudi njegova stekla in luči. Razbit žaromet ugasne (ponoči cesto osvetljuje le še drugi), razbita zadnja luč prav tako.
+- **Kolesa:** pri nastavitvi **Vklop** lahko ob hudem udarcu v vogal odpade tudi kolo. Odkotali se po cesti, avto se nagne na tisti vogal in pelje naprej po pestu, ki med vožnjo iskri; brez kolesa ima manj oprijema in je počasnejši. Na prikazu poškodb so narisana štiri kolesa, izgubljeno je rdeče in črtkano. V boksih mehaniki namestijo novo kolo (postanek je za vsako kolo sekundo daljši), na progah brez boksov pa ga z gumbom **Namesti kolo** namestijo redarji ob cesti (avto 6 s stoji). Na kronometrih in v kvalifikacijah se pokaže **KOLO JE ODPADLO** z gumbom za ponovitev vožnje.
+- **Ogenj:** pri 90 % poškodb (ali pri 75 %, če je pokrov motorja že odpadel) avto zagori: 20 s gori iz motornega prostora, nato se kadi črn dim. Karoserija se počrni od saj (tudi deli, ki ležijo na cesti), stekla zgorijo, luči ugasnejo. Sliši se prasketanje ognja, komentator to omeni.
+- **Uničeno vozilo:** od 96 % poškodb avto izgublja vse, kar še visi na njem, del za delom (pokrov motorja, prtljažnik, odbijača, krilo in kolo na najbolj zmečkanem vogalu). Pri 98 % se pod zemljevidom izpiše **VOZILO UNIČENO** z gumbom **Odstopi** (dvakrat tapni v 4 s; tudi v pavzi). Ko odstopiš, avto zapelje s proge, ti pa greš na rezultate, kjer piše »Odstop«; v prvenstvu odstop ne prinese točk. Lahko pa šepaš naprej do cilja ali do boksov. V dirki s prijateljem in v begu pred policijo se izpiše le napis.
+- **Tekmeci:** tekmec, ki izgubi kolo, gre po novega v bokse, na progah brez boksov pa mu ga namestijo redarji. Kdor izgubi dve kolesi, odstopi: zapelje na varno mesto ob progi in tam obstane (če obtiči na cesti, ga redarji prestavijo). Zastave in varnostni avto ga obravnavajo kot ustavljen avto.
+- **Ogled vozila:** gumb v pavzi in na rezultatih pokaže tvoj avto od blizu v foto načinu, da si lahko ogledaš razbitino.
+- Komentator pove, ko izgubiš kolo, ko voziš po treh kolesih, ko je avto uničen, ko gori in ko odstopiš, pa tudi, ko kolo izgubi ali zagori tekmec.
+- Starejših deset avtov (PICO TURBO, KAZE RS, VORTEX 4WD, STREGA MR, BURJA R7, FORMULA ORKAN, TAIFUN LM, VIHAR V8, STRELA EV, SAMUM 4x4) se razbija kot doslej (odpadejo jim posamezni deli, kolesa ostanejo), ob hudih poškodbah pa tudi oni zagorijo in se počrnijo.
+
 ## Dirkalnik formule
 
 V izbiri avta je **FORMULA ORKAN**, dirkalnik formule z odprtimi kolesi, sprednjim in zadnjim krilom, zaščitnim lokom (halo) nad voznikom v čeladi in kamero na strehi. Voziš ga lahko na vseh progah. Ko ga izbereš, vozijo formule tudi vsi tekmeci, vsak v svoji barvi in s svojo številko, kot v formuli 1.
@@ -317,10 +450,11 @@ Igra ne potrebuje namestitve ali prevajanja: `index.html` naloži datoteke po vr
 | `css/style.css` | slogi |
 | `js/vendor/three.r128.min.js` | knjižnica three.js (MIT) |
 | `js/tracks/<id>.js` | ena datoteka na progo: oblika, višine, sidrišča okolice, imena krajev (vrstni red v `index.html` = vrstni red v meniju) |
-| `js/core.js` | proge, fizika (Circuit Superstars, oprijem v dežju), AI, pravila dirke in prvenstva, promet in pešci na odprti cesti, policija (brez DOM in three.js) |
+| `js/cars/<id>.js` | ena datoteka na vozilo (33 novih vozil): ime, kategorija, opis, fizika, zvok, cena, tekmeci, deli, ki odpadejo, in 3D model iz gradnikov KIT (opis na začetku `js/render.js`) |
+| `js/core.js` | proge, fizika (Circuit Superstars, oprijem v dežju), AI, pravila dirke in prvenstva, promet in pešci na odprti cesti, policija, vozni park (vozila in kategorije, deli, ki odpadejo, izgubljena kolesa, odstop) (brez DOM in three.js) |
 | `js/tex.js` | proceduralne teksture |
 | `js/world.js` | 3D svet prog (teren, drevesa, gledalci, rekviziti, boksi); Nordschleife in Red Bull Ring si delita gradnjo terena iz višinskih podatkov, Vršič ima svojega graditelja (teren iz višinskega modela, raba tal, stavbe, jesenski gozd in sneg) |
-| `js/render.js` | izris, avti, delci, kamere, mehaniki v boksih, dež (curki, pršec, mokra cesta, oblačno nebo), promet, pešci, patrulje in bodičasti trakovi |
+| `js/render.js` | izris, avti (gradniki KIT za modele vozil, razpadanje po delih, ogenj in saje), delci, kamere, mehaniki v boksih, dež (curki, pršec, mokra cesta, oblačno nebo), promet, pešci, patrulje in bodičasti trakovi |
 | `js/sfx.js`, `js/input.js`, `js/comm.js` | zvok, upravljanje, komentator |
 | `js/net.js`, `js/vendor/peerjs.min.js` | povezava dveh telefonov za dirko s prijateljem (soba s kodo, usklajena ura); knjižnica PeerJS (MIT) |
 | `js/game.js` | meniji, nastavitve, HUD, rekordi, prvenstvo, dirka s prijateljem, glavna zanka |
@@ -328,8 +462,16 @@ Igra ne potrebuje namestitve ali prevajanja: `index.html` naloži datoteke po vr
 | `sw.js` | service worker: igra brez interneta in vedno najnovejša različica, ko je internet na voljo (opis v datoteki) |
 | `tests/` | samodejni testi (glej `tests/README.md`) |
 | `tools/stamp.js` | po vsaki spremembi datoteke v `js/` ali `css/` zaženi `node tools/stamp.js`: povezave v `index.html` dobijo oznako vsebine (`?v=…`), da brskalnik po posodobitvi ne pomeša starih in novih datotek |
+| `tools/carshots.mjs` | slike vozila za pregled: `node tools/carshots.mjs <id>` (od strani, spredaj, zadaj in zgoraj z mrežo 1 m, razstavni pogled, pogled za avtom, zrahljani deli, razbitina, zgorelo vozilo, kokpit; vse skupaj v `sheet.png`) ali `node tools/carshots.mjs --cat <kategorija>` (vsa vozila kategorije drugo ob drugem); slike so v `test-results/carshots/` |
 
 Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) ne deluje. Z diska (brez spletnega strežnika) igra deluje, le brez igranja brez interneta in namestitve.
+
+### Novo vozilo
+
+1. Nova datoteka `js/cars/<id>.js` po vzoru obstoječih (npr. `js/cars/levs.js`): `VEHICLE_DEFS.push({ id, name, cat, drive, desc, phys, arc, stats, price, field, snd, expect, parts, look, … })`. Na vrhu je opis vozila (mere, medosna razdalja, prepoznavni deli), `look` pa je 3D model iz gradnikov KIT (opis je na začetku `js/render.js`: karoserija iz prerezov, deli, ki odpadejo, in njihovi tečaji, luči, številka, voznik, kolesa).
+2. V `index.html` dodaj `<script src="js/cars/<id>.js"></script>` pred `js/core.js` in zaženi `node tools/stamp.js`.
+3. Videz preveri s `node tools/carshots.mjs <id>` in `node tools/carshots.mjs --cat <kategorija>`.
+4. `node tests/fleet.test.js` (vozne lastnosti po `expect`, deli in kolesa, ki odpadejo, proračun trikotnikov), `node tests/kit.test.js` in `node tests/browser/fleet.test.mjs`. Vozilo z napako v opisu igra preskoči (test pove, kaj je narobe), druga vozila in referenčne vrednosti testov (golden) ostanejo enaki.
 
 ### Nova proga
 
