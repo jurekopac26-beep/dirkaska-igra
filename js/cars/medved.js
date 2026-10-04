@@ -28,8 +28,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     },
     // the look (KIT API v1, render.js; look units = metres): one loft, the box: slab sides, flat glass leaning in a little, a flat roof (the
     // stripe colour: a two-tone roof), an upright windscreen, a flat bonnet; its end caps the grille's panel (front) and the tailgate (rear,
-    // over the bumper). Each side: the fender, both doors (one part; the sill under them stays), the quarter with its long window. The
-    // bumpers, the spare on the tailgate, the roof rack, the black flares over the tyres in their parts
+    // over the bumper). Each side: the fender, both doors (one part, their glass with them; the sill under them stays), the quarter under
+    // the belt (its long window and the pillars stay with the roof). The bumpers, the spare on the tailgate, the roof rack, the black
+    // flares over the tyres in their parts
     look: {
       body: { len: 4.8, wid: 1.98,
         //       x      w      yb    ybelt  wt     yt     cr    kind  tuck
@@ -77,6 +78,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         LD.side([[-0.84, 0.828], [1.02, 0.828], [1.02, 0.842], [-0.84, 0.842]], CH, null, 0.011);   // (its chrome insert)
         for (const x of [0.01, -0.86, 1.04]) LD.side([[x - 0.008, 0.58], [x + 0.008, 0.58], [x + 0.008, 1.19], [x - 0.008, 1.19]], DK, null, 0.01);
         for (const sd of [-1, 1]) for (const x of [0.16, -0.72]) K.rect(x, 1.06, sd * 0.942, 0.17, 0.035, CH, { dir: sd < 0 ? '-z' : 'z' });
+        K.face([0, 1, 2, 3, 4, 5, 6, 7].map(i => [-1.76 + Math.cos(i * Math.PI / 4) * 0.065, 1.02 + Math.sin(i * Math.PI / 4) * 0.065, 0.938]), DK);   // the fuel filler (right quarter)
         // ---- the flares over the big tyres (black), the arch's ledge under them ----
         for (const A of K.arches) for (const sd of [-1, 1]) K.flare(A.x, 0.44, 0.54, sd * 0.86, sd * 0.995, D, { n: 7 });
         // ---- the nose: the slatted grille between two round head lamps (in the fenders: they go with them), the indicators under them ----
@@ -89,7 +91,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // the wipers on the cowl
         for (const z of [-0.42, 0.28]) K.bar([1.09, 1.215, z - 0.3], [1.075, 1.24, z + 0.3], 0.011, B, { n: 4, part: 'body' });
         // the mirrors: big, on the doors' front corners
-        for (const sd of [-1, 1]) K.mirror(0.95, 1.33, sd * 0.98, { w: 0.08, h: 0.17, d: 0.12, z0: sd * 0.925, col: P, arm: B });
+        for (const sd of [-1, 1]) K.mirror(0.95, 1.33, sd * 0.97, { w: 0.08, h: 0.17, d: 0.12, z0: sd * 0.925, col: P, arm: B });
         // ---- the front bumper: black, square, wrapped round the corners; the skid plate, the fog lamps, the plate ----
         K.part('bumperF', () => {
           K.box(2.31, 0.36, 0, 0.18, 0.28, 1.8, 0, D);
