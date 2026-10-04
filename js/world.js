@@ -23413,6 +23413,7 @@ const World = (function () {
       const NB = 36, ys = new Array(NB).fill(null).map(() => []), put = (x, z, h) => { const d = Math.hypot(x - cx, z - cz); if (Math.abs(d - r.r) < 3.5) ys[Math.floor(((Math.atan2(z - cz, x - cx) / TAU) + 1) % 1 * NB) % NB].push(h); };
       for (let i = 0; i < N; i++) put(T.px[i], T.pz[i], T.hy[i]);
       for (const S of T.stubs || []) for (let j = 0; j < S.n; j++) put(S.x[j], S.z[j], S.Y[j]);
+      for (const L of M.alts) for (const p of L) put(p[0], p[1], p[2]);   // (the oncoming lanes round the arc the route leaves out)
       let yb = ys.map(L => (L.length ? L.reduce((a, b) => a + b) / L.length : null)); if (yb.every(v => v === null)) yb = yb.map(() => y);
       for (let k = 0; k < NB; k++) if (yb[k] === null) { let a = 1, b = 1; while (yb[(k - a + NB) % NB] === null) a++; while (yb[(k + b) % NB] === null) b++; yb[k] = lerp(yb[(k - a + NB) % NB], yb[(k + b) % NB], a / (a + b)); }
       for (let it = 0; it < 2; it++) yb = yb.map((v, k) => (yb[(k + NB - 1) % NB] + 2 * v + yb[(k + 1) % NB]) / 4);
@@ -23662,6 +23663,7 @@ const World = (function () {
     const occPoly = (pts, v) => { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
       for (let a = Math.floor((x0 - ocx0) / OC); a <= Math.floor((x1 - ocx0) / OC); a++) for (let b = Math.floor((z0 - ocz0) / OC); b <= Math.floor((z1 - ocz0) / OC); b++) if (a >= 0 && b >= 0 && a < onx && b < onz && inPoly(pts, ocx0 + (a + 0.5) * OC, ocz0 + (b + 0.5) * OC)) occ[b * onx + a] = Math.max(occ[b * onx + a], v); };
     const Q = {}, QS = {};
+    const onRoadB = (x, z, m) => { const q = T.query(x, z, T.nearestIdx(x, z), Q); if (q.k >= 0) { const S = T.stubs[q.k]; if (q.st <= S.Lend && Math.abs(q.u) <= (q.st < S.te ? T.stubHw(S, q.st) : S.hw) + m) return true; } return !q.deep && !q.over && Math.abs(q.d) < wE(q.d > 0 ? 1 : 0, q.a) + m; };   // (the buildings: a side road's own width past its mouth; walls.js the same)
     const onRoad = (x, z, m) => { const q = T.query(x, z, T.nearestIdx(x, z), Q); if (q.k >= 0 && Math.abs(q.u) <= T.stubHw(T.stubs[q.k], q.st) + m) return true; return !q.deep && !q.over && Math.abs(q.d) < wE(q.d > 0 ? 1 : 0, q.a) + m; };   // (on the asphalt or a sidewalk, or a side road's, m metres more)
 
     /* ---- the buildings (def.bld): clear of the road, its sidewalks and the side roads; their footprints marked (no trees in them) ---- */
@@ -23670,7 +23672,7 @@ const World = (function () {
       const [x, z, L, W, ang, hgt, kind, name] = b, poly = b[8] ? b[8].reduce((a, v, k) => (k % 2 ? a[a.length - 1].push(v) : a.push([v]), a), []) : null;
       if (L < 2.2 || W < 2.2) continue;
       const c = Math.cos(ang), s = Math.sin(ang), pts = poly || [[-L / 2, -W / 2], [L / 2, -W / 2], [L / 2, W / 2], [-L / 2, W / 2]].map(([p, q]) => [x + c * p - s * q, z + s * p + c * q]);
-      let ok = true; for (const [px, pz] of pts.concat([[x, z]])) if (onRoad(px, pz, 0.3) || mvW(px, pz).e > 1) { ok = false; break; }
+      let ok = true; for (const [px, pz] of pts.concat([[x, z]])) if (onRoadB(px, pz, 0.3) || mvW(px, pz).e > 1) { ok = false; break; }
       if (!ok) continue;
       blds.push({ x, z, L, W, ang, hgt, kind, name: name || '', poly, pts }); occPoly(pts, 3);
     }
@@ -23808,6 +23810,10 @@ const World = (function () {
         for (let i = 0; i < N - 1; i++) { if ((town[si][i] && !onBr[i]) || WA[i] < nar || inRing[i] || SF[i] === 5 || SF[i + 1] === 5 || (mouthE[si][i] && i % 2)) continue; strip(i * ds, (i + 1) * ds, (s) => side * (wS(s) - 0.22), 0.075, WH); } }
       for (const g0 of def.giveWay || []) { const s0 = sStart + g0, wi = wS(s0);   // the route's own give-way lines (where it merges): teeth across it
         for (let o = -wi + 0.3; o + 0.5 <= wi - 0.2; o += 0.9) { const a = atSf(s0, o), b = atSf(s0, o + 0.5), c = atSf(s0 - 0.6, o + 0.25), y = hyS(s0) + 0.04; gl.triO([a[0], y, a[1]], [b[0], y, b[1]], [c[0], y, c[1]], WH, [a[0], y - 5, a[1]]); } }
+      for (const z0 of def.zebras || []) { const s0 = sStart + z0, i0 = T.idx(s0);   // the zebra crossings that go on across an oncoming lane beside the road (its own bars across it)
+        for (const L of M.alts) { let bk = -1, bd = 1e9; for (let k = 0; k < L.length; k++) { const dx = L[k][0] - T.px[i0], dz = L[k][1] - T.pz[i0], a = Math.abs(dx * T.tx[i0] + dz * T.tz[i0]), o = Math.abs(dx * T.nx[i0] + dz * T.nz[i0]); if (a < 2.5 && o < WA[i0] + 16 && a < bd) { bd = a; bk = k; } }
+          if (bk < 1 || bk >= L.length - 1) continue; const [x, z, y] = L[bk], tx = L[bk + 1][0] - L[bk - 1][0], tz = L[bk + 1][1] - L[bk - 1][1], tl = Math.hypot(tx, tz) || 1, ux = tx / tl, uz = tz / tl, HWa = def.altHw || 2.4;
+          for (let o = -HWa + 0.3; o + 0.5 <= HWa - 0.2; o += 1.0) { const P = (u, v) => [x - uz * (o + u) + ux * v, y + 0.07, z + ux * (o + u) + uz * v]; gl.quadUp(P(0, -1.5), P(0.5, -1.5), P(0.5, 1.5), P(0, 1.5), [WH, WH, WH, WH]); } } }
       for (const z0 of def.zebras || []) { const s0 = sStart + z0, wi = wS(s0);   // the zebra crossings: bars along the road, 0.5 m wide and 0.5 m apart, 3 m long
         for (let o = -wi + 0.3; o + 0.5 <= wi - 0.2; o += 1.0) strip(s0 - 1.5, s0 + 1.5, () => o + 0.25, 0.25, WH, 0.04); }
       for (const r of M.rings) if (r.drive) {   // the give-way teeth across the route where it enters a ring (its oncoming traffic takes its own way round)
@@ -23864,11 +23870,11 @@ const World = (function () {
         for (let a = 0; a + 1 < secs.length; a++) { const A = secs[a].pts, B = secs[a + 1].pts, C = paved ? SA : SG;
           for (let j = 0; j < 6; j++) { const p = A[j], q = A[j + 1], r = B[j + 1], s = B[j]; if (Math.hypot(p[0] - q[0], p[2] - q[2]) + Math.hypot(s[0] - r[0], s[2] - r[2]) < 0.05) continue;
             C.get(p[0], p[2]).quadUp([p[0], p[1], p[2]], [q[0], q[1], q[2]], [r[0], r[1], r[2]], [s[0], s[1], s[2]], [p[3], q[3], r[3], s[3]], [[p[4], p[5]], [q[4], q[5]], [r[4], r[5]], [s[4], s[5]]]); } }
-        const gwv = (def.sideRoads[k] || [])[11], gwt = gwv > 1 ? gwv : S.te + 1.2;   // (row[11]: 0 none, a distance along it, else at its mouth)
-        if (paved && S.kind === 0 && gwv !== 0 && !((def.sideRoads[k] || [])[12] || []).some(tz => Math.abs(tz - gwt) < 3.5)) { const t = gwt, p = T.stubPt(k, t, F), nx = -p.tz, nz = p.tx, hw = T.stubHw(S, t) - 0.3;   // the give-way line (the streets): 50 cm dashes across it
+        const gwv = (def.sideRoads[k] || [])[11], gwt = gwv > 1 ? gwv : S.te + 1.2, ownW = (t) => Math.min(T.stubHw(S, t), S.hw);   // (the lines across its own width, not the flared mouth)   // (row[11]: 0 none, a distance along it, else at its mouth)
+        if (paved && S.kind === 0 && gwv !== 0 && !((def.sideRoads[k] || [])[12] || []).some(tz => Math.abs(tz - gwt) < 3.5)) { const t = gwt, p = T.stubPt(k, t, F), nx = -p.tz, nz = p.tx, hw = ownW(t) - 0.3;   // the give-way line (the streets): 50 cm dashes across it
           for (let u = 0.2; u + 0.5 <= hw; u += 1) { const at = (uu, dt) => { const x = p.x + nx * uu + p.tx * dt, z = p.z + nz * uu + p.tz * dt; return [x, yAt(x, z, S, t) + 0.07, z]; };
             SL.get(p.x, p.z).quadUp(at(u, -0.15), at(u + 0.5, -0.15), at(u + 0.5, 0.15), at(u, 0.15), [white, white, white, white]); } }
-        for (const tz of (def.sideRoads[k] || [])[12] || []) { const p = T.stubPt(k, tz, F), nx = -p.tz, nz = p.tx, hw = T.stubHw(S, tz) - 0.3;   // the zebra crossings across it (OSM), where the sidewalk crosses its mouth
+        for (const tz of (def.sideRoads[k] || [])[12] || []) { const p = T.stubPt(k, tz, F), nx = -p.tz, nz = p.tx, hw = ownW(tz) - 0.3;   // the zebra crossings across it (OSM), where the sidewalk crosses its mouth
           for (let u = -hw; u + 0.5 <= hw; u += 1) { const at = (uu, dt) => { const x = p.x + nx * uu + p.tx * dt, z = p.z + nz * uu + p.tz * dt; return [x, yAt(x, z, S, tz + dt) + 0.07, z]; };
             SL.get(p.x, p.z).quadUp(at(u, -1.5), at(u + 0.5, -1.5), at(u + 0.5, 1.5), at(u, 1.5), [white, white, white, white]); } }
         if (S.end !== 2) { const p = T.stubPt(k, S.L, {}), nx = -p.tz, nz = p.tx, hc = S.hw + S.lim, g = scen.get(p.x, p.z), rot = p.h + PI / 2;   // the closure
@@ -23901,10 +23907,11 @@ const World = (function () {
       const ga = new RB(true), HW = def.altHw || 2.4, isl = [0.72, 0.71, 0.68], lawn = [0.3, 0.48, 0.18], kerb = [0.8, 0.79, 0.76];
       for (const L of M.alts) { const n = L.length; if (n < 2) continue; let pr = -1, cum = 0;
         const nrm = L.map((p, k) => { const a = L[Math.max(0, k - 1)], b = L[Math.min(n - 1, k + 1)], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1; return [-dz / l, dx / l]; });
+        const QA = {}, onSR = L.map(([x, z]) => { const q = T.query(x, z, T.nearestIdx(x, z), QA); return q.k >= 0 && q.st > T.stubs[q.k].te + 2 && Math.abs(q.u) <= T.stubs[q.k].hw; });   // (on a side road's own carriageway: that road is its asphalt)
         for (let k = 0; k < n; k++) { const [x, z, y] = L[k], [nx, nz] = nrm[k]; if (k) cum += Math.hypot(x - L[k - 1][0], z - L[k - 1][1]);
           const os = [-HW, 0, HW], sh = 0.84 * (0.97 + 0.06 * rpHash(Math.round(cum / 30), 7));
           const r = ga.row(os.map(o => [x + nx * o, y + 0.03, z + nz * o]), os.map(() => [sh, sh, sh * 1.01]), os.map(o => [(o + HW) / 8, cum / 8]));
-          if (pr >= 0) ga.link(pr, r, 0, 2); pr = r; }
+          if (pr >= 0 && !(onSR[k] && onSR[k - 1])) ga.link(pr, r, 0, 2); pr = r; }
         // the islands: where the lane runs within 10 m of the route near a ring, raised 13 cm between the two edges behind kerbs (grass when wide)
         const rows = L.map(([x, z, y], k) => { if (!M.rings.some(r => Math.hypot(x - r.x, z - r.z) < r.r + 45 && Math.hypot(x - r.x, z - r.z) > r.r + r.hw + 0.7)) return null;
           const i = T.nearestIdx(x, z), q = T._qMain(x, z, i, QS); if (q.over) return null; const sd = q.d > 0 ? 1 : -1, gap = Math.abs(q.d) - WA[q.a] - HW; if (gap < 0.4 || gap > 10) return null;
@@ -24045,7 +24052,7 @@ const World = (function () {
         const pts = []; for (let k = 0; k + 1 < Pp.length; k += 2) pts.push([Pp[k], Pp[k + 1]]);
         if (pts.length < 3 || vrDist(pts[0][0], pts[0][1]) > 460) continue;
         occPoly(pts, 1);
-        const col = [0.8, 0.8, 0.82], P3 = (p) => [p[0], mvGround(p[0], p[1]) + 0.06, p[1]], uv = (p) => [p[0] / 6, -p[1] / 6];
+        const col = [0.8, 0.8, 0.82], P3 = (p) => [p[0], mvGround(p[0], p[1]) + 0.12, p[1]], uv = (p) => [p[0] / 6, -p[1] / 6];
         const put = (a, b, c, lv) => { const ab = Math.hypot(b[0] - a[0], b[1] - a[1]), bc = Math.hypot(c[0] - b[0], c[1] - b[1]), ca = Math.hypot(a[0] - c[0], a[1] - c[1]), m = Math.max(ab, bc, ca);
           const nOn = m > 1.2 && lv < 10 ? (onRoad(a[0], a[1], 0.3) ? 1 : 0) + (onRoad(b[0], b[1], 0.3) ? 1 : 0) + (onRoad(c[0], c[1], 0.3) ? 1 : 0) : 0;
           if (nOn === 3 && m < 6) return;   // (under the road)
@@ -24207,7 +24214,9 @@ const World = (function () {
     };
     const flag = (g, x, y, z, rot, h) => { cyl(g, x, y - 0.2, z, 0.06, h + 0.2, 5, [0.94, 0.94, 0.92], [0.9, 0.78, 0.2]);   // a flag pole with the Slovenian flag (white, blue, red)
       const c = Math.cos(rot), s = Math.sin(rot), fw = 1.8, fh = 0.9, fx = x + c * (fw / 2 + 0.06), fz = z + s * (fw / 2 + 0.06), y0 = y + h - fh - 0.15;
-      box(g, fx, y0 + fh * 2 / 3, fz, fw, fh / 3, 0.04, rot, [0.96, 0.96, 0.95]); box(g, fx, y0 + fh / 3, fz, fw, fh / 3, 0.04, rot, [0.1, 0.24, 0.62]); box(g, fx, y0, fz, fw, fh / 3, 0.04, rot, [0.84, 0.12, 0.1]); };
+      box(g, fx, y0 + fh * 2 / 3, fz, fw, fh / 3, 0.04, rot, [0.96, 0.96, 0.95]); box(g, fx, y0 + fh / 3, fz, fw, fh / 3, 0.04, rot, [0.1, 0.24, 0.62]); box(g, fx, y0, fz, fw, fh / 3, 0.04, rot, [0.84, 0.12, 0.1]);
+      const ax = x + c * (fw * 0.27 + 0.06), az = z + s * (fw * 0.27 + 0.06), ay = y0 + fh * 0.5;   // (the coat of arms on the hoist side, across the white and the blue)
+      box(g, ax, ay, az, 0.3, 0.36, 0.06, rot, [0.84, 0.12, 0.1]); box(g, ax, ay + 0.03, az, 0.24, 0.3, 0.075, rot, [0.1, 0.24, 0.62]); box(g, ax, ay + 0.1, az, 0.14, 0.07, 0.085, rot, [0.96, 0.96, 0.95]); };
     {
       const [x, y, z, i] = arch(sStart, 0, [0.2, 0.22, 0.26], [0.14, 0.15, 0.18]), nx = T.nx[i], nz = T.nz[i], g = scen.get(x, z);
       box(g, x, y + 6.5, z, 0.5, 1.1, 5.4, T.hd[i], [0.08, 0.08, 0.09]);

@@ -48,9 +48,9 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
   const [b0, b1] = def.bridges[0], i = at((b0 + b1) / 2);
   check('bridge: 118 m over the Sava (OSM), the barriers 1.6 m past the asphalt there (def.narrow)', Math.abs(b1 - b0 - 118) < 3 && T.bl[i] - T.wAt(i) < 1.7 && T.br[i] - T.wAt(i) < 1.7,
     `${(b1 - b0).toFixed(0)} m, barriers ${(T.bl[i] - T.wAt(i)).toFixed(2)} / ${(T.br[i] - T.wAt(i)).toFixed(2)} m past the edges`);
-  let nIn = 0, nB = 0; for (const b of def.bld) { const [x, z, L, W, ang] = b, c = Math.cos(ang), s = Math.sin(ang); if (b[8] || L * W > 4000) continue;
+  let nIn = 0, nB = 0; for (const b of def.bld) { const [x, z, L, W, ang] = b, c = Math.cos(ang), s = Math.sin(ang); if (b[8] || L * W > 4000 || L < 2.2 || W < 2.2) continue;   // (the sheds under 2.2 m across: the scenery leaves them out)
     const Q = [[0, 0], [-L / 2, -W / 2], [L / 2, -W / 2], [L / 2, W / 2], [-L / 2, W / 2]].map(([u, v]) => { const px = x + c * u - s * v, pz = z + s * u + c * v; return T.query(px, pz, T.nearestIdx(px, pz), {}); });
-    if (Q.some(q => q.k < 0 && !q.over && Math.abs(q.d) < T.wAt(q.a))) continue;   // (one the data puts on the road itself: the scenery leaves it out)
+    if (Q.some(q => (q.k < 0 && !q.over && Math.abs(q.d) < T.wAt(q.a)) || (q.k >= 0 && q.st <= T.stubs[q.k].Lend && Math.abs(q.u) <= (q.st < T.stubs[q.k].te ? T.stubHw(T.stubs[q.k], q.st) : T.stubs[q.k].hw) + 0.3))) continue;   // (one the data puts on the road itself or on a side road: the scenery leaves it out)
     nB++; if (Q.some(q => q.k < 0 && !q.over && !T.gap[q.d > 0 ? 1 : 0][q.a] && Math.abs(q.d) < (q.d > 0 ? q.br : q.bl) - 0.6)) nIn++; }   // (beside a side road's mouth the barrier is open)
   check('walls: the houses, garden walls and fences beside the road are its barrier there (def.walls): no house inside it', def.walls.length > 100 && nIn === 0, `${def.walls.length} walls, ${nIn} of ${nB} houses inside the barriers`);
   const O = (def.overpass || [])[0], oy = O ? Math.max(...O.P.filter((v, k) => k % 3 === 2)) : 0, io = O ? at((O.d[0] + O.d[1]) / 2) : 0;

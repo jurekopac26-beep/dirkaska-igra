@@ -3234,39 +3234,39 @@
   }
  },
  "medvode/race/cs": {
-  "digest": "76efb97e701430ede829623d",
-  "lead": 2206.5,
+  "digest": "6f162fe7e6ffa78e47ce7e2e",
+  "lead": 2207.2,
   "car0": [
-   217.88,
-   -1649.57
+   221.45,
+   -1679.83
   ],
   "cover": {
-   "dmg": 0.41,
-   "loose": 8,
+   "dmg": 0.6,
+   "loose": 11,
    "rescues": 0,
    "repairs": 0
   }
  },
  "medvode/demo/cs": {
-  "digest": "9aa2964d12e9bbfefb72fe2a",
-  "lead": 2350.6,
+  "digest": "fac28a2681c6d37918a72684",
+  "lead": 2347.8,
   "car0": [
-   407.84,
-   -1766.81
+   405.16,
+   -1765.91
   ],
   "cover": {
    "dmg": 0,
-   "loose": 3,
+   "loose": 6,
    "rescues": 0,
    "repairs": 0
   }
  },
  "medvode/upg/cs": {
-  "digest": "a68122e673a78122b75bf808",
-  "lead": 2319.7,
+  "digest": "ac3aa08d66c791fab7bd4faa",
+  "lead": 2326.3,
   "car0": [
-   377.59,
-   -1756.54
+   263.49,
+   -1717.9
   ],
   "cover": {
    "dmg": 0,
@@ -3276,58 +3276,58 @@
   }
  },
  "medvode/crash/cs": {
-  "digest": "6fe26196276a7ff282a394a9",
-  "lead": 2197.2,
+  "digest": "892b019265589a6bea6eea5a",
+  "lead": 2196.7,
   "car0": [
-   166.29,
-   -1437.9
+   182.96,
+   -1475.68
   ],
   "cover": {
    "dmg": 1,
-   "loose": 17,
-   "rescues": 0,
+   "loose": 6,
+   "rescues": 1,
    "repairs": 0
   }
  },
  "medvode/formula/cs": {
-  "digest": "ce0b0c139bfd31b659e68a53",
-  "lead": 2571.1,
+  "digest": "6ce36b3ef8ad907844f1e498",
+  "lead": 2521,
   "car0": [
-   213.68,
-   -1606.84
+   287.89,
+   -1727.66
   ],
   "cover": {
    "dmg": 1,
-   "loose": 39,
+   "loose": 12,
    "rescues": 1,
    "repairs": 0
   }
  },
  "medvode/lm/cs": {
-  "digest": "2f601309c947dc48e9aa0adb",
-  "lead": 2520.9,
+  "digest": "de2d728995f8474fd7461ff7",
+  "lead": 2555.6,
   "car0": [
-   286.32,
-   -1728.4
+   303.27,
+   -1731.39
   ],
   "cover": {
    "dmg": 1,
-   "loose": 20,
+   "loose": 17,
    "rescues": 1,
    "repairs": 0
   }
  },
  "medvode/car/cs": {
-  "digest": "aea73d5b24527f388806dac3",
-  "lead": 2196.4,
+  "digest": "bb7365337de3c5cf086e8095",
+  "lead": 2201.7,
   "car0": [
-   186.24,
-   -1478.36
+   207.22,
+   -1604.23
   ],
   "cover": {
-   "dmg": 0.63,
-   "loose": 8,
-   "rescues": 1,
+   "dmg": 0.89,
+   "loose": 6,
+   "rescues": 0,
    "repairs": 0
   }
  }
