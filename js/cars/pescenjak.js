@@ -26,11 +26,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       },   // (where the look has them: each entry at its range's centroid, the debris flies off from there)
     },
     // the look (KIT API v1, render.js; look units = metres): one loft, the low body (its regions: the nose panel; the deck's middle under
-    // the engine cover's spine), open over the cockpit (an open top, lined in the outer shell); the tube frame over it (in the stripe
-    // colour), the roof panel with the light pod, the windscreen, the seats and the dashboard in 'body'; the engine cover's spine, the spare
-    // wheels in their bays behind the cabin, the snorkel up the right A-pillar, the nose's lamps and skid plate in their parts; the engine,
-    // the gearbox and the frame's front in the inner block. The livery: the paint, a stripe down the middle (bonnet, roof, spine) and along
-    // the sides; the start number on the spine and on the cockpit's sides
+    // the engine cover's spine), open over the cockpit (an open top, lined in the outer shell); the tube frame over it and its rear bumper
+    // tube (in the stripe colour), the roof panel with the light pod, the windscreen, the mirrors, the seats and the dashboard in 'body';
+    // the engine cover's spine with its louvres, the spare wheels in their bays behind the cabin, the snorkel up the right A-pillar, the
+    // blunt nose's lamps and skid plate in their parts; the engine, the gearbox and the frame's front in the inner block. The livery: the
+    // paint, a stripe down the middle (bonnet, roof, spine) and along the sides; the start number on the spine and on the cockpit's sides
     look: {
       body: { len: 4.6, wid: 2.3, roofY: 1.66,
         //       x       w     yb    ybelt  wt    yt    cr     kind  tuck
@@ -122,7 +122,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.rect(2.302, 0.73, 0, 0.32, 0.1, DK);
           K.plate([[2.3, 0.56, -0.66], [2.3, 0.56, 0.66], [1.95, 0.4, 0.72], [1.95, 0.4, -0.72]], 0.03, AL);
         }, { hinge: [[1.96, 0.97, -0.85], [1.96, 0.97, 0.85]] });
-        // ---- the tail: the lamps, the skid, the exhaust, the mudflaps; the start numbers on the cockpit's sides ----
+        // ---- the tail: the lamps, the cooling outlet between them, the plate, the exhaust, the frame's bumper tube under it with its
+        //      towing eye, the skid plate, the mudflaps; the start numbers on the cockpit's sides ----
         K.part('body', () => {
           for (const s of [-1, 1]) { K.rect(-2.303, 0.83, s * 0.56, 0.28, 0.16, B, { dir: '-x' }); K.tailLamp(-2.305, 0.83, s * 0.56, 0.24, 0.12);
             K.rect(-2.0, 0.45, s * 0.98, 0.3, 0.46, B, { dir: '-x' });
