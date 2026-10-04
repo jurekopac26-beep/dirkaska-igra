@@ -36,7 +36,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     },
     // the look (KIT API v1, render.js; look units = metres): one loft, the three boxes (the long bonnet, the cabin under a long flat roof,
     // the long boot); a six-light glasshouse (the front door's window, the fixed one in the stretch between the doors, the rear door's),
-    // each window framed in chrome, black pillars between them, a broad C-pillar and a small rear window (a formal roof). The regions: the
+    // each window framed in chrome, black pillars between them; a formal roof: black vinyl (landau) over the rear compartment, broad
+    // C-pillars, a small rear window, the start number on it (what the chase camera, high behind the car, sees of it). The regions: the
     // standard ones, the rear doors (door2L / door2R) between the stretch and the quarters (the stretch stays with the body). Chrome swept
     // bumpers with overriders, an egg-crate grille between four round lamps, the flags on the front wings (flagL / flagR), white walls
     look: {
@@ -71,7 +72,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           if (at.end) return P;
           if (e === 0 || e === 8) return at.arch ? B : SILL;
           if (kind === 'gf') return e >= 2 && e <= 6 ? G : P;
-          if (kind === 'r') return e === 2 || e === 6 ? (at.x > -1.55 ? G : VIN) : e >= 3 && e <= 5 && at.x < -0.55 ? VIN : P;   // (behind the rear door: the C-pillar)
+          if (kind === 'r') return e === 2 || e === 6 ? (at.x > -1.55 ? G : VIN) : e >= 3 && e <= 5 && at.x < -0.55 ? VIN : P;   // (the C-pillar behind the rear door; the vinyl from the rear door on)
           if (kind === 'gr') return e >= 3 && e <= 5 ? G : e === 2 || e === 6 ? VIN : P;   // (the rear glass, narrowed below; the C-pillar's foot)
           return P;
         });
@@ -137,7 +138,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
             const q = [[xs[i], at(i, 0), z + zs[i]], [xs[i + 1], at(i + 1, 0), z + zs[i + 1]], [xs[i + 1], at(i + 1, 1), z + zs[i + 1]], [xs[i], at(i, 1), z + zs[i]]];
             K.face(q, b === 1 ? RED : S); K.face(q.slice().reverse(), b === 1 ? RED : S);
           }
-        }, { noCrush: true, noDent: true, hinge: [[2.7, 0.94, sd * 0.86], [2.78, 0.94, sd * 0.86]] });
+        }, { noCrush: true, noDent: true, hinge: [[2.7, 0.94, sd * 0.86], [2.78, 0.94, sd * 0.86]] });   // (loose: the staff leans out on its foot)
         K.hinge('hood', [1.26, 0.99, -0.8], [1.26, 0.99, 0.8]);
         K.hinge('trunk', [-2.16, 0.99, -0.8], [-2.16, 0.99, 0.8]);
         // ---- inside (seen once a part is off): the chauffeur's bench, the dashboard and the wheel, the partition (wood); the jump seats
