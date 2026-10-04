@@ -68,6 +68,7 @@
     const sdW = chamfer(G, (k) => wet[k] === 1), sdL = chamfer(G, (k) => wet[k] === 0);
     const seedT = new Uint8Array(n); for (let i = 0; i < T.N; i++) { const a = Math.round((T.px[i] - G.x0) / c), b = Math.round((T.pz[i] - G.z0) / c); if (a >= 0 && b >= 0 && a < G.nx && b < G.nz) seedT[b * G.nx + a] = 1; }
     const dT = chamfer(G, (k) => seedT[k] === 1);
+    for (let k = 0; k < n; k++) if (dT[k] < 22 && !wet[k] && kind[k] !== 7) kind[k] = 8;   // (beside the circuit: the plazas and sidewalks of granite)
     const H = new Float32Array(n), SD = new Float32Array(n);
     for (let k = 0; k < n; k++) {
       const sd = wet[k] ? -sdL[k] : sdW[k]; SD[k] = sd;
@@ -93,7 +94,8 @@
     const T = K.track(), D = PEK_DATA, def = T.def, N = T.N, w = T.w, ds = T.ds, L = T.len, sStart = T.startS, R = rng(3440);
     const root = new THREE.Group(); scene.add(root);
     pkPrep(T, D);
-    const out = { root, dyn: {}, groundH: pkGround, camFloor: (x, z) => Math.max(pkGround(x, z), WL), props: [], farClip: true, ownTex: [], dust: [0.7, 0.68, 0.62] };
+    const ice = opts && opts.season === 'winter';   // (in winter the lakes freeze over: built again when the season changes, out.paintFor)
+    const out = { root, dyn: {}, groundH: pkGround, camFloor: (x, z) => Math.max(pkGround(x, z), WL), props: [], farClip: true, ownTex: [], dust: [0.7, 0.68, 0.62], season: ice ? 'ice' : 'water', paintFor: (s) => (s === 'winter' ? 'ice' : 'water') };
     const ownTex = (t) => { out.ownTex.push(t); return t; };
     out.bounds = { minX: PG.x0, maxX: PG.x1, minZ: PG.z0, maxZ: PG.z1 };
     const matV = new THREE.MeshLambertMaterial({ vertexColors: true }); out.matV = matV;
@@ -106,7 +108,7 @@
     const eh = new Map(), EHC = 32;
     const exclPush = (x, z, r) => { const e = { x, z, r }; for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let Lc = eh.get(k); if (!Lc) eh.set(k, Lc = []); Lc.push(e); } };
     const excluded = (x, z) => { const Lc = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!Lc) return false; for (const e of Lc) if ((x - e.x) ** 2 + (z - e.z) ** 2 < e.r * e.r) return true; return false; };
-    const ctx = { T, D, def, N, w, ds, L, sStart, R, root, out, tex, opts, ownTex, matV, dS, sAt, Pt, atSf, addM, scen, exclPush, excluded, trees: [] };
+    const ctx = { T, D, def, N, w, ds, L, sStart, R, root, out, tex, opts, ownTex, matV, dS, sAt, Pt, atSf, addM, scen, exclPush, excluded, trees: [], ice };
     ctx.near = pkNear(T);
     ctx.street = pkStreetW(T, def);
     const tag = (f, nm) => { const n0 = root.children.length; f(); for (let k = n0; k < root.children.length; k++) if (!root.children[k].name) root.children[k].name = nm; };   // (each part's meshes named after it)
@@ -157,9 +159,10 @@
 
   /* ---- the ground mesh: 640 m chunks of the 10 m grid (cells deep under the water left out), one grass material, the land's kind in its
      vertex colours (lawns, groves, the granite plazas pale), the car parks and plazas on top as their own OSM outlines (crisp edges) ---- */
-  const KCOL = [[0.66, 0.64, 0.44], [0.54, 0.55, 0.38], [0.8, 0.79, 0.75], [0.6, 0.62, 0.55], [0.74, 0.7, 0.6], [0.6, 0.6, 0.6], [0.68, 0.68, 0.46], [0.6, 0.66, 0.42], [0.84, 0.83, 0.79]];
+  const KCOL = [[0.72, 0.68, 0.46], [0.58, 0.58, 0.4], [0.8, 0.79, 0.75], [0.6, 0.62, 0.55], [0.74, 0.7, 0.6], [0.6, 0.6, 0.6], [0.68, 0.68, 0.46], [0.6, 0.66, 0.42], [0.84, 0.83, 0.79]];
   function pkGroundMesh(C) {
-    const G = PG, mat = new THREE.MeshLambertMaterial({ map: C.tex.grass, vertexColors: true }), grp = new THREE.Group(); C.root.add(grp); C.out.ground = grp;
+    const G = PG, mat = new THREE.MeshLambertMaterial({ map: C.tex.grass, vertexColors: true }), matP = new THREE.MeshLambertMaterial({ map: C.tex.paving, vertexColors: true }), grp = new THREE.Group(); C.root.add(grp); C.out.ground = grp;
+    const PAVED = [0, 0, 1, 0, 1, 1, 0, 0, 1];   // (the kinds of ground laid with granite: built-up, bare, car parks, plazas; the rest grass)
     const S = 64;   // cells per chunk side (640 m)
     for (let cj = 0; cj < G.nz - 1; cj += S) for (let ci = 0; ci < G.nx - 1; ci += S) {
       const ni = Math.min(S, G.nx - 1 - ci), nj = Math.min(S, G.nz - 1 - cj);
@@ -171,18 +174,24 @@
         const n1 = hash(ci + i, cj + j), n2 = 0.93 + 0.14 * Math.sin(x * 0.031 + Math.sin(z * 0.027) * 2) * Math.sin(z * 0.023 + x * 0.007);
         let col = KCOL[kd].map(v => v * (kd === 2 || kd === 8 ? 0.97 + 0.06 * n1 : n2 * (0.95 + 0.1 * n1)));
         if (h < WL) col = [0.36, 0.38, 0.34];
+        if (PAVED[kd]) col = [0.86, 0.85, 0.83].map(v => v * (0.95 + 0.08 * n1));
         P.push(x, h, z); Cl.push(col[0], col[1], col[2]); U.push(x / 12, -z / 12);
       }
+      const IP = [];
       const W1 = Math.floor(ni / st) + 1, H1 = Math.floor(nj / st) + 1;
       for (let j = 0; j < H1 - 1; j++) for (let i = 0; i < W1 - 1; i++) {
         const a = j * W1 + i, b = a + 1, c = a + W1, d = c + 1;
         if (Math.max(P[a * 3 + 1], P[b * 3 + 1], P[c * 3 + 1], P[d * 3 + 1]) < WL - 0.5) continue;   // (deep under the water)
-        I.push(a, c, b, b, c, d);
+        const k0 = (cj + j * st) * G.nx + ci + i * st, kd = G.wet[k0] ? 3 : G.kind[k0];
+        (PAVED[kd] ? IP : I).push(a, c, b, b, c, d);
       }
-      if (!I.length) continue;
-      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(Cl, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2));
-      g.setIndex(I); g.computeVertexNormals(); g.computeBoundingSphere();
-      const m = new THREE.Mesh(g, mat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m);
+      if (!I.length && !IP.length) continue;
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(Cl, 3));
+      g.setAttribute('uv', new THREE.Float32BufferAttribute(U.map(v => v * 4), 2)); g.setIndex(I.concat(IP)); g.computeVertexNormals();
+      const uvP = new THREE.Float32BufferAttribute(U.map(v => v * 4), 2), uvG = new THREE.Float32BufferAttribute(U, 2);
+      for (const [L, mt, uv] of [[I, mat, uvG], [IP, matP, uvP]]) { if (!L.length) continue;   // (one vertex buffer, two index lists: the grass and the granite)
+        const gg = new THREE.BufferGeometry(); gg.setAttribute('position', g.attributes.position); gg.setAttribute('normal', g.attributes.normal); gg.setAttribute('color', g.attributes.color); gg.setAttribute('uv', uv);
+        gg.setIndex(L); gg.computeBoundingSphere(); const m = new THREE.Mesh(gg, mt); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m); }
     }
     // the car parks (asphalt) and the plazas (granite paving): OSM outlines, a few cm over the ground
     const OV = { parking: [C.tex.paving, [0.5, 0.5, 0.52], 6], pedestrian: [C.tex.paving, [0.86, 0.86, 0.86], 3], plaza: [C.tex.paving, [0.86, 0.86, 0.86], 3], pitch: [C.tex.grass, [0.74, 1.0, 0.62], 6] };
@@ -201,7 +210,7 @@
      the circuit (a wall from the bed to the plaza, a coping stone on top, a white balustrade where the plaza is busy) ---- */
   function pkWater(C) {
     const G = PG, O = { color: 0x8c9a72, len: 1.4, amp: 0.5, refl: 0.28, land: 0.35, shal: 0.15, lap: 0.2 };
-    const wm = K.waterMat(C.tex, O), wg = new K.Chunks(512, true), W1 = [1, 1, 1];   // the water: the OSM outlines themselves, triangulated (holes: the islands), a little past the embankments
+    const wm = C.ice ? new THREE.MeshLambertMaterial({ color: 0xcfdde8, emissive: 0x101418 }) : K.waterMat(C.tex, O), wg = new K.Chunks(512, true), W1 = [1, 1, 1];   // (the ice: pale, still)   // the water: the OSM outlines themselves, triangulated (holes: the islands), a little past the embankments
     for (const [, rings] of C.D.water) {
       const sh = rings.map(r => { const p = r.map(q => new THREE.Vector2(q[0], q[1])); return p; }); if (!sh[0] || sh[0].length < 3) continue;
       let [x0, z0, x1, z1] = [1e9, 1e9, -1e9, -1e9]; for (const q of rings[0]) { x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); z0 = Math.min(z0, q[1]); z1 = Math.max(z1, q[1]); }
@@ -212,7 +221,15 @@
       for (const [a, b, c] of tris) { const A = all[a], B = all[b], Cc = all[c]; const mx = (A.x + B.x + Cc.x) / 3, mz = (A.y + B.y + Cc.y) / 3; wg.get(mx, mz).triO(V(A), V(B), V(Cc), W1, [mx, WL - 5, mz], W1, W1, U(A), U(B), U(Cc)); }
     }
     wg.addTo(C.root, wm, false, true);
+    if (C.ice) { pkEmbank(C); return; }
     C.out.dyn.water = C.tex.water;
+    const sd = (x, z) => gAt(G.dT, x, z) > 320 ? 99 : -gAt(G.SD, x, z);   // (the shore band only along the shores near the circuit: the paler water by the embankments)
+    for (let z = G.z0; z < G.z1; z += 512) for (let x = G.x0; x < G.x1; x += 512) {
+      const band = K.shoreBand(x, z, Math.min(G.x1, x + 512), Math.min(G.z1, z + 512), WL + 0.01, sd, 9, { F: 4 }); if (band) K.addShore(C.root, band, wm, O); }
+    pkEmbank(C);
+  }
+  function pkEmbank(C) {
+    const G = PG;
     // the embankments: along the OSM outlines of the water (their edges), within 900 m of the circuit
     const ew = new K.Chunks(512), st = [0.7, 0.69, 0.65], stD = [0.5, 0.5, 0.47], cap = [0.84, 0.83, 0.8];
     for (const [, rings] of C.D.water) for (const r of rings) for (let a = 0, b = r.length - 1; a < r.length; b = a++) {
@@ -571,16 +588,16 @@
   /* the swimming hall: a box (its OSM outline) clad in bubbles: a pale blue wall and roof of irregular cells (a canvas texture, no text) */
   function pkAquatic(C, ring) {
     const A = axesOf(ring), cv = document.createElement('canvas'); cv.width = cv.height = 512; const x = cv.getContext('2d'), R = rng(31);
-    x.fillStyle = '#9fcbe6'; x.fillRect(0, 0, 512, 512);
+    x.fillStyle = '#5d9bcc'; x.fillRect(0, 0, 512, 512);
     for (let k = 0; k < 420; k++) { const cx = R() * 512, cy = R() * 512, r = 6 + R() * R() * 42;
-      for (const [dx, dy] of [[0, 0], [512, 0], [-512, 0], [0, 512], [0, -512]]) { x.beginPath(); x.arc(cx + dx, cy + dy, r, 0, TAU); x.fillStyle = `rgba(${200 + R() * 40 | 0},${225 + R() * 25 | 0},245,0.55)`; x.fill(); x.lineWidth = 2; x.strokeStyle = 'rgba(255,255,255,0.85)'; x.stroke(); } }
+      for (const [dx, dy] of [[0, 0], [512, 0], [-512, 0], [0, 512], [0, -512]]) { x.beginPath(); x.arc(cx + dx, cy + dy, r, 0, TAU); x.fillStyle = `rgba(${130 + R() * 50 | 0},${180 + R() * 40 | 0},235,0.45)`; x.fill(); x.lineWidth = 2; x.strokeStyle = 'rgba(225,240,250,0.6)'; x.stroke(); } }
     const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; C.ownTex(t);
     const H = 31, P = (u, v, y) => [A.cx + A.ux * u + A.vx * v, y, A.cz + A.uz * u + A.vz * v], g = new GB(true), W1 = [1, 1, 1], S = 24, ins = [A.cx, H / 2, A.cz];
     const crn = [[-A.a, -A.b], [A.a, -A.b], [A.a, A.b], [-A.a, A.b]];
     for (let k = 0; k < 4; k++) { const [u0, v0] = crn[k], [u1, v1] = crn[(k + 1) % 4], l = Math.hypot(u1 - u0, v1 - v0);
       g.quadO(P(u0, v0, -0.1), P(u1, v1, -0.1), P(u1, v1, H), P(u0, v0, H), W1, ins, [[0, 0], [l / S, 0], [l / S, H / S], [0, H / S]]); }
-    g.quadO(P(-A.a, -A.b, H), P(A.a, -A.b, H), P(A.a, A.b, H), P(-A.a, A.b, H), [0.9, 0.95, 1], [A.cx, 0, A.cz], [[0, 0], [2 * A.a / S, 0], [2 * A.a / S, 2 * A.b / S], [0, 2 * A.b / S]]);
-    const m = new THREE.Mesh(g.geometry(), new THREE.MeshLambertMaterial({ map: t, vertexColors: true, emissive: 0x0d1a22 })); m.castShadow = true; m.receiveShadow = true; m.matrixAutoUpdate = false; C.root.add(m);
+    g.quadO(P(-A.a, -A.b, H), P(A.a, -A.b, H), P(A.a, A.b, H), P(-A.a, A.b, H), [0.82, 0.86, 0.92], [A.cx, 0, A.cz], [[0, 0], [2 * A.a / S, 0], [2 * A.a / S, 2 * A.b / S], [0, 2 * A.b / S]]);
+    const m = new THREE.Mesh(g.geometry(), new THREE.MeshLambertMaterial({ map: t, vertexColors: true, emissive: 0x06101a })); m.castShadow = true; m.receiveShadow = true; m.matrixAutoUpdate = false; C.root.add(m);
     C.exclPush(A.cx, A.cz, Math.max(A.a, A.b) * 1.3); if (C.CR) C.CR.exclAdd(A.cx, A.cz, Math.max(A.a, A.b) * 1.25);
     C.venueAt = (C.venueAt || []).concat([[A.cx, A.cz, Math.max(A.a, A.b) * 1.3]]);
   }

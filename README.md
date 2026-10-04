@@ -454,6 +454,52 @@ Med vožnjo se pod uro izpišejo imena krajev (Vodni stolp, Viadukt, Most čez S
 
 **Viri za postavitev** (preverjena z več neodvisnimi viri; uporabljena so samo dejstva: imena, vrstni red in smer ovinkov, dolžina, lega boksov): članek »Longford Circuit« na Wikipediji, »Track visit – Longford« (Motor Sport, oktober 2005), »Longford Lap…« (primotipo.com, 2018) in imena ulic v OpenStreetMap (Tannery Road, križišče Pateena Road in Illawarra Road pri Mountfordu, viadukt na železnici Western Line, slepi konci cest ob nekdanjih mostovih). Nobenega zemljevida ali slike iz teh virov nismo prerisali; brez Google Maps, Google Earth in Street View.
 
+## Peking, Kitajska
+
+Ulična proga okoli velikega stadiona v olimpijskem parku na severu Pekinga, kjer so v letih 2014 in 2015 dirkali električni dirkalniki. V igri je v **prvi postavitvi iz leta 2014** in v pravem merilu: štirje krogi proti 12 tekmecem, vožnja v nasprotni smeri urinega kazalca, start in cilj na bulvarju vzhodno od dvorane, boksi desno ob štartni ravnini.
+
+- **Zakaj postavitev iz leta 2014:** to je prva postavitev z vsemi dvajsetimi ovinki, ki jih navajajo viri. Leta 2015 so prvo šikano (ovinki 3–5) odstranili, drugo pa zožili; uradna dolžina je obakrat 3,44 km.
+- **Rekonstrukcija (pomembno):** v prostih virih, ki smo jih lahko prebrali, ni zemljevida proge. OpenStreetMap proge nima (nobene ceste z oznako dirkališča), zemljevidi na Wikimedia Commons in drugih straneh pa iz okolja, v katerem je proga nastala, niso bili dosegljivi. Zato je proga položena na ceste parka iz OpenStreetMap, ki se ujemajo z vsem, kar pravijo besedilni viri:
+  - proga obkroža stadion, plavalno dvorano in dvorano severno od nje ter vodi med stadionom in plavalno dvorano (FIA, kitajska športna uprava, 中新网);
+  - vozili so v nasprotni smeri urinega kazalca (FIA, Racer);
+  - proga je potekala večinoma po notranjih cestah parka, zaprli so le »dobrih 200 m« javne ceste severno od stadiona. To je natanko odsek med obema zahodnima bulvarjema ob severni strani dvorane (236 m);
+  - vhod na tribuno 1, ki je stala nasproti boksov in štartne črte, je bil v dvorani, zato sta štartna ravnina in tribuna ob dvorani.
+
+  Vrstni red in smer ovinkov, zaprti odsek javne ceste, lega štarta, boksov in tribune ter skupna dolžina se s tem ujemajo. Natančna oblika in lega šikan pa je približek, prav tako lega ovinkov na pešpoteh okoli stadiona.
+- **Dolžina:** izračunana 3,350 km (sredinska črta v igri), uradna 3,44 km (2,14 milje): 2,6 % manj. Nekateri viri navajajo 3,453 km, od tega je izračunana dolžina 3,0 % krajša. Razlika je verjetno v obliki šikan, boksarski stezi v obliki črke U in potoku proge po širokih ploščadih, ki ga ne poznamo natančno.
+- **Krogi:** 4 (≈ 13,4 km). Pravi krog je dolg 3,44 km (in ne ~2,1 km, kot bi sklepali iz 2,14 milje), zato so štirje krogi približno 13 km.
+- **Ovinki po vrsti** (samo številke, brez imen prizorišč): štartna ravnina proti severu; 1. ovinek pravokotno levo na cesto ob severni strani dvorane (edini zaprti odsek javne ceste); 2. pravokotno levo na dolgi zahodni bulvar; šikana 3–5 (desno-levo-desno, samo leta 2014); 6. pravokotno levo na cesto južno od prizorišč; šikana 7–8; 9. levo proti jezeru; šikana 10–13 ob stadionu (tribuna); 14. dolgi levi okoli stadiona ob jezeru; 15. levo na ploščad severno od stadiona; šikana 16–19 in 20., zadnji ovinek desno na štartno ravnino. Pod uro se izpišejo 1., 2., 3., 6., 7., 9., 10., 14., 15., 16. in 20. ovinek, komentator omeni še stadion, plavalno dvorano in jezero (brez imen).
+- **Boksi in tribune:** boksarska steza desno ob štartni ravnini, med bulvarjem in osrednjo pešpotjo parka, z začasnimi garažami ekip (beli šotori s pasom v barvi ekipe) in tovornjaki zadaj. Zapelješ vanje in mehaniki ti popravijo avto. Resnična boksarska steza je bila v obliki črke U okoli prostora za gledalce, v igri je ravna (približek). Tribuna 1 s streho je levo nasproti boksov, druge tribune so pri 1. ovinku, pri 6. ovinku in ob šikani 10–13. Gledalci stojijo tudi na ploščadih ob osrednji osi, ob jezeru in za stadionom. Štartni portal ima napis BEIJING (zemljepisno ime).
+- **Križišča:** povsod, kjer ceste parka srečajo progo (tudi ravno naprej na vogalih), je pregrada odprta v ustje stranske ceste do zapore. Zapore so rdeče-bele plastične pregrade, napolnjene z vodo, in modra ograja. Kitajski bulvarji so široki: zunaj zidov proge so še zunanji vozni pasovi z belimi prekinjenimi črtami (kjer je bulvar dovolj širok, še kolesarski pas za belo-rumeno zaščitno ograjo), granitni robnik, pločnik in drevored v jamah. V ustjih so tlakovani vogali, zebre s širokimi črtami, stop črte, puščice in rumene sredinske črte. Čez progo so obrabljeni prehodi za pešce (zunaj dirkalnih dni so to javne ceste). Semaforji so v dvanajstih križiščih, kjer jih ima OpenStreetMap: na drogovih z dolgimi ročicami nad cesto (tri luči navpično, števec sekund brez številk, luč za pešce z rdečim in zelenim možicem), pri večjih avenijah še drugi drog na nasprotnem vogalu.
+- **Podirljiva oprema križišč:** semaforji, okrogli znaki (beli z rdečim obročem ali modri), granitni stebrički (pred ploščadmi v vrstah), pari smetnjakov (modri in sivi), rdeči hidranti, sive električne omarice, dvokrake ulične svetilke, avtobusne nadstrešnice in belo-rumene zaščitne ograje ob vogalih, skupaj 244 kosov. Vsi so znotraj pregrad in jih avto zbije: odlomijo se pri tleh in odletijo ali se prevrnejo, avto pa pelje naprej, malo počasneje. Težji kosi (semafor, svetilka, nadstrešnica, omarica, hidrant) naredijo pri več kot 6 m/s malo škode (enkrat na kos). Te vrste so splošne in jih lahko uporabljajo tudi druge mestne proge. Zgradbe, zidovi in ograje proge ostanejo trdni.
+- **Okolica (poenostavljena in generična):**
+  - prizorišča brez imen, logotipov in olimpijskih simbolov: veliki stadion kot ovalna skleda z robom v obliki sedla (41–69 m), ovita v mrežo poševnih jeklenih nosilcev, za njimi rdeča betonska skleda, v strehi bleda membrana, znotraj tribune, atletska steza in igrišče;
+  - plavalna dvorana kot kocka z modro-belimi »mehurčki« (tekstura brez napisov);
+  - dvorana s steklenimi stenami, belimi rebri in srebrno valovito streho;
+  - stolp s široko glavo v obliki obrnjene trapezne prizme (132 m).
+
+  Drugo:
+  - stavbe v okolici v pravih obrisih iz OpenStreetMap (visoke z višinami iz OSM, npr. olimpijski stolp s petimi stebri do 247 m, druge s privzeto višino glede na vrsto in velikost);
+  - dolgo jezero vzhodno od stadiona in ribniki z granitnimi obalnimi zidovi in belo balustrado, mostovi in brvi čez jezero;
+  - tla po rabi tal (ESA WorldCover in OSM): granitne ploščadi, trate, gozdički;
+  - drevesa, značilna za Peking: sofore in jeseni z okroglimi krošnjami (drevoredi ob bulvarjih in poteh), topoli in ginkgi, žalujoče vrbe ob jezeru, kitajski bori v gozdičkih;
+  - ceste in poti okoli parka, prehodi za pešce, semaforji, avtobusne postaje in svetilke iz OSM, parkirani avtomobili na parkiriščih;
+  - na obzorju stolpnice mesta (višine iz OSM) ter hribi na zahodu in severu (SRTM) v rahlem smogu.
+
+  Vreme, letni časi in čas dneva delujejo kot na drugih progah.
+- **Pravno:** samo zemljepisna imena (Peking). Brez imen prizorišč, serije, prireditve in sponzorjev, brez olimpijskih krogov, maskot in oznak. Reklame na zidovih so izmišljene, kot na drugih progah, prometni znaki pa generični, brez kitajskih napisov.
+- **Približki:**
+  - postavitev je rekonstrukcija (glej zgoraj), šikane in ovinki na ploščadih so oblikovani po opisih;
+  - sredinske črte dvopasovnih cest so povprečje obeh vozišč iz OSM, vogali so zaobljeni;
+  - širina proge (12 m) je ocena;
+  - proga je ravna (park leži ~47 m nad morjem, ravno);
+  - boksi so ravni namesto v obliki črke U, lega tribun je ocena;
+  - prizorišča so poenostavljena in generična;
+  - višine stavb brez podatka v OSM so ocenjene;
+  - semaforji so tam, kjer so v OSM (lega opreme v ustjih je shematska);
+  - raba tal je groba (10 m celice WorldCover);
+  - obzorje je poenostavljeno.
+
 ## Toskana, Italija, in Gromski rt
 
 Progi v slogu dveh prog iz igre Circuit Superstars (posnetek dirke `parta.mp4`), z drugače oblikovanimi ovinki, tako da nista enaki originaloma:
@@ -764,6 +810,7 @@ Igra ne potrebuje namestitve ali prevajanja: `index.html` naloži datoteke po vr
 | `js/tex.js` | proceduralne teksture |
 | `js/world.js` | 3D svet prog (teren, drevesa, gledalci, rekviziti, boksi); Nordschleife in Red Bull Ring si delita gradnjo terena iz višinskih podatkov, Vršič ima svojega graditelja (teren iz višinskega modela, raba tal, stavbe, jesenski gozd in sneg), Los Caracoles si deli njegove pomožne funkcije za teren, okolico pa gradi svoj graditelj (andska pokrajina, podporni zidovi lestve, galeriji, železnica, Portillo, kondorji), Harju ima svojega (mesto in park na pravem terenu, dan relija), prav tako Katu-Jaryk (teren in raba tal, reka Čulišman, macesni in cedre, skale, parapeti, kioski in jurte), tako tudi Chapman's Peak (`buildChapman`: morje, granit in peščenjak, fynbos, lovilne mreže, cestninska postaja, razgledišča), tako tudi Big Sur (`buildBigSur`: ocean s peno, pečine, ločna mostova, Old Coast Road, razgledišča, obalna megla); Tianmen uporablja teren Los Caracoles, okolico pa gradi `buildTianmen` (apnenčaste stene, subtropski gozd, most zanke, jama s stopnicami, žičnica, megla); tudi Uncompahgre ima svojega (prepadi brez ograj, gozd s trepetlikami, potoki in slap, predor in galerija, stari rudniki); Sani Pass (`buildSani`) prav tako (bazalt, travnata pobočja po letnih časih, potoki in slapovi, koče in obori na vrhu, ovce, mejni prehod); prav tako Irohazaka (`buildIroha`: japonski gozd, podporni zidovi, table s hiragano, pogled na goro Nantai); Mulholland Highway prav tako (chaparral, hrasti, platane, peščenjak, lesene ograje, Elephant Rock); Moki Dugway prav tako (`buildMoki`: puščava, plasti pečine, makadam z asfaltnima koncema, nasip namesto ograj, razgledišče, osamelci); Bathurst in Crystal Palace uporabljata graditelja Red Bull Ringa v svojem videzu (`RB_LOOK`), Crystal Palace v starinskem (bale, lesene ograje in boksi) s parkom v svoji funkciji (`cpPark`: jezera, kipi, terase, stolp, hiše; `cpTrees`), Riverside ima svojega (`buildRiverside`: pomožne funkcije Nordschleife za teren, okolica iz leta 1960 in gore na obzorju iz višinskega modela, `rsFar`), Longford pa svojega (koridorski teren Nordschleife, svoj graditelj `buildLongford`: reke, železnica z viaduktom, lesena mostova, mesto, pašniki, boksi iz 1960-ih) |
 | `js/data/p206.js` | 3D model Peugeota 206 |
+| `js/world-peking.js`, `js/data/peking.js` | graditelj okolice Pekinga v svoji datoteki (`World.theme`, pomožne funkcije iz `World.kit`) in podatki njegove okolice (OpenStreetMap, ESA WorldCover, SRTM) |
 | `js/render.js` | izris, avti, delci, kamere, mehaniki v boksih, dež (curki, pršec, mokra cesta, oblačno nebo), promet (tudi tovornjaki), pešci, patrulje in bodičasti trakovi |
 | `js/sfx.js`, `js/input.js`, `js/comm.js` | zvok, upravljanje, komentator |
 | `js/net.js`, `js/vendor/peerjs.min.js` | povezava dveh telefonov za dirko s prijateljem (soba s kodo, usklajena ura); knjižnica PeerJS (MIT) |
@@ -856,3 +903,7 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 - Višine in teren Longforda: Copernicus DEM GLO-30: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
 - Raba tal Longforda (pašniki, drevje, njive, mesto): © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Postavitev proge Longford smo preverili v člankih »Longford Circuit« (Wikipedia, besedilo pod licenco CC BY-SA 4.0), »Track visit – Longford« (Motor Sport, 2005) in »Longford Lap…« (primotipo.com); iz njih so samo dejstva (imena, vrstni red in smer ovinkov, uradna dolžina, lega boksov od leta 1959), ne besedilo ali slike, zato pogoj deljenja pod enakimi pogoji (CC BY-SA) za datoteko proge ne velja.
+- Proga Peking (sredinska črta po cestah olimpijskega parka, okolica: stavbe, prizorišča, jezero in ribniki, raba tal, gozdički, drevoredi in drevesa, ceste in poti, prehodi za pešce, semaforji, avtobusne postaje, svetilke, parkirišča): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/), prek [Overture Maps Foundation](https://overturemaps.org) (izdaja 2026-09-23.0). Iz njih izpeljani podatki v `js/tracks/peking.js` in `js/data/peking.js` so na voljo pod ODbL 1.0.
+- Raba tal Pekinga: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Hribi na obzorju Pekinga: SRTM (NASA/USGS, javna domena), prek [Terrain Tiles](https://registry.opendata.aws/terrain-tiles/) (Mapzen/Tilezen) na AWS.
+- Dejstva o progi Peking (leto in postavitev, dolžina, smer vožnje, število ovinkov, zaprti odsek javne ceste, tribuna 1 ob dvorani, sprememba šikan leta 2015; samo dejstva, brez prerisanih zemljevidov ali slik, prebrano prek spletnega iskalnika): [FIA](https://www.fia.com/news/formula-e-beijing-eprix-preview) (predogleda dirk 2014 in 2015), [Racer](https://racer.com/2014/03/13/formula-e-unveils-beijing-circuit/), [kitajska športna uprava](https://www.sport.gov.cn/n20001280/n20067662/n20067613/c23075400/content.html), [中新网](https://www.chinanews.com/auto/2014/09-15/6590031.shtml), [d1ev.com](https://d1ev.com/kol/34270) (poročilo gledalca: tribuna 1), Wikipedija (članki o progi in o dirkah 2014 in 2015).

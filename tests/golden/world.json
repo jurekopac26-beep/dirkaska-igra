@@ -583,6 +583,38 @@
    "worn:MeshLambertMaterial": "2877cdfe"
   }
  },
+ "peking": {
+  "meshes": 573,
+  "verts": 817838,
+  "instances": 4936,
+  "props": 244,
+  "crowd": 915,
+  "world": "550ea986",
+  "propsHash": "b3d902d5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "e4d33b0f",
+   "pkWater:MeshPhongMaterial": "a03ba447",
+   "pkWater:MeshLambertMaterial": "4e813a4",
+   "pkRoad:MeshLambertMaterial": "24151708",
+   "pkWalls:MeshLambertMaterial": "fb9b5433",
+   "pkStreet:MeshLambertMaterial": "ccbbbac3",
+   "pkPits:MeshLambertMaterial": "6710c79b",
+   "pkPits:MeshBasicMaterial": "6dbb0f83",
+   "pkStands:MeshLambertMaterial": "cbc1bb58",
+   "pkVenues:MeshLambertMaterial": "cfecec62",
+   "pkRoads:MeshLambertMaterial": "2f99e76",
+   "pkJunctions:MeshLambertMaterial": "7d815cd",
+   "pkTrees:MeshLambertMaterial": "301e89e5",
+   "pkFar:MeshLambertMaterial": "b72bfc0e",
+   "pkScen:MeshLambertMaterial": "dc20df68",
+   "crowd:MeshLambertMaterial": "90739031",
+   "-:MeshBasicMaterial": "a2c4fcf5",
+   "ao:MeshBasicMaterial": "6f679ba8",
+   "tyremarks:MeshBasicMaterial": "f11b79c8",
+   "roadwear:MeshLambertMaterial": "79d93a43"
+  }
+ },
  "jezero": {
   "meshes": 154,
   "verts": 591648,
