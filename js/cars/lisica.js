@@ -52,7 +52,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           by('hood'), by('trunk', { x: [-2.6, -1.11] }));
       },
       build(K) {
-        const P = K.paint, B = K.black, G = K.GLASS, D = [0.09, 0.09, 0.1], SEAT = [0.5, 0.39, 0.27], HOOP = [0.7, 0.71, 0.74], TOP = [0.13, 0.13, 0.14], AMB = [1, 0.62, 0.1];
+        const P = K.paint, B = K.black, G = K.GLASS, D = [0.09, 0.09, 0.1], SEAT = [0.5, 0.39, 0.27], HOOP = [0.7, 0.71, 0.74], TOP = [0.05, 0.05, 0.055], AMB = [1, 0.62, 0.1];
         const XA = K.arches[1].x + K.arches[1].half, XB = K.arches[0].x - K.arches[0].half;   // (the sills: from the rear arch to the front one)
         // ---- the shell: the paint; the cockpit's top open; the scuttle's top dark (the dashboard under the glass); the sills a shade
         //      darker, black ledges in the arches, the bumpers' undersides a little darker than the paint ----
@@ -69,6 +69,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           DC.band([[x - 0.006, 0], [x + 0.006, 0], [x + 0.006, 1], [x - 0.006, 1]], SH, null, 0.004); }
         DC.side([[-0.42, 0.615], [-0.31, 0.615], [-0.31, 0.64], [-0.42, 0.64]], B, null, 0.005);
         DC.side([[1.64, 0.43], [1.74, 0.43], [1.74, 0.46], [1.64, 0.46]], AMB, null, 0.005);
+        DC.side([[1.51, 0.494], [1.9, 0.494], [1.9, 0.506], [1.51, 0.506]], SH, null, 0.004);   // (the front bumper's top on its flanks)
         // ---- the nose: the smiling mouth (wide, its top flatter than its bottom), the indicators in the bumper's corners ----
         K.part('bumperF', () => {
           const m = []; for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2, s = Math.sin(a); m.push([1.983, 0.335 + s * (s > 0 ? 0.045 : 0.08), -Math.cos(a) * 0.33]); }
@@ -100,6 +101,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const s2 of [-1, 1]) K.tailLamp(-1.98, 0.66, zc + s2 * 0.085, 0.1, 0.1, { round: true });
         }
         K.rect(-1.973, 0.43, 0, 0.4, 0.11, [0.93, 0.93, 0.9], { dir: '-x', part: 'bumperR' });
+        K.rect(-1.972, 0.5, 0, 1.28, 0.012, SH, { dir: '-x', part: 'bumperR' }); DC.side([[-1.97, 0.494], [-1.47, 0.494], [-1.47, 0.506], [-1.97, 0.506]], SH, null, 0.004);   // (its top's shut line)
         K.exhaust(-1.995, 0.25, 0.42, 0.032, 0.2, { part: 'body' });
         const fy = L.topY(-1.0, 0.6) + 0.004, fc = []; for (let i = 0; i < 8; i++) { const a = -i / 8 * Math.PI * 2; fc.push([-1.0 + Math.cos(a) * 0.045, fy, 0.6 + Math.sin(a) * 0.045]); }
         K.face(fc, [0.2, 0.2, 0.21], { part: 'body' });   // (the fuel filler's cap on the right of the deck)
@@ -116,7 +118,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const hx = -0.84;
         K.cage([[[hx + 0.02, 0.84, -0.56], [hx, 1.12, -0.55]], [[hx, 1.12, -0.55], [hx - 0.01, 1.2, -0.44]], [[hx - 0.01, 1.2, -0.44], [hx - 0.01, 1.2, 0.44]], [[hx - 0.01, 1.2, 0.44], [hx, 1.12, 0.55]],
           [[hx, 1.12, 0.55], [hx + 0.02, 0.84, 0.56]], [[hx, 1.13, -0.53], [-1.06, 0.87, -0.5]], [[hx, 1.13, 0.53], [-1.06, 0.87, 0.5]]], 0.024, HOOP, { n: 6, noCrush: true, noDent: true });
-        const prof2 = [[-0.87, 0.85], [-0.9, 0.915], [-0.97, 0.95], [-1.05, 0.93], [-1.1, 0.865]];
+        const prof2 = [[-0.87, 0.85], [-0.895, 0.925], [-0.97, 0.965], [-1.055, 0.94], [-1.1, 0.865]];
         K.skin([[-0.6, 0.8], [-0.52, 1], [0.52, 1], [0.6, 0.8]].map(([z, k]) => prof2.map(([x, y]) => [x, 0.85 + (y - 0.85) * k, z])), TOP, TOP, TOP, { part: 'body' });
         // ---- the hinges: the bonnet at the windscreen, the boot lid at the deck, the doors at their front edges ----
         K.hinge('hood', [0.56, 0.83, -0.6], [0.56, 0.83, 0.6]);
@@ -124,6 +126,12 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.hinge('doorL', [0.55, 0.3, -0.84], [0.55, 0.75, -0.84]); K.hinge('doorR', [0.55, 0.3, 0.84], [0.55, 0.75, 0.84]);
         // ---- inside (seen once a part is off): the four under the bonnet, the radiator behind the mouth ----
         K.engine(0.82, 0.28, 0, { l: 0.5, w: 0.46, h: 0.38, inner: true });
+        K.tyre(-1.56, 0.33, 0.12, { axis: 'y', r: 0.24, w: 0.12, inner: true, part: 'body' });   // (the spare, lying in the boot)
+        // the boot's front wall and the bay's firewall: the cockpit's bulkheads seen from behind them (one-sided: from the boot or the bay
+        // they would show the seats and the footwell), the lining's ring 3 cm in, facing back / forward
+        const wall = (x, yt, wt, cr, ybelt, dir) => { const q = [[0.2, 0.753], [0.3, 0.81], [Math.min(ybelt, yt - 0.03), 0.81], [yt - 0.03, wt - 0.03], [yt - 0.03 + cr, (wt - 0.03) * 0.38]], R = q.map(([y, z]) => [x, y, dir * z]);
+          K.face(R.concat(q.slice().reverse().map(([y, z]) => [x, y, -dir * z])), K.lining, { inner: true, part: 'body' }); };
+        wall(-0.766, 0.845, 0.67, 0, 0.685, 1); wall(0.306, 0.825, 0.68, 0.03, 0.675, -1);
         K.box(1.8, 0.27, 0, 0.05, 0.3, 0.72, 0, [0.12, 0.12, 0.13], null, false, { inner: true, part: 'body' });
       },
     },
