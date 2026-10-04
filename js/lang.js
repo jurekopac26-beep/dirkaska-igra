@@ -7,7 +7,7 @@
   // A text EN does not know stays as it is (a name, a number). The commentator speaks English in both languages.
   const EN = {
     /* ---- the page (index.html): buttons, labels, the HUD ---- */
-    '● POSNETEK': '● REPLAY', 'Foto': 'Photo', 'Končaj': 'Done', 'MESTO': 'POS', 'NAJ': 'BEST', 'ZAVORA': 'BRAKE', 'PLIN': 'GAS', 'NAGIB': 'TILT',
+    '● POSNETEK': '● REPLAY', 'Foto': 'Photo', 'Končaj': 'Done', 'MESTO': 'POS', 'NAJ': 'BEST', 'ZAVORA': 'BRAKE', 'ROČNA': 'HANDBRAKE', 'PLIN': 'GAS', 'NAGIB': 'TILT',
     '↺ Na progo': '↺ Back on track', 'Dirkaj': 'Race', 'Prvenstvo': 'Championship', 'Kariera': 'Career', 'Dirka s prijateljem': 'Race a friend',
     'Lestvica': 'Leaderboard', 'Nastavitve': 'Settings', 'Celoten zaslon': 'Full screen', 'Namesti igro': 'Install the game', 'Nadgradnje': 'Upgrades',
     'Barva': 'Colour', 'Upravljanje': 'Controls', 'Tipke': 'Buttons', 'Volan': 'Wheel', 'Nagib': 'Tilt', 'Nazaj': 'Back', 'Naprej': 'Next',
