@@ -627,7 +627,7 @@ const Garage3D = (function () {
       cg.quadO([xc - 0.12, ya, za], [xc + 0.12, ya, za], [xc + 0.12, yc, zb], [xc - 0.12, yc, zb], RAF, [xc, ya + 1, za]);
       cg.quadO([xc - 0.12, ya + 0.02, za], [xc + 0.12, ya + 0.02, za], [xc + 0.12, yc + 0.02, zb], [xc - 0.12, yc + 0.02, zb], RAF, [xc, ya - 1, za]); }
     const SPR = [0.62, 0.09, 0.07], HEAD = [0.75, 0.75, 0.78];
-    for (const xc of [-6.0, -1.8, 2.4, 6.95]) { for (let z = z0 + 0.25; z < z1 - 0.26; z += 1.25) C(xc - 0.03, xc + 0.03, 4.53, 4.59, z, Math.min(z + 1.25, z1 - 0.25), SPR, 't');
+    for (const xc of [-6.0, -1.8, 2.4, 6.6]) { for (let z = z0 + 0.25; z < z1 - 0.26; z += 1.25) C(xc - 0.03, xc + 0.03, 4.53, 4.59, z, Math.min(z + 1.25, z1 - 0.25), SPR, 't');
       for (let z = z0 + 1; z < z1 - 0.5; z += 3) { C(xc - 0.004, xc + 0.004, 4.59, h, z - 0.004, z + 0.004, CND, 'td');
         const zh = z + 1.5; if (zh > z1 - 0.5 || xc * xc / 20 + zh * zh / 9.5 < 1.4) continue;   // (a head between the hangers; none over the honeycomb)
         C(xc - 0.012, xc + 0.012, 4.47, 4.53, zh - 0.012, zh + 0.012, HEAD, 't'); C(xc - 0.028, xc + 0.028, 4.462, 4.47, zh - 0.028, zh + 0.028, HEAD); } }
