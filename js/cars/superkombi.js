@@ -40,7 +40,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [2.33, 0.84, 0.07, 0.72, 0.79, 0.76, 0.01, 'b', 0.07]],        // the nose: the lamps' panel over the spoiler's face
         eye: { x: 0.12, y: 1.22, near: 0.25, tilt: 0.06, style: 'closed' },   // (high and upright, as in a van; the roll cage round it)
         door: [1.12, -0.06], bumpF: 0.15, bumpR: 0.14, bumpY: [0.5, 0.56],
-        engine: [-0.85, 0.78], engRear: true, cage: true,                    // (the race engine behind the seats, between the axles)
+        engine: [-0.85, 0.68], engRear: true, cage: true,                    // (the race engine behind the seats, between the axles: its top)
         crush: { x0: -2.29, x1: -0.55, z: 0.84 } },                          // (the roof over the engine sinks; the cage holds the cabin's)
       wheels: { style: 'slick', w: 0.27, wR: 0.31, rim: [0.17, 0.17, 0.19], gap: 0.04 },
       // (the tailgate is its glass and the panel under it: the D-pillars beside the glass stay on the body with the tail lamps)
@@ -127,15 +127,18 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         }, { noCrush: true, noDent: true });
         // ---- inside (seen once a part is off): two racing seats in the cage, the dashboard; the race engine behind them (the bulkhead
         //      between), its gearbox over the rear axle; the radiator in the nose ----
-        for (const sd of [-1, 1]) K.seat(0.02, 0.5, sd * 0.38, { w: 0.46, back: 0.72, tilt: 0.18, col: [0.08, 0.08, 0.09] });
+        for (const sd of [-1, 1]) K.seat(0.02, 0.42, sd * 0.38, { w: 0.46, back: 0.76, tilt: 0.2, col: [0.08, 0.08, 0.09] });
         K.box(1.02, 0.6, 0, 0.42, 0.34, 1.6, 0, D, null, false, { inner: true, part: 'body' });
+        K.cyl([0.52, 0.94, -0.38], [0.545, 0.965, -0.38], 0.17, B, { n: 10, capA: null, capB: null, inner: true, part: 'body' });   // the wheel (on the left) on its column
+        K.bar([0.54, 0.955, -0.38], [0.84, 0.82, -0.38], 0.025, D, { n: 4, inner: true, part: 'body' });
         K.box(-0.4, 0.18, 0, 0.04, 0.84, 1.62, 0, D, null, false, { inner: true, part: 'body' });
         // the V10: its block, the plenum in the vee, the red cam covers on its banks, the headers to the tailpipes
-        K.engine(-0.85, 0.2, 0, { l: 0.86, w: 0.46, h: 0.44, col: [0.32, 0.33, 0.35], cover: [0.1, 0.1, 0.11] });
+        K.engine(-0.85, 0.2, 0, { l: 0.86, w: 0.46, h: 0.44, col: [0.6, 0.61, 0.64], cover: [0.1, 0.1, 0.11] });
         for (const sd of [-1, 1]) {
-          K.plate([[-1.24, 0.48, sd * 0.12], [-0.46, 0.48, sd * 0.12], [-0.46, 0.6, sd * 0.31], [-1.24, 0.6, sd * 0.31]], 0.05, [0.66, 0.1, 0.08], { inner: true, part: 'body' });
+          K.plate([[-1.24, 0.48, sd * 0.12], [-0.46, 0.48, sd * 0.12], [-0.46, 0.6, sd * 0.31], [-1.24, 0.6, sd * 0.31]], 0.05, [0.82, 0.12, 0.08], { inner: true, part: 'body' });
           K.bar([-0.62, 0.36, sd * 0.3], [-1.9, 0.3, sd * 0.24], 0.035, [0.45, 0.42, 0.4], { n: 4, inner: true, part: 'body' }); }
-        K.box(-1.52, 0.2, 0, 0.44, 0.32, 0.42, 0, [0.3, 0.31, 0.33], null, false, { inner: true, part: 'body' });
+        K.box(-1.52, 0.2, 0, 0.44, 0.32, 0.42, 0, [0.5, 0.51, 0.53], null, false, { inner: true, part: 'body' });                // (the gearbox)
+        for (const sd of [-1, 1]) K.box(-0.68, 0.2, sd * 0.64, 0.4, 0.55, 0.1, 0, [0.2, 0.21, 0.22], null, false, { inner: true, part: 'body' });   // (the radiators beside it, ahead of the rear wheels)
         K.box(1.95, 0.2, 0, 0.1, 0.5, 1.3, 0, [0.16, 0.16, 0.17], null, false, { inner: true, part: 'body' });
         const C = [0.78, 0.79, 0.82];
         K.cage([[[-0.33, 0.2, -0.72], [-0.33, 1.5, -0.7]], [[-0.33, 0.2, 0.72], [-0.33, 1.5, 0.7]], [[-0.33, 1.5, -0.7], [-0.33, 1.5, 0.7]], [[-0.33, 0.25, -0.7], [-0.33, 1.48, 0.7]],
