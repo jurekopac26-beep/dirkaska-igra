@@ -1,12 +1,13 @@
-// Medvode to Smlednik: the real road at its real width (an open road with four ways to drive it on one card, as Mulholland Highway: def.modes,
-// the race, the time trial, the duel in the traffic and the run from the police). The road: from the football ground on Medvoška cesta in
-// Medvode to the old castle above Smlednik (~6.2 km, ~320 -> ~500 m), its own width along the way (6.4 m on Medvoška cesta, 7.5 m on Gorenjska
-// cesta, 3.7 m up the castle road: def.widths), the sidewalks, the bridge over the Sava with its parapets close to the road; every junction
-// (the side roads), the four roundabouts (three of them driven round, the oncoming traffic on its own way round them and the split approaches:
-// def.altDn), the bus stops and the zebra crossings; the houses, garden walls and fences beside the road are the barrier there (def.walls); the
-// places for the HUD and the commentator in order along the road; only geographic names. The traffic: both ways, the oncoming vehicles round the
-// rings on their own lines, none up the narrow castle road (def.trafficEnd), pulling onto the shoulder for the police where the road is narrow
-// (def.pullOff). A whole race on autopilot (every car finishes and pulls up in its own slot past the line), a whole duel in the traffic, the run
+// Medvode to Smlednik: the real road widened to the usual width of the race tracks (an open road with four ways to drive it on one card, as
+// Mulholland Highway: def.modes, the race, the time trial, the duel in the traffic and the run from the police). The road: from the football
+// ground on Medvoška cesta in Medvode to the old castle above Smlednik (~6.2 km, ~320 -> ~500 m), ~11.4 m wide on average with the real
+// widths' order kept (14 m on Gorenjska cesta, 12.5 m on Medvoška cesta, 8.5 m up the castle road: def.widths), gravel (makadam) where OSM
+// has it unpaved (the castle road: def.surf), the sidewalks, the bridge over the Sava (118 m) with its parapets close to the road, Gorenjska
+// cesta's overpass over the road (def.overpass); every junction (the side roads), the four roundabouts (three of them driven round, their
+// islands solid, the oncoming traffic on its own way round them and the split approaches: def.altDn), the bus stops and the zebra crossings;
+// the houses, garden walls and fences beside the road are the barrier there (def.walls); the places for the HUD and the commentator in order
+// along the road; only geographic names. The traffic: both ways, the oncoming vehicles round the rings on their own lines, none up the castle
+// road (def.trafficEnd), pulling onto the shoulder for the police (def.pullOff). A whole race on autopilot (every car finishes and pulls up in its own slot past the line), a whole duel in the traffic, the run
 // from the police (the autopilot gets away at least once in three on easy). The medal times of the time trial: the stock rally car on the
 // autopilot. The scenery's data (terrain, land cover, canopy, buildings, water, streets) in the track file.
 //   node tests/medvode.test.js
@@ -31,22 +32,30 @@ check('track: from Medvode (~320 m) up to the castle above Smlednik (~500 m), ~6
   `${Math.round(T.raceLen)} m (realKm ${def.realKm}), ${def.alt[0]} -> ${def.alt[1]} m`);
 check('track: not in the big championship (an open road is no circuit)', !C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('medvode'));
 
-// 2. the real widths: Medvoška cesta 6.4 m, Gorenjska cesta 7.5 m, the regional road ~6 m, Smlednik 4.8 m, the castle road 3.7 m; the sidewalks
-// part of the road; the bridge over the Sava (~312 m) between its parapets, 1.6 m from the asphalt
+// 2. the widths: the real ones (Medvoška cesta 6.4 m, Gorenjska cesta 7.5 m, the regional road ~6 m, the bridge 6.5 m, Smlednik 4.8 m, the
+// castle road 3.7 m) widened to the race tracks' usual ~11.4 m on average, their order kept; gravel up the castle road; the sidewalks part of the
+// road; the bridge over the Sava (118 m) between its parapets, 1.6 m from the asphalt; Gorenjska cesta over the road on its bridge
 {
   const w = (d) => 2 * T.wAt(at(d)), wk = T.walk ? T.walk[0].filter(v => v > 0.5).length + T.walk[1].filter(v => v > 0.5).length : 0;
-  check('widths: 6.4 m on Medvoška cesta, 7.5 m on Gorenjska cesta, ~6 m to Zbilje and over the bridge, 4.8 m in Smlednik, 3.7 m up the castle road',
-    Math.abs(w(100) - 6.4) < 0.15 && Math.abs(w(800) - 7.5) < 0.15 && Math.abs(w(1500) - 6.1) < 0.3 && Math.abs(w(3700) - 6.3) < 0.4 && Math.abs(w(4900) - 4.8) < 0.15 && Math.abs(w(5800) - 3.7) < 0.15,
-    [100, 800, 1500, 3700, 4900, 5800].map(d => `${d}: ${w(d).toFixed(2)} m`).join(', '));
+  let ws = 0, wn = 0; for (let d = 0; d < T.raceLen; d += 2) { ws += w(d); wn++; }
+  check('widths: ~11.4 m on average (the race tracks\' usual), the real order kept: 14 m on Gorenjska cesta > 12.5 m on Medvoška cesta, the regional road and the bridge > 9.8 m in Smlednik > 8.5 m up the castle road',
+    Math.abs(ws / wn - 11.4) < 0.4 && Math.abs(w(800) - 14) < 0.3 && Math.abs(w(100) - 12.5) < 0.3 && Math.abs(w(1500) - 12.4) < 0.4 && Math.abs(w(3700) - 12.6) < 0.4 && Math.abs(w(4900) - 9.8) < 0.3 && Math.abs(w(5800) - 8.5) < 0.3,
+    `average ${(ws / wn).toFixed(2)} m; ` + [100, 800, 1500, 3700, 4900, 5800].map(d => `${d}: ${w(d).toFixed(2)} m`).join(', '));
+  const sf = (d) => T.sf ? T.sf[at(d)] : 0, sfs = [3000, 5000, 5200, 5800, 6200].map(sf);
+  check('surface: gravel (makadam) where OSM has the road unpaved, the castle road from its foot (d ~5148) to the end; asphalt before', sfs.join() === '0,0,5,5,5' && def.surf.length === 1 && Math.abs(def.surf[0][0] - 5148) < 5,
+    `surface at 3000/5000/5200/5800/6200: ${sfs.join(' ')}, def.surf ${JSON.stringify(def.surf)}`);
   check('sidewalks: along the villages, part of the road (T.walk)', wk * T.ds > 2500, `${(wk * T.ds / 1000).toFixed(1)} km of sidewalk (both sides)`);
   const [b0, b1] = def.bridges[0], i = at((b0 + b1) / 2);
-  check('bridge: ~312 m over the Sava, the barriers 1.6 m past the asphalt there (def.narrow)', Math.abs(b1 - b0 - 312) < 3 && T.bl[i] - T.wAt(i) < 1.7 && T.br[i] - T.wAt(i) < 1.7,
+  check('bridge: 118 m over the Sava (OSM), the barriers 1.6 m past the asphalt there (def.narrow)', Math.abs(b1 - b0 - 118) < 3 && T.bl[i] - T.wAt(i) < 1.7 && T.br[i] - T.wAt(i) < 1.7,
     `${(b1 - b0).toFixed(0)} m, barriers ${(T.bl[i] - T.wAt(i)).toFixed(2)} / ${(T.br[i] - T.wAt(i)).toFixed(2)} m past the edges`);
   let nIn = 0, nB = 0; for (const b of def.bld) { const [x, z, L, W, ang] = b, c = Math.cos(ang), s = Math.sin(ang); if (b[8] || L * W > 4000) continue;
     const Q = [[0, 0], [-L / 2, -W / 2], [L / 2, -W / 2], [L / 2, W / 2], [-L / 2, W / 2]].map(([u, v]) => { const px = x + c * u - s * v, pz = z + s * u + c * v; return T.query(px, pz, T.nearestIdx(px, pz), {}); });
     if (Q.some(q => q.k < 0 && !q.over && Math.abs(q.d) < T.wAt(q.a))) continue;   // (one the data puts on the road itself: the scenery leaves it out)
     nB++; if (Q.some(q => q.k < 0 && !q.over && !T.gap[q.d > 0 ? 1 : 0][q.a] && Math.abs(q.d) < (q.d > 0 ? q.br : q.bl) - 0.6)) nIn++; }   // (beside a side road's mouth the barrier is open)
   check('walls: the houses, garden walls and fences beside the road are its barrier there (def.walls): no house inside it', def.walls.length > 100 && nIn === 0, `${def.walls.length} walls, ${nIn} of ${nB} houses inside the barriers`);
+  const O = (def.overpass || [])[0], oy = O ? Math.max(...O.P.filter((v, k) => k % 3 === 2)) : 0, io = O ? at((O.d[0] + O.d[1]) / 2) : 0;
+  check('overpass: Gorenjska cesta crosses over the road on its bridge at d ~193 (OSM), its deck over 5 m above the road, the abutments the barrier under it',
+    !!O && O.d[0] < 193 && O.d[1] > 193 && oy - T.hy[io] > 5 && T.bl[io] - T.wAt(io) < 3 && T.br[io] - T.wAt(io) < 3, O ? `deck ${(oy - T.hy[io]).toFixed(1)} m over the road, d ${O.d.join('-')}` : 'none');
 }
 
 // 3. every junction: the side roads, the four roundabouts (three driven round), the oncoming traffic's own way round them (altDn), the bus stops and
@@ -55,6 +64,8 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
   const R = def.rings || [];
   check('junctions: every street, lane and track that meets the road (side roads), the four roundabouts (three driven round, the big one at Na klancu passed on its slip road)',
     T.stubs.length >= 80 && R.length === 4 && R.filter(r => r.drive).length === 3 && R.every(r => r.r > 11 && r.r < 22), `${T.stubs.length} side roads, rings ${R.map(r => `r ${r.r} @${Math.round(r.d)}${r.drive ? '' : ' (passed)'}`).join(', ')}`);
+  const isl = R.filter(r => r.drive).map(r => { const i = at(r.d), q = T._qMain(r.c[0], r.c[1], i, {}), side = q.d > 0 ? 1 : -1, bar = side > 0 ? T.br[i] : T.bl[i]; return bar - T.wAt(i); });
+  check('rings: the islands of the three driven round are solid (the barrier at the island\'s kerb, past its apron)', isl.every(v => v < 2.5), isl.map(v => v.toFixed(2) + ' m').join(', '));
   check('one-way: the oncoming traffic\'s own lines round the rings and the split approaches (altDn), each a stretch of the road with a line of points',
     def.altDn.length === 5 && def.altDn.every(a => a.b > a.a && a.P.length >= 30 && a.P.length % 3 === 0), def.altDn.map(a => `${Math.round(a.a)}-${Math.round(a.b)}`).join(', '));
   check('stops and crossings: the bus stops (OSM, with their names) and the zebra crossings on the road', def.stops.length >= 12 && def.stops.every(s => s[2]) && def.zebras.length >= 12, `${def.stops.length} stops, ${def.zebras.length} zebra crossings`);
@@ -85,7 +96,7 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
   check('traffic: both ways; round the rings and on the split approaches the oncoming vehicles drive their own lines, off the route; none up the castle road',
     tf.veh.some(v => v.dir > 0) && tf.veh.some(v => v.dir < 0) && alt > 20 && off > alt * 0.5 && !beyond, `${tf.veh.length} vehicles, ${alt} seen on their own line (${off} off the route), ${beyond} past the castle road's foot`);
   const v = { dir: 1, s: T.startS + 4900, kind: 0, wid: 1.8 }, e = tf._edge(v);
-  check('traffic: on the 4.8 m road through Smlednik a car pulling over for the police goes onto the shoulder (def.pullOff)', Math.abs(e) > T.wAt(at(4900)) - 0.9 + 0.5, `its middle ${e.toFixed(2)} m from the centre line, the asphalt's edge ${T.wAt(at(4900)).toFixed(2)} m`);
+  check('traffic: on the village street through Smlednik a car pulling over for the police goes onto the shoulder (def.pullOff)', Math.abs(e) > T.wAt(at(4900)) - 0.9 + 0.5, `its middle ${e.toFixed(2)} m from the centre line, the asphalt's edge ${T.wAt(at(4900)).toFixed(2)} m`);
 }
 
 // 6. the ways to drive it (and an online race: always the race)

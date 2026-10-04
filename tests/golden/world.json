@@ -584,22 +584,22 @@
   }
  },
  "medvode": {
-  "meshes": 988,
-  "verts": 1748350,
-  "instances": 7494,
-  "props": 94,
-  "crowd": 522,
-  "world": "91099e0e",
-  "propsHash": "7f89fb11",
-  "floor": "530bfec8/13244",
+  "meshes": 984,
+  "verts": 1744333,
+  "instances": 7666,
+  "props": 102,
+  "crowd": 498,
+  "world": "8b4e1cfc",
+  "propsHash": "f0b9521a",
+  "floor": "4e498904/13160",
   "groups": {
-   "-:MeshLambertMaterial": "61de062f",
-   "-:MeshPhongMaterial": "e20755c9",
-   "crowd:MeshLambertMaterial": "a8ae7ba",
-   "-:MeshBasicMaterial": "ab62ec00",
-   "ao:MeshBasicMaterial": "6b22868f",
-   "tyremarks:MeshBasicMaterial": "fe945062",
-   "roadwear:MeshLambertMaterial": "a3dc6b21"
+   "-:MeshLambertMaterial": "a1f54685",
+   "-:MeshPhongMaterial": "4b54f9bb",
+   "crowd:MeshLambertMaterial": "2d1a2c48",
+   "-:MeshBasicMaterial": "dd4cd48f",
+   "ao:MeshBasicMaterial": "5351fa1f",
+   "tyremarks:MeshBasicMaterial": "be687d2e",
+   "roadwear:MeshLambertMaterial": "91970e2"
   }
  },
  "jezero": {
