@@ -377,8 +377,9 @@ try {
   //          burning (frames of 0.1 s drawn with their effects at a lower resolution: cheap). Only the cars, their pieces and the effects are
   //          drawn (the world hidden: the background the fog's flat colour, so what differs or darkens is the car's own). From the same
   //          camera (the chase camera's pose pinned) at least 35 % of the car's screen box (its body's box projected) looks different; its
-  //          fire in sight (new flame-coloured pixels round the car: its flames out of the body, not inside it) and its smoke (pixels over the
-  //          car's box gone dark); from the cockpit (the roof crushed: roofDmg 1, four steps) the upper middle of the view not dark (>= 60 %);
+  //          fire in sight (flame-coloured pixels the particles add round the car, against the same frame without them: its flames out of
+  //          the body, not inside it) and its smoke (pixels there they darken); from the cockpit of a vehicle with a roof (crushed: roofDmg
+  //          1, four steps) the upper middle of the view not dark (>= 60 %);
   //          the car and its pieces drawn with at most the whole car's draw calls + 2 a piece + 1 a crack decal; what its pieces cost (the
   //          field under a wreck, section 5) ----
   const R6 = [], t7 = Date.now(), seen = kits.concat(models.filter(m => !m.kit));
@@ -444,8 +445,8 @@ try {
     step(20);   // (2 s: the bits of the wrecks over, every fire up)
     const f0 = Render.fxStats(); step(10); const f1 = Render.fxStats();
     const V = R.cars.map(c => Render.viewOf(c)).filter(Boolean), burning = V.filter(v => v.fire), emit = V.filter(v => v.fireEmit), cp = Render.camera.position, d = (v) => Math.hypot(v.car.x - cp.x, v.car.z - cp.z);
-    const near = burning.slice().sort((a, b) => d(a) - d(b)).slice(0, 6);
-    return { cars: R.cars.length, burning: burning.length, emit: emit.length, nearest: near.every(v => v.fireEmit), sparks: f1.sparks - f0.sparks, smoke: f1.total - f0.total };
+    const far = Math.max(0, ...emit.map(d)), next = Math.min(1e9, ...burning.filter(v => !v.fireEmit).map(d));   // (the farthest that emits no farther than the nearest that does not)
+    return { cars: R.cars.length, burning: burning.length, emit: emit.length, nearest: far <= next + 0.5, far: +far.toFixed(1), next: +Math.min(next, 999).toFixed(1), sparks: f1.sparks - f0.sparks, smoke: f1.total - f0.total };
   }, kits.length ? kits[0].id : 'kaze');
   await page.evaluate(() => Render.setDynScale(1));
   console.log(`info the wrecks as seen: ${((Date.now() - t7) / 1000).toFixed(0)} s for ${R6.length} vehicles (${R6.filter(r => !r.kit).length} of the 11); fire / smoke pixels in sight: ` + R6.map(r => `${r.id} ${r.fireV}/${r.smokeV}`).join(', '));
