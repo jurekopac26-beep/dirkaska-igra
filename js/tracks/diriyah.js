@@ -44,7 +44,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
       { n: 'Zavoj 17', d: 2170, say: ['Turn seventeen, a tricky right onto the start straight!', 'Right at Turn Seventeen, past the pits!', 'Turn seventeen, and down to the line!'] },
     ],
     pit: [13, -100, 96, -12, 40],   // pit lane on the right of the start straight (west of it): [centre offset to the right, from, to, the player's box, way in] (metres from the start line)
-    stands: [[-150, 70, -1, 10], [180, 300, 1, 8], [1500, 1800, -1, 7]],   // grandstands [from, to, side, rows]: across from the pits, inside the turning loop, along the avenue
+    stands: [[-85, 60, -1, 10], [185, 290, 1, 8], [1500, 1780, -1, 7]],   // grandstands [from, to, side, rows]: across from the pits, inside the turning loop, along the avenue
     // the junctions on the lap ([metres after the start line, side, half width of the street's mouth, its slant (cos to the track), class]): the side
     // streets closed by the circuit's walls, the walls set back into their mouths (escape roads, def.walls), the junction's lights and furniture there
     junc: [[-121,1,12.0,-0.98,3],[150,-1,5,-0.54,3],[288,-1,13.0,0.8,3],[980,-1,15.0,0.17,5],[1058,-1,3,0.91,5],[1156,-1,3,-0.74,5],[1340,-1,5,-0.01,3],[1386,-1,5,-0.99,3],[1922,-1,3.8,-0.04,4],[2004,-1,15.5,0.33,3],[2172,-1,23.2,-0.01,3]],

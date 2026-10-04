@@ -1709,6 +1709,8 @@ const Render = (function () {
   THEMES.uncompahgre = { fog: 0xbfcfe0, sun: 0xfff0d8, sunI: 1.24, sky: 0xb8d0f0, gnd: 0x4c5236, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-70, 92, 62] };   // the Uncompahgre Gorge: a clear afternoon in the San Juans, the sun from the south-west over the cliffs, a crisp blue haze
   SPLIT.uncompahgre = [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]];
   SPLIT.iroha = [[0.96, 0.99, 1.05], [1.04, 1.0, 0.95]];   // (Irohazaka: cool shade under the maples, a warm autumn sun)
+  THEMES.diriyah = { fog: 0xe2d8c6, sun: 0xfff0d4, sunI: 1.36, sky: 0xc4d6ec, gnd: 0x9a8262, hemiI: 0.62, tint: [1.04, 1.0, 0.94], sat: 1.04, haze: 0.16, hazeCol: [1, 0.86, 0.66], sunOff: [-62, 96, 58] };   // Diriyah: a clear, hot afternoon in the Najd, the high sun from the south-west, a dusty haze
+  SPLIT.diriyah = [[0.96, 0.99, 1.05], [1.06, 1.01, 0.92]];
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   // The time of day as one number, todK: 0 day, 0.5 dusk, 1 night (setAtmos sets it from the setting; an endurance race moves it with its
   // clock: setTodK). The light, the fog and the grade are blended between the day's (the theme's), the dusk's and the night's; dawn (the
