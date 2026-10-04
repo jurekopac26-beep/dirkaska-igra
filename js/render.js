@@ -1521,6 +1521,32 @@ const Render = (function () {
   const PROP_COLS = [[0.88, 0.33, 0.24], [0.95, 0.95, 0.94], [0.27, 0.6, 0.35], [0.2, 0.2, 0.22], [0.92, 0.89, 0.74]];   // instance tint: red / white / green / black / cream (painted tyres, the same as the tyre walls)
   const POST_SNOW = [1, 0.53, 0.13];                              // instance tint of the orange snow poles high up on Pikes Peak (a 'post' with col 1)
   let propMat = null, propMatTyre = null;
+  function streetPropGeo(W, g, kind) {   // the junctions' street furniture (Core PROPK: signal, lamp, sign, bollard, bin, hydrant, cabinet, shelter), its foot at -h0; an arm or a face towards local +x
+    const grey = [0.55, 0.57, 0.6], dark = [0.1, 0.1, 0.11], h0 = { signal: 1.85, lamp: 4.2, sign: 1.2, bollard: 0.45, bin: 0.5, hydrant: 0.4, cabinet: 0.7, shelter: 1.25 }[kind] || 1;   // (Core's h0)
+    const plate = (x, y, z, r, n, col) => { const c = [x, y, z], ins = [x - 1, y, z]; for (let k = 0; k < n; k++) { const a0 = k / n * Math.PI * 2, a1 = (k + 1) / n * Math.PI * 2; g.triO(c, [x, y + Math.cos(a0) * r, z + Math.sin(a0) * r], [x, y + Math.cos(a1) * r, z + Math.sin(a1) * r], col, ins); } };
+    if (kind === 'signal') {   // a grey pole, a black head with a yellow backplate facing +x (red, amber, green), a second head across (+z)
+      W.box(g, 0, -h0, 0, 0.14, 3.55, 0.14, 0, grey, grey);
+      W.box(g, 0.02, 0.55, 0, 0.3, 1.2, 0.38, 0, dark, dark); W.box(g, 0.0, 0.48, 0, 0.04, 1.34, 0.56, 0, [0.95, 0.78, 0.12], [0.95, 0.78, 0.12]);
+      [[1.5, [0.95, 0.15, 0.1]], [1.12, [0.95, 0.62, 0.1]], [0.74, [0.15, 0.85, 0.35]]].forEach(([y, c]) => W.box(g, 0.18, y - 0.12, 0, 0.04, 0.22, 0.22, 0, c, c));
+      W.box(g, 0, 0.2, 0.2, 0.3, 0.85, 0.26, 0, dark, dark); for (const [y, c] of [[0.85, [0.95, 0.15, 0.1]], [0.5, [0.15, 0.85, 0.35]]]) W.box(g, 0, y - 0.1, 0.34, 0.2, 0.2, 0.04, 0, c, c);
+      W.box(g, 0, -h0, 0, 0.3, 0.12, 0.3, 0, grey, grey);
+    } else if (kind === 'lamp') {   // a tall tapered grey pole, its arm out over the road (+x), the luminaire
+      W.cyl(g, 0, -h0, 0, 0.12, 8.2, 6, grey, null, 0.06); W.box(g, 0, -h0, 0, 0.36, 0.5, 0.36, 0, grey, grey);
+      W.box(g, 0.9, 3.9, 0, 1.8, 0.08, 0.08, 0, grey, grey); W.box(g, 1.8, 3.82, 0, 0.7, 0.14, 0.3, 0, [0.4, 0.42, 0.45], [0.4, 0.42, 0.45]); W.box(g, 1.8, 3.8, 0, 0.6, 0.03, 0.24, 0, [1, 0.97, 0.86]);
+    } else if (kind === 'sign') {   // a post, a round blue sign with a white arrow (keep right), facing +x
+      W.box(g, 0, -h0, 0, 0.07, 1.95, 0.07, 0, grey, grey); plate(0.05, 0.85, 0, 0.32, 10, [0.12, 0.3, 0.68]); plate(0.035, 0.85, 0, 0.34, 10, [0.9, 0.9, 0.9]);
+      W.box(g, 0.06, 0.66, 0.0, 0.01, 0.3, 0.07, 0, [0.96, 0.96, 0.96]); W.box(g, 0.06, 0.94, 0.05, 0.01, 0.07, 0.16, 0.0, [0.96, 0.96, 0.96]); W.box(g, 0.06, 0.88, 0.1, 0.01, 0.16, 0.06, 0, [0.96, 0.96, 0.96]);
+    } else if (kind === 'bollard') { const s = [0.86, 0.76, 0.6]; W.cyl(g, 0, -h0, 0, 0.12, 0.9, 6, s, [0.92, 0.84, 0.7]); W.cyl(g, 0, 0.18, 0, 0.125, 0.1, 6, [0.95, 0.95, 0.9]); }   // sandstone coloured, a white band
+    else if (kind === 'bin') { const gr = [0.24, 0.36, 0.3]; W.cyl(g, 0, -h0, 0, 0.27, 0.9, 7, gr); W.cyl(g, 0, 0.4, 0, 0.29, 0.1, 7, [0.45, 0.47, 0.48], [0.3, 0.31, 0.32]); }
+    else if (kind === 'hydrant') { const r = [0.78, 0.12, 0.1], y = [0.95, 0.78, 0.15]; W.cyl(g, 0, -h0, 0, 0.13, 0.62, 6, r); W.cyl(g, 0, 0.22, 0, 0.16, 0.08, 6, y, y); W.cone(g, 0, 0.3, 0, 0.12, 0.1, 6, y, y, 0);
+      W.box(g, 0, -0.05, 0, 0.42, 0.12, 0.1, 0, y, y); }
+    else if (kind === 'cabinet') { const c = [0.78, 0.76, 0.7]; W.box(g, 0, -h0, 0, 0.88, 1.4, 0.48, 0, c, [0.7, 0.68, 0.62]); W.box(g, 0.0, -h0 + 0.3, 0.245, 0.7, 0.9, 0.02, 0, [0.68, 0.66, 0.6]); }
+    else if (kind === 'shelter') {   // posts, a flat roof, a glass back (-z), a bench
+      const st = [0.62, 0.64, 0.66]; for (const x of [-1.5, 1.5]) for (const z of [-0.6, 0.6]) W.box(g, x, -h0, z, 0.08, 2.4, 0.08, 0, st, st);
+      W.box(g, 0, 1.12, 0, 3.3, 0.12, 1.5, 0, [0.85, 0.86, 0.88], [0.92, 0.93, 0.95]); W.box(g, 0, -h0 + 0.15, -0.6, 3.0, 2.1, 0.03, 0, [0.55, 0.7, 0.78]);
+      W.box(g, 0, -h0 + 0.42, -0.35, 2.6, 0.06, 0.38, 0, [0.6, 0.62, 0.64]);
+    }
+  }
   function propGeometry(kind) {
     const W = World, g = new W.GB(kind === 'tyre' || kind === 'tstack'), white = [1, 1, 1], TAU2 = Math.PI * 2;
     const disc = (y, r, n, rim, mid, up) => { for (let k = 0; k < n; k++) { const a0 = k / n * TAU2, a1 = (k + 1) / n * TAU2, c = [0, y, 0], p0 = [Math.cos(a0) * r, y, Math.sin(a0) * r], p1 = [Math.cos(a1) * r, y, Math.sin(a1) * r];
@@ -1557,6 +1583,7 @@ const Render = (function () {
       const wh = [0.95, 0.95, 0.93], bk = [0.08, 0.08, 0.09], rf = [1, 0.45, 0.08];
       W.box(g, 0, -0.65, 0, 0.14, 1.2, 0.14, 0, wh, wh); W.box(g, 0, 0.18, 0, 0.146, 0.22, 0.146, 0, bk, bk);
       for (const x of [-0.074, 0.074]) W.box(g, x, 0.22, 0, 0.012, 0.12, 0.09, 0, rf, rf); }
+    else streetPropGeo(W, g, kind);
     return g.geometry();
   }
   function clearPropMeshes() { for (const k in propMeshes) { const m = propMeshes[k]; scene.remove(m); m.geometry.dispose(); } propMeshes = {}; }

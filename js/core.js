@@ -1567,6 +1567,16 @@ const Core = (function () {
       rbale:  { m: 26, rh: 0.62, rb: 0.75, h0: 0.43,  e: 0.15, mu: 0.8,  lift: 0.3,  I: 4.6,  pts: (() => { const p = []; for (const x of [-0.62, 0.62]) for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; p.push([x, Math.cos(a) * 0.43, Math.sin(a) * 0.43]); } return p; })() },   // round straw bale lying on its side (Toskana)
       rbstack: { m: 78, rh: 0.9, rb: 1.1,  h0: 0.85,  breaks: 'rbale', parts: [[-0.66, -0.425, 0], [0.66, -0.425, 0], [0, 0.425, 0]], pf: [[1.1, 0.6], [1.0, 0.9], [0.8, 2.4]] },
       post:   { m: 4,  rh: 0.14, rb: 0.62, h0: 0.55,  e: 0.3,  mu: 0.6,  lift: 1.0,  I: 0.4,  pts: boxPts(0.07, 0.55, 0.07) },   // roadside post (stebriček): light, snaps over and cartwheels away
+      // street furniture at a town circuit's junctions (generic; World places them, Render draws them, local +x towards the road for an arm):
+      // it snaps off its foot and topples, the car drives on, a little slower; dmg: the heavy ones dent the car a little, once
+      signal: { m: 60, rh: 0.15, rb: 2.0,  h0: 1.85,  e: 0.15, mu: 0.6,  lift: 0.35, I: 75,  dmg: 0.6, pts: boxPts(0.13, 1.85, 0.13) },   // traffic light on its pole (semafor)
+      lamp:   { m: 80, rh: 0.14, rb: 4.3,  h0: 4.2,   e: 0.12, mu: 0.6,  lift: 0.25, I: 470, dmg: 0.8, pts: boxPts(0.12, 4.2, 0.12) },   // street lamp (ulična svetilka)
+      sign:   { m: 9,  rh: 0.12, rb: 1.3,  h0: 1.2,   e: 0.25, mu: 0.6,  lift: 0.7,  I: 4.3, pts: boxPts(0.05, 1.2, 0.3) },      // road sign on a post (prometni znak)
+      bollard: { m: 10, rh: 0.12, rb: 0.5, h0: 0.45,  e: 0.3,  mu: 0.6,  lift: 0.8,  I: 0.7, pts: cylPts(0.12, -0.45, 0.45, 6) },   // bollard (stebriček)
+      bin:    { m: 10, rh: 0.3,  rb: 0.58, h0: 0.5,   e: 0.25, mu: 0.6,  lift: 0.6,  I: 1.1, pts: cylPts(0.28, -0.5, 0.5, 6) },     // litter bin (smetnjak)
+      hydrant: { m: 30, rh: 0.2, rb: 0.45, h0: 0.4,   e: 0.2,  mu: 0.7,  lift: 0.4,  I: 1.4, dmg: 0.4, pts: cylPts(0.18, -0.4, 0.4, 6) },   // fire hydrant
+      cabinet: { m: 50, rh: 0.5, rb: 0.85, h0: 0.7,   e: 0.15, mu: 0.7,  lift: 0.3,  I: 8,   dmg: 0.6, pts: boxPts(0.45, 0.7, 0.25) },   // electrical cabinet (omarica)
+      shelter: { m: 160, rh: 1.0, rb: 2.2, h0: 1.25,  e: 0.1,  mu: 0.75, lift: 0.25, I: 150, dmg: 1,   pts: boxPts(1.6, 1.25, 0.7) },    // bus stop shelter (postajališče)
     };
   })();
   const _pq = {};
@@ -1609,6 +1619,7 @@ const Core = (function () {
       const ax2 = ry * nz, ay2 = rz * nx - rx * nz, az2 = -ry * nx;
       const j = 1.35 * vrel / (1 / K.m + (ax2 * ax2 + ay2 * ay2 + az2 * az2) / K.I + 1 / c.m.mass);
       b.sleep = false; b.t = 0; b.age = 0;
+      if (K.dmg && vrel > 6 && !b.hit1) { b.hit1 = true; applyDamage(c, K.dmg * (vrel - 6) * 0.0012, (px - c.x) * ch + (pz - c.z) * sh, -(px - c.x) * sh + (pz - c.z) * ch); }   // (heavy street furniture: a dent, once)
       propImpulse(b, nx * j, 0, nz * j, rx, ry, rz);
       b.vy = Math.min(7.5, b.vy + Math.min(5, vrel * K.lift * 0.22)); b.wy += (Math.random() - 0.5) * Math.min(10, vrel * 0.5);
       const hs = Math.hypot(b.vx, b.vz), cap = Math.min(18, 0.72 * Math.hypot(c.vx, c.vz) + 2); if (hs > cap) { b.vx *= cap / hs; b.vz *= cap / hs; }
