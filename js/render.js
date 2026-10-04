@@ -777,7 +777,8 @@ const Render = (function () {
        lamps          [[x, y, z] head, [x, y, z] tail]: the right-hand glow points (the left mirrored). Default: the middle of the right-hand
                       K.headLamp / K.tailLamp calls (no K.headLamp / K.tailLamp at all: no glow there, no night beam)
        engine         [x, y] where a burning engine's fire and smoke come from (default: K.engine's top; else 60 % of the way to the nose,
-                      to the tail with engRear); engRear: the engine behind the driver (true / false)
+                      to the tail with engRear): they come out of the shell over it (the bonnet, the engine cover, a cab-over's cab), from
+                      the engine itself once nothing covers it; the soot spreads from it. engRear: the engine behind the driver (true / false)
        wz             the wheels' centres this far in from the half width (default wheels.w / 2 + 0.01: the tyre's face 1 cm inside the side)
        door           [x0, x1] the doors' front and rear edges, either order (default: the windscreen's base, or just behind the front arch,
                       and 1.15 back)
@@ -861,7 +862,12 @@ const Render = (function () {
                a low splitter keeps it up), turning about the diagonal through the two corners next to it (the lamps' glow and the cockpit's
                eye stay with the car); its hub sparks while the car moves; the marshals' refit (c.wreck.fix) puts them back, a repair
                builds the car afresh
-       (tests) Render.viewOf(car): v.kit.dead / ajar, v.loose (copies waiting for their pieces), v.wheelOff, v.hubs, v.sagQ;
+       fire    (every vehicle: engineFx) dmg >= 0.9, or the hood / cover off and dmg >= 0.75 (game.js's fireOn, sfx's crackle): 20 s of
+               race time of flames out of the shell over body.engine (the bonnet, the cover, a cab's top; the bared engine), black smoke
+               over them, a glow, then heavy black smoke; soot spreads from the engine over the whole body (dirtyCarMat's char: the pieces
+               too) and some 8 s in the panes' cracks and every lamp go. The inside (the lining, the cabin, the engine bay: the body's
+               aIn) never gets the dirt or the scratches, and has no gloss
+       (tests) Render.viewOf(car): v.kit.dead / ajar, v.loose (copies waiting for their pieces), v.wheelOff, v.hubs, v.sagQ, v.fire;
        Render.fxStats().total / .sparks: how many bits and sparks were ever emitted
 
      COLOURS: [r, g, b] in 0..1. K.paint and K.strp are the car's own (its colour; its stripe colour, or the paint when the car has none):
@@ -1000,8 +1006,9 @@ const Render = (function () {
      CHECKING A LOOK: node tools/carshots.mjs <id> (test-results/carshots/<id>/sheet.png: the views with the grid and the target box, the
        cut-away (the inside), the chase camera, the wreck: chase-wreck / wreck-34 / wreck-34r a staged one (the front off, the left side torn
        off, the right side and the rear hanging loose, the front left wheel off, lamps and panes broken: check each part comes off whole,
-       hangs the right way from its hinge, the inside behind it), chase-total after Core.wreckCar, the cockpit); --cat <category> (the
-       category side by side). Render.kitStatus(id),
+       hangs the right way from its hinge, the inside behind it), chase-total / total-34 after Core.wreckCar, burning (the flames out of
+       the body, not inside it), chase-burnt / burnt-34l 20 s on (burnt out: soot all over, black smoke), the cockpit); --cat <category>
+       (the category side by side). Render.kitStatus(id),
        Render.kitInfo(id) (ranges with their centroids, budgets, regions, wheels, tubs (the wheel tubs, metres), openings (an open top's,
        seen from above: { x: [x0, x1], z (half width), y (the rim) }, metres); no id: the caches' sizes); Render.kitTry(id, look) (a look
        built on vehicle id's model, not cached: { status, geo (the caller disposes it), body, tris, openings, tubs }: try one out). A part's range should lie where the core throws it from (its debris spawns at the part table's lx, lz, y): move the table's
@@ -1012,7 +1019,8 @@ const Render = (function () {
        frame: the canvas's .marks are their pixels) }; Render.kitGlassNear(id, color, stripe) (a car's copy: how many vertices are near a
        glass colour without being glass). node tests/browser/fleet.test.mjs (FLEET_ONLY=<id>): the budgets, the showroom's framing, the
        wheels, no seeing through the arches, the rims or an open top, the colours, the cockpit (and the driver seeing out of it), a lost
-       part's and a crushed roof's ranges, the field's cost. node tests/kit.test.js: the kit's own rules on test looks (no browser)
+       part's and a crushed roof's ranges, the wreck (its pieces, the wheels off, the sag; as the player sees it: the fire and the smoke
+       in sight, the cockpit under a crushed roof), the field's cost. node tests/kit.test.js: the kit's own rules on test looks (no browser)
      ===================================================================================================================================== */
   // ---- the kit's fixed colours and tables ----
   const KIT_LINE = [0.16, 0.15, 0.14], KIT_SEAT = [0.21, 0.2, 0.19], KIT_GL2 = [0.04, 0.05, 0.08], KIT_LENS_OUT = [0.22, 0.23, 0.25];   // lining / cabin, seats, the rally's glass, a smashed lens
@@ -2057,7 +2065,9 @@ const Render = (function () {
   }
 
   /* ---------------- materials (shared) ---------------- */
-  let matCar, matWheel, matTailOff, matTailOn, matBlob, matMarker, matScOn, matScOff;
+  let matCar, matWheel, matTailOff, matTailOn, matBlob, matMarker, matScOn, matScOff, matCrack, crackWarm = null;   // (matCrack: every pane's crack decal, one
+  // material for all; crackWarm: one degenerate triangle of it drawn in a race's first frame, so its shader compiles at the start, not at the
+  // first broken window: attachRace, frame)
   // scratches: thin bright streaks through the paint, mostly lengthwise, patchy; strongest on the roof/upper body (never inside a kit body:
   // its lining, cabin, engine bay, vIn)
   const SCRATCH_GLSL = [
@@ -2230,7 +2240,7 @@ const Render = (function () {
   // pane k's crack decal (v.crack[k]) laid on its triangles as they are now: (re)built when it breaks, when a part takes some of its glass
   // with it or turns it loose (none left: no decal). Returns the pane's middle (car frame)
   function crackDecal(v, k) {
-    const old = v.crack[k]; if (old) { v.bodyG.remove(old); old.geometry.dispose(); old.material.dispose(); v.crack[k] = null; }
+    const old = v.crack[k]; if (old) { v.bodyG.remove(old); old.geometry.dispose(); v.crack[k] = null; }   // (its material: the shared matCrack)
     const tris = v.glassTris[k]; if (!tris.length) return [0, 0, 0];
     const p = v.body.geometry.attributes.position.array, side = k >= 2, P = [], U = [];
     let u0 = 1e9, u1 = -1e9, w0 = 1e9, w1 = -1e9, sx = 0, sy = 0, sz = 0;
@@ -2243,7 +2253,7 @@ const Render = (function () {
       for (let q = 0; q < 3; q++) { const i = o + q * 3; P.push(p[i] + nx * 0.014, p[i + 1] + ny * 0.014, p[i + 2] + nz * 0.014); U.push(((side ? p[i] : p[i + 2]) - u0) / Math.max(0.05, u1 - u0), (p[i + 1] - w0) / Math.max(0.05, w1 - w0)); }
     }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2));
-    const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ map: tex.cracks, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2 }));
+    const m = new THREE.Mesh(g, matCrack);
     v.bodyG.add(m); v.crack[k] = m;
     return [sx, sy, sz];
   }
@@ -2665,6 +2675,9 @@ const Render = (function () {
     matBlob = new THREE.MeshBasicMaterial({ map: tex.blob, transparent: true, depthWrite: false, opacity: 0.8 });
     matMarker = new THREE.MeshBasicMaterial({ color: 0xffd23f });
     matScOn = new THREE.MeshBasicMaterial({ color: 0xffa21a }); matScOff = new THREE.MeshLambertMaterial({ color: 0x4a3312 });   // (the safety car's lamps)
+    matCrack = new THREE.MeshBasicMaterial({ map: tex.cracks, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2 });
+    { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(9), 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(6), 2));
+      crackWarm = new THREE.Mesh(g, matCrack); crackWarm.frustumCulled = false; crackWarm.onAfterRender = () => { crackWarm.userData.drawn = true; }; }
     particles = new Particles(2400); scene.add(particles.points);
     sparkP = new Particles(700, true); scene.add(sparkP.points);
     glows = new Glows(4 * 16 + 240); scene.add(glows.points);   // (the race's cars; the open road's traffic and patrol cars)
@@ -3269,7 +3282,7 @@ const Render = (function () {
     for (const E of kitCache.values()) { g.add(E.geo); g.add(E.tail); if (E.hub) g.add(E.hub); }   // (the kit: each model's colour-neutral body and tail, its bare hub, its wheels, the showroom's two kept bodies)
     for (const w of kitWheelCache.values()) { g.add(w.f); g.add(w.r); }
     for (const q of kitShowLRU) g.add(q.geo);
-    const m = new Set([matCar, matWheel, matTailOff, matTailOn, matBlob, matMarker, matUnder, matEngine, matLens, matLensBroken, matScOn, matScOff]);
+    const m = new Set([matCar, matWheel, matTailOff, matTailOn, matBlob, matMarker, matUnder, matEngine, matLens, matLensBroken, matScOn, matScOff, matCrack]);
     if (p206Mats) for (const k in p206Mats) m.add(p206Mats[k]);
     return { g, m };
   }
@@ -3366,6 +3379,7 @@ const Render = (function () {
     setupRoad(race);   // (the open road: its traffic, people and patrol cars)
     setupCrew(race);
     particles.clear(); sparkP.clear(); skids.clear(); cam.init = false;
+    if (crackWarm) { crackWarm.userData.drawn = false; scene.add(crackWarm); }   // (drawn once, then taken out: frame)
   }
 
   /* ---------------- Pikes Peak: the car gathers dust on the climb, the low morning sun glints on the paint ----------------
@@ -4320,12 +4334,12 @@ const Render = (function () {
         for (const w of v.wf) w.geometry = W(H.fr, H.fw, col); for (const w of v.wr) w.geometry = W(H.rr, H.rw, col); } }
       const braking = (c.inBrk > 0.08 && c.vl > 0.5 && c.gear !== -1) || c.gear === -1 || c.inHand > 0.5;
       const rainL = v.noHead && (wet > 0 || (braking && time % 0.25 < 0.125));   // the formula's rain light: on in the rain, blinking while it brakes (harvesting)
-      v.tail.material = (v.noHead ? rainL : braking) ? matTailOn : matTailOff;
-      if (v.glb) v.glb.tail.emissive.setHex(braking ? 0xff1a0a : 0x3a0000);
+      v.tail.material = v.tailDead ? matLensBroken : (v.noHead ? rainL : braking) ? matTailOn : matTailOff;   // (tailDead: one of the 11's, both its tail lamps smashed or burnt out)
+      if (v.glb) v.glb.tail.emissive.setHex(v.tailDead ? 0 : braking ? 0xff1a0a : 0x3a0000);
       if (v.drsFlap) { v.drsK = (v.drsK || 0) + ((c.drs ? 1 : 0) - (v.drsK || 0)) * Math.min(1, dt * 12); v.drsFlap.rotation.z = 0.5 * v.drsK; }   // the rear wing's flap opens with DRS
       // light glows: soft warm headlights, red tail lights that flare when braking
       v.grp.updateMatrixWorld(true);
-      for (let k = 0; k < 4 && c !== ck.car; k++) {   // (not the lamps of the car the cockpit camera sits in)
+      for (let k = 0; k < 4 && c !== ck.car && v.grp.visible; k++) {   // (not the lamps of the car the cockpit camera sits in, nor a hidden car's)
         if (v.lightBroken && v.lightBroken[k]) continue;   // smashed lamp: no glow
         if (v.kit && (k < 2 ? v.kit.noHeadGlow : v.kit.noTailGlow)) continue;   // (a kit vehicle without head / tail lamps)
         _lv.copy(v.lights[k]).applyMatrix4(v.grp.matrixWorld);
@@ -4445,6 +4459,7 @@ const Render = (function () {
       if (k < 2) { if (v.kit) kitLampOut(v, k); else v.lens[k].material = matLensBroken; if (v.beam) beams(v); }   // (the night beam: the head lamps left)
       else if (v.kit) kitTailOut(v, k === 2 ? 'L' : 'R');   // (the kit's tail lamps: their side of its own tail mesh goes out)
       else if (!v.glb) { const m = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.13, 0.3), matLensBroken); m.position.set(L.x + 0.02, L.y, L.z); v.bodyG.add(m); }
+      if (!v.kit && v.lightBroken[2] && v.lightBroken[3]) v.tailDead = true;   // (both tail lamps of one of the 11 smashed: its whole tail mesh dark, not lit round the covers)
       const ch = Math.cos(h), sh = Math.sin(h), wx = x + L.x * ch - L.z * sh, wz = z + L.x * sh + L.z * ch;
       for (let n = 0; n < 14; n++) particles.emit(wx, y + L.y, wz, c.vx * 0.5 + (rnd() - 0.5) * 4, 1 + rnd() * 2.5, c.vz * 0.5 + (rnd() - 0.5) * 4, 0.7 + rnd() * 0.5, 0.18, 0.12, 0.86, 0.92, 0.98, 0.95, 9, 0.6, y);   // glass shards
     }
@@ -4763,20 +4778,22 @@ const Render = (function () {
   }
 
   /* ---------------- the engine: its smoke, its fire, the char (stage B2: every vehicle, render only, from the core's state) ----------------
-     - smoke: a damaged engine (dmg > 0.45) smokes from its seat (fireSeat: the body's engine, at the vehicle's own height), grey turning
-       black, black once wrecked (dmg 0.96)
+     - smoke: a damaged engine (dmg > 0.45) smokes from over its seat (fireSeat: the body's engine, at the vehicle's own height; fireSpot:
+       where it comes out of the body), grey turning black, black once wrecked (dmg 0.96)
      - fire: on when dmg >= 0.9, or the bonnet / the engine cover is off and dmg >= 0.75, damage on: the rule of game.js's fireOn (the
        commentator) and sfx's dBurning (the crackle). It burns FIRE_T (20) s of race time from when it starts, once (a repair builds the car
-       afresh), then heavy black smoke. Flames: sparkP (additive) <= 40 a second over the engine; its smoke <= 12 a second, black; one
-       flickering glow. At most FIRE_EMIT (6) cars on fire emit (the nearest to the camera: fireScan), the others glow and char only. With
-       opt.noFx nothing is emitted (and in a replay, dt > 0, no glow either). The car the cockpit camera sits in: its smoke faint, no glow (the
-       driver still sees out)
+       afresh), then heavy black smoke. Flames: sparkP (additive) <= 40 a second out of the body over the engine (a kit body's: on its
+       bonnet, its engine cover, a cab-over's cab, else from the bared engine: fireSpot); its smoke <= 12 a second, black; one flickering
+       glow. At most FIRE_EMIT (6) cars on fire emit (the nearest to the camera: fireScan), the others glow and char only. With opt.noFx
+       nothing is emitted (and in a replay, dt > 0, no glow either); a hidden car (a test's, a tool's picture) no glow. The car the cockpit
+       camera sits in: its smoke faint, no glow (the driver still sees out). Burnt a while (the char's spread w >= 0.6, some 8 s): the
+       panes' crack decals gone (the glass burnt out of the frames, black with the rest) and every lamp out (lampsBurnt)
      - char: v.charU (dirtyCarMat's uChar: xyz the seat, w its spread, 7 w metres: 0.3 at dmg 1 before any fire (from dmg 0.8), over the
        fire's first 18 s to 1: all of the car): soot over the body, its pieces on the road too (they share its material); the 11's
        separate panels darken with it (charParts)
      The renderer's own random numbers (rRnd), but the 11's damage smoke: Math.random, as it always drew it (the same draws, emitted or not:
      the browser tests' races run as before) */
-  const FIRE_T = 20, FIRE_EMIT = 6, SOOT = new THREE.Color(0.06, 0.055, 0.05);
+  const FIRE_T = 20, FIRE_EMIT = 6, SOOT = new THREE.Color(0.06, 0.055, 0.05), _fsv = new THREE.Vector3();
   const fireOn = (c) => c.dmgMode > 0 && (c.dmg >= 0.9 || (!!(c.lost.hood || c.lost.cover) && c.dmg >= 0.75));
   // where the fire and the smoke come from (the car's frame, metres): BODIES[body].engine (x as the sections, y metres: the kit's look's
   // body.engine, the 11's entries); else at the front or the rear (engRear), 12 cm under the top there
@@ -4786,6 +4803,28 @@ const Render = (function () {
     const S = D.secs, x = (D.engRear || v.noHead ? -0.3 : 0.3) * D.len; let y = S[0][5] + S[0][6];
     for (let k = 0; k < S.length - 1; k++) if (x >= S[k][0] && x <= S[k + 1][0]) { const t = (x - S[k][0]) / Math.max(1e-6, S[k + 1][0] - S[k][0]); y = S[k][5] + S[k][6] + (S[k + 1][5] + S[k + 1][6] - S[k][5] - S[k][6]) * t; }
     return [x * sx, y - 0.12, 0];
+  }
+  // where a kit body's fire and smoke come out (the car's frame, metres): 2 cm over the highest face of its shell straight over the seat
+  // (along the car's middle and 20 % of its width to either side: the bonnet, the engine cover, a cab-over truck's cab: the flames seen,
+  // not burning inside it; never a noCrush range: a wing, a deflector, a light bar, a cage, the driver over a kart's engine), or the seat
+  // itself when nothing of the shell is left over it (the bonnet gone, an open engine). Found again when the car loses a part or its roof
+  // sinks. One of the 11: its seat (a little under its bonnet: the flames rise through it)
+  function fireSpot(v, S) {
+    const K = v.kit; if (!K) return S;
+    const key = K.nLost * 8 + v.roofStep; if (v.spot && v.spot.key === key) return v.spot.p;
+    const geo = v.body.geometry, a = geo.attributes.position.array, n = geo.userData.outerN, dv = K.deadV, nc = kitMask(geo.userData, 'noCrush'), X = S[0], W = v.car.m.wid * 0.2; let top = -1e9;
+    for (let t = 0; t < n; t += 3) {
+      if ((dv && dv[t]) || nc[t]) continue;
+      const o = t * 3, ax = a[o], az = a[o + 2], bx = a[o + 3], bz = a[o + 5], cx = a[o + 6], cz = a[o + 8];
+      if ((ax < X && bx < X && cx < X) || (ax > X && bx > X && cx > X)) continue;
+      const d = (bz - cz) * (ax - cx) + (cx - bx) * (az - cz); if (Math.abs(d) < 1e-9) continue;   // (a face on edge from above)
+      for (const z of [0, -W, W]) {
+        const l1 = ((bz - cz) * (X - cx) + (cx - bx) * (z - cz)) / d, l2 = ((cz - az) * (X - cx) + (ax - cx) * (z - cz)) / d, l3 = 1 - l1 - l2;
+        if (l1 < -1e-6 || l2 < -1e-6 || l3 < -1e-6) continue;
+        const y = l1 * a[o + 1] + l2 * a[o + 4] + l3 * a[o + 7]; if (y > S[1] - 0.1 && y > top) top = y;
+      }
+    }
+    v.spot = { key, p: top > -1e8 ? [S[0], top + 0.02, S[2]] : S }; return v.spot.p;
   }
   // the fires this frame (before the cars are drawn): a fire starts once (v.fire.t0: the race's time then); the ones that emit (fireEmit):
   // the FIRE_EMIT nearest to the camera of all that burn or smoke after burning
@@ -4799,10 +4838,13 @@ const Render = (function () {
   }
   function engineFx(v, c, dt, x, y, z, h, opt, now) {
     const M = c.m, F = v.fire, live = !(opt && opt.noFx) && !dbg.noSmoke, S = v.seat || (v.seat = fireSeat(v)), ch = Math.cos(h), sh = Math.sin(h);
-    const sx = x + S[0] * ch - S[2] * sh, sz = z + S[0] * sh + S[2] * ch, sy = y + S[1];   // (the seat in the world; the body's roll and pitch left out)
     // the char: from dmg 0.8 (0.3 at 1) round the seat; a fire spreads it over the car in 18 s
     const e = F ? Math.max(0, now - F.t0) : 0, cw = Math.max(0.3 * Core.sstep(0.8, 1, c.dmg || 0), F ? 0.3 + 0.7 * Math.min(1, e / 18) : 0);
     if (v.charU && (v.charU.value.w !== cw || v.charU.value.x !== S[0])) { v.charU.value.set(S[0], S[1], S[2], cw); charParts(v, cw); }
+    if (!F && !(c.dmg > 0.45)) return;
+    // where the smoke and the flames come out, in the world (with the body's roll, pitch and sag: after updateParts)
+    const Q = fireSpot(v, S); v.bodyG.updateMatrixWorld(); _fsv.set(Q[0], Q[1], Q[2]).applyMatrix4(v.bodyG.matrixWorld);
+    const sx = _fsv.x, sy = _fsv.y, sz = _fsv.z;
     // the damaged engine's smoke (the 11's: their draws of Math.random as ever; a car on fire: the fire's smoke instead, below)
     if (c.dmg > 0.45 && !(opt && opt.noFx) && !dbg.noSmoke) {
       v.smokeAcc += (c.dmg - 0.4) * (10 + 16 * (c.inThr || 0)) * dt;
@@ -4818,7 +4860,7 @@ const Render = (function () {
     // heavy black smoke
     if (dt > 0) F.r = (F.r || 0) + dt;   // (how long it has been drawn burning: it flares up over its first 1.5 s of frames)
     const lit = e < FIRE_T, k = lit ? Core.sstep(0, 1.5, F.r || 0) * (1 - 0.75 * Core.sstep(FIRE_T - 5, FIRE_T, e)) : 0, sc = clamp(M.wid / 1.8, 0.6, 1.4), inCk = !!cam.ck && ck.car === c;
-    if (cw >= 0.6) for (const q of v.crack) if (q) q.visible = false;   // (the glass burnt out of the frames: no cracks left to see)
+    if (cw >= 0.6) { for (const q of v.crack) if (q) q.visible = false; if (!v.lampsOut) lampsBurnt(v); }   // (burnt a while: no glass, no lamps)
     if (live && dt > 0 && v.fireEmit) {
       if (lit) {
         const fw = 0.7 * sc, fz = 0.55 * M.wid; v.flameAcc = (v.flameAcc || 0) + dt * 38 * k;
@@ -4833,13 +4875,24 @@ const Render = (function () {
         particles.emit(sx + (rRnd() - 0.5) * 0.5, sy + (lit ? 0.45 : 0.25), sz + (rRnd() - 0.5) * 0.5, c.vx * 0.3 + (rRnd() - 0.5) * 0.5, 1.3 + rRnd() * 1.1, c.vz * 0.3 + (rRnd() - 0.5) * 0.5,
           (lit ? 2.5 : 3.1) + rRnd() * 1.4, 0.8 * sc, s1, inCk ? 0.36 : g, inCk ? 0.36 : g, inCk ? 0.37 : g * 1.05, inCk ? 0.16 : lit ? 0.62 : 0.72, -0.35, 0.8, y); }
     }
-    if (lit && (live || dt === 0) && !inCk) {   // the glow (a frozen picture keeps it with its flames)
+    if (lit && (live || dt === 0) && !inCk && v.grp.visible) {   // the glow (a frozen picture keeps it with its flames)
       const fl = 0.55 + 0.25 * Math.sin(time * 17.3 + c.id * 1.7) + 0.2 * Math.sin(time * 6.1 + c.id);
       glows.add(sx, sy + 0.35, sz, (1.6 + 1.2 * fl) * sc * (0.5 + 0.5 * k), 1, 0.52, 0.16, (0.32 + 0.42 * fl) * k);
     }
   }
-  // the 11's separate panels darken with the char (one paint for them all and the trim; the formula's and the prototype's: an own copy of the
-  // shared paint for the car first; the Peugeot's model: its paint)
+  // a car burnt a while: its lamps out (no glow, the head lamps' lenses dark, the tail lamps out: a kit car's sides of its tail mesh, one of
+  // the 11's whole tail mesh dark), its night beam gone. No bits (the 11's lamps broke with Math.random's shards: not here)
+  function lampsBurnt(v) {
+    v.lampsOut = true; if (!v.lightBroken) return;
+    for (let k = 0; k < 4; k++) { if (v.lightBroken[k]) continue; v.lightBroken[k] = 1;
+      if (v.kit) { if (k < 2) kitLampOut(v, k); else kitTailOut(v, k === 2 ? 'L' : 'R'); }
+      else if (k < 2 && v.lens && v.lens[k]) v.lens[k].material = matLensBroken; }
+    if (!v.kit) v.tailDead = true;
+    if (v.beam) beams(v);
+  }
+  // the 11's separate panels darken with the char, all alike, as the soot spreads over the body (one paint for them all and the trim; the
+  // formula's and the prototype's: an own copy of the shared paint for the car first; the Peugeot's model: all of its body, its own copies
+  // of the shared materials first)
   function charParts(v, w) {
     if (v.kit) return;
     let L = v.charMats;
@@ -4847,14 +4900,20 @@ const Render = (function () {
       if (w <= 0) return;
       L = v.charMats = [];
       if (v.partMats) for (const m of v.partMats) if (m && m.color) L.push(m);
-      if (v.glb && v.glb.paint) L.push(v.glb.paint);
+      if (v.glb && v.glb.bodyH) {   // (the Peugeot's model: its paint, its tail lamps, and an own copy of each shared material of its body but the black)
+        const sh = new Map(); if (p206Mats) for (const k in p206Mats) if (k !== 'black') sh.set(p206Mats[k], null);
+        v.glb.bodyH.traverse(o => { if (!o.isMesh || !o.material || Array.isArray(o.material)) return; const m = o.material;
+          if (sh.has(m)) { let q = sh.get(m); if (!q) { q = m.clone(); if (m === p206Mats.chrome) cgMat(q, true, 'carCg'); sh.set(m, q); L.push(q); } o.material = q; }
+          else if (m.color && L.indexOf(m) < 0 && !(p206Mats && m === p206Mats.black)) L.push(m); });
+      }
       if (v.fp) { let pm = null; const shared = new Set([matCar, matUnder, matEngine, matLens, matLensBroken, matWheel]);
         for (const n in v.fp.parts) v.fp.parts[n].traverse(o => { if (!o.isMesh || !o.material || Array.isArray(o.material)) return;
           if (o.material === matCar) o.material = pm = pm || cgMat(matCar.clone(), false, 'carCg'); else if (!shared.has(o.material) && L.indexOf(o.material) < 0 && o.material.color) L.push(o.material); });
         if (pm) L.push(pm); }
       for (const m of L) m.userData.col0 = m.color.clone();
     }
-    const k = clamp((w - 0.25) / 0.6, 0, 1) * 0.85;
+    const k = clamp((7 * w - 0.5) / ((v.glb ? 0.5 : 0.8) * v.car.m.len), 0, 1) * 0.92;   // (as much as the body's soot (7 w m round the seat) would cover of the car; the
+    // Peugeot's model, all of it alike (no soot of its own), a little sooner)
     for (const m of L) m.color.copy(m.userData.col0).lerp(SOOT, k);
   }
 
@@ -5443,6 +5502,7 @@ const Render = (function () {
 
   function frame(dt, alpha, target, mode, opt) {
     time += dt;
+    if (crackWarm && crackWarm.parent && crackWarm.userData.drawn) scene.remove(crackWarm);   // (the crack decals' shader compiled: attachRace)
     updateCrew(dt);   // (first: it sets how far the player's car is up on the jacks)
     updateFlags();
     updateCars(dt, alpha, opt);

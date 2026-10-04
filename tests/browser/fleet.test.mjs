@@ -367,16 +367,18 @@ try {
   T.check('a repair: the car built afresh (whole, its outer shell, every wheel on), its pieces on the road still drawn', R5.every(r => r.rebuilt && r.onRoad === r.nPieces), R5.map(r => `${r.id} rebuilt ${r.rebuilt}, ${r.onRoad}/${r.nPieces} pieces drawn`).slice(0, 6).join(', '));
   T.check('the wreck\'s materials keep their program keys (the body and its pieces \'dirtyCarCg\', any paint \'carCg\')', R5.every(r => r.keys.length && r.keys.every(k => k === 'body:dirtyCarCg' || k === 'paint:carCg')), R5.filter(r => !r.keys.length || r.keys.some(k => k !== 'body:dirtyCarCg' && k !== 'paint:carCg')).slice(0, 3).map(r => r.id + ' ' + r.keys.join(',')).join(' | ') || R5.map(r => r.id + ' ' + r.keys.join(',')).slice(0, 3).join(' | '));
 
-  // ---- 4d. the wreck as a player sees it (stage B2: pictures at 844x390, the chase camera at zoom 1.2), each vehicle as the player on
-  //          Bakreni gozd, paused and stepped: the car whole, then Core.wreckCar and its fire burning (frames of 0.1 s drawn with their
-  //          effects at a lower resolution: cheap). Only the cars, their pieces and the effects are drawn (the world hidden: the background
-  //          the fog's flat colour, so what differs or darkens is the car's own). From the same camera (the chase camera's pose pinned) at
-  //          least 35 % of the car's screen box looks different, its fire and smoke there; from the cockpit (the roof crushed: roofDmg 1,
-  //          four steps) the upper middle of the view not dark (>= 60 %); the car and its pieces drawn with at most the whole car's draw calls
-  //          + 2 a piece + 1 a crack decal; what its pieces cost (the field under a wreck, section 5) ----
-  const R6 = [], t7 = Date.now();
-  await page.evaluate(() => Render.setDynScale(0.55));   // (the frames between the pictures: a third of the pixels; Render.snapshot draws at full size)
-  for (const m of kits) {
+  // ---- 4d. the wreck as a player sees it (stage B2: pictures at 844x390, the chase camera at zoom 1.2), each vehicle (the 11 too: the wreck
+  //          look is every vehicle's) as the player on Bakreni gozd, paused and stepped: the car whole, then Core.wreckCar and its fire
+  //          burning (frames of 0.1 s drawn with their effects at a lower resolution: cheap). Only the cars, their pieces and the effects are
+  //          drawn (the world hidden: the background the fog's flat colour, so what differs or darkens is the car's own). From the same
+  //          camera (the chase camera's pose pinned) at least 35 % of the car's screen box (its body's box projected) looks different; its
+  //          fire in sight (new flame-coloured pixels round the car: its flames out of the body, not inside it) and its smoke (pixels over the
+  //          car's box gone dark); from the cockpit (the roof crushed: roofDmg 1, four steps) the upper middle of the view not dark (>= 60 %);
+  //          the car and its pieces drawn with at most the whole car's draw calls + 2 a piece + 1 a crack decal; what its pieces cost (the
+  //          field under a wreck, section 5) ----
+  const R6 = [], t7 = Date.now(), seen = kits.concat(models.filter(m => !m.kit));
+  await page.evaluate((on) => { window.__pics = on; Render.setDynScale(0.55); }, !!process.env.FLEET_PICS);   // (the frames between the pictures: a third of the pixels; Render.snapshot draws at full size)
+  for (const m of seen) {
     const r = await page.evaluate((id) => {
       const g = window.__game, M = Core.MODELS.find(q => q.id === id), FL = window.__fl;
       let seed = 5150; Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
@@ -384,46 +386,66 @@ try {
       const R = g.race, P = R.player, S = Render.scene, world = S.children.filter(o => !o.isLight && !o.isPoints && !R.cars.some(c => Render.viewOf(c) && Render.viewOf(c).grp === o));
       const vis0 = world.map(o => o.visible); for (const o of world) o.visible = false;   // (the world hidden throughout; the cars, their pieces, the effects (points) drawn)
       const run = (n, mode, fx) => { for (let i = 0; i < n; i++) { g.sim(0.1, true); Render.frame(0.1, 1, P, mode, fx ? {} : { noFx: true }); } };
-      const pic = (mode) => { const c = Render.snapshot(P, mode, 844); return { w: c.width, h: c.height, d: c.getContext('2d').getImageData(0, 0, c.width, c.height).data }; };
+      const keep = window.__pics ? {} : null, pic = (mode, name) => { const c = Render.snapshot(P, mode, 844); if (keep) keep[name] = c.toDataURL('image/png'); return { w: c.width, h: c.height, d: c.getContext('2d').getImageData(0, 0, c.width, c.height).data }; };
       // the chase camera settles behind the car, then its pose is pinned (a shot of the same place, view and fog) for both pictures
       Render.resetCam(); run(4, 'chase', false);
       const C = Render.camera, cd = new THREE.Vector3(); C.getWorldDirection(cd); const vd = Render.cam.vd || 10;
       const shot = { px: C.position.x, py: C.position.y, pz: C.position.z, tx: C.position.x + cd.x * vd, ty: C.position.y + cd.y * vd, tz: C.position.z + cd.z * vd, fov: C.fov, fogD: vd, near: C.near };
-      Render.setShot(shot); let v = Render.viewOf(P); const A = pic('chase');
-      // the car's screen box: its body's box (the car's frame) projected
-      const bb = Render.kitInfo(id).bbox; v.grp.updateMatrixWorld(true); let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+      Render.setShot(shot); let v = Render.viewOf(P); const A = pic('chase', 'whole');
+      // the car's screen box: its body's box (the car's frame) projected; round it (as high again over it, half under it, a quarter to each
+      // side: where its flames and its smoke rise, towards the camera too)
+      const g0 = v.body.geometry; if (!g0.boundingBox) g0.computeBoundingBox(); const bb = { min: g0.boundingBox.min.toArray(), max: g0.boundingBox.max.toArray() };
+      v.grp.updateMatrixWorld(true); let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
       for (const X of [bb.min[0], bb.max[0]]) for (const Y of [bb.min[1], bb.max[1]]) for (const Z of [bb.min[2], bb.max[2]]) {
         const p = new THREE.Vector3(X, Y, Z).applyMatrix4(v.grp.matrixWorld).project(Render.camera), px = (p.x * 0.5 + 0.5) * A.w, py = (0.5 - p.y * 0.5) * A.h;
         x0 = Math.min(x0, px); x1 = Math.max(x1, px); y0 = Math.min(y0, py); y1 = Math.max(y1, py); }
       const box = [Math.max(0, Math.floor(x0)), Math.min(A.w - 1, Math.ceil(x1)), Math.max(0, Math.floor(y0)), Math.min(A.h - 1, Math.ceil(y1))];
+      const hb = box[3] - box[2], wb = box[1] - box[0], over = [Math.max(0, box[0] - Math.round(wb * 0.25)), Math.min(A.w - 1, box[1] + Math.round(wb * 0.25)), Math.max(0, box[2] - hb), Math.min(A.h - 1, box[3] + Math.round(hb * 0.5))];
       const intact = FL.costOf(v, P), f0 = Render.fxStats();
-      // the wreck, burning: first from the cockpit (the driver's own smoke faint), then from the chase camera, pinned as before
-      Core.wreckCar(P); Render.setShot(null); run(6, 'cockpit', true); const K = pic('cockpit');
-      let up = 0, upN = 0; for (let y = Math.round(K.h * 0.16); y < Math.round(K.h * 0.45); y += 2) for (let x = Math.round(K.w * 0.3); x < Math.round(K.w * 0.7); x += 2) {
-        const o = (y * K.w + x) * 4; upN++; if (0.299 * K.d[o] + 0.587 * K.d[o + 1] + 0.114 * K.d[o + 2] > 50) up++; }
-      Render.setShot(shot); run(6, 'chase', true); v = Render.viewOf(P); const B = pic('chase'), f1 = Render.fxStats();
+      // the cockpit's view: the upper middle's share not dark (the car whole; then wrecked, burning: the driver's own smoke faint), then the
+      // wreck from the chase camera, pinned as before
+      const upOf = (K) => { let up = 0, upN = 0; for (let y = Math.round(K.h * 0.16); y < Math.round(K.h * 0.45); y += 2) for (let x = Math.round(K.w * 0.3); x < Math.round(K.w * 0.7); x += 2) {
+        const o = (y * K.w + x) * 4; upN++; if (0.299 * K.d[o] + 0.587 * K.d[o + 1] + 0.114 * K.d[o + 2] > 50) up++; } return upN ? up / upN : 0; };
+      Render.setShot(null); run(2, 'cockpit', false); const up0 = upOf(pic('cockpit', 'cockpit0'));
+      Core.wreckCar(P); run(6, 'cockpit', true); const up = upOf(pic('cockpit', 'cockpit'));
+      // the wreck from the chase camera, then the same frame without the particles (the flames, the smoke, the bits: what they add is what
+      // shows of them, not what burns inside the body)
+      Render.setShot(shot); run(6, 'chase', true); v = Render.viewOf(P); const B = pic('chase', 'wreck'), f1 = Render.fxStats();
+      const pts = S.children.filter(o => o.isPoints && o.visible); for (const o of pts) o.visible = false; const B0 = pic('chase', 'nofx'); for (const o of pts) o.visible = true;
       let diff = 0, n = 0; for (let y = box[2]; y <= box[3]; y++) for (let x = box[0]; x <= box[1]; x++) { const o = (y * A.w + x) * 4; n++; if (Math.abs(A.d[o] - B.d[o]) + Math.abs(A.d[o + 1] - B.d[o + 1]) + Math.abs(A.d[o + 2] - B.d[o + 2]) > 60) diff++; }
+      // the fire in sight: flame-coloured pixels (bright, orange to yellow) that the particles add round the car (its box and the box over
+      // it); the smoke: pixels there they darken (black smoke against the fog, the car)
+      const flame = (D, o) => D[o] >= 200 && D[o] - D[o + 2] >= 100 && D[o + 1] >= 60, lum = (D, o) => 0.299 * D[o] + 0.587 * D[o + 1] + 0.114 * D[o + 2];
+      let fireV = 0, smokeV = 0; for (let y = over[2]; y <= over[3]; y++) for (let x = over[0]; x <= over[1]; x++) { const o = (y * A.w + x) * 4;
+        if (flame(B.d, o) && !flame(B0.d, o)) fireV++; if (lum(B0.d, o) - lum(B.d, o) > 25) smokeV++; }
       // the draw calls: the car and its pieces against the car whole; its pieces alone
       const mine = R.debris.filter(d => d.car === P.id && d.mesh && d.mesh.isObject3D).map(d => d.mesh), cracks = v.crack.filter(q => q && q.visible).length;
       const cost = (keep) => { const e = FL.frameWith([], P), c2 = FL.frameWith(keep, P); return { calls: c2[0] - e[0], verts: c2[1] - e[1] }; };
       const wk = cost([v.grp, ...mine]), pcs = cost(mine);
       Render.setShot(null); world.forEach((o, i) => { o.visible = vis0[i]; });
-      return { id, box, diff: n ? diff / n : 0, px: n, fire: !!v.fire, flames: f1.sparks - f0.sparks, smoke: f1.total - f0.total, up: upN ? up / upN : 0, roof: v.roofStep, intact, wk, pcs, n: mine.length, cracks };
+      return { id, kit: !!M.kit, box, diff: n ? diff / n : 0, px: n, fire: !!v.fire, flames: f1.sparks - f0.sparks, smoke: f1.total - f0.total, fireV, smokeV, up, up0, roof: v.roofStep, crush: !!v.crushF, intact, wk, pcs, n: mine.length, cracks, pics: keep };
     }, m.id);
+    if (r.pics) { const dir = path.join(REPO, 'test-results', 'fleet-wreck'); fs.mkdirSync(dir, { recursive: true });   // (FLEET_PICS=1: the pictures, to look at)
+      for (const k in r.pics) fs.writeFileSync(path.join(dir, `${r.id}-${k}.png`), Buffer.from(r.pics[k].split(',')[1], 'base64')); delete r.pics; }
     R6.push(r);
   }
   await page.evaluate(() => Render.setDynScale(1));
-  console.log(`info the wrecks as seen: ${((Date.now() - t7) / 1000).toFixed(0)} s for ${R6.length} vehicles`);
-  T.check('the wreck as a player sees it (844x390, the chase camera at zoom 1.2): at least 35 % of the car\'s screen box different from the car whole, its fire and smoke there',
-    R6.length === kits.length && R6.every(r => r.diff >= 0.35 && r.fire && r.flames > 0 && r.smoke > 0),
-    R6.slice().sort((a, b) => a.diff - b.diff).slice(0, 6).map(r => `${r.id} ${(r.diff * 100).toFixed(0)} % of ${r.px} px${r.fire ? '' : ' NO FIRE'}${r.flames > 0 ? '' : ' no flames'}${r.smoke > 0 ? '' : ' no smoke'}`).join(', '));
-  T.check('the cockpit of the wreck (its roof crushed, four steps) not blacked out: >= 60 % of the view\'s upper middle not dark', R6.every(r => r.roof === 4 && r.up >= 0.6),
-    R6.slice().sort((a, b) => a.up - b.up).slice(0, 6).map(r => `${r.id} ${(r.up * 100).toFixed(0)} % (roof ${r.roof})`).join(', '));
+  console.log(`info the wrecks as seen: ${((Date.now() - t7) / 1000).toFixed(0)} s for ${R6.length} vehicles (${R6.filter(r => !r.kit).length} of the 11); fire / smoke pixels in sight: ` + R6.map(r => `${r.id} ${r.fireV}/${r.smokeV}`).join(', '));
+  const seenOk = (r) => r.diff >= 0.35 && r.fire && r.flames > 0 && r.smoke > 0 && r.fireV >= 12 && r.smokeV >= 12;
+  T.check('the wreck as a player sees it (844x390, the chase camera at zoom 1.2): at least 35 % of the car\'s screen box different from the car whole, its fire (flames out of the body) and smoke in sight',
+    R6.length === seen.length && R6.every(seenOk),
+    R6.filter(r => !seenOk(r)).concat(R6.slice().sort((a, b) => a.diff - b.diff)).slice(0, 6).map(r => `${r.id} ${(r.diff * 100).toFixed(0)} % of ${r.px} px, fire / smoke ${r.fireV} / ${r.smokeV} px${r.fire ? '' : ' NO FIRE'}${r.flames > 0 ? '' : ' no flames'}${r.smoke > 0 ? '' : ' no smoke'}`).join(', '));
+  // (a vehicle without a roof to crush (Render's crushOf: none, v.crushF null: a kart, the formula) is not blacked out by one: its own soot
+  // on what the driver sees of it (the formula's halo) is the wreck's)
+  const ckOk = (r) => r.roof === 4 && (r.up >= 0.6 || !r.crush);
+  T.check('the cockpit of the wreck (its roof crushed, four steps) not blacked out: >= 60 % of the view\'s upper middle not dark (a vehicle with a roof to crush)', R6.every(ckOk),
+    R6.filter(r => !ckOk(r)).concat(R6.slice().sort((a, b) => a.up - b.up)).slice(0, 6).map(r => `${r.id} ${(r.up * 100).toFixed(0)} % (whole ${(r.up0 * 100).toFixed(0)} %, roof ${r.roof}${r.crush ? '' : ', none to crush'})`).join(', '));
   T.check('the wreck\'s draw calls: the car and its pieces <= the car whole + 2 a piece + 1 a crack decal', R6.every(r => r.wk.calls <= r.intact.calls + 2 * r.n + r.cracks),
     R6.filter(r => r.wk.calls > r.intact.calls + 2 * r.n + r.cracks).concat(R6).slice(0, 5).map(r => `${r.id} ${r.wk.calls} <= ${r.intact.calls} + 2 x ${r.n} + ${r.cracks}`).join(', '));
 
   // ---- 4c. the run from the police (Vršič, Policija): a patrol car wrecked: its pieces on the road drawn (syncDebris finds the patrol cars'
-  //          views); the patrol car gone: its view freed but for what its pieces still use; its pieces gone too: freed then ----
+  //          views), the car on fire, its light bar gone with its crushed roof (no blue flashes over a wreck); the patrol car gone: its view
+  //          freed but for what its pieces still use; its pieces gone too: freed then ----
   const t6 = Date.now(), PO = await page.evaluate(async () => {
     const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)), mode = async (md) => { g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(300);
       document.querySelector('[data-track="vrsic"] .tc-mode button[data-v="' + md + '"]').click(); await wait(200); };
@@ -435,7 +457,8 @@ try {
     const pc = R.pol.cars[0], out = { cars: R.pol.cars.length };
     if (pc) {
       Core.wreckCar(pc); g.sim(1 / 120, true); Render.frame(1 / 60, 1, P, 'chase', { noFx: true });
-      const mine = R.debris.filter(d => d.car === pc.id), drawn = mine.filter(d => d.mesh && d.mesh.isObject3D), freed = [];
+      const mine = R.debris.filter(d => d.car === pc.id), drawn = mine.filter(d => d.mesh && d.mesh.isObject3D), freed = [], pv = Render.viewOf(pc);
+      Object.assign(out, { fire: !!(pv && pv.fire), bar: pv && pv.polBar ? pv.polBar.visible : null, roof: pv ? pv.roofStep : null });
       for (const d of drawn) d.mesh.traverse(o => { if (o.geometry) o.geometry.addEventListener('dispose', () => freed.push('g')); if (o.material) o.material.addEventListener('dispose', () => freed.push('m')); });
       R.pol.cars.splice(R.pol.cars.indexOf(pc), 1); Render.frame(1 / 60, 1, P, 'chase', { noFx: true });
       Object.assign(out, { lost: Object.keys(pc.lost).length, pieces: mine.length, drawn: drawn.length, gone: !Render.viewOf(pc), freedAtGone: freed.length });
@@ -446,7 +469,8 @@ try {
     return out;
   });
   console.log(`info the run from the police: ${((Date.now() - t6) / 1000).toFixed(0)} s`);
-  T.check('the run from the police: a wrecked patrol car\'s pieces drawn; its view gone, what its pieces use kept; its pieces gone, freed', PO.cars > 0 && PO.lost > 0 && PO.pieces === PO.lost && PO.drawn === PO.pieces && PO.gone && PO.freedAtGone === 0 && PO.freedAtDeath > 0, JSON.stringify(PO));
+  T.check('the run from the police: a wrecked patrol car\'s pieces drawn, the car on fire, its light bar gone; its view gone, what its pieces use kept; its pieces gone, freed',
+    PO.cars > 0 && PO.lost > 0 && PO.pieces === PO.lost && PO.drawn === PO.pieces && PO.fire && PO.bar === false && PO.gone && PO.freedAtGone === 0 && PO.freedAtDeath > 0, JSON.stringify(PO));
 
   // ---- 5. the field's cost on Jezero and the Nordschleife: the frame without the default field's rivals (perf.test.mjs's samples) plus
   //         the vehicle as the player and its field of rivals (all of them, as if all were in view), within the phone budget ----
