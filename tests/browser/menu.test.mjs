@@ -275,7 +275,9 @@ try {
     const o = await page.evaluate(() => ({ shown: [...document.querySelectorAll('.screen.show')].map(e => e.id), shadow: !!(document.getElementById('menu-host').shadowRoot && document.getElementById('menu-host').shadowRoot.querySelector('#s-title')) }));
     T.check('?menu=old (tdgp-menu=old): the old title is the screen on show, the new menu not built', o.shown.join() === 's-title' && !o.shadow, JSON.stringify(o));
     await page.evaluate(() => __game.onAction('to-track')); await page.waitForTimeout(300);
-    T.check('the old track screen lists the tracks', (await page.evaluate(() => document.querySelectorAll('[data-track]').length)) > 20 && !real(errors).length, real(errors).join(' | '));
+    await page.setViewportSize({ width: 600, height: 400 }); await page.waitForTimeout(300);   // (a window that changes its size, the new menu not built)
+    await page.setViewportSize({ width: 412, height: 915 }); await page.waitForTimeout(300);
+    T.check('the old track screen lists the tracks; the window changing its size is no error', (await page.evaluate(() => document.querySelectorAll('[data-track]').length)) > 20 && !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
 } finally {

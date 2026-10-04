@@ -259,6 +259,7 @@
   // the map from above: the route as big as fits between the switch at the top and the arrows at the bottom (not blurred), the map to every
   // edge of the stage (as big as the flyover); the route's line, flags and point the same size on the screen however far the map is zoomed
   function fitMaps() {
+    if (!app) return;   // (the old menu is on: the menu is not built, and a window that changes its size must not stumble on it)
     for (const box of app.querySelectorAll('.dio.topmap[data-map]')) {   // (the track screen's maps: the intro's is fitted by fitIntroMap)
       const T = RT[box.dataset.map].top, svg = $('svg', box), W = box.clientWidth, H = box.clientHeight, oh = 40;
       if (!W || !H) continue;
