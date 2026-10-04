@@ -79,6 +79,9 @@ try {
     const { ctx, page, errors } = await open();
     await ready(page);
     await click(page, 'single'); await click(page, 'mode:race');
+    // the map switch over a route track (Riviera): only the numbers 1 and 2 (no MAP/Flyover words), number 1 (the flyover) lit by default, and no mode ribbon on the stage
+    const stageUI = await ev(page, 'const m = root.querySelector(".mapv"), pr = m && m.querySelector("button[aria-pressed=\\"true\\"]"); return { btns: m ? [...m.querySelectorAll("button")].map(b => b.textContent) : null, text: m ? m.textContent.replace(/\\s+/g, "") : "", pressed: pr ? pr.textContent : "", ribbon: !!root.querySelector("#track-stage .ribbon") };');
+    T.check('the track stage: the map switch is only "1" and "2" (no MAP/Flyover words), the flyover (1) is lit by default, no mode ribbon', JSON.stringify(stageUI.btns) === '["1","2"]' && stageUI.text === '12' && stageUI.pressed === '1' && !stageUI.ribbon, JSON.stringify(stageUI));
     await click(page, 'pick-weather');
     await click(page, 'weather:1');
     let s = await page.evaluate(() => ({ w: window.__game.S.weather, rainy: document.getElementById('menu-host').shadowRoot.querySelector('#track-stage').classList.contains('rainy') }));
@@ -139,8 +142,8 @@ try {
     await ready(page);
     await click(page, 'single'); await click(page, 'mode:trial'); await click(page, 'group:rally');
     for (let k = 0; k < 5; k++) { const n = await ev(page, 'return root.querySelector(".card h1").firstChild.textContent;'); if (n === 'Harju') break; await click(page, 'track:1'); }
-    const info = await ev(page, 'return { name: root.querySelector(".card h1").firstChild.textContent, ribbon: root.querySelector(".ribbon").textContent, gold: /Gold time/.test(root.querySelector(".info").textContent) };');
-    T.check('Time trial, Rally: Harju with its Gold time', info.name === 'Harju' && /TIME TRIAL/i.test(info.ribbon) && info.gold, JSON.stringify(info));
+    const info = await ev(page, 'return { name: root.querySelector(".card h1").firstChild.textContent, sub: root.querySelector(".topbar h2 small").textContent, gold: /Gold time/.test(root.querySelector(".info").textContent) };');
+    T.check('Time trial, Rally: Harju with its Gold time', info.name === 'Harju' && /Time trial/i.test(info.sub) && info.gold, JSON.stringify(info));
     await click(page, 'race-single');
     await raceOn(page, 'harju').catch(() => null);
     const r = await page.evaluate(() => ({ id: __game.race && __game.race.track.def.id, tt: __game.race && !!__game.race.timeTrial }));

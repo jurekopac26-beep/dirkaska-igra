@@ -26,7 +26,7 @@
 
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
-  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 1, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, hlv: 1, line: 0, intro: 0, music: 1, mapV: 2, lastTrack: '' };
+  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 1, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, hlv: 1, line: 0, intro: 0, music: 1, mapV: 1, lastTrack: '' };
   let S = Object.assign({}, DEF);
   let records = {};
   try { const j = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (j) S = Object.assign(S, j); } catch (_) { }
@@ -49,7 +49,7 @@
   if (!['race', 'tt', 'traffic', 'police'].includes(S.mode)) S.mode = 'race';   // (Vršič: the race against the rivals, the time trial, the duel in the traffic, the run from the police)
   S.difficulty = Number.isFinite(+S.difficulty) ? clamp(Math.round(+S.difficulty), 0, 3) : DEF.difficulty;   // (lahka, srednja, težka, super težka: the police all four, a race takes the last as težka)
   if (S.lang !== 'en') S.lang = 'sl';
-  S.intro = [0, 1, 2].includes(+S.intro) ? +S.intro : 0; S.music = +S.music === 0 ? 0 : 1; S.mapV = +S.mapV === 1 ? 1 : 2;   // (the race intro: Full, Short, Off; the music before the race; the track map shown: the flyover or the map)
+  S.intro = [0, 1, 2].includes(+S.intro) ? +S.intro : 0; S.music = +S.music === 0 ? 0 : 1; S.mapV = +S.mapV === 2 ? 2 : 1;   // (the race intro: Full, Short, Off; the music before the race; the track map shown: 1 the flyover (the default), 2 the map)
   // the menu (js/menu.js: the main menu and the single race, in a shadow root) replaces the title and track screens; ?menu=old (or tdgp-menu=old in the
   // storage, which the automated tests of the old screens set) keeps the old ones, and so does a game opened from a file (it fetches its style and data)
   let menuOn = !!window.Menu && location.protocol !== 'file:' && !/[?&]menu=old\b/.test(location.search) && (() => { try { return localStorage.getItem('tdgp-menu') !== 'old'; } catch (_) { return true; } })();
