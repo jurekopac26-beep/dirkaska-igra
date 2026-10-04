@@ -18327,12 +18327,12 @@ const World = (function () {
     });
     M.im.instanceMatrix.needsUpdate = true;
   }
-  function tmWalk(W, t) {   // the tourists on the steps: each along the flight at its own pace, turning back at either end, a little bob in the step
-    const dt = W.t == null ? 0 : clamp(t - W.t, 0, 0.25), S = W.st, qx = -S.uz, qz = S.ux, h = Math.atan2(S.uz, S.ux); W.t = t;
+  function tmWalk(W, t) {   // the tourists on the steps: each along the flight at its own pace, turning back at either end (a function of the time only), a little bob in the step
+    const S = W.st, qx = -S.uz, qz = S.ux, h = Math.atan2(S.uz, S.ux), span = S.L - 2;
     W.L.forEach((m, k) => {
-      m.a += m.v * dt; if (m.a > S.L - 1) { m.a = S.L - 1; m.v = -Math.abs(m.v); } else if (m.a < 1) { m.a = 1; m.v = Math.abs(m.v); }
-      const y = S.y0 + (S.y1 - S.y0) * m.a / S.L + 0.04 * Math.abs(Math.sin(t * 3.2 + m.ph));
-      W.v.set(S.x0 + S.ux * m.a + qx * m.o, y, S.z0 + S.uz * m.a + qz * m.o); W.e.set(0, -(m.v > 0 ? h : h + Math.PI), 0); W.q.setFromEuler(W.e); W.m4.compose(W.v, W.q, W.sc); W.im.setMatrixAt(k, W.m4);
+      let p = ((m.a - 1) + m.v * t) % (2 * span); if (p < 0) p += 2 * span;
+      const up = p < span, a = 1 + (up ? p : 2 * span - p), y = S.y0 + (S.y1 - S.y0) * a / S.L + 0.04 * Math.abs(Math.sin(t * 3.2 + m.ph));
+      W.v.set(S.x0 + S.ux * a + qx * m.o, y, S.z0 + S.uz * a + qz * m.o); W.e.set(0, -(up ? h : h + Math.PI), 0); W.q.setFromEuler(W.e); W.m4.compose(W.v, W.q, W.sc); W.im.setMatrixAt(k, W.m4);
     });
     W.im.instanceMatrix.needsUpdate = true;
   }
@@ -19021,10 +19021,10 @@ const World = (function () {
       const g = new GB(), RT2 = rng(3961), W1 = [1, 1, 1], skin = [0.86, 0.68, 0.55];
       box(g, 0, 0, 0, 0.3, 0.8, 0.22, 0, [0.22, 0.22, 0.26], null, true); box(g, 0, 0.8, 0, 0.42, 0.62, 0.26, 0, W1, null, true); ROCK_SMOOTH = true; ico(g, 0, 1.6, 0, 0.13, 1.1, skin, RT2, 0.02); ROCK_SMOOTH = false;
       const L = [], cols = [[0.86, 0.13, 0.12], [0.95, 0.95, 0.95], [0.98, 0.8, 0.15], [0.2, 0.42, 0.75], [0.3, 0.6, 0.35], [1, 0.55, 0.1], [0.6, 0.62, 0.66], [0.9, 0.5, 0.6]];
-      for (let k = 0; k < 40; k++) L.push({ a: RT2() * st.L, o: (RT2() - 0.5) * 4.6, v: (RT2() < 0.55 ? 1 : -1) * (0.28 + RT2() * 0.22), c: cols[Math.floor(RT2() * cols.length)], ph: RT2() * TAU });
+      for (let k = 0; k < 40; k++) L.push({ a: RT2() * st.L, o: (RT2() - 0.5) * 4.6, v: 0.28 + RT2() * 0.22, c: cols[Math.floor(RT2() * cols.length)], ph: RT2() * TAU });
       const im = new THREE.InstancedMesh(g.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true }), L.length), cc = new THREE.Color();
       L.forEach((m, k) => { cc.setRGB(m.c[0], m.c[1], m.c[2]); im.setColorAt(k, cc); }); im.frustumCulled = false; root.add(im);
-      (out.dyn.tm || (out.dyn.tm = {})).walk = { im, L, st, m4: new THREE.Matrix4(), q: new THREE.Quaternion(), v: new THREE.Vector3(), sc: new THREE.Vector3(1, 1, 1), e: new THREE.Euler(), t: null };
+      (out.dyn.tm || (out.dyn.tm = {})).walk = { im, L, st, m4: new THREE.Matrix4(), q: new THREE.Quaternion(), v: new THREE.Vector3(), sc: new THREE.Vector3(1, 1, 1), e: new THREE.Euler() };
       nWalk = L.length; tmWalk(out.dyn.tm.walk, 0);
     }
 

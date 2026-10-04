@@ -380,11 +380,11 @@
   "instances": 11402,
   "props": 43,
   "crowd": 362,
-  "world": "df646845",
+  "world": "780f7dc3",
   "propsHash": "ac014ea9",
   "floor": "690d6505/10332",
   "groups": {
-   "-:MeshLambertMaterial": "72cd7da",
+   "-:MeshLambertMaterial": "572fa2a5",
    "-:MeshBasicMaterial": "7a67f235",
    "-:MeshPhongMaterial": "d18a4888",
    "crowd:MeshLambertMaterial": "66ee4997",
