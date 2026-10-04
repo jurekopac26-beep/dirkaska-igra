@@ -103,7 +103,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const sd of [-1, 1]) K.rect(2.104, 0.235, sd * 0.6, 0.16, 0.04, B);
           K.box(2.07, 0.095, 0, 0.1, 0.03, 1.46, 0, B, null, true);
         }, { hinge: [[2.02, 0.14, -0.7], [2.02, 0.14, 0.7]] });
-        K.hinge('cover', [-0.45, 0.7, -0.7], [-0.45, 0.7, 0.7]);
+        K.hinge('cover', [-2.08, 0.63, -0.7], [-2.08, 0.63, 0.7]);   // (a clamshell hinged at the tail: its front lifts over the stacks and the hoop, clear of the wing)
         // ---- the tub's flanks: the number in a white roundel each side; the wrap-around screen on the scuttle (one-sided panes facing
         //      out: the driver sees through them); the dash on the front bulkhead ----
         K.part('body', () => {
@@ -138,7 +138,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         }, { noCrush: true });
         // ---- the big intakes: the V8's eight stacks out of the cover behind the hoop (two rows of four, flared, dark in their mouths) ----
         K.part('body', () => { for (const sd of [-1, 1]) for (let i = 0; i < 4; i++) { const x = -0.66 - 0.12 * i;
-          K.cyl([x, 0.56, sd * 0.12], [x, 0.94, sd * 0.12], 0.034, ALU, { n: 5, r2: 0.05, capA: null, capB: B }); } });
+          K.cyl([x, 0.56, sd * 0.12], [x, 0.94, sd * 0.12], 0.034, K.chrome, { n: 5, r2: 0.054, capA: null, capB: B }); } });
         // ---- the high wing on its tall struts and stays: its plank in the stripe colour, the endplates in the paint ----
         K.part('wing', () => {
           K.wingPlank(-1.57, 1.19, -2.03, 1.26, 0.035, -0.82, 0.82, S);
@@ -151,7 +151,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.part('body', () => {
           K.box(-1.86, 0.15, 0, 0.36, 0.18, 0.26, 0, GBX, null, true);
           for (const sd of [-1, 1]) {
-            K.cyl([-1.78, 0.3, sd * 0.3], [-2.2, 0.35, sd * 0.33], 0.04, STEEL, { n: 5, r2: 0.072, capA: null, capB: [0.05, 0.04, 0.035] });
+            K.cyl([-1.76, 0.3, sd * 0.3], [-2.16, 0.35, sd * 0.33], 0.04, STEEL, { n: 5, r2: 0.072, capA: null, capB: [0.05, 0.04, 0.035] });
           }
           face([[-1.6, 0.12, -0.58], [-1.6, 0.12, 0.58], [-1.6, 0.36, 0.58], [-1.6, 0.36, -0.58]], D, [-3, 0.24, 0]);
         });
