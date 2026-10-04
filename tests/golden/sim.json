@@ -3318,15 +3318,15 @@
   }
  },
  "longford/car/cs": {
-  "digest": "afd3bb94d4ba80814e75ef0b",
-  "lead": 12507.7,
+  "digest": "4377191aa7402f30ad6c7a24",
+  "lead": 12510.1,
   "car0": [
-   -2316.54,
-   -240.48
+   -2069.81,
+   -462.78
   ],
   "cover": {
-   "dmg": 0.8,
-   "loose": 15,
+   "dmg": 1,
+   "loose": 16,
    "rescues": 0,
    "repairs": 1
   }
