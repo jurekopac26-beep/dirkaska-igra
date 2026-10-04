@@ -1,6 +1,7 @@
-// Memory: switching tracks, restarting races, a crash with loose panels and a pit repair, and browsing cars in the car
-// menu must not leave GPU geometry, textures, shader programs or JavaScript memory behind. Round 1 warms up (caches
-// fill, first shaders compile); from round 2 to the last the counts must stay flat.
+// Memory: switching tracks, restarting races, a crash with loose panels and a pit repair, wrecks repaired where they stand (a kit
+// vehicle's and the Peugeot's: their pieces, fire, soot, cracked panes) and browsing cars in the car menu must not leave GPU geometry,
+// textures, shader programs or JavaScript memory behind. Round 1 warms up (caches fill, first shaders compile); from round 2 to the
+// last the counts must stay flat.
 // Every measurement is taken in the same state, so it does not depend on what happened to be on screen before: a fresh
 // race on jezero at the start lights (no contacts yet), the game paused, and one frame drawn with frustum culling off, so
 // every visible object is on the GPU; then garbage collection.
@@ -46,22 +47,24 @@ try {
       return { dmg: +dmg.toFixed(2), loose, repaired: P.repairN || 0, looseAtRepair: g.race.debris.length };
     });
   };
-  // a registered vehicle (RAKETA: the render kit) wrecked and repaired where it stands on Bakreni gozd, three times over: Core.wreckCar (its
-  // parts' copies, its pieces thrown and drawn, the wheels off, the body sagged), Race.repairCar (the car built afresh while its pieces lie on
-  // the road); the third wreck's pieces push the first one's out (the cap of 40): freed with nothing a car still draws; the next race the rest
-  const kitWreck = async () => {
-    const S0 = await page.evaluate(() => { const g = window.__game, s = g.S.car; g.S.car = Core.MODELS.findIndex(m => m.id === 'raketa'); return s; });
+  // a registered vehicle (RAKETA: the render kit) and the Peugeot (its model) wrecked and repaired where they stand on Bakreni gozd, three
+  // times over each: Core.wreckCar (the kit's parts' copies, its pieces thrown and drawn, the wheels off, the body sagged; the fire, the soot,
+  // the cracked panes, the Peugeot's own copies of its model's materials), Race.repairCar (the car built afresh while its pieces lie on the
+  // road); RAKETA's third wreck pushes the first one's pieces out (the cap of 40): freed with nothing a car still draws; the next race the rest
+  const kitWreck = async (id) => {
+    const S0 = await page.evaluate((id) => { const g = window.__game, s = g.S.car; g.S.car = Core.MODELS.findIndex(m => m.id === id); return s; }, id);
     await startTrack(page, 'gozd');
     const r = await page.evaluate(async () => {
       const g = window.__game, P = g.race.player, raf = () => new Promise(r => requestAnimationFrame(r)); g.pause();
-      g.sim(1, true); let pieces = 0, dead = 0;
+      g.sim(1, true); let pieces = 0, dead = 0, fire = 0, cracks = 0, sooted = 0;
       for (let k = 0; k < 3; k++) {
         Core.wreckCar(P); g.sim(0.5, true); for (let i = 0; i < 3; i++) Render.frame(1 / 60, 1, P, g.S.camera, {});
+        const v = Render.viewOf(P); fire += v.fire ? 1 : 0; cracks += v.crack.filter(Boolean).length; sooted += v.charU && v.charU.value.w > 0 ? 1 : 0;
         pieces += g.race.debris.filter(d => d.car === P.id && d.mesh && d.mesh.isObject3D).length;
         g.race.repairCar(P); g.sim(0.25, true); for (let i = 0; i < 3; i++) Render.frame(1 / 60, 1, P, g.S.camera, {});
       }
       dead = 3 * Object.keys(Core.partsOf(P.m)).length - g.race.debris.length; g.resume(); await raf();
-      return { pieces, dead, kit: !!Render.viewOf(P).kit };
+      return { pieces, dead, fire, cracks, sooted, kit: !!Render.viewOf(P).kit };
     });
     await page.evaluate((s) => { window.__game.S.car = s; }, S0);
     return r;
@@ -76,20 +79,21 @@ try {
   });
   const rounds = [];
   const ROUNDS = +(process.env.MEM_ROUNDS || 3);
-  let crash = null, kit = null;
+  let crash = null, kit = null, glb = null;
   for (let r = 0; r < ROUNDS; r++) {
     for (const id of ids) { await startTrack(page, id); await simulate(page, 3); }
     crash = await crashAndRepair();
-    kit = await kitWreck();
+    kit = await kitWreck('raketa'); glb = await kitWreck('p206');
     await startTrack(page, 'gozd'); await simulate(page, 2);   // a restart on the same track
     await carMenu();
     await page.evaluate(async () => { window.__game.onAction('to-title'); await new Promise(r => setTimeout(r, 1500)); });   // the title demo race
     rounds.push(await measure());
-    console.log(`round ${r + 1}: ${JSON.stringify(rounds[r], (k, v) => typeof v === 'number' ? +v.toFixed(1) : v)}  crash ${JSON.stringify(crash)}  kit wreck ${JSON.stringify(kit)}`);
+    console.log(`round ${r + 1}: ${JSON.stringify(rounds[r], (k, v) => typeof v === 'number' ? +v.toFixed(1) : v)}  crash ${JSON.stringify(crash)}  kit wreck ${JSON.stringify(kit)}  Peugeot wreck ${JSON.stringify(glb)}`);
   }
   const w = rounds[Math.min(1, rounds.length - 1)], z = rounds[rounds.length - 1];
   T.check('the crash-and-repair part really ran (damage, loose panels still on the track at the pit repair)', crash && crash.dmg > 0 && crash.looseAtRepair > 0 && crash.repaired === 1, JSON.stringify(crash));
-  T.check('the kit wreck-and-repair part really ran (RAKETA wrecked three times: its pieces drawn, the cap pushed the first ones out)', kit && kit.kit && kit.pieces >= 40 && kit.dead > 0, JSON.stringify(kit));
+  T.check('the kit wreck-and-repair part really ran (RAKETA wrecked three times: its pieces drawn, the cap pushed the first ones out; burning, sooted, its panes cracked)', kit && kit.kit && kit.pieces >= 40 && kit.dead > 0 && kit.fire === 3 && kit.sooted === 3 && kit.cracks > 0, JSON.stringify(kit));
+  T.check('the Peugeot\'s wreck-and-repair part really ran (wrecked three times: burning, sooted)', glb && !glb.kit && glb.fire === 3 && glb.sooted === 3, JSON.stringify(glb));
   T.check('GPU geometries do not grow after the warm-up round', z.geometries <= w.geometries + 2, `${w.geometries} -> ${z.geometries}`);
   T.check('textures do not grow', z.textures <= w.textures, `${w.textures} -> ${z.textures}`);
   T.check('shader programs do not grow', z.programs <= w.programs + 1, `${w.programs} -> ${z.programs}`);

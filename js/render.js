@@ -1976,6 +1976,8 @@ const Render = (function () {
     try { const r = kitBuild(M, look, false); return { status: 'ok', geo: r.geo, tail: r.tail, body: r.body, tris: r.tris, openings: r.openings, tubs: r.tubs, regions: r.regions, std: r.std }; }
     catch (e) { return { status: 'fallback:' + (e && e.message ? e.message : String(e)) }; }
   }
+  // (kitInfo) a burning engine's seat (body.engine, metres) and the top of the shell over it the car whole (null: none: the flames from the seat)
+  function kitFireOf(M, E) { const S = [E.body.engine[0] * M.len / E.body.len, E.body.engine[1], 0], t = kitFireTop(E.geo, S, M.wid, null); return { seat: S, top: t > -1e8 ? t : null }; }
   function kitInfo(id) {
     if (id == null) return { models: kitCache.size, wheels: kitWheelCache.size, show: kitShowLRU.length, legacy: geoCache.size };   // (the caches: one body per model built, its wheels, the showroom's two; the 11's per-colour bodies)
     const M = Core.MODELS.find(m => m.id === id); if (!M || !M.kit) return null;
@@ -1985,7 +1987,7 @@ const Render = (function () {
       rg[n] = { o: R.o.slice(), i: R.i.slice(), subs: R.subs.map(s => Object.assign({}, s)), hinge: R.hinge || null, c: k ? c.map(v => v / k) : null }; }   // (c: the range's centroid, metres)
     return { id, status: E.status, tris: Object.assign({}, U.tris), budget: Object.assign({}, U.budget), outerN: U.outerN, N: U.N, ranges: rg, paint: U.paint.i.length, strp: U.strp.i.length, lamps: U.lamps,
       wheels: { style: E.W.style, hi: [wh.f.userData.tris, wh.r.userData.tris], lo: [wl.f.userData.tris, wl.r.userData.tris], hw: E.body.hw }, body: JSON.parse(JSON.stringify(E.body)), regions: E.regions, std: E.std, tail: E.tail.userData.tail, tubs: E.tubs, openings: E.openings,
-      bbox: { min: E.geo.boundingBox.min.toArray(), max: E.geo.boundingBox.max.toArray() }, clear: kitClear(E).slice() };   // (clear: how far each corner's body may sag, FL FR RL RR, metres)
+      bbox: { min: E.geo.boundingBox.min.toArray(), max: E.geo.boundingBox.max.toArray() }, clear: kitClear(E).slice(), fire: kitFireOf(M, E) };   // (clear: how far each corner's body may sag, FL FR RL RR, metres)
   }
 
 
@@ -4812,7 +4814,13 @@ const Render = (function () {
   function fireSpot(v, S) {
     const K = v.kit; if (!K) return S;
     const key = K.nLost * 8 + v.roofStep; if (v.spot && v.spot.key === key) return v.spot.p;
-    const geo = v.body.geometry, a = geo.attributes.position.array, n = geo.userData.outerN, dv = K.deadV, nc = kitMask(geo.userData, 'noCrush'), X = S[0], W = v.car.m.wid * 0.2; let top = -1e9;
+    const top = kitFireTop(v.body.geometry, S, v.car.m.wid, K.deadV);
+    v.spot = { key, p: top > -1e8 ? [S[0], top + 0.02, S[2]] : S }; return v.spot.p;
+  }
+  // (fireSpot) the highest face of a kit body's outer shell straight over the seat S (dv: its lost parts' vertices; noCrush ranges left out);
+  // -1e9: none
+  function kitFireTop(geo, S, wid, dv) {
+    const a = geo.attributes.position.array, n = geo.userData.outerN, nc = kitMask(geo.userData, 'noCrush'), X = S[0], W = wid * 0.2; let top = -1e9;
     for (let t = 0; t < n; t += 3) {
       if ((dv && dv[t]) || nc[t]) continue;
       const o = t * 3, ax = a[o], az = a[o + 2], bx = a[o + 3], bz = a[o + 5], cx = a[o + 6], cz = a[o + 8];
@@ -4824,7 +4832,7 @@ const Render = (function () {
         const y = l1 * a[o + 1] + l2 * a[o + 4] + l3 * a[o + 7]; if (y > S[1] - 0.1 && y > top) top = y;
       }
     }
-    v.spot = { key, p: top > -1e8 ? [S[0], top + 0.02, S[2]] : S }; return v.spot.p;
+    return top;
   }
   // the fires this frame (before the cars are drawn): a fire starts once (v.fire.t0: the race's time then); the ones that emit (fireEmit):
   // the FIRE_EMIT nearest to the camera of all that burn or smoke after burning
@@ -4849,10 +4857,11 @@ const Render = (function () {
     if (c.dmg > 0.45 && !(opt && opt.noFx) && !dbg.noSmoke) {
       v.smokeAcc += (c.dmg - 0.4) * (10 + 16 * (c.inThr || 0)) * dt;
       const rnd = v.kit ? rRnd : Math.random, dark = Core.sstep(0.5, 0.95, c.dmg), wk = Core.sstep(0.93, 0.98, c.dmg), gc = (0.84 - 0.4 * dark) * (1 - wk) + 0.1 * wk;
+      const ks = v.kit ? clamp(M.wid / 1.8, 0.6, 1.4) : 1;   // (a kit vehicle's puffs by its size: a kart's small, a truck's big; the 11's as ever)
       while (v.smokeAcc >= 1) {
         v.smokeAcc -= 1;
         const r1 = rnd(), r2 = rnd(), r3 = rnd(), r4 = rnd(), r5 = rnd(), r6 = rnd(), r7 = rnd(); if (F) continue;
-        particles.emit(sx + (r1 - 0.5) * 0.5, sy + 0.25, sz + (r2 - 0.5) * 0.5, c.vx * 0.35 + (r3 - 0.5) * 0.6, 0.9 + r4 * 0.6, c.vz * 0.35 + (r5 - 0.5) * 0.6, 1.7 + r6 * 0.9, 0.7, 3.8 + r7 * 1.6, gc, gc, gc * 1.02, 0.52 + dark * 0.2, -0.3, 0.9, y);
+        particles.emit(sx + (r1 - 0.5) * 0.5, sy + 0.25, sz + (r2 - 0.5) * 0.5, c.vx * 0.35 + (r3 - 0.5) * 0.6, 0.9 + r4 * 0.6, c.vz * 0.35 + (r5 - 0.5) * 0.6, 1.7 + r6 * 0.9, 0.7 * ks, (3.8 + r7 * 1.6) * ks, gc, gc, gc * 1.02, 0.52 + dark * 0.2, -0.3, 0.9, y);
       }
     }
     if (!F) return;
