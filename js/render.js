@@ -2689,6 +2689,11 @@ const Render = (function () {
   // start draws the same)
   const rRng = { s: 90217 };
   function rRnd() { rRng.s = (rRng.s * 16807) % 2147483647; return rRng.s / 2147483647; }
+  // three.js names every object it makes (a material, a geometry, a mesh) with Math.random (MathUtils.generateUUID: four draws): what the
+  // renderer makes for its own effects in a race (a piece's own material, a burning car's charred copies, a crack decal laid again) is
+  // made with Math.random swapped for a generator of its own (never reset: the names stay unique), so the race runs as it would without them
+  const uuRng = { s: 4021 };
+  function ownRnd(fn) { const r = Math.random; Math.random = () => { uuRng.s = (uuRng.s * 48271) % 2147483647; return uuRng.s / 2147483647; }; try { return fn(); } finally { Math.random = r; } }
   let particles, skids, views = [];
   let rain = null, wet = -1, wetW = -1, dryLn = null, themeId = 'lake', birds = null;   // rain streaks; the weather drawn now (race.rain, the rain, and race.water, the water on the road; -1: not applied yet), the dry racing line, the world's theme
   let basePR = 1, dynScale = 1;
@@ -3418,7 +3423,7 @@ const Render = (function () {
     scDrop();
     const old = views;
     views = []; curTrack = race.track; curRace = race; clearDebris(); rRng.s = 90217; dust = race.track.def.dust ? Object.assign({}, DUST0, race.track.def.dust) : null;
-    if (race.debris) for (const d of race.debris) d.mesh = null;   // (a race under way drawn afresh: its pieces on the road made again from the new views: syncDebris)
+    if (race.debris) for (const d of race.debris) if (d.mesh) { d.mesh = null; remesh.add(d); }   // (a race under way drawn afresh: its pieces on the road made again from the new views: syncDebris)
     birds.reset(birds.gull);   // (a new race, a fresh sky: nothing left over from the frames before it, so a race stepped from a seeded start draws the same)
     if (world && world.props && world.props.length && race.setProps && !race.props) race.setProps(world.props, world.propFloor);
     setupProps(race);
@@ -4516,7 +4521,7 @@ const Render = (function () {
     if (v.kit) { kitParts(v, c, x, y, z, h); kitLod(v, c); }   // (the kit: the wheels off, parts loose, parts lost: before the glass (a door's goes with it) and the roof; the draw range for them)
     for (let k = 0; k < 4; k++) if (c.winOut[k] && !v.winBroken[k]) { v.winBroken[k] = 1; breakWindow(v, k, c, x, y, z, h); }
     const r0 = v.roofStep; while (v.roofStep < 4 && c.roofDmg >= (v.roofStep + 1) * 0.25) { v.roofStep++; crumpleRoof(v, 0.25); }
-    if (v.roofStep !== r0 || v.crackDirty) { for (let k = 0; k < 4; k++) if (v.winBroken[k] && v.glassTris[k].length && (v.roofStep !== r0 || v.crackDirty[k])) crackDecal(v, k); v.crackDirty = null; }   // (a broken pane's glass moved since its crack decal was laid (the roof sank, a dent): laid again on it, never hanging in the air)
+    if (v.roofStep !== r0 || v.crackDirty) { for (let k = 0; k < 4; k++) if (v.winBroken[k] && v.glassTris[k].length && (v.roofStep !== r0 || v.crackDirty[k])) ownRnd(() => crackDecal(v, k)); v.crackDirty = null; }   // (a broken pane's glass moved since its crack decal was laid (the roof sank, a dent): laid again on it, never hanging in the air)
     if (v.roofStep >= 2 || c.lost.lightbar || (v.kit && c.lost[v.kit.E.body.decalPart])) roofGear(v, c);
     if (v.kit) return;
     // parts that just came off: hide the panel, reveal what is underneath, a puff of bits
@@ -4788,6 +4793,9 @@ const Render = (function () {
   // (kitInfo, tests) how tall each part's piece lies on the road (metres): its ranges in the colour-neutral body as built, laid by kitLayQ
   function kitLayH(E) {
     if (E.layH) return E.layH;
+    return ownRnd(() => kitLayH0(E));
+  }
+  function kitLayH0(E) {
     const U = E.geo.userData, pa = E.geo.attributes.position.array, H = {};
     for (const nm in U.ranges) { if (nm === 'body') continue; const R = U.ranges[nm], no = R.o[1] - R.o[0], n = no + R.i[1] - R.i[0]; if (!n) continue;
       const P = new Float32Array(n * 3); let j = 0; for (const [a, b] of [R.o, R.i]) { if (b > a) { P.set(pa.subarray(a * 3, b * 3), j * 3); j += b - a; } }
@@ -4818,23 +4826,32 @@ const Render = (function () {
     lay.add(inner); m.add(lay); m.userData.lay = lay; m.userData.kit = true;
     return m;
   }
+  const remesh = new WeakSet();   // (pieces made again for views built afresh in a race under way: their objects named without Math.random, ownRnd)
   function syncDebris() {
     if (!curRace || !curRace.debris) return;
     let byId = null;
     for (const d of curRace.debris) {
       if (d.mesh || d.dead) continue;
-      if (!byId) { byId = new Map(); for (const q of views) if (!byId.has(q.car.id)) byId.set(q.car.id, q); }   // (the race's cars, the patrol cars, the safety car)
-      const v = byId.get(d.car);
-      if (v && v.kit) { const m = kitDebrisMesh(v, d); if (m === null) continue; if (!m) { d.mesh = true; continue; } scene.add(m); d.mesh = m; debrisMeshes.push(d); continue; }
-      const src = v && v.parts && v.parts[d.part];
-      if (!src) { d.mesh = true; continue; }
-      // a loose panel lies on its biggest face: turn the thinnest box dimension upright inside a holder
-      const inner = new THREE.Mesh(src.geometry, pieceMat(v, src.material)); inner.castShadow = true; inner.receiveShadow = true;
-      const pr = src.geometry.parameters || {}, dims = [pr.width || 1, pr.height || 1, pr.depth || 1], thin = dims.indexOf(Math.min(...dims));
-      if (thin === 2) inner.rotation.x = Math.PI / 2; else if (thin === 0) inner.rotation.z = Math.PI / 2;
-      const m = new THREE.Group(); m.rotation.order = 'YXZ'; m.add(inner);
-      scene.add(m); d.mesh = m; debrisMeshes.push(d);
+      if (remesh.has(d)) { remesh.delete(d); ownRnd(() => syncPiece(d, byId || (byId = viewsById()))); if (!d.mesh) remesh.add(d); continue; }
+      syncPiece(d, byId || (byId = viewsById()));
     }
+    syncDebrisAfter();
+  }
+  const viewsById = () => { const m = new Map(); for (const q of views) if (!m.has(q.car.id)) m.set(q.car.id, q); return m; };   // (the race's cars, the patrol cars, the safety car)
+  // the core's piece d a mesh of its own (or none to draw, or not yet: a kit car's part not off on its view until its next frame)
+  function syncPiece(d, byId) {
+    const v = byId.get(d.car);
+    if (v && v.kit) { const m = kitDebrisMesh(v, d); if (m === null) return; if (!m) { d.mesh = true; return; } scene.add(m); d.mesh = m; debrisMeshes.push(d); return; }
+    const src = v && v.parts && v.parts[d.part];
+    if (!src) { d.mesh = true; return; }
+    // a loose panel lies on its biggest face: turn the thinnest box dimension upright inside a holder
+    const inner = new THREE.Mesh(src.geometry, pieceMat(v, src.material)); inner.castShadow = true; inner.receiveShadow = true;
+    const pr = src.geometry.parameters || {}, dims = [pr.width || 1, pr.height || 1, pr.depth || 1], thin = dims.indexOf(Math.min(...dims));
+    if (thin === 2) inner.rotation.x = Math.PI / 2; else if (thin === 0) inner.rotation.z = Math.PI / 2;
+    const m = new THREE.Group(); m.rotation.order = 'YXZ'; m.add(inner);
+    scene.add(m); d.mesh = m; debrisMeshes.push(d);
+  }
+  function syncDebrisAfter() {
     // the pieces as the core has them; a dead one (gone off the track, pushed out by the cap of 40) freed, but for what the cars drawn now
     // and the other pieces still use (its car's panel or body material while that car is drawn; a repaired car's no more: freed then)
     let gone = null;
@@ -5011,10 +5028,10 @@ const Render = (function () {
   // (one paint for them all and the trim; the formula's and the prototype's: an own copy of the shared paint for the car first; the
   // Peugeot's model: all of its body, its own copies of the shared materials first); every car's shared under-parts (the engine block, the
   // crash beams a lost panel bares), smashed lenses, bare hubs and wheels: an own copy each (v.charSh), swapped in as they are put on
-  function charParts(v, w) {
+  function charParts(v, w) { if (v.charMats || w > 0) ownRnd(() => charParts0(v, w)); }   // (its copies named without Math.random: ownRnd)
+  function charParts0(v, w) {
     let L = v.charMats;
     if (!L) {
-      if (w <= 0) return;
       L = v.charMats = []; v.charSh = new Map();
       if (v.partMats) for (const m of v.partMats) if (m && m.color) L.push(m);
       if (v.glb && v.glb.bodyH) {   // (the Peugeot's model: its paint, its tail lamps, and an own copy of each shared material of its body but the black)
@@ -5040,11 +5057,11 @@ const Render = (function () {
   // it: it lies elsewhere); a shared one (it never changes) as it is. Pikes Peak: the car's own (its dust layer reads where the car is)
   function pieceMat(v, m) {
     if (!m || v.pk) return m;
-    if (m === v.body.material && m.userData.dirt) {   // (a kit car's body: the same program, its uniforms copied)
+    if (m === v.body.material && m.userData.dirt) return ownRnd(() => {   // (a kit car's body: the same program, its uniforms copied)
       const q = dirtyCarMat(); q.userData.dirt.value = m.userData.dirt.value; q.userData.scr.value = m.userData.scr.value; q.userData.char.value.copy(m.userData.char.value);
-      if (m.emissive) q.emissive.copy(m.emissive); return q; }
+      if (m.emissive) q.emissive.copy(m.emissive); return q; });
     if (sharedCarRes().m.has(m)) return m;
-    const q = m.clone(), cg = m.userData.cg; if (cg) cgMat(q, cg.glass, cg.key); return q;   // (the 11's panels, the formula's paint, a burning car's copies: their programs' keys kept)
+    return ownRnd(() => { const q = m.clone(), cg = m.userData.cg; if (cg) cgMat(q, cg.glass, cg.key); return q; });   // (the 11's panels, the formula's paint, a burning car's copies: their programs' keys kept)
   }
 
   function emitFx(v, c, dt, x, z, h) {
