@@ -21,7 +21,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     // lower nose with the mouth the front bumper (from the front arch), the lower tail the rear one (from the rear arch), the fenders and
     // quarters the sides and shoulders above them, the bonnet the top from the windscreen to the nose, the boot lid the top behind the
     // deck, the doors. The details: the raised pop-up lamps on the fenders, the smiling mouth, the oval tail lamps, the windscreen in its
-    // black frame, the roll hoop over the folded hood, the seats and the driver in sight
+    // black frame, the roll hoop over the folded soft top, the seats and the driver in sight
     look: {
       body: { len: 3.95, wid: 1.68, wz: 0.12, door: [0.55, -0.5], bumpY: [0.5, 0.5],
         //       x      w      yb     ybelt  wt     yt     cr     kind  tuck
@@ -106,7 +106,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const fy = L.topY(-1.0, 0.6) + 0.004, fc = []; for (let i = 0; i < 8; i++) { const a = -i / 8 * Math.PI * 2; fc.push([-1.0 + Math.cos(a) * 0.045, fy, 0.6 + Math.sin(a) * 0.045]); }
         K.face(fc, [0.2, 0.2, 0.21], { part: 'body' });   // (the fuel filler's cap on the right of the deck)
         // ---- the cockpit (in sight): the seats, the dashboard, the driver in the left seat; the roll hoop behind them (never crushed or
-        //      dented), the folded hood on the deck behind it ----
+        //      dented), the soft top folded on the deck behind it ----
         for (const sd of [-1, 1]) K.seat(-0.3, 0.37, sd * 0.33, { w: 0.46, l: 0.46, back: 0.56, tilt: 0.3, col: SEAT });
         K.box(0.2, 0.6, 0, 0.2, 0.2, 1.24, 0, D, null, true, { part: 'body' });
         K.driver(-0.47, 1.06, -0.33, { r: 0.125, lean: 0.3, suit: [0.15, 0.17, 0.2], hands: [0.02, 0.78, 0.16] });
@@ -124,15 +124,15 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.hinge('hood', [0.56, 0.83, -0.6], [0.56, 0.83, 0.6]);
         K.hinge('trunk', [-1.115, 0.86, -0.6], [-1.115, 0.86, 0.6]);
         K.hinge('doorL', [0.55, 0.3, -0.84], [0.55, 0.75, -0.84]); K.hinge('doorR', [0.55, 0.3, 0.84], [0.55, 0.75, 0.84]);
-        // ---- inside (seen once a part is off): the four under the bonnet, the radiator behind the mouth ----
+        // ---- inside (seen once a part is off): the four under the bonnet, the radiator behind the mouth, the spare lying in the boot; the
+        //      boot's front wall and the bay's firewall (the cockpit's bulkheads face the cockpit only: from the boot or the bay they would
+        //      show the seats and the footwell), the lining's ring 3 cm in, facing back / forward ----
         K.engine(0.82, 0.28, 0, { l: 0.5, w: 0.46, h: 0.38, inner: true });
-        K.tyre(-1.56, 0.33, 0.12, { axis: 'y', r: 0.24, w: 0.12, inner: true, part: 'body' });   // (the spare, lying in the boot)
-        // the boot's front wall and the bay's firewall: the cockpit's bulkheads seen from behind them (one-sided: from the boot or the bay
-        // they would show the seats and the footwell), the lining's ring 3 cm in, facing back / forward
+        K.box(1.8, 0.27, 0, 0.05, 0.3, 0.72, 0, [0.12, 0.12, 0.13], null, false, { inner: true, part: 'body' });
+        K.tyre(-1.56, 0.33, 0.12, { axis: 'y', r: 0.24, w: 0.12, inner: true, part: 'body' });
         const wall = (x, yt, wt, cr, ybelt, dir) => { const q = [[0.2, 0.753], [0.3, 0.81], [Math.min(ybelt, yt - 0.03), 0.81], [yt - 0.03, wt - 0.03], [yt - 0.03 + cr, (wt - 0.03) * 0.38]], R = q.map(([y, z]) => [x, y, dir * z]);
           K.face(R.concat(q.slice().reverse().map(([y, z]) => [x, y, -dir * z])), K.lining, { inner: true, part: 'body' }); };
         wall(-0.766, 0.845, 0.67, 0, 0.685, 1); wall(0.306, 0.825, 0.68, 0.03, 0.675, -1);
-        K.box(1.8, 0.27, 0, 0.05, 0.3, 0.72, 0, [0.12, 0.12, 0.13], null, false, { inner: true, part: 'body' });
       },
     },
   });
