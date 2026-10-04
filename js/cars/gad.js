@@ -71,6 +71,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const DC = L.decal;
         // the twin stripes' gap: over the scuttle, the bonnet and the nose; over the deck behind the cockpit, the boot lid and the tail
         for (const [x0, x1] of [[0.12, 1.98], [-1.98, -0.71]]) DC.top([[x0, -0.045], [x1, -0.045], [x1, 0.045], [x0, 0.045]], P, 0.004);
+        // the doors' shut lines (front and rear edge, the side and the shoulder up to the cockpit's rim)
+        for (const x of [-0.57, 0.25]) { DC.side([[x - 0.005, 0.27], [x + 0.005, 0.27], [x + 0.005, 0.7], [x - 0.005, 0.7]], K.shade(P, 0.5), null, 0.004);
+          DC.band([[x - 0.005, 0], [x + 0.005, 0], [x + 0.005, 1], [x - 0.005, 1]], K.shade(P, 0.5), null, 0.004); }
         // the vents behind the front wheels (a slot rounded along the arch)
         DC.side([[0.66, 0.44], [0.74, 0.44], [0.785, 0.5], [0.785, 0.6], [0.74, 0.66], [0.66, 0.66]], D, null, 0.006);
         // the flared lips round the arches (the fenders' and the quarters')
@@ -112,8 +115,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.part('body', () => {
           const z = -0.32, SU = [0.1, 0.14, 0.32], HC = [0.95, 0.95, 0.93];
           K.box(-0.44, 0.48, z, 0.24, 0.4, 0.4, 0.0, SU, null, true);                                 // the torso (the shoulders at 0.88)
-          const R = [[0.86, 0.075], [0.93, 0.118], [1.02, 0.125], [1.09, 0.1], [1.125, 0.05]].map(([y, r], i) => [0, 1, 2, 3, 4, 5, 6, 7].map(j => { const a = j / 8 * Math.PI * 2; return [-0.42 + Math.cos(a) * r * (i ? 1.06 : 1), y, z + Math.sin(a) * r]; }));
-          K.skin(R, (k, e) => k === 2 && (e === 0 || e === 7) ? [0.12, 0.12, 0.14] : k === 3 && (e === 3 || e === 4 || e === 2 || e === 5) ? S : HC, [0.1, 0.1, 0.11], HC);   // the helmet: its visor forward, a stripe over the top
+          const R = [[0.86, 0.075], [0.94, 0.12], [1.05, 0.125], [1.11, 0.095], [1.14, 0.045]].map(([y, r], i) => [0, 1, 2, 3, 4, 5, 6, 7].map(j => { const a = j / 8 * Math.PI * 2; return [-0.42 + Math.cos(a) * r * (i ? 1.06 : 1), y, z + Math.sin(a) * r]; }));
+          K.skin(R, (k, e) => k === 1 && (e === 0 || e === 7) ? [0.26, 0.17, 0.06] : k === 3 && e >= 2 && e <= 5 ? S : HC, [0.1, 0.1, 0.11], HC);   // the helmet: its gold visor at the eyes, the stripe colour on its crown
           for (const sd of [-1, 1]) K.bar([-0.43, 0.84, z + sd * 0.17], [-0.06, 0.74, z + sd * 0.15], 0.042, SU, { n: 4 });   // the arms (to the wheel under the scuttle)
         }, { noCrush: true, noDent: true });
         // (the bulkhead behind the seats stands on the rear arch's end, its ring raised to the arch: under it, outside the tub's inner wall,
@@ -121,10 +124,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const sd of [-1, 1]) K.face(sd > 0 ? [[-0.706, 0.19, 0.78], [-0.706, 0.19, 0.54], [-0.706, 0.335, 0.54], [-0.706, 0.335, 0.78]] : [[-0.706, 0.19, -0.54], [-0.706, 0.19, -0.78], [-0.706, 0.335, -0.78], [-0.706, 0.335, -0.54]], K.lining, { part: 'body' });
         K.cage([[[-0.8, 0.8, -0.56], [-0.8, 1.06, -0.54]], [[-0.8, 1.06, -0.54], [-0.8, 1.13, -0.46]], [[-0.8, 1.13, -0.46], [-0.8, 1.13, -0.18]], [[-0.8, 1.13, -0.18], [-0.8, 1.06, -0.1]],
           [[-0.8, 1.06, -0.1], [-0.8, 0.8, -0.08]], [[-0.8, 1.1, -0.5], [-1.2, 0.88, -0.52]]], 0.024, [0.8, 0.81, 0.84], { n: 5, noCrush: true, noDent: true });
-        // ---- the hinges: the bonnet at the windscreen, the boot lid at the roll bar's deck, the doors at their front edges ----
+        // ---- the hinges: the bonnet at the windscreen, the boot lid at the roll bar's deck, the doors at their front edges, the pipes ----
         K.hinge('hood', [0.28, 0.84, -0.6], [0.28, 0.84, 0.6]);
         K.hinge('trunk', [-1.1, 0.88, -0.6], [-1.1, 0.88, 0.6]);
         K.hinge('doorL', [0.25, 0.3, -0.8], [0.25, 0.75, -0.8]); K.hinge('doorR', [0.25, 0.3, 0.8], [0.25, 0.75, 0.8]);
+        for (const sd of [-1, 1]) K.hinge(sd < 0 ? 'pipeL' : 'pipeR', [0.55, 0.25, sd * 0.75], [0.55, 0.25, sd * 0.86]);   // (a loose pipe hangs from its header, its tail down)
         // ---- inside (seen once a part is off): the V8 under the bonnet with its air cleaner, the radiator behind the mouth ----
         K.engine(0.85, 0.32, 0, { l: 0.62, w: 0.52, h: 0.36, inner: true, col: [0.3, 0.32, 0.36], cover: CH });
         K.cyl([0.88, 0.68, 0], [0.88, 0.74, 0], 0.16, CH, { n: 10, inner: true, part: 'body' });
