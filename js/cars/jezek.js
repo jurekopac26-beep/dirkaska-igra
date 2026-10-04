@@ -52,17 +52,16 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const L = K.loft(K.body.secs, (k, e, kind, at) => {
           if (e === 0 || e === 8) return at.arch || (at.x > XA && at.x < XF) ? B : K.shade(P, 0.62);   // (black sills and arches' ledges; the bumpers' undersides darker)
           if (e === 1 || e === 7) return P;
-          if (e === 2 || e === 6) return kind === 'r' ? (at.x < XC ? P : G) : kind === 'gf' ? G : P;   // (the side glass; the hatch's broad C-pillar in the paint)
+          if (e === 2 || e === 6) return kind === 'r' ? (at.x < XC ? P : G) : kind === 'gf' ? (at.x > 0.88 ? B : G) : P;   // (the side glass; the mirrors' black sails; the hatch's broad C-pillar in the paint)
           if (e === 3 || e === 5) return kind === 'r' ? S : kind === 'gf' || kind === 'gr' ? G : P;                       // (the roof rails)
           return kind === 'r' ? (at.x > GR0 && at.x < GR1 ? G : S) : kind === 'gf' || kind === 'gr' ? G : P;               // (the glass roof)
         }, { caps: { front: { col: P, high: 'bumperF' }, rear: { col: P } }, glass: (k, e, kind, at) => kind === 'r' && (e === 3 || e === 5) && at.x > GR0 && at.x < GR1 });
         const D = L.decal;
         // the glass roof right across the roof's top, the rails each side of it (the edges' outer parts) in the stripe colour
         for (const sd of [-1, 1]) D.top([[GR0 + 0.04, sd * 0.27], [GR1 - 0.04, sd * 0.27], [GR1 - 0.04, sd * 0.47], [GR0 + 0.04, sd * 0.47]].map((p, i, a) => sd < 0 ? a[a.length - 1 - i] : p), G, 0.003);
-        // the A- and B-pillars black (the glass a dark band under the roof's cap): the A-pillar along the windscreen's edge (three pieces:
-        // about 6 cm deep all the way down), the B-pillar at the doors' rear edge; the C-pillar's slanted front edge; the shut lines
-        D.band([[0.4, 0.857], [0.7, 0.757], [0.7, 1], [0.4, 1]], B, null, 0.008); D.band([[0.7, 0.757], [0.9, 0.54], [0.9, 1], [0.7, 1]], B, null, 0.008);
-        D.band([[0.9, 0.54], [1.075, 0], [1.075, 1], [0.9, 1]], B, null, 0.008);
+        // the A- and B-pillars black (the glass a dark band under the roof's cap): the A-pillar along the windscreen's edge (two pieces: about
+        // 6 cm deep down to the mirror's black sail), the B-pillar at the doors' rear edge; the C-pillar's slanted front edge; the shut lines
+        D.band([[0.4, 0.857], [0.7, 0.757], [0.7, 1], [0.4, 1]], B, null, 0.008); D.band([[0.7, 0.757], [0.89, 0.55], [0.89, 1], [0.7, 1]], B, null, 0.008);
         D.band([[-0.43, 0], [-0.345, 0], [-0.345, 1], [-0.43, 1]], B, null, 0.008);
         D.band([[XC, 0], [XC + 0.13, 1], [XC, 1]], P, null, 0.008);
         D.side([[-1.96, 0.79], [1.95, 0.79], [1.95, 0.8], [-1.96, 0.8]], K.shade(P, 0.72), null, 0.004);   // (the shoulder's crease, nose to tail)
