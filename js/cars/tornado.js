@@ -50,6 +50,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       build(K) {
         const P = K.paint, S = K.strp, B = K.black, G = K.GLASS, CF = [0.05, 0.05, 0.055], D = [0.1, 0.1, 0.11], CH = K.chrome, NET = [0.03, 0.03, 0.033];
         const LR = (n, sd) => n + (sd < 0 ? 'L' : 'R'), dirZ = (sd) => sd < 0 ? '-z' : 'z';
+        const face = (pts, col, nr, o) => {   // a flat polygon turned to face nr (its points in either order)
+          const a = pts[0], u = [0, 1, 2].map(i => pts[1][i] - a[i]), v = [0, 1, 2].map(i => pts[2][i] - a[i]);
+          const n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+          K.face(n[0] * nr[0] + n[1] * nr[1] + n[2] * nr[2] < 0 ? pts.slice().reverse() : pts, col, o); };
         const XF = K.arches[0].x - K.arches[0].half, XR = K.arches[1].x + K.arches[1].half;   // (the front arch's rear end, the rear arch's front end)
         // ---- the shell: the paint, the roof in the stripe colour; the glass (the windscreen, the side windows from the A-pillar to the
         //      C-pillar, the rear glass); the sills black between the arches (the skirts), the arches' ledges black ----
@@ -102,9 +106,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.grille(2.472, 0.45, 0, 0.44, 0.07, { slats: 1 });
           K.box(2.415, 0.05, 0, 0.23, 0.035, 1.72, 0, CF);                                  // the splitter, out past the face
           for (const sd of [-1, 1]) { K.box(2.44, 0.085, sd * 0.6, 0.06, 0.06, 0.012, 0, CF); K.rect(2.472, 0.32, sd * 0.66, 0.12, 0.05, B); }   // (its stays; the brake ducts)
-        }, { hinge: [[2.28, 0.6, -0.8], [2.28, 0.6, 0.8]] });
+        });
         for (const sd of [-1, 1]) {   // (the lamps: stickers in black surrounds at the face's upper corners, the indicators past them)
-          K.rect(2.471, 0.45, sd * 0.55, 0.36, 0.13, B, { host: 'bumperF' }); K.rect(2.473, 0.45, sd * 0.765, 0.06, 0.09, K.rgb(0xff9a1e), { host: 'bumperF' });
+          face([[2.471, 0.385, sd * 0.36], [2.471, 0.4, sd * 0.81], [2.471, 0.535, sd * 0.81], [2.471, 0.512, sd * 0.36]], B, [1, 0, 0], { host: 'bumperF' });   // (swept up at the corner)
+          K.rect(2.473, 0.46, sd * 0.765, 0.06, 0.09, K.rgb(0xff9a1e), { host: 'bumperF' });
           K.headLamp(2.474, 0.45, sd * 0.54, 0.05, { shape: 'rect', w: 0.31, h: 0.1, ring: null, host: 'bumperF' });
         }
         // ---- the tail: a black panel across its top with the lamps; the rear bumper's black valance; the exhaust out of the right side
