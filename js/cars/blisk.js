@@ -55,7 +55,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       build(K) {
         const P = K.paint, S = K.strp, G = K.GLASS, CH = K.chrome, TUCK = K.shade(P, 0.55), STEEL = [0.4, 0.41, 0.43], DK = [0.1, 0.1, 0.11];
         const LEATHER = [0.32, 0.17, 0.08], HELMET = [0.58, 0.4, 0.22], SUIT = [0.88, 0.86, 0.8], WHITE = [0.95, 0.95, 0.93], EXH = [0.36, 0.34, 0.32], WOOD = [0.46, 0.27, 0.12];
-        const ALU = [0.62, 0.63, 0.66], GRILLE = [0.06, 0.06, 0.065], WALL = [0.2, 0.2, 0.21], SEAT = [0.34, 0.13, 0.08], SEC = K.body.secs;
+        const ALU = [0.62, 0.63, 0.66], GRILLE = [0.06, 0.06, 0.065], WALL = [0.44, 0.44, 0.46], SEAT = [0.34, 0.13, 0.08], SEC = K.body.secs;
         const ringOf = (q) => { const [x, w, yb, ybelt, wt, yt, cr, , tk] = q;   // (a section's ring as the loft makes it: the cowl's skin starts on it, the firewalls fill it)
           return [[x, yb, w * 0.93], [x, yb + tk, w], [x, ybelt, w], [x, yt, wt], [x, yt + cr, wt * 0.38], [x, yt + cr, -wt * 0.38], [x, yt, -wt], [x, ybelt, -w], [x, yb + tk, -w], [x, yb, -w * 0.93]]; };
         // ---- the shell: the paint; the bottom tuck darker; the cockpit open on top (its sides, lined, cut down at the elbows) ----
@@ -69,9 +69,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // a coach line in the stripe colour along each side under the belt, from the bonnet's front to the tail (in pieces: with the bonnet,
         // the body and the tail)
         const xs = L.secs.map(q => q.x).filter(x => x > -1.72 && x < 1.5).concat([-1.72, 1.5]).sort((a, b) => a - b);
-        for (let i = 0; i < xs.length - 1; i++) { const a = xs[i], b = xs[i + 1], ya = pr(a, 'ybelt') - 0.03, yb = pr(b, 'ybelt') - 0.03;
-          D.side([[a, ya - 0.012], [b, yb - 0.012], [b, yb], [a, ya]], S, null, 0.005); }
-        // ---- the bonnet: louvres along both sides, two leather straps over it (a buckle on the right) ----
+        for (let i = 0; i < xs.length - 1; i++) { const a = xs[i] + 1e-4, b = xs[i + 1] - 1e-4, ya = pr(a, 'ybelt') - 0.03, yb = pr(b, 'ybelt') - 0.03;   // (each piece inside its segment: no slivers in the next one)
+          D.side([[a, ya - 0.012], [b, yb - 0.012], [b, yb], [a, ya]], S, null, 0.005);
+          if (a >= -0.75 && b <= 0.08) D.side([[a, ya + 0.011], [b, yb + 0.011], [b, yb + 0.026], [a, ya + 0.026]], LEATHER, null, 0.005); }   // (the cockpit's edge trimmed in leather)
+        // ---- the bonnet: its hinge along the top, louvres along both sides, two leather straps over it (a buckle on the right) ----
+        D.top([[0.41, -0.008], [1.51, -0.008], [1.51, 0.008], [0.41, 0.008]], [0.72, 0.73, 0.75], 0.004);
         for (let i = 0; i < 12; i++) { const x = 0.58 + i * 0.048; D.side([[x, 0.54], [x + 0.02, 0.54], [x + 0.02, 0.652], [x, 0.652]], K.shade(P, 0.3), null, 0.004); }
         for (const xc of [0.74, 1.28]) {
           const w = pr(xc, 'w'), wt = pr(xc, 'wt'), yb = pr(xc, 'ybelt'), yt = pr(xc, 'yt'), cr = pr(xc, 'cr'), d = 0.007;
