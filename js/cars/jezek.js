@@ -16,7 +16,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     snd: { kind: 'ev', hz: 1, loud: 0.7 },
     expect: { t100: [3.14, 3.69], vmax: [194, 206], latG: [2.22, 2.32], d100: [22.9, 25.3] },
     parts: { set: 'car', ht: 1.5, y0: 0.2,
-      over: { hood: { lx: 0.78 }, trunk: { lx: -0.95, y: 1.0 }, mirrorL: { lx: 0.41, y: 1.02 }, mirrorR: { lx: 0.41, y: 1.02 } } },   // (the hatch's tailgate at the tail, the mirrors on the doors' front corners: where the look has them)
+      over: { hood: { lx: 0.78 }, trunk: { lx: -0.95, y: 1.0 }, doorL: { lx: 0.14, y: 0.86 }, doorR: { lx: 0.14, y: 0.86 },
+        mirrorL: { lx: 0.48, lz: -1.04, y: 1.01 }, mirrorR: { lx: 0.48, lz: 1.04, y: 1.01 } } },   // (where the look has them: the short bonnet, the hatch's tailgate, the long doors, the mirrors by the A-pillars)
     // the look (KIT API v1, render.js; look units = metres): one loft through the sections below, cut by the standard regions into the
     // parts (the front fascia with its light bar, the bonnet, the tailgate with its glass and light bar, the fenders, the quarters, the long
     // doors of a three-door with their glass), the details on top. Two-tone: the body in the paint, the greenhouse's frame (pillars, roof
@@ -25,13 +26,14 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       body: { len: 3.95, wid: 1.78, roofY: 1.5,
         //       x       w      yb    ybelt  wt    yt    cr    kind  tuck
         secs: [[-1.97, 0.8, 0.3, 0.86, 0.72, 0.93, 0.03, 'b', 0.12],     // the tail: the tailgate's lower panel (the bumper under it)
-          [-1.94, 0.855, 0.27, 0.92, 0.74, 0.99, 0.04, 'gr', 0.11],      // the tailgate's glass, raked a little
-          [-1.72, 0.885, 0.22, 1.0, 0.66, 1.36, 0.07, 'r', 0.1],         // its top: the roof rounds down into it (the spoiler over it)
-          [-1.56, 0.89, 0.21, 0.997, 0.69, 1.4, 0.08, 'r', 0.1],
-          [-1.465, 0.89, 0.21, 0.995, 0.7, 1.41, 0.085, 'r', 0.1],       // the glass roof's back end (the rear arch's cut there too)
-          [-0.34, 0.89, 0.21, 0.985, 0.71, 1.415, 0.085, 'r', 0.1],      // the doors' rear edge, the B-pillar
-          [0.2, 0.885, 0.21, 0.978, 0.71, 1.408, 0.083, 'r', 0.1],       // the glass roof's front end
-          [0.4, 0.885, 0.21, 0.975, 0.7, 1.395, 0.08, 'gf', 0.1],        // the windscreen's top
+          [-1.94, 0.855, 0.27, 0.92, 0.74, 0.99, 0.04, 'gr', 0.11],      // the tailgate's glass, raked a little,
+          [-1.8, 0.875, 0.24, 0.96, 0.69, 1.27, 0.065, 'gr', 0.1],       // rounding over into the roof
+          [-1.72, 0.885, 0.22, 0.98, 0.66, 1.36, 0.07, 'r', 0.1],        // the roof's back edge (the spoiler over it)
+          [-1.56, 0.89, 0.21, 0.977, 0.69, 1.4, 0.08, 'r', 0.1],
+          [-1.465, 0.89, 0.21, 0.975, 0.7, 1.41, 0.085, 'r', 0.1],       // the glass roof's back end (the rear arch's cut there too)
+          [-0.34, 0.89, 0.21, 0.965, 0.71, 1.415, 0.085, 'r', 0.1],      // the doors' rear edge, the B-pillar
+          [0.2, 0.885, 0.21, 0.958, 0.71, 1.408, 0.083, 'r', 0.1],       // the glass roof's front end
+          [0.4, 0.885, 0.21, 0.955, 0.7, 1.395, 0.08, 'gf', 0.1],        // the windscreen's top
           [1.075, 0.89, 0.21, 0.94, 0.8, 0.97, 0.045, 'b', 0.1],         // its base (the cowl, over the front wheel), the bonnet's back edge
           [1.7, 0.885, 0.22, 0.865, 0.79, 0.915, 0.04, 'b', 0.1],        // the short bonnet, falling to the nose; the bumper's corners from here
           [1.86, 0.86, 0.25, 0.81, 0.765, 0.855, 0.035, 'b', 0.11],      // its rounded front edge
