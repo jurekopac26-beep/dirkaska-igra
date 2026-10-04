@@ -20,7 +20,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     parts: { set: 'open', ht: 1.3, y0: 0.21,
       over: { bumperF: { lx: 0.902, y: 0.39 }, bumperR: { lx: -0.969, y: 0.48 }, hood: { lx: 0.773, y: 0.82 }, trunk: { lx: -0.732, y: 1.01 },
         fenderL: { lx: 0.521, lz: -0.931, y: 0.68 }, fenderR: { lx: 0.521, lz: 0.931, y: 0.68 }, quarterL: { lx: -0.603, lz: -0.931, y: 0.71 }, quarterR: { lx: -0.603, lz: 0.931, y: 0.71 },
-        doorL: { lx: 0.067, lz: -0.931, y: 0.76 }, doorR: { lx: 0.067, lz: 0.931, y: 0.76 }, mirrorL: { lx: 0.32, lz: -0.989, y: 0.95 }, mirrorR: { lx: 0.32, lz: 0.989, y: 0.95 } } },
+        doorL: { lx: 0.067, lz: -0.931, y: 0.76 }, doorR: { lx: 0.067, lz: 0.931, y: 0.76 }, mirrorL: { lx: 0.412, lz: -0.966, y: 0.96 }, mirrorR: { lx: 0.412, lz: 0.966, y: 0.96 } } },
     // the look (KIT API v1, render.js; look units = metres: the centre of mass at x 0, the axles at 1.15 / -1.32): the LEV S's loft from the
     // windscreen's base forward (the same nose, lamps, mouth, sides and wheels), behind it a coupé-cabriolet with its roof stowed: the
     // scuttle under the windscreen (closed, the dashboard's top), the cockpit open from the dashboard to the bulkhead behind the seats
@@ -61,7 +61,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [1.87, 0.42, 0.14, 0.555, 0.28, 0.635, 0.025, 'b', 0.05]],          // the face (the end cap: the mouth, the slim grille)
         eye: { x: -0.32, y: 1.13, near: 0.2, tilt: 0.05, style: 'open' },    // (behind the windscreen, its header 0.7 ahead, 0.14 over the eyes)
         door: [0.72, -0.62], bumpF: 0.4, bumpR: 0.2649, bumpY: [0.62, 0.66], wz: 0.1515,
-        crush: { x0: 0.0, x1: 0.55, z: 0.62 },                               // (a roll-over folds the windscreen's frame; the hoops stand)
+        crush: { x0: 0, x1: 0, z: 0 },                                       // (no roof to crush: the windscreen's frame and the hoops stand)
         decalX: -1.33, decalY: 1.06, decalRz: 0.01, decalS: 0.5, decalPart: 'trunk',   // (the start number on the deck)
         lamps: [[1.7, 0.68, 0.58], [-1.91, 0.79, 0.5]],                       // (the glow: the head lamps' projectors, the tail lamps' inner ends)
         engine: [1.4, 0.88],
@@ -197,8 +197,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.rect(-1.953, 0.49, 0, 0.44, 0.1, [0.9, 0.9, 0.86], { dir: '-x' });                  // the number plate (blank)
           K.exhaust(-1.95, 0.27, -0.48, 0.035, 0.2, { n: 6 });
         });
-        // ---- the mirrors on the doors' front corners ----
-        for (const sd of [-1, 1]) K.mirror(0.6, 0.99, sd * 0.89, { w: 0.1, h: 0.1, d: 0.15, z0: sd * 0.8 });
+        // ---- the sails between the A-pillars' feet and the doors' front corners (the paint outside, the lining in), the mirrors on them ----
+        for (const sd of [-1, 1]) { const q = [[0.958, 0.955, 0.703], [0.72, 0.952, 0.729], [0.72, 1.075, 0.672]].map(p => [p[0], p[1], sd * p[2]]);
+          F(q, P, [0, 0, sd], { part: 'body' }); F(q.map(p => [p[0], p[1], p[2] - sd * 0.012]), K.lining, [0, 0, -sd], { part: 'body' });
+          K.mirror(0.8, 1.0, sd * 0.875, { w: 0.1, h: 0.1, d: 0.15, z0: sd * 0.72 }); }
         // ---- the hinges: the doors at their front edges ----
         K.hinge('doorL', [0.71, 0.4, -0.82], [0.71, 0.85, -0.82]); K.hinge('doorR', [0.71, 0.4, 0.82], [0.71, 0.85, 0.82]);
         // ---- the cockpit (in sight): the two seats (the head rests in their backs), the dashboard, the steering wheel (left); the roll
@@ -207,6 +209,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.box(-0.34, 0.38, z, 0.5, 0.12, 0.48, 0, SEAT, null, false, { part: 'body' });
           K.plate([[b0[0], b0[1], z - 0.235], [b0[0], b0[1], z + 0.235], [b1[0], b1[1], z + 0.14], [b1[0], b1[1], z - 0.14]], 0.1, SEAT, { part: 'body' }); }
         K.box(0.4, 0.66, 0, 0.12, 0.28, 1.46, 0, D, null, true, { part: 'body' });
+        K.box(0.02, 0.24, 0, 0.62, 0.3, 0.2, 0, D, null, true, { part: 'body' });              // (the centre console between the seats)
         K.part('body', () => {   // (the steering wheel, leaning back on its column: low enough that the cockpit's own dashboard hides it from the seat)
           const C = [0.17, 0.82, -0.36], u = [-Math.sin(0.5), Math.cos(0.5), 0], pt = (a) => [C[0] + 0.17 * Math.sin(a) * u[0], C[1] + 0.17 * Math.sin(a) * u[1], C[2] + 0.17 * Math.cos(a)];
           for (let i = 0; i < 6; i++) K.bar(pt(i / 6 * Math.PI * 2), pt((i + 1) / 6 * Math.PI * 2), 0.016, B, { n: 3 });
