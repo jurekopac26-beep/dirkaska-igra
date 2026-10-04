@@ -148,12 +148,13 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.seat(-0.98, 0.42, 0, { w: 1.0, l: 0.32, back: 0.4, tilt: 0.45, col: SEAT });
         K.box(0.46, 0.58, 0, 0.3, 0.26, 1.42, 0, D, null, false, { inner: true, part: 'body' });
         K.box(0.3, 0.76, -0.36, 0.1, 0.1, 0.46, 0, [0.06, 0.06, 0.07], null, false, { inner: true, part: 'body' });   // (the instruments' hood)
-        K.inner(() => K.part('body', () => {                                                               // the steering wheel (four spokes)
+        K.inner(() => K.part('body', () => {                                                               // the steering wheel: its rim, its column
           const C = [0.16, 0.86, -0.36], rr = 0.18, pt = (a) => [C[0] - Math.sin(a) * rr * 0.6, C[1] + Math.sin(a) * rr * 0.8, C[2] + Math.cos(a) * rr];
           for (let i = 0; i < 8; i++) K.bar(pt(i * Math.PI / 4), pt((i + 1) * Math.PI / 4), 0.014, [0.05, 0.05, 0.055], { n: 3 });
           K.bar([0.36, 0.7, -0.36], C, 0.02, [0.1, 0.1, 0.11], { n: 4 });
         }));
-        K.engine(-1.62, 0.26, 0, { l: 0.64, w: 0.82, h: 0.42, col: [0.42, 0.43, 0.45], cover: [0.14, 0.14, 0.15] });
+        K.engine(-1.63, 0.26, 0, { l: 0.6, w: 0.46, h: 0.44, col: [0.42, 0.43, 0.45], cover: [0.14, 0.14, 0.15] });   // (the crankcase, its fan on top)
+        for (const sd of [-1, 1]) K.box(-1.63, 0.3, sd * 0.34, 0.52, 0.2, 0.22, 0, [0.27, 0.27, 0.29], null, false, { inner: true, part: 'body' });   // the cylinder banks, lying flat
         K.cyl([-1.84, 0.6, 0], [-1.72, 0.6, 0], 0.17, [0.22, 0.22, 0.23], { n: 10, inner: true, part: 'body', capA: [0.55, 0.3, 0.1] });
         K.cyl([1.55, 0.24, 0], [1.55, 0.4, 0], 0.27, [0.06, 0.06, 0.065], { n: 10, inner: true, part: 'body', capB: [0.55, 0.56, 0.6] });
         K.box(1.02, 0.24, 0, 0.36, 0.24, 1.0, 0, [0.5, 0.51, 0.53], null, false, { inner: true, part: 'body' });
