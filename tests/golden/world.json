@@ -582,6 +582,26 @@
    "roadwear:MeshLambertMaterial": "fc990f68"
   }
  },
+ "longford": {
+  "meshes": 1206,
+  "verts": 516758,
+  "instances": 20237,
+  "props": 20,
+  "crowd": 5317,
+  "world": "cfa41ef0",
+  "propsHash": "b4fc4f70",
+  "floor": "53fff8b0/14056",
+  "groups": {
+   "-:MeshLambertMaterial": "112cc87d",
+   "-:MeshPhongMaterial": "b7ac8ae2",
+   "crowd:MeshLambertMaterial": "f173a921",
+   "-:MeshBasicMaterial": "4c8b271f",
+   "ao:MeshBasicMaterial": "76e12916",
+   "tyremarks:MeshBasicMaterial": "9ccc9a73",
+   "roadwear:MeshLambertMaterial": "fcb9c9e8",
+   "worn:MeshLambertMaterial": "2877cdfe"
+  }
+ },
  "jezero": {
   "meshes": 154,
   "verts": 591648,
