@@ -335,6 +335,8 @@
     ' (ali pobegni)': ' (or flee)', 'Greš s policistom na postajo': 'You go to the station with the officer', 'SKRIVALIŠČE · {0} m': 'HIDEOUT · {0} m',
     'Garaža desno ob cesti: zapelji noter': 'The garage on the right of the road: drive in', 'Garaža levo ob cesti: zapelji noter': 'The garage on the left of the road: drive in',
     'Super težka': 'Super hard', 'Beg pred policijo: najhujši pregon; dirke kot Težka': 'The police chase: the toughest pursuit; races as Hard', 'MOTORIST {0}': 'BIKE {0}', 'CIVILNA {0}': 'UNMARKED {0}', 'KOMBI': 'VAN', 'POLICIST': 'OFFICER',
+    /* ---- the menu (js/menu.js is in English only): its settings in the page ---- */
+    'Uvod pred dirko (globus in helikopter)': 'Race intro (globe and helicopter)', 'Polni': 'Full', 'Kratki': 'Short', 'Glasba v uvodu': 'Music in the intro',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['APEX', 'RACING', 'APEX RACING', 'TV', 'DRS', 'KM/H', 'Circuit Superstars', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO']);

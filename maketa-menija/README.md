@@ -2,6 +2,8 @@
 
 Samostojna, klikljiva maketa menija igre v angleščini. **Ni povezana z igro**: igra je ne naloži, nič v igri ne spremeni in ni del `main`. Avti, makete prog in posnetki ozadja so zajeti iz prave igre.
 
+> **Posodobitev:** meni je zdaj v igri (`js/menu.js`, `css/menu.css`, opis v korenskem `README.md`, razdelek »Nov meni«). Maketa je ostala taka, kot je bila (zgodovina in primerjava), zato **spremembe menija delaj v igri**, ne tukaj. Orodja v `orodja/` še vedno izrisujejo slike za meni v igri (glej spodaj).
+
 Objavljena je kot zasebna stran: <https://claude.ai/artifact/LGhsPikqgs4To6phR2LB5V>
 
 ## Glavni meni
@@ -249,6 +251,8 @@ node carimgs.mjs && python3 menuimg.py           # avti v vseh barvah, slike gum
 node bgvideo.mjs '[["jezero",7],["ljubljana",7],["gora",7]]' 1.25 14   # posnetki -> ../assets/video/
 node dio2.mjs proge.json                         # makete prog, suhe in v dežju -> raw/tracks/w_*.png (proge.json: [[id, ime, nastavitve], …])
 python3 mkwebp.py                                # raw/tracks -> ../assets/tracks/<proga>.webp in <proga>-rain.webp
+node dio2.mjs proge_igra.json                    # makete 20 prog, ki so v igri od vključitve menija (isti izris za vse: soil 38, rot 0.45, el 44, fitW 1.06, fitH 0.9) -> raw/tracks/
+python3 mkwebp.py ../../assets/tracks bathurst beartooth …   # samo naštete proge, v mapo igre (assets/tracks/ v korenu repozitorija; nova proga: dodaj vrstico v proge_igra.json)
 node gen_tracks2.js raw/tracks.js                # obrisi prog (nato v outlines.js)
 node check.mjs                                   # vsi zasloni v vseh stanjih -> shots/
 node flow.mjs                                    # odigra današnjo dirko, vse tri načine, izbiro avta in vremena, uvod pred dirko, vse štiri načine kariere in multiplayer -> shots/

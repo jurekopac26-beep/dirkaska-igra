@@ -195,10 +195,23 @@ window.DIO = (function () {
         bb.copy(o.geometry.boundingBox).applyMatrix4(o.matrixWorld);
         const cs = [[bb.min.x, bb.min.z], [bb.max.x, bb.min.z], [bb.min.x, bb.max.z], [bb.max.x, bb.max.z]];
         const pin = poly.some(p => p[0] >= bb.min.x && p[0] <= bb.max.x && p[1] >= bb.min.z && p[1] <= bb.max.z);
-        if (bb.max.x - bb.min.x < 400 && !pin && !cs.some(c => inPoly(c[0], c[1])) && !inPoly((bb.min.x + bb.max.x) / 2, (bb.min.z + bb.max.z) / 2)) drop.push(o);
+        const out = planes.some(pl => cs.every(c => pl.normal.x * c[0] + pl.normal.z * c[1] + pl.constant < -1));   // (wholly on the outer side of one cutting plane: nothing of it can show; a piece the cut only crosses with its edge stays)
+        if (bb.max.x - bb.min.x < 400 && !pin && out) drop.push(o);
       }
     });
     drop.forEach(o => o.parent.remove(o));
+    if (opt.fill !== false) {   // the ground under the world's own, from its height function: shows only where the game's corridor world leaves a tile out (a hole in the cut)
+      const xs = poly.map(q => q[0]), zs = poly.map(q => q[1]), fx0 = Math.min(...xs), fx1 = Math.max(...xs), fz0 = Math.min(...zs), fz1 = Math.max(...zs);
+      const cell = Math.max(25, Math.max(fx1 - fx0, fz1 - fz0) / 110), nx = Math.ceil((fx1 - fx0) / cell) + 1, nz = Math.ceil((fz1 - fz0) / cell) + 1;
+      const pos = new Float32Array(nx * nz * 3), col = new Float32Array(nx * nz * 3), idx = [], fc = opt.fillCol || [0.42, 0.43, 0.32];
+      for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
+        const x = fx0 + i * cell, z = fz0 + j * cell, h = w.groundH(x, z), k = (j * nx + i) * 3, n = 0.94 + 0.12 * ((Math.sin(i * 12.9 + j * 78.2) * 43758.5) % 1);
+        pos[k] = x; pos[k + 1] = (Number.isFinite(h) ? h : 0) - 0.5; pos[k + 2] = z; col[k] = fc[0] * n; col[k + 1] = fc[1] * n; col[k + 2] = fc[2] * n;
+      }
+      for (let j = 0; j < nz - 1; j++) for (let i = 0; i < nx - 1; i++) { const a = j * nx + i; idx.push(a, a + nx, a + 1, a + 1, a + nx, a + nx + 1); }
+      const fg = new THREE.BufferGeometry(); fg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); fg.setAttribute('color', new THREE.BufferAttribute(col, 3)); fg.setIndex(idx); fg.computeVertexNormals();
+      const fm = new THREE.Mesh(fg, new THREE.MeshLambertMaterial({ vertexColors: true })); setClip(fm.material); fm.receiveShadow = true; fm.castShadow = false; fm.frustumCulled = false; w.root.add(fm);
+    }
     // 3. soil walls: top = ground, or the water surface where the cut crosses water
     const waters = [];
     w.root.traverse(o => { if (!o.isMesh || o.isInstancedMesh) return; const m = Array.isArray(o.material) ? o.material[0] : o.material; if (m && m.transparent && /Phong|Standard|Physical/.test(m.type)) waters.push(o); });

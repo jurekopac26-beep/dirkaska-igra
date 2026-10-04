@@ -12,7 +12,13 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
-<link rel="stylesheet" href="css/style.css?v=7f770bf5">
+<link rel="stylesheet" href="css/fonts.css?v=4e40b807">
+<link rel="stylesheet" href="css/style.css?v=6fe9abd1">
+<link rel="preload" as="fetch" id="menu-css" href="css/menu.css?v=c64b2b58" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="fonts/roboto-normal-latin.woff2?v=1404ca34" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="fonts/roboto-italic-latin.woff2?v=14f23757" crossorigin>
+<link rel="prefetch" as="font" type="font/woff2" href="fonts/roboto-normal-latin-ext.woff2?v=79f0ca85" crossorigin>
+<link rel="prefetch" as="font" type="font/woff2" href="fonts/roboto-italic-latin-ext.woff2?v=7f21d061" crossorigin>
 </head>
 <body>
 <div id="app">
@@ -108,6 +114,9 @@
   <button id="btn-rescue" class="off">&#8634; Na progo</button>
 
   <!-- ============ SCREENS ============ -->
+  <!-- the menu (js/menu.js): the main menu and the single race, in a shadow root of its own. The title and track screens below stay for the tests of the old menu (?menu=old). -->
+  <section id="s-menu" class="screen"><div id="menu-host"></div></section>
+
   <section id="s-title" class="screen">
     <div class="panel title-panel">
       <h1 class="logo"><span class="l1">APEX</span><span class="l2">RACING</span></h1>
@@ -234,6 +243,8 @@
         <div class="row" title="Koliko podrobnosti ob progi (gledalci, drevesa, čeri, props …). Samodejno izbere glede na napravo in sproti prilagaja, da igra teče gladko; Nizka je za šibkejše telefone."><span class="rlbl">Podrobnosti</span><div class="seg" data-set="detail"><button data-v="low">Nizka</button><button data-v="med">Srednja</button><button data-v="high">Visoka</button><button data-v="auto">Samodejno</button></div></div>
         <div class="row"><span class="rlbl">Sence</span><div class="seg" data-set="shadows"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Varčevanje z baterijo</span><div class="seg" data-set="saver"><button data-v="off">Izklop</button><button data-v="auto">Samodejno</button><button data-v="on">Vklop</button></div></div>
+        <div class="row"><span class="rlbl">Uvod pred dirko (globus in helikopter)</span><div class="seg" data-set="intro"><button data-v="0">Polni</button><button data-v="1">Kratki</button><button data-v="2">Brez</button></div></div>
+        <div class="row"><span class="rlbl">Glasba v uvodu</span><div class="seg" data-set="music"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Zvok</span><div class="seg" data-set="sound"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Vibracija</span><div class="seg" data-set="vibrate"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Profil</span><button class="btn mini" data-act="prof-export">Izvozi v datoteko</button><button class="btn mini" data-act="prof-import">Uvozi iz datoteke</button></div>
@@ -435,7 +446,7 @@
 <script src="js/tracks/cpalace.js?v=1ff113aa"></script>
 <script src="js/tracks/riverside.js?v=e2cec4ed"></script>
 <script src="js/tracks/longford.js?v=3076a712"></script>
-<script src="js/lang.js?v=415de744"></script>
+<script src="js/lang.js?v=f9a0ff2f"></script>
 <script src="js/core.js?v=71fa2b6f"></script>
 <script src="js/tex.js?v=c8d887ce"></script>
 <script src="js/world.js?v=67365612"></script>
@@ -446,6 +457,12 @@
 <script src="js/comm.js?v=8b44f2c8"></script>
 <script src="js/vendor/peerjs.min.js?v=76b403e4"></script>
 <script src="js/net.js?v=ba863f32"></script>
-<script src="js/game.js?v=a3fb150a"></script>
+<script src="js/menu-data.js?v=671faecd"></script>
+<script src="js/routes.js?v=d1d44054"></script>
+<script src="js/geo.js?v=b110fa12"></script>
+<script src="js/journey.js?v=e98f02ed"></script>
+<script src="js/intro-data.js?v=9c05d124"></script>
+<script src="js/menu.js?v=3ca090a1"></script>
+<script src="js/game.js?v=89beaaac"></script>
 </body>
 </html>

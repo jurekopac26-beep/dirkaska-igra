@@ -5,6 +5,7 @@ import os, sys
 from PIL import Image, ImageEnhance
 IDS = ['jezero', 'riviera', 'gora', 'ljubljana', 'monaco', 'rbring', 'suzuka', 'spa', 'pikes', 'ouninpohja', 'nring']
 OUT = sys.argv[1] if len(sys.argv) > 1 else '../assets/tracks'
+if len(sys.argv) > 2: IDS = sys.argv[2:]   # (python3 mkwebp.py <folder> <track> ...: only those)
 
 def grade(im):
     rgb, a = im.convert('RGB'), im.split()[3]

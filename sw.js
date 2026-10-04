@@ -6,6 +6,9 @@
 //   of date: they come from the saved copies first.
 // - A new index.html is saved only together with everything it links, so the saved game is always complete; files it no
 //   longer links are then removed. Each copy of the game (its own folder) keeps its own saved files.
+// - The menu's pictures (assets/: the models of the tracks, the maps, the cars; not the videos and the music) are kept as they are looked at, in
+//   a cache of their own: the kept copy at once, the newest from the network for next time. Without internet the menu shows the pictures
+//   already seen.
 // To switch it off for every player: replace this file with one that, when installed, calls self.skipWaiting(), and when
 // activated deletes its caches (caches.keys() starting with 'apex-racing') and calls self.registration.unregister();
 // and remove the navigator.serviceWorker.register() call from js/game.js.
@@ -15,6 +18,8 @@ const EXTRA = ['manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png
 const abs = (u) => new URL(u, self.registration.scope).href;
 const PAGE = () => abs('./');   // (the key of the saved index.html, whichever address opened it)
 const STAMPED = /[?&]v=[0-9a-f]{8}(&|$)/;
+const PICTURES = 'apex-racing pictures ' + self.registration.scope;
+const PICTURE = /\/assets\/[^?#]*\.(?:webp|png|json)$/;
 const SLOW = 4000;
 
 // the local files a page links (scripts, styles, icons, manifest; not in comments) and the app's icons, as full addresses
@@ -41,6 +46,14 @@ function save(html) {
     for (const req of await c.keys()) if (req.url !== PAGE() && !want.has(req.url)) await c.delete(req);
   }).catch(() => { });   // (not complete, e.g. the connection dropped: the previous saved game stays as it was)
   return queue;
+}
+
+// a picture of the menu: the kept copy at once (and the network's newest kept for next time), the first time from the network
+async function picture(e) {
+  const c = await caches.open(PICTURES), hit = await c.match(e.request, { ignoreVary: true });
+  const net = fetch(e.request).then((res) => { if (res.ok && res.status === 200) c.put(e.request, res.clone()).catch(() => { }); return res; });
+  if (hit) { e.waitUntil(net.catch(() => { })); return hit; }
+  return net;
 }
 
 self.addEventListener('install', (e) => {
@@ -73,6 +86,7 @@ self.addEventListener('fetch', (e) => {
     if (url.pathname === home || url.pathname === home + 'index.html') e.respondWith(page(e));
     return;
   }
+  if (PICTURE.test(url.pathname)) { e.respondWith(picture(e)); return; }
   if (STAMPED.test(url.search)) { e.respondWith(caches.match(req, { ignoreVary: true }).then(hit => hit || fetch(req))); return; }
   // anything else (manifest, icons): the network (keeping the saved copy fresh), else the saved copy
   e.respondWith(fetch(req).then((res) => {
