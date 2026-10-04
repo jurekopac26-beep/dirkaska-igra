@@ -85,6 +85,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const x0 of [0.181, 0.032, -0.42, -0.569, -1.549]) D2.band([[x0, 0.05], [x0 + 0.018, 0.05], [x0 + 0.018, 0.95], [x0, 0.95]], CH, null, 0.006);
         // the rear window narrowed by the vinyl (a formal roof: the broad C-pillars run onto the boot); a chrome bar at the vinyl's front edge
         for (const [z0, z1] of [[-0.82, -0.312], [-0.312, 0.312], [0.312, 0.82]]) D2.top([[-0.566, z0], [-0.551, z0], [-0.551, z1], [-0.566, z1]], CH, 0.006);
+        D2.band([[-1.575, 0.3], [-1.725, 0.4], [-1.725, 0.45], [-1.575, 0.35]], CH, null, 0.01);   // (a landau bar on each C-pillar)
         for (const sd of [-1, 1]) { D2.top([[-2.149, sd * 0.6], [-1.787, sd * 0.5], [-1.787, sd * 0.82], [-2.149, sd * 0.92]], VIN, 0.008);
           D2.top([[-2.149, sd * 0.585], [-1.787, sd * 0.485], [-1.787, sd * 0.5], [-2.149, sd * 0.6]], CH, 0.008); }   // (its chrome edges)
         // the doors' shut lines, the chrome sills between the arches, a chrome line along the flanks, the side marker lamps
