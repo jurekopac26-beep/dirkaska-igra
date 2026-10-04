@@ -583,6 +583,26 @@
    "worn:MeshLambertMaterial": "2877cdfe"
   }
  },
+ "hotham": {
+  "meshes": 3189,
+  "verts": 2077042,
+  "instances": 74521,
+  "props": 432,
+  "crowd": 1078,
+  "world": "b05756c8",
+  "propsHash": "289bc95f",
+  "floor": "59dd6372/17276",
+  "groups": {
+   "-:MeshLambertMaterial": "f07d9694",
+   "-:MeshPhongMaterial": "b44f39df",
+   "-:MeshBasicMaterial": "137646c4",
+   "irFar:MeshLambertMaterial": "2ea2ee05",
+   "crowd:MeshLambertMaterial": "89add167",
+   "ao:MeshBasicMaterial": "ec9d7593",
+   "tyremarks:MeshBasicMaterial": "f3bb1eb4",
+   "roadwear:MeshLambertMaterial": "c7874105"
+  }
+ },
  "jezero": {
   "meshes": 154,
   "verts": 591648,

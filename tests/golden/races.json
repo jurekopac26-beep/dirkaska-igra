@@ -1648,5 +1648,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "d3aa121f8632ba6f463c887e"
+ },
+ "hotham/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 197.75,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d445dad3b3a0c8e3466a37a2"
+ },
+ "hotham/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 212.91,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "18fc0c810571b3b467295f28"
+ },
+ "hotham/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 163.93,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "b7e07c1e633802e9b1567be5"
+ },
+ "hotham/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 168.3,
+  "spins": 0,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "a4fe0a13f0dd0a998cb77010"
+ },
+ "hotham/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 197.58,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "0acd7ab73602325e02ab1ebd"
  }
 }
