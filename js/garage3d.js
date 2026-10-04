@@ -1365,7 +1365,7 @@ const Garage3D = (function () {
     // the front wall: a clock over the lockers (the time the page opened), the team's whiteboard (a track sketched, the plan) over the
     // engineers' desk: three screens of telemetry on a pole, keyboards, a headset, the radios in their dock, a lamp; two stools; a water
     // cooler and a bin by the lockers
-    { const P = use(WALLS.front), Zw = z1 - 0.04, now = new Date();
+    { const P = use(WALLS.front), Zw = z1 - 0.04, now = new Date(), x2c = (c) => c.map(v => v * 1.95);   // (x2c: a floor thing's colour, the floor's occlusion halves it)
       const face = canvasTex(128, 128, (gx, w) => { const c = w / 2; gx.fillStyle = '#f4f4f0'; gx.beginPath(); gx.arc(c, c, c - 2, 0, TAU); gx.fill(); gx.strokeStyle = '#1a1b1e';
         for (let i = 0; i < 12; i++) { const a = i / 12 * TAU; gx.lineWidth = i % 3 ? 3 : 6; gx.beginPath(); gx.moveTo(c + Math.sin(a) * (c - 8), c - Math.cos(a) * (c - 8)); gx.lineTo(c + Math.sin(a) * (c - (i % 3 ? 16 : 22)), c - Math.cos(a) * (c - (i % 3 ? 16 : 22))); gx.stroke(); }
         const hand = (a, l, wd, col) => { gx.strokeStyle = col; gx.lineWidth = wd; gx.lineCap = 'round'; gx.beginPath(); gx.moveTo(c, c); gx.lineTo(c + Math.sin(a) * l, c - Math.cos(a) * l); gx.stroke(); };
@@ -1389,20 +1389,47 @@ const Garage3D = (function () {
       gl(PAINT); for (const [x, ry] of [[DX - 0.6, -0.25], [DX, 0], [DX + 0.6, 0.25]]) { const m = M4(x, 1.22, 8.7, 0.08, ry, 0); gBox(g, m, 0, 0, 0, 0.62, 0.38, 0.03, [0.06, 0.06, 0.07]);
         const q = [[-0.29, -0.17, 1, 0], [0.29, -0.17, 0, 0], [0.29, 0.17, 0, 1], [-0.29, 0.17, 1, 1]].map(([a, b, u, v]) => [new V3(a, b, -0.017).applyMatrix4(m), u, v]);
         for (const k of [0, 2, 1, 0, 3, 2]) { SP.push(q[k][0].x, q[k][0].y, q[k][0].z); SU.push(q[k][1], q[k][2]); } }
-      { const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(SP, 3)); sg.setAttribute('uv', new THREE.Float32BufferAttribute(SU, 2)); sg.computeBoundingSphere();
-        P.root.add(new THREE.Mesh(sg, new THREE.MeshBasicMaterial({ map: monTexObj || monitorTex(), color: emi(0xffffff, EMI.screen) }))); }
-      // on the desk: two keyboards, a headset, the radios in their dock, the red lamp
+      // the TV over the sofa in the corner: its bezel close to the wall, its picture the telemetry too (the screens' material; a mesh of its
+      // own: the desk's and the TV's in one would be one big sphere, in view, drawn, from the default view behind them); its lead in a duct
+      // down the wall to a socket behind the sofa
+      box(-6.55, 2.25, 8.925, 1.44, 0.82, 0.05, [0.035, 0.035, 0.04], [0.05, 0.05, 0.055]);
+      gl(SATIN); box(-6.12, 1.12, 8.985, 0.06, 1.13, 0.03, [0.6, 0.61, 0.62]); box(-6.12, 1.05, 8.97, 0.09, 0.1, 0.04, [0.84, 0.85, 0.83]); gl(PAINT);
+      { const scm = new THREE.MeshBasicMaterial({ map: monTexObj || monitorTex(), color: emi(0xffffff, EMI.screen) }), TP = [], TU = [];
+        for (const k of [0, 2, 1, 0, 3, 2]) { const [x, y, u, v] = [[-7.25, 2.27, 1, 0], [-5.85, 2.27, 0, 0], [-5.85, 3.05, 0, 1], [-7.25, 3.05, 1, 1]][k]; TP.push(x, y, 8.895); TU.push(u, v); }
+        for (const [A, B] of [[SP, SU], [TP, TU]]) { const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(A, 3)); sg.setAttribute('uv', new THREE.Float32BufferAttribute(B, 2)); sg.computeBoundingSphere(); P.root.add(new THREE.Mesh(sg, scm)); } }
+      // on the desk: two keyboards, a headset, the radios in their dock, papers and a clipboard, an architect lamp (lit: its warm pool on
+      // the desk)
       gl(SATIN); for (const [x, z] of [[2.95, 8.32], [3.85, 8.34]]) { box(x, 0.8, z, 0.44, 0.02, 0.14, [0.09, 0.09, 0.1]); box(x, 0.82, z, 0.42, 0.004, 0.12, [0.16, 0.16, 0.17]); }
       gAdd(g, new THREE.TorusGeometry(0.09, 0.012, 5, 12, Math.PI), M4(3.4, 0.81, 8.5, -Math.PI / 2 + 0.2, 0, 0.4), [0.08, 0.08, 0.09]);
       for (const s of [-1, 1]) gAdd(g, new THREE.CylinderGeometry(0.04, 0.04, 0.03, 12), M4(3.4 + s * 0.08, 0.83, 8.5 - s * 0.035, 0, 0, Math.PI / 2 + s * 0.4), [0.06, 0.06, 0.07]);
       box(4.4, 0.8, 8.36, 0.32, 0.05, 0.12, [0.12, 0.12, 0.13]); for (let i = 0; i < 4; i++) { const x = 4.28 + i * 0.08; box(x, 0.83, 8.36, 0.05, 0.16, 0.03, [0.1, 0.1, 0.11]); box(x + 0.012, 0.99, 8.36, 0.01, 0.07, 0.01, DK); box(x - 0.01, 0.935, 8.346, 0.022, 0.012, 0.004, [0.4, 2.2, 0.6]); }
-      gl(PAINT); cylA(g, [4.62, 0.815, 8.72], 'y', 0.08, 0.03, 12, DK); obox(g, [4.62, 0.83, 8.72], [4.62, 1.22, 8.76], 0.025, 0.025, DK); obox(g, [4.62, 1.22, 8.76], [4.52, 1.3, 8.47], 0.025, 0.025, DK);
-      World.cone(g, 4.5, 1.18, 8.45, 0.09, 0.14, 12, [0.78, 0.14, 0.1], [0.78, 0.14, 0.1], 0);
-      // two stools (navy seats on gas columns, five legs, a foot ring)
-      for (const [x, z] of [[2.9, 7.75], [4.1, 7.8]]) { gl(PAINT); gAdd(g, new THREE.CylinderGeometry(0.19, 0.19, 0.07, 14), M4(x, 0.72, z), [0.13, 0.17, 0.25]);
-        gl(METAL); seg(g, [x, 0.1, z], [x, 0.69, z], 0.022, CHROME, 8); gAdd(g, new THREE.TorusGeometry(0.2, 0.012, 4, 16), M4(x, 0.3, z, Math.PI / 2, 0, 0), CHROME);
-        for (let k = 0; k < 5; k++) { const a = k / 5 * TAU + 0.3; seg(g, [x, 0.1, z], [x + Math.cos(a) * 0.3, 0.05, z + Math.sin(a) * 0.3], 0.014, [0.2, 0.21, 0.23]); }
-        gl(MATTE); for (let k = 0; k < 5; k++) { const a = k / 5 * TAU + 0.3; castor(null, x + Math.cos(a) * 0.3, 0.03, z + Math.sin(a) * 0.3, 0.03); } }
+      const sheet = (x, z, w, d, r, y, col) => { const c = Math.cos(r), s = Math.sin(r), Q = (a, b) => [x + a * c - b * s, y, z + a * s + b * c]; g.quadO(Q(-w / 2, -d / 2), Q(w / 2, -d / 2), Q(w / 2, d / 2), Q(-w / 2, d / 2), col, [x, y - 1, z]); };
+      gl(MATTE); sheet(3.0, 8.55, 0.21, 0.297, 0.1, 0.802, [0.9, 0.9, 0.88]); sheet(3.04, 8.57, 0.21, 0.297, 0.28, 0.804, [0.93, 0.93, 0.9]); sheet(3.7, 8.6, 0.21, 0.297, -0.2, 0.802, [0.9, 0.9, 0.88]);
+      gl(SATIN); box(2.5, 0.8, 8.5, 0.23, 0.008, 0.32, [0.42, 0.3, 0.18], [0.46, 0.33, 0.2], 0.15); sheet(2.5, 8.49, 0.2, 0.27, 0.15, 0.809, [0.92, 0.92, 0.9]);
+      gl(METAL); box(2.5 - 0.15 * Math.sin(0.15), 0.808, 8.5 + 0.14 * Math.cos(0.15), 0.08, 0.012, 0.03, STEEL, STEEL, 0.15);
+      // (the lamp: a dark base, two arms, the shade turned down toward the room, the warm lamp in its mouth)
+      gl(PAINT); World.cyl(g, 4.62, 0.8, 8.72, 0.075, 0.025, 8, DK, [0.1, 0.1, 0.11]); obox(g, [4.62, 0.82, 8.72], [4.55, 1.31, 8.72], 0.018, 0.018, DK); obox(g, [4.55, 1.31, 8.72], [4.2, 1.21, 8.47], 0.016, 0.016, DK);
+      gAdd(g, new THREE.ConeGeometry(0.075, 0.13, 10, 1, true), M4(4.18, 1.17, 8.45, 0.45, 0, 0), [0.1, 0.1, 0.11]);
+      gl(MATTE); gAdd(g, new THREE.CircleGeometry(0.069, 10), M4(4.18, 1.119, 8.425, 2.022, 0, 0), [2.4, 2.0, 1.4]);
+      { const W0 = [0.16, 0.17, 0.19], WC = [0.56, 0.46, 0.32], cx = 4.17, cz = 8.29; for (let k = 0; k < 8; k++) { const a0 = k / 8 * TAU, a1 = (k + 1) / 8 * TAU, P = (a) => [cx + Math.cos(a) * 0.22, 0.8015, cz + Math.sin(a) * 0.13];
+        g.triO([cx, 0.8015, cz], P(a0), P(a1), WC, [cx, 0, cz], W0, W0); } }
+      // (the leads: two from the pedestal along the floor and up the coving (on it: CV, its curve's points out from the wall) into a box on
+      // the wall; a data cable from under the desk across the floor under a striped cable ramp to an outlet by the lockers)
+      const CV = (x, dx) => [[x, 0.008, 8.86], [x - dx * 0.2, 0.012, 8.93], [x - dx * 0.4, 0.04, 8.975], [x - dx * 0.7, 0.1, 8.982], [x - dx, 0.16, 8.982]];
+      gl(MATTE); for (const e of [0, 0.03]) tube(g, [[2.12, 0.05, 8.7 + e], [2.04, 0.008, 8.68 + e], [1.86, 0.008, 8.72 + e]].concat(CV(1.78 - e, 0.015)), 0.008, x2c(DK), 9, 3);
+      gl(PAINT); box(1.75, 0.15, 8.97, 0.14, 0.18, 0.06, [0.5, 0.52, 0.55], [0.56, 0.58, 0.6]);
+      gl(MATTE); tube(g, [[2.6, 0.26, 8.82], [2.58, 0.008, 8.66], [2.57, 0.008, 8.1], [2.4, 0.008, 7.62], [2.2, 0.008, 7.55]], 0.007, x2c([0.3, 0.31, 0.34]), 7, 3);
+      tube(g, [[1.0, 0.008, 7.55], [0.7, 0.008, 7.62], [0.52, 0.008, 7.9], [0.5, 0.008, 8.5]].concat(CV(0.5, 0)), 0.007, x2c([0.3, 0.31, 0.34]), 10, 3);
+      gl(PAINT); box(0.5, 0.1, 8.97, 0.1, 0.14, 0.06, [0.5, 0.52, 0.55], [0.56, 0.58, 0.6]);
+      { const YB = x2c([0.85, 0.66, 0.12]), KB = x2c([0.05, 0.05, 0.055]), xa = 1.0, xb = 2.2, zc = 7.55, h = 0.03, ta = 0.06, tb = 0.125, sk = 0.06, inn = [1.6, -1, zc];
+        for (let i = 0, u = xa - 0.1; u < xb; i++, u += 0.1) { const c = (v) => clamp(v, xa, xb); g.quadO([c(u), h, zc - ta], [c(u + 0.1), h, zc - ta], [c(u + 0.1 + sk), h, zc + ta], [c(u + sk), h, zc + ta], i % 2 ? YB : KB, inn); }
+        for (const s of [-1, 1]) g.quadO([xa, h, zc + s * ta], [xb, h, zc + s * ta], [xb, 0.002, zc + s * tb], [xa, 0.002, zc + s * tb], KB, inn);
+        for (const x of [xa, xb]) g.quadO([x, 0.002, zc - tb], [x, h, zc - ta], [x, h, zc + ta], [x, 0.002, zc + tb], KB, [1.6, 0, zc]); }
+      // two stools (navy seats on gas columns, five legs, a foot ring; as few faces as reads from across the room)
+      for (const [x, z] of [[2.9, 7.75], [4.1, 7.8]]) { gl(PAINT); gAdd(g, new THREE.CylinderGeometry(0.19, 0.19, 0.07, 12), M4(x, 0.72, z), [0.13, 0.17, 0.25]);
+        gl(METAL); seg(g, [x, 0.1, z], [x, 0.69, z], 0.022, CHROME, 6); gAdd(g, new THREE.TorusGeometry(0.2, 0.012, 3, 12), M4(x, 0.3, z, Math.PI / 2, 0, 0), CHROME);
+        for (let k = 0; k < 5; k++) { const a = k / 5 * TAU + 0.3; seg(g, [x, 0.1, z], [x + Math.cos(a) * 0.3, 0.05, z + Math.sin(a) * 0.3], 0.014, [0.2, 0.21, 0.23], 4); }
+        gl(MATTE); for (let k = 0; k < 5; k++) { const a = k / 5 * TAU + 0.3; gAdd(g, new THREE.CylinderGeometry(0.03, 0.03, 0.024, 6), M4(x + Math.cos(a) * 0.3, 0.03, z + Math.sin(a) * 0.3, Math.PI / 2, 0, a), DK); } }
       // a water cooler (its bottle glossy, the taps red and blue), a dark green wheelie bin
       gl(PAINT); box(0.75, 0, 8.7, 0.32, 1.0, 0.32, [0.86, 0.86, 0.84], [0.8, 0.8, 0.78]); box(0.75, 0.62, 8.535, 0.2, 0.18, 0.01, [0.3, 0.31, 0.33]);
       for (const [s, c] of [[-1, [0.78, 0.14, 0.1]], [1, [0.18, 0.36, 0.78]]]) box(0.75 + s * 0.05, 0.72, 8.53, 0.03, 0.05, 0.03, c);
@@ -1653,8 +1680,162 @@ const Garage3D = (function () {
     WALLAO.push(['b', 1.1, 4.8, 0, 2.3, 0.6, BK], ['b', 5.2, 7.8, 0, 2.1, 0.6, BK], ['r', 3.0, 4.8, 0.7, 2.2, 0.4, R], ['r', 4.85, 5.95, 0, 1.0, 0.5, R]);
     g = sm = cp = null;
   }
-  // the front zone's new things (round 2)
-  function buildKitF() {}
+  // the front zone's new things (round 2): in the left corner the team's corner to sit (a kitchenette, a sofa and its table on a rug, a
+  // lit drinks fridge; the TV over the sofa is the desk's block's), the recycling bins and a broom by the lockers: in a piece of their
+  // own that steps aside with the front wall (PK: off the default view's draws, where the front wall's piece is drawn behind the camera);
+  // right of the column, in the front wall's piece: the track maps, the seats and steering wheels on their rail, a pallet of boxed
+  // parts, the spill kit
+  function buildKitF() {
+    const PF = WALLS.front, PK = piece(PF.wall), DK = PAL.dk, STEEL = PAL.steel, ALU = PAL.alu, CHROME = PAL.chrome, WHITE = PAL.white, NAVYM = [0.12, 0.16, 0.3];
+    let g = null, sm = null, cp = null; const use = (p, k) => { g = p.g; sm = p.sm; cp = p; gloss(p, k == null ? PAINT : k); return p; }, gl = (k) => gloss(cp, k), box = (...a) => fbox(g, ...a);
+    // (a quad facing the room (-z) at z; one facing up at y; a tapered box's front and sides, its top (the back to the wall unseen);
+    // a cup: its sides and its top (in: the inside's colour); x2: a floor thing's colour twice (the floor's occlusion halves it))
+    const fq = (xa, xb, ya, yb, z, col) => g.quadO([xa, ya, z], [xb, ya, z], [xb, yb, z], [xa, yb, z], col, [(xa + xb) / 2, (ya + yb) / 2, z + 1]);
+    const tq = (xa, xb, za, zb, y, col) => g.quadO([xa, y, za], [xb, y, za], [xb, y, zb], [xa, y, zb], col, [(xa + xb) / 2, y - 1, (za + zb) / 2]);
+    const taper = (cx, zb, y0, y1, w0, d0, w1, d1, col, top) => { const P = (y, w, d, sx, sz) => [cx + sx * w / 2, y, zb - (sz ? d : 0)], c = [cx, (y0 + y1) / 2, zb - d0 / 2];
+      g.quadO(P(y0, w0, d0, -1, 1), P(y0, w0, d0, 1, 1), P(y1, w1, d1, 1, 1), P(y1, w1, d1, -1, 1), col, c);
+      for (const s of [-1, 1]) g.quadO(P(y0, w0, d0, s, 1), P(y0, w0, d0, s, 0), P(y1, w1, d1, s, 0), P(y1, w1, d1, s, 1), col, c);
+      if (top) g.quadO(P(y1, w1, d1, -1, 1), P(y1, w1, d1, 1, 1), P(y1, w1, d1, 1, 0), P(y1, w1, d1, -1, 0), top, c); };
+    const cup = (x, y, z, r, h, col, inn) => World.cyl(g, x, y, z, r, h, 6, col, inn || [0.09, 0.07, 0.06]);
+    const x2 = (c) => c.map(v => v * 1.95);
+    // the kitchenette: a graphite base unit (two doors, bar pulls, a dark plinth) under a stone worktop; a coffee machine (its brushed
+    // front, the drip tray, a red standby light), a kettle, two mugs; a shelf over it with more mugs and a tin
+    { use(PK, PAINT); const X = -7.935, KG = [0.2, 0.21, 0.24], KD = [0.25, 0.26, 0.29];
+      box(X, 0, 8.66, 0.93, 0.1, 0.46, [0.05, 0.05, 0.06]); box(X, 0.1, 8.625, 0.97, 0.78, 0.55, KG, KG);
+      for (const s of [-1, 1]) fq(X + s * 0.003, X + s * 0.482, 0.12, 0.86, 8.347, KD);
+      gl(METAL); for (const s of [-1, 1]) obox(g, [X + s * 0.07, 0.8, 8.334], [X + s * 0.33, 0.8, 8.334], 0.014, 0.014, ALU);
+      gl(SATIN); box(X, 0.88, 8.642, 0.99, 0.035, 0.684, [0.6, 0.6, 0.58], [0.64, 0.64, 0.62]);
+      gl(PAINT); box(-8.15, 0.915, 8.65, 0.3, 0.38, 0.4, [0.06, 0.06, 0.07], [0.09, 0.09, 0.1]); fq(-8.24, -8.06, 0.95, 1.08, 8.448, [0.02, 0.02, 0.025]);
+      gl(METAL); box(-8.15, 1.1, 8.444, 0.27, 0.18, 0.012, [0.62, 0.64, 0.68]); box(-8.15, 0.915, 8.42, 0.2, 0.02, 0.1, [0.5, 0.52, 0.55]);
+      gl(MATTE); fq(-8.05, -8.035, 1.245, 1.26, 8.437, [2.0, 0.3, 0.2]); cup(-8.15, 0.935, 8.42, 0.026, 0.05, WHITE, [0.2, 0.12, 0.07]);
+      gl(PAINT); World.cyl(g, -7.62, 0.915, 8.72, 0.085, 0.022, 6, DK, DK); World.cyl(g, -7.62, 0.937, 8.72, 0.075, 0.19, 8, [0.8, 0.81, 0.82], [0.3, 0.31, 0.33], 0.062);
+      obox(g, [-7.62, 0.99, 8.81], [-7.62, 1.11, 8.81], 0.022, 0.022, DK); obox(g, [-7.62, 1.11, 8.81], [-7.62, 1.115, 8.76], 0.022, 0.018, DK); obox(g, [-7.62, 1.0, 8.648], [-7.62, 1.07, 8.62], 0.02, 0.02, [0.8, 0.81, 0.82]);
+      cup(-7.86, 0.915, 8.48, 0.04, 0.095, WHITE); cup(-7.76, 0.915, 8.57, 0.04, 0.095, NAVYM);
+      // (the shelf on two brackets: four mugs, a tin)
+      gl(SATIN); box(-7.95, 1.5, 8.875, 0.9, 0.025, 0.25, [0.55, 0.43, 0.29], [0.6, 0.47, 0.32]);
+      gl(PAINT); for (const x of [-8.3, -7.6]) obox(g, [x, 1.36, 8.985], [x, 1.495, 8.8], 0.02, 0.012, DK);
+      [[-8.3, WHITE], [-8.19, NAVYM], [-8.08, WHITE], [-7.97, [0.78, 0.6, 0.2]]].forEach(([x, c]) => cup(x, 1.525, 8.86, 0.04, 0.095, c));
+      World.cyl(g, -7.7, 1.525, 8.86, 0.06, 0.15, 8, [0.16, 0.3, 0.22], [0.6, 0.62, 0.66]);
+      WALLAO.push(['f', -8.43, -7.44, 0, 0.92, 0.5, PK]); BLOBS.push([-7.935, 8.62, 1.25, 0.75, 0.75, 0, PK]); }
+    // the sofa, its back to the wall (charcoal, its cushions a shade lighter on top; a navy and a gold cushion thrown on it; chrome feet);
+    // a low table in front of it on a rug (magazines, two mugs)
+    { use(PK, MATTE); const X = -6.55, FB = [0.16, 0.17, 0.19], FT = [0.17, 0.18, 0.2], FD = [0.12, 0.125, 0.14];
+      box(-6.3, 0, 7.75, 1.4, 0.006, 0.6, x2([0.24, 0.25, 0.27]), x2([0.25, 0.26, 0.28]));   // (the rug)
+      gl(METAL); for (const x of [-7.3, -5.8]) for (const z of [8.09, 8.81]) World.box(g, x, 0, z, 0.04, 0.06, 0.04, 0, CHROME, CHROME, true);
+      gl(MATTE); box(X, 0.06, 8.45, 1.3, 0.36, 0.8, FD, FB); for (const s of [-1, 1]) box(X + s * 0.725, 0.06, 8.45, 0.15, 0.56, 0.84, FB, FT);
+      box(X, 0.42, 8.78, 1.3, 0.45, 0.14, FB, FT);
+      for (const s of [-1, 1]) { const x = X + s * 0.3275; box(x, 0.42, 8.36, 0.645, 0.11, 0.62, FB, FT); gBox(g, M4(x, 0.71, 8.64, 0.15, 0, 0), 0, 0, 0, 0.635, 0.4, 0.17, FT); }
+      gBox(g, M4(-6.98, 0.7, 8.5, 0.28, 0.35, 0.08), 0, 0, 0, 0.36, 0.34, 0.11, [0.12, 0.16, 0.3]); gBox(g, M4(-6.08, 0.69, 8.5, 0.3, -0.3, -0.12), 0, 0, 0, 0.34, 0.32, 0.11, [0.75, 0.58, 0.18]);
+      gl(SATIN); box(-6.3, 0.39, 7.72, 0.7, 0.03, 0.38, [0.12, 0.12, 0.13], [0.14, 0.14, 0.15]);
+      gl(METAL); for (const sx of [-1, 1]) for (const sz of [-1, 1]) World.box(g, -6.3 + sx * 0.31, 0, 7.72 + sz * 0.15, 0.025, 0.39, 0.025, 0, STEEL, STEEL, true);
+      gl(MATTE); [[-6.47, 7.72, 0.2, [0.72, 0.7, 0.64]], [-6.46, 7.71, -0.1, [0.2, 0.34, 0.56]], [-6.2, 7.7, 1.2, [0.7, 0.3, 0.2]]].forEach(([x, z, r, c], i) => box(x, 0.42 + (i === 1 ? 0.006 : 0), z, 0.2, 0.006, 0.27, c, c, r));
+      cup(-5.995, 0.42, 7.6, 0.04, 0.095, WHITE); cup(-5.995, 0.42, 7.84, 0.04, 0.095, [0.62, 0.14, 0.1]);
+      WALLAO.push(['f', -7.35, -5.75, 0, 0.87, 0.55, PK]); BLOBS.push([X, 8.45, 2.0, 1.1, 0.75, 0, PK], [-6.3, 7.72, 0.9, 0.55, 0.5, 0, PK]); }
+    // a drinks fridge with a glass door: the black cabinet, its lit header, the aluminium door frame and handle, a kick grille; inside
+    // (lit: its colours over 1) the white back, four shelves with their white edges, the drinks a row of one kind a shelf as a fridge is
+    // stocked (big bottles of water at the foot, bottles with their necks and caps, cans with their silver tops; a gap where one is gone)
+    { use(PK, PAINT); const X = -5.32, FK = [0.07, 0.07, 0.08], FR = [0.62, 0.64, 0.68], Rf = Core.rng(4246);
+      for (const s of [-1, 1]) box(X + s * 0.28, 0, 8.6, 0.04, 1.75, 0.6, FK, FK);
+      box(X, 1.6, 8.6, 0.52, 0.15, 0.6, FK, FK); box(X, 0, 8.6, 0.52, 0.14, 0.6, FK, [0.85, 0.86, 0.88]);
+      gl(MATTE); fq(X - 0.26, X + 0.26, 1.635, 1.715, 8.297, [1.6, 1.6, 1.55]);
+      for (let i = 0; i < 3; i++) fq(X - 0.22, X + 0.22, 0.03 + i * 0.035, 0.045 + i * 0.035, 8.297, [0.16, 0.16, 0.17]);
+      fq(X - 0.26, X + 0.26, 0.14, 1.6, 8.86, [1.5, 1.55, 1.6]);   // (inside: the back, the side we see, the shelves, what stands on them)
+      g.quadO([X - 0.259, 0.14, 8.86], [X - 0.259, 0.14, 8.3], [X - 0.259, 1.6, 8.3], [X - 0.259, 1.6, 8.86], [1.15, 1.18, 1.22], [X - 1, 0.9, 8.6]);
+      // (each shelf: [bottle or can, its colours (the row's two kinds), the cap's, w, h, the gap between]; x1.3: lit)
+      const L = (c) => c.map(v => v * 1.3), SIL = L([0.82, 0.84, 0.88]), DR = [['b', [[0.55, 0.68, 0.82]], [0.22, 0.36, 0.7], 0.085, 0.27, 0.012], ['b', [[0.2, 0.4, 0.25]], [0.84, 0.84, 0.8], 0.066, 0.215, 0.012],
+        ['c', [[0.6, 0.16, 0.14], [0.82, 0.82, 0.78]], null, 0.066, 0.122, 0.004], ['c', [[0.2, 0.32, 0.56], [0.78, 0.48, 0.2]], null, 0.066, 0.122, 0.004], ['b', [[0.82, 0.62, 0.22]], [0.2, 0.44, 0.24], 0.06, 0.17, 0.01]];
+      for (let k = 0; k < 5; k++) { const y = 0.14 + k * 0.29, [kind, cs, cap, w, h, gap] = DR[k];
+        if (k) { tq(X - 0.26, X + 0.26, 8.32, 8.84, y, [0.75, 0.77, 0.8]); fq(X - 0.26, X + 0.26, y - 0.012, y, 8.32, [1.9, 1.9, 1.9]); }
+        for (let i = 0, x = X - 0.236; x + w <= X + 0.252; i++, x += w + gap) { if (Rf() < 0.1) continue;   // (one gone)
+          const c = L(cs[Math.min(cs.length - 1, i * cs.length / 7 | 0)]), z = 8.35 + Rf() * 0.012, hb = kind === 'c' ? h - 0.012 : h * 0.66, sd = c.map(v => v * 0.7);
+          fq(x, x + w, y, y + hb, z, c); g.quadO([x + w, y, z], [x + w, y, z + 0.07], [x + w, y + hb, z + 0.07], [x + w, y + hb, z], sd, [x + w - 1, y, z]);
+          if (kind === 'c') { fq(x, x + w, y + hb, y + h, z, SIL); tq(x, x + w, z, z + 0.07, y + h, SIL.map(v => v * 0.85)); }   // (the can's top)
+          else { tq(x, x + w, z, z + 0.07, y + hb, c.map(v => v * 0.8)); fq(x + w * 0.3, x + w * 0.7, y + hb, y + h * 0.9, z + 0.025, c.map(v => v * 0.9)); fq(x + w * 0.32, x + w * 0.68, y + h * 0.9, y + h, z + 0.025, L(cap)); } } }
+      gl(METAL); for (const s of [-1, 1]) World.box(g, X + s * 0.2575, 0.14, 8.292, 0.035, 1.46, 0.016, 0, FR, FR, true);
+      for (const y of [0.14, 1.565]) World.box(g, X, y, 8.292, 0.48, 0.035, 0.016, 0, FR, FR, true);
+      obox(g, [X + 0.2, 0.72, 8.262], [X + 0.2, 1.3, 8.262], 0.02, 0.02, ALU);
+      WALLAO.push(['f', X - 0.3, X + 0.3, 0, 1.75, 0.6, PK]); BLOBS.push([X, 8.6, 0.85, 0.85, 0.75, 0, PK]); }
+    // the recycling: three 60 l bins by the lockers (blue, yellow, graphite: tapered, their lids with a slot, a blank label each); a broom
+    // and a squeegee leaning in the gap by the lockers
+    { use(PK, PAINT); const zb = 8.9;
+      [[-4.33, [0.15, 0.28, 0.52]], [-3.97, [0.8, 0.62, 0.13]], [-3.61, [0.25, 0.26, 0.28]]].forEach(([x, c]) => { const lo = c.map(v => v * 0.82);
+        taper(x, zb, 0, 0.4, 0.3, 0.4, 0.3187, 0.4187, c, null); taper(x, zb, 0.4, 0.75, 0.3187, 0.4187, 0.335, 0.435, c, null);
+        box(x, 0.75, zb - 0.22, 0.35, 0.03, 0.45, lo, lo.map(v => v * 1.12)); tq(x - 0.1, x + 0.1, zb - 0.42, zb - 0.36, 0.781, [0.03, 0.03, 0.035]);
+        const zf = (y) => zb - 0.4 - 0.035 * y / 0.75 - 0.002; g.quadO([x - 0.065, 0.46, zf(0.46)], [x + 0.065, 0.46, zf(0.46)], [x + 0.065, 0.56, zf(0.56)], [x - 0.065, 0.56, zf(0.56)], [0.88, 0.88, 0.85], [x, 0.5, zb]); });
+      gl(SATIN); obox(g, [-3.335, 0.1, 8.62], [-3.335, 1.32, 8.977], 0.024, 0.024, [0.55, 0.42, 0.26]); box(-3.335, 0.035, 8.63, 0.055, 0.06, 0.34, [0.16, 0.3, 0.55]);
+      gl(MATTE); box(-3.335, 0, 8.63, 0.05, 0.035, 0.33, [0.07, 0.07, 0.07]);
+      gl(METAL); obox(g, [-3.405, 0.07, 8.55], [-3.405, 1.25, 8.977], 0.022, 0.022, ALU); gl(PAINT); box(-3.405, 0.022, 8.55, 0.03, 0.045, 0.45, [0.6, 0.12, 0.1]);
+      gl(MATTE); box(-3.405, 0, 8.55, 0.02, 0.022, 0.45, [0.05, 0.05, 0.05]);
+      WALLAO.push(['f', -4.5, -3.3, 0, 0.8, 0.45, PK]); BLOBS.push([-3.97, 8.68, 1.3, 0.6, 0.6, 0, PK]); }
+    // three maps of the game's tracks in black frames (a white mat, the navy field, the line in white, its start in gold, the north
+    // arrow, the place's name): their pictures in one canvas, one mesh (the outlines: the tracks' OpenStreetMap centre lines, simplified)
+    { use(PF, SATIN); const SY = 320 / 274, MAPS = [['VRŠIČ', 0, [780, 0, 781, 52, 699, 105, 673, 147, 667, 213, 708, 215, 722, 231, 725, 297, 686, 379, 686, 469, 671, 455, 663, 470, 663, 596, 611, 704, 598, 769, 598, 754, 570, 788, 541, 786, 542, 798, 532, 788, 526, 806, 518, 783, 537, 766, 477, 788, 439, 878, 422, 836, 421, 862, 415, 837, 408, 865, 392, 845, 363, 863, 338, 855, 338, 819, 320, 859, 311, 834, 279, 844, 273, 883, 259, 863, 219, 945, 238, 1000]],
+        ['LJUBLJANA', 1, [534, 286, 711, 241, 871, 193, 952, 164, 990, 190, 1000, 230, 977, 259, 855, 294, 711, 334, 569, 370, 505, 415, 492, 487, 486, 568, 476, 672, 460, 772, 428, 830, 333, 839, 228, 833, 164, 801, 153, 691, 145, 616, 68, 592, 0, 553, 10, 415, 39, 270, 61, 177, 119, 161, 204, 195, 322, 235, 421, 262]],
+        ['BATHURST', 1, [695, 17, 590, 0, 576, 10, 487, 506, 469, 519, 450, 519, 327, 456, 304, 456, 283, 464, 277, 471, 278, 484, 304, 516, 311, 533, 301, 597, 290, 612, 250, 635, 215, 672, 193, 727, 201, 763, 245, 833, 262, 849, 288, 859, 403, 862, 437, 877, 468, 877, 488, 902, 511, 904, 549, 938, 582, 954, 605, 994, 618, 1000, 626, 997, 637, 982, 676, 914, 753, 416, 807, 293, 785, 264, 779, 242, 807, 41, 796, 34]]];
+      const art = canvasTex(512, 256, (gx, w, h) => { MAPS.forEach(([name, closed, T], i) => {   // (a poster 170 x 256: 0.62 x 0.8 m, its art drawn to the metre (SY))
+        gx.save(); gx.translate(i * 171, 0); gx.fillStyle = '#e8e7e1'; gx.fillRect(0, 0, 170, h);
+        const fx = 10, fy = 10 * SY, fw = 150, fh = h - 20 * SY; gx.fillStyle = '#18213d'; gx.fillRect(fx, fy, fw, fh);
+        gx.strokeStyle = 'rgba(255,255,255,0.055)'; gx.lineWidth = 1; for (let x = fx + 15; x < fx + fw; x += 15) { gx.beginPath(); gx.moveTo(x + 0.5, fy); gx.lineTo(x + 0.5, fy + fh); gx.stroke(); }
+        for (let y = fy + 15 * SY; y < fy + fh; y += 15 * SY) { gx.beginPath(); gx.moveTo(fx, y); gx.lineTo(fx + fw, y); gx.stroke(); }
+        const S = 124, ox = fx + 13, oy = fy + 22 * SY, P = (k) => [ox + T[k] / 1000 * S, oy + T[k + 1] / 1000 * S * SY];
+        const line = () => { gx.beginPath(); for (let k = 0; k < T.length; k += 2) { const [x, y] = P(k); k ? gx.lineTo(x, y) : gx.moveTo(x, y); } if (closed) gx.closePath(); };
+        gx.lineJoin = gx.lineCap = 'round'; line(); gx.strokeStyle = 'rgba(0,0,0,0.45)'; gx.lineWidth = 6; gx.stroke(); line(); gx.strokeStyle = '#f2f1ec'; gx.lineWidth = 3; gx.stroke();
+        const [ax, ay] = P(0), [bx, by] = P(2), L = Math.hypot(bx - ax, by - ay) || 1, nx = -(by - ay) / L * 7, ny = (bx - ax) / L * 7;
+        gx.strokeStyle = '#f5c84c'; gx.lineWidth = 3.5; gx.lineCap = 'butt'; gx.beginPath(); gx.moveTo(ax - nx, ay - ny); gx.lineTo(ax + nx, ay + ny); gx.stroke();
+        gx.fillStyle = '#f2f1ec'; gx.beginPath(); gx.moveTo(fx + fw - 14, fy + 7 * SY); gx.lineTo(fx + fw - 9, fy + 19 * SY); gx.lineTo(fx + fw - 14, fy + 16 * SY); gx.lineTo(fx + fw - 19, fy + 19 * SY); gx.closePath(); gx.fill();
+        gx.save(); gx.translate(fx + fw - 14, fy + 29 * SY); gx.scale(1, SY); gx.font = 'bold 9px Roboto, Arial, sans-serif'; gx.textAlign = 'center'; gx.fillText('N', 0, 0); gx.restore();
+        gx.fillStyle = '#f5c84c'; gx.fillRect(fx + 22, fy + fh - 32 * SY, fw - 44, 1.5);
+        gx.save(); gx.translate(fx + fw / 2, fy + fh - 11 * SY); gx.scale(1, SY); gx.fillStyle = '#f2f1ec'; gx.font = '900 17px Roboto, Arial, sans-serif'; gx.textAlign = 'center'; gx.fillText(name, 0, 0, fw - 16); gx.restore();
+        gx.restore(); }); });
+      const pq = new QB(); [5.72, 6.5, 7.28].forEach((cx, i) => { const a = cx - 0.31, b = cx + 0.31, u0 = i * 171 / 512, u1 = (i * 171 + 170) / 512;
+        pq.quad([b, 2.24, 8.972], [a, 2.24, 8.972], [a, 3.04, 8.972], [b, 3.04, 8.972], [0, 0, -1], [[u0, 0], [u1, 0], [u1, 1], [u0, 1]]);
+        World.box(g, cx, 2.22, 8.9875, 0.66, 0.84, 0.025, 0, [0.05, 0.05, 0.06], [0.08, 0.08, 0.09], true); });
+      const pm = pq.mesh(new THREE.MeshLambertMaterial({ map: art })); pm.material.userData.noCube = true; pm.receiveShadow = true; PF.root.add(pm); }
+    // under them, on a rail: two bucket seats hung by their shoulders (navy, black: the shell, its bolsters and wings, the pan, the
+    // harness slots dark), two flat-bottomed steering wheels on pegs (an aluminium centre, coloured buttons, the quick-release boss)
+    { use(PF, METAL); obox(g, [5.45, 1.86, 8.93], [7.25, 1.86, 8.93], 0.03, 0.03, STEEL); for (const x of [5.55, 6.36, 7.15]) box(x, 1.845, 8.965, 0.03, 0.03, 0.07, STEEL);
+      for (const [x, col] of [[5.8, [0.12, 0.16, 0.3]], [6.62, [0.07, 0.07, 0.08]]]) { const M = M4(x, 1.42, 8.86, 0.1, Math.PI, 0), S = (lx, ly, lz, sx, sy, sz, c) => gBox(g, M, lx, ly, lz, sx, sy, sz, c || col);
+        gl(METAL); obox(g, [x, 1.86, 8.93], [x, 1.76, 8.9], 0.015, 0.03, STEEL);
+        const IN = col[2] > 0.2 ? [0.045, 0.045, 0.05] : [0.15, 0.15, 0.16];   // (the padding: black in the navy shell, grey in the black one)
+        gl(PAINT); S(0, 0, 0, 0.48, 0.75, 0.04); for (const s of [-1, 1]) { S(s * 0.22, -0.03, 0.09, 0.05, 0.66, 0.17); S(s * 0.2, 0.27, 0.1, 0.09, 0.18, 0.16); S(s * 0.2, -0.3, 0.25, 0.05, 0.14, 0.38); }
+        S(0, -0.36, 0.22, 0.44, 0.06, 0.42); gl(MATTE); S(0, 0.0, 0.03, 0.34, 0.6, 0.025, IN); S(0, -0.322, 0.21, 0.34, 0.02, 0.33, IN);
+        for (const [lx, ly, lz] of [[-0.08, 0.22, 0.044], [0.08, 0.22, 0.044], [-0.15, -0.27, 0.044], [0.15, -0.27, 0.044]]) gAdd(g, new THREE.PlaneGeometry(0.035, 0.075), M.clone().multiply(M4(lx, ly, lz)), [0.02, 0.02, 0.025]);
+        gAdd(g, new THREE.PlaneGeometry(0.06, 0.035), M.clone().multiply(M4(0, -0.311, 0.33, -Math.PI / 2)), [0.02, 0.02, 0.025]); }
+      for (const [x, y] of [[6.21, 1.55], [7.05, 1.62]]) { const tg = new THREE.TorusGeometry(0.14, 0.018, 4, 10), Q = tg.attributes.position;
+        for (let i = 0; i < Q.count; i++) if (Q.getY(i) < -0.105) Q.setY(i, -0.105 - (Q.getY(i) + 0.105) * 0.25);   // (its bottom flat)
+        tg.computeVertexNormals(); gl(MATTE); gAdd(g, tg, M4(x, y, 8.92), [0.06, 0.06, 0.065]);
+        gl(METAL); gBox(g, null, x, y, 8.92, 0.16, 0.1, 0.02, [0.62, 0.64, 0.68]); for (const s of [-1, 1]) obox(g, [x + s * 0.08, y, 8.92], [x + s * 0.13, y, 8.92], 0.03, 0.012, [0.5, 0.52, 0.55]);
+        gBox(g, null, x, y, 8.95, 0.05, 0.05, 0.04, [0.3, 0.31, 0.34]); obox(g, [x, y, 8.97], [x, y, 9.0], 0.02, 0.02, STEEL);
+        gl(MATTE); [[-0.05, 0.025, [0.85, 0.15, 0.1]], [0.05, 0.025, [0.15, 0.45, 0.85]], [-0.05, -0.025, [0.95, 0.75, 0.15]], [0.05, -0.025, [0.2, 0.7, 0.3]]].forEach(([dx, dy, c]) => fq(x + dx - 0.01, x + dx + 0.01, y + dy - 0.01, y + dy + 0.01, 8.909, c)); } }
+    // a pallet of boxed parts by the corner (the pallet's blocks and boards in raw pine, the gaps dark; kraft boxes, their tape, a white
+    // label on each one we see, two straps round the lower layer)
+    { use(PF, MATTE); const PN = [0.55, 0.43, 0.28], pn = (k) => PN.map(v => v * k), GAP = [0.09, 0.07, 0.05], X0 = 7.1, X1 = 7.9, Z0 = 7.7, Z1 = 8.9, Rb = Core.rng(4247);
+      box(7.5, 0, 8.3, 0.76, 0.122, 1.16, GAP, GAP); box(7.5, 0.122, 8.3, 0.8, 0.022, 1.2, pn(1.75), pn(1.6));
+      for (const z of [7.75, 8.3, 8.85]) g.quadO([X0 - 0.001, 0, z - 0.05], [X0 - 0.001, 0, z + 0.05], [X0 - 0.001, 0.1, z + 0.05], [X0 - 0.001, 0.1, z - 0.05], pn(1.9), [X0 + 1, 0.05, z]);
+      for (const x of [7.16, 7.5, 7.84]) g.quadO([x - 0.06, 0, Z0 - 0.001], [x + 0.06, 0, Z0 - 0.001], [x + 0.06, 0.1, Z0 - 0.001], [x - 0.06, 0.1, Z0 - 0.001], pn(1.9), [x, 0.05, Z0 + 1]);
+      g.quadO([X0 - 0.001, 0.1, Z0], [X0 - 0.001, 0.1, Z1], [X0 - 0.001, 0.122, Z1], [X0 - 0.001, 0.122, Z0], pn(1.7), [X0 + 1, 0.11, 8.3]); g.quadO([X0, 0.1, Z0 - 0.001], [X1, 0.1, Z0 - 0.001], [X1, 0.122, Z0 - 0.001], [X0, 0.122, Z0 - 0.001], pn(1.7), [7.5, 0.11, Z0 + 1]);
+      for (const x of [7.245, 7.43, 7.57, 7.755]) tq(x - 0.02, x + 0.02, Z0, Z1, 0.1445, pn(0.7));
+      gl(SATIN); const KR = [0.6, 0.47, 0.3], kb = (x, y, z, w, hh, d, r, lab) => { const k = 0.92 + Rb() * 0.14, c = KR.map(v => v * k), cs = Math.cos(r), sn = Math.sin(r);
+        World.box(g, x, y, z, w, hh, d, r, c, c.map(v => v * 1.06), true); const Q = (a, b, yy) => [x + a * cs - b * sn, yy, z + a * sn + b * cs];
+        g.quadO(Q(-0.035, -d / 2, y + hh + 0.001), Q(0.035, -d / 2, y + hh + 0.001), Q(0.035, d / 2, y + hh + 0.001), Q(-0.035, d / 2, y + hh + 0.001), [0.72, 0.64, 0.48], [x, y, z]);
+        if (lab) g.quadO(Q(-w / 2 - 0.002, -0.07, y + hh * 0.35), Q(-w / 2 - 0.002, 0.07, y + hh * 0.35), Q(-w / 2 - 0.002, 0.07, y + hh * 0.7), Q(-w / 2 - 0.002, -0.07, y + hh * 0.7), [0.9, 0.9, 0.88], [x, y + hh / 2, z]); };
+      for (const x of [7.31, 7.69]) for (const z of [7.9, 8.3, 8.7]) kb(x, 0.144, z, 0.38, 0.3, 0.38, (Rb() - 0.5) * 0.04, x < 7.5);
+      kb(7.33, 0.444, 7.98, 0.36, 0.34, 0.55, 0.2, true); kb(7.73, 0.444, 7.96, 0.34, 0.3, 0.38, -0.06, false); kb(7.5, 0.444, 8.6, 0.72, 0.32, 0.5, 0.03, true); kb(7.55, 0.764, 8.58, 0.4, 0.28, 0.36, -0.15, true);
+      gl(MATTE); for (const z of [8.1, 8.5]) { g.quadO([X0 + 0.018, 0.15, z - 0.012], [X0 + 0.018, 0.15, z + 0.012], [X0 + 0.018, 0.446, z + 0.012], [X0 + 0.018, 0.446, z - 0.012], [0.05, 0.05, 0.055], [7.5, 0.3, z]);
+        tq(X0 + 0.02, X1 - 0.02, z - 0.012, z + 0.012, 0.4455, [0.05, 0.05, 0.055]); }
+      WALLAO.push(['f', X0, X1, 0, 1.05, 0.45, PF]); BLOBS.push([7.5, 8.3, 1.1, 1.5, 0.75, 0, PF]); }
+    // the spill kit: a yellow wheelie bin (tapered; its lid over the rim, the hinge bar, the handle; black wheels; a black band round its
+    // front with a blank white label and a drop on it)
+    { use(PF, PAINT); const X = 8.335, zb = 8.85, YL = [0.86, 0.68, 0.14];
+      taper(X, zb, 0, 0.4, 0.5, 0.52, 0.526, 0.546, YL, null); taper(X, zb, 0.4, 0.85, 0.526, 0.546, 0.555, 0.575, YL, null);
+      box(X, 0.85, zb - 0.3, 0.6, 0.04, 0.62, YL.map(v => v * 0.92), YL.map(v => v * 1.02)); gl(METAL); obox(g, [X - 0.29, 0.88, zb + 0.015], [X + 0.29, 0.88, zb + 0.015], 0.025, 0.025, [0.2, 0.2, 0.22]);
+      gl(PAINT); obox(g, [X - 0.22, 0.915, zb + 0.02], [X + 0.22, 0.915, zb + 0.02], 0.03, 0.025, YL.map(v => v * 0.85));
+      gl(MATTE); for (const s of [-1, 1]) cylA(g, [X + s * 0.25, 0.1, zb - 0.06], 'x', 0.1, 0.05, 8, DK, [0.3, 0.31, 0.33]);
+      const zf = (y) => zb - 0.52 - 0.055 * y / 0.85 - 0.003, F = (xa, xb, ya, yb, c, e) => g.quadO([xa, ya, zf(ya) - e], [xb, ya, zf(ya) - e], [xb, yb, zf(yb) - e], [xa, yb, zf(yb) - e], c, [X, ya, zb]);
+      F(X - 0.265, X + 0.265, 0.5, 0.74, [0.05, 0.05, 0.055], 0); F(X - 0.12, X + 0.12, 0.54, 0.7, [0.9, 0.9, 0.88], 0.002);
+      g.triO([X, 0.68, zf(0.68) - 0.004], [X - 0.03, 0.6, zf(0.6) - 0.004], [X + 0.03, 0.6, zf(0.6) - 0.004], [0.05, 0.05, 0.055], [X, 0.62, zb]); F(X - 0.03, X + 0.03, 0.56, 0.6, [0.05, 0.05, 0.055], 0.004);
+      WALLAO.push(['f', X - 0.29, X + 0.29, 0, 0.93, 0.45, PF]); BLOBS.push([X, 8.55, 0.75, 0.75, 0.7, 0, PF]); }
+  }
   /* ---------------- outside: the valley round the workshop (the sky, its clouds and the mountains round the valley in one shader; the
      meadows, the fields, the apron and the road away round a bend in another; the forest at the doors' edges, the paddock, a hayrack, a
      farm, a church on a knoll) ---------------- */
@@ -1768,7 +1949,7 @@ const Garage3D = (function () {
     sky.renderOrder = 10; sky.frustumCulled = false; scene.add(sky);   // (drawn after the room: only where nothing else is)
     // what stands out there, in one mesh: the forest, the posts and the fences, the transporter, the paddock, the valley's own things
     let og = new World.GB(); const unlit = [], TS = [], HL = [];   // (unlit: glass; TS: the trees' shadows [x, z, h, r, a spruce]; HL: the far buildings' [footprint, h])
-    const R = Core.rng(5150), Rt = Core.rng(77); for (let i = 0; i < 385; i++) R();   // (the old mountain rings' draws: the same woods)
+    const R = Core.rng(5150), Rt = Core.rng(77), Rj = Core.rng(78); for (let i = 0; i < 385; i++) R();   // (the old mountain rings' draws: the same woods; Rj: each clump's and tier's tint, its own dice)
     const WT = [0.93, 0.94, 0.95], GR = [0.28, 0.3, 0.33], DK = [0.08, 0.08, 0.09], NV = [0.1, 0.13, 0.25], GD = [0.93, 0.71, 0.2], CY = [0.3, 0.72, 0.93];
     const glass = (f) => { const a = og.P.length / 3; f(); unlit.push([a, og.P.length / 3]); };
     const rp = (x, z, rot) => { const c = Math.cos(rot), s = Math.sin(rot); return (lx, lz) => [x + lx * c - lz * s, z + lx * s + lz * c]; };   // (a point in a building's own frame)
@@ -1779,19 +1960,21 @@ const Garage3D = (function () {
       const ap = [x, y1, z], rim = [], m = 2 * n, cm = [(cb[0] + ct[0]) / 2, (cb[1] + ct[1]) / 2, (cb[2] + ct[2]) / 2], inn = [x, y0 + (y1 - y0) * 0.3, z];
       for (let k = 0; k < m; k++) { const a = rot + k / m * TAU, tip = !(k & 1), rr = tip ? r : r * 0.55; rim.push([x + Math.cos(a) * rr, tip ? y0 - r * 0.12 : y0 + (y1 - y0) * 0.14, z + Math.sin(a) * rr]); }
       for (let k = 0; k < m; k++) og.triO(rim[k], rim[(k + 1) % m], ap, k & 1 ? cm : ct, inn, k & 1 ? ct : cm, cb);
-      if (under) { const c0 = [x, y0 + (y1 - y0) * 0.1, z], cu = [cb[0] * 0.7, cb[1] * 0.7, cb[2] * 0.7]; for (let k = 0; k < m; k += 2) og.triO(rim[k], rim[(k + 2) % m], c0, cu, [x, y1 + 9, z]); } };
+      if (under) { const c0 = [x, y0 + (y1 - y0) * 0.3, z], cu = [cm[0] * 0.55, cm[1] * 0.55, cm[2] * 0.55]; for (let k = 0; k < m; k += 2) og.triO(rim[k], rim[(k + 2) % m], c0, cu, [x, y1 + 9, z]); } };   // (dark green under the tips, tucked in)
     const spruce = (x, z, h, near, larch) => { const r = h * (larch ? 0.13 : 0.16), rot = Rt() * TAU, dk = 0.85 + Rt() * 0.3, nt = near ? 5 : 3;
       const cb = (larch ? [0.24, 0.33, 0.13] : [0.07, 0.15, 0.1]).map(v => v * dk), ct = (larch ? [0.42, 0.55, 0.24] : [0.13, 0.25, 0.15]).map(v => v * dk);
       trunk(x, z, h * 0.025, h * 0.3, [0.3, 0.22, 0.15]);
-      for (let t = 0; t < nt; t++) { const f = t / nt, y0 = h * (0.1 + 0.8 * f); tier(x, z, y0, t === nt - 1 ? h : y0 + h * (near ? 0.3 : 0.42), r * (1.04 - f), near ? 6 : 5, rot + t * 0.6, cb, ct, near); }
+      for (let t = 0; t < nt; t++) { const f = t / nt, y0 = h * (0.1 + 0.8 * f), j = (0.9 + Rj() * 0.18) * (t ? 1 : 0.9), tb = cb.map(v => v * j), tt = ct.map(v => v * j);   // (each tier a shade apart, the lowest darker)
+        tier(x, z, y0, t === nt - 1 ? h : y0 + h * (near ? 0.3 : 0.42), r * (1.04 - f), near ? 6 : 5, rot + t * 0.6, tb, tt, near); }
       TS.push([x, z, h, r, 1]); };
     const ico = new THREE.IcosahedronGeometry(1, 0), IP = ico.attributes.position;   // (non-indexed: three vertices a face)
-    const clump = (cx, cy, cz, r, base) => { for (let i = 0; i < IP.count; i += 3) { const v = (j) => [cx + IP.getX(j) * r, cy + IP.getY(j) * r * 0.85, cz + IP.getZ(j) * r], e = (0.9 + Rt() * 0.2) * (0.82 + 0.18 * (IP.getY(i) + IP.getY(i + 1) + IP.getY(i + 2) + 3) / 6);
+    const clump = (cx, cy, cz, r, b0, lo) => { const j = (0.9 + Rj() * 0.18) * (lo ? 0.85 : 1), base = b0.map(v => v * j);   // (each clump a shade apart; the low ones in the crown's shade)
+      for (let i = 0; i < IP.count; i += 3) { const v = (j) => [cx + IP.getX(j) * r, cy + IP.getY(j) * r * 0.85, cz + IP.getZ(j) * r], e = (0.9 + Rt() * 0.2) * (0.82 + 0.18 * (IP.getY(i) + IP.getY(i + 1) + IP.getY(i + 2) + 3) / 6);
       og.triO(v(i), v(i + 1), v(i + 2), [base[0] * e, base[1] * e, base[2] * e], [cx, cy, cz]); } };
     const broad = (x, z, h, n) => { const dk = 0.88 + Rt() * 0.24, base = [0.3 * dk, 0.46 * dk, 0.18 * dk], r = h * 0.26;
       trunk(x, z, h * 0.04, h * 0.55, [0.36, 0.3, 0.24]);
       clump(x, h * 0.74, z, r * 1.1, base);
-      for (let b = 0; b < (n || 3); b++) { const a = b / (n || 3) * TAU + Rt(); clump(x + Math.cos(a) * r * 0.75, h * (0.56 + Rt() * 0.12), z + Math.sin(a) * r * 0.75, r * (0.8 + Rt() * 0.15), base); }
+      for (let b = 0; b < (n || 3); b++) { const a = b / (n || 3) * TAU + Rt(); clump(x + Math.cos(a) * r * 0.75, h * (0.56 + Rt() * 0.12), z + Math.sin(a) * r * 0.75, r * (0.8 + Rt() * 0.15), base, true); }
       TS.push([x, z, h, r * 1.5, 0]); };
     // (kept clear: the doors' views down the valley, the windows' sky, round the paddock's units)
     const LM = [[-29, 15.7, 13], [29, -14, 13]];
@@ -1886,6 +2069,76 @@ const Garage3D = (function () {
       World.box(og, x + 9.23, cy + 9.3, z, 0.06, 1.6, 1.2, 0, DK, DK); World.box(og, x + 7.4, cy + 9.3, z - 1.83, 1.2, 1.6, 0.06, 0, DK, DK);   // (the belfry's openings)
       for (const [hx, hz, r, rf] of [[-292, 58, 0.3, TILE], [-326, 4, -0.2, DKR], [-282, 14, 0.1, DKR], [-338, 52, 0.5, TILE]]) { World.box(og, hx, 0, hz, 9, 5, 7, r, WHT, WHT); roof(hx, 5, hz, 10, 8.4, 3.4, r, rf.map(v => v * 0.8), WHT);
         const Ph = rp(hx, hz, r); for (const i of [-1, 1]) for (const yy of [1.0, 3.0]) { const [wx, wz] = Ph(i * 2.4, 3.53); World.box(og, wx, yy, wz, 1.0, 1.0, 0.08, r, DW, DW); } } }
+    // the paddock by the doors (round 2), clear of the way in and out: the team's gazebo on the sunny apron (its canopy's shadow: the
+    // ground's), a delivery on a pallet with its pallet truck by the right door; two pit scooters and a cage of slicks by the left one.
+    // Each door's in a mesh of its own, baked as the rest (q: the one being built; ql: its glass): out of view, not drawn
+    { const AL = [0.75, 0.76, 0.78], RB = [0.075, 0.075, 0.085], RBL = [0.12, 0.12, 0.13], HB = [0.45, 0.46, 0.5];
+      let q = new World.GB(), ql = [];
+      // (a stack of n slicks round y at x, z: each tyre's tread darker at its shoulders, the top one's sidewall (a compound ring: band) and
+      // its rim)
+      const slicks = (x, z, n, r, th, band, yb) => { const S = 8, b0 = yb || 0, P = (a, y, rr) => [x + Math.cos(a) * rr, y, z + Math.sin(a) * rr], yt = b0 + n * th;
+        for (let k = 0; k < n; k++) { const y0 = b0 + k * th, y1 = y0 + th, lo = RB.map(v => v * 0.8);
+          for (let i = 0; i < S; i++) { const a0 = i / S * TAU, a1 = (i + 1) / S * TAU; q.quadO(P(a0, y0, r), P(a1, y0, r), P(a1, y1, r), P(a0, y1, r), RBL, [x, y0 + th / 2, z], null, [lo, lo, RBL, RBL]); } }
+        for (let i = 0; i < S; i++) { const a0 = i / S * TAU, a1 = (i + 1) / S * TAU, rm = r * 0.64;
+          q.quadO(P(a0, yt, r), P(a1, yt, r), P(a1, yt, rm), P(a0, yt, rm), RB, [x, yt - 1, z], null, band ? [RB, RB, band, band] : null); q.triO([x, yt - 0.02, z], P(a0, yt, rm), P(a1, yt, rm), HB, [x, yt - 1, z]); } };
+      // (the gazebo: four legs, the eaves' frame, a scissor brace each side; the navy canopy to its peak (and its underside), a gold valance
+      // with a navy pinstripe round it; a white folding table, two folding chairs with navy seats, two sets of slicks)
+      { const xa = 11.0, xb = 14.0, za = 2.4, zb = 5.4, ye = 2.3, AP = [12.5, 2.85, 3.9], C = [[xa, za], [xb, za], [xb, zb], [xa, zb]];
+        for (const [x, z] of C) World.box(q, x + (x < 12 ? 0.02 : -0.02), 0, z + (z < 4 ? 0.02 : -0.02), 0.04, ye - 0.02, 0.04, 0, AL, AL);
+        for (let i = 0; i < 4; i++) { const [x0, z0] = C[i], [x1, z1] = C[(i + 1) % 4], ix = (x0 + x1) / 2 - 12.5, iz = (z0 + z1) / 2 - 3.9;
+          obox(q, [x0, ye - 0.03, z0], [x1, ye - 0.03, z1], 0.035, 0.035, AL); obox(q, [x0, ye - 0.06, z0], [x1, ye - 0.42, z1], 0.02, 0.02, AL); obox(q, [x0, ye - 0.42, z0], [x1, ye - 0.06, z1], 0.02, 0.02, AL);
+          q.triO([x0, ye, z0], [x1, ye, z1], AP, NV, [12.5, 0, 3.9]); q.triO([x0, ye - 0.01, z0], [x1, ye - 0.01, z1], [AP[0], AP[1] - 0.01, AP[2]], [0.07, 0.09, 0.17], [12.5, 9, 3.9]);
+          const o = 0.03, ox = Math.sign(ix) * (Math.abs(ix) > 0.1 ? o : 0), oz = Math.sign(iz) * (Math.abs(iz) > 0.1 ? o : 0), Q = (x, y, z, e) => [x + ox * e, y, z + oz * e], ex = (x1 - x0) * 0.01, ez = (z1 - z0) * 0.01;
+          q.quadO(Q(x0 - ex, ye - 0.26, z0 - ez, 1), Q(x1 + ex, ye - 0.26, z1 + ez, 1), Q(x1 + ex, ye, z1 + ez, 1), Q(x0 - ex, ye, z0 - ez, 1), GD, [12.5, ye, 3.9]);
+          q.quadO(Q(x0, ye - 0.26, z0, 0.7), Q(x1, ye - 0.26, z1, 0.7), Q(x1, ye, z1, 0.7), Q(x0, ye, z0, 0.7), [0.62, 0.48, 0.15], [12.5 + ix * 9, ye, 3.9 + iz * 9]);
+          q.quadO(Q(x0 - ex, ye - 0.19, z0 - ez, 1.15), Q(x1 + ex, ye - 0.19, z1 + ez, 1.15), Q(x1 + ex, ye - 0.165, z1 + ez, 1.15), Q(x0 - ex, ye - 0.165, z0 - ez, 1.15), NV, [12.5, ye, 3.9]); }
+        World.box(q, 12.9, 0.7, 4.7, 1.2, 0.035, 0.6, 0, [0.82, 0.83, 0.82], [0.9, 0.9, 0.88]);
+        for (const sx of [-0.5, 0.5]) for (const sz of [-0.24, 0.24]) obox(q, [12.9 + sx, 0.7, 4.7 + sz], [12.9 + sx * 1.04, 0, 4.7 + sz * 1.25], 0.025, 0.025, AL);
+        for (const [x, z, r] of [[12.5, 4.05, 0.15], [13.35, 4.12, -0.1]]) { const B = M4(x, 0, z, 0, r, 0), at = (a, b, c) => new V3(a, b, c).applyMatrix4(B).toArray();
+          gBox(q, B, 0, 0.45, 0, 0.42, 0.035, 0.4, [0.12, 0.16, 0.3]); gBox(q, B, 0, 0.72, -0.2, 0.42, 0.3, 0.025, [0.12, 0.16, 0.3]);
+          for (const s of [-1, 1]) { obox(q, at(s * 0.2, 0, -0.22), at(s * 0.2, 0.45, 0.18), 0.02, 0.02, AL); obox(q, at(s * 0.2, 0, 0.18), at(s * 0.2, 0.88, -0.22), 0.02, 0.02, AL); } }
+        slicks(11.7, 3.0, 4, 0.33, 0.24, null); slicks(12.4, 3.06, 4, 0.33, 0.24, BANDS[0]); }
+      // (the delivery: a pallet (its blocks, its boards), a stack of cartons under stretch film on it; a hand pallet truck's forks in it,
+      // its steering head with the wheels and the handle (muted red) out toward the apron)
+      { const PN = [0.62, 0.5, 0.34], CB = [0.62, 0.5, 0.33], X0 = 10.6, X1 = 11.8, Z0 = -3.2, Z1 = -2.4, xc = 11.2, zc = -2.8, TR = [0.58, 0.1, 0.09];
+        World.box(q, xc, 0, zc, 1.16, 0.12, 0.76, 0, [0.14, 0.11, 0.08], [0.14, 0.11, 0.08], true); World.box(q, xc, 0.12, zc, 1.2, 0.024, 0.8, 0, PN, [0.68, 0.56, 0.38]);
+        for (const z of [Z0 + 0.05, zc, Z1 - 0.05]) q.quadO([X0 - 0.001, 0, z - 0.05], [X0 - 0.001, 0, z + 0.05], [X0 - 0.001, 0.12, z + 0.05], [X0 - 0.001, 0.12, z - 0.05], PN, [xc, 0.06, zc]);
+        for (const x of [X0 + 0.07, xc, X1 - 0.07]) q.quadO([x - 0.07, 0, Z1 + 0.001], [x + 0.07, 0, Z1 + 0.001], [x + 0.07, 0.12, Z1 + 0.001], [x - 0.07, 0.12, Z1 + 0.001], PN, [xc, 0.06, zc]);
+        World.box(q, xc, 0.144, zc, 1.14, 1.05, 0.76, 0, CB, [0.68, 0.56, 0.38], true);
+        for (const [a, b] of [[[10.612, 0.145, -2.75], [10.612, 1.19, -2.75]], [[10.612, 0.67, Z0 + 0.03], [10.612, 0.67, Z1 - 0.03]], [[10.85, 0.145, -2.402], [10.85, 1.19, -2.402]], [[11.25, 0.145, -2.402], [11.25, 1.19, -2.402]], [[10.64, 0.67, -2.402], [11.76, 0.67, -2.402]]]) obox(q, a, b, 0.012, 0.012, [0.42, 0.33, 0.2]);
+        World.box(q, xc, 0.55, zc, 1.16, 0.42, 0.78, 0, [0.76, 0.72, 0.62], [0.76, 0.72, 0.62], true);   // (the film's band, paler)
+        for (const s of [-1, 1]) World.box(q, 11.27, 0.03, zc + s * 0.2, 1.15, 0.07, 0.16, 0, [0.2, 0.2, 0.22], [0.25, 0.25, 0.27], true);
+        World.box(q, 11.95, 0.07, zc, 0.2, 0.36, 0.42, 0, TR, TR.map(v => v * 1.15)); cylA(q, [11.97, 0.085, zc], 'z', 0.085, 0.2, 8, [0.08, 0.08, 0.09], HB);
+        obox(q, [11.98, 0.42, zc], [12.12, 1.12, zc], 0.04, 0.04, TR); obox(q, [12.1, 1.08, zc - 0.13], [12.15, 1.2, zc - 0.13], 0.025, 0.025, [0.1, 0.1, 0.11]); obox(q, [12.1, 1.08, zc + 0.13], [12.15, 1.2, zc + 0.13], 0.025, 0.025, [0.1, 0.1, 0.11]);
+        obox(q, [12.15, 1.2, zc - 0.14], [12.15, 1.2, zc + 0.14], 0.03, 0.03, [0.1, 0.1, 0.11]); }
+      bakeOut(q, ql); q = new World.GB(); ql = [];
+      // (two pit scooters by the left door, step-throughs on their side stands: the navy front and leg shield, a floorboard, white-grey side
+      // panels with a gold line, the black seat, a rack with a gold box on it; small wheels, the handlebar and its mirrors, the headlamp)
+      for (const [x, z, ry] of [[-11.1, 2.62, Math.PI + 0.2], [-11.45, 3.5, Math.PI - 0.15]]) { const B = M4(x, 0, z, 0, ry, 0).multiply(M4(0, 0, 0, -0.08, 0, 0)), at = (a, b, c) => new V3(a, b, c).applyMatrix4(B).toArray(), bx = (a, b, c, sx, sy, sz, col) => gBox(q, B, a, b, c, sx, sy, sz, col);
+        const SW = [0.78, 0.79, 0.8], BL = [0.06, 0.06, 0.07];
+        for (const wx of [-0.6, 0.62]) gAdd(q, new THREE.CylinderGeometry(0.2, 0.2, 0.1, 8), B.clone().multiply(M4(wx, 0.2, 0, Math.PI / 2, 0, 0)), (c, n) => Math.abs(n[1]) > 0.5 ? HB : BL);
+        gAdd(q, new THREE.SphereGeometry(1, 10, 8), B.clone().multiply(M4(-0.42, 0.5, 0, 0, 0, 0.1, 0.38, 0.2, 0.19)), (c) => c[1] > 0.1 && c[1] < 0.3 ? GD : SW); bx(0.1, 0.26, 0, 0.62, 0.06, 0.3, [0.22, 0.23, 0.25]);
+        gBox(q, B.clone().multiply(M4(0.47, 0.6, 0, 0, 0, 0.28)), 0, 0, 0, 0.09, 0.72, 0.4, NV); gBox(q, B.clone().multiply(M4(0.63, 0.43, 0, 0, 0, -0.5)), 0, 0, 0, 0.26, 0.05, 0.15, NV);
+        bx(-0.42, 0.73, 0, 0.6, 0.09, 0.3, BL); bx(-0.82, 0.71, 0, 0.26, 0.025, 0.28, [0.2, 0.21, 0.23]); bx(-0.82, 0.835, 0, 0.27, 0.2, 0.28, GD);
+        obox(q, at(0.56, 0.5, 0), at(0.46, 1.0, 0), 0.05, 0.05, NV); bx(0.45, 1.02, 0, 0.16, 0.1, 0.26, NV); obox(q, at(0.43, 1.07, -0.33), at(0.43, 1.07, 0.33), 0.03, 0.03, BL);
+        for (const s of [-1, 1]) { obox(q, at(0.43, 1.07, s * 0.24), at(0.4, 1.26, s * 0.3), 0.012, 0.012, BL); bx(0.4, 1.28, s * 0.31, 0.03, 0.05, 0.1, BL); }
+        obox(q, at(-0.1, 0.25, -0.17), at(-0.18, 0.0, -0.33), 0.025, 0.025, BL);
+        const a = q.P.length / 3; bx(0.54, 1.02, 0, 0.02, 0.07, 0.12, [0.95, 0.94, 0.88]); ql.push([a, q.P.length / 3]); }
+      // (the cage of slicks by the transporter's tail: galvanised posts and rails, bars on the sides, its door half open; on a pallet; three
+      // stacks of slicks in it, one ringed yellow, one red)
+      { const xa = -11.9, xb = -10.5, za = -3.35, zb = -2.3, H = 1.6, GV = [0.5, 0.52, 0.55], y0 = 0.14;
+        World.box(q, (xa + xb) / 2, 0, (za + zb) / 2, 1.4, y0, 1.05, 0, [0.5, 0.4, 0.28], [0.55, 0.44, 0.3]);
+        for (const x of [xa + 0.025, xb - 0.025]) for (const z of [za + 0.025, zb - 0.025]) World.box(q, x, y0, z, 0.05, H - y0, 0.05, 0, GV, GV);
+        for (const y of [y0 + 0.03, H - 0.02]) { obox(q, [xa, y, za + 0.025], [xb, y, za + 0.025], 0.03, 0.04, GV); obox(q, [xa, y, zb - 0.025], [xb, y, zb - 0.025], 0.03, 0.04, GV); obox(q, [xa + 0.025, y, za], [xa + 0.025, y, zb], 0.03, 0.04, GV); }
+        const bar = (p, t, nx, nz) => { const d = 0.006, A = [nz * d, 0, -nx * d]; for (const e of [1, -1]) q.quadO([p[0] - A[0], p[1], p[2] - A[2]], [p[0] + A[0], p[1], p[2] + A[2]], [t[0] + A[0], t[1], t[2] + A[2]], [t[0] - A[0], t[1], t[2] - A[2]], GV, [p[0] - nx * e, (p[1] + t[1]) / 2, p[2] - nz * e]); };
+        for (let x = xa + 0.17; x < xb - 0.1; x += 0.15) { bar([x, y0 + 0.03, zb - 0.025], [x, H - 0.02, zb - 0.025], 0, 1); }
+        for (let x = xa + 0.3; x < xb - 0.1; x += 0.3) bar([x, y0 + 0.03, za + 0.025], [x, H - 0.02, za + 0.025], 0, -1);
+        for (let z = za + 0.3; z < zb - 0.1; z += 0.3) bar([xa + 0.025, y0 + 0.03, z], [xa + 0.025, H - 0.02, z], -1, 0);
+        { const hz = za + 0.05, L = zb - za - 0.1, th = 0.7, D = (t, y) => [xb + Math.sin(th) * t, y, hz + Math.cos(th) * t];   // (the door on the side to the apron, swung out)
+          for (const t of [0.0, L]) obox(q, D(t, y0 + 0.03), D(t, H - 0.04), 0.035, 0.035, GV); for (const y of [y0 + 0.06, H - 0.06]) obox(q, D(0, y), D(L, y), 0.03, 0.035, GV);
+          for (let t = 0.15; t < L - 0.05; t += 0.15) bar(D(t, y0 + 0.06), D(t, H - 0.06), Math.cos(th), -Math.sin(th)); }
+        slicks(-11.55, -3.02, 5, 0.27, 0.22, [0.95, 0.78, 0.15], y0); slicks(-10.93, -3.03, 4, 0.27, 0.22, null, y0); slicks(-11.24, -2.59, 4, 0.27, 0.22, [0.86, 0.16, 0.12], y0); }
+      bakeOut(q, ql); }
     ico.dispose(); bakeOut(og, unlit); og = null;   // (its arrays let go: the flags' closures below keep this scope)
     // the ground: meadows near the workshop, fields further out (strips of a grid turned 30 deg, their edges wandering: meadow, cut hay in
     // mowing stripes, lush grass, ripe hay, pasture; darker headlands), a gravel strip round the walls; the concrete apron by each door (its
@@ -1920,7 +2173,7 @@ const Garage3D = (function () {
         'float rect(vec2 p, vec4 r){ vec2 q = max(r.xy - p, p - r.zw); return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0); }',   // (out of a rectangle; < 0 in it)
         'float line(float x, float w, float f){ return 1.0 - smoothstep(w - f, w + f, x); }',   // (|x| < w, soft over a pixel's f)
         'void main(){ vec2 p = vW.xz; float ax = abs(p.x), az0 = abs(p.y), d = length(p); vec2 fw = fwidth(p); float px = max(fw.x, fw.y) + 1e-3, e = px * 0.6;',
-        '  vec4 A = texture2D(uN, p * 0.09), B = texture2D(uN, p * 0.012 + 0.3), C = texture2D(uN, p * 0.55); float n1 = A.r, n2 = B.g, n3 = C.b;',
+        '  vec4 A = texture2D(uN, p * 0.09), B = texture2D(uN, p * 0.012 + 0.3), C = texture2D(uN, p * 0.55), D = texture2D(uN, p * 0.0042 + 0.53); float n1 = A.r, n2 = B.g, n3 = C.b;',   // (the noise's blobs: A ~0.6 m, B ~5 m, C ~0.1 m, D ~14 m)
         '  vec2 fp = vec2(p.x * 0.866 + p.y * 0.5, p.y * 0.866 - p.x * 0.5) + (vec2(vn(p * 0.011), vn(p * 0.011 + 7.3)) - 0.5) * 40.0, fq = fp / vec2(24.0, 75.0), fr = fract(fq);',
         '  float hc = hs(floor(fq) + 3.0);',
         '  vec3 fc = hc < 0.35 ? vec3(0.27, 0.4, 0.16) : hc < 0.6 ? vec3(0.38, 0.46, 0.2) : hc < 0.78 ? vec3(0.3, 0.44, 0.16) : hc < 0.9 ? vec3(0.5, 0.48, 0.26) : vec3(0.25, 0.36, 0.15);',
@@ -1928,13 +2181,19 @@ const Garage3D = (function () {
         '  float ed = min(min(fr.x, 1.0 - fr.x) * 24.0, min(fr.y, 1.0 - fr.y) * 75.0); fc = mix(fc * mix(0.8, 1.0, smoothstep(0.4, 2.0, ed)), vec3(0.31, 0.42, 0.18), smoothstep(5.0, 25.0, px));',
         '  float dw = rect(p, ' + v4([x0, z0, x1, z1]) + ');',
         '  vec3 c = mix(mix(vec3(0.24, 0.38, 0.15), vec3(0.36, 0.48, 0.21), n2), fc, smoothstep(20.0, 35.0, dw)) * (0.74 + 0.46 * n1) * (0.86 + 0.26 * n3) * vec3(1.0 + 0.12 * (A.b - 0.5), 1.0, 1.0 - 0.2 * (A.b - 0.5));',
+        // (the grass a little uneven over a few metres and over tens (lighter, darker, toward hay), greyer far off)
+        '  c *= 1.0 + 0.3 * (B.r - 0.5) + 0.3 * (D.g - 0.5); c = mix(c, c.g * vec3(1.0, 0.88, 0.42), 0.4 * (D.r - 0.5) + 0.2 * (B.b - 0.5));',
+        '  c = mix(c, vec3(dot(c, vec3(0.3333))), 0.15 * smoothstep(32.0, 48.0, d));',
         '  vec3 gv = vec3(0.56, 0.54, 0.48) * (0.78 + 0.34 * n3) * (0.94 + 0.1 * n1);',   // (gravel)
         '  float bend = max(ax - 36.0, 0.0), zc = 0.011 * bend * bend, sl = 0.022 * bend, rz = p.y - zc, az = abs(rz) / sqrt(1.0 + sl * sl), rw = mix(6.0, 3.1, smoothstep(15.5, 17.5, ax));',
         '  float rd = ax > 9.0 ? az - rw : 99.0, fcd = min(rect(p, vec4(-37.5, 3.0, -14.0, 20.5)), rect(p, vec4(14.0, -18.5, 40.0, -3.0))), pv = min(rd, fcd), pad = rect(p, vec4(-24.0, -7.6, -14.0, -2.5));',
         '  c = mix(c, gv, max(1.0 - smoothstep(0.6, 1.0, min(pv, dw - 0.2)), 1.0 - smoothstep(-e, e, pad)));',   // (gravel round the walls, along the road and the paddock, the truck's pad)
         '  vec3 a = vec3(0.35, 0.36, 0.38) * (0.84 + 0.28 * n3) * (0.93 + 0.12 * n1);',   // (asphalt; worn tracks along the road)
         '  a *= 1.0 - 0.08 * (1.0 - smoothstep(0.3, 0.9, abs(abs(rz) - 1.5))) * step(14.5, ax) * step(rd, 0.0);',
-        '  vec3 cr = vec3(0.6, 0.6, 0.58) * (0.86 + 0.2 * n3) * (0.94 + 0.1 * n1) * (1.0 - 0.18 * smoothstep(0.55, 0.8, A.g));',   // (concrete: 4 m slabs, old stains)
+        // (on the asphalt: dark sealed cracks meandering across it here and there, a few patches of newer asphalt)
+        '  if (pv < 0.6) { float cs = abs(fract(dot(p, vec2(0.17, 0.11)) + B.g * 1.2 + A.b * 0.06) - 0.5) * 5.0; a *= 1.0 - 0.5 * line(cs, 0.02, e) * smoothstep(0.5, 0.6, D.b) * (1.0 - smoothstep(0.04, 0.1, px));',
+        '    vec2 pq = p / vec2(5.0, 2.2), pf = abs(fract(pq) - 0.5); a *= 1.0 - (0.06 + 0.05 * n1) * step(0.86, hs(floor(pq) + 17.0)) * smoothstep(0.0, 0.06, min((0.33 - pf.x) * 5.0, (0.3 - pf.y) * 2.2)); }',
+        '  vec3 cr = vec3(0.6, 0.6, 0.58) * (0.86 + 0.2 * n3) * (0.94 + 0.1 * n1) * (1.0 - 0.18 * smoothstep(0.55, 0.8, A.g)) * (0.95 + 0.09 * hs(floor(p / 4.0) + 3.0));',   // (concrete: 4 m slabs each a shade apart, old stains)
         '  vec2 jt = abs(fract(p / 4.0) - 0.5) * 4.0; cr *= 1.0 - 0.3 * line(min(jt.x, jt.y), 0.05, e) * (1.0 - smoothstep(0.1, 0.3, px));',
         '  a = mix(a, cr, (1.0 - smoothstep(14.3, 14.7, ax)) * (1.0 - smoothstep(6.3, 6.7, az0)));',
         '  a = mix(a, vec3(0.86, 0.86, 0.84), line(abs(az - rw + 0.3), 0.06, e) * smoothstep(15.0, 18.0, ax) * step(rd, 0.5) * 0.75);',   // (the edge lines)
@@ -1947,6 +2206,10 @@ const Garage3D = (function () {
         '  c *= 0.74 + 0.26 * smoothstep(0.0, 2.6, dw);',   // (darker by the walls)
         '  float shd = texture2D(uSh, p / 384.0 + 0.5).r * step(max(ax, az0), 190.0);',
         '  if (d < 70.0) { shd = max(shd, ' + mx(BX.map(b => 'sweep(p, ' + v4(b) + ', ' + b[4].toFixed(2) + ')')) + ');',
+        // (by the right door: the gazebo's canopy (2.04 m up: its footprint swept from there), its table's top, the slicks stacked under it;
+        // the delivery on its pallet)
+        '    if (p.x > 8.0 && p.x < 14.5 && abs(p.y + 0.2) < 5.6) shd = max(shd, max(max(sweep(p + oSun.xz / oSun.y * 2.04, vec4(11.0, 2.4, 14.0, 5.4), 0.56), sweep(p + oSun.xz / oSun.y * 0.7, vec4(12.3, 4.4, 13.5, 5.0), 0.035)),',
+        '      max(sweep(p, vec4(11.42, 2.72, 12.68, 3.34), 0.96), sweep(p, vec4(10.6, -3.2, 11.8, -2.4), 1.2))));',
         '    c *= 0.8 + 0.2 * smoothstep(0.0, 1.0, min(min(rect(p, ' + v4(BX[1]) + '), rect(p, ' + v4(BX[3]) + ')), rect(p, ' + v4(BX[4]) + '))); }',
         '  c *= mix(vec3(1.0), vec3(0.5, 0.56, 0.68), shd);',
         '  gl_FragColor = outC(mix(c, horz(p), ' + HAZE.toFixed(2) + ' * (1.0 - exp(-d / ' + AIR.toFixed(1) + ')))); }'].join('\n') }));
