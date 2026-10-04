@@ -318,7 +318,7 @@ try {
       for (const n of ['bumperR', 'wheelFL']) if (PT[n] && !P.lost[n]) Core.detachPart(P, n, PT[n]);
       g.sim(1 / 120, true); Render.frame(1 / 60, 1, P, 'chase', { noFx: true });
       const keepLit = ['L', 'R'].filter(s => tr1[s] && tr1[s][1] > tr1[s][0] && TH[s] !== 'bumperR'), lit1 = lit();
-      const one = { bumperR: !!PT.bumperR, host: TH, lit: lit1, keep: keepLit, tailOk: keepLit.every(s => lit1.includes(s)), wheel: !!(PT.wheelFL && v.wheelOff[0]), fl: corner()[0], low: v.sagQ ? live(true) : null };
+      const one = { bumperR: !!PT.bumperR, host: TH, lit: lit1, keep: keepLit, tailOk: keepLit.every(s => lit1.includes(s)), wheel: !!(PT.wheelFL && v.wheelOff[0]), fl: corner()[0], sag: !!v.sagQ, low: live(!!v.sagQ), rest: live(false) };   // (no sag at all: its lowest point already 1 cm over the road, a kart's floor)
       // the wreck: every part off (the wheels too: damage on), the pieces thrown at the next step, then drawn
       const f0 = Render.fxStats(); Core.wreckCar(P); g.sim(1 / 120, true); Render.frame(1 / 60, 1, P, 'chase', { noFx: true });
       const f1 = Render.fxStats(); v = Render.viewOf(P); const full = geo.drawRange.count === U.N;
@@ -345,11 +345,13 @@ try {
       // the wheels hidden, the body down on its corners (the sag's turn and lift, v.sagQ / v.sagP, composed after the body's pose each frame:
       // the hubs' feet moved by it)
       const wl = P.wreck ? P.wreck.wl : 0, lowLive = live(false), hid0 = [...v.wf, ...v.wr].filter(w => !w.visible).length, cy0 = corner();
-      const sag = { wl, hidden: hid0, corners: cy0.map(q => +q.toFixed(3)), want: -Math.min(0.6 * M.rw, Math.max(0, lowLive - 0.01)), low: v.sagQ ? live(true) : null, hubs: v.hubs.filter(hb => hb && hb.visible).length };   // (every wheel off: the body down by 0.6 rw, no lower than its lowest point 1 cm over the road)
+      const sag = { wl, hidden: hid0, corners: cy0.map(q => +q.toFixed(3)), want: -Math.min(0.6 * M.rw, Math.max(0, lowLive - 0.01)), low: live(!!v.sagQ), hubs: v.hubs.filter(hb => hb && hb.visible).length };   // (every wheel off: the body down by 0.6 rw, no lower than its lowest point 1 cm over the road)
       // 60 frames on (the pit crew round the car: crewWheel every frame): still hidden, no new burst
       const crew = !!(Render.crew && Render.crew.P === P);
       let shown = 0; for (let i = 0; i < 60; i++) { g.sim(1 / 60, true); Render.frame(1 / 60, 1, P, 'chase', { noFx: true }); shown = Math.max(shown, [...v.wf, ...v.wr].filter(w => w.visible).length - (4 - hid0)); }
-      const f2 = Render.fxStats(); if (frozen) { frozen.w1 = frozen.m.userData.char.value.w; frozen.c1 = v.charU.value.w; }
+      const f2 = Render.fxStats();
+      if (frozen) { if (v.fire) { v.fire.t0 -= 10; Render.frame(1 / 60, 1, P, 'chase', { noFx: true }); }   // (on the grid the race's clock stands: the fire 10 s older, the car's char spreads on)
+        frozen.w1 = frozen.m.userData.char.value.w; frozen.c1 = v.charU.value.w; }
       // the car limping through a corner on its hubs (the body's roll from c.w * c.speed, frames only), then the marshals' refit (what
       // Race.rescue does on a track without pits): the wheels back, the body up, back on its wheels (nothing of the sag's offset left)
       for (let i = 0; i < 30; i++) { P.w = 0.45; P.speed = 22; Render.frame(1 / 60, 1, P, 'chase', { noFx: true }); }
@@ -378,8 +380,8 @@ try {
   T.check('a part hanging loose (its zone at 65 % of its threshold): its ranges turned once, rigidly (the shell and its lining together), the inner block drawn (no gap into nothing)', R5.every(r => r.loose.ajar && r.loose.moved > 0.005 && r.loose.rigid && r.loose.full),
     R5.map(r => `${r.id} ${r.loose.part} ${r.loose.ajar ? 'loose' : 'not loose'} ${r.loose.moved} m${r.loose.rigid ? '' : ' NOT RIGID'}${r.loose.full ? '' : ' (inner block not drawn)'}`).slice(0, 6).join(', '));
   T.check('the rear bumper off alone: a tail lamp on the body (kitInfo tailHost: the part of the shell\'s surface nearest it) stays lit; the front left wheel off alone: that corner down, no point of the shell left on the car in the road (>= 7 mm over it)',
-    R5.every(r => (!r.one.bumperR || r.one.tailOk) && (!r.one.wheel || (r.one.fl < -0.01 && r.one.low >= 0.007))),
-    R5.map(r => `${r.id} tail ${r.one.host.L}/${r.one.host.R} lit ${r.one.lit.join('') || '-'} of ${r.one.keep.join('') || '-'}${r.one.wheel ? `, FL ${r.one.fl.toFixed(3)} lowest ${r.one.low.toFixed(3)}` : ''}`).slice(0, 6).join(' | '));
+    R5.every(r => (!r.one.bumperR || r.one.tailOk) && (!r.one.wheel || ((r.one.fl < -0.01 || (!r.one.sag && r.one.rest <= 0.02)) && r.one.low >= 0.007))),
+    R5.map(r => `${r.id} tail ${r.one.host.L}/${r.one.host.R} lit ${r.one.lit.join('') || '-'} of ${r.one.keep.join('') || '-'}${r.one.wheel ? `, FL ${r.one.fl.toFixed(3)} lowest ${r.one.low.toFixed(3)}${r.one.sag ? '' : ' (no room to sag: ' + r.one.rest.toFixed(3) + ')'}` : ''}`).slice(0, 6).join(' | '));
   T.check('Core.wreckCar: every lost part off the view (dead), its ranges collapsed to one point, the whole buffer drawn', R5.every(r => r.lost > 0 && !r.dead.length && !r.notOne.length && r.full),
     R5.map(r => `${r.id} ${r.lost} lost${r.dead.length ? ', not dead ' + r.dead.join(' ') : ''}${r.notOne.length ? ', not collapsed ' + r.notOne.join(' ') : ''}${r.full ? '' : ', not the whole buffer'}`).slice(0, 6).join(' | '));
   T.check('each piece on the road a mesh of its own: a body part\'s copy (its ranges\' vertex count, a real volume > 1e-4 m3, its own copy of the body\'s material: the same program, the char it came off with, kept while the car\'s goes on), a wheel the model\'s wheel',

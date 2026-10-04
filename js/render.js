@@ -808,9 +808,10 @@ const Render = (function () {
      PARTS AND RANGES
        The vehicle's part table (Core.partsOf(M): the def's parts.set, drop, extra) names the parts; the wheels are their own meshes, every
        other part must get geometry (else the build fails): 'body' (the shell that never comes off) and each part id own a range of the one
-       body geometry: [outer shell by part][inner block by part]. The inner block (the loft's lining, the floor, the cabin, the engine bay:
-       K.inner, K.seat, K.engine) is drawn only once a part is lost, so it costs nothing while the car is whole. A part's outer and inner
-       ranges leave together (stage B2: they collapse; the debris takes a copy).
+       body geometry: [outer shell by part][inner block by part: what lies ahead of the windscreen's foot first]. The inner block (the
+       loft's lining, the floor, the cabin, the engine bay: K.inner, K.seat, K.engine) is drawn only once a part hangs loose or is lost, so
+       it costs nothing while the car is whole. A part's outer and inner ranges leave together (stage B2: they collapse; the debris takes a
+       copy).
        Which part a triangle belongs to, highest first:
          1. an explicit scope: K.part(id, fn) (also a helper's o.part)
          2. a helper's own centre: every K helper call (and K.at) is ONE primitive, classified once by its centre through the regions, never
@@ -882,7 +883,8 @@ const Render = (function () {
        panel; the cockpit looks out through the glass). A panel whose colour is K.GLASS is glass; mark the others that are (a painted panel
        under a GLASS decal) with the loft's glass(k, e, kind, at). The lining and the cabin are a fixed dark colour. A crushed roof takes
        the lining with its shell (each lining point follows the shell's point it is inset from); the cabin, the floor and the engine stay.
-       The car the cockpit camera sits in draws its outer shell only (no lining, cabin or engine bay from the driver's seat). The glass is
+       The car the cockpit camera sits in draws its outer shell and, once a part is off or loose, of the inner block only what lies ahead
+       of the windscreen's foot (the engine bay a lost bonnet bares; no lining or cabin round the driver). The glass is
        an opaque colour, seen from outside only: the loft's panels are one-sided (from inside they are not drawn: the driver sees out). A
        pane of its own (a roadster's windscreen, a buggy's screen) must be one-sided too: K.face / K.rect facing out (forward); a K.plate
        or K.box of K.GLASS is a dark wall in the cockpit's view
@@ -4621,6 +4623,12 @@ const Render = (function () {
     let th = T[1] * Math.PI / 180;
     if (kind === 'bumper' || kind === 'wing') th = Math.asin(Math.min(kind === 'wing' ? 0.3 : 0.5, (kind === 'wing' ? 0.12 : 0.16) / Math.max(0.05, rm)));
     th *= sg;
+    if (kind === 'bumper' || kind === 'drop') {   // (a low car's bumper end: no lower than 1 cm over the road; the turn cut back as far as that takes)
+      const lowAt = (t) => { const c1 = Math.cos(t), s1 = Math.sin(t); let lo = 1e9;
+        for (let i = R.o[0]; i < R.o[1]; i++) { const qx = pa[i * 3] - A[0], qy = pa[i * 3 + 1] - A[1], qz = pa[i * 3 + 2] - A[2], d = (qx * u[0] + qy * u[1] + qz * u[2]) * (1 - c1);
+          lo = Math.min(lo, A[1] + qy * c1 + (u[2] * qx - u[0] * qz) * s1 + u[1] * d); } return lo; };
+      if (lowAt(th) < 0.01) { let a = 0, b = 1; for (let it = 0; it < 12; it++) { const m = (a + b) / 2; if (lowAt(th * m) >= 0.01) a = m; else b = m; } th *= a; }
+    }
     const cs = Math.cos(th), sn = Math.sin(th), O = [0, 0, 0], turn = (a, i, b) => {   // (Rodrigues: about the axis u through b)
       const qx = a[i] - b[0], qy = a[i + 1] - b[1], qz = a[i + 2] - b[2], d = (qx * u[0] + qy * u[1] + qz * u[2]) * (1 - cs);
       a[i] = b[0] + qx * cs + (u[1] * qz - u[2] * qy) * sn + u[0] * d; a[i + 1] = b[1] + qy * cs + (u[2] * qx - u[0] * qz) * sn + u[1] * d; a[i + 2] = b[2] + qz * cs + (u[0] * qy - u[1] * qx) * sn + u[2] * d; };
