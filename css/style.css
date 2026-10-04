@@ -248,6 +248,8 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 /* ================= SCREENS ================= */
 .screen { position: absolute; inset: 0; z-index: 10; display: none; align-items: center; padding: calc(10px + var(--st)) calc(16px + var(--sr)) calc(10px + var(--sb)) calc(16px + var(--sl)); }
 .screen.show { display: flex; }
+#s-menu { padding: 0; align-items: stretch; }   /* (the menu: its own frame in a shadow root fills it) */
+#menu-host { position: absolute; inset: 0; }
 .panel { position: relative; background: var(--panel); border: 1px solid var(--panel-edge); border-radius: 14px; padding: clamp(14px, 4.5vh, 26px) clamp(16px, 4vw, 30px); max-height: 100%; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,.45); }
 .panel::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 8px; border-radius: 14px 0 0 14px; background: repeating-linear-gradient(180deg, var(--curb) 0 14px, var(--chalk) 14px 28px); }
 .panel h2 { margin: 0 0 8px; font: 400 italic clamp(22px, 7vh, 34px)/1 var(--f-display); letter-spacing: .01em; }

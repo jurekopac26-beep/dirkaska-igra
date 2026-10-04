@@ -108,7 +108,7 @@ try {
   {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }), page = await ctx.newPage(), errors = [];
     page.on('pageerror', e => errors.push('pageerror: ' + e.message));
-    await page.addInitScript((raw) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-noadapt', '1'); localStorage.setItem('tdgp-settings', raw); }, JSON.stringify({ sound: 0, comm: 0, quali: 0, camera: 'iso' }));
+    await page.addInitScript((raw) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-noadapt', '1'); localStorage.setItem('tdgp-menu', 'old'); localStorage.setItem('tdgp-settings', raw); }, JSON.stringify({ sound: 0, comm: 0, quali: 0, camera: 'iso' }));
     await page.goto(srv.base + '/index.html'); await page.waitForFunction(() => window.__game, null, { timeout: 180000 });
     await startTrack(page, 'jezero'); await wait(800);
     const st = () => page.evaluate(() => ({ show: document.getElementById('rotate').classList.contains('show'), txt: document.getElementById('rotate-txt').textContent, why: document.getElementById('rotate-why').textContent, btn: document.getElementById('rotate-cam').textContent, cam: window.__game.S.camera }));
@@ -127,7 +127,7 @@ try {
     const dir = path.join(tmp, 'dirkaska-igra');
     fs.mkdirSync(dir);
     for (const f of ['index.html', 'manifest.webmanifest', 'sw.js']) fs.copyFileSync(path.join(ROOT, f), path.join(dir, f));
-    for (const d of ['css', 'js', 'icons']) fs.cpSync(path.join(ROOT, d), path.join(dir, d), { recursive: true });
+    for (const d of ['css', 'js', 'icons', 'fonts']) fs.cpSync(path.join(ROOT, d), path.join(dir, d), { recursive: true });
     const s2 = await serve(tmp), home = s2.base + '/dirkaska-igra/';
     const isPage = (req) => req.url === '/dirkaska-igra/' || req.url === '/dirkaska-igra/index.html';
     // publish version n: a changed script and title, stamped like a real change; returns the script's new address

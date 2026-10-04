@@ -26,7 +26,7 @@
 
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
-  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 1, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, hlv: 1, line: 0 };
+  const DEF = { phys: 'cs', control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 2, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 1, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, hlv: 1, line: 0, intro: 0, music: 1, mapV: 2, lastTrack: '' };
   let S = Object.assign({}, DEF);
   let records = {};
   try { const j = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (j) S = Object.assign(S, j); } catch (_) { }
@@ -49,6 +49,10 @@
   if (!['race', 'tt', 'traffic', 'police'].includes(S.mode)) S.mode = 'race';   // (Vršič: the race against the rivals, the time trial, the duel in the traffic, the run from the police)
   S.difficulty = Number.isFinite(+S.difficulty) ? clamp(Math.round(+S.difficulty), 0, 3) : DEF.difficulty;   // (lahka, srednja, težka, super težka: the police all four, a race takes the last as težka)
   if (S.lang !== 'en') S.lang = 'sl';
+  S.intro = [0, 1, 2].includes(+S.intro) ? +S.intro : 0; S.music = +S.music === 0 ? 0 : 1; S.mapV = +S.mapV === 1 ? 1 : 2;   // (the race intro: Full, Short, Off; the music before the race; the track map shown: the flyover or the map)
+  // the menu (js/menu.js: the main menu and the single race, in a shadow root) replaces the title and track screens; ?menu=old (or tdgp-menu=old in the
+  // storage, which the automated tests of the old screens set) keeps the old ones, and so does a game opened from a file (it fetches its style and data)
+  let menuOn = !!window.Menu && location.protocol !== 'file:' && !/[?&]menu=old\b/.test(location.search) && (() => { try { return localStorage.getItem('tdgp-menu') !== 'old'; } catch (_) { return true; } })();
   if (!['off', 'auto', 'on'].includes(S.saver)) S.saver = 'off';
   if (!['low', 'med', 'high', 'auto'].includes(S.detail)) S.detail = 'auto';   // adaptive graphics detail (LOD) level, see detailTier()
   if (!['short', 'normal', 'long', 'endurance'].includes(S.length)) S.length = 'normal';
@@ -346,7 +350,9 @@
   }
   function showScreen(name) {
     screen = name;
-    for (const s of document.querySelectorAll('.screen')) s.classList.toggle('show', s.id === 's-' + name);
+    const sid = menuOn && (name === 'title' || name === 'track') ? 'menu' : name;   // (the menu stands for the title and the track screen)
+    for (const s of document.querySelectorAll('.screen')) s.classList.toggle('show', s.id === 's-' + sid);
+    if (menuOn) { if (sid === 'menu') Menu.show(name); else Menu.hide(); }
     fitSegs();
     const inRace = name === 'none';
     $('hud').classList.toggle('off', !(bg === 'race' && (name === 'none' || name === 'pause')));
@@ -452,7 +458,7 @@
       const d = Core.TRACKS.find(x => x.id === S.track), W = ['malo krila', 'srednje krilo', 'veliko krila'], G = ['kratke prestave', 'srednje prestave', 'dolge prestave'], U = setupOf(S.track);
       if (d) toast(tr('Nastavitev za {0}: {1}, {2}.', Lang.of(d, 'name'), tr(W[U.wing]), tr(G[U.gear])), 2400);
       return; }
-    const num = ['zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'codrv', 'damage', 'ghost', 'quali', 'tower', 'fuel', 'line', 'faults', 'radio', 'hlv'];
+    const num = ['zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'comm', 'codrv', 'damage', 'ghost', 'quali', 'tower', 'fuel', 'line', 'faults', 'radio', 'hlv', 'intro', 'music', 'mapV'];
     S[key] = num.includes(key) ? +v : v;
     if (key === 'lang') Lang.set(S.lang);   // (before the settings apply: what they write is in the new language)
     if (key === 'shadows') { autoNoShadows = false; perf.pending = perf.restore = false; perf.keep = true; }   // the player's own choice wins for the rest of the visit
@@ -465,7 +471,7 @@
     if (key === 'weather' && demo) { demo.setRain(demoRain()); if (!race) Render.setStorm(S.weather === 'storm'); }   // (a race keeps its weather; the next one gets the new setting)
     if (key === 'season' || key === 'tod') Render.setAtmos({ season: S.season, tod: S.tod });   // (the season and the time of day: at once, also on the title demo)
     if (key === 'season' && track && Render.worldStale) ensureTrack(track.def.id, () => { });   // (a world painted for the season (Vršič): built again in the new one)
-    if ((key === 'weather' || key === 'mode' || key === 'length' || key === 'pkGhost' || key === 'pkRoad') && screen === 'track') buildTrackScreen();   // (a time trial's records in the rain are its own, and a race's: the cards show them)
+    if ((key === 'weather' || key === 'mode' || key === 'length' || key === 'pkGhost' || key === 'pkRoad') && screen === 'track' && !menuOn) buildTrackScreen();   // (a time trial's records in the rain are its own, and a race's: the cards show them)
     if (key === 'control' && v === 'tilt') enableTilt(false);
     if (key === 'camera') { lockOrientation(); updateOrientation(); }
   }
@@ -1240,7 +1246,7 @@
       cond: { rain: c.rain === 1 ? 1 : 0, tod: CHAL_TOD[c.tod] ? c.tod : 'day', season: CHAL_SEASON[c.season] ? c.season : 'summer', upg: upgNorm(isObj(c.upg) ? c.upg : null), setup: { wing: v(st.wing), gear: v(st.gear) } } };
   }
   function chalLoad() { let o = null; try { o = JSON.parse(localStorage.getItem(CHAL_KEY) || 'null'); } catch (_) { } chal = chalOf(o); chalBtn(); }
-  function chalBtn() { const b = $('btn-chal'); b.classList.toggle('off', !chal); if (chal) b.textContent = tr('Izziv: {0} · {1}', chal.name, fmt(chal.time, true)); }
+  function chalBtn() { if (menuOn) Menu.refresh(); const b = $('btn-chal'); b.classList.toggle('off', !chal); if (chal) b.textContent = tr('Izziv: {0} · {1}', chal.name, fmt(chal.time, true)); }
   function chalImport(o) {   // a challenge from its link: the friend's ghost kept for its track (as a shared ghost), the challenge waiting, shown
     const c = chalOf(o); if (!c) return false;
     try { if (c.ghost) localStorage.setItem('tdgp-fghost-' + c.track, JSON.stringify({ name: c.name, time: c.time, ghost: o.ghost })); localStorage.setItem(CHAL_KEY, JSON.stringify(o)); }
@@ -3953,7 +3959,7 @@
   let padSel = null, padScreen = '';
   const PAD_SEL = 'button, select, input[type="range"]';
   const padVisible = (el) => !!el && el.isConnected && el.offsetParent !== null && !el.disabled && !el.closest('.off');
-  const padScr = () => document.querySelector('.screen.show');
+  const padScr = () => { const sc = document.querySelector('.screen.show'); return menuOn && sc && sc.id === 's-menu' ? Menu.padRoot() : sc; };   // (the menu is in a shadow root: its own buttons, or its intro's or sheet's)
   const padFind = (sel) => { const sc = padScr(); return sc ? [...sc.querySelectorAll(sel)].find(padVisible) || null : null; };
   function padItems() { const sc = padScr(); return sc ? [...sc.querySelectorAll(PAD_SEL)].filter(padVisible) : []; }
   function padFocus(el) {
@@ -3961,7 +3967,7 @@
     padSel = el || null;
     if (padSel) { padSel.classList.add('pad-focus'); try { padSel.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (_) { } }
   }
-  const padHome = () => padFind('.track-card.sel, .ch-card.sel, .btn.primary') || padItems()[0] || null;   // (the chosen track or series, else the main button)
+  const padHome = () => padFind('.track-card.sel, .ch-card.sel, .btn.primary, .go, .mode[aria-current="true"]') || padItems()[0] || null;   // (the chosen track or series, else the main button)
   function padMove(dir) {
     const items = padItems(); if (!items.length) return;
     if (!items.includes(padSel)) { padFocus(padHome()); return; }
@@ -3997,7 +4003,8 @@
         continue;
       }
       if (screen === 'none') continue;
-      if (k === 'start') { const m = padFind('.btn.primary'); if (m) m.click(); }
+      if (menuOn && (screen === 'title' || screen === 'track') && Menu.padKey(k)) continue;   // (the new menu: B, Start, LB and RB are its own)
+      if (k === 'start') { const m = padFind('.btn.primary, .go'); if (m) m.click(); }
       else if (k === 'a') { if (padItems().includes(padSel)) { if (padSel.tagName === 'BUTTON') padSel.click(); else padSel.focus(); } else padFocus(padHome()); }
       else if (k === 'b') { const bk = padFind('[data-act="resume"], .btn.ghost[data-act], [data-act="settings-done"], [data-act="upg-done"], [data-act="ctrl-done"]'); if (bk) bk.click(); }
       else if (k === 'lb' || k === 'rb') { const el = padFind(k === 'lb' ? '[data-act$="car-prev"]' : '[data-act$="car-next"]'); if (el) el.click(); }
@@ -4243,7 +4250,7 @@
       case 'ctl-cur': case 'ctl-inv': { const r = Input.padRaw(); if (!r) break; const B = ctlPadOf(r); if (act === 'ctl-inv') B.steer.inv = B.steer.inv ? 0 : 1; else B.steer.cur = +el.dataset.v === 1 ? 1 : 1.5; ctlPadSet(r, B); ctlBuild(); break; }
       case 'car-prev': S.car = (S.car + Core.MODELS.length - 1) % Core.MODELS.length; save(); buildCarScreen(); break;
       case 'car-next': S.car = (S.car + 1) % Core.MODELS.length; save(); buildCarScreen(); break;
-      case 'to-track': buildTrackScreen(); showScreen('track'); break;
+      case 'to-track': if (!menuOn) buildTrackScreen(); showScreen('track'); break;
       case 'to-upg': buildUpgScreen(); showScreen('upg'); break;
       case 'upg-done': buildCarScreen(); showScreen('car'); break;
       case 'upg-reset': S.upg[Core.MODELS[S.car].id] = upgNorm(null); save(); buildUpgScreen(); break;
@@ -4334,6 +4341,7 @@
   function updateAppButtons() {
     const app = installedApp();
     document.querySelectorAll('[data-act="install"]').forEach(b => b.classList.toggle('off', !installEvt || app));
+    if (menuOn) Menu.refresh();
     document.querySelectorAll('[data-act="fullscreen"]').forEach(b => b.classList.toggle('off', app));
   }
   function installApp() {
@@ -4358,6 +4366,61 @@
       setTimeout(() => { if (screen === 'title') location.reload(); }, 900);
     }).catch(() => { });   // (offline: stay on this version)
   }
+  /* ---------------- the menu's bridge (js/menu.js): what the menu reads and does in the game ---------------- */
+  const MenuBridge = {
+    get S() { return S; },
+    defs: () => Core.TRACKS,
+    track: (id) => getTrack(id),
+    baseId: (id) => { const d = Core.TRACKS.find(x => x.id === id); return d && d.variantOf ? d.variantOf : id; },   // (Pikes Peak on its gravel road is Pikes Peak)
+    shown: (d) => pkRoadDef(d),
+    modeOf: (d) => modeOf(d),
+    lapsOf: (d) => lapsOf(d),
+    setup: (id) => setupOf(id),
+    medals: (d) => medalSet(pkRoadDef(d)),
+    // the player's best on a track in the way it is driven now: [what it is, the time or '—']
+    record(d0) {
+      const d = pkRoadDef(d0), r = rec(d.id), md = modeOf(d), t = (v) => v > 0 ? fmt(v, true) : '—';
+      return isTT(d) ? ['Best time', t(r.bestTime)] : md === 'police' ? ['Best escape', t(r.bestRace)] : md === 'traffic' ? ['Best duel', t(r.bestRace)] : upRace(d) ? ['Best race', t(r.bestRace)] : ['Best lap', t(r.bestLap)];
+    },
+    car: () => { const M = Core.MODELS[S.car]; return { id: M.id, name: M.name, color: S.color }; },
+    carHere: () => owned(Core.MODELS[S.car].id),
+    career: () => inCareer() ? { money: career.money, cars: career.cars.length } : null,
+    champ: () => { const d = champDef(); return d && !champDone() ? { chip: 'ROUND ' + (champ.rounds.length + 1) + ' OF ' + d.tracks.length } : d ? { chip: 'SERIES DONE' } : null; },
+    schoolChip: () => SCHOOL.filter(L => schoolRec(L).medal >= 0).length + ' OF ' + SCHOOL.length + ' MEDALS',
+    statsChip: () => ACH.filter(a => st.ach[a[0]]).length + ' OF ' + ACH.length + ' UNLOCKED',
+    chal: () => !!chal,
+    fsAvailable: () => !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen) && !installedApp(),
+    installAvailable: () => !!installEvt && !installedApp(),
+    // the track the menu shows is the game's track (and, on a road that has several ways to drive it, the way)
+    select(id, gameMode) {
+      const d = Core.TRACKS.find(x => x.id === id); if (!d) return;
+      S.track = d.theme === 'pikes' ? (S.pkRoad === 'pikesg' ? 'pikesg' : 'pikes') : id;
+      if (d.modes && d.modes.indexOf(gameMode) >= 0) S.mode = gameMode;
+      save(); refreshSegs();
+    },
+    setPkRoad(road) { S.pkRoad = road === 'pikesg' ? 'pikesg' : 'pikes'; S.track = S.pkRoad; save(); refreshSegs(); },
+    setOption: (k, v) => setOption(k, v),
+    // the weather of a "random" day is decided now (the intro over the track shows the rain it will have)
+    rollWet() {
+      const w = S.weather; if (w === 'rain' || w === 'storm') return true;
+      if (w !== 'random') return false;
+      const wet = Math.random() < (RAIN_P[S.track] || 0.35); wxNext = { rain: wet ? 1 : 0, wx: null }; return wet;
+    },
+    // Race!: the car must be the player's; the track is loaded (its loading screen), then fn(start) says what comes first (the intro) and calls start for the race
+    launch(fn) {
+      if (!owned(Core.MODELS[S.car].id)) { toast(tr('Ta avto še ni tvoj: kupi ga v izbiri avta.'), 3000); return; }
+      if (S.control === 'tilt') enableTilt(true);
+      Comm.unlock(); champRun = false; school = null;
+      ensureTrack(S.track, () => fn(startRace));
+    },
+    setLast(id) { S.lastTrack = id; save(); },
+    act: (a, el) => onAction(a, el),
+    click: () => { Sfx.resume(); Sfx.click(); },
+    visible: () => screen === 'title' || screen === 'track',
+    // the menu could not start: the old title and track screens take over
+    fallback() { menuOn = false; buildTrackScreen(); showScreen(screen === 'track' ? 'track' : 'title'); },
+  };
+
   function bindUI() {
     document.addEventListener('click', (e) => {
       const b = e.target.closest('[data-act]');
@@ -4447,6 +4510,7 @@
       Render.attachRace(demo);
       bindUI();
       refreshSegs();
+      if (menuOn) Menu.init(MenuBridge);
       showScreen('title');
       $('loading').classList.add('off');
       last = performance.now();

@@ -1,0 +1,13 @@
+[
+  ["jezero", "w_jezero", {"fn": "shot3", "soil": 38, "W": 412, "H": 470, "rot": 0.45, "el": 44, "fitW": 1.06, "soilK": 0.11, "marginK": 0.05, "wet": true}],
+  ["riviera", "w_riviera", {"fn": "shot3", "soil": 38, "W": 412, "H": 470, "rot": 0.45, "el": 44, "fitW": 1.06, "soilK": 0.11, "marginK": 0.05, "wet": true}],
+  ["gora", "w_gora", {"fn": "shot3", "soil": 38, "W": 412, "H": 470, "rot": 0.45, "el": 44, "fitW": 1.06, "soilK": 0.11, "marginK": 0.05, "wet": true}],
+  ["ljubljana", "w_ljubljana", {"fn": "shot3", "soil": 38, "W": 412, "H": 470, "rot": 0.45, "el": 44, "fitW": 1.06, "soilK": 0.11, "marginK": 0.05, "extra": [[282.0, 240.0], [268.6025403784439, 290.0], [232.0, 326.60254037844385], [182.0, 340.0], [132.00000000000003, 326.6025403784439], [95.39745962155612, 290.0], [82.0, 240.0], [95.39745962155612, 190.00000000000003], [131.99999999999994, 153.39745962155615], [181.99999999999997, 140.0], [232.0, 153.39745962155615], [268.60254037844385, 189.99999999999994]], "wet": true}],
+  ["monaco", "w_monaco", {"fn": "shot3", "soil": 38, "W": 412, "H": 470, "el": 44, "fitW": 1.02, "fitH": 0.9, "soilK": 0.11, "marginK": 0.05, "rot": 1.2, "wet": true}],
+  ["rbring", "w_rbring", {"fn": "shot3", "soil": 38, "W": 412, "H": 470, "el": 44, "fitW": 1.02, "fitH": 0.9, "soilK": 0.11, "marginK": 0.05, "rot": 0.45, "wet": true}],
+  ["suzuka", "w_suzuka", {"fn": "shot3", "soil": 38, "W": 412, "H": 470, "el": 44, "fitW": 1.02, "fitH": 0.9, "soilK": 0.11, "marginK": 0.05, "rot": 0.45, "wet": true}],
+  ["spa", "w_spa", {"fn": "shot3", "soil": 38, "W": 412, "H": 470, "el": 44, "fitW": 1.02, "fitH": 0.9, "soilK": 0.11, "marginK": 0.05, "rot": -1.1, "wet": true}],
+  ["pikes", "w_pikes", {"fn": "shot3", "soil": 38, "W": 412, "H": 470, "el": 44, "fitW": 1.02, "fitH": 0.9, "soilK": 0.11, "marginK": 0.05, "floor": [0.33, 0.36, 0.22], "rot": 2.0, "wet": true}],
+  ["ouninpohja", "w_ouninpohja", {"fn": "shot3", "soil": 38, "W": 412, "H": 470, "el": 44, "fitW": 1.02, "fitH": 0.9, "soilK": 0.11, "marginK": 0.05, "floor": [0.22, 0.33, 0.15], "rot": 2.0, "wet": true}],
+  ["nring", "w_nring", {"fn": "shot3", "soil": 38, "W": 412, "H": 470, "el": 44, "fitW": 1.02, "fitH": 0.9, "soilK": 0.11, "marginK": 0.05, "floor": [0.2, 0.3, 0.13], "rot": 0.45, "wet": true}]
+]
