@@ -564,16 +564,16 @@
   }
  },
  "diriyah": {
-  "meshes": 438,
-  "verts": 520039,
+  "meshes": 426,
+  "verts": 519787,
   "instances": 3195,
   "props": 307,
   "crowd": 0,
-  "world": "f2935fb0",
+  "world": "574779a3",
   "propsHash": "e4fc8374",
   "floor": "86994eca/4620",
   "groups": {
-   "-:MeshLambertMaterial": "3f860934",
+   "-:MeshLambertMaterial": "33c5242b",
    "-:MeshBasicMaterial": "9dff184a",
    "ao:MeshBasicMaterial": "f6e48eac",
    "tyremarks:MeshBasicMaterial": "577f2ff4",

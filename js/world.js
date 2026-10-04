@@ -22657,7 +22657,7 @@ const World = (function () {
     const excluded = (x, z) => { const Lc = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!Lc) return false; for (let k = 0; k < Lc.length; k++) { const e = Lc[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     const Pt = (i, o, y) => [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o];
-    const W1 = [1, 1, 1], CH = 128, scen = new Chunks(288);
+    const W1 = [1, 1, 1], CH = 256, scen = new Chunks(288);
     const onSide = (s, side, extra) => { const i = T.idx(s), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + extra); return [T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, i]; };
     const PIT = def.pit, pitZone = (i, side) => { if (!PIT || side < 0) return false; const d = dS(i * ds); return d > PIT[1] - 2 && d < PIT[2] + 2; };
 
@@ -22866,10 +22866,21 @@ const World = (function () {
         const r = gl.row(row, [shade(i, 0), shade(i, 0), shade(i, 0)], row.map(p => [p[0] / tileL, -p[2] / tileL])); if (pr >= 0) gl.link(pr, r, 0, 2); pr = r; }
       addM(gl, aMat);
       const TC = [[0.86, 0.12, 0.12], [0.1, 0.3, 0.7], [0.1, 0.5, 0.3], [0.95, 0.6, 0.1], [0.15, 0.15, 0.18], [0.85, 0.85, 0.88], [0.5, 0.2, 0.6], [0.2, 0.65, 0.75]];
-      for (let d = p0 + 40, k = 0; d < p1 - 20; d += 8.5, k++) { const s = sAt(d), q = T.pitAt(s); if (!q) continue; const i = T.idx(s), [x, z] = atSf(s, q.o + 3.5 + 5), y = hyS(s), hd = T.hd[i], g = scen.get(x, z), tc = TC[Math.floor(k / 2) % TC.length];
-        box(g, x, y, z, 8.3, 4.2, 10, hd, [0.93, 0.93, 0.92], [0.8, 0.8, 0.8], true);
-        const [fx, fz] = atSf(s, q.o + 3.55); box(g, fx, y + 3.0, fz, 8.0, 1.0, 0.1, hd, tc, tc); box(g, fx, y, fz, 6.5, 2.9, 0.06, hd, [0.18, 0.18, 0.2]);
-        exclPush(x, z, 7); nGar++; }
+      // the boxes, one every 10 m where the lane is full width (the player's at def.pit[3]): the apron (9 m, where the crews work: out.pitBoxes),
+      // the garage behind it (white, the team's colour over its door), the yellow stop box on the lane at the player's
+      const wl = [0.92, 0.92, 0.9], yc = [0.98, 0.82, 0.12], gp = new GB(), atY = (sq, o, dy) => { const [x, z, , ii] = atSf(sq, o); return [x, T.hy[ii] + dy, z]; };
+      for (let q = PIT[3] - 5 - 40, k = 0; q <= p1 - 30; q += 10, k++) { const s0 = sStart + q, i = T.idx(s0), pq = T.pitAt(s0); if (!pq || pq.t < 0.999 || nGar >= 13) continue;
+        const tx = T.tx[i], tz = T.tz[i], base = pq.o + 3.5, hd = T.hd[i], tc = TC[k % TC.length], mine = Math.abs(q + 5 - PIT[3]) < 1, sb = s0 + 5, yb = hyS(sb);
+        gp.quadUp(atY(s0 - 0.09, base, 0.034), atY(s0 + 0.09, base, 0.034), atY(s0 + 0.09, base + 9, 0.034), atY(s0 - 0.09, base + 9, 0.034), [wl, wl, wl, wl]);   // the box's divider
+        const [gx, gz] = atSf(sb, base + 14), g = scen.get(gx, gz);
+        box(g, gx, yb, gz, 9.6, 4.4, 10, hd, [0.93, 0.93, 0.92], [0.8, 0.8, 0.8], true);
+        const [fx, fz] = atSf(sb, base + 8.97); box(g, fx, yb + 3.2, fz, 9.0, 1.0, 0.08, hd, tc, tc); box(g, fx, yb, fz, 7.0, 3.0, 0.05, hd, [0.18, 0.18, 0.2]);
+        if (mine) { const L = pq.o; for (const [d0, d1, l0, l1] of [[-3.2, 3.2, L - 2.6, L - 2.35], [-3.2, 3.2, L + 2.35, L + 2.6], [-3.2, -2.95, L - 2.6, L + 2.6], [2.95, 3.2, L - 2.6, L + 2.6]])
+            gp.quadUp(atY(sb + d0, l0, 0.036), atY(sb + d1, l0, 0.036), atY(sb + d1, l1, 0.036), atY(sb + d0, l1, 0.036), [yc, yc, yc, yc]);
+          const [cx, cz] = atSf(sb, base + 4.2); out.pitBox = { s: sb, x: cx, z: cz, hd, tx, tz, nx: T.nx[i], nz: T.nz[i], lane: pq.o, wallO: pq.wall, apron0: base, garage0: base + 9, stop: atSf(sb, pq.o), y: yb }; }
+        const oc = atSf(sb, 0); (out.pitBoxes = out.pitBoxes || []).push({ k, s: sb, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: pq.o, wall: pq.wall, team: tc, mine, y: yb });
+        exclPush(gx, gz, 8); nGar++; }
+      addM(gp, lMat);
       { const s = sStart, i = T.idx(s), y = hyS(s), sp = Math.max(T.bl[i], T.br[i]);   // the start gantry over the line: two posts, the light box
         for (const sd of [-1, 1]) { const [x, z] = atSf(s, sd * ((sd > 0 ? T.br[i] : T.bl[i]) + 0.8)); box(scen.get(x, z), x, y - 0.3, z, 0.5, 7.8, 0.5, T.hd[i], [0.2, 0.2, 0.22]); }
         const [cx, cz] = atSf(s, (T.br[i] - T.bl[i]) / 2), A = [cx, y + 7.1, cz]; box(scen.get(cx, cz), cx, y + 6.4, cz, 0.6, 1.0, T.bl[i] + T.br[i] + 1.6, T.hd[i], [0.16, 0.16, 0.18]);
