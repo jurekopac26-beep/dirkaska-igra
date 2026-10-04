@@ -40,7 +40,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [2.33, 0.84, 0.07, 0.72, 0.79, 0.76, 0.01, 'b', 0.07]],        // the nose: the lamps' panel over the spoiler's face
         eye: { x: 0.12, y: 1.22, near: 0.25, tilt: 0.06, style: 'closed' },   // (high and upright, as in a van; the roll cage round it)
         door: [1.12, -0.06], bumpF: 0.15, bumpR: 0.14, bumpY: [0.5, 0.56],
-        engine: [-0.85, 0.78], engRear: true, cage: true },                  // (the race engine behind the seats, between the axles)
+        engine: [-0.85, 0.78], engRear: true, cage: true,                    // (the race engine behind the seats, between the axles)
+        crush: { x0: -2.29, x1: -0.55, z: 0.84 } },                          // (the roof over the engine sinks; the cage holds the cabin's)
       wheels: { style: 'slick', w: 0.27, wR: 0.31, rim: [0.17, 0.17, 0.19], gap: 0.04 },
       // (the tailgate is its glass and the panel under it: the D-pillars beside the glass stay on the body with the tail lamps)
       regions: (std) => std.map(r => r.part === 'trunk' ? Object.assign({}, r, { bands: ['edge', 'crown'] }) : r),
@@ -66,6 +67,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         LD.band([[XI0, 0.93], [0.38, 0.93], [0.38, 1], [XI0, 1]], B, null, 0.008);                        // under the roof's edge
         // the livery: a band in the stripe colour sweeping up the side from the nose to the tail; the black skirts
         LD.side([[2.34, 0.36], [2.34, 0.54], [-2.34, 0.96], [-2.34, 0.78]], S, null, 0.008);
+        for (const sd of [-1, 1]) {                                                                        // twin stripes over the bonnet and the roof
+          LD.top([[1.34, sd * 0.14], [2.3, sd * 0.14], [2.3, sd * 0.26], [1.34, sd * 0.26]], S, 0.008);
+          LD.top([[-2.14, sd * 0.14], [0.34, sd * 0.14], [0.34, sd * 0.26], [-2.14, sd * 0.26]], S, 0.008); }
         LD.side([[XA + 0.02, 0.24], [XB - 0.02, 0.24], [XB - 0.02, 0.33], [XA + 0.02, 0.33]], B, null, 0.008);
         LD.side([[2.18, 0.1], [2.34, 0.1], [2.34, 0.2], [2.18, 0.2]], B, null, 0.008);                      // (the spoiler's black lip, round its corners)
         // the sliding door: its rear shut line under the intake's lip, its rail along the quarter under the windows
@@ -108,7 +112,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.box(-2.29, 0.56, sd * 0.77, 0.09, 0.5, 0.18, 0, P, null, false, { part: 'body' });
           K.rect(-2.337, 0.81, sd * 0.77, 0.16, 0.46, B, { dir: '-x', part: 'body' }); K.tailLamp(-2.338, 0.81, sd * 0.77, 0.12, 0.42);
         }
-        K.number(-2.334, 0.8, 0, 0.24, { dir: '-x', host: 'trunk' });
+        K.rect(-2.334, 0.81, 0, 1.2, 0.17, B, { dir: '-x', part: 'trunk' });                    // (a black band across the tailgate from lamp to lamp)
         K.hinge('trunk', [-2.19, 1.6, -0.6], [-2.19, 1.6, 0.6]);
         K.part('bumperR', () => {
           K.rect(-2.334, 0.215, 0, 1.64, 0.07, B, { dir: '-x' }); K.rect(-2.334, 0.5, 0, 1.6, 0.035, S, { dir: '-x' });
@@ -120,13 +124,17 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.wingPlank(-1.95, 1.7, -2.38, 1.73, 0.04, -0.9, 0.9, S);                               // (its top 1.77: 14 cm over the roof)
           for (const sd of [-1, 1]) { K.endplate([[-1.92, 1.665], [-2.4, 1.665], [-2.4, 1.78], [-1.94, 1.755]], sd * 0.915, 0.014, B);
             K.box(-2.15, 1.58, sd * 0.45, 0.2, 0.13, 0.03, 0, B); }
-        }, { noCrush: true });
+        }, { noCrush: true, noDent: true });
         // ---- inside (seen once a part is off): two racing seats in the cage, the dashboard; the race engine behind them (the bulkhead
         //      between), its gearbox over the rear axle; the radiator in the nose ----
-        for (const sd of [-1, 1]) K.seat(0.02, 0.5, sd * 0.38, { w: 0.46, back: 0.72, tilt: 0.18 });
+        for (const sd of [-1, 1]) K.seat(0.02, 0.5, sd * 0.38, { w: 0.46, back: 0.72, tilt: 0.18, col: [0.08, 0.08, 0.09] });
         K.box(1.02, 0.6, 0, 0.42, 0.34, 1.6, 0, D, null, false, { inner: true, part: 'body' });
         K.box(-0.4, 0.18, 0, 0.04, 0.84, 1.62, 0, D, null, false, { inner: true, part: 'body' });
-        K.engine(-0.85, 0.2, 0, { l: 0.9, w: 0.64, h: 0.5 });
+        // the V10: its block, the plenum in the vee, the red cam covers on its banks, the headers to the tailpipes
+        K.engine(-0.85, 0.2, 0, { l: 0.86, w: 0.46, h: 0.44, col: [0.32, 0.33, 0.35], cover: [0.1, 0.1, 0.11] });
+        for (const sd of [-1, 1]) {
+          K.plate([[-1.24, 0.48, sd * 0.12], [-0.46, 0.48, sd * 0.12], [-0.46, 0.6, sd * 0.31], [-1.24, 0.6, sd * 0.31]], 0.05, [0.66, 0.1, 0.08], { inner: true, part: 'body' });
+          K.bar([-0.62, 0.36, sd * 0.3], [-1.9, 0.3, sd * 0.24], 0.035, [0.45, 0.42, 0.4], { n: 4, inner: true, part: 'body' }); }
         K.box(-1.52, 0.2, 0, 0.44, 0.32, 0.42, 0, [0.3, 0.31, 0.33], null, false, { inner: true, part: 'body' });
         K.box(1.95, 0.2, 0, 0.1, 0.5, 1.3, 0, [0.16, 0.16, 0.17], null, false, { inner: true, part: 'body' });
         const C = [0.78, 0.79, 0.82];
