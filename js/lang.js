@@ -259,6 +259,7 @@
     'Razgledišče': 'Viewpoint', 'Cestninska postaja': 'Toll Plaza',   // (the viewpoints and the toll plaza above Hout Bay; the viewpoint of Mulholland Highway)
     'Dolina Rock Creek': 'Rock Creek Valley', 'Vrh serpentin': 'Top of the Switchbacks',   // (Beartooth: Serpentina N and the heights by the rules of Lang.place)
     'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
+    'stadion': 'stadium', 'plavalna dvorana': 'swimming hall', 'jezero': 'lake',   // (Peking)
     'Konec asfalta': 'Pavement Ends', 'Konec makadama': 'Back on Asphalt',   // (the Moki Dugway; Razgledisce is in the dictionary already, from the Mulholland Highway)
     'Vodni stolp': 'Water Tower', 'Viadukt': 'Viaduct', 'Most čez South Esk': 'South Esk Bridge', 'Nivojski prehod': 'Level Crossing', 'Ravnina pri strojarni': 'Tannery Straight',
     'Ovinek pri strojarni': 'Tannery Corner', 'Dolgi most': 'Long Bridge', 'Leteča milja': 'Flying Mile',   // (Longford: the HUD)

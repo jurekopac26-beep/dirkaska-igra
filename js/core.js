@@ -1567,6 +1567,18 @@ const Core = (function () {
       rbale:  { m: 26, rh: 0.62, rb: 0.75, h0: 0.43,  e: 0.15, mu: 0.8,  lift: 0.3,  I: 4.6,  pts: (() => { const p = []; for (const x of [-0.62, 0.62]) for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; p.push([x, Math.cos(a) * 0.43, Math.sin(a) * 0.43]); } return p; })() },   // round straw bale lying on its side (Toskana)
       rbstack: { m: 78, rh: 0.9, rb: 1.1,  h0: 0.85,  breaks: 'rbale', parts: [[-0.66, -0.425, 0], [0.66, -0.425, 0], [0, 0.425, 0]], pf: [[1.1, 0.6], [1.0, 0.9], [0.8, 2.4]] },
       post:   { m: 4,  rh: 0.14, rb: 0.62, h0: 0.55,  e: 0.3,  mu: 0.6,  lift: 1.0,  I: 0.4,  pts: boxPts(0.07, 0.55, 0.07) },   // roadside post (stebriček): light, snaps over and cartwheels away
+      // street furniture of the street circuits' junctions (generic): a traffic signal pole with its arm over the road (along local +x), a round
+      // sign on a post (col: the plate's colour), a bollard, a litter bin, a fire hydrant, a utility cabinet, a street lamp (its arms along +x), a bus
+      // shelter, a guard railing panel (along +x). Each breaks off its foot and topples away; dmg: a little damage to the car above 6 m/s
+      signal: { m: 160, rh: 0.18, rb: 3.4,  h0: 3.2,  e: 0.12, mu: 0.6,  lift: 0.12, I: 190, dmg: 0.004, pts: boxPts(0.16, 3.2, 0.16).concat([[6.4, 2.9, 0], [6.4, 2.2, 0]]) },
+      sign:    { m: 10,  rh: 0.1,  rb: 1.35, h0: 1.3,  e: 0.25, mu: 0.6,  lift: 0.7,  I: 4.5,  pts: boxPts(0.05, 1.3, 0.05).concat([[0, 0.95, 0.4], [0, 0.95, -0.4]]) },
+      bollard: { m: 15,  rh: 0.13, rb: 0.5,  h0: 0.42, e: 0.25, mu: 0.6,  lift: 0.7,  I: 0.9,  pts: cylPts(0.13, -0.42, 0.42, 6) },
+      bin:     { m: 16,  rh: 0.36, rb: 0.65, h0: 0.45, e: 0.25, mu: 0.65, lift: 0.6,  I: 1.8,  pts: boxPts(0.5, 0.45, 0.23) },
+      hydrant: { m: 30,  rh: 0.17, rb: 0.5,  h0: 0.42, e: 0.2,  mu: 0.7,  lift: 0.4,  I: 1.2,  dmg: 0.002, pts: cylPts(0.17, -0.42, 0.42, 6) },
+      cabinet: { m: 60,  rh: 0.45, rb: 0.9,  h0: 0.7,  e: 0.15, mu: 0.7,  lift: 0.3,  I: 8,    dmg: 0.003, pts: boxPts(0.5, 0.7, 0.26) },
+      lamp:    { m: 70,  rh: 0.15, rb: 4.2,  h0: 4.0,  e: 0.12, mu: 0.6,  lift: 0.15, I: 300,  dmg: 0.003, pts: boxPts(0.13, 4.0, 0.13).concat([[1.6, 3.7, 0], [-1.6, 3.7, 0]]) },
+      shelter: { m: 160, rh: 0.9,  rb: 1.9,  h0: 1.25, e: 0.1,  mu: 0.75, lift: 0.2,  I: 140,  dmg: 0.004, pts: boxPts(1.6, 1.25, 0.72) },
+      railing: { m: 12,  rh: 0.7,  rb: 1.1,  h0: 0.5,  e: 0.2,  mu: 0.6,  lift: 0.45, I: 4,    pts: boxPts(1.0, 0.5, 0.05) },
     };
   })();
   const _pq = {};
@@ -1615,6 +1627,7 @@ const Core = (function () {
       race.propFx(b, vrel);
       const wl = Math.hypot(b.wx, b.wy, b.wz); if (wl > 14) { b.wx *= 14 / wl; b.wy *= 14 / wl; b.wz *= 14 / wl; }
       propFeel(c, K.m, vrel, b.kind);
+      if (K.dmg && vrel > 6 && !b.hurt) { b.hurt = 1; applyDamage(c, K.dmg * (vrel - 6), rcx * ch + rcz * sh, -rcx * sh + rcz * ch); }   // (the heavier street furniture: a dent where it hit, once)
       return;
     }
   }

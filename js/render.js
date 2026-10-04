@@ -1520,6 +1520,7 @@ const Render = (function () {
   let propMeshes = {};
   const PROP_COLS = [[0.88, 0.33, 0.24], [0.95, 0.95, 0.94], [0.27, 0.6, 0.35], [0.2, 0.2, 0.22], [0.92, 0.89, 0.74]];   // instance tint: red / white / green / black / cream (painted tyres, the same as the tyre walls)
   const POST_SNOW = [1, 0.53, 0.13];                              // instance tint of the orange snow poles high up on Pikes Peak (a 'post' with col 1)
+  const SIGN_COLS = [null, [0.22, 0.44, 0.92], [1, 0.82, 0.15]];   // instance tint of a sign's plate (col): white (none), blue, yellow
   let propMat = null, propMatTyre = null;
   function propGeometry(kind) {
     const W = World, g = new W.GB(kind === 'tyre' || kind === 'tstack'), white = [1, 1, 1], TAU2 = Math.PI * 2;
@@ -1557,6 +1558,53 @@ const Render = (function () {
       const wh = [0.95, 0.95, 0.93], bk = [0.08, 0.08, 0.09], rf = [1, 0.45, 0.08];
       W.box(g, 0, -0.65, 0, 0.14, 1.2, 0.14, 0, wh, wh); W.box(g, 0, 0.18, 0, 0.146, 0.22, 0.146, 0, bk, bk);
       for (const x of [-0.074, 0.074]) W.box(g, x, 0.22, 0, 0.012, 0.12, 0.09, 0, rf, rf); }
+    else if (kind === 'signal') {   // a grey pole on its plinth, the arm along +x at 6 m with two heads hung under it (lenses both ways, the red lit), a countdown box, a head and a pedestrian head on the pole
+      const gr = [0.52, 0.54, 0.57], grD = [0.4, 0.42, 0.45], blk = [0.08, 0.08, 0.09], H = 3.2, ya = H - 0.35, lens = [[0.95, 0.12, 0.08], [0.35, 0.28, 0.06], [0.06, 0.24, 0.1]];
+      W.box(g, 0, -H - 0.1, 0, 0.5, 0.45, 0.5, 0, grD, grD); W.cyl(g, 0, -H + 0.3, 0, 0.13, 2 * H - 0.3, 8, gr, gr, 0.1);
+      W.box(g, 3.2, ya - 0.08, 0, 6.4, 0.16, 0.16, 0, gr, gr);   // the arm
+      const head = (x, y0, both) => { W.box(g, x, y0, 0, 0.36, 1.08, 0.3, 0, blk, blk);   // a vertical housing of three, a visor over each lens
+        for (let k = 0; k < 3; k++) for (const sz of both ? [-1, 1] : [1]) { W.box(g, x, y0 + 0.78 - k * 0.34, sz * 0.155, 0.24, 0.24, 0.02, 0, lens[k], lens[k]); W.box(g, x, y0 + 0.99 - k * 0.34, sz * 0.2, 0.3, 0.03, 0.1, 0, blk, blk); } };
+      head(6.0, ya - 1.25, true); head(4.2, ya - 1.25, true);
+      W.box(g, 5.1, ya - 0.75, 0, 0.5, 0.42, 0.18, 0, blk, blk); for (const sz of [-1, 1]) W.box(g, 5.1, ya - 0.66, sz * 0.095, 0.34, 0.22, 0.01, 0, [0.9, 0.2, 0.1], null);   // the countdown (red digits, no numbers)
+      head(0.3, -0.2, false);
+      W.box(g, -0.16, -1.6, 0.1, 0.3, 0.6, 0.26, 0, blk, blk); W.box(g, -0.16, -1.42, 0.235, 0.22, 0.2, 0.01, 0, [0.9, 0.15, 0.1], null); W.box(g, -0.16, -1.66, 0.235, 0.22, 0.2, 0.01, 0, [0.1, 0.35, 0.15], null);   // pedestrian head: the red and the green man
+    } else if (kind === 'sign') {   // a round plate on a grey post: white with a red ring (the instance colour tints it blue for a lane sign), both faces
+      const gr = [0.55, 0.57, 0.6], H = 1.3, yc = 0.95, n = 12, red = [0.86, 0.1, 0.1];
+      W.box(g, 0, -H - 0.1, 0, 0.07, 2 * H + 0.05, 0.07, 0, gr, gr);
+      for (let k = 0; k < n; k++) { const a0 = k / n * TAU2, a1 = (k + 1) / n * TAU2, P = (a, r, x) => [x, yc + Math.cos(a) * r, Math.sin(a) * r];
+        for (const sx of [-1, 1]) { const x = sx * 0.045; g.triO([x, yc, 0], P(a0, 0.3, x), P(a1, 0.3, x), white, [-sx, yc, 0]); g.quadO(P(a0, 0.3, x), P(a0, 0.4, x), P(a1, 0.4, x), P(a1, 0.3, x), red, [-sx * 4, yc, 0]); }
+        g.quadO(P(a0, 0.4, -0.045), P(a1, 0.4, -0.045), P(a1, 0.4, 0.045), P(a0, 0.4, 0.045), gr, [0, yc, 0]); }
+      for (const sx of [-1, 1]) W.box(g, sx * 0.05, yc - 0.05, 0, 0.004, 0.1, 0.4, 0, [0.12, 0.12, 0.13], null);   // a bar across the white (no entry)
+    } else if (kind === 'bollard') {   // a pale granite post with a rounded top and a dark band
+      W.cyl(g, 0, -0.52, 0, 0.13, 0.84, 8, [0.72, 0.71, 0.68], null, 0.12); W.cyl(g, 0, 0.18, 0, 0.132, 0.08, 8, [0.3, 0.3, 0.32], null); W.cone(g, 0, 0.32, 0, 0.12, 0.1, 8, [0.74, 0.73, 0.7], [0.8, 0.79, 0.76], 0.04);
+    } else if (kind === 'bin') {   // a pair of bins side by side on one frame: blue (to recycle) and grey, dark lids with their slots
+      for (const [x, c] of [[-0.25, [0.16, 0.36, 0.68]], [0.25, [0.46, 0.48, 0.5]]]) { W.box(g, x, -0.45, 0, 0.46, 0.8, 0.44, 0, c, c); W.box(g, x, 0.35, 0, 0.48, 0.1, 0.46, 0, [0.14, 0.15, 0.16], [0.2, 0.21, 0.22]); W.box(g, x, 0.0, 0.225, 0.3, 0.06, 0.01, 0, [0.06, 0.06, 0.07], null); }
+      W.box(g, 0, -0.45, 0, 1.0, 0.06, 0.4, 0, [0.3, 0.31, 0.33], null);
+    } else if (kind === 'hydrant') {   // red, a white band, a cap, two outlets
+      const red = [0.8, 0.1, 0.08], wh = [0.93, 0.93, 0.9];
+      W.cyl(g, 0, -0.42, 0, 0.2, 0.08, 8, red, red); W.cyl(g, 0, -0.34, 0, 0.15, 0.62, 8, red, red); W.cyl(g, 0, 0.12, 0, 0.152, 0.06, 8, wh, wh); W.cone(g, 0, 0.28, 0, 0.13, 0.14, 8, red, red, 0.05);
+      W.box(g, 0, -0.02, 0, 0.46, 0.11, 0.11, 0, red, red);
+    } else if (kind === 'cabinet') {   // a light grey utility cabinet on a concrete plinth, a door seam and a vent
+      W.box(g, 0, -0.72, 0, 1.06, 0.14, 0.58, 0, [0.6, 0.6, 0.58], [0.66, 0.66, 0.64]); W.box(g, 0, -0.58, 0, 1.0, 1.28, 0.52, 0, [0.7, 0.72, 0.7], [0.6, 0.62, 0.6]);
+      W.box(g, 0, -0.5, 0.262, 0.012, 1.0, 0.01, 0, [0.35, 0.37, 0.36], null); W.box(g, 0.3, 0.38, 0.262, 0.25, 0.1, 0.01, 0, [0.4, 0.42, 0.41], null);
+    } else if (kind === 'lamp') {   // a tall grey pole, two arms along +x and -x, a lamp head on each
+      const gr = [0.5, 0.52, 0.55], H = 4.0;
+      W.cyl(g, 0, -H - 0.1, 0, 0.16, 0.5, 8, [0.4, 0.42, 0.45], null, 0.14); W.cyl(g, 0, -H + 0.4, 0, 0.12, 2 * H - 0.4, 8, gr, gr, 0.07);
+      for (const sx of [-1, 1]) { W.box(g, sx * 0.8, H - 0.32, 0, 1.6, 0.08, 0.08, 0, gr, gr); W.box(g, sx * 1.55, H - 0.42, 0, 0.7, 0.16, 0.32, 0, [0.42, 0.44, 0.47], [0.55, 0.57, 0.6]); W.box(g, sx * 1.55, H - 0.51, 0, 0.56, 0.02, 0.24, 0, [1, 0.96, 0.84], null); }
+    } else if (kind === 'shelter') {   // a bus shelter: a steel frame, the roof, glass at the back and the ends, a bench, a blank lit board at one end
+      const st = [0.42, 0.44, 0.48], gl = [0.56, 0.68, 0.76];
+      W.box(g, 0, 1.1, 0, 3.4, 0.14, 1.6, 0, st, [0.62, 0.63, 0.66]); W.box(g, 0, 1.24, 0.74, 3.4, 0.12, 0.08, 0, [0.75, 0.15, 0.12], null);   // the roof, a red edge
+      for (const x of [-1.55, 1.55]) for (const z of [-0.65, 0.6]) W.box(g, x, -1.25, z, 0.08, 2.4, 0.08, 0, st, st);
+      W.box(g, 0, -1.15, -0.66, 3.0, 2.15, 0.04, 0, gl, gl); W.box(g, -1.55, -1.15, 0, 0.04, 2.1, 1.2, 0, gl, gl);
+      W.box(g, 1.55, -1.15, 0, 0.12, 2.1, 1.2, 0, [0.9, 0.92, 0.94], [0.4, 0.42, 0.46]);   // the board (blank, lit)
+      W.box(g, 0, -0.8, -0.45, 2.4, 0.06, 0.36, 0, [0.3, 0.32, 0.36], [0.5, 0.52, 0.56]); W.box(g, 0, -1.25, -0.45, 0.06, 0.45, 0.3, 0, st, st);
+    } else if (kind === 'railing') {   // a guard railing panel along +x: white posts and rails, a yellow and black kick band
+      const wh = [0.92, 0.92, 0.9];
+      for (const x of [-0.98, 0, 0.98]) W.box(g, x, -0.55, 0, 0.06, 1.05, 0.06, 0, wh, wh);
+      for (const y of [0.38, -0.05]) W.box(g, 0, y, 0, 2.0, 0.06, 0.05, 0, wh, wh);
+      for (let k = 0; k < 6; k++) W.box(g, -0.84 + k * 0.336, -0.4, 0, 0.336, 0.16, 0.04, 0, k % 2 ? [0.1, 0.1, 0.11] : [0.95, 0.78, 0.1], null);
+      for (let k = 0; k < 9; k++) W.box(g, -0.9 + k * 0.225, 0.16, 0, 0.025, 0.4, 0.025, 0, wh, null);
+    }
     return g.geometry();
   }
   function clearPropMeshes() { for (const k in propMeshes) { const m = propMeshes[k]; scene.remove(m); m.geometry.dispose(); } propMeshes = {}; }
@@ -1602,7 +1650,7 @@ const Render = (function () {
       const dx = b.x - cx, dz = b.z - cz; if (dx * dx + dz * dz > R2) continue;
       const n = m.userData.n++;
       _pv3.set(b.x, b.y, b.z); _pq4.set(b.qx, b.qy, b.qz, b.qw); _pm4.compose(_pv3, _pq4, _ps3); m.setMatrixAt(n, _pm4);
-      const c = (b.kind === 'tyre' || b.kind === 'tstack') ? (PROP_COLS[b.col] || PROP_COLS[1]) : b.kind === 'post' && b.col === 1 ? POST_SNOW : null;   // (col 1 posts: orange snow poles)
+      const c = (b.kind === 'tyre' || b.kind === 'tstack') ? (PROP_COLS[b.col] || PROP_COLS[1]) : b.kind === 'post' && b.col === 1 ? POST_SNOW : b.kind === 'sign' && b.col ? SIGN_COLS[b.col] || null : null;   // (col 1 posts: orange snow poles; signs: their plate's colour)
       if (c) m.setColorAt(n, _pc.setRGB(c[0], c[1], c[2])); else if (m.instanceColor) m.setColorAt(n, _pc.setRGB(1, 1, 1));
     }
     for (const k in propMeshes) { const m = propMeshes[k]; m.count = m.userData.n; m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; }
@@ -1684,6 +1732,8 @@ const Render = (function () {
   THEMES.uncompahgre = { fog: 0xbfcfe0, sun: 0xfff0d8, sunI: 1.24, sky: 0xb8d0f0, gnd: 0x4c5236, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-70, 92, 62] };   // the Uncompahgre Gorge: a clear afternoon in the San Juans, the sun from the south-west over the cliffs, a crisp blue haze
   SPLIT.uncompahgre = [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]];
   SPLIT.iroha = [[0.96, 0.99, 1.05], [1.04, 1.0, 0.95]];   // (Irohazaka: cool shade under the maples, a warm autumn sun)
+  THEMES.peking = { fog: 0xc9c6ba, sun: 0xfff0d4, sunI: 1.02, sky: 0xc8cdd0, gnd: 0x6a6656, hemiI: 0.68, tint: [1.02, 1.0, 0.97], sat: 1.0, haze: 0.2, hazeCol: [0.96, 0.9, 0.76], sunOff: [-70, 82, 70] };   // Peking: a hazy autumn afternoon over the Olympic Green, the sun veiled in a light smog
+  SPLIT.peking = [[0.98, 0.99, 1.03], [1.04, 1.0, 0.95]];
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   // The time of day as one number, todK: 0 day, 0.5 dusk, 1 night (setAtmos sets it from the setting; an endurance race moves it with its
   // clock: setTodK). The light, the fog and the grade are blended between the day's (the theme's), the dusk's and the night's; dawn (the

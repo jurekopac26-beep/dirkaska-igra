@@ -859,6 +859,7 @@ const World = (function () {
   }
 
   /* ---------------- BUILD ---------------- */
+  const EXT = {};   // the world builders kept in files of their own (World.theme(id, fn): fn(scene, tex, opts) as the builders below; World.kit: the shared helpers)
   function build(scene, track, tex, opts) {
     CROWDS = [];   // (the crowds of this build: their sound, see crowdPoints)
     T = track; THEME = (track.def && track.def.theme) || 'lake'; CSX = THEME === 'forest' || THEME === 'italia' || THEME === 'kamp'; ROCK_SMOOTH = CSX; SEA = (track.def && track.def.sea) || null; RIVER = track.def.river || null; RW = track.def.riverW || 26; CASTLE = track.def.castle || null; buildHash();
@@ -894,6 +895,7 @@ const World = (function () {
     if (THEME === 'longford') return finish(buildLongford(scene, tex, opts), tex);   // Longford: the 1960s road circuit by the town in Tasmania (below)
     if (THEME === 'suzuka') return finish(buildSuzuka(scene, tex, opts), tex); // Suzuka, the figure of eight on its real ground (below)
     if (THEME === 'riverside') return finish(buildRiverside(scene, tex, opts), tex);   // Riverside, the circuit of 1960 in the dry hills (below)
+    if (EXT[THEME]) return finish(EXT[THEME](scene, tex, opts), tex);   // a world builder in a file of its own (World.theme: js/world-<track>.js)
     const R = rng(4242);
     hillN = valueNoise2(77, 60);
     mtnN = valueNoise2(83, 130); mtnN2 = valueNoise2(91, 55); mtnPeak = valueNoise2(97, 220);
@@ -23871,6 +23873,7 @@ const World = (function () {
     if (d.cpMast && cam) cpMastStep(d.cpMast, cam, out.root.parent && out.root.parent.fog);   // Crystal Palace: the mast on the hill, seen from afar
     if (d.screens) { const f = Math.floor(t / 6) % 4; if (f !== d.screens.f) { d.screens.f = f; d.screens.tex.offset.x = f * 0.25; } }   // Red Bull Ring: the video walls' next picture every 6 s
     if (d.water) { d.water.offset.x = (t * 0.012) % 1; d.water.offset.y = (t * 0.007) % 1; }
+    if (d.step) d.step(t, car, cam);   // (a world in a file of its own: its moving things)
     if (d.wind) d.wind.value = t % 1000;   // the trees sway (Nordschleife, Spa)
     if (d.brook) d.brook.uT.value = t % 1000;   // Spa: the Eau Rouge brook flows
     if (d.clouds) { const n = CLOUD_NP; d.clouds.O.value.set(((t * 3.2 / CLOUD_S) % n + n) % n, ((-t * 2.5 / CLOUD_S) % n + n) % n); }   // the cloud shadows drift with the wind
@@ -23914,6 +23917,8 @@ const World = (function () {
   }
   const _hjV = new THREE.Vector3();
 
-  return { build, update, view, GB, box, cyl, cone, ico, gable, hex, vary, waterSky: WSKY, heli: tvHeli };   // (heli: the TV helicopter's model, also the police's on Vršič)
+  const kit = { track: () => T, Chunks, IChunks, RB, puff, rock, roofKit, starCone, crH, crAt, crowdCtx, crowdRun, crowdPut, crowdFinish, crowdUV, rbCrowdTex, swayMat, treeMark, treesTo,
+    waterMat, waterline, shoreBand, addShore, valueNoise2, inPoly, polyDist, atS, atSf, wrapS, nrLump };   // (World.kit: for the builders in files of their own)
+  return { build, update, view, GB, box, cyl, cone, ico, gable, hex, vary, waterSky: WSKY, heli: tvHeli, kit, theme: (id, fn) => { EXT[id] = fn; } };   // (heli: the TV helicopter's model, also the police's on Vršič)
 })();
 
