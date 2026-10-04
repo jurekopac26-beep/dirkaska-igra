@@ -146,8 +146,8 @@ const Garage3D = (function () {
       const img = g.createImageData(w, h), d = img.data;
       for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
         const r = 0.25, u = Math.abs((i + 0.5) / w * 2 - 1) - 0.72 + r, v = Math.abs((j + 0.5) / h * 2 - 1) - 0.6 + r;
-        const sd = Math.hypot(Math.max(u, 0), Math.max(v, 0)) + Math.min(Math.max(u, v), 0) - r, t = clamp((sd + 0.1) / 0.36, 0, 1), o = (j * w + i) * 4;
-        d[o] = d[o + 1] = d[o + 2] = 0; d[o + 3] = Math.round(255 * 0.8 * (1 - t * t * (3 - 2 * t)));
+        const sd = Math.hypot(Math.max(u, 0), Math.max(v, 0)) + Math.min(Math.max(u, v), 0) - r, t = clamp((sd + 0.06) / 0.3, 0, 1), o = (j * w + i) * 4;
+        d[o] = d[o + 1] = d[o + 2] = 0; d[o + 3] = Math.round(255 * 0.92 * (1 - t * t * (3 - 2 * t)));
       }
       g.putImageData(img, 0, 0);
     });
@@ -165,9 +165,11 @@ const Garage3D = (function () {
       g.fillStyle = 'rgb(70,72,78)'; g.beginPath(); g.arc(c, c, c * 0.42, 0, TAU); g.fill();
     });
   }
-  // the light's own textures: the floor's layout map where makeTextures draws none (an even one: r the albedo x 1.6, g the gloss x 1.27)
+  // the light's own textures: the floor's layout map where makeTextures draws none (an even one: r the albedo x 1.6, g the gloss x 1.27);
+  // a tyre's contact shadow (darkest where it stands, on a quad longer than the tyre is wide: an ellipse)
   function makeLightTextures() {
     TX.layN = canvasTex(4, 4, (g, w, h) => { g.fillStyle = 'rgb(160,200,0)'; g.fillRect(0, 0, w, h); });
+    TX.contact = canvasTex(64, 64, (g, w) => { const gr = g.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2); gr.addColorStop(0, 'rgba(0,0,0,0.9)'); gr.addColorStop(0.35, 'rgba(0,0,0,0.5)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, w); });
   }
 
   /* ---------------- materials of the parts (shared by every car in the garage) ---------------- */
@@ -203,7 +205,7 @@ const Garage3D = (function () {
           : 'varying vec4 vC; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0; if (r > 1.0) discard; float a = vC.a * (1.0 - r) * (1.0 - 0.5 * r); gl_FragColor = vec4(vC.rgb * (1.04 - 0.14 * gl_PointCoord.y), a); }',
         transparent: true, depthWrite: false, blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
       });
-      this.pts = new THREE.Points(g, this.mat); this.pts.frustumCulled = false; this.pts.renderOrder = additive ? 9 : 8;
+      this.pts = new THREE.Points(g, this.mat); this.pts.frustumCulled = false; this.pts.renderOrder = additive ? 9 : 8; this.pts.visible = false;   // (drawn only while some live)
     }
     emit(x, y, z, vx, vy, vz, life, s0, s1, c, a, grav, drag, floor) {
       const i = this.cur; this.cur = (this.cur + 1) % this.max;
@@ -212,16 +214,17 @@ const Garage3D = (function () {
       this.C[i * 4] = c[0]; this.C[i * 4 + 1] = c[1]; this.C[i * 4 + 2] = c[2];
     }
     update(dt) {
+      let alive = 0;
       for (let i = 0; i < this.max; i++) {
         if (this.life[i] <= 0) { if (this.S[i] !== 0) { this.S[i] = 0; this.C[i * 4 + 3] = 0; } continue; }
-        this.life[i] -= dt; const t = 1 - Math.max(0, this.life[i]) / this.ml[i], dr = Math.max(0, 1 - this.drag[i] * dt), o = i * 3;
+        alive++; this.life[i] -= dt; const t = 1 - Math.max(0, this.life[i]) / this.ml[i], dr = Math.max(0, 1 - this.drag[i] * dt), o = i * 3;
         this.Vl[o] *= dr; this.Vl[o + 2] *= dr; this.Vl[o + 1] = this.Vl[o + 1] * dr - this.grav[i] * dt;
         this.P[o] += this.Vl[o] * dt; this.P[o + 1] += this.Vl[o + 1] * dt; this.P[o + 2] += this.Vl[o + 2] * dt;
         if (this.P[o + 1] < this.floor[i]) { this.P[o + 1] = this.floor[i]; this.Vl[o + 1] *= -0.35; this.Vl[o] *= 0.6; this.Vl[o + 2] *= 0.6; }
         this.S[i] = this.s0[i] + (this.s1[i] - this.s0[i]) * Math.sqrt(t);
         this.C[i * 4 + 3] = this.a0[i] * (1 - t) * Math.min(1, t * 10 + 0.15);
       }
-      this.aP.needsUpdate = this.aC.needsUpdate = this.aS.needsUpdate = true;
+      this.pts.visible = alive > 0; if (alive) this.aP.needsUpdate = this.aC.needsUpdate = this.aS.needsUpdate = true;
     }
     clear() { this.life.fill(0); }
   }
@@ -250,17 +253,22 @@ const Garage3D = (function () {
      lights and no draws of its own. Brighter under the lamps over the table, darker towards the walls, in the corners, along the floor's
      and the ceiling's edges; the daylight through the doors (the right one in the sun: warm; the left one in the building's shade: cool),
      the wall washers' scallops on the back wall, the sun through the front windows in patches of their shape ---------------- */
-  let ROOMLIGHT_GLSL = '';
+  let ROOMLIGHT_GLSL = '', RL_SUN = '';
   function makeRoomLight() {   // (made from the room's fixed lines, once HDR is known: a window or a washer moved, its light moves too)
     const { x0, x1, z0, z1, h, door, doorH } = ROOM, f = (v) => v.toFixed(3), v3 = (a) => 'vec3(' + a.map(f).join(', ') + ')';
     const at = (a, v) => '(' + a + (v < 0 ? ' + ' + f(-v) : ' - ' + f(v)) + ')', ly = h - 0.5, zw = z1 - 0.15, hw = WW / 2 - 0.03;
+    // the sun through the front windows at p (0..1, no normal: the motes' too): back from p along the sun to the windows' plane, the
+    // windows there (their soft edge wider the farther, pen); a front window: its two panes either side of the mullion (ax: off its middle)
+    RL_SUN = ['const vec3 rlS = ' + v3([SUN.x, SUN.y, SUN.z]) + ';',
+      'float rlWin(float ax, float pen){ return (1.0 - smoothstep(' + f(hw) + ' - pen, ' + f(hw) + ' + pen, ax)) * smoothstep(0.02, 0.03 + pen, ax); }',
+      'float rlSun(vec3 p){ float t = (' + f(zw) + ' - p.z) / rlS.z, pen = 0.03 + t * 0.012; vec2 w = p.xy + rlS.xy * t;',
+      '  float wy = smoothstep(' + f(WIN[0]) + ' - pen, ' + f(WIN[0]) + ' + pen, w.y) * (1.0 - smoothstep(' + f(WIN[1]) + ' - pen, ' + f(WIN[1]) + ' + pen, w.y));',
+      '  if (wy <= 0.0) return 0.0; return wy * (' + FRONTW.map(x => 'rlWin(abs' + at('w.x', x) + ', pen)').join(' + ') + '); }'].join('\n');
     ROOMLIGHT_GLSL = [
-      'varying vec3 vRp; varying vec3 vRn;',
+      'varying vec3 vRp; varying vec3 vRn;', RL_SUN,
       // a door's daylight: from the opening's point half-way to its middle's height (the floor in front of it gets some too)
       'float rlDoor(vec3 p, vec3 n, float x, float s){ vec3 L = vec3(x, 0.5 * clamp(p.y, 0.0, ' + f(doorH) + ') + ' + f(doorH / 4) + ', clamp(p.z, ' + f(-door) + ', ' + f(door) + ')) - p;',
       '  float d2 = dot(L, L) + 0.3; L *= inversesqrt(d2); return max(dot(n, L), 0.0) * max(s * L.x, 0.0) * 5.0 / (1.0 + 0.55 * d2); }',
-      // a front window seen along the sun (ax: how far from its middle, pen: the soft edge): its two panes either side of the mullion
-      'float rlWin(float ax, float pen){ return (1.0 - smoothstep(' + f(hw) + ' - pen, ' + f(hw) + ' + pen, ax)) * smoothstep(0.02, 0.03 + pen, ax); }',
       'vec3 roomLight(vec3 c, vec3 alb){',
       '  vec3 p = vRp, n = normalize(vRn);',
       '  float dx = ' + f((x1 - x0) / 2) + ' - abs' + at('p.x', (x0 + x1) / 2) + ', dz = ' + f((z1 - z0) / 2) + ' - abs' + at('p.z', (z0 + z1) / 2) + ', dw = min(dx, dz);',
@@ -270,10 +278,7 @@ const Garage3D = (function () {
       '  if (n.z > 0.5 && p.z < ' + f(z0 + 0.4) + ') { float iw = 1.0 / (0.35 + 0.22 * (' + f(ly) + ' - p.y)), e;',
       WASH_X.map(x => '    e = ' + at('p.x', x) + ' * iw; wash += exp(-e * e);').join('\n'),
       '    wash *= smoothstep(0.8, 3.6, p.y) * (1.0 - smoothstep(' + f(ly - 0.05) + ', ' + f(ly + 0.05) + ', p.y)); }',
-      '  const vec3 S = ' + v3([SUN.x, SUN.y, SUN.z]) + '; float sun = 0.0, ns = dot(n, S);',   // (the sun: back from p along it to the front windows' plane)
-      '  if (ns > 0.0 && p.z < ' + f(zw - 0.01) + ') { float t = (' + f(zw) + ' - p.z) / S.z, pen = 0.03 + t * 0.012; vec2 w = p.xy + S.xy * t;',
-      '    float wy = smoothstep(' + f(WIN[0]) + ' - pen, ' + f(WIN[0]) + ' + pen, w.y) * (1.0 - smoothstep(' + f(WIN[1]) + ' - pen, ' + f(WIN[1]) + ' + pen, w.y));',
-      '    if (wy > 0.0) sun = wy * ns * (' + FRONTW.map(x => 'rlWin(abs' + at('w.x', x) + ', pen)').join(' + ') + '); }',
+      '  float sun = 0.0, ns = dot(n, rlS); if (ns > 0.0 && p.z < ' + f(zw - 0.01) + ') sun = ns * rlSun(p);',   // (the sun: on what faces it)
       '  return c * k + alb * (' + v3([0.55, 0.506, 0.44]) + ' * rlDoor(p, n, ' + f(x1) + ', 1.0) + ' + v3([0.213, 0.228, 0.248]) + ' * rlDoor(p, n, ' + f(x0) + ', -1.0)',   // (the doors: 0.55 x (1, 0.92, 0.8); 0.55 x 0.45 x (0.86, 0.92, 1))
       '    + vec3(0.9, 0.864, 0.81) * wash + vec3(1.0, 0.88, 0.7) * sun * ' + f(HDR ? 1.8 : 0.9) + ');',
       '}'].join('\n');
@@ -293,6 +298,9 @@ const Garage3D = (function () {
   // the gloss of a piece's matte mesh: its faces from here on (p.g's vertices so far) get their highlights x k, until the next mark
   // (rubber, cloth 0.15; paint 1; bare metal 2.2)
   function gloss(p, k) { p.gl.push([p.g.P.length / 3, k]); }
+  // drawn by the main camera only (not in the floor's mirror, not in the cars' cube map): what lies on the floor or under it, glass,
+  // dust (layers are each object's own: on each mesh)
+  function mainOnly(o) { o.layers.set(NOREFL); return o; }
 
   /* ---------------- the room's pieces that step aside: what comes between the camera and the car dissolves ---------------- */
   // a wall's piece (all that stands or hangs on that wall) is gone while the camera is out beyond the wall (or close to it); a free-
@@ -389,7 +397,7 @@ const Garage3D = (function () {
         obox(g, [a, y0 + 0.03, zf], [b, y0 + 0.03, zf], 0.06, 0.07, FR); obox(g, [a, y1 - 0.03, zf], [b, y1 - 0.03, zf], 0.06, 0.07, FR);
         obox(g, [a + 0.03, y0, zf], [a + 0.03, y1, zf], 0.06, 0.07, FR); obox(g, [b - 0.03, y0, zf], [b - 0.03, y1, zf], 0.06, 0.07, FR); obox(g, [x, y0, zf], [x, y1, zf], 0.05, 0.06, FR);
         box(x, y0 - 0.06, zw + nz * 0.06, WW + 0.16, 0.06, 0.14, [0.5, 0.52, 0.56]);   // (the sill inside)
-        const gl = new THREE.Mesh(new THREE.PlaneGeometry(WW, y1 - y0), glassM); gl.position.set(x, ym, zf + nz * 0.01); if (nz < 0) gl.rotation.y = Math.PI; gl.renderOrder = 2; P.root.add(gl); } };
+        const gl = new THREE.Mesh(new THREE.PlaneGeometry(WW, y1 - y0), glassM); gl.position.set(x, ym, zf + nz * 0.01); if (nz < 0) gl.rotation.y = Math.PI; gl.renderOrder = 2; P.root.add(mainOnly(gl)); } };
     windows(PB, z0, 1, BACKW); windows(PF, z1, -1, FRONTW);
     // ceiling: dark, steel beams across, the honeycomb of LED tubes over the car
     const cq = new QB(); cq.quad([x0, h, z1], [x1, h, z1], [x1, h, z0], [x0, h, z0], [0, -1, 0], [[0, 0], [6, 0], [6, 4], [0, 4]]);
@@ -485,31 +493,42 @@ const Garage3D = (function () {
     const { x0, x1, door } = ROOM;
     // the turntable's lit ring in the floor, its glow
     ringMat = new THREE.MeshBasicMaterial({ color: emi(0x55c4ff, EMI.led) });
-    const ring = new THREE.Mesh(new THREE.RingGeometry(ROOM.R + 0.01, ROOM.R + 0.07, 128), ringMat); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.004; scene.add(ring);
+    const ring = new THREE.Mesh(new THREE.RingGeometry(ROOM.R + 0.01, ROOM.R + 0.07, 128), ringMat); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.004; scene.add(mainOnly(ring));
     ringGlow = new THREE.Mesh(new THREE.RingGeometry(ROOM.R - 0.5, ROOM.R + 0.9, 128, 1), new THREE.ShaderMaterial({
       uniforms: { uC: { value: new THREE.Color(0x3aa8ff) }, uK: { value: 0.3 * GLOW.ring } },
       vertexShader: 'varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
       fragmentShader: 'uniform vec3 uC; uniform float uK; varying vec2 vP; void main(){ float d = length(vP) - ' + (ROOM.R + 0.04).toFixed(2) + '; float a = exp(-d * d * (d < 0.0 ? 60.0 : 5.0)); gl_FragColor = vec4(uC * a * uK, 1.0); }',
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
-    ringGlow.rotation.x = -Math.PI / 2; ringGlow.position.y = 0.008; ringGlow.renderOrder = -1; scene.add(ringGlow);
+    ringGlow.rotation.x = -Math.PI / 2; ringGlow.position.y = 0.008; ringGlow.renderOrder = -1; scene.add(mainOnly(ringGlow));
     // painted lines on the floor: the bay's yellow edges, the arrows of the way through
     const fl = new World.GB(), Y = [0.85, 0.66, 0.12], line = (ax, az, bx, bz, w) => { const L2 = Math.hypot(bx - ax, bz - az), nx = -(bz - az) / L2 * w / 2, nz = (bx - ax) / L2 * w / 2; fl.quadUp([ax - nx, 0.006, az - nz], [ax + nx, 0.006, az + nz], [bx + nx, 0.006, bz + nz], [bx - nx, 0.006, bz - nz], [Y, Y, Y, Y]); };
     for (const sz of [-1, 1]) { line(x0, sz * (door + 0.25), -ROOM.R - 0.4, sz * (door + 0.25), 0.1); line(ROOM.R + 0.4, sz * (door + 0.25), x1, sz * (door + 0.25), 0.1); }
     for (const ax of [-6.2, 5.2]) { for (const s of [-1, 1]) line(ax, s * 0.55, ax + 0.9, 0, 0.12); }
-    const flM = new THREE.Mesh(fl.geometry(), roomLit(new THREE.MeshLambertMaterial({ vertexColors: true }), 'room')); flM.receiveShadow = true; scene.add(flM);
+    const flM = new THREE.Mesh(fl.geometry(), roomLit(new THREE.MeshLambertMaterial({ vertexColors: true }), 'room')); flM.receiveShadow = true; scene.add(mainOnly(flM));
   }
-  // dust in the light over the car
+  // dust, seen only where the light falls through it: in the sun's shafts from the front windows (the motes put along them) and in the
+  // doors' daylight; elsewhere almost nothing (soft and out of focus, faint)
   function buildMotes() {
-    const N = 140, mp = new Float32Array(N * 3); const Rm = Core.rng(77);
-    for (let i = 0; i < N; i++) { mp[i * 3] = (Rm() - 0.5) * 9; mp[i * 3 + 1] = 0.3 + Rm() * 4.2; mp[i * 3 + 2] = (Rm() - 0.5) * 7; }
+    const N = 70, mp = new Float32Array(N * 3), Rm = Core.rng(77), zw = ROOM.z1 - 0.15;
+    for (let i = 0; i < N; i++) {
+      let x, y, z;
+      if (i < 40) do {   // (from a point of a front window's pane, back along the sun to a height in the room)
+        const xw = FRONTW[i % FRONTW.length] + (Rm() < 0.5 ? -1 : 1) * (0.08 + Rm() * 0.8), yw = WIN[0] + Rm() * (WIN[1] - WIN[0]); y = 0.3 + Rm() * (yw - 0.6);
+        const t = (yw - y) / SUN.y; x = xw - SUN.x * t; z = zw - SUN.z * t;
+      } while (Math.abs(x) > ROOM.x1 - 0.4);
+      else { const sd = i < 55 ? -1 : 1; x = sd * (7.5 + (Rm() - 0.5) * 2.4); z = (Rm() - 0.5) * 4.4; y = 0.3 + Rm() * 2.2; }   // (in a door's daylight)
+      mp[i * 3] = x; mp[i * 3 + 1] = y; mp[i * 3 + 2] = z;
+    }
     const mg = new THREE.BufferGeometry(); mg.setAttribute('position', new THREE.BufferAttribute(mp, 3));
     motes = new THREE.Points(mg, new THREE.ShaderMaterial({ uniforms: { uT: { value: 0 }, uScale: { value: 400 } },
-      vertexShader: 'uniform float uT; uniform float uScale; varying float vA; void main(){ vec3 p = position; float s = fract(sin(dot(p.xz, vec2(12.9898, 78.233))) * 43758.5453);'
+      vertexShader: 'uniform float uT; uniform float uScale; varying float vA;\n' + RL_SUN + '\nvoid main(){ vec3 p = position; float s = fract(sin(dot(p.xz, vec2(12.9898, 78.233))) * 43758.5453);'
         + ' p.x += sin(uT * 0.13 + s * 30.0) * 0.6; p.z += cos(uT * 0.11 + s * 20.0) * 0.5; p.y += sin(uT * 0.07 + s * 10.0) * 0.4;'
-        + ' vec4 mv = modelViewMatrix * vec4(p, 1.0); vA = (0.35 + 0.65 * s) * smoothstep(0.0, 1.5, -mv.z); gl_PointSize = (0.012 + 0.014 * s) * uScale / max(0.3, -mv.z); gl_Position = projectionMatrix * mv; }',
-      fragmentShader: 'varying float vA; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0; if (r > 1.0) discard; gl_FragColor = vec4(vec3(1.0, 0.97, 0.9), vA * 0.35 * (1.0 - r)); }',
+        + ' float door = (p.x > 0.0 ? 1.0 : 0.45) * smoothstep(5.8, 8.4, abs(p.x)) * (1.0 - smoothstep(2.0, 2.6, abs(p.z))) * (1.0 - smoothstep(3.0, 3.9, p.y));'   // (the right door in the sun, the left in the shade)
+        + ' float lit = clamp((p.z < ' + zw.toFixed(3) + ' ? rlSun(p) : 0.0) + door, 0.0, 1.0);'
+        + ' vec4 mv = modelViewMatrix * vec4(p, 1.0); vA = (0.35 + 0.65 * s) * smoothstep(0.0, 1.5, -mv.z) * mix(0.12, 1.4, lit); gl_PointSize = (0.03 + 0.03 * s) * uScale / max(0.3, -mv.z); gl_Position = projectionMatrix * mv; }',
+      fragmentShader: 'varying float vA; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0; if (r > 1.0) discard; gl_FragColor = vec4(vec3(1.0, 0.95, 0.86), vA * 0.12 * (1.0 - r) * (1.0 - r)); }',
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
-    motes.frustumCulled = false; scene.add(motes);
+    motes.frustumCulled = false; scene.add(mainOnly(motes));
   }
   /* ---------------- the workshop's things: what makes it a racing team's garage ---------------- */
   // helpers: a box along a segment (frames, handles, poles), a cylinder along an axis; smooth round things (helmets, cups, bottles)
@@ -638,7 +657,7 @@ const Garage3D = (function () {
     { const LM = new THREE.MeshBasicMaterial({ color: emi(0x7fd6ff, EMI.led) }), GM = new THREE.MeshBasicMaterial({ map: canvasTex(16, 64, (gx, w, h) => { const gr = gx.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(90,190,255,0)'); gr.addColorStop(0.5, 'rgba(90,190,255,1)'); gr.addColorStop(1, 'rgba(90,190,255,0)'); gx.fillStyle = gr; gx.fillRect(0, 0, w, h); }), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.35 });
       const run = (P, ax, az, bx, bz, nx, nz) => { const L = Math.hypot(bx - ax, bz - az), cx = (ax + bx) / 2, cz = (az + bz) / 2, ry = nx ? nx * Math.PI / 2 : nz > 0 ? 0 : Math.PI;   // (the plane faces the room)
         const l = new THREE.Mesh(new THREE.BoxGeometry(L, 0.018, 0.02), LM); l.position.set(cx + nx * 0.012, 1.01, cz + nz * 0.012); l.rotation.y = ry; P.root.add(l);
-        const gw = new THREE.Mesh(new THREE.PlaneGeometry(L, 0.5), GM); gw.position.set(cx + nx * 0.016, 1.01, cz + nz * 0.016); gw.rotation.y = ry; gw.renderOrder = 2; P.root.add(gw); };
+        const gw = new THREE.Mesh(new THREE.PlaneGeometry(L, 0.5), GM); gw.position.set(cx + nx * 0.016, 1.01, cz + nz * 0.016); gw.rotation.y = ry; gw.renderOrder = 2; P.root.add(mainOnly(gw)); };
       run(WALLS.back, x0, z0, x1, z0, 0, 1); run(WALLS.left, x0, -door - 0.4, x0, z0, 1, 0); run(WALLS.right, x1, z0, x1, -door - 0.4, -1, 0); }
     // a car under its cover in the front corner (a project waiting): the cover's shape measured on a car, draped to the floor, its folds
     { const PCC = use(piece()), v = Render.garageCar(Core.MODELS.find(m => m.id === 'kaze'), 0x888888, 0, false), P = bodyProbe(v), bb = P.bb, nx = 26, na = 22, pos = [], uv = [], idx = [];
@@ -707,11 +726,11 @@ const Garage3D = (function () {
       const B = WALLS.back;
       for (const [x, z, w, d, , ry, P] of shadows.concat([[-6.9, z0 + 0.4, 1.9, 1.0, 0.9, 0, B], [-5.25, z0 + 0.4, 1.3, 1.0, 0.9, 0, B], [-2.6, z0 + 0.35, 3.6, 0.9, 0.8, 0, B], [3.0, z0 + 0.25, 4.0, 0.8, 0.7, 0, B], [6.45, z0 + 0.35, 2.9, 1.0, 0.9, 0, B],
         [-8.42, z0 + 1.5, 0.9, 1.6, 0.8, 0, FREE.drumsL], [8.3, z1 - 1.2, 0.8, 0.8, 0.8, 0, FREE.drumR], [3.5, z1 - 0.4, 3.6, 1.0, 0.8, 0, WALLS.front], [-1.45, z1 - 0.35, 4.0, 0.9, 0.8, 0, WALLS.front]])) {
-        const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), bm); m.rotation.set(-Math.PI / 2, 0, ry || 0); m.position.set(x, 0.008, z); m.renderOrder = -2; (P ? P.root : scene).add(m); }
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), bm); m.rotation.set(-Math.PI / 2, 0, ry || 0); m.position.set(x, 0.008, z); m.renderOrder = -2; (P ? P.root : scene).add(mainOnly(m)); }
       // a few old oil stains on the epoxy
       const stain = canvasTex(64, 64, (gx, w) => { for (let k = 0; k < 6; k++) { const x = 20 + Math.random() * 24, y = 20 + Math.random() * 24, r = 6 + Math.random() * 14, gr = gx.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgba(10,8,6,0.35)'); gr.addColorStop(1, 'rgba(10,8,6,0)'); gx.fillStyle = gr; gx.fillRect(0, 0, w, w); } });
       const sMat = new THREE.MeshBasicMaterial({ map: stain, transparent: true, depthWrite: false });
-      for (const [x, z, s2] of [[-5.6, -1.6, 1.1], [4.6, 2.2, 0.8], [6.2, -3.0, 1.3], [-6.8, 3.4, 0.9]]) { const m = new THREE.Mesh(new THREE.PlaneGeometry(s2, s2), sMat); m.rotation.set(-Math.PI / 2, 0, x); m.position.set(x, 0.007, z); m.renderOrder = -2; scene.add(m); } }
+      for (const [x, z, s2] of [[-5.6, -1.6, 1.1], [4.6, 2.2, 0.8], [6.2, -3.0, 1.3], [-6.8, 3.4, 0.9]]) { const m = new THREE.Mesh(new THREE.PlaneGeometry(s2, s2), sMat); m.rotation.set(-Math.PI / 2, 0, x); m.position.set(x, 0.007, z); m.renderOrder = -2; scene.add(mainOnly(m)); } }
     finishPieces();
   }
   /* ---------------- outside: the valley round the workshop (sky, mountains, forest, meadows, the road through both doors) ---------------- */
@@ -879,15 +898,15 @@ const Garage3D = (function () {
     rim.material.map = TX.hazard.clone(); rim.material.map.needsUpdate = true; rim.material.map.repeat.set(24, 1); rim.position.y = -0.058; tt.add(rim);
     const under = new THREE.Mesh(new THREE.CircleGeometry(R, 48), new THREE.MeshLambertMaterial({ color: 0x15171b })); under.rotation.x = Math.PI / 2; under.position.y = -0.118; tt.add(under);
     // the pit (seen only with the table up): its wall, its floor, the scissor lift
-    const pit = new THREE.Mesh(new THREE.CylinderGeometry(R + 0.07, R + 0.07, 1.0, 64, 1, true), new THREE.MeshLambertMaterial({ color: 0x24272d, side: THREE.BackSide })); pit.position.y = -0.5; scene.add(pit);
-    const pf = new THREE.Mesh(new THREE.CircleGeometry(R + 0.07, 48), new THREE.MeshLambertMaterial({ color: 0x101114 })); pf.rotation.x = -Math.PI / 2; pf.position.y = -1.0; scene.add(pf);
+    const pit = new THREE.Mesh(new THREE.CylinderGeometry(R + 0.07, R + 0.07, 1.0, 64, 1, true), new THREE.MeshLambertMaterial({ color: 0x24272d, side: THREE.BackSide })); pit.position.y = -0.5; scene.add(mainOnly(pit));
+    const pf = new THREE.Mesh(new THREE.CircleGeometry(R + 0.07, 48), new THREE.MeshLambertMaterial({ color: 0x101114 })); pf.rotation.x = -Math.PI / 2; pf.position.y = -1.0; scene.add(mainOnly(pf));
     scis = { bars: [], mat: new THREE.MeshPhongMaterial({ color: 0xd9a514, specular: 0x555555, shininess: 40 }) };
     for (const z of [-1.1, 1.1]) for (const k of [0, 1]) for (const lvl of [0, 1]) { const b = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.09, 0.08), scis.mat); b.userData = { z: z + (k ? 0.1 : -0.1), k, lvl }; scene.add(b); scis.bars.push(b); }
     const ram = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 1, 12), new THREE.MeshPhongMaterial({ color: 0xc8ccd2, specular: 0xffffff, shininess: 120 })); scene.add(ram); scis.ram = ram;
     setLift(0);
   }
   function setLift(h) {
-    lift = h; tt.position.y = h;
+    lift = h; tt.position.y = h; GROUND.value = h;   // (the cars' floor: their occlusion measured from it)
     // the scissors: two levels of crossed bars between the pit floor (-1.0) and the table's underside (h - 0.12)
     const top = h - 0.12, bot = -0.98, H2 = (top - bot) / 2, L = 2.0, a = Math.asin(clamp(H2 / L, 0, 0.99));
     for (const b of scis.bars) { const { z, k, lvl } = b.userData; b.position.set(0, bot + H2 * (lvl + 0.5), z); b.rotation.set(0, 0, k ? a : -a); b.visible = h > 0.02; }
@@ -967,9 +986,9 @@ const Garage3D = (function () {
     _q.x = (Math.sign(cp.x) + pm[8]) / pm[0]; _q.y = (Math.sign(cp.y) + pm[9]) / pm[5]; _q.z = -1; _q.w = (1 + pm[10]) / pm[14];
     cp.multiplyScalar(2 / cp.dot(_q)); pm[2] = cp.x; pm[6] = cp.y; pm[10] = cp.z + 1 - 0.003; pm[14] = cp.w;
     REF.invP.copy(rc.projectionMatrix).invert();   // (the clipped projection's inverse: the floor's shader finds the reflected points' depth)
-    refl.visible = false; ttTop.visible = false; ringGlow.visible = false;
+    refl.visible = false; ttTop.visible = false;   // (what lies on the floor is the main camera's only: mainOnly)
     renderer.setRenderTarget(REF.rt); renderer.clear(); renderer.render(scene, rc); renderer.setRenderTarget(null);   // (the shadow map, when it is due, is drawn here)
-    refl.visible = true; ttTop.visible = true; ringGlow.visible = true;
+    refl.visible = true; ttTop.visible = true;
   }
 
   /* ---------------- lights ---------------- */
@@ -1130,7 +1149,17 @@ const Garage3D = (function () {
     return out;
   }
   // every material of the car becomes its own copy (the shader patches kept): the reflections of the garage, and the paint shop's
-  // cut (the body's materials only: the wheels and the shadow are never cut)
+  // cut (the body's materials only: the wheels and the shadow are never cut); the floor's occlusion on what is solid (darker down to
+  // the sills, the bumpers' undersides, the wheels' feet: GROUND, the table's top, setLift)
+  const GROUND = { value: 0 };
+  function floorAO(c, key) {
+    const ob = c.onBeforeCompile;
+    c.onBeforeCompile = (sh, r) => { ob.call(c, sh, r); sh.uniforms.uGround = GROUND;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying float vGy;').replace('#include <project_vertex>', '#include <project_vertex>\nvGy = (modelMatrix * vec4(transformed, 1.0)).y;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uGround; varying float vGy;')
+        .replace('#include <tonemapping_fragment>', 'gl_FragColor.rgb *= mix(0.45, 1.0, smoothstep(0.03, 0.62, vGy - uGround));\n#include <tonemapping_fragment>'); };
+    c.customProgramCacheKey = () => key + '|gao';
+  }
   function carMats(cv) {
     const v = cv.v, map = new Map(), clipSet = new Set();
     v.bodyG.traverse(o => { if (o.isMesh) for (const m of [].concat(o.material)) clipSet.add(m); });
@@ -1141,6 +1170,7 @@ const Garage3D = (function () {
           const c = m.clone(); c.onBeforeCompile = m.onBeforeCompile; c.customProgramCacheKey = m.customProgramCacheKey;
           if (c.envMap) c.envMap = env.texture || env;
           if (clipSet.has(m) && o !== v.blob) c.clippingPlanes = [cv.clip];
+          if ((c.isMeshPhongMaterial || c.isMeshLambertMaterial) && !c.transparent && o !== v.blob) floorAO(c, m.customProgramCacheKey());
           map.set(m, c);
         }
         return map.get(m);
@@ -1157,10 +1187,18 @@ const Garage3D = (function () {
     const pb = bodyProbe(v); cv.probe = pb; cv.bb = pb.bb;
     cv.wheels = wheelsOf(v, M); root.userData.cv = cv;
     carMats(cv);
-    if (v.blob) { v.blob.material.map = TX.under; v.blob.material.opacity = 0.9; v.blob.scale.set(1, 1, 1); v.blob.position.y = 0.012; }
+    if (v.blob) { v.blob.material.map = TX.under; v.blob.material.opacity = 0.9; v.blob.scale.set(1, 1, 1); v.blob.position.y = 0.012; mainOnly(v.blob); }
+    // where the tyres stand: a dark patch under each (one mesh, on the floor: it stays when the body moves on its springs; it fades
+    // when the car goes up on its jacks, poseCar)
+    { const P = [], U = [], I = [];
+      for (const w of cv.wheels) { const hx = w.r * 0.85, hz = w.wd * 0.8, n = P.length / 3;
+        P.push(w.x - hx, 0.016, w.z - hz, w.x - hx, 0.016, w.z + hz, w.x + hx, 0.016, w.z + hz, w.x + hx, 0.016, w.z - hz); U.push(0, 0, 0, 1, 1, 1, 1, 0); I.push(n, n + 1, n + 2, n, n + 2, n + 3); }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2)); g.setIndex(I); g.computeBoundingSphere();
+      const m = new THREE.MeshBasicMaterial({ map: TX.contact, transparent: true, depthWrite: false, opacity: 0.85 }); m.userData.own = true;
+      cv.contact = new THREE.Mesh(g, m); cv.contact.renderOrder = 1; root.add(mainOnly(cv.contact)); }
     cv.tailOn = new THREE.MeshBasicMaterial({ color: emi(0xff2a1a, EMI.tail) }); cv.tailOn.clippingPlanes = [cv.clip]; cv.tailOff = v.tail.material;
     // the lamps' glows
-    const gl = (p, col, s) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: TX.glow, color: col, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 })); sp.position.copy(p); sp.scale.set(s, s, s); sp.renderOrder = 10; v.bodyG.add(sp); return sp; };
+    const gl = (p, col, s) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: TX.glow, color: col, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 })); sp.position.copy(p); sp.scale.set(s, s, s); sp.renderOrder = 10; sp.visible = false; v.bodyG.add(sp); return sp; };   // (off: not drawn, lamps())
     cv.head = v.noHead ? [] : [gl(v.lights[0], 0xfff3d6, 0.9), gl(v.lights[1], 0xfff3d6, 0.9)];
     cv.tailG = [gl(v.lights[2], 0xff2a14, 0.6), gl(v.lights[3], 0xff2a14, 0.6)];
     for (const s of cv.head) s.position.x += 0.04; for (const s of cv.tailG) s.position.x -= 0.04;
@@ -1176,6 +1214,7 @@ const Garage3D = (function () {
     if (!cv) return;
     if (cv.root.parent) cv.root.parent.remove(cv.root);
     for (const s of cv.head.concat(cv.tailG)) s.material.dispose();
+    cv.contact.geometry.dispose(); cv.contact.material.dispose();
     for (const k in cv.parts) dropParts(cv.parts[k]);
     Render.garageFree(cv.v); cv.tailOn.dispose();
   }
@@ -1188,9 +1227,9 @@ const Garage3D = (function () {
     const d = v.dirtU ? v.dirtU.value : 0;   // (the wheels of their own get the mud the body's rear ones have)
     for (const w of cv.wheels) if (w.obj) w.obj.traverse(o => { if (o.isMesh && o.material && o.material.color && !(o.material.userData && o.material.userData.own)) o.material.color.setRGB(1 - 0.3 * d, 1 - 0.38 * d, 1 - 0.5 * d); });
   }
-  function lamps(cv, head, tail) {
-    for (const s of cv.head) s.material.opacity = head * 0.9 * GLOW.lamp;
-    for (const s of cv.tailG) s.material.opacity = tail * 0.85 * GLOW.lamp;
+  function lamps(cv, head, tail) {   // (a glow that is off is not drawn)
+    for (const s of cv.head) { s.material.opacity = head * 0.9 * GLOW.lamp; s.visible = s.material.opacity > 0.01; }
+    for (const s of cv.tailG) { s.material.opacity = tail * 0.85 * GLOW.lamp; s.visible = s.material.opacity > 0.01; }
     cv.v.tail.material = tail > 0.6 ? cv.tailOn : cv.tailOff;
   }
   // the car's pose each frame: the body's pitch, roll, bounce and shake on its springs, the wheels' spin
@@ -1200,6 +1239,7 @@ const Garage3D = (function () {
     v.bodyG.rotation.x = cv.roll + (sh ? (Math.random() - 0.5) * 0.006 * sh : 0);
     v.bodyG.position.y = cv.bounce + (sh ? (Math.random() - 0.5) * 0.004 * sh : 0);
     for (const w of cv.wheels) if (w.obj) w.obj.rotation.z = -cv.spin * (cv.M.rw / Math.max(0.2, w.r));
+    cv.contact.material.opacity = 0.85 * (1 - smooth(0, 0.07, v.grp.position.y));   // (up on the jacks: the tyres off the floor)
     const gp = cv.parts.gume; if (gp) for (const it of gp.userData.items) { const w = it.o.userData.wheel; if (w && !w.own) it.o.rotation.z = -cv.spin * w.sd; }   // (the rear wheels are in the body: their lettering turns)
   }
 
@@ -1789,7 +1829,7 @@ const Garage3D = (function () {
       const nw = makeCar(spec);
       // the new body only (its wheels, shadow and parts stay the old car's), cut the other way
       nw.v.grp.traverse(o => { if (o.isMesh && !isIn(o, nw.v.bodyG)) o.visible = false; });
-      for (const k in nw.parts) nw.parts[k].visible = false;
+      for (const k in nw.parts) nw.parts[k].visible = false; nw.contact.visible = false;
       cv.root.add(nw.root); nw.root.position.set(0, 0, 0);
       const cut = (x) => { cv.v.grp.updateMatrixWorld(true); o.setFromMatrixPosition(cv.v.grp.matrixWorld); fwd.set(1, 0, 0).transformDirection(cv.v.grp.matrixWorld); const c = fwd.dot(o) + x; cv.clip.set(fwd.clone().negate(), c); nw.clip.set(fwd.clone(), -c); };
       cut(x0);
@@ -1805,7 +1845,7 @@ const Garage3D = (function () {
       yield* tween(0.5, (k) => { arch.scale.y = 1 - EZ.in(k); });
       disposeTree(arch);
       // the swap: the new car takes the old one's place (its own wheels, its parts moved over)
-      cv.root.remove(nw.root); nw.v.grp.traverse(o => { if (o.isMesh) o.visible = true; });
+      cv.root.remove(nw.root); nw.v.grp.traverse(o => { if (o.isMesh) o.visible = true; }); nw.contact.visible = true;
       if (!spec.num) { nw.v.dec.visible = false; nw.v.bodyG.traverse(o2 => { if (o2.isMesh && o2.material === nw.v.dec.material) o2.visible = false; }); }
       nw.clip.set(new V3(-1, 0, 0), 1e4);
       for (const k in nw.parts) nw.parts[k].visible = true;
@@ -1908,13 +1948,15 @@ const Garage3D = (function () {
     renderer.setClearColor(0x0d1420, 1);
     renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false;   // (drawn only when something moves: frame())
     scene = new THREE.Scene(); scene.background = new THREE.Color(0x0d1420);
-    camera = new THREE.PerspectiveCamera(HOME.fov, 1.6, 0.25, 700);
+    camera = new THREE.PerspectiveCamera(HOME.fov, 1.6, 0.25, 700); camera.layers.enable(NOREFL);
     makeTextures(); makeLightTextures();
     buildLights(); buildFloor(); buildRoom(); buildTurntable(); buildDecor(); buildOutside(); buildPost();
-    // the room in the cars' paint and glass: a cube map of it, made once from where a car's middle is
-    cubeRT = new THREE.WebGLCubeRenderTarget(256, { format: THREE.RGBAFormat, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter });
-    const cc = new THREE.CubeCamera(0.2, 600, cubeRT); cc.position.set(0, 0.9, 0); scene.add(cc);
-    const rk = REF.k.value; REF.k.value = 0; ttTop.visible = true; renderer.shadowMap.needsUpdate = true; cc.update(renderer, scene); REF.k.value = rk; scene.remove(cc);
+    // the room in the cars' paint and glass: a cube map of it, made once from where a car's middle is (HDR: half-float, the lamps over
+    // 1 in it, but at 2.2 while it is made: brighter, the glass would go white; the cube's depth is 16-bit: near 0.5)
+    cubeRT = new THREE.WebGLCubeRenderTarget(256, { format: THREE.RGBAFormat, type: HDR ? THREE.HalfFloatType : THREE.UnsignedByteType, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter });
+    const cc = new THREE.CubeCamera(0.5, 600, cubeRT); cc.position.set(0, 0.9, 0); scene.add(cc);
+    const rk = REF.k.value, lc = lampMat.color.clone(); REF.k.value = 0; lampMat.color.multiplyScalar(Math.min(1, 2.2 / EMI.hex)); ttTop.visible = true; renderer.shadowMap.needsUpdate = true;
+    cc.update(renderer, scene); REF.k.value = rk; lampMat.color.copy(lc); scene.remove(cc);
     env = cubeRT.texture;
     for (const m of decorEnv) { m.envMap = env; m.needsUpdate = true; }
     makePartMats();
@@ -1936,6 +1978,7 @@ const Garage3D = (function () {
   function show(spec) {
     if (cur) freeCar(cur);
     cur = makeCar(spec); tt.add(cur.root); shadowDirty = 2;
+    renderer.compile(scene, camera);   // (the shaders of what is hidden for now too: the lamps' glows, the sparks; no stutter when they show)
   }
   function frame(dt, noDraw) {
     if (!ready) return;
@@ -1971,12 +2014,12 @@ const Garage3D = (function () {
     sc.add(new THREE.HemisphereLight(0xe8efff, 0x40444c, 0.8)); const d = new THREE.DirectionalLight(0xffffff, 0.75); d.position.set(3, 6, 4); sc.add(d);
     const r = new THREE.DirectionalLight(0x9fc8ff, 0.4); r.position.set(-4, 2, -5); sc.add(r);
     sc.add(cv.root); cv.v.blob && (cv.v.blob.material.opacity = 0.85);
-    const cam = new THREE.PerspectiveCamera(24, w / h, 0.1, 50), L = Math.max(4, cv.M.len);
-    cam.position.set(L * 0.95, L * 0.5, L * 1.55); cam.lookAt(0, 0.45, 0);
+    const cam = new THREE.PerspectiveCamera(24, w / h, 0.1, 50), L = Math.max(4, cv.M.len), g0 = GROUND.value;
+    cam.position.set(L * 0.95, L * 0.5, L * 1.55); cam.lookAt(0, 0.45, 0); cam.layers.enable(NOREFL); GROUND.value = 0;   // (its shadows too; on the floor)
     const rt = new THREE.WebGLRenderTarget(w * 2, h * 2, { format: THREE.RGBAFormat }); const old = renderer.getClearColor(new THREE.Color()), oa = renderer.getClearAlpha();
     renderer.setRenderTarget(rt); renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(sc, cam);
     const px = new Uint8Array(w * 2 * h * 2 * 4); renderer.readRenderTargetPixels(rt, 0, 0, w * 2, h * 2, px);
-    renderer.setRenderTarget(null); renderer.setClearColor(old, oa);
+    renderer.setRenderTarget(null); renderer.setClearColor(old, oa); GROUND.value = g0;
     const c = document.createElement('canvas'); c.width = w * 2; c.height = h * 2; const g = c.getContext('2d'), img = g.createImageData(w * 2, h * 2);
     for (let y = 0; y < h * 2; y++) img.data.set(px.subarray((h * 2 - 1 - y) * w * 2 * 4, (h * 2 - y) * w * 2 * 4), y * w * 2 * 4);
     g.putImageData(img, 0, 0); rt.dispose(); freeCar(cv);
