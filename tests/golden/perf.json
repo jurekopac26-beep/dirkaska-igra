@@ -202,6 +202,13 @@
   "maxKverts": 826,
   "jsMs": 0.68
  },
+ "longford": {
+  "calls": 198,
+  "maxCalls": 263,
+  "kverts": 363,
+  "maxKverts": 564,
+  "jsMs": 0.92
+ },
  "jezero": {
   "calls": 278,
   "maxCalls": 330,
