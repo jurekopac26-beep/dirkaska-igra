@@ -19,8 +19,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     parts: { set: 'none', ht: 1.1, y0: 0.22,
       extra: {
         nose: { z: 0, th: 0.5, m: 6, r: 0.4, h: 0.3, lx: 0.95, lz: 0, f: 0.45 },
-        cover: { z: 0, th: 0.75, m: 8, rW: 0.3, h: 0.06, lx: 0.49, lz: 0, f: 0.51 },
-        tail: { z: 1, th: 0.6, m: 7, r: 0.5, h: 0.3, lx: -0.73, lz: 0, f: 0.45 },
+        cover: { z: 0, th: 0.75, m: 8, rW: 0.3, h: 0.06, lx: 0.51, lz: 0, f: 0.53 },
+        tail: { z: 1, th: 0.6, m: 7, r: 0.5, h: 0.3, lx: -0.75, lz: 0, f: 0.43 },
       },
     },
     // the look (KIT API v1, render.js; look units = metres): one loft from the boat tail's point to the bonnet's front: the tail ('tail'),
