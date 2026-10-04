@@ -6,6 +6,36 @@ const World = (function () {
   const { clamp, lerp, sstep, rng } = Core;
   const TAU = Math.PI * 2;
 
+  /* ---------------- adaptive graphics detail (LOD) ----------------
+     One shared mechanism every track builder consults, so a track never copies LOD logic. The tier (opts.tier) comes from the game's
+     "Podrobnosti" setting / the device: 0 = NIZKA (the phone budget from CLAUDE.md, up to ~300 draw calls and ~900k vertices), 1 = SREDNJA,
+     2 = VISOKA (the full detail; VISOKA is a no-op — identical to before this system). A builder keeps the base (road, edges, terrain,
+     start/finish, the essentials) at every tier and asks LOD before emitting the extra decoration:
+       LOD.draw(category)  — is this decorative category drawn at the current tier? (base categories are not listed, so always drawn)
+       LOD.radius(metres)  — a decorative draw distance, shortened on the lower tiers
+       LOD.count(n)        — a decorative instance/scatter count, thinned on the lower tiers (on top of opts.density)
+       LOD.dens            — the same thinning factor, to fold into a builder's own `dens`
+     DETAIL maps a category to the lowest tier at which it is still drawn (absent = always). Tuned per builder in later steps. */
+  const DETAIL = { boulders: 1, marineFog: 2, animals: 1, boats: 1, extraTrees: 1, farProps: 1 };
+  function makeLOD(tier) {
+    const T = tier == null ? 2 : (tier | 0);
+    const densMul = T >= 2 ? 1 : T === 1 ? 0.72 : 0.45;   // SREDNJA / NIZKA thin the decoration
+    const radMul = T >= 2 ? 1 : T === 1 ? 0.72 : 0.42;   // NIZKA: a notably shorter draw distance (fewer in-view chunks → fewer draw calls)
+    return {
+      tier: T, dens: densMul,
+      draw(cat) { const m = DETAIL[cat]; return m == null ? true : T >= m; },
+      radius(m) { return T >= 2 ? m : m * radMul; },          // VISOKA: the exact distance (identical), lower tiers: shorter
+      count(n) { return T >= 2 ? n : Math.max(0, Math.round(n * densMul)); },   // VISOKA: the exact count (identical)
+      cap(m) { return T >= 2 ? Infinity : m * radMul; },      // add a far cut-off only below VISOKA (loops that had none stay unbounded at VISOKA)
+    };
+  }
+  let LOD = makeLOD(2);   // set per build() from opts.tier; VISOKA by default
+  // decorative meshes eligible for the runtime draw-distance cull (vegetation and trees only: Render hides the far ones on the lower tiers to
+  // keep the draw-call count down; the base — road, terrain, barriers, buildings, signs — is never in this list). Each entry: {m, x, z, r}
+  // (the mesh and its chunk centre and radius in world space). Filled during build(), handed out as out.cull in finish().
+  let CULLM = [];
+  const cullAdd = (m, x, z, r) => CULLM.push({ m, x, z, r });
+
   /* ---------------- geometry builder (non-indexed, flat normals) -------- */
   const GB_UV0 = [0, 0];
   class GB {
@@ -101,6 +131,7 @@ const World = (function () {
       for (let k = 0; k < L.length; k += 4) { const y0 = L[k + 2], h = L[k + 3]; for (let v = L[k]; v < L[k + 1]; v++) { const f = Math.max(0, Math.min(1, (g.P[v * 3 + 1] - y0) / h - 0.15)); A[v] = f * f; } }
       geo.setAttribute('aSway', new THREE.BufferAttribute(A, 1));
       const m = new THREE.Mesh(geo, mat); m.castShadow = true; m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); group.add(m);
+      if (!geo.boundingSphere) geo.computeBoundingSphere(); const bs = geo.boundingSphere; cullAdd(m, bs.center.x, bs.center.z, bs.radius);   // swaying woods: distance-cullable on the lower tiers
     }
   }
 
@@ -865,6 +896,8 @@ const World = (function () {
 
   /* ---------------- BUILD ---------------- */
   function build(scene, track, tex, opts) {
+    LOD = makeLOD(opts.tier);   // the graphics detail tier for this build (every builder below consults the shared LOD)
+    CULLM = [];                 // fresh list of distance-cullable vegetation for this build
     CROWDS = [];   // (the crowds of this build: their sound, see crowdPoints)
     T = track; THEME = (track.def && track.def.theme) || 'lake'; CSX = THEME === 'forest' || THEME === 'italia' || THEME === 'kamp'; ROCK_SMOOTH = CSX; SEA = (track.def && track.def.sea) || null; RIVER = track.def.river || null; RW = track.def.riverW || 26; CASTLE = track.def.castle || null; buildHash();
     if (THEME !== 'nring' && THEME !== 'spa' && THEME !== 'rbring' && THEME !== 'bathurst' && THEME !== 'cpalace' && THEME !== 'longford') NR = null;   // free the last corridor build's grids (the Nordschleife's, Spa's, the Red Bull Ring's, Bathurst's, Crystal Palace's, Longford's)
@@ -1690,14 +1723,14 @@ const World = (function () {
         for (let x = B.minX; x < B.maxX; x += step) {
           const px = x + (R() - 0.5) * step * 0.9, pz = z + (R() - 0.5) * step * 0.9;
           const c = clearance(px, pz);
-          if (c < 2.5 || c > 150) continue;
+          if (c < 2.5 || c > LOD.radius(150)) continue;   // (LOD: a shorter tree draw distance on the lower tiers)
           if (lakeSD(px, pz) < 4) continue;
           if (excluded(px, pz)) continue;
           const f = forestN(px, pz);
           let p = sstep(0.36, 0.62, f);
           if (c < 10) p *= 0.35;
           if (c > 110) p = Math.max(p, 0.5);
-          if (R() > p) continue;
+          if (R() > p * LOD.dens) continue;   // (LOD: thin the trees on the lower tiers)
           const g = treeCh.get(px, pz), n0 = g.P.length / 3;
           const y0 = groundH(px, pz) - 0.2;
           const tn = typeN(px, pz);
@@ -1782,7 +1815,7 @@ const World = (function () {
         const x = lerp(B.minX - 40, B.maxX + 40, R()), z = lerp(B.minZ - 40, seaZ - 30, R());
         const W = 11 + R() * 13, D = 10 + R() * 10, rad = Math.hypot(W, D) / 2;
         const c = clearance(x, z);
-        if (c < rad * 0.55 + 2.5 || excluded(x, z)) continue;
+        if (c < rad * 0.55 + 2.5 || c > LOD.cap(230) || excluded(x, z)) continue;   // (LOD: cut the far seafront buildings on the lower tiers)
         if (placed.some(p => Math.hypot(p[0] - x, p[1] - z) < (p[2] + rad) * 0.86)) continue;
         const ni = nearest(x, z).i, rot = ni >= 0 ? T.hd[ni] + (R() < 0.5 ? 0 : Math.PI / 2) : R() * TAU;
         const floors = 2 + Math.floor(R() * (c > 40 ? 6 : 4)), H = floors * 3.1 + 0.9;
@@ -1933,14 +1966,14 @@ const World = (function () {
         for (let x = B.minX; x < B.maxX; x += step) {
           const px = x + (R() - 0.5) * step * 0.9, pz = z + (R() - 0.5) * step * 0.9;
           const c = clearance(px, pz);
-          if (c < 3 || excluded(px, pz)) continue;
+          if (c < 3 || c > LOD.cap(190) || excluded(px, pz)) continue;   // (LOD: cut the far forest on the lower tiers; VISOKA keeps it all)
           const f = forestN(px, pz);
           let p = sstep(0.2, 0.52, f);
           if (c < 10) p *= 0.7;                 // slightly thinner right by the road
           if (c > 120) p = Math.max(p, 0.7);    // thick forest up the slopes
           const y0 = groundH(px, pz);
           if (y0 > 96) p *= sstep(120, 96, y0); // treeline: fewer trees near the peaks
-          if (R() > p) continue;
+          if (R() > p * LOD.dens) continue;   // (LOD: thin the forest on the lower tiers)
           const g = treeCh.get(px, pz), n0 = g.P.length / 3;
           const tn = typeN(px, pz);
           const hgt = 9 + R() * 9;
@@ -1998,7 +2031,7 @@ const World = (function () {
       for (let k = 0; k < 520 / 1; k++) {
         const px = lerp(B.minX, B.maxX, R()), pz = lerp(B.minZ, B.maxZ, R());
         const c = clearance(px, pz);
-        if (c < 3.5 || excluded(px, pz)) continue;
+        if (c < 3.5 || c > LOD.cap(190) || excluded(px, pz)) continue;   // (LOD: cut the far boulders on the lower tiers; VISOKA keeps them all)
         if (R() > 0.5) continue;
         const g = scen.get(px, pz), y0 = groundH(px, pz);
         const s = 0.8 + R() * (c < 20 ? 2.2 : 4.5);
@@ -2276,7 +2309,8 @@ const World = (function () {
       const tryBuilding = (x, z, W, D, rot, H) => {
         const rad = Math.hypot(W, D) / 2;
         if (excluded(x, z) || (RIVER && distRiver(x, z) < RWh + 3 + rad * 0.6) || gH(x, z) > 1.5) return false;
-        if (clearance(x, z) < rad * 0.55 + 2.5 || placed.some(q => Math.hypot(q[0] - x, q[1] - z) < (q[2] + rad) * 0.78)) return false;
+        const cl = clearance(x, z);
+        if (cl < rad * 0.55 + 2.5 || cl > LOD.cap(230) || placed.some(q => Math.hypot(q[0] - x, q[1] - z) < (q[2] + rad) * 0.78)) return false;   // (LOD: cut the far city blocks on the lower tiers; the street fronts by the road stay)
         const col = pal[Math.floor(R() * pal.length)], y0 = facadeBox(x, z, W, D, H, rot, col), g = scen.get(x, z), rk = R();
         gable(g, x, y0 + H, z, W + 0.6, D + 0.6, Math.min(W, D) * 0.32, rot, rk < 0.78 ? vary(tile, R, 0.08) : rk < 0.93 ? [0.36, 0.37, 0.41] : copper, col);
         box(g, x, y0 + H - 0.35, z, W + 0.3, 0.35, D + 0.3, rot, col.map(v => v * 0.82));
@@ -2293,7 +2327,7 @@ const World = (function () {
       // ---- castle hill forest ----
       for (let x = 30; x < 370; x += 6) for (let z = 85; z < 415; z += 6) {
         const px = x + (R() - 0.5) * 5, pz = z + (R() - 0.5) * 5, h0 = gH(px, pz);
-        if (h0 < 3 || R() < 0.22 || (CASTLE && Math.hypot(px - CASTLE[0], pz - CASTLE[1]) < 46) || excluded(px, pz)) continue;
+        if (clearance(px, pz) > LOD.cap(170) || h0 < 3 || R() < 0.22 || (CASTLE && Math.hypot(px - CASTLE[0], pz - CASTLE[1]) < 46) || excluded(px, pz)) continue;   // (LOD: cut the far castle-hill forest on the lower tiers)
         const g = scen.get(px, pz), hgt = 8 + R() * 6;
         cyl(g, px, h0 - 0.3, pz, 0.32, hgt * 0.45, 5, [0.42, 0.34, 0.24]);
         if (R() < 0.18) cone(g, px, h0 + hgt * 0.3, pz, hgt * 0.24, hgt * 0.75, 7, vary([0.18, 0.34, 0.2], R, 0.1), [0.24, 0.42, 0.26], R() * TAU);
@@ -2847,9 +2881,9 @@ const World = (function () {
       if (FOR) for (let z = B.minZ - 60; z < B.maxZ + 60; z += step) for (let x = B.minX - 60; x < B.maxX + 60; x += step) {
         const px = x + (R() - 0.5) * step * 0.9, pz = z + (R() - 0.5) * step * 0.9, c = clearance(px, pz);
         const fN = forestN(px, pz), lawn = 5 + 11 * (1 - sstep(0.35, 0.6, fN));   // the firs come close to the fences in places, as in the reference
-        if (c < lawn || excluded(px, pz)) continue;
+        if (c < lawn || c > LOD.cap(190) || excluded(px, pz)) continue;   // (LOD: cut the far forest on the lower tiers; VISOKA keeps it all)
         let p = 0.45 + 0.5 * sstep(0.35, 0.6, fN); if (c > 30) p = Math.max(p, 0.85); if (c < lawn + 6) p *= 0.6;
-        if (R() > p) continue;
+        if (R() > p * LOD.dens) continue;   // (LOD: thin the fir forest on the lower tiers)
         if (R() < 0.08 && c < 30) { const g = scen.get(px, pz); ico(g, px, gH(px, pz) + 2.2, pz, 2.2 + R(), 0.9, vary([0.24, 0.46, 0.2], R, 0.15), R, 0.3); }   // occasional round bush/tree
         else fir(px, pz, 10 + R() * 9);
       }
@@ -2857,9 +2891,9 @@ const World = (function () {
       if (!FOR) { const st = (ITA ? 6.4 : 5.4) / Math.sqrt(dens);
         for (let z = B.minZ - 60; z < B.maxZ + 60; z += st) for (let x = B.minX - 60; x < B.maxX + 60; x += st) {
           const px = x + (R() - 0.5) * st * 0.9, pz = z + (R() - 0.5) * st * 0.9, c = clearance(px, pz), fN = forestN(px, pz), lawn = (ITA ? 8 : 6) + 10 * (1 - sstep(0.35, 0.6, fN));
-          if (c < lawn || excluded(px, pz)) continue;
+          if (c < lawn || c > LOD.cap(190) || excluded(px, pz)) continue;   // (LOD: cut the far forest on the lower tiers; VISOKA keeps it all)
           let p = ITA ? 0.03 + 0.8 * sstep(0.46, 0.66, fN) : 0.42 + 0.5 * sstep(0.35, 0.6, fN); if (c > 45) p = Math.max(p, ITA ? 0.16 : 0.82); if (c < lawn + 6) p *= 0.6;   // (Toskana: groves on open lawns)
-          if (R() > p) continue;
+          if (R() > p * LOD.dens) continue;   // (LOD: thin the groves on the lower tiers)
           if (ITA) { const u = R(); if (u < 0.13) cypress(px, pz, 11 + R() * 6); else if (u < 0.3) puffPine(px, pz, 10 + R() * 6); else leafy(px, pz, 8 + R() * 5); }
           else if (c > 70 || R() < 0.5) fir(px, pz, 10 + R() * 8 + 7 * sstep(0.5, 0.72, fN)); else leafy(px, pz, 8.5 + R() * 5);   // (far off, where they are small on screen: the cheap far firs; the pines tallest in the thick of the wood)
         } }
@@ -4671,7 +4705,7 @@ const World = (function () {
       const mm = new THREE.Mesh(g, mat); mm.name = 'ao'; mm.renderOrder = 1; mm.matrixAutoUpdate = false; o.root.add(mm);
     }
   }
-  function finish(o, tex) { aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); return clouds(o.root, o, tex); }
+  function finish(o, tex) { o.cull = CULLM; aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); return clouds(o.root, o, tex); }
   // where the crowds are, for their sound (Sfx: x, z, how many 0..1), on a circuit whose builder has not given them (the Red Bull Ring's
   // does): the spectators of every crowd of this build in 24 m cells, and the packed grandstands (the crowd picture) as full ones
   function crowdPoints(o, tex) {
@@ -11550,8 +11584,8 @@ const World = (function () {
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
-          const hd = vrDist(x, z); if (hd > 250) continue;
-          if (hd > 90 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // farther out every other spot (bigger trees: a closed canopy from above)
+          const hd = vrDist(x, z); if (hd > LOD.radius(250)) continue;
+          if (hd > LOD.radius(90) && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // farther out every other spot (bigger trees: a closed canopy from above)
           const c = vrLC(x, z), p = c === 1 ? 0.93 : c === 2 ? 0.5 : c === 0 ? 0.05 + 0.22 * sstep(0.62, 0.8, P.n5(x * 1.3 + 40, z * 1.3)) : c === 3 ? 0.05 : c === 4 ? 0.03 : 0;
           if (r1 > p) continue;
           if (vrWater(x, z).e > -4) continue;
@@ -11597,7 +11631,7 @@ const World = (function () {
       }
       for (let s = 10; s < T.len - 10; s += 7) for (const side of [-1, 1]) {   // limestone at the foot of the cuts and out on the scree
         const i = T.idx(s), A = altAt(i); if (A < 950 || RV() > 0.3) continue;
-        const o = 1.6 + Math.pow(RV(), 1.5) * 40, [x, z] = onSide(s, side, o), sz = 0.5 + RV() * 1.3; if (vrNear(x, z).dd < sz + 0.6 || excluded(x, z)) continue;
+        const o = 1.6 + Math.pow(RV(), 1.5) * 40, [x, z] = onSide(s, side, o), sz = 0.5 + RV() * 1.3; if (vrNear(x, z).dd < sz + 0.6 || excluded(x, z) || vrDist(x, z) > LOD.cap(90)) continue;
         const y = vrGround(x, z), sl = vrSlope(x, z), scree = vrLC(x, z) === 4; if (sl < 0.35 && !scree) continue;
         const g = scen.get(x, z), col = vary(lime[Math.floor(RV() * 3)], RV, 0.1);
         rock(g, x, y + sz * 0.3, z, sz * 1.2, sz, sz, RV() * TAU, col, RV, 0.3);
@@ -11606,7 +11640,7 @@ const World = (function () {
       ROCK_SMOOTH = false;
       for (let s = 16; s < T.len - 16; s += 18) for (const side of [-1, 1]) {   // crags where the slope is steep
         if (RV() < 0.45) continue;
-        const [x, z] = onSide(s, side, 8 + RV() * 60); if (excluded(x, z) || vrNear(x, z).dd < 6) continue;
+        const [x, z] = onSide(s, side, 8 + RV() * 60); if (excluded(x, z) || vrNear(x, z).dd < 6 || vrDist(x, z) > LOD.cap(90)) continue;
         const sl = vrSlope(x, z); if (sl < 0.7) continue;
         const y = vrGround(x, z), g = scen.get(x, z), n = 2 + Math.floor(RV() * 3), b0 = vary(lime[Math.floor(RV() * 3)], RV, 0.08);
         for (let q = 0; q < n; q++) { const r0 = 2 + RV() * 3.4, qx = x + (RV() - 0.5) * 7, qz = z + (RV() - 0.5) * 7, qy = vrGround(qx, qz); if (vrNear(qx, qz).dd < r0 + 1) continue;
@@ -12302,8 +12336,8 @@ const World = (function () {
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
-          const hd = vrDist(x, z); if (hd > 230) continue;
-          if (hd > 70 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // (farther out every other spot)
+          const hd = vrDist(x, z); if (hd > LOD.radius(230)) continue;   // (LOD: a shorter plant/tree draw distance on the lower tiers)
+          if (hd > LOD.radius(70) && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // (farther out every other spot)
           const c = vrLC(x, z), y0 = caGround(x, z), A = y0 + base, sl = caSlope(x, z);
           let kind = -1;
           if (c === 1) kind = r1 < 0.52 ? 0 : r1 < 0.56 ? 1 : -1;
@@ -12351,7 +12385,7 @@ const World = (function () {
       }
       for (let s = 16; s < T.len - 16; s += 16) for (const side of [-1, 1]) {   // crags where the slope is steep
         if (RV() < 0.4) continue;
-        const [x, z] = onSide(s, side, 8 + RV() * 70); if (excluded(x, z) || vrNear(x, z).dd < 6) continue;
+        const [x, z] = onSide(s, side, 8 + RV() * 70); if (excluded(x, z) || vrNear(x, z).dd < 6 || vrDist(x, z) > LOD.cap(90)) continue;
         const sl = caSlope(x, z); if (sl < 0.7) continue;
         const y = caGround(x, z), g = scen.get(x, z), n = 2 + Math.floor(RV() * 3), b0 = vary(rockC[Math.floor(RV() * rockC.length)], RV, 0.08);
         for (let q = 0; q < n; q++) { const r0 = 2 + RV() * 3.8, qx = x + (RV() - 0.5) * 8, qz = z + (RV() - 0.5) * 8, qy = caGround(qx, qz); if (vrNear(qx, qz).dd < r0 + 1) continue;
@@ -13216,7 +13250,7 @@ const World = (function () {
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
           const hd = ktDist(x, z); if (hd > 250) continue;
-          if (hd > 90 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // farther out every other spot (bigger trees: a closed canopy from above)
+          if (hd > LOD.radius(90) && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // farther out every other spot (bigger trees: a closed canopy from above)
           const c = ktLC(x, z), p = c === 1 ? 0.9 : c === 2 ? 0.34 : c === 0 ? 0.08 : c === 3 ? 0.05 : c === 4 ? 0.05 : 0;
           if (r1 > p) continue;
           if (ktRiv(x, z) > -3) continue;
@@ -13767,8 +13801,8 @@ const World = (function () {
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
-          const hd = vrDist(x, z); if (hd > 230) continue;
-          if (hd > 70 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;
+          const hd = vrDist(x, z); if (hd > LOD.radius(230)) continue;   // (LOD: a shorter plant/tree draw distance on the lower tiers)
+          if (hd > LOD.radius(70) && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;
           const c = vrLC(x, z), y0 = chGround(x, z), A = y0 + base, sl = chSlope(x, z);
           if (A < 4 || c === 4 || c === 5) continue;
           let kind = -1;
@@ -14330,8 +14364,8 @@ const World = (function () {
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
-          const hd = vrDist(x, z); if (hd > 230) continue;
-          if (hd > 70 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // (farther out every other spot)
+          const hd = vrDist(x, z); if (hd > LOD.radius(230)) continue;   // (LOD: a shorter plant/tree draw distance on the lower tiers)
+          if (hd > LOD.radius(70) && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // (farther out every other spot)
           const c = vrLC(x, z), y = bsGround(x, z), A = y + base; if (A < 1.5) continue;
           const sl = bsSlope(x, z);
           let kind = -1;
@@ -14363,7 +14397,7 @@ const World = (function () {
         if (++nS >= maxS) break edge;
       }
       const G = P.G, RK = rng(3971), rc = [[0.42, 0.4, 0.37], [0.5, 0.46, 0.4], [0.36, 0.35, 0.34]];
-      for (let k = 0; k < 9000 * dens; k++) {
+      for (let k = 0; k < LOD.count(9000 * dens); k++) {   // (LOD: fewer scattered beach boulders on the lower tiers)
         const x = G.x0 + RK() * G.ntx * VRC * VRT, z = G.z0 + RK() * G.ntz * VRC * VRT, r1 = RK(), r2 = RK(), r3 = RK();
         const ti = Math.floor((x - G.x0) / (VRC * VRT)), tj = Math.floor((z - G.z0) / (VRC * VRT)); if (!G.on[tj * G.ntx + ti]) continue;
         const y = bsGround(x, z); if (y > y0 + 1.2 || y < y0 - 2.5) continue;
@@ -14375,7 +14409,7 @@ const World = (function () {
 
     /* ---- the marine layer: two sheets of fog over the sea off the coast (always: the fog bank lying offshore, thin), thick over the land too on a
        misty run (dyn.bsMist.on, from the race; bsMistStep) ---- */
-    {
+    if (LOD.draw('marineFog')) {   // (LOD: the offshore fog sheets only on VISOKA; its consumers in render/game are guarded by `if (world.dyn.bsMist)`)
       const U = { uT: { value: 0 }, uK: { value: 0.3 }, uC: { value: new THREE.Color(0xdde3e8) }, uLand: { value: 0 } }, mat = bsMistMat(U);
       const G = P.G, X1 = G.x0 + G.ntx * VRC * VRT, Z0 = G.z0 - 1500, Z1 = G.z0 + G.ntz * VRC * VRT + 1500, XW = G.x0 - 4000, coast = Math.min(...Array.from({ length: 8 }, (_, k) => T.px[Math.round(k / 7 * iE)])) - 120;
       for (const [hgt, sp] of [[y0 + 28, 0], [y0 + 75, 1]]) {   // (uv.x: 0 at the coast .. 1 far out; uv.y across the strip, for the soft ends)
@@ -14977,8 +15011,8 @@ const World = (function () {
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
-          const hd = vrDist(x, z); if (hd > 250) continue;
-          if (hd > 90 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // (farther out every other spot)
+          const hd = vrDist(x, z); if (hd > LOD.radius(250)) continue;
+          if (hd > LOD.radius(90) && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // (farther out every other spot)
           const c = vrLC(x, z), p = c === 1 ? 0.9 : c === 2 ? 0.45 : c === 0 ? 0.1 + 0.25 * sstep(0.6, 0.8, P.n5(x * 1.3 + 40, z * 1.3)) : c === 4 ? 0.07 + 0.2 * sstep(0.5, 0.75, P.n5(x * 1.7, z * 1.7 + 90)) : c === 3 ? 0.04 : 0;
           if (r1 > p) continue;
           if (vrWater(x, z).e > -4) continue;
@@ -15365,7 +15399,7 @@ const World = (function () {
       }
       for (let s = 10; s < T.len - 10; s += 5) for (const side of [-1, 1]) {   // boulders fallen onto the verges
         if (RV() > 0.3) continue;
-        const o = 1.2 + Math.pow(RV(), 1.6) * 30, [x, z] = onSide(s, side, o), sz = 0.35 + RV() * 1.2; if (vrNear(x, z).dd < sz + 0.6 || excluded(x, z)) continue;
+        const o = 1.2 + Math.pow(RV(), 1.6) * 30, [x, z] = onSide(s, side, o), sz = 0.35 + RV() * 1.2; if (vrNear(x, z).dd < sz + 0.6 || excluded(x, z) || vrDist(x, z) > LOD.cap(90)) continue;
         rock(scen.get(x, z), x, caGround(x, z) + sz * 0.3, z, sz * 1.2, sz, sz, RV() * TAU, vary(bas[Math.floor(RV() * bas.length)], RV, 0.12), RV, 0.32);
       }
     }
@@ -15396,8 +15430,8 @@ const World = (function () {
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
-          const hd = vrDist(x, z); if (hd > 230) continue;
-          if (hd > 70 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;
+          const hd = vrDist(x, z); if (hd > LOD.radius(230)) continue;   // (LOD: a shorter plant/tree draw distance on the lower tiers)
+          if (hd > LOD.radius(70) && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;
           const c = vrLC(x, z), y0 = caGround(x, z), A = y0 + base, sl = caSlope(x, z);
           let kind = -1;
           if (c === 0 || c === 4) kind = r1 < (A > 2800 ? 0.3 : 0.5) ? 0 : r1 < 0.52 ? 2 : -1;
@@ -15843,8 +15877,8 @@ const World = (function () {
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
-          const hd = vrDist(x, z); if (hd > 250) continue;
-          if (hd > 90 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // farther out every other spot (bigger trees)
+          const hd = vrDist(x, z); if (hd > LOD.radius(250)) continue;
+          if (hd > LOD.radius(90) && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // farther out every other spot (bigger trees)
           const c = vrLC(x, z), p = c === 1 ? 0.95 : c === 2 ? 0.55 : c === 0 ? 0.12 : c === 3 ? 0.06 : 0.03;
           if (r1 > p) continue;
           const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < 2.2) continue; if (nn.i >= 0 && nn.dd < 5 && r2 < 0.15) continue;
@@ -15880,14 +15914,14 @@ const World = (function () {
       }
       for (let s = 10; s < T.len - 10; s += 7) for (const side of [-1, 1]) {   // boulders at the foot of the slopes
         if (RV() > 0.25) continue;
-        const o = 1.6 + Math.pow(RV(), 1.5) * 40, [x, z] = onSide(s, side, o), sz = 0.5 + RV() * 1.2; if (vrNear(x, z).dd < sz + 0.6 || excluded(x, z)) continue;
+        const o = 1.6 + Math.pow(RV(), 1.5) * 40, [x, z] = onSide(s, side, o), sz = 0.5 + RV() * 1.2; if (vrNear(x, z).dd < sz + 0.6 || excluded(x, z) || vrDist(x, z) > LOD.cap(90)) continue;
         const y = vrGround(x, z), sl = vrSlope(x, z); if (sl < 0.4) continue;
         rock(scen.get(x, z), x, y + sz * 0.3, z, sz * 1.2, sz, sz, RV() * TAU, vary(andes[Math.floor(RV() * 3)], RV, 0.1), RV, 0.3);
       }
       ROCK_SMOOTH = false;
       for (let s = 16; s < T.len - 16; s += 18) for (const side of [-1, 1]) {   // crags where the slope is steep
         if (RV() < 0.5) continue;
-        const [x, z] = onSide(s, side, 8 + RV() * 60); if (excluded(x, z) || vrNear(x, z).dd < 6) continue;
+        const [x, z] = onSide(s, side, 8 + RV() * 60); if (excluded(x, z) || vrNear(x, z).dd < 6 || vrDist(x, z) > LOD.cap(90)) continue;
         if (vrSlope(x, z) < 0.75) continue;
         const g = scen.get(x, z), n = 2 + Math.floor(RV() * 3), b0 = vary(andes[Math.floor(RV() * 3)], RV, 0.08);
         for (let q = 0; q < n; q++) { const r0 = 2 + RV() * 3.2, qx = x + (RV() - 0.5) * 7, qz = z + (RV() - 0.5) * 7, qy = vrGround(qx, qz); if (vrNear(qx, qz).dd < r0 + 1) continue;
@@ -16451,7 +16485,7 @@ const World = (function () {
       }
       for (let s = 16; s < T.len - 16; s += 18) for (const side of [-1, 1]) {   // outcrops where the slope is steep: rounded, layered sandstone
         if (RV() < 0.45) continue;
-        const [x, z] = onSide(s, side, 8 + RV() * 70); if (excluded(x, z) || vrNear(x, z).dd < 6) continue;
+        const [x, z] = onSide(s, side, 8 + RV() * 70); if (excluded(x, z) || vrNear(x, z).dd < 6 || vrDist(x, z) > LOD.cap(90)) continue;
         const sl = caSlope(x, z); if (sl < 0.75) continue;
         const y = caGround(x, z), g = scen.get(x, z), n = 2 + Math.floor(RV() * 3), b0 = vary(rockC[Math.floor(RV() * rockC.length)], RV, 0.08);
         for (let q = 0; q < n; q++) { const r0 = 2 + RV() * 3.5, qx = x + (RV() - 0.5) * 8, qz = z + (RV() - 0.5) * 8, qy = caGround(qx, qz); if (vrNear(qx, qz).dd < r0 + 1) continue;
@@ -16937,8 +16971,8 @@ const World = (function () {
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
-          const hd = vrDist(x, z); if (hd > 260) continue;
-          if (hd > 90 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // (farther out every other spot, the trees bigger)
+          const hd = vrDist(x, z); if (hd > LOD.radius(260)) continue;
+          if (hd > LOD.radius(90) && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // (farther out every other spot, the trees bigger)
           const c = vrLC(x, z), y = caGround(x, z), A = y + base, tl = sstep(2780, 2950, A);   // (tl: towards the treeline)
           const p = c === 1 ? 0.9 - 0.35 * tl : c === 2 ? 0.35 : c === 0 ? 0.04 + 0.1 * sstep(0.6, 0.8, P.n5(x * 1.3 + 40, z * 1.3)) * (1 - tl) : c === 4 ? 0.04 : 0;
           if (r1 > p) continue;
@@ -16978,8 +17012,8 @@ const World = (function () {
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
-          const hd = vrDist(x, z); if (hd > 220) continue;
-          if (hd > 70 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;
+          const hd = vrDist(x, z); if (hd > LOD.radius(220)) continue;
+          if (hd > LOD.radius(70) && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;
           const c = vrLC(x, z);
           let kind = -1;
           if (c === 0) kind = r1 < 0.5 ? 0 : r1 < 0.62 ? 1 : r1 < 0.65 ? 2 : -1;
@@ -17028,13 +17062,13 @@ const World = (function () {
       ROCK_SMOOTH = false;
       for (let s = 10; s < T.len - 10; s += 6) for (const side of [-1, 1]) {   // granite at the foot of the cuts
         if (RV() > 0.32) continue;
-        const o = 1.6 + Math.pow(RV(), 1.5) * 36, [x, z] = onSide(s, side, o), sz = 0.4 + RV() * 1.4; if (vrNear(x, z).dd < sz + 0.6 || excluded(x, z)) continue;
+        const o = 1.6 + Math.pow(RV(), 1.5) * 36, [x, z] = onSide(s, side, o), sz = 0.4 + RV() * 1.4; if (vrNear(x, z).dd < sz + 0.6 || excluded(x, z) || vrDist(x, z) > LOD.cap(90)) continue;
         const y = caGround(x, z), sl = caSlope(x, z); if (sl < 0.3 && vrLC(x, z) !== 4) continue;
         rock(scen.get(x, z), x, y + sz * 0.3, z, sz * 1.25, sz, sz, RV() * TAU, vary(granite[Math.floor(RV() * granite.length)], RV, 0.1), RV, 0.28);
       }
       for (let s = 16; s < T.len - 16; s += 15) for (const side of [-1, 1]) {   // crags and slabs where the slope is steep
         if (RV() < 0.4) continue;
-        const [x, z] = onSide(s, side, 8 + RV() * 70); if (excluded(x, z) || vrNear(x, z).dd < 6) continue;
+        const [x, z] = onSide(s, side, 8 + RV() * 70); if (excluded(x, z) || vrNear(x, z).dd < 6 || vrDist(x, z) > LOD.cap(90)) continue;
         const sl = caSlope(x, z); if (sl < 0.65) continue;
         const y = caGround(x, z), g = scen.get(x, z), n = 2 + Math.floor(RV() * 3), b0 = vary(granite[Math.floor(RV() * granite.length)], RV, 0.06);
         for (let q = 0; q < n; q++) { const r0 = 2 + RV() * 4, qx = x + (RV() - 0.5) * 9, qz = z + (RV() - 0.5) * 9, qy = caGround(qx, qz); if (vrNear(qx, qz).dd < r0 + 1) continue;
@@ -17528,7 +17562,7 @@ const World = (function () {
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
-          const hd = vrDist(x, z); if (hd > 250) continue;
+          const hd = vrDist(x, z); if (hd > LOD.radius(250)) continue;
           if (hd > 130 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // farther out every other spot (bigger trees: a closed canopy from above)
           const c = vrLC(x, z), grove = sstep(0.6, 0.78, P.n5(x * 1.2 + 90, z * 1.2));
           const low = (c === 0 || c === 2 || c === 3) && caGround(x, z) + base < 1370;   // (below the plateau the clearings grow over: shrubs, ferns, young trees)
@@ -17575,13 +17609,13 @@ const World = (function () {
       ROCK_SMOOTH = false;
       for (let s = 10; s < T.len - 10; s += 7) for (const side of [-1, 1]) {   // rocks at the foot of the cuts
         const i = T.idx(s); if (RV() > 0.3) continue;
-        const o = 1.6 + Math.pow(RV(), 1.5) * 30, [x, z] = onSide(s, side, o), sz = 0.5 + RV() * 1.2; if (vrNear(x, z).dd < sz + 0.6 || excluded(x, z)) continue;
+        const o = 1.6 + Math.pow(RV(), 1.5) * 30, [x, z] = onSide(s, side, o), sz = 0.5 + RV() * 1.2; if (vrNear(x, z).dd < sz + 0.6 || excluded(x, z) || vrDist(x, z) > LOD.cap(90)) continue;
         const y = caGround(x, z), sl = caSlope(x, z); if (sl < 0.4) continue;
         rock(scen.get(x, z), x, y + sz * 0.3, z, sz * 1.2, sz, sz, RV() * TAU, vary(rockC(T.hy[i] + base), RV, 0.1), RV, 0.3);
       }
       for (let s = 16; s < T.len - 16; s += 14) for (const side of [-1, 1]) {   // crags where the slope is steep
         if (RV() < 0.35) continue;
-        const [x, z] = onSide(s, side, 8 + RV() * 120); if (excluded(x, z) || vrNear(x, z).dd < 6) continue;
+        const [x, z] = onSide(s, side, 8 + RV() * 120); if (excluded(x, z) || vrNear(x, z).dd < 6 || vrDist(x, z) > LOD.cap(90)) continue;
         const sl = caSlope(x, z); if (sl < 0.85) continue;
         const y = caGround(x, z), g = scen.get(x, z), n = 2 + Math.floor(RV() * 3), b0 = vary(rockC(y + base), RV, 0.08);
         for (let q = 0; q < n; q++) { const r0 = 2.2 + RV() * 4, qx = x + (RV() - 0.5) * 9, qz = z + (RV() - 0.5) * 9, qy = caGround(qx, qz); if (vrNear(qx, qz).dd < r0 + 1) continue;
@@ -17949,8 +17983,8 @@ const World = (function () {
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
-          const hd = vrDist(x, z); if (hd > 230) continue;
-          if (hd > 70 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // (farther out every other spot)
+          const hd = vrDist(x, z); if (hd > LOD.radius(230)) continue;   // (LOD: a shorter plant/tree draw distance on the lower tiers)
+          if (hd > LOD.radius(70) && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // (farther out every other spot)
           const y0 = caGround(x, z), A = y0 + base, sl = caSlope(x, z), top = A > 1925, slope = sl > 0.32;
           let kind = -1;
           if (top && !slope) kind = r1 < 0.05 ? 0 : r1 < 0.075 ? 1 : r1 < 0.2 ? 2 : r1 < 0.24 ? 3 : -1;
@@ -17985,13 +18019,13 @@ const World = (function () {
       const RV = rng(3971), rockC = [[0.78, 0.5, 0.36], [0.7, 0.4, 0.3], [0.86, 0.74, 0.58], [0.8, 0.58, 0.4], [0.62, 0.4, 0.32]];
       for (let s = 10; s < T.len - 10; s += 6) for (const side of [-1, 1]) {
         if (RV() > 0.34) continue;
-        const o = 1.6 + Math.pow(RV(), 1.5) * 40, [x, z] = onSide(s, side, o), sz = 0.4 + RV() * 1.4; if (vrNear(x, z).dd < sz + 0.6 || excluded(x, z)) continue;
+        const o = 1.6 + Math.pow(RV(), 1.5) * 40, [x, z] = onSide(s, side, o), sz = 0.4 + RV() * 1.4; if (vrNear(x, z).dd < sz + 0.6 || excluded(x, z) || vrDist(x, z) > LOD.cap(90)) continue;
         const y = caGround(x, z), sl = caSlope(x, z); if (sl < 0.25 && RV() < 0.6) continue;
         rock(scen.get(x, z), x, y + sz * 0.3, z, sz * 1.3, sz, sz, RV() * TAU, vary(rockC[Math.floor(RV() * rockC.length)], RV, 0.12), RV, 0.25, RV() < 0.5);
       }
       for (let s = 16; s < T.len - 16; s += 14) for (const side of [-1, 1]) {   // crags: ledges of the cliff where the slope is steep
         if (RV() < 0.35) continue;
-        const [x, z] = onSide(s, side, 6 + RV() * 70); if (excluded(x, z) || vrNear(x, z).dd < 6) continue;
+        const [x, z] = onSide(s, side, 6 + RV() * 70); if (excluded(x, z) || vrNear(x, z).dd < 6 || vrDist(x, z) > LOD.cap(90)) continue;
         const sl = caSlope(x, z); if (sl < 0.75) continue;
         const y = caGround(x, z), g = scen.get(x, z), n = 2 + Math.floor(RV() * 3), A = y + base, b0 = A > 1880 ? [0.86, 0.76, 0.6] : A > 1720 ? [0.78, 0.48, 0.32] : [0.6, 0.36, 0.28];
         for (let q = 0; q < n; q++) { const r0 = 2 + RV() * 4, qx = x + (RV() - 0.5) * 9, qz = z + (RV() - 0.5) * 9, qy = caGround(qx, qz); if (vrNear(qx, qz).dd < r0 + 1) continue;
@@ -18235,7 +18269,7 @@ const World = (function () {
           c.setRGB(L[k + 6], L[k + 7], L[k + 8]); im.setColorAt(t, c);
         }
         im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true;
-        group.add(im); n += cnt;
+        group.add(im); cullAdd(im, cx, cz, g.boundingSphere.radius); n += cnt;   // vegetation/rocks: distance-cullable on the lower tiers
       }
       return n;
     }
@@ -19709,7 +19743,7 @@ const World = (function () {
         for (let zz = za; zz < za + L; zz += 6.2) for (let xx = xa; xx < xa + L; xx += 6.2) {
           const x = xx + (R() - 0.5) * 5.4, z = zz + (R() - 0.5) * 5.4, rd = nrDist(x, z), r1 = R(), r2 = R();
           if (rd > 250) continue;
-          if (rd > 70 && ((Math.floor(xx / 6.2) + Math.floor(zz / 6.2)) & 1)) continue;   // farther out every other spot, bigger trees (a closed canopy from above)
+          if (rd > LOD.radius(70) && ((Math.floor(xx / 6.2) + Math.floor(zz / 6.2)) & 1)) continue;   // farther out every other spot, bigger trees (a closed canopy from above)
           const cl = nrLC(x, z), far = rd > 70;
           const p = cl === 1 ? 0.92 : cl === 2 ? 0.45 : cl === 3 ? 0.035 : 0.018;
           if (r1 > p) {   // no tree by the land cover: the edge of the woods may still grow here
@@ -22059,8 +22093,8 @@ const World = (function () {
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
         for (let zz = za; zz < za + Lt; zz += 6.2) for (let xx = xa; xx < xa + Lt; xx += 6.2) {
           const x = xx + (R() - 0.5) * 5.4, z = zz + (R() - 0.5) * 5.4, rd = nrDist(x, z), r1 = R(), r2 = R();
-          if (rd > 260) continue;
-          if (rd > 70 && ((Math.floor(xx / 6.2) + Math.floor(zz / 6.2)) & 1)) continue;   // farther out every other spot, bigger trees
+          if (rd > LOD.radius(260)) continue;
+          if (rd > LOD.radius(70) && ((Math.floor(xx / 6.2) + Math.floor(zz / 6.2)) & 1)) continue;   // farther out every other spot, bigger trees
           const cl = nrLC(x, z), far = rd > 70;
           const p = AU ? (cl === 1 ? 0.55 : cl === 2 ? 0.2 : 0.022) : cl === 1 ? 0.9 : cl === 2 ? 0.003 : cl === 3 ? 0.012 : 0.012;   // (Styria: class 2 is farmland; Bathurst: open eucalypt woods, lone gums in the paddocks)
           if (r1 > p) continue;
@@ -23910,7 +23944,7 @@ const World = (function () {
         const xa = G.x0 + ti * L, za = G.z0 + tj * L;
         for (let zz = za; zz < za + L; zz += 6.5) for (let xx = xa; xx < xa + L; xx += 6.5) {
           const x = xx + (R() - 0.5) * 5.6, z = zz + (R() - 0.5) * 5.6, rd = szDist(x, z), r1 = R(), r2 = R();
-          if (rd > 260) continue;
+          if (rd > LOD.radius(260)) continue;
           if (rd > 80 && ((Math.floor(xx / 6.5) + Math.floor(zz / 6.5)) & 1)) continue;   // farther out every other spot, bigger trees
           const cl = szLC(x, z), far = rd > 80;
           const p = cl === 1 ? 0.9 : cl === 2 ? 0.4 : cl === 3 ? 0.01 : 0.05;
