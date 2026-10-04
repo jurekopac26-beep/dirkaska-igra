@@ -722,6 +722,13 @@ const Garage3D = (function () {
     gl(PAINT); for (const sx of [rx0, rx1]) { for (const sz of [0.32, 0.04]) box(sx, 0, z0 + sz, 0.06, 2.2, 0.06, GD); for (const y of [0.3, 1.3]) obox(g, [sx, y, z0 + 0.05], [sx, y + 0.6, z0 + 0.31], 0.03, 0.03, GD); }
     for (const y of [0.08, 1.12]) { box((rx0 + rx1) / 2, y, z0 + 0.18, rx1 - rx0 + 0.1, 0.05, 0.4, [0.24, 0.26, 0.3]); box((rx0 + rx1) / 2, y + 0.01, z0 + 0.385, rx1 - rx0 + 0.1, 0.03, 0.012, GD); }
     gl(MATTE); for (const y of [0.13, 1.17]) for (let i = 0; i < 11; i++) tyre(g, M4(rx0 + 0.2 + i * 0.32, y + 0.336, z0 + 0.2, i * 0.9, 0, Math.PI / 2), i % 4 ? null : BANDS[(i >> 2) % 3], 12, true);
+    // (a barcode sticker on each one's tread toward the room: on the facet that faces it (the low tyre's 12), a little askew; its bars)
+    gl(SATIN); { const ap = TYRE[TYRE.length - 1][0] * Math.cos(Math.PI / 12), F = Math.PI / 6, Rb = Core.rng(4321);
+      for (const y of [0.13, 1.17]) for (let i = 0; i < 11; i++) { let ps = ((F / 2 - i * 0.9) % F + F) % F; if (ps > F / 2) ps -= F;
+        const cx = rx0 + 0.2 + i * 0.32 + (Rb() - 0.5) * 0.03, cy = y + 0.336, cz = z0 + 0.2, sn = Math.sin(ps), cs = Math.cos(ps), tw = (Rb() - 0.5) * 0.3, c = Math.cos(tw), s = Math.sin(tw);
+        const Q = (u, v, o) => { const a = u * c - v * s, b = u * s + v * c, r = ap + o; return [cx + a, cy + sn * r + cs * b, cz + cs * r - sn * b]; }, ins = [cx, cy, cz];
+        g.quadO(Q(-0.035, -0.05, 0.0015), Q(0.035, -0.05, 0.0015), Q(0.035, 0.05, 0.0015), Q(-0.035, 0.05, 0.0015), [0.9, 0.9, 0.88], ins);
+        for (const [u, w] of [[-0.02, 0.008], [-0.006, 0.004], [0.008, 0.01]]) g.quadO(Q(u, -0.035, 0.0025), Q(u + w, -0.035, 0.0025), Q(u + w, 0.012, 0.0025), Q(u, 0.012, 0.0025), [0.12, 0.12, 0.13], ins); } }
     // tall cabinets down the back wall's right end: double doors (their gap, handles), vents at the foot, a label holder
     gl(PAINT); for (let i = 0; i < 3; i++) { const x = 5.65 + i * 0.86, zf = z0 + 0.625;
       box(x, 0, z0 + 0.32, 0.82, 2.05, 0.6, [0.27, 0.29, 0.32], [0.2, 0.21, 0.24]); box(x, 0.06, zf, 0.008, 1.92, 0.01, [0.06, 0.06, 0.07]);
@@ -1040,7 +1047,7 @@ const Garage3D = (function () {
       gl(MATTE); tube(g, [[2.74, 0.67, -3.36], [2.8, 0.3, -3.24], [2.86, 0.012, -3.2], [2.98, 0.012, -3.9], [2.4, 0.012, -4.3], [1.4, 0.012, -4.4], [0.95, 0.012, -4.72], [0.87, 0.14, -4.9], [0.85, 0.37, -4.95]], 0.008, DK, 48, 4);
       BLOBS.push([1.95, -3.45, 1.8, 1.1, 0.9, 0, P]); }
     { use(WALLS.back); box(0.85, 0.37, z0 + 0.03, 0.12, 0.16, 0.06, [0.5, 0.52, 0.55]); box(0.85, 0.42, z0 + 0.061, 0.07, 0.07, 0.004, [0.2, 0.21, 0.23]); }   // (the socket)
-    const TB = use(piece()); TB.near = 4.4; trolley(TB, 6.25, -2.8, Math.PI + 0.12, false); BLOBS.push([6.25, -2.8, 1.8, 1.1, 0.9, 0.12, TB]);
+    const TB = FREE.tyresB = use(piece()), TBm = M4(6.25, 0, -2.8, 0, Math.PI + 0.12, 0); TB.near = 4.4; trolley(TB, 6.25, -2.8, Math.PI + 0.12, false); BLOBS.push([6.25, -2.8, 1.8, 1.1, 0.9, 0.12, TB]);
     // stacks of slicks, a little out of line (a set of wheels on the second, its rim on top; one leaning on the first), by the way in;
     // cones by the way out
     const Rt = Core.rng(5), tyreStack = (x, z, n, rim, lean) => { const P = use(piece(), MATTE); P.near = 4.4; let m = null;
@@ -1220,17 +1227,22 @@ const Garage3D = (function () {
       ng.computeVertexNormals(); gl(PAINT);
       gAdd(g, ng, M4(8.62, 0.117, -4.0, Math.PI / 2, 0, 0, 0.25, 1, 0.11), (c) => c[1] > 0.47 ? [0.78, 0.14, 0.1] : c[1] < -0.54 ? CB : -c[2] > 0.9 * Math.hypot(c[0], c[2]) && c[1] > -0.2 && c[1] < 0.08 ? [0.9, 0.9, 0.88] : [0.14, 0.18, 0.34]);
       BLOBS.push([8.62, -4.0, 0.62, 1.25, 0.55, 0, WALLS.right]); }
-    // the pit's air line: a reel under the roof by the back right corner, its hose dropping in a coil, a wheel gun hanging over the bare set
-    // (the bare set's piece: it hangs 2 m out from the wall, where the wall's piece would not step aside; it goes with the trolley)
-    { use(TB); const X = 6.95, Z = -3.3, Y = 4.34, YC = 3.7, YB = 2.4, YG = 1.85, HY = [0.95, 0.75, 0.12];
+    // the pit's air line: a reel under the roof by the back right corner, its hose dropping in a coil and on down to the bare set, the
+    // last of it lying round the top of the far stack, the wheel gun resting on its rim, on its side (the bare set's piece: it hangs 2 m
+    // out from the wall, where the wall's piece would not step aside; it goes with the trolley)
+    { use(TB); const X = 6.95, Z = -3.3, Y = 4.34, YC = 3.7, YB = 2.4, HY = [0.95, 0.75, 0.12];
       gAdd(g, new THREE.CylinderGeometry(0.2, 0.2, 0.14, 16), M4(X, Y, Z, 0, 0, Math.PI / 2), HY); for (const s of [-1, 1]) gBox(g, null, X + s * 0.09, (Y + 4.66) / 2, Z, 0.012, 4.66 - Y + 0.1, 0.1, DK);
       gl(MATTE); seg(g, [X, Y - 0.18, Z], [X + 0.07, YC, Z], 0.011, HY);
       const helix = new THREE.Curve(); helix.getPoint = (t, o) => (o || new V3()).set(X + 0.07 * Math.cos(t * 24 * Math.PI), YC - (YC - YB) * t, Z + 0.07 * Math.sin(t * 24 * Math.PI));
       gAdd(g, new THREE.TubeGeometry(helix, 72, 0.011, 4, false), null, HY);
-      tube(g, [[X + 0.07, YB, Z], [X + 0.05, YB - 0.2, Z - 0.02], [X, YG + 0.22, Z - 0.06], [X, YG + 0.16, Z - 0.07]], 0.011, HY, 10, 4);
-      gl(PAINT); gAdd(g, new THREE.CylinderGeometry(0.045, 0.045, 0.24, 12), M4(X, YG, Z, Math.PI / 2, 0, 0), [0.07, 0.07, 0.08]); gBox(g, M4(X, YG + 0.09, Z - 0.05, 0.3, 0, 0), 0, 0, 0, 0.04, 0.14, 0.05, [0.07, 0.07, 0.08]);
-      gAdd(g, new THREE.CylinderGeometry(0.048, 0.048, 0.03, 12), M4(X, YG, Z + 0.1, Math.PI / 2, 0, 0), [0.78, 0.14, 0.1]);
-      gl(METAL); gAdd(g, new THREE.CylinderGeometry(0.036, 0.036, 0.07, 6), M4(X, YG, Z + 0.155, Math.PI / 2, 0, 0), CHROME); }
+      const S = new V3(-0.36, 0, 0).applyMatrix4(TBm), fe = Math.atan2(Z - S.z, X + 0.07 - S.x), fg = fe + 1.9, ring = (a) => [S.x + Math.cos(a) * 0.285, 0.632, S.z + Math.sin(a) * 0.285];   // (the far stack: its top 0.62)
+      const G = M4(S.x + Math.cos(fg) * 0.11, 0.665, S.z + Math.sin(fg) * 0.11, 0, Math.PI - fg, Math.PI / 2), H = new V3(0, 0.16, -0.07).applyMatrix4(G).toArray(), L0 = ring(fe);   // (the gun: its barrel along a chord of the rim, the handle out)
+      const hp = [[X + 0.07, YB, Z], [X + 0.06, YB - 0.3, Z + 0.01], [X + 0.02, 1.6, Z + 0.06], [L0[0] + 0.06, 0.95, L0[2] - 0.07], [L0[0] + 0.02, 0.7, L0[2] - 0.02], L0];
+      for (let k = 1; k <= 6; k++) hp.push(ring(fe + k * 0.3)); hp.push(H);
+      tube(g, hp, 0.011, HY, 56, 4);
+      gl(PAINT); gAdd(g, new THREE.CylinderGeometry(0.045, 0.045, 0.24, 12), G.clone().multiply(M4(0, 0, 0, Math.PI / 2, 0, 0)), [0.07, 0.07, 0.08]); gBox(g, G.clone().multiply(M4(0, 0.09, -0.05, 0.3, 0, 0)), 0, 0, 0, 0.04, 0.14, 0.05, [0.07, 0.07, 0.08]);
+      gAdd(g, new THREE.CylinderGeometry(0.048, 0.048, 0.03, 12), G.clone().multiply(M4(0, 0, 0.1, Math.PI / 2, 0, 0)), [0.78, 0.14, 0.1]);
+      gl(METAL); gAdd(g, new THREE.CylinderGeometry(0.036, 0.036, 0.07, 6), G.clone().multiply(M4(0, 0, 0.155, Math.PI / 2, 0, 0)), PAL.chrome); }
     // the front wall: a clock over the lockers (the time the page opened), the team's whiteboard (a track sketched, the plan) over the
     // engineers' desk: three screens of telemetry on a pole, keyboards, a headset, the radios in their dock, a lamp; two stools; a water
     // cooler and a bin by the lockers
@@ -1301,8 +1313,213 @@ const Garage3D = (function () {
   }
   // the left zone's new things (round 2)
   function buildKitL() {}
-  // the right zone's new things (round 2)
-  function buildKitR() {}
+  // the right zone's new things (round 2): a build bay by the right door (a two-post lift, a stripped chassis on its arms, a MIG welder
+  // on its cart, a creeper); on the right wall a parts washer, a step ladder, two pit boards leaning in the corner, the team's banner and
+  // its graphics panel; a utility cart by the bare slicks; the air drop's hose in loose loops on the floor; a cord reel with a cage lamp
+  // under the roof; the walls' contact shadows behind the tall things on the right
+  function buildKitR() {
+    const { x1 } = ROOM, R = WALLS.right, BK = WALLS.back, TB = FREE.tyresB, { dk: DK, steel: STEEL, alu: ALU, rub: RUB } = PAL;
+    let g = null, sm = null, cp = null; const use = (p, k) => { g = p.g; sm = p.sm; cp = p; gloss(p, k == null ? PAINT : k); return p; }, gl = (k) => gloss(cp, k), box = (...a) => fbox(g, ...a);
+    // (a tube of a frame: open, a little longer than a to b, so its bends close; a castor, its axle along z)
+    const bar = (a, b, r, col, n) => { const d = new V3(b[0] - a[0], b[1] - a[1], b[2] - a[2]), L = d.length(); d.divideScalar(L);
+      gAdd(g, new THREE.CylinderGeometry(r, r, L + r * 1.2, n || 6, 1, true), new THREE.Matrix4().compose(new V3((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2), new THREE.Quaternion().setFromUnitVectors(new V3(0, 1, 0), d), new V3(1, 1, 1)), col); };
+    const bars = (r, col, ...pts) => { for (let i = 0; i + 1 < pts.length; i++) bar(pts[i], pts[i + 1], r, col); };
+    const castor = (m, x, y, z, r) => gAdd(g, new THREE.CylinderGeometry(r, r, r * 0.8, 10), (m ? m.clone() : new THREE.Matrix4()).multiply(M4(x, y, z, Math.PI / 2)), DK);
+    // the walls' prints: one canvas (the banner, the graphics panel, the pit boards' faces), one mesh on the right wall (its quads' uv in
+    // pixels of the canvas)
+    const PW = 512, PH = 256, UV = { ban: [0, 0, 300, 140], pan: [300, 0, 512, 136], pb1: [0, 144, 152, 256], pb2: [160, 144, 312, 256] };
+    const prints = canvasTex(PW, PH, (x) => {
+      const Rp = Core.rng(4247), font = (w, px) => w + ' ' + px + 'px Roboto, Arial, sans-serif';
+      // the banner: the team's navy, a gold chevron to the right, a cyan pinstripe under it, the car's number, the cloth's folds and its hems
+      { const [a, b, c, d] = UV.ban, w = c - a, h = d - b; x.save(); x.translate(a, b);
+        x.fillStyle = '#1a2142'; x.fillRect(0, 0, w, h);
+        x.fillStyle = '#e8b53a'; x.beginPath(); x.moveTo(w * 0.52, 0); x.lineTo(w * 0.7, 0); x.lineTo(w * 0.9, h / 2); x.lineTo(w * 0.7, h); x.lineTo(w * 0.52, h); x.lineTo(w * 0.72, h / 2); x.closePath(); x.fill();
+        x.strokeStyle = '#5cc4f2'; x.lineWidth = 3; x.beginPath(); x.moveTo(w * 0.46, 0); x.lineTo(w * 0.66, h / 2); x.lineTo(w * 0.46, h); x.stroke();
+        x.fillStyle = '#f2f2ee'; x.font = font('italic 900', 84); x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('07', w * 0.25, h * 0.52);
+        x.fillStyle = 'rgba(8,10,20,0.85)'; x.fillRect(0, 0, w, 7); x.fillRect(0, h - 6, w, 6);
+        for (let i = 0; i < 9; i++) { const u = (i + 0.5) / 9 * w + (Rp() - 0.5) * 12, gr = x.createLinearGradient(u - 16, 0, u + 16, 0), k = 0.1 + Rp() * 0.1;   // (folds: a shade, a sheen beside it)
+          gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(0.45, 'rgba(0,0,0,' + k.toFixed(2) + ')'); gr.addColorStop(0.62, 'rgba(255,255,255,' + (k * 0.35).toFixed(3) + ')'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(u - 16, 0, 32, h); }
+        x.restore(); }
+      // the graphics panel: navy, gold and cyan speed stripes on the slant, the team's name small at the right end
+      { const [a, b, c, d] = UV.pan, w = c - a, h = d - b; x.save(); x.translate(a, b); x.beginPath(); x.rect(0, 0, w, h); x.clip();
+        const gr = x.createLinearGradient(0, 0, w, h); gr.addColorStop(0, '#141a36'); gr.addColorStop(1, '#222b52'); x.fillStyle = gr; x.fillRect(0, 0, w, h);
+        for (const [o, s, col] of [[-0.05, 0.16, '#e8b53a'], [0.13, 0.05, '#5cc4f2'], [0.2, 0.025, '#e8b53a'], [0.25, 0.012, '#5cc4f2']]) { x.fillStyle = col; x.beginPath(); x.moveTo(w * o, h); x.lineTo(w * (o + s), h); x.lineTo(w * (o + s + 0.42), 0); x.lineTo(w * (o + 0.42), 0); x.closePath(); x.fill(); }
+        x.fillStyle = '#f2f2ee'; x.font = font('italic 900', 20); x.textAlign = 'right'; x.textBaseline = 'alphabetic'; x.fillText('APEX RACING', w - 10, h - 14);
+        x.fillStyle = '#e8b53a'; x.fillRect(w - 118, h - 10, 108, 2);
+        x.restore(); }
+      // the pit boards: black, a white border, the place, the gap, the lap (yellow and white)
+      for (const [k, l1, l2, l3] of [['pb1', 'P2', '+1.4', 'L12'], ['pb2', 'P5', '-0.3', 'L13']]) { const [a, b, c, d] = UV[k], w = c - a, h = d - b; x.save(); x.translate(a, b);
+        x.fillStyle = '#f0f0ec'; x.fillRect(0, 0, w, h); x.fillStyle = '#0c0d10'; x.fillRect(4, 4, w - 8, h - 8);
+        x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = font('900', 34); x.fillStyle = '#f2c230'; x.fillText(l1, w / 2, h * 0.24);
+        x.fillStyle = '#f2f2ee'; x.font = font('900', 30); x.fillText(l2, w / 2, h * 0.53); x.fillStyle = '#f2c230'; x.font = font('700', 26); x.fillText(l3, w / 2, h * 0.8);
+        x.restore(); }
+    });
+    const pq = new World.GB(true), puv = (k) => { const [a, b, c, d] = UV[k]; return (u, v) => [(a + u * (c - a)) / PW, 1 - (b + (1 - v) * (d - b)) / PH]; };   // (u, v 0..1 of a print: u along +z, v up)
+
+    // ---- the build bay by the right door (a piece of its own) ----
+    // a two-post lift: graphite posts on their base plates, the carriages' slots, the carriages (red) at their foot, the arms swung under the
+    // chassis to their rubber pads, the tread plate over the lines between the posts, the power unit on the first post (the motor, the oil
+    // tank, its hose into the plate, the buttons)
+    { const P = use(piece()), GR = [0.26, 0.28, 0.32], GRt = [0.31, 0.33, 0.37], PLT = [0.3, 0.31, 0.34], CAR = [0.56, 0.11, 0.09], ARM = [0.2, 0.21, 0.24], ARM2 = [0.27, 0.28, 0.31];
+      for (const [pz, s] of [[3.13, 1], [5.37, -1]]) {   // (s: toward the other post)
+        gl(PAINT); box(5.8, 0, pz, 0.44, 0.02, 0.44, PLT, [0.36, 0.37, 0.4]);
+        box(5.8, 0.02, pz, 0.26, 2.83, 0.22, GR, GRt); box(5.8, 2.85, pz, 0.3, 0.05, 0.26, [0.2, 0.21, 0.24]);
+        box(5.8, 0.06, pz + s * 0.112, 0.07, 2.74, 0.004, [0.05, 0.05, 0.06]);   // (the slot the carriage runs in)
+        box(5.8, 2.2, pz - s * 0.112, 0.1, 0.07, 0.004, [0.56, 0.57, 0.56]);   // (a blank plate: its load, no words)
+        box(5.8, 0.22, pz + s * 0.17, 0.3, 0.5, 0.12, CAR, [0.62, 0.13, 0.1]);   // the carriage
+        gl(METAL); for (const dx of [-0.17, 0.17]) for (const dz of [-0.17, 0.17]) box(5.8 + dx, 0.02, pz + dz, 0.035, 0.018, 0.035, [0.52, 0.53, 0.56]);   // (anchor bolts)
+        gl(PAINT); for (const px of [4.62, 6.98]) { const zp = s > 0 ? 3.68 : 4.82, a = [5.8 + Math.sign(px - 5.8) * 0.1, 0.25, pz + s * 0.2], m = [a[0] + (px - a[0]) * 0.55, 0.25, a[2] + (zp - a[2]) * 0.55];
+          cylA(g, [a[0], 0.25, a[2]], 'y', 0.045, 0.1, 6, ARM2); obox(g, a, m, 0.09, 0.06, ARM); obox(g, [m[0] - (px - a[0]) * 0.05, 0.25, m[2] - (zp - a[2]) * 0.05], [px, 0.25, zp], 0.07, 0.045, ARM2);   // (a telescopic arm)
+          cylA(g, [px, 0.29, zp], 'y', 0.035, 0.04, 6, [0.3, 0.31, 0.33]); gl(MATTE); cylA(g, [px, 0.315, zp], 'y', 0.07, 0.03, 10, [0.07, 0.07, 0.08]); gl(PAINT); } }
+      gl(1.3); box(5.8, 0, 4.25, 0.4, 0.03, 1.8, [0.4, 0.42, 0.45], [0.48, 0.5, 0.54]);   // the tread plate (its edges bevelled down to the floor)
+      for (const e of [-1, 1]) g.quadO([5.8 + e * 0.2, 0.03, 3.35], [5.8 + e * 0.2, 0.03, 5.15], [5.8 + e * 0.26, 0.002, 5.15], [5.8 + e * 0.26, 0.002, 3.35], [0.34, 0.35, 0.38], [5.8, -1, 4.25]);
+      gl(PAINT); box(5.95, 0.86, 3.13, 0.02, 0.6, 0.18, [0.12, 0.12, 0.13]); box(6.04, 0.9, 3.13, 0.16, 0.24, 0.15, [0.6, 0.62, 0.66], [0.66, 0.68, 0.72]);   // the power unit: its plate, the oil tank
+      box(6.04, 1.14, 3.13, 0.12, 0.03, 0.12, [0.45, 0.47, 0.5]); gAdd(g, new THREE.CylinderGeometry(0.075, 0.075, 0.24, 12), M4(6.04, 1.29, 3.13), (c, n) => n[1] > 0.5 ? [0.1, 0.1, 0.11] : [0.17, 0.18, 0.2]);   // (the pump, the motor)
+      box(5.86, 1.12, 2.995, 0.08, 0.13, 0.05, [0.8, 0.81, 0.78]); box(5.84, 1.21, 2.968, 0.024, 0.024, 0.006, [0.15, 0.62, 0.26]); box(5.88, 1.21, 2.968, 0.024, 0.024, 0.006, [0.8, 0.12, 0.1]);   // (its buttons)
+      gl(MATTE); tube(g, [[6.08, 0.9, 3.21], [6.1, 0.55, 3.25], [6.06, 0.08, 3.3], [5.98, 0.03, 3.36]], 0.01, [0.08, 0.08, 0.09], 10, 4);
+      // the stripped chassis on the pads: the aluminium floor pan, the cage (rails, the main and the front hoop, the roof bars, the main hoop's
+      // diagonal, door bars, the rear stays, the front bulkhead, the rear frame, the cross tubes), the engine and its gearbox, the
+      // driveshafts, the exhaust, the fuel cell, the corners without their wheels (uprights, discs in their hats, gold calipers, wishbones),
+      // the steering rack and its track rods, the pedals
+      gl(METAL); box(5.75, 0.33, 4.25, 3.1, 0.02, 1.2, [0.34, 0.35, 0.38], [0.42, 0.43, 0.46]);
+      const TU = [0.68, 0.7, 0.72], Y = 0.37, ZL = 3.66, ZR = 4.84, t = (...p) => bars(0.022, TU, ...p);
+      gl(PAINT); t([4.25, Y, ZL], [7.25, Y, ZL]); t([4.25, Y, ZR], [7.25, Y, ZR]);
+      t([5.55, Y, ZL], [5.55, 1.1, 3.72], [5.55, 1.22, 3.8], [5.55, 1.28, 3.93], [5.55, 1.28, 4.57], [5.55, 1.22, 4.7], [5.55, 1.1, 4.78], [5.55, Y, ZR]);
+      t([4.85, Y, ZL], [4.9, 0.92, 3.74], [4.93, 1.03, 3.84], [4.96, 1.08, 3.97], [4.96, 1.08, 4.53], [4.93, 1.03, 4.66], [4.9, 0.92, 4.76], [4.85, Y, ZR]);
+      t([4.96, 1.08, 3.97], [5.55, 1.28, 3.93]); t([4.96, 1.08, 4.53], [5.55, 1.28, 4.57]); t([5.55, 1.28, 3.93], [5.55, Y, ZR]);
+      for (const z of [ZL, ZR]) { t([4.86, 0.46, z], [5.55, 0.84, z]); t([4.88, 0.84, z], [5.55, 0.46, z]); }
+      t([5.55, 1.22, 3.8], [6.5, 0.52, 3.7], [7.25, 0.6, 3.76]); t([5.55, 1.22, 4.7], [6.5, 0.52, 4.8], [7.25, 0.6, 4.74]);
+      t([4.25, Y, ZL], [4.25, Y, ZR]); t([4.25, Y, ZL], [4.25, 0.76, 3.76], [4.25, 0.76, 4.74], [4.25, Y, ZR]); t([4.25, 0.76, 3.76], [4.88, 0.84, ZL]); t([4.25, 0.76, 4.74], [4.88, 0.84, ZR]);
+      t([7.25, Y, ZL], [7.25, Y, ZR]); t([7.25, Y, ZL], [7.25, 0.6, 3.76], [7.25, 0.6, 4.74], [7.25, Y, ZR]); t([5.55, Y, ZL], [5.55, Y, ZR]); t([4.85, Y, ZL], [4.85, Y, ZR]);
+      gl(1.3); box(6.6, 0.37, 4.25, 0.45, 0.36, 0.48, [0.18, 0.19, 0.21], [0.22, 0.23, 0.25]); box(6.98, 0.4, 4.25, 0.28, 0.24, 0.34, [0.3, 0.31, 0.34], [0.36, 0.37, 0.4]);   // the engine, its gearbox
+      gl(METAL); box(6.6, 0.73, 4.25, 0.4, 0.045, 0.3, [0.56, 0.58, 0.62], [0.64, 0.66, 0.7]); box(6.36, 0.45, 4.25, 0.05, 0.22, 0.3, [0.3, 0.31, 0.34]);   // (the cam cover, the timing cover)
+      for (const [y, z, r] of [[0.5, 4.25, 0.07], [0.64, 4.14, 0.045], [0.62, 4.38, 0.05]]) gAdd(g, new THREE.CylinderGeometry(r, r, 0.03, 8), M4(6.33, y, z, 0, 0, Math.PI / 2), [0.22, 0.23, 0.25]);   // (the pulleys)
+      gl(PAINT); for (let i = 0; i < 4; i++) box(6.45 + i * 0.1, 0.775, 4.25, 0.05, 0.035, 0.07, [0.07, 0.07, 0.08]);   // (the coil packs)
+      gl(METAL); for (let i = 0; i < 4; i++) gAdd(g, new THREE.CylinderGeometry(0.028, 0.034, 0.12, 8, 1, true), M4(6.45 + i * 0.1, 0.6, 4.55, Math.PI / 2, 0, 0), [0.6, 0.62, 0.66]);   // (the intake trumpets, toward the side)
+      for (let i = 0; i < 4; i++) { const x = 6.45 + i * 0.1; tube(g, [[x, 0.6, 4.0], [x + 0.01, 0.56, 3.9], [x + 0.05, 0.46, 3.86], [7.0, 0.43, 3.86], [7.22, 0.43, 3.85]], 0.018, (c) => c[0] < 6.75 ? [0.62, 0.5, 0.38] : c[0] < 6.95 ? [0.44, 0.38, 0.46] : [0.4, 0.4, 0.43], 8, 4); }   // (the headers into the collector, heat-tinted)
+      gl(PAINT); for (const s of [-1, 1]) bar([6.98, 0.52, 4.25 + s * 0.17], [7.0, 0.6, 4.25 + s * 0.74], 0.018, [0.16, 0.17, 0.19], 6);   // (the driveshafts)
+      gl(MATTE); box(5.9, 0.35, 4.25, 0.5, 0.3, 0.6, [0.06, 0.06, 0.07], [0.08, 0.08, 0.09]); gl(METAL); cylA(g, [5.98, 0.665, 4.42], 'y', 0.045, 0.03, 8, [0.6, 0.62, 0.66]);   // the fuel cell, its filler
+      for (const [ux, uz] of [[4.5, 3.45], [4.5, 5.05], [7.0, 3.45], [7.0, 5.05]]) { const o = Math.sign(uz - 4.25), zr = o < 0 ? ZL : ZR;
+        gl(PAINT); gBox(g, null, ux, 0.6, uz, 0.07, 0.3, 0.07, [0.14, 0.15, 0.17]);
+        gl(METAL); gAdd(g, new THREE.CylinderGeometry(0.15, 0.15, 0.024, 12), M4(ux, 0.6, uz + o * 0.07, Math.PI / 2, 0, 0), (c, n) => Math.abs(n[1]) > 0.5 ? [0.52, 0.53, 0.56] : [0.34, 0.35, 0.38]);   // the disc
+        gl(PAINT); gAdd(g, new THREE.CylinderGeometry(0.08, 0.08, 0.05, 8), M4(ux, 0.6, uz + o * 0.1, Math.PI / 2, 0, 0), [0.12, 0.12, 0.13]);   // (its hat, the hub)
+        gBox(g, null, ux, 0.735, uz + o * 0.07, 0.15, 0.05, 0.055, [0.8, 0.62, 0.18]);   // the caliper (gold) over its edge
+        const ix = Math.sign(5.75 - ux); for (const [y0, y1, d] of [[0.7, 0.62, 0.2], [0.48, 0.4, 0.25]]) for (const e of [-1, 1]) bar([ux, y0, uz - o * 0.03], [ux + ix * 0.02 + e * d, y1, zr], 0.012, [0.12, 0.12, 0.13], 5); }   // (wishbones)
+      gl(METAL); cylA(g, [4.5, 0.45, 4.25], 'z', 0.022, 0.9, 6, [0.3, 0.31, 0.34]); gl(MATTE); for (const s of [-1, 1]) { cylA(g, [4.5, 0.45, 4.25 + s * 0.38], 'z', 0.03, 0.1, 6, [0.06, 0.06, 0.07]); bar([4.5, 0.45, 4.25 + s * 0.43], [4.58, 0.5, 4.25 + s * 0.76], 0.009, [0.3, 0.31, 0.34], 5); }   // (the steering rack, its boots, the track rods)
+      gl(PAINT); box(4.66, 0.35, 4.08, 0.12, 0.05, 0.34, [0.1, 0.1, 0.11]); gl(METAL); for (const z of [3.96, 4.08, 4.2]) obox(g, [4.69, 0.38, z], [4.62, 0.6, z], 0.05, 0.01, [0.6, 0.62, 0.66]);   // (the pedals)
+      // a MIG welder on its cart (two steel shelves, the posts and the handle, big wheels at the back and castors in front): the welder's
+      // panel to the room (two knobs, an amber display, the torch's and the earth's sockets), the gas bottle behind it (a green shoulder,
+      // the valve, a regulator and its gauge, a chain round it), the torch's hose coiled on the front, the torch, the earth lead to its
+      // clamp on the floor
+      const WX = 4.22, S2 = [0.2, 0.21, 0.24];
+      gl(PAINT); for (const y of [0.18, 0.55]) { box(WX, y, 5.61, 0.42, 0.02, 0.62, S2, [0.24, 0.25, 0.28]); for (const e of [-1, 1]) box(WX + e * 0.2, y + 0.02, 5.61, 0.02, 0.025, 0.62, S2); }
+      for (const px of [4.025, 4.415]) { obox(g, [px, 0.08, 5.315], [px, 0.58, 5.315], 0.025, 0.025, S2); obox(g, [px, 0.08, 5.905], [px, 1.02, 5.905], 0.025, 0.025, S2); }
+      gl(METAL); obox(g, [4.0, 1.02, 5.905], [4.44, 1.02, 5.905], 0.03, 0.03, STEEL);   // (the handle)
+      box(WX, 0.1, 6.04, 0.3, 0.02, 0.22, S2); obox(g, [3.97, 0.1, 6.05], [4.47, 0.1, 6.05], 0.02, 0.02, STEEL);   // (the bottle's tray, the axle)
+      gl(MATTE); for (const px of [3.975, 4.465]) gAdd(g, new THREE.CylinderGeometry(0.1, 0.1, 0.04, 12), M4(px, 0.1, 6.05, 0, 0, Math.PI / 2), (c, n) => Math.abs(n[1]) > 0.5 ? [0.3, 0.31, 0.33] : RUB);
+      for (const px of [4.06, 4.38]) { box(px, 0.07, 5.34, 0.03, 0.11, 0.03, DK); castor(null, px, 0.04, 5.34, 0.04); }
+      gl(PAINT); box(WX, 0.57, 5.56, 0.3, 0.42, 0.5, [0.17, 0.18, 0.2], [0.2, 0.21, 0.23]); box(4.067, 0.6, 5.56, 0.006, 0.36, 0.44, [0.68, 0.69, 0.7]);   // the welder, its panel
+      for (let k = 0; k < 4; k++) box(WX, 0.66 + k * 0.06, 5.308, 0.2, 0.012, 0.004, [0.06, 0.06, 0.07]);   // (vents)
+      box(4.062, 0.9, 5.56, 0.004, 0.04, 0.08, [1.8, 0.8, 0.25]);   // (the display, lit)
+      for (const z of [5.44, 5.68]) gAdd(g, new THREE.CylinderGeometry(0.026, 0.026, 0.024, 8), M4(4.054, 0.8, z, 0, 0, Math.PI / 2), [0.08, 0.08, 0.09]);
+      gAdd(g, new THREE.CylinderGeometry(0.028, 0.028, 0.02, 8), M4(4.056, 0.67, 5.44, 0, 0, Math.PI / 2), [0.7, 0.55, 0.28]); gAdd(g, new THREE.CylinderGeometry(0.024, 0.024, 0.02, 8), M4(4.056, 0.67, 5.68, 0, 0, Math.PI / 2), [0.08, 0.08, 0.09]);
+      gl(METAL); obox(g, [WX, 1.04, 5.4], [WX, 1.04, 5.72], 0.03, 0.025, STEEL); for (const z of [5.4, 5.72]) obox(g, [WX, 0.99, z], [WX, 1.04, z], 0.025, 0.025, STEEL);   // (its handle)
+      gl(PAINT); gAdd(g, new THREE.CylinderGeometry(0.09, 0.09, 0.86, 12, 1, true), M4(WX, 0.55, 6.04), [0.45, 0.47, 0.5]); gAdd(g, new THREE.SphereGeometry(0.09, 12, 3, 0, TAU, 0, Math.PI / 2), M4(WX, 0.98, 6.04, 0, 0, 0, 1, 0.8, 1), [0.15, 0.38, 0.22]);
+      gAdd(g, new THREE.CylinderGeometry(0.091, 0.091, 0.08, 12, 1, true), M4(WX, 0.94, 6.04), [0.15, 0.38, 0.22]);   // the bottle, its green shoulder
+      gl(METAL); cylA(g, [WX, 1.1, 6.04], 'y', 0.022, 0.08, 8, [0.72, 0.58, 0.3]); gBox(g, null, WX - 0.04, 1.13, 6.04, 0.06, 0.04, 0.04, [0.72, 0.58, 0.3]);   // (the valve, the regulator)
+      gAdd(g, new THREE.CylinderGeometry(0.03, 0.03, 0.02, 8), M4(WX - 0.08, 1.15, 6.04, 0, 0, Math.PI / 2), (c, n) => n[1] > 0.5 ? [0.92, 0.92, 0.9] : DK);   // (its gauge)
+      tube(g, [[4.025, 0.84, 5.92], [4.1, 0.84, 6.11], [WX, 0.84, 6.145], [4.34, 0.84, 6.11], [4.415, 0.84, 5.92]], 0.006, [0.3, 0.31, 0.33], 8, 3);   // (the chain)
+      gl(MATTE); tube(g, [[4.04, 1.12, 6.04], [4.0, 1.04, 5.95], [4.1, 0.9, 5.82]], 0.007, DK, 6, 4); gl(METAL); obox(g, [WX, 0.72, 5.31], [WX, 0.745, 5.26], 0.02, 0.012, STEEL); gl(MATTE);   // (the gas hose into the welder)
+      for (const [dx, dy, dz] of [[0, 0, 0], [0.015, -0.02, 0.012]]) gAdd(g, new THREE.TorusGeometry(0.15, 0.012, 4, 14), M4(WX + dx, 0.58 + dy, 5.272 + dz), DK);   // the torch's hose, coiled
+      tube(g, [[4.05, 0.67, 5.44], [4.0, 0.7, 5.36], [4.1, 0.74, 5.29], [WX - 0.06, 0.725, 5.275]], 0.012, DK, 8, 4);
+      obox(g, [4.33, 0.47, 5.27], [4.35, 0.3, 5.27], 0.035, 0.03, [0.08, 0.08, 0.09]); gl(METAL); seg(g, [4.35, 0.3, 5.27], [4.355, 0.24, 5.27], 0.012, [0.72, 0.45, 0.25]);   // (the torch, its copper tip)
+      gl(MATTE); tube(g, [[4.05, 0.67, 5.68], [3.99, 0.5, 5.62], [3.985, 0.15, 5.5], [3.99, 0.012, 5.32], [4.05, 0.012, 5.16]], 0.009, DK, 10, 4); gBox(g, M4(4.09, 0.02, 5.12, 0, 0.6, 0), 0, 0, 0, 0.1, 0.03, 0.04, [0.6, 0.38, 0.2]);   // (the earth lead, its clamp)
+      // a creeper half under the chassis' front corner: the board, a red padded headrest, steel edges, six castors
+      const CB = M4(4.83, 0, 3.21, 0, 0.12, 0);
+      gl(PAINT); gBox(g, CB, 0, 0.075, 0, 0.92, 0.03, 0.38, [0.12, 0.12, 0.13]); gBox(g, CB, -0.36, 0.115, 0, 0.16, 0.05, 0.3, [0.5, 0.1, 0.09]);
+      gl(METAL); for (const e of [-1, 1]) gBox(g, CB, 0, 0.072, e * 0.195, 0.92, 0.022, 0.012, STEEL);
+      gl(MATTE); for (const lx of [-0.38, 0.38]) for (const e of [-1, 1]) { gBox(g, CB, lx, 0.05, e * 0.15, 0.03, 0.02, 0.025, DK); gAdd(g, new THREE.CylinderGeometry(0.03, 0.03, 0.024, 6), CB.clone().multiply(M4(lx, 0.03, e * 0.15, Math.PI / 2)), DK); }
+      BLOBS.push([5.75, 4.25, 3.8, 2.0, 0.55, 0, P], [5.8, 3.13, 0.7, 0.7, 0.7, 0, P], [5.8, 5.37, 0.7, 0.7, 0.7, 0, P], [4.22, 5.72, 0.7, 1.05, 0.7, 0, P], [4.83, 3.21, 1.1, 0.55, 0.5, 0.12, P]); }
+
+    // ---- the right wall: a parts washer, a step ladder, the pit boards, the banner and the graphics panel ----
+    // a parts washer by the corner: its drum (rolling hoops), the steel-blue tub on it (its rim, dark inside), the lid open against the
+    // wall, the flexible nozzle arching into the tub (a brass tip), the pump's switch, a brush in the tub
+    { use(R, PAINT); const WX = 8.63, WZ = 7.11, SB = [0.2, 0.29, 0.4], SBL = [0.32, 0.42, 0.54];
+      gAdd(g, new THREE.CylinderGeometry(0.27, 0.27, 0.78, 14, 2), M4(WX, 0.39, WZ), (c, n) => n[1] > 0.5 ? [0.15, 0.16, 0.18] : [0.2, 0.21, 0.24]);
+      gl(METAL); for (const y of [0.26, 0.52]) gAdd(g, new THREE.CylinderGeometry(0.278, 0.278, 0.022, 14, 1, true), M4(WX, y, WZ), [0.26, 0.27, 0.3]);
+      gl(PAINT); box(8.66, 0.78, WZ, 0.6, 0.2, 0.64, SB, [0.04, 0.05, 0.06]);
+      gl(METAL); for (const e of [-1, 1]) { box(8.66 + e * 0.285, 0.98, WZ, 0.03, 0.022, 0.64, SBL); box(8.66, 0.98, WZ + e * 0.305, 0.6, 0.022, 0.03, SBL); }
+      cylA(g, [8.88, 0.995, WZ], 'z', 0.012, 0.6, 6, [0.4, 0.42, 0.46]); gl(PAINT); gBox(g, M4(8.919, 1.27, WZ, 0, 0, -0.15), 0, 0, 0, 0.02, 0.55, 0.64, SB);   // (the hinge, the lid)
+      gl(MATTE); tube(g, [[8.86, 1.0, 7.38], [8.85, 1.22, 7.36], [8.78, 1.35, 7.29], [8.68, 1.3, 7.2], [8.64, 1.13, 7.13]], 0.012, [0.16, 0.17, 0.19], 10, 4);
+      gl(METAL); seg(g, [8.64, 1.13, 7.13], [8.635, 1.06, 7.12], 0.014, [0.72, 0.58, 0.3]);
+      gl(PAINT); box(8.35, 0.8, 6.95, 0.02, 0.1, 0.07, [0.1, 0.1, 0.11]); box(8.338, 0.84, 6.95, 0.008, 0.03, 0.035, [0.8, 0.12, 0.1]);   // (the pump's switch, its red rocker)
+      gl(SATIN); obox(g, [8.52, 1.0, 6.98], [8.4, 1.13, 6.93], 0.022, 0.018, [0.62, 0.45, 0.26]); gBox(g, M4(8.54, 0.985, 6.99, 0, 0.4, 0), 0, 0, 0, 0.07, 0.03, 0.04, [0.1, 0.09, 0.08]);   // (the brush)
+      BLOBS.push([8.66, 7.11, 0.9, 1.0, 0.7, 0, R]); WALLAO.push(['r', 6.75, 7.5, 0, 1.55, 0.5, R]); }
+    // an aluminium step ladder standing open by the washer (its legs spread along the wall): rails, four steps with dark treads, the top
+    // platform, the tool tray on the back legs, the spreader bars, rubber feet
+    { use(R, METAL); const LA = [0.66, 0.68, 0.72], ZF = 6.02, ZB = 6.58, HL = 1.42, zf = (y) => ZF + 0.22 * y / HL, zb = (y) => ZB - 0.22 * y / HL;
+      for (const x of [7.55, 7.95]) { obox(g, [x, 0.03, ZF], [x, HL, zf(HL)], 0.05, 0.025, LA); obox(g, [x, 0.03, ZB], [x, HL, zb(HL)], 0.045, 0.022, LA); obox(g, [x, 0.72, zf(0.72)], [x, 0.72, zb(0.72)], 0.01, 0.025, STEEL); }
+      for (const y of [0.32, 0.62, 0.92, 1.18]) { box(7.75, y - 0.03, zf(y), 0.38, 0.03, 0.09, LA); gl(MATTE); box(7.75, y, zf(y), 0.36, 0.006, 0.08, [0.08, 0.08, 0.09]); gl(METAL); }
+      gl(PAINT); box(7.75, HL, 6.3, 0.44, 0.04, 0.22, [0.2, 0.21, 0.23]); box(7.75, 1.06, zb(1.06) + 0.06, 0.36, 0.025, 0.14, [0.2, 0.21, 0.23]);   // (the top, the tray)
+      gl(MATTE); for (const x of [7.55, 7.95]) for (const z of [ZF, ZB]) box(x, 0, z, 0.035, 0.035, 0.065, [0.06, 0.06, 0.07]);
+      BLOBS.push([7.75, 6.3, 0.75, 0.8, 0.5, 0, R]); }
+    // two pit boards leaning in the corner on their poles (the second against the first): dark backs and edges; their faces are prints
+    { use(R, PAINT);
+      for (const [bx, by, bz, a, r, k] of [[8.9, 1.995, 8.155, 0.12, 0, 'pb1'], [8.82, 1.895, 8.225, 0.16, 0.04, 'pb2']]) { const m = M4(bx, by, bz, r, 0, -a), L = (x, y, z) => new V3(x, y, z).applyMatrix4(m).toArray();
+        gBox(g, m, 0, 0, 0, 0.012, 0.55, 0.75, [0.17, 0.18, 0.2]);
+        const top = new V3(0.026, 0.12, 0).applyMatrix4(m), d = new V3(0, -1, 0).applyMatrix4(new THREE.Matrix4().extractRotation(m)), foot = top.clone().addScaledVector(d, top.y / -d.y);
+        gl(METAL); obox(g, foot.toArray(), top.toArray(), 0.035, 0.035, ALU); gl(MATTE); obox(g, foot.toArray(), foot.clone().addScaledVector(d, -0.08).toArray(), 0.04, 0.04, DK); gl(PAINT);
+        const f = puv(k), q = [[-0.375, -0.275], [0.375, -0.275], [0.375, 0.275], [-0.375, 0.275]];   // (the face: local z along the wall, the room at local -x)
+        pq.quadO(...q.map(([u, v]) => L(-0.0075, v, u)), [1, 1, 1], L(1, 0, 0), q.map(([u, v]) => f(u / 0.75 + 0.5, v / 0.55 + 0.5))); }
+      BLOBS.push([8.72, 8.2, 0.4, 0.8, 0.4, 0, R]); }
+    // the team's banner on a rod over the suits (its cloth in a few folds) and the graphics panel on its standoffs right of the air riser
+    { use(R, METAL); const XB = x1 - 0.03, z0b = 3.15, z1b = 4.75, yt = 3.09, yb = 2.38;
+      bar([x1 - 0.045, 3.1, 3.08], [x1 - 0.045, 3.1, 4.82], 0.012, ALU, 8); for (const z of [3.12, 4.78]) obox(g, [x1, 3.1, z], [x1 - 0.05, 3.1, z], 0.015, 0.02, STEEL);
+      const f = puv('ban'), n = 10;
+      for (let i = 0; i < n; i++) { const za = z0b + (z1b - z0b) * i / n, zb2 = z0b + (z1b - z0b) * (i + 1) / n, w = (z) => 0.009 * Math.sin((z - z0b) * 7.5 + 0.6), ym = (yt + yb) / 2;
+        for (const [ya, yb2, ka, kb] of [[yt, ym, 0, 0.5], [ym, yb, 0.5, 1]]) pq.quadO([XB - w(za) * ka, ya, za], [XB - w(zb2) * ka, ya, zb2], [XB - w(zb2) * kb, yb2, zb2], [XB - w(za) * kb, yb2, za], [1, 1, 1], [x1 + 1, ya, (za + zb2) / 2],
+          [f((za - z0b) / (z1b - z0b), (ya - yb) / (yt - yb)), f((zb2 - z0b) / (z1b - z0b), (ya - yb) / (yt - yb)), f((zb2 - z0b) / (z1b - z0b), (yb2 - yb) / (yt - yb)), f((za - z0b) / (z1b - z0b), (yb2 - yb) / (yt - yb))]); }
+      const pz0 = 5.05, pz1 = 6.3, py0 = 2.3, py1 = 3.1, XP = x1 - 0.03, fp = puv('pan');
+      gl(PAINT); box(XP + 0.006, py0, (pz0 + pz1) / 2, 0.012, py1 - py0, pz1 - pz0, [0.1, 0.11, 0.13]);
+      pq.quadO([XP - 0.0015, py0, pz0], [XP - 0.0015, py0, pz1], [XP - 0.0015, py1, pz1], [XP - 0.0015, py1, pz0], [1, 1, 1], [x1 + 1, 2.7, 5.6], [fp(0, 0), fp(1, 0), fp(1, 1), fp(0, 1)]);
+      gl(METAL); for (const z of [pz0 + 0.06, pz1 - 0.06]) for (const y of [py0 + 0.06, py1 - 0.06]) cylA(g, [XP - 0.004, y, z], 'x', 0.012, 0.008, 8, [0.7, 0.72, 0.76]); }   // (its standoffs' caps)
+    const pm = new THREE.Mesh(pq.geometry(), new THREE.MeshLambertMaterial({ map: prints })); pm.material.userData.noCube = true; R.root.add(pm);
+
+    // ---- a utility cart by the bare slicks (their trolley's piece): three black trays on steel posts and castors; a brake disc with its
+    // caliper, a torque wrench and a box of nuts on top, small bins in the middle, a fuel can at the bottom ----
+    { use(TB, PAINT); const B = M4(5.0, 0, -2.22, 0, 0.1, 0), PLs = [0.1, 0.1, 0.11], PLl = [0.13, 0.13, 0.14];
+      gl(SATIN); for (const y of [0.15, 0.48, 0.82]) { gBox(g, B, 0, y, 0, 0.55, 0.02, 0.45, PLs);
+        for (const e of [-1, 1]) { gBox(g, B, e * 0.265, y + 0.025, 0, 0.02, 0.03, 0.45, PLl); gBox(g, B, 0, y + 0.025, e * 0.215, 0.55, 0.03, 0.02, PLl); } }
+      gl(METAL); for (const sx of [-0.255, 0.255]) for (const sz of [-0.205, 0.205]) gBox(g, B, sx, 0.47, sz, 0.022, 0.78, 0.022, STEEL);
+      gl(MATTE); for (const sx of [-0.23, 0.23]) for (const sz of [-0.18, 0.18]) { gBox(g, B, sx, 0.09, sz, 0.03, 0.05, 0.025, DK); gAdd(g, new THREE.CylinderGeometry(0.035, 0.035, 0.028, 8), B.clone().multiply(M4(sx, 0.035, sz, Math.PI / 2)), DK); }
+      gl(METAL); gAdd(g, new THREE.CylinderGeometry(0.15, 0.15, 0.022, 12), B.clone().multiply(M4(-0.12, 0.842, 0.09)), (c, n) => n[1] > 0.5 ? [0.5, 0.51, 0.54] : [0.34, 0.35, 0.38]);   // the disc
+      gl(PAINT); gAdd(g, new THREE.CylinderGeometry(0.075, 0.075, 0.045, 8), B.clone().multiply(M4(-0.12, 0.875, 0.09)), [0.12, 0.12, 0.13]); gBox(g, B, 0.02, 0.87, 0.09, 0.05, 0.06, 0.13, [0.8, 0.62, 0.18]);   // (its hat, the caliper)
+      const L = (x, y, z) => new V3(x, y, z).applyMatrix4(B).toArray();
+      gl(METAL); obox(g, L(-0.2, 0.842, -0.19), L(0.17, 0.842, 0.09), 0.025, 0.02, STEEL); gl(PAINT); obox(g, L(0.17, 0.846, 0.09), L(0.27, 0.846, 0.165), 0.032, 0.03, [0.6, 0.12, 0.1]);   // the torque wrench, its grip
+      gl(METAL); gAdd(g, new THREE.CylinderGeometry(0.026, 0.026, 0.03, 8), B.clone().multiply(M4(-0.2, 0.847, -0.19)), STEEL);
+      gl(SATIN); gBox(g, B, 0.17, 0.865, -0.13, 0.1, 0.05, 0.08, [0.75, 0.62, 0.38]); gBox(g, B, 0.17, 0.891, -0.13, 0.085, 0.004, 0.065, [0.42, 0.4, 0.36]);   // (the box of nuts)
+      for (const [x, c] of [[-0.17, [0.18, 0.34, 0.62]], [0, [0.36, 0.38, 0.42]], [0.17, [0.18, 0.34, 0.62]]]) { gBox(g, B, x, 0.535, 0.02, 0.14, 0.08, 0.2, c); gBox(g, B, x, 0.574, 0.02, 0.12, 0.004, 0.18, [0.05, 0.05, 0.06]); }   // the bins
+      gl(PAINT); gBox(g, B, -0.08, 0.27, 0, 0.13, 0.22, 0.24, [0.62, 0.12, 0.09]); gBox(g, B, -0.08, 0.395, 0.05, 0.03, 0.03, 0.12, [0.5, 0.09, 0.07]); gBox(g, B, -0.08, 0.4, -0.09, 0.03, 0.04, 0.03, [0.1, 0.1, 0.11]);   // the can, its handle, its cap
+      BLOBS.push([5.0, -2.22, 0.8, 0.65, 0.7, 0.1, TB]); }
+
+    // ---- the back wall: the air drop's hose down from its hook to loose loops on the floor; a cord reel under the roof, its cage lamp ----
+    { use(BK, MATTE); const HY = [0.93, 0.72, 0.12], pts = [[5.03, 1.06, -4.672], [5.02, 0.8, -4.64], [4.99, 0.4, -4.58], [4.93, 0.1, -4.51], [4.84, 0.011, -4.45]], a0 = -0.42;
+      for (let i = 0; i <= 44; i++) { const tt = i / 44, a = a0 + tt * 2.5 * TAU, r = 0.345 - 0.12 * tt + 0.015 * Math.sin(a * 3 + 1.3); pts.push([4.4 + Math.cos(a) * r, 0.011, -4.2 + Math.sin(a) * r]); }
+      tube(g, pts, 0.011, HY, 100, 4); const e = pts[pts.length - 1], e2 = pts[pts.length - 2], dx = e[0] - e2[0], dz = e[2] - e2[2], dl = Math.hypot(dx, dz);
+      gl(METAL); seg(g, e, [e[0] + dx / dl * 0.06, 0.011, e[2] + dz / dl * 0.06], 0.014, [0.8, 0.64, 0.28], 8); }   // (its coupler)
+    { use(BK, PAINT); const X = 3.9, Z = -3.25, Y = 4.5, YL = [0.95, 0.75, 0.12];
+      gAdd(g, new THREE.CylinderGeometry(0.13, 0.13, 0.09, 16), M4(X, Y, Z, 0, 0, Math.PI / 2), (c, n) => Math.abs(n[1]) > 0.5 ? [0.85, 0.66, 0.1] : YL); cylA(g, [X, Y, Z], 'x', 0.05, 0.13, 10, [0.12, 0.12, 0.13]);
+      for (const s of [-1, 1]) gBox(g, null, X + s * 0.07, 4.575, Z, 0.012, 0.16, 0.07, DK);
+      gl(MATTE); seg(g, [X, Y - 0.12, Z + 0.02], [X, 2.13, Z + 0.02], 0.006, [0.06, 0.06, 0.07], 5); gl(PAINT); gAdd(g, new THREE.SphereGeometry(0.03, 8, 4), M4(X, 2.15, Z + 0.02), [0.72, 0.12, 0.1]);   // the cord, its stop
+      gl(MATTE); gAdd(g, new THREE.CylinderGeometry(0.026, 0.03, 0.1, 8), M4(X, 2.07, Z + 0.02), [0.08, 0.08, 0.09]);   // the lamp: its grip, its cage round the lit tube, its hook
+      gl(METAL); for (const y of [2.01, 1.81]) gAdd(g, new THREE.CylinderGeometry(0.036, 0.036, 0.016, 8), M4(X, y, Z + 0.02), [0.16, 0.17, 0.19]);
+      for (let k = 0; k < 4; k++) { const a = k / 4 * TAU + 0.4; seg(g, [X + Math.cos(a) * 0.034, 1.815, Z + 0.02 + Math.sin(a) * 0.034], [X + Math.cos(a) * 0.034, 2.005, Z + 0.02 + Math.sin(a) * 0.034], 0.003, [0.2, 0.21, 0.23], 3); }
+      gl(MATTE); cylA(g, [X, 1.91, Z + 0.02], 'y', 0.017, 0.18, 8, [2.4, 2.2, 1.8]); gl(METAL); gAdd(g, new THREE.TorusGeometry(0.018, 0.004, 3, 6, Math.PI * 1.3), M4(X, 1.79, Z + 0.02, 0, 0, Math.PI), [0.3, 0.31, 0.33]); }
+
+    // the walls' contact shadows behind the tall things on the right (the decal block lays them)
+    WALLAO.push(['b', 1.1, 4.8, 0, 2.3, 0.6, BK], ['b', 5.2, 7.8, 0, 2.1, 0.6, BK], ['r', 3.0, 4.8, 0.7, 2.2, 0.4, R], ['r', 4.85, 5.95, 0, 1.0, 0.5, R]);
+    g = sm = cp = null;
+  }
   // the front zone's new things (round 2)
   function buildKitF() {}
   /* ---------------- outside: the valley round the workshop (the sky, its clouds and the mountains round the valley in one shader; the
