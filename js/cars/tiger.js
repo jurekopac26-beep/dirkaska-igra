@@ -18,8 +18,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     partNames: { splitter: 'front splitter', diffuser: 'diffuser' },
     parts: { set: 'race', ht: 1.25, y0: 0.1,
       over: {
-        bumperF: { df: 0 },
-        // (where the look has them: the doors behind the long bonnet, the mirrors at the cowl, the boot lid behind the fastback)
+        bumperF: { df: 0, y: 0.45 },
+        // (where the look has them: the front clip up to the bonnet, the doors behind the long bonnet, the mirrors at the cowl, the boot lid
+        // behind the fastback)
         doorL: { lx: -0.15, y: 0.62 }, doorR: { lx: -0.15, y: 0.62 }, mirrorL: { lx: 0.01, lz: -0.96, y: 0.97 }, mirrorR: { lx: 0.01, lz: 0.96, y: 0.97 },
         trunk: { lx: -0.95, y: 0.96 },
       },
@@ -28,10 +29,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         diffuser: { z: 1, th: 0.55, m: 4, rW: 0.45, h: 0.05, lx: -0.98, lz: 0, f: 0.03, df: 0.15 },
       },
     },
-    // the look (KIT API v1, render.js; look units = metres): one loft, the standard regions (bonnet, boot lid, fenders with the lamp corners
-    // of the nose, doors with their glass, quarters, bumpers) and the racing parts drawn on: the splitter, the dive planes on the bumper's
-    // corners, the diffuser, the wing on its swan necks. The livery: the paint, twin stripes over the top in the stripe colour, the aero
-    // parts and the skirts in black carbon, the start number on the roof and on both doors (K.number)
+    // the look (KIT API v1, render.js; look units = metres): one loft, the standard regions (bonnet, boot lid, fenders, doors with their
+    // glass, quarters, the rear bumper; the front bumper the whole front clip, the lamps in it) and the racing parts drawn on: the splitter,
+    // the dive planes on the bumper's corners, the diffuser, the wing on its swan necks. The livery: the paint, twin stripes over the top in
+    // the stripe colour, the aero parts and the skirts in black carbon, the start number on the roof and on both doors (K.number)
     look: {
       body: { len: 4.7, wid: 2.05, wz: 0.19,
         //       x      w     yb    ybelt  wt    yt     cr     kind  tuck
@@ -50,10 +51,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         door: [0.25, -0.92], bumpF: 0.3, bumpR: 0.2, bumpY: [0.72, 0.62], cage: true,
         crush: { x0: -1.72, x1: -0.37, z: 0.66 } },                     // (the roof and the fastback's glass; clear of the deck under the wing)
       wheels: { style: 'slick', w: 0.3, wR: 0.33, gap: 0.06 },
-      // the standard regions; the bonnet from the cowl (the windscreen's base: its second section, at the sails, would start it there), the
-      // nose's upper corners (the band over the bumper, by the lamps) with the fenders
-      regions: (std) => std.flatMap(r => r.part === 'hood' ? [Object.assign({}, r, { x: [0.05, r.x[1]] })]
-        : r.part === 'fenderR' ? [r, ...['L', 'R'].map(s => ({ part: 'fender' + s, x: [2.03, 2.6], bands: ['window'], side: s }))] : [r]),
+      // the standard regions, but the bonnet from the cowl (the windscreen's second section, at the sails, would start it there) to the front
+      // clip: the nose ahead of the fenders (its top, its corners by the lamps, its fascia) is all the front bumper's
+      regions: (std) => std.flatMap(r => r.part === 'hood' ? [{ part: 'bumperF', x: [2.03, 2.6], bands: ['window', 'edge', 'crown'] }, Object.assign({}, r, { x: [0.05, 2.03] })] : [r]),
       build(K) {
         const P = K.paint, S = K.strp, B = K.black, D = K.dark, G = K.GLASS, RED = K.rgb(0xd0141a);
         // ---- the shell: the paint, the glass (windscreen, side windows, the fastback's glass), the tuck all round black (the skirts, the arches' ledges) ----
