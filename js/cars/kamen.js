@@ -26,12 +26,13 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       // from there)
       over: { bumperF: { y: 1.36 }, bumperR: { y: 0.91 }, doorL: { lx: 0.204, y: 2.07 }, doorR: { lx: 0.204, y: 2.07 }, mirrorL: { lx: 0.37, y: 2.45 }, mirrorR: { lx: 0.37, y: 2.45 } },
     },
-    // the look (KIT API v1, render.js; look units = metres): three lofts and the running gear. The cab (its doors with their glass, the
+    // the look (KIT API v1, render.js; look units = metres): four lofts and the running gear. The cab (its doors with their glass, the
     // windscreen, the roof with its lamp bar); the tilting front ('hood': the bonnet over the engine with the grille, and the wings over the
     // front wheels with their tall arches, one piece as on a desert truck); the service body behind (a box narrower than the cab, its roof
-    // hatch, its lockers, the ladder at the back) with a spare wheel standing on each flank in front of it; the frame, the axles, the tanks
-    // and the steps under it all; the steel bumper with the grille guard, the rear bumper bar. The livery: the paint, a stripe band along
-    // the sides, the cab's roof and two bonnet stripes in the stripe colour; the start number on the box's roof and on both doors
+    // hatch and rails, its lockers under the sand ladders, the rear door and the ladder at the back) with a spare wheel standing on each
+    // flank in front of it; the frame, the axles, the tanks and the steps under it all; the steel bumper with the grille guard, the rear
+    // bumper bar. The livery: the paint, a stripe band along the sides and round the back, the cab's roof and two bonnet stripes in the
+    // stripe colour; the start number on the box's roof, on both doors and on the rear door
     look: {
       body: { len: 6.3, wid: 2.5, roofY: 3.05,
         //       x     w     yb    ybelt  wt    yt    cr    kind  tuck
@@ -39,9 +40,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [0.97, 1.17, 1.3, 2.2, 1.08, 2.99, 0.06, 'gf', 0.06],         // the roof's front edge: the windscreen, raked a little
           [1.19, 1.17, 1.3, 2.2, 1.1, 2.22, 0.03, 'b', 0.06],           // its base: the cowl over the bonnet's end
           [1.25, 1.15, 1.3, 2.16, 1.1, 2.18, 0.02, 'b', 0.06]],         // the cab's front face beside the bonnet (the bulkhead once it is off)
-        eye: { x: 0.52, y: 2.64, near: 0.25, tilt: 0.14, style: 'closed' },   // (high up behind the windscreen, the bonnet ahead)
-        decalX: -2.3, decalY: 2.8, decalRz: 0, decalS: 1.15,              // (the start number on the box's flat roof, behind the hatch)
-        crush: { x0: -0.3, x1: 1.12, z: 1.06 }, cage: true },          // (only the cab's roof crushes; a rally truck's roll cage)
+        eye: { x: 0.5, y: 2.5, near: 0.25, tilt: 0.1, style: 'closed' },      // (high up behind the windscreen, the bonnet's front over the dashboard)
+        decalX: -2.3, decalY: 2.8, decalRz: 0, decalS: 1.15,               // (the start number on the box's flat roof, behind the hatch)
+        crush: { x0: -0.3, x1: 1.12, z: 1.06 }, cage: true },              // (only the cab's roof crushes; a rally truck's roll cage)
       wheels: { style: 'knob', w: 0.42, rimK: 0.48, rim: [0.8, 0.8, 0.78], gap: 0.1 },
       regions: 'none',
       build(K) {
@@ -189,6 +190,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.cage(cg, 0.035, [0.72, 0.74, 0.77]);
         K.engine(1.95, 1.0, 0, { l: 1.3, w: 0.8, h: 0.84 });
         K.box(2.86, 1.2, 0, 0.12, 0.65, 1.3, 0, [0.12, 0.12, 0.13], null, false, { inner: true, part: 'body' });
+        K.cyl([2.25, 1.62, 0.42], [2.25, 1.62, 0.62], 0.13, [0.42, 0.3, 0.22], { n: 8, inner: true, part: 'body' });   // the turbo (heat-blued) by the block, its intake pipe
+        K.cyl([2.25, 1.75, 0.52], [2.7, 1.86, 0.45], 0.07, B, { n: 6, inner: true, part: 'body', capA: null });
       },
     },
   });
