@@ -195,12 +195,12 @@
   "maxKverts": 376,
   "jsMs": 0.7
  },
- "saopaulo": {
-  "calls": 272,
-  "maxCalls": 310,
-  "kverts": 680,
-  "maxKverts": 772,
-  "jsMs": 0.73
+ "longford": {
+  "calls": 198,
+  "maxCalls": 263,
+  "kverts": 363,
+  "maxKverts": 564,
+  "jsMs": 0.92
  },
  "jezero": {
   "calls": 278,
@@ -229,5 +229,12 @@
   "kverts": 1530,
   "maxKverts": 1670,
   "jsMs": 0.87
+ },
+ "saopaulo": {
+  "calls": 272,
+  "maxCalls": 310,
+  "kverts": 680,
+  "maxKverts": 772,
+  "jsMs": 0.73
  }
 }

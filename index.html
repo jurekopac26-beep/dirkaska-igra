@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
-<link rel="stylesheet" href="css/style.css?v=ce30f429">
+<link rel="stylesheet" href="css/style.css?v=d3d99a82">
 </head>
 <body>
 <div id="app">
@@ -95,6 +95,7 @@
       </div>
     </div>
     <div id="c-brake" class="tb pedal"><span>ZAVORA</span></div>
+    <div id="c-drift" class="tb"><span>ROČNA</span></div>
     <div id="c-gas" class="tb pedal gas"><span>PLIN</span></div>
     <div id="tilt-ind"><div class="ti-bar"></div><span>NAGIB</span></div>
   </div>
@@ -207,7 +208,7 @@
         <div class="row tiltrow"><span class="rlbl">Občutljivost nagiba</span><input type="range" id="tilt-sens" min="10" max="40" step="1"><span id="tilt-sens-v" class="val"></span></div>
         <div class="row tiltrow"><span class="rlbl">Nagib</span><div class="tilt-live"><div id="tilt-live-bar"></div></div><button class="btn mini" data-act="calibrate">Nastavi sredino</button><button class="btn mini" data-act="tilt-invert" id="tilt-inv-btn">Obrni smer</button></div>
         <div class="row"><span class="rlbl">Kamera</span><div class="seg" data-set="camera"><button data-v="iso">Izometrična · ležeče</button><button data-v="chase">Za avtom · pokončno</button><button data-v="kino">Kino · ležeče</button><button data-v="cockpit">Kokpit · ležeče</button></div></div>
-        <div class="row"><span class="rlbl">Oddaljenost</span><div class="seg" data-set="zoom"><button data-v="0.85">Blizu</button><button data-v="1">Srednje</button><button data-v="1.2">Daleč</button></div></div>
+        <div class="row"><span class="rlbl">Oddaljenost</span><div class="seg" data-set="zoom"><button data-v="1.1">Blizu</button><button data-v="1.4">Srednje</button><button data-v="1.7">Daleč</button></div></div>
         <div class="row"><span class="rlbl">Pomoč pri driftu</span><div class="seg" data-set="assist"><button data-v="0">Nizka</button><button data-v="1">Srednja</button><button data-v="2">Visoka</button></div></div>
         <div class="row"><span class="rlbl">Težavnost</span><div class="seg" data-set="difficulty"><button data-v="0">Lahka</button><button data-v="1">Srednja</button><button data-v="2">Težka</button><button data-v="3" title="Beg pred policijo: najhujši pregon; dirke kot Težka">Super težka</button></div></div>
         <div class="row"><span class="rlbl">Samodejni plin</span><div class="seg" data-set="autoGas"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
@@ -393,19 +394,20 @@
 <script src="js/tracks/moki.js?v=6f877ff1"></script>
 <script src="js/tracks/cpalace.js?v=1ff113aa"></script>
 <script src="js/tracks/riverside.js?v=e2cec4ed"></script>
+<script src="js/tracks/longford.js?v=3076a712"></script>
 <script src="js/tracks/saopaulo.js?v=805afe8a"></script>
-<script src="js/lang.js?v=c38e13d0"></script>
+<script src="js/lang.js?v=6490d181"></script>
 <script src="js/core.js?v=c839badd"></script>
 <script src="js/tex.js?v=c8d887ce"></script>
-<script src="js/world.js?v=bf4fa8f3"></script>
+<script src="js/world.js?v=3a9d8a08"></script>
 <script src="js/world-saopaulo.js?v=e06b24d1"></script>
 <script src="js/data/p206.js?v=0016824f"></script>
-<script src="js/render.js?v=75c2ed3e"></script>
+<script src="js/render.js?v=5b07ca50"></script>
 <script src="js/sfx.js?v=4275d2ee"></script>
 <script src="js/input.js?v=d3dda4cf"></script>
 <script src="js/comm.js?v=c1070d74"></script>
 <script src="js/vendor/peerjs.min.js?v=76b403e4"></script>
 <script src="js/net.js?v=ba863f32"></script>
-<script src="js/game.js?v=e625a235"></script>
+<script src="js/game.js?v=3c22aa64"></script>
 </body>
 </html>
